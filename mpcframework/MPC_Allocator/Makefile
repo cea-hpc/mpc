@@ -111,15 +111,15 @@ endif
 
 $(OBJ_cmake):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,cmake/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,$(shell pwd)/cmake/%.c,$@) -o $@
 
 $(OBJ_include):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,include/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,$(shell pwd)/include/%.c,$@) -o $@
 
 $(OBJ_src):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,src/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,$(shell pwd)/src/%.c,$@) -o $@
 
 $(SDEP_cmake):$(M_PWD)/BUILD_MPC_Allocator/lib/%.d:cmake/%.S
 	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,%.S,$@)"
@@ -138,15 +138,15 @@ $(SDEP_src):$(M_PWD)/BUILD_MPC_Allocator/lib/%.d:src/%.S
 
 $(SOBJ_cmake):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,cmake/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,$(shell pwd)/cmake/%.S,$@) -o $@
 
 $(SOBJ_include):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,include/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,$(shell pwd)/include/%.S,$@) -o $@
 
 $(SOBJ_src):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,src/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,$(shell pwd)/src/%.S,$@) -o $@
 
 $(FOBJ_cmake):$(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o:cmake/%.f
 	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o,%.f,$@)"

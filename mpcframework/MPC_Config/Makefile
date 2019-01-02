@@ -155,23 +155,23 @@ endif
 
 $(OBJ_editor):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,editor/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,$(shell pwd)/editor/%.c,$@) -o $@
 
 $(OBJ_extra):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,extra/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,$(shell pwd)/extra/%.c,$@) -o $@
 
 $(OBJ_generated):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,generated/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,$(shell pwd)/generated/%.c,$@) -o $@
 
 $(OBJ_generators):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,generators/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,$(shell pwd)/generators/%.c,$@) -o $@
 
 $(OBJ_src):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,src/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,$(shell pwd)/src/%.c,$@) -o $@
 
 $(SDEP_editor):$(M_PWD)/BUILD_MPC_Config/lib/%.d:editor/%.S
 	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,%.S,$@)"
@@ -200,23 +200,23 @@ $(SDEP_src):$(M_PWD)/BUILD_MPC_Config/lib/%.d:src/%.S
 
 $(SOBJ_editor):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,editor/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,$(shell pwd)/editor/%.S,$@) -o $@
 
 $(SOBJ_extra):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,extra/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,$(shell pwd)/extra/%.S,$@) -o $@
 
 $(SOBJ_generated):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,generated/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,$(shell pwd)/generated/%.S,$@) -o $@
 
 $(SOBJ_generators):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,generators/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,$(shell pwd)/generators/%.S,$@) -o $@
 
 $(SOBJ_src):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,src/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,$(shell pwd)/src/%.S,$@) -o $@
 
 $(FOBJ_editor):$(M_PWD)/BUILD_MPC_Config/lib/%_f.o:editor/%.f
 	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%_f.o,%.f,$@)"

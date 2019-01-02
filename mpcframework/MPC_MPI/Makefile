@@ -133,19 +133,19 @@ endif
 
 $(OBJ_include):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,include/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,$(shell pwd)/include/%.c,$@) -o $@
 
 $(OBJ_mpc):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,mpc/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,$(shell pwd)/mpc/%.c,$@) -o $@
 
 $(OBJ_mpi):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,mpi/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,$(shell pwd)/mpi/%.c,$@) -o $@
 
 $(OBJ_src):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,src/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,$(shell pwd)/src/%.c,$@) -o $@
 
 $(SDEP_include):$(M_PWD)/BUILD_MPC_MPI/lib/%.d:include/%.S
 	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,%.S,$@)"
@@ -169,19 +169,19 @@ $(SDEP_src):$(M_PWD)/BUILD_MPC_MPI/lib/%.d:src/%.S
 
 $(SOBJ_include):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,include/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,$(shell pwd)/include/%.S,$@) -o $@
 
 $(SOBJ_mpc):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,mpc/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,$(shell pwd)/mpc/%.S,$@) -o $@
 
 $(SOBJ_mpi):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,mpi/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,$(shell pwd)/mpi/%.S,$@) -o $@
 
 $(SOBJ_src):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,src/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,$(shell pwd)/src/%.S,$@) -o $@
 
 $(FOBJ_include):$(M_PWD)/BUILD_MPC_MPI/lib/%_f.o:include/%.f
 	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%_f.o,%.f,$@)"

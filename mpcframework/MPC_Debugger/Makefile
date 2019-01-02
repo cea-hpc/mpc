@@ -111,15 +111,15 @@ endif
 
 $(OBJ_include):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,include/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,$(shell pwd)/include/%.c,$@) -o $@
 
 $(OBJ_dbg_thread):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,sctk_dbg_thread/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,$(shell pwd)/sctk_dbg_thread/%.c,$@) -o $@
 
 $(OBJ_src):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,src/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,$(shell pwd)/src/%.c,$@) -o $@
 
 $(SDEP_include):$(M_PWD)/BUILD_MPC_Debugger/lib/%.d:include/%.S
 	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,%.S,$@)"
@@ -138,15 +138,15 @@ $(SDEP_src):$(M_PWD)/BUILD_MPC_Debugger/lib/%.d:src/%.S
 
 $(SOBJ_include):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,include/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,$(shell pwd)/include/%.S,$@) -o $@
 
 $(SOBJ_dbg_thread):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,sctk_dbg_thread/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,$(shell pwd)/sctk_dbg_thread/%.S,$@) -o $@
 
 $(SOBJ_src):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,src/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,$(shell pwd)/src/%.S,$@) -o $@
 
 $(FOBJ_include):$(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o:include/%.f
 	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o,%.f,$@)"

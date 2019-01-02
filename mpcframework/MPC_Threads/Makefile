@@ -89,11 +89,11 @@ endif
 
 $(OBJ_include):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,include/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,$(shell pwd)/include/%.c,$@) -o $@
 
 $(OBJ_thread):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,sctk_thread/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,$(shell pwd)/sctk_thread/%.c,$@) -o $@
 
 $(SDEP_include):$(M_PWD)/BUILD_MPC_Threads/lib/%.d:include/%.S
 	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,%.S,$@)"
@@ -107,11 +107,11 @@ $(SDEP_thread):$(M_PWD)/BUILD_MPC_Threads/lib/%.d:sctk_thread/%.S
 
 $(SOBJ_include):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,include/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,$(shell pwd)/include/%.S,$@) -o $@
 
 $(SOBJ_thread):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,sctk_thread/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,$(shell pwd)/sctk_thread/%.S,$@) -o $@
 
 $(FOBJ_include):$(M_PWD)/BUILD_MPC_Threads/lib/%_f.o:include/%.f
 	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%_f.o,%.f,$@)"

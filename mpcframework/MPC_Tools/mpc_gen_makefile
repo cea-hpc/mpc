@@ -224,9 +224,9 @@ fi
 printf "\$(OBJ_$NAME):%%.o:%%.d">> $FILE;echo "">> $FILE
 printf "\t@echo \"CC  \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.o,%%.c,\$@)\"">> $FILE;echo "">> $FILE
 if test "$i" != "sctk_asm" && test "$i" != "sctk_spinlock"; then 
-printf "\t@\$(CC) -c \$(LOCAL_CFLAGS) \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.o,$i/%%.c,\$@) -o \$@">> $FILE;echo "">> $FILE
+printf "\t@\$(CC) -c \$(LOCAL_CFLAGS) \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.o,\$(shell pwd)/$i/%%.c,\$@) -o \$@">> $FILE;echo "">> $FILE
 else
-printf "\t@\$(GCC) -c \$(GNU_CFLAGS) \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.o,$PWD/$i/%%.c,\$@) -o \$@">> $FILE;echo "">> $FILE
+printf "\t@\$(GCC) -c \$(GNU_CFLAGS) \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.o,\$(shell pwd)/$i/%%.c,\$@) -o \$@">> $FILE;echo "">> $FILE
 fi
 echo "" >> $FILE
 done
@@ -250,7 +250,7 @@ i="sctk_optim/\$(SCTK_ARCH_OPTIM)"
 fi
 printf "\$(SOBJ_$NAME):%%.o:%%.d">> $FILE;echo "">> $FILE
 printf "\t@echo \"CC  \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.o,%%.S,\$@)\"">> $FILE;echo "">> $FILE
-printf "\t@\$(GCC) -c \$(GNU_CFLAGS) \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.o,$i/%%.S,\$@) -o \$@">> $FILE;echo "">> $FILE
+printf "\t@\$(GCC) -c \$(GNU_CFLAGS) \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.o,\$(shell pwd)/$i/%%.S,\$@) -o \$@">> $FILE;echo "">> $FILE
 echo "" >> $FILE
 done
 

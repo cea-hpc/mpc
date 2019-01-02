@@ -331,55 +331,55 @@ endif
 
 $(OBJ_libdict):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,libdict/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/libdict/%.c,$@) -o $@
 
 $(OBJ_aio):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_aio/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_aio/%.c,$@) -o $@
 
 $(OBJ_alloc):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_alloc/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_alloc/%.c,$@) -o $@
 
 $(OBJ_asm):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.c,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,/media/raid/phomes/jbbesnard/repo/mpc/mpcframework/MPC_Common/sctk_asm/%.c,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_asm/%.c,$@) -o $@
 
 $(OBJ_basic):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_basic/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_basic/%.c,$@) -o $@
 
 $(OBJ_datastructures):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_datastructures/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_datastructures/%.c,$@) -o $@
 
 $(OBJ_debug):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_debug/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_debug/%.c,$@) -o $@
 
 $(OBJ_helpers):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_helpers/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_helpers/%.c,$@) -o $@
 
 $(OBJ_launch):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_launch/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_launch/%.c,$@) -o $@
 
 $(OBJ_optim):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_optim/$(SCTK_ARCH_OPTIM)/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_optim/$(SCTK_ARCH_OPTIM)/%.c,$@) -o $@
 
 $(OBJ_shm_mapper):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_shm_mapper/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_shm_mapper/%.c,$@) -o $@
 
 $(OBJ_spinlock):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.c,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,/media/raid/phomes/jbbesnard/repo/mpc/mpcframework/MPC_Common/sctk_spinlock/%.c,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_spinlock/%.c,$@) -o $@
 
 $(OBJ_topology):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_topology/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_topology/%.c,$@) -o $@
 
 $(SDEP_libdict):$(M_PWD)/BUILD_MPC_Common/lib/%.d:libdict/%.S
 	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.S,$@)"
@@ -448,55 +448,55 @@ $(SDEP_topology):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_topology/%.S
 
 $(SOBJ_libdict):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,libdict/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/libdict/%.S,$@) -o $@
 
 $(SOBJ_aio):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_aio/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_aio/%.S,$@) -o $@
 
 $(SOBJ_alloc):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_alloc/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_alloc/%.S,$@) -o $@
 
 $(SOBJ_asm):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_asm/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_asm/%.S,$@) -o $@
 
 $(SOBJ_basic):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_basic/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_basic/%.S,$@) -o $@
 
 $(SOBJ_datastructures):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_datastructures/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_datastructures/%.S,$@) -o $@
 
 $(SOBJ_debug):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_debug/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_debug/%.S,$@) -o $@
 
 $(SOBJ_helpers):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_helpers/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_helpers/%.S,$@) -o $@
 
 $(SOBJ_launch):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_launch/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_launch/%.S,$@) -o $@
 
 $(SOBJ_optim):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_optim/$(SCTK_ARCH_OPTIM)/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_optim/$(SCTK_ARCH_OPTIM)/%.S,$@) -o $@
 
 $(SOBJ_shm_mapper):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_shm_mapper/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_shm_mapper/%.S,$@) -o $@
 
 $(SOBJ_spinlock):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_spinlock/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_spinlock/%.S,$@) -o $@
 
 $(SOBJ_topology):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_topology/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_topology/%.S,$@) -o $@
 
 $(FOBJ_libdict):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:libdict/%.f
 	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,%.f,$@)"
