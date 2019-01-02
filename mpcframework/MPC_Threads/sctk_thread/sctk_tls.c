@@ -483,6 +483,8 @@ int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
 }
 #endif /* SCTK_USE_TLS */
 
+size_t extls_get_sz_static_tls_segments();
+
 /**
  * Interface call to get the TLS block size for the current program.
  * This size contains the sum of all static TLS segment sizes discovered at
