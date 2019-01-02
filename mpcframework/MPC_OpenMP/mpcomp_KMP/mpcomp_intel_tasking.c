@@ -226,18 +226,19 @@ static void mpcomp_intel_translate_taskdep_to_gomp(  kmp_int32 ndeps, kmp_depend
 {
     int i;
 
-    int num_out_dep = 0;
+    long long int num_out_dep = 0;
     int num_in_dep = 0;
-    int nd=(int)(ndeps + ndeps_noalias);
-    gomp_list_deps[0] = (uintptr_t)nd;
+    long long int nd= (ndeps + ndeps_noalias);
+    gomp_list_deps[0] = (void *)(uintptr_t)nd;
     uintptr_t dep_not_out[nd];
-    
-    for ( i = 0; i < nd ; i++ ) 
-    { 
+
+    for ( i = 0; i < nd ; i++ )
+    {
         if ( dep_list[i].base_addr != 0)
         {
             if(dep_list[i].flags.out){
-                gomp_list_deps[num_out_dep+2] = (uintptr_t)dep_list[i].base_addr;
+                long long int ibaseaddr = dep_list[i].base_addr;
+                gomp_list_deps[num_out_dep+2] = (void *)ibaseaddr;
                 num_out_dep++;
             }
             else{
@@ -246,9 +247,9 @@ static void mpcomp_intel_translate_taskdep_to_gomp(  kmp_int32 ndeps, kmp_depend
             }
         }
     }
-    gomp_list_deps[1] = (uintptr_t)num_out_dep;
-    for ( i = 0; i < num_in_dep; i++ ){ 
-        gomp_list_deps[2 + num_out_dep + i] = dep_not_out[i]; 
+    gomp_list_deps[1] = (void *)num_out_dep;
+    for ( i = 0; i < num_in_dep; i++ ){
+        gomp_list_deps[2 + num_out_dep + i] = (void *)dep_not_out[i];
     }
 }
 
@@ -260,8 +261,8 @@ kmp_int32 __kmpc_omp_task_with_deps(ident_t *loc_ref, kmp_int32 gtid,
   struct mpcomp_task_s *mpcomp_task =
       (struct mpcomp_task_s * ) ( (char *)new_task - sizeof(struct mpcomp_task_s));
   void *data = (void *)mpcomp_task->data;
-  long arg_size = 0; 
-  long arg_align = 0; 
+  long arg_size = 0;
+  long arg_align = 0;
   bool if_clause = true; /* if0 task doesn't go here */
   unsigned flags = 8; /* dep flags */
   void ** depend;
