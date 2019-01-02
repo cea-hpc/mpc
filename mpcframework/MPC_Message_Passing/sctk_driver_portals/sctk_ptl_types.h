@@ -287,11 +287,12 @@ typedef struct sctk_ptl_local_data_s
 {
 	union sctk_ptl_slot_u slot;     /**< the request (MD or ME) */
 	union sctk_ptl_slot_h_u slot_h; /**< the request Handle */
-	sctk_ptl_list_t list;           /**< the list the request issued from */
 	sctk_ptl_matchbits_t match;     /**< request match bits */
-	sctk_ptl_mtype_t type;          /**< request type */
-	sctk_ptl_protocol_t prot;       /**< request protocol */
 	void* msg;                      /**< link to the msg */
+	sctk_ptl_list_t list;           /**< the list the request issued from */
+	sctk_ptl_protocol_t prot;       /**< request protocol */
+	sctk_ptl_mtype_t type;          /**< request type */
+	sctk_atomics_int cnt_frag;      /**< number of chunks before being released */
 } sctk_ptl_local_data_t;
 
 /**
@@ -404,10 +405,10 @@ typedef struct sctk_ptl_rail_info_s
 	size_t max_mr;                          /**< Max size of a memory region (MD | ME ) */
 	size_t eager_limit;                     /**< the max size for an eager msg */
 	size_t nb_entries;                      /**< current number of PT entries dedicated to comms */
-	sctk_atomics_int rdma_cpt;              /**< RDMA match_bits counter */
-	char connection_infos[MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
 	size_t connection_infos_size;           /**< Size of the above string */
+	sctk_atomics_int rdma_cpt;              /**< RDMA match_bits counter */
 	int offload_support;
+	char connection_infos[MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
 } sctk_ptl_rail_info_t;
 
 
