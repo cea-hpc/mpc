@@ -62,10 +62,10 @@ extern ompt_callback_t* OMPT_Callbacks;
   mpcomp_task_t* (*mpcomp_task_list_popfromtail) (mpcomp_task_list_t *);
   void (*mpcomp_task_list_consummer_lock) (mpcomp_task_list_t *, void*);
   void (*mpcomp_task_list_consummer_unlock) (mpcomp_task_list_t *, void*);
-  void (*mpcomp_task_list_consummer_trylock) (mpcomp_task_list_t *, void*);
+  int (*mpcomp_task_list_consummer_trylock) (mpcomp_task_list_t *, void*);
   void (*mpcomp_task_list_producer_lock) (mpcomp_task_list_t *, void*);
   void (*mpcomp_task_list_producer_unlock) (mpcomp_task_list_t *, void*);
-  void (*mpcomp_task_list_producer_trylock) (mpcomp_task_list_t *, void*);
+  int (*mpcomp_task_list_producer_trylock) (mpcomp_task_list_t *, void*);
 
 void mpcomp_task_init_func_pointers()
 {
