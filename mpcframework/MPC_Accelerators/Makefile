@@ -106,136 +106,136 @@ endif
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
 $(DEP_include):$(M_PWD)/BUILD_MPC_Accelerators/lib/%.d:include/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,include/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,include/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_cuda):$(M_PWD)/BUILD_MPC_Accelerators/lib/%.d:sctk_cuda/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_cuda/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_cuda/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_openacc):$(M_PWD)/BUILD_MPC_Accelerators/lib/%.d:sctk_openacc/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_openacc/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_openacc/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_opencl):$(M_PWD)/BUILD_MPC_Accelerators/lib/%.d:sctk_opencl/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_opencl/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_opencl/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_src):$(M_PWD)/BUILD_MPC_Accelerators/lib/%.d:src/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,src/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,src/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 else
 $(DEP_include):$(M_PWD)/BUILD_MPC_Accelerators/lib/%.d:include/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,include/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,include/%.c,$@)" > $@
 
 $(DEP_cuda):$(M_PWD)/BUILD_MPC_Accelerators/lib/%.d:sctk_cuda/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_cuda/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_cuda/%.c,$@)" > $@
 
 $(DEP_openacc):$(M_PWD)/BUILD_MPC_Accelerators/lib/%.d:sctk_openacc/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_openacc/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_openacc/%.c,$@)" > $@
 
 $(DEP_opencl):$(M_PWD)/BUILD_MPC_Accelerators/lib/%.d:sctk_opencl/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_opencl/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_opencl/%.c,$@)" > $@
 
 $(DEP_src):$(M_PWD)/BUILD_MPC_Accelerators/lib/%.d:src/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,src/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,src/%.c,$@)" > $@
 
 endif
 
 $(OBJ_include):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,include/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,include/%.c,$@) -o $@
 
 $(OBJ_cuda):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,sctk_cuda/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,sctk_cuda/%.c,$@) -o $@
 
 $(OBJ_openacc):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,sctk_openacc/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,sctk_openacc/%.c,$@) -o $@
 
 $(OBJ_opencl):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,sctk_opencl/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,sctk_opencl/%.c,$@) -o $@
 
 $(OBJ_src):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,src/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,src/%.c,$@) -o $@
 
 $(SDEP_include):$(M_PWD)/BUILD_MPC_Accelerators/lib/%.d:include/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,include/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,include/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_cuda):$(M_PWD)/BUILD_MPC_Accelerators/lib/%.d:sctk_cuda/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_cuda/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_cuda/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_openacc):$(M_PWD)/BUILD_MPC_Accelerators/lib/%.d:sctk_openacc/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_openacc/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_openacc/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_opencl):$(M_PWD)/BUILD_MPC_Accelerators/lib/%.d:sctk_opencl/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_opencl/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,sctk_opencl/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_src):$(M_PWD)/BUILD_MPC_Accelerators/lib/%.d:src/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,src/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,src/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SOBJ_include):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,include/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,include/%.S,$@) -o $@
 
 $(SOBJ_cuda):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,sctk_cuda/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,sctk_cuda/%.S,$@) -o $@
 
 $(SOBJ_openacc):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,sctk_openacc/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,sctk_openacc/%.S,$@) -o $@
 
 $(SOBJ_opencl):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,sctk_opencl/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,sctk_opencl/%.S,$@) -o $@
 
 $(SOBJ_src):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,src/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%.o,src/%.S,$@) -o $@
 
 $(FOBJ_include):$(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o:include/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o,include/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o,include/%.f,$@) -o $@
 
 $(FOBJ_cuda):$(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o:sctk_cuda/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o,sctk_cuda/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o,sctk_cuda/%.f,$@) -o $@
 
 $(FOBJ_openacc):$(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o:sctk_openacc/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o,sctk_openacc/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o,sctk_openacc/%.f,$@) -o $@
 
 $(FOBJ_opencl):$(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o:sctk_opencl/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o,sctk_opencl/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o,sctk_opencl/%.f,$@) -o $@
 
 $(FOBJ_src):$(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o:src/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o,src/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Accelerators/lib/%_f.o,src/%.f,$@) -o $@
 
 

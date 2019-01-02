@@ -80,84 +80,84 @@ endif
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
 $(DEP_cmake):$(M_PWD)/BUILD_MPC_Allocator/lib/%.d:cmake/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,cmake/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,cmake/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_include):$(M_PWD)/BUILD_MPC_Allocator/lib/%.d:include/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,include/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,include/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_src):$(M_PWD)/BUILD_MPC_Allocator/lib/%.d:src/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,src/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,src/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 else
 $(DEP_cmake):$(M_PWD)/BUILD_MPC_Allocator/lib/%.d:cmake/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,cmake/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,cmake/%.c,$@)" > $@
 
 $(DEP_include):$(M_PWD)/BUILD_MPC_Allocator/lib/%.d:include/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,include/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,include/%.c,$@)" > $@
 
 $(DEP_src):$(M_PWD)/BUILD_MPC_Allocator/lib/%.d:src/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,src/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,src/%.c,$@)" > $@
 
 endif
 
 $(OBJ_cmake):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,cmake/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,cmake/%.c,$@) -o $@
 
 $(OBJ_include):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,include/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,include/%.c,$@) -o $@
 
 $(OBJ_src):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,src/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,src/%.c,$@) -o $@
 
 $(SDEP_cmake):$(M_PWD)/BUILD_MPC_Allocator/lib/%.d:cmake/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,cmake/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,cmake/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_include):$(M_PWD)/BUILD_MPC_Allocator/lib/%.d:include/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,include/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,include/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_src):$(M_PWD)/BUILD_MPC_Allocator/lib/%.d:src/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,src/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,src/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SOBJ_cmake):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,cmake/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,cmake/%.S,$@) -o $@
 
 $(SOBJ_include):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,include/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,include/%.S,$@) -o $@
 
 $(SOBJ_src):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,src/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%.o,src/%.S,$@) -o $@
 
 $(FOBJ_cmake):$(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o:cmake/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o,cmake/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o,cmake/%.f,$@) -o $@
 
 $(FOBJ_include):$(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o:include/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o,include/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o,include/%.f,$@) -o $@
 
 $(FOBJ_src):$(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o:src/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o,src/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o,src/%.f,$@) -o $@
 
 
@@ -168,4 +168,5 @@ endif
 endif
 build_tests:
 	@mkdir -p $(M_PWD)/BUILD_MPC_Allocator/tests
+	@echo "MAK tests"
 	@$(MAKE) BUILD_DIR=$(M_PWD)/BUILD_MPC_Allocator/tests -C tests all

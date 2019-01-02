@@ -190,7 +190,7 @@ i="sctk_optim/\$(SCTK_ARCH_OPTIM)"
 fi
 printf "\$(DEP_$NAME):\$(M_PWD)/BUILD_$DIR/lib/%%.d:${i}/%%.c">> $FILE;
 echo "">> $FILE
-printf "\t@echo \"    Generate dependencies \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,$i/%%.c,\$@)\"">> $FILE;
+printf "\t@echo \"DEP \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,%%.c,\$@)\"">> $FILE;
 echo "">> $FILE
 if test "$i" != "sctk_asm" && test "$i" != "sctk_spinlock"; then 
 printf "\t@\$(CC) \$(SCTK_CC_DEP) \$(LOCAL_CFLAGS) \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,$i/%%.c,\$@) | \\">> $FILE;
@@ -209,7 +209,7 @@ if test "$i" = "sctk_optim"; then
 i="sctk_optim/\$(SCTK_ARCH_OPTIM)"
 fi
 printf "\$(DEP_$NAME):\$(M_PWD)/BUILD_$DIR/lib/%%.d:${i}/%%.c">> $FILE;echo "">> $FILE
-printf "\t@echo \"    Generate fake dependencies \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,$i/%%.c,\$@)\"">> $FILE;echo "">> $FILE
+printf "\t@echo \"DEP \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,%%.c,\$@)\"">> $FILE;echo "">> $FILE
 printf "\t@echo \"\$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,$i/%%.c,\$@)\" > \$@">> $FILE;echo "">> $FILE
 echo "" >> $FILE
 done
@@ -222,11 +222,11 @@ if test "$i" = "sctk_optim"; then
 i="sctk_optim/\$(SCTK_ARCH_OPTIM)"
 fi
 printf "\$(OBJ_$NAME):%%.o:%%.d">> $FILE;echo "">> $FILE
-printf "\t@echo \"    Build \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.o,$i/%%.c,\$@)\"">> $FILE;echo "">> $FILE
+printf "\t@echo \"CC  \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.o,%%.c,\$@)\"">> $FILE;echo "">> $FILE
 if test "$i" != "sctk_asm" && test "$i" != "sctk_spinlock"; then 
 printf "\t@\$(CC) -c \$(LOCAL_CFLAGS) \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.o,$i/%%.c,\$@) -o \$@">> $FILE;echo "">> $FILE
 else
-printf "\t@\$(GCC) -c \$(GNU_CFLAGS) \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.o,$i/%%.c,\$@) -o \$@">> $FILE;echo "">> $FILE
+printf "\t@\$(GCC) -c \$(GNU_CFLAGS) \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.o,$PWD/$i/%%.c,\$@) -o \$@">> $FILE;echo "">> $FILE
 fi
 echo "" >> $FILE
 done
@@ -237,7 +237,7 @@ if test "$i" = "sctk_optim"; then
 i="sctk_optim/\$(SCTK_ARCH_OPTIM)"
 fi
 printf "\$(SDEP_$NAME):\$(M_PWD)/BUILD_$DIR/lib/%%.d:${i}/%%.S">> $FILE;echo "">> $FILE
-printf "\t@echo \"    Generate dependencies \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,$i/%%.S,\$@)\"">> $FILE;echo "">> $FILE
+printf "\t@echo \"DEP \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,%%.S,\$@)\"">> $FILE;echo "">> $FILE
 printf "\t@\$(GCC) -M \$(GNU_CFLAGS) \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,$i/%%.S,\$@) | \\">> $FILE;echo "">> $FILE
 printf "\t\tsed 's,\$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,%%.o,\$@):,\$(patsubst %%.d,%%.o,\$@) \$@:,g'> \$@ 2> /dev/null">> $FILE;echo "">> $FILE
 echo "" >> $FILE
@@ -249,7 +249,7 @@ if test "$i" = "sctk_optim"; then
 i="sctk_optim/\$(SCTK_ARCH_OPTIM)"
 fi
 printf "\$(SOBJ_$NAME):%%.o:%%.d">> $FILE;echo "">> $FILE
-printf "\t@echo \"    Build \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.o,$i/%%.S,\$@)\"">> $FILE;echo "">> $FILE
+printf "\t@echo \"CC  \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.o,%%.S,\$@)\"">> $FILE;echo "">> $FILE
 printf "\t@\$(GCC) -c \$(GNU_CFLAGS) \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.o,$i/%%.S,\$@) -o \$@">> $FILE;echo "">> $FILE
 echo "" >> $FILE
 done
@@ -260,7 +260,7 @@ if test "$i" = "sctk_optim"; then
 i="sctk_optim/\$(SCTK_ARCH_OPTIM)"
 fi
 printf "\$(FOBJ_$NAME):\$(M_PWD)/BUILD_$DIR/lib/%%_f.o:${i}/%%.f">> $FILE;echo "">> $FILE
-printf "\t@echo \"    Build \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%_f.o,$i/%%.f,\$@)\"">> $FILE;echo "">> $FILE
+printf "\t@echo \"F77 \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%_f.o,%%.f,\$@)\"">> $FILE;echo "">> $FILE
 printf "\t@\$(F77) -c \$(FFLAGS) \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%_f.o,$i/%%.f,\$@) -o \$@">> $FILE;echo "">> $FILE
 echo "" >> $FILE
 done
@@ -292,6 +292,7 @@ for i in $EXE_SUBDIR; do
 echo "build_$i:" >> $FILE
 printf "\t@mkdir -p \$(M_PWD)/BUILD_${DIR}/$i" >> $FILE
 echo "" >> $FILE
+printf "\t@echo \"MAK $i\"">> $FILE;echo "">> $FILE
 printf "\t@\$(MAKE) BUILD_DIR=\$(M_PWD)/BUILD_${DIR}/$i -C $i all" >> $FILE
 echo "" >> $FILE
 done

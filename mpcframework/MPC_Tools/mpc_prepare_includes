@@ -40,7 +40,7 @@ for i in ${SOURCE_DIR}/*.h; do
 	echo "    $NAME already here"
 	exit 1
     else
-	echo "    Link $NAME"
+	echo "INC  $NAME"
 	ln -s $i $NAME
 	if test "$?" != "0" ; then 
 	    exit 1

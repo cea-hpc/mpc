@@ -171,266 +171,266 @@ endif
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
 $(DEP_env):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:env/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,env/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,env/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_include):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:include/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,include/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,include/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_intel):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:intel/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,intel/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,intel/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_mpcomp_GOMP_include):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_GOMP_include/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_include/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_include/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_mpcomp_GOMP_internal):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_GOMP_internal/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_internal/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_internal/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_mpcomp_GOMP_wrapper):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_GOMP_wrapper/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_wrapper/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_wrapper/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_mpcomp_KMP):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_KMP/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_KMP/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_KMP/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_ompt):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:ompt/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,ompt/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,ompt/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_src):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:src/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,src/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,src/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_task):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:task/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,task/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,task/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 else
 $(DEP_env):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:env/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,env/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,env/%.c,$@)" > $@
 
 $(DEP_include):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:include/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,include/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,include/%.c,$@)" > $@
 
 $(DEP_intel):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:intel/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,intel/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,intel/%.c,$@)" > $@
 
 $(DEP_mpcomp_GOMP_include):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_GOMP_include/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_include/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_include/%.c,$@)" > $@
 
 $(DEP_mpcomp_GOMP_internal):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_GOMP_internal/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_internal/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_internal/%.c,$@)" > $@
 
 $(DEP_mpcomp_GOMP_wrapper):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_GOMP_wrapper/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_wrapper/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_wrapper/%.c,$@)" > $@
 
 $(DEP_mpcomp_KMP):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_KMP/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_KMP/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_KMP/%.c,$@)" > $@
 
 $(DEP_ompt):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:ompt/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,ompt/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,ompt/%.c,$@)" > $@
 
 $(DEP_src):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:src/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,src/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,src/%.c,$@)" > $@
 
 $(DEP_task):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:task/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,task/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,task/%.c,$@)" > $@
 
 endif
 
 $(OBJ_env):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,env/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,env/%.c,$@) -o $@
 
 $(OBJ_include):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,include/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,include/%.c,$@) -o $@
 
 $(OBJ_intel):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,intel/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,intel/%.c,$@) -o $@
 
 $(OBJ_mpcomp_GOMP_include):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_GOMP_include/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_GOMP_include/%.c,$@) -o $@
 
 $(OBJ_mpcomp_GOMP_internal):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_GOMP_internal/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_GOMP_internal/%.c,$@) -o $@
 
 $(OBJ_mpcomp_GOMP_wrapper):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_GOMP_wrapper/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_GOMP_wrapper/%.c,$@) -o $@
 
 $(OBJ_mpcomp_KMP):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_KMP/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_KMP/%.c,$@) -o $@
 
 $(OBJ_ompt):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,ompt/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,ompt/%.c,$@) -o $@
 
 $(OBJ_src):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,src/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,src/%.c,$@) -o $@
 
 $(OBJ_task):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,task/%.c,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,task/%.c,$@) -o $@
 
 $(SDEP_env):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:env/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,env/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,env/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_include):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:include/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,include/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,include/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_intel):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:intel/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,intel/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,intel/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_mpcomp_GOMP_include):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_GOMP_include/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_include/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_include/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_mpcomp_GOMP_internal):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_GOMP_internal/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_internal/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_internal/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_mpcomp_GOMP_wrapper):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_GOMP_wrapper/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_wrapper/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_wrapper/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_mpcomp_KMP):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_KMP/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_KMP/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_KMP/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_ompt):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:ompt/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,ompt/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,ompt/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_src):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:src/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,src/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,src/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_task):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:task/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,task/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,task/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SOBJ_env):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,env/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,env/%.S,$@) -o $@
 
 $(SOBJ_include):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,include/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,include/%.S,$@) -o $@
 
 $(SOBJ_intel):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,intel/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,intel/%.S,$@) -o $@
 
 $(SOBJ_mpcomp_GOMP_include):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_GOMP_include/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_GOMP_include/%.S,$@) -o $@
 
 $(SOBJ_mpcomp_GOMP_internal):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_GOMP_internal/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_GOMP_internal/%.S,$@) -o $@
 
 $(SOBJ_mpcomp_GOMP_wrapper):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_GOMP_wrapper/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_GOMP_wrapper/%.S,$@) -o $@
 
 $(SOBJ_mpcomp_KMP):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_KMP/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_KMP/%.S,$@) -o $@
 
 $(SOBJ_ompt):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,ompt/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,ompt/%.S,$@) -o $@
 
 $(SOBJ_src):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,src/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,src/%.S,$@) -o $@
 
 $(SOBJ_task):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,task/%.S,$@)"
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,task/%.S,$@) -o $@
 
 $(FOBJ_env):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:env/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,env/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,env/%.f,$@) -o $@
 
 $(FOBJ_include):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:include/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,include/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,include/%.f,$@) -o $@
 
 $(FOBJ_intel):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:intel/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,intel/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,intel/%.f,$@) -o $@
 
 $(FOBJ_mpcomp_GOMP_include):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:mpcomp_GOMP_include/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,mpcomp_GOMP_include/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,mpcomp_GOMP_include/%.f,$@) -o $@
 
 $(FOBJ_mpcomp_GOMP_internal):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:mpcomp_GOMP_internal/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,mpcomp_GOMP_internal/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,mpcomp_GOMP_internal/%.f,$@) -o $@
 
 $(FOBJ_mpcomp_GOMP_wrapper):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:mpcomp_GOMP_wrapper/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,mpcomp_GOMP_wrapper/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,mpcomp_GOMP_wrapper/%.f,$@) -o $@
 
 $(FOBJ_mpcomp_KMP):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:mpcomp_KMP/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,mpcomp_KMP/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,mpcomp_KMP/%.f,$@) -o $@
 
 $(FOBJ_ompt):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:ompt/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,ompt/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,ompt/%.f,$@) -o $@
 
 $(FOBJ_src):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:src/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,src/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,src/%.f,$@) -o $@
 
 $(FOBJ_task):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:task/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,task/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,task/%.f,$@) -o $@
 
 
