@@ -234,6 +234,9 @@ static inline short __sctk_ptl_is_unary_op(RDMA_op op, RDMA_type type, char* buf
 /** boolean to check if Portals support 'fetch_and_op', which it supports */
 int sctk_ptl_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type )
 {
+	UNUSED(rail); 
+	UNUSED(size);
+	UNUSED(type);
 	/* trouble with PtlFetchAtomic() & the BXI, disabling the call, fallback w/ CMs */
 	return 0;
 	/* don't support directly INC & DEC w/ Portals... */
@@ -324,6 +327,9 @@ void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 /** boolean to check if Portals support 'compare_and_swap', which it supports */
 int sctk_ptl_rdma_cas_gate( sctk_rail_info_t *rail, size_t size, RDMA_type type )
 {
+	UNUSED(rail);
+	UNUSED(size);
+	UNUSED(type);
 	return 1;
 }
 
@@ -427,6 +433,7 @@ void sctk_ptl_rdma_write(sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
 		void * dest_addr, struct  sctk_rail_pin_ctx_list * remote_key,
 		size_t size)
 {
+	UNUSED(rail);
 	sctk_ptl_id_t remote = remote_key->pin.ptl.origin;
 	void* remote_start   = remote_key->pin.ptl.start;
 	void* local_start    = local_key->pin.ptl.start;
@@ -485,6 +492,8 @@ void sctk_ptl_rdma_read(sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
 		void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
 		size_t size)
 {
+
+	UNUSED(rail);
 	sctk_ptl_id_t remote        = remote_key->pin.ptl.origin;
 	void* remote_start          = remote_key->pin.ptl.start;
 	void* local_start           = local_key->pin.ptl.start;
@@ -599,6 +608,8 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
  */
 void sctk_ptl_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list )
 {
+	UNUSED(rail);
+	sctk_assert(list);
 	sctk_ptl_md_release(list->pin.ptl.md_data);
 	sctk_ptl_me_release(list->pin.ptl.me_data);
 	sctk_nodebug("RELEASE RDMA %p->%p %s", list->pin.ptl.me_data->slot.me.start, list->pin.ptl.me_data->slot.me.start + list->pin.ptl.me_data->slot.me.length, __sctk_ptl_match_str(sctk_malloc(32), 32, list->pin.ptl.me_data->slot.me.match_bits));
@@ -613,7 +624,7 @@ void sctk_ptl_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin
  */
 void sctk_ptl_rdma_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
-	sctk_ptl_pte_t fake;
+	UNUSED(rail);
 	switch(ev.type)
 	{
 		case PTL_EVENT_PUT:                   /* a Put() reached the local process */
@@ -652,6 +663,8 @@ void sctk_ptl_rdma_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)ptr->msg;
 	sctk_ptl_local_data_t* atomic_ptr = (sctk_ptl_local_data_t*)msg->tail.ptl.user_ptr;
+
+	UNUSED(rail);
 	switch(ev.type)
 	{
 		case PTL_EVENT_ACK:    /* write  || CAS || FETCH_AND_OP */

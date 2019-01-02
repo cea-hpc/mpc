@@ -78,6 +78,7 @@ void sctk_ptl_me_free(sctk_ptl_local_data_t*, int);
 void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb, int list, char type, char protocol);
 
 /* event management */
+void sctk_ptl_ct_alloc(sctk_ptl_rail_info_t* srail, sctk_ptl_cnth_t* cnth_ptr);
 void sctk_ptl_ct_free(sctk_ptl_cnth_t cth);
 void sctk_ptl_ct_wait_thrs(sctk_ptl_cnth_t cth, size_t thrs, sctk_ptl_cnt_t* ev);
 size_t sctk_ptl_ct_get(sctk_ptl_cnth_t cth);
@@ -109,7 +110,7 @@ int sctk_ptl_emit_cnt_incr(sctk_ptl_cnth_t target_cnt, size_t incr);
 int sctk_ptl_emit_cnt_set(sctk_ptl_cnth_t target_cnt, size_t val);
 
 /* triggered request management */
-int sctk_ptl_emit_triggeredGet(
+int sctk_ptl_emit_trig_get(
 		sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte,
 		sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, void* user_ptr,
 		sctk_ptl_cnth_t cnt, size_t threshold);

@@ -31,6 +31,7 @@
 #include "sctk_ptl_types.h"
 #include "sctk_ht.h"
 #include "sctk_ptl_offcoll.h"
+#include "sctk_low_level_comm.h"
 
 static sctk_atomics_int nb_mes = SCTK_ATOMICS_INT_T_INIT(0);
 static sctk_atomics_int nb_mds = SCTK_ATOMICS_INT_T_INIT(0);
@@ -828,6 +829,7 @@ int sctk_ptl_emit_cnt_incr(sctk_ptl_cnth_t target_cnt, size_t incr)
 		target_cnt,
 		(sctk_ptl_cnt_t){.success=incr, .failure=0}
 	));
+	return PTL_OK;
 }
 
 int sctk_ptl_emit_cnt_set(sctk_ptl_cnth_t target_cnt, size_t val)
@@ -836,6 +838,7 @@ int sctk_ptl_emit_cnt_set(sctk_ptl_cnth_t target_cnt, size_t val)
 		target_cnt,
 		(sctk_ptl_cnt_t){.success=val, .failure=0}
 	));
+	return PTL_OK;
 }
 /**
  * Same as Get(), but will be hardware-triggered when 'cnt' reaches the set threshold.
