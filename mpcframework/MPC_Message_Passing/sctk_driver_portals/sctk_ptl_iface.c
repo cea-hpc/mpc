@@ -365,6 +365,64 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 		sctk_ptl_offcoll_fini(srail);
 }
 
+static inline void __sctk_ptl_ct_alloc(sctk_ptl_rail_info_t* srail, sctk_ptl_cnth_t* cnth_ptr)
+{
+	sctk_ptl_chk(PtlCTAlloc(
+		srail->iface,
+		cnth_ptr
+	));
+}
+void sctk_ptl_ct_alloc(sctk_ptl_rail_info_t* srail, sctk_ptl_cnth_t* cnth_ptr)
+{
+	return __sctk_ptl_ct_alloc(srail, cnth_ptr);
+}
+
+/**
+ * Free the counting event allocated with sctk_ptl_me_create_with_cnt.
+ * \param[in] cth the counting event handler.
+ */
+void sctk_ptl_ct_free(sctk_ptl_cnth_t cth)
+{
+	sctk_ptl_chk(PtlCTFree(
+		cth
+	));
+}
+
+size_t sctk_ptl_ct_get(sctk_ptl_cnth_t cth)
+{
+	sctk_ptl_cnt_t dummy = (sctk_ptl_cnt_t){.success = 0, .failure = 0};
+	sctk_ptl_chk(PtlCTGet(cth, &dummy));
+	return (size_t)dummy.success;
+}
+
+void sctk_ptl_ct_wait_thrs(sctk_ptl_cnth_t cth, size_t thrs, sctk_ptl_cnt_t* ev)
+{
+	ev->success = 0;
+	ev->failure = 0;
+	int i = 1;
+
+	/* choose one */
+#if 0 
+	PtlCTWait(cth, thrs, ev);
+#else
+	/* by benching these two methods, the BXI Wait() 
+	 * is longer than a while(){Get();} but is probably also
+	 * less stressful. Also the solution below let the program
+	 * works even if -c=1, as polling is required to progress those
+	 * who are calling this ct_wait_thrs() function (offloaded colls mainly)
+	 */
+	sctk_ptl_chk(PtlCTGet(cth, ev));
+	while(ev->success < thrs && !ev->failure)
+	{
+		sctk_ptl_chk(PtlCTGet(cth, ev));
+		/*if(!(i % 1000))*/
+		sctk_network_notify_idle_message();
+		i++;
+	}
+#endif
+}
+
+
 /**
  * This function creates a new memory entry.
  *
@@ -420,10 +478,7 @@ sctk_ptl_local_data_t* sctk_ptl_me_create_with_cnt(sctk_ptl_rail_info_t* srail, 
 	
 	ret = sctk_ptl_me_create(start, size, remote, match, ign, (flags | PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW));
 
-	sctk_ptl_chk(PtlCTAlloc(
-		srail->iface,
-		&ret->slot.me.ct_handle
-	));
+	__sctk_ptl_ct_alloc(srail, &ret->slot.me.ct_handle);
 
 	return ret;
 }
@@ -483,44 +538,6 @@ void sctk_ptl_me_free(sctk_ptl_local_data_t* request, int free_buffer)
 }
 
 /**
- * Free the counting event allocated with sctk_ptl_me_create_with_cnt.
- * \param[in] cth the counting event handler.
- */
-void sctk_ptl_ct_free(sctk_ptl_cnth_t cth)
-{
-	sctk_ptl_chk(PtlCTFree(
-		cth
-	));
-}
-
-void sctk_ptl_ct_wait_thrs(sctk_ptl_cnth_t cth, size_t thrs, sctk_ptl_cnt_t* ev)
-{
-	ev->success = 0;
-	ev->failure = 0;
-	int i = 1;
-
-	/* choose one */
-#if 0 
-	PtlCTWait(cth, thrs, ev);
-#else
-	/* by benching these two methods, the BXI Wait() 
-	 * is longer than a while(){Get();} but is probably also
-	 * less stressful. Also the solution below let the program
-	 * works even if -c=1, as polling is required to progress those
-	 * who are calling this ct_wait_thrs() function (offloaded colls mainly)
-	 */
-	PtlCTGet(cth, ev);
-	while(ev->success < thrs && !ev->failure)
-	{
-		PtlCTGet(cth, ev);
-		/*if(!(i % 1000))*/
-			sctk_network_notify_idle_message();
-		i++;
-	}
-#endif
-}
-
-/**
  * Create a local memory region to be registered to Portals.
  * \param[in] start buffer first address
  * \param[in] length buffer length
@@ -552,10 +569,7 @@ sctk_ptl_local_data_t* sctk_ptl_md_create_with_cnt(sctk_ptl_rail_info_t* srail, 
 	sctk_ptl_local_data_t* user = NULL;
 	user = sctk_ptl_md_create(srail, start, length, flags);
 	
-	sctk_ptl_chk(PtlCTAlloc(
-		srail->iface,
-		&user->slot.md.ct_handle
-	));
+	__sctk_ptl_ct_alloc(srail, &user->slot.md.ct_handle);
 
 	return user;
 }
