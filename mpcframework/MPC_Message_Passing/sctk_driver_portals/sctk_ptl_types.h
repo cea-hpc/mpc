@@ -327,35 +327,50 @@ typedef struct sctk_ptl_route_info_s
 }
 sctk_ptl_route_info_t;
 
+/**
+ * Offcoll-barrier specific information, stored in a local_data obj
+ */
 typedef struct sctk_ptl_offcoll_barrier_s
 {
-	sctk_ptl_cnth_t* cnt_hb_up;
-	sctk_ptl_cnth_t* cnt_hb_down;
+	sctk_ptl_cnth_t* cnt_hb_up; /**< counter handling propagation of the first half barrier */
+	sctk_ptl_cnth_t* cnt_hb_down; /**< counter handling propagation  of the second balf barrier */
 } sctk_ptl_offcoll_barrier_t;
 
+/**
+ * offcoll-bcast specific infors, stored, in a local_data obj
+ */
 typedef struct sctk_ptl_offcoll_bcast_s
 {
-	sctk_ptl_local_data_t* large_puts;
+	sctk_ptl_local_data_t* large_puts; /**< the large_puts ME handler */
 } sctk_ptl_offcoll_bcast_t;
 
+/**
+ * generification of the offcoll-specific info, stored into a local_data obj.
+ */
 typedef union sctk_ptl_offcoll_spec_u
 {
-	struct sctk_ptl_offcoll_barrier_s barrier;
-	struct sctk_ptl_offcoll_bcast_s bcast;
+	struct sctk_ptl_offcoll_barrier_s barrier; /**< data hosts barrier infos */
+	struct sctk_ptl_offcoll_bcast_s bcast; /**< data hosts bcas infos */
 } sctk_ptl_offcoll_spec_t;
 
+/**
+ * Represend node infos from a temporary tree, used to map process communication when running offloaded collectives.
+ * This tree is stored per collective, recomputed each time the root process need to be changed (a bit dirty...).
+ */
 typedef struct sctk_ptl_offcoll_tree_node_s
 {
-        sctk_spinlock_t lock;
-	sctk_atomics_int iter;
-	sctk_ptl_id_t parent;
-	sctk_ptl_id_t* children;
-	size_t nb_children;
-	int root;
-	int leaf; 
-	union sctk_ptl_offcoll_spec_u spec;
+        sctk_spinlock_t lock;   /**< the lock */
+	sctk_atomics_int iter; /**< iteration number (because PTL does not whant us to decr a counter) */
+	sctk_ptl_id_t parent; /**< the PTL id for the parent of the current process in this given tree */
+	sctk_ptl_id_t* children; /**< PTS id array of all children for the current process */
+	size_t nb_children; /**< size of the array above */
+	int root; /**< is this process the root of the tree ? */
+	int leaf; /**< is this process a leaf of the tree ? (these two fields could be merged...) */
+	union sctk_ptl_offcoll_spec_u spec; /**< info stored for the specific collective to process */
 } sctk_ptl_offcoll_tree_node_t;
 
+/**
+ * Specific type of collective currently handled by this implementation */
 typedef enum sctk_ptl_offcoll_type_e
 {
 	SCTK_PTL_OFFCOLL_BARRIER,

@@ -423,8 +423,7 @@ static inline void sctk_ptl_compute_chunks(sctk_ptl_rail_info_t* srail, size_t d
 	*rest_out = (total > 0) ? total % size : 0; /* special care (very rare) where data_sz equals to zero */
 }
 
-
-
+/** global static array to stringify type ID (through SCTK_PTL_STR_TYPE macro) */
 static char * __sctk_ptl_str_type[] = {
 	"SCTK_PTL_TYPE_RECOVERY", 
 	"SCTK_PTL_TYPE_CM",
@@ -435,6 +434,7 @@ static char * __sctk_ptl_str_type[] = {
 	"SCTK_PTL_TYPE_NB",
 }; 
 
+/** global static array to stringify protocol ID (through SCTK_PTL_STR_PROT macro) */
 static char * __sctk_ptl_str_prot[] = {
 
 	"SCTK_PTL_PROT_EAGER",

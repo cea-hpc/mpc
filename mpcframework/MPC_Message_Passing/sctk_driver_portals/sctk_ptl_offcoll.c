@@ -52,9 +52,11 @@ int sctk_ptl_offcoll_enabled(sctk_ptl_rail_info_t* srail)
 sctk_ptl_local_data_t* md_up;
 sctk_ptl_local_data_t* md_down;
 sctk_ptl_local_data_t* dummy_md;
-
 sctk_ptl_rail_info_t* grail;
 
+/**
+ * Initialize the off_coll module.
+ */
 void sctk_ptl_offcoll_init(sctk_ptl_rail_info_t* srail)
 {
 	sctk_assert(__sctk_ptl_offcoll_enabled(srail));
@@ -81,6 +83,9 @@ void sctk_ptl_offcoll_fini(sctk_ptl_rail_info_t* srail)
 	sctk_ptl_md_release(md_down); md_down = NULL;
 }
 
+/**
+ * Initialize the off_coll module for a given Portals entry.
+ */
 void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 {
 	sctk_ptl_local_data_t* me_up = NULL, *me_down = NULL, *tmp = NULL;
@@ -90,6 +95,7 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 	
 	int i;
 	sctk_ptl_offcoll_tree_node_t* cur;
+	/* the tree topologies, for each type of collectives */
 	for (i = 0; i < SCTK_PTL_OFFCOLL_NB; ++i)
 	{
 		cur = pte->node+i;
@@ -103,6 +109,7 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 		switch(i)
 		{
 			case SCTK_PTL_OFFCOLL_BARRIER:
+				/* create one ME for each half barrier */
 				me_up = sctk_ptl_me_create_with_cnt(srail, NULL, 0, SCTK_PTL_ANY_PROCESS, SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP, SCTK_PTL_MATCH_INIT, SCTK_PTL_ME_PUT_NOEV_FLAGS);
 				me_up->msg = NULL;
 				me_up->list = SCTK_PTL_PRIORITY_LIST;
@@ -122,6 +129,7 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 				cur->spec.barrier.cnt_hb_down = &me_down->slot.me.ct_handle;
 				break;
 			case SCTK_PTL_OFFCOLL_BCAST:
+				/* store a dummy ME to receive PUT-READY for large Bcasts */
 				tmp = sctk_ptl_me_create_with_cnt(
 					srail,
 					NULL,
@@ -133,11 +141,11 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 				);
 				sctk_ptl_me_register(srail, tmp, pte);
 				sctk_assert(tmp);
-				tmp->msg = NULL; /* no need for it (for noww */
-				tmp->list = SCTK_PTL_PRIORITY_LIST;
-				tmp->type = SCTK_PTL_TYPE_OFFCOLL; /* Standard MPI message */
-				tmp->prot = SCTK_PTL_PROT_RDV; /* handled by offload protocols */
-				cur->spec.bcast.large_puts = tmp; 
+				tmp->msg = NULL;                    /* no need for it (for noww */
+				tmp->list = SCTK_PTL_PRIORITY_LIST; /* not really significant here */
+				tmp->type = SCTK_PTL_TYPE_OFFCOLL;  /* Standard MPI message */
+				tmp->prot = SCTK_PTL_PROT_RDV;      /* handled by offload protocols */
+				cur->spec.bcast.large_puts = tmp;
 				break;
 			case SCTK_PTL_OFFCOLL_REDUCE:
 				break;
@@ -148,6 +156,9 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 	}
 }
 
+/**
+ * Free offcoll-specific Portals resource for a given Portals entry to free
+ */
 void sctk_ptl_offcoll_pte_fini(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 {
 	sctk_assert(__sctk_ptl_offcoll_enabled(srail));
@@ -191,6 +202,13 @@ static inline int __sctk_ptl_offcoll_rotate_ranks(int rank, int root)
 	return rank;
 }
 
+
+/**
+ * Build the communication tree depending on the actual root.
+ * The graph is a N-arity tree (see #define ARITY) to spread data as much as possible.
+ * The tree is computed again each time the root is changing. The tree is always normalized
+ * with zero as root, and then, ranks are "rotated" to map the actuel root (see __sctk_ptl_offcoll_rotate_ranks).
+ */
 static inline void __sctk_ptl_offcoll_build_tree(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, int local_rank, int root, int size, int collective)
 {
         int l_child = -1, h_child = -1, parent_rank, child_rank; 
@@ -326,6 +344,9 @@ static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, s
 	/*sctk_warning("Barrier Done over idx = %d CPT=%d", pte->idx, cpt);*/
 }
 
+/**
+ * Broadcast implementation for small messages (< eager_limit).
+ */
 static inline void __sctk_ptl_offcoll_bcast_eager_run(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, void* buf, size_t bytes, int is_root)
 {
 	sctk_ptl_offcoll_tree_node_t* bnode; 
@@ -446,6 +467,10 @@ static inline void __sctk_ptl_offcoll_bcast_eager_run(sctk_ptl_rail_info_t* srai
 	}
 }
 
+/** Broadcast implementation for larger messages (> eager_limit).
+ * Beyond a specific size set by the configuration (block_cut), large messages are fragmented into smaller pieces.
+ * The whole buffer is mapped to a single ME and multiple GET requests are processed to retrieve the data
+ */
 static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, void* buf, size_t bytes, int is_root)
 {
 	sctk_ptl_offcoll_tree_node_t* bnode; 
@@ -471,6 +496,7 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 	if(bnode->leaf && is_root)
 		return;
 
+	/* if NOT a leaf, set a ME to allow children to retrieve the data later on */
 	if(!bnode->leaf)
 	{
 		get_me = sctk_ptl_me_create_with_cnt(
@@ -482,18 +508,22 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 				SCTK_PTL_MATCH_INIT,
 				(SCTK_PTL_ME_GET_NOEV_FLAGS)
 			);
-		get_me->msg = NULL; /* no need for it (for noww */
-		get_me->list = SCTK_PTL_PRIORITY_LIST;
-		get_me->type = SCTK_PTL_TYPE_OFFCOLL; /* Standard MPI message */
-		get_me->prot = SCTK_PTL_PROT_RDV; /* handled by offload protocols */
+		get_me->msg = NULL;                    /* no need for it (for noww */
+		get_me->list = SCTK_PTL_PRIORITY_LIST; /* not relevant here... */
+		get_me->type = SCTK_PTL_TYPE_OFFCOLL;  /* Standard MPI message */
+		get_me->prot = SCTK_PTL_PROT_RDV;      /* handled by offload protocols */
 		get_me->match = SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops);
 		sctk_ptl_me_register(srail, get_me, pte);
 		sctk_assert(get_me);
 		/*sctk_error("INTERMEDIATE set a GET-ME match=%s SZ=%llu", __sctk_ptl_match_str(sctk_malloc(32), 32, SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops).raw), bytes);*/
 	}
-		
+	
+	/* compute number of chunks (fragmentation) needed to retrieve/expose */
 	sctk_ptl_compute_chunks(srail, bytes, &chunk_sz, &chunk_nb, &rest);
 
+	/* if NOT the root, create an MD to actually process GET requests.
+	 * Note that intermediate node (not a root AND not a leaf nodes) will create both an ME & MD
+	 */
 	if(!is_root)
 	{
 		get_md = sctk_ptl_md_create_with_cnt(srail, buf, bytes, (SCTK_PTL_MD_GET_NOEV_FLAGS | PTL_MD_EVENT_CT_REPLY));
@@ -503,6 +533,7 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 		sctk_ptl_md_register(srail, get_md);
 
 		cur_off = 0;
+		/* for each chunk to GET */
 		for(chunk = 0; chunk < chunk_nb; ++chunk)
 		{
 			size_t cur_sz = (chunk < rest) ? chunk_sz + 1 : chunk_sz;
@@ -510,17 +541,18 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 			/*sctk_error("intermediate emit %d GET-MD %s FROM=%llu TO=%llu SZ=%llu", chunk_nb, __sctk_ptl_match_str(sctk_malloc(32), 32, SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops).raw), cur_off, cur_off+cur_sz, chunk_sz);*/
 			sctk_ptl_emit_trig_get(
 				get_md,
-				chunk_sz, /* size */
+				chunk_sz, /* chunk size */
 				bnode->parent,
 				pte,
 				SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops),
-				cur_off, cur_off, get_md,
-				*me_cnt_puts,
+				cur_off, cur_off, /* atual offsets in the remote ME */
+				get_md, *me_cnt_puts,
 				(cnt_ops + 1)
 			);
 			cur_off += cur_sz;
 		}
 
+		/* for each children, send a PUT-READY */
 		for (i = 0; i < nb_children; ++i)
 		{
 			sctk_ptl_emit_trig_put(
@@ -562,7 +594,6 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 	}
 	else
 	{
-		dummy.success = 0;
 		/*sctk_warning("OTHERS WAIT on %d", (nb_children * chunk_nb));*/
 		sctk_ptl_ct_wait_thrs(get_me->slot.me.ct_handle, (nb_children * chunk_nb), &dummy);
 		/*sctk_warning("OTHERS WAIT DONE");*/
@@ -578,6 +609,8 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 	}
 }
 
+/** Bcast impl handler, depending on msg size.
+ */
 static inline void __sctk_ptl_offcoll_bcast_run(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, void* buf, size_t bytes, int is_root)
 {
 	if(bytes <= srail->eager_limit)
@@ -590,6 +623,9 @@ static inline void __sctk_ptl_offcoll_bcast_run(sctk_ptl_rail_info_t* srail, sct
 	}
 }
 
+/**
+ * offcoll-specific ME event handlers.
+ */
 void sctk_ptl_offcoll_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
@@ -633,6 +669,11 @@ void sctk_ptl_offcoll_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	}
 }
 
+/**
+ * handlers for MD events, dedicated to offcoll event types.
+ * \param[in] rail the Portals rail
+ * \param[in] ev the event
+ */
 void sctk_ptl_offcoll_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
@@ -654,14 +695,16 @@ void sctk_ptl_offcoll_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	}
 }
 
-
-
 /**************************************************/
 /**************************************************/
 /*********** MPI Interface                        */
 /**************************************************/
 /**************************************************/
 
+/** Main entry point for offloaded barrier.
+ * Directly called from MPC_MPI, loaded through the configuration
+ * May need to use a cleaner way to be called.
+ */
 int ptl_offcoll_barrier(int comm_idx, int rank, int size)
 {
         sctk_ptl_pte_t* pte = SCTK_PTL_PTE_ENTRY(grail->pt_table, comm_idx);
@@ -672,19 +715,24 @@ int ptl_offcoll_barrier(int comm_idx, int rank, int size)
         return 0;
 }
 
-/* contiguous data */
+/** Main entry point for offloaded bcast.
+ * Directly called from MPC_MPI, loaded through the configuration
+ * May need to use a cleaner way to be called.
+ */
 int ptl_offcoll_bcast(int comm_idx, int rank, int size, void* buf, size_t bytes, int root)
 {
 	sctk_ptl_pte_t* pte = SCTK_PTL_PTE_ENTRY(grail->pt_table, comm_idx);
-	sctk_ptl_offcoll_tree_node_t* node = NULL;
 	sctk_assert(pte);
-
 
 	__sctk_ptl_offcoll_build_tree(grail, pte, rank, root, size, SCTK_PTL_OFFCOLL_BCAST);
 	__sctk_ptl_offcoll_bcast_run(grail, pte, buf, bytes, (root == rank));
 	return 0;
 }
 
+/**
+ * Main entry point for offloaded reduce.
+ * TODO: implement it...
+ */
 int ptl_offcoll_reduce()
 {
 	not_implemented();
