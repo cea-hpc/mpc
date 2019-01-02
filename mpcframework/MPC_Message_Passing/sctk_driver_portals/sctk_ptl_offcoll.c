@@ -429,6 +429,136 @@ static inline void __sctk_ptl_offcoll_bcast_eager_run(sctk_ptl_rail_info_t* srai
 
 static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, void* buf, size_t bytes, int is_root)
 {
+	sctk_ptl_offcoll_tree_node_t* bnode; 
+	size_t nb_children, i;
+	size_t chunk, chunk_sz, chunk_nb, rest, cur_off;
+	int cnt_ops;
+	sctk_ptl_cnt_t dummy;
+	sctk_ptl_local_data_t* get_me = NULL, *get_md = NULL;
+	sctk_ptl_cnth_t* me_cnt_puts = NULL;
+
+	sctk_assert(buf);
+	sctk_assert(srail);
+
+	/* first, retrieve the tree related to this broadcast */
+	sctk_assert(pte);
+	bnode        = pte->node + SCTK_PTL_OFFCOLL_BCAST;
+	sctk_assert(bnode);
+        nb_children  = bnode->nb_children;
+	cnt_ops = sctk_atomics_fetch_and_incr_int(&bnode->iter);
+	me_cnt_puts  = &bnode->spec.bcast.large_puts->slot.me.ct_handle;
+	PtlCTGet(*me_cnt_puts, &dummy);
+	/*sctk_error("cnt_puts = %d", dummy.success);*/
+
+	/* if only one node in the tree, don't */
+	if(bnode->leaf && is_root)
+		return;
+
+	/*sctk_warning("leaf = %d / %d", bnode->leaf, cnt_ops);*/
+	if(!bnode->leaf)
+	{
+		get_me = sctk_ptl_me_create_with_cnt(
+				srail,
+				buf,
+				bytes,
+				SCTK_PTL_ANY_PROCESS,
+				SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops),
+				SCTK_PTL_MATCH_INIT,
+				(SCTK_PTL_ME_GET_NOEV_FLAGS)
+			);
+		get_me->msg = NULL; /* no need for it (for noww */
+		get_me->list = SCTK_PTL_PRIORITY_LIST;
+		get_me->type = SCTK_PTL_TYPE_OFFCOLL; /* Standard MPI message */
+		get_me->prot = SCTK_PTL_PROT_RDV; /* handled by offload protocols */
+		get_me->match = SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops);
+		sctk_ptl_me_register(srail, get_me, pte);
+		sctk_assert(get_me);
+		/*sctk_error("INTERMEDIATE set a GET-ME match=%s SZ=%llu", __sctk_ptl_match_str(sctk_malloc(32), 32, SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops).raw), bytes);*/
+	}
+
+	if(!is_root)
+	{
+		get_md = sctk_ptl_md_create_with_cnt(srail, buf, bytes, (SCTK_PTL_MD_GET_NOEV_FLAGS | PTL_MD_EVENT_CT_REPLY));
+		get_md->type = SCTK_PTL_TYPE_OFFCOLL;
+		get_md->prot = SCTK_PTL_PROT_RDV;
+		sctk_assert(get_md);
+		sctk_ptl_md_register(srail, get_md);
+
+		sctk_ptl_compute_chunks(srail, bytes, &chunk_sz, &chunk_nb, &rest);
+		cur_off = 0;
+		for(chunk = 0; chunk < chunk_nb; ++chunk)
+		{
+			size_t cur_sz = (chunk < rest) ? chunk_sz + 1 : chunk_sz;
+			sctk_assert((chunk+1) * cur_sz <= bytes);
+			/*sctk_error("intermediate emit %d GET-MD %s FROM=%llu TO=%llu SZ=%llu", chunk_nb, __sctk_ptl_match_str(sctk_malloc(32), 32, SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops).raw), cur_off, cur_off+cur_sz, chunk_sz);*/
+			sctk_ptl_emit_trig_get(
+				get_md,
+				chunk_sz, /* size */
+				bnode->parent,
+				pte,
+				SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops),
+				cur_off, cur_off, get_md,
+				*me_cnt_puts,
+				(cnt_ops + 1)
+			);
+			cur_off += cur_sz;
+		}
+
+		for (i = 0; i < nb_children; ++i)
+		{
+			sctk_ptl_emit_trig_put(
+				dummy_md,
+				0,
+				bnode->children[i],
+				pte,
+				SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGE,
+				0, 0, 0, dummy_md,
+				get_md->slot.md.ct_handle,
+				chunk_nb
+			);
+		}
+	}
+	else /* The current node is the root one */
+	{
+		/* emulate the PUT op, notifying data are ready */
+		sctk_ptl_emit_cnt_incr(*me_cnt_puts, 1);
+		for (i = 0; i < nb_children; ++i)
+		{
+			/* Directly emit the right PUT to children */
+			sctk_ptl_emit_put(
+				dummy_md,
+				0,
+				bnode->children[i],
+				pte,
+				SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGE,
+				0, 0, 0, dummy_md
+			);
+		}
+	}
+
+	/* Now, wait until completion of the bcast for the current process */
+	if(bnode->leaf)
+	{
+		/*sctk_warning("LEAF WAIT on %d...", chunk_nb);*/
+		sctk_ptl_ct_wait_thrs(get_md->slot.md.ct_handle, chunk_nb, &dummy);
+		/*sctk_warning("LEAF WAIT DONE");*/
+	}
+	else
+	{
+		dummy.success = 0;
+		/*sctk_warning("OTHERS WAIT on %d", nb_children);*/
+		sctk_ptl_ct_wait_thrs(get_me->slot.me.ct_handle, nb_children, &dummy);
+		/*sctk_warning("OTHERS WAIT DONE");*/
+		sctk_ptl_ct_free(get_me->slot.me.ct_handle); /* Don't forget to free, to avoid starvation in the NIC */
+		sctk_ptl_me_release(get_me);
+		sctk_ptl_me_free(get_me, 0);
+	}
+
+	if(!is_root)
+	{
+		sctk_ptl_ct_free(get_md->slot.md.ct_handle);
+		sctk_ptl_md_release(get_md); /* don't forget to free, to avoid deadlock because of starvation in the NIC */
+	}
 }
 
 static inline void __sctk_ptl_offcoll_bcast_run(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, void* buf, size_t bytes, int is_root)
