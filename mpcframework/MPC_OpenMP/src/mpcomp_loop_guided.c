@@ -64,9 +64,10 @@ int __mpcomp_guided_loop_begin(long lb, long b, long incr, long chunk_size,
   /* First thread store shared first iteration value */
   if(t->instance->team->is_first[index] == 1) {
     t->instance->team->is_first[index] = 0;
-    sctk_atomics_store_ptr(&(t->instance->team->guided_from[index]),lb);
+    long long int llb = lb;
+    sctk_atomics_store_ptr(&(t->instance->team->guided_from[index]),(void *)llb);
   }
-  long ret = sctk_atomics_load_ptr(&(t->instance->team->guided_from[index]));
+  long long int ret = (long long int)sctk_atomics_load_ptr(&(t->instance->team->guided_from[index]));
   sctk_spinlock_unlock(&(t->instance->team->lock));
 
   return (!from && !to) ? -1 : __mpcomp_guided_loop_next(from, to);
@@ -78,11 +79,11 @@ int __mpcomp_guided_loop_next(long *from, long *to) {
   sctk_assert(t);
   mpcomp_loop_long_iter_t *loop = &(t->info.loop_infos.loop.mpcomp_long);
   const long num_threads = (long)t->info.num_threads;
-  long ret = 0, anc_from,chunk_size,new_from;
+  long long int ret = 0, anc_from,chunk_size,new_from;
   const int index = __mpcomp_loop_dyn_get_for_dyn_index(t);
   while(ret == 0) /* will loop again if another thread changed from value at the same time */
   {
-    anc_from = sctk_atomics_load_ptr(&(t->instance->team->guided_from[index]));
+    anc_from = (long long int)sctk_atomics_load_ptr(&(t->instance->team->guided_from[index]));
     chunk_size = (loop->b - anc_from) / (2*loop->incr * num_threads);
     if(chunk_size < 0) chunk_size = - chunk_size;
     if(loop->chunk_size > chunk_size) chunk_size = loop->chunk_size;
@@ -95,7 +96,7 @@ int __mpcomp_guided_loop_next(long *from, long *to) {
     {
       new_from = anc_from + chunk_size * loop->incr;
     }
-    ret = sctk_atomics_cas_ptr(&(t->instance->team->guided_from[index]), anc_from, new_from);
+    ret = (long long int)sctk_atomics_cas_ptr(&(t->instance->team->guided_from[index]), (void *)anc_from, (void *)new_from);
     ret = (ret == anc_from) ? 1 : 0;
   }
   *from = anc_from;
@@ -159,9 +160,9 @@ void __mpcomp_guided_loop_end_nowait()
       &(team_info->for_dyn_nb_threads_exited[index].i)) + 1;
   sctk_assert(nb_threads_exited > 0 && nb_threads_exited <= num_threads);
 
-  if (nb_threads_exited == num_threads ) 
-  {    
-    t->instance->team->is_first[index] = 1; 
+  if (nb_threads_exited == num_threads )
+  {
+    t->instance->team->is_first[index] = 1;
 
     const int previous_index = __mpcomp_loop_dyn_get_for_dyn_prev_index(t);
     sctk_assert(previous_index >= 0 &&
@@ -171,12 +172,11 @@ void __mpcomp_guided_loop_end_nowait()
                            MPCOMP_NOWAIT_STOP_SYMBOL);
     int prev = sctk_atomics_swap_int(
         &(team_info->for_dyn_nb_threads_exited[previous_index].i), 0);
-     
   }
 }
 
-void __mpcomp_guided_loop_end() { 
-  __mpcomp_guided_loop_end_nowait(); 
+void __mpcomp_guided_loop_end() {
+  __mpcomp_guided_loop_end_nowait();
   __mpcomp_barrier();
 }
 
@@ -200,7 +200,7 @@ __mpcomp_guided_loop_next_ignore_nowait (long *from, long *to)
 
 /****
  *
- * ORDERED LONG VERSION 
+ * ORDERED LONG VERSION
  *
  *
  *****/
@@ -246,7 +246,7 @@ int __mpcomp_loop_ull_guided_begin(bool up, unsigned long long lb,
 
   t->schedule_type =
       (t->schedule_is_forced) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;
-  t->schedule_is_forced = 1; 
+  t->schedule_is_forced = 1;
 
   const int index = __mpcomp_loop_dyn_get_for_dyn_index(t);
   while ( sctk_atomics_load_int(&(t->instance->team->for_dyn_nb_threads_exited[index].i)) ==
@@ -254,16 +254,16 @@ int __mpcomp_loop_ull_guided_begin(bool up, unsigned long long lb,
     sctk_thread_yield();
   }
   __mpcomp_loop_gen_infos_init_ull(&(t->info.loop_infos), lb, b, incr, chunk_size);
-  mpcomp_loop_long_iter_t *loop = &(t->info.loop_infos.loop.mpcomp_ull);
+  mpcomp_loop_ull_iter_t *loop = &(t->info.loop_infos.loop.mpcomp_ull);
   loop->up = up;
 
   sctk_spinlock_lock(&(t->instance->team->lock));
 
   if(t->instance->team->is_first[index] == 1) {
     t->instance->team->is_first[index] = 0;
-    sctk_atomics_store_ptr(&(t->instance->team->guided_from[index]),lb);
+    sctk_atomics_store_ptr(&(t->instance->team->guided_from[index]), (void *)lb);
   }
-  unsigned long long ret = sctk_atomics_load_ptr(&(t->instance->team->guided_from[index]));
+  unsigned long long ret = (unsigned long long)sctk_atomics_load_ptr(&(t->instance->team->guided_from[index]));
   sctk_spinlock_unlock(&(t->instance->team->lock));
 
   return (!from && !to) ? -1 : __mpcomp_loop_ull_guided_next(from, to);
@@ -274,14 +274,14 @@ int __mpcomp_loop_ull_guided_next(unsigned long long *from,
 
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t);
-  mpcomp_loop_long_iter_t *loop = &(t->info.loop_infos.loop.mpcomp_ull);
+  mpcomp_loop_ull_iter_t *loop = &(t->info.loop_infos.loop.mpcomp_ull);
   const unsigned long long num_threads = (unsigned long long)t->info.num_threads;
   unsigned long long ret = 0, anc_from,chunk_size,new_from;
   const int index = __mpcomp_loop_dyn_get_for_dyn_index(t);
 
   while(ret == 0) /* will loop again if another thread changed from value at the same time */
   {
-    anc_from = sctk_atomics_load_ptr(&(t->instance->team->guided_from[index]));
+    anc_from = (unsigned long long)sctk_atomics_load_ptr(&(t->instance->team->guided_from[index]));
     if(loop->up)
     {
       chunk_size = ((loop->b - anc_from) / (loop->incr)) / (2*num_threads);
@@ -300,7 +300,7 @@ int __mpcomp_loop_ull_guided_next(unsigned long long *from,
     {
       new_from = anc_from + chunk_size * loop->incr;
     }
-    ret = sctk_atomics_cas_ptr(&(t->instance->team->guided_from[index]), anc_from, new_from);
+    ret = (unsigned long long)sctk_atomics_cas_ptr(&(t->instance->team->guided_from[index]), (void *)anc_from, (void *)new_from);
     ret = (ret == anc_from) ? 1 : 0;
   }
   *from = anc_from;

@@ -114,7 +114,7 @@ typedef struct mpcomp_team_s {
   /* GUIDED LOOP CONSTRUCT */
   volatile int is_first[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
   sctk_atomics_ptr guided_from[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
-  sctk_spinlock_t *lock;
+  sctk_spinlock_t lock;
 
 
   /* ORDERED CONSTRUCT */
