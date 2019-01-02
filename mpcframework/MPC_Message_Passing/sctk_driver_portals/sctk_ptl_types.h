@@ -138,6 +138,7 @@ typedef enum {
 #define SCTK_PTL_PTE_ENTRY(table, comm) (MPCHT_get(&table, (comm)+SCTK_PTL_PTE_HIDDEN))
 /** Check if a given comm already has corresponding PT entry */
 #define SCTK_PTL_PTE_EXIST(table, comm) (SCTK_PTL_PTE_ENTRY(table, comm) != NULL)
+#define SCTK_PTL_STR_TYPE(i) __sctk_ptl_str_type[i]
 typedef enum {
 	SCTK_PTL_TYPE_RECOVERY,
 	SCTK_PTL_TYPE_CM,
@@ -148,6 +149,7 @@ typedef enum {
 	SCTK_PTL_TYPE_NB,
 } sctk_ptl_mtype_t;
 
+#define SCTK_PTL_STR_PROT(i) __sctk_ptl_str_prot[i]
 typedef enum {
 	SCTK_PTL_PROT_EAGER,
 	SCTK_PTL_PROT_RDV,
@@ -198,21 +200,21 @@ typedef enum {
  * match MPI msg.
  * Valid for P2P messages and non-offloaded collectives
  */
-struct sctk_ptl_std_content_s
+typedef struct sctk_ptl_std_content_s
 {
 	uint32_t tag;     /**< MPI tag */
 	uint16_t rank;    /**< MPI/MPC rank */
 	uint8_t uid;     /**< unique per-route ID */
 	uint8_t type;    /**< message type, redundant in case of CM */
-};
+} sctk_ptl_std_content_t;
 
-struct sctk_ptl_offload_content_s
+typedef struct sctk_ptl_offload_content_s
 {
 	uint32_t iter;
 	uint16_t pad2;
 	uint8_t dir; /* direction, if necessary */
 	uint8_t type; /* this field should not be changed */
-};
+} sctk_ptl_offload_content_t;
 
 /** struct to make match_bits management easier.
  * Used for std P2P msgs and non-offloaded collectives.

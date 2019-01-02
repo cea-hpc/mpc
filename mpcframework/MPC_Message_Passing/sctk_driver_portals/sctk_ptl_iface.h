@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include "sctk_ptl_types.h"
 #include "sctk_debug.h"
+#include "sctk_rail.h"
 
 #if !defined(NDEBUG)
 #define sctk_ptl_chk(x) do { int __ret = 0; \
@@ -355,7 +356,18 @@ static inline const char const* __sctk_ptl_match_str(char*buf, size_t s, ptl_mat
 {
 	sctk_ptl_matchbits_t m2;
 	m2.raw = m;
-	snprintf(buf, s, "%u:%d[%u]:%d", m2.data.rank, m2.data.tag, m2.data.uid, m2.data.type);
+
+	switch(m2.data.type)
+	{
+		case SCTK_BARRIER_OFFLOAD_MESSAGE:
+		case SCTK_BROADCAST_OFFLOAD_MESSAGE:
+			snprintf(buf, s, "it:%u[%u]:%u", (unsigned int)m2.offload.iter, (int)m2.offload.dir, (int)m2.offload.type);
+			break;
+		default:
+			snprintf(buf, s, "%u:%d[%u]:%d", m2.data.rank, m2.data.tag, (int)m2.data.uid, (int)m2.data.type);
+			break;
+	}
+
 	return buf;
 }
 
@@ -408,8 +420,28 @@ static inline void sctk_ptl_compute_chunks(sctk_ptl_rail_info_t* srail, size_t d
 
 	*sz_out   = size;
 	*nb_out   = nb;
-	*rest_out = total % size;
+	*rest_out = (total > 0) ? total % size : 0; /* special care (very rare) where data_sz equals to zero */
 }
+
+
+
+static char * __sctk_ptl_str_type[] = {
+	"SCTK_PTL_TYPE_RECOVERY", 
+	"SCTK_PTL_TYPE_CM",
+	"SCTK_PTL_TYPE_RDMA",
+	"SCTK_PTL_TYPE_STD",
+	"SCTK_PTL_TYPE_OFFCOLL",
+	"SCTK_PTL_TYPE_NONE",
+	"SCTK_PTL_TYPE_NB",
+}; 
+
+static char * __sctk_ptl_str_prot[] = {
+
+	"SCTK_PTL_PROT_EAGER",
+	"SCTK_PTL_PROT_RDV",
+	"SCTK_PTL_PROT_NONE",
+	"SCTK_PTL_PROT_NB"
+};
 
 #endif
 #endif

@@ -148,6 +148,15 @@ sctk_ptl_rail_info_t sctk_ptl_hardware_init()
 	sctk_ptl_rail_info_t res;
 	sctk_ptl_limits_t l;
 
+	/* pre-actions */
+	sctk_assert(sizeof(sctk_ptl_std_content_t)     <= sizeof(ptl_match_bits_t));
+	sctk_assert(sizeof(sctk_ptl_offload_content_t) <= sizeof(ptl_match_bits_t));
+	sctk_assert(sizeof(sctk_ptl_matchbits_t)       <= sizeof(ptl_match_bits_t));
+	sctk_assert(sizeof(sctk_ptl_std_data_t)        <= sizeof(ptl_hdr_data_t));
+	sctk_assert(sizeof(sctk_ptl_cm_data_t)         <= sizeof(ptl_hdr_data_t));
+	sctk_assert(sizeof(sctk_ptl_offload_data_t)    <= sizeof(ptl_hdr_data_t));
+	sctk_assert(sizeof(sctk_ptl_imm_data_t)        <= sizeof(ptl_hdr_data_t));
+	
 	/* init the driver */
 	sctk_ptl_chk(PtlInit());
 
