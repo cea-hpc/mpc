@@ -455,6 +455,7 @@ sctk_ptl_local_data_t* sctk_ptl_me_create(void * start, size_t size, sctk_ptl_id
 		.list = SCTK_PTL_PRIORITY_LIST,
 		.type = SCTK_PTL_TYPE_NONE,
 		.prot = SCTK_PTL_PROT_NONE,
+		.cnt_frag = SCTK_ATOMICS_INT_T_INIT(0),
 		.msg = NULL /* later filled */
 	};
 
@@ -559,6 +560,7 @@ sctk_ptl_local_data_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void* sta
 		},
 		.slot_h.mdh = PTL_INVALID_HANDLE,
 		.list = SCTK_PTL_PRIORITY_LIST,
+		.cnt_frag = SCTK_ATOMICS_INT_T_INIT(0),
 		.msg = NULL /* later filled */
 	};
 

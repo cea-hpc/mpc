@@ -84,9 +84,8 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	sctk_ptl_rail_info_t* srail        = &rail->network.ptl;
 	sctk_ptl_local_data_t* ptr         = (sctk_ptl_local_data_t*) ev.user_ptr;
 	sctk_thread_ptp_message_t* msg     = (sctk_thread_ptp_message_t*) ptr->msg;
-	void* start                        = NULL;
-	void* chunk_addr;
-	size_t chunk_sz, chunk_nb, chunk, chunk_rest;
+	void* start;
+	size_t cur_off, chunk_sz, chunk_nb, chunk, chunk_rest;
 	int flags;
 
 	sctk_assert(msg);
@@ -129,63 +128,46 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 
 	/* this function will compute byte equal distribution between multiple GET, if needed */
 	sctk_ptl_compute_chunks(srail, SCTK_MSG_SIZE(msg), &chunk_sz, &chunk_nb, &chunk_rest);
-	
-	/* sanity checks */
 	sctk_assert(chunk_nb > 0);
 	sctk_assert(chunk_rest < chunk_nb);
-	
-	/* just copy the start address because we need it for later checks */
-	chunk_addr = start;
+	/* create a new MD and configure it */
+	get_request = sctk_ptl_md_create(
+		srail, 
+		start, 
+		SCTK_MSG_SIZE(msg),
+		flags
+	);
+	sctk_assert(get_request);
+	get_request->msg      = msg;
+	get_request->list     = SCTK_PTL_PRIORITY_LIST;
+	get_request->type     = SCTK_PTL_TYPE_STD;
+	get_request->prot     = SCTK_PTL_PROT_RDV;
+	get_request->match    = (sctk_ptl_matchbits_t)ev.match_bits;
+	/* The GET request only target slots with the bit to 1 */
+	SCTK_PTL_TYPE_RDV_SET(get_request->match.data.type);
+	sctk_atomics_store_int(&get_request->cnt_frag, chunk_nb);
+	sctk_ptl_md_register(srail, get_request);
+
+	cur_off = 0;
 	for (chunk = 0; chunk < chunk_nb; ++chunk) 
 	{
 		/* if the should take '+1' to compensate non-distributed bytes */
 		size_t cur_sz = (chunk < chunk_rest) ? chunk_sz + 1 : chunk_sz;
 
-		/* create a new MD and configure it */
-		get_request = sctk_ptl_md_create(
-			srail, 
-			chunk_addr, 
-			cur_sz,
-			flags
-		);
-		sctk_assert(get_request);
-		get_request->msg      = NULL;
-		get_request->list     = SCTK_PTL_PRIORITY_LIST;
-		get_request->type     = SCTK_PTL_TYPE_STD;
-		get_request->prot     = SCTK_PTL_PROT_RDV;
-		get_request->match    = (sctk_ptl_matchbits_t)ev.match_bits;
-		/* The GET request only target slots with the bit to 1 */
-		SCTK_PTL_TYPE_RDV_SET(get_request->match.data.type);
-
-		/* compute next chunk address */
-		chunk_addr += cur_sz;
-
-		sctk_ptl_md_register(srail, get_request);
-	
-		/*
-		 * register the last request, here is an exception --> GET-MD request 
-		 * Done before emiting the GET because no event should be posted before
-		 * this attribute is set.
-		 */
-		if(chunk == chunk_nb - 1)
-		{
-			msg->tail.ptl.user_ptr = get_request;
-			get_request->msg = msg;
-			sctk_assert(start + SCTK_MSG_SIZE(msg) == chunk_addr);
-		}
-
+		sctk_nodebug("EMIT GET %d - %d (sz=%d for %d chunks)", cur_off, cur_off + cur_sz, cur_sz, chunk_nb);
 		sctk_ptl_emit_get(
 			get_request,        /* the current GET request */
 			cur_sz,             /* the size for this chunk */
 			ev.initiator,       /* the ID contained in the PUT request */
 			pte,                /* the PT entry */
 			get_request->match, /* the match_bits used by the remote to expose the memory */
-			0,                  /* local_offset */
-			0,                  /* remote_offset */
+			cur_off,            /* local_offset */
+			cur_off,            /* remote_offset */
 			get_request         /* user_ptr */
 		);
+		cur_off += cur_sz;
 	}
-	
+
 	sctk_debug("PORTALS: RECV-RDV to %d (idx=%d, match=%s, ch_nb=%llu, ch_sz=%llu)", SCTK_MSG_SRC_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), chunk_nb, chunk_sz);
 }
 
@@ -308,7 +290,11 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	/***************************/
 	/* 2. Configure the GET(s) */
 	/***************************/
-	me_flags         = SCTK_PTL_ME_GET_FLAGS | SCTK_PTL_ONCE;
+	/* compute how many chunks we'll need to expose the memory  */
+	sctk_ptl_compute_chunks(srail, SCTK_MSG_SIZE(msg), &chunk_sz, &chunk_nb, &chunk_rest);
+	sctk_assert(chunk_nb > 0ull);
+	sctk_assert(chunk_rest < chunk_nb);
+	me_flags         = SCTK_PTL_ME_GET_FLAGS | ((chunk_nb == 1) ? SCTK_PTL_ONCE : 0);
 	/* if the message is non-contiguous, we need a copy to 'pack' it first */
 	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
 	{
@@ -321,50 +307,26 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 		sctk_net_copy_in_buffer(msg, start);
 		msg->tail.ptl.copy = 1;
 	}
-
-	/* compute how many chunks we'll need to expose the memory  */
-	sctk_ptl_compute_chunks(srail, SCTK_MSG_SIZE(msg), &chunk_sz, &chunk_nb, &chunk_rest);
 	
-	/* sanity checks */
-	sctk_assert(chunk_nb > 0ull);
-	sctk_assert(chunk_rest < chunk_nb);
-
-	/* just copyt the start address for some assert() later */
-	chunk_addr = start;
-	for (chunk = 0; chunk < chunk_nb; ++chunk)
-	{
-		/* distribute remaining bytes to the first buffers to send
-		 * (the compute is handled by __sctk_ptl_rdv_compute_chunks()
-		 */
-		size_t cur_sz = (chunk < chunk_rest) ? chunk_sz + 1 : chunk_sz;
-		sctk_ptl_matchbits_t me_match = match;
-
-		/* Set the bit to 1 to differenciate incoming PUT and waiting-to-complete GETs */
-		SCTK_PTL_TYPE_RDV_SET(me_match.data.type);
-		/* create the MD request and configure it */
-		me_request = sctk_ptl_me_create(
-				chunk_addr,
-				cur_sz, 
-				remote, 
-				me_match,
-				ign,
-				me_flags
-			);
-		//sctk_nodebug("SEND %d (%llu) || %d|%s|%d|%s (sz=%llu)\n", endpoint->dest, remote.phys.pid, remote.phys.pid, __sctk_ptl_match_str(malloc(32), 32, match.raw), pte->idx, __sctk_ptl_match_str(malloc(32), 32, ign.raw), cur_sz);
-		me_request->msg  = NULL; /* the only case where a msg can be NULL */
-		me_request->type = SCTK_PTL_TYPE_STD;
-		me_request->prot = SCTK_PTL_PROT_RDV;
-		sctk_ptl_me_register(srail, me_request, pte);
-		chunk_addr += cur_sz;
-	}
-	sctk_assert(start + SCTK_MSG_SIZE(msg) == chunk_addr);
-
-	/* store the last request in the msg, to free the complete msg when
-	 * the request complete
-	 */
+	sctk_ptl_matchbits_t me_match = match;
+	/* Set the bit to 1 to differenciate incoming PUT and waiting-to-complete GETs */
+	SCTK_PTL_TYPE_RDV_SET(me_match.data.type);
+	/* create the MD request and configure it */
+	me_request = sctk_ptl_me_create(
+		start,
+		SCTK_MSG_SIZE(msg), 
+		remote, 
+		me_match,
+		ign,
+		me_flags
+	);
+	me_request->msg        = msg;
+	me_request->type       = SCTK_PTL_TYPE_STD;
+	me_request->prot       = SCTK_PTL_PROT_RDV;
 	msg->tail.ptl.user_ptr = me_request;
-	me_request->msg = msg;
-
+	sctk_atomics_store_int(&me_request->cnt_frag, ((chunk_nb == 1) ? 0 : chunk_nb)); /* special case - see event_me() */
+	sctk_ptl_me_register(srail, me_request, pte);
+	
 	sctk_ptl_emit_put(md_request, 0, remote, pte, match, 0, 0, hdr.raw, md_request); /* empty Put() */
 
 	/* TODO: Need to handle the case where the data is larger than the max ME size */
@@ -426,6 +388,7 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
 	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)ptr->msg;
+	int cur = 0;
 
 	switch(ev.type)
 	{
@@ -439,14 +402,24 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			break;
 
 		case PTL_EVENT_GET:                  /* a remote process get the data back */
-
-			/* if msg is NULL, it means that the event is associated
-			 * to an intermediate request (=multiple GET)
-			 * Msg will be released when all requests will complete.
+			cur = sctk_atomics_fetch_and_decr_int(&ptr->cnt_frag) - 1;
+			/* fun fact here...
+			 * We set the cnt_frag differently, depending on the number of chunkds :
+			 *  - if only one fragment, an ME w/ PTL_USE_ONCE has been set and there is nothing to do anymore
+			 *  - Otherwise (multiple requests), the allocated ME needs to be manually freed to avoid leaks.
+			 *
+			 *  For the first case, cnt_frag is set to a negative value, otherwis, it contains the number of
+			 *  chunks to process before releasing the message
 			 */
-			if(msg == NULL)
-				return;
-			sctk_ptl_rdv_complete_message(rail, ev);
+			if(cur <= 0) /* if lower or equal to zero, all chunks have be consumed -> release the message */
+			{
+				sctk_ptl_rdv_complete_message(rail, ev);
+				if(cur == 0) /* special case : when only one chunk is allocated, cnt_frag is negative to avoid entering this condition */
+				{
+					sctk_ptl_me_release(ptr);
+					sctk_ptl_me_free(ptr, 0);
+				}
+			}
 
 			break;
 		case PTL_EVENT_GET_OVERFLOW:          /* a previous received GET matched a just appended ME */
@@ -476,7 +449,7 @@ void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
 	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)ptr->msg;
-
+	int cur = 0;
 	switch(ev.type)
 	{
 		case PTL_EVENT_ACK:   /* a PUT reached a remote process */
@@ -485,15 +458,12 @@ void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			break;
 
 		case PTL_EVENT_REPLY: /* a GET operation completed */
-			/* if msg is NULL, it means that the event is associated
-			 * to an intermediate request (=multiple GET)
-			 * Msg will be released when all requests will complete.
-			 */
-			if(msg != NULL)
+			cur = sctk_atomics_fetch_and_decr_int(&ptr->cnt_frag) - 1;
+			if(cur <= 0)
+			{
 				sctk_ptl_rdv_reply_message(rail, ev);
-			
-			sctk_ptl_md_release(ptr);
-
+				sctk_ptl_md_release(ptr);
+			}
 			break;
 		case PTL_EVENT_SEND: /* a Put() left the local process */
 			not_reachable();
