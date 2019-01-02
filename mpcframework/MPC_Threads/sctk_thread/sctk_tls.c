@@ -69,7 +69,7 @@ struct dyn_sym_s
 struct dsos_s
 {
 	char * name;          /**< the DSO's name */
-	struct dsos_s * next /**< the next discovered DSO in the list (if any) */
+	struct dsos_s * next; /**< the next discovered DSO in the list (if any) */
 };
 
 /** page size for the current execution (filled with getpagesize() call) */
