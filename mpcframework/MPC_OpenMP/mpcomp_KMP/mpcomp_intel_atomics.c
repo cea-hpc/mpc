@@ -91,14 +91,12 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 /* TODO use MPCOMP_MIC */
 
 #if __MIC__ || __MIC2__
-#warning "MIC => atomic locks"
   __mpcomp_atomic_begin();
 
   *lhs += rhs;
 
   __mpcomp_atomic_end();
 #else
-#warning "NON MIC => atomic optim"
   __kmp_test_then_add_real64(lhs, rhs);
 #endif
 
