@@ -88,21 +88,6 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 	sctk_assert(pte);
 	sctk_assert(__sctk_ptl_offcoll_enabled(srail));
 	
-	me_up = sctk_ptl_me_create_with_cnt(srail, NULL, 0, SCTK_PTL_ANY_PROCESS, SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP, SCTK_PTL_MATCH_INIT, SCTK_PTL_ME_PUT_NOEV_FLAGS);
-	me_up->msg = NULL;
-	me_up->list = SCTK_PTL_PRIORITY_LIST;
-	me_up->type = SCTK_PTL_TYPE_OFFCOLL;
-	me_up->prot = SCTK_PTL_PROT_EAGER;
-	me_down = sctk_ptl_me_create_with_cnt(srail, NULL, 0, SCTK_PTL_ANY_PROCESS, SCTK_PTL_MATCH_OFFCOLL_BARRIER_DOWN, SCTK_PTL_MATCH_INIT, SCTK_PTL_ME_PUT_NOEV_FLAGS);
-	me_down->msg = NULL;
-	me_down->list = SCTK_PTL_PRIORITY_LIST;
-	me_down->type = SCTK_PTL_TYPE_OFFCOLL;
-	me_down->prot = SCTK_PTL_PROT_EAGER;
-	sctk_assert(me_up);
-	sctk_assert(me_down);
-	sctk_ptl_me_register(srail, me_up, pte);
-	sctk_ptl_me_register(srail, me_down, pte);
-
 	int i;
 	sctk_ptl_offcoll_tree_node_t* cur;
 	for (i = 0; i < SCTK_PTL_OFFCOLL_NB; ++i)
@@ -118,6 +103,21 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 		switch(i)
 		{
 			case SCTK_PTL_OFFCOLL_BARRIER:
+				me_up = sctk_ptl_me_create_with_cnt(srail, NULL, 0, SCTK_PTL_ANY_PROCESS, SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP, SCTK_PTL_MATCH_INIT, SCTK_PTL_ME_PUT_NOEV_FLAGS);
+				me_up->msg = NULL;
+				me_up->list = SCTK_PTL_PRIORITY_LIST;
+				me_up->type = SCTK_PTL_TYPE_OFFCOLL;
+				me_up->prot = SCTK_PTL_PROT_EAGER;
+				me_down = sctk_ptl_me_create_with_cnt(srail, NULL, 0, SCTK_PTL_ANY_PROCESS, SCTK_PTL_MATCH_OFFCOLL_BARRIER_DOWN, SCTK_PTL_MATCH_INIT, SCTK_PTL_ME_PUT_NOEV_FLAGS);
+				me_down->msg = NULL;
+				me_down->list = SCTK_PTL_PRIORITY_LIST;
+				me_down->type = SCTK_PTL_TYPE_OFFCOLL;
+				me_down->prot = SCTK_PTL_PROT_EAGER;
+				sctk_assert(me_up);
+				sctk_assert(me_down);
+				sctk_ptl_me_register(srail, me_up, pte);
+				sctk_ptl_me_register(srail, me_down, pte);
+				/* store counters (one for each half barrier) */
 				cur->spec.barrier.cnt_hb_up = &me_up->slot.me.ct_handle;
 				cur->spec.barrier.cnt_hb_down = &me_down->slot.me.ct_handle;
 				break;
@@ -151,8 +151,31 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 void sctk_ptl_offcoll_pte_fini(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 {
 	sctk_assert(__sctk_ptl_offcoll_enabled(srail));
-}
+	int i = 0;
+	sctk_ptl_offcoll_tree_node_t* cur; 
+	for(i = 0; i < SCTK_PTL_OFFCOLL_NB; i++)
+	{
+		cur = pte->node+i;
+		switch(i)
+		{
+			case SCTK_PTL_OFFCOLL_BARRIER:
+				sctk_ptl_ct_free(*cur->spec.barrier.cnt_hb_up);
+				sctk_ptl_ct_free(*cur->spec.barrier.cnt_hb_up);
+				/*TODO: Free me_up/down (not stored yet) */
+				break;
+			case SCTK_PTL_OFFCOLL_BCAST:
+				sctk_ptl_ct_free(cur->spec.bcast.large_puts->slot.me.ct_handle);
+				sctk_ptl_me_release(cur->spec.bcast.large_puts);
+				sctk_ptl_me_free(cur->spec.bcast.large_puts, 0);
+				break;
+			case SCTK_PTL_OFFCOLL_REDUCE:
+				break;
+			default:
+				not_reachable();
+		}
+	}
 
+}
 
 /**
  * Adjust ranks to know its position in the tree.
@@ -299,10 +322,6 @@ static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, s
          * the execution flow (within the software) as all calls are directly set up into the NIC
          */
 	sctk_ptl_ct_wait_thrs(*me_cnt_down, (size_t)(cnt_prev_ops + 1), &dummy);
-
-        /* do not forget to reset the second ME to its initial value
-         */
-	/*sctk_ptl_emit_cnt_incr(*me_cnt_down, (size_t)((-1-nb_children))); //TODO: Issue here w/ the standard if trig_op (p. 89 & 101)*/
 
 	/*sctk_warning("Barrier Done over idx = %d CPT=%d", pte->idx, cpt);*/
 }
@@ -574,7 +593,7 @@ static inline void __sctk_ptl_offcoll_bcast_run(sctk_ptl_rail_info_t* srail, sct
 void sctk_ptl_offcoll_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
-	/*sctk_warning("PORTALS: EQS EVENT '%s' idx=%d, type=%x, prot=%x, match=%s from %s, sz=%llu, user=%p", sctk_ptl_event_decode(ev), ev.pt_index, user_ptr->type, user_ptr->prot, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), ev.mlength, ev.user_ptr);*/
+	/*sctk_warning("PORTALS: EQS EVENT '%s' idx=%d, from %s, type=%s, prot=%s, match=%s,  sz=%llu, user=%p", sctk_ptl_event_decode(ev), ev.pt_index, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), ev.mlength, ev.user_ptr);*/
 
 	switch(ev.type)
 	{
@@ -583,10 +602,13 @@ void sctk_ptl_offcoll_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			if(user_ptr->prot == SCTK_PTL_PROT_EAGER && ev.mlength > 0)
 				memcpy(user_ptr->slot.me.start, ev.start, ev.mlength);
 		case PTL_EVENT_PUT:                  /* a Put() reached the local process */
-			if(user_ptr->prot == SCTK_PTL_PROT_EAGER && user_ptr->match.offload.type == SCTK_BROADCAST_OFFLOAD_MESSAGE)
+			if(user_ptr->prot == SCTK_PTL_PROT_EAGER &&
+				((sctk_ptl_matchbits_t)ev.match_bits).offload.type == SCTK_BROADCAST_OFFLOAD_MESSAGE)
+			{
 				PtlCTSet(
 				user_ptr->slot.me.ct_handle,
 				(sctk_ptl_cnt_t){.success = SCTK_PTL_ACTIVE_UNLOCK_THRS, .failure = 0});
+			}
 			break;
 
 		case PTL_EVENT_GET:                  /* a remote process get the data back */
@@ -665,6 +687,7 @@ int ptl_offcoll_bcast(int comm_idx, int rank, int size, void* buf, size_t bytes,
 
 int ptl_offcoll_reduce()
 {
+	not_implemented();
 	return 0;
 }
 
