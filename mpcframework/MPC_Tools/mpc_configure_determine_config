@@ -37,6 +37,7 @@ cat << EOF > ${SCTK_CONF_C}
 #include <sys/types.h>
 #include <signal.h>
 #include <limits.h>
+#include <unistd.h>
 EOF
 
 if test "$MPC_Threads" != "" ; then
@@ -449,12 +450,10 @@ sctk_subtitle (Pthread rwlock compatibility:);
 void
 key_init ()
 {
+sctk_subtitle (Pthread keys compatibility:);
 #ifdef MPC_Threads
 #ifndef SCTK_USE_PTHREAD_KEYS_MAX
-  int PTHREAD_KEYS_MAX = 0;
-#endif
-sctk_subtitle (Pthread keys compatibility:);
-#ifndef SCTK_USE_PTHREAD_KEYS_MAX
+  int ptkm = 0;
   do
     {
       int i;
@@ -467,11 +466,13 @@ sctk_subtitle (Pthread keys compatibility:);
 	  if (pthread_key_create (&k, NULL) != 0)
 	    break;
 	}
-      PTHREAD_KEYS_MAX = i;
+      ptkm = i;
     }
   while (0);
+#else
+  int ptkm = PTHREAD_KEYS_MAX;
 #endif
-  sctk_define_arg (SCTK_THREAD_KEYS_MAX, PTHREAD_KEYS_MAX);
+  sctk_define_arg (SCTK_THREAD_KEYS_MAX, ptkm);
   sctk_opac_type (pthread_key_t, sctk_thread_key_t);
 #endif
 }
