@@ -115,15 +115,6 @@ SOBJ_task=$(SFILES_task:task/%.S=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.o)
 SDEP_task=$(SFILES_task:task/%.S=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d)
 
 
-FILES_tree=$(wildcard tree/*.c)
-OBJ_tree=$(FILES_tree:tree/%.c=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.o)
-DEP_tree=$(FILES_tree:tree/%.c=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d)
-
-SFILES_tree=$(wildcard tree/*.S)
-SOBJ_tree=$(SFILES_tree:tree/%.S=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.o)
-SDEP_tree=$(SFILES_tree:tree/%.S=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d)
-
-
 FFILES_env=$(wildcard env/*.f)
 FOBJ_env=$(FFILES_env:env/%.f=$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o)
 
@@ -154,10 +145,7 @@ FOBJ_src=$(FFILES_src:src/%.f=$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o)
 FFILES_task=$(wildcard task/*.f)
 FOBJ_task=$(FFILES_task:task/%.f=$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o)
 
-FFILES_tree=$(wildcard tree/*.f)
-FOBJ_tree=$(FFILES_tree:tree/%.f=$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o)
-
-all: $(OBJ_env) $(FOBJ_env) $(SOBJ_env) $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_intel) $(FOBJ_intel) $(SOBJ_intel) $(OBJ_mpcomp_GOMP_include) $(FOBJ_mpcomp_GOMP_include) $(SOBJ_mpcomp_GOMP_include) $(OBJ_mpcomp_GOMP_internal) $(FOBJ_mpcomp_GOMP_internal) $(SOBJ_mpcomp_GOMP_internal) $(OBJ_mpcomp_GOMP_wrapper) $(FOBJ_mpcomp_GOMP_wrapper) $(SOBJ_mpcomp_GOMP_wrapper) $(OBJ_mpcomp_KMP) $(FOBJ_mpcomp_KMP) $(SOBJ_mpcomp_KMP) $(OBJ_ompt) $(FOBJ_ompt) $(SOBJ_ompt) $(OBJ_src) $(FOBJ_src) $(SOBJ_src) $(OBJ_task) $(FOBJ_task) $(SOBJ_task) $(OBJ_tree) $(FOBJ_tree) $(SOBJ_tree)
+all: $(OBJ_env) $(FOBJ_env) $(SOBJ_env) $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_intel) $(FOBJ_intel) $(SOBJ_intel) $(OBJ_mpcomp_GOMP_include) $(FOBJ_mpcomp_GOMP_include) $(SOBJ_mpcomp_GOMP_include) $(OBJ_mpcomp_GOMP_internal) $(FOBJ_mpcomp_GOMP_internal) $(SOBJ_mpcomp_GOMP_internal) $(OBJ_mpcomp_GOMP_wrapper) $(FOBJ_mpcomp_GOMP_wrapper) $(SOBJ_mpcomp_GOMP_wrapper) $(OBJ_mpcomp_KMP) $(FOBJ_mpcomp_KMP) $(SOBJ_mpcomp_KMP) $(OBJ_ompt) $(FOBJ_ompt) $(SOBJ_ompt) $(OBJ_src) $(FOBJ_src) $(SOBJ_src) $(OBJ_task) $(FOBJ_task) $(SOBJ_task)
 
 $(M_PWD)/include_modules/MPC_OpenMP:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_OpenMP/env $(M_PWD)/include_modules
@@ -170,14 +158,13 @@ $(M_PWD)/include_modules/MPC_OpenMP:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_OpenMP/ompt $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_OpenMP/src $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_OpenMP/task $(M_PWD)/include_modules
-	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_OpenMP/tree $(M_PWD)/include_modules
 	@touch $@
 
 prepare_includes:$(M_PWD)/include_modules/MPC_OpenMP
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_env) $(DEP_include) $(DEP_intel) $(DEP_mpcomp_GOMP_include) $(DEP_mpcomp_GOMP_internal) $(DEP_mpcomp_GOMP_wrapper) $(DEP_mpcomp_KMP) $(DEP_ompt) $(DEP_src) $(DEP_task) $(DEP_tree) 
+DEPENDS=$(DEP_env) $(DEP_include) $(DEP_intel) $(DEP_mpcomp_GOMP_include) $(DEP_mpcomp_GOMP_internal) $(DEP_mpcomp_GOMP_wrapper) $(DEP_mpcomp_KMP) $(DEP_ompt) $(DEP_src) $(DEP_task) 
 
 $(DEPENDS):Makefile 
 endif
@@ -233,11 +220,6 @@ $(DEP_task):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:task/%.c
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,task/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
-$(DEP_tree):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:tree/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,tree/%.c,$@)"
-	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,tree/%.c,$@) | \
-		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
-
 else
 $(DEP_env):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:env/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,env/%.c,$@)"
@@ -278,10 +260,6 @@ $(DEP_src):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:src/%.c
 $(DEP_task):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:task/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,task/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,task/%.c,$@)" > $@
-
-$(DEP_tree):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:tree/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,tree/%.c,$@)"
-	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,tree/%.c,$@)" > $@
 
 endif
 
@@ -324,10 +302,6 @@ $(OBJ_src):%.o:%.d
 $(OBJ_task):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,task/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,task/%.c,$@) -o $@
-
-$(OBJ_tree):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,tree/%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,tree/%.c,$@) -o $@
 
 $(SDEP_env):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:env/%.S
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,env/%.S,$@)"
@@ -379,11 +353,6 @@ $(SDEP_task):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:task/%.S
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,task/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
-$(SDEP_tree):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:tree/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,tree/%.S,$@)"
-	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,tree/%.S,$@) | \
-		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
-
 $(SOBJ_env):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,env/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,env/%.S,$@) -o $@
@@ -424,10 +393,6 @@ $(SOBJ_task):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,task/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,task/%.S,$@) -o $@
 
-$(SOBJ_tree):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,tree/%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,tree/%.S,$@) -o $@
-
 $(FOBJ_env):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:env/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,env/%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,env/%.f,$@) -o $@
@@ -467,10 +432,6 @@ $(FOBJ_src):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:src/%.f
 $(FOBJ_task):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:task/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,task/%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,task/%.f,$@) -o $@
-
-$(FOBJ_tree):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:tree/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,tree/%.f,$@)"
-	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,tree/%.f,$@) -o $@
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
