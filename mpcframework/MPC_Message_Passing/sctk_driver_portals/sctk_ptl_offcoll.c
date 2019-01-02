@@ -447,14 +447,11 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
         nb_children  = bnode->nb_children;
 	cnt_ops = sctk_atomics_fetch_and_incr_int(&bnode->iter);
 	me_cnt_puts  = &bnode->spec.bcast.large_puts->slot.me.ct_handle;
-	PtlCTGet(*me_cnt_puts, &dummy);
-	/*sctk_error("cnt_puts = %d", dummy.success);*/
 
 	/* if only one node in the tree, don't */
 	if(bnode->leaf && is_root)
 		return;
 
-	/*sctk_warning("leaf = %d / %d", bnode->leaf, cnt_ops);*/
 	if(!bnode->leaf)
 	{
 		get_me = sctk_ptl_me_create_with_cnt(
@@ -475,6 +472,8 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 		sctk_assert(get_me);
 		/*sctk_error("INTERMEDIATE set a GET-ME match=%s SZ=%llu", __sctk_ptl_match_str(sctk_malloc(32), 32, SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops).raw), bytes);*/
 	}
+		
+	sctk_ptl_compute_chunks(srail, bytes, &chunk_sz, &chunk_nb, &rest);
 
 	if(!is_root)
 	{
@@ -484,7 +483,6 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 		sctk_assert(get_md);
 		sctk_ptl_md_register(srail, get_md);
 
-		sctk_ptl_compute_chunks(srail, bytes, &chunk_sz, &chunk_nb, &rest);
 		cur_off = 0;
 		for(chunk = 0; chunk < chunk_nb; ++chunk)
 		{
@@ -546,8 +544,8 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 	else
 	{
 		dummy.success = 0;
-		/*sctk_warning("OTHERS WAIT on %d", nb_children);*/
-		sctk_ptl_ct_wait_thrs(get_me->slot.me.ct_handle, nb_children, &dummy);
+		/*sctk_warning("OTHERS WAIT on %d", (nb_children * chunk_nb));*/
+		sctk_ptl_ct_wait_thrs(get_me->slot.me.ct_handle, (nb_children * chunk_nb), &dummy);
 		/*sctk_warning("OTHERS WAIT DONE");*/
 		sctk_ptl_ct_free(get_me->slot.me.ct_handle); /* Don't forget to free, to avoid starvation in the NIC */
 		sctk_ptl_me_release(get_me);
