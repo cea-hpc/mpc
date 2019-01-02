@@ -49,9 +49,9 @@ sctk_reorder_table_t *sctk_init_task_to_reorder ( int dest )
 	sctk_reorder_table_t *tmp;
 
 	tmp = sctk_malloc( sizeof ( sctk_reorder_table_t ) );
-	
+
 	assume( tmp != NULL );
-	
+
 	memset( tmp, 0, sizeof ( sctk_reorder_table_t ) );
 
 	OPA_store_int ( & ( tmp->message_number_src ), 0 );
@@ -77,7 +77,7 @@ sctk_reorder_table_t *sctk_get_task_from_reorder ( int dest, int process_specifi
 	key.destination = dest;
 
 	sctk_spinlock_lock ( &reorder->lock );
-	
+
 	HASH_FIND ( hh, reorder->table, &key, sizeof ( sctk_reorder_key_t ), tmp );
 
 	if ( tmp == NULL )

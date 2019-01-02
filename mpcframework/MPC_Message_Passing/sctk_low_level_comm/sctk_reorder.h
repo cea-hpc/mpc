@@ -71,14 +71,14 @@ typedef struct sctk_reorder_table_s
 	OPA_int_t message_number_dest;
 
 	sctk_spinlock_t lock;
-	volatile sctk_reorder_buffer_t *buffer;
+	sctk_reorder_buffer_t *buffer;
 
 	UT_hash_handle hh;
 } sctk_reorder_table_t;
 
 typedef struct sctk_reorder_task_s
 {
-	volatile sctk_reorder_table_t *table;
+	sctk_reorder_table_t *table;
 	sctk_spinlock_t lock;
 } sctk_reorder_list_t;
 
