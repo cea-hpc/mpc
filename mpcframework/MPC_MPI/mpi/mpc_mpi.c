@@ -6651,6 +6651,12 @@ int __INTERNAL__PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
                            int root, MPI_Comm comm) {
   int res = MPI_ERR_INTERN;
 
+  /* Bast is not synchronous, the collective can end directly if nothing
+   * has to be sent/received
+   */
+  if(count <= 0)
+	  return 0;
+
   /* Intercomm */
   if (sctk_is_inter_comm(comm)) {
     if (bcast_inter == NULL)
