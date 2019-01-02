@@ -737,7 +737,19 @@ EOF
     done
 }
 
-
+check_libelf_done="0"
+check_libelf(){
+if test "$check_libelf_done" = "0" ; then
+    SCTK_CHECK_HEADER_NOFAIL libelf.h
+    if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
+        SCTK_CHECK_LDOPTION "-lelf"
+	SCTK_CHECK_OPTION "-DSCTK_HAVE_LIBELF"
+    fi
+    check_libelf_done="1"
+else
+    sctk_echo "Already done"
+fi
+}
 
 check_libunwind_done="0"
 check_libunwind(){

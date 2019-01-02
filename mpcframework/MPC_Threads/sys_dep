@@ -135,8 +135,8 @@ if test "$SCTK_SCTK_CHECK_HEADER_RES" = "0" ; then
 	elif [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib/libextls.so" ]; then
 		SCTK_LDFLAGS="-L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib -lextls ${SCTK_LDFLAGS}"
 	fi
+        check_libelf
 fi
-
 end_section
 
 begin_section Pthread
