@@ -51,16 +51,25 @@ int sctk_ptl_offcoll_enabled(sctk_ptl_rail_info_t* srail)
 /** TODO: REMOVE all these global variables (should be per rail) */
 sctk_ptl_local_data_t* md_up;
 sctk_ptl_local_data_t* md_down;
+sctk_ptl_local_data_t* dummy_md;
 
 sctk_ptl_rail_info_t* grail;
 
 void sctk_ptl_offcoll_init(sctk_ptl_rail_info_t* srail)
 {
 	sctk_assert(__sctk_ptl_offcoll_enabled(srail));
-	md_up = sctk_ptl_md_create_with_cnt(srail, NULL, 0, SCTK_PTL_MD_PUT_NOEV_FLAGS);
-	md_down = sctk_ptl_md_create_with_cnt(srail, NULL, 0, SCTK_PTL_MD_PUT_NOEV_FLAGS);
+	md_up = sctk_ptl_md_create_with_cnt(srail, NULL, 0, (SCTK_PTL_MD_PUT_NOEV_FLAGS | PTL_MD_EVENT_CT_SEND));
+	md_down = sctk_ptl_md_create_with_cnt(srail, NULL, 0, (SCTK_PTL_MD_PUT_NOEV_FLAGS | PTL_MD_EVENT_CT_SEND));
+	dummy_md = sctk_ptl_md_create_with_cnt(srail, NULL, 0, (SCTK_PTL_MD_PUT_NOEV_FLAGS | PTL_MD_EVENT_CT_SEND));
+	md_up->prot = SCTK_PTL_PROT_EAGER;
+	md_up->type = SCTK_PTL_TYPE_OFFCOLL;
+	md_down->prot = SCTK_PTL_PROT_EAGER;
+	md_down->type = SCTK_PTL_TYPE_OFFCOLL;
+	dummy_md->prot = SCTK_PTL_PROT_RDV;
+	dummy_md->type = SCTK_PTL_TYPE_OFFCOLL;
 	sctk_ptl_md_register(srail, md_up);
 	sctk_ptl_md_register(srail, md_down);
+	sctk_ptl_md_register(srail, dummy_md);
 
         grail = srail;
 }
@@ -74,7 +83,7 @@ void sctk_ptl_offcoll_fini(sctk_ptl_rail_info_t* srail)
 
 void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 {
-	sctk_ptl_local_data_t* me_up = NULL, *me_down = NULL;
+	sctk_ptl_local_data_t* me_up = NULL, *me_down = NULL, *tmp = NULL;
 	sctk_assert(srail);
 	sctk_assert(pte);
 	sctk_assert(__sctk_ptl_offcoll_enabled(srail));
@@ -82,15 +91,13 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 	me_up = sctk_ptl_me_create_with_cnt(srail, NULL, 0, SCTK_PTL_ANY_PROCESS, SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP, SCTK_PTL_MATCH_INIT, SCTK_PTL_ME_PUT_NOEV_FLAGS);
 	me_up->msg = NULL;
 	me_up->list = SCTK_PTL_PRIORITY_LIST;
-	/// TODO: Wrong setting to check (but not event generated...)
-	me_up->type = 0;
-	me_up->prot = 0;
+	me_up->type = SCTK_PTL_TYPE_OFFCOLL;
+	me_up->prot = SCTK_PTL_PROT_EAGER;
 	me_down = sctk_ptl_me_create_with_cnt(srail, NULL, 0, SCTK_PTL_ANY_PROCESS, SCTK_PTL_MATCH_OFFCOLL_BARRIER_DOWN, SCTK_PTL_MATCH_INIT, SCTK_PTL_ME_PUT_NOEV_FLAGS);
 	me_down->msg = NULL;
 	me_down->list = SCTK_PTL_PRIORITY_LIST;
-	/// TODO: Wrong setting to check (but not event generated...)
-	me_down->type = 0;
-	me_down->prot = 0;
+	me_down->type = SCTK_PTL_TYPE_OFFCOLL;
+	me_down->prot = SCTK_PTL_PROT_EAGER;
 	sctk_assert(me_up);
 	sctk_assert(me_down);
 	sctk_ptl_me_register(srail, me_up, pte);
@@ -115,6 +122,22 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 				cur->spec.barrier.cnt_hb_down = &me_down->slot.me.ct_handle;
 				break;
 			case SCTK_PTL_OFFCOLL_BCAST:
+				tmp = sctk_ptl_me_create_with_cnt(
+					srail,
+					NULL,
+					0,
+					SCTK_PTL_ANY_PROCESS,
+					SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGE,
+					SCTK_PTL_MATCH_INIT,
+					SCTK_PTL_ME_PUT_NOEV_FLAGS
+				);
+				sctk_ptl_me_register(srail, tmp, pte);
+				sctk_assert(tmp);
+				tmp->msg = NULL; /* no need for it (for noww */
+				tmp->list = SCTK_PTL_PRIORITY_LIST;
+				tmp->type = SCTK_PTL_TYPE_OFFCOLL; /* Standard MPI message */
+				tmp->prot = SCTK_PTL_PROT_RDV; /* handled by offload protocols */
+				cur->spec.bcast.large_puts = tmp; 
 				break;
 			case SCTK_PTL_OFFCOLL_REDUCE:
 				break;
@@ -245,7 +268,7 @@ static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, s
          */
         if(bnode->leaf)
         {
-                sctk_ptl_emit_put(md_up, 0, bnode->parent, pte, SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP, 0, 0, 0, NULL);
+                sctk_ptl_emit_put(md_up, 0, bnode->parent, pte, SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP, 0, 0, 0, md_up);
         }
         else
         {
@@ -259,7 +282,7 @@ static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, s
                 {
                         /* forward put() to my parent after receiving a direct put() from all my children (meaning there are ready)
                          */
-			sctk_ptl_emit_trig_put(md_up, 0, bnode->parent, pte, SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP, 0, 0, 0, NULL, *me_cnt_up, (size_t)((cnt_prev_ops + 1) * nb_children));
+			sctk_ptl_emit_trig_put(md_up, 0, bnode->parent, pte, SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP, 0, 0, 0, md_up, *me_cnt_up, (size_t)((cnt_prev_ops + 1) * nb_children));
                 }
                 
 		/* emitting to all the children :
@@ -268,7 +291,7 @@ static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, s
                  */
                 for(i = 0; i < nb_children; i++)
                 {
-                        sctk_ptl_emit_trig_put(md_down, 0, bnode->children[i], pte, SCTK_PTL_MATCH_OFFCOLL_BARRIER_DOWN, 0, 0, 0, NULL, *me_cnt_down, (size_t)(cnt_prev_ops + 1));
+                        sctk_ptl_emit_trig_put(md_down, 0, bnode->children[i], pte, SCTK_PTL_MATCH_OFFCOLL_BARRIER_DOWN, 0, 0, 0, md_down, *me_cnt_down, (size_t)(cnt_prev_ops + 1));
                 }
         }
 
@@ -310,6 +333,8 @@ static inline void __sctk_ptl_offcoll_bcast_eager_run(sctk_ptl_rail_info_t* srai
 	if(!bnode->leaf)
 	{
 		tmp_md = sctk_ptl_md_create_with_cnt(srail, buf, bytes, (SCTK_PTL_MD_PUT_NOEV_FLAGS | PTL_MD_EVENT_CT_SEND));
+		tmp_md->prot = SCTK_PTL_PROT_EAGER;
+		tmp_md->type = SCTK_PTL_TYPE_OFFCOLL;
 		sctk_assert(tmp_md);
 		sctk_ptl_md_register(srail, tmp_md);
 	}
@@ -325,16 +350,16 @@ static inline void __sctk_ptl_offcoll_bcast_eager_run(sctk_ptl_rail_info_t* srai
 				buf,
 				bytes,
 				bnode->parent,
-				SCTK_PTL_MATCH_OFFCOLL_BCAST_READY,
+				SCTK_PTL_MATCH_OFFCOLL_BCAST,
 				SCTK_PTL_MATCH_INIT,
 				(SCTK_PTL_ME_PUT_FLAGS | SCTK_PTL_ONCE)
 			);
-		sctk_ptl_me_register(srail, recv_me, pte);
-		sctk_assert(recv_me);
 		recv_me->msg = NULL; /* no need for it (for noww */
 		recv_me->list = SCTK_PTL_PRIORITY_LIST;
-		recv_me->type = SCTK_PTL_TYPE_STD; /* Standard MPI message */
-		recv_me->prot = SCTK_PTL_PROT_OFFCOLL; /* handled by offload protocols */
+		recv_me->type = SCTK_PTL_TYPE_OFFCOLL; /* Standard MPI message */
+		recv_me->prot = SCTK_PTL_PROT_EAGER; /* handled by offload protocols */
+		sctk_ptl_me_register(srail, recv_me, pte);
+		sctk_assert(recv_me);
 		
 		/* register a trigger to send data to children once data have been received.
 		 * The ct_event is set to SCTK_PTL_ACTIVE_UNLOCK_THRS from a software manner
@@ -351,8 +376,8 @@ static inline void __sctk_ptl_offcoll_bcast_eager_run(sctk_ptl_rail_info_t* srai
 				bytes,
 				bnode->children[i],
 				pte,
-				SCTK_PTL_MATCH_OFFCOLL_BCAST_READY,
-				0, 0, 0, NULL,
+				SCTK_PTL_MATCH_OFFCOLL_BCAST,
+				0, 0, 0, tmp_md,
 				recv_me->slot.me.ct_handle,
 				SCTK_PTL_ACTIVE_UNLOCK_THRS
 			);
@@ -368,8 +393,8 @@ static inline void __sctk_ptl_offcoll_bcast_eager_run(sctk_ptl_rail_info_t* srai
 				bytes,
 				bnode->children[i],
 				pte,
-				SCTK_PTL_MATCH_OFFCOLL_BCAST_READY,
-				0, 0, 0, NULL
+				SCTK_PTL_MATCH_OFFCOLL_BCAST,
+				0, 0, 0, tmp_md
 			);
 		}
 	}
@@ -379,7 +404,6 @@ static inline void __sctk_ptl_offcoll_bcast_eager_run(sctk_ptl_rail_info_t* srai
 	{
 		/* if the node is a leaf, just wait to receive the data in the user buffer (data written into the ME) */
 		sctk_ptl_ct_wait_thrs(recv_me->slot.me.ct_handle, SCTK_PTL_ACTIVE_UNLOCK_THRS, &dummy);
-		sctk_ptl_ct_free(recv_me->slot.me.ct_handle); /* Don't forget to free, to avoid starvation in the NIC */
 	}
 	else
 	{
@@ -398,6 +422,7 @@ static inline void __sctk_ptl_offcoll_bcast_eager_run(sctk_ptl_rail_info_t* srai
 		/* zero means to not try to free the actual buffer pointed by start (here, the user buffer
 		 * not a temp one)
 		 */
+		sctk_ptl_ct_free(recv_me->slot.me.ct_handle); /* Don't forget to free, to avoid starvation in the NIC */
 		sctk_ptl_me_free(recv_me, 0);
 	}
 }
@@ -420,22 +445,26 @@ static inline void __sctk_ptl_offcoll_bcast_run(sctk_ptl_rail_info_t* srail, sct
 
 void sctk_ptl_offcoll_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
-	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
+	sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
+	/*sctk_warning("PORTALS: EQS EVENT '%s' idx=%d, type=%x, prot=%x, match=%s from %s, sz=%llu, user=%p", sctk_ptl_event_decode(ev), ev.pt_index, user_ptr->type, user_ptr->prot, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), ev.mlength, ev.user_ptr);*/
 
 	switch(ev.type)
 	{
 		case PTL_EVENT_PUT_OVERFLOW:         /* a previous received PUT matched a just appended ME */
-			sctk_assert(ev.mlength <= ptr->slot.me.length);
-			memcpy(ptr->slot.me.start, ev.start, ev.mlength);
+			sctk_assert(ev.mlength <= user_ptr->slot.me.length);
+			if(user_ptr->prot == SCTK_PTL_PROT_EAGER && ev.mlength > 0)
+				memcpy(user_ptr->slot.me.start, ev.start, ev.mlength);
 		case PTL_EVENT_PUT:                  /* a Put() reached the local process */
-			PtlCTSet(
-				ptr->slot.me.ct_handle,
+			if(user_ptr->prot == SCTK_PTL_PROT_EAGER && user_ptr->match.offload.type == SCTK_BROADCAST_OFFLOAD_MESSAGE)
+				PtlCTSet(
+				user_ptr->slot.me.ct_handle,
 				(sctk_ptl_cnt_t){.success = SCTK_PTL_ACTIVE_UNLOCK_THRS, .failure = 0});
 			break;
 
 		case PTL_EVENT_GET:                  /* a remote process get the data back */
+			break; /* will increment a counter automagically, nothing to do */
 		case PTL_EVENT_GET_OVERFLOW:          /* a previous received GET matched a just appended ME */
-			not_implemented();
+			//not_reachable(); /* a GET op is always set with an ME BEFORE sending the ready msg */
 			break;
 		case PTL_EVENT_ATOMIC:                /* an Atomic() reached the local process */
 		case PTL_EVENT_ATOMIC_OVERFLOW:       /* a previously received ATOMIC matched a just appended one */
@@ -453,6 +482,29 @@ void sctk_ptl_offcoll_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			break;
 	}
 }
+
+void sctk_ptl_offcoll_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
+{
+	sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
+	/*sctk_warning("PORTALS: MDS EVENT '%s' from %s, type=%d, prot=%d",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), user_ptr->type, user_ptr->prot);*/
+
+	switch(ev.type)
+	{
+		case PTL_EVENT_ACK:   /* a PUT reached a remote process */
+			break;
+
+		case PTL_EVENT_REPLY: /* a GET operation completed */
+			break;
+
+		case PTL_EVENT_SEND: /* a Put() left the local process */
+			break;
+		default:
+			sctk_fatal("Unrecognized MD event: %d", ev.type);
+			break;
+	}
+}
+
+
 
 /**************************************************/
 /**************************************************/
