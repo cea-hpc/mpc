@@ -174,7 +174,7 @@ echo "" >> Makefile
 echo "lib/libmpc_framework.a: \$(COMPIL_DIR)" >> Makefile
 printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
 printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
-printf "\t@\$(AR) rcu \$@ \$(COBJ_LIST) \$(SCTK_ARFLAGS)">> Makefile; echo "">> Makefile
+printf "\t@\$(AR) Drc \$@ \$(COBJ_LIST) \$(SCTK_ARFLAGS)">> Makefile; echo "">> Makefile
 
 #
 # Rule to build libmpc_tdb_remote_static.a
@@ -185,7 +185,7 @@ printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
 printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p lib_thread_db_static">> Makefile; echo "">> Makefile
 printf "\t@\$(CC) -DTDB_${SCTK_ARCH}_ARCH_TDB -DTDB_${SCTK_OS}_SYS -Iinclude_modules -DTDB_REMOTE_STATIC -c \$(CFLAGS) ${MPC_SOURCE_DIR}MPC_Debugger/sctk_dbg_thread/tdb_remote_static.c -o lib_thread_db_static/tdb_remote_static.o">> Makefile; echo "">> Makefile
-printf "\t@\$(AR) rcu \$@ lib_thread_db_static/tdb_remote_static.o">> Makefile; echo "">> Makefile
+printf "\t@\$(AR) Drc \$@ lib_thread_db_static/tdb_remote_static.o">> Makefile; echo "">> Makefile
 
 #
 # Rule to build libmpc_thread.so
@@ -206,7 +206,7 @@ echo "lib/libmpc_frameworkf.a: \$(COMPIL_DIR)" >> Makefile
 printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
 if test "$SCTK_FORTRAN" = "1"; then
 printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
-printf "\t@\$(AR) rcu \$@ \$(FOBJ_LIST) \$(SCTK_ARFLAGS)">> Makefile; echo "">> Makefile
+printf "\t@\$(AR) Drc \$@ \$(FOBJ_LIST) \$(SCTK_ARFLAGS)">> Makefile; echo "">> Makefile
 fi
 
 #
