@@ -354,6 +354,14 @@ int sctk_call_dynamic_initializers()
 #if defined(SCTK_USE_TLS) && defined(Linux_SYS)
 
 /**
+ * Function switched by SCTK_USE_OPTIMIZED_TLS value
+ * @returns 1 if OPTIMIZED_TLS has been requested and is supported, 0 otherwise.
+ */
+int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
+  return 1;
+}
+
+/**
  * Exposed for Extls usage, returns the MPC-managed address where per-VP context address
  * will be stored.
  *
@@ -502,6 +510,8 @@ size_t sctk_extls_size()
 #endif
   return size;
 }
+
+static size_t page_size = 0;
 
 /**
  * alter the given address to align the pointer to the beginning of the page.
