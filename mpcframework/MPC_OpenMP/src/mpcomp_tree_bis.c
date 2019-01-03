@@ -71,6 +71,8 @@ static int __mpcomp_check_tree_parameters(int n_leaves, int depth,
   return 1;
 }
 
+#if 0
+
 /*
  * Compute and return a topological tree array where levels that
  * do not bring any hierarchical structure are ignored.
@@ -147,6 +149,8 @@ static int *__mpcomp_compute_topo_tree_array(hwloc_topology_t topology,
   /* Return the tree */
   return degree;
 }
+
+#endif
 
 int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth, int *degree) 
 {

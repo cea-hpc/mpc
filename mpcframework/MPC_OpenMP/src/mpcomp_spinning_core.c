@@ -59,6 +59,7 @@ __mpcomp_add_mvp_saved_context( mpcomp_mvp_t* mvp )
     mvp->prev_node_father = prev_mvp_context;
 }
 
+#if 0
 static int __mpcomp_tree_rank_get_next_depth( mpcomp_node_t* node, const int expected_nb_mvps, int* nb_mvps )
 {
     int next_depth, num_nodes; 
@@ -83,6 +84,7 @@ static int __mpcomp_tree_rank_get_next_depth( mpcomp_node_t* node, const int exp
     *nb_mvps = ( num_nodes < expected_nb_mvps ) ? num_nodes : expected_nb_mvps;
     return next_depth + 1;
 }
+#endif
 
 mpcomp_instance_t* 
 __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_nb_mvps )

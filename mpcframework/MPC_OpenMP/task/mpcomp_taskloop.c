@@ -43,20 +43,6 @@ static unsigned long mpcomp_taskloop_compute_num_iters(long start, long end,
   return (end - start + step + decal) / step;
 }
 
-static unsigned long long
-mpcomp_taskloop_compute_num_iters_ull(unsigned long long start,
-                                      unsigned long long end,
-                                      unsigned long long step, bool up) {
-  unsigned long long ret = (unsigned long long)0;
-  ret = (up && start < end)
-            ? (end - start + step - (unsigned long long)1) / step
-            : ret;
-  ret = (!up && start > end)
-            ? (start - end - step - (unsigned long long)1) / -step
-            : ret;
-  return ret;
-}
-
 static unsigned long
 mpcomp_taskloop_compute_loop_value(long iteration_num, unsigned long num_tasks,
                                    long step, long *taskstep,

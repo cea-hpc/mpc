@@ -1,6 +1,7 @@
 #ifndef __MPCOMP_TREE_ARRAY_UTILS_H__
 #define __MPCOMP_TREE_ARRAY_UTILS_H__
 
+#if 0
 static char*
 __mpcomp_tree_array_convert_array_to_string( int* tab, const int size )
 {   
@@ -30,6 +31,7 @@ __mpcomp_tree_array_convert_array_to_string( int* tab, const int size )
 
     return string;
 }
+#endif
 
 static inline int*
 __mpcomp_tree_array_compute_tree_shape( mpcomp_node_t* node, int* tree_shape, const int size  )

@@ -50,6 +50,7 @@ __mpcomp_tree_array_get_stage_nodes_num_per_depth( const int* shape, const int m
     return count;
 }
 
+#if 0
 static int*
 __mpcomp_tree_array_get_stage_nodes_num_depth_array( const int* shape, const int max_depth, const int depth )
 {
@@ -65,7 +66,7 @@ __mpcomp_tree_array_get_stage_nodes_num_depth_array( const int* shape, const int
 
     return count;
 }
-
+#endif
 
 static int 
 __mpcomp_tree_array_get_node_depth( const int* shape, const int max_depth, const int rank )
@@ -208,6 +209,7 @@ __mpcomp_tree_array_get_father_array_by_depth( const int* shape, const int max_d
     return parents_array;
 }
 
+#if 0
 static int*
 __mpcomp_tree_array_get_father_array_by_level( const int* shape, const int max_depth, const int rank )
 {
@@ -235,7 +237,7 @@ __mpcomp_tree_array_get_father_array_by_level( const int* shape, const int max_d
     parents_array[0] = 0; // root 
     return parents_array;
 }
-
+#endif
 
 
 static int*
@@ -266,6 +268,7 @@ __mpcomp_tree_array_get_first_child_array( const int* shape, const int max_depth
     return first_child_array; 
 }
 
+#if 0
 static int*
 __mpcomp_tree_array_get_children_num_array( const int* shape, const int max_depth, const int rank )
 {
@@ -288,6 +291,7 @@ __mpcomp_tree_array_get_children_num_array( const int* shape, const int max_dept
 
     return children_num_array;
 }
+#endif
 
 static int
 __mpcomp_tree_array_compute_thread_openmp_min_rank_compact( const int* shape, const int max_depth, const int rank )
@@ -376,11 +380,13 @@ __mpcomp_tree_array_compute_thread_openmp_min_rank_balanced( const int* shape, c
     return count;
 }
 
+#if 0
 static int
 __mpcomp_tree_array_update_thread_openmp_min_rank_scatter (const int father_stage_size, const int father_min_index, const int node_local_rank )
 {
     return father_min_index + node_local_rank * father_stage_size;
 }
+#endif
 
 static int
 __mpcomp_tree_array_compute_thread_openmp_min_rank_scatter( const int* shape, const int max_depth, const int rank )
@@ -443,6 +449,7 @@ __mpcomp_tree_array_compute_thread_openmp_min_rank( const int* shape, const int 
     return min_index;
 } 
 
+#if 0
 static int __mpcomp_tree_array_find_next_running_stage_depth(   const int* tree_shape, 
                                                                 const int start_depth, 
                                                                 const int max_depth, 
@@ -461,6 +468,7 @@ static int __mpcomp_tree_array_find_next_running_stage_depth(   const int* tree_
     *num_assigned_mvps = cumulative_children_num;
     return i;
 }
+#endif
 
 static inline int 
 __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* tree_shape, const int max_depth, const int rank )

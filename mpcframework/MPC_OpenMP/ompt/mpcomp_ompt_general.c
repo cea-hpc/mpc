@@ -257,7 +257,7 @@ ompt_enumerate_mutex_impls( int current_mutex, int* next_mutex, const char** nex
 /****
  * Set/Get Callback
  */
-
+#if 0
 static int mpcomp_ompt_set_result_to_str( ompt_set_result_t status, const char **string )
 {
 	uint64_t i;
@@ -300,6 +300,7 @@ static int mpcomp_ompt_callback_to_str( ompt_callbacks_t callback_type, const ch
 
 	return ( i < len -1 ) ? 1 : 0;
 }
+#endif
 
 static ompt_set_result_t mpcomp_ompt_get_callback_status( ompt_callbacks_t callback_type )
 {

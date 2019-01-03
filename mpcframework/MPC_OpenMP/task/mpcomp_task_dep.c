@@ -25,12 +25,6 @@ extern ompt_callback_t* OMPT_Callbacks;
 
 #ifdef MPCOMP_USE_TASKDEP
 
-static int __mpcomp_task_wait_deps(mpcomp_task_dep_node_t *task_node) {
-  while (sctk_atomics_load_int(&(task_node->predecessors))) {
-    mpcomp_task_schedule(1);
-  }
-}
-
 static int __mpcomp_task_process_deps(mpcomp_task_dep_node_t *task_node,
                                       mpcomp_task_dep_ht_table_t *htable,
                                       void **depend) {
