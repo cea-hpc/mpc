@@ -246,7 +246,7 @@ void mpcomp_internal_GOMP_parallel_sections_start(void (*fn)(void *),
   info->nb_sections = count;
 
   /* Begin scheduling */
-  num_threads = (num_threads == 0) ? -1 : num_threads;
+  num_threads = (num_threads == 0) ? 1 : num_threads;
   __mpcomp_internal_begin_parallel_region(info, num_threads);
 
   /* Start scheduling */
