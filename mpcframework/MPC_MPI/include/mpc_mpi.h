@@ -444,7 +444,8 @@ extern "C"
 typedef MPC_Datatype MPI_Datatype; /* unsigned int */
 typedef MPC_Comm MPI_Comm; /* unsigned int */
 typedef int MPI_Request;
-typedef MPC_Aint MPI_Aint; /* long */
+typedef MPC_Aint MPI_Aint;
+typedef MPC_Count MPI_Count;
 typedef int MPI_Errhandler;
 typedef MPC_User_function MPI_User_function;
 typedef int MPI_Op;
@@ -484,7 +485,7 @@ typedef MPC_Checkpoint_state MPIX_Checkpoint_state;
 
 /* NOT IMPLEMENTED >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 typedef int MPI_Win;
-typedef long MPI_Count;
+
 
 typedef MPC_Message MPI_Message;
 
