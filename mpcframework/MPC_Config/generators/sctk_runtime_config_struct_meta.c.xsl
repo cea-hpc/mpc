@@ -42,7 +42,7 @@
 		<xsl:call-template name="modules-meta"/>
 		<xsl:apply-templates select="config"/>
 		<xsl:call-template name="end-marker"/>
-		<xsl:text>};&#10;&#10;</xsl:text>
+		<xsl:text>};</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -64,7 +64,7 @@
 		<xsl:value-of select="@name"/>
 		<xsl:text>) , NULL , sctk_runtime_config_struct_init_</xsl:text>
 		<xsl:value-of select="@name"/>
-		<xsl:text>},&#10;</xsl:text>
+		<xsl:text>, NULL },</xsl:text>
 		<xsl:apply-templates select="param"/>
 		<xsl:apply-templates select="array"/>
 	</xsl:template>
@@ -90,7 +90,7 @@
 				NULL
 			</xsl:otherwise>
 		</xsl:choose>
-		<xsl:text>},&#10;</xsl:text>
+		<xsl:text>, NULL},</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -105,7 +105,7 @@
 		<xsl:call-template name="gen-type-name2"/>
 		<xsl:text>" , "</xsl:text>
 		<xsl:value-of select="@entry-name"/>
-		<xsl:text>"},&#10;</xsl:text>
+		<xsl:text>", NULL },</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -117,7 +117,7 @@
 		<xsl:value-of select="@name"/>
 		<xsl:text>) , NULL , sctk_runtime_config_struct_init_</xsl:text>
 		<xsl:value-of select="@name"/>
-		<xsl:text>},&#10;</xsl:text>
+		<xsl:text>, NULL},</xsl:text>
 		<xsl:apply-templates select="choice"/>
 	</xsl:template>
 
@@ -134,7 +134,7 @@
 		<xsl:call-template name="gen-type-name2"/>
 		<xsl:text>" , </xsl:text>
 		<xsl:call-template name="gen-init-name"/>
-		<xsl:text>},&#10;</xsl:text>
+		<xsl:text>, NULL},</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -237,21 +237,21 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="end-marker">
 		<xsl:text>&#09;/* end marker */&#10;</xsl:text>
-		<xsl:text>&#09;{NULL , SCTK_CONFIG_META_TYPE_END , 0 , 0 , NULL,  NULL}&#10;</xsl:text>
+		<xsl:text>&#09;{NULL , SCTK_CONFIG_META_TYPE_END , 0 , 0 , NULL,  NULL, NULL}&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template name="profile-meta">
 		<xsl:text>&#09;/* sctk_runtime_config */&#10;</xsl:text>
-		<xsl:text>&#09;{"sctk_runtime_config" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config) , NULL , sctk_runtime_config_reset},&#10;</xsl:text>
-		<xsl:text>&#09;{"modules"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config,modules)  , sizeof(struct sctk_runtime_config_modules) , "sctk_runtime_config_modules" , NULL},&#10;</xsl:text>
-		<xsl:text>&#09;{"networks"    , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config,networks)  , sizeof(struct sctk_runtime_config_struct_networks), "sctk_runtime_config_struct_networks" , NULL},&#10;</xsl:text>
+		<xsl:text>&#09;{"sctk_runtime_config" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config) , NULL , sctk_runtime_config_reset, NULL},&#10;</xsl:text>
+		<xsl:text>&#09;{"modules"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config,modules)  , sizeof(struct sctk_runtime_config_modules) , "sctk_runtime_config_modules" , NULL, NULL},&#10;</xsl:text>
+		<xsl:text>&#09;{"networks"    , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config,networks)  , sizeof(struct sctk_runtime_config_struct_networks), "sctk_runtime_config_struct_networks" , NULL, NULL},&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template name="modules-meta">
 		<xsl:text>&#09;/* sctk_runtime_config_modules */&#10;</xsl:text>
-		<xsl:text>&#09;{"sctk_runtime_config_modules" , SCTK_CONFIG_META_TYPE_STRUCT , 0 , sizeof(struct sctk_runtime_config) , NULL , NULL},&#10;</xsl:text>
+		<xsl:text>&#09;{"sctk_runtime_config_modules" , SCTK_CONFIG_META_TYPE_STRUCT , 0 , sizeof(struct sctk_runtime_config) , NULL , NULL, NULL},&#10;</xsl:text>
 		<xsl:for-each select="config">
 			<xsl:apply-templates select="modules"/>
 		</xsl:for-each>
@@ -274,7 +274,7 @@
 		<xsl:value-of select="@type"/>
 		<xsl:text>" , sctk_runtime_config_struct_init_</xsl:text>
 		<xsl:value-of select="@type"/>
-		<xsl:text>},&#10;</xsl:text>
+		<xsl:text>, NULL},</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->

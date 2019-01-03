@@ -79,9 +79,14 @@ bool sctk_runtime_config_xml_selector_check(xmlNodePtr selector)
 
 	/* switches */
 	if (xmlStrcmp(selector->name,BAD_CAST("env")) == 0)
+	{
 		return sctk_runtime_config_xml_selector_env_check(selector);
+	}
 	else
+	{
 		sctk_fatal("Invalid selector in mappings : %s.",selector->name);
+		return false;
+	}
 }
 
 /********************************* FUNCTION *********************************/

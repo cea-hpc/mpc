@@ -340,7 +340,6 @@ const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_child_meta
 void * sctk_runtime_config_get_entry(sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current)
 {
 	/* errors */
-	assert(current->offset >= 0);
 	assert(current->type == SCTK_CONFIG_META_TYPE_PARAM || current->type == SCTK_CONFIG_META_TYPE_ARRAY || current->type == SCTK_CONFIG_META_TYPE_UNION_ENTRY);
 
 	/* compute address and return */
