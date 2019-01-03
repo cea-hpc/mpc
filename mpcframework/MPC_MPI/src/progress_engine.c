@@ -251,9 +251,6 @@ int sctk_progress_list_poll( struct sctk_progress_list * pl )
         {
             did_work |= 1;
             pl->no_work_count--;
-            if( pl->no_work_count < 0 )
-                pl->no_work_count = 0;
-
 
             sctk_spinlock_lock( &pl->list_lock );
             /* We need to free this slot */

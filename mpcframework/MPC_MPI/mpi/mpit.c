@@ -253,6 +253,7 @@ static inline void *MPC_T_data_get_ptr_size(struct MPC_T_data *tdata,
     break;
   default:
     sctk_fatal("No such datatype for MPI_T_DATA");
+    return 0;
   }
 }
 

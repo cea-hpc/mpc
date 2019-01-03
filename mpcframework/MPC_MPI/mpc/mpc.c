@@ -809,7 +809,7 @@ int __MPC_init_progress(sctk_task_specific_t * tmp )
   /* Retrieve the ctx pointer */
   tmp->progress_list = sctk_progress_engine_pool_join( &__mpc_progress_pool );
 
-
+  return MPC_SUCCESS;
 }
 
 int __MPC_release_progress( sctk_task_specific_t * tmp  )
@@ -2123,6 +2123,7 @@ size_t __MPC_Get_datatype_size(MPC_Datatype datatype,
 
   /* We shall never arrive here ! */
   sctk_fatal("This error shall never be reached");
+  return MPC_ERR_INTERN;
 }
 
 int PMPC_Type_get_true_extent(MPC_Datatype datatype, MPC_Aint *true_lb,
@@ -2652,6 +2653,7 @@ int PMPC_Derived_datatype(MPC_Datatype *datatype,
    * SCTK_USER_DATA_TYPES_MAX if you app needs more than 265 datatypes =) */
   sctk_fatal("Not enough datatypes allowed : you requested too many derived "
              "types (forgot to free ?)");
+  return MPC_ERR_INTERN;
 }
 
 /** \brief this function is used to convert a datatype to a derived datatype
@@ -3651,12 +3653,12 @@ static inline int __MPC_Isend(void *buf, mpc_msg_count count,
 
   mpc_check_comm(comm, comm);
 
+  __MPC_Comm_rank_size(comm, &src, &com_size, task_specific);
+
   if (dest == MPC_PROC_NULL) {
     sctk_mpc_init_request(request, comm, src, REQUEST_SEND);
     MPC_ERROR_SUCESS();
   }
-
-  __MPC_Comm_rank_size(comm, &src, &com_size, task_specific);
 
   mpc_check_count(count, comm);
 
@@ -3838,6 +3840,9 @@ static inline int __MPC_Irecv(void *buf, mpc_msg_count count,
   char tmp;
 
   mpc_check_comm(comm, comm);
+
+  __MPC_Comm_rank_size(comm, &src, &comm_size, task_specific);
+
   if (source == MPC_PROC_NULL) {
     sctk_mpc_init_request(request, comm, src, REQUEST_RECV);
     MPC_ERROR_SUCESS();
@@ -3849,8 +3854,6 @@ static inline int __MPC_Irecv(void *buf, mpc_msg_count count,
   }
   mpc_check_buf_null(buf, comm);
   mpc_check_type(datatype, comm);
-
-  __MPC_Comm_rank_size(comm, &src, &comm_size, task_specific);
 
   /*   mpc_check_msg (source, src, tag, comm, comm_size); */
   mpc_check_task_msg(src, comm, " destination", comm_size);

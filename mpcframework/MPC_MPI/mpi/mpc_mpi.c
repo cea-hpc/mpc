@@ -3515,7 +3515,7 @@ static int __INTERNAL__PMPI_Type_hvector (int count,
 		__INTERNAL__PMPI_Type_extent (old_type, (MPI_Aint *) & extent);
 
 		/*  Handle the contiguous case or Handle count == 0 */
-		if( (((blocklen * extent) == stride) && ( 0 <= stride ))
+		if( (((blocklen * extent) == stride))
 		|| (count == 0 ) )
 		{
 			int ret = __INTERNAL__PMPI_Type_contiguous_inherits (count * blocklen, old_type,  newtype_p, &dtctx);
@@ -10295,9 +10295,9 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute(
 
 	int res;
 
-	if( 1 || (size < sctk_runtime_config_get()->modules.collectives_intra.reduce_intra_for_trsh)
+	if( 1 || ((size < sctk_runtime_config_get()->modules.collectives_intra.reduce_intra_for_trsh)
 	&&  sctk_datatype_contig_mem(datatype)
-	&&  (count <  sctk_runtime_config_get()->modules.collectives_intra.reduce_intra_for_count_trsh) )
+	&&  (count <  sctk_runtime_config_get()->modules.collectives_intra.reduce_intra_for_count_trsh)) )
 	{
 		res = __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 				sendbuf, recvbuf, count, datatype, op,
@@ -19710,6 +19710,7 @@ static void MPC_Message_handle_init_once() {
   sctk_spinlock_unlock(&__message_handle_lock);
 }
 
+#if 0
 /** This is how you release the handle table once */
 static void MPC_Message_handle_release_once() {
 
@@ -19722,6 +19723,7 @@ static void MPC_Message_handle_release_once() {
 
   sctk_spinlock_unlock(&__message_handle_lock);
 }
+#endif
 
 /** This is how you create a new mesage */
 struct MPC_Message *MPC_Message_new() {

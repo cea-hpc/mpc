@@ -187,6 +187,8 @@ MPI_Aint MPCX_Type_get_count(MPI_Datatype datatype) {
     return 0;
     break;
   }
+
+  return 0;
 }
 
 /** \brief This function is an extension to the standard used to fill a status from a size

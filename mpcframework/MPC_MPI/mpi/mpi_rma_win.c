@@ -850,9 +850,6 @@ static inline void win_keyval_ht_init_once() {
 
 static inline sctk_uint64_t get_per_rank_keyval_key(int keyval) {
   sctk_uint64_t rank = sctk_get_task_rank();
-
-  assume(0 <= rank);
-
   sctk_uint64_t ret = 0;
 
   ret = (rank << 32);

@@ -34,7 +34,7 @@ static const char * op_to_string(MPI_Op op) {
 }
 
 #else
-#define LOG(...) 
+#define LOG(...)
 #endif
 
 typedef enum {
@@ -95,7 +95,7 @@ typedef struct _xMPI_Request
 } xMPI_Request;
 
 
-static inline int nbc_op_init( struct nbc_op * op,
+static inline void nbc_op_init( struct nbc_op * op,
         nbc_op_type type,
         int remote,
         MPI_Comm comm,
@@ -118,27 +118,27 @@ static inline int nbc_op_init( struct nbc_op * op,
     op->tag = tag;
 }
 
-static inline int nbc_op_wait_init(struct nbc_op * op) {
+static inline void nbc_op_wait_init(struct nbc_op * op) {
     op->trig = 0;
     op->done = 0;
     op->t = TYPE_WAIT;
 }
 
-static inline int nbc_op_free_init(struct nbc_op * op, void * buff) {
+static inline void nbc_op_free_init(struct nbc_op * op, void * buff) {
     op->trig = 0;
     op->done = 0;
     op->t = TYPE_FREE;
     op->buff = buff;
 }
 
-static inline int nbc_op_comm_free_init(struct nbc_op * op, MPI_Comm comm) {
+static inline void nbc_op_comm_free_init(struct nbc_op * op, MPI_Comm comm) {
     op->trig = 0;
     op->done = 0;
     op->t = TYPE_COMM_FREE;
     op->comm = comm;
 }
 
-static inline int nbc_op_mpi_op_init(struct nbc_op * op,
+static inline void nbc_op_mpi_op_init(struct nbc_op * op,
         MPI_Datatype datatype,
         int count,
         void * buff,

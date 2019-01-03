@@ -355,6 +355,7 @@ int lock_type_to_exposure_mode(int lock_type) {
     return MPC_WIN_TARGET_PASSIVE_SHARED;
   } else {
     sctk_fatal("No such lock type");
+    return MPC_WIN_TARGET_NONE;
   }
 }
 
