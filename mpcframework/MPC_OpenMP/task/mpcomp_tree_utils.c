@@ -173,9 +173,11 @@ static void __mpcomp_task_check_neighbourhood_r( mpcomp_node_t *node )
     thread = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
 
     sctk_assert( thread->instance );
+
+    instance = thread->instance;
     sctk_assert( instance->tree_nb_nodes_per_depth );
     
-    instance = thread->instance;
+    
     const int instance_level_size = instance->tree_nb_nodes_per_depth[node->depth + 1];
     
     switch (node->child_type) 
