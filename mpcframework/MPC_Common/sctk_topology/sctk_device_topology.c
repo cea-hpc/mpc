@@ -957,7 +957,6 @@ void sctk_device_attach_resource(sctk_device_t *device) {
 void sctk_device_detach_resource(sctk_device_t *device) {
   sctk_spinlock_lock(&device->res_lock);
   device->nb_res--;
-  assert(device->nb_res >= 0);
   sctk_spinlock_unlock(&device->res_lock);
 }
 

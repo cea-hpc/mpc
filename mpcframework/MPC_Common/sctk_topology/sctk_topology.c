@@ -215,47 +215,48 @@ static void chose_color_task(int task_id, int nb_task, int *r, int *g, int *b, i
     *b_m = blue_m;
 }
 
-static char *convert_rgb_to_string(int red, int green, int blue, char * rgb){                                          
-    char r[8];                                                                                  
-    char g[8];                                                                                  
+static char *convert_rgb_to_string(int red, int green, int blue, char * rgb){
+    char r[8];
+    char g[8];
     char b[8];
     char temp1[8];
     char temp2[8];
     char temp3[8];
     sprintf(r, "%x", red);
-    sprintf(g, "%x", green);                                                                   
-    sprintf(b, "%x", blue);                                                                    
-    char * r1;                                                                                  
-    char * g1;                                                                                  
+    sprintf(g, "%x", green);
+    sprintf(b, "%x", blue);
+    char * r1;
+    char * g1;
     char * b1;
     if(red < 16){
         sprintf(temp1, "%d", 0);
-        r1 = strcat(temp1, r);                                                               
+        r1 = strcat(temp1, r);
     }
-    else{   
-        sprintf(temp1, "");
-        r1 = strcat(temp1, r);                                                               
+    else{
+        temp1[0] = '\0';
+        r1 = strcat(temp1, r);
     }
     if(green < 16){
-        sprintf(temp2, "%d", 0);
-        g1 = strcat(temp2, g);                                                               
+        temp2[0] = '\0';
+        g1 = strcat(temp2, g);
     }
-    else{   
-        sprintf(temp2, "");
-        g1 = strcat(temp2, g);                                                               
+    else{
+        temp2[0] = '\0';
+        g1 = strcat(temp2, g);
     }
     if(blue < 16){
         sprintf(temp3, "%d", 0);
-        b1 = strcat(temp3, b);                                                               
+        b1 = strcat(temp3, b);
     }
-    else{   
-        sprintf(temp3, "");
-        b1 = strcat(temp3, b);                                                               
+    else{
+        temp3[0] = '\0';
+        b1 = strcat(temp3, b);
     }
     char *temp = strcat(g1,b1);
-    strcat(r1, temp);                                                                
+    strcat(r1, temp);
     strcpy(rgb, r1);
-} 
+    return rgb;
+}
 
 /* fill thread placement informations in file to communicate between processes of the same node for text placement option */
 void create_placement_text(int os_pu, int os_master_pu, int task_id, int vp, int rank_open_mp, int* min_idex, int pid){
@@ -570,7 +571,7 @@ static void sctk_init_text_option(struct sctk_text_option_s **tab_option){
     (*tab_option)->pid_tab = malloc(sizeof(int)*lenght);
     int l=0;
     struct sctk_text_option_s * temp = *tab_option;
-    for(l; l< lenght; l++){
+    for(l=0; l< lenght; l++){
         temp->vp_tab[l] = -1;
         temp->os_index[l] = -1;
         temp->rank_mpi[l] = -1;
