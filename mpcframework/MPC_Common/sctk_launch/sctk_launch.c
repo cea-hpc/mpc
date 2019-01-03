@@ -328,17 +328,17 @@ static void sctk_perform_initialisation (void)
 #ifdef HAVE_HWLOC
 	sctk_alloc_posix_mmsrc_numa_init_phase_numa();
 #endif
-	
+
     // MALP FIX...
     char *env = NULL;
-    if( env = getenv( "LD_PRELOAD") )
+    if( (env = getenv( "LD_PRELOAD")) )
     {
        env = strdup( env );
        setenv("LD_PRELOAD", "", 1 );
     }
 
 	sctk_locate_dynamic_initializers();
-	
+
     if( env )
        setenv( "LD_PRELOAD", env, 1 );
 

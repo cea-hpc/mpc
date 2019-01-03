@@ -46,7 +46,8 @@ volatile int sctk_online_program = 1;
 ssize_t sctk_safe_read(int fd, void* buf, size_t count)
 {
 	/* vars */
-	int tmp = 0, nb_total_received_bytes = 0;
+	int tmp = 0;
+	size_t nb_total_received_bytes = 0;
 	int res = count;
 
 	if( count == 0 )
@@ -103,7 +104,8 @@ ssize_t sctk_safe_read(int fd, void* buf, size_t count)
 ssize_t sctk_safe_write(int fd, const void* buf, size_t count)
 {
 	/* vars */
-	int tmp, nb_total_sent_bytes = 0;
+	int tmp;
+	size_t nb_total_sent_bytes = 0;
 	int res = count;
 
 	/* loop until read all */
@@ -143,7 +145,7 @@ ssize_t sctk_safe_write(int fd, const void* buf, size_t count)
 ssize_t sctk_safe_checked_read(int fd, void* buf, size_t count)
 {
 	ssize_t res = sctk_safe_read(fd,buf,count);
-	assume_m(res == count,"Failed to read the requested size, get %lu but expect %lu.",res,count);
+	assume_m((size_t)res == count,"Failed to read the requested size, get %lu but expect %lu.",res,count);
 	return res;
 }
 
@@ -154,6 +156,6 @@ ssize_t sctk_safe_checked_read(int fd, void* buf, size_t count)
 ssize_t sctk_safe_checked_write(int fd, const void* buf, size_t count)
 {
 	ssize_t res = sctk_safe_write(fd,buf,count);
-	assume_m(res == count,"Failed to write the requested size, get %lu but expect %lu.",res,count);
+	assume_m((size_t)res == count,"Failed to write the requested size, get %lu but expect %lu.",res,count);
 	return res;
 }

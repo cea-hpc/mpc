@@ -515,13 +515,13 @@ static inline int sctk_aio_numthreads()
 	return 4;
 }
 
-volatile static int sctk_aio_threads_initialized = 0;
+static volatile int sctk_aio_threads_initialized = 0;
 pthread_mutex_t sctk_aio_threads_initialized_lock = PTHREAD_MUTEX_INITIALIZER;
 
 
 
 static struct sctk_aio_threads sctk_aio_threads;
-volatile static int sctk_aio_thread_stop_condition = 1;
+static volatile int sctk_aio_thread_stop_condition = 1;
 
 void * aio_thread_main_loop( void * arg )
 {
@@ -886,8 +886,8 @@ struct sctk_aio_lio_listio_ctx
 	struct sigevent * sevp;
 	struct sigevent * individual_sevp;
 
-	volatile unsigned int counter;
-	volatile unsigned int request_count;
+	volatile int counter;
+	volatile int request_count;
 	pthread_mutex_t lock;
 };
 
