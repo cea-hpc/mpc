@@ -103,7 +103,7 @@ void * realloc (void * ptr, size_t size)
 /************************* FUNCTION ************************/
 int posix_memalign(void **memptr, size_t boundary, size_t size)
 {
-	int res;
+	int res = 0;
 
 	SCTK_PROFIL_START(posix_memalign);
 
@@ -114,12 +114,6 @@ int posix_memalign(void **memptr, size_t boundary, size_t size)
 		res = EINVAL;
 	} else {
 		*memptr = sctk_memalign(boundary,size);
-
-		//check res
-		if (memptr == NULL)
-			res = ENOMEM;
-		else
-			res = 0;
 	}
 
 	SCTK_PROFIL_END(posix_memalign);

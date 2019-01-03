@@ -34,7 +34,7 @@ extern "C"
 
 /********************************** GLOBALS *********************************/
 /** Size class for the free lists. **/
-extern const sctk_size_t SCTK_ALLOC_FREE_SIZES[SCTK_ALLOC_NB_FREE_LIST];
+extern const sctk_ssize_t SCTK_ALLOC_FREE_SIZES[SCTK_ALLOC_NB_FREE_LIST];
 
 /********************************** ENUM ************************************/
 /** Define how to insert a given bloc in free list, at the end or begening. **/
@@ -68,12 +68,12 @@ struct sctk_thread_pool
 	**/
 	bool free_list_status[SCTK_ALLOC_NB_FREE_LIST];
 	/** If you free list size follow an analytic low, you can provide a method to reverse it is more optimized way. **/
-	int (*reverse_analytic_free_size)(sctk_size_t size,const sctk_size_t * size_list);
+	int (*reverse_analytic_free_size)(sctk_size_t size,const sctk_ssize_t * size_list);
 	/**
 	 * Define the size of each class of free blocs, must be terminated by -1.
 	 * and must must contain at least SCTK_ALLOC_NB_FREE_LIST elements.
 	**/
-	const sctk_size_t * alloc_free_sizes;
+	const sctk_ssize_t * alloc_free_sizes;
 	/** Define the number of entries in free lists (must be lower than SCTK_ALLOC_NB_FREE_LIST). **/
 	short int nb_free_lists;
 };
@@ -82,7 +82,7 @@ struct sctk_thread_pool
 //thread pool management
 void sctk_alloc_thread_pool_init(
     struct sctk_thread_pool *pool,
-    const sctk_size_t alloc_free_sizes[SCTK_ALLOC_NB_FREE_LIST]);
+    const sctk_ssize_t alloc_free_sizes[SCTK_ALLOC_NB_FREE_LIST]);
 sctk_alloc_free_list_t *sctk_alloc_get_free_list(struct sctk_thread_pool *pool,
                                                  sctk_size_t size);
 sctk_size_t sctk_alloc_get_list_class(struct sctk_thread_pool *pool,
@@ -97,7 +97,7 @@ void sctk_alloc_free_list_remove(struct sctk_thread_pool *pool,
                                  struct sctk_alloc_free_chunk *fchunk);
 struct sctk_alloc_free_chunk *
 sctk_alloc_find_adapted_free_chunk(sctk_alloc_free_list_t *list,
-                                   sctk_size_t size);
+                                   sctk_ssize_t size);
 struct sctk_alloc_free_chunk *
 sctk_alloc_find_free_chunk(struct sctk_thread_pool *pool, sctk_size_t size);
 sctk_alloc_free_list_t *
@@ -125,7 +125,7 @@ void sctk_alloc_free_list_mark_non_empty(struct sctk_thread_pool *pool,
 bool sctk_alloc_free_list_is_not_empty_quick(struct sctk_thread_pool *pool,
                                              sctk_alloc_free_list_t *list);
 extern int sctk_alloc_reverse_analytic_free_size(sctk_size_t size,
-                                                 const sctk_size_t *size_list);
+                                                 const sctk_ssize_t *size_list);
 
 #ifdef __cplusplus
 }

@@ -85,7 +85,7 @@ extern "C"
 **/
 #define SCTK_ALLOC_SMALL_CHUNK_SIZE 32
 /** Define the size of a macro bloc (2Mo by default) **/
-#define SCTK_MACRO_BLOC_SIZE (2*1024ULL*1024ULL)
+#define SCTK_MACRO_BLOC_SIZE (2*1024LL*1024LL)
 /** Number of size class for the free list. **/
 #define SCTK_ALLOC_NB_FREE_LIST 48
 /** Minimal size of blocks. **/
@@ -97,7 +97,7 @@ extern "C"
 /** Size allocated for region headers. **/
 #define SCTK_REGION_HEADER_SIZE (4*1024ULL*1024ULL)
 /** Size of a region header (1TB for 2MB macro-blocs and 1 pointer per entry) **/
-#define SCTK_REGION_SIZE (1024ULL*1024ULL*1024ULL*1024ULL)
+#define SCTK_REGION_SIZE (1024LL*1024LL*1024LL*1024LL)
 /** Number of entries of a region header. **/
 #define SCTK_REGION_HEADER_ENTRIES ((SCTK_REGION_SIZE) / SCTK_MACRO_BLOC_SIZE)
 /** Base address for the current process heap based on mmap. **/
@@ -162,6 +162,7 @@ extern "C"
 /************************** TYPES **************************/
 /** Type for size member, must be 64bit type to maintain alignment coherency. **/
 typedef size_t sctk_size_t;
+typedef ssize_t sctk_ssize_t;
 /** Type for address member, must be 64bit type to maintain alignment coherency. **/
 typedef size_t sctk_addr_t;
 /** Type for short size member, must be 8bits type to maintain alignment coherency. **/

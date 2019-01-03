@@ -277,7 +277,7 @@ SCTK_PUBLIC void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s* stat,
 SCTK_PUBLIC void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s* stat, void* ptr, size_t size)
 {
 	//vars
-	int i;
+	unsigned int i;
 	size_t first_page = (size_t)ptr >> SCTK_ALLOC_NUMA_STAT_PAGE_SHIFT;
 	size_t last_page = first_page + (size >> SCTK_ALLOC_NUMA_STAT_PAGE_SHIFT);
 	static bool first_call = true;

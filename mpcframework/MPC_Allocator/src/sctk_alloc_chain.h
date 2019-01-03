@@ -62,8 +62,8 @@ struct sctk_alloc_numa_stat_s;
 /******************************** STRUCTURE *********************************/
 struct sctk_alloc_chain_stat
 {
-	sctk_size_t min_free_size;
-	sctk_size_t max_free_size;
+	sctk_ssize_t min_free_size;
+	sctk_ssize_t max_free_size;
 	sctk_size_t nb_free_chunks;
 	sctk_size_t nb_macro_blocs;
 	sctk_size_t cached_free_memory;

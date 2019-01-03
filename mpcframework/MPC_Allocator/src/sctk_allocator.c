@@ -96,7 +96,7 @@ struct sctk_alloc_chain * sctk_alloc_chain_list[2] = {NULL,NULL};
  * with analytic function sctk_alloc_reverse_analytic_free_size()
  * CAUTION, if change values here, you need to update this function.
 **/
-const sctk_size_t SCTK_ALLOC_FREE_SIZES[SCTK_ALLOC_NB_FREE_LIST] = {
+const sctk_ssize_t SCTK_ALLOC_FREE_SIZES[SCTK_ALLOC_NB_FREE_LIST] = {
 	32,    64,   96,  128,  160,   192,   224,   256,    288,    320,
 	352,  384,  416,  448,  480,   512,   544,   576,    608,    640,
 	672,  704,  736,  768,  800,   832,   864,   896,    928,    960,
@@ -104,7 +104,7 @@ const sctk_size_t SCTK_ALLOC_FREE_SIZES[SCTK_ALLOC_NB_FREE_LIST] = {
 	524288, 1048576, SCTK_MACRO_BLOC_SIZE, -1, -1, -1, -1, -1
 };
 /** Define the size classes used for the free list of default memory source. **/
-const sctk_size_t SCTK_ALLOC_MMS_FREE_SIZES[SCTK_ALLOC_NB_FREE_LIST] = {
+const sctk_ssize_t SCTK_ALLOC_MMS_FREE_SIZES[SCTK_ALLOC_NB_FREE_LIST] = {
 	     1*SCTK_MACRO_BLOC_SIZE,     2*SCTK_MACRO_BLOC_SIZE,     4*SCTK_MACRO_BLOC_SIZE,
 	     8*SCTK_MACRO_BLOC_SIZE,    16*SCTK_MACRO_BLOC_SIZE,    32*SCTK_MACRO_BLOC_SIZE,
 	    64*SCTK_MACRO_BLOC_SIZE,   128*SCTK_MACRO_BLOC_SIZE,   256*SCTK_MACRO_BLOC_SIZE,
@@ -215,7 +215,7 @@ sctk_size_t sctk_alloc_calc_chunk_size(sctk_size_t user_size) {
 **/
 void sctk_alloc_thread_pool_init(
     struct sctk_thread_pool *pool,
-    const sctk_size_t alloc_free_sizes[SCTK_ALLOC_NB_FREE_LIST]) {
+    const sctk_ssize_t alloc_free_sizes[SCTK_ALLOC_NB_FREE_LIST]) {
   int i;
 
   // default value
@@ -300,7 +300,7 @@ int sctk_alloc_optimized_log2_size_t(sctk_size_t value)
  * @param size_list Define the list this is only to check in debug mode.
 **/
 int sctk_alloc_reverse_analytic_free_size(sctk_size_t size,
-                                          const sctk_size_t *size_list) {
+                                          const sctk_ssize_t *size_list) {
   // errors
   assert(size_list == SCTK_ALLOC_FREE_SIZES);
   assert(64 >> 5 == 2);
@@ -327,12 +327,12 @@ int sctk_alloc_reverse_analytic_free_size(sctk_size_t size,
  * header comprised. For blocs larger than a macro bloc, it will return NULL.
 **/
 sctk_alloc_free_list_t *
-sctk_alloc_get_free_list_slow(struct sctk_thread_pool *pool, sctk_size_t size) {
+sctk_alloc_get_free_list_slow(struct sctk_thread_pool *pool, sctk_ssize_t size) {
   /** @TODO maybe this can be optimized by using uin32_t, only ok if refuse
    * usage of old memory source as it manage segment of large size. **/
   sctk_size_t seg_size = pool->nb_free_lists;
   sctk_size_t i = seg_size >> 1;
-  const sctk_size_t *ptr = pool->alloc_free_sizes;
+  const sctk_ssize_t *ptr = pool->alloc_free_sizes;
   // int j = 0;
 
   // errors
@@ -377,9 +377,9 @@ sctk_alloc_get_free_list_slow(struct sctk_thread_pool *pool, sctk_size_t size) {
  * header comprised. For blocs larger than a macro bloc, it will return NULL.
 **/
 sctk_alloc_free_list_t *
-sctk_alloc_get_free_list_fast(struct sctk_thread_pool *pool, sctk_size_t size) {
+sctk_alloc_get_free_list_fast(struct sctk_thread_pool *pool, sctk_ssize_t size) {
   // vars
-  const sctk_size_t *size_list = pool->alloc_free_sizes;
+  const sctk_ssize_t *size_list = pool->alloc_free_sizes;
   int pos;
 
   // errors
@@ -488,7 +488,7 @@ void sctk_alloc_free_list_insert(
     enum sctk_alloc_insert_mode insert_mode) {
   struct sctk_alloc_free_chunk *flist;
   struct sctk_alloc_free_chunk *fchunk;
-  sctk_size_t list_class;
+  sctk_ssize_t list_class;
 
   // errors
   assert(pool != NULL);
@@ -582,7 +582,7 @@ void sctk_alloc_free_list_remove(struct sctk_thread_pool *pool,
  */
 struct sctk_alloc_free_chunk *
 sctk_alloc_find_adapted_free_chunk(sctk_alloc_free_list_t *list,
-                                   sctk_size_t size) {
+                                   sctk_ssize_t size) {
   struct sctk_alloc_free_chunk *fchunk;
 
   // error
@@ -1480,7 +1480,7 @@ SCTK_PUBLIC void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,
 
 		//temporaty check non support of small blocs
 		if (chunk != NULL)
-			assume_m(sctk_alloc_get_chunk_header_large_size(&chunk->header) >= 32lu,"Small blocs are not supported for now, so it's imposible to get such a small size here.");
+			assume_m(sctk_alloc_get_chunk_header_large_size(&chunk->header) >= 32l,"Small blocs are not supported for now, so it's imposible to get such a small size here.");
 
 		//error
 		if (chunk == NULL)
@@ -1946,7 +1946,7 @@ void sctk_alloc_mm_source_default_init(struct sctk_alloc_mm_source_default* sour
 **/
 struct sctk_alloc_macro_bloc *
 sctk_alloc_mm_source_default_request_memory(struct sctk_alloc_mm_source *source,
-                                            sctk_size_t size) {
+                                            sctk_ssize_t size) {
   // vars
   struct sctk_alloc_mm_source_default *source_default =
       (struct sctk_alloc_mm_source_default *)source;
@@ -1954,7 +1954,7 @@ sctk_alloc_mm_source_default_request_memory(struct sctk_alloc_mm_source *source,
   struct sctk_alloc_macro_bloc *macro_bloc;
   enum sctk_alloc_mapping_state mapping;
   void *tmp = NULL;
-  sctk_size_t aligned_size = size;
+  sctk_ssize_t aligned_size = size;
   sctk_alloc_vchunk vchunk;
   sctk_alloc_vchunk residut;
 
@@ -2266,7 +2266,6 @@ SCTK_PUBLIC struct sctk_alloc_region_entry * sctk_alloc_region_get_entry(void* a
 	id = (((sctk_addr_t)addr)%SCTK_REGION_SIZE) / SCTK_MACRO_BLOC_SIZE;
 
 	assert(id < SCTK_REGION_HEADER_ENTRIES);
-	assert(id >= 0);
 
 	return region->entries+id;
 }

@@ -71,7 +71,7 @@ struct sctk_alloc_free_macro_bloc
 **/
 struct sctk_alloc_mm_source
 {
-	struct sctk_alloc_macro_bloc * (*request_memory)(struct sctk_alloc_mm_source * source,sctk_size_t size);
+	struct sctk_alloc_macro_bloc * (*request_memory)(struct sctk_alloc_mm_source * source,sctk_ssize_t size);
 	void (*free_memory)(struct sctk_alloc_mm_source * source,struct sctk_alloc_macro_bloc * bloc);
 	void (*cleanup)(struct sctk_alloc_mm_source * source);
 	struct sctk_alloc_macro_bloc * (*remap)(struct sctk_alloc_macro_bloc * old_macro_bloc,sctk_size_t new_size);

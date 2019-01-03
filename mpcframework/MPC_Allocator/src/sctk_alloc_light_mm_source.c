@@ -425,7 +425,7 @@ struct sctk_alloc_macro_bloc *sctk_alloc_mm_source_light_find_in_cache(
 **/
 struct sctk_alloc_macro_bloc *
 sctk_alloc_mm_source_light_request_memory(struct sctk_alloc_mm_source *source,
-                                          sctk_size_t size) {
+                                          sctk_ssize_t size) {
   // vars
   struct sctk_alloc_mm_source_light *light_source =
       (struct sctk_alloc_mm_source_light *)source;

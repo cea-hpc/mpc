@@ -111,7 +111,7 @@ extern void
 sctk_alloc_mm_source_light_cleanup(struct sctk_alloc_mm_source *source);
 extern struct sctk_alloc_macro_bloc *
 sctk_alloc_mm_source_light_request_memory(struct sctk_alloc_mm_source *source,
-                                          sctk_size_t size);
+                                          sctk_ssize_t size);
 extern void
 sctk_alloc_mm_source_light_free_memory(struct sctk_alloc_mm_source *source,
                                        struct sctk_alloc_macro_bloc *bloc);

@@ -51,12 +51,12 @@ static __inline__ bool sctk_alloc_is_power_of_two(sctk_size_t size)
  * Some functions to access attributes structure 
  */
 /************************* FUNCTION ************************/
-static __inline__ sctk_size_t sctk_alloc_get_chunk_header_large_size(struct sctk_alloc_chunk_header_large * chunk)
+static __inline__ sctk_ssize_t sctk_alloc_get_chunk_header_large_size(struct sctk_alloc_chunk_header_large * chunk)
 {
 	#ifdef _WIN32
 		//Windows doesn't support bitfield value of more than 32bits, but we have 56, so re-implement by and with masks and shift.
 		//Here, take the first 56bits were the size if stored.
-		return ( (*(sctk_size_t * ) chunk->size) & ((1ULL << 56 ) - 1 ) );
+		return ( (*(sctk_ssize_t * ) chunk->size) & ((1ULL << 56 ) - 1 ) );
 	#else
 		//On Unix, we can use the more safe way with bitfield.
 		return chunk->size;
