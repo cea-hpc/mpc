@@ -18,7 +18,7 @@ char *sctk_mpi_handler_gen_filename(void *option, void *option1) {
   if(filename == NULL){
 	  printf("Can't gen filename : filename allocation failedi\n");
   	  }
-          sprintf(filename, "mpc-%s_%d_%d_%d", (char *)option, getpid(), time(0),
+          sprintf(filename, "mpc-%s_%d_%ld_%d", (char *)option, getpid(), time(0),
                   rand());
           return filename;
   }

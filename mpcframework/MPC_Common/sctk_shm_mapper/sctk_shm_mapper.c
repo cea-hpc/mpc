@@ -46,13 +46,14 @@
 
 /************************* GLOBALS *************************/
 /** Static variable used to communicate between slaves and master for fake comm mode (only for test). **/
-volatile static const char * sctk_shm_mapper_fake_glob = NULL;
+static volatile const char * sctk_shm_mapper_fake_glob = NULL;
 /** Define the struct of fake comm handler (only for test). **/
 sctk_alloc_mapper_handler_t sctk_shm_mapper_fake_handler = {
 	sctk_shm_mapper_fake_handler_send,
 	sctk_shm_mapper_fake_handler_recv,
 	sctk_shm_mapper_get_filename,
 	NULL,
+	NULL
 };
 
 /************************* FUNCTION ************************/
@@ -597,7 +598,7 @@ SCTK_STATIC void sctk_shm_mapper_merge_map(sctk_shm_mapper_segment_t ** free_seg
 
 	//compute name of segments mapping file (/dev/{PID}/maps
 	res = sprintf(filename,"/proc/%d/maps",pid);
-	assert(res < sizeof(filename));
+	assert(res < (int)sizeof(filename));
 	
 	//open the segment mapping file (/dev/{PID}/maps)
 	fp = fopen(filename,"r");
