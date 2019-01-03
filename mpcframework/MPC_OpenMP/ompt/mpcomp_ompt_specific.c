@@ -62,16 +62,16 @@ ompt_parallel_id_t mpcomp_OMPT_gen_parallel_id( void )
 ompt_state_t ompt_get_state_internal(ompt_wait_id_t *wait_id)
 {
 	mpcomp_thread_t *t;
-  	mpcomp_mvp_t *mvp;
-  	ompt_state_t state;
-  
-  	t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-  	sctk_assert( t != NULL);
+	mpcomp_mvp_t *mvp;
+	ompt_state_t state;
 
-  	mvp = t->mvp;
+	t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+	sctk_assert( t != NULL);
 
-  //state = mvp->mpc_ompt_thread.state;
-  return state;
+	mvp = t->mvp;
+	//state = mvp->mpc_ompt_thread.state;
+INFO("STATE IS USED NOT INITIALIZED");
+	return state;
 }
 
 ompt_frame_t * ompt_get_task_frame(int ancestor_level)

@@ -279,6 +279,7 @@ int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t* restrictedTopology,
         int pu;
 	   for( pu = 0; pu < num_mvps; pu++ )
 	   {
+INFO("CORE IS USED NOT INITIALIZED");
            const int num_pus_select = ( rest > core ) ? quot+1 : quot; 
           if(sctk_enable_smt_capabilities){
 		  core_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, taskVp+pu);	
