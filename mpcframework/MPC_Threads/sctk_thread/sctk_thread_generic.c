@@ -28,6 +28,7 @@
 #include <errno.h>
 #include "sctk_kernel_thread.h"
 #include <sctk_topology.h>
+#include <string.h>
 
 #define SCTK_BLOCKING_LOCK_TABLE_SIZE 6
 
@@ -986,10 +987,30 @@ void sctk_thread_generic_alloc_pthread_blocking_lock_table(
   attr->ptr->sctk_thread_generic_pthread_blocking_lock_table = (void*) lock_table;
 }
 
+static inline void sctk_thread_generic_intern_attr_init(sctk_thread_generic_intern_attr_t* attr )
+{
+    memset(attr, 0, sizeof(sctk_thread_generic_intern_attr_t));
+                                                                        
+    attr->scope = SCTK_THREAD_SCOPE_PROCESS;
+    attr->detachstate = SCTK_THREAD_CREATE_JOINABLE;
+    attr->inheritsched = SCTK_THREAD_EXPLICIT_SCHED;
+    attr->cancel_state = PTHREAD_CANCEL_ENABLE;
+    attr->cancel_type = PTHREAD_CANCEL_DEFERRED;
+    attr->bind_to = -1;
+    attr->spinlock = SCTK_SPINLOCK_INITIALIZER;
+    sctk_thread_generic_kind_t knd = sctk_thread_generic_kind_init;
+    attr->kind = knd;
+    attr->basic_priority = 10;
+    attr->current_priority = 10;
+    attr->timestamp_threshold = 1;
+    attr->timestamp_base = -1;
+}
+
 int
 sctk_thread_generic_attr_init (sctk_thread_generic_attr_t * attr)
 {
-  sctk_thread_generic_intern_attr_t init = sctk_thread_generic_intern_attr_init;
+  sctk_thread_generic_intern_attr_t init;
+  sctk_thread_generic_intern_attr_init(&init);
   attr->ptr = (sctk_thread_generic_intern_attr_t *)
     sctk_malloc (sizeof (sctk_thread_generic_intern_attr_t));
 
@@ -1033,7 +1054,8 @@ sctk_thread_generic_attr_destroy (sctk_thread_generic_attr_t * attr)
 static int
 sctk_thread_generic_attr_getscope (const sctk_thread_generic_attr_t * attr, int *scope)
 {
-  sctk_thread_generic_intern_attr_t init = sctk_thread_generic_intern_attr_init;
+  sctk_thread_generic_intern_attr_t init;
+  sctk_thread_generic_intern_attr_init(&init);
   sctk_thread_generic_intern_attr_t * ptr;
 
   ptr = attr->ptr;
@@ -1098,7 +1120,8 @@ sctk_thread_generic_attr_setbinding (sctk_thread_generic_attr_t * attr, int bind
 static int
 sctk_thread_generic_attr_getbinding (sctk_thread_generic_attr_t * attr, int *binding)
 {
-  sctk_thread_generic_intern_attr_t init = sctk_thread_generic_intern_attr_init;
+  sctk_thread_generic_intern_attr_t init;
+  sctk_thread_generic_intern_attr_init(&init);
   sctk_thread_generic_intern_attr_t * ptr;
 
   ptr = attr->ptr;
@@ -1124,7 +1147,8 @@ sctk_thread_generic_attr_getstacksize (sctk_thread_generic_attr_t * attr,
 
   if( stacksize == NULL ) return SCTK_EINVAL;
 
-  sctk_thread_generic_intern_attr_t init = sctk_thread_generic_intern_attr_init;
+  sctk_thread_generic_intern_attr_t init;
+  sctk_thread_generic_intern_attr_init(&init);
   sctk_thread_generic_intern_attr_t * ptr;
 
   ptr = attr->ptr;
@@ -1168,7 +1192,8 @@ sctk_thread_generic_attr_getstackaddr (sctk_thread_generic_attr_t * attr,
 
   if( addr == NULL ) return SCTK_EINVAL;
 
-  sctk_thread_generic_intern_attr_t init = sctk_thread_generic_intern_attr_init;
+  sctk_thread_generic_intern_attr_t init;
+  sctk_thread_generic_intern_attr_init(&init);
   sctk_thread_generic_intern_attr_t * ptr;
 
   ptr = attr->ptr;
@@ -1271,7 +1296,6 @@ sctk_thread_generic_attr_setguardsize( sctk_thread_generic_attr_t* attr,
 	*/
 
   if( attr == NULL ) return SCTK_EINVAL;
-  if( guardsize < 0 ) return SCTK_EINVAL;
 
   if(attr->ptr == NULL){
 	sctk_thread_generic_attr_init(attr);
@@ -1406,7 +1430,8 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 				 sctk_thread_generic_attr_t * attr,
 				 void *(*start_routine) (void *), void *arg)
 {
-  sctk_thread_generic_intern_attr_t init = sctk_thread_generic_intern_attr_init;
+  sctk_thread_generic_intern_attr_t init;
+  sctk_thread_generic_intern_attr_init(&init);
   sctk_thread_generic_intern_attr_t * ptr;
   sctk_thread_data_t tmp;
   sctk_thread_generic_t thread_id;
@@ -2112,7 +2137,8 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
   {
     sctk_thread_generic_attr_t lattr;
     sctk_thread_generic_intern_attr_t * ptr;
-    sctk_thread_generic_intern_attr_t init = sctk_thread_generic_intern_attr_init;
+    sctk_thread_generic_intern_attr_t init;
+    sctk_thread_generic_intern_attr_init(&init);
     sctk_thread_generic_scheduler_t* sched;
     sctk_thread_generic_p_t* current;
     
