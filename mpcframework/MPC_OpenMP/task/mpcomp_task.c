@@ -668,7 +668,7 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
           /* Try to steal inside the last stolen list*/
       {
         if ((list = MPCOMP_TASK_MVP_GET_LAST_STOLEN_TASK_LIST(mvp, type))) {
-          if (task = mpcomp_task_steal(list,rank,victim)) {
+          if ((task = mpcomp_task_steal(list,rank,victim))) {
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
             sctk_atomics_incr_int( &__private_perf_success_steal );
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
@@ -681,7 +681,7 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
       {
         if (mvp->task_infos.last_thief != -1 && (list = mpcomp_task_get_list(mvp->task_infos.last_thief,type))) {
           victim = mvp->task_infos.last_thief;
-          if (task = mpcomp_task_steal(list,rank,victim)) {
+          if ((task = mpcomp_task_steal(list,rank,victim))) {
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
             sctk_atomics_incr_int( &__private_perf_success_steal );
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */

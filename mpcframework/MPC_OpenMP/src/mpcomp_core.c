@@ -315,7 +315,7 @@ int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t* restrictedTopology,
 
     hwloc_obj_t prev_pu, next_pu;
     prev_pu = NULL; // Init hwloc iterator
-    while( next_pu = hwloc_get_next_obj_by_type( *restrictedTopology, HWLOC_OBJ_PU, prev_pu ) )
+    while( (next_pu = hwloc_get_next_obj_by_type( *restrictedTopology, HWLOC_OBJ_PU, prev_pu )) )
     {
        prev_pu = next_pu;
     }

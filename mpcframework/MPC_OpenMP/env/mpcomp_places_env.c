@@ -129,7 +129,7 @@ mpcomp_places_build_numas_places( const int places_number, int* error )
    numa_found = 0; tnwrites = 0;
    const int number_numas = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_NUMANODE );
    const int __places_number = ( places_number == -1 ) ? number_numas : places_number;
-   while( next_numa = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_NUMANODE, prev_numa ) )
+   while( (next_numa = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_NUMANODE, prev_numa )) )
    {  
       /* Level with no PU ... skip */
       if( hwloc_get_nbobjs_inside_cpuset_by_type( topology, next_numa->cpuset, HWLOC_OBJ_PU ) <= 0 )
@@ -138,7 +138,7 @@ mpcomp_places_build_numas_places( const int places_number, int* error )
       size_t current_index = 0; int pu_found = 0;
       char currend_bitmap_list[255]; prev_pu = NULL;
 
-      while( next_pu = hwloc_get_next_obj_inside_cpuset_by_type( topology, next_numa->cpuset, HWLOC_OBJ_PU, prev_pu ) )
+      while( (next_pu = hwloc_get_next_obj_inside_cpuset_by_type( topology, next_numa->cpuset, HWLOC_OBJ_PU, prev_pu )) )
       {
          int tmp_write;
          assert( current_index < 254 );
@@ -213,7 +213,7 @@ mpcomp_places_build_sockets_places( const int places_number, int *error )
    socket_found = 0; tnwrites = 0;
    const int number_sockets = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_SOCKET );
    const int __places_number = ( places_number == -1 ) ? number_sockets : places_number;
-   while( next_socket = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_SOCKET, prev_socket ) )
+   while( (next_socket = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_SOCKET, prev_socket )) )
    {  
       /* Level with no PU ... skip */
       if( hwloc_get_nbobjs_inside_cpuset_by_type( topology, next_socket->cpuset, HWLOC_OBJ_PU ) <= 0 )
@@ -222,7 +222,7 @@ mpcomp_places_build_sockets_places( const int places_number, int *error )
       size_t current_index = 0; int pu_found = 0;
       char currend_bitmap_list[255]; prev_pu = NULL;
 
-      while( next_pu = hwloc_get_next_obj_inside_cpuset_by_type( topology, next_socket->cpuset, HWLOC_OBJ_PU, prev_pu ) )
+      while( (next_pu = hwloc_get_next_obj_inside_cpuset_by_type( topology, next_socket->cpuset, HWLOC_OBJ_PU, prev_pu )) )
       {
          int tmp_write;
          assert( current_index < 254 );
@@ -293,7 +293,7 @@ mpcomp_places_build_threads_places( const int places_number, int* error )
    pu_found = 0; tnwrites = 0;
    const int threads_number = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_PU );
    const int __places_number = ( places_number == -1 ) ? threads_number : places_number;
-   while( next_pu = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_PU, prev_pu ) )
+   while( (next_pu = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_PU, prev_pu )) )
    {
       char currend_bitmap_list[255];
       hwloc_bitmap_list_snprintf( currend_bitmap_list, 255, next_pu->cpuset );
@@ -349,7 +349,7 @@ mpcomp_places_build_cores_places( const int places_number, int *error )
    const int pu_number = hwloc_get_nbobjs_by_type( topology,  HWLOC_OBJ_PU);
 
    const int __places_number = ( places_number == -1 ) ? core_number : places_number;
-   while( next_core = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_CORE, prev_core ) )
+   while( (next_core = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_CORE, prev_core )) )
    {
       char currend_bitmap_list[255];
       hwloc_bitmap_list_snprintf( currend_bitmap_list, 255, next_core->cpuset );
