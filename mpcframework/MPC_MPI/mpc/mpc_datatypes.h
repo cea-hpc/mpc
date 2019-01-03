@@ -63,13 +63,13 @@ struct Datatype_Keyval {
  * 	\param type_keyval ID of keyval to retrieve (offset in a static table)
  *  \return Pointer to keyval (or NULL if keyval freed or invalid)
  */
-struct Datatype_Keyval *Datatype_Keyval_get(int type_keyval);
+struct Datatype_Keyval *Datatype_Keyval_get(unsigned int type_keyval);
 
 /** \brief This function deletes a keyval from an id
  * 	\param type_keyval ID of keyval to delete (offset in a static table)
  *  \return MPI_SUCCESS if ok
  */
-int Datatype_Keyval_delete(int type_keyval);
+int Datatype_Keyval_delete(unsigned int type_keyval);
 
 /** \brief This function create a new keyval
  *  \param type_keyval (OUT) Id of the new keyval
@@ -154,7 +154,7 @@ int Datatype_Attr_store_release(struct Datatype_Attr_store *store,
  *  \param combiner Target combiner
  *  \return a static char describing the combiner
  */
-const char * const sctk_datype_combiner(MPC_Type_combiner combiner);
+char * sctk_datype_combiner(MPC_Type_combiner combiner);
 
 /** \brief This datastructure is used to store the definition
  * of a datatype in order to reproduce it using MPI_Get_envelope
@@ -162,10 +162,9 @@ const char * const sctk_datype_combiner(MPC_Type_combiner combiner);
 struct Datatype_context
 {
 	/* Internal ref-counting handling */
-		
+
 	MPC_Datatype internal_type; /**< This is the internal type when types are built on top of each other happens for hvector and hindexed */
-	
-	
+
 	/* MPI_get_envelope */
 	MPC_Type_combiner combiner; /**< Combiner used to build the datatype */
 	int count; /**< Number of item (as given in the data-type call) */

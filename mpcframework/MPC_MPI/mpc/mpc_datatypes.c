@@ -64,14 +64,14 @@ static const char * const type_combiner_names[MPC_COMBINER_COUNT__] =
 };
 
 
-const char * const sctk_datype_combiner(MPC_Type_combiner combiner)
+char * sctk_datype_combiner(MPC_Type_combiner combiner)
 {
 	if( (combiner < MPC_COMBINER_COUNT__) && ( 0 <= combiner ) )
 	{
-		return type_combiner_names[ combiner ];
+		return (char *)type_combiner_names[ combiner ];
 	}
 	
-	return type_combiner_names[ MPC_COMBINER_UNKNOWN ];
+	return (char *)type_combiner_names[ MPC_COMBINER_UNKNOWN ];
 }
 
 
@@ -114,7 +114,7 @@ static unsigned int __keyval_array_offset = 0;
 /** This is the Keyval array lock */
 sctk_spinlock_t __keyval_array_lock = 0;
 
-struct Datatype_Keyval *Datatype_Keyval_get(int type_keyval) {
+struct Datatype_Keyval *Datatype_Keyval_get(unsigned int type_keyval) {
   if (__keyval_array_size <= type_keyval)
     return NULL;
 
@@ -130,7 +130,7 @@ struct Datatype_Keyval *Datatype_Keyval_get(int type_keyval) {
   return cell;
 }
 
-int Datatype_Keyval_delete(int type_keyval) {
+int Datatype_Keyval_delete(unsigned int type_keyval) {
   struct Datatype_Keyval *key = Datatype_Keyval_get(type_keyval);
 
   if (!key) {
@@ -156,7 +156,7 @@ struct Datatype_Keyval *Datatype_Keyval_new(int *type_keyval) {
 
   int new_id = -1;
 
-  int i;
+  unsigned int i;
 
   /* Try to do some recycling */
   for (i = 0; i < __keyval_array_offset; i++) {
@@ -816,7 +816,7 @@ int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
            * no layout and was not handled in set_context */
 
           /* Try to rely on the datype layout */
-          int i;
+          unsigned int i;
           size_t count;
           struct Datatype_layout *layout =
               sctk_datatype_layout(&type->context, &count);
@@ -889,7 +889,7 @@ void sctk_derived_datatype_true_extent( sctk_derived_datatype_t * type , mpc_pac
 	mpc_pack_absolute_indexes_t min_index, max_index;
 	int min_set = 0, max_set = 0;
 	
-	int i;
+	unsigned int i;
 	
 	for( i = 0 ; i < type->count ; i++ )
 	{
@@ -977,7 +977,7 @@ int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
 	
 	/* Copy back the content */
 	
-	int cnt = 0;
+	unsigned int cnt = 0;
 	for( i = 0; i < count ; i++ )
 	{
 		if( cells[i].ignore )
@@ -998,52 +998,56 @@ int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
 	return MPC_SUCCESS;
 }
 
-
-void sctk_derived_datatype_display( sctk_derived_datatype_t * target_type )
+void sctk_derived_datatype_display( sctk_derived_datatype_t *target_type )
 {
-	sctk_error("============DERIVED===================");
-	sctk_error("TYPE %d", target_type->id );
-	sctk_error("NAME %s", sctk_datype_get_name( target_type->id ) );
-	sctk_error("SIZE %ld", target_type->size );
-	sctk_error("REF_COUNT %ld", target_type->ref_count );
-	sctk_error("COUNT %ld", target_type->count );
-	sctk_error("OPT_COUNT %ld", target_type->opt_count );
-	
+	sctk_error( "============DERIVED===================" );
+	sctk_error( "TYPE %d", target_type->id );
+	sctk_error( "NAME %s", sctk_datype_get_name( target_type->id ) );
+	sctk_error( "SIZE %ld", target_type->size );
+	sctk_error( "REF_COUNT %ld", target_type->ref_count );
+	sctk_error( "COUNT %ld", target_type->count );
+	sctk_error( "OPT_COUNT %ld", target_type->opt_count );
+
 	int ni, na, nd, c;
 
-	sctk_datatype_fill_envelope( &target_type->context , &ni, &na , &nd , &c );
-	sctk_error("COMBINER : %s[%d]", sctk_datype_combiner(c), c );
-	
+	sctk_datatype_fill_envelope( &target_type->context, &ni, &na, &nd, &c );
+	sctk_error( "COMBINER : %s[%d]", sctk_datype_combiner( c ), c );
+
 	int i;
 
-        sctk_error("INT : [");
-        for (i = 0; i < ni; i++) {
-          sctk_error("[%d] %d , ", i,
-                     target_type->context.array_of_integers[i]);
-        }
-        sctk_error("]\n");
+	sctk_error( "INT : [" );
+	for ( i = 0; i < ni; i++ )
+	{
+		sctk_error( "[%d] %d , ", i,
+					target_type->context.array_of_integers[i] );
+	}
+	sctk_error( "]\n" );
 
-        sctk_error("ADD : [");
-        for (i = 0; i < na; i++) {
-          sctk_error("[%d] %ld , ", i,
-                     target_type->context.array_of_addresses[i]);
-        }
-        sctk_error("]\n");
+	sctk_error( "ADD : [" );
+	for ( i = 0; i < na; i++ )
+	{
+		sctk_error( "[%d] %ld , ", i,
+					target_type->context.array_of_addresses[i] );
+	}
+	sctk_error( "]\n" );
 
-        sctk_error("TYP : [");
-        for (i = 0; i < nd; i++) {
-          sctk_error(
-              "[%d] %d (%s), ", i, target_type->context.array_of_types[i],
-              sctk_datype_get_name(target_type->context.array_of_types[i]));
-        }
-        sctk_error("]\n");
+	sctk_error( "TYP : [" );
+	for ( i = 0; i < nd; i++ )
+	{
+		sctk_error(
+			"[%d] %d (%s), ", i, target_type->context.array_of_types[i],
+			sctk_datype_get_name( target_type->context.array_of_types[i] ) );
+	}
+	sctk_error( "]\n" );
 
-        for (i = 0; i < target_type->opt_count; i++) {
-          sctk_error("[%d , %d]\n", target_type->opt_begins[i],
-                     target_type->opt_ends[i]);
-        }
+	unsigned int j;
+	for ( j = 0; j < target_type->opt_count; j++ )
+	{
+		sctk_error( "[%d , %d]\n", target_type->opt_begins[j],
+					target_type->opt_ends[j] );
+	}
 
-        sctk_error("==============================================");
+	sctk_error( "==============================================" );
 }
 
 extern sctk_derived_datatype_t *
@@ -1070,7 +1074,7 @@ void *sctk_derived_datatype_serialize(sctk_datatype_t type, size_t *size,
     return NULL;
   }
 
-  size_t *count = (size_t *)(ret + header_pad);
+  ssize_t *count = (ssize_t *)(ret + header_pad);
   mpc_pack_absolute_indexes_t *begins = (count + 1);
   mpc_pack_absolute_indexes_t *ends = begins + dtype->count;
   sctk_datatype_t *types = (sctk_datatype_t *)(ends + dtype->count);
@@ -1096,23 +1100,23 @@ void *sctk_derived_datatype_serialize(sctk_datatype_t type, size_t *size,
   lb_ub->is_a_padded_struct = dtype->is_a_padded_struct;
 
   assert(*guard == 77);
-  assert(guard < (ret + *size));
+  assert(guard < (char*)(ret + *size));
 
   return ret;
 }
 
 sctk_datatype_t sctk_derived_datatype_deserialize(void *buff, size_t size,
                                                   size_t header_pad) {
-  size_t *count = (size_t *)(buff + header_pad);
+  ssize_t *count = (ssize_t *)(buff + header_pad);
   mpc_pack_absolute_indexes_t *begins = (count + 1);
   mpc_pack_absolute_indexes_t *ends = begins + *count;
   sctk_datatype_t *types = (sctk_datatype_t *)(ends + *count);
   struct inner_lbub *lb_ub = (struct inner_lbub *)(types + *count);
 
-  assume(count < (size_t*)(buff + size));
-  assume(count < (size_t*)(begins + size));
-  assume(count < (size_t*)(ends + size));
-  assume(count < (size_t*)(types + size));
+  assume(count < (ssize_t*)(buff + size));
+  assume(count < (ssize_t*)(begins + size));
+  assume(count < (ssize_t*)(ends + size));
+  assume(count < (ssize_t*)(types + size));
 
   sctk_datatype_t ret;
 
@@ -1638,6 +1642,9 @@ void __sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatyp
 
         /* Retrieve type dependent information */
         switch (ctx->combiner) {
+        case MPC_COMBINER_DUMMY:
+          sctk_fatal("ERROR : You are setting a context on a dummy data-type");
+          break;
         case MPC_COMBINER_NAMED:
           sctk_fatal("ERROR : You are setting a context on a common data-type");
           break;
@@ -1909,6 +1916,7 @@ int sctk_datatype_fill_envelope( struct Datatype_context * ctx , int * num_integ
 	
 	switch( ctx->combiner )
 	{
+		case MPC_COMBINER_DUMMY:
 		case MPC_COMBINER_NAMED:
 			/* Calling MPI get contents
 			 * is invalid for this combiner */
@@ -2028,7 +2036,8 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 	
 	size_t count = 0;
 	size_t ndims = 0;
-	int i, cnt, j;
+	unsigned int i;
+  int cnt, j;
 	*ly_count = 0;
 	int is_allocated = 0;
 	
@@ -2048,9 +2057,9 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 			/* Here no surprises the size is always the same */
 			ret = please_allocate_layout( 1 );
 			*ly_count = 1;
-			
+
 			PMPC_Type_is_allocated (ctx->array_of_types[0], &is_allocated );
-					
+
 			if( !is_allocated )
 			{
 				ret[0].size = 0;
@@ -2065,22 +2074,20 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 			/* We have to handle the case of structs where each element can have a size 
 			   and also empty blocklength for indexed types */
 			count = ctx->array_of_integers[0];
-			
+
 			/* Compute the number of blocks */
 			int number_of_blocks = 0;
-			
+
 			for( i = 1 ; i <= count ; i++ )
 			{
 				number_of_blocks += ctx->array_of_integers[i] + 1;
 			}
 
 			sctk_nodebug("Num block : %d", number_of_blocks);
-			
+
 			/* Allocate blocks */
 			ret = please_allocate_layout( number_of_blocks );
-			
 
-			
 			cnt = 0;
 			for( i = 0 ; i < count ; i++ )
 			{
@@ -2126,6 +2133,7 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 		case MPC_COMBINER_HVECTOR_INTEGER:
 		case MPC_COMBINER_COUNT__:
 		case MPC_COMBINER_UNKNOWN:
+    case MPC_COMBINER_DUMMY:
 			return NULL;
 	}
 	
