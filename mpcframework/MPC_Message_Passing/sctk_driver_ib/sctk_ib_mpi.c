@@ -446,22 +446,6 @@ static pthread_cond_t  poll_cond = PTHREAD_COND_INITIALIZER;
 static int retry;
 
 
-static void __release_cq_broadcast ()
-{
-	pthread_mutex_lock ( &poll_mutex );
-	pthread_cond_broadcast ( &poll_cond );
-	pthread_mutex_unlock ( &poll_mutex );
-}
-
-static void __release_cq_signal ()
-{
-	pthread_mutex_lock ( &poll_mutex );
-	pthread_cond_signal ( &poll_cond );
-	pthread_mutex_unlock ( &poll_mutex );
-}
-
-//#define SCTK_IB_CQ_MUTEX
-
 void sctk_network_poll_all_cq ( sctk_rail_info_t *rail, sctk_ib_polling_t *poll, int polling_task_id, int blocking )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;

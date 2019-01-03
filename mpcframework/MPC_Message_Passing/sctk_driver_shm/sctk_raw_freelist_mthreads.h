@@ -60,10 +60,12 @@ sctk_shm_enqueue_mt(volatile sctk_shm_list_t *queue,
     }
     else
     {
-        abs_prev_item = sctk_shm_rel_to_abs(dest_base_addr, rel_prev_item);     
+        abs_prev_item = sctk_shm_rel_to_abs(dest_base_addr, rel_prev_item);
         abs_prev_item->next = rel_new_item;
     }
     sctk_spinlock_unlock( &(queue->lock));
+
+    return 0;
 }
 
 #endif /* __SCTK_RAW_FREELIST_MTHREADS_H__ */

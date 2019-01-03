@@ -938,7 +938,7 @@ inline void sctk_message_copy(sctk_message_to_copy_t *tmp) {
     sctk_nodebug("SCTK_MESSAGE_CONTIGUOUS - SCTK_MESSAGE_PACK size %d",
                  send->tail.message.contiguous.size);
     size_t i;
-    size_t j;
+    ssize_t j;
     size_t size;
     size_t total = 0;
     size_t recv_size = 0;
@@ -991,7 +991,7 @@ inline void sctk_message_copy(sctk_message_to_copy_t *tmp) {
     sctk_nodebug("SCTK_MESSAGE_CONTIGUOUS - SCTK_MESSAGE_PACK_ABSOLUTE size %d",
                  send->tail.message.contiguous.size);
     size_t i;
-    size_t j;
+    ssize_t j;
     size_t size;
     size_t total = 0;
     size_t recv_size = 0;
@@ -1429,7 +1429,7 @@ inline void sctk_message_copy_pack(sctk_message_to_copy_t *tmp) {
   case SCTK_MESSAGE_CONTIGUOUS: {
     sctk_nodebug("SCTK_MESSAGE_PACK - SCTK_MESSAGE_CONTIGUOUS");
     size_t i;
-    size_t j;
+    ssize_t j;
     size_t size;
     char *body;
 
@@ -1521,7 +1521,7 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t *tmp) {
   case SCTK_MESSAGE_CONTIGUOUS: {
     sctk_nodebug("SCTK_MESSAGE_PACK_ABSOLUTE - SCTK_MESSAGE_CONTIGUOUS");
     size_t i;
-    size_t j;
+    ssize_t j;
     size_t size;
     size_t send_size = 0;
     size_t total = 0;

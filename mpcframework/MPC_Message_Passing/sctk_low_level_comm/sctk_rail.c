@@ -364,7 +364,6 @@ static inline size_t sctk_rail_print_infos( sctk_rail_info_t * rail, char * star
 	assert(depth >= 0);
 	assert(rail);
 	assert(start);
-	assert(sz >=0);
 
 	int i;
 	size_t cur_sz = 0;

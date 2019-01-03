@@ -597,7 +597,7 @@ int sctk_ib_qp_get_cap_flags ( struct sctk_ib_rail_info_s *rail_ib )
 	return device->dev_attr.device_cap_flags;
 }
 
-char* qp_states[] = { "RESET", "INIT", "RTR", "RTS", "SQD", "SQE", "ERR"};
+char* qp_states[] = { "RESET", "INIT", "RTR", "RTS", "SQD", "SQE", "ERR", "UNK"};
 
 char * sctk_ib_qp_print_state( struct ibv_qp *qp)
 {
@@ -615,6 +615,7 @@ char * sctk_ib_qp_print_state( struct ibv_qp *qp)
 			case IBV_QPS_SQD: return qp_states[4]; break;
 			case IBV_QPS_SQE: return qp_states[5]; break;
 			case IBV_QPS_ERR: return qp_states[6]; break;
+			case IBV_QPS_UNKNOWN: return qp_states[7]; break;
 		}
 	}
 	sctk_fatal("Unable to query the QP !");

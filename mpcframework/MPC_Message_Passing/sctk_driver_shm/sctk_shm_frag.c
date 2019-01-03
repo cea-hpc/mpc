@@ -346,7 +346,7 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
       sctk_nodebug("[KEY:%d]\t\tRECV NEXT PART MSG", msg_key);
       sctk_spinlock_lock(&sctk_shm_recving_frag_hastable_lock);
       frag_infos = sctk_shm_frag_get_elt_from_hash(msg_key, msg_src, SCTK_SHM_RECVER_HT); 
-      assume_m(((frag_infos->size_copied < frag_infos->size_total) && (frag_infos->size_copied >= 0)), "WRONG SIZE FOR FRAGMENT");
+      assume_m((frag_infos->size_copied < frag_infos->size_total), "WRONG SIZE FOR FRAGMENT");
       sctk_spinlock_unlock(&sctk_shm_recving_frag_hastable_lock);
       assume_m( frag_infos != NULL, "Recv an oprhelin SHM fragment\n");
       memcpy(frag_infos->msg + frag_infos->size_copied, cell->data, cell->size_to_copy);

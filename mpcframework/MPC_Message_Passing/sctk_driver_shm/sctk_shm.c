@@ -339,6 +339,8 @@ static void* sctk_shm_add_region(sctk_size_t size,sctk_shm_mapper_role_t role,
 		default:
 			assume_m(0,"Invalid role on sctk_shm_mapper.");
 	}
+
+    return NULL;
 }
 
 static void sctk_shm_add_route(int dest,int shm_dest,sctk_rail_info_t *rail )

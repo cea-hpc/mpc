@@ -353,8 +353,8 @@ static inline int sctk_is_inter_comm(const sctk_communicator_t communicator) {
   if( communicator == SCTK_COMM_WORLD )
     return 0;
 
-  static int __thread last_comm = -2;
-  static int __thread last_val = -1;
+  static __thread int last_comm = -2;
+  static __thread int last_val = -1;
 
   if (last_comm == communicator) {
     return last_val;
@@ -376,8 +376,8 @@ static inline int sctk_is_inter_comm(const sctk_communicator_t communicator) {
 int __sctk_is_shared_mem(const sctk_communicator_t communicator);
 
 static inline int sctk_is_shared_mem(const sctk_communicator_t communicator) {
-  static int __thread last_comm = -2;
-  static int __thread last_val = -1;
+  static __thread int last_comm = -2;
+  static __thread int last_val = -1;
 
   if (last_comm == communicator) {
     return last_val;
@@ -394,8 +394,8 @@ static inline int sctk_is_shared_mem(const sctk_communicator_t communicator) {
 int __sctk_is_shared_node(const sctk_communicator_t communicator);
 
 static inline int sctk_is_shared_node(const sctk_communicator_t communicator) {
-  static int __thread last_comm = -2;
-  static int __thread last_val = -1;
+  static __thread int last_comm = -2;
+  static __thread int last_val = -1;
 
   if (last_comm == communicator) {
     return last_val;
