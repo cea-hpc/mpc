@@ -86,6 +86,7 @@ static inline void mpcomp_task_lockfree_list_consummer_unlock( mpcomp_task_list_
 static inline int mpcomp_task_lockfree_list_consummer_trylock(mpcomp_task_list_t *list, void* opaque ) {
 #ifdef MPCOMP_USE_MCS_LOCK
   not_implemented();
+  return 0;
 #else /* MPCOMP_USE_MCS_LOCK */
   return sctk_spinlock_trylock(&(list->mpcomp_task_lock));
 #endif /* MPCOMP_USE_MCS_LOCK */

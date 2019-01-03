@@ -419,7 +419,7 @@ static int mpcomp_places_named_extract_num( const char* env, char *string  )
 
    if( 0 && *string != '\0' )
    {
-      fprintf(stderr,  "error: offset %d with \'%c\' end: %s\n", string - env -1, *string, string );
+      fprintf(stderr,  "error: offset %ld with \'%c\' end: %s\n", string - env -1, *string, string );
       return 0;
    }
 
@@ -799,7 +799,7 @@ mpcomp_places_env_variable_parsing(const int nb_mvps)
 
     if( *end != '\0' )
     {
-       fprintf(stderr,  "error: offset %d with \'%c\' end: %s\n", end - env -1, *end, end );
+       fprintf(stderr,  "error: offset %ld with \'%c\' end: %s\n", end - env -1, *end, end );
        return NULL;
     }
 

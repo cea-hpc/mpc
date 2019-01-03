@@ -454,7 +454,7 @@ mpcomp_task_prepare_victim_producer_order( const int globalRank, const int index
 {
     int i;
     int *order;
-    void *ext_arg;
+    void *ext_arg = NULL;
     mpcomp_thread_t *thread;
     mpcomp_instance_t* instance;
     struct mpcomp_task_list_s *list;

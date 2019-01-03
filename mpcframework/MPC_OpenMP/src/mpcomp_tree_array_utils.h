@@ -195,9 +195,11 @@ __mpcomp_tree_array_compute_node_parents(  mpcomp_node_t* root, mpcomp_node_t* n
         node_parents[i] = stage_rank / ( root->tree_nb_nodes_per_depth[node->depth-i+1] / root->tree_base[i] ) + prev_num_nodes; 
         
     }
+
+    return NULL;
 }
 
-static void inline 
+static inline void 
 __mpcomp_update_node_children_node_ptr( const int first_idx, 
                                         mpcomp_node_t* node, 
                                         mpcomp_meta_tree_node_t* root )
@@ -236,7 +238,7 @@ __mpcomp_update_node_children_node_ptr( const int first_idx,
         me->fathers_array[i] = root[first_idx].fathers_array[i];
 }  
 
-static void inline
+static inline void
 __mpcomp_update_node_children_mvp_ptr(  const int first_idx, 
                                         mpcomp_node_t* node, 
                                         mpcomp_meta_tree_node_t* root )

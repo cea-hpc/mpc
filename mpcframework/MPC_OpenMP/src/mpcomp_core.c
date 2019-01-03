@@ -946,7 +946,7 @@ void __mpcomp_in_order_scheduler( mpcomp_thread_t* thread )
     loop = &( thread->info.loop_infos.loop.mpcomp_long );
 
     if( thread->info.combined_pragma < 0 || thread->info.combined_pragma > 10 )
-        fprintf(stderr, "[%d/%d] Start %s :: %d\n", thread->mvp->global_rank, thread->rank, __func__, thread->info.combined_pragma );
+        fprintf(stderr, "[%d/%ld] Start %s :: %ld\n", thread->mvp->global_rank, thread->rank, __func__, thread->info.combined_pragma );
 
     /* Handle beginning of combined parallel region */
     switch( thread->info.combined_pragma ) 
