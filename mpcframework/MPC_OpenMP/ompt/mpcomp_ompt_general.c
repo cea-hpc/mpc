@@ -196,7 +196,7 @@ OMPT_API_ROUTINE int
 ompt_enumerate_states(int cur_state, int* next_state, const char** next_state_name)
 {
 	int i;
-	const static int len = sizeof(ompt_state_info)/sizeof(ompt_enumerate_info_t);
+	static const int len = sizeof(ompt_state_info)/sizeof(ompt_enumerate_info_t);
 	assert( len > 0 );
 
 	if( cur_state == ompt_state_undefined )
@@ -234,7 +234,7 @@ OMPT_API_ROUTINE int
 ompt_enumerate_mutex_impls( int current_mutex, int* next_mutex, const char** next_name)
 {
 	uint64_t i;
-	const static uint64_t len = sizeof(ompt_mutex_impls_info)/sizeof(ompt_enumerate_info_t);
+	static const uint64_t len = sizeof(ompt_mutex_impls_info)/sizeof(ompt_enumerate_info_t);
 	assert( len > 0 );
 
 	/* Find current state in ompt_state_info tabular */
