@@ -327,7 +327,7 @@ typedef struct {
   char pad[4096];
 } sctk_multiple_queues_sched_list_t;
 #define SCTK_MULTIPLE_QUEUES_SCHED_LIST_INIT                                   \
-  { SCTK_SPINLOCK_INITIALIZER, NULL, NULL }
+  { SCTK_SPINLOCK_INITIALIZER, NULL, NULL, .pad = {0} }
 
 static sctk_multiple_queues_sched_list_t* sctk_multiple_queues_sched_lists = NULL;
 
@@ -342,7 +342,7 @@ typedef struct {
   char pad[4096];
 }sctk_multiple_queues_task_list_t;
 #define SCTK_MULTIPLE_QUEUES_TASK_LIST_INIT                                    \
-  { NULL, SCTK_SPINLOCK_INITIALIZER, 0, NULL }
+  { NULL, SCTK_SPINLOCK_INITIALIZER, 0, NULL, .pad = {0} }
 static sctk_multiple_queues_task_list_t* sctk_multiple_queues_task_lists = NULL;
 
 ////////////////////////////////////////
