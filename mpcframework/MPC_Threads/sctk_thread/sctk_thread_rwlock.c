@@ -387,8 +387,7 @@ __sctk_thread_generic_rwlocks_rwlock_unlock( sctk_thread_generic_rwlock_t* lock,
 	  }
   }
 
-  if( lock->count <= 0 ){
-	  if( lock->count < 0 ) abort();
+  if( lock->count == 0 ){
 	  lock->wait = SCTK_RWLOCK_NO_WR_WAIT;
 	  lock->current = SCTK_RWLOCK_ALONE;
 	  lock->writer = NULL;

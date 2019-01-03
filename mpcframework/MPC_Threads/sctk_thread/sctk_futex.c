@@ -566,12 +566,7 @@ int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_k
 				sctk_uint64_t key = (sctk_uint64_t) queue->futex_key;
 				MPCHT_delete( &ht->queue_hash_table, key );
 				ht->queue_count--;
-				
-				if( ht->queue_count < 0 )
-				{
-					sctk_error("Underflow in futex queues");
-				}
-				
+
 				/* Free it */
 				futex_queue_release( queue );
 			}
