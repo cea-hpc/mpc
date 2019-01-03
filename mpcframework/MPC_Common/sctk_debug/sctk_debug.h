@@ -59,7 +59,7 @@ extern "C"
 
   /* DEBUG FUNCTIONS START */
   void sctk_flush_version (void);
-  void sctk_abort (void);
+  void sctk_abort (void)  __attribute__((__noreturn__));
   void sctk_install_bt_sig_handler();
   void sctk_error (const char *fmt, ...);
   void sctk_formated_assert_print (FILE * stream, const int line,
@@ -111,7 +111,7 @@ extern "C"
 
   void sctk_formated_dbg_print_abort (FILE * stream, const int line,
 				      const char *file, const char *func,
-				      const char *fmt, ...);
+				      const char *fmt, ...)  __attribute__((__noreturn__));
 
   size_t sctk_noalloc_fwrite (const void *ptr, size_t size, size_t nmemb,
 			      FILE * stream);
