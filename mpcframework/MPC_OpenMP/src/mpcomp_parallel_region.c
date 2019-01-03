@@ -42,7 +42,7 @@ extern ompt_callback_t* OMPT_Callbacks;
 /* Add header for spinning core */
 mpcomp_instance_t* __mpcomp_tree_array_instance_init( mpcomp_thread_t*, const int);
 
-
+#if 0
 static void __mpcomp_internal_parallel_ompt_begin( mpcomp_thread_t* t )
 {
 #if OMPT_SUPPORT
@@ -64,6 +64,7 @@ static void __mpcomp_internal_parallel_ompt_begin( mpcomp_thread_t* t )
 	}	
 #endif /* OMPT_SUPPORT */
 }
+#endif
 
 void 
 __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const unsigned expected_num_threads ) 
