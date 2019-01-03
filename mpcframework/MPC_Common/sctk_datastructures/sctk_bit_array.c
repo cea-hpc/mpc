@@ -36,7 +36,7 @@ void sctk_bit_array_init_buff(struct sctk_bit_array *ba, sctk_uint64_t size,
     sctk_fatal("%s : Buffer was NULL", __FUNCTION__);
   }
 
-  int i = 0;
+  unsigned int i = 0;
   for (i = 0; i < ba->size; i++)
     ba->array[i] = 0;
 }
@@ -55,7 +55,7 @@ void sctk_bit_array_init(struct sctk_bit_array *ba, sctk_uint64_t size) {
 }
 
 void sctk_bit_array_release(struct sctk_bit_array *ba) {
-  int i = 0;
+  unsigned int i = 0;
   for (i = 0; i < ba->size; i++)
     ba->array[i] = 0;
 
@@ -78,7 +78,7 @@ void sctk_bit_array_replicate(struct sctk_bit_array *dest,
 
 void sctk_bit_array_dump(struct sctk_bit_array *ba) {
 
-  int i = 0;
+  unsigned int i = 0;
   unsigned int size = ba->size * 8;
 
   printf("Array size is %d \n", size);

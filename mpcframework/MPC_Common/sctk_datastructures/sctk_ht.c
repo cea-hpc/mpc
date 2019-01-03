@@ -199,14 +199,14 @@ void MPCHT_init( struct MPCHT * ht, sctk_uint64_t size )
 		sctk_fatal("Could not create HT RW lock array");
 	}
 	
-	int i;
+	unsigned int i;
 	
 	for( i = 0 ; i < size ; i++ )
 		sctk_spin_rwlock_init(&(ht->rwlocks[i]));
 }
 void MPCHT_release( struct MPCHT * ht )
 {
-	int i;
+	unsigned int i;
 	
 
 	for( i = 0 ; i < ht->table_size ; i++ )

@@ -64,7 +64,7 @@ void MPCHT_unlock_cell_write( struct MPCHT * ht , sctk_uint64_t key);
 
 
 #define MPC_HT_ITER( ht, var )\
-int ____i;\
+unsigned int ____i;\
 for( ____i = 0 ; ____i < (ht)->table_size ; ____i++ )\
 {\
 	struct MPCHT_Cell * ____c = &( ht )->cells[____i];\

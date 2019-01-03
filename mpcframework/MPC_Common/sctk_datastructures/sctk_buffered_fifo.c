@@ -260,7 +260,7 @@ int Buffered_FIFO_process(struct Buffered_FIFO *fifo, int (*func)( void * elem, 
 
 	while( chunk )
 	{
-		int i;
+		unsigned int i;
 		
 		for( i = chunk->start_offset ; i < chunk->end_offset ; i++ )
 		{
