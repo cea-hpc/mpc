@@ -2429,7 +2429,7 @@ int sctk_get_init_vp_and_nbvp_numa_packed(int i, int *nbVp) {
     tat += Tnk;
   }
 
-  sctk_debug("sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc);
+  //sctk_debug("sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc);
   sctk_abort ();
   return proc;
 }

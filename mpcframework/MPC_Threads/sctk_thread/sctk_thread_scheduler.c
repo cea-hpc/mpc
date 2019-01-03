@@ -459,6 +459,8 @@ static sctk_thread_generic_scheduler_t* sctk_multiple_queues_get_from_list(){
   }
 }
 
+
+
 ////////////////////////////////////////
 // generic/multiple_queues dynamic
 //
@@ -466,7 +468,7 @@ static sctk_thread_generic_scheduler_t* sctk_multiple_queues_get_from_list(){
 // concat_to_list
 // get_from_list
 //
-
+#if 0
 // add_to_list
 static void sctk_multiple_queues_with_priority_dynamic_add_to_list(
     sctk_thread_generic_scheduler_t *sched) {
@@ -920,7 +922,7 @@ sctk_multiple_queues_with_priority_nofamine_get_from_list() {
     return NULL;
   }
 }
-
+#endif
 ////////////////////////////////////////
 // generic/multiple_queues_with_priority_dyn_sorted_list
 //
@@ -1173,6 +1175,7 @@ static void sctk_multiple_queues_with_priority_dyn_sorted_list_concat_to_list(
                             .sctk_multiple_queues_sched_list_lock);
 }
 
+#if 0
 // get_from_list with priority_dyn_sorted_list
 static sctk_thread_generic_scheduler_t *
 sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list() {
@@ -1265,6 +1268,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list() {
     return NULL;
   }
 }
+#endif
 
 // get_from_list with priority_dyn_sorted_list old
 static sctk_thread_generic_scheduler_t *
