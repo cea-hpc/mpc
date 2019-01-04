@@ -79,7 +79,7 @@ void display_handler_sh(enum sctk_runtime_config_walk_type type,
                         const char * type_name,
                         void * value,
                         enum sctk_runtime_config_walk_status status,
-                        const struct sctk_runtime_config_entry_meta * type_meta,
+                        __UNUSED__ const struct sctk_runtime_config_entry_meta * type_meta,
                         int level,
                         void * opt)
 {

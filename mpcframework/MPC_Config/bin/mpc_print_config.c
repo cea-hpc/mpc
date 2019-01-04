@@ -105,7 +105,7 @@ void display_launcher(const struct sctk_runtime_config * config)
 /**
  * Standard display of the struct to see the complete tree
 **/
-void display_all(const struct sctk_runtime_config * config)
+void display_all(__UNUSED__ const struct sctk_runtime_config * config)
 {
 	sctk_runtime_config_runtime_display();
 }
