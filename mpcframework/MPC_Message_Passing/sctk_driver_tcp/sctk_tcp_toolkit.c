@@ -392,7 +392,7 @@ static void sctk_network_connection_to_ctx( sctk_rail_info_t *rail, struct sctk_
  * \param[in] to not used
  * \param[in] rail ont used.
  */
-static void sctk_network_connection_to_tcp ( int from, int to, sctk_rail_info_t *rail ) {}
+static void sctk_network_connection_to_tcp ( __UNUSED__ int from, __UNUSED__ int to, __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /** 
  * Initiate a connection with a peer process.
@@ -454,7 +454,7 @@ static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_
  * \param[in] data the TCP context, sent from the remote
  * \param[in] size size of the message sent (should be sizeof(struct sctk_tcp_connection_context))
  */
-void tcp_control_message_handler( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data, size_t size )
+void tcp_control_message_handler( struct sctk_rail_info_s * rail, __UNUSED__ int source_process, __UNUSED__ int source_rank, char subtype, __UNUSED__ char param, void * data, __UNUSED__ size_t size )
 {
 	sctk_tcp_control_message_t action = subtype;
 
@@ -491,8 +491,7 @@ void tcp_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process 
  * \param[in] route_init the function registering a new TCP route
  */
 void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
-                                 void * ( *tcp_thread ) ( sctk_endpoint_t * ),
-                                 void ( *route_init ) ( sctk_rail_info_t * ) )
+                                 void * ( *tcp_thread ) ( sctk_endpoint_t * ) )
 {
 	char right_rank_connection_infos[MAX_STRING_SIZE];
 	int right_rank;

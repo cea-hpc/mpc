@@ -157,14 +157,14 @@ static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_recv_message_tcp ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail ) {}
+static void sctk_network_notify_recv_message_tcp ( __UNUSED__ sctk_thread_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_matching_message_tcp ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail ) {}
+static void sctk_network_notify_matching_message_tcp (  __UNUSED__ sctk_thread_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
@@ -174,14 +174,14 @@ static void sctk_network_notify_matching_message_tcp ( sctk_thread_ptp_message_t
  * \param[in] blocking not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_perform_message_tcp ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail ) {}
+static void sctk_network_notify_perform_message_tcp (  __UNUSED__ int remote,  __UNUSED__ int remote_task_id,  __UNUSED__ int polling_task_id,  __UNUSED__ int blocking, __UNUSED__  sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_any_source_message_tcp ( int polling_task_id, int blocking, sctk_rail_info_t *rail ) {}
+static void sctk_network_notify_any_source_message_tcp ( __UNUSED__  int polling_task_id, __UNUSED__ int blocking,  __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Called by idle threads to progress messages.
@@ -258,5 +258,5 @@ void sctk_network_init_tcp ( sctk_rail_info_t *rail )
 	}
 
 	/* Actually initialize the network (note TCP kind specific functions) */
-	sctk_network_init_tcp_all ( rail, sctk_use_tcp_o_ib, sctk_tcp_thread, rail->route_init );
+	sctk_network_init_tcp_all ( rail, sctk_use_tcp_o_ib, sctk_tcp_thread);
 }

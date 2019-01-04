@@ -196,14 +196,14 @@ static void sctk_network_send_message_tcp_rdma_endpoint ( sctk_thread_ptp_messag
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_recv_message_tcp_rdma ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail ) {}
+static void sctk_network_notify_recv_message_tcp_rdma ( __UNUSED__ sctk_thread_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_matching_message_tcp_rdma ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail ) {}
+static void sctk_network_notify_matching_message_tcp_rdma ( __UNUSED__ sctk_thread_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
@@ -213,20 +213,20 @@ static void sctk_network_notify_matching_message_tcp_rdma ( sctk_thread_ptp_mess
  * \param[in] blocking not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_perform_message_tcp_rdma ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail ) {}
+static void sctk_network_notify_perform_message_tcp_rdma ( __UNUSED__ int remote, __UNUSED__ int remote_task_id,__UNUSED__ int polling_task_id, __UNUSED__  int blocking, __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
  * \param[in] rail not used
  */
-static void sctk_network_notify_idle_message_tcp_rdma ( sctk_rail_info_t *rail ) {}
+static void sctk_network_notify_idle_message_tcp_rdma ( __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_any_source_message_tcp_rdma ( int polling_task_id, int blocking, sctk_rail_info_t *rail ) {}
+static void sctk_network_notify_any_source_message_tcp_rdma ( __UNUSED__ int polling_task_id, __UNUSED__ int blocking,__UNUSED__  sctk_rail_info_t *rail ) {}
 
 /************************************************************************/
 /* TCP RDMA Init                                                        */
@@ -235,7 +235,7 @@ static void sctk_network_notify_any_source_message_tcp_rdma ( int polling_task_i
  * not used for this network.
  * \param[in] rail not used
  */
-void sctk_network_finalize_tcp_rdma(sctk_rail_info_t* rail)
+void sctk_network_finalize_tcp_rdma(__UNUSED__ sctk_rail_info_t* rail)
 {
 }
 
@@ -267,5 +267,5 @@ void sctk_network_init_tcp_rdma ( sctk_rail_info_t *rail )
 	}
 
 	/* Actually Init the TCP layer */
-	sctk_network_init_tcp_all ( rail, sctk_use_tcp_o_ib, sctk_tcp_rdma_thread, rail->route_init );
+	sctk_network_init_tcp_all ( rail, sctk_use_tcp_o_ib, sctk_tcp_rdma_thread );
 }
