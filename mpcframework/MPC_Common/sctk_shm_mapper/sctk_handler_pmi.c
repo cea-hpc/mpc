@@ -9,7 +9,7 @@
 
 static int sctk_pmi_handler_generation_number = 0;
 
-char *sctk_pmi_handler_gen_filename(void *option, void *option1) {
+char *sctk_pmi_handler_gen_filename(void *option, __UNUSED__ void *option1) {
   char *filename = sctk_malloc(sctk_pmi_get_max_key_len());
   if (filename == NULL) {
     sctk_nodebug("Can't gen filename : filename allocation failed");
@@ -24,7 +24,7 @@ char *sctk_pmi_handler_gen_filename(void *option, void *option1) {
  */
 
 bool sctk_pmi_handler_send_filename(const char *filename, void *option,
-                                    void *option1) {
+                                    __UNUSED__ void *option1) {
   if(option == NULL || filename == NULL){
 	  sctk_nodebug("Can't send filename : incorrect key or filename");
 	  return 0;
@@ -40,7 +40,7 @@ bool sctk_pmi_handler_send_filename(const char *filename, void *option,
  * @param option No option implemented 
  */
 
-  char *sctk_pmi_handler_recv_filename(void *option, void *option1) {
+  char *sctk_pmi_handler_recv_filename(void *option, __UNUSED__ void *option1) {
     char *filename = sctk_malloc(sctk_pmi_get_max_key_len());
     if (option == NULL || filename == NULL) {
       assume_m(

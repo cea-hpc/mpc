@@ -19,6 +19,7 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
+
 #ifndef SCTK_BOOL_H
 #define SCTK_BOOL_H
 

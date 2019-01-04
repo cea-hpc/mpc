@@ -558,7 +558,7 @@ sctk_formated_assert_print (FILE * stream, const int line, const char *file,
 }
 
 void
-sctk_silent_debug (const char *fmt, ...)
+sctk_silent_debug (__UNUSED__ const char *fmt, ...)
 {
 }
 

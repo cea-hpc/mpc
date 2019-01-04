@@ -31,13 +31,13 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "sctk_debug.h"
 
 #ifdef MPC_THREAD
 #include "mpcthread.h"
 #endif
 
 
-#define assume_m(x,...) if (!(x)) { printf("ERROR: ");printf(__VA_ARGS__);printf("\n");abort(); }
 #define fatal(...) {printf("ERROR: ");printf(__VA_ARGS__);printf("\n");abort();}
 #define assume_perror(test,perror_string,...) {if (!(test)) {perror(perror_string);fatal(__VA_ARGS__);}}
 
@@ -66,8 +66,8 @@ SCTK_STATIC void sctk_shm_mapper_fake_handler_reset(void)
 /************************* FUNCTION ************************/
 /** Fake sync handler used for unit test only as it count on a shared (in sense of thread) global pointer. **/
 SCTK_STATIC bool sctk_shm_mapper_fake_handler_send(const char *filename,
-                                                   void *option,
-                                                   void *option1) {
+                                                   __UNUSED__ void *option,
+                                                   __UNUSED__ void *option1) {
   assert(filename != NULL);
   sctk_shm_mapper_fake_glob = filename;
   return true;
@@ -75,8 +75,8 @@ SCTK_STATIC bool sctk_shm_mapper_fake_handler_send(const char *filename,
 
 /************************* FUNCTION ************************/
 /** Fake sync handler used for unit test only as it count on a shared (in sense of thread) global pointer. **/
-SCTK_STATIC char *sctk_shm_mapper_fake_handler_recv(void *option,
-                                                    void *option1) {
+SCTK_STATIC char *sctk_shm_mapper_fake_handler_recv(__UNUSED__ void *option,
+                                                    __UNUSED__ void *option1) {
   while (sctk_shm_mapper_fake_glob == NULL) {
   };
   return strdup((const char *)sctk_shm_mapper_fake_glob);
@@ -88,7 +88,7 @@ SCTK_STATIC char *sctk_shm_mapper_fake_handler_recv(void *option,
  * The caller need to free the string it return.
  * @TODO ensure to try another filename if file already exist (with a warning)
 **/
-SCTK_STATIC char *sctk_shm_mapper_get_filename(void *option, void *option1) {
+SCTK_STATIC char *sctk_shm_mapper_get_filename(__UNUSED__ void *option, __UNUSED__ void *option1) {
   char *buffer = malloc(64);
   int res;
   res = sprintf(buffer, "sctk_shm_mapper_%06d.raw", getpid());
@@ -164,7 +164,7 @@ static sctk_atomics_int local_gen;
 static sctk_spinlock_t gen_lock = 0;
 static int gen_init_done = 0;
 
-SCTK_STATIC void sctk_shm_mapper_barrier( sctk_shm_mapper_sync_header_t * sync_header,sctk_shm_mapper_role_t role,int participants)
+SCTK_STATIC void sctk_shm_mapper_barrier( sctk_shm_mapper_sync_header_t * sync_header,__UNUSED__ sctk_shm_mapper_role_t role,int participants)
 {
 	//errors
 	assert(sync_header != NULL);
@@ -178,9 +178,9 @@ SCTK_STATIC void sctk_shm_mapper_barrier( sctk_shm_mapper_sync_header_t * sync_h
 
         sctk_atomics_incr_int(&local_gen);
 
-        // sctk_error("ROLE %d PART %d (GEN %d VAL %d)", role, participants,
-        // local_gen, sctk_atomics_load_int
-        //				(&sync_header->barrier_cnt));
+        sctk_nodebug("ROLE %d PART %d (GEN %d VAL %d)", role, participants,
+         						local_gen, sctk_atomics_load_int
+        						(&sync_header->barrier_cnt));
 
         while (sctk_atomics_load_int(&local_gen) !=
                sctk_atomics_load_int(&sync_header->barrier_gen)) {

@@ -13,7 +13,7 @@
  * @param option No option implemented 
  */
 
-char *sctk_mpi_handler_gen_filename(void *option, void *option1) {
+char *sctk_mpi_handler_gen_filename(void *option, __UNUSED__ void *option1) {
   char *filename = (char*) malloc(128*sizeof(char));
   if(filename == NULL){
 	  printf("Can't gen filename : filename allocation failedi\n");

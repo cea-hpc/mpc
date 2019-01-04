@@ -100,6 +100,14 @@ extern "C"
      #define INFO(x)
 #endif
 
+/* For not used fuctions (disable compiler warning */
+#ifdef __GNUC__
+#define __UNUSED__ __attribute__ ((__unused__))
+#else
+#define __UNUSED__
+#endif
+
+
   void sctk_silent_debug (const char *fmt, ...);
   void sctk_log (FILE * file, const char *fmt, ...);
   void sctk_warning (const char *fmt, ...);

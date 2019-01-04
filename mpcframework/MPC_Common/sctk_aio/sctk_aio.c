@@ -24,7 +24,6 @@
 #include "sctk_aio.h"
 
 #include <stdio.h>
-#include <pthread.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -33,6 +32,10 @@
 #include <string.h>
 #include <signal.h>
 #include <time.h>
+
+#include "sctk_debug.h"
+#include "pthread.h"
+
 
 #define MAX_SCTK_AIO_THREADS 16
 
@@ -523,7 +526,7 @@ pthread_mutex_t sctk_aio_threads_initialized_lock = PTHREAD_MUTEX_INITIALIZER;
 static struct sctk_aio_threads sctk_aio_threads;
 static volatile int sctk_aio_thread_stop_condition = 1;
 
-void * aio_thread_main_loop( void * arg )
+void * aio_thread_main_loop( __UNUSED__ void * arg )
 {
 	int trial_counter = 0;
 

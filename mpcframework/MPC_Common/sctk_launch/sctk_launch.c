@@ -182,7 +182,7 @@ __sctk_add_arg (char *arg, void (*action) (void),
 #define sctk_add_arg(arg,action) if(__sctk_add_arg(arg,action,word) == 0) return 0
 
 	static inline int
-__sctk_add_arg_eq (char *arg, char *argeq,
+__sctk_add_arg_eq (char *arg,
 		void (*action) (char *), char *word)
 {
 	if (strncmp (word, arg, strlen (arg)) == 0)
@@ -193,7 +193,7 @@ __sctk_add_arg_eq (char *arg, char *argeq,
 	return 1;
 }
 
-#define sctk_add_arg_eq(arg,action) if(__sctk_add_arg_eq(arg,arg"=n",action,word) == 0) return 0
+#define sctk_add_arg_eq(arg,action) if(__sctk_add_arg_eq(arg,action,word) == 0) return 0
 
 static bool sctk_version_details_val;
 static void (*sctk_thread_val) (void) = NULL;
@@ -222,7 +222,7 @@ void sctk_use_pthread(void) {
  * we relax it after doing driver initialization */
 int __polling_done = 0;
 
-void * polling_thread( void * dummy )
+void * polling_thread( __UNUSED__ void * dummy )
 {
 	/* The role of this thread is to poll
 	 * idle in a gentle manner in order
@@ -520,7 +520,7 @@ void sctk_use_pthread_ng(void) {
 }
 /*********  END NG ************/
 
-static void sctk_def_directory(char *arg) { /*   sctk_store_dir = arg; */
+static void sctk_def_directory(__UNUSED__ char *arg) { /*   sctk_store_dir = arg; */
 }
 
 static void sctk_def_task_nb(char *arg) {
@@ -590,31 +590,31 @@ sctk_get_node_nb()
 }
 
 	static void
-sctk_def_enable_smt (char *arg)
+sctk_def_enable_smt (__UNUSED__ char *arg)
 {
 	sctk_enable_smt_capabilities = 1;
 }
 
 	static void
-sctk_def_disable_smt (char *arg)
+sctk_def_disable_smt (__UNUSED__ char *arg)
 {
 	sctk_enable_smt_capabilities = 0;
 }
 
 	static void
-sctk_def_text_placement(char *arg)
+sctk_def_text_placement(__UNUSED__ char *arg)
 {
 	sctk_enable_text_placement = 1;
 }
 
 	static void
-sctk_def_graphic_placement(char *arg)
+sctk_def_graphic_placement(__UNUSED__ char *arg)
 {
 	sctk_enable_graphic_placement = 1;
 }
 
 	static void
-sctk_def_share_node (char *arg)
+sctk_def_share_node (__UNUSED__ char *arg)
 {
 	sctk_share_node_capabilities = 1;
 }
@@ -659,7 +659,7 @@ sctk_use_network (char *arg)
 }
 
 
-static void sctk_set_profiling( char * arg )
+static void sctk_set_profiling(__UNUSED__ char * arg )
 {
 	/* fprintf(stderr,"BEFORE |%s| |%s|\n",sctk_profiling_outputs,arg); */
 #ifdef MPC_Profiler
