@@ -32,11 +32,11 @@ void sctk_shm_free_regions_infos()
 }
 
 void 
-sctk_shm_add_region_infos(char* shmem_base,size_t shmem_size,int cells_num,int rank,int participants)
+sctk_shm_add_region_infos(char* shmem_base,size_t shmem_size,int cells_num,int rank)
 {
     assume(sctk_shm_regions_infos != NULL);
     assume(sctk_shm_regions_infos[rank] == NULL);
-    sctk_shm_regions_infos[rank]=sctk_shm_set_region_infos(shmem_base,shmem_size,cells_num,participants);
+    sctk_shm_regions_infos[rank]=sctk_shm_set_region_infos(shmem_base,shmem_size,cells_num);
 }
 
 void sctk_shm_reset_process_queues(int rank)

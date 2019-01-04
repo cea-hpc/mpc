@@ -28,7 +28,7 @@ struct sctk_shm_region_infos_s
 typedef struct sctk_shm_region_infos_s sctk_shm_region_infos_t;
 
 /* FUNCS */
-sctk_shm_region_infos_t *sctk_shm_set_region_infos(void*,size_t,int,int);
+sctk_shm_region_infos_t *sctk_shm_set_region_infos(void*,size_t,int);
 void sctk_shm_reset_region_queues(sctk_shm_region_infos_t*,int);
 size_t sctk_shm_get_region_size(int);
 

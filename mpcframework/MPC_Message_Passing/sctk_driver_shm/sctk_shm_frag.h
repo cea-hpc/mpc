@@ -33,7 +33,7 @@ typedef struct
 void sctk_network_frag_shm_interface_init(void);
 void sctk_network_frag_shm_interface_free(void);
 void sctk_network_frag_msg_shm_idle(int);
-sctk_thread_ptp_message_t *sctk_network_frag_msg_shm_recv(sctk_shm_cell_t*,int);
+sctk_thread_ptp_message_t *sctk_network_frag_msg_shm_recv(sctk_shm_cell_t*);
 int sctk_network_frag_msg_shm_send(sctk_thread_ptp_message_t*,sctk_shm_cell_t*);
 
 #endif /* __SCTK_SHM_FRAG__ */

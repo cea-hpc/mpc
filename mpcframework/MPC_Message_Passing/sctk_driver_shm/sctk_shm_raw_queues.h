@@ -9,7 +9,7 @@
 
 void sctk_shm_init_regions_infos(int);
 void sctk_shm_free_regions_infos();
-void sctk_shm_add_region_infos(char*,size_t,int,int,int);
+void sctk_shm_add_region_infos(char*,size_t,int,int);
 void sctk_shm_reset_process_queues(int);
 
 void sctk_shm_release_cell(sctk_shm_cell_t *);

@@ -37,6 +37,7 @@ static long sctk_shm_roundup_powerof2(unsigned long n)
     return n+1;
 }
 
+#if 0
 void sctk_shm_network_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
                          void * src_addr, struct sctk_rail_pin_ctx_list * local_key,
                          void * dest_addr, struct  sctk_rail_pin_ctx_list * remote_key,
@@ -45,7 +46,7 @@ void sctk_shm_network_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_messa
 
 
 }
-	
+
 void sctk_shm_network_rdma_read(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
                          void * src_addr,  struct  sctk_rail_pin_ctx_list * remote_key,
                          void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
@@ -53,7 +54,8 @@ void sctk_shm_network_rdma_read(  sctk_rail_info_t *rail, sctk_thread_ptp_messag
 {
 
 }
-	
+#endif
+
 static void
 sctk_network_add_message_to_pending_shm_list( sctk_thread_ptp_message_t *msg, int sctk_shm_dest, int with_lock)
 {
@@ -108,7 +110,7 @@ static int sctk_network_send_message_dest_shm(sctk_thread_ptp_message_t *msg,
 
 
 static void
-sctk_network_send_message_from_pending_shm_list( int sctk_shm_max_message )
+sctk_network_send_message_from_pending_shm_list( void )
 {
 	sctk_shm_msg_list_t *elt = NULL;
 	sctk_shm_msg_list_t *tmp = NULL;
@@ -157,13 +159,13 @@ sctk_network_send_message_endpoint_shm ( sctk_thread_ptp_message_t *msg, sctk_en
 }
 
 static void 
-sctk_network_notify_matching_message_shm ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
+sctk_network_notify_matching_message_shm ( __UNUSED__ sctk_thread_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail )
 {
 }
 
 
 static void 
-sctk_network_notify_perform_message_shm ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
+sctk_network_notify_perform_message_shm ( __UNUSED__ int remote, __UNUSED__ int remote_task_id, __UNUSED__ int polling_task_id, __UNUSED__ int blocking, __UNUSED__ sctk_rail_info_t *rail )
 {
 }
 
@@ -182,7 +184,7 @@ static int reduce_polling = 0;
 #define MAX_REDUCE_POLLING 1024
 
 static void 
-sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
+sctk_network_notify_idle_message_shm ( __UNUSED__ sctk_rail_info_t *rail )
 {
     sctk_shm_cell_t * cell;
     sctk_thread_ptp_message_t *msg;
@@ -220,7 +222,7 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 #endif /* MPC_USE_CMA */
 	    case SCTK_SHM_FIRST_FRAG:
 	    case SCTK_SHM_NEXT_FRAG:
-            	msg = sctk_network_frag_msg_shm_recv(cell,1);
+            	msg = sctk_network_frag_msg_shm_recv(cell);
     	    	if(msg) sctk_send_message_from_network_shm(msg);
 		break;
 	    default:
@@ -231,20 +233,20 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
     if(!cell)
     {
     	sctk_network_frag_msg_shm_idle(1);
-    	sctk_network_send_message_from_pending_shm_list(1);
+    	sctk_network_send_message_from_pending_shm_list();
     }
 
     sctk_spinlock_unlock(&sctk_shm_polling_lock);
 
 }
 
-static void sctk_network_notify_recv_message_shm ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
+static void sctk_network_notify_recv_message_shm ( __UNUSED__ sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
     sctk_network_notify_idle_message_shm ( rail );
 }
 
 static void 
-sctk_network_notify_any_source_message_shm ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
+sctk_network_notify_any_source_message_shm ( __UNUSED__ int polling_task_id, __UNUSED__ int blocking, sctk_rail_info_t *rail )
 {
     sctk_network_notify_idle_message_shm ( rail );
 }
@@ -365,7 +367,7 @@ static void sctk_shm_add_route(int dest,int shm_dest,sctk_rail_info_t *rail )
     return;
 }
 
-static void sctk_shm_init_raw_queue(size_t size, int cells_num, int rank, int participants)
+static void sctk_shm_init_raw_queue(size_t size, int cells_num, int rank)
 {
     char buffer[16];
     void *shm_base = NULL;
@@ -379,7 +381,7 @@ static void sctk_shm_init_raw_queue(size_t size, int cells_num, int rank, int pa
     shm_role = (sctk_local_process_rank==rank)?SCTK_SHM_MAPPER_ROLE_MASTER:shm_role; 
     shm_base = sctk_shm_add_region( size, shm_role, pmi_handler);
         
-    sctk_shm_add_region_infos(shm_base,size,cells_num,rank,participants );
+    sctk_shm_add_region_infos(shm_base,size,cells_num,rank );
 
     if( shm_role == SCTK_SHM_MAPPER_ROLE_MASTER )
         sctk_shm_reset_process_queues( rank );
@@ -389,7 +391,6 @@ static void sctk_shm_init_raw_queue(size_t size, int cells_num, int rank, int pa
 
 static void sctk_shm_free_raw_queue()
 {
-	
 }
 
 void sctk_shm_check_raw_queue(int local_process_number)
@@ -405,7 +406,7 @@ void sctk_shm_check_raw_queue(int local_process_number)
     sctk_pmi_barrier();
 }
 
-void sctk_network_finalize_shm(sctk_rail_info_t *rail)
+void sctk_network_finalize_shm(__UNUSED__ sctk_rail_info_t *rail)
 {
 	if(!sctk_shm_driver_initialized)
 		return;
@@ -477,7 +478,7 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
    sctk_shm_init_regions_infos(local_process_number);
    for(i=0; i < tmp->nb_process; i++)
    {
-      sctk_shm_init_raw_queue(sctk_shmem_size,sctk_shmem_cells_num,i,local_process_number);
+      sctk_shm_init_raw_queue(sctk_shmem_size,sctk_shmem_cells_num,i);
       if( i != local_process_rank)
          sctk_shm_add_route(tmp->process_list[i], i,rail);
       sctk_pmi_barrier();

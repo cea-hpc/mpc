@@ -116,7 +116,7 @@ sctk_shm_send_register_new_frag_msg(int dest)
 }
 
 static sctk_shm_proc_frag_info_t* 
-sctk_shm_init_send_frag_msg(int *key, int remote, sctk_thread_ptp_message_t* msg)
+sctk_shm_init_send_frag_msg( int remote, sctk_thread_ptp_message_t* msg)
 {
    sctk_shm_proc_frag_info_t* frag_infos = NULL;
    frag_infos = sctk_shm_send_register_new_frag_msg(remote);
@@ -177,7 +177,7 @@ sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t
  
    if( SCTK_MSG_SIZE(msg) > 0 ) 
    {
-      frag_infos = sctk_shm_init_send_frag_msg(&msg_key, cell->dest, msg);
+      frag_infos = sctk_shm_init_send_frag_msg( cell->dest, msg);
    }
 
 
@@ -328,7 +328,7 @@ sctk_network_frag_msg_shm_send(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t* 
 }
 
 sctk_thread_ptp_message_t *
-sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
+sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell)
 {
    int msg_key, msg_src;
    sctk_shm_proc_frag_info_t* frag_infos = NULL;
