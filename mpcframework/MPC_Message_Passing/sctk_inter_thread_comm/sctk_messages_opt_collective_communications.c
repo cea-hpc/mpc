@@ -567,7 +567,6 @@ static void sctk_allreduce_opt_messages ( const void *buffer_in, void *buffer_ou
                                           const sctk_datatype_t data_type,
                                           struct sctk_internal_collectives_struct_s *tmp )
 {
-	TODO ( "Add buffer splitting" )
 	sctk_allreduce_opt_messages_intern ( buffer_in, buffer_out, elem_size, elem_number, func, communicator, data_type, tmp );
 }
 

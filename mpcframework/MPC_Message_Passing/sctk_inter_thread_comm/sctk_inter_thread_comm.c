@@ -57,8 +57,6 @@
 /* Task engine disabled */
 //#define SCTK_DISABLE_TASK_ENGINE
 
-TODO("sctk_cancel_message: need to be implemented")
-
 static inline int _sctk_is_net_message(int dest);
 
 int sctk_cancel_message(sctk_request_t *msg) {
@@ -86,7 +84,7 @@ int sctk_cancel_message(sctk_request_t *msg) {
   case REQUEST_SEND:
     if (msg->msg == NULL)
       return ret;
-
+    /* NOTE: cancelling a Send is deprecated */
     if (_sctk_is_net_message(SCTK_MSG_DEST_PROCESS(msg->msg))) {
       sctk_error("Try to cancel a network message for %d from UNIX process %d",
                  SCTK_MSG_DEST_PROCESS(msg->msg), sctk_process_rank);
@@ -2289,8 +2287,6 @@ sctk_perform_messages_probe_matching(sctk_internal_ptp_t *pair,
     }
   }
 
-  TODO("Add another function pointer to indicate that we have matched a "
-       "message from known process")
 #if 0
 
 		if ( header->source == SCTK_ANY_SOURCE )
@@ -2722,8 +2718,6 @@ void sctk_perform_messages(struct sctk_perform_messages_s *wait) {
 /*
  * Wait for all message according to a communicator and a task id
  */
-TODO("We should add an option in the MPC config to choose if we support "
-     "the wait_all function. If not, we could delete the useless locks")
 void sctk_wait_all(const int task, const sctk_communicator_t com) {
   sctk_internal_ptp_t *pair;
   int i;
@@ -2731,9 +2725,6 @@ void sctk_wait_all(const int task, const sctk_communicator_t com) {
   /* Get the pending list associated to the task */
   pair = sctk_get_internal_ptp(task, com);
   sctk_assert(pair);
-
-  TODO("Rewrite the following section")
-#if 1
 
   do {
     i = OPA_load_int(&pair->pending_nb);
@@ -2752,13 +2743,8 @@ void sctk_wait_all(const int task, const sctk_communicator_t com) {
 
       if (i != 0)
         sctk_thread_yield();
-
-      /*       sleep(5); */
-      /*       fprintf(stderr,"Reste %d\n",pair->pending_nb); */
     }
   } while (i != 0);
-
-#endif
 }
 
 void sctk_notify_idle_message() {
@@ -3090,8 +3076,6 @@ int sctk_is_net_message(int dest)
 /*Probe                                                             */
 /********************************************************************/
 
-TODO("Probe only occurs on recv")
-/* FIXME: is it possible to probe a message from an Isend ? */
 static inline void
 sctk_probe_source_tag_class_func(int destination, int source, int tag,
                                  sctk_message_class_t class,

@@ -962,11 +962,6 @@ sctk_disable_addr_randomize (int argc, char **argv)
 		disable_addr_randomize = sctk_runtime_config_get()->modules.launcher.disable_rand_addr;
 		if (!keep_addr_randomize && disable_addr_randomize)
 		{
-			if (sctk_runtime_config_get()->modules.launcher.banner)
-			{
-				INFO("Addr randomize disabled for large scale runs")
-					//      sctk_warning ("Restart execution to disable addr randomize");
-			}
 			THIS__set_personality (ADDR_NO_RANDOMIZE);
 			execvp (argv[0], argv);
 		}

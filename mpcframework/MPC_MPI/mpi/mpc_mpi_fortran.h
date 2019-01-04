@@ -22,9 +22,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-TODO("Handle the case of MPI_Aint which are not int fortran")
-
-
 void ffunc (mpi_send) (void *buf, int *count, MPI_Datatype * datatype,
 		       int *dest, int *tag, MPI_Comm * comm, int *res);
 
@@ -1951,16 +1948,13 @@ void ffunc (pmpi_info_get_nthkey)( MPI_Info * info, int * n, char * out SCTK_CHA
 {
 	*res = MPI_Info_get_nthkey( *info, *n, out );
 	sctk_char_c_to_fortran (out, size);
-	
 }
 
 void ffunc (pmpi_info_get_valuelen)( MPI_Info * info, const char *key SCTK_CHAR_MIXED(size), int * value_len, int * flag,  int *res SCTK_CHAR_END (size))
 {
 	char *ckey, *ptr;
 	ckey = sctk_char_fortran_to_c ((char *)key, size, &ptr);
-	
 	*res = MPI_Info_get_valuelen( *info, ckey, value_len, flag );
-	
 	sctk_free( ptr );
 }
 

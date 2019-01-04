@@ -45,35 +45,32 @@ char * sctk_char_fortran_to_c (char *buf, int size, char ** free_ptr)
 	char *tmp;
 	long int i;
 	tmp = sctk_malloc (size + 1);
-	TODO("check memory liberation")
 	assume( tmp != NULL );
 	*free_ptr = tmp;
-	
+
 	for (i = 0; i < size; i++)
 	{
 	tmp[i] = buf[i];
 	}
 	tmp[i] = '\0';
-	
+
 	/* Trim */
 
 	while( *tmp == ' ')
 	{
 		tmp++;
 	}
-	
+
 	int len = strlen( tmp );
-	
+
 	char *begin = tmp;
-	
+
 	while( (tmp[len - 1] == ' ') && (&tmp[len] != begin) )
 	{
 		tmp[len - 1] = '\0';
 		len--;
 	}
-		
-	
-	
+
 	return tmp;
 }
 
@@ -739,7 +736,6 @@ static void __sctk_init_mpi_errors() { __MPC_Error_init(); }
 static int is_finalized = 0;
 static int is_initialized = 0;
 
-TODO("to optimize")
 #define mpi_check_comm(com, comm)                                              \
   if ((is_finalized != 0) || (is_initialized != 1)) {                          \
     MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_OTHER, "");                       \
@@ -12674,7 +12670,7 @@ static int
 __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 				   int ranges[][3], MPI_Group * mpi_newgroup)
 {
-	TODO("Cette partie a été reprise sur OpenMPI");
+  /* This code has been taken fron OpenMPI */
 	int err, i,index;
     int group_size;
     int * elements_int_list;
@@ -12874,7 +12870,7 @@ static int
 __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 				   int ranges[][3], MPI_Group * mpi_newgroup)
 {
-	TODO("Cette partie a été reprise sur OpenMPI");
+	/* This code has been taken fron OpenMPI */
 	int err, i,index;
     int group_size;
     int * elements_int_list;

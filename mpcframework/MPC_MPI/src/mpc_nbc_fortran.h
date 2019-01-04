@@ -20,8 +20,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-TODO("Handle the case of MPI_Aint which are not int fortran")
-
 char * sctk_char_fortran_to_c (char *buf, int size, char ** free_ptr );
 void sctk_char_c_to_fortran (char *buf, int size);
 

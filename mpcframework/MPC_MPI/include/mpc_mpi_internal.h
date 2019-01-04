@@ -46,9 +46,8 @@
 #include <string.h>
 #include <uthash.h>
 #include <utlist.h>
-TODO("Optimize algorithme for derived types")
 
-#define ENABLE_COLLECTIVES_ON_INTERCOMM  
+#define ENABLE_COLLECTIVES_ON_INTERCOMM
 //#define MPC_MPI_USE_REQUEST_CACHE
 //#define MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
 int __INTERNAL__PMPI_Attr_set_fortran (int keyval);
