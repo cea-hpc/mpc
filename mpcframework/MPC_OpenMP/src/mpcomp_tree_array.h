@@ -21,10 +21,10 @@ typedef struct mpcomp_meta_tree_node_s
     /* Generic information */
     mpcomp_meta_tree_type_t type;
     /* Father information */
-    unsigned int* fathers_array;
+    int* fathers_array;
     unsigned int fathers_array_size;
     /* Children information */
-    unsigned int* first_child_array;
+    int* first_child_array;
     unsigned int* children_num_array;
     unsigned int children_array_size;
 

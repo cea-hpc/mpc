@@ -192,7 +192,7 @@ __mpcomp_spinning_get_debug_thread_infos( mpcomp_thread_t* thread )
 static inline mpcomp_node_t*
 __mpcomp_spinning_get_mvp_father_node( mpcomp_mvp_t* mvp, mpcomp_instance_t* instance )
 {
-    unsigned int* mvp_father_array;
+    int* mvp_father_array;
     mpcomp_meta_tree_node_t* tree_array_node, *tree_array; 
 
     sctk_assert( mvp );
