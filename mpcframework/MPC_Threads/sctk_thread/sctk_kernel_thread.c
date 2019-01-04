@@ -30,7 +30,7 @@
 #include <string.h>
 #include <semaphore.h>
 #include "sctk_runtime_config.h"
-#include "sctk_alloc_posix.h"
+#include "sctk_alloc.h"
 #include "sctk_tls.h"
 
 #ifndef SCTK_KERNEL_THREAD_USE_TLS

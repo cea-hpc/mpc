@@ -21,7 +21,7 @@
 /* ######################################################################## */
 #include "mpc_extended_request.h"
 #include <stdlib.h>
-#include "sctk_alloc_posix.h"
+#include "sctk_alloc.h"
 
 void GRequest_context_init( struct GRequest_context * ctx )
 {
