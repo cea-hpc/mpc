@@ -18549,7 +18549,7 @@ PMPI_Reduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
   int i;
   int size; 
   int res = MPI_ERR_INTERN;
-  int * recvcnts;
+
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 		MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
@@ -18568,7 +18568,6 @@ PMPI_Reduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
 	if (MPI_IN_PLACE == recvbuf || sendbuf == recvbuf) {
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	}
-
 	mpi_check_count (recvcnts, comm);
 	mpi_check_type (datatype, comm);
 	mpi_check_op (op,datatype, comm);
