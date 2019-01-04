@@ -125,11 +125,9 @@ sctk_ib_rdma_done_t;
  /* Rendez-vous */
 
 sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req ( sctk_rail_info_t *rail,
-													sctk_ib_qp_t *remote, sctk_thread_ptp_message_t *msg, size_t size,
-													int low_memory_mode );
+						sctk_ib_qp_t *remote, sctk_thread_ptp_message_t *msg, size_t size );
 
-void sctk_ib_rdma_rendezvous_prepare_send_msg ( sctk_ib_rail_info_t *rail_ib,
-											    sctk_thread_ptp_message_t *msg, size_t size );
+void sctk_ib_rdma_rendezvous_prepare_send_msg ( sctk_thread_ptp_message_t *msg, size_t size );
 
 /* RDMA Read-Write */
 

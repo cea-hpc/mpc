@@ -158,7 +158,7 @@ void sctk_ib_config_mutate ( sctk_ib_rail_info_t *rail_ib )
 	config->buffered_limit  = ( config->buffered_limit + sizeof ( sctk_thread_ptp_message_body_t ) );
 }
 
-void sctk_ib_config_init ( sctk_ib_rail_info_t *rail_ib, char *network_name )
+void sctk_ib_config_init ( sctk_ib_rail_info_t *rail_ib, __UNUSED__ char *network_name )
 {
 	LOAD_CONFIG ( rail_ib );
 

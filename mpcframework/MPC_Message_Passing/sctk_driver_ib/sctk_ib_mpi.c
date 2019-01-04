@@ -50,6 +50,34 @@
 /** array of VPS, for remembering __thread vars to reset when rail is re-enabled */
 volatile char *vps_reset = NULL;
 
+#if 0
+static char *sctk_ib_protocol_print ( sctk_ib_protocol_t prot )
+{
+	switch ( prot )
+	{
+		case SCTK_IB_EAGER_PROTOCOL:
+			return "SCTK_IB_EAGER_PROTOCOL";
+			break;
+
+		case SCTK_IB_BUFFERED_PROTOCOL:
+			return "SCTK_IB_BUFFERED_PROTOCOL";
+			break;
+
+		case SCTK_IB_RDMA_PROTOCOL:
+			return "SCTK_IB_RDMA_PROTOCOL";
+			break;
+
+		case SCTK_IB_NULL_PROTOCOL:
+			return "SCTK_IB_NULL_PROTOCOL";
+			break;
+
+		default:
+			return "null";
+			break;
+	}
+}
+#endif
+
 
 static void sctk_network_send_message_ib_endpoint ( sctk_thread_ptp_message_t *msg , sctk_endpoint_t *endpoint )
 {
@@ -82,7 +110,7 @@ static void sctk_network_send_message_ib_endpoint ( sctk_thread_ptp_message_t *m
 	        || ( size + IBUF_GET_EAGER_SIZE <= config->eager_limit ) )
 	{
 		sctk_debug ( "Eager" );
-		ibuf = sctk_ib_eager_prepare_msg ( rail_ib, remote, msg, size, -1, sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ) );
+		ibuf = sctk_ib_eager_prepare_msg ( rail_ib, remote, msg, size, sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ) );
 
 		/* Actually, it is possible to get a NULL pointer for ibuf. We falback to buffered */
 		if ( ibuf == NULL )
@@ -94,7 +122,7 @@ static void sctk_network_send_message_ib_endpoint ( sctk_thread_ptp_message_t *m
 		PROF_INC ( rail_ib->rail, ib_eager_nb );
 
 		/* Remote profiling */
-		sctk_ibuf_rdma_update_remote ( rail_ib, remote, size );
+		sctk_ibuf_rdma_update_remote ( remote, size );
 		goto exit;
 	}
 
@@ -109,18 +137,18 @@ buffered:
 		PROF_INC ( rail_ib->rail, ib_buffered_nb );
 
 		/* Remote profiling */
-		sctk_ibuf_rdma_update_remote ( rail_ib, remote, size );
+		sctk_ibuf_rdma_update_remote ( remote, size );
 
 		goto exit;
 	}
 
 	/***** RDMA RENDEZVOUS CHANNEL *****/
 	sctk_debug ( "Size of message: %lu", size );
-	ibuf = sctk_ib_rdma_rendezvous_prepare_req ( rail, remote, msg, size, -1 );
+	ibuf = sctk_ib_rdma_rendezvous_prepare_req ( rail, remote, msg, size );
 
 	/* Send message */
 	sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
-	sctk_ib_rdma_rendezvous_prepare_send_msg ( rail_ib, msg, size );
+	sctk_ib_rdma_rendezvous_prepare_send_msg ( msg, size );
 	PROF_INC ( rail_ib->rail, ib_rdma_nb );
 exit:
 	{}
@@ -178,7 +206,7 @@ sctk_endpoint_t * sctk_on_demand_connection_ib( struct sctk_rail_info_s * rail ,
 
 
 
-int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf,  const char from_cp, struct sctk_ib_polling_s *poll )
+int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 {	
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	int release_ibuf = 1;
@@ -227,7 +255,7 @@ int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf,  co
 	return 0;
 }
 
-int sctk_network_poll_recv_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf, const char from_cp, struct sctk_ib_polling_s *poll )
+int sctk_network_poll_recv_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 {
 	PROF_TIME_START ( rail, ib_poll_recv_ibuf );
 	const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL ( ibuf->buffer );
@@ -309,7 +337,7 @@ int sctk_network_poll_recv_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf, con
 	return 0;
 }
 
-static int sctk_network_poll_recv ( sctk_rail_info_t *rail, struct ibv_wc *wc,  struct sctk_ib_polling_s *poll )
+static int sctk_network_poll_recv ( sctk_rail_info_t *rail, struct ibv_wc *wc )
 {
 	sctk_ibuf_t *ibuf = NULL;
 	ibuf = ( sctk_ibuf_t * ) wc->wr_id;
@@ -334,7 +362,7 @@ static int sctk_network_poll_recv ( sctk_rail_info_t *rail, struct ibv_wc *wc,  
 	/* If this is an immediate message, we process it */
 	if ( wc->wc_flags == IBV_WC_WITH_IMM )
 	{
-		return sctk_network_poll_recv_ibuf ( rail, ibuf, 0, poll );
+		return sctk_network_poll_recv_ibuf ( rail, ibuf );
 	}
 
 	if ( IBUF_GET_CHANNEL ( ibuf ) & RC_SR_CHANNEL )
@@ -342,9 +370,9 @@ static int sctk_network_poll_recv ( sctk_rail_info_t *rail, struct ibv_wc *wc,  
 		dest_task = IBUF_GET_DEST_TASK ( ibuf->buffer );
 		ibuf->cq = SCTK_IB_RECV_CQ;
 
-		if ( sctk_ib_cp_handle_message ( rail, ibuf, dest_task, dest_task ) == 0 )
+		if ( sctk_ib_cp_handle_message ( ibuf, dest_task, dest_task ) == 0 )
 		{
-			return sctk_network_poll_recv_ibuf ( rail, ibuf, 0, poll );
+			return sctk_network_poll_recv_ibuf ( rail, ibuf );
 		}
 		else
 		{
@@ -353,11 +381,11 @@ static int sctk_network_poll_recv ( sctk_rail_info_t *rail, struct ibv_wc *wc,  
 	}
 	else
 	{
-		return sctk_network_poll_recv_ibuf ( rail, ibuf, 0, poll );
+		return sctk_network_poll_recv_ibuf ( rail, ibuf );
 	}
 }
 
-static int sctk_network_poll_send ( sctk_rail_info_t *rail, struct ibv_wc *wc, struct sctk_ib_polling_s *poll )
+static int sctk_network_poll_send ( sctk_rail_info_t *rail, struct ibv_wc *wc )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	sctk_ibuf_t *ibuf = NULL;
@@ -380,7 +408,7 @@ static int sctk_network_poll_send ( sctk_rail_info_t *rail, struct ibv_wc *wc, s
 		{
 			int current_pending;
 			current_pending = sctk_ib_qp_fetch_and_sub_pending_data ( ibuf->remote, ibuf );
-			sctk_ibuf_rdma_update_max_pending_data ( rail_ib, ibuf->remote,
+			sctk_ibuf_rdma_update_max_pending_data ( ibuf->remote,
 			                                         current_pending );
 
 			/* Check if we are in a flush state */
@@ -412,7 +440,7 @@ static int sctk_network_poll_send ( sctk_rail_info_t *rail, struct ibv_wc *wc, s
 	/* Decrease the number of pending requests */
 	int current_pending;
 	current_pending = sctk_ib_qp_fetch_and_sub_pending_data ( ibuf->remote, ibuf );
-	sctk_ibuf_rdma_update_max_pending_data ( rail_ib, ibuf->remote,
+	sctk_ibuf_rdma_update_max_pending_data ( ibuf->remote,
 	                                         current_pending );
 
 	if ( (IBUF_GET_CHANNEL ( ibuf ) & RC_SR_CHANNEL))
@@ -422,9 +450,9 @@ static int sctk_network_poll_send ( sctk_rail_info_t *rail, struct ibv_wc *wc, s
 
 		/* We still check the dest_task. If it is -1, this is a process_specific
 		* message, so we need to handle the message asap */
-		if ( sctk_ib_cp_handle_message ( rail, ibuf, dest_task, src_task ) == 0 )
+		if ( sctk_ib_cp_handle_message ( ibuf, dest_task, src_task ) == 0 )
 		{
-			return sctk_network_poll_send_ibuf ( rail, ibuf, 0, poll );
+			return sctk_network_poll_send_ibuf ( rail, ibuf );
 		}
 		else
 		{
@@ -433,7 +461,7 @@ static int sctk_network_poll_send ( sctk_rail_info_t *rail, struct ibv_wc *wc, s
 	}
 	else
 	{
-		return sctk_network_poll_send_ibuf ( rail, ibuf, 0, poll );
+		return sctk_network_poll_send_ibuf ( rail, ibuf );
 	}
 }
 
@@ -446,7 +474,7 @@ static pthread_cond_t  poll_cond = PTHREAD_COND_INITIALIZER;
 static int retry;
 
 
-void sctk_network_poll_all_cq ( sctk_rail_info_t *rail, sctk_ib_polling_t *poll, int polling_task_id, int blocking )
+void sctk_network_poll_all_cq ( sctk_rail_info_t *rail, sctk_ib_polling_t *poll )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	LOAD_DEVICE ( rail_ib );
@@ -541,21 +569,21 @@ void sctk_network_poll_all_cq ( sctk_rail_info_t *rail, sctk_ib_polling_t *poll,
 #endif
 #endif
 
-	sctk_ib_cp_poll_global_list(rail, poll);
+	sctk_ib_cp_poll_global_list(poll);
 }
 
-static void sctk_network_notify_recv_message_ib ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
+static void sctk_network_notify_recv_message_ib ( __UNUSED__ sctk_thread_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail )
 {
 
 }
 
-static void sctk_network_notify_matching_message_ib ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
+static void sctk_network_notify_matching_message_ib (  __UNUSED__ sctk_thread_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail )
 {
 
 }
 
 /* WARNING: This function can be called with dest == sctk_process_rank */
-static void sctk_network_notify_perform_message_ib ( int remote_process, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
+static void sctk_network_notify_perform_message_ib (  __UNUSED__ int remote_process, __UNUSED__  int remote_task_id,  __UNUSED__ int polling_task_id,  __UNUSED__ int blocking, sctk_rail_info_t *rail )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	LOAD_CONFIG ( rail_ib );
@@ -569,20 +597,20 @@ static void sctk_network_notify_perform_message_ib ( int remote_process, int rem
 
 	POLL_INIT ( &poll );
 	SCTK_PROFIL_START ( ib_perform_all );
-	sctk_ib_cp_poll ( rail, &poll, polling_task_id );
+	sctk_ib_cp_poll ( &poll, polling_task_id );
 
 	/* If nothing to poll, we poll the CQ */
 	if ( POLL_GET_RECV ( &poll ) == 0 )
 	{
 		POLL_INIT ( &poll );
-		sctk_network_poll_all_cq ( rail, &poll, polling_task_id, blocking );
+		sctk_network_poll_all_cq ( rail, &poll );
 
 		/* If the polling returned something or someone already inside the function,
 		* we retry to poll the pending lists */
 		if ( POLL_GET_RECV_CQ ( &poll ) != 0 )
 		{
 			POLL_INIT ( &poll );
-			sctk_ib_cp_poll ( rail, &poll, polling_task_id );
+			sctk_ib_cp_poll ( &poll, polling_task_id );
 		}
 	}
 
@@ -626,7 +654,7 @@ static void sctk_network_notify_idle_message_ib ( sctk_rail_info_t *rail )
 
     int polling_task_id = sctk_get_task_rank();
     POLL_INIT ( &poll );
-    sctk_network_poll_all_cq ( rail, &poll, polling_task_id, 0 );
+    sctk_network_poll_all_cq ( rail, &poll );
 
     /* If the polling returned something or someone already inside the function,
     * we retry to poll the pending lists */
@@ -636,7 +664,7 @@ static void sctk_network_notify_idle_message_ib ( sctk_rail_info_t *rail )
         if ( polling_task_id >= 0 )
         {
             POLL_INIT ( &poll );
-            sctk_ib_cp_poll ( rail, &poll, polling_task_id );
+            sctk_ib_cp_poll ( &poll, polling_task_id );
         }
     }
     else
@@ -649,7 +677,7 @@ static void sctk_network_notify_idle_message_ib ( sctk_rail_info_t *rail )
 }
 
 
-static void sctk_network_notify_any_source_message_ib ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
+static void sctk_network_notify_any_source_message_ib ( int polling_task_id, __UNUSED__ int blocking, sctk_rail_info_t *rail )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	LOAD_CONFIG ( rail_ib );
@@ -664,13 +692,13 @@ static void sctk_network_notify_any_source_message_ib ( int polling_task_id, int
 	}
 
 	POLL_INIT ( &poll );
-	sctk_ib_cp_poll ( rail, &poll, polling_task_id );
+	sctk_ib_cp_poll ( &poll, polling_task_id );
 
 	/* If nothing to poll, we poll the CQ */
 	if ( POLL_GET_RECV ( &poll ) == 0 )
 	{
 		POLL_INIT ( &poll );
-		sctk_network_poll_all_cq ( rail, &poll, polling_task_id, blocking );
+		sctk_network_poll_all_cq ( rail, &poll );
 
 		/* If the polling returned something or someone already inside the function,
 		* we retry to poll the pending lists */
@@ -678,7 +706,7 @@ static void sctk_network_notify_any_source_message_ib ( int polling_task_id, int
 		        || POLL_GET_RECV_CQ ( &poll ) == POLL_CQ_BUSY )
 		{
 			POLL_INIT ( &poll );
-			sctk_ib_cp_poll ( rail, &poll, polling_task_id );
+			sctk_ib_cp_poll ( &poll, polling_task_id );
 		}
 	}
 }
@@ -774,7 +802,7 @@ void sctk_ib_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ct
 	memcpy( &list->pin.ib.mr , list->pin.ib.p_entry->mr, sizeof( struct ibv_mr ) );
 }
 
-void sctk_ib_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list )
+void sctk_ib_unpin_region( __UNUSED__ struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list )
 {
 	sctk_nodebug("Unpin %p at %p size %ld releaseon %d", list->pin.ib.p_entry, list->pin.ib.p_entry->addr, list->pin.ib.p_entry->size, list->pin.ib.p_entry->free_on_relax );
 	

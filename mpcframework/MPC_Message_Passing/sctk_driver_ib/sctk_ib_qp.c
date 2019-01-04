@@ -202,14 +202,14 @@ char *sctk_ib_cq_print_status ( enum ibv_wc_status status )
 /*-----------------------------------------------------------
  *  Exchange keys
  *----------------------------------------------------------*/
-void sctk_ib_qp_key_print ( sctk_ib_cm_qp_connection_t *keys )
+void sctk_ib_qp_key_print ( __UNUSED__ sctk_ib_cm_qp_connection_t *keys )
 {
 	sctk_nodebug ( "LID=%lu psn=%lu qp_num=%lu", keys->lid,
 	               keys->psn,
 	               keys->qp_num );
 }
 
-void sctk_ib_qp_key_fill ( sctk_ib_cm_qp_connection_t *keys, sctk_ib_qp_t *remote,  sctk_uint16_t lid, sctk_uint32_t qp_num, sctk_uint32_t psn )
+void sctk_ib_qp_key_fill ( sctk_ib_cm_qp_connection_t *keys, sctk_uint16_t lid, sctk_uint32_t qp_num, sctk_uint32_t psn )
 {
 	keys->lid = lid;
 	keys->qp_num = qp_num;
@@ -285,7 +285,6 @@ void sctk_ib_qp_keys_send ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *r
 }
 
 sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *rail_ib,
-                                                  sctk_ib_qp_t *remote,
                                                   int dest_process )
 {
 	sctk_ib_cm_qp_connection_t qp_keys;
@@ -514,7 +513,7 @@ struct ibv_qp_attr sctk_ib_qp_state_rts_attr ( struct sctk_ib_rail_info_s *rail_
 	return attr;
 }
 
-struct ibv_qp_attr sctk_ib_qp_STATE_RESET_attr ( struct sctk_ib_rail_info_s *rail_ib, sctk_uint32_t psn, int *flags )
+struct ibv_qp_attr sctk_ib_qp_STATE_RESET_attr ( int *flags )
 {
 	struct ibv_qp_attr attr;
 	memset ( &attr, 0, sizeof ( struct ibv_qp_attr ) );
@@ -711,13 +710,13 @@ void sctk_ib_qp_allocate_rts ( struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_qp_
 	sctk_ib_qp_allocate_set_rts ( remote, 1 );
 }
 
-void sctk_ib_qp_allocate_reset ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote )
+void sctk_ib_qp_allocate_reset ( __UNUSED__ struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote )
 {
 	struct ibv_qp_attr       attr;
 	sctk_endpoint_t *endpoint = remote->endpoint;
 	int flags;
 
-	attr = sctk_ib_qp_STATE_RESET_attr ( rail_ib, remote->psn, &flags );
+	attr = sctk_ib_qp_STATE_RESET_attr ( &flags );
 	sctk_nodebug ( "Modify QR RESET for rank %d", remote->rank );
 	sctk_ib_qp_modify ( remote, &attr, flags );
 
@@ -780,7 +779,7 @@ struct wait_send_s
 	sctk_ibuf_t *ibuf;
 };
 
-void sctk_ib_qp_release_entry ( struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_qp_t *remote )
+void sctk_ib_qp_release_entry ( __UNUSED__ struct sctk_ib_rail_info_s *rail_ib,  __UNUSED__ sctk_ib_qp_t *remote )
 {
 	not_implemented();
 }
@@ -907,8 +906,8 @@ int sctk_ib_qp_send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *re
 		/* Decrease the number of pending requests */
 		int current_pending;
 		current_pending = sctk_ib_qp_fetch_and_sub_pending_data ( remote, ibuf );
-		sctk_ibuf_rdma_update_max_pending_data ( rail_ib, remote, current_pending );
-		sctk_network_poll_send_ibuf ( rail_ib->rail, ibuf, 0, &poll );
+		sctk_ibuf_rdma_update_max_pending_data ( remote, current_pending );
+		sctk_network_poll_send_ibuf ( rail_ib->rail, ibuf);
 		return 0;
 	}
 

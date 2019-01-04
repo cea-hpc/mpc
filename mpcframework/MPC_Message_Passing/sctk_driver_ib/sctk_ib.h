@@ -55,15 +55,6 @@ extern "C"
 /*-----------------------------------------------------------
  *----------------------------------------------------------*/
 
-
-/* For not used fuctions (disable compiler warning */
-#ifdef __GNUC__
-#define __UNUSED__ __attribute__ ((__unused__))
-#else
-#define __UNUSED__
-#endif
-
-
 struct sctk_rail_info_s;
 struct sctk_ibuf_pool_s;
 struct sctk_ibuf_s;
@@ -116,32 +107,6 @@ typedef enum sctk_ib_protocol_e
     SCTK_IB_RDMA_PROTOCOL         = 333,
     SCTK_IB_NULL_PROTOCOL         = 444,
 } sctk_ib_protocol_t;
-
-__UNUSED__ static char *sctk_ib_protocol_print ( sctk_ib_protocol_t prot )
-{
-	switch ( prot )
-	{
-		case SCTK_IB_EAGER_PROTOCOL:
-			return "SCTK_IB_EAGER_PROTOCOL";
-			break;
-
-		case SCTK_IB_BUFFERED_PROTOCOL:
-			return "SCTK_IB_BUFFERED_PROTOCOL";
-			break;
-
-		case SCTK_IB_RDMA_PROTOCOL:
-			return "SCTK_IB_RDMA_PROTOCOL";
-			break;
-
-		case SCTK_IB_NULL_PROTOCOL:
-			return "SCTK_IB_NULL_PROTOCOL";
-			break;
-
-		default:
-			return "null";
-			break;
-	}
-}
 
 
 /* 2 first bits: SCTK_IB_RDMA_NOT_SET, SCTK_IB_RDMA_ZEROCOPY, SCTK_IB_RDMA_RECOPY */

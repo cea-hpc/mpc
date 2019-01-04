@@ -295,7 +295,7 @@ sctk_ibuf_rdma_region_resize ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t
 
 void
 sctk_ibuf_rdma_region_free ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
-                             sctk_ibuf_region_t *region, enum sctk_ibuf_channel channel, int nb_ibufs, int size_ibufs )
+                             sctk_ibuf_region_t *region, enum sctk_ibuf_channel channel )
 {
 	LOAD_DEVICE ( rail_ib );
 
@@ -374,7 +374,7 @@ sctk_ibuf_rdma_region_reinit ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t
 	/* If we need to free the region */
 	if ( nb_ibufs == 0 )
 	{
-		sctk_ibuf_rdma_region_free ( rail_ib, remote, region, channel, nb_ibufs, size_ibufs );
+		sctk_ibuf_rdma_region_free ( rail_ib, remote, region, channel );
 		PROF_INC_GLOB ( rail_ib->rail, SCTK_IB_RDMA_DECONNECTION );
 	}
 	else
@@ -490,7 +490,7 @@ sctk_ibuf_rdma_region_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *
  * Create a region of ibufs for RDMA
  */
 sctk_ibuf_rdma_pool_t *
-sctk_ibuf_rdma_pool_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote )
+sctk_ibuf_rdma_pool_init ( sctk_ib_qp_t *remote )
 {
 	sctk_ibuf_rdma_pool_t *pool;
 
@@ -523,10 +523,9 @@ sctk_ibuf_rdma_pool_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *re
  * Delete a RDMA poll from a remote
  */
 void
-sctk_ibuf_rdma_pool_free ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote )
+sctk_ibuf_rdma_pool_free ( __UNUSED__ struct sctk_ib_rail_info_s *rail_ib, __UNUSED__ sctk_ib_qp_t *remote )
 {
-	/* Needs to be re-written */
-//  not_implemented();
+/* Needs to be re-written */
 #if 0
 	LOAD_DEVICE ( rail_ib );
 	/* Check if we can allocate an RDMA channel */
@@ -566,7 +565,7 @@ sctk_ibuf_rdma_pool_free ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *re
 /*
  * Pick a RDMA buffer from the RDMA channel
  */
-inline sctk_ibuf_t *sctk_ibuf_rdma_pick ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote )
+inline sctk_ibuf_t *sctk_ibuf_rdma_pick ( sctk_ib_qp_t *remote )
 {
 	sctk_ibuf_t *tail;
 	int piggyback;
@@ -682,7 +681,7 @@ void sctk_ib_rdma_set_tail_flag ( sctk_ibuf_t *ibuf, size_t size )
 /*
  * Handle a message received
  */
-static void __poll_ibuf ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote,
+static void __poll_ibuf ( sctk_ib_rail_info_t *rail_ib,
                           sctk_ibuf_t *ibuf )
 {
 	sctk_rail_info_t *rail = rail_ib->rail;
@@ -871,7 +870,7 @@ retry:
 			sctk_nodebug ( "Set %p as busy", head );
 
 			/* Handle the ibuf */
-			__poll_ibuf ( rail_ib, remote, head );
+			__poll_ibuf ( rail_ib, head );
 			goto retry;
 		}
 		else
@@ -1093,7 +1092,7 @@ void sctk_ibuf_rdma_release ( sctk_ib_rail_info_t *rail_ib, sctk_ibuf_t *ibuf )
  * Check if a remote can be connected using RDMA.
  * The number of connections is automatically increased
  */
-int sctk_ibuf_rdma_is_connectable ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int entry_nb, int entry_size )
+int sctk_ibuf_rdma_is_connectable ( sctk_ib_rail_info_t *rail_ib )
 {
 	LOAD_CONFIG ( rail_ib );
 	LOAD_DEVICE ( rail_ib );
@@ -1203,7 +1202,7 @@ size_t sctk_ibuf_rdma_get_regions_get_allocate_size ( sctk_ib_qp_t *remote )
  * Update the maximum number of pending requests.
  * Should be called just before calling incr_requests_nb
  */
-void sctk_ibuf_rdma_update_max_pending_data ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int current_pending )
+void sctk_ibuf_rdma_update_max_pending_data ( sctk_ib_qp_t *remote, int current_pending )
 {
 	sctk_spinlock_lock ( &remote->rdma.pending_data_lock );
 
@@ -1313,7 +1312,7 @@ static int sctk_ibuf_rdma_determine_config ( sctk_ib_rail_info_t *rail_ib,
 	return 1;
 }
 
-void sctk_ibuf_rdma_update_remote ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, size_t size )
+void sctk_ibuf_rdma_update_remote ( sctk_ib_qp_t *remote, size_t size )
 {
 
 	size_t messages_nb;
@@ -1426,7 +1425,7 @@ void sctk_ibuf_rdma_check_remote ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *r
  * Fill RDMA connection keys with the configuration of a send and receive region
  */
 void
-sctk_ibuf_rdma_fill_remote_addr ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote,
+sctk_ibuf_rdma_fill_remote_addr ( sctk_ib_qp_t *remote,
                                   sctk_ib_cm_rdma_connection_t *keys, int region )
 {
 
@@ -1443,7 +1442,7 @@ sctk_ibuf_rdma_fill_remote_addr ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *re
  * called before sending any message to the RDMA channel
  */
 void
-sctk_ibuf_rdma_update_remote_addr ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, sctk_ib_cm_rdma_connection_t *key, int region )
+sctk_ibuf_rdma_update_remote_addr ( sctk_ib_qp_t *remote, sctk_ib_cm_rdma_connection_t *key, int region )
 {
 	sctk_nodebug ( "REMOTE addr updated:: addr=%p rkey=%u (connected: %d)",
 	               key->addr, key->rkey, key->connected );
@@ -1563,7 +1562,7 @@ int sctk_ibuf_rdma_check_flush_recv ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t
 
 				/* Fill the keys */
 				sctk_ib_cm_rdma_connection_t *send_keys = &remote->rdma.pool->resizing_request.send_keys;
-				sctk_ibuf_rdma_fill_remote_addr ( rail_ib, remote, send_keys, REGION_RECV );
+				sctk_ibuf_rdma_fill_remote_addr ( remote, send_keys, REGION_RECV );
 				send_keys->connected = 1;
 
 				sctk_ib_nodebug ( "Sending a FLUSH ACK message to remote %d", remote->rank );
@@ -1618,7 +1617,6 @@ void sctk_ibuf_rdma_flush_recv ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *rem
  * must take locks
  */
 void sctk_ibuf_rdma_get_allocated_size_from_all_remotes (
-    sctk_ib_rail_info_t *rail_ib,
     size_t *allocated_size,
     int *regions_nb )
 {
@@ -1672,7 +1670,7 @@ int sctk_ibuf_rdma_remote_normalize ( sctk_ib_rail_info_t *rail_ib, size_t mem_t
 	sctk_ib_qp_t *remote;
 
 	sctk_spinlock_read_lock ( &rdma_region_list_lock );
-	sctk_ibuf_rdma_get_allocated_size_from_all_remotes ( rail_ib, &allocated_size,
+	sctk_ibuf_rdma_get_allocated_size_from_all_remotes ( &allocated_size,
 	                                                     &regions_nb );
 
 	/* If we want to save more memory than
@@ -1746,7 +1744,7 @@ int sctk_ibuf_rdma_remote_normalize ( sctk_ib_rail_info_t *rail_ib, size_t mem_t
 
 
 
-sctk_ibuf_region_t *sctk_ibuf_rdma_remote_get_lru ( sctk_ib_rail_info_t *rail_ib, char *name )
+sctk_ibuf_region_t *sctk_ibuf_rdma_remote_get_lru ( char *name )
 {
 	sctk_ibuf_region_t *region;
 	sctk_ibuf_region_t *elected_region = NULL;
@@ -1818,8 +1816,7 @@ exit:
  * Returns: the remote to disconnect
  * memory_used: total memory used for the RDMA connection (in kB)
  * */
-sctk_ibuf_region_t *sctk_ibuf_rdma_remote_get_max_allocated_size ( sctk_ib_rail_info_t *rail_ib,
-                                                                   char *name )
+sctk_ibuf_region_t *sctk_ibuf_rdma_remote_get_max_allocated_size ( char *name )
 {
 	sctk_ibuf_region_t *region;
 	size_t max = 0;
@@ -1866,17 +1863,16 @@ sctk_ibuf_region_t *sctk_ibuf_rdma_remote_get_max_allocated_size ( sctk_ib_rail_
 /*
  *  Disconnect RDMA buffers
  */
-size_t sctk_ibuf_rdma_remote_disconnect ( sctk_ib_rail_info_t *rail_ib,
-                                          size_t mem_to_save )
+size_t sctk_ibuf_rdma_remote_disconnect ( sctk_ib_rail_info_t *rail_ib )
 {
 	size_t memory_used = ( ~0 );
 	char name[256] = "";
 	sctk_ibuf_region_t *region;
 
 	/* MAX MEM */
-	//region = sctk_ibuf_rdma_remote_get_max_allocated_size(rail_ib, name);
+	//region = sctk_ibuf_rdma_remote_get_max_allocated_size( name);
 	/* LRU */
-	region = sctk_ibuf_rdma_remote_get_lru ( rail_ib, name );
+	region = sctk_ibuf_rdma_remote_get_lru ( name );
 	/* NORMALIZATION */
 
 	/* If we find a process to deconnect, we deconnect it */
@@ -1948,7 +1944,7 @@ void sctk_ibuf_rdma_save_memory ( sctk_ib_rail_info_t *rail_ib, size_t memory_to
 	/* We loop while there are some memory to release */
 	do
 	{
-		memory_used = sctk_ibuf_rdma_remote_disconnect ( rail_ib, memory_to_save );
+		memory_used = sctk_ibuf_rdma_remote_disconnect ( rail_ib );
 
 		if ( memory_used != ( ~0 ) )
 			total_memory_used += memory_used;

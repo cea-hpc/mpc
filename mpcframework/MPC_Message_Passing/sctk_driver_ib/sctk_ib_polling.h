@@ -116,11 +116,11 @@ __UNUSED__ static inline void sctk_ib_polling_check_wc ( struct sctk_ib_rail_inf
 }
 
 #define WC_COUNT 100
-__UNUSED__ static inline void sctk_ib_cq_poll ( sctk_rail_info_t *rail,
+static inline void sctk_ib_cq_poll ( sctk_rail_info_t *rail,
                                                 struct ibv_cq *cq,
-                                                const int poll_nb,
+                                                __UNUSED__ const int poll_nb,
                                                 struct sctk_ib_polling_s *poll,
-                                                int ( *ptr_func ) ( sctk_rail_info_t *rail, struct ibv_wc *, struct sctk_ib_polling_s *poll ) )
+                                                int ( *ptr_func ) ( sctk_rail_info_t *rail, struct ibv_wc *) )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	struct ibv_wc wc[WC_COUNT];
@@ -137,7 +137,7 @@ __UNUSED__ static inline void sctk_ib_cq_poll ( sctk_rail_info_t *rail,
 		for ( i = 0; i < res; ++i )
 		{
 			sctk_ib_polling_check_wc ( rail_ib, wc[i] );
-			ptr_func ( rail, &wc[i], poll );
+			ptr_func ( rail, &wc[i] );
 			POLL_RECV_CQ ( poll );
 		}
 	}

@@ -59,7 +59,7 @@ struct sctk_ib_qp_s;
  *----------------------------------------------------------*/
 
 /* Change the state of a remote process */
-static void sctk_ib_cm_change_state ( sctk_rail_info_t *rail,  sctk_endpoint_t *endpoint, sctk_endpoint_state_t state )
+static void sctk_ib_cm_change_state_connected ( sctk_rail_info_t *rail,  sctk_endpoint_t *endpoint )
 {
 	struct sctk_ib_qp_s *remote = endpoint->data.ib.remote;
 
@@ -249,13 +249,13 @@ void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
 		sctk_pmi_barrier();
 
 		/* change state to RTR */
-		keys = sctk_ib_qp_keys_recv ( rail_ib, route_dest->remote, src_rank );
+		keys = sctk_ib_qp_keys_recv ( rail_ib, src_rank );
 		sctk_ib_qp_allocate_rtr ( rail_ib, route_src->remote, &keys );
 		sctk_ib_qp_allocate_rts ( rail_ib, route_src->remote );
 		sctk_ib_qp_keys_send ( rail_ib, route_src->remote );
 		sctk_pmi_barrier();
 
-		keys = sctk_ib_qp_keys_recv ( rail_ib, route_src->remote, dest_rank );
+		keys = sctk_ib_qp_keys_recv ( rail_ib, dest_rank );
 		sctk_ib_qp_allocate_rtr ( rail_ib, route_dest->remote, &keys );
 		sctk_ib_qp_allocate_rts ( rail_ib, route_dest->remote );
 		sctk_pmi_barrier();
@@ -264,8 +264,8 @@ void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
 		sctk_rail_add_static_route (  rail, src_rank, endpoint_src );
 
 		/* Change to connected */
-		sctk_ib_cm_change_state ( rail, endpoint_dest, STATE_CONNECTED );
-		sctk_ib_cm_change_state ( rail, endpoint_src, STATE_CONNECTED );
+		sctk_ib_cm_change_state_connected ( rail, endpoint_dest );
+		sctk_ib_cm_change_state_connected ( rail, endpoint_src );
 	}
 	else
 	{
@@ -280,7 +280,7 @@ void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
 		sctk_pmi_barrier();
 
 		/* change state to RTR */
-		keys = sctk_ib_qp_keys_recv ( rail_ib, route_dest->remote, src_rank );
+		keys = sctk_ib_qp_keys_recv ( rail_ib, src_rank );
 		sctk_ib_qp_allocate_rtr ( rail_ib, route_dest->remote, &keys );
 		sctk_ib_qp_allocate_rts ( rail_ib, route_dest->remote );
 		sctk_pmi_barrier();
@@ -288,7 +288,7 @@ void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
 		sctk_rail_add_static_route (  rail, dest_rank, endpoint_dest );
 
 		/* Change to connected */
-		sctk_ib_cm_change_state ( rail, endpoint_dest, STATE_CONNECTED );
+		sctk_ib_cm_change_state_connected ( rail, endpoint_dest );
 	}
 
 	sctk_nodebug ( "Recv from %d, send to %d", src_rank, dest_rank );
@@ -323,7 +323,7 @@ void sctk_ib_cm_connect_to ( int from, int to, sctk_rail_info_t *rail )
 	sctk_route_messages_recv ( from, to, SCTK_CONTROL_MESSAGE_INTERNAL, CM_OD_STATIC_TAG, &recv_keys, sizeof ( sctk_ib_cm_qp_connection_t ) );
 	sctk_ib_qp_allocate_rtr ( rail_ib, remote, &recv_keys );
 
-	sctk_ib_qp_key_fill ( &send_keys, remote, device->port_attr.lid,
+	sctk_ib_qp_key_fill ( &send_keys, device->port_attr.lid,
 	                      remote->qp->qp_num, remote->psn );
 	send_keys.rail_id = rail->rail_number;
 
@@ -334,7 +334,7 @@ void sctk_ib_cm_connect_to ( int from, int to, sctk_rail_info_t *rail )
 	/* Add route */
 	sctk_rail_add_static_route (  rail, from, endpoint );
 	/* Change to connected */
-	sctk_ib_cm_change_state ( rail, endpoint, STATE_CONNECTED );
+	sctk_ib_cm_change_state_connected ( rail, endpoint );
 }
 
 void sctk_ib_cm_connect_from ( int from, int to, sctk_rail_info_t *rail )
@@ -363,7 +363,7 @@ void sctk_ib_cm_connect_from ( int from, int to, sctk_rail_info_t *rail )
 	sctk_ib_debug ( "[%d] QP connection  request to process %d", rail->rail_number, remote->rank );
 
 	assume ( remote->qp );
-	sctk_ib_qp_key_fill ( &send_keys, remote, device->port_attr.lid,
+	sctk_ib_qp_key_fill ( &send_keys, device->port_attr.lid,
 	                      remote->qp->qp_num, remote->psn );
 	send_keys.rail_id = rail->rail_number;
 
@@ -378,7 +378,7 @@ void sctk_ib_cm_connect_from ( int from, int to, sctk_rail_info_t *rail )
 	/* Add route */
 	sctk_rail_add_static_route (  rail, to, endpoint );
 	/* Change to connected */
-	sctk_ib_cm_change_state ( rail, endpoint, STATE_CONNECTED );
+	sctk_ib_cm_change_state_connected ( rail, endpoint );
 }
 
 /*-----------------------------------------------------------
@@ -386,7 +386,7 @@ void sctk_ib_cm_connect_from ( int from, int to, sctk_rail_info_t *rail )
  *  Messages are sent using raw data (not like ring where messages are converted into
  *  string).
  *----------------------------------------------------------*/
-static inline void sctk_ib_cm_on_demand_recv_done ( sctk_rail_info_t *rail, void *done, int src )
+static inline void sctk_ib_cm_on_demand_recv_done ( sctk_rail_info_t *rail, int src )
 {
 	sctk_ib_rail_info_t *rail_ib_targ = &rail->network.ib;
 
@@ -399,7 +399,7 @@ static inline void sctk_ib_cm_on_demand_recv_done ( sctk_rail_info_t *rail, void
 	sctk_ib_qp_allocate_rts ( rail_ib_targ, remote );
 
 	/* Change to connected */
-	sctk_ib_cm_change_state ( rail, endpoint, STATE_CONNECTED );
+	sctk_ib_cm_change_state_connected ( rail, endpoint );
 }
 
 static inline void sctk_ib_cm_on_demand_recv_ack ( sctk_rail_info_t *rail, void *ack, int src )
@@ -430,7 +430,7 @@ static inline void sctk_ib_cm_on_demand_recv_ack ( sctk_rail_info_t *rail, void 
 	sctk_control_messages_send_rail ( src, CM_OD_DONE_TAG, 0, &done, sizeof ( sctk_ib_cm_done_t ) , rail->rail_number);
 
 	/* Change to connected */
-	sctk_ib_cm_change_state ( rail, endpoint, STATE_CONNECTED );
+	sctk_ib_cm_change_state_connected ( rail, endpoint );
 }
 
 int sctk_ib_cm_on_demand_recv_request ( sctk_rail_info_t *rail, void *request, int src )
@@ -468,7 +468,7 @@ int sctk_ib_cm_on_demand_recv_request ( sctk_rail_info_t *rail, void *request, i
 		ib_assume ( sctk_ib_qp_allocate_get_rtr ( remote ) == 0 );
 		sctk_ib_qp_allocate_rtr ( rail_ib_targ, remote, &recv_keys );
 
-		sctk_ib_qp_key_fill ( &send_keys, remote, device->port_attr.lid,
+		sctk_ib_qp_key_fill ( &send_keys, device->port_attr.lid,
 		                      remote->qp->qp_num, remote->psn );
 		send_keys.rail_id = rail->rail_number;
 
@@ -516,7 +516,7 @@ sctk_endpoint_t *sctk_ib_cm_on_demand_request ( int dest, sctk_rail_info_t *rail
 	{
 		struct sctk_ib_qp_s *remote = endpoint->data.ib.remote;
 
-		sctk_ib_qp_key_fill ( &send_keys, remote, device->port_attr.lid, remote->qp->qp_num, remote->psn );
+		sctk_ib_qp_key_fill ( &send_keys, device->port_attr.lid, remote->qp->qp_num, remote->psn );
 		send_keys.rail_id = rail->rail_number;
 
 		sctk_ib_debug ( "[%d] OD QP connexion requested to %d", rail->rail_number, remote->rank );
@@ -534,7 +534,7 @@ sctk_endpoint_t *sctk_ib_cm_on_demand_request ( int dest, sctk_rail_info_t *rail
  *----------------------------------------------------------*/
 
 /* Function which returns if a remote can be connected using RDMA */
-int sctk_ib_cm_on_demand_rdma_check_request ( sctk_rail_info_t *rail, struct sctk_ib_qp_s *remote )
+int sctk_ib_cm_on_demand_rdma_check_request ( __UNUSED__ sctk_rail_info_t *rail, struct sctk_ib_qp_s *remote )
 {
 	int send_request = 0;
 	ib_assume ( sctk_endpoint_get_state ( remote->endpoint ) == STATE_CONNECTED );
@@ -571,7 +571,7 @@ int sctk_ib_cm_on_demand_rdma_request ( sctk_rail_info_t *rail, struct sctk_ib_q
 	/* If we are the first to access the route and if the state
 	* is deconnected, so we can proceed to a connection*/
 
-	if ( sctk_ibuf_rdma_is_connectable ( rail_ib_targ, remote, entry_nb, entry_size ) )
+	if ( sctk_ibuf_rdma_is_connectable ( rail_ib_targ ) )
 	{
 		/* Can connect to RDMA */
 
@@ -618,7 +618,7 @@ static inline void sctk_ib_cm_on_demand_rdma_done_recv ( sctk_rail_info_t *rail,
 
 	ib_assume ( recv_keys->connected == 1 );
 	/* Update the RDMA regions */
-	sctk_ibuf_rdma_update_remote_addr ( rail_ib_targ, remote, recv_keys, REGION_SEND );
+	sctk_ibuf_rdma_update_remote_addr ( remote, recv_keys, REGION_SEND );
 	sctk_ib_cm_change_state_to_rtr ( rail, endpoint, CONNECTION );
 }
 
@@ -641,16 +641,16 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_ack ( sctk_rail_info_t *rail, 
 	if ( recv_keys->connected == 1 )
 	{
 		/* Allocate the buffer */
-		sctk_ibuf_rdma_pool_init ( rail_ib_targ, remote );
+		sctk_ibuf_rdma_pool_init ( remote );
 		/* We create the SEND region */
 		sctk_ibuf_rdma_region_init ( rail_ib_targ, remote,
 		                             &remote->rdma.pool->region[REGION_SEND],
 		                             RDMA_CHANNEL | SEND_CHANNEL, remote->od_request.nb, remote->od_request.size_ibufs );
 
 		/* Update the RDMA regions */
-		sctk_ibuf_rdma_update_remote_addr ( rail_ib_targ, remote, recv_keys, REGION_RECV );
+		sctk_ibuf_rdma_update_remote_addr ( remote, recv_keys, REGION_RECV );
 		/* Fill the keys */
-		sctk_ibuf_rdma_fill_remote_addr ( rail_ib_targ, remote, &send_keys, REGION_SEND );
+		sctk_ibuf_rdma_fill_remote_addr ( remote, &send_keys, REGION_SEND );
 		send_keys.rail_id = * ( ( int * ) ack );
 
 		/* Send the message */
@@ -708,7 +708,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request ( sctk_rail_info_t *ra
 	ib_assume ( recv_keys->connected == 1 );
 
 	/* We check if we can also be connected using RDMA */
-	if ( sctk_ibuf_rdma_is_connectable ( rail_ib_targ, remote, recv_keys->nb, recv_keys->size ) )
+	if ( sctk_ibuf_rdma_is_connectable ( rail_ib_targ ) )
 	{
 		/* Can connect to RDMA */
 
@@ -719,14 +719,14 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request ( sctk_rail_info_t *ra
 
 		/* We firstly allocate the main structure. 'ibuf_rdma_pool_init'
 		* implicitely does not allocate memory if already created */
-		sctk_ibuf_rdma_pool_init ( rail_ib_targ, remote );
+		sctk_ibuf_rdma_pool_init ( remote );
 		/* We create the RECV region */
 		sctk_ibuf_rdma_region_init ( rail_ib_targ, remote,
 		                             &remote->rdma.pool->region[REGION_RECV],
 		                             RDMA_CHANNEL | RECV_CHANNEL, recv_keys->nb, recv_keys->size );
 
 		/* Fill the keys */
-		sctk_ibuf_rdma_fill_remote_addr ( rail_ib_targ, remote, &send_keys, REGION_RECV );
+		sctk_ibuf_rdma_fill_remote_addr ( remote, &send_keys, REGION_RECV );
 	}
 	else
 	{
@@ -817,7 +817,7 @@ static inline void sctk_ib_cm_resizing_rdma_done_recv ( sctk_rail_info_t *rail, 
 	ib_assume ( recv_keys->connected == 1 );
 
 	/* Update the RDMA regions */
-	sctk_ibuf_rdma_update_remote_addr ( rail_ib_targ, remote, recv_keys, REGION_SEND );
+	sctk_ibuf_rdma_update_remote_addr ( remote, recv_keys, REGION_SEND );
 
 	sctk_ib_cm_change_state_to_rtr ( rail, endpoint, RESIZING );
 }
@@ -838,7 +838,7 @@ static inline void sctk_ib_cm_resizing_rdma_ack_recv ( sctk_rail_info_t *rail, v
 
 	/* Update the RDMA regions */
 	/* FIXME: the rail number should be determinated */
-	sctk_ibuf_rdma_update_remote_addr ( rail_ib_targ, remote, recv_keys, REGION_RECV );
+	sctk_ibuf_rdma_update_remote_addr ( remote, recv_keys, REGION_RECV );
 
 	/* If the remote peer is connectable */
 	sctk_ib_cm_rdma_connection_t *send_keys =
@@ -853,7 +853,7 @@ static inline void sctk_ib_cm_resizing_rdma_ack_recv ( sctk_rail_info_t *rail, v
 	OPA_incr_int ( &remote->rdma.resizing_nb );
 	send_keys->connected = 1;
 	send_keys->rail_id = rail_ib_targ->rail->rail_number;
-	sctk_ibuf_rdma_fill_remote_addr ( rail_ib_targ, remote, send_keys, REGION_SEND );
+	sctk_ibuf_rdma_fill_remote_addr ( remote, send_keys, REGION_SEND );
 
 	sctk_control_messages_send_rail ( src, CM_RESIZING_RDMA_DONE_TAG, 0, send_keys, sizeof ( sctk_ib_cm_rdma_connection_t ), rail->rail_number );
 	
@@ -901,7 +901,7 @@ static inline int sctk_ib_cm_resizing_rdma_recv_request ( sctk_rail_info_t *rail
  *  Handler of OD connexions
  *----------------------------------------------------------*/
 
-void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int process_src, int source_rank, char subtype, char param, void * payload, size_t size )
+void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int process_src, __UNUSED__ int source_rank, char subtype, __UNUSED__ char param, void * payload, __UNUSED__ size_t size )
 {
 	int rail_id = rail->rail_number;
 
@@ -917,7 +917,7 @@ void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int pro
 			break;
 
 		case CM_OD_DONE_TAG:
-			sctk_ib_cm_on_demand_recv_done ( rail,  payload, process_src );
+			sctk_ib_cm_on_demand_recv_done ( rail,  process_src );
 			break;
 
 			/* RDMA connection */

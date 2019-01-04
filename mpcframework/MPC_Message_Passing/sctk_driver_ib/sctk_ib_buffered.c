@@ -53,8 +53,8 @@
  * */
 
 /* Handle non contiguous messages. Returns 1 if the message was handled, 0 if not */
-static inline void *sctk_ib_buffered_send_non_contiguous_msg ( sctk_rail_info_t *rail,
-                                                               sctk_ib_qp_t *remote,
+static inline void *sctk_ib_buffered_send_non_contiguous_msg ( __UNUSED__ sctk_rail_info_t *rail,
+                                                               __UNUSED__ sctk_ib_qp_t *remote,
                                                                sctk_thread_ptp_message_t *msg,
                                                                size_t size )
 {
@@ -140,7 +140,7 @@ int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
 		IBUF_SET_SRC_TASK ( ibuf->buffer, SCTK_MSG_SRC_TASK ( msg ) );
 
 		/* Recalculate size and send */
-		sctk_ibuf_prepare ( rail_ib, remote, ibuf, payload_size + IBUF_GET_BUFFERED_SIZE );
+		sctk_ibuf_prepare ( remote, ibuf, payload_size + IBUF_GET_BUFFERED_SIZE );
 		sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
 
 		buffer_index++;

@@ -63,7 +63,7 @@ void sctk_ib_topology_free ( struct sctk_ib_rail_info_s * rail );
 void sctk_ib_topology_init_rail ( struct sctk_ib_rail_info_s *rail_ib );
 
 void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp );
-void sctk_ib_topology_free_task ( struct sctk_rail_info_s *rail);
+void sctk_ib_topology_free_task();
 
 /* Return the IB topology structure the closest from the current task
  *

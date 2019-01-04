@@ -345,7 +345,7 @@ void sctk_ib_cp_finalize_task ( int rank )
 
 }
 
-static inline int __cp_poll ( const sctk_rail_info_t const *rail, struct sctk_ib_polling_s *poll, sctk_ibuf_t *volatile *list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task, char from_global )
+static inline int __cp_poll ( struct sctk_ib_polling_s *poll, sctk_ibuf_t *volatile *list, sctk_spinlock_t *lock )
 {
 	sctk_ibuf_t *ibuf = NULL;
 	int nb_found = 0;
@@ -372,13 +372,13 @@ retry:
 				{
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
 					//            (sctk_ib_prof_get_time_stamp() - ibuf->polled_timestamp));
-					sctk_network_poll_recv_ibuf ( ( sctk_rail_info_t * ) ibuf->rail, ibuf, 1, poll );
+					sctk_network_poll_recv_ibuf ( ( sctk_rail_info_t * ) ibuf->rail, ibuf );
 				}
 				else
 				{
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
 					//            (sctk_ib_prof_get_time_stamp() - ibuf->polled_timestamp));
-					sctk_network_poll_send_ibuf ( ( sctk_rail_info_t * ) ibuf->rail, ibuf, 1, poll );
+					sctk_network_poll_send_ibuf ( ( sctk_rail_info_t * ) ibuf->rail, ibuf);
 				}
 
 				POLL_RECV_OWN ( poll );
@@ -400,7 +400,7 @@ retry:
 	return nb_found;
 }
 
-int sctk_ib_cp_poll_global_list ( const struct sctk_rail_info_s const *rail, struct sctk_ib_polling_s *poll )
+int sctk_ib_cp_poll_global_list ( struct sctk_ib_polling_s *poll )
 {
 	sctk_ib_cp_task_t *task = NULL;
 	int vp = sctk_thread_get_vp();
@@ -422,10 +422,10 @@ int sctk_ib_cp_poll_global_list ( const struct sctk_rail_info_s const *rail, str
 
 	ib_assume ( task );
 
-	return __cp_poll ( rail, poll, task->global_ibufs_list, task->global_ibufs_list_lock, task, 1 );
+	return __cp_poll (  poll, task->global_ibufs_list, task->global_ibufs_list_lock );
 }
 
-int sctk_ib_cp_poll ( struct sctk_rail_info_s *rail, struct sctk_ib_polling_s *poll, int task_id )
+int sctk_ib_cp_poll ( struct sctk_ib_polling_s *poll, int task_id )
 {
 	sctk_ib_cp_task_t *task = NULL;
 #ifdef HAVE_PROGRESS_THREAD
@@ -434,7 +434,7 @@ int sctk_ib_cp_poll ( struct sctk_rail_info_s *rail, struct sctk_ib_polling_s *p
 	if ( task_id < 0 )
 #endif
 	{
-          sctk_ib_cp_steal(rail, poll, 1);
+          sctk_ib_cp_steal( poll, 1);
           return 0;
         }
 
@@ -466,14 +466,14 @@ int sctk_ib_cp_poll ( struct sctk_rail_info_s *rail, struct sctk_ib_polling_s *p
         }
 
         for (task = tls_vp->tasks; task; task = task->hh_vp.next) {
-          __cp_poll(rail, poll, &(task->local_ibufs_list),
-                    &(task->local_ibufs_list_lock), task, 0);
+          __cp_poll( poll, &(task->local_ibufs_list),
+                    &(task->local_ibufs_list_lock));
         }
 
         return 0;
 }
 
-static inline int __cp_steal ( const struct sctk_rail_info_s const *rail, struct sctk_ib_polling_s *poll, sctk_ibuf_t *volatile *list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task, sctk_ib_cp_task_t *stealing_task )
+static inline int __cp_steal ( struct sctk_ib_polling_s *poll, sctk_ibuf_t *volatile *list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task, sctk_ib_cp_task_t *stealing_task )
 {
 	sctk_ibuf_t *ibuf = NULL;
 	int nb_found = 0;
@@ -500,7 +500,7 @@ static inline int __cp_steal ( const struct sctk_rail_info_s const *rail, struct
 					* from the CQ */
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
 					//            (sctk_ib_prof_get_time_stamp() - ibuf->polled_timestamp));
-					sctk_network_poll_recv_ibuf ( ibuf->rail, ibuf, 2, poll );
+					sctk_network_poll_recv_ibuf ( ibuf->rail, ibuf );
 				}
 				else
 				{
@@ -508,7 +508,7 @@ static inline int __cp_steal ( const struct sctk_rail_info_s const *rail, struct
 					* from the CQ */
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
 					//            (sctk_ib_prof_get_time_stamp() - ibuf->polled_timestamp));
-					sctk_network_poll_send_ibuf ( ibuf->rail, ibuf, 2, poll );
+					sctk_network_poll_send_ibuf ( ibuf->rail, ibuf );
 				}
 
 				POLL_RECV_OTHER ( poll );
@@ -540,7 +540,7 @@ exit:
 	return nb_found;
 }
 
-int sctk_ib_cp_steal ( const sctk_rail_info_t const *rail, struct sctk_ib_polling_s *poll, char other_numa )
+int sctk_ib_cp_steal ( struct sctk_ib_polling_s *poll, char other_numa )
 {
 	int nb_found = 0;
 	int vp = sctk_thread_get_vp();
@@ -586,7 +586,7 @@ int sctk_ib_cp_steal ( const sctk_rail_info_t const *rail, struct sctk_ib_pollin
             if (numa != NULL) {
               CDL_FOREACH(numa->vps, tmp_vp) {
                 for (task = tmp_vp->tasks; task; task = task->hh_vp.next) {
-                  nb_found += __cp_steal(rail, poll, &(task->local_ibufs_list),
+                  nb_found += __cp_steal(poll, &(task->local_ibufs_list),
                                          &(task->local_ibufs_list_lock), task,
                                          stealing_task);
                 }
@@ -612,7 +612,7 @@ int sctk_ib_cp_steal ( const sctk_rail_info_t const *rail, struct sctk_ib_pollin
           if (numa != NULL) {
             CDL_FOREACH(numa->vps, tmp_vp) {
               for (task = tmp_vp->tasks; task; task = task->hh_vp.next) {
-                nb_found += __cp_steal(rail, poll, &(task->local_ibufs_list),
+                nb_found += __cp_steal(poll, &(task->local_ibufs_list),
                                        &(task->local_ibufs_list_lock), task,
                                        stealing_task);
 
@@ -631,7 +631,7 @@ int sctk_ib_cp_steal ( const sctk_rail_info_t const *rail, struct sctk_ib_pollin
 }while(0);
 #define IBUF_GET_RDMA_TYPE(x) ((x)->type)
 
-int sctk_ib_cp_handle_message ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf, int dest_task, int target_task )
+int sctk_ib_cp_handle_message ( sctk_ibuf_t *ibuf, int dest_task, int target_task )
 {
 	sctk_ib_cp_task_t *task = NULL;
 

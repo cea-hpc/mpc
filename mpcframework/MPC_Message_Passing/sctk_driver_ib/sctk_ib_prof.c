@@ -82,14 +82,14 @@ void sctk_ib_prof_init_reference_clock()
 }
 #endif
 
-void sctk_ib_prof_init_task ( int rank, int vp )
+void sctk_ib_prof_init_task ( __UNUSED__ int rank, __UNUSED__ int vp )
 {
 	sctk_nodebug ( "Initialization with %d rails for rank %d", sctk_rail_count(), rank );
 	sctk_ib_prof_qp_init_task ( rank, vp );
 }
 
 
-void sctk_ib_prof_finalize ( sctk_ib_rail_info_t *rail_ib )
+void sctk_ib_prof_finalize ( __UNUSED__ sctk_ib_rail_info_t *rail_ib )
 {
 #ifdef SCTK_IB_PROF
 

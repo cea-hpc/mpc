@@ -140,13 +140,7 @@ void sctk_ib_eager_release_buffered_ptp_message ( sctk_rail_info_t *rail, sctk_t
 }
 
 
-void to_break_here()
-{
-	
-	
-}
-
-sctk_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,  sctk_ib_qp_t *remote, sctk_thread_ptp_message_t *msg, size_t size, int low_memory_mode, char is_control_message )
+sctk_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,  sctk_ib_qp_t *remote, sctk_thread_ptp_message_t *msg, size_t size, char is_control_message )
 {
 	sctk_ibuf_t *ibuf;
 	sctk_ib_eager_t *eager_header;
@@ -158,7 +152,7 @@ sctk_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,  sctk_ib_
 	if ( is_control_message )
 	{
 		ibuf = sctk_ibuf_pick_send_sr ( rail_ib );
-		sctk_ibuf_prepare ( rail_ib, remote, ibuf, ibuf_size );
+		sctk_ibuf_prepare ( remote, ibuf, ibuf_size );
 	}
 	else
 	{
@@ -183,11 +177,6 @@ sctk_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,  sctk_ib_
 	eager_header = IBUF_GET_EAGER_HEADER ( ibuf->buffer );
 	eager_header->payload_size = size - sizeof ( sctk_thread_ptp_message_body_t );
 	IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_EAGER_PROTOCOL );
-
-	if ( is_control_message )
-	{	
-	to_break_here();
-	}
 
 	return ibuf;
 }

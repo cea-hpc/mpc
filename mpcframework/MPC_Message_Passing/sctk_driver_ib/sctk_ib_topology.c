@@ -52,7 +52,7 @@ extern volatile char* vps_reset;
  * of the closest node */
 static __thread struct sctk_ib_topology_numa_node_s **numa_node_task = NULL;
 
-__UNUSED__ static void sctk_ib_topology_check_and_allocate_tls ( sctk_ib_rail_info_t *rail_ib )
+static void sctk_ib_topology_check_and_allocate_tls (void)
 {
 	int nvp = sctk_thread_get_vp();
 	/* if __thread vars need to be reset when re-enabling the rail */
@@ -92,7 +92,7 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 
 	sctk_ib_topology_numa_node_init_t *init = &topo->init[node_nb];
 
-	sctk_ib_topology_check_and_allocate_tls ( rail_ib );
+	sctk_ib_topology_check_and_allocate_tls ();
 
 	sctk_nodebug ( "[%d] Initializing task on vp %d node %d", rail_ib->rail_nb, vp, node_nb );
 	
@@ -169,7 +169,7 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 
 }
 
-void sctk_ib_topology_free_task(sctk_rail_info_t *rail_ib)
+void sctk_ib_topology_free_task(void)
 {
 	if(numa_node_task)
 	{
@@ -249,7 +249,7 @@ void sctk_ib_topology_free(struct sctk_ib_rail_info_s *rail_ib)
 	{
 		if(rail_ib->topology->nodes[i])
 		{
-			sctk_ibuf_free_numa_node(rail_ib, &rail_ib->topology->nodes[i]->ibufs);
+			sctk_ibuf_free_numa_node( &rail_ib->topology->nodes[i]->ibufs);
 			sctk_free(rail_ib->topology->nodes[i]);
 			rail_ib->topology->nodes[i] = NULL;
 		}
@@ -257,7 +257,7 @@ void sctk_ib_topology_free(struct sctk_ib_rail_info_s *rail_ib)
 
 	if(rail_ib->topology->nodes[numa_node_nb])
 	{
-		sctk_ibuf_free_numa_node(rail_ib, &rail_ib->topology->nodes[numa_node_nb]->ibufs);
+		sctk_ibuf_free_numa_node( &rail_ib->topology->nodes[numa_node_nb]->ibufs);
 		sctk_free(rail_ib->topology->nodes[numa_node_nb]);
 		rail_ib->topology->nodes[numa_node_nb] = NULL;
 
@@ -271,7 +271,7 @@ void sctk_ib_topology_free(struct sctk_ib_rail_info_s *rail_ib)
 sctk_ib_topology_numa_node_t *
 sctk_ib_topology_get_default_numa_node ( struct sctk_ib_rail_info_s *rail_ib )
 {
-	sctk_ib_topology_check_and_allocate_tls ( rail_ib );
+	sctk_ib_topology_check_and_allocate_tls ();
 
 	struct sctk_ib_topology_s * topo = rail_ib->topology;
 	return topo->default_node;
@@ -289,7 +289,7 @@ sctk_ib_topology_get_numa_node ( struct sctk_ib_rail_info_s *rail_ib )
 		return sctk_ib_topology_get_default_numa_node ( rail_ib );
 	}
 
-	sctk_ib_topology_check_and_allocate_tls ( rail_ib );
+	sctk_ib_topology_check_and_allocate_tls ();
 
 	if ( numa_node_task[rail_nb] == NULL )
 	{

@@ -39,6 +39,7 @@ enum sctk_ib_cq_type_t
 #include "sctk_spinlock.h"
 #include "sctk_ib_mmu.h"
 #include "sctk_ib.h"
+#include "sctk_debug.h"
 
 struct sctk_rail_info_s;
 struct sctk_ib_rail_info_s;
@@ -157,7 +158,9 @@ enum sctk_ibuf_channel
     RECV_CHANNEL  = 1 << 3,
 };
 
-__UNUSED__ static void sctk_ibuf_channel_print ( char *str, enum sctk_ibuf_channel channel )
+__UNUSED__ static void sctk_ibuf_channel_print ( char *str, enum sctk_ibuf_channel channel );
+
+static void sctk_ibuf_channel_print ( char *str, enum sctk_ibuf_channel channel )
 {
 	str[0] = ( channel & RC_SR_CHANNEL ) == RC_SR_CHANNEL ? '1' : '0';
 	str[1] = ( channel & RDMA_CHANNEL )  == RDMA_CHANNEL ? '1' : '0';
@@ -225,66 +228,6 @@ enum sctk_ibuf_status
     RDMA_WRITE_INLINE_IBUF_FLAG  = 1111,
 };
 
-__UNUSED__ static char *sctk_ibuf_print_flag ( enum sctk_ibuf_status flag )
-{
-	switch ( flag )
-	{
-		case RDMA_READ_IBUF_FLAG:
-				return "RDMA_READ_IBUF_FLAG";
-			break;
-
-		case RDMA_WRITE_IBUF_FLAG:
-			return "RDMA_WRITE_IBUF_FLAG";
-			break;
-			
-		case RDMA_FETCH_AND_OP_IBUF_FLAG:
-			return "RDMA_FETCH_AND_OP_IBUF_FLAG";
-			break;
-
-		case RDMA_CAS_IBUF_FLAG:
-			return "RDMA_CAS_IBUF_FLAG";
-			break;
-
-		case RDMA_WRITE_INLINE_IBUF_FLAG:
-			return "RDMA_WRITE_INLINE_IBUF_FLAG";
-			break;
-
-		case NORMAL_IBUF_FLAG:
-			return "NORMAL_IBUF_FLAG";
-			break;
-
-		case RECV_IBUF_FLAG:
-			return "RECV_IBUF_FLAG";
-			break;
-
-		case SEND_IBUF_FLAG:
-			return "SEND_IBUF_FLAG";
-			break;
-
-		case SEND_INLINE_IBUF_FLAG:
-			return "SEND_INLINE_IBUF_FLAG";
-			break;
-
-		case BARRIER_IBUF_FLAG:
-			return "BARRIER_IBUF_FLAG";
-			break;
-
-		case BUSY_FLAG:
-			return "BUSY_FLAG";
-			break;
-
-		case FREE_FLAG:
-			return "FREE_FLAG";
-			break;
-
-		case EAGER_RDMA_POLLED:
-			return "EAGER_RDMA_POLLED";
-			break;
-	}
-
-	return NULL;
-}
-
 /** Describes an ibuf */
 typedef struct sctk_ibuf_s
 {
@@ -336,10 +279,6 @@ void sctk_ibuf_print ( sctk_ibuf_t *ibuf, char *desc );
 
 void *sctk_ibuf_get_buffer ( sctk_ibuf_t *ibuf );
 
-__UNUSED__ static size_t sctk_ibuf_get_payload_size ( sctk_ibuf_t *ibuf )
-{
-	return ibuf->desc.sg_entry.length;
-}
 
 /*-----------------------------------------------------------
  *  WR INITIALIZATION
@@ -405,8 +344,7 @@ void sctk_ibuf_release ( struct sctk_ib_rail_info_s *rail_ib,
                          sctk_ibuf_t *ibuf,
                          int decr_free_srq_nb );
 
-void sctk_ibuf_prepare ( struct sctk_ib_rail_info_s *rail_ib,
-                         struct sctk_ib_qp_s *remote,
+void sctk_ibuf_prepare ( struct sctk_ib_qp_s *remote,
                          sctk_ibuf_t *ibuf,
                          size_t size );
 
@@ -419,7 +357,7 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
                                 struct sctk_ibuf_numa_s *node,
                                 int nb_ibufs,
                                 char is_initial_allocation );
-void sctk_ibuf_free_numa_node( struct sctk_ib_rail_info_s *rail_ib, struct sctk_ibuf_numa_s *node);
+void sctk_ibuf_free_numa_node( struct sctk_ibuf_numa_s *node);
 
 
 #endif

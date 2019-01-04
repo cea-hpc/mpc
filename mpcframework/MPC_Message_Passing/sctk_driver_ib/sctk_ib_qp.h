@@ -122,7 +122,6 @@ typedef struct sctk_ib_qp_s
 
 void sctk_ib_qp_key_create_value ( char *msg, size_t size, sctk_ib_cm_qp_connection_t *keys );
 void sctk_ib_qp_key_fill ( sctk_ib_cm_qp_connection_t *keys,
-                           sctk_ib_qp_t *remote,
                            sctk_uint16_t lid,
                            sctk_uint32_t qp_num,
                            sctk_uint32_t psn );
@@ -140,7 +139,7 @@ sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_convert ( char *msg );
 
 void sctk_ib_qp_keys_send ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote );
 
-sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, int dest_process );
+sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *rail_ib, int dest_process );
 
 sctk_ib_qp_t *sctk_ib_qp_new();
 void sctk_ib_qp_destroy(sctk_ib_qp_t *remote);

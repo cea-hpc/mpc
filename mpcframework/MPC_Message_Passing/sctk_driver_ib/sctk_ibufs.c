@@ -136,7 +136,7 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
 	sctk_ib_debug ( "Allocation of %d buffers (free_nb:%u got:%u)", nb_ibufs, free_nb, node->nb - free_nb );
 }
 
-void sctk_ibuf_free_numa_node(sctk_ib_rail_info_t *rail, struct sctk_ibuf_numa_s *node)
+void sctk_ibuf_free_numa_node( struct sctk_ibuf_numa_s *node)
 {
 	struct sctk_ibuf_region_s *region, *tmp;
 	sctk_ibuf_t *buf, *tmp2;
@@ -290,7 +290,7 @@ sctk_ibuf_t *sctk_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib,
 			if ( ( IBUF_RDMA_GET_SIZE + s ) <= limit )
 			{
 				sctk_nodebug ( "requested:%lu max:%lu header:%lu", s, limit, IBUF_RDMA_GET_SIZE );
-				ibuf = sctk_ibuf_rdma_pick ( rail_ib, remote );
+				ibuf = sctk_ibuf_rdma_pick ( remote );
 				sctk_nodebug ( "Picked a rdma buffer: %p", ibuf );
 
 				/* A buffer has been picked-up */
@@ -397,7 +397,7 @@ exit:
 	else
 	{
 		/* Prepare the buffer for sending */
-		sctk_ibuf_prepare ( rail_ib, remote, ibuf, *size );
+		sctk_ibuf_prepare ( remote, ibuf, *size );
 	}
 
 	IBUF_SET_POISON ( ibuf->buffer );
@@ -545,7 +545,6 @@ int sctk_ibuf_srq_check_and_post ( struct sctk_ib_rail_info_s *rail_ib )
 
 static inline void __release_in_srq ( struct sctk_ib_rail_info_s *rail_ib,
                                       sctk_ibuf_numa_t *node,
-                                      sctk_ibuf_t *ibuf,
                                       int decr_free_srq_nb )
 {
 
@@ -562,7 +561,7 @@ void sctk_ibuf_release_from_srq ( struct sctk_ib_rail_info_s *rail_ib, sctk_ibuf
 {
 	sctk_ibuf_numa_t *node = ibuf->region->node;
 
-	__release_in_srq ( rail_ib, node, ibuf, 1 );
+	__release_in_srq ( rail_ib, node, 1 );
 }
 
 /* release one buffer given as parameter.
@@ -627,7 +626,7 @@ void sctk_ibuf_release ( struct sctk_ib_rail_info_s *rail_ib,
 				}
 
 				/* If SRQ, we check and try to post more messages to SRQ */
-				__release_in_srq ( rail_ib, node, ibuf, decr_free_srq_nb );
+				__release_in_srq ( rail_ib, node, decr_free_srq_nb );
 				PROF_TIME_END ( rail_ib->rail, ib_ibuf_sr_srq_release );
 			}
 			else
@@ -656,8 +655,7 @@ void sctk_ibuf_release ( struct sctk_ib_rail_info_s *rail_ib,
 	}
 }
 
-void sctk_ibuf_prepare ( sctk_ib_rail_info_t *rail_ib,
-                         sctk_ib_qp_t *remote,
+void sctk_ibuf_prepare ( sctk_ib_qp_t *remote,
                          sctk_ibuf_t *ibuf,
                          size_t size )
 {
@@ -952,6 +950,66 @@ void sctk_ibuf_rdma_fetch_and_add_init( sctk_ibuf_t *ibuf,
 	ibuf->desc.sg_entry.addr = ( uintptr_t ) fetch_addr;
 
 	ibuf->flag = RDMA_FETCH_AND_OP_IBUF_FLAG;
+}
+
+static char *sctk_ibuf_print_flag ( enum sctk_ibuf_status flag )
+{
+	switch ( flag )
+	{
+		case RDMA_READ_IBUF_FLAG:
+				return "RDMA_READ_IBUF_FLAG";
+			break;
+
+		case RDMA_WRITE_IBUF_FLAG:
+			return "RDMA_WRITE_IBUF_FLAG";
+			break;
+			
+		case RDMA_FETCH_AND_OP_IBUF_FLAG:
+			return "RDMA_FETCH_AND_OP_IBUF_FLAG";
+			break;
+
+		case RDMA_CAS_IBUF_FLAG:
+			return "RDMA_CAS_IBUF_FLAG";
+			break;
+
+		case RDMA_WRITE_INLINE_IBUF_FLAG:
+			return "RDMA_WRITE_INLINE_IBUF_FLAG";
+			break;
+
+		case NORMAL_IBUF_FLAG:
+			return "NORMAL_IBUF_FLAG";
+			break;
+
+		case RECV_IBUF_FLAG:
+			return "RECV_IBUF_FLAG";
+			break;
+
+		case SEND_IBUF_FLAG:
+			return "SEND_IBUF_FLAG";
+			break;
+
+		case SEND_INLINE_IBUF_FLAG:
+			return "SEND_INLINE_IBUF_FLAG";
+			break;
+
+		case BARRIER_IBUF_FLAG:
+			return "BARRIER_IBUF_FLAG";
+			break;
+
+		case BUSY_FLAG:
+			return "BUSY_FLAG";
+			break;
+
+		case FREE_FLAG:
+			return "FREE_FLAG";
+			break;
+
+		case EAGER_RDMA_POLLED:
+			return "EAGER_RDMA_POLLED";
+			break;
+	}
+
+	return NULL;
 }
 
 void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,

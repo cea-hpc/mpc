@@ -183,7 +183,7 @@ sctk_ib_rdma_recv_done_remote(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
  * RECV DONE LOCAL
  */
 static inline void
-sctk_ib_rdma_recv_done_local ( sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg )
+sctk_ib_rdma_recv_done_local ( sctk_thread_ptp_message_t *msg )
 {
 	assume ( msg->tail.ib.rdma.local.mmu_entry );
 	sctk_ib_mmu_relax ( msg->tail.ib.rdma.local.mmu_entry );
@@ -229,7 +229,7 @@ void sctk_ib_rdma_net_free_recv ( void *arg )
  *----------------------------------------------------------*/
 
 
-static void sctk_ib_rdma_prepare_recv_zerocopy ( sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg )
+static void sctk_ib_rdma_prepare_recv_zerocopy ( sctk_thread_ptp_message_t *msg )
 {
 	sctk_ib_msg_header_t *send_header;
 
@@ -241,7 +241,7 @@ static void sctk_ib_rdma_prepare_recv_zerocopy ( sctk_rail_info_t *rail, sctk_th
 
 }
 
-static void sctk_ib_rdma_prepare_recv_recopy ( sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg )
+static void sctk_ib_rdma_prepare_recv_recopy ( sctk_thread_ptp_message_t *msg )
 {
 	sctk_ib_msg_header_t *send_header;
 	size_t page_size;
@@ -367,8 +367,7 @@ static void sctk_ib_rdma_rendezvous_send_ack ( sctk_rail_info_t *rail, sctk_thre
 sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req(sctk_rail_info_t *rail,
                                                  sctk_ib_qp_t *remote,
                                                  sctk_thread_ptp_message_t *msg,
-                                                 size_t size,
-                                                 int low_memory_mode) {
+                                                 size_t size) {
   LOAD_RAIL(rail);
   sctk_ib_header_rdma_t *rdma = &msg->tail.ib.rdma;
   sctk_ibuf_t *ibuf;
@@ -447,7 +446,7 @@ void sctk_ib_rdma_rendezvous_net_copy ( sctk_message_to_copy_t *tmp )
 			send_header->rdma.local.size  = recv->tail.message.contiguous.size;
 			send_header->rdma.local.status       = SCTK_IB_RDMA_ZEROCOPY;
 			sctk_nodebug ( "Zerocopy. (Send:%p Recv:%p)", send, recv );
-			sctk_ib_rdma_prepare_recv_zerocopy ( send_header->rdma.rail, send );
+			sctk_ib_rdma_prepare_recv_zerocopy ( send );
 			sctk_ib_rdma_rendezvous_send_ack ( send_header->rdma.rail, send );
 			send_header->rdma.copy_ptr = tmp;
 			send_header->rdma.local.ready = 1;
@@ -456,7 +455,7 @@ void sctk_ib_rdma_rendezvous_net_copy ( sctk_message_to_copy_t *tmp )
 			/* not contiguous message */
 		{
 			send_header->rdma.local.status       = SCTK_IB_RDMA_RECOPY;
-			sctk_ib_rdma_prepare_recv_recopy ( send_header->rdma.rail, send );
+			sctk_ib_rdma_prepare_recv_recopy ( send );
 			sctk_nodebug ( "Msg %p recopied from buffer %p", tmp->msg_send, send_header->rdma.local.addr );
 			send_header->rdma.copy_ptr = tmp;
 			sctk_ib_rdma_rendezvous_send_ack ( send_header->rdma.rail, send );
@@ -555,8 +554,7 @@ sctk_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
   return msg;
 }
 
-void sctk_ib_rdma_rendezvous_prepare_send_msg ( sctk_ib_rail_info_t *rail_ib,
-												sctk_thread_ptp_message_t *msg, size_t size )
+void sctk_ib_rdma_rendezvous_prepare_send_msg ( sctk_thread_ptp_message_t *msg, size_t size )
 {
 	sctk_ib_header_rdma_t *rdma = &msg->tail.ib.rdma;
 	void *aligned_addr = NULL;
@@ -727,7 +725,7 @@ sctk_ib_rdma_rendezvous_prepare_done_write(sctk_rail_info_t *rail,
  *  RDMA ATOMIC OPERATIONS GATES
  *----------------------------------------------------------*/
 
-int sctk_ib_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type )
+int sctk_ib_rdma_fetch_and_op_gate( __UNUSED__ sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type )
 {
 	/* IB only supports 64 bits operands */
 	if( size != 8 )
@@ -751,15 +749,15 @@ int sctk_ib_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_op
         }
 }
 
-int sctk_ib_rdma_cas_gate( sctk_rail_info_t *rail, size_t size,  RDMA_type type )
+int sctk_ib_rdma_cas_gate( __UNUSED__ sctk_rail_info_t *rail, size_t size,  __UNUSED__ RDMA_type type )
 {
-	/* IB only supports 64 bits operands */
-	if( size != 8 )
-	{
-		return 0;
-	}
+  /* IB only supports 64 bits operands */
+  if( size != 8 )
+  {
+    return 0;
+  }
 
-        return 1;
+  return 1;
 }
 
 /*-----------------------------------------------------------
@@ -1015,7 +1013,7 @@ sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 		case SCTK_IB_RDMA_RDV_WRITE_TYPE:
 			sctk_nodebug ( "Poll send: message RDMA data write received" );
 			msg = sctk_ib_rdma_rendezvous_prepare_done_write ( rail, ibuf );
-			sctk_ib_rdma_recv_done_local ( rail, msg );
+			sctk_ib_rdma_recv_done_local ( msg );
 			break;
 
 		case SCTK_IB_RDMA_RDV_DONE_TYPE:
