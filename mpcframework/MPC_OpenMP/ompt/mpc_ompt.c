@@ -205,7 +205,7 @@ ompt_state_info_t ompt_state_info[] = {
 
 ompt_state_t ompt_get_state( ompt_wait_id_t *wait_id )
 {	
-  ompt_state_t state = ompt_get_state_internal(wait_id);	
+  ompt_state_t state = ompt_get_state_internal(wait_id);
 
   return state;
 }
