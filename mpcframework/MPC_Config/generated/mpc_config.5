@@ -139,10 +139,6 @@ See type collectives_shm.
 Collectives intracom MPI
 .br
 See type collectives_intra.
-.It Cm collectives_offload
-Offloaded Collectives for MPC
-.br
-See type collectives_offload.
 .It Cm collectives_inter
 Collectives intercom MPI
 .br
@@ -602,7 +598,7 @@ Type is bool. Default value is false.
 .Pp ondemand
 Enable on-demand optimization through ID hardware propagation
 .It Cm collectives
-Type is bool. Default value is true. 
+Type is bool. Default value is false. 
 .Pp collectives
 Enable collective optimization for Portals
 .El
@@ -1128,25 +1124,6 @@ Number of reduce slots to allocate (required to be power of 2)
 Type is int. Default value is 8. 
 .Pp bcast_interleave
 Number of bcast slots to allocate (required to be power of 2)
-.El
-.Sh ENTRIES OF TYPE collectives_offload
-Offloaded Collectives for MPC
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm barrier_intra
-Type is function pointer. Default value is ptl_offcoll_barrier. 
-.Pp barrier_intra
-MPI_Barrier
-.It Cm bcast_intra
-Type is function pointer. Default value is ptl_offcoll_bcast. 
-.Pp bcast_intra
-MPI_Bcast
-.It Cm reduce_intra
-Type is function pointer. Default value is ptl_offcoll_reduce. 
-.Pp reduce_intra
-MPI_Reduce
 .El
 .Sh ENTRIES OF TYPE collectives_intra
 Collectives intracom MPI

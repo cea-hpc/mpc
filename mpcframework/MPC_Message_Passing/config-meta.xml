@@ -68,7 +68,7 @@
 
 		<struct name="offload_ops_t" doc="">
 			<param name="ondemand" type="bool" doc="Enable on-demand optimization through ID hardware propagation" default="false" />
-			<param name="collectives" type="bool" doc="Enable collective optimization for Portals" default="true" />
+			<param name="collectives" type="bool" doc="Enable collective optimization for Portals" default="false" />
 		</struct>
 
 		<!-- Structure for Portals driver -->

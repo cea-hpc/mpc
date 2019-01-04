@@ -5924,14 +5924,10 @@ int __INTERNAL__PMPI_Barrier_intra(MPI_Comm comm) {
 	__INTERNAL__PMPI_Comm_size( comm, &size );
         __INTERNAL__PMPI_Comm_rank( comm, &rank);
 
-	if(!barrier_offload)
-		barrier_offload = ((int(*)(int, int, int))sctk_runtime_config_get()->modules.collectives_offload.barrier_intra.value);
-
 #ifdef MPC_USE_PORTALS
-
-        if(barrier_offload)
+        if(ptl_offcoll_enabled())
         {
-                res = barrier_offload(comm, rank, size);
+                res = ptl_offcoll_barrier(comm, rank, size);
 		return res;
         }
 #endif
@@ -6386,19 +6382,14 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 	if (res != MPI_SUCCESS) {
 		return res;
 	}
-	if(!bcast_offload)
-		bcast_offload = ((int(*)(int, int, int, void*, size_t, int))sctk_runtime_config_get()->modules.collectives_offload.bcast_intra.value);
-
 #ifdef MPC_USE_PORTALS
-	if(!bcast_offload)
-		bcast_offload = ((int(*)(int, int, int, void*, size_t, int))sctk_runtime_config_get()->modules.collectives_offload.bcast_intra.value);
-        if(bcast_offload && sctk_datatype_kind(datatype) == MPC_DATATYPES_COMMON)
+        if(ptl_offcoll_enabled() && sctk_datatype_kind(datatype) == MPC_DATATYPES_COMMON)
         {
 		size_t tmp_size;
 		PMPC_Type_size (datatype, &tmp_size);
 		size_t length = ((size_t)count) * ((size_t)tmp_size);
 
-                res = bcast_offload(comm, rank, size, buffer, length, root);
+                res = ptl_offcoll_bcast(comm, rank, size, buffer, length, root);
 		return res;
         }
 #endif

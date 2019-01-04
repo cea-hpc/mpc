@@ -33,6 +33,12 @@
 #define COLL_ARITY 2
 
 extern sctk_ptl_id_t* ranks_id_map;
+ 
+/** TODO: REMOVE all these global variables (should be per rail) */
+sctk_ptl_local_data_t* md_up;
+sctk_ptl_local_data_t* md_down;
+sctk_ptl_local_data_t* dummy_md;
+sctk_ptl_rail_info_t* grail;
 
 static inline int __sctk_ptl_offcoll_enabled(sctk_ptl_rail_info_t* srail)
 {
@@ -43,16 +49,15 @@ static inline int __sctk_ptl_offcoll_enabled(sctk_ptl_rail_info_t* srail)
 	return cache;
 }
 
+int ptl_offcoll_enabled()
+{
+	return (grail);
+}
+
 int sctk_ptl_offcoll_enabled(sctk_ptl_rail_info_t* srail)
 {
 	return __sctk_ptl_offcoll_enabled(srail);
 }
- 
-/** TODO: REMOVE all these global variables (should be per rail) */
-sctk_ptl_local_data_t* md_up;
-sctk_ptl_local_data_t* md_down;
-sctk_ptl_local_data_t* dummy_md;
-sctk_ptl_rail_info_t* grail;
 
 /**
  * Initialize the off_coll module.
@@ -740,5 +745,6 @@ int ptl_offcoll_reduce()
 	not_implemented();
 	return 0;
 }
+
 
 #endif
