@@ -60,7 +60,7 @@ void sctk_alloc_hooks_init(struct sctk_alloc_hooks * hooks)
  * member attached to the chain.
  * @param chain Define the chain from which to read the user data.
  */
-void * sctk_alloc_hooks_get_user_data(struct sctk_alloc_chain * chain)
+void * sctk_alloc_hooks_get_user_data(__AL_UNUSED__ struct sctk_alloc_chain * chain)
 {
 	#ifdef ENABLE_ALLOC_HOOKS
 		return chain->hook_user_data;
@@ -75,7 +75,7 @@ void * sctk_alloc_hooks_get_user_data(struct sctk_alloc_chain * chain)
  * @param chain The chain on which to setup the user data.
  * @param data The user data to register on the chain.
  */
-void sctk_alloc_hooks_set_user_data(struct sctk_alloc_chain * chain,void * data)
+void sctk_alloc_hooks_set_user_data(__AL_UNUSED__ struct sctk_alloc_chain * chain, __AL_UNUSED__ void * data)
 {
 	#ifdef ENABLE_ALLOC_HOOKS
 	chain->hook_user_data = data;

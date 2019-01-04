@@ -102,25 +102,25 @@ int sctk_get_node_from_cpu (int cpu);
 #endif
 
 /*************************** FUNCTION **********************/
-SCTK_PUBLIC void * sctk_malloc_hook(size_t size,const void * caller)
+SCTK_PUBLIC void * sctk_malloc_hook(size_t size,__AL_UNUSED__ const void * caller)
 {
 	return sctk_malloc(size);
 }
 
 /*************************** FUNCTION **********************/
-SCTK_PUBLIC void sctk_free_hook(void * ptr, const void * caller)
+SCTK_PUBLIC void sctk_free_hook(void * ptr, __AL_UNUSED__ const void * caller)
 {
 	sctk_free(ptr);
 }
 
 /*************************** FUNCTION **********************/
-SCTK_PUBLIC void * sctk_realloc_hook(void * ptr,size_t size,const void * caller)
+SCTK_PUBLIC void * sctk_realloc_hook(void * ptr,size_t size,__AL_UNUSED__ const void * caller)
 {
 	return sctk_realloc(ptr,size);
 }
 
 /*************************** FUNCTION **********************/
-SCTK_PUBLIC void * sctk_memalign_hook(size_t align,size_t size,const void * caller)
+SCTK_PUBLIC void * sctk_memalign_hook(size_t align,size_t size,__AL_UNUSED__ const void * caller)
 {
 	return sctk_memalign(align,size);
 }

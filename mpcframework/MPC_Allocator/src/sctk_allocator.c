@@ -923,7 +923,7 @@ void sctk_alloc_free_chunk_range(struct sctk_thread_pool *pool,
 sctk_alloc_vchunk sctk_alloc_merge_chunk(struct sctk_thread_pool *pool,
                                          sctk_alloc_vchunk chunk,
                                          sctk_alloc_vchunk first_page_chunk,
-                                         sctk_addr_t max_address) {
+                                         __AL_UNUSED__ sctk_addr_t max_address) {
   sctk_alloc_vchunk cur = chunk;
   sctk_alloc_vchunk last;
   sctk_size_t size;

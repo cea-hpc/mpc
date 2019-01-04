@@ -110,7 +110,7 @@ SCTK_PUBLIC int sctk_alloc_numa_stat_get_node_of_page(void* ptr)
 	}
 }
 #else
-int sctk_alloc_numa_stat_get_node_of_page(void* ptr)
+int sctk_alloc_numa_stat_get_node_of_page(__AL_UNUSED__ void* ptr)
 {
 	warning("Caution, get_node_of_page is supported only on Linux with libnuma support.");
 	return -1;
@@ -182,7 +182,7 @@ void sctk_alloc_numa_stat_print(const struct sctk_alloc_numa_stat_s* stat,void *
 		printf("%-20s : %-10lu (%.01f Mo / %.01f %%)\n","NUMA unknown",stat->numa_pages[SCTK_DEFAULT_NUMA_MM_SOURCE_ID],(float)(stat->numa_pages[SCTK_DEFAULT_NUMA_MM_SOURCE_ID] * 4) / 1024.0,100.0*(float)stat->numa_pages[SCTK_DEFAULT_NUMA_MM_SOURCE_ID] / (float)stat->total_mapped);
 }
 #else //HAVE_LINUX_PAGEMAP
-SCTK_PUBLIC void sctk_alloc_numa_stat_print(const struct sctk_alloc_numa_stat_s* stat,void * ptr,sctk_size_t size)
+SCTK_PUBLIC void sctk_alloc_numa_stat_print(__AL_UNUSED__ const struct sctk_alloc_numa_stat_s* stat,__AL_UNUSED__ void * ptr,__AL_UNUSED__ sctk_size_t size)
 {
 	printf("%-20s : %s\n","Linux pagemap","Not supported");
 }
@@ -355,7 +355,7 @@ SCTK_PUBLIC void sctk_alloc_numa_stat_print_detail(void* ptr, size_t size)
 	free(table);
 }
 #else //HAVE_LINUX_PAGEMAP
-SCTK_PUBLIC void sctk_alloc_numa_stat_print_detail(void* ptr, size_t size)
+SCTK_PUBLIC void sctk_alloc_numa_stat_print_detail(__AL_UNUSED__ void* ptr, __AL_UNUSED__ size_t size)
 {
 	static bool first_call = true;
 	if (first_call)

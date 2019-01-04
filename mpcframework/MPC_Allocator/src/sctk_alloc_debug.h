@@ -97,6 +97,16 @@
 #endif //HAVE_MEMCHECK_H
 
 /************************** MACROS *************************/
+
+/* For not used fuctions (disable compiler warning) for allocator */
+#ifdef __GNUC__
+#define __AL_UNUSED__ __attribute__ ((__unused__))
+#else
+#define __AL_UNUSED__
+#endif
+
+
+/************************** MACROS *************************/
 #ifndef assert
 #ifdef SCTK_ALLOC_DEBUG
 #define assert(x) if (!(x)) { sctk_alloc_perror("Assertion failure at %s!%d\n%s\n",__FILE__,__LINE__,#x); abort(); }

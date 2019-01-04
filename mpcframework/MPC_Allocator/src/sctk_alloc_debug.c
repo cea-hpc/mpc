@@ -192,7 +192,7 @@ void sctk_alloc_debug_dump_segment(int fd,void* base_addr, void* end_addr)
 }
 
 /************************* FUNCTION ************************/
-void sctk_alloc_debug_dump_free_lists(int fd, struct sctk_alloc_free_chunk* free_lists)
+void sctk_alloc_debug_dump_free_lists(__AL_UNUSED__ int fd, __AL_UNUSED__ struct sctk_alloc_free_chunk* free_lists)
 {
 	/*int i;
 	struct sctk_alloc_free_chunk * fchunk = NULL;
@@ -214,13 +214,13 @@ void sctk_alloc_debug_dump_free_lists(int fd, struct sctk_alloc_free_chunk* free
 }
 
 /************************* FUNCTION ************************/
-void sctk_alloc_debug_dump_thread_pool(int fd, struct sctk_thread_pool* pool)
+void sctk_alloc_debug_dump_thread_pool(__AL_UNUSED__ int fd, __AL_UNUSED__ struct sctk_thread_pool* pool)
 {
 	//sctk_alloc_debug_dump_free_lists(fd,pool->free_lists);
 }
 
 /************************* FUNCTION ************************/
-void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
+void sctk_alloc_debug_dump_alloc_chain(__AL_UNUSED__ struct sctk_alloc_chain* chain)
 {
 	/** @todo  Not thread safe **/
 	/*static int id = 0;
