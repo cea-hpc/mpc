@@ -218,112 +218,89 @@ __mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int* shape_d
 }
 
 /* MOVE FROM mpcomp_tree_bis.c */
-int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t* restrictedTopology, const int omp_threads_expected, const int* cpulist )
+int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t *restrictedTopology, const int omp_threads_expected, const int *cpulist )
 {
-	int i, err, num_mvps, core;	
+	int i, err, num_mvps, core;
 	hwloc_topology_t topology;
 	hwloc_bitmap_t final_cpuset;
 	hwloc_obj_t core_obj, pu_obj;
-	
+
 	final_cpuset = hwloc_bitmap_alloc();
 	topology = sctk_get_topology_object();
 
 	const int taskRank = sctk_get_task_rank();
 	const int taskVp = sctk_get_init_vp_and_nbvp( taskRank, &num_mvps );
-	const int npus = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU); 
-	const int ncores = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE); 
+	const int npus = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_PU );
+	const int ncores = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_CORE );
 
 	// Every core must have the same number of PU
-	sctk_assert( npus % ncores  == 0 );
+	sctk_assert( npus % ncores == 0 );
 
-	if( omp_threads_expected > 0 && num_mvps > omp_threads_expected )
+	if ( omp_threads_expected > 0 && num_mvps > omp_threads_expected )
 		num_mvps = omp_threads_expected;
 
-    if( cpulist )
-    {
-        /* If smt is enable we use cpu_id as HT_id else core_id 
-         * We can iterate on OBJ_PU directly for both configuration */   
-         assume( omp_threads_expected == num_mvps );
+	if ( cpulist )
+	{
+		/* If smt is enable we use cpu_id as HT_id else core_id
+         * We can iterate on OBJ_PU directly for both configuration */
+		assume( omp_threads_expected == num_mvps );
 
-         /* Restrict core_id to core in OMP_PLACES */
-         for( i = 0; i < num_mvps; i++ )
-         {
-             const int cur_pu_id = cpulist[i];
-             pu_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cur_pu_id);
-             sctk_assert( pu_obj );
-             hwloc_bitmap_or( final_cpuset, final_cpuset, pu_obj->cpuset );
-         }
-    } 
-    else  /* No places */
-    {
-	   const int quot = num_mvps / ncores; 	
-	   const int rest = num_mvps % ncores;
-	
-	   // Get min between ncores and num_mvps
-	   const int ncores_select = ( num_mvps > ncores ) ? ncores : num_mvps;
+		/* Restrict core_id to core in OMP_PLACES */
+		for ( i = 0; i < num_mvps; i++ )
+		{
+			const int cur_pu_id = cpulist[i];
+			pu_obj = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, cur_pu_id );
+			sctk_assert( pu_obj );
+			hwloc_bitmap_or( final_cpuset, final_cpuset, pu_obj->cpuset );
+		}
+	}
+	else /* No places */
+	{
+		const int quot = num_mvps / ncores;
+		const int rest = num_mvps % ncores;
 
-	   /*for( core = 0; core < ncores_select; core++ )
-	   {
-	      const int num_pus_select = ( rest > core ) ? quot+1 : quot; 
-          printf("deb taskVp+core %d, hwloc nb core %d, num_pus_select %d, quot %d\n", taskVp+core, hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE), num_pus_select, quot);
-		  core_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_CORE, taskVp+core );	
-		  sctk_assert( core_obj );
-	
-		  for( i = 0; i < num_pus_select; i ++ )
-		  {
-		     pu_obj = hwloc_get_obj_inside_cpuset_by_type(topology, core_obj->cpuset, HWLOC_OBJ_PU, i);
-			 sctk_assert( pu_obj );
-			 hwloc_bitmap_or( final_cpuset, final_cpuset, pu_obj->cpuset );
-		  }
-	    }*/
-        int pu;
-	   for( pu = 0; pu < num_mvps; pu++ )
-	   {
-INFO("CORE IS USED NOT INITIALIZED");
-           const int num_pus_select = ( rest > core ) ? quot+1 : quot; 
-          if(sctk_enable_smt_capabilities){
-		  core_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, taskVp+pu);	
-          pu_obj = core_obj;
+		// Get min between ncores and num_mvps
+		const int ncores_select = ( num_mvps > ncores ) ? ncores : num_mvps;
 
-          }
-          else{
-              core_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_CORE, taskVp+pu);	
-              pu_obj = hwloc_get_obj_inside_cpuset_by_type(topology, core_obj->cpuset, HWLOC_OBJ_PU, 0);
-          }
-          sctk_assert( core_obj );
-          sctk_assert( pu_obj );
-          hwloc_bitmap_or( final_cpuset, final_cpuset, pu_obj->cpuset );
-	
-		  /*for( i = 0; i < num_pus_select; i ++ )
-		  {
-		     pu_obj = hwloc_get_obj_inside_cpuset_by_type(topology, core_obj->cpuset, HWLOC_OBJ_PU, i);
-			 sctk_assert( pu_obj );
-			 hwloc_bitmap_or( final_cpuset, final_cpuset, pu_obj->cpuset );
-		  }*/
-	    }
-    }	
+		int pu;
+		for ( pu = 0; pu < num_mvps; pu++ )
+		{
+			if ( sctk_enable_smt_capabilities )
+			{
+				core_obj = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, taskVp + pu );
+				pu_obj = core_obj;
+			}
+			else
+			{
+				core_obj = hwloc_get_obj_by_type( topology, HWLOC_OBJ_CORE, taskVp + pu );
+				pu_obj = hwloc_get_obj_inside_cpuset_by_type( topology, core_obj->cpuset, HWLOC_OBJ_PU, 0 );
+			}
+			sctk_assert( core_obj );
+			sctk_assert( pu_obj );
+			hwloc_bitmap_or( final_cpuset, final_cpuset, pu_obj->cpuset );
+		}
+	}
 
-	sctk_assert( num_mvps == hwloc_bitmap_weight( final_cpuset ) );	
+	sctk_assert( num_mvps == hwloc_bitmap_weight( final_cpuset ) );
 
-	if((err = hwloc_topology_init(restrictedTopology)))
+	if ( ( err = hwloc_topology_init( restrictedTopology ) ) )
 		return -1;
 
-	if((err = hwloc_topology_dup(restrictedTopology,topology)))
+	if ( ( err = hwloc_topology_dup( restrictedTopology, topology ) ) )
 		return -1;
 
-	if((err = hwloc_topology_restrict(*restrictedTopology,final_cpuset,HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES)))
+	if ( ( err = hwloc_topology_restrict( *restrictedTopology, final_cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES ) ) )
 		return -1;
 
-    hwloc_obj_t prev_pu, next_pu;
-    prev_pu = NULL; // Init hwloc iterator
-    while( (next_pu = hwloc_get_next_obj_by_type( *restrictedTopology, HWLOC_OBJ_PU, prev_pu )) )
-    {
-       prev_pu = next_pu;
-    }
-    hwloc_bitmap_free( final_cpuset );
-	return 0;	
+	hwloc_obj_t prev_pu, next_pu;
+	prev_pu = NULL; // Init hwloc iterator
+	while ( ( next_pu = hwloc_get_next_obj_by_type( *restrictedTopology, HWLOC_OBJ_PU, prev_pu ) ) )
+	{
+		prev_pu = next_pu;
+	}
+	hwloc_bitmap_free( final_cpuset );
+	return 0;
 }
-
 
 static hwloc_topology_t
 __mpcomp_prepare_omp_task_tree_init( const int num_mvps, const int* cpus_order ) 
