@@ -324,6 +324,7 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
   sctk_thread_mutex_lock(&critical_lock);                                      \
   new_value = (*loc);                                                          \
   sctk_thread_mutex_unlock(&critical_lock);                                    \
+  return new_value;                                                            \
   }
 
 #define ATOMIC_XCHG_WR(TYPE_ID, OP_ID, TYPE, BITS, OP, GOMP_FLAG)              \
