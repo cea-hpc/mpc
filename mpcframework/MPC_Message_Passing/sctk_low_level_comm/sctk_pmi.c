@@ -228,7 +228,7 @@ int sctk_pmi_init()
                 // Put hostname on kvs for current process;
                 sprintf(value, "%s", hostname);
                 rc = sctk_pmi_put_connection_info(
-                    value, sctk_max_val_len,
+                    value,
                     SCTK_PMI_TAG_PMI + SCTK_PMI_TAG_PMI_HOSTNAME);
 
                 if (rc != PMI_SUCCESS) {
@@ -438,12 +438,14 @@ int sctk_pmi_barrier()
 /******************************************************************************
 INFORMATION DIFFUSION
 ******************************************************************************/
+
+
 /*! \brief Register information required for connection initialization
  * @param info The information to store
  * @param size Size in bytes of the information
- * @param tag An identifier to distinguish information
+ * @param tag A key string to distinguish information
 */
-int sctk_pmi_put_connection_info ( void *info, size_t size, int tag )
+int sctk_pmi_put_connection_info_str ( void *info, char tag[] )
 {
 #ifdef SCTK_LIB_MODE
 	not_implemented();
@@ -456,8 +458,7 @@ int sctk_pmi_put_connection_info ( void *info, size_t size, int tag )
 	sctk_pmi_get_process_rank ( &iRank );
 
 	// Build the key
-	sKeyValue = ( char * ) sctk_malloc ( sctk_max_key_len * sizeof ( char ) );
-	sprintf ( sKeyValue, "MPC_KEYS_%d_%d", tag, iRank );
+	sKeyValue = tag;
 
 	// Build the value
 	sValue = ( char * ) info;
@@ -475,6 +476,33 @@ int sctk_pmi_put_connection_info ( void *info, size_t size, int tag )
 			fprintf ( stderr, "FAILURE (sctk_pmi): PMI_KVS_Commit: %d\n", rc );
 		}
 	}
+
+	return rc;
+#endif /* SCTK_LIB_MODE */
+}
+
+/*! \brief Register information required for connection initialization
+ * @param info The information to store
+ * @param size Size in bytes of the information
+ * @param tag An identifier to distinguish information
+*/
+int sctk_pmi_put_connection_info ( void *info, int tag )
+{
+#ifdef SCTK_LIB_MODE
+	not_implemented();
+	return PMI_FAIL;
+#else /* SCTK_LIB_MODE */
+	int iRank, rc;
+	char *sKeyValue = NULL, * sValue = NULL;
+
+	// Get the process rank
+	sctk_pmi_get_process_rank ( &iRank );
+
+	// Build the key
+	sKeyValue = ( char * ) sctk_malloc ( sctk_max_key_len * sizeof ( char ) );
+	sprintf ( sKeyValue, "MPC_KEYS_%d_%d", tag, iRank );
+
+	rc = sctk_pmi_put_connection_info_str( info, sKeyValue);
 
 	sctk_free ( sKeyValue );
 	return rc;
@@ -514,46 +542,6 @@ int sctk_pmi_get_connection_info ( void *info, size_t size, int tag, int rank )
 #endif /* SCTK_LIB_MODE */
 }
 
-/*! \brief Register information required for connection initialization
- * @param info The information to store
- * @param size Size in bytes of the information
- * @param tag A key string to distinguish information
-*/
-int sctk_pmi_put_connection_info_str ( void *info, size_t size, char tag[] )
-{
-#ifdef SCTK_LIB_MODE
-	not_implemented();
-	return PMI_FAIL;
-#else /* SCTK_LIB_MODE */
-	int iRank, rc;
-	char *sKeyValue = NULL, * sValue = NULL;
-
-	// Get the process rank
-	sctk_pmi_get_process_rank ( &iRank );
-
-	// Build the key
-	sKeyValue = tag;
-
-	// Build the value
-	sValue = ( char * ) info;
-
-	// Put info in Key-Value-Space
-	if ( ( rc = PMI_KVS_Put ( sctk_kvsname, sKeyValue, sValue ) ) != PMI_SUCCESS )
-	{
-		fprintf ( stderr, "FAILURE (sctk_pmi): PMI_KVS_Put: %d\n", rc );
-	}
-	else
-	{
-		// Apply changes on Key-Value-Space
-		if ( ( rc = PMI_KVS_Commit ( sctk_kvsname ) ) != PMI_SUCCESS )
-		{
-			fprintf ( stderr, "FAILURE (sctk_pmi): PMI_KVS_Commit: %d\n", rc );
-		}
-	}
-
-	return rc;
-#endif /* SCTK_LIB_MODE */
-}
 
 /*! \brief Get information required for connection initialization
  * @param info The place to store the information to retrieve

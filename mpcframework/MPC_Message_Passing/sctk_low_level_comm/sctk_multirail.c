@@ -31,13 +31,13 @@
 
 /* HERE ARE DEFAULT GATES */
 
-int sctk_rail_gate_boolean( sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
+int sctk_rail_gate_boolean( __UNUSED__ sctk_rail_info_t * rail, __UNUSED__ sctk_thread_ptp_message_t * message , void * gate_config )
 {
 	struct sctk_runtime_config_struct_gate_boolean * conf = (struct sctk_runtime_config_struct_gate_boolean *)gate_config;
 	return conf->value;
 }
 
-int sctk_rail_gate_probabilistic( sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
+int sctk_rail_gate_probabilistic(  __UNUSED__ sctk_rail_info_t * rail, __UNUSED__ sctk_thread_ptp_message_t * message , void * gate_config )
 {
 	struct sctk_runtime_config_struct_gate_probabilistic * conf = (struct sctk_runtime_config_struct_gate_probabilistic *)gate_config;
 	
@@ -46,7 +46,7 @@ int sctk_rail_gate_probabilistic( sctk_rail_info_t * rail, sctk_thread_ptp_messa
 	return ( num < conf->probability );
 }
 
-int sctk_rail_gate_minsize( sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
+int sctk_rail_gate_minsize( __UNUSED__ sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
 {
 	struct sctk_runtime_config_struct_gate_min_size * conf = (struct sctk_runtime_config_struct_gate_min_size *)gate_config;
 	
@@ -55,7 +55,7 @@ int sctk_rail_gate_minsize( sctk_rail_info_t * rail, sctk_thread_ptp_message_t *
 	return ( conf->value < message_size );
 }
 
-int sctk_rail_gate_maxsize( sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
+int sctk_rail_gate_maxsize( __UNUSED__ sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
 {
 	struct sctk_runtime_config_struct_gate_max_size * conf = (struct sctk_runtime_config_struct_gate_max_size *)gate_config;
 	
@@ -65,7 +65,7 @@ int sctk_rail_gate_maxsize( sctk_rail_info_t * rail, sctk_thread_ptp_message_t *
 }
 
 
-int sctk_rail_gate_msgtype( sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
+int sctk_rail_gate_msgtype( __UNUSED__ sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
 {
 	struct sctk_runtime_config_struct_gate_message_type * conf = (struct sctk_runtime_config_struct_gate_message_type *)gate_config;
 	

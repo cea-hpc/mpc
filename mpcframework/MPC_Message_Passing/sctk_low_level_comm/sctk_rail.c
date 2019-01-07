@@ -706,7 +706,7 @@ void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_de
 
 /**************************/
 
-void sctk_rail_add_static_route (sctk_rail_info_t *rail, int dest, sctk_endpoint_t *tmp )
+void sctk_rail_add_static_route (sctk_rail_info_t *rail, sctk_endpoint_t *tmp )
 {
 	/* Is this rail a subrail ? */
 	if( rail->parent_rail )
@@ -732,7 +732,7 @@ void sctk_rail_add_static_route (sctk_rail_info_t *rail, int dest, sctk_endpoint
 
 
 
-void sctk_rail_add_dynamic_route ( sctk_rail_info_t *rail, int dest, sctk_endpoint_t *tmp )
+void sctk_rail_add_dynamic_route ( sctk_rail_info_t *rail, sctk_endpoint_t *tmp )
 {
 	/* Is this rail a subrail ? */
 	if( rail->parent_rail )

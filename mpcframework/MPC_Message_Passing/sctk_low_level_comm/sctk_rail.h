@@ -321,8 +321,8 @@ static inline int sctk_rail_get_subrail_id_with_device( sctk_rail_info_t *rail, 
 /* Add Routes to Rail                                                   */
 /************************************************************************/
 
-void sctk_rail_add_static_route ( sctk_rail_info_t *rail, int dest, sctk_endpoint_t *tmp  );
-void sctk_rail_add_dynamic_route ( sctk_rail_info_t *rail, int dest, sctk_endpoint_t *tmp );
+void sctk_rail_add_static_route ( sctk_rail_info_t *rail, sctk_endpoint_t *tmp  );
+void sctk_rail_add_dynamic_route ( sctk_rail_info_t *rail, sctk_endpoint_t *tmp );
 void sctk_rail_add_dynamic_route_no_lock (  sctk_rail_info_t * rail, sctk_endpoint_t *tmp );
 
 sctk_endpoint_t * sctk_rail_add_or_reuse_route_dynamic ( sctk_rail_info_t *rail, int dest, sctk_endpoint_t * ( *create_func ) (), void ( *init_func ) ( int dest, sctk_rail_info_t *rail, sctk_endpoint_t *route_table, int ondemand ), int *added, char is_initiator );

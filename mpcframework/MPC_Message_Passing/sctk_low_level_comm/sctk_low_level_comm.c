@@ -61,7 +61,7 @@ static void sctk_network_not_implemented_warn ( char *name )
 
 /********** SEND ************/
 
-void sctk_network_send_message_default ( sctk_thread_ptp_message_t *msg )
+void sctk_network_send_message_default ( __UNUSED__ sctk_thread_ptp_message_t *msg )
 {
 	not_reachable();
 }
@@ -79,9 +79,8 @@ void sctk_network_send_message_set ( void ( *sctk_network_send_message_val ) ( s
 
 /********** NOTIFY_RECV ************/
 
-void sctk_network_notify_recv_message_default ( sctk_thread_ptp_message_t *msg )
+void sctk_network_notify_recv_message_default ( __UNUSED__ sctk_thread_ptp_message_t *msg )
 {
-
 }
 
 static void ( *sctk_network_notify_recv_message_ptr ) ( sctk_thread_ptp_message_t * ) = sctk_network_notify_recv_message_default;
@@ -98,9 +97,8 @@ void sctk_network_notify_recv_message_set ( void ( *sctk_network_notify_recv_mes
 
 /********** NOTIFY_MATCHING ************/
 
-void sctk_network_notify_matching_message_default ( sctk_thread_ptp_message_t *msg )
+void sctk_network_notify_matching_message_default (  __UNUSED__ sctk_thread_ptp_message_t *msg )
 {
-
 }
 
 static void ( *sctk_network_notify_matching_message_ptr ) ( sctk_thread_ptp_message_t * ) = sctk_network_notify_matching_message_default;
@@ -117,7 +115,7 @@ void sctk_network_notify_matching_message_set ( void ( *sctk_network_notify_matc
 
 /********** NOTIFY_PERFORM ************/
 
-static void sctk_network_notify_perform_message_default ( int remote_proces, int remote_task_id, int polling_task_id, int blocking )
+static void sctk_network_notify_perform_message_default ( __UNUSED__ int remote_proces, __UNUSED__ int remote_task_id, __UNUSED__ int polling_task_id, __UNUSED__ int blocking )
 {
 
 }
@@ -175,7 +173,7 @@ void sctk_network_notify_idle_message_set ( void ( *sctk_network_notify_idle_mes
 
 /********** NOTIFY_ANY_SOURCE ************/
 
-static void sctk_network_notify_any_source_message_default ( int polling_task_id, int blocking )
+static void sctk_network_notify_any_source_message_default ( __UNUSED__ int polling_task_id, __UNUSED__ int blocking )
 {
 
 }
@@ -203,7 +201,7 @@ void sctk_network_notify_any_source_message_set ( void ( *sctk_network_notify_an
 }
 
 /********** NOTIFY_NEW_COMM ************/
-static void sctk_network_notify_new_communicator_default(int comm_idx, size_t comm_size)
+static void sctk_network_notify_new_communicator_default(__UNUSED__ int comm_idx, __UNUSED__ size_t comm_size)
 {
 }
 

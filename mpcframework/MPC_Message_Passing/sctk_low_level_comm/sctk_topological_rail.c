@@ -111,17 +111,17 @@ static void sctk_network_send_message_endpoint_topological ( sctk_thread_ptp_mes
 	endpoint_rail->send_message_endpoint( msg, topo_endpoint );
 }
 
-static void sctk_network_notify_recv_message_topological ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
+static void sctk_network_notify_recv_message_topological ( __UNUSED__ sctk_thread_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail )
 {
 	/* Done in subrails */
 }
 
-static void sctk_network_notify_matching_message_topological ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
+static void sctk_network_notify_matching_message_topological ( __UNUSED__ sctk_thread_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail )
 {
 	/* Done in subrails */
 }
 
-static void sctk_network_notify_perform_message_topological ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
+static void sctk_network_notify_perform_message_topological ( __UNUSED__ int remote, __UNUSED__ int remote_task_id, __UNUSED__ int polling_task_id, __UNUSED__ int blocking, __UNUSED__ sctk_rail_info_t *rail )
 {
 	/* Done in subrails */
 }
@@ -131,12 +131,12 @@ static void sctk_network_notify_idle_message_topological ()
 	/* Done in subrails */
 }
 
-static void sctk_network_notify_any_source_message_topological ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
+static void sctk_network_notify_any_source_message_topological ( __UNUSED__ int polling_task_id, __UNUSED__ int blocking, __UNUSED__ sctk_rail_info_t *rail )
 {
 	/* Done in subrails */
 }
 
-static int sctk_send_message_from_network_topological ( sctk_thread_ptp_message_t *msg )
+static int sctk_send_message_from_network_topological ( __UNUSED__ sctk_thread_ptp_message_t *msg )
 {
 	/* Done in subrails */
 	return 1;
@@ -166,19 +166,19 @@ void topological_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_
 	}
 }
 
-void topological_control_message_handler( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data, size_t size )
+void topological_control_message_handler( __UNUSED__ struct sctk_rail_info_s * rail, __UNUSED__ int source_process, __UNUSED__ int source_rank, __UNUSED__ char subtype, __UNUSED__ char param, __UNUSED__ void * data, __UNUSED__ size_t size )
 {
 	/* Done in subrails */
 }
 
 
-void sctk_network_connection_to_topological( int from, int to, sctk_rail_info_t *rail )
+void sctk_network_connection_to_topological( __UNUSED__ int from, __UNUSED__ int to, __UNUSED__ sctk_rail_info_t *rail )
 {
 	/* Done in subrails */
 }
 
 
-void sctk_network_connection_from_topological( int from, int to, sctk_rail_info_t *rail )
+void sctk_network_connection_from_topological( __UNUSED__ int from, __UNUSED__ int to, __UNUSED__ sctk_rail_info_t *rail )
 {
 	/* Done in subrails */
 }

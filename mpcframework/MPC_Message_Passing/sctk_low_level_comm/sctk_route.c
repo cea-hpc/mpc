@@ -329,7 +329,7 @@ void sctk_walk_all_static_routes( sctk_route_table_t * table, void ( *func ) (  
 /* Routes                                                               */
 /************************************************************************/
 
-static void sctk_free_route_messages ( void *ptr )
+static void sctk_free_route_messages ( __UNUSED__ void *ptr )
 {
 
 }

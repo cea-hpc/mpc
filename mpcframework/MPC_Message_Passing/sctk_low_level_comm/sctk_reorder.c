@@ -66,8 +66,7 @@ sctk_reorder_table_t *sctk_init_task_to_reorder ( int dest )
 /*
  * Get an entry from the reorder. Add it if not exist
  */
-sctk_reorder_table_t *sctk_get_task_from_reorder ( int dest, int process_specific,
-                                                   sctk_reorder_list_t *reorder )
+sctk_reorder_table_t *sctk_get_task_from_reorder ( int dest, sctk_reorder_list_t *reorder )
 {
 	sctk_reorder_key_t key;
 	sctk_reorder_table_t *tmp;
@@ -175,10 +174,7 @@ int sctk_send_message_from_network_reorder ( sctk_thread_ptp_message_t *msg )
                         dest_task, SCTK_MSG_COMMUNICATOR(msg));
                 sctk_nodebug("GET REORDER LIST FOR %d -> %d", src_task,
                              dest_task);
-                tmp = sctk_get_task_from_reorder(
-                    src_task, sctk_message_class_is_process_specific(
-                                  SCTK_MSG_SPECIFIC_CLASS(msg)),
-                    list);
+                tmp = sctk_get_task_from_reorder(src_task, list);
                 assume(tmp != NULL);
                 sctk_nodebug("LIST %p ENTRY %p src %d dest %d", list, tmp,
                              src_task, dest_task);
@@ -254,8 +250,6 @@ int sctk_prepare_send_message_to_network_reorder ( sctk_thread_ptp_message_t *ms
         sctk_reorder_list_t *list = sctk_ptp_get_reorder_from_destination(
             src_task, SCTK_MSG_COMMUNICATOR(msg));
         tmp = sctk_get_task_from_reorder(dest_task,
-                                         sctk_message_class_is_process_specific(
-                                             SCTK_MSG_SPECIFIC_CLASS(msg)),
                                          list);
         assume(tmp);
 

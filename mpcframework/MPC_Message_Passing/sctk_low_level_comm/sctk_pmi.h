@@ -125,7 +125,7 @@ INFORMATION DIFFUSION
  * @param size Size in bytes of the information
  * @param tag An identifier to distinguish information
 */
-int sctk_pmi_put_connection_info ( void *info, size_t size, int tag );
+int sctk_pmi_put_connection_info ( void *info, int tag );
 /*! \brief Get information required for connection initialization
  * @param info The place to store the information to retrieve
  * @param size Size in bytes of the information
@@ -139,7 +139,7 @@ int sctk_pmi_get_connection_info ( void *info, size_t size, int tag, int rank );
  * @param size Size in bytes of the information
  * @param tag A key string to distinguish information
 */
-int sctk_pmi_put_connection_info_str ( void *info, size_t size, char tag[] );
+int sctk_pmi_put_connection_info_str ( void *info, char tag[] );
 /*! \brief Get information required for connection initialization
  * @param info The place to store the information to retrieve
  * @param size Size in bytes of the information

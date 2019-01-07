@@ -28,7 +28,7 @@
 /* None                                                                 */
 /************************************************************************/
 
-void sctk_route_none_init ( sctk_rail_info_t *rail )
+void sctk_route_none_init (  __UNUSED__ sctk_rail_info_t *rail )
 {
 	/* Nothing to do here by definition */
 }
@@ -41,13 +41,13 @@ void sctk_route_none_init ( sctk_rail_info_t *rail )
  * This function does nothing because of this assumption.
  * \param[in] rail no used.
  */
-void sctk_route_ring_init ( sctk_rail_info_t *rail )
+void sctk_route_ring_init (  __UNUSED__ sctk_rail_info_t *rail )
 {
 	/* Nothing to do as the driver is supposed to
 	 * provide a ring at startup */
 }
 
-int sctk_route_ring ( int dest, sctk_rail_info_t *rail )
+int sctk_route_ring ( int dest,  __UNUSED__ sctk_rail_info_t *rail )
 {
 	int old_dest;
 	int delta_1;
@@ -80,7 +80,7 @@ int sctk_route_ring ( int dest, sctk_rail_info_t *rail )
 /************************************************************************/
 /* Fully Connected                                                      */
 /************************************************************************/
-int sctk_route_fully ( int dest, sctk_rail_info_t *rail )
+int sctk_route_fully (  __UNUSED__ int dest,  __UNUSED__ sctk_rail_info_t *rail )
 {
 	not_reachable();
 	return -1;

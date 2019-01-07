@@ -460,54 +460,9 @@ void sctk_net_copy_in_buffer ( sctk_thread_ptp_message_t *msg,
 }
 
 
-void *sctk_net_if_one_msg_in_buffer ( sctk_thread_ptp_message_t *msg )
+void *sctk_net_if_one_msg_in_buffer (  __UNUSED__ sctk_thread_ptp_message_t *msg )
 {
 	not_implemented();
-	/*     size_t i; */
-	/*     size_t j; */
-	/*     int nb_msg = 0; */
-	/*     void* ptr = NULL; */
-
-	/*     for (i = 0; i < msg->message.nb_items; i++) */
-	/*     { */
-	/*       if (msg->message.begins_absolute[i] != NULL) */
-	/*       { */
-	/*         for (j = 0; j < msg->message.sizes[i]; j++) */
-	/*         { */
-	/*           ptr =((char *) (msg->message.adresses[i])) + */
-	/*               msg->message.begins_absolute[i][j] * */
-	/*               msg->message.elem_sizes[i]; */
-
-	/*           nb_msg++; */
-	/*           if (nb_msg >= 2) */
-	/*             return 0; */
-	/*         } */
-	/*       } */
-	/*       else */
-	/*       { */
-	/*         if (msg->message.begins[i] == NULL) */
-	/*         { */
-	/*           ptr = msg->message.adresses[i]; */
-	/*           nb_msg++; */
-	/*           if (nb_msg >= 2) */
-	/*             return 0; */
-	/*         } */
-	/*         else */
-	/*         { */
-	/*           for (j = 0; j < msg->message.sizes[i]; j++) */
-	/*           { */
-	/*             ptr = (char *) (msg->message.adresses[i]) + */
-	/*                 msg->message.begins[i][j] * */
-	/*                 msg->message.elem_sizes[i]; */
-
-	/*             nb_msg++; */
-	/*             if (nb_msg >= 2) */
-	/*               return 0; */
-	/*           } */
-	/*         } */
-	/*       } */
-	/*     } */
-	/*     return ptr; */
 	return NULL;
 }
 
@@ -526,13 +481,13 @@ amd64_cpy_nt ( volatile void *dst, volatile void *src, size_t n )
 }
 
 static inline size_t
-copy_frag ( char *msg,
-            size_t size,
-            char *buffer,
-            size_t curr_copy,
-            size_t max_copy,
-            size_t tot_size,
-            int *go_on )
+copy_frag (  __UNUSED__ char *msg,
+             __UNUSED__ size_t size,
+             __UNUSED__ char *buffer,
+             __UNUSED__ size_t curr_copy,
+             __UNUSED__ size_t max_copy,
+             __UNUSED__ size_t tot_size,
+             __UNUSED__ int *go_on )
 {
 	not_implemented();
 	return 0;
