@@ -2815,7 +2815,7 @@ SCTK_PUBLIC int sctk_alloc_chain_get_numa_node(struct sctk_alloc_chain * chain)
  * @param new_mm_source Define the new memory source to link to this allocation chain you can use
  * SCTK_ALLOC_KEEP_OLD_MM_SOURCE.
 **/
-SCTK_PUBLIC void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_numa_node,bool migrate_chain_struct,bool migrate_content,struct sctk_alloc_mm_source * new_mm_source)
+SCTK_PUBLIC void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_numa_node,bool migrate_chain_struct, __AL_UNUSED__ bool migrate_content,struct sctk_alloc_mm_source * new_mm_source)
 {
 	//errors
 	assert(chain != NULL);
