@@ -124,7 +124,7 @@ struct sctk_task_specific_s *__MPC_get_task_specific();
 static inline void sctk_datatype_lock( sctk_task_specific_t *task_specific )
 {
 	sctk_assert( task_specific != NULL );
-	Datatype_Array_lock( task_specific->datatype_array );
+	Datatype_Array_lock();
 }
 
 /** \brief Lock the datatype array
@@ -132,7 +132,7 @@ static inline void sctk_datatype_lock( sctk_task_specific_t *task_specific )
 static inline void sctk_datatype_unlock( sctk_task_specific_t *task_specific )
 {
 	sctk_assert( task_specific != NULL );
-	Datatype_Array_unlock( task_specific->datatype_array );
+	Datatype_Array_unlock();
 }
 
 sctk_contiguous_datatype_t * sctk_task_specific_get_contiguous_datatype( sctk_task_specific_t *task_specific, MPC_Datatype datatype );

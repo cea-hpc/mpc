@@ -412,7 +412,7 @@ typedef struct {
 
 
 
-static inline void NBC_DEBUG(int level, const char *fmt, ...) 
+static inline void NBC_DEBUG(__UNUSED__ int level, __UNUSED__ const char *fmt, ...) 
 { 
 #if NBC_DLEVEL > 0
 	va_list ap;

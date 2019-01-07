@@ -727,7 +727,7 @@ void Datatype_Array_release( struct Datatype_Array * da );
 /** \brief Locks the datatype array 
  *  \param da A pointer to the datatype array we want to lock
  */
-static inline void Datatype_Array_lock( struct Datatype_Array * da )
+static inline void Datatype_Array_lock(void)
 {
 #ifdef SCTK_PROCESS_MODE
   sctk_spinlock_lock_yield(&da->datatype_lock);
@@ -737,7 +737,7 @@ static inline void Datatype_Array_lock( struct Datatype_Array * da )
 /** \brief Unlocks the datatype array 
  *  \param da A pointer to the datatype array we want to unlock
  */
-static inline void Datatype_Array_unlock( struct Datatype_Array * da )
+static inline void Datatype_Array_unlock(void)
 {
 #ifdef SCTK_PROCESS_MODE
   sctk_spinlock_unlock(&da->datatype_lock);
