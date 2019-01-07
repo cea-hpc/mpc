@@ -260,8 +260,8 @@ void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
 		sctk_ib_qp_allocate_rts ( rail_ib, route_dest->remote );
 		sctk_pmi_barrier();
 
-		sctk_rail_add_static_route ( rail, dest_rank, endpoint_dest );
-		sctk_rail_add_static_route (  rail, src_rank, endpoint_src );
+		sctk_rail_add_static_route ( rail, endpoint_dest );
+		sctk_rail_add_static_route (  rail, endpoint_src );
 
 		/* Change to connected */
 		sctk_ib_cm_change_state_connected ( rail, endpoint_dest );
@@ -285,7 +285,7 @@ void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
 		sctk_ib_qp_allocate_rts ( rail_ib, route_dest->remote );
 		sctk_pmi_barrier();
 
-		sctk_rail_add_static_route (  rail, dest_rank, endpoint_dest );
+		sctk_rail_add_static_route (  rail, endpoint_dest );
 
 		/* Change to connected */
 		sctk_ib_cm_change_state_connected ( rail, endpoint_dest );
@@ -332,7 +332,7 @@ void sctk_ib_cm_connect_to ( int from, int to, sctk_rail_info_t *rail )
 	                           sizeof ( sctk_ib_cm_done_t ) );
 	sctk_ib_qp_allocate_rts ( rail_ib, remote );
 	/* Add route */
-	sctk_rail_add_static_route (  rail, from, endpoint );
+	sctk_rail_add_static_route (  rail, endpoint );
 	/* Change to connected */
 	sctk_ib_cm_change_state_connected ( rail, endpoint );
 }
@@ -376,7 +376,7 @@ void sctk_ib_cm_connect_from ( int from, int to, sctk_rail_info_t *rail )
 	sctk_route_messages_send ( from, to, SCTK_CONTROL_MESSAGE_INTERNAL, CM_OD_STATIC_TAG, &done,
 	                           sizeof ( sctk_ib_cm_done_t ) );
 	/* Add route */
-	sctk_rail_add_static_route (  rail, to, endpoint );
+	sctk_rail_add_static_route (  rail, endpoint );
 	/* Change to connected */
 	sctk_ib_cm_change_state_connected ( rail, endpoint );
 }

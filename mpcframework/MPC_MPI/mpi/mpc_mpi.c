@@ -5024,7 +5024,7 @@ __INTERNAL__PMPI_Pack (void *inbuf,
 		       int incount,
 		       MPI_Datatype datatype,
 		       void *outbuf, int outcount, int *position,
-		       MPI_Comm comm)
+		       __UNUSED__ MPI_Comm comm)
 {
 	int copied = 0;
 	if (sctk_datatype_is_derived (datatype))
@@ -5100,7 +5100,7 @@ __INTERNAL__PMPI_Unpack (void *inbuf,
 			 int insize,
 			 int *position,
 			 void *outbuf, int outcount, MPI_Datatype datatype,
-			 MPI_Comm comm)
+			 __UNUSED__ MPI_Comm comm)
 {
 	int copied = 0;
 	sctk_nodebug("MPI_Unpack insise = %d, position = %d, outcount = %d, datatype = %d, comm = %d", insize, *position, outcount, datatype, comm);
@@ -5156,7 +5156,7 @@ __INTERNAL__PMPI_Unpack (void *inbuf,
 }
 
 int
-__INTERNAL__PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm,
+__INTERNAL__PMPI_Pack_size (int incount, MPI_Datatype datatype, __UNUSED__ MPI_Comm comm,
 			    int *size)
 {
 	*size = 0;
@@ -5353,6 +5353,9 @@ int __INTERNAL__PMPI_Pack_external (char *datarep , void *inbuf, int incount, MP
 		int pos = 0;
 		/* MPI_Pack takes an integer output size */
 		int int_outsize = pack_size;
+
+    if( outsize < pack_size )
+      pack_size = outsize;
 		
 		char * native_pack_buff = sctk_malloc( pack_size );
 		memset( native_pack_buff, 0 , pack_size );
@@ -9995,8 +9998,8 @@ sctk_mpi_shared_mem_buffer_collect(union shared_mem_buffer *b,
 }
 
 static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_ring(
-		void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
-		int root, MPI_Comm comm, MPC_Op mpc_op, sctk_op_t *mpi_op, int size,
+		void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+		int root, MPI_Comm comm, MPC_Op mpc_op, int size,
 		int rank) {
 	int res;
 	void *tmp_buf;
@@ -10106,7 +10109,7 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_ring(
 
 static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 		void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
-		int root, MPI_Comm comm, MPC_Op mpc_op, sctk_op_t *mpi_op, int size,
+		int root, MPI_Comm comm, MPC_Op mpc_op, int size,
 		int rank) {
 
 	int res;
@@ -10286,7 +10289,7 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 
 static inline int __INTERNAL__PMPI_Reduce_derived_no_commute(
 		void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
-		int root, MPI_Comm comm, MPC_Op mpc_op, sctk_op_t *mpi_op, int size,
+		int root, MPI_Comm comm, MPC_Op mpc_op, int size,
 		int rank) {
 
 	int res;
@@ -10297,13 +10300,13 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute(
 	{
 		res = __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 				sendbuf, recvbuf, count, datatype, op,
-				root, comm, mpc_op, mpi_op, size, rank);
+				root, comm, mpc_op,  size, rank);
 	}
 	else
 	{
 		res = __INTERNAL__PMPI_Reduce_derived_no_commute_ring(
-				sendbuf, recvbuf, count, datatype, op,
-				root, comm, mpc_op, mpi_op, size, rank);
+				sendbuf, recvbuf, count, datatype,
+				root, comm, mpc_op, size, rank);
 	}
 
 	return res;
@@ -10314,9 +10317,8 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute(
 
 static inline int
 __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *recvbuf, int count,
-		MPI_Datatype datatype, MPI_Op op,
-		int root, MPI_Comm comm, MPC_Op mpc_op,
-		sctk_op_t *mpi_op, int size, int rank) {
+		MPI_Datatype datatype,
+		int root, MPI_Comm comm, MPC_Op mpc_op, int size, int rank) {
 	int res;
 
     /* Temporary buffers for LC & RC contributions */
@@ -10962,14 +10964,13 @@ __INTERNAL__PMPI_Reduce_intra (void *sendbuf, void *recvbuf, int count,
           if ( !sctk_op_can_commute(mpi_op, datatype) || !sctk_datatype_contig_mem( datatype ) ) {
             res = __INTERNAL__PMPI_Reduce_derived_no_commute(
                 sendbuf, recvbuf, count, datatype, op, root, comm, mpc_op,
-                mpi_op, size, rank);
+                size, rank);
             if (res != MPI_SUCCESS) {
               return res;
             }
           } else {
             res = __INTERNAL__PMPI_Reduce_derived_commute(
-                sendbuf, recvbuf, count, datatype, op, root, comm, mpc_op,
-                mpi_op, size, rank);
+                sendbuf, recvbuf, count, datatype, root, comm, mpc_op,  size, rank);
             if (res != MPI_SUCCESS) {
               return res;
             }
@@ -15005,7 +15006,7 @@ __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
 
 static int
 __INTERNAL__PMPI_Cart_map (MPI_Comm comm, int ndims, int *dims,
-			   int *periods, int *newrank)
+			   __UNUSED__ int *periods, int *newrank)
 {
   int res;
   int nnodes = 1;
@@ -15016,7 +15017,7 @@ __INTERNAL__PMPI_Cart_map (MPI_Comm comm, int ndims, int *dims,
       nnodes *= dims[i];
     }
 
-TODO("Should be optimized")
+TODO("Should be optimized why period is unused ?")
   res = __INTERNAL__PMPI_Comm_rank (comm, newrank);
 
   if (*newrank >= nnodes)
@@ -15028,10 +15029,10 @@ TODO("Should be optimized")
 }
 
 static int
-__INTERNAL__PMPI_Graph_map (MPI_Comm comm, int nnodes, int *index,
-			    int *edges, int *newrank)
+__INTERNAL__PMPI_Graph_map (MPI_Comm comm, int nnodes, __UNUSED__  int *index,
+			  __UNUSED__    int *edges, int *newrank)
 {
-TODO("Should be optimized")
+TODO("Should be optimized, Index and Edges are unused")
   __INTERNAL__PMPI_Comm_rank (comm, newrank);
 
   if (nnodes <= *newrank)
@@ -15057,18 +15058,10 @@ __INTERNAL__PMPI_Get_version (int *version, int *subversion)
 }
 
 void
-MPI_Default_error (MPI_Comm * comm, int *error, char *msg, char *file,
-		   int line)
+MPI_Default_error (__UNUSED__ MPI_Comm * comm, __UNUSED__ int *error, __UNUSED__ char *msg, __UNUSED__ char *file,
+		   __UNUSED__ int line)
 {
-/*   char str[1024]; */
-/*   int i; */
-/*   __INTERNAL__PMPI_Error_string (*error, str, &i); */
-/*   if (i != 0) */
-/*     sctk_error ("%s in file %s at line %d %s", str, file, line, msg); */
-/*   else */
-/*     sctk_error ("Unknown error"); */
-  /* The lib is not supposed to crash but deliver message */
-/*   __INTERNAL__PMPI_Abort (*comm, *error); */
+
 }
 
 void
@@ -15087,7 +15080,7 @@ MPI_Abort_error (MPI_Comm * comm, int *error, char *msg, char *file,
 }
 
 void
-MPI_Return_error (MPI_Comm * comm, int *error, ...)
+MPI_Return_error (__UNUSED__ MPI_Comm * comm, __UNUSED__ int *error, ...)
 {
 }
 
@@ -15589,10 +15582,6 @@ static int __INTERNAL__PMPIX_Checkpoint(MPIX_Checkpoint_state* st)
 #define SCTK_MPI_CHECK_RETURN_VAL(res,comm)do{if(res == MPI_SUCCESS){return res;} else {MPI_ERROR_REPORT(comm,res,"Generic error retrun");}}while(0)
 //~ #define SCTK_MPI_CHECK_RETURN_VAL(res, comm) return res
 
-static inline void
-SCTK__MPI_INIT_STATUS (MPI_Status * status)
-{
-}
 
 inline void
 SCTK__MPI_INIT_REQUEST (MPI_Request * request)
@@ -15699,7 +15688,7 @@ static inline int PMPI_Recv_p(void *buf, int count, MPI_Datatype datatype,
 
     SCTK_MPI_CHECK_RETURN_VAL(res, comm);
   }
-  SCTK__MPI_INIT_STATUS(status);
+
   {
     int size;
     mpi_check_comm(comm, comm);
@@ -18411,7 +18400,7 @@ PMPI_Op_free (MPI_Op * op)
 }
 
 int
-PMPI_Op_commutative(MPI_Op op, int * commute) { not_implemented(); return MPI_ERR_INTERN;}
+PMPI_Op_commutative(__UNUSED__ MPI_Op op, __UNUSED__ int * commute) { not_implemented(); return MPI_ERR_INTERN;}
 
 int
 PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
@@ -19016,7 +19005,7 @@ PMPI_Comm_split (MPI_Comm comm, int color, int key, MPI_Comm * newcomm)
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
-int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info,
+int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
                          MPI_Comm *newcomm) {
   int color = 0;
 
@@ -19658,7 +19647,7 @@ int PMPI_Is_thread_main(int *flag)
   /* Note that we may need to define a @PCONTROL_LIST@ depending on whether
      stdargs are supported */
 int
-PMPI_Pcontrol (const int level, ...)
+PMPI_Pcontrol (__UNUSED__  const int level, ...)
 {
   return MPI_SUCCESS;
 }
@@ -19914,7 +19903,7 @@ struct MPC_Message_poll {
   MPI_Datatype datatype;
 };
 
-int MPI_Grequest_imrecv_query(void *extra_state, MPI_Status *status) {
+int MPI_Grequest_imrecv_query(__UNUSED__ void *extra_state, __UNUSED__ MPI_Status *status) {
   return 0;
 }
 
@@ -19940,7 +19929,7 @@ int MPI_Grequest_imrecv_poll(void *extra_state, MPI_Status *status) {
   return MPI_SUCCESS;
 }
 
-int MPI_Grequest_imrecv_cancel(void *extra_state, int complete) {
+int MPI_Grequest_imrecv_cancel(__UNUSED__ void *extra_state, __UNUSED__ int complete) {
   return MPI_SUCCESS;
 }
 
@@ -20014,20 +20003,20 @@ PMPI_Comm_set_name (MPI_Comm comm, char *comm_name)
 *  NULL Delete handlers              *
 **************************************/
 
-int MPC_Mpi_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state )
+int MPC_Mpi_null_delete_fn( __UNUSED__ MPI_Datatype datatype, __UNUSED__ int type_keyval, __UNUSED__ void* attribute_val_out, __UNUSED__ void* extra_state )
 {
 	sctk_nodebug("MPC_Mpi_null_delete_fn");
 	return MPI_SUCCESS;
 }
 
-int MPC_Mpi_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_null_copy_fn( __UNUSED__ MPI_Comm comm, __UNUSED__ int comm_keyval, __UNUSED__ void* extra_state, __UNUSED__ void* attribute_val_in, __UNUSED__ void* attribute_val_out, int* flag )
 {
 	sctk_nodebug("MPC_Mpi_null_copy_fn");
 	*flag = 0;
 	return MPI_SUCCESS;
 }
 
-int MPC_Mpi_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_dup_fn( __UNUSED__ MPI_Comm comm, __UNUSED__ int comm_keyval, __UNUSED__ void* extra_state, __UNUSED__ void* attribute_val_in, __UNUSED__ void* attribute_val_out, int* flag )
 {
 	sctk_nodebug("MPC_Mpi_dup_fn");
    *flag = 1;
@@ -20036,20 +20025,20 @@ int MPC_Mpi_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* att
 }
 
 /* type */
-int MPC_Mpi_type_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state )
+int MPC_Mpi_type_null_delete_fn( __UNUSED__ MPI_Datatype datatype, __UNUSED__ int type_keyval, __UNUSED__ void* attribute_val_out, __UNUSED__ void* extra_state )
 {
 	sctk_nodebug("MPC_Mpi_type_null_delete_fn");
 	return MPI_SUCCESS;
 }
 
-int MPC_Mpi_type_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_type_null_copy_fn( __UNUSED__ MPI_Comm comm, __UNUSED__ int comm_keyval,__UNUSED__  void* extra_state, __UNUSED__ void* attribute_val_in, __UNUSED__ void* attribute_val_out, int* flag )
 {
 	sctk_nodebug("MPC_Mpi_type_null_copy_fn");
 	*flag = 0;
 	return MPI_SUCCESS;
 }
 
-int MPC_Mpi_type_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_type_dup_fn(__UNUSED__  MPI_Comm comm, __UNUSED__ int comm_keyval, __UNUSED__ void* extra_state, void* attribute_val_in, void* attribute_val_out, __UNUSED__ int* flag )
 {
 	sctk_nodebug("MPC_Mpi_type_dup_fn");
    *flag = 1;
@@ -20058,20 +20047,20 @@ int MPC_Mpi_type_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void
 }
 
 /* comm */
-int MPC_Mpi_comm_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state )
+int MPC_Mpi_comm_null_delete_fn( __UNUSED__ MPI_Datatype datatype, __UNUSED__ int type_keyval, __UNUSED__ void* attribute_val_out, __UNUSED__ void* extra_state )
 {
 	sctk_nodebug("MPC_Mpi_comm_null_delete_fn");
 	return MPI_SUCCESS;
 }
 
-int MPC_Mpi_comm_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_comm_null_copy_fn(__UNUSED__  MPI_Comm comm, __UNUSED__ int comm_keyval, __UNUSED__ void* extra_state, __UNUSED__ void* attribute_val_in, __UNUSED__ void* attribute_val_out, __UNUSED__ int* flag )
 {
 	sctk_nodebug("MPC_Mpi_comm_null_copy_fn");
 	*flag = 0;
 	return MPI_SUCCESS;
 }
 
-int MPC_Mpi_comm_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_comm_dup_fn(__UNUSED__  MPI_Comm comm, __UNUSED__ int comm_keyval, __UNUSED__ void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
 {
 	sctk_nodebug("MPC_Mpi_comm_dup_fn");
    *flag = 1;
@@ -20080,20 +20069,20 @@ int MPC_Mpi_comm_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void
 }
 
 /* win */
-int MPC_Mpi_win_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state )
+int MPC_Mpi_win_null_delete_fn(__UNUSED__ MPI_Datatype datatype, __UNUSED__ int type_keyval,__UNUSED__  void* attribute_val_out, __UNUSED__ void* extra_state )
 {
 	sctk_nodebug("MPC_Mpi_win_null_delete_fn");
 	return MPI_SUCCESS;
 }
 
-int MPC_Mpi_win_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_win_null_copy_fn( __UNUSED__ MPI_Comm comm, __UNUSED__ int comm_keyval, __UNUSED__ void* extra_state, __UNUSED__ void* attribute_val_in, __UNUSED__ void* attribute_val_out, int* flag )
 {
 	sctk_nodebug("MPC_Mpi_win_null_copy_fn");
 	*flag = 0;
 	return MPI_SUCCESS;
 }
 
-int MPC_Mpi_win_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_win_dup_fn( __UNUSED__ MPI_Comm comm, __UNUSED__ int comm_keyval, __UNUSED__ void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
 {
 	sctk_nodebug("MPC_Mpi_win_dup_fn");
    *flag = 1;
@@ -20197,7 +20186,7 @@ int PMPI_Free_mem (void *ptr)
   return MPI_SUCCESS;
 }
 
-int PMPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
+int PMPI_Alloc_mem(MPI_Aint size, __UNUSED__ MPI_Info info, void *baseptr)
 {
   *((void **)baseptr) = mpc_MPI_allocmem_pool_alloc(size);
 
@@ -20511,17 +20500,17 @@ int PMPI_T_category_changed(int *stamp) {
 
 /* Error Handling */
 
-int PMPI_Add_error_class(int *errorclass) {
+int PMPI_Add_error_class(__UNUSED__ int *errorclass) {
+  TODO("IMPLEMENT ERROR CLASSES");
+  return MPI_SUCCESS;
+}
+
+int PMPI_Add_error_code(__UNUSED__ int errorclass, __UNUSED__ int *errorcode) {
   //not_implemented();
   return MPI_SUCCESS;
 }
 
-int PMPI_Add_error_code(int errorclass, int *errorcode) {
-  //not_implemented();
-  return MPI_SUCCESS;
-}
-
-int PMPI_Add_error_string(int errorcode, char *string) {
+int PMPI_Add_error_string(__UNUSED__ int errorcode, __UNUSED__ char *string) {
   //not_implemented();
   return MPI_SUCCESS;
 }
@@ -20868,11 +20857,11 @@ int PMPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size, int *disp_unit,
   return mpc_MPI_Win_shared_query(win, rank, size, disp_unit, baseptr);
 }
 
-int PMPI_Win_attach(MPI_Win win, void *base, MPI_Aint size) {
+int PMPI_Win_attach(__UNUSED__ MPI_Win win, __UNUSED__ void *base, __UNUSED__ MPI_Aint size) {
   return MPI_SUCCESS;
 }
 
-int PMPI_Win_detach(MPI_Win win, const void *base) { return MPI_SUCCESS; }
+int PMPI_Win_detach(__UNUSED__ MPI_Win win, __UNUSED__ const void *base) { return MPI_SUCCESS; }
 
 /* Checkpointing */
 int PMPIX_Checkpoint(MPIX_Checkpoint_state* state)
@@ -20885,14 +20874,14 @@ int PMPIX_Checkpoint(MPIX_Checkpoint_state* state)
 /************************************************************************/
 
 /* Communicator Management */
-int PMPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Comm_dup_with_info(MPI_Comm comm, MPI_Info info, MPI_Comm * newcomm){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Comm_set_info(MPI_Comm comm, MPI_Info info){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Comm_get_info(MPI_Comm comm, MPI_Info * info_used){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Comm_idup(__UNUSED__ MPI_Comm comm, __UNUSED__  MPI_Comm *newcomm, __UNUSED__ MPI_Request *request){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Comm_dup_with_info(__UNUSED__  MPI_Comm comm, __UNUSED__  MPI_Info info, __UNUSED__  MPI_Comm * newcomm){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Comm_set_info(__UNUSED__  MPI_Comm comm, __UNUSED__  MPI_Info info){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Comm_get_info(__UNUSED__  MPI_Comm comm, __UNUSED__  MPI_Info * info_used){not_implemented();return MPI_ERR_INTERN;}
 
-int PMPI_Comm_create_group(MPI_Comm comm, MPI_Group group, int tag, MPI_Comm * newcomm){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Comm_create_group(__UNUSED__  MPI_Comm comm, __UNUSED__ MPI_Group group, __UNUSED__  int  tag, __UNUSED__  MPI_Comm * newcomm){not_implemented();return MPI_ERR_INTERN;}
 
-int PMPI_Get_library_version( char *version, int *resultlen )
+int PMPI_Get_library_version( char *version, __UNUSED__  int  *resultlen )
 {
 	snprintf( version, MPI_MAX_LIBRARY_VERSION_STRING - 1,
 			  "MPC version %d.%d.%d%s %s %s",
@@ -20904,32 +20893,32 @@ int PMPI_Get_library_version( char *version, int *resultlen )
 }
 
 /* Process Creation and Management */
-int PMPI_Close_port(const char *port_name){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Comm_accept(const char *port_name, MPI_Info info, int root, MPI_Comm comm,MPI_Comm *newcomm){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Comm_connect(const char *port_name, MPI_Info info, int root, MPI_Comm comm, MPI_Comm *newcomm){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Comm_disconnect(MPI_Comm * comm){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Comm_get_parent(MPI_Comm *parent){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Comm_join(int fd, MPI_Comm *intercomm){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info info,int root, MPI_Comm comm, MPI_Comm *intercomm,int array_of_errcodes[]){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Comm_spawn_multiple(int count, char *array_of_commands[],char **array_of_argv[], const int array_of_maxprocs[],const MPI_Info array_of_info[], int root, MPI_Comm comm,MPI_Comm *intercomm, int array_of_errcodes[]){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Open_port(MPI_Info info, char *port_name){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Publish_name(const char *service_name, MPI_Info info, const char *port_name){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Unpublish_name(const char *service_name, MPI_Info info, const char *port_name){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Close_port(__UNUSED__ const char *port_name){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Comm_accept(__UNUSED__ const char *port_name, __UNUSED__  MPI_Info info, __UNUSED__  int  root, __UNUSED__  MPI_Comm comm,__UNUSED__  MPI_Comm *newcomm){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Comm_connect(__UNUSED__ const char *port_name, __UNUSED__  MPI_Info info, __UNUSED__  int  root, __UNUSED__  MPI_Comm comm, __UNUSED__  MPI_Comm *newcomm){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Comm_disconnect(__UNUSED__  MPI_Comm * comm){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Comm_get_parent(__UNUSED__  MPI_Comm *parent){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Comm_join(__UNUSED__  int  fd, __UNUSED__  MPI_Comm *intercomm){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Comm_spawn(__UNUSED__ const char *command, __UNUSED__ char *argv[], __UNUSED__  int  maxprocs, __UNUSED__  MPI_Info info,__UNUSED__  int  root, __UNUSED__  MPI_Comm comm, __UNUSED__  MPI_Comm *intercomm,__UNUSED__  int  array_of_errcodes[]){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Comm_spawn_multiple(__UNUSED__  int  count, __UNUSED__ char *array_of_commands[], __UNUSED__ char **array_of_argv[], __UNUSED__ const int array_of_maxprocs[],const __UNUSED__  MPI_Info array_of_info[], __UNUSED__  int  root, __UNUSED__  MPI_Comm comm,__UNUSED__  MPI_Comm *intercomm, __UNUSED__ int array_of_errcodes[]){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Lookup_name(__UNUSED__ const char *service_name, __UNUSED__  MPI_Info info,__UNUSED__  char *port_name){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Open_port(__UNUSED__  MPI_Info info, __UNUSED__ char *port_name){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Publish_name(__UNUSED__ const char *service_name, __UNUSED__  MPI_Info info, __UNUSED__ const char *port_name){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Unpublish_name(__UNUSED__ const char *service_name, __UNUSED__  MPI_Info info, __UNUSED__ const char *port_name){not_implemented();return MPI_ERR_INTERN;}
 
 
 /* Dist graph operations */
-int PMPI_Dist_graph_neighbors_count(MPI_Comm comm, int *indegree, int *outdegree, int *weighted){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Dist_graph_neighbors(MPI_Comm comm, int maxindegree, int sources[], int sourceweights[], int maxoutdegree, int destinations[], int destweights[]){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Dist_graph_create(MPI_Comm comm_old, int n, const int sources[],const int degrees[], const int destinations[],const int weights[],MPI_Info info, int reorder, MPI_Comm *comm_dist_graph){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Dist_graph_create_adjacent(MPI_Comm comm_old,int indegree, const int sources[],const int sourceweights[],int outdegree, const int destinations[],const int destweights[],MPI_Info info, int reorder, MPI_Comm *comm_dist_graph){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Dist_graph_neighbors_count(__UNUSED__  MPI_Comm comm, __UNUSED__  int  *indegree, __UNUSED__  int  *outdegree, __UNUSED__  int  *weighted){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Dist_graph_neighbors(__UNUSED__  MPI_Comm comm, __UNUSED__  int  maxindegree, __UNUSED__  int  sources[], __UNUSED__  int  sourceweights[], __UNUSED__  int  maxoutdegree, __UNUSED__  int  destinations[], __UNUSED__  int  destweights[]){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Dist_graph_create(__UNUSED__  MPI_Comm comm_old, __UNUSED__  int  n, const __UNUSED__  int  sources[],const __UNUSED__  int  degrees[], const __UNUSED__  int  destinations[],const __UNUSED__  int  weights[],__UNUSED__  MPI_Info info, __UNUSED__  int  reorder, __UNUSED__  MPI_Comm *comm_dist_graph){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Dist_graph_create_adjacent(__UNUSED__  MPI_Comm comm_old,__UNUSED__  int  indegree, const __UNUSED__  int  sources[],const __UNUSED__  int  sourceweights[],__UNUSED__  int  outdegree, const __UNUSED__  int  destinations[],const __UNUSED__  int  destweights[],__UNUSED__  MPI_Info info, __UNUSED__  int  reorder, __UNUSED__  MPI_Comm *comm_dist_graph){not_implemented();return MPI_ERR_INTERN;}
 
 /* collectives */
-int PMPI_Reduce_local(const void *inbuf, void *inoutbuf, int count, MPI_Datatype datatype, MPI_Op op){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Reduce_local(__UNUSED__ const void *inbuf,__UNUSED__  void *inoutbuf, __UNUSED__  int  count,__UNUSED__  MPI_Datatype datatype, __UNUSED__ MPI_Op op){not_implemented();return MPI_ERR_INTERN;}
 
 /* Error handling */
-int PMPI_File_create_errhandler(MPI_File_errhandler_function *file_errhandler_fn, MPI_Errhandler *errhandler){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_File_call_errhandler(void * fh, int errorcode){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_File_create_errhandler(__UNUSED__ MPI_File_errhandler_function *file_errhandler_fn, __UNUSED__ MPI_Errhandler *errhandler){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_File_call_errhandler(__UNUSED__ void * fh, __UNUSED__  int  errorcode){not_implemented();return MPI_ERR_INTERN;}
 
 
 /* FORTRAN TYPE */
@@ -20938,11 +20927,11 @@ int PMPI_Type_create_f90_integer(int range, MPI_Datatype *newtype){not_implement
 int PMPI_Type_create_f90_real(int precision, int range, MPI_Datatype *newtype){not_implemented();return MPI_ERR_INTERN;}
 
 /* MPIX methods */
-int PMPIX_Comm_failure_ack( MPI_Comm comm ){not_implemented();return MPI_ERR_INTERN;}
-int PMPIX_Comm_failure_get_acked( MPI_Comm comm, MPI_Group *failedgrp ){not_implemented();return MPI_ERR_INTERN;}
-int PMPIX_Comm_agree(MPI_Comm comm, int *flag){not_implemented();return MPI_ERR_INTERN;}
-int PMPIX_Comm_revoke(MPI_Comm comm){not_implemented();return MPI_ERR_INTERN;}
-int PMPIX_Comm_shrink(MPI_Comm comm, MPI_Comm *newcomm){not_implemented();return MPI_ERR_INTERN;}
+int PMPIX_Comm_failure_ack( __UNUSED__  MPI_Comm comm ){not_implemented();return MPI_ERR_INTERN;}
+int PMPIX_Comm_failure_get_acked( __UNUSED__  MPI_Comm comm, __UNUSED__ MPI_Group *failedgrp ){not_implemented();return MPI_ERR_INTERN;}
+int PMPIX_Comm_agree(__UNUSED__  MPI_Comm comm, __UNUSED__ int *flag){not_implemented();return MPI_ERR_INTERN;}
+int PMPIX_Comm_revoke(__UNUSED__  MPI_Comm comm){not_implemented();return MPI_ERR_INTERN;}
+int PMPIX_Comm_shrink(__UNUSED__  MPI_Comm comm, __UNUSED__  MPI_Comm *newcomm){not_implemented();return MPI_ERR_INTERN;}
 
 /************************************************************************/
 /* END NOT IMPLEMENTED                                                     */

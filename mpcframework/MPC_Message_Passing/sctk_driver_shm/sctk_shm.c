@@ -358,7 +358,7 @@ static void sctk_shm_add_route(int dest,int shm_dest,sctk_rail_info_t *rail )
     new_route->data.shm.dest = shm_dest;
 
     /* Add the new route */
-    sctk_rail_add_static_route ( rail, dest, new_route );
+    sctk_rail_add_static_route ( rail, new_route );
 
     /* set the route as connected */
     sctk_endpoint_set_state ( new_route, STATE_CONNECTED );

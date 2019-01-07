@@ -35,7 +35,7 @@
 volatile int ___mpi_t_is_running = 0;
 static sctk_spinlock_t mpit_init_lock = 0;
 
-int mpc_MPI_T_init_thread(int required, int *provided) {
+int mpc_MPI_T_init_thread(__UNUSED__ int required, int *provided) {
   if (!provided) {
     return MPI_ERR_ARG;
   }
@@ -544,8 +544,8 @@ int mpc_MPI_T_cvar_get_index(const char *name, int *cvar_index) {
 /* INTERNAL MPI_T Control variables CVARS HANDLES                       */
 /************************************************************************/
 
-int mpc_MPI_T_cvar_handle_alloc(int cvar_index, void *obj_handle,
-                                MPI_T_cvar_handle *handle, int *count) {
+int mpc_MPI_T_cvar_handle_alloc(int cvar_index, __UNUSED__ void *obj_handle,
+                                MPI_T_cvar_handle *handle, __UNUSED__ int *count) {
   /* Note we only support CVARS which are of "global" type
    * ie not attached to an MPI handle */
 
@@ -915,7 +915,7 @@ int mpc_MPI_T_pvar_handle_free(MPI_T_pvar_session session,
 /* INTERNAL MPI_T Performance variables PVARS Start and Stop            */
 /************************************************************************/
 
-int mpc_MPI_T_pvar_start(MPI_T_pvar_session session, MPI_T_pvar_handle handle) {
+int mpc_MPI_T_pvar_start(__UNUSED__ MPI_T_pvar_session session, MPI_T_pvar_handle handle) {
   if (!handle) {
     return MPI_ERR_ARG;
   }
@@ -932,7 +932,7 @@ int mpc_MPI_T_pvar_start(MPI_T_pvar_session session, MPI_T_pvar_handle handle) {
   return MPI_SUCCESS;
 }
 
-int mpc_MPI_T_pvar_stop(MPI_T_pvar_session session, MPI_T_pvar_handle handle) {
+int mpc_MPI_T_pvar_stop(__UNUSED__ MPI_T_pvar_session session, MPI_T_pvar_handle handle) {
   if (!handle) {
     return MPI_ERR_ARG;
   }
@@ -953,7 +953,7 @@ int mpc_MPI_T_pvar_stop(MPI_T_pvar_session session, MPI_T_pvar_handle handle) {
 /* INTERNAL MPI_T Performance variables PVARS Read and Write            */
 /************************************************************************/
 
-int mpc_MPI_T_pvar_read(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
+int mpc_MPI_T_pvar_read(__UNUSED__ MPI_T_pvar_session session, MPI_T_pvar_handle handle,
                         void *buff) {
   if (!handle) {
     return MPI_ERR_ARG;
@@ -973,7 +973,7 @@ int mpc_MPI_T_pvar_readreset(MPI_T_pvar_session session,
   return MPI_SUCCESS;
 }
 
-int mpc_MPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
+int mpc_MPI_T_pvar_write(__UNUSED__ MPI_T_pvar_session session, MPI_T_pvar_handle handle,
                          const void *buff) {
   if (!handle) {
     return MPI_ERR_ARG;
@@ -990,7 +990,7 @@ int mpc_MPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
   return MPI_SUCCESS;
 }
 
-int mpc_MPI_T_pvar_reset(MPI_T_pvar_session session, MPI_T_pvar_handle handle) {
+int mpc_MPI_T_pvar_reset(__UNUSED__ MPI_T_pvar_session session, MPI_T_pvar_handle handle) {
   if (!handle) {
     return MPI_ERR_ARG;
   }
@@ -1388,7 +1388,7 @@ struct MPC_T_pvar_handle *MPC_T_session_array_alloc(MPI_T_pvar_session session,
   return varhandle;
 }
 
-int MPC_T_session_array_free(MPI_T_pvar_session session,
+int MPC_T_session_array_free(__UNUSED__ MPI_T_pvar_session session,
                              struct MPC_T_pvar_handle *handle) {
   if (!handle) {
     return MPI_ERR_ARG;

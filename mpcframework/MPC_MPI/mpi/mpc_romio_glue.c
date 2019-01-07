@@ -302,12 +302,12 @@ void MPIO_unlock_shared()
  * defined, we do not expect them to be called as we rely
  * on extended requests. Therefore we just directly return */
 
-int PMPIO_Wait(void *r, MPI_Status *s)
+int PMPIO_Wait(__UNUSED__ void *r, __UNUSED__ MPI_Status *s)
 {
 	return MPI_SUCCESS;
 }
 
-int PMPIO_Test(void * r, int * c, MPI_Status *s)
+int PMPIO_Test(__UNUSED__ void * r, __UNUSED__ int * c, __UNUSED__ MPI_Status *s)
 {
 	return MPI_SUCCESS;
 }
@@ -389,20 +389,20 @@ void * MPIO_File_f2c(int fid)
 /* ERROR Handling                                                       */
 /************************************************************************/
 
-int MPIR_Err_create_code_valist(int a, int b, const char c[], int d, int e, 
-				const char f[], const char g[], va_list args )
+int MPIR_Err_create_code_valist(__UNUSED__ int a, __UNUSED__ int b, __UNUSED__ const char c[], __UNUSED__ int d,__UNUSED__ int e, 
+				const char __UNUSED__  f[], const char __UNUSED__ g[],__UNUSED__  va_list args )
 {
 	return MPI_SUCCESS;
 }
 
-int MPIR_Err_is_fatal(int a)
+int MPIR_Err_is_fatal(__UNUSED__ int a)
 {
 	return 0;
 }
 
 typedef int (* MPIR_Err_get_class_string_func_t)(int error, char *str, int length);
 
-void MPIR_Err_get_string( int errcode, char *msg, int maxlen, MPIR_Err_get_class_string_func_t fcname )
+void MPIR_Err_get_string( int errcode, char *msg, int maxlen,__UNUSED__  MPIR_Err_get_class_string_func_t fcname )
 {
 	char buff[128];
 	int len;
@@ -421,7 +421,7 @@ void MPIR_Err_get_string( int errcode, char *msg, int maxlen, MPIR_Err_get_class
 
 
 struct MPID_Comm;
-int MPID_Abort(struct MPID_Comm *comm, int mpi_errno, int exit_code, const char *error_msg)
+int MPID_Abort(__UNUSED__ struct MPID_Comm *comm, int mpi_errno, int exit_code, const char *error_msg)
 {
 	sctk_error("FATAL : %d [exit : %d ] : %s", mpi_errno, exit_code, error_msg );
 	MPI_Abort( MPI_COMM_WORLD, mpi_errno );
@@ -430,9 +430,9 @@ int MPID_Abort(struct MPID_Comm *comm, int mpi_errno, int exit_code, const char 
 
 
 
-void MPIR_Get_file_error_routine( MPI_Errhandler a, 
-				  void (**errr)(void * , int * , ...), 
-				  int * b)
+void MPIR_Get_file_error_routine( __UNUSED__ MPI_Errhandler a, 
+				  __UNUSED__ void (**errr)(void * , int * , ...), 
+				  __UNUSED__ int * b)
 {
 	
 	
@@ -440,15 +440,15 @@ void MPIR_Get_file_error_routine( MPI_Errhandler a,
 }
 
 
-int MPIR_File_call_cxx_errhandler( void *fh, int *errorcode, 
-			   void (*c_errhandler)(void  *, int *, ... ) )
+int MPIR_File_call_cxx_errhandler( __UNUSED__ void *fh, __UNUSED__ int *errorcode, 
+			   __UNUSED__ void (*c_errhandler)(void  *, int *, ... ) )
 {
-	
+
 	return MPI_SUCCESS;
 }
 
 
-int MPIO_Err_create_code(int lastcode, int fatal, const char fcname[],
+int MPIO_Err_create_code(__UNUSED__ int lastcode, __UNUSED__ int fatal, const char fcname[],
 			 int line, int error_class, const char generic_msg[],
 			 const char specific_msg[], ... )
 {

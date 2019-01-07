@@ -1790,7 +1790,7 @@ void ffunc (pmpi_abort) (MPI_Comm * comm, int *errorcode, int *res)
   *res = MPI_Abort (*comm, *errorcode);
 }
 
-void ffunc (pmpi_pcontrol) (const int level, ...)
+void ffunc (pmpi_pcontrol) (__UNUSED__ const int level, ...)
 {
   not_implemented ();
 }
@@ -1974,14 +1974,6 @@ void ffunc (pmpi_is_thread_main)(int *flag, int *res)
 	*res = MPI_Is_thread_main(flag);
 }
 
-
-void ffunc (pmpi_type_match_size)(int typeclass, int size, MPI_Datatype *rtype, int *res){not_implemented();}
-void ffunc (pmpi_type_size_x)(MPI_Datatype datatype, MPI_Count *size, int *res){not_implemented();}
-void ffunc (pmpi_type_get_extent_x)(MPI_Datatype datatype, MPI_Count *lb, MPI_Count *extent, int *res){not_implemented();}
-void ffunc (pmpi_type_get_true_extent_x)(MPI_Datatype datatype, MPI_Count *true_lb, MPI_Count *true_extent, int *res){not_implemented();}
-void ffunc (pmpi_get_elements_x)(MPI_Status * status, MPI_Datatype datatype, MPI_Count *elements, int *res){not_implemented();}
-void ffunc (pmpi_type_create_darray)(int size,int rank,int ndims,int array_of_gsizes[],int array_of_distribs[],int array_of_dargs[],int array_of_psizes[],int order,MPI_Datatype oldtype,MPI_Datatype *newtype, int *res){not_implemented();}
-
 /* MPI Status Modification and Query */
 
 void ffunc (pmpi_status_set_elements)(MPI_Status *status, MPI_Datatype datatype, int count,  int *res )
@@ -2060,7 +2052,6 @@ void ffunc(pmpi_win_get_errhandler)(MPI_Win win, MPI_Errhandler *errhandler,
                                     int *res) {
   *res = MPI_Win_get_errhandler(win, errhandler);
 }
-void ffunc (pmpi_win_call_errhandler)(MPI_Win win, int errorcode, int *res){not_implemented();}
 
 /* Info Management */
 
@@ -2317,132 +2308,148 @@ void ffunc(pmpi_add_error_string)(int *errorcode,
 /************************************************************************/
 /*  NOT IMPLEMENTED                                                     */
 /************************************************************************/
+
+/* Error handling */
+void ffunc (pmpi_win_call_errhandler)(__UNUSED__ MPI_Win win, __UNUSED__ int errorcode, __UNUSED__ int *res){not_implemented();}
+
+
+
+/* Datatypes */
+
+void ffunc (pmpi_type_match_size)(__UNUSED__ int typeclass, __UNUSED__ int size, __UNUSED__ MPI_Datatype *rtype, __UNUSED__ int *res){not_implemented();}
+void ffunc (pmpi_type_size_x)(__UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Count *size, __UNUSED__ int *res){not_implemented();}
+void ffunc (pmpi_type_get_extent_x)(__UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Count *lb, __UNUSED__ MPI_Count *extent, __UNUSED__ int *res){not_implemented();}
+void ffunc (pmpi_type_get_true_extent_x)(__UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Count *true_lb, __UNUSED__ MPI_Count *true_extent, __UNUSED__ int *res){not_implemented();}
+void ffunc (pmpi_get_elements_x)(__UNUSED__ MPI_Status * status, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Count *elements, __UNUSED__ int *res){not_implemented();}
+void ffunc (pmpi_type_create_darray)(__UNUSED__ int size, __UNUSED__ int rank, __UNUSED__ int ndims, __UNUSED__ int array_of_gsizes[], __UNUSED__ int array_of_distribs[], __UNUSED__ int array_of_dargs[], __UNUSED__ int array_of_psizes[], __UNUSED__  int order, __UNUSED__ MPI_Datatype oldtype, __UNUSED__ MPI_Datatype *newtype,  __UNUSED__ int *res){not_implemented();}
+
+
 /* Generalized Requests */
-void ffunc(pmpi_grequest_start)(MPI_Grequest_query_function *query_fn,
-                                MPI_Grequest_free_function *free_fn,
-                                MPI_Grequest_cancel_function *cancel_fn,
-                                void *extra_state, MPI_Request *request,
-                                int *res) {
+void ffunc(pmpi_grequest_start)(__UNUSED__ MPI_Grequest_query_function *query_fn,
+                                __UNUSED__ MPI_Grequest_free_function *free_fn,
+                                __UNUSED__ MPI_Grequest_cancel_function *cancel_fn,
+                                __UNUSED__ void *extra_state, __UNUSED__ MPI_Request *request,
+                                __UNUSED__ int *res) {
   not_implemented();
 }
-void ffunc(pmpi_grequest_complete)(MPI_Request request, int *res) {
+void ffunc(pmpi_grequest_complete)(__UNUSED__ MPI_Request request, __UNUSED__ int *res) {
   not_implemented();
 }
 /* Extended Generalized Requests */
-void ffunc(pmpix_grequest_start)(MPI_Grequest_query_function *query_fn,
-                                 MPI_Grequest_free_function *free_fn,
-                                 MPI_Grequest_cancel_function *cancel_fn,
-                                 MPIX_Grequest_poll_fn *poll_fn,
-                                 void *extra_state, MPI_Request *request,
-                                 int *res) {
+void ffunc(pmpix_grequest_start)(__UNUSED__ MPI_Grequest_query_function *query_fn,
+                                 __UNUSED__ MPI_Grequest_free_function *free_fn,
+                                 __UNUSED__ MPI_Grequest_cancel_function *cancel_fn,
+                                 __UNUSED__  MPIX_Grequest_poll_fn *poll_fn,
+                                 __UNUSED__  void *extra_state, __UNUSED__ MPI_Request *request,
+                                 __UNUSED__  int *res) {
   not_implemented();
 }
 /* Extended Generalized Request Class */
 void ffunc(pmpix_grequest_class_create)(
-    MPI_Grequest_query_function *query_fn, MPI_Grequest_free_function *free_fn,
-    MPI_Grequest_cancel_function *cancel_fn, MPIX_Grequest_poll_fn *poll_fn,
-    MPIX_Grequest_wait_fn *wait_fn, MPIX_Grequest_class *new_class, int *res) {
+    __UNUSED__ MPI_Grequest_query_function *query_fn, __UNUSED__ MPI_Grequest_free_function *free_fn,
+    __UNUSED__ MPI_Grequest_cancel_function *cancel_fn, __UNUSED__ MPIX_Grequest_poll_fn *poll_fn,
+    __UNUSED__ MPIX_Grequest_wait_fn *wait_fn, __UNUSED__ MPIX_Grequest_class *new_class, __UNUSED__ int *res) {
   not_implemented();
 }
-void ffunc(pmpix_grequest_class_allocate)(MPIX_Grequest_class target_class,
-                                          void *extra_state,
-                                          MPI_Request *request, int *res) {
+void ffunc(pmpix_grequest_class_allocate)(__UNUSED__ MPIX_Grequest_class target_class,
+                                          __UNUSED__ void *extra_state,
+                                          __UNUSED__ MPI_Request *request, __UNUSED__ int *res) {
   not_implemented();
 }
 
 /* Communicator Management */
-void ffunc (pmpi_comm_set_attr)(MPI_Comm comm, int comm_keyval, void *attribute_val, int *res){not_implemented();}
-void ffunc (pmpi_comm_get_attr)(MPI_Comm comm, int comm_keyval, void *attribute_val, int *flag, int *res){not_implemented();}
-void ffunc (pmpi_comm_free_keyval)(int *comm_keyval, int *res){not_implemented();}
-void ffunc (pmpi_comm_delete_attr)(MPI_Comm comm, int comm_keyval, int *res){not_implemented();}
-void ffunc (pmpi_comm_create_keyval)(MPI_Comm_copy_attr_function *comm_copy_attr_fn, MPI_Comm_delete_attr_function *comm_delete_attr_fn, int *comm_keyval, void *extra_state, int *res){not_implemented();}
-void ffunc (pmpi_comm_idup)(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_comm_dup_with_info)(MPI_Comm comm, MPI_Info info, MPI_Comm * newcomm, int *res){not_implemented();}
-void ffunc (pmpi_comm_split_type)(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm * newcomm, int *res){not_implemented();}
-void ffunc (pmpi_comm_set_info)(MPI_Comm comm, MPI_Info info, int *res){not_implemented();}
-void ffunc (pmpi_comm_get_info)(MPI_Comm comm, MPI_Info * info_used, int *res){not_implemented();}
-void ffunc (pmpi_comm_create_errhandler)(MPI_Comm_errhandler_function *function, MPI_Errhandler *errhandler, int *res){not_implemented();}
-void ffunc (pmpi_comm_get_errhandler)(MPI_Comm comm, MPI_Errhandler *errhandler, int *res){not_implemented();}
-void ffunc (pmpi_comm_create_group)(MPI_Comm comm, MPI_Group group, int tag, MPI_Comm * newcomm, int *res){not_implemented();}
-void ffunc (pmpi_comm_call_errhandler)(MPI_Comm comm, int errorcode, int *res){not_implemented();}
+void ffunc (pmpi_comm_set_attr)(__UNUSED__ MPI_Comm comm, __UNUSED__ int comm_keyval, __UNUSED__ void *attribute_val, __UNUSED__ int *res){not_implemented();}
+void ffunc (pmpi_comm_get_attr)(__UNUSED__ MPI_Comm comm,__UNUSED__ int comm_keyval, __UNUSED__ void *attribute_val, __UNUSED__ int *flag, __UNUSED__ int *res){not_implemented();}
+void ffunc (pmpi_comm_free_keyval)(__UNUSED__ int *comm_keyval, __UNUSED__ int *res){not_implemented();}
+void ffunc (pmpi_comm_delete_attr)(__UNUSED__ MPI_Comm comm, __UNUSED__ int comm_keyval, __UNUSED__ int *res){not_implemented();}
+void ffunc (pmpi_comm_create_keyval)(__UNUSED__ MPI_Comm_copy_attr_function *comm_copy_attr_fn, __UNUSED__ MPI_Comm_delete_attr_function *comm_delete_attr_fn, __UNUSED__ int *comm_keyval, __UNUSED__ void *extra_state, __UNUSED__ int *res){not_implemented();}
+void ffunc (pmpi_comm_idup)(__UNUSED__ MPI_Comm comm,__UNUSED__ MPI_Comm *newcomm, __UNUSED__ MPI_Request *request, __UNUSED__ int *res){not_implemented();}
+void ffunc (pmpi_comm_dup_with_info)(__UNUSED__ MPI_Comm comm, __UNUSED__ __UNUSED__  MPI_Info info, __UNUSED__ MPI_Comm * newcomm, __UNUSED__ int *res){not_implemented();}
+void ffunc (pmpi_comm_split_type)(__UNUSED__ MPI_Comm comm, __UNUSED__ __UNUSED__  int split_type, __UNUSED__ __UNUSED__  int key, __UNUSED__ __UNUSED__  MPI_Info info, __UNUSED__ MPI_Comm * newcomm, __UNUSED__ __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_comm_set_info)(__UNUSED__  MPI_Comm comm, __UNUSED__  MPI_Info info, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_comm_get_info)(__UNUSED__  MPI_Comm comm, __UNUSED__  MPI_Info * info_used, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_comm_create_errhandler)(__UNUSED__  MPI_Comm_errhandler_function *function, __UNUSED__ MPI_Errhandler *errhandler, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_comm_get_errhandler)(__UNUSED__  MPI_Comm comm, __UNUSED__ MPI_Errhandler *errhandler, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_comm_create_group)(__UNUSED__  MPI_Comm comm, __UNUSED__ MPI_Group group, __UNUSED__  int tag, __UNUSED__  MPI_Comm * newcomm, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_comm_call_errhandler)(__UNUSED__  MPI_Comm comm, __UNUSED__  int errorcode, __UNUSED__  int *res){not_implemented();}
 
 /* datatype handling */
-void ffunc (pmpi_type_set_attr)(MPI_Datatype datatype, int type_keyval, void *attribute_val, int *res){not_implemented();}
-void ffunc (pmpi_type_get_attr)(MPI_Datatype datatype, int type_keyval, void *attribute_val, int *flag, int *res){not_implemented();}
-void ffunc (pmpi_type_free_keyval)(int *type_keyval, int *res){not_implemented();}
-void ffunc (pmpi_type_delete_attr)(MPI_Datatype datatype, int type_keyval, int *res){not_implemented();}
-void ffunc (pmpi_type_create_keyval)(MPI_Type_copy_attr_function *type_copy_attr_fn, MPI_Type_delete_attr_function *type_delete_attr_fn, int *type_keyval, void *extra_state, int *res){not_implemented();}
+void ffunc (pmpi_type_set_attr)(__UNUSED__  MPI_Datatype datatype, __UNUSED__  int type_keyval, __UNUSED__  void *attribute_val, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_type_get_attr)(__UNUSED__  MPI_Datatype datatype, __UNUSED__  int type_keyval, __UNUSED__  void *attribute_val, __UNUSED__  int *flag, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_type_free_keyval)(__UNUSED__  int *type_keyval, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_type_delete_attr)(__UNUSED__  MPI_Datatype datatype, __UNUSED__  int type_keyval, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_type_create_keyval)(__UNUSED__ MPI_Type_copy_attr_function *type_copy_attr_fn, __UNUSED__ MPI_Type_delete_attr_function *type_delete_attr_fn, __UNUSED__  int *type_keyval, __UNUSED__  void *extra_state, __UNUSED__  int *res){not_implemented();}
 
-void ffunc (pmpi_get_library_version)(char *version, int *resultlen, int *res){not_implemented();}
+void ffunc (pmpi_get_library_version)(__UNUSED__ char *version, __UNUSED__  int *resultlen, __UNUSED__  int *res){not_implemented();}
 
 /* Process Creation and Management */
-void ffunc (pmpi_close_port)(const char *port_name, int *res){not_implemented();}
-void ffunc (pmpi_comm_accept)(const char *port_name, MPI_Info info, int root, MPI_Comm comm,MPI_Comm *newcomm, int *res){not_implemented();}
-void ffunc (pmpi_comm_connect)(const char *port_name, MPI_Info info, int root, MPI_Comm comm, MPI_Comm *newcomm, int *res){not_implemented();}
-void ffunc (pmpi_comm_disconnect)(MPI_Comm * comm, int *res){not_implemented();}
-void ffunc (pmpi_comm_get_parent)(MPI_Comm *parent, int *res){not_implemented();}
-void ffunc (pmpi_comm_join)(int fd, MPI_Comm *intercomm, int *res){not_implemented();}
-void ffunc (pmpi_comm_spawn)(const char *command, char *argv[], int maxprocs, MPI_Info info,int root, MPI_Comm comm, MPI_Comm *intercomm,int array_of_errcodes[], int *res){not_implemented();}
-void ffunc (pmpi_comm_spawn_multiple)(int count, char *array_of_commands[],char **array_of_argv[], const int array_of_maxprocs[],const MPI_Info array_of_info[], int root, MPI_Comm comm,MPI_Comm *intercomm, int array_of_errcodes[], int *res){not_implemented();}
-void ffunc (pmpi_lookup_name)(const char *service_name, MPI_Info info, char *port_name, int *res){not_implemented();}
-void ffunc (pmpi_open_port)(MPI_Info info, char *port_name, int *res){not_implemented();}
-void ffunc (pmpi_publish_name)(const char *service_name, MPI_Info info, const char *port_name, int *res){not_implemented();}
-void ffunc (pmpi_unpublish_name)(const char *service_name, MPI_Info info, const char *port_name, int *res){not_implemented();}
+void ffunc (pmpi_close_port)(__UNUSED__ const char *port_name, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_comm_accept)(__UNUSED__ const char *port_name, __UNUSED__  MPI_Info info, __UNUSED__  int root, __UNUSED__  MPI_Comm comm,__UNUSED__  MPI_Comm *newcomm, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_comm_connect)(__UNUSED__ const char *port_name, __UNUSED__  MPI_Info info, __UNUSED__  int root, __UNUSED__  MPI_Comm comm, __UNUSED__  MPI_Comm *newcomm, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_comm_disconnect)(__UNUSED__  MPI_Comm * comm, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_comm_get_parent)(__UNUSED__  MPI_Comm *parent, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_comm_join)(__UNUSED__  int fd, __UNUSED__  MPI_Comm *__UNUSED__  intercomm, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_comm_spawn)(__UNUSED__ const char *command, __UNUSED__ char *argv[], __UNUSED__  int maxprocs, __UNUSED__  MPI_Info info,__UNUSED__  int root, __UNUSED__  MPI_Comm comm, __UNUSED__  MPI_Comm *__UNUSED__  intercomm,__UNUSED__  int array_of_errcodes[], __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_comm_spawn_multiple)(__UNUSED__  int count, __UNUSED__ char *array_of_commands[], __UNUSED__ char **array_of_argv[], const __UNUSED__  int array_of_maxprocs[],const __UNUSED__  MPI_Info array_of_info[], __UNUSED__  int root, __UNUSED__  MPI_Comm comm,__UNUSED__  MPI_Comm *__UNUSED__  intercomm, __UNUSED__  int array_of_errcodes[], __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_lookup_name)(__UNUSED__ const char *service_name, __UNUSED__  MPI_Info info, __UNUSED__ char *port_name, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_open_port)(__UNUSED__  MPI_Info info, __UNUSED__ char *port_name, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_publish_name)(__UNUSED__ const char *service_name, __UNUSED__  MPI_Info info, __UNUSED__ const char *port_name, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_unpublish_name)(__UNUSED__ const char *service_name, __UNUSED__  MPI_Info info, __UNUSED__ const char *port_name, __UNUSED__  int *res){not_implemented();}
 
 
 /* Dist graph operations */
-void ffunc (pmpi_dist_graph_neighbors_count)(MPI_Comm comm, int *indegree, int *outdegree, int *weighted, int *res){not_implemented();}
-void ffunc (pmpi_dist_graph_neighbors)(MPI_Comm comm, int maxindegree, int sources[], int sourceweights[], int maxoutdegree, int destinations[], int destweights[], int *res){not_implemented();}
-void ffunc (pmpi_dist_graph_create)(MPI_Comm comm_old, int n, const int sources[],const int degrees[], const int destinations[],const int weights[],MPI_Info info, int reorder, MPI_Comm *comm_dist_graph, int *res){not_implemented();}
-void ffunc (pmpi_dist_graph_create_adjacent)(MPI_Comm comm_old,int indegree, const int sources[],const int sourceweights[],int outdegree, const int destinations[],const int destweights[],MPI_Info info, int reorder, MPI_Comm *comm_dist_graph, int *res){not_implemented();}
+void ffunc (pmpi_dist_graph_neighbors_count)(__UNUSED__  MPI_Comm comm, __UNUSED__  int *indegree, __UNUSED__  int *outdegree, __UNUSED__  int *weighted, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_dist_graph_neighbors)(__UNUSED__  MPI_Comm comm, __UNUSED__  int maxindegree, __UNUSED__  int sources[], __UNUSED__  int sourceweights[], __UNUSED__  int maxoutdegree, __UNUSED__  int destinations[], __UNUSED__  int destweights[], __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_dist_graph_create)(__UNUSED__  MPI_Comm comm_old, __UNUSED__  int n, const __UNUSED__  int sources[],const __UNUSED__  int degrees[], const __UNUSED__  int destinations[],const __UNUSED__  int weights[],__UNUSED__  MPI_Info info, __UNUSED__  int reorder, __UNUSED__  MPI_Comm *comm_dist_graph, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_dist_graph_create_adjacent)(__UNUSED__  MPI_Comm comm_old,__UNUSED__  int indegree, const __UNUSED__  int sources[],const __UNUSED__  int sourceweights[],__UNUSED__  int outdegree, const __UNUSED__  int destinations[],const __UNUSED__  int destweights[],__UNUSED__  MPI_Info info, __UNUSED__  int reorder, __UNUSED__  MPI_Comm *comm_dist_graph, __UNUSED__  int *res){not_implemented();}
 
 /* collectives */
-void ffunc (pmpi_reduce_local)(const void *inbuf, void *inoutbuf, int count, MPI_Datatype datatype, MPI_Op op, int *res){not_implemented();}
+void ffunc (pmpi_reduce_local)(const __UNUSED__  void *inbuf, __UNUSED__  void *inoutbuf, __UNUSED__  int count, __UNUSED__  MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__  int *res){not_implemented();}
 
 /* Error handling */
-void ffunc (pmpi_file_create_errhandler)(MPI_File_errhandler_function *file_errhandler_fn, MPI_Errhandler *errhandler, int *res){not_implemented();}
-void ffunc (pmpi_file_call_errhandler)(void * fh, int errorcode, int *res){not_implemented();}
+void ffunc (pmpi_file_create_errhandler)(__UNUSED__ MPI_File_errhandler_function *file_errhandler_fn, __UNUSED__ MPI_Errhandler *errhandler, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_file_call_errhandler)(__UNUSED__  void * fh, __UNUSED__  int errorcode, __UNUSED__  int *res){not_implemented();}
 
 /* MPI_T methods */
-void ffunc (pmpi_t_init_thread)(int required, int *provided, int *res){not_implemented();}
-void ffunc (pmpi_t_finalize)(int *res){not_implemented();}
+void ffunc (pmpi_t_init_thread)(__UNUSED__  int required, __UNUSED__  int *provided, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_finalize)(__UNUSED__  int *res){not_implemented();}
 
-void ffunc (pmpi_t_pvar_read)(MPI_T_pvar_session session, MPI_T_pvar_handle handle, void *buf, int *res){not_implemented();}
-void ffunc (pmpi_t_pvar_write)(MPI_T_pvar_session session, MPI_T_pvar_handle handle, void *buf, int *res){not_implemented();}
-void ffunc (pmpi_t_pvar_reset)(MPI_T_pvar_session session, MPI_T_pvar_handle handle, int *res){not_implemented();}
-void ffunc (pmpi_t_pvar_get_num)(int *num_pvar, int *res){not_implemented();}
-void ffunc (pmpi_t_pvar_get_info)(int pvar_index, char *name, int *name_len, int *verbosity, int *var_class, MPI_Datatype *datatype, MPI_T_enum *enumtype, char *desc, int *desc_len, int *binding, int *readonly, int *continuous, int *atomic, int *res){not_implemented();}
-void ffunc (pmpi_t_pvar_session_create)(MPI_T_pvar_session *session, int *res){not_implemented();}
-void ffunc (pmpi_t_pvar_session_free)(MPI_T_pvar_session *session, int *res){not_implemented();}
-void ffunc (pmpi_t_pvar_handle_alloc)(MPI_T_pvar_session session, int pvar_index, void *obj_handle, MPI_T_pvar_handle *handle, int *count, int *res){not_implemented();}
-void ffunc (pmpi_t_pvar_handle_free)(MPI_T_pvar_session session, MPI_T_pvar_handle *handle, int *res){not_implemented();}
-void ffunc (pmpi_t_pvar_start)(MPI_T_pvar_session session, MPI_T_pvar_handle handle, int *res){not_implemented();}
-void ffunc (pmpi_t_pvar_stop)(MPI_T_pvar_session session, MPI_T_pvar_handle handle, int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_read)(__UNUSED__  MPI_T_pvar_session session, __UNUSED__  MPI_T_pvar_handle handle, __UNUSED__  void *buf, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_write)(__UNUSED__  MPI_T_pvar_session session, __UNUSED__  MPI_T_pvar_handle handle, __UNUSED__  void *buf, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_reset)(__UNUSED__  MPI_T_pvar_session session, __UNUSED__  MPI_T_pvar_handle handle, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_get_num)(__UNUSED__  int *num_pvar, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_get_info)(__UNUSED__  int pvar_index, __UNUSED__ char *name, __UNUSED__  int *name_len, __UNUSED__  int *verbosity, __UNUSED__  int *var_class, __UNUSED__  MPI_Datatype *datatype, __UNUSED__ MPI_T_enum *enumtype, __UNUSED__ char *desc, __UNUSED__  int *desc_len, __UNUSED__  int *binding, __UNUSED__  int *readonly, __UNUSED__  int *continuous, __UNUSED__  int *atomic, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_session_create)(__UNUSED__  MPI_T_pvar_session *session, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_session_free)(__UNUSED__  MPI_T_pvar_session *session, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_handle_alloc)(__UNUSED__  MPI_T_pvar_session session, __UNUSED__  int pvar_index, __UNUSED__  void *obj_handle, __UNUSED__  MPI_T_pvar_handle *handle, __UNUSED__  int *count, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_handle_free)(__UNUSED__  MPI_T_pvar_session session, __UNUSED__  MPI_T_pvar_handle *handle, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_start)(__UNUSED__  MPI_T_pvar_session session, __UNUSED__  MPI_T_pvar_handle handle, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_stop)(__UNUSED__  MPI_T_pvar_session session, __UNUSED__  MPI_T_pvar_handle handle, __UNUSED__  int *res){not_implemented();}
 
-void ffunc (pmpi_t_cvar_read)(MPI_T_cvar_handle handle, void *buf, int *res){not_implemented();}
-void ffunc (pmpi_t_cvar_write)(MPI_T_cvar_handle handle, void *buf, int *res){not_implemented();}
-void ffunc (pmpi_t_cvar_get_num)(int *num_cvar, int *res){not_implemented();}
-void ffunc (pmpi_t_cvar_get_info)(int cvar_index, char *name, int *name_len,int *verbosity, MPI_Datatype *datatype, MPI_T_enum *enumtype,char *desc, int *desc_len, int *binding, int *scope, int *res){not_implemented();}
-void ffunc (pmpi_t_cvar_handle_alloc)(int cvar_index, void *obj_handle, MPI_T_cvar_handle *handle, int *count, int *res){not_implemented();}
-void ffunc (pmpi_t_cvar_handle_free)(MPI_T_cvar_handle *handle, int *res){not_implemented();}
+void ffunc (pmpi_t_cvar_read)(__UNUSED__  MPI_T_cvar_handle handle, __UNUSED__  void *buf, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_cvar_write)(__UNUSED__  MPI_T_cvar_handle handle, __UNUSED__  void *buf, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_cvar_get_num)(__UNUSED__  int *num_cvar, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_cvar_get_info)(__UNUSED__  int cvar_index, __UNUSED__ char *name, __UNUSED__  int *name_len,__UNUSED__  int *verbosity, __UNUSED__  MPI_Datatype *datatype, __UNUSED__ MPI_T_enum *enumtype, __UNUSED__ char *desc, __UNUSED__  int *desc_len, __UNUSED__  int *binding, __UNUSED__  int *scope, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_cvar_handle_alloc)(__UNUSED__  int cvar_index, __UNUSED__  void *obj_handle, __UNUSED__  MPI_T_cvar_handle *handle, __UNUSED__  int *count, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_cvar_handle_free)(__UNUSED__  MPI_T_cvar_handle *handle, __UNUSED__  int *res){not_implemented();}
 
-void ffunc (pmpi_t_category_get_pvars)(int cat_index, int len, int indices[], int *res){not_implemented();}
-void ffunc (pmpi_t_category_get_num)(int *num_cat, int *res){not_implemented();}
-void ffunc (pmpi_t_category_get_categories)(int cat_index, int len, int indices[], int *res){not_implemented();}
-void ffunc (pmpi_t_category_get_info)(int cat_index, char *name, int *name_len, char *desc,int *desc_len, int *num_cvars, int *num_pvars, int *num_categories, int *res){not_implemented();}
-void ffunc (pmpi_t_category_get_cvars)(int cat_index, int len, int indices[], int *res){not_implemented();}
+void ffunc (pmpi_t_category_get_pvars)(__UNUSED__  int cat_index, __UNUSED__  int len, __UNUSED__  int indices[], __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_category_get_num)(__UNUSED__  int *num_cat, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_category_get_categories)(__UNUSED__  int cat_index, __UNUSED__  int len, __UNUSED__  int indices[], __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_category_get_info)(__UNUSED__  int cat_index, __UNUSED__ char *name, __UNUSED__  int *name_len, __UNUSED__ char *desc,__UNUSED__  int *desc_len, __UNUSED__  int *num_cvars, __UNUSED__  int *num_pvars, __UNUSED__  int *num_categories, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpi_t_category_get_cvars)(__UNUSED__  int cat_index, __UNUSED__  int len, __UNUSED__  int indices[], __UNUSED__  int *res){not_implemented();}
 
-void ffunc (pmpi_t_enum_get_info)(MPI_T_enum enumtype, int *num, char *name, int *name_len, int *res){not_implemented();}
+void ffunc (pmpi_t_enum_get_info)(__UNUSED__ MPI_T_enum enumtype, __UNUSED__  int *num, __UNUSED__ char *name, __UNUSED__  int *name_len, __UNUSED__  int *res){not_implemented();}
 
 /* MPIX methods */
-void ffunc (pmpix_comm_failure_ack)( MPI_Comm comm, int *res ){not_implemented();}
-void ffunc (pmpix_comm_failure_get_acked)( MPI_Comm comm, MPI_Group *failedgrp, int *res ){not_implemented();}
-void ffunc (pmpix_comm_agree)(MPI_Comm comm, int *flag, int *res){not_implemented();}
-void ffunc (pmpix_comm_revoke)(MPI_Comm comm, int *res){not_implemented();}
-void ffunc (pmpix_comm_shrink)(MPI_Comm comm, MPI_Comm *newcomm, int *res){not_implemented();}
+void ffunc (pmpix_comm_failure_ack)( __UNUSED__  MPI_Comm comm, __UNUSED__  int *res ){not_implemented();}
+void ffunc (pmpix_comm_failure_get_acked)( __UNUSED__  MPI_Comm comm, __UNUSED__ MPI_Group *failedgrp, __UNUSED__  int *res ){not_implemented();}
+void ffunc (pmpix_comm_agree)(__UNUSED__  MPI_Comm comm, __UNUSED__  int *flag, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpix_comm_revoke)(__UNUSED__  MPI_Comm comm, __UNUSED__  int *res){not_implemented();}
+void ffunc (pmpix_comm_shrink)(__UNUSED__  MPI_Comm comm,__UNUSED__  MPI_Comm *newcomm, __UNUSED__  int *res){not_implemented();}
 
 /* checkpointing */
-void ffunc (pmpix_checkpoint)(MPIX_Checkpoint_state* st){not_implemented();}
+void ffunc (pmpix_checkpoint)(__UNUSED__ MPIX_Checkpoint_state* st){not_implemented();}
 
 /************************************************************************/
 /*  END NOT IMPLEMENTED                                                     */

@@ -331,11 +331,11 @@ static void sctk_tcp_add_route ( int dest, int fd, sctk_rail_info_t *rail,
 	/* Add the new route */
 	if( route_type == ROUTE_ORIGIN_STATIC )
 	{
-		sctk_rail_add_static_route (  rail, dest, new_route );
+		sctk_rail_add_static_route (  rail, new_route );
 	}
 	else
 	{
-		sctk_rail_add_dynamic_route(  rail, dest, new_route );
+		sctk_rail_add_dynamic_route(  rail, new_route );
 	}
 	
 	/* set the route as connected */
@@ -565,7 +565,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 #else
 
 	/* Register connection info inside the PMPI */
-	assume ( sctk_pmi_put_connection_info ( rail->network.tcp.connection_infos, MAX_STRING_SIZE, rail->rail_number ) == 0 );
+	assume ( sctk_pmi_put_connection_info ( rail->network.tcp.connection_infos, rail->rail_number ) == 0 );
 
 	sctk_pmi_barrier();
 
