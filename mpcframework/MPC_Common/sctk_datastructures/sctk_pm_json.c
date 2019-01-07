@@ -22,6 +22,7 @@
 #include <limits.h>
 
 #include "sctk_pm_json.h"
+#include "sctk_debug.h"
 
 /*
    MAIN Json type definition
@@ -167,7 +168,7 @@ json_t * json_null()
 	return ret;
 }
 
-void json_null_destroy(json_t * json)
+void json_null_destroy(__UNUSED__ json_t * json)
 {
 
 }

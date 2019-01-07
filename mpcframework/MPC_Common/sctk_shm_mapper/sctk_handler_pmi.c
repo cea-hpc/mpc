@@ -31,7 +31,7 @@ bool sctk_pmi_handler_send_filename(const char *filename, void *option,
   	  }
   sctk_nodebug("opt : %s\n", (char*) option);
   sctk_nodebug("filename : %s\n", filename);
-  sctk_pmi_put_connection_info_str((void*)filename, 64, (char*) option); 
+  sctk_pmi_put_connection_info_str((void*)filename, (char*) option); 
   sctk_pmi_barrier();
   return 1;
   }
