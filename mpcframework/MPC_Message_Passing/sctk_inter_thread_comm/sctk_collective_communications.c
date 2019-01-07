@@ -33,7 +33,7 @@
 /*Terminaison Barrier                                                   */
 /************************************************************************/
 void
-sctk_terminaison_barrier ( const int id )
+sctk_terminaison_barrier (void)
 {
 	int local;
 	int total;

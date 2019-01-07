@@ -70,9 +70,9 @@ void mpc_MPI_Win_control_message_handler(void *data, size_t size);
 void mpc_MPI_Win_control_message_handler(void *data, size_t size) {}
 #endif
 
-void sctk_control_message_task_level(int source_process, int source_rank,
-                                     char subtype, char param, void *data,
-                                     size_t size) {
+void sctk_control_message_task_level(__UNUSED__ int source_process, __UNUSED__ int source_rank,
+                                     __UNUSED__ char subtype, __UNUSED__ char param, __UNUSED__ void *data,
+                                     __UNUSED__ size_t size) {
   switch (subtype) {
 
   // case SCTK_PROCESS_RDMA_CONTROL_MESSAGE:
@@ -83,9 +83,9 @@ void sctk_control_message_task_level(int source_process, int source_rank,
   }
 }
 
-void sctk_control_message_process_level(int source_process, int source_rank,
-                                        char subtype, char param, void *data,
-                                        size_t size) {
+void sctk_control_message_process_level(__UNUSED__ int source_process, __UNUSED__ int source_rank,
+                                        char subtype, __UNUSED__ char param, void *data,
+                                        __UNUSED__ size_t size) {
   struct sctk_window_map_request *mr = NULL;
   struct sctk_window_emulated_RDMA *erma = NULL;
   struct sctk_control_message_fence_ctx *fence = NULL;
@@ -139,7 +139,7 @@ void sctk_control_message_process_level(int source_process, int source_rank,
 /* Control Messages Send Recv                                           */
 /************************************************************************/
 
-static void sctk_free_control_messages ( void *ptr )
+static void sctk_free_control_messages (__UNUSED__  void *ptr )
 {
 
 }
@@ -165,8 +165,7 @@ void __sctk_control_messages_send(int dest, int dest_task,
                                   sctk_message_class_t message_class,
                                   sctk_communicator_t comm, int subtype,
                                   int param, void *buffer, size_t size,
-                                  int rail_id, int is_broadcast,
-                                  sctk_communicator_t inner_comm) {
+                                  int rail_id) {
   sctk_communicator_t communicator = comm;
   sctk_communicator_t tag = 16000;
 
@@ -231,7 +230,7 @@ void sctk_control_messages_send_process(int dest_process, int subtype,
                                         char param, void *buffer, size_t size) {
   __sctk_control_messages_send(dest_process, -1, SCTK_CONTROL_MESSAGE_PROCESS,
                                SCTK_COMM_WORLD, subtype, param, buffer, size,
-                               -1, 0, SCTK_COMM_WORLD);
+                               -1);
 }
 
 void sctk_control_messages_send_to_task(int dest_task, sctk_communicator_t comm,
@@ -239,15 +238,14 @@ void sctk_control_messages_send_to_task(int dest_task, sctk_communicator_t comm,
                                         size_t size) {
   sctk_info("Send task to %d (subtype %d)", dest_task, subtype);
   __sctk_control_messages_send(-1, dest_task, SCTK_CONTROL_MESSAGE_TASK, comm,
-                               subtype, param, buffer, size, -1, 0,
-                               SCTK_COMM_WORLD);
+                               subtype, param, buffer, size, -1);
 }
 
 void sctk_control_messages_send_rail( int dest, int subtype, char  param, void *buffer, size_t size, int  rail_id ) 
 {
   __sctk_control_messages_send(dest, -1, SCTK_CONTROL_MESSAGE_RAIL,
                                SCTK_COMM_WORLD, subtype, param, buffer, size,
-                               rail_id, 0, SCTK_COMM_WORLD);
+                               rail_id);
 }
 
 void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg )
@@ -530,7 +528,7 @@ int sctk_control_message_process_local(int rank) {
   return ret;
 }
 
-void __sctk_control_message_process(void *dummy) {
+void __sctk_control_message_process(__UNUSED__ void *dummy) {
   struct sctk_ctrl_msg_cell *cell = NULL;
 
   if (__ctrl_msg_list != NULL) {

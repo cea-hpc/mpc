@@ -49,7 +49,7 @@ static int ALLREDUCE_MAX_SLOT;
 /************************************************************************/
 /*TOOLS                                                                 */
 /************************************************************************/
-static void sctk_free_opt_noalloc_split_messages ( void *ptr )
+static void sctk_free_opt_noalloc_split_messages ( __UNUSED__ void *ptr )
 {
 
 }
@@ -73,9 +73,8 @@ typedef struct
 /************************************************************************/
 
 static void sctk_opt_noalloc_split_messages_send ( const sctk_communicator_t communicator, int myself, int dest, int tag, void *buffer, size_t size,
-                                                   sctk_message_class_t message_class, sctk_opt_noalloc_split_messages_t *msg_req, int check, int copy_in_send )
+                                                   sctk_message_class_t message_class, sctk_opt_noalloc_split_messages_t *msg_req )
 {
-	//sctk_error("BAR %d SEND TO %d", myself, dest );
         sctk_init_header(&(msg_req->msg), SCTK_MESSAGE_CONTIGUOUS,
                          sctk_free_opt_noalloc_split_messages,
                          sctk_message_copy);
@@ -85,17 +84,11 @@ static void sctk_opt_noalloc_split_messages_send ( const sctk_communicator_t com
                                    message_class, SCTK_DATATYPE_IGNORE, REQUEST_SEND_COLL);
 
         sctk_send_message(&(msg_req->msg));
-#if 0
-	msg_req->msg.tail.need_check_in_wait = /* copy_in_send */1;
-	sctk_send_message_try_check ( & ( msg_req->msg ), check );
-#endif
 }
 
 static void sctk_opt_noalloc_split_messages_recv ( const sctk_communicator_t communicator, int src, int myself, int tag, void *buffer, size_t size,
-                                                   sctk_message_class_t message_class, sctk_opt_noalloc_split_messages_t *msg_req, struct sctk_internal_ptp_s *ptp_internal, int check,
-                                                   int copy_in_recv )
+                                                   sctk_message_class_t message_class, sctk_opt_noalloc_split_messages_t *msg_req, struct sctk_internal_ptp_s *ptp_internal )
 {
-	//sctk_error("BAR %d RECV FROM %d", myself, src );
         sctk_init_header(&(msg_req->msg), SCTK_MESSAGE_CONTIGUOUS,
                          sctk_free_opt_noalloc_split_messages,
                          sctk_message_copy);
@@ -105,10 +98,6 @@ static void sctk_opt_noalloc_split_messages_recv ( const sctk_communicator_t com
                                    message_class, SCTK_DATATYPE_IGNORE, REQUEST_RECV_COLL);
 
         sctk_recv_message(&(msg_req->msg), ptp_internal, 1);
-#if 0
-	msg_req->msg.tail.need_check_in_wait = /* copy_in_recv */1;
-	sctk_recv_message_try_check ( & ( msg_req->msg ), ptp_internal, check );
-#endif
 }
 
 static void sctk_opt_noalloc_split_messages_wait ( sctk_opt_noalloc_split_messages_table_t *tab )
@@ -152,7 +141,7 @@ static void sctk_opt_noalloc_split_messages_init_items ( sctk_opt_noalloc_split_
 /*BARRIER                                                               */
 /************************************************************************/
 
-static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t communicator, sctk_internal_collectives_struct_t *tmp )
+static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t communicator,  __UNUSED__ sctk_internal_collectives_struct_t *tmp )
 {
 	if ( !sctk_is_inter_comm ( communicator ) )
 	{
@@ -195,7 +184,7 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
                               communicator, src + (j * (i / barrier_arity)),
                               myself, 0, &c, 1, SCTK_BARRIER_MESSAGE,
                               sctk_opt_noalloc_split_messages_get_item(&table),
-                              ptp_internal, 1, 1);
+                              ptp_internal);
                         }
                       }
                       sctk_opt_noalloc_split_messages_wait(&table);
@@ -208,13 +197,12 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
                         sctk_opt_noalloc_split_messages_send(
                             communicator, myself, dest, 0, &c, 1,
                             SCTK_BARRIER_MESSAGE,
-                            sctk_opt_noalloc_split_messages_get_item(&table), 0,
-                            1);
+                            sctk_opt_noalloc_split_messages_get_item(&table));
                         sctk_opt_noalloc_split_messages_recv(
                             communicator, dest, myself, 1, &c, 1,
                             SCTK_BARRIER_MESSAGE,
                             sctk_opt_noalloc_split_messages_get_item(&table),
-                            ptp_internal, 0, 1);
+                            ptp_internal);
                         sctk_opt_noalloc_split_messages_wait(&table);
                         break;
                       }
@@ -237,8 +225,7 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
                             communicator, myself,
                             dest + (j * (i / barrier_arity)), 1, &c, 1,
                             SCTK_BARRIER_MESSAGE,
-                            sctk_opt_noalloc_split_messages_get_item(&table), 1,
-                            1);
+                            sctk_opt_noalloc_split_messages_get_item(&table));
                       }
                     }
                   }
@@ -269,23 +256,20 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
           for (i = 0; i < rsize; i++) {
             sctk_opt_noalloc_split_messages_send(
                 communicator, myself, i, 65536, &c, 1, SCTK_BARRIER_MESSAGE,
-                sctk_opt_noalloc_split_messages_get_item(&table),
-                (size < broadcast_check_threshold),
-                (size < broadcast_check_threshold));
+                sctk_opt_noalloc_split_messages_get_item(&table));
           }
 
           for (j = 0; j < rsize; j++) {
             sctk_opt_noalloc_split_messages_recv(
                 communicator, j, myself, 65536, &c, 1, SCTK_BARRIER_MESSAGE,
-                sctk_opt_noalloc_split_messages_get_item(&table), ptp_internal,
-                1, 1);
+                sctk_opt_noalloc_split_messages_get_item(&table), ptp_internal);
           }
 
           sctk_opt_noalloc_split_messages_wait(&table);
         }
 }
 
-void sctk_barrier_opt_noalloc_split_messages_init ( sctk_internal_collectives_struct_t *tmp, sctk_communicator_t id )
+void sctk_barrier_opt_noalloc_split_messages_init ( sctk_internal_collectives_struct_t *tmp,  __UNUSED__ sctk_communicator_t id )
 {
 	barrier_arity = sctk_runtime_config_get()->modules.inter_thread_comm.barrier_arity;
 
@@ -358,7 +342,7 @@ void sctk_broadcast_opt_noalloc_split_messages ( void *buffer, const size_t size
                           communicator, (dest + root) % total, myself, root,
                           buffer, size, SCTK_BROADCAST_MESSAGE,
                           sctk_opt_noalloc_split_messages_get_item(&table),
-                          ptp_internal, 1, 1);
+                          ptp_internal);
                       sctk_opt_noalloc_split_messages_wait(&table);
                       break;
                     }
@@ -378,9 +362,7 @@ void sctk_broadcast_opt_noalloc_split_messages ( void *buffer, const size_t size
                             (dest + root + (j * (i / BROADCAST_ARRITY))) %
                                 total,
                             root, buffer, size, SCTK_BROADCAST_MESSAGE,
-                            sctk_opt_noalloc_split_messages_get_item(&table),
-                            (size < broadcast_check_threshold),
-                            (size < broadcast_check_threshold));
+                            sctk_opt_noalloc_split_messages_get_item(&table));
                       }
                     }
                   }
@@ -390,7 +372,7 @@ void sctk_broadcast_opt_noalloc_split_messages ( void *buffer, const size_t size
         }
 }
 
-void sctk_broadcast_opt_noalloc_split_messages_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id )
+void sctk_broadcast_opt_noalloc_split_messages_init ( struct sctk_internal_collectives_struct_s *tmp,  __UNUSED__ sctk_communicator_t id )
 {
 	broadcast_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_arity_max;
 	broadcast_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_max_size;
@@ -418,8 +400,7 @@ static void sctk_allreduce_opt_noalloc_split_messages_intern ( const void *buffe
                                                                void ( *func ) ( const void *, void *, size_t,
                                                                                 sctk_datatype_t ),
                                                                const sctk_communicator_t communicator,
-                                                               const sctk_datatype_t data_type,
-                                                               struct sctk_internal_collectives_struct_s *tmp )
+                                                               const sctk_datatype_t data_type)
 {
 	int myself;
 	int total;
@@ -534,7 +515,7 @@ static void sctk_allreduce_opt_noalloc_split_messages_intern ( const void *buffe
                     communicator, src + (j * (i / ALLREDUCE_ARRITY)), myself, 0,
                     buffer_table[j - 1], size, SCTK_ALLREDUCE_MESSAGE,
                     sctk_opt_noalloc_split_messages_get_item(&table),
-                    ptp_internal, 0, 0);
+                    ptp_internal);
               }
             }
 
@@ -556,13 +537,13 @@ static void sctk_allreduce_opt_noalloc_split_messages_intern ( const void *buffe
               sctk_opt_noalloc_split_messages_send(
                   communicator, myself, dest, 0, buffer_tmp, size,
                   SCTK_ALLREDUCE_MESSAGE,
-                  sctk_opt_noalloc_split_messages_get_item(&table), 1, 1);
+                  sctk_opt_noalloc_split_messages_get_item(&table));
               sctk_nodebug("Leaf Recv from %d", dest);
               sctk_opt_noalloc_split_messages_recv(
                   communicator, dest, myself, 1, buffer_out, size,
                   SCTK_ALLREDUCE_MESSAGE,
                   sctk_opt_noalloc_split_messages_get_item(&table),
-                  ptp_internal, 1, 1);
+                  ptp_internal);
               sctk_opt_noalloc_split_messages_wait(&table);
               break;
             }
@@ -584,9 +565,7 @@ static void sctk_allreduce_opt_noalloc_split_messages_intern ( const void *buffe
                 sctk_opt_noalloc_split_messages_send(
                     communicator, myself, dest + (j * (i / ALLREDUCE_ARRITY)),
                     1, buffer_out, size, SCTK_ALLREDUCE_MESSAGE,
-                    sctk_opt_noalloc_split_messages_get_item(&table),
-                    (size < allreduce_check_threshold),
-                    (size < allreduce_check_threshold));
+                    sctk_opt_noalloc_split_messages_get_item(&table));
               }
             }
           }
@@ -642,7 +621,7 @@ static void sctk_allreduce_opt_noalloc_split_messages ( const void *buffer_in, v
 			{
 				sctk_allreduce_opt_noalloc_split_messages_intern ( ( ( char * ) buffer_in ) + ( elem_size * ( elem_number_done ) ),
 				                                                   ( ( char * ) buffer_out ) + ( elem_size * ( elem_number_done ) ),
-				                                                   elem_size, elem_number_slot, func, communicator, data_type, tmp );
+				                                                   elem_size, elem_number_slot, func, communicator, data_type );
 				elem_number_done += elem_number_slot;
 			}
 
@@ -650,16 +629,16 @@ static void sctk_allreduce_opt_noalloc_split_messages ( const void *buffer_in, v
 			{
 				sctk_allreduce_opt_noalloc_split_messages_intern ( ( ( char * ) buffer_in ) + ( elem_size * ( elem_number_done ) ),
 				                                                   ( ( char * ) buffer_out ) + ( elem_size * ( elem_number_done ) ),
-				                                                   elem_size, elem_number_remain, func, communicator, data_type, tmp );
+				                                                   elem_size, elem_number_remain, func, communicator, data_type );
 			}
 		}
 		else
 		{
-			sctk_allreduce_opt_noalloc_split_messages_intern ( buffer_in, buffer_out, elem_size, elem_number, func, communicator, data_type, tmp );
+			sctk_allreduce_opt_noalloc_split_messages_intern ( buffer_in, buffer_out, elem_size, elem_number, func, communicator, data_type );
 		}
 
 #else
-		sctk_allreduce_opt_noalloc_split_messages_intern ( buffer_in, buffer_out, elem_size, elem_number, func, communicator, data_type, tmp );
+		sctk_allreduce_opt_noalloc_split_messages_intern ( buffer_in, buffer_out, elem_size, elem_number, func, communicator, data_type );
 #endif
 	}
 }
@@ -669,7 +648,7 @@ void sctk_allreduce_opt_noalloc_split_messages_ALLREDUCE_MAX_SLOT ( int t )
 	ALLREDUCE_MAX_SLOT = t;
 }
 
-void sctk_allreduce_opt_noalloc_split_messages_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id )
+void sctk_allreduce_opt_noalloc_split_messages_init ( struct sctk_internal_collectives_struct_s   __UNUSED__ *tmp, __UNUSED__ sctk_communicator_t id )
 {
 	allreduce_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_arity_max;
 	allreduce_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_max_size;

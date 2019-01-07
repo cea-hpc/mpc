@@ -53,7 +53,7 @@ void sctk_barrier_simple ( const sctk_communicator_t communicator,
 	sctk_thread_mutex_unlock ( &tmp->barrier.barrier_simple.lock );
 }
 
-void sctk_barrier_simple_init ( sctk_internal_collectives_struct_t *tmp, sctk_communicator_t id )
+void sctk_barrier_simple_init ( sctk_internal_collectives_struct_t *tmp,  __UNUSED__ sctk_communicator_t id )
 {
 	if ( sctk_process_number == 1 )
 	{
@@ -119,7 +119,7 @@ void sctk_broadcast_simple ( void *buffer, const size_t size,
 	sctk_barrier_simple ( com_id, tmp );
 }
 
-void sctk_broadcast_simple_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id )
+void sctk_broadcast_simple_init ( struct sctk_internal_collectives_struct_s *tmp,  __UNUSED__ sctk_communicator_t id )
 {
 	if ( sctk_process_number == 1 )
 	{
@@ -198,7 +198,7 @@ static void sctk_allreduce_simple ( const void *buffer_in, void *buffer_out,
 	sctk_barrier_simple ( com_id, tmp );
 }
 
-void sctk_allreduce_simple_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id )
+void sctk_allreduce_simple_init ( struct sctk_internal_collectives_struct_s *tmp, __UNUSED__  sctk_communicator_t id )
 {
 	if ( sctk_process_number == 1 )
 	{

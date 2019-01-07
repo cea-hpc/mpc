@@ -119,6 +119,6 @@ void sctk_collectives_init ( sctk_communicator_t id,
 extern void ( *sctk_collectives_init_hook ) ( sctk_communicator_t id );
 
 void
-sctk_terminaison_barrier ( const int id );
+sctk_terminaison_barrier (void);
 
 #endif

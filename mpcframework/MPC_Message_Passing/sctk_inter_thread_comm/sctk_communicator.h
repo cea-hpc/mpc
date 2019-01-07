@@ -441,8 +441,8 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t origin_communicator, int is_inter_comm, int rank );
 sctk_communicator_t sctk_get_local_comm_id ( const sctk_communicator_t communicator );
 sctk_communicator_t sctk_delete_communicator ( const sctk_communicator_t );
-sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list, int first );
-sctk_communicator_t sctk_create_intercommunicator_from_intercommunicator (const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list, int remote_leader, int local_com);
+sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list);
+sctk_communicator_t sctk_create_intercommunicator_from_intercommunicator (const sctk_communicator_t origin_communicator, int remote_leader, int local_com);
 struct sctk_internal_collectives_struct_s *sctk_get_internal_collectives ( const sctk_communicator_t communicator );
 
 #endif

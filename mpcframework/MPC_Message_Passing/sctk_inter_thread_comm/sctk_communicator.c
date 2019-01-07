@@ -398,7 +398,7 @@ static inline void sctk_communicator_intern_read_unlock ( sctk_internal_communic
 #endif
 }
 
-static inline void sctk_comm_reduce ( const sctk_communicator_t *mpc_restrict  in , sctk_communicator_t *mpc_restrict inout , size_t size , sctk_datatype_t datatype )
+static inline void sctk_comm_reduce ( const sctk_communicator_t *mpc_restrict  in , sctk_communicator_t *mpc_restrict inout , size_t size , __UNUSED__ sctk_datatype_t datatype )
 {
 	size_t i;
 
@@ -1018,7 +1018,7 @@ int sctk_shared_mem_barrier_init(struct shared_mem_barrier *shmb, int nb_task) {
   return 0;
 }
 
-int sctk_shared_mem_barrier_release(struct shared_mem_barrier *shmb) {
+int sctk_shared_mem_barrier_release(__UNUSED__ struct shared_mem_barrier *shmb) {
   return 0;
 }
 
@@ -1334,7 +1334,7 @@ int sctk_comm_coll_release(struct sctk_comm_coll *coll) {
 
 
 int sctk_per_node_comm_context_init(struct sctk_per_node_comm_context *ctx,
-                                     sctk_communicator_t comm, int nb_task )
+                                     __UNUSED__ sctk_communicator_t comm, int nb_task )
 {
        return sctk_shared_mem_barrier_init(&ctx->shm_barrier, nb_task);
 }
@@ -2053,7 +2053,7 @@ void sctk_get_rank_size_total ( const sctk_communicator_t communicator, int *ran
 }
 
 
-int sctk_get_node_rank_from_task_rank ( const int rank )
+int sctk_get_node_rank_from_task_rank ( __UNUSED__ const int rank )
 {
 	not_implemented();
 	return -1;
@@ -2838,7 +2838,7 @@ sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_
  * @param is_inter_comm determine if it is an intercommunicator.
  * @return the identification number of the new communicator.
 **/
-sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list, int first )
+sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list )
 {
 	sctk_internal_communicator_t *tmp;
 	sctk_internal_communicator_t *new_tmp;
@@ -2998,7 +2998,7 @@ sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communi
  * @param local_comm local communicator for local group.
  * @return the identification number of the new communicator.
 **/
-sctk_communicator_t sctk_create_intercommunicator_from_intercommunicator (const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list, int remote_leader, int local_com)
+sctk_communicator_t sctk_create_intercommunicator_from_intercommunicator (const sctk_communicator_t origin_communicator, int remote_leader, int local_com)
 {
 	sctk_internal_communicator_t * tmp;
 	sctk_communicator_t newintercomm;

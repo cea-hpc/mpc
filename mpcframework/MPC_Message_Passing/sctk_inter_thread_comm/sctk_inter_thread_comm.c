@@ -226,7 +226,7 @@ void sctk_message_isend_class_src(int src, int dest, void *data, size_t size,
       sctk_get_internal_ptp(cw_src, comm);
 
   sctk_thread_ptp_message_t *msg =
-      sctk_create_header(src, SCTK_MESSAGE_CONTIGUOUS);
+      sctk_create_header(SCTK_MESSAGE_CONTIGUOUS);
   sctk_add_adress_in_message(msg, data, size);
   sctk_set_header_in_message(msg, tag, comm, src, dest, req, size, class,
                              SCTK_DATATYPE_IGNORE, REQUEST_SEND);
@@ -255,7 +255,7 @@ void sctk_message_irecv_class_dest(int src, int dest, void *buffer, size_t size,
       sctk_get_internal_ptp(cw_dest, comm);
 
   sctk_thread_ptp_message_t *msg =
-      sctk_create_header(src, SCTK_MESSAGE_CONTIGUOUS);
+      sctk_create_header(SCTK_MESSAGE_CONTIGUOUS);
   sctk_add_adress_in_message(msg, buffer, size);
   sctk_set_header_in_message(msg, tag, comm, src, dest, req, size, class,
                              SCTK_DATATYPE_IGNORE, REQUEST_RECV);
@@ -1785,8 +1785,7 @@ void sctk_init_header(sctk_thread_ptp_message_t *tmp,
   }
 }
 
-sctk_thread_ptp_message_t *sctk_create_header(const int myself,
-                                              sctk_message_type_t msg_type) {
+sctk_thread_ptp_message_t *sctk_create_header(sctk_message_type_t msg_type) {
   sctk_thread_ptp_message_t *tmp;
 
   tmp = sctk_alloc_header();

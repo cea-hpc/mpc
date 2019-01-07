@@ -512,7 +512,7 @@ void sctk_init_header ( sctk_thread_ptp_message_t *tmp, sctk_message_type_t msg_
                         void ( *message_copy ) ( sctk_message_to_copy_t * ) );
 void sctk_reinit_header ( sctk_thread_ptp_message_t *tmp, void ( *free_memory ) ( void * ),
                           void ( *message_copy ) ( sctk_message_to_copy_t * ) );
-sctk_thread_ptp_message_t *sctk_create_header ( const int myself, sctk_message_type_t msg_type );
+sctk_thread_ptp_message_t *sctk_create_header ( sctk_message_type_t msg_type );
 void sctk_add_adress_in_message ( sctk_thread_ptp_message_t *restrict msg, void *restrict addr, const size_t size );
 void sctk_add_pack_in_message ( sctk_thread_ptp_message_t *msg, void *adr, const sctk_count_t nb_items,
                                 const size_t elem_size,

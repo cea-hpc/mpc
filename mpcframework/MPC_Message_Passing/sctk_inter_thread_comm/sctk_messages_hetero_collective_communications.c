@@ -48,7 +48,7 @@ static int allreduce_check_threshold;
 /************************************************************************/
 /*TOOLS                                                                 */
 /************************************************************************/
-static void sctk_free_hetero_messages ( void *ptr )
+static void sctk_free_hetero_messages ( __UNUSED__ void *ptr )
 {
 
 }
@@ -72,7 +72,7 @@ typedef struct
 /************************************************************************/
 
 static void sctk_hetero_messages_send ( const sctk_communicator_t communicator, int myself, int dest, int tag, void *buffer, size_t size,
-                                        sctk_message_class_t message_class, sctk_hetero_messages_t *msg_req, int check, int copy_in_send )
+                                        sctk_message_class_t message_class, sctk_hetero_messages_t *msg_req, int check )
 {
   sctk_init_header(&(msg_req->msg), SCTK_MESSAGE_CONTIGUOUS,
                    sctk_free_hetero_messages, sctk_message_copy);
@@ -80,13 +80,12 @@ static void sctk_hetero_messages_send ( const sctk_communicator_t communicator, 
   sctk_set_header_in_message(&(msg_req->msg), tag, communicator, myself, dest,
                              &(msg_req->request), size, message_class,
                              SCTK_DATATYPE_IGNORE, REQUEST_SEND_COLL);
-  msg_req->msg.tail.need_check_in_wait = /* copy_in_send */ 1;
+  msg_req->msg.tail.need_check_in_wait = 1;
   sctk_send_message_try_check(&(msg_req->msg), check);
 }
 
 static void sctk_hetero_messages_recv ( const sctk_communicator_t communicator, int src, int myself, int tag, void *buffer, size_t size,
-                                        sctk_message_class_t message_class, sctk_hetero_messages_t *msg_req, struct sctk_internal_ptp_s *ptp_internal, int check,
-                                        int copy_in_recv )
+                                        sctk_message_class_t message_class, sctk_hetero_messages_t *msg_req, struct sctk_internal_ptp_s *ptp_internal, int check )
 {
   sctk_init_header(&(msg_req->msg), SCTK_MESSAGE_CONTIGUOUS,
                    sctk_free_hetero_messages, sctk_message_copy);
@@ -94,7 +93,7 @@ static void sctk_hetero_messages_recv ( const sctk_communicator_t communicator, 
   sctk_set_header_in_message(&(msg_req->msg), tag, communicator, src, myself,
                              &(msg_req->request), size, message_class,
                              SCTK_DATATYPE_IGNORE, REQUEST_RECV_COLL);
-  msg_req->msg.tail.need_check_in_wait = /* copy_in_recv */ 1;
+  msg_req->msg.tail.need_check_in_wait = 1;
   sctk_recv_message_try_check(&(msg_req->msg), ptp_internal, check);
 }
 
@@ -143,7 +142,7 @@ static int int_cmp ( const void *a, const void *b )
 
 static
 void sctk_barrier_hetero_messages_inter ( const sctk_communicator_t communicator,
-                                          sctk_internal_collectives_struct_t *tmp )
+                                          __UNUSED__ sctk_internal_collectives_struct_t *tmp )
 {
 	int myself;
 	int my_rank;
@@ -199,7 +198,7 @@ void sctk_barrier_hetero_messages_inter ( const sctk_communicator_t communicator
                     process_array[src + (j * (i / barrier_arity))],
                     process_array[myself], 0, &c, 1,
                     SCTK_BARRIER_HETERO_MESSAGE,
-                    sctk_hetero_messages_get_item(&table), ptp_internal, 1, 1);
+                    sctk_hetero_messages_get_item(&table), ptp_internal, 1);
               }
             }
 
@@ -214,12 +213,12 @@ void sctk_barrier_hetero_messages_inter ( const sctk_communicator_t communicator
               sctk_hetero_messages_send(
                   communicator, process_array[myself], process_array[dest], 0,
                   &c, 1, SCTK_BARRIER_HETERO_MESSAGE,
-                  sctk_hetero_messages_get_item(&table), 0, 1);
+                  sctk_hetero_messages_get_item(&table), 0);
               sctk_nodebug("recv %d to %d", dest, myself);
               sctk_hetero_messages_recv(
                   communicator, process_array[dest], process_array[myself], 1,
                   &c, 1, SCTK_BARRIER_HETERO_MESSAGE,
-                  sctk_hetero_messages_get_item(&table), ptp_internal, 0, 1);
+                  sctk_hetero_messages_get_item(&table), ptp_internal, 0);
               sctk_hetero_messages_wait(&table);
               break;
             }
@@ -243,7 +242,7 @@ void sctk_barrier_hetero_messages_inter ( const sctk_communicator_t communicator
                     communicator, process_array[myself],
                     process_array[dest + (j * (i / barrier_arity))], 1, &c, 1,
                     SCTK_BARRIER_HETERO_MESSAGE,
-                    sctk_hetero_messages_get_item(&table), 1, 1);
+                    sctk_hetero_messages_get_item(&table), 1);
               }
             }
           }
@@ -285,7 +284,7 @@ void sctk_barrier_hetero_messages ( const sctk_communicator_t communicator,
 }
 
 
-void sctk_barrier_hetero_messages_init ( sctk_internal_collectives_struct_t *tmp, sctk_communicator_t id )
+void sctk_barrier_hetero_messages_init ( sctk_internal_collectives_struct_t *tmp, __UNUSED__ sctk_communicator_t id )
 {
 	barrier_arity = sctk_runtime_config_get()->modules.inter_thread_comm.barrier_arity;
 	tmp->barrier_func = sctk_barrier_hetero_messages;
@@ -300,8 +299,7 @@ void sctk_barrier_hetero_messages_init ( sctk_internal_collectives_struct_t *tmp
 /*Broadcast                                                             */
 /************************************************************************/
 void sctk_broadcast_hetero_messages_inter ( void *buffer, const size_t size,
-                                            const int root_process, const sctk_communicator_t communicator,
-                                            struct sctk_internal_collectives_struct_s *tmp )
+                                            const int root_process, const sctk_communicator_t communicator )
 {
 
 	/* If only one process involved, we return */
@@ -377,7 +375,7 @@ void sctk_broadcast_hetero_messages_inter ( void *buffer, const size_t size,
                           communicator, process_array[(dest + root) % total],
                           process_array[myself], root_process, buffer, size,
                           specific_tag, sctk_hetero_messages_get_item(&table),
-                          ptp_internal, 1, 1);
+                          ptp_internal, 1);
                       sctk_hetero_messages_wait(&table);
                       break;
                     }
@@ -400,7 +398,6 @@ void sctk_broadcast_hetero_messages_inter ( void *buffer, const size_t size,
                                           total],
                             root_process, buffer, size, specific_tag,
                             sctk_hetero_messages_get_item(&table),
-                            (size < broadcast_check_threshold),
                             (size < broadcast_check_threshold));
                       }
                     }
@@ -449,7 +446,7 @@ void sctk_broadcast_hetero_messages ( void *buffer, const size_t size,
 
 		/* Begin inter node communications */
 		sctk_broadcast_hetero_messages_inter ( buffer, size,
-		                                       root_process, communicator, tmp );
+		                                       root_process, communicator );
 		/* End inter node communications */
 
 		OPA_store_ptr ( &bcast->buff_root, buffer );
@@ -482,7 +479,7 @@ void sctk_broadcast_hetero_messages ( void *buffer, const size_t size,
 	}
 }
 
-void sctk_broadcast_hetero_messages_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id )
+void sctk_broadcast_hetero_messages_init ( struct sctk_internal_collectives_struct_s *tmp, __UNUSED__ sctk_communicator_t id )
 {
 	broadcast_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_arity_max;
 	broadcast_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_max_size;
@@ -508,7 +505,7 @@ static void sctk_allreduce_hetero_messages_intern_inter ( const void *buffer_in,
                                                                            sctk_datatype_t ),
                                                           const sctk_communicator_t communicator,
                                                           const sctk_datatype_t data_type,
-                                                          struct sctk_internal_collectives_struct_s *tmp )
+                                                          __UNUSED__ struct sctk_internal_collectives_struct_s *tmp )
 {
 
 	int ALLREDUCE_ARRITY = 2;
@@ -598,9 +595,11 @@ static void sctk_allreduce_hetero_messages_intern_inter ( const void *buffer_in,
                     process_array[src + (j * (i / ALLREDUCE_ARRITY))],
                     process_array[myself], 0, buffer_table[j - 1], size,
                     specific_tag, sctk_hetero_messages_get_item(&table),
-                    ptp_internal, 0, 0);
+                    ptp_internal, 0);
               }
             }
+
+	    memcpy(buffer_out, buffer_in, size);
 
             sctk_hetero_messages_wait(&table);
 
@@ -621,13 +620,13 @@ static void sctk_allreduce_hetero_messages_intern_inter ( const void *buffer_in,
               sctk_hetero_messages_send(
                   communicator, process_array[myself], process_array[dest], 0,
                   buffer_tmp, size, specific_tag,
-                  sctk_hetero_messages_get_item(&table), 1, 1);
+                  sctk_hetero_messages_get_item(&table), 1);
 
               sctk_nodebug("Leaf Recv from %d", dest);
               sctk_hetero_messages_recv(
                   communicator, process_array[dest], process_array[myself], 1,
                   buffer_out, size, specific_tag,
-                  sctk_hetero_messages_get_item(&table), ptp_internal, 1, 1);
+                  sctk_hetero_messages_get_item(&table), ptp_internal, 1);
               sctk_hetero_messages_wait(&table);
               break;
             }
@@ -651,7 +650,6 @@ static void sctk_allreduce_hetero_messages_intern_inter ( const void *buffer_in,
                     process_array[dest + (j * (i / ALLREDUCE_ARRITY))], 1,
                     buffer_out, size, specific_tag,
                     sctk_hetero_messages_get_item(&table),
-                    (size < allreduce_check_threshold),
                     (size < allreduce_check_threshold));
               }
             }

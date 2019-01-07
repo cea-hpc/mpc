@@ -558,7 +558,7 @@ static inline void sctk_window_RDMA_write_net(struct sctk_window *win,
   sctk_nodebug("RDMA WRITE NET");
 
   sctk_thread_ptp_message_t *msg =
-      sctk_create_header(win->owner, SCTK_MESSAGE_CONTIGUOUS);
+      sctk_create_header(SCTK_MESSAGE_CONTIGUOUS);
   sctk_set_header_in_message(
       msg, -8, win->comm, sctk_get_rank(win->comm, sctk_get_task_rank()),
       win->comm_rank, req, size, SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE, REQUEST_RDMA);
@@ -724,7 +724,7 @@ void sctk_window_RDMA_read_net( struct sctk_window * win, sctk_rail_pin_ctx_t * 
   }
 
   sctk_thread_ptp_message_t *msg =
-      sctk_create_header(win->owner, SCTK_MESSAGE_CONTIGUOUS);
+      sctk_create_header(SCTK_MESSAGE_CONTIGUOUS);
 
   sctk_set_header_in_message(
       msg, -8, win->comm, sctk_get_rank(win->comm, sctk_get_task_rank()),
@@ -1193,6 +1193,7 @@ static inline void sctk_window_RDMA_fetch_and_op_local(
   struct sctk_window *win = sctk_win_translate(remote_win_id);
 
   // sctk_error("Fetch and add");
+  sctk_init_request(req, win->comm, REQUEST_RDMA);
 
   if (!win) {
     sctk_fatal("No such window ID %d", remote_win_id);
@@ -1208,6 +1209,8 @@ static inline void sctk_window_RDMA_fetch_and_op_local(
   void *remote_addr = win->start_addr + offset;
 
   sctk_window_fetch_and_op_operate(op, type, add, remote_addr, fetch_addr);
+
+  sctk_window_complete_request(req);
 }
 
 static inline void sctk_window_RDMA_fetch_and_op_net(
@@ -1235,7 +1238,7 @@ static inline void sctk_window_RDMA_fetch_and_op_net(
   }
 
   sctk_thread_ptp_message_t *msg =
-      sctk_create_header(win->owner, SCTK_MESSAGE_CONTIGUOUS);
+      sctk_create_header(SCTK_MESSAGE_CONTIGUOUS);
 
   sctk_set_header_in_message(msg, -8, win->comm,
                              sctk_get_rank(win->comm, sctk_get_task_rank()),
@@ -1499,7 +1502,7 @@ void sctk_window_RDMA_CAS_net( sctk_window_t remote_win_id, size_t remote_offset
         }
 
         sctk_thread_ptp_message_t *msg =
-            sctk_create_header(win->owner, SCTK_MESSAGE_CONTIGUOUS);
+            sctk_create_header(SCTK_MESSAGE_CONTIGUOUS);
 
         sctk_set_header_in_message(msg, -8, win->comm,
                                    sctk_get_rank(win->comm, win->owner),

@@ -459,11 +459,15 @@ typedef enum {
   MPC_COMBINER_COUNT__
 } MPC_Type_combiner;
 
+/* Note that this state is completed with other types in sctk_ft_types.h */
+
+#define MPC_STATE_NO_SUPPORT 0
+
 #if defined(MPC_Fault_Tolerance) || defined(MPC_MODULE_MPC_Fault_Tolerance)
 /* Checkpoint */
 typedef sctk_ft_state_t MPC_Checkpoint_state;
 #else
-typedef char MPC_Checkpoint_state;
+typedef int MPC_Checkpoint_state;
 #endif
 
 /*Initialisation */
