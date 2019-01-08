@@ -404,7 +404,7 @@ static inline int mpc_MPI_Win_do_registration(sctk_window_t internal_win,
 }
 
 int __mpc_MPI_Win_create(void *base, MPI_Aint size, int disp_unit,
-                         MPI_Info info, MPI_Comm comm, MPI_Win *win,
+                         __UNUSED__ MPI_Info info, MPI_Comm comm, MPI_Win *win,
                          int WIN_FLAVOR, int MEM_MODEL,
                          mpc_MPI_win_storage storage) {
 

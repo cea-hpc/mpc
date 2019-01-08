@@ -373,7 +373,7 @@ static inline xMPI_Request * xMPI_Request_new(MPI_Request * parent, int size)
 
 /** Extended Generalized Request Interface **/
 
-int xMPI_Request_query_fn( void * pxreq, MPI_Status * status )
+int xMPI_Request_query_fn( __UNUSED__ void * pxreq, MPI_Status * status )
 {
     status->MPI_ERROR = MPI_SUCCESS;
 
@@ -474,7 +474,7 @@ static inline int xMPI_Request_gen_poll( xMPI_Request *xreq )
 
 
 
-int xMPI_Request_poll_fn( void * pxreq, MPI_Status * status )
+int xMPI_Request_poll_fn( void * pxreq, __UNUSED__ MPI_Status * status )
 {
     int flag;
     xMPI_Request * xreq = (xMPI_Request*) pxreq;
@@ -489,7 +489,7 @@ int xMPI_Request_poll_fn( void * pxreq, MPI_Status * status )
     return MPI_SUCCESS;
 }
 
-int xMPI_Request_wait_fn( int cnt, void ** array_of_states, double timeout, MPI_Status * st )
+int xMPI_Request_wait_fn( int cnt, void ** array_of_states, __UNUSED__ double timeout, __UNUSED__ MPI_Status * st )
 {
     /* Simple implementation */
     int i;

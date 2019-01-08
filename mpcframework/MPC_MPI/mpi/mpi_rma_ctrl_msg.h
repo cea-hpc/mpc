@@ -67,12 +67,11 @@ struct mpc_MPI_Win_ctrl_message {
 void mpc_MPI_Win_control_message_handler(void *data, size_t size);
 
 void mpc_MPI_Win_control_message_send(MPI_Win win, int rank,
-                                      struct mpc_MPI_Win_ctrl_message *message,
-                                      int allow_direct);
+                                      struct mpc_MPI_Win_ctrl_message *message);
 
 void mpc_MPI_Win_control_message_send_piggybacked(
     MPI_Win win, int rank, struct mpc_MPI_Win_ctrl_message *message,
-    size_t size, int allow_direct);
+    size_t size);
 
 int mpc_MPI_Win_init_lock_message(struct mpc_MPI_Win_ctrl_message *message,
                                   MPI_Win win, int rank, int lock_type);

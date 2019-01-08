@@ -66,7 +66,7 @@ void mpc_MPI_Win_handle_shadow_win_flush(void *data, size_t size) {
   mpc_Win_exposure_end();
 }
 
-void mpc_MPI_Win_handle_win_flush(void *data, size_t size) {
+void mpc_MPI_Win_handle_win_flush(void *data ) {
   struct mpc_MPI_Win_ctrl_message *message =
       (struct mpc_MPI_Win_ctrl_message *)data;
 
@@ -424,14 +424,13 @@ void mpc_MPI_Win_control_message_handler(void *data, size_t size) {
     mpc_MPI_Win_handle_non_contiguous_accumulate_send(data, size);
     break;
   case MPC_MPI_WIN_CTRL_FLUSH:
-    mpc_MPI_Win_handle_win_flush(data, size);
+    mpc_MPI_Win_handle_win_flush(data);
     break;
   }
 }
 
 void mpc_MPI_Win_control_message_send(MPI_Win win, int rank,
-                                      struct mpc_MPI_Win_ctrl_message *message,
-                                      int allow_direct) {
+                                      struct mpc_MPI_Win_ctrl_message *message) {
   /* Retrieve the MPI Desc */
   struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
 
@@ -459,7 +458,7 @@ void mpc_MPI_Win_control_message_send(MPI_Win win, int rank,
 
 void mpc_MPI_Win_control_message_send_piggybacked(
     MPI_Win win, int rank, struct mpc_MPI_Win_ctrl_message *message,
-    size_t size, int allow_direct) {
+    size_t size) {
   assume(sizeof(struct mpc_MPI_Win_ctrl_message) <= size);
 
   /* Retrieve the MPI Desc */

@@ -57,9 +57,7 @@ void sctk_mpi_halo_context_init( struct sctk_mpi_halo_context * ctx )
 
 void sctk_mpi_halo_context_relase( struct sctk_mpi_halo_context * ctx )
 {
-	
-	
-	
+	memset(ctx, 0, sizeof(struct sctk_mpi_halo_context));
 }
 
 static inline int sctk_mpi_halo_context_resize_array( void ** ptr, int current_size )

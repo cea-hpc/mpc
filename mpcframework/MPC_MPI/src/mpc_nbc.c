@@ -673,7 +673,7 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
   return NBC_OK;
 }
 
-static inline int allred_sched_chain(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize) {
+static inline int allred_sched_chain(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule, __UNUSED__ NBC_Handle *handle, int fragsize) {
 	int res, rrpeer, rbpeer, srpeer, sbpeer, numfrag, fragnum, fragcount, thiscount, bstart, bend;
 	long roffset, boffset;
 	
@@ -763,7 +763,7 @@ static inline int allred_sched_chain(int rank, int p, int count, MPI_Datatype da
 	return NBC_OK;
 }
 
-static inline int allred_sched_ring(int r, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule, NBC_Handle *handle) {
+static inline int allred_sched_ring(int r, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, __UNUSED__ int size, int ext, NBC_Schedule *schedule, __UNUSED__ NBC_Handle *handle) {
 	int i; /* runner */
 	int segsize, *segsizes, *segoffsets; /* segment sizes and offsets per segment (number of segments == number of nodes */
 	int speer, rpeer; /* send and recvpeer */
@@ -1068,7 +1068,7 @@ static int NBC_Ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendtype, vo
 	return NBC_OK;
 }
 
-static inline int a2a_sched_pairwise(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
+static inline int a2a_sched_pairwise(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm) {
 	int res, r, sndpeer, rcvpeer;
 	char *rbuf, *sbuf;
 
@@ -1096,7 +1096,7 @@ static inline int a2a_sched_pairwise(int rank, int p, MPI_Aint sndext, MPI_Aint 
 	return res;
 }
 
-static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
+static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm) {
 	int res, r;
 	char *rbuf, *sbuf;
 
@@ -1116,7 +1116,7 @@ static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rc
 	return res;
 }
 
-static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
+static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, __UNUSED__ void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
 	int res, i, r, speer, rpeer, datasize, offset, virtp;
 	char *rbuf, *rtmpbuf, *stmpbuf;
 
@@ -2290,7 +2290,7 @@ static inline int red_sched_binomial(int rank, int p, int root, void *sendbuf, v
 
 
 /* chain send ... */ 
-static __inline__ int red_sched_chain(int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int ext, int size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize) {
+static __inline__ int red_sched_chain(int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int ext, int size, NBC_Schedule *schedule, __UNUSED__ NBC_Handle *handle, int fragsize) {
   int res, vrank, rpeer, speer, numfrag, fragnum, fragcount, thiscount;
   long offset;
 
@@ -3515,7 +3515,7 @@ static int NBC_Iexscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
 
 int __MPC_poll_progress_id(int id);
 
-void *NBC_Pthread_func( void *ptr ) {
+void *NBC_Pthread_func( __UNUSED__ void *ptr ) {
 
   MPI_Request req=MPI_REQUEST_NULL;
   int tmp_recv;
@@ -4526,7 +4526,7 @@ int NBC_Wait(NBC_Handle *handle, MPI_Status *status) {
 	return NBC_OK;
 }
 
-int NBC_Test(NBC_Handle *handle, int *flag, MPI_Status *status) {
+int NBC_Test(NBC_Handle *handle, int *flag, __UNUSED__ MPI_Status *status) {
   int use_progress_thread = 0;
   use_progress_thread =
       sctk_runtime_config_get()->modules.nbc.use_progress_thread;
@@ -5131,7 +5131,7 @@ int NBC_Operation(void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype ty
  * *********************************************************************/
 
 
-int NBC_Finalize(sctk_thread_t * NBC_thread)
+int NBC_Finalize(__UNUSED__ sctk_thread_t * NBC_thread)
 {
   if(sctk_runtime_config_get()->modules.nbc.use_progress_thread == 1)
   {

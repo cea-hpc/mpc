@@ -192,7 +192,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
       /* Now notify remote */
       mpc_MPI_Win_control_message_send_piggybacked(win, target_rank, message,
-                                                   stsize, 1);
+                                                   stsize);
 
       if (!can_write_rma) {
         sctk_wait_message(request);
@@ -411,7 +411,7 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
 
     /* Now notify remote */
     mpc_MPI_Win_control_message_send_piggybacked(win, target_rank, message,
-                                                 stsize, 1);
+                                                 stsize);
   }
 
   return MPI_SUCCESS;
@@ -727,7 +727,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
     /* Now notify remote */
     mpc_MPI_Win_control_message_send_piggybacked(win, target_rank, message,
-                                                 stsize, 1);
+                                                 stsize);
 
     if (do_free_target_type &&
         !sctk_datatype_is_struct_datatype(target_datatype)) {
@@ -1201,7 +1201,7 @@ static inline int mpc_MPI_CAS_fast_path(size_t type_size) {
 static inline int mpc_MPI_Compare_and_swap_RMA(
     struct mpc_MPI_Win *desc, const void *origin_addr, const void *compare_addr,
     void *result_addr, MPI_Datatype datatype, int target_rank,
-    MPI_Aint target_disp, MPI_Win win, sctk_request_t *ref_request) {
+    MPI_Aint target_disp, sctk_request_t *ref_request) {
   if (target_rank == MPC_PROC_NULL)
     return MPI_SUCCESS;
 
@@ -1270,7 +1270,7 @@ int mpc_MPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,
 
   ret = mpc_MPI_Compare_and_swap_RMA(desc, origin_addr, compare_addr,
                                      result_addr, datatype, target_rank,
-                                     target_disp, win, NULL);
+                                     target_disp, NULL);
 
   mpc_MPI_Win_request_array_add_done(&desc->source.requests);
 

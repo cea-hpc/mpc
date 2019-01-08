@@ -1640,7 +1640,7 @@ static inline int __mpc_MPI_Win_flush(int rank, MPI_Win win, int remote,
         struct mpc_MPI_Win_ctrl_message fm;
         mpc_MPI_Win_init_flush(&fm, win, rank);
 
-        mpc_MPI_Win_control_message_send(win, rank, &fm, 1);
+        mpc_MPI_Win_control_message_send(win, rank, &fm);
 
         sctk_request_t _req;
         sctk_request_t *req = &_req;
@@ -1764,7 +1764,7 @@ int mpc_Win_contexes_fence_control(MPI_Win win) {
   return 0;
 }
 
-int mpc_MPI_Win_fence(int assert, MPI_Win win) {
+int mpc_MPI_Win_fence(__UNUSED__ int assert, MPI_Win win) {
 
   /* Retrieve the MPI Desc */
   struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
@@ -1803,7 +1803,7 @@ int mpc_MPI_Win_fence(int assert, MPI_Win win) {
 /* Window Locking                                                       */
 /************************************************************************/
 
-int mpc_MPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win) {
+int mpc_MPI_Win_lock(int lock_type, int rank, __UNUSED__ int assert, MPI_Win win) {
   sctk_nodebug("LLLLLLLLLLLLLLLLL to %d", rank);
   if (rank == MPC_PROC_NULL) {
     return MPI_SUCCESS;
@@ -1885,7 +1885,7 @@ int mpc_MPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win) {
 
   /* Now enter the access epoch */
 
-  mpc_MPI_Win_control_message_send(win, rank, &message, 0);
+  mpc_MPI_Win_control_message_send(win, rank, &message);
 
   if (!do_lock_all) {
     if (mpc_Win_source_ctx_start_access(win, MPC_WIN_SINGLE_REMOTE, &rank, 1,
@@ -1993,7 +1993,7 @@ static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
     return MPI_SUCCESS;
   }
 
-  mpc_MPI_Win_control_message_send(win, rank, &message, 0);
+  mpc_MPI_Win_control_message_send(win, rank, &message);
 
   if (!do_unlock_all) {
     mpc_MPI_Win_request_array_fence(&desc->source.requests);
@@ -2014,7 +2014,7 @@ int mpc_MPI_Win_unlock(int rank, MPI_Win win) {
   return __mpc_MPI_Win_unlock(rank, win, 0);
 }
 
-int mpc_MPI_Win_lock_all(int assert, MPI_Win win) {
+int mpc_MPI_Win_lock_all(__UNUSED__ int assert, MPI_Win win) {
 
   /* Retrieve the MPI Desc */
   struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
@@ -2059,7 +2059,7 @@ int mpc_MPI_Win_unlock_all(MPI_Win win) {
 /* Active Target Sync                                                   */
 /************************************************************************/
 
-int mpc_MPI_Win_post(MPI_Group group, int assert, MPI_Win win) {
+int mpc_MPI_Win_post(MPI_Group group, __UNUSED__ int assert, MPI_Win win) {
   int group_size;
   int *ranks = NULL;
 
@@ -2099,7 +2099,7 @@ int mpc_MPI_Win_test(MPI_Win win, int *flag) {
   return MPI_SUCCESS;
 }
 
-int mpc_MPI_Win_start(MPI_Group group, int assert, MPI_Win win) {
+int mpc_MPI_Win_start(MPI_Group group, __UNUSED__ int assert, MPI_Win win) {
   int group_size;
   int *ranks = NULL;
 
