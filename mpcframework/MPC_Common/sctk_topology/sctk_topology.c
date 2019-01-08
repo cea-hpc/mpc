@@ -373,14 +373,15 @@ int sctk_get_cpu_compute_node_topology()
 }
 
 /* return logical index from topology_compute_node os index */
-int sctk_get_logical_from_os_compute_node_topology(int cpu_os){
+int sctk_get_logical_from_os_compute_node_topology(unsigned int cpu_os){
     /* hwloc_get_pu_obj_by_os_inde give false resultat i suppose */
     /*hwloc_obj_t cpu = hwloc_get_pu_obj_by_os_index(topology_compute_node, cpu_os);
     return cpu->logical_index;*/
-    int nb;
+    unsigned int nb;
+    unsigned int i;
     if(sctk_enable_smt_capabilities){
-        nb =hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
-        int i;
+        nb = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
+
         for(i = 0; i <  nb; i++){
             if(hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_PU, i)->os_index == cpu_os){
                 hwloc_obj_t pu = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_PU, i);
@@ -390,7 +391,7 @@ int sctk_get_logical_from_os_compute_node_topology(int cpu_os){
     }
     else{
         nb =hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_CORE);
-        int i;
+
         for(i = 0; i <  nb; i++){
             if(hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_CORE, i)->os_index == cpu_os){
                 hwloc_obj_t pu = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_CORE, i);
@@ -454,7 +455,7 @@ restart_restrict:
         hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
         hwloc_cpuset_t set = hwloc_bitmap_alloc();
         hwloc_bitmap_zero(cpuset);
-        const int core_number = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_CORE);
+        const unsigned int core_number = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_CORE);
 
         for(i=0;i < core_number; ++i)
         {
@@ -694,7 +695,7 @@ static void sctk_read_format_option_text_placement(FILE *f_textual, struct sctk_
     }
     fclose(f_textual);
 }
-static hwloc_obj_t hwloc_get_core_by_os_index(hwloc_topology_t topology, int os_i){
+static hwloc_obj_t hwloc_get_core_by_os_index(hwloc_topology_t topology, unsigned int os_i){
     int depth_core = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE); 
     int i;
     int nb_core = hwloc_get_nbobjs_by_depth(topology, depth_core);
@@ -713,7 +714,7 @@ static int determine_lower_logical(int *os_index, int lenght){
     int i;
     int lower_logical = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
     int current_logical = 0;
-    hwloc_obj_t pu; 
+    hwloc_obj_t pu;
     for(i=0;i<lenght;i++){
         if(os_index[i] != -1){
                 if(sctk_enable_smt_capabilities){
@@ -764,7 +765,7 @@ static int sctk_determine_higher_logical(int *os_index, int lenght){
 
 /* Write in file as lstopo adding informations on the topology and thread placement (text option) */
 static void print_children(hwloc_topology_t topology, hwloc_obj_t obj, 
-        int depth, struct sctk_text_option_s *tab_option, int num_os,int higher_logical , int lower_logical, const char* HostName, FILE* f, int __UNUSED__ ind_child, int last_arity)
+        int depth, struct sctk_text_option_s *tab_option, int num_os, unsigned int higher_logical , int lower_logical, const char* HostName, FILE* f, int __UNUSED__ ind_child, int last_arity)
 {
     char string[128];
     char string_mpc[128];
@@ -863,7 +864,7 @@ void print_cpuset(hwloc_bitmap_t cpuset)
 }
 
 static void
-sctk_update_topology ( const int processor_number,  const int index_first_processor )
+sctk_update_topology ( const int processor_number,  const unsigned int index_first_processor )
 {
 	sctk_processor_number_on_node = processor_number ;
 	hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
@@ -1008,7 +1009,7 @@ sctk_restrict_topology ()
 		hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
 		hwloc_cpuset_t set = hwloc_bitmap_alloc();
 		hwloc_bitmap_zero(cpuset);
-		const int core_number = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
+		const unsigned int core_number = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
 
 		for(i=0;i < core_number; ++i)
 		{
@@ -1453,7 +1454,7 @@ int __sctk_topology_get_roots_for_level( hwloc_obj_t obj, hwloc_cpuset_t roots )
 	 	return 1;
 	}
 	
-	int i;
+	unsigned int i;
 	
 	int ret = 0;
 	
@@ -1600,7 +1601,7 @@ int sctk_topology_distance_from_pu( int source_pu, hwloc_obj_t target_obj )
 */
 static __thread int sctk_get_cpu_val = -1;
 
-static inline  int sctk_get_cpu_intern ()
+static inline int sctk_get_cpu_intern ()
 {
 	hwloc_cpuset_t set = hwloc_bitmap_alloc();
 
@@ -1646,18 +1647,18 @@ static inline  int sctk_get_cpu_intern ()
 	return cpu;
 }
 
- int sctk_get_cpu()
+unsigned int sctk_get_cpu()
 {
 	if(sctk_get_cpu_val < 0)
 	{
 		sctk_spinlock_lock(&topology_lock);
-		int ret = sctk_get_cpu_intern();
+		unsigned int ret = (unsigned int)sctk_get_cpu_intern();
 		sctk_spinlock_unlock(&topology_lock);
 		return ret;
 	}
 	else
 	{
-		return sctk_get_cpu_val;
+		return (unsigned int)sctk_get_cpu_val;
 	}
 }
 
@@ -2178,12 +2179,12 @@ void print_neighborhood(int cpuid, int nb_cpus, int* neighborhood, hwloc_obj_t* 
  * @param nb_cpus Number of neighbor
  * @param neighborhood Neighbor list
  */
-void sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood)
+void sctk_get_neighborhood(int cpuid, unsigned int nb_cpus, int* neighborhood)
 {
-	int i;
+	unsigned int i;
 	hwloc_obj_t *objs;
 	hwloc_obj_t currentCPU ; 
-	unsigned nb_cpus_found;
+	unsigned int nb_cpus_found;
 
 	currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuid);
 
@@ -2221,9 +2222,9 @@ void sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood)
  * @param nb_cpus Number of neighbor
  * @param neighborhood Neighbor list
  */
-void  sctk_get_neighborhood_topology(hwloc_topology_t topo, int cpuid, int nb_cpus, int* neighborhood)
+void  sctk_get_neighborhood_topology(hwloc_topology_t topo, int cpuid, unsigned int nb_cpus, int* neighborhood)
 {
-	int i;
+	unsigned int i;
 	hwloc_obj_t *objs;
 	hwloc_obj_t currentCPU ; 
 	unsigned nb_cpus_found;

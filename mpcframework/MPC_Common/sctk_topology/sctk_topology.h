@@ -72,7 +72,7 @@ void sctk_topology_destroy(void);
 
 /*! \brief Return the current core_id
 */
-int sctk_get_cpu(void);
+unsigned int sctk_get_cpu(void);
 
 /*! \brief Return the Socket ID for current CPU
  */
@@ -143,7 +143,7 @@ char *sctk_get_node_name(void);
  * @param nb_cpus Number of neighbor
  * @param neighborhood Neighbor list
 */
-void sctk_get_neighborhood(int cpuid, int nb_cpus, int *neighborhood);
+void sctk_get_neighborhood(int cpuid, unsigned int nb_cpus, int *neighborhood);
 
 /*! \brief Return the closest core_id
  * @param cpuid Main core_id
@@ -151,7 +151,7 @@ void sctk_get_neighborhood(int cpuid, int nb_cpus, int *neighborhood);
  * @param neighborhood Neighbor list
 */
 void sctk_get_neighborhood_topology(hwloc_topology_t topo, int cpuid,
-                                    int nb_cpus, int *neighborhood);
+                                    unsigned int nb_cpus, int *neighborhood);
 
 /*! \brief Return the number of NUMA nodes
 */
@@ -268,7 +268,7 @@ void create_placement_text(int os_pu, int os_master_pu, int task_id, int vp, int
 int sctk_get_cpu_compute_node_topology();
 
 /* Get the logical index from the os one from the topology_compute_node */
-int sctk_get_logical_from_os_compute_node_topology(int cpu_os);
+int sctk_get_logical_from_os_compute_node_topology(unsigned int cpu_os);
 
 /* Get the os index from the logical one from the topology_compute_node */
 int sctk_get_cpu_compute_node_topology_from_logical( int logical_pu);

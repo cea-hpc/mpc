@@ -115,7 +115,7 @@ static int * ___current_core_id = NULL;
 
 int sctk_device_count_pu_on_numa( hwloc_obj_t obj  )
 {
-	int i;
+	unsigned int i;
 	
 	if( obj->type == HWLOC_OBJ_PU )
 	{
@@ -554,7 +554,7 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
 {
 	/* First walk to count */
 	hwloc_obj_t pci_dev =  hwloc_get_next_pcidev( topology, NULL );
-	int i;
+	unsigned int i;
 	
 	while( pci_dev )
 	{
@@ -613,7 +613,8 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
         // hwloc_topology_export_xml(topology, "-");
 
         //*
-        for (i = 0; i < sctk_devices_count; i++) {
+	int j;
+        for (j = 0; j < sctk_devices_count; j++) {
           sctk_device_print(&sctk_devices[i]);
         }
         //*/
@@ -1003,7 +1004,7 @@ sctk_device_attach_freest_device_from(sctk_device_t **device_list, int count) {
       freest_elem = current;
       sctk_nodebug("First device: %d (%d)", freest_elem->device_id,
                    freest_elem->nb_res);
-    } else if (current->nb_res < freest_value) {
+    } else if ((int)current->nb_res < freest_value) {
       /* free the previous selected device */
       sctk_spinlock_unlock(&freest_elem->res_lock);
       freest_value = current->nb_res;
