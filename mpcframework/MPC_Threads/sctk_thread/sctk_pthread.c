@@ -406,7 +406,7 @@ local_pthread_create (pthread_t * restrict thread,
 }
 
 static int
-sctk_pthread_thread_attr_setbinding (sctk_thread_attr_t * __attr, int __binding)
+sctk_pthread_thread_attr_setbinding (__UNUSED__ sctk_thread_attr_t * __attr, __UNUSED__ int __binding)
 {
 #if HAVE_PTHREAD_ATTR_SETAFFINITY_NP
     cpu_set_t mask;
@@ -418,7 +418,7 @@ sctk_pthread_thread_attr_setbinding (sctk_thread_attr_t * __attr, int __binding)
 }
 
 static int
-sctk_pthread_thread_attr_getbinding (sctk_thread_attr_t * __attr, int *__binding)
+sctk_pthread_thread_attr_getbinding (__UNUSED__ sctk_thread_attr_t * __attr, __UNUSED__ int *__binding)
 {
   return 0;
 }

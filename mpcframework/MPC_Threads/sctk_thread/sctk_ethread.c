@@ -448,13 +448,13 @@ sctk_ethread_sigsuspend (sigset_t * set)
 
 
 static int
-sctk_ethread_thread_attr_setbinding (sctk_thread_attr_t * __attr, int __binding)
+sctk_ethread_thread_attr_setbinding (__UNUSED__ sctk_thread_attr_t * __attr, __UNUSED__  int __binding)
 {
   return 0;
 }
 
 static int
-sctk_ethread_thread_attr_getbinding (sctk_thread_attr_t * __attr, int *__binding)
+sctk_ethread_thread_attr_getbinding (__UNUSED__  sctk_thread_attr_t * __attr, __UNUSED__  int *__binding)
 {
   return 0;
 }

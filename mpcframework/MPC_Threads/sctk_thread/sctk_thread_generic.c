@@ -1604,8 +1604,8 @@ sctk_thread_generic_create (sctk_thread_generic_t * threadp,
 }
 
 static int
-sctk_thread_generic_atfork( void (*prepare)(void), void (*parent)(void),
-				void (*child)(void) ){
+sctk_thread_generic_atfork(__UNUSED__  void (*prepare)(void), __UNUSED__ void (*parent)(void),
+				__UNUSED__ void (*child)(void) ){
   not_implemented();
   return 0;
 }

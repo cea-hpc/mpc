@@ -48,7 +48,7 @@ extern "C"
     sctk_free (attr);
     return 0;
   }
-  /*les différents attributs */ static inline
+  /*les diffï¿½rents attributs */ static inline
   int __sctk_ethread_attr_setdetachstate (sctk_ethread_attr_t * attr,
 					  int detachstate)
   {
@@ -134,7 +134,7 @@ extern "C"
   {
     sctk_ethread_check_attr (attr);
     if (attr == NULL)
-      return SCTK_ESRCH;	/*la norme ne précise pas le signal a envoyer */
+      return SCTK_ESRCH;	/*la norme ne prï¿½cise pas le signal a envoyer */
     sctk_ethread_check_attr (attr);
     attr->ptr->stack = (char *) stackaddr;
     return 0;
@@ -391,7 +391,7 @@ extern "C"
   }
 
   /*
-     on ne gère pas encore la condition comme point de cancel
+     on ne gï¿½re pas encore la condition comme point de cancel
    */
   static inline int __sctk_ethread_cond_wait (sctk_ethread_cond_t * cond,
 					      sctk_ethread_virtual_processor_t
@@ -545,7 +545,7 @@ extern "C"
 	      /*
 	       *on reparcours toute la liste pour savoir ou on est
 	       *on peut etre absent (apres un broadcast qui c'est produit 
-	       *entre le début du while et ici  par exemple          
+	       *entre le dï¿½but du while et ici  par exemple          
 	       */
 	      while (ptr->list != NULL)
 		{
@@ -571,23 +571,23 @@ extern "C"
 	    }
       }
 
-    sctk_nodebug ("le mutex a été récupéré");
+    sctk_nodebug ("le mutex a ï¿½tï¿½ rï¿½cupï¿½rï¿½");
     __sctk_ethread_mutex_lock (vp, owner, mutex);
     return ret;
   }
 #else
-  static inline int __sctk_ethread_cond_timedwait (sctk_ethread_cond_t *
+  static inline int __sctk_ethread_cond_timedwait (__UNUSED__ sctk_ethread_cond_t *
 						   cond,
-						   sctk_ethread_virtual_processor_t
+						   __UNUSED__ sctk_ethread_virtual_processor_t
 						   * vp,
-						   sctk_ethread_per_thread_t
+						   __UNUSED__ sctk_ethread_per_thread_t
 						   * owner,
-						   void (*retrun_task)
+						  __UNUSED__  void (*retrun_task)
 						   (sctk_ethread_per_thread_t
 						    * task),
-						   sctk_ethread_mutex_t *
+						   __UNUSED__ sctk_ethread_mutex_t *
 						   mutex,
-						   const struct timespec
+						   __UNUSED__ const struct timespec
 						   *abstime)
   {
     not_implemented ();
@@ -783,7 +783,7 @@ extern "C"
       }
     else
       {
-	/*lock->lock--; effectué au début */
+	/*lock->lock--; effectuï¿½ au dï¿½but */
 	sctk_spinlock_unlock (&lock->spinlock);
       }
 
@@ -796,7 +796,7 @@ extern "C"
 
     if (lock->lock <= 0)
       {
-	sctk_nodebug ("try_wait : sem occupé");
+	sctk_nodebug ("try_wait : sem occupï¿½");
 	errno = SCTK_EAGAIN;
 	return -1;
       }
@@ -804,7 +804,7 @@ extern "C"
 
     if (lock->lock <= 0)
       {
-	sctk_nodebug ("try_wait : sem occupé");
+	sctk_nodebug ("try_wait : sem occupï¿½");
 	sctk_spinlock_unlock (&lock->spinlock);
 	errno = SCTK_EAGAIN;
 	return -1;
@@ -879,128 +879,124 @@ extern "C"
   } sctk_ethread_sem_head_list;
 #define SCTK_SEM_HEAD_INITIALIZER {SCTK_SPINLOCK_INITIALIZER,NULL}
 
-  static inline sctk_ethread_sem_t *__sctk_ethread_sem_open (const char
-							     *name,
-							     int flags,
-							     sctk_ethread_sem_head_list
-							     * head,
-							     mode_t mode,
-							     int value)
+  static inline sctk_ethread_sem_t *__sctk_ethread_sem_open( const char
+																 *name,
+															 int flags,
+															 sctk_ethread_sem_head_list
+																 *head,
+															 __UNUSED__ mode_t mode,
+															 int value )
   {
-    int length;
-    sctk_ethread_sem_t *sem = NULL;
-    volatile sctk_ethread_sem_name_t *tmp, *sem_struct;
-    char *_name;
-    sem_struct = head->next;
-    if (name == NULL)
-      {
-	errno = SCTK_EINVAL;
-	return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
-      }
+	  int length;
+	  sctk_ethread_sem_t *sem = NULL;
+	  volatile sctk_ethread_sem_name_t *tmp, *sem_struct;
+	  char *_name;
+	  sem_struct = head->next;
+	  if ( name == NULL )
+	  {
+		  errno = SCTK_EINVAL;
+		  return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
+	  }
 
-    length = strlen (name);
-    _name = (char *) sctk_malloc ((length + 1) * sizeof (char));
-    if (name[0] == '/')
-      {
-	strcpy (_name, name + 1);
-	_name[length - 1] = '\0';
-      }
-    else
-      {
-	strcpy (_name, name);
-	_name[length] = '\0';
-      }
-    /*on recherche le sémaphore */
-    tmp = sem_struct;
-    sctk_spinlock_lock (&head->spinlock);
-    while (tmp != NULL)
-      {
-	if (strcmp (tmp->name, _name) == 0 && tmp->unlink == 0)
-	  break;
-	else
+	  length = strlen( name );
+	  _name = (char *) sctk_malloc( ( length + 1 ) * sizeof( char ) );
+	  if ( name[0] == '/' )
 	  {
-	    sem_struct = tmp;
-	    tmp = tmp->next;
+		  strcpy( _name, name + 1 );
+		  _name[length - 1] = '\0';
 	  }
-      }
-    sctk_nodebug
-      ("la recherche a trouvé : %p , la création est à  : %d \n",
-       tmp, flags & SCTK_O_CREAT);
+	  else
+	  {
+		  strcpy( _name, name );
+		  _name[length] = '\0';
+	  }
+	  /* We search the semaphore */
+	  tmp = sem_struct;
+	  sctk_spinlock_lock( &head->spinlock );
+	  while ( tmp != NULL )
+	  {
+		  if ( strcmp( tmp->name, _name ) == 0 && tmp->unlink == 0 )
+			  break;
+		  else
+		  {
+			  sem_struct = tmp;
+			  tmp = tmp->next;
+		  }
+	  }
 
-    if ((tmp != NULL) && ((flags & SCTK_O_CREAT) && (flags & SCTK_O_EXCL)))
-      {
-	errno = EEXIST;
-	sctk_spinlock_unlock (&head->spinlock);
-	return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
-      }
-    else if (tmp != NULL)
-      {
-	sctk_free (_name);
-	tmp->nb++;
-	sctk_spinlock_unlock (&head->spinlock);
-	return tmp->sem;
-      }
-    if (tmp == NULL && (flags & SCTK_O_CREAT))
-      {
-	sctk_ethread_sem_name_t *maillon;
-	int ret;
-	sem = (sctk_ethread_sem_t *)
-	  sctk_malloc (sizeof (sctk_ethread_sem_t));
-	if (sem == NULL)
+	  if ( ( tmp != NULL ) && ( ( flags & SCTK_O_CREAT ) && ( flags & SCTK_O_EXCL ) ) )
 	  {
-	    sctk_free (_name);
-	    errno = SCTK_ENOSPC;
-	    sctk_spinlock_unlock (&head->spinlock);
-	    return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
+		  errno = EEXIST;
+		  sctk_spinlock_unlock( &head->spinlock );
+		  return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
 	  }
-	ret = __sctk_ethread_sem_init (sem, 0, value);
-	if (ret != 0)
+	  else if ( tmp != NULL )
 	  {
-	    sctk_free (_name);
-	    sctk_free (sem);
-	    errno = ret;
-	    sctk_spinlock_unlock (&head->spinlock);
-	    return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
+		  sctk_free( _name );
+		  tmp->nb++;
+		  sctk_spinlock_unlock( &head->spinlock );
+		  return tmp->sem;
 	  }
-	maillon = (sctk_ethread_sem_name_t *)
-	  sctk_malloc (sizeof (sctk_ethread_sem_name_t));
-	sctk_nodebug ("%p pointe sur %p avec maillon vaux %p\n",
-		      sem_struct, sem_struct, maillon);
-	if (maillon == NULL)
+	  if ( tmp == NULL && ( flags & SCTK_O_CREAT ) )
 	  {
-	    sctk_free (_name);
-	    sctk_free (sem);
-	    errno = SCTK_ENOSPC;
-	    sctk_spinlock_unlock (&head->spinlock);
-	    return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
+		  sctk_ethread_sem_name_t *maillon;
+		  int ret;
+		  sem = (sctk_ethread_sem_t *)
+			  sctk_malloc( sizeof( sctk_ethread_sem_t ) );
+		  if ( sem == NULL )
+		  {
+			  sctk_free( _name );
+			  errno = SCTK_ENOSPC;
+			  sctk_spinlock_unlock( &head->spinlock );
+			  return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
+		  }
+		  ret = __sctk_ethread_sem_init( sem, 0, value );
+		  if ( ret != 0 )
+		  {
+			  sctk_free( _name );
+			  sctk_free( sem );
+			  errno = ret;
+			  sctk_spinlock_unlock( &head->spinlock );
+			  return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
+		  }
+		  maillon = (sctk_ethread_sem_name_t *)
+			  sctk_malloc( sizeof( sctk_ethread_sem_name_t ) );
+		  sctk_nodebug( "%p pointe sur %p avec maillon vaux %p\n",
+						sem_struct, sem_struct, maillon );
+		  if ( maillon == NULL )
+		  {
+			  sctk_free( _name );
+			  sctk_free( sem );
+			  errno = SCTK_ENOSPC;
+			  sctk_spinlock_unlock( &head->spinlock );
+			  return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
+		  }
+		  if ( sem_struct != NULL )
+		  {
+			  maillon->next = sem_struct->next;
+			  sem_struct->next = maillon;
+		  }
+		  else
+		  {
+			  head->next = maillon;
+		  }
+		  maillon->name = _name;
+		  maillon->sem = sem;
+		  maillon->nb = 1;
+		  maillon->unlink = 0;
+		  sctk_nodebug( "head %p pointe sur %p avec maillon vaux %p\n",
+						head, head->next, maillon );
 	  }
-	if (sem_struct != NULL)
+	  if ( tmp == NULL && !( flags & SCTK_O_CREAT ) )
 	  {
-	    maillon->next = sem_struct->next;
-	    sem_struct->next = maillon;
+		  sctk_free( _name );
+		  errno = SCTK_ENOENT;
+		  sctk_spinlock_unlock( &head->spinlock );
+		  return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
 	  }
-	else
-	  {
-	    head->next = maillon;
-	  }
-	maillon->name = _name;
-	maillon->sem = sem;
-	maillon->nb = 1;
-	maillon->unlink = 0;
-	sctk_nodebug ("head %p pointe sur %p avec maillon vaux %p\n",
-		      head, head->next, maillon);
-
-      }
-    if (tmp == NULL && !(flags & SCTK_O_CREAT))
-      {
-	sctk_free (_name);
-	errno = SCTK_ENOENT;
-	sctk_spinlock_unlock (&head->spinlock);
-	return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
-      }
-    sctk_nodebug ("sem vaux %p avec une valeur de %d", sem, sem->lock);
-    sctk_spinlock_unlock (&head->spinlock);
-    return sem;
+	  sctk_nodebug( "sem vaux %p avec une valeur de %d", sem, sem->lock );
+	  sctk_spinlock_unlock( &head->spinlock );
+	  return sem;
   }
 
   static inline void __sctk_ethread_sem_clean (volatile
@@ -1041,7 +1037,7 @@ extern "C"
 	strcpy (_name, name);
 	_name[length] = '\0';
       }
-    /*on recherche le sémaphore */
+    /*on recherche le sï¿½maphore */
     tmp = sem_struct;
     sctk_spinlock_lock (&head->spinlock);
     while (tmp != NULL)
@@ -1062,9 +1058,9 @@ extern "C"
 	return -1;
       }
     else if (tmp->nb == 0)
-      {				/*tout le monde a déja fermé ce sémaphore, on le détruit */
+      {				/*tout le monde a dï¿½ja fermï¿½ ce sï¿½maphore, on le dï¿½truit */
 	sctk_nodebug
-	  ("unlink détruit le maillon %p avec le sémaphore %p", tmp,
+	  ("unlink dï¿½truit le maillon %p avec le sï¿½maphore %p", tmp,
 	   tmp->sem);
 	if (head->next == tmp)
 	  head->next = tmp->next;
@@ -1089,7 +1085,7 @@ extern "C"
   {
     volatile sctk_ethread_sem_name_t *tmp, *sem_struct;
     sem_struct = head->next;
-    /*on recherche le sémaphore */
+    /*on recherche le sï¿½maphore */
     tmp = sem_struct;
     sctk_spinlock_lock (&head->spinlock);
     while (tmp != NULL && sem != tmp->sem)
@@ -1098,7 +1094,7 @@ extern "C"
 	tmp = tmp->next;
       }
 
-    sctk_nodebug ("la recherche a trouvé : %p pour le sémaphore %p\n",
+    sctk_nodebug ("la recherche a trouvï¿½ : %p pour le sï¿½maphore %p\n",
 		  tmp, sem);
     if (tmp == NULL)
       {
@@ -1110,7 +1106,7 @@ extern "C"
     if (tmp->nb == 0 && tmp->unlink != 0)
       {
 	sctk_nodebug
-	  ("close détruit le maillon %p avec le sémaphore %p", tmp, tmp->sem);
+	  ("close dï¿½truit le maillon %p avec le sï¿½maphore %p", tmp, tmp->sem);
 	sctk_nodebug ("sem_struct : %p , tmp : %p ", sem_struct, tmp);
 	if (head->next == tmp)
 	  head->next = tmp->next;
@@ -1126,7 +1122,7 @@ extern "C"
 
 
   /*sched priority 
-   *on ne gère que 0 pour l'instant*/
+   *on ne gï¿½re que 0 pour l'instant*/
   static inline int __sctk_ethread_sched_get_priority_max (int policy)
   {
     if (policy != SCTK_SCHED_FIFO && policy != SCTK_SCHED_RR
@@ -1237,7 +1233,7 @@ extern "C"
     return 0;
   }
   /*on ne supporte pas le EDEADLOCK
-   *La norme n'est pas précise à ce sujet
+   *La norme n'est pas prï¿½cise ï¿½ ce sujet
    */
   int sctk_thread_yield (void);
 #define SCTK_SPIN_DELAY 10
@@ -1275,7 +1271,7 @@ extern "C"
   }
 
   /* RWlock */
-  /*on ne supporte pas les attributs dans le sens où on ne supporte pas le fait 
+  /*on ne supporte pas les attributs dans le sens oï¿½ on ne supporte pas le fait 
    *qu'on soit sur plusieurs processus*/
   static inline int
     __sctk_ethread_rwlock_init (sctk_ethread_rwlock_t * rwlock,
@@ -1459,7 +1455,7 @@ extern "C"
 	    return 0;
 	  }
       }
-    /*si il y a aucune attente , alors on peut écrire directement */
+    /*si il y a aucune attente , alors on peut ï¿½crire directement */
     if (type == SCTK_RWLOCK_WRITE
 	&& rwlock->current == SCTK_RWLOCK_ALONE
 	&& rwlock->wait == SCTK_RWLOCK_NO_WR_WAIT)
@@ -1520,7 +1516,7 @@ extern "C"
 
 
   /* Barrier */
-  /*on ne supporte pas les attributs dans le sens où on ne supporte pas le fait 
+  /*on ne supporte pas les attributs dans le sens oï¿½ on ne supporte pas le fait 
    *qu'on soit sur plusieurs processus*/
   static inline int
     __sctk_ethread_barrier_init (sctk_ethread_barrier_t * barrier,

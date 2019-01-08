@@ -173,7 +173,7 @@ __sctk_thread_generic_rwlocks_rwlock_destroy( sctk_thread_generic_rwlock_t* lock
 static inline int
 __sctk_thread_generic_rwlocks_rwlock_init( sctk_thread_generic_rwlock_t* lock,
                     const sctk_thread_generic_rwlockattr_t* attr,
-                    sctk_thread_generic_scheduler_t* sched ){
+                    __UNUSED__ sctk_thread_generic_scheduler_t* sched ){
  /*
  	 ERRORS:
      EINVAL The value specified for the argument is not correct
@@ -548,17 +548,16 @@ sctk_thread_generic_rwlocks_rwlock_unlock( sctk_thread_generic_rwlock_t* lock,
   return __sctk_thread_generic_rwlocks_rwlock_unlock( lock, sched );
 }
 
-int
-sctk_thread_generic_rwlocks_rwlockattr_getkind_np( sctk_thread_generic_rwlockattr_t * attr,
-                    int* pref){
-  not_implemented ();
-  return 0;
+int sctk_thread_generic_rwlocks_rwlockattr_getkind_np( __UNUSED__ sctk_thread_generic_rwlockattr_t *attr,
+												                               __UNUSED__ int *pref )
+{
+	not_implemented();
+	return 0;
 }
 
-int
-sctk_thread_generic_rwlocks_rwlockattr_setkind_np( sctk_thread_generic_rwlockattr_t * attr,
-                    int pref){
-  not_implemented ();
-  return 0;
+int sctk_thread_generic_rwlocks_rwlockattr_setkind_np( __UNUSED__ sctk_thread_generic_rwlockattr_t *attr,
+													                             __UNUSED__ int pref )
+{
+	not_implemented();
+	return 0;
 }
-

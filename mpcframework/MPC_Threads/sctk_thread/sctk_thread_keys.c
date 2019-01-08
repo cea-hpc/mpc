@@ -60,7 +60,7 @@ sctk_thread_generic_keys_getspecific (sctk_thread_key_t __key,
 
 int
 sctk_thread_generic_keys_key_create (sctk_thread_key_t * __key,
-				void (*__destr_function) (void *),sctk_thread_generic_keys_t* keys)
+				void (*__destr_function) (void *), __UNUSED__ sctk_thread_generic_keys_t* keys)
 {
   int i;
   sctk_spinlock_lock(&key_lock);

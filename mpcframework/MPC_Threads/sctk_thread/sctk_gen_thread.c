@@ -68,7 +68,7 @@ sctk_touch_long (const long ptr)
 }
 
 static double
-sctk_gen_thread_get_activity (int i)
+sctk_gen_thread_get_activity (__UNUSED__ int i)
 {
   sctk_nodebug ("sctk_gen_thread_get_activity");
   return -1;

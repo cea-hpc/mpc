@@ -544,13 +544,13 @@ volatile int sctk_current_local_tasks_nb = 0;
 sctk_thread_mutex_t sctk_current_local_tasks_lock =
   SCTK_THREAD_MUTEX_INITIALIZER;
 
-void sctk_unregister_task (const int i){
+void sctk_unregister_task (__UNUSED__ const int i){
   sctk_thread_mutex_lock (&sctk_current_local_tasks_lock);
   sctk_current_local_tasks_nb--;
   sctk_thread_mutex_unlock (&sctk_current_local_tasks_lock);
 }
 
-void sctk_register_task (const int i){
+void sctk_register_task (__UNUSED__ const int i){
   sctk_error("REG !!!!!!!");
   sctk_thread_mutex_lock (&sctk_current_local_tasks_lock);
   sctk_current_local_tasks_nb++;
@@ -652,12 +652,12 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 #endif
 
       sctk_register_thread_initial (tmp.task_id);
-      sctk_terminaison_barrier (tmp.task_id);
+      sctk_terminaison_barrier ();
       sctk_online_program = 1;
 #ifdef MPC_USE_INFINIBAND
       sctk_ib_prof_init_reference_clock();
 #endif
-      sctk_terminaison_barrier (tmp.task_id);
+      sctk_terminaison_barrier ();
     }
 #endif
 
@@ -736,9 +736,9 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   if (tmp.task_id >= 0)
     {
       sctk_nodebug ("sctk_terminaison_barrier");
-      sctk_terminaison_barrier (tmp.task_id);
+      sctk_terminaison_barrier ();
       sctk_online_program = 0;
-      sctk_terminaison_barrier (tmp.task_id);
+      sctk_terminaison_barrier ();
       sctk_nodebug ("sctk_terminaison_barrier done");
       sctk_net_finalize_task_level(tmp.task_id, tmp.virtual_processor);
       sctk_unregister_task (tmp.task_id);
@@ -1271,7 +1271,7 @@ sctk_thread_exit_cleanup ()
       if (tmp->task_id >= 0 && tmp->user_thread == 0)
 	{
 	  sctk_nodebug ("sctk_terminaison_barrier");
-	  sctk_terminaison_barrier (tmp->task_id);
+	  sctk_terminaison_barrier ();
 	  sctk_nodebug ("sctk_terminaison_barrier done");
 	  sctk_unregister_task (tmp->task_id);
 	  sctk_net_send_task_end (tmp->task_id, sctk_process_rank);
@@ -1602,8 +1602,8 @@ sctk_thread_mutex_unlock (sctk_thread_mutex_t * __mutex)
 }
 
 int
-sctk_thread_mutex_getprioceiling (const sctk_thread_mutex_t * restrict mutex,
-				  int *restrict prioceiling)
+sctk_thread_mutex_getprioceiling (__UNUSED__ const sctk_thread_mutex_t * restrict mutex,
+				                          __UNUSED__ int *restrict prioceiling)
 {
   int res = 0;
   not_implemented ();
@@ -1611,8 +1611,8 @@ sctk_thread_mutex_getprioceiling (const sctk_thread_mutex_t * restrict mutex,
 }
 
 int
-sctk_thread_mutex_setprioceiling (sctk_thread_mutex_t * restrict mutex,
-				  int prioceiling, int *restrict old_ceiling)
+sctk_thread_mutex_setprioceiling (__UNUSED__ sctk_thread_mutex_t * restrict mutex,
+				                          __UNUSED__ int prioceiling, __UNUSED__ int *restrict old_ceiling)
 {
   int res = 0;
   not_implemented ();
@@ -3106,7 +3106,7 @@ sctk_thread_atomic_add (volatile unsigned long *ptr, unsigned long val)
 }
 
 /* Used by GCC to bypass TLS destructor calls */
-int __cxa_thread_mpc_atexit(void(*dfunc)(void*), void* obj, void* dso_symbol)
+int __cxa_thread_mpc_atexit(void(*dfunc)(void*), void* obj, __UNUSED__ void* dso_symbol)
 {
 	sctk_thread_data_t *th;
 

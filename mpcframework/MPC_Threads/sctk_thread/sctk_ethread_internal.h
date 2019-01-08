@@ -1157,7 +1157,7 @@ extern "C"
   }
 
   static inline int
-    __sctk_ethread_mutex_unlock (sctk_ethread_virtual_processor_t *
+    __sctk_ethread_mutex_unlock (__UNUSED__ sctk_ethread_virtual_processor_t *
 				 restrict vp,
 				 sctk_ethread_per_thread_t *
 				 restrict owner, void (*retrun_task)
@@ -1243,7 +1243,7 @@ extern "C"
       }
   }
 
-  static inline int __sctk_ethread_key_delete (sctk_ethread_per_thread_t *
+  static inline int __sctk_ethread_key_delete (__UNUSED__ sctk_ethread_per_thread_t *
 					       cur, int key)
   {
     if ((key < SCTK_THREAD_KEYS_MAX) && (key >= 0))

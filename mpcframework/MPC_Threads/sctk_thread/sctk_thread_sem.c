@@ -115,7 +115,7 @@ sctk_thread_generic_sems_sem_wait( sctk_thread_generic_sem_t* sem,
 
 int
 sctk_thread_generic_sems_sem_trywait( sctk_thread_generic_sem_t* sem,
-                        sctk_thread_generic_scheduler_t* sched ){
+                        __UNUSED__ sctk_thread_generic_scheduler_t* sched ){
 
   /*
 	ERRORS:
@@ -215,7 +215,7 @@ sctk_thread_generic_sems_sem_timedwait( sctk_thread_generic_sem_t* sem,
 
 int
 sctk_thread_generic_sems_sem_post( sctk_thread_generic_sem_t* sem,
-                        sctk_thread_generic_scheduler_t* sched ){
+                        __UNUSED__ sctk_thread_generic_scheduler_t* sched ){
 
   /*
 	ERRORS:

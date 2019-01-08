@@ -158,7 +158,7 @@ sctk_thread_generic_conds_cond_destroy( sctk_thread_generic_cond_t* lock ){
 int
 sctk_thread_generic_conds_cond_init (sctk_thread_generic_cond_t * lock,
 					const  sctk_thread_generic_condattr_t* attr,
-					sctk_thread_generic_scheduler_t* sched)
+					__UNUSED__ sctk_thread_generic_scheduler_t* sched)
 {
 
   /*
@@ -242,7 +242,7 @@ int sctk_thread_generic_conds_cond_wait (sctk_thread_generic_cond_t* restrict co
 
 
 int sctk_thread_generic_conds_cond_signal (sctk_thread_generic_cond_t* cond,
-                                         sctk_thread_generic_scheduler_t* sched)
+                                         __UNUSED__ sctk_thread_generic_scheduler_t* sched)
 {
 
   /*
@@ -412,7 +412,7 @@ sctk_thread_generic_conds_cond_timedwait( sctk_thread_generic_cond_t* restrict c
 }
 
 int sctk_thread_generic_conds_cond_broadcast (sctk_thread_generic_cond_t * cond,
-					      sctk_thread_generic_scheduler_t* sched)
+					      __UNUSED__ sctk_thread_generic_scheduler_t* sched)
 {
   /*
 	ERRORS:

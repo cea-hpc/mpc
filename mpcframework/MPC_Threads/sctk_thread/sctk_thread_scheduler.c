@@ -193,11 +193,11 @@ static void sctk_centralized_add_to_list(sctk_thread_generic_scheduler_t* sched)
 }
 
 static 
-void sctk_centralized_concat_to_list(sctk_thread_generic_scheduler_t* sched,
+void sctk_centralized_concat_to_list(__UNUSED__ sctk_thread_generic_scheduler_t* sched,
 				     sctk_thread_generic_scheduler_generic_t*s_list){
     sctk_spinlock_lock(&sctk_centralized_sched_list_lock);
     DL_CONCAT(sctk_centralized_sched_list,s_list);
-    sctk_spinlock_unlock(&sctk_centralized_sched_list_lock);    
+    sctk_spinlock_unlock(&sctk_centralized_sched_list_lock);
 }
 
 static sctk_thread_generic_scheduler_t* sctk_centralized_get_from_list(){
@@ -1750,14 +1750,14 @@ void sctk_thread_generic_scheduler_swapcontext_ethread(sctk_thread_generic_sched
   sctk_thread_generic_scheduler_swapcontext(old_th,new_th);
 }
 
-void sctk_thread_generic_scheduler_swapcontext_nothing(sctk_thread_generic_scheduler_t* old_th,
-						       sctk_thread_generic_scheduler_t* new_th,
-						       sctk_per_vp_data_t* vp){
+void sctk_thread_generic_scheduler_swapcontext_nothing(__UNUSED__ sctk_thread_generic_scheduler_t* old_th,
+						       __UNUSED__ sctk_thread_generic_scheduler_t* new_th,
+						       __UNUSED__ sctk_per_vp_data_t* vp){
 }
 
-void sctk_thread_generic_scheduler_swapcontext_none(sctk_thread_generic_scheduler_t* old_th,
-						       sctk_thread_generic_scheduler_t* new_th,
-						    sctk_per_vp_data_t* vp){
+void sctk_thread_generic_scheduler_swapcontext_none(__UNUSED__ sctk_thread_generic_scheduler_t* old_th,
+						       __UNUSED__ sctk_thread_generic_scheduler_t* new_th,
+						    __UNUSED__ sctk_per_vp_data_t* vp){
   not_reachable();
 }
 
@@ -2293,7 +2293,7 @@ void sctk_generic_thread_status(sctk_thread_generic_scheduler_t* sched,
   sched->status = status;
 }
 
-static void sctk_generic_register_spinlock_unlock(sctk_thread_generic_scheduler_t* sched,
+static void sctk_generic_register_spinlock_unlock(__UNUSED__ sctk_thread_generic_scheduler_t* sched,
 						  sctk_spinlock_t* lock){
   sctk_nodebug("Register spinunlock %p",lock);
   vp_data.sctk_generic_delegated_spinlock = lock;

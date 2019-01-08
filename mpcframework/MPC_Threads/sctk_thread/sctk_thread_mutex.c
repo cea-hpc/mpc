@@ -174,7 +174,7 @@ sctk_thread_generic_mutexes_mutex_destroy( sctk_thread_generic_mutex_t* lock ){
 int
 sctk_thread_generic_mutexes_mutex_init (sctk_thread_generic_mutex_t * lock,
 					const  sctk_thread_generic_mutexattr_t* attr,
-					sctk_thread_generic_scheduler_t* sched){
+					__UNUSED__ sctk_thread_generic_scheduler_t* sched){
 
   /*
 	ERRORS:

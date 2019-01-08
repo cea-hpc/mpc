@@ -738,7 +738,7 @@ void sctk_futex_context_release()
 /* Futex Ops                                               	            */
 /************************************************************************/
 
-int sctk_futex_WAIT_no_timer(void *addr1, int op, int val1, int val3 )
+int sctk_futex_WAIT_no_timer(void *addr1, int op, int val3 )
 {
 	int * wait_ticket = futex_queue_HT_register_thread( &___futex_queue_HT, addr1, val3, op );
 	
@@ -774,7 +774,7 @@ int sctk_futex_WAIT(void *addr1, int op, int val1, struct timespec *timeout, int
 	/* Do we need to jump to the blocking implementation ? */
 	if( !timeout )
 	{
-		return sctk_futex_WAIT_no_timer(addr1, op, val1, bitmask );
+		return sctk_futex_WAIT_no_timer(addr1, op, bitmask );
 	}
 	
 	/* Here we consider the timed implementation */
@@ -816,7 +816,7 @@ int sctk_futex_WAKE_BITSET(void *addr1, int op, int val1, int val3 )
 }
 
 
-void sctk_futex_WAKE_OP_decode( int val3, int * op, int * cmp, int * oparg, int * cmparg )
+void sctk_futex_WAKE_OP_decode( int val3, int * op, int * cmp, int * oparg )
 {
 	int opcode, cmpcode, opargcode, cmpargcode;
 
@@ -844,7 +844,7 @@ int sctk_futex_WAKE_OP_do_op( int oldval, int val3 )
 {
 	int op, cmp, oparg, cmparg;
 	
-	sctk_futex_WAKE_OP_decode( val3, &op, &cmp, &oparg, &cmparg );
+	sctk_futex_WAKE_OP_decode( val3, &op, &cmp, &oparg );
 	
 	switch( op )
 	{
@@ -874,7 +874,7 @@ int sctk_futex_WAKE_OP_do_cmp( int oldval, int val3 )
 {
 	int op, cmp, oparg, cmparg;
 	
-	sctk_futex_WAKE_OP_decode( val3, &op, &cmp, &oparg, &cmparg );
+	sctk_futex_WAKE_OP_decode( val3, &op, &cmp, &oparg );
 	
 	switch( op )
 	{
@@ -903,7 +903,7 @@ int sctk_futex_WAKE_OP_do_cmp( int oldval, int val3 )
 	return oparg;
 }
 
-int sctk_futex_WAKE_OP(void *addr1, int op, void *addr2, int val1, int val2, int val3  )
+int sctk_futex_WAKE_OP(void *addr1, void *addr2, int val1, int val2, int val3  )
 {
 	int ret = 0;
 	int tmp_ret = 0;
@@ -959,7 +959,7 @@ int sctk_futex_CMPREQUEUE(void *addr1, int op, int val1, void * addr2, int val3 
 										   op );
 }
 
-int sctk_futex_CMPREQUEUE_PI(void *addr1, int op, int val1, void * addr2, int val3 )
+int sctk_futex_CMPREQUEUE_PI(void *addr1, int val1, void * addr2, int val3 )
 {
 	if( val1 != 1 )
 	{
@@ -1000,7 +1000,7 @@ int sctk_futex_LOCKPI( int * volatile futex , struct timespec *timeout)
 	{
 		if( sctk_futex_TRYLOCKPI( futex ) != 0 )
 		{
-			sctk_futex_WAIT_no_timer(futex, SCTK_FUTEX_LOCK_PI, *((int *)futex), 0 );
+			sctk_futex_WAIT_no_timer(futex, SCTK_FUTEX_LOCK_PI, 0 );
 		}
 	}
 	else
@@ -1064,7 +1064,7 @@ int sctk_futex(void *addr1, int op, int val1,
 			ret = sctk_futex_WAKE_BITSET(addr1, op, val1, val3 );
 		break;
 		case SCTK_FUTEX_WAKE_OP :
-			ret = sctk_futex_WAKE_OP(addr1, op, addr2, val1, val2, val3 );
+			ret = sctk_futex_WAKE_OP(addr1, addr2, val1, val2, val3 );
 		break;
 		case SCTK_FUTEX_REQUEUE :
 			ret = sctk_futex_REQUEUE(addr1, SCTK_FUTEX_REQUEUE, val1, addr2 );
@@ -1073,7 +1073,7 @@ int sctk_futex(void *addr1, int op, int val1,
 			ret = sctk_futex_CMPREQUEUE(addr1, SCTK_FUTEX_CMP_REQUEUE, val1, addr2, val3 );
 		break;
 		case SCTK_FUTEX_CMP_REQUEUE_PI :
-			ret = sctk_futex_CMPREQUEUE_PI( addr1, op, val1, addr2, val3 );
+			ret = sctk_futex_CMPREQUEUE_PI( addr1, val1, addr2, val3 );
 		break;
 		case SCTK_FUTEX_LOCK_PI :
 			ret = sctk_futex_LOCKPI( addr1 , timeout);

@@ -916,7 +916,7 @@ int mpc_atexit(void (*function)(void))
 
 /* Futexes */
 
-long  mpc_thread_futex(int sysop, void *addr1, int op, int val1, 
+long  mpc_thread_futex(__UNUSED__ int sysop, void *addr1, int op, int val1, 
 					  struct timespec *timeout, void *addr2, int val2)
 {
 	sctk_futex_context_init();
