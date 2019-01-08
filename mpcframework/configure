@@ -425,7 +425,7 @@ for arg in "$@" ; do
     if [ "$SCTK_DEBUG_MESSAGES_DISABLED" -eq "0" ]; then
       SCTK_DEBUG_MESSAGES="1"
     fi
-    SCTK_CFLAGS="${SCTK_CFLAGS} -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare"
+    SCTK_CFLAGS="${SCTK_CFLAGS} -Wall -Wextra -Wduplicated-cond -Wlogical-op -Wnull-dereference -Wjump-misses-init -Wdouble-promotion -Wshadow"
     ;;
     --enable-debug-strict)
     SCTK_DEBUG="1"
