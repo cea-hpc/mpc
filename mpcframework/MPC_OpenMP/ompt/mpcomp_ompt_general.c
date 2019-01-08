@@ -124,7 +124,7 @@ ompt_callback_t mpcomp_ompt_get_callback(int callback_type)
  */
 
 #pragma weak ompt_start_tool
-ompt_fns_t* ompt_start_tool( unsigned int omp_version, const char *runtime_version )
+ompt_fns_t* ompt_start_tool( __UNUSED__ unsigned int omp_version, __UNUSED__ const char *runtime_version )
 {
    sctk_info("No ompt_start_tool function from tool");
    return NULL;
@@ -369,7 +369,7 @@ ompt_get_thread_data(void)
 }
 
 OMPT_API_ROUTINE ompt_state_t
-ompt_get_state( ompt_wait_id_t* wait_id)
+ompt_get_state( __UNUSED__ ompt_wait_id_t* wait_id)
 {
 	mpcomp_thread_t *thread_infos = mpcomp_get_thread_tls();
 	return ( thread_infos ) ? thread_infos->state : ompt_state_undefined; 

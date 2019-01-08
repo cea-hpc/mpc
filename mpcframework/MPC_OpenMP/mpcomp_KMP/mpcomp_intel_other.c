@@ -24,9 +24,9 @@
 
 #include "sctk_debug.h"
 
-int __kmpc_invoke_task_func(int gtid) {
+int __kmpc_invoke_task_func(__UNUSED__ int gtid) {
   not_implemented();
   return 0;
 }
 
-void kmpc_set_blocktime(int arg) { not_implemented(); }
+void kmpc_set_blocktime(__UNUSED__ int arg) { not_implemented(); }

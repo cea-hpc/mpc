@@ -7,7 +7,7 @@
 #include "mpcomp_barrier.h"
 
 struct private_common *
-__kmp_threadprivate_find_task_common(struct common_table *tbl, int gtid,
+__kmp_threadprivate_find_task_common(struct common_table *tbl, __UNUSED__ int gtid,
                                      void *pc_addr) {
   struct private_common *tn;
   for (tn = tbl->data[KMP_HASH(pc_addr)]; tn; tn = tn->next) {
@@ -19,7 +19,7 @@ __kmp_threadprivate_find_task_common(struct common_table *tbl, int gtid,
 }
 
 struct shared_common *__kmp_find_shared_task_common(struct shared_table *tbl,
-                                                    int gtid, void *pc_addr) {
+                                                    __UNUSED__ int gtid, void *pc_addr) {
   struct shared_common *tn;
   for (tn = tbl->data[KMP_HASH(pc_addr)]; tn; tn = tn->next) {
     if (tn->gbl_addr == pc_addr) {
@@ -30,7 +30,7 @@ struct shared_common *__kmp_find_shared_task_common(struct shared_table *tbl,
 }
 
 struct private_common *kmp_threadprivate_insert(int gtid, void *pc_addr,
-                                                void *data_addr,
+                                                __UNUSED__ void *data_addr,
                                                 size_t pc_size) {
   struct private_common *tn, **tt;
   static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
@@ -62,7 +62,7 @@ struct private_common *kmp_threadprivate_insert(int gtid, void *pc_addr,
   return tn;
 }
 
-void *__kmpc_threadprivate(ident_t *loc, kmp_int32 global_tid, void *data,
+void *__kmpc_threadprivate(__UNUSED__ ident_t *loc, kmp_int32 global_tid, void *data,
                            size_t size) {
   void *ret = NULL;
   struct private_common *tn;
@@ -108,7 +108,7 @@ int __kmp_default_tp_capacity() {
   return nth;
 }
 
-void __kmpc_copyprivate(ident_t *loc, kmp_int32 global_tid, size_t cpy_size,
+void __kmpc_copyprivate(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid, __UNUSED__ size_t cpy_size,
                         void *cpy_data, void (*cpy_func)(void *, void *),
                         kmp_int32 didit) {
   mpcomp_thread_t *t; /* Info on the current thread */
@@ -169,7 +169,7 @@ void *__kmpc_threadprivate_cached(ident_t *loc, kmp_int32 global_tid,
   return ret;
 }
 
-void __kmpc_threadprivate_register(ident_t *loc, void *data, kmpc_ctor ctor,
+void __kmpc_threadprivate_register(__UNUSED__ ident_t *loc, void *data, kmpc_ctor ctor,
                                    kmpc_cctor cctor, kmpc_dtor dtor) {
   struct shared_common *d_tn, **lnk_tn;
 
@@ -192,7 +192,7 @@ void __kmpc_threadprivate_register(ident_t *loc, void *data, kmpc_ctor ctor,
   }
 }
 
-void __kmpc_threadprivate_register_vec(ident_t *loc, void *data,
+void __kmpc_threadprivate_register_vec(__UNUSED__ ident_t *loc, void *data,
                                        kmpc_ctor_vec ctor, kmpc_cctor_vec cctor,
                                        kmpc_dtor_vec dtor,
                                        size_t vector_length) {

@@ -25,19 +25,19 @@
 #include "sctk_debug.h"
 #include "mpcomp_intel_alloc.h"
 
-void *kmpc_malloc(size_t size) {
+void *kmpc_malloc(__UNUSED__ size_t size) {
   not_implemented();
   return NULL;
 }
 
-void *kmpc_calloc(size_t nelem, size_t elsize) {
+void *kmpc_calloc(__UNUSED__ size_t nelem, __UNUSED__ size_t elsize) {
   not_implemented();
   return NULL;
 }
 
-void *kmpc_realloc(void *ptr, size_t size) {
+void *kmpc_realloc(__UNUSED__ void *ptr, __UNUSED__ size_t size) {
   not_implemented();
   return NULL;
 }
 
-void kmpc_free(void *ptr) { not_implemented(); }
+void kmpc_free(__UNUSED__ void *ptr) { not_implemented(); }

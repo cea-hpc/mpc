@@ -216,8 +216,8 @@ static inline int __kmp_dispatch_next_mpcomp_ull(
   return ret;
 }
 
-static inline void __kmpc_dispatch_fini_mpcomp_gen(ident_t *loc,
-                                                   kmp_int32 gtid) {
+static inline void __kmpc_dispatch_fini_mpcomp_gen(__UNUSED__ ident_t *loc,
+                                                   __UNUSED__ kmp_int32 gtid) {
   mpcomp_thread_t *t;
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);

@@ -44,10 +44,10 @@ bool mpcomp_GOMP_loop_ull_ordered_runtime_start(bool up,
    return ret;
 }
 
-bool mpcomp_GOMP_loop_ull_doacross_runtime_start(unsigned ncounts,
-                                                 unsigned long long *counts,
-                                                 unsigned long long *istart,
-                                                 unsigned long long *iend) {
+bool mpcomp_GOMP_loop_ull_doacross_runtime_start(__UNUSED__ unsigned ncounts,
+                                                 __UNUSED__ unsigned long long *counts,
+                                                 __UNUSED__ unsigned long long *istart,
+                                                 __UNUSED__ unsigned long long *iend) {
   bool ret;
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
@@ -151,9 +151,9 @@ bool mpcomp_GOMP_loop_ull_guided_start(bool up, unsigned long long start,
 }
 
 bool mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_start(
-    bool up, unsigned long long start, unsigned long long end,
-    unsigned long long incr, unsigned long long chunk_size,
-    unsigned long long *istart, unsigned long long *iend) {
+    __UNUSED__ bool up, __UNUSED__ unsigned long long start, __UNUSED__ unsigned long long end,
+    __UNUSED__ unsigned long long incr, __UNUSED__ unsigned long long chunk_size,
+    __UNUSED__ unsigned long long *istart,__UNUSED__  unsigned long long *iend) {
   bool ret;
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
 #if (defined(MPC_SUPPORT_ULL_LOOP) && defined(MPC_SUPPORT_NONMONOTONIC))
@@ -168,9 +168,9 @@ bool mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_start(
 }
 
 bool mpcomp_GOMP_loop_ull_nonmonotonic_guided_start(
-    bool up, unsigned long long start, unsigned long long end,
-    unsigned long long incr, unsigned long long chunk_size,
-    unsigned long long *istart, unsigned long long *iend) {
+   __UNUSED__  bool up, __UNUSED__ unsigned long long start, __UNUSED__ unsigned long long end,
+    __UNUSED__ unsigned long long incr, __UNUSED__ unsigned long long chunk_size,
+   __UNUSED__  unsigned long long *istart,__UNUSED__  unsigned long long *iend) {
   bool ret;
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
 #if (defined(MPC_SUPPORT_ULL_LOOP) && defined(MPC_SUPPORT_NONMONOTONIC))
@@ -241,11 +241,11 @@ bool mpcomp_GOMP_loop_ull_ordered_guided_start(
    return ret;
 }
 
-bool mpcomp_GOMP_loop_ull_doacross_static_start(unsigned ncounts,
-                                                unsigned long long *counts,
-                                                unsigned long long chunk_size,
-                                                unsigned long long *istart,
-                                                unsigned long long *iend) {
+bool mpcomp_GOMP_loop_ull_doacross_static_start(__UNUSED__ unsigned ncounts,
+                                                __UNUSED__ unsigned long long *counts,
+                                                __UNUSED__ unsigned long long chunk_size,
+                                                __UNUSED__ unsigned long long *istart,
+                                             __UNUSED__    unsigned long long *iend) {
   bool ret;
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
@@ -259,11 +259,11 @@ bool mpcomp_GOMP_loop_ull_doacross_static_start(unsigned ncounts,
    return ret;
 }
 
-bool mpcomp_GOMP_loop_ull_doacross_dynamic_start(unsigned ncounts,
-                                                 unsigned long long *counts,
-                                                 unsigned long long chunk_size,
-                                                 unsigned long long *istart,
-                                                 unsigned long long *iend) {
+bool mpcomp_GOMP_loop_ull_doacross_dynamic_start(__UNUSED__ unsigned ncounts,
+                                                 __UNUSED__ unsigned long long *counts,
+                                                 __UNUSED__ unsigned long long chunk_size,
+                                                 __UNUSED__ unsigned long long *istart,
+                                                 __UNUSED__ unsigned long long *iend) {
   bool ret;
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
 #if (defined(MPC_SUPPORT_ULL_LOOP) && defined(MPC_SUPPORT_DOACCROSS))
@@ -277,11 +277,11 @@ bool mpcomp_GOMP_loop_ull_doacross_dynamic_start(unsigned ncounts,
    return ret;
 }
 
-bool mpcomp_GOMP_loop_ull_doacross_guided_start(unsigned ncounts,
-                                                unsigned long long *counts,
-                                                unsigned long long chunk_size,
-                                                unsigned long long *istart,
-                                                unsigned long long *iend) {
+bool mpcomp_GOMP_loop_ull_doacross_guided_start(__UNUSED__ unsigned ncounts,
+                                                __UNUSED__ unsigned long long *counts,
+                                                __UNUSED__ unsigned long long chunk_size,
+                                                __UNUSED__ unsigned long long *istart,
+                                                __UNUSED__ unsigned long long *iend) {
   bool ret;
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
 #if (defined(MPC_SUPPORT_ULL_LOOP) && defined(MPC_SUPPORT_DOACCROSS))
@@ -337,8 +337,8 @@ bool mpcomp_GOMP_loop_ull_guided_next(unsigned long long *istart,
    return ret;
 }
 
-bool mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_next(unsigned long long *istart,
-                                                    unsigned long long *iend) {
+bool mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_next(__UNUSED__ unsigned long long *istart,
+                                                    __UNUSED__ unsigned long long *iend) {
   bool ret;
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
 #if (defined(MPC_SUPPORT_ULL_LOOP) && defined(MPC_SUPPORT_NONMONOTONIC))
@@ -351,8 +351,8 @@ bool mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_next(unsigned long long *istart,
    return ret;
 }
 
-bool mpcomp_GOMP_loop_ull_nonmonotonic_guided_next(unsigned long long *istart,
-                                                   unsigned long long *iend) {
+bool mpcomp_GOMP_loop_ull_nonmonotonic_guided_next(__UNUSED__ unsigned long long *istart,
+                                                   __UNUSED__ unsigned long long *iend) {
   bool ret;
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
 #if (defined(MPC_SUPPORT_ULL_LOOP) && defined(MPC_SUPPORT_NONMONOTONIC))

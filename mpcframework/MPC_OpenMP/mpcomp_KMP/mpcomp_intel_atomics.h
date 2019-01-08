@@ -74,23 +74,23 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 
 /* begins for atomic functions */
 #define ATOMIC_BEGIN(TYPE_ID, OP_ID, TYPE, RET_TYPE)                           \
-  RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID(ident_t *id_ref, int gtid,        \
+  RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID(__UNUSED__ ident_t *id_ref, __UNUSED__ int gtid,        \
                                              TYPE *lhs, TYPE rhs) {
 
 #define ATOMIC_BEGIN_REV(TYPE_ID, OP_ID, TYPE, RET_TYPE)                       \
-  RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID##_rev(ident_t *id_ref, int gtid,  \
+  RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID##_rev(__UNUSED__ ident_t *id_ref, __UNUSED__ int gtid,  \
                                                    TYPE *lhs, TYPE rhs) {
 
 #define ATOMIC_BEGIN_MIX(TYPE_ID, TYPE, OP_ID, RTYPE_ID, RTYPE)                \
   void __kmpc_atomic_##TYPE_ID##_##OP_ID##_##RTYPE_ID(                         \
-      ident_t *id_ref, int gtid, TYPE *lhs, RTYPE rhs) {
+      __UNUSED__ ident_t *id_ref, __UNUSED__ int gtid, TYPE *lhs, RTYPE rhs) {
 
 #define ATOMIC_BEGIN_READ(TYPE_ID, OP_ID, TYPE, RET_TYPE)                      \
-  RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID(ident_t *id_ref, int gtid,        \
+  RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID(__UNUSED__ ident_t *id_ref, __UNUSED__ int gtid,        \
                                              TYPE *loc) {
 
 #define ATOMIC_BEGIN_CPT(TYPE_ID, OP_ID, TYPE, RET_TYPE)                       \
-  RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID(ident_t *id_ref, int gtid,        \
+  RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID(__UNUSED__ ident_t *id_ref,__UNUSED__  int gtid,        \
                                              TYPE *lhs, TYPE rhs, int flag) {
 
 /* atomic functions */

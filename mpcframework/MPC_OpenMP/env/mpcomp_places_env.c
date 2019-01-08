@@ -29,7 +29,7 @@
 
 
 mpcomp_places_info_t*
-mpcomp_places_build_interval_infos( const char *env, char *string, char **end, const int nb_mvps )
+mpcomp_places_build_interval_infos( char *string, char **end, const int nb_mvps )
 {
     mpcomp_places_info_t* place;
     int res, num_places, stride, exclude, error;
@@ -63,7 +63,7 @@ mpcomp_places_build_interval_infos( const char *env, char *string, char **end, c
             bitmap_to_update = exclude_interval;
         }
         
-        res = mpcomp_safe_atoi( env, string, end );
+        res = mpcomp_safe_atoi( string, end );
         string = *end;
 
         if( !exclude )
@@ -71,7 +71,7 @@ mpcomp_places_build_interval_infos( const char *env, char *string, char **end, c
             if( *string == ':' )
             {
                 string++;
-                num_places = mpcomp_safe_atoi( env, string, end );
+                num_places = mpcomp_safe_atoi( string, end );
                 if( string == *end )
                 {
                     error = 1; // missing value
@@ -88,7 +88,7 @@ mpcomp_places_build_interval_infos( const char *env, char *string, char **end, c
             if( *string == ':' )
             {
                 string++;
-                stride = mpcomp_safe_atoi( env, string, end );
+                stride = mpcomp_safe_atoi( string, end );
                 if( string == *end )
                 {
                     error = 1; // missing value
@@ -401,7 +401,7 @@ static int mpcomp_places_named_extract_num( const char* env, char *string  )
 
    string++;   // skip '('   
   
-   const int num_places = mpcomp_safe_atoi( NULL, string, &next_char);
+   const int num_places = mpcomp_safe_atoi( string, &next_char);
    
    if( num_places <= 0 || string == next_char ) 
    {
@@ -475,7 +475,7 @@ mpcomp_places_is_named_places( const char* env, char *string, int* error )
 }
 
 mpcomp_places_info_t*
-mpcomp_places_build_place_infos( const char* env, char *string, char **end, const int nb_mvps )
+mpcomp_places_build_place_infos( char *string, char **end, const int nb_mvps )
 {
     int error, exclude, stride, len;
     mpcomp_places_info_t* new_place, *list;
@@ -504,7 +504,7 @@ mpcomp_places_build_place_infos( const char* env, char *string, char **end, cons
         }
         string++; // skip '{'
 
-        new_place = mpcomp_places_build_interval_infos( env, string, end, nb_mvps );
+        new_place = mpcomp_places_build_interval_infos( string, end, nb_mvps );
         if( !new_place )
         {
             fprintf(stderr, "error: can't parse subplace\n");
@@ -528,7 +528,7 @@ mpcomp_places_build_place_infos( const char* env, char *string, char **end, cons
             if( *string == ':' )
             {
                 string++;
-                len = mpcomp_safe_atoi( env, string, end );
+                len = mpcomp_safe_atoi( string, end );
                 if( string == *end )
                 {
                     error = 1; // missing value
@@ -545,7 +545,7 @@ mpcomp_places_build_place_infos( const char* env, char *string, char **end, cons
             if( *string == ':' )
             {
                 string++;
-                stride = mpcomp_safe_atoi( env, string, end );
+                stride = mpcomp_safe_atoi( string, end );
                 if( string == *end )
                 {
                     error = 1; // missing value
@@ -795,7 +795,7 @@ mpcomp_places_env_variable_parsing(const int nb_mvps)
        return NULL;
     }
 
-    list = mpcomp_places_build_place_infos( env, string, &end, nb_mvps );
+    list = mpcomp_places_build_place_infos( string, &end, nb_mvps );
 
     if( *end != '\0' )
     {

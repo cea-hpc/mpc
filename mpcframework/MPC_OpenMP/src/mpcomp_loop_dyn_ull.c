@@ -151,7 +151,7 @@ int __mpcomp_loop_ull_dynamic_begin(bool up, unsigned long long lb,
 }
 
 /* DEBUG */
-void __mpcomp_loop_ull_dynamic_next_debug(char *funcname) {
+void __mpcomp_loop_ull_dynamic_next_debug(__UNUSED__ char *funcname) {
   int i;
   mpcomp_thread_t *t; /* Info on the current thread */
 

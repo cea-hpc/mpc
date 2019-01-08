@@ -28,7 +28,7 @@
 
 #include "mpcomp_loop_static_ull.h"
 
-void __kmpc_for_static_init_4(ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
+void __kmpc_for_static_init_4(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid, kmp_int32 schedtype,
     kmp_int32 *plastiter, kmp_int32 *plower,
     kmp_int32 *pupper, kmp_int32 *pstride,
     kmp_int32 incr, kmp_int32 chunk) {
@@ -133,7 +133,7 @@ void __kmpc_for_static_init_4(ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
   }
 }
 
-void __kmpc_for_static_init_4u(ident_t *loc, kmp_int32 gtid,
+void __kmpc_for_static_init_4u(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid,
     kmp_int32 schedtype, kmp_int32 *plastiter,
     kmp_uint32 *plower, kmp_uint32 *pupper,
     kmp_int32 *pstride, kmp_int32 incr,
@@ -252,7 +252,7 @@ void __kmpc_for_static_init_4u(ident_t *loc, kmp_int32 gtid,
   }
 }
 
-void __kmpc_for_static_init_8(ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
+void __kmpc_for_static_init_8(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid, kmp_int32 schedtype,
     kmp_int32 *plastiter, kmp_int64 *plower,
     kmp_int64 *pupper, kmp_int64 *pstride,
     kmp_int64 incr, kmp_int64 chunk) {
@@ -364,7 +364,7 @@ void __kmpc_for_static_init_8(ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
   }
 }
 
-void __kmpc_for_static_init_8u(ident_t *loc, kmp_int32 gtid,
+void __kmpc_for_static_init_8u(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid,
     kmp_int32 schedtype, kmp_int32 *plastiter,
     kmp_uint64 *plower, kmp_uint64 *pupper,
     kmp_int64 *pstride, kmp_int64 incr,
@@ -483,6 +483,6 @@ void __kmpc_for_static_init_8u(ident_t *loc, kmp_int32 gtid,
   }
 }
 
-void __kmpc_for_static_fini(ident_t *loc, kmp_int32 global_tid) {
+void __kmpc_for_static_fini(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid) {
   sctk_nodebug("[REDIRECT KMP]: %s -> None", __func__);
 }

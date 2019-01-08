@@ -238,7 +238,7 @@ static inline void mpcomp_task_locked_list_consummer_unlock( mpcomp_task_list_t 
 #endif /* MPCOMP_USE_MCS_LOCK */
 }
 
-static inline int mpcomp_task_locked_list_consummer_trylock(mpcomp_task_list_t *list, void* opaque ) {
+static inline int mpcomp_task_locked_list_consummer_trylock(__UNUSED__ mpcomp_task_list_t *list, __UNUSED__ void* opaque ) {
 #ifdef MPCOMP_USE_MCS_LOCK
     not_implemented();
     return 0;
@@ -263,7 +263,7 @@ static inline void mpcomp_task_locked_list_producer_unlock(mpcomp_task_list_t *l
 #endif /* MPCOMP_USE_MCS_LOCK */
 }
 
-static inline int mpcomp_task_locked_list_producer_trylock(mpcomp_task_list_t *list, void* opaque) {
+static inline int mpcomp_task_locked_list_producer_trylock(__UNUSED__ mpcomp_task_list_t *list, __UNUSED__ void* opaque) {
 #ifdef MPCOMP_USE_MCS_LOCK
     not_implemented();
     return 0;

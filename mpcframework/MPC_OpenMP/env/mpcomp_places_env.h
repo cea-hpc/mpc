@@ -42,7 +42,7 @@ mpcomp_places_restrict_bitmap(hwloc_bitmap_t res, const int nb_mvps)
 }
 
 static inline int
-mpcomp_safe_atoi( const char* env, char* string, char** next )
+mpcomp_safe_atoi( char* string, char** next )
 {
     long retval = strtol( string, next, 10 );
     assert( retval > INT_MIN && retval < INT_MAX ); 

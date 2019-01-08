@@ -182,9 +182,9 @@ void __mpcomp_guided_loop_end() {
    !WARNING! This function assumes that there is no loops w/ guided schedule
    and nowait clause previously executed in the same parallel region 
 */
-int __mpcomp_guided_loop_begin_ignore_nowait(long lb, long b, long incr,
-                                             long chunk_size, long *from,
-                                             long *to) {
+int __mpcomp_guided_loop_begin_ignore_nowait(__UNUSED__ long lb, __UNUSED__ long b, __UNUSED__ long incr,
+                                             __UNUSED__ long chunk_size, __UNUSED__ long *from,
+                                             __UNUSED__ long *to) {
   not_implemented();
   return 0;
 }

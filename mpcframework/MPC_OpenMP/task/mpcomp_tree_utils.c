@@ -164,7 +164,6 @@ static void __mpcomp_task_check_neighbourhood_r( mpcomp_node_t *node )
 {
     int i, j;
     mpcomp_thread_t *thread;
-    mpcomp_instance_t* instance;
 
     sctk_assert( node );
 
@@ -174,10 +173,9 @@ static void __mpcomp_task_check_neighbourhood_r( mpcomp_node_t *node )
 
     sctk_assert( thread->instance );
     sctk_assert( thread->instance->tree_nb_nodes_per_depth );
-    
-    
-    const int instance_level_size = instance->tree_nb_nodes_per_depth[node->depth + 1];
-    
+
+    const int instance_level_size = thread->instance->tree_nb_nodes_per_depth[node->depth + 1];
+
     switch (node->child_type) 
     {
         case MPCOMP_CHILDREN_NODE:

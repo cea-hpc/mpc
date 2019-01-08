@@ -47,10 +47,10 @@ void __mpcomp_static_schedule_get_specific_chunk_ull(
   *to = (!loop->up && *to < loop->b) ? loop->b : *to;
 }
 
-void __mpcomp_static_loop_init_ull(mpcomp_thread_t *t, unsigned long long lb,
-                                   unsigned long long b,
-                                   unsigned long long incr,
-                                   unsigned long long chunk_size) {
+void __mpcomp_static_loop_init_ull(__UNUSED__ mpcomp_thread_t *t, __UNUSED__ unsigned long long lb,
+                                   __UNUSED__ unsigned long long b,
+                                   __UNUSED__ unsigned long long incr,
+                                   __UNUSED__ unsigned long long chunk_size) {
   return;
 }
 

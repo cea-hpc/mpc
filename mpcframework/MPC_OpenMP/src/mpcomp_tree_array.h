@@ -48,7 +48,7 @@ typedef struct mpcomp_mvp_thread_args_s
 mpcomp_meta_tree_node_t**  __mpcomp_allocate_tree_array( const int*, const int, int* );
 
 static inline mpcomp_meta_tree_type_t
-__mpcomp_tree_array_node_type_by_depth( mpcomp_meta_tree_node_t** root )
+__mpcomp_tree_array_node_type_by_depth( __UNUSED__ mpcomp_meta_tree_node_t** root )
 {
     return MPCOMP_META_TREE_UNDEF;
 }

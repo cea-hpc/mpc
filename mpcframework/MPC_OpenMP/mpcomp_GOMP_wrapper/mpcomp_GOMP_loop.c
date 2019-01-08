@@ -363,7 +363,7 @@ bool mpcomp_GOMP_loop_ordered_guided_next(long *start, long *end) {
 void mpcomp_GOMP_parallel_loop_static(void (*fn)(void *), void *data,
                                       unsigned num_threads, long start,
                                       long end, long incr, long chunk_size,
-                                      unsigned flags) {
+                                      __UNUSED__ unsigned flags) {
   __mpcomp_start_parallel_static_loop(fn, data, num_threads, start, end, incr,
                                       chunk_size);
 }
@@ -371,7 +371,7 @@ void mpcomp_GOMP_parallel_loop_static(void (*fn)(void *), void *data,
 void mpcomp_GOMP_parallel_loop_dynamic(void (*fn)(void *), void *data,
                                        unsigned num_threads, long start,
                                        long end, long incr, long chunk_size,
-                                       unsigned flags) {
+                                       __UNUSED__ unsigned flags) {
   __mpcomp_start_parallel_dynamic_loop(fn, data, num_threads, start, end, incr,
                                        chunk_size);
 }
@@ -379,13 +379,13 @@ void mpcomp_GOMP_parallel_loop_dynamic(void (*fn)(void *), void *data,
 void mpcomp_GOMP_parallel_loop_guided(void (*fn)(void *), void *data,
                                       unsigned num_threads, long start,
                                       long end, long incr, long chunk_size,
-                                      unsigned flags) {
+                                      __UNUSED__ unsigned flags) {
   __mpcomp_start_parallel_guided_loop(fn, data, num_threads, start, end, incr,
                                       chunk_size);
 }
 
 void mpcomp_GOMP_parallel_loop_runtime(void (*fn)(void *), void *data,
                                        unsigned num_threads, long start,
-                                       long end, long incr, unsigned flags) {
+                                       long end, long incr, __UNUSED__ unsigned flags) {
   __mpcomp_start_parallel_runtime_loop(fn, data, num_threads, start, end, incr, 0);
 }

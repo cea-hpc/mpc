@@ -41,7 +41,7 @@ __mpcomp_tree_array_get_children_nodes_num_per_depth( const int* shape, const in
 }
 
 static int 
-__mpcomp_tree_array_get_stage_nodes_num_per_depth( const int* shape, const int max_depth, const int depth )
+__mpcomp_tree_array_get_stage_nodes_num_per_depth( const int* shape, __UNUSED__ const int max_depth, const int depth )
 {
     int i, count;
 
@@ -483,17 +483,17 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
     me = &(root[rank]);
 	root_node = (mpcomp_node_t*)root[0].user_pointer;
 	sctk_assert( root_node );
-   
+
     if( !(me->user_pointer)  )
     {
         sctk_assert( rank );
-        me->type = MPCOMP_META_TREE_NODE;   
+        me->type = MPCOMP_META_TREE_NODE;
         mpcomp_node_t* new_alloc_node = (mpcomp_node_t *) mpcomp_alloc( sizeof(mpcomp_node_t) );
         assert(new_alloc_node);
         memset( new_alloc_node, 0, sizeof(mpcomp_node_t) );
         me->user_pointer = (void*) new_alloc_node;
     }
-   
+
 	new_node = (mpcomp_node_t*)me->user_pointer;
     new_node->tree_array = root;
 
@@ -506,17 +506,17 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
     new_node->stage_rank = __mpcomp_tree_array_convert_global_to_stage( tree_shape, max_depth, rank );
     new_node->local_rank = __mpcomp_tree_array_convert_global_to_local( tree_shape, max_depth, rank );
     new_node->rank = new_node->local_rank; 
-    
+
     if( rank )
     {
         me->fathers_array_size = new_node->depth;
-    	me->fathers_array = (unsigned int *)mpcomp_alloc( sizeof(int) * new_node->depth );
+    	me->fathers_array = (int *)mpcomp_alloc( sizeof(int) * new_node->depth );
     	sctk_assert( me->fathers_array); 
 	 }
 
     /* Children initialisation */
     me->children_array_size = max_depth - new_node->depth;
-    me->first_child_array = (unsigned int*) __mpcomp_tree_array_get_first_child_array( tree_shape, max_depth, rank );
+    me->first_child_array = (int*) __mpcomp_tree_array_get_first_child_array( tree_shape, max_depth, rank );
 
     /* -- TREE BASE -- */
     if( rank )
@@ -529,7 +529,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
         sctk_assert( new_node->tree_cumulative );
         new_node->tree_nb_nodes_per_depth = (int*)mpcomp_alloc( sizeof( int ) * new_node->tree_depth );
         sctk_assert( new_node->tree_nb_nodes_per_depth );
-        
+
         const int tmp = root_node->tree_nb_nodes_per_depth[new_node->depth];
 
         new_node->tree_base[0] = 1;
@@ -654,7 +654,7 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     
     /* Father initialisation */
     me->fathers_array_size = ( max_depth ) ? max_depth : 1; 
-    me->fathers_array = (unsigned int*)__mpcomp_tree_array_get_father_array_by_depth( tree_shape, max_depth, rank );
+    me->fathers_array = (int*)__mpcomp_tree_array_get_father_array_by_depth( tree_shape, max_depth, rank );
 
 	new_mvp->tree_rank = __mpcomp_tree_array_get_tree_rank( tree_shape, max_depth, rank );
     new_mvp->enable = 1;

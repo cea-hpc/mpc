@@ -247,7 +247,7 @@ int omp_get_thread_limit() {
  * The omp_set_max_active_levels routine limits the number of nested 
  * active parallel regions, by setting the max-active-levels-var ICV.
  */
-void omp_set_max_active_levels(int max_levels) {
+void omp_set_max_active_levels(__UNUSED__ int max_levels) {
   /*
 * According current implementation of nested parallelism
 * This is equivalent of having only one active parallel region

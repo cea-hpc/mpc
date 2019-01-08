@@ -19,7 +19,7 @@
  */
 static inline int mpcomp_task_cmp_decr_func(const void *opq_a,
                                             const void *opq_b, 
-                                            void* args) {
+                                            __UNUSED__ void* args) {
   const int *a = (int *)opq_a;
   const int *b = (int *)opq_b;
   return (a[0] == b[0]) ? b[1] - a[1] : b[0] - a[0];
@@ -52,15 +52,15 @@ mpcomp_task_get_depth_from_global_rank( const int globalRank)
     return gen_node->ptr.mvp->threads->depth;
 }
 
-int mpcomp_task_get_victim_default(int globalRank, int index,
-                                   mpcomp_tasklist_type_t type) {
+int mpcomp_task_get_victim_default(int globalRank, __UNUSED__ int index,
+                                   __UNUSED__ mpcomp_tasklist_type_t type) {
   return globalRank;
 }
 
 /** Hierarchical stealing policy **/
 
-int mpcomp_task_get_victim_hierarchical(int globalRank, int index,
-                                        mpcomp_tasklist_type_t type) {
+int mpcomp_task_get_victim_hierarchical(int globalRank, __UNUSED__ int index,
+                                        __UNUSED__ mpcomp_tasklist_type_t type) {
   return mpcomp_get_neighbour(globalRank, index);
 }
 
@@ -95,7 +95,7 @@ void mpcomp_task_init_victim_random( mpcomp_generic_node_t* gen_node )
     }
 }
 
-int mpcomp_task_get_victim_random(const int globalRank, const int index, mpcomp_tasklist_type_t type) 
+int mpcomp_task_get_victim_random(const int globalRank, __UNUSED__ const int index, mpcomp_tasklist_type_t type) 
 {
     int victim,i;
     long int value;
@@ -251,7 +251,7 @@ int mpcomp_task_get_victim_hierarchical_random(const int globalRank, const int i
 
 
 static void
-mpcomp_task_prepare_victim_random_order(const int globalRank, const int index, mpcomp_tasklist_type_t type) 
+mpcomp_task_prepare_victim_random_order(const int globalRank, __UNUSED__ const int index, mpcomp_tasklist_type_t type) 
 {
     int i;
     int *order;
@@ -343,7 +343,7 @@ int mpcomp_task_get_victim_random_order(int globalRank, int index,
 }
 
 static void 
-mpcomp_task_prepare_victim_roundrobin(const int globalRank, const int index, mpcomp_tasklist_type_t type) 
+mpcomp_task_prepare_victim_roundrobin(const int globalRank, __UNUSED__ const int index, mpcomp_tasklist_type_t type) 
 {
     int i;
     int *order;
@@ -404,7 +404,7 @@ mpcomp_task_get_victim_roundrobin(const int globalRank, const int index, mpcomp_
   return order[index - 1];
 }
 
-int mpcomp_task_get_victim_producer(int globalRank, int index, mpcomp_tasklist_type_t type) 
+int mpcomp_task_get_victim_producer(int globalRank, __UNUSED__ int index, mpcomp_tasklist_type_t type) 
 {
     int i, max_elt, victim, rank, nb_elt;
     mpcomp_thread_t *thread;
@@ -450,7 +450,7 @@ int mpcomp_task_get_victim_producer(int globalRank, int index, mpcomp_tasklist_t
 }
 
 static inline int
-mpcomp_task_prepare_victim_producer_order( const int globalRank, const int index, mpcomp_tasklist_type_t type) 
+mpcomp_task_prepare_victim_producer_order( __UNUSED__ const int globalRank, __UNUSED__ const int index, mpcomp_tasklist_type_t type) 
 {
     int i;
     int *order;

@@ -27,7 +27,7 @@
 #include "mpcomp_intel_types.h"
 #include "mpcomp_intel_atomics.h"
 
-void __kmpc_atomic_4(ident_t *id_ref, int gtid, void *lhs, void *rhs,
+void __kmpc_atomic_4(__UNUSED__ ident_t *id_ref, __UNUSED__ int gtid, void *lhs, void *rhs,
                      void (*f)(void *, void *, void *)) {
   static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
   if (
@@ -56,7 +56,7 @@ void __kmpc_atomic_4(ident_t *id_ref, int gtid, void *lhs, void *rhs,
   }
 }
 
-void __kmpc_atomic_fixed4_wr(ident_t *id_ref, int gtid, kmp_int32 *lhs,
+void __kmpc_atomic_fixed4_wr(__UNUSED__ ident_t *id_ref, __UNUSED__ int gtid, kmp_int32 *lhs,
                              kmp_int32 rhs) {
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t);
@@ -75,7 +75,7 @@ void __kmpc_atomic_fixed4_wr(ident_t *id_ref, int gtid, kmp_int32 *lhs,
 #endif
 }
 
-void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
+void __kmpc_atomic_float8_add(__UNUSED__ ident_t *id_ref,__UNUSED__  int gtid, kmp_real64 *lhs,
                               kmp_real64 rhs) {
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t);

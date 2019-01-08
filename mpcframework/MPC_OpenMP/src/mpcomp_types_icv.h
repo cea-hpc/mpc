@@ -25,6 +25,7 @@
 #ifndef __MPCOMP_TYPES_ICV_H__
 #define __MPCOMP_TYPES_ICV_H__
 
+#include "sctk_debug.h"
 #include "mpcomp.h"
 
 /* Global Internal Control Variables
@@ -70,7 +71,7 @@ typedef struct mpcomp_local_icv_s {
 } mpcomp_local_icv_t;
 
 static inline void 
-__mpcomp_apply_icvs_global_to_local( mpcomp_global_icv_t* global, mpcomp_local_icv_t* local )
+__mpcomp_apply_icvs_global_to_local( __UNUSED__ mpcomp_global_icv_t* global, __UNUSED__ mpcomp_local_icv_t* local )
 {
 }
 

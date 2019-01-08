@@ -24,7 +24,7 @@ __mpcomp_scatter_compute_node_num_threads( mpcomp_node_t* node, const int num_th
 
     *first = -1;
     if( rank >= min ) return 0;
-    
+
     *first = ( rank < rest ) ? ((quot+1) * rank) : (quot * rank + rest);
     return ( rank < rest ) ? quot+1 : quot; 
 }
@@ -108,7 +108,7 @@ int __mpcomp_scatter_compute_instance_rank_from_mvp( mpcomp_instance_t* instance
 {
     int nthreads, max, i, first;
     int mvp_instance_rank;
-    unsigned int* mvp_fathers;
+    int* mvp_fathers;
     mpcomp_node_t* prev_node, *next_node;
     mpcomp_meta_tree_node_t* tree_array_node, *tree_array;
 

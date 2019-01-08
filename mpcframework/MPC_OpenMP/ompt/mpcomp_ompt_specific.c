@@ -59,7 +59,7 @@ ompt_parallel_id_t mpcomp_OMPT_gen_parallel_id( void )
 	return ( ompt_thread_id_t ) prev; 
 }
 
-ompt_state_t ompt_get_state_internal(ompt_wait_id_t *wait_id)
+ompt_state_t ompt_get_state_internal(__UNUSED__ ompt_wait_id_t *wait_id)
 {
 	mpcomp_thread_t *t;
 

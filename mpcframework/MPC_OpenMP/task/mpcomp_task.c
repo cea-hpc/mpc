@@ -245,7 +245,7 @@ mpcomp_task_t *
 __mpcomp_task_alloc(void (*fn)(void *), void *data,
 			  void (*cpyfn)(void *, void *),
 			  long arg_size, long arg_align,
-			  bool if_clause, unsigned flags,
+			  __UNUSED__ bool if_clause, unsigned flags,
 			  int deps_num) 
 {
   sctk_assert(sctk_openmp_thread_tls);
@@ -528,7 +528,7 @@ __mpcomp_task(void (*fn)(void *), void *data,
  * \return the stolen task or NULL if failed
  */
 static mpcomp_task_t *
-mpcomp_task_steal(mpcomp_task_list_t *list,int rank, int victim) 
+mpcomp_task_steal(mpcomp_task_list_t *list, __UNUSED__ int rank, __UNUSED__ int victim) 
 {
     mpcomp_thread_t* thread ;
     struct mpcomp_task_s *task = NULL;

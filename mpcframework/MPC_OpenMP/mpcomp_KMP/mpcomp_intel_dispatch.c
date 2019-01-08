@@ -3,7 +3,7 @@
 #include "mpcomp_intel_types.h"
 #include "mpcomp_intel_dispatch.h"
 
-void __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid,
+void __kmpc_dispatch_init_4(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid,
                             enum sched_type schedule, kmp_int32 lb,
                             kmp_int32 ub, kmp_int32 st, kmp_int32 chunk) {
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
@@ -21,7 +21,7 @@ void __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid,
   __kmpc_dispatch_init_mpcomp_long(t, lb, b, (long)st, (long)chunk);
 }
 
-void __kmpc_dispatch_init_4u(ident_t *loc, kmp_int32 gtid,
+void __kmpc_dispatch_init_4u(__UNUSED__ ident_t *loc,__UNUSED__  kmp_int32 gtid,
                              enum sched_type schedule, kmp_uint32 lb,
                              kmp_uint32 ub, kmp_int32 st, kmp_int32 chunk) {
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
@@ -44,7 +44,7 @@ void __kmpc_dispatch_init_4u(ident_t *loc, kmp_int32 gtid,
                                   (unsigned long long)chunk);
 }
 
-void __kmpc_dispatch_init_8(ident_t *loc, kmp_int32 gtid,
+void __kmpc_dispatch_init_8(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid,
                             enum sched_type schedule, kmp_int64 lb,
                             kmp_int64 ub, kmp_int64 st, kmp_int64 chunk) {
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
@@ -61,7 +61,7 @@ void __kmpc_dispatch_init_8(ident_t *loc, kmp_int32 gtid,
   __kmpc_dispatch_init_mpcomp_long(t, lb, b, (long)st, (long)chunk);
 }
 
-void __kmpc_dispatch_init_8u(ident_t *loc, kmp_int32 gtid,
+void __kmpc_dispatch_init_8u(__UNUSED__ ident_t *loc,__UNUSED__  kmp_int32 gtid,
                              enum sched_type schedule, kmp_uint64 lb,
                              kmp_uint64 ub, kmp_int64 st, kmp_int64 chunk) {
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
@@ -83,8 +83,8 @@ void __kmpc_dispatch_init_8u(ident_t *loc, kmp_int32 gtid,
                                   (unsigned long long)chunk);
 }
 
-int __kmpc_dispatch_next_4(ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
-                           kmp_int32 *p_lb, kmp_int32 *p_ub, kmp_int32 *p_st) {
+int __kmpc_dispatch_next_4(ident_t *loc, kmp_int32 gtid, __UNUSED__ kmp_int32 *p_last,
+                           kmp_int32 *p_lb, kmp_int32 *p_ub, __UNUSED__  kmp_int32 *p_st) {
   long from, to;
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
@@ -107,9 +107,9 @@ int __kmpc_dispatch_next_4(ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   return ret;
 }
 
-int __kmpc_dispatch_next_4u(ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
+int __kmpc_dispatch_next_4u(ident_t *loc, kmp_int32 gtid, __UNUSED__ kmp_int32 *p_last,
                             kmp_uint32 *p_lb, kmp_uint32 *p_ub,
-                            kmp_int32 *p_st) {
+                            __UNUSED__ kmp_int32 *p_st) {
   mpcomp_thread_t *t;
   unsigned long long from, to;
 
@@ -135,8 +135,8 @@ int __kmpc_dispatch_next_4u(ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   return ret;
 }
 
-int __kmpc_dispatch_next_8(ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
-                           kmp_int64 *p_lb, kmp_int64 *p_ub, kmp_int64 *p_st) {
+int __kmpc_dispatch_next_8(ident_t *loc, kmp_int32 gtid, __UNUSED__ kmp_int32 *p_last,
+                           kmp_int64 *p_lb, kmp_int64 *p_ub, __UNUSED__ kmp_int64 *p_st) {
   long from, to;
   mpcomp_thread_t *t;
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
@@ -161,9 +161,9 @@ int __kmpc_dispatch_next_8(ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   return ret;
 }
 
-int __kmpc_dispatch_next_8u(ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
+int __kmpc_dispatch_next_8u(ident_t *loc, kmp_int32 gtid, __UNUSED__ kmp_int32 *p_last,
                             kmp_uint64 *p_lb, kmp_uint64 *p_ub,
-                            kmp_int64 *p_st) {
+                            __UNUSED__ kmp_int64 *p_st) {
   mpcomp_thread_t *t;
   unsigned long long from, to;
 
@@ -188,10 +188,10 @@ int __kmpc_dispatch_next_8u(ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   return ret;
 }
 
-void __kmpc_dispatch_fini_4(ident_t *loc, kmp_int32 gtid) {}
+void __kmpc_dispatch_fini_4(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid) {}
 
-void __kmpc_dispatch_fini_8(ident_t *loc, kmp_int32 gtid) {}
+void __kmpc_dispatch_fini_8(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid) {}
 
-void __kmpc_dispatch_fini_4u(ident_t *loc, kmp_int32 gtid) {}
+void __kmpc_dispatch_fini_4u(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid) {}
 
-void __kmpc_dispatch_fini_8u(ident_t *loc, kmp_int32 gtid) {}
+void __kmpc_dispatch_fini_8u(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid) {}

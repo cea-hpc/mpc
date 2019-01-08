@@ -2,64 +2,64 @@
 #include "mpcomp_abi.h"
 #include "mpcomp_GOMP_common.h"
 
-void mpcomp_GOMP_offload_register_ver(unsigned version, const void *host_table,
-                                      int target_type,
-                                      const void *target_data) {
+void mpcomp_GOMP_offload_register_ver(__UNUSED__ unsigned version, __UNUSED__ const void *host_table,
+                                      __UNUSED__ int target_type,
+                                      __UNUSED__ const void *target_data) {
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
   not_implemented();
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);
 }
 
-void mpcomp_GOMP_offload_register(const void *host_table, int target_type,
-                                  const void *target_data) {
+void mpcomp_GOMP_offload_register(__UNUSED__ const void *host_table, __UNUSED__ int target_type,
+                                  __UNUSED__ const void *target_data) {
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
   not_implemented();
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);
 }
 
-void mpcomp_GOMP_offload_unregister_ver(unsigned version,
-                                        const void *host_table, int target_type,
-                                        const void *target_data) {
+void mpcomp_GOMP_offload_unregister_ver(__UNUSED__ unsigned version,
+                                        __UNUSED__ const void *host_table, __UNUSED__ int target_type,
+                                        __UNUSED__ const void *target_data) {
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
   not_implemented();
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);
 }
 
-void mpcomp_GOMP_offload_unregister(const void *host_table, int target_type,
-                                    const void *target_data) {
+void mpcomp_GOMP_offload_unregister(__UNUSED__ const void *host_table, __UNUSED__ int target_type,
+                                    __UNUSED__ const void *target_data) {
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
   not_implemented();
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);
 }
 
-void mpcomp_GOMP_target(int device, void (*fn)(void *), const void *unused,
-                        size_t mapnum, void **hostaddrs, size_t *sizes,
-                        unsigned char *kinds) {
+void mpcomp_GOMP_target(__UNUSED__ int device, __UNUSED__ void (*fn)(void *), __UNUSED__ const void *unused,
+                        __UNUSED__ size_t mapnum, __UNUSED__ void **hostaddrs, __UNUSED__ size_t *sizes,
+                        __UNUSED__ unsigned char *kinds) {
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
   not_implemented();
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);
 }
 
 #include "sctk_thread.h"
-void mpcomp_GOMP_target_ext(int device, void (*fn)(void *), size_t mapnum,
-                            void **hostaddrs, size_t *sizes,
-                            unsigned short *kinds, unsigned int flags,
-                            void **depend, void **args) {
+void mpcomp_GOMP_target_ext(__UNUSED__ int device, __UNUSED__  void (*fn)(void *), __UNUSED__ size_t mapnum,
+                            __UNUSED__ void **hostaddrs, __UNUSED__ size_t *sizes,
+                            __UNUSED__ unsigned short *kinds,__UNUSED__  unsigned int flags,
+                            __UNUSED__ void **depend, __UNUSED__ void **args) {
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
   not_implemented();
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);
 }
 
-void mpcomp_GOMP_target_data(int device, const void *unused, size_t mapnum,
-                             void **hostaddrs, size_t *sizes,
-                             unsigned char *kinds) {
+void mpcomp_GOMP_target_data(__UNUSED__ int device, __UNUSED__ const void *unused,__UNUSED__  size_t mapnum,
+                             __UNUSED__ void **hostaddrs, __UNUSED__ size_t *sizes,
+                             __UNUSED__ unsigned char *kinds) {
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
   not_implemented();
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);
 }
 
-void mpcomp_GOMP_target_data_ext(int device, size_t mapnum, void **hostaddrs,
-                                 size_t *sizes, unsigned short *kinds) {
+void mpcomp_GOMP_target_data_ext(__UNUSED__ int device, __UNUSED__ size_t mapnum, __UNUSED__ void **hostaddrs,
+                                 __UNUSED__ size_t *sizes, __UNUSED__ unsigned short *kinds) {
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
   not_implemented();
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);
@@ -71,32 +71,32 @@ void mpcomp_GOMP_target_end_data(void) {
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);
 }
 
-void mpcomp_GOMP_target_update(int device, const void *unused, size_t mapnum,
-                               void **hostaddrs, size_t *sizes,
-                               unsigned char *kinds) {
+void mpcomp_GOMP_target_update(__UNUSED__ int device, __UNUSED__ const void *unused, __UNUSED__ size_t mapnum,
+                               __UNUSED__ void **hostaddrs, __UNUSED__ size_t *sizes,
+                               __UNUSED__ unsigned char *kinds) {
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
   not_implemented();
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);
 }
 
-void mpcomp_GOMP_target_update_ext(int device, size_t mapnum, void **hostaddrs,
-                                   size_t *sizes, unsigned short *kinds,
-                                   unsigned int flags, void **depend) {
+void mpcomp_GOMP_target_update_ext(__UNUSED__ int device, __UNUSED__ size_t mapnum, __UNUSED__ void **hostaddrs,
+                                  __UNUSED__  size_t *sizes,__UNUSED__  unsigned short *kinds,
+                                   __UNUSED__ unsigned int flags, __UNUSED__ void **depend) {
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
   not_implemented();
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);
 }
 
-void mpcomp_GOMP_target_enter_exit_data(int device, size_t mapnum,
-                                        void **hostaddrs, size_t *sizes,
-                                        unsigned short *kinds,
-                                        unsigned int flags, void **depend) {
+void mpcomp_GOMP_target_enter_exit_data(__UNUSED__ int device, __UNUSED__ size_t mapnum,
+                                        __UNUSED__ void **hostaddrs, __UNUSED__ size_t *sizes,
+                                        __UNUSED__ unsigned short *kinds,
+                                        __UNUSED__ unsigned int flags,__UNUSED__  void **depend) {
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
   not_implemented();
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);
 }
 
-void mpcomp_GOMP_teams(unsigned int num_teams, unsigned int thread_limit) {
+void mpcomp_GOMP_teams(__UNUSED__ unsigned int num_teams, __UNUSED__ unsigned int thread_limit) {
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
   not_implemented();
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);

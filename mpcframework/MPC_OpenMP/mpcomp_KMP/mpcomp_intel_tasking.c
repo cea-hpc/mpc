@@ -49,7 +49,7 @@ double mean_time=0;
 #define TIMER wtime
 
 #if MPCOMP_TASK
-kmp_int32 __kmpc_omp_task(ident_t *loc_ref, kmp_int32 gtid,
+kmp_int32 __kmpc_omp_task(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid,
                           kmp_task_t *new_task) {
   struct mpcomp_task_s *mpcomp_task =
       (struct mpcomp_task_s * ) ( (char *)new_task - sizeof(struct mpcomp_task_s));
@@ -63,7 +63,7 @@ void __kmp_omp_task_wrapper(void *task_ptr) {
   kmp_task_ptr->routine(0, kmp_task_ptr);
 }
 
-kmp_task_t *__kmpc_omp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
+kmp_task_t *__kmpc_omp_task_alloc(__UNUSED__ ident_t *loc_ref,__UNUSED__  kmp_int32 gtid,
                                   kmp_int32 flags, size_t sizeof_kmp_task_t,
                                   size_t sizeof_shareds,
                                   kmp_routine_entry_t task_entry) {
@@ -161,7 +161,7 @@ kmp_task_t *__kmpc_omp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
   return compiler_infos;
 }
 
-void __kmpc_omp_task_begin_if0(ident_t *loc_ref, kmp_int32 gtid,
+void __kmpc_omp_task_begin_if0(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid,
                                kmp_task_t *task) {
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   struct mpcomp_task_s *mpcomp_task = (struct mpcomp_task_s *) (
@@ -174,7 +174,7 @@ void __kmpc_omp_task_begin_if0(ident_t *loc_ref, kmp_int32 gtid,
   MPCOMP_TASK_THREAD_SET_CURRENT_TASK(t, mpcomp_task);
 }
 
-void __kmpc_omp_task_complete_if0(ident_t *loc_ref, kmp_int32 gtid,
+void __kmpc_omp_task_complete_if0(__UNUSED__ ident_t *loc_ref,__UNUSED__  kmp_int32 gtid,
                                   kmp_task_t *task) {
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   struct mpcomp_task_s *mpcomp_task = (struct mpcomp_task_s *)
@@ -187,7 +187,7 @@ void __kmpc_omp_task_complete_if0(ident_t *loc_ref, kmp_int32 gtid,
   t->info.icvs = mpcomp_task->prev_icvs;
 }
 
-kmp_int32 __kmpc_omp_task_parts(ident_t *loc_ref, kmp_int32 gtid,
+kmp_int32 __kmpc_omp_task_parts(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid,
                                 kmp_task_t *new_task) {
   // TODO: Check if this is the correct way to implement __kmpc_omp_task_parts
   struct mpcomp_task_s *mpcomp_task = (struct mpcomp_task_s *)
@@ -196,34 +196,34 @@ kmp_int32 __kmpc_omp_task_parts(ident_t *loc_ref, kmp_int32 gtid,
   return (kmp_int32)0;
 }
 
-kmp_int32 __kmpc_omp_taskwait(ident_t *loc_ref, kmp_int32 gtid) {
+kmp_int32 __kmpc_omp_taskwait(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid) {
   mpcomp_taskwait();
   return (kmp_int32)0;
 }
 
-kmp_int32 __kmpc_omp_taskyield(ident_t *loc_ref, kmp_int32 gtid, int end_part) {
+kmp_int32 __kmpc_omp_taskyield(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, __UNUSED__ int end_part) {
   //not_implemented();
   return (kmp_int32)0;
 }
 
 /* Following 2 functions should be enclosed by "if TASK_UNUSED" */
 
-void __kmpc_omp_task_begin(ident_t *loc_ref, kmp_int32 gtid, kmp_task_t *task) {
+void __kmpc_omp_task_begin(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, __UNUSED__ kmp_task_t *task) {
   //not_implemented();
 }
 
-void __kmpc_omp_task_complete(ident_t *loc_ref, kmp_int32 gtid,
-                              kmp_task_t *task) {
+void __kmpc_omp_task_complete(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid,
+                              __UNUSED__ kmp_task_t *task) {
   //not_implemented();
 }
 
 /* FOR OPENMP 4 */
 
-void __kmpc_taskgroup(ident_t *loc, int gtid) { mpcomp_taskgroup_start(); }
+void __kmpc_taskgroup(__UNUSED__ ident_t *loc, __UNUSED__ int gtid) { mpcomp_taskgroup_start(); }
 
-void __kmpc_end_taskgroup(ident_t *loc, int gtid) { mpcomp_taskgroup_end(); }
+void __kmpc_end_taskgroup(__UNUSED__ ident_t *loc, __UNUSED__ int gtid) { mpcomp_taskgroup_end(); }
 
-static void mpcomp_intel_translate_taskdep_to_gomp(  kmp_int32 ndeps, kmp_depend_info_t *dep_list, kmp_int32 ndeps_noalias, kmp_depend_info_t *noalias_dep_list, void** gomp_list_deps)
+static void mpcomp_intel_translate_taskdep_to_gomp(  kmp_int32 ndeps, kmp_depend_info_t *dep_list, kmp_int32 ndeps_noalias, __UNUSED__ kmp_depend_info_t *noalias_dep_list, void** gomp_list_deps)
 {
     int i;
 
@@ -252,10 +252,10 @@ static void mpcomp_intel_translate_taskdep_to_gomp(  kmp_int32 ndeps, kmp_depend
     for ( i = 0; i < num_in_dep; i++ ){
         gomp_list_deps[2 + num_out_dep + i] = (void *)dep_not_out[i];
     }
-    return 0;
+    return;
 }
 
-kmp_int32 __kmpc_omp_task_with_deps(ident_t *loc_ref, kmp_int32 gtid,
+kmp_int32 __kmpc_omp_task_with_deps(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid,
                                     kmp_task_t *new_task, kmp_int32 ndeps,
                                     kmp_depend_info_t *dep_list,
                                     kmp_int32 ndeps_noalias,
@@ -277,7 +277,7 @@ kmp_int32 __kmpc_omp_task_with_deps(ident_t *loc_ref, kmp_int32 gtid,
   return (kmp_int32)0;
 }
 
-void __kmpc_omp_wait_deps(ident_t *loc_ref, kmp_int32 gtid, kmp_int32 ndeps,
+void __kmpc_omp_wait_deps(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, kmp_int32 ndeps,
                           kmp_depend_info_t *dep_list, kmp_int32 ndeps_noalias,
                           kmp_depend_info_t *noalias_dep_list) {
     mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
@@ -296,12 +296,12 @@ void __kmpc_omp_wait_deps(ident_t *loc_ref, kmp_int32 gtid, kmp_int32 ndeps,
     sctk_nodebug("[Redirect mpcomp_GOMP]%s:\tEnd", __func__);
 }
 
-void __kmp_release_deps(kmp_int32 gtid, kmp_taskdata_t *task) {
+void __kmp_release_deps(__UNUSED__ kmp_int32 gtid, __UNUSED__ kmp_taskdata_t *task) {
   //not_implemented();
 }
 
 typedef void(*p_task_dup_t)(kmp_task_t *, kmp_task_t *, kmp_int32);
-void __kmpc_taskloop(ident_t *loc, int gtid, kmp_task_t *task, int if_val,
+void __kmpc_taskloop(ident_t *loc, int gtid, kmp_task_t *task, __UNUSED__ int if_val,
                 kmp_uint64 *lb, kmp_uint64 *ub, kmp_int64 st,
                 int nogroup, int sched, kmp_uint64 grainsize, void *task_dup )
 {

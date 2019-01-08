@@ -97,7 +97,7 @@ static void mpcomp_internal_GOMP_in_order_scheduler_master_end(void) {
 
 void mpcomp_internal_GOMP_parallel_start(void (*fn)(void *), void *data,
                                          unsigned num_threads,
-                                         unsigned int flags) {
+                                         __UNUSED__ unsigned int flags) {
   __mpcomp_start_parallel_region((void (*)(void *))fn, data, num_threads);
 }
 

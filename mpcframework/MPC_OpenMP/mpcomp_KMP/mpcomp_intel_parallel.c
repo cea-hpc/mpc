@@ -9,12 +9,12 @@
 
 #include "mpcomp_parallel_region.h"
 
-kmp_int32 __kmpc_ok_to_fork(ident_t *loc) {
+kmp_int32 __kmpc_ok_to_fork(__UNUSED__ ident_t *loc) {
   sctk_nodebug("%s: entering...", __func__);
   return (kmp_int32)1;
 }
 
-void __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...) {
+void __kmpc_fork_call(__UNUSED__ ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...) {
   va_list args;
   int i;
   void **args_copy;
@@ -78,7 +78,7 @@ void __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...) {
   t->push_num_threads = 0;
 }
 
-void __kmpc_serialized_parallel(ident_t *loc, kmp_int32 global_tid) {
+void __kmpc_serialized_parallel(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid) {
   mpcomp_thread_t *t;
   mpcomp_parallel_region_t *info;
 
@@ -114,7 +114,7 @@ void __kmpc_serialized_parallel(ident_t *loc, kmp_int32 global_tid) {
   sctk_nodebug("%s: leaving (%d) ...", __func__, global_tid);
 }
 
-void __kmpc_end_serialized_parallel(ident_t *loc, kmp_int32 global_tid) {
+void __kmpc_end_serialized_parallel(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid) {
   mpcomp_thread_t *t;
 
   sctk_nodebug("%s: entering (%d)...", __func__, global_tid);
@@ -130,7 +130,7 @@ void __kmpc_end_serialized_parallel(ident_t *loc, kmp_int32 global_tid) {
   sctk_nodebug("%s: leaving (%d)...", __func__, global_tid);
 }
 
-void __kmpc_push_num_threads(ident_t *loc, kmp_int32 global_tid,
+void __kmpc_push_num_threads(__UNUSED__ ident_t *loc,__UNUSED__  kmp_int32 global_tid,
                              kmp_int32 num_threads) {
   mpcomp_thread_t *t;
   sctk_warning("%s: pushing %d thread(s)", __func__, num_threads);
@@ -145,12 +145,12 @@ void __kmpc_push_num_threads(ident_t *loc, kmp_int32 global_tid,
   t->push_num_threads = num_threads;
 }
 
-void __kmpc_push_num_teams(ident_t *loc, kmp_int32 global_tid,
-                           kmp_int32 num_teams, kmp_int32 num_threads) {
+void __kmpc_push_num_teams(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid,
+                           __UNUSED__ kmp_int32 num_teams, __UNUSED__ kmp_int32 num_threads) {
   not_implemented();
 }
 
-void __kmpc_fork_teams(ident_t *loc, kmp_int32 argc, kmpc_micro microtask,
+void __kmpc_fork_teams(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 argc,__UNUSED__  kmpc_micro microtask,
                        ...) {
   not_implemented();
 }

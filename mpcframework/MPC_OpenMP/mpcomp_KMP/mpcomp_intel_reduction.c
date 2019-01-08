@@ -31,7 +31,7 @@
 #include "mpcomp_barrier.h"
 
 int __kmp_determine_reduction_method(
-    ident_t *loc, kmp_int32 global_tid, kmp_int32 num_vars, size_t reduce_size,
+    ident_t *loc, __UNUSED__ kmp_int32 global_tid, __UNUSED__ kmp_int32 num_vars, __UNUSED__ size_t reduce_size,
     void *reduce_data, void (*reduce_func)(void *lhs_data, void *rhs_data),
     kmp_critical_name *lck, mpcomp_thread_t *t) {
   int retval = critical_reduce_block;
@@ -325,8 +325,8 @@ __kmpc_reduce_nowait(ident_t *loc, kmp_int32 global_tid, kmp_int32 num_vars,
   return retval;
 }
 
-void __kmpc_end_reduce_nowait(ident_t *loc, kmp_int32 global_tid,
-                              kmp_critical_name *lck) {
+void __kmpc_end_reduce_nowait(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid,
+                              __UNUSED__ kmp_critical_name *lck) {
   int packed_reduction_method;
 
   /* get reduction method */
@@ -381,8 +381,8 @@ __kmpc_reduce(ident_t *loc, kmp_int32 global_tid, kmp_int32 num_vars,
   return retval;
 }
 
-void __kmpc_end_reduce(ident_t *loc, kmp_int32 global_tid,
-    kmp_critical_name *lck) {
+void __kmpc_end_reduce(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid,
+    __UNUSED__ kmp_critical_name *lck) {
 
   int packed_reduction_method;
 

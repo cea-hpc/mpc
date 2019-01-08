@@ -51,8 +51,8 @@ __mpcomp_parallel_region_infos_init(mpcomp_parallel_region_t *info) {
 
 static inline void __mpcomp_thread_infos_init(mpcomp_thread_t *thread,
                                               mpcomp_local_icv_t icvs,
-                                              mpcomp_instance_t *instance,
-                                              mpcomp_thread_t *father) {
+                                              __UNUSED__ mpcomp_instance_t *instance,
+                                              __UNUSED__ mpcomp_thread_t *father) {
   int i;
 
   /* RESET all thread_infos to NULL 		*/

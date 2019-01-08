@@ -123,7 +123,7 @@ static unsigned long mpcomp_taskloop_compute_loop_value_grainsize(
 void mpcomp_taskloop(void (*fn)(void *), void *data,
                      void (*cpyfn)(void *, void *), long arg_size,
                      long arg_align, unsigned flags, unsigned long num_tasks,
-                     int priority, long start, long end, long step) {
+                     __UNUSED__ int priority, long start, long end, long step) {
   long taskstep;
   unsigned long extra_chunk, grainsize, i;
 
@@ -164,12 +164,12 @@ void mpcomp_taskloop(void (*fn)(void *), void *data,
   }
 }
 
-void mpcomp_taskloop_ull(void (*fn)(void *), void *data,
-                         void (*cpyfn)(void *, void *), long arg_size,
-                         long arg_align, unsigned flags,
-                         unsigned long num_tasks, int priority,
-                         unsigned long long start, unsigned long long end,
-                         unsigned long long step) {}
+void mpcomp_taskloop_ull(__UNUSED__ void (*fn)(void *), __UNUSED__ void *data,
+                         __UNUSED__ void (*cpyfn)(void *, void *), __UNUSED__ long arg_size,
+                         __UNUSED__ long arg_align, __UNUSED__ unsigned flags,
+                         __UNUSED__  unsigned long num_tasks, __UNUSED__ int priority,
+                         __UNUSED__ unsigned long long start, __UNUSED__ unsigned long long end,
+                         __UNUSED__ unsigned long long step) {}
 
 #endif /* MPCOMP_TASK */
 

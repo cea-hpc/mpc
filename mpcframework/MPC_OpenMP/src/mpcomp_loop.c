@@ -111,10 +111,10 @@ __mpcomp_get_static_nb_chunks_per_rank_ull(unsigned long long rank,
 }
 
 
-void __mpcomp_get_specific_chunk_per_rank(int rank, int num_threads, long lb,
-                                          long b, long incr, long chunk_size,
-                                          long chunk_num, long *from,
-                                          long *to) {
+void __mpcomp_get_specific_chunk_per_rank(__UNUSED__ int rank, __UNUSED__ int num_threads, __UNUSED__ long lb,
+                                          __UNUSED__ long b, __UNUSED__ long incr, __UNUSED__ long chunk_size,
+                                          __UNUSED__ long chunk_num, __UNUSED__ long *from,
+                                          __UNUSED__ long *to) {
   not_implemented();
 }
 

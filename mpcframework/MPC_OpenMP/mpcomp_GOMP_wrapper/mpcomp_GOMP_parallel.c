@@ -24,14 +24,14 @@ void mpcomp_GOMP_parallel_end(void) {
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);
 }
 
-bool mpcomp_GOMP_cancellation_point(int which) {
+bool mpcomp_GOMP_cancellation_point(__UNUSED__ int which) {
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
   not_implemented();
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);
   return false;
 }
 
-bool mpcomp_GOMP_cancel(int which, bool do_cancel) {
+bool mpcomp_GOMP_cancel(__UNUSED__ int which, __UNUSED__ bool do_cancel) {
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
   not_implemented();
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);

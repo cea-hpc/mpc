@@ -184,7 +184,7 @@ __mpcomp_spining_get_instance_max_depth( mpcomp_instance_t* instance )
 }
 
 static inline char* 
-__mpcomp_spinning_get_debug_thread_infos( mpcomp_thread_t* thread )
+__mpcomp_spinning_get_debug_thread_infos( __UNUSED__ mpcomp_thread_t* thread )
 {
     return NULL; 
 }

@@ -31,7 +31,7 @@ void mpcomp_GOMP_parallel_sections_start(void (*fn)(void *), void *data,
 
 void mpcomp_GOMP_parallel_sections(void (*fn)(void *), void *data,
                                    unsigned num_threads, unsigned count,
-                                   unsigned flags) {
+                                   __UNUSED__ unsigned flags) {
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
   __mpcomp_start_sections_parallel_region(fn, data, num_threads, count);
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);

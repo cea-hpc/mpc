@@ -311,7 +311,7 @@ void __mpcomp_dynamic_loop_end(void) {
   __mpcomp_barrier();
 }
 
-int __mpcomp_dynamic_loop_next_ignore_nowait(long *from, long *to) {
+int __mpcomp_dynamic_loop_next_ignore_nowait(__UNUSED__ long *from, __UNUSED__ long *to) {
   not_implemented();
   return 0;
 }
