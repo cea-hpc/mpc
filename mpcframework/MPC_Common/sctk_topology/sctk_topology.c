@@ -259,7 +259,7 @@ static char *convert_rgb_to_string(int red, int green, int blue, char * rgb){
 }
 
 /* fill thread placement informations in file to communicate between processes of the same node for text placement option */
-void create_placement_text(int os_pu, int os_master_pu, int task_id, int vp, int rank_open_mp, int* min_idex, int pid){
+void create_placement_text(int os_pu, int os_master_pu, int task_id, int vp, __UNUSED__ int rank_open_mp, int* min_idex, int pid){
 
     /*acces global topo*/
     hwloc_topology_load(topology_full);
@@ -764,7 +764,7 @@ static int sctk_determine_higher_logical(int *os_index, int lenght){
 
 /* Write in file as lstopo adding informations on the topology and thread placement (text option) */
 static void print_children(hwloc_topology_t topology, hwloc_obj_t obj, 
-        int depth, struct sctk_text_option_s *tab_option, int num_os,int higher_logical , int lower_logical, const char* HostName, FILE* f, int ind_child, int last_arity)
+        int depth, struct sctk_text_option_s *tab_option, int num_os,int higher_logical , int lower_logical, const char* HostName, FILE* f, int __UNUSED__ ind_child, int last_arity)
 {
     char string[128];
     char string_mpc[128];
