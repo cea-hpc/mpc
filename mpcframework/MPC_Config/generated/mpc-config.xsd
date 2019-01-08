@@ -520,15 +520,33 @@
       <xs:element minOccurs="0" name="pkey" type="xs:string"/>
       <xs:element minOccurs="0" name="adm_port" type="xs:integer"/>
       <xs:element minOccurs="0" name="verbose_level" type="xs:integer"/>
-      <xs:element minOccurs="0" name="eager_limit" type="xs:integer"/>
-      <xs:element minOccurs="0" name="buffered_limit" type="xs:integer"/>
+      <xs:element minOccurs="0" name="eager_limit">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="buffered_limit">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
       <xs:element minOccurs="0" name="qp_tx_depth" type="xs:integer"/>
       <xs:element minOccurs="0" name="qp_rx_depth" type="xs:integer"/>
       <xs:element minOccurs="0" name="cq_depth" type="xs:integer"/>
       <xs:element minOccurs="0" name="rdma_depth" type="xs:integer"/>
       <xs:element minOccurs="0" name="max_sg_sq" type="xs:integer"/>
       <xs:element minOccurs="0" name="max_sg_rq" type="xs:integer"/>
-      <xs:element minOccurs="0" name="max_inline" type="xs:integer"/>
+      <xs:element minOccurs="0" name="max_inline">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
       <xs:element minOccurs="0" name="rdma_resizing" type="xs:integer"/>
       <xs:element minOccurs="0" name="max_rdma_connections" type="xs:integer"/>
       <xs:element minOccurs="0" name="max_rdma_resizing" type="xs:integer"/>
@@ -538,7 +556,13 @@
       <xs:element minOccurs="0" name="max_srq_ibufs" type="xs:integer"/>
       <xs:element minOccurs="0" name="srq_credit_limit" type="xs:integer"/>
       <xs:element minOccurs="0" name="srq_credit_thread_limit" type="xs:integer"/>
-      <xs:element minOccurs="0" name="size_ibufs_chunk" type="xs:integer"/>
+      <xs:element minOccurs="0" name="size_ibufs_chunk">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
       <xs:element minOccurs="0" name="init_mr" type="xs:integer"/>
       <xs:element minOccurs="0" name="steal" type="xs:integer"/>
       <xs:element minOccurs="0" name="quiet_crash" type="xs:integer"/>
@@ -547,12 +571,36 @@
       <xs:element minOccurs="0" name="wc_out_number" type="xs:integer"/>
       <xs:element minOccurs="0" name="low_memory" type="xs:boolean"/>
       <xs:element minOccurs="0" name="rdvz_protocol" type="user_type_ibv_rdvz_protocol"/>
-      <xs:element minOccurs="0" name="rdma_min_size" type="xs:integer"/>
-      <xs:element minOccurs="0" name="rdma_max_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="rdma_min_size">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="rdma_max_size">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
       <xs:element minOccurs="0" name="rdma_min_nb" type="xs:integer"/>
       <xs:element minOccurs="0" name="rdma_max_nb" type="xs:integer"/>
-      <xs:element minOccurs="0" name="rdma_resizing_min_size" type="xs:integer"/>
-      <xs:element minOccurs="0" name="rdma_resizing_max_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="rdma_resizing_min_size">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="rdma_resizing_max_size">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
       <xs:element minOccurs="0" name="rdma_resizing_min_nb" type="xs:integer"/>
       <xs:element minOccurs="0" name="rdma_resizing_max_nb" type="xs:integer"/>
       <xs:element minOccurs="0" name="size_recv_ibufs_chunk" type="xs:integer"/>

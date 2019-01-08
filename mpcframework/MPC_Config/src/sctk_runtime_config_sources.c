@@ -51,7 +51,7 @@ const char * sctk_runtime_config_default_user_file_path = NULL;
 **/
 static int sctk_runtime_config_sources_profile_name_is_unique( struct sctk_runtime_config_sources * config_sources, const xmlChar *candidate )
 {
-	int i = 0;
+	unsigned int i = 0;
 
 	/* errors */
 	assert( candidate != NULL );
@@ -263,7 +263,7 @@ xmlNodePtr sctk_runtime_config_sources_find_profile_node(struct sctk_runtime_con
 void sctk_runtime_config_sources_insert_profile_node(struct sctk_runtime_config_sources * config_sources,xmlNodePtr node)
 {
 	/* vars */
-	int i;
+	unsigned int i;
 	bool present = false;
 
 	/* trivial cas */
@@ -653,7 +653,7 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 void sctk_runtime_config_sources_close(struct sctk_runtime_config_sources * config_sources)
 {
 	/* vars */
-	int i;
+	unsigned int i;
 
 	/* errors */
 	assert(config_sources != NULL);

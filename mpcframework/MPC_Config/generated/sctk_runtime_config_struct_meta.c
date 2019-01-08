@@ -277,9 +277,9 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 				NULL
 			, NULL},	{"verbose_level"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,verbose_level)  , sizeof(int) , "int" , NULL , 
 				"IB_VERBOSE"
-			, NULL},	{"eager_limit"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,eager_limit)  , sizeof(int) , "int" , NULL , 
+			, NULL},	{"eager_limit"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,eager_limit)  , sizeof(size_t) , "size_t" , NULL , 
 				"IB_EAGER_THRESH"
-			, NULL},	{"buffered_limit"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,buffered_limit)  , sizeof(int) , "int" , NULL , 
+			, NULL},	{"buffered_limit"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,buffered_limit)  , sizeof(size_t) , "size_t" , NULL , 
 				"IB_BUFFERED_THRESH"
 			, NULL},	{"qp_tx_depth"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,qp_tx_depth)  , sizeof(int) , "int" , NULL , 
 				"IB_TX_DEPTH"
@@ -293,7 +293,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 				"IB_MAX_SG_SQ"
 			, NULL},	{"max_sg_rq"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,max_sg_rq)  , sizeof(int) , "int" , NULL , 
 				"IB_MAX_SG_RQ"
-			, NULL},	{"max_inline"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,max_inline)  , sizeof(int) , "int" , NULL , 
+			, NULL},	{"max_inline"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,max_inline)  , sizeof(size_t) , "size_t" , NULL , 
 				"IB_MAX_INLINE"
 			, NULL},	{"rdma_resizing"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_resizing)  , sizeof(int) , "int" , NULL , 
 				"IB_RDMA_RESIZING"
@@ -313,7 +313,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 				"IB_SRQ_CREDIT_LIMIT"
 			, NULL},	{"srq_credit_thread_limit"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,srq_credit_thread_limit)  , sizeof(int) , "int" , NULL , 
 				"IB_SRQ_CREDIT_LIMIT_THREAD"
-			, NULL},	{"size_ibufs_chunk"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,size_ibufs_chunk)  , sizeof(int) , "int" , NULL , 
+			, NULL},	{"size_ibufs_chunk"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,size_ibufs_chunk)  , sizeof(size_t) , "size_t" , NULL , 
 				"IB_IBUF_CHUNK"
 			, NULL},	{"init_mr"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,init_mr)  , sizeof(int) , "int" , NULL , 
 				"IB_MMU_INIT"
@@ -331,17 +331,17 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 				NULL
 			, NULL},	{"rdvz_protocol"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdvz_protocol)  , sizeof(enum ibv_rdvz_protocol) , "enum ibv_rdvz_protocol" , NULL , 
 				NULL
-			, NULL},	{"rdma_min_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_min_size)  , sizeof(int) , "int" , NULL , 
+			, NULL},	{"rdma_min_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_min_size)  , sizeof(size_t) , "size_t" , NULL , 
 				NULL
-			, NULL},	{"rdma_max_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_max_size)  , sizeof(int) , "int" , NULL , 
+			, NULL},	{"rdma_max_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_max_size)  , sizeof(size_t) , "size_t" , NULL , 
 				NULL
 			, NULL},	{"rdma_min_nb"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_min_nb)  , sizeof(int) , "int" , NULL , 
 				NULL
 			, NULL},	{"rdma_max_nb"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_max_nb)  , sizeof(int) , "int" , NULL , 
 				NULL
-			, NULL},	{"rdma_resizing_min_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_resizing_min_size)  , sizeof(int) , "int" , NULL , 
+			, NULL},	{"rdma_resizing_min_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_resizing_min_size)  , sizeof(size_t) , "size_t" , NULL , 
 				NULL
-			, NULL},	{"rdma_resizing_max_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_resizing_max_size)  , sizeof(int) , "int" , NULL , 
+			, NULL},	{"rdma_resizing_max_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_resizing_max_size)  , sizeof(size_t) , "size_t" , NULL , 
 				NULL
 			, NULL},	{"rdma_resizing_min_nb"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_resizing_min_nb)  , sizeof(int) , "int" , NULL , 
 				NULL

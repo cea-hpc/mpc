@@ -113,7 +113,7 @@ void sctk_runtime_config_map_profile( struct sctk_runtime_config * config, xmlNo
 void sctk_runtime_config_runtime_map_sources( struct sctk_runtime_config * config,struct sctk_runtime_config_sources * config_sources)
 {
 	/* vars */
-	int i;
+	unsigned int i;
 
 	/* errors */
 	assert(config != NULL);
@@ -236,7 +236,7 @@ void sctk_runtime_config_init(void)
                 &__sctk_global_runtime_config__, &config_sources);
 
             /* Retrieve the list of profiles names */
-            int i = 0;
+            unsigned int i = 0;
             __sctk_global_runtime_config__.number_profiles =
                 config_sources.cnt_profile_names;
             for (i = 0; i < config_sources.cnt_profile_names; i++) {

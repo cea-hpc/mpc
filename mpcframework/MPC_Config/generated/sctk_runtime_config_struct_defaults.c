@@ -1373,7 +1373,7 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 			abort();
 		}
 #endif
-				obj->eager_limit = 12288;
+				obj->eager_limit = sctk_runtime_config_map_entry_parse_size("12288");
 
 #ifdef MPC_MPI
 		if( mpc_MPI_T_cvar_get_index( "IB_EAGER_THRESH" , &the_temp_index ) == MPI_SUCCESS )
@@ -1406,7 +1406,7 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 			abort();
 		}
 #endif
-				obj->buffered_limit = 262114;
+				obj->buffered_limit = sctk_runtime_config_map_entry_parse_size("262114");
 
 #ifdef MPC_MPI
 		if( mpc_MPI_T_cvar_get_index( "IB_BUFFERED_THRESH" , &the_temp_index ) == MPI_SUCCESS )
@@ -1637,7 +1637,7 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 			abort();
 		}
 #endif
-				obj->max_inline = 128;
+				obj->max_inline = sctk_runtime_config_map_entry_parse_size("128");
 
 #ifdef MPC_MPI
 		if( mpc_MPI_T_cvar_get_index( "IB_MAX_INLINE" , &the_temp_index ) == MPI_SUCCESS )
@@ -1967,7 +1967,7 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 			abort();
 		}
 #endif
-				obj->size_ibufs_chunk = 100;
+				obj->size_ibufs_chunk = sctk_runtime_config_map_entry_parse_size("100");
 
 #ifdef MPC_MPI
 		if( mpc_MPI_T_cvar_get_index( "IB_IBUF_CHUNK" , &the_temp_index ) == MPI_SUCCESS )
@@ -2200,12 +2200,12 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 #endif
 				obj->low_memory = false;
 	obj->rdvz_protocol = IBV_RDVZ_WRITE_PROTOCOL;
-	obj->rdma_min_size = 1024;
-	obj->rdma_max_size = 4096;
+	obj->rdma_min_size = sctk_runtime_config_map_entry_parse_size("1024");
+	obj->rdma_max_size = sctk_runtime_config_map_entry_parse_size("4096");
 	obj->rdma_min_nb = 8;
 	obj->rdma_max_nb = 32;
-	obj->rdma_resizing_min_size = 1024;
-	obj->rdma_resizing_max_size = 4096;
+	obj->rdma_resizing_min_size = sctk_runtime_config_map_entry_parse_size("1024");
+	obj->rdma_resizing_max_size = sctk_runtime_config_map_entry_parse_size("4096");
 	obj->rdma_resizing_min_nb = 8;
 	obj->rdma_resizing_max_nb = 32;
 	obj->size_recv_ibufs_chunk = 400;

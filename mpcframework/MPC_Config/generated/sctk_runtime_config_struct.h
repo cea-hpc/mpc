@@ -385,9 +385,9 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	/**Defines the verbose level of the Infiniband interface .**/
 	int verbose_level;
 	/**Size of the eager buffers (short messages).**/
-	int eager_limit;
+	size_t eager_limit;
 	/**Max size for using the Buffered protocol (message split into several Eager messages).**/
-	int buffered_limit;
+	size_t buffered_limit;
 	/**Number of entries to allocate in the QP for sending messages. If too low, may cause an QP overrun**/
 	int qp_tx_depth;
 	/**Number of entries to allocate in the QP for receiving messages. Must be 0 if using SRQ**/
@@ -401,7 +401,7 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	/**Max pending RDMA operations for recv**/
 	int max_sg_rq;
 	/**Max size for inlining messages**/
-	int max_inline;
+	size_t max_inline;
 	/**Defines if RDMA connections may be resized.**/
 	int rdma_resizing;
 	/**Number of RDMA buffers allocated for each neighbor**/
@@ -421,7 +421,7 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	/**Min number of free recv Eager buffers before the activation of the asynchronous thread. If this thread is activated too many times, the performance may be decreased.**/
 	int srq_credit_thread_limit;
 	/**Number of new buffers allocated when no more buffers are available.**/
-	int size_ibufs_chunk;
+	size_t size_ibufs_chunk;
 	/**Number of MMU entries allocated during the MPC initlization.**/
 	int init_mr;
 	/**Defines if the steal in MPI is allowed **/
@@ -439,17 +439,17 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	/**Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)**/
 	enum ibv_rdvz_protocol rdvz_protocol;
 	/**Defines the minimum size for the Eager RDMA buffers**/
-	int rdma_min_size;
+	size_t rdma_min_size;
 	/**Defines the maximun size for the Eager RDMA buffers**/
-	int rdma_max_size;
+	size_t rdma_max_size;
 	/**Defines the minimum number of Eager RDMA buffers**/
 	int rdma_min_nb;
 	/**Defines the maximum number of Eager RDMA buffers**/
 	int rdma_max_nb;
 	/**Defines the minimum size for the Eager RDMA buffers (resizing)**/
-	int rdma_resizing_min_size;
+	size_t rdma_resizing_min_size;
 	/**Defines the maximum size for the Eager RDMA buffers (resizing)**/
-	int rdma_resizing_max_size;
+	size_t rdma_resizing_max_size;
 	/**Defines the minimum number of Eager RDMA buffers (resizing)**/
 	int rdma_resizing_min_nb;
 	/**Defines the maximum number of Eager RDMA buffers (resizing)**/
