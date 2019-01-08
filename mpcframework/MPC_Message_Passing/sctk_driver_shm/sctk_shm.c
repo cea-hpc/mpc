@@ -27,7 +27,7 @@ static sctk_shm_msg_list_t *sctk_shm_pending_ptp_msg_list = NULL;
 // FROM Henry S. Warren, Jr.'s "Hacker's Delight."
 static long sctk_shm_roundup_powerof2(unsigned long n)
 {
-    assume( n < ( 1 << 31));
+    assume( n < (unsigned long)( 1 << 31));
     --n;
     n |= n >> 1;
     n |= n >> 2;
@@ -74,7 +74,8 @@ static int sctk_network_send_message_dest_shm(sctk_thread_ptp_message_t *msg,
                                               int sctk_shm_dest,
                                               int with_lock) {
   sctk_shm_cell_t *cell = NULL;
-  int sctk_shm_send_cur_try, ret;
+  unsigned int sctk_shm_send_cur_try;
+  int ret;
   int is_message_control = 0;
 
   if (sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg))) {

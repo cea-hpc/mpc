@@ -182,7 +182,7 @@ typedef struct sctk_ibuf_region_s
 	size_t allocated_size;								/**< Memory allocated for the region */
 	struct sctk_ib_rail_info_s *rail;					/**< A region is associated to a rail */
 	sctk_ib_mmu_entry_t *mmu_entry;				/**< MMU entry */
-	int             polled_nb;							/**< Number of messages polled */
+	sctk_uint32_t polled_nb;							/**< Number of messages polled */
 	struct sctk_ibuf_s *list;							/** List of buffers */
 	struct sctk_ibuf_s *ibuf;							/**< Pointer to the addr where ibufs are  allocated */
 	enum sctk_ibuf_channel channel;						/**< Channel where the region has been allocated */
@@ -235,7 +235,7 @@ typedef struct sctk_ibuf_s
 	* for data alignment troubles */
 	struct sctk_ibuf_desc_s desc;
 	struct sctk_ibuf_region_s *region;
-	int index;
+	unsigned int index;
 	unsigned char *buffer;				/**< pointer to the buffer */
 	size_t size;						/**< size of the buffer */
 	enum sctk_ibuf_status flag;			/**< status of the buffer */
@@ -303,7 +303,7 @@ int sctk_ibuf_rdma_write_with_imm_init ( sctk_ibuf_t *ibuf,
                                          sctk_uint32_t lkey,
                                          void *remote_address,
                                          sctk_uint32_t rkey,
-                                         int len,
+                                         unsigned int len,
                                          char to_release,
                                          sctk_uint32_t imm_data );
 
@@ -312,7 +312,7 @@ int sctk_ibuf_rdma_write_init ( sctk_ibuf_t *ibuf,
                                 sctk_uint32_t lkey,
                                 void *remote_address,
                                 sctk_uint32_t rkey,
-                                int len,
+                                unsigned int len,
                                 int send_flags,
                                 char to_release );
 

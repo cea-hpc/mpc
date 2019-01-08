@@ -57,7 +57,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 			break;
 		}
 
-		if ( res < sizeof ( size_t ) )
+		if ( res < (ssize_t)sizeof ( size_t ) )
 		{
 			break;
 		}

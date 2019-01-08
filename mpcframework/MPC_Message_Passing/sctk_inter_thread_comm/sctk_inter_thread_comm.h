@@ -322,7 +322,7 @@ void sctk_probe_any_source_tag_class_comm(int destination, int tag,
 
 typedef unsigned int sctk_pack_indexes_t;
 typedef long sctk_pack_absolute_indexes_t;
-typedef int sctk_count_t;
+typedef unsigned int sctk_count_t;
 
 typedef enum
 {

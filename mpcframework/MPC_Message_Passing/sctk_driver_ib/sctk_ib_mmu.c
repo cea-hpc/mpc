@@ -253,7 +253,7 @@ static inline int __sctk_ib_mmu_get_entry_containing( sctk_ib_mmu_entry_t * entr
 
 sctk_ib_mmu_entry_t * sctk_ib_mmu_get_entry_containing_no_lock( struct sctk_ib_mmu * mmu, void * addr, size_t size, sctk_ib_rail_info_t *rail_ib )
 {
-	int i;
+	unsigned int i;
 
 	for( i = 0 ; i < mmu->cache_max_entry_count ; i++ )
 	{
@@ -277,7 +277,6 @@ sctk_ib_mmu_entry_t * sctk_ib_mmu_get_entry_containing_no_lock( struct sctk_ib_m
 			else
 			{
 				/* No rail then just return the entry */
-				
 				/* note that here the cell is held in read and not relaxed */
 				return mmu->cache[i];
 			}
@@ -311,12 +310,11 @@ static inline int _sctk_ib_mmu_try_to_release_and_replace_entry( struct sctk_ib_
 {
 	int start_point = rand() % mmu->cache_max_entry_count;
 
-	int i;
+	unsigned int i;
 
 	for( i = start_point ; i <  ( start_point + mmu->cache_max_entry_count) ; i++ )
 	{
 		int index = i % mmu->cache_max_entry_count;
-		
 		/* Cell is free */
 		if( mmu->cache[index] )
 		{
@@ -326,20 +324,16 @@ static inline int _sctk_ib_mmu_try_to_release_and_replace_entry( struct sctk_ib_
 				/* Remove */
 				mmu->current_size -= mmu->cache[index]->size;
 				sctk_ib_mmu_entry_release( mmu->cache[index] );
-				
 				/* Add */
 				if( entry )
 				{
 					mmu->current_size += entry->size;
 				}
-		
 				mmu->cache[index] = entry;
-				
 				return 1;
 			}
 		}
 	}
-	
 	return 0;
 }
 
@@ -365,12 +359,12 @@ void _sctk_ib_mmu_push_entry( struct sctk_ib_mmu * mmu , sctk_ib_mmu_entry_t * e
 
 	/* Warning YOU must enter here MMU LOCKED ! */
 	int trials = 0;
-	
+
 	while( trials < MMU_PUSH_MAX_TRIAL )
 	{
-	
-		int i;
-		
+
+		unsigned int i;
+
 		/* First try to register in cache */
 		for( i = 0 ; i < mmu->cache_max_entry_count ; i++ )
 		{
@@ -464,7 +458,7 @@ int _sctk_ib_mmu_unpin(  struct sctk_ib_mmu * mmu, void * addr, size_t size)
 	__already_inside_unpin = 1;
 	
 	/* Now release intersecting cells */
-	int i;
+	unsigned int i;
 
 	for( i = 0 ; i < mmu->cache_max_entry_count ; i++ )
 	{

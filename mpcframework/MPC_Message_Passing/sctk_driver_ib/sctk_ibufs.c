@@ -806,7 +806,7 @@ int sctk_ibuf_rdma_write_with_imm_init ( sctk_ibuf_t *ibuf,
                                          sctk_uint32_t lkey,
                                          void *remote_address,
                                          sctk_uint32_t rkey,
-                                         int len,
+                                         unsigned int len,
                                          char to_release,
                                          sctk_uint32_t imm_data )
 {
@@ -851,7 +851,7 @@ int sctk_ibuf_rdma_write_init ( sctk_ibuf_t *ibuf,
                                 sctk_uint32_t lkey,
                                 void *remote_address,
                                 sctk_uint32_t rkey,
-                                int len,
+                                unsigned int len,
                                 int send_flags,
                                 char to_release )
 {

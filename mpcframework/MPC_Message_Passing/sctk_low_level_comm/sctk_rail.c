@@ -394,7 +394,8 @@ static inline size_t sctk_rail_print_infos( sctk_rail_info_t * rail, char * star
 
 size_t sctk_rail_print_topology( char * start, size_t sz)
 {
-	int i = 0, nb_rails = sctk_rail_count(), cur_sz = 0;
+	int i = 0, nb_rails = sctk_rail_count();
+	size_t cur_sz = 0;
 	char *cursor = start;
 	sctk_rail_info_t *rail;
 
@@ -433,7 +434,7 @@ void sctk_rail_commit()
 	}
 
 	sz = sctk_rail_print_topology(net_name, sctk_rail_count() * 1024);
-	assert(sz <= sctk_rail_count() * 1024);
+	assert(sz <= (size_t)sctk_rail_count() * 1024);
 	sctk_network_mode = net_name;
 }
 

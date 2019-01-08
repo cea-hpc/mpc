@@ -147,8 +147,7 @@ static void sctk_free_control_messages (__UNUSED__  void *ptr )
 
 void printpayload( void * pl , size_t size )
 {
-	int i;
-	
+	size_t i;
 
 	sctk_info("======== %ld ========", size);
 	for( i = 0 ; i < size; i++ )
@@ -156,9 +155,7 @@ void printpayload( void * pl , size_t size )
 		sctk_info("%d = [%hu]  ",i,  ((char *)pl)[i] );
 	}
 	sctk_info("===================");
-	
-	
-	
+
 }
 
 void __sctk_control_messages_send(int dest, int dest_task,

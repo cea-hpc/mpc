@@ -39,10 +39,10 @@
 static int barrier_arity;
 static int broadcast_arity_max;
 static int broadcast_max_size;
-static int broadcast_check_threshold;
+static unsigned int broadcast_check_threshold;
 static int allreduce_arity_max;
 static int allreduce_max_size;
-static int allreduce_check_threshold;
+static unsigned int allreduce_check_threshold;
 #define SCTK_MAX_ASYNC 1
 
 /************************************************************************/

@@ -1215,7 +1215,7 @@ void sctk_ibuf_rdma_update_max_pending_data ( sctk_ib_qp_t *remote, int current_
 }
 
 static int sctk_ibuf_rdma_determine_config ( sctk_ib_rail_info_t *rail_ib,
-                                             sctk_ib_qp_t *remote, int *determined_size, int *determined_nb, char resizing )
+                                             sctk_ib_qp_t *remote, unsigned int *determined_size, int *determined_nb, char resizing )
 {
 	LOAD_CONFIG ( rail_ib );
 	/* Compute the mean size of messages */
@@ -1289,7 +1289,7 @@ static int sctk_ibuf_rdma_determine_config ( sctk_ib_rail_info_t *rail_ib,
 
 	if ( resizing == 1 )
 	{
-		int previous_size = remote->rdma.pool->region[REGION_SEND].size_ibufs;
+		unsigned int previous_size = remote->rdma.pool->region[REGION_SEND].size_ibufs;
 		int previous_nb   = remote->rdma.pool->region[REGION_SEND].nb;
 
 		if ( previous_nb > *determined_nb )
@@ -1340,7 +1340,7 @@ void sctk_ibuf_rdma_check_remote ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *r
 	LOAD_CONFIG ( rail_ib );
 	int res;
 	int iter;
-	int determined_size;
+	unsigned int determined_size;
 	int determined_nb;
 	/* We first get the state of the route */
 	const sctk_endpoint_state_t state_rts = sctk_ibuf_rdma_get_remote_state_rts ( remote );
@@ -1390,7 +1390,8 @@ void sctk_ibuf_rdma_check_remote ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *r
 				if ( ret == STATE_CONNECTED )
 				{
 					/* Compute the next slots values */
-					int next_size, next_nb, previous_size, previous_nb;
+					unsigned int next_size;
+					int next_nb, previous_size, previous_nb;
 					/* Reset the counter */
 					OPA_store_int ( &remote->rdma.miss_nb, 0 );
 
@@ -1925,37 +1926,6 @@ size_t sctk_ibuf_rdma_remote_disconnect ( sctk_ib_rail_info_t *rail_ib )
 	return memory_used;
 }
 
-/*
- * Function which tries to save memory from a process
- */
-void sctk_ibuf_rdma_save_memory ( sctk_ib_rail_info_t *rail_ib, size_t memory_to_save )
-{
-	LOAD_DEVICE ( rail_ib )
-	size_t memory_used = 0, total_memory_used = 0;
-	int ret;
-
-	/* We try to normalize every remote */
-	ret = sctk_ibuf_rdma_remote_normalize ( rail_ib, memory_to_save );
-
-	/* We managed to normalize, so we leave */
-	if ( ret == 1 )
-		return;
-
-	/* We loop while there are some memory to release */
-	do
-	{
-		memory_used = sctk_ibuf_rdma_remote_disconnect ( rail_ib );
-
-		if ( memory_used != ( ~0 ) )
-			total_memory_used += memory_used;
-	}
-	while ( ( memory_used != ( ~0 ) ) && total_memory_used < memory_to_save );
-
-	if ( total_memory_used != ( ~0 ) )
-	{
-		sctk_warning ( "Total memory saved: %fkB over %fkB (rdma_connections:%d)", total_memory_used / 1024.0, memory_to_save / 1024.0, device->eager_rdma_connections );
-	}
-}
 
 
 #endif

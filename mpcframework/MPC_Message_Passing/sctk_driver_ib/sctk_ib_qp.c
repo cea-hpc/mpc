@@ -393,11 +393,11 @@ struct ibv_qp_init_attr sctk_ib_qp_init_attr ( struct sctk_ib_rail_info_s *rail_
 	attr.recv_cq  = device->recv_cq;
 	attr.srq      = device->srq;
 	attr.cap.max_send_wr  = config->qp_tx_depth;
-        if (attr.cap.max_send_wr > device->dev_attr.max_qp_wr) {
+        if (attr.cap.max_send_wr > (unsigned int)device->dev_attr.max_qp_wr) {
           attr.cap.max_send_wr = device->dev_attr.max_qp_wr;
         }
         attr.cap.max_recv_wr = config->qp_rx_depth;
-        if (attr.cap.max_recv_wr > device->dev_attr.max_qp_wr) {
+        if (attr.cap.max_recv_wr > (unsigned int)device->dev_attr.max_qp_wr) {
           attr.cap.max_recv_wr = device->dev_attr.max_qp_wr;
         }
         attr.cap.max_send_sge = config->max_sg_sq;

@@ -120,44 +120,6 @@ void sctk_ib_prof_finalize ( __UNUSED__ sctk_ib_rail_info_t *rail_ib )
 #endif
 }
 
-#if 0
-void *__mem_thread ( void *arg )
-{
-	sctk_ib_rail_info_t *rail_ib = ( sctk_ib_rail_info_t * ) arg;
-
-	while ( 1 )
-	{
-		mem_used = sctk_profiling_get_dataused();
-
-		if ( sctk_process_rank == 0 )
-		{
-			sctk_warning ( "Memory used for process %d: %.0fko-%.0fko", sctk_process_rank, mem_used, IBV_MEM_USED_LIMIT );
-
-			if ( mem_used > IBV_MEM_USED_LIMIT )
-			{
-				sctk_warning ( "Process %d in low memory mode :%.0fko", mem_used );
-				sctk_ibuf_rdma_save_memory ( rail_ib, mem_used - IBV_MEM_USED_LIMIT );
-			}
-		}
-
-		sleep ( 1 );
-	}
-}
-
-#endif
-#if 0
-/* Process initialization */
-void sctk_ib_prof_mem_init ( sctk_ib_rail_info_t *rail_ib )
-{
-	sctk_thread_t pidt;
-	sctk_thread_attr_t attr;
-
-	sctk_thread_attr_init ( &attr );
-	sctk_thread_attr_setscope ( &attr, SCTK_THREAD_SCOPE_SYSTEM );
-	sctk_user_thread_create ( &pidt, &attr, __mem_thread, ( void * ) rail_ib );
-}
-#endif
-
 
 #ifdef SCTK_IB_QP_PROF
 /*-----------------------------------------------------------

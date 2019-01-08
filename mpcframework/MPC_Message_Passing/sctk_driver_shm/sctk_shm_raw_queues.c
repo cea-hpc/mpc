@@ -158,7 +158,7 @@ sctk_shm_push_cell_dest(sctk_shm_list_type_t type, sctk_shm_cell_t * cell, int p
     sctk_shm_region_infos_t *dest_shm_infos, *item_shm_infos;
 
     item = sctk_shm_cell_to_item(cell);
-    assume_m(process_rank == item->src, "Empty cell must be get from dest queue");
+    assume_m((unsigned int)process_rank == item->src, "Empty cell must be get from dest queue");
 
     queue = sctk_shm_get_queue_by_type(type,process_rank);
 

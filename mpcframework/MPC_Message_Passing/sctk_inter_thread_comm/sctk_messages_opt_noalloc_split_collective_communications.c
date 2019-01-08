@@ -42,7 +42,7 @@ static int broadcast_check_threshold;
 static int allreduce_arity_max;
 static int allreduce_max_size;
 static int allreduce_check_threshold;
-static int ALLREDUCE_MAX_SLOT;
+static unsigned int ALLREDUCE_MAX_SLOT;
 #define SCTK_MAX_ASYNC 32
 /* #warning "Change here !!!" */
 
