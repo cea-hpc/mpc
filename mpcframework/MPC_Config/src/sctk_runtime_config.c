@@ -162,7 +162,7 @@ void sctk_runtime_config_runtime_cleanup(void)
  * \TODO Improve by printing at least on MPI task 0, but not sure that we can get this informations
  * when MPC_Config is init.
  */
-void sctk_runtime_config_libxml_silent_error_handler(void * ctx,const char * msg,...)
+void sctk_runtime_config_libxml_silent_error_handler(__UNUSED__ void * ctx, __UNUSED__ const char * msg,...)
 {
 
 }

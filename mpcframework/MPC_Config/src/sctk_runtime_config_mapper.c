@@ -698,7 +698,7 @@ void* sctk_runtime_config_get_symbol(char * symbol_name)
 
 /******************************** FUNCTION *********************************/
 /** @TODO Generate this methode from XML files. **/
-void sctk_runtime_config_do_cleanup(struct sctk_runtime_config* config)
+void sctk_runtime_config_do_cleanup(__UNUSED__ struct sctk_runtime_config* config)
 {
 
 }
