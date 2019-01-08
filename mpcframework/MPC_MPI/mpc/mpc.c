@@ -2724,7 +2724,7 @@ int PMPC_Copy_in_buffer(void *inbuffer, void *outbuffer,
                         MPC_Datatype datatype) {
   /* Only meaningful if its a derived datatype */
   if (sctk_datatype_is_derived(datatype)) {
-    int j;
+    unsigned int j;
     char *tmp;
 
     /* Retrieve task ctx */
@@ -2766,7 +2766,7 @@ int PMPC_Copy_from_buffer(void *inbuffer, void *outbuffer,
                           MPC_Datatype datatype) {
   /* Only meaningful if its a derived datatype */
   if (sctk_datatype_is_derived(datatype)) {
-    int j;
+    unsigned int j;
     char *tmp;
 
     /* Retrieve task ctx */

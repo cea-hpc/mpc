@@ -228,7 +228,7 @@ typedef enum {
 
 struct MPC_T_cvars_array {
   struct MPC_T_cvar st_vars[MPI_T_CVAR_COUNT]; /**<< An array of static CVARS */
-  int dyn_cvar_count;           /**<< The number of dynamic CVARS */
+  unsigned int dyn_cvar_count;           /**<< The number of dynamic CVARS */
   struct MPC_T_cvar *dyn_cvars; /*<< The array of dynamic CVARS */
   sctk_spinlock_t lock;         /**<< A lock to rule them all */
 };

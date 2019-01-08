@@ -324,7 +324,7 @@ void mpc_MPI_Win_handle_non_contiguous_accumulate_send(void *data,
   MPI_Count per_elem_size = 0;
   PMPI_Type_size_x(inner_type, &per_elem_size);
 
-  size_t max_size = (local_pack_size < pack_size) ? local_pack_size : pack_size;
+  size_t max_size = ((unsigned int)local_pack_size < pack_size) ? (size_t)local_pack_size : pack_size;
 
   func(pack_data, local_pack_data, max_size / per_elem_size, inner_type);
 

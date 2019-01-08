@@ -128,7 +128,7 @@ int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
     assume(*blocklen != NULL);
     assume(*indices != NULL);
 
-    int i;
+    unsigned int i;
 
     /* Here we create start, len pairs from begins/ends pairs
      * note +1 in the extent as those boundaries are INCLUSIVE ! */

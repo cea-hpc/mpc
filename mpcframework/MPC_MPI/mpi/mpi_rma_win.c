@@ -54,7 +54,7 @@ int mpc_MPI_Win_progress_probe(struct mpc_MPI_Win *desc, void *prebuff,
 
     void *buff = prebuff;
 
-    if (buffsize <= msize) {
+    if (buffsize <= (size_t)msize) {
       buff = sctk_malloc(msize);
       assume(buff);
     }
@@ -66,11 +66,9 @@ int mpc_MPI_Win_progress_probe(struct mpc_MPI_Win *desc, void *prebuff,
     sctk_wait_message(&req);
     // PMPI_Recv(buff, msize, MPI_CHAR, st.MPI_SOURCE, 16008, desc->comm, &st);
 
-    sctk_info("  =>CT");
     mpc_MPI_Win_control_message_handler(buff, msize);
-    sctk_info("  <=CT");
 
-    if (buffsize <= msize) {
+    if (buffsize <= (size_t)msize) {
       sctk_free(buff);
     }
 

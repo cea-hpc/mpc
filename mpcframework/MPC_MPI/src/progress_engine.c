@@ -284,7 +284,7 @@ int sctk_progress_engine_pool_init( struct sctk_progress_engine_pool * p, unsign
     p->size = size;
     p->booked = 0;
 
-    int i;
+    unsigned int i;
 
     for( i = 0 ; i < p->size ; i++ )
     {
@@ -305,7 +305,7 @@ int sctk_progress_engine_pool_release( struct sctk_progress_engine_pool * p)
     p->size = 0;
     p->booked = 0;
 
-    int i;
+    unsigned int i;
 
     for( i = 0 ; i < p->size ; i++ )
     {

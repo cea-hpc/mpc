@@ -4060,7 +4060,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	{
 
 		int types_are_all_common = 1;
-		int max_pad_value = 0;
+		unsigned int max_pad_value = 0;
 		
 		/* First check if we are playing with common datatypes
 		 * Note that types with UB LB are ignored */
@@ -5247,7 +5247,7 @@ int __INTERNAL__PMPI_Pack_external_size (char *datarep , int incount, MPI_Dataty
 			sctk_derived_datatype_t *derived_user_types = sctk_task_specific_get_derived_datatype( task_specific, datatype );
 			sctk_datatype_unlock( task_specific );
 		
-			int i;
+			unsigned int i;
 			MPI_Datatype local_type;
 			MPI_Aint count;
 			MPI_Aint extent;
@@ -5354,7 +5354,7 @@ int __INTERNAL__PMPI_Pack_external (char *datarep , void *inbuf, int incount, MP
 		/* MPI_Pack takes an integer output size */
 		int int_outsize = pack_size;
 
-    if( outsize < pack_size )
+    if( (int)outsize < pack_size )
       pack_size = outsize;
 		
 		char * native_pack_buff = sctk_malloc( pack_size );

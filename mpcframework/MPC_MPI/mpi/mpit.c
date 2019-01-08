@@ -1102,7 +1102,7 @@ int mpc_MPI_T_category_get_info(int cat_index, char *name, int *name_len,
   if (num_pvars) {
 
     for (i = 0; i < MPI_T_PVAR_COUNT; i++) {
-      if (__mpi_t_pvars_categories[i] == cat_index) {
+      if (__mpi_t_pvars_categories[i] == (MPC_T_category_t)cat_index) {
         __num_pvars++;
       }
     }
@@ -1113,7 +1113,7 @@ int mpc_MPI_T_category_get_info(int cat_index, char *name, int *name_len,
   if (num_cvars) {
 
     for (i = 0; i < MPI_T_CVAR_COUNT; i++) {
-      if (__mpi_t_cvars_categories[i] == cat_index) {
+      if (__mpi_t_cvars_categories[i] ==(MPC_T_category_t)cat_index) {
         __num_cvars++;
       }
     }
@@ -1124,7 +1124,7 @@ int mpc_MPI_T_category_get_info(int cat_index, char *name, int *name_len,
   if (num_categories) {
 
     for (i = 0; i < MPI_T_CATEGORY_COUNT; i++) {
-      if (__mpi_t_category_parent[i] == cat_index) {
+      if (__mpi_t_category_parent[i] == (MPC_T_category_t)cat_index) {
         __num_cat++;
       }
     }
@@ -1157,7 +1157,7 @@ int mpc_MPI_T_category_get_cvars(int cat_index, int len, int indices[]) {
   int num_cvars = 0;
 
   for (i = 0; i < MPI_T_CVAR_COUNT; i++) {
-    if (__mpi_t_cvars_categories[i] == cat_index) {
+    if (__mpi_t_cvars_categories[i] == (MPC_T_category_t)cat_index) {
       if (num_cvars < len) {
         indices[num_cvars] = i;
       } else {
@@ -1179,7 +1179,7 @@ int mpc_MPI_T_category_get_pvars(int cat_index, int len, int indices[]) {
   int num_pvars = 0;
 
   for (i = 0; i < MPI_T_PVAR_COUNT; i++) {
-    if (__mpi_t_pvars_categories[i] == cat_index) {
+    if (__mpi_t_pvars_categories[i] == (MPC_T_category_t)cat_index) {
       if (num_pvars < len) {
         indices[num_pvars] = i;
       } else {
@@ -1201,7 +1201,7 @@ int mpc_MPI_T_category_get_categories(int cat_index, int len, int indices[]) {
   int num_cat = 0;
 
   for (i = 0; i < MPI_T_CATEGORY_COUNT; i++) {
-    if (__mpi_t_category_parent[i] == cat_index) {
+    if (__mpi_t_category_parent[i] == (MPC_T_category_t)cat_index) {
       if (num_cat < len) {
         indices[num_cat] = i;
       } else {

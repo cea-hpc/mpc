@@ -299,7 +299,7 @@ void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int * is_shared) {
           ____mpc_sctk_mpi_alloc_mem_pool.space_per_bit;
 
   /* Now try to find this number of contiguous free bits */
-  int i, j;
+  size_t i, j;
 
   struct sctk_bit_array *ba = &____mpc_sctk_mpi_alloc_mem_pool.mask;
 
@@ -309,7 +309,7 @@ void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int * is_shared) {
       continue;
     }
 
-    int end_of_seg_off = i + number_of_bits;
+    unsigned long long end_of_seg_off = i + number_of_bits;
 
     if (ba->real_size <= end_of_seg_off) {
       /* We are too close from the end */
@@ -332,7 +332,7 @@ void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int * is_shared) {
         /* We found enough space */
 
         /* Book the bits */
-        int k;
+        size_t k;
 
         for (k = i; k < (i + number_of_bits); k++) {
           sctk_bit_array_set(ba, k, 1);
