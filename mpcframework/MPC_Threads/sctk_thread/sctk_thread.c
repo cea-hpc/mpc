@@ -773,7 +773,7 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   struct sctk_alloc_chain *tls;
   int previous_binding;
   static unsigned int core = 0;
-  int new_binding;
+  unsigned int new_binding;
 
   /* We bind the parent thread to the vp where the child
    * will be created. We must bind before calling
