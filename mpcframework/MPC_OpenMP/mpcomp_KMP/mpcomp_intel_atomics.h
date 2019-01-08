@@ -282,13 +282,13 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
   ATOMIC_BEGIN_MIX(TYPE_ID, TYPE, OP_ID, RTYPE_ID, RTYPE)                      \
   TYPE old_value, new_value;                                                   \
   old_value = *(TYPE volatile *)lhs;                                           \
-  new_value = old_value OP rhs;                                                \
+  new_value = old_value OP (TYPE)rhs;                                                \
   while (!__kmp_compare_and_store##BITS((kmp_int##BITS *)lhs,                  \
                                         *(kmp_int##BITS *)&old_value,          \
                                         *(kmp_int##BITS *)&new_value)) {       \
     DO_PAUSE;                                                                  \
     old_value = *(TYPE volatile *)lhs;                                         \
-    new_value = old_value OP rhs;                                              \
+    new_value = old_value OP (TYPE)rhs;                                              \
   }                                                                            \
   }
 

@@ -371,7 +371,7 @@ SCTK_PUBLIC void sctk_alloc_numa_check(bool fatal_on_fail, const char* filename,
 {
 	//vars
 	struct sctk_alloc_numa_stat_s numa_stat;
-	float ratio;
+	double ratio;
 
 	//errors
 	assert(filename != NULL);

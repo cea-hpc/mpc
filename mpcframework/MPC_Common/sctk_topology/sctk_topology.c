@@ -695,12 +695,12 @@ static void sctk_read_format_option_text_placement(FILE *f_textual, struct sctk_
     }
     fclose(f_textual);
 }
-static hwloc_obj_t hwloc_get_core_by_os_index(hwloc_topology_t topology, unsigned int os_i){
-    int depth_core = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE); 
+static hwloc_obj_t hwloc_get_core_by_os_index(hwloc_topology_t hwtopology, unsigned int os_i){
+    int depth_core = hwloc_get_type_depth(hwtopology, HWLOC_OBJ_CORE); 
     int i;
-    int nb_core = hwloc_get_nbobjs_by_depth(topology, depth_core);
+    int nb_core = hwloc_get_nbobjs_by_depth(hwtopology, depth_core);
     for(i = 0; i <  nb_core; i++){
-        hwloc_obj_t core = hwloc_get_obj_by_depth(topology, HWLOC_OBJ_CORE, i);
+        hwloc_obj_t core = hwloc_get_obj_by_depth(hwtopology, HWLOC_OBJ_CORE, i);
         if(core->os_index == os_i){
             return core;
         }
@@ -764,7 +764,7 @@ static int sctk_determine_higher_logical(int *os_index, int lenght){
 }
 
 /* Write in file as lstopo adding informations on the topology and thread placement (text option) */
-static void print_children(hwloc_topology_t topology, hwloc_obj_t obj, 
+static void print_children(hwloc_topology_t hwtopology, hwloc_obj_t obj, 
         int depth, struct sctk_text_option_s *tab_option, int num_os, unsigned int higher_logical , int lower_logical, const char* HostName, FILE* f, int __UNUSED__ ind_child, int last_arity)
 {
     char string[128];
@@ -778,9 +778,9 @@ static void print_children(hwloc_topology_t topology, hwloc_obj_t obj,
     hwloc_obj_type_snprintf(string, sizeof(string), obj, 0);
     static int already_begining_done = 1;
     if(already_begining_done){
-        hwloc_obj_t lower_index_obj_pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, lower_logical);
+        hwloc_obj_t lower_index_obj_pu = hwloc_get_obj_by_type(hwtopology, HWLOC_OBJ_PU, lower_logical);
         /* if ancestor of the first pu booked */
-        if(hwloc_get_ancestor_obj_by_type(topology, obj->type, lower_index_obj_pu)->logical_index == obj->logical_index
+        if(hwloc_get_ancestor_obj_by_type(hwtopology, obj->type, lower_index_obj_pu)->logical_index == obj->logical_index
         && obj->type != HWLOC_OBJ_MACHINE && obj->type != HWLOC_OBJ_NODE && obj->type != HWLOC_OBJ_SOCKET && obj->type != HWLOC_OBJ_SYSTEM){
             fprintf(f,"\n\n|------------------------------BEGINING RESERVATION HOST %s-------------------------|\n", HostName); 
             already_begining_done = 0;
@@ -795,7 +795,7 @@ static void print_children(hwloc_topology_t topology, hwloc_obj_t obj,
                 os_index_to_compare = obj->os_index;
             }
             else{
-                pu = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, obj);
+                pu = hwloc_get_ancestor_obj_by_type(hwtopology, HWLOC_OBJ_CORE, obj);
                 os_index_to_compare = pu->os_index;
             }
             if(tab_option->os_index[k] == os_index_to_compare){
@@ -834,7 +834,7 @@ static void print_children(hwloc_topology_t topology, hwloc_obj_t obj,
         last_arity = 0;
    }
     for (i = 0; i < obj->arity; i++) {
-        print_children(topology, obj->children[i], depth + 1, tab_option,  num_os, higher_logical, lower_logical, HostName, f, i, last_arity);
+        print_children(hwtopology, obj->children[i], depth + 1, tab_option,  num_os, higher_logical, lower_logical, HostName, f, i, last_arity);
     }
 }
 
@@ -1671,15 +1671,15 @@ int sctk_get_ht_per_core(void)
 {
     int pu_per_core;
     hwloc_obj_t first_core;
-    hwloc_topology_t topology;
+    hwloc_topology_t hwtopology;
 
-    hwloc_topology_init(&topology);
-    hwloc_topology_load(topology);
+    hwloc_topology_init(&hwtopology);
+    hwloc_topology_load(hwtopology);
 
-    first_core = hwloc_get_obj_by_type( topology, HWLOC_OBJ_CORE, 0 );
+    first_core = hwloc_get_obj_by_type( hwtopology, HWLOC_OBJ_CORE, 0 );
     sctk_assert( first_core );
 
-    pu_per_core = hwloc_get_nbobjs_inside_cpuset_by_type( topology, first_core->cpuset, HWLOC_OBJ_PU );
+    pu_per_core = hwloc_get_nbobjs_inside_cpuset_by_type( hwtopology, first_core->cpuset, HWLOC_OBJ_PU );
     assert( pu_per_core > 0 );
     
     return pu_per_core; 
@@ -1688,29 +1688,29 @@ int sctk_get_ht_per_core(void)
 int sctk_get_pu_number()
 {
 	int core_number;
-	hwloc_topology_t topology;
-	hwloc_topology_init(&topology);
-	hwloc_topology_load(topology);
+	hwloc_topology_t hwtopology;
+	hwloc_topology_init(&hwtopology);
+	hwloc_topology_load(hwtopology);
 
-	int depth = hwloc_get_type_depth(topology, HWLOC_OBJ_PU);
+	int depth = hwloc_get_type_depth(hwtopology, HWLOC_OBJ_PU);
 	if(depth == HWLOC_TYPE_DEPTH_UNKNOWN)
 	{
 		core_number = -1;
 	}
 	else
 	{
-		core_number = hwloc_get_nbobjs_by_depth(topology, depth);
+		core_number = hwloc_get_nbobjs_by_depth(hwtopology, depth);
 	}
 
-	hwloc_topology_destroy(topology);
+	hwloc_topology_destroy(hwtopology);
 	return core_number;
 }
 
-int sctk_get_pu_number_by_core(hwloc_topology_t topology, int core)
+int sctk_get_pu_number_by_core(hwloc_topology_t hwtopology, int core)
 {
 	int core_number;
 
-	hwloc_obj_t obj_pu_per_core = hwloc_get_obj_by_type(topology, HWLOC_OBJ_CORE, core);
+	hwloc_obj_t obj_pu_per_core = hwloc_get_obj_by_type(hwtopology, HWLOC_OBJ_CORE, core);
 	int pu_per_core = obj_pu_per_core->arity;
 
 	return pu_per_core;
@@ -1932,21 +1932,21 @@ hwloc_obj_t sctk_get_first_child_by_type(hwloc_obj_t obj, hwloc_obj_type_t type)
 }
 
 
-void sctk_print_specific_topology (FILE * fd, hwloc_topology_t topology)
+void sctk_print_specific_topology (FILE * fd, hwloc_topology_t hwtopology)
 {
 	int i;
 	fprintf(fd, "Node %s: %s %s %s\n", sctk_node_name, utsname.sysname,
 	utsname.release, utsname.version);
-	const int pu_number = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
+	const int pu_number = hwloc_get_nbobjs_by_type(hwtopology, HWLOC_OBJ_PU);
 	
 	for(i=0;i < pu_number; ++i)
 	{
-		hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
+		hwloc_obj_t pu = hwloc_get_obj_by_type(hwtopology, HWLOC_OBJ_PU, i);
 		hwloc_obj_t tmp[3];
 		unsigned int node_os_index;
-		tmp[0] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
-		tmp[1] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, pu);
-		tmp[2] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, pu);
+		tmp[0] = hwloc_get_ancestor_obj_by_type(hwtopology, HWLOC_OBJ_NODE, pu);
+		tmp[1] = hwloc_get_ancestor_obj_by_type(hwtopology, HWLOC_OBJ_SOCKET, pu);
+		tmp[2] = hwloc_get_ancestor_obj_by_type(hwtopology, HWLOC_OBJ_CORE, pu);
 
 		if(tmp[0] == NULL)
 		{

@@ -614,7 +614,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
      * THIS IS THE LOCAL CASE (Shared memory)
      *
      */
-    MPI_Count remote_size = 0;
+    remote_size = 0;
     PMPI_Type_size_x(target_datatype, &remote_size);
     remote_size *= target_count;
 
@@ -719,7 +719,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
                                  pack_size, TAG_RDMA_ACCUMULATE, desc->comm,
                                  SCTK_RDMA_MESSAGE, request);
 
-    int target_win = mpc_MPI_win_get_remote_win(desc, target_rank, 1);
+    target_win = mpc_MPI_win_get_remote_win(desc, target_rank, 1);
     struct sctk_window *low_remote_win = sctk_win_translate(target_win);
     sctk_window_inc_outgoing(low_remote_win);
 

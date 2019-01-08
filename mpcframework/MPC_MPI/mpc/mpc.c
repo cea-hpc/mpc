@@ -1529,7 +1529,8 @@ int ___grequest_disguise_poll( void * arg )
 {
     int ret = 0;
     //sctk_error("POLL %p", arg);
-
+    int disguised = 0;
+    int my_rank = -1;
     MPC_Request * req = (MPC_Request *)arg;
 
     if( !req->poll_fn )
@@ -1544,9 +1545,8 @@ int ___grequest_disguise_poll( void * arg )
         goto POLL_DONE_G;
     }
 
-    int my_rank = sctk_get_task_rank();
-    
-    int disguised = 0;
+    my_rank = sctk_get_task_rank();
+
     if( my_rank != req->grequest_rank )
     {
         disguised = 1;
@@ -1797,6 +1797,8 @@ int PMPC_Type_free(MPC_Datatype *datatype_p) {
                      "You tried to free an MPI_PACKED datatype");
   }
 
+  sctk_derived_datatype_t *derived_type_target = NULL;
+  sctk_contiguous_datatype_t *continuous_type_target = NULL;
   /* Choose what to do in function of the datatype kind */
   switch (sctk_datatype_kind(datatype)) {
   case MPC_DATATYPES_COMMON:
@@ -1812,7 +1814,7 @@ int PMPC_Type_free(MPC_Datatype *datatype_p) {
     /* Lock the contiguous type array */
     sctk_datatype_lock(task_specific);
     /* Retrieve a pointer to the type to be freed */
-    sctk_contiguous_datatype_t *continuous_type_target =
+    continuous_type_target =
         sctk_task_specific_get_contiguous_datatype(task_specific, datatype);
     /* Unlock type array */
     sctk_datatype_unlock(task_specific);
@@ -1827,7 +1829,7 @@ int PMPC_Type_free(MPC_Datatype *datatype_p) {
     /* Lock the derived type array */
     sctk_datatype_lock(task_specific);
     /* Retrieve a pointer to the type to be freed */
-    sctk_derived_datatype_t *derived_type_target =
+    derived_type_target =
         sctk_task_specific_get_derived_datatype(task_specific, datatype);
     /* Unlock the derived type array */
     sctk_datatype_unlock(task_specific);
@@ -4810,7 +4812,7 @@ int MPC_Iprobe_inter(const int source, const int destination, const int tag,
 
   int has_status = 1;
 
-  if ((status == MPC_STATUS_IGNORE) || (!status)) {
+  if (status == MPC_STATUS_IGNORE) {
     has_status = 0;
   } else {
     *status = status_init;
@@ -5874,10 +5876,10 @@ int PMPC_Alltoall(void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
 #endif
 
   if (sctk_is_inter_comm(comm)) {
-    int local_size, remote_size, max_size, i;
+    int local_size, remote_size, max_size;
     MPC_Status status;
     size_t sendtype_extent, recvtype_extent;
-    int src, dst, rank;
+    int src;
     char *sendaddr, *recvaddr;
 
     __MPC_Comm_size(comm, &local_size);
@@ -5965,10 +5967,10 @@ int PMPC_Alltoallv(void *sendbuf, mpc_msg_count *sendcnts,
   mpc_log_debug(comm, "MPC_Alltoallv");
 #endif
   if (sctk_is_inter_comm(comm)) {
-    int local_size, remote_size, max_size, i;
+    int local_size, remote_size, max_size;
     MPC_Status status;
     size_t sendtype_extent, recvtype_extent;
-    int src, dst, rank, sendcount, recvcount;
+    int src, sendcount, recvcount;
     char *sendaddr, *recvaddr;
 
     __MPC_Comm_size(comm, &local_size);

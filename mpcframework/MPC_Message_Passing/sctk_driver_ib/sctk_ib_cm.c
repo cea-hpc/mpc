@@ -150,7 +150,7 @@ static void sctk_ib_cm_change_state_to_rtr ( sctk_rail_info_t *rail,
 	                remote->rdma.pool->region[REGION_RECV].size_ibufs_previous,
 	                remote->rdma.pool->region[REGION_RECV].size_ibufs,
 	                device->eager_rdma_connections,
-	                ( float ) sctk_ibuf_rdma_get_regions_get_allocate_size ( remote ) / 1024.0 );
+	                (double) sctk_ibuf_rdma_get_regions_get_allocate_size ( remote ) / 1024.0 );
 }
 
 /* Change the state of a remote process */
@@ -204,7 +204,7 @@ static void sctk_ib_cm_change_state_to_rts ( sctk_rail_info_t *rail,
 	                remote->rdma.pool->region[REGION_SEND].size_ibufs_previous,
 	                remote->rdma.pool->region[REGION_SEND].size_ibufs,
 	                device->eager_rdma_connections,
-	                ( float ) sctk_ibuf_rdma_get_regions_get_allocate_size ( remote ) / 1024,
+	                (double) sctk_ibuf_rdma_get_regions_get_allocate_size ( remote ) / 1024.0,
 	                sctk_get_time_stamp() - remote->rdma.creation_timestamp );
 
 }

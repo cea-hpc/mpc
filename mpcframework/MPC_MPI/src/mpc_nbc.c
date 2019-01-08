@@ -404,6 +404,7 @@ static int NBC_Iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype 
         int maxr = (int)ceil((log(p) / LOG2));
         int cpts[maxr][3];
         int root = 0;
+        int alloc_size = 0;
 
         switch (alg) {
         case NBC_ARED_BINOMIAL:;
@@ -418,7 +419,7 @@ static int NBC_Iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype 
             }
           }
 
-          int alloc_size =
+          alloc_size =
               sizeof(int) + sizeof(int) +
               recv_op_rounds * (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type) +
                                 sizeof(char) + sizeof(int)) +
@@ -1452,6 +1453,7 @@ static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *sch
 static int NBC_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle* handle) {
   int rank, p, res, size, segsize;
   NBC_Schedule *schedule;
+  int alloc_size = 0;
   enum { NBC_BCAST_LINEAR, NBC_BCAST_BINOMIAL, NBC_BCAST_CHAIN } alg;
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
@@ -1487,7 +1489,7 @@ static int NBC_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, 
   switch (alg) {
   case NBC_BCAST_LINEAR:
     if (rank == root) {
-      int alloc_size =
+      alloc_size =
           sizeof(int) + sizeof(int) +
           ((p - 1) * (sizeof(NBC_Args_send) + sizeof(NBC_Fn_type))) +
           sizeof(char);
@@ -1498,7 +1500,7 @@ static int NBC_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, 
       *(int *)*schedule = alloc_size;
       *(((int *)*schedule) + 1) = p - 1;
     } else {
-      int alloc_size = sizeof(int) + sizeof(int) +
+      alloc_size = sizeof(int) + sizeof(int) +
                        (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type)) +
                        sizeof(char);
       *schedule = sctk_malloc(alloc_size);
@@ -1515,7 +1517,7 @@ static int NBC_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, 
     int vrank;
 
     RANK2VRANK(rank, vrank, root);
-    int alloc_size = sizeof(int);
+    alloc_size = sizeof(int);
     int sends;
     if (vrank == 0) {
       sends = (int)ceil((log(p) / LOG2));
@@ -1986,6 +1988,7 @@ static int NBC_Ireduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
 	int rank, p, res, segsize = 0, size;
 	MPI_Aint ext;
 	NBC_Schedule *schedule;
+  int alloc_size = 0;
 	char *redbuf=NULL, inplace;
 	enum { NBC_RED_BINOMIAL, NBC_RED_CHAIN } alg;
 
@@ -2040,8 +2043,8 @@ static int NBC_Ireduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
         }
         //	} else {
         //		handle->tmpbuf = sctk_malloc(ext*count);
-        //		alg = NBC_RED_CHAIN;
-        //		segsize = 16384/2;
+        //		algint = NBC_RED_CHAIN;
+        //		segintsize = 16384/2;
         //	}
         if (NULL == handle->tmpbuf) {
           printf("Error in sctk_malloc() (%i)\n", res);
@@ -2093,7 +2096,7 @@ static int NBC_Ireduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
                       }
                     }
           */
-          int alloc_size =
+          alloc_size =
               sizeof(int) +
               recv_op_rounds * (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type) +
                                 sizeof(int) + sizeof(char)) +
@@ -4131,6 +4134,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
   NBC_Args_unpack *unpackargs; 
   NBC_Schedule myschedule;
   void *buf1, *buf2, *buf3;
+  MPI_Request * tmp_reqs = NULL;
  
   MPI_request_struct_t * requests = __sctk_internal_get_MPC_requests();
 
@@ -4174,7 +4178,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
   }
 
 	handle->req_count += req_cpt;
-	MPI_Request * tmp_reqs = handle->req_array; 
+	tmp_reqs = handle->req_array; 
   handle->req_array = (MPI_Request*)sctk_malloc((handle->req_count)*sizeof(MPI_Request));
 	for(i=0; i<old_req_count; i++)
 	{

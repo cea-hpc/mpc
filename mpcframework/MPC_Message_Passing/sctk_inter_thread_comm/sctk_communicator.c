@@ -699,7 +699,6 @@ static inline sctk_communicator_t sctk_intercommunicator_get_new_id ( int local_
 			if ( comm != -1 )
 			{
 				/*Check if available*/
-				sctk_internal_communicator_t *tmp_check;
 				tmp->id = comm;
 				tmp->remote_comm->id = comm;
 				sctk_nodebug ( "Check intercomm %d", comm );
@@ -872,7 +871,6 @@ static inline sctk_communicator_t sctk_communicator_get_new_id_from_intercomm ( 
 			if ( comm != -1 )
 			{
 				/*Check if available*/
-				sctk_internal_communicator_t *tmp_check;
 				tmp->id = comm;
 				sctk_nodebug ( "check comm from intercomm %d", comm );
 				sctk_spinlock_lock ( &sctk_communicator_all_table_lock );

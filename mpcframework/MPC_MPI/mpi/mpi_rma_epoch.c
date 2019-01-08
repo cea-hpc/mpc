@@ -1047,7 +1047,7 @@ int mpc_Win_target_ctx_end_exposure_no_lock(MPI_Win win,
   /* Now handle state transition */
 
   int had_error = 0;
-
+  int last_rlock = 0;
   int clear_remote_ranks = 0;
   int check_for_pending_locks = 0;
 
@@ -1078,7 +1078,7 @@ int mpc_Win_target_ctx_end_exposure_no_lock(MPI_Win win,
   case MPC_WIN_TARGET_PASSIVE_SHARED:
     check_for_pending_locks = 1;
     ctx->passive_exposure_count--;
-    int last_rlock = sctk_spinlock_read_unlock(&ctx->locks.win_lock);
+    last_rlock = sctk_spinlock_read_unlock(&ctx->locks.win_lock);
     sctk_info("UNLOCK %d pending (unlock from %d)", ctx->passive_exposure_count,
               source_rank);
     if ((ctx->passive_exposure_count == 0) && (last_rlock == 0)) {
@@ -1907,6 +1907,7 @@ static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
 
   /* Retrieve the MPI Desc */
   struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  int local_win = -1;
 
   /* Are we in shared ? */
   if (desc->is_single_process) {
@@ -1971,7 +1972,7 @@ static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
     }
   }
 
-  int local_win = mpc_MPI_win_get_remote_win(desc, rank, 0);
+  local_win = mpc_MPI_win_get_remote_win(desc, rank, 0);
 
   if (local_win < 0) {
     /* Remote has no data */

@@ -1609,14 +1609,14 @@ void sctk_ptp_per_task_init(int i) {
 
       /* List not already allocated. We create it */
       if (buffered_ptp_message == NULL) {
-        sctk_thread_ptp_message_t *tmp;
-        tmp = sctk_malloc(sizeof(sctk_thread_ptp_message_t) *
+        sctk_thread_ptp_message_t *tmp_message;
+        tmp_message = sctk_malloc(sizeof(sctk_thread_ptp_message_t) *
                           BUFFERED_PTP_MESSAGE_NUMBER);
-        assume(tmp);
+        assume(tmp_message);
 
         /* Loop on all buffers and create a list */
         for (j = 0; j < BUFFERED_PTP_MESSAGE_NUMBER; ++j) {
-          sctk_thread_ptp_message_t *entry = &tmp[j];
+          sctk_thread_ptp_message_t *entry = &tmp_message[j];
           entry->from_buffered = 1;
           /* Add it to the list */
           LL_PREPEND(buffered_ptp_message, entry);

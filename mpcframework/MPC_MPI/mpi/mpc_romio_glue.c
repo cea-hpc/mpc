@@ -12,45 +12,45 @@
 /** \brief This function is used in ROMIO in order to dermine if a data-type is contiguous
  *  We implement it here as it is much faster to do it with the
  *  knowledge of data-type internals
- * 
+ *
  *  \param datatype Type to be tested
  *  \param flag OUT 1 of cont. 0 otherwize
  */
 void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 {
 	sctk_task_specific_t *task_specific;
-	
+
 	*flag = 0;
-	
+
 	/* UB or LB are not contiguous */
 	if( sctk_datatype_is_boundary(datatype) )
 		return;
-	
+
+  sctk_derived_datatype_t *target_type = NULL;
 	switch( sctk_datatype_kind( datatype ) )
 	{
 		/* CONT and COMMON are contiguous by definition */
 		case MPC_DATATYPES_CONTIGUOUS:
 			*flag = 1;
 		break;
-		
+
 		case MPC_DATATYPES_COMMON:
 			*flag = 1;
 		break;
-		
+
 		/* For dereived dat-types we have to check */
 		case MPC_DATATYPES_DERIVED:
-			task_specific = __MPC_get_task_specific ();	
-			sctk_derived_datatype_t *target_type = sctk_task_specific_get_derived_datatype(  task_specific, datatype );
+			task_specific = __MPC_get_task_specific ();
+			target_type = sctk_task_specific_get_derived_datatype(  task_specific, datatype );
 			assume( target_type != NULL );
-			
+
 			/* If there is no block (0 size) or one block in the optimized representation
 			 * then this data-type is contiguous */
 			if( (target_type->count == 0) ||  (target_type->opt_count == 1) )
 				*flag = 1;
 
 		break;
-		
-		
+
 		default:
 			not_reachable();
 	}

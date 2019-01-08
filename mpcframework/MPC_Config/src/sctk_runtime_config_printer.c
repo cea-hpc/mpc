@@ -107,7 +107,7 @@ bool sctk_runtime_config_display_plain_type( const char * type_name,void *value)
 		printf("%s",(*(bool*)value)?"true":"false");
 		return true;
 	} else if (strcmp(type_name,"float") == 0) {
-		printf("%f",*(float*)value);
+		printf("%f",(double)*(float*)value);
 		return true;
 	} else if (strcmp(type_name,"double") == 0) {
 		printf("%g",*(double*)value);

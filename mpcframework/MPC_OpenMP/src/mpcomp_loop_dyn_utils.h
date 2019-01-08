@@ -108,7 +108,7 @@ __mpcomp_loop_dyn_init_target_chunk_ull(mpcomp_thread_t *thread,
 	{
     if( !sctk_spinlock_trylock(&(target->info.update_lock))) {
       /* Get the current id of remaining chunk for the target */
-      int cur = sctk_atomics_load_int(&(target->for_dyn_remain[index].i));
+      cur = sctk_atomics_load_int(&(target->for_dyn_remain[index].i));
       if (cur < 0 && (__mpcomp_loop_dyn_get_for_dyn_current(thread) >
                       __mpcomp_loop_dyn_get_for_dyn_current(target) )) {
           target->for_dyn_total[index] = __mpcomp_get_static_nb_chunks_per_rank_ull(
@@ -133,7 +133,7 @@ __mpcomp_loop_dyn_init_target_chunk(mpcomp_thread_t *thread,
 	{
 	  if( !sctk_spinlock_trylock(&(target->info.update_lock))) {
       /* Get the current id of remaining chunk for the target */
-      int cur = sctk_atomics_load_int(&(target->for_dyn_remain[index].i));
+      cur = sctk_atomics_load_int(&(target->for_dyn_remain[index].i));
       if (cur < 0 && (__mpcomp_loop_dyn_get_for_dyn_current(thread) >
                     __mpcomp_loop_dyn_get_for_dyn_current(target) )) {
         target->for_dyn_total[index] = __mpcomp_get_static_nb_chunks_per_rank(

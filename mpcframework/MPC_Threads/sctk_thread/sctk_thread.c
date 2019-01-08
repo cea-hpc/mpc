@@ -2737,7 +2737,6 @@ sctk_start_func (void *(*run) (void *), void *arg)
 				}
 				else
 				{
-					int i=0;
 					start_thread = (host_nb_task * host_number) + ((node_rank - host_number) * mic_nb_task);
 					for(i=0 ; i<process_on_node_rank ; i++)
 					{
@@ -2756,7 +2755,6 @@ sctk_start_func (void *(*run) (void *), void *arg)
 				}
 				else
 				{
-					int i=0;
 					start_thread = (node_rank * host_nb_task);
 					for(i=0 ; i<process_on_node_rank ; i++)
 					{

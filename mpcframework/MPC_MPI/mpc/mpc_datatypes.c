@@ -2033,14 +2033,14 @@ static inline int Datatype_layout_fill( struct Datatype_layout * l, MPC_Datatype
 struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, size_t * ly_count )
 {
 	struct Datatype_layout *ret = NULL;
-	
 	size_t count = 0;
 	size_t ndims = 0;
-	unsigned int i;
-  int cnt, j;
+	unsigned int i = 0;
+  int cnt=0, j = 0;
 	*ly_count = 0;
 	int is_allocated = 0;
-	
+	int number_of_blocks = 0;
+
 	switch( ctx->combiner )
 	{
 		case MPC_COMBINER_CONTIGUOUS:
@@ -2076,7 +2076,7 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 			count = ctx->array_of_integers[0];
 
 			/* Compute the number of blocks */
-			int number_of_blocks = 0;
+  		number_of_blocks = 0;
 
 			for( i = 1 ; i <= count ; i++ )
 			{
@@ -2088,7 +2088,6 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 			/* Allocate blocks */
 			ret = please_allocate_layout( number_of_blocks );
 
-			cnt = 0;
 			for( i = 0 ; i < count ; i++ )
 			{
 				sctk_nodebug("CTX : BL : %d   T : %d", ctx->array_of_integers[i + 1], ctx->array_of_types[i]);

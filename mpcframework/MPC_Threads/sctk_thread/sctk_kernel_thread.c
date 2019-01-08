@@ -172,7 +172,6 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
   } else {
     pthread_attr_t attr;
     int res;
-    size_t kthread_stack_size;
     kthread_create_start_t tmp;
     sctk_nodebug("Create new kernel thread");
 
