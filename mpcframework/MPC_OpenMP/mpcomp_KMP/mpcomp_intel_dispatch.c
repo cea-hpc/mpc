@@ -32,7 +32,7 @@ void __kmpc_dispatch_init_4u(__UNUSED__ ident_t *loc,__UNUSED__  kmp_int32 gtid,
       t->rank, __func__, lb, ub, ub + st, st, chunk, schedule);
 
   /* add to sync with MPC runtime bounds */
-  const long long add = ((ub - lb) % st == 0) ? st : st - ((ub - lb) % st);
+  const long long add = ((ub - lb) % st == 0) ? st : st - (kmp_int32)((ub - lb) % st);
   const unsigned long long b = (unsigned long long)ub + add;
 
   const bool up = (st > 0);
@@ -75,7 +75,7 @@ void __kmpc_dispatch_init_8u(__UNUSED__ ident_t *loc,__UNUSED__  kmp_int32 gtid,
   const bool up = (st > 0);
   const unsigned long long st_ull = (up) ? st : -st;
 
-  const long long add = ((ub - lb) % st == 0) ? st : st - ((ub - lb) % st);
+  const long long add = ((ub - lb) % st == 0) ? st : st - (kmp_int32)((ub - lb) % st);
   const unsigned long long b = (unsigned long long)ub + add;
   t->schedule_type = schedule;
   t->schedule_is_forced = 1;

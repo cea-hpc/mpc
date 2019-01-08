@@ -202,7 +202,7 @@ __mpcomp_spinning_get_mvp_father_node( mpcomp_mvp_t* mvp, mpcomp_instance_t* ins
 
     const int max_depth = mvp->depth;
     const int father_depth = instance->root->depth + instance->tree_depth -1;
-    const int mvp_ancestor_node = max_depth - father_depth;
+    const unsigned int mvp_ancestor_node = max_depth - father_depth;
 
     if( !mvp_ancestor_node ) return mvp->father;
 

@@ -32,7 +32,6 @@
 #include <ctype.h>
 
 #include "mpcomp_types.h"
-#include "mpcomp_tree.h"
 #include "mpcomp_tree_structs.h"
 #include "mpcomp_task_utils.h"
 #include "mpcomp_sections.h"

@@ -234,8 +234,9 @@ __mpcomp_update_node_children_node_ptr( const int first_idx,
     sctk_assert( me->fathers_array_size == root[first_idx].fathers_array_size -1 );
     sctk_assert( me->fathers_array );
 
-    for( i = 0; i < me->fathers_array_size; i++ )
-        me->fathers_array[i] = root[first_idx].fathers_array[i];
+    size_t j;
+    for( j = 0; j < me->fathers_array_size; j++ )
+        me->fathers_array[j] = root[first_idx].fathers_array[j];
 }  
 
 static inline void
@@ -273,8 +274,9 @@ __mpcomp_update_node_children_mvp_ptr(  const int first_idx,
 
     sctk_assert( me->fathers_array_size == root[first_idx].fathers_array_size -1 );
 
-    for( i = 0; i < me->fathers_array_size; i++ )
-        me->fathers_array[i] = root[first_idx].fathers_array[i];
+    size_t j;
+    for( j = 0; j < me->fathers_array_size; j++ )
+        me->fathers_array[j] = root[first_idx].fathers_array[j];
 }  
 
 #endif /* __MPCOMP_TREE_ARRAY_UTILS_H__ */

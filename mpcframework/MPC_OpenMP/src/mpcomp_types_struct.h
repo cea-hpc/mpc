@@ -138,7 +138,7 @@ typedef struct mpcomp_thread_s {
     /* -- Internal specific informations -- */
     unsigned int depth;
     /** OpenMP rank (0 for master thread per team) */
-    long rank;      
+    long rank;
     long tree_array_rank;
     int* tree_array_ancestor_path;
     /* Micro-vp of the thread*/
@@ -247,7 +247,7 @@ typedef struct mpcomp_instance_s
 
     /** Number of microVPs for this instance   */
     /** All microVPs of this instance  */
-  	int nb_mvps;
+  	unsigned int nb_mvps;
     struct mpcomp_generic_node_s* mvps;
     int tree_array_size;
     struct mpcomp_generic_node_s* tree_array;

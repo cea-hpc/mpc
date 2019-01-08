@@ -265,8 +265,8 @@ __mpcomp_task_alloc(void (*fn)(void *), void *data,
   /* Compute task total size */
   long mpcomp_task_tot_size = mpcomp_task_info_size;
 
-  sctk_assert(MPCOMP_OVERFLOW_SANITY_CHECK(mpcomp_task_tot_size,
-                                           mpcomp_task_data_size));
+  sctk_assert(MPCOMP_OVERFLOW_SANITY_CHECK((unsigned long)mpcomp_task_tot_size,
+                                           (unsigned long)mpcomp_task_data_size));
   mpcomp_task_tot_size += mpcomp_task_data_size;
   mpcomp_task_t *new_task;
 

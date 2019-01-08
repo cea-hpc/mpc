@@ -207,12 +207,13 @@ __mpcomp_loop_dyn_get_chunk_from_target(mpcomp_thread_t *thread,
       }
     }
   } while (cur > 0 && !success);
-  return (cur > 0 && success) ? for_dyn_total - cur : -1;
+  return (cur > 0 && success) ? (int)(for_dyn_total - cur) : -1;
 }
 
 
 static inline int __mpcomp_loop_dyn_get_victim_rank(mpcomp_thread_t *thread) {
-    int i, target;
+    int i;
+    unsigned int target;
     int* tree_cumulative;
 
     sctk_assert(thread);
@@ -231,7 +232,6 @@ static inline int __mpcomp_loop_dyn_get_victim_rank(mpcomp_thread_t *thread) {
 
 	target = ( thread->rank + target ) % thread->instance->nb_mvps;
 
-    sctk_assert(target >= 0);
     sctk_assert(target < thread->instance->nb_mvps);
 	//fprintf(stderr, "[%d] ::: %s ::: Get Victim  %d\n", thread->rank, __func__, target );
 

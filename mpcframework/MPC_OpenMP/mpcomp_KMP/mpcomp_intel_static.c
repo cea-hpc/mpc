@@ -143,8 +143,8 @@ void __kmpc_for_static_init_4u(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gti
 
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
-  int rank=t->rank;
-  int num_threads=t->info.num_threads;
+  unsigned long rank = (unsigned long)t->rank;
+  unsigned int num_threads= (unsigned int)t->info.num_threads;
 
   // save old pupper
   kmp_uint32 pupper_old = *pupper;
@@ -172,17 +172,17 @@ void __kmpc_for_static_init_4u(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gti
       *plastiter, *pstride);
 
   unsigned long long trip_count;
-  if(incr > 0) 
+  if(incr > 0)
   {
     trip_count = ((*pupper - *plower) / incr) + 1;
   }
-  else 
+  else
   {
     trip_count = ((*plower - *pupper) / ( -incr)) +1;
   }
 
   switch (schedtype) {
-    case kmp_sch_static: {                         
+    case kmp_sch_static: {
       if (trip_count <= num_threads) {
         if(rank < trip_count) {
           *pupper = *plower = *plower + rank * incr;
@@ -197,7 +197,7 @@ void __kmpc_for_static_init_4u(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gti
 
       else {
         int chunk_size = trip_count / num_threads;
-        int extras = trip_count % num_threads;
+        unsigned long int extras = trip_count % num_threads;
         if (rank < extras) {
           /* The first part is homogeneous with a chunk size a little bit larger */
           *pupper = *plower + (rank + 1) * (chunk_size +1) * incr - incr;
@@ -206,7 +206,7 @@ void __kmpc_for_static_init_4u(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gti
           /* The final part has a smaller chunk_size, therefore the computation is
              splitted in 2 parts */
           *pupper = *plower + extras * (chunk_size + 1) * incr +
-            (rank + 1 - extras) * chunk_size * incr - incr;        
+            (rank + 1 - extras) * chunk_size * incr - incr;
           *plower = *plower + extras * (chunk_size + 1) * incr +
             (rank - extras) * chunk_size * incr;
         }
@@ -237,7 +237,7 @@ void __kmpc_for_static_init_4u(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gti
       *pupper = *plower + ( chunk * incr ) - incr;
       // plastiter computation
       if ( plastiter != NULL )
-        *plastiter = ( t->rank == ( ( trip_count - 1 ) / chunk ) % t->info.num_threads );
+        *plastiter = ( (unsigned long)t->rank == ( ( trip_count - 1 ) / chunk ) % t->info.num_threads );
       break;
     }
     default:
@@ -375,8 +375,8 @@ void __kmpc_for_static_init_8u(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gti
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
-  int rank=t->rank;
-  int num_threads=t->info.num_threads;
+  unsigned long  rank=t->rank;
+  unsigned long num_threads=t->info.num_threads;
   mpcomp_loop_gen_info_t *loop_infos;
   kmp_uint64 pupper_old = *pupper;
 
@@ -428,7 +428,7 @@ void __kmpc_for_static_init_8u(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gti
 
       else {
         unsigned long long chunk_size = trip_count / num_threads;
-        int extras = trip_count % num_threads;
+        unsigned long extras = trip_count % num_threads;
         if (rank < extras) {
           /* The first part is homogeneous with a chunk size a little bit larger */
           *pupper = *plower + (rank + 1) * (chunk_size +1) * incr - incr;
@@ -437,7 +437,7 @@ void __kmpc_for_static_init_8u(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gti
           /* The final part has a smaller chunk_size, therefore the computation is
              splitted in 2 parts */
           *pupper = *plower + extras * (chunk_size + 1) * incr +
-            (rank + 1 - extras) * chunk_size * incr - incr;        
+            (rank + 1 - extras) * chunk_size * incr - incr;
           *plower = *plower + extras * (chunk_size + 1) * incr +
             (rank - extras) * chunk_size * incr;
         }
@@ -468,7 +468,7 @@ void __kmpc_for_static_init_8u(__UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gti
       *pupper = *plower + ( chunk * incr ) - incr;
       // plastiter computation
       if ( plastiter != NULL )
-        *plastiter = ( t->rank == ( ( trip_count - 1 ) / chunk ) % t->info.num_threads );
+        *plastiter = ( (unsigned long)t->rank == ( ( trip_count - 1 ) / chunk ) % t->info.num_threads );
       break;
     }
     default:

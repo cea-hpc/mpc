@@ -85,8 +85,8 @@ kmp_task_t *__kmpc_omp_task_alloc(__UNUSED__ ident_t *loc_ref,__UNUSED__  kmp_in
   /* Compute task total size */
   long mpcomp_task_tot_size = mpcomp_task_info_size;
 
-  sctk_assert(MPCOMP_OVERFLOW_SANITY_CHECK(mpcomp_task_tot_size,
-                                           mpcomp_task_data_size));
+  sctk_assert(MPCOMP_OVERFLOW_SANITY_CHECK((unsigned long)mpcomp_task_tot_size,
+                                           (unsigned long)mpcomp_task_data_size));
   mpcomp_task_tot_size += mpcomp_task_data_size;
 
   struct mpcomp_task_s *new_task ;

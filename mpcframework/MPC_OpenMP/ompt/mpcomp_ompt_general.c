@@ -208,7 +208,7 @@ ompt_enumerate_states(int cur_state, int* next_state, const char** next_state_na
 		/* Find current state in ompt_state_info tabular */
 		for( i = 0; i < len - 1; i++) 
 		{
-			if( ompt_state_info[i].id != cur_state)
+			if( ompt_state_info[i].id != (unsigned long)cur_state)
 				continue;
 			break;
 		}
@@ -238,9 +238,9 @@ ompt_enumerate_mutex_impls( int current_mutex, int* next_mutex, const char** nex
 	assert( len > 0 );
 
 	/* Find current state in ompt_state_info tabular */
-	for( i = 0; i < len - 1; i++) 
+	for( i = 0; i < len - 1; i++)
 	{
-		if( ompt_mutex_impls_info[i].id != current_mutex )
+		if( ompt_mutex_impls_info[i].id != (unsigned long)current_mutex )
 			continue;
 		break;
 	}
@@ -361,19 +361,19 @@ ompt_get_callback( ompt_callbacks_t callback_type, ompt_callback_t* callback )
 	return retval; 
 }
 
-OMPT_API_ROUTINE ompt_data_t* 
+OMPT_API_ROUTINE ompt_data_t*
 ompt_get_thread_data(void)
 {
 	mpcomp_thread_t *thread_infos = mpcomp_get_thread_tls();
-	return ( thread_infos ) ? &(thread_infos->ompt_thread_data) : NULL; 
+	return ( thread_infos ) ? &(thread_infos->ompt_thread_data) : NULL;
 }
 
 OMPT_API_ROUTINE ompt_state_t
 ompt_get_state( __UNUSED__ ompt_wait_id_t* wait_id)
 {
 	mpcomp_thread_t *thread_infos = mpcomp_get_thread_tls();
-	return ( thread_infos ) ? thread_infos->state : ompt_state_undefined; 
-} 
+	return ( thread_infos ) ? thread_infos->state : ompt_state_undefined;
+}
 
 OMPT_API_ROUTINE int
 ompt_get_parallel_info( int ancestor_level, ompt_data_t** parallel_data, int* team_size)
@@ -390,7 +390,7 @@ ompt_get_parallel_info( int ancestor_level, ompt_data_t** parallel_data, int* te
 	*parallel_data = (thread_infos) ? &(thread_infos->info.ompt_region_data) : NULL;
 	*team_size = (thread_infos) ? thread_infos->info.num_threads : 0;
 	return 1;
-} 
+}
 
 OMPT_API_ROUTINE int
 ompt_get_task_info( 	int ancestor_level, 

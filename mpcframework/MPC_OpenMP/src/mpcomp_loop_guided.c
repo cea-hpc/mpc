@@ -271,7 +271,7 @@ int __mpcomp_loop_ull_guided_next(unsigned long long *from,
 
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t);
-  mpcomp_loop_long_iter_t *loop = (mpcomp_loop_long_iter_t*)&(t->info.loop_infos.loop.mpcomp_ull);
+  mpcomp_loop_ull_iter_t *loop = (mpcomp_loop_ull_iter_t*)&(t->info.loop_infos.loop.mpcomp_ull);
   const unsigned long long num_threads = (unsigned long long)t->info.num_threads;
   unsigned long long ret = 0, anc_from,chunk_size,new_from;
   const int index = __mpcomp_loop_dyn_get_for_dyn_index(t);
@@ -283,13 +283,13 @@ int __mpcomp_loop_ull_guided_next(unsigned long long *from,
     {
       chunk_size = ((loop->b - anc_from) / (loop->incr)) / (2*num_threads);
     }
-    else 
+    else
     {
       chunk_size =  ((anc_from - loop->b) / (-loop->incr)) / (2*num_threads);
     }
     if(loop->chunk_size > chunk_size) chunk_size = loop->chunk_size;
-    
-    if(((loop->b - anc_from) / chunk_size < loop->incr && loop->up) || ((anc_from - loop->b) / chunk_size < (- loop->incr) && !loop->up)) // Last iteration 
+
+    if(((loop->b - anc_from) / chunk_size < loop->incr && loop->up) || ((anc_from - loop->b) / chunk_size < (- loop->incr) && !loop->up)) // Last iteration
     {
       new_from = loop->b;
     }

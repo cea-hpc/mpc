@@ -93,7 +93,7 @@ __mpcomp_get_static_nb_chunks_per_rank_ull(unsigned long long rank,
   nb_chunks_per_thread = trip_count / (chunk_size * num_threads);
   /* Compute the number of extrat chunk nb_chunk_extra can't be greater than
    * nb_thread */
-  const int nb_chunk_extra = (int)((trip_count / chunk_size) % num_threads);
+  const unsigned long long nb_chunk_extra = (int)((trip_count / chunk_size) % num_threads);
   const int are_not_multiple = (trip_count % chunk_size) ? 1 : 0;
 
   /* The first threads will have one more chunk (according to the previous

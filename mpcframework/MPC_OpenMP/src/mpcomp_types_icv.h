@@ -54,7 +54,7 @@ typedef struct mpcomp_global_icv_s {
 /** Local Internal Control Variables
  * One structure per OpenMP thread 				*/
 typedef struct mpcomp_local_icv_s {
-  int nthreads_var;          /**< Number of threads for the next team creation
+  unsigned int nthreads_var;          /**< Number of threads for the next team creation
                                 */
   int dyn_var;               /**< Is dynamic thread adjustement on?
                                 */

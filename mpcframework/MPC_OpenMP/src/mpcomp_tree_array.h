@@ -54,7 +54,7 @@ __mpcomp_tree_array_node_type_by_depth( __UNUSED__ mpcomp_meta_tree_node_t** roo
 }
 
 static inline mpcomp_meta_tree_type_t
-__mpcomp_tree_array_node_type_from_node_by_depth( mpcomp_meta_tree_node_t* node, const int depth )
+__mpcomp_tree_array_node_type_from_node_by_depth( mpcomp_meta_tree_node_t* node, const unsigned int depth )
 {
     // No more children at distance depth or node is already a leaf
     if( depth >= node->children_array_size || node->type == MPCOMP_META_TREE_LEAF )

@@ -28,8 +28,8 @@ extern ompt_callback_t* OMPT_Callbacks;
 static int __mpcomp_task_process_deps(mpcomp_task_dep_node_t *task_node,
                                       mpcomp_task_dep_ht_table_t *htable,
                                       void **depend) {
-
-  int i, j, predecessors_num;
+  size_t i, j;
+  int predecessors_num;
   mpcomp_task_dep_ht_entry_t *entry;
   mpcomp_task_dep_node_t *last_out;
 
@@ -40,7 +40,7 @@ static int __mpcomp_task_process_deps(mpcomp_task_dep_node_t *task_node,
     return 0;
 
   // Filter redundant value
-  int task_already_process_num = 0;
+  size_t task_already_process_num = 0;
   uintptr_t *task_already_process_list =
      (uintptr_t*) sctk_malloc(sizeof(uintptr_t) * tot_deps_num);
   sctk_assert(task_already_process_list);
@@ -62,7 +62,7 @@ static int __mpcomp_task_process_deps(mpcomp_task_dep_node_t *task_node,
         break;
       }
     }
-		
+
     sctk_nodebug("task: %p deps: %p redundant : %d \n", task_node, addr,
                  redundant);
     /** OUT are in first position en OUT > IN deps */

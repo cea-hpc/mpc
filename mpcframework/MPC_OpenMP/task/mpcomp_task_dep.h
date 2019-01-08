@@ -197,7 +197,7 @@ mpcomp_task_dep_alloc_node_list_elt(mpcomp_task_dep_node_list_t *list,
 
 static inline int
 mpcomp_task_dep_free_task_htable(mpcomp_task_dep_ht_table_t *htable) {
-  int i;
+  unsigned int i;
   int removed_entries = 0;
 
   for (i = 0; htable && i < htable->hsize; i++) {
@@ -226,7 +226,7 @@ mpcomp_task_dep_alloc_task_htable(mpcomp_task_dep_hash_func_t hfunc) {
       sizeof(mpcomp_task_dep_ht_table_t), MPCOMP_TASK_DEFAULT_ALIGN);
   const long array_size =
       sizeof(mpcomp_task_dep_ht_bucket_t) * MPCOMP_TASK_DEP_MPC_HTABLE_SIZE;
-  sctk_assert(MPCOMP_OVERFLOW_SANITY_CHECK(infos_size, array_size));
+  sctk_assert(MPCOMP_OVERFLOW_SANITY_CHECK((unsigned long)infos_size, (unsigned long)array_size));
 
   new_htable =
       (mpcomp_task_dep_ht_table_t *)sctk_malloc(infos_size + array_size);

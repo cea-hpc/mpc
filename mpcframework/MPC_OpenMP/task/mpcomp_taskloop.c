@@ -64,7 +64,7 @@ mpcomp_taskloop_compute_loop_value(long iteration_num, unsigned long num_tasks,
                             : 1;
   }
 
-  if (num_tasks >= iteration_num) {
+  if (num_tasks >= (unsigned long)iteration_num) {
     compute_num_tasks = iteration_num;
   } else {
     const long quotient = iteration_num / compute_num_tasks;
