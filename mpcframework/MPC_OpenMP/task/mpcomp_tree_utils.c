@@ -50,7 +50,6 @@ int mpcomp_get_neighbour( const int globalRank, const int index )
     int *path, *treeShape, *treeNumNodePerDepth;
     mpcomp_thread_t* thread;
     mpcomp_instance_t* instance;
-    mpcomp_generic_node_t* gen_node;
 
     /* Retrieve the current thread information */
     sctk_assert(sctk_openmp_thread_tls);
@@ -162,7 +161,7 @@ int mpcomp_get_ancestor( const int globalRank, const int depth )
 /* Recursive call for checking neighbourhood from node n */
 static void __mpcomp_task_check_neighbourhood_r( mpcomp_node_t *node ) 
 {
-    int i, j;
+    int i;
     mpcomp_thread_t *thread;
 
     sctk_assert( node );
@@ -173,8 +172,6 @@ static void __mpcomp_task_check_neighbourhood_r( mpcomp_node_t *node )
 
     sctk_assert( thread->instance );
     sctk_assert( thread->instance->tree_nb_nodes_per_depth );
-
-    const int instance_level_size = thread->instance->tree_nb_nodes_per_depth[node->depth + 1];
 
     switch (node->child_type) 
     {

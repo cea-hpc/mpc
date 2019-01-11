@@ -45,7 +45,6 @@ __mpcomp_instance_tree_array_node_init(struct mpcomp_node_s* parent, struct mpco
     instance = parent->instance;
 
     const int vdepth = parent->depth - parent->instance->root->depth +1;
-    const int tree_base_val = parent->instance->tree_base[vdepth];
     const int next_tree_base_val = parent->instance->tree_base[vdepth+1];
 
     const int global_rank = parent->instance_global_rank + index; 

@@ -36,7 +36,7 @@ __mpcomp_tree_array_convert_array_to_string( int* tab, const int size )
 static inline int*
 __mpcomp_tree_array_compute_tree_shape( mpcomp_node_t* node, int* tree_shape, const int size  )
 {
-    int i, tmp;
+    int i;
     int *node_tree_shape;
  
     sctk_assert( node );
@@ -144,7 +144,6 @@ __mpcomp_tree_array_compute_tree_first_children( mpcomp_node_t* root, mpcomp_nod
     memset( node_first_children, 0, sizeof(int) * node_tree_size );
 
     node_first_children[0] = node->global_rank;
-    const int node_stage_size = root->tree_base[node->depth];
 
     shift_next_stage_stage = 0;
     for( i = 0; i <= node->depth; i++ )
@@ -164,7 +163,7 @@ __mpcomp_tree_array_compute_tree_first_children( mpcomp_node_t* root, mpcomp_nod
 static inline int*
 __mpcomp_tree_array_compute_node_parents(  mpcomp_node_t* root, mpcomp_node_t* node )
 {
-    int i, prev_num_nodes, stage_rank, shift_next_stage_stage, cur_rank;
+    int i, prev_num_nodes, stage_rank;
     int *node_parents;
 
     sctk_assert( node );

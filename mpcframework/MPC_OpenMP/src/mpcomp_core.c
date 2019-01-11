@@ -102,7 +102,7 @@ TODO(" function __mpcomp_tokenizer is inspired from sctk_launch.c. Need to "
 static char **__mpcomp_tokenizer(char *string_to_tokenize, int *nb_tokens) {
   /*    size_t len;*/
   char *cursor;
-  int i;
+
   char **new_argv;
   int new_argc = 0;
 
@@ -219,7 +219,7 @@ __mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int* shape_d
 /* MOVE FROM mpcomp_tree_bis.c */
 int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t *restrictedTopology, const int omp_threads_expected, const int *cpulist )
 {
-	int i, err, num_mvps, core;
+	int i, err, num_mvps;
 	hwloc_topology_t topology;
 	hwloc_bitmap_t final_cpuset;
 	hwloc_obj_t core_obj, pu_obj;
@@ -255,11 +255,6 @@ int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t *restrictedTopology,
 	}
 	else /* No places */
 	{
-		const int quot = num_mvps / ncores;
-		const int rest = num_mvps % ncores;
-
-		// Get min between ncores and num_mvps
-		const int ncores_select = ( num_mvps > ncores ) ? ncores : num_mvps;
 
 		int pu;
 		for ( pu = 0; pu < num_mvps; pu++ )
@@ -364,7 +359,6 @@ __mpcomp_init_omp_task_tree( const int num_mvps, int* shape, const int* cpus_ord
  */
 static inline void __mpcomp_read_env_variables() {
   char *env;
-  int nb_threads;
 
   sctk_nodebug("__mpcomp_read_env_variables: Read env vars (MPC rank: %d)",
                sctk_get_task_rank());
@@ -727,7 +721,7 @@ void __mpcomp_init(void) {
   static volatile int done = 0;
   static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
   int nb_mvps;
-  int task_rank, id_numa;
+  int task_rank;
 
   /* Need to initialize the current team */
   if (sctk_openmp_thread_tls == NULL) {
@@ -737,13 +731,10 @@ void __mpcomp_init(void) {
 		mpcomp_ompt_pre_init();
 #endif /* OMPT_SUPPORT */
 
-    mpcomp_team_t *seq_team_info;
-    mpcomp_instance_t *seq_instance;
 
     mpcomp_thread_t *t;
     mpcomp_local_icv_t icvs;
-    mpcomp_team_t *team_info;
-    mpcomp_instance_t *instance;
+
 
     /* Need to initialize the whole runtime (environment variables) This
      * section is shared by every OpenMP instances among MPI tasks located inside
@@ -765,9 +756,6 @@ void __mpcomp_init(void) {
 
     /* Get the rank of current MPI task */
     task_rank = sctk_get_task_rank();
-
-    /* Get id numa*/
-    id_numa = sctk_get_node_from_cpu(sctk_get_init_vp(task_rank));
 
     if (task_rank == -1) {
       /* No parallel OpenMP if MPI has not been initialized yet */

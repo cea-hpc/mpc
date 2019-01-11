@@ -106,11 +106,11 @@ int __mpcomp_scatter_compute_global_rank_from_instance_rank( mpcomp_instance_t* 
 
 int __mpcomp_scatter_compute_instance_rank_from_mvp( mpcomp_instance_t* instance, mpcomp_mvp_t* mvp )
 {
-    int nthreads, max, i, first;
+    int nthreads, i, first;
     int mvp_instance_rank;
     int* mvp_fathers;
     mpcomp_node_t* prev_node, *next_node;
-    mpcomp_meta_tree_node_t* tree_array_node, *tree_array;
+    mpcomp_meta_tree_node_t* tree_array;
 
     sctk_assert( mvp );
     sctk_assert( instance );
@@ -286,7 +286,7 @@ __mpcomp_scatter_compute_instance_tree_array_infos( mpcomp_instance_t* instance,
 mpcomp_instance_t*
 __mpcomp_scatter_instance_pre_init( mpcomp_thread_t* thread, const int num_mvps )
 {
-    int shift, i, tot_nnodes;
+
     mpcomp_node_t* root;
     mpcomp_instance_t* instance;
 
@@ -385,7 +385,7 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
 
         for( i = 0; i < nthreads; i++ )
         {
-            mpcomp_thread_t* father, *next;
+            mpcomp_thread_t* next;
             child_node = node->children.node[cur_node];
             sctk_assert( child_node );
             mvp = child_node->mvp;
@@ -453,7 +453,7 @@ __mpcomp_scatter_wakeup_final_mvp( mpcomp_node_t* node )
 
     for( i = 0; i < nthreads; i++ )
     {
-        mpcomp_thread_t* father, *next;
+        mpcomp_thread_t* next;
         mpcomp_mvp_t* mvp = node->children.leaf[cur_mvp]; 
         if( !node->instance->buffered )
         {
@@ -525,7 +525,7 @@ void __mpcomp_scatter_instance_post_init( mpcomp_thread_t* thread )
 {
     sctk_assert( thread );
     sctk_assert( thread->mvp );
-    mpcomp_instance_t* instance;
+
     mpcomp_mvp_t* mvp = thread->mvp;
     int j; 
     for (j = 0; j < MPCOMP_MAX_ALIVE_FOR_DYN + 1; j++) 

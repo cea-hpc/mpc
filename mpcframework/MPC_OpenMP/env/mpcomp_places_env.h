@@ -145,7 +145,6 @@ static inline int
 mpcomp_places_expand_place_bitmap( mpcomp_places_info_t* list, mpcomp_places_info_t* place, int len, int stride, const int nb_mvps)
 {
     int i;
-    unsigned int index;
     mpcomp_places_info_t* new_place;
 
     assert( stride != 0 && len > 0);

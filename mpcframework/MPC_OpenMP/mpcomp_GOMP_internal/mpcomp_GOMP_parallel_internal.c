@@ -105,7 +105,7 @@ void mpcomp_internal_GOMP_start_parallel_region(void (*fn)(void *), void *data,
                                                 unsigned num_threads) {
   mpcomp_thread_t *t;
   mpcomp_parallel_region_t *info;
-  mpcomp_GOMP_wrapper_t *wrapper_gomp;
+
 
   /* Initialize OpenMP environment */
   __mpcomp_init();
@@ -149,7 +149,7 @@ void mpcomp_internal_GOMP_parallel_loop_generic_start(
     long incr, long chunk_size, long combined_pragma) {
   mpcomp_thread_t *t;
   mpcomp_parallel_region_t *info;
-  mpcomp_GOMP_wrapper_t *wrapper_gomp;
+
 
   /* Initialize OpenMP environment */
   __mpcomp_init();

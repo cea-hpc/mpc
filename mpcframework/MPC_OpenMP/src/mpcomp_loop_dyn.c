@@ -149,7 +149,7 @@ int __mpcomp_dynamic_loop_next(long *from, long *to)
 {
     mpcomp_mvp_t* target_mvp;
     mpcomp_thread_t *t, *target;
-    int i, found, target_idx, barrier_nthreads, ret;
+    int found, target_idx, barrier_nthreads, ret;
 
     /* Grab the thread info */
     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
@@ -299,7 +299,7 @@ void __mpcomp_dynamic_loop_end_nowait(void) {
 
     sctk_atomics_store_int(&(team_info->for_dyn_nb_threads_exited[index].i),
                            MPCOMP_NOWAIT_STOP_SYMBOL);
-    int prev = sctk_atomics_swap_int(
+    sctk_atomics_swap_int(
         &(team_info->for_dyn_nb_threads_exited[previous_index].i), 0);
      
   }

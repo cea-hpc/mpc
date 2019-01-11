@@ -87,7 +87,7 @@ static ompt_callback_info_t ompt_callback_info[] = {
 #undef ompt_callback_macro
 };
 
-static ompt_enumerate_info_t ompt_set_result_info[] = {
+__UNUSED__ static ompt_enumerate_info_t ompt_set_result_info[] = {
 #define ompt_set_result_macro(name, code)	{ # name, name },
 	 FOREACH_OMPT_SET_RESULT(ompt_set_result_macro)
 #undef ompt_set_result_macro

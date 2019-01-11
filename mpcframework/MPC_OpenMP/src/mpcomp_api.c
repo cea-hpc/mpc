@@ -68,7 +68,6 @@ int omp_get_max_threads(void) {
  */
 int omp_get_num_procs(void) {
   __mpcomp_init();
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
   return mpcomp_global_icvs.nmicrovps_var;
 }
 

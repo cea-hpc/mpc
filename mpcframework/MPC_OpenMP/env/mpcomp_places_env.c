@@ -346,7 +346,6 @@ mpcomp_places_build_cores_places( const int places_number, int *error )
    
    core_found = 0; tnwrites = 0;
    const int core_number = hwloc_get_nbobjs_by_type( topology,  HWLOC_OBJ_CORE );
-   const int pu_number = hwloc_get_nbobjs_by_type( topology,  HWLOC_OBJ_PU);
 
    const int __places_number = ( places_number == -1 ) ? core_number : places_number;
    while( (next_core = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_CORE, prev_core )) )
@@ -477,7 +476,7 @@ mpcomp_places_is_named_places( const char* env, char *string, int* error )
 mpcomp_places_info_t*
 mpcomp_places_build_place_infos( char *string, char **end, const int nb_mvps )
 {
-    int error, exclude, stride, len;
+    int exclude, stride, len;
     mpcomp_places_info_t* new_place, *list;
     static int __mpcomp_places_generate_count = 0; 
 
@@ -499,7 +498,6 @@ mpcomp_places_build_place_infos( char *string, char **end, const int nb_mvps )
 
         if( *string != '{' )
         {
-            error = 1;
             break;
         }
         string++; // skip '{'
@@ -508,7 +506,6 @@ mpcomp_places_build_place_infos( char *string, char **end, const int nb_mvps )
         if( !new_place )
         {
             fprintf(stderr, "error: can't parse subplace\n");
-            error = 1;
             break;
         }
         
@@ -518,7 +515,6 @@ mpcomp_places_build_place_infos( char *string, char **end, const int nb_mvps )
        
         if( *string != '}' )
         {
-            error = 1;
             break;
         }
         string++; // skip '}'
@@ -531,12 +527,10 @@ mpcomp_places_build_place_infos( char *string, char **end, const int nb_mvps )
                 len = mpcomp_safe_atoi( string, end );
                 if( string == *end )
                 {
-                    error = 1; // missing value
                     break;
                 }
                 if( len <= 0 )
                 {
-                    error = 1;
                     fprintf(stderr, "error: len in place is not positive integer ( %d )\n", len );
                     break;
                 }
@@ -548,7 +542,6 @@ mpcomp_places_build_place_infos( char *string, char **end, const int nb_mvps )
                 stride = mpcomp_safe_atoi( string, end );
                 if( string == *end )
                 {
-                    error = 1; // missing value
                     break;
                 }
                 string = *end;
@@ -696,7 +689,6 @@ int mpcomp_places_get_topo_info( mpcomp_places_info_t* list, int** shape, int** 
    DL_FOREACH_SAFE( list, place, saveptr )
    {
       __place_old_id = -1;
-      const int place_num_elts = hwloc_bitmap_weight( place->interval ); 
       /* Get first elt */
       while( ( __place_cur_id = hwloc_bitmap_next( place->interval, __place_old_id ) ) >= 0 )
       {

@@ -305,10 +305,8 @@ void __kmpc_taskloop(ident_t *loc, int gtid, kmp_task_t *task, __UNUSED__ int if
                 kmp_uint64 *lb, kmp_uint64 *ub, kmp_int64 st,
                 int nogroup, int sched, kmp_uint64 grainsize, void *task_dup )
 {
-
-  long taskstep;
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  unsigned long extra_chunk, i, trip_count, num_tasks = 0, extras = 0, lower = *lb, upper = *ub;
+  unsigned long i, trip_count, num_tasks = 0, extras = 0, lower = *lb, upper = *ub;
   kmp_task_t * next_task;
   int lastpriv;
   kmp_taskdata_t *taskdata_src, *taskdata;

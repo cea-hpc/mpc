@@ -41,7 +41,7 @@ typedef enum mpcomp_task_dep_type_e {
   MPCOMP_TASK_DEP_COUNT = 3,
 } mpcomp_task_dep_type_t;
 
-static char *mpcomp_task_dep_type_to_string[MPCOMP_TASK_DEP_COUNT] = {
+__UNUSED__ static char *mpcomp_task_dep_type_to_string[MPCOMP_TASK_DEP_COUNT] = {
     "MPCOMP_TASK_DEP_NONE", /*  MPCOMP_TASK_DEP_NONE    = 0 */
     "MPCOMP_TASK_DEP_IN  ", /*  MPCOMP_TASK_DEP_IN      = 1 */
     "MPCOMP_TASK_DEP_OUT "  /*  MPCOMP_TASK_DEP_IN      = 2 */
@@ -54,7 +54,7 @@ typedef enum mpcomp_task_dep_htable_op_e {
   MPCOMP_TASK_DEP_HTABLE_OP_COUNT = 3,
 } mpcomp_task_dep_htable_op_t;
 
-static char
+__UNUSED__ static char
     *mpcomp_task_dep_htable_op_to_string[MPCOMP_TASK_DEP_HTABLE_OP_COUNT] = {
         "MPCOMP_TASK_DEP_HTABLE_OP_INSERT", "MPCOMP_TASK_DEP_HTABLE_OP_DELETE",
         "MPCOMP_TASK_DEP_HTABLE_OP_SEARCH"};
@@ -67,7 +67,7 @@ typedef enum mpcomp_task_dep_task_status_e {
   MPCOMP_TASK_DEP_TASK_COUNT = 4
 } mpcomp_task_dep_task_status_t;
 
-static char *mpcomp_task_dep_task_status_to_string[MPCOMP_TASK_DEP_TASK_COUNT] =
+__UNUSED__ static char *mpcomp_task_dep_task_status_to_string[MPCOMP_TASK_DEP_TASK_COUNT] =
     {"MPCOMP_TASK_DEP_TASK_PROCESS_DEP", "MPCOMP_TASK_DEP_TASK_NOT_EXECUTE",
      "MPCOMP_TASK_DEP_TASK_RELEASED", "MPCOMP_TASK_DEP_TASK_FINALIZED"}; 
 
@@ -143,7 +143,6 @@ static inline mpcomp_task_dep_node_t *mpcomp_task_dep_new_node(void) {
 static inline mpcomp_task_dep_node_t *
 mpcomp_task_dep_node_ref(mpcomp_task_dep_node_t *node) {
   sctk_assert(node);
-  const int prev = sctk_atomics_fetch_and_incr_int(&(node->ref_counter));
   return node;
 }
 

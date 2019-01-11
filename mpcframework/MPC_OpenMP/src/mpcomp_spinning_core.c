@@ -93,7 +93,7 @@ static int __mpcomp_tree_rank_get_next_depth( mpcomp_node_t* node, const int exp
 mpcomp_instance_t* 
 __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_nb_mvps )
 {
-    mpcomp_thread_t* master, *current_thread;
+    mpcomp_thread_t* master;
     mpcomp_instance_t* instance;
 
     sctk_assert( thread );
@@ -140,9 +140,8 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
 mpcomp_thread_t*
 __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp ) 
 {
-    int i, ret;
-    mpcomp_local_icv_t icvs;
-    mpcomp_thread_t* new_thread, *cur_thread;
+
+    mpcomp_thread_t* new_thread;
 
     sctk_assert(mvp);
     
@@ -231,7 +230,7 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
  */
 void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp ) 
 {
-    int num_threads, rest, quot, father_num_children;
+
     mpcomp_node_t* spin_node;
 
     sctk_assert( mvp );

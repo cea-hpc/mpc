@@ -224,7 +224,6 @@ static inline void mpcomp_task_thread_infos_init(struct mpcomp_thread_s *thread)
     mpcomp_task_t *implicit_task;
     mpcomp_task_list_t *tied_tasks_list;
 
-    const int numa_node_id = mpcomp_task_thread_get_numa_node_id(thread);
 
     /* Allocate the default current task (no func, no data, no parent) */
     implicit_task = (mpcomp_task_t*) mpcomp_alloc( sizeof(mpcomp_task_t) );
@@ -330,7 +329,6 @@ __mpcomp_task_mvp_list_init( struct mpcomp_node_s* parent, struct mpcomp_mvp_s* 
     mpcomp_task_mvp_infos_t* infos;
     
     infos = &( child->task_infos );
-    const int child_vdepth = child->depth - parent->instance->root->depth;
 
     if( parent->task_infos.tasklist[type] )
     {
@@ -541,7 +539,6 @@ mpcomp_task_get_list(int globalRank, mpcomp_tasklist_type_t type)
     mpcomp_thread_t* thread;
     mpcomp_instance_t* instance;
     mpcomp_generic_node_t* gen_node;
-    struct mpcomp_task_list_s* list;
 
     sctk_assert(type >= 0 && type < MPCOMP_TASK_TYPE_COUNT);
   

@@ -98,7 +98,7 @@ void __mpcomp_ordered_begin( void )
 static inline void __mpcomp_internal_ordered_end( mpcomp_thread_t* t, mpcomp_loop_gen_info_t* loop_infos  )
 {
     int isLastIteration;
-    const int index = t->next_ordered_index;
+
     sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG );
     mpcomp_loop_long_iter_t* loop = &( loop_infos->loop.mpcomp_long );
 
@@ -114,7 +114,7 @@ static inline void __mpcomp_internal_ordered_end( mpcomp_thread_t* t, mpcomp_loo
     if( isLastIteration )
     {
 	    t->instance->team->next_ordered_offset = (long) 0;
-        int ret = sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized), 1, 0 );
+        sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized), 1, 0 );
     }
     else
     {
@@ -151,7 +151,7 @@ static inline void __mpcomp_internal_ordered_end_ull( mpcomp_thread_t* t, mpcomp
     if( isLastIteration )
     {
 	    t->instance->team->next_ordered_offset_ull = (long) 0;
-        int ret = sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized), 1, 0 );
+        sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized), 1, 0 );
     }
     else
     {

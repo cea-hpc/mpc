@@ -173,7 +173,7 @@ int __mpcomp_loop_ull_dynamic_next(unsigned long long *from,
     
     mpcomp_mvp_t* target_mvp; 
     mpcomp_thread_t *t, *target;
-    int i, found, target_idx, barrier_nthreads, ret;
+    int found, target_idx, barrier_nthreads, ret;
 
     /* Grab the thread info */
     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;

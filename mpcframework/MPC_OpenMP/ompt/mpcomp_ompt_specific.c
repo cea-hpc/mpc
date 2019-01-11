@@ -33,7 +33,6 @@
 static sctk_atomics_int mpcomp_OMPT_wait_id = OPA_INT_T_INITIALIZER(1); 
 static sctk_atomics_int mpcomp_OMPT_task_id = OPA_INT_T_INITIALIZER(1); 
 static sctk_atomics_int mpcomp_OMPT_thread_id = OPA_INT_T_INITIALIZER(1); 
-static sctk_atomics_int mpcomp_OMPT_parallel_id = OPA_INT_T_INITIALIZER(1); 
 
 ompt_wait_id_t mpcomp_OMPT_gen_wait_id( void )
 {

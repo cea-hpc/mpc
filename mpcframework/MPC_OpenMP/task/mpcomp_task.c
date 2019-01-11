@@ -195,7 +195,7 @@ void
 mpcomp_task_unref_parent_task(mpcomp_task_t *task) 
 {
   bool no_more_ref;
-  mpcomp_task_t *mother, *swap_value;
+  mpcomp_task_t *mother;
   sctk_assert(task);
   mpcomp_thread_t *thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
@@ -532,7 +532,6 @@ mpcomp_task_steal(mpcomp_task_list_t *list, __UNUSED__ int rank, __UNUSED__ int 
 {
     mpcomp_thread_t* thread ;
     struct mpcomp_task_s *task = NULL;
-    mpcomp_generic_node_t* gen_node;
 
     /* Check input argument */
     sctk_assert(list != NULL);
@@ -622,7 +621,7 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
   int i, type;
   mpcomp_thread_t *thread;
   struct mpcomp_task_s *task = NULL;
-  struct mpcomp_mvp_s *mvp, *target;
+  struct mpcomp_mvp_s *mvp;
   struct mpcomp_team_s *team;
   struct mpcomp_task_list_s *list;
 
@@ -640,7 +639,6 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
   sctk_assert(thread->instance);
   team = thread->instance->team;
   sctk_assert(team);
-  mpcomp_generic_node_t* gen_node;
 
   const int larcenyMode = MPCOMP_TASK_TEAM_GET_TASK_LARCENY_MODE(team);
   const int isMonoVictim = (larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM ||
@@ -730,7 +728,7 @@ static void
 __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp, mpcomp_team_t* team ) 
 {
     int type;
-    mpcomp_task_t *task, *current_task;
+    mpcomp_task_t *task;
     mpcomp_task_list_t* list;
     /* All arguments must be non null */
     sctk_assert( thread && mvp && team);
@@ -743,8 +741,6 @@ __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp, mpc
         return;
     }
 
-    /*    Executed once per thread    */
-    current_task = thread->task_infos.current_task;
     
     for (type = 0, task = NULL; !task && type <= MPCOMP_TASK_TYPE_NEW; type++) 
     {

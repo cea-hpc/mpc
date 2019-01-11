@@ -167,12 +167,12 @@ void __mpcomp_single_coherency_end_barrier(void) {
   sctk_assert(num_threads > 0);
 
   for (i = 0; i < num_threads; i++) {
-    mpcomp_thread_t *target_t = &(t->instance->mvps[i].ptr.mvp->threads[0]);
-    sctk_nodebug("%s: thread %d single_sections_current:%d "
+    /* mpcomp_thread_t *target_t = &(t->instance->mvps[i].ptr.mvp->threads[0]);
+    sctk_debug("%s: thread %d single_sections_current:%d "
                  "single_sections_last_current:%d",
                  __func__, target_t->rank, target_t->single_sections_current,
                  sctk_atomics_load_int(
-                     &(t->instance->team->single_sections_last_current)));
+                     &(t->instance->team->single_sections_last_current))); */
   }
 }
 

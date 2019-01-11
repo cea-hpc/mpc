@@ -34,7 +34,7 @@ __mpcomp_tree_array_get_parent_nodes_num_per_depth( const int* shape, const int 
 static int 
 __mpcomp_tree_array_get_children_nodes_num_per_depth( const int* shape, const int max_depth, const int depth )
 {
-    int i, j, count;        
+    int i, count;
     for( count = 1, i = depth; i < max_depth; i++ )
         count *= shape[i];
     return count; 
@@ -185,7 +185,6 @@ __mpcomp_tree_array_get_father_array_by_depth( const int* shape, const int max_d
     int i;
     int tmp_rank = -1;
     int* parents_array = NULL;
-    int nodes_num = __mpcomp_tree_array_get_parent_nodes_num_per_depth( shape, max_depth );
     int depth = __mpcomp_tree_array_get_node_depth( shape, max_depth, rank );
 
     if( !rank ) return NULL;
@@ -426,9 +425,8 @@ int*
 __mpcomp_tree_array_compute_thread_openmp_min_rank( const int* shape, const int max_depth, const int rank, const int core_depth )
 {
     int index;
-    int tmp_rank, stage_rank, count;
+
     int* min_index = NULL; 
-    const int depth = __mpcomp_tree_array_get_node_depth( shape, max_depth, rank ); 
 
     min_index = ( int* ) mpcomp_alloc( sizeof(int) * MPCOMP_AFFINITY_NB );
     assert( min_index );
@@ -619,7 +617,7 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     int *tree_shape;
     int target_node_rank, current_depth; 
     mpcomp_mvp_t * new_mvp = NULL;
-    mpcomp_node_t* root_node, *spinning_node;
+    mpcomp_node_t* root_node;
     mpcomp_meta_tree_node_t* me = NULL;
     mpcomp_meta_tree_node_t* root = NULL;
     mpcomp_mvp_thread_args_t* unpack_args = NULL; 
@@ -627,7 +625,6 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     /* Unpack thread start_routine arguments */
     unpack_args = (mpcomp_mvp_thread_args_t* ) args;
     const unsigned int rank = unpack_args->rank;
-    const unsigned int target_vp = unpack_args->target_vp;
     
     root = unpack_args->array;
     me = &( root[rank] );

@@ -49,7 +49,7 @@ mpcomp_taskloop_compute_loop_value(long iteration_num, unsigned long num_tasks,
                                    unsigned long *extra_chunk) {
   long compute_taskstep;
   mpcomp_thread_t *omp_thread_tls;
-  unsigned long grainsize, compute_num_tasks, compute_extra_chunk;
+  unsigned long compute_num_tasks, compute_extra_chunk;
 
   omp_thread_tls = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(omp_thread_tls);
@@ -125,7 +125,7 @@ void mpcomp_taskloop(void (*fn)(void *), void *data,
                      long arg_align, unsigned flags, unsigned long num_tasks,
                      __UNUSED__ int priority, long start, long end, long step) {
   long taskstep;
-  unsigned long extra_chunk, grainsize, i;
+  unsigned long extra_chunk, i;
 
   __mpcomp_init();
 

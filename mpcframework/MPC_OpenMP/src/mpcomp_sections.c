@@ -81,7 +81,6 @@ static int __mpcomp_sections_internal_next(mpcomp_thread_t *t,
 
 
 void __mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) {
-  mpcomp_team_t *team ;	/* Info on the team TODO remove this variable */
   long num_threads ;
 
   /* Number of threads in the current team */

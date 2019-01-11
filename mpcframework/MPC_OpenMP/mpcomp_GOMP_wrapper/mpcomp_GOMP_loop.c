@@ -54,7 +54,6 @@ void mpcomp_GOMP_parallel_loop_static_start(void (*fn)(void *), void *data,
                                             unsigned num_threads, long start,
                                             long end, long incr,
                                             long chunk_size) {
-  bool ret;
   mpcomp_internal_GOMP_parallel_loop_generic_start(
       fn, data, num_threads, start, end, incr, chunk_size,
       (long)MPCOMP_COMBINED_STATIC_LOOP);

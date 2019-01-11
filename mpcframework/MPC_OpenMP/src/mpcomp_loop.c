@@ -36,9 +36,6 @@
 /* Return the number of chunks that a static schedule will create for the thread 'rank' */
 int __mpcomp_get_static_nb_chunks_per_rank(int rank, int num_threads,
                                            mpcomp_loop_long_iter_t *loop) {
-  mpcomp_thread_t *t;
-
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
   long nb_chunks_per_thread;
   const long trip_count =

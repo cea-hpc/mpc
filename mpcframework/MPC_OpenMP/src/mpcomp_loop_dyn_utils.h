@@ -113,7 +113,7 @@ __mpcomp_loop_dyn_init_target_chunk_ull(mpcomp_thread_t *thread,
                       __mpcomp_loop_dyn_get_for_dyn_current(target) )) {
           target->for_dyn_total[index] = __mpcomp_get_static_nb_chunks_per_rank_ull(
           (unsigned long long) target->rank, (unsigned long long) num_threads, &(thread->info.loop_infos.loop.mpcomp_ull));
-          int ret = sctk_atomics_cas_int(&(target->for_dyn_remain[index].i), -1,
+          sctk_atomics_cas_int(&(target->for_dyn_remain[index].i), -1,
                                      target->for_dyn_total[index]);
       }
       sctk_spinlock_unlock(&(target->info.update_lock));
@@ -138,7 +138,7 @@ __mpcomp_loop_dyn_init_target_chunk(mpcomp_thread_t *thread,
                     __mpcomp_loop_dyn_get_for_dyn_current(target) )) {
         target->for_dyn_total[index] = __mpcomp_get_static_nb_chunks_per_rank(
         target->rank, num_threads, &(thread->info.loop_infos.loop.mpcomp_long));
-        int ret = sctk_atomics_cas_int(&(target->for_dyn_remain[index].i), -1,
+        sctk_atomics_cas_int(&(target->for_dyn_remain[index].i), -1,
                                    target->for_dyn_total[index]);
       }
       sctk_spinlock_unlock(&(target->info.update_lock));

@@ -70,9 +70,9 @@ void
 __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const unsigned expected_num_threads ) 
 {
     mpcomp_thread_t *t;
-    mpcomp_node_t* root;
+
     unsigned real_num_threads;
-    mpcomp_thread_t* new_thread;
+
     mpcomp_parallel_region_t* instance_info;
 
     /* Grab the thread info */
@@ -148,11 +148,12 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
 
 void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance) 
 {
-    mpcomp_node_t *root;
-    mpcomp_thread_t *master;
+
 
     if( instance->team->info.num_threads > 1 ) {
 #if 0
+      mpcomp_node_t *root;
+      mpcomp_thread_t *master;
 //    mpcomp_thread_t *prev = sctk_openmp_thread_tls;
 //    sctk_openmp_thread_tls = master;
 

@@ -156,7 +156,7 @@ int mpcomp_task_get_victim_random(const int globalRank, __UNUSED__ const int ind
 
 int mpcomp_task_get_victim_hierarchical_random(const int globalRank, const int index, mpcomp_tasklist_type_t type)
 {   
-  int victim,i,j;
+  int i,j;
   long int value;
   int *order;
   mpcomp_thread_t *thread;
@@ -165,7 +165,7 @@ int mpcomp_task_get_victim_hierarchical_random(const int globalRank, const int i
   struct mpcomp_mvp_s *mvp ;
   struct drand48_data *randBuffer;
   mpcomp_generic_node_t* gen_node;
-  mpcomp_task_list_t *list;
+
 
   /* Retrieve the information (microthread structure and current region) */
   thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
@@ -179,7 +179,6 @@ int mpcomp_task_get_victim_hierarchical_random(const int globalRank, const int i
   order = MPCOMP_TASK_THREAD_GET_LARCENY_ORDER(thread);
   sctk_assert( order );
   if(index==1) {
-    int local_rank = thread->rank % node->barrier_num_threads;
     int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(instance->team, type);
 
     int nbVictims = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
@@ -220,7 +219,7 @@ int mpcomp_task_get_victim_hierarchical_random(const int globalRank, const int i
 
     int parentrank=node->instance_global_rank - first_rank;
     int startrank=parentrank;
-    int x=1,k,l,cpt=0,nb_elt;
+    int x=1,k,l,cpt=0;
 
     for(i=0;i<tasklistDepth;i++)
     {

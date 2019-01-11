@@ -168,7 +168,7 @@ void __mpcomp_guided_loop_end_nowait()
 
     sctk_atomics_store_int(&(team_info->for_dyn_nb_threads_exited[index].i),
                            MPCOMP_NOWAIT_STOP_SYMBOL);
-    int prev = sctk_atomics_swap_int(
+    sctk_atomics_swap_int(
         &(team_info->for_dyn_nb_threads_exited[previous_index].i), 0);
   }
 }

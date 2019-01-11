@@ -226,7 +226,6 @@ static inline mpcomp_task_t* mpcomp_task_lockfree_list_popfromhead(mpcomp_task_l
       sctk_atomics_store_ptr( (OPA_ptr_t*)&( list->lockfree_shadow_head ), sctk_atomics_load_ptr( &( task->lockfree_next )));
     }
   }
-  const int value = sctk_atomics_fetch_and_decr_int(&(list->nb_elements));
 
   return task;
 }
@@ -260,7 +259,6 @@ static inline mpcomp_task_t *mpcomp_task_lockfree_list_popfromtail(mpcomp_task_l
     }
   }	
 
-  const int value = sctk_atomics_fetch_and_decr_int(&(list->nb_elements));
 
   return task;
 

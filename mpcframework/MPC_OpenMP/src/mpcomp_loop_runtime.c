@@ -241,7 +241,7 @@ int __mpcomp_loop_ull_runtime_begin(bool up, unsigned long long lb,
       (t->schedule_is_forced) ? t->schedule_type : MPCOMP_COMBINED_RUNTIME_LOOP;
   t->schedule_is_forced = 1;
 
-  const int run_sched_var = t->info.icvs.run_sched_var;
+
   const unsigned long long chunk_size =
       (unsigned long long)t->info.icvs.modifier_sched_var;
 

@@ -181,7 +181,7 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 
 #define MIN_MAX_COMPXCHG_CPT(TYPE_ID, OP_ID, TYPE, BITS, OP, GOMP_FLAG)        \
   ATOMIC_BEGIN_CPT(TYPE_ID, OP_ID, TYPE, TYPE)                                 \
-  TYPE new_value, old_value;                                                   \
+  TYPE old_value;                                                   \
   if (*lhs OP rhs) {                                                           \
     TYPE volatile temp_val;                                                    \
     temp_val = *lhs;                                                           \
@@ -364,7 +364,7 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 
 #define ATOMIC_FIXED_ADD_CPT(TYPE_ID, OP_ID, TYPE, BITS, OP, GOMP_FLAG)        \
   ATOMIC_BEGIN_CPT(TYPE_ID, OP_ID, TYPE, TYPE)                                 \
-  TYPE old_value, new_value;                                                   \
+  TYPE old_value;                                                   \
   old_value = __kmp_test_then_add##BITS((lhs), (OP rhs));                      \
   if (flag) {                                                                  \
     return old_value OP rhs;                                                   \

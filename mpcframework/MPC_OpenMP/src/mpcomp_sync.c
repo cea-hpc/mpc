@@ -48,10 +48,10 @@ extern ompt_callback_t* OMPT_Callbacks;
 TODO("OpenMP: Anonymous critical and global atomic are not per-task locks")
  
 /* Atomic emulated */
-static ompt_wait_id_t __mpcomp_ompt_atomic_lock_wait_id = 0;
+__UNUSED__ static ompt_wait_id_t __mpcomp_ompt_atomic_lock_wait_id = 0;
 static sctk_atomics_int __mpcomp_atomic_lock_init_once 		= OPA_INT_T_INITIALIZER(0); 
 /* Critical anonymous */
-static ompt_wait_id_t __mpcomp_ompt_critical_lock_wait_id = 0;
+__UNUSED__  static ompt_wait_id_t __mpcomp_ompt_critical_lock_wait_id = 0;
 static sctk_atomics_int __mpcomp_critical_lock_init_once 	= OPA_INT_T_INITIALIZER(0); 
 
 static sctk_spinlock_t* __mpcomp_omp_global_atomic_lock = NULL;
