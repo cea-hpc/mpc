@@ -188,7 +188,8 @@ size_t sctk_runtime_config_map_entry_parse_size( const char *pval )
 			value[len - 1 ]= '\0';
 			ret = atoll(value);
 		} else {
-			sctk_fatal("Could not parse size : %s\n", pval);
+			sctk_warning("Found no units in  '%s' assuming Bytes (you may use B, KB, MB, GB, TB, PB)\n", pval);
+			ret = atoll(value);
 		}
 	}
 
