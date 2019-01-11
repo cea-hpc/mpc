@@ -560,7 +560,7 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	const char * config_system;
 	const char * config_schema;
 	const char * config_user;
-	const char * tmp;
+
 	const char * mpc_rprefix = getenv("MPC_RPREFIX");
 	const char * mpc_subprefix = getenv("MPC_SUBPREFIX");
 	const char * mpc_target_subprefix = getenv("MPC_TARGET_SUBPREFIX");
