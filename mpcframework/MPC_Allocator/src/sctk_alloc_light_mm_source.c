@@ -242,7 +242,7 @@ void sctk_alloc_force_segment_binding(
     struct sctk_alloc_mm_source_light *light_source, void *base,
     sctk_size_t size) {
   // vars
-  int res;
+
 
   // errors
   assert(base != NULL);
@@ -253,7 +253,7 @@ void sctk_alloc_force_segment_binding(
   // use hwloc to bind the segment
   // 0 on HWLOC_MEMBIND_THREAD for windows
   if (light_source->nodeset != NULL)
-    res = hwloc_set_area_membind_nodeset(sctk_get_topology_object(), base, size,
+    hwloc_set_area_membind_nodeset(sctk_get_topology_object(), base, size,
                                          light_source->nodeset,
                                          HWLOC_MEMBIND_BIND, 0);
 }

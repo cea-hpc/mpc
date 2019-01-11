@@ -1581,7 +1581,7 @@ SCTK_PUBLIC void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * pt
 	sctk_alloc_vchunk vchunk;
 	sctk_alloc_vchunk vfirst = NULL;
 	bool insert_bloc = true;
-	sctk_size_t old_size;
+	__AL_UNUSED__ sctk_size_t old_size;
 
 	//error
 	assume_m(chain != NULL, "Can't free the memory without an allocation chain.");

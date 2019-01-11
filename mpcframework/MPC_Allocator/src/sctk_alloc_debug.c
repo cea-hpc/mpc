@@ -168,7 +168,6 @@ void sctk_alloc_fprintf(int fd,const char * format,...)
 /************************* FUNCTION ************************/
 void sctk_alloc_debug_dump_segment(int fd,void* base_addr, void* end_addr)
 {
-	sctk_size_t prev_size = 0;
 	sctk_alloc_vchunk vchunk;
 	
 	sctk_alloc_fprintf(fd,"============ SEGMENT %p - %p ============\n",base_addr,end_addr);
@@ -180,10 +179,6 @@ void sctk_alloc_debug_dump_segment(int fd,void* base_addr, void* end_addr)
 	while (((sctk_addr_t)sctk_alloc_get_large(vchunk)) + sctk_alloc_get_size(vchunk) < (sctk_addr_t)end_addr)
 	{
 		vchunk = sctk_alloc_get_next_chunk(vchunk);
-		if (vchunk->type == SCTK_ALLOC_CHUNK_TYPE_LARGE)
-			prev_size = sctk_alloc_get_prev_size(vchunk);
-		else
-			prev_size = 0;
 		sctk_alloc_fprintf(fd,"Bloc %p (align = %2d) %12ld [%s] in state %s\n",sctk_alloc_get_ptr(vchunk),sctk_alloc_get_addr(vchunk)%32,sctk_alloc_get_size(vchunk),
 		                   SCTK_ALLOC_TYPE_NAME[vchunk->type],SCTK_ALLOC_STATE_NAME[vchunk->state]);
 	}
