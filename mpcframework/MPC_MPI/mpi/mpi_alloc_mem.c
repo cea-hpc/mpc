@@ -111,7 +111,7 @@ int mpc_MPI_allocmem_pool_init() {
     PMPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, cw_rank,
                          MPI_INFO_NULL, &node_comm);
 
-    int my_rank, comm_size, node_size;
+    int my_rank, comm_size;
     PMPI_Comm_rank(node_comm, &my_rank);
     PMPI_Comm_size(node_comm, &comm_size);
     
@@ -453,7 +453,7 @@ void mpc_MPI_accumulate_op_lock_init() {
   PMPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, cw_rank,
                        MPI_INFO_NULL, &node_comm);
 
-  int my_rank, comm_size, node_size;
+  int my_rank, comm_size;
   PMPI_Comm_rank(node_comm, &my_rank);
   PMPI_Comm_size(node_comm, &comm_size);
 

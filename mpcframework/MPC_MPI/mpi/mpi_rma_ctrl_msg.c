@@ -45,7 +45,6 @@ void mpc_MPI_Win_handle_shadow_win_flush(void *data, size_t size) {
   struct sctk_window *low_win = sctk_win_translate(message->target_win);
   assume(low_win);
 
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)low_win->payload;
 
   mpc_Win_exposure_start();
 
@@ -79,7 +78,7 @@ void mpc_MPI_Win_handle_win_flush(void *data ) {
   int outgoing_rma = message->opt_arg1;
 
   int incoming_rma = 0;
-  int a, b;
+
 
   int source_cw_rank =
       sctk_get_comm_world_rank(desc->comm, message->source_rank);
@@ -434,7 +433,6 @@ void mpc_MPI_Win_control_message_send(MPI_Win win, int rank,
   /* Retrieve the MPI Desc */
   struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
 
-  int remote_rank = sctk_get_comm_world_rank(desc->comm, rank);
 
   if (desc->is_single_process) {
     mpc_MPI_Win_control_message_handler(

@@ -1134,13 +1134,12 @@ inline void sctk_check_auto_free_list(MPI_request_struct_t *requests)
 	{
 		MPI_internal_request_t *tmp;
 		int flag;
-		int res;
 
 		/* Take HEAD */
 		tmp = (MPI_internal_request_t *)requests->auto_free_list;
 		
 		/* Test it */
-		res = PMPC_Test (&(tmp->req), &flag, MPC_STATUS_IGNORE);
+		PMPC_Test (&(tmp->req), &flag, MPC_STATUS_IGNORE);
 		
 		/* If call has ended */
 		if (flag != 0)
@@ -2541,7 +2540,6 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
 
 int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests, MPI_Status * array_of_statuses)
 {
-	int flag = 0;
 	int i;
 	MPI_request_struct_t *requests;
 	
@@ -2895,7 +2893,7 @@ __INTERNAL__PMPI_Bsend_init (void *buf, int count, MPI_Datatype datatype,
 			     int dest, int tag, MPI_Comm comm,
 			     MPI_Request * request)
 {
-	int rank;
+
 	MPI_internal_request_t *req;
 	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
 	sctk_nodebug("new request %d", *request);
@@ -3916,12 +3914,12 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	{
 		if ((old_types[i] != MPI_UB) && (old_types[i] != MPI_LB))
 		{
-			int j, is_lb, is_ub;
+			int j;
 			size_t tmp;
 			
 			unsigned long count_in, extent, k, stride_t;
 			unsigned long local_count_out = 0;
-			unsigned long prev_count_out = 0;
+
 
 			int derived_ret = 0;
 			sctk_derived_datatype_t input_datatype;
@@ -4011,7 +4009,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 /* 				fprintf(stderr,"Type struct %ld-%ld\n",begins_out[i],ends_out[i]+1); */
 			}
 
-			prev_count_out = count_out;
+
 			local_count_out = count_in * blocklens[i];
 			count_out += local_count_out;
 		}
@@ -5110,7 +5108,7 @@ __INTERNAL__PMPI_Unpack (void *inbuf,
 	sctk_nodebug("MPI_Unpack insise = %d, position = %d, outcount = %d, datatype = %d, comm = %d", insize, *position, outcount, datatype, comm);
 	if (sctk_datatype_is_derived (datatype))
 	{
-		unsigned long count_out;
+
 		unsigned long i;
 		int j;
 		unsigned long extent;
@@ -5167,15 +5165,7 @@ __INTERNAL__PMPI_Pack_size (int incount, MPI_Datatype datatype, __UNUSED__ MPI_C
 	sctk_nodebug ("incount size %d", incount);
 	if (sctk_datatype_is_derived (datatype))
 	{
-		int res;
-		mpc_pack_absolute_indexes_t *begins_in;
-		mpc_pack_absolute_indexes_t *ends_in;
-		unsigned long count_in;
 		unsigned long i;
-		mpc_pack_absolute_indexes_t lb;
-		int is_lb;
-		mpc_pack_absolute_indexes_t ub;
-		int is_ub;
 		int j;
 
 		int derived_ret = 0;
@@ -5254,7 +5244,6 @@ int __INTERNAL__PMPI_Pack_external_size (char *datarep , int incount, MPI_Dataty
 			sctk_datatype_unlock( task_specific );
 		
 			unsigned int i;
-			MPI_Datatype local_type;
 			MPI_Aint count;
 			MPI_Aint extent;
 			
@@ -5817,7 +5806,7 @@ static inline int __INTERNAL__PMPI_Barrier_intra_for(MPI_Comm comm, int size) {
 }
 
 static inline int __INTERNAL__PMPI_Barrier_btree_mpi(MPI_Comm comm, int size) {
-  int i, res = MPI_ERR_INTERN, rank;
+  int res = MPI_ERR_INTERN, rank;
 
 
   if (size == 1)
@@ -6495,7 +6484,7 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 		
 		MPI_Request reqs[2];
 
-		int min_pipeline_blk = 1024;
+
 
                 /* NOTE : The second algorithm has been disabled as it clearly stresses Infiniband layer with
                  * too much messages to send when large blocks are required to be sent. The ibuf starvation leads
@@ -6509,6 +6498,7 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
                  *      such an approach is likelyt to have performance drawbacks.
                  */
 #if 0
+		int min_pipeline_blk = 1024;
 		if( (count < min_pipeline_blk)
 		|| ! sctk_datatype_contig_mem( datatype ) )
 		{
@@ -6757,7 +6747,7 @@ int __INTERNAL__PMPI_Gather_inter(void *sendbuf, int sendcnt,
                                   int recvcnt, MPI_Datatype recvtype, int root,
                                   MPI_Comm comm) {
   char *ptmp;
-  int i, res = MPI_ERR_INTERN, rank, size;
+  int i, res = MPI_ERR_INTERN, size;
   MPI_Aint incr, extent;
 
   res = __INTERNAL__PMPI_Comm_remote_size(comm, &size);
@@ -7562,7 +7552,7 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
   sv_ctx->tollgate[rank] = !sv_ctx->tollgate[rank];
 
   void *data_buff = sendbuf;
-  int did_allocate_send = 0;
+
 
   MPI_Aint rtype_size = 0;
   if(rank != root) 
@@ -7618,7 +7608,6 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
         for (i = 0; i < coll->comm_size; ++i) {
           int cnt = 0;
           void *from = sendbuf + displs[i] * stsize;
-          size_t to_cpy = sendcnts[i];
 
           data_buff = sctk_malloc(sendcnts[i] * stsize);
           assume(data_buff != NULL);
@@ -7633,7 +7622,6 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
         }
       }
 
-      did_allocate_send = 1;
 
       /* Notify leaves that it is
        * going to be expensive */
@@ -7850,7 +7838,7 @@ int __INTERNAL__PMPI_Scatterv_inter(void *sendbuf, int *sendcnts, int *displs,
   int i, rsize, res = MPI_ERR_INTERN;
   char *ptmp;
   MPI_Aint extent;
-  MPI_Request request;
+
   MPI_Request *sendrequest;
 
   res = __INTERNAL__PMPI_Comm_remote_size(comm, &rsize);
@@ -8582,7 +8570,7 @@ int __INTERNAL__PMPI_Alltoallv_intra_shm(void *sendbuf, int *sendcnts,
 
   int i, j;
 
-  int current_rank = 0;
+
 
   for (j = 0; j < coll->comm_size; j++) {
     /* Try to split readings */
@@ -9298,7 +9286,7 @@ static int __INTERNAL__PMPI_Neighbor_alltoall_cart(void *sendbuf, int sendcount,
   MPI_Request *reqs;
   mpi_topology_per_comm_t *topo;
   mpc_mpi_per_communicator_t *tmp;
-  int rc = MPI_SUCCESS, dim, nreqs = 0, i;
+  int rc = MPI_SUCCESS, dim, nreqs = 0;
   PMPI_Comm_rank(comm, &rank);
 
   PMPI_Type_extent(recvtype, &rdextent);
@@ -10128,7 +10116,7 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 	if( rank == root )
 	{
 		void * sumbuff = NULL;
-		int root_did_alloc = 0;
+
 		char red_buffer[MAX_FOR_RED_STATIC_BUFF];
 	
 		MPI_Aint dsize;
@@ -10550,8 +10538,6 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
     return res;
   }
 
-  /* Only set when going through FP */
-  int used_fast_path = 0;
 
   int i, size;
   size = coll->comm_size;
@@ -10998,7 +10984,7 @@ __INTERNAL__PMPI_Reduce_inter (void *sendbuf, void *recvbuf, int count,
 {
 	int res = MPI_ERR_INTERN;
 	unsigned long size;
-	sctk_task_specific_t *task_specific;
+
 	MPC_Status status;
 	int rank;
 	void *tmp_buf;
@@ -11899,7 +11885,7 @@ __INTERNAL__PMPI_Scan_intra (void *sendbuf, void *recvbuf, int count,
 	int rank;
 	MPI_Request request;
 	char *tmp = NULL;
-	char *free_buffer = NULL;
+
 	int res;
 
   if(sendbuf == MPI_IN_PLACE)
@@ -12679,7 +12665,7 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 				   int ranges[][3], MPI_Group * mpi_newgroup)
 {
   /* This code has been taken fron OpenMPI */
-	int err, i,index;
+	int i,index;
     int group_size;
     int * elements_int_list;
 
@@ -12879,7 +12865,7 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 				   int ranges[][3], MPI_Group * mpi_newgroup)
 {
 	/* This code has been taken fron OpenMPI */
-	int err, i,index;
+	int  i,index;
     int group_size;
     int * elements_int_list;
 
@@ -12888,8 +12874,6 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
     int first_rank,last_rank,stride;
     int count,result;
 
-	MPC_Group group;
-	MPC_Group newgroup;
 
 /* Error checking */
 	if(n == 0)
@@ -13283,8 +13267,6 @@ static int __INTERNAL__PMPI_Comm_split(MPI_Comm comm, int color, int key,
 
 static int __INTERNAL__PMPI_Comm_free(MPI_Comm *comm) {
 
-  mpc_mpi_per_communicator_t *per_comm = mpc_mpc_get_per_comm_data(*comm);
-
   int res;
   res = SCTK__MPI_Attr_clean_communicator(*comm);
   if (res != MPI_SUCCESS) {
@@ -13609,7 +13591,7 @@ static int __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_valu
 	mpc_mpi_data_t* tmp;
 	mpc_mpi_per_communicator_t* tmp_per_comm;
 	void **attr;
-	int i;
+
 
 	*flag = 0;
 	attr = (void **) attr_value;
@@ -13681,16 +13663,19 @@ static int __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_valu
 	return res;
 }
 
-static int __INTERNAL__PMPI_Attr_get_fortran (MPI_Comm comm, int keyval, int *attr_value,   int *flag){
-        if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
-        {	
-		long tmp;
-                *flag = 1;
-		*attr_value = *((int*)(defines_attr_tab[keyval]));
-                return MPI_SUCCESS;
-        } else {
-                return __INTERNAL__PMPI_Attr_get(comm,keyval,(void*)attr_value,flag);
-        }
+static int __INTERNAL__PMPI_Attr_get_fortran( MPI_Comm comm, int keyval, int *attr_value, int *flag )
+{
+	if ( ( keyval >= 0 ) && ( keyval < MPI_MAX_KEY_DEFINED ) )
+	{
+
+		*flag = 1;
+		*attr_value = *( (int *) ( defines_attr_tab[keyval] ) );
+		return MPI_SUCCESS;
+	}
+	else
+	{
+		return __INTERNAL__PMPI_Attr_get( comm, keyval, (void *) attr_value, flag );
+	}
 }
 
 static int __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
@@ -16188,7 +16173,7 @@ PMPI_Waitsome (int incount, MPI_Request array_of_requests[],
 int PMPI_Testsome (int incount, MPI_Request array_of_requests[], int *outcount, int array_of_indices[], MPI_Status array_of_statuses[])
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
-	int index;
+
 	int res = MPI_ERR_INTERN;
 	if ((array_of_requests == NULL) && (incount != 0))
 	{
@@ -16688,7 +16673,7 @@ int PMPI_Type_create_indexed_block(int count, int blocklength, int indices[], MP
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
-	int i;
+
 	mpi_check_count(count,comm);
 	
 	*newtype = MPC_DATATYPE_NULL;
@@ -16711,7 +16696,7 @@ int PMPI_Type_create_hindexed_block(int count, int blocklength, MPI_Aint indices
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
-	int i;
+
 	mpi_check_count(count,comm);
 	
 	
@@ -18538,7 +18523,7 @@ int
 PMPI_Reduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
 		     MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
-  int i;
+
   int size; 
   int res = MPI_ERR_INTERN;
 
@@ -19255,7 +19240,7 @@ PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index, int *edges,
   int i;
   int size;
   int nb_edge = 0;
-  int first_edge = 0;
+
   __INTERNAL__PMPI_Comm_size (comm_old, &size); 
 
   if((nnodes < 0) || (nnodes > size)){
@@ -19278,10 +19263,7 @@ PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index, int *edges,
                 MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
           }
   }
-  for (i = 0; i < nnodes; i++){
-    int j;
-    first_edge = index[i];
-  }
+
   }
   res =
     __INTERNAL__PMPI_Graph_create (comm_old, nnodes, index, edges, reorder,
@@ -19327,7 +19309,7 @@ PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims, int *periods,
 	sctk_nodebug("Enter PMPI_Cart_get");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);  {
-  int i;
+
   int size;
   __INTERNAL__PMPI_Comm_size (comm, &size);
   if((maxdims <= 0) || (maxdims > size)){

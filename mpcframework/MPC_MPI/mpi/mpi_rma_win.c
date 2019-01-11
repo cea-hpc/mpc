@@ -722,7 +722,6 @@ int mpc_MPI_Win_free(MPI_Win *win) {
       is_master = 1;
     }
 
-    int process_on_node_count = 0;
 
     MPI_Comm process_master_comm;
     PMPI_Comm_split(desc->comm, is_master, rank, &process_master_comm);

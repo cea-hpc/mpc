@@ -49,7 +49,7 @@ typedef enum {
     TYPE_COUNT
 }nbc_op_type;
 
-static const char * const strops[TYPE_COUNT] = {
+__UNUSED__ static const char * const strops[TYPE_COUNT] = {
     "NULL",
     "SEND",
     "RECV",
@@ -476,7 +476,6 @@ static inline int xMPI_Request_gen_poll( xMPI_Request *xreq )
 
 int xMPI_Request_poll_fn( void * pxreq, __UNUSED__ MPI_Status * status )
 {
-    int flag;
     xMPI_Request * xreq = (xMPI_Request*) pxreq;
 
     int not_done = xMPI_Request_gen_poll( xreq );
@@ -550,11 +549,10 @@ int xMPI_Request_free_fn( void * pxreq )
 
 
 
-int xMPI_Request_cancel_fn( void * pxreq, int complete )
+int xMPI_Request_cancel_fn( __UNUSED__ void * pxreq, int complete )
 {
     if(!complete)
         return MPI_SUCCESS;
-    xMPI_Request * xreq = (xMPI_Request*) pxreq;
     return MPI_SUCCESS;
 }
 

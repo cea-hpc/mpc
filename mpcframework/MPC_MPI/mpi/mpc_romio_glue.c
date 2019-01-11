@@ -157,7 +157,7 @@ int MPIR_Type_flatten(MPI_Datatype type, MPI_Aint **off_array,
 MPI_Aint MPCX_Type_get_count(MPI_Datatype datatype) {
   sctk_task_specific_t *task_specific = __MPC_get_task_specific();
   sctk_derived_datatype_t *target_derived_type;
-  sctk_contiguous_datatype_t *contiguous_type;
+
 
   /* Nothing to do */
   if (datatype == MPI_DATATYPE_NULL) {
@@ -170,8 +170,6 @@ MPI_Aint MPCX_Type_get_count(MPI_Datatype datatype) {
     return 1;
     break;
   case MPC_DATATYPES_CONTIGUOUS:
-    contiguous_type =
-        sctk_task_specific_get_contiguous_datatype(task_specific, datatype);
     return 1;
     break;
 

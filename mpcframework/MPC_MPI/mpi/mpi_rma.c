@@ -267,8 +267,6 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
   int can_read_rma = 0;
   int can_write_rma = 0;
 
-  void *local_buff = NULL;
-  void *remote_buff = NULL;
 
   if (target_rank == MPC_PROC_NULL)
     return MPI_SUCCESS;
@@ -501,8 +499,6 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
   int can_read_rma = 0;
   int can_write_rma = 0;
 
-  void *local_buff = NULL;
-  void *remote_buff = NULL;
 
   /* Do the optimized RMA only if target datatype is contiguous */
   if (sctk_datatype_is_common(target_datatype) ||

@@ -399,10 +399,9 @@ static int NBC_Iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype 
         int recv_op_rounds = 0;
 
         int sends = 0;
-        int recvs = 0;
-        int ops = 0;
+
         int maxr = (int)ceil((log(p) / LOG2));
-        int cpts[maxr][3];
+
         int root = 0;
         int alloc_size = 0;
 
@@ -768,7 +767,7 @@ static inline int allred_sched_ring(int r, int p, int count, MPI_Datatype dataty
 	int i; /* runner */
 	int segsize, *segsizes, *segoffsets; /* segment sizes and offsets per segment (number of segments == number of nodes */
 	int speer, rpeer; /* send and recvpeer */
-	int res;
+
 
 	if(count == 0) return NBC_OK;
 
@@ -1451,7 +1450,7 @@ static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *sch
 
 
 static int NBC_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle* handle) {
-  int rank, p, res, size, segsize;
+  int rank, p, res, size;
   NBC_Schedule *schedule;
   int alloc_size = 0;
   enum { NBC_BCAST_LINEAR, NBC_BCAST_BINOMIAL, NBC_BCAST_CHAIN } alg;
@@ -1461,9 +1460,11 @@ static int NBC_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, 
   res = PMPC_Comm_size(comm, &p);
   res = __INTERNAL__PMPI_Type_size(datatype, &size);
 
-  segsize = 16384;
+
   /* algorithm selection */
-  /*	if(p <= 4) {
+  /*
+    int segsize = 16384;
+  	if(p <= 4) {
       alg = NBC_BCAST_LINEAR;
       } else if(size*count < 65536) {
       alg = NBC_BCAST_BINOMIAL;
@@ -3028,7 +3029,7 @@ static int NBC_Ialltoallw(void* sendbuf, int *sendcounts, int *sdispls,
 		MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle* handle) {
 	
 	int rank, p, res, i;
-	MPI_Aint sndext, rcvext;
+
 	NBC_Schedule *schedule;
 	char *rbuf, *sbuf, inplace;
 	
@@ -3687,7 +3688,7 @@ static inline int NBC_Sched_send(void* buf, char tmpbuf, int count, MPI_Datatype
 }
 
 static inline int NBC_Sched_send_pos(int pos, void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule) {
-  int size;
+
   NBC_Args_send* send_args;
  
   /* adjust the function type */
@@ -3736,7 +3737,7 @@ static inline int NBC_Sched_recv(void* buf, char tmpbuf, int count, MPI_Datatype
 }
 
 static inline int NBC_Sched_recv_pos(int pos, void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule) {
-  int size;
+
   NBC_Args_recv* recv_args;
  
   
@@ -3791,7 +3792,7 @@ static inline int NBC_Sched_op(void *buf3, char tmpbuf3, void* buf1, char tmpbuf
 }
 
 static inline int NBC_Sched_op_pos(int pos, void *buf3, char tmpbuf3, void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule) {
-  int size;
+
   NBC_Args_op* op_args;
   
   /* adjust the function type */
@@ -3854,7 +3855,7 @@ static inline int NBC_Sched_copy_pos(int pos, void *src, char tmpsrc,
                                      void *tgt, char tmptgt, int tgtcount,
                                      MPI_Datatype tgttype,
                                      NBC_Schedule *schedule) {
-  int size;
+
   NBC_Args_copy *copy_args;
 
   /* adjust the function type */
@@ -4061,7 +4062,7 @@ static inline int NBC_Free(NBC_Handle* handle) {
  *
  * to be called *only* from the progress thread !!! */
 static inline int NBC_Progress(NBC_Handle *handle) {
-  int flag, res, ret=NBC_CONTINUE;
+  int  res, ret=NBC_CONTINUE;
   long size;
   char *delim;
 
@@ -4422,7 +4423,7 @@ static inline int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
    * on !!! */
 
     struct sctk_task_specific_s * task_specific;
-    struct sctk_list_elem * list_handles;
+
     sctk_thread_mutex_t *lock;
     task_specific = __MPC_get_task_specific ();
 
@@ -4440,7 +4441,7 @@ static inline int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
     PMPC_Send(&tmp_send, 1, MPI_INT, 0, 0, MPI_COMM_SELF);
 
     sctk_thread_mutex_lock(lock);
-    list_handles = task_specific->mpc_mpi_data->NBC_Pthread_handles;
+
     DL_APPEND(task_specific->mpc_mpi_data->NBC_Pthread_handles, elem_tmp);
     task_specific->mpc_mpi_data->NBC_Pthread_nb++;
     sctk_thread_mutex_unlock(lock);

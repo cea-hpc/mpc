@@ -248,7 +248,7 @@ sctk_thread_createnewspecific_mpc_per_comm(sctk_task_specific_t *task_specific,
                                            sctk_communicator_t old_comm) {
   mpc_per_communicator_t *per_communicator;
   mpc_per_communicator_t *per_communicator_new;
-  int i;
+
   assume(new_comm != old_comm);
 
   sctk_spinlock_lock(&(task_specific->per_communicator_lock));
@@ -1493,7 +1493,7 @@ int __MPC_Barrier(MPC_Comm comm) {
   mpc_check_comm(comm, comm);
 
   if (sctk_is_inter_comm(comm)) {
-    int root = 0, buf = 0, rank;
+    int buf = 0, rank;
     sctk_task_specific_t *task_specific;
 
     task_specific = __MPC_get_task_specific();
@@ -2674,10 +2674,6 @@ int PMPC_Type_convert_to_derived(MPC_Datatype in_datatype,
   } else {
     /* Its either a derived or common datatype */
 
-    /* Retrieve task specific context */
-    sctk_task_specific_t *task_specific;
-    task_specific = __MPC_get_task_specific();
-
     /* First allocate desriptive arrays for derived datatype */
     mpc_pack_absolute_indexes_t *begins_out =
         sctk_malloc(sizeof(mpc_pack_absolute_indexes_t));
@@ -3653,9 +3649,7 @@ static inline int __MPC_Isend(void *buf, mpc_msg_count count,
   int src;
   size_t d_size;
   int com_size;
-  int buffer_rank;
   size_t msg_size;
-  int comm_remote_size;
   char tmp;
 
   mpc_check_comm(comm, comm);
@@ -4157,11 +4151,9 @@ int __MPC_Waitallp(mpc_msg_count count, MPC_Request *parray_of_requests[],
                    MPC_Status array_of_statuses[]) {
   int i;
   int flag = 0;
-  double start, end;
-  int show = 1;
 
   sctk_nodebug("waitall count %d\n", count);
-  start = MPC_Wtime();
+
 
 
   /* We have to detect generalized requests as we are not able
@@ -4485,7 +4477,6 @@ static int __MPC_Send(void *restrict buf, mpc_msg_count count,
   int size;
   size_t msg_size;
   sctk_task_specific_t *task_specific;
-  int buffer_rank;
   char tmp;
   sctk_thread_ptp_message_t header;
 
@@ -6091,7 +6082,6 @@ int PMPC_Alltoallw(const void *sendbuf, const int sendcounts[],
     int i, ii, ss, dst;
     int type_size, size;
     int rank, bblock = 4;
-    MPC_Status status;
     MPC_Status *starray;
     MPC_Request *reqarray;
     int outstanding_requests;
@@ -6349,7 +6339,6 @@ int PMPC_Comm_create_from_intercomm(MPC_Comm comm, MPC_Group group,
 
 static inline int __MPC_Comm_create(MPC_Comm comm, MPC_Group group,
                                     MPC_Comm *comm_out, int is_inter_comm) {
-  int nb;
   int grank, rank;
   int i;
   int present = 0;
@@ -6431,7 +6420,6 @@ static inline int __MPC_Intercomm_create(MPC_Comm local_comm, int local_leader,
   mpc_check_comm(local_comm, local_comm);
   mpc_check_comm(peer_comm, peer_comm);
   int *task_list;
-  int *remote_task_list;
   int size;
   int other_leader;
   int first = 0;
@@ -6544,7 +6532,6 @@ int PMPC_Comm_free(MPC_Comm *comm) {
 int PMPC_Comm_dup(MPC_Comm comm, MPC_Comm *comm_out) {
   sctk_nodebug("duplicate comm %d", comm);
   sctk_task_specific_t *task_specific;
-  MPC_Group group;
   int rank;
   mpc_check_comm(comm, comm);
 #ifdef MPC_LOG_DEBUG
@@ -6700,7 +6687,7 @@ int PMPC_Errhandler_create(MPC_Handler_function *function,
 }
 
 int PMPC_Errhandler_set(MPC_Comm comm, MPC_Errhandler errhandler) {
-  int ret = sctk_handle_set_errhandler((sctk_handle)comm, SCTK_HANDLE_COMM,
+  sctk_handle_set_errhandler((sctk_handle)comm, SCTK_HANDLE_COMM,
                                        (sctk_errhandler_t)errhandler);
   MPC_ERROR_SUCESS();
 }

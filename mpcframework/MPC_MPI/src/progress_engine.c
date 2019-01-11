@@ -228,8 +228,7 @@ int sctk_progress_list_poll( struct sctk_progress_list * pl )
     int progress_count = 0;
 
     for (i = 0; i < PROGRESS_PWU_STATIC_ARRAY; ++i) {
-        
-        int is_free = 0;
+
 
         if( sctk_progress_work_unit_isfree( &pl->works[i]) )
             continue;

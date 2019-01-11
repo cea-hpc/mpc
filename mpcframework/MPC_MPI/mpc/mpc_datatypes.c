@@ -1220,12 +1220,12 @@ int Datatype_is_allocated( struct Datatype_Array * da, MPC_Datatype datatype )
 
 void Datatype_Array_release( struct Datatype_Array * da )
 {
-	int i, j;
-	int did_free = 0;
+	int i;
+
 
 	/* Handle derived datatypes */
 	
-	sctk_derived_datatype_t * deriv = NULL;
+
 	
 	/* Now we can free all datatypes */
 	for( i = 0 ; i < MPC_TYPE_COUNT ; i++ )
@@ -1240,7 +1240,6 @@ void Datatype_Array_release( struct Datatype_Array * da )
                              i);
                   MPC_Datatype tmp = i;
                   PMPC_Type_free(&tmp);
-                  did_free = 1;
                 }
   }
 
@@ -1358,8 +1357,6 @@ int sctk_type_delete_attr(struct Datatype_Array *da, MPC_Datatype type,
 
   if (!store)
     return MPC_ERR_ARG;
-
-  struct Datatype_Attr *ret = NULL;
 
   void *pret = MPCHT_get(&store->attrs, type_keyval);
 
@@ -2034,7 +2031,7 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 {
 	struct Datatype_layout *ret = NULL;
 	size_t count = 0;
-	size_t ndims = 0;
+
 	unsigned int i = 0;
   int cnt=0, j = 0;
 	*ly_count = 0;
