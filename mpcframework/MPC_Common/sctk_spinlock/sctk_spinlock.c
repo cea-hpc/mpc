@@ -53,7 +53,7 @@ int
 sctk_spinlock_lock (sctk_spinlock_t * lock)
 {
   volatile int *p = lock;
-  int i=0, j=0;
+  int i=0;
   while (expect_true (sctk_test_and_set (p)))
     {
 		

@@ -206,7 +206,6 @@ int sctk_device_get_ith_logical_on_numa(  hwloc_topology_t topology, int numa_id
 {
    int ret = -1;
    
-   int did_alloc = 0;
    hwloc_cpuset_t local_cpuset;
    hwloc_obj_t numa = hwloc_get_obj_by_type( topology, HWLOC_OBJ_NODE , numa_id); 	
    

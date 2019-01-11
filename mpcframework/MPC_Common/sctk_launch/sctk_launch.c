@@ -100,7 +100,7 @@ bool sctk_accl_support;
 #define MAX_TERM_LENGTH 80
 #define MAX_NAME_FORMAT 30
 /* const char *sctk_store_dir = "/dev/null"; */
-static char topology_name[SCTK_MAX_FILENAME_SIZE];
+
 
 char *sctk_multithreading_mode;
 int sctk_new_scheduler_engine_enabled = 0;
@@ -450,25 +450,7 @@ static void sctk_perform_initialisation (void)
 	sctk_atomics_cpu_freq_init();
 	sctk_print_banner(0 /* not in restart mode */);
 
-	/*  { */
-	/*     FILE *topo_file = NULL; */
-	/*    int max_try = sctk_runtime_config_get()->modules.launcher.max_try;*/
-	/*     sprintf (topology_name, "%s/Process_%d_topology", sctk_store_dir, */
-	/*         sctk_process_rank); */
-	/*     do */
-	/*     { */
-	/*       topo_file = fopen (topology_name, "w"); */
-	/*       max_try--; */
-	/*     } */
-	/*     while ((topo_file == NULL) && (max_try >= 0)); */
-	/*     if (topo_file != NULL) */
-	/*     { */
-	/*       sctk_print_topology (topo_file); */
-	/*       fclose (topo_file); */
-	/*     } */
-	/*   } */
 	sctk_flush_version ();
-
 
 	/* We passed the init phase we can stop the bootstrap polling */
 	__polling_done = 1;
@@ -1009,14 +991,14 @@ void sctk_init_mpc_runtime()
 		return;
 
 	char *sctk_argument;
-	char *sctk_disable_mpc;
+
 	int argc = 1;
 	char **argv;
 	void **tofree = NULL;
 	int tofree_nb = 0;
 	static int auto_kill;
 	char * argv_tmp[1];
-	int init_res;
+
 
 	argv = argv_tmp;
 	argv[0] = "main";
@@ -1160,7 +1142,7 @@ void sctk_init_mpc_runtime()
 	memcpy (sctk_save_argument, argv, argc * sizeof (char *));
 
 	sctk_nodebug ("init argc %d", argc);
-	init_res = sctk_env_init (&argc, &argv);
+	sctk_env_init (&argc, &argv);
 	sctk_nodebug ("init argc %d", argc);
 
 #ifdef MPC_MPI

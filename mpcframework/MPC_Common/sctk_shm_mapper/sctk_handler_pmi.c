@@ -7,7 +7,7 @@
  * @param option No option implemented 
  */
 
-static int sctk_pmi_handler_generation_number = 0;
+
 
 char *sctk_pmi_handler_gen_filename(void *option, __UNUSED__ void *option1) {
   char *filename = sctk_malloc(sctk_pmi_get_max_key_len());

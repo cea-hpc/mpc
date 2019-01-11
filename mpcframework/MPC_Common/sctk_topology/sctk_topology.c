@@ -264,8 +264,8 @@ void create_placement_text(int os_pu, int os_master_pu, int task_id, int vp, __U
     /*acces global topo*/
     hwloc_topology_load(topology_full);
     /*add color info on pu*/
-    hwloc_obj_t obj_pu;
-    hwloc_obj_t obj_master;
+
+
 
     if(os_pu == os_master_pu){
             /* implemtation txt */
@@ -302,8 +302,7 @@ void create_placement_rendering(int os_pu, int os_master_pu, int task_id){
     /*acces global topo*/
     hwloc_topology_load(topology_full);
     /*add color info on pu*/
-    hwloc_obj_t obj_pu;
-    hwloc_obj_t obj_master;
+
 
     if(os_pu == os_master_pu){
         char temp_background_master[128];
@@ -427,7 +426,6 @@ int sctk_get_cpu_compute_node_topology_from_logical( int logical_pu)
     static void
 sctk_restrict_topology_compute_node ()
 {
-    int rank ;
     fflush(stdout);
 
 restart_restrict:
@@ -770,7 +768,7 @@ static void print_children(hwloc_topology_t hwtopology, hwloc_obj_t obj,
     char string[128];
     char string_mpc[128];
     unsigned i;
-    int cpt = 0;
+
     int k;
     static hwloc_obj_type_t type;
     type = HWLOC_OBJ_PU;
@@ -1708,8 +1706,6 @@ int sctk_get_pu_number()
 
 int sctk_get_pu_number_by_core(hwloc_topology_t hwtopology, int core)
 {
-	int core_number;
-
 	hwloc_obj_t obj_pu_per_core = hwloc_get_obj_by_type(hwtopology, HWLOC_OBJ_CORE, core);
 	int pu_per_core = obj_pu_per_core->arity;
 
@@ -1824,26 +1820,20 @@ void sctk_topology_init ()
 void sctk_topology_destroy (void)
 {
     if(sctk_enable_graphic_placement){
-        unsigned long flags = HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM;
+
         if(sctk_get_local_process_rank() == 0){
             hwloc_obj_t cluster = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_MACHINE, 0);
             int lenght_max;
-            int lenght_min;
-            int lenght;
+
+
             lenght_max = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
-            lenght_min = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_CORE);
-            if(sctk_enable_smt_capabilities){
-                lenght = lenght_max;
-            }
-            else{
-                lenght = lenght_min;
-            }
+
             if(cluster != NULL){
                 FILE *f = fopen(placement_txt, "r");
                 if(f != NULL){
                     sctk_read_format_option_graphic_placement_and_complet_topo_infos(f, lenght_max);
                 }
-                const char * HostName  = hwloc_obj_get_info_by_name(cluster, "HostName");
+
                 name_and_date_file_text(file_placement);
                 strcat(file_placement, ".xml");
                 hwloc_topology_export_xml(topology_compute_node,file_placement); 

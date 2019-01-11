@@ -408,7 +408,7 @@ SCTK_STATIC void * sctk_shm_mapper_master(sctk_size_t size,int participants,sctk
 {
 	//vars
 	char * filename;
-	int id;
+
 	int fd;
 	bool status;
 	void * ptr;
@@ -423,9 +423,6 @@ SCTK_STATIC void * sctk_shm_mapper_master(sctk_size_t size,int participants,sctk
 
         // debug
         // sctk_nodebug("sctk_shm_mapper_master(%lu,%d,handler)",size,participants);
-
-        // get id
-        id = getpid();
 
         // get filename
         filename = handler->gen_filename(handler->option, handler->option1);
@@ -705,7 +702,7 @@ SCTK_STATIC void * sctk_shm_mapper_find_common_addr(sctk_size_t size,int * pids,
 SCTK_STATIC void sctk_shm_mapper_remap(int fd,void * old_addr,void * new_addr,sctk_size_t size)
 {
 	//vars
-	void * res;
+
 	//errors
 	assert(fd != -1);
 	assert(old_addr != NULL);
@@ -718,7 +715,7 @@ SCTK_STATIC void sctk_shm_mapper_remap(int fd,void * old_addr,void * new_addr,sc
 
 	//unmap an re-mmap
 	sctk_alloc_shm_remove(old_addr,size);
-	res = sctk_shm_mapper_mmap(new_addr,fd,size);
+	sctk_shm_mapper_mmap(new_addr,fd,size);
 }
 
 /************************* FUNCTION ************************/
@@ -783,8 +780,7 @@ SCTK_STATIC int sctk_shm_mapper_create_shm_file(const char * filename,sctk_size_
 {
 	//vars
 	int fd;
-	int res;
-    
+
 	//errors
 	assert(filename != NULL);
 	assert(size > 0 && size % SCTK_SHM_MAPPER_PAGE_SIZE == 0);
@@ -794,7 +790,7 @@ SCTK_STATIC int sctk_shm_mapper_create_shm_file(const char * filename,sctk_size_
 	assume_perror(fd != -1,filename,"Error while creating file for SHM mapping.");
 
 	//force mapping memory
-	res = ftruncate(fd,size);
+	ftruncate(fd,size);
 	assume_perror(fd != -1,filename,"Error while resizing the file for SHM mapping with size : %ld.",size);
 
 	return fd;
