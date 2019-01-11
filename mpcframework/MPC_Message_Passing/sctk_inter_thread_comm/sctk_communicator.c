@@ -48,7 +48,7 @@ static sctk_internal_communicator_t *sctk_communicator_array[SCTK_MAX_COMMUNICAT
 /** spinlock for communicators table **/
 static sctk_spin_rwlock_t sctk_communicator_local_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 static sctk_spinlock_t sctk_communicator_all_table_lock = SCTK_SPINLOCK_INITIALIZER;
-static sctk_spin_rwlock_t sctk_process_from_rank_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+
 extern volatile int sctk_online_program;
 
 /************************* FUNCTION ************************/
@@ -60,7 +60,7 @@ extern volatile int sctk_online_program;
 **/
 static inline sctk_internal_communicator_t *sctk_check_internal_communicator_no_lock ( const sctk_communicator_t communicator )
 {
-	int i=0, j=0;
+
 	sctk_internal_communicator_t *tmp = NULL;
 
 	assume ( communicator >= 0 );
@@ -616,12 +616,12 @@ static inline sctk_communicator_t sctk_intercommunicator_get_new_id ( int local_
 	sctk_communicator_t i = 0;
 	sctk_communicator_t ti = 0;
 	sctk_communicator_t remote_ti = 0;
-	sctk_status_t status;
-	int wrank;
+
+
 	int need_clean;
-	int change_i = 1;
+
 	int tag = 628;
-	wrank = sctk_get_task_rank();
+
 	
 	sctk_nodebug ( "rank %d : get new id for intercomm, local_leader = %d, remote_leader = %d, local_root = %d, peer_comm = %d", rank, local_leader, remote_leader, local_root, peer_comm );
 
@@ -779,10 +779,10 @@ static inline sctk_communicator_t sctk_communicator_get_new_id_from_intercomm ( 
 	sctk_communicator_t i = 0;
 	sctk_communicator_t ti = 0;
 	sctk_communicator_t peer_comm = 0;
-	sctk_communicator_t remote_ti = 0;
-	sctk_status_t status;
+
+
 	int need_clean;
-	int change_i = 1;
+
 	int tag = 628;
 	sctk_nodebug ( "rank %d : get new id from intercomm %d, local_root %d, lleader %d, rleader %d", rank, origin_communicator, local_root, local_leader, remote_leader );
 
@@ -1575,7 +1575,6 @@ sctk_communicator_t sctk_delete_communicator ( const sctk_communicator_t comm )
 	else
 	{
 		sctk_internal_communicator_t *tmp;
-		int is_master = 0;
 		int val;
 		int max_val;
 		sctk_barrier (comm);
@@ -1587,7 +1586,6 @@ sctk_communicator_t sctk_delete_communicator ( const sctk_communicator_t comm )
 
 		if ( val == max_val - 1 )
 		{
-			is_master = 1;
 			sctk_spinlock_lock ( &sctk_communicator_all_table_lock );
 			sctk_free ( tmp->local_to_global );
 			sctk_free ( tmp->global_to_local );
@@ -1600,8 +1598,6 @@ sctk_communicator_t sctk_delete_communicator ( const sctk_communicator_t comm )
 
                         sctk_free(tmp);
                         sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
-                } else {
-                  is_master = 0;
                 }
 
                 return SCTK_COMM_NULL;
@@ -1913,7 +1909,7 @@ int sctk_get_remote_comm_world_rank ( const sctk_communicator_t communicator, co
 {
 	sctk_internal_communicator_t *tmp;
 	int ret;
-	int i;
+
 
 	/* Other communicators */
 	tmp = sctk_get_internal_communicator ( communicator );
@@ -1971,7 +1967,7 @@ int _sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const in
 {
 	sctk_internal_communicator_t *tmp;
 	int ret;
-	int i;
+
 
 	if ( communicator == SCTK_COMM_WORLD )
 		return rank;
@@ -2227,7 +2223,7 @@ sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t orig
 	{
 		assume ( tmp->remote_comm != NULL );
 		sctk_internal_communicator_t *new_tmp;
-		sctk_internal_communicator_t *remote_tmp;
+
 		int local_root = 0, local_leader = 0, remote_leader = 0;
 
 		if ( sctk_is_in_local_group ( origin_communicator ) )
@@ -2373,12 +2369,12 @@ sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t orig
 sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t local_comm, const int local_leader,
                                                     const sctk_communicator_t peer_comm, const int remote_leader, const int tag, const int first )
 {
-	sctk_status_t status;
+
 	sctk_communicator_t comm;
 	sctk_internal_communicator_t *tmp;
 	sctk_internal_communicator_t *local_tmp;
 	sctk_internal_communicator_t *remote_tmp;
-	int local_root = 0, i, rank, grank, nb_task_involved, local_size, remote_leader_rank,
+	int local_root = 0, i, rank, grank, local_size, remote_leader_rank,
 	    remote_size, remote_lleader, remote_rleader, rleader, lleader, local_id, remote_id;
 	int *remote_task_list;
 	/* get task id */
@@ -2998,26 +2994,21 @@ sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communi
 **/
 sctk_communicator_t sctk_create_intercommunicator_from_intercommunicator (const sctk_communicator_t origin_communicator, int remote_leader, int local_com)
 {
-	sctk_internal_communicator_t * tmp;
+
 	sctk_communicator_t newintercomm;
 	sctk_communicator_t peer_comm;
-	sctk_status_t status;
-	int local_comm;
+
 	int local_leader = 0;
 	int tag = 730;
 	int first;
-	int rank, grank;
+
 	
 	sctk_nodebug("sctk_create_intercommunicator_from_intercommunicator origin_comm %d, local_comm %d", origin_communicator, local_com);
-	/* get task id */
-	rank = sctk_get_task_rank();
-	/* get group rank */
-	grank = sctk_get_rank(origin_communicator, rank);
-	local_comm = sctk_get_local_comm_id(origin_communicator);
+
 	peer_comm = sctk_get_peer_comm(origin_communicator);
 	
 	/* get comm struct */
-	tmp = sctk_get_internal_communicator(origin_communicator);
+
 	
 	if(sctk_is_in_local_group(origin_communicator))
 		first = 1;

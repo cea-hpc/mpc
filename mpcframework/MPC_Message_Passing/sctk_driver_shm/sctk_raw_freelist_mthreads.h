@@ -8,7 +8,7 @@ static inline sctk_shm_item_t *
 sctk_shm_dequeue_mt(volatile sctk_shm_list_t *queue,char *src_base_addr)
 {
     volatile sctk_shm_item_t *abs_item;
-    sctk_shm_item_t *head, *tail;
+    sctk_shm_item_t *head;
 
     if(sctk_spinlock_trylock(&(queue->lock)) != 0)
     { 

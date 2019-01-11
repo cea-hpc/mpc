@@ -49,10 +49,8 @@ void sctk_route_ring_init (  __UNUSED__ sctk_rail_info_t *rail )
 
 int sctk_route_ring ( int dest,  __UNUSED__ sctk_rail_info_t *rail )
 {
-	int old_dest;
 	int delta_1;
 
-	old_dest = dest;
 
 	if ( sctk_process_rank > dest )
 	{
@@ -92,7 +90,6 @@ int sctk_route_fully (  __UNUSED__ int dest,  __UNUSED__ sctk_rail_info_t *rail 
  */
 void sctk_route_fully_init ( sctk_rail_info_t *rail )
 {
-	int ( *sav_sctk_route ) ( int , sctk_rail_info_t * );
 
 	sctk_pmi_barrier();
 

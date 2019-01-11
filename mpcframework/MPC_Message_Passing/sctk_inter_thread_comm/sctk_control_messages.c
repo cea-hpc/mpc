@@ -88,14 +88,14 @@ void sctk_control_message_process_level(__UNUSED__ int source_process, __UNUSED_
                                         __UNUSED__ size_t size) {
   struct sctk_window_map_request *mr = NULL;
   struct sctk_window_emulated_RDMA *erma = NULL;
-  struct sctk_control_message_fence_ctx *fence = NULL;
+  __UNUSED__ struct sctk_control_message_fence_ctx *fence = NULL;
   struct sctk_window_emulated_fetch_and_op_RDMA *fop = NULL;
   struct sctk_window_emulated_CAS_RDMA *fcas = NULL;
   int win_id = -1;
 
   switch (subtype) {
   case SCTK_PROCESS_FENCE:
-    fence = (struct sctk_control_message_fence_ctx *)data;
+    //fence = (struct sctk_control_message_fence_ctx *)data;
     // sctk_control_message_fence_handler(fence);
     break;
 
@@ -418,8 +418,6 @@ void sctk_control_message_fence_req(int target_task, sctk_communicator_t comm,
           sctk_get_comm_world_rank(target_task, comm)),
       SCTK_PROCESS_FENCE, 0, &ctx,
       sizeof(struct sctk_control_message_fence_ctx));
-
-  int cnt = 0;
 }
 
 void sctk_control_message_fence(int target_task, sctk_communicator_t comm) {

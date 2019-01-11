@@ -493,7 +493,7 @@ int sctk_pmi_put_connection_info ( void *info, int tag )
 	return PMI_FAIL;
 #else /* SCTK_LIB_MODE */
 	int iRank, rc;
-	char *sKeyValue = NULL, * sValue = NULL;
+	char *sKeyValue = NULL;
 
 	// Get the process rank
 	sctk_pmi_get_process_rank ( &iRank );

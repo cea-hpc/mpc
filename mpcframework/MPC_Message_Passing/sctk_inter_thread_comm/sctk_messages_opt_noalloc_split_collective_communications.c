@@ -234,10 +234,7 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
                 sctk_opt_noalloc_split_messages_wait(&table);
         } else {
           int i, j;
-          int dest;
-          int size;
           int rsize;
-          int total;
           int myself;
           char c = 'c';
           sctk_opt_noalloc_split_messages_table_t table;
@@ -245,13 +242,13 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
 
           sctk_opt_noalloc_split_messages_init_items(&table);
 
-          total = sctk_get_nb_task_total(communicator);
+
           myself = sctk_get_rank(communicator, sctk_get_task_rank());
           ptp_internal =
               sctk_get_internal_ptp(sctk_get_task_rank(), communicator);
 
           rsize = sctk_get_nb_task_remote(communicator);
-          size = sctk_get_nb_task_total(communicator);
+
 
           for (i = 0; i < rsize; i++) {
             sctk_opt_noalloc_split_messages_send(

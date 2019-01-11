@@ -324,7 +324,8 @@ void rdma_rail_ellection()
 			sctk_rail_info_t * previous = sctk_rail_get_by_id ( rdma_rail_id );
 
 			sctk_fatal("Found two rails with the RDMA flag up (%s and %s)\n"
-			           "this is not allowed, please make sure that only one is set");
+			           "this is not allowed, please make sure that only one is set",
+				   rail->network_name, previous->network_name);
 		}
 
 	}

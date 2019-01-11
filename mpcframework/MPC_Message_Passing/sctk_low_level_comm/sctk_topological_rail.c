@@ -367,9 +367,7 @@ void sctk_network_init_topological_rail_info(  sctk_rail_info_t *rail )
 
 void sctk_topological_rail_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list, void * addr, size_t size )
 {
-	struct sctk_rail_pin_ctx_list * ret = NULL;
-	struct sctk_rail_pin_ctx_list * current = NULL;
-	
+
 	int i;
 
 	/* Build a pinning list involving all subrails */

@@ -478,7 +478,7 @@ void sctk_net_init_driver ( char *name )
 	/* Init Polling for control messages */
 	sctk_control_message_init();
 
-	int j, k, l;
+	int k;
 
 	struct sctk_runtime_config_struct_net_cli_option *cli_option = NULL;
 
@@ -611,7 +611,7 @@ static inline size_t sctk_network_memory_allocator_hook_ib ( size_t size )
 
 size_t sctk_net_memory_allocation_hook ( size_t size_origin )
 {
-	size_t aligned_size;
+
 #ifdef MPC_USE_INFINIBAND
 
 	if ( sctk_network_is_ib_used() )
@@ -625,7 +625,7 @@ size_t sctk_net_memory_allocation_hook ( size_t size_origin )
 
 void sctk_net_memory_free_hook ( void * ptr , size_t size )
 {
-	size_t aligned_size;
+
 #ifdef MPC_USE_INFINIBAND
 
 	if ( sctk_network_is_ib_used())

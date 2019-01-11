@@ -224,11 +224,7 @@ void _sctk_ib_mmu_init( struct sctk_ib_mmu * mmu )
 
 void _sctk_ib_mmu_release( struct sctk_ib_mmu * mmu )
 {
-	int i;
-
-	
 	memset( mmu, 0, sizeof( struct sctk_ib_mmu ) );
-	
 }
 
 

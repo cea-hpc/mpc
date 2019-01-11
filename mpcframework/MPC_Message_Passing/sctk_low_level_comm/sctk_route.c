@@ -253,7 +253,7 @@ UT_icd ptr_icd = {sizeof ( sctk_endpoint_t ** ), NULL, NULL, NULL};
  * Only dynamic routes are involved */
 void sctk_walk_all_dynamic_routes ( sctk_route_table_t * table, void ( *func ) (  sctk_endpoint_t *endpoint, void * arg  ), void * arg )
 {
-	sctk_endpoint_t *current_route, *tmp, **tmp2;
+	sctk_endpoint_t *current_route, **tmp2;
 	UT_array *routes;
 
 	if(table == NULL) return; /* no routes */
@@ -291,7 +291,7 @@ void sctk_walk_all_dynamic_routes ( sctk_route_table_t * table, void ( *func ) (
 void sctk_walk_all_static_routes( sctk_route_table_t * table, void ( *func ) (  sctk_endpoint_t *endpoint, void * arg  ), void * arg )
 {
 
-	sctk_endpoint_t *current_route, *tmp, **tmp2;
+	sctk_endpoint_t *current_route, **tmp2;
 	UT_array *routes;
 
 	if(table == NULL) return;/* no route */

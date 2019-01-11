@@ -75,7 +75,6 @@ static int sctk_network_send_message_dest_shm(sctk_thread_ptp_message_t *msg,
                                               int with_lock) {
   sctk_shm_cell_t *cell = NULL;
   unsigned int sctk_shm_send_cur_try;
-  int ret;
   int is_message_control = 0;
 
   if (sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg))) {
@@ -130,9 +129,8 @@ sctk_network_send_message_from_pending_shm_list( void )
               /* If we are here the element
                * was back pushed to the pending list */
 
-              sctk_thread_ptp_message_t *msg = elt->msg;
-
-              sctk_nodebug(
+              /* sctk_thread_ptp_message_t *msg = elt->msg;
+              sctk_debug(
                   "!%d!  [ %d -> %d ] [ %d -> %d ] (CLASS "
                   "%s(%d) SPE %d SIZE %d TAG %d)",
                   sctk_process_rank, SCTK_MSG_SRC_PROCESS(msg),
@@ -142,7 +140,7 @@ sctk_network_send_message_from_pending_shm_list( void )
                   SCTK_MSG_SPECIFIC_CLASS(msg),
                   sctk_message_class_is_process_specific(
                       SCTK_MSG_SPECIFIC_CLASS(msg)),
-                  SCTK_MSG_SIZE(msg), SCTK_MSG_TAG(msg));
+                  SCTK_MSG_SIZE(msg), SCTK_MSG_TAG(msg)); */
 
               sctk_free((void*)elt);
               sctk_shm_pending_ptp_msg_num--;
@@ -181,7 +179,7 @@ sctk_send_message_from_network_shm ( sctk_thread_ptp_message_t *msg )
 	return 1;
 }
 
-static int reduce_polling = 0; 
+
 #define MAX_REDUCE_POLLING 1024
 
 static void 
@@ -196,7 +194,6 @@ sctk_network_notify_idle_message_shm ( __UNUSED__ sctk_rail_info_t *rail )
     if(sctk_spinlock_trylock(&sctk_shm_polling_lock))
       return; 
 
-    //reduce_polling = (reduce_polling+1) % MAX_REDUCE_POLLING;
 
     while(1)
     {
@@ -431,7 +428,7 @@ void sctk_network_finalize_shm(__UNUSED__ sctk_rail_info_t *rail)
 
 void sctk_network_init_shm ( sctk_rail_info_t *rail )
 {
-    int i, local_process_rank, local_process_number, first_proc_on_node;
+    int i, local_process_rank, local_process_number;
     size_t sctk_shmem_size;
     int sctk_shmem_cells_num;
 

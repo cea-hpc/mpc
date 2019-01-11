@@ -209,9 +209,9 @@ static inline int sctk_comm_coll_get_id_red(struct sctk_comm_coll *coll,
   return __sctk_comm_coll_get_id(coll, rank) & (coll->reduce_interleave - 1);
 }
 
-static inline struct shared_mem_reduce * sctk_comm_coll_get_red(struct sctk_comm_coll *coll, int rank)
+static inline struct shared_mem_reduce * sctk_comm_coll_get_red(struct sctk_comm_coll *coll, __UNUSED__ int rank)
 {
-  int xid = sctk_comm_coll_get_id_red(coll, rank);
+  //int xid = sctk_comm_coll_get_id_red(coll, rank);
   return &coll->shm_reduce[0];
 }
 
@@ -220,9 +220,9 @@ static inline int sctk_comm_coll_get_id_bcast(struct sctk_comm_coll *coll,
   return __sctk_comm_coll_get_id(coll, rank) & (coll->bcast_interleave - 1);
 }
 
-static inline struct shared_mem_bcast * sctk_comm_coll_get_bcast(struct sctk_comm_coll *coll, int rank)
+static inline struct shared_mem_bcast * sctk_comm_coll_get_bcast(struct sctk_comm_coll *coll, __UNUSED__ int rank)
 {
-  int xid = sctk_comm_coll_get_id_bcast(coll, rank);
+  //int xid = sctk_comm_coll_get_id_bcast(coll, rank);
   return &coll->shm_bcast[0];
 }
 

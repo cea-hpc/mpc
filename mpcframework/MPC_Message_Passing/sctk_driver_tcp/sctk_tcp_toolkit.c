@@ -56,9 +56,8 @@
 static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 {
 	int clientsock_fd;
-	struct sockaddr_in serv_addr;
 	struct hostent *server;
-	char *ip;
+
 	char name[MAX_STRING_SIZE];
 	char *portno = NULL;
 	int i;

@@ -145,7 +145,6 @@ void sctk_barrier_hetero_messages_inter ( const sctk_communicator_t communicator
                                           __UNUSED__ sctk_internal_collectives_struct_t *tmp )
 {
 	int myself;
-	int my_rank;
 	int *process_array;
 	int total = sctk_get_process_nb_in_array ( communicator );
 	int *myself_ptr = NULL;
@@ -162,7 +161,6 @@ void sctk_barrier_hetero_messages_inter ( const sctk_communicator_t communicator
 	sctk_nodebug ( "Start inter" );
 	sctk_hetero_messages_init_items ( &table );
 
-	my_rank = sctk_get_rank ( communicator, sctk_get_task_rank() );
 	process_array = sctk_get_process_array ( communicator ),
 	myself_ptr = ( ( int * ) bsearch ( ( void * ) &sctk_process_rank,
 	                                   process_array,
@@ -311,7 +309,6 @@ void sctk_broadcast_hetero_messages_inter ( void *buffer, const size_t size,
 	{
 		int myself;
 		int *myself_ptr = NULL;
-		int my_rank;
 		int related_myself;
 		int total_max;
 		int i;
@@ -336,7 +333,6 @@ void sctk_broadcast_hetero_messages_inter ( void *buffer, const size_t size,
 			BROADCAST_ARRITY = broadcast_arity_max;
 		}
 
-		my_rank = sctk_get_rank ( communicator, sctk_get_task_rank() );
 		process_array = sctk_get_process_array ( communicator );
 		myself_ptr = ( ( int * ) bsearch ( ( void * ) &sctk_process_rank,
 		                                   process_array,
@@ -514,7 +510,6 @@ static void sctk_allreduce_hetero_messages_intern_inter ( const void *buffer_in,
 	sctk_hetero_messages_table_t table;
 	void *buffer_tmp;
 	void **buffer_table;
-	int my_rank;
 	int myself;
 	int *myself_ptr;
 	size_t size = elem_size * elem_number;
@@ -559,7 +554,6 @@ static void sctk_allreduce_hetero_messages_intern_inter ( const void *buffer_in,
 		}
 	}
 
-	my_rank = sctk_get_rank ( communicator, sctk_get_task_rank() );
 	process_array = sctk_get_process_array ( communicator ),
 	myself_ptr = ( ( int * ) bsearch ( ( void * ) &sctk_process_rank,
 	                                   process_array,

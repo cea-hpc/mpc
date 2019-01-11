@@ -344,11 +344,10 @@ void sctk_endpoint_list_prune( sctk_endpoint_list_t ** list)
 	sctk_endpoint_list_t *entry = *list;
 	sctk_endpoint_list_t *tofree = NULL;
 	sctk_endpoint_t *route;
-	sctk_endpoint_state_t rstate;
+
 	while( entry )
 	{
 		route = entry->endpoint;
-		rstate = sctk_endpoint_get_state(route);
 
 		tofree = entry;
 		entry = entry->next;

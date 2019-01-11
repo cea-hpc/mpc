@@ -170,7 +170,6 @@ sctk_shm_init_recv_frag_msg(int key, int remote, sctk_thread_ptp_message_t* msg)
 static sctk_shm_proc_frag_info_t*
 sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t *cell)
 {
-   int msg_key = -1;
    sctk_shm_proc_frag_info_t* frag_infos = NULL;
    
    cell->size_to_copy = (SCTK_MSG_SIZE(msg) > 0) ? SCTK_MSG_SIZE(msg) : 0;
@@ -185,12 +184,6 @@ sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t
       return NULL;
 
    memcpy(cell->data, msg, sizeof(sctk_thread_ptp_message_body_t));
-    
-//   if( SCTK_MSG_SIZE(msg) > 0)
-//   {
-//   	sctk_nodebug("[KEY:%d-%ld]\t\tSEND FIRST PART MSG ( HEADER:%lu MSG:%lu )", msg_key, SCTK_MSG_SIZE(msg), hash_payload(msg, sizeof(sctk_thread_ptp_message_body_t)), hash_payload(frag_infos->msg, frag_infos->size_total));
-//        assume_m(hash_payload(cell->data, sizeof(sctk_thread_ptp_message_body_t)) == hash_payload(msg, sizeof(sctk_thread_ptp_message_body_t)), "WRONG HEADER COPY !!!!!!!");
-//   }  
 
    cell->frag_hkey = (frag_infos) ? frag_infos->msg_frag_key : -1; 
    cell->msg_type = SCTK_SHM_FIRST_FRAG;

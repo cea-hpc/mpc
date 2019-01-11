@@ -36,14 +36,14 @@ void
 sctk_terminaison_barrier (void)
 {
 	int local;
-	int total;
+
 	static volatile int done = 0;
 	static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
 	static sctk_thread_cond_t cond = SCTK_THREAD_COND_INITIALIZER;
 
 
 	local = sctk_get_nb_task_local ( SCTK_COMM_WORLD );
-	total = sctk_get_nb_task_total ( SCTK_COMM_WORLD );
+
 
 	sctk_thread_mutex_lock ( &lock );
 	done ++;

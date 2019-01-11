@@ -104,7 +104,7 @@ struct sctk_window *__sctk_win_translate(sctk_window_t win_id) {
 
   assume(win_id == ret->id);
 
-  int generation = sctk_atomics_load_int(&__rma_generation);
+  sctk_atomics_load_int(&__rma_generation);
 
   if (!__forward_translate.win) {
     sctk_win_translation_init(&__forward_translate, ret);
@@ -957,7 +957,6 @@ static inline void sctk_window_fetch_and_op_operate_int(RDMA_op op, void *add,
                                                                                \
   static inline void sctk_window_fetch_and_op_operate_##type##type2##type3##_( \
       RDMA_op op, void *add, void *src, void *dest) {                          \
-    type type2 type3 result;                                                   \
     type type2 type3 *to_add = (type type2 type3 *)add;                        \
     type type2 type3 *src_addr = (type type2 type3 *)src;                      \
     type type2 type3 *dest_addr = (type type2 type3 *)dest;                    \
@@ -1026,7 +1025,6 @@ static inline void sctk_window_fetch_and_op_operate_int(RDMA_op op, void *add,
                                                                                \
   static inline void sctk_window_fetch_and_op_operate_##type##type2##_(        \
       RDMA_op op, void *add, void *src, void *dest) {                          \
-    type type2 result;                                                         \
     type type2 *to_add = (type type2 *)add;                                    \
     type type2 *src_addr = (type type2 *)src;                                  \
     type type2 *dest_addr = (type type2 *)dest;                                \
@@ -1089,14 +1087,22 @@ static inline void sctk_window_fetch_and_op_operate_int(RDMA_op op, void *add,
     sctk_spinlock_unlock(&__RDMA_OP_##type##type2##_lock);                     \
   }
 
-RDMA_OP_def(char, , ) RDMA_OP_def_nobin(double, ) RDMA_OP_def_nobin(float, )
-    RDMA_OP_def(long, , ) RDMA_OP_def_nobin(long, double) RDMA_OP_def(long,
-                                                                      long, )
-        RDMA_OP_def(long, long, int) RDMA_OP_def(short, , ) RDMA_OP_def(signed,
-                                                                        char, )
-            RDMA_OP_def(unsigned, , ) RDMA_OP_def(unsigned, char, )
-                RDMA_OP_def(unsigned, long, ) RDMA_OP_def(unsigned, long, long)
-                    RDMA_OP_def(unsigned, short, ) RDMA_OP_def(sctk_wchar_t, , )
+RDMA_OP_def(char, , )
+RDMA_OP_def_nobin(double, )
+RDMA_OP_def_nobin(float, )
+RDMA_OP_def(long, , )
+RDMA_OP_def_nobin(long, double)
+RDMA_OP_def(long, long, )
+RDMA_OP_def(long, long, int)
+RDMA_OP_def(short, , )
+RDMA_OP_def(signed, char, )
+RDMA_OP_def(unsigned, , )
+RDMA_OP_def(unsigned, char, )
+RDMA_OP_def(unsigned, long, )
+RDMA_OP_def(unsigned, long, long)
+RDMA_OP_def(unsigned, short, )
+RDMA_OP_def(sctk_wchar_t, , )
+
 
                         static inline void sctk_window_fetch_and_op_operate(
                             RDMA_op op, RDMA_type type, void *add, void *src,
@@ -1632,8 +1638,6 @@ void sctk_window_RDMA_wait( sctk_request_t *request )
 
 void sctk_window_RDMA_fence(sctk_window_t win_id, sctk_request_t *req) {
   struct sctk_window *win = sctk_win_translate(win_id);
-
-  sctk_request_t _req;
 
   if (!win) {
     sctk_fatal("No such window ID");

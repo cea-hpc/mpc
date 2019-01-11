@@ -79,7 +79,6 @@ sctk_shm_reset_region_queues(sctk_shm_region_infos_t *shmem, int rank)
 sctk_shm_region_infos_t *
 sctk_shm_set_region_infos(void *shmem_base, size_t shmem_size,int cells_num)
 {
-    int i;
     sctk_shm_region_infos_t *shmem = NULL;
 
     shmem = (sctk_shm_region_infos_t*) sctk_malloc(sizeof(sctk_shm_region_infos_t));

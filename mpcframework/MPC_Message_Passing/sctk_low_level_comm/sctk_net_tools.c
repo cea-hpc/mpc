@@ -343,27 +343,26 @@ void sctk_net_write_in_fd ( sctk_thread_ptp_message_t *msg,
 	}
 }
 
-void 
-sctk_get_iovec_in_buffer(sctk_thread_ptp_message_t *msg,struct iovec **iov,int *iovlen)
+void sctk_get_iovec_in_buffer( sctk_thread_ptp_message_t *msg, struct iovec **iov, int *iovlen )
 {
-    struct iovec tmp;
+
 	switch ( msg->tail.message_type )
 	{
 		case SCTK_MESSAGE_CONTIGUOUS:
 		{
-			*iov = (struct iovec*)sctk_malloc(sizeof(struct iovec));	
-            *iovlen = 1;
-			(*iov)->iov_base = msg->tail.message.contiguous.addr;	
-			(*iov)->iov_len = SCTK_MSG_SIZE ( msg );
+			*iov = (struct iovec *) sctk_malloc( sizeof( struct iovec ) );
+			*iovlen = 1;
+			( *iov )->iov_base = msg->tail.message.contiguous.addr;
+			( *iov )->iov_len = SCTK_MSG_SIZE( msg );
 			break;
 		}
 
 		case SCTK_MESSAGE_NETWORK:
 		{
-			*iov = (struct iovec*)sctk_malloc(sizeof(struct iovec));	
-            		*iovlen = 1;
-			(*iov)->iov_base = (char*)msg+sizeof(sctk_thread_ptp_message_t);
-			(*iov)->iov_len = SCTK_MSG_SIZE ( msg );
+			*iov = (struct iovec *) sctk_malloc( sizeof( struct iovec ) );
+			*iovlen = 1;
+			( *iov )->iov_base = (char *) msg + sizeof( sctk_thread_ptp_message_t );
+			( *iov )->iov_len = SCTK_MSG_SIZE( msg );
 			break;
 		}
 
