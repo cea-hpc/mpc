@@ -168,10 +168,10 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 	/* prepare the Put() MD */
 	size                   = SCTK_MSG_SIZE(msg);
 	flags                  = SCTK_PTL_MD_PUT_FLAGS;
-	match.data.tag         = SCTK_MSG_TAG(msg);
-	match.data.rank        = SCTK_MSG_SRC_PROCESS(msg);
-	match.data.uid         = SCTK_MSG_NUMBER(msg);
-	match.data.type        = SCTK_MSG_SPECIFIC_CLASS(msg);
+	match.data.tag         = SCTK_MSG_TAG(msg)            % SCTK_PTL_MAX_TAGS;
+	match.data.rank        = SCTK_MSG_SRC_PROCESS(msg)    % SCTK_PTL_MAX_RANKS;
+	match.data.uid         = SCTK_MSG_NUMBER(msg)         % SCTK_PTL_MAX_UIDS;
+	match.data.type        = SCTK_MSG_SPECIFIC_CLASS(msg) % SCTK_PTL_MAX_TYPES;
 	pte                    = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
 	remote                 = infos->dest;
 	request                = sctk_ptl_md_create(srail, start, size, flags);
@@ -181,12 +181,11 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 
 	/* double-linking */
 	request->msg           = msg;
-	msg->tail.ptl.user_ptr = request;
 	request->type = SCTK_PTL_TYPE_STD;
-	
-	/* for eager, build the immediate data, contained in Put() request */
-	hdr.std.datatype     = SCTK_MSG_SPECIFIC_CLASS(msg);
 	request->prot = SCTK_PTL_PROT_EAGER;
+	request->msg_seq_nb = SCTK_MSG_NUMBER(msg);
+	hdr.std.msg_seq_nb     = SCTK_MSG_NUMBER(msg);
+	msg->tail.ptl.user_ptr = request;
 
 	/* emit the request */
 	sctk_ptl_md_register(srail, request);
@@ -230,10 +229,10 @@ void sctk_ptl_eager_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_in
 	}
 
 	/* Build the match_bits */
-	match.data.tag  = SCTK_MSG_TAG(msg);
-	match.data.rank = SCTK_MSG_SRC_PROCESS(msg);
-	match.data.uid  = SCTK_MSG_NUMBER(msg);
-	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg);
+	match.data.tag  = SCTK_MSG_TAG(msg)            % SCTK_PTL_MAX_TAGS;
+	match.data.rank = SCTK_MSG_SRC_PROCESS(msg)    % SCTK_PTL_MAX_RANKS;
+	match.data.uid  = SCTK_MSG_NUMBER(msg)         % SCTK_PTL_MAX_UIDS;
+	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg) % SCTK_PTL_MAX_TYPES;
 
 	/* apply the mask, depending on request infos
 	 * The UID is always ignored, it we only be used to make RDV requests consistent
@@ -254,9 +253,9 @@ void sctk_ptl_eager_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_in
 
 	user_ptr->msg          = msg;
 	user_ptr->list         = SCTK_PTL_PRIORITY_LIST;
-	msg->tail.ptl.user_ptr = user_ptr;
 	user_ptr->type         = SCTK_PTL_TYPE_STD;
 	user_ptr->prot         = SCTK_PTL_PROT_EAGER;
+	msg->tail.ptl.user_ptr = user_ptr;
 	sctk_ptl_me_register(srail, user_ptr, pte);
 	
 	sctk_nodebug("PORTALS: NOTIFY-RECV-EAGER from %d (idx=%llu, match=%s, ign=%llu start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);

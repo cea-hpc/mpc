@@ -138,17 +138,25 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 		flags
 	);
 	sctk_assert(get_request);
-	get_request->msg      = msg;
-	get_request->list     = SCTK_PTL_PRIORITY_LIST;
-	get_request->type     = SCTK_PTL_TYPE_STD;
-	get_request->prot     = SCTK_PTL_PROT_RDV;
-	get_request->match    = (sctk_ptl_matchbits_t)ev.match_bits;
-	/* The GET request only target slots with the bit to 1 */
-	SCTK_PTL_TYPE_RDV_SET(get_request->match.data.type);
+
+	get_request->msg                   = msg;
+	get_request->list                  = SCTK_PTL_PRIORITY_LIST;
+	get_request->type                  = SCTK_PTL_TYPE_STD;
+	get_request->prot                  = SCTK_PTL_PROT_RDV;
+
+	/* retreive and store the match_bits, it contains the actual SRC_RANK (in case of ANY_SOURCE, 
+	 * we don't have such information) */
+	get_request->match      = (sctk_ptl_matchbits_t)ev.match_bits;
+	get_request->msg_seq_nb = ((sctk_ptl_imm_data_t)ev.hdr_data).std.msg_seq_nb;
 	sctk_atomics_store_int(&get_request->cnt_frag, chunk_nb);
+	
+	/* The GET request only target slots with the bit to 1 */
 	sctk_ptl_md_register(srail, get_request);
 
 	cur_off = 0;
+	sctk_ptl_matchbits_t md_match = get_request->match;
+	SCTK_PTL_TYPE_RDV_SET(md_match.data.type);
+	md_match.data.rank = sctk_get_process_rank();
 	for (chunk = 0; chunk < chunk_nb; ++chunk) 
 	{
 		/* if the should take '+1' to compensate non-distributed bytes */
@@ -160,7 +168,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 			cur_sz,             /* the size for this chunk */
 			ev.initiator,       /* the ID contained in the PUT request */
 			pte,                /* the PT entry */
-			get_request->match, /* the match_bits used by the remote to expose the memory */
+			md_match,           /* the match_bits used by the remote to expose the memory */
 			cur_off,            /* local_offset */
 			cur_off,            /* remote_offset */
 			get_request         /* user_ptr */
@@ -198,7 +206,7 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	SCTK_MSG_DEST_TASK_SET       ( net_msg ,  sctk_get_process_rank());
 	SCTK_MSG_COMMUNICATOR_SET    ( net_msg ,  SCTK_MSG_COMMUNICATOR(recv_msg));
 	SCTK_MSG_TAG_SET             ( net_msg ,  ptr->match.data.tag);
-	SCTK_MSG_NUMBER_SET          ( net_msg ,  ptr->match.data.uid);
+	SCTK_MSG_NUMBER_SET          ( net_msg ,  ptr->msg_seq_nb);
 	SCTK_PTL_TYPE_RDV_UNSET(ptr->match.data.type); /* this infomation should be removed before rebuilding the message */
 	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  ptr->match.data.type);
 	SCTK_MSG_MATCH_SET           ( net_msg ,  0);
@@ -268,9 +276,9 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	md_flags        = me_flags   = 0;
 	remote          = infos->dest;
 	start           = NULL;
-	match.data.tag  = SCTK_MSG_TAG(msg);
-	match.data.rank = SCTK_MSG_SRC_PROCESS(msg);
-	match.data.uid  = SCTK_MSG_NUMBER(msg);
+	match.data.tag  = SCTK_MSG_TAG(msg)            % SCTK_PTL_MAX_TAGS;
+	match.data.rank = SCTK_MSG_SRC_PROCESS(msg)    % SCTK_PTL_MAX_RANKS;
+	match.data.uid  = SCTK_MSG_NUMBER(msg)         % SCTK_PTL_MAX_UIDS;
 	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg) % SCTK_PTL_MAX_TYPES;
 	SCTK_PTL_TYPE_RDV_UNSET(match.data.type); /* the PUT does not carry that information */
 	ign             = SCTK_PTL_MATCH_INIT;
@@ -284,7 +292,8 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	md_request->msg  = msg;
 	md_request->type = SCTK_PTL_TYPE_STD;
 	md_request->prot = SCTK_PTL_PROT_RDV;
-	hdr.std.datatype = SCTK_MSG_SPECIFIC_CLASS(msg);
+	md_request->match = match;
+	hdr.std.msg_seq_nb = SCTK_MSG_NUMBER(msg);
 	sctk_ptl_md_register(srail, md_request);
 
 	/***************************/
@@ -309,7 +318,11 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	}
 	
 	sctk_ptl_matchbits_t me_match = match;
-	/* Set the bit to 1 to differenciate incoming PUT and waiting-to-complete GETs */
+	/* Set the bit to 1 to differenciate incoming PUT and waiting-to-complete GETs
+	 * Set the rank to DEST process to identify it among others 
+	 * It is this one which is stored into rdv_extras struct
+	 */
+	me_match.data.rank = SCTK_MSG_DEST_PROCESS(msg);
 	SCTK_PTL_TYPE_RDV_SET(me_match.data.type);
 	/* create the MD request and configure it */
 	me_request = sctk_ptl_me_create(
@@ -323,8 +336,12 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	me_request->msg        = msg;
 	me_request->type       = SCTK_PTL_TYPE_STD;
 	me_request->prot       = SCTK_PTL_PROT_RDV;
-	msg->tail.ptl.user_ptr = me_request;
+	/* store infos that should be expanded from forthcomin REPLY op */
+	me_request->match = me_match;
+	me_request->msg_seq_nb = SCTK_MSG_NUMBER(msg);
 	sctk_atomics_store_int(&me_request->cnt_frag, ((chunk_nb == 1) ? 0 : chunk_nb)); /* special case - see event_me() */
+
+	msg->tail.ptl.user_ptr = me_request;
 	sctk_ptl_me_register(srail, me_request, pte);
 	
 	sctk_ptl_emit_put(md_request, 0, remote, pte, match, 0, 0, hdr.raw, md_request); /* empty Put() */
@@ -347,10 +364,10 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 
 	/****** INIT COMMON ATTRIBUTES ******/
 	pte             = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
-	match.data.tag  = SCTK_MSG_TAG(msg);
-	match.data.rank = SCTK_MSG_SRC_PROCESS(msg);
-	match.data.uid  = SCTK_MSG_NUMBER(msg);
-	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg);
+	match.data.tag  = SCTK_MSG_TAG(msg)            % SCTK_PTL_MAX_TAGS;
+	match.data.rank = SCTK_MSG_SRC_PROCESS(msg)    % SCTK_PTL_MAX_RANKS;
+	match.data.uid  = SCTK_MSG_NUMBER(msg)         % SCTK_PTL_MAX_UIDS;
+	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg) % SCTK_PTL_MAX_TYPES;
 	SCTK_PTL_TYPE_RDV_UNSET(match.data.type); /* the emitted PUT does not carry the information */
 	ign.data.tag    = (SCTK_MSG_TAG(msg)         == SCTK_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
 	ign.data.rank   = (SCTK_MSG_SRC_PROCESS(msg) == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;

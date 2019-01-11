@@ -56,7 +56,6 @@
 #define SCTK_PTL_MATCH_UID  ((uint8_t)0)
 /** Set the 'Message type' to be used for the matching step */
 #define SCTK_PTL_MATCH_TYPE  ((uint8_t)0)
-#define SCTK_PTL_MAX_TYPES (1 << 7)
 #define SCTK_PTL_TYPE_RDV_SET(a) do { a |= (1<<7);}while(0)
 #define SCTK_PTL_TYPE_RDV_UNSET(a) do { a &= (~(1<<7));}while(0)
 
@@ -195,6 +194,10 @@ typedef enum {
 #define UNUSED(a) (void*)&a
 #endif
 
+#define SCTK_PTL_MAX_TAGS  (( size_t)(~ (( uint32_t)0)))
+#define SCTK_PTL_MAX_RANKS (( size_t)(~ (( uint16_t)0)))
+#define SCTK_PTL_MAX_UIDS  (( size_t)(~ (( uint8_t)0)))
+#define SCTK_PTL_MAX_TYPES (( size_t)(~ (( uint8_t)0)))
 /**
  * How the match_bits is divided to store essential information to 
  * match MPI msg.
@@ -244,7 +247,7 @@ typedef struct sctk_ptl_cm_data_s
  */
 typedef struct sctk_ptl_std_data_s
 {
-	int datatype; /**< the datatype, for the matching */
+	int msg_seq_nb; /**< the MSG_NUMBER, for the matching */
 	char pad[4];  /**< padding */
 } sctk_ptl_std_data_t;
 
@@ -288,11 +291,12 @@ typedef struct sctk_ptl_local_data_s
 	union sctk_ptl_slot_u slot;     /**< the request (MD or ME) */
 	union sctk_ptl_slot_h_u slot_h; /**< the request Handle */
 	sctk_ptl_matchbits_t match;     /**< request match bits */
+	sctk_atomics_int cnt_frag;      /**< number of chunks before being released */
+	int msg_seq_nb; 
 	void* msg;                      /**< link to the msg */
 	sctk_ptl_list_t list;           /**< the list the request issued from */
 	sctk_ptl_protocol_t prot;       /**< request protocol */
 	sctk_ptl_mtype_t type;          /**< request type */
-	sctk_atomics_int cnt_frag;      /**< number of chunks before being released */
 } sctk_ptl_local_data_t;
 
 /**

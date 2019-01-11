@@ -176,7 +176,9 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 	
 			/* we only consider Portals-succeded events */
 			if(ev.ni_fail_type != PTL_NI_OK) 
-				sctk_fatal("ME: Failed event %s: %s", sctk_ptl_event_decode(ev), sctk_ptl_ni_fail_decode(ev));
+			{
+				sctk_fatal("PORTALS: FAILED EQS EVENT '%s' idx=%d, from %s, type=%s, prot=%s, match=%s,  sz=%llu, user=%p err='%s'", sctk_ptl_event_decode(ev), ev.pt_index, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), ev.mlength, ev.user_ptr, sctk_ptl_ni_fail_decode(ev));
+			}
 		
 			/* if the request consumed an unexpected slot, append a new one */
 			if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST)
@@ -243,7 +245,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 			/* we only care about Portals-sucess events */
 			if(ev.ni_fail_type != PTL_NI_OK)
 			{
-				sctk_fatal("MD: Failed event %s: %s", sctk_ptl_event_decode(ev), sctk_ptl_ni_fail_decode(ev));
+				sctk_fatal("PORTALS: FAILED MDS EVENT '%s' from %s, type=%s, prot=%s, match=%s err='%s'",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), __sctk_ptl_match_str(sctk_malloc(32), 32, user_ptr->match.raw), sctk_ptl_ni_fail_decode(ev));
 			}
 
 			sctk_assert(user_ptr->type != SCTK_PTL_TYPE_NONE);
