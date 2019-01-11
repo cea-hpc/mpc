@@ -642,9 +642,9 @@ int sctk_ib_cp_handle_message ( sctk_ibuf_t *ibuf, int dest_task, int target_tas
 
 	if ( !task )
 	{
-		sctk_ib_rdma_t *rdma_header;
-		rdma_header = IBUF_GET_RDMA_HEADER ( ibuf->buffer );
-		int type = IBUF_GET_RDMA_TYPE ( rdma_header );
+		//sctk_ib_rdma_t *rdma_header;
+		//rdma_header = IBUF_GET_RDMA_HEADER ( ibuf->buffer );
+		//int type = IBUF_GET_RDMA_TYPE ( rdma_header );
 		//    sctk_error("Indirect message!! (target task:%d dest_task:%d) %d process %d", target_task, dest_task, type, sctk_process_rank);
 		/* We return without error -> indirect message that we need to handle */
 		return 0;

@@ -160,7 +160,7 @@ void sctk_ib_config_mutate ( sctk_ib_rail_info_t *rail_ib )
 
 void sctk_ib_config_init ( sctk_ib_rail_info_t *rail_ib, __UNUSED__ char *network_name )
 {
-	LOAD_CONFIG ( rail_ib );
+
 
 	rail_ib->config = &rail_ib->rail->runtime_config_driver_config->driver.value.infiniband;
 	sctk_ib_config_mutate ( rail_ib );

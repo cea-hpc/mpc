@@ -219,9 +219,9 @@ void sctk_ib_qp_key_fill ( sctk_ib_cm_qp_connection_t *keys, sctk_uint16_t lid, 
 
 void sctk_ib_qp_key_create_value ( char *msg, size_t size, sctk_ib_cm_qp_connection_t *keys )
 {
-	int ret;
 
-	ret = snprintf ( msg, size, "%08x:%08x:%08x", keys->lid,
+
+	snprintf ( msg, size, "%08x:%08x:%08x", keys->lid,
 	                 keys->qp_num,
 	                 keys->psn );
 	/* We assume the value doest not overflow with the buffer */
@@ -232,9 +232,9 @@ void sctk_ib_qp_key_create_value ( char *msg, size_t size, sctk_ib_cm_qp_connect
 
 void sctk_ib_qp_key_create_key ( char *msg, size_t size, int rail_id, int src, int dest )
 {
-	int ret;
+
 	/* We create the key with the number of the rail */
-	ret = snprintf ( msg, size, "IB-%02d|%06d:%06d", rail_id, src, dest );
+	snprintf ( msg, size, "IB-%02d|%06d:%06d", rail_id, src, dest );
 	sctk_nodebug ( "key: %s", msg );
 	/* We assume the value doest not overflow with the buffer */
 	ib_assume ( ret < size );
@@ -266,7 +266,7 @@ void sctk_ib_qp_keys_send ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *r
 	char * val = sctk_malloc( sizeof(char) * val_max + 1 );
 	assume( val != NULL );
 	
-	int ret;
+
 
 	sctk_ib_cm_qp_connection_t qp_keys =
 	{
@@ -277,7 +277,7 @@ void sctk_ib_qp_keys_send ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *r
 
 	sctk_ib_qp_key_create_key ( key, key_max, rail_ib->rail->rail_number, sctk_process_rank, remote->rank );
 	sctk_ib_qp_key_create_value ( val, val_max, &qp_keys );
-	ret = sctk_pmi_put_connection_info_str ( val, key );
+	sctk_pmi_put_connection_info_str ( val, key );
 	ib_assume ( ret == SCTK_PMI_SUCCESS );
 	
 	sctk_free( key );
@@ -297,10 +297,10 @@ sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *ra
 	char * val = sctk_malloc( sizeof(char) * val_max + 1);
 	assume( val != NULL );
 
-	int ret;
+
 
 	sctk_ib_qp_key_create_key ( key, key_max, rail_ib->rail->rail_number, dest_process, sctk_process_rank );
-	ret = sctk_pmi_get_connection_info_str ( val, val_max, key );
+	sctk_pmi_get_connection_info_str ( val, val_max, key );
 	ib_assume ( ret == SCTK_PMI_SUCCESS );
 	qp_keys = sctk_ib_qp_keys_convert ( val );
 
@@ -713,7 +713,7 @@ void sctk_ib_qp_allocate_rts ( struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_qp_
 void sctk_ib_qp_allocate_reset ( __UNUSED__ struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote )
 {
 	struct ibv_qp_attr       attr;
-	sctk_endpoint_t *endpoint = remote->endpoint;
+
 	int flags;
 
 	attr = sctk_ib_qp_STATE_RESET_attr ( &flags );
@@ -756,9 +756,9 @@ static int check_signaled ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *r
 	return 0;
 }
 
-static void inc_signaled ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, int need_reset )
+static void inc_signaled ( __UNUSED__ struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, int need_reset )
 {
-	LOAD_CONFIG ( rail_ib );
+
 
 	if ( need_reset )
 	{

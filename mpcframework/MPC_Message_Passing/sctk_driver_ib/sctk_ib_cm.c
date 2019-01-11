@@ -604,7 +604,7 @@ int sctk_ib_cm_on_demand_rdma_request ( sctk_rail_info_t *rail, struct sctk_ib_q
 
 static inline void sctk_ib_cm_on_demand_rdma_done_recv ( sctk_rail_info_t *rail, void *done, int src )
 {
-	sctk_ib_rail_info_t *rail_ib_targ = &rail->network.ib;
+
 	sctk_ib_cm_rdma_connection_t *recv_keys = ( sctk_ib_cm_rdma_connection_t * ) done;
 
 	/* get the route to process */
@@ -802,7 +802,6 @@ void sctk_ib_cm_resizing_rdma_ack ( sctk_rail_info_t *rail,  struct sctk_ib_qp_s
 
 static inline void sctk_ib_cm_resizing_rdma_done_recv ( sctk_rail_info_t *rail, void *done, int src )
 {
-	sctk_ib_rail_info_t *rail_ib_targ = &rail->network.ib;
 	sctk_ib_cm_rdma_connection_t *recv_keys = ( sctk_ib_cm_rdma_connection_t * ) done;
 
 	/* get the route to process */
@@ -903,7 +902,6 @@ static inline int sctk_ib_cm_resizing_rdma_recv_request ( sctk_rail_info_t *rail
 
 void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int process_src, __UNUSED__ int source_rank, char subtype, __UNUSED__ char param, void * payload, __UNUSED__ size_t size )
 {
-	int rail_id = rail->rail_number;
 
 	switch ( subtype )
 	{

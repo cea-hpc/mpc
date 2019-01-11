@@ -67,7 +67,7 @@ void sctk_ib_eager_init ( sctk_ib_rail_info_t *rail_ib )
 void sctk_ib_eager_finalize(sctk_ib_rail_info_t *rail_ib)
 {
 	sctk_thread_ptp_message_t *elt, *tmp;
-	int i;
+
 	LL_FOREACH_SAFE(rail_ib->eager_buffered_ptp_message, elt, tmp)
 	{
 		/* if the ptp_message has been dynamically allocated */
@@ -144,10 +144,9 @@ sctk_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,  sctk_ib_
 {
 	sctk_ibuf_t *ibuf;
 	sctk_ib_eager_t *eager_header;
-	void *body;
+
 	size_t ibuf_size = size + IBUF_GET_EAGER_SIZE;
 
-	body = ( char * ) msg + sizeof ( sctk_thread_ptp_message_t );
 
 	if ( is_control_message )
 	{
@@ -274,11 +273,11 @@ static sctk_thread_ptp_message_t *sctk_ib_eager_recv ( sctk_rail_info_t *rail, s
 void sctk_ib_eager_recv_msg_no_recopy ( sctk_message_to_copy_t *tmp )
 {
 	sctk_thread_ptp_message_t *send;
-	sctk_thread_ptp_message_t *recv;
+
 	sctk_ibuf_t *ibuf;
 	void *body;
 
-	recv = tmp->msg_recv;
+
 	send = tmp->msg_send;
 	/* Assume msg not recopied */
 	ib_assume ( !send->tail.ib.eager.recopied );

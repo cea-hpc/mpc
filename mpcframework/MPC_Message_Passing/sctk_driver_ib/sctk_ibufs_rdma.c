@@ -687,7 +687,7 @@ static void __poll_ibuf ( sctk_ib_rail_info_t *rail_ib,
 	sctk_rail_info_t *rail = rail_ib->rail;
 	ib_assume ( ibuf );
 	int release_ibuf = 1;
-	int ret = REORDER_UNDEFINED;
+
 
 	/* Set the buffer as releasable. Actually, we need to do this reset
 	 * here.. */
@@ -1000,11 +1000,11 @@ void sctk_ibuf_rdma_release ( sctk_ib_rail_info_t *rail_ib, sctk_ibuf_t *ibuf )
 {
 	sctk_ibuf_region_t *region = ibuf->region;
 	sctk_ib_qp_t *remote = ibuf->region->remote;
-	int ret;
+	
 
 	if ( IBUF_GET_CHANNEL ( ibuf ) & RECV_CHANNEL )
 	{
-		int piggyback = 0;
+		
 
 		sctk_nodebug ( "Freeing a RECV RDMA buffer (channel:%d head:%p - ibuf:%p - tail:%p)", IBUF_GET_CHANNEL ( ibuf ),
 		               ibuf->region->head, ibuf, ibuf->region->tail );
@@ -1219,7 +1219,7 @@ static int sctk_ibuf_rdma_determine_config ( sctk_ib_rail_info_t *rail_ib,
 {
 	LOAD_CONFIG ( rail_ib );
 	/* Compute the mean size of messages */
-	int i, max;
+
 	float mean = 0;
 	int max_pending_data, max_pending_data_before_realign;
 
@@ -1315,12 +1315,12 @@ static int sctk_ibuf_rdma_determine_config ( sctk_ib_rail_info_t *rail_ib,
 void sctk_ibuf_rdma_update_remote ( sctk_ib_qp_t *remote, size_t size )
 {
 
-	size_t messages_nb;
+
 	sctk_spinlock_lock ( &remote->rdma.stats_lock );
 	size_t old_messages_size = remote->rdma.messages_size;
 	size_t new_messages_size = old_messages_size + size;
 	remote->rdma.messages_size += size;
-	messages_nb = ++remote->rdma.messages_nb;
+	remote->rdma.messages_nb++;
 
 	/* Reset counters */
 	if ( expect_false ( new_messages_size < old_messages_size ) )
@@ -1338,8 +1338,8 @@ void sctk_ibuf_rdma_update_remote ( sctk_ib_qp_t *remote, size_t size )
 void sctk_ibuf_rdma_check_remote ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote )
 {
 	LOAD_CONFIG ( rail_ib );
-	int res;
-	int iter;
+
+
 	unsigned int determined_size;
 	int determined_nb;
 	/* We first get the state of the route */
@@ -1391,7 +1391,7 @@ void sctk_ibuf_rdma_check_remote ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *r
 				{
 					/* Compute the next slots values */
 					unsigned int next_size;
-					int next_nb, previous_size, previous_nb;
+					int next_nb;
 					/* Reset the counter */
 					OPA_store_int ( &remote->rdma.miss_nb, 0 );
 
@@ -1915,8 +1915,7 @@ size_t sctk_ibuf_rdma_remote_disconnect ( sctk_ib_rail_info_t *rail_ib )
 			if ( region->channel == ( RDMA_CHANNEL | RECV_CHANNEL ) )
 			{
 				/* Change the state to 'requesting' */
-				sctk_endpoint_state_t ret =
-				    sctk_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_CONNECTED, STATE_REQUESTING );
+				sctk_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_CONNECTED, STATE_REQUESTING );
 				memory_used = 0;
 			}
 			else

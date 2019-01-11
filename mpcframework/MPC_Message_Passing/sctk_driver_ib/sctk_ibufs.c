@@ -64,7 +64,7 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
 	void *ibuf;
 	sctk_ibuf_t *ibuf_ptr;
 	int i;
-	int free_nb;
+
 
 	/* If this allocation is done during initialization */
 	if ( is_initial_allocation )
@@ -129,8 +129,7 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
 	}
 
 	OPA_add_int ( &node->free_nb, nb_ibufs );
-	
-	free_nb = OPA_load_int ( &node->free_nb );
+
 	node->nb += nb_ibufs;
 
 	sctk_ib_debug ( "Allocation of %d buffers (free_nb:%u got:%u)", nb_ibufs, free_nb, node->nb - free_nb );

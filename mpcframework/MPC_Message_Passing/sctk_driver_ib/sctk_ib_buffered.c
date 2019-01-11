@@ -162,7 +162,7 @@ void sctk_ib_buffered_free_msg ( void *arg )
 {
 	sctk_thread_ptp_message_t *msg = ( sctk_thread_ptp_message_t * ) arg;
 	sctk_ib_buffered_entry_t *entry = NULL;
-	sctk_rail_info_t *rail;
+	__UNUSED__ sctk_rail_info_t *rail;
 
 	entry = msg->tail.ib.buffered.entry;
 	rail = entry->msg.tail.ib.buffered.rail;
@@ -188,7 +188,7 @@ void sctk_ib_buffered_free_msg ( void *arg )
 void sctk_ib_buffered_copy ( sctk_message_to_copy_t *tmp )
 {
 	sctk_ib_buffered_entry_t *entry = NULL;
-	sctk_rail_info_t *rail;
+	__UNUSED__ sctk_rail_info_t *rail;
 	sctk_thread_ptp_message_t *send;
 	sctk_thread_ptp_message_t *recv;
 

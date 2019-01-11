@@ -83,7 +83,7 @@ void sctk_ib_init_remote ( int dest, sctk_rail_info_t *rail, struct sctk_endpoin
 sctk_endpoint_t * sctk_ib_create_remote()
 {
 	sctk_endpoint_t *tmp;
-	sctk_ib_route_info_t *route_ib;
+
 
 	tmp = sctk_malloc ( sizeof ( sctk_endpoint_t ) );
 

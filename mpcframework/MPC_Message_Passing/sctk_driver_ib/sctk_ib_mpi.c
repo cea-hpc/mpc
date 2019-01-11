@@ -468,12 +468,6 @@ static int sctk_network_poll_send ( sctk_rail_info_t *rail, struct ibv_wc *wc )
 /* Count how many times the vp is entered to the polling function. We
  * allow recursive calls to the polling function */
 
-
-static pthread_mutex_t poll_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t  poll_cond = PTHREAD_COND_INITIALIZER;
-static int retry;
-
-
 void sctk_network_poll_all_cq ( sctk_rail_info_t *rail, sctk_ib_polling_t *poll )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -492,7 +486,9 @@ void sctk_network_poll_all_cq ( sctk_rail_info_t *rail, sctk_ib_polling_t *poll 
 
 #ifdef SCTK_IB_CQ_MUTEX
 #if 1
-
+			static pthread_mutex_t poll_mutex = PTHREAD_MUTEX_INITIALIZER;
+			static pthread_cond_t  poll_cond = PTHREAD_COND_INITIALIZER;
+			static int retry;
 			if ( sctk_net_is_mode_hybrid() )
 			{
 				/* The condition must change according if we are in MT or not */
@@ -586,7 +582,7 @@ static void sctk_network_notify_matching_message_ib (  __UNUSED__ sctk_thread_pt
 static void sctk_network_notify_perform_message_ib (  __UNUSED__ int remote_process, __UNUSED__  int remote_task_id,  __UNUSED__ int polling_task_id,  __UNUSED__ int blocking, sctk_rail_info_t *rail )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-	LOAD_CONFIG ( rail_ib );
+
 	struct sctk_ib_polling_s poll;
 
 	int ret;
@@ -623,7 +619,7 @@ __thread int idle_poll_freq = 100;
 static void sctk_network_notify_idle_message_ib ( sctk_rail_info_t *rail )
 {
     sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-    LOAD_CONFIG ( rail_ib );
+
     struct sctk_ib_polling_s poll;
 
     if(rail->state != SCTK_RAIL_ST_ENABLED)
@@ -680,7 +676,7 @@ static void sctk_network_notify_idle_message_ib ( sctk_rail_info_t *rail )
 static void sctk_network_notify_any_source_message_ib ( int polling_task_id, __UNUSED__ int blocking, sctk_rail_info_t *rail )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-	LOAD_CONFIG ( rail_ib );
+
 	struct sctk_ib_polling_s poll;
 
 	{
@@ -740,9 +736,8 @@ int sctk_send_message_from_network_mpi_ib ( sctk_thread_ptp_message_t *msg )
 }
 
 
-void sctk_connect_on_demand_mpi_ib( struct sctk_rail_info_s * rail , int dest )
+void sctk_connect_on_demand_mpi_ib( __UNUSED__ struct sctk_rail_info_s * rail , __UNUSED__ int dest )
 {
-	sctk_endpoint_t * new_endpoint = sctk_on_demand_connection_ib ( rail, dest );
         /* add_dynamic_route() is not necessary here, as its is done
          * by the IB handshake protocol deeply in the function above */
 }
@@ -764,10 +759,9 @@ void sctk_network_initialize_leader_task_mpi_ib ( sctk_rail_info_t *rail )
 	LOAD_CONFIG ( rail_ib );
 	LOAD_DEVICE ( rail_ib );
 	struct ibv_srq_attr mod_attr;
-	int rc;
+
 	mod_attr.srq_limit  = config->srq_credit_thread_limit;
-	rc = ibv_modify_srq ( device->srq, &mod_attr, IBV_SRQ_LIMIT );
-	ib_assume ( rc == 0 );
+	ibv_modify_srq ( device->srq, &mod_attr, IBV_SRQ_LIMIT );
 }
 
 void sctk_network_initialize_task_mpi_ib ( sctk_rail_info_t *rail, int taskid, int vp )
@@ -816,7 +810,7 @@ void sctk_network_finalize_mpi_ib( sctk_rail_info_t *rail)
 {
 	sctk_network_set_ib_unused();
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-	LOAD_CONFIG (rail_ib);
+
 	LOAD_DEVICE(rail_ib);
 
 	/* Clear the QPs                                              */
@@ -851,8 +845,6 @@ void sctk_network_finalize_mpi_ib( sctk_rail_info_t *rail)
 	/* - close IB device struct (sctk_ib_device_init)             */
 	sctk_ib_device_close(&rail->network.ib);
 
-	/* - Reset ib config struct (sctk_ib_config_init)             */
-	config = NULL;
 
 	memset((void *)vps_reset, 0, sizeof(char) * sctk_get_cpu_number());
 
@@ -867,7 +859,6 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 
 	/* Retrieve config pointers */
 	struct sctk_runtime_config_struct_net_rail *rail_config = rail->runtime_config_rail;
-	struct sctk_runtime_config_struct_net_driver_config *driver_config = rail->runtime_config_driver_config;
 
 	/* init the first time the rail is enabled */
 	if(!vps_reset)
@@ -929,7 +920,6 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	sctk_ib_topology_init_task ( rail, sctk_thread_get_vp() );
 	
 	/* Initialize network */
-	int init_cpu = sctk_get_cpu();
         sprintf(network_name, "IB-MT - %dx %s (%d Gb/s)", device->link_width,device->link_rate, device->data_rate);
 
 #ifdef IB_DEBUG

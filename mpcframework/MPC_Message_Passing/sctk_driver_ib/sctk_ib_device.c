@@ -89,7 +89,7 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, cha
 	char *link_rate_string = "unknown";
 	int link_rate = -1;
 	int data_rate = -1;
-	int i;
+
 	
 	int device_id = 0;
 	
