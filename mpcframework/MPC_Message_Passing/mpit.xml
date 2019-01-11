@@ -4,7 +4,7 @@
 			<cvar>
 				<name>IB_EAGER_THRESH</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_INT</datatype>
+				<datatype>MPI_UNSIGNED_LONG</datatype>
 				<desc>This is the eager threshold to apply to the IB rails</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>
@@ -20,7 +20,7 @@
 			<cvar>
 				<name>IB_BUFFERED_THRESH</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_INT</datatype>
+				<datatype>MPI_UNSIGNED_LONG</datatype>
 				<desc>Max size for using the Buffered protocol (message split into several Eager messages).</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>
@@ -76,7 +76,7 @@
 			<cvar>
 				<name>IB_MAX_INLINE</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_INT</datatype>
+				<datatype>MPI_UNSIGNED_LONG</datatype>
 				<desc>Max size for inlining messages</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>

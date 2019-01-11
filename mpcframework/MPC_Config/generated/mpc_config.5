@@ -747,11 +747,11 @@ Type is int. Default value is 0.
 .Pp verbose_level
 Defines the verbose level of the Infiniband interface .
 .It Cm eager_limit
-Type is size. Default value is 12288. 
+Type is size. Default value is 12KB. 
 .Pp eager_limit
 Size of the eager buffers (short messages).
 .It Cm buffered_limit
-Type is size. Default value is 262114. 
+Type is size. Default value is 26KB. 
 .Pp buffered_limit
 Max size for using the Buffered protocol (message split into several Eager messages).
 .It Cm qp_tx_depth
@@ -779,7 +779,7 @@ Type is int. Default value is 4.
 .Pp max_sg_rq
 Max pending RDMA operations for recv
 .It Cm max_inline
-Type is size. Default value is 128. 
+Type is size. Default value is 128B. 
 .Pp max_inline
 Max size for inlining messages
 .It Cm rdma_resizing
@@ -819,7 +819,7 @@ Type is int. Default value is 100.
 .Pp srq_credit_thread_limit
 Min number of free recv Eager buffers before the activation of the asynchronous thread. If this thread is activated too many times, the performance may be decreased.
 .It Cm size_ibufs_chunk
-Type is size. Default value is 100. 
+Type is int. Default value is 100. 
 .Pp size_ibufs_chunk
 Number of new buffers allocated when no more buffers are available.
 .It Cm init_mr
@@ -857,11 +857,11 @@ Default value is IBV_RDVZ_WRITE_PROTOCOL.
 .Pp rdvz_protocol
 Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)
 .It Cm rdma_min_size
-Type is size. Default value is 1024. 
+Type is size. Default value is 1KB. 
 .Pp rdma_min_size
 Defines the minimum size for the Eager RDMA buffers
 .It Cm rdma_max_size
-Type is size. Default value is 4096. 
+Type is size. Default value is 4KB. 
 .Pp rdma_max_size
 Defines the maximun size for the Eager RDMA buffers
 .It Cm rdma_min_nb
@@ -873,11 +873,11 @@ Type is int. Default value is 32.
 .Pp rdma_max_nb
 Defines the maximum number of Eager RDMA buffers
 .It Cm rdma_resizing_min_size
-Type is size. Default value is 1024. 
+Type is size. Default value is 1KB. 
 .Pp rdma_resizing_min_size
 Defines the minimum size for the Eager RDMA buffers (resizing)
 .It Cm rdma_resizing_max_size
-Type is size. Default value is 4096. 
+Type is size. Default value is 4KB. 
 .Pp rdma_resizing_max_size
 Defines the maximum size for the Eager RDMA buffers (resizing)
 .It Cm rdma_resizing_min_nb

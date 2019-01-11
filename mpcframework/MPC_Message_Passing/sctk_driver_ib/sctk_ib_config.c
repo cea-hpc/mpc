@@ -94,7 +94,7 @@ void sctk_ib_config_print ( sctk_ib_rail_info_t *rail_ib )
 		          "init_recv_ibufs        = %d\n"
 		          "max_srq_ibufs_posted    = %d\n"
 		          "max_srq_ibufs    = %d\n"
-		          "size_ibufs_chunk = %ld\n"
+		          "size_ibufs_chunk = %d\n"
 		          "size_recv_ibufs_chunk = %d\n"
 		          "srq_credit_limit = %d\n"
 		          "srq_credit_thread_limit = %d\n"

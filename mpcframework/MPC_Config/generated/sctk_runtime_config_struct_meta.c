@@ -313,7 +313,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 				"IB_SRQ_CREDIT_LIMIT"
 			, NULL},	{"srq_credit_thread_limit"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,srq_credit_thread_limit)  , sizeof(int) , "int" , NULL , 
 				"IB_SRQ_CREDIT_LIMIT_THREAD"
-			, NULL},	{"size_ibufs_chunk"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,size_ibufs_chunk)  , sizeof(size_t) , "size_t" , NULL , 
+			, NULL},	{"size_ibufs_chunk"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,size_ibufs_chunk)  , sizeof(int) , "int" , NULL , 
 				"IB_IBUF_CHUNK"
 			, NULL},	{"init_mr"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,init_mr)  , sizeof(int) , "int" , NULL , 
 				"IB_MMU_INIT"

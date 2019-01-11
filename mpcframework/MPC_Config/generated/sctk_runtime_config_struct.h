@@ -421,7 +421,7 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	/**Min number of free recv Eager buffers before the activation of the asynchronous thread. If this thread is activated too many times, the performance may be decreased.**/
 	int srq_credit_thread_limit;
 	/**Number of new buffers allocated when no more buffers are available.**/
-	size_t size_ibufs_chunk;
+	int size_ibufs_chunk;
 	/**Number of MMU entries allocated during the MPC initlization.**/
 	int init_mr;
 	/**Defines if the steal in MPI is allowed **/

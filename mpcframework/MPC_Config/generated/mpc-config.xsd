@@ -556,13 +556,7 @@
       <xs:element minOccurs="0" name="max_srq_ibufs" type="xs:integer"/>
       <xs:element minOccurs="0" name="srq_credit_limit" type="xs:integer"/>
       <xs:element minOccurs="0" name="srq_credit_thread_limit" type="xs:integer"/>
-      <xs:element minOccurs="0" name="size_ibufs_chunk">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
+      <xs:element minOccurs="0" name="size_ibufs_chunk" type="xs:integer"/>
       <xs:element minOccurs="0" name="init_mr" type="xs:integer"/>
       <xs:element minOccurs="0" name="steal" type="xs:integer"/>
       <xs:element minOccurs="0" name="quiet_crash" type="xs:integer"/>
