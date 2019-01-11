@@ -818,10 +818,9 @@ int sctk_futex_WAKE_BITSET(void *addr1, int op, int val1, int val3 )
 
 void sctk_futex_WAKE_OP_decode( int val3, int * op, int * cmp, int * oparg )
 {
-	int opcode, cmpcode, opargcode, cmpargcode;
+	int opcode, opargcode, cmpargcode;
 
 	opcode = (val3 >> 28 ) & 0xf;
-	cmpcode = (val3 >> 24 ) & 0xf;
 	opargcode = (val3 >> 12 ) & 0xfff;
 	cmpargcode = val3 & 0xfff;
 	
@@ -842,7 +841,7 @@ void sctk_futex_WAKE_OP_decode( int val3, int * op, int * cmp, int * oparg )
 
 int sctk_futex_WAKE_OP_do_op( int oldval, int val3 )
 {
-	int op, cmp, oparg, cmparg;
+	int op, cmp, oparg;
 	
 	sctk_futex_WAKE_OP_decode( val3, &op, &cmp, &oparg );
 	
@@ -872,7 +871,7 @@ int sctk_futex_WAKE_OP_do_op( int oldval, int val3 )
 
 int sctk_futex_WAKE_OP_do_cmp( int oldval, int val3 )
 {
-	int op, cmp, oparg, cmparg;
+	int op, cmp, oparg;
 	
 	sctk_futex_WAKE_OP_decode( val3, &op, &cmp, &oparg );
 	

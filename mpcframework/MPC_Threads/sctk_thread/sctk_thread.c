@@ -827,7 +827,6 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
         /* get os ind */
         int master = sctk_get_cpu_compute_node_topology();
         sctk_spinlock_lock(&lock_graphic);
-        int min_index[3] = {0,0,0};
         /* fill file to communicate between process of the same compute node */
         create_placement_rendering(master, master, tmp->task_id);     
         sctk_spinlock_unlock(&lock_graphic);
@@ -2358,28 +2357,28 @@ int sctk_get_init_vp_and_nbvp_numa_packed(int i, int *nbVp) {
 
   /*   int rank_in_node; */
   // declaration
-  int slot_size;
-  int task_nb;
+
+
   int proc;
-  int first;
-  int last;
+
+
   int cpu_nb;
-  int total_tasks_number;
-  int cpu_per_task;
-  int j;
+
+
+
 
   int nb_numa_node_per_node;
-  int nb_cpu_per_numa_node;
-  int nb_task_per_numa_node;
+
+
 
   // initialization
   cpu_nb = sctk_get_cpu_number(); // number of cpu per process
-  total_tasks_number = sctk_get_total_tasks_number();
+
 
   nb_numa_node_per_node =
       sctk_get_numa_node_number(); // number of numa nodes in the node
-  nb_cpu_per_numa_node =
-      cpu_nb / nb_numa_node_per_node; // number of cores per numa nodes
+
+
 
   // config
   int T = sctk_last_local - sctk_first_local + 1; // number of task per node
@@ -2622,7 +2621,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	sctk_thread_t migration_thread;
 	sctk_thread_attr_t migration_thread_attr;
 #endif
-	FILE *file;
+
 	struct _sctk_thread_cleanup_buffer *ptr_cleanup;
         /*	char name[SCTK_MAX_FILENAME_SIZE]; */
         sctk_thread_t *threads = NULL;
@@ -2716,10 +2715,8 @@ sctk_start_func (void *(*run) (void *), void *arg)
 		   (getenv("SCTK_NB_MIC") != NULL))
 		{
 			int node_rank,process_on_node_rank,process_on_node_number;
-			int host_number, mic_nb_task, host_nb_task;
+			int host_nb_task;
 
-			host_number = (getenv("SCTK_NB_HOST") != NULL) ? atoi(getenv("SCTK_NB_HOST")) : 0;
-			mic_nb_task = (getenv("SCTK_MIC_NB_TASK") != NULL) ? atoi(getenv("SCTK_MIC_NB_TASK")) : 0;
 			host_nb_task = (getenv("SCTK_HOST_NB_TASK") != NULL) ? atoi(getenv("SCTK_HOST_NB_TASK")) : 0;
 			
 #ifdef MPC_Message_Passing
@@ -2729,6 +2726,9 @@ sctk_start_func (void *(*run) (void *), void *arg)
 #endif
 			
 			#if __MIC__
+        int host_number, mic_nb_task;
+        host_number = (getenv("SCTK_NB_HOST") != NULL) ? atoi(getenv("SCTK_NB_HOST")) : 0;
+        mic_nb_task = (getenv("SCTK_MIC_NB_TASK") != NULL) ? atoi(getenv("SCTK_MIC_NB_TASK")) : 0;
 				local_threads = mic_nb_task/process_on_node_number;
 				if ((mic_nb_task % process_on_node_number) > process_on_node_rank)
 				{

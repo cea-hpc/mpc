@@ -188,7 +188,6 @@ sctk_ethread_mxn_sched_restore (sctk_thread_t thread, char *type, int vp)
 {
   struct sctk_alloc_chain *tls;
   sctk_ethread_virtual_processor_t *cpu;
-  char name[SCTK_MAX_FILENAME_SIZE];
   sctk_nodebug ("Try to restore %p on vp %d", thread, vp);
   __sctk_restore_tls (&tls, type);
   sctk_nodebug ("Try to restore %p on vp %d DONE", thread, vp);
@@ -221,12 +220,13 @@ sctk_ethread_mxn_sched_restore (sctk_thread_t thread, char *type, int vp)
 static int
 sctk_ethread_mxn_sched_dump_clean ()
 {
+  /*
   sctk_ethread_t self;
   char name[SCTK_MAX_FILENAME_SIZE];
   unsigned long step = 0;
   FILE *file;
   self = sctk_ethread_mxn_self ();
-
+  */
 /*   sprintf (name, "%s/task_%p_%lu", sctk_store_dir, self, step); */
 /*   file = fopen (name, "r"); */
 /*   while (file != NULL) */

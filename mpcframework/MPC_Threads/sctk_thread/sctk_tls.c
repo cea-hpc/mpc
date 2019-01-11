@@ -154,7 +154,7 @@ int sctk_load_proc_self_maps()
 	
 	FILE * self = fopen("/proc/self/maps" ,"r");
 	
-	size_t ret = fread(maps, 1, 4 * 1024 * 1024 , self);
+	fread(maps, 1, 4 * 1024 * 1024 , self);
 	
 	//printf("READ %d\n", ret );
 	
@@ -163,7 +163,7 @@ int sctk_load_proc_self_maps()
 	
 	int cont = 1;
 	
-	unsigned long begin, end, size, inode;
+	unsigned long begin, end, inode;
 	char skip[50], perm[5], dev[50], dsoname[500];
 	
 	do
@@ -426,7 +426,7 @@ void sctk_tls_dtors_add(struct sctk_tls_dtors_s ** head, void * obj, void (*func
 void sctk_tls_dtors_free(struct sctk_tls_dtors_s ** head)
 {
 	struct sctk_tls_dtors_s* elt = NULL, *tmp = NULL;
-	int count = 0;
+
 	
 	LL_FOREACH_SAFE(*head, elt, tmp)
 	{

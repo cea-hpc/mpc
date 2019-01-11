@@ -927,7 +927,7 @@ long mpc_thread_futex_with_vaargs(int sysop, ...)
 {
     va_list ap;
     void* addr1, *addr2;
-    int i, op, val1, val2;
+    int op, val1, val2;
     struct timespec *timeout;
 
     va_start(ap, sysop);

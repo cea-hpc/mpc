@@ -158,7 +158,6 @@ static int
 sctk_ethread_sched_restore (sctk_thread_t thread, char *type, int vp)
 {
   struct sctk_alloc_chain *tls;
-  char name[SCTK_MAX_FILENAME_SIZE];
 
   assume (vp == 0);
 
@@ -180,37 +179,12 @@ sctk_ethread_sched_restore (sctk_thread_t thread, char *type, int vp)
   /*Place in ready queue */
   sctk_ethread_enqueue_task (&virtual_processor, thread);
 
-  /*Free migration request */
-/*   sprintf (name, "%s/mig_task", sctk_store_dir); */
-/*   if (strncmp (type, name, strlen (name)) == 0) */
-/*     { */
-/*       sctk_nodebug ("Remove %p %s", thread, type); */
-/*       remove (type); */
-/*       sctk_ethread_sched_yield (); */
-/*     } */
+
   return 0;
 }
 static int
 sctk_ethread_sched_dump_clean ()
 {
-  sctk_ethread_t self;
-  char name[SCTK_MAX_FILENAME_SIZE];
-  unsigned long step = 0;
-  FILE *file;
-  self = sctk_ethread_self ();
-
-/*   sprintf (name, "%s/task_%p_%lu", sctk_store_dir, self, step); */
-/*   file = fopen (name, "r"); */
-/*   while (file != NULL) */
-/*     { */
-/*       fclose (file); */
-/*       sctk_nodebug ("Clean file %s", name); */
-/*       remove (name); */
-/*       step++; */
-/*       sprintf (name, "%s/task_%p_%lu", sctk_store_dir, self, step); */
-/*       file = fopen (name, "r"); */
-/*     } */
-
   return 0;
 }
 

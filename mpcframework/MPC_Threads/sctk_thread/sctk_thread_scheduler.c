@@ -69,11 +69,10 @@ static void sctk_thread_generic_scheduler_bind_to_cpu (int core){
 }
 
 static void* sctk_thread_generic_scheduler_idle_task(sctk_thread_generic_scheduler_task_t* arg){
-  int core;
+
   sctk_thread_generic_p_t p_th;
   sctk_thread_generic_t th;
   sctk_thread_generic_attr_t attr;
-  core = arg->core;
   if(arg->core >= 0){
     sctk_thread_generic_scheduler_bind_to_cpu (arg->core);
   }
@@ -398,7 +397,7 @@ static sctk_thread_generic_scheduler_t* sctk_multiple_queues_get_from_list(){
   // sctk_spinlock_unlock(&debug_lock);
 
   // hmt
-  int i;
+
   char hostname[128];
   gethostname(hostname, 128);
 
@@ -1028,10 +1027,11 @@ void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_inc
     sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[bind_to]
                               .sctk_multiple_queues_sched_list_lock);
 
-    sctk_thread_generic_scheduler_t *sched;
-    sched = &(sctk_thread_generic_self()->sched);
+
 #ifdef SCTK_DEBUG_SCHEDULER
     {
+      sctk_thread_generic_scheduler_t *sched;
+      sched = &(sctk_thread_generic_self()->sched);
       char hostname[128];
       char hostname2[128];
       char current_vp[5];
@@ -1076,10 +1076,10 @@ void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_dec
         sctk_runtime_config_get()
             ->modules.scheduler.task_polling_thread_basic_priority_step;
 
-    sctk_thread_generic_scheduler_t *sched;
-    sched = &(sctk_thread_generic_self()->sched);
 #ifdef SCTK_DEBUG_SCHEDULER
     {
+      sctk_thread_generic_scheduler_t *sched;
+      sched = &(sctk_thread_generic_self()->sched);
       char hostname[128];
       char hostname2[128];
       char current_vp[5];
@@ -1278,11 +1278,12 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old() {
   core = core_id;
   assert(core >= 0);
 
-  sctk_thread_generic_scheduler_t *sched;
-  sched = &(sctk_thread_generic_self()->sched);
+
 
 #ifdef SCTK_DEBUG_SCHEDULER
   {
+  sctk_thread_generic_scheduler_t *sched;
+  sched = &(sctk_thread_generic_self()->sched);
     char hostname[128];
     char hostname2[128];
     char current_vp[5];
@@ -1880,7 +1881,7 @@ static void sctk_generic_sched_yield_intern(
 
   // next thread to schedule
   sctk_thread_generic_scheduler_t *next;
-  int have_spinlock_registered = 0;
+
 
   // bypass get_from_list ?
   if (vp_data.swap_to_sched != NULL) {
@@ -2105,7 +2106,7 @@ quick_swap:
       if (vp_data.sctk_generic_delegated_spinlock != NULL) {
         sched->generic.is_idle_mode = 1;
 
-        have_spinlock_registered = 1;
+
         assume(vp_data.registered_spin_unlock == NULL);
 
         sctk_nodebug("REGISTER delegated IDLE %p", sched);

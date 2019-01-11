@@ -1964,14 +1964,13 @@ sctk_thread_generic_exit( void* retval ){
 void sctk_thread_generic_handle_zombies(
     sctk_thread_generic_scheduler_generic_t *th) {
   sctk_thread_generic_scheduler_generic_t* schedg = th;
-  sctk_thread_generic_p_t* p_th = schedg->sched->th;
+
 
   sctk_nodebug("th %p to be freed",th->sched->th);
   if( schedg->sched->th->attr.user_stack == NULL )
 	sctk_free( schedg->sched->th->attr.stack );
   sctk_free( schedg->sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table );
   sctk_free( schedg->sched->th );
-  p_th = NULL;
 }
 
 /***************************************/
