@@ -47,7 +47,7 @@
 /* Macros for configuration                                         */
 /********************************************************************/
 /* Reentrance enabled */
-#ifdef SCTK_PROCESS_MODE
+#if 0
 #define SCTK_DISABLE_REENTRANCE
 #endif
 
