@@ -594,7 +594,6 @@ int sctk_net_set_mode_hybrid ()
 /* Memory Allocator                                                 */
 /********************************************************************/
 
-TODO ( "The following value MUST be determined dynamically!!" )
 #define IB_MEM_THRESHOLD_ALIGNED_SIZE (256*1024) /* RDMA threshold */
 #define IB_MEM_ALIGNMENT        (4096) /* Page size */
 

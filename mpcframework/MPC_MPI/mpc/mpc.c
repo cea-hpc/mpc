@@ -1197,11 +1197,6 @@ MPC_CREATE_INTERN_FUNC(MAXLOC);
       !sctk_datatype_is_struct_datatype(datatype))                             \
     MPC_ERROR_REPORT(comm, MPC_ERR_TYPE, "");
 
-TODO("To optimize")
-/* #define mpc_check_comm(com,comm)		\ */
-/*   if(sctk_thread_getspecific_mpc_per_comm(__MPC_get_task_specific (),com) ==
- * NULL)	\ */
-/*     MPC_ERROR_REPORT(comm,MPC_ERR_COMM,"") */
 #define mpc_check_comm(com, comm)                                              \
   if (com < 0)                                                                 \
   MPC_ERROR_REPORT(comm, MPC_ERR_COMM, "")
