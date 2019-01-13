@@ -425,7 +425,6 @@ for arg in "$@" ; do
     if [ "$SCTK_DEBUG_MESSAGES_DISABLED" -eq "0" ]; then
       SCTK_DEBUG_MESSAGES="1"
     fi
-    SCTK_CFLAGS="${SCTK_CFLAGS} -Wall -Wextra -Wduplicated-cond -Wlogical-op -Wnull-dereference -Wjump-misses-init -Wdouble-promotion -Wshadow"
     ;;
     --enable-debug-strict)
     SCTK_DEBUG="1"
@@ -792,13 +791,14 @@ end_section
 fi
 
 #Enable debug compiler flags
+DEBUG_CFLAGS="-Wall -Wextra -Wduplicated-cond -Wlogical-op -Wnull-dereference -Wjump-misses-init -Wdouble-promotion -Wshadow"
 if test "$SCTK_DEBUG_STRICT" = "1"; then
 	begin_section "Enabling -Wall -Werror as we are running in strict debug mode"
-	SCTK_CHECK_OPTION "-Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable"
+	SCTK_CHECK_OPTION "$DEBUG_CFLAGS -Werror"
 	end_section
 elif test "$SCTK_DEBUG" = "1" ; then
 	begin_section "Enabling -Wall as we are running in debug mode"
-	SCTK_CHECK_OPTION "-Wall -Wno-unused-variable -Wno-unused-but-set-variable"
+	SCTK_CHECK_OPTION "$DEBUG_CFLAGS"
 	end_section
 fi
 
