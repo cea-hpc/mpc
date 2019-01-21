@@ -14,7 +14,7 @@ build_job:
   - echo "mkdir /dev/shm/${CI_PIPELINE_ID}_BUILD" >> ./build.sh
   - echo "ln -s /dev/shm/${CI_PIPELINE_ID}_BUILD BUILD" >> ./build.sh
   - echo "cd ./BUILD/" >> ./build.sh
-  - echo "${CI_PROJECT_DIR}/installmpc --prefix=$HOME/mpc_tmp_builds/$CI_PIPELINE_ID -j4 --mpc-option='--enable-debug'; rm -fr /dev/shm/${CI_PIPELINE_ID}_BUILD/" >> ./build.sh
+  - echo "${CI_PROJECT_DIR}/installmpc --prefix=$HOME/mpc_tmp_builds/$CI_PIPELINE_ID -j4 --mpc-option='--with-slurm --enable-debug'; rm -fr /dev/shm/${CI_PIPELINE_ID}_BUILD/" >> ./build.sh
   - chmod +x ./build.sh
   - srun -N 1 -c 8 ./build.sh
 
