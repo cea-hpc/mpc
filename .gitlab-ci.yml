@@ -22,27 +22,27 @@ build_job:
 simple:
   stage: test_simple
   script:
-  - srun -N1 -c 8 $HOME/run_valid.sh ${CI_PROJECT_DIR}/MPC_Test_Suite/ $HOME/mpc_tmp_builds/$CI_PIPELINE_ID/ ./simple
+  - $HOME/run_valid.sh ${CI_PROJECT_DIR}/MPC_Test_Suite/ $HOME/mpc_tmp_builds/$CI_PIPELINE_ID/ ./simple
 
 privatization:
   stage: test
   script:
-  - srun -N1 -c 8 $HOME/run_valid.sh ${CI_PROJECT_DIR}/MPC_Test_Suite/ $HOME/mpc_tmp_builds/$CI_PIPELINE_ID/ ./gcc
+  - $HOME/run_valid.sh ${CI_PROJECT_DIR}/MPC_Test_Suite/ $HOME/mpc_tmp_builds/$CI_PIPELINE_ID/ ./gcc
 
 messagepassing:
   stage: test
   script:
-  - srun -N1 -c 8 $HOME/run_valid.sh ${CI_PROJECT_DIR}/MPC_Test_Suite/ $HOME/mpc_tmp_builds/$CI_PIPELINE_ID/ ./MPI/MessagePassing/
+  - $HOME/run_valid.sh ${CI_PROJECT_DIR}/MPC_Test_Suite/ $HOME/mpc_tmp_builds/$CI_PIPELINE_ID/ ./MPI/MessagePassing/
 
 imb:
   stage: test
   script:
-  - srun -N1 -c 8 $HOME/run_valid.sh ${CI_PROJECT_DIR}/MPC_Test_Suite/ $HOME/mpc_tmp_builds/$CI_PIPELINE_ID/ ./MPI/IMB/check/
+  - $HOME/run_valid.sh ${CI_PROJECT_DIR}/MPC_Test_Suite/ $HOME/mpc_tmp_builds/$CI_PIPELINE_ID/ ./MPI/IMB/check/
 
 mpi:
   stage: test
   script:
-  - srun -N1 -c 8 $HOME/run_valid.sh ${CI_PROJECT_DIR}/MPC_Test_Suite/ $HOME/mpc_tmp_builds/$CI_PIPELINE_ID/ ./MPI/Intel_ANL/communicators
+  - $HOME/run_valid.sh ${CI_PROJECT_DIR}/MPC_Test_Suite/ $HOME/mpc_tmp_builds/$CI_PIPELINE_ID/ ./MPI/Intel_ANL/communicators
 
 cleanup_job:
   stage: cleanup
