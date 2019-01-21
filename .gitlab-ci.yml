@@ -11,6 +11,7 @@ build_job:
   - mkdir -p $HOME/mpc_tmp_builds/$CI_PIPELINE_ID
   - echo "#!/bin/sh" > ./build.sh
   - echo "set -e" >> ./build.sh
+  - echo "rm -fr /dev/shm/${CI_PIPELINE_ID}_BUILD" >> ./build.sh
   - echo "mkdir /dev/shm/${CI_PIPELINE_ID}_BUILD" >> ./build.sh
   - echo "ln -s /dev/shm/${CI_PIPELINE_ID}_BUILD BUILD" >> ./build.sh
   - echo "cd ./BUILD/" >> ./build.sh
