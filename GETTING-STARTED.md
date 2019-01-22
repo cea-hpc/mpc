@@ -1,7 +1,4 @@
-Multi-Processor Computing framework _(MPC version @MPC_VERSION@)_
-=======================================================
-_Getting Started guide_
-=======================
+# Getting Started guide  {#gettingstartedmpc}
 
 Introduction
 ------------
@@ -48,20 +45,20 @@ These steps describe the default installation of MPC with its additional compone
 
 5. Source the *mpcvars* script (located at the root of the MPC installation directory) to update environment variables (e.g., *PATH* and *LD\_LIBRARY\_PATH*). 
         
-        For *csh* and *tcsh*:
+For *csh* and *tcsh*:
 
         $ source $(HOME)/mpc-install/mpcvars.csh
         
-        For *bash* and *sh*:
+For *bash* and *sh*:
 
         $ source $(HOME)/mpc-install/mpcvars.sh
         
-        Check that everything went well at this point by running
-		
-		$ which mpc_cc
+Check that everything went well at this point by running
+
+        $ which mpc_cc
         $ which mpcrun
         
-        If there was no errors, it should display the path of the mpc_cc and mpcrun scripts.
+If there was no errors, it should display the path of the mpc\_cc and mpcrun scripts.
 
 6. To compile your first MPC program, you may execute the mpc\_cc compiler:
 
@@ -75,8 +72,6 @@ These steps describe the default installation of MPC with its additional compone
         $ mpcrun -m=ethread      -p=1 -n=4 hello_world
         $ mpcrun -m=ethread_mxn  -p=1 -n=4 hello_world
         $ mpcrun -m=pthread      -p=1 -n=4 hello_world
-
-See [supported APIs](http://mpc.paratools.com/UsersGuide/SupportedAPIs) for details on the ’-m’ option.
 
 
 Custom Installation
@@ -183,8 +178,8 @@ Mono-process job
 In order to run an MPC job in a single process with Hydra, you should use on of the following methods (depending on the thread type you want to use).
 
         $ mpcrun -m=ethread      -n=4 hello_world
-          $ mpcrun -m=ethread_mxn  -n=4 hello_world
-          $ mpcrun -m=pthread      -n=4 hello_world
+        $ mpcrun -m=ethread_mxn  -n=4 hello_world
+        $ mpcrun -m=pthread      -n=4 hello_world
 
 To use one of the above methods with SLURM, just add *-l=srun* to the command line.
 
@@ -194,8 +189,8 @@ Multi-process job on a single node
 In order to run an MPC job with Hydra in a two-process single-node manner with the shared memory module enabled (SHM), you should use one of the following methods (depending on the thread type you want to use). Note that on a single node, even if the TCP module is explicitly used, MPC automatically uses the SHM module for all process communications.
 
         $ mpcrun -m=ethread      -n=4 -p=2 -net=tcp hello_world
-          $ mpcrun -m=ethread_mxn  -n=4 -p=2 -net=tcp hello_world
-          $ mpcrun -m=pthread      -n=4 -p=2 -net=tcp hello_world
+        $ mpcrun -m=ethread_mxn  -n=4 -p=2 -net=tcp hello_world
+        $ mpcrun -m=pthread      -n=4 -p=2 -net=tcp hello_world
 
 To use one of the above methods with SLURM, just add *-l=srun* to the command line.
 
@@ -208,9 +203,11 @@ Multi-process job on multiple nodes
 
 In order to run an MPC job on two nodes with eight processes communicating with TCP, you should use one of the following methods (depending on the thread type you want to use). Note that on multiple nodes, MPC automatically switches to the MPC SHared Memory module (SHM) when a communication between processes on the same node occurs. This behavior is available with all inter-process communication modules (TCP included).
 
-        $ mpcrun -m=ethread      -n=8 -p=8 -net=tcp -N=2 hello_world
-          $ mpcrun -m=ethread_mxn  -n=8 -p=8 -net=tcp -N=2 hello_world
-          $ mpcrun -m=pthread      -n=8 -p=8 -net=tcp -N=2 hello_world
+```sh
+$ mpcrun -m=ethread      -n=8 -p=8 -net=tcp -N=2 hello_world
+$ mpcrun -m=ethread_mxn  -n=8 -p=8 -net=tcp -N=2 hello_world
+$ mpcrun -m=pthread      -n=8 -p=8 -net=tcp -N=2 hello_world
+```
 
 Of course, this mode supports both MPI and OpenMP standards, enabling the use of hybrid programming. There are different implementations of inter-process communications and launch methods. A call to mpcrun -help detail all the available implementations and launch methods.
 
@@ -223,58 +220,6 @@ In order to execute an MPC job on multile nodes using *Hydra*, you need to provi
 
 See [Using the Hydra Process Manager](https://wiki.mpich.org/mpich/index.php/Using_the_Hydra_Process_Manager) for more information about hydra hosts file.
 
-FAQ
----
-
-###Q - How can I execute Fortan program on MPC ?
-
-* First, be sure that you don't have disabled the fortran support (*--disable-fortran* of the MPC configure).
-* Second, rename your main fortran function by *subroutine mpc\_user\_main*. For example, change *<<program main\_program>>* by *<<subroutine mpc\_user\_main>>*. Now, you can execute your fortran program using the *mpcrun* command.
-
-###Q - How can I disable the MPC SHared Memory module (*SHM*) ?
-> The *SHM* module is enabled by default. To disable it, pass the argument *--disable-shm* to the MPC configure. Don't forget to recompile MPC.
-
-###Q - Can I tune the MPC SHared Memory module (*SHM*) according to my needs ?
-> You need to edit the file located there : 
-
-        mpc/MPC_Message_Passing/sctk_low\level_comm/sctk_shm_consts.h
-
-> In this file, you can modify the number of cells in each queue (PTP queues, collective queues,etc...) as well as the size allocated by each cell. Don't forget to recompile MPC after each modification.
-
-###Q - Why is my MPI program crashing when I use the MPC compilers?
-> In MPC, every MPI task is a thread and thus all tasks share global variables with each other. This sharing can cause undefined behavior, so we propose several solutions to ease the removal of global variables:
-
-* Use the compiler option *-fmpc-privatize* to automatically privatize the global variables. In this mode, every global variable is duplicated for every MPI task such as the code can run correctly with MPC. Note than in versions older than 2.4.0, the application has to be compiled as a dynamic library for this solution to work.
-
-* Use the option *-Wmpc* with the patched GCC compiler to generate warnings. In this mode, the compiler will warn you about every global variable declared in the program.
-
-###Q - When compiling, I have the error undefined reference to *mpc\_user\_main\_\_*
-> The file containing your *main* should include *mpi.h* or *mpc.h*.
-
-###Q - Why won't HDF5 compile with MPC?
-> MPI-IO is not yet supported.  MPC supports the MPI 1.3 standard, but MPI-IO was added in the MPI 2.0 standard.
-
-Publications
-------------
-1. S. Didelot, P. Carribault, M. Pérache, and W. Jalby, "Improving MPI Communication Overlap With Collaborative Polling," *in European MPI Users Group Meeting (EUROMPI’12)*, 2012. [View PDF](http://mpc.paratools.com/Documentation?action=AttachFile&do=view&target=DidCarPerJal_EuroMPI2012_LNCS.pdf)
-
-1. A. Mahéo, S. Koliaï, P. Carribauilt, M. Pérache, and W. Jalby. "Adaptive OpenMP for Large NUMA Nodes," *in International Workshop on OpenMP (IWOMP’12)*, 2012. [View PDF](http://mpc.paratools.com/Documentation?action=AttachFile&do=view&target=MahKolCarPerJal_IWOMP2012.pdf)
-
-1. M. Tchiboukdjian, P. Carribault, and M. Pérache, "Hierarchical Local Storage: Exploiting Flexible User-Data Sharing Between MPI Tasks," *in IEEE International Parallel and Distributed Processing (IPDPS’12)*, 2012. [View PDF](http://mpc.paratools.com/Documentation?action=AttachFile&do=view&target=TchCarPer_IPDPS2012.pdf)
-
-1. P. Carribault, M. Pérache, and H. Jourdren, "Thread-Local Storage Extension to Support Thread-Based MPI/OpenMP Applications," *in International Workshop on OpenMP (IWOMP'11)*, 2011. [View PDF](http://mpc.paratools.com/Documentation?action=AttachFile&do=view&target=CarPerJou_IWOMP2011_LNCS.pdf)
-
-1. K. Pouget, M. Pérache, P. Carribault, and H. Jourdren, "User Level DB: a Debugging API for User-Level Thread Libraries," *in Workshop on Multithreaded Architectures and Applications (MTAAP'10)*, 2010. [View PDF](http://mpc.paratools.com/Documentation?action=AttachFile&do=view&target=PouPerCarJou10MTAAP.pdf)
-
-1. P. Carribault, M. Pérache, and H. Jourdren, "Enabling low-overhead hybrid MPI/OpenMP parallelism with MPC," *in International workshop on OpenMP (IWOMP’10)*, 2010. [View PDF](http://mpc.paratools.com/Documentation?action=AttachFile&do=view&target=CarPerJou_IWOMP2010_LNCS.pdf)
-
-1. M. Pérache, P. Carribault, and H. Jourdren, "MPC-MPI: An MPI Implementation Reducing the Overall Memory Consumption," *in 16th european PVM/MPI users group meeting (EuroPVM/MPI 2009)*, 2009. [View PDF](http://mpc.paratools.com/Documentation?action=AttachFile&do=view&target=PerCarJou09EuroPVMMPI.pdf)
-
-1. M. Pérache, H. Jourdren, and R. Namyst, "MPC: a unified parallel runtime for clusters of NUMA machines," *in Proceedings of the 14th international EURO-PAR conference (EURO-PAR 2008)*, 2008. [View PDF](http://mpc.paratools.com/Documentation?action=AttachFile&do=view&target=PerJouNam08EuroPar.pdf)
-
-News Article
-------------
-[CEA Ports the MPC Framework on Intel MIC Architure](http://archive.hpcwire.com/hpcwire/2011-10-07/cea_ports_the_mpc_framework_on_intel_mic_architecture.html)
 
 Contacts
 --------

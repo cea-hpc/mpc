@@ -1,6 +1,13 @@
 Multi-Processor Computing (MPC) Framework Documentation
 =======================================================
 
+How to Install MPC
+------------------
+
+You may refer to the short installation guide [here](@ref installmpc)
+A longer version of this guide is also provided as a [Getting Started](@ref gettingstartedmpc).
+
+
 Introduction
 ------------
 
@@ -19,6 +26,7 @@ MPC conforms to three standards :
 All these standards can be mixed together in an efficient way, thanks to process
 virtualization. MPC has been ported on x86, x86_64 with Linux and OpenSolaris
 systems and supports TCP and InfiniBand interconnects.
+
 
 Features
 --------
@@ -103,18 +111,6 @@ InfiniBand interconnect. MPC provides performances close to MPICH2 or OpenMPI,
 but with a much better support of hybrid programming models (e.g., MPI/PThreads,
 MPI/OpenMP, …) and lower memory consumption.\cite{perache2008mpc}
 
-
-Installation Guide
-------------------
-
-To avoid documentation duplication, please refer to our dedicated MD file
-available [here][INSTALL_MD]
-
-Getting Started
----------------
-As previously said, "Getting Started" guide is provided as external resource and
-is available [here][GETTING-STARTED_MD]
-
 Credits
 -------
 The MPC framework is developed by the *Commissariat à l'Energie Atomique et aux
@@ -129,6 +125,4 @@ available [here][MAINTAINERS_MD]
 [MPI_LNK]: http://www.mpi-forum.org/docs/mpi-1.3/mpi-report-1.3-2008-05-30.pdf "MPI 1.3 Standard"
 [CEA_LNK]: http://www.cea.fr/english-portal/ "CEA Home Page"
 
-[INSTALL_MD]: ../../../INSTALL
-[GETTING-STARTED_MD]: ../../../GETTING-STARTED
 [MAINTAINERS_MD]: ../../../MAINTAINERS
