@@ -46,6 +46,8 @@ mpi:
 
 cleanup_job:
   stage: cleanup
+  when: always
   script:
+  - scancel -u $USER
   - rm -fr $HOME/mpc_tmp_builds/$CI_PIPELINE_ID
   - rm -fr /dev/shm/${CI_PIPELINE_ID}_BUILD
