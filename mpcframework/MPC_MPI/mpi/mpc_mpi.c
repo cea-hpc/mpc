@@ -8673,7 +8673,6 @@ int __INTERNAL__PMPI_Alltoallv_intra(void *sendbuf, int *sendcnts, int *sdispls,
     sdispls = rdispls;
     d_send = d_recv;
     size_t to_cpy = 0;
-    int i;
     for (i = 0; i < size; i++) {
       to_cpy +=d_recv*rdispls[i];
     }
@@ -10311,9 +10310,8 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute(
 
 static inline int
 __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *recvbuf, int count,
-		MPI_Datatype datatype, MPI_Op op,
-		int root, MPI_Comm comm, MPC_Op mpc_op,
-		sctk_op_t *mpi_op, int size, int rank) {
+		MPI_Datatype datatype,
+		int root, MPI_Comm comm, MPC_Op mpc_op, int size, int rank) {
 	int res;
 
     /* Temporary buffers for LC & RC contributions */
@@ -10967,7 +10965,7 @@ __INTERNAL__PMPI_Reduce_intra (void *sendbuf, void *recvbuf, int count,
             }
           } else {
             res = __INTERNAL__PMPI_Reduce_derived_commute(
-                sendbuf, recvbuf, count, datatype, op, root, comm, mpc_op, mpi_op, size, rank);
+                sendbuf, recvbuf, count, datatype, root, comm, mpc_op, size, rank);
             if (res != MPI_SUCCESS) {
               return res;
             }
@@ -20911,9 +20909,9 @@ int PMPI_File_call_errhandler(__UNUSED__ void * fh, __UNUSED__  int  errorcode){
 
 
 /* FORTRAN TYPE */
-int PMPI_Type_create_f90_complex(int precision, int range, MPI_Datatype *newtype){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Type_create_f90_integer(int range, MPI_Datatype *newtype){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Type_create_f90_real(int precision, int range, MPI_Datatype *newtype){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Type_create_f90_complex( __UNUSED__ int precision,  __UNUSED__ int range,  __UNUSED__ MPI_Datatype *newtype){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Type_create_f90_integer( __UNUSED__ int range,  __UNUSED__ MPI_Datatype *newtype){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Type_create_f90_real( __UNUSED__ int precision,  __UNUSED__ int range,  __UNUSED__ MPI_Datatype *newtype){not_implemented();return MPI_ERR_INTERN;}
 
 /* MPIX methods */
 int PMPIX_Comm_failure_ack( __UNUSED__  MPI_Comm comm ){not_implemented();return MPI_ERR_INTERN;}
