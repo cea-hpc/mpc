@@ -10347,6 +10347,8 @@ __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *recvbuf, int count,
         if( sendbuf != MPI_IN_PLACE )
           memcpy(tBuffRes, sendbuf, count * dsize);
     }
+    else if(sendbuf == MPI_IN_PLACE)
+	    sendbuf = recvbuf;
 
     /* Calculate new rank when root != 0 */
     if( 0 < root )
