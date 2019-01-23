@@ -294,29 +294,28 @@ void sctk_sendrecv(void *sendbuf, size_t size, int dest, int tag, void *recvbuf,
 /********************************************************************/
 /*Functions                                                         */
 /********************************************************************/
+/*
+static void sctk_show_requests(sctk_request_t* requests, int req_nb) {
 
-/* --> not used
-static void sctk_show_requests(sctk_request_t* request, int req_nb) {
+	int i;
+	for (i=0; i< req_nb; ++i) {
+		sctk_request_t* request = &requests[i];
 
-//  int i;
-//  for (i=0; i< req_nb; ++i) {
-//    sctk_request_t* request = &requests[req_nb];
+		sctk_nodebug("Request %p from %d to %d (glob=from %d to %d type=%d msg=%p)",
+				request,
+				request->header.source,
+				request->header.destination,
+				request->header.source_task,
+				request->header.destination_task,
+				request->request_type,
+				request->msg);
 
-    sctk_nodebug("Request %p from %d to %d (glob=from %d to %d type=%d msg=%p)",
-        request,
-        request->header.source,
-        request->header.destination,
-        request->header.source_task,
-        request->header.destination_task,
-        request->request_type,
-        request->msg);
-
-    if (request->msg) {
-      sctk_nodebug("Ceck in wait: %d %p", request->msg->tail.need_check_in_wait,
-request->msg->tail.request);
-TODO("Fill with infos from the message");
-    }
-//  }
+		if (request->msg) {
+			sctk_nodebug("Ceck in wait: %d %p", request->msg->tail.need_check_in_wait,
+					request->msg->tail.request);
+			TODO("Fill with infos from the message");
+		}
+	}
 }
 */
 
@@ -2511,6 +2510,7 @@ static void sctk_perform_messages_done(struct sctk_perform_messages_s *wait) {
     //    sctk_network_notify_perform_message (remote_process, source_task_id,
     //        request->header.source_task, 0);
   }
+
 }
 
 static inline void _sctk_perform_messages(struct sctk_perform_messages_s *wait);
@@ -2583,7 +2583,9 @@ void sctk_wait_message(sctk_request_t *request) {
       sctk_inter_thread_perform_idle((int *)&(request->completion_flag),
                                      SCTK_MESSAGE_DONE, __MPC_poll_progress, NULL);
   } else {
-    
+    if( request->completion_flag == SCTK_MESSAGE_DONE )
+	    return;
+
     /* Find the PTPs lists */
     sctk_perform_messages_wait_init(&_wait, request, 1);
     sctk_perform_messages_wait_init_request_type(&_wait);

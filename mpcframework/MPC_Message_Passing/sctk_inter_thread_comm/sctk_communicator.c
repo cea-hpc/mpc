@@ -1590,6 +1590,9 @@ sctk_communicator_t sctk_delete_communicator ( const sctk_communicator_t comm )
 			sctk_free ( tmp->local_to_global );
 			sctk_free ( tmp->global_to_local );
 			sctk_free ( tmp->task_to_process );
+			tmp->task_to_process = NULL;
+			tmp->global_to_local = NULL;
+			tmp->local_to_global = NULL;
 			sctk_del_internal_communicator_no_lock_no_check ( comm );
 
                         if (tmp->coll.init_done) {
@@ -2155,7 +2158,6 @@ sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t orig
 				memcpy(dup_task_to_process, tmp->task_to_process, sizeof(int) * tmp->nb_task);
 			}
 
-			sctk_error("DOING DUP for %p\n", dup_task_to_process);
 			tmp->new_comm = new_tmp;
 			sctk_communicator_init_intern_init_only ( tmp->nb_task,
 			                                          tmp->last_local,
