@@ -308,14 +308,14 @@ static void sctk_perform_initialisation (void)
 #endif
 
 #ifdef MPC_Accelerators
-        sctk_accl_init();
+	sctk_accl_init();
 #endif
 
 #ifdef MPC_Fault_Tolerance
 	sctk_ft_init();
 #endif
 
-/* Do not bind in LIB_MODE */
+	/* Do not bind in LIB_MODE */
 #ifndef SCTK_LIB_MODE
 	/* Bind the main thread to the first VP */
 	const unsigned int core = 0;
@@ -329,18 +329,17 @@ static void sctk_perform_initialisation (void)
 	sctk_alloc_posix_mmsrc_numa_init_phase_numa();
 #endif
 
-    // MALP FIX...
-    char *env = NULL;
-    if( (env = getenv( "LD_PRELOAD")) )
-    {
-       env = strdup( env );
-       setenv("LD_PRELOAD", "", 1 );
-    }
+	// MALP FIX...
+	char *env = NULL;
+	if( (env = getenv( "LD_PRELOAD")) )
+	{
+		setenv("LD_PRELOAD", "", 1 );
+	}
 
 	sctk_locate_dynamic_initializers();
 
-    if( env )
-       setenv( "LD_PRELOAD", env, 1 );
+	if( env )
+		setenv( "LD_PRELOAD", env, 1 );
 
 	sctk_thread_init ();
 
@@ -416,31 +415,31 @@ static void sctk_perform_initialisation (void)
 #endif
 
 	/* Start auxiliary polling thread */
-/*
-    pthread_t progress;
-    pthread_create (&progress, NULL, polling_thread, NULL);
-*/
+	/*
+	   pthread_t progress;
+	   pthread_create (&progress, NULL, polling_thread, NULL);
+	   */
 
 	sctk_thread_t progress;
 	sctk_thread_attr_t attr;
 	sctk_thread_attr_init ( &attr );
 	sctk_thread_attr_setscope ( &attr, SCTK_THREAD_SCOPE_SYSTEM );
-	
+
 	sctk_user_thread_create(&progress, &attr, polling_thread, NULL);
 
 
 #ifdef MPC_Message_Passing
 	if (sctk_process_nb_val > 1) {
 #ifdef MPC_USE_INFINIBAND
-          if (!sctk_network_driver_name && !sctk_ib_device_found()) {
-            if (!sctk_process_rank)
-              sctk_info("Could not locate an IB device, fallback to TCP");
-            sctk_network_driver_name = "tcp";
-          }
+		if (!sctk_network_driver_name && !sctk_ib_device_found()) {
+			if (!sctk_process_rank)
+				sctk_info("Could not locate an IB device, fallback to TCP");
+			sctk_network_driver_name = "tcp";
+		}
 #endif
-          sctk_net_init_driver(sctk_network_driver_name);
-        }
-        sctk_window_init_ht();
+		sctk_net_init_driver(sctk_network_driver_name);
+	}
+	sctk_window_init_ht();
 #endif
 
 #ifdef SCTK_LIB_MODE

@@ -882,6 +882,7 @@ sctk_update_topology ( const int processor_number,  const unsigned int index_fir
 			hwloc_cpuset_t set = hwloc_bitmap_dup(pu->cpuset);
 			hwloc_bitmap_singlify(set);
 			hwloc_bitmap_or(cpuset, cpuset, set);
+			hwloc_bitmap_free(set);
 		}
 
 	}
@@ -1641,6 +1642,8 @@ static inline int sctk_get_cpu_intern ()
 
 	/* And return the logical index */
 	int cpu = pu->logical_index;
+
+	hwloc_bitmap_free(set);
 
 	return cpu;
 }
