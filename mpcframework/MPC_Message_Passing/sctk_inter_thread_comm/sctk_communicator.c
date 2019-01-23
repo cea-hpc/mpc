@@ -2146,6 +2146,16 @@ sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t orig
 			new_tmp = sctk_malloc ( sizeof ( sctk_internal_communicator_t ) );
 			memset ( new_tmp, 0, sizeof ( sctk_internal_communicator_t ) );
 
+			void * dup_task_to_process = tmp->task_to_process; 
+				
+			if( tmp->task_to_process )
+			{
+				dup_task_to_process = malloc(sizeof(int) * tmp->nb_task);
+				sctk_assert(dup_task_to_process != NULL);
+				memcpy(dup_task_to_process, tmp->task_to_process, sizeof(int) * tmp->nb_task);
+			}
+
+			sctk_error("DOING DUP for %p\n", dup_task_to_process);
 			tmp->new_comm = new_tmp;
 			sctk_communicator_init_intern_init_only ( tmp->nb_task,
 			                                          tmp->last_local,
@@ -2153,7 +2163,7 @@ sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t orig
 			                                          tmp->local_tasks,
 			                                          tmp->local_to_global,
 			                                          tmp->global_to_local,
-			                                          tmp->task_to_process,
+			                                          dup_task_to_process,
 			                                          /* FIXME: process and process_nb have not been
 			                                          * tested for now. Could aim to trouble */
 			                                          tmp->process,
@@ -2508,7 +2518,7 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 		{
 			process_array[i++] = current_process->process_id;
 			HASH_DEL ( process, current_process );
-			free ( current_process );
+			//free ( current_process );
 		}
 		tmp->new_comm = local_tmp;
 		/* init new comm */
@@ -2579,7 +2589,7 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 		{
 			remote_process_array[i++] = remote_current_process->process_id;
 			HASH_DEL ( remote_process, remote_current_process );
-			free ( remote_current_process );
+			//free ( remote_current_process );
 		}
 
 		tmp->remote_comm = remote_tmp;
@@ -2760,7 +2770,7 @@ sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_
           HASH_ITER(hh, process, current_process, tmp_process) {
             process_array[i++] = current_process->process_id;
             HASH_DEL(process, current_process);
-            sctk_free(current_process);
+            //sctk_free(current_process);
           }
 
           tmp->new_comm = new_tmp;
@@ -2882,7 +2892,7 @@ sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communi
 
 		local_to_global = sctk_malloc ( nb_task_involved * sizeof ( int ) );
 		global_to_local = sctk_malloc ( sctk_get_nb_task_total ( SCTK_COMM_WORLD ) * sizeof ( int ) );
-		task_to_process = sctk_malloc ( nb_task_involved * sizeof ( int ) );
+		task_to_process = sctk_malloc ( sctk_get_nb_task_total ( SCTK_COMM_WORLD ) * sizeof ( int ) );
 
 		//~ for(i = 0 ; i < sctk_get_nb_task_total(SCTK_COMM_WORLD) ; i++)
 		//~ global_to_local[i] = -1;
@@ -2916,7 +2926,7 @@ sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communi
 		{
 			process_array[i++] = current_process->process_id;
 			HASH_DEL ( process, current_process );
-			free ( current_process );
+			//free ( current_process );
 		}
 
 		tmp->new_comm = new_tmp;
