@@ -183,7 +183,9 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
         int i;
         int maxr;
         int peer;
-/*
+/* The second algorithm led to segfaults
+   after rebase */
+#if 1
         alloc_size =
 		sizeof( int ) + sizeof( int ) +
 		( p - 1 ) * ( sizeof( NBC_Args ) + sizeof( NBC_Fn_type ) ) +
@@ -222,8 +224,7 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
             }
           }
         }
-*/
-
+#else
 
 /* Algo Gather + Bcast */
                 if (rank == 0) {
@@ -367,7 +368,7 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
 
 //        *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 0;
 
-
+#endif
 
 
 	res = NBC_Sched_commit_pos( schedule );
