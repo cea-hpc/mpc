@@ -195,13 +195,13 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
 	*( ( (int *) *schedule ) + 1 ) = ( p - 1 ) * 2;
 
 	sbuf = ( (char *) recvbuf ) + ( rank * recvcount * rcvext );
-        // do p-1 rounds 
+
 	int pos = sizeof( int );
 	for ( r = 0; r < p; r++ )
 	{
 		if ( r != rank )
 		{
-            /* recv from rank r */
+
 			rbuf = ( (char *) recvbuf ) + r * ( recvcount * rcvext );
 			res = NBC_Sched_recv_pos( pos, rbuf, 0, recvcount, recvtype, r,
 									  schedule );
@@ -229,12 +229,12 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
                 if (rank == 0) {
                   alloc_size =
                       sizeof(int) + sizeof(int) +
-                      (p - 1) * (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type)) +
+                      (p - 1) * (sizeof(NBC_Args) + sizeof(NBC_Fn_type)) +
                       sizeof(char);
                   round_size = p - 1;
                 } else {
                   alloc_size = sizeof(int) + sizeof(int) +
-                               (sizeof(NBC_Args_send) + sizeof(NBC_Fn_type)) +
+                               (sizeof(NBC_Args) + sizeof(NBC_Fn_type)) +
                                sizeof(char);
                   round_size = 1;
                 }
@@ -257,12 +257,12 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
         }
       }
       alloc_size += sizeof(int) +
-                    (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type)) +
+                    (sizeof(NBC_Args) + sizeof(NBC_Fn_type)) +
                     sizeof(char);
     }
 
     alloc_size += sizeof(int) +
-                  sends * (sizeof(NBC_Args_send) + sizeof(NBC_Fn_type)) +
+                  sends * (sizeof(NBC_Args) + sizeof(NBC_Fn_type)) +
                   sizeof(char);
 
 
@@ -289,7 +289,7 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
                   /* send msg to root */
                   res = NBC_Sched_send_pos(pos, sendbuf, 0, sendcount, sendtype,
                                            0, schedule);
-                  pos += sizeof(NBC_Args_send) + sizeof(NBC_Fn_type);
+                  pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
                   if (NBC_OK != res) {
                     printf("Error in NBC_Sched_send() (%i)\n", res);
                     return res;
@@ -301,7 +301,7 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
                       /* root receives message to the right buffer */
                       res = NBC_Sched_recv_pos(pos, rbuf, 0, recvcount,
                                                recvtype, i, schedule);
-                      pos += sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type);
+                      pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
                       if (NBC_OK != res) {
                         printf("Error in NBC_Sched_recv() "
                                "(%i)\n",
@@ -329,7 +329,7 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
               VRANK2RANK(peer, rank - (1 << r), 0);
               res = NBC_Sched_recv_pos(pos, recvbuf, 0, p*recvcount, recvtype, peer,
                                        schedule);
-              pos += (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type));
+              pos += (sizeof(NBC_Args) + sizeof(NBC_Fn_type));
               if (NBC_OK != res) {
                 printf("Error in NBC_Sched_recv() (%i)\n", res);
                 return res;
@@ -356,7 +356,7 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
             cpt++;
             res = NBC_Sched_send_pos(pos, recvbuf, 0, p*recvcount, recvtype, peer,
                                      schedule);
-            pos += sizeof(NBC_Args_send) + sizeof(NBC_Fn_type);
+            pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
             if (NBC_OK != res) {
               printf("Error in NBC_Sched_send() (%i)\n", res);
               return res;
@@ -1294,14 +1294,16 @@ static int NBC_Ialltoall( void *sendbuf, int sendcount, MPI_Datatype sendtype, v
 		return res;
 	}
 
+  size_t alloc_size = 0;
+
 	switch ( alg )
 	{
 		case NBC_A2A_LINEAR:
-                alloc_size = sizeof(int) + sizeof(int) + 
-                (p-1)*(sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type) + 
-                       sizeof(NBC_Args_send) + sizeof(NBC_Fn_type)) + sizeof(char);
-                *schedule = sctk_malloc(alloc_size);
-                *(int *)*schedule = alloc_size;
+      alloc_size = sizeof(int) + sizeof(int) +
+      (p-1)*(sizeof(NBC_Args) + sizeof(NBC_Fn_type) +
+                   sizeof(NBC_Args) + sizeof(NBC_Fn_type)) + sizeof(char);
+      *schedule = sctk_malloc(alloc_size);
+      *(int *)*schedule = alloc_size;
 			res = a2a_sched_linear( rank, p, sndext, rcvext, schedule, sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm );
         		if (NBC_OK != res) { return res; }
         		res = NBC_Sched_commit_pos(schedule);
@@ -1384,11 +1386,11 @@ static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rc
 		if (r == rank) { continue; }
 		rbuf = ((char *) recvbuf) + (r*recvcount*rcvext);
 		res = NBC_Sched_recv_pos(pos, rbuf, 0, recvcount, recvtype, r, schedule);
-        pos += sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type);
+        pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
 		if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
 		sbuf = ((char *) sendbuf) + (r*sendcount*sndext);
 		res = NBC_Sched_send_pos(pos, sbuf, 0, sendcount, sendtype, r, schedule);
-        pos += sizeof(NBC_Args_send) + sizeof(NBC_Fn_type);
+        pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
 		if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
 	}
 
