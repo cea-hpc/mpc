@@ -85,7 +85,7 @@ Features
 Support for debugging user-level MPC threads is provided thanks to an
 implementation of the libthread_db and a patch to the GNU Debugger (GDB). It
 allows to manage user-level threads in GDB and all GUIs based on GDB. It is also
-compatible with SUN’s DBX debugger.
+compatible with Allinea/ARM DDT debugger (and SUN’s DBX debugger).
 
 ### Thread safety ###
 
