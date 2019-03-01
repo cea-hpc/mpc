@@ -15,25 +15,22 @@ The MPC (Multi-Processor Computing) framework provides a unified parallel
 runtime designed to improve the scalability and performances of applications
 running on clusters of (very) large multiprocessor/multicore NUMA nodes.
 
+Thanks to its design, MPC allows **mixed-mode programming models** and efficient interaction with the HPC software stack.
+
 MPC is available under the [CeCILL-C][CCC_LNK] license, which is a French
 transposition of the LGPL and is fully LGPL-compatible.
 
-MPC conforms to three standards :
-  * [POSIX Threads][PTH_LNK]
-  * [OpenMP 3.1][OMP_LNK]
-  * [MPI 1.3][MPI_LNK]
-  
-All these standards can be mixed together in an efficient way, thanks to process
-virtualization. MPC has been ported on x86, x86_64 with Linux and OpenSolaris
-systems and supports TCP and InfiniBand interconnects.
 
+Supported Parallel Programming APIs
+------------
 
-Features
---------
+MPC provides implementations for the [MPI 3.1][MPI_LNK], [OpenMP 3.1][OMP_LNK] and [POSIX Threads][PTH_LNK]. 
+All these standards can be mixed together in an efficient way, thanks to process virtualization. 
+MPC has been ported on x86 and x86_64 with Linux system, and supports TCP, InfiniBand and Portals4 interconnects.
 
 ### Thread Library ###
 
-MPC comes with its own MxN thread library and POSIX Thread implementation. MxN
+MPC comes with its own MxN thread library and **POSIX Thread implementation**. MxN
 thread libraries provide lightweight user-level threads that are mapped to
 kernel threads. One key advantage of the MxN approach is the ability to optimize
 the user-level thread scheduler to create and schedule a very large number of
@@ -44,9 +41,65 @@ available CPU cores. Furthermore, collective communications are integrated into
 the thread scheduler to enable efficient barrier, reduction and broadcast
 operations.
 
+### MPI ###
+
+MPC provides its own MPI implementation, and fully respects the **MPI 3.1 standard**,
+ such as an efficient MPI_THREAD_MULTIPLE support, a full MPI I/O support, 
+a full non-blocking collectives support with efficient progress threads 
+and an efficient Generalized requests support.
+
+MPC provides a thread-based MPI implementation (e.g MPI processes are threads and not OS processes).
+MPC’s communications are implemented in the following way: 
+intra-node communications involve several MPI Processes in a unique OS process 
+(MPC’s default mode uses one OS process per node). These MPI Processes use 
+the optimized thread-scheduler polling method and thread-scheduler integrated collectives 
+to communicate with each other. As far as inter-node communications are concerned, 
+MPC uses direct access to the TCP, InfiniBand or Portals4 interconnect. 
+
+MPC provides performances close to MPICH or OpenMPI, but with a much better support 
+of hybrid programming models (e.g., MPI/PThreads, MPI/OpenMP, …) and lower memory 
+consumption.
+
+MPC can also be used as a process-based MPI implementation, like MPICH or OpenMPI.
+
+
+### OpenMP ###
+
+MPC provides its own OpenMP implementation, and fully respects the **OpenMP 3.1 standard**.
+MPC supports compilation and execution of C/C++ and Fortran OpenMP applications
+thanks to its built-in OpenMP 3.1 runtime. This OpenMP implementation supports
+GNU and Intel compilers. The main MPC package contains a patched version of GCC
+(6.2.0) called MPC_GCC which is automatically installed when building MPC. The
+OpenMP implementation is also compatible with Intel C/C++ and FORTRAN compilers
+starting at version 15.0. 
+
+The OpenMP runtime has been optimized to
+efficiently support large NUMA architectures and hybrid MPI/OpenMP codes.
+
+
+Features
+--------
+
+### Thread debugging ###
+
+Support for debugging user-level MPC threads is provided thanks to an
+implementation of the libthread_db and a patch to the GNU Debugger (GDB). It
+allows to manage user-level threads in GDB and all GUIs based on GDB. It is also
+compatible with SUN’s DBX debugger.
+
+### Thread safety ###
+
+Because MPC provides a thread-based MPI implementation, a mechanism is needed to
+deal with global-variable sharing in the application. Such thread-safety issues
+are managed with **automatic privatization of global variables**. This mechanism is
+automatically applied by the compiler for C/C++ and Fortran MPI codes through
+the new **-fmpc-privatize** option. This new option is available in MPC_GCC
+(provided with the MPC package) and Intel compilers (starting with version 15.0
+for C/C++ and Fortran).
+
 ### Memory Allocator ###
 
-The MPC thread library comes with a thread-aware and NUMA-aware memory allocator
+The MPC thread library comes with a **thread-aware** and **NUMA-aware** memory allocator
 (malloc, calloc, realloc, free, memalign and posix_memalign). It implements a
 per-thread heap to avoid contention during allocation and to maintain data
 locality on NUMA nodes. Each new data allocation is first performed by a
@@ -60,33 +113,6 @@ heap are virtual and are not necessarily backed by physical pages. On a same
 node, memory pages freed by a thread are provided to new allocations of other
 threads without any system call.
 
-### Thread debugging ###
-
-Support for debugging user-level MPC threads is provided thanks to an
-implementation of the libthread_db and a patch to the GNU Debugger (GDB). It
-allows to manage user-level threads in GDB and all GUIs based on GDB. It is also
-compatible with SUN’s DBX debugger.
-
-### OpenMP ###
-
-MPC supports compilation and execution of C/C++ and Fortran OpenMP applications
-thanks to its built-in OpenMP 3.1 runtime. This OpenMP implementation supports
-GNU and Intel compilers. The main MPC package contains a patched version of GCC
-(4.8.0) called MPC_GCC which is automatically installed when building MPC. The
-OpenMP implementation is also compatible with Intel C/C++ and FORTRAN compilers
-starting at version 15.0. Finally, the OpenMP runtime has been optimized to
-efficiently support large NUMA architectures and hybrid MPI/OpenMP codes.
-
-### Thread safety ###
-
-Because MPC provides a thread-based MPI implementation, a mechanism is needed to
-deal with global-variable sharing in the application. Such thread-safety issues
-are managed with automatic privatization of global variables. This mechanism is
-automatically appplied by the compiler for C/C++ and Fortran MPI codes through
-the new -fmpc-privatize option. This new option is available in MPC_GCC
-(provided with the MPC package) and Intel compilers (starting with version 15.0
-for C/C++ and Fortran).
-
 ### Hierarchical Local Storage (HLS) ###
 
 HLS is a set of directives in C, C++ and Fortran allowing the application
@@ -97,19 +123,6 @@ case of HLS variables is a large table of physical constants. With the HLS
 extension, only one table per node will be allocated instead of one table per
 core (if there is one MPI task per core) thus reducing the memory consumption by
 a factor equal to the number of cores per node.
-
-### MPI ###
-
-MPC’s implementation of MPI fully respects the MPI 1.3 standard. It also
-provides an efficient MPI_THREAD_MULTIPLE support (MPI2 feature). MPC’s
-communications are implemented in the following way: intra-node communications
-involve two tasks in a unique process (MPC’s default mode uses one process per
-node). These tasks use the optimized thread-scheduler polling method and
-thread-scheduler integrated collectives to communicate with each other. As far
-as inter-node communications are concerned, MPC uses direct access to the TCP or
-InfiniBand interconnect. MPC provides performances close to MPICH2 or OpenMPI,
-but with a much better support of hybrid programming models (e.g., MPI/PThreads,
-MPI/OpenMP, …) and lower memory consumption.\cite{perache2008mpc}
 
 Credits
 -------
@@ -122,7 +135,7 @@ available [here][MAINTAINERS_MD]
 [CCC_LNK]: http://www.cecill.info/index.en.html "CeCILL-C License"
 [PTH_LNK]: http://pubs.opengroup.org/onlinepubs/007904975/basedefs/pthread.h.html "POSIX Threads Standard"
 [OMP_LNK]: http://www.openmp.org/mp-documents/OpenMP3.1.pdf "OpenMP 3.1 standard"
-[MPI_LNK]: http://www.mpi-forum.org/docs/mpi-1.3/mpi-report-1.3-2008-05-30.pdf "MPI 1.3 Standard"
+[MPI_LNK]: https://www.mpi-forum.org/docs/mpi-3.1/mpi31-report.pdf "MPI 3.1 Standard"
 [CEA_LNK]: http://www.cea.fr/english-portal/ "CEA Home Page"
 
 [MAINTAINERS_MD]: ../../../MAINTAINERS
