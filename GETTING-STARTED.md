@@ -224,7 +224,6 @@ See [Using the Hydra Process Manager](https://wiki.mpich.org/mpich/index.php/Usi
 Contacts
 --------
 
-* CARRIBAULT Patrick  patrick.carribault@cea.fr
-* PÉRACHE Marc  marc.perache@cea.fr
-* JAEGGER Julien  julien@cea.fr
+* JAEGER Julien  julien.jaeger@cea.fr
+* TABOADA Hugo  hugo.taboada@cea.fr
 * ParaTools Staff  info@paratools.fr
