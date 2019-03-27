@@ -294,7 +294,7 @@ storeMPCcompilers()
 		for lang in c cxx fortran; 
 		do 
 			CHASH=`$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager get_detail $lang 1 | cut -f4 -d":"`
-			test -n $CHASH -a -d $MPC_RPREFIX/$CHASH/ && cp -r ${MPC_RPREFIX}/${CHASH} ${HOME_CFILEPATH}/
+			test -n "$CHASH" -a -d "$MPC_RPREFIX/$CHASH/" && cp -r ${MPC_RPREFIX}/${CHASH} ${HOME_CFILEPATH}/
 		done
 	fi
 
