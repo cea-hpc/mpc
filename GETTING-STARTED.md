@@ -225,5 +225,6 @@ Contacts
 --------
 
 * JAEGER Julien  julien.jaeger@cea.fr
+* ROUSSEL  Adrien adrien.roussel@cea.fr
 * TABOADA Hugo  hugo.taboada@cea.fr
 * ParaTools Staff  info@paratools.fr

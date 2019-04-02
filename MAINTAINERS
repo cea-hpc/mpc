@@ -7,7 +7,10 @@ Maintainers:
 ============
 |             Name                |                 Email Address                 |
 |:-------------------------------:|:---------------------------------------------:|
+| CARRIBAULT Patrick              |   <patrick.carribault@cea.fr>                 |
 | JAEGER Julien                   |   <julien.jaeger@cea.fr>                      |
+| PERACHE Marc                    |   <marc.perache@cea.fr>                       |
+| ROUSSEL Adrien                  |   <adrien.roussel@cea.fr>                     |
 | TABOADA Hugo                    |   <hugo.taboada@cea.fr>                       |
 
 Contributors:
@@ -30,7 +33,6 @@ please send a email to the maintainers of the project (section above).
 | BISPO VIEIRA Ricardo            | <ricardo.bispo-viera@exascale-computing.eu>   |
 | BOUHROUR Stephane               | <stephane.bouhrour@exascale-computing.eu>     |
 | CAPRA Antoine                   | <capra@paratools.com>                         |
-| CARRIBAULT Patrick              | <patrick.carribault@cea.fr>                   |
 | CLET-ORTEGA Jerome              | <jerome.clet-ortega@cea.fr>                   |
 | DIDELOT Sylvain                 | <sylvain.didelot@exascale-computing.eu>       |
 | DIONISI Thomas                  | <thomas.dionisi@exascale-computing.eu>        |
@@ -38,7 +40,6 @@ please send a email to the maintainers of the project (section above).
 | GONCALVES Thomas                | <thomas.goncalves@cea.fr>                     |
 | KOLIAI Souad                    | <souad.koliai@exascale-computing.eu>          |
 | MAHEO Aurele                    | <aurele.maheo@exascale-computing.eu>          |
-| PERACHE Marc                    | <marc.perache@cea.fr>                         |
 | PULVERAIL Sebastien             | <sebastien.pulverail@sogeti.com>              |
 | SCHENDE Sameer                  | <sameer@paratools.com>                        |
 | SERRAZ Augustin                 | <augustin.serraz@exascale-computing.eu>       |
