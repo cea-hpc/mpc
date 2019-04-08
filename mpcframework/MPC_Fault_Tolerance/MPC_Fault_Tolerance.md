@@ -40,20 +40,20 @@ contain the application state after the call, which can be CHECKPOINT,RESTART or
 IGNORED (disabled C/R). This high-level call is in charge of calling this FT
 module only once per process. The FT module exposes 7 functions to checkpoint : 
 
-1. sctk_ft_init: called once, it will configure DMTCP callbacks
-2. sctk_ft_checkpoint_init: initialize a new checkpoint procedure. This will
+1. `sctk_ft_init`: called once, it will configure DMTCP callbacks
+2. `sctk_ft_checkpoint_init`: initialize a new checkpoint procedure. This will
    ensure that the application enter a critical C/R section.
-3. sctk_ft_checkpoint_prepare: Prepare the checkpoint. As an example, it is
+3. `sctk_ft_checkpoint_prepare`: Prepare the checkpoint. As an example, it is
    calling disconnection protocols for network not supporting DMTCP interrupts.
    This cannot be done during the init() becasue upper-layer has to do some
    things between them (synchronisations).
-4. sctk_ft_checkpoint: emit a checkpoint request to DMTCP coordinator. This
+4. `sctk_ft_checkpoint`: emit a checkpoint request to DMTCP coordinator. This
    should be invoked only once for the whole application. The MPI layer will
    ensure that. Other processes will call the next function
-5. sctk_ft_wait: wait for checkpoint completion (per-process basis)
-6. sctk_ft_checkpoint_finalize: Complete the current checkpoint. As an example,
+5. `sctk_ft_wait`: wait for checkpoint completion (per-process basis)
+6. `sctk_ft_checkpoint_finalize`: Complete the current checkpoint. As an example,
    it will re-enable closed networks.
-7. sctk_ft_finalize: relase C/R resources
+7. `sctk_ft_finalize`: relase C/R resources
 
 To let developers create critical sections where the library should not be
 interrupted, two calls `sctk_ft_{enable,disable}` are available.
