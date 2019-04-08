@@ -3,7 +3,12 @@
 Introduction
 ------------
 
-This Getting Started guide details the various ways to install and configure the MPC library (Multi-Processor Computing) version including MPI @MPI_VERSION@, OpenMP @OMP_VERSION@ (with patched GCC) and PThread support. For further information on MPC internals, the reader may refer to [documentation](http://mpc.paratools.com/Documentation) for more details about the MPC framework and its execution model.
+This Getting Started guide details the various ways to install and configure the
+MPC library (Multi-Processor Computing) version including MPI `@MPI_VERSION@`,
+OpenMP `@OMP_VERSION@` (with patched GCC) and PThread support. For further
+information on MPC internals, the reader may refer to
+[documentation](http://mpc.paratools.com/Documentation) for more details about
+the MPC framework and its execution model.
 
 Prerequisites
 -------------
@@ -11,61 +16,75 @@ Prerequisites
 The following prerequisites are required to compile MPC:
 
   * The main archive file from the [Downloads page](http://mpc.paratools.com/Download)
-  * A *C* compiler (e.g., *gcc*)
-  * An optional *Fortran* compiler if Fortran applications are to be used (e.g., *g77* or *gfortran*)
+  * A **C** compiler (e.g., `gcc`)
+  * An optional **Fortran** compiler if Fortran applications are to be used
+    (e.g., `g77` or `gfortran`)
   * Optional *SLURM*, *HWLOC* and *OPENPA* libraries installed
-  * For *Infiniband* support *libibvers* is required
+  * For *Infiniband* support *libibverbs* is required
 
 Standard Installation
 ---------------------
-
-These steps describe the default installation of MPC with its additional components (*GCC*,*GDB*, *Hydr*a, *HWLOC* and *OPENPA*).
 
 1. Unpack the main archive (tar format) and go to the top-level directory:
 
         $ tar xfz MPC_@MPC_VERSION@.tar.gz
         $ cd MPC_@MPC_VERSION@
 
-2. If your tar program does not accept the ’z’ option, use the following commands:
+2. If your tar program does not accept the ’z’ option, use the following
+   commands:
 
         $ gunzip MPC_@MPC_VERSION@.tar.gz
         $ tar xf MPC_@MPC_VERSION@.tar
         $ cd MPC_@MPC_VERSION@
 
-3. Choose an installation directory. Using the default */usr/local/* will overwrite legacy headers: choose a custom install path:
+3. Choose an installation directory. Using the default `/usr/local/` will
+   overwrite legacy headers. The most convenient choice is a directory shared
+   among all the machines you want to use the library on. If such a directory is
+   not accessible, you will have to deploy MPC on every machine after the
+   installation.
 
         $ mkdir $HOME/mpc-install
-  The most convenient choice is a directory shared among all the machines you want to use the library on. If such a directory is not accessible, you will have to deploy MPC on every machine after the installation.
 
-4. Launch the installation script for MPC and its dependencies. Specifying the installation directory:
+
+4. Launch the installation script for MPC and its dependencies. Specifying the
+   installation directory:
 
         $ ./installmpc --prefix=$HOME/mpc-install
-  **Note**: you can use the flag *-jX* to perform a faster installation. *X* should be a number and is the total amount of processes launched by *Make*.
+
+  **Note**: you can use the flag `-jX` to perform a faster installation. `X`
+  should be a number and is the total amount of processes launched by *Make*.
 
 
-5. Source the *mpcvars* script (located at the root of the MPC installation directory) to update environment variables (e.g., *PATH* and *LD\_LIBRARY\_PATH*). 
-        
+5. Source the *mpcvars* script (located at the root of the MPC installation
+   directory) to update environment variables (e.g., *PATH* and
+   *LD\_LIBRARY\_PATH*). 
+
 For *csh* and *tcsh*:
 
         $ source $(HOME)/mpc-install/mpcvars.csh
-        
+
 For *bash* and *sh*:
 
         $ source $(HOME)/mpc-install/mpcvars.sh
-        
+
 Check that everything went well at this point by running
 
         $ which mpc_cc
         $ which mpcrun
-        
-If there was no errors, it should display the path of the mpc\_cc and mpcrun scripts.
+
+If there was no errors, it should display the path of the mpc\_cc and mpcrun
+scripts.
 
 6. To compile your first MPC program, you may execute the mpc\_cc compiler:
 
         $ mpc_cc mpcframework/MPC_Tests/parallel/MPC_Message_Passing/hello_world.c -o hello_world
-  This command uses the main default patched *GCC* to compile the code. If you want to use your favorite compiler instead (loosing some features like OpenMP support and global-variable removal), you may use the *mpc\_cflags* and *mpc\_ldflags* commands:
 
-        $CC MPC_Tests/parallel/MPC_Message_Passing/hello_world.c -o hello_world `mpc_cflags` `mpc_ldflags`
+ This command uses the main default patched *GCC* to compile the code. If you
+ want to use your favorite compiler instead (loosing some features like OpenMP
+ support and global-variable removal), you may use the *mpc\_cflags* and
+ *mpc\_ldflags* commands:
+
+        $ ${CC} MPC_Tests/parallel/MPC_Message_Passing/hello_world.c -o hello_world `mpc_cflags` `mpc_ldflags`
 
 7. To execute your MPC program, use the mpcrun command:
 
@@ -77,35 +96,39 @@ If there was no errors, it should display the path of the mpc\_cc and mpcrun scr
 Custom Installation
 -------------------
 
-The previous section described the default installation and configuration of MPC, but other alternatives are available. You can find out more details on the configuration by running: ./configure --help.
+The previous section described the default installation and configuration of
+MPC, but other alternatives are available. You can find out more details on the
+configuration by running: ./configure --help.
 
 Specify the PMI based launcher to be used by MPC as follows:
 
-* __-with-hydra__ *Compile MPC with the Hydra launcher (embedded in the MPC distribution). This option is enabled by default.*
-* __-with-slurm[=prefix]__ *Compile MPC with the SLURM launcher.*
+* `--with-hydra``: Compile MPC with the **Hydra** launcher (embedded in the MPC
+  distribution). This option is enabled by default.
+* `--with-slurm[=prefix]` Compile MPC with the **SLURM** launcher.
 
 Specify external libraries used by MPC:
 
-* __-with-hwloc=prefix__ *Specify the prefix of hwloc library
-* __-with-openpa=prefix__ *Specify the prefix of OpenPA library
-* __-with-libxml2=prefix__ *Specify the prefix of libxml2 library
-* __-with-mpc-binutils=prefix__ *Specify the prefix of the binutils
+* `--with-hwloc=prefix`: Specify the prefix of hwloc library
+* `--with-openpa=prefix`: Specify the prefix of OpenPA library
+* `--with-libxml2=prefix`: Specify the prefix of libxml2 library
+* `--with-mpc-binutils=prefix`: Specify the prefix of the binutils
 
 Specify external libraries for gcc compilation:
 
-* __-with-gmp=prefix__ *Specify the prefix of gmp library
-* __-with-mpfr=prefix__ *Specify the prefix of mpfr library
-* __-with-mpc=prefix__ *Specify the prefix of mpc multiprecision library
+* `--with-gmp=prefix`: Specify the prefix of gmp library
+* `--with-mpfr=prefix`: Specify the prefix of mpfr library
+* `--with-mpc=prefix`: Specify the prefix of mpc multiprecision library
 
 Specify external gcc and gdb:
 
-* __-with-mpc-gcc=prefix__ *Specify the prefix of the gcc used by MPC
-* __-with-mpc-gdb=prefix__ *Specify the prefix of the gdb used by MPC
+* `--with-mpc-gcc=prefix`: Specify the prefix of the gcc used by MPC
+* `--with-mpc-gdb=prefix`: Specify the prefix of the gdb used by MPC
 
 Running MPC
 -----------
 
-The mpcrun script drives the launch of MPC programs with different types of parallelism. Its usage is defined as follows:
+The mpcrun script drives the launch of MPC programs with different types of
+parallelism. Its usage is defined as follows:
 
         Usage mpcrun [option] [--] binary [user args]
 
@@ -167,64 +190,88 @@ The mpcrun script drives the launch of MPC programs with different types of para
 Launcher options
 ----------------
 
-Options passed to the launcher options should be compatible with the launch mode chosen during *configure*. For more information you might read the documentations of mpiexec and srun respectively for Hydra and Slurm.
+Options passed to the launcher options should be compatible with the launch mode
+chosen during *configure*. For more information you might read the
+documentations of mpiexec and srun respectively for Hydra and Slurm.
 
-* __Hydra__: If MPC is configured with Hydra, mpcrun should be used with *-l=mpiexec* argument. Note that this argument is used by default if not specified.
-* __SLURM__: If MPC is configured with SLURM, mpcrun should be used with *-l=srun* argument.
+* `Hydra`: If MPC is configured with Hydra, mpcrun should be used with
+  `-l=mpiexec` argument. Note that this argument is used by default if not
+  specified.
+* `SLURM`: If MPC is configured with SLURM, mpcrun should be used with `-l=srun`
+  argument.
 
 Mono-process job
 ----------------
 
-In order to run an MPC job in a single process with Hydra, you should use on of the following methods (depending on the thread type you want to use).
+In order to run an MPC job in a single process with Hydra, you should use on of
+the following methods (depending on the thread type you want to use).
 
         $ mpcrun -m=ethread      -n=4 hello_world
         $ mpcrun -m=ethread_mxn  -n=4 hello_world
         $ mpcrun -m=pthread      -n=4 hello_world
 
-To use one of the above methods with SLURM, just add *-l=srun* to the command line.
+To use one of the above methods with SLURM, just add *-l=srun* to the command
+line.
 
 Multi-process job on a single node
 ----------------------------------
 
-In order to run an MPC job with Hydra in a two-process single-node manner with the shared memory module enabled (SHM), you should use one of the following methods (depending on the thread type you want to use). Note that on a single node, even if the TCP module is explicitly used, MPC automatically uses the SHM module for all process communications.
+In order to run an MPC job with Hydra in a two-process single-node manner with
+the shared memory module enabled (SHM), you should use one of the following
+methods (depending on the thread type you want to use). Note that on a single
+node, even if the TCP module is explicitly used, MPC automatically uses the SHM
+module for all process communications.
 
         $ mpcrun -m=ethread      -n=4 -p=2 -net=tcp hello_world
         $ mpcrun -m=ethread_mxn  -n=4 -p=2 -net=tcp hello_world
         $ mpcrun -m=pthread      -n=4 -p=2 -net=tcp hello_world
 
-To use one of the above methods with SLURM, just add *-l=srun* to the command line.
-
-Of course, this mode supports both MPI and OpenMP standards, enabling the use of hybrid programming.
-
-There are different implementations of inter-process communications. A call to *mpcrun -help* details all the available implementations.
+To use one of the above methods with SLURM, just add *-l=srun* to the command
+line. Of course, this mode supports both MPI and OpenMP standards, enabling the
+use of hybrid programming.  There are different implementations of inter-process
+communications. A call to *mpcrun -help* details all the available
+implementations.
 
 Multi-process job on multiple nodes
 -----------------------------------
 
-In order to run an MPC job on two nodes with eight processes communicating with TCP, you should use one of the following methods (depending on the thread type you want to use). Note that on multiple nodes, MPC automatically switches to the MPC SHared Memory module (SHM) when a communication between processes on the same node occurs. This behavior is available with all inter-process communication modules (TCP included).
+In order to run an MPC job on two nodes with eight processes communicating with
+TCP, you should use one of the following methods (depending on the thread type
+you want to use). Note that on multiple nodes, MPC automatically switches to the
+MPC SHared Memory module (SHM) when a communication between processes on the
+same node occurs. This behavior is available with all inter-process
+communication modules (TCP included).
 
-```sh
-$ mpcrun -m=ethread      -n=8 -p=8 -net=tcp -N=2 hello_world
-$ mpcrun -m=ethread_mxn  -n=8 -p=8 -net=tcp -N=2 hello_world
-$ mpcrun -m=pthread      -n=8 -p=8 -net=tcp -N=2 hello_world
-```
+	$ mpcrun -m=ethread      -n=8 -p=8 -net=tcp -N=2 hello_world
+	$ mpcrun -m=ethread_mxn  -n=8 -p=8 -net=tcp -N=2 hello_world
+	$ mpcrun -m=pthread      -n=8 -p=8 -net=tcp -N=2 hello_world
 
-Of course, this mode supports both MPI and OpenMP standards, enabling the use of hybrid programming. There are different implementations of inter-process communications and launch methods. A call to mpcrun -help detail all the available implementations and launch methods.
+Of course, this mode supports both MPI and OpenMP standards, enabling the use of
+hybrid programming. There are different implementations of inter-process
+communications and launch methods. A call to mpcrun -help detail all the
+available implementations and launch methods.
 
 Launch with Hydra
 -----------------
 
-In order to execute an MPC job on multile nodes using *Hydra*, you need to provide the list of nodes in a *hosts* file and set the HYDRA\_HOST\_FILE variable with the path to the file. You can also pass the host file as a parameter of the launcher as follow:
+In order to execute an MPC job on multile nodes using *Hydra*, you need to
+provide the list of nodes in a *hosts* file and set the HYDRA\_HOST\_FILE
+variable with the path to the file. You can also pass the host file as a
+parameter of the launcher as follow:
 
         $ mpcrun -m=ethread -n=8 -p=8 -net=tcp -N=2 --opt='-f hosts' hello_world
 
-See [Using the Hydra Process Manager](https://wiki.mpich.org/mpich/index.php/Using_the_Hydra_Process_Manager) for more information about hydra hosts file.
-
+See [Using the Hydra Process Manager](https://wiki.mpich.org/mpich/index.php/Using_the_Hydra_Process_Manager)
+for more information about hydra hosts file.
 
 Contacts
 --------
 
-* JAEGER Julien  julien.jaeger@cea.fr
-* ROUSSEL  Adrien adrien.roussel@cea.fr
-* TABOADA Hugo  hugo.taboada@cea.fr
-* ParaTools Staff  info@paratools.fr
+In case of question, feature or need for assistance, please contact any of the
+maintainers of the project. You can find an exhaustive list in the
+[MAINTAINERS](./MAINTAINERS.md) file, summarized below :
+
+* JAEGER Julien julien.jaeger@cea.fr
+* ROUSSEL Adrien adrien.roussel@cea.fr
+* TABOADA Hugo hugo.taboada@cea.fr
+* ParaTools Staff info@paratools.fr
