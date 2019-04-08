@@ -93,71 +93,66 @@ mpcrun_error(){
 
 print_help(){
 cat << EOF
-Usage mpcrun [option] [--] binary [user args]
 
-Informations:
-    --help,-h Display this help
-    --show, Display command line
-    --version-details, Print version of each module used
-    --report, Print report
-    --verbose=n,-v,-vv,-vvv Verbose mode (level 1 to 3)
-    --verbose Verbose level 1
+Usage: mpcrun [option] [--] program [program-args]
 
-Topology:
-    --task-nb=n,-n=n Total number of tasks
-    --process-nb=n,-p=n Total number of processes
-    --cpu-nb=n,-c=n Number of cpus per process
-    --cpu-nb-mpc=n Number of cpus per process for the MPC process
-    --node-nb=n,-N=n Total number of nodes
-    --enable-smt Enable SMT capabilities (disabled by default, except for MIC)
-    --graphic-placement Output a xml file to visualize thread placement and topology for each compute node
-    --text-placement Output a txt file to visualize thread placement and their infos on the topology for each compute node
-    --disable-smt Disable SMT capabilities
-    --disable-share-node Do not restrict on CPU number to share node
+General-purpose:
+    --help,-h                  Display this help
+    --show,                    Display the launcher command (Hydra, Slurm)
+    --version-details          Print by-module version
+    --[no]report               Print profiling report on stdout
+    --verbose[=X]              Enable verbosity (X={1,2,3}), X=1 by default
+    -v,-vv,-vvv                Verbosity Shortcuts
+
+Topology: (In the following, X is a strict positive number)
+    --node-nb=X    | -N=X      Total number of nodes
+    --process-nb=X | -p=X      Total number of processes
+    --task-nb=X    | -n=X      Total number of tasks
+    --cpu-nb=X     | -c=X      Number of cpus per process (-p option)
+    --cpu-nb-mpc=X             (deprecated, use -c instead)
+    --{enable,disable}-smt     Activate/Deactivate SMT capabilities (default: disabled)
+    --[disable-]share-node     Allow/Forbid multiple processes to share the same node
 
 Multithreading:
-    --multithreading=n,-m=n Define multithreading mode
-        modes: $MODES_MULTITHREAD
+    --multithreading=M | -m=M  Define multithreading mode, where M is from {$MODES_MULTITHREAD}
 
 Network:
-    --network=n,-net=n Define Network mode (TCP + SHM by default)
-        modes: $MODES_NET
-        modes (experimental): $SCTK_NET_LIST_EXP
+    --network=N | -net=N       Define network layer to use, where N is from {$MODES_NET}
 
-Checkpoint/Restart and Migration:
-    --checkpoint Enable checkpoint
-    --migration Enable migration
-    --restart Enable restart
+Configuration:
+    --config=<file>            Configuration file to load (XML only).
+    --profiles=<p1,p2>         List of profiles to enable in config (set from configuration).
+
+Accelerators: (if support enabled)
+    --use-accl, -accl          Enable Accelerator support at runtime
 
 Launcher:
-    --launcher=n,-l=n Define launcher
-    --opt=<options> launcher specific options
-    --launch_list print available launch methods
-    --config=<file> Configuration file to load.
-    --profiles=<p1,p2> List of profiles to enable in config.
-    --tempdir Run MPC job in a temporary directory (created in current dir)
+    --launcher=L | -l=L        Define launcher (where L is one listed by --list-launchers)
+    --opt=<options>            Forward launcher-specific options
+    --list-launchers           Print available launch methods
+    --tempdir                  Run MPC job in a temporary directory (created in current dir)
 
 Debugger:
-    --dbg=<debugger_name> to use a debugger
+    --dbg=<debugger_name>      Program to run application with.
 
-Fault-tolerance (if compiled with --enable-ft):
-    --checkpoint Enabling Fault-tolerance support
-    --restart[=<path>] Restart from previous checkpoint (path to restart script)
+Fault-tolerance (if support enabled):
+    --checkpoint               Enabling Fault-tolerance support
+    --ft-host=<hostname>       Specify where the DMTCP daemon is listening (for restart)
+    --ft-port=<port>           Specify the port the daemon is listening to (for restart)
+    --restart[=<path>]         Restart from previous checkpoint (path to restart script)
 
-Profiling (if compiled with --enable-MPC_Profiler) :
-	--profiling=AA,BB,...
-	
-	example : --profiling=stdout,html,latex
-	
-	With the following output modules :
-		* file : Outputs to file indented profile with time in standard units
-		* file-raw : Outputs to file unindented profile in ticks (gnuplot compliant)
-		* file-noindent : Same as "text" with no indentation
-		* stdout : "text" to stdout
-		* stdout-raw : "text_raw" to stdout
-		* stdout-noindent : "text_noindent" to stdout
-		* latex : Outputs profile to a latex source file
-		* html : Outputs profile to an html file
+Profiling:
+    --graphic-placement        Generate thread pinning as HWLOC-compliant XML files
+    --text-placement           Generate thread pinning as human-readable text files
+    --profiling=X,Y...         Enable profiling, with X, Y in :
+                                 * file            : Outputs to file indented profile with time in standard units
+                                 * file-raw        : Outputs to file unindented profile in ticks (gnuplot compliant)
+                                 * file-noindent   : Same as "text" with no indentation
+                                 * stdout          : "text" to stdout
+                                 * stdout-raw      : "text_raw" to stdout
+                                 * stdout-noindent : "text_noindent" to stdout
+                                 * latex           : Outputs profile to a latex source file
+                                 * html            : Outputs profile to an html file
 EOF
 }
 
@@ -602,7 +597,6 @@ if test "$mpi_only" = "yes" ; then
 SCTK_ARGS=""
 MPC_DISABLE="1"
 PROCESS_NB="$TASK_NB"
-NET_TYPE="--use-mpi"
 fi
 
 
