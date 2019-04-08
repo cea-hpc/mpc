@@ -23,26 +23,10 @@
 
 P="."
 
-list_dir(){
-cd $1
-P="$P/$i"
-P="`echo $P | sed s,//,/,g`"
-echo "$P"
-for i in * ; do
-if test -f $i ; then
-echo "    `ls  $i`" | grep -v "~"
-fi
-done
-echo 
-
-for i in * ; do
-if test -d $i; then
-list_dir $i
-fi
-done
-
-cd ..
-P="`echo $P | sed s,/$1,,g`"
+error()
+{
+	printf "ERROR: $@"
+	exit 2
 }
-
-list_dir .
+which git > /dev/null || error "Need git to run this command !"
+git ls-files
