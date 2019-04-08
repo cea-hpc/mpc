@@ -125,39 +125,34 @@ VAR=VALUE.  See below for descriptions of some of the useful variables.
 Defaults for the options are specified in brackets.
 
 Configuration:
-  -h, --help              Display this help and exit
-  -n, --no-create         Do not create output files
+  -h, --help                       Display this help and exit
+  -n, --no-create                  Do not create output files
 
-EOF
-
-cat <<EOF
 Installation directories:
-  --prefix=PREFIX         Install architecture-independent files in PREFIX [/usr/local]
-  --exec-prefix=EPREFIX   Install architecture-dependent files in EPREFIX [PREFIX]
+  --prefix=PREFIX                  Install architecture-independent files in PREFIX [/usr/local]
+  --exec-prefix=EPREFIX            Install architecture-dependent files in EPREFIX [PREFIX]
 
-By default, 'make install' will install all the files in
-'/usr/local/bin', '/usr/local/lib' etc.  You can specify
-an installation prefix other than '/usr/local' using '--prefix',
-for instance '--prefix=\$HOME'.
+ By default, 'make install' will install all the files in '/usr/local/bin',
+ '/usr/local/lib' etc. This is discouraged to avoid erasing system header files
+ MPC may override. You can specify an installation prefix other than
+ '/usr/local' using '--prefix', for instance '--prefix=\$HOME'.
 
 Fine tuning of the installation directories:
-  --bindir=DIR            User executables in DIR [EPREFIX/bin]
-  --includedir=DIR        C header files in DIR [PREFIX/include]
-  --libdir=DIR            Object code libraries in DIR [EPREFIX/lib]
-  --mandir=DIR            Man documentation in DIR [PREFIX/man]
+  --bindir=DIR                     User executables in DIR [EPREFIX/bin]
+  --includedir=DIR                 C header files in DIR [PREFIX/include]
+  --libdir=DIR                     Object code libraries in DIR [EPREFIX/lib]
+  --mandir=DIR                     Man documentation in DIR [PREFIX/man]
 
 EOF
 
 cat <<EOF
 Optional features:
-  --disable-FEATURE                Do not include FEATURE
-  --enable-FEATURE                 Include FEATURE
   --enable-fortran                 Build MPC fortran API
   --use-network=*                  Select inter-node network type [all]
-  --mpc-process-mode			   Configure MPC in a process-based flavour
+  --mpc-process-mode               Configure MPC in a process-based flavour
   --enable-checksum                Enable checksum for inter-processes messages
   --disable-shm                    Disable intra-node communication module (SHM)
-  --enable-shm-cma		   		   Enable CMA support for SHM (since Linux 3.2 & glibc 2.15) 
+  --enable-shm-cma                 Enable CMA support for SHM (since Linux 3.2 & glibc 2.15) 
   --disable-posix-alloc            Disable MPC posix memory allocator.
   --enable-debug                   Enable MPC internal debugging features
   --enable-debug-noassert          Enable MPC internal debugging features but preserve performance
@@ -165,6 +160,7 @@ Optional features:
   --enable-debug-messages          Enable MPC debug message printing in verbose level 3
   --enable-shell-colors            Enable support of colors in shell
   --enable-valgrind-memcheck       Enable support of valgrind memcheck in MPC_Allocator
+  --disable-valgrind-memcheck      Disable support of valgrind memcheck in MPC_Allocator
   --enable-lib-mode                Build MPC as a communication library
 
 Module selection:
@@ -174,23 +170,22 @@ mpc_modules_print_help disabled
 mpc_modules_print_help enabled
 
 cat <<EOF
+  --disable-all                    Disable all MPC modules
 
 Optional packages:
-  --with-PACKAGE          Use PACKAGE
-  --without-PACKAGE       Do not use PACKAGE
-  --without-libunwind     Disable libunwind backtraces [enabled]
-  --with-libnuma          Enable libnuma for memory and cpu binding [disabled]
-  --with-libcpuset        Enable libcpuset for memory and cpu binding [disabled]
-  --without-slurm         Disable slurm detection [enabled]
-  --without-mpc_mmap      Disable mpc mmap/munmap support [enabled]
-  --with-openpa=prefix    Enable OpenPA using given prefix [system default]
-  --with-hwloc=prefix     Enable hwloc using given prefix [system default]
-  --with-openib=prefix    Enable OpenFabrics using given prefix [system default]
-  --with-portals=prefix   Enable Portals API using given prefix [system default]
-  --with-libxml2=prefix   Enable libxml2 for config file parsing [pkg-config or /usr]
-  --with-libsctk_arch=prefix   Enable libsctk_arch for config file parsing [pkg-config or /usr]
+  --without-libunwind              Disable libunwind backtraces [enabled]
+  --with-libnuma                   Enable libnuma for memory and cpu binding [disabled]
+  --with-libcpuset                 Enable libcpuset for memory and cpu binding [disabled]
+  --without-slurm                  Disable slurm detection [enabled]
+  --without-mpc_mmap               Disable mpc mmap/munmap support [enabled]
+  --with-openpa=prefix             Enable OpenPA using given prefix [system default]
+  --with-hwloc=prefix              Enable hwloc using given prefix [system default]
+  --with-openib=prefix             Enable OpenFabrics using given prefix [system default]
+  --with-portals=prefix            Enable Portals API using given prefix [system default]
+  --with-libxml2=prefix            Enable libxml2 for config file parsing [pkg-config or /usr]
+  --with-libsctk_arch=prefix       Enable libsctk_arch for config file parsing [pkg-config or /usr]
 
-Some influential environment variables:
+Some influential environment variables (provided as arguments):
   CC                               C compiler command
   CFLAGS                           C compiler flags
   CFLAGS_NON_GNU                   C compiler flags except for gcc
@@ -200,7 +195,6 @@ Some influential environment variables:
   F77                              Fortran compiler command
 
 EOF
-
 }
 
 begin_section "Available Modules:"
@@ -433,9 +427,6 @@ for arg in "$@" ; do
     SCTK_DEBUG_MESSAGES="1"
     SCTK_DEBUG_STRICT="1"
     ;;
-    --disable-fortran-header)
-    SCTK_FORTRAN_HEADER_DISABLED="1"
-    ;;
     --disable-fortran)
     SCTK_FORTRAN="0"
     ;;
@@ -559,15 +550,18 @@ for arg in "$@" ; do
     debug "$CONF_ARG"
     mpc_modules_enable_module "${CONF_ARG}"
 	;;
-    --compilers=*)
-	COMPILER_LIST="`echo A$arg | sed -e 's/A--compilers=//g'`"
-    ;;
     --debuggers=*)
 	DEBUGGER_LIST="`echo A$arg | sed -e 's/A--debuggers=//g'`"
     ;;
     --add-library-path=*)
 	ADD_TO_LIBRARY_PATH="`echo A$arg | sed -e 's/A--add-library-path=//g'`"
     ;;
+    # all deprecated options, kept here for retro-compatibility
+	--no-recursion);;
+	--enable-fortran);;
+	--disable-fortran-header);;
+	--disable-fortran);;
+	--compilers=*);;
     *)
 	perror "$0: error: unrecognized option: $arg"
 	exit 1
