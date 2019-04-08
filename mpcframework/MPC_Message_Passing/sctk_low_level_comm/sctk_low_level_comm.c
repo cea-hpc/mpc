@@ -36,42 +36,41 @@
 #endif
 
 /************************************************************************/
-/* Net Error Messages                                                   */
-/************************************************************************/
-
-/*static void sctk_network_not_implemented ( char *name )
-{
-	sctk_error ( "No configuration found for the network '%s'. Please check you '-net=' argument"
-	             " and your configuration file", name );
-	sctk_abort();
-}
-
-static void sctk_network_not_implemented_warn ( char *name )
-{
-	if ( sctk_process_rank == 0 )
-	{
-		sctk_warning ( "No configuration found for the network '%s'. Please check you '-net=' argument"
-		               " and your configuration file. FALLBACK to TCP", name );
-	}
-}*/
-
-/************************************************************************/
 /* Network Hooks                                                        */
 /************************************************************************/
 
 /********** SEND ************/
 
-void sctk_network_send_message_default ( __UNUSED__ sctk_thread_ptp_message_t *msg )
+/**
+ * Default value when a rail did not defines it own send() method.
+ *
+ * This is clearly an issue with the development of a given driver if the default pointer to send a message is not
+ * overriden by the rail initialization. This is the purpose of this function.
+ * This function does NOT return !
+ *
+ * \param[in] msg the message to send
+ */
+void sctk_network_send_message_default ( sctk_thread_ptp_message_t *msg )
 {
 	not_reachable();
 }
+
+/** send_message() function pointer used by later trampolines */
 static void ( *sctk_network_send_message_ptr ) ( sctk_thread_ptp_message_t * ) = sctk_network_send_message_default;
 
+/** trampoline function to set to the dyamically-defined send() routine.
+ * \param[in] msg the message to send
+ */
 void sctk_network_send_message ( sctk_thread_ptp_message_t *msg )
 {
 	sctk_network_send_message_ptr ( msg );
 }
 
+/**
+ * Set the routine used to send a message from latter calls.
+ *
+ * \param[in] sctk_network_send_message_val the function pointer
+ */
 void sctk_network_send_message_set ( void ( *sctk_network_send_message_val ) ( sctk_thread_ptp_message_t * ) )
 {
 	sctk_network_send_message_ptr = sctk_network_send_message_val;
@@ -79,17 +78,37 @@ void sctk_network_send_message_set ( void ( *sctk_network_send_message_val ) ( s
 
 /********** NOTIFY_RECV ************/
 
-void sctk_network_notify_recv_message_default ( __UNUSED__ sctk_thread_ptp_message_t *msg )
+/**
+ * Default handler when a RECV message is locally posted.
+ *
+ * This handler can be called if a given driver does not care about such notification.
+ * That's why there is no `not_rechable()` call here.
+ *
+ * \param[in] msg the message hosting RECV infos
+ */
+void sctk_network_notify_recv_message_default ( sctk_thread_ptp_message_t *msg )
 {
 }
 
+/** recv_mesg() function pointer used by later calls */
 static void ( *sctk_network_notify_recv_message_ptr ) ( sctk_thread_ptp_message_t * ) = sctk_network_notify_recv_message_default;
 
+
+/**
+ * tranpoline function to set the the dynamically-defined recv() routine.
+ *
+ * \param[in] msg the message hosting RECV infos
+ */
 void sctk_network_notify_recv_message ( sctk_thread_ptp_message_t *msg )
 {
 	sctk_network_notify_recv_message_ptr ( msg );
 }
 
+/**
+ * Set the routine used to get a local-recv notification.
+ *
+ * \param[in] sctk_network_notify_recv_message_val 
+ */
 void sctk_network_notify_recv_message_set ( void ( *sctk_network_notify_recv_message_val ) ( sctk_thread_ptp_message_t * ) )
 {
 	sctk_network_notify_recv_message_ptr = sctk_network_notify_recv_message_val;
@@ -97,17 +116,34 @@ void sctk_network_notify_recv_message_set ( void ( *sctk_network_notify_recv_mes
 
 /********** NOTIFY_MATCHING ************/
 
-void sctk_network_notify_matching_message_default (  __UNUSED__ sctk_thread_ptp_message_t *msg )
+/**
+ * Default handler when a network-received messaged matched with a local-recv (two-sided).
+ * 
+ * As some driver implementation could ignore such notification, this handler may be called by default. 
+ * That's why there is no `not_reachable()` here.
+ *
+ * \param[in] msg the matched message
+ */
+void sctk_network_notify_matching_message_default ( sctk_thread_ptp_message_t *msg )
 {
 }
 
+/** notify_msg() function pointe rused by later calls */
 static void ( *sctk_network_notify_matching_message_ptr ) ( sctk_thread_ptp_message_t * ) = sctk_network_notify_matching_message_default;
 
+/**
+ * trampoline function to set the dynamically-defined notify_matching() function.
+ *
+ * \param[in] msg the matching message
+ */
 void sctk_network_notify_matching_message ( sctk_thread_ptp_message_t *msg )
 {
 	sctk_network_notify_matching_message_ptr ( msg );
 }
 
+/** Set the routine used to notify local matching messages.
+ * \param[in] msg the matching message
+ */
 void sctk_network_notify_matching_message_set ( void ( *sctk_network_notify_matching_message_val ) ( sctk_thread_ptp_message_t * ) )
 {
 	sctk_network_notify_matching_message_ptr = sctk_network_notify_matching_message_val;
@@ -170,6 +206,12 @@ void sctk_network_notify_probe_message  (sctk_thread_message_header_t* hdr, int 
 
 /********** NOTIFY_IDLE ************/
 
+
+/**
+ * Default handler to poll new messages from network.
+ * The behavior here should always be overriden by the network driver implementation to progress
+ * messages. Nevertheless, this default handler could be called in some situations anyway
+ */
 void sctk_network_notify_idle_message_default ()
 {
 
@@ -177,8 +219,20 @@ void sctk_network_notify_idle_message_default ()
 
 static void ( *sctk_network_notify_idle_message_ptr ) () = sctk_network_notify_idle_message_default;
 
+
+/**
+ * Main entry point from upper layers for polling messages.
+ *
+ * This function can be called from anywhere to request message progress. Each rail is then called
+ * to progreess its own queues. This function is THE potential routine to avoid deadlock, despite the
+ * call can be costly in some situation. For example, this function can be called in the context of
+ * thread context switching to solve potential deadlocks.
+ */
 void sctk_network_notify_idle_message ()
 {
+	/* Fault Tolerance mechanism cannot allow any driver to be modified during a pending checkpoint.
+	 * This is our way to maintain consistency for data to be saved.
+	 */
 #ifdef MPC_Fault_Tolerance
 	if(sctk_ft_no_suspend_start())
         {
