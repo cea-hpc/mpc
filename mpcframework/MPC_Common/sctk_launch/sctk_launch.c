@@ -703,8 +703,6 @@ sctk_proceed_arg (char *word)
 	sctk_add_arg ("--use-ethread_ng", sctk_use_ethread_ng);
 	sctk_add_arg ("--use-ethread", sctk_use_ethread);
 
-	/*   sctk_add_arg ("--use-mpi", sctk_use_mpi); */
-	/*   sctk_add_arg ("--use-tcp", sctk_use_tcp); */
 	sctk_add_arg_eq ("--sctk_use_network", sctk_use_network);
 
 	/*FOR COMPATIBILITY */
