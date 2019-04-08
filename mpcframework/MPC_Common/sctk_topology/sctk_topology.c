@@ -1050,9 +1050,6 @@ sctk_restrict_topology ()
 		sctk_expand_pin_processor_list(pinning_env);
 	}
 
-	/* Share nodes */
-	sctk_share_node_capabilities = 1;
-	
 	if ((sctk_share_node_capabilities == 1) 
 	&& (sctk_process_number > 1))
 	{
