@@ -9,31 +9,41 @@ Defaults for the options are specified in brackets.
   --help|-h|-?                            : Display this help and exit
   --version                               : Report version number and exit
 
-# Installation
+# Build & Installation
   --prefix=PREFIX                         : Install architecture-independent files in PREFIX [/usr/local]
   --disable-check-install                 : Override installation if it already exists in the prefix
-  --disable-check-deps                    : Disable dependency checking
-  --lib-mode                              : Build MPC as a communication library
-
-# Build
+  --{enable,disable}-check-deps           : Enable/Disable dependency checking
   --compiler                              : Default compiler
+  --download-missing-deps                 : Download dependencies
+  --mirror={1|2|3|4}                      : Choose a mirror for downloading dependencies
   clean                                   : Delete directories inside build directory 
   distclean                               : Delete directories and makefiles inside build directory
 
-# Download missing deps
-  --download-missing-deps                 : Download dependencies
-  --mirror={1|2|3|4}                      : Choose a mirror for downloading dependencies
+# Features
+  --lib-mode                              : Build MPC as a communication library
+  --mpc-process-mode                      : Build MPC in process-mode (1 MPI process = 1 UNIX process)
+  --{enable,disable}-mpc-ft               : Activate/Deactivate checkpoint/restart support
+  --disable-color                         : Disable colors in display
+  --enable-mpc-debug                      : Enable every debug levels (symbols, messages)
+  --verbose=1|2|3                         : Level of verbosity
+  -v|-vv|-vvv                             : Level of verbosity
+  -jN                                     : Allow N jobs at once (parallel install)
 
 # Disable sub packages
-  --disable-mpc-gdb                       : Disable gdb
   --disable-mpc-gcc                       : Disable gcc
   --disable-mpc-binutils                  : Disable binutils
   --disable-mpc-fortran                   : Disable fortran
-  --disable-romio                          : Disable ROMIO MPI-IO support
+  --disable-mpc-hydra                     : Disable Hydra
+  --disable-romio                         : Disable ROMIO MPI-IO support
+  --{enable,disable}-mpc-gdb              : Enable/Disable gdb
+  --{enable,disable}-tbb                  : Enable/Disable TBB
 
 # Specify system subpackages
   --with-mpc-gdb=*                        : Specify gdb prefix on the system
   --with-mpc-gcc=*                        : Specify gcc prefix on the system
+  --with-gmp=*                            : Specify GCC deps on the system
+  --with-mpfr=*                           : Specify GCC deps on the system
+  --with-mpc=*                            : Specify GCC deps on the system
   --with-sctk-arch=*                      : Specify sctk_arch prefix on the system
   --with-openpa=*                         : Specify openpa prefix on the system
   --with-mpc-binutils=*                   : Specify binutils prefix on the system
@@ -42,6 +52,10 @@ Defaults for the options are specified in brackets.
   --with-cuda=*                           : Specify Cuda prefix on the system
   --with-openacc=*                        : Specify OpenACC prefix on the system (NIMPL)
   --with-opencl=*                         : Specify OpenCL prefix on the system (NIMPL)
+  --with-hydra=*                          : Specify Hydra prefix on the system
+  --with-tbb=*                            : Specify TBB prefix on the system
+  --with-{dmtcp,hbict}=*                  : Specify DMTCP/HBICT prefix on the system
+  --with-libextls=*                       : Specify ExTLS prefix on the system
 
 # Options to transmit to subpackages
   --mpc-gcc-*                             : Add options to gcc configure
@@ -50,10 +64,15 @@ Defaults for the options are specified in brackets.
   --openpa-*                              : Add options to openpa configure
   --gmp-*                                 : Add options to gmp configure
   --mpfr-*                                : Add options to mpfr configure
+  --mpc-*                                 : Add options to 'Multi-Precision' configure
   --mpc-*                                 : Add options to mpc multiprecision library configure
   --mpc-binutils-*                        : Add options to binutils configure
   --libxml2-*                             : Add options to libxml2 configure
+  --hydra-*                               : Add options to Hydra configure
   --hwloc-*                               : Add options to hwloc configure
+  --tbb-*                                 : Add options to TBB configure
+  --libextls-*                            : Add options to ExTLS configure
+  --{dmtcp,hbict}-*                       : Add options to DMTCP/HBICT configure
   --mpc-option=*                          : Add options to mpc framework configure
 
 # Cross-compilation
@@ -61,9 +80,3 @@ Defaults for the options are specified in brackets.
   --host=*                                : Specify architecture for host
   --arch-library-path=*                   : Specify path for architecture libraries
   --with-sysroot=*                        : Specify path for sysroot (MPSS for MIC)
-
-# Features
-  --disable-color                         : Disable colors in display
-  --verbose=1|2|3                         : Level of verbosity
-  -v|-vv|-vvv                             : Level of verbosity
-  -jN                                     : Allow N jobs at once (parallel install)
