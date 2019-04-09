@@ -1,39 +1,28 @@
-############################# MPC License ##############################
-# Wed Nov 19 15:19:19 CET 2008                                         #
-# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
-#                                                                      #
-# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
-# This file is part of the MPC Runtime.                                #
-#                                                                      #
-# This software is governed by the CeCILL-C license under French law   #
-# and abiding by the rules of distribution of free software.  You can  #
-# use, modify and/ or redistribute the software under the terms of     #
-# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
-# following URL http://www.cecill.info.                                #
-#                                                                      #
-# The fact that you are presently reading this means that you have     #
-# had knowledge of the CeCILL-C license and that you accept its        #
-# terms.                                                               #
-#                                                                      #
-# Authors:                                                             #
-#   - PERACHE Marc marc.perache@cea.fr                                 #
-#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
-#                                                                      #
-########################################################################
 
-all: GettingStarted.pdf InstallationGuide.pdf  
+man1_files=$(wildcard man/man1/*.1in)
+man1_generated=$(man1_files:man/man1/%.1in=$(M_PWD)/BUILD_MPC_Doc/man/man1/%.1)
+man3_files=$(wildcard man/man3/*.3in)
+man3_generated=$(man3_files:man/man3/%.3in=$(M_PWD)/BUILD_MPC_Doc/man/man3/%.3)
+man5_files=$(wildcard man/man5/*.5in)
+man5_generated=$(man5_files:man/man5/%.5in=$(M_PWD)/BUILD_MPC_Doc/man/man5/%.5)
 
-GettingStarted.pdf:
-	@./updatesrc "GettingStarted.md"
-	@gimli -f ./GettingStarted.md
-	@cp GettingStarted.pdf ../../README.pdf 
+all: setup_dirs $(man1_files) $(man1_generated) $(man3_files) $(man3_generated) $(man5_files) $(man5_generated)
 
-InstallationGuide.pdf:
-	@./updatesrc "InstallationGuide.md"
-	@../../installmpc --help | sed 's/^/      /' >> InstallationGuide.md
-	@gimli -f ./InstallationGuide.md
-	@cp InstallationGuide.pdf ../../
+$(man1_generated):$(M_PWD)/BUILD_MPC_Doc/man/man1/%.1:man/man1/%.1in
+	@./build_manpage $^ > $@
+$(man3_generated):$(M_PWD)/BUILD_MPC_Doc/man/man3/%.3:man/man3/%.3in
+	@./build_manpage $^ > $@
+$(man5_generated):$(M_PWD)/BUILD_MPC_Doc/man/man5/%.5:man/man5/%.5in
+	@./build_manpage $^ > $@
+
+setup_dirs:
+	@mkdir -p $(M_PWD)/BUILD_MPC_Doc/man/man1
+	@mkdir -p $(M_PWD)/BUILD_MPC_Doc/man/man3
+	@mkdir -p $(M_PWD)/BUILD_MPC_Doc/man/man5
+
+.PHONY: setup_dirs 
 
 clean:
-	@rm -f GettingStarted.pdf InstallationGuide.pdf
-
+	@rm -f $(M_PWD)/BUILD_MPC_Doc/man/man1
+	@rm -f $(M_PWD)/BUILD_MPC_Doc/man/man3
+	@rm -f $(M_PWD)/BUILD_MPC_Doc/man/man5

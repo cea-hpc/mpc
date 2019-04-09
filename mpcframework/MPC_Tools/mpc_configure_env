@@ -76,10 +76,10 @@ fi
 # fi
 
 if test -z "\${MANPATH}" ; then
-	MANPATH="\${MPCROOT}/man:"
+	MANPATH="\${MPCROOT}/share/man:"
 	export MANPATH
 else
-	MANPATH="\${MPCROOT}/man:\${MANPATH}:"
+	MANPATH="\${MPCROOT}/share/man:\${MANPATH}:"
 	export MANPATH
 fi
 
@@ -163,9 +163,9 @@ endif
 # endif
 
 if (\$?MANPATH) then
-  setenv MANPATH "\${MPCROOT}/man:\${MANPATH}"
+  setenv MANPATH "\${MPCROOT}/share/man:\${MANPATH}"
 else
-  setenv MANPATH "\${MPCROOT}/man"
+  setenv MANPATH "\${MPCROOT}/share/man"
 endif
 
 if (\$?LIBRARY_PATH) then

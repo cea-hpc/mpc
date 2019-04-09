@@ -11,10 +11,10 @@ configuration layer , etc...
 CONTENTS:
 ---------
 * **config/**                    : default configuration files
-* **cross_compilation_scripts/** : MIC script to enable cross-compilation
-* **fortran_gen/**               : Interface to build Fortran to C MPI interface
-* **mpcrun_opt/**                : mpcrun laucher scripts
-* **sctk_configs/**              : (probably) deprecated
+* **cross\_compilation\_scripts/** : MIC script to enable cross-compilation
+* **fortran\_gen/**               : Interface to build Fortran to C MPI interface
+* **mpcrun\_opt/**                : mpcrun laucher scripts
+* **sctk\_configs/**              : (probably) deprecated
 * **mpirun/**                    : 'mpirun' binary code (standalone)
 * **mpit/**                      : python-based MPIT interface generator
 

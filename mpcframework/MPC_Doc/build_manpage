@@ -1,0 +1,12 @@
+#!/bin/sh
+
+. ../.MPC_version || exit 24
+
+file="$1"
+version="$MAJOR.$MINOR.$REVISION"
+test -n "$PRE_RELEASE" && version="$version$PRE_RELEASE"
+test -n "$file" || exit 42
+
+sed -e "s@#PACKAGE_DATE#@`date +%x`@" \
+    -e "s@#PACKAGE_VERSION#@$version@" \
+    -e "s@#PACKAGE_NAME#@Multi-Processor Computing@" $file
