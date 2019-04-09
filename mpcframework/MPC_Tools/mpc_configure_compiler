@@ -136,6 +136,31 @@ die()
 	exit 2
 }
 
+help()
+{
+	echo "Usage: \`basename $1\` [options] file..."
+	echo "MPC Options:"
+	echo "  -f[no]mpc-privatize        Enable/Disable global variable automatic privatization"
+	echo "  -f[no]mpc-tlsopt           Enable/Disable optimized TLS (through GS) when privatiation is enabled"
+	echo "  -f[no]mpc-plugin           Enable/DIsable GCC plugin for dynamic variable automatic privatization"
+	echo "  -f[no]mpc-include          Add (or not) 'mpc_main.h' header to redefine main() function"
+	echo "  -f[no]openmp               Enable/Disable OpenMP from being handled by MPC implementation"
+	echo "  -f[no]mpc-cuda             Enable/Disable CUDA support at compile-time with MPC support"
+	echo "  --show                     Display the compilation command lines as they would be run"
+	echo "  --help,-h                  Display this help"
+	echo "  --compiler-help            Get the native compiler help"
+	echo "  --version, -v              Get the current MPC version"
+	echo "  --compilers                Get list of available compiler for this language"
+	echo "  -target=<target>           Select the target to build the code for"
+	echo "  --target_list              Get the list built target for this compiler"
+	echo "  --showme:<token>           Display a specific flags of the compiler command to run."
+	echo "                               token can be: compile, link or command (=compiler path)."
+	echo "  --use:command              Use bare compiler path to build, without any further flags"
+	echo ""
+	echo "For more information, please consult 'man \`basename $1\`'"
+	echo "To report bugs, please look at the BUGS section in man-pages."
+}
+
 #used to override option w/ compiler specific when option has been provided
 # \$1: var name
 # \$2: compiler-specific option
@@ -384,15 +409,27 @@ USE_COMMAND="1"
 		PRIV_FLAG=""
 		addarg=no
 	;;
+	-fmpc-plugin)
+		export MPC_DYN_PRIV_ENABLED=1
+		addarg=no
+	;;
 	-fno-mpc-plugin)
 		unset MPC_DYN_PRIV_ENABLED
 		addarg=no
 	;;
+	-fno-mpc-dyninsert|-fno-mpc-dyn-insert)
+		export MPC_DYN_INSERT=0
+		addarg=0
+		;;
 	-fmpc-dyninsert|-fmpc-dyn-insert)
 		export MPC_DYN_INSERT=1
 		addarg=no
 	;;
-	-fmpc-notlsopt|-fmpc-no-tlsopt)
+	-fmpc-tlsopt)
+		NO_TLS_OPT=0
+		addarg=0
+		;;
+	-fmpc-notlsopt|-fmpc-no-tlsopt|-fnompc-tlsopt)
 		NO_TLS_OPT=1
 		addarg=no
 	;;
@@ -402,7 +439,7 @@ USE_COMMAND="1"
 		MPC_HEADER_INCLUDE="\${MPC_HEADER_INCLUDE} -include mpc_main.h"
 		addarg=no
 	;;
-	-fno-mpc-include)
+	-fno-mpc-include|-fnompc-include)
 		MPC_HEADER_INCLUDE=""
 		addarg=no
 	;;
@@ -436,7 +473,11 @@ USE_COMMAND="1"
 		done
 		exit 0
 	;;
-	-cuda)
+	-nocuda|-fnompc-cuda)
+		EXTRA_ADDON_FLAGS=""
+		addarg=no
+		;;
+	-cuda|-fmpc-cuda)
 		EXTRA_ADDON_FLAGS="-L\$MPC_RPREFIX/\${MPC_SUBPREFIX}/lib/stubs -Wl,-rpath=\$MPC_RPREFIX/\${MPC_SUBPREFIX}/lib/stubs -lmpc_cuda_addon -Wl,--unresolved-symbols=ignore-in-shared-libs"
 		addarg=no
 	;;
@@ -454,21 +495,25 @@ USE_COMMAND="1"
 	fi
     ;;
 
-    -show)
+    -show|--show)
     addarg=no
     Show=echo
     ;;
 
     # Verbose mode
-    -v)
+    -v|--version)
     # Pass this argument to the pre-compiler/compiler as well.
     echo "mpc_cc for \$MPC_VERSION"
     ;;
 
     # Help
-    -help)
+    --help|-h)
+    	help
+    	exit 0
     ;;
-
+	--compiler-help)
+	qarg="--help"
+	;;
     *)
 	qarg="'\$arg'"
     ;;
