@@ -9,6 +9,8 @@ error()
 which pandoc >/dev/null 2>&1 || error "Failed to find 'pandoc' to build static man-pages"
 test -f ./build_manpage || error "Run this script from MPC_Doc directory only"
 
+pandoc_args="-s -f markdown -t man -V header=Multi-Processor-Computing -V date=`date +%x` -V footer=MPC-`../MPC_Tools/mpc_print_version`"
+
 regex="man/man([[:digit:]])/(.*)\.md"
 if test -z "$1"; then
 for markdown in `find man/ -name "*.md"`
@@ -16,11 +18,13 @@ do
 	if [[ $markdown =~ $regex ]]; then
 		mannum="${BASH_REMATCH[1]}"
 		manname="${BASH_REMATCH[2]}"
-		manfile="./man_static/man${mannum}/${manname}.${mannum}in"
-		echo "Updating $markdown -> $manfile"
-		pandoc -s $markdown -t man > $manfile
+		manfile="man_static/man${mannum}/${manname}.${mannum}in"
+		echo "Generating $markdown -> $manfile"
+		pandoc $pandoc_args $markdown -V section="$mannum" -o $manfile
 	fi
 done
 else
-	pandoc -s "$1" -t man
+	if [[ $markdown =~ $regex ]]; then
+		pandoc $pandoc_args "$1" -V section=${BASH_REMATCH[1]}
+	fi
 fi

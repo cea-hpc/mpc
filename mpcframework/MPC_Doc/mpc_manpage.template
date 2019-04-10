@@ -1,6 +1,5 @@
-% NAME OF THE PROGRAM(1)
-% Multi-Processor Computing
-% #PACKAGE_DATE#
+% NAME OF THE PROGRAM
+% <AUTHOR NAME>
 
 # NAME
 
@@ -23,7 +22,3 @@ Short description
 ## NATIVE COMPILER OPTIONS
 
 # NOTES
-
-# AUTHORS
-
-Man-page written by <>

@@ -1,6 +1,5 @@
-% MPC_COMPILATION_WRAPPERS(1)
-% Multi-Processor Computing
-% #PACKAGE_DATE#
+% MPC Compilation wrappers
+% Julien Adam <adamj@paratools.com>
 
 # NAME
 
@@ -152,7 +151,3 @@ available for the current installation is available by using the
 
 **--target-list**
 : List currently active MPC target, for cross-compilation only.
-
-# AUTHORS
-
-Written by Julien Adam <adamj@paratools.com>
