@@ -791,7 +791,6 @@ RECURSIVE              = YES
 # run.
 
 EXCLUDE                = $(MPC_SOURCE_DIRECTORY)/mpcframework/MPC_Tests/ \
-                         $(MPC_SOURCE_DIRECTORY)/mpcframework/MPC_Doc/ \
                          $(MPC_SOURCE_DIRECTORY)/mpcframework/MPC_Allocator/tests/ \
 						 $(MPC_SOURCE_DIRECTORY)/MPC_Test_Suite/ \
 						 $(MPC_SOURCE_DIRECTORY)/doc/ \
