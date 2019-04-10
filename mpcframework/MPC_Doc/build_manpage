@@ -1,28 +1,26 @@
-#!/bin/sh
-
-. ../.MPC_version || exit 24
-
-file="$1"
-version="$MAJOR.$MINOR.$REVISION"
-test -n "$PRE_RELEASE" && version="$version$PRE_RELEASE"
-test -n "$file" || exit 42
-
-sed -e "s@#PACKAGE_DATE#@`date +%x`@" \
-    -e "s@#PACKAGE_VERSION#@$version@" \
-    -e "s@#PACKAGE_NAME#@Multi-Processor Computing@" $file
+#!/bin/bash
+error()
+{
+	printf "ERROR: $@\n"
+	exit 42
+}
 
 
-if test -n "`echo "$file" | grep "MPI_.*.3in"`"; then
-cat<<EOF
-.SH DISCLAIMER
-.ft R
-This man page, while documenting a function from the MPI standard, is fully part of the OpenMPI implementation and the "Multi-Processor Computing" (MPC) team complies in full respect regarding the MPI standard. It has been generated and original authors are mentioned in the Open-MPI project.
+which pandoc >/dev/null 2>&1 || error "Failed to find 'pandoc' to build static man-pages"
+test -f ./build_manpage || error "Run this script from MPC_Doc directory only"
 
-The Open-MPI project is distributed under the 3-clause BSD license and freely available at https://www.open-mpi.org/. There is NO WARRANTY to the extent permitted by law.
-
-.SH REPORTING BUGS
-.ft R
-Julien Jaeger <julien.jaeger@cea.fr>, ParaTools Staff <info@paratools.com>
-
-EOF
+regex="man/man([[:digit:]])/(.*)\.md"
+if test -z "$1"; then
+for markdown in `find man/ -name "*.md"`
+do
+	if [[ $markdown =~ $regex ]]; then
+		mannum="${BASH_REMATCH[1]}"
+		manname="${BASH_REMATCH[2]}"
+		manfile="./man_static/man${mannum}/${manname}.${mannum}in"
+		echo "Updating $markdown -> $manfile"
+		pandoc -s $markdown -t man > $manfile
+	fi
+done
+else
+	pandoc -s "$1" -t man
 fi

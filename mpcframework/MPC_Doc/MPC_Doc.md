@@ -110,4 +110,19 @@ How-to update the documentation
   updated as well as the man-page. Keep in mind that no one can be aware of such
   functionalitites if it is not publicly exposed and explained.
 
+* The script `install_manpage`, taking the man-page to install as first
+  argument, is called by the Makefile during the MPC installation process, to
+  deploy the documentation.
+
+* the script `build_manpage` will generate static man-pages from the dynamic
+  one, if any. It is executing something similar to : `pandoc -s man/manX/<file>.md -t
+  man > man_static/manX/<file>.Xin`
+
+* The man-page name is appended with 'in' suffix, because a pre-processing is
+  done when installing the documentation. This is because we did not want to
+  make changes on original Open-MPI man-pages to make later updates easier. The
+  following macros will be replaced:
+    - PACKAGE_DATE: Date of build
+    - PACKAGE_NAME: Name of the project (Multi-Processor Computing)
+    - PACKAGE_VERSION: The actual version
 
