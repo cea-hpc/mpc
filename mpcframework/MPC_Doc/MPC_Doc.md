@@ -56,6 +56,13 @@ command-line tools (either through man-pages or `--help` option):
 - `mpc_status`
 - `mpc_print_config`
 
+the `man/` directory contains Markdown-based man-pages, used by `pandoc` at
+compile time to build an up-to-date documentation while keeping the task of
+documenting easy for developers. The `man_static/` directory contains every
+man-pages in 'man-page format', used in the case the tool is not available when
+building the documentation. Any man-page in `man/` should have a static version,
+already generated into the `main_static/` directory. 
+
 How-to build the documentation
 ------------------------------
 
@@ -80,6 +87,19 @@ version of the documentation.
 
 How-to update the documentation
 -------------------------------
+
+* **DO NOT EDIT THE MAN-PAGE FILES DIRECTLY**. If doing so, any modification
+  will be lost when static man-pages will be regnerated, later on. Furthermore,
+  as long as the user is having the `pandoc` tool in the `$PATH`, these updated
+  man-pages won't be copied to be the ones to load. So, please keep you away
+  from such a pain and edit only the Markdown associated files under `/`. The
+  syntax is clearly easier and more intuitive.
+
+* When the documentation is built, the Makefile iterates over every man-pages
+  under `man_static/` directory. It looks for a 'dynamic' version under `man/`
+  directory to be run with pandoc. When adding a new man-page, be sure to add
+  both files, one in Markdown under `man/manX` and `man_static/manX`, manually
+  generated.
 
 * Developers are encouraged to keep their code documented through Doxygen for
   both functions **AND** global/static variables. It will help any further
