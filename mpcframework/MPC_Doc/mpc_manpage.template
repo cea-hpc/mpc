@@ -1,0 +1,29 @@
+% NAME OF THE PROGRAM(1)
+% Multi-Processor Computing
+% #PACKAGE_DATE#
+
+# NAME
+
+**PROGRAM NAME** - What it is for ?
+
+# SYNOPSIS
+
+**PROGRAM NAME** [options] **[arguments]**
+
+# DESCRIPTIONS
+
+Short description
+
+# GENERAL OPTIONS
+
+## MPC-SPECIFIC OPTIONS
+
+## LANGUAGE-SPECIFIC OPTIONS
+
+## NATIVE COMPILER OPTIONS
+
+# NOTES
+
+# AUTHORS
+
+Man-page written by <>
