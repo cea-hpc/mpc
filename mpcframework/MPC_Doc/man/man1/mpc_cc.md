@@ -1,14 +1,18 @@
-% mpc_cc(1)
+% MPC_COMPILATION_WRAPPERS(1)
 % Multi-Processor Computing
 % #PACKAGE_DATE#
 
 # NAME
 
-mpc\_cc -- MPI/OpenMP C compilation wrappers
+mpc\_\* -- MPI/OpenMP compilation wrappers
 
 # SYNOPSIS
 
 **mpc_cc** [options] **file...**
+**mpc_cxx** [options] **file...**
+**mpc_ff77** [options] **file...**
+**mpc_f90** [options] **file...**
+**mpc_f08** [options] **file...**
 
 # DESCRIPTION
 
@@ -23,13 +27,15 @@ $ mpc_cc my_mpi_code.c
 
 # OPTIONS
 
-Here will be presented options allowed to be passed as argument to the
-**mpc_cc** command. All native options targeting the underlying compiler can be
-provided transparently, any unkown options from MPC's point of view is discretly
+Here will be presented options allowed to be passed as argument to the wrapper
+command. All native options targeting the underlying compiler can be provided
+transparently, any unkown options from MPC's point of view is discretly
 forwarded to the final compiler. There is only one collision in option name, for
 the **--help**, which is caught by the wrapper to print its own help. To avoid
 long output, the help from the underlying compiler is not shown. To display the
-native compiler help, please use **--compiler-help** instead.
+native compiler help, please use **--compiler-help** instead. Options are
+available for any language-specific wrapper, only for few exceptions, explicitly
+mentioned.
 
 **--help**, **-h**
 
@@ -102,7 +108,7 @@ can be an issue in some situations, the **-fnompc-tlsopt** option indicates that
 only TLS optimizations through function calls are allowed. **-fmpc-tlsopt** is
 implied by default and only used to be explicit.
 
-**-fmpc-plugin**, **-fnompc-plugin**
+**-fmpc-plugin**, **-fnompc-plugin** [ __*C only*__ ]
 : Global and TLS variables have some similarities but are also quite different.
 One ont them is the way they can be initialized before the program starts. FOr
 example, such code below is allowed for global/static variable but clearly
@@ -121,13 +127,15 @@ int a = 2;
 int &b = &a;
 ```
 
-**-fmpc-include**, **-fnompc-include**
+**-fmpc-include**, **-fnompc-include** [ __*C/C++ only*__ ]
 : Force the inclusion of *mpc_main.h* to the binary. This header contains some
 macro redefinition to help replacing symbols of the targeted application. The
 approach of running MPI main() codes require the catch such function and running
 it in threads. The purpose of such header is to rename the `main()` symbol in
 `mpc_user_main__()` to avoid the program to be sticked to it (as the main() is
 one of the only symbols which cannot be preloaded, for safety reasons).
+This is only a C/C++ option, the approach is different in Fortran, based on a
+rewrite of the symbol afterwards, through the `objcopy --redefine-sym` tool.
 
 **-fopenmp**, **-fnoopenmp**
 : Enable of disable the support of OpenMP pragma directives. As the OpenMP
