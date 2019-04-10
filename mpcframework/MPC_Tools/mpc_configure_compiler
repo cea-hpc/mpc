@@ -156,6 +156,7 @@ help()
 	echo "  --showme:<token>           Display a specific flags of the compiler command to run."
 	echo "                               token can be: compile, link or command (=compiler path)."
 	echo "  --use:command              Use bare compiler path to build, without any further flags"
+	echo "  -cc=<compiler>             Force the wrapper to use the given compiler instead of the default"
 	echo ""
 	echo "For more information, please consult 'man \`basename $1\`'"
 	echo "To report bugs, please look at the BUGS section in man-pages."

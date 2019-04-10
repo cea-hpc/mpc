@@ -3,15 +3,19 @@
 
 # NAME
 
-mpc\_\* -- MPI/OpenMP compilation wrappers
+mpc\_cc, mpc\_cxx, mpc\_f77, mpc\_f90, mpc\_f08 - MPI/OpenMP compilation wrappers
 
 # SYNOPSIS
 
-**mpc_cc** [options] **file...**
-**mpc_cxx** [options] **file...**
-**mpc_ff77** [options] **file...**
-**mpc_f90** [options] **file...**
-**mpc_f08** [options] **file...**
+**mpc\_cc** \[options\] **file...**
+
+**mpc\_cxx** \[options\] **file...**
+
+**mpc\_ff77** \[options\] **file...**
+
+**mpc\_f90** \[options\] **file...**
+
+**mpc\_f08** \[options\] **file...**
 
 # DESCRIPTION
 
@@ -30,44 +34,44 @@ Here will be presented options allowed to be passed as argument to the wrapper
 command. All native options targeting the underlying compiler can be provided
 transparently, any unkown options from MPC's point of view is discretly
 forwarded to the final compiler. There is only one collision in option name, for
-the **--help**, which is caught by the wrapper to print its own help. To avoid
+the **\-\-help**, which is caught by the wrapper to print its own help. To avoid
 long output, the help from the underlying compiler is not shown. To display the
-native compiler help, please use **--compiler-help** instead. Options are
+native compiler help, please use **\-\-compiler-help** instead. Options are
 available for any language-specific wrapper, only for few exceptions, explicitly
 mentioned.
 
-**--help**, **-h**
+**-h**, **\-\-help**
 
 : Print the help / usage for this command.
 
-**--compiler-help**
+**\-\-compiler-help**
 
 : Forward the actual help from the underlying compiler to the user
 
-**--version**, **-v**
+**-v**, **\-\-version**
 
 : Display the MPC version is wrapper is coming from.
 
-**--compilers**
+**\-\-compilers**
 
 : Display all compilers handled by the current installation. As MPC can rely on
 a different compiler than the one used to build the framework, an installation
 can handle multiple underlying compiler to build an application. the
-**--compilers** option will list all registered compilers for the C language, in
-the order there are loaded by the wrapper. The first one listed is picked as the
-default. To change/add/remove compilers from this list, one can use the
+**\-\-compilers** option will list all registered compilers for the C language,
+in the order there are loaded by the wrapper. The first one listed is picked as
+the default. To change/add/remove compilers from this list, one can use the
 **mpc\_compiler\_manager** tool.
 
-**--show**
+**\-\-show**
 
 : Echoes every invocation to the underlying compiler instead of actually running
 them (equivalent to a dry-run). Note that for MPC, a single wrapper invocation
 does *NOT* map to a single compiler invocation. Because some other tasks have to
 be performed beforehand, this command will display every invocation leading to
 build the final binary. To have a partial view and/ord retrieve only subsets of
-the compilafion flags, it could be better to look for the **--showme** option.
+the compilafion flags, it could be better to look for the **\-\-showme** option.
 
-**--showme:***token*
+**\-\-showme:***token*
 
 : Depending on *token*, displays the arguments supplied to the underlying
 compiler. The following values for *token* are accepted:
@@ -77,23 +81,30 @@ compiler. The following values for *token* are accepted:
     - *command*: displays the absolute path to the underlying compiler. This
       last value is equivalent to what **mpc\_compiler\_manager** is able to do.
 
-**--use:***token*
+**\-\-use:***token*
 
 : Depending on *token*, invoke the supplied compiler with only a subset of
 arguments. The following values for *token* are accepted:
     - *command*: call the underlying compiler without any implicit arguments.
       User can provide its own argument list.
 
+**-cc=***compiler*
+: Force the compilation wrapper to use the designated compiler instead of the
+default one. This may be convenient to punctually override the compiler
+management, avoiding the pain to change the default compiler back and forth.
+Even if the option mention 'cc', it can be used for any language, like C++ and
+Fortran.
+
 **-fmpc-privatize**, **-fnompc-privatize**
 
 : The privatization is steered by the use of the flag **-fmpc-privatize**. It
 will make the application compatible with a thread-based MPI usage, by
-privatizing every global/static variables, changing their scope to have different
-copies for each MPI 'process' (becoming threads in a thread-based context). This
-flag will enable compilation optimisations, but does not limit the application
-to be run in thread-base mode only. the **--fnompc-privatize** only as an
-'explicit' interest. If specified multiples times, only the last occurence
-prevails.
+privatizing every global/static variables, changing their scope to have
+different copies for each MPI 'process' (becoming threads in a thread-based
+context). This flag will enable compilation optimisations, but does not limit
+the application to be run in thread-base mode only. the **\-\-fnompc-privatize**
+only as an 'explicit' interest. If specified multiples times, only the last
+occurence prevails.
 
 **-fmpc-tlsopt**, **-fnompc-tlsopt**
 : Because global/variables are translated into multi-level TLS variables
@@ -134,7 +145,7 @@ it in threads. The purpose of such header is to rename the `main()` symbol in
 `mpc_user_main__()` to avoid the program to be sticked to it (as the main() is
 one of the only symbols which cannot be preloaded, for safety reasons).
 This is only a C/C++ option, the approach is different in Fortran, based on a
-rewrite of the symbol afterwards, through the `objcopy --redefine-sym` tool.
+rewrite of the symbol afterwards, through the `objcopy \-\-redefine-sym` tool.
 
 **-fopenmp**, **-fnoopenmp**
 : Enable of disable the support of OpenMP pragma directives. As the OpenMP
@@ -144,10 +155,10 @@ forwared to the underlying compiler. Furthermore, depending on the vendor (GCC,
 Intel) the proper option is set (-fopenmp vs -openmp) without requiring any
 modification from the command-line.
 
-**--target=***target*
+**\-\-target=***target*
 : Specifies the target the compilation is for. The list of valid target
 available for the current installation is available by using the
-**--target\_list** option.
+**\-\-target\_list** option.
 
-**--target-list**
+**\-\-target-list**
 : List currently active MPC target, for cross-compilation only.

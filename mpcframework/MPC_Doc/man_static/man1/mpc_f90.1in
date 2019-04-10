@@ -4,13 +4,19 @@
 .hy
 .SH NAME
 .PP
-mpc_* \[en] MPI/OpenMP compilation wrappers
+mpc_cc, mpc_cxx, mpc_f77, mpc_f90, mpc_f08 \- MPI/OpenMP compilation
+wrappers
 .SH SYNOPSIS
 .PP
-\f[B]mpc_cc\f[] options \f[B]file\&...\f[] \f[B]mpc_cxx\f[] options
-\f[B]file\&...\f[] \f[B]mpc_ff77\f[] options \f[B]file\&...\f[]
-\f[B]mpc_f90\f[] options \f[B]file\&...\f[] \f[B]mpc_f08\f[] options
-\f[B]file\&...\f[]
+\f[B]mpc_cc\f[] [options] \f[B]file\&...\f[]
+.PP
+\f[B]mpc_cxx\f[] [options] \f[B]file\&...\f[]
+.PP
+\f[B]mpc_ff77\f[] [options] \f[B]file\&...\f[]
+.PP
+\f[B]mpc_f90\f[] [options] \f[B]file\&...\f[]
+.PP
+\f[B]mpc_f08\f[] [options] \f[B]file\&...\f[]
 .SH DESCRIPTION
 .PP
 The purpose of this wrapper is to provide to the user a convenient
@@ -31,44 +37,44 @@ wrapper command.
 All native options targeting the underlying compiler can be provided
 transparently, any unkown options from MPC's point of view is discretly
 forwarded to the final compiler.
-There is only one collision in option name, for the \f[B]\[en]help\f[],
+There is only one collision in option name, for the \f[B]\-\-help\f[],
 which is caught by the wrapper to print its own help.
 To avoid long output, the help from the underlying compiler is not
 shown.
 To display the native compiler help, please use
-\f[B]\[en]compiler\-help\f[] instead.
+\f[B]\-\-compiler\-help\f[] instead.
 Options are available for any language\-specific wrapper, only for few
 exceptions, explicitly mentioned.
 .TP
-.B \f[B]\[en]help\f[], \f[B]\-h\f[]
+.B \f[B]\-h\f[], \f[B]\-\-help\f[]
 Print the help / usage for this command.
 .RS
 .RE
 .TP
-.B \f[B]\[en]compiler\-help\f[]
+.B \f[B]\-\-compiler\-help\f[]
 Forward the actual help from the underlying compiler to the user
 .RS
 .RE
 .TP
-.B \f[B]\[en]version\f[], \f[B]\-v\f[]
+.B \f[B]\-v\f[], \f[B]\-\-version\f[]
 Display the MPC version is wrapper is coming from.
 .RS
 .RE
 .TP
-.B \f[B]\[en]compilers\f[]
+.B \f[B]\-\-compilers\f[]
 Display all compilers handled by the current installation.
 As MPC can rely on a different compiler than the one used to build the
 framework, an installation can handle multiple underlying compiler to
 build an application.
-the \f[B]\[en]compilers\f[] option will list all registered compilers
-for the C language, in the order there are loaded by the wrapper.
+the \f[B]\-\-compilers\f[] option will list all registered compilers for
+the C language, in the order there are loaded by the wrapper.
 The first one listed is picked as the default.
 To change/add/remove compilers from this list, one can use the
 \f[B]mpc_compiler_manager\f[] tool.
 .RS
 .RE
 .TP
-.B \f[B]\[en]show\f[]
+.B \f[B]\-\-show\f[]
 Echoes every invocation to the underlying compiler instead of actually
 running them (equivalent to a dry\-run).
 Note that for MPC, a single wrapper invocation does \f[I]NOT\f[] map to
@@ -76,11 +82,11 @@ a single compiler invocation.
 Because some other tasks have to be performed beforehand, this command
 will display every invocation leading to build the final binary.
 To have a partial view and/ord retrieve only subsets of the compilafion
-flags, it could be better to look for the \f[B]\[en]showme\f[] option.
+flags, it could be better to look for the \f[B]\-\-showme\f[] option.
 .RS
 .RE
 .TP
-.B \f[B]\[en]showme:\f[]\f[I]token\f[]
+.B \f[B]\-\-showme:\f[]\f[I]token\f[]
 Depending on \f[I]token\f[], displays the arguments supplied to the
 underlying compiler.
 The following values for \f[I]token\f[] are accepted:
@@ -96,13 +102,23 @@ This last value is equivalent to what \f[B]mpc_compiler_manager\f[] is
 able to do.
 .RE
 .TP
-.B \f[B]\[en]use:\f[]\f[I]token\f[]
+.B \f[B]\-\-use:\f[]\f[I]token\f[]
 Depending on \f[I]token\f[], invoke the supplied compiler with only a
 subset of arguments.
 The following values for \f[I]token\f[] are accepted: \-
 \f[I]command\f[]: call the underlying compiler without any implicit
 arguments.
 User can provide its own argument list.
+.RS
+.RE
+.TP
+.B \f[B]\-cc=\f[]\f[I]compiler\f[]
+Force the compilation wrapper to use the designated compiler instead of
+the default one.
+This may be convenient to punctually override the compiler management,
+avoiding the pain to change the default compiler back and forth.
+Even if the option mention `cc', it can be used for any language, like
+C++ and Fortran.
 .RS
 .RE
 .TP
@@ -115,7 +131,7 @@ have different copies for each MPI `process' (becoming threads in a
 thread\-based context).
 This flag will enable compilation optimisations, but does not limit the
 application to be run in thread\-base mode only.
-the \f[B]\[en]fnompc\-privatize\f[] only as an `explicit' interest.
+the \f[B]\-\-fnompc\-privatize\f[] only as an `explicit' interest.
 If specified multiples times, only the last occurence prevails.
 .RS
 .RE
@@ -180,7 +196,7 @@ the main() is one of the only symbols which cannot be preloaded, for
 safety reasons).
 This is only a C/C++ option, the approach is different in Fortran, based
 on a rewrite of the symbol afterwards, through the
-\f[C]objcopy\ \-\-redefine\-sym\f[] tool.
+\f[C]objcopy\ \\\-\\\-redefine\-sym\f[] tool.
 .RS
 .RE
 .TP
@@ -195,14 +211,14 @@ command\-line.
 .RS
 .RE
 .TP
-.B \f[B]\[en]target=\f[]\f[I]target\f[]
+.B \f[B]\-\-target=\f[]\f[I]target\f[]
 Specifies the target the compilation is for.
 The list of valid target available for the current installation is
-available by using the \f[B]\[en]target_list\f[] option.
+available by using the \f[B]\-\-target_list\f[] option.
 .RS
 .RE
 .TP
-.B \f[B]\[en]target\-list\f[]
+.B \f[B]\-\-target\-list\f[]
 List currently active MPC target, for cross\-compilation only.
 .RS
 .RE
