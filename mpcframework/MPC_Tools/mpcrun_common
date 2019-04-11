@@ -92,6 +92,8 @@ mpcrun_error(){
 }
 
 print_help(){
+# Not documented options (on purpose)
+#--smt-nb=X     | -s=X      Total number SM threads per OS processes. (> -c)
 cat << EOF
 
 Usage: mpcrun [option] [--] program [program-args]
@@ -106,12 +108,11 @@ General-purpose:
 
 Topology: (In the following, X is a strict positive number)
     --node-nb=X    | -N=X      Total number of nodes
-    --process-nb=X | -p=X      Total number of processes
-    --task-nb=X    | -n=X      Total number of tasks
-    --cpu-nb=X     | -c=X      Number of cpus per process (-p option)
-    --cpu-nb-mpc=X             (deprecated, use -c instead)
+    --process-nb=X | -p=X      Total number of OS processes
+    --task-nb=X    | -n=X      Total number of MPI processes (> -p)
+    --cpu-nb=X     | -c=X      Number of cpus per OS process (per -p)
     --{enable,disable}-smt     Activate/Deactivate SMT capabilities (default: disabled)
-    --[disable-]share-node     Allow/Forbid multiple processes to share the same node
+    --[disable-]share-node     Allow/Forbid multiple OS processes to share the same node
 
 Multithreading:
     --multithreading=M | -m=M  Define multithreading mode, where M is from {$MODES_MULTITHREAD}
@@ -408,6 +409,12 @@ for arg in "$@" ; do
     ;;
     --cpu-nb-mpc=*)
     CPU_NB_MPC="`echo A$arg | sed -e 's/A--cpu-nb-mpc=//g'`"
+    ;;
+    --smt-nb=*)
+    CPU_NB_MPC="`echo A$arg | sed -e 's/A--cpu-nb-mpc=//g'`"
+    ;;
+    -s=*)
+    CPU_NB_MPC="`echo A$arg | sed -e 's/A-s=//g'`"
     ;;
     -c=*)
     CPU_NB="`echo A$arg | sed -e 's/A-c=//g'`"
