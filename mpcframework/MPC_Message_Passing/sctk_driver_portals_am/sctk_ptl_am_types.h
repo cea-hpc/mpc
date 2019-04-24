@@ -115,7 +115,7 @@
 /* typedefs */
 #define sctk_ptl_meh_t ptl_handle_me_t /**< ME handler */
 #define sctk_ptl_me_t ptl_me_t         /**< ME */
-#define SCTK_PTL_ONCE PTL_ME_USE_ONCE
+#define SCTK_PTL_AM_ONCE PTL_ME_USE_ONCE
 #define SCTK_PTL_AM_ME_FLAGS  PTL_ME_EVENT_LINK_DISABLE | PTL_ME_NO_TRUNCATE | PTL_ME_UNEXPECTED_HDR_DISABLE
 #define SCTK_PTL_AM_ME_PUT_FLAGS SCTK_PTL_AM_ME_FLAGS | PTL_ME_OP_PUT
 #define SCTK_PTL_AM_ME_GET_FLAGS SCTK_PTL_AM_ME_FLAGS | PTL_ME_OP_GET | SCTK_PTL_ONCE
