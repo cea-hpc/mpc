@@ -738,6 +738,7 @@ int sctk_send_message_from_network_mpi_ib ( sctk_thread_ptp_message_t *msg )
 
 void sctk_connect_on_demand_mpi_ib( __UNUSED__ struct sctk_rail_info_s * rail , __UNUSED__ int dest )
 {
+        sctk_on_demand_connection_ib(rail, dest);
         /* add_dynamic_route() is not necessary here, as its is done
          * by the IB handshake protocol deeply in the function above */
 }
