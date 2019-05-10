@@ -61,7 +61,13 @@ else
 	export PATH
 fi
 
-
+if test -z "\${PYTHONPATH}" ; then
+	PYTHONPATH="\${MPCROOT}/lib:\${MPCROOT}/lib64"
+	export PYTHONPATH
+else
+	PYTHONPATH="\${MPCROOT}/lib:\${MPCROOT}/lib64:\${PYTHONPATH}"
+	export PYTHONPATH
+fi
 
 # if test -z "\${CPATH}" ; then
 #    export CPATH="\${MPCROOT}/include"
@@ -207,5 +213,12 @@ endif
 
 EOF
 fi
+
+cat <<EOF >> ${OUTPUTFILE}
+if (\$?PYTHONPATH) then
+   setenv PYTHONPATH "\${MPCROOT}/lib:\${MPCROOT}/lib64:\${PYTHONPATH}"
+else
+   setenv PYTHONPATH "\${MPCROOT}/lib:\${MPCROOT}/lib64"
+endif
 
 end_section

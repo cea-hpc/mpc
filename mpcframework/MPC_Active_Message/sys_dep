@@ -20,3 +20,6 @@
 #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
 #                                                                      #
 ########################################################################
+
+# If this file is loaded, Active_Message is loaded
+SCTK_ARPC=1

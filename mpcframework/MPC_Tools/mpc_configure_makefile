@@ -221,6 +221,7 @@ printf "\t@mkdir -p lib/stubs">> Makefile; echo "">> Makefile
 printf "\t@\$(CC) -fPIC -shared -I$CUDA_USER_PREFIX/include ${MPC_SOURCE_DIR}MPC_Accelerators/sctk_cuda/cuda_lib/cuda_lib.c -L$CUDA_USER_PREFIX/lib -L$CUDA_USER_PREFIX/lib64 -L$CUDA_USER_PREFIX/lib64/stubs -lcuda -o \$@ " >> Makefile; echo "">> Makefile
 fi
 
+
 #
 # Rule to prepare includes for every module
 #
@@ -382,12 +383,17 @@ printf "\t@find INSTALL/lib/* -type f -exec chmod 644 {} +">> Makefile; echo "">
 #printf "\t@\$(CC) $SCTK_CFLAGS ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcdb_client.c -o INSTALL/bin/mpcdb_client $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
 #printf "\t@\$(CC) $SCTK_CFLAGS ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcdb_server.c -o INSTALL/bin/mpcdb_server $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
 
+if test "$SCTK_ARPC" = 1; then
+printf "\t@\$(MAKE) -C ${MPC_SOURCE_DIR}/MPC_Active_Message/binding install">> Makefile; echo "">> Makefile
+fi
+
 printf "\t@chmod -R 755 INSTALL/bin/*">> Makefile; echo "">> Makefile
 printf "\t@chmod -R 644 INSTALL/include/mpcframework/*">> Makefile; echo "">> Makefile
 printf "\t@chmod 644 INSTALL/man/man1/*.1">> Makefile; echo "">> Makefile
 printf "\t@chmod 644 INSTALL/man/man3/*.3">> Makefile; echo "">> Makefile
 printf "\t@chmod 644 INSTALL/man/man5/*.5">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/lib/* \${DESTDIR}${SCTK_LIB_DIR}">> Makefile; echo "">> Makefile
+printf "\t@find INSTALL/lib64/* -exec cp -r {} \${DESTDIR}${SCTK_LIB_DIR}64 \;">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/include/mpcframework/* \${DESTDIR}${SCTK_INCLUDE_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/man/* \${DESTDIR}${SCTK_MAN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@echo \"LIB libmpc_framework.so\"">> Makefile; echo "">> Makefile

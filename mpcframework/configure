@@ -215,6 +215,7 @@ MPC_HYDRA="1"
 SCTK_SLURM="0"
 SCTK_OPENPA="1"
 SCTK_SHM="1"
+SCTK_ARPC="0" #Set by sys_dep when loading MPC_Active_Message
 SCTK_CUDA="0"
 SCTK_OPENACC="0"
 SCTK_OPENCL="0"
