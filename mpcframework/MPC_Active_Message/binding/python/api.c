@@ -25,31 +25,30 @@
 #include <string.h>
 #include <Python.h>
 
-struct sctk_arpc_context
-{
-	int dest;
-	int rpcode;
-	int srvcode;
-	void* cxx_pool;
-};
-typedef struct sctk_arpc_context sctk_arpc_context_t;
-
-int arpc_register_service(void* pool, int srvcode){}
-int arpc_free_response(void* addr){}
-int arpc_emit_call(sctk_arpc_context_t* ctx, const void* request, size_t req_size, void** response, size_t* resp_size){}
-int arpc_recv_call(sctk_arpc_context_t* ctx, const void* request, size_t req_size, void** response, size_t* resp_size){}
-
-int arpc_polling_request(sctk_arpc_context_t* ctx){}
-
-/* injected into the application code when building */
-#pragma weak arpc_c_to_cxx_converter
-int arpc_c_to_cxx_converter(sctk_arpc_context_t* ctx, const void * request, size_t req_size, void** response, size_t* resp_size){}
-
-
 char reg_docs[] = "Register a new Service";
 
+static PyObject* register_service(PyObject* self, PyObject* args)
+{
+	fprintf(stderr, "Call in %s\n", __FUNCTION__);
+	return Py_None;
+}
+
+static PyObject* polling_request(PyObject* self, PyObject* args)
+{
+	fprintf(stderr, "Call in %s\n", __FUNCTION__);
+	return Py_None;
+}
+
+static PyObject* emit_call(PyObject* self, PyObject* args)
+{
+	fprintf(stderr, "Call in %s\n", __FUNCTION__);
+	return Py_None;
+}
+
 static struct PyMethodDef methods[] = {
-	{"register_service", (PyCFunction)arpc_register_service, METH_VARARGS, reg_docs },
+	{"register_service", (PyCFunction)register_service, METH_VARARGS, NULL },
+	{"emit_call", (PyCFunction)emit_call, METH_VARARGS, NULL},
+	{"polling_request", (PyCFunction)polling_request, METH_VARARGS, NULL},
 	{ NULL }
 };
 
@@ -88,4 +87,5 @@ int mpc_user_main__(void)
 {
 	fprintf(stderr, "mpc_user_main__() from Python bindings should never be called ! SEGV\n");
 	((void(*)())0x0)();
+	return 1;
 }

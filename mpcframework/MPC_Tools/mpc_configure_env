@@ -62,10 +62,10 @@ else
 fi
 
 if test -z "\${PYTHONPATH}" ; then
-	PYTHONPATH="\${MPCROOT}/lib:\${MPCROOT}/lib64"
+	PYTHONPATH="\${MPCROOT}/lib/python:\${MPCROOT}/lib64/python"
 	export PYTHONPATH
 else
-	PYTHONPATH="\${MPCROOT}/lib:\${MPCROOT}/lib64:\${PYTHONPATH}"
+	PYTHONPATH="\${MPCROOT}/lib/python:\${MPCROOT}/lib64/python:\${PYTHONPATH}"
 	export PYTHONPATH
 fi
 
@@ -216,9 +216,9 @@ fi
 
 cat <<EOF >> ${OUTPUTFILE}
 if (\$?PYTHONPATH) then
-   setenv PYTHONPATH "\${MPCROOT}/lib:\${MPCROOT}/lib64:\${PYTHONPATH}"
+   setenv PYTHONPATH "\${MPCROOT}/lib/python:\${MPCROOT}/lib64/python:\${PYTHONPATH}"
 else
-   setenv PYTHONPATH "\${MPCROOT}/lib:\${MPCROOT}/lib64"
+   setenv PYTHONPATH "\${MPCROOT}/lib/python:\${MPCROOT}/lib64/python"
 endif
 
 end_section
