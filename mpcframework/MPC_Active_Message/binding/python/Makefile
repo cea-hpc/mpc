@@ -27,6 +27,6 @@ build: api.c setup.py
 
 install: build
 	@echo "LIB arpc4py.so"
-	@python3 setup.py install --install-lib=$(M_PWD)/INSTALL/lib64/python >/dev/null
+	@ARPC_PATH=$(M_PWD) python3 setup.py install --install-lib=$(M_PWD)/lib64/python > /dev/null
 	@python3 setup.py clean --all >/dev/null 2>&1
 

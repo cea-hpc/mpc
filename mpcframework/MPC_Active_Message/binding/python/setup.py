@@ -1,11 +1,19 @@
 from os import environ
+import sys
 from distutils.core import setup, Extension
 
 environ['CC'] = "gcc"
 environ['CFLAGS'] = ""
 
+try:
+    arpc_path = environ['ARPC_PATH']
+except (KeyError):
+    arpc_path = ""
+
 module = Extension('arpc4py',
-                    libraries = ['mpc_framework'],
+                    include_dirs = [ arpc_path+'/include' ],
+                    library_dirs = [ arpc_path+'/lib' ],
+                    libraries = ['arpc'],
                     sources = ['api.c'])
 
 setup (name = 'arpc4py',
