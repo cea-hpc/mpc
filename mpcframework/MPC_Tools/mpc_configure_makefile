@@ -393,7 +393,7 @@ printf "\t@chmod 644 INSTALL/man/man1/*.1">> Makefile; echo "">> Makefile
 printf "\t@chmod 644 INSTALL/man/man3/*.3">> Makefile; echo "">> Makefile
 printf "\t@chmod 644 INSTALL/man/man5/*.5">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/lib/* \${DESTDIR}${SCTK_LIB_DIR}">> Makefile; echo "">> Makefile
-printf "\t@cp -r INSTALL/lib64/* \${DESTDIR}${SCTK_LIB_DIR}64 || 0;">> Makefile; echo "">> Makefile
+printf "\t@cp -r INSTALL/lib64/* \${DESTDIR}${SCTK_LIB_DIR}64 || :">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/include/mpcframework/* \${DESTDIR}${SCTK_INCLUDE_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/man/* \${DESTDIR}${SCTK_MAN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@echo \"LIB libmpc_framework.so\"">> Makefile; echo "">> Makefile

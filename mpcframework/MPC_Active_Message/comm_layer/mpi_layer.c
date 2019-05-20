@@ -22,10 +22,25 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "mpi_layer.h"
+#include <mpi_layer.h>
+
+#ifdef MPC_Active_Message
 #include <sctk_alloc.h>
 #include <sctk_atomics.h>
 #include <sctk_debug.h>
+#else
+#include <stdlib.h>
+#include <assert.h>
+#define sctk_malloc malloc
+#define sctk_free free
+#define sctk_assert assert
+
+#ifndef OPA_INT_T_INITIALIZER
+#define OPA_INT_T_INITIALIZER(v) v
+#endif
+#define sctk_atomics_int int
+#define sctk_atomics_fetch_and_incr_int(v) ((*v)++)
+#endif
 
 static sctk_atomics_int atomic_tag = OPA_INT_T_INITIALIZER(0);
 
@@ -45,7 +60,6 @@ int arpc_init_mpi(int nb_srv)
  */
 int arpc_emit_call_mpi(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
 {
-	/*__arpc_print_ctx(ctx, "Send req=%p (sz:%llu) <--> resp=%p (sz: %llu)", input, req_size, response, *resp_size);*/
 	sctk_arpc_mpi_ctx_t mpi_ctx;
 	int next_tag = sctk_atomics_fetch_and_incr_int(&atomic_tag);
 
@@ -53,6 +67,7 @@ int arpc_emit_call_mpi(sctk_arpc_context_t* ctx, const void* input, size_t req_s
 	mpi_ctx.srvcode = ctx->srvcode;
 	mpi_ctx.msize = req_size;
 	mpi_ctx.next_tag = next_tag;
+	//__arpc_print_ctx(ctx, "Send req=%p (sz:%llu) <--> resp=%p (sz: %llu) TAG = %d", input, req_size, response, *resp_size, next_tag);
 
 	/* first, send the context main infos */
 	/* if request is null, don't send it ! */
@@ -142,7 +157,7 @@ int arpc_recv_call_mpi(sctk_arpc_context_t* ctx, const void* request, size_t req
 	/* now, if there is something to return */
 	if(*response_addr != NULL)
 	{
-		/*__arpc_print_ctx(ctx, "Recv req=%p (sz:%llu) <--> resp=%p (sz: %llu)", request, req_size, *response_addr, *resp_size);*/
+		//__arpc_print_ctx(ctx, "Recv req=%p (sz:%llu) <--> resp=%p (sz: %llu) TAG = %d", request, req_size, *response_addr, *resp_size, next_tag);
 		mpi_ctx.msize = *resp_size;
 		if(mpi_ctx.msize < MAX_STATIC_ARPC_SIZE - 1)
 		{

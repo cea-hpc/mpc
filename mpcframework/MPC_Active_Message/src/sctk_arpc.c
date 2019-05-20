@@ -22,10 +22,20 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "arpc.h"
+#include <arpc.h>
+#include <mpi_layer.h>
+#include <ptl_layer.h>
+#include <stdio.h>
+
+#ifdef MPC_Active_Message
 #include <sctk_runtime_config.h>
-#include "mpi_layer.h"
-#include "ptl_layer.h"
+#else
+#include <assert.h>
+#include <stdlib.h>
+#define sctk_assert assert
+#define sctk_fatal(...) do{fprintf(stderr, __VA_ARGS__); exit(42); } while(0)
+#define not_reachable() do { fprintf(stderr, "line %s:%d should not be reached !!\n", __FUNCTION__, __LINE__); } while(0)
+#endif
 
 static int (*reg_fn)(void*,int);
 static int (*free_fn)(void*);
@@ -38,7 +48,6 @@ static struct sctk_runtime_config_struct_arpc_type arpc_config;
 
 static void __arpc_init_callbacks()
 {
-
 	switch(arpc_config.net_layer)
 	{
 		case ARPC_MPI:
@@ -68,7 +77,7 @@ static void __arpc_init_callbacks()
 
 void arpc_init()
 {
-	arpc_config = sctk_runtime_config_get()->modules.arpc;
+	arpc_config = sctk_runtime_config_get_checked()->modules.arpc;
 	__arpc_init_callbacks();
 	sctk_assert(init_fn);
 	init_fn(arpc_config.nb_srv);
