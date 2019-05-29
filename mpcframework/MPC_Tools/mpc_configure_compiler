@@ -58,7 +58,6 @@ EOF
 # $2: the real MPC script name
 printf_noflags_compiler()
 {
-    echo "Generate $1"
 	echo "#!/bin/sh" > $1
 	cat <<EOF >> $1
 if test -z \${MPC_RPREFIX}; then
@@ -80,17 +79,35 @@ EOF
 # $2: the real MPC script name
 printf_mpi_compiler()
 {
-	echo "#!/bin/sh" > $1
-	cat <<EOF >> $1
-if test -z \${MPC_RPREFIX}; then
-	echo "################################################################"
-	echo "# No MPC_RPREFIX defined. it is the root of the actual prefix  #"
-	echo "# Yout should source the mpcvars.sh file in root of MPC prefix #"
-	echo "################################################################"
-	exit 1
+echo "#!/bin/sh" > $1
+cat <<EOF >> $1
+#!/bin/sh
+
+# This is the MPI class compiler proxy
+# to the MPC one, just passes the arguments
+# through however note that by default
+# this compiler does not privatize
+# you can export MPI_PRIV to do it from here
+# or just use their mpc_* counterpart
+
+# This variable is used to inform
+# sub-commands that the MPI compil
+# wrapper is invoking them
+export FROM_MPI_COMPIL_WRAPPER=1
+
+MPI_PRIV_ARG="-fnompc-privatize"
+
+if test ! -z "\$MPI_PRIV"; then
+	MPI_PRIV_ARG=""
+else
+	# This variables request the process based linking
+	# adapting the mpc_cflags and mpc_ldflags accordingly
+	export MPI_COMPIL_PROCESS_BASED=1
 fi
+
+# Now invoke the compiler
+\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/$2 \$MPI_PRIV_ARG "\$@"
 EOF
-	echo "\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/$2  \"\$@\"" >> $1
 }
 
 #
@@ -1012,67 +1029,17 @@ printf_deprecated_compiler bin/mpc_g++ bin/mpc_cxx g++
 printf_deprecated_compiler bin/mpc_ifort bin/mpc_f77 ifort
 printf_deprecated_compiler bin/mpc_gfortran bin/mpc_f77 gfortran
 
-for i in bin/mpc_icc bin/mpc_gcc  bin/mpc_icpc bin/mpc_g++ bin/mpc_ifort bin/mpc_gfortran bin/mpc_cc bin/mpc_cxx bin/mpc_f77; do
-printf_noflags_compiler ${i}_noflags $i
+for i in mpc_icc mpc_gcc  mpc_icpc mpc_g++ mpc_ifort mpc_gfortran mpc_cc mpc_cxx mpc_f77; do
+    sctk_echo "Generating no-flag version of $i"
+printf_noflags_compiler bin/${i}_noflags bin/$i
 done
 
+mkdir -p bin/mpiwrapp
 for i in cc cxx f77 icc icpc ifort; do
-	printf_mpi_compiler bin/mpi$i bin/mpc_$i
+	printf_mpi_compiler bin/mpiwrapp/mpi$i bin/mpc_$i
 done
 
 if test "$SCTK_CUDA" = "1"; then
 	sctk_echo "Preparing NVIDIA Compiler: mpc_nvcc"
 	printf_compiler bin/mpc_nvcc cxx "nvcc --compiler-bindir "
 fi
-
-########################################
-########################################
-##### MPC_MPI_COMPILER_WRAPPER #########
-########################################
-########################################
-
-genMPIcompilwrapper()
-{
-	
-TARGET_COMP=$1
-	
-cat <<EOF
-#!/bin/sh
-
-# This is the MPI class compiler proxy
-# to the MPC one, just passes the arguments
-# through however note that by default
-# this compiler does not privatize
-# you can export MPI_PRIV to do it from here
-# or just use their mpc_* counterpart
-
-# This variable is used to inform
-# sub-commands that the MPI compil
-# wrapper is invoking them
-export FROM_MPI_COMPIL_WRAPPER=1
-
-MPI_PRIV_ARG="-fnompc-privatize"
-
-if test ! -z "\$MPI_PRIV"; then
-	MPI_PRIV_ARG=""
-else
-	# This variables request the process based linking
-	# adapting the mpc_cflags and mpc_ldflags accordingly
-	export MPI_COMPIL_PROCESS_BASED=1
-fi
-
-# Now invoke the compiler
-$TARGET_COMP \$MPI_PRIV_ARG \$@ 
-
-EOF
-
-}
-
-mkdir -p ./bin/mpiwrapp/
-
-genMPIcompilwrapper "mpc_cc" >  bin/mpiwrapp/mpicc
-genMPIcompilwrapper "mpc_cxx" > bin/mpiwrapp/mpicxx
-genMPIcompilwrapper "mpc_cxx" > bin/mpiwrapp/mpic++
-genMPIcompilwrapper "mpc_f77" > bin/mpiwrapp/mpif77
-genMPIcompilwrapper "mpc_f77" > bin/mpiwrapp/mpif90
-genMPIcompilwrapper "mpc_f77" > bin/mpiwrapp/mpifc

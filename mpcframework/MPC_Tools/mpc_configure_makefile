@@ -383,17 +383,12 @@ printf "\t@find INSTALL/lib/* -type f -exec chmod 644 {} +">> Makefile; echo "">
 #printf "\t@\$(CC) $SCTK_CFLAGS ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcdb_client.c -o INSTALL/bin/mpcdb_client $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
 #printf "\t@\$(CC) $SCTK_CFLAGS ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcdb_server.c -o INSTALL/bin/mpcdb_server $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
 
-if test "$SCTK_ARPC" = 1; then
-printf "\t@\$(MAKE) -C ${MPC_SOURCE_DIR}/MPC_Active_Message/binding install">> Makefile; echo "">> Makefile
-fi
-
 printf "\t@chmod -R 755 INSTALL/bin/*">> Makefile; echo "">> Makefile
 printf "\t@chmod -R 644 INSTALL/include/mpcframework/*">> Makefile; echo "">> Makefile
 printf "\t@chmod 644 INSTALL/man/man1/*.1">> Makefile; echo "">> Makefile
 printf "\t@chmod 644 INSTALL/man/man3/*.3">> Makefile; echo "">> Makefile
 printf "\t@chmod 644 INSTALL/man/man5/*.5">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/lib/* \${DESTDIR}${SCTK_LIB_DIR}">> Makefile; echo "">> Makefile
-printf "\t@cp -r INSTALL/lib64/* \${DESTDIR}${SCTK_LIB_DIR}64 || :">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/include/mpcframework/* \${DESTDIR}${SCTK_INCLUDE_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/man/* \${DESTDIR}${SCTK_MAN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@echo \"LIB libmpc_framework.so\"">> Makefile; echo "">> Makefile
@@ -419,6 +414,13 @@ if test "$SCTK_FORTRAN" = "1"; then
 printf "\t@MPC_RPREFIX=\${DESTDIR} \${DESTDIR}${SCTK_BIN_DIR}/mpc_compiler_manager --global add fortran ${SCTK_F77} ${SCTK_FAMILY} >/dev/null 2>&1" >> Makefile; echo "" >> Makefile
 fi
 fi
+if test "$SCTK_ACTIVE_MESSAGE" = 1; then
+printf "\t@\$(MAKE) -C ${MPC_SOURCE_DIR}/MPC_Active_Message/binding install prefix=\$(DESTDIR)${SCTK_LIB_DIR}">> Makefile; echo "">> Makefile
+if test "$SCTK_ACTIVE_MESSAGE_PB" = 1; then
+printf "\t@\$(MAKE) -C ${MPC_SOURCE_DIR}/MPC_Active_Message/protobuf pb_prefix=${PB_USER_PREFIX} prefix=\$(DESTDIR)${SCTK_BIN_DIR}" >> Makefile; echo "" >> Makefile
+fi
+fi
+
 
 #
 # Rule 'uninstall'

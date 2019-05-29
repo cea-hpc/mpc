@@ -215,7 +215,8 @@ MPC_HYDRA="1"
 SCTK_SLURM="0"
 SCTK_OPENPA="1"
 SCTK_SHM="1"
-SCTK_ARPC="0" #Set by sys_dep when loading MPC_Active_Message
+SCTK_ACTIVE_MESSAGE="0"
+SCTK_ACTIVE_MESSAGE_PB="0"
 SCTK_CUDA="0"
 SCTK_OPENACC="0"
 SCTK_OPENCL="0"
@@ -493,6 +494,10 @@ for arg in "$@" ; do
 	--with-active-message)
 		mpc_modules_enable_module "MPC_Active_Message"
 		SCTK_ACTIVE_MESSAGE=1
+	;;
+	--with-pb=*)
+	SCTK_ACTIVE_MESSAGE_PB=1
+    	PB_USER_PREFIX="`echo A$arg | sed -e 's/A--with-pb=//g'`"
 	;;
 
 	--with-cuda=*)
