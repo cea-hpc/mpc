@@ -6,11 +6,11 @@ environ['CC'] = "gcc"
 environ['CFLAGS'] = ""
 
 try:
-    arpc_hdrs = environ['ARPC_HDRS']
+    arpc_hdrs = [ environ['ARPC_HDRS'] ]
 except (KeyError):
     arpc_hdrs = ""
 try:
-    arpc_libs = environ['ARPC_LIBS']
+    arpc_libs = [ environ['ARPC_LIBS'] ]
 except (KeyError):
     arpc_libs = ""
 
@@ -20,8 +20,8 @@ except (KeyError):
     arpc_link = None
 
 module = Extension('arpc4py',
-                    include_dirs = [ arpc_hdrs ],
-                    library_dirs = [ arpc_libs ],
+                    include_dirs = arpc_hdrs,
+                    library_dirs = arpc_libs,
                     libraries = arpc_link,
                     sources = ['api.c'])
 

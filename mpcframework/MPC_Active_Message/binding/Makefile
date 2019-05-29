@@ -29,9 +29,9 @@ build: build_python
 install: install_python
 
 build_python:
-	@$(MAKE) -C python build
+	@$(MAKE) -C python build prefix=$(prefix)
 
 install_python:
-	@$(MAKE) -C python install
+	@$(MAKE) -C python install prefix=$(prefix)
 
 .PHONY: build install

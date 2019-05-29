@@ -27,6 +27,6 @@ build: api.c setup.py
 
 install: build
 	@echo "LIB arpc4py.so"
-	@ARPC_LDFLAGS="mpc_framework" ARPC_HDRS="$(M_PWD)/INSTALL/include/mpcframework" python3 setup.py install --install-lib=$(M_PWD)/INSTALL/lib64/python > /dev/null
+	@ARPC_LDFLAGS="mpc_framework" ARPC_HDRS="$(M_PWD)/include_modules" python3 setup.py install --install-lib=$(prefix)64/python > /dev/null 2>&1
 	@python3 setup.py clean --all >/dev/null 2>&1
 

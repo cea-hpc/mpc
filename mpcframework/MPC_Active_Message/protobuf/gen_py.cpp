@@ -168,6 +168,9 @@ void ArpcPython::buildScript(const FileDescriptor * pfile)
 {
 	std::ostringstream service_conversion;
 	stream
+		<< "import sys" << std::endl
+		<< "import ctypes" << std::endl
+		<< "sys.setdlopenflags(sys.getdlopenflags() | ctypes.RTLD_GLOBAL)" << std::endl
 		<< "import arpc4py" << std::endl
 		<< "import " << opts.ns << std::endl
 		<< std::endl

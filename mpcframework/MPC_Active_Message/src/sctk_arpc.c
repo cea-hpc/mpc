@@ -77,7 +77,7 @@ static void __arpc_init_callbacks()
 
 void arpc_init()
 {
-	arpc_config = sctk_runtime_config_get_checked()->modules.arpc;
+	arpc_config = sctk_runtime_config_get()->modules.arpc;
 	__arpc_init_callbacks();
 	sctk_assert(init_fn);
 	init_fn(arpc_config.nb_srv);

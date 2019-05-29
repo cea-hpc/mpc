@@ -101,6 +101,7 @@ static struct PyMethodDef methods[] = {
 };
 
 char mod_doc[] = "Python bindings to support ARPC interface";
+char *argv[] = {"arpc4py.so"};
 
 #if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef _arpc4py_module = {
@@ -113,14 +114,14 @@ static struct PyModuleDef _arpc4py_module = {
 
 PyMODINIT_FUNC PyInit_arpc4py(void)
 {
-	arpc_init();
+	sctk_init_mpc_runtime();
 	return PyModule_Create(&_arpc4py_module);
 }
 
 #else
 void initarpc4py(void)
 {
-	arpc_init();
+	main_c(1, argv);
 	Py_InitModule3("arpc4py", methods, mod_doc);
 }
 #endif
