@@ -68,50 +68,6 @@ std::ostringstream ArpcPython::unrollMethod(const ServiceDescriptor * serv, bool
 		method_conversion
 			<< "\t\tif rpc == " << method->index() << ": req = " << in << "()" << std::endl
 			;
-		continue;
-
-		if(in.compare("Empty") != 0)
-		{
-			method_conversion
-				<< "\t\t\t\t\t\treq = new "<<opts.ns_prefix<<in << ";"               << std::endl
-				<< "\t\t\t\t\t\tif(req_size > 0)"                        << std::endl
-				<< "\t\t\t\t\t\t\treq->ParseFromString((char*)request);" << std::endl
-				<< "\t\t\t\t\t\telse"                                    << std::endl
-				<< "\t\t\t\t\t\t\treq->Clear();"                         << std::endl
-				;
-		}
-
-		if(out.compare("Empty") != 0)
-		{
-			method_conversion
-				<< "\t\t\t\t\t\tresp = new "<<opts.ns_prefix<<out << ";" << std::endl
-				<< "\t\t\t\t\t\tstd::string out;"            << std::endl
-				;
-
-		}
-		else
-		{
-			method_conversion
-				<< "\t\t\t\t\t\t*resp_size = 0;"        << std::endl
-				<< "\t\t\t\t\t\t*response_addr = NULL;" << std::endl
-				;
-		}
-
-		method_conversion << "\t\t\t\t\t\tret = r->" << name << "(ctx, req, resp);" << std::endl;
-
-		if(out.compare("Empty") != 0)
-		{
-			method_conversion
-				<< "\t\t\t\t\t\tresp->SerializeToString(&out);"        << std::endl
-				<< "\t\t\t\t\t\t*resp_size = out.size();"              << std::endl
-				<< "\t\t\t\t\t\t*response_addr = strdup(out.c_str());" << std::endl
-				;
-		}
-
-		method_conversion
-			<< "\t\t\t\t\t\tbreak;" << std::endl
-			<< "\t\t\t\t\t}"        << std::endl
-			;
 	}
 	return method_conversion;
 }

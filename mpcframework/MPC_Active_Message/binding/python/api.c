@@ -70,7 +70,7 @@ static PyObject* emit_call(PyObject* self, PyObject* args, PyObject* keywords)
 	size_t req_sz = 0, resp_sz = 1;
 	int need_resp = 0;
 
-	static char * kwds[] = {"service", "rpc", "dest", "request", "with_resp"};
+	static char * kwds[] = {"service", "rpc", "dest", "request", "with_resp", NULL};
 
 	if(!PyArg_ParseTupleAndKeywords(args, keywords, "iiiy#i", kwds, &ctx.srvcode, &ctx.rpcode, &ctx.dest, &request, &req_sz, &need_resp))
 	{
