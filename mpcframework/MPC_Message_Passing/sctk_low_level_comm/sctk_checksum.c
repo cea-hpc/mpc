@@ -209,11 +209,12 @@ unsigned long sctk_checksum_verify ( sctk_thread_ptp_message_t *send, sctk_threa
 
 		if ( adler != send->body.checksum )
 		{
-#ifdef MPC_USE_INFINIBAND
-			sctk_ib_print_msg ( send );
-#endif
 			sctk_error ( "Got wrong checksum (got:%lu, expected:%lu)", adler, send->body.checksum );
 			sctk_abort();
+		}
+		else
+		{
+			sctk_debug ( "Got GOOD checksum (got:%lu, expected:%lu)", adler, send->body.checksum );
 		}
 	}
 

@@ -1618,6 +1618,10 @@ void sctk_ptp_per_task_init(int i) {
       sctk_spinlock_unlock(&lock_buffered_ptp_message);
     }
   }
+
+  #ifdef SCTK_USE_CHECKSUM
+  sctk_checksum_init();
+  #endif
 }
 
 /********************************************************************/
@@ -2777,6 +2781,10 @@ void sctk_send_message_try_check(sctk_thread_ptp_message_t *msg,
       SCTK_MSG_SPECIFIC_CLASS(msg),
       sctk_message_class_is_process_specific(SCTK_MSG_SPECIFIC_CLASS(msg)),
       SCTK_MSG_SIZE(msg), SCTK_MSG_TAG(msg));
+
+  #ifdef SCTK_USE_CHECKSUM
+    sctk_checksum_register(msg);
+  #endif
 
   /*  Message has not reached its destination */
   if (SCTK_MSG_DEST_PROCESS(msg) != sctk_process_rank) {
