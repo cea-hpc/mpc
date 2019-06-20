@@ -61,11 +61,11 @@ void sctk_ptl_add_route(int dest, sctk_ptl_id_t id, sctk_rail_info_t* rail, sctk
 
 	if(origin == ROUTE_ORIGIN_STATIC)
 	{
-		sctk_rail_add_static_route (  rail, dest, route );
+		sctk_rail_add_static_route (  rail, route );
 	}
 	else
 	{
-		sctk_rail_add_dynamic_route(  rail, dest, route );
+		sctk_rail_add_dynamic_route(  rail, route );
 	}
 }
 
@@ -322,7 +322,6 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 	/* register the serialized id into the PMI */
 	tmp_ret = sctk_pmi_put_connection_info (
 			srail->connection_infos,      /* the string to publish */
-			srail->connection_infos_size, /* string size */
 			rail->rail_number             /* rail ID: PMI tag */
 	);
 	assert(tmp_ret == 0);
