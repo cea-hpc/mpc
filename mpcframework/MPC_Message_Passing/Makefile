@@ -160,7 +160,7 @@ $(DEP_driver_portals):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_por
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_driver_portals_am):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_portals_am/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_portals_am/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_portals_am/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
@@ -198,7 +198,7 @@ $(DEP_driver_portals):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_por
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_portals/%.c,$@)" > $@
 
 $(DEP_driver_portals_am):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_portals_am/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_portals_am/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_portals_am/%.c,$@)" > $@
 
 $(DEP_driver_shm):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_shm/%.c
@@ -232,8 +232,8 @@ $(OBJ_driver_portals):%.o:%.d
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,$(shell pwd)/sctk_driver_portals/%.c,$@) -o $@
 
 $(OBJ_driver_portals_am):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_portals_am/%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_portals_am/%.c,$@) -o $@
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,%.c,$@)"
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,$(shell pwd)/sctk_driver_portals_am/%.c,$@) -o $@
 
 $(OBJ_driver_shm):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,%.c,$@)"
@@ -267,7 +267,7 @@ $(SDEP_driver_portals):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_po
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_driver_portals_am):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_portals_am/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_portals_am/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_portals_am/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
@@ -304,8 +304,8 @@ $(SOBJ_driver_portals):%.o:%.d
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,$(shell pwd)/sctk_driver_portals/%.S,$@) -o $@
 
 $(SOBJ_driver_portals_am):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_portals_am/%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_portals_am/%.S,$@) -o $@
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,%.S,$@)"
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,$(shell pwd)/sctk_driver_portals_am/%.S,$@) -o $@
 
 $(SOBJ_driver_shm):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,%.S,$@)"
@@ -336,7 +336,7 @@ $(FOBJ_driver_portals):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o:sctk_driver_
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o,sctk_driver_portals/%.f,$@) -o $@
 
 $(FOBJ_driver_portals_am):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o:sctk_driver_portals_am/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o,sctk_driver_portals_am/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o,sctk_driver_portals_am/%.f,$@) -o $@
 
 $(FOBJ_driver_shm):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o:sctk_driver_shm/%.f

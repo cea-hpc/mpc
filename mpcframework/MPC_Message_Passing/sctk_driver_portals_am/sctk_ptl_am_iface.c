@@ -1172,7 +1172,6 @@ void sctk_ptl_am_register_process( sctk_ptl_am_rail_info_t *srail )
 	/* register the serialized id into the PMI */
 	tmp_ret = sctk_pmi_put_connection_info(
 		srail->connection_infos,	  /* the string to publish */
-		srail->connection_infos_size, /* string size */
 		SCTK_PTL_AM_PMI_TAG			  /* rail ID: PMI tag */
 	);
 	assert( tmp_ret == 0 );

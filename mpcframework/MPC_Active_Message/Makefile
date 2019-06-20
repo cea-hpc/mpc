@@ -80,84 +80,84 @@ endif
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
 $(DEP_comm_layer):$(M_PWD)/BUILD_MPC_Active_Message/lib/%.d:comm_layer/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,comm_layer/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,comm_layer/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_include):$(M_PWD)/BUILD_MPC_Active_Message/lib/%.d:include/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,include/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,include/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_src):$(M_PWD)/BUILD_MPC_Active_Message/lib/%.d:src/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,src/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,src/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 else
 $(DEP_comm_layer):$(M_PWD)/BUILD_MPC_Active_Message/lib/%.d:comm_layer/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,comm_layer/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,comm_layer/%.c,$@)" > $@
 
 $(DEP_include):$(M_PWD)/BUILD_MPC_Active_Message/lib/%.d:include/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,include/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,include/%.c,$@)" > $@
 
 $(DEP_src):$(M_PWD)/BUILD_MPC_Active_Message/lib/%.d:src/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,src/%.c,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,src/%.c,$@)" > $@
 
 endif
 
 $(OBJ_comm_layer):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,comm_layer/%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,comm_layer/%.c,$@) -o $@
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,%.c,$@)"
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,$(shell pwd)/comm_layer/%.c,$@) -o $@
 
 $(OBJ_include):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,include/%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,include/%.c,$@) -o $@
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,%.c,$@)"
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,$(shell pwd)/include/%.c,$@) -o $@
 
 $(OBJ_src):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,src/%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,src/%.c,$@) -o $@
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,%.c,$@)"
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,$(shell pwd)/src/%.c,$@) -o $@
 
 $(SDEP_comm_layer):$(M_PWD)/BUILD_MPC_Active_Message/lib/%.d:comm_layer/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,comm_layer/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,comm_layer/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_include):$(M_PWD)/BUILD_MPC_Active_Message/lib/%.d:include/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,include/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,include/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_src):$(M_PWD)/BUILD_MPC_Active_Message/lib/%.d:src/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,src/%.S,$@)"
+	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,src/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SOBJ_comm_layer):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,comm_layer/%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,comm_layer/%.S,$@) -o $@
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,%.S,$@)"
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,$(shell pwd)/comm_layer/%.S,$@) -o $@
 
 $(SOBJ_include):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,include/%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,include/%.S,$@) -o $@
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,%.S,$@)"
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,$(shell pwd)/include/%.S,$@) -o $@
 
 $(SOBJ_src):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,src/%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,src/%.S,$@) -o $@
+	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,%.S,$@)"
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%.o,$(shell pwd)/src/%.S,$@) -o $@
 
 $(FOBJ_comm_layer):$(M_PWD)/BUILD_MPC_Active_Message/lib/%_f.o:comm_layer/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%_f.o,comm_layer/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%_f.o,comm_layer/%.f,$@) -o $@
 
 $(FOBJ_include):$(M_PWD)/BUILD_MPC_Active_Message/lib/%_f.o:include/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%_f.o,include/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%_f.o,include/%.f,$@) -o $@
 
 $(FOBJ_src):$(M_PWD)/BUILD_MPC_Active_Message/lib/%_f.o:src/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%_f.o,src/%.f,$@)"
+	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Active_Message/lib/%_f.o,src/%.f,$@) -o $@
 
 
