@@ -2,7 +2,7 @@
 #define __MPCOMP_OMPT_PARELLEL_REGIONS_H__
 
 /** Mandatory Events ( page 6, TR 2016 ) */
-
+#if 0
 static inline void __mpcomp_ompt_parallel_regions_begin( unsigned int threads_num, ompt_invoker_t invoker)
 {
 #if OMPT_SUPPORT
@@ -33,5 +33,6 @@ static inline void __mpcomp_ompt_parallel_regions_end(ompt_invoker_t invoker)
 	}	
 #endif /* OMPT_SUPPORT */ 
 }
+#endif
 	
 #endif /* __MPCOMP_OMPT_PARELLEL_REGIONS_H__ */

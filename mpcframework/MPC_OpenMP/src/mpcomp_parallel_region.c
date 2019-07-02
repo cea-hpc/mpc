@@ -42,30 +42,6 @@ extern ompt_callback_t* OMPT_Callbacks;
 /* Add header for spinning core */
 mpcomp_instance_t* __mpcomp_tree_array_instance_init( mpcomp_thread_t*, const int);
 
-#if 0
-static void __mpcomp_internal_parallel_ompt_begin( mpcomp_thread_t* t )
-{
-#if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks )
-	{
-		ompt_callback_parallel_begin_t callback;
-		callback = (ompt_callback_parallel_begin_t) OMPT_Callbacks[ompt_callback_parallel_begin];
-		if( callback )
-		{
-			mpcomp_thread_t *thread;
-			ompt_frame_t* parent_frame;
-			t->info.ompt_region_data = ompt_data_none;
-			ompt_data_t* parallel_data = &( t->children_instance->team->info.ompt_region_data );
-			ompt_data_t *parent_task_data;
-
-			const void* code_ra = __builtin_return_address( 0 );
-			callback( NULL, NULL, parallel_data, 0, 0, ompt_invoker_program, code_ra );
-		}
-	}	
-#endif /* OMPT_SUPPORT */
-}
-#endif
-
 void 
 __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const unsigned expected_num_threads ) 
 {
@@ -114,7 +90,20 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     mpcomp_instance_t* instance = t->children_instance;
 
 #if OMPT_SUPPORT
-    __mpcomp_internal_parallel_ompt_begin( t );
+    if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks ) {
+        ompt_callback_parallel_begin_t callback;
+        callback = (ompt_callback_parallel_begin_t) OMPT_Callbacks[ompt_callback_parallel_begin];
+
+        if( callback ) {
+            t->info.ompt_region_data = ompt_data_none;
+            ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
+            ompt_data_t* parallel_data = &( t->children_instance->team->info.ompt_region_data );
+            int flags = ( ompt_parallel_invoker_program & ompt_parallel_team );
+            const void* code_ra = __builtin_return_address( 0 );
+
+            callback( task_data, NULL, parallel_data, real_num_threads, flags, code_ra );
+        }
+    }
 #endif /* OMPT_SUPPORT */
 
     instance_info = &( instance->team->info );
@@ -148,7 +137,10 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
 
 void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance) 
 {
-
+    /* Grab the thread info */
+    mpcomp_thread_t *t;
+    t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+    sctk_assert(t != NULL);
 
     if( instance->team->info.num_threads > 1 ) {
 #if 0
@@ -190,19 +182,19 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance)
 #endif
 
 #if OMPT_SUPPORT 
-   if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks )
-   {
-      ompt_callback_parallel_end_t callback;
-      callback = (ompt_callback_parallel_end_t) OMPT_Callbacks[ompt_callback_parallel_end];
-      if( callback )
-      {
-         ompt_data_t* parallel_data = &( instance->team->info.ompt_region_data );
-			ompt_data_t* task_data;
+    if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks )
+    {
+        ompt_callback_parallel_end_t callback;
+        callback = (ompt_callback_parallel_end_t) OMPT_Callbacks[ompt_callback_parallel_end];
+        if( callback )
+        {
+            ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
+            ompt_data_t* parallel_data = &( instance->team->info.ompt_region_data );
+            const void* code_ra = __builtin_return_address( 1 );
 
-         const void* code_ra = __builtin_return_address( 1 );
-         callback( parallel_data, NULL, ompt_invoker_program, code_ra );
-      }
-   }
+            callback( parallel_data, task_data, ( ompt_parallel_invoker_program | ompt_parallel_team ), code_ra );
+        }
+    }
 #endif /* OMPT_SUPPORT */
 }
 

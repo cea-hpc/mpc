@@ -394,7 +394,7 @@ ompt_get_parallel_info( int ancestor_level, ompt_data_t** parallel_data, int* te
 
 OMPT_API_ROUTINE int
 ompt_get_task_info( 	int ancestor_level, 
-							ompt_task_type_t *type, 
+							ompt_task_flag_t *type, 
 							ompt_data_t **task_data, 
 							ompt_frame_t **task_frame, 
 							ompt_data_t **parallel_data,
@@ -425,7 +425,7 @@ ompt_get_task_info( 	int ancestor_level,
 	}	
 	else
 	{
-		*type = ompt_task_undefined;
+		*type = current_task->ompt_task_type;
 		*task_data = &(current_task->ompt_task_data);
 		*task_frame = &(current_task->ompt_task_frame);
 		if( !ompt_get_parallel_info( 0, parallel_data, thread_num))

@@ -90,7 +90,7 @@ typedef struct mpcomp_task_s {
 #if 1 //OMPT_SUPPORT
 	ompt_data_t 	ompt_task_data;
 	ompt_frame_t 	ompt_task_frame;
-	ompt_task_type_t ompt_task_type;
+	ompt_task_flag_t ompt_task_type;
 #endif /* OMPT_SUPPORT */
 /* TODO if INTEL */
 struct mpcomp_task_s *last_task_alloc; /**< last task allocated by the thread doing if0 pragma */

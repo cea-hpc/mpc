@@ -218,12 +218,12 @@ mpcomp_tree_array_task_thread_init( struct mpcomp_thread_s* thread )
 
 static inline void mpcomp_task_thread_infos_init(struct mpcomp_thread_s *thread) {
   sctk_assert(thread);
-
+  sctk_assert(thread->instance);
+  sctk_assert(thread->instance->team);
 
   if (!MPCOMP_TASK_THREAD_IS_INITIALIZED(thread)) {
     mpcomp_task_t *implicit_task;
     mpcomp_task_list_t *tied_tasks_list;
-
 
     /* Allocate the default current task (no func, no data, no parent) */
     implicit_task = (mpcomp_task_t*) mpcomp_alloc( sizeof(mpcomp_task_t) );
@@ -239,22 +239,22 @@ static inline void mpcomp_task_thread_infos_init(struct mpcomp_thread_s *thread)
     memset(implicit_task->task_dep_infos, 0,
            sizeof(mpcomp_task_dep_task_infos_t));
 #endif /* MPCOMP_USE_TASKDEP */
-	
 
 #if OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
 	{
-		ompt_task_type_t task_type = ompt_task_implicit;
-
-   	if( OMPT_Callbacks )
-   	{
+        if( OMPT_Callbacks &&
+            thread->instance->nb_mvps == 1 &&
+            thread->instance->team->depth == 0 )
+   	    {
 			ompt_callback_task_create_t callback; 
 			callback = (ompt_callback_task_create_t) OMPT_Callbacks[ompt_callback_task_create];
+
 			if( callback )
 			{
 				ompt_data_t* task_data = &( implicit_task->ompt_task_data);
 				const void* code_ra = __builtin_return_address(0);	
-				callback( NULL, NULL, task_data, task_type, ompt_task_initial, code_ra);
+				callback( NULL, NULL, task_data, ompt_task_initial, 0, code_ra);
 			}
 		}
 	}

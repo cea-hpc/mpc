@@ -204,8 +204,8 @@ typedef uint64_t ompt_id_t;
 typedef uint64_t ompt_wait_id_t; /**< identifies what a thread is awaiting */
 
 typedef union ompt_data_u{
-   uint64_t value;     /**< integer ID under tool control */
-   void* ptr;        /**< pointer under tool control */
+   uint64_t value;               /**< integer ID under tool control */
+   void* ptr;                    /**< pointer under tool control */
 } ompt_data_t;
 
 extern ompt_callback_t* OMPT_Callbacks; 
@@ -236,23 +236,27 @@ typedef struct ompt_frame_s
 /***
  *
  */
-
-typedef enum ompt_invoker_e
+typedef enum ompt_parallel_flag_e
 {
-	ompt_invoker_program = 1,	/**< program invokes master task */
-	ompt_invoker_runtime = 2  /**< runtime invokes master task */
-} ompt_invoker_t;
+	ompt_parallel_invoker_program = 0x00000001,	 /**< program invokes master task */
+	ompt_parallel_invoker_runtime = 0x00000002,  /**< runtime invokes master task */
+    ompt_parallel_league          = 0x40000000,
+    ompt_parallel_team            = 0x80000000,
+} ompt_parallel_flag_t;
 
-
-typedef enum ompt_task_type_e
+typedef enum ompt_task_flag_e
 {
-	ompt_task_undefined = 0,
-	ompt_task_initial = 1,
-	ompt_task_implicit = 2,
-	ompt_task_explicit = 3,
-	ompt_task_target = 4,
-	ompt_task_degenerate = 5
-}ompt_task_type_t;
+    ompt_task_undefined  = 0x00000000,
+	ompt_task_initial    = 0x00000001,
+	ompt_task_implicit   = 0x00000002,
+	ompt_task_explicit   = 0x00000004,
+	ompt_task_target     = 0x00000008,
+	ompt_task_undeferred = 0x08000000,
+    ompt_task_untied     = 0x10000000,
+    ompt_task_final      = 0x20000000,
+    ompt_task_mergeable  = 0x40000000,
+    ompt_task_merged     = 0x80000000
+}ompt_task_flag_t;
 
 typedef enum ompt_thread_type_e
 {
@@ -333,7 +337,7 @@ typedef int (*ompt_get_parallel_info_t)
 typedef int (*ompt_get_task_info_t)
 (
 	int ancestor_level,
-	ompt_task_type_t *type,
+	ompt_task_flag_t *type,
 	ompt_data_t **task_data,
 	ompt_frame_t **task_frame,
 	ompt_data_t ** parallel_data,
@@ -364,18 +368,17 @@ typedef void (*ompt_callback_work_t)
 
 typedef void (*ompt_callback_parallel_begin_t)
 (
-	ompt_data_t* parent_task_data,
-   const ompt_frame_t* parent_frame,
+   ompt_data_t* encountering_task_data,
+   const ompt_frame_t* encountering_task_frame,
    ompt_data_t* parallel_data,
-   unsigned int requested_team_size,
-   unsigned int actual_team_size,
-   ompt_invoker_t invoker,
+   unsigned int requested_parallelism,
+   int flags,
    const void * codeptr_ra 
 );
 
 typedef void (*ompt_callback_sync_region_t)
 (  
-	ompt_sync_region_kind_t kind,
+   ompt_sync_region_kind_t kind,
    ompt_scope_endpoint_t endpoint,
    ompt_data_t* parallel_data,
    ompt_data_t* task_data,
@@ -384,10 +387,10 @@ typedef void (*ompt_callback_sync_region_t)
 
 typedef void (*ompt_callback_parallel_end_t)
 (
-	ompt_data_t* parallel_data,
-	ompt_data_t* task_data,
-	ompt_invoker_t invoker,
-	const void * codeptr_ra	
+   ompt_data_t* parallel_data,
+   ompt_data_t* encountering_task_data,
+   int flags,
+   const void * codeptr_ra	
 );
 
 typedef void (*ompt_callback_task_create_t)
@@ -395,7 +398,7 @@ typedef void (*ompt_callback_task_create_t)
 	ompt_data_t* parent_task_data,
 	const ompt_frame_t* parent_frame,
 	ompt_data_t *new_task_data,
-	ompt_task_type_t task_type,
+	ompt_task_flag_t task_type,
 	int has_dependences,
 	const void* codeptr_ra
 );
@@ -410,7 +413,9 @@ typedef void (*ompt_callback_implicit_task_t)
 	ompt_scope_endpoint_t endpoint,
 	ompt_data_t *parallel_data,
 	ompt_data_t *task_data,
-	unsigned int thread_num
+	unsigned int actial_parallelism,
+	unsigned int index,
+    int flags
 );
 
 typedef void (*ompt_callback_task_dependences_t) ( 
