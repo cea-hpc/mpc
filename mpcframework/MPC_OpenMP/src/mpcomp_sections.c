@@ -141,8 +141,10 @@ int __mpcomp_sections_begin(int nb_sections) {
 			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
 			if( callback )
 			{
+                ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
+                ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
 				const void* code_ra = __builtin_return_address(0);	
-				callback( ompt_worksharing_sections, ompt_scope_begin, NULL, NULL, nb_sections, code_ra);
+				callback( ompt_work_sections, ompt_scope_begin, parallel_data, task_data, nb_sections, code_ra);
 			}
 		}
 	}
@@ -218,8 +220,10 @@ void __mpcomp_sections_end_nowait(void) {
 			if( callback )
 			{
   				mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+                ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
+                ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
 				const void* code_ra = __builtin_return_address(0);	
-				callback( ompt_worksharing_sections, ompt_scope_end, NULL, NULL, t->nb_sections, code_ra);
+				callback( ompt_work_sections, ompt_scope_end, parallel_data, task_data, t->nb_sections, code_ra);
 			}
 		}
 	}

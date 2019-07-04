@@ -169,34 +169,51 @@ void __mpcomp_barrier(void) {
                t->info.num_threads);
 
 #if OMPT_SUPPORT
-	//__mpcomp_ompt_barrier_begin( false );	
+  if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks ) {
+    if( t->info.in_single ) {
+      t->info.in_single = 0;
+      ompt_work_t wstype = (t->rank == t->instance->team->info.doing_single) ? ompt_work_single_executor : ompt_work_single_other;
+      if( wstype == ompt_work_single_executor ) t->instance->team->info.doing_single = -1;
+
+      ompt_callback_work_t callback;
+      callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
+
+      if( callback ) {
+        ompt_data_t* parallel_data = &(t->instance->team->info.ompt_region_data);
+        ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
+        const void* code_ra = __builtin_return_address(0);
+        callback( wstype, ompt_scope_end, parallel_data, task_data, 1, code_ra);
+      }
+    }
+  
+  //__mpcomp_ompt_barrier_begin( false );
+  }
 #endif /* OMPT_SUPPORT */
 
-  	if (t->info.num_threads != 1)
-	{
+  if (t->info.num_threads != 1)
+  {
 
 #if OMPT_SUPPORT 
-	//__mpcomp_ompt_barrier_begin( true );
+    //__mpcomp_ompt_barrier_begin( true );
 #endif /* OMPT_SUPPORT */
 
-  /* Get the corresponding microVP */
-  mpcomp_mvp_t *mvp = t->mvp;
-  sctk_assert(mvp != NULL);
-  sctk_nodebug("[%d] %s: t->mvp = %p", t->rank, __func__, t->mvp);
+    /* Get the corresponding microVP */
+    mpcomp_mvp_t *mvp = t->mvp;
+    sctk_assert(mvp != NULL);
+    sctk_nodebug("[%d] %s: t->mvp = %p", t->rank, __func__, t->mvp);
  
-  /* Call the real barrier */
-  sctk_assert( t->info.num_threads == t->mvp->threads->info.num_threads );
-  __mpcomp_internal_full_barrier(mvp);
+    /* Call the real barrier */
+    sctk_assert( t->info.num_threads == t->mvp->threads->info.num_threads );
+    __mpcomp_internal_full_barrier(mvp);
 
 #if OMPT_SUPPORT 
 	//__mpcomp_ompt_barrier_end( true );
 #endif /* OMPT_SUPPORT */
-}
+  }
 
 #if OMPT_SUPPORT
-	//__mpcomp_ompt_barrier_end( true );
+  //__mpcomp_ompt_barrier_end( true );
 #endif /* OMPT_SUPPORT */
-	
 }
 
 /* GOMP OPTIMIZED_1_0_WRAPPING */

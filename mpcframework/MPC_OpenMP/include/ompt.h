@@ -273,15 +273,16 @@ typedef enum ompt_task_dependence_flag_e
 	ompt_task_dependence_type_inout = 3,
 } ompt_task_dependence_flag_t;
 
-typedef enum ompt_worksharing_type_e
+typedef enum ompt_work_e
 {
-	ompt_worksharing_loop = 1,	
-	ompt_worksharing_sections = 2,	
-	ompt_worksharing_single_executor = 3,	
-	ompt_worksharing_single_other = 4,	
-	ompt_worksharing_workshare = 5,	
-	ompt_worksharing_distribute = 6	
-}ompt_worksharing_type_t;
+	ompt_work_loop            = 1,
+	ompt_work_sections        = 2,
+	ompt_work_single_executor = 3,
+	ompt_work_single_other    = 4,
+	ompt_work_workshare       = 5,
+	ompt_work_distribute      = 6,
+	ompt_work_taskloop        = 7
+}ompt_work_t;
 
 typedef struct ompt_task_dependence_s
 {
@@ -358,12 +359,12 @@ typedef void (*ompt_callback_thread_end_t)
 
 typedef void (*ompt_callback_work_t)
 (
-	ompt_worksharing_type_t wstype,
-	ompt_scope_endpoint_t endpoint,
+   ompt_work_t wstype,
+   ompt_scope_endpoint_t endpoint,
    ompt_data_t* parallel_data,
    ompt_data_t* task_data,
-	uint64_t count,
-	const void * codeptr_ra
+   uint64_t count,
+   const void * codeptr_ra
 );
 
 typedef void (*ompt_callback_parallel_begin_t)

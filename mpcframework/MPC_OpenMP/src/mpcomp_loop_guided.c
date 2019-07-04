@@ -136,8 +136,9 @@ void __mpcomp_guided_loop_end_nowait()
 				uint64_t ompt_iter_count = 0;
 				ompt_iter_count = __mpcomp_internal_loop_get_num_iters_gen(&(t->info.loop_infos));
 				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
+                ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
 				const void* code_ra = __builtin_return_address(0);	
-				callback( ompt_worksharing_loop, ompt_scope_end, parallel_data, NULL, ompt_iter_count, code_ra);
+				callback( ompt_work_loop, ompt_scope_end, parallel_data, task_data, ompt_iter_count, code_ra);
 			}
 		}
 	}
