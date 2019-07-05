@@ -111,47 +111,47 @@ typedef enum {
  * OMPT_CALLBACK
  */
 
-#define FOREACH_OMPT_CALLBACK(macro)														\
-																										\
-	/*--- Mandatory Events ---*/																\
-	macro(ompt_callback_thread_begin, 			1, 	ompt_set_always)				\
-	macro(ompt_callback_thread_end, 	 			2, 	ompt_set_always)				\
-	macro(ompt_callback_parallel_begin,			3,		ompt_set_always)				\
-	macro(ompt_callback_parallel_end,			4,		ompt_set_always)				\
-	macro(ompt_callback_task_create, 			5,		ompt_set_always)				\
-	macro(ompt_callback_task_schedule,			6,		ompt_set_always)				\
-	macro(ompt_callback_implicit_task,			7,		ompt_set_always)				\
-	macro(ompt_callback_target, 					8,		ompt_set_none)					\
-	macro(ompt_callback_target_data_op,			9,		ompt_set_none)					\
-	macro(ompt_callback_target_submit,			10, 	ompt_set_none)					\
-	macro(ompt_callback_control_tool,			11,	ompt_set_none)					\
-	macro(ompt_callback_device_initialize,		12,	ompt_set_none)					\
-																										\
-	/*--- Optional Events for Blame Shifting ---*/										\
-	macro(ompt_callback_idle,						13,	ompt_set_sometimes)			\
-	macro(ompt_callback_sync_region_wait,		14,	ompt_set_sometimes)			\
-	macro(ompt_callback_mutex_released, 		15,	ompt_set_sometimes)			\
-																										\
-	/*--- Optional Events for Instrumentation-based Tools ---*/						\
-	macro(ompt_callback_task_dependences,		16,	ompt_set_always)				\
-	macro(ompt_callback_task_dependence,		17,	ompt_set_none)					\
-	macro(ompt_callback_work,						18,	ompt_set_sometimes)			\
-	macro(ompt_callback_master,					19,	ompt_set_none)					\
-	macro(ompt_callback_target_map,				20,	ompt_set_none)					\
-	macro(ompt_callback_sync_region,				21,	ompt_set_none)					\
-	macro(ompt_callback_lock_init,				22,	ompt_set_sometimes)			\
-	macro(ompt_callback_lock_destroy, 			23,	ompt_set_sometimes)			\
-	macro(ompt_callback_mutex_acquire,		 	24,	ompt_set_sometimes)			\
-	macro(ompt_callback_mutex_acquired, 		25,	ompt_set_sometimes)			\
-	macro(ompt_callback_nest_lock, 				26,	ompt_set_sometimes)			\
-	macro(ompt_callback_flush, 					27,	ompt_set_none)					\
-	macro(ompt_callback_cancel, 					28,	ompt_set_none)			
+#define FOREACH_OMPT_CALLBACK(macro)                                           \
+                                                                               \
+    /*--- Mandatory Events ---*/                                               \
+macro( ompt_callback_thread_begin,                    1,   ompt_set_always )   \
+macro( ompt_callback_thread_end,                      2,   ompt_set_always )   \
+macro( ompt_callback_parallel_begin,                  3,   ompt_set_always )   \
+macro( ompt_callback_parallel_end,                    4,   ompt_set_always )   \
+macro( ompt_callback_task_create,                     5,   ompt_set_always )   \
+macro( ompt_callback_task_schedule,                   6,   ompt_set_always )   \
+macro( ompt_callback_implicit_task,                   7,   ompt_set_always )   \
+macro( ompt_callback_target,                          8,   ompt_set_none )     \
+macro( ompt_callback_target_data_op,                  9,   ompt_set_none )     \
+macro( ompt_callback_target_submit,                   10,  ompt_set_none )     \
+macro( ompt_callback_control_tool,                    11,  ompt_set_none )     \
+macro( ompt_callback_device_initialize,               12,  ompt_set_none )     \
+                                                                               \
+/*--- Optional Events for Blame Shifting ---*/                                 \
+macro( ompt_callback_idle,                            13,  ompt_set_sometimes )\
+macro( ompt_callback_sync_region_wait,                14,  ompt_set_sometimes )\
+macro( ompt_callback_mutex_released,                  15,  ompt_set_sometimes )\
+                                                                               \
+/*--- Optional Events for Instrumentation-based Tools ---*/                    \
+macro( ompt_callback_task_dependences,                16,  ompt_set_always )   \
+macro( ompt_callback_task_dependence,                 17,  ompt_set_none )     \
+macro( ompt_callback_work,                            18,  ompt_set_sometimes )\
+macro( ompt_callback_master,                          19,  ompt_set_none )     \
+macro( ompt_callback_target_map,                      20,  ompt_set_none )     \
+macro( ompt_callback_sync_region,                     21,  ompt_set_always )   \
+macro( ompt_callback_lock_init,                       22,  ompt_set_sometimes )\
+macro( ompt_callback_lock_destroy,                    23,  ompt_set_sometimes )\
+macro( ompt_callback_mutex_acquire,                   24,  ompt_set_sometimes )\
+macro( ompt_callback_mutex_acquired,                  25,  ompt_set_sometimes )\
+macro( ompt_callback_nest_lock,                       26,  ompt_set_sometimes )\
+macro( ompt_callback_flush,                           27,  ompt_set_none )     \
+macro( ompt_callback_cancel,                          28,  ompt_set_none )
 
 typedef enum {
 #define ompt_callback_macro(name, code, status) name = code,
 	FOREACH_OMPT_CALLBACK(ompt_callback_macro)
 #undef ompt_callback_macro
-} ompt_callbacks_t; 
+} ompt_callbacks_t;
 
 /*
  * MUTEX KIND
@@ -189,12 +189,16 @@ typedef enum ompt_scope_endpoint_e
    ompt_scope_end = 2
 } ompt_scope_endpoint_t;
 
-typedef enum ompt_sync_region_kind_e
+typedef enum ompt_sync_region_e
 {
-	ompt_sync_region_barrier = 1,
-	ompt_sync_region_taskwait = 2,
-	ompt_sync_region_taskgroup = 3
-}ompt_sync_region_kind_t;
+	ompt_sync_region_barrier                = 1,
+	ompt_sync_region_barrier_implicit       = 2,
+	ompt_sync_region_barrier_explicit       = 3,
+	ompt_sync_region_barrier_implementation = 4,
+	ompt_sync_region_taskwait               = 5,
+	ompt_sync_region_taskgroup              = 6,
+	ompt_sync_region_reduction              = 7
+}ompt_sync_region_t;
 
 /*
  * identifiers
@@ -379,7 +383,7 @@ typedef void (*ompt_callback_parallel_begin_t)
 
 typedef void (*ompt_callback_sync_region_t)
 (  
-   ompt_sync_region_kind_t kind,
+   ompt_sync_region_t kind,
    ompt_scope_endpoint_t endpoint,
    ompt_data_t* parallel_data,
    ompt_data_t* task_data,

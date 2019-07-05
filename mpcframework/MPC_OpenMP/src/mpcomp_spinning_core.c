@@ -205,7 +205,39 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
     spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );
     *spin_status = MPCOMP_MVP_STATE_SLEEP;
 
+#if OMPT_SUPPORT
+    if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks ) {
+       ompt_callback_sync_region_t callback;
+       callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync_region];
+
+       if( callback ) {
+           ompt_data_t* parallel_data = 
+               &( cur_thread->instance->team->info.ompt_region_data );
+           ompt_data_t* task_data = 
+               &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(cur_thread)->ompt_task_data );
+           const void* code_ra = __builtin_return_address( 1 );
+
+           callback( ompt_sync_region_barrier_implicit, ompt_scope_begin, parallel_data, task_data, code_ra );
+       }
+    }
+#endif /* OMPT_SUPPORT */
+
     __mpcomp_internal_full_barrier( mvp );
+
+#if OMPT_SUPPORT
+    if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks ) {
+       ompt_callback_sync_region_t callback;
+       callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync_region];
+
+       if( callback ) {
+           ompt_data_t* task_data = 
+               &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(cur_thread)->ompt_task_data );
+           const void* code_ra = __builtin_return_address( 1 );
+
+           callback( ompt_sync_region_barrier_implicit, ompt_scope_end, NULL, task_data, code_ra );
+       }
+    }
+#endif /* OMPT_SUPPORT */
 
     __mpcomp_task_free( mvp->threads);
 
