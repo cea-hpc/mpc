@@ -21,7 +21,7 @@ typedef struct mpcomp_ompt_task_info_s
 	//ompt_task_id_t taskid;
 #if MPCOMP_USE_TASKDEP
 	unsigned int ndeps;
-	ompt_task_dependence_t *deps;
+	ompt_dependence_t *deps;
 #endif /* MPCOMP_USE_TASKDEP */
 } mpcomp_ompt_task_info_t;
 

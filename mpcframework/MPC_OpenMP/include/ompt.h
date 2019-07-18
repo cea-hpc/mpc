@@ -133,7 +133,7 @@ macro( ompt_callback_sync_region_wait,                14,  ompt_set_sometimes )\
 macro( ompt_callback_mutex_released,                  15,  ompt_set_sometimes )\
                                                                                \
 /*--- Optional Events for Instrumentation-based Tools ---*/                    \
-macro( ompt_callback_task_dependences,                16,  ompt_set_always )   \
+macro( ompt_callback_dependences,                     16,  ompt_set_always )   \
 macro( ompt_callback_task_dependence,                 17,  ompt_set_none )     \
 macro( ompt_callback_work,                            18,  ompt_set_sometimes )\
 macro( ompt_callback_master,                          19,  ompt_set_none )     \
@@ -270,12 +270,15 @@ typedef enum ompt_thread_type_e
 	ompt_thread_unknown = 4
 }ompt_thread_type_t;
 
-typedef enum ompt_task_dependence_flag_e
+typedef enum ompt_dependence_type_e
 {
-	ompt_task_dependence_type_out = 1,
-	ompt_task_dependence_type_in = 2,
-	ompt_task_dependence_type_inout = 3,
-} ompt_task_dependence_flag_t;
+	ompt_dependence_type_in            = 1,
+	ompt_dependence_type_out           = 2,
+	ompt_dependence_type_inout         = 3,
+	ompt_dependence_type_mutexinoutset = 4,
+	ompt_dependence_type_source        = 5,
+	ompt_dependence_type_sink          = 6
+} ompt_dependence_type_t;
 
 typedef enum ompt_work_e
 {
@@ -288,11 +291,11 @@ typedef enum ompt_work_e
 	ompt_work_taskloop        = 7
 }ompt_work_t;
 
-typedef struct ompt_task_dependence_s
+typedef struct ompt_dependence_s
 {
-	void* variable_addr;
-	unsigned int dependence_flags;
-} ompt_task_dependence_t;
+	ompt_data_t variable;
+	ompt_dependence_type_t dependence_type;
+} ompt_dependence_t;
 
 /**
  * INITIALIZATION FUNCTIONS
@@ -423,9 +426,9 @@ typedef void (*ompt_callback_implicit_task_t)
     int flags
 );
 
-typedef void (*ompt_callback_task_dependences_t) ( 
+typedef void (*ompt_callback_dependences_t) ( 
 	ompt_data_t* task_data,
-	const ompt_task_dependence_t *deps,
+	const ompt_dependence_t *deps,
 	int ndeps
 );
 
