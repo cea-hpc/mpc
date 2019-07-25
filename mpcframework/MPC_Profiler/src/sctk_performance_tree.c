@@ -102,7 +102,7 @@ void sctk_performance_tree_total_time_and_hits( struct sctk_profiler_array *arra
 	{
 		/* Only process leaf nodes */
 
-    /* tr->total_time += sctk_profiler_array_get_value( array, id ); */
+    		tr->total_time += sctk_profiler_array_get_value( array, id );
 		tr->total_hits += sctk_profiler_array_get_hits( array, id );
 
 	}
@@ -159,9 +159,9 @@ void  sctk_performance_tree_init( struct sctk_performance_tree *tr, struct sctk_
 	sctk_profiler_array_walk( array, sctk_performance_tree_relative_percentage , (void *)tr , 1);
 	/* Fill Total time and hits */
 	sctk_profiler_array_walk( array, sctk_performance_tree_total_time_and_hits , (void *)tr , 1);
-  /* Fill the total time */
-  tr->total_time = array->run_time;
-  /* Compute absolute percentages */
+  	/* Fill the total time */
+	//tr->total_time = array->run_time;
+  	/* Compute absolute percentages */
 	sctk_profiler_array_walk( array, sctk_performance_tree_absolute_percentage , (void *)tr , 1);
 
 	int i = 0;
