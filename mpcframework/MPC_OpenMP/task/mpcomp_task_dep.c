@@ -141,14 +141,15 @@ void __mpcomp_task_finalize_deps(mpcomp_task_t *task) {
 
   sctk_assert(task);
 
+  if(!(task->task_dep_infos))
+    return;
+
+
   if (!(task->task_dep_infos->htable)) {
     /* remove all elements from task dep hash table */
     //(void) mpcomp_task_dep_free_task_htable( task->task_dep_infos->htable );
     // task->task_dep_infos->htable = NULL;
   }
-
-  if(!(task->task_dep_infos))
-    return;
 
   task_node = task->task_dep_infos->node;
 
