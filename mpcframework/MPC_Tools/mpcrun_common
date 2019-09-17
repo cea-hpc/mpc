@@ -456,26 +456,6 @@ for arg in "$@" ; do
     export SCTK_ARCH_LIBRARY_PATH
     echo "Arch library path updated : $SCTK_ARCH_LIBRARY_PATH" >&2
     ;;
-    --mic-nb-task=*)
-    SCTK_MIC_NB_TASK="`echo A$arg | sed -e 's/A--mic-nb-task=//g'`"
-    export SCTK_MIC_NB_TASK
-    echo "run with $SCTK_MIC_NB_TASK task(s) per MIC" >&2
-    ;;
-    --host-nb-task=*)
-    SCTK_HOST_NB_TASK="`echo A$arg | sed -e 's/A--host-nb-task=//g'`"
-    export SCTK_HOST_NB_TASK
-    echo "run with $SCTK_HOST_NB_TASK task(s) per host" >&2
-    ;;
-    --nb-mic=*)
-    SCTK_NB_MIC="`echo A$arg | sed -e 's/A--nb-mic=//g'`"
-    export SCTK_NB_MIC
-    echo "run with $SCTK_NB_MIC MIC(s)" >&2
-    ;;
-    --nb-host=*)
-    SCTK_NB_HOST="`echo A$arg | sed -e 's/A--nb-host=//g'`"
-    export SCTK_NB_HOST
-    echo "run with $SCTK_NB_HOST host(s)" >&2
-    ;;
     --tempdir)
     export MPC_MOVE_TO_TEMP="1"
     ;;
