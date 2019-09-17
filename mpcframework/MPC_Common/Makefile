@@ -34,13 +34,13 @@ SOBJ_include=$(SFILES_include:include/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
 SDEP_include=$(SFILES_include:include/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
 
 
-FILES_topology=$(wildcard sctk_topology/*.c)
-OBJ_topology=$(FILES_topology:sctk_topology/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
-DEP_topology=$(FILES_topology:sctk_topology/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
+FILES_optim=$(wildcard sctk_optim/$(SCTK_ARCH_OPTIM)/*.c)
+OBJ_optim=$(FILES_optim:sctk_optim/$(SCTK_ARCH_OPTIM)/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
+DEP_optim=$(FILES_optim:sctk_optim/$(SCTK_ARCH_OPTIM)/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
 
-SFILES_topology=$(wildcard sctk_topology/*.S)
-SOBJ_topology=$(SFILES_topology:sctk_topology/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
-SDEP_topology=$(SFILES_topology:sctk_topology/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
+SFILES_optim=$(wildcard sctk_optim/$(SCTK_ARCH_OPTIM)/*.S)
+SOBJ_optim=$(SFILES_optim:sctk_optim/$(SCTK_ARCH_OPTIM)/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
+SDEP_optim=$(SFILES_optim:sctk_optim/$(SCTK_ARCH_OPTIM)/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
 
 
 FILES_src=$(wildcard src/*.c)
@@ -55,17 +55,17 @@ SDEP_src=$(SFILES_src:src/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
 FFILES_include=$(wildcard include/*.f)
 FOBJ_include=$(FFILES_include:include/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
 
-FFILES_topology=$(wildcard sctk_topology/*.f)
-FOBJ_topology=$(FFILES_topology:sctk_topology/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
+FFILES_optim=$(wildcard sctk_optim/$(SCTK_ARCH_OPTIM)/*.f)
+FOBJ_optim=$(FFILES_optim:sctk_optim/$(SCTK_ARCH_OPTIM)/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
 
 FFILES_src=$(wildcard src/*.f)
 FOBJ_src=$(FFILES_src:src/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
 
-all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_topology) $(FOBJ_topology) $(SOBJ_topology) $(OBJ_src) $(FOBJ_src) $(SOBJ_src)
+all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_optim) $(FOBJ_optim) $(SOBJ_optim) $(OBJ_src) $(FOBJ_src) $(SOBJ_src)
 
 $(M_PWD)/include_modules/MPC_Common:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/include $(M_PWD)/include_modules
-	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_topology $(M_PWD)/include_modules
+	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_optim/$(SCTK_ARCH_OPTIM) $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/src $(M_PWD)/include_modules
 	@touch $@
 
@@ -73,7 +73,7 @@ prepare_includes:$(M_PWD)/include_modules/MPC_Common
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_include) $(DEP_topology) $(DEP_src) 
+DEPENDS=$(DEP_include) $(DEP_optim) $(DEP_src) 
 
 $(DEPENDS):Makefile 
 endif
@@ -84,9 +84,9 @@ $(DEP_include):$(M_PWD)/BUILD_MPC_Common/lib/%.d:include/%.c
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,include/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
-$(DEP_topology):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_topology/%.c
+$(DEP_optim):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_optim/$(SCTK_ARCH_OPTIM)/%.c
 	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.c,$@)"
-	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_topology/%.c,$@) | \
+	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_optim/$(SCTK_ARCH_OPTIM)/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_src):$(M_PWD)/BUILD_MPC_Common/lib/%.d:src/%.c
@@ -99,9 +99,9 @@ $(DEP_include):$(M_PWD)/BUILD_MPC_Common/lib/%.d:include/%.c
 	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,include/%.c,$@)" > $@
 
-$(DEP_topology):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_topology/%.c
+$(DEP_optim):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_optim/$(SCTK_ARCH_OPTIM)/%.c
 	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.c,$@)"
-	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_topology/%.c,$@)" > $@
+	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_optim/$(SCTK_ARCH_OPTIM)/%.c,$@)" > $@
 
 $(DEP_src):$(M_PWD)/BUILD_MPC_Common/lib/%.d:src/%.c
 	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.c,$@)"
@@ -113,9 +113,9 @@ $(OBJ_include):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/include/%.c,$@) -o $@
 
-$(OBJ_topology):%.o:%.d
+$(OBJ_optim):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_topology/%.c,$@) -o $@
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_optim/$(SCTK_ARCH_OPTIM)/%.c,$@) -o $@
 
 $(OBJ_src):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.c,$@)"
@@ -126,9 +126,9 @@ $(SDEP_include):$(M_PWD)/BUILD_MPC_Common/lib/%.d:include/%.S
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,include/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
-$(SDEP_topology):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_topology/%.S
+$(SDEP_optim):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_optim/$(SCTK_ARCH_OPTIM)/%.S
 	@echo "DEP $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.S,$@)"
-	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_topology/%.S,$@) | \
+	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_optim/$(SCTK_ARCH_OPTIM)/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_src):$(M_PWD)/BUILD_MPC_Common/lib/%.d:src/%.S
@@ -140,9 +140,9 @@ $(SOBJ_include):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/include/%.S,$@) -o $@
 
-$(SOBJ_topology):%.o:%.d
+$(SOBJ_optim):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_topology/%.S,$@) -o $@
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,$(shell pwd)/sctk_optim/$(SCTK_ARCH_OPTIM)/%.S,$@) -o $@
 
 $(SOBJ_src):%.o:%.d
 	@echo "CC  $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,%.S,$@)"
@@ -152,9 +152,9 @@ $(FOBJ_include):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:include/%.f
 	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,include/%.f,$@) -o $@
 
-$(FOBJ_topology):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:sctk_topology/%.f
+$(FOBJ_optim):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:sctk_optim/$(SCTK_ARCH_OPTIM)/%.f
 	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,%.f,$@)"
-	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,sctk_topology/%.f,$@) -o $@
+	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,sctk_optim/$(SCTK_ARCH_OPTIM)/%.f,$@) -o $@
 
 $(FOBJ_src):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:src/%.f
 	@echo "F77 $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,%.f,$@)"
