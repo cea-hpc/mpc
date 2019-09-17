@@ -56,7 +56,7 @@ sctk_terminaison_barrier (void)
 		/* In libmode we do not want the pmi barrier
 		 * to be called after MPI_Finalize (therefore we
 		 * simply ignore it )*/
-		if ( sctk_process_number > 1 )
+		if ( get_process_count() > 1 )
 		{
 			sctk_nodebug ( "sctk_pmi_barrier" );
 			sctk_pmi_barrier();

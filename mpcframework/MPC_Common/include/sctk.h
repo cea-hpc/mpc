@@ -28,10 +28,6 @@
 #include "sctk_debug.h"
 #include "sctk_bool.h"
 
-extern int sctk_process_number;
-extern int sctk_process_rank;
-extern int sctk_node_number;
-extern int sctk_node_rank;
 extern volatile int sctk_multithreading_initialised;
 extern bool sctk_migration_mode;
 

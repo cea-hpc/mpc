@@ -36,6 +36,7 @@
 #include <sys/ucontext.h>
 #endif
 
+#include "sctk_rank.h"
 #include "sctk_config.h"
 #include "sctk_debug.h"
 #include "sctk_spinlock.h"
@@ -58,17 +59,8 @@ int sctk_only_once_while_val;
 static int sctk_debug_version_details = 0;
 static char sctk_version_buff[WRITE_BUFFER_SIZE];
 static __thread char ret[DEBUG_INFO_SIZE];
-
-int sctk_process_number = 1;
-int sctk_process_rank = 0;
-int sctk_node_number = 1;
-int sctk_node_rank = 0;
 int sctk_is_in_fortran = 0;
 
-/* rank of the process inside the node */
-int sctk_local_process_rank = 0;
-/* number of processes inside the node */
-int sctk_local_process_number = 1;
 
 volatile int sctk_multithreading_initialised = 0;
 
@@ -127,15 +119,15 @@ sctk_print_debug_infos()
         SCTK_COLOR_GREEN([%4d/%4d/%4d/)
         SCTK_COLOR_GREEN_BOLD(%4d)
         SCTK_COLOR_GREEN(/%4d/%4d]),
-        sctk_node_rank,
-        sctk_process_rank, sctk_thread_get_vp (), task_id, thread_id, sctk_local_process_rank);
+        get_node_rank(),
+        get_process_rank(), sctk_thread_get_vp (), task_id, thread_id, get_local_process_rank());
   }
   else {
     snprintf(ret,
 			DEBUG_INFO_SIZE,
         "[%4d/%4d/%4d/%4d/%4d/%4d]",
-        sctk_node_rank,
-        sctk_process_rank, sctk_thread_get_vp (), task_id, thread_id, sctk_local_process_rank);
+        get_node_rank(),
+        get_process_rank(), sctk_thread_get_vp (), task_id, thread_id, get_local_process_rank());
   }
 
   return ret;
@@ -407,7 +399,7 @@ MPC_check_compatibility_lib (int major, int minor, char *pre)
     int task_id;
     int thread_id;
 
-    if (sctk_process_rank!=0)
+    if (get_process_rank()!=0)
       return;
 
     sctk_get_thread_info (&task_id, &thread_id);
@@ -644,7 +636,7 @@ sctk_formated_dbg_print_abort (FILE * stream, const int line,
 void
 sctk_flush_version ()
 {
-  if (sctk_debug_version_details && (sctk_process_rank == 0))
+  if (sctk_debug_version_details && (get_process_rank() == 0))
     {
       sctk_noalloc_fprintf (stderr, sctk_version_buff);
       sctk_version_buff[0] = '\0';

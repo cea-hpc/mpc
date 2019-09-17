@@ -309,13 +309,24 @@ void sctk_network_notify_new_communicator_set( void (*func)(int, size_t))
 
 void sctk_net_init_pmi()
 {
-	if ( sctk_process_number > 1 )
+	if ( get_process_count() > 1 )
 	{
 		/* Initialize topology informations from PMI */
-		sctk_pmi_get_process_rank ( &sctk_process_rank );
-		sctk_pmi_get_process_number ( &sctk_process_number );
-		sctk_pmi_get_process_on_node_rank ( &sctk_local_process_rank );
-		sctk_pmi_get_process_on_node_number ( &sctk_local_process_number );
+		int process_rank;
+		sctk_pmi_get_process_rank ( &process_rank );
+		set_process_rank(process_rank);
+
+		int process_count;
+		sctk_pmi_get_process_number ( &process_count );
+		set_process_count(process_count);
+
+		int local_process_rank;
+		sctk_pmi_get_process_on_node_rank ( &local_process_rank );
+		set_local_process_rank(local_process_rank);
+
+		int local_process_count;
+		sctk_pmi_get_process_on_node_number ( &local_process_count );
+		set_process_count(local_process_count);
 	}
 }
 
@@ -552,7 +563,7 @@ void sctk_net_finalize_task_level(int taskid, int vp)
 
 void sctk_net_init_driver ( char *name )
 {	
-	if ( sctk_process_number == 1 )
+	if ( get_process_count() == 1 )
 	{
 		/* Nothing to do */
 		return;

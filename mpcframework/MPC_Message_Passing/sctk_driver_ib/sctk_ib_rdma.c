@@ -1055,7 +1055,7 @@ sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
                              "######### IBUF DESC ############\n"
                              "%s\n"
                              "################################",
-                             sctk_process_rank, ibuf_desc);
+                             get_process_rank(), ibuf_desc);
                   sctk_error("END ERROR");
                   //      not_reachable();
                 }

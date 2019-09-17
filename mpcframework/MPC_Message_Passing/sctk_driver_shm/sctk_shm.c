@@ -133,7 +133,7 @@ sctk_network_send_message_from_pending_shm_list( void )
               sctk_debug(
                   "!%d!  [ %d -> %d ] [ %d -> %d ] (CLASS "
                   "%s(%d) SPE %d SIZE %d TAG %d)",
-                  sctk_process_rank, SCTK_MSG_SRC_PROCESS(msg),
+                  get_process_rank(), SCTK_MSG_SRC_PROCESS(msg),
                   SCTK_MSG_DEST_PROCESS(msg), SCTK_MSG_SRC_TASK(msg),
                   SCTK_MSG_DEST_TASK(msg),
                   sctk_message_class_name[(int)SCTK_MSG_SPECIFIC_CLASS(msg)],
@@ -376,7 +376,7 @@ static void sctk_shm_init_raw_queue(size_t size, int cells_num, int rank)
     pmi_handler = sctk_shm_pmi_handler_init(buffer);
 
     shm_role = SCTK_SHM_MAPPER_ROLE_SLAVE;
-    shm_role = (sctk_local_process_rank==rank)?SCTK_SHM_MAPPER_ROLE_MASTER:shm_role; 
+    shm_role = (get_local_process_rank()==rank)?SCTK_SHM_MAPPER_ROLE_MASTER:shm_role; 
     shm_base = sctk_shm_add_region( size, shm_role, pmi_handler);
         
     sctk_shm_add_region_infos(shm_base,size,cells_num,rank );
@@ -457,7 +457,7 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
    sctk_pmi_get_process_on_node_number(&local_process_number);
    sctk_shm_proc_local_rank_on_node = local_process_rank;
 
-   if (local_process_number == 1 || sctk_get_node_number() > 1)
+   if (local_process_number == 1 || get_node_count() > 1)
    {
      sctk_shm_driver_initialized = 0;
      return;

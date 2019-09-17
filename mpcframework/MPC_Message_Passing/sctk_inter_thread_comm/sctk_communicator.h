@@ -26,6 +26,8 @@
 #include <sctk_atomics.h>
 #include <sctk_spinlock.h>
 
+#include <sctk_rank.h>
+
 #include "sctk_runtime_config.h"
 
 /******************************** STRUCTURE *********************************/
@@ -414,7 +416,7 @@ int sctk_get_rank ( const sctk_communicator_t communicator, const int comm_world
 int sctk_get_node_rank_from_task_rank ( const int rank );
 
 int _sctk_get_process_rank_from_task_rank ( int rank );
-extern int sctk_process_number;
+
 
 static inline int sctk_get_process_rank_from_task_rank( int rank )
 {
@@ -422,7 +424,7 @@ static inline int sctk_get_process_rank_from_task_rank( int rank )
 	return rank;
 #endif
 
-	if ( sctk_process_number == 1 )
+	if ( get_process_count() == 1 )
 		return 0;
   
   return _sctk_get_process_rank_from_task_rank(rank);

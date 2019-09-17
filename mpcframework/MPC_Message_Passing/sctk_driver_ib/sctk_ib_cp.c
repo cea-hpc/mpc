@@ -645,7 +645,7 @@ int sctk_ib_cp_handle_message ( sctk_ibuf_t *ibuf, int dest_task, int target_tas
 		//sctk_ib_rdma_t *rdma_header;
 		//rdma_header = IBUF_GET_RDMA_HEADER ( ibuf->buffer );
 		//int type = IBUF_GET_RDMA_TYPE ( rdma_header );
-		//    sctk_error("Indirect message!! (target task:%d dest_task:%d) %d process %d", target_task, dest_task, type, sctk_process_rank);
+		//    sctk_error("Indirect message!! (target task:%d dest_task:%d) %d process %d", target_task, dest_task, type, get_process_rank());
 		/* We return without error -> indirect message that we need to handle */
 		return 0;
 	}
@@ -698,7 +698,7 @@ void sctk_network_notify_idle_message_multirail_ib_wait_send ()
 
 void sctk_network_initialize_task_collaborative_ib (sctk_rail_info_t *rail, int rank, int vp )
 {
-	if ( sctk_process_number > 1 && sctk_network_is_ib_used() )
+	if ( get_process_count() > 1 && sctk_network_is_ib_used() )
 	{
 		/* Register task for collaborative polling */
 		sctk_ib_cp_init_task ( rank, vp );
@@ -731,7 +731,7 @@ void sctk_network_finalize_task_collaborative_ib (sctk_rail_info_t *rail, int ta
 	/* Register task for topology infos */
 	sctk_ib_topology_free_task ( rail );
 
-	if ( sctk_process_number > 1 && sctk_network_is_ib_used() )
+	if ( get_process_count() > 1 && sctk_network_is_ib_used() )
 	{
 		sctk_ib_cp_finalize_task ( taskid );
 	}

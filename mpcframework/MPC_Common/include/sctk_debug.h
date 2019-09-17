@@ -35,8 +35,10 @@ extern "C"
 #include <sctk_keywords.h>
 #include <sctk_config.h>
 #include <assert.h>
+
 #include "sctk_bool.h"
 #include "sctk_keywords.h"
+
 
 #define SCTK_MAX_FILENAME_SIZE 1024
 #define SCTK_DBG_INFO stderr,__LINE__,__FILE__,SCTK_FUNCTION
@@ -49,10 +51,7 @@ extern "C"
   extern char *sctk_network_mode;
 /*   extern const char *sctk_store_dir; */
   extern int sctk_is_in_fortran;
-  extern int sctk_local_process_rank;
-  extern int sctk_local_process_number;
-  extern int sctk_node_rank;
-  extern int sctk_node_number;
+
 
   void sctk_init (void);
   void sctk_leave (void);

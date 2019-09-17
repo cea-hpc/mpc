@@ -225,10 +225,10 @@ void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
 
 	ib_assume ( rail->send_message_from_network != NULL );
 
-	dest_rank = ( sctk_process_rank + 1 ) % sctk_process_number;
-	src_rank = ( sctk_process_rank + sctk_process_number - 1 ) % sctk_process_number;
+	dest_rank = ( get_process_rank() + 1 ) % get_process_count();
+	src_rank = ( get_process_rank() + get_process_count() - 1 ) % get_process_count();
 
-	if ( sctk_process_number > 2 )
+	if ( get_process_count() > 2 )
 	{
 		/* XXX: Set QP in a Ready-To-Send mode. Ideally, we should check that
 		* the remote QP has sent an ack */
@@ -458,7 +458,7 @@ int sctk_ib_cm_on_demand_recv_request ( sctk_rail_info_t *rail, void *request, i
 		                rail->rail_number, src, sctk_endpoint_get_is_initiator ( endpoint ) );
 
 	/* RACE CONDITION AVOIDING -> positive ACK */
-	if ( sctk_endpoint_get_is_initiator ( endpoint ) == 0 || sctk_process_rank > src )
+	if ( sctk_endpoint_get_is_initiator ( endpoint ) == 0 || get_process_rank() > src )
 	{
 		struct sctk_ib_qp_s *remote = endpoint->data.ib.remote;
 		sctk_ib_debug ( "[%d] OD QP connexion request to process %d (initiator:%d)",

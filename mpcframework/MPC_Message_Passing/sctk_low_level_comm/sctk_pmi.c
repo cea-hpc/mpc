@@ -102,7 +102,7 @@ int sctk_pmi_init()
 {
 	/* let the MPC PMI interface choose if it need to be initialized */
 #ifndef SCTK_LIB_MODE
-	if(sctk_process_number <= 1)
+	if(get_process_count() <= 1)
 		return PMI_FAIL;
 #endif
 	/*static int done = 0;*/
@@ -116,11 +116,10 @@ int sctk_pmi_init()
 		sctk_pmi_process_number = MPC_Net_hook_size();
 
 		/* Consider nodes as processes */
-		sctk_node_rank = sctk_pmi_process_rank;
-		sctk_node_number=sctk_pmi_process_number;
-		sctk_local_process_rank = 0;
-		sctk_local_process_number = 1;
-
+		set_node_rank(sctk_pmi_process_rank);
+		set_node_count(sctk_pmi_process_number);
+		set_local_process_rank(0):
+		set_local_process_count(1);
 		return 0;
 #else /* SCTK_LIB_MODE */
 
@@ -328,10 +327,23 @@ int sctk_pmi_init()
 
                 sctk_pmi_get_process_rank(&sctk_pmi_process_rank);
                 sctk_pmi_get_process_number(&sctk_pmi_process_number);
-                sctk_pmi_get_node_rank(&sctk_node_rank);
-                sctk_pmi_get_node_number(&sctk_node_number);
-                sctk_pmi_get_process_on_node_rank(&sctk_local_process_rank);
-                sctk_pmi_get_process_on_node_number(&sctk_local_process_number);
+
+				int node_rank;
+                sctk_pmi_get_node_rank(&node_rank);
+				set_node_rank(node_rank);
+
+				int node_count;
+                sctk_pmi_get_node_number(&node_count);
+				set_node_count(node_count);
+
+				int local_process_rank;
+                sctk_pmi_get_process_on_node_rank(&local_process_rank);
+				set_local_process_rank(local_process_rank);
+
+				int local_process_count;
+                sctk_pmi_get_process_on_node_number(&local_process_count);
+				set_local_process_count(local_process_count);
+
                 sctk_pmi_get_process_number_from_node_rank(
                     &sctk_pmi_process_nb_from_node_rank);
 
@@ -704,7 +716,7 @@ int sctk_pmi_get_node_rank ( int *rank )
 int sctk_pmi_get_process_on_node_number ( int *size )
 {
 #ifdef SCTK_LIB_MODE
-	*size = sctk_local_process_number;
+	*size = get_local_process_count();
 	return PMI_SUCCESS;
 #else /* SCTK_LIB_MODE */
 	#ifdef MPC_USE_SLURM
@@ -737,7 +749,7 @@ int sctk_pmi_get_process_on_node_number ( int *size )
 int sctk_pmi_get_process_on_node_rank ( int *rank )
 {
 #ifdef SCTK_LIB_MODE
-	*rank = sctk_local_process_rank;
+	*rank = get_local_process_rank();
 	return PMI_SUCCESS;
 #else /* SCTK_LIB_MODE */
 	#ifdef MPC_USE_HYDRA

@@ -341,7 +341,7 @@ void rdma_rail_ellection()
 	{
 		__rails.rdma_rail = -1;
 
-		/*if( !sctk_get_process_rank() )*/
+		/*if( !get_process_rank() )*/
 		/*{*/
 				/*sctk_warning("No RDMA capable rail found (using emulated calls)");*/
 		/*}*/
@@ -449,7 +449,7 @@ struct sctk_rail_dump_context
 
 void __sctk_rail_dump_routes(  sctk_endpoint_t *table, void * arg  )
 {
-	int src = sctk_get_process_rank();
+	int src = get_process_rank();
 	int dest = table->dest;
 
 	struct sctk_rail_dump_context * ctx = (struct sctk_rail_dump_context *) arg;
@@ -497,8 +497,8 @@ void sctk_rail_dump_routes()
 {
 	int i;
 
-	int rank = sctk_get_process_rank();
-	int size = sctk_get_process_number();
+	int rank = get_process_rank();
+	int size = get_process_count();
 	int local_task_rank = sctk_get_local_task_rank();
 
 	if( local_task_rank )

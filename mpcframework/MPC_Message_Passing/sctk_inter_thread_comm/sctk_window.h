@@ -155,7 +155,7 @@ struct sctk_window_map_request
 
 static inline void sctk_window_map_request_init( struct sctk_window_map_request * mr, int remote_rank, sctk_window_t win_id )
 {
-	mr->source_rank = sctk_get_task_rank();
+	mr->source_rank = get_task_rank();
 	mr->remote_rank = remote_rank;
 	mr->win_id = win_id;
 }
@@ -181,7 +181,7 @@ struct sctk_window_emulated_RDMA
 
 static inline void sctk_window_emulated_RDMA_init( struct sctk_window_emulated_RDMA * erma, int remote_rank, size_t offset, size_t size, sctk_window_t win_id )
 {
-	erma->source_rank = sctk_get_task_rank();
+	erma->source_rank = get_task_rank();
 	erma->remote_rank = remote_rank;
 	erma->offset = offset;
 	erma->size = size;

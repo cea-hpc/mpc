@@ -97,7 +97,7 @@ void mpc_MPI_Win_handle_win_flush(void *data ) {
       mpc_MPI_Win_request_array_test(&desc->target.requests);
 
       if (20 < cnt) {
-        sctk_control_message_process_local(sctk_get_task_rank());
+        sctk_control_message_process_local(get_task_rank());
       }
     }
     incoming_rma =

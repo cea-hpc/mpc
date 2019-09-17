@@ -86,7 +86,7 @@ __UNUSED__ static inline void sctk_ib_polling_check_wc ( struct sctk_ib_rail_inf
 		if ( config->quiet_crash )
 		{
 			sctk_error ( "\nIB - PROCESS %d CRASHED (%s): %s",
-			             sctk_process_rank, host, ibv_wc_status_str ( wc.status ) );
+			             get_process_rank(), host, ibv_wc_status_str ( wc.status ) );
 		}
 		else
 		{
@@ -100,7 +100,7 @@ __UNUSED__ static inline void sctk_ib_polling_check_wc ( struct sctk_ib_rail_inf
 			             "Dest process : %d\n"
 			             "######### IBUF DESC ############\n"
 			             "%s\n"
-			             "################################", sctk_process_rank,
+			             "################################", get_process_rank(),
 			             host,
 			             wc.wr_id,
 			             ibv_wc_status_str ( wc.status ),

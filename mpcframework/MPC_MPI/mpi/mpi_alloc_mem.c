@@ -59,7 +59,7 @@ void mpc_MPI_allocmem_adapt(char *exename) {
   if (is_linear) {
     _forced_pool_size =
         sctk_runtime_config_get()->modules.rma.alloc_mem_pool_per_process_size *
-        sctk_get_local_process_number();
+        get_local_process_count();
     sctk_info("Info : setting MPI_Alloc_mem pool size to %d MB",
               _forced_pool_size / (1024 * 1024));
   }
@@ -101,7 +101,7 @@ int mpc_MPI_allocmem_pool_init() {
   inner_size += sizeof(sctk_atomics_int);
 
   /* Are all the tasks in the same process ? */
-  if (sctk_get_task_number() == sctk_get_local_task_number()) {
+  if (get_task_number() == sctk_get_local_task_number()) {
     mpc_MPI_accumulate_op_lock_init_shared();
     return 0;
   } else {
@@ -130,7 +130,7 @@ int mpc_MPI_allocmem_pool_init() {
       int tot_size = 0;
 
       MPI_Allreduce(&comm_size, &tot_size, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD ); /* equal to the total number of tasks if there is one task per process */
-      if ((tot_size == sctk_get_task_number()) || (alloc_mem_enabled == 0)) {
+      if ((tot_size == get_task_number()) || (alloc_mem_enabled == 0)) {
       mpc_MPI_accumulate_op_lock_init_shared();
       _pool_only_local = 1;
       PMPI_Comm_free(&node_comm);
@@ -227,7 +227,7 @@ int mpc_MPI_allocmem_pool_release() {
 
   /* Are all the tasks in the same process ? */
   if (_pool_only_local ||
-      (sctk_get_task_number() == sctk_get_local_task_number())) {
+      (get_task_number() == sctk_get_local_task_number())) {
     return 0;
   }
 
@@ -243,7 +243,7 @@ int mpc_MPI_allocmem_pool_release() {
   sctk_spinlock_unlock(&_pool_init_lock);
 
   if (_pool_only_local ||
-      (sctk_get_task_number() == sctk_get_local_task_number())) {
+      (get_task_number() == sctk_get_local_task_number())) {
     if (is_master) {
       sctk_free(____mpc_sctk_mpi_alloc_mem_pool._pool);
     }
@@ -281,7 +281,7 @@ void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int * is_shared) {
   *is_shared = 0;
   /* Are all the tasks in the same process ? */
   if (_pool_only_local ||
-      (sctk_get_task_number() == sctk_get_local_task_number())) {
+      (get_task_number() == sctk_get_local_task_number())) {
     *is_shared = 1;
     return sctk_malloc(size);
   }
@@ -378,7 +378,7 @@ int mpc_MPI_allocmem_pool_free_size(void *ptr, ssize_t known_size) {
 
   /* Are all the tasks in the same process ? */
   if (_pool_only_local ||
-      (sctk_get_task_number() == sctk_get_local_task_number())) {
+      (get_task_number() == sctk_get_local_task_number())) {
     sctk_free(ptr);
     return 0;
   }

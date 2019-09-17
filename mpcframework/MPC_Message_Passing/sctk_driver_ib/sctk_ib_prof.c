@@ -100,7 +100,7 @@ void sctk_ib_prof_finalize ( __UNUSED__ sctk_ib_rail_info_t *rail_ib )
 #if 1
 	char line[1024];
 	char line_res[1024] = "\0";
-	sprintf ( line, "%d ", sctk_process_rank );
+	sprintf ( line, "%d ", get_process_rank() );
 	strcat ( line_res, line );
 
 	int i;
@@ -310,9 +310,9 @@ void sctk_ib_prof_mem_write ( double ts, double mem )
 		sctk_ib_prof_mem_flush();
 	}
 
-	if ( sctk_process_rank == 0 )
+	if ( get_process_rank() == 0 )
 	{
-		sctk_warning ( "[%d] Memory used: %fMB", sctk_process_rank, mem / 1024.0 / 1024.0 );
+		sctk_warning ( "[%d] Memory used: %fMB", get_process_rank(), mem / 1024.0 / 1024.0 );
 	}
 
 	mem_prof->buff[mem_prof->head].ts = ts;

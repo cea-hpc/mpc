@@ -611,7 +611,7 @@ mpc_mpc_get_per_comm_data(sctk_communicator_t comm) {
   static __thread int tcomm = MPI_COMM_NULL;
   static __thread mpc_mpi_per_communicator_t *data = NULL;
 
-  if (task_rank == sctk_get_task_rank()) {
+  if (task_rank == get_task_rank()) {
     if (tcomm == comm) {
       return data;
     }
@@ -624,7 +624,7 @@ mpc_mpc_get_per_comm_data(sctk_communicator_t comm) {
     return NULL;
 
   data = tmp->mpc_mpi_per_communicator;
-  task_rank = sctk_get_task_rank();
+  task_rank = get_task_rank();
   tcomm = comm;
 
   return tmp->mpc_mpi_per_communicator;
@@ -693,7 +693,7 @@ static inline void sctk_init_yield_as_overloaded() {
     __do_yield = 1;
   }
 
-  if (1 < sctk_get_process_number()) {
+  if (1 < get_process_count()) {
     // We need to progress messages
     __do_yield = 1;
   }
@@ -13104,7 +13104,7 @@ static int __INTERNAL__PMPI_Comm_size(MPI_Comm comm, int *size) {
     static __thread int last_size = -1;
 
     if (last_comm == comm) {
-      if (last_rank == sctk_get_task_rank()) {
+      if (last_rank == get_task_rank()) {
         *size = last_size;
         return ret;
       }
@@ -13112,7 +13112,7 @@ static int __INTERNAL__PMPI_Comm_size(MPI_Comm comm, int *size) {
 
     ret = PMPC_Comm_size(comm, size);
 
-    last_rank = sctk_get_task_rank();
+    last_rank = get_task_rank();
     last_comm = comm;
     last_size = *size;
 
@@ -13132,7 +13132,7 @@ static int __INTERNAL__PMPI_Comm_rank(MPI_Comm comm, int *rank) {
   static __thread int last_crank = -1;
 
   if (last_comm == comm) {
-    if (last_rank == sctk_get_task_rank()) {
+    if (last_rank == get_task_rank()) {
         if (!__MPC_Maybe_disguised()) {
             *rank = last_crank;
   	    return MPI_SUCCESS;
@@ -13145,7 +13145,7 @@ static int __INTERNAL__PMPI_Comm_rank(MPI_Comm comm, int *rank) {
   if( (ret == MPI_SUCCESS) && (!__MPC_Maybe_disguised()) )
   {
  	//sctk_error("SAVE %d@%d %p", *rank , comm,  rank); 
-  	last_rank = sctk_get_task_rank();
+  	last_rank = get_task_rank();
   	last_comm = comm;
   	last_crank = *rank;
 
@@ -19034,7 +19034,7 @@ int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_
   int color = 0;
 
   if (split_type == MPI_COMM_TYPE_SHARED) {
-    color = sctk_get_node_rank();
+    color = get_node_rank();
     /* char hname[200];
     gethostname(hname, 200);
     sctk_error("Color %d on %s", color, hname); */

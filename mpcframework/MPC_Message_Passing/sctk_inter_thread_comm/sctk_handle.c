@@ -135,13 +135,13 @@ int sctk_errhandler_free(sctk_errhandler_t errh) {
 
 static inline sctk_uint64_t sctk_handle_compute(sctk_handle id,
                                                 sctk_handle_type type) {
-  sctk_uint64_t rank = sctk_get_task_rank();
+  sctk_uint64_t rank = get_task_rank();
 
   sctk_uint64_t ret = type;
   ret |= id << 16;
   ret |= rank << 32;
 
-  sctk_nodebug("RET (%d %d %d) %ld", sctk_get_task_rank(), id, type, ret);
+  sctk_nodebug("RET (%d %d %d) %ld", get_task_rank(), id, type, ret);
   return ret;
 }
 

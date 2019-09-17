@@ -87,7 +87,7 @@ int sctk_cancel_message(sctk_request_t *msg) {
     /* NOTE: cancelling a Send is deprecated */
     if (_sctk_is_net_message(SCTK_MSG_DEST_PROCESS(msg->msg))) {
       sctk_error("Try to cancel a network message for %d from UNIX process %d",
-                 SCTK_MSG_DEST_PROCESS(msg->msg), sctk_process_rank);
+                 SCTK_MSG_DEST_PROCESS(msg->msg), get_process_rank());
       not_implemented();
     }
 
@@ -231,7 +231,7 @@ void sctk_message_isend_class_src(int src, int dest, void *data, size_t size,
 void sctk_message_isend_class(int dest, void *data, size_t size, int tag,
                               sctk_communicator_t comm,
                               sctk_message_class_t class, sctk_request_t *req) {
-  sctk_message_isend_class_src(sctk_get_rank(comm, sctk_get_task_rank()), dest,
+  sctk_message_isend_class_src(sctk_get_rank(comm, get_task_rank()), dest,
                                data, size, tag, comm, class, req);
 }
 
@@ -261,7 +261,7 @@ void sctk_message_irecv_class(int src, void *buffer, size_t size, int tag,
                               sctk_communicator_t comm,
                               sctk_message_class_t class, sctk_request_t *req) {
 
-  sctk_message_irecv_class_dest(src, sctk_get_rank(comm, sctk_get_task_rank()),
+  sctk_message_irecv_class_dest(src, sctk_get_rank(comm, get_task_rank()),
                                 buffer, size, tag, comm, class, req);
 }
 
@@ -656,9 +656,9 @@ void sctk_ptp_tasks_init()
      return;
   }
 
-  if( sctk_get_task_number() < PTP_MAX_TASK_LISTS)
+  if( get_task_number() < PTP_MAX_TASK_LISTS)
   {
-    sctk_ptp_tasks_count = sctk_get_task_number();
+    sctk_ptp_tasks_count = get_task_number();
   }
   else
   {
@@ -1864,7 +1864,7 @@ void sctk_set_header_in_message(sctk_thread_ptp_message_t *msg,
     SCTK_MSG_DEST_PROCESS_SET(msg, destination);
 
     /* Message does not come from a task source */
-    SCTK_MSG_SRC_TASK_SET(msg, sctk_get_task_rank());
+    SCTK_MSG_SRC_TASK_SET(msg, get_task_rank());
 
     /* In all cases such message goes to a process */
     SCTK_MSG_DEST_TASK_SET(msg, -1);
@@ -1914,7 +1914,7 @@ void sctk_set_header_in_message(sctk_thread_ptp_message_t *msg,
       /* If the communicator used is the COMM_SELF */
       if (communicator == SCTK_COMM_SELF) {
         /* The world destination is actually ourself :) */
-        int world_src = sctk_get_task_rank();
+        int world_src = get_task_rank();
         SCTK_MSG_SRC_TASK_SET(
             msg, sctk_get_comm_world_rank(communicator, world_src));
       } else {
@@ -1931,7 +1931,7 @@ void sctk_set_header_in_message(sctk_thread_ptp_message_t *msg,
     /* If the communicator used is the COMM_SELF */
     if (communicator == SCTK_COMM_SELF) {
       /* The world destination is actually ourself :) */
-      int world_dest = sctk_get_task_rank();
+      int world_dest = get_task_rank();
       SCTK_MSG_DEST_TASK_SET(
           msg, sctk_get_comm_world_rank(communicator, world_dest));
     } else {
@@ -2293,7 +2293,7 @@ sctk_perform_messages_probe_matching(sctk_internal_ptp_t *pair,
 			remote_task = sctk_get_comm_world_rank ( header->communicator, header->source );
 			remote_process = sctk_get_process_rank_from_task_rank ( remote_task );
 
-			if ( remote_process != sctk_process_rank )
+			if ( remote_process != get_process_rank() )
 			{
 				sctk_network_notify_perform_message ( remote_process );
 			}
@@ -2746,7 +2746,7 @@ void sctk_wait_all(const int task, const sctk_communicator_t com) {
 
 void sctk_notify_idle_message() {
   /* sctk_perform_all (); */
-  if (sctk_process_number > 1) {
+  if (get_process_count() > 1) {
     sctk_network_notify_idle_message();
   }
 }
@@ -2763,15 +2763,15 @@ void sctk_notify_idle_message() {
  * */
 void sctk_send_message_try_check(sctk_thread_ptp_message_t *msg,
                                  int perform_check) {
-  if ((sctk_get_process_rank() < 0) ||
-      (sctk_get_process_number() <= SCTK_MSG_DEST_PROCESS(msg)))
+  if ((get_process_rank() < 0) ||
+      (get_process_count() <= SCTK_MSG_DEST_PROCESS(msg)))
   {
-    sctk_error("BAD RANKS Detected FROM %d SENDING to %d/%d", sctk_get_process_rank(), SCTK_MSG_DEST_PROCESS(msg), sctk_get_process_number());
+    sctk_error("BAD RANKS Detected FROM %d SENDING to %d/%d", get_process_rank(), SCTK_MSG_DEST_PROCESS(msg), get_process_count());
     CRASH();
   }
   sctk_debug(
       "!%d!  [ %d -> %d ] [ %d -> %d ] (CLASS %s(%d) SPE %d SIZE %d TAG %d)",
-      sctk_process_rank, SCTK_MSG_SRC_PROCESS(msg), SCTK_MSG_DEST_PROCESS(msg),
+      get_process_rank(), SCTK_MSG_SRC_PROCESS(msg), SCTK_MSG_DEST_PROCESS(msg),
       SCTK_MSG_SRC_TASK(msg), SCTK_MSG_DEST_TASK(msg),
       sctk_message_class_name[(int)SCTK_MSG_SPECIFIC_CLASS(msg)],
       SCTK_MSG_SPECIFIC_CLASS(msg),
@@ -2779,7 +2779,7 @@ void sctk_send_message_try_check(sctk_thread_ptp_message_t *msg,
       SCTK_MSG_SIZE(msg), SCTK_MSG_TAG(msg));
 
   /*  Message has not reached its destination */
-  if (SCTK_MSG_DEST_PROCESS(msg) != sctk_process_rank) {
+  if (SCTK_MSG_DEST_PROCESS(msg) != get_process_rank()) {
     if (msg->tail.request != NULL) {
       msg->tail.request->request_type = REQUEST_SEND;
     }
@@ -3036,7 +3036,7 @@ static __thread struct is_net_previous_answer __sctk_is_net = {-1, 0};
 static inline int _sctk_is_net_message(int dest) {
 
 #ifdef SCTK_PROCESS_MODE
-  if (dest != sctk_get_task_rank()) {
+  if (dest != get_task_rank()) {
     return 1;
   }
 

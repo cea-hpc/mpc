@@ -24,6 +24,7 @@
 
 #include <stdlib.h>
 #include "sctk_config.h"
+#include "sctk_rank.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_topology.h"
@@ -37,16 +38,16 @@ extern "C"
 {
 #endif
 
-static inline int sctk_get_task_rank (void)
+static inline int get_task_rank (void)
 {
-#ifdef SCTK_LIB_MODE	
+#ifdef SCTK_LIB_MODE
 	int my_rank = 0;
 	sctk_pmi_get_process_rank ( &my_rank );
 	return my_rank;
 #else
 
 #ifdef SCTK_PROCESS_MODE
-  return sctk_process_rank;
+  return get_process_rank();
 #endif
 
   int can_be_disguised = __MPC_Maybe_disguised();
@@ -62,30 +63,30 @@ static inline int sctk_get_task_rank (void)
        * the request to the actual rank has
        * not been made. However, if different
        * it contains the task rank */
-    
+
       ret = __mpc_task_rank;
-    
+
       /* Was it initialized ? Yes then we are done */
       if (ret != -2)
         return ret;
-    
+
       sctk_thread_data_t *data = sctk_thread_data_get();
-    
+
       if (!data)
         return -1;
-    
+
       ret = (int)(data->task_id);
-    
+
       /* Save for next call */
       __mpc_task_rank = ret;
  }
  else
  {
     sctk_thread_data_t *data = sctk_thread_data_get();
-    
+
     if( !data )
         return -1;
-    
+
     ret = (int)(data->task_id);
  }
 
@@ -95,7 +96,7 @@ static inline int sctk_get_task_rank (void)
 
 int sctk_get_total_tasks_number();
 
-static inline int sctk_get_task_number (void)
+static inline int get_task_number (void)
 {
 	return sctk_get_total_tasks_number();
 }
@@ -160,36 +161,6 @@ static inline int sctk_get_core_number (void)
   }
 
   return ret;
-}
-
-static inline int sctk_get_process_rank (void)
-{
-	return sctk_process_rank;
-}
-
-static inline int sctk_get_process_number (void)
-{
-	return sctk_process_number;
-}
-
-static inline int sctk_get_node_rank (void)
-{
-	return sctk_node_rank;
-}
-
-static inline int sctk_get_node_number (void)
-{
-return sctk_node_number;
-}
-
-static inline int sctk_get_local_process_rank (void)
-{
-	return sctk_local_process_rank;
-}
-
-static inline int sctk_get_local_process_number (void)
-{
-	return sctk_local_process_number;
 }
 
 #ifdef __cplusplus

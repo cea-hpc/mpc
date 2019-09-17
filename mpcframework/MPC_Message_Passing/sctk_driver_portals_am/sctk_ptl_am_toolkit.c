@@ -345,8 +345,8 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 	ranks_ids_map[sctk_get_process_rank()] = srail->id;
 
 	/* what are my neighbour ranks ? */
-	right_rank = ( sctk_process_rank + 1 ) % sctk_process_number;
-	left_rank = ( sctk_process_rank + sctk_process_number - 1 ) % sctk_process_number;
+	right_rank = ( get_process_rank() + 1 ) % get_process_count();
+	left_rank = ( get_process_rank() + get_process_count() - 1 ) % get_process_count();
 
 	/* wait for each process to register its own serialized ID */
 	sctk_pmi_barrier();
@@ -368,7 +368,7 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 	);
 
 	//if we need an initialization to the left process (bidirectional ring)
-	if(sctk_process_number > 2)
+	if(get_process_count() > 2)
 	{
 
 		/* retrieve the left neighbour id struct */
@@ -390,7 +390,7 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 
 	/* add routes */
 	sctk_ptl_add_route (right_rank, right_id, rail, ROUTE_ORIGIN_STATIC, STATE_CONNECTED);
-	if ( sctk_process_number > 2 )
+	if ( get_process_count() > 2 )
 	{
 		sctk_ptl_add_route (left_rank, left_id, rail, ROUTE_ORIGIN_STATIC, STATE_CONNECTED);
 	}
