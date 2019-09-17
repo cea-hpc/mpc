@@ -25,6 +25,9 @@
 #include "sctk_thread_generic_kind.h"
 
 #include "sctk.h"
+
+#include <sctk_launch.h>
+
 #include "sctk_debug.h"
 #include "sctk_topology.h"
 #include "sctk_runtime_config.h"

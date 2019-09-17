@@ -18,16 +18,16 @@
 # Authors:                                                             #
 #   - PERACHE Marc marc.perache@cea.fr                                 #
 #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+#   - TABOADA Hugo hugo.taboada.ocre@cea.fr                            #
 #                                                                      #
 ########################################################################
-need_module MPC_Message_Passing
-need_module MPC_Launch
-need_module MPC_Shm_mapper
-need_module MPC_Common
-need_module MPC_Config
 
-
-#Disable mpi inter-node network 
-check_net_mpi_disable="1"
-
-SCTK_INCLUDE_FILES="mpcmp.h"
+SCTK_CHECK_HEADER assert.h
+SCTK_CHECK_HEADER fcntl.h
+SCTK_CHECK_HEADER stdio.h
+SCTK_CHECK_HEADER stdlib.h
+SCTK_CHECK_HEADER string.h
+SCTK_CHECK_HEADER sys/mman.h
+SCTK_CHECK_HEADER sys/stat.h
+SCTK_CHECK_HEADER sys/types.h
+SCTK_CHECK_HEADER unistd.h

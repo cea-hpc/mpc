@@ -26,7 +26,6 @@
 #endif
 #include "sctk_alloc.h"
 #include "sctk_debug.h"
-#include "sctk_launch.h"
 #include "sctk_bool.h"
 
 extern int sctk_process_number;
