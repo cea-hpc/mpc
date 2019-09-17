@@ -25,6 +25,8 @@
 #include "mpc.h"
 #undef main
 
+#include <sctk_launch.h>
+
 #include "mpc_reduction.h"
 #include "mpcthread.h"
 #include "sctk.h"

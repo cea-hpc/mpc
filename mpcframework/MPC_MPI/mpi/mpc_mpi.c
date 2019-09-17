@@ -25,6 +25,8 @@
 #include <mpc_mpi_internal.h>
 #include <mpc_internal_thread.h>
 
+#include <sctk_launch.h>
+
 #include "sctk_ht.h"
 #include "sctk_handle.h"
 #include "mpc_mpi_halo.h"
