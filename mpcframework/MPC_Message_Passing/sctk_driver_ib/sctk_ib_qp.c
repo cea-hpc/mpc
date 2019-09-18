@@ -277,7 +277,7 @@ void sctk_ib_qp_keys_send ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *r
 
 	sctk_ib_qp_key_create_key ( key, key_max, rail_ib->rail->rail_number, get_process_rank(), remote->rank );
 	sctk_ib_qp_key_create_value ( val, val_max, &qp_keys );
-	sctk_pmi_put_connection_info_str ( val, key );
+	sctk_pmi_put ( val, key );
 	ib_assume ( ret == SCTK_PMI_SUCCESS );
 	
 	sctk_free( key );
@@ -300,7 +300,7 @@ sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *ra
 
 
 	sctk_ib_qp_key_create_key ( key, key_max, rail_ib->rail->rail_number, dest_process, get_process_rank() );
-	sctk_pmi_get_connection_info_str ( val, val_max, key );
+	sctk_pmi_get( val, val_max, key );
 	ib_assume ( ret == SCTK_PMI_SUCCESS );
 	qp_keys = sctk_ib_qp_keys_convert ( val );
 

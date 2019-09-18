@@ -71,7 +71,6 @@ static inline int get_node_rank(void)
     {
         return 1;
     }
-
 #endif /* MPC_Thread */
 
 

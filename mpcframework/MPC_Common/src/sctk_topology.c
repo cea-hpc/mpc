@@ -298,7 +298,7 @@ void create_placement_rendering(int os_pu, int os_master_pu, int task_id){
     char string_rgb_hexa_master[512];
 
 
-    chose_color_task(task_id, get_task_number(), &red, &green, &blue, &red_m, &green_m, &blue_m);
+    chose_color_task(task_id, get_task_count(), &red, &green, &blue, &red_m, &green_m, &blue_m);
 
     convert_rgb_to_string(red, green, blue, string_rgb_hexa);
     convert_rgb_to_string(red, green, blue, string_rgb_hexa_master);
@@ -1063,8 +1063,8 @@ sctk_restrict_topology ()
 
 		#ifdef MPC_Message_Passing
 		/* Determine number of processes on this node */
-		sctk_pmi_get_process_on_node_number(&detected_on_this_host);
-		sctk_pmi_get_process_on_node_rank(&rank);
+		sctk_pmi_get_local_process_count(&detected_on_this_host);
+		sctk_pmi_get_local_process_rank(&rank);
 		detected = get_process_count();
 		sctk_nodebug("Nb process on node %d",detected_on_this_host);
 		#else
@@ -1723,8 +1723,7 @@ void sctk_topology_init ()
 	char* xml_path;
 
 	#ifdef MPC_Message_Passing
-	/* let the interface choose to init or not */
-	sctk_pmi_init();
+	assume(sctk_pmi_is_initialized());
 	#endif
 
 	xml_path = getenv("MPC_SET_XML_TOPOLOGY_FILE");

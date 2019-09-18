@@ -62,8 +62,6 @@ struct sctk_runtime_config_struct_net_rail *sctk_get_rail_config_by_name ( char 
 */
 struct sctk_runtime_config_struct_net_driver_config *sctk_get_driver_config_by_name ( char *name );
 
-
-void sctk_net_init_pmi();
 int sctk_is_net_migration_available();
 
 void sctk_network_send_message ( sctk_thread_ptp_message_t *msg );

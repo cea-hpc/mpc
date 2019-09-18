@@ -453,8 +453,9 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
    sctk_shmem_size = sctk_shm_get_region_size(sctk_shmem_cells_num);
    sctk_shmem_size = sctk_shm_roundup_powerof2(sctk_shmem_size);
 
-   sctk_pmi_get_process_on_node_rank(&local_process_rank);
-   sctk_pmi_get_process_on_node_number(&local_process_number);
+   local_process_rank = get_local_process_rank();
+   local_process_number = get_local_process_count();
+
    sctk_shm_proc_local_rank_on_node = local_process_rank;
 
    if (local_process_number == 1 || get_node_count() > 1)

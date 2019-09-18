@@ -656,9 +656,9 @@ void sctk_ptp_tasks_init()
      return;
   }
 
-  if( get_task_number() < PTP_MAX_TASK_LISTS)
+  if( get_task_count() < PTP_MAX_TASK_LISTS)
   {
-    sctk_ptp_tasks_count = get_task_number();
+    sctk_ptp_tasks_count = get_task_count();
   }
   else
   {

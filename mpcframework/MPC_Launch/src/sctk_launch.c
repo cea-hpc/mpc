@@ -306,6 +306,9 @@ static void sctk_perform_initialisation (void)
 		sctk_nodebug ("%d processes", get_process_count());
 	}
 
+	/* As a first step initialize the PMI */
+	sctk_pmi_init();
+
 	sctk_topology_init ();
 #if defined (MPC_USE_EXTLS) && !defined(MPC_DISABLE_HLS)
 	extls_hls_topology_construct();	
@@ -392,7 +395,6 @@ static void sctk_perform_initialisation (void)
 		*(void**)(&sctk_runtime_config_get()->modules.inter_thread_comm.collectives_init_hook.value);
 	if (sctk_process_nb_val > 1){
 		sctk_ptp_per_task_init(-1);
-		sctk_net_init_pmi();
 	}
 #endif
 
@@ -418,8 +420,7 @@ static void sctk_perform_initialisation (void)
 #ifdef SCTK_LIB_MODE	
 	/* In LIB mode we create the task context
 	 * at process level (not in an actual task ) */
-	int my_rank = 0;
-	sctk_pmi_get_process_rank ( &my_rank );
+	int my_rank = get_process_rank();
 	sctk_ptp_per_task_init (my_rank);
 #endif
 

@@ -227,7 +227,7 @@ struct mpc_MPI_Win *mpc_MPI_Win_init(int flavor, int model, MPI_Comm comm,
   mpc_Win_target_ctx_init(&ret->target, win_com);
 
   ret->is_single_process =
-      (get_task_number() == sctk_get_local_task_number());
+      (get_task_count() == sctk_get_local_task_number());
 
   ret->is_over_network = is_over_network || !ret->is_single_process;
 
@@ -470,7 +470,7 @@ int mpc_MPI_Win_allocate(MPI_Aint size, int disp_unit, MPI_Info info,
   /* Start by checking the shifting to a shared window */
   int youd_better_move_to_shared = 0;
 
-  if (get_task_number() != sctk_get_local_task_number()) {
+  if (get_task_count() != sctk_get_local_task_number()) {
     /* If we are here we are not all in the same process
      * which is the initial requirement to use a shared win */
     MPI_Comm node_comm;
@@ -543,7 +543,7 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
   mpc_MPI_win_storage storage_type = MPC_MPI_WIN_STORAGE_NONE;
 
   /* Are all the tasks in the same process ? */
-  if (get_task_number() == sctk_get_local_task_number()) {
+  if (get_task_count() == sctk_get_local_task_number()) {
     /* Easy case we are all in the same process */
     if (!rank) {
       /* Root does allocated */

@@ -304,33 +304,6 @@ void sctk_network_notify_new_communicator_set( void (*func)(int, size_t))
 }
 
 /************************************************************************/
-/* PMI Init                                                             */
-/************************************************************************/
-
-void sctk_net_init_pmi()
-{
-	if ( get_process_count() > 1 )
-	{
-		/* Initialize topology informations from PMI */
-		int process_rank;
-		sctk_pmi_get_process_rank ( &process_rank );
-		set_process_rank(process_rank);
-
-		int process_count;
-		sctk_pmi_get_process_number ( &process_count );
-		set_process_count(process_count);
-
-		int local_process_rank;
-		sctk_pmi_get_process_on_node_rank ( &local_process_rank );
-		set_local_process_rank(local_process_rank);
-
-		int local_process_count;
-		sctk_pmi_get_process_on_node_number ( &local_process_count );
-		set_process_count(local_process_count);
-	}
-}
-
-/************************************************************************/
 /* Config Helpers                                                       */
 /************************************************************************/
 

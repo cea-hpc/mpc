@@ -328,7 +328,7 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 	assert(srail->connection_infos_size > 0);
 
 	/* register the serialized id into the PMI */
-	tmp_ret = sctk_pmi_put_connection_info (
+	tmp_ret = sctk_pmi_put_as_rank (
 			srail->connection_infos,      /* the string to publish */
 			rail->rail_number             /* rail ID: PMI tag */
 	);
@@ -343,7 +343,7 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 	sctk_pmi_barrier();
 
 	/* retrieve the right neighbour id struct */
-	tmp_ret = sctk_pmi_get_connection_info (
+	tmp_ret = sctk_pmi_get_as_rank (
 			right_rank_connection_infos, /* the recv buffer */
 			MAX_STRING_SIZE,             /* the recv buffer max size */
 			rail->rail_number,           /* rail IB: PMI tag */
@@ -363,7 +363,7 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 	{
 
 		/* retrieve the left neighbour id struct */
-		tmp_ret = sctk_pmi_get_connection_info (
+		tmp_ret = sctk_pmi_get_as_rank (
 				left_rank_connection_infos, /* the recv buffer */
 				MAX_STRING_SIZE,             /* the recv buffer max size */
 				rail->rail_number,           /* rail IB: PMI tag */
@@ -404,7 +404,7 @@ sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, int dest)
 	if(SCTK_PTL_IS_ANY_PROCESS(ranks_ids_map[dest]) )
 	{
 		/* retrieve the right neighbour id struct */
-		tmp_ret = sctk_pmi_get_connection_info (
+		tmp_ret = sctk_pmi_get_as_rank (
 				connection_infos,  /* the recv buffer */
 				MAX_STRING_SIZE,   /* the recv buffer max size */
 				rail->rail_number, /* rail IB: PMI tag */

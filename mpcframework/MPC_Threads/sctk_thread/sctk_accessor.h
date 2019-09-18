@@ -19,8 +19,8 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK_ACCESSORS_H_
-#define __SCTK_ACCESSORS_H_
+#ifndef MPC_THREADS_SCTK_THREAD_SCTK_ACCESSOR_H_
+#define MPC_THREADS_SCTK_THREAD_SCTK_ACCESSOR_H_
 
 #include <stdlib.h>
 #include "sctk_config.h"
@@ -40,13 +40,7 @@ extern "C"
 
 static inline int get_task_rank (void)
 {
-#ifdef SCTK_LIB_MODE
-	int my_rank = 0;
-	sctk_pmi_get_process_rank ( &my_rank );
-	return my_rank;
-#else
-
-#ifdef SCTK_PROCESS_MODE
+#if defined(SCTK_PROCESS_MODE) || defined(SCTK_LIB_MODE)
   return get_process_rank();
 #endif
 
@@ -54,7 +48,7 @@ static inline int get_task_rank (void)
 
   int ret = -1;
 
-  if( can_be_disguised == 0 )
+  if (can_be_disguised == 0)
   {
 
       /* __mpc_task_rank is a manually switched
@@ -84,19 +78,18 @@ static inline int get_task_rank (void)
  {
     sctk_thread_data_t *data = sctk_thread_data_get();
 
-    if( !data )
+    if (!data)
         return -1;
 
     ret = (int)(data->task_id);
  }
 
   return ret;
-#endif
 }
 
 int sctk_get_total_tasks_number();
 
-static inline int get_task_number (void)
+static inline int get_task_count(void)
 {
 	return sctk_get_total_tasks_number();
 }
@@ -166,4 +159,4 @@ static inline int sctk_get_core_number (void)
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif //MPC_THREADS_SCTK_THREAD_SCTK_ACCESSOR_H_

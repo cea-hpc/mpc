@@ -564,12 +564,12 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 #else
 
 	/* Register connection info inside the PMPI */
-	assume ( sctk_pmi_put_connection_info ( rail->network.tcp.connection_infos, rail->rail_number ) == 0 );
+	assume ( sctk_pmi_put_as_rank ( rail->network.tcp.connection_infos, rail->rail_number ) == 0 );
 
 	sctk_pmi_barrier();
 
 	/* Retrieve Connection info to dest rank from the PMI */
-	assume ( sctk_pmi_get_connection_info ( right_rank_connection_infos, MAX_STRING_SIZE, rail->rail_number, right_rank ) == 0 );
+	assume ( sctk_pmi_get_as_rank ( right_rank_connection_infos, MAX_STRING_SIZE, rail->rail_number, right_rank ) == 0 );
 
 	sctk_pmi_barrier();
 #endif

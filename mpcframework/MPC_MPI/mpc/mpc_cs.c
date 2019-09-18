@@ -45,7 +45,7 @@ MPC_comm_size (void)
 }
 
 int
-MPC_get_task_number (void)
+MPC_get_task_count (void)
 {
   int n;
   MPC_Comm_rank (MPC_COMM_WORLD, &n);
