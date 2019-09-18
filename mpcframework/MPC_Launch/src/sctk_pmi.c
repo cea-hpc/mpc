@@ -245,7 +245,7 @@ int sctk_pmi_init()
     char *nodes = NULL;
     char hostname[SCTK_PMI_NAME_SIZE];
 
-    value = sctk_malloc( pmi_context.max_val_len );
+    value = sctk_malloc( SCTK_PMI_NAME_SIZE );
     assume(value);
 
     // Get hostname
@@ -253,7 +253,7 @@ int sctk_pmi_init()
 
     // Put hostname on kvs for current process;
     snprintf(value,
-             pmi_context.max_val_len,
+             SCTK_PMI_NAME_SIZE,
              "%s",
              hostname );
 
@@ -266,33 +266,29 @@ int sctk_pmi_init()
     pmi_check_rc(rc, "sctk_pmi_barrier");
 
     // now retrieve hostnames for all processes and compute local infos
-    nodes = sctk_malloc( (size_t) pmi_context.process_count * pmi_context.max_val_len );
+    nodes = sctk_calloc(pmi_context.process_count * SCTK_PMI_NAME_SIZE, sizeof(char));
     assume(nodes);
-
-    memset( nodes, '\0', (size_t) pmi_context.process_count * pmi_context.max_val_len );
 
     // build nodes list and compute local ranks and size
     for ( i = 0; i < pmi_context.process_count; i++ )
     {
         j = 0;
         // get ith process hostname
-        rc = sctk_pmi_get_as_rank(value, pmi_context.max_val_len,
-                                          SCTK_PMI_TAG_PMI + SCTK_PMI_TAG_PMI_HOSTNAME, i );
+        rc = sctk_pmi_get_as_rank(value, SCTK_PMI_NAME_SIZE,
+                                  SCTK_PMI_TAG_PMI + SCTK_PMI_TAG_PMI_HOSTNAME, i );
         pmi_check_rc(rc, "sctk_pmi_get_as_rank");
 
         // compare value with current hostname. if the same, increase
-        // local processes number
+        // local processes count
         if ( strcmp( hostname, value ) == 0 )
             pmi_context.local_process_count++;
 
-        // if i == rank, local rank ==
-        // pmi_context.local_process_count-1
+        // acquire local process rank
         if ( i == pmi_context.process_rank )
             pmi_context.local_process_rank =
                 pmi_context.local_process_count - 1;
 
-        while ( strcmp( nodes + j * pmi_context.max_val_len, value ) != 0 &&
-                j < nodes_nb )
+        while ( strcmp( nodes + j * SCTK_PMI_NAME_SIZE, value ) != 0 && j < nodes_nb )
             j++;
 
         // update number of processes per node data
@@ -308,8 +304,7 @@ int sctk_pmi_init()
             tmp->nb_process = 1;
             tmp->process_list = (int *) sctk_malloc( sizeof( int ) * 1 );
             tmp->process_list[0] = i;
-            HASH_ADD_INT( pmi_context.process_nb_from_node_rank, node_rank,
-                          tmp );
+            HASH_ADD_INT(pmi_context.process_nb_from_node_rank, node_rank, tmp);
         }
         else
         {
@@ -325,20 +320,26 @@ int sctk_pmi_init()
         if ( j == nodes_nb )
         {
             // found new node
-            strcpy( nodes + j * pmi_context.max_val_len, value );
+            strncpy( nodes + j * SCTK_PMI_NAME_SIZE, value, SCTK_PMI_NAME_SIZE);
             nodes_nb++;
         }
     }
 
-    // Compute node rank
+    /* Compute node rank */
     j = 0;
 
-    while ( strcmp( nodes + j * pmi_context.max_val_len, hostname ) != 0 &&
-            j < nodes_nb )
+    while ( strcmp( nodes + j * SCTK_PMI_NAME_SIZE, hostname ) != 0 && j < nodes_nb )
         j++;
 
     pmi_context.node_rank = j;
     pmi_context.node_count = nodes_nb;
+
+   /* Free temporary values */
+
+    sctk_free( value );
+    sctk_free( nodes );
+
+    /* Set the whole context */
 
     int node_rank;
     sctk_pmi_get_node_rank( &node_rank );
@@ -356,8 +357,6 @@ int sctk_pmi_init()
     sctk_pmi_get_local_process_count( &local_process_count );
     set_local_process_count( local_process_count );
 
-    sctk_free( value );
-    sctk_free( nodes );
     return rc;
 }
 

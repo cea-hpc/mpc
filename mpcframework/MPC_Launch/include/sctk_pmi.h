@@ -48,7 +48,7 @@ struct process_nb_from_node_rank
 	UT_hash_handle hh;
 };
 
-#define SCTK_PMI_NAME_SIZE 128
+#define SCTK_PMI_NAME_SIZE 64
 #define SCTK_PMI_TAG_PMI 6000
 #define SCTK_PMI_TAG_PMI_HOSTNAME 1
 
