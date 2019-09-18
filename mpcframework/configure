@@ -572,7 +572,7 @@ done
 #update paths
 post_update_vars
 
-SCTK_CFLAGS="$SCTK_CFLAGS $SCTK_CFLAGS_NON_GNU"
+SCTK_CFLAGS="$SCTK_CFLAGS $SCTK_CFLAGS_NON_GNU  -I${MPC_SOURCE_DIR}/"
 
 # export launcher information
 
