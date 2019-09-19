@@ -58,20 +58,44 @@
 #include <ctype.h>
 #include <errno.h>
 
-#define SCTK_MAX_PROCESSOR_NAME 100
 #define SCTK_MAX_NODE_NAME 512
-#define SCTK_LOCAL_VERSION_MAJOR 0
-#define SCTK_LOCAL_VERSION_MINOR 1
-
-static char *sctk_xml_specific_path = NULL;
-static int sctk_processor_number_on_node = 0;
-static char sctk_node_name[SCTK_MAX_NODE_NAME];
-static sctk_spinlock_t topology_lock = SCTK_SPINLOCK_INITIALIZER;
-hwloc_bitmap_t pin_processor_bitmap;
 #define MAX_PIN_PROCESSOR_LIST 1024
-int pin_processor_list[MAX_PIN_PROCESSOR_LIST];
-int pin_processor_current = 0;
-int bind_processor_current = 0;
+
+struct mpc_topology_context
+{
+	/* Set in sctk_topology_init */
+	char *xml_specific_path;
+
+	/* Set in multiple places ??! */
+	int processor_count_on_node;
+
+	/* Set in sctk_topology_init */
+	char hostname[SCTK_MAX_NODE_NAME];
+
+	/* Initialized static */
+	sctk_spinlock_t lock;
+
+	/* Set in restrict ? */
+	hwloc_bitmap_t pin_processor_bitmap;
+
+	/* Set from restrict topo ?? */
+	int pin_processor_list[MAX_PIN_PROCESSOR_LIST];
+	int pin_processor_current;
+};
+
+
+
+static struct mpc_topology_context topology_ctx;
+
+
+void mpc_topology_context_clear(void)
+{
+	memset(&topology_ctx, 0, sizeof(struct mpc_topology_context));
+}
+
+
+
+
 
 /* The topology of the machine + its cpuset */
 static hwloc_topology_t topology;
@@ -106,13 +130,13 @@ void print_cpuset( hwloc_bitmap_t cpuset )
 static void
 sctk_update_topology( const int processor_number, const unsigned int index_first_processor )
 {
-	sctk_processor_number_on_node = processor_number;
+	topology_ctx.processor_count_on_node = processor_number;
 	hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
 
 	int err;
 
 	hwloc_bitmap_zero( cpuset );
-	if ( hwloc_bitmap_iszero( pin_processor_bitmap ) )
+	if ( hwloc_bitmap_iszero( topology_ctx.pin_processor_bitmap ) )
 	{
 		unsigned int i;
 		for ( i = index_first_processor; i < index_first_processor + processor_number; ++i )
@@ -132,7 +156,7 @@ sctk_update_topology( const int processor_number, const unsigned int index_first
 	{
 		int sum = 0;
 
-		sum = hwloc_get_nbobjs_inside_cpuset_by_type( topology, pin_processor_bitmap, HWLOC_OBJ_PU );
+		sum = hwloc_get_nbobjs_inside_cpuset_by_type( topology, topology_ctx.pin_processor_bitmap, HWLOC_OBJ_PU );
 
 		if ( sum != sctk_get_processor_nb() )
 		{
@@ -140,7 +164,7 @@ sctk_update_topology( const int processor_number, const unsigned int index_first
 			sctk_abort();
 		}
 
-		hwloc_bitmap_copy( cpuset, pin_processor_bitmap );
+		hwloc_bitmap_copy( cpuset, topology_ctx.pin_processor_bitmap );
 	}
 
 	err = hwloc_topology_restrict( topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES );
@@ -152,19 +176,19 @@ sctk_update_topology( const int processor_number, const unsigned int index_first
 static void sctk_expand_pin_processor_add_to_list( int id )
 {
 	hwloc_cpuset_t previous = hwloc_bitmap_alloc();
-	hwloc_bitmap_copy( previous, pin_processor_bitmap );
+	hwloc_bitmap_copy( previous, topology_ctx.pin_processor_bitmap );
 
-	if ( id > ( sctk_processor_number_on_node - 1 ) )
-		sctk_error( "Error in MPC_PIN_PROCESSOR_LIST: processor %d is more than the max number of cores %d", id, sctk_processor_number_on_node );
+	if ( id > ( topology_ctx.processor_count_on_node - 1 ) )
+		sctk_error( "Error in MPC_PIN_PROCESSOR_LIST: processor %d is more than the max number of cores %d", id, topology_ctx.processor_count_on_node );
 
-	hwloc_bitmap_set( pin_processor_bitmap, id );
+	hwloc_bitmap_set( topology_ctx.pin_processor_bitmap, id );
 
 	/* New entry added. We also add it in the list */
-	if ( !hwloc_bitmap_isequal( pin_processor_bitmap, previous ) )
+	if ( !hwloc_bitmap_isequal( topology_ctx.pin_processor_bitmap, previous ) )
 	{
-		assume( pin_processor_current < MAX_PIN_PROCESSOR_LIST );
-		pin_processor_list[pin_processor_current] = id;
-		pin_processor_current++;
+		assume( topology_ctx.pin_processor_current < MAX_PIN_PROCESSOR_LIST );
+		topology_ctx.pin_processor_list[topology_ctx.pin_processor_current] = id;
+		topology_ctx.pin_processor_current++;
 	}
 
 	hwloc_bitmap_free( previous );
@@ -243,10 +267,10 @@ restart_restrict:
 		int i;
 		sctk_warning( "SMT capabilities ENABLED" );
 
-		sctk_processor_number_on_node = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_PU );
+		topology_ctx.processor_count_on_node = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_PU );
 		hwloc_bitmap_zero( topology_cpuset );
 
-		for ( i = 0; i < sctk_processor_number_on_node; ++i )
+		for ( i = 0; i < topology_ctx.processor_count_on_node; ++i )
 		{
 			hwloc_obj_t core = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, i );
 			hwloc_bitmap_or( topology_cpuset, topology_cpuset, core->cpuset );
@@ -283,15 +307,15 @@ restart_restrict:
 
 		hwloc_bitmap_free( cpuset );
 		hwloc_bitmap_free( set );
-		sctk_processor_number_on_node = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_CORE );
+		topology_ctx.processor_count_on_node = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_CORE );
 	}
 
-	pin_processor_bitmap = hwloc_bitmap_alloc();
-	hwloc_bitmap_zero( pin_processor_bitmap );
+	topology_ctx.pin_processor_bitmap = hwloc_bitmap_alloc();
+	hwloc_bitmap_zero( topology_ctx.pin_processor_bitmap );
 
 #ifdef __MIC__
 	{
-		sctk_update_topology( sctk_processor_number_on_node, sctk_get_pu_number_by_core( topology, 0 ) );
+		sctk_update_topology( topology_ctx.processor_count_on_node, sctk_get_pu_number_by_core( topology, 0 ) );
 	}
 #endif
 
@@ -321,7 +345,7 @@ restart_restrict:
 		/* More than 1 process per node is not supported by process pinning */
 		int nodes_number = sctk_get_node_nb();
 
-		if ( ( mpc_common_get_process_count() != nodes_number ) && !hwloc_bitmap_iszero( pin_processor_bitmap ) )
+		if ( ( mpc_common_get_process_count() != nodes_number ) && !hwloc_bitmap_iszero( topology_ctx.pin_processor_bitmap ) )
 		{
 			sctk_error( "MPC_PIN_PROCESSOR_LIST cannot be set if more than 1 process per node is set. process_number=%d node_number=%d", mpc_common_get_process_count(), nodes_number );
 			sctk_abort();
@@ -332,19 +356,19 @@ restart_restrict:
 
 		sctk_nodebug( "%d/%d host detected %d share %s", detected,
 					  sctk_get_process_nb(), detected_on_this_host,
-					  sctk_node_name );
+					  topology_ctx.hostname );
 
 		{
 			/* Determine processor number per process */
-			int processor_number = sctk_processor_number_on_node / detected_on_this_host;
-			int remaining_procs = sctk_processor_number_on_node % detected_on_this_host;
+			int processor_number = topology_ctx.processor_count_on_node / detected_on_this_host;
+			int remaining_procs = topology_ctx.processor_count_on_node % detected_on_this_host;
 			int start = processor_number * rank;
 
 			if ( processor_number < 1 )
 			{
 				processor_number = 1;
 				remaining_procs = 0;
-				start = ( processor_number * rank ) % sctk_processor_number_on_node;
+				start = ( processor_number * rank ) % topology_ctx.processor_count_on_node;
 			}
 
 			if ( remaining_procs > 0 )
@@ -373,19 +397,19 @@ restart_restrict:
 
 		if ( processor_number > 0 )
 		{
-			if ( processor_number > sctk_processor_number_on_node )
+			if ( processor_number > topology_ctx.processor_count_on_node )
 			{
 				sctk_error( "Unable to allocate %d core (%d real cores)",
-							processor_number, sctk_processor_number_on_node );
+							processor_number, topology_ctx.processor_count_on_node );
 				/* we cannot exit with a sctk_abort() because thread
 				* library is not initialized at this moment */
 				/* sctk_abort (); */
 				exit( 1 );
 			}
-			else if ( processor_number < sctk_processor_number_on_node )
+			else if ( processor_number < topology_ctx.processor_count_on_node )
 			{
 				sctk_warning( "Do not use the entire node %d on %d",
-							  processor_number, sctk_processor_number_on_node );
+							  processor_number, topology_ctx.processor_count_on_node );
 				sctk_update_topology( processor_number, 0 );
 			}
 		}
@@ -790,7 +814,7 @@ static inline int sctk_get_cpu_intern()
 	{
 		/* Check if only one CPU in the CPU set. Maybe there is a simpler function
 		* to do that */
-		if ( sctk_xml_specific_path == NULL )
+		if ( topology_ctx.xml_specific_path == NULL )
 			assume( hwloc_bitmap_first( set ) == hwloc_bitmap_last( set ) );
 	}
 
@@ -814,9 +838,9 @@ int sctk_get_cpu()
 {
 	if ( sctk_get_cpu_val < 0 )
 	{
-		sctk_spinlock_lock( &topology_lock );
+		sctk_spinlock_lock( &topology_ctx.lock );
 		int ret = sctk_get_cpu_intern();
-		sctk_spinlock_unlock( &topology_lock );
+		sctk_spinlock_unlock( &topology_ctx.lock );
 		return ret;
 	}
 	else
@@ -881,8 +905,10 @@ int sctk_get_pu_number_by_core( hwloc_topology_t hwtopology, int core )
 */
 void sctk_topology_init()
 {
+	mpc_topology_context_clear();
+
 	char *xml_path = getenv( "MPC_SET_XML_TOPOLOGY_FILE" );
-	sctk_xml_specific_path = xml_path;
+	topology_ctx.xml_specific_path = xml_path;
 
 	hwloc_topology_init( &topology );
 
@@ -912,8 +938,6 @@ void sctk_topology_init()
 	support = hwloc_topology_get_support( topology );
 
 	sctk_only_once();
-	sctk_print_version( "Topology", SCTK_LOCAL_VERSION_MAJOR,
-						SCTK_LOCAL_VERSION_MINOR );
 
 	sctk_restrict_topology();
 
@@ -921,9 +945,9 @@ void sctk_topology_init()
 	sctk_device_load_from_topology( topology_full );
 
 #ifndef WINDOWS_SYS
-	gethostname( sctk_node_name, SCTK_MAX_NODE_NAME );
+	gethostname( topology_ctx.hostname, SCTK_MAX_NODE_NAME );
 #else
-	sprintf( sctk_node_name, "localhost" );
+	sprintf( topology_ctx.hostname, "localhost" );
 #endif
 
 	uname( &utsname );
@@ -932,7 +956,7 @@ void sctk_topology_init()
 	extls_set_topology_addr((void*(*)(void))sctk_get_topology_addr);
 #endif
 
-	if ( !hwloc_bitmap_iszero( pin_processor_bitmap ) )
+	if ( !hwloc_bitmap_iszero( topology_ctx.pin_processor_bitmap ) )
 	{
 		sctk_print_topology( stderr );
 	}
@@ -950,7 +974,7 @@ void sctk_topology_destroy( void )
 */
 char *sctk_get_node_name()
 {
-	return sctk_node_name;
+	return topology_ctx.hostname;
 }
 
 /*! \brief Return the first child of \p obj of type \p type
@@ -970,7 +994,7 @@ hwloc_obj_t sctk_get_first_child_by_type( hwloc_obj_t obj, hwloc_obj_type_t type
 void sctk_print_specific_topology( FILE *fd, hwloc_topology_t hwtopology )
 {
 	int i;
-	fprintf( fd, "Node %s: %s %s %s\n", sctk_node_name, utsname.sysname,
+	fprintf( fd, "Node %s: %s %s %s\n", topology_ctx.hostname, utsname.sysname,
 			 utsname.release, utsname.version );
 	const int pu_number = hwloc_get_nbobjs_by_type( hwtopology, HWLOC_OBJ_PU );
 
@@ -1040,7 +1064,7 @@ int sctk_bind_to_cpu( int i )
 		return -1;
 	}
 
-	sctk_spinlock_lock( &topology_lock );
+	sctk_spinlock_lock( &topology_ctx.lock );
 
 	int ret = sctk_get_cpu_intern();
 
@@ -1056,7 +1080,7 @@ int sctk_bind_to_cpu( int i )
 	}
 	//    assume(sctk_get_cpu_intern() == i);
 	sctk_get_cpu_val = i;
-	sctk_spinlock_unlock( &topology_lock );
+	sctk_spinlock_unlock( &topology_ctx.lock );
 	return ret;
 }
 
