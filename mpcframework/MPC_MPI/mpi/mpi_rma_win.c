@@ -227,7 +227,7 @@ struct mpc_MPI_Win *mpc_MPI_Win_init(int flavor, int model, MPI_Comm comm,
   mpc_Win_target_ctx_init(&ret->target, win_com);
 
   ret->is_single_process =
-      (mpc_common_get_task_count() == sctk_get_local_task_number());
+      (mpc_common_get_task_count() == mpc_common_get_local_task_count());
 
   ret->is_over_network = is_over_network || !ret->is_single_process;
 
@@ -470,7 +470,7 @@ int mpc_MPI_Win_allocate(MPI_Aint size, int disp_unit, MPI_Info info,
   /* Start by checking the shifting to a shared window */
   int youd_better_move_to_shared = 0;
 
-  if (mpc_common_get_task_count() != sctk_get_local_task_number()) {
+  if (mpc_common_get_task_count() != mpc_common_get_local_task_count()) {
     /* If we are here we are not all in the same process
      * which is the initial requirement to use a shared win */
     MPI_Comm node_comm;
@@ -543,7 +543,7 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
   mpc_MPI_win_storage storage_type = MPC_MPI_WIN_STORAGE_NONE;
 
   /* Are all the tasks in the same process ? */
-  if (mpc_common_get_task_count() == sctk_get_local_task_number()) {
+  if (mpc_common_get_task_count() == mpc_common_get_local_task_count()) {
     /* Easy case we are all in the same process */
     if (!rank) {
       /* Root does allocated */
@@ -561,7 +561,7 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
     /* Now count number of processes by counting masters */
     int is_master = 0;
 
-    if (sctk_get_local_task_rank() == 0) {
+    if (mpc_common_get_local_task_rank() == 0) {
       is_master = 1;
     }
 
@@ -584,7 +584,7 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
     PMPI_Comm_size(process_master_comm, &process_on_node_count);
 
     /* Only process masters do the mapping */
-    if (sctk_get_local_task_rank() == 0) {
+    if (mpc_common_get_local_task_rank() == 0) {
       /* Prepare to use the MPI handlers */
       sctk_alloc_mapper_handler_t *handler =
           sctk_shm_mpi_handler_init(process_master_comm);
@@ -718,7 +718,7 @@ int mpc_MPI_Win_free(MPI_Win *win) {
     /* Now count number of processes by counting masters */
     int is_master = 0;
 
-    if (sctk_get_local_task_rank() == 0) {
+    if (mpc_common_get_local_task_rank() == 0) {
       is_master = 1;
     }
 
@@ -726,7 +726,7 @@ int mpc_MPI_Win_free(MPI_Win *win) {
     MPI_Comm process_master_comm;
     PMPI_Comm_split(desc->comm, is_master, rank, &process_master_comm);
 
-    if (sctk_get_local_task_rank() == 0) {
+    if (mpc_common_get_local_task_rank() == 0) {
       sctk_alloc_shm_remove(desc->win_segment, desc->mmaped_size);
     }
 

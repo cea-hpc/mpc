@@ -549,7 +549,7 @@ sctk_retrieve_datatype_ctx(MPC_Datatype datatype) {
 
 /** \brief Return 0 if the process is the process root */
 int MPC_Is_process_root() {
-  if (sctk_get_local_task_rank() == 0)
+  if (mpc_common_get_local_task_rank() == 0)
     return 1;
 
   return 0;
@@ -708,12 +708,12 @@ sctk_atomics_int ________is_disguised;
 int __MPC_init_disguise( struct sctk_task_specific_s * my_specific )
 {
 
-    int my_id = sctk_get_local_task_rank();
+    int my_id = mpc_common_get_local_task_rank();
 
     if( my_id == 0 )
     {
         sctk_atomics_store_int(&________is_disguised, 0);
-        int local_count = sctk_get_local_task_number();
+        int local_count = mpc_common_get_local_task_count();
         ___disguisements = sctk_malloc( sizeof(struct sctk_task_specific_s *) * local_count );
 
         if( ___disguisements == NULL )
@@ -756,7 +756,7 @@ int MPCX_Disguise( MPC_Comm comm, int target_rank )
   /* Retrieve the ctx pointer */
   int cwr = sctk_get_comm_world_rank( (sctk_communicator_t) comm, target_rank );
 
-  int local_count = sctk_get_local_task_number();
+  int local_count = mpc_common_get_local_task_count();
   
   int i;
 
@@ -799,10 +799,10 @@ static struct sctk_progress_engine_pool __mpc_progress_pool;
 int __MPC_init_progress(sctk_task_specific_t * tmp )
 {
 
-  int my_local_id = sctk_get_local_task_rank();
+  int my_local_id = mpc_common_get_local_task_rank();
   if( my_local_id == 0 )
   {
-    int local_count = sctk_get_local_task_number();
+    int local_count = mpc_common_get_local_task_count();
     sctk_progress_engine_pool_init( &__mpc_progress_pool, local_count );
   }
 
@@ -3105,8 +3105,8 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 	if (sctk_checkpoint_mode)
 	{
 		int total_nbprocs = mpc_common_get_process_count();
-		int local_nbtasks = sctk_get_local_task_number();
-		int local_tasknum = sctk_get_local_task_rank();
+		int local_nbtasks = mpc_common_get_local_task_count();
+		int local_tasknum = mpc_common_get_local_task_rank();
 		int task_rank = mpc_common_get_task_rank();
 		int pmi_rank = -1;
 		static sctk_atomics_int init_once = OPA_INT_T_INITIALIZER(0);
@@ -3430,7 +3430,7 @@ static inline void sctk_move_to_temp_dir_if_requested_from_env() {
   PMPC_Bcast((void *)tmpdir, 1000, MPC_CHAR, 0, MPC_COMM_WORLD);
 
   /* Only the root of each process does the chdir */
-  if (sctk_get_local_task_rank() == 0) {
+  if (mpc_common_get_local_task_rank() == 0) {
     chdir(tmpdir);
   }
 }
@@ -3616,12 +3616,12 @@ int PMPC_Task_number(int *number) {
 }
 
 int PMPC_Local_task_rank(int *rank) {
-  *rank = sctk_get_local_task_rank();
+  *rank = mpc_common_get_local_task_rank();
   MPC_ERROR_SUCESS();
 }
 
 int PMPC_Local_task_number(int *number) {
-  *number = sctk_get_local_task_number();
+  *number = mpc_common_get_local_task_count();
   MPC_ERROR_SUCESS();
 }
 

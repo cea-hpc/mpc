@@ -71,6 +71,16 @@ static inline int mpc_common_get_node_rank(void)
     {
         return 1;
     }
+
+    static inline int mpc_common_get_local_task_rank(void)
+    {
+        return 0;
+    }
+
+    static inline int mpc_common_get_local_task_count(void)
+    {
+        return 1;
+    }
 #endif /* MPC_Thread */
 
 

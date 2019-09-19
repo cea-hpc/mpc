@@ -689,7 +689,7 @@ static volatile int __do_yield = 0;
 /** Do we need to yield in this process for collectives (overloaded)
  */
 static inline void sctk_init_yield_as_overloaded() {
-  if (sctk_get_cpu_number() < sctk_get_local_task_number()) {
+  if (sctk_get_cpu_number() < mpc_common_get_local_task_count()) {
     __do_yield = 1;
   }
 

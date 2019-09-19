@@ -499,7 +499,7 @@ void sctk_rail_dump_routes()
 
 	int rank = mpc_common_get_process_rank();
 	int size = mpc_common_get_process_count();
-	int local_task_rank = sctk_get_local_task_rank();
+	int local_task_rank = mpc_common_get_local_task_rank();
 
 	if( local_task_rank )
 		return;

@@ -43,13 +43,13 @@ int sctk_get_progress_thread_binding_overweight(void) {
 int sctk_get_progress_thread_binding_numa_iter(void) {
   int cpu_id_to_bind_progress_thread;
 
-  int task_nb = sctk_get_local_task_number();
+  int task_nb = mpc_common_get_local_task_count();
   int numa_node_per_node_nb = sctk_get_numa_node_number();
 
   int current_cpu = sctk_get_cpu();
 
   int nbVp;
-  int global_id = sctk_get_local_task_rank();
+  int global_id = mpc_common_get_local_task_rank();
   int proc_global = sctk_get_init_vp_and_nbvp(global_id, &nbVp);
 
   int numa_node_id = (global_id * numa_node_per_node_nb) / task_nb;
@@ -69,7 +69,7 @@ int sctk_get_progress_thread_binding_numa_iter(void) {
   // FILE *hostname_fd = fopen(strcat(hostname,".log"),"a");
   // fprintf(hostname_fd,"NBC BINDING task_nb %d cpu_per_node %d
   // numa_node_per_node_nb %d numa_node_id %d task_per_numa_node %d local_id %d
-  // global_id %d proc_global %d current_cpu %d sctk_get_local_task_number
+  // global_id %d proc_global %d current_cpu %d mpc_common_get_local_task_count
   // %d\n\n",
   //        task_nb,
   //        cpu_per_node ,
@@ -80,7 +80,7 @@ int sctk_get_progress_thread_binding_numa_iter(void) {
   //        global_id ,
   //        proc_global,
   //        current_cpu,
-  //        sctk_get_local_task_number()
+  //        mpc_common_get_local_task_count()
   //      );
   // fflush(hostname_fd);
   // fclose(hostname_fd);
@@ -124,7 +124,7 @@ int sctk_get_progress_thread_binding_numa_iter(void) {
 int sctk_get_progress_thread_binding_numa(void) {
   int cpu_id_to_bind_progress_thread;
 
-  int task_nb = sctk_get_local_task_number();
+  int task_nb = mpc_common_get_local_task_count();
 
   int cpu_per_node = sctk_get_cpu_number();
 
@@ -136,7 +136,7 @@ int sctk_get_progress_thread_binding_numa(void) {
 
   int nbVp;
 
-  int global_id = sctk_get_local_task_rank();
+  int global_id = mpc_common_get_local_task_rank();
 
   int proc_global = sctk_get_init_vp_and_nbvp(global_id, &nbVp);
 

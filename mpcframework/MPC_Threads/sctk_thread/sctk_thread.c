@@ -2472,7 +2472,7 @@ int sctk_get_init_vp_and_nbvp_numa(int i, int *nbVp) {
   // FILE *hostname_fd = fopen(strcat(hostname,".log"),"a");
   // fprintf(hostname_fd,"INIT        task_nb %d cpu_per_node %d
   // numa_node_per_node_nb %d numa_node_id %d task_per_numa_node %d local_id %d
-  // global_id %d proc_global %d current_cpu %d sctk_get_local_task_number %d
+  // global_id %d proc_global %d current_cpu %d mpc_common_get_local_task_count %d
   // nbVp %d\n",
   //        task_nb,
   //        cpu_nb ,
@@ -2483,7 +2483,7 @@ int sctk_get_init_vp_and_nbvp_numa(int i, int *nbVp) {
   //        global_id ,
   //        proc_global,
   //        sctk_get_cpu(),
-  //        sctk_get_local_task_number(),
+  //        mpc_common_get_local_task_count(),
   //        *nbVp
   //       );
   // fflush(hostname_fd);

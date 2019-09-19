@@ -783,7 +783,7 @@ void __mpcomp_init(void) {
         break;
       case MPCOMP_MODE_ALTERNATING:
         nb_mvps = 1;
-        if (sctk_get_local_task_rank() == 0) {
+        if (mpc_common_get_local_task_rank() == 0) {
           nb_mvps = sctk_get_processor_number();
         }
         break;
@@ -800,18 +800,18 @@ void __mpcomp_init(void) {
     }
 
     /* DEBUG */
-    if (sctk_get_local_task_rank() == 0) {
+    if (mpc_common_get_local_task_rank() == 0) {
       sctk_debug(
           "%s: MPI rank=%d, process_rank=%d, local_task_rank=%d => %d mvp(s) "
           "out of %d core(s) A",
           __func__, task_rank, sctk_get_local_process_rank(),
-          sctk_get_local_task_rank(), sctk_get_processor_number(),
+          mpc_common_get_local_task_rank(), sctk_get_processor_number(),
           sctk_get_processor_number());
     } else {
       sctk_debug("%s: MPI rank=%d, process_rank=%d, local_task_rank=%d => %d "
                  "mvp(s) out of %d core(s)",
                  __func__, task_rank, sctk_get_local_process_rank(),
-                 sctk_get_local_task_rank(), nb_mvps,
+                 mpc_common_get_local_task_rank(), nb_mvps,
                  sctk_get_processor_number());
     }
 

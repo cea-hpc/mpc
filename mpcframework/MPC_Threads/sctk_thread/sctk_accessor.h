@@ -94,7 +94,7 @@ static inline int mpc_common_get_task_count(void)
 	return sctk_get_total_tasks_number();
 }
 
-static inline int sctk_get_local_task_rank (void)
+static inline int mpc_common_get_local_task_rank (void)
 {
 #ifdef SCTK_LIB_MODE
 	return 0;
@@ -111,7 +111,7 @@ static inline int sctk_get_local_task_rank (void)
 		return (int) ( data->local_task_id );
 }
 
-static inline int sctk_get_local_task_number (void)
+static inline int mpc_common_get_local_task_count (void)
 {
 #ifdef SCTK_LIB_MODE
 	return 1;

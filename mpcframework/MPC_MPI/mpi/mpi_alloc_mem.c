@@ -101,7 +101,7 @@ int mpc_MPI_allocmem_pool_init() {
   inner_size += sizeof(sctk_atomics_int);
 
   /* Are all the tasks in the same process ? */
-  if (mpc_common_get_task_count() == sctk_get_local_task_number()) {
+  if (mpc_common_get_task_count() == mpc_common_get_local_task_count()) {
     mpc_MPI_accumulate_op_lock_init_shared();
     return 0;
   } else {
@@ -147,7 +147,7 @@ int mpc_MPI_allocmem_pool_init() {
     /* Now count number of processes by counting masters */
     int is_master = 0;
 
-    if (sctk_get_local_task_rank() == 0) {
+    if (mpc_common_get_local_task_rank() == 0) {
       is_master = 1;
     }
 
@@ -227,7 +227,7 @@ int mpc_MPI_allocmem_pool_release() {
 
   /* Are all the tasks in the same process ? */
   if (_pool_only_local ||
-      (mpc_common_get_task_count() == sctk_get_local_task_number())) {
+      (mpc_common_get_task_count() == mpc_common_get_local_task_count())) {
     return 0;
   }
 
@@ -243,7 +243,7 @@ int mpc_MPI_allocmem_pool_release() {
   sctk_spinlock_unlock(&_pool_init_lock);
 
   if (_pool_only_local ||
-      (mpc_common_get_task_count() == sctk_get_local_task_number())) {
+      (mpc_common_get_task_count() == mpc_common_get_local_task_count())) {
     if (is_master) {
       sctk_free(____mpc_sctk_mpi_alloc_mem_pool._pool);
     }
@@ -281,7 +281,7 @@ void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int * is_shared) {
   *is_shared = 0;
   /* Are all the tasks in the same process ? */
   if (_pool_only_local ||
-      (mpc_common_get_task_count() == sctk_get_local_task_number())) {
+      (mpc_common_get_task_count() == mpc_common_get_local_task_count())) {
     *is_shared = 1;
     return sctk_malloc(size);
   }
@@ -378,7 +378,7 @@ int mpc_MPI_allocmem_pool_free_size(void *ptr, ssize_t known_size) {
 
   /* Are all the tasks in the same process ? */
   if (_pool_only_local ||
-      (mpc_common_get_task_count() == sctk_get_local_task_number())) {
+      (mpc_common_get_task_count() == mpc_common_get_local_task_count())) {
     sctk_free(ptr);
     return 0;
   }

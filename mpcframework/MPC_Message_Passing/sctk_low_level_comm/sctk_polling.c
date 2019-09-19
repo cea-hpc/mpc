@@ -54,7 +54,7 @@ void sctk_polling_tree_init_once( struct sctk_polling_tree * tree )
 		return;
 	}
 	
-	int local_task_count = sctk_get_local_task_number();
+	int local_task_count = mpc_common_get_local_task_count();
 	assume( local_task_count != 0 );
 	tree->cell_count = local_task_count;
 	
@@ -90,7 +90,7 @@ void sctk_polling_tree_release( struct sctk_polling_tree * tree )
 
 void sctk_polling_tree_join( struct sctk_polling_tree * tree )
 {
-	int my_local_rank = sctk_get_local_task_rank();
+	int my_local_rank = mpc_common_get_local_task_rank();
 	
 	assume( 0 <= my_local_rank );
 	
@@ -173,7 +173,7 @@ void sctk_polling_tree_poll( struct sctk_polling_tree * tree , void (*func)(void
 		return;
 	}
 
-	int my_local_rank = sctk_get_local_task_rank();
+	int my_local_rank = mpc_common_get_local_task_rank();
 	
 	if( my_local_rank < 0 )
 	{

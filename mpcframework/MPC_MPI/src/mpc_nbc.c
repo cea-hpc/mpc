@@ -4903,7 +4903,7 @@ static inline int NBC_Initialize() {
 
   // fprintf(hostname_fd,"task_id %03d, current_cpu=%03d,
   // cpu_id_to_bind_progress_thread = %03d\n",
-  //        sctk_get_local_task_rank(),
+  //        mpc_common_get_local_task_rank(),
   //        sctk_get_cpu(),
   //        cpu_id_to_bind_progress_thread
   //      );
