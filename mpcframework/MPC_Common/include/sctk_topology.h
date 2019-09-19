@@ -41,11 +41,10 @@ extern "C" {
 
 /* Hwloc topology accessors */
 
-hwloc_topology_t mpc_common_topology();
+hwloc_topology_t mpc_common_topology_get();
 hwloc_topology_t mpc_common_topology_full();
 
 int mpc_common_topology_processor_on_node();
-
 
 /*
   Numbering rules
@@ -186,7 +185,7 @@ int sctk_get_node_from_cpu_topology(hwloc_topology_t topo, const int vp);
 
 /*! \brief Return the hwloc topology object
 */
-hwloc_topology_t sctk_get_topology_object(void);
+hwloc_topology_t mpc_common_topology_get(void);
 
 void sctk_restrict_binding();
 

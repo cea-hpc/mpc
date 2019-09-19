@@ -648,7 +648,7 @@ sctk_device_t * sctk_device_get_from_handle( char * handle )
 	
 	/* Try as a PCI id (xxxx:yy:zz.t or yy:zz.t) */
 	
-	hwloc_obj_t pci_dev = hwloc_get_pcidev_by_busidstring ( sctk_get_topology_object(), handle );
+	hwloc_obj_t pci_dev = hwloc_get_pcidev_by_busidstring ( mpc_common_topology_get(), handle );
 	
 	if(! pci_dev )
 	{

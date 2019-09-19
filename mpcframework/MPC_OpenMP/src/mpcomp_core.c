@@ -228,7 +228,7 @@ int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t *restrictedTopology,
 	hwloc_obj_t core_obj, pu_obj;
 
 	final_cpuset = hwloc_bitmap_alloc();
-	topology = sctk_get_topology_object();
+	topology = mpc_common_topology_get();
 
 	const int taskRank = mpc_common_get_task_rank();
 	const int taskVp = sctk_get_init_vp_and_nbvp( taskRank, &num_mvps );

@@ -51,7 +51,7 @@ SCTK_INTERN void sctk_alloc_topology_bind_thread_on_core(int id);
 SCTK_INTERN bool sctk_alloc_is_numa(void);
 
 #ifdef HAVE_HWLOC
-SCTK_INTERN hwloc_topology_t sctk_get_topology_object(void);
+SCTK_INTERN hwloc_topology_t mpc_common_topology_get(void);
 SCTK_INTERN void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_node);
 #endif //HAVE_HWLOC
 

@@ -83,7 +83,7 @@ static hwloc_topology_t topology_full;
 
 const struct hwloc_topology_support *support;
 
-hwloc_topology_t mpc_common_topology()
+hwloc_topology_t mpc_common_topology_get()
 {
 	return topology;
 }
@@ -93,17 +93,6 @@ hwloc_topology_t mpc_common_topology_full()
 	return topology_full;
 }
 
-
-int mpc_common_topology_processor_on_node()
-{
-	return sctk_processor_number_on_node;
-}
-
-
-hwloc_topology_t sctk_get_topology_object( void )
-{
-	return topology;
-}
 
 /* print a cpuset in a human readable way */
 void print_cpuset( hwloc_bitmap_t cpuset )
@@ -407,7 +396,7 @@ restart_restrict:
 int sctk_get_global_index_from_cpu( hwloc_topology_t topo, const int vp )
 {
 	hwloc_obj_t obj;
-	hwloc_topology_t globalTopology = sctk_get_topology_object();
+	hwloc_topology_t globalTopology = mpc_common_topology_get();
 	const hwloc_obj_t pu = hwloc_get_obj_by_type( topo, HWLOC_OBJ_PU, vp );
 
 	assume( pu );

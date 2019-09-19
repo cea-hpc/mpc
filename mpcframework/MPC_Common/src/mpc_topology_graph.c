@@ -875,10 +875,10 @@ void topology_graph_init(void)
 
         hwloc_cpuset_t newset;
         newset = hwloc_bitmap_alloc();
-        int ret = hwloc_get_last_cpu_location(mpc_common_topology(), newset, HWLOC_CPUBIND_THREAD);
+        int ret = hwloc_get_last_cpu_location(mpc_common_topology_get(), newset, HWLOC_CPUBIND_THREAD);
         assert(ret == 0);
         hwloc_obj_t obj;
-        obj = hwloc_get_obj_inside_cpuset_by_type(mpc_common_topology(), newset,HWLOC_OBJ_PU, 0);
+        obj = hwloc_get_obj_inside_cpuset_by_type(mpc_common_topology_get(), newset,HWLOC_OBJ_PU, 0);
         hwloc_obj_t cluster = hwloc_get_ancestor_obj_by_type(topology_compute_node, HWLOC_OBJ_MACHINE, obj);
         strcpy(file_placement, "");
         strcat(file_placement, "placement_");

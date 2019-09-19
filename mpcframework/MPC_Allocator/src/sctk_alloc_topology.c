@@ -315,7 +315,7 @@ SCTK_INTERN int sctk_alloc_init_on_numa_node(void)
 /************************* FUNCTION ************************/
 #ifdef HAVE_HWLOC
 #ifndef MPC_Threads
-SCTK_INTERN hwloc_topology_t sctk_get_topology_object(void)
+SCTK_INTERN hwloc_topology_t mpc_common_topology_get(void)
 {
 	return topology;
 }
@@ -352,7 +352,7 @@ SCTK_INTERN void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int ta
 	SCTK_PDEBUG("Request change of memory binding on area %p [%llu] to node %d.",addr,size,target_numa_node);
 
 	//get topo
-	topo = sctk_get_topology_object();
+	topo = mpc_common_topology_get();
 	//get hwloc object for binding
 	obj = hwloc_get_obj_by_type(topo, HWLOC_OBJ_NODE, target_numa_node);
 
@@ -395,7 +395,7 @@ SCTK_INTERN void sctk_alloc_topology_bind_thread_on_core(int id)
 	assert(id >= 0);
 
 	//get topology
-	topology = sctk_get_topology_object();
+	topology = mpc_common_topology_get();
 
 	//debug
 	SCTK_PDEBUG("Bind thread with hwloc on core %d\n",id);
