@@ -706,6 +706,12 @@ int sctk_pmi_get_local_process_rank( int *rank )
 
 }
 
+int sctk_pmi_get_process_number_from_node_rank( struct process_nb_from_node_rank **process_number_from_node_rank )
+{
+    *process_number_from_node_rank = pmi_context.process_nb_from_node_rank;
+}
+
+
 void sctk_net_abort()
 {
 #if defined(SCTK_LIB_MODE)
