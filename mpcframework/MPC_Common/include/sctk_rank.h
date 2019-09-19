@@ -5,8 +5,8 @@
 
 /* OS Process Count Getters */
 
-void set_process_count(int process_count);
-void set_process_rank(int process_rank);
+void mpc_common_set_process_count(int process_count);
+void mpc_common_mpc_common_set_process_rank(int process_rank);
 
 extern int __process_count;
 extern int __process_rank;
@@ -23,8 +23,8 @@ static inline int get_process_rank(void)
 
 /* OS local_process Count Getters */
 
-void set_local_process_count(int local_process_count);
-void set_local_process_rank(int local_process_rank);
+void mpc_common_set_local_process_count(int local_process_count);
+void mpc_common_set_local_process_rank(int local_process_rank);
 
 extern int __local_process_count;
 extern int __local_process_rank;
@@ -41,8 +41,8 @@ static inline int get_local_process_rank(void)
 
 /* Node Count Getters */
 
-void set_node_count(int node_count);
-void set_node_rank(int node_rank);
+void mpc_common_set_node_count(int node_count);
+void mpc_common_set_node_rank(int node_rank);
 
 extern int __node_count;
 extern int __node_rank;

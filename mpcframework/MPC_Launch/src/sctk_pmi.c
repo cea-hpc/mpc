@@ -141,9 +141,9 @@ int _sctk_pmi_init_lib_mode()
     pmi_context.process_count = MPC_Net_hook_size();
 
     /* Consider nodes as processes */
-    set_node_rank( pmi_context.process_rank );
-    set_node_count( pmi_context.process_count );
-    set_local_process_rank( 0 ) : set_local_process_count( 1 );
+    mpc_common_set_node_rank( pmi_context.process_rank );
+    mpc_common_set_node_count( pmi_context.process_count );
+    mpc_common_set_local_process_rank( 0 ) : mpc_common_set_local_process_count( 1 );
     return 0;
 }
 #endif
@@ -343,19 +343,19 @@ int sctk_pmi_init()
 
     int node_rank;
     sctk_pmi_get_node_rank( &node_rank );
-    set_node_rank( node_rank );
+    mpc_common_set_node_rank( node_rank );
 
     int node_count;
     sctk_pmi_get_node_count( &node_count );
-    set_node_count( node_count );
+    mpc_common_set_node_count( node_count );
 
     int local_process_rank;
     sctk_pmi_get_local_process_rank( &local_process_rank );
-    set_local_process_rank( local_process_rank );
+    mpc_common_set_local_process_rank( local_process_rank );
 
     int local_process_count;
     sctk_pmi_get_local_process_count( &local_process_count );
-    set_local_process_count( local_process_count );
+    mpc_common_set_local_process_count( local_process_count );
 
     return rc;
 }

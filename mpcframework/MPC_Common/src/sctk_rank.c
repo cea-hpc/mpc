@@ -6,12 +6,12 @@
 int __process_count = 1;
 int __process_rank = 0;
 
-void set_process_count(int process_count)
+void mpc_common_set_process_count(int process_count)
 {
     __process_count = process_count;
 }
 
-void set_process_rank(int process_rank)
+void mpc_common_mpc_common_set_process_rank(int process_rank)
 {
     __process_rank = process_rank;
 }
@@ -21,12 +21,12 @@ void set_process_rank(int process_rank)
 int __local_process_count = -1;
 int __local_process_rank = -1;
 
-void set_local_process_count(int local_process_count)
+void mpc_common_set_local_process_count(int local_process_count)
 {
     __local_process_count = local_process_count;
 }
 
-void set_local_process_rank(int local_process_rank)
+void mpc_common_set_local_process_rank(int local_process_rank)
 {
     __local_process_rank = local_process_rank;
 }
@@ -36,12 +36,12 @@ void set_local_process_rank(int local_process_rank)
 int __node_count = 1;
 int __node_rank = 0;
 
-void set_node_count(int node_count)
+void mpc_common_set_node_count(int node_count)
 {
     __node_count = node_count;
 }
 
-void set_node_rank(int node_rank)
+void mpc_common_set_node_rank(int node_rank)
 {
     __node_rank = node_rank;
 }

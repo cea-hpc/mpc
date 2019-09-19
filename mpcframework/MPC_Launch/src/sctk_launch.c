@@ -302,7 +302,7 @@ static void sctk_perform_initialisation (void)
 
 	if (sctk_process_nb_val > 1)
 	{
-		set_process_count(sctk_process_nb_val);
+		mpc_common_set_process_count(sctk_process_nb_val);
 		sctk_nodebug ("%d processes", get_process_count());
 	}
 
