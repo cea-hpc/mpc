@@ -81,6 +81,8 @@ static inline int mpc_common_get_node_rank(void)
     {
         return 1;
     }
+#else
+#include "sctk_accessor.h"
 #endif /* MPC_Thread */
 
 

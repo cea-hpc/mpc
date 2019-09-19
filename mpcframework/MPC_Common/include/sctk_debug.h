@@ -22,8 +22,8 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK___DEBUG__
-#define __SCTK___DEBUG__
+#ifndef MPC_COMMON_INCLUDE_SCTK_DEBUG_H_
+#define MPC_COMMON_INCLUDE_SCTK_DEBUG_H_
 
 #ifdef __cplusplus
 extern "C"
