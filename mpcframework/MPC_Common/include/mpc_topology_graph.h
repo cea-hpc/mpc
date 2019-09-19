@@ -30,4 +30,9 @@
 void topology_graph_init(void);
 void topology_graph_render(void);
 
+
+void mpc_common_topology_graph_lock_graphic();
+void mpc_common_topology_graph_unlock_graphic();
+void mpc_common_topology_graph_notify_thread(int task_id);
+
 #endif /* MPC_COMMON_INCLUDE_TOPOLOGY_GRAPH_H_ */

@@ -43,7 +43,7 @@ extern "C" {
 
 hwloc_topology_t mpc_common_topology();
 hwloc_topology_t mpc_common_topology_full();
-hwloc_topology_t mpc_common_topology_compute_node();
+
 int mpc_common_topology_processor_on_node();
 
 

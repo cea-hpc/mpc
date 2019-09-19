@@ -804,13 +804,13 @@ void __mpcomp_init(void) {
       sctk_debug(
           "%s: MPI rank=%d, process_rank=%d, local_task_rank=%d => %d mvp(s) "
           "out of %d core(s) A",
-          __func__, task_rank, sctk_get_local_process_rank(),
+          __func__, task_rank, mpc_common_get_local_process_rank(),
           mpc_common_get_local_task_rank(), sctk_get_processor_number(),
           sctk_get_processor_number());
     } else {
       sctk_debug("%s: MPI rank=%d, process_rank=%d, local_task_rank=%d => %d "
                  "mvp(s) out of %d core(s)",
-                 __func__, task_rank, sctk_get_local_process_rank(),
+                 __func__, task_rank, mpc_common_get_local_process_rank(),
                  mpc_common_get_local_task_rank(), nb_mvps,
                  sctk_get_processor_number());
     }

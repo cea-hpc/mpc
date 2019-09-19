@@ -2,12 +2,15 @@
 #include "MPC_Common/include/sctk_topology.h"
 #include "MPC_Common/include/sctk_debug.h"
 #include "MPC_Common/include/sctk_rank.h"
+
 #include "MPC_Launch/include/sctk_launch.h"
 
 static char file_placement[128];
 static char placement_txt[128];
 static char textual_file[128];
 static char textual_file_output[128];
+
+static hwloc_topology_t topology_compute_node;
 
 typedef struct sctk_text_option_s{
                 int *os_index ; 
@@ -23,6 +26,100 @@ typedef struct sctk_text_option_s{
 /* used by the graphical option */
 static hwloc_bitmap_t topology_cpuset_compute_node;
 
+
+
+/* return the os index of the topology_compute_node of the thread executed */
+int sctk_get_cpu_compute_node_topology()
+{
+	hwloc_cpuset_t set = hwloc_bitmap_alloc();
+
+	int ret = hwloc_get_last_cpu_location( topology_compute_node, set, HWLOC_CPUBIND_THREAD );
+
+	assume( ret != -1 );
+	assume( !hwloc_bitmap_iszero( set ) );
+
+	hwloc_obj_t pu;
+	if ( sctk_enable_smt_capabilities )
+	{
+		pu = hwloc_get_obj_inside_cpuset_by_type( topology_compute_node, set, HWLOC_OBJ_PU, 0 );
+	}
+	else
+	{
+		pu = hwloc_get_obj_inside_cpuset_by_type( topology_compute_node, set, HWLOC_OBJ_CORE, 0 );
+	}
+
+	if ( !pu )
+	{
+		hwloc_bitmap_free( set );
+		return -1;
+	}
+
+	/* return the os index */
+	int cpu_os = pu->os_index;
+	//int cpu = sctk_get_logical_from_os_compute_node_topology(cpu_os);
+
+	return cpu_os;
+}
+
+/* return logical index from topology_compute_node os index */
+int sctk_get_logical_from_os_compute_node_topology( unsigned int cpu_os )
+{
+	/* hwloc_get_pu_obj_by_os_inde give false resultat i suppose */
+	/*hwloc_obj_t cpu = hwloc_get_pu_obj_by_os_index(topology_compute_node, cpu_os);
+    return cpu->logical_index;*/
+	unsigned int nb;
+	unsigned int i;
+	if ( sctk_enable_smt_capabilities )
+	{
+		nb = hwloc_get_nbobjs_by_type( topology_compute_node, HWLOC_OBJ_PU );
+
+		for ( i = 0; i < nb; i++ )
+		{
+			if ( hwloc_get_obj_by_type( topology_compute_node, HWLOC_OBJ_PU, i )->os_index == cpu_os )
+			{
+				hwloc_obj_t pu = hwloc_get_obj_by_type( topology_compute_node, HWLOC_OBJ_PU, i );
+				return pu->logical_index;
+			}
+		}
+	}
+	else
+	{
+		nb = hwloc_get_nbobjs_by_type( topology_compute_node, HWLOC_OBJ_CORE );
+
+		for ( i = 0; i < nb; i++ )
+		{
+			if ( hwloc_get_obj_by_type( topology_compute_node, HWLOC_OBJ_CORE, i )->os_index == cpu_os )
+			{
+				hwloc_obj_t pu = hwloc_get_obj_by_type( topology_compute_node, HWLOC_OBJ_CORE, i );
+				return pu->logical_index;
+			}
+		}
+	}
+	return -1;
+}
+
+/* return the os index of the topology_compute_node from logical index */
+int sctk_get_cpu_compute_node_topology_from_logical( int logical_pu )
+{
+	hwloc_obj_t pu;
+	if ( sctk_enable_smt_capabilities )
+	{
+		pu = hwloc_get_obj_by_type( topology_compute_node, HWLOC_OBJ_PU, logical_pu );
+	}
+	else
+	{
+		pu = hwloc_get_obj_by_type( topology_compute_node, HWLOC_OBJ_CORE, logical_pu );
+	}
+
+	if ( pu )
+	{
+		return pu->os_index;
+	}
+	else
+	{
+		return -1;
+	}
+}
 
 
 /* used by graphic option */
@@ -284,8 +381,41 @@ void create_placement_rendering(int os_pu, int os_master_pu, int task_id){
     }
 }
 
+static sctk_spinlock_t __lock_graphic = 0;
+
+void mpc_common_topology_graph_lock_graphic()
+{
+    sctk_spinlock_lock(&__lock_graphic);
+}
+
+void mpc_common_topology_graph_unlock_graphic()
+{
+    sctk_spinlock_unlock(&__lock_graphic);
+}
 
 
+void mpc_common_topology_graph_notify_thread(int task_id)
+{
+
+    /* graphic placement option */
+    if(sctk_enable_graphic_placement){
+        /* get os ind */
+        int master = sctk_get_cpu_compute_node_topology();
+        mpc_common_topology_graph_lock_graphic();
+        /* fill file to communicate between process of the same compute node */
+        create_placement_rendering(master, master, task_id);
+        mpc_common_topology_graph_unlock_graphic();
+    }
+	/* text placement option */
+    if(sctk_enable_text_placement){
+        int master = sctk_get_cpu_compute_node_topology();
+        mpc_common_topology_graph_lock_graphic();
+        /* need to lock to write in the node file for each mpi master of the processus */
+        int min_index[3] = {0,0,0};
+        create_placement_text(master, master, task_id, 0, 0, min_index, syscall(SYS_gettid));
+        mpc_common_topology_graph_unlock_graphic();
+    }
+}
 
 
 /* used by graphic and text option */
@@ -333,7 +463,7 @@ static void sctk_read_format_option_graphic_placement_and_complet_topo_infos(FIL
             sctk_get_logical_from_os_compute_node_topology(atoi(os_ind));
         hwloc_obj_t obj;
         if(sctk_enable_smt_capabilities){
-            obj = hwloc_get_obj_by_type(mpc_common_topology_compute_node(), HWLOC_OBJ_PU, logical_ind);
+            obj = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_PU, logical_ind);
         }
         else{
             obj = hwloc_get_obj_by_type(mpc_common_topology_full(), HWLOC_OBJ_CORE, logical_ind);
@@ -619,16 +749,16 @@ static hwloc_obj_t hwloc_get_core_by_os_index(hwloc_topology_t hwtopology, unsig
 /* determine the lower logical index pu used for text placement option */
 static int determine_lower_logical(int *os_index, int lenght){
     int i;
-    int lower_logical = hwloc_get_nbobjs_by_type(mpc_common_topology_compute_node(), HWLOC_OBJ_PU);
+    int lower_logical = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
     int current_logical = 0;
     hwloc_obj_t pu;
     for(i=0;i<lenght;i++){
         if(os_index[i] != -1){
                 if(sctk_enable_smt_capabilities){
-                    pu = hwloc_get_pu_obj_by_os_index(mpc_common_topology_compute_node(), os_index[i]);
+                    pu = hwloc_get_pu_obj_by_os_index(topology_compute_node, os_index[i]);
                 }
                 else{
-                    hwloc_obj_t core = hwloc_get_core_by_os_index(mpc_common_topology_compute_node(), os_index[i]);
+                    hwloc_obj_t core = hwloc_get_core_by_os_index(topology_compute_node, os_index[i]);
                     pu = core->children[0];
                 }
                 if(pu == NULL){
@@ -652,10 +782,10 @@ static int sctk_determine_higher_logical(int *os_index, int lenght){
     for(i=0;i<lenght;i++){
         if(os_index[i] != -1){
                 if(sctk_enable_smt_capabilities){
-                    pu = hwloc_get_pu_obj_by_os_index(mpc_common_topology_compute_node(), os_index[i]);
+                    pu = hwloc_get_pu_obj_by_os_index(topology_compute_node, os_index[i]);
                 }
                 else{
-                    hwloc_obj_t core = hwloc_get_core_by_os_index(mpc_common_topology_compute_node(), os_index[i]);
+                    hwloc_obj_t core = hwloc_get_core_by_os_index(topology_compute_node, os_index[i]);
                     pu = core->children[0];
                 }
                 if(pu == NULL){
@@ -686,12 +816,12 @@ restart_restrict:
         int i;
         sctk_warning ("SMT capabilities ENABLED");
 
-        int proc_count = hwloc_get_nbobjs_by_type(mpc_common_topology_compute_node(), HWLOC_OBJ_PU);
+        int proc_count = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
         hwloc_bitmap_zero(topology_cpuset_compute_node);
 
         for(i=0;i < proc_count; ++i)
         {
-            hwloc_obj_t core = hwloc_get_obj_by_type(mpc_common_topology_compute_node(), HWLOC_OBJ_PU, i);
+            hwloc_obj_t core = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_PU, i);
             hwloc_bitmap_or(topology_cpuset_compute_node, topology_cpuset_compute_node, core->cpuset);
         }
 
@@ -704,17 +834,17 @@ restart_restrict:
         hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
         hwloc_cpuset_t set = hwloc_bitmap_alloc();
         hwloc_bitmap_zero(cpuset);
-        const unsigned int core_number = hwloc_get_nbobjs_by_type(mpc_common_topology_compute_node(), HWLOC_OBJ_CORE);
+        const unsigned int core_number = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_CORE);
 
         for(i=0;i < core_number; ++i)
         {
-            hwloc_obj_t core = hwloc_get_obj_by_type(mpc_common_topology_compute_node(), HWLOC_OBJ_CORE, i);
+            hwloc_obj_t core = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_CORE, i);
             hwloc_bitmap_copy(set, core->cpuset);
             hwloc_bitmap_singlify(set);
             hwloc_bitmap_or(cpuset, cpuset, set);
         }
         /* restrict the topology to physical CPUs */
-        err = hwloc_topology_restrict(mpc_common_topology_compute_node(), cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
+        err = hwloc_topology_restrict(topology_compute_node, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
         if(err)
         {
             hwloc_bitmap_free(cpuset);
@@ -727,18 +857,29 @@ restart_restrict:
 
 }
 
-
 void topology_graph_init(void)
 {
     /*graphical option*/
     if(sctk_enable_graphic_placement || sctk_enable_text_placement){
+
+
+	    hwloc_topology_init( &topology_compute_node );
+        char *xml_path = getenv( "MPC_SET_XML_TOPOLOGY_FILE" );
+
+        if ( xml_path != NULL )
+        {
+            hwloc_topology_set_xml( topology_compute_node, xml_path );
+	    }
+
+        hwloc_topology_load( topology_compute_node );
+
         hwloc_cpuset_t newset;
         newset = hwloc_bitmap_alloc();
         int ret = hwloc_get_last_cpu_location(mpc_common_topology(), newset, HWLOC_CPUBIND_THREAD);
         assert(ret == 0);
         hwloc_obj_t obj;
         obj = hwloc_get_obj_inside_cpuset_by_type(mpc_common_topology(), newset,HWLOC_OBJ_PU, 0);
-        hwloc_obj_t cluster = hwloc_get_ancestor_obj_by_type(mpc_common_topology_compute_node(), HWLOC_OBJ_MACHINE, obj);
+        hwloc_obj_t cluster = hwloc_get_ancestor_obj_by_type(topology_compute_node, HWLOC_OBJ_MACHINE, obj);
         strcpy(file_placement, "");
         strcat(file_placement, "placement_");
         strcpy(textual_file, "");

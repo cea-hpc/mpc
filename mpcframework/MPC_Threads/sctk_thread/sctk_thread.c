@@ -28,7 +28,8 @@
 #include <sctk_ib_cp.h>
 #endif
 
-#include <sctk_topology.h>
+#include "MPC_Common/include/sctk_topology.h"
+#include "MPC_Common/include/mpc_topology_graph.h"
 
 #undef sleep
 #undef usleep
@@ -766,8 +767,6 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   return res;
 }
 
-static sctk_spinlock_t lock_graphic;
-
 int
 sctk_thread_create (sctk_thread_t * restrict __threadp,
 		    const sctk_thread_attr_t * restrict __attr,
@@ -829,25 +828,8 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 				  sctk_thread_create_tmp_start_routine,
 				  (void *) tmp);
 
-	/* graphic placement option */
-    if(sctk_enable_graphic_placement){
-        /* get os ind */
-        int master = sctk_get_cpu_compute_node_topology();
-        sctk_spinlock_lock(&lock_graphic);
+  mpc_common_topology_graph_notify_thread(tmp->task_id);
         int min_index[3] = {0,0,0};
-        /* fill file to communicate between process of the same compute node */
-        create_placement_rendering(master, master, tmp->task_id);     
-        sctk_spinlock_unlock(&lock_graphic);
-    }
-	/* text placement option */
-    if(sctk_enable_text_placement){
-        int master = sctk_get_cpu_compute_node_topology();
-        sctk_spinlock_lock(&lock_graphic);
-        /* need to lock to write in the node file for each mpi master of the processus */
-        int min_index[3] = {0,0,0};
-        create_placement_text(master, master, tmp->task_id, 0, 0, min_index, syscall(SYS_gettid));     
-        sctk_spinlock_unlock(&lock_graphic);
-    }
 
   /* We reset the binding */
   {
@@ -1100,6 +1082,9 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
     }
 #endif
 
+
+   TODO("THIS CODE IS UGLY !");
+
     /* option graphic placement */
     if(sctk_enable_graphic_placement){
         /* to be sure of __arg type to cast */
@@ -1114,10 +1099,10 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
             int logical_pu = (master_logical + vp_local_processus);
             /* convert logical in os ind in topology_compute_node */
             int os_pu = sctk_get_cpu_compute_node_topology_from_logical(logical_pu);
-            sctk_spinlock_lock(&lock_graphic);
+            mpc_common_topology_graph_lock_graphic();
             /* fill file to communicate between process of the same compute node */
             create_placement_rendering(os_pu, master, mpc_common_get_task_rank()); 
-            sctk_spinlock_unlock(&lock_graphic);
+            mpc_common_topology_graph_unlock_graphic();
         }
     }
     /* option text placement */
@@ -1139,13 +1124,13 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
             tree_shape = root_node->tree_base + 1;
             int core_depth;
             static int done_init = 1;
-            sctk_spinlock_lock(&lock_graphic);
+            mpc_common_topology_graph_lock_graphic();
             if(done_init){
                 hwloc_topology_init(&topology_option_text);
                 hwloc_topology_load(topology_option_text);
                 done_init = 0;
             }
-            sctk_spinlock_unlock(&lock_graphic);
+            mpc_common_topology_graph_unlock_graphic();
             if(sctk_enable_smt_capabilities){
                 core_depth = hwloc_get_type_depth(topology_option_text, HWLOC_OBJ_PU);
             }
@@ -1163,9 +1148,9 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
             int logical_pu = (master_logical + target_vp);
             /* convert logical in os ind in topology_compute_node */
             int os_pu = sctk_get_cpu_compute_node_topology_from_logical(logical_pu);
-            sctk_spinlock_lock(&lock_graphic);
+            mpc_common_topology_graph_lock_graphic();
             create_placement_text(os_pu, master, mpc_common_get_task_rank(), target_vp, 0, min_index, 0); 
-            sctk_spinlock_unlock(&lock_graphic);
+            mpc_common_topology_graph_unlock_graphic();
             free(min_index);
         }
     }
