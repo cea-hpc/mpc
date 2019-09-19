@@ -160,7 +160,7 @@ void sctk_win_acquire( sctk_window_t win_id )
 
 static int _sctk_win_relax( struct sctk_window * win )
 {
-	sctk_nodebug("%s win_id %d on %d", __FUNCTION__, win->id, get_task_rank() );
+	sctk_nodebug("%s win_id %d on %d", __FUNCTION__, win->id, mpc_common_get_task_rank() );
 	int ret = 0;
 
 	sctk_spinlock_lock( &win->lock );
@@ -194,7 +194,7 @@ sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, sctk_
         win->remote_id = -1;
 
         /* Set window owner task */
-        win->owner = get_task_rank();
+        win->owner = mpc_common_get_task_rank();
         win->comm = comm;
         win->comm_rank = sctk_get_rank(win->comm, win->owner);
 
@@ -235,7 +235,7 @@ sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, sctk_
         win->access_mode = SCTK_WIN_ACCESS_AUTO;
 
         sctk_nodebug("CREATING WIN (%p) %d on %d RC %d", win, win->id,
-                     get_task_rank(), win->refcounter);
+                     mpc_common_get_task_rank(), win->refcounter);
 
         return win->id;
 }
@@ -246,14 +246,14 @@ void sctk_window_release( sctk_window_t win_id  )
 	struct sctk_window * win = sctk_win_translate( win_id );
 
         sctk_nodebug("%s %p win_id %d on %d RC %d", __FUNCTION__, win, win_id,
-                     get_task_rank(), win->refcounter);
+                     mpc_common_get_task_rank(), win->refcounter);
 
         if (!win) {
           sctk_fatal("No such window ID");
         }
 
         /* Do we need to signal a remote win ? */
-        if ((win->owner != get_task_rank()) &&
+        if ((win->owner != mpc_common_get_task_rank()) &&
             sctk_is_net_message(win->owner)) {
           sctk_nodebug("Remote is %d on %d", win->remote_id, win->owner);
           /* This is a remote window sigal release
@@ -275,12 +275,12 @@ void sctk_window_release( sctk_window_t win_id  )
         /* Did the refcounter reach "0" ? */
         if (refcount != 0) {
           sctk_nodebug("NO REL %s win_id %d on %d (RC %d)", __FUNCTION__,
-                       win_id, get_task_rank(), refcount);
+                       win_id, mpc_common_get_task_rank(), refcount);
           return;
         }
 
         sctk_nodebug("REL %s win_id %d on %d (RC %d)", __FUNCTION__, win_id,
-                     get_task_rank(), refcount);
+                     mpc_common_get_task_rank(), refcount);
 
         /* If we are at "0" we free the window */
 
@@ -560,7 +560,7 @@ static inline void sctk_window_RDMA_write_net(struct sctk_window *win,
   sctk_thread_ptp_message_t *msg =
       sctk_create_header(SCTK_MESSAGE_CONTIGUOUS);
   sctk_set_header_in_message(
-      msg, -8, win->comm, sctk_get_rank(win->comm, get_task_rank()),
+      msg, -8, win->comm, sctk_get_rank(win->comm, mpc_common_get_task_rank()),
       win->comm_rank, req, size, SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE, REQUEST_RDMA);
 
   /* Pin local segment */
@@ -590,7 +590,7 @@ static inline void __sctk_window_RDMA_write(sctk_window_t win_id,
     sctk_fatal("No such window ID");
   }
 
-  int my_rank = get_task_rank();
+  int my_rank = mpc_common_get_task_rank();
 
   if ((my_rank == win->owner) /* Same rank */
       || (mpc_MPI_allocmem_is_in_pool(win->start_addr)) ||
@@ -727,7 +727,7 @@ void sctk_window_RDMA_read_net( struct sctk_window * win, sctk_rail_pin_ctx_t * 
       sctk_create_header(SCTK_MESSAGE_CONTIGUOUS);
 
   sctk_set_header_in_message(
-      msg, -8, win->comm, sctk_get_rank(win->comm, get_task_rank()),
+      msg, -8, win->comm, sctk_get_rank(win->comm, mpc_common_get_task_rank()),
       win->comm_rank, req, size, SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE, REQUEST_RDMA);
 
   /* Pin local segment */
@@ -756,7 +756,7 @@ void __sctk_window_RDMA_read( sctk_window_t win_id, sctk_rail_pin_ctx_t * dest_p
 
         /* Set an empty request */
 
-        int my_rank = get_task_rank();
+        int my_rank = mpc_common_get_task_rank();
 
         if ((my_rank == win->owner) /* Same rank */
             || (mpc_MPI_allocmem_is_in_pool(win->start_addr)) ||
@@ -1247,7 +1247,7 @@ static inline void sctk_window_RDMA_fetch_and_op_net(
       sctk_create_header(SCTK_MESSAGE_CONTIGUOUS);
 
   sctk_set_header_in_message(msg, -8, win->comm,
-                             sctk_get_rank(win->comm, get_task_rank()),
+                             sctk_get_rank(win->comm, mpc_common_get_task_rank()),
                              win->comm_rank, req, RDMA_type_size(type),
                              SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE, REQUEST_RDMA);
 
@@ -1294,7 +1294,7 @@ static inline void __sctk_window_RDMA_fetch_and_op(
 
   /* Set an empty request */
 
-  int my_rank = get_task_rank();
+  int my_rank = mpc_common_get_task_rank();
 
   if ((my_rank == win->owner) /* Same rank */
       || (mpc_MPI_allocmem_is_in_pool(win->start_addr)) ||
@@ -1559,7 +1559,7 @@ void __sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, 
 
         /* Set an empty request */
 
-        int my_rank = get_task_rank();
+        int my_rank = mpc_common_get_task_rank();
 
         if ((my_rank == win->owner) /* Same rank */
             || (mpc_MPI_allocmem_is_in_pool(win->start_addr)) ||
@@ -1643,7 +1643,7 @@ void sctk_window_RDMA_fence(sctk_window_t win_id, sctk_request_t *req) {
     sctk_fatal("No such window ID");
   }
 
-  int my_rank = get_task_rank();
+  int my_rank = mpc_common_get_task_rank();
 
   if ((my_rank == win->owner) ||
       (mpc_MPI_allocmem_is_in_pool(win->start_addr)) ||

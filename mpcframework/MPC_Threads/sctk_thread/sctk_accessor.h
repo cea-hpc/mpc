@@ -38,10 +38,10 @@ extern "C"
 {
 #endif
 
-static inline int get_task_rank (void)
+static inline int mpc_common_get_task_rank (void)
 {
 #if defined(SCTK_PROCESS_MODE) || defined(SCTK_LIB_MODE)
-  return get_process_rank();
+  return mpc_common_get_process_rank();
 #endif
 
   int can_be_disguised = __MPC_Maybe_disguised();
@@ -89,7 +89,7 @@ static inline int get_task_rank (void)
 
 int sctk_get_total_tasks_number();
 
-static inline int get_task_count(void)
+static inline int mpc_common_get_task_count(void)
 {
 	return sctk_get_total_tasks_number();
 }

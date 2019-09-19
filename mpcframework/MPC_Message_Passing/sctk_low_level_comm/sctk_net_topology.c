@@ -52,24 +52,24 @@ int sctk_route_ring ( int dest,  __UNUSED__ sctk_rail_info_t *rail )
 	int delta_1;
 
 
-	if ( get_process_rank() > dest )
+	if ( mpc_common_get_process_rank() > dest )
 	{
-		delta_1 = get_process_rank() - dest;
+		delta_1 = mpc_common_get_process_rank() - dest;
 
-		dest = ( delta_1 > get_process_count() - delta_1 ) ?
-		       ( get_process_rank() + get_process_count() + 1 ) % get_process_count() :
-		       ( get_process_rank() + get_process_count() - 1 ) % get_process_count();
+		dest = ( delta_1 > mpc_common_get_process_count() - delta_1 ) ?
+		       ( mpc_common_get_process_rank() + mpc_common_get_process_count() + 1 ) % mpc_common_get_process_count() :
+		       ( mpc_common_get_process_rank() + mpc_common_get_process_count() - 1 ) % mpc_common_get_process_count();
 	}
 	else
 	{
-		delta_1 = dest - get_process_rank();
+		delta_1 = dest - mpc_common_get_process_rank();
 
-		dest = ( delta_1 > get_process_count() - delta_1 ) ?
-		       ( get_process_rank() + get_process_count() - 1 ) % get_process_count() :
-		       ( get_process_rank() + get_process_count() + 1 ) % get_process_count();
+		dest = ( delta_1 > mpc_common_get_process_count() - delta_1 ) ?
+		       ( mpc_common_get_process_rank() + mpc_common_get_process_count() - 1 ) % mpc_common_get_process_count() :
+		       ( mpc_common_get_process_rank() + mpc_common_get_process_count() + 1 ) % mpc_common_get_process_count();
 	}
 
-	sctk_nodebug ( "Route via dest - %d to %d (delta1:%d - process_rank:%d - process_number:%d)", dest, old_dest, delta_1, get_process_rank(), get_process_count() );
+	sctk_nodebug ( "Route via dest - %d to %d (delta1:%d - process_rank:%d - process_number:%d)", dest, old_dest, delta_1, mpc_common_get_process_rank(), mpc_common_get_process_count() );
 
 	return dest;
 }
@@ -93,20 +93,20 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 
 	sctk_pmi_barrier();
 
-	if ( 3 < get_process_count()  )
+	if ( 3 < mpc_common_get_process_count()  )
 	{
 		int from;
 		int to;
 
-		for ( from = 0; from < get_process_count(); from++ )
+		for ( from = 0; from < mpc_common_get_process_count(); from++ )
 		{
-			for ( to = 0; to < get_process_count(); to ++ )
+			for ( to = 0; to < mpc_common_get_process_count(); to ++ )
 			{
 				if ( to > from )
 				{
 					sctk_endpoint_t *tmp;
 
-					if ( from == get_process_rank() )
+					if ( from == mpc_common_get_process_rank() )
 					{
 
 						tmp = sctk_rail_get_any_route_to_process ( rail, to );
@@ -121,7 +121,7 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 
 					}
 
-					if ( to == get_process_rank() )
+					if ( to == mpc_common_get_process_rank() )
 					{
 
 						tmp = sctk_rail_get_any_route_to_process ( rail, from );
@@ -137,7 +137,7 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 				}
 			}
 		}
-		sctk_nodebug("%d finished its requests !!!!!!!", get_process_rank());
+		sctk_nodebug("%d finished its requests !!!!!!!", mpc_common_get_process_rank());
 
 		sctk_pmi_barrier();
 	}
@@ -156,13 +156,13 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
  */
 void sctk_route_torus_init(sctk_rail_info_t* rail)
 {
-	size_t nbprocs = get_process_count();
+	size_t nbprocs = mpc_common_get_process_count();
 	size_t dim_x, dim_y;
 	size_t i, offset, right, top, left, bot;
 	
 	dim_x = (int)sqrt(nbprocs);
 	dim_y = dim_x;
-	i = get_process_rank();
+	i = mpc_common_get_process_rank();
 
 	/*if(nbprocs % dim_x > 0)*/
 	/*{*/

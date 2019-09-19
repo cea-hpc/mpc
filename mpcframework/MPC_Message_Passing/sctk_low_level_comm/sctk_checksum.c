@@ -223,7 +223,7 @@ unsigned long sctk_checksum_verify ( sctk_thread_ptp_message_t *send, sctk_threa
 
 void sctk_checksum_init()
 {
-	if ( get_process_rank() == 0 )
+	if ( mpc_common_get_process_rank() == 0 )
 	{
 	fprintf ( stderr, SCTK_COLOR_RED_BOLD ( WARNING: inter - node message checking enabled! ) "\n" );
 	}

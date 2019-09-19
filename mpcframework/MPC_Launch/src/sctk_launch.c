@@ -252,7 +252,7 @@ void * polling_thread( __UNUSED__ void * dummy )
 
 void sctk_print_banner(bool restart)
 {
-	if (get_process_rank() == 0)
+	if ( mpc_common_get_process_rank() == 0)
 	{
 		char *mpc_lang = "C/C++";
 		if (sctk_is_in_fortran == 1)
@@ -303,7 +303,7 @@ static void sctk_perform_initialisation (void)
 	if (sctk_process_nb_val > 1)
 	{
 		mpc_common_set_process_count(sctk_process_nb_val);
-		sctk_nodebug ("%d processes", get_process_count());
+		sctk_nodebug ("%d processes", mpc_common_get_process_count());
 	}
 
 	/* As a first step initialize the PMI */
@@ -420,7 +420,7 @@ static void sctk_perform_initialisation (void)
 #ifdef SCTK_LIB_MODE	
 	/* In LIB mode we create the task context
 	 * at process level (not in an actual task ) */
-	int my_rank = get_process_rank();
+	int my_rank = mpc_common_get_process_rank();
 	sctk_ptp_per_task_init (my_rank);
 #endif
 
@@ -442,7 +442,7 @@ static void sctk_perform_initialisation (void)
 	if (sctk_process_nb_val > 1) {
 #ifdef MPC_USE_INFINIBAND
 		if (!sctk_network_driver_name && !sctk_ib_device_found()) {
-			if (!get_process_rank())
+			if (!mpc_common_get_process_rank())
 				sctk_info("Could not locate an IB device, fallback to TCP");
 			sctk_network_driver_name = "tcp";
 		}

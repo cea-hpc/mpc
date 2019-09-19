@@ -187,17 +187,17 @@ void __sctk_control_messages_send(int dest, int dest_task,
   if (dest < 0) {
     int cw_rank = sctk_get_comm_world_rank(comm, dest_task);
     dest = sctk_get_process_rank_from_task_rank(cw_rank);
-    source = sctk_get_rank(communicator, get_task_rank());
+    source = sctk_get_rank(communicator, mpc_common_get_task_rank());
   } else {
-    source = get_process_rank();
+    source = mpc_common_get_process_rank();
   }
 
   /* Are we sending to our own process ?? */
-  //~ if( dest == get_process_rank() )
+  //~ if( dest == mpc_common_get_process_rank() )
   //~ {
   //~ /* If so we call directly */
-  //~ control_message_submit( message_class, rail_id, get_process_rank(),
-  // sctk_get_rank(communicator, get_task_rank() ), subtype, param, buffer,
+  //~ control_message_submit( message_class, rail_id, mpc_common_get_process_rank(),
+  // sctk_get_rank(communicator, mpc_common_get_task_rank() ), subtype, param, buffer,
   // size );
   //~ return;
   //~ }
@@ -367,7 +367,7 @@ void sctk_control_messages_perform(sctk_thread_ptp_message_t *msg, int force) {
                      sctk_free_control_messages, sctk_message_copy);
     sctk_add_adress_in_message(&recvmsg, tmp_contol_buffer, msg_size);
     sctk_set_header_in_message(&recvmsg, 0, msg_comm, SCTK_ANY_SOURCE,
-                               get_process_rank(), &request,
+                               mpc_common_get_process_rank(), &request,
                                SCTK_MSG_SIZE(msg), class, SCTK_DATATYPE_IGNORE, REQUEST_RECV);
 
     /* Trigger the receive task (as if we matched) */
@@ -403,7 +403,7 @@ void sctk_control_message_fence_req(int target_task, sctk_communicator_t comm,
 
   return;
 
-  ctx.source = sctk_get_rank(comm, get_task_rank());
+  ctx.source = sctk_get_rank(comm, mpc_common_get_task_rank());
   ctx.remote = sctk_get_rank(comm, target_task);
   ctx.comm = comm;
 
@@ -434,7 +434,7 @@ void sctk_control_message_fence_handler( struct sctk_control_message_fence_ctx *
   static int dummy = 0;
   sctk_error("FENCE SEND %d -> %d", ctx->remote, ctx->source);
 
-  sctk_control_message_process_local(get_task_rank());
+  sctk_control_message_process_local( mpc_common_get_task_rank());
 
   sctk_message_isend_class_src(ctx->remote, ctx->source, &dummy, sizeof(int),
                                ctx->source, ctx->comm,

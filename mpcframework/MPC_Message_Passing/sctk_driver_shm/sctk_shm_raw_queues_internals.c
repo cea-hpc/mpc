@@ -85,7 +85,7 @@ sctk_shm_set_region_infos(void *shmem_base, size_t shmem_size,int cells_num)
     assume( shmem != NULL );
     
     shmem->cells_num = cells_num;
-    shmem->all_shm_base = sctk_malloc(get_local_process_count()*sizeof(char*));
+    shmem->all_shm_base = sctk_malloc( mpc_common_get_local_process_count() * sizeof(char*));
     shmem->shm_base = shmem_base; 
     shmem->max_addr = shmem->shm_base + shmem_size;
     shmem->global_lock = SCTK_SPINLOCK_INITIALIZER;

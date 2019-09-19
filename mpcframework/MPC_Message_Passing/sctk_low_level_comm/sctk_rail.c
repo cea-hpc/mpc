@@ -449,7 +449,7 @@ struct sctk_rail_dump_context
 
 void __sctk_rail_dump_routes(  sctk_endpoint_t *table, void * arg  )
 {
-	int src = get_process_rank();
+	int src = mpc_common_get_process_rank();
 	int dest = table->dest;
 
 	struct sctk_rail_dump_context * ctx = (struct sctk_rail_dump_context *) arg;
@@ -497,8 +497,8 @@ void sctk_rail_dump_routes()
 {
 	int i;
 
-	int rank = get_process_rank();
-	int size = get_process_count();
+	int rank = mpc_common_get_process_rank();
+	int size = mpc_common_get_process_count();
 	int local_task_rank = sctk_get_local_task_rank();
 
 	if( local_task_rank )

@@ -424,7 +424,7 @@ static inline int sctk_get_process_rank_from_task_rank( int rank )
 	return rank;
 #endif
 
-	if ( get_process_count() == 1 )
+	if ( mpc_common_get_process_count() == 1 )
 		return 0;
   
   return _sctk_get_process_rank_from_task_rank(rank);

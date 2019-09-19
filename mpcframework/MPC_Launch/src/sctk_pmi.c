@@ -171,7 +171,7 @@ int sctk_pmi_init()
 
     /* Note that process count is first set in sctk_lauch
        according to command line parameters */
-    if ( get_process_count() <= 1 )
+    if ( mpc_common_get_process_count() <= 1 )
         return PMI_FAIL;
 
     int rc;
@@ -649,7 +649,7 @@ int sctk_pmi_get_node_rank( int *rank )
 int sctk_pmi_get_local_process_count( int *size )
 {
 #ifdef SCTK_LIB_MODE
-    *size = get_local_process_count();
+    *size = mpc_common_get_local_process_count();
     return PMI_SUCCESS;
 #elif defined(MPC_USE_HYDRA)
     *size = pmi_context.local_process_count;
@@ -678,7 +678,7 @@ int sctk_pmi_get_local_process_count( int *size )
 int sctk_pmi_get_local_process_rank( int *rank )
 {
 #ifdef SCTK_LIB_MODE
-    *rank = get_local_process_rank();
+    *rank = mpc_common_get_local_process_rank();
     return PMI_SUCCESS;
 #elif defined(MPC_USE_HYDRA)
     *rank = pmi_context.local_process_rank;

@@ -536,7 +536,7 @@ void sctk_net_finalize_task_level(int taskid, int vp)
 
 void sctk_net_init_driver ( char *name )
 {	
-	if ( get_process_count() == 1 )
+	if ( mpc_common_get_process_count() == 1 )
 	{
 		/* Nothing to do */
 		return;

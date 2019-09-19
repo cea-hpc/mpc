@@ -578,7 +578,7 @@ static void sctk_network_notify_matching_message_ib (  __UNUSED__ sctk_thread_pt
 
 }
 
-/* WARNING: This function can be called with dest == get_process_rank() */
+/* WARNING: This function can be called with dest == mpc_common_get_process_rank() */
 static void sctk_network_notify_perform_message_ib (  __UNUSED__ int remote_process, __UNUSED__  int remote_task_id,  __UNUSED__ int polling_task_id,  __UNUSED__ int blocking, sctk_rail_info_t *rail )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -648,7 +648,7 @@ static void sctk_network_notify_idle_message_ib ( sctk_rail_info_t *rail )
         idle_poll_freq *= 4;
     }
 
-    int polling_task_id = get_task_rank();
+    int polling_task_id = mpc_common_get_task_rank();
     POLL_INIT ( &poll );
     sctk_network_poll_all_cq ( rail, &poll );
 
@@ -925,7 +925,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 
 #ifdef IB_DEBUG
 
-	if ( get_process_rank() == 0 )
+	if ( mpc_common_get_process_rank() == 0 )
 	{
 		fprintf ( stderr, SCTK_COLOR_RED_BOLD ( WARNING: MPC debug mode activated. Your job * MAY * be * VERY * slow! ) "\n" );
 	}

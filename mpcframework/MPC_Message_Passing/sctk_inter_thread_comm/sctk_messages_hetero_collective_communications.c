@@ -161,13 +161,13 @@ void sctk_barrier_hetero_messages_inter ( const sctk_communicator_t communicator
 	sctk_nodebug ( "Start inter" );
 	sctk_hetero_messages_init_items ( &table );
 
-	int process_rank = get_process_rank();
+	int process_rank = mpc_common_get_process_rank();
 
 	process_array = sctk_get_process_array ( communicator ),
 	myself_ptr = ( ( int * ) bsearch ( ( void * ) &process_rank,
 	                                   process_array,
 	                                   total, sizeof ( int ), int_cmp ) );
-	sctk_nodebug ( "rank : %d, myself_ptr: %p", get_process_rank(), myself_ptr );
+	sctk_nodebug ( "rank : %d, myself_ptr: %p", mpc_common_get_process_rank(), myself_ptr );
 	assume ( myself_ptr );
 	myself = ( myself_ptr - process_array );
 
@@ -335,7 +335,7 @@ void sctk_broadcast_hetero_messages_inter ( void *buffer, const size_t size,
 			BROADCAST_ARRITY = broadcast_arity_max;
 		}
 
-		int process_rank = get_process_rank();
+		int process_rank = mpc_common_get_process_rank();
 
 		process_array = sctk_get_process_array ( communicator );
 		myself_ptr = ( ( int * ) bsearch ( ( void * ) &process_rank,
@@ -428,7 +428,7 @@ void sctk_broadcast_hetero_messages ( void *buffer, const size_t size,
 		return;
 	}
 
-	myself = sctk_get_rank ( communicator, get_task_rank() );
+	myself = sctk_get_rank ( communicator, mpc_common_get_task_rank() );
 	nb_tasks_in_node = sctk_get_nb_task_local ( communicator );
 	bcast = &tmp->broadcast.broadcast_hetero_messages;
 	generation = bcast->generation;
@@ -437,7 +437,7 @@ void sctk_broadcast_hetero_messages ( void *buffer, const size_t size,
 	/* Looking if root is on node */
 	root_process = sctk_get_process_rank_from_task_rank ( root );
 
-	if ( root_process == get_process_rank() )
+	if ( root_process == mpc_common_get_process_rank() )
 		is_root_on_node = 1;
 
 	if ( ( ( is_root_on_node ) && ( root == myself ) ) ||
@@ -558,7 +558,7 @@ static void sctk_allreduce_hetero_messages_intern_inter ( const void *buffer_in,
 		}
 	}
 
-	int process_rank = get_process_rank();
+	int process_rank = mpc_common_get_process_rank();
 
 	process_array = sctk_get_process_array ( communicator ),
 	myself_ptr = ( ( int * ) bsearch ( ( void * ) &process_rank,

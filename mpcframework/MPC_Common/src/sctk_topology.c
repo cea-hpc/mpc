@@ -298,7 +298,7 @@ void create_placement_rendering(int os_pu, int os_master_pu, int task_id){
     char string_rgb_hexa_master[512];
 
 
-    chose_color_task(task_id, get_task_count(), &red, &green, &blue, &red_m, &green_m, &blue_m);
+    chose_color_task(task_id, mpc_common_get_task_count(), &red, &green, &blue, &red_m, &green_m, &blue_m);
 
     convert_rgb_to_string(red, green, blue, string_rgb_hexa);
     convert_rgb_to_string(red, green, blue, string_rgb_hexa_master);
@@ -1055,7 +1055,7 @@ sctk_restrict_topology ()
 	}
 
 	if ((sctk_share_node_capabilities == 1) 
-	&& (get_process_count() > 1))
+	&& ( mpc_common_get_process_count() > 1))
 	{
 		
 		int detected_on_this_host = 0;
@@ -1065,7 +1065,7 @@ sctk_restrict_topology ()
 		/* Determine number of processes on this node */
 		sctk_pmi_get_local_process_count(&detected_on_this_host);
 		sctk_pmi_get_local_process_rank(&rank);
-		detected = get_process_count();
+		detected = mpc_common_get_process_count();
 		sctk_nodebug("Nb process on node %d",detected_on_this_host);
 		#else
 		detected = 1;
@@ -1074,9 +1074,9 @@ sctk_restrict_topology ()
 		/* More than 1 process per node is not supported by process pinning */
 		int nodes_number = sctk_get_node_nb();
 		
-		if ( (get_process_count() != nodes_number) && !hwloc_bitmap_iszero(pin_processor_bitmap))
+		if ( ( mpc_common_get_process_count() != nodes_number) && !hwloc_bitmap_iszero(pin_processor_bitmap))
 		{
-			sctk_error("MPC_PIN_PROCESSOR_LIST cannot be set if more than 1 process per node is set. process_number=%d node_number=%d", get_process_count(), nodes_number);
+			sctk_error("MPC_PIN_PROCESSOR_LIST cannot be set if more than 1 process per node is set. process_number=%d node_number=%d", mpc_common_get_process_count(), nodes_number);
 			sctk_abort();
 		}
 
@@ -1174,7 +1174,7 @@ int sctk_restrict_topology_for_mpcomp(hwloc_topology_t *restrictedTopology,
   sctk_assert(restrictedTopology);
 
   /* Get the current MPI task rank */
-  taskRank = get_task_rank();
+  taskRank = mpc_common_get_task_rank();
 
   /* Initialize the final cpuset */
   cpuset = hwloc_bitmap_alloc();
@@ -1828,7 +1828,7 @@ void sctk_topology_destroy (void)
 {
     if(sctk_enable_graphic_placement){
 
-        if(get_local_process_rank() == 0){
+        if( mpc_common_get_local_process_rank() == 0){
             hwloc_obj_t cluster = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_MACHINE, 0);
             int lenght_max;
 
@@ -1854,8 +1854,8 @@ void sctk_topology_destroy (void)
         }
     }
     if(sctk_enable_text_placement){
-        if(get_local_process_rank() == 0){
-            printf("proc %d",get_local_process_rank());
+        if( mpc_common_get_local_process_rank() == 0){
+            printf("proc %d", mpc_common_get_local_process_rank());
             hwloc_obj_t cluster = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_MACHINE, 0);
             int lenght_max;
             int lenght_min;

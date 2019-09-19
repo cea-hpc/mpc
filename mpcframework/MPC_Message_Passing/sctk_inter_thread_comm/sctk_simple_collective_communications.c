@@ -55,7 +55,7 @@ void sctk_barrier_simple ( const sctk_communicator_t communicator,
 
 void sctk_barrier_simple_init ( sctk_internal_collectives_struct_t *tmp,  __UNUSED__ sctk_communicator_t id )
 {
-	if ( get_process_count() == 1 )
+	if ( mpc_common_get_process_count() == 1 )
 	{
 		tmp->barrier.barrier_simple.done = 0;
 		sctk_thread_mutex_init ( & ( tmp->barrier.barrier_simple.lock ), NULL );
@@ -81,7 +81,7 @@ void sctk_broadcast_simple ( void *buffer, const size_t size,
 
 
 	local = sctk_get_nb_task_local ( com_id );
-	id = sctk_get_rank ( com_id, get_task_rank() );
+	id = sctk_get_rank ( com_id, mpc_common_get_task_rank() );
 
 	sctk_thread_mutex_lock ( &tmp->broadcast.broadcast_simple.lock );
 	{
@@ -121,7 +121,7 @@ void sctk_broadcast_simple ( void *buffer, const size_t size,
 
 void sctk_broadcast_simple_init ( struct sctk_internal_collectives_struct_s *tmp,  __UNUSED__ sctk_communicator_t id )
 {
-	if ( get_process_count() == 1 )
+	if ( mpc_common_get_process_count() == 1 )
 	{
 		tmp->broadcast.broadcast_simple.buffer = NULL;
 		tmp->broadcast.broadcast_simple.size = 0;
@@ -200,7 +200,7 @@ static void sctk_allreduce_simple ( const void *buffer_in, void *buffer_out,
 
 void sctk_allreduce_simple_init ( struct sctk_internal_collectives_struct_s *tmp, __UNUSED__  sctk_communicator_t id )
 {
-	if ( get_process_count() == 1 )
+	if ( mpc_common_get_process_count() == 1 )
 	{
 		tmp->allreduce.allreduce_simple.buffer = NULL;
 		tmp->allreduce.allreduce_simple.size = 0;
@@ -220,7 +220,7 @@ void sctk_allreduce_simple_init ( struct sctk_internal_collectives_struct_s *tmp
 /************************************************************************/
 void sctk_collectives_init_simple ( sctk_communicator_t id )
 {
-	if ( get_process_count() == 1 )
+	if ( mpc_common_get_process_count() == 1 )
 	{
 		sctk_collectives_init ( id,
 		                        sctk_barrier_simple_init,

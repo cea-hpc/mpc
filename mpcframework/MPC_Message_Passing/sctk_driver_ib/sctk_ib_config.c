@@ -53,7 +53,7 @@ void sctk_ib_config_check ( sctk_ib_rail_info_t *rail_ib )
 {
 	LOAD_CONFIG ( rail_ib );
 
-	if ( ( get_process_rank() == 0 )
+	if ( ( mpc_common_get_process_rank() == 0 )
 	        && ( config->low_memory ) )
 	{
 		sctk_error ( "LOW mem module enabled: use it at your own risk!" );
@@ -70,7 +70,7 @@ void sctk_ib_config_print ( sctk_ib_rail_info_t *rail_ib )
 
 	return;
 
-	if ( get_process_rank() == 0 )
+	if ( mpc_common_get_process_rank() == 0 )
 	{
 		fprintf ( stderr, "############# IB configuration\n"
 		          "eager_limit      = %ld\n"

@@ -127,7 +127,7 @@ sctk_shm_init_send_frag_msg( int remote, sctk_thread_ptp_message_t* msg)
    frag_infos->size_total = SCTK_MSG_SIZE(msg);
    frag_infos->size_copied = 0;
    frag_infos->remote_mpi_rank = remote; 
-   frag_infos->local_mpi_rank = get_local_process_rank(); 
+   frag_infos->local_mpi_rank = mpc_common_get_local_process_rank(); 
    frag_infos->header = msg;
    frag_infos->msg = (void*) msg->tail.message.contiguous.addr;
     
@@ -153,7 +153,7 @@ sctk_shm_init_recv_frag_msg(int key, int remote, sctk_thread_ptp_message_t* msg)
    frag_infos->size_total = msg_size;
    frag_infos->size_copied = 0;
    frag_infos->remote_mpi_rank = remote;
-   frag_infos->local_mpi_rank = get_local_process_rank();
+   frag_infos->local_mpi_rank = mpc_common_get_local_process_rank();
    frag_infos->header = (sctk_thread_ptp_message_t*) sctk_malloc(msg_size+sizeof(sctk_thread_ptp_message_t));
    frag_infos->msg = (char*) frag_infos->header + sizeof(sctk_thread_ptp_message_t);
 
@@ -253,7 +253,7 @@ sctk_network_frag_msg_next_send(sctk_shm_proc_frag_info_t* frag_infos)
    size = (size < SCTK_SHM_CELL_SIZE) ? size : SCTK_SHM_CELL_SIZE;
 
    cell->msg_type = SCTK_SHM_NEXT_FRAG;
-   cell->src = get_local_process_rank();
+   cell->src = mpc_common_get_local_process_rank();
    cell->dest = msg_dest;
    cell->size_to_copy = size;
    cell->frag_hkey = msg_key;
@@ -298,7 +298,7 @@ sctk_network_frag_msg_shm_idle(int max_try)
   	    return;
     
     cur_try = 0;
-    for (i=0; i < get_local_process_count(); i++)
+    for (i=0; i < mpc_common_get_local_process_count(); i++)
     {
     	MPC_HT_ITER( &(sctk_shm_sending_frag_hastable_ptr[i]), infos )
     	   if (!sctk_network_frag_msg_next_send(infos) && cur_try++ < max_try)
@@ -367,14 +367,14 @@ void
 sctk_network_frag_shm_interface_init(void)
 {
     int i;
-    const int sctk_shm_process_on_node = get_local_process_count();
+    const int sctk_shm_process_on_node = mpc_common_get_local_process_count();
 
     sctk_shm_sending_frag_hastable_ptr = (struct MPCHT*) sctk_malloc(sctk_shm_process_on_node * sizeof(struct MPCHT)); 
     sctk_shm_recving_frag_hastable_ptr = (struct MPCHT*) sctk_malloc(sctk_shm_process_on_node * sizeof(struct MPCHT)); 
     
     for(i=0; i < sctk_shm_process_on_node; i++)
     { 
-        sctk_nodebug("%d %d %p", get_local_process_rank(), i, &(sctk_shm_recving_frag_hastable_ptr[i]));
+        sctk_nodebug("%d %d %p", mpc_common_get_local_process_rank(), i, &(sctk_shm_recving_frag_hastable_ptr[i]));
     	MPCHT_init(&(sctk_shm_recving_frag_hastable_ptr[i]), SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS);
     	MPCHT_init(&(sctk_shm_sending_frag_hastable_ptr[i]), SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS);
     }
@@ -382,7 +382,7 @@ sctk_network_frag_shm_interface_init(void)
 
 void sctk_network_frag_shm_interface_free(void)
 {
-	const int max = get_local_process_count();
+	const int max = mpc_common_get_local_process_count();
 	int i;
 
 	for (i = 0; i < max; ++i) {

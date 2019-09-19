@@ -735,7 +735,7 @@ int __MPC_init_disguise( struct sctk_task_specific_s * my_specific )
     sctk_barrier( SCTK_COMM_WORLD );
 
     ___disguisements[ my_id ] = my_specific;
-    ___local_to_global_table[ my_id ] = get_task_rank();
+    ___local_to_global_table[ my_id ] = mpc_common_get_task_rank();
 
     sctk_barrier( SCTK_COMM_WORLD );
 
@@ -858,7 +858,7 @@ static inline void __MPC_init_task_specific_t(sctk_task_specific_t *tmp) {
   tmp->progress_list = NULL;
 
   /* Set task id */
-  tmp->task_id = get_task_rank();
+  tmp->task_id = mpc_common_get_task_rank();
 
   __MPC_init_progress(tmp);
 
@@ -1071,7 +1071,7 @@ struct sctk_task_specific_s *__MPC_get_task_specific() {
   static __thread int last_rank = -2;
   static __thread struct sctk_task_specific_s *last_specific = NULL;
 
-   if ( last_rank == get_task_rank() ) {
+   if ( last_rank == mpc_common_get_task_rank() ) {
        if( last_specific )
         return last_specific;
    }
@@ -1081,7 +1081,7 @@ struct sctk_task_specific_s *__MPC_get_task_specific() {
             sctk_task_specific);
 
   last_specific = ret;
-  last_rank = get_task_rank();
+  last_rank = mpc_common_get_task_rank();
   
   return ret;
 }
@@ -1542,7 +1542,7 @@ int ___grequest_disguise_poll( void * arg )
         goto POLL_DONE_G;
     }
 
-    my_rank = get_task_rank();
+    my_rank = mpc_common_get_task_rank();
 
     if( my_rank != req->grequest_rank )
     {
@@ -1610,7 +1610,7 @@ int PMPCX_Grequest_start_generic(MPC_Grequest_query_function *query_fn,
   /* Set not null as we want to be waited */
   request->is_null = 0;
 
-  request->grequest_rank = get_task_rank();
+  request->grequest_rank = mpc_common_get_task_rank();
 
   /* Fill in generalized request CTX */
   request->pointer_to_source_request = (void *)request;
@@ -3104,10 +3104,10 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 #ifdef MPC_Fault_Tolerance
 	if (sctk_checkpoint_mode)
 	{
-		int total_nbprocs = get_process_count();
+		int total_nbprocs = mpc_common_get_process_count();
 		int local_nbtasks = sctk_get_local_task_number();
 		int local_tasknum = sctk_get_local_task_rank();
-		int task_rank = get_task_rank();
+		int task_rank = mpc_common_get_task_rank();
 		int pmi_rank = -1;
 		static sctk_atomics_int init_once = OPA_INT_T_INITIALIZER(0);
 		static sctk_atomics_int gen_acquire = OPA_INT_T_INITIALIZER(0);
@@ -3239,7 +3239,7 @@ int PMPC_Migrate() {
       file = fopen (name, "w+");
       assume (file != NULL);
       fprintf (file, "Restart 0\n");
-      fprintf (file, "Process %d\n", get_process_rank());
+      fprintf (file, "Process %d\n", mpc_common_get_process_rank());
       fprintf (file, "Thread %p\n", self_p);
       fprintf (file, "Virtual processor %d\n", vp);
       fclose (file);
@@ -3317,7 +3317,7 @@ int PMPC_Move_to(int process, int cpuid) {
   int proc;
   proc = sctk_get_processor_rank();
   sctk_nodebug("move to %d %d(old %d)", process, cpuid, proc);
-  if (process == get_process_rank()) {
+  if (process == mpc_common_get_process_rank()) {
     if (proc != cpuid) {
       sctk_thread_proc_migration(cpuid);
     }
@@ -3343,7 +3343,7 @@ int PMPC_Move_to(int process, int cpuid) {
 	  file = fopen (name, "w+");
 	  assume (file != NULL);
 	  fprintf (file, "Restart 0\n");
-	  fprintf (file, "Process %d\n", get_process_rank());
+	  fprintf (file, "Process %d\n", mpc_common_get_process_rank());
 	  fprintf (file, "Thread %p\n", self_p);
 	  fprintf (file, "Virtual processor %d\n", vp);
 	  fclose (file);
@@ -3362,7 +3362,7 @@ int PMPC_Move_to(int process, int cpuid) {
 	  file = fopen (name, "w+");
 	  assume (file != NULL);
 	  fprintf (file, "Restart 0\n");
-	  fprintf (file, "Process %d\n", get_process_rank());
+	  fprintf (file, "Process %d\n", mpc_common_get_process_rank());
 	  fprintf (file, "Thread %p\n", self_p);
 	  fprintf (file, "Virtual processor %d\n", vp);
 	  fclose (file);
@@ -3467,7 +3467,7 @@ int sctk_user_main(int argc, char **argv) {
   sctk_barrier((sctk_communicator_t)MPC_COMM_WORLD);
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
-  MPC_Task_hook(get_task_rank());
+  MPC_Task_hook(mpc_common_get_task_rank());
 #endif
 
 #ifdef MPC_OpenMP
@@ -3543,14 +3543,14 @@ int PMPC_Comm_remote_size(MPC_Comm comm, int *size) {
 
 int PMPC_Node_rank(int *rank) {
   SCTK_PROFIL_START(MPC_Node_rank);
-  *rank = get_node_rank();
+  *rank = mpc_common_get_node_rank();
   SCTK_PROFIL_END(MPC_Node_rank);
   MPC_ERROR_SUCESS();
 }
 
 int PMPC_Node_number(int *number) {
   SCTK_PROFIL_START(MPC_Node_number);
-  *number = get_node_count();
+  *number = mpc_common_get_node_count();
   SCTK_PROFIL_END(MPC_Node_number);
   MPC_ERROR_SUCESS();
 }
@@ -3571,28 +3571,28 @@ int PMPC_Processor_number(int *number) {
 
 int PMPC_Process_rank(int *rank) {
   SCTK_PROFIL_START(MPC_Process_rank);
-  *rank = get_process_rank();
+  *rank = mpc_common_get_process_rank();
   SCTK_PROFIL_END(MPC_Process_rank);
   MPC_ERROR_SUCESS();
 }
 
 int PMPC_Process_number(int *number) {
   SCTK_PROFIL_START(MPC_Process_number);
-  *number = get_process_count();
+  *number = mpc_common_get_process_count();
   SCTK_PROFIL_END(MPC_Process_number);
   MPC_ERROR_SUCESS();
 }
 
 int PMPC_Local_process_rank(int *rank) {
   SCTK_PROFIL_START(MPC_Local_process_rank);
-  *rank = get_local_process_rank();
+  *rank = mpc_common_get_local_process_rank();
   SCTK_PROFIL_END(MPC_Local_process_rank);
   MPC_ERROR_SUCESS();
 }
 
 int PMPC_Local_process_number(int *number) {
   SCTK_PROFIL_START(MPC_Local_process_number);
-  *number = get_local_process_count();
+  *number = mpc_common_get_local_process_count();
   SCTK_PROFIL_END(MPC_Local_process_number);
   MPC_ERROR_SUCESS();
 }
@@ -7452,7 +7452,7 @@ int PMPC_Info_get_valuelen(MPC_Info info, char *key, int *valuelen, int *flag) {
 void MPC_Send_signalization_network(int dest_process, int tag, void *buff,
                                     size_t size) {
 #ifdef MPC_Message_Passing
-  sctk_route_messages_send(get_process_rank(), dest_process,
+  sctk_route_messages_send(mpc_common_get_process_rank(), dest_process,
                            SCTK_CONTROL_MESSAGE_USER, tag, buff, size);
 #endif
 }
@@ -7461,7 +7461,7 @@ void MPC_Send_signalization_network(int dest_process, int tag, void *buff,
 void MPC_Recv_signalization_network(int src_process, int tag, void *buff,
                                     size_t size) {
 #ifdef MPC_Message_Passing
-  sctk_route_messages_recv(src_process, get_process_rank(),
+  sctk_route_messages_recv(src_process, mpc_common_get_process_rank(),
                            SCTK_CONTROL_MESSAGE_USER, tag, buff, size);
 #endif
 }

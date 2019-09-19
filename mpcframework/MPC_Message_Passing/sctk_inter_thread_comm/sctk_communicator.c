@@ -318,7 +318,7 @@ int sctk_is_in_local_group_rank ( const sctk_communicator_t communicator , int c
 **/
 int sctk_is_in_local_group ( const sctk_communicator_t communicator )
 {
-	int comm_world_rank = get_task_rank();
+	int comm_world_rank = mpc_common_get_task_rank();
 	
 	assume( 0 <= comm_world_rank );
 	
@@ -1405,7 +1405,7 @@ static inline void sctk_communicator_init_intern_init_only ( const int nb_task, 
     }
     else {
         /* We are building comm_world */
-        if (get_node_count() == 1)
+        if ( mpc_common_get_node_count() == 1)
             tmp->is_shared_node = 1;
     }
 
@@ -1490,7 +1490,7 @@ void sctk_communicator_self_init()
 
 	/* Construct the list of processes */
 	process_array = sctk_malloc ( sizeof ( int ) );
-	*process_array = get_process_rank();
+	*process_array = mpc_common_get_process_rank();
 	sctk_communicator_init_intern ( 1, SCTK_COMM_SELF, last_local, first_local, local_tasks, NULL, NULL, NULL, process_array, 1 );
 }
 
@@ -1510,25 +1510,25 @@ void sctk_communicator_world_init ( const int nb_task )
 	int local_tasks;
 	int *process_array;
 
-	pos = get_process_rank();
+	pos = mpc_common_get_process_rank();
 
-	local_tasks = nb_task / get_process_count();
+	local_tasks = nb_task / mpc_common_get_process_count();
 
-	if ( nb_task % get_process_count() > pos )
+	if ( nb_task % mpc_common_get_process_count() > pos )
 		local_tasks++;
 
-	first_local = get_process_rank() * local_tasks;
+	first_local = mpc_common_get_process_rank() * local_tasks;
 
-	if ( nb_task % get_process_count() <= pos )
+	if ( nb_task % mpc_common_get_process_count() <= pos )
 	{
-		first_local += nb_task % get_process_count();
+		first_local += nb_task % mpc_common_get_process_count();
 	}
 
 	last_local = first_local + local_tasks - 1;
 
 
 	int * task_to_process = NULL;
-	if(get_process_count() < 1024 )
+	if( mpc_common_get_process_count() < 1024 )
 	{
 		task_to_process = sctk_malloc(sizeof(int) * nb_task);
 		assume(task_to_process);
@@ -1539,14 +1539,14 @@ void sctk_communicator_world_init ( const int nb_task )
 	}
 
 	/* Construct the list of processes */
-	process_array = sctk_malloc ( get_process_count() * sizeof ( int ) );
+	process_array = sctk_malloc ( mpc_common_get_process_count() * sizeof ( int ) );
 
-	for ( i = 0; i < get_process_count(); ++i )
+	for ( i = 0; i < mpc_common_get_process_count(); ++i )
 		process_array[i] = i;
 
-	sctk_communicator_init_intern ( nb_task, SCTK_COMM_WORLD, last_local, first_local, local_tasks, NULL, NULL, task_to_process, process_array, get_process_count() );
+	sctk_communicator_init_intern ( nb_task, SCTK_COMM_WORLD, last_local, first_local, local_tasks, NULL, NULL, task_to_process, process_array, mpc_common_get_process_count() );
 
-	if ( get_process_count() > 1 )
+	if ( mpc_common_get_process_count() > 1 )
 	{
 		sctk_pmi_barrier();
 	}
@@ -1554,7 +1554,7 @@ void sctk_communicator_world_init ( const int nb_task )
 
 void sctk_communicator_delete()
 {
-	if ( get_process_count() > 1 )
+	if ( mpc_common_get_process_count() > 1 )
 	{
 		sctk_pmi_barrier();
 	}
@@ -1950,7 +1950,7 @@ int sctk_get_remote_comm_world_rank ( const sctk_communicator_t communicator, co
 		{
 			/* Handle DUP of COMM_SELF case */
 			if ( tmp->is_comm_self )
-				return get_task_rank();
+				return mpc_common_get_task_rank();
 
 			return rank;
 		}
@@ -1979,7 +1979,7 @@ int _sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const in
 		{
 			int cwrank;
 			/* get task id */
-			cwrank = get_task_rank();
+			cwrank = mpc_common_get_task_rank();
 			return cwrank;
 		}
 
@@ -2027,7 +2027,7 @@ int _sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const in
                 } else {
                   /* Handle DUP of COMM_SELF case */
                   if (tmp->is_comm_self)
-                    return get_task_rank();
+                    return mpc_common_get_task_rank();
 
                   return rank;
                 }
@@ -2073,7 +2073,7 @@ int _sctk_get_process_rank_from_task_rank( int rank )
 	return rank;
 #endif
 
-	if ( get_process_count() == 1 )
+	if ( mpc_common_get_process_count() == 1 )
 		return 0;
 
 	tmp = sctk_get_internal_communicator( SCTK_COMM_WORLD );
@@ -2092,8 +2092,8 @@ int _sctk_get_process_rank_from_task_rank( int rank )
 
 	int local_tasks;
 	int remain_tasks;
-	local_tasks = tmp->nb_task / get_process_count();
-	remain_tasks = tmp->nb_task % get_process_count();
+	local_tasks = tmp->nb_task / mpc_common_get_process_count();
+	remain_tasks = tmp->nb_task % mpc_common_get_process_count();
 
 	if ( rank < ( local_tasks + 1 ) * remain_tasks )
 		proc_rank = rank / ( local_tasks + 1 );
@@ -2391,7 +2391,7 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 	int *remote_task_list;
 	/* get task id */
 
-	rank = get_task_rank();
+	rank = mpc_common_get_task_rank();
 	sctk_barrier (local_comm);
 	/* group rank */
 	grank = sctk_get_rank ( local_comm, rank );
@@ -2497,7 +2497,7 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 			global_to_local[local_to_global[i]] = i;
 			task_to_process[i] = sctk_get_process_rank_from_task_rank ( local_to_global[i] );
 
-			if ( task_to_process[i] == get_process_rank() )
+			if ( task_to_process[i] == mpc_common_get_process_rank() )
 			{
 				local_tasks++;
 			}
@@ -2568,7 +2568,7 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 			remote_global_to_local[remote_local_to_global[i]] = i;
 			remote_task_to_process[i] = sctk_get_process_rank_from_task_rank ( remote_local_to_global[i] );
 
-			if ( remote_task_to_process[i] == get_process_rank() )
+			if ( remote_task_to_process[i] == mpc_common_get_process_rank() )
 			{
 				remote_local_tasks++;
 			}
@@ -2715,7 +2715,7 @@ sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_
 	int rank, grank;
 
 	/* get task id */
-	rank = get_task_rank();
+	rank = mpc_common_get_task_rank();
 	/* get group rank */
 	grank = sctk_get_rank ( origin_communicator, rank );
 
@@ -2752,7 +2752,7 @@ sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_
             task_to_process[i] =
                 sctk_get_process_rank_from_task_rank(local_to_global[i]);
 
-            if (task_to_process[i] == get_process_rank()) {
+            if (task_to_process[i] == mpc_common_get_process_rank()) {
               local_tasks++;
             }
 
@@ -2854,7 +2854,7 @@ sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communi
 	int rank, grank;
 
 	/* get task id */
-	rank = get_task_rank();
+	rank = mpc_common_get_task_rank();
 	/* get group rank */
 	grank = sctk_get_rank ( origin_communicator, rank );
 
@@ -2905,7 +2905,7 @@ sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communi
 			global_to_local[local_to_global[i]] = i;
 			task_to_process[i] = sctk_get_process_rank_from_task_rank ( local_to_global[i] );
 
-			if ( task_to_process[i] == get_process_rank() )
+			if ( task_to_process[i] == mpc_common_get_process_rank() )
 			{
 				local_tasks++;
 			}

@@ -475,7 +475,7 @@ void tcp_control_message_handler( struct sctk_rail_info_s * rail, __UNUSED__ int
  */
 void tcp_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process )
 {
-	__sctk_network_connection_from_tcp ( get_process_rank(), dest_process, rail, ROUTE_ORIGIN_DYNAMIC );
+	__sctk_network_connection_from_tcp ( mpc_common_get_process_rank(), dest_process, rail, ROUTE_ORIGIN_DYNAMIC );
 }
 
 
@@ -527,16 +527,16 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	}
 
 	/* Otherwise BUILD a TCP bootstrap ring */
-	right_rank = ( get_process_rank() + 1 ) % get_process_count();
-	left_rank = ( get_process_rank() + get_process_count() - 1 ) % get_process_count();
+	right_rank = ( mpc_common_get_process_rank() + 1 ) % mpc_common_get_process_count();
+	left_rank = ( mpc_common_get_process_rank() + mpc_common_get_process_count() - 1 ) % mpc_common_get_process_count();
 
-	sctk_nodebug ( "Connection Infos (%d): %s", get_process_rank(), rail->network.tcp.connection_infos );
+	sctk_nodebug ( "Connection Infos (%d): %s", mpc_common_get_process_rank(), rail->network.tcp.connection_infos );
 
 #ifdef SCTK_LIB_MODE
-	sctk_nodebug("TCP BOOTSTRAP LIB MODE %d %d", get_process_count(), get_process_rank());
-	if ( get_process_count() > 2 )
+	sctk_nodebug("TCP BOOTSTRAP LIB MODE %d %d", mpc_common_get_process_count(), mpc_common_get_process_rank());
+	if ( mpc_common_get_process_count() > 2 )
 	{
-		if ( get_process_rank() % 2 == 0 )
+		if ( mpc_common_get_process_rank() % 2 == 0 )
 		{
 			MPC_Net_hook_send_to( rail->network.tcp.connection_infos, MAX_STRING_SIZE, left_rank );
 			MPC_Net_hook_recv_from( right_rank_connection_infos, MAX_STRING_SIZE, right_rank );
@@ -549,9 +549,9 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	}
 	else
 	{
-		if( get_process_count() == 2 )
+		if( mpc_common_get_process_count() == 2 )
 		{
-			if( get_process_rank() == 1 )
+			if( mpc_common_get_process_rank() == 1 )
 			{
 				MPC_Net_hook_send_to( rail->network.tcp.connection_infos, MAX_STRING_SIZE, left_rank );
 			}
@@ -574,13 +574,13 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	sctk_pmi_barrier();
 #endif
 
-	sctk_nodebug ( "DEST Connection Infos(%d) to %d: %s", get_process_rank(), right_rank, right_rank_connection_infos );
+	sctk_nodebug ( "DEST Connection Infos(%d) to %d: %s", mpc_common_get_process_rank(), right_rank, right_rank_connection_infos );
 
 
 	/* Intiate ring connection */
-	if ( get_process_count() > 2 )
+	if ( mpc_common_get_process_count() > 2 )
 	{
-		if ( get_process_rank() % 2 == 0 )
+		if ( mpc_common_get_process_rank() % 2 == 0 )
 		{
 			sctk_nodebug ( "Connect to %d", right_rank );
 			right_socket = sctk_tcp_connect_to ( right_rank_connection_infos, rail );
@@ -624,7 +624,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	else
 	{
 		/* Here particular case of two processes (not to loop) */
-		if ( get_process_rank() == 0 )
+		if ( mpc_common_get_process_rank() == 0 )
 		{
 			sctk_nodebug ( "Connect to %d", right_rank );
 			right_socket = sctk_tcp_connect_to ( right_rank_connection_infos, rail );
@@ -653,7 +653,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	/* We are all done, now register the routes and create the polling threads */
 	sctk_tcp_add_route ( right_rank, right_socket, rail, tcp_thread, ROUTE_ORIGIN_STATIC );
 
-	if ( get_process_count() > 2 )
+	if ( mpc_common_get_process_count() > 2 )
 	{
 		sctk_tcp_add_route ( left_rank, left_socket, rail, tcp_thread, ROUTE_ORIGIN_STATIC );
 	}

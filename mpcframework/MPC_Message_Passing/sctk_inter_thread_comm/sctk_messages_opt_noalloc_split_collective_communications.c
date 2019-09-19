@@ -156,9 +156,9 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
 		sctk_opt_noalloc_split_messages_init_items ( &table );
 
 		total = sctk_get_nb_task_total ( communicator );
-		myself = sctk_get_rank ( communicator, get_task_rank() );
+		myself = sctk_get_rank ( communicator, mpc_common_get_task_rank() );
                 ptp_internal =
-                    sctk_get_internal_ptp(get_task_rank(), communicator);
+                    sctk_get_internal_ptp( mpc_common_get_task_rank(), communicator);
                 sctk_nodebug("enter barrier total = %d, myself = %d", total,
                              myself);
                 total_max = log(total) / log(barrier_arity);
@@ -243,9 +243,9 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
           sctk_opt_noalloc_split_messages_init_items(&table);
 
 
-          myself = sctk_get_rank(communicator, get_task_rank());
+          myself = sctk_get_rank(communicator, mpc_common_get_task_rank());
           ptp_internal =
-              sctk_get_internal_ptp(get_task_rank(), communicator);
+              sctk_get_internal_ptp(mpc_common_get_task_rank(), communicator);
 
           rsize = sctk_get_nb_task_remote(communicator);
 
@@ -310,10 +310,10 @@ void sctk_broadcast_opt_noalloc_split_messages ( void *buffer, const size_t size
 		}
 
 		total = sctk_get_nb_task_total ( communicator );
-		myself = sctk_get_rank ( communicator, get_task_rank() );
+		myself = sctk_get_rank ( communicator, mpc_common_get_task_rank() );
 		related_myself = ( myself + total - root ) % total;
                 ptp_internal =
-                    sctk_get_internal_ptp(get_task_rank(), communicator);
+                    sctk_get_internal_ptp(mpc_common_get_task_rank(), communicator);
                 total_max = log(total) / log(BROADCAST_ARRITY);
                 total_max = pow(BROADCAST_ARRITY, total_max);
 
@@ -484,9 +484,9 @@ static void sctk_allreduce_opt_noalloc_split_messages_intern ( const void *buffe
 	assume ( size > 0 );
 
 	total = sctk_get_nb_task_total ( communicator );
-	myself = sctk_get_rank ( communicator, get_task_rank() );
+	myself = sctk_get_rank ( communicator, mpc_common_get_task_rank() );
         ptp_internal =
-            sctk_get_internal_ptp(get_task_rank(), communicator);
+            sctk_get_internal_ptp(mpc_common_get_task_rank(), communicator);
 
         total_max = log(total) / log(ALLREDUCE_ARRITY);
         total_max = pow(ALLREDUCE_ARRITY, total_max);

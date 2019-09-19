@@ -230,7 +230,7 @@ int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t *restrictedTopology,
 	final_cpuset = hwloc_bitmap_alloc();
 	topology = sctk_get_topology_object();
 
-	const int taskRank = get_task_rank();
+	const int taskRank = mpc_common_get_task_rank();
 	const int taskVp = sctk_get_init_vp_and_nbvp( taskRank, &num_mvps );
 	const int npus = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_PU );
 	const int ncores = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_CORE );
@@ -364,7 +364,7 @@ static inline void __mpcomp_read_env_variables() {
   char *env;
 
   sctk_nodebug("__mpcomp_read_env_variables: Read env vars (MPC rank: %d)",
-               get_task_rank());
+               mpc_common_get_task_rank());
 
   /******* OMP_VP_NUMBER *********/
   OMP_MICROVP_NUMBER = sctk_runtime_config_get()->modules.openmp.vp;
@@ -609,7 +609,7 @@ static inline void __mpcomp_read_env_variables() {
   }
 
   /***** PRINT SUMMARY (only first MPI rank) ******/
-  if (getenv("MPC_DISABLE_BANNER") == NULL && get_task_rank() == 0) {
+  if (getenv("MPC_DISABLE_BANNER") == NULL && mpc_common_get_task_rank() == 0) {
     fprintf(stderr,
             "MPC OpenMP version %d.%d (Intel and Patched GCC compatibility)\n",
             SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR);
@@ -758,7 +758,7 @@ void __mpcomp_init(void) {
     }
 
     /* Get the rank of current MPI task */
-    task_rank = get_task_rank();
+    task_rank = mpc_common_get_task_rank();
 
     if (task_rank == -1) {
       /* No parallel OpenMP if MPI has not been initialized yet */

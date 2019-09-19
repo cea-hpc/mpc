@@ -1740,7 +1740,7 @@ int mpc_Win_contexes_fence_control(MPI_Win win) {
 
     {
       sctk_control_message_process_all();
-      sctk_control_message_process_local(get_task_rank());
+      sctk_control_message_process_local(mpc_common_get_task_rank());
       sctk_notify_idle_message();
       mpc_thread_yield();
     }

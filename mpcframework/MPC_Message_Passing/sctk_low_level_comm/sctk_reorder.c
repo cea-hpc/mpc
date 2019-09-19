@@ -159,10 +159,10 @@ int sctk_send_message_from_network_reorder ( sctk_thread_ptp_message_t *msg )
 			     SCTK_MSG_SRC_TASK ( msg ),
 			     SCTK_MSG_DEST_TASK ( msg ), SCTK_MSG_NUMBER ( msg ) );
 
-		sctk_nodebug("RET %d == %d", dest_process, get_process_rank() );
+		sctk_nodebug("RET %d == %d", dest_process, mpc_common_get_process_rank() );
 
 		/* Indirect messages, we do not check PSN */
-		if( (get_process_rank() != dest_process)
+		if( (mpc_common_get_process_rank() != dest_process)
 		/* Process level messages we do not check the PSN */
 		||  (sctk_message_class_is_process_specific(SCTK_MSG_SPECIFIC_CLASS(msg)) ) )
 		{
@@ -240,7 +240,7 @@ int sctk_prepare_send_message_to_network_reorder ( sctk_thread_ptp_message_t *ms
 	int src_process;
 	src_process = sctk_get_process_rank_from_task_rank ( src_task );
 
-	if ( get_process_rank() != src_process )
+	if ( mpc_common_get_process_rank() != src_process )
 	{
 		return 0;
 	}

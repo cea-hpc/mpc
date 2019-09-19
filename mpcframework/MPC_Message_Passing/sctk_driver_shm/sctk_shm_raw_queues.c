@@ -95,8 +95,8 @@ sctk_shm_recv_cell(void)
     sctk_shm_item_t * item;
     volatile sctk_shm_list_t *queue;
 
-    item_shm_infos = sctk_shm_get_region_infos(get_local_process_rank());
-    queue = sctk_shm_get_queue_by_type(SCTK_SHM_CELLS_QUEUE_RECV,get_local_process_rank());
+    item_shm_infos = sctk_shm_get_region_infos( mpc_common_get_local_process_rank() );
+    queue = sctk_shm_get_queue_by_type(SCTK_SHM_CELLS_QUEUE_RECV, mpc_common_get_local_process_rank());
     item = sctk_shm_dequeue_mt(queue,item_shm_infos->sctk_shm_asymm_addr);
 
     return sctk_shm_item_to_cell(item);

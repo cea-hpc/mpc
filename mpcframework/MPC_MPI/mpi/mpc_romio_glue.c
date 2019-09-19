@@ -228,7 +228,7 @@ int MPIR_Get_node_id(MPI_Comm comm, int rank, int *id) {
   struct process_nb_from_node_rank *nodes_infos = NULL;
   sctk_pmi_get_process_number_from_node_rank(&nodes_infos);
 
-  int node_number = get_node_count();
+  int node_number = mpc_common_get_node_count();
 
   struct process_nb_from_node_rank *tmp;
 

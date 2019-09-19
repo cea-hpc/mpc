@@ -119,15 +119,15 @@ sctk_print_debug_infos()
         SCTK_COLOR_GREEN([%4d/%4d/%4d/)
         SCTK_COLOR_GREEN_BOLD(%4d)
         SCTK_COLOR_GREEN(/%4d/%4d]),
-        get_node_rank(),
-        get_process_rank(), sctk_thread_get_vp (), task_id, thread_id, get_local_process_rank());
+        mpc_common_get_node_rank(),
+        mpc_common_get_process_rank(), sctk_thread_get_vp (), task_id, thread_id, mpc_common_get_local_process_rank());
   }
   else {
     snprintf(ret,
 			DEBUG_INFO_SIZE,
         "[%4d/%4d/%4d/%4d/%4d/%4d]",
-        get_node_rank(),
-        get_process_rank(), sctk_thread_get_vp (), task_id, thread_id, get_local_process_rank());
+        mpc_common_get_node_rank(),
+        mpc_common_get_process_rank(), sctk_thread_get_vp (), task_id, thread_id, mpc_common_get_local_process_rank());
   }
 
   return ret;
@@ -399,7 +399,7 @@ MPC_check_compatibility_lib (int major, int minor, char *pre)
     int task_id;
     int thread_id;
 
-    if (get_process_rank()!=0)
+    if ( mpc_common_get_process_rank() != 0 )
       return;
 
     sctk_get_thread_info (&task_id, &thread_id);
@@ -636,7 +636,7 @@ sctk_formated_dbg_print_abort (FILE * stream, const int line,
 void
 sctk_flush_version ()
 {
-  if (sctk_debug_version_details && (get_process_rank() == 0))
+  if (sctk_debug_version_details && ( mpc_common_get_process_rank() == 0))
     {
       sctk_noalloc_fprintf (stderr, sctk_version_buff);
       sctk_version_buff[0] = '\0';
