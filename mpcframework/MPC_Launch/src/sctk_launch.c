@@ -787,14 +787,12 @@ static int sctk_env_init_intern(int *argc, char ***argv) {
       *argc = (*argc) - 1;
     }
   }
-  
+
   if( sctk_enable_smt_capabilities == 1)
   {
-	printf("BEEFOR %d\n", sctk_processor_nb_val);
      sctk_processor_nb_val *= mpc_common_topo_get_ht_per_core();
-	 printf("AFTRER %d\n", sctk_processor_nb_val);
   }
- 
+
   i++;
   for (j = sctk_start_argc + 1; i < sctk_initial_argc; i++) {
     new_argv[j] = (*argv)[i];

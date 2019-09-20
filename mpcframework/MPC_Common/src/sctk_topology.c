@@ -730,8 +730,8 @@ hwloc_cpuset_t sctk_topology_get_roots_for_level( hwloc_obj_type_t type )
 	return roots;
 }
 
-int __sctk_topology_distance_fill_prefix( hwloc_obj_t *prefix,
-										  hwloc_obj_t target_obj )
+int _topo_get_distance_from_pu_fill_prefix( hwloc_obj_t *prefix,
+										    hwloc_obj_t target_obj )
 {
 	/* Register in the tree */
 	if ( !target_obj )
@@ -740,7 +740,7 @@ int __sctk_topology_distance_fill_prefix( hwloc_obj_t *prefix,
 	int depth = 0;
 
 	/* Compute depth as it is not set for
-   * PCI devices ... */
+     * PCI devices ... */
 	hwloc_obj_t cur = target_obj;
 
 	while ( cur->parent )
@@ -770,16 +770,16 @@ int __sctk_topology_distance_fill_prefix( hwloc_obj_t *prefix,
 	return depth;
 }
 
-int sctk_topology_distance_from_pu( int source_pu, hwloc_obj_t target_obj )
+int topo_get_distance_from_pu(hwloc_topology_t target_topo, int source_pu, hwloc_obj_t target_obj )
 {
-	hwloc_obj_t source_pu_obj = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, source_pu );
+	hwloc_obj_t source_pu_obj = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_PU, source_pu );
 
 	/* No such PU then no distance */
 	if ( !source_pu_obj )
 		return -1;
 
 	/* Compute topology depth */
-	int topo_depth = hwloc_topology_get_depth( topology );
+	int topo_depth = hwloc_topology_get_depth( target_topo );
 
 	/* Allocate prefix lists */
 	hwloc_obj_t *prefix_PU =
@@ -800,9 +800,9 @@ int sctk_topology_distance_from_pu( int source_pu, hwloc_obj_t target_obj )
 
 	/* Compute the prefix of the two objects in the tree */
 	int pu_depth =
-		__sctk_topology_distance_fill_prefix( prefix_PU, source_pu_obj );
+	 _topo_get_distance_from_pu_fill_prefix( prefix_PU, source_pu_obj );
 	int obj_depth =
-		__sctk_topology_distance_fill_prefix( prefix_target, target_obj );
+	 _topo_get_distance_from_pu_fill_prefix( prefix_target, target_obj );
 
 	/* Extract the common prefix */
 	int common_prefix = 0;
@@ -1238,7 +1238,6 @@ int mpc_common_topo_get_ht_per_core(void)
 		hwloc_topology_t temp_topo;
 		hwloc_topology_init( &temp_topo );
 		hwloc_topology_load( temp_topo );
-
 
 		ret = topo_get_pu_per_core_count(temp_topo, 0);
 

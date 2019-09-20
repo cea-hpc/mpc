@@ -446,7 +446,7 @@ void sctk_device_init( hwloc_topology_t topology, sctk_device_t * dev , hwloc_ob
 
 #ifdef MPC_USE_INFINIBAND
 /** The purpose of this function is to resolve the device ids of the OFA devices */
-void sctk_device_fill_in_infiniband_info( sctk_device_t * device, hwloc_topology_t topology )
+void sctk_device_fill_in_infiniband_info( sctk_device_t * device )
 {
 	int devices_nb;
 	/* Retrieve device list from verbs */
@@ -469,7 +469,7 @@ void sctk_device_fill_in_infiniband_info( sctk_device_t * device, hwloc_topology
 #endif
 
 
-void sctk_device_enrich_topology( hwloc_topology_t topology )
+void sctk_device_enrich_topology()
 {
 	int i;
 #if defined(MPC_USE_CUDA)
@@ -484,7 +484,7 @@ void sctk_device_enrich_topology( hwloc_topology_t topology )
 
           if (device->type == SCTK_DEVICE_NETWORK_OFA) {
 #ifdef MPC_USE_INFINIBAND
-            sctk_device_fill_in_infiniband_info(device, topology);
+            sctk_device_fill_in_infiniband_info(device);
 #endif
           }
 
@@ -561,10 +561,8 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
 				{
 					sctk_devices_count ++;
 				}
-				
 			}
 		}
-		
 		pci_dev = hwloc_get_next_pcidev( topology, pci_dev );
 	}
 
@@ -599,7 +597,7 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
           pci_dev = hwloc_get_next_pcidev(topology, pci_dev);
         }
 
-        sctk_device_enrich_topology(topology);
+        sctk_device_enrich_topology();
         // hwloc_topology_export_xml(topology, "-");
 
         //*
@@ -609,7 +607,7 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
         }
         //*/
         /* Now initialize the device distance matrix */
-        sctk_device_matrix_init();
+        sctk_device_matrix_init(topology);
 }
 
 void sctk_device_release()
@@ -774,7 +772,7 @@ static inline int sctk_device_matrix_get_value( int pu_id, int device_id )
 
 
 /** Intializes the device matrix */
-void sctk_device_matrix_init()
+void sctk_device_matrix_init(hwloc_topology_t topology)
 {
 	sctk_device_matrix.device_count = sctk_devices_count;
 	sctk_device_matrix.pu_count =  mpc_common_topo_get_cpu_count();
@@ -802,7 +800,7 @@ void sctk_device_matrix_init()
 			}
 			
 			/* Compute the distance */
-			*cell = sctk_topology_distance_from_pu( j , device_obj );
+			*cell = topo_get_distance_from_pu(topology, j , device_obj );
 
                         sctk_nodebug("Distance (PU %d, DEV %d (%s)) == %d", j,
                                      i, sctk_devices[i].name, *cell);

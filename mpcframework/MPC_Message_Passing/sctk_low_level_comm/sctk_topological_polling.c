@@ -166,9 +166,9 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 	unsigned int trigger_vp_id = -1;
 	
 	/* Update the calling cells accordingly */
-	hwloc_bitmap_foreach_begin( trigger_vp_id, range_cpuset )
-	sctk_nodebug("range_vp_id : %d (LOG : %d)",  trigger_vp_id,  sctk_topology_convert_os_pu_to_logical( trigger_vp_id ) );
-	hwloc_bitmap_foreach_end(); 	
+	//hwloc_bitmap_foreach_begin( trigger_vp_id, range_cpuset )
+	//sctk_nodebug("range_vp_id : %d (LOG : %d)",  trigger_vp_id,  sctk_topology_convert_os_pu_to_logical( trigger_vp_id ) );
+	//hwloc_bitmap_foreach_end(); 	
 	
 	/* Now do the same for the trigger */
 		

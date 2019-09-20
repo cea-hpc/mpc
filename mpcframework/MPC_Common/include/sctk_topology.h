@@ -236,7 +236,7 @@ hwloc_cpuset_t sctk_topology_get_roots_for_level(hwloc_obj_type_t type);
 
 /*! \brief Compute the distance between a given object and a PU
 */
-int sctk_topology_distance_from_pu(int source_pu, hwloc_obj_t target_obj);
+int topo_get_distance_from_pu(hwloc_topology_t topology, int source_pu, hwloc_obj_t target_obj);
 
 void mpc_common_topo_clear_cpu_pinning_cache();
 
