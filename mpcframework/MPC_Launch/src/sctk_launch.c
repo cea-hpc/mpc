@@ -328,13 +328,16 @@ static void sctk_perform_initialisation (void)
 #endif
 
 	/* Do not bind in LIB_MODE */
+TODO("UNDERSTAND WHY IT IS FAILING");
+#if 0
 #ifndef SCTK_LIB_MODE
 	/* Bind the main thread to the first VP */
 	const unsigned int core = 0;
 	int binding = 0;
 	binding = sctk_get_init_vp (core);
- mpc_common_topo_bind_to_cpu (binding);
+ 	mpc_common_topo_bind_to_cpu (binding);
 	sctk_nodebug("Init: thread bound to thread %d", binding);
+#endif
 #endif
 
 #ifdef HAVE_HWLOC
