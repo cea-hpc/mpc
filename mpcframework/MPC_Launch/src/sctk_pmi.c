@@ -340,6 +340,8 @@ int sctk_pmi_init()
     sctk_free( nodes );
 
     /* Set the whole context */
+    mpc_common_set_process_rank( pmi_context.process_rank );
+    mpc_common_set_process_count( pmi_context.process_count );
 
     int node_rank;
     sctk_pmi_get_node_rank( &node_rank );

@@ -6,7 +6,7 @@
 /* OS Process Count Getters */
 
 void mpc_common_set_process_count(int process_count);
-void mpc_common_mpc_common_set_process_rank(int process_rank);
+void mpc_common_set_process_rank(int process_rank);
 
 extern int __process_count;
 extern int __process_rank;

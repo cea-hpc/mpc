@@ -11,7 +11,7 @@ void mpc_common_set_process_count(int process_count)
     __process_count = process_count;
 }
 
-void mpc_common_mpc_common_set_process_rank(int process_rank)
+void mpc_common_set_process_rank(int process_rank)
 {
     __process_rank = process_rank;
 }

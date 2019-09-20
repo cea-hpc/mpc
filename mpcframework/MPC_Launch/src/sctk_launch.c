@@ -311,7 +311,7 @@ static void sctk_perform_initialisation (void)
 
 	sctk_topology_init ();
 #if defined (MPC_USE_EXTLS) && !defined(MPC_DISABLE_HLS)
-	extls_hls_topology_construct();	
+	extls_hls_topology_construct();
 
 #endif
 
