@@ -128,9 +128,9 @@ SCTK_PUBLIC void sctk_alloc_numa_stat_init(struct sctk_alloc_numa_stat_s* stat)
 		sctk_alloc_numa_stat_open_pagemap();
 
 	//check number of nodes
-	if (sctk_is_numa_node())
+	if (mpc_common_topo_has_numa_nodes())
 	{
-		stat->numa_nodes = sctk_get_numa_node_number();
+		stat->numa_nodes = mpc_common_topo_get_numa_node_count();
 	} else {
 		stat->numa_nodes = 1;
 		warning("No NUMA node available\n");
@@ -175,7 +175,7 @@ void sctk_alloc_numa_stat_print(const struct sctk_alloc_numa_stat_s* stat,void *
 	printf("%-20s : %-10lu (%.01f Mo)\n","Total pages",stat->total_pages,(float)(stat->total_pages * 4) / 1024.0);
 	printf("%-20s : %-10lu (%.01f Mo / %.01f %%)\n","Total mapped",stat->total_mapped,(float)(stat->total_mapped * 4) / 1024.0,100.0*(float)stat->total_mapped/(float)stat->total_pages);
 	printf("%-20s : %lu\n","Non mapped",stat->total_pages - stat->total_mapped);
-	if (sctk_is_numa_node())
+	if (mpc_common_topo_has_numa_nodes())
 		for (i = 0 ; i < stat->numa_nodes ; i++)
 			printf("NUMA %-15d : %-10lu (%.01f Mo / %.01f %%)\n",i,stat->numa_pages[i],(float)(stat->numa_pages[i] * 4) / 1024.0,100.0*(float)stat->numa_pages[i] / (float)stat->total_mapped);
 	if (stat->numa_pages[SCTK_DEFAULT_NUMA_MM_SOURCE_ID] != 0)
@@ -382,7 +382,7 @@ SCTK_PUBLIC void sctk_alloc_numa_check(bool fatal_on_fail, const char* filename,
 	assert(min_ratio >= 0 && min_ratio <= 100);
 
 	//if not numa node can return immediately
-	if (sctk_is_numa_node() == false)
+	if (mpc_common_topo_has_numa_nodes() == false)
 		return;
 
 	//get numa stat

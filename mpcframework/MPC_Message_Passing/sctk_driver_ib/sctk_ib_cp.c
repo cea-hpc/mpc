@@ -171,7 +171,7 @@ void sctk_ib_cp_finalize(struct sctk_ib_rail_info_s *rail_ib)
 
 	sctk_spinlock_lock(&vps_lock);
 	/* free vps struct */
-	int nbvps = sctk_get_cpu_number();
+	int nbvps = mpc_common_topo_get_cpu_count();
 	if(vps)
 	{
 		for (i = 0; i < nbvps; ++i)
@@ -189,7 +189,7 @@ void sctk_ib_cp_finalize(struct sctk_ib_rail_info_s *rail_ib)
 	}
 	
 	/* free numas struct */
-	int max_node = sctk_get_numa_node_number();
+	int max_node = mpc_common_topo_get_numa_node_count();
 	max_node = (max_node < 1) ? 1 : max_node;
 
 	sctk_spinlock_lock(&numas_lock);
@@ -225,7 +225,7 @@ void sctk_ib_cp_finalize(struct sctk_ib_rail_info_s *rail_ib)
 void sctk_ib_cp_init_task ( int rank, int vp )
 {
 	sctk_ib_cp_task_t *task = NULL;
-	int node =  sctk_get_node_from_cpu( vp );
+	int node =  mpc_common_topo_get_numa_node_from_cpu( vp );
 	/* Process specific list of messages */
 	static sctk_ibuf_t *volatile __global_ibufs_list = NULL;
 	static sctk_spinlock_t __global_ibufs_list_lock = SCTK_SPINLOCK_INITIALIZER;
@@ -268,7 +268,7 @@ void sctk_ib_cp_init_task ( int rank, int vp )
 	/* Initial allocation of structures */
         sctk_spinlock_lock(&numas_lock);
         if (!numas) {
-	  numa_number = sctk_get_numa_node_number();
+	  numa_number = mpc_common_topo_get_numa_node_count();
 
           if (numa_number == 0)
             numa_number = 1;
@@ -276,11 +276,11 @@ void sctk_ib_cp_init_task ( int rank, int vp )
           numas = sctk_calloc(numa_number, sizeof(numa_t));
           ib_assume(numas);
 
-          int vp_number = sctk_get_cpu_number();
+          int vp_number = mpc_common_topo_get_cpu_count();
           vps = sctk_malloc(sizeof(vp_t *) * vp_number);
           ib_assume(vps);
           memset(vps, 0, sizeof(vp_t *) * vp_number);
-          sctk_nodebug("vp: %d - numa: %d", sctk_get_cpu_number(), numa_number);
+          sctk_nodebug("vp: %d - numa: %d", mpc_common_topo_get_cpu_count(), numa_number);
         }
 
         /* Add NUMA node if not already added */
@@ -329,7 +329,7 @@ void sctk_ib_cp_finalize_task ( int rank )
 	if ( task )
 	{
 		vp = task->vp;
-		node = sctk_get_node_from_cpu(vp);
+		node = mpc_common_topo_get_numa_node_from_cpu(vp);
 
 		CDL_DELETE(numas[node]->tasks, task);
 		HASH_DELETE(hh_vp, vps[vp]->tasks, task);
@@ -576,7 +576,7 @@ int sctk_ib_cp_steal ( struct sctk_ib_polling_s *poll, char other_numa )
           * function.
           * If task_node_number not initialized, we do it now */
           if (task_node_number < 0)
-            task_node_number = sctk_get_node_from_cpu(vp);
+            task_node_number = mpc_common_topo_get_numa_node_from_cpu(vp);
 
           /* First, try to steal from the same NUMA node*/
           assume((task_node_number < numa_number));

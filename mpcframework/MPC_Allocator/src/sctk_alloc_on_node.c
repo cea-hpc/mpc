@@ -74,7 +74,7 @@ SCTK_INTERN void sctk_malloc_on_node_init(int numa_nodes)
 	memset(sctk_global_alloc_on_node_mm_src,0,sizeof(sctk_global_alloc_on_node_mm_src));
 
 	//do nothing if not numa node
-	if ( sctk_is_numa_node() == false)
+	if ( mpc_common_topo_has_numa_nodes() == false)
 		return;
 
 	//setup allocations chains for all nodes
@@ -158,7 +158,7 @@ void *sctk_malloc_on_node_numa(size_t size, int node) {
   struct sctk_alloc_chain *chain;
 
   // check if NUMA is enabled.
-  if (sctk_is_numa_node()) {
+  if (mpc_common_topo_has_numa_nodes()) {
     // get the good chain
     chain = sctk_malloc_on_node_get_chain(node);
     assert(chain != NULL);

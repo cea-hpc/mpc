@@ -815,7 +815,7 @@ __mpcomp_alloc_openmp_tree_struct( int* shape, int max_depth, const int* cpus_or
     for( i = 1; i < leaf_n_num; i++ )
     {
         const int target_vp = ( cpus_order ) ? cpus_order[i] : i; 
-        const int pu_id = ( sctk_get_cpu() + target_vp ) % sctk_get_cpu_number(); 
+        const int pu_id = ( mpc_common_topo_get_current_cpu() + target_vp ) % mpc_common_topo_get_cpu_count(); 
         place_id += ( !( i % place_size ) ) ? 1 : 0;
 
         args[i].target_vp = target_vp;

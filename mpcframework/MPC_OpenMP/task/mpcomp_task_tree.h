@@ -22,7 +22,7 @@ mpcomp_task_tree_infos_alloc(const int tree_array_size) {
 
   sctk_assert(tree_array_size >= 0);
 
-  const int numa_node_number = sctk_max(sctk_get_numa_node_number(), 1);
+  const int numa_node_number = sctk_max(mpc_common_topo_get_numa_node_count(), 1);
   sctk_assert(numa_node_number > 0);
 
   task_tree_infos = mpcomp_alloc( sizeof(mpcomp_task_tree_infos_t) );
@@ -88,7 +88,7 @@ static inline void mpcomp_task_tree_register_node_in_all_numa_node_array(
   sctk_assert(tree_array);
   sctk_assert(global_rank >= 0);
 
-  const int numa_node_number = sctk_max(sctk_get_numa_node_number(), 1);
+  const int numa_node_number = sctk_max(mpc_common_topo_get_numa_node_count(), 1);
 
   for (i = 0; i < numa_node_number; i++) {
     sctk_assert(tree_array[i]);

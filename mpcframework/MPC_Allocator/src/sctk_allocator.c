@@ -2761,7 +2761,7 @@ SCTK_PUBLIC void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
 	//read stat
 	sctk_alloc_chain_get_numa_stat(&numa_stat,chain);
 	sctk_alloc_chain_get_stat(&chain_stat,chain);
-	numa_nodes = sctk_get_numa_node_number();
+	numa_nodes = mpc_common_topo_get_numa_node_count();
 
 	//print it
 	printf("====================== ALLOCATION CHAIN STAT ======================\n");

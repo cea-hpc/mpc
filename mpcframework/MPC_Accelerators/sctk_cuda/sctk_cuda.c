@@ -104,7 +104,7 @@ int sctk_accl_cuda_init_context() {
   cuda_ctx_t *cuda = (cuda_ctx_t *)sctk_cuda_ctx;
   cuda = (cuda_ctx_t *)sctk_malloc(sizeof(cuda_ctx_t));
   cuda->pushed = 0;
-  cuda->cpu_id = sctk_get_cpu();
+  cuda->cpu_id = mpc_common_topo_get_current_cpu();
 
   sctk_nodebug("CUDA: (MALLOC) pushed?%d, cpu_id=%d, address=%p", cuda->pushed,
                cuda->cpu_id, cuda);

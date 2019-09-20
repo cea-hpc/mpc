@@ -29,11 +29,8 @@
 
 #include <stdio.h>
 
-#include "hwloc.h"
-#ifdef MPC_USE_INFINIBAND
-#include <infiniband/verbs.h>
-#include <hwloc/openfabrics-verbs.h>
-#endif
+#include <hwloc.h>
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,6 +40,51 @@ extern "C" {
 
 hwloc_topology_t mpc_common_topology_get();
 hwloc_topology_t mpc_common_topology_full();
+
+
+/*! \brief Return the closest core_id
+ * @param cpuid Main core_id
+ * @param nb_cpus Number of neighbor
+ * @param neighborhood Neighbor list
+*/
+void mpc_common_topo_get_cpu_neighborhood(int cpuid, unsigned int nb_cpus, int *neighborhood);
+
+
+/*! \brief return the Numa node associated with a given CPUID
+ * @param cpuid The target CPUID (logical)
+ * @return identifier of the numa node matching cpuid (0 if none)
+ */
+int mpc_common_topo_get_numa_node_from_cpu(const int cpuid);
+
+
+/*! \brief Return the number of NUMA nodes */
+int mpc_common_topo_get_numa_node_count(void);
+
+/*! \brief Return 1 if the current node is a NUMA node, 0 otherwise */
+int mpc_common_topo_has_numa_nodes(void);
+
+/*! \brief Return the total number of core for the process
+*/
+int mpc_common_topo_get_cpu_count(void);
+
+/*! \brief Bind the current thread
+ * @ param i The cpu_id to bind
+*/
+int mpc_common_topo_bind_to_cpu(int i);
+
+/*! \brief Print the topology tree into a file
+ * @param fd Destination file descriptor
+*/
+void mpc_common_topo_print(FILE *fd);
+
+/*! \brief get the number of processing units (PU) as seen by MPC
+ * @return Number of PUs in curent MPC topology
+ */
+int mpc_common_topo_get_pu_count(void);
+
+/*! \brief Return the current core_id
+*/
+int mpc_common_topo_get_current_cpu(void);
 
 /*
   Numbering rules
@@ -60,9 +102,7 @@ void sctk_topology_init(void);
 */
 void sctk_topology_destroy(void);
 
-/*! \brief Return the current core_id
-*/
-int sctk_get_cpu(void);
+
 
 /*! \brief Return the Socket ID for current CPU
  */
@@ -72,43 +112,38 @@ int sctk_topology_get_socket_id(int os_level);
  */
 int sctk_topology_get_socket_number();
 
-/*! \brief Return the total number of core for the process
-*/
-int sctk_get_cpu_number(void);
 
 /*! \brief Return the total number of core for the process (from a topology)
 */
-int sctk_get_cpu_number_topology(hwloc_topology_t topo);
+int topo_get_cpu_count(hwloc_topology_t target_topo);
 
-/*! \brief Return 1 if the current node is a NUMA node, 0 otherwise
-*/
-int sctk_is_numa_node(void);
 
 /*! \brief Return 1 if the current node is a NUMA node, 0 otherwise (from a
  * topology)
 */
-int sctk_is_numa_node_topology(hwloc_topology_t topo);
+int topo_has_numa_nodes(hwloc_topology_t target_topo);
 
-/*! \brief Print the topology tree into a file
- * @param fd Destination file descriptor
+/*! \brief Return the total number of numa nodes (from a topology)
 */
-void sctk_print_topology(FILE *fd);
+int topo_get_numa_node_count(hwloc_topology_t target_topo);
 
 /*! \brief Print a given topology tree into a file
+ * @param target_topology the topology to print
  * @param fd Destination file descriptor
- * @param topology the topology to print
 */
-void sctk_print_specific_topology(FILE *fd, hwloc_topology_t topology);
+void topo_print(hwloc_topology_t target_topology, FILE *fd);
 
-/*! \brief Bind the current thread
- * @ param i The cpu_id to bind
+
+/*! \brief returns the number of HT on each core
+  @param cpuid target core
+  @return number of HT in the given core
 */
-int sctk_bind_to_cpu(int i);
+int topo_get_pu_per_core_count(hwloc_topology_t target_topo, int cpuid);
 
 /*! \brief Return the first core_id for a NUMA node
  * @ param node NUMA node id.
 */
-int sctk_get_first_cpu_in_node(int node);
+int topo_get_first_cpu_in_numa_node(hwloc_topology_t target_topo, int node);
 
 /*! \brief Return the type of processor (x86, x86_64, ...)
 */
@@ -122,70 +157,29 @@ int sctk_set_cpu_number(int n);
 
 /*! \brief Number of processing units per core
 */
-int sctk_get_ht_per_core(void);
+int mpc_common_topo_get_ht_per_core(void);
 
-/*! \brief Return the hostname
-*/
-char *sctk_get_node_name(void);
 
 /*! \brief Return the closest core_id
  * @param cpuid Main core_id
  * @param nb_cpus Number of neighbor
  * @param neighborhood Neighbor list
 */
-void sctk_get_neighborhood(int cpuid, unsigned int nb_cpus, int *neighborhood);
-
-/*! \brief Return the closest core_id
- * @param cpuid Main core_id
- * @param nb_cpus Number of neighbor
- * @param neighborhood Neighbor list
-*/
-void sctk_get_neighborhood_topology(hwloc_topology_t topo, int cpuid,
+void topo_get_cpu_neighborhood(hwloc_topology_t topo, int cpuid,
                                     unsigned int nb_cpus, int *neighborhood);
 
-/*! \brief Return the number of NUMA nodes
-*/
-int sctk_get_numa_node_number(void);
 
-/*! \brief Return the NUMA node according to the code_id number
- * @param vp VP
-*/
-int sctk_get_node_from_cpu(const int vp);
 
-/*! \brief Return the PHYSICAL NUMA node according to the code_id number
- * @param vp VP
-*/
-int sctk_get_physical_node_from_cpu(const int vp);
-
-/*! \brief Return the NUMA node for current CPU
-*/
-static inline int sctk_get_numa_node(int os_level) {
-  if (!sctk_is_numa_node()) {
-    return -1;
-  }
-
-  int cpu = sctk_get_cpu();
-
-  if (0 <= cpu) {
-    if (os_level)
-      return sctk_get_physical_node_from_cpu(cpu);
-    else
-      return sctk_get_node_from_cpu(cpu);
-  }
-
-  return -1;
-}
-
-/*! \brief Return the NUMA node according to the code_id number
- * @param vp VP
-*/
-int sctk_get_node_from_cpu_topology(hwloc_topology_t topo, const int vp);
+/*! \brief Return the NUMA node according to the core_id number
+ * @param cpuid Cpu which NUMA has to be queried
+ */
+int topo_get_numa_node_from_cpu(hwloc_topology_t target_topo, const int cpuid);
 
 /*! \brief Return the hwloc topology object
 */
 hwloc_topology_t mpc_common_topology_get(void);
 
-void sctk_restrict_binding();
+void mpc_common_topo_bind_to_process_cpuset();
 
 /* Called only by __mpcomp_buid_tree */
 int sctk_get_global_index_from_cpu(hwloc_topology_t topo, const int vp);
@@ -244,9 +238,9 @@ hwloc_cpuset_t sctk_topology_get_roots_for_level(hwloc_obj_type_t type);
 */
 int sctk_topology_distance_from_pu(int source_pu, hwloc_obj_t target_obj);
 
-void sctk_topology_init_cpu();
+void mpc_common_topo_clear_cpu_pinning_cache();
 
-int sctk_get_pu_number();
+int mpc_common_topo_get_pu_count();
 
 /* used by option graphic */
 void create_placement_rendering(int pu, int master_pu,int task_id);

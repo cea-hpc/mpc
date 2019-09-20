@@ -100,9 +100,6 @@ void mpc_topology_context_clear(void)
 }
 
 
-
-
-
 /* The topology of the machine + its cpuset */
 static hwloc_topology_t topology;
 
@@ -321,7 +318,7 @@ restart_restrict:
 
 #ifdef __MIC__
 	{
-		sctk_update_topology( topology_ctx.processor_count_on_node, sctk_get_pu_number_by_core( topology, 0 ) );
+		sctk_update_topology( topology_ctx.processor_count_on_node, topo_get_pu_per_core_count( topology, 0 ) );
 	}
 #endif
 
@@ -466,7 +463,56 @@ uname( struct utsname *buf )
 
 #endif
 
-/* libextls requirement */
+
+void topo_print( hwloc_topology_t target_topology, FILE *fd )
+{
+	int i;
+	fprintf( fd, "Node %s: %s %s %s\n", topology_ctx.hostname, utsname.sysname,
+			 utsname.release, utsname.version );
+	const int pu_number = hwloc_get_nbobjs_by_type( target_topology, HWLOC_OBJ_PU );
+
+	for ( i = 0; i < pu_number; ++i )
+	{
+		hwloc_obj_t pu = hwloc_get_obj_by_type( target_topology, HWLOC_OBJ_PU, i );
+		hwloc_obj_t tmp[3];
+		unsigned int node_os_index;
+		tmp[0] = hwloc_get_ancestor_obj_by_type( target_topology, HWLOC_OBJ_NODE, pu );
+		tmp[1] = hwloc_get_ancestor_obj_by_type( target_topology, HWLOC_OBJ_SOCKET, pu );
+		tmp[2] = hwloc_get_ancestor_obj_by_type( target_topology, HWLOC_OBJ_CORE, pu );
+
+		if ( tmp[0] == NULL )
+		{
+			node_os_index = 0;
+		}
+		else
+		{
+			node_os_index = tmp[0]->os_index;
+		}
+
+		fprintf( fd, "\tProcessor %4u real (%4u:%4u:%4u)\n", pu->os_index,
+				 node_os_index, tmp[1]->logical_index, tmp[2]->logical_index );
+	}
+
+	fprintf( fd, "\tNUMA: %d\n", topo_has_numa_nodes(target_topology) );
+
+	if ( topo_has_numa_nodes(target_topology) )
+	{
+		fprintf( fd, "\t\t* Node nb %d\n", topo_get_numa_node_count(target_topology) );
+	}
+
+	return;
+}
+
+
+/*! \brief Return the type of processor (x86, x86_64, ...)
+*/
+char *sctk_get_processor_name()
+{
+	return utsname.machine;
+}
+
+
+
 hwloc_topology_t* sctk_get_topology_addr(void)
 {
 	return &topology;
@@ -511,7 +557,7 @@ hwloc_const_cpuset_t sctk_topology_get_numa_cpuset( int pu_id )
 {
 	hwloc_const_cpuset_t ret;
 
-	if ( !sctk_is_numa_node() )
+	if ( !mpc_common_topo_has_numa_nodes() )
 	{
 		ret = hwloc_topology_get_allowed_cpuset( topology );
 	}
@@ -572,7 +618,7 @@ int sctk_topology_get_socket_number()
 
 int sctk_topology_get_socket_id( int os_level )
 {
-	int cpu = sctk_get_cpu();
+	int cpu = mpc_common_topo_get_current_cpu();
 
 	if ( cpu < 0 )
 	{
@@ -659,7 +705,7 @@ hwloc_cpuset_t sctk_topology_get_roots_for_level( hwloc_obj_type_t type )
 	hwloc_cpuset_t roots = hwloc_bitmap_alloc();
 
 	/* Handle the case where the node is not a numa node */
-	if ( !sctk_is_numa_node() )
+	if ( !mpc_common_topo_has_numa_nodes() )
 	{
 		/* Just tell that the expected value was MACHINE */
 		type = HWLOC_OBJ_MACHINE;
@@ -790,41 +836,16 @@ int sctk_topology_distance_from_pu( int source_pu, hwloc_obj_t target_obj )
 
 /*! \brief Return the current core_id
 */
-static __thread int sctk_get_cpu_val = -1;
-
-static inline int sctk_get_cpu_intern()
+static inline int topo_get_current_cpu(hwloc_topology_t target_topo)
 {
 	hwloc_cpuset_t set = hwloc_bitmap_alloc();
 
-	int ret = hwloc_get_last_cpu_location( topology, set, HWLOC_CPUBIND_THREAD );
+	int ret = hwloc_get_last_cpu_location( target_topo, set, HWLOC_CPUBIND_THREAD );
 
 	assume( ret != -1 );
 	assume( !hwloc_bitmap_iszero( set ) );
 
-	/* Check if HWLOC_XMLFILE env variable is set. This variable aims at modifing 
-	*  a fake topology to test the runtime bahivior. On the downside, hwloc 
-	*  disables binding. */
-
-	int isset_hwloc_xmlfile = ( getenv( "HWLOC_XMLFILE" ) != NULL );
-
-	/* Check if HWLOC_THISSYSTEM env variable is set. This variable aims at asserting 
-	*  that the topology loaded with the HWLOC_XMLFILE env variable is the same as
-	*  this system. */
-
-	int isset_hwloc_thissystem = 0;
-	char *hwloc_thissystem = getenv( "HWLOC_THISSYSTEM" );
-	if ( hwloc_thissystem != NULL )
-		isset_hwloc_thissystem = ( strcmp( hwloc_thissystem, "1" ) == 0 );
-
-	if ( !isset_hwloc_xmlfile || isset_hwloc_thissystem )
-	{
-		/* Check if only one CPU in the CPU set. Maybe there is a simpler function
-		* to do that */
-		if ( topology_ctx.xml_specific_path == NULL )
-			assume( hwloc_bitmap_first( set ) == hwloc_bitmap_last( set ) );
-	}
-
-	hwloc_obj_t pu = hwloc_get_obj_inside_cpuset_by_type( topology, set, HWLOC_OBJ_PU, 0 );
+	hwloc_obj_t pu = hwloc_get_obj_inside_cpuset_by_type( target_topo, set, HWLOC_OBJ_PU, 0 );
 
 	if ( !pu )
 	{
@@ -832,80 +853,233 @@ static inline int sctk_get_cpu_intern()
 		return -1;
 	}
 
-	/* And return the logical index */
-	int cpu = pu->logical_index;
-
 	hwloc_bitmap_free( set );
 
-	return cpu;
+	return pu->logical_index;
 }
 
-int sctk_get_cpu()
-{
-	if ( sctk_get_cpu_val < 0 )
-	{
-		sctk_spinlock_lock( &topology_ctx.lock );
-		int ret = sctk_get_cpu_intern();
-		sctk_spinlock_unlock( &topology_ctx.lock );
-		return ret;
-	}
-	else
-	{
-		return sctk_get_cpu_val;
-	}
-}
 
-void sctk_topology_init_cpu()
-{
-	sctk_get_cpu_val = -1;
-}
 
-int sctk_get_ht_per_core( void )
-{
-	int pu_per_core;
-	hwloc_obj_t first_core;
-	hwloc_topology_t hwtopology;
 
-	hwloc_topology_init( &hwtopology );
-	hwloc_topology_load( hwtopology );
-
-	first_core = hwloc_get_obj_by_type( hwtopology, HWLOC_OBJ_CORE, 0 );
-	sctk_assert( first_core );
-
-	pu_per_core = hwloc_get_nbobjs_inside_cpuset_by_type( hwtopology, first_core->cpuset, HWLOC_OBJ_PU );
-	assert( pu_per_core > 0 );
-
-	return pu_per_core;
-}
-
-int sctk_get_pu_number()
+int topo_get_pu_count(hwloc_topology_t target_topo)
 {
 	int core_number;
-	hwloc_topology_t hwtopology;
-	hwloc_topology_init( &hwtopology );
-	hwloc_topology_load( hwtopology );
 
-	int depth = hwloc_get_type_depth( hwtopology, HWLOC_OBJ_PU );
+	int depth = hwloc_get_type_depth( target_topo, HWLOC_OBJ_PU );
+
 	if ( depth == HWLOC_TYPE_DEPTH_UNKNOWN )
 	{
 		core_number = -1;
 	}
 	else
 	{
-		core_number = hwloc_get_nbobjs_by_depth( hwtopology, depth );
+		core_number = hwloc_get_nbobjs_by_depth( target_topo, depth );
 	}
 
-	hwloc_topology_destroy( hwtopology );
 	return core_number;
 }
 
-int sctk_get_pu_number_by_core( hwloc_topology_t hwtopology, int core )
+int topo_get_pu_per_core_count(hwloc_topology_t target_topo, int cpuid)
 {
-	hwloc_obj_t obj_pu_per_core = hwloc_get_obj_by_type( hwtopology, HWLOC_OBJ_CORE, core );
-	int pu_per_core = obj_pu_per_core->arity;
+	int pu_per_core;
+
+#ifdef MPC_USE_EXTLS && !defined(MPC_DISABLE_HLS)
+	extls_set_topology_addr((void*(*)(void))sctk_get_topology_addr);
+#endif
+
+	hwloc_obj_t core = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_CORE, cpuid);
+	sctk_assert( core );
+
+	pu_per_core = hwloc_get_nbobjs_inside_cpuset_by_type( target_topo, core->cpuset, HWLOC_OBJ_PU );
+	assert( pu_per_core > 0 );
 
 	return pu_per_core;
 }
+
+
+/* Restrict the binding to the current cpu_set */
+void topo_bind_to_process(hwloc_topology_t target_topo, hwloc_bitmap_t process_cpuset)
+{
+	int err;
+	err = hwloc_set_cpubind( target_topo, process_cpuset, HWLOC_CPUBIND_THREAD );
+	assume( !err );
+}
+
+/*! \brief Bind the current thread. The function may return -1 if the thread
+ * was previously bound to a core that was not managed by the HWLOC topology
+ * @ param i The cpu_id to bind
+ */
+int topo_bind_to_cpu(hwloc_topology_t target_topo, hwloc_bitmap_t process_cpuset, int cpuid)
+{
+
+	if ( cpuid < 0 )
+	{
+		topo_bind_to_process(target_topo, process_cpuset);
+		return -1;
+	}
+
+	sctk_spinlock_lock( &topology_ctx.lock );
+
+	int ret = topo_get_current_cpu(target_topo);
+
+	hwloc_obj_t pu = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_PU, cpuid );
+	assume( pu );
+
+	int err = hwloc_set_cpubind( target_topo, pu->cpuset, HWLOC_CPUBIND_THREAD );
+
+	if ( err )
+	{
+		const char *errmsg = strerror( errno );
+		int supported = support->cpubind->set_thisthread_cpubind;
+		char *msg = "Bind to cpu";
+		fprintf( stderr, "%-40s: %sFAILED (%d, %s)\n", msg, supported ? "" : "X", errno, errmsg );
+	}
+
+	sctk_spinlock_unlock( &topology_ctx.lock );
+	return ret;
+}
+
+/*! \brief Return the first core_id for a NUMA node
+ * @ param node NUMA node id.
+ */
+int topo_get_first_cpu_in_numa_node(hwloc_topology_t target_topo, int node)
+{
+	hwloc_obj_t currentNode = hwloc_get_obj_by_type(target_topo, HWLOC_OBJ_NODE, node);
+
+	while ( currentNode->type != HWLOC_OBJ_CORE )
+	{
+		currentNode = currentNode->children[0];
+	}
+
+	return currentNode->logical_index;
+}
+
+
+/*! \brief Return the total number of core for the process
+*/
+int topo_get_cpu_count(hwloc_topology_t target_topo)
+{
+	return hwloc_get_nbobjs_by_type( target_topo, HWLOC_OBJ_PU );
+}
+
+/*! \brief Set the number of core usable for the current process
+ * @ param n Number of cores
+ * used in ethread
+ */
+int topo_set_process_cpu_count(hwloc_topology_t target_topo, int n)
+{
+	if ( n <= topo_get_cpu_count(target_topo) )
+	{
+		sctk_update_topology( n, 0 );
+	}
+	return n;
+}
+
+
+int topo_has_numa_nodes(hwloc_topology_t target_topo)
+{
+	return hwloc_get_nbobjs_by_type( target_topo, HWLOC_OBJ_NODE ) != 0;
+}
+
+
+int topo_get_numa_node_count(hwloc_topology_t target_topo)
+{
+	return hwloc_get_nbobjs_by_type( target_topo, HWLOC_OBJ_NODE );
+}
+
+
+int topo_get_numa_node_from_cpu(hwloc_topology_t target_topo, const int cpuid)
+{
+	if ( topo_has_numa_nodes( target_topo ) )
+	{
+		const hwloc_obj_t pu = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_PU, cpuid );
+		assume( pu );
+		const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_NODE, pu );
+
+		return node->logical_index;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+/* print the neighborhood*/
+void _topo_print_cpu_neighborhood(hwloc_topology_t target_topo, int cpuid, int nb_cpus, int *neighborhood, hwloc_obj_t *objs)
+{
+	int i;
+	hwloc_obj_t currentCPU = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_PU, cpuid );
+	hwloc_obj_type_t type = ( mpc_common_topo_has_numa_nodes() ) ? HWLOC_OBJ_NODE : HWLOC_OBJ_MACHINE;
+	int currentCPU_node_id = hwloc_get_ancestor_obj_by_type( target_topo, type, currentCPU )->logical_index;
+	int currentCPU_socket_id = hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_SOCKET, currentCPU )->logical_index;
+	int currentCPU_core_id = hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_CORE, currentCPU )->logical_index;
+
+	fprintf( stderr, "Neighborhood result starting with CPU %d: (Node:%d, Socket: %d, Core: %d)\n",
+			 cpuid, currentCPU_node_id, currentCPU_socket_id, currentCPU_core_id );
+
+	for ( i = 0; i < nb_cpus; i++ )
+	{
+		hwloc_obj_t current = objs[i];
+
+		fprintf( stderr, "\tNeighbor[%d] -> CPU %d: (Node:%d, Socket: %d, Core: %d)\n",
+				 i, neighborhood[i],
+				 hwloc_get_ancestor_obj_by_type( target_topo, type, current )->logical_index,
+				 hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_SOCKET, current )->logical_index,
+				 hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_CORE, current )->logical_index );
+	}
+}
+
+
+/*! \brief Return the closest core_id
+ * @param cpuid Main core_id
+ * @param nb_cpus Number of neighbor
+ * @param neighborhood Neighbor list
+ */
+void topo_get_cpu_neighborhood(hwloc_topology_t target_topo, int cpuid, unsigned int nb_cpus, int *neighborhood)
+{
+	unsigned int i;
+	hwloc_obj_t *objs;
+	hwloc_obj_t currentCPU;
+	unsigned nb_cpus_found;
+
+	currentCPU = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_PU, cpuid );
+
+	/* alloc size for retreiving objects. We could also use a static array */
+	objs = sctk_malloc( nb_cpus * sizeof( hwloc_obj_t ) );
+	sctk_assert( objs != NULL );
+
+	/* The closest CPU is actually... the current CPU :-). 
+	* Set the closest CPU as the current CPU */
+	objs[0] = currentCPU;
+
+	/* get closest objects to the current CPU */
+	nb_cpus_found = hwloc_get_closest_objs( target_topo, currentCPU, &objs[1], ( nb_cpus - 1 ) );
+	/*  +1 because of the current cpu not returned by hwloc_get_closest_objs */
+	assume( ( nb_cpus_found + 1 ) == nb_cpus );
+
+	/* fill the neighborhood variable */
+	for ( i = 0; i < nb_cpus; i++ )
+	{
+		/*
+		hwloc_obj_t current = objs[i];
+		neighborhood[i] = hwloc_get_ancestor_obj_by_type(target_topo, HWLOC_OBJ_CORE, current)->logical_index;
+		*/
+		neighborhood[i] = objs[i]->logical_index;
+	}
+
+	/* uncomment for printing the returned result */
+	//_topo_print_cpu_neighborhood(target_topo, cpuid, nb_cpus, neighborhood, objs);
+
+	sctk_free( objs );
+}
+
+
+/*
+
+ TOPO INIT & RELEASE
+
+*/
+
 
 /*! \brief Initialize the topology module
 */
@@ -956,13 +1130,9 @@ void sctk_topology_init()
 
 	uname( &utsname );
 
-#ifdef MPC_USE_EXTLS && !defined(MPC_DISABLE_HLS)
-	extls_set_topology_addr((void*(*)(void))sctk_get_topology_addr);
-#endif
-
 	if ( !hwloc_bitmap_iszero( topology_ctx.pin_processor_bitmap ) )
 	{
-		sctk_print_topology( stderr );
+	 mpc_common_topo_print( stderr );
 	}
 }
 
@@ -974,402 +1144,94 @@ void sctk_topology_destroy( void )
 	hwloc_topology_destroy( topology );
 }
 
-/*! \brief Return the hostname
+
+/*
+
+MPC Common Topology Interface
+
 */
-char *sctk_get_node_name()
+
+void mpc_common_topo_get_cpu_neighborhood( int cpuid, unsigned int nb_cpus, int *neighborhood )
 {
-	return topology_ctx.hostname;
+	topo_get_cpu_neighborhood( topology, cpuid, nb_cpus, neighborhood );
 }
 
-/*! \brief Return the first child of \p obj of type \p type
- * @param obj Parent object
- * @param type Child type
- */
-hwloc_obj_t sctk_get_first_child_by_type( hwloc_obj_t obj, hwloc_obj_type_t type )
+int mpc_common_topo_get_numa_node_from_cpu(const int cpuid)
 {
-	hwloc_obj_t child = obj;
-	do
-	{
-		child = child->first_child;
-	} while ( child->type != type );
-	return child;
+	return topo_get_numa_node_from_cpu( topology, cpuid );
 }
 
-void sctk_print_specific_topology( FILE *fd, hwloc_topology_t hwtopology )
+int mpc_common_topo_get_numa_node_count()
 {
-	int i;
-	fprintf( fd, "Node %s: %s %s %s\n", topology_ctx.hostname, utsname.sysname,
-			 utsname.release, utsname.version );
-	const int pu_number = hwloc_get_nbobjs_by_type( hwtopology, HWLOC_OBJ_PU );
-
-	for ( i = 0; i < pu_number; ++i )
-	{
-		hwloc_obj_t pu = hwloc_get_obj_by_type( hwtopology, HWLOC_OBJ_PU, i );
-		hwloc_obj_t tmp[3];
-		unsigned int node_os_index;
-		tmp[0] = hwloc_get_ancestor_obj_by_type( hwtopology, HWLOC_OBJ_NODE, pu );
-		tmp[1] = hwloc_get_ancestor_obj_by_type( hwtopology, HWLOC_OBJ_SOCKET, pu );
-		tmp[2] = hwloc_get_ancestor_obj_by_type( hwtopology, HWLOC_OBJ_CORE, pu );
-
-		if ( tmp[0] == NULL )
-		{
-			node_os_index = 0;
-		}
-		else
-		{
-			node_os_index = tmp[0]->os_index;
-		}
-
-		fprintf( fd, "\tProcessor %4u real (%4u:%4u:%4u)\n", pu->os_index,
-				 node_os_index, tmp[1]->logical_index, tmp[2]->logical_index );
-	}
-
-	fprintf( fd, "\tNUMA: %d\n", sctk_is_numa_node() );
-
-	if ( sctk_is_numa_node() )
-	{
-		fprintf( fd, "\t\t* Node nb %d\n", sctk_get_numa_node_number() );
-	}
-
-	return;
+	return topo_get_numa_node_count( topology);
 }
 
-/*! \brief Print the topology tree into a file
- * @param fd Destination file descriptor
- */
-void sctk_print_topology( FILE *fd )
+int mpc_common_topo_has_numa_nodes(void)
 {
-	sctk_print_specific_topology( fd, topology );
+	return topo_has_numa_nodes(topology);
 }
 
-/* Restrict the binding to the current cpu_set */
-void sctk_restrict_binding()
+int sctk_set_cpu_number( int n )
 {
-	int err;
-
-	err = hwloc_set_cpubind( topology, topology_ctx.topology_cpuset, HWLOC_CPUBIND_THREAD );
-	assume( !err );
-
-	sctk_topology_init_cpu();
+	return topo_set_process_cpu_count(topology, n);
 }
 
-/*! \brief Bind the current thread. The function may return -1 if the thread
- * was previously bound to a core that was not managed by the HWLOC topology
- * @ param i The cpu_id to bind
- */
-int sctk_bind_to_cpu( int i )
+int mpc_common_topo_get_cpu_count(void)
 {
-	int supported = support->cpubind->set_thisthread_cpubind;
-	const char *errmsg = strerror( errno );
+	return topo_get_cpu_count(topology);
+}
 
-	if ( i < 0 )
-	{
-		sctk_restrict_binding();
-		return -1;
-	}
+static __thread int __topo_cpu_pinning_caching_value = -1;
 
-	sctk_spinlock_lock( &topology_ctx.lock );
+void mpc_common_topo_clear_cpu_pinning_cache()
+{
+	__topo_cpu_pinning_caching_value = -1;
+}
 
-	int ret = sctk_get_cpu_intern();
+void _set_cpu_pinning_cache(int logical_id)
+{
+	__topo_cpu_pinning_caching_value = logical_id;
+}
 
-	TODO( "Handle specific mapping from the user" );
-	hwloc_obj_t pu = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, i );
-	assume( pu );
+int mpc_common_topo_bind_to_cpu(int cpuid)
+{
+	int ret = topo_bind_to_cpu(topology, topology_ctx.topology_cpuset, cpuid);
 
-	int err = hwloc_set_cpubind( topology, pu->cpuset, HWLOC_CPUBIND_THREAD );
-	if ( err )
-	{
-		char *msg = "Bind to cpu";
-		fprintf( stderr, "%-40s: %sFAILED (%d, %s)\n", msg, supported ? "" : "X", errno, errmsg );
-	}
-	//    assume(sctk_get_cpu_intern() == i);
-	sctk_get_cpu_val = i;
-	sctk_spinlock_unlock( &topology_ctx.lock );
+ 	_set_cpu_pinning_cache(cpuid);
+
 	return ret;
 }
 
-/*! \brief Return the type of processor (x86, x86_64, ...)
-*/
-char *sctk_get_processor_name()
+void mpc_common_topo_bind_to_process_cpuset(void)
 {
-	return utsname.machine;
+	topo_bind_to_process(topology, topology_ctx.topology_cpuset);
+	mpc_common_topo_clear_cpu_pinning_cache();
 }
 
-/*! \brief Return the first core_id for a NUMA node
- * @ param node NUMA node id.
- */
-int sctk_get_first_cpu_in_node( int node )
+int mpc_common_topo_get_current_cpu()
 {
-	hwloc_obj_t currentNode = hwloc_get_obj_by_type( topology, HWLOC_OBJ_NODE, node );
-
-	while ( currentNode->type != HWLOC_OBJ_CORE )
+	if ( __topo_cpu_pinning_caching_value < 0 )
 	{
-		currentNode = currentNode->children[0];
-	}
-
-	return currentNode->logical_index;
-}
-
-/*! \brief Return the total number of core for the process
-*/
-int sctk_get_cpu_number()
-{
-	return hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_PU );
-}
-
-/*! \brief Return the total number of core for the process
-*/
-int sctk_get_cpu_number_topology( hwloc_topology_t topo )
-{
-	return hwloc_get_nbobjs_by_type( topo, HWLOC_OBJ_PU );
-}
-
-/*! \brief Set the number of core usable for the current process
- * @ param n Number of cores
- * used in ethread
- */
-int sctk_set_cpu_number( int n )
-{
-	if ( n <= sctk_get_cpu_number() )
-	{
-		sctk_update_topology( n, 0 );
-	}
-	return n;
-}
-
-/*! \brief Return 1 if the current node is a NUMA node, 0 otherwise
-*/
-int sctk_is_numa_node()
-{
-	return hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_NODE ) != 0;
-}
-
-/*! \brief Return 1 if the current node is a NUMA node, 0 otherwise
-*/
-int sctk_is_numa_node_topology( hwloc_topology_t topo )
-{
-	return hwloc_get_nbobjs_by_type( topo, HWLOC_OBJ_NODE ) != 0;
-}
-
-/*! \brief Return the number of NUMA nodes
-*/
-int sctk_get_numa_node_number()
-{
-	return hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_NODE );
-}
-
-/*! \brief Return the NUMA node according to the code_id number
- * @param vp VP
- */
-int sctk_get_node_from_cpu( const int vp )
-{
-	if ( vp < 0 )
-		return -1;
-
-	if ( sctk_is_numa_node() )
-	{
-		const hwloc_obj_t pu = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, vp );
-		assume( pu );
-		const hwloc_obj_t node =
-			hwloc_get_ancestor_obj_by_type( topology, HWLOC_OBJ_NODE, pu );
-
-		return node->logical_index;
+		return topo_get_current_cpu(topology);
 	}
 	else
 	{
-		return 0;
+		return __topo_cpu_pinning_caching_value;
 	}
 }
 
-int sctk_get_physical_node_from_cpu( const int vp )
+void mpc_common_topo_print(FILE *fd)
 {
-#ifdef HAVE_HWLOC
-	if ( sctk_is_numa_node() )
-	{
-		const hwloc_obj_t pu = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, vp );
-		const hwloc_obj_t node =
-			hwloc_get_ancestor_obj_by_type( topology, HWLOC_OBJ_NODE, pu );
-		return node->os_index;
-	}
-	else
-	{
-		return 0;
-	}
-#else
-	return 0;
-#endif
+	topo_print(topology, fd);
 }
 
-/*! \brief Return the NUMA node according to the code_id number
- * @param vp VP
- */
-int sctk_get_node_from_cpu_topology( hwloc_topology_t topo, const int vp )
+int mpc_common_topo_get_pu_count(void)
 {
-	if ( sctk_is_numa_node_topology( topo ) )
-	{
-		const hwloc_obj_t pu = hwloc_get_obj_by_type( topo, HWLOC_OBJ_PU, vp );
-		assume( pu );
-		const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type( topo, HWLOC_OBJ_NODE, pu );
-
-		return node->logical_index;
-	}
-	else
-	{
-		return 0;
-	}
+	return topo_get_pu_count(topology);
 }
 
-/* print the neighborhood*/
-void print_neighborhood( int cpuid, int nb_cpus, int *neighborhood, hwloc_obj_t *objs )
+
+int mpc_common_topo_get_ht_per_core(void)
 {
-	int i;
-	hwloc_obj_t currentCPU = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, cpuid );
-	hwloc_obj_type_t type = ( sctk_is_numa_node() ) ? HWLOC_OBJ_NODE : HWLOC_OBJ_MACHINE;
-	int currentCPU_node_id = hwloc_get_ancestor_obj_by_type( topology, type, currentCPU )->logical_index;
-	int currentCPU_socket_id = hwloc_get_ancestor_obj_by_type( topology, HWLOC_OBJ_SOCKET, currentCPU )->logical_index;
-	int currentCPU_core_id = hwloc_get_ancestor_obj_by_type( topology, HWLOC_OBJ_CORE, currentCPU )->logical_index;
-
-	fprintf( stderr, "Neighborhood result starting with CPU %d: (Node:%d, Socket: %d, Core: %d)\n",
-			 cpuid, currentCPU_node_id, currentCPU_socket_id, currentCPU_core_id );
-
-	for ( i = 0; i < nb_cpus; i++ )
-	{
-		hwloc_obj_t current = objs[i];
-
-		fprintf( stderr, "\tNeighbor[%d] -> CPU %d: (Node:%d, Socket: %d, Core: %d)\n",
-				 i, neighborhood[i],
-				 hwloc_get_ancestor_obj_by_type( topology, type, current )->logical_index,
-				 hwloc_get_ancestor_obj_by_type( topology, HWLOC_OBJ_SOCKET, current )->logical_index,
-				 hwloc_get_ancestor_obj_by_type( topology, HWLOC_OBJ_CORE, current )->logical_index );
-	}
+	return topo_get_pu_per_core_count(topology, 0);
 }
-
-/*! \brief Return the closest core_id
- * @param cpuid Main core_id
- * @param nb_cpus Number of neighbor
- * @param neighborhood Neighbor list
- */
-void sctk_get_neighborhood( int cpuid, unsigned int nb_cpus, int *neighborhood )
-{
-	unsigned int i;
-	hwloc_obj_t *objs;
-	hwloc_obj_t currentCPU;
-	unsigned int nb_cpus_found;
-
-	currentCPU = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, cpuid );
-
-	/* alloc size for retreiving objects. We could also use a static array */
-	objs = sctk_malloc( nb_cpus * sizeof( hwloc_obj_t ) );
-	sctk_assert( objs != NULL );
-
-	/* The closest CPU is actually... the current CPU :-). 
-	* Set the closest CPU as the current CPU */
-	objs[0] = currentCPU;
-
-	/* get closest objects to the current CPU */
-	nb_cpus_found = hwloc_get_closest_objs( topology, currentCPU, &objs[1], ( nb_cpus - 1 ) );
-	/*  +1 because of the current cpu not returned by hwloc_get_closest_objs */
-	assume( ( nb_cpus_found + 1 ) == nb_cpus );
-
-	/* fill the neighborhood variable */
-	for ( i = 0; i < nb_cpus; i++ )
-	{
-		/*
-		hwloc_obj_t current = objs[i];
-		neighborhood[i] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, current)->logical_index;
-		*/
-		neighborhood[i] = objs[i]->logical_index;
-	}
-
-	/* uncomment for printing the returned result */
-	//print_neighborhood(cpuid, nb_cpus, neighborhood, objs);
-
-	sctk_free( objs );
-}
-
-/*! \brief Return the closest core_id
- * @param cpuid Main core_id
- * @param nb_cpus Number of neighbor
- * @param neighborhood Neighbor list
- */
-void sctk_get_neighborhood_topology( hwloc_topology_t topo, int cpuid, unsigned int nb_cpus, int *neighborhood )
-{
-	unsigned int i;
-	hwloc_obj_t *objs;
-	hwloc_obj_t currentCPU;
-	unsigned nb_cpus_found;
-
-	currentCPU = hwloc_get_obj_by_type( topo, HWLOC_OBJ_PU, cpuid );
-
-	/* alloc size for retreiving objects. We could also use a static array */
-	objs = sctk_malloc( nb_cpus * sizeof( hwloc_obj_t ) );
-	sctk_assert( objs != NULL );
-
-	/* The closest CPU is actually... the current CPU :-). 
-	* Set the closest CPU as the current CPU */
-	objs[0] = currentCPU;
-
-	/* get closest objects to the current CPU */
-	nb_cpus_found = hwloc_get_closest_objs( topo, currentCPU, &objs[1], ( nb_cpus - 1 ) );
-	/*  +1 because of the current cpu not returned by hwloc_get_closest_objs */
-	assume( ( nb_cpus_found + 1 ) == nb_cpus );
-
-	/* fill the neighborhood variable */
-	for ( i = 0; i < nb_cpus; i++ )
-	{
-		/*
-		hwloc_obj_t current = objs[i];
-		neighborhood[i] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, current)->logical_index;
-		*/
-		neighborhood[i] = objs[i]->logical_index;
-	}
-
-	/* uncomment for printing the returned result */
-	//print_neighborhood(cpuid, nb_cpus, neighborhood, objs);
-
-	sctk_free( objs );
-}
-
-/*
- * For OpenFabrics
- */
-#ifdef MPC_USE_INFINIBAND
-/* Add functions here for IB */
-
-int sctk_topology_is_ib_device_close_from_cpu( struct ibv_device *dev, int logical_core_id )
-{
-	int err;
-
-	hwloc_bitmap_t ib_set;
-	ib_set = hwloc_bitmap_alloc();
-
-	err = hwloc_ibv_get_device_cpuset( topology, dev, ib_set );
-
-	if ( err < 0 )
-	{
-		return -1;
-	}
-	else
-	{
-		int res;
-
-		hwloc_obj_t obj_cpu = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, logical_core_id );
-		assume( obj_cpu );
-
-#if 0
-		char *cpuset_string = NULL;
-		hwloc_bitmap_list_asprintf(&cpuset_string, ib_set);
-		sctk_debug("String: %s", cpuset_string);
-#endif
-
-		hwloc_bitmap_and( ib_set, ib_set, obj_cpu->cpuset );
-		res = hwloc_bitmap_iszero( ib_set );
-
-		hwloc_bitmap_free( ib_set );
-		/* If the bitmap is different from 0, we are close to the IB card, so
-		* we return 1 */
-		return !res;
-	}
-}
-
-#endif

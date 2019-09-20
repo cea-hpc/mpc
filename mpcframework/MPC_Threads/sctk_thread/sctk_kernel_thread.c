@@ -96,7 +96,7 @@ kthread_create_start_routine (void *t_arg)
 {
   kthread_create_start_t slot;
 
-  sctk_topology_init_cpu();
+  mpc_common_topo_clear_cpu_pinning_cache();
 
   memcpy(&slot,t_arg,sizeof(kthread_create_start_t));
   ((kthread_create_start_t*)t_arg)->started = 1;

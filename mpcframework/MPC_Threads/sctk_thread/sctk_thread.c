@@ -604,14 +604,14 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   tmp = *__arg;
 
   // DEBUG
-  assume_m(sctk_get_cpu() == tmp.bind_to,
+  assume_m(mpc_common_topo_get_current_cpu() == tmp.bind_to,
            "sctk_thread_create_tmp_start_routine BUGUED");
-  // assert(sctk_get_cpu() == tmp.bind_to);
+  // assert(mpc_common_topo_get_current_cpu() == tmp.bind_to);
   // ENDDEBUG
 
   /* Bind the thread to the right core if we are using pthreads */
   if (sctk_get_thread_val() == sctk_pthread_thread_init) {
-    sctk_bind_to_cpu (tmp.bind_to);
+    mpc_common_topo_bind_to_cpu (tmp.bind_to);
   }
 
   //mark the given TLS as currant thread allocator
@@ -708,7 +708,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
    *
    * TODO: due to some issues, weak functions are replaced by dlsym accesses for now
    */
-  int init_cpu = sctk_get_cpu();
+  int init_cpu = mpc_common_topo_get_current_cpu();
   int nbvps, i, nb_cpusets;
   cpu_set_t * cpuset;
 
@@ -789,10 +789,10 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 
   core++;
 
-  previous_binding = sctk_bind_to_cpu (new_binding);
+  previous_binding = mpc_common_topo_bind_to_cpu (new_binding);
 
   // DEBUG
-  assert(new_binding == sctk_get_cpu());
+  assert(new_binding == mpc_common_topo_get_current_cpu());
   // ENDDEBUG
 
   tls = __sctk_create_thread_memory_area ();
@@ -833,7 +833,7 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 
   /* We reset the binding */
   {
-    sctk_bind_to_cpu(previous_binding);
+    mpc_common_topo_bind_to_cpu(previous_binding);
 #ifdef MPC_USE_EXTLS
   	extls_ctx_restore(old_ctx);
 #endif
@@ -1040,10 +1040,10 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
       sctk_thread_attr_getscope (__attr, &scope_init);
       sctk_nodebug ("Thread to create with scope %d ", scope_init);
       if (scope_init == SCTK_THREAD_SCOPE_SYSTEM) {
-        sctk_restrict_binding();
+        mpc_common_topo_bind_to_process_cpuset();
       }
     } else {
-        sctk_restrict_binding();
+        mpc_common_topo_bind_to_process_cpuset();
     }
 #endif
 
@@ -2272,7 +2272,7 @@ int sctk_get_init_vp_and_nbvp_default(int i, int *nbVp) {
   int cpu_per_task;
   int j;
 
-  cpu_nb = sctk_get_cpu_number(); // number of cpu per process
+  cpu_nb = mpc_common_topo_get_cpu_count(); // number of cpu per process
 
   total_tasks_number = sctk_get_total_tasks_number();
 
@@ -2354,11 +2354,11 @@ int sctk_get_init_vp_and_nbvp_numa_packed(int i, int *nbVp) {
   int nb_task_per_numa_node;
 
   // initialization
-  cpu_nb = sctk_get_cpu_number(); // number of cpu per process
+  cpu_nb = mpc_common_topo_get_cpu_count(); // number of cpu per process
   total_tasks_number = sctk_get_total_tasks_number();
 
   nb_numa_node_per_node =
-      sctk_get_numa_node_number(); // number of numa nodes in the node
+      mpc_common_topo_get_numa_node_count(); // number of numa nodes in the node
   nb_cpu_per_numa_node =
       cpu_nb / nb_numa_node_per_node; // number of cores per numa nodes
 
@@ -2417,8 +2417,8 @@ int sctk_get_init_vp_and_nbvp_numa_packed(int i, int *nbVp) {
 int sctk_get_init_vp_and_nbvp_numa(int i, int *nbVp) {
   int task_nb =
       sctk_last_local - sctk_first_local + 1; // number of task per process
-  int cpu_nb = sctk_get_cpu_number();         // number of cpu per process
-  int numa_node_per_node_nb = sctk_get_numa_node_number();
+  int cpu_nb = mpc_common_topo_get_cpu_count();         // number of cpu per process
+  int numa_node_per_node_nb = mpc_common_topo_get_numa_node_count();
   int cpu_per_numa_node = cpu_nb / numa_node_per_node_nb;
 
   int global_id = i;
@@ -2467,7 +2467,7 @@ int sctk_get_init_vp_and_nbvp_numa(int i, int *nbVp) {
   //        local_id  ,
   //        global_id ,
   //        proc_global,
-  //        sctk_get_cpu(),
+  //        mpc_common_topo_get_current_cpu(),
   //        mpc_common_get_local_task_count(),
   //        *nbVp
   //       );

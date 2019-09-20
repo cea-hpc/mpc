@@ -92,7 +92,7 @@ void sctk_alloc_config_init_static_defaults(
     struct sctk_runtime_config_struct_allocator *config);
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif //SCTK_ALLOC_CONFIG_H

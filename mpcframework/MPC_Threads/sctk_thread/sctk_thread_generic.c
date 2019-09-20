@@ -2467,7 +2467,7 @@ void sctk_register_thread_type(char* type){
 int sctk_get_env_cpu_nuber(){
   int cpu_number; 
   char* env;
-  cpu_number = sctk_get_cpu_number ();
+  cpu_number = mpc_common_topo_get_cpu_count ();
   env = getenv("SCTK_SET_CORE_NUMBER");
   if(env != NULL){
     cpu_number = atoi(env);

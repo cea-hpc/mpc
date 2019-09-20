@@ -24,13 +24,13 @@
 
 int sctk_get_progress_thread_binding_bind(void) {
   int cpu_id_to_bind_progress_thread;
-  cpu_id_to_bind_progress_thread = sctk_get_cpu();
+  cpu_id_to_bind_progress_thread = mpc_common_topo_get_current_cpu();
   return cpu_id_to_bind_progress_thread;
 }
 
 int sctk_get_progress_thread_binding_smart(void) {
   int cpu_id_to_bind_progress_thread;
-  cpu_id_to_bind_progress_thread = sctk_get_cpu() + 1;
+  cpu_id_to_bind_progress_thread = mpc_common_topo_get_current_cpu() + 1;
   return cpu_id_to_bind_progress_thread;
 }
 
@@ -44,9 +44,9 @@ int sctk_get_progress_thread_binding_numa_iter(void) {
   int cpu_id_to_bind_progress_thread;
 
   int task_nb = mpc_common_get_local_task_count();
-  int numa_node_per_node_nb = sctk_get_numa_node_number();
+  int numa_node_per_node_nb = mpc_common_topo_get_numa_node_count();
 
-  int current_cpu = sctk_get_cpu();
+  int current_cpu = mpc_common_topo_get_current_cpu();
 
   int nbVp;
   int global_id = mpc_common_get_local_task_rank();
@@ -126,13 +126,13 @@ int sctk_get_progress_thread_binding_numa(void) {
 
   int task_nb = mpc_common_get_local_task_count();
 
-  int cpu_per_node = sctk_get_cpu_number();
+  int cpu_per_node = mpc_common_topo_get_cpu_count();
 
-  int numa_node_per_node_nb = sctk_get_numa_node_number();
+  int numa_node_per_node_nb = mpc_common_topo_get_numa_node_count();
 
   int cpu_per_numa_node = cpu_per_node / numa_node_per_node_nb;
 
-  int current_cpu = sctk_get_cpu();
+  int current_cpu = mpc_common_topo_get_current_cpu();
 
   int nbVp;
 

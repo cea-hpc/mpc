@@ -139,7 +139,7 @@ static inline int sctk_get_processor_number (void)
   static int ret = -1;
 
   if (ret == -1) {
-    ret = sctk_get_cpu_number();
+    ret = mpc_common_topo_get_cpu_count();
   }
 
   return ret;
@@ -150,7 +150,7 @@ static inline int sctk_get_core_number (void)
   static int ret = -1;
 
   if (ret == -1) {
-    ret = sctk_get_pu_number();
+    ret = mpc_common_topo_get_pu_count();
   }
 
   return ret;

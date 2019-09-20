@@ -40,8 +40,8 @@ extern "C"
 
 /************************* FUNCTION ************************/
 #ifndef MPC_Threads
-SCTK_INTERN int sctk_is_numa_node(void);
-SCTK_INTERN int sctk_get_numa_node_number (void);
+SCTK_INTERN int mpc_common_topo_has_numa_nodes(void);
+SCTK_INTERN int mpc_common_topo_get_numa_node_count (void);
 #endif
 
 SCTK_INTERN void sctk_alloc_init_topology(void);

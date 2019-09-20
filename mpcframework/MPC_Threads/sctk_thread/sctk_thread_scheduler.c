@@ -64,7 +64,7 @@ static int sctk_thread_generic_scheduler_use_binding = 1;
 
 static void sctk_thread_generic_scheduler_bind_to_cpu (int core){
   if(sctk_thread_generic_scheduler_use_binding == 1){
-    sctk_bind_to_cpu (core);
+    mpc_common_topo_bind_to_cpu (core);
   }
 }
 
@@ -789,7 +789,7 @@ sctk_multiple_queues_with_priority_omp_get_from_list() {
                       res, res_tmp) {
         if (res->sched->th->attr.kind.mask & KIND_MASK_OMP) {
           printf("canard %d %d %d\n", res->sched->th->attr.kind.mask,
-                 sctk_thread_generic_getkind_mask_self(), sctk_get_cpu());
+                 sctk_thread_generic_getkind_mask_self(), mpc_common_topo_get_current_cpu());
           fflush(stdout);
           // remove the omp thread from the list
           DL_DELETE(sctk_multiple_queues_sched_lists[core]
@@ -2448,7 +2448,7 @@ void sctk_thread_generic_scheduler_init(char *thread_type, char *scheduler_type,
                                         int vp_number) {
   int i;
 
-  if(vp_number > sctk_get_cpu_number ()){
+  if(vp_number > mpc_common_topo_get_cpu_count ()){
     sctk_thread_generic_scheduler_use_binding = 0;
   }
 

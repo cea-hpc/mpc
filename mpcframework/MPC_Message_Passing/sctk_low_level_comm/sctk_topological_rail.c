@@ -198,7 +198,7 @@ void sctk_network_init_topological_rail_info(  sctk_rail_info_t *rail )
 	sctk_topological_rail_info_t  * infos = &rail->network.topological;
 	
 	/* Allocate an array of CPU size */
-	infos->max_vp = sctk_get_cpu_number();
+	infos->max_vp = mpc_common_topo_get_cpu_count();
 	
 	infos->vp_to_subrail = sctk_malloc( infos->max_vp * sizeof( int ) );
 	assume( infos->vp_to_subrail != NULL );

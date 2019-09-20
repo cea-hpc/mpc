@@ -136,7 +136,7 @@ int sctk_device_count_pu_on_numa( hwloc_obj_t obj  )
 
 void sctk_device_load_topology_limits( hwloc_topology_t topology )
 {
-	int numa = sctk_get_numa_node_number();
+	int numa = mpc_common_topo_get_numa_node_count();
 	/* Assume 1 when not a numa machine */
 	if( numa == 0 )
 		numa = 1;
@@ -182,7 +182,7 @@ void sctk_device_load_topology_limits( hwloc_topology_t topology )
 	/* No numa found */
 	if( !has_numa )
 	{
-		___core_count = sctk_get_cpu_number();
+		___core_count = mpc_common_topo_get_cpu_count();
 	}
 	else
 	{
@@ -453,29 +453,20 @@ void sctk_device_fill_in_infiniband_info( sctk_device_t * device, hwloc_topology
 	struct ibv_device ** dev_list = ibv_get_device_list ( &devices_nb );
 
 	int id;
-	
+
 	/* For all the devices */
 	for( id = 0 ; id < devices_nb ; id++ )
 	{
-		/* Retrieve the HWLOC osdev */
-		hwloc_obj_t ofa_osdev = hwloc_ibv_get_device_osdev ( topology, dev_list[id] );
-
-		/* If one */
-		if( ofa_osdev )
+		if( !strcmp(dev_list[id]->name, device->name)
+		 || !strcmp(dev_list[id]->dev_name, device->name) )
 		{
-			/* Compare the OS name with the one we have from the previously loaded device */
-			if( !strcmp( device->name , ofa_osdev->name ) )
-			{
 				sctk_nodebug("OFA device %s has ID %d", ofa_osdev->name, id );
 				device->device_id = id;
-			}
+				break;
 		}
 	}
 }
 #endif
-
-
-
 
 
 void sctk_device_enrich_topology( hwloc_topology_t topology )
@@ -786,7 +777,7 @@ static inline int sctk_device_matrix_get_value( int pu_id, int device_id )
 void sctk_device_matrix_init()
 {
 	sctk_device_matrix.device_count = sctk_devices_count;
-	sctk_device_matrix.pu_count =  sctk_get_cpu_number();
+	sctk_device_matrix.pu_count =  mpc_common_topo_get_cpu_count();
 	
 	sctk_device_matrix.distances = sctk_malloc( sizeof( int ) * sctk_device_matrix.device_count  * sctk_device_matrix.pu_count );
 	
