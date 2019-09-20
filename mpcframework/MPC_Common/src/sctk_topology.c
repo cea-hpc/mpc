@@ -859,8 +859,6 @@ static inline int topo_get_current_cpu(hwloc_topology_t target_topo)
 }
 
 
-
-
 int topo_get_pu_count(hwloc_topology_t target_topo)
 {
 	int core_number;
@@ -1233,5 +1231,19 @@ int mpc_common_topo_get_pu_count(void)
 
 int mpc_common_topo_get_ht_per_core(void)
 {
-	return topo_get_pu_per_core_count(topology, 0);
+	static int ret = -1;
+
+	if(ret < 0)
+	{
+		hwloc_topology_t temp_topo;
+		hwloc_topology_init( &temp_topo );
+		hwloc_topology_load( temp_topo );
+
+
+		ret = topo_get_pu_per_core_count(temp_topo, 0);
+
+		hwloc_topology_destroy(temp_topo);
+	}
+
+	return ret;
 }
