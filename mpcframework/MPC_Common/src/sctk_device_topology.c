@@ -238,7 +238,7 @@ int sctk_device_get_ith_logical_on_numa(  hwloc_topology_t topology, int numa_id
 		if( i == core_id )
 		{
 			/* Do not forget to convert it to logical */
-			return sctk_topology_convert_os_pu_to_logical( ret );
+			return mpc_common_topo_convert_os_pu_to_logical( ret );
 		}
 		 
 		i++; 

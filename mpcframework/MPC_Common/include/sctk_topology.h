@@ -38,8 +38,10 @@ extern "C" {
 
 /* Hwloc topology accessors */
 
-hwloc_topology_t mpc_common_topology_get();
+hwloc_topology_t mpc_common_topology_get(void);
 hwloc_topology_t mpc_common_topology_full();
+
+
 
 
 /*! \brief Return the closest core_id
@@ -72,6 +74,8 @@ int mpc_common_topo_get_cpu_count(void);
 */
 int mpc_common_topo_bind_to_cpu(int i);
 
+void mpc_common_topo_bind_to_process_cpuset();
+
 /*! \brief Print the topology tree into a file
  * @param fd Destination file descriptor
 */
@@ -85,6 +89,28 @@ int mpc_common_topo_get_pu_count(void);
 /*! \brief Return the current core_id
 */
 int mpc_common_topo_get_current_cpu(void);
+
+hwloc_const_cpuset_t mpc_common_topo_get_process_cpuset();
+
+hwloc_cpuset_t mpc_common_topo_get_parent_numa_cpuset(int cpuid);
+
+hwloc_cpuset_t mpc_common_topo_get_parent_socket_cpuset(int cpuid);
+
+hwloc_cpuset_t mpc_common_topo_get_pu_cpuset(int cpuid);
+
+hwloc_cpuset_t mpc_common_topo_get_parent_core_cpuset(int cpuid);
+
+hwloc_cpuset_t mpc_common_topo_get_first_pu_for_level(hwloc_obj_type_t type);
+
+int mpc_common_topo_convert_logical_pu_to_os( int cpuid );
+
+/*! \brief Number of processing units per core
+*/
+int mpc_common_topo_get_ht_per_core(void);
+
+void mpc_common_topo_clear_cpu_pinning_cache();
+
+int mpc_common_topo_get_pu_count();
 
 /*
   Numbering rules
@@ -145,19 +171,11 @@ int topo_get_pu_per_core_count(hwloc_topology_t target_topo, int cpuid);
 */
 int topo_get_first_cpu_in_numa_node(hwloc_topology_t target_topo, int node);
 
-/*! \brief Return the type of processor (x86, x86_64, ...)
-*/
-char *sctk_get_processor_name(void);
-
 /*! \brief Set the number of core usable for the current process
  * @ param n Number of cores
  * used for ethread
 */
 int sctk_set_cpu_number(int n);
-
-/*! \brief Number of processing units per core
-*/
-int mpc_common_topo_get_ht_per_core(void);
 
 
 /*! \brief Return the closest core_id
@@ -175,14 +193,6 @@ void topo_get_cpu_neighborhood(hwloc_topology_t topo, int cpuid,
  */
 int topo_get_numa_node_from_cpu(hwloc_topology_t target_topo, const int cpuid);
 
-/*! \brief Return the hwloc topology object
-*/
-hwloc_topology_t mpc_common_topology_get(void);
-
-void mpc_common_topo_bind_to_process_cpuset();
-
-/* Called only by __mpcomp_buid_tree */
-int sctk_get_global_index_from_cpu(hwloc_topology_t topo, const int vp);
 
 /*
  *  * Restrict the topology object of the current mpi task to 'nb_mvps' vps.
@@ -191,56 +201,45 @@ int sctk_get_global_index_from_cpu(hwloc_topology_t topo, const int vp);
 int sctk_restrict_topology_for_mpcomp(hwloc_topology_t *restrictedTopology,
                                       int nb_mvps);
 
-#ifdef MPC_USE_INFINIBAND
-#include <infiniband/verbs.h>
-/*! \brief Return if the core_id is close from the core_id. If an error occurs,
- * we get -1
-*/
-int sctk_topology_is_ib_device_close_from_cpu(struct ibv_device *dev,
-                                              int core_id);
-#endif
 
 /*! \brief Convert a PU id to a logical index
 */
-int sctk_topology_convert_os_pu_to_logical(int pu_os_id);
+int topo_convert_os_pu_to_logical(hwloc_topology_t target_topo, int pu_os_id);
 
 /*! \brief Convert an OS PU to a logical index
 */
-int sctk_topology_convert_logical_pu_to_os(int pu_id);
+int topo_convert_logical_pu_to_os(hwloc_topology_t target_topo, int cpuid);
 
 /*! \brief Returns the complete allowed cpu set for this process
 */
-hwloc_const_cpuset_t sctk_topology_get_machine_cpuset();
+hwloc_const_cpuset_t topo_get_process_cpuset();
 
 /*! \brief Return the cpuset of the node containing the PU with pu_id
- * if not numa it behaves like  sctk_topology_get_machine_cpuset
+ * if not numa it behaves like  topo_get_process_cpuset
 */
-hwloc_const_cpuset_t sctk_topology_get_numa_cpuset(int pu_id);
+hwloc_cpuset_t topo_get_parent_numa_cpuset(hwloc_topology_t target_topo, int cpuid);
 
 /*! \brief Return the cpuset of the socket containing the PU with pu_id
 */
-hwloc_cpuset_t sctk_topology_get_socket_cpuset(int pu_id);
+hwloc_cpuset_t topo_get_parent_socket_cpuset(hwloc_topology_t target_topo, int cpuid);
 
 /*! \brief Return the cpuset of the PU with pu_id
 */
-hwloc_cpuset_t sctk_topology_get_pu_cpuset(int pu_id);
+hwloc_cpuset_t topo_get_pu_cpuset(hwloc_topology_t target_topo, int cpuid);
 
 /*! \brief Return the cpuset of the CORE hosting PU with pu_id
 */
-hwloc_cpuset_t sctk_topology_get_core_cpuset(int pu_id);
+hwloc_cpuset_t topo_get_parent_core_cpuset(hwloc_topology_t target_topo, int cpuid);
 
 /*! \brief Retrieve a CPUSET with the first core for each item of level
  * NUMA/MACHINE/SOCKET
 */
-hwloc_cpuset_t sctk_topology_get_roots_for_level(hwloc_obj_type_t type);
+hwloc_cpuset_t topo_get_first_pu_for_level(hwloc_topology_t topology, hwloc_obj_type_t type);
 
 /*! \brief Compute the distance between a given object and a PU
 */
 int topo_get_distance_from_pu(hwloc_topology_t topology, int source_pu, hwloc_obj_t target_obj);
 
-void mpc_common_topo_clear_cpu_pinning_cache();
-
-int mpc_common_topo_get_pu_count();
 
 /* used by option graphic */
 void create_placement_rendering(int pu, int master_pu,int task_id);

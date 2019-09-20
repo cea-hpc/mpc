@@ -419,18 +419,6 @@ restart_restrict:
 	}
 }
 
-/* Called only by __mpcomp_buid_tree */
-int sctk_get_global_index_from_cpu( hwloc_topology_t topo, const int vp )
-{
-	hwloc_obj_t obj;
-	hwloc_topology_t globalTopology = mpc_common_topology_get();
-	const hwloc_obj_t pu = hwloc_get_obj_by_type( topo, HWLOC_OBJ_PU, vp );
-
-	assume( pu );
-	obj = hwloc_get_pu_obj_by_os_index( globalTopology, pu->os_index );
-	return obj->logical_index;
-}
-
 #include <sched.h>
 #if defined( HP_UX_SYS )
 #include <sys/param.h>
@@ -503,27 +491,17 @@ void topo_print( hwloc_topology_t target_topology, FILE *fd )
 	return;
 }
 
-
-/*! \brief Return the type of processor (x86, x86_64, ...)
-*/
-char *sctk_get_processor_name()
-{
-	return utsname.machine;
-}
-
-
-
 hwloc_topology_t* sctk_get_topology_addr(void)
 {
 	return &topology;
 }
 
-int sctk_topology_convert_os_pu_to_logical( int pu_os_id )
+int topo_convert_os_pu_to_logical(hwloc_topology_t target_topo, int pu_os_id)
 {
 	hwloc_cpuset_t this_pu_cpuset = hwloc_bitmap_alloc();
 	hwloc_bitmap_only( this_pu_cpuset, pu_os_id );
 
-	hwloc_obj_t pu = hwloc_get_obj_inside_cpuset_by_type( topology, this_pu_cpuset, HWLOC_OBJ_PU, 0 );
+	hwloc_obj_t pu = hwloc_get_obj_inside_cpuset_by_type( target_topo, this_pu_cpuset, HWLOC_OBJ_PU, 0 );
 
 	hwloc_bitmap_free( this_pu_cpuset );
 
@@ -535,9 +513,9 @@ int sctk_topology_convert_os_pu_to_logical( int pu_os_id )
 	return pu->logical_index;
 }
 
-int sctk_topology_convert_logical_pu_to_os( int pu_id )
+int topo_convert_logical_pu_to_os(hwloc_topology_t target_topo, int cpuid)
 {
-	hwloc_obj_t target_pu = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, pu_id );
+	hwloc_obj_t target_pu = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_PU, cpuid );
 
 	if ( !target_pu )
 	{
@@ -548,57 +526,17 @@ int sctk_topology_convert_logical_pu_to_os( int pu_id )
 	return target_pu->os_index;
 }
 
-hwloc_const_cpuset_t sctk_topology_get_machine_cpuset()
+
+hwloc_cpuset_t topo_get_pu_parent_cpuset_by_type(hwloc_topology_t target_topo,
+												 hwloc_obj_type_t parent_type,
+												 int cpuid)
 {
-	return hwloc_topology_get_allowed_cpuset( topology );
-}
-
-hwloc_const_cpuset_t sctk_topology_get_numa_cpuset( int pu_id )
-{
-	hwloc_const_cpuset_t ret;
-
-	if ( !mpc_common_topo_has_numa_nodes() )
-	{
-		ret = hwloc_topology_get_allowed_cpuset( topology );
-	}
-	else
-	{
-		hwloc_obj_t target_pu = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, pu_id );
-
-		if ( !target_pu )
-		{
-			sctk_warning( "INFO : Could not extract NUMA topology" );
-			return hwloc_topology_get_allowed_cpuset( topology );
-		}
-
-		assume( target_pu != NULL );
-
-		hwloc_obj_t parent = target_pu->parent;
-
-		while ( parent->type != HWLOC_OBJ_NODE )
-		{
-			if ( !parent )
-				break;
-
-			parent = parent->parent;
-		}
-
-		assume( parent != NULL );
-
-		ret = parent->cpuset;
-	}
-
-	return ret;
-}
-
-hwloc_cpuset_t sctk_topology_get_socket_cpuset( int pu_id )
-{
-	hwloc_obj_t target_pu = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, pu_id );
+	hwloc_obj_t target_pu = hwloc_get_obj_by_type(target_topo, HWLOC_OBJ_PU, cpuid);
 	assume( target_pu != NULL );
 
 	hwloc_obj_t parent = target_pu->parent;
 
-	while ( parent->type != HWLOC_OBJ_SOCKET )
+	while ( parent->type != parent_type )
 	{
 		if ( !parent )
 			break;
@@ -610,6 +548,47 @@ hwloc_cpuset_t sctk_topology_get_socket_cpuset( int pu_id )
 
 	return parent->cpuset;
 }
+
+
+hwloc_const_cpuset_t topo_get_process_cpuset(hwloc_topology_t target_topo)
+{
+	return hwloc_topology_get_allowed_cpuset( target_topo );
+}
+
+hwloc_cpuset_t topo_get_parent_numa_cpuset( hwloc_topology_t target_topo, int cpuid )
+{
+	if ( !topo_has_numa_nodes(target_topo) )
+	{
+		return (hwloc_cpuset_t)topo_get_process_cpuset( target_topo );
+	}
+	else
+	{
+		return topo_get_pu_parent_cpuset_by_type(target_topo, HWLOC_OBJ_NODE, cpuid);
+	}
+
+	not_reachable();
+}
+
+hwloc_cpuset_t topo_get_parent_socket_cpuset( hwloc_topology_t target_topo, int cpuid )
+{
+	return topo_get_pu_parent_cpuset_by_type(target_topo, HWLOC_OBJ_SOCKET, cpuid);
+}
+
+
+hwloc_cpuset_t topo_get_parent_core_cpuset(hwloc_topology_t target_topo, int cpuid)
+{
+	return topo_get_pu_parent_cpuset_by_type(target_topo, HWLOC_OBJ_CORE, cpuid);
+}
+
+hwloc_cpuset_t topo_get_pu_cpuset(hwloc_topology_t target_topo,  int cpuid)
+{
+	hwloc_obj_t target_pu = hwloc_get_obj_by_type(target_topo, HWLOC_OBJ_PU, cpuid);
+	assume( target_pu != NULL );
+	return target_pu->cpuset;
+}
+
+
+
 
 int sctk_topology_get_socket_number()
 {
@@ -650,34 +629,8 @@ int sctk_topology_get_socket_id( int os_level )
 	}
 }
 
-hwloc_cpuset_t sctk_topology_get_core_cpuset( int pu_id )
-{
-	hwloc_obj_t target_pu = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, pu_id );
-	assume( target_pu != NULL );
 
-	hwloc_obj_t parent = target_pu->parent;
-
-	while ( parent->type != HWLOC_OBJ_CORE )
-	{
-		if ( !parent )
-			break;
-
-		parent = parent->parent;
-	}
-
-	assume( parent != NULL );
-
-	return parent->cpuset;
-}
-
-hwloc_cpuset_t sctk_topology_get_pu_cpuset( int pu_id )
-{
-	hwloc_obj_t target_pu = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, pu_id );
-	assume( target_pu != NULL );
-	return target_pu->cpuset;
-}
-
-int __sctk_topology_get_roots_for_level( hwloc_obj_t obj, hwloc_cpuset_t roots )
+int _topo_get_first_pu_for_level( hwloc_obj_t obj, hwloc_cpuset_t roots )
 {
 	if ( obj->type == HWLOC_OBJ_PU )
 	{
@@ -691,7 +644,7 @@ int __sctk_topology_get_roots_for_level( hwloc_obj_t obj, hwloc_cpuset_t roots )
 
 	for ( i = 0; i < obj->arity; i++ )
 	{
-		ret = __sctk_topology_get_roots_for_level( obj->children[i], roots );
+		ret = _topo_get_first_pu_for_level( obj->children[i], roots );
 
 		if ( ret )
 			break;
@@ -700,7 +653,7 @@ int __sctk_topology_get_roots_for_level( hwloc_obj_t obj, hwloc_cpuset_t roots )
 	return ret;
 }
 
-hwloc_cpuset_t sctk_topology_get_roots_for_level( hwloc_obj_type_t type )
+hwloc_cpuset_t topo_get_first_pu_for_level( hwloc_topology_t target_topo, hwloc_obj_type_t type )
 {
 	hwloc_cpuset_t roots = hwloc_bitmap_alloc();
 
@@ -711,15 +664,14 @@ hwloc_cpuset_t sctk_topology_get_roots_for_level( hwloc_obj_type_t type )
 		type = HWLOC_OBJ_MACHINE;
 	}
 
-	int pu_count = hwloc_get_nbobjs_by_type( topology, type );
+	int pu_count = hwloc_get_nbobjs_by_type( target_topo, type );
 
 	int i;
 
 	for ( i = 0; i < pu_count; i++ )
 	{
-		hwloc_obj_t obj = hwloc_get_obj_by_type( topology, type, i );
-		__sctk_topology_get_roots_for_level( obj, roots );
-		obj = hwloc_get_next_obj_by_type( topology, type, obj );
+		hwloc_obj_t obj = hwloc_get_obj_by_type( target_topo, type, i );
+	 	_topo_get_first_pu_for_level( obj, roots );
 	}
 
 	if ( hwloc_bitmap_iszero( roots ) )
@@ -1245,4 +1197,44 @@ int mpc_common_topo_get_ht_per_core(void)
 	}
 
 	return ret;
+}
+
+hwloc_const_cpuset_t mpc_common_topo_get_process_cpuset()
+{
+	return topo_get_process_cpuset(topology);
+}
+
+hwloc_cpuset_t mpc_common_topo_get_parent_numa_cpuset(int cpuid)
+{
+	return topo_get_parent_numa_cpuset(topology, cpuid);
+}
+
+hwloc_cpuset_t mpc_common_topo_get_parent_socket_cpuset(int cpuid)
+{
+	return topo_get_parent_socket_cpuset(topology, cpuid);
+}
+
+hwloc_cpuset_t mpc_common_topo_get_pu_cpuset(int cpuid)
+{
+	return topo_get_pu_cpuset(topology, cpuid);
+}
+
+hwloc_cpuset_t mpc_common_topo_get_parent_core_cpuset(int cpuid)
+{
+	return topo_get_parent_core_cpuset(topology, cpuid);
+}
+
+hwloc_cpuset_t mpc_common_topo_get_first_pu_for_level(hwloc_obj_type_t type)
+{
+	return topo_get_first_pu_for_level(topology, type);
+}
+
+int mpc_common_topo_convert_logical_pu_to_os( int cpuid )
+{
+	return topo_convert_logical_pu_to_os(topology, cpuid);
+}
+
+int mpc_common_topo_convert_os_pu_to_logical( int pu_os_id )
+{
+	return topo_convert_os_pu_to_logical(topology, pu_os_id);
 }

@@ -138,21 +138,21 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 			return;
 		break;
 		case SCTK_POLL_PU:
-			range_cpuset = sctk_topology_get_pu_cpuset( root_pu );
+			range_cpuset = mpc_common_topo_get_pu_cpuset(root_pu);
 		break;
 		case SCTK_POLL_CORE:
-			range_cpuset = sctk_topology_get_core_cpuset( root_pu );
+			range_cpuset = mpc_common_topo_get_parent_core_cpuset(root_pu);
 		break;
 		case SCTK_POLL_SOCKET:
-			range_cpuset = sctk_topology_get_socket_cpuset( root_pu );
+			range_cpuset = mpc_common_topo_get_parent_socket_cpuset(root_pu);
 		break;
 		case SCTK_POLL_NUMA:
-			range_cpuset = sctk_topology_get_numa_cpuset( root_pu );
+			range_cpuset = mpc_common_topo_get_parent_numa_cpuset(root_pu);
 		break;
 		case SCTK_POLL_MACHINE:
-			range_cpuset = sctk_topology_get_machine_cpuset();
+			range_cpuset = mpc_common_topo_get_process_cpuset(root_pu);
 		break;
-		
+
 		default:
 		case SCTK_POLL_NOT_SET:
 			sctk_fatal("Bad polling range provided");
@@ -167,7 +167,7 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 	
 	/* Update the calling cells accordingly */
 	//hwloc_bitmap_foreach_begin( trigger_vp_id, range_cpuset )
-	//sctk_nodebug("range_vp_id : %d (LOG : %d)",  trigger_vp_id,  sctk_topology_convert_os_pu_to_logical( trigger_vp_id ) );
+	//sctk_nodebug("range_vp_id : %d (LOG : %d)",  trigger_vp_id,  mpc_common_topo_convert_os_pu_to_logical( trigger_vp_id ) );
 	//hwloc_bitmap_foreach_end(); 	
 	
 	/* Now do the same for the trigger */
@@ -178,7 +178,7 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 		return;
 	}
 	
-	hwloc_cpuset_t roots_cpuset = sctk_topology_get_roots_for_level( sctk_topological_polling_trigget_to_hwloc_type(trigger) );
+	hwloc_cpuset_t roots_cpuset = mpc_common_topo_get_first_pu_for_level(sctk_topological_polling_trigget_to_hwloc_type(trigger));
 	
 	assume( roots_cpuset );
 	
@@ -196,14 +196,14 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 	
 	/* Debug print */
 	hwloc_bitmap_foreach_begin( trigger_vp_id, roots_cpuset )
-	sctk_nodebug("trigger_vp_id : %d (LOG %d)",  trigger_vp_id,  sctk_topology_convert_os_pu_to_logical( trigger_vp_id ) );
+	sctk_nodebug("trigger_vp_id : %d (LOG %d)",  trigger_vp_id,  mpc_common_topo_convert_os_pu_to_logical( trigger_vp_id ) );
 	hwloc_bitmap_foreach_end(); 		
 
 	/* Now we can register trigger roots in the cell tree */
 	hwloc_bitmap_foreach_begin( trigger_vp_id, roots_cpuset )
 	
 	/* Trigger on this VP */
-	int trigger_logical_index = sctk_topology_convert_os_pu_to_logical( trigger_vp_id );
+	int trigger_logical_index = mpc_common_topo_convert_os_pu_to_logical( trigger_vp_id );
 	
 	if( ( 0 <= trigger_logical_index ) && ( trigger_logical_index < tree->cell_count ) )
 	{
@@ -248,7 +248,7 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 	 * set to POLL_IGNORE */
 	for( i= 0 ; i < tree->cell_count ; i++ )
 	{
-		int os_index = sctk_topology_convert_logical_pu_to_os( i );
+		int os_index = mpc_common_topo_convert_logical_pu_to_os( i );
 		
 		if( !hwloc_bitmap_isset(range_cpuset, os_index) )
 		{

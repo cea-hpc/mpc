@@ -713,7 +713,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   cpu_set_t * cpuset;
 
   sctk_get_init_vp_and_nbvp (mpc_common_get_task_rank(), &nbvps);
-  init_cpu = sctk_topology_convert_logical_pu_to_os(init_cpu);
+  init_cpu = mpc_common_topo_convert_logical_pu_to_os(init_cpu);
   
   nb_cpusets = 1;
   cpuset = sctk_malloc(sizeof(cpu_set_t) * nb_cpusets);
