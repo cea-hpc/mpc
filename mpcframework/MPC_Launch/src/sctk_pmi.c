@@ -369,7 +369,7 @@ int sctk_pmi_finalize()
     int rc;
 
     // Finalize PMI/SLURM
-    PMI_Finalize();
+    rc = PMI_Finalize();
 
     sctk_free( pmi_context.kvsname );
     return rc;
@@ -511,7 +511,7 @@ int sctk_pmi_get_as_rank( char *value, size_t size, int tag, int rank )
     snprintf( key, pmi_context.max_key_len, "MPC_KEYS_%d_%d", tag, rank );
 
     // Get the value associated to the given key
-    PMI_KVS_Get( pmi_context.kvsname, key, value, size );
+    rc = PMI_KVS_Get( pmi_context.kvsname, key, value, size );
 
     sctk_free( key );
     return rc;
@@ -709,6 +709,7 @@ int sctk_pmi_get_local_process_rank( int *rank )
 int sctk_pmi_get_process_number_from_node_rank( struct process_nb_from_node_rank **process_number_from_node_rank )
 {
     *process_number_from_node_rank = pmi_context.process_nb_from_node_rank;
+    return PMI_SUCCESS;
 }
 
 

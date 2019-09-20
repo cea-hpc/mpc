@@ -110,7 +110,6 @@ void sctk_device_print( sctk_device_t * dev );
 
 void sctk_device_load_from_topology( hwloc_topology_t topology );
 void sctk_device_release();
-void sctk_device_matrix_init();
 
 /* Device getter */
 

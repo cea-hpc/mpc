@@ -81,6 +81,12 @@ struct mpc_topology_context
 	/* Set from restrict topo ?? */
 	int pin_processor_list[MAX_PIN_PROCESSOR_LIST];
 	int pin_processor_current;
+
+	/* Mainly restrict topology */
+	hwloc_bitmap_t topology_cpuset;
+
+	/* Set in sctk_topology_init */
+	hwloc_topology_t topology_full;
 };
 
 
@@ -99,11 +105,11 @@ void mpc_topology_context_clear(void)
 
 /* The topology of the machine + its cpuset */
 static hwloc_topology_t topology;
-static hwloc_bitmap_t topology_cpuset;
+
 
 /* Describe the full topology of the machine.
  * Only used for binding*/
-static hwloc_topology_t topology_full;
+
 
 const struct hwloc_topology_support *support;
 
@@ -114,7 +120,7 @@ hwloc_topology_t mpc_common_topology_get()
 
 hwloc_topology_t mpc_common_topology_full()
 {
-	return topology_full;
+	return topology_ctx.topology_full;
 }
 
 
@@ -169,7 +175,7 @@ sctk_update_topology( const int processor_number, const unsigned int index_first
 
 	err = hwloc_topology_restrict( topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES );
 	assume( !err );
-	hwloc_bitmap_copy( topology_cpuset, cpuset );
+	hwloc_bitmap_copy( topology_ctx.topology_cpuset, cpuset );
 	hwloc_bitmap_free( cpuset );
 }
 
@@ -268,12 +274,12 @@ restart_restrict:
 		sctk_warning( "SMT capabilities ENABLED" );
 
 		topology_ctx.processor_count_on_node = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_PU );
-		hwloc_bitmap_zero( topology_cpuset );
+		hwloc_bitmap_zero( topology_ctx.topology_cpuset );
 
 		for ( i = 0; i < topology_ctx.processor_count_on_node; ++i )
 		{
 			hwloc_obj_t core = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, i );
-			hwloc_bitmap_or( topology_cpuset, topology_cpuset, core->cpuset );
+			hwloc_bitmap_or( topology_ctx.topology_cpuset, topology_ctx.topology_cpuset, core->cpuset );
 		}
 	}
 	else
@@ -303,7 +309,7 @@ restart_restrict:
 			sctk_warning( "Topology reduction issue" );
 			goto restart_restrict;
 		}
-		hwloc_bitmap_copy( topology_cpuset, cpuset );
+		hwloc_bitmap_copy( topology_ctx.topology_cpuset, cpuset );
 
 		hwloc_bitmap_free( cpuset );
 		hwloc_bitmap_free( set );
@@ -919,19 +925,17 @@ void sctk_topology_init()
 	}
 
 	hwloc_topology_load( topology );
-	hwloc_topology_init( &topology_full );
+	hwloc_topology_init( &topology_ctx.topology_full );
 
 	if ( xml_path != NULL )
 	{
-		hwloc_topology_set_xml( topology_full, xml_path );
+		hwloc_topology_set_xml( topology_ctx.topology_full, xml_path );
 	}
 
-	/* Set flags to make sure devices are also loaded */
-	hwloc_topology_set_flags( topology_full, HWLOC_TOPOLOGY_FLAG_IO_DEVICES );
 
-	hwloc_topology_load( topology_full );
+	hwloc_topology_load( topology_ctx.topology_full );
 
-	topology_cpuset = hwloc_bitmap_alloc();
+	topology_ctx.topology_cpuset = hwloc_bitmap_alloc();
 
 	topology_graph_init();
 
@@ -942,7 +946,7 @@ void sctk_topology_init()
 	sctk_restrict_topology();
 
 	/*  load devices */
-	sctk_device_load_from_topology( topology_full );
+	sctk_device_load_from_topology( topology_ctx.topology_full );
 
 #ifndef WINDOWS_SYS
 	gethostname( topology_ctx.hostname, SCTK_MAX_NODE_NAME );
@@ -1043,7 +1047,7 @@ void sctk_restrict_binding()
 {
 	int err;
 
-	err = hwloc_set_cpubind( topology, topology_cpuset, HWLOC_CPUBIND_THREAD );
+	err = hwloc_set_cpubind( topology, topology_ctx.topology_cpuset, HWLOC_CPUBIND_THREAD );
 	assume( !err );
 
 	sctk_topology_init_cpu();

@@ -44,8 +44,6 @@ extern "C" {
 hwloc_topology_t mpc_common_topology_get();
 hwloc_topology_t mpc_common_topology_full();
 
-int mpc_common_topology_processor_on_node();
-
 /*
   Numbering rules
 
