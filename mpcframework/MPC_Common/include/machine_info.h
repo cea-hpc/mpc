@@ -3,13 +3,17 @@
 #define MPC_COMMON_MACHINE_INFO_H_
 
 #include <sched.h>
+
 #if defined( HP_UX_SYS )
 #include <sys/param.h>
 #include <sys/pstat.h>
+
 #endif
+
 #ifdef HAVE_UTSNAME
-static struct utsname utsname;
+#include <sys/utsname.h>
 #else
+
 struct utsname
 {
 	char sysname[];
@@ -19,7 +23,6 @@ struct utsname
 	char machine[];
 };
 
-static struct utsname utsname;
 
 static int
 uname( struct utsname *buf )

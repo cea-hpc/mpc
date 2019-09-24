@@ -24,86 +24,36 @@
 /* #   - BOUHROUR Stephane stephane.bouhrour@exascale-computing.eu        # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk_config.h"
-#include "sctk_topology.h"
+#include "MPC_Common/include/sctk_topology.h"
+
 #include "sctk_launch.h"
 #include "sctk_config.h"
-#include "sctk_debug.h"
-#include "sctk_thread.h"
-#include "sctk.h"
-#include "sctk_kernel_thread.h"
-#include "sctk_device_topology.h"
 
-#include "MPC_Common/include/sctk_rank.h"
-#include "MPC_Common/include/mpc_topology_graph.h"
+#include "MPC_Common/include/sctk_debug.h"
 #include "MPC_Common/include/machine_info.h"
 #include "MPC_Common/include/sctk_io_helper.h"
+#include "MPC_Common/include/sctk_rank.h"
 
+#include "MPC_Common/include/mpc_topology_graph.h"
+#include "MPC_Common/include/sctk_device_topology.h"
 
 #ifdef MPC_USE_EXTLS
 #include <extls.h>
 #endif
 
-#include <dirent.h>
 
 #include <stdio.h>
-#ifdef HAVE_UTSNAME
-#include <sys/utsname.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 
-#define SCTK_MAX_NODE_NAME 512
-
-struct mpc_topology_context
-{
-	/* Set in sctk_topology_init */
-	char *xml_specific_path;
-
-	/* Set in sctk_topology_init */
-	char hostname[SCTK_MAX_NODE_NAME];
-
-	/* Initialized static */
-	sctk_spinlock_t lock;
-
-	/* Mainly restrict topology */
-	hwloc_bitmap_t topology_cpuset;
-
-	/* Set in sctk_topology_init */
-	hwloc_topology_t topology_full;
-};
-
-
-
-static struct mpc_topology_context topology_ctx;
-
-
-void mpc_topology_context_clear(void)
-{
-	memset(&topology_ctx, 0, sizeof(struct mpc_topology_context));
-}
-
-
 /* The topology of the machine + its cpuset */
 static hwloc_topology_t topology;
-
-
-/* Describe the full topology of the machine.
- * Only used for binding*/
-
-
-const struct hwloc_topology_support *support;
 
 hwloc_topology_t mpc_common_topology_get()
 {
 	return topology;
-}
-
-hwloc_topology_t mpc_common_topology_full()
-{
-	return topology_ctx.topology_full;
 }
 
 
@@ -294,10 +244,6 @@ restart_restrict:
 	}
 }
 
-
-// OUT topology_ctx.processor_count_on_node
-// IN TOPOLOGY
-// OUT topology_ctx.topology_cpuset
 void
 topo_apply_mpc_process_constraints(hwloc_topology_t target_topology)
 {
@@ -309,6 +255,9 @@ topo_apply_mpc_process_constraints(hwloc_topology_t target_topology)
 
 	hwloc_cpuset_t pinning_constraints = topo_get_pinning_constraints(processor_count);
 
+	int processor_per_process = processor_count;
+
+	/* Now apply process restrictions */
 	if (mpc_common_get_process_count() > 1)
 	{
 		/* Determine number of processes on this node */
@@ -317,7 +266,7 @@ topo_apply_mpc_process_constraints(hwloc_topology_t target_topology)
 
 
 		/* Determine processor number per process */
-		int processor_per_process = processor_count / local_process_count;
+		processor_per_process = processor_count / local_process_count;
 		int remaining_procs = processor_count % local_process_count;
 		int start = processor_per_process * local_process_rank;
 
@@ -341,37 +290,32 @@ topo_apply_mpc_process_constraints(hwloc_topology_t target_topology)
 			}
 		}
 
-
 		topo_map_and_restrict_by_cpuset(target_topology,
 										processor_per_process,
 										start,
 										pinning_constraints);
-
 	} /* share node */
 
-	/* Choose the number of processor used */
+	/* Apply processor number from command line if possible */
 	{
-		int processor_per_process;
+		int requested_processor_per_process = sctk_get_processor_nb();
 
-		processor_per_process = sctk_get_processor_nb();
-
-		if ( processor_per_process > 0 )
+		if ( requested_processor_per_process > 0 )
 		{
-			if ( processor_per_process > processor_count )
+			if ( requested_processor_per_process > processor_per_process )
 			{
 				sctk_error( "Unable to allocate %d core (%d real cores)",
-							processor_per_process, processor_count );
-				/* we cannot exit with a sctk_abort() because thread
-				* library is not initialized at this moment */
-				/* sctk_abort (); */
-				exit( 1 );
+							requested_processor_per_process, processor_per_process );
+				sctk_abort();
 			}
-			else if ( processor_per_process < processor_count )
+			else if ( requested_processor_per_process < processor_count )
 			{
-				sctk_warning( "Do not use the entire node %d on %d",
-							  processor_per_process, processor_count );
+				sctk_warning("Process %d does not use all avaiable CPUs (%d/%d)",
+							 mpc_common_get_process_rank(),
+							 requested_processor_per_process, processor_per_process );
+
 				topo_map_and_restrict_by_cpuset(target_topology,
-												processor_per_process,
+												requested_processor_per_process,
 												0,
 												pinning_constraints);
 			}
@@ -384,8 +328,19 @@ topo_apply_mpc_process_constraints(hwloc_topology_t target_topology)
 
 void topo_print( hwloc_topology_t target_topology, FILE *fd )
 {
+	char hostname[128];
+
+#ifndef WINDOWS_SYS
+	gethostname( hostname, 128 );
+#else
+	sprintf( hostname, "localhost" );
+#endif
+
+	static struct utsname utsname;
+	uname( &utsname );
+
 	int i;
-	fprintf( fd, "Node %s: %s %s %s\n", topology_ctx.hostname, utsname.sysname,
+	fprintf( fd, "Node %s: %s %s %s\n", hostname, utsname.sysname,
 			 utsname.release, utsname.version );
 	const int pu_number = hwloc_get_nbobjs_by_type( target_topology, HWLOC_OBJ_PU );
 
@@ -791,6 +746,7 @@ void topo_bind_to_process(hwloc_topology_t target_topo)
  */
 int topo_bind_to_cpu(hwloc_topology_t target_topo, int cpuid)
 {
+	static sctk_spinlock_t pin_lock = 0;
 
 	if ( cpuid < 0 )
 	{
@@ -798,7 +754,7 @@ int topo_bind_to_cpu(hwloc_topology_t target_topo, int cpuid)
 		return -1;
 	}
 
-	sctk_spinlock_lock( &topology_ctx.lock );
+	sctk_spinlock_lock( &pin_lock);
 
 	int ret = topo_get_current_cpu(target_topo);
 
@@ -810,12 +766,10 @@ int topo_bind_to_cpu(hwloc_topology_t target_topo, int cpuid)
 	if ( err )
 	{
 		const char *errmsg = strerror( errno );
-		int supported = support->cpubind->set_thisthread_cpubind;
-		char *msg = "Bind to cpu";
-		fprintf( stderr, "%-40s: %sFAILED (%d, %s)\n", msg, supported ? "" : "X", errno, errmsg );
+		fprintf( stderr, "Bind to cpu: FAILED (%d, %s)\n", errno, errmsg );
 	}
 
-	sctk_spinlock_unlock( &topology_ctx.lock );
+	sctk_spinlock_unlock( &pin_lock );
 	return ret;
 }
 
@@ -973,10 +927,7 @@ void topo_get_cpu_neighborhood(hwloc_topology_t target_topo, int cpuid, unsigned
 */
 void sctk_topology_init()
 {
-	mpc_topology_context_clear();
-
 	char *xml_path = getenv( "MPC_SET_XML_TOPOLOGY_FILE" );
-	topology_ctx.xml_specific_path = xml_path;
 
 	hwloc_topology_init( &topology );
 
@@ -986,37 +937,18 @@ void sctk_topology_init()
 		hwloc_topology_set_xml( topology, xml_path );
 	}
 
+	hwloc_topology_set_flags(topology, HWLOC_TOPOLOGY_FLAG_IO_DEVICES);
+
 	hwloc_topology_load( topology );
-	hwloc_topology_init( &topology_ctx.topology_full );
-
-	if ( xml_path != NULL )
-	{
-		hwloc_topology_set_xml( topology_ctx.topology_full, xml_path );
-	}
-
-
-	hwloc_topology_load( topology_ctx.topology_full );
 
 	topology_graph_init();
-
-	support = hwloc_topology_get_support( topology );
 
 	sctk_only_once();
 
 	topo_apply_mpc_process_constraints(topology);
 
 	/*  load devices */
-	sctk_device_load_from_topology( topology_ctx.topology_full );
-
-#ifndef WINDOWS_SYS
-	gethostname( topology_ctx.hostname, SCTK_MAX_NODE_NAME );
-#else
-	sprintf( topology_ctx.hostname, "localhost" );
-#endif
-
-	uname( &utsname );
-
-
+	sctk_device_load_from_topology( topology );
 }
 
 /*! \brief Destroy the topology module

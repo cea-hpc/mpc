@@ -305,7 +305,7 @@ static char *convert_rgb_to_string(int red, int green, int blue, char * rgb){
 void create_placement_text(int os_pu, int os_master_pu, int task_id, int vp, __UNUSED__ int rank_open_mp, int* min_idex, int pid){
 
     /*acces global topo*/
-    hwloc_topology_load(mpc_common_topology_full());
+    hwloc_topology_load(mpc_common_topology_get());
     /*add color info on pu*/
 
 
@@ -343,7 +343,7 @@ void create_placement_rendering(int os_pu, int os_master_pu, int task_id){
     convert_rgb_to_string(red, green, blue, string_rgb_hexa_master);
 
     /*acces global topo*/
-    hwloc_topology_load(mpc_common_topology_full());
+    hwloc_topology_load(mpc_common_topology_get());
     /*add color info on pu*/
 
 
@@ -466,7 +466,7 @@ static void sctk_read_format_option_graphic_placement_and_complet_topo_infos(FIL
             obj = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_PU, logical_ind);
         }
         else{
-            obj = hwloc_get_obj_by_type(mpc_common_topology_full(), HWLOC_OBJ_CORE, logical_ind);
+            obj = hwloc_get_obj_by_type(mpc_common_topology_get(), HWLOC_OBJ_CORE, logical_ind);
         }
         if(!obj){
             free(infosbuff);
@@ -506,7 +506,7 @@ static void name_and_date_file_text(char *file_name){
 
 /* init struct for text placement option */
 static void sctk_init_text_option(struct sctk_text_option_s **tab_option){
-    int lenght = hwloc_get_nbobjs_by_type(mpc_common_topology_full(), HWLOC_OBJ_PU);
+    int lenght = hwloc_get_nbobjs_by_type(mpc_common_topology_get(), HWLOC_OBJ_PU);
     *tab_option = (struct sctk_text_option_s *)malloc(sizeof(struct sctk_text_option_s)); 
     (*tab_option)->os_index = (int *)malloc(sizeof(int)*lenght);
     (*tab_option)->vp_tab = malloc(sizeof(int)*lenght);
@@ -910,10 +910,10 @@ void topology_graph_init(void)
 void topology_graph_enable_graphic_placement( void )
 {
 
-	hwloc_obj_t cluster = hwloc_get_obj_by_type( mpc_common_topology_full(), HWLOC_OBJ_MACHINE, 0 );
+	hwloc_obj_t cluster = hwloc_get_obj_by_type( mpc_common_topology_get(), HWLOC_OBJ_MACHINE, 0 );
 	int lenght_max;
 
-	lenght_max = hwloc_get_nbobjs_by_type( mpc_common_topology_full(), HWLOC_OBJ_PU );
+	lenght_max = hwloc_get_nbobjs_by_type( mpc_common_topology_get(), HWLOC_OBJ_PU );
 
 	if ( cluster != NULL )
 	{
@@ -925,7 +925,7 @@ void topology_graph_enable_graphic_placement( void )
 
 		name_and_date_file_text( file_placement );
 		strcat( file_placement, ".xml" );
-		hwloc_topology_export_xml( mpc_common_topology_full(), file_placement );
+		hwloc_topology_export_xml( mpc_common_topology_get(), file_placement );
 		if ( 1 )
 		{ //TODO one among each nodes
 			fprintf( stdout, "/* --graphic-placement : \n.xml dated file has been generated for each compute node to vizualise topology and thread placement with their infos.\nYou can use the command \"lstopo -i file.xml\" to vizualise graphicaly */\n" );
@@ -939,12 +939,12 @@ void topology_graph_enable_graphic_placement( void )
 
 void topology_graph_enable_text_placement( void )
 {
-	hwloc_obj_t cluster = hwloc_get_obj_by_type( mpc_common_topology_full(), HWLOC_OBJ_MACHINE, 0 );
+	hwloc_obj_t cluster = hwloc_get_obj_by_type( mpc_common_topology_get(), HWLOC_OBJ_MACHINE, 0 );
 	int lenght_max;
 	int lenght_min;
 	int lenght;
-	lenght_max = hwloc_get_nbobjs_by_type( mpc_common_topology_full(), HWLOC_OBJ_PU );
-	lenght_min = hwloc_get_nbobjs_by_type( mpc_common_topology_full(), HWLOC_OBJ_CORE );
+	lenght_max = hwloc_get_nbobjs_by_type( mpc_common_topology_get(), HWLOC_OBJ_PU );
+	lenght_min = hwloc_get_nbobjs_by_type( mpc_common_topology_get(), HWLOC_OBJ_CORE );
 	if ( sctk_enable_smt_capabilities )
 	{
 		lenght = lenght_max;
@@ -968,7 +968,7 @@ void topology_graph_enable_text_placement( void )
 		name_and_date_file_text( textual_file_output );
 		strcat( textual_file_output, ".txt" );
 
-		hwloc_obj_t root = hwloc_get_root_obj( mpc_common_topology_full() );
+		hwloc_obj_t root = hwloc_get_root_obj( mpc_common_topology_get() );
 		FILE *f = fopen( textual_file_output, "a" );
 
 		if ( f != NULL )
@@ -981,7 +981,7 @@ void topology_graph_enable_text_placement( void )
 				fprintf( stdout, "/* --text-placement : \n.txt dated file has been generated for each compute node to vizualise topology and thread placement with their infos. */\n" );
 				fflush( stdout );
 			}
-			print_children( mpc_common_topology_full(), root, 0, tab_option, lenght_max, higher_logical, lower_logical, HostName, f, 0, 0 );
+			print_children( mpc_common_topology_get(), root, 0, tab_option, lenght_max, higher_logical, lower_logical, HostName, f, 0, 0 );
 			fclose( f );
 		}
 		/* remove temp files */
