@@ -30,7 +30,7 @@
 #ifndef __SCTK__IB_TOOLKIT_H_
 #define __SCTK__IB_TOOLKIT_H_
 
-#include "sctk_shell_colors.h"
+#include "mpc_common_io_helper.h"
 #include "sctk_runtime_config_struct.h"
 
 #define SMALL_BUFFER_SIZE (4*1024)

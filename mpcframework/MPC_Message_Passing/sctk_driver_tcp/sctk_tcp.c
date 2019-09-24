@@ -49,7 +49,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		size_t size;
 		ssize_t res;
 
-		res = sctk_safe_read ( fd, ( char * ) &size, sizeof ( size_t ) );
+		res = mpc_common_io_safe_read ( fd, ( char * ) &size, sizeof ( size_t ) );
 
 		if( (res <= 0) )
 		{
@@ -77,7 +77,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 
 
 		/* Recv header*/
-		res = sctk_safe_read ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
+		res = mpc_common_io_safe_read ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
 
 		if( (res <= 0) )
 		{
@@ -101,7 +101,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		/* Recv body*/
 		size = size - sizeof ( sctk_thread_ptp_message_t );
 		
-		res = sctk_safe_read ( fd, ( char * ) body, size );
+		res = mpc_common_io_safe_read ( fd, ( char * ) body, size );
 
 		if( (res <= 0) )
 		{
@@ -140,9 +140,9 @@ static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *
 
 	sctk_nodebug("SEND MSG of size %d ENDPOINT TCP to %d", size, endpoint->dest);
 
-	sctk_safe_write ( fd, ( char * ) &size, sizeof ( size_t ) );
+	mpc_common_io_safe_write ( fd, ( char * ) &size, sizeof ( size_t ) );
 
-	sctk_safe_write ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
+	mpc_common_io_safe_write ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
 
 	sctk_net_write_in_fd ( msg, fd );
 	sctk_spinlock_unlock ( & ( endpoint->data.tcp.lock ) );

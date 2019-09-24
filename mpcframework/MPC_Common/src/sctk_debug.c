@@ -36,14 +36,14 @@
 #include <sys/ucontext.h>
 #endif
 
-#include "sctk_rank.h"
+#include "mpc_common_rank.h"
 #include "sctk_config.h"
 #include "sctk_debug.h"
 #include "sctk_spinlock.h"
 #include "sctk.h"
 
 
-#include "sctk_shell_colors.h"
+#include "mpc_common_io_helper.h"
 #include "sctk_runtime_config.h"
 
 #ifdef MPC_Debugger

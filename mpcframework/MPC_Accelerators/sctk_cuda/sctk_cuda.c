@@ -27,7 +27,7 @@
 #include <sctk_debug.h>
 #include <sctk_device_topology.h>
 #include <sctk_spinlock.h>
-#include <sctk_topology.h>
+#include <mpc_common_topology.h>
 
 extern __thread void *sctk_cuda_ctx;
 

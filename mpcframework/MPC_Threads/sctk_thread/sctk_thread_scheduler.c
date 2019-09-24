@@ -29,7 +29,7 @@
 #include "sctk_spinlock.h"
 #include "sctk_thread_generic.h"
 #include "sctk_thread_scheduler.h"
-#include "sctk_topology.h"
+#include "mpc_common_topology.h"
 #include <errno.h>
 #include <libpause.h>
 #include <stdlib.h>
@@ -2607,7 +2607,7 @@ void sctk_thread_generic_scheduler_init(char *thread_type, char *scheduler_type,
     }
   }
   
-  sctk_set_cpu_number (vp_number);
+  mpc_common_topo_set_pu_count (vp_number);
 }
 
 void sctk_thread_generic_polling_init(int vp_number) {

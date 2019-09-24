@@ -25,8 +25,6 @@
 #include "sctk.h"
 #include "string.h"
 
-#include "sctk_shell_colors.h"
-
 #include "sctk_ib_toolkit.h"
 #include <execinfo.h>
 

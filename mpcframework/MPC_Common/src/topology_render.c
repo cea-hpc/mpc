@@ -1,7 +1,11 @@
-#include "MPC_Common/include/topology_render.h"
-#include "MPC_Common/include/sctk_topology.h"
-#include "MPC_Common/include/sctk_debug.h"
-#include "MPC_Common/include/sctk_rank.h"
+#include "topology_render.h"
+
+
+#include "sctk_debug.h"
+
+#include <mpc_common_topology.h>
+
+#include <mpc_common_rank.h>
 
 #include "MPC_Launch/include/sctk_launch.h"
 

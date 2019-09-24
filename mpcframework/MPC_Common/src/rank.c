@@ -1,4 +1,4 @@
-#include "sctk_rank.h"
+#include "mpc_common_rank.h"
 
 
 /* OS Process Count Getters */

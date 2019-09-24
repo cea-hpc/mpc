@@ -24,9 +24,9 @@
 #include "MPC_Launch/include/sctk_pmi.h"
 
 #include "MPC_Common/include/sctk_alloc.h"
-#include "MPC_Common/include/sctk_io_helper.h"
+#include "MPC_Common/include/mpc_common_io_helper.h"
 #include "MPC_Common/include/sctk_debug.h"
-#include "MPC_Common/include/sctk_rank.h"
+#include "MPC_Common/include/mpc_common_rank.h"
 
 #include "MPC_Launch/include/sctk_launch.h"
 

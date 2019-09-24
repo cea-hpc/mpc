@@ -30,7 +30,7 @@
 #include "sctk_alloc.h"
 #include "sctk_context.h"
 #include "sctk_thread.h"
-#include "sctk_topology.h"
+#include "mpc_common_topology.h"
 #include "sctk_debug.h"
 
 static mpc_thread_once_t sctk_microthread_key_is_initialized =

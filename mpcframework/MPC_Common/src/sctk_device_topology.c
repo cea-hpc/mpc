@@ -26,7 +26,7 @@
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_spinlock.h"
-#include "sctk_topology.h"
+#include "topology.h"
 
 #include <sys/types.h>
 #include <regex.h>
@@ -800,7 +800,7 @@ void sctk_device_matrix_init(hwloc_topology_t topology)
 			}
 			
 			/* Compute the distance */
-			*cell = topo_get_distance_from_pu(topology, j , device_obj );
+			*cell = _mpc_topo_get_distance_from_pu(topology, j , device_obj );
 
                         sctk_nodebug("Distance (PU %d, DEV %d (%s)) == %d", j,
                                      i, sctk_devices[i].name, *cell);

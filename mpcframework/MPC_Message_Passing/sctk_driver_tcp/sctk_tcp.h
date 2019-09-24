@@ -28,7 +28,7 @@ extern "C"
 #endif
 
 #include <sctk_spinlock.h>
-#include <sctk_io_helper.h>
+#include <mpc_common_io_helper.h>
 
 /** \brief ROUTE level data structure for TCP
 *
@@ -51,7 +51,7 @@ typedef struct
 	int sctk_use_tcp_o_ib;                               /**< set to 1 if the TCP connection targets TCP over IB */
 	int sockfd;                                          /**< Listening socket file descriptor */
 	int portno;                                          /**< Listening socket port number */
-	char connection_infos[MAX_STRING_SIZE];              /**< Connection info for this listening socket */
+	char connection_infos[MPC_COMMON_MAX_STRING_SIZE];              /**< Connection info for this listening socket */
 	size_t connection_infos_size;                        /**< Length of the connection_info field */
 	void * ( *tcp_thread ) ( struct sctk_endpoint_s * ); /**< Function to call when registering a route (RDMA/MULTIRAIL/TCP) */
 } sctk_tcp_rail_info_t;

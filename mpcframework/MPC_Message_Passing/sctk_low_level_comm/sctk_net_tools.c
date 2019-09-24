@@ -192,7 +192,7 @@ void sctk_net_read_in_fd ( sctk_thread_ptp_message_t *msg,
 			size = SCTK_MSG_SIZE ( msg );
 
 			sctk_nodebug ( "MSG SEND |%s|", ( char * ) msg->tail.message.contiguous.addr );
-			sctk_safe_read ( fd, msg->tail.message.contiguous.addr, size );
+			mpc_common_io_safe_read ( fd, msg->tail.message.contiguous.addr, size );
 			break;
 		}
 
@@ -204,7 +204,7 @@ void sctk_net_read_in_fd ( sctk_thread_ptp_message_t *msg,
 			size = SCTK_MSG_SIZE ( msg );
 			body = ( char * ) msg + sizeof ( sctk_thread_ptp_message_t );
 
-			sctk_safe_read ( fd, body, size );
+			mpc_common_io_safe_read ( fd, body, size );
 			break;
 		}
 
@@ -223,7 +223,7 @@ void sctk_net_read_in_fd ( sctk_thread_ptp_message_t *msg,
 						size = ( msg->tail.message.pack.list.std[i].ends[j] -
 						         msg->tail.message.pack.list.std[i].begins[j] +
 						         1 ) * msg->tail.message.pack.list.std[i].elem_size;
-						sctk_safe_read ( fd, ( ( char * ) ( msg->tail.message.pack.list.std[i].addr ) ) +
+						mpc_common_io_safe_read ( fd, ( ( char * ) ( msg->tail.message.pack.list.std[i].addr ) ) +
 						                 msg->tail.message.pack.list.std[i].begins[j] *
 						                 msg->tail.message.pack.list.std[i].elem_size, size );
 					}
@@ -247,7 +247,7 @@ void sctk_net_read_in_fd ( sctk_thread_ptp_message_t *msg,
 						size = ( msg->tail.message.pack.list.absolute[i].ends[j] -
 						         msg->tail.message.pack.list.absolute[i].begins[j] +
 						         1 ) * msg->tail.message.pack.list.absolute[i].elem_size;
-						sctk_safe_read ( fd, ( ( char * ) ( msg->tail.message.pack.list.absolute[i].addr ) ) +
+						mpc_common_io_safe_read ( fd, ( ( char * ) ( msg->tail.message.pack.list.absolute[i].addr ) ) +
 						                 msg->tail.message.pack.list.absolute[i].begins[j] *
 						                 msg->tail.message.pack.list.absolute[i].elem_size, size );
 					}
@@ -274,7 +274,7 @@ void sctk_net_write_in_fd ( sctk_thread_ptp_message_t *msg,
 
 			sctk_nodebug ( "MSG SEND |%s|", ( char * ) msg->tail.message.contiguous.addr );
 
-			sctk_safe_write ( fd, msg->tail.message.contiguous.addr, size );
+			mpc_common_io_safe_write ( fd, msg->tail.message.contiguous.addr, size );
 			break;
 		}
 
@@ -286,7 +286,7 @@ void sctk_net_write_in_fd ( sctk_thread_ptp_message_t *msg,
 			size = SCTK_MSG_SIZE ( msg );
 			body = ( char * ) msg + sizeof ( sctk_thread_ptp_message_t );
 
-			sctk_safe_write ( fd, body, size );
+			mpc_common_io_safe_write ( fd, body, size );
 			break;
 		}
 
@@ -305,7 +305,7 @@ void sctk_net_write_in_fd ( sctk_thread_ptp_message_t *msg,
 						size = ( msg->tail.message.pack.list.std[i].ends[j] -
 						         msg->tail.message.pack.list.std[i].begins[j] +
 						         1 ) * msg->tail.message.pack.list.std[i].elem_size;
-						sctk_safe_write ( fd, ( ( char * ) ( msg->tail.message.pack.list.std[i].addr ) ) +
+						mpc_common_io_safe_write ( fd, ( ( char * ) ( msg->tail.message.pack.list.std[i].addr ) ) +
 						                  msg->tail.message.pack.list.std[i].begins[j] *
 						                  msg->tail.message.pack.list.std[i].elem_size, size );
 					}
@@ -329,7 +329,7 @@ void sctk_net_write_in_fd ( sctk_thread_ptp_message_t *msg,
 						size = ( msg->tail.message.pack.list.absolute[i].ends[j] -
 						         msg->tail.message.pack.list.absolute[i].begins[j] +
 						         1 ) * msg->tail.message.pack.list.absolute[i].elem_size;
-						sctk_safe_write ( fd, ( ( char * ) ( msg->tail.message.pack.list.absolute[i].addr ) ) +
+						mpc_common_io_safe_write ( fd, ( ( char * ) ( msg->tail.message.pack.list.absolute[i].addr ) ) +
 						                  msg->tail.message.pack.list.absolute[i].begins[j] *
 						                  msg->tail.message.pack.list.absolute[i].elem_size, size );
 					}
@@ -928,7 +928,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 	}
 }
 
-/* void sctk_safe_write(int fd, char* buf,size_t size){ */
+/* void mpc_common_io_safe_write(int fd, char* buf,size_t size){ */
 /*   size_t done = 0;  */
 /*   int res; */
 /*   do{ */
@@ -941,7 +941,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 /*   }while(done < size); */
 /* } */
 
-/* void sctk_safe_read(int fd, char* buf,size_t size){ */
+/* void mpc_common_io_safe_read(int fd, char* buf,size_t size){ */
 /*   size_t done = 0;  */
 /*   int res; */
 /*   do{ */

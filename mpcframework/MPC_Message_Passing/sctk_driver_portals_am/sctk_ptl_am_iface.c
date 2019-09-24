@@ -26,7 +26,7 @@
 #include <limits.h>
 #include "sctk_debug.h"
 #include "sctk_alloc.h"
-#include "sctk_io_helper.h"
+#include "mpc_common_io_helper.h"
 #include "ptl_layer.h"
 #include "sctk_ptl_am_iface.h"
 #include "sctk_ptl_am_types.h"
@@ -1165,7 +1165,7 @@ void sctk_ptl_am_register_process( sctk_ptl_am_rail_info_t *srail )
 		&srail->id,				 /* the process it to serialize */
 		sizeof( sctk_ptl_id_t ), /* size of the Portals ID struct */
 		srail->connection_infos, /* the string to store the serialization */
-		MAX_STRING_SIZE			 /* max allowed string's size */
+		MPC_COMMON_MAX_STRING_SIZE			 /* max allowed string's size */
 	);
 	assert( srail->connection_infos_size > 0 );
 
@@ -1189,13 +1189,13 @@ void sctk_ptl_am_register_process( sctk_ptl_am_rail_info_t *srail )
 sctk_ptl_id_t sctk_ptl_am_map_id( sctk_ptl_am_rail_info_t *srail, int dest )
 {
 	int tmp_ret;
-	char connection_infos[MAX_STRING_SIZE];
+	char connection_infos[MPC_COMMON_MAX_STRING_SIZE];
 	sctk_ptl_id_t id = SCTK_PTL_ANY_PROCESS;
 
 	/* retrieve the right neighbour id struct */
 	tmp_ret = sctk_pmi_get_as_rank(
 		connection_infos,	/* the recv buffer */
-		MAX_STRING_SIZE,	 /* the recv buffer max size */
+		MPC_COMMON_MAX_STRING_SIZE,	 /* the recv buffer max size */
 		SCTK_PTL_AM_PMI_TAG, /* rail IB: PMI tag */
 		dest				 /* which process we are targeting */
 	);

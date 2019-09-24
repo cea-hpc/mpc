@@ -48,7 +48,7 @@
 #include <sctk_ib_prof.h>
 #include <sctk_route.h>
 #include <sctk_ibufs_rdma.h>
-#include <sctk_io_helper.h>
+#include <mpc_common_io_helper.h>
 
 /* Initialize a new route table */
 void sctk_ib_init_remote ( int dest, sctk_rail_info_t *rail, struct sctk_endpoint_s *route_table, int ondemand )

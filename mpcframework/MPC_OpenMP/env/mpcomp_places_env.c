@@ -24,7 +24,7 @@
 #include "utlist.h"
 #include "sctk_runtime_config.h"
 #include "sctk_spinlock.h"
-#include "sctk_topology.h"
+#include "mpc_common_topology.h"
 #include "mpcomp_places_env.h"
 
 

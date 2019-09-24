@@ -28,7 +28,7 @@
 #include <sctk_ib_cp.h>
 #endif
 
-#include "MPC_Common/include/sctk_topology.h"
+#include "MPC_Common/include/mpc_common_topology.h"
 #include "MPC_Common/include/topology_render.h"
 
 #undef sleep
@@ -37,14 +37,14 @@
 
 #include "sctk_debug.h"
 
-#include "sctk_rank.h"
+#include "mpc_common_rank.h"
 
 #include "sctk_config.h"
 #include "sctk_thread.h"
 #include "sctk_kernel_thread.h"
 #include "sctk_alloc.h"
 #include "sctk_launch.h"
-#include "sctk_topology.h"
+#include "mpc_common_topology.h"
 #include "sctk_asm.h"
 #include "sctk_tls.h"
 #include <unistd.h>
@@ -70,7 +70,7 @@
 #ifdef MPC_MPI
 #include <mpc_internal_thread.h>
 #include "mpc_datatypes.h"
-#include "mpc_common.h"
+#include "mpc_internal_common.h"
 #endif
 
 #ifdef MPC_Message_Passing

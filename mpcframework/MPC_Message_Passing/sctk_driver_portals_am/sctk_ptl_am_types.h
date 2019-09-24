@@ -28,7 +28,7 @@
 
 #include <portals4.h>
 #include "sctk_spinlock.h"
-#include "sctk_io_helper.h"
+#include "mpc_common_io_helper.h"
 #include "sctk_atomics.h"
 
 /** Helper to find the struct base address, based on the address on a given member */
@@ -300,7 +300,7 @@ typedef struct sctk_ptl_am_rail_info_s
 	size_t nb_entries;                      /**< current number of PT entries */
 	size_t eager_limit;                     /**< the max size for a small payload */
 	
-	char connection_infos[MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
+	char connection_infos[MPC_COMMON_MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
 	size_t connection_infos_size;           /**< Size of the above string */
 } sctk_ptl_am_rail_info_t;
 #endif

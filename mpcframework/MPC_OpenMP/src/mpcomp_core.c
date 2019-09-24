@@ -29,7 +29,7 @@
 #include <sctk_launch.h>
 
 #include "sctk_debug.h"
-#include "sctk_topology.h"
+#include "mpc_common_topology.h"
 #include "sctk_runtime_config.h"
 #include <sys/time.h>
 #include <ctype.h>

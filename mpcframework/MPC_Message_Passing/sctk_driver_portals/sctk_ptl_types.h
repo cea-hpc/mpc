@@ -29,7 +29,7 @@
 #include <portals4.h>
 #include <stddef.h>
 #include "sctk_ht.h"
-#include "sctk_io_helper.h"
+#include "mpc_common_io_helper.h"
 #include "sctk_atomics.h"
 
 /** Helper to find the struct base address, based on the address on a given member */
@@ -422,7 +422,7 @@ typedef struct sctk_ptl_rail_info_s
 	size_t connection_infos_size;           /**< Size of the above string */
 	sctk_atomics_int rdma_cpt;              /**< RDMA match_bits counter */
 	int offload_support;
-	char connection_infos[MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
+	char connection_infos[MPC_COMMON_MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
 } sctk_ptl_rail_info_t;
 
 

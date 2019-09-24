@@ -24,7 +24,7 @@
 #include <sctk_accessor.h>
 #include <sctk_debug.h>
 #include <sctk_thread.h>
-#include <sctk_topology.h>
+#include <mpc_common_topology.h>
 #include <stdio.h>
 #include <stdlib.h>
 

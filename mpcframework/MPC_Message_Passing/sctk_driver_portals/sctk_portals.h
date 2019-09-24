@@ -30,7 +30,7 @@ extern "C"
 {
 #endif
 
-#include <sctk_io_helper.h>
+#include <mpc_common_io_helper.h>
 #include "sctk_ptl_types.h"
 
 void sctk_network_init_ptl ( struct sctk_rail_info_s *rail);

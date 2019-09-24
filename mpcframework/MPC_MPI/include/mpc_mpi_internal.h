@@ -21,7 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 //#include "sctk_alloc.h"
-#include "mpc_common.h"
+#include "mpc_internal_common.h"
 #include "mpc_reduction.h"
 #include "mpcthread.h"
 #include "mpi_alloc_mem.h"
@@ -36,7 +36,7 @@
 #include "sctk_runtime_config.h"
 #include "sctk_spinlock.h"
 #include "sctk_thread.h"
-#include "sctk_topology.h"
+#include "mpc_common_topology.h"
 #include <mpc.h>
 #include <mpc_extern32.h>
 #include <mpc_mpi.h>

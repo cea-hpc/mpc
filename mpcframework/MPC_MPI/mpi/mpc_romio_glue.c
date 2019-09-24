@@ -1,4 +1,4 @@
-#include "mpc_common.h"
+#include "mpc_internal_common.h"
 #include "mpc_datatypes.h"
 #include "mpc_mpi.h"
 #include "sctk_debug.h"

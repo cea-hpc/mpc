@@ -27,6 +27,6 @@
 #include "sctk.h"
 #include "mpc_reduction.h"
 #include "sctk_debug.h"
-#include "sctk_topology.h"
+#include "mpc_common_topology.h"
 
-#include "mpc_common.h"
+#include "mpc_internal_common.h"

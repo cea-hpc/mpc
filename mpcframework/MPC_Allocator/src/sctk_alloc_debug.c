@@ -63,9 +63,9 @@ static const char SCTK_ALLOC_TRACE_FILE[] = "alloc-trace-%d.txt";
 
 //usage of safe write in MPC
 #ifdef MPC_Common
-	#include "sctk_io_helper.h"
+	#include "mpc_common_io_helper.h"
 #else //MPC_Common
-	#define sctk_safe_write(fd,buf,count) write((fd),(buf),(count))
+	#define mpc_common_io_safe_write(fd,buf,count) write((fd),(buf),(count))
 #endif //MPC_Common
 
 /************************* GLOBALS *************************/
@@ -127,7 +127,7 @@ void sctk_alloc_pdebug (const char * format,...)
 	va_start (param, format);
 	sctk_alloc_vsprintf (tmp2,4096, tmp, param);
 	va_end (param);
-	sctk_safe_write(STDERR_FILENO,tmp2,(unsigned int)strlen(tmp2));
+	mpc_common_io_safe_write(STDERR_FILENO,tmp2,(unsigned int)strlen(tmp2));
 }
 
 /************************* FUNCTION ************************/
@@ -149,7 +149,7 @@ void sctk_alloc_ptrace (const char * format,...)
 	va_start (param, format);
 	sctk_alloc_vsprintf (tmp2,4096, tmp, param);
 	va_end (param);
-	sctk_safe_write(SCTK_ALLOC_TRACE_FD,tmp2,(unsigned int)strlen(tmp2));
+	mpc_common_io_safe_write(SCTK_ALLOC_TRACE_FD,tmp2,(unsigned int)strlen(tmp2));
 	fflush(stderr);
 }
 #endif
@@ -162,7 +162,7 @@ void sctk_alloc_fprintf(int fd,const char * format,...)
 	va_start (param, format);
 	sctk_alloc_vsprintf (tmp,4096, format, param);
 	va_end (param);
-	sctk_safe_write(fd,tmp,(unsigned int)strlen(tmp));
+	mpc_common_io_safe_write(fd,tmp,(unsigned int)strlen(tmp));
 }
 
 /************************* FUNCTION ************************/

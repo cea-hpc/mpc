@@ -1,8 +1,6 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
-/* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
 /* # This file is part of the MPC Runtime.                                # */
@@ -18,12 +16,19 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
+/* #   - VALAT Sébastien sebastien.valat@cea.fr                           # */
 /* #                                                                      # */
 /* ######################################################################## */
 
-/* Escape char */
+#ifndef MPC_COMMON_INCLUDE_MPC_COMMON_IO_HELPER_H_
+#define MPC_COMMON_INCLUDE_MPC_COMMON_IO_HELPER_H_
+
+#include <unistd.h>
+
+/***********************
+ * SHELL COLOR SUPPORT *
+ ***********************/
+
 #ifdef SHELL_COLORS
 
 #define SCTK_COLOR_ESC "\033["
@@ -67,4 +72,42 @@
 #define SCTK_COLOR_WHITE_BOLD(txt)      #txt
 #define SCTK_COLOR_CYAN_BOLD(txt)       #txt
 
-#endif
+#endif /* SHELL_COLORS */
+
+/***********
+ * DEFINES *
+ ***********/
+
+#define MPC_COMMON_MAX_STRING_SIZE  512
+
+/***********************
+ * COMMON IO FUNCTIONS *
+ ***********************/
+
+/**
+ * @brief Parse a long from a string with error handling
+ *
+ * @param input string containing a value
+ * @return long long value as parsed (abort on error)
+ */
+long mpc_common_parse_long(char * input);
+
+/*!
+ * Call read in loop to avoid problem with splitted messages.
+ * Also support EINTR error if interrupted.
+ * @param fd File descriptor to read.
+ * @param buf Buffer to read.
+ * @param count Size of buffer to read.
+*/
+ssize_t mpc_common_io_safe_read(int fd,void * buf,size_t count);
+
+/*!
+ * Call write in loop to avoid problem with splitted messages.
+ * Also support EINTR error if interrupted.
+ * @param fd File descriptor to write.
+ * @param buf Buffer to write.
+ * @param count Size of buffer to write.
+*/
+ssize_t mpc_common_io_safe_write(int fd,const void * buf,size_t count);
+
+#endif /* MPC_COMMON_INCLUDE_MPC_COMMON_IO_HELPER_H_ */

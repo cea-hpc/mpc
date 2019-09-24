@@ -26,7 +26,7 @@
 #include <sctk_runtime_config.h>
 #include "sctk_checksum.h"
 #ifdef SCTK_USE_CHECKSUM
-#include "sctk_shell_colors.h"
+#include "mpc_common_io_helper.h"
 #include <zlib.h>
 
 static bool checksum_enabled;

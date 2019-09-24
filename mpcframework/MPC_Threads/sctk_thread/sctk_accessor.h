@@ -23,11 +23,13 @@
 #define MPC_THREADS_SCTK_THREAD_SCTK_ACCESSOR_H_
 
 #include <stdlib.h>
+
+#include <mpc_common_topology.h>
+
 #include "sctk_config.h"
-#include "sctk_rank.h"
+#include "mpc_common_rank.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
-#include "sctk_topology.h"
 #include "sctk.h"
 #include "sctk_pmi.h"
 #include "sctk_tls.h"

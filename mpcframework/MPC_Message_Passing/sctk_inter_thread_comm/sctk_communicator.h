@@ -26,7 +26,7 @@
 #include <sctk_atomics.h>
 #include <sctk_spinlock.h>
 
-#include <sctk_rank.h>
+#include <mpc_common_rank.h>
 
 #include "sctk_runtime_config.h"
 

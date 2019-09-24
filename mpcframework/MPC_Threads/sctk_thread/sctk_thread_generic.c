@@ -27,7 +27,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include "sctk_kernel_thread.h"
-#include <sctk_topology.h>
+#include <mpc_common_topology.h>
 #include <string.h>
 
 #define SCTK_BLOCKING_LOCK_TABLE_SIZE 6

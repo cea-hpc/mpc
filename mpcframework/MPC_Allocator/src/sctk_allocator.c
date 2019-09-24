@@ -69,9 +69,9 @@
 
 //usage of safe write in MPC
 #ifdef MPC_Common
-	#include "sctk_io_helper.h"
+	#include "mpc_common_io_helper.h"
 #else //MPC_Common
-	#define sctk_safe_write(fd,buf,count) write((fd),(buf),(count))
+	#define mpc_common_io_safe_write(fd,buf,count) write((fd),(buf),(count))
 #endif //MPC_Common
 
 /************************* GLOBALS *************************/
@@ -2164,7 +2164,7 @@ void sctk_alloc_perror (const char * format,...)
 	va_start (param, format);
 	sctk_alloc_vsprintf (tmp2,4096, tmp, param);
 	va_end (param);
-	sctk_safe_write(STDERR_FILENO,tmp2,strlen(tmp2));
+	mpc_common_io_safe_write(STDERR_FILENO,tmp2,strlen(tmp2));
 }
 
 /************************* FUNCTION ************************/
@@ -2180,7 +2180,7 @@ void sctk_alloc_pwarning (const char * format,...)
 	va_start (param, format);
 	sctk_alloc_vsprintf (tmp2,4096, tmp, param);
 	va_end (param);
-	sctk_safe_write(STDERR_FILENO,tmp2,(unsigned int)strlen(tmp2));
+	mpc_common_io_safe_write(STDERR_FILENO,tmp2,(unsigned int)strlen(tmp2));
 }
 
 /************************* FUNCTION ************************/

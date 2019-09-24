@@ -22,7 +22,7 @@
 /* ######################################################################## */
 
 /********************************* INCLUDES *********************************/
-#include "sctk_io_helper.h"
+#include "mpc_common_io_helper.h"
 #include "sctk_debug.h"
 #include <errno.h>
 #include <stdio.h>
@@ -38,9 +38,7 @@ volatile int sctk_online_program = -1;
 volatile int sctk_online_program = 1;
 #endif
 
-/********************************* FUNCTION *********************************/
-
-static inline io_all_digits(char * str)
+static inline int _mpc_io_all_digits(char * str)
 {
 	int len = strlen(str);
 
@@ -58,7 +56,7 @@ static inline io_all_digits(char * str)
 
 long mpc_common_parse_long(char * input)
 {
-	if(!io_all_digits(input))
+	if(!_mpc_io_all_digits(input))
 	{
 		sctk_fatal("Could not parse value '%s' expected integer", input);
 	}
@@ -83,16 +81,7 @@ long mpc_common_parse_long(char * input)
 	return ret;
 }
 
-
-/********************************* FUNCTION *********************************/
-/*!
- * Call read in loop to avoid problem with splitted messages.
- * Also support EINTR error if interrupted.
- * @param fd File descriptor to read.
- * @param buf Buffer to read.
- * @param count Size of buffer to read.
-*/
-ssize_t sctk_safe_read(int fd, void* buf, size_t count)
+ssize_t mpc_common_io_safe_read(int fd, void* buf, size_t count)
 {
 	/* vars */
 	int tmp = 0;
@@ -125,7 +114,7 @@ ssize_t sctk_safe_read(int fd, void* buf, size_t count)
 			}
 			else {
 				sctk_debug ("READ %p %lu/%lu FAIL\n", buf, count);
-				perror("sctk_safe_read");
+				perror("mpc_common_io_safe_read");
 				res = -1;
 				break;
 			}
@@ -142,15 +131,7 @@ ssize_t sctk_safe_read(int fd, void* buf, size_t count)
 	return res;
 }
 
-/********************************* FUNCTION *********************************/
-/*!
- * Call write in loop to avoid problem with splitted messages.
- * Also support EINTR error if interrupted.
- * @param fd File descriptor to write.
- * @param buf Buffer to write.
- * @param count Size of buffer to write.
-*/
-ssize_t sctk_safe_write(int fd, const void* buf, size_t count)
+ssize_t mpc_common_io_safe_write(int fd, const void* buf, size_t count)
 {
 	/* vars */
 	int tmp;
@@ -174,7 +155,7 @@ ssize_t sctk_safe_write(int fd, const void* buf, size_t count)
 				break;
 			} else {
 				sctk_debug ("WRITE %p %lu/%lu FAIL\n", buf, count);
-				perror("sctk_safe_write");
+				perror("mpc_common_io_safe_write");
 				res = -1;
 				break;
 			}
@@ -184,27 +165,5 @@ ssize_t sctk_safe_write(int fd, const void* buf, size_t count)
 		nb_total_sent_bytes += tmp;
 	};
 
-	return res;
-}
-
-/********************************* FUNCTION *********************************/
-/*!
- * Same than sctk_safe_read() but abort on error or non complete read.
-*/
-ssize_t sctk_safe_checked_read(int fd, void* buf, size_t count)
-{
-	ssize_t res = sctk_safe_read(fd,buf,count);
-	assume_m((size_t)res == count,"Failed to read the requested size, get %lu but expect %lu.",res,count);
-	return res;
-}
-
-/********************************* FUNCTION *********************************/
-/*!
- * Same than sctk_safe_write() but abort on error or non complete write.
-*/
-ssize_t sctk_safe_checked_write(int fd, const void* buf, size_t count)
-{
-	ssize_t res = sctk_safe_write(fd,buf,count);
-	assume_m((size_t)res == count,"Failed to write the requested size, get %lu but expect %lu.",res,count);
 	return res;
 }

@@ -58,7 +58,7 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 	int clientsock_fd;
 	struct hostent *server;
 
-	char name[MAX_STRING_SIZE];
+	char name[MPC_COMMON_MAX_STRING_SIZE];
 	char *portno = NULL;
 	int i;
 
@@ -66,7 +66,7 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 
 	/* Extract server name and port */
 
-	for ( i = 0; i < MAX_STRING_SIZE; i++ )
+	for ( i = 0; i < MPC_COMMON_MAX_STRING_SIZE; i++ )
 	{
 		if ( name[i] == ':' )
 		{
@@ -359,7 +359,7 @@ struct sctk_tcp_connection_context
 {
 	int from;                            /**< the process id that initiated the request */
 	int to;                              /**< the process id to be notified from the request */
-char dest_connection_infos[MAX_STRING_SIZE]; /**< the connection string( host:port) */
+char dest_connection_infos[MPC_COMMON_MAX_STRING_SIZE]; /**< the connection string( host:port) */
 };
 
 /**
@@ -410,7 +410,7 @@ static void __sctk_network_connection_from_tcp( int from, int to, sctk_rail_info
 	
 	ctx.from = from;
 	ctx.to = to;
-	snprintf( ctx.dest_connection_infos, MAX_STRING_SIZE, "%s", rail->network.tcp.connection_infos);
+	snprintf( ctx.dest_connection_infos, MPC_COMMON_MAX_STRING_SIZE, "%s", rail->network.tcp.connection_infos);
 	
 	if( route_type == ROUTE_ORIGIN_STATIC )
 	{
@@ -492,7 +492,7 @@ void tcp_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process 
 void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
                                  void * ( *tcp_thread ) ( sctk_endpoint_t * ) )
 {
-	char right_rank_connection_infos[MAX_STRING_SIZE];
+	char right_rank_connection_infos[MPC_COMMON_MAX_STRING_SIZE];
 	int right_rank;
 	int right_socket = -1;
 	int left_rank;
@@ -512,13 +512,13 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	sctk_client_create_recv_socket ( rail );
 
 	/* Fill HOST info */
-	gethostname ( rail->network.tcp.connection_infos, MAX_STRING_SIZE - 100 );
+	gethostname ( rail->network.tcp.connection_infos, MPC_COMMON_MAX_STRING_SIZE - 100 );
 	rail->network.tcp.connection_infos_size = strlen ( rail->network.tcp.connection_infos );
 	/* Add port info */
 	sprintf ( rail->network.tcp.connection_infos + rail->network.tcp.connection_infos_size, ":%d", rail->network.tcp.portno );
 	rail->network.tcp.connection_infos_size = strlen ( rail->network.tcp.connection_infos ) + 1;
 
-	assume ( rail->network.tcp.connection_infos_size < MAX_STRING_SIZE );
+	assume ( rail->network.tcp.connection_infos_size < MPC_COMMON_MAX_STRING_SIZE );
 
 	/* If this rail does not require the bootstrap ring just return */
 	if( rail->requires_bootstrap_ring == 0 )
@@ -538,13 +538,13 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	{
 		if ( mpc_common_get_process_rank() % 2 == 0 )
 		{
-			MPC_Net_hook_send_to( rail->network.tcp.connection_infos, MAX_STRING_SIZE, left_rank );
-			MPC_Net_hook_recv_from( right_rank_connection_infos, MAX_STRING_SIZE, right_rank );
+			MPC_Net_hook_send_to( rail->network.tcp.connection_infos, MPC_COMMON_MAX_STRING_SIZE, left_rank );
+			MPC_Net_hook_recv_from( right_rank_connection_infos, MPC_COMMON_MAX_STRING_SIZE, right_rank );
 		}
 		else
 		{
-			MPC_Net_hook_recv_from( right_rank_connection_infos, MAX_STRING_SIZE, right_rank );
-			MPC_Net_hook_send_to( rail->network.tcp.connection_infos, MAX_STRING_SIZE, left_rank );
+			MPC_Net_hook_recv_from( right_rank_connection_infos, MPC_COMMON_MAX_STRING_SIZE, right_rank );
+			MPC_Net_hook_send_to( rail->network.tcp.connection_infos, MPC_COMMON_MAX_STRING_SIZE, left_rank );
 		}
 	}
 	else
@@ -553,11 +553,11 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 		{
 			if( mpc_common_get_process_rank() == 1 )
 			{
-				MPC_Net_hook_send_to( rail->network.tcp.connection_infos, MAX_STRING_SIZE, left_rank );
+				MPC_Net_hook_send_to( rail->network.tcp.connection_infos, MPC_COMMON_MAX_STRING_SIZE, left_rank );
 			}
 			else
 			{
-				MPC_Net_hook_recv_from( right_rank_connection_infos, MAX_STRING_SIZE, right_rank );
+				MPC_Net_hook_recv_from( right_rank_connection_infos, MPC_COMMON_MAX_STRING_SIZE, right_rank );
 			}
 		}
 	}
@@ -569,7 +569,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	sctk_pmi_barrier();
 
 	/* Retrieve Connection info to dest rank from the PMI */
-	assume ( sctk_pmi_get_as_rank ( right_rank_connection_infos, MAX_STRING_SIZE, rail->rail_number, right_rank ) == 0 );
+	assume ( sctk_pmi_get_as_rank ( right_rank_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, right_rank ) == 0 );
 
 	sctk_pmi_barrier();
 #endif

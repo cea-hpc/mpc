@@ -1,6 +1,8 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
 /* # This file is part of the MPC Runtime.                                # */
@@ -16,27 +18,20 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - VALAT Sébastien sebastien.valat@cea.fr                           # */
+/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
+/* #   - TCHIBOUKDJIAN Marc marc.tchiboukdjian@exascale-computing.eu      # */
+/* #   - BOUHROUR Stephane stephane.bouhrour@exascale-computing.eu        # */
+/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
+#ifndef MPC_COMMON_INCLUDE_MPC_COMMON_H_
+#define MPC_COMMON_INCLUDE_MPC_COMMON_H_
 
-#ifndef SCTK_IO_HELPER_H
-#define SCTK_IO_HELPER_H
 
-/********************************* INCLUDES *********************************/
-#include <unistd.h>
+#include <mpc_common_io_helper.h>
+#include <mpc_common_rank.h>
+#include <mpc_common_topology.h>
 
-/********************************* DEFINES *********************************/
 
-/**< This values is used in some network drivers 
- * (particularly when dealing with the PMI ) */
-#define MAX_STRING_SIZE  2048
-
-/********************************* FUNCTION *********************************/
-long mpc_common_parse_long(char * input);
-ssize_t sctk_safe_read(int fd,void * buf,size_t count);
-ssize_t sctk_safe_write(int fd,const void * buf,size_t count);
-ssize_t sctk_safe_checked_read(int fd,void * buf,size_t count);
-ssize_t sctk_safe_checked_write(int fd,const void * buf,size_t count);
-
-#endif /*SCTK_IO_HELPER_H*/
+#endif /* MPC_COMMON_INCLUDE_MPC_COMMON_H_ */

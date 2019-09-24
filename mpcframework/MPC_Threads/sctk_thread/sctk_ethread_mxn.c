@@ -31,7 +31,7 @@
 #include "sctk_internal_thread.h"
 #include "sctk_context.h"
 #include "sctk_spinlock.h"
-#include "sctk_topology.h"
+#include "mpc_common_topology.h"
 #include "sctk_posix_ethread_mxn.h"
 
 #define SCTK_LOCAL_VERSION_MAJOR 0

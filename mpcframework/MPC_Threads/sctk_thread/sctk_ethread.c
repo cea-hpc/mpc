@@ -30,7 +30,7 @@
 #include "sctk_internal_thread.h"
 #include "sctk_context.h"
 #include "sctk_posix_ethread.h"
-#include "sctk_topology.h"
+#include "mpc_common_topology.h"
 
 #define SCTK_LOCAL_VERSION_MAJOR 0
 #define SCTK_LOCAL_VERSION_MINOR 2
@@ -562,7 +562,7 @@ sctk_ethread_thread_init (void)
   sctk_free (sctk_malloc (5));
 
   sctk_thread_data_init ();
-  sctk_set_cpu_number (1);
+  mpc_common_topo_set_pu_count (1);
 #ifdef MPC_PosixAllocator
   sctk_add_global_var (&sctk_ethread_key_pos, sizeof (int));
 #endif

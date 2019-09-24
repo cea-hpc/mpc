@@ -29,7 +29,7 @@
 #define _GNU_SOURCE
 #include "sctk_config.h"
 #include "sctk_alloc.h"
-#include "sctk_topology.h"
+#include "mpc_common_topology.h"
 #include "sctk_accessor.h"
 #include "sctk_spinlock.h"
 #include "sctk_atomics.h"

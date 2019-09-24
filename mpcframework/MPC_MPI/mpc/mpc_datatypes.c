@@ -22,7 +22,7 @@
 /* ######################################################################## */
 #include "mpc_datatypes.h"
 
-#include "mpc_common.h"
+#include "mpc_internal_common.h"
 #include "mpc_reduction.h"
 #include "mpcmp.h"
 #include "sctk_handle.h"

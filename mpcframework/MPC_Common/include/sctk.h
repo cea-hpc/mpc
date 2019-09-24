@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #ifdef MPC_Threads
-#include "sctk_topology.h"
+
 #include "sctk_thread.h"
 #include "sctk_accessor.h"
 #endif

@@ -29,7 +29,7 @@
 #include "mpcomp.h"
 #include "sctk_context.h"
 #include "sctk_atomics.h"
-#include "sctk_topology.h"
+#include "mpc_common_topology.h"
 #include "mpcomp_types_def.h"
 #include "mpcomp_types_icv.h"
 #include "mpcomp_types_loop.h"

@@ -52,7 +52,7 @@
 	#endif /* MPC_USE_INFINIBAND */
 #include "sctk_window.h"
 #endif /* MPC_Message_Passing */
-#include "sctk_topology.h"
+#include "mpc_common_topology.h"
 #include "sctk_asm.h"
 /* #include "sctk_daemons.h" */
 /* #include "sctk_io.h" */

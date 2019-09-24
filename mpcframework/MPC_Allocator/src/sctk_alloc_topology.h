@@ -28,7 +28,7 @@
 
 //optional header
 #ifdef MPC_Threads
-#include <sctk_topology.h>
+#include <mpc_common_topology.h>
 #elif defined(HAVE_HWLOC)
 #include <hwloc.h>
 #endif

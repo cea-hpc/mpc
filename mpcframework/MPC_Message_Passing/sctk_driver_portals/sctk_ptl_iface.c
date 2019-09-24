@@ -26,7 +26,7 @@
 #include <limits.h>
 #include "sctk_debug.h"
 #include "sctk_alloc.h"
-#include "sctk_io_helper.h"
+#include "mpc_common_io_helper.h"
 #include "sctk_atomics.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_types.h"

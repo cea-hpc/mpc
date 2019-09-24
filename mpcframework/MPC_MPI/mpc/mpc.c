@@ -40,7 +40,6 @@
 #include "sctk_route.h"
 #include "sctk_runtime_config.h"
 #include "sctk_stdint.h"
-#include "sctk_topology.h"
 #include <mpcmp.h>
 #include <sctk_ethread_internal.h>
 #include <sys/time.h>
@@ -50,7 +49,7 @@
 #include <stdarg.h>
 #endif
 
-#include "mpc_common.h"
+#include "mpc_internal_common.h"
 #include <mpc_internal_thread.h>
 #ifdef MPC_OpenMP
 #include "mpcomp_core.h"
