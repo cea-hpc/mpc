@@ -29,7 +29,7 @@
 #endif
 
 #include "MPC_Common/include/sctk_topology.h"
-#include "MPC_Common/include/mpc_topology_graph.h"
+#include "MPC_Common/include/topology_render.h"
 
 #undef sleep
 #undef usleep

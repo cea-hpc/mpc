@@ -308,7 +308,7 @@ static void sctk_perform_initialisation (void)
 
 	/* As a first step initialize the PMI */
 	sctk_pmi_init();
-	sctk_topology_init ();
+ mpc_common_topology_init ();
 
 #if defined (MPC_USE_EXTLS) && !defined(MPC_DISABLE_HLS)
 	extls_hls_topology_construct();
@@ -817,7 +817,7 @@ sctk_env_init (int *argc, char ***argv)
 	int
 sctk_env_exit ()
 {
-	sctk_topology_destroy();
+ mpc_common_topology_destroy();
 #ifdef MPC_AIO_ENABLED
 	sctk_aio_threads_release();
 #endif

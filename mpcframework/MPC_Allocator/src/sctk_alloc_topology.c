@@ -50,7 +50,7 @@ static hwloc_topology_t topology;
 SCTK_INTERN void sctk_alloc_init_topology(void)
 {
 	#ifdef MPC_Threads
-	sctk_topology_init();
+ mpc_common_topology_init();
 	#elif defined(HAVE_HWLOC)
 	hwloc_topology_init(&topology);
 	hwloc_topology_load(topology);
