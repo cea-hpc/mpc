@@ -27,6 +27,9 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <limits.h>
 
 /********************************** GLOBALS *********************************/
 #ifdef MPC_Threads
@@ -34,6 +37,52 @@ volatile int sctk_online_program = -1;
 #else
 volatile int sctk_online_program = 1;
 #endif
+
+/********************************* FUNCTION *********************************/
+
+static inline io_all_digits(char * str)
+{
+	int len = strlen(str);
+
+	int i;
+	for( i = 0 ; i < len ; i++ )
+	{
+		if(!isdigit(str[i]))
+		{
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+long mpc_common_parse_long(char * input)
+{
+	if(!io_all_digits(input))
+	{
+		sctk_fatal("Could not parse value '%s' expected integer", input);
+	}
+
+	long ret = 0;
+	char * endptr = NULL;
+
+	errno = 0;
+	ret = strtol(input, &endptr, 10);
+
+	if ((errno == ERANGE
+	     && (ret == LONG_MAX || ret == LONG_MIN))
+	|| (errno != 0 && ret == 0)) {
+		perror("strtol");
+		sctk_fatal("Could not parse value '%s' expected integer", input);
+	}
+
+	if (endptr == input) {
+		sctk_fatal("Could not parse value '%s' expected integer", input);
+	}
+
+	return ret;
+}
+
 
 /********************************* FUNCTION *********************************/
 /*!

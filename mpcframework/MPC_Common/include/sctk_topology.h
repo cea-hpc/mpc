@@ -132,11 +132,11 @@ void sctk_topology_destroy(void);
 
 /*! \brief Return the Socket ID for current CPU
  */
-int sctk_topology_get_socket_id(int os_level);
+int topo_get_socket_id(hwloc_topology_t target_topo, int os_level);
 
 /*! \brief Return the Number of sockets
  */
-int sctk_topology_get_socket_number();
+int topo_get_socket_count(hwloc_topology_t target_topo);
 
 
 /*! \brief Return the total number of core for the process (from a topology)
@@ -192,14 +192,6 @@ void topo_get_cpu_neighborhood(hwloc_topology_t topo, int cpuid,
  * @param cpuid Cpu which NUMA has to be queried
  */
 int topo_get_numa_node_from_cpu(hwloc_topology_t target_topo, const int cpuid);
-
-
-/*
- *  * Restrict the topology object of the current mpi task to 'nb_mvps' vps.
- *   * This function handles multiple PUs per core.
- *    */
-int sctk_restrict_topology_for_mpcomp(hwloc_topology_t *restrictedTopology,
-                                      int nb_mvps);
 
 
 /*! \brief Convert a PU id to a logical index

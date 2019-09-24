@@ -308,8 +308,8 @@ static void sctk_perform_initialisation (void)
 
 	/* As a first step initialize the PMI */
 	sctk_pmi_init();
-
 	sctk_topology_init ();
+
 #if defined (MPC_USE_EXTLS) && !defined(MPC_DISABLE_HLS)
 	extls_hls_topology_construct();
 
@@ -575,12 +575,6 @@ sctk_get_launcher_mode()
 sctk_def_node_nb (char *arg)
 {
 	sctk_node_nb_val = atoi (arg);
-}
-
-	int
-sctk_get_node_nb()
-{
-	return sctk_node_nb_val;
 }
 
 	static void

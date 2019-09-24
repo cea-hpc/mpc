@@ -33,6 +33,7 @@
 #define MAX_STRING_SIZE  2048
 
 /********************************* FUNCTION *********************************/
+long mpc_common_parse_long(char * input);
 ssize_t sctk_safe_read(int fd,void * buf,size_t count);
 ssize_t sctk_safe_write(int fd,const void * buf,size_t count);
 ssize_t sctk_safe_checked_read(int fd,void * buf,size_t count);
