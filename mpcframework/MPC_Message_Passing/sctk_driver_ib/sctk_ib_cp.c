@@ -111,11 +111,6 @@ static __thread numa_t **numas_copy = NULL;
   int steal = config->steal;                    \
   if (steal < 0) return; }while(0)
 
-extern volatile int sctk_online_program;
-#define CHECK_ONLINE_PROGRAM do {         \
-  if (sctk_online_program != 1) return 0; \
-}while(0);
-
 OPA_int_t cp_nb_pending_msg;
 
 void sctk_ib_cp_incr_nb_pending_msg()
@@ -408,8 +403,6 @@ int sctk_ib_cp_poll_global_list ( struct sctk_ib_polling_s *poll )
 	if ( vp < 0 )
 		return 0;
 
-	CHECK_ONLINE_PROGRAM;
-        
 	if ( vps == NULL || vps[vp] == NULL )
 	{
 		return 0;
@@ -445,8 +438,6 @@ int sctk_ib_cp_poll ( struct sctk_ib_polling_s *poll, int task_id )
 
           if (vp < 0 || vps == NULL )
             return 0;
-
-          CHECK_ONLINE_PROGRAM;
 
           if (vps[vp] == NULL) {
             sctk_nodebug( "Are we in hybrid mode? try to find dest task %d", task_id );
@@ -552,8 +543,6 @@ int sctk_ib_cp_steal ( struct sctk_ib_polling_s *poll, char other_numa )
 	if ( vp < 0 || vps_reset[vp] == 0 || !vps || !numas)
 		return 0;
 
-	CHECK_ONLINE_PROGRAM;
-
 	if ( numas_copy == NULL )
 	{
           sctk_spinlock_lock(&numas_lock);
@@ -634,8 +623,6 @@ int sctk_ib_cp_steal ( struct sctk_ib_polling_s *poll, char other_numa )
 int sctk_ib_cp_handle_message ( sctk_ibuf_t *ibuf, int dest_task, int target_task )
 {
 	sctk_ib_cp_task_t *task = NULL;
-
-	CHECK_ONLINE_PROGRAM;
 
 	/* XXX: Do not support thread migration */
 	HASH_FIND ( hh_all, all_tasks, &target_task, sizeof ( int ), task );

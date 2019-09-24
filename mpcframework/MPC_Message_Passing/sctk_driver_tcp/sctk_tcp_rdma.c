@@ -61,8 +61,6 @@ static void sctk_tcp_rdma_message_copy ( sctk_message_to_copy_t *tmp )
 /* Network Hooks                                                        */
 /************************************************************************/
 
-extern volatile int sctk_online_program;
-
 /**
  * Polling function created for each route.
  * \param[in] tmp the endpoint to progress.
@@ -87,16 +85,6 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 		if ( res < (ssize_t)sizeof ( sctk_tcp_rdma_type_t ) )
 		{
 			return NULL;
-		}
-
-		if ( sctk_online_program == 0 )
-		{
-			return NULL;
-		}
-
-		while ( sctk_online_program == -1 )
-		{
-			sched_yield();
 		}
 
 		switch ( op_type )

@@ -49,8 +49,6 @@ static sctk_internal_communicator_t *sctk_communicator_array[SCTK_MAX_COMMUNICAT
 static sctk_spin_rwlock_t sctk_communicator_local_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 static sctk_spinlock_t sctk_communicator_all_table_lock = SCTK_SPINLOCK_INITIALIZER;
 
-extern volatile int sctk_online_program;
-
 /************************* FUNCTION ************************/
 /**
  * This method is used to check if the communicator "communicator" exist.
@@ -116,12 +114,6 @@ static inline sctk_internal_communicator_t *sctk_get_internal_communicator ( con
 	if ( tmp == NULL )
 	{
 		sctk_error ( "Communicator %d does not exist", communicator );
-
-		if ( sctk_online_program == 0 )
-		{
-			exit ( 0 );
-		}
-
 		not_reachable();
 	}
 

@@ -26,8 +26,6 @@
 #include <sctk_tcp_toolkit.h>
 #include <sys/socket.h> /* shutdown() */
 
-extern volatile int sctk_online_program;
-
 /********************************************************************/
 /* Inter Thread Comm Hooks                                          */
 /********************************************************************/

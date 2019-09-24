@@ -32,11 +32,6 @@
 #include <limits.h>
 
 /********************************** GLOBALS *********************************/
-#ifdef MPC_Threads
-volatile int sctk_online_program = -1;
-#else
-volatile int sctk_online_program = 1;
-#endif
 
 static inline int _mpc_io_all_digits(char * str)
 {
@@ -124,10 +119,7 @@ ssize_t mpc_common_io_safe_read(int fd, void* buf, size_t count)
 		nb_total_received_bytes += tmp;
 	};
 
-	if(sctk_online_program == 0) {
-		exit(0);
-	}
-	
+
 	return res;
 }
 

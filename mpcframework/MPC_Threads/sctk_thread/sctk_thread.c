@@ -97,7 +97,6 @@ static sctk_thread_key_t _sctk_thread_handler_key;
 #endif
 
 static volatile long sctk_nb_user_threads = 0;
-extern volatile int sctk_online_program;
 
 struct sctk_alloc_chain *sctk_thread_tls = NULL;
 
@@ -661,7 +660,6 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 #endif
       sctk_register_thread_initial (tmp.task_id);
       sctk_terminaison_barrier ();
-      sctk_online_program = 1;
 #ifdef MPC_USE_INFINIBAND
       sctk_ib_prof_init_reference_clock();
 #endif
@@ -744,7 +742,6 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
     {
       sctk_nodebug ("sctk_terminaison_barrier");
       sctk_terminaison_barrier ();
-      sctk_online_program = 0;
       sctk_terminaison_barrier ();
       sctk_nodebug ("sctk_terminaison_barrier done");
       sctk_net_finalize_task_level(tmp.task_id, tmp.virtual_processor);

@@ -54,34 +54,40 @@
 #define SCTK_LOCAL_VERSION_MAJOR 0
 #define SCTK_LOCAL_VERSION_MINOR 1
 
-extern volatile int sctk_online_program;
-
 static void
-pthread_wait_for_value_and_poll( volatile int *data, int value,
-								 void ( *func )( void * ), void *arg )
+pthread_wait_for_value_and_poll (volatile int *data, int value,
+				 void (*func) (void *), void *arg)
 {
-	int i = 0;
-	while ( ( *data ) != value )
+  int i = 0;
+  while ((*data) != value)
+    {
+      if (func != NULL)
 	{
-		if ( func != NULL )
-		{
-			func( arg );
-		}
-		/*       sctk_thread_yield(); */
-		if ( ( *data ) != value )
-		{
-			if ( i >= 150 )
-			{
-				kthread_usleep( 15 );
-				i = 0;
-			}
-			else
-			{
-				sctk_cpu_relax();
-			}
-			i++;
-		}
+	  func (arg);
 	}
+/*       sctk_thread_yield(); */
+      if ((*data) != value)
+	{
+	  if (i >= 100)
+	    {
+#ifndef SCTK_ENABLE_SPINNING
+        sched_yield();
+#else
+	      kthread_usleep (10);
+#endif
+	      i = 0;
+	    } else {
+        /* If the spinning is enable, we slow down the the progression thread */
+#ifdef SCTK_ENABLE_SPINNING
+        sleep(1);
+#endif
+		 sctk_cpu_relax ();
+	  }
+	  /* 	  else */
+/* 	    sched_yield (); */
+	  i++;
+	}
+    }
 }
 
 typedef struct sctk_cell_s
