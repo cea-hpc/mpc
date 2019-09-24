@@ -22,7 +22,8 @@
 /* ######################################################################## */
 
 /********************************* INCLUDES *********************************/
-#include "mpc_common_io_helper.h"
+#include <mpc_common_io_helper.h>
+
 #include "sctk_debug.h"
 #include <errno.h>
 #include <stdio.h>
@@ -79,7 +80,6 @@ long mpc_common_parse_long(char * input)
 ssize_t mpc_common_io_safe_read(int fd, void* buf, size_t count)
 {
 	/* vars */
-	int tmp = 0;
 	size_t nb_total_received_bytes = 0;
 	int res = count;
 
@@ -90,7 +90,7 @@ ssize_t mpc_common_io_safe_read(int fd, void* buf, size_t count)
 
 	/* loop until read all */
 	while (nb_total_received_bytes < count) {
-		tmp = read(fd, (char *)buf + nb_total_received_bytes, count - nb_total_received_bytes);
+		int tmp = read(fd, (char *)buf + nb_total_received_bytes, count - nb_total_received_bytes);
 
 		/* check errors */
 		if (tmp == 0) {
@@ -126,13 +126,12 @@ ssize_t mpc_common_io_safe_read(int fd, void* buf, size_t count)
 ssize_t mpc_common_io_safe_write(int fd, const void* buf, size_t count)
 {
 	/* vars */
-	int tmp;
 	size_t nb_total_sent_bytes = 0;
 	int res = count;
 
 	/* loop until read all */
 	while (nb_total_sent_bytes < count) {
-		tmp = write(fd, (char *)buf + nb_total_sent_bytes, count - nb_total_sent_bytes);
+		int tmp = write(fd, (char *)buf + nb_total_sent_bytes, count - nb_total_sent_bytes);
 
 		/* check errors */
 		if (tmp < 0) {
