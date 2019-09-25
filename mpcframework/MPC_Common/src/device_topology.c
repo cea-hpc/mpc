@@ -26,6 +26,7 @@
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_spinlock.h"
+
 #include "topology.h"
 
 #include <sys/types.h>
@@ -344,7 +345,24 @@ void _mpc_topo_device_init( hwloc_topology_t topology, mpc_common_topo_device_t 
 			 * device is locality sensitive */
 			dev->container = MPC_COMMON_TOPO_TOPOLOGICAL_DEVICE;
 
-			/*TODO*/
+			hwloc_obj_t numa_hwl = hwloc_get_obj_inside_cpuset_by_type( topology,
+																		  dev->cpuset,
+																		  HWLOC_OBJ_NUMANODE,
+																		  0 );
+			if(numa_hwl)
+			{
+				dev->root_numa = numa_hwl->logical_index;
+			}
+
+			hwloc_obj_t pu_hwl = hwloc_get_obj_inside_cpuset_by_type( topology,
+																   	    dev->cpuset,
+																		HWLOC_OBJ_PU,
+																		0 );
+			if(pu_hwl)
+			{
+				dev->root_core = pu_hwl->logical_index;
+			}
+
 		}
 		else
 		{

@@ -743,8 +743,66 @@
               </object>
             </object>
           </object>
+                <object type="Bridge" os_index="4" bridge_type="0-1" depth="0" bridge_pci="0000:[34-38]">
+        <object type="Bridge" os_index="212992" bridge_type="1-1" depth="1" bridge_pci="0000:[35-38]" pci_busid="0000:34:00.0" pci_type="0604 [8086:2030] [8086:0000] 04" pci_link_speed="0.000000">
+          <info name="PCISlot" value="0"/>
+          <object type="Bridge" os_index="217088" bridge_type="1-1" depth="2" bridge_pci="0000:[36-38]" pci_busid="0000:35:00.0" pci_type="0604 [8086:37c0] [beef:dead] 08" pci_link_speed="0.000000">
+            <object type="Bridge" os_index="221232" bridge_type="1-1" depth="3" bridge_pci="0000:[37-38]" pci_busid="0000:36:03.0" pci_type="0604 [8086:37c5] [beef:dead] 08" pci_link_speed="0.000000">
+              <object type="PCIDev" os_index="225284" pci_busid="0000:37:00.0" pci_type="0200 [8086:37ce] [8086:0000] 08" pci_link_speed="0.000000">
+                <object type="OSDev" name="enp55s0f4" osdev_type="2">
+                  <info name="Address" value="08:00:38:b5:49:0f"/>
+                </object>
+              </object>
+              <object type="PCIDev" os_index="225285" pci_busid="0000:37:00.1" pci_type="0200 [8086:37ce] [8086:0000] 08" pci_link_speed="0.000000">
+                <object type="OSDev" name="enp55s0f5" osdev_type="2">
+                  <info name="Address" value="08:00:38:b5:49:10"/>
+                </object>
+              </object>
+              <object type="PCIDev" os_index="225286" pci_busid="0000:37:00.2" pci_type="0200 [8086:37d1] [8086:0000] 08" pci_link_speed="0.000000">
+                <object type="OSDev" name="enp55s0f6" osdev_type="2">
+                  <info name="Address" value="08:00:38:b5:49:11"/>
+                </object>
+              </object>
+              <object type="PCIDev" os_index="225287" pci_busid="0000:37:00.3" pci_type="0200 [8086:37d1] [8086:0000] 08" pci_link_speed="0.000000">
+                <object type="OSDev" name="enp55s0f7" osdev_type="2">
+                  <info name="Address" value="08:00:38:b5:49:12"/>
+                </object>
+              </object>
+            </object>
+          </object>
+        </object>
+      </object>
+      <object type="Bridge" os_index="5" bridge_type="0-1" depth="0" bridge_pci="0000:[5a-5b]">
+        <object type="Bridge" os_index="368640" bridge_type="1-1" depth="1" bridge_pci="0000:[5b-5b]" pci_busid="0000:5a:00.0" pci_type="0604 [8086:2030] [8086:0000] 04" pci_link_speed="0.000000">
+          <info name="PCISlot" value="0-1"/>
+          <object type="PCIDev" os_index="372736" pci_busid="0000:5b:00.0" pci_type="0207 [15b3:1013] [15b3:0045] 00" pci_link_speed="0.000000">
+            <object type="OSDev" name="ib1" osdev_type="2">
+              <info name="Address" value="80:00:00:68:fe:80:00:00:00:00:00:00:08:00:38:03:00:b3:be:2c"/>
+              <info name="Port" value="1"/>
+            </object>
+            <object type="OSDev" name="mlx5_1" osdev_type="3">
+              <info name="NodeGUID" value="0800:3803:00b3:be2c"/>
+              <info name="SysImageGUID" value="0800:3803:00b3:be2c"/>
+              <info name="Port1State" value="4"/>
+              <info name="Port1LID" value="0x3"/>
+              <info name="Port1LMC" value="0"/>
+              <info name="Port1GID0" value="fe80:0000:0000:0000:0800:3803:00b3:be2c"/>
+            </object>
+          </object>
+        </object>
+      </object>
         </object>
       </object>
     </object>
   </object>
+
+  <object type="Bridge" os_index="6" bridge_type="0-1" depth="0" bridge_pci="0000:[5a-5b]">
+        <object type="Bridge" os_index="368640" bridge_type="1-1" depth="1" bridge_pci="0000:[5b-5b]" pci_busid="0000:5a:00.0" pci_type="0604 [8086:2030] [8086:0000] 04" pci_link_speed="0.000000">
+          <info name="PCISlot" value="0-1"/>
+          <object type="PCIDev" os_index="372736" pci_busid="0000:5b:00.0" pci_type="0207 [15b3:1013] [15b3:0045] 00" pci_link_speed="0.000000">
+            <object type="OSDev" name="blk0" osdev_type="0">
+            </object>
+          </object>
+        </object>
+      </object>
 </topology>

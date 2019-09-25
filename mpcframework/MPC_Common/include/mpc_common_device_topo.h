@@ -137,10 +137,39 @@ mpc_common_topo_device_t **mpc_common_topo_device_get_from_handle_regexp( char *
 
 /**
  * @brief Print the content of a device as seen from MPC
- * 
+ *
  * @param dev device to print information of
  */
 void mpc_common_topo_device_print( mpc_common_topo_device_t * dev );
+
+/**
+ * @brief Get the closest device from PU matching the regexp "matching_regexp"
+ *
+ * @param pu_id PU to search a device for
+ * @param matching_regexp handle_reg_exp the regular expression as a string format
+ * @return mpc_common_topo_device_t* the closest device matching the regexpr for pu_id (not for free)
+ */
+mpc_common_topo_device_t *mpc_common_topo_device_get_closest_from_pu( int pu_id, char *matching_regexp );
+
+/**
+ * @brief  Get the list of closest device from PU matching the regexp "matching_regexp"
+ *
+ * @param pu_id  PU to search a device for
+ * @param matching_regexp handle_reg_exp the regular expression as a string format
+ * @param count [out] number of devices returner
+ * @return mpc_common_topo_device_t** an array of the closest devices (count elem) (to free)
+ */
+mpc_common_topo_device_t **mpc_common_topo_device_matrix_get_list_closest_from_pu( int pu_id,
+																				   char *matching_regexp,
+																				   int *count );
+
+/**
+ * @brief Return 1 if the devices matching the regexp are equidistant
+ *
+ * @param matching_regexp device to check for iso-distance
+ * @return int return true if device is palcement indiferent
+ */
+int mpc_common_topo_device_matrix_is_equidistant( char *matching_regexp );
 
 /**
  * Increment the number of associated resource by 1
@@ -189,34 +218,6 @@ mpc_common_topo_device_attach_freest_device_from( mpc_common_topo_device_t **dev
  */
 mpc_common_topo_device_t *mpc_common_topo_device_attach_freest_device( char *handle_reg_exp );
 
-/**
- * @brief Get the closest device from PU matching the regexp "matching_regexp"
- *
- * @param pu_id PU to search a device for
- * @param matching_regexp handle_reg_exp the regular expression as a string format
- * @return mpc_common_topo_device_t* the closest device matching the regexpr for pu_id (not for free)
- */
-mpc_common_topo_device_t *mpc_common_topo_device_get_closest_from_pu( int pu_id, char *matching_regexp );
-
-/**
- * @brief  Get the list of closest device from PU matching the regexp "matching_regexp"
- * 
- * @param pu_id  PU to search a device for
- * @param matching_regexp handle_reg_exp the regular expression as a string format
- * @param count [out] number of devices returner
- * @return mpc_common_topo_device_t** an array of the closest devices (count elem) (to free)
- */
-mpc_common_topo_device_t **mpc_common_topo_device_matrix_get_list_closest_from_pu( int pu_id,
-																				   char *matching_regexp,
-																				   int *count );
-
-/**
- * @brief Return 1 if the devices matching the regexp are equidistant
- *
- * @param matching_regexp device to check for iso-distance
- * @return int return true if device is palcement indiferent
- */
-int mpc_common_topo_device_matrix_is_equidistant( char *matching_regexp );
 
 #ifdef __cplusplus
 }
