@@ -126,7 +126,7 @@ static inline int mpc_common_get_local_task_count (void)
         return sctk_thread_get_current_local_tasks_nb();
 }
 
-static inline int sctk_get_processor_rank (void)
+static inline int mpc_common_get_pu_rank (void)
 {
 	sctk_thread_data_t *data = sctk_thread_data_get();
 
@@ -136,18 +136,7 @@ static inline int sctk_get_processor_rank (void)
 	return data->virtual_processor;
 }
 
-static inline int sctk_get_processor_number (void)
-{
-  static int ret = -1;
-
-  if (ret == -1) {
-    ret = mpc_common_topo_get_cpu_count();
-  }
-
-  return ret;
-}
-
-static inline int sctk_get_core_number (void)
+static inline int mpc_common_get_pu_count (void)
 {
   static int ret = -1;
 

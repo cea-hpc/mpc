@@ -3292,7 +3292,7 @@ int PMPC_Get_activity(int nb_item, MPC_Activity_t *tab, double *process_act) {
   int i;
   int nb_proc;
   double proc_act = 0;
-  nb_proc = sctk_get_processor_number();
+  nb_proc = mpc_common_get_pu_count();
   sctk_nodebug("Activity %d/%d:", nb_item, nb_proc);
   for (i = 0; (i < nb_item) && (i < nb_proc); i++) {
     double tmp;
@@ -3314,7 +3314,7 @@ int PMPC_Get_activity(int nb_item, MPC_Activity_t *tab, double *process_act) {
 
 int PMPC_Move_to(int process, int cpuid) {
   int proc;
-  proc = sctk_get_processor_rank();
+  proc = mpc_common_get_pu_rank();
   sctk_nodebug("move to %d %d(old %d)", process, cpuid, proc);
   if (process == mpc_common_get_process_rank()) {
     if (proc != cpuid) {
@@ -3367,7 +3367,7 @@ int PMPC_Move_to(int process, int cpuid) {
 	  fclose (file);
 
 	  sctk_register_thread (rank);
-	  proc = sctk_get_processor_rank ();
+	  proc = mpc_common_get_pu_rank ();
 	  if (proc != cpuid)
 	    {
 	      sctk_thread_proc_migration (cpuid);
@@ -3556,14 +3556,14 @@ int PMPC_Node_number(int *number) {
 
 int PMPC_Processor_rank(int *rank) {
   SCTK_PROFIL_START(MPC_Processor_rank);
-  *rank = sctk_get_processor_rank();
+  *rank = mpc_common_get_pu_rank();
   SCTK_PROFIL_END(MPC_Processor_rank);
   MPC_ERROR_SUCESS();
 }
 
 int PMPC_Processor_number(int *number) {
   SCTK_PROFIL_START(MPC_Processor_number);
-  *number = sctk_get_processor_number();
+  *number = mpc_common_get_pu_count();
   SCTK_PROFIL_END(MPC_Processor_number);
   MPC_ERROR_SUCESS();
 }

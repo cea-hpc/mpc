@@ -2269,7 +2269,7 @@ int sctk_get_init_vp_and_nbvp_default(int i, int *nbVp) {
   int cpu_per_task;
   int j;
 
-  cpu_nb = mpc_common_topo_get_cpu_count(); // number of cpu per process
+  cpu_nb = mpc_common_topo_get_pu_count(); // number of cpu per process
 
   total_tasks_number = sctk_get_total_tasks_number();
 
@@ -2351,7 +2351,7 @@ int sctk_get_init_vp_and_nbvp_numa_packed(int i, int *nbVp) {
   int nb_task_per_numa_node;
 
   // initialization
-  cpu_nb = mpc_common_topo_get_cpu_count(); // number of cpu per process
+  cpu_nb = mpc_common_topo_get_pu_count(); // number of cpu per process
   total_tasks_number = sctk_get_total_tasks_number();
 
   nb_numa_node_per_node =
@@ -2414,7 +2414,7 @@ int sctk_get_init_vp_and_nbvp_numa_packed(int i, int *nbVp) {
 int sctk_get_init_vp_and_nbvp_numa(int i, int *nbVp) {
   int task_nb =
       sctk_last_local - sctk_first_local + 1; // number of task per process
-  int cpu_nb = mpc_common_topo_get_cpu_count();         // number of cpu per process
+  int cpu_nb = mpc_common_topo_get_pu_count();         // number of cpu per process
   int numa_node_per_node_nb = mpc_common_topo_get_numa_node_count();
   int cpu_per_numa_node = cpu_nb / numa_node_per_node_nb;
 

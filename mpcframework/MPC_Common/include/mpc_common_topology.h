@@ -62,7 +62,7 @@ hwloc_topology_t mpc_common_topology_get(void);
  * @param nb_cpus Number of neighbor
  * @param neighborhood Neighbor list
 */
-void mpc_common_topo_get_cpu_neighborhood(int cpuid, unsigned int nb_cpus, int *neighborhood);
+void mpc_common_topo_get_pu_neighborhood(int cpuid, unsigned int nb_cpus, int *neighborhood);
 
 /*! \brief return the Numa node associated with a given CPUID
  * @param cpuid The target CPUID (logical)
@@ -75,10 +75,6 @@ int mpc_common_topo_get_numa_node_count(void);
 
 /*! \brief Return 1 if the current node is a NUMA node, 0 otherwise */
 int mpc_common_topo_has_numa_nodes(void);
-
-/*! \brief Return the total number of core for the process
-*/
-int mpc_common_topo_get_cpu_count(void);
 
 /*! \brief Bind the current thread
  * @ param i The cpu_id to bind

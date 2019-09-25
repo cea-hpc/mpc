@@ -232,7 +232,6 @@ restart_restrict:
 void _mpc_topo_apply_mpc_process_constraints(hwloc_topology_t target_topology)
 {
 	int processor_count = 0;
-	sctk_only_once();
 
 	_mpc_topo_apply_smt_configuration(target_topology,
 			 						  &processor_count);
@@ -677,25 +676,6 @@ static inline int _mpc_topo_get_current_cpu(hwloc_topology_t target_topo)
 	return pu->logical_index;
 }
 
-
-int _mpc_topo_get_pu_count(hwloc_topology_t target_topo)
-{
-	int core_number;
-
-	int depth = hwloc_get_type_depth( target_topo, HWLOC_OBJ_PU );
-
-	if ( depth == HWLOC_TYPE_DEPTH_UNKNOWN )
-	{
-		core_number = -1;
-	}
-	else
-	{
-		core_number = hwloc_get_nbobjs_by_depth( target_topo, depth );
-	}
-
-	return core_number;
-}
-
 int _mpc_topo_get_pu_per_core_count(hwloc_topology_t target_topo, int cpuid)
 {
 	int pu_per_core;
@@ -728,7 +708,7 @@ void _mpc_topo_bind_to_process(hwloc_topology_t target_topo)
  * was previously bound to a core that was not managed by the HWLOC topology
  * @ param i The cpu_id to bind
  */
-int _mpc_topo_bind_to_cpu(hwloc_topology_t target_topo, int cpuid)
+int _mpc_topo_bind_to_pu(hwloc_topology_t target_topo, int cpuid)
 {
 	static sctk_spinlock_t pin_lock = 0;
 
@@ -775,7 +755,7 @@ int _mpc_topo_get_first_cpu_in_numa_node(hwloc_topology_t target_topo, int node)
 
 /*! \brief Return the total number of core for the process
 */
-int _mpc_topo_get_cpu_count(hwloc_topology_t target_topo)
+int _mpc_topo_get_pu_count(hwloc_topology_t target_topo)
 {
 	return hwloc_get_nbobjs_by_type( target_topo, HWLOC_OBJ_PU );
 }
@@ -784,11 +764,11 @@ int _mpc_topo_get_cpu_count(hwloc_topology_t target_topo)
  * @ param n Number of cores
  * used in ethread
  */
-int _mpc_topo_set_process_cpu_count(hwloc_topology_t target_topo, int n)
+int _mpc_topo_set_process_pu_count(hwloc_topology_t target_topo, int n)
 {
 	hwloc_cpuset_t empty_set = hwloc_bitmap_alloc();
 
-	if ( n <= _mpc_topo_get_cpu_count(target_topo) )
+	if ( n <= _mpc_topo_get_pu_count(target_topo) )
 	{
 		_mpc_topo_map_and_restrict_by_cpuset( target_topo,
 										 n,
@@ -861,7 +841,7 @@ void _topo_print_cpu_neighborhood(hwloc_topology_t target_topo, int cpuid, int n
  * @param nb_cpus Number of neighbor
  * @param neighborhood Neighbor list
  */
-void _mpc_topo_get_cpu_neighborhood(hwloc_topology_t target_topo, int cpuid, unsigned int nb_cpus, int *neighborhood)
+void _mpc_topo_get_pu_neighborhood(hwloc_topology_t target_topo, int cpuid, unsigned int nb_cpus, int *neighborhood)
 {
 	unsigned int i;
 	hwloc_obj_t *objs;
@@ -869,6 +849,8 @@ void _mpc_topo_get_cpu_neighborhood(hwloc_topology_t target_topo, int cpuid, uns
 	unsigned nb_cpus_found;
 
 	currentCPU = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_PU, cpuid );
+
+	assume(currentCPU!=NULL);
 
 	/* alloc size for retreiving objects. We could also use a static array */
 	objs = sctk_malloc( nb_cpus * sizeof( hwloc_obj_t ) );
@@ -922,19 +904,17 @@ void mpc_common_topology_init()
 
 	hwloc_topology_init( &__mpc_module_topology );
 
+	hwloc_topology_set_flags(__mpc_module_topology, HWLOC_TOPOLOGY_FLAG_IO_DEVICES);
+
 	if ( xml_path != NULL )
 	{
 		fprintf( stderr, "USE XML file %s\n", xml_path );
 		hwloc_topology_set_xml( __mpc_module_topology, xml_path );
 	}
 
-	hwloc_topology_set_flags(__mpc_module_topology, HWLOC_TOPOLOGY_FLAG_IO_DEVICES);
-
 	hwloc_topology_load( __mpc_module_topology );
 
 	topology_graph_init();
-
-	sctk_only_once();
 
 	_mpc_topo_apply_mpc_process_constraints(__mpc_module_topology);
 
@@ -944,13 +924,14 @@ void mpc_common_topology_init()
 
 void mpc_common_topology_destroy( void )
 {
+	sctk_device_release();
 	topology_graph_render();
 	hwloc_topology_destroy( __mpc_module_topology );
 }
 
-void mpc_common_topo_get_cpu_neighborhood( int cpuid, unsigned int nb_cpus, int *neighborhood )
+void mpc_common_topo_get_pu_neighborhood( int cpuid, unsigned int nb_cpus, int *neighborhood )
 {
-	_mpc_topo_get_cpu_neighborhood( __mpc_module_topology, cpuid, nb_cpus, neighborhood );
+	_mpc_topo_get_pu_neighborhood( __mpc_module_topology, cpuid, nb_cpus, neighborhood );
 }
 
 int mpc_common_topo_get_numa_node_from_cpu(const int cpuid)
@@ -970,12 +951,12 @@ int mpc_common_topo_has_numa_nodes(void)
 
 int mpc_common_topo_set_pu_count( int n )
 {
-	return _mpc_topo_set_process_cpu_count(__mpc_module_topology, n);
+	return _mpc_topo_set_process_pu_count(__mpc_module_topology, n);
 }
 
-int mpc_common_topo_get_cpu_count(void)
+int mpc_common_topo_get_pu_count(void)
 {
-	return _mpc_topo_get_cpu_count(__mpc_module_topology);
+	return _mpc_topo_get_pu_count(__mpc_module_topology);
 }
 
 static __thread int __topo_cpu_pinning_caching_value = -1;
@@ -992,7 +973,7 @@ void _set_cpu_pinning_cache(int logical_id)
 
 int mpc_common_topo_bind_to_cpu(int cpuid)
 {
-	int ret = _mpc_topo_bind_to_cpu(__mpc_module_topology, cpuid);
+	int ret = _mpc_topo_bind_to_pu(__mpc_module_topology, cpuid);
 
  	_set_cpu_pinning_cache(cpuid);
 
@@ -1022,10 +1003,6 @@ void mpc_common_topo_print(FILE *fd)
 	_mpc_topo_print(__mpc_module_topology, fd);
 }
 
-int mpc_common_topo_get_pu_count(void)
-{
-	return _mpc_topo_get_pu_count(__mpc_module_topology);
-}
 
 int mpc_common_topo_get_ht_per_core(void)
 {
@@ -1060,14 +1037,14 @@ hwloc_cpuset_t mpc_common_topo_get_parent_socket_cpuset(int cpuid)
 	return _mpc_topo_get_parent_socket_cpuset(__mpc_module_topology, cpuid);
 }
 
-hwloc_cpuset_t mpc_common_topo_get_pu_cpuset(int cpuid)
-{
-	return _mpc_topo_get_pu_cpuset(__mpc_module_topology, cpuid);
-}
-
 hwloc_cpuset_t mpc_common_topo_get_parent_core_cpuset(int cpuid)
 {
 	return _mpc_topo_get_parent_core_cpuset(__mpc_module_topology, cpuid);
+}
+
+hwloc_cpuset_t mpc_common_topo_get_pu_cpuset(int cpuid)
+{
+	return _mpc_topo_get_pu_cpuset(__mpc_module_topology, cpuid);
 }
 
 hwloc_cpuset_t mpc_common_topo_get_first_pu_for_level(hwloc_obj_type_t type)

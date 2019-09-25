@@ -425,7 +425,7 @@ sctk_ethread_mxn_user_create (sctk_ethread_t * threadp,
  * @return cpu to bind current thread to have a numa placement
  */
 // int sctk_ethread_get_init_vp_numa(int pos){
-//    int nb_cpu_per_node = mpc_common_topo_get_cpu_count();
+//    int nb_cpu_per_node = mpc_common_topo_get_pu_count();
 //    int nb_numa_node_per_node = mpc_common_topo_get_numa_node_count();
 //    int nb_cpu_per_numa_node = nb_cpu_per_node / nb_numa_node_per_node;
 //    int current_cpu = mpc_common_topo_get_current_cpu();
@@ -675,7 +675,7 @@ sctk_ethread_mxn_init_virtual_processors ()
   /*Init main thread and virtual processor */
   sctk_ethread_mxn_init_vp (&sctk_ethread_main_thread, &virtual_processor);
 
-  cpu_number = mpc_common_topo_get_cpu_count ();
+  cpu_number = mpc_common_topo_get_pu_count ();
 
   sctk_nodebug ("starts %d virtual processors", cpu_number);
 
@@ -770,9 +770,9 @@ sctk_ethread_mxn_thread_proc_migration (const int cpu)
   sctk_assert (current->vp == current_vp);
   sctk_assert (last == sctk_thread_get_vp ());
   assume (cpu >= 0);
-  assume (cpu < mpc_common_topo_get_cpu_count ());
+  assume (cpu < mpc_common_topo_get_pu_count ());
   assume (last >= 0);
-  assume (last < mpc_common_topo_get_cpu_count ());
+  assume (last < mpc_common_topo_get_pu_count ());
 
   sctk_nodebug ("task %p Jump from %d to %d", current, last, cpu);
 

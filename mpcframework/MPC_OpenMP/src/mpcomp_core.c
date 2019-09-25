@@ -377,11 +377,11 @@ static inline void __mpcomp_read_env_variables() {
         OMP_MICROVP_NUMBER, 0);
     OMP_MICROVP_NUMBER = 0;
   }
-  if (OMP_MICROVP_NUMBER > sctk_get_processor_number()) {
+  if (OMP_MICROVP_NUMBER > mpc_common_get_pu_count()) {
     fprintf(stderr, "Warning: Number of microVPs should be at most the number "
                     "of cores per node: %d\n"
                     "Switching to default value %d\n",
-            sctk_get_processor_number(), OMP_MICROVP_NUMBER);
+            mpc_common_get_pu_count(), OMP_MICROVP_NUMBER);
     OMP_MICROVP_NUMBER = 0;
   }
 
@@ -784,14 +784,14 @@ void __mpcomp_init(void) {
       case MPCOMP_MODE_ALTERNATING:
         nb_mvps = 1;
         if (mpc_common_get_local_task_rank() == 0) {
-          nb_mvps = sctk_get_processor_number();
+          nb_mvps = mpc_common_get_pu_count();
         }
         break;
       case MPCOMP_MODE_OVERSUBSCRIBED_MIXED:
         not_implemented();
         break;
       case MPCOMP_MODE_FULLY_MIXED:
-        nb_mvps = sctk_get_processor_number();
+        nb_mvps = mpc_common_get_pu_count();
         break;
       default:
         not_reachable();
@@ -805,14 +805,14 @@ void __mpcomp_init(void) {
           "%s: MPI rank=%d, process_rank=%d, local_task_rank=%d => %d mvp(s) "
           "out of %d core(s) A",
           __func__, task_rank, mpc_common_get_local_process_rank(),
-          mpc_common_get_local_task_rank(), sctk_get_processor_number(),
-          sctk_get_processor_number());
+          mpc_common_get_local_task_rank(), mpc_common_get_pu_count(),
+          mpc_common_get_pu_count());
     } else {
       sctk_debug("%s: MPI rank=%d, process_rank=%d, local_task_rank=%d => %d "
                  "mvp(s) out of %d core(s)",
                  __func__, task_rank, mpc_common_get_local_process_rank(),
                  mpc_common_get_local_task_rank(), nb_mvps,
-                 sctk_get_processor_number());
+                 mpc_common_get_pu_count());
     }
 
     /* Update some global icvs according the number of mvps */

@@ -182,7 +182,7 @@ void sctk_device_load_topology_limits( hwloc_topology_t topology )
 	/* No numa found */
 	if( !has_numa )
 	{
-		___core_count = mpc_common_topo_get_cpu_count();
+		___core_count = mpc_common_topo_get_pu_count();
 	}
 	else
 	{
@@ -612,12 +612,11 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
 
 void sctk_device_release()
 {
-	
-	
+	sctk_free(sctk_devices);
+	sctk_devices = NULL;
+	sctk_devices_count = 0;
+	sctk_device_matrix_release();
 }
-
-
-
 
 sctk_device_t * sctk_device_get_from_handle( char * handle )
 {
@@ -770,12 +769,19 @@ static inline int sctk_device_matrix_get_value( int pu_id, int device_id )
 	return *ret;
 }
 
+void sctk_device_matrix_release()
+{
+	sctk_device_matrix.device_count = 0;
+	sctk_device_matrix.pu_count = 0;
+	free(sctk_device_matrix.distances);
+	sctk_device_matrix.distances = NULL;
+}
 
 /** Intializes the device matrix */
 void sctk_device_matrix_init(hwloc_topology_t topology)
 {
 	sctk_device_matrix.device_count = sctk_devices_count;
-	sctk_device_matrix.pu_count =  mpc_common_topo_get_cpu_count();
+	sctk_device_matrix.pu_count =  mpc_common_topo_get_pu_count();
 	
 	sctk_device_matrix.distances = sctk_malloc( sizeof( int ) * sctk_device_matrix.device_count  * sctk_device_matrix.pu_count );
 	

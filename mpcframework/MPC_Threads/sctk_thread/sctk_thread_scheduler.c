@@ -2448,7 +2448,7 @@ void sctk_thread_generic_scheduler_init(char *thread_type, char *scheduler_type,
                                         int vp_number) {
   int i;
 
-  if(vp_number > mpc_common_topo_get_cpu_count ()){
+  if(vp_number > mpc_common_topo_get_pu_count ()){
     sctk_thread_generic_scheduler_use_binding = 0;
   }
 

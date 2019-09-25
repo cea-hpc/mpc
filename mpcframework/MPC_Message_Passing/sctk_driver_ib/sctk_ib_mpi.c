@@ -847,7 +847,7 @@ void sctk_network_finalize_mpi_ib( sctk_rail_info_t *rail)
 	sctk_ib_device_close(&rail->network.ib);
 
 
-	memset((void *)vps_reset, 0, sizeof(char) * mpc_common_topo_get_cpu_count());
+	memset((void *)vps_reset, 0, sizeof(char) * mpc_common_topo_get_pu_count());
 
 }
 
@@ -864,7 +864,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	/* init the first time the rail is enabled */
 	if(!vps_reset)
 	{
-		int nbvps = mpc_common_topo_get_cpu_count();
+		int nbvps = mpc_common_topo_get_pu_count();
 		vps_reset = sctk_malloc(nbvps * sizeof(char));
 		assert(vps_reset);
 		memset((void*)vps_reset, 0, sizeof(char) * nbvps);

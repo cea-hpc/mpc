@@ -55,7 +55,7 @@ int _mpc_topo_get_socket_count(hwloc_topology_t target_topo);
 
 /*! \brief Return the total number of core for the process (from a topology)
 */
-int _mpc_topo_get_cpu_count(hwloc_topology_t target_topo);
+int _mpc_topo_get_pu_count(hwloc_topology_t target_topo);
 
 /*! \brief Return 1 if the current node is a NUMA node, 0 otherwise (from a
  * topology)
@@ -88,7 +88,7 @@ int _mpc_topo_get_first_cpu_in_numa_node(hwloc_topology_t target_topo, int node)
  * @param nb_cpus Number of neighbor
  * @param neighborhood Neighbor list
 */
-void _mpc_topo_get_cpu_neighborhood(hwloc_topology_t topo, int cpuid,
+void _mpc_topo_get_pu_neighborhood(hwloc_topology_t topo, int cpuid,
                                     unsigned int nb_cpus, int *neighborhood);
 
 /*! \brief Return the NUMA node according to the core_id number

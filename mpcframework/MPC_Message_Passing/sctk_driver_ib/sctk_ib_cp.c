@@ -166,7 +166,7 @@ void sctk_ib_cp_finalize(struct sctk_ib_rail_info_s *rail_ib)
 
 	sctk_spinlock_lock(&vps_lock);
 	/* free vps struct */
-	int nbvps = mpc_common_topo_get_cpu_count();
+	int nbvps = mpc_common_topo_get_pu_count();
 	if(vps)
 	{
 		for (i = 0; i < nbvps; ++i)
@@ -271,11 +271,11 @@ void sctk_ib_cp_init_task ( int rank, int vp )
           numas = sctk_calloc(numa_number, sizeof(numa_t));
           ib_assume(numas);
 
-          int vp_number = mpc_common_topo_get_cpu_count();
+          int vp_number = mpc_common_topo_get_pu_count();
           vps = sctk_malloc(sizeof(vp_t *) * vp_number);
           ib_assume(vps);
           memset(vps, 0, sizeof(vp_t *) * vp_number);
-          sctk_nodebug("vp: %d - numa: %d", mpc_common_topo_get_cpu_count(), numa_number);
+          sctk_nodebug("vp: %d - numa: %d", mpc_common_topo_get_pu_count(), numa_number);
         }
 
         /* Add NUMA node if not already added */

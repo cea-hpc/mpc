@@ -59,7 +59,7 @@ static OPA_int_t sctk_ib_prof_glob_counters[IB_PROF_GLOB_COUNTERS_MAX];
  *----------------------------------------------------------*/
 void sctk_ib_prof_init()
 {
-	sctk_nodebug ( "VP number: %d", mpc_common_topo_get_cpu_count() );
+	sctk_nodebug ( "VP number: %d", mpc_common_topo_get_pu_count() );
 
 	/* Initialize QP usage profiling */
 #ifdef SCTK_IB_QP_PROF
@@ -183,7 +183,7 @@ void sctk_ib_prof_qp_init_task ( int task_id, int vp )
 	if ( qp_prof == NULL )
 	{
 		int vp_number;
-		vp_number = mpc_common_topo_get_cpu_count();
+		vp_number = mpc_common_topo_get_pu_count();
 		assume ( vp_number >= 1 );
 		qp_prof = sctk_malloc ( vp_number * sizeof ( struct sctk_ib_prof_qp_s ) );
 		assume ( qp_prof );

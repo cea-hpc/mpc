@@ -271,7 +271,7 @@ void sctk_print_banner(bool restart)
 						"MPC version %d.%d.%d%s %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s %s\n",
 						SCTK_VERSION_MAJOR, SCTK_VERSION_MINOR, SCTK_VERSION_REVISION,
 						SCTK_VERSION_PRE, mpc_lang, sctk_task_nb_val,
-						sctk_process_nb_val, mpc_common_topo_get_cpu_count (),sctk_atomics_get_cpu_freq()/1000000000.0,
+						sctk_process_nb_val, mpc_common_topo_get_pu_count (),sctk_atomics_get_cpu_freq()/1000000000.0,
 						sctk_multithreading_mode,
 						sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_checkpoint_str, sctk_network_mode);
 			}
@@ -280,7 +280,7 @@ void sctk_print_banner(bool restart)
 				fprintf (stderr,
 						"MPC experimental version %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s %s\n",
 						mpc_lang, sctk_task_nb_val, sctk_process_nb_val,
-					 mpc_common_topo_get_cpu_count (),sctk_atomics_get_cpu_freq()/1000000000.0,  sctk_multithreading_mode,
+					 mpc_common_topo_get_pu_count (),sctk_atomics_get_cpu_freq()/1000000000.0,  sctk_multithreading_mode,
 						sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_checkpoint_str, sctk_network_mode);
 			}
 		}
@@ -383,7 +383,7 @@ TODO("UNDERSTAND WHY IT IS FAILING");
 		if (sctk_process_nb_val > 1)
 		{
 			int cpu_detected;
-			cpu_detected = mpc_common_topo_get_cpu_count ();
+			cpu_detected = mpc_common_topo_get_pu_count ();
 			if (cpu_detected < sctk_processor_nb_val)
 			{
 				fprintf (stderr,

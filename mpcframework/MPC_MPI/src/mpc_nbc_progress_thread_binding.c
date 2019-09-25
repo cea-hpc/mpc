@@ -126,7 +126,7 @@ int sctk_get_progress_thread_binding_numa(void) {
 
   int task_nb = mpc_common_get_local_task_count();
 
-  int cpu_per_node = mpc_common_topo_get_cpu_count();
+  int cpu_per_node = mpc_common_topo_get_pu_count();
 
   int numa_node_per_node_nb = mpc_common_topo_get_numa_node_count();
 
