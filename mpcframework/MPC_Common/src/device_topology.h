@@ -16,55 +16,19 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - ADAM Julien adamj@paratools.com                                  # */
+/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
+#ifndef SCTK_DEVICE_TOPOLOGY_H
+#define SCTK_DEVICE_TOPOLOGY_H
 
-#ifdef MPC_Accelerators
-#include <sctk_accelerators.h>
-#include <sctk_alloc.h>
+#include <hwloc.h>
+#include <sctk_spinlock.h>
+
 #include <mpc_common_device_topo.h>
 
-static size_t nb_devices = 0;
-extern bool sctk_accl_support;
 
-/**
- * Initialize MPC_Accelerators.
- *
- * Should call sub-module init functions
- * @return 0 if everything succeded, 1 otherwise
- */
-int sctk_accl_init() {
+void _mpc_topo_device_print( mpc_common_topo_device_t * dev );
 
-  if (!sctk_accl_support) {
-    nb_devices = 0;
-    return 1;
-  }
 
-  sctk_warning("Accelerators support ENABLED");
-
-  mpc_common_topo_device_t **list = mpc_common_topo_device_get_from_handle_regexp(
-      "cuda-enabled-card*", (int *)&nb_devices);
-  sctk_free(list);
-
-#ifdef MPC_USE_CUDA
-  sctk_accl_cuda_init();
-#endif
-
-#ifdef MPC_USE_OPENACC
-#endif
-
-#ifdef MPC_USE_OPENCL
-#endif
-  return 0;
-}
-
-/**
- * Returns the number of GPUs on the current node.
- *
- * Especially used to check CUDA can be used without errors.
- * @return the number of devices
- */
-size_t sctk_accl_get_nb_devices() { return nb_devices; }
-#endif
+#endif /* SCTK_DEVICE_TOPOLOGY_H */

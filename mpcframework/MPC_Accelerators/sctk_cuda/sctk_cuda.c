@@ -25,7 +25,7 @@
 #include <sctk_accelerators.h>
 #include <sctk_alloc.h>
 #include <sctk_debug.h>
-#include <sctk_device_topology.h>
+#include <mpc_common_device_topo.h>
 #include <sctk_spinlock.h>
 #include <mpc_common_topology.h>
 
@@ -58,18 +58,18 @@ static int sctk_accl_cuda_get_closest_device(int cpu_id) {
   assert(num_devices == nb_check);
 
   /* else, we try to find the closest device for the current thread */
-  sctk_device_t **closest_devices = NULL;
+  mpc_common_topo_device_t **closest_devices = NULL;
   int nearest_id = -1;
 
   /* to recycle, nb_check contains the number of minimum distance device */
-  closest_devices = sctk_device_matrix_get_list_closest_from_pu(
+  closest_devices = mpc_common_topo_device_matrix_get_list_closest_from_pu(
       cpu_id, "cuda-enabled-card*", &nb_check);
 
   /* once the list is filtered with the nearest ones, we need to elected the one
    * with the minimum
    * number of attached resources */
-  sctk_device_t *elected =
-      sctk_device_attach_freest_device_from(closest_devices, nb_check);
+  mpc_common_topo_device_t *elected =
+      mpc_common_topo_device_attach_freest_device_from(closest_devices, nb_check);
   assert(elected != NULL);
 
   nearest_id = elected->device_id;

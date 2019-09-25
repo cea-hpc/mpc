@@ -421,7 +421,7 @@ int sctk_unfold_rails( struct sctk_runtime_config_struct_net_cli_option *cli_opt
 					int matching_rails = 0;
 					
 					/* +1 to skip the ! */
-					sctk_device_t ** matching_device = sctk_device_get_from_handle_regexp( rail->device + 1, &matching_rails );
+				 mpc_common_topo_device_t ** matching_device = mpc_common_topo_device_get_from_handle_regexp( rail->device + 1, &matching_rails );
 					
 					/* Now we build the subrail array
 					 * we duplicate the config of current rail

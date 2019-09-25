@@ -36,7 +36,7 @@
 #include "mpc_common_rank.h"
 
 #include "topology_render.h"
-#include "sctk_device_topology.h"
+#include <mpc_common_device_topo.h>
 
 #ifdef MPC_USE_EXTLS
 #include <extls.h>
@@ -919,12 +919,12 @@ void mpc_common_topology_init()
 	_mpc_topo_apply_mpc_process_constraints(__mpc_module_topology);
 
 	/*  load devices */
-	sctk_device_load_from_topology( __mpc_module_topology );
+ mpc_common_topo_device_init( __mpc_module_topology );
 }
 
 void mpc_common_topology_destroy( void )
 {
-	sctk_device_release();
+ mpc_common_topo_device_release();
 	topology_graph_render();
 	hwloc_topology_destroy( __mpc_module_topology );
 }
