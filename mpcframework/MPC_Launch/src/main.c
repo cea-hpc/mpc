@@ -23,6 +23,8 @@
 #include "sctk_config.h"
 #include "sctk_debug.h"
 
+#include <stdlib.h>
+
 #if defined(MPC_Message_Passing) || defined(MPC_Threads)
 
 /* We do not need a main
@@ -31,6 +33,10 @@
 
 /*#pragma weak main*/
 int main(int argc, char **argv) {
+  if( getenv("MPC_CALL_ORIGINAL_MAIN"))
+  {
+	  return mpc_user_main__(argc, argv, NULL);
+  }
   int tmp;
   tmp = main_c (argc, argv);
   return tmp;
