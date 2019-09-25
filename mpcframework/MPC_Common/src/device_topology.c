@@ -258,12 +258,12 @@ static inline int __mpc_topo_device_get_ith_logical_on_numa( hwloc_topology_t to
 
 void mpc_common_topo_device_print( mpc_common_topo_device_t *dev )
 {
-	sctk_nodebug( "#######################################" );
-	sctk_nodebug( "Type : %s", mpc_common_topo_device_type_to_char( dev->type ) );
-	sctk_nodebug( "Container : %s", mpc_common_topo_device_container_to_char( dev->container ) );
-	sctk_nodebug( "Name : %s", dev->name );
-	sctk_nodebug( "Vendor : '%s'", dev->vendor );
-	sctk_nodebug( "Device : '%s'", dev->device );
+	printf( "#######################################\n");
+	printf( "Type : %s\n", mpc_common_topo_device_type_to_char( dev->type ) );
+	printf( "Container : %s\n", mpc_common_topo_device_container_to_char( dev->container ) );
+	printf( "Name : %s\n", dev->name );
+	printf( "Vendor : '%s'\n", dev->vendor );
+	printf( "Device : '%s'\n", dev->device );
 
 	char cpuset[512];
 	hwloc_bitmap_list_snprintf( cpuset, 512, dev->cpuset );
@@ -271,7 +271,7 @@ void mpc_common_topo_device_print( mpc_common_topo_device_t *dev )
 	char cpusetraw[512];
 	hwloc_bitmap_snprintf( cpusetraw, 512, dev->cpuset );
 
-	sctk_nodebug( "CPU set : '%s' (%s)", cpuset, cpusetraw );
+	printf( "CPU set : '%s' (%s)\n", cpuset, cpusetraw );
 
 	char nodeset[512];
 	hwloc_bitmap_list_snprintf( nodeset, 512, dev->nodeset );
@@ -279,12 +279,12 @@ void mpc_common_topo_device_print( mpc_common_topo_device_t *dev )
 	char nodesetraw[512];
 	hwloc_bitmap_snprintf( nodesetraw, 512, dev->nodeset );
 
-	sctk_nodebug( "NODE set : '%s' (%s)", nodeset, nodesetraw );
-	sctk_nodebug( "Root numa : '%d'", dev->root_numa );
-	sctk_nodebug( "Root core : '%d'", dev->root_core );
-	sctk_nodebug( "Device ID : '%d'", dev->device_id );
+	printf( "NODE set : '%s' (%s)\n", nodeset, nodesetraw );
+	printf( "Root numa : '%d'\n", dev->root_numa );
+	printf( "Root core : '%d'\n", dev->root_core );
+	printf( "Device ID : '%d'\n", dev->device_id );
 
-	sctk_nodebug( "#######################################" );
+	printf( "#######################################\n" );
 }
 
 void _mpc_topo_device_init( hwloc_topology_t topology, mpc_common_topo_device_t *dev, hwloc_obj_t obj, int os_dev_offset )
@@ -729,13 +729,13 @@ void mpc_common_topo_device_init( hwloc_topology_t topology )
 	__mpc_topo_device_enrich_topology();
 	// hwloc_topology_export_xml(topology, "-");
 
-	//*
+	/*
 	int j;
 	for ( j = 0; j < __mpc_topo_device_list_count; j++ )
 	{
 	 mpc_common_topo_device_print( &__mpc_topo_device_list[i] );
 	}
-	//*/
+	*/
 	/* Now initialize the device distance matrix */
 	__mpc_topo_device_matrix_init( topology );
 }

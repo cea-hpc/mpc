@@ -24,6 +24,12 @@
 #define MPC_COMMON_INCLUDE_MPC_COMMON_DEVICE_TOPOLOGY_H_
 
 #include <hwloc.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #include <sctk_spinlock.h>
 
 /************************************************************************/
@@ -211,5 +217,9 @@ mpc_common_topo_device_t **mpc_common_topo_device_matrix_get_list_closest_from_p
  * @return int return true if device is palcement indiferent
  */
 int mpc_common_topo_device_matrix_is_equidistant( char *matching_regexp );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MPC_COMMON_INCLUDE_MPC_COMMON_DEVICE_TOPOLOGY_H_ */
