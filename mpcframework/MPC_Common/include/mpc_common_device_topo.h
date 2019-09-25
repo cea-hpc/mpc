@@ -130,6 +130,13 @@ mpc_common_topo_device_t **mpc_common_topo_device_get_from_handle_regexp( char *
 																		  int *count );
 
 /**
+ * @brief Print the content of a device as seen from MPC
+ * 
+ * @param dev device to print information of
+ */
+void mpc_common_topo_device_print( mpc_common_topo_device_t * dev );
+
+/**
  * Increment the number of associated resource by 1
  * @param[in] device the device to update
  */

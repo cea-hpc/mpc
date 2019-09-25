@@ -21,7 +21,7 @@
 /* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "device_topology.h"
+#include <mpc_common_device_topo.h>
 
 #include "sctk_debug.h"
 #include "sctk_thread.h"
@@ -256,7 +256,7 @@ static inline int __mpc_topo_device_get_ith_logical_on_numa( hwloc_topology_t to
 /* DEVICE                                                               */
 /************************************************************************/
 
-void _mpc_topo_device_print( mpc_common_topo_device_t *dev )
+void mpc_common_topo_device_print( mpc_common_topo_device_t *dev )
 {
 	sctk_nodebug( "#######################################" );
 	sctk_nodebug( "Type : %s", mpc_common_topo_device_type_to_char( dev->type ) );
@@ -733,7 +733,7 @@ void mpc_common_topo_device_init( hwloc_topology_t topology )
 	int j;
 	for ( j = 0; j < __mpc_topo_device_list_count; j++ )
 	{
-		_mpc_topo_device_print( &__mpc_topo_device_list[i] );
+	 mpc_common_topo_device_print( &__mpc_topo_device_list[i] );
 	}
 	//*/
 	/* Now initialize the device distance matrix */
