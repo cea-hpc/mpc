@@ -232,18 +232,18 @@ sctk_debug_print_backtrace (const char *format, ...)
 /**********************************************************************/
 /*Abort                                                               */
 /**********************************************************************/
-#ifdef MPC_Message_Passing
-void sctk_net_abort ();
+#ifdef MPC_Launch
+void mpc_launch_pmi_abort ();
 #endif
 void
 sctk_abort (void)
 {
   static volatile int done = 0;
   sctk_debug_print_backtrace("sctk_abort");
-#ifdef MPC_Message_Passing
+#ifdef MPC_Launch
   if(done == 0){
     done = 1;
-    sctk_net_abort ();
+    mpc_launch_pmi_abort ();
   }
 #endif
   abort();

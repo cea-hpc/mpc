@@ -1540,7 +1540,7 @@ void sctk_communicator_world_init ( const int nb_task )
 
 	if ( mpc_common_get_process_count() > 1 )
 	{
-		sctk_pmi_barrier();
+	 mpc_launch_pmi_barrier();
 	}
 }
 
@@ -1548,7 +1548,7 @@ void sctk_communicator_delete()
 {
 	if ( mpc_common_get_process_count() > 1 )
 	{
-		sctk_pmi_barrier();
+	 mpc_launch_pmi_barrier();
 	}
 }
 

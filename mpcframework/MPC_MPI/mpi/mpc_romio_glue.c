@@ -226,7 +226,7 @@ int MPIR_Get_node_id(MPI_Comm comm, int rank, int *id) {
   int comm_world_rank = sctk_get_comm_world_rank(comm, rank);
 
   struct process_nb_from_node_rank *nodes_infos = NULL;
-  sctk_pmi_get_process_number_from_node_rank(&nodes_infos);
+  mpc_launch_pmi_get_process_per_node_table(&nodes_infos);
 
   int node_number = mpc_common_get_node_count();
 

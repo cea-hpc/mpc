@@ -3141,8 +3141,8 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 			sctk_ft_disable();
 			if(total_nbprocs > 1)
 			{
-				sctk_pmi_get_process_rank(&pmi_rank);
-				sctk_pmi_barrier();
+				mpc_common_get_process_rank(&pmi_rank);
+			 mpc_launch_pmi_barrier();
 			}
 			else
 			{

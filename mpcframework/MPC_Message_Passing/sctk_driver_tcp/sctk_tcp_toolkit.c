@@ -564,14 +564,14 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 #else
 
 	/* Register connection info inside the PMPI */
-	assume ( sctk_pmi_put_as_rank ( rail->network.tcp.connection_infos, rail->rail_number ) == 0 );
+	assume ( mpc_launch_pmi_put_as_rank ( rail->network.tcp.connection_infos, rail->rail_number ) == 0 );
 
-	sctk_pmi_barrier();
+ mpc_launch_pmi_barrier();
 
 	/* Retrieve Connection info to dest rank from the PMI */
-	assume ( sctk_pmi_get_as_rank ( right_rank_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, right_rank ) == 0 );
+	assume ( mpc_launch_pmi_get_as_rank ( right_rank_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, right_rank ) == 0 );
 
-	sctk_pmi_barrier();
+ mpc_launch_pmi_barrier();
 #endif
 
 	sctk_nodebug ( "DEST Connection Infos(%d) to %d: %s", mpc_common_get_process_rank(), right_rank, right_rank_connection_infos );
@@ -648,7 +648,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 		}
 	}
 
-	sctk_pmi_barrier();
+ mpc_launch_pmi_barrier();
 
 	/* We are all done, now register the routes and create the polling threads */
 	sctk_tcp_add_route ( right_rank, right_socket, rail, tcp_thread, ROUTE_ORIGIN_STATIC );
@@ -658,6 +658,6 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 		sctk_tcp_add_route ( left_rank, left_socket, rail, tcp_thread, ROUTE_ORIGIN_STATIC );
 	}
 
-	sctk_pmi_barrier();
+ mpc_launch_pmi_barrier();
 }
 

@@ -336,7 +336,7 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 	assert(srail->connection_infos_size > 0);
 
 	/* register the serialized id into the PMI */
-	tmp_ret = sctk_pmi_put_as_rank (
+	tmp_ret = mpc_launch_pmi_put_as_rank (
 			srail->connection_infos,      /* the string to publish */
 			srail->connection_infos_size, /* string size */
 			rail->rail_number             /* rail ID: PMI tag */
@@ -349,10 +349,10 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 	left_rank = ( mpc_common_get_process_rank() + mpc_common_get_process_count() - 1 ) % mpc_common_get_process_count();
 
 	/* wait for each process to register its own serialized ID */
-	sctk_pmi_barrier();
+ mpc_launch_pmi_barrier();
 
 	/* retrieve the right neighbour id struct */
-	tmp_ret = sctk_pmi_get_as_rank (
+	tmp_ret = mpc_launch_pmi_get_as_rank (
 			right_rank_connection_infos, /* the recv buffer */
 			MPC_COMMON_MAX_STRING_SIZE,             /* the recv buffer max size */
 			rail->rail_number,           /* rail IB: PMI tag */
@@ -372,7 +372,7 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 	{
 
 		/* retrieve the left neighbour id struct */
-		tmp_ret = sctk_pmi_get_as_rank (
+		tmp_ret = mpc_launch_pmi_get_as_rank (
 				left_rank_connection_infos, /* the recv buffer */
 				MPC_COMMON_MAX_STRING_SIZE,             /* the recv buffer max size */
 				rail->rail_number,           /* rail IB: PMI tag */
@@ -396,7 +396,7 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 	}
 
 	//Wait for all processes to complete the ring topology init */
-	sctk_pmi_barrier();
+ mpc_launch_pmi_barrier();
 }
 
 /** 
@@ -412,7 +412,7 @@ sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, int dest)
 	sctk_ptl_id_t id = SCTK_PTL_ANY_PROCESS;
 
 	/* retrieve the right neighbour id struct */
-	tmp_ret = sctk_pmi_get_as_rank (
+	tmp_ret = mpc_launch_pmi_get_as_rank (
 			connection_infos,  /* the recv buffer */
 			MPC_COMMON_MAX_STRING_SIZE,   /* the recv buffer max size */
 			rail->rail_number, /* rail IB: PMI tag */

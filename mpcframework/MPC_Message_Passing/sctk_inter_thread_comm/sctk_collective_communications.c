@@ -59,7 +59,7 @@ sctk_terminaison_barrier (void)
 		if ( mpc_common_get_process_count() > 1 )
 		{
 			sctk_nodebug ( "sctk_pmi_barrier" );
-			sctk_pmi_barrier();
+		 mpc_launch_pmi_barrier();
 		}
 		#endif
 

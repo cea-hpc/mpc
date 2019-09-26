@@ -275,7 +275,7 @@ sctk_shm_add_region_slave(sctk_size_t size,sctk_alloc_mapper_handler_t * handler
         fd = sctk_shm_mapper_slave_open(filename);
         ptr = sctk_shm_mapper_mmap(NULL, fd, size);
 
-        sctk_pmi_barrier();
+        mpc_launch_pmi_barrier();
 
 	close(fd);
         sctk_free(filename);
@@ -310,7 +310,7 @@ sctk_shm_add_region_master(sctk_size_t size,sctk_alloc_mapper_handler_t * handle
         assume_m(status,
                  "Fail to send the SHM filename to other participants.");
 
-        sctk_pmi_barrier();
+        mpc_launch_pmi_barrier();
 
 	close(fd);
 	sctk_shm_mapper_unlink(filename);
@@ -401,7 +401,7 @@ void sctk_shm_check_raw_queue(int local_process_number)
         assume_m( sctk_shm_isempty_process_queue(SCTK_SHM_CELLS_QUEUE_CMPL,i),"Queue must be empty")
         assume_m(!sctk_shm_isempty_process_queue(SCTK_SHM_CELLS_QUEUE_FREE,i),"Queue must be full")
     }
-    sctk_pmi_barrier();
+    mpc_launch_pmi_barrier();
 }
 
 void sctk_network_finalize_shm(__UNUSED__ sctk_rail_info_t *rail)
@@ -465,10 +465,9 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
    }
 
    struct process_nb_from_node_rank *nodes_infos = NULL;
-   sctk_pmi_get_process_number_from_node_rank(&nodes_infos);
+   mpc_launch_pmi_get_process_per_node_table(&nodes_infos);
 
-   int node_rank;
-   sctk_pmi_get_node_rank(&node_rank);
+   int node_rank = mpc_common_get_node_rank();
 
    struct process_nb_from_node_rank *tmp;
    HASH_FIND_INT( nodes_infos, &node_rank, tmp);
@@ -480,7 +479,7 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
       sctk_shm_init_raw_queue(sctk_shmem_size,sctk_shmem_cells_num,i);
       if( i != local_process_rank)
          sctk_shm_add_route(tmp->process_list[i], i,rail);
-      sctk_pmi_barrier();
+      mpc_launch_pmi_barrier();
    }
     
     sctk_cma_enabled = rail->runtime_config_driver_config->driver.value.shm.cma_enable;

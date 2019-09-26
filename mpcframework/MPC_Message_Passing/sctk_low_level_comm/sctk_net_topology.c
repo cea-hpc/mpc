@@ -91,7 +91,7 @@ int sctk_route_fully (  __UNUSED__ int dest,  __UNUSED__ sctk_rail_info_t *rail 
 void sctk_route_fully_init ( sctk_rail_info_t *rail )
 {
 
-	sctk_pmi_barrier();
+ mpc_launch_pmi_barrier();
 
 	if ( 3 < mpc_common_get_process_count()  )
 	{
@@ -139,11 +139,11 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 		}
 		sctk_nodebug("%d finished its requests !!!!!!!", mpc_common_get_process_rank());
 
-		sctk_pmi_barrier();
+	 mpc_launch_pmi_barrier();
 	}
 
-	sctk_pmi_barrier();
-	sctk_pmi_barrier();
+ mpc_launch_pmi_barrier();
+ mpc_launch_pmi_barrier();
 }
 
 
@@ -201,5 +201,5 @@ void sctk_route_torus_init(sctk_rail_info_t* rail)
 	}
 	
 
-	sctk_pmi_barrier();
+ mpc_launch_pmi_barrier();
 }

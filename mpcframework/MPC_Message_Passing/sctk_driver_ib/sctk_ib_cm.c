@@ -246,19 +246,19 @@ void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
 		SCTK_COUNTER_INC ( signalization_endpoints, 2 );
 
 		sctk_ib_qp_keys_send ( rail_ib, route_dest->remote );
-		sctk_pmi_barrier();
+	 mpc_launch_pmi_barrier();
 
 		/* change state to RTR */
 		keys = sctk_ib_qp_keys_recv ( rail_ib, src_rank );
 		sctk_ib_qp_allocate_rtr ( rail_ib, route_src->remote, &keys );
 		sctk_ib_qp_allocate_rts ( rail_ib, route_src->remote );
 		sctk_ib_qp_keys_send ( rail_ib, route_src->remote );
-		sctk_pmi_barrier();
+	 mpc_launch_pmi_barrier();
 
 		keys = sctk_ib_qp_keys_recv ( rail_ib, dest_rank );
 		sctk_ib_qp_allocate_rtr ( rail_ib, route_dest->remote, &keys );
 		sctk_ib_qp_allocate_rts ( rail_ib, route_dest->remote );
-		sctk_pmi_barrier();
+	 mpc_launch_pmi_barrier();
 
 		sctk_rail_add_static_route ( rail, endpoint_dest );
 		sctk_rail_add_static_route (  rail, endpoint_src );
@@ -277,13 +277,13 @@ void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
 		SCTK_COUNTER_INC ( signalization_endpoints, 1 );
 
 		sctk_ib_qp_keys_send ( rail_ib, route_dest->remote );
-		sctk_pmi_barrier();
+	 mpc_launch_pmi_barrier();
 
 		/* change state to RTR */
 		keys = sctk_ib_qp_keys_recv ( rail_ib, src_rank );
 		sctk_ib_qp_allocate_rtr ( rail_ib, route_dest->remote, &keys );
 		sctk_ib_qp_allocate_rts ( rail_ib, route_dest->remote );
-		sctk_pmi_barrier();
+	 mpc_launch_pmi_barrier();
 
 		sctk_rail_add_static_route (  rail, endpoint_dest );
 

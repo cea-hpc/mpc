@@ -21,14 +21,15 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "MPC_Launch/include/sctk_pmi.h"
+#include "sctk_pmi.h"
 
-#include "MPC_Common/include/sctk_alloc.h"
-#include "MPC_Common/include/mpc_common_io_helper.h"
-#include "MPC_Common/include/sctk_debug.h"
-#include "MPC_Common/include/mpc_common_rank.h"
+#include <mpc_common_io_helper.h>
+#include <mpc_common_rank.h>
 
-#include "MPC_Launch/include/sctk_launch.h"
+#include "sctk_alloc.h"
+#include "sctk_debug.h"
+
+#include "sctk_launch.h"
 
 #ifndef SCTK_LIB_MODE
 #include <pmi.h>
@@ -39,7 +40,7 @@
 #define PMI_FAIL 1
 #endif /*SCTK_LIB_MODE */
 
-struct sctk_pmi_context
+struct mpc_pmi_context
 {
     /** Nodes Ranking */
     int node_rank;
@@ -71,29 +72,12 @@ struct sctk_pmi_context
     int initialized;
 };
 
-static struct sctk_pmi_context pmi_context;
+static struct mpc_pmi_context pmi_context;
 
-void sctk_mpi_context_clear(void)
+void __mpc_launch_pmi_context_clear(void)
 {
-    memset(&pmi_context, 0, sizeof(struct sctk_pmi_context));
+    memset(&pmi_context, 0, sizeof(struct mpc_pmi_context));
 }
-
-int sctk_pmi_get_max_key_len()
-{
-    return pmi_context.max_key_len;
-}
-
-int sctk_pmi_get_max_val_len()
-{
-    return pmi_context.max_val_len;
-}
-
-int sctk_pmi_is_initialized()
-{
-    return pmi_context.initialized;
-}
-
-
 
 /******************************************************************************
 LIBRARY MODE TOLOGY GETTERS
@@ -135,7 +119,7 @@ INITIALIZATION/FINALIZE
 ******************************************************************************/
 
 #ifdef SCTK_LIB_MODE
-int _sctk_pmi_init_lib_mode()
+static inline int __mpc_pmi_init_lib_mode()
 {
     pmi_context.process_rank = MPC_Net_hook_rank();
     pmi_context.process_count = MPC_Net_hook_size();
@@ -148,7 +132,7 @@ int _sctk_pmi_init_lib_mode()
 }
 #endif
 
-#define pmi_check_rc(retcode, ctx)do\
+#define PMI_CHECK_RC(retcode, ctx)do\
 {\
     if ( retcode != PMI_SUCCESS )\
     {\
@@ -157,16 +141,189 @@ int _sctk_pmi_init_lib_mode()
     }\
 }while(0)
 
+/******************************************************************************
+NUMBERING/TOPOLOGY INFORMATION
+******************************************************************************/
+/*! \brief Get the number of processes
+ * @param size Pointer to store the number of processes
+*/
+static inline int __mpc_pmi_get_process_count( int *size )
+{
+#ifdef SCTK_LIB_MODE
+    *size = pmi_context.process_count;
+    return PMI_SUCCESS;
+#endif /* SCTK_LIB_MODE */
+
+    int rc;
+    // Get the total number of processes
+    rc = PMI_Get_size( size );
+    PMI_CHECK_RC(rc, "PMI_Get_size");
+
+    return rc;
+}
+
+/*! \brief Get the rank of this process on the current node
+ * @param rank Pointer to store the rank of the process
+*/
+static inline int __mpc_pmi_get_local_process_rank( int *rank )
+{
+#ifdef SCTK_LIB_MODE
+    *rank = mpc_common_get_local_process_rank();
+    return PMI_SUCCESS;
+#elif defined(MPC_USE_HYDRA)
+    *rank = pmi_context.local_process_rank;
+    return PMI_SUCCESS;
+#elif defined(MPC_USE_SLURM)
+    char *env = NULL;
+
+    env = getenv( "SLURM_LOCALID" );
+
+    if ( env )
+    {
+        *rank = atoi( env );
+    }
+    else
+    {
+        fprintf( stderr, "FAILURE (sctk_pmi): unable to get process rank on the node\n" );
+        *rank = -1;
+        return PMI_FAIL;
+    }
+
+    return PMI_SUCCESS;
+#else
+    not_implemented();
+#endif /* MPC_USE_SLURM */
+
+}
+
+/*! \brief Get the number of processes on the current node
+ * @param size Pointer to store the number of processes
+*/
+static inline int __mpc_pmi_get_local_process_count( int *size )
+{
+#ifdef SCTK_LIB_MODE
+    *size = mpc_common_get_local_process_count();
+    return PMI_SUCCESS;
+#elif defined(MPC_USE_HYDRA)
+    *size = pmi_context.local_process_count;
+    return PMI_SUCCESS;
+#elif defined(MPC_USE_SLURM)
+    int rc;
+
+    // Get the number of processes on the current node
+    if ((rc = PMI_Get_clique_size(size)) != PMI_SUCCESS)
+    {
+        fprintf( stderr, "FAILURE (sctk_pmi): PMI_Get_clique_size: %d\n", rc );
+        *size = -1;
+        return PMI_FAIL;
+    }
+
+    return PMI_SUCCESS;
+#else
+    not_implemented();
+#endif
+
+}
+
+/*! \brief Get the rank of this node
+ * @param rank Pointer to store the rank of the node
+*/
+static inline int __mpc_pmi_get_node_rank( int *rank )
+{
+#ifdef SCTK_LIB_MODE
+    return __mpc_pmi_get_process_rank( rank );
+#elif defined(MPC_USE_HYDRA)
+    *rank = pmi_context.node_rank;
+    return PMI_SUCCESS;
+#elif defined(MPC_USE_SLURM)
+    char *env = NULL;
+
+    env = getenv( "SLURM_NODEID" );
+
+    if ( env )
+    {
+        *rank = atoi( env );
+    }
+    else
+    {
+        fprintf( stderr, "FAILURE (sctk_pmi): unable to get node rank\n" );
+        *rank = -1;
+        return PMI_FAIL;
+    }
+
+    return PMI_SUCCESS;
+#else
+    not_implemented();
+#endif
+
+    return PMI_FAIL;
+}
+
+/*! \brief Get the number of nodes
+ * @param size Pointer to store the number of nodes
+*/
+static inline int __mpc_pmi_get_node_count( int *size )
+{
+#ifdef SCTK_LIB_MODE
+    return __mpc_pmi_get_process_count( size );
+#elif defined(MPC_USE_HYDRA)
+    *size = pmi_context.node_count;
+    return PMI_SUCCESS;
+#elif defined(MPC_USE_SLURM)
+    char *env = NULL;
+
+    env = getenv( "SLURM_NNODES" );
+
+    if ( env )
+    {
+        *size = atoi( env );
+    }
+    else
+    {
+        fprintf( stderr, "FAILURE (sctk_pmi): unable to get nodes number\n" );
+        *size = -1;
+        return PMI_FAIL;
+    }
+
+    return PMI_SUCCESS;
+#else
+    not_implemented();
+#endif
+
+    return PMI_FAIL;
+}
+
+/*! \brief Get the rank of this process
+ * @param rank Pointer to store the rank of the process
+*/
+static inline int __mpc_pmi_get_process_rank( int *rank )
+{
+#ifdef SCTK_LIB_MODE
+    *rank = pmi_context.process_rank;
+    return PMI_SUCCESS;
+#endif /* SCTK_LIB_MODE */
+    int rc;
+
+    // Get the rank of the current process
+    rc = PMI_Get_rank( rank );
+    PMI_CHECK_RC(rc, "PMI_Get_rank");
+
+    return rc;
+}
+
+/******************************
+ * INITIALIZATION AND RELEASE *
+ ******************************/
 
 /*! \brief Initialization function
  *
  */
-int sctk_pmi_init()
+int mpc_launch_pmi_init()
 {
-    sctk_mpi_context_clear();
+    __mpc_launch_pmi_context_clear();
 
 #ifdef SCTK_LIB_MODE
-    return _sctk_pmi_init_lib_mode();
+    return __mpc_pmi_init_lib_mode();
 #endif
 
     /* Note that process count is first set in sctk_lauch
@@ -178,12 +335,12 @@ int sctk_pmi_init()
 
     // Initialized PMI/SLURM
     rc = PMI_Init( &pmi_context.spawned );
-    pmi_check_rc(rc, "PMI_Init");
+    PMI_CHECK_RC(rc, "PMI_Init");
 
     // Check if PMI/SLURM is initialized
     pmi_context.initialized = 0;
     rc = PMI_Initialized( &pmi_context.initialized );
-    pmi_check_rc(rc, "PMI_Initialized");
+    PMI_CHECK_RC(rc, "PMI_Initialized");
 
     if ( pmi_context.initialized != 1 )
     {
@@ -194,26 +351,26 @@ int sctk_pmi_init()
     // Get key, value max sizes and kvsname.
     // NB: Need to initialize kvsname here to avoid error in barrier with slurm
     rc = PMI_KVS_Get_name_length_max( &pmi_context.kvsname_len );
-    pmi_check_rc(rc, "PMI_KVS_Get_name_length_max");
+    PMI_CHECK_RC(rc, "PMI_KVS_Get_name_length_max");
 
     rc = PMI_KVS_Get_key_length_max( &pmi_context.max_key_len );
-    pmi_check_rc(rc, "PMI_KVS_Get_key_length_max");
+    PMI_CHECK_RC(rc, "PMI_KVS_Get_key_length_max");
 
     rc = PMI_KVS_Get_value_length_max( &pmi_context.max_val_len );
-    pmi_check_rc(rc, "PMI_KVS_Get_value_length_max");
+    PMI_CHECK_RC(rc, "PMI_KVS_Get_value_length_max");
 
     // Get the kvs name
     pmi_context.kvsname = (char *) sctk_malloc( pmi_context.kvsname_len * sizeof( char ) );
     assume(pmi_context.kvsname);
 
     rc = PMI_KVS_Get_my_name( pmi_context.kvsname, pmi_context.kvsname_len );
-    pmi_check_rc(rc, "PMI_KVS_Get_my_name");
+    PMI_CHECK_RC(rc, "PMI_KVS_Get_my_name");
 
-    rc = sctk_pmi_get_process_rank( &pmi_context.process_rank );
-    pmi_check_rc(rc, "sctk_pmi_get_process_rank");
+    rc = __mpc_pmi_get_process_rank( &pmi_context.process_rank );
+    PMI_CHECK_RC(rc, "sctk_pmi_get_process_rank");
 
-    rc = sctk_pmi_get_process_count( &pmi_context.process_count );
-    pmi_check_rc(rc, "sctk_pmi_get_process_count");
+    rc = __mpc_pmi_get_process_count( &pmi_context.process_count );
+    PMI_CHECK_RC(rc, "sctk_pmi_get_process_count");
 
     // check if PMI_Get_size is equal to 1 (could mean application
     // launched without mpiexec)
@@ -257,13 +414,13 @@ int sctk_pmi_init()
              "%s",
              hostname );
 
-    rc = sctk_pmi_put_as_rank(value,
+    rc = mpc_launch_pmi_put_as_rank(value,
                                       SCTK_PMI_TAG_PMI + SCTK_PMI_TAG_PMI_HOSTNAME);
-    pmi_check_rc(rc, "sctk_pmi_put_as_rank");
+    PMI_CHECK_RC(rc, "sctk_pmi_put_as_rank");
 
     // wait for all processes to put their hostname in KVS
-    rc = sctk_pmi_barrier();
-    pmi_check_rc(rc, "sctk_pmi_barrier");
+    rc = mpc_launch_pmi_barrier();
+    PMI_CHECK_RC(rc, "sctk_pmi_barrier");
 
     // now retrieve hostnames for all processes and compute local infos
     nodes = sctk_calloc(pmi_context.process_count * SCTK_PMI_NAME_SIZE, sizeof(char));
@@ -274,9 +431,9 @@ int sctk_pmi_init()
     {
         j = 0;
         // get ith process hostname
-        rc = sctk_pmi_get_as_rank(value, SCTK_PMI_NAME_SIZE,
+        rc = mpc_launch_pmi_get_as_rank(value, SCTK_PMI_NAME_SIZE,
                                   SCTK_PMI_TAG_PMI + SCTK_PMI_TAG_PMI_HOSTNAME, i );
-        pmi_check_rc(rc, "sctk_pmi_get_as_rank");
+        PMI_CHECK_RC(rc, "sctk_pmi_get_as_rank");
 
         // compare value with current hostname. if the same, increase
         // local processes count
@@ -344,26 +501,26 @@ int sctk_pmi_init()
     mpc_common_set_process_count( pmi_context.process_count );
 
     int node_rank;
-    sctk_pmi_get_node_rank( &node_rank );
+    __mpc_pmi_get_node_rank( &node_rank );
     mpc_common_set_node_rank( node_rank );
 
     int node_count;
-    sctk_pmi_get_node_count( &node_count );
+    __mpc_pmi_get_node_count( &node_count );
     mpc_common_set_node_count( node_count );
 
     int local_process_rank;
-    sctk_pmi_get_local_process_rank( &local_process_rank );
+    __mpc_pmi_get_local_process_rank( &local_process_rank );
     mpc_common_set_local_process_rank( local_process_rank );
 
     int local_process_count;
-    sctk_pmi_get_local_process_count( &local_process_count );
+    __mpc_pmi_get_local_process_count( &local_process_count );
     mpc_common_set_local_process_count( local_process_count );
 
     return rc;
 }
 
 /*! \brief Finalization function */
-int sctk_pmi_finalize()
+int mpc_launch_pmi_finalize()
 {
 #ifdef SCTK_LIB_MODE
     return PMI_SUCCESS;
@@ -377,10 +534,61 @@ int sctk_pmi_finalize()
     return rc;
 }
 
+
+/********************
+ * PUBLIC INTERFACE *
+ ********************/
+
+/******************************************************************************
+SYNCHRONIZATION
+******************************************************************************/
+/*! \brief Perform a barrier between all the processes of the job
+ *
+*/
+int mpc_launch_pmi_barrier()
+{
+#ifdef SCTK_LIB_MODE
+    MPC_Net_hook_barrier();
+    return PMI_SUCCESS;
+#endif /* SCTK_LIB_MODE */
+    int rc;
+
+    // Perform the barrier
+    rc = PMI_Barrier();
+    PMI_CHECK_RC(rc, "PMI_Barrier");
+
+    return rc;
+}
+
+int mpc_launch_pmi_get_max_key_len()
+{
+    return pmi_context.max_key_len;
+}
+
+int mpc_launch_pmi_get_max_val_len()
+{
+    return pmi_context.max_val_len;
+}
+
+int mpc_launch_pmi_is_initialized()
+{
+    return pmi_context.initialized;
+}
+
+void mpc_launch_pmi_abort()
+{
+#if defined(SCTK_LIB_MODE)
+    abort();
+#else
+    PMI_Abort( 6, "ABORT from mpc_launch_pmi_abort" );
+#endif
+}
+
+
 /*! \brief Get the job id
  * @param id Pointer to store the job id
 */
-int sctk_pmi_get_job_id( int *id )
+int mpc_launch_pmi_get_job_id( int *id )
 {
 #if MPC_USE_HYDRA
     /* in mpich with pmi1, kvs name is used as job id. */
@@ -417,36 +625,10 @@ int sctk_pmi_get_job_id( int *id )
 }
 
 /******************************************************************************
-SYNCHRONIZATION
-******************************************************************************/
-/*! \brief Perform a barrier between all the processes of the job
- *
-*/
-int sctk_pmi_barrier()
-{
-#ifdef SCTK_LIB_MODE
-    MPC_Net_hook_barrier();
-    return PMI_SUCCESS;
-#endif /* SCTK_LIB_MODE */
-    int rc;
-
-    // Perform the barrier
-    rc = PMI_Barrier();
-    pmi_check_rc(rc, "PMI_Barrier");
-
-    return rc;
-}
-
-/******************************************************************************
 INFORMATION DIFFUSION
 ******************************************************************************/
 
-/*! \brief Register information required for connection initialization
- * @param info The information to store
- * @param size Size in bytes of the information
- * @param key A key string to distinguish information
-*/
-int sctk_pmi_put( char *value, char *key )
+int mpc_launch_pmi_put( char *value, char *key )
 {
 #ifdef SCTK_LIB_MODE
     not_implemented();
@@ -456,21 +638,16 @@ int sctk_pmi_put( char *value, char *key )
 
     // Put info in Key-Value-Space
     rc = PMI_KVS_Put( pmi_context.kvsname, key, value );
-    pmi_check_rc(rc, "PMI_KVS_Put");
+    PMI_CHECK_RC(rc, "PMI_KVS_Put");
 
     // Apply changes on Key-Value-Space
     rc = PMI_KVS_Commit( pmi_context.kvsname );
-    pmi_check_rc(rc, "PMI_KVS_Commit");
+    PMI_CHECK_RC(rc, "PMI_KVS_Commit");
 
     return rc;
 }
 
-/*! \brief Register information required for connection initialization
- * @param info The information to store
- * @param size Size in bytes of the information
- * @param tag An identifier to distinguish information
-*/
-int sctk_pmi_put_as_rank( char *value, int tag )
+int mpc_launch_pmi_put_as_rank( char *value, int tag )
 {
 #ifdef SCTK_LIB_MODE
     not_implemented();
@@ -480,26 +657,20 @@ int sctk_pmi_put_as_rank( char *value, int tag )
     char *key = NULL;
 
     // Get the process rank
-    sctk_pmi_get_process_rank( &iRank );
+    __mpc_pmi_get_process_rank( &iRank );
 
     // Build the key
     key = (char *) sctk_malloc( pmi_context.max_key_len * sizeof( char ) );
     snprintf( key, pmi_context.max_key_len, "MPC_KEYS_%d_%d", tag, iRank );
 
-    rc = sctk_pmi_put(value, key);
+    rc = mpc_launch_pmi_put(value, key);
 
     sctk_free(key);
     return rc;
 #endif /* SCTK_LIB_MODE */
 }
 
-/*! \brief Get information required for connection initialization
- * @param info The place to store the information to retrieve
- * @param size Size in bytes of the information
- * @param tag An identifier to distinguish information
- * @param rank Rank of the process the information comes from
-*/
-int sctk_pmi_get_as_rank( char *value, size_t size, int tag, int rank )
+int mpc_launch_pmi_get_as_rank( char *value, size_t size, int tag, int rank )
 {
 #ifdef SCTK_LIB_MODE
     not_implemented();
@@ -519,12 +690,7 @@ int sctk_pmi_get_as_rank( char *value, size_t size, int tag, int rank )
     return rc;
 }
 
-/*! \brief Get information required for connection initialization
- * @param info The place to store the information to retrieve
- * @param size Size in bytes of the information
- * @param tag A key string to distinguish information
-*/
-int sctk_pmi_get( char *value, size_t size, char *key )
+int mpc_launch_pmi_get( char *value, size_t size, char *key )
 {
 #ifdef SCTK_LIB_MODE
     not_implemented();
@@ -534,192 +700,14 @@ int sctk_pmi_get( char *value, size_t size, char *key )
 
     // Get the value associated to the given key
     rc = PMI_KVS_Get( pmi_context.kvsname, key, value, size );
-    pmi_check_rc(rc, "PMI_KVS_Get");
-
-    return rc;
-}
-/******************************************************************************
-NUMBERING/TOPOLOGY INFORMATION
-******************************************************************************/
-/*! \brief Get the number of processes
- * @param size Pointer to store the number of processes
-*/
-int sctk_pmi_get_process_count( int *size )
-{
-#ifdef SCTK_LIB_MODE
-    *size = pmi_context.process_count;
-    return PMI_SUCCESS;
-#endif /* SCTK_LIB_MODE */
-
-    int rc;
-    // Get the total number of processes
-    rc = PMI_Get_size( size );
-    pmi_check_rc(rc, "PMI_Get_size");
+    PMI_CHECK_RC(rc, "PMI_KVS_Get");
 
     return rc;
 }
 
-/*! \brief Get the rank of this process
- * @param rank Pointer to store the rank of the process
-*/
-int sctk_pmi_get_process_rank( int *rank )
-{
-#ifdef SCTK_LIB_MODE
-    *rank = pmi_context.process_rank;
-    return PMI_SUCCESS;
-#endif /* SCTK_LIB_MODE */
-    int rc;
 
-    // Get the rank of the current process
-    rc = PMI_Get_rank( rank );
-    pmi_check_rc(rc, "PMI_Get_rank");
-
-    return rc;
-}
-
-/*! \brief Get the number of nodes
- * @param size Pointer to store the number of nodes
-*/
-int sctk_pmi_get_node_count( int *size )
-{
-#ifdef SCTK_LIB_MODE
-    return sctk_pmi_get_process_count( size );
-#elif defined(MPC_USE_HYDRA)
-    *size = pmi_context.node_count;
-    return PMI_SUCCESS;
-#elif defined(MPC_USE_SLURM)
-    char *env = NULL;
-
-    env = getenv( "SLURM_NNODES" );
-
-    if ( env )
-    {
-        *size = atoi( env );
-    }
-    else
-    {
-        fprintf( stderr, "FAILURE (sctk_pmi): unable to get nodes number\n" );
-        *size = -1;
-        return PMI_FAIL;
-    }
-
-    return PMI_SUCCESS;
-#else
-    not_implemented();
-#endif
-
-    return PMI_FAIL;
-}
-
-/*! \brief Get the rank of this node
- * @param rank Pointer to store the rank of the node
-*/
-int sctk_pmi_get_node_rank( int *rank )
-{
-#ifdef SCTK_LIB_MODE
-    return sctk_pmi_get_process_rank( rank );
-#elif defined(MPC_USE_HYDRA)
-    *rank = pmi_context.node_rank;
-    return PMI_SUCCESS;
-#elif defined(MPC_USE_SLURM)
-    char *env = NULL;
-
-    env = getenv( "SLURM_NODEID" );
-
-    if ( env )
-    {
-        *rank = atoi( env );
-    }
-    else
-    {
-        fprintf( stderr, "FAILURE (sctk_pmi): unable to get node rank\n" );
-        *rank = -1;
-        return PMI_FAIL;
-    }
-
-    return PMI_SUCCESS;
-#else
-    not_implemented();
-#endif
-
-    return PMI_FAIL;
-}
-
-/*! \brief Get the number of processes on the current node
- * @param size Pointer to store the number of processes
-*/
-int sctk_pmi_get_local_process_count( int *size )
-{
-#ifdef SCTK_LIB_MODE
-    *size = mpc_common_get_local_process_count();
-    return PMI_SUCCESS;
-#elif defined(MPC_USE_HYDRA)
-    *size = pmi_context.local_process_count;
-    return PMI_SUCCESS;
-#elif defined(MPC_USE_SLURM)
-    int rc;
-
-    // Get the number of processes on the current node
-    if ((rc = PMI_Get_clique_size(size)) != PMI_SUCCESS)
-    {
-        fprintf( stderr, "FAILURE (sctk_pmi): PMI_Get_clique_size: %d\n", rc );
-        *size = -1;
-        return PMI_FAIL;
-    }
-
-    return PMI_SUCCESS;
-#else
-    not_implemented();
-#endif
-
-}
-
-/*! \brief Get the rank of this process on the current node
- * @param rank Pointer to store the rank of the process
-*/
-int sctk_pmi_get_local_process_rank( int *rank )
-{
-#ifdef SCTK_LIB_MODE
-    *rank = mpc_common_get_local_process_rank();
-    return PMI_SUCCESS;
-#elif defined(MPC_USE_HYDRA)
-    *rank = pmi_context.local_process_rank;
-    return PMI_SUCCESS;
-#elif defined(MPC_USE_SLURM)
-    char *env = NULL;
-
-    env = getenv( "SLURM_LOCALID" );
-
-    if ( env )
-    {
-        *rank = atoi( env );
-    }
-    else
-    {
-        fprintf( stderr, "FAILURE (sctk_pmi): unable to get process rank on the node\n" );
-        *rank = -1;
-        return PMI_FAIL;
-    }
-
-    return PMI_SUCCESS;
-#else
-    not_implemented();
-#endif /* MPC_USE_SLURM */
-
-}
-
-int sctk_pmi_get_process_number_from_node_rank( struct process_nb_from_node_rank **process_number_from_node_rank )
+int mpc_launch_pmi_get_process_per_node_table( struct process_nb_from_node_rank **process_number_from_node_rank )
 {
     *process_number_from_node_rank = pmi_context.process_nb_from_node_rank;
     return PMI_SUCCESS;
-}
-
-
-void sctk_net_abort()
-{
-#if defined(SCTK_LIB_MODE)
-    abort();
-#else
-    PMI_Abort( 6, "ABORT from sctk_net_abort" );
-#endif
 }

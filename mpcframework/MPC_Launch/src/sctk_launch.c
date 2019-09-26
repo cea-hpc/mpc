@@ -307,7 +307,7 @@ static void sctk_perform_initialisation (void)
 	}
 
 	/* As a first step initialize the PMI */
-	sctk_pmi_init();
+ mpc_launch_pmi_init();
  mpc_common_topology_init ();
 
 #if defined (MPC_USE_EXTLS) && !defined(MPC_DISABLE_HLS)

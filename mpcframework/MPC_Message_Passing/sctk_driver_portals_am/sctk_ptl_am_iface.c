@@ -1170,14 +1170,14 @@ void sctk_ptl_am_register_process( sctk_ptl_am_rail_info_t *srail )
 	assert( srail->connection_infos_size > 0 );
 
 	/* register the serialized id into the PMI */
-	tmp_ret = sctk_pmi_put_as_rank(
+	tmp_ret = mpc_launch_pmi_put_as_rank(
 		srail->connection_infos,	  /* the string to publish */
 		SCTK_PTL_AM_PMI_TAG			  /* rail ID: PMI tag */
 	);
 	assert( tmp_ret == 0 );
 
 	//Wait for all processes to complete the ring topology init */
-	sctk_pmi_barrier();
+ mpc_launch_pmi_barrier();
 }
 
 /** 
@@ -1193,7 +1193,7 @@ sctk_ptl_id_t sctk_ptl_am_map_id( sctk_ptl_am_rail_info_t *srail, int dest )
 	sctk_ptl_id_t id = SCTK_PTL_ANY_PROCESS;
 
 	/* retrieve the right neighbour id struct */
-	tmp_ret = sctk_pmi_get_as_rank(
+	tmp_ret = mpc_launch_pmi_get_as_rank(
 		connection_infos,	/* the recv buffer */
 		MPC_COMMON_MAX_STRING_SIZE,	 /* the recv buffer max size */
 		SCTK_PTL_AM_PMI_TAG, /* rail IB: PMI tag */

@@ -257,8 +257,8 @@ sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_convert ( char *msg )
 void sctk_ib_qp_keys_send ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote )
 {
 	LOAD_DEVICE ( rail_ib );
-	int key_max = sctk_pmi_get_max_key_len();
-	int val_max = sctk_pmi_get_max_val_len();
+	int key_max = mpc_launch_pmi_get_max_key_len();
+	int val_max = mpc_launch_pmi_get_max_val_len();
 	
 	char * key = sctk_malloc( sizeof(char) * key_max + 1 );
 	assume( key != NULL );
@@ -277,7 +277,7 @@ void sctk_ib_qp_keys_send ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *r
 
 	sctk_ib_qp_key_create_key ( key, key_max, rail_ib->rail->rail_number, mpc_common_get_process_rank(), remote->rank );
 	sctk_ib_qp_key_create_value ( val, val_max, &qp_keys );
-	sctk_pmi_put ( val, key );
+ mpc_launch_pmi_put ( val, key );
 	ib_assume ( ret == SCTK_PMI_SUCCESS );
 	
 	sctk_free( key );
@@ -288,8 +288,8 @@ sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *ra
                                                   int dest_process )
 {
 	sctk_ib_cm_qp_connection_t qp_keys;
-	int key_max = sctk_pmi_get_max_key_len();
-	int val_max = sctk_pmi_get_max_val_len();
+	int key_max = mpc_launch_pmi_get_max_key_len();
+	int val_max = mpc_launch_pmi_get_max_val_len();
 	
 	char * key = sctk_malloc( sizeof(char) * key_max  + 1);
 	assume( key != NULL );
@@ -300,7 +300,7 @@ sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *ra
 
 
 	sctk_ib_qp_key_create_key ( key, key_max, rail_ib->rail->rail_number, dest_process, mpc_common_get_process_rank() );
-	sctk_pmi_get( val, val_max, key );
+ mpc_launch_pmi_get( val, val_max, key );
 	ib_assume ( ret == SCTK_PMI_SUCCESS );
 	qp_keys = sctk_ib_qp_keys_convert ( val );
 

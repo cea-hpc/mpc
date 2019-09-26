@@ -52,10 +52,10 @@ void sctk_shm_host_pmi_init( void )
 
     	shm_host_pmi_infos = (sctk_shm_guest_pmi_infos_t*) sctk_get_shm_host_pmi_infos();
     
-	sctk_pmi_get_node_rank ( &sctk_shm_vmhost_node_rank );
-	sctk_pmi_get_node_number ( &sctk_shm_vmhost_node_number );
-	sctk_pmi_get_process_on_node_rank ( &sctk_vmhost_shm_local_process_rank );
-	sctk_pmi_get_process_on_node_number ( &sctk_vmhost_shm_local_process_number );
+ mpc_launch_pmi_get_node_rank ( &sctk_shm_vmhost_node_rank );
+ mpc_launch_pmi_get_node_number ( &sctk_shm_vmhost_node_number );
+ mpc_launch_pmi_get_process_on_node_rank ( &sctk_vmhost_shm_local_process_rank );
+ mpc_launch_pmi_get_process_on_node_number ( &sctk_vmhost_shm_local_process_number );
     
     /* Set pmi infos for SHM infos */ 
     
