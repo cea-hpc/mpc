@@ -25,7 +25,7 @@
 #include <sctk_route.h>
 #include <sctk_reorder.h>
 #include <sctk_communicator.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include <sctk_ib_cm.h>
 #include <sctk_low_level_comm.h>
 #include "sctk_ib_qp.h"
@@ -56,10 +56,10 @@ sctk_route_table_t * sctk_route_table_new()
 void sctk_route_table_destroy(sctk_route_table_t* table)
 {
 
-	sctk_spinlock_write_lock(&table->dynamic_route_table_lock);
+	mpc_common_spinlock_write_lock(&table->dynamic_route_table_lock);
 	MPCHT_release(&table->dynamic_route_table);
 	MPCHT_release(&table->static_route_table);
-	sctk_spinlock_write_unlock(&table->dynamic_route_table_lock);
+	mpc_common_spinlock_write_unlock(&table->dynamic_route_table_lock);
 	
 	sctk_free(table); table = NULL;
 }
@@ -183,9 +183,9 @@ void sctk_route_table_add_dynamic_route (  sctk_route_table_t * table, sctk_endp
 {
 	assume( tmp->origin == ROUTE_ORIGIN_DYNAMIC );
 	
-	sctk_spinlock_write_lock ( &table->dynamic_route_table_lock );
+	mpc_common_spinlock_write_lock ( &table->dynamic_route_table_lock );
 	sctk_route_table_add_dynamic_route_no_lock ( table,tmp, push_in_multirail );
-	sctk_spinlock_write_unlock ( &table->dynamic_route_table_lock  );
+	mpc_common_spinlock_write_unlock ( &table->dynamic_route_table_lock  );
 }
 
 
@@ -233,9 +233,9 @@ sctk_endpoint_t * sctk_route_table_get_dynamic_route( sctk_route_table_t * table
 {
 	sctk_endpoint_t *tmp;
 
-	sctk_spinlock_read_lock ( &table->dynamic_route_table_lock );
+	mpc_common_spinlock_read_lock ( &table->dynamic_route_table_lock );
 	tmp = sctk_route_table_get_dynamic_route_no_lock( table ,  dest );
-	sctk_spinlock_read_unlock ( &table->dynamic_route_table_lock );
+	mpc_common_spinlock_read_unlock ( &table->dynamic_route_table_lock );
 	
 	return tmp;
 }
@@ -261,7 +261,7 @@ void sctk_walk_all_dynamic_routes ( sctk_route_table_t * table, void ( *func ) (
 
 	/* Do not walk on static routes */
 
-	sctk_spinlock_read_lock ( &table->dynamic_route_table_lock );
+	mpc_common_spinlock_read_lock ( &table->dynamic_route_table_lock );
 	
 	MPC_HT_ITER ( &table->dynamic_route_table, current_route )
 	{
@@ -275,7 +275,7 @@ void sctk_walk_all_dynamic_routes ( sctk_route_table_t * table, void ( *func ) (
 	}
 	MPC_HT_ITER_END
 	
-	sctk_spinlock_read_unlock ( &table->dynamic_route_table_lock );
+	mpc_common_spinlock_read_unlock ( &table->dynamic_route_table_lock );
 
 	tmp2 = NULL;
 

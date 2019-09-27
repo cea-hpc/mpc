@@ -31,7 +31,7 @@
 #include "sctk_alloc.h"
 #include "mpc_common_topology.h"
 #include "sctk_accessor.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_atomics.h"
 #include "hwloc.h"
 

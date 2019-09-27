@@ -7,7 +7,7 @@
 #include "sctk_inter_thread_comm.h"
 #include "egreq_nbc.h"
 
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 
 
 //#define EG_DEBUG
@@ -89,7 +89,7 @@ typedef struct _xMPI_Request
     int size;
     int current_off;
     MPI_Request * myself;
-    sctk_spinlock_t lock;
+    mpc_common_spinlock_t lock;
     struct _xMPI_Request * next;
     struct nbc_op op[0];
 } xMPI_Request;
@@ -276,14 +276,14 @@ static inline int nbc_op_test( struct nbc_op * op  )
 }
 
 
-static sctk_spinlock_t rpool_lock = 0;
+static mpc_common_spinlock_t rpool_lock = 0;
 static int rpool_count = 0;
 static xMPI_Request * rpool = NULL;
 
 static inline xMPI_Request * xMPI_Request_from_pool( int  size )
 {
     xMPI_Request * ret = NULL;
-    sctk_spinlock_lock( &rpool_lock );
+    mpc_common_spinlock_lock( &rpool_lock );
 
     if( rpool_count )
     {
@@ -298,7 +298,7 @@ static inline xMPI_Request * xMPI_Request_from_pool( int  size )
         }
     }
 
-    sctk_spinlock_unlock( &rpool_lock );
+    mpc_common_spinlock_unlock( &rpool_lock );
 
     return ret;
 }
@@ -307,7 +307,7 @@ static inline xMPI_Request * xMPI_Request_from_pool( int  size )
 static inline int xMPI_Request_to_pool( xMPI_Request * req )
 {
     int ret = 0;
-    sctk_spinlock_lock( &rpool_lock );
+    mpc_common_spinlock_lock( &rpool_lock );
 
     if( rpool_count < 100 )
     {
@@ -317,7 +317,7 @@ static inline int xMPI_Request_to_pool( xMPI_Request * req )
         ret = 1;
     }
 
-    sctk_spinlock_unlock( &rpool_lock );
+    mpc_common_spinlock_unlock( &rpool_lock );
 
     return ret;
 }
@@ -395,7 +395,7 @@ static inline int xMPI_Request_gen_poll( xMPI_Request *xreq )
     PMPI_Comm_rank( MPI_COMM_WORLD , &rank );
 #endif
 
-    int failed_lock = sctk_spinlock_trylock( &xreq->lock );
+    int failed_lock = mpc_common_spinlock_trylock( &xreq->lock );
 
     if( failed_lock )
         return 1;
@@ -467,7 +467,7 @@ static inline int xMPI_Request_gen_poll( xMPI_Request *xreq )
         ret = 1;
     }
 
-    sctk_spinlock_unlock( &xreq->lock );
+    mpc_common_spinlock_unlock( &xreq->lock );
 
     return ret;
 }

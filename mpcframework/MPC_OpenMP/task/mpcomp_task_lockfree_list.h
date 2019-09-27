@@ -41,7 +41,7 @@
 #ifdef MPCOMP_USE_MCS_LOCK
 #include "sctk_mcslock.h"
 #else /* MPCOMP_USE_MCS_LOCK */
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #endif /* MPCOMP_USE_MCS_LOCK */
 
 #define MPCOMP_TASK_LOCKFREE_CACHELINE_PADDING 128
@@ -49,7 +49,7 @@
 #ifdef MPCOMP_USE_MCS_LOCK
 typedef sctk_mcslock_t sctk_mpcomp_task_lock_t;
 #else /* MPCOMP_USE_MCS_LOCK */
-typedef sctk_spinlock_t sctk_mpcomp_task_lock_t; 
+typedef mpc_common_spinlock_t sctk_mpcomp_task_lock_t; 
 #endif /* MPCOMP_USE_MCS_LOCK */
 
 
@@ -71,7 +71,7 @@ static inline void mpcomp_task_lockfree_list_consummer_lock( mpcomp_task_list_t 
 #ifdef MPCOMP_USE_MCS_LOCK
   sctk_mcslock_push_ticket(&( list->mpcomp_task_lock ), (sctk_mcslock_ticket_t *) opaque, SCTK_MCSLOCK_WAIT );
 #else /* MPCOMP_USE_MCS_LOCK */
-  sctk_spinlock_lock(&(list->mpcomp_task_lock));
+  mpc_common_spinlock_lock(&(list->mpcomp_task_lock));
 #endif /* MPCOMP_USE_MCS_LOCK */
 }
 
@@ -79,7 +79,7 @@ static inline void mpcomp_task_lockfree_list_consummer_unlock( mpcomp_task_list_
 #ifdef MPCOMP_USE_MCS_LOCK
   sctk_mcslock_trash_ticket( &(list->mpcomp_task_lock), (sctk_mcslock_ticket_t *) opaque );
 #else /* MPCOMP_USE_MCS_LOCK */
-  sctk_spinlock_unlock(&(list->mpcomp_task_lock));
+  mpc_common_spinlock_unlock(&(list->mpcomp_task_lock));
 #endif /* MPCOMP_USE_MCS_LOCK */
 }
 
@@ -88,7 +88,7 @@ static inline int mpcomp_task_lockfree_list_consummer_trylock(__UNUSED__ mpcomp_
   not_implemented();
   return 0;
 #else /* MPCOMP_USE_MCS_LOCK */
-  return sctk_spinlock_trylock(&(list->mpcomp_task_lock));
+  return mpc_common_spinlock_trylock(&(list->mpcomp_task_lock));
 #endif /* MPCOMP_USE_MCS_LOCK */
 }
 

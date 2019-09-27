@@ -24,7 +24,7 @@
 
 #include <sctk_types.h>
 #include <sctk_atomics.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 
 #include <mpc_common_rank.h>
 
@@ -64,7 +64,7 @@ union shared_mem_buffer {
 struct shared_mem_reduce {
   volatile int * tollgate;
   sctk_atomics_int fare;
-  sctk_spinlock_t *buff_lock;
+  mpc_common_spinlock_t *buff_lock;
   sctk_atomics_int owner;
   sctk_atomics_int left_to_push;
   void *target_buff;
@@ -281,7 +281,7 @@ typedef struct sctk_internal_communicator_s {
 
   sctk_spin_rwlock_t lock;
   /** spinlock for the creation of the comunicator **/
-  sctk_spinlock_t creation_lock;
+  mpc_common_spinlock_t creation_lock;
 
   volatile int has_zero;
 

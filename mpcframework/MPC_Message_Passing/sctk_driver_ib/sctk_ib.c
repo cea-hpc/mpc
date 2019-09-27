@@ -36,7 +36,7 @@
 #include <sctk.h>
 #include <sctk_asm.h>
 #include <netdb.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include <sctk_net_tools.h>
 #include <sctk_route.h>
 #include <sctk_ib.h>

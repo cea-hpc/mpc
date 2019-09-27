@@ -24,7 +24,7 @@
 
 #include "sctk_debug.h"
 #include "mpc_mpi.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_ht.h"
 
 /************************************************************************/
@@ -139,7 +139,7 @@ struct MPC_T_data {
 
   MPI_Datatype type;
 
-  sctk_spinlock_t lock;
+  mpc_common_spinlock_t lock;
 
   short enabled;
   short continuous;
@@ -230,7 +230,7 @@ struct MPC_T_cvars_array {
   struct MPC_T_cvar st_vars[MPI_T_CVAR_COUNT]; /**<< An array of static CVARS */
   unsigned int dyn_cvar_count;           /**<< The number of dynamic CVARS */
   struct MPC_T_cvar *dyn_cvars; /*<< The array of dynamic CVARS */
-  sctk_spinlock_t lock;         /**<< A lock to rule them all */
+  mpc_common_spinlock_t lock;         /**<< A lock to rule them all */
 };
 
 /** Initialize the CVAR array storage (done once)
@@ -341,7 +341,7 @@ struct MPC_T_pvars_array {
   int dyn_pvar_count;
   struct MPC_T_pvar *dyn_pvars;
 
-  sctk_spinlock_t lock;
+  mpc_common_spinlock_t lock;
 };
 
 /** Initialize the PVAR array storage (done once)
@@ -480,7 +480,7 @@ struct MPC_T_pvar_handle {
   struct MPC_T_data data;
   MPI_T_pvar_session session;
   int mpi_handle;
-  sctk_spinlock_t lock;
+  mpc_common_spinlock_t lock;
   struct MPC_T_pvar_handle *next;
 };
 

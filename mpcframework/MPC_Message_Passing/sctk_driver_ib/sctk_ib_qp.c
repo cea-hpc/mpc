@@ -35,7 +35,7 @@
 #include "sctk_asm.h"
 #include "utlist.h"
 #include "sctk_ib_mpi.h"
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include <errno.h>
 #include <string.h>
 
@@ -68,9 +68,9 @@ sctk_ib_qp_t  *sctk_ib_qp_ht_find ( struct sctk_ib_rail_info_s *rail_ib, int key
 	if ( rail_ib->remotes == NULL )
 		return NULL;
 
-	sctk_spinlock_read_lock ( &__qp_ht_lock );
+	mpc_common_spinlock_read_lock ( &__qp_ht_lock );
 	HASH_FIND_INT ( rail_ib->remotes, &key, entry );
-	sctk_spinlock_read_unlock ( &__qp_ht_lock );
+	mpc_common_spinlock_read_unlock ( &__qp_ht_lock );
 
 	if ( entry != NULL )
 		return entry->remote;
@@ -93,9 +93,9 @@ static inline void sctk_ib_qp_ht_add ( struct sctk_ib_rail_info_s *rail_ib, stru
 	entry->key = key;
 	entry->remote = remote;
 
-	sctk_spinlock_write_lock ( &__qp_ht_lock );
+	mpc_common_spinlock_write_lock ( &__qp_ht_lock );
 	HASH_ADD_INT ( rail_ib->remotes, key, entry );
-	sctk_spinlock_write_unlock ( &__qp_ht_lock );
+	mpc_common_spinlock_write_unlock ( &__qp_ht_lock );
 }
 
 /*-----------------------------------------------------------
@@ -653,7 +653,7 @@ void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, s
 	{
 		remote->R = 1;
 		remote->ondemand = 1;
-		sctk_spinlock_lock ( &od->lock );
+		mpc_common_spinlock_lock ( &od->lock );
 		sctk_nodebug ( "[%d] Add QP to rank %d %p", rail_ib->rail->rail_number, remote->rank, remote );
 		CDL_PREPEND ( od->qp_list, remote );
 
@@ -662,7 +662,7 @@ void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, s
 			od->qp_list_ptr = remote;
 		}
 
-		sctk_spinlock_unlock ( &od->lock );
+		mpc_common_spinlock_unlock ( &od->lock );
 	}
 
 	init_attr = sctk_ib_qp_init_attr ( rail_ib );
@@ -793,7 +793,7 @@ static void *wait_send ( void *arg )
 
 	PROF_TIME_START ( a->rail_ib->rail, ib_post_send );
 
-	sctk_spinlock_lock ( &a->remote->lock_send );
+	mpc_common_spinlock_lock ( &a->remote->lock_send );
 
 	int need_reset = check_signaled ( a->rail_ib, a->remote, a->ibuf );
 
@@ -802,7 +802,7 @@ static void *wait_send ( void *arg )
 	if ( rc == 0 )
 		inc_signaled ( a->rail_ib, a->remote, need_reset );
 
-	sctk_spinlock_unlock ( &a->remote->lock_send );
+	mpc_common_spinlock_unlock ( &a->remote->lock_send );
 
 	PROF_TIME_END ( a->rail_ib->rail, ib_post_send );
 
@@ -834,7 +834,7 @@ static inline void __send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
 	/* We lock here because ibv_post_send uses mutexes which provide really bad performances.
 	* Instead we encapsulate the call between spinlocks */
 	PROF_TIME_START ( rail_ib->rail, ib_post_send_lock );
-	sctk_spinlock_lock ( &remote->lock_send );
+	mpc_common_spinlock_lock ( &remote->lock_send );
 	PROF_TIME_END ( rail_ib->rail, ib_post_send_lock );
 
 	PROF_TIME_START ( rail_ib->rail, ib_post_send );
@@ -848,7 +848,7 @@ static inline void __send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
 	if ( rc == 0 )
 		inc_signaled ( rail_ib, remote, need_reset );
 
-	sctk_spinlock_unlock ( &remote->lock_send );
+	mpc_common_spinlock_unlock ( &remote->lock_send );
 
 	if ( rc != 0 )
 	{

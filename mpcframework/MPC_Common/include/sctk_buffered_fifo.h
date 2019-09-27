@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 
 /**
  * @brief Structure defining a chunk of FIFO. 
@@ -46,7 +46,7 @@
  * This is useful to avoid allocating/deallocating at each push/pop. 
  */
 struct Buffered_FIFO_chunk {
-	sctk_spinlock_t lock;                 /**< @brief a lock for concurrent internal manipulations */
+	mpc_common_spinlock_t lock;                 /**< @brief a lock for concurrent internal manipulations */
 	char *payload;                      /**< @brief the actual data */
 	uint64_t chunk_size;                /**< @brief the size of the current chunk */
 	size_t elem_size;                   /**< @brief the size of stored elements */
@@ -102,9 +102,9 @@ void * Buffered_FIFO_chunk_pop( struct Buffered_FIFO_chunk *ch, void *dest );
  */
 static inline void Buffered_FIFO_chunk_ctx_prev( struct Buffered_FIFO_chunk *ch, struct Buffered_FIFO_chunk *prev)
 {
-		sctk_spinlock_lock( &ch->lock );
+		mpc_common_spinlock_lock( &ch->lock );
 		ch->prev = prev;
-		sctk_spinlock_unlock( &ch->lock );
+		mpc_common_spinlock_unlock( &ch->lock );
 }
 
 /**
@@ -115,9 +115,9 @@ static inline void Buffered_FIFO_chunk_ctx_prev( struct Buffered_FIFO_chunk *ch,
 static inline struct Buffered_FIFO_chunk * Buffered_FIFO_chunk_prev( struct Buffered_FIFO_chunk *ch )
 {
 	struct Buffered_FIFO_chunk *ret;
-	sctk_spinlock_lock( &ch->lock );
+	mpc_common_spinlock_lock( &ch->lock );
 	ret =ch->prev;
-	sctk_spinlock_unlock( &ch->lock );
+	mpc_common_spinlock_unlock( &ch->lock );
 
 	return ret;
 }
@@ -136,15 +136,15 @@ static inline struct Buffered_FIFO_chunk * Buffered_FIFO_chunk_prev( struct Buff
  * It is composed of several Buffered_FIFO_chunk
  */
 struct Buffered_FIFO {
-	sctk_spinlock_t head_lock;            /**< @brief a lock for concurent access to the head */
+	mpc_common_spinlock_t head_lock;            /**< @brief a lock for concurent access to the head */
 	struct Buffered_FIFO_chunk *head;   /**< @brief the head chunk (chere elements are pushed */
-	sctk_spinlock_t tail_lock;            /**< @brief a lock for concurent access to the tail */
+	mpc_common_spinlock_t tail_lock;            /**< @brief a lock for concurent access to the tail */
 	struct Buffered_FIFO_chunk *tail;   /**< @brief the tail chunk (from where elements are popped */
 
 	uint64_t chunk_size;                /**< @brief the size of the composing chunks */
 	size_t elem_size;                   /**< @brief the size of each stored element */
 
-	sctk_spinlock_t lock;                 /**< @brief a lock for concurrent access to element_count */
+	mpc_common_spinlock_t lock;                 /**< @brief a lock for concurrent access to element_count */
 	uint64_t elem_count;                /**< @brief the number of elements currently stored in the FIFO */
 };
 

@@ -24,7 +24,7 @@
 
 #include "sctk_buffered_fifo.h"
 #include "sctk_ht.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_atomics.h"
 #include "sctk_futex_def.h"
 
@@ -63,7 +63,7 @@ int futex_cell_apply_bitmask( void * elem /* struct futex_cell */,
 
 struct futex_queue
 {
-	sctk_spinlock_t queue_is_wake_tainted;
+	mpc_common_spinlock_t queue_is_wake_tainted;
 	struct Buffered_FIFO wait_list;
 	int * futex_key;
 };

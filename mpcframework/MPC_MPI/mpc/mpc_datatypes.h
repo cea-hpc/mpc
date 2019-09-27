@@ -27,7 +27,7 @@
 #include "sctk_atomics.h"
 #include "sctk_collective_communications.h" /* sctk_datatype_t */
 #include "sctk_ht.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_thread.h"
 #include <stdlib.h>
 
@@ -701,7 +701,7 @@ struct Datatype_Array
 {
 	sctk_contiguous_datatype_t contiguous_user_types[SCTK_USER_DATA_TYPES_MAX]; /**< Contiguous datatype array */
 	sctk_derived_datatype_t * derived_user_types[SCTK_USER_DATA_TYPES_MAX];  /**< Derived datatype array */
-	sctk_spinlock_t datatype_lock; /**< A lock protecting both datatypes types */
+	mpc_common_spinlock_t datatype_lock; /**< A lock protecting both datatypes types */
 };
 
 /** \brief Initializes the datatype array

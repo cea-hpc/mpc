@@ -996,15 +996,15 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   sctk_thread_data_t *tmp;
   sctk_thread_data_t *tmp_father;
   struct sctk_alloc_chain *tls;
-  static sctk_spinlock_t lock = 0;
+  static mpc_common_spinlock_t lock = 0;
   int user_thread;
   int scope_init;
 
-  sctk_spinlock_lock (&lock);
+  mpc_common_spinlock_lock (&lock);
   sctk_nb_user_threads++;
   user_thread = sctk_nb_user_threads;
 
-  sctk_spinlock_unlock (&lock);
+  mpc_common_spinlock_unlock (&lock);
 
   tls = __sctk_create_thread_memory_area ();
   sctk_nodebug ("create tls %p attr %p", tls, __attr);

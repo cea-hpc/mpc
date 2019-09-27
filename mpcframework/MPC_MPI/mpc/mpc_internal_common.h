@@ -41,7 +41,7 @@ struct mpc_mpi_per_communicator_s;
 typedef struct {
   sctk_communicator_t key;
 
-  sctk_spinlock_t err_handler_lock;
+  mpc_common_spinlock_t err_handler_lock;
   MPC_Handler_function*  err_handler;
 
   struct mpc_mpi_per_communicator_s* mpc_mpi_per_communicator;
@@ -84,7 +84,7 @@ typedef struct sctk_task_specific_s
 
 	/* Communicator handling */
 	mpc_per_communicator_t*per_communicator;
-	sctk_spinlock_t per_communicator_lock;
+	mpc_common_spinlock_t per_communicator_lock;
 
 	/* ID */
 	int task_id; /**< MPI comm rank of the task */
@@ -170,7 +170,7 @@ typedef struct
 {
 	mpc_buffered_msg_t buffer[MAX_MPC_BUFFERED_MSG];
 	volatile int buffer_rank;
-	sctk_spinlock_t lock;
+	mpc_common_spinlock_t lock;
 } sctk_buffer_t;
 
 typedef struct sctk_thread_buffer_pool_s

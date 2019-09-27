@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 
 /************************************************************************/
 /* ENUM DEFINITION                                                      */
@@ -91,7 +91,7 @@ typedef struct sctk_device_s
 
 	size_t nb_res;			  /**< How many times this device has been associated to a
                           resources (meaning loading level) */
-	sctk_spinlock_t res_lock; /** lock on previous field to ensure thread safety */
+	mpc_common_spinlock_t res_lock; /** lock on previous field to ensure thread safety */
 } mpc_common_topo_device_t;
 
 /************************************************************************/

@@ -57,7 +57,7 @@ sctk_ibuf_rdma_pool_t *rdma_pool_list = NULL;
 /* Elements to merge to the rdma_pool_list */
 sctk_ibuf_rdma_pool_t *rdma_pool_list_to_merge = NULL;
 /* Lock when adding and accessing the concat list */
-static sctk_spinlock_t rdma_pool_list_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t rdma_pool_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
 /* Linked list of regions */
 static sctk_ibuf_region_t *rdma_region_list = NULL;
@@ -65,7 +65,7 @@ static sctk_spin_rwlock_t rdma_region_list_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 /* Pointer for the clock algorithm */
 static sctk_ibuf_region_t *clock_pointer = NULL;
 
-static sctk_spinlock_t rdma_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t rdma_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_spin_rwlock_t rdma_polling_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 
 /*-----------------------------------------------------------
@@ -315,9 +315,9 @@ sctk_ibuf_rdma_region_free ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *
 		region->allocated_size = 0;
 	}
 
-	sctk_spinlock_lock ( &rdma_lock );
+	mpc_common_spinlock_lock ( &rdma_lock );
 	--device->eager_rdma_connections;
-	sctk_spinlock_unlock ( &rdma_lock );
+	mpc_common_spinlock_unlock ( &rdma_lock );
 
 	if ( channel == ( RDMA_CHANNEL | SEND_CHANNEL ) )
 		/* SEND CHANNEL */
@@ -345,18 +345,18 @@ sctk_ibuf_rdma_region_free ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *
 
 			sctk_ibuf_rdma_pool_t *pool = remote->rdma.pool;
 //#warning "We should lock during DELETING the element."
-			//    sctk_spinlock_write_lock(&rdma_polling_lock);
+			//    mpc_common_spinlock_write_lock(&rdma_polling_lock);
 			DL_DELETE ( rdma_pool_list, pool );
-			//    sctk_spinlock_write_unlock(&rdma_polling_lock);
+			//    mpc_common_spinlock_write_unlock(&rdma_polling_lock);
 
-			sctk_spinlock_write_lock ( &rdma_region_list_lock );
+			mpc_common_spinlock_write_lock ( &rdma_region_list_lock );
 
 			/* Shift clock pointer */
 			if ( clock_pointer == region )
 				clock_pointer = region->next;
 
 			CDL_DELETE ( rdma_region_list, region );
-			sctk_spinlock_write_unlock ( &rdma_region_list_lock );
+			mpc_common_spinlock_write_unlock ( &rdma_region_list_lock );
 		}
 		else
 			not_reachable();
@@ -463,16 +463,16 @@ sctk_ibuf_rdma_region_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *
 			                  remote->rank, nb_ibufs, size_ibufs );
 
 			/* Add the entry to the pooling list */
-			sctk_spinlock_lock ( &rdma_pool_list_lock );
+			mpc_common_spinlock_lock ( &rdma_pool_list_lock );
 			DL_APPEND ( rdma_pool_list_to_merge, remote->rdma.pool );
-			sctk_spinlock_unlock ( &rdma_pool_list_lock );
+			mpc_common_spinlock_unlock ( &rdma_pool_list_lock );
 			OPA_store_int ( &remote->rdma.pool->busy_nb[REGION_RECV], 0 );
 
 		}
 		else
 			not_reachable();
 
-	sctk_spinlock_write_lock ( &rdma_region_list_lock );
+	mpc_common_spinlock_write_lock ( &rdma_region_list_lock );
 
 	/* Set clock-pointer */
 	if ( clock_pointer == NULL )
@@ -480,7 +480,7 @@ sctk_ibuf_rdma_region_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *
 
 	CDL_PREPEND ( rdma_region_list, region );
 	PROF_INC_GLOB ( rail_ib->rail, SCTK_IB_RDMA_CONNECTION );
-	sctk_spinlock_write_unlock ( &rdma_region_list_lock );
+	mpc_common_spinlock_write_unlock ( &rdma_region_list_lock );
 
 	sctk_nodebug ( "Head=%p(%d) Tail=%p(%d)", region->head, region->head->index,
 	               region->tail, region->tail->index );
@@ -495,7 +495,7 @@ sctk_ibuf_rdma_pool_init ( sctk_ib_qp_t *remote )
 	sctk_ibuf_rdma_pool_t *pool;
 
 	/* We lock during the memmory allocating */
-	sctk_spinlock_lock ( &remote->rdma.lock );
+	mpc_common_spinlock_lock ( &remote->rdma.lock );
 	pool = remote->rdma.pool;
 
 	/* If no allocation has been done */
@@ -514,7 +514,7 @@ sctk_ibuf_rdma_pool_init ( sctk_ib_qp_t *remote )
 		remote->rdma.pool = pool;
 	}
 
-	sctk_spinlock_unlock ( &remote->rdma.lock );
+	mpc_common_spinlock_unlock ( &remote->rdma.lock );
 
 	return pool;
 }
@@ -529,13 +529,13 @@ sctk_ibuf_rdma_pool_free ( __UNUSED__ struct sctk_ib_rail_info_s *rail_ib, __UNU
 #if 0
 	LOAD_DEVICE ( rail_ib );
 	/* Check if we can allocate an RDMA channel */
-	sctk_spinlock_lock ( &rdma_lock );
+	mpc_common_spinlock_lock ( &rdma_lock );
 
 	if ( sctk_ibuf_rdma_is_remote_connected ( remote ) )
 	{
 		sctk_ibuf_rdma_pool_t *pool = remote->rdma.pool;
 		--device->eager_rdma_connections;
-		sctk_spinlock_unlock ( &rdma_lock );
+		mpc_common_spinlock_unlock ( &rdma_lock );
 
 		sctk_ib_debug ( "Freeing RDMA buffers (connections: %d)", device->eager_rdma_connections );
 
@@ -543,9 +543,9 @@ sctk_ibuf_rdma_pool_free ( __UNUSED__ struct sctk_ib_rail_info_s *rail_ib, __UNU
 		sctk_ibuf_rdma_region_free ( rail_ib, &pool->region[REGION_SEND] );
 		sctk_ibuf_rdma_region_free ( rail_ib, &pool->region[REGION_RECV] );
 
-		sctk_spinlock_lock ( &rdma_pool_list_lock );
+		mpc_common_spinlock_lock ( &rdma_pool_list_lock );
 		DL_DELETE ( rdma_pool_list_to_merge, pool );
-		sctk_spinlock_unlock ( &rdma_pool_list_lock );
+		mpc_common_spinlock_unlock ( &rdma_pool_list_lock );
 
 		/* Free pool */
 		free ( remote->rdma.pool );
@@ -555,7 +555,7 @@ sctk_ibuf_rdma_pool_free ( __UNUSED__ struct sctk_ib_rail_info_s *rail_ib, __UNU
 	}
 	else
 	{
-		sctk_spinlock_unlock ( &rdma_lock );
+		mpc_common_spinlock_unlock ( &rdma_lock );
 	}
 
 #endif
@@ -741,7 +741,7 @@ void sctk_ib_rdma_eager_walk_remotes ( sctk_ib_rail_info_t *rail, int ( func ) (
 	/* Set the default value */
 	*ret = REORDER_UNDEFINED;
 
-	sctk_spinlock_read_lock ( &rdma_polling_lock );
+	mpc_common_spinlock_read_lock ( &rdma_polling_lock );
 	DL_FOREACH ( rdma_pool_list, pool )
 	{
 		/* 'func' needs to check if the remote is in a RTR mode */
@@ -750,20 +750,20 @@ void sctk_ib_rdma_eager_walk_remotes ( sctk_ib_rail_info_t *rail, int ( func ) (
 		if ( tmp_ret == REORDER_FOUND_EXPECTED )
 		{
 			*ret = tmp_ret;
-			sctk_spinlock_read_unlock ( &rdma_polling_lock );
+			mpc_common_spinlock_read_unlock ( &rdma_polling_lock );
 			return;
 		}
 	}
-	sctk_spinlock_read_unlock ( &rdma_polling_lock );
+	mpc_common_spinlock_read_unlock ( &rdma_polling_lock );
 
 	/* Check if they are remotes to merge. We need to merge here because
 	 * we cannot do this in the DL_FOREACH just before. It aims
 	 * to deadlocks. */
 	if ( rdma_pool_list_to_merge != NULL )
 	{
-		sctk_spinlock_write_lock ( &rdma_polling_lock );
+		mpc_common_spinlock_write_lock ( &rdma_polling_lock );
 		/* We only add entries of connected processes */
-		sctk_spinlock_lock ( &rdma_pool_list_lock );
+		mpc_common_spinlock_lock ( &rdma_pool_list_lock );
 		DL_FOREACH_SAFE ( rdma_pool_list_to_merge, pool, tmp_pool )
 		{
 			sctk_endpoint_state_t state = sctk_ibuf_rdma_get_remote_state_rtr ( pool->remote );
@@ -776,8 +776,8 @@ void sctk_ib_rdma_eager_walk_remotes ( sctk_ib_rail_info_t *rail, int ( func ) (
 				DL_APPEND ( rdma_pool_list, pool );
 			}
 		}
-		sctk_spinlock_unlock ( &rdma_pool_list_lock );
-		sctk_spinlock_write_unlock ( &rdma_polling_lock );
+		mpc_common_spinlock_unlock ( &rdma_pool_list_lock );
+		mpc_common_spinlock_write_unlock ( &rdma_polling_lock );
 	}
 }
 
@@ -1110,14 +1110,14 @@ int sctk_ibuf_rdma_is_connectable ( sctk_ib_rail_info_t *rail_ib )
 #endif
 
 	/* Check if we do not have reached the maximum number of RDMA connections */
-	sctk_spinlock_lock ( &rdma_lock );
+	mpc_common_spinlock_lock ( &rdma_lock );
 
 	if ( config->max_rdma_connections >= ( device->eager_rdma_connections + 1 ) )
 	{
 		ret = ++device->eager_rdma_connections;
 	}
 
-	sctk_spinlock_unlock ( &rdma_lock );
+	mpc_common_spinlock_unlock ( &rdma_lock );
 
 	return ret;
 }
@@ -1126,9 +1126,9 @@ void sctk_ibuf_rdma_connection_cancel ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp
 {
 	LOAD_DEVICE ( rail_ib );
 
-	sctk_spinlock_lock ( &rdma_lock );
+	mpc_common_spinlock_lock ( &rdma_lock );
 	--device->eager_rdma_connections;
-	sctk_spinlock_unlock ( &rdma_lock );
+	mpc_common_spinlock_unlock ( &rdma_lock );
 
 	/* We reset the state to 'reset' because we do not support the RDMA deconnection for now.
 	 * In a next release, we need to change to deconnected */
@@ -1204,14 +1204,14 @@ size_t sctk_ibuf_rdma_get_regions_get_allocate_size ( sctk_ib_qp_t *remote )
  */
 void sctk_ibuf_rdma_update_max_pending_data ( sctk_ib_qp_t *remote, int current_pending )
 {
-	sctk_spinlock_lock ( &remote->rdma.pending_data_lock );
+	mpc_common_spinlock_lock ( &remote->rdma.pending_data_lock );
 
 	if ( current_pending > remote->rdma.max_pending_data )
 	{
 		remote->rdma.max_pending_data = current_pending;
 	}
 
-	sctk_spinlock_unlock ( &remote->rdma.pending_data_lock );
+	mpc_common_spinlock_unlock ( &remote->rdma.pending_data_lock );
 }
 
 static int sctk_ibuf_rdma_determine_config ( sctk_ib_rail_info_t *rail_ib,
@@ -1233,9 +1233,9 @@ static int sctk_ibuf_rdma_determine_config ( sctk_ib_rail_info_t *rail_ib,
 		}
 	}
 
-	sctk_spinlock_lock ( &remote->rdma.stats_lock );
+	mpc_common_spinlock_lock ( &remote->rdma.stats_lock );
 	mean = ( remote->rdma.messages_size ) / ( float ) ( remote->rdma.messages_nb );
-	sctk_spinlock_unlock ( &remote->rdma.stats_lock );
+	mpc_common_spinlock_unlock ( &remote->rdma.stats_lock );
 
 	/* Reajust the size according to the statistics */
 	*determined_size = ( int ) mean;
@@ -1316,7 +1316,7 @@ void sctk_ibuf_rdma_update_remote ( sctk_ib_qp_t *remote, size_t size )
 {
 
 
-	sctk_spinlock_lock ( &remote->rdma.stats_lock );
+	mpc_common_spinlock_lock ( &remote->rdma.stats_lock );
 	size_t old_messages_size = remote->rdma.messages_size;
 	size_t new_messages_size = old_messages_size + size;
 	remote->rdma.messages_size += size;
@@ -1329,7 +1329,7 @@ void sctk_ibuf_rdma_update_remote ( sctk_ib_qp_t *remote, size_t size )
 		remote->rdma.messages_size = size;
 	}
 
-	sctk_spinlock_unlock ( &remote->rdma.stats_lock );
+	mpc_common_spinlock_unlock ( &remote->rdma.stats_lock );
 }
 
 /*
@@ -1349,9 +1349,9 @@ void sctk_ibuf_rdma_check_remote ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *r
 	if ( config->max_rdma_connections != 0 && state_rts == STATE_DECONNECTED )
 	{
 		size_t messages_nb;
-		sctk_spinlock_lock ( &remote->rdma.stats_lock );
+		mpc_common_spinlock_lock ( &remote->rdma.stats_lock );
 		messages_nb = remote->rdma.messages_nb;
-		sctk_spinlock_unlock ( &remote->rdma.stats_lock );
+		mpc_common_spinlock_unlock ( &remote->rdma.stats_lock );
 
 		/* Check if we need to connect using RDMA */
 		if ( messages_nb >= IBV_RDMA_THRESHOLD )
@@ -1384,7 +1384,7 @@ void sctk_ibuf_rdma_check_remote ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *r
 				sctk_nodebug ( "MAX MISS REACHED busy:%d", OPA_load_int ( &remote->rdma.pool->busy_nb[REGION_SEND] ) );
 				/* Try to change the state to flushing.
 				 * By changing the state of the remote to 'flushing', we automaticaly switch to SR */
-				sctk_spinlock_lock ( &remote->rdma.flushing_lock );
+				mpc_common_spinlock_lock ( &remote->rdma.flushing_lock );
 				ret = sctk_ibuf_rdma_cas_remote_state_rts ( remote, STATE_CONNECTED, STATE_FLUSHING );
 
 				if ( ret == STATE_CONNECTED )
@@ -1401,7 +1401,7 @@ void sctk_ibuf_rdma_check_remote ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *r
 						remote->rdma.pool->resizing_request.send_keys.nb   = next_nb;
 						remote->rdma.pool->resizing_request.send_keys.size = next_size;
 						sctk_nodebug ( "Resizing the RMDA buffer for remote %d (%d->%d %d->%d)", remote->rank, previous_nb, next_nb, previous_size, next_size );
-						sctk_spinlock_unlock ( &remote->rdma.flushing_lock );
+						mpc_common_spinlock_unlock ( &remote->rdma.flushing_lock );
 
 						sctk_ibuf_rdma_check_flush_send ( rail_ib, remote );
 					}
@@ -1411,12 +1411,12 @@ void sctk_ibuf_rdma_check_remote ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *r
 						/* We reset the connection to connected */
 						ret = sctk_ibuf_rdma_cas_remote_state_rts ( remote, STATE_FLUSHING, STATE_CONNECTED );
 						assume ( ret == STATE_FLUSHING );
-						sctk_spinlock_unlock ( &remote->rdma.flushing_lock );
+						mpc_common_spinlock_unlock ( &remote->rdma.flushing_lock );
 					}
 				}
 				else
 				{
-					sctk_spinlock_unlock ( &remote->rdma.flushing_lock );
+					mpc_common_spinlock_unlock ( &remote->rdma.flushing_lock );
 				}
 			}
 		}
@@ -1486,7 +1486,7 @@ int sctk_ibuf_rdma_check_flush_send ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t
 
 		if ( busy_nb == 0 )
 		{
-			sctk_spinlock_lock ( &remote->rdma.flushing_lock );
+			mpc_common_spinlock_lock ( &remote->rdma.flushing_lock );
 			ret = sctk_ibuf_rdma_cas_remote_state_rts ( remote, STATE_FLUSHING, STATE_FLUSHED );
 
 			if ( ret == STATE_FLUSHING )
@@ -1501,7 +1501,7 @@ int sctk_ibuf_rdma_check_flush_send ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t
 				 * the number of slots */
 				int size_ibufs = remote->rdma.pool->resizing_request.send_keys.size;
 				int nb = remote->rdma.pool->resizing_request.send_keys.nb;
-				sctk_spinlock_unlock ( &remote->rdma.flushing_lock );
+				mpc_common_spinlock_unlock ( &remote->rdma.flushing_lock );
 
 				sctk_ib_cm_resizing_rdma_request ( rail_ib->rail, remote,
 				                                   size_ibufs, nb );
@@ -1509,7 +1509,7 @@ int sctk_ibuf_rdma_check_flush_send ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t
 			}
 			else
 			{
-				sctk_spinlock_unlock ( &remote->rdma.flushing_lock );
+				mpc_common_spinlock_unlock ( &remote->rdma.flushing_lock );
 			}
 		}
 		else
@@ -1670,7 +1670,7 @@ int sctk_ibuf_rdma_remote_normalize ( sctk_ib_rail_info_t *rail_ib, size_t mem_t
 	sctk_endpoint_state_t state;
 	sctk_ib_qp_t *remote;
 
-	sctk_spinlock_read_lock ( &rdma_region_list_lock );
+	mpc_common_spinlock_read_lock ( &rdma_region_list_lock );
 	sctk_ibuf_rdma_get_allocated_size_from_all_remotes ( &allocated_size,
 	                                                     &regions_nb );
 
@@ -1678,7 +1678,7 @@ int sctk_ibuf_rdma_remote_normalize ( sctk_ib_rail_info_t *rail_ib, size_t mem_t
 	 * the memory used for RDMA buffers, we should disconnect every remote */
 	if ( mem_to_save > allocated_size )
 	{
-		sctk_spinlock_read_unlock ( &rdma_region_list_lock );
+		mpc_common_spinlock_read_unlock ( &rdma_region_list_lock );
 		return 0;
 	}
 
@@ -1701,7 +1701,7 @@ int sctk_ibuf_rdma_remote_normalize ( sctk_ib_rail_info_t *rail_ib, size_t mem_t
 				{
 					/* Try to change the state to flushing.
 					 * By changing the state of the remote to 'flushing', we automaticaly switch to SR */
-					sctk_spinlock_lock ( &remote->rdma.flushing_lock );
+					mpc_common_spinlock_lock ( &remote->rdma.flushing_lock );
 					state = sctk_ibuf_rdma_cas_remote_state_rts ( remote, STATE_CONNECTED, STATE_FLUSHING );
 
 					/* If we are allowed to deconnect */
@@ -1710,14 +1710,14 @@ int sctk_ibuf_rdma_remote_normalize ( sctk_ib_rail_info_t *rail_ib, size_t mem_t
 						/* Update the slots values requested to 0 -> means that we want to disconnect */
 						remote->rdma.pool->resizing_request.send_keys.nb   = 0;
 						remote->rdma.pool->resizing_request.send_keys.size = 0;
-						sctk_spinlock_unlock ( &remote->rdma.flushing_lock );
+						mpc_common_spinlock_unlock ( &remote->rdma.flushing_lock );
 
 						sctk_ib_debug ( "Resizing the RMDA buffer for remote %d", remote->rank );
 						sctk_ibuf_rdma_check_flush_send ( rail_ib, remote );
 					}
 					else
 					{
-						sctk_spinlock_unlock ( &remote->rdma.flushing_lock );
+						mpc_common_spinlock_unlock ( &remote->rdma.flushing_lock );
 					}
 				}
 
@@ -1739,7 +1739,7 @@ int sctk_ibuf_rdma_remote_normalize ( sctk_ib_rail_info_t *rail_ib, size_t mem_t
 		}
 	}
 
-	sctk_spinlock_read_unlock ( &rdma_region_list_lock );
+	mpc_common_spinlock_read_unlock ( &rdma_region_list_lock );
 	return 1;
 }
 
@@ -1752,7 +1752,7 @@ sctk_ibuf_region_t *sctk_ibuf_rdma_remote_get_lru ( char *name )
 	sctk_endpoint_state_t state;
 	sprintf ( name, "LRU" );
 
-	sctk_spinlock_read_lock ( &rdma_region_list_lock );
+	mpc_common_spinlock_read_lock ( &rdma_region_list_lock );
 
 	if ( rdma_region_list != NULL )
 	{
@@ -1803,7 +1803,7 @@ sctk_ibuf_region_t *sctk_ibuf_rdma_remote_get_lru ( char *name )
 	}
 
 exit:
-	sctk_spinlock_read_unlock ( &rdma_region_list_lock );
+	mpc_common_spinlock_read_unlock ( &rdma_region_list_lock );
 
 	/* Return the elected region */
 	return elected_region;
@@ -1825,7 +1825,7 @@ sctk_ibuf_region_t *sctk_ibuf_rdma_remote_get_max_allocated_size ( char *name )
 	sctk_endpoint_state_t state;
 	sprintf ( name, "EMERGENCY" );
 
-	sctk_spinlock_read_lock ( &rdma_region_list_lock );
+	mpc_common_spinlock_read_lock ( &rdma_region_list_lock );
 	CDL_FOREACH ( rdma_region_list, region )
 	{
 		size_t current = ( ~0 );
@@ -1855,7 +1855,7 @@ sctk_ibuf_region_t *sctk_ibuf_rdma_remote_get_max_allocated_size ( char *name )
 			}
 		}
 	}
-	sctk_spinlock_read_unlock ( &rdma_region_list_lock );
+	mpc_common_spinlock_read_unlock ( &rdma_region_list_lock );
 
 	return max_region;
 }
@@ -1890,7 +1890,7 @@ size_t sctk_ibuf_rdma_remote_disconnect ( sctk_ib_rail_info_t *rail_ib )
 		{
 			/* Try to change the state to flushing.
 			 * By changing the state of the remote to 'flushing', we automaticaly switch to SR */
-			sctk_spinlock_lock ( &remote->rdma.flushing_lock );
+			mpc_common_spinlock_lock ( &remote->rdma.flushing_lock );
 			sctk_endpoint_state_t ret =
 			    sctk_ibuf_rdma_cas_remote_state_rts ( remote, STATE_CONNECTED, STATE_FLUSHING );
 
@@ -1900,14 +1900,14 @@ size_t sctk_ibuf_rdma_remote_disconnect ( sctk_ib_rail_info_t *rail_ib )
 				/* Update the slots values requested to 0 -> means that we want to disconnect */
 				remote->rdma.pool->resizing_request.send_keys.nb   = 0;
 				remote->rdma.pool->resizing_request.send_keys.size = 0;
-				sctk_spinlock_unlock ( &remote->rdma.flushing_lock );
+				mpc_common_spinlock_unlock ( &remote->rdma.flushing_lock );
 
 				sctk_ib_debug ( "Resizing the RMDA buffer for remote %d", remote->rank );
 				sctk_ibuf_rdma_check_flush_send ( rail_ib, remote );
 			}
 			else
 			{
-				sctk_spinlock_unlock ( &remote->rdma.flushing_lock );
+				mpc_common_spinlock_unlock ( &remote->rdma.flushing_lock );
 				memory_used = 0;
 			}
 		}

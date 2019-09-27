@@ -56,7 +56,7 @@ typedef struct sctk_thread_generic_intern_attr_s{
   int polling;                                             /* ----------------------------------------- */
   void* sctk_thread_generic_pthread_blocking_lock_table;   /* |BARRIER|COND|MUTEX|RWLOCK|SEM|TASK LOCK| */ 
   sctk_thread_rwlock_in_use_t* rwlocks_owned;              /* ----------------------------------------- */
-  sctk_spinlock_t spinlock;
+  mpc_common_spinlock_t spinlock;
   volatile int nb_sig_pending;
   volatile int nb_sig_treated;
 

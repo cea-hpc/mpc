@@ -29,25 +29,3 @@ double sctk_get_time_stamp_gettimeofday(){
   return sctk_atomics_get_timestamp_gettimeofday ();
 }
 
-#if ! defined(SCTK_OPENPA_AVAILABLE)
-static pthread_mutex_t sctk_atomics_default_mutex = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
-/* test_and_set implementation. Fallback to mutex if
- * openPA not available for the current architecture*/
-int sctk_test_and_set (sctk_atomic_test_t * atomic) {
-#if defined(SCTK_OPENPA_AVAILABLE)
-  return sctk_atomics_swap_int((OPA_int_t *) atomic, 1);
-#else
-  int res;
-  pthread_mutex_lock(&sctk_atomics_default_mutex);
-  res = *atomic;
-  if (*atomic == 0) {
-	  *atomic = 1;
-  }
-  pthread_mutex_unlock(&sctk_atomics_default_mutex);
-  return res;
-#endif /* defined(SCTK_OPENPA_AVAILABLE) */
-}
-
-

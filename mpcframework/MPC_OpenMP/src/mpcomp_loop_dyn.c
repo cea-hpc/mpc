@@ -282,10 +282,10 @@ void __mpcomp_dynamic_loop_end_nowait(void) {
   sctk_assert(team_info != NULL);
 
   /* WARNING: the following order is important */
-  sctk_spinlock_lock(&(t->info.update_lock));
+  mpc_common_spinlock_lock(&(t->info.update_lock));
   sctk_atomics_incr_int(&(t->for_dyn_ull_current));
   sctk_atomics_store_int(&(t->for_dyn_remain[index].i), -1);
-  sctk_spinlock_unlock(&(t->info.update_lock));
+  mpc_common_spinlock_unlock(&(t->info.update_lock));
 
   /* Update the number of threads which ended this loop */
   nb_threads_exited = sctk_atomics_fetch_and_incr_int(

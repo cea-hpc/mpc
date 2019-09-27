@@ -23,7 +23,7 @@ static void __mpcomp_tree_array_team_reset( mpcomp_team_t *team )
     last_array_slot = &(team->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i);
     sctk_atomics_store_int(last_array_slot, MPCOMP_NOWAIT_STOP_SYMBOL);
     team->id = sctk_atomics_fetch_and_incr_int(&nb_teams);
-    sctk_spinlock_init(&team->lock, SCTK_SPINLOCK_INITIALIZER);
+    mpc_common_spinlock_init(&team->lock, SCTK_SPINLOCK_INITIALIZER);
 
 #if OMPT_SUPPORT
     team->info.doing_single = -1;
@@ -164,7 +164,7 @@ __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp )
     new_thread->mvp = mvp;
     new_thread->instance = mvp->instance;
 
-    sctk_spinlock_init( &( new_thread->info.update_lock ), 0 ); 
+    mpc_common_spinlock_init( &( new_thread->info.update_lock ), 0 ); 
     /* Reset pragma for dynamic internal */
     
 	return new_thread;	

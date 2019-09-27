@@ -27,7 +27,7 @@
 #ifndef __SCTK__IB_CP_H_
 #define __SCTK__IB_CP_H_
 
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include <uthash.h>
 #include <sctk_inter_thread_comm.h>
 #include <sctk_ibufs.h>
@@ -42,14 +42,14 @@ typedef struct sctk_ib_cp_task_s
 	int node;				/**< numa node */
 	int rank;				/**< rank is the key of HT */
 	sctk_ibuf_t *volatile local_ibufs_list;  /**< local pending ibufs for the current task  */
-	sctk_spinlock_t local_ibufs_list_lock;
+	mpc_common_spinlock_t local_ibufs_list_lock;
 	char dummy[64];
 	sctk_ibuf_t *volatile *global_ibufs_list;		/**< global pending ibufs for the current task  */
-	sctk_spinlock_t *global_ibufs_list_lock;
+	mpc_common_spinlock_t *global_ibufs_list_lock;
 	/* Counters */
 	OPA_int_t c[64];
 	/* Timers */
-	sctk_spinlock_t lock_timers;
+	mpc_common_spinlock_t lock_timers;
 	double time_stolen;
 	double time_steals;
 	double time_own;

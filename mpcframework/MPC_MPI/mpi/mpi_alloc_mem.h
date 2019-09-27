@@ -26,7 +26,7 @@
 #include "sctk_atomics.h"
 #include "sctk_bit_array.h"
 #include "sctk_ht.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include <stdlib.h>
 
 struct mpc_MPI_allocmem_pool {

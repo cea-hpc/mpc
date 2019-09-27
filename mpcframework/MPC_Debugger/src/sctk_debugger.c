@@ -30,7 +30,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sctk_debugger.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #ifdef SCTK_DEBUG_UNWIND
 #include <libunwind.h>
 #endif
@@ -221,7 +221,7 @@ read_map ()
   done = 1;
 }
 
-static sctk_spinlock_t big_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t big_lock = SCTK_SPINLOCK_INITIALIZER;
 
 void
 sctk_vprint_backtrace (const char *format, va_list ap)
@@ -234,7 +234,7 @@ sctk_vprint_backtrace (const char *format, va_list ap)
   char func_name_buf[10000];
   int i;
 
-  sctk_spinlock_lock (&big_lock);
+  mpc_common_spinlock_lock (&big_lock);
   read_map ();
 
 
@@ -319,12 +319,12 @@ sctk_vprint_backtrace (const char *format, va_list ap)
     }
   sctk_noalloc_fprintf (stderr, "----------- EVENT TRACE END -----------\n");
 
-  sctk_spinlock_unlock (&big_lock);
+  mpc_common_spinlock_unlock (&big_lock);
 #elif defined SCTK_DEBUG_BACKTRACE
   void *array[20];
   size_t size;
 
-  sctk_spinlock_lock (&big_lock);
+  mpc_common_spinlock_lock (&big_lock);
   read_map ();
 
   size = 20;
@@ -399,13 +399,13 @@ sctk_vprint_backtrace (const char *format, va_list ap)
 #endif
   backtrace_symbols_fd (array, size, 2);
   sctk_noalloc_fprintf (stderr, "----------- EVENT TRACE END -----------\n");
-  sctk_spinlock_unlock (&big_lock);
+  mpc_common_spinlock_unlock (&big_lock);
 #else
   void *array[20];
   size_t size;
   int i;
 
-  sctk_spinlock_lock (&big_lock);
+  mpc_common_spinlock_lock (&big_lock);
   read_map ();
 
 
@@ -413,7 +413,7 @@ sctk_vprint_backtrace (const char *format, va_list ap)
   sctk_noalloc_vfprintf (stderr, format, ap);
   sctk_noalloc_fprintf (stderr, "UNABLE TO BACKTRACE\n");
   sctk_noalloc_fprintf (stderr, "----------- EVENT TRACE END -----------\n");
-  sctk_spinlock_unlock (&big_lock);
+  mpc_common_spinlock_unlock (&big_lock);
 #endif
 }
 
@@ -431,7 +431,7 @@ mpc_debug_resolve (mpc_addr2line_t * tab, int size)
 {
   int j;
   int i;
-  sctk_spinlock_lock (&big_lock);
+  mpc_common_spinlock_lock (&big_lock);
   read_map ();
   for (j = 0; j < size; j++)
     {
@@ -467,5 +467,5 @@ mpc_debug_resolve (mpc_addr2line_t * tab, int size)
       ptr.ptr = tab[j].ptr;
       memcpy (&(tab[j]), &ptr, sizeof (mpc_addr2line_t));
     }
-  sctk_spinlock_unlock (&big_lock);
+  mpc_common_spinlock_unlock (&big_lock);
 }

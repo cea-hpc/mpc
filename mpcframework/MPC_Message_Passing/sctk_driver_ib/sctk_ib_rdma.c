@@ -55,7 +55,7 @@
 #define IBUF_SET_RDMA_POINTER(x, __msg_pointer) ((x)->msg_pointer = __msg_pointer)
 
 static sctk_ib_header_rdma_t *recv_rdma_headers = NULL;
-static sctk_spinlock_t recv_rdma_headers_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t recv_rdma_headers_lock = SCTK_SPINLOCK_INITIALIZER;
 static OPA_int_t recv_rdma_headers_nb = OPA_INT_T_INITIALIZER ( 0 );
 
 static inline void sctk_ib_rdma_align_msg ( void *addr, size_t  size,
@@ -79,9 +79,9 @@ sctk_thread_ptp_message_t * sctk_ib_rdma_recv_done_remote_imm (__UNUSED__  sctk_
 	sctk_thread_ptp_message_t *recv;
 
 	/* Save the values of the ack because the buffer will be reused */
-	sctk_spinlock_lock ( &recv_rdma_headers_lock );
+	mpc_common_spinlock_lock ( &recv_rdma_headers_lock );
 	HASH_FIND ( hh, recv_rdma_headers, &imm_data, sizeof ( int ), rdma );
-	sctk_spinlock_unlock ( &recv_rdma_headers_lock );
+	mpc_common_spinlock_unlock ( &recv_rdma_headers_lock );
 	assume ( rdma );
 
 
@@ -214,10 +214,10 @@ void sctk_ib_rdma_net_free_recv ( void *arg )
 	assume ( rdma->local.mmu_entry );
 	sctk_ib_mmu_relax ( rdma->local.mmu_entry );
 	sctk_nodebug ( "FREE: %p", msg );
-	sctk_spinlock_lock ( &recv_rdma_headers_lock );
+	mpc_common_spinlock_lock ( &recv_rdma_headers_lock );
 	HASH_DELETE ( hh, recv_rdma_headers, rdma );
 	sctk_nodebug ( "REM msg %p with key %d", rdma, rdma->ht_key );
-	sctk_spinlock_unlock ( &recv_rdma_headers_lock );
+	mpc_common_spinlock_unlock ( &recv_rdma_headers_lock );
 	sctk_free ( msg );
 	PROF_INC ( rail, ib_free_mem );
 }
@@ -429,7 +429,7 @@ void sctk_ib_rdma_rendezvous_net_copy ( sctk_message_to_copy_t *tmp )
 
 	/* The buffer has been posted and if the message is contiguous,
 	 * we can initiate a RDMA data transfert */
-	sctk_spinlock_lock ( &send_header->rdma.lock );
+	mpc_common_spinlock_lock ( &send_header->rdma.lock );
 
 	/* If the message has not yet been handled */
 	if ( send_header->rdma.local.status == SCTK_IB_RDMA_NOT_SET )
@@ -474,7 +474,7 @@ void sctk_ib_rdma_rendezvous_net_copy ( sctk_message_to_copy_t *tmp )
 		else
 			not_reachable();
 
-	sctk_spinlock_unlock ( &send_header->rdma.lock );
+	mpc_common_spinlock_unlock ( &send_header->rdma.lock );
 }
 
 static inline sctk_thread_ptp_message_t *
@@ -532,10 +532,10 @@ sctk_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
   rdma->local.ready = 0;
   rdma->ht_key = OPA_fetch_and_incr_int(&recv_rdma_headers_nb);
 
-  sctk_spinlock_lock(&recv_rdma_headers_lock);
+  mpc_common_spinlock_lock(&recv_rdma_headers_lock);
   HASH_ADD(hh, recv_rdma_headers, ht_key, sizeof(int), rdma);
   sctk_nodebug("ADD msg %p with key %d", rdma, rdma->ht_key);
-  sctk_spinlock_unlock(&recv_rdma_headers_lock);
+  mpc_common_spinlock_unlock(&recv_rdma_headers_lock);
 
   /* XXX: Only for collaborative polling */
   rdma->source_task = IBUF_GET_SRC_TASK(ibuf->buffer);

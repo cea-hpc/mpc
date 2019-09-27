@@ -23,7 +23,7 @@
 #include "sctk_atomics.h"
 #include "sctk_debug.h"
 #include "sctk_ht.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_thread.h"
 #include <sctk_inter_thread_comm.h>
 
@@ -32,7 +32,7 @@
 /************************************************************************/
 
 static int init_done = 0;
-static sctk_spinlock_t init_lock = 0;
+static mpc_common_spinlock_t init_lock = 0;
 
 /* Error handlers */
 static sctk_atomics_int current_errhandler;
@@ -63,14 +63,14 @@ static void _mpc_mpi_err_init() {
 }
 
 static void mpc_mpi_err_init_once() {
-  sctk_spinlock_lock(&init_lock);
+  mpc_common_spinlock_lock(&init_lock);
 
   if (!init_done) {
     _mpc_mpi_err_init();
     init_done = 1;
   }
 
-  sctk_spinlock_unlock(&init_lock);
+  mpc_common_spinlock_unlock(&init_lock);
 }
 
 /************************************************************************/
@@ -156,7 +156,7 @@ struct sctk_handle_context *sctk_handle_context_new(sctk_handle id) {
   return ret;
 }
 
-static sctk_spinlock_t handle_mod_lock = 0;
+static mpc_common_spinlock_t handle_mod_lock = 0;
 
 struct sctk_handle_context *sctk_handle_context_no_lock(sctk_handle id,
                                                         sctk_handle_type type) {
@@ -168,9 +168,9 @@ struct sctk_handle_context *sctk_handle_context(sctk_handle id,
                                                 sctk_handle_type type) {
   struct sctk_handle_context *ret = NULL;
 
-  sctk_spinlock_lock_yield(&handle_mod_lock);
+  mpc_common_spinlock_lock_yield(&handle_mod_lock);
   ret = sctk_handle_context_no_lock(id, type);
-  sctk_spinlock_unlock(&handle_mod_lock);
+  mpc_common_spinlock_unlock(&handle_mod_lock);
 
   if (!ret) {
     /* If no such context then create it */
@@ -186,7 +186,7 @@ sctk_handle sctk_handle_new_from_id(int previous_id, sctk_handle_type type) {
 
   mpc_mpi_err_init_once();
 
-  sctk_spinlock_lock_yield(&handle_mod_lock);
+  mpc_common_spinlock_lock_yield(&handle_mod_lock);
 
   if (sctk_handle_context_no_lock(previous_id, type) == NULL) {
     /* Create an unique id */
@@ -200,7 +200,7 @@ sctk_handle sctk_handle_new_from_id(int previous_id, sctk_handle_type type) {
               (void *)ctx);
   }
 
-  sctk_spinlock_unlock(&handle_mod_lock);
+  mpc_common_spinlock_unlock(&handle_mod_lock);
 
   /* All ok return the handle */
   return new_handle_id;
@@ -219,18 +219,18 @@ sctk_handle sctk_handle_new(sctk_handle_type type) {
 
 int sctk_handle_free(sctk_handle id, sctk_handle_type type) {
 
-  sctk_spinlock_lock_yield(&handle_mod_lock);
+  mpc_common_spinlock_lock_yield(&handle_mod_lock);
 
   struct sctk_handle_context *hctx = sctk_handle_context_no_lock(id, type);
 
   if (!hctx) {
-    sctk_spinlock_unlock(&handle_mod_lock);
+    mpc_common_spinlock_unlock(&handle_mod_lock);
     return MPC_ERR_ARG;
   }
 
   MPCHT_delete(&handle_context, sctk_handle_compute(id, type));
 
-  sctk_spinlock_unlock(&handle_mod_lock);
+  mpc_common_spinlock_unlock(&handle_mod_lock);
 
   sctk_handle_context_release(hctx);
 

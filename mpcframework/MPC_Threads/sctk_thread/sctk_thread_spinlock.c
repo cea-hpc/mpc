@@ -42,7 +42,7 @@ sctk_thread_generic_spinlocks_spin_destroy( sctk_thread_generic_spinlock_t* spin
 
 	printf("%d %d\n",sctk_spin_destroyed,spinlock->state);
   if( spinlock == NULL || spinlock->state != sctk_spin_initialized ) return SCTK_EINVAL;
-  sctk_spinlock_t* p_lock = &(spinlock->lock);
+  mpc_common_spinlock_t* p_lock = &(spinlock->lock);
   if( (*p_lock) != 0 ) return SCTK_EBUSY;
 
   spinlock->state = sctk_spin_destroyed;
@@ -64,7 +64,7 @@ sctk_thread_generic_spinlocks_spin_init( sctk_thread_generic_spinlock_t* spinloc
 	*/
 
   if( spinlock == NULL ) return SCTK_EINVAL;
-  sctk_spinlock_t* p_lock = &(spinlock->lock);
+  mpc_common_spinlock_t* p_lock = &(spinlock->lock);
   if( ( spinlock->state == sctk_spin_initialized || spinlock->state == sctk_spin_destroyed ) 
 		  && ( (*p_lock) != 0 )) return SCTK_EBUSY;
   if( pshared == SCTK_THREAD_PROCESS_SHARED ){
@@ -95,8 +95,8 @@ sctk_thread_generic_spinlocks_spin_lock( sctk_thread_generic_spinlock_t* spinloc
   if( spinlock->owner == sched ) return SCTK_EDEADLK;
 
   long i = SCTK_SPIN_DELAY;
-  sctk_spinlock_t* p_lock = &(spinlock->lock);
-  while( sctk_spinlock_trylock( &(spinlock->lock) )){
+  mpc_common_spinlock_t* p_lock = &(spinlock->lock);
+  while( mpc_common_spinlock_trylock( &(spinlock->lock) )){
 	while( expect_true( (*p_lock) != 0 ) ){
 	  i--;
 	  if( expect_false( i <= 0 ) ){
@@ -124,7 +124,7 @@ sctk_thread_generic_spinlocks_spin_trylock( sctk_thread_generic_spinlock_t* spin
   if( spinlock == NULL ) return SCTK_EINVAL;
   if( spinlock->owner == sched ) return SCTK_EDEADLK;
 
-  if( sctk_spinlock_trylock( &(spinlock->lock) ) != 0 )
+  if( mpc_common_spinlock_trylock( &(spinlock->lock) ) != 0 )
 	return SCTK_EBUSY;
   else{
 	spinlock->owner = sched;
@@ -146,7 +146,7 @@ sctk_thread_generic_spinlocks_spin_unlock( sctk_thread_generic_spinlock_t* spinl
   if( spinlock->owner != sched ) return SCTK_EPERM;
 
   spinlock->owner = NULL;
-  sctk_spinlock_unlock( &(spinlock->lock) );
+  mpc_common_spinlock_unlock( &(spinlock->lock) );
   printf("in unlock:%d\n", spinlock->state);
   return 0;
 }

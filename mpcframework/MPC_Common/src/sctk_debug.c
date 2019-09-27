@@ -39,7 +39,7 @@
 #include "mpc_common_rank.h"
 #include "sctk_config.h"
 #include "sctk_debug.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk.h"
 
 
@@ -168,24 +168,24 @@ sctk_noalloc_fprintf (FILE * stream, const char *format, ...)
 {
   va_list ap;
   static char tmp[WRITE_BUFFER_SIZE];
-  static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
-  sctk_spinlock_lock (&lock);
+  static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+  mpc_common_spinlock_lock (&lock);
   va_start (ap, format);
   sctk_vsnprintf (tmp, WRITE_BUFFER_SIZE, format, ap);
   va_end (ap);
   sctk_noalloc_fwrite (tmp, 1, strlen (tmp), stream);
-  sctk_spinlock_unlock (&lock);
+  mpc_common_spinlock_unlock (&lock);
 }
 
 void
 sctk_noalloc_vfprintf (FILE * stream, const char *format, va_list ap)
 {
   static char tmp[WRITE_BUFFER_SIZE];
-  static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
-  sctk_spinlock_lock (&lock);
+  static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+  mpc_common_spinlock_lock (&lock);
   sctk_vsnprintf (tmp, WRITE_BUFFER_SIZE, format, ap);
   sctk_noalloc_fwrite (tmp, 1, strlen (tmp), stream);
-  sctk_spinlock_unlock (&lock);
+  mpc_common_spinlock_unlock (&lock);
 }
 
 void

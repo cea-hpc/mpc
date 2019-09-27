@@ -26,7 +26,7 @@
 #include "sctk_atomics.h"
 #include "sctk_rail.h"
 #include "sctk_rdma.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_thread.h"
 #include "sctk_types.h"
 
@@ -52,7 +52,7 @@ struct sctk_window
         sctk_rail_pin_ctx_t pin;
         sctk_communicator_t comm;
         int is_emulated;
-        sctk_spinlock_t lock;
+        mpc_common_spinlock_t lock;
         unsigned int refcounter;
         void *payload;
         sctk_thread_t th;

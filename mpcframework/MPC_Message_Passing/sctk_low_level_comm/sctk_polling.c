@@ -46,11 +46,11 @@ void sctk_polling_tree_init_empty( struct sctk_polling_tree * tree )
 
 void sctk_polling_tree_init_once( struct sctk_polling_tree * tree )
 {
-	sctk_spinlock_lock( &tree->push_lock );
+	mpc_common_spinlock_lock( &tree->push_lock );
 	
 	if( tree->cell_count )
 	{
-		sctk_spinlock_unlock( &tree->push_lock );
+		mpc_common_spinlock_unlock( &tree->push_lock );
 		return;
 	}
 	
@@ -72,12 +72,12 @@ void sctk_polling_tree_init_once( struct sctk_polling_tree * tree )
 		tree->local_task_id_to_cell_lut[i] = -1;
 	}
 	
-	sctk_spinlock_unlock( &tree->push_lock );
+	mpc_common_spinlock_unlock( &tree->push_lock );
 }
 
 void sctk_polling_tree_release( struct sctk_polling_tree * tree )
 {
-	sctk_spinlock_lock( &tree->push_lock );
+	mpc_common_spinlock_lock( &tree->push_lock );
 	
 	tree->cell_count = 0;
 	
@@ -94,7 +94,7 @@ void sctk_polling_tree_join( struct sctk_polling_tree * tree )
 	
 	assume( 0 <= my_local_rank );
 	
-	sctk_spinlock_lock( &tree->push_lock );
+	mpc_common_spinlock_lock( &tree->push_lock );
 	
 	int i;
 
@@ -120,7 +120,7 @@ void sctk_polling_tree_join( struct sctk_polling_tree * tree )
 	}
 	
 	
-	sctk_spinlock_unlock( &tree->push_lock );
+	mpc_common_spinlock_unlock( &tree->push_lock );
 }
 
 

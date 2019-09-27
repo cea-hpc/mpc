@@ -27,11 +27,11 @@
 #include "sctk_thread.h"
 #include "sctk_internal_thread.h"
 #include "sctk_thread_keys.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 
 typedef void (*__destr_function_key_t) (void *) ;
 
-static sctk_spinlock_t key_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t key_lock = SCTK_SPINLOCK_INITIALIZER;
 static char sctk_key_used[SCTK_THREAD_KEYS_MAX + 1];
 static __destr_function_key_t __destr_function_key[SCTK_THREAD_KEYS_MAX + 1];
 
@@ -63,7 +63,7 @@ sctk_thread_generic_keys_key_create (sctk_thread_key_t * __key,
 				void (*__destr_function) (void *), __UNUSED__ sctk_thread_generic_keys_t* keys)
 {
   int i;
-  sctk_spinlock_lock(&key_lock);
+  mpc_common_spinlock_lock(&key_lock);
   for (i = 1; i < SCTK_THREAD_KEYS_MAX + 1; i++) {
     if(sctk_key_used[i] == 0){
       sctk_key_used[i] = 1;
@@ -72,7 +72,7 @@ sctk_thread_generic_keys_key_create (sctk_thread_key_t * __key,
       break;
     }
   }
-  sctk_spinlock_unlock(&key_lock);
+  mpc_common_spinlock_unlock(&key_lock);
   if(i == SCTK_THREAD_KEYS_MAX){
     return SCTK_EAGAIN;
   }

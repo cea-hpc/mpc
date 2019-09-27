@@ -370,7 +370,7 @@ void mpc_MPI_Win_control_message_handler(void *data, size_t size) {
 
   switch (message->type) {
   case MPC_MPI_WIN_CTRL_MSG_LOCK:
-    if (sctk_spinlock_trylock(&ctx->lock)) {
+    if (mpc_common_spinlock_trylock(&ctx->lock)) {
       sctk_info("Delayed lock from %d", message->source_rank);
       /* Already locked */
       mpc_MPI_win_locks_push_delayed(&ctx->locks, message->source_rank,
@@ -385,10 +385,10 @@ void mpc_MPI_Win_control_message_handler(void *data, size_t size) {
         message->target_win, MPC_WIN_SINGLE_REMOTE, &message->source_rank, 1,
         lock_type_to_exposure_mode(message->opt_arg1));
 
-    sctk_spinlock_unlock(&ctx->lock);
+    mpc_common_spinlock_unlock(&ctx->lock);
     break;
   case MPC_MPI_WIN_CTRL_MSG_UNLOCK:
-    if (sctk_spinlock_trylock(&ctx->lock)) {
+    if (mpc_common_spinlock_trylock(&ctx->lock)) {
       sctk_info("Delayed unlock from %d", message->source_rank);
       /* Already locked */
       mpc_MPI_win_locks_push_delayed(&ctx->locks, message->source_rank,
@@ -404,7 +404,7 @@ void mpc_MPI_Win_control_message_handler(void *data, size_t size) {
 
     mpc_Win_target_ctx_check_for_pending_locks(message->target_win);
 
-    sctk_spinlock_unlock(&ctx->lock);
+    mpc_common_spinlock_unlock(&ctx->lock);
     break;
   case MPC_MPI_WIN_CTRL_MSG_LOCKALL:
     not_implemented();

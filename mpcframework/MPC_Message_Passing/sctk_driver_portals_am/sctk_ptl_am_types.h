@@ -27,7 +27,7 @@
 #define SCTK_PTL_AM_TYPES_H_
 
 #include <portals4.h>
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "mpc_common_io_helper.h"
 #include "sctk_atomics.h"
 
@@ -243,7 +243,7 @@ typedef struct sctk_ptl_am_chunk_s
 typedef struct sctk_ptl_am_pte_s
 {
 	ptl_pt_index_t idx; /**< the effective PT index */
-	sctk_spinlock_t pte_lock;
+	mpc_common_spinlock_t pte_lock;
 	sctk_atomics_int next_tag;
 	
 	sctk_ptl_am_chunk_t* req_head;

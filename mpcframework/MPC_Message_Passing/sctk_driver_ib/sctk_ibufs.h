@@ -36,7 +36,7 @@ enum sctk_ib_cq_type_t
     SCTK_IB_RECV_CQ
 };
 
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_ib_mmu.h"
 #include "sctk_ib.h"
 #include "sctk_debug.h"
@@ -132,9 +132,9 @@ typedef struct sctk_ibuf_numa_s
 	struct sctk_ibuf_s         *free_entry;		/**< flag to the first free header */
 	struct sctk_ibuf_s         *free_srq_cache;	/**< Free SRQ buffers */
 	char padd3[64];
-	sctk_spinlock_t lock;							/**< lock when moving pointers */
+	mpc_common_spinlock_t lock;							/**< lock when moving pointers */
 	char padd1[64];
-	sctk_spinlock_t srq_cache_lock;
+	mpc_common_spinlock_t srq_cache_lock;
 	unsigned int nb;								  /**< Number of buffers created total */
 	OPA_int_t free_nb;							  /**< Number of buffers free */
 	OPA_int_t free_srq_nb;						  /**< Number of SRQ buffers free */
@@ -194,7 +194,7 @@ typedef struct sctk_ibuf_region_s
 	struct sctk_ibuf_s *tail;
 	struct sctk_ib_qp_s *remote;
 	/* Locks */
-	sctk_spinlock_t lock;
+	mpc_common_spinlock_t lock;
 	/* For clock algorithm */
 	int R_bit;
 } sctk_ibuf_region_t;
@@ -204,7 +204,7 @@ typedef struct sctk_ibuf_pool_s
 {
 	/* Lock to authorize only 1 task to post
 	* new buffers in SRQ */
-	sctk_spinlock_t post_srq_lock;
+	mpc_common_spinlock_t post_srq_lock;
 	struct sctk_ibuf_numa_s *node_srq_buffers;
 
 	struct sctk_ibuf_numa_s *default_node;

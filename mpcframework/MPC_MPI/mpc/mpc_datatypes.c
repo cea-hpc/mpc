@@ -133,15 +133,15 @@ static unsigned int __keyval_array_size = 0;
 /** This is the current ID offset */
 static unsigned int __keyval_array_offset = 0;
 /** This is the Keyval array lock */
-sctk_spinlock_t __keyval_array_lock = 0;
+mpc_common_spinlock_t __keyval_array_lock = 0;
 
 struct Datatype_Keyval *Datatype_Keyval_get(unsigned int type_keyval) {
   if (__keyval_array_size <= type_keyval)
     return NULL;
 
-  sctk_spinlock_lock(&__keyval_array_lock);
+  mpc_common_spinlock_lock(&__keyval_array_lock);
   struct Datatype_Keyval *cell = &__keyval_array[type_keyval];
-  sctk_spinlock_unlock(&__keyval_array_lock);
+  mpc_common_spinlock_unlock(&__keyval_array_lock);
 
   if (cell->free_cell) {
     /* Already freed */
@@ -167,7 +167,7 @@ struct Datatype_Keyval *Datatype_Keyval_new(int *type_keyval) {
   struct Datatype_Keyval *ret = NULL;
   int need_realloc = 0;
 
-  sctk_spinlock_lock(&__keyval_array_lock);
+  mpc_common_spinlock_lock(&__keyval_array_lock);
 
   if (__keyval_array_size == 0) {
     /* No keyval array yet */
@@ -214,7 +214,7 @@ struct Datatype_Keyval *Datatype_Keyval_new(int *type_keyval) {
   *type_keyval = new_id;
   ret = &__keyval_array[new_id];
 
-  sctk_spinlock_unlock(&__keyval_array_lock);
+  mpc_common_spinlock_unlock(&__keyval_array_lock);
 
   return ret;
 }
@@ -1400,7 +1400,7 @@ int sctk_type_delete_attr(struct Datatype_Array *da, MPC_Datatype type,
 /** \brief Static variable used to store type names */
 struct Datatype_name_cell * datatype_names = NULL;
 /** \brief Lock protecting \ref datatype_names */
-sctk_spinlock_t datatype_names_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t datatype_names_lock = SCTK_SPINLOCK_INITIALIZER;
 
 static inline struct Datatype_name_cell * sctk_datype_get_name_cell( MPC_Datatype datatype )
 {
@@ -1416,7 +1416,7 @@ static inline struct Datatype_name_cell * sctk_datype_get_name_cell( MPC_Datatyp
 int sctk_datype_set_name( MPC_Datatype datatype, char * name )
 {
 	/* First locate a previous cell */
-	sctk_spinlock_lock(&datatype_names_lock);
+	mpc_common_spinlock_lock(&datatype_names_lock);
 	struct Datatype_name_cell * cell = sctk_datype_get_name_cell( datatype );
 	
 	if( cell )
@@ -1435,7 +1435,7 @@ int sctk_datype_set_name( MPC_Datatype datatype, char * name )
 	/* Save it */
 	
 	HASH_ADD_INT( datatype_names, datatype, new_cell );
-	sctk_spinlock_unlock(&datatype_names_lock);
+	mpc_common_spinlock_unlock(&datatype_names_lock);
 	
 	return 0;
 }
@@ -1443,16 +1443,16 @@ int sctk_datype_set_name( MPC_Datatype datatype, char * name )
 
 char * sctk_datype_get_name( MPC_Datatype datatype )
 {
-	sctk_spinlock_lock(&datatype_names_lock);
+	mpc_common_spinlock_lock(&datatype_names_lock);
 	struct Datatype_name_cell *cell = sctk_datype_get_name_cell( datatype );
 
 	if( !cell )
 	{
-		sctk_spinlock_unlock(&datatype_names_lock);
+		mpc_common_spinlock_unlock(&datatype_names_lock);
 		return NULL;
 	}
 	
-	sctk_spinlock_unlock(&datatype_names_lock);	
+	mpc_common_spinlock_unlock(&datatype_names_lock);	
 	return cell->name;
 }
 

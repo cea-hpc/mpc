@@ -29,7 +29,7 @@
 #include "sctk_atomics.h"
 #include "sctk_buffered_fifo.h"
 #include "sctk_ht.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_stdint.h"
 #include "sctk_stdint.h"
 #include "sctk_thread.h"

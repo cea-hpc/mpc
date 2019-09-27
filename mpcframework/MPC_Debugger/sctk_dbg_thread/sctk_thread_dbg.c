@@ -32,7 +32,7 @@
 #include "sctk_thread_dbg.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_ethread.h"
 #include "sctk_context.h"
 
@@ -67,7 +67,7 @@ sctk_thread_remove (sctk_thread_data_t * item)
 /** *********************   LIB_THREAD_DB   ************************************* **/
 /** ***************************************************************************** **/
 static int sctk_use_rtdb = 0 ;
-static sctk_spinlock_t sctk_rtdb_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t sctk_rtdb_lock = SCTK_SPINLOCK_INITIALIZER;
 
 /* Translate a sctk status to a gdb status*/
 /* static inline */
@@ -232,8 +232,8 @@ int sctk_enable_lib_thread_db (void) {
 #endif
 
   rtdb_set_lock ((void *)&sctk_rtdb_lock,
-		 (int (*)(void *))sctk_spinlock_lock,
-		 (int (*)(void *))sctk_spinlock_unlock,
+		 (int (*)(void *))mpc_common_spinlock_lock,
+		 (int (*)(void *))mpc_common_spinlock_unlock,
 		 NULL) ;
 
   /* initialization of the main thread*/

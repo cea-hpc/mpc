@@ -148,10 +148,10 @@ sctk_thread_getspecific_mpc_per_comm(sctk_task_specific_t *task_specific,
                                      sctk_communicator_t comm) {
   mpc_per_communicator_t *per_communicator;
 
-  sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+  mpc_common_spinlock_lock(&(task_specific->per_communicator_lock));
   HASH_FIND(hh, task_specific->per_communicator, &comm,
             sizeof(sctk_communicator_t), per_communicator);
-  sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
+  mpc_common_spinlock_unlock(&(task_specific->per_communicator_lock));
   return per_communicator;
 }
 
@@ -160,7 +160,7 @@ sctk_thread_addspecific_mpc_per_comm(sctk_task_specific_t *task_specific,
                                      mpc_per_communicator_t *mpc_per_comm,
                                      sctk_communicator_t comm) {
   mpc_per_communicator_t *per_communicator;
-  sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+  mpc_common_spinlock_lock(&(task_specific->per_communicator_lock));
   HASH_FIND(hh, task_specific->per_communicator, &comm,
             sizeof(sctk_communicator_t), per_communicator);
   assume(per_communicator == NULL);
@@ -186,7 +186,7 @@ sctk_thread_addspecific_mpc_per_comm(sctk_task_specific_t *task_specific,
     }
   }*/
 
-  sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
+  mpc_common_spinlock_unlock(&(task_specific->per_communicator_lock));
   return;
 }
 
@@ -194,7 +194,7 @@ static inline void
 sctk_thread_removespecific_mpc_per_comm(sctk_task_specific_t *task_specific,
                                         sctk_communicator_t comm) {
   mpc_per_communicator_t *per_communicator;
-  sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+  mpc_common_spinlock_lock(&(task_specific->per_communicator_lock));
 
   /* { */
   /*   mpc_per_communicator_t* pair; */
@@ -223,13 +223,13 @@ sctk_thread_removespecific_mpc_per_comm(sctk_task_specific_t *task_specific,
   sctk_nodebug("Remove %d %p (%d)", comm, per_communicator,
                task_specific->task_id);
   sctk_free(per_communicator);
-  sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
+  mpc_common_spinlock_unlock(&(task_specific->per_communicator_lock));
 }
 
 static inline mpc_per_communicator_t *
 sctk_thread_createspecific_mpc_per_comm() {
   mpc_per_communicator_t *tmp;
-  sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+  mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
 
   tmp = sctk_malloc(sizeof(mpc_per_communicator_t));
 
@@ -252,7 +252,7 @@ sctk_thread_createnewspecific_mpc_per_comm(sctk_task_specific_t *task_specific,
 
   assume(new_comm != old_comm);
 
-  sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+  mpc_common_spinlock_lock(&(task_specific->per_communicator_lock));
   HASH_FIND(hh, task_specific->per_communicator, &old_comm,
             sizeof(sctk_communicator_t), per_communicator);
   assume(per_communicator != NULL);
@@ -267,7 +267,7 @@ sctk_thread_createnewspecific_mpc_per_comm(sctk_task_specific_t *task_specific,
         per_communicator->mpc_mpi_per_communicator);
   }
 
-  sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
+  mpc_common_spinlock_unlock(&(task_specific->per_communicator_lock));
   assert(per_communicator_new->mpc_mpi_per_communicator);
   sctk_thread_addspecific_mpc_per_comm(task_specific, per_communicator_new,
                                        new_comm);
@@ -281,7 +281,7 @@ static inline void sctk_thread_createspecific_mpc_per_comm_from_existing(
 
   assume(new_comm != old_comm);
 
-  sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+  mpc_common_spinlock_lock(&(task_specific->per_communicator_lock));
   HASH_FIND(hh, task_specific->per_communicator, &old_comm,
             sizeof(sctk_communicator_t), per_communicator);
   assume(per_communicator != NULL);
@@ -295,7 +295,7 @@ static inline void sctk_thread_createspecific_mpc_per_comm_from_existing(
         &(per_communicator_new->mpc_mpi_per_communicator),
         per_communicator->mpc_mpi_per_communicator);
   }
-  sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
+  mpc_common_spinlock_unlock(&(task_specific->per_communicator_lock));
 
   sctk_thread_addspecific_mpc_per_comm(task_specific, per_communicator_new,
                                        new_comm);
@@ -309,7 +309,7 @@ static inline void sctk_thread_createspecific_mpc_per_comm_from_existing_dup(
 
   assume(new_comm != old_comm);
 
-  sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+  mpc_common_spinlock_lock(&(task_specific->per_communicator_lock));
   HASH_FIND(hh, task_specific->per_communicator, &old_comm,
             sizeof(sctk_communicator_t), per_communicator);
   assume(per_communicator != NULL);
@@ -323,7 +323,7 @@ static inline void sctk_thread_createspecific_mpc_per_comm_from_existing_dup(
         &(per_communicator_new->mpc_mpi_per_communicator),
         per_communicator->mpc_mpi_per_communicator);
   }
-  sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
+  mpc_common_spinlock_unlock(&(task_specific->per_communicator_lock));
 
   sctk_thread_addspecific_mpc_per_comm(task_specific, per_communicator_new,
                                        new_comm);
@@ -815,16 +815,16 @@ int __MPC_init_progress(sctk_task_specific_t * tmp )
 
 int __MPC_release_progress( sctk_task_specific_t * tmp  )
 {
-    static sctk_spinlock_t l = 0;
-    static sctk_spinlock_t d = 0;
+    static mpc_common_spinlock_t l = 0;
+    static mpc_common_spinlock_t d = 0;
   
     tmp->progress_list = NULL;
 
     int done = 0;
-    sctk_spinlock_lock( &l );
+    mpc_common_spinlock_lock( &l );
     done = d;
 	d=1;
-    sctk_spinlock_unlock( &l );
+    mpc_common_spinlock_unlock( &l );
 
     if( done )
         return MPC_SUCCESS;
@@ -4363,14 +4363,14 @@ int PMPC_Wait_pending_all_comm() {
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug(MPC_COMM_WORLD, "MPC_Wait_pending_all_comm");
 #endif
-  sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+  mpc_common_spinlock_lock(&(task_specific->per_communicator_lock));
   HASH_ITER(hh, task_specific->per_communicator, per_communicator,
             per_communicator_tmp) {
     j = per_communicator->key;
     if (sctk_is_valid_comm(j))
       __MPC_Wait_pending(j);
   }
-  sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
+  mpc_common_spinlock_unlock(&(task_specific->per_communicator_lock));
   SCTK_PROFIL_END(MPC_Wait_pending_all_comm);
   MPC_ERROR_SUCESS();
 }

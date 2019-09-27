@@ -24,7 +24,7 @@
 #define SCTK_IB_MMU_H
 
 #include <stdlib.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 
 /** This is the actual payload */
 struct ibv_mr;

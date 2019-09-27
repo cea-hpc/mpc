@@ -27,7 +27,7 @@
 #include <sctk_communicator.h>
 #include <sctk.h>
 #include <sctk_debug.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include <uthash.h>
 #include <utlist.h>
 #include <string.h>
@@ -456,16 +456,16 @@ struct sctk_ctrl_msg_cell
 };
 
 struct sctk_ctrl_msg_cell * __ctrl_msg_list = NULL;
-sctk_spinlock_t __ctrl_msg_list_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t __ctrl_msg_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
 void sctk_control_message_push( sctk_thread_ptp_message_t * msg )
 {
 	struct sctk_ctrl_msg_cell * cell = sctk_malloc( sizeof( struct sctk_ctrl_msg_cell ) );
 	cell->msg = msg;
 	
-	sctk_spinlock_lock( &__ctrl_msg_list_lock );
+	mpc_common_spinlock_lock( &__ctrl_msg_list_lock );
 	DL_PREPEND( __ctrl_msg_list, cell );
-	sctk_spinlock_unlock( &__ctrl_msg_list_lock );
+	mpc_common_spinlock_unlock( &__ctrl_msg_list_lock );
 }
 
 void sctk_control_message_process_all()
@@ -477,7 +477,7 @@ void sctk_control_message_process_all()
 
 
             if (__ctrl_msg_list) {
-                sctk_spinlock_lock_yield(&__ctrl_msg_list_lock);
+                mpc_common_spinlock_lock_yield(&__ctrl_msg_list_lock);
 
                 if (__ctrl_msg_list) {
                     /* In UTLIST head->prev is the tail */
@@ -485,7 +485,7 @@ void sctk_control_message_process_all()
                     DL_DELETE(__ctrl_msg_list, cell);
                 }
 
-                sctk_spinlock_unlock(&__ctrl_msg_list_lock);
+                mpc_common_spinlock_unlock(&__ctrl_msg_list_lock);
             }
 
           if (cell) {
@@ -527,7 +527,7 @@ void __sctk_control_message_process(__UNUSED__ void *dummy) {
   struct sctk_ctrl_msg_cell *cell = NULL;
 
   if (__ctrl_msg_list != NULL) {
-      sctk_spinlock_lock_yield(&__ctrl_msg_list_lock);
+      mpc_common_spinlock_lock_yield(&__ctrl_msg_list_lock);
 
       if (__ctrl_msg_list != NULL) {
 
@@ -536,7 +536,7 @@ void __sctk_control_message_process(__UNUSED__ void *dummy) {
           DL_DELETE(__ctrl_msg_list, cell);
       }
 
-      sctk_spinlock_unlock(&__ctrl_msg_list_lock);
+      mpc_common_spinlock_unlock(&__ctrl_msg_list_lock);
 
       if (cell) {
           sctk_control_messages_perform(cell->msg, 0);

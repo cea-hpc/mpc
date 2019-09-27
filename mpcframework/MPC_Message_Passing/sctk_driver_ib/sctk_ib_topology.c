@@ -97,7 +97,7 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 	sctk_nodebug ( "[%d] Initializing task on vp %d node %d", rail_ib->rail_nb, vp, node_nb );
 	
 	/* Only one task allocates the IB structures per NUMA node */
-	sctk_spinlock_lock ( &init->initialization_lock );
+	mpc_common_spinlock_lock ( &init->initialization_lock );
 
 	/* First try to retrieve a previously allocated node */
 	sctk_ib_topology_numa_node_t *node = topo->nodes[node_nb];
@@ -138,11 +138,11 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 		sctk_ib_topology_init_tls ( rail_ib, node );
 	}
 
-	sctk_spinlock_unlock ( &init->initialization_lock );
+	mpc_common_spinlock_unlock ( &init->initialization_lock );
 
 	/* The last node is the SRQ. We init it ! */
 	init = &topo->init[numa_node_count];
-	sctk_spinlock_lock ( &init->initialization_lock );
+	mpc_common_spinlock_lock ( &init->initialization_lock );
 
 	if ( init->is_leader == 1 )
 	{
@@ -165,7 +165,7 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 		sctk_nodebug ( "SRQ node ready for rail %d", rail_ib->rail_nb );
 	}
 
-	sctk_spinlock_unlock ( &init->initialization_lock );
+	mpc_common_spinlock_unlock ( &init->initialization_lock );
 
 }
 

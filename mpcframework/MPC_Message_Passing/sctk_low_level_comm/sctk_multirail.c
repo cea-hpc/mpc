@@ -377,7 +377,7 @@ void sctk_multirail_destination_table_entry_release( sctk_multirail_destination_
 		return;
 	
 	/* Make sure that we are not acquired */
-	sctk_spinlock_write_lock( &entry->endpoints_lock );
+	mpc_common_spinlock_write_lock( &entry->endpoints_lock );
 	
 	sctk_endpoint_list_release( &entry->endpoints );
 	entry->destination = -1;
@@ -391,9 +391,9 @@ void sctk_multirail_destination_table_entry_free( sctk_multirail_destination_tab
 
 void sctk_multirail_destination_table_entry_prune(sctk_multirail_destination_table_entry_t * entry)
 {
-	sctk_spinlock_write_lock(&entry->endpoints_lock);
+	mpc_common_spinlock_write_lock(&entry->endpoints_lock);
 	sctk_endpoint_list_prune(&entry->endpoints);
-	sctk_spinlock_write_unlock(&entry->endpoints_lock);
+	mpc_common_spinlock_write_unlock(&entry->endpoints_lock);
 }
 
 sctk_multirail_destination_table_entry_t * sctk_multirail_destination_table_entry_new(int destination)
@@ -409,16 +409,16 @@ sctk_multirail_destination_table_entry_t * sctk_multirail_destination_table_entr
 
 void sctk_multirail_destination_table_entry_push_endpoint( sctk_multirail_destination_table_entry_t * entry, sctk_endpoint_t * endpoint )
 {
-	sctk_spinlock_write_lock( &entry->endpoints_lock );
+	mpc_common_spinlock_write_lock( &entry->endpoints_lock );
 	entry->endpoints =  sctk_endpoint_list_push( entry->endpoints, endpoint );
-	sctk_spinlock_write_unlock( &entry->endpoints_lock );
+	mpc_common_spinlock_write_unlock( &entry->endpoints_lock );
 }
 
 void sctk_multirail_destination_table_entry_pop_endpoint( sctk_multirail_destination_table_entry_t * entry, sctk_endpoint_t * endpoint )
 {
-	sctk_spinlock_write_lock( &entry->endpoints_lock );
+	mpc_common_spinlock_write_lock( &entry->endpoints_lock );
 	entry->endpoints =  sctk_endpoint_list_pop_endpoint( entry->endpoints, endpoint );
-	sctk_spinlock_write_unlock( &entry->endpoints_lock );
+	mpc_common_spinlock_write_unlock( &entry->endpoints_lock );
 }
 
 
@@ -543,7 +543,7 @@ sctk_endpoint_t * sctk_multirail_ellect_endpoint( sctk_thread_ptp_message_t *msg
 
 
 
-sctk_spinlock_t on_demand_connection_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t on_demand_connection_lock = SCTK_SPINLOCK_INITIALIZER;
 
 /* Per VP pending on-demand connection list */
 static __thread sctk_pending_on_demand_t * __pending_on_demand = NULL;
@@ -599,7 +599,7 @@ void sctk_pending_on_demand_process()
 		/* No endpoint ? then its worth locking */
 		if( !previous_endpoint )
 		{
-			sctk_spinlock_lock( & on_demand_connection_lock );
+			mpc_common_spinlock_lock( & on_demand_connection_lock );
 			
 			/* Check again to avoid RC */
 			previous_endpoint = sctk_rail_get_any_route_to_process (  pod->rail, pod->dest );
@@ -610,7 +610,7 @@ void sctk_pending_on_demand_process()
 				(pod->rail->connect_on_demand)( pod->rail,  pod->dest );
 			}
 			
-			sctk_spinlock_unlock( & on_demand_connection_lock );
+			mpc_common_spinlock_unlock( & on_demand_connection_lock );
 		}
 		
 		sctk_pending_on_demand_t * to_free = pod;
@@ -717,7 +717,7 @@ void sctk_multirail_on_demand_connection( sctk_thread_ptp_message_t *msg )
 
 	/* Enter the critical section to guanrantee the uniqueness of the 
 	 * newly created rail by first checking if it is not already present */
-	sctk_spinlock_lock( & on_demand_connection_lock );
+	mpc_common_spinlock_lock( & on_demand_connection_lock );
 
 	int dest_process = SCTK_MSG_DEST_PROCESS ( msg );
 
@@ -740,7 +740,7 @@ void sctk_multirail_on_demand_connection( sctk_thread_ptp_message_t *msg )
 		(elected_rail->connect_on_demand)( elected_rail,  dest_process );
 	}
 
-	sctk_spinlock_unlock( & on_demand_connection_lock );
+	mpc_common_spinlock_unlock( & on_demand_connection_lock );
 }
 
 
@@ -1036,7 +1036,7 @@ void sctk_multirail_destination_table_release()
 	sctk_multirail_destination_table_entry_t * entry;
 	sctk_multirail_destination_table_entry_t * to_free;
 
-	sctk_spinlock_write_lock( &table->table_lock );
+	mpc_common_spinlock_write_lock( &table->table_lock );
 
 
 	HASH_ITER(hh, table->destinations, to_free, entry)
@@ -1052,14 +1052,14 @@ void sctk_multirail_destination_table_prune(void)
 	struct sctk_multirail_destination_table* table = sctk_multirail_destination_table_get();
 	sctk_multirail_destination_table_entry_t *entry = NULL, *tmp = NULL;
 
-	sctk_spinlock_write_lock( &table->table_lock);
+	mpc_common_spinlock_write_lock( &table->table_lock);
         
 	HASH_ITER(hh, table->destinations, entry, tmp)
 	{
 		sctk_multirail_destination_table_entry_prune(entry);
 	}
 
-	sctk_spinlock_write_unlock(&table->table_lock);
+	mpc_common_spinlock_write_unlock(&table->table_lock);
 }
 
 sctk_multirail_destination_table_entry_t * sctk_multirail_destination_table_acquire_routes(int destination )
@@ -1067,7 +1067,7 @@ sctk_multirail_destination_table_entry_t * sctk_multirail_destination_table_acqu
 	struct sctk_multirail_destination_table * table = sctk_multirail_destination_table_get();
 	sctk_multirail_destination_table_entry_t * dest_entry = NULL;
 	
-	sctk_spinlock_read_lock( &table->table_lock );
+	mpc_common_spinlock_read_lock( &table->table_lock );
 	
 	//sctk_warning("GET endpoint to %d", destination );
 	
@@ -1076,10 +1076,10 @@ sctk_multirail_destination_table_entry_t * sctk_multirail_destination_table_acqu
 	if( dest_entry )
 	{
 		/* Acquire entries in read */
-		sctk_spinlock_read_lock( &dest_entry->endpoints_lock );
+		mpc_common_spinlock_read_lock( &dest_entry->endpoints_lock );
 	}
 	
-	sctk_spinlock_read_unlock( &table->table_lock );
+	mpc_common_spinlock_read_unlock( &table->table_lock );
 	
 	return dest_entry;
 }
@@ -1090,7 +1090,7 @@ void sctk_multirail_destination_table_relax_routes( sctk_multirail_destination_t
 		return;
 	
 	/* Just relax the read lock inside a previously acquired entry */
-	sctk_spinlock_read_unlock( &entry->endpoints_lock );
+	mpc_common_spinlock_read_unlock( &entry->endpoints_lock );
 }
 
 void sctk_multirail_destination_table_push_endpoint(sctk_endpoint_t * endpoint )
@@ -1098,7 +1098,7 @@ void sctk_multirail_destination_table_push_endpoint(sctk_endpoint_t * endpoint )
 	struct sctk_multirail_destination_table * table = sctk_multirail_destination_table_get();
 	sctk_multirail_destination_table_entry_t * dest_entry = NULL;
 
-	sctk_spinlock_write_lock( &table->table_lock );
+	mpc_common_spinlock_write_lock( &table->table_lock );
 	
 	HASH_FIND_INT(table->destinations, &endpoint->dest, dest_entry);
 	
@@ -1111,7 +1111,7 @@ void sctk_multirail_destination_table_push_endpoint(sctk_endpoint_t * endpoint )
 	
         sctk_multirail_destination_table_entry_push_endpoint( dest_entry, endpoint );
 	
-	sctk_spinlock_write_unlock( &table->table_lock );
+	mpc_common_spinlock_write_unlock( &table->table_lock );
 	
 }
 
@@ -1120,7 +1120,7 @@ void sctk_multirail_destination_table_pop_endpoint( sctk_endpoint_t * topop )
 	struct sctk_multirail_destination_table * table = sctk_multirail_destination_table_get();
 	sctk_multirail_destination_table_entry_t * dest_entry = NULL;
 	
-	sctk_spinlock_write_lock( &table->table_lock );
+	mpc_common_spinlock_write_lock( &table->table_lock );
 	
 	HASH_FIND_INT(table->destinations, &topop->dest, dest_entry);
 	
@@ -1129,7 +1129,7 @@ void sctk_multirail_destination_table_pop_endpoint( sctk_endpoint_t * topop )
 		sctk_multirail_destination_table_entry_pop_endpoint( dest_entry, topop );
 	}
 	
-	sctk_spinlock_write_unlock( &table->table_lock );	
+	mpc_common_spinlock_write_unlock( &table->table_lock );	
 }
 
 /**
@@ -1153,7 +1153,7 @@ void sctk_multirail_destination_table_route_to_process( int destination, int * n
 
 	int distance = -1;
 
-	sctk_spinlock_read_lock( &table->table_lock );
+	mpc_common_spinlock_read_lock( &table->table_lock );
 
 
 	HASH_ITER(hh, table->destinations, entry, tmp)
@@ -1197,7 +1197,7 @@ void sctk_multirail_destination_table_route_to_process( int destination, int * n
 		}
 	}
 	
-	sctk_spinlock_read_unlock( &table->table_lock );
+	mpc_common_spinlock_read_unlock( &table->table_lock );
 	
 	if( distance == -1 )
 	{

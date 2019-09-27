@@ -17,9 +17,9 @@
 #define MPCOMP_TASK_DEP_MPC_HTABLE_SIZE 1001 /* 7 * 11 * 13 */
 #define MPCOMP_TASK_DEP_MPC_HTABLE_SEED 2
 
-#define MPCOMP_TASK_DEP_LOCK_NODE(node) sctk_spinlock_lock(&(node->lock))
+#define MPCOMP_TASK_DEP_LOCK_NODE(node) mpc_common_spinlock_lock(&(node->lock))
 
-#define MPCOMP_TASK_DEP_UNLOCK_NODE(node) sctk_spinlock_unlock(&(node->lock))
+#define MPCOMP_TASK_DEP_UNLOCK_NODE(node) mpc_common_spinlock_unlock(&(node->lock))
 
 /* Datastruct from other header */
 struct mpcomp_task_s; /*@see mpcomp_task.h */
@@ -72,7 +72,7 @@ __UNUSED__ static char *mpcomp_task_dep_task_status_to_string[MPCOMP_TASK_DEP_TA
      "MPCOMP_TASK_DEP_TASK_RELEASED", "MPCOMP_TASK_DEP_TASK_FINALIZED"}; 
 
 typedef struct mpcomp_task_dep_node_s {
-  sctk_spinlock_t lock;
+  mpc_common_spinlock_t lock;
   sctk_atomics_int ref_counter;
   sctk_atomics_int predecessors;
   struct mpcomp_task_s *task;
@@ -108,7 +108,7 @@ typedef struct mpcomp_task_dep_ht_bucket_s {
 typedef struct mpcomp_task_dep_ht_table_s {
   uint32_t hsize;
   uint32_t hseed;
-  sctk_spinlock_t hlock;
+  mpc_common_spinlock_t hlock;
   mpcomp_task_dep_hash_func_t hfunc;
   struct mpcomp_task_dep_ht_bucket_s *buckets;
 } mpcomp_task_dep_ht_table_t;

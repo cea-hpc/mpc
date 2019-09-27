@@ -263,31 +263,31 @@ void MPIR_Ext_cs_yield(void) { sctk_thread_yield(); }
  * as global variables and it is not what we want. */
 
 /* STRIDED LOCK */
-sctk_spinlock_t mpio_strided_lock = 0;
+mpc_common_spinlock_t mpio_strided_lock = 0;
 
 void MPIO_lock_strided()
 {
-	sctk_spinlock_lock(&mpio_strided_lock);
+	mpc_common_spinlock_lock(&mpio_strided_lock);
 }
 
 
 void MPIO_unlock_strided()
 {
-	sctk_spinlock_unlock(&mpio_strided_lock);
+	mpc_common_spinlock_unlock(&mpio_strided_lock);
 }
 
 /* SHARED LOCK */
-sctk_spinlock_t mpio_shared_lock = 0;
+mpc_common_spinlock_t mpio_shared_lock = 0;
 
 void MPIO_lock_shared()
 {
-	sctk_spinlock_lock(&mpio_shared_lock);
+	mpc_common_spinlock_lock(&mpio_shared_lock);
 }
 
 
 void MPIO_unlock_shared()
 {
-	sctk_spinlock_unlock(&mpio_shared_lock);
+	mpc_common_spinlock_unlock(&mpio_shared_lock);
 }
 
 
@@ -343,13 +343,13 @@ struct MPI_File_Fortran_cell
 };
 
 struct MPI_File_Fortran_cell * mpi_file_lookup_table = NULL;
-sctk_spinlock_t mpi_file_lookup_table_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t mpi_file_lookup_table_lock = SCTK_SPINLOCK_INITIALIZER;
 
 MPI_Fint MPIO_File_c2f(void * fh)
 {
 	MPI_Fint ret = 0;
 	
-	sctk_spinlock_lock( &mpi_file_lookup_table_lock );
+	mpc_common_spinlock_lock( &mpi_file_lookup_table_lock );
 
 	struct MPI_File_Fortran_cell * new_cell = NULL;
 	new_cell = sctk_malloc( sizeof( struct MPI_File_Fortran_cell ) );
@@ -359,7 +359,7 @@ MPI_Fint MPIO_File_c2f(void * fh)
 	ret = new_cell->id;
 	HASH_ADD_INT( mpi_file_lookup_table, id, new_cell );
 
-	sctk_spinlock_unlock( &mpi_file_lookup_table_lock );
+	mpc_common_spinlock_unlock( &mpi_file_lookup_table_lock );
 	
 	return ret;
 }
@@ -368,7 +368,7 @@ void * MPIO_File_f2c(int fid)
 {
 	void * ret = NULL;
 	
-	sctk_spinlock_lock( &mpi_file_lookup_table_lock );
+	mpc_common_spinlock_lock( &mpi_file_lookup_table_lock );
 	
 	struct MPI_File_Fortran_cell * previous_cell = NULL;
 	
@@ -377,7 +377,7 @@ void * MPIO_File_f2c(int fid)
 	if( previous_cell )
 		ret = previous_cell->fh;
 	
-	sctk_spinlock_unlock( &mpi_file_lookup_table_lock );
+	mpc_common_spinlock_unlock( &mpi_file_lookup_table_lock );
 	
 	return ret;
 }

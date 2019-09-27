@@ -30,7 +30,7 @@
 #include "sctk_internal_thread.h"
 #include "sctk_thread_scheduler.h"
 #include "sctk_thread_mutex.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include <utlist.h>
 
 typedef struct sctk_thread_generic_cond_cell_s{
@@ -40,7 +40,7 @@ typedef struct sctk_thread_generic_cond_cell_s{
 }sctk_thread_generic_cond_cell_t;
 
 typedef struct {
-  sctk_spinlock_t lock;
+  mpc_common_spinlock_t lock;
   sctk_thread_generic_cond_cell_t *blocked;
   clockid_t clock_id;
 }sctk_thread_generic_cond_t;

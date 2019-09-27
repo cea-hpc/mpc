@@ -27,7 +27,7 @@
 #include "sctk_config.h"
 #include "sctk_debug.h"
 #include "sctk_ethread_internal.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_asm.h"
 #include "sctk_pthread_compatible_structures.h"
 #include "sctk_ethread.h"

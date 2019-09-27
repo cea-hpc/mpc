@@ -2,7 +2,7 @@
 #define __SCTK_RAW_FREELIST_QUEUE_H__
 
 #include "stdlib.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_shm_raw_queues_archdefs.h"
 
 #define SCTK_SHM_CELL_SIZE 8192
@@ -39,7 +39,7 @@ typedef enum {
  * STRUCTS
  */
 typedef struct sctk_shm_cell_s{
-    sctk_spinlock_t lock; 
+    mpc_common_spinlock_t lock; 
     sctk_shm_msg_type_t msg_type;       /* Cell msg type                        */ 
     size_t size_to_copy;
     int src;
@@ -65,7 +65,7 @@ struct sctk_shm_list_s
 {
     sctk_shm_item_t *head;
     sctk_shm_item_t *tail;
-    sctk_spinlock_t lock; 
+    mpc_common_spinlock_t lock; 
 #ifdef SHM_USE_ATOMIC_QUEUE
     char cache_pad[CACHELINE_SIZE];
     sctk_shm_item_t *shadow_head;

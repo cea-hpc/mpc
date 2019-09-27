@@ -84,7 +84,7 @@ void sctk_profile_meta_release(struct sctk_profile_meta *meta)
 
 void sctk_profile_meta_begin_compute(struct sctk_profile_meta *meta)
 {
-	sctk_spinlock_lock( &meta->lock );
+	mpc_common_spinlock_lock( &meta->lock );
 	{
 		if( meta->status == 0)
 		{
@@ -93,13 +93,13 @@ void sctk_profile_meta_begin_compute(struct sctk_profile_meta *meta)
 			meta->status = 1;
 		}
 	}
-	sctk_spinlock_unlock( &meta->lock );
+	mpc_common_spinlock_unlock( &meta->lock );
 }
 
 
 void sctk_profile_meta_end_compute(struct sctk_profile_meta *meta)
 {
-	sctk_spinlock_lock( &meta->lock );
+	mpc_common_spinlock_lock( &meta->lock );
 	{
 		if( meta->status == 1)
 		{
@@ -121,7 +121,7 @@ void sctk_profile_meta_end_compute(struct sctk_profile_meta *meta)
 			meta->status = 2;
 		}
 	}
-	sctk_spinlock_unlock( &meta->lock );
+	mpc_common_spinlock_unlock( &meta->lock );
 
 	int rank = 0;
 	MPC_Comm_rank(MPC_COMM_WORLD, &rank);

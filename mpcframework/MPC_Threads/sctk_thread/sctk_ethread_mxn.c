@@ -30,7 +30,7 @@
 #include "sctk_alloc.h"
 #include "sctk_internal_thread.h"
 #include "sctk_context.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "mpc_common_topology.h"
 #include "sctk_posix_ethread_mxn.h"
 
@@ -38,7 +38,7 @@
 #define SCTK_LOCAL_VERSION_MINOR 2
 
 static volatile unsigned int sctk_nb_vp_initialized = 1;
-sctk_spinlock_t sctk_ethread_key_spinlock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t sctk_ethread_key_spinlock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_ethread_virtual_processor_t **sctk_ethread_mxn_vp_list = NULL;
 static int use_ethread_mxn = 0;
 
@@ -88,14 +88,14 @@ sctk_ethread_mxn_place_task_on_vp (sctk_ethread_virtual_processor_t * vp,
 {
   task->vp = vp;
   sctk_nodebug ("Place %p on %d", task, vp->rank);
-  sctk_spinlock_lock (&vp->spinlock);
+  mpc_common_spinlock_lock (&vp->spinlock);
   task->status = ethread_ready;
   __sctk_ethread_enqueue_task (task,
 			       (sctk_ethread_per_thread_t **) & (vp->
 								 incomming_queue),
 			       (sctk_ethread_per_thread_t **) & (vp->
 								 incomming_queue_tail));
-  sctk_spinlock_unlock (&vp->spinlock);
+  mpc_common_spinlock_unlock (&vp->spinlock);
 }
 
 void
@@ -537,9 +537,9 @@ sctk_ethread_mxn_func_kernel_thread (void *arg)
   //avoid to create an allocation chain
   sctk_alloc_posix_plug_on_egg_allocator();
 
-  sctk_spinlock_lock (&sctk_ethread_key_spinlock);
+  mpc_common_spinlock_lock (&sctk_ethread_key_spinlock);
   sctk_nb_vp_initialized++;
-  sctk_spinlock_unlock (&sctk_ethread_key_spinlock);
+  mpc_common_spinlock_unlock (&sctk_ethread_key_spinlock);
 
   if (vp != NULL)
     {

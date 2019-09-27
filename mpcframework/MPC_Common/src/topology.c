@@ -710,7 +710,7 @@ void _mpc_topo_bind_to_process(hwloc_topology_t target_topo)
  */
 int _mpc_topo_bind_to_pu(hwloc_topology_t target_topo, int cpuid)
 {
-	static sctk_spinlock_t pin_lock = 0;
+	static mpc_common_spinlock_t pin_lock = 0;
 
 	if ( cpuid < 0 )
 	{
@@ -718,7 +718,7 @@ int _mpc_topo_bind_to_pu(hwloc_topology_t target_topo, int cpuid)
 		return -1;
 	}
 
-	sctk_spinlock_lock( &pin_lock);
+	mpc_common_spinlock_lock( &pin_lock);
 
 	int ret = _mpc_topo_get_current_cpu(target_topo);
 
@@ -733,7 +733,7 @@ int _mpc_topo_bind_to_pu(hwloc_topology_t target_topo, int cpuid)
 		fprintf( stderr, "Bind to cpu: FAILED (%d, %s)\n", errno, errmsg );
 	}
 
-	sctk_spinlock_unlock( &pin_lock );
+	mpc_common_spinlock_unlock( &pin_lock );
 	return ret;
 }
 

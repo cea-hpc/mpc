@@ -23,7 +23,7 @@
 #define MPI_HALO_CONTEXT_H
 
 #include <mpc_mpi.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include <stdlib.h>
 
 /************************************************************************/
@@ -43,7 +43,7 @@ struct sctk_mpi_halo_context
 	int exchange_counter;
 	int exchange_size;
 	
-	sctk_spinlock_t lock;
+	mpc_common_spinlock_t lock;
 };
 
 void sctk_mpi_halo_context_init( struct sctk_mpi_halo_context * ctx );

@@ -29,7 +29,7 @@
 #include "sctk_thread.h"
 #include "sctk_internal_thread.h"
 #include "sctk_thread_scheduler.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 
 typedef enum{
   sctk_spin_unitialized,
@@ -38,7 +38,7 @@ typedef enum{
 } sctk_spin_state;
 
 typedef struct sctk_thread_generic_spinlock_s{
-	sctk_spinlock_t lock;
+	mpc_common_spinlock_t lock;
 	sctk_spin_state state;
 	sctk_thread_generic_scheduler_t* owner;
 }sctk_thread_generic_spinlock_t;

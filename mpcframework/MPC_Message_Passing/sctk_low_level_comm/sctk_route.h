@@ -95,12 +95,12 @@ struct sctk_endpoint_s
 	char is_initiator;		  /**< Return if the process is the initiator of the remote creation.
 					   * if 'is_initiator == CHAR_MAX, value not set */
 	
-	sctk_spinlock_t lock;
+	mpc_common_spinlock_t lock;
 };
 
-#define ROUTE_LOCK(r) sctk_spinlock_lock(&(r)->lock)
-#define ROUTE_UNLOCK(r) sctk_spinlock_unlock(&(r)->lock)
-#define ROUTE_TRYLOCK(r) sctk_spinlock_trylock(&(r)->lock)
+#define ROUTE_LOCK(r) mpc_common_spinlock_lock(&(r)->lock)
+#define ROUTE_UNLOCK(r) mpc_common_spinlock_unlock(&(r)->lock)
+#define ROUTE_TRYLOCK(r) mpc_common_spinlock_trylock(&(r)->lock)
 
 void sctk_endpoint_init( sctk_endpoint_t *tmp,  int dest, sctk_rail_info_t *rail, sctk_route_origin_t origin );
 void sctk_endpoint_init_static ( sctk_endpoint_t *tmp, int dest, sctk_rail_info_t *rail );

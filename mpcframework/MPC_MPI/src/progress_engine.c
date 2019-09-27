@@ -11,9 +11,9 @@
 static inline int sctk_progress_work_unit_isfree( struct sctk_progress_work_unit * pwu )
 {
     int ret = 0;
-    if( sctk_spinlock_trylock( &pwu->unit_lock ) == 0 ){
+    if( mpc_common_spinlock_trylock( &pwu->unit_lock ) == 0 ){
         ret = pwu->is_free;
-        sctk_spinlock_unlock( &pwu->unit_lock );
+        mpc_common_spinlock_unlock( &pwu->unit_lock );
     }
     return ret;
 }
@@ -76,7 +76,7 @@ int sctk_progress_work_unit_poll( struct sctk_progress_work_unit *pwu )
     int ret = PWU_NO_PROGRESS;
 
 
-    if( sctk_spinlock_trylock(&pwu->unit_lock) == 0 ) {
+    if( mpc_common_spinlock_trylock(&pwu->unit_lock) == 0 ) {
 
         if( !pwu->is_free)
         {
@@ -92,7 +92,7 @@ int sctk_progress_work_unit_poll( struct sctk_progress_work_unit *pwu )
             }
         }
     
-        sctk_spinlock_unlock(&pwu->unit_lock);
+        mpc_common_spinlock_unlock(&pwu->unit_lock);
     }
 
     return ret;
@@ -162,9 +162,9 @@ struct sctk_progress_work_unit * sctk_progress_list_acquire( struct sctk_progres
         int current_w_count = 0;
         do
         {
-            sctk_spinlock_lock( &pl->list_lock );
+            mpc_common_spinlock_lock( &pl->list_lock );
             current_w_count = pl->work_count;
-            sctk_spinlock_unlock( &pl->list_lock );
+            mpc_common_spinlock_unlock( &pl->list_lock );
 
             if( PROGRESS_PWU_STATIC_ARRAY == current_w_count )
             {
@@ -176,7 +176,7 @@ struct sctk_progress_work_unit * sctk_progress_list_acquire( struct sctk_progres
 
 
         /* We have a window now try to acquire */
-        sctk_spinlock_lock( &pl->list_lock );
+        mpc_common_spinlock_lock( &pl->list_lock );
 
         if( pl->work_count < PROGRESS_PWU_STATIC_ARRAY )
         {
@@ -197,7 +197,7 @@ struct sctk_progress_work_unit * sctk_progress_list_acquire( struct sctk_progres
             }
         }
 
-        sctk_spinlock_unlock( &pl->list_lock );
+        mpc_common_spinlock_unlock( &pl->list_lock );
 
     }while( !acquired );
 
@@ -251,10 +251,10 @@ int sctk_progress_list_poll( struct sctk_progress_list * pl )
             did_work |= 1;
             pl->no_work_count--;
 
-            sctk_spinlock_lock( &pl->list_lock );
+            mpc_common_spinlock_lock( &pl->list_lock );
             /* We need to free this slot */
             pl->work_count--;
-            sctk_spinlock_unlock( &pl->list_lock );
+            mpc_common_spinlock_unlock( &pl->list_lock );
 
             return PWU_WORK_DONE;
         }
@@ -328,7 +328,7 @@ struct sctk_progress_list * sctk_progress_engine_pool_join( struct sctk_progress
 
     struct sctk_progress_list * ret = NULL;
 
-    sctk_spinlock_lock( &p->pool_lock );
+    mpc_common_spinlock_lock( &p->pool_lock );
 
     if( p->booked == p->size )
     {
@@ -340,7 +340,7 @@ struct sctk_progress_list * sctk_progress_engine_pool_join( struct sctk_progress
     ret->id = p->booked;
     p->booked++;
 
-    sctk_spinlock_unlock( &p->pool_lock );
+    mpc_common_spinlock_unlock( &p->pool_lock );
 
 
     return ret;

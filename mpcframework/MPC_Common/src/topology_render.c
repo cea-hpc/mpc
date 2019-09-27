@@ -385,16 +385,16 @@ void create_placement_rendering(int os_pu, int os_master_pu, int task_id){
     }
 }
 
-static sctk_spinlock_t __lock_graphic = 0;
+static mpc_common_spinlock_t __lock_graphic = 0;
 
 void mpc_common_topology_graph_lock_graphic()
 {
-    sctk_spinlock_lock(&__lock_graphic);
+    mpc_common_spinlock_lock(&__lock_graphic);
 }
 
 void mpc_common_topology_graph_unlock_graphic()
 {
-    sctk_spinlock_unlock(&__lock_graphic);
+    mpc_common_spinlock_unlock(&__lock_graphic);
 }
 
 

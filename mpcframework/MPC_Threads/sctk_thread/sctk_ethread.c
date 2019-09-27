@@ -87,14 +87,14 @@ sctk_ethread_place_task_on_vp (sctk_ethread_virtual_processor_t * vp,
 {
   task->vp = vp;
   sctk_nodebug ("Place %p on %d", task, vp->rank);
-  sctk_spinlock_lock (&vp->spinlock);
+  mpc_common_spinlock_lock (&vp->spinlock);
   task->status = ethread_ready;
   __sctk_ethread_enqueue_task (task,
 			       (sctk_ethread_per_thread_t **) & (vp->
 								 incomming_queue),
 			       (sctk_ethread_per_thread_t **) & (vp->
 								 incomming_queue_tail));
-  sctk_spinlock_unlock (&vp->spinlock);
+  mpc_common_spinlock_unlock (&vp->spinlock);
 }
 
 void

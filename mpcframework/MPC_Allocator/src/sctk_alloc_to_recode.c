@@ -24,7 +24,7 @@
 
 /************************** HEADERS ************************/
 #include <sctk_config.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include "sctk_alloc_posix.h"
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_posix.h"

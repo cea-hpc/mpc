@@ -42,7 +42,7 @@ void mpc_MPI_Win_tmp_init(struct mpc_MPI_Win_tmp *tmp) {
 }
 
 void mpc_MPI_Win_tmp_purge(struct mpc_MPI_Win_tmp *tmp) {
-  sctk_spinlock_lock_yield(&tmp->lock);
+  mpc_common_spinlock_lock_yield(&tmp->lock);
 
   struct mpc_MPI_Win_tmp_buff *curr = tmp->head;
   struct mpc_MPI_Win_tmp_buff *to_free = NULL;
@@ -58,7 +58,7 @@ void mpc_MPI_Win_tmp_purge(struct mpc_MPI_Win_tmp *tmp) {
 
   tmp->head = NULL;
 
-  sctk_spinlock_unlock(&tmp->lock);
+  mpc_common_spinlock_unlock(&tmp->lock);
 }
 
 void mpc_MPI_Win_tmp_release(struct mpc_MPI_Win_tmp *tmp) {
@@ -67,21 +67,21 @@ void mpc_MPI_Win_tmp_release(struct mpc_MPI_Win_tmp *tmp) {
 
 int mpc_MPI_Win_tmp_register(struct mpc_MPI_Win_tmp *tmp, void *ptr,
                              size_t size) {
-  sctk_spinlock_lock_yield(&tmp->lock);
+  mpc_common_spinlock_lock_yield(&tmp->lock);
 
   struct mpc_MPI_Win_tmp_buff *pbuff =
       sctk_malloc(sizeof(struct mpc_MPI_Win_tmp_buff));
 
   if (!pbuff) {
     perror("malloc");
-    sctk_spinlock_unlock(&tmp->lock);
+    mpc_common_spinlock_unlock(&tmp->lock);
     return -1;
   }
 
   pbuff->buff = ptr;
 
   if (!pbuff->buff) {
-    sctk_spinlock_unlock(&tmp->lock);
+    mpc_common_spinlock_unlock(&tmp->lock);
     return -1;
   }
 
@@ -91,7 +91,7 @@ int mpc_MPI_Win_tmp_register(struct mpc_MPI_Win_tmp *tmp, void *ptr,
   pbuff->next = tmp->head;
   tmp->head = pbuff;
 
-  sctk_spinlock_unlock(&tmp->lock);
+  mpc_common_spinlock_unlock(&tmp->lock);
 
   return 0;
 }
@@ -116,20 +116,20 @@ void *mpc_MPI_Win_tmp_alloc(struct mpc_MPI_Win_tmp *tmp, size_t size) {
 /************************************************************************/
 
 static struct MPCHT __request_pool_ht;
-static sctk_spinlock_t __request_pool_lock = 0;
+static mpc_common_spinlock_t __request_pool_lock = 0;
 static volatile int __request_pool_init_done = 0;
 
 static inline void request_poll_ht_check_init() {
   if (__request_pool_init_done)
     return;
 
-  sctk_spinlock_lock(&__request_pool_lock);
+  mpc_common_spinlock_lock(&__request_pool_lock);
   if (__request_pool_init_done == 0) {
     MPCHT_init(&__request_pool_ht, 64);
     __request_pool_init_done = 1;
   }
 
-  sctk_spinlock_unlock(&__request_pool_lock);
+  mpc_common_spinlock_unlock(&__request_pool_lock);
 }
 
 int mpc_MPI_register_request_counter(sctk_request_t *request,
@@ -264,12 +264,12 @@ int mpc_MPI_Win_request_array_fence_dual(
   do {
     mpc_MPI_Win_request_array_fence_no_ops_dual(ra1, ra2);
 
-    sctk_spinlock_lock(&ra1->lock);
-    sctk_spinlock_lock(&ra2->lock);
+    mpc_common_spinlock_lock(&ra1->lock);
+    mpc_common_spinlock_lock(&ra2->lock);
     wait_for_ops1 = ra1->pending_rma;
     wait_for_ops2 = ra2->pending_rma;
-    sctk_spinlock_unlock(&ra2->lock);
-    sctk_spinlock_unlock(&ra1->lock);
+    mpc_common_spinlock_unlock(&ra2->lock);
+    mpc_common_spinlock_unlock(&ra1->lock);
 
   } while (wait_for_ops1 || wait_for_ops2);
 
@@ -280,7 +280,7 @@ int mpc_MPI_Win_request_array_test(struct mpc_MPI_Win_request_array *pra) {
 
   struct mpc_MPI_Win_request_array *ra = pra;
 
-  if (sctk_spinlock_trylock(&ra->lock) == 1) {
+  if (mpc_common_spinlock_trylock(&ra->lock) == 1) {
     return 0;
   }
 
@@ -298,7 +298,7 @@ int mpc_MPI_Win_request_array_test(struct mpc_MPI_Win_request_array *pra) {
     }
   }
 
-  sctk_spinlock_unlock(&ra->lock);
+  mpc_common_spinlock_unlock(&ra->lock);
 
   return 1;
 }
@@ -308,7 +308,7 @@ mpc_MPI_Win_request_array_pick(struct mpc_MPI_Win_request_array *ra) {
 
   while (1) {
 
-    sctk_spinlock_lock_yield(&ra->lock);
+    mpc_common_spinlock_lock_yield(&ra->lock);
 
     if (sctk_atomics_load_int(&ra->available_req) != 0) {
       int i;
@@ -320,14 +320,14 @@ mpc_MPI_Win_request_array_pick(struct mpc_MPI_Win_request_array *ra) {
 
           sctk_init_request(&ra->requests[i], ra->comm, REQUEST_PICKED);
 
-          sctk_spinlock_unlock(&ra->lock);
+          mpc_common_spinlock_unlock(&ra->lock);
 
           return &ra->requests[i];
         }
       }
     }
 
-    sctk_spinlock_unlock(&ra->lock);
+    mpc_common_spinlock_unlock(&ra->lock);
 
     mpc_thread_yield();
   }
@@ -448,7 +448,7 @@ int mpc_MPI_win_locks_push_delayed(struct mpc_MPI_win_locks *locks, int rank,
   struct mpc_MPI_win_lock_request *new =
       mpc_MPI_win_lock_request_new(rank, lock_type);
 
-  sctk_spinlock_lock_yield(&locks->lock);
+  mpc_common_spinlock_lock_yield(&locks->lock);
 
   if (!locks->head) {
     locks->head = new;
@@ -466,7 +466,7 @@ int mpc_MPI_win_locks_push_delayed(struct mpc_MPI_win_locks *locks, int rank,
     }
   }
 
-  sctk_spinlock_unlock(&locks->lock);
+  mpc_common_spinlock_unlock(&locks->lock);
 
   return 0;
 }
@@ -494,7 +494,7 @@ int mpc_MPI_win_locks_init(struct mpc_MPI_win_locks *locks) {
 
 int mpc_MPI_win_locks_release(struct mpc_MPI_win_locks *locks) {
 
-  sctk_spinlock_lock_yield(&locks->lock);
+  mpc_common_spinlock_lock_yield(&locks->lock);
 
   struct mpc_MPI_win_lock_request *cur = locks->head;
   struct mpc_MPI_win_lock_request *to_free = NULL;
@@ -506,7 +506,7 @@ int mpc_MPI_win_locks_release(struct mpc_MPI_win_locks *locks) {
     mpc_MPI_win_lock_request_free(to_free);
   }
 
-  sctk_spinlock_unlock(&locks->lock);
+  mpc_common_spinlock_unlock(&locks->lock);
 
   return 0;
 }
@@ -519,7 +519,7 @@ int *mpc_MPI_win_locks_pop(struct mpc_MPI_win_locks *locks, int *count_popped,
 
   int *ret = NULL;
 
-  sctk_spinlock_lock_yield(&locks->lock);
+  mpc_common_spinlock_lock_yield(&locks->lock);
 
   struct mpc_MPI_win_lock_request *to_free = NULL;
   struct mpc_MPI_win_lock_request *cur = locks->head;
@@ -557,7 +557,7 @@ int *mpc_MPI_win_locks_pop(struct mpc_MPI_win_locks *locks, int *count_popped,
       }
 
       /* We can only take a single exclusive lock */
-      sctk_spinlock_unlock(&locks->lock);
+      mpc_common_spinlock_unlock(&locks->lock);
       return ret;
     }
 
@@ -574,14 +574,14 @@ int *mpc_MPI_win_locks_pop(struct mpc_MPI_win_locks *locks, int *count_popped,
       }
 
       /* We can only take a single exclusive lock */
-      sctk_spinlock_unlock(&locks->lock);
+      mpc_common_spinlock_unlock(&locks->lock);
       return ret;
     }
 
     cur = locks->head;
   }
 
-  sctk_spinlock_unlock(&locks->lock);
+  mpc_common_spinlock_unlock(&locks->lock);
 
   return ret;
 }
@@ -833,10 +833,10 @@ int mpc_Win_target_ctx_start_exposure_no_lock(MPI_Win win, mpc_Win_arity arity,
         if (remotes[i] < 0)
           continue;
 
-        sctk_spinlock_read_lock(&ctx->locks.win_lock);
+        mpc_common_spinlock_read_lock(&ctx->locks.win_lock);
       }
     } else if (state == MPC_WIN_TARGET_PASSIVE_EXCL) {
-      sctk_spinlock_write_lock(&ctx->locks.win_lock);
+      mpc_common_spinlock_write_lock(&ctx->locks.win_lock);
     } else {
       not_reachable();
     }
@@ -979,14 +979,14 @@ int mpc_Win_target_ctx_start_exposure(MPI_Win win, mpc_Win_arity arity,
 
   mpc_Win_exposure_start();
 
-  sctk_spinlock_lock_yield(&ctx->lock);
+  mpc_common_spinlock_lock_yield(&ctx->lock);
 
   mpc_Win_target_ctx_check_for_pending_locks(win);
 
   ret = mpc_Win_target_ctx_start_exposure_no_lock(win, arity, remotes,
                                                   remote_count, state);
 
-  sctk_spinlock_unlock(&ctx->lock);
+  mpc_common_spinlock_unlock(&ctx->lock);
 
   return ret;
 }
@@ -1068,7 +1068,7 @@ int mpc_Win_target_ctx_end_exposure_no_lock(MPI_Win win,
     ctx->passive_exposure_count--;
     sctk_info("UNLOCK %d pending", ctx->passive_exposure_count);
     if (ctx->passive_exposure_count == 0) {
-      sctk_spinlock_write_unlock(&ctx->locks.win_lock);
+      mpc_common_spinlock_write_unlock(&ctx->locks.win_lock);
       check_for_pending_locks = 1;
       clear_remote_ranks = 1;
       ctx->state = MPC_WIN_TARGET_NONE;
@@ -1078,7 +1078,7 @@ int mpc_Win_target_ctx_end_exposure_no_lock(MPI_Win win,
   case MPC_WIN_TARGET_PASSIVE_SHARED:
     check_for_pending_locks = 1;
     ctx->passive_exposure_count--;
-    last_rlock = sctk_spinlock_read_unlock(&ctx->locks.win_lock);
+    last_rlock = mpc_common_spinlock_read_unlock(&ctx->locks.win_lock);
     sctk_info("UNLOCK %d pending (unlock from %d)", ctx->passive_exposure_count,
               source_rank);
     if ((ctx->passive_exposure_count == 0) && (last_rlock == 0)) {
@@ -1174,11 +1174,11 @@ int mpc_Win_target_ctx_end_exposure(MPI_Win win, mpc_Win_target_state state,
 
   int ret = 0;
 
-  sctk_spinlock_lock_yield(&ctx->lock);
+  mpc_common_spinlock_lock_yield(&ctx->lock);
 
   ret = mpc_Win_target_ctx_end_exposure_no_lock(win, state, source_rank);
 
-  sctk_spinlock_unlock(&ctx->lock);
+  mpc_common_spinlock_unlock(&ctx->lock);
 
   mpc_Win_exposure_end();
 
@@ -1418,12 +1418,12 @@ int mpc_Win_source_ctx_start_access(MPI_Win win, mpc_Win_arity arity,
 
   int ret = 0;
 
-  sctk_spinlock_lock_yield(&ctx->lock);
+  mpc_common_spinlock_lock_yield(&ctx->lock);
 
   ret = mpc_Win_source_ctx_start_access_no_lock(win, arity, remotes,
                                                 remote_count, state);
 
-  sctk_spinlock_unlock(&ctx->lock);
+  mpc_common_spinlock_unlock(&ctx->lock);
 
   return ret;
 }
@@ -1575,11 +1575,11 @@ int mpc_Win_source_ctx_end_access(MPI_Win win, mpc_Win_source_state state,
 
   int ret = 0;
 
-  sctk_spinlock_lock_yield(&ctx->lock);
+  mpc_common_spinlock_lock_yield(&ctx->lock);
 
   ret = mpc_Win_source_ctx_end_access_no_lock(win, state, remote_rank);
 
-  sctk_spinlock_unlock(&ctx->lock);
+  mpc_common_spinlock_unlock(&ctx->lock);
 
   return ret;
 }
@@ -1831,14 +1831,14 @@ int mpc_MPI_Win_lock(int lock_type, int rank, __UNUSED__ int assert, MPI_Win win
         (struct mpc_MPI_Win *)sctk_window_get_payload(remote_win);
 
     if (lock_type == MPI_LOCK_EXCLUSIVE) {
-      while (sctk_spinlock_write_trylock(&rdesc->target.locks.win_lock) != 0) {
+      while (mpc_common_spinlock_write_trylock(&rdesc->target.locks.win_lock) != 0) {
         mpc_MPI_Win_request_array_fence(&desc->source.requests);
         mpc_MPI_Win_request_array_test(&desc->target.requests);
       }
 
-      sctk_spinlock_lock_yield(&rdesc->target.lock);
+      mpc_common_spinlock_lock_yield(&rdesc->target.lock);
       rdesc->target.state = MPC_WIN_TARGET_PASSIVE_EXCL;
-      sctk_spinlock_unlock(&rdesc->target.lock);
+      mpc_common_spinlock_unlock(&rdesc->target.lock);
 
       if (!do_lock_all) {
         if (mpc_Win_source_ctx_start_access(win, MPC_WIN_NO_REMOTE, NULL, 0,
@@ -1850,14 +1850,14 @@ int mpc_MPI_Win_lock(int lock_type, int rank, __UNUSED__ int assert, MPI_Win win
       return MPI_SUCCESS;
     } else if (lock_type == MPI_LOCK_SHARED) {
       sctk_info("LOCKSH %d", rank);
-      while (sctk_spinlock_read_trylock(&rdesc->target.locks.win_lock) != 0) {
+      while (mpc_common_spinlock_read_trylock(&rdesc->target.locks.win_lock) != 0) {
         mpc_MPI_Win_request_array_fence(&desc->source.requests);
         mpc_MPI_Win_request_array_test(&desc->target.requests);
       }
 
-      sctk_spinlock_lock_yield(&rdesc->target.lock);
+      mpc_common_spinlock_lock_yield(&rdesc->target.lock);
       rdesc->target.state = MPC_WIN_TARGET_PASSIVE_SHARED;
-      sctk_spinlock_unlock(&rdesc->target.lock);
+      mpc_common_spinlock_unlock(&rdesc->target.lock);
 
       if (!do_lock_all) {
         if (mpc_Win_source_ctx_start_access(win, MPC_WIN_NO_REMOTE, NULL, 0,
@@ -1921,7 +1921,7 @@ static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
 
     if (rdesc->target.state == MPC_WIN_TARGET_PASSIVE_EXCL) {
 
-      sctk_spinlock_lock_yield(&rdesc->target.lock);
+      mpc_common_spinlock_lock_yield(&rdesc->target.lock);
 
       rdesc->target.state = MPC_WIN_TARGET_NONE;
 
@@ -1930,8 +1930,8 @@ static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
       sctk_free(rdesc->target.remote_ranks);
       rdesc->target.remote_ranks = NULL;
 
-      sctk_spinlock_unlock(&rdesc->target.lock);
-      sctk_spinlock_write_unlock(&rdesc->target.locks.win_lock);
+      mpc_common_spinlock_unlock(&rdesc->target.lock);
+      mpc_common_spinlock_write_unlock(&rdesc->target.locks.win_lock);
 
       if (!do_unlock_all) {
         if (mpc_Win_source_ctx_end_access(win, MPC_WIN_SOURCE_PASIVE, -1)) {
@@ -1942,11 +1942,11 @@ static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
 
       goto UNPD;
     } else if (rdesc->target.state == MPC_WIN_TARGET_PASSIVE_SHARED) {
-      int rlv = sctk_spinlock_read_unlock(&rdesc->target.locks.win_lock);
+      int rlv = mpc_common_spinlock_read_unlock(&rdesc->target.locks.win_lock);
       sctk_info("UNLOCK SH %d @ %d", rank, rlv);
 
       if (rlv == 0) {
-        sctk_spinlock_lock_yield(&rdesc->target.lock);
+        mpc_common_spinlock_lock_yield(&rdesc->target.lock);
         if (rdesc->target.passive_exposure_count == 0) {
           rdesc->target.state = MPC_WIN_TARGET_NONE;
 
@@ -1955,7 +1955,7 @@ static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
           sctk_free(rdesc->target.remote_ranks);
           rdesc->target.remote_ranks = 0;
         }
-        sctk_spinlock_unlock(&rdesc->target.lock);
+        mpc_common_spinlock_unlock(&rdesc->target.lock);
       }
 
       if (!do_unlock_all) {
@@ -2002,9 +2002,9 @@ static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
   }
 
 UNPD:
-  if (sctk_spinlock_trylock(&desc->target.lock) == 0) {
+  if (mpc_common_spinlock_trylock(&desc->target.lock) == 0) {
     mpc_Win_target_ctx_check_for_pending_locks(win);
-    sctk_spinlock_unlock(&desc->target.lock);
+    mpc_common_spinlock_unlock(&desc->target.lock);
   }
 
   sctk_info("DONE UUUUUUUUUUUUUU to %d", rank);

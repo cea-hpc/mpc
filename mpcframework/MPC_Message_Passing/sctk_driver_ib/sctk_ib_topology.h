@@ -34,7 +34,7 @@
 typedef struct sctk_ib_topology_numa_node_s
 {
 	int id;
-	sctk_spinlock_t polling_lock;
+	mpc_common_spinlock_t polling_lock;
 	sctk_ibuf_numa_t ibufs;
 	char padd[4096];
 } sctk_ib_topology_numa_node_t;
@@ -43,7 +43,7 @@ typedef struct sctk_ib_topology_numa_node_s
 typedef struct sctk_ib_topology_numa_node_init_s
 {
 	int is_leader;
-	sctk_spinlock_t initialization_lock;
+	mpc_common_spinlock_t initialization_lock;
 } sctk_ib_topology_numa_node_init_t;
 
 typedef struct sctk_ib_topology_s

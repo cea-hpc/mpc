@@ -24,7 +24,7 @@
 
 #include <uthash.h>
 #include <opa_primitives.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 struct sctk_thread_ptp_message_s;
 struct sctk_ib_buffered_table_s;
 
@@ -70,7 +70,7 @@ typedef struct sctk_reorder_table_s
 	OPA_int_t message_number_src;
 	OPA_int_t message_number_dest;
 
-	sctk_spinlock_t lock;
+	mpc_common_spinlock_t lock;
 	sctk_reorder_buffer_t *buffer;
 
 	UT_hash_handle hh;
@@ -79,7 +79,7 @@ typedef struct sctk_reorder_table_s
 typedef struct sctk_reorder_task_s
 {
 	sctk_reorder_table_t *table;
-	sctk_spinlock_t lock;
+	mpc_common_spinlock_t lock;
 } sctk_reorder_list_t;
 
 sctk_reorder_table_t *sctk_get_reorder ( int dest );

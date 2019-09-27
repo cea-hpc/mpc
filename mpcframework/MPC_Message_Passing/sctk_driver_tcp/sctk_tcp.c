@@ -130,7 +130,7 @@ static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *
 	size_t size;
 	int fd;
 
-	sctk_spinlock_lock ( & ( endpoint->data.tcp.lock ) );
+	mpc_common_spinlock_lock ( & ( endpoint->data.tcp.lock ) );
 
 	fd = endpoint->data.tcp.fd;
 
@@ -143,7 +143,7 @@ static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *
 	mpc_common_io_safe_write ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
 
 	sctk_net_write_in_fd ( msg, fd );
-	sctk_spinlock_unlock ( & ( endpoint->data.tcp.lock ) );
+	mpc_common_spinlock_unlock ( & ( endpoint->data.tcp.lock ) );
 
 	sctk_nodebug("SEND MSG ENDPOINT TCP to %d DONE", endpoint->dest);
 

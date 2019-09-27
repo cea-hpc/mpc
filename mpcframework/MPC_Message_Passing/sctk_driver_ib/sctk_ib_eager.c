@@ -95,7 +95,7 @@ static inline sctk_thread_ptp_message_t *sctk_ib_eager_pick_buffered_ptp_message
 
 	if ( rail_ib->eager_buffered_ptp_message )
 	{
-		sctk_spinlock_lock ( &rail_ib->eager_lock_buffered_ptp_message );
+		mpc_common_spinlock_lock ( &rail_ib->eager_lock_buffered_ptp_message );
 
 		if ( rail_ib->eager_buffered_ptp_message )
 		{
@@ -103,7 +103,7 @@ static inline sctk_thread_ptp_message_t *sctk_ib_eager_pick_buffered_ptp_message
 			LL_DELETE ( rail_ib->eager_buffered_ptp_message, rail_ib->eager_buffered_ptp_message );
 		}
 
-		sctk_spinlock_unlock ( &rail_ib->eager_lock_buffered_ptp_message );
+		mpc_common_spinlock_unlock ( &rail_ib->eager_lock_buffered_ptp_message );
 	}
 
 	/* If no more entries are available in the buffered list, we allocate */
@@ -127,9 +127,9 @@ void sctk_ib_eager_release_buffered_ptp_message ( sctk_rail_info_t *rail, sctk_t
 	{
 		sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 
-		sctk_spinlock_lock ( &rail_ib->eager_lock_buffered_ptp_message );
+		mpc_common_spinlock_lock ( &rail_ib->eager_lock_buffered_ptp_message );
 		LL_PREPEND ( rail_ib->eager_buffered_ptp_message, msg );
-		sctk_spinlock_unlock ( &rail_ib->eager_lock_buffered_ptp_message );
+		mpc_common_spinlock_unlock ( &rail_ib->eager_lock_buffered_ptp_message );
 	}
 	else
 	{

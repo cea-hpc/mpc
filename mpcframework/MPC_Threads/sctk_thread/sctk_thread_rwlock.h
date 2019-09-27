@@ -29,7 +29,7 @@
 #include "sctk_thread.h"
 #include "sctk_internal_thread.h"
 #include "sctk_thread_scheduler.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include <utlist.h>
 #include <time.h>
 #include <uthash.h>
@@ -59,7 +59,7 @@ typedef struct sctk_thread_generic_rwlockattr_s{
 #define SCTK_THREAD_GENERIC_RWLOCKATTR_INIT {SCTK_THREAD_PROCESS_PRIVATE}
 
 typedef struct sctk_thread_generic_rwlock_s{
-  sctk_spinlock_t lock;
+  mpc_common_spinlock_t lock;
   volatile sctk_rwlock_status_t status;
   volatile unsigned int count;
   volatile unsigned int reads_count;

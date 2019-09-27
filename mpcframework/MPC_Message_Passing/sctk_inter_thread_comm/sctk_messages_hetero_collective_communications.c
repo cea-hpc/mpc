@@ -24,7 +24,7 @@
 #include <sctk_inter_thread_comm.h>
 #include <sctk_communicator.h>
 #include <sctk.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include <sctk_atomics.h>
 #include <sctk_thread.h>
 #include <string.h>

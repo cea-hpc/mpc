@@ -29,7 +29,7 @@
 
 #include "sctk_ib_config.h"
 #include "sctk_ib_buffered.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_ibufs.h"
 #include "sctk_route.h"
 #include "sctk_ib_cm.h"
@@ -41,14 +41,14 @@
 #define ACK_CANCEL  333
 typedef struct sctk_ibuf_rdma_s
 {
-	sctk_spinlock_t lock;			/**< Lock for allocating pool */
+	mpc_common_spinlock_t lock;			/**< Lock for allocating pool */
 	char dummy1[64];
-	sctk_spinlock_t polling_lock;
+	mpc_common_spinlock_t polling_lock;
 	char dummy2[64];
 	struct sctk_ibuf_rdma_pool_s *pool;
 	OPA_int_t state_rtr; 			/**< If remote is RTR. Type: sctk_endpoint_state_t */
 	OPA_int_t state_rts;			/**< If remote is RTS. Type: sctk_endpoint_state_t */
-	sctk_spinlock_t pending_data_lock;
+	mpc_common_spinlock_t pending_data_lock;
 	OPA_int_t       resizing_nb;			/**< Number of resizing */
 	OPA_int_t       cancel_nb; 			/**< Number of Connection cancels */
 	char dummy3[64];
@@ -60,9 +60,9 @@ typedef struct sctk_ibuf_rdma_s
 	/* Counters */
 	OPA_int_t miss_nb;    			 /**< Number of RDMA miss */
 	OPA_int_t hits_nb;     			 /**< Number of RDMA hits */
-	sctk_spinlock_t flushing_lock;   		/**< Lock while flushing */
+	mpc_common_spinlock_t flushing_lock;   		/**< Lock while flushing */
 	char dummy[64];
-	sctk_spinlock_t stats_lock;
+	mpc_common_spinlock_t stats_lock;
 	size_t messages_size;			/**< Cumulative sum of msg sizes */
 	size_t messages_nb;				/**< Number of messages exchanged */
 	double creation_timestamp;
@@ -87,20 +87,20 @@ typedef struct sctk_ib_qp_s
 	int                     rank;       /**< Process rank associated to the QP */
 	OPA_int_t               state; 	    /**< QP state */
 	OPA_int_t               is_rtr;     /**< If QP in Ready-to-Receive mode*/
-	sctk_spinlock_t         lock_rtr;
+	mpc_common_spinlock_t         lock_rtr;
 	OPA_int_t               is_rts;     /**< If QP in Ready-to-Send mode */
-	sctk_spinlock_t         lock_rts;
+	mpc_common_spinlock_t         lock_rts;
 	unsigned int            free_nb;    /**< Number of pending entries free in QP */
-	sctk_spinlock_t         post_lock;  /**< Lock when posting an element */
+	mpc_common_spinlock_t         post_lock;  /**< Lock when posting an element */
 	OPA_int_t               pending_data; 	/**< Number of pending requests */
 	sctk_endpoint_t      * endpoint; /** Routes */
 	/* For linked-list */
 	struct sctk_ib_qp_s *prev;
 	struct sctk_ib_qp_s *next;
 	/* ---------------- */
-	sctk_spinlock_t lock_send;		/**< Lock for sending messages */
+	mpc_common_spinlock_t lock_send;		/**< Lock for sending messages */
 	char dummy [64];
-	sctk_spinlock_t flushing_lock; 	/**< Lock for flushing messages */
+	mpc_common_spinlock_t flushing_lock; 	/**< Lock for flushing messages */
 	int is_flushing_initiator;
 	OPA_int_t deco_canceled;	          /**< If a QP deconnexion should be canceled */
 	int local_ack;			/**< ACK for the local peers */

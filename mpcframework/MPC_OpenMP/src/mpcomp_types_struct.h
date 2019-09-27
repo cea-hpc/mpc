@@ -35,7 +35,7 @@
 #include "mpcomp_types_loop.h"
 
 #include "mpcomp_tree_array.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 
 #ifdef MPCOMP_USE_INTEL_ABI
 #include "mpcomp_intel_types.h"
@@ -78,7 +78,7 @@ typedef struct mpcomp_new_parallel_region_info_s {
   struct mpcomp_new_parallel_region_info_s* parent;
   struct mpcomp_node_s *new_root;
   int single_sections_current_save;
-  sctk_spinlock_t update_lock;
+  mpc_common_spinlock_t update_lock;
   int for_dyn_current_save;
   long combined_pragma;
   mpcomp_local_icv_t icvs; /* Set of ICVs for the child team */
@@ -117,7 +117,7 @@ typedef struct mpcomp_team_s {
   /* GUIDED LOOP CONSTRUCT */
   volatile int is_first[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
   sctk_atomics_ptr guided_from[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
-  sctk_spinlock_t lock;
+  mpc_common_spinlock_t lock;
 
 
   /* ORDERED CONSTRUCT */
@@ -188,7 +188,7 @@ typedef struct mpcomp_thread_s {
     struct mpcomp_thread_s* dyn_last_target;
     /* Shift of target thread to steal */
     int *for_dyn_shift;  
-    sctk_spinlock_t *for_dyn_lock;
+    mpc_common_spinlock_t *for_dyn_lock;
     /* Did we just execute the last iteration of the original loop? ( pr35196.c )*/
     int for_dyn_last_loop_iteration;
     /* Thread next ordered index ( common for all active loop in parallel region )*/

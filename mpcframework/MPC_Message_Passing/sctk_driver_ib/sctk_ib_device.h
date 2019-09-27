@@ -28,7 +28,7 @@
 #include <infiniband/verbs.h>
 #include <inttypes.h>
 
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_ib.h"
 #include "sctk_runtime_config_struct.h"
 
@@ -39,7 +39,7 @@ typedef struct sctk_ib_qp_ondemand_s
 {
 	struct sctk_ib_qp_s *qp_list;
 	struct sctk_ib_qp_s *qp_list_ptr; /** 'Hand' of the clock */
-	sctk_spinlock_t lock;
+	mpc_common_spinlock_t lock;
 } sctk_ib_qp_ondemand_t;
 
 
@@ -69,7 +69,7 @@ typedef struct sctk_ib_device_s
 	struct sctk_ib_qp_ondemand_s ondemand;
 
 	char pad1[64];
-	sctk_spinlock_t cq_polling_lock;
+	mpc_common_spinlock_t cq_polling_lock;
 	char pad2[64];
 
 	/* Link rate & data rate*/

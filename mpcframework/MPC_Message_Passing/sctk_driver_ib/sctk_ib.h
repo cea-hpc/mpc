@@ -29,7 +29,7 @@
 extern "C"
 {
 #endif
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "uthash.h"
 #include "sctk_stdint.h"
 
@@ -91,7 +91,7 @@ typedef struct sctk_ib_rail_info_s
 	/* For Eager messages -> pool of MPC headers */
 	struct sctk_thread_ptp_message_s *eager_buffered_ptp_message;
 	void* eager_buffered_start_addr;
-	sctk_spinlock_t eager_lock_buffered_ptp_message;
+	mpc_common_spinlock_t eager_lock_buffered_ptp_message;
 } sctk_ib_rail_info_t;
 
 typedef struct sctk_ib_route_info_s
@@ -136,7 +136,7 @@ typedef struct sctk_ib_header_rdma_s
 	int ht_key;
 
 	size_t requested_size;
-	sctk_spinlock_t lock;
+	mpc_common_spinlock_t lock;
 	struct sctk_rail_info_s *rail;
 	struct sctk_rail_info_s *remote_rail;
 	struct sctk_ib_qp_s *remote_peer;

@@ -37,7 +37,7 @@ extern "C"
 {
 #endif
 
-  typedef volatile int sctk_spinlock_t;
+  typedef volatile int mpc_common_spinlock_t;
 #define SCTK_SPINLOCK_INITIALIZER 0
 
   /*Threads definitions */
@@ -54,7 +54,7 @@ extern "C"
   struct sctk_ethread_mutex_cell_s;
   typedef struct
   {
-    sctk_spinlock_t lock;
+    mpc_common_spinlock_t lock;
     volatile int is_init;
     volatile struct sctk_ethread_mutex_cell_s *list;
     volatile struct sctk_ethread_mutex_cell_s *list_tail;
@@ -72,7 +72,7 @@ extern "C"
   typedef struct
   {
     volatile int lock;
-    sctk_spinlock_t spinlock;
+    mpc_common_spinlock_t spinlock;
     volatile struct sctk_ethread_mutex_cell_s *list;
     volatile struct sctk_ethread_mutex_cell_s *list_tail;
   } sctk_ethread_sem_t;
@@ -86,7 +86,7 @@ extern "C"
     volatile struct sctk_ethread_per_thread_s *owner;
     volatile struct sctk_ethread_mutex_cell_s *list;
     volatile struct sctk_ethread_mutex_cell_s *list_tail;
-    sctk_spinlock_t spinlock;
+    mpc_common_spinlock_t spinlock;
     volatile unsigned int lock;
     unsigned int type;
   } sctk_ethread_mutex_t;
@@ -110,7 +110,7 @@ extern "C"
 
   typedef struct
   {
-    sctk_spinlock_t spinlock;
+    mpc_common_spinlock_t spinlock;
     volatile sctk_ethread_rwlock_cell_t *list;
     volatile sctk_ethread_rwlock_cell_t *list_tail;
     volatile unsigned int lock;
@@ -134,7 +134,7 @@ extern "C"
 /*barrier*/
   typedef struct
   {
-    sctk_spinlock_t spinlock;
+    mpc_common_spinlock_t spinlock;
     volatile struct sctk_ethread_mutex_cell_s *list;
     volatile struct sctk_ethread_mutex_cell_s *list_tail;
     volatile unsigned int nb_max;

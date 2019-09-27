@@ -159,7 +159,7 @@ void sctk_ib_mmu_entry_acquire( sctk_ib_mmu_entry_t * entry )
 	
 	sctk_nodebug("ACQUIRING(%p) %p s %ld", entry, entry->addr, entry->size );
 	
-	sctk_spinlock_read_lock( &entry->entry_refcounter );
+	mpc_common_spinlock_read_lock( &entry->entry_refcounter );
 }
 
 void sctk_ib_mmu_entry_relax( sctk_ib_mmu_entry_t * entry )
@@ -171,7 +171,7 @@ void sctk_ib_mmu_entry_relax( sctk_ib_mmu_entry_t * entry )
 	sctk_nodebug("Entry RELAX %p", entry );
 	
 	
-	sctk_spinlock_read_unlock( &entry->entry_refcounter );
+	mpc_common_spinlock_read_unlock( &entry->entry_refcounter );
 	
 	/* This is called when the entry was not pushed 
 	 * in the cache (case where all entries were in use
@@ -293,11 +293,11 @@ sctk_ib_mmu_entry_t * _sctk_ib_mmu_get_entry_containing( struct sctk_ib_mmu * mm
 	
 	sctk_ib_mmu_entry_t * ret = NULL;
 		/* Lock the MMU */
-	sctk_spinlock_read_lock( &mmu->cache_lock );
+	mpc_common_spinlock_read_lock( &mmu->cache_lock );
 	
 	ret = sctk_ib_mmu_get_entry_containing_no_lock( mmu, addr, size, rail_ib );
 	
-	sctk_spinlock_read_unlock( &mmu->cache_lock );
+	mpc_common_spinlock_read_unlock( &mmu->cache_lock );
 	
 	return ret;
 }
@@ -417,7 +417,7 @@ sctk_ib_mmu_entry_t * _sctk_ib_mmu_pin(  struct sctk_ib_mmu * mmu,  sctk_ib_rail
 
 	/* If we are here we did not find an entry */
 	/* Lock root */
-	sctk_spinlock_write_lock( &mmu->cache_lock );
+	mpc_common_spinlock_write_lock( &mmu->cache_lock );
 
 	/* Note that we do not check if the entry
 	 * has been pushed in the meantime as
@@ -432,7 +432,7 @@ sctk_ib_mmu_entry_t * _sctk_ib_mmu_pin(  struct sctk_ib_mmu * mmu,  sctk_ib_rail
 
 	/* If we are here we did not find an entry */
 	/* Lock root */
-	sctk_spinlock_write_unlock( &mmu->cache_lock );
+	mpc_common_spinlock_write_unlock( &mmu->cache_lock );
 	
 	return entry;
 }
@@ -449,7 +449,7 @@ int _sctk_ib_mmu_unpin(  struct sctk_ib_mmu * mmu, void * addr, size_t size)
 		return 0;
 
 	/* Lock root */
-	sctk_spinlock_write_lock( &mmu->cache_lock );
+	mpc_common_spinlock_write_lock( &mmu->cache_lock );
 	
 	__already_inside_unpin = 1;
 	
@@ -477,7 +477,7 @@ int _sctk_ib_mmu_unpin(  struct sctk_ib_mmu * mmu, void * addr, size_t size)
 	}
 	
 	/* Unlock root MMU */
-	sctk_spinlock_write_unlock( &mmu->cache_lock );
+	mpc_common_spinlock_write_unlock( &mmu->cache_lock );
 	
 	__already_inside_unpin = 0;
 	

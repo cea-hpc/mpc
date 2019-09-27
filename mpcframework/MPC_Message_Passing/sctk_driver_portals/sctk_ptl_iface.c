@@ -235,7 +235,7 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 			i,           /* the desired index value */
 			&table[i].idx       /* the effective index value */
 		));
-		/*table[i].taglocks = sctk_malloc(sizeof(sctk_spinlock_t) * SCTK_PTL_PTE_NB_LOCKS);*/
+		/*table[i].taglocks = sctk_malloc(sizeof(mpc_common_spinlock_t) * SCTK_PTL_PTE_NB_LOCKS);*/
 		/*int j;*/
 		/*for (j = 0; j < SCTK_PTL_PTE_NB_LOCKS; ++j) */
 		/*{*/

@@ -30,7 +30,7 @@
 #include "sctk_thread.h"
 #include "sctk_internal_thread.h"
 #include "sctk_thread_scheduler.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include <utlist.h>
 
 typedef struct sctk_thread_generic_barrier_cell_s{ 
@@ -39,7 +39,7 @@ typedef struct sctk_thread_generic_barrier_cell_s{
 }sctk_thread_generic_barrier_cell_t;
 
 typedef struct sctk_thread_generic_barrier_s{
-  sctk_spinlock_t lock;
+  mpc_common_spinlock_t lock;
   volatile int nb_max;
   volatile int nb_current;
   sctk_thread_generic_barrier_cell_t* blocked;

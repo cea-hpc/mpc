@@ -29,7 +29,7 @@
 #include "sctk_thread.h"
 #include "sctk_internal_thread.h"
 #include "sctk_thread_scheduler.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include <utlist.h>
 
 /* Values of Protocol attribute */
@@ -55,7 +55,7 @@ typedef struct sctk_thread_generic_mutex_cell_s{
 
 typedef struct sctk_thread_generic_mutex_s{  
   volatile sctk_thread_generic_scheduler_t* owner;
-  sctk_spinlock_t lock;
+  mpc_common_spinlock_t lock;
   int type;
   int nb_call;
   sctk_thread_generic_mutex_cell_t* blocked;

@@ -28,7 +28,7 @@
 #include "sctk_config.h"
 #include "sctk_debug.h"
 #include "sctk_ethread_internal.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_asm.h"
 #include "sctk_pthread_compatible_structures.h"
 #include "sctk_ethread.h"
@@ -309,7 +309,7 @@ extern "C"
 
 
   /**pthread_once**/
-  typedef sctk_spinlock_t sctk_ethread_once_t;
+  typedef mpc_common_spinlock_t sctk_ethread_once_t;
 
   static inline int __sctk_ethread_once_initialized (sctk_ethread_once_t *
 						     once_control)
@@ -374,7 +374,7 @@ extern "C"
 	  }
       }
     cond->is_init = 0;
-    sctk_spinlock_init (&(cond->lock), 0);
+    mpc_common_spinlock_init (&(cond->lock), 0);
     cond->list = NULL;
     cond->list_tail = NULL;
     return 0;
@@ -405,7 +405,7 @@ extern "C"
     sctk_ethread_mutex_cell_t cell;
     int ret;
     __sctk_ethread_testcancel (owner);
-    sctk_spinlock_lock (&(cond->lock));
+    mpc_common_spinlock_lock (&(cond->lock));
     if (cond == NULL || mutex == NULL)
       return SCTK_EINVAL;
     cell.my_self = owner;
@@ -436,10 +436,10 @@ extern "C"
 	      }
 	    owner->status = ethread_ready;
 	    owner->no_auto_enqueue = 0;
-	    sctk_spinlock_unlock (&(cond->lock));
+	    mpc_common_spinlock_unlock (&(cond->lock));
 	    return SCTK_EPERM;
 	  }
-	sctk_spinlock_unlock (&(cond->lock));
+	mpc_common_spinlock_unlock (&(cond->lock));
 	__sctk_ethread_sched_yield_vp_poll (vp, owner);
       }
     else
@@ -452,10 +452,10 @@ extern "C"
 	      {
 		cond->list_tail = NULL;
 	      }
-	    sctk_spinlock_unlock (&(cond->lock));
+	    mpc_common_spinlock_unlock (&(cond->lock));
 	    return SCTK_EPERM;
 	  }
-	sctk_spinlock_unlock (&(cond->lock));
+	mpc_common_spinlock_unlock (&(cond->lock));
 	while (cell.wake != 1)
 	  {
 	    __sctk_ethread_sched_yield_vp (vp, owner);
@@ -496,7 +496,7 @@ extern "C"
 	  return SCTK_ETIMEDOUT;
 	}
 
-    sctk_spinlock_lock (&(cond->lock));
+    mpc_common_spinlock_lock (&(cond->lock));
     cell.my_self = owner;
     cell.next = NULL;
     cell.wake = -1;
@@ -520,12 +520,12 @@ extern "C"
 	  }
 	owner->status = ethread_ready;
 	owner->no_auto_enqueue = 0;
-	sctk_spinlock_unlock (&(cond->lock));
+	mpc_common_spinlock_unlock (&(cond->lock));
 	sctk_nodebug ("sortie eperm");
 	return SCTK_EPERM;
       }
     sctk_nodebug ("cond ->list = %p", cond->list);
-    sctk_spinlock_unlock (&(cond->lock));
+    mpc_common_spinlock_unlock (&(cond->lock));
     ret = 0;
     while (cell.wake != 1)
       {
@@ -537,7 +537,7 @@ extern "C"
 	      sctk_ethread_cond_t *ptr;
 	      ptr = cond;
 
-	      sctk_spinlock_lock (&(cond->lock));
+	      mpc_common_spinlock_lock (&(cond->lock));
 
 	      cell.wake = 1;
 	      owner->status = ethread_ready;
@@ -567,7 +567,7 @@ extern "C"
 
 	      ret = SCTK_ETIMEDOUT;
 	      sctk_nodebug ("cond ->list 3 = %p", cond->list);
-	      sctk_spinlock_unlock (&(cond->lock));
+	      mpc_common_spinlock_unlock (&(cond->lock));
 	    }
       }
 
@@ -607,7 +607,7 @@ extern "C"
     sctk_ethread_mutex_cell_t *cell, *cell_next;
     if (cond == NULL)
       return SCTK_EINVAL;
-    sctk_spinlock_lock (&(cond->lock));
+    mpc_common_spinlock_lock (&(cond->lock));
     while (cond->list != NULL)
       {
 	cell_next = cond->list->next;
@@ -624,7 +624,7 @@ extern "C"
 	cond->list = cell_next;
       }
     cond->list_tail = NULL;
-    sctk_spinlock_unlock (&(cond->lock));
+    mpc_common_spinlock_unlock (&(cond->lock));
     return 0;
   }
   static inline
@@ -637,7 +637,7 @@ extern "C"
     sctk_ethread_mutex_cell_t *cell, *cell_next;
     if (cond == NULL)
       return SCTK_EINVAL;
-    sctk_spinlock_lock (&(cond->lock));
+    mpc_common_spinlock_lock (&(cond->lock));
     if (cond->list != NULL)
       {
 	cell_next = cond->list->next;
@@ -654,7 +654,7 @@ extern "C"
       }
     if (cond->list == NULL)
       cond->list_tail = NULL;
-    sctk_spinlock_unlock (&(cond->lock));
+    mpc_common_spinlock_unlock (&(cond->lock));
     return 0;
   }
 
@@ -744,7 +744,7 @@ extern "C"
 
     sctk_nodebug ("%p lock on %p %d", owner, lock, lock->lock);
     __sctk_ethread_testcancel (owner);
-    sctk_spinlock_lock (&lock->spinlock);
+    mpc_common_spinlock_lock (&lock->spinlock);
     lock->lock--;
     if (lock->lock < 0)
       {
@@ -766,7 +766,7 @@ extern "C"
 	  {
 	    owner->status = ethread_blocked;
 	    owner->no_auto_enqueue = 1;
-	    sctk_spinlock_unlock (&lock->spinlock);
+	    mpc_common_spinlock_unlock (&lock->spinlock);
 	    __sctk_ethread_sched_yield_vp_poll (vp, owner);
 	    owner->status = ethread_ready;
 	  }
@@ -774,17 +774,17 @@ extern "C"
 	  {
 	    while (cell.wake != 1)
 	      {
-		sctk_spinlock_unlock (&lock->spinlock);
+		mpc_common_spinlock_unlock (&lock->spinlock);
 		__sctk_ethread_sched_yield_vp (vp, owner);
-		sctk_spinlock_lock (&lock->spinlock);
+		mpc_common_spinlock_lock (&lock->spinlock);
 	      }
-	    sctk_spinlock_unlock (&lock->spinlock);
+	    mpc_common_spinlock_unlock (&lock->spinlock);
 	  }
       }
     else
       {
 	/*lock->lock--; effectu� au d�but */
-	sctk_spinlock_unlock (&lock->spinlock);
+	mpc_common_spinlock_unlock (&lock->spinlock);
       }
 
     return 0;
@@ -800,12 +800,12 @@ extern "C"
 	errno = SCTK_EAGAIN;
 	return -1;
       }
-    sctk_spinlock_lock (&lock->spinlock);
+    mpc_common_spinlock_lock (&lock->spinlock);
 
     if (lock->lock <= 0)
       {
 	sctk_nodebug ("try_wait : sem occup�");
-	sctk_spinlock_unlock (&lock->spinlock);
+	mpc_common_spinlock_unlock (&lock->spinlock);
 	errno = SCTK_EAGAIN;
 	return -1;
       }
@@ -813,7 +813,7 @@ extern "C"
       {
 	lock->lock--;
 	sctk_nodebug ("try_wait : sem libre");
-	sctk_spinlock_unlock (&lock->spinlock);
+	mpc_common_spinlock_unlock (&lock->spinlock);
       }
 
     return 0;
@@ -826,7 +826,7 @@ extern "C"
   {
     sctk_ethread_mutex_cell_t *cell;
     sctk_ethread_per_thread_t *to_wake_up;
-    sctk_spinlock_lock (&lock->spinlock);
+    mpc_common_spinlock_lock (&lock->spinlock);
     if (lock->list != NULL)
       {
 	sctk_ethread_per_thread_t *to_wake;
@@ -842,7 +842,7 @@ extern "C"
 	retrun_task (to_wake);
       }
     lock->lock++;
-    sctk_spinlock_unlock (&lock->spinlock);
+    mpc_common_spinlock_unlock (&lock->spinlock);
 /*    sctk_nodebug ("%p unlock on %p %d", owner, lock, lock->lock);*/
 
     return 0;
@@ -874,7 +874,7 @@ extern "C"
 
   typedef struct
   {
-    sctk_spinlock_t spinlock;
+    mpc_common_spinlock_t spinlock;
     volatile sctk_ethread_sem_name_t *next;
   } sctk_ethread_sem_head_list;
 #define SCTK_SEM_HEAD_INITIALIZER {SCTK_SPINLOCK_INITIALIZER,NULL}
@@ -912,7 +912,7 @@ extern "C"
 	  }
 	  /* We search the semaphore */
 	  tmp = sem_struct;
-	  sctk_spinlock_lock( &head->spinlock );
+	  mpc_common_spinlock_lock( &head->spinlock );
 	  while ( tmp != NULL )
 	  {
 		  if ( strcmp( tmp->name, _name ) == 0 && tmp->unlink == 0 )
@@ -927,14 +927,14 @@ extern "C"
 	  if ( ( tmp != NULL ) && ( ( flags & SCTK_O_CREAT ) && ( flags & SCTK_O_EXCL ) ) )
 	  {
 		  errno = EEXIST;
-		  sctk_spinlock_unlock( &head->spinlock );
+		  mpc_common_spinlock_unlock( &head->spinlock );
 		  return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
 	  }
 	  else if ( tmp != NULL )
 	  {
 		  sctk_free( _name );
 		  tmp->nb++;
-		  sctk_spinlock_unlock( &head->spinlock );
+		  mpc_common_spinlock_unlock( &head->spinlock );
 		  return tmp->sem;
 	  }
 	  if ( tmp == NULL && ( flags & SCTK_O_CREAT ) )
@@ -947,7 +947,7 @@ extern "C"
 		  {
 			  sctk_free( _name );
 			  errno = SCTK_ENOSPC;
-			  sctk_spinlock_unlock( &head->spinlock );
+			  mpc_common_spinlock_unlock( &head->spinlock );
 			  return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
 		  }
 		  ret = __sctk_ethread_sem_init( sem, 0, value );
@@ -956,7 +956,7 @@ extern "C"
 			  sctk_free( _name );
 			  sctk_free( sem );
 			  errno = ret;
-			  sctk_spinlock_unlock( &head->spinlock );
+			  mpc_common_spinlock_unlock( &head->spinlock );
 			  return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
 		  }
 		  maillon = (sctk_ethread_sem_name_t *)
@@ -968,7 +968,7 @@ extern "C"
 			  sctk_free( _name );
 			  sctk_free( sem );
 			  errno = SCTK_ENOSPC;
-			  sctk_spinlock_unlock( &head->spinlock );
+			  mpc_common_spinlock_unlock( &head->spinlock );
 			  return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
 		  }
 		  if ( sem_struct != NULL )
@@ -991,11 +991,11 @@ extern "C"
 	  {
 		  sctk_free( _name );
 		  errno = SCTK_ENOENT;
-		  sctk_spinlock_unlock( &head->spinlock );
+		  mpc_common_spinlock_unlock( &head->spinlock );
 		  return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
 	  }
 	  sctk_nodebug( "sem vaux %p avec une valeur de %d", sem, sem->lock );
-	  sctk_spinlock_unlock( &head->spinlock );
+	  mpc_common_spinlock_unlock( &head->spinlock );
 	  return sem;
   }
 
@@ -1039,7 +1039,7 @@ extern "C"
       }
     /*on recherche le s�maphore */
     tmp = sem_struct;
-    sctk_spinlock_lock (&head->spinlock);
+    mpc_common_spinlock_lock (&head->spinlock);
     while (tmp != NULL)
       {
 	if (strcmp (tmp->name, _name) == 0 && tmp->unlink == 0)
@@ -1054,7 +1054,7 @@ extern "C"
       {
 	sctk_free (_name);
 	errno = SCTK_ENOENT;
-	sctk_spinlock_unlock (&head->spinlock);
+	mpc_common_spinlock_unlock (&head->spinlock);
 	return -1;
       }
     else if (tmp->nb == 0)
@@ -1074,7 +1074,7 @@ extern "C"
       {
 	tmp->unlink = 1;
       }
-    sctk_spinlock_unlock (&head->spinlock);
+    mpc_common_spinlock_unlock (&head->spinlock);
     sctk_free (_name);
     return 0;
   }
@@ -1087,7 +1087,7 @@ extern "C"
     sem_struct = head->next;
     /*on recherche le s�maphore */
     tmp = sem_struct;
-    sctk_spinlock_lock (&head->spinlock);
+    mpc_common_spinlock_lock (&head->spinlock);
     while (tmp != NULL && sem != tmp->sem)
       {
 	sem_struct = tmp;
@@ -1099,7 +1099,7 @@ extern "C"
     if (tmp == NULL)
       {
 	errno = SCTK_EINVAL;
-	sctk_spinlock_unlock (&head->spinlock);
+	mpc_common_spinlock_unlock (&head->spinlock);
 	return -1;
       }
     tmp->nb--;
@@ -1116,7 +1116,7 @@ extern "C"
 	__sctk_ethread_sem_clean (tmp);
 	sctk_free ((sctk_ethread_sem_name_t *) tmp);
       }
-    sctk_spinlock_unlock (&head->spinlock);
+    mpc_common_spinlock_unlock (&head->spinlock);
     return 0;
   }
 
@@ -1214,7 +1214,7 @@ extern "C"
 
 
   /*Spinlock */
-  typedef sctk_spinlock_t sctk_ethread_spinlock_t;
+  typedef mpc_common_spinlock_t sctk_ethread_spinlock_t;
   static inline
     int __sctk_ethread_spin_init (sctk_ethread_spinlock_t * lock, int pshared)
   {
@@ -1239,9 +1239,9 @@ extern "C"
 #define SCTK_SPIN_DELAY 10
   static inline int __sctk_ethread_spin_lock (sctk_ethread_spinlock_t * lock)
   {
-    /*sctk_spinlock_lock(lock); */
+    /*mpc_common_spinlock_lock(lock); */
     long i = SCTK_SPIN_DELAY;
-    while (sctk_spinlock_trylock (lock))
+    while (mpc_common_spinlock_trylock (lock))
       {
 	while (expect_true (*lock != 0))
 	  {
@@ -1258,7 +1258,7 @@ extern "C"
   static inline
     int __sctk_ethread_spin_trylock (sctk_ethread_spinlock_t * lock)
   {
-    if (sctk_spinlock_trylock (lock) != 0)
+    if (mpc_common_spinlock_trylock (lock) != 0)
       return SCTK_EBUSY;
     else
       return 0;
@@ -1266,7 +1266,7 @@ extern "C"
   static inline
     int __sctk_ethread_spin_unlock (sctk_ethread_spinlock_t * lock)
   {
-    sctk_spinlock_unlock (lock);
+    mpc_common_spinlock_unlock (lock);
     return 0;
   }
 
@@ -1307,7 +1307,7 @@ extern "C"
 						* owner)
   {
     sctk_ethread_rwlock_cell_t cell;
-    sctk_spinlock_lock (&rwlock->spinlock);
+    mpc_common_spinlock_lock (&rwlock->spinlock);
     rwlock->lock++;
 
     sctk_nodebug
@@ -1322,7 +1322,7 @@ extern "C"
 	    && (rwlock->wait == SCTK_RWLOCK_NO_WR_WAIT))
 	  {
 	    rwlock->current = SCTK_RWLOCK_READ;
-	    sctk_spinlock_unlock (&rwlock->spinlock);
+	    mpc_common_spinlock_unlock (&rwlock->spinlock);
 	    return 0;
 	  }
       }
@@ -1333,7 +1333,7 @@ extern "C"
 	    && rwlock->wait == SCTK_RWLOCK_NO_WR_WAIT)
 	  {
 	    rwlock->current = SCTK_RWLOCK_WRITE;
-	    sctk_spinlock_unlock (&rwlock->spinlock);
+	    mpc_common_spinlock_unlock (&rwlock->spinlock);
 	    return 0;
 	  }
 
@@ -1363,22 +1363,22 @@ extern "C"
       {
 	owner->status = ethread_blocked;
 	owner->no_auto_enqueue = 1;
-	sctk_spinlock_unlock (&rwlock->spinlock);
+	mpc_common_spinlock_unlock (&rwlock->spinlock);
 	__sctk_ethread_sched_yield_vp_poll (vp, owner);
 	owner->status = ethread_ready;
-	sctk_spinlock_lock (&rwlock->spinlock);
+	mpc_common_spinlock_lock (&rwlock->spinlock);
       }
     else
       {
 	while (cell.wake != 1)
 	  {
-	    sctk_spinlock_unlock (&rwlock->spinlock);
+	    mpc_common_spinlock_unlock (&rwlock->spinlock);
 	    __sctk_ethread_sched_yield_vp (vp, owner);
-	    sctk_spinlock_lock (&rwlock->spinlock);
+	    mpc_common_spinlock_lock (&rwlock->spinlock);
 	  }
       }
 
-    sctk_spinlock_unlock (&rwlock->spinlock);
+    mpc_common_spinlock_unlock (&rwlock->spinlock);
     return 0;
   }
 
@@ -1392,7 +1392,7 @@ extern "C"
     sctk_ethread_rwlock_cell_t *cell;
     sctk_ethread_per_thread_t *to_wake_up;
     int first = 1;
-    sctk_spinlock_lock (&(lock->spinlock));
+    mpc_common_spinlock_lock (&(lock->spinlock));
     sctk_nodebug ("unlock : %p", lock->list);
     lock->lock--;
     if (lock->list != NULL)
@@ -1434,7 +1434,7 @@ extern "C"
 	lock->wait = SCTK_RWLOCK_NO_WR_WAIT;
 	lock->current = SCTK_RWLOCK_ALONE;
       }
-    sctk_spinlock_unlock (&(lock->spinlock));
+    mpc_common_spinlock_unlock (&(lock->spinlock));
 
     return 0;
   }
@@ -1442,7 +1442,7 @@ extern "C"
   static inline int
     __sctk_ethread_rwlock_trylock (sctk_ethread_rwlock_t * rwlock, int type)
   {
-    sctk_spinlock_lock (&rwlock->spinlock);
+    mpc_common_spinlock_lock (&rwlock->spinlock);
     /*si on n'est pas sur de devoir attendre */
     if (rwlock->current != SCTK_RWLOCK_WRITE
 	&& rwlock->wait != SCTK_RWLOCK_WR_WAIT)
@@ -1451,7 +1451,7 @@ extern "C"
 	  {
 	    rwlock->current = SCTK_RWLOCK_READ;
 	    rwlock->lock++;
-	    sctk_spinlock_unlock (&rwlock->spinlock);
+	    mpc_common_spinlock_unlock (&rwlock->spinlock);
 	    return 0;
 	  }
       }
@@ -1462,10 +1462,10 @@ extern "C"
       {
 	rwlock->current = SCTK_RWLOCK_WRITE;
 	rwlock->lock++;
-	sctk_spinlock_unlock (&rwlock->spinlock);
+	mpc_common_spinlock_unlock (&rwlock->spinlock);
 	return 0;
       }
-    sctk_spinlock_unlock (&rwlock->spinlock);
+    mpc_common_spinlock_unlock (&rwlock->spinlock);
     return SCTK_EBUSY;
   }
   /*les attributs des rwlock */
@@ -1566,7 +1566,7 @@ extern "C"
     cell.next = NULL;
     cell.wake = 0;
 
-    sctk_spinlock_lock (&barrier->spinlock);
+    mpc_common_spinlock_lock (&barrier->spinlock);
 
     barrier->lock--;
 
@@ -1587,14 +1587,14 @@ extern "C"
 	  {
 	    owner->status = ethread_blocked;
 	    owner->no_auto_enqueue = 1;
-	    sctk_spinlock_unlock (&barrier->spinlock);
+	    mpc_common_spinlock_unlock (&barrier->spinlock);
 	    __sctk_ethread_sched_yield_vp_poll (vp, owner);
 	    owner->status = ethread_ready;
-	    sctk_spinlock_lock (&barrier->spinlock);
+	    mpc_common_spinlock_lock (&barrier->spinlock);
 	  }
 	else
 	  {
-	    sctk_spinlock_unlock (&barrier->spinlock);
+	    mpc_common_spinlock_unlock (&barrier->spinlock);
 	    while (cell.wake != 1)
 	      {
 		__sctk_ethread_sched_yield_vp (vp, owner);
@@ -1610,7 +1610,7 @@ extern "C"
 	barrier->list_tail = NULL;
 	barrier->lock = barrier->nb_max;
 	barrier->list = NULL;
-	sctk_spinlock_unlock (&barrier->spinlock);
+	mpc_common_spinlock_unlock (&barrier->spinlock);
 
 	while (list != NULL)
 	  {
@@ -1626,7 +1626,7 @@ extern "C"
 	  }
 	ret = SCTK_THREAD_BARRIER_SERIAL_THREAD;
       }
-    sctk_spinlock_unlock (&barrier->spinlock);
+    mpc_common_spinlock_unlock (&barrier->spinlock);
     return ret;
   }
 

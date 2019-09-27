@@ -33,14 +33,14 @@
 /************************************************************************/
 
 volatile int ___mpi_t_is_running = 0;
-static sctk_spinlock_t mpit_init_lock = 0;
+static mpc_common_spinlock_t mpit_init_lock = 0;
 
 int mpc_MPI_T_init_thread(__UNUSED__ int required, int *provided) {
   if (!provided) {
     return MPI_ERR_ARG;
   }
 
-  sctk_spinlock_lock(&mpit_init_lock);
+  mpc_common_spinlock_lock(&mpit_init_lock);
 
   if (___mpi_t_is_running == 0) {
     MPI_T_pvars_array_init();
@@ -50,7 +50,7 @@ int mpc_MPI_T_init_thread(__UNUSED__ int required, int *provided) {
 
   ___mpi_t_is_running++;
 
-  sctk_spinlock_unlock(&mpit_init_lock);
+  mpc_common_spinlock_unlock(&mpit_init_lock);
 
   *provided = MPI_THREAD_MULTIPLE;
 
@@ -58,7 +58,7 @@ int mpc_MPI_T_init_thread(__UNUSED__ int required, int *provided) {
 }
 
 int mpc_MPI_T_finalize(void) {
-  sctk_spinlock_lock(&mpit_init_lock);
+  mpc_common_spinlock_lock(&mpit_init_lock);
 
   ___mpi_t_is_running--;
 
@@ -68,7 +68,7 @@ int mpc_MPI_T_finalize(void) {
     MPC_T_session_array_release();
   }
 
-  sctk_spinlock_unlock(&mpit_init_lock);
+  mpc_common_spinlock_unlock(&mpit_init_lock);
 
   return MPI_SUCCESS;
 }
@@ -293,7 +293,7 @@ int MPC_T_data_alias(struct MPC_T_data *tdata, void *data) {
 
 /** This is where the CVARS (meta) are being stored */
 
-static sctk_spinlock_t cvar_array_lock = 0;
+static mpc_common_spinlock_t cvar_array_lock = 0;
 static int cvar_array_initialized = 0;
 static struct MPC_T_cvars_array __cvar_array;
 
@@ -329,12 +329,12 @@ int MPI_T_cvar_fill_info_from_config() {
 }
 
 int MPI_T_cvars_array_init() {
-  sctk_spinlock_lock(&cvar_array_lock);
+  mpc_common_spinlock_lock(&cvar_array_lock);
 
   if (cvar_array_initialized == 0) {
     cvar_array_initialized = 1;
   } else {
-    sctk_spinlock_unlock(&cvar_array_lock);
+    mpc_common_spinlock_unlock(&cvar_array_lock);
     return 0;
   }
 
@@ -344,17 +344,17 @@ int MPI_T_cvars_array_init() {
 
   MPI_T_cvar_fill_info_from_config();
 
-  sctk_spinlock_unlock(&cvar_array_lock);
+  mpc_common_spinlock_unlock(&cvar_array_lock);
   return 0;
 }
 
 int MPI_T_cvars_array_release() {
-  sctk_spinlock_lock(&cvar_array_lock);
+  mpc_common_spinlock_lock(&cvar_array_lock);
 
   if (cvar_array_initialized == 1) {
     cvar_array_initialized = 0;
   } else {
-    sctk_spinlock_unlock(&cvar_array_lock);
+    mpc_common_spinlock_unlock(&cvar_array_lock);
     return 0;
   }
 
@@ -362,7 +362,7 @@ int MPI_T_cvars_array_release() {
   sctk_free(__cvar_array.dyn_cvars);
   __cvar_array.dyn_cvars = NULL;
 
-  sctk_spinlock_unlock(&cvar_array_lock);
+  mpc_common_spinlock_unlock(&cvar_array_lock);
   return 0;
 }
 
@@ -375,13 +375,13 @@ struct MPC_T_cvar *MPI_T_cvars_array_get(MPC_T_cvar_t slot) {
   } else {
     struct MPC_T_cvar *cv = NULL;
 
-    sctk_spinlock_lock(&cvar_array_lock);
+    mpc_common_spinlock_lock(&cvar_array_lock);
 
     if ((slot - MPI_T_CVAR_COUNT) < __cvar_array.dyn_cvar_count) {
       cv = &__cvar_array.dyn_cvars[slot - MPI_T_CVAR_COUNT];
     }
 
-    sctk_spinlock_unlock(&cvar_array_lock);
+    mpc_common_spinlock_unlock(&cvar_array_lock);
 
     return cv;
   }
@@ -392,7 +392,7 @@ struct MPC_T_cvar *MPI_T_cvars_array_new(int *cvar_index) {
     return NULL;
   }
 
-  sctk_spinlock_lock(&cvar_array_lock);
+  mpc_common_spinlock_lock(&cvar_array_lock);
 
   int my_index = __cvar_array.dyn_cvar_count;
   __cvar_array.dyn_cvar_count++;
@@ -402,11 +402,11 @@ struct MPC_T_cvar *MPI_T_cvars_array_new(int *cvar_index) {
                    __cvar_array.dyn_cvar_count * sizeof(struct MPC_T_cvar));
 
   if (__cvar_array.dyn_cvars == NULL) {
-    sctk_spinlock_unlock(&cvar_array_lock);
+    mpc_common_spinlock_unlock(&cvar_array_lock);
     return NULL;
   }
 
-  sctk_spinlock_unlock(&cvar_array_lock);
+  mpc_common_spinlock_unlock(&cvar_array_lock);
 
   *cvar_index = my_index;
   return &__cvar_array.dyn_cvars[my_index];
@@ -478,9 +478,9 @@ int mpc_MPI_T_cvar_get_num(int *num_cvar) {
   if (!num_cvar)
     return 1;
 
-  sctk_spinlock_lock(&cvar_array_lock);
+  mpc_common_spinlock_lock(&cvar_array_lock);
   *num_cvar = __cvar_array.dyn_cvar_count + MPI_T_CVAR_COUNT;
-  sctk_spinlock_unlock(&cvar_array_lock);
+  mpc_common_spinlock_unlock(&cvar_array_lock);
 
   return MPI_SUCCESS;
 }
@@ -601,7 +601,7 @@ int mpc_MPI_T_cvar_write(MPI_T_cvar_handle handle, const void *buff) {
 
 static struct MPC_T_pvars_array __pvar_array;
 static int pvar_array_initialized = 0;
-static sctk_spinlock_t pvar_array_lock = 0;
+static mpc_common_spinlock_t pvar_array_lock = 0;
 
 #define CATEGORIES(cat, parent, desc)
 #define CVAR(name, verbosity, type, desc, bind, scope, cat)
@@ -636,12 +636,12 @@ int MPI_T_pvar_fill_info_from_config() {
 }
 
 int MPI_T_pvars_array_init() {
-  sctk_spinlock_lock(&pvar_array_lock);
+  mpc_common_spinlock_lock(&pvar_array_lock);
 
   if (pvar_array_initialized == 0) {
     pvar_array_initialized = 1;
   } else {
-    sctk_spinlock_unlock(&pvar_array_lock);
+    mpc_common_spinlock_unlock(&pvar_array_lock);
     return 0;
   }
 
@@ -651,7 +651,7 @@ int MPI_T_pvars_array_init() {
 
   MPI_T_pvar_fill_info_from_config();
 
-  sctk_spinlock_unlock(&pvar_array_lock);
+  mpc_common_spinlock_unlock(&pvar_array_lock);
   return 0;
 }
 
@@ -659,12 +659,12 @@ int MPI_T_pvars_array_init() {
  * @return Non-zero on error
  */
 int MPI_T_pvars_array_release() {
-  sctk_spinlock_lock(&pvar_array_lock);
+  mpc_common_spinlock_lock(&pvar_array_lock);
 
   if (pvar_array_initialized == 1) {
     pvar_array_initialized = 0;
   } else {
-    sctk_spinlock_unlock(&pvar_array_lock);
+    mpc_common_spinlock_unlock(&pvar_array_lock);
     return 0;
   }
 
@@ -672,7 +672,7 @@ int MPI_T_pvars_array_release() {
   sctk_free(__pvar_array.dyn_pvars);
   __pvar_array.dyn_pvars = NULL;
 
-  sctk_spinlock_unlock(&pvar_array_lock);
+  mpc_common_spinlock_unlock(&pvar_array_lock);
   return 0;
 }
 
@@ -684,13 +684,13 @@ struct MPC_T_pvar *MPI_T_pvars_array_get(int slot) {
 
     struct MPC_T_pvar *pv = NULL;
 
-    sctk_spinlock_lock(&pvar_array_lock);
+    mpc_common_spinlock_lock(&pvar_array_lock);
 
     if ((slot - MPI_T_PVAR_COUNT) < __pvar_array.dyn_pvar_count) {
       pv = &__pvar_array.dyn_pvars[slot - MPI_T_PVAR_COUNT];
     }
 
-    sctk_spinlock_unlock(&pvar_array_lock);
+    mpc_common_spinlock_unlock(&pvar_array_lock);
 
     return pv;
   }
@@ -703,7 +703,7 @@ struct MPC_T_pvar *MPI_T_pvars_array_new(int *pvar_index) {
     return NULL;
   }
 
-  sctk_spinlock_lock(&pvar_array_lock);
+  mpc_common_spinlock_lock(&pvar_array_lock);
 
   int my_index = __pvar_array.dyn_pvar_count;
   __pvar_array.dyn_pvar_count++;
@@ -713,11 +713,11 @@ struct MPC_T_pvar *MPI_T_pvars_array_new(int *pvar_index) {
                    __pvar_array.dyn_pvar_count * sizeof(struct MPC_T_pvar));
 
   if (__pvar_array.dyn_pvars == NULL) {
-    sctk_spinlock_unlock(&pvar_array_lock);
+    mpc_common_spinlock_unlock(&pvar_array_lock);
     return NULL;
   }
 
-  sctk_spinlock_unlock(&pvar_array_lock);
+  mpc_common_spinlock_unlock(&pvar_array_lock);
 
   *pvar_index = my_index;
   return &__pvar_array.dyn_pvars[my_index];
@@ -786,9 +786,9 @@ int mpc_MPI_T_pvars_array_register(char *name, MPC_T_verbosity verbosity,
 int mpc_MPI_T_pvar_get_num(int *num_pvar) {
   int ret = 0;
 
-  sctk_spinlock_lock(&pvar_array_lock);
+  mpc_common_spinlock_lock(&pvar_array_lock);
   ret = __pvar_array.dyn_pvar_count + MPI_T_PVAR_COUNT;
-  sctk_spinlock_unlock(&pvar_array_lock);
+  mpc_common_spinlock_unlock(&pvar_array_lock);
 
   *num_pvar = ret;
 
@@ -1302,9 +1302,9 @@ int MPC_T_session_array_release() {
 }
 
 int MPC_T_session_array_init_session(MPI_T_pvar_session *session) {
-  sctk_spinlock_write_lock(&___session_array.lock);
+  mpc_common_spinlock_write_lock(&___session_array.lock);
   int sess = ___session_array.current_session++;
-  sctk_spinlock_write_unlock(&___session_array.lock);
+  mpc_common_spinlock_write_unlock(&___session_array.lock);
 
   *session = sess;
 
@@ -1317,7 +1317,7 @@ int MPC_T_session_array_release_session(MPI_T_pvar_session *session) {
 
   int i;
 
-  // sctk_spinlock_write_lock( &___session_array.lock );
+  // mpc_common_spinlock_write_lock( &___session_array.lock );
 
   /* Remove probes from the session */
   for (i = 0; i < MPI_T_PVAR_COUNT; i++) {
@@ -1349,7 +1349,7 @@ int MPC_T_session_array_release_session(MPI_T_pvar_session *session) {
     }
   }
 
-  // sctk_spinlock_write_unlock( &___session_array.lock );
+  // mpc_common_spinlock_write_unlock( &___session_array.lock );
 
   *session = MPI_T_PVAR_SESSION_NULL;
 
@@ -1376,14 +1376,14 @@ struct MPC_T_pvar_handle *MPC_T_session_array_alloc(MPI_T_pvar_session session,
       MPC_T_pvar_handle_new(session, mpihandle, var);
 
   /* Now insert in array */
-  sctk_spinlock_write_lock(&___session_array.lock);
+  mpc_common_spinlock_write_lock(&___session_array.lock);
 
   /* Head is next */
   varhandle->next = ___session_array.handle_lists[pvar];
   /* Replace head */
   ___session_array.handle_lists[pvar] = varhandle;
 
-  sctk_spinlock_write_unlock(&___session_array.lock);
+  mpc_common_spinlock_write_unlock(&___session_array.lock);
 
   return varhandle;
 }
@@ -1394,7 +1394,7 @@ int MPC_T_session_array_free(__UNUSED__ MPI_T_pvar_session session,
     return MPI_ERR_ARG;
   }
 
-  sctk_spinlock_write_lock(&___session_array.lock);
+  mpc_common_spinlock_write_lock(&___session_array.lock);
 
   int pvar = handle->index;
 
@@ -1419,7 +1419,7 @@ int MPC_T_session_array_free(__UNUSED__ MPI_T_pvar_session session,
     tmp = tmp->next;
   }
 
-  sctk_spinlock_write_unlock(&___session_array.lock);
+  mpc_common_spinlock_write_unlock(&___session_array.lock);
 
   return 0;
 }
@@ -1444,7 +1444,7 @@ int MPC_T_session_set(MPI_T_pvar_session session, void *handle,
     mpi_handle = *((int *)handle);
   }
 
-  sctk_spinlock_read_lock(&___session_array.lock);
+  mpc_common_spinlock_read_lock(&___session_array.lock);
 
   struct MPC_T_pvar_handle *tmp = ___session_array.handle_lists[pvar];
 
@@ -1459,7 +1459,7 @@ int MPC_T_session_set(MPI_T_pvar_session session, void *handle,
     tmp = tmp->next;
   }
 
-  sctk_spinlock_read_unlock(&___session_array.lock);
+  mpc_common_spinlock_read_unlock(&___session_array.lock);
 
   return MPI_SUCCESS;
 }
@@ -1484,7 +1484,7 @@ int MPC_T_session_start(MPI_T_pvar_session session, void *handle,
     mpi_handle = *((int *)handle);
   }
 
-  sctk_spinlock_read_lock(&___session_array.lock);
+  mpc_common_spinlock_read_lock(&___session_array.lock);
 
   struct MPC_T_pvar_handle *tmp = ___session_array.handle_lists[pvar];
 
@@ -1499,7 +1499,7 @@ int MPC_T_session_start(MPI_T_pvar_session session, void *handle,
     tmp = tmp->next;
   }
 
-  sctk_spinlock_read_unlock(&___session_array.lock);
+  mpc_common_spinlock_read_unlock(&___session_array.lock);
 
   return MPI_SUCCESS;
 }
@@ -1524,7 +1524,7 @@ int MPC_T_session_stop(MPI_T_pvar_session session, void *handle,
     mpi_handle = *((int *)handle);
   }
 
-  sctk_spinlock_read_lock(&___session_array.lock);
+  mpc_common_spinlock_read_lock(&___session_array.lock);
 
   struct MPC_T_pvar_handle *tmp = ___session_array.handle_lists[pvar];
 
@@ -1539,7 +1539,7 @@ int MPC_T_session_stop(MPI_T_pvar_session session, void *handle,
     tmp = tmp->next;
   }
 
-  sctk_spinlock_read_unlock(&___session_array.lock);
+  mpc_common_spinlock_read_unlock(&___session_array.lock);
 
   return MPI_SUCCESS;
 }

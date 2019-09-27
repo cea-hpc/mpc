@@ -225,11 +225,11 @@ sctk_thread_generic_mutexes_mutex_lock (sctk_thread_generic_mutex_t * lock,
   int ret = 0;
   sctk_thread_generic_mutex_cell_t cell;
   void** tmp = (void**) sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
-  sctk_spinlock_lock(&(lock->lock));
+  mpc_common_spinlock_lock(&(lock->lock));
   if(lock->owner == NULL){
     lock->owner = sched;
     if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE ) lock->nb_call ++;
-    sctk_spinlock_unlock(&(lock->lock));
+    mpc_common_spinlock_unlock(&(lock->lock));
     // We can force sched_yield here to increase calls to the priority scheduler
     // sctk_thread_generic_sched_yield(sched);
     return ret;
@@ -237,7 +237,7 @@ sctk_thread_generic_mutexes_mutex_lock (sctk_thread_generic_mutex_t * lock,
     if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE 
 			&& lock->owner == sched){
       lock->nb_call ++;
-      sctk_spinlock_unlock(&(lock->lock));
+      mpc_common_spinlock_unlock(&(lock->lock));
       // We can force sched_yield here to increase calls to the priority
       // scheduler
       // sctk_thread_generic_sched_yield(sched);
@@ -246,7 +246,7 @@ sctk_thread_generic_mutexes_mutex_lock (sctk_thread_generic_mutex_t * lock,
     if (lock->type == SCTK_THREAD_MUTEX_ERRORCHECK 
 			&& lock->owner == sched ){
 	  ret = SCTK_EDEADLK;
-	  sctk_spinlock_unlock(&(lock->lock));
+	  mpc_common_spinlock_unlock(&(lock->lock));
 	  return ret;
     }
 
@@ -278,22 +278,22 @@ sctk_thread_generic_mutexes_mutex_trylock (sctk_thread_generic_mutex_t * lock,
   if( lock == NULL ) return SCTK_EINVAL;
 
   int ret = 0;
-  if( /*sctk_spinlock_trylock(&(lock->lock)) == 0 */1){
-	  sctk_spinlock_lock(&(lock->lock));
+  if( /*mpc_common_spinlock_trylock(&(lock->lock)) == 0 */1){
+	  mpc_common_spinlock_lock(&(lock->lock));
 	if(lock->owner == NULL){
 	  lock->owner = sched;
 	  if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE ) lock->nb_call ++;
-	  sctk_spinlock_unlock(&(lock->lock));
+	  mpc_common_spinlock_unlock(&(lock->lock));
 	  return ret;
 	} else {
 	  if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE
 			&& lock->owner == sched ){
 		lock->nb_call ++;
-		sctk_spinlock_unlock(&(lock->lock));
+		mpc_common_spinlock_unlock(&(lock->lock));
 		return ret;
 	  } 
 	  ret = SCTK_EBUSY;
-	  sctk_spinlock_unlock(&(lock->lock));
+	  mpc_common_spinlock_unlock(&(lock->lock));
 	}
   } else {
 	ret = SCTK_EBUSY;
@@ -324,7 +324,7 @@ sctk_thread_generic_mutexes_mutex_timedlock (sctk_thread_generic_mutex_t* lock,
   struct timespec t_current;
 
   do{
-	if( sctk_spinlock_trylock( &(lock->lock)) == 0 ){
+	if( mpc_common_spinlock_trylock( &(lock->lock)) == 0 ){
 	  if(lock->owner == NULL){
 		lock->owner = sched;
     	if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE ) lock->nb_call ++;
@@ -338,7 +338,7 @@ sctk_thread_generic_mutexes_mutex_timedlock (sctk_thread_generic_mutex_t* lock,
 	} else {
 	  ret = SCTK_EBUSY;
 	}
-	sctk_spinlock_unlock(&(lock->lock));
+	mpc_common_spinlock_unlock(&(lock->lock));
 	clock_gettime( CLOCK_REALTIME, &t_current );
   } while( ret != 0 && ( t_current.tv_sec < time->tv_sec ||
 			  ( t_current.tv_sec == time->tv_sec && t_current.tv_nsec < time->tv_nsec ) ) );
@@ -370,22 +370,22 @@ sctk_thread_generic_mutexes_mutex_spinlock (sctk_thread_generic_mutex_t * lock,
   int ret = 0;
   sctk_thread_generic_mutex_cell_t cell;
 
-  sctk_spinlock_lock(&(lock->lock));
+  mpc_common_spinlock_lock(&(lock->lock));
   if(lock->owner == NULL){
     lock->owner = sched;
     lock->nb_call = 1;
-    sctk_spinlock_unlock(&(lock->lock));
+    mpc_common_spinlock_unlock(&(lock->lock));
     return ret;
   } else {
     if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE){
       lock->nb_call ++;
-      sctk_spinlock_unlock(&(lock->lock));
+      mpc_common_spinlock_unlock(&(lock->lock));
       return ret;
     } 
     if (lock->type == SCTK_THREAD_MUTEX_ERRORCHECK){
       if(lock->owner == sched){
 	ret = SCTK_EDEADLK;
-	sctk_spinlock_unlock(&(lock->lock));
+	mpc_common_spinlock_unlock(&(lock->lock));
 	return ret;
       }
     }
@@ -393,7 +393,7 @@ sctk_thread_generic_mutexes_mutex_spinlock (sctk_thread_generic_mutex_t * lock,
     cell.sched = sched;
     DL_APPEND(lock->blocked,&cell);
     
-    sctk_spinlock_unlock(&(lock->lock));
+    mpc_common_spinlock_unlock(&(lock->lock));
     do{
       sctk_thread_generic_sched_yield(sched);
     }while(lock->owner != sched);
@@ -425,7 +425,7 @@ sctk_thread_generic_mutexes_mutex_unlock (sctk_thread_generic_mutex_t * lock,
 	  }
     }
 
-  sctk_spinlock_lock(&(lock->lock));
+  mpc_common_spinlock_lock(&(lock->lock));
   {
     sctk_thread_generic_mutex_cell_t * head;
     head = lock->blocked;
@@ -442,7 +442,7 @@ sctk_thread_generic_mutexes_mutex_unlock (sctk_thread_generic_mutex_t * lock,
       }
     }
   }
-  sctk_spinlock_unlock(&(lock->lock));
+  mpc_common_spinlock_unlock(&(lock->lock));
   return 0;
 }
 

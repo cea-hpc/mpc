@@ -25,7 +25,7 @@
 
 #include "sctk_debug.h"
 #include "sctk_thread.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 
 #include "topology.h"
 
@@ -114,7 +114,7 @@ static sctk_device_matrix_t __mpc_topo_device_matrix;
 /* Scattering Computation                                               */
 /************************************************************************/
 
-static sctk_spinlock_t ___counter_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t ___counter_lock = SCTK_SPINLOCK_INITIALIZER;
 static int ___numa_count = -1;
 static int ___core_count = -1;
 static int ___current_numa_id = 0;
@@ -371,7 +371,7 @@ void _mpc_topo_device_init( hwloc_topology_t topology, mpc_common_topo_device_t 
 			 * a preferential NUMA node */
 			dev->container = MPC_COMMON_TOPO_MACHINE_LEVEL_DEVICE;
 
-			sctk_spinlock_lock( &___counter_lock );
+			mpc_common_spinlock_lock( &___counter_lock );
 
 			/* If needed first load the topology */
 			if ( ( ___core_count < 0 ) || ( ___numa_count < 0 ) )
@@ -390,7 +390,7 @@ void _mpc_topo_device_init( hwloc_topology_t topology, mpc_common_topo_device_t 
 																		dev->root_numa,
 																		___current_core_id[dev->root_numa] );
 
-			sctk_spinlock_unlock( &___counter_lock );
+			mpc_common_spinlock_unlock( &___counter_lock );
 		}
 	}
 	else
@@ -887,16 +887,16 @@ mpc_common_topo_device_t **mpc_common_topo_device_get_from_handle_regexp( char *
 
 void mpc_common_topo_device_attach_resource( mpc_common_topo_device_t *device )
 {
-	sctk_spinlock_lock( &device->res_lock );
+	mpc_common_spinlock_lock( &device->res_lock );
 	device->nb_res++;
-	sctk_spinlock_unlock( &device->res_lock );
+	mpc_common_spinlock_unlock( &device->res_lock );
 }
 
 void mpc_common_topo_device_detach_resource( mpc_common_topo_device_t *device )
 {
-	sctk_spinlock_lock( &device->res_lock );
+	mpc_common_spinlock_lock( &device->res_lock );
 	device->nb_res--;
-	sctk_spinlock_unlock( &device->res_lock );
+	mpc_common_spinlock_unlock( &device->res_lock );
 }
 
 mpc_common_topo_device_t *mpc_common_topo_device_attach_freest_device_from( mpc_common_topo_device_t **device_list, int count )
@@ -914,7 +914,7 @@ mpc_common_topo_device_t *mpc_common_topo_device_attach_freest_device_from( mpc_
 		mpc_common_topo_device_t *current = device_list[i];
 
 		/* lock the counter */
-		sctk_spinlock_lock( &current->res_lock );
+		mpc_common_spinlock_lock( &current->res_lock );
 
 		/* if it the first checked driver */
 		if ( freest_value < 0 )
@@ -927,7 +927,7 @@ mpc_common_topo_device_t *mpc_common_topo_device_attach_freest_device_from( mpc_
 		else if ( (int) current->nb_res < freest_value )
 		{
 			/* free the previous selected device */
-			sctk_spinlock_unlock( &freest_elem->res_lock );
+			mpc_common_spinlock_unlock( &freest_elem->res_lock );
 			freest_value = current->nb_res;
 			freest_elem = current;
 			sctk_nodebug( "New best device: %d (%d)", freest_elem->device_id,
@@ -936,13 +936,13 @@ mpc_common_topo_device_t *mpc_common_topo_device_attach_freest_device_from( mpc_
 		else
 		{
 			/* this device is not elected as the freest ones -> unlock */
-			sctk_spinlock_unlock( &current->res_lock );
+			mpc_common_spinlock_unlock( &current->res_lock );
 		}
 	}
 
 	assert( freest_elem != NULL );
 	freest_elem->nb_res++;
-	sctk_spinlock_unlock( &freest_elem->res_lock );
+	mpc_common_spinlock_unlock( &freest_elem->res_lock );
 
 	return freest_elem;
 }

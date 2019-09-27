@@ -22,7 +22,7 @@
 /* ######################################################################## */
 /************************** HEADERS ************************/
 #include "sctk_shm_mapper.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -161,7 +161,7 @@ sctk_shm_mapper_sync_header_init(void *ptr, sctk_size_t size,
 **/
 
 static sctk_atomics_int local_gen;
-static sctk_spinlock_t gen_lock = 0;
+static mpc_common_spinlock_t gen_lock = 0;
 static int gen_init_done = 0;
 
 SCTK_STATIC void sctk_shm_mapper_barrier( sctk_shm_mapper_sync_header_t * sync_header,__UNUSED__ sctk_shm_mapper_role_t role,int participants)
@@ -169,12 +169,12 @@ SCTK_STATIC void sctk_shm_mapper_barrier( sctk_shm_mapper_sync_header_t * sync_h
 	//errors
 	assert(sync_header != NULL);
 
-        sctk_spinlock_lock(&gen_lock);
+        mpc_common_spinlock_lock(&gen_lock);
         if (gen_init_done == 0) {
           sctk_atomics_store_int(&local_gen, -1);
           gen_init_done = 1;
         }
-        sctk_spinlock_unlock(&gen_lock);
+        mpc_common_spinlock_unlock(&gen_lock);
 
         sctk_atomics_incr_int(&local_gen);
 
@@ -258,9 +258,9 @@ SCTK_PUBLIC void * sctk_shm_mapper_create(sctk_size_t size,sctk_shm_mapper_role_
     }
 
     // Flush the barrier generation value
-    sctk_spinlock_lock(&gen_lock);
+    mpc_common_spinlock_lock(&gen_lock);
     gen_init_done = 0;
-    sctk_spinlock_unlock(&gen_lock);
+    mpc_common_spinlock_unlock(&gen_lock);
 
     // select the method
     switch (role) {

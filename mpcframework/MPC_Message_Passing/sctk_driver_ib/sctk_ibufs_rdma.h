@@ -29,7 +29,7 @@
 
 #include "infiniband/verbs.h"
 
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_ib_mmu.h"
 #include "sctk_ib.h"
 #include "sctk_ib_qp.h"
@@ -53,13 +53,13 @@ struct sctk_ib_rail_info_s;
 
 #define IBUF_RDMA_GET_REGION(remote,ptr) (&remote->rdma.pool->region[ptr])
 
-#define IBUF_RDMA_LOCK_REGION(remote,ptr) (sctk_spinlock_lock(&remote->rdma.pool->region[ptr].lock))
-#define IBUF_RDMA_TRYLOCK_REGION(remote,ptr) (sctk_spinlock_trylock(&remote->rdma.pool->region[ptr].lock))
-#define IBUF_RDMA_UNLOCK_REGION(remote,ptr) (sctk_spinlock_unlock(&remote->rdma.pool->region[ptr].lock))
+#define IBUF_RDMA_LOCK_REGION(remote,ptr) (mpc_common_spinlock_lock(&remote->rdma.pool->region[ptr].lock))
+#define IBUF_RDMA_TRYLOCK_REGION(remote,ptr) (mpc_common_spinlock_trylock(&remote->rdma.pool->region[ptr].lock))
+#define IBUF_RDMA_UNLOCK_REGION(remote,ptr) (mpc_common_spinlock_unlock(&remote->rdma.pool->region[ptr].lock))
 
-#define IBUF_RDMA_LOCK_POLLING(remote) (sctk_spinlock_lock(&remote->rdma.polling_lock))
-#define IBUF_RDMA_TRYLOCK_POLLING(remote) (sctk_spinlock_trylock(&remote->rdma.polling_lock))
-#define IBUF_RDMA_UNLOCK_POLLING(remote) (sctk_spinlock_unlock(&remote->rdma.polling_lock))
+#define IBUF_RDMA_LOCK_POLLING(remote) (mpc_common_spinlock_lock(&remote->rdma.polling_lock))
+#define IBUF_RDMA_TRYLOCK_POLLING(remote) (mpc_common_spinlock_trylock(&remote->rdma.polling_lock))
+#define IBUF_RDMA_UNLOCK_POLLING(remote) (mpc_common_spinlock_unlock(&remote->rdma.polling_lock))
 
 #define IBUF_RDMA_GET_REMOTE_ADDR(remote,ibuf) \
   ((char*) remote->rdma.pool->remote_region[REGION_RECV] + (ibuf->index * \

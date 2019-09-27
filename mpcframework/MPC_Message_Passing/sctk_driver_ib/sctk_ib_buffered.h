@@ -27,7 +27,7 @@
 #ifndef __SCTK__IB_BUFFERED_H_
 #define __SCTK__IB_BUFFERED_H_
 
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include <uthash.h>
 #include <sctk_inter_thread_comm.h>
 
@@ -37,7 +37,7 @@
 typedef struct sctk_ib_buffered_table_s
 {
 	struct sctk_ib_buffered_entry_s *entries;
-	sctk_spinlock_t lock;
+	mpc_common_spinlock_t lock;
 
 	OPA_int_t number;
 } sctk_ib_buffered_table_t;
@@ -61,10 +61,10 @@ typedef struct sctk_ib_buffered_entry_s
 	int total;
 	void *payload;
 	sctk_ib_rdma_status_t status;
-	sctk_spinlock_t lock;
+	mpc_common_spinlock_t lock;
 	char dummy[64];
 	/* Current copied */
-	sctk_spinlock_t current_copied_lock;
+	mpc_common_spinlock_t current_copied_lock;
 	size_t current_copied;
 
 	struct sctk_message_to_copy_s *copy_ptr;

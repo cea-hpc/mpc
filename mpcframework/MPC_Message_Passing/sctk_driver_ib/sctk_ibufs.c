@@ -206,9 +206,9 @@ sctk_ibuf_t *sctk_ibuf_pick_send_sr ( struct sctk_ib_rail_info_s *rail_ib )
 	PROF_TIME_START ( rail_ib->rail, ib_pick_send_sr );
 	sctk_ibuf_numa_t *node = sctk_ibuf_get_closest_node ( rail_ib );
 
-	sctk_spinlock_t *lock = &node->lock;
+	mpc_common_spinlock_t *lock = &node->lock;
 
-	sctk_spinlock_lock ( lock );
+	mpc_common_spinlock_lock ( lock );
 
 	/* Allocate additionnal buffers if no more are available */
 	if ( !node->free_entry )
@@ -221,7 +221,7 @@ sctk_ibuf_t *sctk_ibuf_pick_send_sr ( struct sctk_ib_rail_info_s *rail_ib )
 	DL_DELETE ( node->free_entry, node->free_entry );
 	OPA_decr_int ( &node->free_nb );
 
-	sctk_spinlock_unlock ( lock );
+	mpc_common_spinlock_unlock ( lock );
 
 	IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_NULL_PROTOCOL );
 
@@ -268,7 +268,7 @@ sctk_ibuf_t *sctk_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib,
 	if ( state == STATE_CONNECTED )
 	{
 		/* Double lock checking */
-		sctk_spinlock_lock ( &remote->rdma.flushing_lock );
+		mpc_common_spinlock_lock ( &remote->rdma.flushing_lock );
 		state = sctk_ibuf_rdma_get_remote_state_rts ( remote );
 
 		if ( state == STATE_CONNECTED )
@@ -276,7 +276,7 @@ sctk_ibuf_t *sctk_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib,
 			/* WARNING: 'free_nb' must be decremented just after
 			* checking the state of the RDMA buffer. */
 			OPA_incr_int ( &remote->rdma.pool->busy_nb[REGION_SEND] );
-			sctk_spinlock_unlock ( &remote->rdma.flushing_lock );
+			mpc_common_spinlock_unlock ( &remote->rdma.flushing_lock );
 
 			limit = sctk_ibuf_rdma_get_eager_limit ( remote );
 			sctk_nodebug ( "Eager limit: %lu", limit );
@@ -327,7 +327,7 @@ sctk_ibuf_t *sctk_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib,
 		}
 		else
 		{
-			sctk_spinlock_unlock ( &remote->rdma.flushing_lock );
+			mpc_common_spinlock_unlock ( &remote->rdma.flushing_lock );
 		}
 	}
 
@@ -342,9 +342,9 @@ sctk_ibuf_t *sctk_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib,
 		sctk_nodebug ( "Picking from SR" );
 
 		sctk_ibuf_numa_t *node = sctk_ibuf_get_closest_node ( rail_ib );
-		sctk_spinlock_t *lock = &node->lock;
+		mpc_common_spinlock_t *lock = &node->lock;
 
-		sctk_spinlock_lock ( lock );
+		mpc_common_spinlock_lock ( lock );
 
 		/* Allocate additionnal buffers if no more are available */
 		if ( !node->free_entry )
@@ -357,7 +357,7 @@ sctk_ibuf_t *sctk_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib,
 		DL_DELETE ( node->free_entry, node->free_entry );
 		OPA_decr_int ( &node->free_nb );
 
-		sctk_spinlock_unlock ( lock );
+		mpc_common_spinlock_unlock ( lock );
 
 		IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_NULL_PROTOCOL );
 		PROF_INC ( rail_ib->rail, ib_ibuf_sr_nb );
@@ -465,7 +465,7 @@ static int srq_post ( struct sctk_ib_rail_info_s *rail_ib,
 	int nb_posted = 0;
 	sctk_ibuf_t *ibuf;
 	int rc;
-	sctk_spinlock_t *lock = &node->lock;
+	mpc_common_spinlock_t *lock = &node->lock;
 	int nb_ibufs;
 	int free_srq_nb;
 
@@ -481,20 +481,20 @@ static int srq_post ( struct sctk_ib_rail_info_s *rail_ib,
 	PROF_TIME_START ( rail_ib->rail, ib_ibuf_srq_post );
 
 	if ( force )
-		sctk_spinlock_lock ( &rail_ib->pool_buffers->post_srq_lock );
+		mpc_common_spinlock_lock ( &rail_ib->pool_buffers->post_srq_lock );
 	else
-		if ( sctk_spinlock_trylock ( &rail_ib->pool_buffers->post_srq_lock ) != 0 )
+		if ( mpc_common_spinlock_trylock ( &rail_ib->pool_buffers->post_srq_lock ) != 0 )
 			goto exit;
 
 	/* Only 1 task can post to the SRQ at the same time. No need more concurrency */
-	//  if (sctk_spinlock_trylock(&rail_ib->pool_buffers->post_srq_lock) == 0)
+	//  if (mpc_common_spinlock_trylock(&rail_ib->pool_buffers->post_srq_lock) == 0)
 	{
 		/* limit of buffer posted */
 		free_srq_nb = OPA_load_int ( &node->free_srq_nb );
 		nb_ibufs = config->max_srq_ibufs_posted - free_srq_nb;
 		sctk_nodebug ( "Post %d ibufs in SRQ (free:%d max:%d force:%d)", nb_ibufs, free_srq_nb, config->max_srq_ibufs_posted, force );
 
-		sctk_spinlock_lock ( lock );
+		mpc_common_spinlock_lock ( lock );
 
 		for ( i = 0; i < nb_ibufs; ++i )
 		{
@@ -522,11 +522,11 @@ static int srq_post ( struct sctk_ib_rail_info_s *rail_ib,
 				nb_posted++;
 		}
 
-		sctk_spinlock_unlock ( lock );
+		mpc_common_spinlock_unlock ( lock );
 
 		OPA_add_int ( &node->free_srq_nb, nb_posted );
 
-		sctk_spinlock_unlock ( &rail_ib->pool_buffers->post_srq_lock );
+		mpc_common_spinlock_unlock ( &rail_ib->pool_buffers->post_srq_lock );
 	}
 	PROF_TIME_END ( rail_ib->rail, ib_ibuf_srq_post );
 
@@ -587,7 +587,7 @@ void sctk_ibuf_release ( struct sctk_ib_rail_info_s *rail_ib,
 
 			ib_assume ( IBUF_GET_CHANNEL ( ibuf ) == RC_SR_CHANNEL );
 			sctk_ibuf_numa_t *node = ibuf->region->node;
-			sctk_spinlock_t *lock = &node->lock;
+			mpc_common_spinlock_t *lock = &node->lock;
 
 			if ( ibuf->in_srq )
 			{
@@ -599,9 +599,9 @@ void sctk_ibuf_release ( struct sctk_ib_rail_info_s *rail_ib,
 
 				{
 					sctk_ibuf_numa_t *closest_node = sctk_ibuf_get_closest_node ( rail_ib );
-					sctk_spinlock_t *srq_cache_lock = &closest_node->srq_cache_lock;
+					mpc_common_spinlock_t *srq_cache_lock = &closest_node->srq_cache_lock;
 
-					sctk_spinlock_lock ( srq_cache_lock );
+					mpc_common_spinlock_lock ( srq_cache_lock );
 					const int srq_cache_nb = ++ closest_node->free_srq_cache_nb;
 					DL_APPEND ( closest_node->free_srq_cache, ibuf );
 
@@ -613,15 +613,15 @@ void sctk_ibuf_release ( struct sctk_ib_rail_info_s *rail_ib,
 					{
 						OPA_add_int ( &node->free_nb, srq_cache_nb );
 
-						sctk_spinlock_lock ( lock );
+						mpc_common_spinlock_lock ( lock );
 						DL_CONCAT ( node->free_entry, closest_node->free_srq_cache );
-						sctk_spinlock_unlock ( lock );
+						mpc_common_spinlock_unlock ( lock );
 
 						closest_node->free_srq_cache_nb = 0;
 						closest_node->free_srq_cache = NULL;
 					}
 
-					sctk_spinlock_unlock ( srq_cache_lock );
+					mpc_common_spinlock_unlock ( srq_cache_lock );
 				}
 
 				/* If SRQ, we check and try to post more messages to SRQ */
@@ -641,9 +641,9 @@ void sctk_ibuf_release ( struct sctk_ib_rail_info_s *rail_ib,
 				IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_NULL_PROTOCOL );
 
 				OPA_incr_int ( &node->free_nb );
-				sctk_spinlock_lock ( lock );
+				mpc_common_spinlock_lock ( lock );
 				DL_APPEND ( node->free_entry, ibuf );
-				sctk_spinlock_unlock ( lock );
+				mpc_common_spinlock_unlock ( lock );
 				PROF_TIME_END ( rail_ib->rail, ib_ibuf_sr_send_release );
 			}
 		}

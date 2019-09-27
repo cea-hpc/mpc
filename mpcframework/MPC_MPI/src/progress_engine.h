@@ -1,7 +1,7 @@
 #ifndef PROGRESS_ENGINE_H
 #define PROGRESS_ENGINE_H
 
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_thread.h"
 
 typedef enum
@@ -17,7 +17,7 @@ struct sctk_progress_work_unit
     void * param;
     volatile int done;
     int is_free;
-    sctk_spinlock_t unit_lock;
+    mpc_common_spinlock_t unit_lock;
 };
 
 int sctk_progress_work_unit_init( struct sctk_progress_work_unit *pwu );
@@ -33,7 +33,7 @@ struct sctk_progress_list
 {
     struct sctk_progress_work_unit works[PROGRESS_PWU_STATIC_ARRAY];
     volatile unsigned int work_count;
-    sctk_spinlock_t list_lock;
+    mpc_common_spinlock_t list_lock;
     int is_free;
     unsigned int no_work_count;
     int id;
@@ -49,7 +49,7 @@ int sctk_progress_list_poll( struct sctk_progress_list * pl );
 struct sctk_progress_engine_pool
 {
     struct sctk_progress_list *lists;
-    sctk_spinlock_t pool_lock;
+    mpc_common_spinlock_t pool_lock;
     unsigned int size;
     unsigned int booked;
 };

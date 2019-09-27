@@ -30,8 +30,6 @@
 
 #include <sys/uio.h>
 
-#define sctk_min(a, b)  ((a) < (b) ? (a) : (b))
-
 struct iovec *
 sctk_net_convert_msg_to_iovec( sctk_thread_ptp_message_t *msg, int *iovlen, size_t max_size)
 {

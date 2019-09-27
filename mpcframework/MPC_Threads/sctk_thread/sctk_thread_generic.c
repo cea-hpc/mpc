@@ -583,7 +583,7 @@ static void sctk_thread_generic_treat_signals(sctk_thread_generic_t threadp) {
   }
 
   if( &(th->attr.spinlock ) != &(sctk_thread_generic_self()->attr.spinlock )){
-  sctk_spinlock_lock ( &(th->attr.spinlock ));
+  mpc_common_spinlock_lock ( &(th->attr.spinlock ));
 
   for( i = 0; i < SCTK_NSIG; i++ ){
 	if( expect_false( th->attr.thread_sigpending[i] != 0 )){
@@ -606,7 +606,7 @@ static void sctk_thread_generic_treat_signals(sctk_thread_generic_t threadp) {
   }
 
   th->attr.nb_sig_treated += done;
-  sctk_spinlock_unlock ( &(th->attr.spinlock ));
+  mpc_common_spinlock_unlock ( &(th->attr.spinlock ));
   }
   else{
   for( i = 0; i < SCTK_NSIG; i++ ){
@@ -639,7 +639,7 @@ int __sctk_thread_generic_sigpending(sctk_thread_generic_t threadp,
   sigemptyset (set);
   sctk_thread_generic_p_t* th = threadp;
 
-  sctk_spinlock_lock ( &(th->attr.spinlock ));
+  mpc_common_spinlock_lock ( &(th->attr.spinlock ));
 
   for( i = 0; i < SCTK_NSIG; i++ ){
 	if( th->attr.thread_sigpending[i] != 0 ){
@@ -647,7 +647,7 @@ int __sctk_thread_generic_sigpending(sctk_thread_generic_t threadp,
 	}
   }
 
-  sctk_spinlock_unlock ( &(th->attr.spinlock ));
+  mpc_common_spinlock_unlock ( &(th->attr.spinlock ));
   return 0;
 }
 
@@ -754,7 +754,7 @@ sctk_thread_generic_wake_on_barrier(sctk_thread_generic_scheduler_t *sched,
   sctk_thread_generic_barrier_t* barrier = (sctk_thread_generic_barrier_t*) lock;
   sctk_thread_generic_barrier_cell_t* list;
 
-  sctk_spinlock_lock( &(barrier->lock ));
+  mpc_common_spinlock_lock( &(barrier->lock ));
   DL_FOREACH( barrier->blocked, list ){
 	if( list->sched == sched ) break;
   }
@@ -767,14 +767,14 @@ sctk_thread_generic_wake_on_barrier(sctk_thread_generic_scheduler_t *sched,
 	  sctk_generic_swap_to_sched( sched );
 	}
 	else{
-	  sctk_spinlock_unlock( &(barrier->lock ));
+	  mpc_common_spinlock_unlock( &(barrier->lock ));
 	  sctk_thread_generic_wake( sched );
 	}
   }
   else{
   if( list ){ 
 	  sctk_generic_swap_to_sched( sched );}
-  sctk_spinlock_unlock( &(barrier->lock ));
+  mpc_common_spinlock_unlock( &(barrier->lock ));
   }
 }
 
@@ -784,18 +784,18 @@ sctk_thread_generic_wake_on_cond(sctk_thread_generic_scheduler_t *sched,
   sctk_thread_generic_cond_t* cond = (sctk_thread_generic_cond_t*) lock;
   sctk_thread_generic_cond_cell_t* list;
 
-  sctk_spinlock_lock( &(cond->lock ));
+  mpc_common_spinlock_lock( &(cond->lock ));
   DL_FOREACH( cond->blocked, list ){
 	if( list->sched == sched ) break;
   }
   if( remove_from_lock_list && list ){
 	DL_DELETE( cond->blocked, list );
-	sctk_spinlock_unlock( &(cond->lock ));
+	mpc_common_spinlock_unlock( &(cond->lock ));
 	sctk_thread_generic_wake( sched );
   }
   else{
   if( list ) sctk_generic_swap_to_sched( sched );
-  sctk_spinlock_unlock( &(cond->lock ));
+  mpc_common_spinlock_unlock( &(cond->lock ));
   }
 }
 
@@ -805,7 +805,7 @@ sctk_thread_generic_wake_on_mutex(sctk_thread_generic_scheduler_t *sched,
   sctk_thread_generic_mutex_t* mu = (sctk_thread_generic_mutex_t*) lock;
   sctk_thread_generic_mutex_cell_t* list;
 
-  sctk_spinlock_lock( &(mu->lock ));
+  mpc_common_spinlock_lock( &(mu->lock ));
   DL_FOREACH( mu->blocked, list ){
 	if( list->sched == sched ) break;
   }
@@ -817,13 +817,13 @@ sctk_thread_generic_wake_on_mutex(sctk_thread_generic_scheduler_t *sched,
 	  sctk_generic_swap_to_sched( sched );
 	}
 	else{
-	  sctk_spinlock_unlock( &(mu->lock ));
+	  mpc_common_spinlock_unlock( &(mu->lock ));
 	  sctk_thread_generic_wake( sched );
 	}
   }
   else{
 	if( list ) sctk_generic_swap_to_sched( sched );
-	sctk_spinlock_unlock( &(mu->lock ));
+	mpc_common_spinlock_unlock( &(mu->lock ));
   }
 }
 
@@ -833,7 +833,7 @@ sctk_thread_generic_wake_on_rwlock(sctk_thread_generic_scheduler_t *sched,
   sctk_thread_generic_rwlock_t* rw = (sctk_thread_generic_rwlock_t*) lock;
   sctk_thread_generic_rwlock_cell_t* list;
 
-  sctk_spinlock_lock( &(rw->lock ));
+  mpc_common_spinlock_lock( &(rw->lock ));
   DL_FOREACH( rw->waiting, list ){
 	if( list->sched == sched ) break;
   }
@@ -847,13 +847,13 @@ sctk_thread_generic_wake_on_rwlock(sctk_thread_generic_scheduler_t *sched,
 	  /* Maybe need to remove the lock from taken thread s rwlocks list*/
 	}
 	else{
-	  sctk_spinlock_unlock( &(rw->lock ));
+	  mpc_common_spinlock_unlock( &(rw->lock ));
 	  sctk_thread_generic_wake( sched );
 	}
   }
   else{
   if( list ) sctk_generic_swap_to_sched( sched );
-  sctk_spinlock_unlock( &(rw->lock ));
+  mpc_common_spinlock_unlock( &(rw->lock ));
   }
 }
 
@@ -863,18 +863,18 @@ sctk_thread_generic_wake_on_sem(sctk_thread_generic_scheduler_t *sched,
   sctk_thread_generic_sem_t* sem = (sctk_thread_generic_sem_t*) lock;
   sctk_thread_generic_mutex_cell_t* list;
 
-  sctk_spinlock_lock( &(sem->spinlock ));
+  mpc_common_spinlock_lock( &(sem->spinlock ));
   DL_FOREACH( sem->list, list ){
 	if( list->sched == sched ) break;
   }
   if( remove_from_lock_list && list ){
 	DL_DELETE( sem->list, list );
-	sctk_spinlock_unlock( &(sem->spinlock ));
+	mpc_common_spinlock_unlock( &(sem->spinlock ));
 	sctk_thread_generic_wake( sched );
   }
   else{
   if( list ) sctk_generic_swap_to_sched( sched );
-  sctk_spinlock_unlock( &(sem->spinlock ));
+  mpc_common_spinlock_unlock( &(sem->spinlock ));
   }
 }
 
@@ -938,12 +938,12 @@ sctk_thread_generic_kill( sctk_thread_generic_t threadp, int val ){
   }
 
   if( (&(th->attr.spinlock )) != (&(sctk_thread_generic_self()->attr.spinlock ))){
-	sctk_spinlock_lock ( &(th->attr.spinlock ));
+	mpc_common_spinlock_lock ( &(th->attr.spinlock ));
 	if( th->attr.thread_sigpending[val] == 0 ){
 	  th->attr.thread_sigpending[val] = 1;
 	  th->attr.nb_sig_pending++;
 	}
-    sctk_spinlock_unlock ( &(th->attr.spinlock ));
+    mpc_common_spinlock_unlock ( &(th->attr.spinlock ));
   }
   else{
 	if( th->attr.thread_sigpending[val] == 0 ){
@@ -2060,7 +2060,7 @@ sctk_thread_generic_getcpuclockid( sctk_thread_generic_t threadp,
 /***************************************/
 /* THREAD ONCE                         */
 /***************************************/
-typedef sctk_spinlock_t sctk_thread_generic_once_t;
+typedef mpc_common_spinlock_t sctk_thread_generic_once_t;
 
 static int __sctk_thread_generic_once_initialized(
     sctk_thread_generic_once_t *once_control) {

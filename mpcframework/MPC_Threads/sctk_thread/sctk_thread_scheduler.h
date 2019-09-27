@@ -27,7 +27,7 @@
 #include "sctk_config.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_internal_thread.h"
 #include "sctk_context.h"
 #include <utlist.h>
@@ -64,7 +64,7 @@ typedef struct{
 typedef struct sctk_thread_generic_scheduler_generic_s{
   int vp_type;
   volatile int is_idle_mode;
-  sctk_spinlock_t lock;
+  mpc_common_spinlock_t lock;
   struct sctk_thread_generic_scheduler_s* sched;
   struct sctk_thread_generic_scheduler_generic_s *prev, *next;
   sem_t sem;
@@ -80,7 +80,7 @@ typedef struct sctk_thread_generic_scheduler_s{
   sctk_mctx_t ctx;
   sctk_mctx_t ctx_bootstrap;
   volatile sctk_thread_generic_thread_status_t status;
-  sctk_spinlock_t debug_lock;
+  mpc_common_spinlock_t debug_lock;
   struct sctk_thread_generic_p_s* th;
   union{
     sctk_thread_generic_scheduler_generic_t generic;
@@ -102,7 +102,7 @@ extern void (*sctk_thread_generic_sched_yield)(sctk_thread_generic_scheduler_t*)
 extern void (*sctk_thread_generic_thread_status)(sctk_thread_generic_scheduler_t*,
 						sctk_thread_generic_thread_status_t);
 extern void (*sctk_thread_generic_register_spinlock_unlock)(sctk_thread_generic_scheduler_t*,
-							   sctk_spinlock_t*);
+							   mpc_common_spinlock_t*);
 extern void (*sctk_thread_generic_wake)(sctk_thread_generic_scheduler_t*);
 
 struct sctk_thread_generic_p_s;

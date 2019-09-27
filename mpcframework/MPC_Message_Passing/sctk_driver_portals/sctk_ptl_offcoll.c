@@ -110,7 +110,7 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 		cur->nb_children = -1;
 		cur->root = -1;
 		sctk_atomics_store_int(&cur->iter, 0);
-        	sctk_spinlock_init((&cur->lock), 0);
+        	mpc_common_spinlock_init((&cur->lock), 0);
 		switch(i)
 		{
 			case SCTK_PTL_OFFCOLL_BARRIER:
@@ -226,7 +226,7 @@ static inline void __sctk_ptl_offcoll_build_tree(sctk_ptl_rail_info_t* srail, sc
 	/* if no tree has been built yet OR if the currently saved tree is not the one we want => built it */
         if(node->leaf == -1 || node->root != root)
         {
-                sctk_spinlock_lock(&node->lock);
+                mpc_common_spinlock_lock(&node->lock);
                 if(node->leaf == -1 || node->root != root)
                 {
                         /* get children range for the current process 
@@ -277,7 +277,7 @@ static inline void __sctk_ptl_offcoll_build_tree(sctk_ptl_rail_info_t* srail, sc
 				node->nb_children = 0;
 			}
                 }
-                sctk_spinlock_unlock(&node->lock);
+                mpc_common_spinlock_unlock(&node->lock);
         }
 }
 

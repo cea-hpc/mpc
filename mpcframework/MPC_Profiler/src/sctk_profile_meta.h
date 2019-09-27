@@ -26,7 +26,7 @@
 #include <sys/time.h>
 #include <stdint.h>
 
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 
 struct sctk_profile_meta
 {
@@ -42,7 +42,7 @@ struct sctk_profile_meta
 	uint64_t begin_ts;
 	struct timeval calibration_time;
 
-	sctk_spinlock_t lock;
+	mpc_common_spinlock_t lock;
 	int status;
 };
 

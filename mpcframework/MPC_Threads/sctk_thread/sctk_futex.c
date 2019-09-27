@@ -302,13 +302,13 @@ int * futex_queue_push( struct futex_queue * fq , int bitmask, int orig_op )
 {
 	/* Make sure we do not push when poping
 	 * to avoid repopping previously popped threads */
-	sctk_spinlock_lock( &fq->queue_is_wake_tainted );
+	mpc_common_spinlock_lock( &fq->queue_is_wake_tainted );
 	
 	struct futex_cell * cell = futex_cell_new(bitmask, orig_op);
 
 	Buffered_FIFO_push( &fq->wait_list , &cell );
 	
-	sctk_spinlock_unlock( &fq->queue_is_wake_tainted );
+	mpc_common_spinlock_unlock( &fq->queue_is_wake_tainted );
 	
 	return cell->do_wait;
 }
@@ -323,11 +323,11 @@ int * futex_queue_repush_no_lock( struct futex_queue * fq , struct futex_cell * 
 int * futex_queue_repush( struct futex_queue * fq , struct futex_cell * to_repush )
 {
 	int * ret = NULL;
-	sctk_spinlock_lock( &fq->queue_is_wake_tainted );
+	mpc_common_spinlock_lock( &fq->queue_is_wake_tainted );
 	
 	ret = futex_queue_repush_no_lock( fq , to_repush );
 	
-	sctk_spinlock_unlock( &fq->queue_is_wake_tainted );
+	mpc_common_spinlock_unlock( &fq->queue_is_wake_tainted );
 	
 	return ret;
 }
@@ -355,7 +355,7 @@ int futex_queue_wake( struct futex_queue * fq , int bitmask, int use_mask, int c
 {
 	int popped = 0;
 	
-	sctk_spinlock_lock( &fq->queue_is_wake_tainted );
+	mpc_common_spinlock_lock( &fq->queue_is_wake_tainted );
 	
 	/* Wake indiferently from the mask */
 	if( use_mask == 0 )
@@ -425,7 +425,7 @@ int futex_queue_wake( struct futex_queue * fq , int bitmask, int use_mask, int c
 		
 	}
 	
-	sctk_spinlock_unlock( &fq->queue_is_wake_tainted );
+	mpc_common_spinlock_unlock( &fq->queue_is_wake_tainted );
 		
 	return popped;
 }
@@ -434,7 +434,7 @@ int futex_queue_requeue( struct futex_queue * fq, struct futex_queue * out, int 
 {
 	int popped = 0;
 	
-	sctk_spinlock_lock( &fq->queue_is_wake_tainted );
+	mpc_common_spinlock_lock( &fq->queue_is_wake_tainted );
 
 	struct futex_cell * to_wake = NULL;
 	
@@ -487,7 +487,7 @@ int futex_queue_requeue( struct futex_queue * fq, struct futex_queue * out, int 
 	if( popped < 0 )
 	{
 		/* We already encountered an error */
-		sctk_spinlock_unlock( &fq->queue_is_wake_tainted );
+		mpc_common_spinlock_unlock( &fq->queue_is_wake_tainted );
 		return -1;
 	}
 	
@@ -502,7 +502,7 @@ int futex_queue_requeue( struct futex_queue * fq, struct futex_queue * out, int 
 	}
 	/* ELSE Nothing to do we are already on the same queue */
 
-	sctk_spinlock_unlock( &fq->queue_is_wake_tainted );
+	mpc_common_spinlock_unlock( &fq->queue_is_wake_tainted );
 	
 	
 	return popped;
@@ -974,7 +974,7 @@ int sctk_futex_CMPREQUEUE_PI(void *addr1, int val1, void * addr2, int val3 )
 
 int sctk_futex_TRYLOCKPI( int * volatile futex )
 {
-	int ret = sctk_spinlock_trylock( (sctk_spinlock_t *) futex );
+	int ret = mpc_common_spinlock_trylock( (mpc_common_spinlock_t *) futex );
 	
 	/* Flag as waited for */
 	*futex = *futex & sctk_do_translate_futex_waiter();
@@ -1026,7 +1026,7 @@ int sctk_futex_LOCKPI( int * volatile futex , struct timespec *timeout)
 
 int sctk_futex_UNLOCKPI( int * volatile futex)
 {
-	sctk_spinlock_unlock( (sctk_spinlock_t *) futex );
+	mpc_common_spinlock_unlock( (mpc_common_spinlock_t *) futex );
 	sctk_futex_WAKE(futex, SCTK_FUTEX_UNLOCK_PI, 1 );
 	
 	return 0;

@@ -83,7 +83,7 @@ int mpc_MPI_Win_progress_probe(struct mpc_MPI_Win *desc, void *prebuff,
 
 #if 1
 
-static sctk_spinlock_t __pool_submit_lock = 0;
+static mpc_common_spinlock_t __pool_submit_lock = 0;
 static struct mpc_MPI_Win *submited_desc = NULL;
 static volatile int progress_pool_count = 0;
 
@@ -93,7 +93,7 @@ struct mpc_MPI_Win *mpc_MPI_Win_progress_pool_wait() {
   int inc = 0;
 
   while (1) {
-    if (sctk_spinlock_trylock(&__pool_submit_lock)) {
+    if (mpc_common_spinlock_trylock(&__pool_submit_lock)) {
       sctk_thread_yield();
       continue;
     }
@@ -109,7 +109,7 @@ struct mpc_MPI_Win *mpc_MPI_Win_progress_pool_wait() {
       progress_pool_count--;
     }
 
-    sctk_spinlock_unlock(&__pool_submit_lock);
+    mpc_common_spinlock_unlock(&__pool_submit_lock);
 
     if (ret)
       break;
@@ -239,7 +239,7 @@ struct mpc_MPI_Win *mpc_MPI_Win_init(int flavor, int model, MPI_Comm comm,
   int pool_retries = 0;
 
   while (pool_retries++ < 32) {
-    sctk_spinlock_lock_yield(&__pool_submit_lock);
+    mpc_common_spinlock_lock_yield(&__pool_submit_lock);
 
     if (progress_pool_count) {
       if (!submited_desc) {
@@ -248,7 +248,7 @@ struct mpc_MPI_Win *mpc_MPI_Win_init(int flavor, int model, MPI_Comm comm,
       }
     }
 
-    sctk_spinlock_unlock(&__pool_submit_lock);
+    mpc_common_spinlock_unlock(&__pool_submit_lock);
 
     if (used_pool_thread)
       break;
@@ -831,18 +831,18 @@ int mpc_MPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size,
 /* Keyval low-level storage */
 
 static struct MPCHT __win_keyval_ht;
-sctk_spinlock_t __win_keyval_ht_lock = 0;
+mpc_common_spinlock_t __win_keyval_ht_lock = 0;
 int __win_keyval_ht_init_done = 0;
 
 static inline void win_keyval_ht_init_once() {
-  sctk_spinlock_lock(&__win_keyval_ht_lock);
+  mpc_common_spinlock_lock(&__win_keyval_ht_lock);
 
   if (!__win_keyval_ht_init_done) {
     MPCHT_init(&__win_keyval_ht, 16);
     __win_keyval_ht_init_done = 1;
   }
 
-  sctk_spinlock_unlock(&__win_keyval_ht_lock);
+  mpc_common_spinlock_unlock(&__win_keyval_ht_lock);
 }
 
 static inline sctk_uint64_t get_per_rank_keyval_key(int keyval) {

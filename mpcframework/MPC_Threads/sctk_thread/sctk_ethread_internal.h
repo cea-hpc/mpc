@@ -188,7 +188,7 @@ extern "C"
 #ifndef WINDOWS_SYS
     int i;
     int done = 0;
-    sctk_spinlock_lock (&(cur->spinlock));
+    mpc_common_spinlock_lock (&(cur->spinlock));
     for (i = 0; i < SCTK_NSIG; i++)
       {
 	if (expect_false (cur->thread_sigpending[i] != 0))
@@ -202,7 +202,7 @@ extern "C"
 	      }
 	  }
       }
-    sctk_spinlock_unlock (&(cur->spinlock));
+    mpc_common_spinlock_unlock (&(cur->spinlock));
     cur->nb_sig_proceeded += done;
     return done;
 #else
@@ -216,7 +216,7 @@ extern "C"
 #ifndef WINDOWS_SYS
     int i;
     sigemptyset (set);
-    sctk_spinlock_lock (&(cur->spinlock));
+    mpc_common_spinlock_lock (&(cur->spinlock));
     for (i = 0; i < SCTK_NSIG; i++)
       {
 	if (cur->thread_sigpending[i] != 0)
@@ -224,7 +224,7 @@ extern "C"
 	    sigaddset (set, i + 1);
 	  }
       }
-    sctk_spinlock_unlock (&(cur->spinlock));
+    mpc_common_spinlock_unlock (&(cur->spinlock));
 #endif
     return 0;
   }
@@ -327,13 +327,13 @@ extern "C"
     if ((val < 0) || (val >= SCTK_NSIG))
       return SCTK_EINVAL;
 
-    sctk_spinlock_lock (&(thread->spinlock));
+    mpc_common_spinlock_lock (&(thread->spinlock));
     if (thread->thread_sigpending[val] == 0)
       {
 	thread->thread_sigpending[val] = 1;
 	thread->nb_sig_pending++;
       }
-    sctk_spinlock_unlock (&(thread->spinlock));
+    mpc_common_spinlock_unlock (&(thread->spinlock));
     return 0;
   }
 
@@ -922,9 +922,9 @@ extern "C"
 	if (lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
 	  {
 	    sctk_assert (lock->lock >= 1);
-	    sctk_spinlock_lock (&lock->spinlock);
+	    mpc_common_spinlock_lock (&lock->spinlock);
 	    lock->lock++;
-	    sctk_spinlock_unlock (&lock->spinlock);
+	    mpc_common_spinlock_unlock (&lock->spinlock);
 	    return 0;
 	  }
 	else if (lock->type == SCTK_THREAD_MUTEX_ERRORCHECK)
@@ -934,7 +934,7 @@ extern "C"
 	  }
       }
 
-    sctk_spinlock_lock (&lock->spinlock);
+    mpc_common_spinlock_lock (&lock->spinlock);
 
     if (lock->lock >= 1)
       {
@@ -956,13 +956,13 @@ extern "C"
 	  {
 	    owner->status = ethread_blocked;
 	    owner->no_auto_enqueue = 1;
-	    sctk_spinlock_unlock (&lock->spinlock);
+	    mpc_common_spinlock_unlock (&lock->spinlock);
 	    __sctk_ethread_sched_yield_vp_poll (vp, owner);
 	    owner->status = ethread_ready;
 	  }
 	else
 	  {
-	    sctk_spinlock_unlock (&lock->spinlock);
+	    mpc_common_spinlock_unlock (&lock->spinlock);
 	    while (cell.wake != 1)
 	      {
 		__sctk_ethread_sched_yield_vp (vp, owner);
@@ -978,7 +978,7 @@ extern "C"
       {
 	lock->lock = 1;
 	lock->owner = owner;
-	sctk_spinlock_unlock (&lock->spinlock);
+	mpc_common_spinlock_unlock (&lock->spinlock);
       }
     sctk_assert (lock->lock >= 1);
 
@@ -1000,9 +1000,9 @@ extern "C"
 	if (lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
 	  {
 	    sctk_assert (lock->lock >= 1);
-	    sctk_spinlock_lock (&lock->spinlock);
+	    mpc_common_spinlock_lock (&lock->spinlock);
 	    lock->lock++;
-	    sctk_spinlock_unlock (&lock->spinlock);
+	    mpc_common_spinlock_unlock (&lock->spinlock);
 	    return 0;
 	  }
 	else if (lock->type == SCTK_THREAD_MUTEX_ERRORCHECK)
@@ -1012,7 +1012,7 @@ extern "C"
 	  }
       }
 
-    sctk_spinlock_lock (&lock->spinlock);
+    mpc_common_spinlock_lock (&lock->spinlock);
 
     if (lock->lock >= 1)
       {
@@ -1034,7 +1034,7 @@ extern "C"
 	sctk_nodebug ("%p blocked on %p", owner, lock);
 	if (owner->status == ethread_ready)
 	  {
-	    sctk_spinlock_unlock (&lock->spinlock);
+	    mpc_common_spinlock_unlock (&lock->spinlock);
 	    while ((cell.wake) != 1 && (lock->owner != owner))
 	      {
 		i--;
@@ -1057,7 +1057,7 @@ extern "C"
 	  }
 	else
 	  {
-	    sctk_spinlock_unlock (&lock->spinlock);
+	    mpc_common_spinlock_unlock (&lock->spinlock);
 	    while (cell.wake != 1)
 	      {
 		__sctk_ethread_sched_yield_vp (vp, owner);
@@ -1073,7 +1073,7 @@ extern "C"
       {
 	lock->lock = 1;
 	lock->owner = owner;
-	sctk_spinlock_unlock (&lock->spinlock);
+	mpc_common_spinlock_unlock (&lock->spinlock);
       }
     sctk_assert (lock->lock >= 1);
 
@@ -1095,9 +1095,9 @@ extern "C"
 	if (lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
 	  {
 	    sctk_nodebug ("on est dans le mutex r�cursif");
-	    sctk_spinlock_lock (&lock->spinlock);
+	    mpc_common_spinlock_lock (&lock->spinlock);
 	    lock->lock++;
-	    sctk_spinlock_unlock (&lock->spinlock);
+	    mpc_common_spinlock_unlock (&lock->spinlock);
 	    return 0;
 	  }
 	else if (lock->type == SCTK_THREAD_MUTEX_ERRORCHECK)
@@ -1119,7 +1119,7 @@ extern "C"
        Si on arrive pas � prendre le spinlock, c'est qu'il y a du mon et donc que l'on est
        pas prioritaire.
      */
-    if (sctk_spinlock_trylock (&lock->spinlock))
+    if (mpc_common_spinlock_trylock (&lock->spinlock))
       {
 	return SCTK_EBUSY;
       }
@@ -1127,14 +1127,14 @@ extern "C"
 
     if (lock->lock > 0)
       {
-	sctk_spinlock_unlock (&lock->spinlock);
+	mpc_common_spinlock_unlock (&lock->spinlock);
 	return SCTK_EBUSY;
       }
     else
       {
 	lock->lock = 1;
 	lock->owner = owner;
-	sctk_spinlock_unlock (&lock->spinlock);
+	mpc_common_spinlock_unlock (&lock->spinlock);
       }
 
     sctk_assert (lock->lock > 0);
@@ -1179,13 +1179,13 @@ extern "C"
       {
 	if (lock->lock > 1)
 	  {
-	    sctk_spinlock_lock (&lock->spinlock);
+	    mpc_common_spinlock_lock (&lock->spinlock);
 	    lock->lock--;
-	    sctk_spinlock_unlock (&lock->spinlock);
+	    mpc_common_spinlock_unlock (&lock->spinlock);
 	    return 0;
 	  }
       }
-    sctk_spinlock_lock (&lock->spinlock);
+    mpc_common_spinlock_lock (&lock->spinlock);
     sctk_assert (lock->lock == 1);
     if (lock->list != NULL)
       {
@@ -1208,7 +1208,7 @@ extern "C"
 	lock->owner = NULL;
 	lock->lock = 0;
       }
-    sctk_spinlock_unlock (&lock->spinlock);
+    mpc_common_spinlock_unlock (&lock->spinlock);
 
 
     sctk_nodebug ("%p unlock on %p %d", owner, lock, lock->lock);
@@ -1223,7 +1223,7 @@ extern "C"
   {
     if (sctk_ethread_key_pos < SCTK_THREAD_KEYS_MAX)
       {
-	sctk_spinlock_lock (&sctk_ethread_key_spinlock);
+	mpc_common_spinlock_lock (&sctk_ethread_key_spinlock);
 	sctk_ethread_destr_func_tab[sctk_ethread_key_pos] = destr_func;
 	*key = sctk_ethread_key_pos;
 	sctk_ethread_key_pos++;
@@ -1234,7 +1234,7 @@ extern "C"
 #warning "Key backup disabled"
 #endif
 #endif
-	sctk_spinlock_unlock (&sctk_ethread_key_spinlock);
+	mpc_common_spinlock_unlock (&sctk_ethread_key_spinlock);
 	return 0;
       }
     else
@@ -1748,12 +1748,12 @@ extern "C"
 	sctk_makecontext (&(th_data->ctx),
 			  (void *) th_data,
 			  __sctk_start_routine, stack, stack_size);
-	sctk_spinlock_lock (&vp->spinlock);
+	mpc_common_spinlock_lock (&vp->spinlock);
 	__sctk_ethread_enqueue_task
 	  (th_data,
 	   (sctk_ethread_per_thread_t **) & (vp->incomming_queue),
 	   (sctk_ethread_per_thread_t **) & (vp->incomming_queue_tail));
-	sctk_spinlock_unlock (&vp->spinlock);
+	mpc_common_spinlock_unlock (&vp->spinlock);
 
       }
     else if (status == ethread_idle)
@@ -1777,14 +1777,14 @@ extern "C"
 
 	th_data->vp = new_kernel_vp;
 
-	sctk_spinlock_lock (&new_kernel_vp->spinlock);
+	mpc_common_spinlock_lock (&new_kernel_vp->spinlock);
 	__sctk_ethread_enqueue_task
 	  (th_data,
 	   (sctk_ethread_per_thread_t **) & (new_kernel_vp->
 					     incomming_queue),
 	   (sctk_ethread_per_thread_t **) & (new_kernel_vp->
 					     incomming_queue_tail));
-	sctk_spinlock_unlock (&new_kernel_vp->spinlock);
+	mpc_common_spinlock_unlock (&new_kernel_vp->spinlock);
 
       }
     else

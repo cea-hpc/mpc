@@ -25,7 +25,7 @@
 #include <sctk_communicator.h>
 #include <sctk.h>
 #include <sctk_debug.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include <uthash.h>
 #include <utlist.h>
 #include <string.h>
@@ -120,7 +120,7 @@ typedef struct {
   } while (0)
 
 typedef struct {
-  sctk_spinlock_t lock;
+  mpc_common_spinlock_t lock;
   volatile sctk_msg_list_t *list;
 } sctk_internal_ptp_list_incomming_t;
 
@@ -136,7 +136,7 @@ typedef struct {
   sctk_internal_ptp_list_incomming_t incomming_recv;
 #endif
 
-  sctk_spinlock_t pending_lock;
+  mpc_common_spinlock_t pending_lock;
   /* Messages in the 'pending' lists are waiting to be
    * matched */
   sctk_internal_ptp_list_pending_t pending_send;
@@ -325,7 +325,7 @@ static void sctk_show_requests(sctk_request_t* requests, int req_nb) {
 
 static inline void sctk_internal_ptp_list_incomming_init(
     sctk_internal_ptp_list_incomming_t *list) {
-  static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+  static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
 
   list->list = NULL;
   list->lock = lock;
@@ -343,7 +343,7 @@ sctk_internal_ptp_list_pending_init(sctk_internal_ptp_list_pending_t *list) {
  */
 static inline void
 sctk_internal_ptp_message_list_init(sctk_internal_ptp_message_lists_t *lists) {
-  static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+  static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
 #ifndef SCTK_DISABLE_REENTRANCE
   sctk_internal_ptp_list_incomming_init(&(lists->incomming_send));
   sctk_internal_ptp_list_incomming_init(&(lists->incomming_recv));
@@ -363,20 +363,20 @@ sctk_internal_ptp_merge_pending(sctk_internal_ptp_message_lists_t *lists) {
 #ifndef SCTK_DISABLE_REENTRANCE
 
   if (lists->incomming_send.list != NULL) {
-    if(sctk_spinlock_trylock(&(lists->incomming_send.lock)) == 0) {
+    if(mpc_common_spinlock_trylock(&(lists->incomming_send.lock)) == 0) {
       DL_CONCAT(lists->pending_send.list,
                 (sctk_msg_list_t *)lists->incomming_send.list);
       lists->incomming_send.list = NULL;
-      sctk_spinlock_unlock(&(lists->incomming_send.lock));
+      mpc_common_spinlock_unlock(&(lists->incomming_send.lock));
     }
   }
 
   if (lists->incomming_recv.list != NULL) {
-    if(sctk_spinlock_trylock(&(lists->incomming_recv.lock)) == 0){
+    if(mpc_common_spinlock_trylock(&(lists->incomming_recv.lock)) == 0){
       DL_CONCAT(lists->pending_recv.list,
                 (sctk_msg_list_t *)lists->incomming_recv.list);
       lists->incomming_recv.list = NULL;
-      sctk_spinlock_unlock(&(lists->incomming_recv.lock));
+      mpc_common_spinlock_unlock(&(lists->incomming_recv.lock));
     }
   }
 
@@ -387,17 +387,17 @@ sctk_internal_ptp_merge_pending(sctk_internal_ptp_message_lists_t *lists) {
 
 static inline void
 sctk_internal_ptp_lock_pending(sctk_internal_ptp_message_lists_t *lists) {
-  sctk_spinlock_lock_yield(&(lists->pending_lock));
+  mpc_common_spinlock_lock_yield(&(lists->pending_lock));
 }
 
 static inline int
 sctk_internal_ptp_trylock_pending(sctk_internal_ptp_message_lists_t *lists) {
-  return sctk_spinlock_trylock(&(lists->pending_lock));
+  return mpc_common_spinlock_trylock(&(lists->pending_lock));
 }
 
 static inline void
 sctk_internal_ptp_unlock_pending(sctk_internal_ptp_message_lists_t *lists) {
-  sctk_spinlock_unlock(&(lists->pending_lock));
+  mpc_common_spinlock_unlock(&(lists->pending_lock));
 }
 
 /*
@@ -419,9 +419,9 @@ static inline void
 sctk_internal_ptp_add_recv_incomming(sctk_internal_ptp_t *tmp,
                                      sctk_thread_ptp_message_t *msg) {
   msg->tail.distant_list.msg = msg;
-  sctk_spinlock_lock(&(tmp->lists.incomming_recv.lock));
+  mpc_common_spinlock_lock(&(tmp->lists.incomming_recv.lock));
   DL_APPEND(tmp->lists.incomming_recv.list, &(msg->tail.distant_list));
-  sctk_spinlock_unlock(&(tmp->lists.incomming_recv.lock));
+  mpc_common_spinlock_unlock(&(tmp->lists.incomming_recv.lock));
 }
 /*
  * Add message into the 'incoming' send list
@@ -430,9 +430,9 @@ static inline void
 sctk_internal_ptp_add_send_incomming(sctk_internal_ptp_t *tmp,
                                      sctk_thread_ptp_message_t *msg) {
   msg->tail.distant_list.msg = msg;
-  sctk_spinlock_lock(&(tmp->lists.incomming_send.lock));
+  mpc_common_spinlock_lock(&(tmp->lists.incomming_send.lock));
   DL_APPEND(tmp->lists.incomming_send.list, &(msg->tail.distant_list));
-  sctk_spinlock_unlock(&(tmp->lists.incomming_send.lock));
+  mpc_common_spinlock_unlock(&(tmp->lists.incomming_send.lock));
 }
 #else
 TODO("Using blocking version of send/recv message")
@@ -484,7 +484,7 @@ static inline void sctk_ptp_table_write_lock() {
 #ifndef SCTK_MIGRATION_DISABLED
 
   if (sctk_migration_mode)
-    sctk_spinlock_write_lock(&sctk_ptp_table_lock);
+    mpc_common_spinlock_write_lock(&sctk_ptp_table_lock);
 
 #endif
 }
@@ -493,7 +493,7 @@ static inline void sctk_ptp_table_write_unlock() {
 #ifndef SCTK_MIGRATION_DISABLED
 
   if (sctk_migration_mode)
-    sctk_spinlock_write_unlock(&sctk_ptp_table_lock);
+    mpc_common_spinlock_write_unlock(&sctk_ptp_table_lock);
 
 #endif
 }
@@ -502,7 +502,7 @@ static inline void sctk_ptp_table_read_lock() {
 #ifndef SCTK_MIGRATION_DISABLED
 
   if (sctk_migration_mode)
-    sctk_spinlock_read_lock(&sctk_ptp_table_lock);
+    mpc_common_spinlock_read_lock(&sctk_ptp_table_lock);
 
 #endif
 }
@@ -511,7 +511,7 @@ static inline void sctk_ptp_table_read_unlock() {
 #ifndef SCTK_MIGRATION_DISABLED
 
   if (sctk_migration_mode)
-    sctk_spinlock_read_unlock(&sctk_ptp_table_lock);
+    mpc_common_spinlock_read_unlock(&sctk_ptp_table_lock);
 
 #endif
 }
@@ -565,7 +565,7 @@ sctk_ptp_get_reorder_from_destination(int task,
  * and fail in this case
  */
 static inline void sctk_ptp_table_insert(sctk_internal_ptp_t *tmp) {
-  static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+  static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
   static volatile int done = 0;
 
   /* If the destination is -1, the message is for the 'sctk_ptp_admin' list */
@@ -582,7 +582,7 @@ static inline void sctk_ptp_table_insert(sctk_internal_ptp_t *tmp) {
           assume(internal_ptp == NULL);
         }
 #endif
-  sctk_spinlock_lock(&lock);
+  mpc_common_spinlock_lock(&lock);
 
   /* Only one task allocate the structures */
   if (done == 0) {
@@ -626,7 +626,7 @@ static inline void sctk_ptp_table_insert(sctk_internal_ptp_t *tmp) {
   HASH_ADD(hh_on_vp, sctk_ptp_table_on_vp, key, sizeof(sctk_comm_dest_key_t),
            tmp);
   sctk_ptp_table_write_unlock();
-  sctk_spinlock_unlock(&lock);
+  mpc_common_spinlock_unlock(&lock);
 }
 
 /********************************************************************/
@@ -638,21 +638,21 @@ static inline void sctk_ptp_table_insert(sctk_internal_ptp_t *tmp) {
 /* Messages in the 'sctk_ptp_task_list' have already been
  * matched and are wainting to be copied */
 sctk_message_to_copy_t **sctk_ptp_task_list = NULL;
-sctk_spinlock_t *sctk_ptp_tasks_lock = 0;
+mpc_common_spinlock_t *sctk_ptp_tasks_lock = 0;
 int sctk_ptp_tasks_count = 0;
 
 static short sctk_ptp_tasks_init_done = 0;
-sctk_spinlock_t sctk_ptp_tasks_init_lock = 0;
+mpc_common_spinlock_t sctk_ptp_tasks_init_lock = 0;
 
 #define PTP_MAX_TASK_LISTS 32
 
 void sctk_ptp_tasks_init()
 {
-  sctk_spinlock_lock(&sctk_ptp_tasks_init_lock);
+  mpc_common_spinlock_lock(&sctk_ptp_tasks_init_lock);
 
   if( sctk_ptp_tasks_init_done )
   {
-     sctk_spinlock_unlock(&sctk_ptp_tasks_init_lock);
+     mpc_common_spinlock_unlock(&sctk_ptp_tasks_init_lock);
      return;
   }
 
@@ -668,7 +668,7 @@ void sctk_ptp_tasks_init()
   sctk_ptp_task_list = sctk_malloc(sizeof(sctk_message_to_copy_t*) * sctk_ptp_tasks_count);
   assume(sctk_ptp_task_list);
 
-  sctk_ptp_tasks_lock = sctk_malloc(sizeof(sctk_spinlock_t *) * sctk_ptp_tasks_count);
+  sctk_ptp_tasks_lock = sctk_malloc(sizeof(mpc_common_spinlock_t *) * sctk_ptp_tasks_count);
   assume(sctk_ptp_tasks_lock);
 
   int i;
@@ -679,7 +679,7 @@ void sctk_ptp_tasks_init()
   }
 
   sctk_ptp_tasks_init_done = 1;
-  sctk_spinlock_unlock(&sctk_ptp_tasks_init_lock);
+  mpc_common_spinlock_unlock(&sctk_ptp_tasks_init_lock);
 }
 
 /*
@@ -698,7 +698,7 @@ static inline int _sctk_ptp_tasks_perform(int key, int depth) {
   {
     tmp = NULL;
 
-    if (sctk_spinlock_trylock(&(sctk_ptp_tasks_lock[target_list])) == 0) {
+    if (mpc_common_spinlock_trylock(&(sctk_ptp_tasks_lock[target_list])) == 0) {
       tmp = sctk_ptp_task_list[target_list];
 
       if (tmp != NULL) {
@@ -706,7 +706,7 @@ static inline int _sctk_ptp_tasks_perform(int key, int depth) {
         DL_DELETE(sctk_ptp_task_list[target_list], tmp);
       }
 
-      sctk_spinlock_unlock(&(sctk_ptp_tasks_lock[target_list]));
+      mpc_common_spinlock_unlock(&(sctk_ptp_tasks_lock[target_list]));
     }
 
     if (tmp != NULL) {
@@ -744,9 +744,9 @@ static inline int sctk_ptp_tasks_perform(int key){
 static inline void sctk_ptp_tasks_insert(sctk_message_to_copy_t *tmp,
                                          sctk_internal_ptp_t *pair) {
   int key = pair->key.dest_src % PTP_MAX_TASK_LISTS;
-  sctk_spinlock_lock(&(sctk_ptp_tasks_lock[key]));
+  mpc_common_spinlock_lock(&(sctk_ptp_tasks_lock[key]));
   DL_APPEND(sctk_ptp_task_list[key], tmp);
-  sctk_spinlock_unlock(&(sctk_ptp_tasks_lock[key]));
+  mpc_common_spinlock_unlock(&(sctk_ptp_tasks_lock[key]));
 }
 
 #endif
@@ -1566,7 +1566,7 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t *tmp) {
  * during init */
 #define BUFFERED_PTP_MESSAGE_NUMBER 100
 __thread sctk_thread_ptp_message_t *buffered_ptp_message = NULL;
-__thread sctk_spinlock_t lock_buffered_ptp_message = SCTK_SPINLOCK_INITIALIZER;
+__thread mpc_common_spinlock_t lock_buffered_ptp_message = SCTK_SPINLOCK_INITIALIZER;
 
 /*
  * Init data structures used for task i. Called only once for each task
@@ -1597,7 +1597,7 @@ void sctk_ptp_per_task_init(int i) {
 
     /* Initialize the buffered_ptp_message list for the VP */
     if (buffered_ptp_message == NULL) {
-      sctk_spinlock_lock(&lock_buffered_ptp_message);
+      mpc_common_spinlock_lock(&lock_buffered_ptp_message);
 
       /* List not already allocated. We create it */
       if (buffered_ptp_message == NULL) {
@@ -1615,7 +1615,7 @@ void sctk_ptp_per_task_init(int i) {
         }
       }
 
-      sctk_spinlock_unlock(&lock_buffered_ptp_message);
+      mpc_common_spinlock_unlock(&lock_buffered_ptp_message);
     }
   }
 }
@@ -1635,9 +1635,9 @@ static void sctk_free_header(void *tmp) {
 
   /* Header is from the buffered list */
   if (header->from_buffered) {
-    sctk_spinlock_lock(&lock_buffered_ptp_message);
+    mpc_common_spinlock_lock(&lock_buffered_ptp_message);
     LL_PREPEND(buffered_ptp_message, header);
-    sctk_spinlock_unlock(&lock_buffered_ptp_message);
+    mpc_common_spinlock_unlock(&lock_buffered_ptp_message);
   } else {
     sctk_free(tmp);
   }
@@ -1653,7 +1653,7 @@ static void *sctk_alloc_header() {
 
   /* We first look at the buffered list if a header is available */
   if (buffered_ptp_message != NULL) {
-    sctk_spinlock_lock(&lock_buffered_ptp_message);
+    mpc_common_spinlock_lock(&lock_buffered_ptp_message);
 
     if (buffered_ptp_message != NULL) {
       tmp = buffered_ptp_message;
@@ -1661,7 +1661,7 @@ static void *sctk_alloc_header() {
       LL_DELETE(buffered_ptp_message, buffered_ptp_message);
     }
 
-    sctk_spinlock_unlock(&lock_buffered_ptp_message);
+    mpc_common_spinlock_unlock(&lock_buffered_ptp_message);
   }
 
   /* If no more entries available in the buffered list, we allocate */

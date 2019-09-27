@@ -70,7 +70,7 @@ struct sctk_profiler_array
 	uint64_t sctk_profile_max[ SCTK_PROFILE_KEY_COUNT ];
 	uint64_t sctk_profile_min[ SCTK_PROFILE_KEY_COUNT ];
 
-	sctk_spinlock_t lock;
+	mpc_common_spinlock_t lock;
 
   /* Timer for start (MPI_Init) and end (MPI_Finalize) */
   uint64_t initialize_time;
@@ -105,7 +105,7 @@ MPC_T_pvar_t sctk_profiler_array_get_mpit_highw(int id);
 
 static inline void sctk_profiler_array_hit( struct sctk_profiler_array *array, int id, int64_t value )
 {
-	sctk_spinlock_lock( &array->lock );
+	mpc_common_spinlock_lock( &array->lock );
 	{
 
 		array->sctk_profile_hits[ id ]++;
@@ -168,7 +168,7 @@ static inline void sctk_profiler_array_hit( struct sctk_profiler_array *array, i
                   }
                 }
         }
-        sctk_spinlock_unlock(&array->lock);
+        mpc_common_spinlock_unlock(&array->lock);
 }
 
 /* GETTERS */
@@ -177,11 +177,11 @@ static inline uint64_t sctk_profiler_array_get_from_tab( struct sctk_profiler_ar
 {
 	uint64_t ret;
 
-	sctk_spinlock_lock( &array->lock );
+	mpc_common_spinlock_lock( &array->lock );
 	{
 		ret = tab[id];
 	}
-	sctk_spinlock_unlock( &array->lock );
+	mpc_common_spinlock_unlock( &array->lock );
 
 	return ret;
 }

@@ -26,7 +26,7 @@
 #include "mpc_mpi.h"
 #include "sctk_atomics.h"
 #include "sctk_buffered_fifo.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_stdint.h"
 #include "sctk_window.h"
 
@@ -42,7 +42,7 @@ struct mpc_MPI_Win_tmp_buff {
 
 struct mpc_MPI_Win_tmp {
   struct mpc_MPI_Win_tmp_buff *head;
-  sctk_spinlock_t lock;
+  mpc_common_spinlock_t lock;
 };
 
 void mpc_MPI_Win_tmp_init(struct mpc_MPI_Win_tmp *tmp);
@@ -94,7 +94,7 @@ struct mpc_MPI_Win_request_array {
   sctk_atomics_int available_req; /*<< The number of available requests */
   sctk_request_t requests[MAX_PENDING_RMA]; /*<< The MPC request array */
   MPI_Comm comm;        /*<< The communicator associated with the array */
-  sctk_spinlock_t lock; /*<< A lock to protect the RMA array */
+  mpc_common_spinlock_t lock; /*<< A lock to protect the RMA array */
   int is_emulated;      /*<< Wether the window is emulated or not */
   int test_start;       /*<< Point where to start request testing (arity
                                                  see \ref
@@ -107,9 +107,9 @@ struct mpc_MPI_Win_request_array {
  */
 static inline void
 mpc_MPI_Win_request_array_add_pending(struct mpc_MPI_Win_request_array *ra) {
-  sctk_spinlock_lock_yield(&ra->lock);
+  mpc_common_spinlock_lock_yield(&ra->lock);
   ra->pending_rma++;
-  sctk_spinlock_unlock(&ra->lock);
+  mpc_common_spinlock_unlock(&ra->lock);
 }
 
 /** Remove a pending RMA operation to the request array
@@ -118,9 +118,9 @@ mpc_MPI_Win_request_array_add_pending(struct mpc_MPI_Win_request_array *ra) {
  */
 static inline void
 mpc_MPI_Win_request_array_add_done(struct mpc_MPI_Win_request_array *ra) {
-  sctk_spinlock_lock_yield(&ra->lock);
+  mpc_common_spinlock_lock_yield(&ra->lock);
   ra->pending_rma--;
-  sctk_spinlock_unlock(&ra->lock);
+  mpc_common_spinlock_unlock(&ra->lock);
 }
 
 /** Initialize an empty request array
@@ -191,7 +191,7 @@ void mpc_MPI_win_lock_request_free(struct mpc_MPI_win_lock_request *req);
 
 struct mpc_MPI_win_locks {
   struct mpc_MPI_win_lock_request *head;
-  sctk_spinlock_t lock;
+  mpc_common_spinlock_t lock;
 
   sctk_spin_rwlock_t win_lock;
 };
@@ -259,7 +259,7 @@ struct mpc_Win_target_ctx {
   struct mpc_MPI_Win_tmp tmp_buffs;
 
   /* Lock */
-  sctk_spinlock_t lock;
+  mpc_common_spinlock_t lock;
 
   /* Counter */
   sctk_atomics_int ctrl_message_counter;
@@ -314,7 +314,7 @@ struct mpc_Win_source_ctx {
   struct mpc_MPI_Win_tmp tmp_buffs;
 
   /* Lock */
-  sctk_spinlock_t lock;
+  mpc_common_spinlock_t lock;
 
   /* Counter */
   sctk_atomics_int ctrl_message_counter;

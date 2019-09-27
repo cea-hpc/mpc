@@ -36,7 +36,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netdb.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include <sctk_net_tools.h>
 #include <errno.h>
 #include <sctk_control_messages.h>

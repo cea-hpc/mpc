@@ -25,7 +25,7 @@
 #include "sctk_debug.h"
 #include "mpcomp_core.h"
 #include "mpcomp_types.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "mpcomp_ordered.h"
 
 static inline void __mpcomp_internal_ordered_begin( mpcomp_thread_t *t, mpcomp_loop_gen_info_t* loop_infos )

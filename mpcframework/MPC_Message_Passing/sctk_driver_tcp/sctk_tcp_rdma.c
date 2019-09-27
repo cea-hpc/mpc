@@ -46,7 +46,7 @@ static void sctk_tcp_rdma_message_copy ( sctk_message_to_copy_t *tmp )
 	route = tmp->msg_send->tail.route_table;
 
 	fd = route->data.tcp.fd;
-	sctk_spinlock_lock ( & ( route->data.tcp.lock ) );
+	mpc_common_spinlock_lock ( & ( route->data.tcp.lock ) );
 	{
 		sctk_tcp_rdma_type_t op_type;
 		op_type = SCTK_RDMA_READ;
@@ -54,7 +54,7 @@ static void sctk_tcp_rdma_message_copy ( sctk_message_to_copy_t *tmp )
 		mpc_common_io_safe_write ( fd, & ( tmp->msg_send->tail.rdma_src ), sizeof ( void * ) );
 		mpc_common_io_safe_write ( fd, & ( tmp ), sizeof ( void * ) );
 	}
-	sctk_spinlock_unlock ( & ( route->data.tcp.lock ) );
+	mpc_common_spinlock_unlock ( & ( route->data.tcp.lock ) );
 }
 
 /************************************************************************/
@@ -119,12 +119,12 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 				mpc_common_io_safe_read ( fd, ( char * ) &msg, sizeof ( void * ) );
 				mpc_common_io_safe_read ( fd, ( char * ) &copy_ptr, sizeof ( void * ) );
 
-				sctk_spinlock_lock ( & ( tmp->data.tcp.lock ) );
+				mpc_common_spinlock_lock ( & ( tmp->data.tcp.lock ) );
 				op_type = SCTK_RDMA_WRITE;
 				mpc_common_io_safe_write ( fd, &op_type, sizeof ( sctk_tcp_rdma_type_t ) );
 				mpc_common_io_safe_write ( fd, & ( copy_ptr ), sizeof ( void * ) );
 				sctk_net_write_in_fd ( msg, fd );
-				sctk_spinlock_unlock ( & ( tmp->data.tcp.lock ) );
+				mpc_common_spinlock_unlock ( & ( tmp->data.tcp.lock ) );
 
 				sctk_complete_and_free_message ( msg );
 				break;
@@ -165,7 +165,7 @@ static void sctk_network_send_message_tcp_rdma_endpoint ( sctk_thread_ptp_messag
 
 	sctk_nodebug ( "send message through rail %d", rail->rail_number );
 
-	sctk_spinlock_lock ( & ( endpoint->data.tcp.lock ) );
+	mpc_common_spinlock_lock ( & ( endpoint->data.tcp.lock ) );
 
 	fd = endpoint->data.tcp.fd;
 
@@ -175,7 +175,7 @@ static void sctk_network_send_message_tcp_rdma_endpoint ( sctk_thread_ptp_messag
 	mpc_common_io_safe_write ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
 	mpc_common_io_safe_write ( fd, &msg, sizeof ( void * ) );
 
-	sctk_spinlock_unlock ( & ( endpoint->data.tcp.lock ) );
+	mpc_common_spinlock_unlock ( & ( endpoint->data.tcp.lock ) );
 
 }
 

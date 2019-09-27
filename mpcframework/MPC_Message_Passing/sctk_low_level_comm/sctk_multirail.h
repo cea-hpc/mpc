@@ -25,7 +25,7 @@
 #include <uthash.h>
 
 #include <sctk_route.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include <sctk_runtime_config_struct.h>
 
 /************************************************************************/

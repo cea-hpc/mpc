@@ -84,12 +84,12 @@ struct sctk_mpi_halo_s * sctk_mpi_halo_context_get( struct sctk_mpi_halo_context
 {
 	struct sctk_mpi_halo_s * ret = NULL;
 	
-	sctk_spinlock_lock( &ctx->lock );
+	mpc_common_spinlock_lock( &ctx->lock );
 	
 	if( (id < ctx->halo_counter) && (0 <= id) )
 		ret = ctx->halo_cells[id];
 		
-	sctk_spinlock_unlock( &ctx->lock );
+	mpc_common_spinlock_unlock( &ctx->lock );
 	
 	return ret;
 }
@@ -97,14 +97,14 @@ struct sctk_mpi_halo_s * sctk_mpi_halo_context_get( struct sctk_mpi_halo_context
 int sctk_mpi_halo_context_set( struct sctk_mpi_halo_context * ctx,  int id, struct sctk_mpi_halo_s * halo )
 {
 	int ret = 0;
-	sctk_spinlock_lock( &ctx->lock );
+	mpc_common_spinlock_lock( &ctx->lock );
 	
 	if( (id < ctx->halo_counter) && (0 <= id) )
 		ctx->halo_cells[id] = halo;
 	else
 		ret = 1;
 	
-	sctk_spinlock_unlock( &ctx->lock );
+	mpc_common_spinlock_unlock( &ctx->lock );
 	
 	return ret;
 }
@@ -117,7 +117,7 @@ struct sctk_mpi_halo_s *  sctk_mpi_halo_context_new( struct sctk_mpi_halo_contex
 	
 	*id = -1;
 	
-	sctk_spinlock_lock( &ctx->lock );
+	mpc_common_spinlock_lock( &ctx->lock );
 	
 	/* Search for free cells */
 	int i;
@@ -147,7 +147,7 @@ struct sctk_mpi_halo_s *  sctk_mpi_halo_context_new( struct sctk_mpi_halo_contex
 	}
 	
 	
-	sctk_spinlock_unlock( &ctx->lock );
+	mpc_common_spinlock_unlock( &ctx->lock );
 	
 	return ret;
 }
@@ -156,12 +156,12 @@ struct sctk_mpi_halo_exchange_s * sctk_mpi_halo_context_exchange_get( struct sct
 {
 	struct sctk_mpi_halo_exchange_s * ret = NULL;
 	
-	sctk_spinlock_lock( &ctx->lock );
+	mpc_common_spinlock_lock( &ctx->lock );
 	
 	if( (id < ctx->exchange_counter) && (0 <= id) )
 		ret = ctx->exchange_cells[id];
 		
-	sctk_spinlock_unlock( &ctx->lock );
+	mpc_common_spinlock_unlock( &ctx->lock );
 	
 	return ret;	
 }
@@ -169,14 +169,14 @@ struct sctk_mpi_halo_exchange_s * sctk_mpi_halo_context_exchange_get( struct sct
 int sctk_mpi_halo_context_exchange_set( struct sctk_mpi_halo_context * ctx,  int id, struct sctk_mpi_halo_exchange_s * halo )
 {
 	int ret = 0;
-	sctk_spinlock_lock( &ctx->lock );
+	mpc_common_spinlock_lock( &ctx->lock );
 	
 	if( (id < ctx->exchange_counter) && (0 <= id) )
 		ctx->exchange_cells[id] = halo;
 	else
 		ret = 1;
 	
-	sctk_spinlock_unlock( &ctx->lock );
+	mpc_common_spinlock_unlock( &ctx->lock );
 	
 	return ret;
 }
@@ -189,7 +189,7 @@ struct sctk_mpi_halo_exchange_s *  sctk_mpi_halo_context_exchange_new( struct sc
 	
 	*id = MPI_HALO_NULL;
 	
-	sctk_spinlock_lock( &ctx->lock );
+	mpc_common_spinlock_lock( &ctx->lock );
 	
 	/* Search for free cells */
 	int i;
@@ -218,7 +218,7 @@ struct sctk_mpi_halo_exchange_s *  sctk_mpi_halo_context_exchange_new( struct sc
 	
 	}
 	
-	sctk_spinlock_unlock( &ctx->lock );
+	mpc_common_spinlock_unlock( &ctx->lock );
 	
 	return ret;	
 }
@@ -229,7 +229,7 @@ struct sctk_mpi_halo_exchange_s *  sctk_mpi_halo_context_exchange_new( struct sc
 /************************************************************************/
 
 static volatile int __halo_local_tag = 25000;
-sctk_spinlock_t  __halo_local_tag_lock = 0;
+mpc_common_spinlock_t  __halo_local_tag_lock = 0;
 
 int sctk_mpi_halo_init( struct sctk_mpi_halo_s * halo , char * label , MPI_Datatype type, int count )
 {
@@ -249,9 +249,9 @@ int sctk_mpi_halo_init( struct sctk_mpi_halo_s * halo , char * label , MPI_Datat
 
 	halo->halo_type = type;
 	
-	sctk_spinlock_lock( &__halo_local_tag_lock );
+	mpc_common_spinlock_lock( &__halo_local_tag_lock );
 	halo->halo_tag = __halo_local_tag++;
-	sctk_spinlock_unlock( &__halo_local_tag_lock );
+	mpc_common_spinlock_unlock( &__halo_local_tag_lock );
 		
 	MPI_Datatype cont_type;
 	if( PMPI_Type_contiguous( count, type, &cont_type) != MPI_SUCCESS )

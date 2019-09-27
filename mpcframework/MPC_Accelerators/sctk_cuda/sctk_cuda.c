@@ -26,7 +26,7 @@
 #include <sctk_alloc.h>
 #include <sctk_debug.h>
 #include <mpc_common_device_topo.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include <mpc_common_topology.h>
 
 extern __thread void *sctk_cuda_ctx;

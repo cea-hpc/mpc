@@ -34,7 +34,7 @@
 #include "sctk_handle.h"
 #include "sctk_inter_thread_comm.h"
 #include "sctk_runtime_config.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_thread.h"
 #include "mpc_common_topology.h"
 #include <mpc.h>
@@ -42,7 +42,7 @@
 #include <mpc_mpi.h>
 #include <sctk_debug.h>
 #include <sctk_ethread_internal.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include <string.h>
 #include <uthash.h>
 #include <utlist.h>
@@ -109,7 +109,7 @@ typedef struct mpc_mpi_data_s{
 	struct sctk_mpi_ops_s *ops;
 
 	/****** LOCK ******/
-	sctk_spinlock_t lock;
+	mpc_common_spinlock_t lock;
 
 	/****** NBC_HANDLES ******/
         int NBC_Pthread_nb; // number of elements in the list
@@ -151,7 +151,7 @@ typedef struct MPI_Persistant_s
 
 typedef struct MPI_internal_request_s
 {
-	sctk_spinlock_t lock; /**< Lock protecting the data-structure */	
+	mpc_common_spinlock_t lock; /**< Lock protecting the data-structure */	
 
 	MPC_Request req;	/**< Request to be stored */
 	int used; 	/**< Is the request slot in use */
@@ -196,7 +196,7 @@ typedef struct MPI_internal_request_s
  * */
  typedef struct MPI_request_struct_s
 {
-	sctk_spinlock_t lock; /**< Lock protecting the data-structure */
+	mpc_common_spinlock_t lock; /**< Lock protecting the data-structure */
 	/* Number of resquests */
 	int max_size; /**< Current size of the tab array (starts at 0 and is increased 10 by 10) */
 	MPI_internal_request_t **tab; /**< This array stores the \ref MPI_internal_request_t which are the containers for MPC_Requests */

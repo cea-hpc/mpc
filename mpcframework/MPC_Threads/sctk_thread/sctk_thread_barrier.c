@@ -156,7 +156,7 @@ sctk_thread_generic_barriers_barrier_wait( sctk_thread_generic_barrier_t* barrie
   sctk_thread_generic_barrier_cell_t* list;
   void** tmp = sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
 
-  sctk_spinlock_lock ( &(barrier->lock) );
+  mpc_common_spinlock_lock ( &(barrier->lock) );
   barrier->nb_current--;
   if( barrier->nb_current > 0 ){
 	cell.sched = sched;
@@ -180,7 +180,7 @@ sctk_thread_generic_barriers_barrier_wait( sctk_thread_generic_barrier_t* barrie
 	}
 	barrier->nb_current = barrier->nb_max;
 	ret = SCTK_THREAD_BARRIER_SERIAL_THREAD;
-	sctk_spinlock_unlock( &(barrier->lock) );
+	mpc_common_spinlock_unlock( &(barrier->lock) );
   }
 
   return ret;

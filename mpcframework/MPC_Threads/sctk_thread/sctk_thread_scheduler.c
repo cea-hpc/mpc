@@ -26,7 +26,7 @@
 #include "sctk_debug.h"
 #include "sctk_internal_thread.h"
 #include "sctk_kernel_thread.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_thread_generic.h"
 #include "sctk_thread_scheduler.h"
 #include "mpc_common_topology.h"
@@ -44,7 +44,7 @@ void (*sctk_thread_generic_sched_yield)(sctk_thread_generic_scheduler_t*) = NULL
 void (*sctk_thread_generic_thread_status)(sctk_thread_generic_scheduler_t*,
 					  sctk_thread_generic_thread_status_t) = NULL;
 void (*sctk_thread_generic_register_spinlock_unlock)(sctk_thread_generic_scheduler_t*,
-						     sctk_spinlock_t*) = NULL;
+						     mpc_common_spinlock_t*) = NULL;
 void (*sctk_thread_generic_wake)(sctk_thread_generic_scheduler_t*) = NULL;
 
 void (*sctk_thread_generic_scheduler_init_thread_p)(sctk_thread_generic_scheduler_t* ) = NULL;
@@ -146,15 +146,15 @@ void sctk_thread_generic_scheduler_swapcontext(sctk_thread_generic_scheduler_t* 
 					       sctk_thread_generic_scheduler_t* new_th){
   sctk_thread_generic_set_self(new_th->th);
   sctk_nodebug("SWAP %p %p -> %p",pthread_self(),&(old_th->ctx),&(new_th->ctx));
-  sctk_spinlock_unlock(&(old_th->debug_lock));
-  assume(sctk_spinlock_trylock(&(new_th->debug_lock)) == 0);
+  mpc_common_spinlock_unlock(&(old_th->debug_lock));
+  assume(mpc_common_spinlock_trylock(&(new_th->debug_lock)) == 0);
   sctk_swapcontext(&(old_th->ctx),&(new_th->ctx));
 }
 void sctk_thread_generic_scheduler_setcontext(sctk_thread_generic_scheduler_t* new_th){
   sctk_thread_generic_set_self(new_th->th);
   sctk_nodebug("SET %p",&(new_th->ctx));
   sctk_setcontext(&(new_th->ctx));
-  assume(sctk_spinlock_trylock(&(new_th->debug_lock)) == 0);	
+  assume(mpc_common_spinlock_trylock(&(new_th->debug_lock)) == 0);	
 }
 
 /***************************************/
@@ -177,37 +177,37 @@ sctk_thread_generic_scheduler_check_task(sctk_thread_generic_task_t *task) {
 /***************************************/
 /* CENTRALIZED SCHEDULER               */
 /***************************************/
-static sctk_spinlock_t sctk_centralized_sched_list_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t sctk_centralized_sched_list_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_thread_generic_scheduler_generic_t* sctk_centralized_sched_list = NULL;
 
 static sctk_thread_generic_task_t* sctk_centralized_task_list = NULL;
-static sctk_spinlock_t sctk_centralized_task_list_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t sctk_centralized_task_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
 static void sctk_centralized_add_to_list(sctk_thread_generic_scheduler_t* sched){
   assume(sched->generic.sched == sched);
-  sctk_spinlock_lock(&sctk_centralized_sched_list_lock);
+  mpc_common_spinlock_lock(&sctk_centralized_sched_list_lock);
   DL_APPEND(sctk_centralized_sched_list,&(sched->generic));
   sctk_nodebug("ADD Thread %p",sched);
-  sctk_spinlock_unlock(&sctk_centralized_sched_list_lock);
+  mpc_common_spinlock_unlock(&sctk_centralized_sched_list_lock);
 }
 
 static 
 void sctk_centralized_concat_to_list(__UNUSED__ sctk_thread_generic_scheduler_t* sched,
 				     sctk_thread_generic_scheduler_generic_t*s_list){
-    sctk_spinlock_lock(&sctk_centralized_sched_list_lock);
+    mpc_common_spinlock_lock(&sctk_centralized_sched_list_lock);
     DL_CONCAT(sctk_centralized_sched_list,s_list);
-    sctk_spinlock_unlock(&sctk_centralized_sched_list_lock);
+    mpc_common_spinlock_unlock(&sctk_centralized_sched_list_lock);
 }
 
 static sctk_thread_generic_scheduler_t* sctk_centralized_get_from_list(){
   if(sctk_centralized_sched_list != NULL){
     sctk_thread_generic_scheduler_generic_t* res;
-    sctk_spinlock_lock(&sctk_centralized_sched_list_lock);
+    mpc_common_spinlock_lock(&sctk_centralized_sched_list_lock);
     res = sctk_centralized_sched_list;
     if(res != NULL){
       DL_DELETE(sctk_centralized_sched_list,res);
     }
-    sctk_spinlock_unlock(&sctk_centralized_sched_list_lock);
+    mpc_common_spinlock_unlock(&sctk_centralized_sched_list_lock);
     if(res != NULL){
       sctk_nodebug("REMOVE Thread %p",res->sched);
       return res->sched;
@@ -223,14 +223,14 @@ static sctk_thread_generic_scheduler_t* sctk_centralized_get_from_list_pthread_i
   if(sctk_centralized_sched_list != NULL){
     sctk_thread_generic_scheduler_generic_t* res_tmp;
     sctk_thread_generic_scheduler_generic_t* res;
-    sctk_spinlock_lock(&sctk_centralized_sched_list_lock);
+    mpc_common_spinlock_lock(&sctk_centralized_sched_list_lock);
     DL_FOREACH_SAFE(sctk_centralized_sched_list,res,res_tmp){    
     if((res != NULL) && (res->vp_type == 4)){
       DL_DELETE(sctk_centralized_sched_list,res);
       break;
     }
     }
-    sctk_spinlock_unlock(&sctk_centralized_sched_list_lock);
+    mpc_common_spinlock_unlock(&sctk_centralized_sched_list_lock);
     if(res != NULL){
       sctk_nodebug("REMOVE Thread %p",res->sched);
       return res->sched;
@@ -245,20 +245,20 @@ static sctk_thread_generic_scheduler_t* sctk_centralized_get_from_list_pthread_i
 static sctk_thread_generic_task_t* sctk_centralized_get_task(){
   sctk_thread_generic_task_t* task = NULL;
   if(sctk_centralized_task_list != NULL){
-    sctk_spinlock_lock(&sctk_centralized_task_list_lock);
+    mpc_common_spinlock_lock(&sctk_centralized_task_list_lock);
     if(sctk_centralized_task_list != NULL){
       task = sctk_centralized_task_list;
       DL_DELETE(sctk_centralized_task_list,task);
     }
-    sctk_spinlock_unlock(&sctk_centralized_task_list_lock);
+    mpc_common_spinlock_unlock(&sctk_centralized_task_list_lock);
   }
   return task;
 }
 
 static void sctk_centralized_add_task_to_proceed(sctk_thread_generic_task_t* task){
-  sctk_spinlock_lock(&sctk_centralized_task_list_lock);
+  mpc_common_spinlock_lock(&sctk_centralized_task_list_lock);
   DL_APPEND(sctk_centralized_task_list,task);
-  sctk_spinlock_unlock(&sctk_centralized_task_list_lock);
+  mpc_common_spinlock_unlock(&sctk_centralized_task_list_lock);
 }
 
 static 
@@ -267,14 +267,14 @@ void sctk_centralized_poll_tasks(sctk_thread_generic_scheduler_t* sched){
   sctk_thread_generic_task_t* task_tmp;
   sctk_thread_generic_scheduler_t* lsched = NULL;
   
-  if(sctk_spinlock_trylock(&sctk_centralized_task_list_lock) == 0){
+  if(mpc_common_spinlock_trylock(&sctk_centralized_task_list_lock) == 0){
   /* Exec polling */
   DL_FOREACH_SAFE(sctk_centralized_task_list,task,task_tmp){
     if(sctk_thread_generic_scheduler_check_task(task) == 1){
       DL_DELETE(sctk_centralized_task_list,task);
       sctk_nodebug("WAKE task %p",task);
 
-      sctk_spinlock_lock(&(sched->generic.lock));
+      mpc_common_spinlock_lock(&(sched->generic.lock));
 	  lsched = task->sched;
 	  if( task->free_func ){
 		task->free_func( task->arg );
@@ -287,10 +287,10 @@ void sctk_centralized_poll_tasks(sctk_thread_generic_scheduler_t* sched){
 		if( tmp ) tmp[sctk_thread_generic_task_lock] = NULL;
 		sctk_thread_generic_wake(lsched);
 	  }
-      sctk_spinlock_unlock(&(sched->generic.lock));
+      mpc_common_spinlock_unlock(&(sched->generic.lock));
     }
   }
-  sctk_spinlock_unlock(&sctk_centralized_task_list_lock);  
+  mpc_common_spinlock_unlock(&sctk_centralized_task_list_lock);  
 }
 }
 
@@ -299,17 +299,17 @@ sctk_centralized_thread_generic_wake_on_task_lock( sctk_thread_generic_scheduler
 				int remove_from_lock_list ){
   sctk_thread_generic_task_t* task_tmp;
 
-  sctk_spinlock_lock( &sctk_centralized_task_list_lock );
+  mpc_common_spinlock_lock( &sctk_centralized_task_list_lock );
   DL_FOREACH( sctk_centralized_task_list, task_tmp ){
 	if( task_tmp->sched == sched ) break;
   }
   if( remove_from_lock_list && task_tmp ){
 	*(task_tmp->data) = task_tmp->value;
-	sctk_spinlock_unlock( &sctk_centralized_task_list_lock );
+	mpc_common_spinlock_unlock( &sctk_centralized_task_list_lock );
   }
   else{
   if( task_tmp ) sctk_generic_swap_to_sched( sched );
-  sctk_spinlock_unlock( &sctk_centralized_task_list_lock );
+  mpc_common_spinlock_unlock( &sctk_centralized_task_list_lock );
   }
 }
 
@@ -318,7 +318,7 @@ sctk_centralized_thread_generic_wake_on_task_lock( sctk_thread_generic_scheduler
 /***************************************/
 
 typedef struct {
-  sctk_spinlock_t sctk_multiple_queues_sched_list_lock;
+  mpc_common_spinlock_t sctk_multiple_queues_sched_list_lock;
   /*Mettre un pointeur directement sur le thread de progression des NBC */
   sctk_thread_generic_scheduler_t *sctk_multiple_queues_sched_NBC_Pthread_sched;
   sctk_thread_generic_scheduler_generic_t* sctk_multiple_queues_sched_list;
@@ -333,7 +333,7 @@ static sctk_multiple_queues_sched_list_t* sctk_multiple_queues_sched_lists = NUL
 typedef struct {
   // list of task which are able to be poll by the polling mpc thread
   sctk_thread_generic_task_t* sctk_multiple_queues_task_list;
-  sctk_spinlock_t sctk_multiple_queues_task_list_lock ;
+  mpc_common_spinlock_t sctk_multiple_queues_task_list_lock ;
   int task_nb; // number of task in sctk_multiple_queues_task_list
   /*Mettre un pointeur directement sur le thread de polling mpc*/
   sctk_thread_generic_scheduler_t
@@ -363,10 +363,10 @@ static void sctk_multiple_queues_add_to_list(sctk_thread_generic_scheduler_t* sc
 
   assume(sched->generic.sched == sched);
 
-  sctk_spinlock_lock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
+  mpc_common_spinlock_lock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
   DL_APPEND((sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list),&(sched->generic));
   sctk_nodebug("ADD Thread %p",sched);
-  sctk_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
+  mpc_common_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
 }
 
 // concat_to_list
@@ -379,22 +379,22 @@ void sctk_multiple_queues_concat_to_list(sctk_thread_generic_scheduler_t* sched,
     core = 0;
   }
   
-  sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+  mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
   DL_CONCAT(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,s_list);
-  sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);    
+  mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);    
 }
 
 // get_from_list
-sctk_spinlock_t debug_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t debug_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_thread_generic_scheduler_t* sctk_multiple_queues_get_from_list(){
   int core;
 
   core = core_id;
   assert(core >= 0);
 
-  // sctk_spinlock_lock(&debug_lock);
+  // mpc_common_spinlock_lock(&debug_lock);
   // if (core==0)fprintf(stderr,"%s\n",sctk_print_debug_infos());
-  // sctk_spinlock_unlock(&debug_lock);
+  // mpc_common_spinlock_unlock(&debug_lock);
 
   // hmt
 
@@ -407,7 +407,7 @@ static sctk_thread_generic_scheduler_t* sctk_multiple_queues_get_from_list(){
     sctk_thread_generic_scheduler_generic_t *res;
     sctk_thread_generic_scheduler_generic_t *res_tmp;
 
-    sctk_spinlock_lock(&(sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_lock(&(sctk_multiple_queues_sched_lists[core]
                              .sctk_multiple_queues_sched_list_lock));
     res =
         sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
@@ -425,7 +425,7 @@ static sctk_thread_generic_scheduler_t* sctk_multiple_queues_get_from_list(){
       }
       fprintf(fd, "\n\n\n");
     }
-    sctk_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
                                .sctk_multiple_queues_sched_list_lock));
   }
 
@@ -436,7 +436,7 @@ static sctk_thread_generic_scheduler_t* sctk_multiple_queues_get_from_list(){
   if (sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
       NULL) {
     sctk_thread_generic_scheduler_generic_t *res;
-    sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
                             .sctk_multiple_queues_sched_list_lock);
     res =
         sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
@@ -445,7 +445,7 @@ static sctk_thread_generic_scheduler_t* sctk_multiple_queues_get_from_list(){
                     .sctk_multiple_queues_sched_list,
                 res);
     }
-    sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
                               .sctk_multiple_queues_sched_list_lock);
     if (res != NULL) {
       sctk_nodebug("REMOVE Thread %p", res->sched);
@@ -478,13 +478,13 @@ static void sctk_multiple_queues_with_priority_dynamic_add_to_list(
   }
   assume(sched->generic.sched == sched);
 
-  sctk_spinlock_lock(&(sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_lock(&(sctk_multiple_queues_sched_lists[core]
                            .sctk_multiple_queues_sched_list_lock));
   DL_APPEND(
       (sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list),
       &(sched->generic));
   sctk_nodebug("ADD Thread %p", sched);
-  sctk_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
                              .sctk_multiple_queues_sched_list_lock));
 }
 
@@ -499,12 +499,12 @@ static void sctk_multiple_queues_with_priority_dynamic_concat_to_list(
   }
   assume(sched->generic.sched == sched);
 
-  sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
                           .sctk_multiple_queues_sched_list_lock);
   DL_CONCAT(
       sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,
       s_list);
-  sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
                             .sctk_multiple_queues_sched_list_lock);
 }
 
@@ -534,7 +534,7 @@ sctk_multiple_queues_with_priority_dynamic_get_from_list() {
             sched->th->attr.kind.mask, sched->status,
             sched->th->attr.current_priority, sched->th->attr.basic_priority);
 
-    sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
                             .sctk_multiple_queues_sched_list_lock);
 
     if (sctk_multiple_queues_sched_lists[core]
@@ -556,7 +556,7 @@ sctk_multiple_queues_with_priority_dynamic_get_from_list() {
       fprintf(fd, "null ] task_nb=%d\n",
               sctk_multiple_queues_task_lists[core].task_nb);
     }
-    sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
                               .sctk_multiple_queues_sched_list_lock);
 
     fflush(fd);
@@ -568,7 +568,7 @@ sctk_multiple_queues_with_priority_dynamic_get_from_list() {
   if (sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
       NULL) {
     sctk_thread_generic_scheduler_generic_t *res;
-    sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
                             .sctk_multiple_queues_sched_list_lock);
     res =
         sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
@@ -577,7 +577,7 @@ sctk_multiple_queues_with_priority_dynamic_get_from_list() {
                     .sctk_multiple_queues_sched_list,
                 res);
     }
-    sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
                               .sctk_multiple_queues_sched_list_lock);
     if (res != NULL) {
       sctk_nodebug("REMOVE Thread %p", res->sched);
@@ -609,13 +609,13 @@ static void sctk_multiple_queues_with_priority_default_add_to_list(
 
   assume(sched->generic.sched == sched);
 
-  sctk_spinlock_lock(&(sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_lock(&(sctk_multiple_queues_sched_lists[core]
                            .sctk_multiple_queues_sched_list_lock));
   DL_APPEND(
       (sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list),
       &(sched->generic));
   sctk_nodebug("ADD Thread %p", sched);
-  sctk_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
                              .sctk_multiple_queues_sched_list_lock));
 }
 
@@ -629,12 +629,12 @@ static void sctk_multiple_queues_with_priority_default_concat_to_list(
     core = 0;
   }
 
-  sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
                           .sctk_multiple_queues_sched_list_lock);
   DL_CONCAT(
       sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,
       s_list);
-  sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
                             .sctk_multiple_queues_sched_list_lock);
 }
 
@@ -658,7 +658,7 @@ sctk_multiple_queues_with_priority_default_get_from_list() {
   //     sctk_thread_generic_scheduler_generic_t* res;
   //     sctk_thread_generic_scheduler_generic_t* res_tmp;
 
-  //     sctk_spinlock_lock(
+  //     mpc_common_spinlock_lock(
   //     &(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
   //     res =
   //     sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
@@ -682,7 +682,7 @@ sctk_multiple_queues_with_priority_default_get_from_list() {
   //         }
   //         fprintf(fd,"\n\n\n");
   //     }
-  //     sctk_spinlock_unlock(
+  //     mpc_common_spinlock_unlock(
   //     &(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
   // }
 
@@ -693,7 +693,7 @@ sctk_multiple_queues_with_priority_default_get_from_list() {
   if (sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
       NULL) {
     sctk_thread_generic_scheduler_generic_t *res;
-    sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
                             .sctk_multiple_queues_sched_list_lock);
     res =
         sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
@@ -702,7 +702,7 @@ sctk_multiple_queues_with_priority_default_get_from_list() {
                     .sctk_multiple_queues_sched_list,
                 res);
     }
-    sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
                               .sctk_multiple_queues_sched_list_lock);
     if (res != NULL) {
       sctk_nodebug("REMOVE Thread %p", res->sched);
@@ -734,13 +734,13 @@ static void sctk_multiple_queues_with_priority_omp_add_to_list(
 
   assume(sched->generic.sched == sched);
 
-  sctk_spinlock_lock(&(sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_lock(&(sctk_multiple_queues_sched_lists[core]
                            .sctk_multiple_queues_sched_list_lock));
   DL_APPEND(
       (sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list),
       &(sched->generic));
   sctk_nodebug("ADD Thread %p", sched);
-  sctk_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
                              .sctk_multiple_queues_sched_list_lock));
 }
 
@@ -754,12 +754,12 @@ static void sctk_multiple_queues_with_priority_omp_concat_to_list(
     core = 0;
   }
 
-  sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
                           .sctk_multiple_queues_sched_list_lock);
   DL_CONCAT(
       sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,
       s_list);
-  sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
                             .sctk_multiple_queues_sched_list_lock);
 }
 
@@ -776,7 +776,7 @@ sctk_multiple_queues_with_priority_omp_get_from_list() {
       NULL) {
     sctk_thread_generic_scheduler_generic_t *res;
     sctk_thread_generic_scheduler_generic_t *res_tmp;
-    sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
                             .sctk_multiple_queues_sched_list_lock);
 
     // look for omp threads to schedule them in priority
@@ -795,7 +795,7 @@ sctk_multiple_queues_with_priority_omp_get_from_list() {
           DL_DELETE(sctk_multiple_queues_sched_lists[core]
                         .sctk_multiple_queues_sched_list,
                     res);
-          sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
+          mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
                                     .sctk_multiple_queues_sched_list_lock);
           // return this thread
           return res->sched;
@@ -811,7 +811,7 @@ sctk_multiple_queues_with_priority_omp_get_from_list() {
                     .sctk_multiple_queues_sched_list,
                 res);
     }
-    sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
                               .sctk_multiple_queues_sched_list_lock);
     if (res != NULL) {
       sctk_nodebug("REMOVE Thread %p", res->sched);
@@ -843,13 +843,13 @@ static void sctk_multiple_queues_with_priority_nofamine_add_to_list(
 
   assume(sched->generic.sched == sched);
 
-  sctk_spinlock_lock(&(sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_lock(&(sctk_multiple_queues_sched_lists[core]
                            .sctk_multiple_queues_sched_list_lock));
   DL_APPEND(
       (sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list),
       &(sched->generic));
   sctk_nodebug("ADD Thread %p", sched);
-  sctk_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
                              .sctk_multiple_queues_sched_list_lock));
 }
 
@@ -863,12 +863,12 @@ static void sctk_multiple_queues_with_priority_nofamine_concat_to_list(
     core = 0;
   }
 
-  sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
                           .sctk_multiple_queues_sched_list_lock);
   DL_CONCAT(
       sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,
       s_list);
-  sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
                             .sctk_multiple_queues_sched_list_lock);
 }
 
@@ -886,7 +886,7 @@ sctk_multiple_queues_with_priority_nofamine_get_from_list() {
     sctk_thread_generic_scheduler_generic_t *res;
     sctk_thread_generic_scheduler_generic_t *res_tmp;
     sctk_thread_generic_scheduler_generic_t *ret;
-    sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
                             .sctk_multiple_queues_sched_list_lock);
     // look for omp threads to schedule them in priority
     res =
@@ -911,7 +911,7 @@ sctk_multiple_queues_with_priority_nofamine_get_from_list() {
       DL_DELETE(sctk_multiple_queues_sched_lists[core]
                     .sctk_multiple_queues_sched_list,
                 ret);
-      sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
+      mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
                                 .sctk_multiple_queues_sched_list_lock);
       return ret->sched;
     } else {
@@ -974,12 +974,12 @@ void sctk_multiple_queues_priority_dyn_sorted_list_sched_NBC_Pthread_sched_incre
       sctk_runtime_config_get()
           ->modules.scheduler.sched_NBC_Pthread_basic_priority_step;
   // sort the list to have a sorted ready list
-  sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[sched->th->attr.bind_to]
+  mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[sched->th->attr.bind_to]
                           .sctk_multiple_queues_sched_list_lock);
   DL_SORT(sctk_multiple_queues_sched_lists[sched->th->attr.bind_to]
               .sctk_multiple_queues_sched_list,
           sctk_multiple_queues_sched_list_sort);
-  sctk_spinlock_unlock(
+  mpc_common_spinlock_unlock(
       &sctk_multiple_queues_sched_lists[sched->th->attr.bind_to]
            .sctk_multiple_queues_sched_list_lock);
 }
@@ -1019,12 +1019,12 @@ void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_inc
         sctk_runtime_config_get()
             ->modules.scheduler.task_polling_thread_basic_priority_step;
 
-    sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[bind_to]
+    mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[bind_to]
                             .sctk_multiple_queues_sched_list_lock);
     DL_SORT(sctk_multiple_queues_sched_lists[bind_to]
                 .sctk_multiple_queues_sched_list,
             sctk_multiple_queues_sched_list_sort);
-    sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[bind_to]
+    mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[bind_to]
                               .sctk_multiple_queues_sched_list_lock);
 
 
@@ -1112,7 +1112,7 @@ static void sctk_multiple_queues_with_priority_dyn_sorted_list_add_to_list(
   assume(sched->generic.sched == sched);
 
   sctk_thread_generic_scheduler_generic_t *res;
-  sctk_spinlock_lock(&(sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_lock(&(sctk_multiple_queues_sched_lists[core]
                            .sctk_multiple_queues_sched_list_lock));
   if (sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
       NULL) {
@@ -1152,7 +1152,7 @@ static void sctk_multiple_queues_with_priority_dyn_sorted_list_add_to_list(
       (sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list),
       &(sched->generic));
 unlock:
-  sctk_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
                              .sctk_multiple_queues_sched_list_lock));
 }
 
@@ -1166,12 +1166,12 @@ static void sctk_multiple_queues_with_priority_dyn_sorted_list_concat_to_list(
     core = 0;
   }
 
-  sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
                           .sctk_multiple_queues_sched_list_lock);
   DL_CONCAT(
       sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,
       s_list);
-  sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
+  mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
                             .sctk_multiple_queues_sched_list_lock);
 }
 
@@ -1202,7 +1202,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list() {
             sched->th->attr.kind.mask, sched->status,
             sched->th->attr.current_priority, sched->th->attr.basic_priority);
 
-    sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
                             .sctk_multiple_queues_sched_list_lock);
 
     if (sctk_multiple_queues_sched_lists[core]
@@ -1224,7 +1224,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list() {
       fprintf(fd, "null ] task_nb=%d\n",
               sctk_multiple_queues_task_lists[core].task_nb);
     }
-    sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
                               .sctk_multiple_queues_sched_list_lock);
 
     fflush(fd);
@@ -1236,7 +1236,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list() {
   if (sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
       NULL) {
     sctk_thread_generic_scheduler_generic_t *res;
-    sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
                             .sctk_multiple_queues_sched_list_lock);
     res =
         sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
@@ -1249,7 +1249,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list() {
       }
     }
 
-    sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
                               .sctk_multiple_queues_sched_list_lock);
 
     if (res != NULL) {
@@ -1297,7 +1297,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old() {
             sched->th->attr.kind.mask, sched->status,
             sched->th->attr.current_priority, sched->th->attr.basic_priority);
 
-    sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
                             .sctk_multiple_queues_sched_list_lock);
 
     if (sctk_multiple_queues_sched_lists[core]
@@ -1319,7 +1319,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old() {
       fprintf(fd, "null ] task_nb=%d\n",
               sctk_multiple_queues_task_lists[core].task_nb);
     }
-    sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
                               .sctk_multiple_queues_sched_list_lock);
 
     fflush(fd);
@@ -1331,7 +1331,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old() {
   if (sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
       NULL) {
     sctk_thread_generic_scheduler_generic_t *res;
-    sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
                             .sctk_multiple_queues_sched_list_lock);
     res =
         sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
@@ -1341,7 +1341,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old() {
                 res);
     }
 
-    sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
+    mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
                               .sctk_multiple_queues_sched_list_lock);
 
     if (res != NULL) {
@@ -1501,14 +1501,14 @@ static sctk_thread_generic_scheduler_t* sctk_multiple_queues_get_from_list_pthre
   if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL){
     sctk_thread_generic_scheduler_generic_t* res_tmp;
     sctk_thread_generic_scheduler_generic_t* res;
-    sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+    mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
     DL_FOREACH_SAFE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,res,res_tmp){    
     if((res != NULL) && (res->vp_type == 4)){
       DL_DELETE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,res);
       break;
     }
     }
-    sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+    mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
     if(res != NULL){
       sctk_nodebug("REMOVE Thread %p",res->sched);
       return res->sched;
@@ -1528,12 +1528,12 @@ static sctk_thread_generic_task_t* sctk_multiple_queues_get_task(){
 
 
   if(sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list != NULL){
-    sctk_spinlock_lock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);
+    mpc_common_spinlock_lock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);
     if(sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list != NULL){
       task = sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list;
       DL_DELETE(sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list,task);
     }
-    sctk_spinlock_unlock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);
+    mpc_common_spinlock_unlock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);
   }
   return task;
 }
@@ -1543,7 +1543,7 @@ static void sctk_multiple_queues_add_task_to_proceed(sctk_thread_generic_task_t*
 
   core = core_id;
 
-  sctk_spinlock_lock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);
+  mpc_common_spinlock_lock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);
   DL_APPEND(sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list,task);
   // we already do the increment of task_nb line 1321 after we call
   // sctk_multiple_queues_add_task_to_proceed
@@ -1583,7 +1583,7 @@ static void sctk_multiple_queues_add_task_to_proceed(sctk_thread_generic_task_t*
   // //endhmt
 
   ////endhmt
-  sctk_spinlock_unlock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);
+  mpc_common_spinlock_unlock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);
 }
 
 static 
@@ -1594,7 +1594,7 @@ void sctk_multiple_queues_poll_tasks(sctk_thread_generic_scheduler_t* sched){
   int core;
 
   core = core_id;
-  sctk_spinlock_lock(&sctk_multiple_queues_task_lists[core]
+  mpc_common_spinlock_lock(&sctk_multiple_queues_task_lists[core]
                           .sctk_multiple_queues_task_list_lock);
   {
     /* Exec polling */
@@ -1619,7 +1619,7 @@ void sctk_multiple_queues_poll_tasks(sctk_thread_generic_scheduler_t* sched){
         // endhmt
         sctk_nodebug("WAKE task %p", task);
 
-        sctk_spinlock_lock(&(sched->generic.lock));
+        mpc_common_spinlock_lock(&(sched->generic.lock));
         lsched = task->sched;
         if (task->free_func) {
           task->free_func(task->arg);
@@ -1634,11 +1634,11 @@ void sctk_multiple_queues_poll_tasks(sctk_thread_generic_scheduler_t* sched){
             tmp[sctk_thread_generic_task_lock] = NULL;
           sctk_thread_generic_wake(lsched);
         }
-        sctk_spinlock_unlock(&(sched->generic.lock));
+        mpc_common_spinlock_unlock(&(sched->generic.lock));
       }
     }
     }
-    sctk_spinlock_unlock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);  
+    mpc_common_spinlock_unlock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);  
 }
 
 void
@@ -1649,17 +1649,17 @@ sctk_multiple_queues_thread_generic_wake_on_task_lock( sctk_thread_generic_sched
 
   core = core_id;
 
-  sctk_spinlock_lock( &sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock );
+  mpc_common_spinlock_lock( &sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock );
   DL_FOREACH( sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list, task_tmp ){
     if( task_tmp->sched == sched ) break;
   }
   if( remove_from_lock_list && task_tmp ){
     *(task_tmp->data) = task_tmp->value;
-    sctk_spinlock_unlock( &sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock );
+    mpc_common_spinlock_unlock( &sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock );
   }
   else{
     if( task_tmp ) sctk_generic_swap_to_sched( sched );
-    sctk_spinlock_unlock( &sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock );
+    mpc_common_spinlock_unlock( &sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock );
   }
 }
 
@@ -1689,9 +1689,9 @@ typedef struct sctk_per_vp_data_s{
   // int delegated_task_nb;
   sctk_thread_generic_scheduler_generic_t* sctk_generic_delegated_zombie_detach_thread;
   sctk_thread_generic_scheduler_t* sctk_generic_delegated_add;
-  sctk_spinlock_t* sctk_generic_delegated_spinlock;
+  mpc_common_spinlock_t* sctk_generic_delegated_spinlock;
   sctk_thread_generic_scheduler_t*sched_idle;
-  sctk_spinlock_t*registered_spin_unlock;
+  mpc_common_spinlock_t*registered_spin_unlock;
   sctk_thread_generic_scheduler_t* swap_to_sched;
 } sctk_per_vp_data_t;
 
@@ -1725,8 +1725,8 @@ void sctk_thread_generic_scheduler_swapcontext_pthread(sctk_thread_generic_sched
 
   new_th->generic.vp = vp;
   old_th->generic.vp = NULL;
-  sctk_spinlock_unlock(&(old_th->debug_lock));
-  assume(sctk_spinlock_trylock(&(new_th->debug_lock)) == 0);
+  mpc_common_spinlock_unlock(&(old_th->debug_lock));
+  assume(mpc_common_spinlock_trylock(&(new_th->debug_lock)) == 0);
 
   assume(sem_getvalue(&(new_th->generic.sem),&val) == 0);
   assume(val == 0);
@@ -1787,7 +1787,7 @@ static void sctk_generic_add_task(sctk_thread_generic_task_t* task){
     // increment delegated_task_nb
     delegated_task_nb++;
     // endhmt
-    sctk_spinlock_lock(&(task->sched->generic.lock));
+    mpc_common_spinlock_lock(&(task->sched->generic.lock));
     sctk_thread_generic_register_spinlock_unlock(task->sched,
                                                  &(task->sched->generic.lock));
     sctk_thread_generic_sched_yield(task->sched);
@@ -2116,7 +2116,7 @@ quick_swap:
 
         sctk_nodebug("Register spinunlock %p execute IDLE",
                      vp_data.sctk_generic_delegated_spinlock);
-        sctk_spinlock_unlock(vp_data.sctk_generic_delegated_spinlock);
+        mpc_common_spinlock_unlock(vp_data.sctk_generic_delegated_spinlock);
         vp_data.sctk_generic_delegated_spinlock = NULL;
       }
 
@@ -2148,7 +2148,7 @@ quick_swap:
   if (vp_data.sched_idle != NULL) {
     if (vp_data.sched_idle != sched) {
       if (vp_data.registered_spin_unlock != NULL) {
-        sctk_spinlock_lock(vp_data.registered_spin_unlock);
+        mpc_common_spinlock_lock(vp_data.registered_spin_unlock);
         vp_data.sched_idle->generic.is_idle_mode = 0;
         if (vp_data.sched_idle->status == sctk_thread_generic_running) {
           sctk_nodebug("ADD FROM delegated spinlock %p", vp_data.sched_idle);
@@ -2163,7 +2163,7 @@ quick_swap:
           sctk_generic_add_to_list(vp_data.sched_idle,
                                    vp_data.sched_idle->generic.is_idle_mode);
         }
-        sctk_spinlock_unlock(vp_data.registered_spin_unlock);
+        mpc_common_spinlock_unlock(vp_data.registered_spin_unlock);
       }
     }
     vp_data.registered_spin_unlock = NULL;
@@ -2173,7 +2173,7 @@ quick_swap:
   if (vp_data.sctk_generic_delegated_spinlock != NULL) {
     sctk_nodebug("Register spinunlock %p execute",
                  vp_data.sctk_generic_delegated_spinlock);
-    sctk_spinlock_unlock(vp_data.sctk_generic_delegated_spinlock);
+    mpc_common_spinlock_unlock(vp_data.sctk_generic_delegated_spinlock);
     vp_data.sctk_generic_delegated_spinlock = NULL;
   }
 
@@ -2262,7 +2262,7 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
     } else {
       if(sched->generic.vp_type == 4){
 	sched->generic.vp_type = 3;
-	sctk_spinlock_unlock(&(sched->debug_lock));
+	mpc_common_spinlock_unlock(&(sched->debug_lock));
 	assume(sctk_sem_wait(&(sched->generic.sem)) == 0);
 	memcpy(&vp_data,sched->generic.vp,sizeof(sctk_per_vp_data_t));
 	sctk_nodebug("Register spinunlock %p execute SWAP NEW FIRST",sched->generic.vp->sctk_generic_delegated_spinlock);
@@ -2295,7 +2295,7 @@ void sctk_generic_thread_status(sctk_thread_generic_scheduler_t* sched,
 }
 
 static void sctk_generic_register_spinlock_unlock(__UNUSED__ sctk_thread_generic_scheduler_t* sched,
-						  sctk_spinlock_t* lock){
+						  mpc_common_spinlock_t* lock){
   sctk_nodebug("Register spinunlock %p",lock);
   vp_data.sctk_generic_delegated_spinlock = lock;
 }

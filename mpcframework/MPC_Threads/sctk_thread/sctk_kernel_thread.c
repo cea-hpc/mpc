@@ -25,7 +25,7 @@
 #include "sctk_asm.h"
 #include "sctk_pthread.h"
 #include "sctk_kernel_thread.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "mpc_common_topology.h"
 #include <string.h>
 #include <semaphore.h>
@@ -88,7 +88,7 @@ typedef struct kthread_create_start_s
   sem_t sem;
 } kthread_create_start_t;
 
-static sctk_spinlock_t lock = 0;
+static mpc_common_spinlock_t lock = 0;
 static volatile kthread_create_start_t* list = NULL;
 
 static void *
@@ -106,7 +106,7 @@ kthread_create_start_routine (void *t_arg)
 
   sem_init(&(slot.sem), 0,0);
 
-  sctk_spinlock_lock(&lock);
+  mpc_common_spinlock_lock(&lock);
 
   if( list !=  &slot )
     slot.next = list;
@@ -114,7 +114,7 @@ kthread_create_start_routine (void *t_arg)
     slot.next = NULL;
 
   list = &slot;
-  sctk_spinlock_unlock(&lock);
+  mpc_common_spinlock_unlock(&lock);
 
   while(1){
     void *(*start_routine) (void *);
@@ -149,7 +149,7 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
   size_t kthread_stack_size = sctk_runtime_config_get()->modules.thread.kthread_stack_size;
 
   sctk_nodebug("Scan already started kthreads");
-  sctk_spinlock_lock(&lock);
+  mpc_common_spinlock_lock(&lock);
   cursor = (kthread_create_start_t*)list;
   while(cursor != NULL){
     if(cursor->used == 0){
@@ -159,7 +159,7 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
     }
     cursor = (kthread_create_start_t*)cursor->next;
   }
-  sctk_spinlock_unlock(&lock);
+  mpc_common_spinlock_unlock(&lock);
   sctk_nodebug("Scan already started kthreads done found %p",found);
 
   if(found){

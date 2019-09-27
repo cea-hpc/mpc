@@ -173,12 +173,12 @@ void sctk_ib_prof_qp_init()
 void sctk_ib_prof_qp_init_task ( int task_id, int vp )
 {
 	char pathname[256];
-	static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
 	struct sctk_ib_prof_qp_s *tmp;
 
 	sctk_debug ( "Task initialization" );
 
-	sctk_spinlock_lock ( &lock );
+	mpc_common_spinlock_lock ( &lock );
 
 	if ( qp_prof == NULL )
 	{
@@ -190,7 +190,7 @@ void sctk_ib_prof_qp_init_task ( int task_id, int vp )
 		memset ( qp_prof, 0, vp_number * sizeof ( struct sctk_ib_prof_qp_s ) );
 	}
 
-	sctk_spinlock_unlock ( &lock );
+	mpc_common_spinlock_unlock ( &lock );
 
 	tmp = sctk_ib_prof_qp_get ( vp );
 

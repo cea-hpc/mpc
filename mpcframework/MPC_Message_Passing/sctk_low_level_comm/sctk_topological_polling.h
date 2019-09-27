@@ -23,7 +23,7 @@
 #define SCTK_TOPOLOGICAL_POLLING
 
 #include "sctk_debug.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include <sctk_atomics.h>
 #include <sctk_runtime_config_struct.h>
 

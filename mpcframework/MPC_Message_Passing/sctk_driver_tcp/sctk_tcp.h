@@ -27,7 +27,7 @@ extern "C"
 {
 #endif
 
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include <mpc_common_io_helper.h>
 
 /** \brief ROUTE level data structure for TCP
@@ -37,7 +37,7 @@ extern "C"
 */
 typedef struct
 {
-	sctk_spinlock_t lock; /**< Client socket write lock */
+	mpc_common_spinlock_t lock; /**< Client socket write lock */
 	int fd;               /**< Client socket */
 } sctk_tcp_route_info_t;
 

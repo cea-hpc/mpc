@@ -31,7 +31,7 @@
 #include "sctk_kernel_thread.h"
 #include "sctk_internal_thread.h"
 #include "sctk_context.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_alloc.h"
 #include "sctk_pthread_compatible_structures.h"
 
@@ -53,7 +53,7 @@ extern "C"
 
   typedef void (*stck_ethread_key_destr_function_t) (void *);
 
-  extern sctk_spinlock_t sctk_ethread_key_spinlock;
+  extern mpc_common_spinlock_t sctk_ethread_key_spinlock;
   extern int sctk_ethread_key_pos;
   extern stck_ethread_key_destr_function_t sctk_ethread_destr_func_tab[];
 
@@ -149,7 +149,7 @@ extern "C"
 
     volatile struct sctk_ethread_virtual_processor_s *vp;
 
-    sctk_spinlock_t spinlock;
+    mpc_common_spinlock_t spinlock;
     struct sctk_ethread_virtual_processor_s *migrate_to;
     void (*migration_func) (struct sctk_ethread_per_thread_s *);
 
@@ -209,7 +209,7 @@ extern "C"
 
     volatile sctk_ethread_polling_t *poll_list;
 
-    sctk_spinlock_t spinlock;
+    mpc_common_spinlock_t spinlock;
 
     int rank;
     volatile sctk_long_long activity;
@@ -394,7 +394,7 @@ extern "C"
       {
 	sctk_ethread_per_thread_t *head;
 	sctk_ethread_per_thread_t *tail;
-	sctk_spinlock_lock (&vp->spinlock);
+	mpc_common_spinlock_lock (&vp->spinlock);
 	if (vp->incomming_queue != NULL)
 	  {
 	    head = (sctk_ethread_per_thread_t *) vp->incomming_queue;
@@ -413,7 +413,7 @@ extern "C"
 	    vp->ready_queue_tail_used = tail;
 
 	  }
-	sctk_spinlock_unlock (&vp->spinlock);
+	mpc_common_spinlock_unlock (&vp->spinlock);
       }
   }
 

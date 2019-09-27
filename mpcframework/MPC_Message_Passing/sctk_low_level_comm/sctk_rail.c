@@ -824,7 +824,7 @@ sctk_endpoint_t * sctk_rail_add_or_reuse_route_dynamic ( sctk_rail_info_t *rail,
 
 	*added = 0;
 
-	sctk_spinlock_write_lock ( &rail->route_table->dynamic_route_table_lock );
+	mpc_common_spinlock_write_lock ( &rail->route_table->dynamic_route_table_lock );
 
 	sctk_endpoint_t * tmp =  sctk_route_table_get_dynamic_route_no_lock( rail->route_table , dest );
 
@@ -855,7 +855,7 @@ sctk_endpoint_t * sctk_rail_add_or_reuse_route_dynamic ( sctk_rail_info_t *rail,
 		}
 	}
 
-	sctk_spinlock_write_unlock ( &rail->route_table->dynamic_route_table_lock );
+	mpc_common_spinlock_write_unlock ( &rail->route_table->dynamic_route_table_lock );
 	return tmp;
 }
 

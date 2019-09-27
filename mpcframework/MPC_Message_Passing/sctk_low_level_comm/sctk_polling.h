@@ -23,7 +23,7 @@
 #define SCTK_POLLING
 
 #include "sctk_debug.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include <sctk_atomics.h>
 #include <sctk_runtime_config_struct.h>
 
@@ -40,7 +40,7 @@ struct sctk_polling_tree
 	struct sctk_polling_cell * cells;
 	int * local_task_id_to_cell_lut;
 	
-	sctk_spinlock_t push_lock;
+	mpc_common_spinlock_t push_lock;
 	char root_cell_used;
 	
 	int cell_count;

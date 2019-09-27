@@ -23,7 +23,7 @@
 #include "hwloc.h"
 #include "utlist.h"
 #include "sctk_runtime_config.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "mpc_common_topology.h"
 #include "mpcomp_places_env.h"
 
@@ -570,11 +570,11 @@ mpcomp_places_get_default_include_bitmap( const int nb_mvps )
      int i;
      hwloc_obj_t pu;
      static volatile hwloc_bitmap_t __default_num_threads_bitmap = NULL;
-     static sctk_spinlock_t multiple_tasks_lock = SCTK_SPINLOCK_INITIALIZER;
+     static mpc_common_spinlock_t multiple_tasks_lock = SCTK_SPINLOCK_INITIALIZER;
  
      if( !__default_num_threads_bitmap )
      {
-        sctk_spinlock_lock( &multiple_tasks_lock );
+        mpc_common_spinlock_lock( &multiple_tasks_lock );
         if( !__default_num_threads_bitmap )
         {
            hwloc_bitmap_t __tmp_default_bitmap_places = hwloc_bitmap_alloc();
@@ -588,7 +588,7 @@ mpcomp_places_get_default_include_bitmap( const int nb_mvps )
            }
            __default_num_threads_bitmap = __tmp_default_bitmap_places;
         }
-        sctk_spinlock_unlock( &multiple_tasks_lock );
+        mpc_common_spinlock_unlock( &multiple_tasks_lock );
     }
 
 #if 0   /* DEBUG */

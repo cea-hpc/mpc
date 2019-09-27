@@ -27,7 +27,7 @@
 #include <sctk_alloc.h>
 #include <sctk_atomics.h>
 #include <sctk_control_messages.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include <sctk_wchar.h>
 #include "sctk_handle.h"
 
@@ -139,11 +139,11 @@ static void sctk_win_delete( struct sctk_window * win )
 
 static void _sctk_win_acquire( struct sctk_window * win )
 {
-	sctk_spinlock_lock( &win->lock );
+	mpc_common_spinlock_lock( &win->lock );
 
         win->refcounter++;
 
-        sctk_spinlock_unlock(&win->lock);
+        mpc_common_spinlock_unlock(&win->lock);
 }
 
 void sctk_win_acquire( sctk_window_t win_id )
@@ -163,12 +163,12 @@ static int _sctk_win_relax( struct sctk_window * win )
 	sctk_nodebug("%s win_id %d on %d", __FUNCTION__, win->id, mpc_common_get_task_rank() );
 	int ret = 0;
 
-	sctk_spinlock_lock( &win->lock );
+	mpc_common_spinlock_lock( &win->lock );
 
         win->refcounter--;
         ret = win->refcounter;
 
-        sctk_spinlock_unlock(&win->lock);
+        mpc_common_spinlock_unlock(&win->lock);
 
         return ret;
 }
@@ -952,7 +952,7 @@ static inline void sctk_window_fetch_and_op_operate_int(RDMA_op op, void *add,
 }
 
 #define RDMA_OP_def(type, type2, type3)                                        \
-  static sctk_spinlock_t __RDMA_OP_##type##type2##type3##_lock =               \
+  static mpc_common_spinlock_t __RDMA_OP_##type##type2##type3##_lock =               \
       SCTK_SPINLOCK_INITIALIZER;                                               \
                                                                                \
   static inline void sctk_window_fetch_and_op_operate_##type##type2##type3##_( \
@@ -961,7 +961,7 @@ static inline void sctk_window_fetch_and_op_operate_int(RDMA_op op, void *add,
     type type2 type3 *src_addr = (type type2 type3 *)src;                      \
     type type2 type3 *dest_addr = (type type2 type3 *)dest;                    \
                                                                                \
-    sctk_spinlock_lock(&__RDMA_OP_##type##type2##type3##_lock);                \
+    mpc_common_spinlock_lock(&__RDMA_OP_##type##type2##type3##_lock);                \
                                                                                \
     *dest_addr = *src_addr;                                                    \
                                                                                \
@@ -1016,11 +1016,11 @@ static inline void sctk_window_fetch_and_op_operate_int(RDMA_op op, void *add,
       break;                                                                   \
     }                                                                          \
                                                                                \
-    sctk_spinlock_unlock(&__RDMA_OP_##type##type2##type3##_lock);              \
+    mpc_common_spinlock_unlock(&__RDMA_OP_##type##type2##type3##_lock);              \
   }
 
 #define RDMA_OP_def_nobin(type, type2)                                         \
-  static sctk_spinlock_t __RDMA_OP_##type##type2##_lock =                      \
+  static mpc_common_spinlock_t __RDMA_OP_##type##type2##_lock =                      \
       SCTK_SPINLOCK_INITIALIZER;                                               \
                                                                                \
   static inline void sctk_window_fetch_and_op_operate_##type##type2##_(        \
@@ -1029,7 +1029,7 @@ static inline void sctk_window_fetch_and_op_operate_int(RDMA_op op, void *add,
     type type2 *src_addr = (type type2 *)src;                                  \
     type type2 *dest_addr = (type type2 *)dest;                                \
                                                                                \
-    sctk_spinlock_lock(&__RDMA_OP_##type##type2##_lock);                       \
+    mpc_common_spinlock_lock(&__RDMA_OP_##type##type2##_lock);                       \
                                                                                \
     *dest_addr = *src_addr;                                                    \
                                                                                \
@@ -1084,7 +1084,7 @@ static inline void sctk_window_fetch_and_op_operate_int(RDMA_op op, void *add,
       break;                                                                   \
     }                                                                          \
                                                                                \
-    sctk_spinlock_unlock(&__RDMA_OP_##type##type2##_lock);                     \
+    mpc_common_spinlock_unlock(&__RDMA_OP_##type##type2##_lock);                     \
   }
 
 RDMA_OP_def(char, , )
@@ -1390,11 +1390,11 @@ void sctk_window_RDMA_CAS_ptr_local( void ** cmp , void ** new, void * target, v
 		memcpy( res, &local, sizeof( void * ) );
 }
 
-static sctk_spinlock_t __RDMA_CAS_16_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __RDMA_CAS_16_lock = SCTK_SPINLOCK_INITIALIZER;
 
 void sctk_window_RDMA_CAS_16_local( void * cmp , void * new, void * target, void * res )
 {
-	sctk_spinlock_lock( &__RDMA_CAS_16_lock );
+	mpc_common_spinlock_lock( &__RDMA_CAS_16_lock );
 
         if (memcmp(target, cmp, 16) == 0) {
           if (res)
@@ -1403,14 +1403,14 @@ void sctk_window_RDMA_CAS_16_local( void * cmp , void * new, void * target, void
 
         memcpy(target, new, 16);
 
-        sctk_spinlock_unlock(&__RDMA_CAS_16_lock);
+        mpc_common_spinlock_unlock(&__RDMA_CAS_16_lock);
 }
 
-static sctk_spinlock_t __RDMA_CAS_any_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __RDMA_CAS_any_lock = SCTK_SPINLOCK_INITIALIZER;
 
 void sctk_window_RDMA_CAS_any_local( void * cmp , void * new, void * target, void * res, size_t size )
 {
-	sctk_spinlock_lock( &__RDMA_CAS_any_lock );
+	mpc_common_spinlock_lock( &__RDMA_CAS_any_lock );
 
         if (memcmp(target, cmp, size) == 0) {
           if (res)
@@ -1419,7 +1419,7 @@ void sctk_window_RDMA_CAS_any_local( void * cmp , void * new, void * target, voi
 
         memcpy(target, new, size);
 
-        sctk_spinlock_unlock(&__RDMA_CAS_any_lock);
+        mpc_common_spinlock_unlock(&__RDMA_CAS_any_lock);
 }
 
 

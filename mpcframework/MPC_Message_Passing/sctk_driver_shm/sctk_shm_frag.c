@@ -9,8 +9,8 @@
 static volatile int sctk_shm_idle_frag_msg = 0;
 static volatile int sctk_shm_process_msg_id = 0;
 
-static sctk_spinlock_t sctk_shm_sending_frag_hastable_lock = SCTK_SPINLOCK_INITIALIZER;
-static sctk_spinlock_t sctk_shm_recving_frag_hastable_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t sctk_shm_sending_frag_hastable_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t sctk_shm_recving_frag_hastable_lock = SCTK_SPINLOCK_INITIALIZER;
 static struct MPCHT *sctk_shm_sending_frag_hastable_ptr = NULL;
 static struct MPCHT *sctk_shm_recving_frag_hastable_ptr = NULL;
   
@@ -84,10 +84,10 @@ sctk_shm_send_register_new_frag_msg(int dest)
    /* Prevent polling thread activity */ 
    frag_infos = sctk_malloc(sizeof(sctk_shm_proc_frag_info_t));
    frag_infos->is_ready = SCTK_SPINLOCK_INITIALIZER;
-   sctk_spinlock_lock(&(frag_infos->is_ready));
+   mpc_common_spinlock_lock(&(frag_infos->is_ready));
  
    /* Try to get an empty key in hastable */  
-   sctk_spinlock_lock(&sctk_shm_sending_frag_hastable_lock); 
+   mpc_common_spinlock_lock(&sctk_shm_sending_frag_hastable_lock); 
    do
    {
       sctk_shm_process_msg_id = (sctk_shm_process_msg_id+1) % SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS;
@@ -111,7 +111,7 @@ sctk_shm_send_register_new_frag_msg(int dest)
       sctk_shm_idle_frag_msg++;
    }   
 
-   sctk_spinlock_unlock(&sctk_shm_sending_frag_hastable_lock); 
+   mpc_common_spinlock_unlock(&sctk_shm_sending_frag_hastable_lock); 
    return frag_infos; 
 }
 
@@ -148,7 +148,7 @@ sctk_shm_init_recv_frag_msg(int key, int remote, sctk_thread_ptp_message_t* msg)
 
    frag_infos = (sctk_shm_proc_frag_info_t*) sctk_malloc(sizeof(sctk_shm_proc_frag_info_t));
    frag_infos->is_ready = SCTK_SPINLOCK_INITIALIZER;
-   sctk_spinlock_lock(&(frag_infos->is_ready));
+   mpc_common_spinlock_lock(&(frag_infos->is_ready));
 
    frag_infos->size_total = msg_size;
    frag_infos->size_copied = 0;
@@ -159,9 +159,9 @@ sctk_shm_init_recv_frag_msg(int key, int remote, sctk_thread_ptp_message_t* msg)
 
    if(msg_size)
    {
-      sctk_spinlock_lock(&sctk_shm_recving_frag_hastable_lock);
+      mpc_common_spinlock_lock(&sctk_shm_recving_frag_hastable_lock);
       sctk_shm_frag_add_elt_to_hash(key, remote, frag_infos, SCTK_SHM_RECVER_HT);
-      sctk_spinlock_unlock(&sctk_shm_recving_frag_hastable_lock);
+      mpc_common_spinlock_unlock(&sctk_shm_recving_frag_hastable_lock);
    }
 
    return frag_infos;
@@ -191,7 +191,7 @@ sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t
 
    if(frag_infos) 
    {
-   	    sctk_spinlock_unlock(&(frag_infos->is_ready));
+   	    mpc_common_spinlock_unlock(&(frag_infos->is_ready));
    }
    else
    {
@@ -230,7 +230,7 @@ sctk_network_frag_msg_next_send(sctk_shm_proc_frag_info_t* frag_infos)
   sctk_shm_cell_t *cell = NULL;
   sctk_thread_ptp_message_t *msg = NULL;
 
-  if (sctk_spinlock_trylock(&(frag_infos->is_ready)))
+  if (mpc_common_spinlock_trylock(&(frag_infos->is_ready)))
     return 0;
 
   is_control_msg = 0;
@@ -245,7 +245,7 @@ sctk_network_frag_msg_next_send(sctk_shm_proc_frag_info_t* frag_infos)
 
   cell = sctk_shm_get_cell(msg_dest, is_control_msg);
   if (!cell) {
-    sctk_spinlock_unlock(&(frag_infos->is_ready));
+    mpc_common_spinlock_unlock(&(frag_infos->is_ready));
     return 0;
    }
 
@@ -280,7 +280,7 @@ sctk_network_frag_msg_next_send(sctk_shm_proc_frag_info_t* frag_infos)
    }
 
    if(frag_infos)
-      sctk_spinlock_unlock(&(frag_infos->is_ready));
+      mpc_common_spinlock_unlock(&(frag_infos->is_ready));
 
    return 1;
 }
@@ -294,7 +294,7 @@ sctk_network_frag_msg_shm_idle(int max_try)
     if(!sctk_shm_idle_frag_msg)
        return;
 
-    if(sctk_spinlock_trylock(&sctk_shm_sending_frag_hastable_lock))
+    if(mpc_common_spinlock_trylock(&sctk_shm_sending_frag_hastable_lock))
   	    return;
     
     cur_try = 0;
@@ -306,7 +306,7 @@ sctk_network_frag_msg_shm_idle(int max_try)
     	MPC_HT_ITER_END
     }
 
-    sctk_spinlock_unlock(&sctk_shm_sending_frag_hastable_lock);
+    mpc_common_spinlock_unlock(&sctk_shm_sending_frag_hastable_lock);
 }
 
 int 
@@ -337,10 +337,10 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell)
    else
    {
       sctk_nodebug("[KEY:%d]\t\tRECV NEXT PART MSG", msg_key);
-      sctk_spinlock_lock(&sctk_shm_recving_frag_hastable_lock);
+      mpc_common_spinlock_lock(&sctk_shm_recving_frag_hastable_lock);
       frag_infos = sctk_shm_frag_get_elt_from_hash(msg_key, msg_src, SCTK_SHM_RECVER_HT); 
       assume_m((frag_infos->size_copied < frag_infos->size_total), "WRONG SIZE FOR FRAGMENT");
-      sctk_spinlock_unlock(&sctk_shm_recving_frag_hastable_lock);
+      mpc_common_spinlock_unlock(&sctk_shm_recving_frag_hastable_lock);
       assume_m( frag_infos != NULL, "Recv an oprhelin SHM fragment\n");
       memcpy(frag_infos->msg + frag_infos->size_copied, cell->data, cell->size_to_copy);
       frag_infos->size_copied += cell->size_to_copy;
@@ -354,9 +354,9 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell)
 	msg_hdr = frag_infos->header;
 	if(frag_infos->size_total)
     {	
-    		sctk_spinlock_lock(&sctk_shm_recving_frag_hastable_lock);
+    		mpc_common_spinlock_lock(&sctk_shm_recving_frag_hastable_lock);
    		    sctk_shm_frag_del_elt_from_hash(msg_key, msg_src, SCTK_SHM_RECVER_HT);
-    		sctk_spinlock_unlock(&sctk_shm_recving_frag_hastable_lock);
+    		mpc_common_spinlock_unlock(&sctk_shm_recving_frag_hastable_lock);
     }
    }
 

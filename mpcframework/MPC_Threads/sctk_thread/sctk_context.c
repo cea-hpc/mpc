@@ -26,7 +26,7 @@
 #include "sctk_debug.h"
 #include "sctk_config.h"
 #include "sctk_context.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk.h"
 #include "sctk_tls.h"
 #include "sctk_alloc.h"
@@ -300,7 +300,7 @@ sctk_mctx_set(sctk_mctx_t* mctx,
   return TRUE;
 }
 #else
-static sctk_spinlock_t sjlj_spinlock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t sjlj_spinlock = SCTK_SPINLOCK_INITIALIZER;
 static jmp_buf mctx_trampoline;
 
 static sctk_mctx_t mctx_caller;
@@ -326,7 +326,7 @@ sctk_mctx_set (sctk_mctx_t * mctx, void (*func) (void *), char *sk_addr_lo,
   sigset_t osigs;
   sigset_t sigs;
 
-  sctk_spinlock_lock (&sjlj_spinlock);
+  mpc_common_spinlock_lock (&sjlj_spinlock);
 
   sigemptyset (&sigs);
   sigaddset (&sigs, SIGUSR1);
@@ -391,7 +391,7 @@ sctk_mctx_set (sctk_mctx_t * mctx, void (*func) (void *), char *sk_addr_lo,
   memset (&mctx_trampoline, 0, sizeof (jmp_buf));
 
   sctk_nodebug ("Creation ended");
-  sctk_spinlock_unlock (&sjlj_spinlock);
+  mpc_common_spinlock_unlock (&sjlj_spinlock);
   return TRUE;
 }
 

@@ -59,14 +59,14 @@ int __mpcomp_guided_loop_begin(long lb, long b, long incr, long chunk_size,
     sctk_thread_yield();
   }
   __mpcomp_loop_gen_infos_init(&(t->info.loop_infos), lb, b, incr, chunk_size);
-  sctk_spinlock_lock(&(t->instance->team->lock));
+  mpc_common_spinlock_lock(&(t->instance->team->lock));
 
   /* First thread store shared first iteration value */
   if(t->instance->team->is_first[index] == 1) {
     t->instance->team->is_first[index] = 0;
     sctk_atomics_store_ptr(&(t->instance->team->guided_from[index]),(void*)lb);
   }
-  sctk_spinlock_unlock(&(t->instance->team->lock));
+  mpc_common_spinlock_unlock(&(t->instance->team->lock));
 
   return (!from && !to) ? -1 : __mpcomp_guided_loop_next(from, to);
 }
@@ -150,9 +150,9 @@ void __mpcomp_guided_loop_end_nowait()
   sctk_assert(team_info != NULL);
 
   /* WARNING: the following order is important */
-  sctk_spinlock_lock(&(t->info.update_lock));
+  mpc_common_spinlock_lock(&(t->info.update_lock));
   sctk_atomics_incr_int(&(t->for_dyn_ull_current));
-  sctk_spinlock_unlock(&(t->info.update_lock));
+  mpc_common_spinlock_unlock(&(t->info.update_lock));
 
   /* Update the number of threads which ended this loop */
   nb_threads_exited = sctk_atomics_fetch_and_incr_int(
@@ -256,13 +256,13 @@ int __mpcomp_loop_ull_guided_begin(bool up, unsigned long long lb,
   mpcomp_loop_long_iter_t *loop = (mpcomp_loop_long_iter_t*)&(t->info.loop_infos.loop.mpcomp_ull);
   loop->up = up;
 
-  sctk_spinlock_lock(&(t->instance->team->lock));
+  mpc_common_spinlock_lock(&(t->instance->team->lock));
 
   if(t->instance->team->is_first[index] == 1) {
     t->instance->team->is_first[index] = 0;
     sctk_atomics_store_ptr(&(t->instance->team->guided_from[index]),(void*)lb);
   }
-  sctk_spinlock_unlock(&(t->instance->team->lock));
+  mpc_common_spinlock_unlock(&(t->instance->team->lock));
 
   return (!from && !to) ? -1 : __mpcomp_loop_ull_guided_next(from, to);
 }

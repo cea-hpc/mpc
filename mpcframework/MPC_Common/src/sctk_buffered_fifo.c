@@ -24,9 +24,9 @@ uint64_t Buffered_FIFO_count(struct Buffered_FIFO *fifo)
 {
 	uint64_t ret = 0;
 
-	sctk_spinlock_lock( &fifo->lock );
+	mpc_common_spinlock_lock( &fifo->lock );
 	ret = fifo->elem_count;
-	sctk_spinlock_unlock( &fifo->lock );
+	mpc_common_spinlock_unlock( &fifo->lock );
 
 	return ret;
 }
@@ -77,7 +77,7 @@ void * Buffered_FIFO_chunk_push( struct Buffered_FIFO_chunk *ch, void *elem )
 {
 	void *ret = NULL;
 
-	sctk_spinlock_lock( &ch->lock );
+	mpc_common_spinlock_lock( &ch->lock );
 	
 	/* Do we have free room ? */
 
@@ -89,7 +89,7 @@ void * Buffered_FIFO_chunk_push( struct Buffered_FIFO_chunk *ch, void *elem )
 		ch->end_offset++;
 	}
 
-	sctk_spinlock_unlock( &ch->lock );
+	mpc_common_spinlock_unlock( &ch->lock );
 
 	return ret;
 }
@@ -98,7 +98,7 @@ void * Buffered_FIFO_chunk_pop( struct Buffered_FIFO_chunk *ch, void *dest )
 {
 	void *ret = NULL;
 
-	sctk_spinlock_lock( &ch->lock );
+	mpc_common_spinlock_lock( &ch->lock );
 	
 	/* Is there any elem left ? */
 	if( ch->start_offset < ch->end_offset )
@@ -109,7 +109,7 @@ void * Buffered_FIFO_chunk_pop( struct Buffered_FIFO_chunk *ch, void *dest )
 		ch->start_offset++;
 	}
 
-	sctk_spinlock_unlock( &ch->lock );
+	mpc_common_spinlock_unlock( &ch->lock );
 
 	return ret;
 }
@@ -135,8 +135,8 @@ void Buffered_FIFO_release(struct Buffered_FIFO *fifo)
 	struct Buffered_FIFO_chunk * tmp = fifo->head;
 	struct Buffered_FIFO_chunk * to_free = NULL;
 
-	sctk_spinlock_lock( &fifo->head_lock );
-	sctk_spinlock_lock( &fifo->tail_lock );
+	mpc_common_spinlock_lock( &fifo->head_lock );
+	mpc_common_spinlock_lock( &fifo->tail_lock );
 
 	while( tmp )
 	{
@@ -154,14 +154,14 @@ void *Buffered_FIFO_push(struct Buffered_FIFO *fifo, void *elem)
 {
 	void *ret = NULL;
 
-	sctk_spinlock_lock( &fifo->head_lock );
+	mpc_common_spinlock_lock( &fifo->head_lock );
 	/* Case of empty FIFO */
 	if( fifo->head == NULL )
 	{
-			sctk_spinlock_lock( &fifo->tail_lock );
+			mpc_common_spinlock_lock( &fifo->tail_lock );
 			fifo->head = Buffered_FIFO_chunk_new( fifo->chunk_size, fifo->elem_size );
 			fifo->tail = fifo->head;
-			sctk_spinlock_unlock( &fifo->tail_lock );
+			mpc_common_spinlock_unlock( &fifo->tail_lock );
 	}
 
 	while( !ret )
@@ -179,11 +179,11 @@ void *Buffered_FIFO_push(struct Buffered_FIFO *fifo, void *elem)
 	
 	}
 	
-	sctk_spinlock_lock( &fifo->lock );
+	mpc_common_spinlock_lock( &fifo->lock );
 	fifo->elem_count++;
-	sctk_spinlock_unlock( &fifo->lock );
+	mpc_common_spinlock_unlock( &fifo->lock );
 
-	sctk_spinlock_unlock( &fifo->head_lock );
+	mpc_common_spinlock_unlock( &fifo->head_lock );
 
 	return ret;
 }
@@ -192,7 +192,7 @@ void *Buffered_FIFO_push(struct Buffered_FIFO *fifo, void *elem)
 void *Buffered_FIFO_pop(struct Buffered_FIFO *fifo, void *dest)
 {
 	void *ret = NULL;
-	sctk_spinlock_lock( &fifo->tail_lock );
+	mpc_common_spinlock_lock( &fifo->tail_lock );
 	
 	if( fifo->tail != NULL )
 	{
@@ -204,9 +204,9 @@ void *Buffered_FIFO_pop(struct Buffered_FIFO *fifo, void *dest)
 
 			if( ret )
 			{		
-				sctk_spinlock_lock( &fifo->lock );
+				mpc_common_spinlock_lock( &fifo->lock );
 				fifo->elem_count--;
-				sctk_spinlock_unlock( &fifo->lock );
+				mpc_common_spinlock_unlock( &fifo->lock );
 			}
 			else
 			{
@@ -238,7 +238,7 @@ void *Buffered_FIFO_pop(struct Buffered_FIFO *fifo, void *dest)
 		}	
 	}
 
-	sctk_spinlock_unlock( &fifo->tail_lock );
+	mpc_common_spinlock_unlock( &fifo->tail_lock );
 	
 	return ret;
 }
@@ -252,8 +252,8 @@ int Buffered_FIFO_process(struct Buffered_FIFO *fifo, int (*func)( void * elem, 
 	int did_process = 0;
 	
 	/* Block the FIFO */
-	sctk_spinlock_lock( &fifo->head_lock );
-	sctk_spinlock_lock( &fifo->tail_lock );
+	mpc_common_spinlock_lock( &fifo->head_lock );
+	mpc_common_spinlock_lock( &fifo->tail_lock );
 
 	
 	struct Buffered_FIFO_chunk * chunk = fifo->head;
@@ -271,8 +271,8 @@ int Buffered_FIFO_process(struct Buffered_FIFO *fifo, int (*func)( void * elem, 
 		chunk = chunk->prev;
 	}
 	
-	sctk_spinlock_unlock( &fifo->tail_lock );
-	sctk_spinlock_unlock( &fifo->head_lock );
+	mpc_common_spinlock_unlock( &fifo->tail_lock );
+	mpc_common_spinlock_unlock( &fifo->head_lock );
 
 	return did_process;
 }

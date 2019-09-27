@@ -234,17 +234,17 @@ __sctk_thread_generic_rwlocks_rwlock_lock( sctk_thread_generic_rwlock_t* lock,
   unsigned int ltype = type;
   if( type != SCTK_RWLOCK_READ && type != SCTK_RWLOCK_WRITE ){
 	  if( type == SCTK_RWLOCK_TRYREAD ){
-		  if( sctk_spinlock_trylock ( &(lock->lock) )) return SCTK_EBUSY;
+		  if( mpc_common_spinlock_trylock ( &(lock->lock) )) return SCTK_EBUSY;
 		  ltype = SCTK_RWLOCK_READ;
 	  }
 	  else if( type == SCTK_RWLOCK_TRYWRITE ){
-		  if( sctk_spinlock_trylock ( &(lock->lock) )) return SCTK_EBUSY;
+		  if( mpc_common_spinlock_trylock ( &(lock->lock) )) return SCTK_EBUSY;
 		  ltype = SCTK_RWLOCK_WRITE;
 	  } else {
 		  return SCTK_EINVAL;
 	  }
   } else {
-	  sctk_spinlock_lock ( &(lock->lock) );
+	  mpc_common_spinlock_lock ( &(lock->lock) );
   }
   lock->count++;
 
@@ -260,16 +260,16 @@ __sctk_thread_generic_rwlocks_rwlock_lock( sctk_thread_generic_rwlock_t* lock,
 		  /* We add the lock to a hash table owned by the current thread*/
 		  if( (ret = sctk_thread_generic_rwlocks_store_rwlock( lock, sched )) != 0 ){
 			lock->count--;
-			sctk_spinlock_unlock ( &(lock->lock) );
+			mpc_common_spinlock_unlock ( &(lock->lock) );
 			return ret;
 		  }
 
-		  sctk_spinlock_unlock ( &(lock->lock) );
+		  mpc_common_spinlock_unlock ( &(lock->lock) );
 		  return 0;
 	  }
 	  else if( sched == lock->writer ){
 		  lock->count--;
-		  sctk_spinlock_unlock ( &(lock->lock) );
+		  mpc_common_spinlock_unlock ( &(lock->lock) );
 		  return SCTK_EDEADLK;
 	  }
 	  /* We cannot take the lock for reading and we prepare to block */
@@ -283,16 +283,16 @@ __sctk_thread_generic_rwlocks_rwlock_lock( sctk_thread_generic_rwlock_t* lock,
 		  /* We add the lock to a hash table owned by the current thread*/
 		  if( (ret = sctk_thread_generic_rwlocks_store_rwlock( lock, sched )) != 0 ){
 			lock->count--;
-			sctk_spinlock_unlock ( &(lock->lock) );
+			mpc_common_spinlock_unlock ( &(lock->lock) );
 			return ret;
 		  }
 
-		  sctk_spinlock_unlock ( &(lock->lock) );
+		  mpc_common_spinlock_unlock ( &(lock->lock) );
 		  return 0;
 	  }
 	  else if( sched == lock->writer ){
 		  lock->count--;
-		  sctk_spinlock_unlock ( &(lock->lock) );
+		  mpc_common_spinlock_unlock ( &(lock->lock) );
 		  return SCTK_EDEADLK;
 	  }
 	  lock->wait = SCTK_RWLOCK_WR_WAITING;
@@ -305,14 +305,14 @@ __sctk_thread_generic_rwlocks_rwlock_lock( sctk_thread_generic_rwlock_t* lock,
   /* We test if we were in a tryread or in a trywrite */
   if( type != SCTK_RWLOCK_READ && type != SCTK_RWLOCK_WRITE ){
 	  lock->count--;
-	  sctk_spinlock_unlock ( &(lock->lock) );
+	  mpc_common_spinlock_unlock ( &(lock->lock) );
 	  return SCTK_EBUSY;
   }
 
   /* We add the lock to a hash table owned by the current thread*/
   if( (ret = sctk_thread_generic_rwlocks_store_rwlock( lock, sched )) != 0 ){
 	lock->count--;
-	sctk_spinlock_unlock ( &(lock->lock) );
+	mpc_common_spinlock_unlock ( &(lock->lock) );
 	return ret;
   }
 
@@ -348,7 +348,7 @@ __sctk_thread_generic_rwlocks_rwlock_unlock( sctk_thread_generic_rwlock_t* lock,
   int ret = sctk_thread_generic_rwlocks_retrieve_rwlock( lock, sched  );
   if( ret != 0 ) return ret;
 
-  sctk_spinlock_lock( &(lock->lock) );
+  mpc_common_spinlock_lock( &(lock->lock) );
   lock->count--;
   if( lock->reads_count > 0 ) lock->reads_count--;
 
@@ -392,7 +392,7 @@ __sctk_thread_generic_rwlocks_rwlock_unlock( sctk_thread_generic_rwlock_t* lock,
 	  lock->current = SCTK_RWLOCK_ALONE;
 	  lock->writer = NULL;
   }
-  sctk_spinlock_unlock( &(lock->lock) );
+  mpc_common_spinlock_unlock( &(lock->lock) );
 
   return 0;
 }

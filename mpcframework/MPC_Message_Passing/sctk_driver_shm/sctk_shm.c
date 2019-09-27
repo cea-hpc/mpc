@@ -19,8 +19,8 @@ static unsigned int sctk_shm_send_max_try = 2;
 static int sctk_cma_enabled = 1;
 
 static unsigned int sctk_shm_pending_ptp_msg_num = 0;
-static sctk_spinlock_t sctk_shm_polling_lock = SCTK_SPINLOCK_INITIALIZER;
-static sctk_spinlock_t sctk_shm_pending_ptp_msg_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t sctk_shm_polling_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t sctk_shm_pending_ptp_msg_lock = SCTK_SPINLOCK_INITIALIZER;
 
 static sctk_shm_msg_list_t *sctk_shm_pending_ptp_msg_list = NULL;
 
@@ -63,11 +63,11 @@ sctk_network_add_message_to_pending_shm_list( sctk_thread_ptp_message_t *msg, in
    tmp->msg = msg;
    tmp->sctk_shm_dest = sctk_shm_dest; 
    if(with_lock)
-      sctk_spinlock_lock(&sctk_shm_pending_ptp_msg_lock);
+      mpc_common_spinlock_lock(&sctk_shm_pending_ptp_msg_lock);
    DL_APPEND(sctk_shm_pending_ptp_msg_list, tmp);
    sctk_shm_pending_ptp_msg_num++;
    if(with_lock)
-      sctk_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
+      mpc_common_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
 }
 
 static int sctk_network_send_message_dest_shm(sctk_thread_ptp_message_t *msg,
@@ -118,7 +118,7 @@ sctk_network_send_message_from_pending_shm_list( void )
    if(!sctk_shm_pending_ptp_msg_num)
       return;
 
-	if(sctk_spinlock_trylock(&sctk_shm_pending_ptp_msg_lock))
+	if(mpc_common_spinlock_trylock(&sctk_shm_pending_ptp_msg_lock))
 		return;
 
 	DL_FOREACH_SAFE(sctk_shm_pending_ptp_msg_list,elt,tmp) {
@@ -148,7 +148,7 @@ sctk_network_send_message_from_pending_shm_list( void )
           }
         }
 
-        sctk_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
+        mpc_common_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
 }
 
 static void 
@@ -191,7 +191,7 @@ sctk_network_notify_idle_message_shm ( __UNUSED__ sctk_rail_info_t *rail )
     if(!sctk_shm_driver_initialized)
         return;
 
-    if(sctk_spinlock_trylock(&sctk_shm_polling_lock))
+    if(mpc_common_spinlock_trylock(&sctk_shm_polling_lock))
       return; 
 
 
@@ -234,7 +234,7 @@ sctk_network_notify_idle_message_shm ( __UNUSED__ sctk_rail_info_t *rail )
     	sctk_network_send_message_from_pending_shm_list();
     }
 
-    sctk_spinlock_unlock(&sctk_shm_polling_lock);
+    mpc_common_spinlock_unlock(&sctk_shm_polling_lock);
 
 }
 

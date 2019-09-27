@@ -29,7 +29,7 @@
 #include "sctk_thread_mutex.h"
 #include "sctk_thread_cond.h"
 #include "sctk_thread_scheduler.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_thread_generic.h"
 
 int
@@ -212,7 +212,7 @@ int sctk_thread_generic_conds_cond_wait (sctk_thread_generic_cond_t* restrict co
   int ret = 0;
   sctk_thread_generic_cond_cell_t cell;
   void** tmp = (void**) sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
-  sctk_spinlock_lock(&(cond->lock));
+  mpc_common_spinlock_lock(&(cond->lock));
   if( cond->blocked == NULL ){
 	if( sched != mutex->owner ) return SCTK_EPERM;
 	cell.binded = mutex;
@@ -253,13 +253,13 @@ int sctk_thread_generic_conds_cond_signal (sctk_thread_generic_cond_t* cond,
   if( cond == NULL ) return SCTK_EINVAL;
 
   sctk_thread_generic_cond_cell_t* task;
-  sctk_spinlock_lock(&(cond->lock));
+  mpc_common_spinlock_lock(&(cond->lock));
   task = cond->blocked; 
   if(task != NULL){
     DL_DELETE(cond->blocked,task);
     sctk_thread_generic_wake(task->sched); 
   }
-  sctk_spinlock_unlock(&(cond->lock));
+  mpc_common_spinlock_unlock(&(cond->lock));
   return 0;
 }
 
@@ -302,7 +302,7 @@ sctk_conds_cond_timedwait_test_timeout( void* args ){
   sctk_thread_generic_cond_cell_t* lcell_tmp = NULL ;
   struct timespec t_current;
 
-  if( sctk_spinlock_trylock( &(arg->cond->lock )) == 0 ){
+  if( mpc_common_spinlock_trylock( &(arg->cond->lock )) == 0 ){
 	clock_gettime( arg->cond->clock_id, &t_current );
 
 	if( t_current.tv_sec > arg->timedout->tv_sec ||
@@ -316,7 +316,7 @@ sctk_conds_cond_timedwait_test_timeout( void* args ){
 		}
 	  }
 	}
-  sctk_spinlock_unlock( &(arg->cond->lock) );
+  mpc_common_spinlock_unlock( &(arg->cond->lock) );
   }
 }
 
@@ -356,7 +356,7 @@ sctk_thread_generic_conds_cond_timedwait( sctk_thread_generic_cond_t* restrict c
   args = (struct sctk_cond_timedwait_args_s*) sctk_malloc( sizeof( struct sctk_cond_timedwait_args_s ));
   if( args == NULL ) return SCTK_ENOMEM;
 
-  sctk_spinlock_lock(&(cond->lock));
+  mpc_common_spinlock_lock(&(cond->lock));
   if( cond->blocked == NULL ){
 	if( sched != mutex->owner ) return SCTK_EPERM;
 	cell.binded = mutex;
@@ -392,7 +392,7 @@ sctk_thread_generic_conds_cond_timedwait( sctk_thread_generic_cond_t* restrict c
 	DL_DELETE( cond->blocked, &cell );
 	tmp[sctk_thread_generic_cond] = NULL;
 	sctk_thread_generic_mutexes_mutex_lock( mutex, sched );
-	sctk_spinlock_unlock( &(cond->lock ));
+	mpc_common_spinlock_unlock( &(cond->lock ));
 	return SCTK_ETIMEDOUT;
   }
 
@@ -423,13 +423,13 @@ int sctk_thread_generic_conds_cond_broadcast (sctk_thread_generic_cond_t * cond,
 
   sctk_thread_generic_cond_cell_t* task;
   sctk_thread_generic_cond_cell_t* task_tmp;
-  sctk_spinlock_lock(&(cond->lock));
+  mpc_common_spinlock_lock(&(cond->lock));
   DL_FOREACH_SAFE(cond->blocked,task,task_tmp){
     DL_DELETE(cond->blocked,task);
     sctk_nodebug("ADD BCAST cond wake %p from %p",task->sched,sched);
     sctk_thread_generic_wake(task->sched);    
   }
-  sctk_spinlock_unlock(&(cond->lock));
+  mpc_common_spinlock_unlock(&(cond->lock));
   return 0;
 }
 

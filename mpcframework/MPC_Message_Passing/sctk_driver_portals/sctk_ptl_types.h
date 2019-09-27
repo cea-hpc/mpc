@@ -374,7 +374,7 @@ typedef union sctk_ptl_offcoll_spec_u
  */
 typedef struct sctk_ptl_offcoll_tree_node_s
 {
-        sctk_spinlock_t lock;               /**< the lock */
+        mpc_common_spinlock_t lock;   /**< the lock */
 	sctk_atomics_int iter;              /**< iteration number (because PTL does not whant us to decr a counter) */
 	sctk_ptl_id_t parent;               /**< the PTL id for the parent of the current process in this given tree */
 	sctk_ptl_id_t* children;            /**< PTS id array of all children for the current process */

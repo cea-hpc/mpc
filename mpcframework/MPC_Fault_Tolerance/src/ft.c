@@ -124,7 +124,7 @@ void sctk_ft_checkpoint_init()
          * be called for waiting. This thread should not be preempted
          * (leading to deadlock to acquire read after write).
          */
-	sctk_spinlock_write_lock_yield(&checkpoint_lock);
+	mpc_common_spinlock_write_lock_yield(&checkpoint_lock);
 #ifdef MPC_USE_DMTCP
 	/* retrieve old value (we will wait for their increment to simulate a barrier) */
 	dmtcp_get_local_status(&nb_checkpoints, &nb_restarts);
@@ -177,7 +177,7 @@ int sctk_ft_no_suspend_start()
         if(old == 0)
         {
 		/* And I cannot take the lock --> skip to create the section */
-                if(sctk_spinlock_read_trylock(&checkpoint_lock) != 0)
+                if(mpc_common_spinlock_read_trylock(&checkpoint_lock) != 0)
                 {
                         sctk_ft_critical_section--;
                         return false;
@@ -205,7 +205,7 @@ void sctk_ft_no_suspend_end()
 
         if(nw == 0)
         {
-                sctk_spinlock_read_unlock(&checkpoint_lock);
+                mpc_common_spinlock_read_unlock(&checkpoint_lock);
         }
 }
 
@@ -257,7 +257,7 @@ void sctk_ft_checkpoint_finalize()
 	/* recall driver init function & update sctk_network_mode string */
         sctk_rail_commit();
 	
-	sctk_spinlock_write_unlock(&checkpoint_lock);
+	mpc_common_spinlock_write_unlock(&checkpoint_lock);
 }
 
 /**

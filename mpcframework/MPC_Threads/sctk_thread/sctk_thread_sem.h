@@ -30,14 +30,14 @@
 #include "sctk_thread.h"
 #include "sctk_internal_thread.h"
 #include "sctk_thread_scheduler.h"
-#include "sctk_spinlock.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_thread_mutex.h"
 #include <utlist.h>
 #include <time.h>
 
 typedef struct sctk_thread_generic_sem_s{
   volatile unsigned int lock;
-  sctk_spinlock_t spinlock;
+  mpc_common_spinlock_t spinlock;
   sctk_thread_generic_mutex_cell_t* list;
 }sctk_thread_generic_sem_t;
 

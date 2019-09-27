@@ -35,7 +35,7 @@ struct mpc_MPI_allocmem_pool ____mpc_sctk_mpi_alloc_mem_pool;
 
 static int _pool_init_done = 0;
 static int _pool_only_local = 0;
-static sctk_spinlock_t _pool_init_lock = 0;
+static mpc_common_spinlock_t _pool_init_lock = 0;
 
 static size_t _forced_pool_size = 0;
 
@@ -79,14 +79,14 @@ int mpc_MPI_allocmem_pool_init() {
 
   int do_init = 0;
 
-  sctk_spinlock_lock(&_pool_init_lock);
+  mpc_common_spinlock_lock(&_pool_init_lock);
 
   if (_pool_init_done == 0) {
     _pool_init_done = 1;
     do_init = 1;
   }
 
-  sctk_spinlock_unlock(&_pool_init_lock);
+  mpc_common_spinlock_unlock(&_pool_init_lock);
 
   int cw_rank;
   PMPI_Comm_rank(MPI_COMM_WORLD, &cw_rank);
@@ -233,14 +233,14 @@ int mpc_MPI_allocmem_pool_release() {
 
   int is_master = 0;
 
-  sctk_spinlock_lock(&_pool_init_lock);
+  mpc_common_spinlock_lock(&_pool_init_lock);
 
   if (_pool_init_done) {
     is_master = 1;
     _pool_init_done = 0;
   }
 
-  sctk_spinlock_unlock(&_pool_init_lock);
+  mpc_common_spinlock_unlock(&_pool_init_lock);
 
   if (_pool_only_local ||
       (mpc_common_get_task_count() == mpc_common_get_local_task_count())) {
@@ -435,8 +435,8 @@ int mpc_MPI_allocmem_is_in_pool(void *ptr) {
 
 /* This is the accumulate pool protection */
 
-static sctk_spinlock_t *__accululate_master_lock = NULL;
-static sctk_spinlock_t __static_lock_for_acc = 0;
+static mpc_common_spinlock_t *__accululate_master_lock = NULL;
+static mpc_common_spinlock_t __static_lock_for_acc = 0;
 
 void mpc_MPI_accumulate_op_lock_init_shared() {
   __accululate_master_lock = &__static_lock_for_acc;
@@ -460,23 +460,23 @@ void mpc_MPI_accumulate_op_lock_init() {
   void *p = NULL;
 
   if (!my_rank) {
-    p = mpc_MPI_allocmem_pool_alloc(sizeof(sctk_spinlock_t));
-    *((sctk_spinlock_t *)p) = 0;
+    p = mpc_MPI_allocmem_pool_alloc(sizeof(mpc_common_spinlock_t));
+    *((mpc_common_spinlock_t *)p) = 0;
   }
 
   sctk_broadcast(&p, sizeof(MPI_Aint), 0, node_comm);
 
-  __accululate_master_lock = (sctk_spinlock_t *)p;
+  __accululate_master_lock = (mpc_common_spinlock_t *)p;
 
   PMPI_Comm_free(&node_comm);
 }
 
 void mpc_MPI_accumulate_op_lock() {
   assert(__accululate_master_lock != NULL);
-  sctk_spinlock_lock_yield(__accululate_master_lock);
+  mpc_common_spinlock_lock_yield(__accululate_master_lock);
 }
 
 void mpc_MPI_accumulate_op_unlock() {
   assert(__accululate_master_lock != NULL);
-  sctk_spinlock_unlock(__accululate_master_lock);
+  mpc_common_spinlock_unlock(__accululate_master_lock);
 }

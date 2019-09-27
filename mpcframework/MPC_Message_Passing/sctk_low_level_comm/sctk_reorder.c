@@ -25,7 +25,7 @@
 #include <sctk_route.h>
 #include <sctk_reorder.h>
 #include <sctk_communicator.h>
-#include <sctk_spinlock.h>
+#include <mpc_common_spinlock.h>
 #include <uthash.h>
 #include <opa_primitives.h>
 #include <sctk_inter_thread_comm.h>
@@ -75,7 +75,7 @@ sctk_reorder_table_t *sctk_get_task_from_reorder ( int dest, sctk_reorder_list_t
 
 	key.destination = dest;
 
-	sctk_spinlock_lock ( &reorder->lock );
+	mpc_common_spinlock_lock ( &reorder->lock );
 
 	HASH_FIND ( hh, reorder->table, &key, sizeof ( sctk_reorder_key_t ), tmp );
 
@@ -87,7 +87,7 @@ sctk_reorder_table_t *sctk_get_task_from_reorder ( int dest, sctk_reorder_list_t
 		sctk_nodebug ( "%p Entry for task %d added to %p!!", reorder->table, dest, reorder->table );
 	}
 
-	sctk_spinlock_unlock ( &reorder->lock );
+	mpc_common_spinlock_unlock ( &reorder->lock );
 	assume ( tmp );
 
 	return tmp;
@@ -105,7 +105,7 @@ static inline int __send_pending_messages ( sctk_reorder_table_t *tmp )
 
 		do
 		{
-			sctk_spinlock_lock ( & ( tmp->lock ) );
+			mpc_common_spinlock_lock ( & ( tmp->lock ) );
 			key = OPA_load_int ( & ( tmp->message_number_src ) );
 			HASH_FIND ( hh, tmp->buffer, &key, sizeof ( int ), reorder );
 
@@ -113,7 +113,7 @@ static inline int __send_pending_messages ( sctk_reorder_table_t *tmp )
 			{
 				sctk_nodebug ( "Pending Send %d for %p", SCTK_MSG_NUMBER ( reorder->msg ), tmp );
 				HASH_DELETE ( hh, tmp->buffer, reorder );
-				sctk_spinlock_unlock ( & ( tmp->lock ) );
+				mpc_common_spinlock_unlock ( & ( tmp->lock ) );
 				/* We can not keep the lock during sending the message to MPC or the
 				 * code will deadlock */
 				sctk_send_message_try_check ( reorder->msg, 1 );
@@ -123,7 +123,7 @@ static inline int __send_pending_messages ( sctk_reorder_table_t *tmp )
 			}
 			else
 			{
-				sctk_spinlock_unlock ( & ( tmp->lock ) );
+				mpc_common_spinlock_unlock ( & ( tmp->lock ) );
 			}
 		}
 		while ( reorder != NULL );
@@ -204,9 +204,9 @@ int sctk_send_message_from_network_reorder ( sctk_thread_ptp_message_t *msg )
                   reorder->key = SCTK_MSG_NUMBER(msg);
                   reorder->msg = msg;
 
-                  sctk_spinlock_lock(&(tmp->lock));
+                  mpc_common_spinlock_lock(&(tmp->lock));
                   HASH_ADD(hh, tmp->buffer, key, sizeof(int), reorder);
-                  sctk_spinlock_unlock(&(tmp->lock));
+                  mpc_common_spinlock_unlock(&(tmp->lock));
                   sctk_nodebug("recv %d to %d - delay wait for %d recv %d "
                                "(expecting:%d, tmp:%p)",
                                SCTK_MSG_SRC_PROCESS(msg),

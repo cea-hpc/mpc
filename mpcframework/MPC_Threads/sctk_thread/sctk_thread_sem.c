@@ -26,7 +26,7 @@
 #include <errno.h>
 
 extern int errno;
-static sctk_spinlock_t sem_named_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t sem_named_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_thread_generic_sem_named_list_t* named_list_head = NULL;
 
 void sctk_thread_generic_sems_init(){
@@ -91,10 +91,10 @@ sctk_thread_generic_sems_sem_wait( sctk_thread_generic_sem_t* sem,
   /* test cancel */
   sctk_thread_generic_check_signals( 0 );
 
-  sctk_spinlock_lock(&(sem->spinlock));
+  mpc_common_spinlock_lock(&(sem->spinlock));
   if( sem->lock > 0 ){
 	sem->lock--;
-	sctk_spinlock_unlock(&(sem->spinlock));
+	mpc_common_spinlock_unlock(&(sem->spinlock));
 	return ret;
   }
 
@@ -130,14 +130,14 @@ sctk_thread_generic_sems_sem_trywait( sctk_thread_generic_sem_t* sem,
 
   int ret = 0;
 
-  if( sctk_spinlock_trylock(&(sem->spinlock)) == 0 ){
+  if( mpc_common_spinlock_trylock(&(sem->spinlock)) == 0 ){
 	if( sem->lock > 0 ){
 	  sem->lock--;
 	} else {
 	  errno = SCTK_EAGAIN;
 	  ret = -1;
 	}
-	sctk_spinlock_unlock(&(sem->spinlock));
+	mpc_common_spinlock_unlock(&(sem->spinlock));
   } else {
 	errno = SCTK_EAGAIN;
 	ret = -1;
@@ -177,18 +177,18 @@ sctk_thread_generic_sems_sem_timedwait( sctk_thread_generic_sem_t* sem,
   struct timespec t_current;
 
   do{
-	if( sctk_spinlock_trylock(&(sem->spinlock)) == 0 ){
+	if( mpc_common_spinlock_trylock(&(sem->spinlock)) == 0 ){
 	  if( sem->lock > 0 ){
 		sem->lock--;
 		errno = 0;
 		ret = 0;
-		sctk_spinlock_unlock(&(sem->spinlock));
+		mpc_common_spinlock_unlock(&(sem->spinlock));
 		return ret;
 	  } else {
 		errno = SCTK_EAGAIN;
 		ret = -1;
 	  }
-	  sctk_spinlock_unlock(&(sem->spinlock));
+	  mpc_common_spinlock_unlock(&(sem->spinlock));
 	} else {
 	  errno = SCTK_EAGAIN;
 	  ret = -1;
@@ -231,7 +231,7 @@ sctk_thread_generic_sems_sem_post( sctk_thread_generic_sem_t* sem,
   int ret = 0;
   sctk_thread_generic_mutex_cell_t* head;
 
-  sctk_spinlock_lock(&(sem->spinlock));
+  mpc_common_spinlock_lock(&(sem->spinlock));
   if( sem->list != NULL ){
 	head = sem->list;
 	DL_DELETE( sem->list, head );
@@ -246,7 +246,7 @@ sctk_thread_generic_sems_sem_post( sctk_thread_generic_sem_t* sem,
 	  ret = -1;
 	}
   }
-  sctk_spinlock_unlock(&(sem->spinlock));
+  mpc_common_spinlock_unlock(&(sem->spinlock));
 
   return ret;
 }
@@ -341,7 +341,7 @@ sctk_thread_generic_sems_sem_open( const char* name, int oflag, ...){
   sctk_thread_generic_sem_t* sem_tmp;
   sctk_thread_generic_sem_named_list_t* sem_named_tmp;
 
-  sctk_spinlock_lock( &sem_named_lock );
+  mpc_common_spinlock_lock( &sem_named_lock );
   sctk_thread_generic_sem_named_list_t* list = named_list_head;
 
   if( list != NULL ){
@@ -356,7 +356,7 @@ sctk_thread_generic_sems_sem_open( const char* name, int oflag, ...){
 
   if( list != NULL && ((oflag & SCTK_O_CREAT) 
 			  && (oflag & SCTK_O_EXCL))){
-	sctk_spinlock_unlock( &sem_named_lock );
+	mpc_common_spinlock_unlock( &sem_named_lock );
 	sctk_free( _name );
 	errno = SCTK_EEXIST;
 	return (sctk_thread_generic_sem_t*) SCTK_SEM_FAILED;
@@ -371,12 +371,12 @@ sctk_thread_generic_sems_sem_open( const char* name, int oflag, ...){
 	  if( (list->mode & mode) != mode ){
 		sctk_free( _name );
 		errno = SCTK_EACCES;
-		sctk_spinlock_unlock( &sem_named_lock );
+		mpc_common_spinlock_unlock( &sem_named_lock );
 		return (sctk_thread_generic_sem_t*) SCTK_SEM_FAILED;
 	  }
 	}
 	list->nb++;
-	sctk_spinlock_unlock( &sem_named_lock );
+	mpc_common_spinlock_unlock( &sem_named_lock );
 	sctk_free (_name);
 	return list->sem;
   } 
@@ -393,7 +393,7 @@ sctk_thread_generic_sems_sem_open( const char* name, int oflag, ...){
 	if( sem_tmp == NULL ){
 	  errno = SCTK_ENOMEM;
 	  sctk_free (_name);
-	  sctk_spinlock_unlock( &sem_named_lock );
+	  mpc_common_spinlock_unlock( &sem_named_lock );
 	  return (sctk_thread_generic_sem_t*) SCTK_SEM_FAILED;
 	}
 
@@ -404,14 +404,14 @@ sctk_thread_generic_sems_sem_open( const char* name, int oflag, ...){
 	  errno = SCTK_ENOMEM;
 	  sctk_free (_name);
 	  sctk_free (sem_tmp);
-	  sctk_spinlock_unlock( &sem_named_lock );
+	  mpc_common_spinlock_unlock( &sem_named_lock );
 	  return (sctk_thread_generic_sem_t*) SCTK_SEM_FAILED;
 	}
 
 	int ret = sctk_thread_generic_sems_sem_init( sem_tmp, 0, value );
 
 	if( ret != 0 ){
-	  sctk_spinlock_unlock( &sem_named_lock );
+	  mpc_common_spinlock_unlock( &sem_named_lock );
 	  return (sctk_thread_generic_sem_t*) SCTK_SEM_FAILED;
 	}
 
@@ -423,7 +423,7 @@ sctk_thread_generic_sems_sem_open( const char* name, int oflag, ...){
 
 	DL_APPEND( named_list_head, sem_named_tmp );
 
-	sctk_spinlock_unlock( &sem_named_lock );
+	mpc_common_spinlock_unlock( &sem_named_lock );
 
 	sctk_nodebug ("head %p pointe sur sem %p named %s\n",
 			named_list_head, named_list_head->sem, head->name);
@@ -431,7 +431,7 @@ sctk_thread_generic_sems_sem_open( const char* name, int oflag, ...){
   else {
 	sctk_free( _name );
 	errno = SCTK_ENOENT;
-	sctk_spinlock_unlock( &sem_named_lock );
+	mpc_common_spinlock_unlock( &sem_named_lock );
 	return (sctk_thread_generic_sem_t*) SCTK_SEM_FAILED;
   }
 
@@ -453,7 +453,7 @@ sctk_thread_generic_sems_sem_close( sctk_thread_generic_sem_t* sem ){
 	return -1;
   }
 
-  sctk_spinlock_lock( &sem_named_lock );
+  mpc_common_spinlock_lock( &sem_named_lock );
   sctk_thread_generic_sem_named_list_t* list = named_list_head;
 
   if( list != NULL ){
@@ -464,7 +464,7 @@ sctk_thread_generic_sems_sem_close( sctk_thread_generic_sem_t* sem ){
 
   if( list == NULL ){
 	errno = SCTK_EINVAL;
-	sctk_spinlock_unlock( &sem_named_lock );
+	mpc_common_spinlock_unlock( &sem_named_lock );
 	return -1;
   }
 
@@ -476,7 +476,7 @@ sctk_thread_generic_sems_sem_close( sctk_thread_generic_sem_t* sem ){
 	sctk_free( list );	
   }
 
-  sctk_spinlock_unlock( &sem_named_lock );
+  mpc_common_spinlock_unlock( &sem_named_lock );
 
   return 0;
 }
@@ -505,7 +505,7 @@ sctk_thread_generic_sems_sem_unlink( const char* name ){
 	return -1;
   }
 
-  sctk_spinlock_lock( &sem_named_lock );
+  mpc_common_spinlock_lock( &sem_named_lock );
   sctk_thread_generic_sem_named_list_t* list = named_list_head;
 
   if( list != NULL ){
@@ -517,7 +517,7 @@ sctk_thread_generic_sems_sem_unlink( const char* name ){
 
   if( list == NULL ){
 	errno = SCTK_ENOENT;
-	sctk_spinlock_unlock( &sem_named_lock );
+	mpc_common_spinlock_unlock( &sem_named_lock );
 	return -1;
   }
   else if( list->nb == 0 ){
@@ -529,7 +529,7 @@ sctk_thread_generic_sems_sem_unlink( const char* name ){
 	list->unlink = 1;
   }
 
-  sctk_spinlock_unlock( &sem_named_lock );
+  mpc_common_spinlock_unlock( &sem_named_lock );
 
   return 0;
 }

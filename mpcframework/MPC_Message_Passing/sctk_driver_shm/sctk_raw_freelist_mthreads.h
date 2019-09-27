@@ -10,7 +10,7 @@ sctk_shm_dequeue_mt(volatile sctk_shm_list_t *queue,char *src_base_addr)
     volatile sctk_shm_item_t *abs_item;
     sctk_shm_item_t *head;
 
-    if(sctk_spinlock_trylock(&(queue->lock)) != 0)
+    if(mpc_common_spinlock_trylock(&(queue->lock)) != 0)
     { 
         cpu_relax();
         return NULL;
@@ -19,7 +19,7 @@ sctk_shm_dequeue_mt(volatile sctk_shm_list_t *queue,char *src_base_addr)
     head = queue->head;    
     if(!head)
     {
-        sctk_spinlock_unlock( &(queue->lock));
+        mpc_common_spinlock_unlock( &(queue->lock));
         return NULL;
     }
     
@@ -34,7 +34,7 @@ sctk_shm_dequeue_mt(volatile sctk_shm_list_t *queue,char *src_base_addr)
         queue->tail = 0;
         queue->head = 0;
     }
-    sctk_spinlock_unlock( &(queue->lock));
+    mpc_common_spinlock_unlock( &(queue->lock));
     abs_item->next = 0;
     return (sctk_shm_item_t *) abs_item;
 }
@@ -48,7 +48,7 @@ sctk_shm_enqueue_mt(volatile sctk_shm_list_t *queue,
     sctk_shm_item_t *rel_new_item, *rel_prev_item, *abs_prev_item;
     rel_new_item = sctk_shm_abs_to_rel(src_base_addr,abs_new_item);
     
-    while(sctk_spinlock_trylock(&(queue->lock)) != 0)
+    while(mpc_common_spinlock_trylock(&(queue->lock)) != 0)
         cpu_relax();
 
     rel_prev_item = queue->tail;
@@ -63,7 +63,7 @@ sctk_shm_enqueue_mt(volatile sctk_shm_list_t *queue,
         abs_prev_item = sctk_shm_rel_to_abs(dest_base_addr, rel_prev_item);
         abs_prev_item->next = rel_new_item;
     }
-    sctk_spinlock_unlock( &(queue->lock));
+    mpc_common_spinlock_unlock( &(queue->lock));
 
     return 0;
 }
