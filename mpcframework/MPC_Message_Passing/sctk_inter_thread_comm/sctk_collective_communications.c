@@ -26,7 +26,7 @@
 #include <sctk_spinlock.h>
 #include <sctk_thread.h>
 #include <uthash.h>
-#include <sctk_pmi.h>
+#include <mpc_launch_pmi.h>
 #include <sctk_runtime_config.h>
 
 /************************************************************************/

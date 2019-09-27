@@ -24,7 +24,7 @@
 #include "sctk_communicator.h"
 #include "sctk.h"
 #include "sctk_handle.h"
-#include "sctk_pmi.h"
+#include "mpc_launch_pmi.h"
 #include "utarray.h"
 #include <opa_primitives.h>
 #include <uthash.h>

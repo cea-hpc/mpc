@@ -85,8 +85,6 @@ void mpc_launch_pmi_abort();
 */
 int mpc_launch_pmi_barrier();
 
-
-
 /*************************
  * INFORMATION DIFFUSION *
  *************************/
@@ -140,11 +138,13 @@ int mpc_launch_pmi_get_job_id( int *id );
 
 
 #ifdef SCTK_LIB_MODE
+
 int MPC_Net_hook_rank();
 int MPC_Net_hook_size();
 void MPC_Net_hook_barrier();
 void MPC_Net_hook_send_to( void * data, size_t size, int target );
 void MPC_Net_hook_recv_from( void * data, size_t size, int source );
+
 #endif
 
 

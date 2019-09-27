@@ -21,7 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_pmi.h"
+#include <mpc_launch_pmi.h>
 
 #include <mpc_common_io_helper.h>
 #include <mpc_common_rank.h>
@@ -136,8 +136,19 @@ static inline int __mpc_pmi_init_lib_mode()
 {\
     if ( retcode != PMI_SUCCESS )\
     {\
-        fprintf( stderr, "FAILURE (sctk_pmi): %s: %d\n", ctx, retcode );\
-        return rc;\
+        fprintf( stderr, "FAILURE (mpc_launch_pmi): %s: %d\n", ctx, retcode );\
+        return SCTK_PMI_FAIL;\
+    }\
+}while(0)
+
+
+#define PMI_RETURN(retcode)do\
+{\
+    if ( retcode != PMI_SUCCESS )\
+    {\
+        return SCTK_PMI_FAIL;\
+    } else {\
+        return SCTK_PMI_SUCCESS;\
     }\
 }while(0)
 
@@ -151,7 +162,7 @@ static inline int __mpc_pmi_get_process_count( int *size )
 {
 #ifdef SCTK_LIB_MODE
     *size = pmi_context.process_count;
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 #endif /* SCTK_LIB_MODE */
 
     int rc;
@@ -159,7 +170,7 @@ static inline int __mpc_pmi_get_process_count( int *size )
     rc = PMI_Get_size( size );
     PMI_CHECK_RC(rc, "PMI_Get_size");
 
-    return rc;
+    PMI_RETURN(rc);
 }
 
 /*! \brief Get the rank of this process on the current node
@@ -169,10 +180,10 @@ static inline int __mpc_pmi_get_local_process_rank( int *rank )
 {
 #ifdef SCTK_LIB_MODE
     *rank = mpc_common_get_local_process_rank();
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 #elif defined(MPC_USE_HYDRA)
     *rank = pmi_context.local_process_rank;
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 #elif defined(MPC_USE_SLURM)
     char *env = NULL;
 
@@ -184,12 +195,12 @@ static inline int __mpc_pmi_get_local_process_rank( int *rank )
     }
     else
     {
-        fprintf( stderr, "FAILURE (sctk_pmi): unable to get process rank on the node\n" );
+        fprintf( stderr, "FAILURE (mpc_launch_pmi): unable to get process rank on the node\n" );
         *rank = -1;
         return PMI_FAIL;
     }
 
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 #else
     not_implemented();
 #endif /* MPC_USE_SLURM */
@@ -203,22 +214,22 @@ static inline int __mpc_pmi_get_local_process_count( int *size )
 {
 #ifdef SCTK_LIB_MODE
     *size = mpc_common_get_local_process_count();
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 #elif defined(MPC_USE_HYDRA)
     *size = pmi_context.local_process_count;
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 #elif defined(MPC_USE_SLURM)
     int rc;
 
     // Get the number of processes on the current node
     if ((rc = PMI_Get_clique_size(size)) != PMI_SUCCESS)
     {
-        fprintf( stderr, "FAILURE (sctk_pmi): PMI_Get_clique_size: %d\n", rc );
+        fprintf( stderr, "FAILURE (mpc_launch_pmi): PMI_Get_clique_size: %d\n", rc );
         *size = -1;
         return PMI_FAIL;
     }
 
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 #else
     not_implemented();
 #endif
@@ -234,7 +245,7 @@ static inline int __mpc_pmi_get_node_rank( int *rank )
     return __mpc_pmi_get_process_rank( rank );
 #elif defined(MPC_USE_HYDRA)
     *rank = pmi_context.node_rank;
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 #elif defined(MPC_USE_SLURM)
     char *env = NULL;
 
@@ -246,12 +257,12 @@ static inline int __mpc_pmi_get_node_rank( int *rank )
     }
     else
     {
-        fprintf( stderr, "FAILURE (sctk_pmi): unable to get node rank\n" );
+        fprintf( stderr, "FAILURE (mpc_launch_pmi): unable to get node rank\n" );
         *rank = -1;
         return PMI_FAIL;
     }
 
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 #else
     not_implemented();
 #endif
@@ -268,7 +279,7 @@ static inline int __mpc_pmi_get_node_count( int *size )
     return __mpc_pmi_get_process_count( size );
 #elif defined(MPC_USE_HYDRA)
     *size = pmi_context.node_count;
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 #elif defined(MPC_USE_SLURM)
     char *env = NULL;
 
@@ -280,12 +291,12 @@ static inline int __mpc_pmi_get_node_count( int *size )
     }
     else
     {
-        fprintf( stderr, "FAILURE (sctk_pmi): unable to get nodes number\n" );
+        fprintf( stderr, "FAILURE (mpc_launch_pmi): unable to get nodes number\n" );
         *size = -1;
         return PMI_FAIL;
     }
 
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 #else
     not_implemented();
 #endif
@@ -300,7 +311,7 @@ static inline int __mpc_pmi_get_process_rank( int *rank )
 {
 #ifdef SCTK_LIB_MODE
     *rank = pmi_context.process_rank;
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 #endif /* SCTK_LIB_MODE */
     int rc;
 
@@ -308,7 +319,7 @@ static inline int __mpc_pmi_get_process_rank( int *rank )
     rc = PMI_Get_rank( rank );
     PMI_CHECK_RC(rc, "PMI_Get_rank");
 
-    return rc;
+    PMI_RETURN(rc);
 }
 
 /******************************
@@ -344,8 +355,8 @@ int mpc_launch_pmi_init()
 
     if ( pmi_context.initialized != 1 )
     {
-        fprintf( stderr, "FAILURE (sctk_pmi): PMI_Initialized returned false\n" );
-        return rc;
+        fprintf( stderr, "FAILURE (mpc_launch_pmi): PMI_Initialized returned false\n" );
+        PMI_RETURN(rc);
     }
 
     // Get key, value max sizes and kvsname.
@@ -367,10 +378,10 @@ int mpc_launch_pmi_init()
     PMI_CHECK_RC(rc, "PMI_KVS_Get_my_name");
 
     rc = __mpc_pmi_get_process_rank( &pmi_context.process_rank );
-    PMI_CHECK_RC(rc, "sctk_pmi_get_process_rank");
+    PMI_CHECK_RC(rc, "mpc_launch_pmi_get_process_rank");
 
     rc = __mpc_pmi_get_process_count( &pmi_context.process_count );
-    PMI_CHECK_RC(rc, "sctk_pmi_get_process_count");
+    PMI_CHECK_RC(rc, "mpc_launch_pmi_get_process_count");
 
     // check if PMI_Get_size is equal to 1 (could mean application
     // launched without mpiexec)
@@ -382,7 +393,7 @@ int mpc_launch_pmi_init()
         pmi_context.node_rank = 0;
         pmi_context.node_count = 1;
         pmi_context.local_process_count = 1;
-        return rc;
+        PMI_RETURN(rc);
     }
 
     // now we need to put node info in KVS in order to determine the
@@ -416,11 +427,11 @@ int mpc_launch_pmi_init()
 
     rc = mpc_launch_pmi_put_as_rank(value,
                                       SCTK_PMI_TAG_PMI + SCTK_PMI_TAG_PMI_HOSTNAME);
-    PMI_CHECK_RC(rc, "sctk_pmi_put_as_rank");
+    PMI_CHECK_RC(rc, "mpc_launch_pmi_put_as_rank");
 
     // wait for all processes to put their hostname in KVS
     rc = mpc_launch_pmi_barrier();
-    PMI_CHECK_RC(rc, "sctk_pmi_barrier");
+    PMI_CHECK_RC(rc, "mpc_launch_pmi_barrier");
 
     // now retrieve hostnames for all processes and compute local infos
     nodes = sctk_calloc(pmi_context.process_count * SCTK_PMI_NAME_SIZE, sizeof(char));
@@ -433,7 +444,7 @@ int mpc_launch_pmi_init()
         // get ith process hostname
         rc = mpc_launch_pmi_get_as_rank(value, SCTK_PMI_NAME_SIZE,
                                   SCTK_PMI_TAG_PMI + SCTK_PMI_TAG_PMI_HOSTNAME, i );
-        PMI_CHECK_RC(rc, "sctk_pmi_get_as_rank");
+        PMI_CHECK_RC(rc, "mpc_launch_pmi_get_as_rank");
 
         // compare value with current hostname. if the same, increase
         // local processes count
@@ -516,14 +527,14 @@ int mpc_launch_pmi_init()
     __mpc_pmi_get_local_process_count( &local_process_count );
     mpc_common_set_local_process_count( local_process_count );
 
-    return rc;
+    PMI_RETURN(rc);
 }
 
 /*! \brief Finalization function */
 int mpc_launch_pmi_finalize()
 {
 #ifdef SCTK_LIB_MODE
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 #endif /* SCTK_LIB_MODE */
     int rc;
 
@@ -531,7 +542,7 @@ int mpc_launch_pmi_finalize()
     rc = PMI_Finalize();
 
     sctk_free( pmi_context.kvsname );
-    return rc;
+    PMI_RETURN(rc);
 }
 
 
@@ -549,7 +560,7 @@ int mpc_launch_pmi_barrier()
 {
 #ifdef SCTK_LIB_MODE
     MPC_Net_hook_barrier();
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 #endif /* SCTK_LIB_MODE */
     int rc;
 
@@ -557,7 +568,7 @@ int mpc_launch_pmi_barrier()
     rc = PMI_Barrier();
     PMI_CHECK_RC(rc, "PMI_Barrier");
 
-    return rc;
+    PMI_RETURN(rc);
 }
 
 int mpc_launch_pmi_get_max_key_len()
@@ -593,7 +604,7 @@ int mpc_launch_pmi_get_job_id( int *id )
 #if MPC_USE_HYDRA
     /* in mpich with pmi1, kvs name is used as job id. */
     *id = atoi( pmi_context.kvsname );
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 #elif defined( SCTK_LIB_MODE ) || defined( MPC_USE_SLURM )
     char *env = NULL;
 
@@ -602,7 +613,7 @@ int mpc_launch_pmi_get_job_id( int *id )
     if ( env )
     {
         *id = atoi( env );
-        return PMI_SUCCESS;
+        return SCTK_PMI_SUCCESS;
     }
 
     env = getenv( "SLURM_JOBID" );
@@ -610,15 +621,15 @@ int mpc_launch_pmi_get_job_id( int *id )
     if ( env )
     {
         *id = atoi( env );
-        return PMI_SUCCESS;
+        return SCTK_PMI_SUCCESS;
     }
     else
     {
-        fprintf( stderr, "FAILURE (sctk_pmi): unable to get job ID\n" );
+        fprintf( stderr, "FAILURE (mpc_launch_pmi): unable to get job ID\n" );
         *id = -1;
         return PMI_FAIL;
     }
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 #else
     not_implemented();
 #endif
@@ -644,7 +655,7 @@ int mpc_launch_pmi_put( char *value, char *key )
     rc = PMI_KVS_Commit( pmi_context.kvsname );
     PMI_CHECK_RC(rc, "PMI_KVS_Commit");
 
-    return rc;
+    PMI_RETURN(rc);
 }
 
 int mpc_launch_pmi_put_as_rank( char *value, int tag )
@@ -652,7 +663,8 @@ int mpc_launch_pmi_put_as_rank( char *value, int tag )
 #ifdef SCTK_LIB_MODE
     not_implemented();
     return PMI_FAIL;
-#else  /* SCTK_LIB_MODE */
+#endif  /* SCTK_LIB_MODE */
+
     int iRank, rc;
     char *key = NULL;
 
@@ -666,8 +678,8 @@ int mpc_launch_pmi_put_as_rank( char *value, int tag )
     rc = mpc_launch_pmi_put(value, key);
 
     sctk_free(key);
-    return rc;
-#endif /* SCTK_LIB_MODE */
+    PMI_RETURN(rc);
+
 }
 
 int mpc_launch_pmi_get_as_rank( char *value, size_t size, int tag, int rank )
@@ -687,7 +699,7 @@ int mpc_launch_pmi_get_as_rank( char *value, size_t size, int tag, int rank )
     rc = PMI_KVS_Get( pmi_context.kvsname, key, value, size );
 
     sctk_free( key );
-    return rc;
+    PMI_RETURN(rc);
 }
 
 int mpc_launch_pmi_get( char *value, size_t size, char *key )
@@ -702,12 +714,12 @@ int mpc_launch_pmi_get( char *value, size_t size, char *key )
     rc = PMI_KVS_Get( pmi_context.kvsname, key, value, size );
     PMI_CHECK_RC(rc, "PMI_KVS_Get");
 
-    return rc;
+    PMI_RETURN(rc);
 }
 
 
 int mpc_launch_pmi_get_process_per_node_table( struct process_nb_from_node_rank **process_number_from_node_rank )
 {
     *process_number_from_node_rank = pmi_context.process_nb_from_node_rank;
-    return PMI_SUCCESS;
+    return SCTK_PMI_SUCCESS;
 }

@@ -429,7 +429,7 @@ void _mpc_topo_device_init( hwloc_topology_t topology, mpc_common_topo_device_t 
 		{
 			if ( dev->name )
 			{
-				free( dev->name );
+				sctk_free( dev->name );
 			}
 
 			dev->name = strdup( os_level_obj->name );
@@ -536,7 +536,7 @@ static inline void __mpc_topo_device_enrich_topology()
 
 				/* we suppose 4 digits to encode GPU ids is enough ! */
 				const short name_size = name_prefix_size + 4;
-				char *name = malloc( sizeof( char ) * name_size );
+				char *name = sctk_malloc( sizeof( char ) * name_size );
 				int check;
 
 				/* Creating one single string */

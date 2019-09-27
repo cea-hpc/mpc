@@ -22,7 +22,7 @@
 #include "sctk_net_topology.h"
 #include "sctk_route.h"
 
-#include <sctk_pmi.h>
+#include <mpc_launch_pmi.h>
 
 /************************************************************************/
 /* None                                                                 */

@@ -25,7 +25,7 @@
 #include "sctk_low_level_comm.h"
 
 #include <sctk_route.h>
-#include <sctk_pmi.h>
+#include <mpc_launch_pmi.h>
 #include <sctk_accessor.h>
 
 #include <stdio.h>

@@ -22,7 +22,7 @@
 
 #include <sctk_low_level_comm.h>
 #include <sctk.h>
-#include <sctk_pmi.h>
+#include <mpc_launch_pmi.h>
 #include <string.h>
 #include "sctk_checksum.h"
 #include "sctk_runtime_config.h"

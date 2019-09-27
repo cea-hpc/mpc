@@ -31,7 +31,7 @@
 #include "sctk_ib_qp.h"
 #include "sctk_ib_prof.h"
 #include "sctk_ib_polling.h"
-#include "sctk_pmi.h"
+#include "mpc_launch_pmi.h"
 #include "sctk_asm.h"
 #include "utlist.h"
 #include "sctk_ib_mpi.h"

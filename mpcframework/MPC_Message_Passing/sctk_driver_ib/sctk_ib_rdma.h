@@ -32,7 +32,7 @@
 #include "sctk_ib_config.h"
 #include "sctk_ibufs.h"
 #include "sctk_ib_qp.h"
-#include "sctk_pmi.h"
+#include "mpc_launch_pmi.h"
 #include "sctk_route.h"
 #include "utlist.h"
 

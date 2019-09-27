@@ -75,7 +75,7 @@
 
 #ifdef MPC_Message_Passing
 #include <sctk_communicator.h>
-#include "sctk_pmi.h"
+#include "mpc_launch_pmi.h"
 #include "sctk_ib_prof.h"
 #include <sctk_low_level_comm.h>
 #endif

@@ -1,7 +1,7 @@
 
 #include <sctk_debug.h>
 #include "sctk_route.h"
-#include "sctk_pmi.h"
+#include "mpc_launch_pmi.h"
 #include "sctk_shm_mapper.h"
 #include "sctk_handler_pmi.h"
 #include "sctk_alloc.h"
