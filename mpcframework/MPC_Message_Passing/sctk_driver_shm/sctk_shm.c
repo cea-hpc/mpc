@@ -464,12 +464,12 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
      return;
    }
 
-   struct process_nb_from_node_rank *nodes_infos = NULL;
-   mpc_launch_pmi_get_process_per_node_table(&nodes_infos);
+   struct mpc_launch_pmi_process_layout *nodes_infos = NULL;
+   mpc_launch_pmi_get_process_layout(&nodes_infos);
 
    int node_rank = mpc_common_get_node_rank();
 
-   struct process_nb_from_node_rank *tmp;
+   struct mpc_launch_pmi_process_layout *tmp;
    HASH_FIND_INT( nodes_infos, &node_rank, tmp);
    assert(tmp != NULL);
 

@@ -1,6 +1,7 @@
 #include "mpc_internal_common.h"
 #include "mpc_datatypes.h"
 #include "mpc_mpi.h"
+#include "mpc_launch_pmi.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "uthash.h"
@@ -161,7 +162,6 @@ MPI_Aint MPCX_Type_get_count(MPI_Datatype datatype) {
 
   /* Nothing to do */
   if (datatype == MPI_DATATYPE_NULL) {
-    return 0;
     return MPI_SUCCESS;
   }
 
@@ -225,12 +225,12 @@ int MPIR_Get_node_id(MPI_Comm comm, int rank, int *id) {
   // TODO use the actual node rank
   int comm_world_rank = sctk_get_comm_world_rank(comm, rank);
 
-  struct process_nb_from_node_rank *nodes_infos = NULL;
-  mpc_launch_pmi_get_process_per_node_table(&nodes_infos);
+  struct mpc_launch_pmi_process_layout *nodes_infos = NULL;
+  mpc_launch_pmi_get_process_layout(&nodes_infos);
 
   int node_number = mpc_common_get_node_count();
 
-  struct process_nb_from_node_rank *tmp;
+  struct mpc_launch_pmi_process_layout *tmp;
 
   int i, j;
 

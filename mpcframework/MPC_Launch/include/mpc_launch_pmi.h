@@ -20,8 +20,8 @@
 /* #   - COTTRET Maxime maxime.cottret@sogeti.com                         # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef MPC_LAUNCH_INCLUDE_SCTK_PMI_H_
-#define MPC_LAUNCH_INCLUDE_SCTK_PMI_H_
+#ifndef MPC_LAUNCH_INCLUDE_MPC_LAUNCH_PMI_H_
+#define MPC_LAUNCH_INCLUDE_MPC_LAUNCH_PMI_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,121 +34,210 @@ extern "C"
 {
 #endif
 
-/*!
- * SCTK_PMI Errors definition
- */
-#define SCTK_PMI_SUCCESS                  0 //PMI_SUCCESS
-#define SCTK_PMI_FAIL                    -1 //PMI_FAIL
+/*************************
+ * PMI ERROR DEFINITIONS *
+ *************************/
 
-struct process_nb_from_node_rank
-{
-	int node_rank;
-	int nb_process;
-	int *process_list;
-	UT_hash_handle hh;
-};
-
-#define SCTK_PMI_NAME_SIZE 64
-#define SCTK_PMI_TAG_PMI 6000
-#define SCTK_PMI_TAG_PMI_HOSTNAME 1
-
+#define MPC_LAUNCH_PMI_SUCCESS 0 /**< Wrapper for PMI_SUCCESS */
+#define MPC_LAUNCH_PMI_FAIL -1 /**< Wrapper for PMI_FAIL */
 
 /***************************
  * INITIALIZATION/FINALIZE *
  ***************************/
 
-/*! \brief Initialization function
+/**
+ * @brief Main initialization point for MPI support
  *
+ * @return int SCTK_PMI_SUCCESS / _FAIL
  */
 int mpc_launch_pmi_init();
 
-
-/*! \brief Finalization function
+/**
+ * @brief Main release point for PMI support
  *
+ * @return int SCTK_PMI_SUCCESS / _FAIL
  */
 int mpc_launch_pmi_finalize();
 
+/******************
+ * SIZE RETRIEVAL *
+ ******************/
 
+/**
+ * @brief Maximum lenght of a PMI key
+ *
+ * @return int max key len
+ */
 int mpc_launch_pmi_get_max_key_len();
-int mpc_launch_pmi_get_max_val_len();
-int mpc_launch_pmi_is_initialized();
-void mpc_launch_pmi_abort();
 
+/**
+ * @brief Maximum lenght of a PMI value
+ *
+ * @return int max value len
+ */
+int mpc_launch_pmi_get_max_val_len();
+
+/***********************
+ * PMI STATE AND ABORT *
+ ***********************/
+
+/**
+ * @brief Check if PMI was initialized
+ *
+ * @return int 1 if initialized 0 otherwise
+ */
+int mpc_launch_pmi_is_initialized();
+
+/**
+ * @brief Abort the process using PMI
+ *
+ */
+void mpc_launch_pmi_abort();
 
 /*******************
  * SYNCHRONIZATION *
  *******************/
 
-
-/*! \brief Perform a barrier between all the processes of the job
+/**
+ * @brief Execute a PMI barrier between UNIX processes
  *
-*/
+ * @return int SCTK_PMI_SUCCESS / _FAIL
+ */
 int mpc_launch_pmi_barrier();
 
 /*************************
  * INFORMATION DIFFUSION *
  *************************/
 
+/**
+ * @brief Put a value in KVS for rank using an integer tag
+ *
+ * @param value Data to be stored in the PMI
+ * @param tag identifier of the stored value
+ * @return int SCTK_PMI_SUCCESS / _FAIL
+ */
+int mpc_launch_pmi_put_as_rank( char *value, int tag );
 
-/*! \brief Register information required for connection initialization
- * @param info The information to store
- * @param size Size in bytes of the information
- * @param tag An identifier to distinguish information
-*/
-int mpc_launch_pmi_put_as_rank( char *info, int tag );
+/**
+ * @brief Get a value in KVS for rank using an integer tag
+ *
+ * @param value Data to be retrieved from the PMI
+ * @param size maximum size of the expected data
+ * @param tag tag of the data to be retrieved
+ * @param rank rank to retrieve data for
+ * @return int SCTK_PMI_SUCCESS / _FAIL
+ */
+int mpc_launch_pmi_get_as_rank( char *value, size_t size, int tag, int rank );
 
-/*! \brief Get information required for connection initialization
- * @param info The place to store the information to retrieve
- * @param size Size in bytes of the information
- * @param tag An identifier to distinguish information
- * @param rank Rank of the process the information comes from
-*/
-int mpc_launch_pmi_get_as_rank( char *info, size_t size, int tag, int rank );
-
-/*! \brief Register information required for connection initialization
- * @param info The information to store
- * @param size Size in bytes of the information
- * @param tag A key string to distinguish information
-*/
+/**
+ * @brief Set a value at key in the KVS
+ *
+ * @param value value to be set
+ * @param key corresponding key
+ * @return int SCTK_PMI_SUCCESS / _FAIL
+ */
 int mpc_launch_pmi_put(char *value, char *key );
 
-/*! \brief Get information required for connection initialization
- * @param info The place to store the information to retrieve
- * @param size Size in bytes of the information
- * @param tag A key string to distinguish information
-*/
+/**
+ * @brief Get a value at key in the KVS
+ *
+ * @param value value to be retrieved
+ * @param size maximum value size
+ * @param key corresponding key
+ * @return int SCTK_PMI_SUCCESS / _FAIL
+ */
 int mpc_launch_pmi_get(char *value, size_t size, char *key);
 
+/*********************
+ * OS PROCESS LAYOUT *
+ *********************/
 
+/**
+ * @brief Defines an UTHASH hash-table to retrieve per node process layout
+ *
+ */
+struct mpc_launch_pmi_process_layout
+{
+	int node_rank;		/**< Node info for rank */
+	int nb_process;		/**< Number of processes on the node */
+	int *process_list;	/**< List of processes ID on the node */
+	UT_hash_handle hh;	/**< UTHash handle */
+};
+
+/**
+ * @brief Retrieve a UTHASH hash-table gathering process layout on nodes
+ *
+ * @param layout [OUT] where to store the pointer (not to free)
+ * @return int SCTK_PMI_SUCCESS / _FAIL
+ */
+int mpc_launch_pmi_get_process_layout( struct mpc_launch_pmi_process_layout **layout );
 
 /**********************************
  * NUMBERING/TOPOLOGY INFORMATION *
  **********************************/
-
 
 /*! \brief Get the job id
  * @param id Pointer to store the job id
 */
 int mpc_launch_pmi_get_job_id( int *id );
 
-
 /*******************************
  * LIBRARY MODE TOLOGY GETTERS *
  *******************************/
 
+/** Libmode allows MPC to run alongside another MPI instance
+ * to do so simply compile mpc with ./installmpc --lib-mode.
+ * Note that a TCP rail is required to bootstrap the comm ring
+ * to enable on demand connections on high speed networks.
+ *
+ * These function are the weak implementation to be overriden
+ * by actual ones in the target implementation.
+ */
 
 #ifdef SCTK_LIB_MODE
 
+/**
+ * @brief Return an unique rank
+ *
+ * @return int rank
+ */
 int MPC_Net_hook_rank();
+
+/**
+ * @brief Return the communicator size
+ *
+ * @return int comm size
+ */
 int MPC_Net_hook_size();
+
+/**
+ * @brief Implement a barrier between processes
+ *
+ */
 void MPC_Net_hook_barrier();
+
+/**
+ * @brief Send data to a given rank
+ *
+ * @param data pointer to data to be sent
+ * @param size size of the data in bytes
+ * @param target target rank
+ */
 void MPC_Net_hook_send_to( void * data, size_t size, int target );
+
+/**
+ * @brief Receive data from a given rank
+ *
+ * @param data pointer to data to be received
+ * @param size size of the data in bytes
+ * @param source source rank
+ */
 void MPC_Net_hook_recv_from( void * data, size_t size, int source );
 
-#endif
-
+#endif /* SCTK_LIB_MODE */
 
 #ifdef __cplusplus
 }
 #endif
-#endif // MPC_LAUNCH_INCLUDE_SCTK_PMI_H_
+
+#endif // MPC_LAUNCH_INCLUDE_MPC_LAUNCH_PMI_H_

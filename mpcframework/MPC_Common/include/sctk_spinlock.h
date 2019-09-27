@@ -19,8 +19,8 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK_SPINLOCK_H__
-#define __SCTK_SPINLOCK_H__
+#ifndef MPC_COMMON_INCLUDE_SPINLOCK_H_
+#define MPC_COMMON_INCLUDE_SPINLOCK_H_
 #ifdef __cplusplus
 extern "C"
 {
@@ -64,4 +64,5 @@ extern int sctk_thread_yield( void );
 #ifdef __cplusplus
 }				/* end of extern "C" */
 #endif
-#endif
+
+#endif /* MPC_COMMON_INCLUDE_SPINLOCK_H_ */

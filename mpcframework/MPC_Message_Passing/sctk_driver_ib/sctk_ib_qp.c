@@ -278,7 +278,7 @@ void sctk_ib_qp_keys_send ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *r
 	sctk_ib_qp_key_create_key ( key, key_max, rail_ib->rail->rail_number, mpc_common_get_process_rank(), remote->rank );
 	sctk_ib_qp_key_create_value ( val, val_max, &qp_keys );
  mpc_launch_pmi_put ( val, key );
-	ib_assume ( ret == SCTK_PMI_SUCCESS );
+	ib_assume ( ret == MPC_LAUNCH_PMI_SUCCESS );
 	
 	sctk_free( key );
 	sctk_free( val );
