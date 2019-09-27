@@ -21,20 +21,20 @@
 /* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr					  # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef sctk_aio_H
-#define sctk_aio_H
+#ifndef MPC_COMMON_INCLUDE_AIO_H_
+#define MPC_COMMON_INCLUDE_AIO_H_
 
 #include <aio.h>
 
-int sctk_aio_read( struct aiocb * cb );
-int sctk_aio_write( struct aiocb * cb );
-int sctk_aio_fsync( int op, struct aiocb * cb );
-int sctk_aio_error( struct aiocb * cb );
-ssize_t sctk_aio_return( struct aiocb * cb );
-int sctk_aio_cancel( int fd, struct aiocb * cb );
-int sctk_aio_suspend( const struct aiocb * const aiocb_list[], int nitems, const struct timespec * timeout );
-int sctk_aio_lio_listio( int mode , struct aiocb * const aiocb_list[], int nitems, struct sigevent *sevp );
+int mpc_common_aio_read( struct aiocb * cb );
+int mpc_common_aio_write( struct aiocb * cb );
+int mpc_common_aio_fsync( int op, struct aiocb * cb );
+int mpc_common_aio_error( struct aiocb * cb );
+ssize_t mpc_common_aio_return( struct aiocb * cb );
+int mpc_common_aio_cancel( int fd, struct aiocb * cb );
+int mpc_common_aio_suspend( const struct aiocb * const aiocb_list[], int nitems, const struct timespec * timeout );
+int mpc_common_aio_lio_listio( int mode , struct aiocb * const aiocb_list[], int nitems, struct sigevent *sevp );
 
-int sctk_aio_threads_release();
+int mpc_common_aio_threads_release();
 
-#endif /* sctk_aio_H */
+#endif /* MPC_COMMON_INCLUDE_AIO_H_ */

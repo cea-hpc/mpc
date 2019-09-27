@@ -682,14 +682,14 @@ int mpc_thread_mutex_unlock (sctk_thread_mutex_t * mutex);
 #include <aio.h>
 
 /* Declare the MPC aio interface if enabled */
-int sctk_aio_read( struct aiocb * cb );
-int sctk_aio_write( struct aiocb * cb );
-int sctk_aio_fsync( int op, struct aiocb * cb );
-int sctk_aio_error( struct aiocb * cb );
-ssize_t sctk_aio_return( struct aiocb * cb );
-int sctk_aio_cancel( int fd, struct aiocb * cb );
-int sctk_aio_suspend( const struct aiocb * const aiocb_list[], int nitems, const struct timespec * timeout );
-int sctk_aio_lio_listio( int mode , struct aiocb * const aiocb_list[], int nitems, struct sigevent *sevp );
+int mpc_common_aio_read( struct aiocb * cb );
+int mpc_common_aio_write( struct aiocb * cb );
+int mpc_common_aio_fsync( int op, struct aiocb * cb );
+int mpc_common_aio_error( struct aiocb * cb );
+ssize_t mpc_common_aio_return( struct aiocb * cb );
+int mpc_common_aio_cancel( int fd, struct aiocb * cb );
+int mpc_common_aio_suspend( const struct aiocb * const aiocb_list[], int nitems, const struct timespec * timeout );
+int mpc_common_aio_lio_listio( int mode , struct aiocb * const aiocb_list[], int nitems, struct sigevent *sevp );
 
 #endif
 

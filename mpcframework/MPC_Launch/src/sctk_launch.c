@@ -819,7 +819,7 @@ sctk_env_exit ()
 {
  mpc_common_topology_destroy();
 #ifdef MPC_AIO_ENABLED
-	sctk_aio_threads_release();
+	mpc_common_aio_threads_release();
 #endif
 	sctk_leave ();
 	return 0;
