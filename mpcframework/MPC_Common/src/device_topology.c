@@ -592,7 +592,7 @@ static inline void __mpc_topo_device_matrix_release()
 {
 	__mpc_topo_device_matrix.device_count = 0;
 	__mpc_topo_device_matrix.pu_count = 0;
-	free( __mpc_topo_device_matrix.distances );
+	sctk_free( __mpc_topo_device_matrix.distances );
 	__mpc_topo_device_matrix.distances = NULL;
 }
 

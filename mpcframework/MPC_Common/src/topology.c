@@ -291,7 +291,7 @@ void _mpc_topo_apply_mpc_process_constraints(hwloc_topology_t target_topology)
 							requested_processor_per_process, processor_per_process );
 				sctk_abort();
 			}
-			else if ( requested_processor_per_process < processor_count )
+			else if ( requested_processor_per_process < processor_per_process )
 			{
 				sctk_warning("Process %d does not use all avaiable CPUs (%d/%d)",
 							 mpc_common_get_process_rank(),
