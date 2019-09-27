@@ -26,6 +26,26 @@
 
 #include <aio.h>
 
+/*******************
+ * MPC AIO RELEASE *
+ *******************/
+
+/**
+ * @brief Exit point for MPC's AIO
+ *
+ * @return int -1 on error 0 on success
+ */
+int mpc_common_aio_threads_release();
+
+/**************************************
+ * MPC'S AIO INTERFACE IMPLEMENTATION *
+ **************************************/
+
+/* It was needed as the libc implementation uses a TLS which is
+not privatized by MPC in older libc versions a confix
+test checks for the bug and if present redirects AIO
+calls to this interface */
+
 int mpc_common_aio_read( struct aiocb * cb );
 int mpc_common_aio_write( struct aiocb * cb );
 int mpc_common_aio_fsync( int op, struct aiocb * cb );
@@ -34,7 +54,5 @@ ssize_t mpc_common_aio_return( struct aiocb * cb );
 int mpc_common_aio_cancel( int fd, struct aiocb * cb );
 int mpc_common_aio_suspend( const struct aiocb * const aiocb_list[], int nitems, const struct timespec * timeout );
 int mpc_common_aio_lio_listio( int mode , struct aiocb * const aiocb_list[], int nitems, struct sigevent *sevp );
-
-int mpc_common_aio_threads_release();
 
 #endif /* MPC_COMMON_INCLUDE_AIO_H_ */
