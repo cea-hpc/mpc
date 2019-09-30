@@ -33,7 +33,7 @@ static hwloc_bitmap_t topology_cpuset_compute_node;
 
 
 /* return the os index of the topology_compute_node of the thread executed */
-int sctk_get_cpu_compute_node_topology()
+int mpc_common_toporender_get_current_binding()
 {
 	hwloc_cpuset_t set = hwloc_bitmap_alloc();
 
@@ -60,13 +60,13 @@ int sctk_get_cpu_compute_node_topology()
 
 	/* return the os index */
 	int cpu_os = pu->os_index;
-	//int cpu = sctk_get_logical_from_os_compute_node_topology(cpu_os);
+	//int cpu = mpc_common_toporender_get_logical_from_os_id(cpu_os);
 
 	return cpu_os;
 }
 
 /* return logical index from topology_compute_node os index */
-int sctk_get_logical_from_os_compute_node_topology( unsigned int cpu_os )
+int mpc_common_toporender_get_logical_from_os_id( unsigned int cpu_os )
 {
 	/* hwloc_get_pu_obj_by_os_inde give false resultat i suppose */
 	/*hwloc_obj_t cpu = hwloc_get_pu_obj_by_os_index(topology_compute_node, cpu_os);
@@ -103,7 +103,7 @@ int sctk_get_logical_from_os_compute_node_topology( unsigned int cpu_os )
 }
 
 /* return the os index of the topology_compute_node from logical index */
-int sctk_get_cpu_compute_node_topology_from_logical( int logical_pu )
+int mpc_common_toporender_get_current_binding_from_logical( int logical_pu )
 {
 	hwloc_obj_t pu;
 	if ( sctk_enable_smt_capabilities )
@@ -306,7 +306,7 @@ static char *convert_rgb_to_string(int red, int green, int blue, char * rgb){
 }
 
 /* fill thread placement informations in file to communicate between processes of the same node for text placement option */
-void create_placement_text(int os_pu, int os_master_pu, int task_id, int vp, __UNUSED__ int rank_open_mp, int* min_idex, int pid){
+void mpc_common_toporender_text(int os_pu, int os_master_pu, int task_id, int vp, __UNUSED__ int rank_open_mp, int* min_idex, int pid){
 
     /*acces global topo*/
     hwloc_topology_load(mpc_common_topology_get());
@@ -334,7 +334,7 @@ void create_placement_text(int os_pu, int os_master_pu, int task_id, int vp, __U
 }
 
 /* fill thread placement informations in file to communicate between processes of the same node for graphic placement option */
-void create_placement_rendering(int os_pu, int os_master_pu, int task_id){
+void mpc_common_toporender_create(int os_pu, int os_master_pu, int task_id){
     int red, green, blue;
     int red_m, green_m, blue_m;
     char string_rgb_hexa[512];
@@ -387,37 +387,37 @@ void create_placement_rendering(int os_pu, int os_master_pu, int task_id){
 
 static mpc_common_spinlock_t __lock_graphic = 0;
 
-void mpc_common_topology_graph_lock_graphic()
+void mpc_common_toporender_lock()
 {
     mpc_common_spinlock_lock(&__lock_graphic);
 }
 
-void mpc_common_topology_graph_unlock_graphic()
+void mpc_common_toporender_unlock()
 {
     mpc_common_spinlock_unlock(&__lock_graphic);
 }
 
 
-void mpc_common_topology_graph_notify_thread(int task_id)
+void mpc_common_toporender_notify(int task_id)
 {
 
     /* graphic placement option */
     if(sctk_enable_graphic_placement){
         /* get os ind */
-        int master = sctk_get_cpu_compute_node_topology();
-        mpc_common_topology_graph_lock_graphic();
+        int master = mpc_common_toporender_get_current_binding();
+        mpc_common_toporender_lock();
         /* fill file to communicate between process of the same compute node */
-        create_placement_rendering(master, master, task_id);
-        mpc_common_topology_graph_unlock_graphic();
+        mpc_common_toporender_create(master, master, task_id);
+        mpc_common_toporender_unlock();
     }
 	/* text placement option */
     if(sctk_enable_text_placement){
-        int master = sctk_get_cpu_compute_node_topology();
-        mpc_common_topology_graph_lock_graphic();
+        int master = mpc_common_toporender_get_current_binding();
+        mpc_common_toporender_lock();
         /* need to lock to write in the node file for each mpi master of the processus */
         int min_index[3] = {0,0,0};
-        create_placement_text(master, master, task_id, 0, 0, min_index, syscall(SYS_gettid));
-        mpc_common_topology_graph_unlock_graphic();
+        mpc_common_toporender_text(master, master, task_id, 0, 0, min_index, syscall(SYS_gettid));
+        mpc_common_toporender_unlock();
     }
 }
 
@@ -464,7 +464,7 @@ static void sctk_read_format_option_graphic_placement_and_complet_topo_infos(FIL
             break;
         }
         int logical_ind = 
-            sctk_get_logical_from_os_compute_node_topology(atoi(os_ind));
+            mpc_common_toporender_get_logical_from_os_id(atoi(os_ind));
         hwloc_obj_t obj;
         if(sctk_enable_smt_capabilities){
             obj = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_PU, logical_ind);
@@ -861,7 +861,7 @@ restart_restrict:
 
 }
 
-void topology_graph_init(void)
+void _mpc_common_toporender_init(void)
 {
     /*graphical option*/
     if(sctk_enable_graphic_placement || sctk_enable_text_placement){
@@ -996,7 +996,7 @@ void topology_graph_enable_text_placement( void )
 
 
 
-void topology_graph_render(void)
+void _mpc_common_toporender_render(void)
 {
     if( mpc_common_get_local_process_rank() == 0){
         if(sctk_enable_graphic_placement){

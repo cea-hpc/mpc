@@ -28,8 +28,8 @@
 #include <sctk_ib_cp.h>
 #endif
 
-#include "MPC_Common/include/mpc_common_topology.h"
-#include "MPC_Common/include/topology_render.h"
+#include <mpc_common_topology.h>
+#include <mpc_common_toporender.h>
 
 #undef sleep
 #undef usleep
@@ -825,7 +825,7 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 				  sctk_thread_create_tmp_start_routine,
 				  (void *) tmp);
 
-  mpc_common_topology_graph_notify_thread(tmp->task_id);
+  mpc_common_toporender_notify(tmp->task_id);
         int min_index[3] = {0,0,0};
 
   /* We reset the binding */
@@ -1089,17 +1089,17 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
             struct mpcomp_mvp_thread_args_s *temp = (struct mpcomp_mvp_thread_args_s *)__arg;
             int vp_local_processus = temp->target_vp;
             /* get os ind */
-            int master = sctk_get_cpu_compute_node_topology();
+            int master = mpc_common_toporender_get_current_binding();
             /* need the logical pu of the master from the total compute node topo computing with the os index */
-            int master_logical = sctk_get_logical_from_os_compute_node_topology(master);
+            int master_logical = mpc_common_toporender_get_logical_from_os_id(master);
             /* in the global scope of compute node topology the pu is*/
             int logical_pu = (master_logical + vp_local_processus);
             /* convert logical in os ind in topology_compute_node */
-            int os_pu = sctk_get_cpu_compute_node_topology_from_logical(logical_pu);
-            mpc_common_topology_graph_lock_graphic();
+            int os_pu = mpc_common_toporender_get_current_binding_from_logical(logical_pu);
+            mpc_common_toporender_lock();
             /* fill file to communicate between process of the same compute node */
-            create_placement_rendering(os_pu, master, mpc_common_get_task_rank()); 
-            mpc_common_topology_graph_unlock_graphic();
+            mpc_common_toporender_create(os_pu, master, mpc_common_get_task_rank()); 
+            mpc_common_toporender_unlock();
         }
     }
     /* option text placement */
@@ -1121,13 +1121,13 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
             tree_shape = root_node->tree_base + 1;
             int core_depth;
             static int done_init = 1;
-            mpc_common_topology_graph_lock_graphic();
+            mpc_common_toporender_lock();
             if(done_init){
                 hwloc_topology_init(&topology_option_text);
                 hwloc_topology_load(topology_option_text);
                 done_init = 0;
             }
-            mpc_common_topology_graph_unlock_graphic();
+            mpc_common_toporender_unlock();
             if(sctk_enable_smt_capabilities){
                 core_depth = hwloc_get_type_depth(topology_option_text, HWLOC_OBJ_PU);
             }
@@ -1138,16 +1138,16 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
             int * min_index = (int*)malloc(sizeof(int) * MPCOMP_AFFINITY_NB);
             min_index = __mpcomp_tree_array_compute_thread_openmp_min_rank( tree_shape, max_depth, rank, core_depth );
             /* get os ind */
-            int master = sctk_get_cpu_compute_node_topology();
+            int master = mpc_common_toporender_get_current_binding();
             // need the logical pu of the master from the total compute node topo computin with the os index to use for origin */
-            int master_logical = sctk_get_logical_from_os_compute_node_topology(master);
+            int master_logical = mpc_common_toporender_get_logical_from_os_id(master);
             /* in the global compute node topology the processus is*/
             int logical_pu = (master_logical + target_vp);
             /* convert logical in os ind in topology_compute_node */
-            int os_pu = sctk_get_cpu_compute_node_topology_from_logical(logical_pu);
-            mpc_common_topology_graph_lock_graphic();
-            create_placement_text(os_pu, master, mpc_common_get_task_rank(), target_vp, 0, min_index, 0); 
-            mpc_common_topology_graph_unlock_graphic();
+            int os_pu = mpc_common_toporender_get_current_binding_from_logical(logical_pu);
+            mpc_common_toporender_lock();
+            mpc_common_toporender_text(os_pu, master, mpc_common_get_task_rank(), target_vp, 0, min_index, 0); 
+            mpc_common_toporender_unlock();
             free(min_index);
         }
     }

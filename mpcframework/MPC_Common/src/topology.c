@@ -914,7 +914,7 @@ void mpc_common_topology_init()
 
 	hwloc_topology_load( __mpc_module_topology );
 
-	topology_graph_init();
+ _mpc_common_toporender_init();
 
 	_mpc_topo_apply_mpc_process_constraints(__mpc_module_topology);
 
@@ -925,7 +925,7 @@ void mpc_common_topology_init()
 void mpc_common_topology_destroy( void )
 {
  mpc_common_topo_device_release();
-	topology_graph_render();
+ _mpc_common_toporender_render();
 	hwloc_topology_destroy( __mpc_module_topology );
 }
 
