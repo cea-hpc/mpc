@@ -51,7 +51,7 @@ extern int sctk_thread_yield( void );
  * @brief This defines the mpc spinlock object
  *
  */
-typedef volatile int mpc_common_spinlock_t;
+typedef OPA_int_t mpc_common_spinlock_t;
 
 /**
  * @brief Used to initialize a spinlock statically
@@ -61,18 +61,19 @@ typedef volatile int mpc_common_spinlock_t;
 
 #endif
 
-#define mpc_common_spinlock_init( a, b )          \
-	do                                            \
-	{                                             \
-		*( (mpc_common_spinlock_t *) ( a ) ) = b; \
-	} while ( 0 )
+static inline void mpc_common_spinlock_init( mpc_common_spinlock_t *lock, int value )
+{
+	OPA_int_t *p = (OPA_int_t *) lock;
+	OPA_store_int(p, value);
+}
+
 
 static inline int mpc_common_spinlock_lock_yield( mpc_common_spinlock_t *lock )
 {
-	volatile int *p = (volatile int *) lock;
+	OPA_int_t *p = (OPA_int_t *) lock;
 	while ( expect_true( sctk_test_and_set( p ) ) )
 	{
-		while ( *p )
+		while ( OPA_load_int(p) )
 		{
 			int i;
 #ifdef MPC_Threads
@@ -80,7 +81,7 @@ static inline int mpc_common_spinlock_lock_yield( mpc_common_spinlock_t *lock )
 #else
 			sched_yield();
 #endif
-			for ( i = 0; ( *p ) && ( i < 100 ); i++ )
+			for ( i = 0; ( OPA_load_int(p) ) && ( i < 100 ); i++ )
 			{
 				sctk_cpu_relax();
 			}
@@ -92,20 +93,21 @@ static inline int mpc_common_spinlock_lock_yield( mpc_common_spinlock_t *lock )
 
 static inline int mpc_common_spinlock_lock( mpc_common_spinlock_t *lock )
 {
-	volatile int *p = lock;
+	OPA_int_t *p =  (OPA_int_t *) lock;
 	while ( expect_true( sctk_test_and_set( p ) ) )
 	{
 		do
 		{
 			sctk_cpu_relax();
-		} while ( *p );
+		} while ( OPA_load_int(p) );
 	}
 	return 0;
 }
 
 static inline int mpc_common_spinlock_trylock( mpc_common_spinlock_t *lock )
 {
-	return sctk_test_and_set( lock );
+	OPA_int_t *p =  (OPA_int_t *) lock;
+	return sctk_test_and_set( p );
 }
 
 static inline int mpc_common_spinlock_unlock( mpc_common_spinlock_t *lock )

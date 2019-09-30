@@ -73,9 +73,9 @@ extern "C" {
 typedef volatile int sctk_atomic_test_t;
 
 
-static inline int sctk_test_and_set( sctk_atomic_test_t *atomic )
+static inline int sctk_test_and_set( OPA_int_t *atomic )
 {
-        return OPA_swap_int( (OPA_int_t *) atomic, 1 );
+        return OPA_swap_int(atomic, 1 );
 }
 
 
