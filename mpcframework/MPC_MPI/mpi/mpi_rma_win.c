@@ -530,8 +530,8 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
   PMPI_Comm_rank(comm, &rank);
   int comm_size;
   PMPI_Comm_size(comm, &comm_size);
-  sctk_uint64_t total_size;
-  sctk_uint64_t tmp_size = size;
+  uint64_t total_size;
+  uint64_t tmp_size = size;
 
   int ret = PMPI_Allreduce((void *)&tmp_size, (void *)&total_size, 1,
                            MPI_UINT64_T, MPI_SUM, comm);
@@ -845,9 +845,9 @@ static inline void win_keyval_ht_init_once() {
   mpc_common_spinlock_unlock(&__win_keyval_ht_lock);
 }
 
-static inline sctk_uint64_t get_per_rank_keyval_key(int keyval) {
-  sctk_uint64_t rank = mpc_common_get_task_rank();
-  sctk_uint64_t ret = 0;
+static inline uint64_t get_per_rank_keyval_key(int keyval) {
+  uint64_t rank = mpc_common_get_task_rank();
+  uint64_t ret = 0;
 
   ret = (rank << 32);
   ret |= keyval;
@@ -969,7 +969,7 @@ int mpc_MPI_Win_set_attr(MPI_Win win, int keyval, void *attr_val) {
 
   /* Check keyval */
 
-  sctk_uint64_t per_rank_keyval = get_per_rank_keyval_key(keyval);
+  uint64_t per_rank_keyval = get_per_rank_keyval_key(keyval);
 
   struct mpc_MPI_Win_keyval *kv =
       (struct mpc_MPI_Win_keyval *)MPCHT_get(&__win_keyval_ht, per_rank_keyval);
@@ -1041,7 +1041,7 @@ int mpc_MPI_Win_get_attr(MPI_Win win, int keyval, void *attr_val, int *flag) {
 
   /* First check keyval */
 
-  sctk_uint64_t per_rank_keyval = get_per_rank_keyval_key(keyval);
+  uint64_t per_rank_keyval = get_per_rank_keyval_key(keyval);
 
   void *pkv = MPCHT_get(&__win_keyval_ht, per_rank_keyval);
 
@@ -1075,7 +1075,7 @@ int mpc_MPI_Win_delete_attr(MPI_Win win, int keyval) {
 
   /* Check keyval */
 
-  sctk_uint64_t per_rank_keyval = get_per_rank_keyval_key(keyval);
+  uint64_t per_rank_keyval = get_per_rank_keyval_key(keyval);
 
   struct mpc_MPI_Win_keyval *kv =
       (struct mpc_MPI_Win_keyval *)MPCHT_get(&__win_keyval_ht, per_rank_keyval);
@@ -1117,7 +1117,7 @@ int mpc_MPI_Win_create_keyval(MPI_Win_copy_attr_function *copy_fn,
   }
 
   /* Now add to the ATTR HT */
-  sctk_uint64_t per_rank_keyval = get_per_rank_keyval_key(new->keyval);
+  uint64_t per_rank_keyval = get_per_rank_keyval_key(new->keyval);
   MPCHT_set(&__win_keyval_ht, per_rank_keyval, new);
 
   /* SET the return keyval */
@@ -1133,7 +1133,7 @@ int mpc_MPI_Win_free_keyval(int *keyval) {
     return MPI_ERR_ARG;
   }
 
-  sctk_uint64_t per_rank_keyval = get_per_rank_keyval_key(*keyval);
+  uint64_t per_rank_keyval = get_per_rank_keyval_key(*keyval);
 
   void *pkv = MPCHT_get(&__win_keyval_ht, per_rank_keyval);
 

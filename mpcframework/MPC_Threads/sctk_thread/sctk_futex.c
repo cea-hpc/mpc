@@ -284,7 +284,7 @@ struct futex_queue * futex_queue_new( int * futex_key )
 	return ret;
 }
 
-void * futex_queue_new_from_key( sctk_uint64_t key )
+void * futex_queue_new_from_key( uint64_t key )
 {
 	return (void *)futex_queue_new( (int *) key );
 }
@@ -563,7 +563,7 @@ int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_k
 			if( !Buffered_FIFO_count( &queue->wait_list ) )
 			{
 				/* This is an empty wait list then POP */
-				sctk_uint64_t key = (sctk_uint64_t) queue->futex_key;
+				uint64_t key = (uint64_t) queue->futex_key;
 				MPCHT_delete( &ht->queue_hash_table, key );
 				ht->queue_count--;
 
@@ -593,7 +593,7 @@ int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_k
 	
 	/* Here we first create a futex queue if 
 	 * it does not exists yet */
-	sctk_uint64_t new_key = (sctk_uint64_t) futex_key;
+	uint64_t new_key = (uint64_t) futex_key;
 	
 	int new_queue_created = 0;
 	struct futex_queue *fq = (struct futex_queue *) 
@@ -636,8 +636,8 @@ int futex_queue_HT_requeue_threads( struct futex_queue_HT * ht ,
 	
 	/* Here we first create a futex queue if 
 	 * it does not exists yet */
-	sctk_uint64_t in_key = (sctk_uint64_t) in_futex_key;
-	sctk_uint64_t out_key = (sctk_uint64_t) out_futex_key;
+	uint64_t in_key = (uint64_t) in_futex_key;
+	uint64_t out_key = (uint64_t) out_futex_key;
 	
 	int new_queue_created = 0;
 	struct futex_queue *in_fq = (struct futex_queue *) 
@@ -688,7 +688,7 @@ int futex_queue_HT_wake_threads( struct futex_queue_HT * ht , int * futex_key , 
 	/* Acquire the read lock */
 	OPA_incr_int( &ht->queue_table_is_being_manipulated);
 		
-	sctk_uint64_t key = (sctk_uint64_t) futex_key;
+	uint64_t key = (uint64_t) futex_key;
 	struct futex_queue *fq = (struct futex_queue *) 
 							   MPCHT_get( &ht->queue_hash_table,key );
 	

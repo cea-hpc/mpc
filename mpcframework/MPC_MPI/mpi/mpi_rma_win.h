@@ -42,7 +42,7 @@
 /* Keyval definition */
 
 struct mpc_MPI_Win_keyval {
-  sctk_uint64_t keyval;
+  uint64_t keyval;
   MPI_Win_copy_attr_function *copy_fn;
   MPI_Win_delete_attr_function *delete_fn;
   void *extra_state;

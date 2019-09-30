@@ -209,7 +209,7 @@ void sctk_ib_qp_key_print ( __UNUSED__ sctk_ib_cm_qp_connection_t *keys )
 	               keys->qp_num );
 }
 
-void sctk_ib_qp_key_fill ( sctk_ib_cm_qp_connection_t *keys, sctk_uint16_t lid, sctk_uint32_t qp_num, sctk_uint32_t psn )
+void sctk_ib_qp_key_fill ( sctk_ib_cm_qp_connection_t *keys, uint16_t lid, uint32_t qp_num, uint32_t psn )
 {
 	keys->lid = lid;
 	keys->qp_num = qp_num;
@@ -481,7 +481,7 @@ struct ibv_qp_attr sctk_ib_qp_state_rtr_attr ( struct sctk_ib_rail_info_s *rail_
 	return attr;
 }
 
-struct ibv_qp_attr sctk_ib_qp_state_rts_attr ( struct sctk_ib_rail_info_s *rail_ib, sctk_uint32_t psn, int *flags )
+struct ibv_qp_attr sctk_ib_qp_state_rts_attr ( struct sctk_ib_rail_info_s *rail_ib, uint32_t psn, int *flags )
 {
 	LOAD_CONFIG ( rail_ib );
 	struct ibv_qp_attr attr;

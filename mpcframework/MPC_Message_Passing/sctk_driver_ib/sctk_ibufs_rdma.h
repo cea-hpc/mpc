@@ -148,7 +148,7 @@ typedef struct sctk_ibuf_rdma_pool_s
 	struct sctk_ibuf_region_s *remote_region[2];
 
 	/* Rkey of the remote buffer pool */
-	sctk_uint32_t rkey[2];
+	uint32_t rkey[2];
 
 	/* Number of pending entries busy in the RDMA buffer.
 	 * Only for send region */

@@ -874,8 +874,8 @@ void sctk_ib_rdma_fetch_and_op(sctk_rail_info_t *rail,
   sctk_info("RDMA Fetch and op from %p to %p add %lld", remote_addr, fetch_addr,
             add);
 
-  sctk_uint64_t local_add = 0;
-  memcpy(&local_add, add, sizeof(sctk_uint64_t));
+  uint64_t local_add = 0;
+  memcpy(&local_add, add, sizeof(uint64_t));
 
   sctk_ibuf_rdma_fetch_and_add_init(ibuf, fetch_addr, local_key->pin.ib.mr.lkey,
                                     remote_addr, remote_key->pin.ib.mr.rkey,
@@ -918,11 +918,11 @@ void sctk_ib_rdma_cas(    sctk_rail_info_t *rail,
         IBUF_SET_RDMA_TYPE(rdma_header, SCTK_IB_RDMA_CAS);
         IBUF_SET_RDMA_POINTER(rdma_header, msg);
 
-        sctk_uint64_t local_comp = 0;
-        memcpy(&local_comp, comp, sizeof(sctk_uint64_t));
+        uint64_t local_comp = 0;
+        memcpy(&local_comp, comp, sizeof(uint64_t));
 
-        sctk_uint64_t local_new = 0;
-        memcpy(&local_new, new, sizeof(sctk_uint64_t));
+        uint64_t local_new = 0;
+        memcpy(&local_new, new, sizeof(uint64_t));
 
         sctk_info("RDMA CASS to %p to comp %lld new %lld", remote_addr,
                   local_comp, local_new);

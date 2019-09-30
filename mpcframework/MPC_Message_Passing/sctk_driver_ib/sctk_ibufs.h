@@ -175,14 +175,14 @@ typedef struct sctk_ibuf_region_s
 	void *buffer_addr;									/**< Address of the buffer */
 	struct sctk_ibuf_region_s *next;
 	struct sctk_ibuf_region_s *prev;
-	sctk_uint32_t nb;									/**< Number of buffer for the region */
+	uint32_t nb;									/**< Number of buffer for the region */
 	int size_ibufs;										/**< Size of the buffers */
 	uint32_t nb_previous;								/**< Number of buffer for the region (previous)*/
 	int size_ibufs_previous;							/**< Size of the buffers (previous)*/
 	size_t allocated_size;								/**< Memory allocated for the region */
 	struct sctk_ib_rail_info_s *rail;					/**< A region is associated to a rail */
 	sctk_ib_mmu_entry_t *mmu_entry;				/**< MMU entry */
-	sctk_uint32_t polled_nb;							/**< Number of messages polled */
+	uint32_t polled_nb;							/**< Number of messages polled */
 	struct sctk_ibuf_s *list;							/** List of buffers */
 	struct sctk_ibuf_s *ibuf;							/**< Pointer to the addr where ibufs are  allocated */
 	enum sctk_ibuf_channel channel;						/**< Channel where the region has been allocated */
@@ -285,13 +285,13 @@ void *sctk_ibuf_get_buffer ( sctk_ibuf_t *ibuf );
  *----------------------------------------------------------*/
 void sctk_ibuf_recv_init ( sctk_ibuf_t *ibuf );
 
-void sctk_ibuf_rdma_recv_init ( sctk_ibuf_t *ibuf, void *local_address, sctk_uint32_t lkey );
+void sctk_ibuf_rdma_recv_init ( sctk_ibuf_t *ibuf, void *local_address, uint32_t lkey );
 
 void sctk_ibuf_barrier_send_init ( sctk_ibuf_t *ibuf,
                                    void *local_address,
-                                   sctk_uint32_t lkey,
+                                   uint32_t lkey,
                                    void *remote_address,
-                                   sctk_uint32_t rkey,
+                                   uint32_t rkey,
                                    int len );
 
 void sctk_ibuf_send_init ( sctk_ibuf_t *ibuf, size_t size );
@@ -300,43 +300,43 @@ int sctk_ibuf_send_inline_init ( sctk_ibuf_t *ibuf, size_t size );
 
 int sctk_ibuf_rdma_write_with_imm_init ( sctk_ibuf_t *ibuf,
                                          void *local_address,
-                                         sctk_uint32_t lkey,
+                                         uint32_t lkey,
                                          void *remote_address,
-                                         sctk_uint32_t rkey,
+                                         uint32_t rkey,
                                          unsigned int len,
                                          char to_release,
-                                         sctk_uint32_t imm_data );
+                                         uint32_t imm_data );
 
 int sctk_ibuf_rdma_write_init ( sctk_ibuf_t *ibuf,
                                 void *local_address,
-                                sctk_uint32_t lkey,
+                                uint32_t lkey,
                                 void *remote_address,
-                                sctk_uint32_t rkey,
+                                uint32_t rkey,
                                 unsigned int len,
                                 int send_flags,
                                 char to_release );
 
 void sctk_ibuf_rdma_read_init ( sctk_ibuf_t *ibuf,
                                 void *local_address,
-                                sctk_uint32_t lkey,
+                                uint32_t lkey,
                                 void *remote_address,
-                                sctk_uint32_t rkey,
+                                uint32_t rkey,
                                 int len );
 
 void sctk_ibuf_rdma_fetch_and_add_init( sctk_ibuf_t *ibuf,
 										void *fetch_addr,
-										sctk_uint32_t lkey,
+										uint32_t lkey,
 										void *remote_address,
-										sctk_uint32_t rkey,
-										sctk_uint64_t add );
+										uint32_t rkey,
+										uint64_t add );
 
 void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,
 							  void *  res_addr,
-							  sctk_uint32_t local_key,
+							  uint32_t local_key,
 							  void *remote_address,
-							  sctk_uint32_t rkey,
-							  sctk_uint64_t comp,
-							  sctk_uint64_t new );
+							  uint32_t rkey,
+							  uint64_t comp,
+							  uint64_t new );
 
 
 

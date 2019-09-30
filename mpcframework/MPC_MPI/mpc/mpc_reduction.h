@@ -95,18 +95,18 @@ MPC_DEFINED_FUNCS(MPC_2REAL,mpc_real_real,name);                                
 MPC_DEFINED_FUNCS(MPC_REAL4,float,name);				\
 MPC_DEFINED_FUNCS(MPC_REAL8,double,name);				\
 MPC_DEFINED_FUNCS(MPC_REAL16,long double,name);			\
-MPC_DEFINED_FUNCS(MPC_INTEGER1,sctk_int8_t,name);			\
-MPC_DEFINED_FUNCS(MPC_INTEGER2,sctk_int16_t,name);			\
-MPC_DEFINED_FUNCS(MPC_INTEGER4,sctk_int32_t,name);			\
-MPC_DEFINED_FUNCS(MPC_INTEGER8,sctk_int64_t,name);			\
-MPC_DEFINED_FUNCS (MPC_UINT8_T, sctk_uint8_t,name);   \
-MPC_DEFINED_FUNCS (MPC_UINT16_T, sctk_uint16_t,name);   \
-MPC_DEFINED_FUNCS (MPC_UINT32_T, sctk_uint32_t,name);   \
-MPC_DEFINED_FUNCS (MPC_UINT64_T, sctk_uint64_t,name);   \
-MPC_DEFINED_FUNCS (MPC_INT8_T, sctk_int8_t,name);   \
-MPC_DEFINED_FUNCS (MPC_INT16_T, sctk_int16_t,name);   \
-MPC_DEFINED_FUNCS (MPC_INT32_T, sctk_int32_t,name);   \
-MPC_DEFINED_FUNCS (MPC_INT64_T, sctk_int64_t,name);   \
+MPC_DEFINED_FUNCS(MPC_INTEGER1,int8_t,name);			\
+MPC_DEFINED_FUNCS(MPC_INTEGER2,int16_t,name);			\
+MPC_DEFINED_FUNCS(MPC_INTEGER4,int32_t,name);			\
+MPC_DEFINED_FUNCS(MPC_INTEGER8,int64_t,name);			\
+MPC_DEFINED_FUNCS (MPC_UINT8_T, uint8_t,name);   \
+MPC_DEFINED_FUNCS (MPC_UINT16_T, uint16_t,name);   \
+MPC_DEFINED_FUNCS (MPC_UINT32_T, uint32_t,name);   \
+MPC_DEFINED_FUNCS (MPC_UINT64_T, uint64_t,name);   \
+MPC_DEFINED_FUNCS (MPC_INT8_T, int8_t,name);   \
+MPC_DEFINED_FUNCS (MPC_INT16_T, int16_t,name);   \
+MPC_DEFINED_FUNCS (MPC_INT32_T, int32_t,name);   \
+MPC_DEFINED_FUNCS (MPC_INT64_T, int64_t,name);   \
 MPC_DEFINED_FUNCS (MPC_COUNT, MPC_Count, name);       \
 MPC_DEFINED_FUNCS (MPC_AINT, MPC_Aint, name);         \
 MPC_DEFINED_FUNCS (MPC_OFFSET, MPC_Aint, name);       \

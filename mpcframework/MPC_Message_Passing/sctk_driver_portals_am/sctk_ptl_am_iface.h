@@ -28,7 +28,7 @@
 
 #include <portals4.h>
 #include <stddef.h>
-#include <stdint.h>
+#include <mpc_common_types.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>

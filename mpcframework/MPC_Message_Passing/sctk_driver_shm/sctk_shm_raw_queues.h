@@ -1,7 +1,7 @@
 #ifndef __SCTK_SHM_RAW_QUEUES_API_H__
 #define __SCTK_SHM_RAW_QUEUES_API_H__
 
-#include <stdint.h>
+#include <mpc_common_types.h>
 #include "stdlib.h"
 
 #define CACHELINE_SIZE 64

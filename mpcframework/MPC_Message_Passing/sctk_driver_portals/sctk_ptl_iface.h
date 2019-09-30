@@ -27,7 +27,7 @@
 #define SCTK_PTL_IFACE_H_
 
 #include <portals4.h>
-#include <stdint.h>
+#include <mpc_common_types.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>

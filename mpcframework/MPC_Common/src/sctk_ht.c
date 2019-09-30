@@ -24,7 +24,7 @@
 
 #include <string.h>
 
-void MPCHT_Cell_init( struct MPCHT_Cell * cell, sctk_uint64_t key, void * data, struct MPCHT_Cell * next )
+void MPCHT_Cell_init( struct MPCHT_Cell * cell, uint64_t key, void * data, struct MPCHT_Cell * next )
 {
 	cell->use_flag = 1;
 	cell->key = key;
@@ -32,7 +32,7 @@ void MPCHT_Cell_init( struct MPCHT_Cell * cell, sctk_uint64_t key, void * data, 
 	cell->next = next;
 }
 
-struct MPCHT_Cell * MPCHT_Cell_new( sctk_uint64_t key, void * data, struct MPCHT_Cell * next )
+struct MPCHT_Cell * MPCHT_Cell_new( uint64_t key, void * data, struct MPCHT_Cell * next )
 {
 	struct MPCHT_Cell * ret = sctk_malloc( sizeof( struct MPCHT_Cell ) );
 	
@@ -58,7 +58,7 @@ void MPCHT_Cell_release( struct MPCHT_Cell * cell )
 	}
 }
 
-struct MPCHT_Cell * MPCHT_Cell_get( struct MPCHT_Cell * cell, sctk_uint64_t key )
+struct MPCHT_Cell * MPCHT_Cell_get( struct MPCHT_Cell * cell, uint64_t key )
 {
 		while( cell )
 		{
@@ -72,7 +72,7 @@ struct MPCHT_Cell * MPCHT_Cell_get( struct MPCHT_Cell * cell, sctk_uint64_t key 
 }
 
 
-struct MPCHT_Cell * MPCHT_Cell_pop( struct MPCHT_Cell * head, sctk_uint64_t key )
+struct MPCHT_Cell * MPCHT_Cell_pop( struct MPCHT_Cell * head, uint64_t key )
 {
 	struct MPCHT_Cell * target = MPCHT_Cell_get( head, key );
 	
@@ -107,11 +107,11 @@ struct MPCHT_Cell * MPCHT_Cell_pop( struct MPCHT_Cell * head, sctk_uint64_t key 
 	return head;
 }
 
-static inline sctk_uint64_t murmur_hash( sctk_uint64_t val )
+static inline uint64_t murmur_hash( uint64_t val )
 {
 		/* This is MURMUR Hash under MIT 
 		 * https://code.google.com/p/smhasher/ */
-        sctk_uint64_t h = val;
+        uint64_t h = val;
 
         h ^= h >> 33;
         h *= 0xff51afd7ed558ccdllu;
@@ -124,26 +124,26 @@ static inline sctk_uint64_t murmur_hash( sctk_uint64_t val )
 
 /* THESE Functions are locking buckets (as offset) */
 
-static inline void MPCHT_lock_read( struct MPCHT * ht , sctk_uint64_t bucket)
+static inline void MPCHT_lock_read( struct MPCHT * ht , uint64_t bucket)
 {
 	sctk_spin_rwlock_t * lock = &ht->rwlocks[bucket];
 	mpc_common_spinlock_read_lock( lock );
 }
 
-static inline void MPCHT_unlock_read( struct MPCHT * ht , sctk_uint64_t bucket)
+static inline void MPCHT_unlock_read( struct MPCHT * ht , uint64_t bucket)
 {
 	sctk_spin_rwlock_t * lock = &ht->rwlocks[bucket];
 	mpc_common_spinlock_read_unlock( lock );
 }
 
-static inline void MPCHT_lock_write( struct MPCHT * ht , sctk_uint64_t bucket)
+static inline void MPCHT_lock_write( struct MPCHT * ht , uint64_t bucket)
 {
   sctk_nodebug("LOCKING cell %d", bucket);
   sctk_spin_rwlock_t *lock = &ht->rwlocks[bucket];
   mpc_common_spinlock_write_lock_yield(lock);
 }
 
-static inline void MPCHT_unlock_write( struct MPCHT * ht , sctk_uint64_t bucket)
+static inline void MPCHT_unlock_write( struct MPCHT * ht , uint64_t bucket)
 {
   sctk_nodebug("UN-LOCKING cell %d", bucket);
   sctk_spin_rwlock_t *lock = &ht->rwlocks[bucket];
@@ -153,28 +153,28 @@ static inline void MPCHT_unlock_write( struct MPCHT * ht , sctk_uint64_t bucket)
 
 /* THESE Functions are locking buckets according to KEYS */
 
-void MPCHT_lock_cell_read( struct MPCHT * ht , sctk_uint64_t key)
+void MPCHT_lock_cell_read( struct MPCHT * ht , uint64_t key)
 {
 	MPCHT_lock_read( ht, murmur_hash( key ) % ht->table_size);
 }
 
-void MPCHT_unlock_cell_read( struct MPCHT * ht , sctk_uint64_t key)
+void MPCHT_unlock_cell_read( struct MPCHT * ht , uint64_t key)
 {
 	MPCHT_unlock_read( ht, murmur_hash( key ) % ht->table_size);
 }
 
-void MPCHT_lock_cell_write( struct MPCHT * ht , sctk_uint64_t key)
+void MPCHT_lock_cell_write( struct MPCHT * ht , uint64_t key)
 {
 	MPCHT_lock_write( ht, murmur_hash( key ) % ht->table_size);
 }
 
-void MPCHT_unlock_cell_write( struct MPCHT * ht , sctk_uint64_t key)
+void MPCHT_unlock_cell_write( struct MPCHT * ht , uint64_t key)
 {
 	MPCHT_unlock_write( ht, murmur_hash( key ) % ht->table_size);
 }
 
 
-void MPCHT_init( struct MPCHT * ht, sctk_uint64_t size )
+void MPCHT_init( struct MPCHT * ht, uint64_t size )
 {
 	if( size == 0 )
 	{
@@ -226,9 +226,9 @@ void MPCHT_release( struct MPCHT * ht )
 	ht->table_size = 0;
 }
 
-void * MPCHT_get(  struct MPCHT * ht, sctk_uint64_t key )
+void * MPCHT_get(  struct MPCHT * ht, uint64_t key )
 {
-	sctk_uint64_t bucket = murmur_hash( key ) % ht->table_size;
+	uint64_t bucket = murmur_hash( key ) % ht->table_size;
 	
 	struct MPCHT_Cell * head = &ht->cells[bucket];
 	
@@ -260,9 +260,9 @@ void * MPCHT_get(  struct MPCHT * ht, sctk_uint64_t key )
         return ret;
 }
 
-void * MPCHT_get_or_create(  struct MPCHT * ht, sctk_uint64_t key , void * (create_entry)( sctk_uint64_t key ), int * did_create )
+void * MPCHT_get_or_create(  struct MPCHT * ht, uint64_t key , void * (create_entry)( uint64_t key ), int * did_create )
 {
-	sctk_uint64_t bucket = murmur_hash( key ) % ht->table_size;
+	uint64_t bucket = murmur_hash( key ) % ht->table_size;
 	
 	struct MPCHT_Cell * head = &ht->cells[bucket];
 
@@ -313,9 +313,9 @@ void * MPCHT_get_or_create(  struct MPCHT * ht, sctk_uint64_t key , void * (crea
 	return new_cell->data;
 }
 
-void MPCHT_set(  struct MPCHT * ht, sctk_uint64_t key, void * data )
+void MPCHT_set(  struct MPCHT * ht, uint64_t key, void * data )
 {
-	sctk_uint64_t bucket = murmur_hash( key ) % ht->table_size;
+	uint64_t bucket = murmur_hash( key ) % ht->table_size;
 	
 	struct MPCHT_Cell * head = &ht->cells[bucket];
 	
@@ -344,9 +344,9 @@ void MPCHT_set(  struct MPCHT * ht, sctk_uint64_t key, void * data )
         MPCHT_unlock_write(ht, bucket);
 }
 
-void MPCHT_delete(  struct MPCHT * ht, sctk_uint64_t key )
+void MPCHT_delete(  struct MPCHT * ht, uint64_t key )
 {
-	sctk_uint64_t bucket = murmur_hash( key ) % ht->table_size;
+	uint64_t bucket = murmur_hash( key ) % ht->table_size;
 	
 	struct MPCHT_Cell * head = &ht->cells[bucket];
 	

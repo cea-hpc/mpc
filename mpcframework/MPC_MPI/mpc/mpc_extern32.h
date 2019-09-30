@@ -40,7 +40,7 @@
 
 
 /** Macro to detect endianess */
-#define IS_BIG_ENDIAN (*(sctk_uint16_t *)"\0\xff" < 0x100)
+#define IS_BIG_ENDIAN (*(uint16_t *)"\0\xff" < 0x100)
 
 /** ==========================================================
  * These conversion functions are adapted from MPICH 
@@ -66,9 +66,9 @@
 #if (MANUAL_BYTESWAPS == 1)
 static void  BASIC_convert32(char *src, char * dest)      
 {
-	sctk_uint32_t tmp_src = *((sctk_uint32_t *) src);
+	uint32_t tmp_src = *((uint32_t *) src);
 
-	*((sctk_uint32_t *) dest) = (((tmp_src >> 24) & 0x000000FF) |
+	*((uint32_t *) dest) = (((tmp_src >> 24) & 0x000000FF) |
 				     ((tmp_src >>  8) & 0x0000FF00) |
 				     ((tmp_src <<  8) & 0x00FF0000) |
 				     ((tmp_src << 24) & 0xFF000000));
@@ -84,9 +84,9 @@ static void BASIC_convert32(char *src, char *dest)
 #if (MANUAL_BYTESWAPS == 1)
 static void BASIC_convert16(char *src, char *dest)
 {
- 	sctk_uint16_t tmp_src = *((sctk_uint16_t *) src);
+ 	uint16_t tmp_src = *((uint16_t *) src);
    
-	*((sctk_uint16_t *) dest) = (((tmp_src >> 8) & 0x00FF) |
+	*((uint16_t *) dest) = (((tmp_src >> 8) & 0x00FF) |
 	    			     ((tmp_src << 8) & 0xFF00));
 }
 #else
@@ -102,54 +102,54 @@ static inline void BASIC_convert64(char *src, char *dest)
     uint32_t tmp_src[2];
     uint32_t tmp_dest[2];
 
-    tmp_src[0] = (sctk_uint32_t)(*((sctk_uint64_t *)src) >> 32);
-    tmp_src[1] = (sctk_uint32_t)((*((sctk_uint64_t *)src) << 32) >> 32);
+    tmp_src[0] = (uint32_t)(*((uint64_t *)src) >> 32);
+    tmp_src[1] = (uint32_t)((*((uint64_t *)src) << 32) >> 32);
 
     BASIC_convert32((char *)&tmp_src[0], (char *)&tmp_dest[0]);
     BASIC_convert32((char *)&tmp_src[1], (char *)&tmp_dest[1]);
 
-    *((sctk_uint64_t *)dest) = (sctk_uint64_t)tmp_dest[0];
-    *((sctk_uint64_t *)dest) <<= 32;
-    *((sctk_uint64_t *)dest) |= (sctk_uint64_t)tmp_dest[1];
+    *((uint64_t *)dest) = (uint64_t)tmp_dest[0];
+    *((uint64_t *)dest) <<= 32;
+    *((uint64_t *)dest) |= (uint64_t)tmp_dest[1];
 }
 
 static inline void BASIC_convert96(char *src, char *dest)
 {
-    sctk_uint32_t tmp_src[3];
-    sctk_uint32_t tmp_dest[3];
+    uint32_t tmp_src[3];
+    uint32_t tmp_dest[3];
     char *ptr = dest;
 
-    tmp_src[0] = (sctk_uint32_t)(*((sctk_uint64_t *)src) >> 32);
-    tmp_src[1] = (sctk_uint32_t)((*((sctk_uint64_t *)src) << 32) >> 32);
-    tmp_src[2] = (sctk_uint32_t)
-        (*((uint32_t *)((char *)src + sizeof(sctk_uint64_t))));
+    tmp_src[0] = (uint32_t)(*((uint64_t *)src) >> 32);
+    tmp_src[1] = (uint32_t)((*((uint64_t *)src) << 32) >> 32);
+    tmp_src[2] = (uint32_t)
+        (*((uint32_t *)((char *)src + sizeof(uint64_t))));
 
     BASIC_convert32((char *)&tmp_src[0], (char *)&tmp_dest[0]);
     BASIC_convert32((char *)&tmp_src[1], (char *)&tmp_dest[1]);
     BASIC_convert32((char *)&tmp_src[2], (char *)&tmp_dest[2]);
 
-    *((sctk_uint32_t *)ptr) = tmp_dest[0];
-    ptr += sizeof(sctk_uint32_t);
-    *((sctk_uint32_t *)ptr) = tmp_dest[1];
-    ptr += sizeof(sctk_uint32_t);
-    *((sctk_uint32_t *)ptr) = tmp_dest[2];
+    *((uint32_t *)ptr) = tmp_dest[0];
+    ptr += sizeof(uint32_t);
+    *((uint32_t *)ptr) = tmp_dest[1];
+    ptr += sizeof(uint32_t);
+    *((uint32_t *)ptr) = tmp_dest[2];
 }
 
 static inline void BASIC_convert128(char *src, char *dest)
 {
-    sctk_uint64_t tmp_src[2];
-    sctk_uint64_t tmp_dest[2];
+    uint64_t tmp_src[2];
+    uint64_t tmp_dest[2];
     char *ptr = dest;
 
-    tmp_src[0] = *((sctk_uint64_t *)src);
-    tmp_src[1] = *((sctk_uint64_t *)((char *)src + sizeof(sctk_uint64_t)));
+    tmp_src[0] = *((uint64_t *)src);
+    tmp_src[1] = *((uint64_t *)((char *)src + sizeof(uint64_t)));
 
     BASIC_convert64((char *) &tmp_src[0], (char *) &tmp_dest[0]);
     BASIC_convert64((char *) &tmp_src[1], (char *) &tmp_dest[1]);
 
-    *((sctk_uint64_t *)ptr) = tmp_dest[0];
-    ptr += sizeof(sctk_uint64_t);
-    *((sctk_uint64_t *)ptr) = tmp_dest[1];
+    *((uint64_t *)ptr) = tmp_dest[0];
+    ptr += sizeof(uint64_t);
+    *((uint64_t *)ptr) = tmp_dest[1];
 }
 
 

@@ -69,9 +69,9 @@ static const int unset_bit_mask[] = {254, 253, 251, 247, 239, 223, 191, 127};
  * @brief Defines a bit array
  */
 struct sctk_bit_array {
-  sctk_uint8_t *array; /**< @brief The data */
-  sctk_uint64_t size;  /**< @brief The number of sctk_uint8_t array contains */
-  sctk_uint64_t real_size; /**< @brief The number of bits the array contains */
+  uint8_t *array; /**< @brief The data */
+  uint64_t size;  /**< @brief The number of uint8_t array contains */
+  uint64_t real_size; /**< @brief The number of bits the array contains */
 };
 
 /**
@@ -79,7 +79,7 @@ struct sctk_bit_array {
  * @param ba the array
  * @return the number of bits ba contains
  */
-static inline sctk_uint64_t sctk_bit_array_size(struct sctk_bit_array *ba) {
+static inline uint64_t sctk_bit_array_size(struct sctk_bit_array *ba) {
   return ba->real_size;
 }
 
@@ -88,7 +88,7 @@ static inline sctk_uint64_t sctk_bit_array_size(struct sctk_bit_array *ba) {
  * @param ba the sctk_bit_array to initialize
  * @param size the number of bits wanted fot ba
  */
-void sctk_bit_array_init(struct sctk_bit_array *ba, sctk_uint64_t size);
+void sctk_bit_array_init(struct sctk_bit_array *ba, uint64_t size);
 
 /**
  * @brief sctk_bit_array initializer with preallocated buffer
@@ -97,8 +97,8 @@ void sctk_bit_array_init(struct sctk_bit_array *ba, sctk_uint64_t size);
  * @param buff a preallocated buffer larger than size bits
  * @param buff_size the size of the preallocated buffer
  */
-void sctk_bit_array_init_buff(struct sctk_bit_array *ba, sctk_uint64_t size,
-                              void *buff, sctk_uint64_t buff_size);
+void sctk_bit_array_init_buff(struct sctk_bit_array *ba, uint64_t size,
+                              void *buff, uint64_t buff_size);
 
 /**
  * @brief sctk_bit_array deinitializer
@@ -130,17 +130,17 @@ void sctk_bit_array_dump(struct sctk_bit_array *ba);
  * @param value the value to set
  */
 static inline void sctk_bit_array_set(struct sctk_bit_array *ba,
-                                      sctk_uint64_t key, sctk_uint8_t value) {
+                                      uint64_t key, uint8_t value) {
 
   if (ba->real_size <= key) {
     // printf(" SET Out of bound (%ld)\n", key);
     return;
   }
 
-  sctk_uint64_t extern_offset = key >> 3;
-  sctk_uint8_t local_offset = key - extern_offset * 8;
+  uint64_t extern_offset = key >> 3;
+  uint8_t local_offset = key - extern_offset * 8;
 
-  sctk_uint8_t *target = &ba->array[extern_offset];
+  uint8_t *target = &ba->array[extern_offset];
 
   if (value)
     *target |= get_set_bit_mask[local_offset];
@@ -154,15 +154,15 @@ static inline void sctk_bit_array_set(struct sctk_bit_array *ba,
  * @param key the index of the bit to get
  * @return the value of the bit (3 if out of bound)
  */
-static inline sctk_uint8_t sctk_bit_array_get(struct sctk_bit_array *ba,
-                                              sctk_uint64_t key) {
+static inline uint8_t sctk_bit_array_get(struct sctk_bit_array *ba,
+                                              uint64_t key) {
   if (ba->real_size <= key) {
     // printf(" GET Out of bound (%ld) \n", key);
     return 3;
   }
 
-  sctk_uint64_t extern_offset = key >> 3;
-  sctk_uint8_t local_offset = key - extern_offset * 8;
+  uint64_t extern_offset = key >> 3;
+  uint8_t local_offset = key - extern_offset * 8;
 
   return (ba->array[extern_offset] & get_set_bit_mask[local_offset]) >>
          local_offset;

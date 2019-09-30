@@ -20,8 +20,8 @@
 #include "sctk_debug.h"
 #include <string.h>
 
-void sctk_bit_array_init_buff(struct sctk_bit_array *ba, sctk_uint64_t size,
-                              void *buff, sctk_uint64_t buff_size) {
+void sctk_bit_array_init_buff(struct sctk_bit_array *ba, uint64_t size,
+                              void *buff, uint64_t buff_size) {
   ba->real_size = size;
   ba->size = (size >> 3);
 
@@ -41,11 +41,11 @@ void sctk_bit_array_init_buff(struct sctk_bit_array *ba, sctk_uint64_t size,
     ba->array[i] = 0;
 }
 
-void sctk_bit_array_init(struct sctk_bit_array *ba, sctk_uint64_t size) {
+void sctk_bit_array_init(struct sctk_bit_array *ba, uint64_t size) {
 
   size_t array_size = (size >> 3);
 
-  void *array = malloc(array_size * sizeof(sctk_uint8_t));
+  void *array = malloc(array_size * sizeof(uint8_t));
 
   if (!array) {
     sctk_fatal("Failed to allocate a sctk_bit_array \n");

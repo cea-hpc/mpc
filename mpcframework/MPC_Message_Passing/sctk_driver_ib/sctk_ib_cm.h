@@ -91,9 +91,9 @@ typedef struct
 typedef struct
 {
 	int rail_id;  /* rail id. *MUST* be the first field */
-	sctk_uint16_t lid;
-	sctk_uint32_t qp_num;
-	sctk_uint32_t psn;
+	uint16_t lid;
+	uint32_t qp_num;
+	uint32_t psn;
 } sctk_ib_cm_qp_connection_t;
 
 typedef struct
@@ -108,7 +108,7 @@ typedef struct
 	int connected;
 	int size;   /* Size of a slot */
 	int nb;     /* Number of slots */
-	sctk_uint32_t rkey;
+	uint32_t rkey;
 	void *addr;
 } sctk_ib_cm_rdma_connection_t;
 

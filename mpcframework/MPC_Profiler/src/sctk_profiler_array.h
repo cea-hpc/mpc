@@ -22,7 +22,7 @@
 #ifndef SCTK_PROFILER_ARRAY
 #define SCTK_PROFILER_ARRAY
 
-#include "stdint.h"
+#include <mpc_common_types.h>
 #include "mpit_internal.h"
 
 #undef SIZE_COUNTER

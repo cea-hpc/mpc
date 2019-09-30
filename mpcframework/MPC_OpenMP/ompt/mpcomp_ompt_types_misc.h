@@ -23,7 +23,7 @@
 #ifndef __MPCOMP_OMPT_TYPES_MISCELLANEOUS_H__
 #define __MPCOMP_OMPT_TYPES_MISCELLANEOUS_H__
 
-#include <stdint.h>
+#include <mpc_common_types.h>
 
 /** used to mark OMPT functions obtained from look ip function passed to ompt_initialize_fn_t */
 #define OMPT_API

@@ -73,7 +73,7 @@ char *sctk_mpi_handler_gen_filename(void *option, __UNUSED__ void *option1) {
     mpi_handler->option = (void *)malloc(128 * sizeof(char));
     assume(mpi_handler->option != NULL);
 
-    sctk_int64_t pcomm = comm;
+    int64_t pcomm = comm;
     mpi_handler->option1 = (void *)pcomm;
 
     mpi_handler->send_handler = sctk_mpi_handler_send_filename;

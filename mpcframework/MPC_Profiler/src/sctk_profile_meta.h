@@ -24,7 +24,7 @@
 #define SCTK_PROFILE_META_H
 
 #include <sys/time.h>
-#include <stdint.h>
+#include <mpc_common_types.h>
 
 #include "mpc_common_spinlock.h"
 

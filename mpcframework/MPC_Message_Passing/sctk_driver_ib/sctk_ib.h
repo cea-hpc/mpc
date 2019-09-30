@@ -168,7 +168,7 @@ typedef struct sctk_ib_header_rdma_s
 		struct sctk_thread_ptp_message_s *msg_header;
 		void  *addr;
 		size_t size;
-		sctk_uint32_t rkey;
+		uint32_t rkey;
 		void  *aligned_addr;
 		size_t aligned_size;
 	} remote;

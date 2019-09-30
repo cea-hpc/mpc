@@ -343,7 +343,7 @@ void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int * is_shared) {
                      (i * ____mpc_sctk_mpi_alloc_mem_pool.space_per_bit);
 
         /* Store bit size for free for address */
-        MPCHT_set(&____mpc_sctk_mpi_alloc_mem_pool.size_ht, (sctk_uint64_t)addr,
+        MPCHT_set(&____mpc_sctk_mpi_alloc_mem_pool.size_ht, (uint64_t)addr,
                   (void *)number_of_bits);
 
         sctk_nodebug("ALLOC %ld", number_of_bits);
@@ -389,7 +389,7 @@ int mpc_MPI_allocmem_pool_free_size(void *ptr, ssize_t known_size) {
 
   if( known_size < 0 )
   {
-      size_in_ptr = MPCHT_get(&____mpc_sctk_mpi_alloc_mem_pool.size_ht, (sctk_uint64_t)ptr);
+      size_in_ptr = MPCHT_get(&____mpc_sctk_mpi_alloc_mem_pool.size_ht, (uint64_t)ptr);
   }
   else
   {
@@ -412,7 +412,7 @@ int mpc_MPI_allocmem_pool_free_size(void *ptr, ssize_t known_size) {
       sctk_bit_array_set(&____mpc_sctk_mpi_alloc_mem_pool.mask, i, 0);
     }
 
-    MPCHT_delete(&____mpc_sctk_mpi_alloc_mem_pool.size_ht, (sctk_uint64_t)ptr);
+    MPCHT_delete(&____mpc_sctk_mpi_alloc_mem_pool.size_ht, (uint64_t)ptr);
 
     mpc_MPI_allocmem_pool_unlock();
   } else {

@@ -714,9 +714,9 @@ void sctk_ibuf_recv_init ( sctk_ibuf_t *ibuf )
 
 void sctk_ibuf_barrier_send_init ( sctk_ibuf_t *ibuf,
                                    void *local_address,
-                                   sctk_uint32_t lkey,
+                                   uint32_t lkey,
                                    void *remote_address,
-                                   sctk_uint32_t rkey,
+                                   uint32_t rkey,
                                    int len )
 {
 	ibuf->to_release = IBUF_RELEASE;
@@ -802,12 +802,12 @@ void sctk_ibuf_send_init ( sctk_ibuf_t *ibuf, size_t size )
 
 int sctk_ibuf_rdma_write_with_imm_init ( sctk_ibuf_t *ibuf,
                                          void *local_address,
-                                         sctk_uint32_t lkey,
+                                         uint32_t lkey,
                                          void *remote_address,
-                                         sctk_uint32_t rkey,
+                                         uint32_t rkey,
                                          unsigned int len,
                                          char to_release,
-                                         sctk_uint32_t imm_data )
+                                         uint32_t imm_data )
 {
 	LOAD_CONFIG ( ibuf->region->rail );
 	int is_inlined = 0;
@@ -847,9 +847,9 @@ int sctk_ibuf_rdma_write_with_imm_init ( sctk_ibuf_t *ibuf,
 
 int sctk_ibuf_rdma_write_init ( sctk_ibuf_t *ibuf,
                                 void *local_address,
-                                sctk_uint32_t lkey,
+                                uint32_t lkey,
                                 void *remote_address,
-                                sctk_uint32_t rkey,
+                                uint32_t rkey,
                                 unsigned int len,
                                 int send_flags,
                                 char to_release )
@@ -893,9 +893,9 @@ int sctk_ibuf_rdma_write_init ( sctk_ibuf_t *ibuf,
 
 void sctk_ibuf_rdma_read_init ( sctk_ibuf_t *ibuf,
                                 void *local_address,
-                                sctk_uint32_t lkey,
+                                uint32_t lkey,
                                 void *remote_address,
-                                sctk_uint32_t rkey,
+                                uint32_t rkey,
                                 int len )
 {
 	ibuf->in_srq = 0;
@@ -921,10 +921,10 @@ void sctk_ibuf_rdma_read_init ( sctk_ibuf_t *ibuf,
 
 void sctk_ibuf_rdma_fetch_and_add_init( sctk_ibuf_t *ibuf,
 										void *fetch_addr,
-										sctk_uint32_t lkey,
+										uint32_t lkey,
 										void *remote_address,
-										sctk_uint32_t rkey,
-										sctk_uint64_t add )
+										uint32_t rkey,
+										uint64_t add )
 {
 	ibuf->in_srq = 0;
 	ibuf->send_imm_data = 0;
@@ -944,7 +944,7 @@ void sctk_ibuf_rdma_fetch_and_add_init( sctk_ibuf_t *ibuf,
 	ibuf->desc.wr.send.sg_list = & ( ibuf->desc.sg_entry );
 	ibuf->desc.wr.send.imm_data = IMM_DATA_NULL;
 
-	ibuf->desc.sg_entry.length = sizeof( sctk_uint64_t );
+	ibuf->desc.sg_entry.length = sizeof( uint64_t );
 	ibuf->desc.sg_entry.lkey = lkey;
 	ibuf->desc.sg_entry.addr = ( uintptr_t ) fetch_addr;
 
@@ -1013,11 +1013,11 @@ static char *sctk_ibuf_print_flag ( enum sctk_ibuf_status flag )
 
 void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,
 							  void *  res_addr,
-							  sctk_uint32_t local_key,
+							  uint32_t local_key,
 							  void *remote_address,
-							  sctk_uint32_t rkey,
-							  sctk_uint64_t comp,
-							  sctk_uint64_t new )
+							  uint32_t rkey,
+							  uint64_t comp,
+							  uint64_t new )
 {
 	ibuf->in_srq = 0;
 	ibuf->send_imm_data = 0;
@@ -1036,7 +1036,7 @@ void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,
 
 	ibuf->desc.wr.send.sg_list = & ( ibuf->desc.sg_entry );
 	ibuf->desc.wr.send.imm_data = IMM_DATA_NULL;
-	ibuf->desc.sg_entry.length = sizeof( sctk_uint64_t );
+	ibuf->desc.sg_entry.length = sizeof( uint64_t );
 	ibuf->desc.sg_entry.lkey = local_key;
 	ibuf->desc.sg_entry.addr = (uintptr_t)res_addr;
 

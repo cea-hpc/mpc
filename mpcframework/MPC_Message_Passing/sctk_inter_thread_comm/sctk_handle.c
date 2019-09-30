@@ -133,11 +133,11 @@ int sctk_errhandler_free(sctk_errhandler_t errh) {
 /* MPI Handles                                                          */
 /************************************************************************/
 
-static inline sctk_uint64_t sctk_handle_compute(sctk_handle id,
+static inline uint64_t sctk_handle_compute(sctk_handle id,
                                                 sctk_handle_type type) {
-  sctk_uint64_t rank = mpc_common_get_task_rank();
+  uint64_t rank = mpc_common_get_task_rank();
 
-  sctk_uint64_t ret = type;
+  uint64_t ret = type;
   ret |= id << 16;
   ret |= rank << 32;
 
