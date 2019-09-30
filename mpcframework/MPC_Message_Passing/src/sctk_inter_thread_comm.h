@@ -25,7 +25,7 @@
 #include <sctk_config.h>
 #include <sctk_debug.h>
 #include <sctk_communicator.h>
-#include <sctk_collective_communications.h>
+#include <mpc_mp_coll.h>
 #include <sctk_reorder.h>
 
 #include <mpc_common_asm.h>

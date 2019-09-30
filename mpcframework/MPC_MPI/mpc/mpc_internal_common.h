@@ -31,6 +31,7 @@
 #include "sctk_debug.h"
 #include "progress_engine.h"
 #include "sctk_communicator.h"
+#include "sctk_inter_thread_comm.h"
 
 /************************************************************************/
 /* Per communicator context                                             */

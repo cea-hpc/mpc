@@ -20,6 +20,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include "coll.h"
+
 #include <sctk_inter_thread_comm.h>
 #include <sctk_communicator.h>
 
@@ -56,7 +58,7 @@ static unsigned int allreduce_max_slot;
 
 static
 void _mpc_coll_barrier_simple ( const sctk_communicator_t communicator,
-                           mpc_mp_coll_t *tmp )
+                           struct mpc_mp_coll_s *tmp )
 {
 	int local;
 	local = sctk_get_nb_task_local ( communicator );
@@ -77,7 +79,7 @@ void _mpc_coll_barrier_simple ( const sctk_communicator_t communicator,
 	sctk_thread_mutex_unlock ( &tmp->barrier.barrier_simple.lock );
 }
 
-void _mpc_coll_barrier_simple_init ( mpc_mp_coll_t *tmp,  __UNUSED__ sctk_communicator_t id )
+void _mpc_coll_barrier_simple_init ( struct mpc_mp_coll_s *tmp,  __UNUSED__ sctk_communicator_t id )
 {
 	if ( mpc_common_get_process_count() == 1 )
 	{
@@ -242,7 +244,7 @@ void mpc_mp_coll_init_simple ( sctk_communicator_t id )
 {
 	if ( mpc_common_get_process_count() == 1 )
 	{
-		mpc_mp_coll_init ( id,
+		_mpc_coll_init ( id,
 		                        _mpc_coll_barrier_simple_init,
 		                        _mpc_coll_bcast_simple_init,
 		                        _mpc_coll_allreduce_simple_init );
@@ -344,7 +346,7 @@ static void sctk_opt_messages_init_items ( sctk_opt_messages_table_t *tab )
 
 /* Barrier */
 
-static void _mpc_coll_opt_barrier ( const sctk_communicator_t communicator, __UNUSED__ mpc_mp_coll_t *tmp )
+static void _mpc_coll_opt_barrier ( const sctk_communicator_t communicator, __UNUSED__ struct mpc_mp_coll_s *tmp )
 {
 	if ( !sctk_is_inter_comm ( communicator ) )
 	{
@@ -470,7 +472,7 @@ static void _mpc_coll_opt_barrier ( const sctk_communicator_t communicator, __UN
         }
 }
 
-void _mpc_coll_opt_barrier_init ( mpc_mp_coll_t *tmp, __UNUSED__ sctk_communicator_t id )
+void _mpc_coll_opt_barrier_init ( struct mpc_mp_coll_s *tmp, __UNUSED__ sctk_communicator_t id )
 {
 	barrier_arity = sctk_runtime_config_get()->modules.inter_thread_comm.barrier_arity;
 
@@ -767,7 +769,7 @@ void _mpc_coll_opt_allreduce_init ( struct mpc_mp_coll_s *tmp,__UNUSED__ sctk_co
 
 void mpc_mp_coll_init_opt ( sctk_communicator_t id )
 {
-	mpc_mp_coll_init ( id,
+	_mpc_coll_init ( id,
 	                        _mpc_coll_opt_barrier_init,
 	                        _mpc_coll_opt_bcast_init,
 	                        _mpc_coll_opt_allreduce_init );
@@ -873,7 +875,7 @@ static int int_cmp ( const void *a, const void *b )
 
 static
 void _mpc_coll_hetero_barrier_inter ( const sctk_communicator_t communicator,
-                                          __UNUSED__ mpc_mp_coll_t *tmp )
+                                          __UNUSED__ struct mpc_mp_coll_s *tmp )
 {
 	int myself;
 	int *process_array;
@@ -985,7 +987,7 @@ void _mpc_coll_hetero_barrier_inter ( const sctk_communicator_t communicator,
 
 static
 void _mpc_coll_hetero_barrier ( const sctk_communicator_t communicator,
-                                    mpc_mp_coll_t *tmp )
+                                    struct mpc_mp_coll_s *tmp )
 {
 	int nb_tasks_in_node;
 	_mpc_coll_hetero_barrier_t *barrier;
@@ -1015,7 +1017,7 @@ void _mpc_coll_hetero_barrier ( const sctk_communicator_t communicator,
 }
 
 
-void _mpc_coll_hetero_barrier_init ( mpc_mp_coll_t *tmp, __UNUSED__ sctk_communicator_t id )
+void _mpc_coll_hetero_barrier_init ( struct mpc_mp_coll_s *tmp, __UNUSED__ sctk_communicator_t id )
 {
 	barrier_arity = sctk_runtime_config_get()->modules.inter_thread_comm.barrier_arity;
 	tmp->barrier_func = _mpc_coll_hetero_barrier;
@@ -1523,7 +1525,7 @@ void _mpc_coll_hetero_allreduce_init ( struct mpc_mp_coll_s *tmp, sctk_communica
 
 void mpc_mp_coll_init_hetero ( sctk_communicator_t id )
 {
-	mpc_mp_coll_init ( id,
+	_mpc_coll_init ( id,
 	                        _mpc_coll_hetero_barrier_init,
 	                        _mpc_coll_hetero_bcast_init,
 	                        _mpc_coll_hetero_allreduce_init );
@@ -1630,7 +1632,7 @@ static void sctk_opt_noalloc_split_messages_init_items ( sctk_opt_noalloc_split_
 
 /* Barrier */
 
-static void _mpc_coll_noalloc_barrier ( const sctk_communicator_t communicator,  __UNUSED__ mpc_mp_coll_t *tmp )
+static void _mpc_coll_noalloc_barrier ( const sctk_communicator_t communicator,  __UNUSED__ struct mpc_mp_coll_s *tmp )
 {
 	if ( !sctk_is_inter_comm ( communicator ) )
 	{
@@ -1755,7 +1757,7 @@ static void _mpc_coll_noalloc_barrier ( const sctk_communicator_t communicator, 
         }
 }
 
-void _mpc_coll_noalloc_barrier_init ( mpc_mp_coll_t *tmp,  __UNUSED__ sctk_communicator_t id )
+void _mpc_coll_noalloc_barrier_init ( struct mpc_mp_coll_s *tmp,  __UNUSED__ sctk_communicator_t id )
 {
 	barrier_arity = sctk_runtime_config_get()->modules.inter_thread_comm.barrier_arity;
 
@@ -2144,7 +2146,7 @@ void _mpc_coll_noalloc_allreduce_init ( struct mpc_mp_coll_s   __UNUSED__ *tmp, 
 
 void mpc_mp_coll_init_noalloc ( sctk_communicator_t id )
 {
-	mpc_mp_coll_init ( id,
+	_mpc_coll_init ( id,
 	                        _mpc_coll_noalloc_barrier_init,
 	                        _mpc_coll_noalloc_bcast_init,
 	                        _mpc_coll_noalloc_allreduce_init );
@@ -2163,7 +2165,7 @@ void mpc_mp_coll_init_noalloc ( sctk_communicator_t id )
 /*Terminaison Barrier                                                   */
 /************************************************************************/
 void
-sctk_terminaison_barrier (void)
+mpc_mp_terminaison_barrier (void)
 {
 	int local;
 
@@ -2177,7 +2179,7 @@ sctk_terminaison_barrier (void)
 
 	sctk_thread_mutex_lock ( &lock );
 	done ++;
-	sctk_nodebug ( "sctk_terminaison_barrier %d %d", done, local );
+	sctk_nodebug ( "mpc_mp_terminaison_barrier %d %d", done, local );
 
 	if ( done == local )
 	{
@@ -2193,17 +2195,17 @@ sctk_terminaison_barrier (void)
 		}
 		#endif
 
-		sctk_nodebug ( "WAKE ALL in sctk_terminaison_barrier" );
+		sctk_nodebug ( "WAKE ALL in mpc_mp_terminaison_barrier" );
 		sctk_thread_cond_broadcast ( &cond );
 	}
 	else
 	{
-		sctk_nodebug ( "WAIT in sctk_terminaison_barrier" );
+		sctk_nodebug ( "WAIT in mpc_mp_terminaison_barrier" );
 		sctk_thread_cond_wait ( &cond, &lock );
 	}
 
 	sctk_thread_mutex_unlock ( &lock );
-	sctk_nodebug ( "sctk_terminaison_barrier %d %d DONE", done, local );
+	sctk_nodebug ( "mpc_mp_terminaison_barrier %d %d DONE", done, local );
 }
 
 /************************************************************************/
@@ -2212,7 +2214,7 @@ sctk_terminaison_barrier (void)
 
 void mpc_mp_barrier ( const sctk_communicator_t communicator )
 {
-	mpc_mp_coll_t *tmp;
+	struct mpc_mp_coll_s *tmp;
 
 	if ( communicator != SCTK_COMM_SELF )
 	{
@@ -2227,7 +2229,7 @@ void mpc_mp_barrier ( const sctk_communicator_t communicator )
 void mpc_mp_bcast ( void *buffer, const size_t size,
                       const int root, const sctk_communicator_t communicator )
 {
-	mpc_mp_coll_t *tmp;
+	struct mpc_mp_coll_s *tmp;
 
 	if ( communicator != SCTK_COMM_SELF )
 	{
@@ -2246,7 +2248,7 @@ void mpc_mp_allreduce ( const void *buffer_in, void *buffer_out,
                        const sctk_communicator_t communicator,
                        const sctk_datatype_t data_type )
 {
-	mpc_mp_coll_t *tmp;
+	struct mpc_mp_coll_s *tmp;
 
 	if ( communicator != SCTK_COMM_SELF )
 	{
@@ -2265,17 +2267,17 @@ void mpc_mp_allreduce ( const void *buffer_in, void *buffer_out,
 /*INIT                                                                  */
 /************************************************************************/
 
-void ( *mpc_mp_coll_init_hook ) ( sctk_communicator_t id ) = NULL; //mpc_mp_coll_init_opt;
+void ( *mpc_mp_coll_init_hook ) ( sctk_communicator_t id ) = NULL; //_mpc_coll_init_opt;
 
 /*Init data structures used for task i*/
-void mpc_mp_coll_init ( sctk_communicator_t id,
-                             void ( *barrier ) ( mpc_mp_coll_t *, sctk_communicator_t id ),
-                             void ( *broadcast ) ( mpc_mp_coll_t *, sctk_communicator_t id ),
-                             void ( *allreduce ) ( mpc_mp_coll_t *, sctk_communicator_t id ) )
+void _mpc_coll_init ( sctk_communicator_t id,
+                             void ( *barrier ) ( struct mpc_mp_coll_s *, sctk_communicator_t id ),
+                             void ( *broadcast ) ( struct mpc_mp_coll_s *, sctk_communicator_t id ),
+                             void ( *allreduce ) ( struct mpc_mp_coll_s *, sctk_communicator_t id ) )
 {
-	mpc_mp_coll_t *tmp;
-	tmp = sctk_malloc ( sizeof ( mpc_mp_coll_t ) );
-	memset ( tmp, 0, sizeof ( mpc_mp_coll_t ) );
+	struct mpc_mp_coll_s *tmp;
+	tmp = sctk_malloc ( sizeof ( struct mpc_mp_coll_s ) );
+	memset ( tmp, 0, sizeof ( struct mpc_mp_coll_s ) );
 
 	barrier ( tmp, id );
 	broadcast ( tmp, id );

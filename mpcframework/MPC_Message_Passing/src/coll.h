@@ -22,11 +22,14 @@
 #ifndef __SCTK_COLLECTIVE_COMMUNICATIONS_H_
 #define __SCTK_COLLECTIVE_COMMUNICATIONS_H_
 
+#include <mpc_mp_coll.h>
+
+
 #include <sctk_inter_thread_comm.h>
 
+
 #include <mpc_common_spinlock.h>
-#include <sctk_thread.h>
-#include <sctk_types.h>
+
 
 struct mpc_mp_coll_s;
 
@@ -193,9 +196,33 @@ void _mpc_coll_noalloc_allreduce_init ( struct mpc_mp_coll_s *tmp, sctk_communic
 
 void mpc_mp_coll_init_noalloc ( sctk_communicator_t id );
 
+
+/**************************
+ * INTERNAL INIT FUNCTION *
+ **************************/
+
+struct mpc_mp_coll_s;
+
+void _mpc_coll_init ( sctk_communicator_t id,
+			void ( *barrier ) ( struct mpc_mp_coll_s *, sctk_communicator_t id ),
+			void ( *broadcast ) ( struct mpc_mp_coll_s *, sctk_communicator_t id ),
+			void ( *allreduce ) ( struct mpc_mp_coll_s *, sctk_communicator_t id ) );
+
+
+
 /**********************************************
  * GENERIC COLLECTIVE COMMUNICATION INTERFACE *
  **********************************************/
+
+/* Init */
+
+struct mpc_mp_coll_s;
+
+void mpc_mp_coll_init ( sctk_communicator_t id,
+			void ( *barrier ) ( struct mpc_mp_coll_s *, sctk_communicator_t id ),
+			void ( *broadcast ) ( struct mpc_mp_coll_s *, sctk_communicator_t id ),
+			void ( *allreduce ) ( struct mpc_mp_coll_s *, sctk_communicator_t id ) );
+
 
 /* Barrier */
 
@@ -207,7 +234,6 @@ typedef union
 	_mpc_coll_hetero_barrier_t barrier_hetero_messages;
 } mpc_mp_barrier_t;
 
-void mpc_mp_barrier ( const sctk_communicator_t communicator );
 
 /* Broadcast */
 
@@ -219,8 +245,6 @@ typedef union
 	_mpc_coll_hetero_bcast_t broadcast_hetero_messages;
 } mpc_mp_bcast_t;
 
-void mpc_mp_bcast ( void *buffer, const size_t size,
-                      const int root, const sctk_communicator_t com_id );
 
 /* Allreduce */
 
@@ -232,17 +256,9 @@ typedef union
 	_mpc_coll_hetero_allreduce_t allreduce_hetero_messages;
 } sctk_allreduce_t;
 
-void mpc_mp_allreduce ( const void *buffer_in, void *buffer_out,
-                       const size_t elem_size,
-                       const size_t elem_number,
-                       sctk_Op_f func,
-                       const sctk_communicator_t communicator,
-                       const sctk_datatype_t data_type );
-
 /* Collective Structure */
 
-typedef struct mpc_mp_coll_s
-{
+struct mpc_mp_coll_s{
 	mpc_mp_barrier_t barrier;
 	void ( *barrier_func ) ( const sctk_communicator_t ,
 	                         struct mpc_mp_coll_s * );
@@ -260,18 +276,6 @@ typedef struct mpc_mp_coll_s
 	                           const sctk_communicator_t ,
 	                           const sctk_datatype_t ,
 	                           struct mpc_mp_coll_s * );
-} mpc_mp_coll_t;
-
-/* Init */
-
-void mpc_mp_coll_init ( sctk_communicator_t id,
-                             void ( *barrier ) ( mpc_mp_coll_t *, sctk_communicator_t id ),
-                             void ( *broadcast ) ( mpc_mp_coll_t *, sctk_communicator_t id ),
-                             void ( *allreduce ) ( mpc_mp_coll_t *, sctk_communicator_t id ) );
-
-extern void ( *mpc_mp_coll_init_hook ) ( sctk_communicator_t id );
-
-void
-sctk_terminaison_barrier (void);
+};
 
 #endif

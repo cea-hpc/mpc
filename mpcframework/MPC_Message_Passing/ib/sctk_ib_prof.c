@@ -202,8 +202,10 @@ void sctk_ib_prof_qp_init_task ( int task_id, int vp )
 	tmp->head = 0;
 
 	/* Tasks synchronization */
-	sctk_terminaison_barrier ();
-	sctk_terminaison_barrier ();
+	mpc_mp_terminaison_barrier ( task_id );
+	mpc_mp_terminaison_barrier ( task_id );
+	mpc_mp_terminaison_barrier ( task_id );
+	mpc_mp_terminaison_barrier ( task_id );
 	sctk_ib_prof_qp_write ( -1, 0, sctk_get_time_stamp(), PROF_QP_SYNC );
 }
 

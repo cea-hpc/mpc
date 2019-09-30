@@ -25,10 +25,12 @@
 
 #include "mpcmp.h" /* mpc_pack_absolute_indexes_t */
 #include "mpc_common_asm.h"
-#include "sctk_collective_communications.h" /* sctk_datatype_t */
+#include "mpc_mp_coll.h" /* sctk_datatype_t */
 #include "mpc_common_datastructure.h"
 #include "mpc_common_spinlock.h"
 #include "sctk_thread.h"
+
+#include <uthash.h>
 #include <stdlib.h>
 
 /************************************************************************/

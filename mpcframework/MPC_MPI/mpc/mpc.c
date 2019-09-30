@@ -32,7 +32,7 @@
 
 #include "sctk_accessor.h"
 #include "mpc_common_asm.h"
-#include "sctk_collective_communications.h"
+#include "mpc_mp_coll.h"
 #include "sctk_communicator.h"
 #include "sctk_debug.h"
 #include "sctk_handle.h"
@@ -3182,7 +3182,7 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 
 		/* re-init the network at task level if necessary */
 		sctk_net_init_task_level(task_rank, mpc_common_topo_get_current_cpu());
-		sctk_terminaison_barrier(task_rank);
+		mpc_mp_terminaison_barrier(task_rank);
 
 		/* If I'm the last task to reach here, increment the global generation counter */ 
 		if(OPA_fetch_and_incr_int(&gen_release) == local_nbtasks -1)

@@ -27,7 +27,7 @@
 #include "mpi_alloc_mem.h"
 #include "nbc.h"
 #include "sctk_alloc.h"
-#include "sctk_collective_communications.h"
+#include "mpc_mp_coll.h"
 #include "sctk_communicator.h"
 #include "sctk_communicator.h"
 #include "sctk_debug.h"
