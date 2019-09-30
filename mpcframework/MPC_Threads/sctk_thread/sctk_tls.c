@@ -32,7 +32,7 @@
 #include "mpc_common_topology.h"
 #include "sctk_accessor.h"
 #include "mpc_common_spinlock.h"
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include "hwloc.h"
 
 #include <unistd.h>

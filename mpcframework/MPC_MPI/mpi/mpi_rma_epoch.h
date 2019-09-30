@@ -24,7 +24,7 @@
 #define MPI_RMA_EPOCH_H
 
 #include "mpc_mpi.h"
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include "sctk_buffered_fifo.h"
 #include "mpc_common_spinlock.h"
 #include "sctk_stdint.h"

@@ -45,7 +45,7 @@
 #include "sctk_alloc.h"
 #include "sctk_launch.h"
 #include "mpc_common_topology.h"
-#include "sctk_asm.h"
+#include "mpc_common_asm.h"
 #include "sctk_tls.h"
 #include <unistd.h>
 #include "sctk_posix_thread.h"

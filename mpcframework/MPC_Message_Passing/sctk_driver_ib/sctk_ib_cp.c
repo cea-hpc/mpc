@@ -34,7 +34,7 @@
 #include "sctk_net_tools.h"
 #include "sctk_ib_eager.h"
 #include "sctk_ib_prof.h"
-#include "sctk_asm.h"
+#include "mpc_common_asm.h"
 #include "utlist.h"
 #include "sctk_ib_mpi.h"
 #include "sctk_ib_rdma.h"

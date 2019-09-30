@@ -42,9 +42,9 @@
 #ifdef MPC_Message_Passing
 #include <sctk_inter_thread_comm.h>
 #include <sctk_communicator.h>
-#include "sctk_asm.h"
+#include "mpc_common_asm.h"
 #endif
-#include "sctk_asm.h"
+#include "mpc_common_asm.h"
 
 
 #if !defined(HAVE_PTHREAD_CREATE)

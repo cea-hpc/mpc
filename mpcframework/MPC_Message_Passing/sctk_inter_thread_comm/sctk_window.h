@@ -23,7 +23,7 @@
 #ifndef SCTK_WINDOW_H
 #define SCTK_WINDOW_H
 
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include "sctk_rail.h"
 #include "sctk_rdma.h"
 #include "mpc_common_spinlock.h"

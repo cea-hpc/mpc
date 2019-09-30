@@ -44,8 +44,8 @@
 #include "sctk_ib_prof.h"
 #include "sctk_ib_cp.h"
 #include "sctk_ib_prof.h"
-#include "sctk_atomics.h"
-#include "sctk_asm.h"
+#include "mpc_common_asm.h"
+#include "mpc_common_asm.h"
 
 /** array of VPS, for remembering __thread vars to reset when rail is re-enabled */
 volatile char *vps_reset = NULL;

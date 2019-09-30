@@ -26,7 +26,7 @@
 #include "mpc_mpi.h"
 #include "mpi_alloc_mem.h"
 #include "mpi_rma_epoch.h"
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include "sctk_buffered_fifo.h"
 #include "sctk_ht.h"
 #include "mpc_common_spinlock.h"

@@ -1,6 +1,6 @@
 #include "mpcomp_types.h"
 #include "mpcomp_core.h"
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include "mpcomp_barrier.h"
 
 #include "mpcomp_alloc.h"

@@ -32,7 +32,7 @@
 
 #include "sctk_debug.h"
 #include "machine_info.h"
-#include "mpc_common_io_helper.h"
+#include "mpc_common_helper.h"
 #include "mpc_common_rank.h"
 
 #include "topology_render.h"

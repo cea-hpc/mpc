@@ -23,7 +23,7 @@
 #define __SCTK_COMMUNICATOR_H_
 
 #include <sctk_types.h>
-#include <sctk_atomics.h>
+#include <mpc_common_asm.h>
 #include <mpc_common_spinlock.h>
 
 #include <mpc_common_rank.h>

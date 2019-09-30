@@ -28,8 +28,8 @@
 
 #include "mpcomp.h"
 #include "sctk.h"
-#include "sctk_atomics.h"
-#include "sctk_asm.h"
+#include "mpc_common_asm.h"
+#include "mpc_common_asm.h"
 #include "sctk_context.h"
 #include "sctk_tls.h"
 
@@ -38,7 +38,7 @@
 #include "sctk_debug.h"
 
 #ifdef MPCOMP_USE_MCS_LOCK
-#include "sctk_mcslock.h"
+#include "mpc_common_spinlock.h"
 #else /* MPCOMP_USE_MCS_LOCK */
 #include "mpc_common_spinlock.h"
 #endif /* MPCOMP_USE_MCS_LOCK */

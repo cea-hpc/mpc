@@ -24,7 +24,7 @@
 #define MPC_DATATYPES_H
 
 #include "mpcmp.h" /* mpc_pack_absolute_indexes_t */
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include "sctk_collective_communications.h" /* sctk_datatype_t */
 #include "sctk_ht.h"
 #include "mpc_common_spinlock.h"

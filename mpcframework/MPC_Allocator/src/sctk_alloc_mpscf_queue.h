@@ -46,7 +46,7 @@
 
 /********************************* MACROS ***********************************/
 #ifdef MPC_Common
-	#include <sctk_atomics.h>
+	#include <mpc_common_asm.h>
 #elif defined(_WIN32)
 	#include <Windows.h>
 	//define the equiavelent of OPA_ptr_t for windows VCC

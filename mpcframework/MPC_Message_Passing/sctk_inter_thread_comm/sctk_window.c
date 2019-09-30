@@ -25,7 +25,7 @@
 #include "sctk_inter_thread_comm.h"
 #include "uthash.h"
 #include <sctk_alloc.h>
-#include <sctk_atomics.h>
+#include <mpc_common_asm.h>
 #include <sctk_control_messages.h>
 #include <mpc_common_spinlock.h>
 #include <sctk_wchar.h>

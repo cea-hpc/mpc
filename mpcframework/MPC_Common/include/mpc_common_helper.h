@@ -80,6 +80,13 @@
 
 #define MPC_COMMON_MAX_STRING_SIZE  512
 
+/*************
+ * MIN & MAX *
+ *************/
+
+#define sctk_max( a, b ) ( ( a ) > ( b ) ? ( a ) : ( b ) )
+#define sctk_min( a, b ) ( ( a ) < ( b ) ? ( a ) : ( b ) )
+
 /***********************
  * COMMON IO FUNCTIONS *
  ***********************/

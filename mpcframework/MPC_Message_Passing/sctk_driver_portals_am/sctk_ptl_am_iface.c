@@ -26,11 +26,11 @@
 #include <limits.h>
 #include "sctk_debug.h"
 #include "sctk_alloc.h"
-#include "mpc_common_io_helper.h"
+#include "mpc_common_helper.h"
 #include "ptl_layer.h"
 #include "sctk_ptl_am_iface.h"
 #include "sctk_ptl_am_types.h"
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include "sctk_pmi.h"
 #include "sctk_accessor.h"
 

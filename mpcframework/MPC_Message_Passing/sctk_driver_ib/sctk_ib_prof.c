@@ -29,7 +29,7 @@
 #include "sctk_ib.h"
 #include "sctk_ib_config.h"
 #include "sctk_ib_qp.h"
-#include "sctk_asm.h"
+#include "mpc_common_asm.h"
 #include "utlist.h"
 #include "sctk_route.h"
 #include "sctk_ib_prof.h"

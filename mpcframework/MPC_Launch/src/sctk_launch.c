@@ -42,8 +42,8 @@
 #include "sctk_launch.h"
 #include "sctk_debug.h"
 #include "sctk_config.h"
-#include "sctk_asm.h"
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
+#include "mpc_common_asm.h"
 #ifdef MPC_Message_Passing
 	#include "sctk_inter_thread_comm.h"
 	#include "sctk_low_level_comm.h"
@@ -53,7 +53,7 @@
 #include "sctk_window.h"
 #endif /* MPC_Message_Passing */
 #include "mpc_common_topology.h"
-#include "sctk_asm.h"
+#include "mpc_common_asm.h"
 /* #include "sctk_daemons.h" */
 /* #include "sctk_io.h" */
 #include "sctk_runtime_config.h"

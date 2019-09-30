@@ -26,8 +26,8 @@
 #include "sctk_debug.h"
 #include "sctk_profiler_array.h"
 #include "sctk_profile_meta.h"
-#include "sctk_asm.h"
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
+#include "mpc_common_asm.h"
 
 /* Profiler internal interface */
 

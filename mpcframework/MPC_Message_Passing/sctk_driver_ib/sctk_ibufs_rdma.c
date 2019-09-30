@@ -32,7 +32,7 @@
 #include "sctk_ib_prof.h"
 #include "sctk_ibufs_rdma.h"
 #include "sctk_ib.h"
-#include "sctk_asm.h"
+#include "mpc_common_asm.h"
 #include "sctk_ib_eager.h"
 #include "sctk_ib_rdma.h"
 #include "sctk_ib_config.h"

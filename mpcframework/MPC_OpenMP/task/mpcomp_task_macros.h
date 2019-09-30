@@ -3,7 +3,7 @@
 #if (!defined(__MPCOMP_TASK_MACROS_H__) && MPCOMP_TASK)
 #define __MPCOMP_TASK_MACROS_H__
 
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include "mpcomp_types.h"
 #include "mpcomp_task.h"
 

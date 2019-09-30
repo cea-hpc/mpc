@@ -25,7 +25,7 @@
 #ifndef __MPCOMP_TASGROUP_H__
 #define __MPCOMP_TASGROUP_H__
 
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include "mpcomp_types.h"
 #define MPCOMP_TASKGROUP
 

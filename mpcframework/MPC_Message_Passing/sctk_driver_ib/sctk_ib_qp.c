@@ -32,7 +32,7 @@
 #include "sctk_ib_prof.h"
 #include "sctk_ib_polling.h"
 #include "mpc_launch_pmi.h"
-#include "sctk_asm.h"
+#include "mpc_common_asm.h"
 #include "utlist.h"
 #include "sctk_ib_mpi.h"
 #include <mpc_common_spinlock.h>

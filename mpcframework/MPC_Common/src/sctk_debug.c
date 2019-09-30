@@ -43,7 +43,7 @@
 #include "sctk.h"
 
 
-#include "mpc_common_io_helper.h"
+#include "mpc_common_helper.h"
 #include "sctk_runtime_config.h"
 
 #ifdef MPC_Debugger

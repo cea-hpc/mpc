@@ -23,7 +23,7 @@
 
 #include <mpc_launch_pmi.h>
 
-#include <mpc_common_io_helper.h>
+#include <mpc_common_helper.h>
 #include <mpc_common_rank.h>
 
 #include "sctk_alloc.h"

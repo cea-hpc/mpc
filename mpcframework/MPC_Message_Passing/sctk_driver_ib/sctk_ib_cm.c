@@ -31,7 +31,7 @@
 #include "sctk_ib_prof.h"
 #include "sctk_ibufs_rdma.h"
 #include "sctk_route.h"
-#include "sctk_asm.h"
+#include "mpc_common_asm.h"
 
 /* IB debug macros */
 #if defined SCTK_IB_MODULE_NAME

@@ -36,7 +36,7 @@ extern "C"
 #include <sctk_route.h>
 #include <sctk_ibufs.h>
 #include <mpc_common_spinlock.h>
-#include <mpc_common_io_helper.h>
+#include <mpc_common_helper.h>
 
 
 struct sctk_ibuf_s;

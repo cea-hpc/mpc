@@ -26,7 +26,7 @@
 
 #include "sctk_route.h"
 #include "sctk_net_tools.h"
-#include "mpc_common_io_helper.h" /* for MPC_COMMON_MAX_STRING_SIZE */
+#include "mpc_common_helper.h" /* for MPC_COMMON_MAX_STRING_SIZE */
 #include "sctk_ptl_am_types.h"
 #include "sctk_ptl_am_iface.h"
 #include "sctk_ptl_am_toolkit.h"

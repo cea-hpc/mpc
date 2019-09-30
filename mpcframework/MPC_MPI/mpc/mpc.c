@@ -31,7 +31,7 @@
 #include "mpcthread.h"
 #include "sctk.h"
 #include "sctk_accessor.h"
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include "sctk_collective_communications.h"
 #include "sctk_communicator.h"
 #include "sctk_debug.h"

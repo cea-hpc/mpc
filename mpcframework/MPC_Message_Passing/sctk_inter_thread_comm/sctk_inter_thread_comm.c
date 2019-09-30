@@ -29,7 +29,7 @@
 #include <uthash.h>
 #include <utlist.h>
 #include <string.h>
-#include <sctk_asm.h>
+#include <mpc_common_asm.h>
 #include <sctk_checksum.h>
 #include <sctk_reorder.h>
 #include <sctk_control_messages.h>

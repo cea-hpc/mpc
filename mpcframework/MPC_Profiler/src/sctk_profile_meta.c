@@ -24,7 +24,7 @@
 
 #include "sctk_debug.h"
 #include "mpc_mpi.h"
-#include "sctk_asm.h"
+#include "mpc_common_asm.h"
 
 
 void sctk_profile_meta_calibrate_begin(struct sctk_profile_meta *meta)

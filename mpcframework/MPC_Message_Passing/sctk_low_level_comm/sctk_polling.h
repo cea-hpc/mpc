@@ -24,7 +24,7 @@
 
 #include "sctk_debug.h"
 #include "mpc_common_spinlock.h"
-#include <sctk_atomics.h>
+#include <mpc_common_asm.h>
 #include <sctk_runtime_config_struct.h>
 
 struct sctk_polling_cell

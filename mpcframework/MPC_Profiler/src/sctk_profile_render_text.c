@@ -21,7 +21,7 @@
 /* ######################################################################## */
 
 #include "sctk_profile_render_text.h"
-#include "mpc_common_io_helper.h"
+#include "mpc_common_helper.h"
 #include <stdlib.h>
 
 #include "sctk_debug.h"

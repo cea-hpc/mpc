@@ -7,7 +7,7 @@
 #include "mpcomp_alloc.h"
 
 #include "mpcthread.h"
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include "mpcomp_types.h"
 #include "mpcomp_tree_array.h"
 #include "mpcomp_tree_structs.h"

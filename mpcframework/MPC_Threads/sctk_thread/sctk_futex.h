@@ -25,7 +25,7 @@
 #include "sctk_buffered_fifo.h"
 #include "sctk_ht.h"
 #include "mpc_common_spinlock.h"
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include "sctk_futex_def.h"
 
 /************************************************************************/

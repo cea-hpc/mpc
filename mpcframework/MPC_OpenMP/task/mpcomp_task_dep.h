@@ -6,8 +6,8 @@
 
 #include <sctk_bool.h>
 #include <sctk_int.h>
-#include <sctk_asm.h>
-#include <sctk_atomics.h>
+#include <mpc_common_asm.h>
+#include <mpc_common_asm.h>
 
 #define MPCOMP_TASK_DEP_GOMP_DEPS_FLAG 8
 

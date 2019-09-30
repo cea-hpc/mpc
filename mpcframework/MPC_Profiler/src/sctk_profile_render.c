@@ -27,7 +27,7 @@
 
 #include "sctk_profiler_array.h"
 #include "sctk_debug.h"
-#include "sctk_asm.h"
+#include "mpc_common_asm.h"
 
 /* Profile renderer list */
 #include "sctk_internal_profiler.h"

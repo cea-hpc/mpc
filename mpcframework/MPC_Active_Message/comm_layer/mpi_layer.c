@@ -26,7 +26,7 @@
 
 #ifdef MPC_Active_Message
 #include <sctk_alloc.h>
-#include <sctk_atomics.h>
+#include <mpc_common_asm.h>
 #include <sctk_debug.h>
 #else
 #include <stdlib.h>

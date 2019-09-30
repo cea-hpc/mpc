@@ -28,7 +28,7 @@
 #include <sctk_collective_communications.h>
 #include <sctk_reorder.h>
 #include <sctk_ib.h>
-#include <sctk_atomics.h>
+#include <mpc_common_asm.h>
 #include <sctk_types.h>
 #include <sctk_portals.h>
 #ifdef __cplusplus

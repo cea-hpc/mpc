@@ -23,7 +23,7 @@
 #include "sctk_ib_mmu.h"
 #include "sctk_ib_device.h"
 #include "sctk_runtime_config.h"
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 
 #include <infiniband/verbs.h>
 #include <stdlib.h>

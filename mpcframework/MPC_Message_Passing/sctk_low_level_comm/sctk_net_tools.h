@@ -27,7 +27,7 @@ extern "C"
 #endif
 
 #include "sctk_low_level_comm.h"
-#include "mpc_common_io_helper.h"
+#include "mpc_common_helper.h"
 #include <sys/uio.h>
 
 /* IOVEC NET FUNCS */

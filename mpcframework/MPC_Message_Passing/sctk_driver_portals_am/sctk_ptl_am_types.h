@@ -28,8 +28,8 @@
 
 #include <portals4.h>
 #include "mpc_common_spinlock.h"
-#include "mpc_common_io_helper.h"
-#include "sctk_atomics.h"
+#include "mpc_common_helper.h"
+#include "mpc_common_asm.h"
 
 /** Helper to find the struct base address, based on the address on a given member */
 #define container_of(ptr, type, member) ({ \

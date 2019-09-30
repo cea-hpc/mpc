@@ -34,7 +34,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sctk.h>
-#include <sctk_asm.h>
+#include <mpc_common_asm.h>
 #include <netdb.h>
 #include <mpc_common_spinlock.h>
 #include <sctk_net_tools.h>
@@ -48,7 +48,7 @@
 #include <sctk_ib_prof.h>
 #include <sctk_route.h>
 #include <sctk_ibufs_rdma.h>
-#include <mpc_common_io_helper.h>
+#include <mpc_common_helper.h>
 
 /* Initialize a new route table */
 void sctk_ib_init_remote ( int dest, sctk_rail_info_t *rail, struct sctk_endpoint_s *route_table, int ondemand )

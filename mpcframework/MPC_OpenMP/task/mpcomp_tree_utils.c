@@ -4,7 +4,7 @@
 #if( MPCOMP_TASK || defined( MPCOMP_OPENMP_3_0 ) )
 
 #include "sctk_debug.h"
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include "mpcomp_types.h"
 #include "mpcomp_tree_utils.h"
 #include "mpcomp_task_macros.h"

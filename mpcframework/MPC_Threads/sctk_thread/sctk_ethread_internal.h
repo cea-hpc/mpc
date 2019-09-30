@@ -35,7 +35,7 @@
 #include "sctk_thread_dbg.h"
 #endif
 #include "sched.h"
-#include "sctk_asm.h"
+#include "mpc_common_asm.h"
 #include "sctk.h"
 #include "sctk_runtime_config.h"
 #ifdef MPC_Message_Passing

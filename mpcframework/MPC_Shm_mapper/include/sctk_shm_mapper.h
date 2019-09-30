@@ -25,7 +25,7 @@
 #define SCTK_SHM_MAPPER_H
 
 /************************** HEADERS ************************/
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include "sctk_bool.h"
 #include <stdio.h>
 #include <stdlib.h>

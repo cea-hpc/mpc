@@ -20,7 +20,7 @@
 /* #   - COTTRET Maxime maxime.cottret@sogeti.com                         # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include <unistd.h>
 #include <sys/time.h>
 

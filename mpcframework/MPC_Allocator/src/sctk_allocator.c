@@ -69,7 +69,7 @@
 
 //usage of safe write in MPC
 #ifdef MPC_Common
-	#include "mpc_common_io_helper.h"
+	#include "mpc_common_helper.h"
 #else //MPC_Common
 	#define mpc_common_io_safe_write(fd,buf,count) write((fd),(buf),(count))
 #endif //MPC_Common

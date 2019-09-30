@@ -29,8 +29,8 @@
 #include <portals4.h>
 #include <stddef.h>
 #include "sctk_ht.h"
-#include "mpc_common_io_helper.h"
-#include "sctk_atomics.h"
+#include "mpc_common_helper.h"
+#include "mpc_common_asm.h"
 
 /** Helper to find the struct base address, based on the address on a given member */
 #ifndef container_of

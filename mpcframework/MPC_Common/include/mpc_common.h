@@ -29,7 +29,7 @@
 #define MPC_COMMON_INCLUDE_MPC_COMMON_H_
 
 
-#include <mpc_common_io_helper.h>
+#include <mpc_common_helper.h>
 #include <mpc_common_rank.h>
 #include <mpc_common_topology.h>
 

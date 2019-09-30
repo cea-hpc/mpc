@@ -25,7 +25,7 @@
 
 #include "ompt.h"
 #include "mpcomp_types.h"
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include "mpcomp_types.h"
 #include "mpcomp_ompt_specific.h"
 #include "mpcomp_ompt_types_internal.h"

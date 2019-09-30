@@ -23,7 +23,7 @@
 #ifndef MPI_ALLOC_MEM_H
 #define MPI_ALLOC_MEM_H
 
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 #include "sctk_bit_array.h"
 #include "sctk_ht.h"
 #include "mpc_common_spinlock.h"

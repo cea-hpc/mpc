@@ -1,6 +1,6 @@
 #include <sctk_bool.h>
 #include <sctk_int.h>
-#include <sctk_asm.h>
+#include <mpc_common_asm.h>
 #include "mpcomp_types.h"
 #include "sctk_runtime_config_struct.h"
 
@@ -15,7 +15,7 @@
 
 #include "mpcomp_task_dep.h"
 #include "MurmurHash_64.h"
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 
 #include "sctk_debug.h"
 #include "mpcomp_task_utils.h"

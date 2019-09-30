@@ -28,7 +28,7 @@
 #include "sctk_route.h"
 #include "sctk_ptl_rdma.h"
 #include "sctk_ptl_iface.h"
-#include "sctk_atomics.h"
+#include "mpc_common_asm.h"
 
 /**
  * Global pointer to the RDMA PT entry.

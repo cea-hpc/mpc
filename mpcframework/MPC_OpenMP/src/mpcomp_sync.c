@@ -31,7 +31,7 @@
 
 #include "mpcomp_alloc.h"
 #include "sched.h"
-#include "sctk_asm.h"
+#include "mpc_common_asm.h"
 #include "sctk_thread.h"
 
 extern ompt_callback_t* OMPT_Callbacks;

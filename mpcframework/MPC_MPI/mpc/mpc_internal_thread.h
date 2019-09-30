@@ -23,7 +23,7 @@
 #ifndef MPC_INTERNAL_THREAD_H
 #define MPC_INTERNAL_THREAD_H
 
-#include <sctk_atomics.h>
+#include <mpc_common_asm.h>
 
 struct sctk_task_specific_s;
 struct sctk_thread_specific_s;
