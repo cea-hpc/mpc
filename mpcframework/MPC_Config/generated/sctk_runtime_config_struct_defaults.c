@@ -764,6 +764,594 @@ void sctk_runtime_config_struct_init_ft(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_collectives_shm_shared(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_collectives_shm_shared * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->barrier_intra_shared_node.name = "__INTERNAL__PMPI_Barrier_intra_shared_node";
+	*(void **) &(obj->barrier_intra_shared_node.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_intra_shared_node");
+	obj->bcast_intra_shared_node.name = "__INTERNAL__PMPI_Bcast_intra_shared_node";
+	*(void **) &(obj->bcast_intra_shared_node.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Bcast_intra_shared_node");
+	obj->alltoall_intra_shared_node.name = "__INTERNAL__PMPI_Alltoall_intra_shared_node";
+	*(void **) &(obj->alltoall_intra_shared_node.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoall_intra_shared_node");
+	obj->scatter_intra_shared_node.name = "__INTERNAL__PMPI_Scatter_intra_shared_node";
+	*(void **) &(obj->scatter_intra_shared_node.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatter_intra_shared_node");
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_collectives_shm(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_collectives_shm * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->barrier_intra_shm.name = "__INTERNAL__PMPI_Barrier_intra_shm";
+	*(void **) &(obj->barrier_intra_shm.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_intra_shm");
+	obj->bcast_intra_shm.name = "__INTERNAL__PMPI_Bcast_intra_shm";
+	*(void **) &(obj->bcast_intra_shm.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Bcast_intra_shm");
+	obj->alltoallv_intra_shm.name = "__INTERNAL__PMPI_Alltoallv_intra_shm";
+	*(void **) &(obj->alltoallv_intra_shm.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallv_intra_shm");
+	obj->gatherv_intra_shm.name = "__INTERNAL__PMPI_Gatherv_intra_shm";
+	*(void **) &(obj->gatherv_intra_shm.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gatherv_intra_shm");
+	obj->scatterv_intra_shm.name = "__INTERNAL__PMPI_Scatterv_intra_shm";
+	*(void **) &(obj->scatterv_intra_shm.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatterv_intra_shm");
+	obj->reduce_intra_shm.name = "__INTERNAL__PMPI_Reduce_shm";
+	*(void **) &(obj->reduce_intra_shm.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_shm");
+	obj->topo_tree_arity = -1;
+
+#ifdef MPC_MPI
+		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_TOPO_TREE_ARITY" , &the_temp_index ) == MPI_SUCCESS )
+		{
+			the_cvar = MPI_T_cvars_array_get( the_temp_index );
+
+			
+			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
+			obj->topo_tree_arity ) )
+			{
+				fprintf(stderr,"Error size mismatch for MPI_COLL_TOPO_TREE_ARITY");
+				abort();	
+			}
+
+			if( the_cvar )
+			{
+									MPC_T_data_alias(&the_cvar->data, &obj->topo_tree_arity);
+	
+			}
+			else
+			{
+				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_TOPO_TREE_ARITY");
+				abort();
+			}
+		
+		}
+		else
+		{
+			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_TOPO_TREE_ARITY");
+			abort();
+		}
+#endif
+				obj->topo_tree_dump = false;
+
+#ifdef MPC_MPI
+		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_TOPO_TREE_DUMP" , &the_temp_index ) == MPI_SUCCESS )
+		{
+			the_cvar = MPI_T_cvars_array_get( the_temp_index );
+
+			
+			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
+			obj->topo_tree_dump ) )
+			{
+				fprintf(stderr,"Error size mismatch for MPI_COLL_TOPO_TREE_DUMP");
+				abort();	
+			}
+
+			if( the_cvar )
+			{
+									MPC_T_data_alias(&the_cvar->data, &obj->topo_tree_dump);
+	
+			}
+			else
+			{
+				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_TOPO_TREE_DUMP");
+				abort();
+			}
+		
+		}
+		else
+		{
+			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_TOPO_TREE_DUMP");
+			abort();
+		}
+#endif
+				obj->coll_force_nocommute = false;
+
+#ifdef MPC_MPI
+		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_NO_COMMUTE" , &the_temp_index ) == MPI_SUCCESS )
+		{
+			the_cvar = MPI_T_cvars_array_get( the_temp_index );
+
+			
+			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
+			obj->coll_force_nocommute ) )
+			{
+				fprintf(stderr,"Error size mismatch for MPI_COLL_NO_COMMUTE");
+				abort();	
+			}
+
+			if( the_cvar )
+			{
+									MPC_T_data_alias(&the_cvar->data, &obj->coll_force_nocommute);
+	
+			}
+			else
+			{
+				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_NO_COMMUTE");
+				abort();
+			}
+		
+		}
+		else
+		{
+			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_NO_COMMUTE");
+			abort();
+		}
+#endif
+				obj->reduce_pipelined_blocks = 16;
+
+#ifdef MPC_MPI
+		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_REDUCE_PIPELINED_BLOCKS" , &the_temp_index ) == MPI_SUCCESS )
+		{
+			the_cvar = MPI_T_cvars_array_get( the_temp_index );
+
+			
+			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
+			obj->reduce_pipelined_blocks ) )
+			{
+				fprintf(stderr,"Error size mismatch for MPI_COLL_REDUCE_PIPELINED_BLOCKS");
+				abort();	
+			}
+
+			if( the_cvar )
+			{
+									MPC_T_data_alias(&the_cvar->data, &obj->reduce_pipelined_blocks);
+	
+			}
+			else
+			{
+				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_REDUCE_PIPELINED_BLOCKS");
+				abort();
+			}
+		
+		}
+		else
+		{
+			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_REDUCE_PIPELINED_BLOCKS");
+			abort();
+		}
+#endif
+				obj->reduce_pipelined_tresh = sctk_runtime_config_map_entry_parse_size("1KB");
+
+#ifdef MPC_MPI
+		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_REDUCE_INTERLEAVE_TRSH" , &the_temp_index ) == MPI_SUCCESS )
+		{
+			the_cvar = MPI_T_cvars_array_get( the_temp_index );
+
+			
+			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
+			obj->reduce_pipelined_tresh ) )
+			{
+				fprintf(stderr,"Error size mismatch for MPI_COLL_REDUCE_INTERLEAVE_TRSH");
+				abort();	
+			}
+
+			if( the_cvar )
+			{
+									MPC_T_data_alias(&the_cvar->data, &obj->reduce_pipelined_tresh);
+	
+			}
+			else
+			{
+				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_REDUCE_INTERLEAVE_TRSH");
+				abort();
+			}
+		
+		}
+		else
+		{
+			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_REDUCE_INTERLEAVE_TRSH");
+			abort();
+		}
+#endif
+				obj->reduce_interleave = 8;
+
+#ifdef MPC_MPI
+		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_REDUCE_INTERLEAVE" , &the_temp_index ) == MPI_SUCCESS )
+		{
+			the_cvar = MPI_T_cvars_array_get( the_temp_index );
+
+			
+			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
+			obj->reduce_interleave ) )
+			{
+				fprintf(stderr,"Error size mismatch for MPI_COLL_REDUCE_INTERLEAVE");
+				abort();	
+			}
+
+			if( the_cvar )
+			{
+									MPC_T_data_alias(&the_cvar->data, &obj->reduce_interleave);
+	
+			}
+			else
+			{
+				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_REDUCE_INTERLEAVE");
+				abort();
+			}
+		
+		}
+		else
+		{
+			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_REDUCE_INTERLEAVE");
+			abort();
+		}
+#endif
+				obj->bcast_interleave = 8;
+
+#ifdef MPC_MPI
+		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_BCAST_INTERLEAVE" , &the_temp_index ) == MPI_SUCCESS )
+		{
+			the_cvar = MPI_T_cvars_array_get( the_temp_index );
+
+			
+			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
+			obj->bcast_interleave ) )
+			{
+				fprintf(stderr,"Error size mismatch for MPI_COLL_BCAST_INTERLEAVE");
+				abort();	
+			}
+
+			if( the_cvar )
+			{
+									MPC_T_data_alias(&the_cvar->data, &obj->bcast_interleave);
+	
+			}
+			else
+			{
+				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_BCAST_INTERLEAVE");
+				abort();
+			}
+		
+		}
+		else
+		{
+			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_BCAST_INTERLEAVE");
+			abort();
+		}
+#endif
+				obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_collectives_intra(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_collectives_intra * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->barrier_intra.name = "__INTERNAL__PMPI_Barrier_intra";
+	*(void **) &(obj->barrier_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_intra");
+	obj->barrier_intra_for_trsh = 33;
+
+#ifdef MPC_MPI
+		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_BARRIER_FOR_TRSH" , &the_temp_index ) == MPI_SUCCESS )
+		{
+			the_cvar = MPI_T_cvars_array_get( the_temp_index );
+
+			
+			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
+			obj->barrier_intra_for_trsh ) )
+			{
+				fprintf(stderr,"Error size mismatch for MPI_COLL_BARRIER_FOR_TRSH");
+				abort();	
+			}
+
+			if( the_cvar )
+			{
+									MPC_T_data_alias(&the_cvar->data, &obj->barrier_intra_for_trsh);
+	
+			}
+			else
+			{
+				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_BARRIER_FOR_TRSH");
+				abort();
+			}
+		
+		}
+		else
+		{
+			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_BARRIER_FOR_TRSH");
+			abort();
+		}
+#endif
+				obj->bcast_intra.name = "__INTERNAL__PMPI_Bcast_intra";
+	*(void **) &(obj->bcast_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Bcast_intra");
+	obj->bcast_intra_for_trsh = 33;
+
+#ifdef MPC_MPI
+		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_BCAST_FOR_TRSH" , &the_temp_index ) == MPI_SUCCESS )
+		{
+			the_cvar = MPI_T_cvars_array_get( the_temp_index );
+
+			
+			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
+			obj->bcast_intra_for_trsh ) )
+			{
+				fprintf(stderr,"Error size mismatch for MPI_COLL_BCAST_FOR_TRSH");
+				abort();	
+			}
+
+			if( the_cvar )
+			{
+									MPC_T_data_alias(&the_cvar->data, &obj->bcast_intra_for_trsh);
+	
+			}
+			else
+			{
+				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_BCAST_FOR_TRSH");
+				abort();
+			}
+		
+		}
+		else
+		{
+			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_BCAST_FOR_TRSH");
+			abort();
+		}
+#endif
+				obj->bcast_intra_for_count_trsh = 1024;
+
+#ifdef MPC_MPI
+		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_BCAST_FOR_ELEM_TRSH" , &the_temp_index ) == MPI_SUCCESS )
+		{
+			the_cvar = MPI_T_cvars_array_get( the_temp_index );
+
+			
+			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
+			obj->bcast_intra_for_count_trsh ) )
+			{
+				fprintf(stderr,"Error size mismatch for MPI_COLL_BCAST_FOR_ELEM_TRSH");
+				abort();	
+			}
+
+			if( the_cvar )
+			{
+									MPC_T_data_alias(&the_cvar->data, &obj->bcast_intra_for_count_trsh);
+	
+			}
+			else
+			{
+				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_BCAST_FOR_ELEM_TRSH");
+				abort();
+			}
+		
+		}
+		else
+		{
+			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_BCAST_FOR_ELEM_TRSH");
+			abort();
+		}
+#endif
+				obj->allgather_intra.name = "__INTERNAL__PMPI_Allgather_intra";
+	*(void **) &(obj->allgather_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgather_intra");
+	obj->allgatherv_intra.name = "__INTERNAL__PMPI_Allgatherv_intra";
+	*(void **) &(obj->allgatherv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgatherv_intra");
+	obj->alltoall_intra.name = "__INTERNAL__PMPI_Alltoall_intra";
+	*(void **) &(obj->alltoall_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoall_intra");
+	obj->alltoallv_intra.name = "__INTERNAL__PMPI_Alltoallv_intra";
+	*(void **) &(obj->alltoallv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallv_intra");
+	obj->alltoallw_intra.name = "__INTERNAL__PMPI_Alltoallw_intra";
+	*(void **) &(obj->alltoallw_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallw_intra");
+	obj->gather_intra.name = "__INTERNAL__PMPI_Gather_intra";
+	*(void **) &(obj->gather_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gather_intra");
+	obj->gatherv_intra.name = "__INTERNAL__PMPI_Gatherv_intra";
+	*(void **) &(obj->gatherv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gatherv_intra");
+	obj->scatter_intra.name = "__INTERNAL__PMPI_Scatter_intra";
+	*(void **) &(obj->scatter_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatter_intra");
+	obj->scatterv_intra.name = "__INTERNAL__PMPI_Scatterv_intra";
+	*(void **) &(obj->scatterv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatterv_intra");
+	obj->scan_intra.name = "__INTERNAL__PMPI_Scan_intra";
+	*(void **) &(obj->scan_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scan_intra");
+	obj->exscan_intra.name = "__INTERNAL__PMPI_Exscan_intra";
+	*(void **) &(obj->exscan_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Exscan_intra");
+	obj->reduce_intra.name = "__INTERNAL__PMPI_Reduce_intra";
+	*(void **) &(obj->reduce_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_intra");
+	obj->reduce_intra_for_trsh = 33;
+
+#ifdef MPC_MPI
+		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_REDUCE_FOR_TRSH" , &the_temp_index ) == MPI_SUCCESS )
+		{
+			the_cvar = MPI_T_cvars_array_get( the_temp_index );
+
+			
+			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
+			obj->reduce_intra_for_trsh ) )
+			{
+				fprintf(stderr,"Error size mismatch for MPI_COLL_REDUCE_FOR_TRSH");
+				abort();	
+			}
+
+			if( the_cvar )
+			{
+									MPC_T_data_alias(&the_cvar->data, &obj->reduce_intra_for_trsh);
+	
+			}
+			else
+			{
+				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_REDUCE_FOR_TRSH");
+				abort();
+			}
+		
+		}
+		else
+		{
+			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_REDUCE_FOR_TRSH");
+			abort();
+		}
+#endif
+				obj->reduce_intra_for_count_trsh = 1024;
+
+#ifdef MPC_MPI
+		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_REDUCE_FOR_ELEM_TRSH" , &the_temp_index ) == MPI_SUCCESS )
+		{
+			the_cvar = MPI_T_cvars_array_get( the_temp_index );
+
+			
+			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
+			obj->reduce_intra_for_count_trsh ) )
+			{
+				fprintf(stderr,"Error size mismatch for MPI_COLL_REDUCE_FOR_ELEM_TRSH");
+				abort();	
+			}
+
+			if( the_cvar )
+			{
+									MPC_T_data_alias(&the_cvar->data, &obj->reduce_intra_for_count_trsh);
+	
+			}
+			else
+			{
+				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_REDUCE_FOR_ELEM_TRSH");
+				abort();
+			}
+		
+		}
+		else
+		{
+			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_REDUCE_FOR_ELEM_TRSH");
+			abort();
+		}
+#endif
+				obj->allreduce_intra.name = "__INTERNAL__PMPI_Allreduce_intra";
+	*(void **) &(obj->allreduce_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allreduce_intra");
+	obj->reduce_scatter_intra.name = "__INTERNAL__PMPI_Reduce_scatter_intra";
+	*(void **) &(obj->reduce_scatter_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_intra");
+	obj->reduce_scatter_block_intra.name = "__INTERNAL__PMPI_Reduce_scatter_block_intra";
+	*(void **) &(obj->reduce_scatter_block_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_block_intra");
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_collectives_inter(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_collectives_inter * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->barrier_inter.name = "__INTERNAL__PMPI_Barrier_inter";
+	*(void **) &(obj->barrier_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_inter");
+	obj->bcast_inter.name = "__INTERNAL__PMPI_Bcast_inter";
+	*(void **) &(obj->bcast_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Bcast_inter");
+	obj->allgather_inter.name = "__INTERNAL__PMPI_Allgather_inter";
+	*(void **) &(obj->allgather_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgather_inter");
+	obj->allgatherv_inter.name = "__INTERNAL__PMPI_Allgatherv_inter";
+	*(void **) &(obj->allgatherv_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgatherv_inter");
+	obj->alltoall_inter.name = "__INTERNAL__PMPI_Alltoall_inter";
+	*(void **) &(obj->alltoall_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoall_inter");
+	obj->alltoallv_inter.name = "__INTERNAL__PMPI_Alltoallv_inter";
+	*(void **) &(obj->alltoallv_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallv_inter");
+	obj->alltoallw_inter.name = "__INTERNAL__PMPI_Alltoallw_inter";
+	*(void **) &(obj->alltoallw_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallw_inter");
+	obj->gather_inter.name = "__INTERNAL__PMPI_Gather_inter";
+	*(void **) &(obj->gather_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gather_inter");
+	obj->gatherv_inter.name = "__INTERNAL__PMPI_Gatherv_inter";
+	*(void **) &(obj->gatherv_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gatherv_inter");
+	obj->scatter_inter.name = "__INTERNAL__PMPI_Scatter_inter";
+	*(void **) &(obj->scatter_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatter_inter");
+	obj->scatterv_inter.name = "__INTERNAL__PMPI_Scatterv_inter";
+	*(void **) &(obj->scatterv_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatterv_inter");
+	obj->reduce_inter.name = "__INTERNAL__PMPI_Reduce_inter";
+	*(void **) &(obj->reduce_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_inter");
+	obj->allreduce_inter.name = "__INTERNAL__PMPI_Allreduce_inter";
+	*(void **) &(obj->allreduce_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allreduce_inter");
+	obj->reduce_scatter_inter.name = "__INTERNAL__PMPI_Reduce_scatter_inter";
+	*(void **) &(obj->reduce_scatter_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_inter");
+	obj->reduce_scatter_block_inter.name = "__INTERNAL__PMPI_Reduce_scatter_block_inter";
+	*(void **) &(obj->reduce_scatter_block_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_block_inter");
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_nbc(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_nbc * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->use_progress_thread = 0;
+	obj->progress_thread_binding.name = "sctk_get_progress_thread_binding_bind";
+	*(void **) &(obj->progress_thread_binding.value) = sctk_runtime_config_get_symbol("sctk_get_progress_thread_binding_bind");
+	obj->use_egreq_bcast = 0;
+	obj->use_egreq_scatter = 0;
+	obj->use_egreq_gather = 0;
+	obj->use_egreq_reduce = 0;
+	obj->use_egreq_barrier = 0;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_mpi_rma(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_mpi_rma * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->alloc_mem_pool_enable = 1;
+	obj->alloc_mem_pool_size = sctk_runtime_config_map_entry_parse_size("1MB");
+	obj->alloc_mem_pool_autodetect = 1;
+	obj->alloc_mem_pool_force_process_linear = 0;
+	obj->alloc_mem_pool_per_process_size = sctk_runtime_config_map_entry_parse_size("1MB");
+	obj->win_thread_pool_max = 2;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_mpc(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_mpc * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->log_debug = false;
+	obj->hard_checking = false;
+	obj->buffering = false;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_net_driver_topological(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_driver_topological * obj = struct_ptr;
@@ -2922,7 +3510,7 @@ void sctk_runtime_config_struct_init_inter_thread_comm(void * struct_ptr)
 			abort();
 		}
 #endif
-				obj->ALLREDUCE_MAX_SLOT = 65536;
+				obj->allreduce_max_slot = 65536;
 
 #ifdef MPC_MPI
 		if( mpc_MPI_T_cvar_get_index( "ITT_ALLREDUCE_MAX_SLOT" , &the_temp_index ) == MPI_SUCCESS )
@@ -2931,7 +3519,7 @@ void sctk_runtime_config_struct_init_inter_thread_comm(void * struct_ptr)
 
 			
 			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->ALLREDUCE_MAX_SLOT ) )
+			obj->allreduce_max_slot ) )
 			{
 				fprintf(stderr,"Error size mismatch for ITT_ALLREDUCE_MAX_SLOT");
 				abort();	
@@ -2939,7 +3527,7 @@ void sctk_runtime_config_struct_init_inter_thread_comm(void * struct_ptr)
 
 			if( the_cvar )
 			{
-									MPC_T_data_alias(&the_cvar->data, &obj->ALLREDUCE_MAX_SLOT);
+									MPC_T_data_alias(&the_cvar->data, &obj->allreduce_max_slot);
 	
 			}
 			else
@@ -2977,594 +3565,6 @@ void sctk_runtime_config_struct_init_low_level_comm(void * struct_ptr)
 	obj->dyn_reordering = false;
 	obj->enable_idle_polling = false;
 	sctk_runtime_config_struct_init_ib_global(&obj->ib_global);
-	obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_collectives_shm_shared(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_collectives_shm_shared * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->barrier_intra_shared_node.name = "__INTERNAL__PMPI_Barrier_intra_shared_node";
-	*(void **) &(obj->barrier_intra_shared_node.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_intra_shared_node");
-	obj->bcast_intra_shared_node.name = "__INTERNAL__PMPI_Bcast_intra_shared_node";
-	*(void **) &(obj->bcast_intra_shared_node.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Bcast_intra_shared_node");
-	obj->alltoall_intra_shared_node.name = "__INTERNAL__PMPI_Alltoall_intra_shared_node";
-	*(void **) &(obj->alltoall_intra_shared_node.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoall_intra_shared_node");
-	obj->scatter_intra_shared_node.name = "__INTERNAL__PMPI_Scatter_intra_shared_node";
-	*(void **) &(obj->scatter_intra_shared_node.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatter_intra_shared_node");
-	obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_collectives_shm(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_collectives_shm * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->barrier_intra_shm.name = "__INTERNAL__PMPI_Barrier_intra_shm";
-	*(void **) &(obj->barrier_intra_shm.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_intra_shm");
-	obj->bcast_intra_shm.name = "__INTERNAL__PMPI_Bcast_intra_shm";
-	*(void **) &(obj->bcast_intra_shm.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Bcast_intra_shm");
-	obj->alltoallv_intra_shm.name = "__INTERNAL__PMPI_Alltoallv_intra_shm";
-	*(void **) &(obj->alltoallv_intra_shm.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallv_intra_shm");
-	obj->gatherv_intra_shm.name = "__INTERNAL__PMPI_Gatherv_intra_shm";
-	*(void **) &(obj->gatherv_intra_shm.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gatherv_intra_shm");
-	obj->scatterv_intra_shm.name = "__INTERNAL__PMPI_Scatterv_intra_shm";
-	*(void **) &(obj->scatterv_intra_shm.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatterv_intra_shm");
-	obj->reduce_intra_shm.name = "__INTERNAL__PMPI_Reduce_shm";
-	*(void **) &(obj->reduce_intra_shm.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_shm");
-	obj->topo_tree_arity = -1;
-
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_TOPO_TREE_ARITY" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->topo_tree_arity ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_TOPO_TREE_ARITY");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->topo_tree_arity);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_TOPO_TREE_ARITY");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_TOPO_TREE_ARITY");
-			abort();
-		}
-#endif
-				obj->topo_tree_dump = false;
-
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_TOPO_TREE_DUMP" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->topo_tree_dump ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_TOPO_TREE_DUMP");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->topo_tree_dump);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_TOPO_TREE_DUMP");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_TOPO_TREE_DUMP");
-			abort();
-		}
-#endif
-				obj->coll_force_nocommute = false;
-
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_NO_COMMUTE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->coll_force_nocommute ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_NO_COMMUTE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->coll_force_nocommute);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_NO_COMMUTE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_NO_COMMUTE");
-			abort();
-		}
-#endif
-				obj->reduce_pipelined_blocks = 16;
-
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_REDUCE_PIPELINED_BLOCKS" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->reduce_pipelined_blocks ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_REDUCE_PIPELINED_BLOCKS");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->reduce_pipelined_blocks);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_REDUCE_PIPELINED_BLOCKS");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_REDUCE_PIPELINED_BLOCKS");
-			abort();
-		}
-#endif
-				obj->reduce_pipelined_tresh = sctk_runtime_config_map_entry_parse_size("1KB");
-
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_REDUCE_INTERLEAVE_TRSH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->reduce_pipelined_tresh ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_REDUCE_INTERLEAVE_TRSH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->reduce_pipelined_tresh);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_REDUCE_INTERLEAVE_TRSH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_REDUCE_INTERLEAVE_TRSH");
-			abort();
-		}
-#endif
-				obj->reduce_interleave = 8;
-
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_REDUCE_INTERLEAVE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->reduce_interleave ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_REDUCE_INTERLEAVE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->reduce_interleave);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_REDUCE_INTERLEAVE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_REDUCE_INTERLEAVE");
-			abort();
-		}
-#endif
-				obj->bcast_interleave = 8;
-
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_BCAST_INTERLEAVE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->bcast_interleave ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_BCAST_INTERLEAVE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->bcast_interleave);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_BCAST_INTERLEAVE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_BCAST_INTERLEAVE");
-			abort();
-		}
-#endif
-				obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_collectives_intra(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_collectives_intra * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->barrier_intra.name = "__INTERNAL__PMPI_Barrier_intra";
-	*(void **) &(obj->barrier_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_intra");
-	obj->barrier_intra_for_trsh = 33;
-
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_BARRIER_FOR_TRSH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->barrier_intra_for_trsh ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_BARRIER_FOR_TRSH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->barrier_intra_for_trsh);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_BARRIER_FOR_TRSH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_BARRIER_FOR_TRSH");
-			abort();
-		}
-#endif
-				obj->bcast_intra.name = "__INTERNAL__PMPI_Bcast_intra";
-	*(void **) &(obj->bcast_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Bcast_intra");
-	obj->bcast_intra_for_trsh = 33;
-
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_BCAST_FOR_TRSH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->bcast_intra_for_trsh ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_BCAST_FOR_TRSH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->bcast_intra_for_trsh);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_BCAST_FOR_TRSH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_BCAST_FOR_TRSH");
-			abort();
-		}
-#endif
-				obj->bcast_intra_for_count_trsh = 1024;
-
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_BCAST_FOR_ELEM_TRSH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->bcast_intra_for_count_trsh ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_BCAST_FOR_ELEM_TRSH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->bcast_intra_for_count_trsh);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_BCAST_FOR_ELEM_TRSH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_BCAST_FOR_ELEM_TRSH");
-			abort();
-		}
-#endif
-				obj->allgather_intra.name = "__INTERNAL__PMPI_Allgather_intra";
-	*(void **) &(obj->allgather_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgather_intra");
-	obj->allgatherv_intra.name = "__INTERNAL__PMPI_Allgatherv_intra";
-	*(void **) &(obj->allgatherv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgatherv_intra");
-	obj->alltoall_intra.name = "__INTERNAL__PMPI_Alltoall_intra";
-	*(void **) &(obj->alltoall_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoall_intra");
-	obj->alltoallv_intra.name = "__INTERNAL__PMPI_Alltoallv_intra";
-	*(void **) &(obj->alltoallv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallv_intra");
-	obj->alltoallw_intra.name = "__INTERNAL__PMPI_Alltoallw_intra";
-	*(void **) &(obj->alltoallw_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallw_intra");
-	obj->gather_intra.name = "__INTERNAL__PMPI_Gather_intra";
-	*(void **) &(obj->gather_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gather_intra");
-	obj->gatherv_intra.name = "__INTERNAL__PMPI_Gatherv_intra";
-	*(void **) &(obj->gatherv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gatherv_intra");
-	obj->scatter_intra.name = "__INTERNAL__PMPI_Scatter_intra";
-	*(void **) &(obj->scatter_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatter_intra");
-	obj->scatterv_intra.name = "__INTERNAL__PMPI_Scatterv_intra";
-	*(void **) &(obj->scatterv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatterv_intra");
-	obj->scan_intra.name = "__INTERNAL__PMPI_Scan_intra";
-	*(void **) &(obj->scan_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scan_intra");
-	obj->exscan_intra.name = "__INTERNAL__PMPI_Exscan_intra";
-	*(void **) &(obj->exscan_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Exscan_intra");
-	obj->reduce_intra.name = "__INTERNAL__PMPI_Reduce_intra";
-	*(void **) &(obj->reduce_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_intra");
-	obj->reduce_intra_for_trsh = 33;
-
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_REDUCE_FOR_TRSH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->reduce_intra_for_trsh ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_REDUCE_FOR_TRSH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->reduce_intra_for_trsh);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_REDUCE_FOR_TRSH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_REDUCE_FOR_TRSH");
-			abort();
-		}
-#endif
-				obj->reduce_intra_for_count_trsh = 1024;
-
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_REDUCE_FOR_ELEM_TRSH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->reduce_intra_for_count_trsh ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_REDUCE_FOR_ELEM_TRSH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->reduce_intra_for_count_trsh);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_REDUCE_FOR_ELEM_TRSH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_REDUCE_FOR_ELEM_TRSH");
-			abort();
-		}
-#endif
-				obj->allreduce_intra.name = "__INTERNAL__PMPI_Allreduce_intra";
-	*(void **) &(obj->allreduce_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allreduce_intra");
-	obj->reduce_scatter_intra.name = "__INTERNAL__PMPI_Reduce_scatter_intra";
-	*(void **) &(obj->reduce_scatter_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_intra");
-	obj->reduce_scatter_block_intra.name = "__INTERNAL__PMPI_Reduce_scatter_block_intra";
-	*(void **) &(obj->reduce_scatter_block_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_block_intra");
-	obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_collectives_inter(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_collectives_inter * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->barrier_inter.name = "__INTERNAL__PMPI_Barrier_inter";
-	*(void **) &(obj->barrier_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_inter");
-	obj->bcast_inter.name = "__INTERNAL__PMPI_Bcast_inter";
-	*(void **) &(obj->bcast_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Bcast_inter");
-	obj->allgather_inter.name = "__INTERNAL__PMPI_Allgather_inter";
-	*(void **) &(obj->allgather_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgather_inter");
-	obj->allgatherv_inter.name = "__INTERNAL__PMPI_Allgatherv_inter";
-	*(void **) &(obj->allgatherv_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgatherv_inter");
-	obj->alltoall_inter.name = "__INTERNAL__PMPI_Alltoall_inter";
-	*(void **) &(obj->alltoall_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoall_inter");
-	obj->alltoallv_inter.name = "__INTERNAL__PMPI_Alltoallv_inter";
-	*(void **) &(obj->alltoallv_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallv_inter");
-	obj->alltoallw_inter.name = "__INTERNAL__PMPI_Alltoallw_inter";
-	*(void **) &(obj->alltoallw_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallw_inter");
-	obj->gather_inter.name = "__INTERNAL__PMPI_Gather_inter";
-	*(void **) &(obj->gather_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gather_inter");
-	obj->gatherv_inter.name = "__INTERNAL__PMPI_Gatherv_inter";
-	*(void **) &(obj->gatherv_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gatherv_inter");
-	obj->scatter_inter.name = "__INTERNAL__PMPI_Scatter_inter";
-	*(void **) &(obj->scatter_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatter_inter");
-	obj->scatterv_inter.name = "__INTERNAL__PMPI_Scatterv_inter";
-	*(void **) &(obj->scatterv_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatterv_inter");
-	obj->reduce_inter.name = "__INTERNAL__PMPI_Reduce_inter";
-	*(void **) &(obj->reduce_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_inter");
-	obj->allreduce_inter.name = "__INTERNAL__PMPI_Allreduce_inter";
-	*(void **) &(obj->allreduce_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allreduce_inter");
-	obj->reduce_scatter_inter.name = "__INTERNAL__PMPI_Reduce_scatter_inter";
-	*(void **) &(obj->reduce_scatter_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_inter");
-	obj->reduce_scatter_block_inter.name = "__INTERNAL__PMPI_Reduce_scatter_block_inter";
-	*(void **) &(obj->reduce_scatter_block_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_block_inter");
-	obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_nbc(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_nbc * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->use_progress_thread = 0;
-	obj->progress_thread_binding.name = "sctk_get_progress_thread_binding_bind";
-	*(void **) &(obj->progress_thread_binding.value) = sctk_runtime_config_get_symbol("sctk_get_progress_thread_binding_bind");
-	obj->use_egreq_bcast = 0;
-	obj->use_egreq_scatter = 0;
-	obj->use_egreq_gather = 0;
-	obj->use_egreq_reduce = 0;
-	obj->use_egreq_barrier = 0;
-	obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_mpi_rma(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_mpi_rma * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->alloc_mem_pool_enable = 1;
-	obj->alloc_mem_pool_size = sctk_runtime_config_map_entry_parse_size("1MB");
-	obj->alloc_mem_pool_autodetect = 1;
-	obj->alloc_mem_pool_force_process_linear = 0;
-	obj->alloc_mem_pool_per_process_size = sctk_runtime_config_map_entry_parse_size("1MB");
-	obj->win_thread_pool_max = 2;
-	obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_mpc(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_mpc * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->log_debug = false;
-	obj->hard_checking = false;
-	obj->buffering = false;
 	obj->init_done = 1;
 }
 
@@ -3740,10 +3740,6 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
 	sctk_runtime_config_struct_init_debugger(&config->modules.debugger);
 	sctk_runtime_config_struct_init_ft(&config->modules.ft_system);
-	sctk_runtime_config_struct_init_inter_thread_comm(&config->modules.inter_thread_comm);
-	sctk_runtime_config_struct_init_low_level_comm(&config->modules.low_level_comm);
-	sctk_runtime_config_enum_init_ibv_rdvz_protocol();
-	sctk_runtime_config_enum_init_rail_topological_polling_level();
 	sctk_runtime_config_struct_init_collectives_shm_shared(&config->modules.collectives_shm_shared);
 	sctk_runtime_config_struct_init_collectives_shm(&config->modules.collectives_shm);
 	sctk_runtime_config_struct_init_collectives_intra(&config->modules.collectives_intra);
@@ -3751,6 +3747,10 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_struct_init_nbc(&config->modules.nbc);
 	sctk_runtime_config_struct_init_mpc(&config->modules.mpc);
 	sctk_runtime_config_struct_init_mpi_rma(&config->modules.rma);
+	sctk_runtime_config_struct_init_inter_thread_comm(&config->modules.inter_thread_comm);
+	sctk_runtime_config_struct_init_low_level_comm(&config->modules.low_level_comm);
+	sctk_runtime_config_enum_init_ibv_rdvz_protocol();
+	sctk_runtime_config_enum_init_rail_topological_polling_level();
 	sctk_runtime_config_struct_init_openmp(&config->modules.openmp);
 	sctk_runtime_config_enum_init_mpcomp_task_larceny_mode_t();
 	sctk_runtime_config_struct_init_profiler(&config->modules.profiler);
@@ -3832,6 +3832,48 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 	if( !strcmp( structname , "sctk_runtime_config_struct_ft") )
 	{
 		sctk_runtime_config_struct_init_ft( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_collectives_shm_shared") )
+	{
+		sctk_runtime_config_struct_init_collectives_shm_shared( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_collectives_shm") )
+	{
+		sctk_runtime_config_struct_init_collectives_shm( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_collectives_intra") )
+	{
+		sctk_runtime_config_struct_init_collectives_intra( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_collectives_inter") )
+	{
+		sctk_runtime_config_struct_init_collectives_inter( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_nbc") )
+	{
+		sctk_runtime_config_struct_init_nbc( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_mpi_rma") )
+	{
+		sctk_runtime_config_struct_init_mpi_rma( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_mpc") )
+	{
+		sctk_runtime_config_struct_init_mpc( ptr );
 		return;
 	}
 
@@ -3958,48 +4000,6 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 	if( !strcmp( structname , "sctk_runtime_config_struct_low_level_comm") )
 	{
 		sctk_runtime_config_struct_init_low_level_comm( ptr );
-		return;
-	}
-
-	if( !strcmp( structname , "sctk_runtime_config_struct_collectives_shm_shared") )
-	{
-		sctk_runtime_config_struct_init_collectives_shm_shared( ptr );
-		return;
-	}
-
-	if( !strcmp( structname , "sctk_runtime_config_struct_collectives_shm") )
-	{
-		sctk_runtime_config_struct_init_collectives_shm( ptr );
-		return;
-	}
-
-	if( !strcmp( structname , "sctk_runtime_config_struct_collectives_intra") )
-	{
-		sctk_runtime_config_struct_init_collectives_intra( ptr );
-		return;
-	}
-
-	if( !strcmp( structname , "sctk_runtime_config_struct_collectives_inter") )
-	{
-		sctk_runtime_config_struct_init_collectives_inter( ptr );
-		return;
-	}
-
-	if( !strcmp( structname , "sctk_runtime_config_struct_nbc") )
-	{
-		sctk_runtime_config_struct_init_nbc( ptr );
-		return;
-	}
-
-	if( !strcmp( structname , "sctk_runtime_config_struct_mpi_rma") )
-	{
-		sctk_runtime_config_struct_init_mpi_rma( ptr );
-		return;
-	}
-
-	if( !strcmp( structname , "sctk_runtime_config_struct_mpc") )
-	{
-		sctk_runtime_config_struct_init_mpc( ptr );
 		return;
 	}
 

@@ -33,14 +33,171 @@ struct sctk_internal_collectives_struct_s;
 /************************************************************************/
 /*collective communication implementation                               */
 /************************************************************************/
-#include <sctk_simple_collective_communications.h>
-#include <sctk_messages_opt_collective_communications.h>
-#include <sctk_messages_hetero_collective_communications.h>
-#include <sctk_messages_opt_noalloc_split_collective_communications.h>
 
-/************************************************************************/
-/*Barrier                                                               */
-/************************************************************************/
+/************************************
+ * SIMPLE COLLECTIVE IMPLEMENTATION *
+ ************************************/
+
+/* Barrier */
+
+typedef struct
+{
+	volatile int done /* = 0 */;
+	sctk_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
+	sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
+} sctk_barrier_simple_t;
+
+void sctk_barrier_simple_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+
+/* Broadcast */
+
+typedef struct
+{
+	volatile int done /* = 0 */;
+	sctk_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
+	sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
+	void *buffer;
+	size_t size;
+} sctk_broadcast_simple_t;
+
+void sctk_broadcast_simple_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+
+/* Allreduce */
+
+typedef struct
+{
+	volatile int done /* = 0 */;
+	sctk_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
+	sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
+	void *buffer;
+	size_t size;
+} sctk_allreduce_simple_t;
+
+void sctk_allreduce_simple_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+
+/* Init */
+
+void sctk_collectives_init_simple ( sctk_communicator_t id );
+
+/*********************************
+ * OPT COLLECTIVE IMPLEMENTATION *
+ *********************************/
+
+/* Barrier */
+
+typedef struct
+{
+	int dummy;
+} sctk_barrier_opt_messages_t;
+
+void sctk_barrier_opt_messages_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+
+/* Broadcast */
+
+typedef struct
+{
+	int dummy;
+} sctk_broadcast_opt_messages_t;
+
+void sctk_broadcast_opt_messages_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+
+/* Allreduce */
+
+typedef struct
+{
+	int dummy;
+} sctk_allreduce_opt_messages_t;
+
+void sctk_allreduce_opt_messages_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+
+/* Init */
+
+void sctk_collectives_init_opt_messages ( sctk_communicator_t id );
+
+/************************************
+ * HETERO COLLECTIVE IMPLEMENTATION *
+ ************************************/
+
+/* Barrier */
+
+typedef struct
+{
+	OPA_int_t tasks_entered_in_node;
+	volatile unsigned int generation;
+} sctk_barrier_hetero_messages_t;
+
+void sctk_barrier_hetero_messages_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+
+/* Broadcast */
+
+typedef struct
+{
+	OPA_int_t tasks_entered_in_node;
+	OPA_int_t tasks_exited_in_node;
+	volatile unsigned int generation;
+	OPA_ptr_t buff_root;
+} sctk_broadcast_hetero_messages_t;
+
+void sctk_broadcast_hetero_messages_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+
+/* Allreduce */
+
+typedef struct
+{
+	/* TODO: initialization */
+	OPA_int_t tasks_entered_in_node;
+	volatile unsigned int generation;
+	volatile void *volatile *buff_in;
+	volatile void *volatile *buff_out;
+} sctk_allreduce_hetero_messages_t;
+
+void sctk_allreduce_hetero_messages_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+
+/* Init */
+
+void sctk_collectives_init_hetero_messages ( sctk_communicator_t id );
+
+/******************************************
+ * OPT NO ALLOC COLLECTIBE IMPLEMENTATION *
+ ******************************************/
+
+
+/* Barrier */
+
+typedef struct
+{
+	int dummy;
+} sctk_barrier_opt_noalloc_split_messages_t;
+
+void sctk_barrier_opt_noalloc_split_messages_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+
+/* Broadcast */
+
+typedef struct
+{
+	int dummy;
+} sctk_broadcast_opt_noalloc_split_messages_t;
+
+void sctk_broadcast_opt_noalloc_split_messages_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+
+/* Allreduce */
+
+typedef struct
+{
+	int dummy;
+} sctk_allreduce_opt_noalloc_split_messages_t;
+
+void sctk_allreduce_opt_noalloc_split_messages_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+
+/* Init */
+
+void sctk_collectives_init_opt_noalloc_split_messages ( sctk_communicator_t id );
+
+/**********************************************
+ * GENERIC COLLECTIVE COMMUNICATION INTERFACE *
+ **********************************************/
+
+/* Barrier */
 
 typedef union
 {
@@ -52,9 +209,7 @@ typedef union
 
 void sctk_barrier ( const sctk_communicator_t communicator );
 
-/************************************************************************/
-/*Broadcast                                                             */
-/************************************************************************/
+/* Broadcast */
 
 typedef union
 {
@@ -67,9 +222,7 @@ typedef union
 void sctk_broadcast ( void *buffer, const size_t size,
                       const int root, const sctk_communicator_t com_id );
 
-/************************************************************************/
-/*Allreduce                                                             */
-/************************************************************************/
+/* Allreduce */
 
 typedef union
 {
@@ -86,9 +239,7 @@ void sctk_all_reduce ( const void *buffer_in, void *buffer_out,
                        const sctk_communicator_t communicator,
                        const sctk_datatype_t data_type );
 
-/************************************************************************/
-/*Collectives struct                                                    */
-/************************************************************************/
+/* Collective Structure */
 
 typedef struct sctk_internal_collectives_struct_s
 {
@@ -110,6 +261,8 @@ typedef struct sctk_internal_collectives_struct_s
 	                           const sctk_datatype_t ,
 	                           struct sctk_internal_collectives_struct_s * );
 } sctk_internal_collectives_struct_t;
+
+/* Init */
 
 void sctk_collectives_init ( sctk_communicator_t id,
                              void ( *barrier ) ( sctk_internal_collectives_struct_t *, sctk_communicator_t id ),

@@ -182,6 +182,188 @@ struct sctk_runtime_config_struct_ft
 	int enabled;
 };
 
+/******************************** STRUCTURE *********************************/
+/**Shared Memory Collectives for MPC**/
+struct sctk_runtime_config_struct_collectives_shm_shared
+{	int init_done;
+	/**MPI_Barrier intracom algorithm on shared-node comms**/
+	struct sctk_runtime_config_funcptr barrier_intra_shared_node;
+	/**MPI_Bcast intracom algorithm on shared-node comms**/
+	struct sctk_runtime_config_funcptr bcast_intra_shared_node;
+	/**MPI_Alltoall intracom algorithm on shared-node comms**/
+	struct sctk_runtime_config_funcptr alltoall_intra_shared_node;
+	/**MPI_Scatter intracom algorithm on shared-node comms**/
+	struct sctk_runtime_config_funcptr scatter_intra_shared_node;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Shared Memory Collectives for MPC**/
+struct sctk_runtime_config_struct_collectives_shm
+{	int init_done;
+	/**MPI_Barrier intracom algorithm on shared communicators**/
+	struct sctk_runtime_config_funcptr barrier_intra_shm;
+	/**Type of MPI_Bcast intracom algorithm on shared communicators**/
+	struct sctk_runtime_config_funcptr bcast_intra_shm;
+	/**Alltoallv intracom algorithm**/
+	struct sctk_runtime_config_funcptr alltoallv_intra_shm;
+	/**MPI_Gatherv intracom algorithm for shared communicators**/
+	struct sctk_runtime_config_funcptr gatherv_intra_shm;
+	/**MPI_Scatterv intracom algorithm on shared communicators**/
+	struct sctk_runtime_config_funcptr scatterv_intra_shm;
+	/**MPI_Reduce intracom shared-mem algorithm**/
+	struct sctk_runtime_config_funcptr reduce_intra_shm;
+	/**Arrity being used to build topological communicators  '-1' means auto-compute to match processes and NUMA**/
+	int topo_tree_arity;
+	/**Dump topological comm tree in DOT (fname topoN.cdat) with N the communicator size**/
+	int topo_tree_dump;
+	/**Force the use of deterministic algorithms**/
+	int coll_force_nocommute;
+	/**Number of blocks for pipelined Reduce**/
+	int reduce_pipelined_blocks;
+	/**Size required to rely on pipelined reduce**/
+	size_t reduce_pipelined_tresh;
+	/**Number of reduce slots to allocate (required to be power of 2)**/
+	int reduce_interleave;
+	/**Number of bcast slots to allocate (required to be power of 2)**/
+	int bcast_interleave;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Collectives intracom MPI**/
+struct sctk_runtime_config_struct_collectives_intra
+{	int init_done;
+	/**MPI_Barrier intracom algorithm**/
+	struct sctk_runtime_config_funcptr barrier_intra;
+	/**Maximum number of process for using a trivial for for the Barrier**/
+	int barrier_intra_for_trsh;
+	/**Type of MPI_Bcast intracom algorithm**/
+	struct sctk_runtime_config_funcptr bcast_intra;
+	/**Maximum number of process for using a trivial for for the Bcast**/
+	int bcast_intra_for_trsh;
+	/**Maximum number of elems for using a trivial for for the Bcast**/
+	int bcast_intra_for_count_trsh;
+	/**MPI_Allgather intracom algorithm**/
+	struct sctk_runtime_config_funcptr allgather_intra;
+	/**MPI_Allgatherv intracom algorithm**/
+	struct sctk_runtime_config_funcptr allgatherv_intra;
+	/**MPI_Alltoall intracom algorithm**/
+	struct sctk_runtime_config_funcptr alltoall_intra;
+	/**Alltoallv intracom algorithm**/
+	struct sctk_runtime_config_funcptr alltoallv_intra;
+	/**MPI_Alltoallw intracom algorithm**/
+	struct sctk_runtime_config_funcptr alltoallw_intra;
+	/**MPI_Gather intracom algorithm**/
+	struct sctk_runtime_config_funcptr gather_intra;
+	/**MPI_Gatherv intracom algorithm**/
+	struct sctk_runtime_config_funcptr gatherv_intra;
+	/**MPI_Scatter intracom algorithm**/
+	struct sctk_runtime_config_funcptr scatter_intra;
+	/**MPI_Scatterv intracom algorithm**/
+	struct sctk_runtime_config_funcptr scatterv_intra;
+	/**MPI_Scan intracom algorithm**/
+	struct sctk_runtime_config_funcptr scan_intra;
+	/**MPI_Exscan intracom algorithm**/
+	struct sctk_runtime_config_funcptr exscan_intra;
+	/**MPI_Reduce intracom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_intra;
+	/**Maximum number of process for using a trivial for for the Reduce**/
+	int reduce_intra_for_trsh;
+	/**Maximum number of elements for using a trivial for for the Reduce**/
+	int reduce_intra_for_count_trsh;
+	/**MPI_Allreduce intracom algorithm**/
+	struct sctk_runtime_config_funcptr allreduce_intra;
+	/**MPI_Reduce_scatter intracom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_scatter_intra;
+	/**MPI_Reduce_scatter_block intracom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_scatter_block_intra;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Collectives intercom MPI**/
+struct sctk_runtime_config_struct_collectives_inter
+{	int init_done;
+	/**MPI_Barrier intercom algorithm**/
+	struct sctk_runtime_config_funcptr barrier_inter;
+	/**MPI_Barrier intercom algorithm**/
+	struct sctk_runtime_config_funcptr bcast_inter;
+	/**MPI_Allgather intercom algorithm**/
+	struct sctk_runtime_config_funcptr allgather_inter;
+	/**MPI_Allgatherv intercom algorithm**/
+	struct sctk_runtime_config_funcptr allgatherv_inter;
+	/**MPI_Alltoall intercom algorithm**/
+	struct sctk_runtime_config_funcptr alltoall_inter;
+	/**MPI_Alltoallv intercom algorithm**/
+	struct sctk_runtime_config_funcptr alltoallv_inter;
+	/**MPI_Alltoallw intercom algorithm**/
+	struct sctk_runtime_config_funcptr alltoallw_inter;
+	/**MPI_Gather intercom algorithm**/
+	struct sctk_runtime_config_funcptr gather_inter;
+	/**MPI_Gatherv intercom algorithm**/
+	struct sctk_runtime_config_funcptr gatherv_inter;
+	/**MPI_Scatter intercom algorithm**/
+	struct sctk_runtime_config_funcptr scatter_inter;
+	/**MPI_Scatterv intercom algorithm**/
+	struct sctk_runtime_config_funcptr scatterv_inter;
+	/**MPI_Reduce intercom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_inter;
+	/**MPI_Allreduce intercom algorithm**/
+	struct sctk_runtime_config_funcptr allreduce_inter;
+	/**MPI_Reduce_scatter intercom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_scatter_inter;
+	/**MPI_Reduce_scatter_block intercom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_scatter_block_inter;
+};
+
+/******************************** STRUCTURE *********************************/
+/**NBC**/
+struct sctk_runtime_config_struct_nbc
+{	int init_done;
+	/**If use progress threads for non blocking collectives**/
+	int use_progress_thread;
+	/**Algorithm of progress threads binding : sctk_get_progress_thread_binding_[bind,smart,numa_iter,numa]**/
+	struct sctk_runtime_config_funcptr progress_thread_binding;
+	/**Should bcast rely on Egreq progress**/
+	int use_egreq_bcast;
+	/**Should scatter rely on Egreq progress**/
+	int use_egreq_scatter;
+	/**Should gather rely on Egreq progress**/
+	int use_egreq_gather;
+	/**Should reduce rely on Egreq progress**/
+	int use_egreq_reduce;
+	/**Should barrier rely on Egreq progress**/
+	int use_egreq_barrier;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Options related to the MPI RMA support**/
+struct sctk_runtime_config_struct_mpi_rma
+{	int init_done;
+	/**Enable the MPI_Alloc_mem shared memory pool**/
+	int alloc_mem_pool_enable;
+	/**Size of the MPI_Alloc_mem pool**/
+	size_t alloc_mem_pool_size;
+	/**Alloc the MPI_Alloc_mem pool to grow linear for some apps**/
+	int alloc_mem_pool_autodetect;
+	/**Force the size to be a quantum per local process**/
+	int alloc_mem_pool_force_process_linear;
+	/**Quantum to allocate to each process when linear forced**/
+	size_t alloc_mem_pool_per_process_size;
+	/**Maximum number of window threads to keep**/
+	int win_thread_pool_max;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Options for MPC Message Passing**/
+struct sctk_runtime_config_struct_mpc
+{	int init_done;
+	/**Print debug messages**/
+	int log_debug;
+	/****/
+	int hard_checking;
+	/****/
+	int buffering;
+};
+
 /********************************** ENUM ************************************/
 /****/
 enum ibv_rdvz_protocol
@@ -605,7 +787,7 @@ struct sctk_runtime_config_struct_inter_thread_comm
 	/****/
 	int allreduce_check_threshold;
 	/**Slot size for allreduce**/
-	int ALLREDUCE_MAX_SLOT;
+	int allreduce_max_slot;
 	/****/
 	struct sctk_runtime_config_funcptr collectives_init_hook;
 };
@@ -626,188 +808,6 @@ struct sctk_runtime_config_struct_low_level_comm
 	int enable_idle_polling;
 	/**Global parameters for IB**/
 	struct sctk_runtime_config_struct_ib_global ib_global;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Shared Memory Collectives for MPC**/
-struct sctk_runtime_config_struct_collectives_shm_shared
-{	int init_done;
-	/**MPI_Barrier intracom algorithm on shared-node comms**/
-	struct sctk_runtime_config_funcptr barrier_intra_shared_node;
-	/**MPI_Bcast intracom algorithm on shared-node comms**/
-	struct sctk_runtime_config_funcptr bcast_intra_shared_node;
-	/**MPI_Alltoall intracom algorithm on shared-node comms**/
-	struct sctk_runtime_config_funcptr alltoall_intra_shared_node;
-	/**MPI_Scatter intracom algorithm on shared-node comms**/
-	struct sctk_runtime_config_funcptr scatter_intra_shared_node;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Shared Memory Collectives for MPC**/
-struct sctk_runtime_config_struct_collectives_shm
-{	int init_done;
-	/**MPI_Barrier intracom algorithm on shared communicators**/
-	struct sctk_runtime_config_funcptr barrier_intra_shm;
-	/**Type of MPI_Bcast intracom algorithm on shared communicators**/
-	struct sctk_runtime_config_funcptr bcast_intra_shm;
-	/**Alltoallv intracom algorithm**/
-	struct sctk_runtime_config_funcptr alltoallv_intra_shm;
-	/**MPI_Gatherv intracom algorithm for shared communicators**/
-	struct sctk_runtime_config_funcptr gatherv_intra_shm;
-	/**MPI_Scatterv intracom algorithm on shared communicators**/
-	struct sctk_runtime_config_funcptr scatterv_intra_shm;
-	/**MPI_Reduce intracom shared-mem algorithm**/
-	struct sctk_runtime_config_funcptr reduce_intra_shm;
-	/**Arrity being used to build topological communicators  '-1' means auto-compute to match processes and NUMA**/
-	int topo_tree_arity;
-	/**Dump topological comm tree in DOT (fname topoN.cdat) with N the communicator size**/
-	int topo_tree_dump;
-	/**Force the use of deterministic algorithms**/
-	int coll_force_nocommute;
-	/**Number of blocks for pipelined Reduce**/
-	int reduce_pipelined_blocks;
-	/**Size required to rely on pipelined reduce**/
-	size_t reduce_pipelined_tresh;
-	/**Number of reduce slots to allocate (required to be power of 2)**/
-	int reduce_interleave;
-	/**Number of bcast slots to allocate (required to be power of 2)**/
-	int bcast_interleave;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Collectives intracom MPI**/
-struct sctk_runtime_config_struct_collectives_intra
-{	int init_done;
-	/**MPI_Barrier intracom algorithm**/
-	struct sctk_runtime_config_funcptr barrier_intra;
-	/**Maximum number of process for using a trivial for for the Barrier**/
-	int barrier_intra_for_trsh;
-	/**Type of MPI_Bcast intracom algorithm**/
-	struct sctk_runtime_config_funcptr bcast_intra;
-	/**Maximum number of process for using a trivial for for the Bcast**/
-	int bcast_intra_for_trsh;
-	/**Maximum number of elems for using a trivial for for the Bcast**/
-	int bcast_intra_for_count_trsh;
-	/**MPI_Allgather intracom algorithm**/
-	struct sctk_runtime_config_funcptr allgather_intra;
-	/**MPI_Allgatherv intracom algorithm**/
-	struct sctk_runtime_config_funcptr allgatherv_intra;
-	/**MPI_Alltoall intracom algorithm**/
-	struct sctk_runtime_config_funcptr alltoall_intra;
-	/**Alltoallv intracom algorithm**/
-	struct sctk_runtime_config_funcptr alltoallv_intra;
-	/**MPI_Alltoallw intracom algorithm**/
-	struct sctk_runtime_config_funcptr alltoallw_intra;
-	/**MPI_Gather intracom algorithm**/
-	struct sctk_runtime_config_funcptr gather_intra;
-	/**MPI_Gatherv intracom algorithm**/
-	struct sctk_runtime_config_funcptr gatherv_intra;
-	/**MPI_Scatter intracom algorithm**/
-	struct sctk_runtime_config_funcptr scatter_intra;
-	/**MPI_Scatterv intracom algorithm**/
-	struct sctk_runtime_config_funcptr scatterv_intra;
-	/**MPI_Scan intracom algorithm**/
-	struct sctk_runtime_config_funcptr scan_intra;
-	/**MPI_Exscan intracom algorithm**/
-	struct sctk_runtime_config_funcptr exscan_intra;
-	/**MPI_Reduce intracom algorithm**/
-	struct sctk_runtime_config_funcptr reduce_intra;
-	/**Maximum number of process for using a trivial for for the Reduce**/
-	int reduce_intra_for_trsh;
-	/**Maximum number of elements for using a trivial for for the Reduce**/
-	int reduce_intra_for_count_trsh;
-	/**MPI_Allreduce intracom algorithm**/
-	struct sctk_runtime_config_funcptr allreduce_intra;
-	/**MPI_Reduce_scatter intracom algorithm**/
-	struct sctk_runtime_config_funcptr reduce_scatter_intra;
-	/**MPI_Reduce_scatter_block intracom algorithm**/
-	struct sctk_runtime_config_funcptr reduce_scatter_block_intra;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Collectives intercom MPI**/
-struct sctk_runtime_config_struct_collectives_inter
-{	int init_done;
-	/**MPI_Barrier intercom algorithm**/
-	struct sctk_runtime_config_funcptr barrier_inter;
-	/**MPI_Barrier intercom algorithm**/
-	struct sctk_runtime_config_funcptr bcast_inter;
-	/**MPI_Allgather intercom algorithm**/
-	struct sctk_runtime_config_funcptr allgather_inter;
-	/**MPI_Allgatherv intercom algorithm**/
-	struct sctk_runtime_config_funcptr allgatherv_inter;
-	/**MPI_Alltoall intercom algorithm**/
-	struct sctk_runtime_config_funcptr alltoall_inter;
-	/**MPI_Alltoallv intercom algorithm**/
-	struct sctk_runtime_config_funcptr alltoallv_inter;
-	/**MPI_Alltoallw intercom algorithm**/
-	struct sctk_runtime_config_funcptr alltoallw_inter;
-	/**MPI_Gather intercom algorithm**/
-	struct sctk_runtime_config_funcptr gather_inter;
-	/**MPI_Gatherv intercom algorithm**/
-	struct sctk_runtime_config_funcptr gatherv_inter;
-	/**MPI_Scatter intercom algorithm**/
-	struct sctk_runtime_config_funcptr scatter_inter;
-	/**MPI_Scatterv intercom algorithm**/
-	struct sctk_runtime_config_funcptr scatterv_inter;
-	/**MPI_Reduce intercom algorithm**/
-	struct sctk_runtime_config_funcptr reduce_inter;
-	/**MPI_Allreduce intercom algorithm**/
-	struct sctk_runtime_config_funcptr allreduce_inter;
-	/**MPI_Reduce_scatter intercom algorithm**/
-	struct sctk_runtime_config_funcptr reduce_scatter_inter;
-	/**MPI_Reduce_scatter_block intercom algorithm**/
-	struct sctk_runtime_config_funcptr reduce_scatter_block_inter;
-};
-
-/******************************** STRUCTURE *********************************/
-/**NBC**/
-struct sctk_runtime_config_struct_nbc
-{	int init_done;
-	/**If use progress threads for non blocking collectives**/
-	int use_progress_thread;
-	/**Algorithm of progress threads binding : sctk_get_progress_thread_binding_[bind,smart,numa_iter,numa]**/
-	struct sctk_runtime_config_funcptr progress_thread_binding;
-	/**Should bcast rely on Egreq progress**/
-	int use_egreq_bcast;
-	/**Should scatter rely on Egreq progress**/
-	int use_egreq_scatter;
-	/**Should gather rely on Egreq progress**/
-	int use_egreq_gather;
-	/**Should reduce rely on Egreq progress**/
-	int use_egreq_reduce;
-	/**Should barrier rely on Egreq progress**/
-	int use_egreq_barrier;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Options related to the MPI RMA support**/
-struct sctk_runtime_config_struct_mpi_rma
-{	int init_done;
-	/**Enable the MPI_Alloc_mem shared memory pool**/
-	int alloc_mem_pool_enable;
-	/**Size of the MPI_Alloc_mem pool**/
-	size_t alloc_mem_pool_size;
-	/**Alloc the MPI_Alloc_mem pool to grow linear for some apps**/
-	int alloc_mem_pool_autodetect;
-	/**Force the size to be a quantum per local process**/
-	int alloc_mem_pool_force_process_linear;
-	/**Quantum to allocate to each process when linear forced**/
-	size_t alloc_mem_pool_per_process_size;
-	/**Maximum number of window threads to keep**/
-	int win_thread_pool_max;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Options for MPC Message Passing**/
-struct sctk_runtime_config_struct_mpc
-{	int init_done;
-	/**Print debug messages**/
-	int log_debug;
-	/****/
-	int hard_checking;
-	/****/
-	int buffering;
 };
 
 /********************************** ENUM ************************************/
@@ -953,8 +953,6 @@ struct sctk_runtime_config_modules
 	struct sctk_runtime_config_struct_launcher launcher;
 	struct sctk_runtime_config_struct_debugger debugger;
 	struct sctk_runtime_config_struct_ft ft_system;
-	struct sctk_runtime_config_struct_inter_thread_comm inter_thread_comm;
-	struct sctk_runtime_config_struct_low_level_comm low_level_comm;
 	struct sctk_runtime_config_struct_collectives_shm_shared collectives_shm_shared;
 	struct sctk_runtime_config_struct_collectives_shm collectives_shm;
 	struct sctk_runtime_config_struct_collectives_intra collectives_intra;
@@ -962,6 +960,8 @@ struct sctk_runtime_config_modules
 	struct sctk_runtime_config_struct_nbc nbc;
 	struct sctk_runtime_config_struct_mpc mpc;
 	struct sctk_runtime_config_struct_mpi_rma rma;
+	struct sctk_runtime_config_struct_inter_thread_comm inter_thread_comm;
+	struct sctk_runtime_config_struct_low_level_comm low_level_comm;
 	struct sctk_runtime_config_struct_openmp openmp;
 	struct sctk_runtime_config_struct_profiler profiler;
 	struct sctk_runtime_config_struct_thread thread;
