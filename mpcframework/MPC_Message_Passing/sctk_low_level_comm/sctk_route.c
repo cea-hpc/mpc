@@ -46,8 +46,8 @@ sctk_route_table_t * sctk_route_table_new()
 	sctk_spin_rwlock_t lck = SCTK_SPIN_RWLOCK_INITIALIZER;
 	ret->dynamic_route_table_lock = lck;
 	
-	MPCHT_init( &ret->dynamic_route_table, 128 );
-	MPCHT_init( &ret->static_route_table, 128 );
+	mpc_common_hashtable_init( &ret->dynamic_route_table, 128 );
+	mpc_common_hashtable_init( &ret->static_route_table, 128 );
 
 
 	return ret;
@@ -57,8 +57,8 @@ void sctk_route_table_destroy(sctk_route_table_t* table)
 {
 
 	mpc_common_spinlock_write_lock(&table->dynamic_route_table_lock);
-	MPCHT_release(&table->dynamic_route_table);
-	MPCHT_release(&table->static_route_table);
+	mpc_common_hashtable_release(&table->dynamic_route_table);
+	mpc_common_hashtable_release(&table->static_route_table);
 	mpc_common_spinlock_write_unlock(&table->dynamic_route_table_lock);
 	
 	sctk_free(table); table = NULL;
@@ -72,7 +72,7 @@ void sctk_route_table_clear(sctk_route_table_t** table)
 
 int sctk_route_table_empty(sctk_route_table_t *table)
 {
-	return MPCHT_empty(&table->dynamic_route_table) && MPCHT_empty(&table->static_route_table);
+	return mpc_common_hashtable_empty(&table->dynamic_route_table) && mpc_common_hashtable_empty(&table->static_route_table);
 }
 
 /************************************************************************/
@@ -170,7 +170,7 @@ void sctk_route_table_add_dynamic_route_no_lock (  sctk_route_table_t * table, s
 {
 	assume( tmp->origin == ROUTE_ORIGIN_DYNAMIC );
 	
-	MPCHT_set(  &table->dynamic_route_table, tmp->dest, tmp );
+	mpc_common_hashtable_set(  &table->dynamic_route_table, tmp->dest, tmp );
 
 	if( push_in_multirail )
 	{
@@ -195,7 +195,7 @@ void sctk_route_table_add_static_route (  sctk_route_table_t * table, sctk_endpo
 	
 	assume( tmp->origin == ROUTE_ORIGIN_STATIC );
 		
-	MPCHT_set( &table->static_route_table, tmp->dest, tmp );
+	mpc_common_hashtable_set( &table->static_route_table, tmp->dest, tmp );
 	
 	if( push_in_multirail )
 	{
@@ -213,7 +213,7 @@ sctk_endpoint_t * sctk_route_table_get_static_route(   sctk_route_table_t * tabl
 {
 	sctk_endpoint_t *tmp = NULL;
 
-	tmp = MPCHT_get(&table->static_route_table, dest);
+	tmp = mpc_common_hashtable_get(&table->static_route_table, dest);
 
 	sctk_nodebug ( "Get static route for %d -> %p", dest, tmp );
 
@@ -224,7 +224,7 @@ sctk_endpoint_t * sctk_route_table_get_dynamic_route_no_lock( sctk_route_table_t
 {
 	sctk_endpoint_t *tmp = NULL;
 
-	tmp = MPCHT_get( &table->dynamic_route_table, dest );
+	tmp = mpc_common_hashtable_get( &table->dynamic_route_table, dest );
 
 	return tmp;
 }

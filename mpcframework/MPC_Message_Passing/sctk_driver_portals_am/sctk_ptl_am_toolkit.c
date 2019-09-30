@@ -33,13 +33,13 @@
 
 /** global shortcut, where each cell maps to the portals process object */
 sctk_ptl_id_t* ranks_ids_map = NULL;
-/** shortcut to the COMM_WORLD PTE entry (avoid MPCHT calls) */
+/** shortcut to the COMM_WORLD PTE entry (avoid mpc_common_hashtable calls) */
 static sctk_ptl_pte_t* comm_world_pte = NULL;
-/** shortcut to the INTERNAL PTE entry (avoid MPCHT calls) */
+/** shortcut to the INTERNAL PTE entry (avoid mpc_common_hashtable calls) */
 static sctk_ptl_pte_t* comm_recovery_pte = NULL;
-/** shortcut to the INTERNAL PTE entry (avoid MPCHT calls) */
+/** shortcut to the INTERNAL PTE entry (avoid mpc_common_hashtable calls) */
 static sctk_ptl_pte_t* comm_cm_pte = NULL;
-/** shortcut to the INTERNAL PTE entry (avoid MPCHT calls) */
+/** shortcut to the INTERNAL PTE entry (avoid mpc_common_hashtable calls) */
 static sctk_ptl_pte_t* comm_rdma_pte = NULL;
 
 
@@ -186,7 +186,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 			}
 			else
 			{
-				cur_pte = MPCHT_get(&srail->pt_table, i);
+				cur_pte = mpc_common_hashtable_get(&srail->pt_table, i);
 			}
 			i++;
 		}
@@ -483,12 +483,12 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 		ranks_ids_map = sctk_calloc(sctk_get_process_number(), sizeof(sctk_ptl_id_t));
 	}
 
-	comm_recovery_pte = MPCHT_get(&rail->network.ptl.pt_table, SCTK_PTL_PTE_RECOVERY);
-	comm_cm_pte = MPCHT_get(&rail->network.ptl.pt_table, SCTK_PTL_PTE_CM);
-	comm_rdma_pte = MPCHT_get(&rail->network.ptl.pt_table, SCTK_PTL_PTE_RDMA);
+	comm_recovery_pte = mpc_common_hashtable_get(&rail->network.ptl.pt_table, SCTK_PTL_PTE_RECOVERY);
+	comm_cm_pte = mpc_common_hashtable_get(&rail->network.ptl.pt_table, SCTK_PTL_PTE_CM);
+	comm_rdma_pte = mpc_common_hashtable_get(&rail->network.ptl.pt_table, SCTK_PTL_PTE_RDMA);
 
 	if(min_comms > 0)
-		comm_world_pte = MPCHT_get(&rail->network.ptl.pt_table, SCTK_PTL_PTE_HIDDEN + SCTK_COMM_WORLD);
+		comm_world_pte = mpc_common_hashtable_get(&rail->network.ptl.pt_table, SCTK_PTL_PTE_HIDDEN + SCTK_COMM_WORLD);
 }
 
 /**

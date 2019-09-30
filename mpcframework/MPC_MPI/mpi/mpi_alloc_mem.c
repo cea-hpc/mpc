@@ -205,14 +205,14 @@ int mpc_MPI_allocmem_pool_init() {
     ____mpc_sctk_mpi_alloc_mem_pool.size_left = pool_size;
     OPA_store_int(____mpc_sctk_mpi_alloc_mem_pool.lock, 0);
 
-    sctk_bit_array_init_buff(&____mpc_sctk_mpi_alloc_mem_pool.mask,
+    mpc_common_bit_array_init_buff(&____mpc_sctk_mpi_alloc_mem_pool.mask,
                              SCTK_SHM_MAPPER_PAGE_SIZE * 8, bit_array_page,
                              SCTK_SHM_MAPPER_PAGE_SIZE);
 
     ____mpc_sctk_mpi_alloc_mem_pool.space_per_bit =
         (pool_size / (SCTK_SHM_MAPPER_PAGE_SIZE * 8));
 
-    MPCHT_init(&____mpc_sctk_mpi_alloc_mem_pool.size_ht, 32);
+    mpc_common_hashtable_init(&____mpc_sctk_mpi_alloc_mem_pool.size_ht, 32);
   }
 
   mpc_MPI_accumulate_op_lock_init();
@@ -255,7 +255,7 @@ int mpc_MPI_allocmem_pool_release() {
   sctk_barrier(MPI_COMM_WORLD);
 
   if (is_master) {
-    MPCHT_release(&____mpc_sctk_mpi_alloc_mem_pool.size_ht);
+    mpc_common_hashtable_release(&____mpc_sctk_mpi_alloc_mem_pool.size_ht);
     /* All the rest is static */
     memset(&____mpc_sctk_mpi_alloc_mem_pool, 0,
            sizeof(struct mpc_MPI_allocmem_pool));
@@ -301,10 +301,10 @@ void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int * is_shared) {
   /* Now try to find this number of contiguous free bits */
   size_t i, j;
 
-  struct sctk_bit_array *ba = &____mpc_sctk_mpi_alloc_mem_pool.mask;
+  struct mpc_common_bit_array *ba = &____mpc_sctk_mpi_alloc_mem_pool.mask;
 
   for (i = 0; i < ba->real_size; i++) {
-    if (sctk_bit_array_get(ba, i)) {
+    if (mpc_common_bit_array_get(ba, i)) {
       /* This bit is taken */
       continue;
     }
@@ -316,13 +316,13 @@ void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int * is_shared) {
       break;
     }
 
-    if (sctk_bit_array_get(ba, end_of_seg_off) == 0) {
+    if (mpc_common_bit_array_get(ba, end_of_seg_off) == 0) {
       int found_taken_bit = 0;
       /* Last bit is free it is a good candidate */
 
       /* Now scan the whole segment */
       for (j = i; (j < (i + number_of_bits)); j++) {
-        if (sctk_bit_array_get(ba, j)) {
+        if (mpc_common_bit_array_get(ba, j)) {
           found_taken_bit = 1;
           break;
         }
@@ -335,7 +335,7 @@ void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int * is_shared) {
         size_t k;
 
         for (k = i; k < (i + number_of_bits); k++) {
-          sctk_bit_array_set(ba, k, 1);
+          mpc_common_bit_array_set(ba, k, 1);
         }
 
         /* Compute address */
@@ -343,7 +343,7 @@ void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int * is_shared) {
                      (i * ____mpc_sctk_mpi_alloc_mem_pool.space_per_bit);
 
         /* Store bit size for free for address */
-        MPCHT_set(&____mpc_sctk_mpi_alloc_mem_pool.size_ht, (uint64_t)addr,
+        mpc_common_hashtable_set(&____mpc_sctk_mpi_alloc_mem_pool.size_ht, (uint64_t)addr,
                   (void *)number_of_bits);
 
         sctk_nodebug("ALLOC %ld", number_of_bits);
@@ -389,7 +389,7 @@ int mpc_MPI_allocmem_pool_free_size(void *ptr, ssize_t known_size) {
 
   if( known_size < 0 )
   {
-      size_in_ptr = MPCHT_get(&____mpc_sctk_mpi_alloc_mem_pool.size_ht, (uint64_t)ptr);
+      size_in_ptr = mpc_common_hashtable_get(&____mpc_sctk_mpi_alloc_mem_pool.size_ht, (uint64_t)ptr);
   }
   else
   {
@@ -409,10 +409,10 @@ int mpc_MPI_allocmem_pool_free_size(void *ptr, ssize_t known_size) {
     size_t i;
 
     for (i = off; i < (off + number_of_bits); i++) {
-      sctk_bit_array_set(&____mpc_sctk_mpi_alloc_mem_pool.mask, i, 0);
+      mpc_common_bit_array_set(&____mpc_sctk_mpi_alloc_mem_pool.mask, i, 0);
     }
 
-    MPCHT_delete(&____mpc_sctk_mpi_alloc_mem_pool.size_ht, (uint64_t)ptr);
+    mpc_common_hashtable_delete(&____mpc_sctk_mpi_alloc_mem_pool.size_ht, (uint64_t)ptr);
 
     mpc_MPI_allocmem_pool_unlock();
   } else {

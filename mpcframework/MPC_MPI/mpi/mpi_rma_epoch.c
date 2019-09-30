@@ -115,7 +115,7 @@ void *mpc_MPI_Win_tmp_alloc(struct mpc_MPI_Win_tmp *tmp, size_t size) {
 /* MPI Request Counter Pool                                             */
 /************************************************************************/
 
-static struct MPCHT __request_pool_ht;
+static struct mpc_common_hashtable __request_pool_ht;
 static mpc_common_spinlock_t __request_pool_lock = 0;
 static volatile int __request_pool_init_done = 0;
 
@@ -125,7 +125,7 @@ static inline void request_poll_ht_check_init() {
 
   mpc_common_spinlock_lock(&__request_pool_lock);
   if (__request_pool_init_done == 0) {
-    MPCHT_init(&__request_pool_ht, 64);
+    mpc_common_hashtable_init(&__request_pool_ht, 64);
     __request_pool_init_done = 1;
   }
 
@@ -135,13 +135,13 @@ static inline void request_poll_ht_check_init() {
 int mpc_MPI_register_request_counter(sctk_request_t *request,
                                      OPA_int_t *pool_cnt) {
   request_poll_ht_check_init();
-  MPCHT_set(&__request_pool_ht, (uint64_t)request, (void *)pool_cnt);
+  mpc_common_hashtable_set(&__request_pool_ht, (uint64_t)request, (void *)pool_cnt);
   return 0;
 }
 
 int mpc_MPI_unregister_request_counter(sctk_request_t *request) {
   request_poll_ht_check_init();
-  MPCHT_delete(&__request_pool_ht, (uint64_t)request);
+  mpc_common_hashtable_delete(&__request_pool_ht, (uint64_t)request);
   return 0;
 }
 
@@ -149,7 +149,7 @@ int mpc_MPI_notify_request_counter(sctk_request_t *request) {
   request_poll_ht_check_init();
 
   OPA_int_t *pool_cnt =
-      (OPA_int_t *)MPCHT_get(&__request_pool_ht, (uint64_t)request);
+      (OPA_int_t *)mpc_common_hashtable_get(&__request_pool_ht, (uint64_t)request);
 
   if (pool_cnt) {
     OPA_incr_int(pool_cnt);

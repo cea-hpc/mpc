@@ -136,7 +136,7 @@ typedef enum {
 	SCTK_PTL_PTE_HIDDEN_NB = SCTK_PTL_PTE_HIDDEN
 } sctk_ptl_pte_id_t;
 /** Translate the communicator ID to the PT entry object */
-#define SCTK_PTL_PTE_ENTRY(table, comm) (MPCHT_get(&table, (comm)+SCTK_PTL_PTE_HIDDEN))
+#define SCTK_PTL_PTE_ENTRY(table, comm) (mpc_common_hashtable_get(&table, (comm)+SCTK_PTL_PTE_HIDDEN))
 /** Check if a given comm already has corresponding PT entry */
 #define SCTK_PTL_PTE_EXIST(table, comm) (SCTK_PTL_PTE_ENTRY(table, comm) != NULL)
 typedef enum {
@@ -415,7 +415,7 @@ typedef struct sctk_ptl_rail_info_s
 	sctk_ptl_nih_t iface;                   /**< Interface handler for the device */
 	sctk_ptl_id_t id;                       /**< Local id identifying this rail */
 	sctk_ptl_eq_t mds_eq;                   /**< EQ for all MDs emited from this NI */
-	struct MPCHT pt_table;                  /**< The PT hash table */
+	struct mpc_common_hashtable pt_table;                  /**< The PT hash table */
 	size_t cutoff;                          /**< cutoff for large RDV messages */
 	size_t max_mr;                          /**< Max size of a memory region (MD | ME ) */
 	size_t eager_limit;                     /**< the max size for an eager msg */

@@ -50,12 +50,12 @@ void sctk_win_translation_init(struct sctk_win_translation *wt,
   wt->generation = OPA_load_int(&__rma_generation);
 }
 
-static struct MPCHT ___window_hash_table;
+static struct mpc_common_hashtable ___window_hash_table;
 
 OPA_int_t __current_win_id;
 
 void sctk_window_init_ht() {
-  MPCHT_init(&___window_hash_table, 512);
+  mpc_common_hashtable_init(&___window_hash_table, 512);
   OPA_store_int(&__current_win_id, 1);
 }
 
@@ -73,7 +73,7 @@ void sctk_window_release_ht() {
 
   MPC_HT_ITER_END
 
-  MPCHT_release(&___window_hash_table);
+  mpc_common_hashtable_release(&___window_hash_table);
 }
 
 /* The ID to win translation HT */
@@ -88,7 +88,7 @@ static struct sctk_window * sctk_win_register()
 
   new->id = new_id;
 
-  MPCHT_set(&___window_hash_table, new_id, (void *)new);
+  mpc_common_hashtable_set(&___window_hash_table, new_id, (void *)new);
 
   sctk_handle_new_from_id(new_id, SCTK_HANDLE_WIN);
 
@@ -100,7 +100,7 @@ __thread struct sctk_win_translation __forward_translate = {0};
 struct sctk_window *__sctk_win_translate(sctk_window_t win_id) {
   struct sctk_window *ret = NULL;
 
-  ret = MPCHT_get(&___window_hash_table, win_id);
+  ret = mpc_common_hashtable_get(&___window_hash_table, win_id);
 
   assume(win_id == ret->id);
 
@@ -124,7 +124,7 @@ static void sctk_win_delete( struct sctk_window * win )
 
   int id = win->id;
 
-  MPCHT_delete(&___window_hash_table, id);
+  mpc_common_hashtable_delete(&___window_hash_table, id);
 
   sctk_handle_free(id, SCTK_HANDLE_WIN);
 

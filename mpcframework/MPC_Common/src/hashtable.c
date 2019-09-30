@@ -24,7 +24,7 @@
 
 #include <string.h>
 
-void MPCHT_Cell_init( struct MPCHT_Cell *cell, uint64_t key, void *data, struct MPCHT_Cell *next )
+void _mpc_ht_cell_init( struct _mpc_ht_cell *cell, uint64_t key, void *data, struct _mpc_ht_cell *next )
 {
 	cell->use_flag = 1;
 	cell->key = key;
@@ -32,32 +32,32 @@ void MPCHT_Cell_init( struct MPCHT_Cell *cell, uint64_t key, void *data, struct 
 	cell->next = next;
 }
 
-struct MPCHT_Cell *MPCHT_Cell_new( uint64_t key, void *data, struct MPCHT_Cell *next )
+struct _mpc_ht_cell *_mpc_ht_cell_new( uint64_t key, void *data, struct _mpc_ht_cell *next )
 {
-	struct MPCHT_Cell *ret = sctk_malloc( sizeof( struct MPCHT_Cell ) );
+	struct _mpc_ht_cell *ret = sctk_malloc( sizeof( struct _mpc_ht_cell ) );
 
 	if ( !ret )
 	{
 		abort();
 	}
 
-	MPCHT_Cell_init( ret, key, data, next );
+ _mpc_ht_cell_init( ret, key, data, next );
 
 	return ret;
 }
 
-void MPCHT_Cell_release( struct MPCHT_Cell *cell )
+void _mpc_ht_cell_release( struct _mpc_ht_cell *cell )
 {
 	while ( cell )
 	{
-		struct MPCHT_Cell *to_sctk_free = cell;
+		struct _mpc_ht_cell *to_sctk_free = cell;
 		cell = cell->next;
-		memset( to_sctk_free, 0, sizeof( struct MPCHT_Cell ) );
+		memset( to_sctk_free, 0, sizeof( struct _mpc_ht_cell ) );
 		sctk_free( to_sctk_free );
 	}
 }
 
-struct MPCHT_Cell *MPCHT_Cell_get( struct MPCHT_Cell *cell, uint64_t key )
+struct _mpc_ht_cell *_mpc_ht_cell_get( struct _mpc_ht_cell *cell, uint64_t key )
 {
 	while ( cell )
 	{
@@ -70,9 +70,9 @@ struct MPCHT_Cell *MPCHT_Cell_get( struct MPCHT_Cell *cell, uint64_t key )
 	return NULL;
 }
 
-struct MPCHT_Cell *MPCHT_Cell_pop( struct MPCHT_Cell *head, uint64_t key )
+struct _mpc_ht_cell *_mpc_ht_cell_pop( struct _mpc_ht_cell *head, uint64_t key )
 {
-	struct MPCHT_Cell *target = MPCHT_Cell_get( head, key );
+	struct _mpc_ht_cell *target = _mpc_ht_cell_get( head, key );
 
 	if ( !target )
 	{
@@ -82,12 +82,12 @@ struct MPCHT_Cell *MPCHT_Cell_pop( struct MPCHT_Cell *head, uint64_t key )
 
 	if ( head == target )
 	{
-		struct MPCHT_Cell *next = head->next;
+		struct _mpc_ht_cell *next = head->next;
 		sctk_free( head );
 		return next;
 	}
 
-	struct MPCHT_Cell *tmp = head;
+	struct _mpc_ht_cell *tmp = head;
 
 	while ( tmp )
 	{
@@ -122,26 +122,26 @@ static inline uint64_t murmur_hash( uint64_t val )
 
 /* THESE Functions are locking buckets (as offset) */
 
-static inline void MPCHT_lock_read( struct MPCHT *ht, uint64_t bucket )
+static inline void mpc_common_hashtable_lock_read( struct mpc_common_hashtable *ht, uint64_t bucket )
 {
 	sctk_spin_rwlock_t *lock = &ht->rwlocks[bucket];
 	mpc_common_spinlock_read_lock( lock );
 }
 
-static inline void MPCHT_unlock_read( struct MPCHT *ht, uint64_t bucket )
+static inline void mpc_common_hashtable_unlock_read( struct mpc_common_hashtable *ht, uint64_t bucket )
 {
 	sctk_spin_rwlock_t *lock = &ht->rwlocks[bucket];
 	mpc_common_spinlock_read_unlock( lock );
 }
 
-static inline void MPCHT_lock_write( struct MPCHT *ht, uint64_t bucket )
+static inline void mpc_common_hashtable_lock_write( struct mpc_common_hashtable *ht, uint64_t bucket )
 {
 	sctk_nodebug( "LOCKING cell %d", bucket );
 	sctk_spin_rwlock_t *lock = &ht->rwlocks[bucket];
 	mpc_common_spinlock_write_lock_yield( lock );
 }
 
-static inline void MPCHT_unlock_write( struct MPCHT *ht, uint64_t bucket )
+static inline void mpc_common_hashtable_unlock_write( struct mpc_common_hashtable *ht, uint64_t bucket )
 {
 	sctk_nodebug( "UN-LOCKING cell %d", bucket );
 	sctk_spin_rwlock_t *lock = &ht->rwlocks[bucket];
@@ -150,27 +150,27 @@ static inline void MPCHT_unlock_write( struct MPCHT *ht, uint64_t bucket )
 
 /* THESE Functions are locking buckets according to KEYS */
 
-void MPCHT_lock_cell_read( struct MPCHT *ht, uint64_t key )
+void mpc_common_hashtable_lock_cell_read( struct mpc_common_hashtable *ht, uint64_t key )
 {
-	MPCHT_lock_read( ht, murmur_hash( key ) % ht->table_size );
+	mpc_common_hashtable_lock_read( ht, murmur_hash( key ) % ht->table_size );
 }
 
-void MPCHT_unlock_cell_read( struct MPCHT *ht, uint64_t key )
+void mpc_common_hashtable_unlock_cell_read( struct mpc_common_hashtable *ht, uint64_t key )
 {
-	MPCHT_unlock_read( ht, murmur_hash( key ) % ht->table_size );
+	mpc_common_hashtable_unlock_read( ht, murmur_hash( key ) % ht->table_size );
 }
 
-void MPCHT_lock_cell_write( struct MPCHT *ht, uint64_t key )
+void mpc_common_hashtable_lock_cell_write( struct mpc_common_hashtable *ht, uint64_t key )
 {
-	MPCHT_lock_write( ht, murmur_hash( key ) % ht->table_size );
+	mpc_common_hashtable_lock_write( ht, murmur_hash( key ) % ht->table_size );
 }
 
-void MPCHT_unlock_cell_write( struct MPCHT *ht, uint64_t key )
+void mpc_common_hashtable_unlock_cell_write( struct mpc_common_hashtable *ht, uint64_t key )
 {
-	MPCHT_unlock_write( ht, murmur_hash( key ) % ht->table_size );
+	mpc_common_hashtable_unlock_write( ht, murmur_hash( key ) % ht->table_size );
 }
 
-void MPCHT_init( struct MPCHT *ht, uint64_t size )
+void mpc_common_hashtable_init( struct mpc_common_hashtable *ht, uint64_t size )
 {
 	if ( size == 0 )
 	{
@@ -179,7 +179,7 @@ void MPCHT_init( struct MPCHT *ht, uint64_t size )
 
 	ht->table_size = size;
 
-	ht->cells = sctk_calloc( size, sizeof( struct MPCHT_Cell ) );
+	ht->cells = sctk_calloc( size, sizeof( struct _mpc_ht_cell ) );
 
 	if ( ht->cells == NULL )
 	{
@@ -200,19 +200,19 @@ void MPCHT_init( struct MPCHT *ht, uint64_t size )
 	for ( i = 0; i < size; i++ )
 		sctk_spin_rwlock_init( &( ht->rwlocks[i] ) );
 }
-void MPCHT_release( struct MPCHT *ht )
+void mpc_common_hashtable_release( struct mpc_common_hashtable *ht )
 {
 	unsigned int i;
 
 	for ( i = 0; i < ht->table_size; i++ )
 	{
-		MPCHT_lock_write( ht, i );
+		mpc_common_hashtable_lock_write( ht, i );
 
 		if ( ht->cells[i].next )
 		{
-			MPCHT_Cell_release( ht->cells[i].next );
+		 _mpc_ht_cell_release( ht->cells[i].next );
 		}
-		MPCHT_unlock_write( ht, i );
+		mpc_common_hashtable_unlock_write( ht, i );
 	}
 
 	sctk_free( ht->cells );
@@ -223,18 +223,18 @@ void MPCHT_release( struct MPCHT *ht )
 	ht->table_size = 0;
 }
 
-void *MPCHT_get( struct MPCHT *ht, uint64_t key )
+void *mpc_common_hashtable_get( struct mpc_common_hashtable *ht, uint64_t key )
 {
 	uint64_t bucket = murmur_hash( key ) % ht->table_size;
 
-	struct MPCHT_Cell *head = &ht->cells[bucket];
+	struct _mpc_ht_cell *head = &ht->cells[bucket];
 
-	MPCHT_lock_read( ht, bucket );
+	mpc_common_hashtable_lock_read( ht, bucket );
 
 	if ( !head->use_flag )
 	{
 		/* The static header cell is empty */
-		MPCHT_unlock_read( ht, bucket );
+		mpc_common_hashtable_unlock_read( ht, bucket );
 		return NULL;
 	}
 
@@ -242,31 +242,31 @@ void *MPCHT_get( struct MPCHT *ht, uint64_t key )
 	{
 		/* Direct match */
 		void *ret = head->data;
-		MPCHT_unlock_read( ht, bucket );
+		mpc_common_hashtable_unlock_read( ht, bucket );
 		return ret;
 	}
 
 	/* Now walk sibblings */
-	struct MPCHT_Cell *cell = MPCHT_Cell_get( head->next, key );
+	struct _mpc_ht_cell *cell = _mpc_ht_cell_get( head->next, key );
 	void *ret = NULL;
 
 	if ( cell )
 		ret = cell->data;
 
-	MPCHT_unlock_read( ht, bucket );
+	mpc_common_hashtable_unlock_read( ht, bucket );
 	return ret;
 }
 
-void *MPCHT_get_or_create( struct MPCHT *ht, uint64_t key, void *( create_entry )( uint64_t key ), int *did_create )
+void *mpc_common_hashtable_get_or_create( struct mpc_common_hashtable *ht, uint64_t key, void *( create_entry )( uint64_t key ), int *did_create )
 {
 	uint64_t bucket = murmur_hash( key ) % ht->table_size;
 
-	struct MPCHT_Cell *head = &ht->cells[bucket];
+	struct _mpc_ht_cell *head = &ht->cells[bucket];
 
 	if ( did_create )
 		*did_create = 1;
 
-	MPCHT_lock_write( ht, bucket );
+	mpc_common_hashtable_lock_write( ht, bucket );
 
 	void *data = NULL;
 
@@ -279,17 +279,17 @@ void *MPCHT_get_or_create( struct MPCHT *ht, uint64_t key, void *( create_entry 
 			data = ( create_entry )( key );
 		}
 
-		MPCHT_Cell_init( head, key, data, NULL );
-		MPCHT_unlock_write( ht, bucket );
+	 _mpc_ht_cell_init( head, key, data, NULL );
+		mpc_common_hashtable_unlock_write( ht, bucket );
 		return head->data;
 	}
 
 	/* Otherwise make sure that such cell is not present yet */
-	struct MPCHT_Cell *candidate = MPCHT_Cell_get( head, key );
+	struct _mpc_ht_cell *candidate = _mpc_ht_cell_get( head, key );
 
 	if ( candidate )
 	{
-		MPCHT_unlock_write( ht, bucket );
+		mpc_common_hashtable_unlock_write( ht, bucket );
 		if ( did_create )
 			*did_create = 0;
 		return candidate->data;
@@ -302,61 +302,61 @@ void *MPCHT_get_or_create( struct MPCHT *ht, uint64_t key, void *( create_entry 
 		data = ( create_entry )( key );
 	}
 
-	struct MPCHT_Cell *new_cell = MPCHT_Cell_new( key, data, head->next );
+	struct _mpc_ht_cell *new_cell = _mpc_ht_cell_new( key, data, head->next );
 	head->next = new_cell;
 
-	MPCHT_unlock_write( ht, bucket );
+	mpc_common_hashtable_unlock_write( ht, bucket );
 
 	return new_cell->data;
 }
 
-void MPCHT_set( struct MPCHT *ht, uint64_t key, void *data )
+void mpc_common_hashtable_set( struct mpc_common_hashtable *ht, uint64_t key, void *data )
 {
 	uint64_t bucket = murmur_hash( key ) % ht->table_size;
 
-	struct MPCHT_Cell *head = &ht->cells[bucket];
+	struct _mpc_ht_cell *head = &ht->cells[bucket];
 
-	MPCHT_lock_write( ht, bucket );
+	mpc_common_hashtable_lock_write( ht, bucket );
 
 	if ( head->use_flag == 0 )
 	{
 		/* Static cell is free */
-		MPCHT_Cell_init( head, key, data, NULL );
-		MPCHT_unlock_write( ht, bucket );
+	 _mpc_ht_cell_init( head, key, data, NULL );
+		mpc_common_hashtable_unlock_write( ht, bucket );
 		return;
 	}
 
 	/* Otherwise make sure that such cell is not present yet */
-	struct MPCHT_Cell *candidate = MPCHT_Cell_get( head, key );
+	struct _mpc_ht_cell *candidate = _mpc_ht_cell_get( head, key );
 
 	if ( candidate )
 	{
 		candidate->data = data;
-		MPCHT_unlock_write( ht, bucket );
+		mpc_common_hashtable_unlock_write( ht, bucket );
 		return;
 	}
 
 	/* If not we have to push it */
-	struct MPCHT_Cell *new_cell = MPCHT_Cell_new( key, data, head->next );
+	struct _mpc_ht_cell *new_cell = _mpc_ht_cell_new( key, data, head->next );
 	head->next = new_cell;
 
-	MPCHT_unlock_write( ht, bucket );
+	mpc_common_hashtable_unlock_write( ht, bucket );
 }
 
-void MPCHT_delete( struct MPCHT *ht, uint64_t key )
+void mpc_common_hashtable_delete( struct mpc_common_hashtable *ht, uint64_t key )
 {
 	uint64_t bucket = murmur_hash( key ) % ht->table_size;
 
-	struct MPCHT_Cell *head = &ht->cells[bucket];
+	struct _mpc_ht_cell *head = &ht->cells[bucket];
 
-	MPCHT_lock_write( ht, bucket );
+	mpc_common_hashtable_lock_write( ht, bucket );
 
 	if ( head->key == key )
 	{
 		if ( head->next )
 		{
-			struct MPCHT_Cell *tofree = head->next;
-			memcpy( head, tofree, sizeof( struct MPCHT_Cell ) );
+			struct _mpc_ht_cell *tofree = head->next;
+			memcpy( head, tofree, sizeof( struct _mpc_ht_cell ) );
 			sctk_free( tofree );
 		}
 		else
@@ -365,16 +365,16 @@ void MPCHT_delete( struct MPCHT *ht, uint64_t key )
 			head->use_flag = 0;
 		}
 
-		MPCHT_unlock_write( ht, bucket );
+		mpc_common_hashtable_unlock_write( ht, bucket );
 		return;
 	}
 
 	/* Handle the tail */
-	head->next = MPCHT_Cell_pop( head->next, key );
+	head->next = _mpc_ht_cell_pop( head->next, key );
 
-	MPCHT_unlock_write( ht, bucket );
+	mpc_common_hashtable_unlock_write( ht, bucket );
 }
-int MPCHT_empty( struct MPCHT *ht )
+int mpc_common_hashtable_empty( struct mpc_common_hashtable *ht )
 {
 	int i, sz = ht->table_size;
 

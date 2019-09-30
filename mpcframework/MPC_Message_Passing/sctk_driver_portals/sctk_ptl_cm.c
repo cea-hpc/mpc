@@ -133,7 +133,7 @@ void sctk_ptl_cm_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* e
 	match.data.uid  = SCTK_MSG_NUMBER(msg);
 	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg);
 	remote          = infos->dest;
-	pte             = MPCHT_get(&srail->pt_table, SCTK_PTL_PTE_CM);
+	pte             = mpc_common_hashtable_get(&srail->pt_table, SCTK_PTL_PTE_CM);
 	request         = sctk_ptl_md_create(srail, start, size, flags);
 	
 	sctk_assert(pte);

@@ -302,7 +302,7 @@ struct Datatype_Attr *Datatype_Attr_new(int type_keyval, void *attribute_val) {
 }
 
 int Datatype_Attr_store_init(struct Datatype_Attr_store *store) {
-  MPCHT_init(&store->attrs, 11);
+  mpc_common_hashtable_init(&store->attrs, 11);
   return 0;
 }
 
@@ -323,7 +323,7 @@ int Datatype_Attr_store_release(struct Datatype_Attr_store *store,
 
   MPC_HT_ITER_END
 
-  MPCHT_release(&store->attrs);
+  mpc_common_hashtable_release(&store->attrs);
 
   return 0;
 }
@@ -1335,14 +1335,14 @@ int sctk_type_set_attr(struct Datatype_Array *da, MPC_Datatype type,
 
   struct Datatype_Attr *new = NULL;
 
-  void *pnew = MPCHT_get(&store->attrs, type_keyval);
+  void *pnew = mpc_common_hashtable_get(&store->attrs, type_keyval);
 
   if (pnew) {
     new = (struct Datatype_Attr *)pnew;
     new->attribute_val = attribute_val;
   } else {
     new = Datatype_Attr_new(type_keyval, attribute_val);
-    MPCHT_set(&store->attrs, type_keyval, new);
+    mpc_common_hashtable_set(&store->attrs, type_keyval, new);
   }
 
   return MPC_SUCCESS;
@@ -1357,7 +1357,7 @@ int sctk_type_get_attr(struct Datatype_Array *da, MPC_Datatype type,
 
   struct Datatype_Attr *ret = NULL;
 
-  void *pret = MPCHT_get(&store->attrs, type_keyval);
+  void *pret = mpc_common_hashtable_get(&store->attrs, type_keyval);
 
   if (pret) {
     ret = (struct Datatype_Attr *)pret;
@@ -1379,13 +1379,13 @@ int sctk_type_delete_attr(struct Datatype_Array *da, MPC_Datatype type,
   if (!store)
     return MPC_ERR_ARG;
 
-  void *pret = MPCHT_get(&store->attrs, type_keyval);
+  void *pret = mpc_common_hashtable_get(&store->attrs, type_keyval);
 
   if (!pret) {
     return MPC_ERR_ARG;
   }
 
-  MPCHT_delete(&store->attrs, type_keyval);
+  mpc_common_hashtable_delete(&store->attrs, type_keyval);
 
   sctk_free(pret);
 

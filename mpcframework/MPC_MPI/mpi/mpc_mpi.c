@@ -19673,7 +19673,7 @@ static int __message_handle_id = 1;
 static volatile int __message_handle_initialized = 0;
 
 /** This is the HT where handle conversion is done */
-struct MPCHT __message_handle_ht;
+struct mpc_common_hashtable __message_handle_ht;
 
 /** This is the message handle data-structure */
 struct MPC_Message {
@@ -19693,7 +19693,7 @@ static void MPC_Message_handle_init_once() {
   mpc_common_spinlock_lock_yield(&__message_handle_lock);
   if (__message_handle_initialized == 0) {
     __message_handle_initialized = 1;
-    MPCHT_init(&__message_handle_ht, 64);
+    mpc_common_hashtable_init(&__message_handle_ht, 64);
     sctk_m_probe_matching_init();
   }
 
@@ -19708,7 +19708,7 @@ static void MPC_Message_handle_release_once() {
 
   if (__message_handle_initialized == 1) {
     __message_handle_initialized = 0;
-    MPCHT_release(&__message_handle_ht);
+    mpc_common_hashtable_release(&__message_handle_ht);
   }
 
   mpc_common_spinlock_unlock(&__message_handle_lock);
@@ -19731,7 +19731,7 @@ struct MPC_Message *MPC_Message_new() {
 
   mpc_common_spinlock_unlock(&__message_handle_lock);
 
-  MPCHT_set(&__message_handle_ht, new->message_id, (void *)new);
+  mpc_common_hashtable_set(&__message_handle_ht, new->message_id, (void *)new);
 
   return new;
 }
@@ -19748,10 +19748,10 @@ void MPC_Message_free(struct MPC_Message *m) {
 struct MPC_Message *MPC_Message_retrieve(MPI_Message message) {
 
   struct MPC_Message *ret =
-      (struct MPC_Message *)MPCHT_get(&__message_handle_ht, message);
+      (struct MPC_Message *)mpc_common_hashtable_get(&__message_handle_ht, message);
 
   if (ret) {
-    MPCHT_delete(&__message_handle_ht, message);
+    mpc_common_hashtable_delete(&__message_handle_ht, message);
   }
 
   return ret;

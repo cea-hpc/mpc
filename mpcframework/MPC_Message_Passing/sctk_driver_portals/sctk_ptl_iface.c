@@ -216,7 +216,7 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 	comm_dims += SCTK_PTL_PTE_HIDDEN;
 
 	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * comm_dims); /* one CM, one recovery, one RDMA */
-	MPCHT_init(&srail->pt_table, (comm_dims < 64) ? 64 : comm_dims);
+	mpc_common_hashtable_init(&srail->pt_table, (comm_dims < 64) ? 64 : comm_dims);
 
 	for (i = 0; i < SCTK_PTL_PTE_HIDDEN; i++)
 	{
@@ -242,7 +242,7 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 			/*table[i].taglocks[j] = SCTK_SPINLOCK_INITIALIZER;*/
 		/*}*/
 		
-		MPCHT_set(&srail->pt_table, i, table + i);
+		mpc_common_hashtable_set(&srail->pt_table, i, table + i);
 	}
 
 	/* fill the CM queue with preallocated buffers
@@ -307,7 +307,7 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 	sctk_ptl_me_feed(srail, pte, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_OVERFLOW_LIST, SCTK_PTL_TYPE_STD,
 	 SCTK_PTL_PROT_NONE);
 
-	MPCHT_set(&srail->pt_table, key, pte);
+	mpc_common_hashtable_set(&srail->pt_table, key, pte);
 	/* suppose that comm_idx always increase
 	 * We add 1, because  (key + HIDDEN) is an idx */
 	srail->nb_entries = (key + SCTK_PTL_PTE_HIDDEN) + 1;
@@ -331,7 +331,7 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 
 	for(i = 0; i < table_dims; i++)
 	{
-		sctk_ptl_pte_t* cur = MPCHT_get(&srail->pt_table, i);
+		sctk_ptl_pte_t* cur = mpc_common_hashtable_get(&srail->pt_table, i);
 
 		if(sctk_ptl_offcoll_enabled(srail))
 			sctk_ptl_offcoll_pte_fini(srail, cur);
@@ -355,7 +355,7 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 
 	/* write 'NULL' to be sure */
 	sctk_free(base_ptr);
-	MPCHT_release(&srail->pt_table);
+	mpc_common_hashtable_release(&srail->pt_table);
 	srail->nb_entries = 0;
 
 	if(sctk_ptl_offcoll_enabled(srail))

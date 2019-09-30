@@ -26,7 +26,7 @@
 
 
 /**
- * @addtogroup MPCHT_Cell_
+ * @addtogroup _mpc_ht_cell_
  * @{
  */
 
@@ -36,9 +36,9 @@
  * @param key The key of this cell
  * @param data The pointer to be stored
  * @param next The pointer to the next cell to the chained
- * @return struct MPCHT_Cell*  New cell
+ * @return struct _mpc_ht_cell*  New cell
  */
-struct MPCHT_Cell * MPCHT_Cell_new( uint64_t key, void * data, struct MPCHT_Cell * next );
+struct _mpc_ht_cell * _mpc_ht_cell_new( uint64_t key, void * data, struct _mpc_ht_cell * next );
 
 /**
  * @brief Intialize the content of a cell
@@ -48,32 +48,32 @@ struct MPCHT_Cell * MPCHT_Cell_new( uint64_t key, void * data, struct MPCHT_Cell
  * @param data The pointer to be stored
  * @param next The pointer to the next cell to the chained
  */
-void MPCHT_Cell_init( struct MPCHT_Cell * cell , uint64_t key, void * data, struct MPCHT_Cell * next );
+void _mpc_ht_cell_init( struct _mpc_ht_cell * cell , uint64_t key, void * data, struct _mpc_ht_cell * next );
 
 /**
  * @brief Release an internal hash-table cell
  *
  * @param cell The cell to be released
  */
-void MPCHT_Cell_release( struct MPCHT_Cell * cell );
+void _mpc_ht_cell_release( struct _mpc_ht_cell * cell );
 
 /**
  * @brief Get a cell from an internal HT cell
  *
  * @param cell The cell-list to be searched
  * @param key the key to be searched
- * @return struct MPCHT_Cell* the resulting cell (or NULL if not found)
+ * @return struct _mpc_ht_cell* the resulting cell (or NULL if not found)
  */
-struct MPCHT_Cell * MPCHT_Cell_get( struct MPCHT_Cell * cell, uint64_t key );
+struct _mpc_ht_cell * _mpc_ht_cell_get( struct _mpc_ht_cell * cell, uint64_t key );
 
 /**
  * @brief Remove a cell from an HT list
  *
  * @param head head of the cell-list
  * @param key the key to be removed
- * @return struct MPCHT_Cell* the removed cell
+ * @return struct _mpc_ht_cell* the removed cell
  */
-struct MPCHT_Cell * MPCHT_Cell_pop( struct MPCHT_Cell * head, uint64_t key );
+struct _mpc_ht_cell * _mpc_ht_cell_pop( struct _mpc_ht_cell * head, uint64_t key );
 
 /**
  * @}

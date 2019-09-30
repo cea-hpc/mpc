@@ -21,7 +21,7 @@
 #include "sctk_debug.h"
 #include <string.h>
 
-void sctk_bit_array_init_buff(struct sctk_bit_array *ba, uint64_t size,
+void mpc_common_bit_array_init_buff(struct mpc_common_bit_array *ba, uint64_t size,
                               void *buff, uint64_t buff_size) {
   ba->real_size = size;
   ba->size = (size >> 3);
@@ -42,20 +42,20 @@ void sctk_bit_array_init_buff(struct sctk_bit_array *ba, uint64_t size,
     ba->array[i] = 0;
 }
 
-void sctk_bit_array_init(struct sctk_bit_array *ba, uint64_t size) {
+void mpc_common_bit_array_init(struct mpc_common_bit_array *ba, uint64_t size) {
 
   size_t array_size = (size >> 3);
 
   void *array = malloc(array_size * sizeof(uint8_t));
 
   if (!array) {
-    sctk_fatal("Failed to allocate a sctk_bit_array \n");
+    sctk_fatal("Failed to allocate a mpc_common_bit_array \n");
   }
 
-  sctk_bit_array_init_buff(ba, size, array, array_size);
+  mpc_common_bit_array_init_buff(ba, size, array, array_size);
 }
 
-void sctk_bit_array_release(struct sctk_bit_array *ba) {
+void mpc_common_bit_array_release(struct mpc_common_bit_array *ba) {
   unsigned int i = 0;
   for (i = 0; i < ba->size; i++)
     ba->array[i] = 0;
@@ -67,17 +67,17 @@ void sctk_bit_array_release(struct sctk_bit_array *ba) {
   ba->array = NULL;
 }
 
-void sctk_bit_array_replicate(struct sctk_bit_array *dest,
-                              struct sctk_bit_array *src) {
+void mpc_common_bit_array_replicate(struct mpc_common_bit_array *dest,
+                              struct mpc_common_bit_array *src) {
   if (dest->size != src->size) {
-    printf("Trying to copy to a different size sctk_bit_array\n");
+    printf("Trying to copy to a different size mpc_common_bit_array\n");
     abort();
   }
 
   memcpy(dest->array, src->array, dest->size);
 }
 
-void sctk_bit_array_dump(struct sctk_bit_array *ba) {
+void mpc_common_bit_array_dump(struct mpc_common_bit_array *ba) {
 
   unsigned int i = 0;
   unsigned int size = ba->size * 8;
@@ -85,7 +85,7 @@ void sctk_bit_array_dump(struct sctk_bit_array *ba) {
   printf("Array size is %d \n", size);
 
   for (i = 0; i < size; i++) {
-    printf("[%d]%d ", i, sctk_bit_array_get(ba, i));
+    printf("[%d]%d ", i, mpc_common_bit_array_get(ba, i));
   }
 
   printf("\n");

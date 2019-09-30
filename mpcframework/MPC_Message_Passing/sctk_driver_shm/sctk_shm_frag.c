@@ -11,8 +11,8 @@ static volatile int sctk_shm_process_msg_id = 0;
 
 static mpc_common_spinlock_t sctk_shm_sending_frag_hastable_lock = SCTK_SPINLOCK_INITIALIZER;
 static mpc_common_spinlock_t sctk_shm_recving_frag_hastable_lock = SCTK_SPINLOCK_INITIALIZER;
-static struct MPCHT *sctk_shm_sending_frag_hastable_ptr = NULL;
-static struct MPCHT *sctk_shm_recving_frag_hastable_ptr = NULL;
+static struct mpc_common_hashtable *sctk_shm_sending_frag_hastable_ptr = NULL;
+static struct mpc_common_hashtable *sctk_shm_recving_frag_hastable_ptr = NULL;
   
 static sctk_shm_proc_frag_info_t*
 sctk_shm_frag_get_elt_from_hash(int key, int table_id, sctk_shm_table_t table_type)
@@ -21,10 +21,10 @@ sctk_shm_frag_get_elt_from_hash(int key, int table_id, sctk_shm_table_t table_ty
    switch(table_type)
    {
       case SCTK_SHM_SENDER_HT:
-         tmp = MPCHT_get(&(sctk_shm_sending_frag_hastable_ptr[table_id]), key);
+         tmp = mpc_common_hashtable_get(&(sctk_shm_sending_frag_hastable_ptr[table_id]), key);
 	 break;
       case SCTK_SHM_RECVER_HT:
-         tmp = MPCHT_get(&(sctk_shm_recving_frag_hastable_ptr[table_id]), key);
+         tmp = mpc_common_hashtable_get(&(sctk_shm_recving_frag_hastable_ptr[table_id]), key);
          break;
       default:
         assume_m(0, "Unknown shm hastable type");
@@ -38,10 +38,10 @@ sctk_shm_frag_add_elt_to_hash(int key, int table_id, sctk_shm_proc_frag_info_t* 
    switch(table_type)
    {
       case SCTK_SHM_SENDER_HT:
-         MPCHT_set(&(sctk_shm_sending_frag_hastable_ptr[table_id]), key, (void*) elt);
+         mpc_common_hashtable_set(&(sctk_shm_sending_frag_hastable_ptr[table_id]), key, (void*) elt);
          break;
       case SCTK_SHM_RECVER_HT:
-	 MPCHT_set(&(sctk_shm_recving_frag_hastable_ptr[table_id]), key, (void*) elt);
+	 mpc_common_hashtable_set(&(sctk_shm_recving_frag_hastable_ptr[table_id]), key, (void*) elt);
 	 break;
       default:
 	 assume_m(0, "Unknown shm hastable type");
@@ -54,10 +54,10 @@ sctk_shm_frag_del_elt_from_hash(int key, int table_id, sctk_shm_table_t table_ty
    switch(table_type)
    {
       case SCTK_SHM_SENDER_HT:
-         MPCHT_delete(&(sctk_shm_sending_frag_hastable_ptr[table_id]), key);
+         mpc_common_hashtable_delete(&(sctk_shm_sending_frag_hastable_ptr[table_id]), key);
          break;
       case SCTK_SHM_RECVER_HT:
-         MPCHT_delete(&(sctk_shm_recving_frag_hastable_ptr[table_id]), key);
+         mpc_common_hashtable_delete(&(sctk_shm_recving_frag_hastable_ptr[table_id]), key);
          break;
       default:
          assume_m(0, "Unknown shm hastable type");
@@ -369,14 +369,14 @@ sctk_network_frag_shm_interface_init(void)
     int i;
     const int sctk_shm_process_on_node = mpc_common_get_local_process_count();
 
-    sctk_shm_sending_frag_hastable_ptr = (struct MPCHT*) sctk_malloc(sctk_shm_process_on_node * sizeof(struct MPCHT)); 
-    sctk_shm_recving_frag_hastable_ptr = (struct MPCHT*) sctk_malloc(sctk_shm_process_on_node * sizeof(struct MPCHT)); 
+    sctk_shm_sending_frag_hastable_ptr = (struct mpc_common_hashtable*) sctk_malloc(sctk_shm_process_on_node * sizeof(struct mpc_common_hashtable)); 
+    sctk_shm_recving_frag_hastable_ptr = (struct mpc_common_hashtable*) sctk_malloc(sctk_shm_process_on_node * sizeof(struct mpc_common_hashtable)); 
     
     for(i=0; i < sctk_shm_process_on_node; i++)
     { 
         sctk_nodebug("%d %d %p", mpc_common_get_local_process_rank(), i, &(sctk_shm_recving_frag_hastable_ptr[i]));
-    	MPCHT_init(&(sctk_shm_recving_frag_hastable_ptr[i]), SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS);
-    	MPCHT_init(&(sctk_shm_sending_frag_hastable_ptr[i]), SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS);
+    	mpc_common_hashtable_init(&(sctk_shm_recving_frag_hastable_ptr[i]), SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS);
+    	mpc_common_hashtable_init(&(sctk_shm_sending_frag_hastable_ptr[i]), SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS);
     }
 }
 
@@ -386,8 +386,8 @@ void sctk_network_frag_shm_interface_free(void)
 	int i;
 
 	for (i = 0; i < max; ++i) {
-		MPCHT_release(sctk_shm_recving_frag_hastable_ptr + i);
-		MPCHT_release(sctk_shm_sending_frag_hastable_ptr + i);
+		mpc_common_hashtable_release(sctk_shm_recving_frag_hastable_ptr + i);
+		mpc_common_hashtable_release(sctk_shm_sending_frag_hastable_ptr + i);
 	}
 
 	sctk_free(sctk_shm_recving_frag_hastable_ptr);

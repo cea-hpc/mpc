@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-uint64_t Buffered_FIFO_count( struct Buffered_FIFO *fifo )
+uint64_t mpc_common_fifo_count( struct mpc_common_fifo *fifo )
 {
 	uint64_t ret = 0;
 
@@ -32,7 +32,7 @@ uint64_t Buffered_FIFO_count( struct Buffered_FIFO *fifo )
 	return ret;
 }
 
-void Buffered_FIFO_chunk_init( struct Buffered_FIFO_chunk *ch,
+void mpc_common_fifo_chunk_init( struct mpc_common_fifo_chunk *ch,
 							   uint64_t chunk_size, uint64_t elem_size )
 {
 	ch->lock = 0;
@@ -52,9 +52,9 @@ void Buffered_FIFO_chunk_init( struct Buffered_FIFO_chunk *ch,
 	ch->prev = NULL;
 }
 
-struct Buffered_FIFO_chunk *Buffered_FIFO_chunk_new( uint64_t chunk_size, uint64_t elem_size )
+struct mpc_common_fifo_chunk *mpc_common_fifo_chunk_new( uint64_t chunk_size, uint64_t elem_size )
 {
-	struct Buffered_FIFO_chunk *ret = malloc( sizeof( struct Buffered_FIFO_chunk ) );
+	struct mpc_common_fifo_chunk *ret = malloc( sizeof( struct mpc_common_fifo_chunk ) );
 
 	if ( !ret )
 	{
@@ -62,18 +62,18 @@ struct Buffered_FIFO_chunk *Buffered_FIFO_chunk_new( uint64_t chunk_size, uint64
 		exit( 1 );
 	}
 
-	Buffered_FIFO_chunk_init( ret, chunk_size, elem_size );
+	mpc_common_fifo_chunk_init( ret, chunk_size, elem_size );
 
 	return ret;
 }
 
-void Buffered_FIFO_chunk_release( struct Buffered_FIFO_chunk *ch )
+void mpc_common_fifo_chunk_release( struct mpc_common_fifo_chunk *ch )
 {
 	free( ch->payload );
-	memset( ch, 0, sizeof( struct Buffered_FIFO_chunk ) );
+	memset( ch, 0, sizeof( struct mpc_common_fifo_chunk ) );
 }
 
-void *Buffered_FIFO_chunk_push( struct Buffered_FIFO_chunk *ch, void *elem )
+void *mpc_common_fifo_chunk_push( struct mpc_common_fifo_chunk *ch, void *elem )
 {
 	void *ret = NULL;
 
@@ -94,7 +94,7 @@ void *Buffered_FIFO_chunk_push( struct Buffered_FIFO_chunk *ch, void *elem )
 	return ret;
 }
 
-void *Buffered_FIFO_chunk_pop( struct Buffered_FIFO_chunk *ch, void *dest )
+void *mpc_common_fifo_chunk_pop( struct mpc_common_fifo_chunk *ch, void *dest )
 {
 	void *ret = NULL;
 
@@ -114,7 +114,7 @@ void *Buffered_FIFO_chunk_pop( struct Buffered_FIFO_chunk *ch, void *dest )
 	return ret;
 }
 
-void Buffered_FIFO_init( struct Buffered_FIFO *fifo, uint64_t chunk_size, size_t elem_size )
+void mpc_common_fifo_init( struct mpc_common_fifo *fifo, uint64_t chunk_size, size_t elem_size )
 {
 	fifo->head_lock = 0;
 	fifo->head = NULL;
@@ -128,10 +128,10 @@ void Buffered_FIFO_init( struct Buffered_FIFO *fifo, uint64_t chunk_size, size_t
 	fifo->elem_count = 0;
 }
 
-void Buffered_FIFO_release( struct Buffered_FIFO *fifo )
+void mpc_common_fifo_release( struct mpc_common_fifo *fifo )
 {
-	struct Buffered_FIFO_chunk *tmp = fifo->head;
-	struct Buffered_FIFO_chunk *to_free = NULL;
+	struct mpc_common_fifo_chunk *tmp = fifo->head;
+	struct mpc_common_fifo_chunk *to_free = NULL;
 
 	mpc_common_spinlock_lock( &fifo->head_lock );
 	mpc_common_spinlock_lock( &fifo->tail_lock );
@@ -141,13 +141,13 @@ void Buffered_FIFO_release( struct Buffered_FIFO *fifo )
 		to_free = tmp;
 		tmp = tmp->prev;
 
-		Buffered_FIFO_chunk_release( to_free );
+		mpc_common_fifo_chunk_release( to_free );
 	}
 
-	memset( fifo, 0, sizeof( struct Buffered_FIFO ) );
+	memset( fifo, 0, sizeof( struct mpc_common_fifo ) );
 }
 
-void *Buffered_FIFO_push( struct Buffered_FIFO *fifo, void *elem )
+void *mpc_common_fifo_push( struct mpc_common_fifo *fifo, void *elem )
 {
 	void *ret = NULL;
 
@@ -156,7 +156,7 @@ void *Buffered_FIFO_push( struct Buffered_FIFO *fifo, void *elem )
 	if ( fifo->head == NULL )
 	{
 		mpc_common_spinlock_lock( &fifo->tail_lock );
-		fifo->head = Buffered_FIFO_chunk_new( fifo->chunk_size, fifo->elem_size );
+		fifo->head = mpc_common_fifo_chunk_new( fifo->chunk_size, fifo->elem_size );
 		fifo->tail = fifo->head;
 		mpc_common_spinlock_unlock( &fifo->tail_lock );
 	}
@@ -164,13 +164,13 @@ void *Buffered_FIFO_push( struct Buffered_FIFO *fifo, void *elem )
 	while ( !ret )
 	{
 
-		ret = Buffered_FIFO_chunk_push( fifo->head, elem );
+		ret = mpc_common_fifo_chunk_push( fifo->head, elem );
 
 		/* Chunk is full  create a new one*/
 		if ( !ret )
 		{
-			struct Buffered_FIFO_chunk *new = Buffered_FIFO_chunk_new( fifo->chunk_size, fifo->elem_size );
-			Buffered_FIFO_chunk_ctx_prev( fifo->head, new );
+			struct mpc_common_fifo_chunk *new = mpc_common_fifo_chunk_new( fifo->chunk_size, fifo->elem_size );
+			mpc_common_fifo_chunk_ctx_prev( fifo->head, new );
 			fifo->head = new;
 		}
 	}
@@ -184,18 +184,18 @@ void *Buffered_FIFO_push( struct Buffered_FIFO *fifo, void *elem )
 	return ret;
 }
 
-void *Buffered_FIFO_pop( struct Buffered_FIFO *fifo, void *dest )
+void *mpc_common_fifo_pop( struct mpc_common_fifo *fifo, void *dest )
 {
 	void *ret = NULL;
 	mpc_common_spinlock_lock( &fifo->tail_lock );
 
 	if ( fifo->tail != NULL )
 	{
-		struct Buffered_FIFO_chunk *target = fifo->tail;
+		struct mpc_common_fifo_chunk *target = fifo->tail;
 
 		while ( !ret )
 		{
-			ret = Buffered_FIFO_chunk_pop( target, dest );
+			ret = mpc_common_fifo_chunk_pop( target, dest );
 
 			if ( ret )
 			{
@@ -206,16 +206,16 @@ void *Buffered_FIFO_pop( struct Buffered_FIFO *fifo, void *dest )
 			else
 			{
 				/* Go to previous chunk */
-				struct Buffered_FIFO_chunk *to_free = target;
+				struct mpc_common_fifo_chunk *to_free = target;
 
-				target = Buffered_FIFO_chunk_prev( target );
+				target = mpc_common_fifo_chunk_prev( target );
 
 				/* Found previous */
 				if ( target )
 				{
 
 					/* Free old block */
-					Buffered_FIFO_chunk_release( to_free );
+					mpc_common_fifo_chunk_release( to_free );
 					free( to_free );
 					/* Move tail */
 					fifo->tail = target;
@@ -235,7 +235,7 @@ void *Buffered_FIFO_pop( struct Buffered_FIFO *fifo, void *dest )
 	return ret;
 }
 
-int Buffered_FIFO_process( struct Buffered_FIFO *fifo, int ( *func )( void *elem, void *arg ), void *arg )
+int mpc_common_fifo_process( struct mpc_common_fifo *fifo, int ( *func )( void *elem, void *arg ), void *arg )
 {
 	if ( !fifo || !func )
 		return 0;
@@ -246,7 +246,7 @@ int Buffered_FIFO_process( struct Buffered_FIFO *fifo, int ( *func )( void *elem
 	mpc_common_spinlock_lock( &fifo->head_lock );
 	mpc_common_spinlock_lock( &fifo->tail_lock );
 
-	struct Buffered_FIFO_chunk *chunk = fifo->head;
+	struct mpc_common_fifo_chunk *chunk = fifo->head;
 
 	while ( chunk )
 	{

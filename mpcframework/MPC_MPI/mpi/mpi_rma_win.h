@@ -67,7 +67,7 @@ mpc_MPI_Win_attr_init(int keyval, void *value,
                       struct mpc_MPI_Win_keyval *keyval_pl, sctk_window_t win);
 
 struct mpc_MPI_Win_attr_ht {
-  struct MPCHT ht;
+  struct mpc_common_hashtable ht;
 };
 
 int mpc_MPI_Win_attr_ht_init(struct mpc_MPI_Win_attr_ht *ht);

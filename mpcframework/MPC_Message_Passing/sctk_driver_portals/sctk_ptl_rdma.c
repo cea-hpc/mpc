@@ -558,7 +558,7 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 	sctk_ptl_id_t remote;
 
 	if(rdma_pte==NULL)
-		rdma_pte = MPCHT_get(&srail->pt_table, SCTK_PTL_PTE_RDMA);
+		rdma_pte = mpc_common_hashtable_get(&srail->pt_table, SCTK_PTL_PTE_RDMA);
 
 	md_request = me_request = NULL;
 	match      = ign        = SCTK_PTL_MATCH_INIT;

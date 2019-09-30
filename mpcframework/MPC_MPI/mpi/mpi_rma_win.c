@@ -830,7 +830,7 @@ int mpc_MPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size,
 
 /* Keyval low-level storage */
 
-static struct MPCHT __win_keyval_ht;
+static struct mpc_common_hashtable __win_keyval_ht;
 mpc_common_spinlock_t __win_keyval_ht_lock = 0;
 int __win_keyval_ht_init_done = 0;
 
@@ -838,7 +838,7 @@ static inline void win_keyval_ht_init_once() {
   mpc_common_spinlock_lock(&__win_keyval_ht_lock);
 
   if (!__win_keyval_ht_init_done) {
-    MPCHT_init(&__win_keyval_ht, 16);
+    mpc_common_hashtable_init(&__win_keyval_ht, 16);
     __win_keyval_ht_init_done = 1;
   }
 
@@ -906,7 +906,7 @@ mpc_MPI_Win_attr_init(int keyval, void *value,
 }
 
 int mpc_MPI_Win_attr_ht_init(struct mpc_MPI_Win_attr_ht *atht) {
-  MPCHT_init(&atht->ht, 16);
+  mpc_common_hashtable_init(&atht->ht, 16);
   return 0;
 }
 
@@ -938,13 +938,13 @@ int mpc_MPI_Win_attr_ht_release(struct mpc_MPI_Win_attr_ht *atht) {
         }
       }
 
-      MPCHT_delete(&atht->ht, found);
+      mpc_common_hashtable_delete(&atht->ht, found);
       sctk_free(attr);
     }
 
   } while (found != -1);
 
-  MPCHT_release(&atht->ht);
+  mpc_common_hashtable_release(&atht->ht);
 
   return 0;
 }
@@ -972,7 +972,7 @@ int mpc_MPI_Win_set_attr(MPI_Win win, int keyval, void *attr_val) {
   uint64_t per_rank_keyval = get_per_rank_keyval_key(keyval);
 
   struct mpc_MPI_Win_keyval *kv =
-      (struct mpc_MPI_Win_keyval *)MPCHT_get(&__win_keyval_ht, per_rank_keyval);
+      (struct mpc_MPI_Win_keyval *)mpc_common_hashtable_get(&__win_keyval_ht, per_rank_keyval);
 
   if (!kv) {
     return MPI_ERR_KEYVAL;
@@ -980,11 +980,11 @@ int mpc_MPI_Win_set_attr(MPI_Win win, int keyval, void *attr_val) {
 
   /* If we are here ready to set */
   struct mpc_MPI_Win_attr *attr =
-      (struct mpc_MPI_Win_attr *)MPCHT_get(&desc->attrs.ht, keyval);
+      (struct mpc_MPI_Win_attr *)mpc_common_hashtable_get(&desc->attrs.ht, keyval);
 
   if (!attr) {
     attr = mpc_MPI_Win_attr_init(keyval, attr_val, kv, win);
-    MPCHT_set(&desc->attrs.ht, keyval, attr);
+    mpc_common_hashtable_set(&desc->attrs.ht, keyval, attr);
   } else {
     attr->value = attr_val;
   }
@@ -1043,7 +1043,7 @@ int mpc_MPI_Win_get_attr(MPI_Win win, int keyval, void *attr_val, int *flag) {
 
   uint64_t per_rank_keyval = get_per_rank_keyval_key(keyval);
 
-  void *pkv = MPCHT_get(&__win_keyval_ht, per_rank_keyval);
+  void *pkv = mpc_common_hashtable_get(&__win_keyval_ht, per_rank_keyval);
 
   if (!pkv) {
     return MPI_ERR_KEYVAL;
@@ -1051,7 +1051,7 @@ int mpc_MPI_Win_get_attr(MPI_Win win, int keyval, void *attr_val, int *flag) {
 
   /* Now try to retrieve attr */
   struct mpc_MPI_Win_attr *attr =
-      (struct mpc_MPI_Win_attr *)MPCHT_get(&desc->attrs.ht, keyval);
+      (struct mpc_MPI_Win_attr *)mpc_common_hashtable_get(&desc->attrs.ht, keyval);
 
   if (!attr) {
     *flag = 0;
@@ -1078,7 +1078,7 @@ int mpc_MPI_Win_delete_attr(MPI_Win win, int keyval) {
   uint64_t per_rank_keyval = get_per_rank_keyval_key(keyval);
 
   struct mpc_MPI_Win_keyval *kv =
-      (struct mpc_MPI_Win_keyval *)MPCHT_get(&__win_keyval_ht, per_rank_keyval);
+      (struct mpc_MPI_Win_keyval *)mpc_common_hashtable_get(&__win_keyval_ht, per_rank_keyval);
 
   if (!kv) {
     return MPI_ERR_KEYVAL;
@@ -1086,14 +1086,14 @@ int mpc_MPI_Win_delete_attr(MPI_Win win, int keyval) {
 
   /* Now try to retrieve attr */
   struct mpc_MPI_Win_attr *attr =
-      (struct mpc_MPI_Win_attr *)MPCHT_get(&desc->attrs.ht, keyval);
+      (struct mpc_MPI_Win_attr *)mpc_common_hashtable_get(&desc->attrs.ht, keyval);
 
   if (attr) {
     if (kv->delete_fn != NULL) {
       (kv->delete_fn)(win, keyval, attr->value, kv->extra_state);
     }
 
-    MPCHT_delete(&desc->attrs.ht, keyval);
+    mpc_common_hashtable_delete(&desc->attrs.ht, keyval);
     sctk_free(attr);
   }
 
@@ -1118,7 +1118,7 @@ int mpc_MPI_Win_create_keyval(MPI_Win_copy_attr_function *copy_fn,
 
   /* Now add to the ATTR HT */
   uint64_t per_rank_keyval = get_per_rank_keyval_key(new->keyval);
-  MPCHT_set(&__win_keyval_ht, per_rank_keyval, new);
+  mpc_common_hashtable_set(&__win_keyval_ht, per_rank_keyval, new);
 
   /* SET the return keyval */
   *keyval = new->keyval;
@@ -1135,13 +1135,13 @@ int mpc_MPI_Win_free_keyval(int *keyval) {
 
   uint64_t per_rank_keyval = get_per_rank_keyval_key(*keyval);
 
-  void *pkv = MPCHT_get(&__win_keyval_ht, per_rank_keyval);
+  void *pkv = mpc_common_hashtable_get(&__win_keyval_ht, per_rank_keyval);
 
   if (!pkv) {
     return MPI_ERR_KEYVAL;
   }
 
-  MPCHT_delete(&__win_keyval_ht, per_rank_keyval);
+  mpc_common_hashtable_delete(&__win_keyval_ht, per_rank_keyval);
   sctk_free(pkv);
 
   return MPI_SUCCESS;

@@ -277,7 +277,7 @@ struct futex_queue * futex_queue_new( int * futex_key )
 	
 	ret->queue_is_wake_tainted = 0;
 
-	Buffered_FIFO_init(&ret->wait_list, 32, sizeof(struct futex_cell *));
+	mpc_common_fifo_init(&ret->wait_list, 32, sizeof(struct futex_cell *));
 	
 	ret->futex_key = futex_key;
 	
@@ -291,7 +291,7 @@ void * futex_queue_new_from_key( uint64_t key )
 
 int futex_queue_release( struct futex_queue * fq )
 {
-	Buffered_FIFO_release( &fq->wait_list );
+	mpc_common_fifo_release( &fq->wait_list );
 	
 	free( fq ); 
 	
@@ -306,7 +306,7 @@ int * futex_queue_push( struct futex_queue * fq , int bitmask, int orig_op )
 	
 	struct futex_cell * cell = futex_cell_new(bitmask, orig_op);
 
-	Buffered_FIFO_push( &fq->wait_list , &cell );
+	mpc_common_fifo_push( &fq->wait_list , &cell );
 	
 	mpc_common_spinlock_unlock( &fq->queue_is_wake_tainted );
 	
@@ -315,7 +315,7 @@ int * futex_queue_push( struct futex_queue * fq , int bitmask, int orig_op )
 
 int * futex_queue_repush_no_lock( struct futex_queue * fq , struct futex_cell * to_repush )
 {
-	Buffered_FIFO_push( &fq->wait_list , &to_repush );
+	mpc_common_fifo_push( &fq->wait_list , &to_repush );
 
 	return to_repush->do_wait;
 }
@@ -366,7 +366,7 @@ int futex_queue_wake( struct futex_queue * fq , int bitmask, int use_mask, int c
 			struct futex_cell * to_wake = NULL;
 			
 			
-			if( !Buffered_FIFO_pop(&fq->wait_list, (void *)&to_wake ) )
+			if( !mpc_common_fifo_pop(&fq->wait_list, (void *)&to_wake ) )
 			{
 				/* No more elem to pop */
 				break;
@@ -420,7 +420,7 @@ int futex_queue_wake( struct futex_queue * fq , int bitmask, int use_mask, int c
 		desc.bitmask = bitmask;
 		desc.to_process = count;
 		
-		popped = Buffered_FIFO_process(&fq->wait_list, futex_cell_apply_bitmask, (void *)&desc );
+		popped = mpc_common_fifo_process(&fq->wait_list, futex_cell_apply_bitmask, (void *)&desc );
 		
 		
 	}
@@ -441,7 +441,7 @@ int futex_queue_requeue( struct futex_queue * fq, struct futex_queue * out, int 
 	while( count )
 	{
 		
-		if( !Buffered_FIFO_pop(&fq->wait_list, (void *)&to_wake ) )
+		if( !mpc_common_fifo_pop(&fq->wait_list, (void *)&to_wake ) )
 		{
 			/* No more elem to pop */
 			break;
@@ -494,7 +494,7 @@ int futex_queue_requeue( struct futex_queue * fq, struct futex_queue * out, int 
 	if( fq != out )
 	{
 		/* Queues are different, lets push on the new one */
-		while( Buffered_FIFO_pop(&fq->wait_list, (void *)&to_wake ) )
+		while( mpc_common_fifo_pop(&fq->wait_list, (void *)&to_wake ) )
 		{
 			futex_queue_repush( out, to_wake );
 			//sched_yield();
@@ -514,7 +514,7 @@ int futex_queue_requeue( struct futex_queue * fq, struct futex_queue * out, int 
 
 int futex_queue_HT_init( struct futex_queue_HT * ht )
 {
-	MPCHT_init( &ht->queue_hash_table, 128 );
+	mpc_common_hashtable_init( &ht->queue_hash_table, 128 );
 	ht->queue_count = 0;
 	ht->queue_cleanup_ratio = 128;
 	OPA_store_int( &ht->queue_table_is_being_manipulated, 0);
@@ -524,7 +524,7 @@ int futex_queue_HT_init( struct futex_queue_HT * ht )
 
 int futex_queue_HT_release( struct futex_queue_HT * ht )
 {
-	MPCHT_release( &ht->queue_hash_table );
+	mpc_common_hashtable_release( &ht->queue_hash_table );
 	ht->queue_count = 0;
 	ht->queue_cleanup_ratio = 0;
 	OPA_store_int( &ht->queue_table_is_being_manipulated, 0);
@@ -560,11 +560,11 @@ int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_k
 		{
 			struct futex_queue * queue = (struct futex_queue *)pfutex_queue;
 			
-			if( !Buffered_FIFO_count( &queue->wait_list ) )
+			if( !mpc_common_fifo_count( &queue->wait_list ) )
 			{
 				/* This is an empty wait list then POP */
 				uint64_t key = (uint64_t) queue->futex_key;
-				MPCHT_delete( &ht->queue_hash_table, key );
+				mpc_common_hashtable_delete( &ht->queue_hash_table, key );
 				ht->queue_count--;
 
 				/* Free it */
@@ -597,7 +597,7 @@ int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_k
 	
 	int new_queue_created = 0;
 	struct futex_queue *fq = (struct futex_queue *) 
-	          MPCHT_get_or_create(&ht->queue_hash_table,
+	          mpc_common_hashtable_get_or_create(&ht->queue_hash_table,
 								   new_key ,
 								   futex_queue_new_from_key,
 								   &new_queue_created);
@@ -641,7 +641,7 @@ int futex_queue_HT_requeue_threads( struct futex_queue_HT * ht ,
 	
 	int new_queue_created = 0;
 	struct futex_queue *in_fq = (struct futex_queue *) 
-	          MPCHT_get_or_create(&ht->queue_hash_table,
+	          mpc_common_hashtable_get_or_create(&ht->queue_hash_table,
 								   in_key ,
 								   futex_queue_new_from_key,
 								   &new_queue_created);
@@ -651,7 +651,7 @@ int futex_queue_HT_requeue_threads( struct futex_queue_HT * ht ,
 	
 	new_queue_created = 0;
 	struct futex_queue *out_fq = (struct futex_queue *) 
-	          MPCHT_get_or_create(&ht->queue_hash_table,
+	          mpc_common_hashtable_get_or_create(&ht->queue_hash_table,
 								   out_key ,
 								   futex_queue_new_from_key,
 								   &new_queue_created);
@@ -690,7 +690,7 @@ int futex_queue_HT_wake_threads( struct futex_queue_HT * ht , int * futex_key , 
 		
 	uint64_t key = (uint64_t) futex_key;
 	struct futex_queue *fq = (struct futex_queue *) 
-							   MPCHT_get( &ht->queue_hash_table,key );
+							   mpc_common_hashtable_get( &ht->queue_hash_table,key );
 	
 	if( !fq )
 	{

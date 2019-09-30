@@ -64,7 +64,7 @@ int futex_cell_apply_bitmask( void * elem /* struct futex_cell */,
 struct futex_queue
 {
 	mpc_common_spinlock_t queue_is_wake_tainted;
-	struct Buffered_FIFO wait_list;
+	struct mpc_common_fifo wait_list;
 	int * futex_key;
 };
 
@@ -81,7 +81,7 @@ struct futex_queue_HT
 {
 	OPA_int_t queue_table_is_being_manipulated;
 	
-	struct MPCHT queue_hash_table;
+	struct mpc_common_hashtable queue_hash_table;
 	unsigned int queue_count;
 	unsigned int queue_cleanup_ratio;
 };

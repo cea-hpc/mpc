@@ -151,10 +151,10 @@ __UNUSED__ static sctk_route_origin_t sctk_endpoint_get_origin ( sctk_endpoint_t
 struct sctk_route_table_s
 {
 	/* Dynamic Routes */
-	struct MPCHT dynamic_route_table; /** Here are stored the dynamic routes (hash table) */
+	struct mpc_common_hashtable dynamic_route_table; /** Here are stored the dynamic routes (hash table) */
 	sctk_spin_rwlock_t dynamic_route_table_lock; /** This is the dynamic route lock */
 	/* Static Routes */
-	struct MPCHT static_route_table; /** Here are stored static routes (hash table) -- no lock as they are read only */
+	struct mpc_common_hashtable static_route_table; /** Here are stored static routes (hash table) -- no lock as they are read only */
 };
 
 

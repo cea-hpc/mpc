@@ -147,7 +147,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 	{
 		do
 		{
-			cur_pte = MPCHT_get(&srail->pt_table, ((i++)%size));
+			cur_pte = mpc_common_hashtable_get(&srail->pt_table, ((i++)%size));
 		}
 		while(!cur_pte && i < size);
 		if(!cur_pte)

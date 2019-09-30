@@ -36,30 +36,30 @@ static mpc_common_spinlock_t init_lock = 0;
 
 /* Error handlers */
 static OPA_int_t current_errhandler;
-static struct MPCHT error_handlers;
+static struct mpc_common_hashtable error_handlers;
 
 /* Handles */
 static OPA_int_t current_handle;
-static struct MPCHT handle_context;
+static struct mpc_common_hashtable handle_context;
 
 /* Error codes */
 static OPA_int_t current_error_class;
 static OPA_int_t current_error_code;
-static struct MPCHT error_strings;
+static struct mpc_common_hashtable error_strings;
 
 static void _mpc_mpi_err_init() {
   /* Error handlers */
   OPA_store_int(&current_errhandler, 100);
-  MPCHT_init(&error_handlers, 8);
+  mpc_common_hashtable_init(&error_handlers, 8);
 
   /* Handles */
   OPA_store_int(&current_handle, SCTK_BOOKED_HANDLES);
-  MPCHT_init(&handle_context, 64);
+  mpc_common_hashtable_init(&handle_context, 64);
 
   /* Error codes */
   OPA_store_int(&current_error_class, 1024);
   OPA_store_int(&current_error_code, 100);
-  MPCHT_init(&error_strings, 8);
+  mpc_common_hashtable_init(&error_strings, 8);
 }
 
 static void mpc_mpi_err_init_once() {
@@ -86,7 +86,7 @@ int sctk_errhandler_register(sctk_generic_handler eh, sctk_errhandler_t *errh) {
   *errh = (sctk_errhandler_t)new_id;
   /* Save in the HT */
   sctk_nodebug("REGISTER Is %p for %d", eh, *errh);
-  MPCHT_set(&error_handlers, new_id, (void *)eh);
+  mpc_common_hashtable_set(&error_handlers, new_id, (void *)eh);
   /* All ok */
   return 0;
 }
@@ -96,7 +96,7 @@ int sctk_errhandler_register_on_slot(sctk_generic_handler eh,
   mpc_mpi_err_init_once();
   /* Save in the HT */
   sctk_nodebug("REGISTER Is %p for %d", eh, *errh);
-  MPCHT_set(&error_handlers, slot, (void *)eh);
+  mpc_common_hashtable_set(&error_handlers, slot, (void *)eh);
   /* All ok */
   return 0;
 }
@@ -105,7 +105,7 @@ sctk_generic_handler sctk_errhandler_resolve(sctk_errhandler_t errh) {
   mpc_mpi_err_init_once();
   /* Direct HT lookup */
 
-  sctk_generic_handler ret = MPCHT_get(&error_handlers, errh);
+  sctk_generic_handler ret = mpc_common_hashtable_get(&error_handlers, errh);
 
   sctk_nodebug("RET Is %p for %d", ret, errh);
 
@@ -123,7 +123,7 @@ int sctk_errhandler_free(sctk_errhandler_t errh) {
   }
 
   /* If present delete */
-  MPCHT_delete(&error_handlers, errh);
+  mpc_common_hashtable_delete(&error_handlers, errh);
 
   /* All done */
   return 0;
@@ -160,7 +160,7 @@ static mpc_common_spinlock_t handle_mod_lock = 0;
 
 struct sctk_handle_context *sctk_handle_context_no_lock(sctk_handle id,
                                                         sctk_handle_type type) {
-  return (struct sctk_handle_context *)MPCHT_get(&handle_context,
+  return (struct sctk_handle_context *)mpc_common_hashtable_get(&handle_context,
                                                  sctk_handle_compute(id, type));
 }
 
@@ -196,7 +196,7 @@ sctk_handle sctk_handle_new_from_id(int previous_id, sctk_handle_type type) {
     struct sctk_handle_context *ctx = sctk_handle_context_new(new_handle_id);
 
     /* Save in the HT */
-    MPCHT_set(&handle_context, sctk_handle_compute(new_handle_id, type),
+    mpc_common_hashtable_set(&handle_context, sctk_handle_compute(new_handle_id, type),
               (void *)ctx);
   }
 
@@ -228,7 +228,7 @@ int sctk_handle_free(sctk_handle id, sctk_handle_type type) {
     return MPC_ERR_ARG;
   }
 
-  MPCHT_delete(&handle_context, sctk_handle_compute(id, type));
+  mpc_common_hashtable_delete(&handle_context, sctk_handle_compute(id, type));
 
   mpc_common_spinlock_unlock(&handle_mod_lock);
 

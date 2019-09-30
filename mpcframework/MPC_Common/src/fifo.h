@@ -33,11 +33,11 @@ extern "C" {
 
 /**
  * @brief Structure defining a chunk of FIFO.
- * The Buffered_FIFO is made of several Buffered_FIFO_chunk containing the data.
+ * The mpc_common_fifo is made of several mpc_common_fifo_chunk containing the data.
  *
  * This is useful to avoid allocating/deallocating at each push/pop.
  */
-struct Buffered_FIFO_chunk
+struct mpc_common_fifo_chunk
 {
 	mpc_common_spinlock_t lock;		  /**< @brief a lock for concurrent internal manipulations */
 	char *payload;					  /**< @brief the actual data */
@@ -45,31 +45,31 @@ struct Buffered_FIFO_chunk
 	size_t elem_size;				  /**< @brief the size of stored elements */
 	uint64_t start_offset;			  /**< @brief the start offset (position of oldest element in payload */
 	uint64_t end_offset;			  /**< @brief the end offset (position of the end of newest element in payload */
-	struct Buffered_FIFO_chunk *prev; /**< @brief previous chunk of the FIFO (newer elements) */
+	struct mpc_common_fifo_chunk *prev; /**< @brief previous chunk of the FIFO (newer elements) */
 };
 
 /**
- * @brief Initializes a Buffered_FIFO_chunk
+ * @brief Initializes a mpc_common_fifo_chunk
  * @param ch the chunk to initialize
  * @param chunk_size the number of elements the chunk can contain
  * @param elem_size the size of the elements to store
  */
-void Buffered_FIFO_chunk_init( struct Buffered_FIFO_chunk *ch,
+void mpc_common_fifo_chunk_init( struct mpc_common_fifo_chunk *ch,
 			       uint64_t chunk_size, uint64_t elem_size );
 
 /**
- * @brief Allocates a new Buffered_FIFO_chunk
+ * @brief Allocates a new mpc_common_fifo_chunk
  * @param chunk_size the number of elements the chunk can contain
  * @param elem_size the size of the elements to store
  * @return the newly created chunk
  */
-struct Buffered_FIFO_chunk *Buffered_FIFO_chunk_new( uint64_t chunk_size, uint64_t elem_size );
+struct mpc_common_fifo_chunk *mpc_common_fifo_chunk_new( uint64_t chunk_size, uint64_t elem_size );
 
 /**
- * @brief Deallocates a new Buffered_FIFO_chunk
+ * @brief Deallocates a new mpc_common_fifo_chunk
  * @param ch the chunk to deallocate
  */
-void Buffered_FIFO_chunk_release( struct Buffered_FIFO_chunk *ch );
+void mpc_common_fifo_chunk_release( struct mpc_common_fifo_chunk *ch );
 
 /**
  * @brief Pushes an element into a chunk
@@ -77,7 +77,7 @@ void Buffered_FIFO_chunk_release( struct Buffered_FIFO_chunk *ch );
  * @param elem the element to push
  * @return a pointer to the element stored in ch->payload (NULL if there is not enough room)
  */
-void *Buffered_FIFO_chunk_push( struct Buffered_FIFO_chunk *ch, void *elem );
+void *mpc_common_fifo_chunk_push( struct mpc_common_fifo_chunk *ch, void *elem );
 
 /**
  * @brief pops en element from a chunk
@@ -85,14 +85,14 @@ void *Buffered_FIFO_chunk_push( struct Buffered_FIFO_chunk *ch, void *elem );
  * @param dest the element where to copy data
  * @return a pointer to the element stored in ch->payload (NULL the chunk is empty)
  */
-void *Buffered_FIFO_chunk_pop( struct Buffered_FIFO_chunk *ch, void *dest );
+void *mpc_common_fifo_chunk_pop( struct mpc_common_fifo_chunk *ch, void *dest );
 
 /**
  * @brief Thread-safely sets the previous chunk (ch->prev)
  * @param ch the chunk where to set the previous chunk
  * @param prev the new previous chunk
  */
-static inline void Buffered_FIFO_chunk_ctx_prev( struct Buffered_FIFO_chunk *ch, struct Buffered_FIFO_chunk *prev )
+static inline void mpc_common_fifo_chunk_ctx_prev( struct mpc_common_fifo_chunk *ch, struct mpc_common_fifo_chunk *prev )
 {
 	mpc_common_spinlock_lock( &ch->lock );
 	ch->prev = prev;
@@ -104,9 +104,9 @@ static inline void Buffered_FIFO_chunk_ctx_prev( struct Buffered_FIFO_chunk *ch,
  * @param ch the chunk from where to get the previous chunk
  * @return the previous chunk
  */
-static inline struct Buffered_FIFO_chunk *Buffered_FIFO_chunk_prev( struct Buffered_FIFO_chunk *ch )
+static inline struct mpc_common_fifo_chunk *mpc_common_fifo_chunk_prev( struct mpc_common_fifo_chunk *ch )
 {
-	struct Buffered_FIFO_chunk *ret;
+	struct mpc_common_fifo_chunk *ret;
 	mpc_common_spinlock_lock( &ch->lock );
 	ret = ch->prev;
 	mpc_common_spinlock_unlock( &ch->lock );
@@ -119,7 +119,7 @@ static inline struct Buffered_FIFO_chunk *Buffered_FIFO_chunk_prev( struct Buffe
  */
 
 /**
- * @addtogroup Buffered_FIFO_
+ * @addtogroup mpc_common_fifo_
  * @{
  */
 

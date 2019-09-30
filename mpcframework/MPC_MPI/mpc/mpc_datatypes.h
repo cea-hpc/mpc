@@ -129,7 +129,7 @@ struct Datatype_Attr *Datatype_Attr_new(int type_keyval, void *attribute_val);
 /** \brief This is where datatype attrs are stored (in each dt)
  */
 struct Datatype_Attr_store {
-  struct MPCHT attrs; /**< Just an ATTR ht */
+  struct mpc_common_hashtable attrs; /**< Just an ATTR ht */
 };
 
 /** \brief Initialize a data-type store
