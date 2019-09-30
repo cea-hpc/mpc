@@ -235,15 +235,15 @@ static void sctk_ptl_am_pte_populate( sctk_ptl_am_rail_info_t *srail, int srv_id
 		sctk_ptl_am_local_data_t *block;
 		last = (sctk_ptl_am_chunk_t *) sctk_calloc( 1, sizeof( sctk_ptl_am_chunk_t ) );
 
-		sctk_atomics_store_int( &last->refcnt, 0 );
-		sctk_atomics_store_int( &last->noff, 0 );
-		sctk_atomics_store_int( &last->up, 1 );
+		OPA_store_int( &last->refcnt, 0 );
+		OPA_store_int( &last->noff, 0 );
+		OPA_store_int( &last->up, 1 );
 		last->tag = 0;
 
 		/* in case of response, the tag will have to match */
 		if ( me_type == SCTK_PTL_AM_REP_TYPE )
 		{
-			match.data.tag = sctk_atomics_fetch_and_incr_int( &pte->next_tag );
+			match.data.tag = OPA_fetch_and_incr_int( &pte->next_tag );
 			last->tag = match.data.tag;
 		}
 
@@ -432,7 +432,7 @@ void sctk_ptl_am_pte_create( sctk_ptl_am_rail_info_t *srail, size_t key )
 		sctk_warning( "A Portals entry does not match the computed index !" );
 
 	pte->pte_lock = SCTK_SPINLOCK_INITIALIZER;
-	sctk_atomics_store_int( &pte->next_tag, 0 );
+	OPA_store_int( &pte->next_tag, 0 );
 	pte->req_head = NULL;
 	pte->req_tail = NULL;
 	pte->rep_head = NULL;
@@ -491,15 +491,15 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 			while ( rep_me ) /* iterate of available ME-RESP chunks */
 			{
 				/* if the current one is currently mapped */
-				if ( sctk_atomics_load_int( &rep_me->up ) )
+				if ( OPA_load_int( &rep_me->up ) )
 				{
 					/* Is a cell available ? */
-					req_imm.data.offset = sctk_atomics_fetch_and_add_int( &rep_me->noff, SCTK_PTL_AM_REP_CELL_SZ );
+					req_imm.data.offset = OPA_fetch_and_add_int( &rep_me->noff, SCTK_PTL_AM_REP_CELL_SZ );
 
 					/* YES and it is the last one for this chunk */
 					if ( req_imm.data.offset == ( SCTK_PTL_AM_CHUNK_SZ - SCTK_PTL_AM_REP_CELL_SZ ) ) /* last cell */
 					{
-						int cas_val = sctk_atomics_cas_int( &rep_me->up, 1, 0 );
+						int cas_val = OPA_cas_int( &rep_me->up, 1, 0 );
 						sctk_assert( cas_val == 1 );
 						break;
 					}
@@ -511,7 +511,7 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 					}
 
 					/* NO */
-					sctk_atomics_fetch_and_add_int( &rep_me->noff, ( -1 ) * (int) ( SCTK_PTL_AM_REP_CELL_SZ ) );
+					OPA_fetch_and_add_int( &rep_me->noff, ( -1 ) * (int) ( SCTK_PTL_AM_REP_CELL_SZ ) );
 				}
 				/* next chunk */
 				rep_me = rep_me->next;
@@ -531,7 +531,7 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 
 		/* save the tag of the found ME-REP */
 		tag = rep_me->tag;
-		sctk_atomics_incr_int( &rep_me->refcnt );
+		OPA_incr_int( &rep_me->refcnt );
 
 		/* as each response cell contains an header, save the header addr and 
 		 * the space to put back the response. The req_imm.data.offset is the 64-bit extra info
@@ -694,9 +694,9 @@ static inline void __sctk_ptl_am_free_chunk( sctk_ptl_am_local_data_t *c )
 	if ( c->block )
 	{
 		/* in that case, check that all cells have been released by their owners */
-		sctk_assert( sctk_atomics_load_int( &c->block->refcnt ) <= 0 );
+		sctk_assert( OPA_load_int( &c->block->refcnt ) <= 0 );
 		/* check also that the chunk has been detached from the Portals device */
-		sctk_assert( sctk_atomics_load_int( &c->block->up ) == 0 );
+		sctk_assert( OPA_load_int( &c->block->up ) == 0 );
 		sctk_free( (void *) c->block );
 	}
 	sctk_free( (void *) c );
@@ -721,8 +721,8 @@ int sctk_ptl_am_free_response( void *addr )
 		return 1;
 
 	sctk_ptl_am_msg_t *msg = container_of( addr, sctk_ptl_am_msg_t, data );
-	int last_val = sctk_atomics_fetch_and_decr_int( &msg->chunk_addr->refcnt );
-	int cas_val = sctk_atomics_load_int( &msg->chunk_addr->up );
+	int last_val = OPA_fetch_and_decr_int( &msg->chunk_addr->refcnt );
+	int cas_val = OPA_load_int( &msg->chunk_addr->up );
 
 	/* if this is the last free from the chunk */
 	if ( last_val - 1 == 0 && cas_val == 0 )
@@ -784,7 +784,7 @@ static inline void __sctk_ptl_am_event_handle_put( sctk_ptl_am_rail_info_t *srai
 		}
 		req_buf = ev->start;
 		req_sz = ev->mlength;
-		sctk_atomics_incr_int( &chunk->block->refcnt );
+		OPA_incr_int( &chunk->block->refcnt );
 
 		if ( !m.data.inc_data )
 		{
@@ -807,8 +807,8 @@ static inline void __sctk_ptl_am_event_handle_put( sctk_ptl_am_rail_info_t *srai
 		arpc_recv_call_ptl( &ctx, req_buf, req_sz, &resp_buf, &resp_sz, &msg );
 
 		/* flag the memory in the ME as freeable */
-		int last_value = sctk_atomics_fetch_and_decr_int( &chunk->block->refcnt );
-		int cas_value = sctk_atomics_load_int( &chunk->block->up );
+		int last_value = OPA_fetch_and_decr_int( &chunk->block->refcnt );
+		int cas_value = OPA_load_int( &chunk->block->up );
 
 		/* if this slot is the last one used in the memory block AND the ME has been unlinked -> free everything */
 		if ( last_value - 1 == 0 && cas_value == 0 )
@@ -887,8 +887,8 @@ static inline void __sctk_ptl_am_event_handle_unlink( sctk_ptl_am_rail_info_t *s
 		 */
 
 		sctk_assert( m.data.is_req == SCTK_PTL_AM_REQ_TYPE );
-		int cas_res = sctk_atomics_cas_int( &chunk->block->up, 1, 0 ); /* currenT ME is unlinked */
-		int cnt_res = sctk_atomics_load_int( &chunk->block->refcnt );
+		int cas_res = OPA_cas_int( &chunk->block->up, 1, 0 ); /* currenT ME is unlinked */
+		int cnt_res = OPA_load_int( &chunk->block->refcnt );
 		/* Are all slots unused at the unlinking time ? */
 		if ( cnt_res == 0 )
 		{

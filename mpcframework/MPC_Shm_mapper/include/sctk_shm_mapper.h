@@ -151,20 +151,20 @@ struct sctk_shm_mapper_sync_header_s
 	 * Counter to sync slaves operations. It start to number of participant and decrement until all are ready (0).
 	 * Slaves and master will spin on this until 0.
 	**/
-        sctk_atomics_int barrier_cnt;
+        OPA_int_t barrier_cnt;
         /**
          * Counter to sync barrier operations.
         **/
-        sctk_atomics_int barrier_gen;
+        OPA_int_t barrier_gen;
         /** Counter to known where slave must write their PID (need atomic inc
          * and read), master put at 0. **/
-        sctk_atomics_int cnt_pid;
+        OPA_int_t cnt_pid;
         /**
          * Number of participants which didn't map the segment to same address
          *at first step, so need more complexe
          * decision from master if not 0.
         **/
-        sctk_atomics_int cnt_invalid;
+        OPA_int_t cnt_invalid;
         /** Initial address obtained by master, if all slaves map with this one,
          * it's fine, don't need more work. **/
         volatile void *master_initial_address;
@@ -173,7 +173,7 @@ struct sctk_shm_mapper_sync_header_s
          *choice here for slaves.
          * Slavles will spin on this until non NULL.
         **/
-        sctk_atomics_ptr final_address;
+        OPA_ptr_t final_address;
         /** Just to assert the size on each participant and ensure all request
          * the same one. **/
         sctk_size_t size;

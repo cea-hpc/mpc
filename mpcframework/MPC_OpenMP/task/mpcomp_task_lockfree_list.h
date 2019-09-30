@@ -60,9 +60,9 @@ typedef struct mpcomp_task_lockfree_list_s {
   char pad1[MPCOMP_TASK_LOCKFREE_CACHELINE_PADDING-2*sizeof(OPA_ptr_t)];	
   OPA_ptr_t lockfree_shadow_head;
   char pad2[MPCOMP_TASK_LOCKFREE_CACHELINE_PADDING-1*sizeof(OPA_ptr_t)];	
-  sctk_atomics_int nb_elements;
+  OPA_int_t nb_elements;
   sctk_mpcomp_task_lock_t mpcomp_task_lock;	
-  sctk_atomics_int nb_larcenies; /**< Number of tasks in the list */
+  OPA_int_t nb_larcenies; /**< Number of tasks in the list */
 } mpcomp_task_lockfree_list_t;
 
 
@@ -104,16 +104,16 @@ static inline int mpcomp_task_lockfree_list_producer_trylock(__UNUSED__ mpcomp_t
 
 static inline int mpcomp_task_lockfree_list_isempty(mpcomp_task_list_t *list) {
   int ret = 0;
-  if( ! sctk_atomics_load_ptr( &( list->lockfree_shadow_head ) ) )
+  if( ! OPA_load_ptr( &( list->lockfree_shadow_head ) ) )
   {
-    if( ! sctk_atomics_load_ptr( &( list->lockfree_head ) ) )
+    if( ! OPA_load_ptr( &( list->lockfree_head ) ) )
     {
       ret = 1;
     }
     else
     {
-      sctk_atomics_store_ptr( &( list->lockfree_shadow_head ), sctk_atomics_load_ptr( &( list->lockfree_head ) ));
-      sctk_atomics_store_ptr( &( list->lockfree_head ), NULL ); 
+      OPA_store_ptr( &( list->lockfree_shadow_head ), OPA_load_ptr( &( list->lockfree_head ) ));
+      OPA_store_ptr( &( list->lockfree_head ), NULL ); 
     }
   } 
   return ret;
@@ -128,7 +128,7 @@ static inline mpcomp_task_t * mpcomp_task_peek_head( mpcomp_task_list_t *list)
     return NULL;
   }
 
-  return sctk_atomics_load_ptr( &( list->lockfree_shadow_head ) );
+  return OPA_load_ptr( &( list->lockfree_shadow_head ) );
 }
 
 
@@ -138,32 +138,32 @@ static inline void mpcomp_task_lockfree_list_pushtohead( mpcomp_task_list_t *lis
   sctk_assert( task );
   task->list = list;
 
-  sctk_atomics_store_ptr( &( task->lockfree_prev ), NULL );
-  sctk_atomics_write_barrier();
-  void* head = sctk_atomics_load_ptr( &( list->lockfree_shadow_head ));	
+  OPA_store_ptr( &( task->lockfree_prev ), NULL );
+  OPA_write_barrier();
+  void* head = OPA_load_ptr( &( list->lockfree_shadow_head ));	
 
   if(head)
   {
     mpcomp_task_t* next_task = ( mpcomp_task_t*) head;
-    sctk_atomics_store_ptr( &( list->lockfree_shadow_head), task);
-    sctk_atomics_store_ptr( &( task->lockfree_next ), next_task );
-    sctk_atomics_store_ptr( &( next_task->lockfree_prev ), (void*)  task );
+    OPA_store_ptr( &( list->lockfree_shadow_head), task);
+    OPA_store_ptr( &( task->lockfree_next ), next_task );
+    OPA_store_ptr( &( next_task->lockfree_prev ), (void*)  task );
   }
 
   else
   {
-    head = sctk_atomics_load_ptr( &( list->lockfree_head ));
+    head = OPA_load_ptr( &( list->lockfree_head ));
     if(head)
     {
       mpcomp_task_t* next_task = ( mpcomp_task_t*) head;
-      sctk_atomics_store_ptr( &( list->lockfree_head), task);
-      sctk_atomics_store_ptr( &( task->lockfree_next ), next_task );
-      sctk_atomics_store_ptr( &( next_task->lockfree_prev ), (void*)  task );
+      OPA_store_ptr( &( list->lockfree_head), task);
+      OPA_store_ptr( &( task->lockfree_next ), next_task );
+      OPA_store_ptr( &( next_task->lockfree_prev ), (void*)  task );
     }
     else
     {
-      sctk_atomics_store_ptr( &( list->lockfree_head ), (void*)  task );
-      sctk_atomics_store_ptr( &( list->lockfree_tail ), (void*)  task );
+      OPA_store_ptr( &( list->lockfree_head ), (void*)  task );
+      OPA_store_ptr( &( list->lockfree_tail ), (void*)  task );
     }
   }
 
@@ -173,24 +173,24 @@ static inline void mpcomp_task_lockfree_list_pushtotail( mpcomp_task_list_t *lis
 {
   sctk_assert( task );
   task->list = list;
-  sctk_atomics_store_ptr( (OPA_ptr_t*)&( task->next ), NULL );
+  OPA_store_ptr( (OPA_ptr_t*)&( task->next ), NULL );
 
   /* From OpenPA lockfree implementation */
-  sctk_atomics_write_barrier();
+  OPA_write_barrier();
 
-  void* prev = sctk_atomics_swap_ptr( &( list->lockfree_tail ), task );
+  void* prev = OPA_swap_ptr( &( list->lockfree_tail ), task );
 
   if( !prev )
   {
-    sctk_atomics_store_ptr( (OPA_ptr_t*)&( list->lockfree_head ), (void*)  task );
-    sctk_atomics_store_ptr( (OPA_ptr_t*)&( task->lockfree_prev ), NULL );
+    OPA_store_ptr( (OPA_ptr_t*)&( list->lockfree_head ), (void*)  task );
+    OPA_store_ptr( (OPA_ptr_t*)&( task->lockfree_prev ), NULL );
 
   }
   else
   {
     mpcomp_task_t* prev_task = ( mpcomp_task_t*) prev;
-    sctk_atomics_store_ptr( (OPA_ptr_t*)&( prev_task->lockfree_next ), (void*)  task );
-    sctk_atomics_store_ptr( (OPA_ptr_t*)&( task->lockfree_prev), (void*) prev_task);
+    OPA_store_ptr( (OPA_ptr_t*)&( prev_task->lockfree_next ), (void*)  task );
+    OPA_store_ptr( (OPA_ptr_t*)&( task->lockfree_prev), (void*) prev_task);
   }
 }
 
@@ -205,25 +205,25 @@ static inline mpcomp_task_t* mpcomp_task_lockfree_list_popfromhead(mpcomp_task_l
     return NULL;
   }
   /* Get first task in list */
-  void* shadow = sctk_atomics_load_ptr( &( list->lockfree_shadow_head ) );
+  void* shadow = OPA_load_ptr( &( list->lockfree_shadow_head ) );
   task = ( mpcomp_task_t* ) shadow;
 
-  if( sctk_atomics_load_ptr( (OPA_ptr_t*)&( task->lockfree_next ) ))
+  if( OPA_load_ptr( (OPA_ptr_t*)&( task->lockfree_next ) ))
   {
-    sctk_atomics_store_ptr( (OPA_ptr_t*)&( list->lockfree_shadow_head ), sctk_atomics_load_ptr( &( task->lockfree_next ) ) );
-    mpcomp_task_t* next_task = ( mpcomp_task_t*) sctk_atomics_load_ptr(&(task->lockfree_next));
-    sctk_atomics_store_ptr( (OPA_ptr_t*)&( next_task->lockfree_prev ), NULL);
+    OPA_store_ptr( (OPA_ptr_t*)&( list->lockfree_shadow_head ), OPA_load_ptr( &( task->lockfree_next ) ) );
+    mpcomp_task_t* next_task = ( mpcomp_task_t*) OPA_load_ptr(&(task->lockfree_next));
+    OPA_store_ptr( (OPA_ptr_t*)&( next_task->lockfree_prev ), NULL);
   }
   else
   {
-    sctk_atomics_store_ptr( (OPA_ptr_t*)&( list->lockfree_shadow_head ) , NULL );
-    if( sctk_atomics_cas_ptr( (OPA_ptr_t*)&( list->lockfree_tail ), shadow, NULL ) != shadow )
+    OPA_store_ptr( (OPA_ptr_t*)&( list->lockfree_shadow_head ) , NULL );
+    if( OPA_cas_ptr( (OPA_ptr_t*)&( list->lockfree_tail ), shadow, NULL ) != shadow )
     {
-      while( !sctk_atomics_load_ptr( (OPA_ptr_t*)&( task->lockfree_next ) ))
+      while( !OPA_load_ptr( (OPA_ptr_t*)&( task->lockfree_next ) ))
       {
         sctk_cpu_relax();
       }
-      sctk_atomics_store_ptr( (OPA_ptr_t*)&( list->lockfree_shadow_head ), sctk_atomics_load_ptr( &( task->lockfree_next )));
+      OPA_store_ptr( (OPA_ptr_t*)&( list->lockfree_shadow_head ), OPA_load_ptr( &( task->lockfree_next )));
     }
   }
 
@@ -237,25 +237,25 @@ static inline mpcomp_task_t *mpcomp_task_lockfree_list_popfromtail(mpcomp_task_l
   {
     return NULL;
   }
-  void* tail = sctk_atomics_load_ptr( &( list->lockfree_tail ) );	
-  shadow = ( mpcomp_task_t* )sctk_atomics_load_ptr( &( list->lockfree_shadow_head ) );	
+  void* tail = OPA_load_ptr( &( list->lockfree_tail ) );	
+  shadow = ( mpcomp_task_t* )OPA_load_ptr( &( list->lockfree_shadow_head ) );	
   task = (mpcomp_task_t*) tail;
-  if( sctk_atomics_load_ptr( &( shadow->lockfree_next ) ))
+  if( OPA_load_ptr( &( shadow->lockfree_next ) ))
   {
-    sctk_atomics_store_ptr( &( list->lockfree_tail ), sctk_atomics_load_ptr( &( task->lockfree_prev) ) );
-    mpcomp_task_t* prev_task = ( mpcomp_task_t*) sctk_atomics_load_ptr(&(task->lockfree_prev));
-    sctk_atomics_store_ptr( &( prev_task->lockfree_next ), NULL);
+    OPA_store_ptr( &( list->lockfree_tail ), OPA_load_ptr( &( task->lockfree_prev) ) );
+    mpcomp_task_t* prev_task = ( mpcomp_task_t*) OPA_load_ptr(&(task->lockfree_prev));
+    OPA_store_ptr( &( prev_task->lockfree_next ), NULL);
   }
   else
   {
-    sctk_atomics_store_ptr( (OPA_ptr_t*)&( list->lockfree_shadow_head), NULL );
-    if( sctk_atomics_cas_ptr( (OPA_ptr_t*)&( list->lockfree_tail ), shadow, NULL ) != shadow )
+    OPA_store_ptr( (OPA_ptr_t*)&( list->lockfree_shadow_head), NULL );
+    if( OPA_cas_ptr( (OPA_ptr_t*)&( list->lockfree_tail ), shadow, NULL ) != shadow )
     {
-      while( !sctk_atomics_load_ptr( (OPA_ptr_t*)&( task->lockfree_next ) ))
+      while( !OPA_load_ptr( (OPA_ptr_t*)&( task->lockfree_next ) ))
       {
         sctk_cpu_relax();
       }
-      sctk_atomics_store_ptr( (OPA_ptr_t*)&( list->lockfree_shadow_head ), sctk_atomics_load_ptr( &( task->lockfree_next ))); 
+      OPA_store_ptr( (OPA_ptr_t*)&( list->lockfree_shadow_head ), OPA_load_ptr( &( task->lockfree_next ))); 
     }
   }	
 

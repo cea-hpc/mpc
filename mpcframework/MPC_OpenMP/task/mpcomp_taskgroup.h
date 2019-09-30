@@ -48,13 +48,13 @@ static inline void mpcomp_taskgroup_add_task(mpcomp_task_t *new_task) {
   taskgroup = current_task->taskgroup;
   if (taskgroup) {
     new_task->taskgroup = taskgroup;
-    sctk_atomics_incr_int(&(taskgroup->children_num));
+    OPA_incr_int(&(taskgroup->children_num));
   }
 }
 
 static inline void mpcomp_taskgroup_del_task(mpcomp_task_t *task) {
   if (task->taskgroup)
-    sctk_atomics_decr_int(&(task->taskgroup->children_num));
+    OPA_decr_int(&(task->taskgroup->children_num));
 }
 
 #else /* MPCOMP_TASKGROUP */

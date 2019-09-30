@@ -30,31 +30,31 @@
 #include "mpcomp_ompt_specific.h"
 #include "mpcomp_ompt_types_internal.h"
 
-static sctk_atomics_int mpcomp_OMPT_wait_id = OPA_INT_T_INITIALIZER(1); 
-static sctk_atomics_int mpcomp_OMPT_task_id = OPA_INT_T_INITIALIZER(1); 
-static sctk_atomics_int mpcomp_OMPT_thread_id = OPA_INT_T_INITIALIZER(1); 
+static OPA_int_t mpcomp_OMPT_wait_id = OPA_INT_T_INITIALIZER(1); 
+static OPA_int_t mpcomp_OMPT_task_id = OPA_INT_T_INITIALIZER(1); 
+static OPA_int_t mpcomp_OMPT_thread_id = OPA_INT_T_INITIALIZER(1); 
 
 ompt_wait_id_t mpcomp_OMPT_gen_wait_id( void )
 {
-	const int prev = sctk_atomics_fetch_and_incr_int( &( mpcomp_OMPT_wait_id ) );
+	const int prev = OPA_fetch_and_incr_int( &( mpcomp_OMPT_wait_id ) );
 	return ( ompt_wait_id_t ) prev; 
 }
 
 ompt_task_id_t mpcomp_OMPT_gen_task_id( void )
 {
-	const int prev = sctk_atomics_fetch_and_incr_int( &( mpcomp_OMPT_task_id ) );
+	const int prev = OPA_fetch_and_incr_int( &( mpcomp_OMPT_task_id ) );
 	return ( ompt_task_id_t ) prev; 
 }
 
 ompt_thread_id_t mpcomp_OMPT_gen_thread_id( void )
 {
-	const int prev = sctk_atomics_fetch_and_incr_int( &( mpcomp_OMPT_thread_id ) );
+	const int prev = OPA_fetch_and_incr_int( &( mpcomp_OMPT_thread_id ) );
 	return ( ompt_thread_id_t ) prev; 
 }
 
 ompt_parallel_id_t mpcomp_OMPT_gen_parallel_id( void )
 {
-	const int prev = sctk_atomics_fetch_and_incr_int( &( mpcomp_OMPT_thread_id ) );
+	const int prev = OPA_fetch_and_incr_int( &( mpcomp_OMPT_thread_id ) );
 	return ( ompt_thread_id_t ) prev; 
 }
 

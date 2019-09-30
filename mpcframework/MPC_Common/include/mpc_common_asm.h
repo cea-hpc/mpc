@@ -25,8 +25,6 @@
 #include "sctk_config.h"
 #include "mpc_common_asm.h"
 
-
-
 #include <sched.h>
 #include <libpause.h>
 #ifdef __MIC__
@@ -45,48 +43,16 @@ extern "C" {
 #include "sctk_config.h"
 
 #if defined(OPA_USE_UNSAFE_PRIMITIVES)\
- || defined(OPA_HAVE_GCC_AND_POWERPC_ASM)\
- || defined(OPA_HAVE_GCC_X86_32_64) \
- || defined(OPA_HAVE_GCC_X86_32_64_P3)\
- || defined(OPA_HAVE_GCC_AND_IA64_ASM)\
- || defined(OPA_HAVE_GCC_AND_SICORTEX_ASM) \
- || defined(OPA_HAVE_GCC_INTRINSIC_ATOMICS)\
- || defined(OPA_HAVE_SUN_ATOMIC_OPS)\
- || defined(OPA_HAVE_NT_INTRINSICS) \
- || defined(OPA_USE_LOCK_BASED_PRIMITIVES)
-
-        #define SCTK_OPENPA_AVAILABLE
-
-        #include "opa_primitives.h"
-
-        // Rename the OPA types into sctk_atomics ones
-        typedef OPA_int_t sctk_atomics_int;
-        typedef OPA_ptr_t sctk_atomics_ptr;
-
-        // Rename the OPA functions into sctk_atomics ones
-        #define sctk_atomics_store_int           OPA_store_int
-        #define sctk_atomics_swap_int            OPA_swap_int
-        #define sctk_atomics_load_int            OPA_load_int
-        #define sctk_atomics_load_ptr            OPA_load_ptr
-        #define sctk_atomics_store_ptr           OPA_store_ptr
-        #define sctk_atomics_add_int             OPA_add_int
-        #define sctk_atomics_incr_int            OPA_incr_int
-        #define sctk_atomics_decr_int            OPA_decr_int
-        #define sctk_atomics_decr_and_test_int   OPA_decr_and_test_int
-        #define sctk_atomics_fetch_and_add_int   OPA_fetch_and_add_int
-        #define sctk_atomics_fetch_and_incr_int  OPA_fetch_and_incr_int
-        #define sctk_atomics_fetch_and_decr_int  OPA_fetch_and_decr_int
-        #define sctk_atomics_cas_ptr             OPA_cas_ptr
-        #define sctk_atomics_cas_int             OPA_cas_int
-        #define sctk_atomics_swap_ptr            OPA_swap_ptr
-        #define sctk_atomics_write_barrier       OPA_write_barrier
-        #define sctk_atomics_read_barrier        OPA_read_barrier
-        #define sctk_atomics_read_write_barrier  OPA_read_write_barrier
-        #define sctk_atomics_pause               OPA_busy_wait
-
-        #define SCTK_ATOMICS_INT_T_INIT	OPA_INT_T_INITIALIZER
-        #define SCTK_ATOMICS_PTR_T_INIT	OPA_PTR_T_INITIALIZER
-
+        || defined(OPA_HAVE_GCC_AND_POWERPC_ASM)\
+        || defined(OPA_HAVE_GCC_X86_32_64) \
+        || defined(OPA_HAVE_GCC_X86_32_64_P3)\
+        || defined(OPA_HAVE_GCC_AND_IA64_ASM)\
+        || defined(OPA_HAVE_GCC_AND_SICORTEX_ASM) \
+        || defined(OPA_HAVE_GCC_INTRINSIC_ATOMICS)\
+        || defined(OPA_HAVE_SUN_ATOMIC_OPS)\
+        || defined(OPA_HAVE_NT_INTRINSICS) \
+        || defined(OPA_USE_LOCK_BASED_PRIMITIVES)
+#include "opa_primitives.h"
 #else /* OpenPA Test Variable */
         #error Unsupported architecture. Cannot compile MPC
 #endif
@@ -109,7 +75,7 @@ typedef volatile int sctk_atomic_test_t;
 
 static inline int sctk_test_and_set( sctk_atomic_test_t *atomic )
 {
-        return sctk_atomics_swap_int( (OPA_int_t *) atomic, 1 );
+        return OPA_swap_int( (OPA_int_t *) atomic, 1 );
 }
 
 

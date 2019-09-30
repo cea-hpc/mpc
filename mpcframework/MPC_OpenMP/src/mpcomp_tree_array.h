@@ -34,7 +34,7 @@ typedef struct mpcomp_meta_tree_node_s
 
     /* Min index */
     void* user_pointer;
-    sctk_atomics_int children_ready;
+    OPA_int_t children_ready;
 } mpcomp_meta_tree_node_t; 
 
 typedef struct mpcomp_mvp_thread_args_s

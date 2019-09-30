@@ -274,7 +274,7 @@ void sctk_barrier_hetero_messages ( const sctk_communicator_t communicator,
 
 		OPA_store_int ( &barrier->tasks_entered_in_node, 0 );
 		barrier->generation = generation + 1;
-		sctk_atomics_write_barrier();
+		OPA_write_barrier();
 	}
 	else
 	{
@@ -450,7 +450,7 @@ void sctk_broadcast_hetero_messages ( void *buffer, const size_t size,
 		/* End inter node communications */
 
 		OPA_store_ptr ( &bcast->buff_root, buffer );
-		sctk_atomics_write_barrier();
+		OPA_write_barrier();
 
 		while ( OPA_load_int ( &bcast->tasks_exited_in_node ) != nb_tasks_in_node - 1 )
 			sctk_thread_yield();
@@ -460,7 +460,7 @@ void sctk_broadcast_hetero_messages ( void *buffer, const size_t size,
 		OPA_store_int ( &bcast->tasks_exited_in_node, 0 );
 		OPA_store_ptr ( &bcast->buff_root, NULL );
 		bcast->generation = generation + 1;
-		sctk_atomics_write_barrier();
+		OPA_write_barrier();
 	}
 	else
 	{
@@ -700,7 +700,7 @@ static void sctk_allreduce_hetero_messages_hetero_intern ( const void *buffer_in
 		/* Fill the buffer entry for all tasks */
 		buff_in[task_id_in_node] = ( volatile void * ) buffer_in;
 		buff_out[task_id_in_node] = buffer_out;
-		sctk_atomics_write_barrier();
+		OPA_write_barrier();
 
 		/* Last entry */
 		if ( task_id_in_node == nb_tasks_in_node - 1 )
@@ -730,7 +730,7 @@ static void sctk_allreduce_hetero_messages_hetero_intern ( const void *buffer_in
 			 * be propagate to all other tasks */
 
 			allreduce->generation = generation + 1;
-			sctk_atomics_write_barrier();
+			OPA_write_barrier();
 
 			while ( OPA_load_int ( &allreduce->tasks_entered_in_node ) != 1 )
 				sctk_thread_yield();

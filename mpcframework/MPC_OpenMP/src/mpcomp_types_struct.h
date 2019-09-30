@@ -60,7 +60,7 @@ struct mpcomp_task_instance_infos_s;
  ********************/
 
 typedef struct mpcomp_atomic_int_pad_s {
-  sctk_atomics_int i; /**< Value of the integer */
+  OPA_int_t i; /**< Value of the integer */
   char pad[8];        /* Padding */
 } mpcomp_atomic_int_pad_t;
 
@@ -107,7 +107,7 @@ typedef struct mpcomp_team_s {
   int id; /* team unique id */
 
   /* -- SINGLE/SECTIONS CONSTRUCT -- */
-  sctk_atomics_int single_sections_last_current;
+  OPA_int_t single_sections_last_current;
   void *single_copyprivate_data;
 
   /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
@@ -116,7 +116,7 @@ typedef struct mpcomp_team_s {
 
   /* GUIDED LOOP CONSTRUCT */
   volatile int is_first[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
-  sctk_atomics_ptr guided_from[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
+  OPA_ptr_t guided_from[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
   mpc_common_spinlock_t lock;
 
 
@@ -124,7 +124,7 @@ typedef struct mpcomp_team_s {
   int next_ordered_index;
   volatile long next_ordered_offset;
   volatile unsigned long long next_ordered_offset_ull;
-  sctk_atomics_int next_ordered_offset_finalized;
+  OPA_int_t next_ordered_offset_finalized;
 
 #if MPCOMP_TASK
   struct mpcomp_task_team_infos_s task_infos;
@@ -177,7 +177,7 @@ typedef struct mpcomp_thread_s {
     //TODO MERGE THESE TWO STRUCT ...
     /* Current position in 'for_dyn_chunk_info' array  */ 
     int for_dyn_current;
-    sctk_atomics_int for_dyn_ull_current;
+    OPA_int_t for_dyn_ull_current;
     /* Chunks array for loop dynamic schedule constructs */
     mpcomp_atomic_int_pad_t for_dyn_remain[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
     /* Total number of chunks of the thread */
@@ -403,7 +403,7 @@ typedef struct mpcomp_node_s
     int min_index[MPCOMP_AFFINITY_NB]; 
     /* -- Barrier specific information --                       */ 
     /** Threads number already wait on node                     */
-    sctk_atomics_int barrier;
+    OPA_int_t barrier;
     /** Last generation barrier id perform on node              */
     volatile long barrier_done;
     /** Number of threads involved in the barrier               */

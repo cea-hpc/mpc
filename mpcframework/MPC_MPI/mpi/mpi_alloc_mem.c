@@ -98,7 +98,7 @@ int mpc_MPI_allocmem_pool_init() {
   inner_size += SCTK_SHM_MAPPER_PAGE_SIZE;
 
   /* Book space for the spinlock */
-  inner_size += sizeof(sctk_atomics_int);
+  inner_size += sizeof(OPA_int_t);
 
   /* Are all the tasks in the same process ? */
   if (mpc_common_get_task_count() == mpc_common_get_local_task_count()) {
@@ -203,7 +203,7 @@ int mpc_MPI_allocmem_pool_init() {
 
     ____mpc_sctk_mpi_alloc_mem_pool.size = pool_size;
     ____mpc_sctk_mpi_alloc_mem_pool.size_left = pool_size;
-    sctk_atomics_store_int(____mpc_sctk_mpi_alloc_mem_pool.lock, 0);
+    OPA_store_int(____mpc_sctk_mpi_alloc_mem_pool.lock, 0);
 
     sctk_bit_array_init_buff(&____mpc_sctk_mpi_alloc_mem_pool.mask,
                              SCTK_SHM_MAPPER_PAGE_SIZE * 8, bit_array_page,
@@ -266,14 +266,14 @@ int mpc_MPI_allocmem_pool_release() {
 
 static inline void mpc_MPI_allocmem_pool_lock() {
   assert(____mpc_sctk_mpi_alloc_mem_pool.lock);
-  while (sctk_atomics_cas_int(____mpc_sctk_mpi_alloc_mem_pool.lock, 0, 1)) {
+  while (OPA_cas_int(____mpc_sctk_mpi_alloc_mem_pool.lock, 0, 1)) {
     mpc_thread_yield();
   }
 }
 
 static inline void mpc_MPI_allocmem_pool_unlock() {
   assert(____mpc_sctk_mpi_alloc_mem_pool.lock);
-  sctk_atomics_store_int(____mpc_sctk_mpi_alloc_mem_pool.lock, 0);
+  OPA_store_int(____mpc_sctk_mpi_alloc_mem_pool.lock, 0);
 }
 
 

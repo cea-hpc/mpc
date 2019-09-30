@@ -36,7 +36,7 @@ struct mpc_MPI_allocmem_pool {
   size_t size_left;
   size_t mapped_size;
   size_t space_per_bit;
-  sctk_atomics_int *lock;
+  OPA_int_t *lock;
   struct sctk_bit_array mask;
   struct MPCHT size_ht;
 };

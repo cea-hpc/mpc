@@ -702,7 +702,7 @@ struct sctk_task_specific_s *___the_process_specific = NULL;
 
 static int * ___local_to_global_table = NULL;
 static struct sctk_task_specific_s **___disguisements = NULL;
-sctk_atomics_int ________is_disguised;
+OPA_int_t ________is_disguised;
 
 int __MPC_init_disguise( struct sctk_task_specific_s * my_specific )
 {
@@ -711,7 +711,7 @@ int __MPC_init_disguise( struct sctk_task_specific_s * my_specific )
 
     if( my_id == 0 )
     {
-        sctk_atomics_store_int(&________is_disguised, 0);
+        OPA_store_int(&________is_disguised, 0);
         int local_count = mpc_common_get_local_task_count();
         ___disguisements = sctk_malloc( sizeof(struct sctk_task_specific_s *) * local_count );
 
@@ -763,7 +763,7 @@ int MPCX_Disguise( MPC_Comm comm, int target_rank )
   for (i = 0; i < local_count; ++i) {
       if( ___local_to_global_table[i] == cwr )
       {
-        sctk_atomics_incr_int( &________is_disguised );
+        OPA_incr_int( &________is_disguised );
         th->my_disguisement = ___disguisements[i]->thread_data;
         th->ctx_disguisement = (void *)___disguisements[i];
         return MPC_SUCCESS;
@@ -783,7 +783,7 @@ int MPCX_Undisguise()
 
   th->my_disguisement = NULL;
   th->ctx_disguisement = NULL;
-  sctk_atomics_decr_int( &________is_disguised );
+  OPA_decr_int( &________is_disguised );
 
   return MPC_SUCCESS;
 }
@@ -3108,31 +3108,31 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 		int local_tasknum = mpc_common_get_local_task_rank();
 		int task_rank = mpc_common_get_task_rank();
 		int pmi_rank = -1;
-		static sctk_atomics_int init_once = OPA_INT_T_INITIALIZER(0);
-		static sctk_atomics_int gen_acquire = OPA_INT_T_INITIALIZER(0);
-		static sctk_atomics_int gen_release = OPA_INT_T_INITIALIZER(0);
-		static sctk_atomics_int gen_current = OPA_INT_T_INITIALIZER(0);
+		static OPA_int_t init_once = OPA_INT_T_INITIALIZER(0);
+		static OPA_int_t gen_acquire = OPA_INT_T_INITIALIZER(0);
+		static OPA_int_t gen_release = OPA_INT_T_INITIALIZER(0);
+		static OPA_int_t gen_current = OPA_INT_T_INITIALIZER(0);
 		static int * task_generations;
 
 		/* init once the genration array */
-		if(sctk_atomics_cas_int(&init_once, 0, 1) == 0)
+		if(OPA_cas_int(&init_once, 0, 1) == 0)
 		{
 			task_generations = (int*)malloc(sizeof(int) * local_nbtasks);
 			memset(task_generations, 0, sizeof(int) * local_nbtasks);
-			sctk_atomics_store_int(&init_once, 2);
+			OPA_store_int(&init_once, 2);
 		}
 		else
 		{
-			while(sctk_atomics_load_int(&init_once) != 2)
+			while(OPA_load_int(&init_once) != 2)
 				sctk_thread_yield();
 		}
 
 		/* ensure there won't be any overlapping betwen different MPC_Checkpoint() calls */
-		while(sctk_atomics_load_int(&gen_current) < task_generations[local_tasknum])
+		while(OPA_load_int(&gen_current) < task_generations[local_tasknum])
 			sctk_thread_yield();
 
 		/* if I'm the last task to process: do the work */
-		if(sctk_atomics_fetch_and_incr_int(&gen_acquire) == local_nbtasks -1)
+		if(OPA_fetch_and_incr_int(&gen_acquire) == local_nbtasks -1)
 		{
                         /* save the old checkpoint/restart counters */
 			sctk_ft_checkpoint_init();
@@ -3164,15 +3164,15 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 			sctk_ft_checkpoint_finalize();
 
 			/* set gen_release to 0, prepare the end of current generation */ 
-			sctk_atomics_store_int(&gen_release, 0);
+			OPA_store_int(&gen_release, 0);
 			/* set gen_aquire to 0: unlock waiting tasks */
-			sctk_atomics_store_int(&gen_acquire, 0);
+			OPA_store_int(&gen_acquire, 0);
 
 		}
 		else
 		{
 			/* waiting tasks */
-			while(sctk_atomics_load_int(&gen_acquire) != 0)
+			while(OPA_load_int(&gen_acquire) != 0)
 				sctk_thread_yield();
 		}
 	
@@ -3185,9 +3185,9 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 		sctk_terminaison_barrier(task_rank);
 
 		/* If I'm the last task to reach here, increment the global generation counter */ 
-		if(sctk_atomics_fetch_and_incr_int(&gen_release) == local_nbtasks -1)
+		if(OPA_fetch_and_incr_int(&gen_release) == local_nbtasks -1)
 		{
-			sctk_atomics_incr_int(&gen_current);
+			OPA_incr_int(&gen_current);
 		}
 
 		/* the current task finished the work for the current generation */

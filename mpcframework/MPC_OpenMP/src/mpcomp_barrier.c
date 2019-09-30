@@ -58,7 +58,7 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
 
   /* Step 1: Climb in the tree */
   b_done = c->barrier_done; /* Move out of sync region? */
-  b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
+        b = OPA_fetch_and_incr_int(&(c->barrier)) + 1;
 
   while (b == c->barrier_num_threads && c != new_root) {
     sctk_atomics_store_int(&(c->barrier), 0);

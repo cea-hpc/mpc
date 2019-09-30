@@ -29,7 +29,7 @@
 
 struct sctk_polling_cell
 {
-	sctk_atomics_int polling_counter;
+	OPA_int_t polling_counter;
 	char is_free;
 };
 

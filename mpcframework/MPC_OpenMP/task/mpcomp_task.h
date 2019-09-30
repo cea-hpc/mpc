@@ -57,7 +57,7 @@ typedef unsigned int mpcomp_task_property_t;
 typedef struct mpcomp_task_taskgroup_s {
   struct mpcomp_task_s *children;
   struct mpcomp_task_taskgroup_s *prev;
-  sctk_atomics_int children_num;
+  OPA_int_t children_num;
 } mpcomp_task_taskgroup_t;
 
 /** OpenMP task data structure */
@@ -65,7 +65,7 @@ typedef struct mpcomp_task_s {
   int depth;                 /**< nested task depth */
   void (*func)(void *);      /**< Function to execute */
   void *data;                /**< Arguments of the function 				    */
-  sctk_atomics_int refcount; /**< refcount delay task free                   */
+  OPA_int_t refcount; /**< refcount delay task free                   */
   mpcomp_task_property_t property; /**< Task property
                                       */
   struct mpcomp_task_s *parent;    /**< Mother task
@@ -75,8 +75,8 @@ typedef struct mpcomp_task_s {
   struct mpcomp_task_list_s
       *list;                  /**< The current list of the task 				*/
 
-  sctk_atomics_ptr lockfree_next; /**< Prev task in the thread's task list if lists are lockfree */
-  sctk_atomics_ptr lockfree_prev; /**< Next task in the thread's task list if lists are lockfree */
+  OPA_ptr_t lockfree_next; /**< Prev task in the thread's task list if lists are lockfree */
+  OPA_ptr_t lockfree_prev; /**< Next task in the thread's task list if lists are lockfree */
   struct mpcomp_task_s *prev; /**< Prev task in the thread's task list if lists are locked */
   struct mpcomp_task_s *next; /**< Next task in the thread's task list if lists are locked */
 
@@ -128,7 +128,7 @@ typedef struct mpcomp_task_mvp_infos_s {
  */
 typedef struct mpcomp_task_thread_infos_s {
   int *larceny_order;
-  sctk_atomics_int status;               /**< Thread task's init tag */
+  OPA_int_t status;               /**< Thread task's init tag */
   struct mpcomp_task_s *current_task;    /**< Currently running task */
   struct mpcomp_task_list_s *tied_tasks; /**< List of suspended tied tasks */
   void* opaque; /**< use mcslock buffered */
@@ -156,8 +156,8 @@ typedef struct mpcomp_task_team_infos_s {
   int task_nesting_max;      /**< Task max depth in task generation */
   int task_larceny_mode;     /**< Task stealing policy
                                 */
-  sctk_atomics_int status;   /**< Thread team task's init status tag */
-  sctk_atomics_int use_task; /**< Thread team task create task */
+  OPA_int_t status;   /**< Thread team task's init status tag */
+  OPA_int_t use_task; /**< Thread team task create task */
   int tasklist_depth[MPCOMP_TASK_TYPE_COUNT]; /**< Depth in the tree of task
                                                  lists 			*/
 } mpcomp_task_team_infos_t;

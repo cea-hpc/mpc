@@ -84,7 +84,7 @@ void mpc_MPI_Win_handle_win_flush(void *data ) {
       sctk_get_comm_world_rank(desc->comm, message->source_rank);
 
   incoming_rma =
-      sctk_atomics_load_int(&low_win->incoming_emulated_rma[source_cw_rank]);
+      OPA_load_int(&low_win->incoming_emulated_rma[source_cw_rank]);
 
   int cnt = 0;
   while (incoming_rma != outgoing_rma) {
@@ -101,7 +101,7 @@ void mpc_MPI_Win_handle_win_flush(void *data ) {
       }
     }
     incoming_rma =
-        sctk_atomics_load_int(&low_win->incoming_emulated_rma[source_cw_rank]);
+        OPA_load_int(&low_win->incoming_emulated_rma[source_cw_rank]);
     cnt++;
   }
   static int dummy;
@@ -183,7 +183,7 @@ void mpc_MPI_Win_handle_non_contiguous_write(void *data, size_t size) {
   PMPC_Type_free(&target_type);
 
   sctk_window_inc_incoming(low_win, message->source_rank);
-  sctk_atomics_incr_int(&desc->target.ctrl_message_counter);
+  OPA_incr_int(&desc->target.ctrl_message_counter);
 }
 
 void mpc_MPI_Win_handle_non_contiguous_read(void *data, size_t size) {
@@ -340,7 +340,7 @@ void mpc_MPI_Win_handle_non_contiguous_accumulate_send(void *data,
   PMPC_Type_free(&target_type);
 
   sctk_window_inc_incoming(low_win, message->source_rank);
-  sctk_atomics_incr_int(&desc->target.ctrl_message_counter);
+  OPA_incr_int(&desc->target.ctrl_message_counter);
 }
 
 /************************************************************************/
@@ -572,7 +572,7 @@ int mpc_MPI_Win_init_flush(struct mpc_MPI_Win_ctrl_message *message,
 
   assume(low_win);
 
-  message->opt_arg1 = sctk_atomics_load_int(&low_win->outgoing_emulated_rma);
+  message->opt_arg1 = OPA_load_int(&low_win->outgoing_emulated_rma);
 
   return ret;
 }
@@ -584,9 +584,9 @@ void mpc_MPI_Win_notify_dest_ctx_counter(MPI_Win win) {
   if (!desc)
     return;
 
-  sctk_atomics_incr_int(&desc->target.ctrl_message_counter);
+  OPA_incr_int(&desc->target.ctrl_message_counter);
   sctk_nodebug("NOTIFY TAR on %d(%p) now %d", win, desc,
-               sctk_atomics_load_int(&desc->target.ctrl_message_counter));
+               OPA_load_int(&desc->target.ctrl_message_counter));
 }
 
 void mpc_MPI_Win_notify_src_ctx_counter(MPI_Win win) {
@@ -596,7 +596,7 @@ void mpc_MPI_Win_notify_src_ctx_counter(MPI_Win win) {
   if (!desc)
     return;
 
-  sctk_atomics_incr_int(&desc->source.ctrl_message_counter);
+  OPA_incr_int(&desc->source.ctrl_message_counter);
   sctk_nodebug("NOTIFY SRC on %d(%p) now %d", win, desc,
-               sctk_atomics_load_int(&desc->source.ctrl_message_counter));
+               OPA_load_int(&desc->source.ctrl_message_counter));
 }

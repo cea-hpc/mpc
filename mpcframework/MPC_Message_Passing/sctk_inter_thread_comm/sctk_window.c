@@ -42,21 +42,21 @@ static inline int mpc_MPI_allocmem_is_in_pool(void *ptr) { return 0; }
 /* Window Numbering and translation                                     */
 /************************************************************************/
 
-sctk_atomics_int __rma_generation;
+OPA_int_t __rma_generation;
 
 void sctk_win_translation_init(struct sctk_win_translation *wt,
                                struct sctk_window *win) {
   wt->win = win;
-  wt->generation = sctk_atomics_load_int(&__rma_generation);
+  wt->generation = OPA_load_int(&__rma_generation);
 }
 
 static struct MPCHT ___window_hash_table;
 
-sctk_atomics_int __current_win_id;
+OPA_int_t __current_win_id;
 
 void sctk_window_init_ht() {
   MPCHT_init(&___window_hash_table, 512);
-  sctk_atomics_store_int(&__current_win_id, 1);
+  OPA_store_int(&__current_win_id, 1);
 }
 
 void sctk_window_release_ht() {
@@ -84,7 +84,7 @@ static struct sctk_window * sctk_win_register()
   assume(new);
   memset(new, 0, sizeof(struct sctk_window));
 
-  int new_id = sctk_atomics_fetch_and_add_int(&__current_win_id, 1);
+  int new_id = OPA_fetch_and_add_int(&__current_win_id, 1);
 
   new->id = new_id;
 
@@ -104,7 +104,7 @@ struct sctk_window *__sctk_win_translate(sctk_window_t win_id) {
 
   assume(win_id == ret->id);
 
-  sctk_atomics_load_int(&__rma_generation);
+  OPA_load_int(&__rma_generation);
 
   if (!__forward_translate.win) {
     sctk_win_translation_init(&__forward_translate, ret);
@@ -120,7 +120,7 @@ static void sctk_win_delete( struct sctk_window * win )
   if (!win)
     return;
 
-  sctk_atomics_incr_int(&__rma_generation);
+  OPA_incr_int(&__rma_generation);
 
   int id = win->id;
 
@@ -203,16 +203,16 @@ sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, sctk_
         win->size = size;
         win->disp_unit = disp_unit;
 
-        sctk_atomics_store_int(&win->outgoing_emulated_rma, 0);
+        OPA_store_int(&win->outgoing_emulated_rma, 0);
 
         int comm_size = sctk_get_nb_task_total(win->comm);
 
         win->incoming_emulated_rma =
-            sctk_calloc(comm_size, sizeof(sctk_atomics_int));
+            sctk_calloc(comm_size, sizeof(OPA_int_t));
 
         int i;
         for (i = 0; i < comm_size; i++) {
-          sctk_atomics_store_int(&win->incoming_emulated_rma[i], 0);
+          OPA_store_int(&win->incoming_emulated_rma[i], 0);
         }
 
         sctk_rail_info_t *rdma_rail = sctk_rail_get_rdma();
@@ -345,11 +345,11 @@ int sctk_window_build_from_remote(struct sctk_window *remote_win_data) {
   int comm_size = sctk_get_nb_task_total(new_win->comm);
 
   new_win->incoming_emulated_rma =
-      sctk_calloc(comm_size, sizeof(sctk_atomics_int));
+      sctk_calloc(comm_size, sizeof(OPA_int_t));
 
   int i;
   for (i = 0; i < comm_size; i++) {
-    sctk_atomics_store_int(&new_win->incoming_emulated_rma[i], 0);
+    OPA_store_int(&new_win->incoming_emulated_rma[i], 0);
   }
 
   return new_win->id;
@@ -516,7 +516,7 @@ void sctk_window_RDMA_emulated_write_ctrl_msg_handler(
 
   sctk_wait_message(&req);
 
-  sctk_atomics_incr_int(&win->incoming_emulated_rma[erma->source_rank]);
+  OPA_incr_int(&win->incoming_emulated_rma[erma->source_rank]);
 #ifdef MPC_MPI
   mpc_MPI_Win_notify_dest_ctx_counter(erma->win_id);
 #endif
@@ -625,7 +625,7 @@ static inline void __sctk_window_RDMA_write(sctk_window_t win_id,
 
     sctk_wait_message(&data_req);
 
-    sctk_atomics_incr_int(&win->outgoing_emulated_rma);
+    OPA_incr_int(&win->outgoing_emulated_rma);
 
     sctk_window_complete_request(req);
   } else {
@@ -877,78 +877,78 @@ static inline void sctk_window_fetch_and_op_operate_int(RDMA_op op, void *add,
 
   switch (op) {
   case RDMA_SUM:
-    result = sctk_atomics_fetch_and_add_int(src, *to_add);
+    result = OPA_fetch_and_add_int(src, *to_add);
     break;
 
   case RDMA_INC:
-    result = sctk_atomics_fetch_and_incr_int(src);
+    result = OPA_fetch_and_incr_int(src);
     break;
 
   case RDMA_DEC:
-    result = sctk_atomics_fetch_and_decr_int(src);
+    result = OPA_fetch_and_decr_int(src);
     break;
 
   case RDMA_MIN:
-    val = sctk_atomics_load_int(src);
+    val = OPA_load_int(src);
 
     if (*to_add < val) {
-      sctk_atomics_store_int(src, *to_add);
+      OPA_store_int(src, *to_add);
     }
 
     result = val;
     break;
   case RDMA_MAX:
-    val = sctk_atomics_load_int(src);
+    val = OPA_load_int(src);
 
     if (val < *to_add) {
-      sctk_atomics_store_int(src, *to_add);
+      OPA_store_int(src, *to_add);
     }
 
     result = val;
     break;
   case RDMA_PROD:
-    val = sctk_atomics_load_int(src);
-    sctk_atomics_store_int(src, *to_add * val);
+    val = OPA_load_int(src);
+    OPA_store_int(src, *to_add * val);
     result = val;
     break;
   case RDMA_LAND:
-    val = sctk_atomics_load_int(src);
-    sctk_atomics_store_int(src, *to_add && val);
+    val = OPA_load_int(src);
+    OPA_store_int(src, *to_add && val);
     result = val;
     break;
 
   case RDMA_BAND:
-    val = sctk_atomics_load_int(src);
-    sctk_atomics_store_int(src, *to_add & val);
+    val = OPA_load_int(src);
+    OPA_store_int(src, *to_add & val);
     result = val;
     break;
 
   case RDMA_LOR:
-    val = sctk_atomics_load_int(src);
-    sctk_atomics_store_int(src, *to_add || val);
+    val = OPA_load_int(src);
+    OPA_store_int(src, *to_add || val);
     result = val;
     break;
 
   case RDMA_BOR:
-    val = sctk_atomics_load_int(src);
-    sctk_atomics_store_int(src, *to_add | val);
+    val = OPA_load_int(src);
+    OPA_store_int(src, *to_add | val);
     result = val;
     break;
 
   case RDMA_LXOR:
-    val = sctk_atomics_load_int(src);
-    sctk_atomics_store_int(src, (!(*to_add)) != (!(val)));
+    val = OPA_load_int(src);
+    OPA_store_int(src, (!(*to_add)) != (!(val)));
     result = val;
     break;
 
   case RDMA_BXOR:
-    val = sctk_atomics_load_int(src);
-    sctk_atomics_store_int(src, *to_add ^ val);
+    val = OPA_load_int(src);
+    OPA_store_int(src, *to_add ^ val);
     result = val;
     break;
   }
 
-  memcpy(dest, &result, sizeof(sctk_atomics_int));
+  memcpy(dest, &result, sizeof(OPA_int_t));
 }
 
 #define RDMA_OP_def(type, type2, type3)                                        \
@@ -1367,12 +1367,12 @@ void sctk_window_RDMA_CAS_int_local( void * cmp , void * new, void * target, voi
 {
 	int oldv = *((int *)cmp );
 	int newv = *((int *)new );
-	sctk_atomics_int * ptarget = (sctk_atomics_int *)target;
+	OPA_int_t * ptarget = (OPA_int_t *)target;
 	int * pres = (int *)res;
 
         int local = 0;
 
-        local = sctk_atomics_cas_int(ptarget, oldv, newv);
+        local = OPA_cas_int(ptarget, oldv, newv);
 
         // sctk_error("OLD %d NEW %d RES %d", oldv, newv, local );
 
@@ -1382,9 +1382,9 @@ void sctk_window_RDMA_CAS_int_local( void * cmp , void * new, void * target, voi
 
 void sctk_window_RDMA_CAS_ptr_local( void ** cmp , void ** new, void * target, void  * res )
 {
-	sctk_atomics_ptr * ptarget = (sctk_atomics_ptr *)target;
+	OPA_ptr_t * ptarget = (OPA_ptr_t *)target;
 
-	void * local = sctk_atomics_cas_ptr(ptarget, *cmp, *new);
+	void * local = OPA_cas_ptr(ptarget, *cmp, *new);
 
 	if( res )
 		memcpy( res, &local, sizeof( void * ) );
@@ -1439,13 +1439,13 @@ void sctk_window_RDMA_CAS_local( sctk_window_t remote_win_id, size_t remote_offs
           sctk_fatal("Error RDMA CAS operation overflows the window");
         }
 
-        void *remote_addr = (sctk_atomics_int *)(win->start_addr + offset);
+        void *remote_addr = (OPA_int_t *)(win->start_addr + offset);
 
         size_t type_size = RDMA_type_size(type);
 
-        if (type_size == sizeof(sctk_atomics_int)) {
+        if (type_size == sizeof(OPA_int_t)) {
           sctk_window_RDMA_CAS_int_local(comp, new_data, remote_addr, res);
-        } else if (type_size == sizeof(sctk_atomics_ptr)) {
+        } else if (type_size == sizeof(OPA_ptr_t)) {
           sctk_window_RDMA_CAS_ptr_local(comp, new_data, remote_addr, res);
         } else if (type_size == 16) {
           sctk_window_RDMA_CAS_16_local(comp, new_data, remote_addr, res);

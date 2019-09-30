@@ -116,12 +116,12 @@ static int __mpcomp_task_process_deps(mpcomp_task_dep_node_t *task_node,
       mpcomp_task_dep_node_list_t *node_list;
       for (node_list = entry->last_in; node_list; node_list = node_list->next) {
         mpcomp_task_dep_node_t *node = node_list->node;
-        if (sctk_atomics_load_int(&(node->status)) <
+        if (OPA_load_int(&(node->status)) <
             MPCOMP_TASK_DEP_TASK_FINALIZED)
         // if( node->task )
         {
           MPCOMP_TASK_DEP_LOCK_NODE(node);
-          if (sctk_atomics_load_int(&(node->status)) <
+          if (OPA_load_int(&(node->status)) <
               MPCOMP_TASK_DEP_TASK_FINALIZED)
           // if( node->task )
           {
@@ -137,12 +137,12 @@ static int __mpcomp_task_process_deps(mpcomp_task_dep_node_t *task_node,
       entry->last_in = NULL;
     } else {
       /** Non executed OUT dependency**/
-      if (last_out && (sctk_atomics_load_int(&(last_out->status)) <
+      if (last_out && (OPA_load_int(&(last_out->status)) <
                        MPCOMP_TASK_DEP_TASK_FINALIZED))
       // if( last_out && last_out->task )
       {
         MPCOMP_TASK_DEP_LOCK_NODE(last_out);
-        if (sctk_atomics_load_int(&(last_out->status)) <
+        if (OPA_load_int(&(last_out->status)) <
             MPCOMP_TASK_DEP_TASK_FINALIZED)
         // if( last_out->task )
         {
@@ -201,19 +201,19 @@ void __mpcomp_task_finalize_deps(mpcomp_task_t *task) {
 
   /* Release Task Deps */
   MPCOMP_TASK_DEP_LOCK_NODE(task_node);
-  sctk_atomics_store_int( &( task_node->status ), MPCOMP_TASK_DEP_TASK_FINALIZED );
+  OPA_store_int( &( task_node->status ), MPCOMP_TASK_DEP_TASK_FINALIZED );
   MPCOMP_TASK_DEP_UNLOCK_NODE(task_node);
 
   /* Unref my successors */
   while ((list_elt = task_node->successors)) {
     succ_node = list_elt->node;
     const int prev =
-        sctk_atomics_fetch_and_decr_int(&(succ_node->predecessors)) - 1;
+        OPA_fetch_and_decr_int(&(succ_node->predecessors)) - 1;
 
     if( !prev && succ_node->if_clause)
     {
-      if( sctk_atomics_load_int( &( succ_node->status ) ) != MPCOMP_TASK_DEP_TASK_FINALIZED )
-       if( sctk_atomics_cas_int( &( succ_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_RELEASED )
+      if( OPA_load_int( &( succ_node->status ) ) != MPCOMP_TASK_DEP_TASK_FINALIZED )
+       if( OPA_cas_int( &( succ_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_RELEASED )
            == MPCOMP_TASK_DEP_TASK_NOT_EXECUTE )
          __mpcomp_task_process(succ_node->task, 1);
     }
@@ -289,8 +289,8 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
   task_node->task = NULL;
 
   /* Can't be execute by release func */
-  sctk_atomics_store_int(&(task_node->predecessors), 0);
-  sctk_atomics_store_int(&(task_node->status),
+  OPA_store_int(&(task_node->predecessors), 0);
+  OPA_store_int(&(task_node->status),
                          MPCOMP_TASK_DEP_TASK_PROCESS_DEP);
 
   predecessors_num = __mpcomp_task_process_deps(
@@ -300,7 +300,7 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
   task_node->task = new_task;
   new_task->task_dep_infos->node = task_node;
   /* Should be remove TOTEST */
-  sctk_atomics_read_write_barrier();
+  OPA_read_write_barrier();
 
 #if OMPT_SUPPORT
   if( mpcomp_ompt_is_enabled() && OMPT_Callbacks ) {
@@ -316,12 +316,12 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
 #endif
 
   /* task_node->predecessors can be update by release task */
-  sctk_atomics_add_int(&(task_node->predecessors), predecessors_num);
-  sctk_atomics_store_int(&(task_node->status),
+  OPA_add_int(&(task_node->predecessors), predecessors_num);
+  OPA_store_int(&(task_node->status),
                          MPCOMP_TASK_DEP_TASK_NOT_EXECUTE);
 
   if (!if_clause) {
-        while (sctk_atomics_load_int(&(task_node->predecessors))) {
+        while (OPA_load_int(&(task_node->predecessors))) {
             mpcomp_task_schedule(0); /* schedule thread doing if0 with dependances until deps resolution 
                                         mpcomp_task_schedule(0) because refcount will remain >= 2 with if0 
                                         mpcomp_task_schedule(1) would not stop looping */
@@ -333,9 +333,9 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
         }
   }
 
-  if (sctk_atomics_load_int(&(task_node->predecessors)) == 0) {
-      if( sctk_atomics_load_int( &( task_node->status ) ) != MPCOMP_TASK_DEP_TASK_FINALIZED )
-       if( sctk_atomics_cas_int( &( task_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_RELEASED )
+  if (OPA_load_int(&(task_node->predecessors)) == 0) {
+      if( OPA_load_int( &( task_node->status ) ) != MPCOMP_TASK_DEP_TASK_FINALIZED )
+       if( OPA_cas_int( &( task_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_RELEASED )
            == MPCOMP_TASK_DEP_TASK_NOT_EXECUTE )
          __mpcomp_task_process(new_task, if_clause);
   }

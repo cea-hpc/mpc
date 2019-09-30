@@ -119,11 +119,11 @@ sctk_shm_mapper_sync_header_init(void *ptr, sctk_size_t size,
   // sctk_nodebug("sctk_shm_mapper_sync_header_init(%p,%d,%lu)",ptr,participants,size);
 
   // setup entries
-  sctk_atomics_store_int(&sync_header->cnt_invalid, 0);
-  sctk_atomics_store_int(&sync_header->barrier_cnt, participants);
-  sctk_atomics_store_int(&sync_header->barrier_gen, 0);
-  sctk_atomics_store_int(&sync_header->cnt_pid, 1);
-  sctk_atomics_store_ptr(&sync_header->final_address, NULL);
+  OPA_store_int(&sync_header->cnt_invalid, 0);
+  OPA_store_int(&sync_header->barrier_cnt, participants);
+  OPA_store_int(&sync_header->barrier_gen, 0);
+  OPA_store_int(&sync_header->cnt_pid, 1);
+  OPA_store_ptr(&sync_header->final_address, NULL);
   sync_header->size = size;
   sync_header->master_initial_address = sync_header;
   sync_header->pids = (int *)(sync_header + 1);
@@ -160,7 +160,7 @@ sctk_shm_mapper_sync_header_init(void *ptr, sctk_size_t size,
  * @TODO rewrite with MPC functions and remove need of role.
 **/
 
-static sctk_atomics_int local_gen;
+static OPA_int_t local_gen;
 static mpc_common_spinlock_t gen_lock = 0;
 static int gen_init_done = 0;
 
@@ -171,36 +171,36 @@ SCTK_STATIC void sctk_shm_mapper_barrier( sctk_shm_mapper_sync_header_t * sync_h
 
         mpc_common_spinlock_lock(&gen_lock);
         if (gen_init_done == 0) {
-          sctk_atomics_store_int(&local_gen, -1);
+          OPA_store_int(&local_gen, -1);
           gen_init_done = 1;
         }
         mpc_common_spinlock_unlock(&gen_lock);
 
-        sctk_atomics_incr_int(&local_gen);
+        OPA_incr_int(&local_gen);
 
         sctk_nodebug("ROLE %d PART %d (GEN %d VAL %d)", role, participants,
-         						local_gen, sctk_atomics_load_int
+         						local_gen, OPA_load_int
         						(&sync_header->barrier_cnt));
 
-        while (sctk_atomics_load_int(&local_gen) !=
-               sctk_atomics_load_int(&sync_header->barrier_gen)) {
-          sctk_atomics_read_write_barrier();
+        while (OPA_load_int(&local_gen) !=
+               OPA_load_int(&sync_header->barrier_gen)) {
+          OPA_read_write_barrier();
         }
 
-        // sctk_error("VAL %d",sctk_atomics_load_int( &sync_header->barrier_cnt
+        // sctk_error("VAL %d",OPA_load_int( &sync_header->barrier_cnt
         // ) );
 
         // loop until pids equal to 0
 
-        if (sctk_atomics_fetch_and_add_int(&sync_header->barrier_cnt, -1) ==
+        if (OPA_fetch_and_add_int(&sync_header->barrier_cnt, -1) ==
             1) {
-          sctk_atomics_incr_int(&sync_header->barrier_gen);
-          sctk_atomics_store_int(&sync_header->barrier_cnt, participants);
+          OPA_incr_int(&sync_header->barrier_gen);
+          OPA_store_int(&sync_header->barrier_cnt, participants);
         }
 
-        while (sctk_atomics_load_int(&sync_header->barrier_gen) !=
-               (sctk_atomics_load_int(&local_gen) + 1)) {
-          sctk_atomics_read_write_barrier();
+        while (OPA_load_int(&sync_header->barrier_gen) !=
+               (OPA_load_int(&local_gen) + 1)) {
+          OPA_read_write_barrier();
         }
 }
 
@@ -227,13 +227,13 @@ SCTK_STATIC sctk_shm_mapper_sync_header_t * sctk_shm_mapper_sync_header_slave_up
 
 	//update the PID list
 	/** TODO USE ATOMICS **/
-        cnt_pid = sctk_atomics_fetch_and_add_int(&sync_header->cnt_pid, 1);
+        cnt_pid = OPA_fetch_and_add_int(&sync_header->cnt_pid, 1);
         assert(cnt_pid > 0 && cnt_pid < participants);
         pids[cnt_pid] = getpid();
 
         // if didn't has the same address need to notifiy
         if (ptr != sync_header->master_initial_address)
-          sctk_atomics_store_int(&sync_header->cnt_invalid, 1);
+          OPA_store_int(&sync_header->cnt_invalid, 1);
 
         return sync_header;
 }
@@ -338,7 +338,7 @@ SCTK_STATIC void * sctk_shm_mapper_slave(sctk_size_t size,int participants,sctk_
                                 participants);
 
         // wait final decision of master
-        while (sctk_atomics_load_ptr(&sync_header->final_address) == NULL) {
+        while (OPA_load_ptr(&sync_header->final_address) == NULL) {
 	#ifdef MPC_THREAD
           mpc_thread_yield();
 	#endif
@@ -348,7 +348,7 @@ SCTK_STATIC void * sctk_shm_mapper_slave(sctk_size_t size,int participants,sctk_
                                 participants);
 
         // remap if required
-        ptr = (void *)sctk_atomics_load_ptr(&sync_header->final_address);
+        ptr = (void *)OPA_load_ptr(&sync_header->final_address);
         sctk_shm_mapper_remap(fd, sync_header, ptr, size);
         sync_header = ptr;
 
@@ -445,7 +445,7 @@ SCTK_STATIC void * sctk_shm_mapper_master(sctk_size_t size,int participants,sctk
                                 participants);
 
         // if some are not with same address,
-        if (sctk_atomics_load_int(&sync_header->cnt_invalid) > 0) {
+        if (OPA_load_int(&sync_header->cnt_invalid) > 0) {
           // search common free space
           ptr = sctk_shm_mapper_find_common_addr(size, sync_header->pids,
                                                  participants, ptr);
@@ -456,7 +456,7 @@ SCTK_STATIC void * sctk_shm_mapper_master(sctk_size_t size,int participants,sctk
         }
         // mark final address and wait all before exit
         sync_header->step = SCTK_SHM_MAPPER_STEP_FINAL_CHECK;
-        sctk_atomics_store_ptr(&sync_header->final_address, sync_header);
+        OPA_store_ptr(&sync_header->final_address, sync_header);
 
         sctk_shm_mapper_barrier(sync_header, SCTK_SHM_MAPPER_ROLE_MASTER,
                                 participants);

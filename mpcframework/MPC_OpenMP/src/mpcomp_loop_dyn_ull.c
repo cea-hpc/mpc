@@ -74,7 +74,7 @@ void __mpcomp_dynamic_loop_init_ull(mpcomp_thread_t *t, bool up,
   t->schedule_is_forced = 0;
 
   /* Stop if the maximum number of alive loops is reached */
-  while (sctk_atomics_load_int(
+  while (OPA_load_int(
              &(t->instance->team->for_dyn_nb_threads_exited[index].i)) ==
          MPCOMP_NOWAIT_STOP_SYMBOL) {
     sctk_thread_yield();
@@ -92,7 +92,7 @@ void __mpcomp_dynamic_loop_init_ull(mpcomp_thread_t *t, bool up,
   /* Try to change the number of remaining chunks */
   t->for_dyn_total[index] = __mpcomp_get_static_nb_chunks_per_rank_ull(
       t->rank, num_threads, &(t->info.loop_infos.loop.mpcomp_ull));
-  (void) sctk_atomics_cas_int(&(t->for_dyn_remain[index].i), -1, t->for_dyn_total[index]);
+  (void) OPA_cas_int(&(t->for_dyn_remain[index].i), -1, t->for_dyn_total[index]);
 
 }
 
@@ -335,7 +335,7 @@ mpcomp_for_dyn_coherency_end_barrier()
 		 /* Check team coherency */
 		 n = 0 ;
 		 for ( i = 0 ; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1 ; i++ ) {
-			 switch( sctk_atomics_load_int( &team->for_dyn_nb_threads_exited[i].i) ) {
+			 switch( OPA_load_int( &team->for_dyn_nb_threads_exited[i].i) ) {
 				 case 0:
 					 break ;
 				 case MPCOMP_NOWAIT_STOP_SYMBOL:
@@ -381,7 +381,7 @@ mpcomp_for_dyn_coherency_end_barrier()
 
 			 /* Checking for_dyn_remain */
 			 for ( j = 0 ; j < MPCOMP_MAX_ALIVE_FOR_DYN+1 ; j++ ) {
-				 if ( sctk_atomics_load_int( &(target_t->for_dyn_remain[j].i) ) != -1 ) {
+				 if ( OPA_load_int( &(target_t->for_dyn_remain[j].i) ) != -1 ) {
 					 not_reachable() ;
 				 }
 			 }

@@ -37,7 +37,7 @@ static inline void __mpcomp_internal_ordered_begin( mpcomp_thread_t *t, mpcomp_l
 	/* First iteration of the loop -> initialize 'next_ordered_offset' */
 	if( cur_ordered_iter == loop->lb ) 
     {
-        while( sctk_atomics_cas_int( &( t->instance->team->next_ordered_offset_finalized ), 0, 1 ) )
+        while( OPA_cas_int( &( t->instance->team->next_ordered_offset_finalized ), 0, 1 ) )
             sctk_thread_yield();
 
         return;
@@ -57,7 +57,7 @@ static inline void __mpcomp_internal_ordered_begin_ull( mpcomp_thread_t *t, mpco
     /* First iteration of the loop -> initialize 'next_ordered_offset' */
     if( cur_ordered_iter == loop->lb )                   
     {
-        while( sctk_atomics_cas_int( &( t->instance->team->next_ordered_offset_finalized), 0, 1 ) )
+        while( OPA_cas_int( &( t->instance->team->next_ordered_offset_finalized), 0, 1 ) )
             sctk_thread_yield();
 
         return;
@@ -114,7 +114,7 @@ static inline void __mpcomp_internal_ordered_end( mpcomp_thread_t* t, mpcomp_loo
     if( isLastIteration )
     {
 	    t->instance->team->next_ordered_offset = (long) 0;
-        sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized), 1, 0 );
+        OPA_cas_int(&(t->instance->team->next_ordered_offset_finalized), 1, 0 );
     }
     else
     {
@@ -151,7 +151,7 @@ static inline void __mpcomp_internal_ordered_end_ull( mpcomp_thread_t* t, mpcomp
     if( isLastIteration )
     {
 	    t->instance->team->next_ordered_offset_ull = (long) 0;
-        sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized), 1, 0 );
+        OPA_cas_int(&(t->instance->team->next_ordered_offset_finalized), 1, 0 );
     }
     else
     {

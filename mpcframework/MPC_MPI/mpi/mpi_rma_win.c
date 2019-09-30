@@ -856,7 +856,7 @@ static inline sctk_uint64_t get_per_rank_keyval_key(int keyval) {
 }
 /* Attr definition */
 
-static sctk_atomics_int __win_attr_counter;
+static OPA_int_t __win_attr_counter;
 
 struct mpc_MPI_Win_keyval *
 mpc_MPI_Win_keyval_init(MPI_Win_copy_attr_function *copy_fn,
@@ -874,7 +874,7 @@ mpc_MPI_Win_keyval_init(MPI_Win_copy_attr_function *copy_fn,
   ret->delete_fn = delete_fn;
   ret->extra_state = extra_state;
 
-  int my_id = sctk_atomics_fetch_and_add_int(&__win_attr_counter, 1);
+  int my_id = OPA_fetch_and_add_int(&__win_attr_counter, 1);
 
   /* Make sure to skip the compulsory attributes  (WIN_BASE, & co ) */
   my_id += 50;

@@ -154,7 +154,7 @@ typedef struct sctk_internal_ptp_s {
   sctk_internal_ptp_message_lists_t lists;
 
   /* Number of pending messages for the MPI task */
-  sctk_atomics_int pending_nb;
+  OPA_int_t pending_nb;
 
   UT_hash_handle hh;
   UT_hash_handle hh_on_vp;
@@ -2063,17 +2063,17 @@ void sctk_add_pack_in_message_absolute(sctk_thread_ptp_message_t *msg,
 /* Searching functions                                              */
 /********************************************************************/
 
-static __thread sctk_atomics_int m_probe_id;
-static __thread sctk_atomics_int m_probe_id_task;
+static __thread OPA_int_t m_probe_id;
+static __thread OPA_int_t m_probe_id_task;
 
 void sctk_m_probe_matching_init() {
-  sctk_atomics_store_int(&m_probe_id, 0);
-  sctk_atomics_store_int(&m_probe_id_task, -1);
+  OPA_store_int(&m_probe_id, 0);
+  OPA_store_int(&m_probe_id_task, -1);
 }
 
 void sctk_m_probe_matching_set(int value) {
-  while (sctk_atomics_cas_int(&m_probe_id, 0, value) != 0) {
-    sctk_nodebug("CAS %d", sctk_atomics_load_int(&m_probe_id));
+  while (OPA_cas_int(&m_probe_id, 0, value) != 0) {
+    sctk_nodebug("CAS %d", OPA_load_int(&m_probe_id));
     sctk_thread_yield();
   }
 
@@ -2083,12 +2083,12 @@ void sctk_m_probe_matching_set(int value) {
 
   sctk_nodebug("THREAD ID %d", thread_id);
 
-  sctk_atomics_store_int(&m_probe_id_task, thread_id + 1);
+  OPA_store_int(&m_probe_id_task, thread_id + 1);
 }
 
 void sctk_m_probe_matching_reset() {
-  sctk_atomics_store_int(&m_probe_id, 0);
-  sctk_atomics_store_int(&m_probe_id_task, -1);
+  OPA_store_int(&m_probe_id, 0);
+  OPA_store_int(&m_probe_id_task, -1);
 }
 
 int sctk_m_probe_matching_get() {
@@ -2096,11 +2096,11 @@ int sctk_m_probe_matching_get() {
   int thread_id;
   sctk_get_thread_info(&task_id, &thread_id);
 
-  if (sctk_atomics_load_int(&m_probe_id_task) != (thread_id + 1)) {
+  if (OPA_load_int(&m_probe_id_task) != (thread_id + 1)) {
     return -1;
   }
 
-  return sctk_atomics_load_int(&m_probe_id);
+  return OPA_load_int(&m_probe_id);
 }
 
 /*
@@ -2242,7 +2242,7 @@ sctk_perform_messages_probe_matching(sctk_internal_ptp_t *pair,
                  header->source_task, header->message_tag);
 
     int send_message_matching_id =
-        sctk_atomics_load_int(&header_send->matching_id);
+        OPA_load_int(&header_send->matching_id);
 
     // sctk_error("SEND MID = %d", send_message_matching_id );
 
@@ -2252,7 +2252,7 @@ sctk_perform_messages_probe_matching(sctk_internal_ptp_t *pair,
         /* Has either no or the same matching ID */
         ((send_message_matching_id == -1) ||
          (send_message_matching_id ==
-          sctk_atomics_load_int(&header->matching_id))) &&
+          OPA_load_int(&header->matching_id))) &&
         /* Match Communicator */
         ((header->communicator == header_send->communicator) ||
          (header->communicator == SCTK_ANY_COMM)) &&
@@ -2271,7 +2271,7 @@ sctk_perform_messages_probe_matching(sctk_internal_ptp_t *pair,
       int matching_token = sctk_m_probe_matching_get();
 
       if (matching_token != 0) {
-        sctk_atomics_store_int(&header_send->matching_id, matching_token);
+        OPA_store_int(&header_send->matching_id, matching_token);
       }
 
       memcpy(header, &(ptr_send->msg->body.header),

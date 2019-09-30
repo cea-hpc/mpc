@@ -25,7 +25,7 @@
 
 void sctk_polling_cell_zero( struct sctk_polling_cell * cell )
 {
-	sctk_atomics_store_int( &cell->polling_counter, 0);	
+	OPA_store_int( &cell->polling_counter, 0);	
 	cell->is_free = 1;	
 }
 
@@ -131,12 +131,12 @@ void __sctk_polling_tree_poll( struct sctk_polling_tree * tree , void (*func)(vo
 	
 	struct sctk_polling_cell * cell = &tree->cells[ cell_id ];
 	
-	int current_load = sctk_atomics_fetch_and_incr_int( &cell->polling_counter );
+	int current_load = OPA_fetch_and_incr_int( &cell->polling_counter );
 	
 	/* We consider that only core_count threads should go through */
 	if( tree->max_load  < current_load )
 	{
-		sctk_atomics_decr_int( &cell->polling_counter );
+		OPA_decr_int( &cell->polling_counter );
 		return;
 	}
 
@@ -153,7 +153,7 @@ void __sctk_polling_tree_poll( struct sctk_polling_tree * tree , void (*func)(vo
 		__sctk_polling_tree_poll( tree, func, parent_cell_id, call_id, arg );
 	}
 	
-	sctk_atomics_decr_int( &cell->polling_counter );
+	OPA_decr_int( &cell->polling_counter );
 }
 
 __thread volatile int __last_local_id = -1; 

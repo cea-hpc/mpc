@@ -42,14 +42,14 @@ static int __mpcomp_sections_internal_next(mpcomp_thread_t *t,
   int success ;
 
   t->single_sections_current =
-      sctk_atomics_load_int(&(team->single_sections_last_current));
+      OPA_load_int(&(team->single_sections_last_current));
   sctk_nodebug("[%d] %s: Current = %d (target = %d)", t->rank, __func__,
                t->single_sections_current, t->single_sections_target_current);
   success = 0 ;
 
   while (t->single_sections_current < t->single_sections_target_current &&
          !success) {
-    r = sctk_atomics_cas_int(&(team->single_sections_last_current),
+    r = OPA_cas_int(&(team->single_sections_last_current),
                              t->single_sections_current,
                              t->single_sections_current + 1);
 
@@ -58,7 +58,7 @@ static int __mpcomp_sections_internal_next(mpcomp_thread_t *t,
 
     if (r != t->single_sections_current) {
       t->single_sections_current =
-          sctk_atomics_load_int(&(team->single_sections_last_current));
+          OPA_load_int(&(team->single_sections_last_current));
       if (t->single_sections_current > t->single_sections_target_current) {
         t->single_sections_current = t->single_sections_target_current;
       }

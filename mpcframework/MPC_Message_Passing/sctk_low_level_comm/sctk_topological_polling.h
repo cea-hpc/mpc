@@ -61,7 +61,7 @@ typedef enum
 /** This defines a polling cell used by a VP */
 struct sctk_topological_polling_cell
 {
-	sctk_atomics_int polling_counter; /**< Counter when doing the polling */
+	OPA_int_t polling_counter; /**< Counter when doing the polling */
 	int cell_id; /**< This is the ID of the cell relatively to the closest trigger
 	              * cell, see the polling function implementation for details
 	              * note that this field can take the special values SCTK_POLL_TRIGGER and SCTK_POLL_IGNORE */

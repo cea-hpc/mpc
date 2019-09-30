@@ -376,7 +376,7 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
       sctk_window_RDMA_write(target_win, (void *)origin_addr, remote_size,
                              target_disp, request);
 
-      // sctk_atomics_incr_int( &desc->source.ctrl_message_counter );
+      // OPA_incr_int( &desc->source.ctrl_message_counter );
     }
   } else {
 
@@ -405,7 +405,7 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
     struct sctk_window *low_remote_win = sctk_win_translate(target_win);
     sctk_window_inc_outgoing(low_remote_win);
 
-    sctk_atomics_incr_int(&desc->source.ctrl_message_counter);
+    OPA_incr_int(&desc->source.ctrl_message_counter);
 
     /* Now notify remote */
     mpc_MPI_Win_control_message_send_piggybacked(win, target_rank, message,
@@ -719,7 +719,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
     struct sctk_window *low_remote_win = sctk_win_translate(target_win);
     sctk_window_inc_outgoing(low_remote_win);
 
-    sctk_atomics_incr_int(&desc->source.ctrl_message_counter);
+    OPA_incr_int(&desc->source.ctrl_message_counter);
 
     /* Now notify remote */
     mpc_MPI_Win_control_message_send_piggybacked(win, target_rank, message,
@@ -1218,13 +1218,13 @@ static inline int mpc_MPI_Compare_and_swap_RMA(
       switch (rmatsize) {
       case 4:
         *((int *)result_addr) = *((int *)ptarget);
-        sctk_atomics_cas_int(ptarget, *((int *)compare_addr),
+        OPA_cas_int(ptarget, *((int *)compare_addr),
                              *((int *)origin_addr));
         break;
 
       case 8:
         *((void **)result_addr) = *((void **)ptarget);
-        sctk_atomics_cas_ptr(ptarget, *((void **)compare_addr),
+        OPA_cas_ptr(ptarget, *((void **)compare_addr),
                              *((void **)origin_addr));
         break;
       }

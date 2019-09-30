@@ -156,7 +156,7 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance)
     fprintf(stderr, "[<>] Waitting for %d threads on node %p\n", root->barrier_num_threads, root );  
 
     /* Finish the half barrier by spinning on the root value */
-    while (sctk_atomics_load_int(&(root->barrier)) !=
+    while (OPA_load_int(&(root->barrier)) !=
            root->barrier_num_threads) {
       sctk_thread_yield();
 #ifdef MPCOMP_TASK
@@ -164,7 +164,7 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance)
 #endif /* MPCOMP_TASK */
     }
 
-    sctk_atomics_store_int(&(root->barrier), 0);
+    OPA_store_int(&(root->barrier), 0);
 
     sctk_nodebug("%s: final barrier done...", __func__);
 #endif

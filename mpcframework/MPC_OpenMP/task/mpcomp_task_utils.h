@@ -191,7 +191,7 @@ mpcomp_tree_array_task_thread_init( struct mpcomp_thread_s* thread )
 
     thread->task_infos.current_task = implicit_task;
     __mpcomp_task_infos_init(implicit_task, NULL, NULL, thread); 
-    sctk_atomics_store_int( &( implicit_task->refcount ), 1);  
+    OPA_store_int( &( implicit_task->refcount ), 1);  
 
 #ifdef MPCOMP_USE_TASKDEP
     implicit_task->task_dep_infos = (mpcomp_task_dep_task_infos_t*)mpcomp_alloc(sizeof(mpcomp_task_dep_task_infos_t));
@@ -266,7 +266,7 @@ static inline void mpcomp_task_thread_infos_init(struct mpcomp_thread_s *thread)
 
     MPCOMP_TASK_THREAD_SET_CURRENT_TASK(thread, implicit_task);
     MPCOMP_TASK_THREAD_SET_TIED_TASK_LIST_HEAD(thread, tied_tasks_list);
-    sctk_atomics_store_int(&(implicit_task->refcount), 1);
+    OPA_store_int(&(implicit_task->refcount), 1);
 
     /* Change tasking_init_done to avoid multiple thread init */
     MPCOMP_TASK_THREAD_CMPL_INIT(thread);

@@ -49,10 +49,10 @@ TODO("OpenMP: Anonymous critical and global atomic are not per-task locks")
  
 /* Atomic emulated */
 __UNUSED__ static ompt_wait_id_t __mpcomp_ompt_atomic_lock_wait_id = 0;
-static sctk_atomics_int __mpcomp_atomic_lock_init_once 		= OPA_INT_T_INITIALIZER(0); 
+static OPA_int_t __mpcomp_atomic_lock_init_once 		= OPA_INT_T_INITIALIZER(0); 
 /* Critical anonymous */
 __UNUSED__  static ompt_wait_id_t __mpcomp_ompt_critical_lock_wait_id = 0;
-static sctk_atomics_int __mpcomp_critical_lock_init_once 	= OPA_INT_T_INITIALIZER(0); 
+static OPA_int_t __mpcomp_critical_lock_init_once 	= OPA_INT_T_INITIALIZER(0); 
 
 static mpc_common_spinlock_t* __mpcomp_omp_global_atomic_lock = NULL;
 static mpcomp_lock_t* 	__mpcomp_omp_global_critical_lock = NULL;
@@ -60,10 +60,10 @@ static mpc_common_spinlock_t 	__mpcomp_global_init_critical_named_lock = SCTK_SP
 
 void __mpcomp_atomic_begin(void) 
 {
-	if( sctk_atomics_load_int(&__mpcomp_atomic_lock_init_once) < 2)
+	if( OPA_load_int(&__mpcomp_atomic_lock_init_once) < 2)
 	{
 		//prevent multi call to init 
-		if( !sctk_atomics_cas_int( &__mpcomp_atomic_lock_init_once, 0, 1))
+		if( !OPA_cas_int( &__mpcomp_atomic_lock_init_once, 0, 1))
 		{
 			__mpcomp_omp_global_atomic_lock = (mpc_common_spinlock_t*) mpcomp_alloc(sizeof(mpc_common_spinlock_t));
 			sctk_assert( __mpcomp_omp_global_atomic_lock );
@@ -86,12 +86,12 @@ void __mpcomp_atomic_begin(void)
 				}
 			}
 #endif //OMPT_SUPPORT
-			sctk_atomics_store_int( &__mpcomp_atomic_lock_init_once, 2 );
+			OPA_store_int( &__mpcomp_atomic_lock_init_once, 2 );
 		}
 		else
 		{
 			/* Wait lock init */
-			while( sctk_atomics_load_int( &__mpcomp_atomic_lock_init_once ) != 2 )
+			while( OPA_load_int( &__mpcomp_atomic_lock_init_once ) != 2 )
 			{
 				sctk_cpu_relax();
 			}
@@ -158,10 +158,10 @@ TODO("BUG w/ nested anonymous critical (and maybe named critical) -> need nested
 
 void __mpcomp_anonymous_critical_begin(void) 
 {
-	if( sctk_atomics_load_int(&__mpcomp_critical_lock_init_once)  != 2)
+	if( OPA_load_int(&__mpcomp_critical_lock_init_once)  != 2)
 	{
 		//prevent multi call to init 
-		if( !sctk_atomics_cas_int( &__mpcomp_critical_lock_init_once, 0, 1))
+		if( !OPA_cas_int( &__mpcomp_critical_lock_init_once, 0, 1))
 		{
 			__mpcomp_omp_global_critical_lock = (mpcomp_lock_t *) mpcomp_alloc( sizeof( mpcomp_lock_t ));
 			sctk_assert(__mpcomp_omp_global_critical_lock);
@@ -189,12 +189,12 @@ void __mpcomp_anonymous_critical_begin(void)
 				}
 			}
 #endif //OMPT_SUPPORT
-			sctk_atomics_store_int( &__mpcomp_critical_lock_init_once, 2 );
+			OPA_store_int( &__mpcomp_critical_lock_init_once, 2 );
 		}
 		else
 		{
 			/* Wait lock init */
-			while( sctk_atomics_load_int( &__mpcomp_critical_lock_init_once ) != 2 )
+			while( OPA_load_int( &__mpcomp_critical_lock_init_once ) != 2 )
 			{
 				sctk_cpu_relax();
 			}

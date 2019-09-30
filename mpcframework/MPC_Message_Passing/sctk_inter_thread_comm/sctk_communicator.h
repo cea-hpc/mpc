@@ -34,10 +34,10 @@
 struct sctk_internal_collectives_struct_s;
 
 struct shared_mem_barrier_sig {
-  sctk_atomics_ptr *sig_points;
+  OPA_ptr_t *sig_points;
   volatile int *tollgate;
-  sctk_atomics_int fare;
-  sctk_atomics_int counter;
+  OPA_int_t fare;
+  OPA_int_t counter;
 };
 
 int sctk_shared_mem_barrier_sig_init(struct shared_mem_barrier_sig *shmb,
@@ -45,8 +45,8 @@ int sctk_shared_mem_barrier_sig_init(struct shared_mem_barrier_sig *shmb,
 int sctk_shared_mem_barrier_sig_release(struct shared_mem_barrier_sig *shmb);
 
 struct shared_mem_barrier {
-  sctk_atomics_int counter;
-  sctk_atomics_int phase;
+  OPA_int_t counter;
+  OPA_int_t phase;
 };
 
 int sctk_shared_mem_barrier_init(struct shared_mem_barrier *shmb, int nb_task);
@@ -63,10 +63,10 @@ union shared_mem_buffer {
 
 struct shared_mem_reduce {
   volatile int * tollgate;
-  sctk_atomics_int fare;
+  OPA_int_t fare;
   mpc_common_spinlock_t *buff_lock;
-  sctk_atomics_int owner;
-  sctk_atomics_int left_to_push;
+  OPA_int_t owner;
+  OPA_int_t left_to_push;
   void *target_buff;
   union shared_mem_buffer *buffer;
   int pipelined_blocks;
@@ -76,15 +76,15 @@ int sctk_shared_mem_reduce_init(struct shared_mem_reduce *shmr, int nb_task);
 int sctk_shared_mem_reduce_release(struct shared_mem_reduce *shmr);
 
 struct shared_mem_bcast {
-  sctk_atomics_int owner;
-  sctk_atomics_int left_to_pop;
+  OPA_int_t owner;
+  OPA_int_t left_to_pop;
 
   volatile int * tollgate;
-  sctk_atomics_int fare;
+  OPA_int_t fare;
 
   union shared_mem_buffer buffer;
 
-  sctk_atomics_ptr to_free;
+  OPA_ptr_t to_free;
   void *target_buff;
   int scount;
   size_t stype_size;
@@ -95,14 +95,14 @@ int sctk_shared_mem_bcast_init(struct shared_mem_bcast *shmb, int nb_task);
 int sctk_shared_mem_bcast_release(struct shared_mem_bcast *shmb);
 
 struct shared_mem_gatherv {
-  sctk_atomics_int owner;
-  sctk_atomics_int left_to_push;
+  OPA_int_t owner;
+  OPA_int_t left_to_push;
 
   volatile int * tollgate;
-  sctk_atomics_int fare;
+  OPA_int_t fare;
 
   /* Leaf infos */
-  sctk_atomics_ptr *src_buffs;
+  OPA_ptr_t *src_buffs;
 
   /* Root infos */
   void *target_buff;
@@ -119,14 +119,14 @@ int sctk_shared_mem_gatherv_init(struct shared_mem_gatherv *shmgv, int nb_task);
 int sctk_shared_mem_gatherv_release(struct shared_mem_gatherv *shmgv);
 
 struct shared_mem_scatterv {
-  sctk_atomics_int owner;
-  sctk_atomics_int left_to_pop;
+  OPA_int_t owner;
+  OPA_int_t left_to_pop;
 
   volatile int * tollgate;
-  sctk_atomics_int fare;
+  OPA_int_t fare;
 
   /* Root infos */
-  sctk_atomics_ptr *src_buffs;
+  OPA_ptr_t *src_buffs;
   int was_packed;
   size_t stype_size;
   int *counts;

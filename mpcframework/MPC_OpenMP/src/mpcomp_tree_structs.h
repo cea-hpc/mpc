@@ -68,7 +68,7 @@ static inline void __mpcomp_thread_infos_init(mpcomp_thread_t *thread,
 
   /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
   for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++) {
-    sctk_atomics_store_int(&(thread->for_dyn_remain[i].i), -1);
+    OPA_store_int(&(thread->for_dyn_remain[i].i), -1);
   }
 #if (defined(MPCOMP_TASK) || defined(MPCOMP_OPENMP_3_0))
   mpcomp_task_thread_infos_init(thread);
@@ -121,13 +121,13 @@ static inline void __mpcomp_team_infos_init(mpcomp_team_t *team) {
 
   /* SET all non null task info fields */
   memset(team, 0, sizeof(mpcomp_team_t));
-  sctk_atomics_store_int(
+  OPA_store_int(
       &(team->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i),
       MPCOMP_NOWAIT_STOP_SYMBOL);
 
   /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
   for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN; i++) {
-    sctk_atomics_store_int(&(team->for_dyn_nb_threads_exited[i].i), 0);
+    OPA_store_int(&(team->for_dyn_nb_threads_exited[i].i), 0);
   }
 }
 

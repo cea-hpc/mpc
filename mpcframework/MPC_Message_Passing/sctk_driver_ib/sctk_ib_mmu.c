@@ -315,7 +315,7 @@ static inline int _sctk_ib_mmu_try_to_release_and_replace_entry( struct sctk_ib_
 		if( mmu->cache[index] )
 		{
 			/* Try to find entries with no current reader */
-			if( sctk_atomics_load_int( &mmu->cache[index]->entry_refcounter.reader_number) == 0 )
+			if( OPA_load_int( &mmu->cache[index]->entry_refcounter.reader_number) == 0 )
 			{
 				/* Remove */
 				mmu->current_size -= mmu->cache[index]->size;

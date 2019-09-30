@@ -49,10 +49,10 @@
 extern ompt_callback_t* OMPT_Callbacks;
 
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
-  static sctk_atomics_int __private_perf_call_steal = SCTK_ATOMICS_INT_T_INIT(0);
-  static sctk_atomics_int __private_perf_success_steal = SCTK_ATOMICS_INT_T_INIT(0);
-  static sctk_atomics_int __private_perf_create_task = SCTK_ATOMICS_INT_T_INIT(0);
-  static sctk_atomics_int __private_perf_executed_task = SCTK_ATOMICS_INT_T_INIT(0);
+  static OPA_int_t __private_perf_call_steal = OPA_INT_T_INITIALIZER(0);
+  static OPA_int_t __private_perf_success_steal = OPA_INT_T_INITIALIZER(0);
+  static OPA_int_t __private_perf_create_task = OPA_INT_T_INITIALIZER(0);
+  static OPA_int_t __private_perf_executed_task = OPA_INT_T_INITIALIZER(0);
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
 
   int (*mpcomp_task_list_isempty) (mpcomp_task_list_t *);
@@ -128,7 +128,7 @@ __mpcomp_task_execute(mpcomp_task_t *task)
   saved_current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);
 
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
-   sctk_atomics_incr_int( &__private_perf_executed_task );
+   OPA_incr_int( &__private_perf_executed_task );
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
 
 #if OMPT_SUPPORT
@@ -187,8 +187,8 @@ mpcomp_task_ref_parent_task(mpcomp_task_t *task)
   if (!(task->parent))
     return;
 
-  sctk_atomics_incr_int(&(task->refcount));
-  sctk_atomics_incr_int(&(task->parent->refcount));
+  OPA_incr_int(&(task->refcount));
+  OPA_incr_int(&(task->parent->refcount));
 }
 
 void 
@@ -200,7 +200,7 @@ mpcomp_task_unref_parent_task(mpcomp_task_t *task)
   mpcomp_thread_t *thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
   mother = task->parent;
-  no_more_ref = (sctk_atomics_fetch_and_decr_int(&(task->refcount)) == 1);
+  no_more_ref = (OPA_fetch_and_decr_int(&(task->refcount)) == 1);
   while (mother && no_more_ref) // FREE MY TASK AND CLIMB TREE
   {
     /* Try to store task to reuse it after and avoid alloc overhead */
@@ -216,12 +216,12 @@ mpcomp_task_unref_parent_task(mpcomp_task_t *task)
     }
     task = mother;
     mother = task->parent;
-    no_more_ref = (sctk_atomics_fetch_and_decr_int(&(task->refcount)) == 1);
+    no_more_ref = (OPA_fetch_and_decr_int(&(task->refcount)) == 1);
   }
 
   if (!mother && no_more_ref) // ROOT TASK
   {
-    sctk_atomics_decr_int(&(task->refcount));
+    OPA_decr_int(&(task->refcount));
   } 
 }
 
@@ -391,9 +391,9 @@ __mpcomp_task_try_delay(mpcomp_thread_t * thread, bool if_clause)
   const int __max_delayed = sctk_runtime_config_get()->modules.openmp.mpcomp_task_max_delayed;
 
    //Too much delayed tasks
-  if (sctk_atomics_fetch_and_incr_int(&(mvp_task_list->nb_elements)) >=
+  if (OPA_fetch_and_incr_int(&(mvp_task_list->nb_elements)) >=
       __max_delayed) {
-    sctk_atomics_decr_int(&(mvp_task_list->nb_elements));
+    OPA_decr_int(&(mvp_task_list->nb_elements));
     return NULL;
   }
 
@@ -459,7 +459,7 @@ __mpcomp_task_process(mpcomp_task_t *new_task, bool if_clause)
   thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
-   sctk_atomics_incr_int( &__private_perf_create_task );
+   OPA_incr_int( &__private_perf_create_task );
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
 
   mvp_task_list = __mpcomp_task_try_delay(thread, if_clause);
@@ -626,7 +626,7 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
   struct mpcomp_task_list_s *list;
 
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
-  sctk_atomics_incr_int( &__private_perf_call_steal );
+  OPA_incr_int( &__private_perf_call_steal );
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
 
   /* Retrieve the information (microthread structure and current region) */
@@ -668,7 +668,7 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
         if ((list = MPCOMP_TASK_MVP_GET_LAST_STOLEN_TASK_LIST(mvp, type))) {
           if ((task = mpcomp_task_steal(list,rank,victim))) {
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
-            sctk_atomics_incr_int( &__private_perf_success_steal );
+            OPA_incr_int( &__private_perf_success_steal );
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
             return task;
           }
@@ -681,7 +681,7 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
           victim = mvp->task_infos.last_thief;
           if ((task = mpcomp_task_steal(list,rank,victim))) {
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
-            sctk_atomics_incr_int( &__private_perf_success_steal );
+            OPA_incr_int( &__private_perf_success_steal );
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
             return task;
           }
@@ -699,7 +699,7 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
         if(list) task = mpcomp_task_steal(list,rank,victim);
         if(task) {
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
-          sctk_atomics_incr_int( &__private_perf_success_steal );
+          OPA_incr_int( &__private_perf_success_steal );
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
           return task;
           } 
@@ -840,7 +840,7 @@ mpcomp_taskwait(void)
 #endif /* OMPT_SUPPORT */
 
     /* Look for a children tasks list */
-    while (sctk_atomics_load_int(&(current_task->refcount)) != 1) {
+    while (OPA_load_int(&(current_task->refcount)) != 1) {
 	    /* Schedule any other task 
 	     * prevent recursive calls to mpcomp_taskwait with argument 0 */
       mpcomp_task_schedule(0);
@@ -867,10 +867,10 @@ mpcomp_taskwait(void)
   }
 
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
-    const int a = sctk_atomics_load_int( &__private_perf_call_steal );
-    const int b = sctk_atomics_load_int( &__private_perf_success_steal );
-    const int c = sctk_atomics_load_int( &__private_perf_create_task );
-    const int d = sctk_atomics_load_int( &__private_perf_executed_task );
+    const int a = OPA_load_int( &__private_perf_call_steal );
+    const int b = OPA_load_int( &__private_perf_success_steal );
+    const int c = OPA_load_int( &__private_perf_create_task );
+    const int d = OPA_load_int( &__private_perf_executed_task );
     if( 1 && !omp_thread_tls->rank )
        fprintf(stderr, "try steal : %d - success steal : %d -- total tasks : %d -- performed tasks : %d\n", a,b,c,d);
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
@@ -967,9 +967,9 @@ __mpcomp_task_coherency_entering_parallel_region()
     /* Check team tasking cohenrency */
     sctk_debug("__mpcomp_task_coherency_entering_parallel_region: "
                "Team init %d and tasklist init %d with %d nb_tasks\n",
-               sctk_atomics_load_int(&team->tasking_init_done),
-               sctk_atomics_load_int(&team->tasklist_init_done),
-               sctk_atomics_load_int(&team->nb_tasks));
+               OPA_load_int(&team->tasking_init_done),
+               OPA_load_int(&team->tasklist_init_done),
+               OPA_load_int(&team->nb_tasks));
 
     /* Check per thread task system coherency */
     mvp = t->children_instance->mvps;
@@ -1011,9 +1011,9 @@ __mpcomp_task_coherency_ending_parallel_region()
     /* Check team tasking cohenrency */
     sctk_debug("__mpcomp_task_coherency_ending_parallel_region: "
                "Team init %d and tasklist init %d with %d nb_tasks\n",
-               sctk_atomics_load_int(&team->tasking_init_done),
-               sctk_atomics_load_int(&team->tasklist_init_done),
-               sctk_atomics_load_int(&team->nb_tasks));
+               OPA_load_int(&team->tasking_init_done),
+               OPA_load_int(&team->tasklist_init_done),
+               OPA_load_int(&team->nb_tasks));
 
     /* Check per thread and mvp task system coherency */
     mvp = t->children_instance->mvps;

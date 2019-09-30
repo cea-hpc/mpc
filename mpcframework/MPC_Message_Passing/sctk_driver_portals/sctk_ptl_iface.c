@@ -34,8 +34,8 @@
 #include "sctk_ptl_offcoll.h"
 #include "sctk_low_level_comm.h"
 
-//static sctk_atomics_int nb_mes = SCTK_ATOMICS_INT_T_INIT(0);
-static sctk_atomics_int nb_mds = SCTK_ATOMICS_INT_T_INIT(0);
+static OPA_int_t nb_mes = OPA_INT_T_INITIALIZER(0);
+static OPA_int_t nb_mds = OPA_INT_T_INITIALIZER(0);
 
 /**
  * Will print the Portals structure.
@@ -263,7 +263,7 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 		&srail->mds_eq        /* out: the EQ handler */
 	));
 
-	sctk_atomics_store_int(&srail->rdma_cpt, 0);
+	OPA_store_int(&srail->rdma_cpt, 0);
 	if(srail->max_mr > srail->max_limits.max_msg_size)
 		srail->max_mr = srail->max_limits.max_msg_size;
 	
@@ -451,7 +451,7 @@ sctk_ptl_local_data_t* sctk_ptl_me_create(void * start, size_t size, sctk_ptl_id
 		.list = SCTK_PTL_PRIORITY_LIST,
 		.type = SCTK_PTL_TYPE_NONE,
 		.prot = SCTK_PTL_PROT_NONE,
-		.cnt_frag = SCTK_ATOMICS_INT_T_INIT(0),
+		.cnt_frag = OPA_INT_T_INITIALIZER(0),
 		.match = SCTK_PTL_MATCH_INIT,
 		.msg_seq_nb = -1,
 		.req_sz = 0,
@@ -564,7 +564,7 @@ sctk_ptl_local_data_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void* sta
 		},
 		.slot_h.mdh = PTL_INVALID_HANDLE,
 		.list = SCTK_PTL_PRIORITY_LIST,
-		.cnt_frag = SCTK_ATOMICS_INT_T_INIT(0),
+		.cnt_frag = OPA_INT_T_INITIALIZER(0),
 		.match = SCTK_PTL_MATCH_INIT,
 		.msg_seq_nb = -1,
 		.msg = NULL /* later filled */
@@ -594,9 +594,9 @@ void sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* us
 	int max = srail->max_limits.max_mds;
 	int i = 0;
 
-	while(sctk_atomics_fetch_and_incr_int(&nb_mds) >= max)
+	while(OPA_fetch_and_incr_int(&nb_mds) >= max)
 	{
-		sctk_atomics_decr_int(&nb_mds);
+		OPA_decr_int(&nb_mds);
 		if((i++)%20000 == 0)
 			sctk_network_notify_idle_message();
 		else
@@ -623,7 +623,7 @@ void sctk_ptl_md_release(sctk_ptl_local_data_t* request)
 	sctk_ptl_chk(PtlMDRelease(
 		request->slot_h.mdh
 	));
-	sctk_atomics_decr_int(&nb_mds);
+	OPA_decr_int(&nb_mds);
 	sctk_free(request);
 }
 

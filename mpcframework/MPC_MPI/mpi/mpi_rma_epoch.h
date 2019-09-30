@@ -63,7 +63,7 @@ void mpc_MPI_Win_tmp_purge(struct mpc_MPI_Win_tmp *tmp);
  *	@return non-zero on error
  */
 int mpc_MPI_register_request_counter(sctk_request_t *request,
-                                     sctk_atomics_int *pool_cnt);
+                                     OPA_int_t *pool_cnt);
 
 /** This remove a request from the counter pool
  * @arg request Request to be removed
@@ -91,7 +91,7 @@ int mpc_MPI_notify_request_counter(sctk_request_t *request);
  * providing the required polling for emulated RMA */
 struct mpc_MPI_Win_request_array {
   volatile int pending_rma;       /*<< The number of pending RMA operations */
-  sctk_atomics_int available_req; /*<< The number of available requests */
+  OPA_int_t available_req; /*<< The number of available requests */
   sctk_request_t requests[MAX_PENDING_RMA]; /*<< The MPC request array */
   MPI_Comm comm;        /*<< The communicator associated with the array */
   mpc_common_spinlock_t lock; /*<< A lock to protect the RMA array */
@@ -262,7 +262,7 @@ struct mpc_Win_target_ctx {
   mpc_common_spinlock_t lock;
 
   /* Counter */
-  sctk_atomics_int ctrl_message_counter;
+  OPA_int_t ctrl_message_counter;
 
   /* Active epoch */
   sctk_spin_rwlock_t active_epoch_lock;
@@ -303,7 +303,7 @@ struct mpc_Win_source_ctx {
   mpc_Win_arity arity;
   int *remote_ranks;
   int remote_count;
-  sctk_atomics_int stacked_acess;
+  OPA_int_t stacked_acess;
   /* State */
   mpc_Win_source_state state;
 
@@ -317,7 +317,7 @@ struct mpc_Win_source_ctx {
   mpc_common_spinlock_t lock;
 
   /* Counter */
-  sctk_atomics_int ctrl_message_counter;
+  OPA_int_t ctrl_message_counter;
 
   /* Current lock type */
   int lock_type;

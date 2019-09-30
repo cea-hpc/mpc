@@ -299,6 +299,7 @@ typedef struct sctk_ptl_local_data_s
 	union sctk_ptl_slot_u slot;     /**< the request (MD or ME) */
 	union sctk_ptl_slot_h_u slot_h; /**< the request Handle */
 	int msg_seq_nb;                 /**< mesage sequence number (not truncated) */
+	OPA_int_t cnt_frag;      /**< number of chunks before being released */
 	void* msg;                      /**< link to the msg */
 	sctk_ptl_list_t list;           /**< the list the request issued from */
 	sctk_ptl_protocol_t prot;       /**< request protocol */
@@ -375,7 +376,7 @@ typedef union sctk_ptl_offcoll_spec_u
 typedef struct sctk_ptl_offcoll_tree_node_s
 {
         mpc_common_spinlock_t lock;   /**< the lock */
-	sctk_atomics_int iter;              /**< iteration number (because PTL does not whant us to decr a counter) */
+	OPA_int_t iter; /**< iteration number (because PTL does not whant us to decr a counter) */
 	sctk_ptl_id_t parent;               /**< the PTL id for the parent of the current process in this given tree */
 	sctk_ptl_id_t* children;            /**< PTS id array of all children for the current process */
 	size_t nb_children;                 /**< size of the array above */
@@ -420,7 +421,7 @@ typedef struct sctk_ptl_rail_info_s
 	size_t eager_limit;                     /**< the max size for an eager msg */
 	size_t nb_entries;                      /**< current number of PT entries dedicated to comms */
 	size_t connection_infos_size;           /**< Size of the above string */
-	sctk_atomics_int rdma_cpt;              /**< RDMA match_bits counter */
+	OPA_int_t rdma_cpt;              /**< RDMA match_bits counter */
 	int offload_support;
 	char connection_infos[MPC_COMMON_MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
 } sctk_ptl_rail_info_t;

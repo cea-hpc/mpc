@@ -133,7 +133,7 @@ static inline void request_poll_ht_check_init() {
 }
 
 int mpc_MPI_register_request_counter(sctk_request_t *request,
-                                     sctk_atomics_int *pool_cnt) {
+                                     OPA_int_t *pool_cnt) {
   request_poll_ht_check_init();
   MPCHT_set(&__request_pool_ht, (sctk_uint64_t)request, (void *)pool_cnt);
   return 0;
@@ -148,11 +148,11 @@ int mpc_MPI_unregister_request_counter(sctk_request_t *request) {
 int mpc_MPI_notify_request_counter(sctk_request_t *request) {
   request_poll_ht_check_init();
 
-  sctk_atomics_int *pool_cnt =
-      (sctk_atomics_int *)MPCHT_get(&__request_pool_ht, (sctk_uint64_t)request);
+  OPA_int_t *pool_cnt =
+      (OPA_int_t *)MPCHT_get(&__request_pool_ht, (sctk_uint64_t)request);
 
   if (pool_cnt) {
-    sctk_atomics_incr_int(pool_cnt);
+    OPA_incr_int(pool_cnt);
     return 1;
   }
 
@@ -188,7 +188,7 @@ int mpc_MPI_Win_request_array_init(struct mpc_MPI_Win_request_array *ra,
     mpc_MPI_register_request_counter(&ra->requests[i], &ra->available_req);
   }
 
-  sctk_atomics_store_int(&ra->available_req, MAX_PENDING_RMA);
+  OPA_store_int(&ra->available_req, MAX_PENDING_RMA);
 
   return 0;
 }
@@ -210,10 +210,10 @@ int mpc_MPI_Win_request_array_release(struct mpc_MPI_Win_request_array *ra) {
 int mpc_MPI_Win_request_array_fence_no_ops(
     struct mpc_MPI_Win_request_array *ra) {
 
-  if (sctk_atomics_load_int(&ra->available_req) == MAX_PENDING_RMA)
+  if (OPA_load_int(&ra->available_req) == MAX_PENDING_RMA)
     return 0;
 
-  while (sctk_atomics_load_int(&ra->available_req) != MAX_PENDING_RMA) {
+  while (OPA_load_int(&ra->available_req) != MAX_PENDING_RMA) {
     mpc_MPI_Win_request_array_test(ra);
 
     sctk_notify_idle_message();
@@ -236,8 +236,8 @@ int mpc_MPI_Win_request_array_fence_no_ops_dual(
     struct mpc_MPI_Win_request_array *ra2) {
   int cnt = 0;
 
-  int req1 = sctk_atomics_load_int(&ra1->available_req);
-  int req2 = sctk_atomics_load_int(&ra2->available_req);
+  int req1 = OPA_load_int(&ra1->available_req);
+  int req2 = OPA_load_int(&ra2->available_req);
 
   while ((req1 != MAX_PENDING_RMA) || (req2 != MAX_PENDING_RMA)) {
 
@@ -245,8 +245,8 @@ int mpc_MPI_Win_request_array_fence_no_ops_dual(
     mpc_MPI_Win_request_array_test(ra2);
     cnt++;
 
-    req1 = sctk_atomics_load_int(&ra1->available_req);
-    req2 = sctk_atomics_load_int(&ra2->available_req);
+    req1 = OPA_load_int(&ra1->available_req);
+    req2 = OPA_load_int(&ra2->available_req);
 
     mpc_thread_yield();
   }
@@ -310,11 +310,11 @@ mpc_MPI_Win_request_array_pick(struct mpc_MPI_Win_request_array *ra) {
 
     mpc_common_spinlock_lock_yield(&ra->lock);
 
-    if (sctk_atomics_load_int(&ra->available_req) != 0) {
+    if (OPA_load_int(&ra->available_req) != 0) {
       int i;
       for (i = 0; i < MAX_PENDING_RMA; i++) {
         if (ra->requests[i].completion_flag == 1) {
-          sctk_atomics_decr_int(&ra->available_req);
+          OPA_decr_int(&ra->available_req);
 
           memset(&ra->requests[i], 0, sizeof(sctk_request_t));
 
@@ -596,7 +596,7 @@ int mpc_Win_target_ctx_init(struct mpc_Win_target_ctx *ctx, MPI_Comm comm) {
   ctx->remote_count = 0;
   ctx->state = MPC_WIN_TARGET_NONE;
   ctx->lock = 0;
-  sctk_atomics_store_int(&ctx->ctrl_message_counter, 0);
+  OPA_store_int(&ctx->ctrl_message_counter, 0);
   ctx->passive_exposure_count = 0;
   mpc_MPI_win_locks_init(&ctx->locks);
   mpc_MPI_Win_request_array_init(&ctx->requests, comm);
@@ -618,7 +618,7 @@ int mpc_Win_target_ctx_release(struct mpc_Win_target_ctx *ctx) {
   mpc_MPI_Win_tmp_release(&ctx->tmp_buffs);
 
   ctx->lock = 0;
-  sctk_atomics_store_int(&ctx->ctrl_message_counter, 0);
+  OPA_store_int(&ctx->ctrl_message_counter, 0);
 
   return 0;
 }
@@ -1185,10 +1185,10 @@ int mpc_Win_target_ctx_end_exposure(MPI_Win win, mpc_Win_target_state state,
   return ret;
 }
 
-static sctk_atomics_int exposure_count;
+static OPA_int_t exposure_count;
 
 int mpc_Win_exposure_wait() {
-  while (sctk_atomics_load_int(&exposure_count)) {
+  while (OPA_load_int(&exposure_count)) {
     sctk_thread_yield();
   }
 
@@ -1196,12 +1196,12 @@ int mpc_Win_exposure_wait() {
 }
 
 int mpc_Win_exposure_start() {
-  sctk_atomics_fetch_and_add_int(&exposure_count, 1);
+  OPA_fetch_and_add_int(&exposure_count, 1);
   return 0;
 }
 
 int mpc_Win_exposure_end() {
-  sctk_atomics_fetch_and_add_int(&exposure_count, -1);
+  OPA_fetch_and_add_int(&exposure_count, -1);
   return 0;
 }
 
@@ -1214,9 +1214,9 @@ int mpc_Win_source_ctx_init(struct mpc_Win_source_ctx *ctx, MPI_Comm comm) {
   ctx->remote_ranks = NULL;
   ctx->state = MPC_WIN_SOURCE_NONE;
   ctx->remote_count = 0;
-  sctk_atomics_store_int(&ctx->stacked_acess, 0);
+  OPA_store_int(&ctx->stacked_acess, 0);
   ctx->lock = 0;
-  sctk_atomics_store_int(&ctx->ctrl_message_counter, 0);
+  OPA_store_int(&ctx->ctrl_message_counter, 0);
 
   mpc_MPI_Win_request_array_init(&ctx->requests, comm);
   mpc_MPI_Win_tmp_init(&ctx->tmp_buffs);
@@ -1232,7 +1232,7 @@ int mpc_Win_source_ctx_release(struct mpc_Win_source_ctx *ctx) {
   ctx->lock = 0;
   mpc_MPI_Win_request_array_release(&ctx->requests);
   mpc_MPI_Win_tmp_release(&ctx->tmp_buffs);
-  sctk_atomics_store_int(&ctx->ctrl_message_counter, 0);
+  OPA_store_int(&ctx->ctrl_message_counter, 0);
 
   return 0;
 }
@@ -1315,7 +1315,7 @@ int mpc_Win_source_ctx_start_access_no_lock(MPI_Win win, mpc_Win_arity arity,
       }
     }
 
-    sctk_atomics_incr_int(&ctx->stacked_acess);
+    OPA_incr_int(&ctx->stacked_acess);
   }
 
   /* Fencing handling */
@@ -1529,7 +1529,7 @@ int mpc_Win_source_ctx_end_access_no_lock(MPI_Win win,
 
   case MPC_WIN_SOURCE_PASIVE: {
     int current_access =
-        sctk_atomics_fetch_and_add_int(&ctx->stacked_acess, -1) - 1;
+        OPA_fetch_and_add_int(&ctx->stacked_acess, -1) - 1;
 
     if (current_access == 0) {
 
@@ -1717,7 +1717,7 @@ int mpc_Win_contexes_fence_control(MPI_Win win) {
   struct mpc_Win_source_ctx *sctx = &desc->source;
   struct mpc_Win_target_ctx *tctx = &desc->target;
 
-  int source = sctk_atomics_load_int(&sctx->ctrl_message_counter);
+  int source = OPA_load_int(&sctx->ctrl_message_counter);
 
   long long int reduce_source = 0;
 
@@ -1745,7 +1745,7 @@ int mpc_Win_contexes_fence_control(MPI_Win win) {
       mpc_thread_yield();
     }
 
-    int target = sctk_atomics_load_int(&tctx->ctrl_message_counter);
+    int target = OPA_load_int(&tctx->ctrl_message_counter);
 
     PMPI_Allreduce(&target, &reduce_target, 1, MPI_INT, MPI_SUM, desc->comm);
     sctk_nodebug("REDUCE TARG %ld/%ld", reduce_target, reduce_source);

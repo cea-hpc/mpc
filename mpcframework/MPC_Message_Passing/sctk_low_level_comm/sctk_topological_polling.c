@@ -31,7 +31,7 @@
 
 void sctk_topological_polling_cell_init( struct sctk_topological_polling_cell * cell )
 {
-	sctk_atomics_store_int( &cell->polling_counter, 0);
+	OPA_store_int( &cell->polling_counter, 0);
 	cell->cell_id = SCTK_POLL_IGNORE;
 }
 
@@ -282,7 +282,7 @@ static inline void sctk_topological_polling_cell_poll( struct sctk_topological_p
 	
 	struct sctk_topological_polling_cell * cell = &cells[offset];
 	
-	int polling_counter = sctk_atomics_fetch_and_incr_int( &cell->polling_counter );
+	int polling_counter = OPA_fetch_and_incr_int( &cell->polling_counter );
 
 	/* Are we alone in the cell ? */
 	if(  polling_counter == 0 )
@@ -307,7 +307,7 @@ static inline void sctk_topological_polling_cell_poll( struct sctk_topological_p
 		
 	}
 	
-	sctk_atomics_decr_int( &cell->polling_counter );
+	OPA_decr_int( &cell->polling_counter );
 
 }
 

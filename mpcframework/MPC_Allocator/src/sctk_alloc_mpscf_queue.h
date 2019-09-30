@@ -50,24 +50,24 @@
 #elif defined(_WIN32)
 	#include <Windows.h>
 	//define the equiavelent of OPA_ptr_t for windows VCC
-	typedef PVOID volatile sctk_atomics_ptr;
+	typedef PVOID volatile OPA_ptr_t;
 
 	//emulate OPA function for windows VCC (consider 64bit intel x86 atch here)
-	#define	sctk_atomics_load_ptr(target) (*(target))
-	#define sctk_atomics_store_ptr(target,value) ((*(target)) = (value))
-	#define sctk_atomics_swap_ptr(target,value) InterlockedExchangePointer((target),(value))
+	#define	OPA_load_ptr(target) (*(target))
+	#define OPA_store_ptr(target,value) ((*(target)) = (value))
+	#define OPA_swap_ptr(target,value) InterlockedExchangePointer((target),(value))
 	//TODO find something to do 'pause'
-	#define sctk_atomics_pause() do{} while(0)
+	#define OPA_busy_wait() do{} while(0)
 #else //MPC_Common
 	#include <opa_primitives.h>
 	// Rename the OPA types into sctk_atomics ones
-	typedef OPA_ptr_t sctk_atomics_ptr;
+	typedef OPA_ptr_t OPA_ptr_t;
 
 	// Rename the OPA functions into sctk_atomics ones
-	#define sctk_atomics_load_ptr            OPA_load_ptr
-	#define sctk_atomics_store_ptr           OPA_store_ptr
-	#define sctk_atomics_swap_ptr            OPA_swap_ptr
-	#define sctk_atomics_pause               OPA_busy_wait
+	#define OPA_load_ptr            OPA_load_ptr
+	#define OPA_store_ptr           OPA_store_ptr
+	#define OPA_swap_ptr            OPA_swap_ptr
+	#define OPA_busy_wait               OPA_busy_wait
 #endif //MPC_Common
 
 /********************************* MACROS ***********************************/
@@ -93,8 +93,8 @@ struct sctk_mpscf_queue_entry
 **/
 struct sctk_mpscf_queue
 {
-	sctk_atomics_ptr head;
-	sctk_atomics_ptr tail;
+	OPA_ptr_t head;
+	OPA_ptr_t tail;
 };
 
 /********************************* FUNCTION *********************************/
@@ -112,8 +112,8 @@ static __inline__ void sctk_mpscf_queue_init(struct sctk_mpscf_queue * queue)
 	assert(queue != NULL);
 
 	/* setup default values */
-	sctk_atomics_store_ptr(&queue->head,NULL);
-	sctk_atomics_store_ptr(&queue->tail,NULL);
+	OPA_store_ptr(&queue->head,NULL);
+	OPA_store_ptr(&queue->tail,NULL);
 }
 
 /********************************* FUNCTION *********************************/
@@ -137,7 +137,7 @@ static __inline__ bool sctk_mpscf_queue_is_empty(struct sctk_mpscf_queue * queue
 	assert(queue != NULL);
 
 	/* check status */
-	return (sctk_atomics_load_ptr(&queue->head) == NULL);
+	return (OPA_load_ptr(&queue->head) == NULL);
 }
 
 /********************************* FUNCTION *********************************/
@@ -159,13 +159,13 @@ static __inline__ void sctk_mpscf_queue_insert(struct sctk_mpscf_queue * queue, 
 	entry->next = NULL;
 
 	/* update tail with swap first */
-	prev = (struct sctk_mpscf_queue_entry *)sctk_atomics_swap_ptr(&queue->tail,entry);
+	prev = (struct sctk_mpscf_queue_entry *)OPA_swap_ptr(&queue->tail,entry);
 
 	/* Then update head if required or update prev->next
 	   This operation didn't required atomic ops as long as we are aligned in memory*/
 	if (prev == NULL) {
 		/* in theory atomic isn't required for this write otherwise we can do atomic write */
-		sctk_atomics_store_ptr(&queue->head,entry);
+		OPA_store_ptr(&queue->head,entry);
 	} else {
 		prev->next = entry;
 	}
@@ -190,7 +190,7 @@ static __inline__ void sctk_mpscf_queue_wait_until_end_is(struct sctk_mpscf_queu
 		if (current->next != NULL)
 			current = current->next;
 		else
-			sctk_atomics_pause();
+			OPA_busy_wait();
 	}
 
 	/* check that we have effectively the last element otherwise it's a bug. */
@@ -211,7 +211,7 @@ static __inline__ struct sctk_mpscf_queue_entry * sctk_mpscft_queue_dequeue_all(
 	assert(queue != NULL);
 
 	/* read head and mark it as NULL */
-	head = (struct sctk_mpscf_queue_entry *)sctk_atomics_load_ptr(&queue->head);
+	head = (struct sctk_mpscf_queue_entry *)OPA_load_ptr(&queue->head);
 
 	/* if has entry, need to clear the current list */
 	if (head != NULL)
@@ -221,11 +221,11 @@ static __inline__ struct sctk_mpscf_queue_entry * sctk_mpscft_queue_dequeue_all(
 		   as we have one, produced work only on tail.
 		   We will flush tail after this, so it's ok with cache coherence if the two next
 		   ops are not reorder.*/
-		sctk_atomics_store_ptr(&queue->head,NULL);
+		OPA_store_ptr(&queue->head,NULL);
 		//OPA_write_barrier();
 
 		/* swap tail to make it NULL */
-		tail = (struct sctk_mpscf_queue_entry *)sctk_atomics_swap_ptr(&queue->tail,NULL);
+		tail = (struct sctk_mpscf_queue_entry *)OPA_swap_ptr(&queue->tail,NULL);
 
 		/* we have head, so NULL tail is abnormal */
 		assert(tail != NULL);

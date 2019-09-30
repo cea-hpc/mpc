@@ -58,12 +58,12 @@ typedef struct mpcomp_task_list_s {
   char pad1[MPCOMP_TASK_LOCKFREE_CACHELINE_PADDING-2*sizeof(OPA_ptr_t)];	
   OPA_ptr_t lockfree_shadow_head;
   char pad2[MPCOMP_TASK_LOCKFREE_CACHELINE_PADDING-1*sizeof(OPA_ptr_t)];
-  sctk_atomics_int nb_elements; /**< Number of tasks in the list */
+  OPA_int_t nb_elements; /**< Number of tasks in the list */
   sctk_mpcomp_task_lock_t mpcomp_task_lock; /**< Lock of the list                                 */
   int total;
   struct mpcomp_task_s *head; /**< First task of the list */
   struct mpcomp_task_s *tail; /**< Last task of the list */
-  sctk_atomics_int nb_larcenies; /**< Number of tasks in the list */
+  OPA_int_t nb_larcenies; /**< Number of tasks in the list */
 } mpcomp_task_list_t;
 
 static inline void mpcomp_task_list_reset(mpcomp_task_list_t *list) {
@@ -150,7 +150,7 @@ mpcomp_task_locked_list_popfromhead(mpcomp_task_list_t *list) {
   if(list->head) list->head->prev = NULL;
   if (!(task->next))
     list->tail = NULL;
-  sctk_atomics_decr_int(&list->nb_elements);
+  OPA_decr_int(&list->nb_elements);
 
   task->list=NULL;
   return task;
@@ -173,7 +173,7 @@ mpcomp_task_locked_list_popfromtail(mpcomp_task_list_t *list) {
       list->head = NULL;
     }
 
-    sctk_atomics_decr_int(&(list->nb_elements));
+    OPA_decr_int(&(list->nb_elements));
     return task;
   }
 
@@ -198,7 +198,7 @@ static inline int mpcomp_task_locked_list_remove(mpcomp_task_list_t *list,
   if (task->prev)
     task->prev->next = task->next;
 
-  sctk_atomics_decr_int(&(list->nb_elements));
+  OPA_decr_int(&(list->nb_elements));
   task->list = NULL;
 
   return 1;

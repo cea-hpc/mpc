@@ -148,7 +148,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	 * we don't have such information) */
 	get_request->match      = (sctk_ptl_matchbits_t)ev.match_bits;
 	get_request->msg_seq_nb = ((sctk_ptl_imm_data_t)ev.hdr_data).std.msg_seq_nb;
-	sctk_atomics_store_int(&get_request->cnt_frag, chunk_nb);
+	OPA_store_int(&get_request->cnt_frag, chunk_nb);
 	
 	/* The GET request only target slots with the bit to 1 */
 	sctk_ptl_md_register(srail, get_request);
@@ -340,7 +340,7 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	/* store infos that should be expanded from forthcomin REPLY op */
 	me_request->match = me_match;
 	me_request->msg_seq_nb = SCTK_MSG_NUMBER(msg);
-	sctk_atomics_store_int(&me_request->cnt_frag, ((chunk_nb == 1) ? 0 : chunk_nb)); /* special case - see event_me() */
+	OPA_store_int(&me_request->cnt_frag, ((chunk_nb == 1) ? 0 : chunk_nb)); /* special case - see event_me() */
 
 	msg->tail.ptl.user_ptr = me_request;
 	sctk_ptl_me_register(srail, me_request, pte);
@@ -424,7 +424,7 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			break;
 
 		case PTL_EVENT_GET:                  /* a remote process get the data back */
-			cur = sctk_atomics_fetch_and_decr_int(&ptr->cnt_frag) - 1;
+			cur = OPA_fetch_and_decr_int(&ptr->cnt_frag) - 1;
 			/* fun fact here...
 			 * We set the cnt_frag differently, depending on the number of chunkds :
 			 *  - if only one fragment, an ME w/ PTL_USE_ONCE has been set and there is nothing to do anymore
@@ -480,7 +480,7 @@ void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			break;
 
 		case PTL_EVENT_REPLY: /* a GET operation completed */
-			cur = sctk_atomics_fetch_and_decr_int(&ptr->cnt_frag) - 1;
+			cur = OPA_fetch_and_decr_int(&ptr->cnt_frag) - 1;
 			if(cur <= 0)
 			{
 				sctk_ptl_rdv_reply_message(rail, ev);

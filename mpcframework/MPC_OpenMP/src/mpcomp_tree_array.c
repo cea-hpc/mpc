@@ -585,7 +585,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
     }
 
     /* Wait our children */
-    while( sctk_atomics_load_int( &( me->children_ready ) ) != num_children)  
+    while( OPA_load_int( &( me->children_ready ) ) != num_children)  
         sctk_thread_yield();
  
     //(void) __mpcomp_tree_array_compute_node_parents( root_node, new_node );
@@ -607,7 +607,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
 
     father_rank = me->fathers_array[new_node->depth-1];
 
-    (void) sctk_atomics_fetch_and_incr_int( &(root[father_rank].children_ready) ); 
+    (void) OPA_fetch_and_incr_int( &(root[father_rank].children_ready) ); 
     return ( !(new_node->local_rank) ) ? 1 : 0;
 }
 
@@ -677,7 +677,7 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     current_depth = max_depth -1;
     target_node_rank = me->fathers_array[current_depth]; 
 
-    ( void ) sctk_atomics_incr_int( &( root[target_node_rank].children_ready) ); 
+    ( void ) OPA_incr_int( &( root[target_node_rank].children_ready) ); 
  
     if(  !( new_mvp->local_rank ) )
     {

@@ -109,7 +109,7 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 		cur->children = NULL;
 		cur->nb_children = -1;
 		cur->root = -1;
-		sctk_atomics_store_int(&cur->iter, 0);
+		OPA_store_int(&cur->iter, 0);
         	mpc_common_spinlock_init((&cur->lock), 0);
 		switch(i)
 		{
@@ -304,7 +304,7 @@ static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, s
 
 	bnode        = pte->node + SCTK_PTL_OFFCOLL_BARRIER;
         nb_children  = bnode->nb_children;
-	cnt_prev_ops = sctk_atomics_fetch_and_incr_int(&bnode->iter);
+	cnt_prev_ops = OPA_fetch_and_incr_int(&bnode->iter);
 	me_cnt_up    = bnode->spec.barrier.cnt_hb_up;
 	me_cnt_down  = bnode->spec.barrier.cnt_hb_down;
 
@@ -494,7 +494,7 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 	bnode        = pte->node + SCTK_PTL_OFFCOLL_BCAST;
 	sctk_assert(bnode);
         nb_children  = bnode->nb_children;
-	cnt_ops = sctk_atomics_fetch_and_incr_int(&bnode->iter);
+	cnt_ops = OPA_fetch_and_incr_int(&bnode->iter);
 	me_cnt_puts  = &bnode->spec.bcast.large_puts->slot.me.ct_handle;
 
 	/* if only one node in the tree, don't */

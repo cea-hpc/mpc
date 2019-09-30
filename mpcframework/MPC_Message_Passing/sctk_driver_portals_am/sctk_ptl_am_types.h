@@ -226,9 +226,9 @@ typedef struct sctk_ptl_am_local_data_s
 
 typedef struct sctk_ptl_am_chunk_s
 {
-	sctk_atomics_int refcnt;
-	sctk_atomics_int up;
-	sctk_atomics_int noff;
+	OPA_int_t refcnt;
+	OPA_int_t up;
+	OPA_int_t noff;
 	int tag;
 	struct sctk_ptl_am_chunk_s* next;
 	struct sctk_ptl_am_chunk_s* prev;
@@ -244,7 +244,7 @@ typedef struct sctk_ptl_am_pte_s
 {
 	ptl_pt_index_t idx; /**< the effective PT index */
 	mpc_common_spinlock_t pte_lock;
-	sctk_atomics_int next_tag;
+	OPA_int_t next_tag;
 	
 	sctk_ptl_am_chunk_t* req_head;
 	sctk_ptl_am_chunk_t* req_tail;

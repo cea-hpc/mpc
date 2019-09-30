@@ -410,7 +410,7 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
                 mvp->instance = node->instance;
             int j; 
             for (j = 0; j < MPCOMP_MAX_ALIVE_FOR_DYN + 1; j++) 
-	            sctk_atomics_store_int(&(mvp->threads->for_dyn_remain[j].i), -1);
+	            OPA_store_int(&(mvp->threads->for_dyn_remain[j].i), -1);
                 __mpcomp_instance_tree_array_mvp_init( node, mvp, i );
             }
             /* WakeUp NODE */
@@ -471,7 +471,7 @@ __mpcomp_scatter_wakeup_final_mvp( mpcomp_node_t* node )
             mvp->threads->rank = node->mvp_first_id + i;
             int j; 
             for (j = 0; j < MPCOMP_MAX_ALIVE_FOR_DYN + 1; j++) 
-	            sctk_atomics_store_int(&(mvp->threads->for_dyn_remain[j].i), -1);
+	            OPA_store_int(&(mvp->threads->for_dyn_remain[j].i), -1);
             __mpcomp_instance_tree_array_mvp_init( node, mvp, i );
         }
         /* WakeUp MVP */
@@ -529,7 +529,7 @@ void __mpcomp_scatter_instance_post_init( mpcomp_thread_t* thread )
     mpcomp_mvp_t* mvp = thread->mvp;
     int j; 
     for (j = 0; j < MPCOMP_MAX_ALIVE_FOR_DYN + 1; j++) 
-	    sctk_atomics_store_int(&(mvp->threads->for_dyn_remain[j].i), -1);
+	    OPA_store_int(&(mvp->threads->for_dyn_remain[j].i), -1);
 
 	if(!thread->task_infos.reusable_tasks)
     thread->task_infos.reusable_tasks = (mpcomp_task_t**) mpcomp_alloc(MPCOMP_NB_REUSABLE_TASKS*sizeof(mpcomp_task_t*));

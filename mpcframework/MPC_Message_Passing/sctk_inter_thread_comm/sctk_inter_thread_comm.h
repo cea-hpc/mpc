@@ -258,7 +258,7 @@ typedef struct sctk_thread_message_header_s
 	/* Ordering */
 	int message_number; /**< Message order (for reorder) */
 	char use_message_numbering; /**< Should this message be reordered */
-        sctk_atomics_int matching_id; /**< 0 By default unique id otherwise */
+        OPA_int_t matching_id; /**< 0 By default unique id otherwise */
         /* Content */
         sctk_datatype_t datatype; /**< Caried data-type (for matching check) */
         size_t msg_size;          /**< Message size */
@@ -305,9 +305,9 @@ void sctk_probe_any_source_tag_class_comm(int destination, int tag,
 #define SCTK_MSG_NUMBER( msg ) msg->body.header.message_number
 #define SCTK_MSG_NUMBER_SET( msg , number ) do{ msg->body.header.message_number = number; }while(0)
 
-#define SCTK_MSG_MATCH(msg) sctk_atomics_load_int(&msg->body.header.matching_id)
+#define SCTK_MSG_MATCH(msg) OPA_load_int(&msg->body.header.matching_id)
 #define SCTK_MSG_MATCH_SET(msg, match)                                         \
-  sctk_atomics_store_int(&msg->body.header.matching_id, match)
+  OPA_store_int(&msg->body.header.matching_id, match)
 
 #define SCTK_MSG_SPECIFIC_CLASS( msg ) msg->body.header.message_type.type
 #define SCTK_MSG_SPECIFIC_CLASS_SET( msg , specific_tag ) do{ msg->body.header.message_type.type = specific_tag; }while(0)

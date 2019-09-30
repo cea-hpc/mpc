@@ -972,7 +972,7 @@ static int int_cmp ( const void *a, const void *b )
 
 int sctk_shared_mem_barrier_sig_init(struct shared_mem_barrier_sig *shmb,
                                      int nb_task) {
-  shmb->sig_points = sctk_malloc(sizeof(sctk_atomics_ptr) * nb_task);
+  shmb->sig_points = sctk_malloc(sizeof(OPA_ptr_t) * nb_task);
 
   assume(shmb->sig_points != NULL);
 
@@ -985,9 +985,9 @@ int sctk_shared_mem_barrier_sig_init(struct shared_mem_barrier_sig *shmb,
     shmb->tollgate[i] = 0;
   }
 
-  sctk_atomics_store_int(&shmb->fare, 0);
+  OPA_store_int(&shmb->fare, 0);
 
-  sctk_atomics_store_int(&shmb->counter, nb_task);
+  OPA_store_int(&shmb->counter, nb_task);
 
   return 0;
 }
@@ -1003,8 +1003,8 @@ int sctk_shared_mem_barrier_sig_release(struct shared_mem_barrier_sig *shmb) {
 }
 
 int sctk_shared_mem_barrier_init(struct shared_mem_barrier *shmb, int nb_task) {
-  sctk_atomics_store_int(&shmb->counter, nb_task);
-  sctk_atomics_store_int(&shmb->phase, 0);
+  OPA_store_int(&shmb->counter, nb_task);
+  OPA_store_int(&shmb->phase, 0);
   return 0;
 }
 
@@ -1018,9 +1018,9 @@ int sctk_shared_mem_reduce_init(struct shared_mem_reduce *shmr, int nb_task) {
 
   assume(shmr->buffer != NULL);
 
-  sctk_atomics_store_int(&shmr->owner, -1);
+  OPA_store_int(&shmr->owner, -1);
 
-  sctk_atomics_store_int(&shmr->left_to_push, nb_task);
+  OPA_store_int(&shmr->left_to_push, nb_task);
 
   shmr->target_buff = NULL;
 
@@ -1046,7 +1046,7 @@ int sctk_shared_mem_reduce_init(struct shared_mem_reduce *shmr, int nb_task) {
     shmr->tollgate[i] = 0;
   }
 
-  sctk_atomics_store_int(&shmr->fare, 0);
+  OPA_store_int(&shmr->fare, 0);
 
   return 0;
 }
@@ -1065,9 +1065,9 @@ int sctk_shared_mem_reduce_release(struct shared_mem_reduce *shmr) {
 }
 
 int sctk_shared_mem_bcast_init(struct shared_mem_bcast *shmb, int nb_task) {
-  sctk_atomics_store_int(&shmb->owner, -1);
+  OPA_store_int(&shmb->owner, -1);
 
-  sctk_atomics_store_int(&shmb->left_to_pop, nb_task);
+  OPA_store_int(&shmb->left_to_pop, nb_task);
 
   shmb->tollgate = sctk_malloc(nb_task * sizeof(int));
 
@@ -1078,8 +1078,8 @@ int sctk_shared_mem_bcast_init(struct shared_mem_bcast *shmb, int nb_task) {
     shmb->tollgate[i] = 0;
   }
 
-  sctk_atomics_store_int(&shmb->fare, 0);
-  sctk_atomics_store_ptr(&shmb->to_free, 0);
+  OPA_store_int(&shmb->fare, 0);
+  OPA_store_ptr(&shmb->to_free, 0);
 
   shmb->scount = 0;
   shmb->stype_size = 0;
@@ -1097,16 +1097,16 @@ int sctk_shared_mem_bcast_release(struct shared_mem_bcast *shmb) {
 
 int sctk_shared_mem_gatherv_init(struct shared_mem_gatherv *shmgv,
                                  int nb_task) {
-  sctk_atomics_store_int(&shmgv->owner, -1);
-  sctk_atomics_store_int(&shmgv->left_to_push, nb_task);
+  OPA_store_int(&shmgv->owner, -1);
+  OPA_store_int(&shmgv->left_to_push, nb_task);
 
   /* Tollgate */
   shmgv->tollgate = sctk_malloc(nb_task * sizeof(int));
   assume(shmgv->tollgate != NULL);
-  sctk_atomics_store_int(&shmgv->fare, 0);
+  OPA_store_int(&shmgv->fare, 0);
 
   /* Leaf CTX */
-  shmgv->src_buffs = sctk_malloc(nb_task * sizeof(sctk_atomics_ptr));
+  shmgv->src_buffs = sctk_malloc(nb_task * sizeof(OPA_ptr_t));
   assume(shmgv->src_buffs != NULL);
 
   /* Root CTX */
@@ -1129,7 +1129,7 @@ int sctk_shared_mem_gatherv_init(struct shared_mem_gatherv *shmgv,
     shmgv->tollgate[i] = 0;
     shmgv->send_count[i] = 0;
     shmgv->send_type_size[i] = 0;
-    sctk_atomics_store_ptr(&shmgv->src_buffs[i], 0);
+    OPA_store_ptr(&shmgv->src_buffs[i], 0);
   }
 
   return 0;
@@ -1153,16 +1153,16 @@ int sctk_shared_mem_gatherv_release(struct shared_mem_gatherv *shmgv) {
 
 int sctk_shared_mem_scatterv_init(struct shared_mem_scatterv *shmsv,
                                   int nb_task) {
-  sctk_atomics_store_int(&shmsv->owner, -1);
-  sctk_atomics_store_int(&shmsv->left_to_pop, nb_task);
+  OPA_store_int(&shmsv->owner, -1);
+  OPA_store_int(&shmsv->left_to_pop, nb_task);
 
   /* Tollgate */
   shmsv->tollgate = sctk_malloc(nb_task * sizeof(int));
   assume(shmsv->tollgate != NULL);
-  sctk_atomics_store_int(&shmsv->fare, 0);
+  OPA_store_int(&shmsv->fare, 0);
 
   /* Root CTX */
-  shmsv->src_buffs = sctk_malloc(nb_task * sizeof(sctk_atomics_ptr));
+  shmsv->src_buffs = sctk_malloc(nb_task * sizeof(OPA_ptr_t));
   assume(shmsv->src_buffs != NULL);
 
   shmsv->was_packed = 0;
@@ -1174,7 +1174,7 @@ int sctk_shared_mem_scatterv_init(struct shared_mem_scatterv *shmsv,
   int i;
   for (i = 0; i < nb_task; ++i) {
     shmsv->tollgate[i] = 0;
-    sctk_atomics_store_ptr(&shmsv->src_buffs[i], 0);
+    OPA_store_ptr(&shmsv->src_buffs[i], 0);
   }
 
   return 0;

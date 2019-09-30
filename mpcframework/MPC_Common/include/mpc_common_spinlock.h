@@ -232,12 +232,12 @@ static inline int mpc_common_spinlock_write_unlock( sctk_spin_rwlock_t *lock )
 
 typedef enum { SCTK_MCSLOCK_WAIT,
 			   SCTK_MCSLOCK_DELAY } sctk_mcslock_flags_t;
-typedef sctk_atomics_ptr sctk_mcslock_t;
+typedef OPA_ptr_t sctk_mcslock_t;
 
 typedef struct
 {
-	sctk_atomics_int lock;
-	sctk_atomics_ptr next;
+	OPA_int_t lock;
+	OPA_ptr_t next;
 } sctk_mcslock_ticket_t;
 
 static inline void sctk_mcslock_init_ticket( sctk_mcslock_ticket_t *ticket )
@@ -250,8 +250,8 @@ static inline sctk_mcslock_ticket_t *sctk_mcslock_alloc_ticket( void )
 {
 	sctk_mcslock_ticket_t *new_ticket;
 	new_ticket = (sctk_mcslock_ticket_t *) sctk_malloc( sizeof( sctk_mcslock_ticket_t ) );
-	sctk_atomics_store_ptr( &( new_ticket->next ), NULL );
-	sctk_atomics_store_int( &( new_ticket->lock ), 0 );
+	OPA_store_ptr( &( new_ticket->next ), NULL );
+	OPA_store_int( &( new_ticket->lock ), 0 );
 	return new_ticket;
 }
 
@@ -260,21 +260,21 @@ static inline int sctk_mcslock_push_ticket( sctk_mcslock_t *lock,
 					    sctk_mcslock_flags_t flags )
 {
 	sctk_mcslock_ticket_t *prev;
-	sctk_atomics_store_ptr( &( ticket->next ), NULL );
-	prev = (sctk_mcslock_ticket_t *) sctk_atomics_swap_ptr( lock, ticket );
+	OPA_store_ptr( &( ticket->next ), NULL );
+	prev = (sctk_mcslock_ticket_t *) OPA_swap_ptr( lock, ticket );
 
 	/* Acquire lock */
 	if ( !prev )
 		return 1;
 
 	/* Push ticket in queue */
-	sctk_atomics_store_int( &( ticket->lock ), 0 );
-	sctk_atomics_store_ptr( &( prev->next ), ticket );
+	OPA_store_int( &( ticket->lock ), 0 );
+	OPA_store_ptr( &( prev->next ), ticket );
 
 	if ( flags != SCTK_MCSLOCK_WAIT )
 		return 0;
 
-	while ( !sctk_atomics_load_int( &( ticket->lock ) ) )
+	while ( !OPA_load_int( &( ticket->lock ) ) )
 		sctk_cpu_relax();
 
 	return 1;
@@ -282,19 +282,19 @@ static inline int sctk_mcslock_push_ticket( sctk_mcslock_t *lock,
 
 static inline int sctk_mcslock_test_ticket( sctk_mcslock_ticket_t *ticket )
 {
-	return sctk_atomics_load_int( &( ticket->lock ) );
+	return OPA_load_int( &( ticket->lock ) );
 }
 
 static inline int sctk_mcslock_wait_ticket( sctk_mcslock_ticket_t *ticket )
 {
-	while ( !sctk_atomics_load_int( &( ticket->lock ) ) )
+	while ( !OPA_load_int( &( ticket->lock ) ) )
 		sctk_cpu_relax();
 	return 1;
 }
 
 static inline int sctk_mcslock_cancel_ticket( sctk_mcslock_ticket_t *ticket )
 {
-	if ( sctk_atomics_cas_int( &( ticket->lock ), 0, 2 ) == 0 )
+	if ( OPA_cas_int( &( ticket->lock ), 0, 2 ) == 0 )
 		return 1;
 
 	/* Lock was already acquire */
@@ -305,18 +305,18 @@ static inline void sctk_mcslock_trash_ticket( sctk_mcslock_t *lock,
 					      sctk_mcslock_ticket_t *ticket )
 {
 	sctk_mcslock_ticket_t *succ;
-	succ = (sctk_mcslock_ticket_t *) sctk_atomics_load_ptr( &( ticket->next ) );
+	succ = (sctk_mcslock_ticket_t *) OPA_load_ptr( &( ticket->next ) );
 
 	if ( !succ )
 	{
-		if ( sctk_atomics_cas_ptr( lock, ticket, NULL ) == ticket )
+		if ( OPA_cas_ptr( lock, ticket, NULL ) == ticket )
 			return;
 
-		while ( !( succ = (sctk_mcslock_ticket_t *) sctk_atomics_load_ptr( &( ticket->next ) ) ) )
+		while ( !( succ = (sctk_mcslock_ticket_t *) OPA_load_ptr( &( ticket->next ) ) ) )
 			sctk_cpu_relax();
 	}
 
-	if ( sctk_atomics_cas_int( &( succ->lock ), 0, 1 ) == 0 )
+	if ( OPA_cas_int( &( succ->lock ), 0, 1 ) == 0 )
 		return;
 
 	/* cur thread become next ticket */
@@ -325,7 +325,7 @@ static inline void sctk_mcslock_trash_ticket( sctk_mcslock_t *lock,
 
 static inline void sctk_mcslock_init( sctk_mcslock_t *lock )
 {
-	sctk_atomics_store_ptr( lock, NULL );
+	OPA_store_ptr( lock, NULL );
 }
 
 #ifdef __cplusplus

@@ -76,15 +76,15 @@ typedef enum mpcomp_task_init_status_e {
 } mpcomp_task_init_status_t;
 
 #define MPCOMP_TASK_STATUS_IS_INITIALIZED(status)                              \
-  (sctk_atomics_load_int(&(status)) == MPCOMP_TASK_INIT_STATUS_INITIALIZED)
+  (OPA_load_int(&(status)) == MPCOMP_TASK_INIT_STATUS_INITIALIZED)
 
 #define MPCOMP_TASK_STATUS_TRY_INIT(status)                                    \
-  (sctk_atomics_cas_int(&(status), MPCOMP_TASK_INIT_STATUS_UNINITIALIZED,      \
+  (OPA_cas_int(&(status), MPCOMP_TASK_INIT_STATUS_UNINITIALIZED,      \
                         MPCOMP_TASK_INIT_STATUS_INIT_IN_PROCESS) ==            \
    MPCOMP_TASK_INIT_STATUS_UNINITIALIZED)
 
 #define MPCOMP_TASK_STATUS_CMPL_INIT(status)                                   \
-  (sctk_atomics_store_int(&(status), MPCOMP_TASK_INIT_STATUS_INITIALIZED))
+  (OPA_store_int(&(status), MPCOMP_TASK_INIT_STATUS_INITIALIZED))
 
 
 /*** THREAD ACCESSORS MACROS ***/
@@ -191,15 +191,15 @@ typedef enum mpcomp_task_init_status_e {
 
 #define MPCOMP_TASK_TEAM_SET_USE_TASK(team)                                    \
   do {                                                                         \
-    sctk_atomics_cas_int(&(team->task_infos.use_task), 0, 1);                  \
+    OPA_cas_int(&(team->task_infos.use_task), 0, 1);                  \
   } while (0)
 
 #define MPCOMP_TASK_TEAM_GET_USE_TASK(team)                                    \
-  sctk_atomics_load_int(&(team->task_infos.use_task))
+  OPA_load_int(&(team->task_infos.use_task))
 
 #define MPCOMP_TASK_TEAM_RESET_USE_TASK(team)                                  \
   do {                                                                         \
-    sctk_atomics_store_int(&(team->task_infos.use_task), 0);                   \
+    OPA_store_int(&(team->task_infos.use_task), 0);                   \
   } while (0)
 
 /*** NODE ACCESSORS MACROS ***/

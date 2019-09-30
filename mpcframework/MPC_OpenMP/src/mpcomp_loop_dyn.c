@@ -84,7 +84,7 @@ void __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, long lb, long b, long incr,
 
   /* Stop if the maximum number of alive loops is reached */
   while (
-      sctk_atomics_load_int(&(team_info->for_dyn_nb_threads_exited[index].i)) ==
+      OPA_load_int(&(team_info->for_dyn_nb_threads_exited[index].i)) ==
       MPCOMP_NOWAIT_STOP_SYMBOL) {
     sctk_thread_yield();
   }
@@ -96,7 +96,7 @@ void __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, long lb, long b, long incr,
   t->dyn_last_target = t ;
   t->for_dyn_total[index] = __mpcomp_get_static_nb_chunks_per_rank(
       t->rank, num_threads, &(t->info.loop_infos.loop.mpcomp_long));
-  (void) sctk_atomics_cas_int(&(t->for_dyn_remain[index].i), -1, t->for_dyn_total[index]);
+  (void) OPA_cas_int(&(t->for_dyn_remain[index].i), -1, t->for_dyn_total[index]);
 }
 
 int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size,
@@ -272,7 +272,7 @@ void __mpcomp_dynamic_loop_end_nowait(void) {
   /* In case of 1 thread, re-initialize the number of remaining chunks
        * but do not increase the current index */
   if (num_threads == 1) {
-    sctk_atomics_store_int(&(t->for_dyn_remain[index].i), -1);
+    OPA_store_int(&(t->for_dyn_remain[index].i), -1);
     return;
   }
 
@@ -283,12 +283,12 @@ void __mpcomp_dynamic_loop_end_nowait(void) {
 
   /* WARNING: the following order is important */
   mpc_common_spinlock_lock(&(t->info.update_lock));
-  sctk_atomics_incr_int(&(t->for_dyn_ull_current));
-  sctk_atomics_store_int(&(t->for_dyn_remain[index].i), -1);
+  OPA_incr_int(&(t->for_dyn_ull_current));
+  OPA_store_int(&(t->for_dyn_remain[index].i), -1);
   mpc_common_spinlock_unlock(&(t->info.update_lock));
 
   /* Update the number of threads which ended this loop */
-  nb_threads_exited = sctk_atomics_fetch_and_incr_int(
+  nb_threads_exited = OPA_fetch_and_incr_int(
       &(team_info->for_dyn_nb_threads_exited[index].i)) + 1;
   sctk_assert(nb_threads_exited > 0 && nb_threads_exited <= num_threads);
 
@@ -299,9 +299,9 @@ void __mpcomp_dynamic_loop_end_nowait(void) {
     sctk_assert(previous_index >= 0 &&
                 previous_index < MPCOMP_MAX_ALIVE_FOR_DYN + 1);
 
-    sctk_atomics_store_int(&(team_info->for_dyn_nb_threads_exited[index].i),
+    OPA_store_int(&(team_info->for_dyn_nb_threads_exited[index].i),
                            MPCOMP_NOWAIT_STOP_SYMBOL);
-    sctk_atomics_swap_int(
+    OPA_swap_int(
         &(team_info->for_dyn_nb_threads_exited[previous_index].i), 0);
      
   }
@@ -369,7 +369,7 @@ void __mpcomp_for_dyn_coherency_end_parallel_region(
   /* Check team coherency */
   n = 0;
   for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++) {
-    switch (sctk_atomics_load_int(&team->for_dyn_nb_threads_exited[i].i)) {
+    switch (OPA_load_int(&team->for_dyn_nb_threads_exited[i].i)) {
     case 0:
       break;
     case MPCOMP_NOWAIT_STOP_SYMBOL:
@@ -413,7 +413,7 @@ void __mpcomp_for_dyn_coherency_end_parallel_region(
 
     /* Checking for_dyn_remain */
     for (j = 0; j < MPCOMP_MAX_ALIVE_FOR_DYN + 1; j++) {
-      if (sctk_atomics_load_int(&(target_t->for_dyn_remain[j].i)) != -1) {
+      if (OPA_load_int(&(target_t->for_dyn_remain[j].i)) != -1) {
         not_reachable();
       }
     }

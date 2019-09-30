@@ -35,30 +35,30 @@ static int init_done = 0;
 static mpc_common_spinlock_t init_lock = 0;
 
 /* Error handlers */
-static sctk_atomics_int current_errhandler;
+static OPA_int_t current_errhandler;
 static struct MPCHT error_handlers;
 
 /* Handles */
-static sctk_atomics_int current_handle;
+static OPA_int_t current_handle;
 static struct MPCHT handle_context;
 
 /* Error codes */
-static sctk_atomics_int current_error_class;
-static sctk_atomics_int current_error_code;
+static OPA_int_t current_error_class;
+static OPA_int_t current_error_code;
 static struct MPCHT error_strings;
 
 static void _mpc_mpi_err_init() {
   /* Error handlers */
-  sctk_atomics_store_int(&current_errhandler, 100);
+  OPA_store_int(&current_errhandler, 100);
   MPCHT_init(&error_handlers, 8);
 
   /* Handles */
-  sctk_atomics_store_int(&current_handle, SCTK_BOOKED_HANDLES);
+  OPA_store_int(&current_handle, SCTK_BOOKED_HANDLES);
   MPCHT_init(&handle_context, 64);
 
   /* Error codes */
-  sctk_atomics_store_int(&current_error_class, 1024);
-  sctk_atomics_store_int(&current_error_code, 100);
+  OPA_store_int(&current_error_class, 1024);
+  OPA_store_int(&current_error_code, 100);
   MPCHT_init(&error_strings, 8);
 }
 
@@ -81,7 +81,7 @@ int sctk_errhandler_register(sctk_generic_handler eh, sctk_errhandler_t *errh) {
   mpc_mpi_err_init_once();
   /* Create an unique id */
   sctk_errhandler_t new_id =
-      sctk_atomics_fetch_and_add_int(&current_errhandler, 1);
+      OPA_fetch_and_add_int(&current_errhandler, 1);
   /* Give it to the iface */
   *errh = (sctk_errhandler_t)new_id;
   /* Save in the HT */
@@ -212,7 +212,7 @@ sctk_handle sctk_handle_new(sctk_handle_type type) {
   mpc_mpi_err_init_once();
 
   /* Create an unique id */
-  new_handle_id = sctk_atomics_fetch_and_add_int(&current_handle, 1);
+  new_handle_id = OPA_fetch_and_add_int(&current_handle, 1);
 
   return sctk_handle_new_from_id(new_handle_id, type);
 }

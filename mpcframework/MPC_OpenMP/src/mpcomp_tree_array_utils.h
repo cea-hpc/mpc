@@ -214,7 +214,7 @@ __mpcomp_update_node_children_node_ptr( const int first_idx,
 
     const int children_num = node->nb_children;
     me = &(root[node->global_rank]);
-    assert(sctk_atomics_load_int(&(me->children_ready)) == children_num);
+    assert(OPA_load_int(&(me->children_ready)) == children_num);
 
     for( i = 0; i < children_num; i++ ) 
     { 
@@ -255,7 +255,7 @@ __mpcomp_update_node_children_mvp_ptr(  const int first_idx,
 
     const int children_num = node->nb_children;
     me = &(root[node->global_rank]);
-    assert(sctk_atomics_load_int(&(me->children_ready)) == children_num);
+    assert(OPA_load_int(&(me->children_ready)) == children_num);
 
     for( i = 0; i < children_num; i++ ) 
     { 

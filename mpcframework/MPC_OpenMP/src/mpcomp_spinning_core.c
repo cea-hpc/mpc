@@ -12,17 +12,17 @@
 #include "mpcomp_scatter.h"
 #include "mpcomp_spinning_core.h"
 
-static sctk_atomics_int nb_teams = SCTK_ATOMICS_INT_T_INIT(0);
+static OPA_int_t nb_teams = OPA_INT_T_INITIALIZER(0);
 
 /** Reset mpcomp_team informations */
 static void __mpcomp_tree_array_team_reset( mpcomp_team_t *team )
 {
     sctk_assert(team);
-    sctk_atomics_int *last_array_slot;
+    OPA_int_t *last_array_slot;
     memset( team, 0, sizeof( mpcomp_team_t ) );
     last_array_slot = &(team->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i);
-    sctk_atomics_store_int(last_array_slot, MPCOMP_NOWAIT_STOP_SYMBOL);
-    team->id = sctk_atomics_fetch_and_incr_int(&nb_teams);
+    OPA_store_int(last_array_slot, MPCOMP_NOWAIT_STOP_SYMBOL);
+    team->id = OPA_fetch_and_incr_int(&nb_teams);
     mpc_common_spinlock_init(&team->lock, SCTK_SPINLOCK_INITIALIZER);
 
 #if OMPT_SUPPORT

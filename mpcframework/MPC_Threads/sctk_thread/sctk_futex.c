@@ -517,7 +517,7 @@ int futex_queue_HT_init( struct futex_queue_HT * ht )
 	MPCHT_init( &ht->queue_hash_table, 128 );
 	ht->queue_count = 0;
 	ht->queue_cleanup_ratio = 128;
-	sctk_atomics_store_int( &ht->queue_table_is_being_manipulated, 0);
+	OPA_store_int( &ht->queue_table_is_being_manipulated, 0);
 	
 	return 0;
 }
@@ -527,7 +527,7 @@ int futex_queue_HT_release( struct futex_queue_HT * ht )
 	MPCHT_release( &ht->queue_hash_table );
 	ht->queue_count = 0;
 	ht->queue_cleanup_ratio = 0;
-	sctk_atomics_store_int( &ht->queue_table_is_being_manipulated, 0);
+	OPA_store_int( &ht->queue_table_is_being_manipulated, 0);
 
 	return 0;
 }
@@ -536,7 +536,7 @@ int futex_queue_HT_release( struct futex_queue_HT * ht )
 int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_key  , int bitmask , int orig_op)
 {
 	/* Here we are protecting a table manipulation */
-	while( sctk_atomics_load_int( &ht->queue_table_is_being_manipulated )  < 0 )
+	while( OPA_load_int( &ht->queue_table_is_being_manipulated )  < 0 )
 	{
 		sched_yield();
 	}
@@ -546,10 +546,10 @@ int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_k
 	if( ht->queue_cleanup_ratio < ht->queue_count )
 	{
 		/* Flag the table as being manipulated dy decrementing by one */
-		sctk_atomics_decr_int( &ht->queue_table_is_being_manipulated);
+		OPA_decr_int( &ht->queue_table_is_being_manipulated);
 		
 		/* Wait of all the threads in the critical section to leave */
-		while( 0 <= sctk_atomics_load_int( &ht->queue_table_is_being_manipulated ) )
+		while( 0 <= OPA_load_int( &ht->queue_table_is_being_manipulated ) )
 		{
 			sched_yield();
 		}
@@ -575,7 +575,7 @@ int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_k
 		
 		
 		/* This done we leave the negative locking phase */
-		sctk_atomics_incr_int( &ht->queue_table_is_being_manipulated);
+		OPA_incr_int( &ht->queue_table_is_being_manipulated);
 		
 		/* As we are not sure to be the first one entering
 		 * we simply recursively call the function */
@@ -589,7 +589,7 @@ int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_k
 	int * ret = NULL;
 
 	/* Acquire the read lock */
-	sctk_atomics_incr_int( &ht->queue_table_is_being_manipulated);
+	OPA_incr_int( &ht->queue_table_is_being_manipulated);
 	
 	/* Here we first create a futex queue if 
 	 * it does not exists yet */
@@ -615,7 +615,7 @@ int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_k
 	}
 	
 	/* Release the read lock */
-	sctk_atomics_decr_int( &ht->queue_table_is_being_manipulated);
+	OPA_decr_int( &ht->queue_table_is_being_manipulated);
 	
 	sched_yield();
 	
@@ -632,7 +632,7 @@ int futex_queue_HT_requeue_threads( struct futex_queue_HT * ht ,
 	int ret = 0;
 
 	/* Acquire the read lock */
-	sctk_atomics_incr_int( &ht->queue_table_is_being_manipulated);
+	OPA_incr_int( &ht->queue_table_is_being_manipulated);
 	
 	/* Here we first create a futex queue if 
 	 * it does not exists yet */
@@ -667,7 +667,7 @@ int futex_queue_HT_requeue_threads( struct futex_queue_HT * ht ,
 	}
 	
 	/* Release the read lock */
-	sctk_atomics_decr_int( &ht->queue_table_is_being_manipulated);
+	OPA_decr_int( &ht->queue_table_is_being_manipulated);
 	
 	return ret;	
 	
@@ -678,7 +678,7 @@ int futex_queue_HT_requeue_threads( struct futex_queue_HT * ht ,
 int futex_queue_HT_wake_threads( struct futex_queue_HT * ht , int * futex_key , int bitmask, int use_mask, int count, int op )
 {
 	/* Here we are protecting a table manipulation */
-	while( sctk_atomics_load_int( &ht->queue_table_is_being_manipulated )  < 0 )
+	while( OPA_load_int( &ht->queue_table_is_being_manipulated )  < 0 )
 	{
 		sched_yield();
 	}
@@ -686,7 +686,7 @@ int futex_queue_HT_wake_threads( struct futex_queue_HT * ht , int * futex_key , 
 	int ret = 0;
 
 	/* Acquire the read lock */
-	sctk_atomics_incr_int( &ht->queue_table_is_being_manipulated);
+	OPA_incr_int( &ht->queue_table_is_being_manipulated);
 		
 	sctk_uint64_t key = (sctk_uint64_t) futex_key;
 	struct futex_queue *fq = (struct futex_queue *) 
@@ -696,7 +696,7 @@ int futex_queue_HT_wake_threads( struct futex_queue_HT * ht , int * futex_key , 
 	{
 		/* No such queue */
 		errno = EINVAL;
-		sctk_atomics_decr_int( &ht->queue_table_is_being_manipulated);
+		OPA_decr_int( &ht->queue_table_is_being_manipulated);
 		return -1;
 	}
 	else
@@ -706,7 +706,7 @@ int futex_queue_HT_wake_threads( struct futex_queue_HT * ht , int * futex_key , 
 	}
 	
 	/* Release the read lock */
-	sctk_atomics_decr_int( &ht->queue_table_is_being_manipulated);
+	OPA_decr_int( &ht->queue_table_is_being_manipulated);
 	
 	return ret;
 }
@@ -761,7 +761,7 @@ int sctk_futex_WAIT(void *addr1, int op, int val1, struct timespec *timeout, int
 	/* First check the value */
 	OPA_int_t * pold_val = (OPA_int_t *)addr1;
 	
-	int old_val = sctk_atomics_load_int( pold_val );
+	int old_val = OPA_load_int( pold_val );
 	
 	/* Val is different directly return */
 	if( old_val != val1 )
@@ -942,7 +942,7 @@ int sctk_futex_CMPREQUEUE(void *addr1, int op, int val1, void * addr2, int val3 
 	/* First check the value */
 	OPA_int_t * pold_val = (OPA_int_t *)addr1;
 	
-	int old_val = sctk_atomics_load_int( pold_val );
+	int old_val = OPA_load_int( pold_val );
 	
 	/* Val is different directly return */
 	if( old_val != val3 )

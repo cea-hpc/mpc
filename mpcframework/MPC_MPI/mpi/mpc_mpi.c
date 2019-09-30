@@ -5532,13 +5532,13 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm) {
   int cnt = 0;
 
   if (__do_yield) {
-    while (*toll != sctk_atomics_load_int(&barrier_ctx->fare)) {
+    while (*toll != OPA_load_int(&barrier_ctx->fare)) {
       sctk_thread_yield();
       if( (cnt++ & 0xFF) == 0 )
         __MPC_poll_progress();
     }
   } else {
-    while (*toll != sctk_atomics_load_int(&barrier_ctx->fare)) {
+    while (*toll != OPA_load_int(&barrier_ctx->fare)) {
       sctk_cpu_relax();
       if( (cnt++ & 0xFF) == 0 )
         __MPC_poll_progress();
@@ -5546,28 +5546,28 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm) {
   }
 
   /* I Own the cell */
-  sctk_atomics_store_ptr(&barrier_ctx->sig_points[rank], (void *)&the_signal);
+  OPA_store_ptr(&barrier_ctx->sig_points[rank], (void *)&the_signal);
 
   /* Next time we expect the opposite */
   *toll = !*toll;
 
-  if (sctk_atomics_fetch_and_decr_int(&barrier_ctx->counter) == 1) {
+  if (OPA_fetch_and_decr_int(&barrier_ctx->counter) == 1) {
     /* The last task */
     int size = coll->comm_size;
 
     /* Reset counter */
-    sctk_atomics_store_int(&barrier_ctx->counter, size);
+    OPA_store_int(&barrier_ctx->counter, size);
 
     /* Free others */
     int i;
     for (i = 0; i < size; i++) {
-      int *sig = sctk_atomics_load_ptr(&barrier_ctx->sig_points[i]);
+      int *sig = OPA_load_ptr(&barrier_ctx->sig_points[i]);
       *sig = 1;
     }
 
     /* Reverse the Fare */
-    int current_fare = sctk_atomics_load_int(&barrier_ctx->fare);
-    sctk_atomics_store_int(&barrier_ctx->fare, !current_fare);
+    int current_fare = OPA_load_int(&barrier_ctx->fare);
+    OPA_store_int(&barrier_ctx->fare, !current_fare);
 
   } else {
     if (__do_yield) {
@@ -5592,15 +5592,14 @@ int __INTERNAL__PMPI_Barrier_intra_shm_on_ctx( struct shared_mem_barrier *barrie
 											   int comm_size )
 {
 
-	int my_phase = !sctk_atomics_load_int( &barrier_ctx->phase );
+  int my_phase = !OPA_load_int(&barrier_ctx->phase);
 
-	if ( sctk_atomics_fetch_and_decr_int( &barrier_ctx->counter ) == 1 )
-	{
-		sctk_atomics_store_int( &barrier_ctx->counter, comm_size );
-		sctk_atomics_store_int( &barrier_ctx->phase, my_phase );
+  if (OPA_fetch_and_decr_int(&barrier_ctx->counter) == 1) {
+    OPA_store_int(&barrier_ctx->counter, comm_size);
+    OPA_store_int(&barrier_ctx->phase, my_phase);
 	}
 	else
-	{
+      while (OPA_load_int(&barrier_ctx->phase) != my_phase) {
 		if ( __do_yield )
 		{
 			while ( sctk_atomics_load_int( &barrier_ctx->phase ) != my_phase )
@@ -5608,7 +5607,7 @@ int __INTERNAL__PMPI_Barrier_intra_shm_on_ctx( struct shared_mem_barrier *barrie
 				sched_yield();
 			}
 		}
-		else
+      while (OPA_load_int(&barrier_ctx->phase) != my_phase) {
 		{
 			while ( sctk_atomics_load_int( &barrier_ctx->phase ) != my_phase )
 			{
@@ -6095,13 +6094,13 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
   /* First pay the toll gate */
   if (__do_yield) {
     while (bcast_ctx->tollgate[rank] !=
-           sctk_atomics_load_int(&bcast_ctx->fare)) {
+           OPA_load_int(&bcast_ctx->fare)) {
       sctk_thread_yield();
     }
 
   } else {
     while (bcast_ctx->tollgate[rank] !=
-           sctk_atomics_load_int(&bcast_ctx->fare)) {
+           OPA_load_int(&bcast_ctx->fare)) {
       sctk_cpu_relax();
     }
   }
@@ -6124,13 +6123,13 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
   if (root == rank) {
     if (__do_yield) {
 
-      while (sctk_atomics_cas_int(&bcast_ctx->owner, -1, -2) != -1) {
+      while (OPA_cas_int(&bcast_ctx->owner, -1, -2) != -1) {
         sctk_thread_yield();
       }
 
     } else {
 
-      while (sctk_atomics_cas_int(&bcast_ctx->owner, -1, -2) != -1) {
+      while (OPA_cas_int(&bcast_ctx->owner, -1, -2) != -1) {
         sctk_cpu_relax();
       }
     }
@@ -6150,7 +6149,7 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
       PMPI_Pack(buffer, count, datatype, data_buff, tsize * count, &cnt, comm);
 
       /* We had to allocate the segment save it for release by the last */
-      sctk_atomics_store_ptr(&bcast_ctx->to_free, data_buff);
+      OPA_store_ptr(&bcast_ctx->to_free, data_buff);
 
       /* Set pack as reference */
       bcast_ctx->target_buff = data_buff;
@@ -6174,16 +6173,16 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
     bcast_ctx->scount = count;
 
     /* Now unleash the others */
-    sctk_atomics_store_int(&bcast_ctx->owner, rank);
+    OPA_store_int(&bcast_ctx->owner, rank);
 
   } else {
     /* Wait for the root */
     if (__do_yield) {
-      while (sctk_atomics_load_int(&bcast_ctx->owner) != root) {
+      while (OPA_load_int(&bcast_ctx->owner) != root) {
         sctk_thread_yield();
       }
     } else {
-      while (sctk_atomics_load_int(&bcast_ctx->owner) != root) {
+      while (OPA_load_int(&bcast_ctx->owner) != root) {
         sctk_cpu_relax();
       }
     }
@@ -6216,24 +6215,24 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
   /* Now leave the pending list and if I am the last I free */
 
   if (bcast_ctx->root_in_buff) {
-    if (sctk_atomics_fetch_and_decr_int(&bcast_ctx->left_to_pop) == 1) {
+    if (OPA_fetch_and_decr_int(&bcast_ctx->left_to_pop) == 1) {
       goto SHM_BCAST_RELEASE;
     }
   } else {
     /* Sorry rank 0 we have to make sure that the root stays here if we are
  * not using the async buffers */
 
-    sctk_atomics_decr_int(&bcast_ctx->left_to_pop);
+    OPA_decr_int(&bcast_ctx->left_to_pop);
 
     if (rank == root) {
       /* Wait for everybody */
 
       if (__do_yield) {
-        while (sctk_atomics_load_int(&bcast_ctx->left_to_pop) != 0) {
+        while (OPA_load_int(&bcast_ctx->left_to_pop) != 0) {
           sctk_thread_yield();
         }
       } else {
-        while (sctk_atomics_load_int(&bcast_ctx->left_to_pop) != 0) {
+        while (OPA_load_int(&bcast_ctx->left_to_pop) != 0) {
           sctk_cpu_relax();
         }
       }
@@ -6245,20 +6244,20 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
   return MPI_SUCCESS;
 
 SHM_BCAST_RELEASE : {
-  void *to_free = sctk_atomics_load_ptr(&bcast_ctx->to_free);
+  void *to_free = OPA_load_ptr(&bcast_ctx->to_free);
 
   if (to_free) {
-    sctk_atomics_store_ptr(&bcast_ctx->to_free, 0);
+    OPA_store_ptr(&bcast_ctx->to_free, 0);
     sctk_free(to_free);
   }
 
   /* Set the counter */
-  sctk_atomics_store_int(&bcast_ctx->left_to_pop, coll->comm_size);
+  OPA_store_int(&bcast_ctx->left_to_pop, coll->comm_size);
 
-  sctk_atomics_store_int(&bcast_ctx->owner, -1);
+  OPA_store_int(&bcast_ctx->owner, -1);
 
-  int current_fare = sctk_atomics_load_int(&bcast_ctx->fare);
-  sctk_atomics_store_int(&bcast_ctx->fare, !current_fare);
+  int current_fare = OPA_load_int(&bcast_ctx->fare);
+  OPA_store_int(&bcast_ctx->fare, !current_fare);
 
   return MPI_SUCCESS;
 }
@@ -6291,7 +6290,7 @@ int __INTERNAL__PMPI_Bcast_intra_shared_node_impl(void *buffer, int count, MPI_D
         {
 
             int is_shared = 0;
-            cdata.buffer_addr = mpc_MPI_allocmem_pool_alloc_check( to_bcast_size + sizeof(sctk_atomics_int),
+            cdata.buffer_addr = mpc_MPI_allocmem_pool_alloc_check( to_bcast_size + sizeof(OPA_int_t),
                     &is_shared);
 
             if( !is_shared )
@@ -6303,8 +6302,8 @@ int __INTERNAL__PMPI_Bcast_intra_shared_node_impl(void *buffer, int count, MPI_D
             else
             {
                 /* Fill the buffer */
-                sctk_atomics_store_int( (sctk_atomics_int*)cdata.buffer_addr, coll->comm_size );
-                memcpy( cdata.buffer_addr + sizeof(sctk_atomics_int), buffer, to_bcast_size );
+                OPA_store_int( (OPA_int_t*)cdata.buffer_addr, coll->comm_size );
+                memcpy( cdata.buffer_addr + sizeof(OPA_int_t), buffer, to_bcast_size );
                 cdata.is_counter = 1;
             }
         }
@@ -6324,12 +6323,12 @@ int __INTERNAL__PMPI_Bcast_intra_shared_node_impl(void *buffer, int count, MPI_D
             if( cdata.is_counter )
             {
                 
-                memcpy( buffer,  cdata.buffer_addr + sizeof(sctk_atomics_int), to_bcast_size );
+                memcpy( buffer,  cdata.buffer_addr + sizeof(OPA_int_t), to_bcast_size );
                 
-                int token = sctk_atomics_fetch_and_decr_int( (sctk_atomics_int *)cdata.buffer_addr );
+                int token = OPA_fetch_and_decr_int( (OPA_int_t *)cdata.buffer_addr );
                 if( token == 2 )
                 {
-                        mpc_MPI_allocmem_pool_free_size( cdata.buffer_addr ,  to_bcast_size + sizeof(sctk_atomics_int));
+                        mpc_MPI_allocmem_pool_free_size( cdata.buffer_addr ,  to_bcast_size + sizeof(OPA_int_t));
                 }
             }
             else
@@ -6862,12 +6861,12 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(void *sendbuf, int sendcnt,
 
   /* First pay the toll gate */
   if (__do_yield) {
-    while (gv_ctx->tollgate[rank] != sctk_atomics_load_int(&gv_ctx->fare)) {
+    while (gv_ctx->tollgate[rank] != OPA_load_int(&gv_ctx->fare)) {
       sctk_thread_yield();
     }
 
   } else {
-    while (gv_ctx->tollgate[rank] != sctk_atomics_load_int(&gv_ctx->fare)) {
+    while (gv_ctx->tollgate[rank] != OPA_load_int(&gv_ctx->fare)) {
       sctk_cpu_relax();
     }
   }
@@ -6900,7 +6899,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(void *sendbuf, int sendcnt,
               comm);
 
     /* We had to allocate the segment save it for release by the last */
-    sctk_atomics_store_ptr(&gv_ctx->src_buffs[rank], data_buff);
+    OPA_store_ptr(&gv_ctx->src_buffs[rank], data_buff);
     did_allocate_send = 1;
   }
 
@@ -6909,11 +6908,11 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(void *sendbuf, int sendcnt,
   /* Now am I the root ? */
   if (root == rank) {
     if (__do_yield) {
-      while (sctk_atomics_cas_int(&gv_ctx->owner, -1, -2) != -1) {
+      while (OPA_cas_int(&gv_ctx->owner, -1, -2) != -1) {
         sctk_thread_yield();
       }
     } else {
-      while (sctk_atomics_cas_int(&gv_ctx->owner, -1, -2) != -1) {
+      while (OPA_cas_int(&gv_ctx->owner, -1, -2) != -1) {
         sctk_cpu_relax();
       }
     }
@@ -6934,16 +6933,16 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(void *sendbuf, int sendcnt,
     }
 
     /* Now unleash the others */
-    sctk_atomics_store_int(&gv_ctx->owner, rank);
+    OPA_store_int(&gv_ctx->owner, rank);
 
   } else {
     /* Wait for the root */
     if (__do_yield) {
-      while (sctk_atomics_load_int(&gv_ctx->owner) != root) {
+      while (OPA_load_int(&gv_ctx->owner) != root) {
         sctk_thread_yield();
       }
     } else {
-      while (sctk_atomics_load_int(&gv_ctx->owner) != root) {
+      while (OPA_load_int(&gv_ctx->owner) != root) {
         sctk_cpu_relax();
       }
     }
@@ -6967,11 +6966,11 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(void *sendbuf, int sendcnt,
         data_buff = sctk_malloc(sendcnt * stsize);
         assume(data_buff != NULL);
         memcpy(data_buff, sendbuf, sendcnt * stsize);
-        sctk_atomics_store_ptr(&gv_ctx->src_buffs[rank], data_buff);
+        OPA_store_ptr(&gv_ctx->src_buffs[rank], data_buff);
       }
       /*else
       {
-               sctk_atomics_store_ptr( &gv_ctx->src_buffs[rank], data_buff );
+               OPA_store_ptr( &gv_ctx->src_buffs[rank], data_buff );
                was done when packing
       }*/
     } else {
@@ -6995,16 +6994,16 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(void *sendbuf, int sendcnt,
     }
   }
 
-  sctk_atomics_decr_int(&gv_ctx->left_to_push);
+  OPA_decr_int(&gv_ctx->left_to_push);
 
   if (rank == root) {
     /* Wait for all the others */
     if (__do_yield) {
-      while (sctk_atomics_load_int(&gv_ctx->left_to_push) != 0) {
+      while (OPA_load_int(&gv_ctx->left_to_push) != 0) {
         sctk_thread_yield();
       }
     } else {
-      while (sctk_atomics_load_int(&gv_ctx->left_to_push) != 0) {
+      while (OPA_load_int(&gv_ctx->left_to_push) != 0) {
         sctk_cpu_relax();
       }
     }
@@ -7019,7 +7018,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(void *sendbuf, int sendcnt,
         void *to = NULL;
         void *from = NULL;
 
-        from = sctk_atomics_load_ptr(&gv_ctx->src_buffs[i]);
+        from = OPA_load_ptr(&gv_ctx->src_buffs[i]);
 
         if (!gv_ctx->disps) {
           /* Gather case */
@@ -7040,12 +7039,12 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(void *sendbuf, int sendcnt,
     }
 
     /* On free */
-    sctk_atomics_store_int(&gv_ctx->left_to_push, coll->comm_size);
+    OPA_store_int(&gv_ctx->left_to_push, coll->comm_size);
 
-    sctk_atomics_store_int(&gv_ctx->owner, -1);
+    OPA_store_int(&gv_ctx->owner, -1);
 
-    int current_fare = sctk_atomics_load_int(&gv_ctx->fare);
-    sctk_atomics_store_int(&gv_ctx->fare, !current_fare);
+    int current_fare = OPA_load_int(&gv_ctx->fare);
+    OPA_store_int(&gv_ctx->fare, !current_fare);
   }
 
   return MPI_SUCCESS;
@@ -7380,7 +7379,7 @@ int __INTERNAL__PMPI_Scatter_intra_shared_node_impl(void *sendbuf, int sendcnt, 
         if(  !_mpc_MPI_allocmem_is_in_pool(sendbuf) )
         {
             int is_shared = 0;
-            cdata->buffer_addr = mpc_MPI_allocmem_pool_alloc_check( to_scatter_size + sizeof(sctk_atomics_int),
+            cdata->buffer_addr = mpc_MPI_allocmem_pool_alloc_check( to_scatter_size + sizeof(OPA_int_t),
                     &is_shared);
 
             if( !is_shared )
@@ -7392,8 +7391,8 @@ int __INTERNAL__PMPI_Scatter_intra_shared_node_impl(void *sendbuf, int sendcnt, 
             else
             {
                 /* Fill the buffer */
-                sctk_atomics_store_int( (sctk_atomics_int*)cdata->buffer_addr, coll->comm_size );
-                memcpy( cdata->buffer_addr + sizeof(sctk_atomics_int), sendbuf, to_scatter_size );
+                OPA_store_int( (OPA_int_t*)cdata->buffer_addr, coll->comm_size );
+                memcpy( cdata->buffer_addr + sizeof(OPA_int_t), sendbuf, to_scatter_size );
                 cdata->is_counter = 1;
             }
         }
@@ -7410,11 +7409,11 @@ int __INTERNAL__PMPI_Scatter_intra_shared_node_impl(void *sendbuf, int sendcnt, 
 
         if( cdata->is_counter )
         {
-                memcpy( recvbuf,  cdata->buffer_addr + sizeof(sctk_atomics_int) + (rank * tsize * sendcnt), recvcnt * tsize );
-                int token = sctk_atomics_fetch_and_decr_int( (sctk_atomics_int *)cdata->buffer_addr );
+                memcpy( recvbuf,  cdata->buffer_addr + sizeof(OPA_int_t) + (rank * tsize * sendcnt), recvcnt * tsize );
+                int token = OPA_fetch_and_decr_int( (OPA_int_t *)cdata->buffer_addr );
                 if( token == 1 )
                 {
-                        mpc_MPI_allocmem_pool_free_size( cdata->buffer_addr ,  to_scatter_size + sizeof(sctk_atomics_int));
+                        mpc_MPI_allocmem_pool_free_size( cdata->buffer_addr ,  to_scatter_size + sizeof(OPA_int_t));
                 }
         }
         else
@@ -7559,12 +7558,12 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 
   /* First pay the toll gate */
   if (__do_yield) {
-    while (sv_ctx->tollgate[rank] != sctk_atomics_load_int(&sv_ctx->fare)) {
+    while (sv_ctx->tollgate[rank] != OPA_load_int(&sv_ctx->fare)) {
       sctk_thread_yield();
     }
 
   } else {
-    while (sv_ctx->tollgate[rank] != sctk_atomics_load_int(&sv_ctx->fare)) {
+    while (sv_ctx->tollgate[rank] != OPA_load_int(&sv_ctx->fare)) {
       sctk_cpu_relax();
     }
   }
@@ -7595,12 +7594,12 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
     }
 
     if (__do_yield) {
-      while (sctk_atomics_cas_int(&sv_ctx->owner, -1, -2) != -1) {
+      while (OPA_cas_int(&sv_ctx->owner, -1, -2) != -1) {
         sctk_thread_yield();
       }
 
     } else {
-      while (sctk_atomics_cas_int(&sv_ctx->owner, -1, -2) != -1) {
+      while (OPA_cas_int(&sv_ctx->owner, -1, -2) != -1) {
         sctk_cpu_relax();
       }
     }
@@ -7622,7 +7621,7 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
         PMPI_Pack(sendbuf, sendcnts[0] * coll->comm_size, sendtype, data_buff,
                   buff_size, &cnt, comm);
         /* Only store in 0 the big Pack */
-        sctk_atomics_store_ptr(&sv_ctx->src_buffs[0], data_buff);
+        OPA_store_ptr(&sv_ctx->src_buffs[0], data_buff);
         sv_ctx->stype_size = cnt/(coll->comm_size*sendcnts[0]);
       } else {
         /* We are a Scatterv */
@@ -7636,7 +7635,7 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
           PMPI_Pack(from, sendcnts[i], sendtype, data_buff,
                     stsize * sendcnts[i], &cnt, comm);
           /* Only store in 0 the big Pack */
-          sctk_atomics_store_ptr(&sv_ctx->src_buffs[i], data_buff);
+          OPA_store_ptr(&sv_ctx->src_buffs[i], data_buff);
           if(sendcnts[i]) 
           {
             sv_ctx->stype_size = cnt/sendcnts[i];
@@ -7651,7 +7650,7 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
     } else {
       /* Yes ! We are contiguous we can start
        * to perform a little */
-      sctk_atomics_store_ptr(&sv_ctx->src_buffs[0], data_buff);
+      OPA_store_ptr(&sv_ctx->src_buffs[0], data_buff);
       /* Notify leaves that we are on fastpath */
       sv_ctx->was_packed = 0;
       sv_ctx->stype_size = stsize;
@@ -7662,16 +7661,16 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
     sv_ctx->counts = sendcnts;
 
     /* Now unleash the others */
-    sctk_atomics_store_int(&sv_ctx->owner, rank);
+    OPA_store_int(&sv_ctx->owner, rank);
 
   } else {
     /* Wait for the root */
     if (__do_yield) {
-      while (sctk_atomics_load_int(&sv_ctx->owner) != root) {
+      while (OPA_load_int(&sv_ctx->owner) != root) {
         sctk_thread_yield();
       }
     } else {
-      while (sctk_atomics_load_int(&sv_ctx->owner) != root) {
+      while (OPA_load_int(&sv_ctx->owner) != root) {
         sctk_cpu_relax();
       }
     }
@@ -7695,14 +7694,14 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
                      recvcnt, rtype_size, sv_ctx->counts[0],
                      sv_ctx->stype_size);
         /* We are a Scatter only data in [0] */
-        void *data = sctk_atomics_load_ptr(&sv_ctx->src_buffs[0]);
+        void *data = OPA_load_ptr(&sv_ctx->src_buffs[0]);
         from = data + rank * sv_ctx->counts[0] * sv_ctx->stype_size;
         to_cpy = sv_ctx->counts[0] * sv_ctx->stype_size;
 
         /* Will be freed by root */
       } else {
         /* We are a ScatterV data in the whole array */
-        from = sctk_atomics_load_ptr(&sv_ctx->src_buffs[rank]);
+        from = OPA_load_ptr(&sv_ctx->src_buffs[rank]);
         to_cpy = sv_ctx->counts[rank] * sv_ctx->stype_size;
         do_free = 1;
       }
@@ -7723,12 +7722,12 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 
       if (!sv_ctx->disps) {
         /* Scatter case */
-        void *data = sctk_atomics_load_ptr(&sv_ctx->src_buffs[0]);
+        void *data = OPA_load_ptr(&sv_ctx->src_buffs[0]);
         from = data + sv_ctx->counts[0] * rank * sv_ctx->stype_size;
         to_cpy = sv_ctx->counts[0] * sv_ctx->stype_size;
       } else {
         /* ScatterV case */
-        void *data = sctk_atomics_load_ptr(&sv_ctx->src_buffs[0]);
+        void *data = OPA_load_ptr(&sv_ctx->src_buffs[0]);
         from = data + sv_ctx->disps[rank] * sv_ctx->stype_size;
         to_cpy = sv_ctx->counts[rank] * sv_ctx->stype_size;
       }
@@ -7744,17 +7743,17 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
     }
   }
 
-  sctk_atomics_decr_int(&sv_ctx->left_to_pop);
+  OPA_decr_int(&sv_ctx->left_to_pop);
 
   if (rank == root) {
     /* Wait for all the others */
     if (__do_yield) {
-      while (sctk_atomics_load_int(&sv_ctx->left_to_pop) != 0) {
+      while (OPA_load_int(&sv_ctx->left_to_pop) != 0) {
         sctk_thread_yield();
       }
 
     } else {
-      while (sctk_atomics_load_int(&sv_ctx->left_to_pop) != 0) {
+      while (OPA_load_int(&sv_ctx->left_to_pop) != 0) {
         sctk_cpu_relax();
       }
     }
@@ -7762,18 +7761,18 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
     /* Do we need to free data packed for Scatter case ? */
     if (!sctk_datatype_contig_mem(sendtype)) {
       if (!displs) {
-        void *data = sctk_atomics_load_ptr(&sv_ctx->src_buffs[0]);
+        void *data = OPA_load_ptr(&sv_ctx->src_buffs[0]);
         sctk_free(data);
       }
     }
 
     /* On free */
-    sctk_atomics_store_int(&sv_ctx->left_to_pop, coll->comm_size);
+    OPA_store_int(&sv_ctx->left_to_pop, coll->comm_size);
 
-    sctk_atomics_store_int(&sv_ctx->owner, -1);
+    OPA_store_int(&sv_ctx->owner, -1);
 
-    int current_fare = sctk_atomics_load_int(&sv_ctx->fare);
-    sctk_atomics_store_int(&sv_ctx->fare, !current_fare);
+    int current_fare = OPA_load_int(&sv_ctx->fare);
+    OPA_store_int(&sv_ctx->fare, !current_fare);
   }
 
   return MPI_SUCCESS;
@@ -10575,12 +10574,12 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 
   if (__do_yield) {
     while (reduce_ctx->tollgate[rank] !=
-           sctk_atomics_load_int(&reduce_ctx->fare)) {
+           OPA_load_int(&reduce_ctx->fare)) {
       sctk_thread_yield();
     }
   } else {
     while (reduce_ctx->tollgate[rank] !=
-           sctk_atomics_load_int(&reduce_ctx->fare)) {
+           OPA_load_int(&reduce_ctx->fare)) {
       sctk_cpu_relax();
     }
   }
@@ -10623,11 +10622,11 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 
   if (root == rank) {
     if (__do_yield) {
-      while (sctk_atomics_cas_int(&reduce_ctx->owner, -1, -2) != -1) {
+      while (OPA_cas_int(&reduce_ctx->owner, -1, -2) != -1) {
         sctk_thread_yield();
       }
     } else {
-      while (sctk_atomics_cas_int(&reduce_ctx->owner, -1, -2) != -1) {
+      while (OPA_cas_int(&reduce_ctx->owner, -1, -2) != -1) {
         sctk_cpu_relax();
       }
     }
@@ -10642,15 +10641,15 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
     }
 
     /* Now unleash the others */
-    sctk_atomics_store_int(&reduce_ctx->owner, rank);
+    OPA_store_int(&reduce_ctx->owner, rank);
 
   } else {
     if (__do_yield) {
-      while (sctk_atomics_load_int(&reduce_ctx->owner) != root) {
+      while (OPA_load_int(&reduce_ctx->owner) != root) {
         sctk_thread_yield();
       }
     } else {
-      while (sctk_atomics_load_int(&reduce_ctx->owner) != root) {
+      while (OPA_load_int(&reduce_ctx->owner) != root) {
         sctk_cpu_relax();
       }
     }
@@ -10749,13 +10748,13 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 
         if (__do_yield) {
 
-          while (sctk_atomics_load_int(&reduce_ctx->left_to_push) != 1) {
+          while (OPA_load_int(&reduce_ctx->left_to_push) != 1) {
             sctk_thread_yield();
           }
 
         } else {
 
-          while (sctk_atomics_load_int(&reduce_ctx->left_to_push) != 1) {
+          while (OPA_load_int(&reduce_ctx->left_to_push) != 1) {
             sctk_cpu_relax();
           }
         }
@@ -10764,11 +10763,11 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
       /* Wait for the GO in order */
 
       if (__do_yield) {
-        while (sctk_atomics_load_int(&reduce_ctx->left_to_push) != (rank + 1)) {
+        while (OPA_load_int(&reduce_ctx->left_to_push) != (rank + 1)) {
           sctk_thread_yield();
         }
       } else {
-        while (sctk_atomics_load_int(&reduce_ctx->left_to_push) != (rank + 1)) {
+        while (OPA_load_int(&reduce_ctx->left_to_push) != (rank + 1)) {
           sctk_cpu_relax();
         }
       }
@@ -10863,17 +10862,17 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 SHM_REDUCE_DONE:
 
   /* I'm done, notify */
-  sctk_atomics_decr_int(&reduce_ctx->left_to_push);
+  OPA_decr_int(&reduce_ctx->left_to_push);
 
   /* Do we need to unpack and/or free ? */
 
   if (rank == root) {
     if (__do_yield) {
-      while (sctk_atomics_load_int(&reduce_ctx->left_to_push) != 0) {
+      while (OPA_load_int(&reduce_ctx->left_to_push) != 0) {
         sctk_thread_yield();
       }
     } else {
-      while (sctk_atomics_load_int(&reduce_ctx->left_to_push) != 0) {
+      while (OPA_load_int(&reduce_ctx->left_to_push) != 0) {
         sctk_cpu_relax();
       }
     }
@@ -10891,14 +10890,14 @@ SHM_REDUCE_DONE:
       sctk_free(data_buff);
     }
     /* Set the counter */
-    sctk_atomics_store_int(&reduce_ctx->left_to_push, size);
+    OPA_store_int(&reduce_ctx->left_to_push, size);
 
     /* Now flag slot as free */
-    sctk_atomics_store_int(&reduce_ctx->owner, -1);
+    OPA_store_int(&reduce_ctx->owner, -1);
 
     /* And reverse the fare */
-    int current_fare = sctk_atomics_load_int(&reduce_ctx->fare);
-    sctk_atomics_store_int(&reduce_ctx->fare, !current_fare);
+    int current_fare = OPA_load_int(&reduce_ctx->fare);
+    OPA_store_int(&reduce_ctx->fare, !current_fare);
 
   } else {
     if (allocated) {

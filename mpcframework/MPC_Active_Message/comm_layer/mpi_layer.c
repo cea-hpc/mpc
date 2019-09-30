@@ -38,11 +38,11 @@
 #ifndef OPA_INT_T_INITIALIZER
 #define OPA_INT_T_INITIALIZER(v) v
 #endif
-#define sctk_atomics_int int
-#define sctk_atomics_fetch_and_incr_int(v) ((*v)++)
+#define OPA_int_t int
+#define OPA_fetch_and_incr_int(v) ((*v)++)
 #endif
 
-static sctk_atomics_int atomic_tag = OPA_INT_T_INITIALIZER(0);
+static OPA_int_t atomic_tag = OPA_INT_T_INITIALIZER(0);
 
 int arpc_init_mpi(int nb_srv)
 {
@@ -61,7 +61,7 @@ int arpc_init_mpi(int nb_srv)
 int arpc_emit_call_mpi(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
 {
 	sctk_arpc_mpi_ctx_t mpi_ctx;
-	int next_tag = sctk_atomics_fetch_and_incr_int(&atomic_tag);
+	int next_tag = OPA_fetch_and_incr_int(&atomic_tag);
 
 	mpi_ctx.rpcode = ctx->rpcode;
 	mpi_ctx.srvcode = ctx->srvcode;

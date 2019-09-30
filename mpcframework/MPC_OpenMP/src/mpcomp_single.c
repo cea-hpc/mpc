@@ -79,11 +79,11 @@ int __mpcomp_do_single(void)
   		sctk_nodebug("[%d]%s : Entering with current %d...", __func__, t->rank,
                current);
   		sctk_nodebug("[%d]%s : team current is %d", __func__, t->rank,
-               sctk_atomics_load_int(&(team->single_sections_last_current)));
+               OPA_load_int(&(team->single_sections_last_current)));
 
-  		if (current == sctk_atomics_load_int(&(team->single_sections_last_current))) 
+  		if (current == OPA_load_int(&(team->single_sections_last_current))) 
 		{
-    		const int res = sctk_atomics_cas_int(&(team->single_sections_last_current),
+    		const int res = OPA_cas_int(&(team->single_sections_last_current),
                                          current, current + 1);
     		sctk_nodebug("[%d]%s: incr team %d -> %d ==> %d", __func__, t->rank,
                  current, current + 1, res);
@@ -175,7 +175,7 @@ void __mpcomp_single_coherency_end_barrier(void) {
     sctk_debug("%s: thread %d single_sections_current:%d "
                  "single_sections_last_current:%d",
                  __func__, target_t->rank, target_t->single_sections_current,
-                 sctk_atomics_load_int(
+                 OPA_load_int(
                      &(t->instance->team->single_sections_last_current))); */
   }
 }

@@ -58,8 +58,8 @@ struct sctk_window
         sctk_thread_t th;
         int poll;
         sctk_window_access_mode access_mode;
-        sctk_atomics_int outgoing_emulated_rma;
-        sctk_atomics_int *incoming_emulated_rma;
+        OPA_int_t outgoing_emulated_rma;
+        OPA_int_t *incoming_emulated_rma;
 };
 
 /************************************************************************/
@@ -67,11 +67,11 @@ struct sctk_window
 /************************************************************************/
 
 static inline void sctk_window_inc_outgoing(struct sctk_window *win) {
-  sctk_atomics_incr_int(&win->outgoing_emulated_rma);
+  OPA_incr_int(&win->outgoing_emulated_rma);
 }
 
 static inline void sctk_window_inc_incoming(struct sctk_window *win, int rank) {
-  sctk_atomics_incr_int(&win->incoming_emulated_rma[rank]);
+  OPA_incr_int(&win->incoming_emulated_rma[rank]);
 }
 
 /************************************************************************/
@@ -94,13 +94,13 @@ void sctk_win_translation_init(struct sctk_win_translation *wt,
 void sctk_window_complete_request(sctk_request_t *req);
 
 extern __thread struct sctk_win_translation __forward_translate;
-extern sctk_atomics_int __rma_generation;
+extern OPA_int_t __rma_generation;
 
 /* Translate to internal type */
 struct sctk_window *__sctk_win_translate(sctk_window_t win_id);
 
 static inline struct sctk_window *sctk_win_translate(sctk_window_t win_id) {
-  int generation = sctk_atomics_load_int(&__rma_generation);
+  int generation = OPA_load_int(&__rma_generation);
 
   if (generation == __forward_translate.generation) {
     if (__forward_translate.win) {

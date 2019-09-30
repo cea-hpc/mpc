@@ -73,10 +73,10 @@ __UNUSED__ static char *mpcomp_task_dep_task_status_to_string[MPCOMP_TASK_DEP_TA
 
 typedef struct mpcomp_task_dep_node_s {
   mpc_common_spinlock_t lock;
-  sctk_atomics_int ref_counter;
-  sctk_atomics_int predecessors;
+  OPA_int_t ref_counter;
+  OPA_int_t predecessors;
   struct mpcomp_task_s *task;
-  sctk_atomics_int status;
+  OPA_int_t status;
   struct mpcomp_task_dep_node_list_s *successors;
   bool if_clause;
 #if OMPT_SUPPORT
@@ -139,7 +139,7 @@ static inline mpcomp_task_dep_node_t *mpcomp_task_dep_new_node(void) {
   new_node = sctk_malloc(sizeof(mpcomp_task_dep_node_t));
   sctk_assert(new_node);
   memset(new_node, 0, sizeof(mpcomp_task_dep_node_t));
-  sctk_atomics_store_int(&(new_node->ref_counter), 1);
+  OPA_store_int(&(new_node->ref_counter), 1);
   return new_node;
 }
 
@@ -155,11 +155,11 @@ static inline int mpcomp_task_dep_node_unref(mpcomp_task_dep_node_t *node) {
   if (!node)
     return 0;
 
-  sctk_assert(sctk_atomics_load_int(&(node->ref_counter)));
+  sctk_assert(OPA_load_int(&(node->ref_counter)));
   /* Fetch and decr to prevent double free */
-  const int prev = sctk_atomics_fetch_and_decr_int(&(node->ref_counter)) - 1;
+  const int prev = OPA_fetch_and_decr_int(&(node->ref_counter)) - 1;
   if (!prev) {
-    sctk_assert(!sctk_atomics_load_int(&(node->ref_counter)));
+    sctk_assert(!OPA_load_int(&(node->ref_counter)));
     sctk_free(node);
     node = NULL;
     return 1;

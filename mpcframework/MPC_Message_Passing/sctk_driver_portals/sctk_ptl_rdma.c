@@ -574,7 +574,7 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 
 	/* configure the ME */
 	me_flags       = SCTK_PTL_ME_PUT_FLAGS | SCTK_PTL_ME_GET_FLAGS;
-	match.data.tag = sctk_atomics_fetch_and_incr_int(&rail->network.ptl.rdma_cpt);
+	match.data.tag = OPA_fetch_and_incr_int(&rail->network.ptl.rdma_cpt);
 	ign.data.tag   = SCTK_PTL_MATCH_TAG;
 	ign.data.rank  = SCTK_PTL_IGN_RANK;
 	ign.data.uid   = SCTK_PTL_IGN_UID;

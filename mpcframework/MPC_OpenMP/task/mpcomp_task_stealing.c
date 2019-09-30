@@ -436,7 +436,7 @@ int mpcomp_task_get_victim_producer(int globalRank, __UNUSED__ int index, mpcomp
         rank = i + first_rank;
         rank += (rank >= globalRank) ? 1 : 0;
         list = (mpcomp_task_list_t *) mpcomp_task_get_list(rank, type);
-        nb_elt = (list) ? sctk_atomics_load_int(&(list->nb_elements)) : -1;
+        nb_elt = (list) ? OPA_load_int(&(list->nb_elements)) : -1;
 
         if (max_elt < nb_elt) 
         {
@@ -487,7 +487,7 @@ mpcomp_task_prepare_victim_producer_order( __UNUSED__ const int globalRank, __UN
     {
         nbElts[i][1] = i + first_rank;
         list = mpcomp_task_get_list(nbElts[i][1], type);
-        nbElts[i][0] = (list) ? sctk_atomics_load_int(&list->nb_elements) : -1;
+        nbElts[i][0] = (list) ? OPA_load_int(&list->nb_elements) : -1;
     }
 
     qsort_r(nbElts, nbVictims, 2 * sizeof(int), mpcomp_task_cmp_decr_func, ext_arg);
