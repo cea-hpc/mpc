@@ -24,8 +24,8 @@
 #define MPI_ALLOC_MEM_H
 
 #include "mpc_common_asm.h"
-#include "sctk_bit_array.h"
-#include "sctk_ht.h"
+#include "mpc_common_datastructure.h"
+#include "mpc_common_datastructure.h"
 #include "mpc_common_spinlock.h"
 #include <stdlib.h>
 

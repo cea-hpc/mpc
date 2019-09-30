@@ -1,7 +1,7 @@
 #ifndef __SCTK_SHM_FRAG__
 #define __SCTK_SHM_FRAG__
 
-#include "sctk_ht.h"
+#include "mpc_common_datastructure.h"
 #include "sctk_shm_raw_queues.h"
 #include "sctk_inter_thread_comm.h"
 

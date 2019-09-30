@@ -22,7 +22,7 @@
 #include "sctk_handle.h"
 #include "mpc_common_asm.h"
 #include "sctk_debug.h"
-#include "sctk_ht.h"
+#include "mpc_common_datastructure.h"
 #include "mpc_common_spinlock.h"
 #include "sctk_thread.h"
 #include <sctk_inter_thread_comm.h>

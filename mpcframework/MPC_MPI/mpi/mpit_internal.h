@@ -25,7 +25,7 @@
 #include "sctk_debug.h"
 #include "mpc_mpi.h"
 #include "mpc_common_spinlock.h"
-#include "sctk_ht.h"
+#include "mpc_common_datastructure.h"
 
 /************************************************************************/
 /* INTERNAL MPI_T Init and Finalize                                     */

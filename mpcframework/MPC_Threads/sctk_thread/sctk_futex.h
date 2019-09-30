@@ -22,8 +22,8 @@
 #ifndef SCTK_FUTEX_H
 #define SCTK_FUTEX_H
 
-#include "sctk_buffered_fifo.h"
-#include "sctk_ht.h"
+#include "mpc_common_datastructure.h"
+#include "mpc_common_datastructure.h"
 #include "mpc_common_spinlock.h"
 #include "mpc_common_asm.h"
 #include "sctk_futex_def.h"

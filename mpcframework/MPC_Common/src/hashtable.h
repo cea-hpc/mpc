@@ -22,62 +22,61 @@
 #ifndef SCTK_HASH_TABLE
 #define SCTK_HASH_TABLE
 
-#include <mpc_common_types.h>
-#include <mpc_common_spinlock.h>
+#include <mpc_common_datastructure.h>
 
-struct MPCHT_Cell
-{
-	char use_flag;
-	uint64_t key;
-	void * data;
-	struct MPCHT_Cell * next;
-};
 
+/**
+ * @addtogroup MPCHT_Cell_
+ * @{
+ */
+
+/**
+ * @brief Allocate a new internal cell for the MPC HT
+ *
+ * @param key The key of this cell
+ * @param data The pointer to be stored
+ * @param next The pointer to the next cell to the chained
+ * @return struct MPCHT_Cell*  New cell
+ */
 struct MPCHT_Cell * MPCHT_Cell_new( uint64_t key, void * data, struct MPCHT_Cell * next );
+
+/**
+ * @brief Intialize the content of a cell
+ *
+ * @param cell The cell to be initialized
+ * @param key The key of this cell
+ * @param data The pointer to be stored
+ * @param next The pointer to the next cell to the chained
+ */
 void MPCHT_Cell_init( struct MPCHT_Cell * cell , uint64_t key, void * data, struct MPCHT_Cell * next );
+
+/**
+ * @brief Release an internal hash-table cell
+ *
+ * @param cell The cell to be released
+ */
 void MPCHT_Cell_release( struct MPCHT_Cell * cell );
+
+/**
+ * @brief Get a cell from an internal HT cell
+ *
+ * @param cell The cell-list to be searched
+ * @param key the key to be searched
+ * @return struct MPCHT_Cell* the resulting cell (or NULL if not found)
+ */
 struct MPCHT_Cell * MPCHT_Cell_get( struct MPCHT_Cell * cell, uint64_t key );
+
+/**
+ * @brief Remove a cell from an HT list
+ *
+ * @param head head of the cell-list
+ * @param key the key to be removed
+ * @return struct MPCHT_Cell* the removed cell
+ */
 struct MPCHT_Cell * MPCHT_Cell_pop( struct MPCHT_Cell * head, uint64_t key );
 
-
-struct MPCHT
-{
-	struct MPCHT_Cell * cells;
-	sctk_spin_rwlock_t * rwlocks;
-	uint64_t table_size;
-};
-
-void MPCHT_init( struct MPCHT * ht, uint64_t size );
-void MPCHT_release( struct MPCHT * ht );
-
-void * MPCHT_get(  struct MPCHT * ht, uint64_t key );
-void * MPCHT_get_or_create(  struct MPCHT * ht, uint64_t key , void * (create_entry)( uint64_t key ), int * did_create );
-void MPCHT_set(  struct MPCHT * ht, uint64_t key, void * data );
-void MPCHT_delete(  struct MPCHT * ht, uint64_t key );
-int MPCHT_empty(struct MPCHT * ht);
-
-/* Fine grained locking */
-void MPCHT_lock_cell_read( struct MPCHT * ht , uint64_t key);
-void MPCHT_unlock_cell_read( struct MPCHT * ht , uint64_t key);
-void MPCHT_lock_cell_write( struct MPCHT * ht , uint64_t key);
-void MPCHT_unlock_cell_write( struct MPCHT * ht , uint64_t key);
-
-
-#define MPC_HT_ITER( ht, var )\
-unsigned int ____i;\
-for( ____i = 0 ; ____i < (ht)->table_size ; ____i++ )\
-{\
-	struct MPCHT_Cell * ____c = &( ht )->cells[____i];\
-	if( ____c->use_flag == 0 )\
-		continue;\
-\
-	while( ____c )\
-	{\
-		var = ____c->data;
-		
-#define MPC_HT_ITER_END \
-		____c = ____c->next;\
-	}\
-}
+/**
+ * @}
+ */
 
 #endif /* SCTK_HASH_TABLE */

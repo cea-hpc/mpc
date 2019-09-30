@@ -30,7 +30,7 @@
 #include "sctk_atomics.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_types.h"
-#include "sctk_ht.h"
+#include "mpc_common_datastructure.h"
 #include "sctk_ptl_offcoll.h"
 #include "sctk_low_level_comm.h"
 

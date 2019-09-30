@@ -25,7 +25,7 @@
 
 #include "mpc_mpi.h"
 #include "mpc_common_asm.h"
-#include "sctk_buffered_fifo.h"
+#include "mpc_common_datastructure.h"
 #include "mpc_common_spinlock.h"
 #include "mpc_common_types.h"
 #include "sctk_window.h"

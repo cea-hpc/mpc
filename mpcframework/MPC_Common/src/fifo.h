@@ -1,0 +1,134 @@
+/* ############################ MALP License ############################## */
+/* # Fri Jan 18 14:00:00 CET 2013                                         # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@cea.fr               # */
+/* #                                                                      # */
+/* ######################################################################## */
+
+/**
+ * @addtogroup internal_FIFO_
+ * @{
+ */
+
+#ifndef BUFFERED_FIFO_H
+#define BUFFERED_FIFO_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <mpc_common_datastructure.h>
+
+/**
+ * @brief Structure defining a chunk of FIFO.
+ * The Buffered_FIFO is made of several Buffered_FIFO_chunk containing the data.
+ *
+ * This is useful to avoid allocating/deallocating at each push/pop.
+ */
+struct Buffered_FIFO_chunk
+{
+	mpc_common_spinlock_t lock;		  /**< @brief a lock for concurrent internal manipulations */
+	char *payload;					  /**< @brief the actual data */
+	uint64_t chunk_size;			  /**< @brief the size of the current chunk */
+	size_t elem_size;				  /**< @brief the size of stored elements */
+	uint64_t start_offset;			  /**< @brief the start offset (position of oldest element in payload */
+	uint64_t end_offset;			  /**< @brief the end offset (position of the end of newest element in payload */
+	struct Buffered_FIFO_chunk *prev; /**< @brief previous chunk of the FIFO (newer elements) */
+};
+
+/**
+ * @brief Initializes a Buffered_FIFO_chunk
+ * @param ch the chunk to initialize
+ * @param chunk_size the number of elements the chunk can contain
+ * @param elem_size the size of the elements to store
+ */
+void Buffered_FIFO_chunk_init( struct Buffered_FIFO_chunk *ch,
+			       uint64_t chunk_size, uint64_t elem_size );
+
+/**
+ * @brief Allocates a new Buffered_FIFO_chunk
+ * @param chunk_size the number of elements the chunk can contain
+ * @param elem_size the size of the elements to store
+ * @return the newly created chunk
+ */
+struct Buffered_FIFO_chunk *Buffered_FIFO_chunk_new( uint64_t chunk_size, uint64_t elem_size );
+
+/**
+ * @brief Deallocates a new Buffered_FIFO_chunk
+ * @param ch the chunk to deallocate
+ */
+void Buffered_FIFO_chunk_release( struct Buffered_FIFO_chunk *ch );
+
+/**
+ * @brief Pushes an element into a chunk
+ * @param ch the chunk where to push the element
+ * @param elem the element to push
+ * @return a pointer to the element stored in ch->payload (NULL if there is not enough room)
+ */
+void *Buffered_FIFO_chunk_push( struct Buffered_FIFO_chunk *ch, void *elem );
+
+/**
+ * @brief pops en element from a chunk
+ * @param ch the chunk where to push the element
+ * @param dest the element where to copy data
+ * @return a pointer to the element stored in ch->payload (NULL the chunk is empty)
+ */
+void *Buffered_FIFO_chunk_pop( struct Buffered_FIFO_chunk *ch, void *dest );
+
+/**
+ * @brief Thread-safely sets the previous chunk (ch->prev)
+ * @param ch the chunk where to set the previous chunk
+ * @param prev the new previous chunk
+ */
+static inline void Buffered_FIFO_chunk_ctx_prev( struct Buffered_FIFO_chunk *ch, struct Buffered_FIFO_chunk *prev )
+{
+	mpc_common_spinlock_lock( &ch->lock );
+	ch->prev = prev;
+	mpc_common_spinlock_unlock( &ch->lock );
+}
+
+/**
+ * @brief Thread-safely gets the previous chunk (ch->prev)
+ * @param ch the chunk from where to get the previous chunk
+ * @return the previous chunk
+ */
+static inline struct Buffered_FIFO_chunk *Buffered_FIFO_chunk_prev( struct Buffered_FIFO_chunk *ch )
+{
+	struct Buffered_FIFO_chunk *ret;
+	mpc_common_spinlock_lock( &ch->lock );
+	ret = ch->prev;
+	mpc_common_spinlock_unlock( &ch->lock );
+
+	return ret;
+}
+
+/**
+ * @}
+ */
+
+/**
+ * @addtogroup Buffered_FIFO_
+ * @{
+ */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* BUFFERED_FIFO_H  */
+
+/**
+ * @}
+ */

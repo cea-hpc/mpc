@@ -16,7 +16,8 @@
 /* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@cea.fr               # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk_bit_array.h"
+#include <mpc_common_datastructure.h>
+
 #include "sctk_debug.h"
 #include <string.h>
 

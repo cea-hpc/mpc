@@ -27,7 +27,7 @@
 
 #include <sctk_launch.h>
 
-#include "sctk_ht.h"
+#include "mpc_common_datastructure.h"
 #include "sctk_handle.h"
 #include "mpc_mpi_halo.h"
 

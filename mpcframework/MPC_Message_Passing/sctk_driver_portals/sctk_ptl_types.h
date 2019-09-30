@@ -28,7 +28,7 @@
 
 #include <portals4.h>
 #include <stddef.h>
-#include "sctk_ht.h"
+#include "mpc_common_datastructure.h"
 #include "mpc_common_helper.h"
 #include "mpc_common_asm.h"
 
