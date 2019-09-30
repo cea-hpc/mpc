@@ -28,7 +28,7 @@
 #define __SCTK__INFINIBAND_IBUFS_H_
 
 #include "infiniband/verbs.h"
-#include "sctk_stdint.h"
+#include "mpc_common_types.h"
 
 enum sctk_ib_cq_type_t
 {

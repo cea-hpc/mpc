@@ -22,7 +22,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_bool.h"
+#include "mpc_common_types.h"
 #include "sctk_debug.h"
 #include "mpcomp_types.h"
 #include "mpcomp_task.h"

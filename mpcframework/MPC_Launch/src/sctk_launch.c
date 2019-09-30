@@ -57,7 +57,7 @@
 /* #include "sctk_daemons.h" */
 /* #include "sctk_io.h" */
 #include "sctk_runtime_config.h"
-#include "sctk_bool.h"
+#include "mpc_common_types.h"
 
 #ifdef MPC_USE_EXTLS
 #include <extls_hls.h>

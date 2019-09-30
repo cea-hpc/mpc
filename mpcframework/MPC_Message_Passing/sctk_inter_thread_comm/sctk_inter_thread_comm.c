@@ -914,7 +914,7 @@ inline void sctk_message_copy(sctk_message_to_copy_t *tmp) {
   case SCTK_MESSAGE_CONTIGUOUS: {
     sctk_nodebug("SCTK_MESSAGE_CONTIGUOUS - SCTK_MESSAGE_CONTIGUOUS");
     size_t size;
-    size = sctk_min(send->tail.message.contiguous.size,
+    size = mpc_common_min(send->tail.message.contiguous.size,
                     recv->tail.message.contiguous.size);
 
     memcpy(recv->tail.message.contiguous.addr,
@@ -1099,7 +1099,7 @@ sctk_copy_buffer_std_std(sctk_pack_indexes_t *restrict in_begins,
         }
 
         max_length =
-            sctk_min((out_ends[i] * out_elem_size - j + out_elem_size),
+            mpc_common_min((out_ends[i] * out_elem_size - j + out_elem_size),
                      (in_ends[in_i] * in_elem_size - in_j + in_elem_size));
 
         memcpy(&(((char *)out_adress)[j]), &(((char *)in_adress)[in_j]),
@@ -1176,7 +1176,7 @@ static inline void sctk_copy_buffer_absolute_std(
         }
 
         max_length =
-            sctk_min((out_ends[i] * out_elem_size - j + out_elem_size),
+            mpc_common_min((out_ends[i] * out_elem_size - j + out_elem_size),
                      (in_ends[in_i] * in_elem_size - in_j + in_elem_size));
 
         memcpy(&(((char *)out_adress)[j]), &(((char *)in_adress)[in_j]),
@@ -1256,7 +1256,7 @@ static inline void sctk_copy_buffer_std_absolute(
         }
 
         max_length =
-            sctk_min((out_ends[i] * out_elem_size - j + out_elem_size),
+            mpc_common_min((out_ends[i] * out_elem_size - j + out_elem_size),
                      (in_ends[in_i] * in_elem_size - in_j + in_elem_size));
 
         sctk_nodebug("Copy out[%lu-%lu]%p == in[%lu-%lu]%p", j, j + max_length,
@@ -1341,7 +1341,7 @@ static inline void sctk_copy_buffer_absolute_absolute(
         }
 
         max_length =
-            sctk_min((out_ends[i] * out_elem_size - j + out_elem_size),
+            mpc_common_min((out_ends[i] * out_elem_size - j + out_elem_size),
                      (in_ends[in_i] * in_elem_size - in_j + in_elem_size));
 
         sctk_nodebug("Copy out[%lu-%lu]%p == in[%lu-%lu]%p", j, j + max_length,

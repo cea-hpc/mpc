@@ -27,7 +27,7 @@ extern "C"
 #endif
 
 #include "mpc.h"
-#include "sctk_stdint.h"
+#include "mpc_common_types.h"
 
 typedef struct {float a ; int b;} mpc_float_int;
 typedef struct {double a ; int b;} mpc_double_int;

@@ -28,7 +28,7 @@
 #include <mpc_common_asm.h>
 #include <sctk_control_messages.h>
 #include <mpc_common_spinlock.h>
-#include <sctk_wchar.h>
+#include <mpc_common_types.h>
 #include "sctk_handle.h"
 
 #ifdef MPC_MPI

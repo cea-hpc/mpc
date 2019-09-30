@@ -3,7 +3,7 @@
 #include "sctk_collective_communications.h"
 #include "sctk_debug.h"
 #include "sctk_shm_mapper.h"
-#include "sctk_stdint.h"
+#include "mpc_common_types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>

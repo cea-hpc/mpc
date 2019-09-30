@@ -32,7 +32,7 @@
 #include <sctk_debug.h>
 #include <sctk_config.h>
 #include "opa_primitives.h"
-#include "sctk_stdint.h"
+#include "mpc_common_types.h"
 #include <mpc_common_asm.h>
 
 /* Rail to profile */

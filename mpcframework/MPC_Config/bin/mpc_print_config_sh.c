@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sctk_bool.h>
+#include <mpc_common_types.h>
 #include <sctk_debug.h>
 #include <sctk_runtime_config_walk.h>
 #include <sctk_runtime_config_printer.h>

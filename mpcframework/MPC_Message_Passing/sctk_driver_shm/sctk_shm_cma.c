@@ -6,7 +6,7 @@
 
 #include "sctk_net_tools.h"
 #include "sctk_shm_cma.h"
-#define sctk_min(a, b)  ((a) < (b) ? (a) : (b))
+#define mpc_common_min(a, b)  ((a) < (b) ? (a) : (b))
 
 static pid_t sctk_shm_process_sys_id = -1;
 
@@ -52,7 +52,7 @@ sctk_shm_cma_message_copy_generic(sctk_message_to_copy_t * tmp)
         {
             size_t size;
             size = SCTK_MSG_SIZE ( send );
-            size = sctk_min ( SCTK_MSG_SIZE ( send ), recv->tail.message.contiguous.size );
+            size = mpc_common_min ( SCTK_MSG_SIZE ( send ), recv->tail.message.contiguous.size );
 			
    	    shm_send_iov = (sctk_shm_iovec_info_t *) ((char*) send + sizeof(sctk_thread_ptp_message_t));
 	    recv_iov = (struct iovec *) sctk_malloc( sizeof( struct iovec ));

@@ -24,7 +24,7 @@
 #define __SCTK_LAUNCH_H_
 
 #include "sctk_config.h"
-#include "sctk_bool.h"
+#include "mpc_common_types.h"
 #include <stdio.h>
 #ifdef __cplusplus
 extern "C"

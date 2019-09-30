@@ -23,11 +23,11 @@
 
 #include "mpcomp_types_def.h"
 
-#include "sctk_bool.h"
+#include "mpc_common_types.h"
 
 #if MPCOMP_TASK
 
-#include <sctk_int.h>
+#include <mpc_common_types.h>
 #include <mpc_common_asm.h>
 #include "mpcomp_types.h"
 #include "sctk_runtime_config_struct.h"

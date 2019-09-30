@@ -24,7 +24,7 @@
 #define SCTK_RUNTIME_CONFIG_SOURCES_H
 
 /********************************* INCLUDES *********************************/
-#include <sctk_bool.h>
+#include <mpc_common_types.h>
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 

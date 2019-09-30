@@ -26,8 +26,8 @@
 #include "mpc_reduction.h"
 #include "mpcmp.h"
 #include "sctk_handle.h"
-#include "sctk_stdint.h"
-#include "sctk_wchar.h"
+#include "mpc_common_types.h"
+#include "mpc_common_types.h"
 #include "uthash.h"
 #include "sctk_handle.h"
 #include <string.h>

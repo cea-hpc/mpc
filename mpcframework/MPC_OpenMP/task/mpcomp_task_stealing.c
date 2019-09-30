@@ -2,8 +2,8 @@
 #define _GNU_SOURCE
 #include <stdlib.h>
 
-#include <sctk_bool.h>
-#include <sctk_int.h>
+#include <mpc_common_types.h>
+#include <mpc_common_types.h>
 #include <mpc_common_asm.h>
 
 #include "sctk_debug.h"

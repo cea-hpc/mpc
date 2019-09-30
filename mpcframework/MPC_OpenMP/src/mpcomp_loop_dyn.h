@@ -25,7 +25,7 @@
 #ifndef __MPCOMP_LOOP_DYN_H__
 #define __MPCOMP_LOOP_DYN_H__
 
-#include "sctk_bool.h"
+#include "mpc_common_types.h"
 #include "mpcomp_types.h"
 
 void __mpcomp_dynamic_loop_init(struct mpcomp_thread_s *, long, long, long,

@@ -30,8 +30,8 @@
 #include "sctk_buffered_fifo.h"
 #include "sctk_ht.h"
 #include "mpc_common_spinlock.h"
-#include "sctk_stdint.h"
-#include "sctk_stdint.h"
+#include "mpc_common_types.h"
+#include "mpc_common_types.h"
 #include "sctk_thread.h"
 #include "sctk_window.h"
 

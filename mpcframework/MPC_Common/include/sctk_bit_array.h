@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "sctk_stdint.h"
+#include "mpc_common_types.h"
 
 #ifndef SCTK_BIT_ARRAY_H
 #define SCTK_BIT_ARRAY_H

@@ -26,7 +26,7 @@
 #include <string.h>
 #include "mpcmp.h"
 #include "mpc_internal_common.h"
-#include "sctk_stdint.h"
+#include "mpc_common_types.h"
 #include "mpc_datatypes.h"
 
 /* This file defines the extern32 data-rep following

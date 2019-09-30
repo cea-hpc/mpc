@@ -36,7 +36,7 @@ extern "C"
 #include <sctk_config.h>
 #include <assert.h>
 
-#include "sctk_bool.h"
+#include "mpc_common_types.h"
 #include "sctk_keywords.h"
 
 

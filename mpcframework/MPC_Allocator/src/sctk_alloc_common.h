@@ -71,7 +71,7 @@ extern "C"
 		#endif
 	#endif //__cplusplus
 #else
-	#include "sctk_bool.h"
+	#include "mpc_common_types.h"
 #endif
 
 /************************** CONSTS *************************/

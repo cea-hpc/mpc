@@ -39,7 +39,7 @@
 #include "sctk_inter_thread_comm.h"
 #include "sctk_route.h"
 #include "sctk_runtime_config.h"
-#include "sctk_stdint.h"
+#include "mpc_common_types.h"
 #include <mpcmp.h>
 #include <sctk_ethread_internal.h>
 #include <sys/time.h>

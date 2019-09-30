@@ -31,7 +31,7 @@ extern "C"
 #endif
 #include "mpc_common_spinlock.h"
 #include "uthash.h"
-#include "sctk_stdint.h"
+#include "mpc_common_types.h"
 
 /*-----------------------------------------------------------
  *  IB module debugging

@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "sctk_bool.h"
+#include "mpc_common_types.h"
 #include "sctk_shm_mapper.h"
 
 /*! \brief Generate filename with localhost and pid  

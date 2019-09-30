@@ -20,9 +20,10 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef MPC_COMMON_INCLUDE_MPC_COMMON_IO_HELPER_H_
-#define MPC_COMMON_INCLUDE_MPC_COMMON_IO_HELPER_H_
+#ifndef MPC_COMMON_INCLUDE_MPC_COMMON_HELPER_H_
+#define MPC_COMMON_INCLUDE_MPC_COMMON_HELPER_H_
 
+#include <stdint.h>
 #include <unistd.h>
 
 /***********************
@@ -84,8 +85,35 @@
  * MIN & MAX *
  *************/
 
-#define sctk_max( a, b ) ( ( a ) > ( b ) ? ( a ) : ( b ) )
-#define sctk_min( a, b ) ( ( a ) < ( b ) ? ( a ) : ( b ) )
+/**
+ * @brief Return the maximum of two values
+ *
+ */
+#define mpc_common_max( a, b ) ( ( a ) > ( b ) ? ( a ) : ( b ) )
+
+ /**
+  * @brief Return the minimum of two values
+  *
+  */
+#define mpc_common_min( a, b ) ( ( a ) < ( b ) ? ( a ) : ( b ) )
+
+/*********************
+ * HASHING FUNCTIONS *
+ *********************/
+
+static inline uint64_t mpc_common_hash(uint64_t val) {
+  /* This is MURMUR Hash under MIT
+   * https://code.google.com/p/smhasher/ */
+  uint64_t h = val;
+
+  h ^= h >> 33;
+  h *= 0xff51afd7ed558ccdllu;
+  h ^= h >> 33;
+  h *= 0xc4ceb9fe1a85ec53llu;
+  h ^= h >> 33;
+
+  return h;
+}
 
 /***********************
  * COMMON IO FUNCTIONS *
@@ -117,4 +145,4 @@ ssize_t mpc_common_io_safe_read(int fd,void * buf,size_t count);
 */
 ssize_t mpc_common_io_safe_write(int fd,const void * buf,size_t count);
 
-#endif /* MPC_COMMON_INCLUDE_MPC_COMMON_IO_HELPER_H_ */
+#endif /* MPC_COMMON_INCLUDE_MPC_COMMON_HELPER_H_ */

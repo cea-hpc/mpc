@@ -26,7 +26,6 @@
 #endif
 #include "sctk_alloc.h"
 #include "sctk_debug.h"
-#include "sctk_bool.h"
 
 extern volatile int sctk_multithreading_initialised;
 extern bool sctk_migration_mode;

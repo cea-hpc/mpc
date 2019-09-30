@@ -1,5 +1,5 @@
-#include <sctk_bool.h>
-#include <sctk_int.h>
+#include <mpc_common_types.h>
+#include <mpc_common_types.h>
 #include <mpc_common_asm.h>
 #include "mpcomp_types.h"
 #include "sctk_runtime_config_struct.h"
@@ -14,7 +14,6 @@
 #include "mpcomp_task_stealing.h"
 
 #include "mpcomp_task_dep.h"
-#include "MurmurHash_64.h"
 #include "mpc_common_asm.h"
 
 #include "sctk_debug.h"

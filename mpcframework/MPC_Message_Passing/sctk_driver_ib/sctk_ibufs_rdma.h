@@ -34,7 +34,7 @@
 #include "sctk_ib.h"
 #include "sctk_ib_qp.h"
 #include "sctk_ib_cm.h"
-#include "sctk_stdint.h"
+#include "mpc_common_types.h"
 
 struct sctk_ib_rail_info_s;
 

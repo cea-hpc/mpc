@@ -22,7 +22,7 @@
 #include "sctk_config.h"
 #include "sctk_debug.h"
 #include "mpc_reduction.h"
-#include "sctk_stdint.h"
+#include "mpc_common_types.h"
 
 #if 0
 #if (__GNUC__ == 4) && (__GNUC_MINOR__ == 4) && (__GNUC_PATCHLEVEL__ == 0)

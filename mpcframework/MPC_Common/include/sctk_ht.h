@@ -22,7 +22,7 @@
 #ifndef SCTK_HASH_TABLE
 #define SCTK_HASH_TABLE
 
-#include <sctk_stdint.h>
+#include <mpc_common_types.h>
 #include <mpc_common_spinlock.h>
 
 struct MPCHT_Cell

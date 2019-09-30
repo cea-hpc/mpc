@@ -21,7 +21,7 @@
 /* ######################################################################## */
 
 /********************************* INCLUDES *********************************/
-#include <sctk_bool.h>
+#include <mpc_common_types.h>
 #include <sctk_config.h>
 #include <sctk_debug.h>
 #include <string.h>

@@ -153,7 +153,7 @@ static mpcomp_task_tree_infos_t *mpcomp_task_tree_init_task_tree_infos_node(
       child_task_tree_infos->first_rank +
       (cur_globalRank - parent_task_tree_infos->first_rank) * tree_base_value;
 
-  const int numa_node_number = sctk_max(sctk_get_numa_node_number(), 1);
+  const int numa_node_number = mpc_common_max(sctk_get_numa_node_number(), 1);
   for (i = 0; i < numa_node_number; i++)
     parent_task_tree_infos->tree_array[i][cur_globalRank] = node;
 

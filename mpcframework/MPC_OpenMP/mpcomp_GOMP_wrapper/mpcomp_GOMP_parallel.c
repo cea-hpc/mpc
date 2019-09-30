@@ -1,4 +1,4 @@
-#include "sctk_bool.h"
+#include "mpc_common_types.h"
 #include "mpcomp_abi.h"
 #include "sctk_debug.h"
 #include "mpcomp_GOMP_common.h"

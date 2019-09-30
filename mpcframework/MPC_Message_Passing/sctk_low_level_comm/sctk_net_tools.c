@@ -692,7 +692,7 @@ void sctk_net_message_copy ( sctk_message_to_copy_t *tmp )
           size_t size;
           size = SCTK_MSG_SIZE(send);
           size =
-              sctk_min(SCTK_MSG_SIZE(send), recv->tail.message.contiguous.size);
+              mpc_common_min(SCTK_MSG_SIZE(send), recv->tail.message.contiguous.size);
 
           memcpy(recv->tail.message.contiguous.addr, body, size);
 
@@ -828,7 +828,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 		{
 			size_t size;
 			size = SCTK_MSG_SIZE ( send );
-			size = sctk_min ( SCTK_MSG_SIZE ( send ), recv->tail.message.contiguous.size );
+			size = mpc_common_min ( SCTK_MSG_SIZE ( send ), recv->tail.message.contiguous.size );
 
 			memcpy ( recv->tail.message.contiguous.addr, body, size );
 			sctk_nodebug ( "RECV size %lu-%lu %lu %p", size, recv->tail.message.contiguous.size, adler32 ( 0, ( unsigned char * ) recv->tail.message.contiguous.addr, size ), recv );

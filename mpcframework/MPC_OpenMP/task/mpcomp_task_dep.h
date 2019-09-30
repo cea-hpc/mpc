@@ -4,8 +4,8 @@
 #ifndef __MPCOMP_TASK_DEP_H__
 #define __MPCOMP_TASK_DEP_H__
 
-#include <sctk_bool.h>
-#include <sctk_int.h>
+#include <mpc_common_types.h>
+#include <mpc_common_types.h>
 #include <mpc_common_asm.h>
 #include <mpc_common_asm.h>
 

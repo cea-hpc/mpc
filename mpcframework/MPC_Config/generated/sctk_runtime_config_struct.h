@@ -21,7 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <sctk_bool.h>
+#include <mpc_common_types.h>
 #include "sctk_runtime_config_struct_defaults.h"
 
 #ifndef SCTK_RUNTIME_CONFIG_STRUCT_H

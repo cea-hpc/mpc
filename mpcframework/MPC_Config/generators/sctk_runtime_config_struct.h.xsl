@@ -29,7 +29,7 @@
 	<!-- ********************************************************* -->
 	<xsl:template match="all">
 		<xsl:call-template name="gen-mpc-header"/>
-		<xsl:text>#include &lt;sctk_bool.h&gt;&#10;</xsl:text>
+		<xsl:text>#include &lt;mpc_common_types.h&gt;&#10;</xsl:text>
 		<xsl:text>#include "sctk_runtime_config_struct_defaults.h"&#10;&#10;</xsl:text>
 		<xsl:text>#ifndef SCTK_RUNTIME_CONFIG_STRUCT_H&#10;</xsl:text>
 		<xsl:text>#define SCTK_RUNTIME_CONFIG_STRUCT_H&#10;</xsl:text>
