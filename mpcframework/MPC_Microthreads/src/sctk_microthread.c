@@ -25,7 +25,8 @@
 
 #include <mpcmicrothread.h>
 
-#include "sctk.h"
+
+#include <mpc_common_helper.h>
 #include "mpcmicrothread_internal.h"
 #include "sctk_alloc.h"
 #include "sctk_context.h"

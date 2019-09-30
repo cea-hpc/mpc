@@ -27,7 +27,7 @@
 #ifndef __SCTK__INFINIBAND_TOPOLOGY_H_
 #define __SCTK__INFINIBAND_TOPOLOGY_H_
 
-#include "sctk.h"
+
 #include "sctk_ibufs.h"
 
 

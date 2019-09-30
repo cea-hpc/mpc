@@ -23,7 +23,7 @@
 #include <sctk_inter_thread_comm.h>
 #include <sctk_low_level_comm.h>
 #include <sctk_communicator.h>
-#include <sctk.h>
+
 #include <sctk_debug.h>
 #include <mpc_common_spinlock.h>
 #include <uthash.h>
@@ -34,6 +34,7 @@
 #include <sctk_reorder.h>
 #include <sctk_control_messages.h>
 #include <sctk_rail.h>
+#include <sctk_launch.h>
 
 #ifdef SCTK_LIB_MODE
 #include "sctk_handle.h"

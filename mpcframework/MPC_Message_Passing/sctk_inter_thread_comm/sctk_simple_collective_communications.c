@@ -23,7 +23,7 @@
 #include <sctk_collective_communications.h>
 #include <sctk_inter_thread_comm.h>
 #include <sctk_communicator.h>
-#include <sctk.h>
+
 #include <mpc_common_spinlock.h>
 #include <sctk_thread.h>
 

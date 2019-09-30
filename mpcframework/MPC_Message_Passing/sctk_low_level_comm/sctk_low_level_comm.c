@@ -21,12 +21,13 @@
 /* ######################################################################## */
 
 #include <sctk_low_level_comm.h>
-#include <sctk.h>
+
 #include <mpc_launch_pmi.h>
 #include <string.h>
 #include "sctk_checksum.h"
 #include "sctk_runtime_config.h"
 #include "sctk_control_messages.h"
+#include <sctk_launch.h>
 /*Networks*/
 #include <sctk_ib_mpi.h>
 #include <sctk_route.h>

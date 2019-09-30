@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-#include "sctk.h"
+
 #include "sctk_shm_raw_queues.h"
 #include "sctk_shm_raw_queues_helpers.h"
 #include "sctk_shm_raw_queues_archdefs.h"

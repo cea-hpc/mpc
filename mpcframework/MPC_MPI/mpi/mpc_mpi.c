@@ -24,10 +24,9 @@
 #include <string.h>
 #include <mpc_mpi_internal.h>
 #include <mpc_internal_thread.h>
-
+#include <mpc_common_helper.h>
 #include <sctk_launch.h>
-
-#include "mpc_common_datastructure.h"
+#include <mpc_common_datastructure.h>
 #include "sctk_handle.h"
 #include "mpc_mpi_halo.h"
 

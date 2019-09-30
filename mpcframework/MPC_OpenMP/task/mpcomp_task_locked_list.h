@@ -27,7 +27,7 @@
 #define __MPCOMP_TASK_LOCKED_LIST_H__
 
 #include "mpcomp.h"
-#include "sctk.h"
+
 #include "mpc_common_asm.h"
 #include "mpc_common_asm.h"
 #include "sctk_context.h"

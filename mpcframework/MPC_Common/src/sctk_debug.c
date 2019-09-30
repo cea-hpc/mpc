@@ -40,7 +40,7 @@
 #include "sctk_config.h"
 #include "sctk_debug.h"
 #include "mpc_common_spinlock.h"
-#include "sctk.h"
+
 
 
 #include "mpc_common_helper.h"
@@ -60,9 +60,6 @@ static int sctk_debug_version_details = 0;
 static char sctk_version_buff[WRITE_BUFFER_SIZE];
 static __thread char ret[DEBUG_INFO_SIZE];
 int sctk_is_in_fortran = 0;
-
-
-volatile int sctk_multithreading_initialised = 0;
 
 static int
 sctk_vsnprintf (char *s, size_t n, const char *format, va_list ap)

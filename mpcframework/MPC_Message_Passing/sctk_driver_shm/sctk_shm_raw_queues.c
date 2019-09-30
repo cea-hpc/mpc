@@ -3,7 +3,7 @@
 #include "sctk_shm_raw_queues.h"
 #include "sctk_shm_raw_queues_helpers.h"
 #include "sctk_shm_raw_queues_internals.h"
-
+#include <mpc_common_rank.h>
 #include "sctk_raw_freelist_mthreads.h"
 
 static sctk_shm_region_infos_t **sctk_shm_regions_infos = NULL;

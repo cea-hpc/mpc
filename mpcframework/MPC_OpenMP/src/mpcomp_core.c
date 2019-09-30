@@ -24,7 +24,7 @@
 
 #include "sctk_thread_generic_kind.h"
 
-#include "sctk.h"
+
 
 #include <sctk_launch.h>
 

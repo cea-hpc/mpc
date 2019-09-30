@@ -32,7 +32,7 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sctk.h>
+
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netdb.h>

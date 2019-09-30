@@ -20,7 +20,7 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk.h"
+
 #include <mpcomp.h>
 #include <mpcomp_abi.h>
 #include "mpcmicrothread_internal.h"

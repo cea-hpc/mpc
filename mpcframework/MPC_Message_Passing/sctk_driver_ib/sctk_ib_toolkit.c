@@ -22,7 +22,7 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk.h"
+
 #include "string.h"
 
 #include "sctk_ib_toolkit.h"

@@ -56,7 +56,7 @@
 #ifdef MPC_Debugger
 #include "sctk_thread_dbg.h"
 #endif
-#include "sctk.h"
+
 #include "sctk_context.h"
 #include "sctk_runtime_config.h"
 #include "sctk_runtime_config_struct_defaults.h"
@@ -97,6 +97,8 @@ static sctk_thread_key_t _sctk_thread_handler_key;
 #endif
 
 static volatile long sctk_nb_user_threads = 0;
+
+volatile int sctk_multithreading_initialised = 0;
 
 struct sctk_alloc_chain *sctk_thread_tls = NULL;
 

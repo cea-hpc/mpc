@@ -58,7 +58,7 @@
 //for getpid
 //optional header
 #ifdef MPC_Common
-#include "sctk.h"
+
 #endif
 
 /************************* PORTABILITY *************************/

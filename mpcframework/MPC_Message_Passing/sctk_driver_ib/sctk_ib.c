@@ -33,7 +33,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sctk.h>
+
 #include <mpc_common_asm.h>
 #include <netdb.h>
 #include <mpc_common_spinlock.h>

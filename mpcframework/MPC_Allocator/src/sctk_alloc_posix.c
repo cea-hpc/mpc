@@ -53,7 +53,7 @@
 
 //optional header
 #ifdef MPC_Common
-#include "sctk.h"
+#include "mpc_common_helper.h"
 #endif
 
 //if have NUMA support

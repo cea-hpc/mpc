@@ -36,7 +36,7 @@
 #endif
 #include "sched.h"
 #include "mpc_common_asm.h"
-#include "sctk.h"
+
 #include "sctk_runtime_config.h"
 #ifdef MPC_Message_Passing
 #include <sctk_inter_thread_comm.h>

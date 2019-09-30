@@ -22,7 +22,7 @@
 
 /********************************* INCLUDES *********************************/
 #include "sctk_communicator.h"
-#include "sctk.h"
+
 #include "sctk_handle.h"
 #include "mpc_launch_pmi.h"
 #include "utarray.h"
@@ -30,6 +30,8 @@
 #include <uthash.h>
 #include "sctk_handle.h"
 #include "sctk_low_level_comm.h"
+
+#include <sctk_launch.h>
 
 #ifdef MPC_THREAD
 #include "sctk_thread.h"

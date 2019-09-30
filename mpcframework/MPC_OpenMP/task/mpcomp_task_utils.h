@@ -4,7 +4,7 @@
 
 #include "sctk_runtime_config.h"
 #include "mpcomp_types.h"
-
+#include <mpc_common_rank.h>
 #include "mpcomp_alloc.h"
 #include "mpcomp_task.h"
 #include "sctk_debug.h"

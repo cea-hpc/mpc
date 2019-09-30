@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "sctk_debug.h"
 
+#include <mpc_common_rank.h>
+#include "sctk_debug.h"
 #include "sctk_shm_raw_queues_internals.h"
 #include "sctk_raw_freelist_mthreads.h"
 

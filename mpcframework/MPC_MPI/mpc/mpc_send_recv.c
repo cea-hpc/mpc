@@ -24,7 +24,7 @@
 #undef main
 
 #include <assert.h>
-#include "sctk.h"
+
 #include "mpc_reduction.h"
 #include "sctk_debug.h"
 #include "mpc_common_topology.h"

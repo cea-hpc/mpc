@@ -145,4 +145,25 @@ ssize_t mpc_common_io_safe_read(int fd,void * buf,size_t count);
 */
 ssize_t mpc_common_io_safe_write(int fd,const void * buf,size_t count);
 
+/*************************
+ * MPC INTERNAL PROFILER *
+ *************************/
+
+#ifdef MPC_Profiler
+
+#include "sctk_internal_profiler.h"
+
+#else
+
+#define SCTK_PROFIL_START(key)	(void)(0)
+#define SCTK_PROFIL_END(key) (void)(0)
+#define SCTK_COUNTER_INC(key,val) (void)(0);
+#define SCTK_COUNTER_DEC(key,val) (void)(0);
+#define SCTK_PROFIL_END_WITH_VALUE(key, value) (void)(0);
+#define sctk_internal_profiler_init() (void)(0)
+#define sctk_internal_profiler_render() (void)(0)
+#define sctk_internal_profiler_release() (void)(0)
+
+#endif /* MPC_Profiler */
+
 #endif /* MPC_COMMON_INCLUDE_MPC_COMMON_HELPER_H_ */

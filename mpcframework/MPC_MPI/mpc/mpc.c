@@ -29,7 +29,7 @@
 
 #include "mpc_reduction.h"
 #include "mpcthread.h"
-#include "sctk.h"
+
 #include "sctk_accessor.h"
 #include "mpc_common_asm.h"
 #include "sctk_collective_communications.h"

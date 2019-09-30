@@ -30,7 +30,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <sctk_runtime_config.h>
-#include "sctk.h"
+
 
 #if !defined(NO_INTERNAL_ASSERT)
 #define SCTK_DEBUG_MODE " Debug MODE"
