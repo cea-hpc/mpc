@@ -182,7 +182,7 @@ int mpc_MPI_allocmem_pool_init() {
     PMPI_Comm_free(&process_master_comm);
   }
 
-  sctk_barrier(MPI_COMM_WORLD);
+  mpc_mp_barrier(MPI_COMM_WORLD);
 
   assume(____mpc_sctk_mpi_alloc_mem_pool._pool != NULL);
 
@@ -219,13 +219,13 @@ int mpc_MPI_allocmem_pool_init() {
 
   mpc_MPI_accumulate_op_lock_init();
 
-  sctk_barrier(MPI_COMM_WORLD);
+  mpc_mp_barrier(MPI_COMM_WORLD);
 
   return 0;
 }
 
 int mpc_MPI_allocmem_pool_release() {
-  sctk_barrier(MPI_COMM_WORLD);
+  mpc_mp_barrier(MPI_COMM_WORLD);
 
   /* Are all the tasks in the same process ? */
   if (_pool_only_local ||
@@ -254,7 +254,7 @@ int mpc_MPI_allocmem_pool_release() {
                           ____mpc_sctk_mpi_alloc_mem_pool.mapped_size);
   }
 
-  sctk_barrier(MPI_COMM_WORLD);
+  mpc_mp_barrier(MPI_COMM_WORLD);
 
   if (is_master) {
     mpc_common_hashtable_release(&____mpc_sctk_mpi_alloc_mem_pool.size_ht);
@@ -466,7 +466,7 @@ void mpc_MPI_accumulate_op_lock_init() {
     *((mpc_common_spinlock_t *)p) = 0;
   }
 
-  sctk_broadcast(&p, sizeof(MPI_Aint), 0, node_comm);
+  mpc_mp_bcast(&p, sizeof(MPI_Aint), 0, node_comm);
 
   __accululate_master_lock = (mpc_common_spinlock_t *)p;
 

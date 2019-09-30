@@ -97,13 +97,13 @@ void MPC_Net_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * re
 
 void MPC_Net_barrier( sctk_communicator_t comm )
 {
-	sctk_barrier ( comm );
+	mpc_mp_barrier ( comm );
 }
 
 void MPC_Net_broadcast( void *buffer, const size_t size, 
                         const int root, const sctk_communicator_t communicator )
 {
-	sctk_broadcast ( buffer, size, root, communicator );
+	mpc_mp_bcast ( buffer, size, root, communicator );
 }
 
 void MPC_Net_allreduce(const void *buffer_in, void *buffer_out,
@@ -113,7 +113,7 @@ void MPC_Net_allreduce(const void *buffer_in, void *buffer_out,
                        const sctk_communicator_t communicator,
                        sctk_datatype_t datatype )
 {
-	sctk_all_reduce ( buffer_in, buffer_out,elem_size, elem_count,
+	mpc_mp_allreduce ( buffer_in, buffer_out,elem_size, elem_count,
 	                  func, communicator, datatype );
 }
 

@@ -518,7 +518,7 @@
 			<param name="allreduce_max_size" type="int" default="4096" doc="" alias="ITT_ALLREDUCE_MAX_SIZE"/>
 			<param name="allreduce_check_threshold" type="int" default="8192" doc="" alias="ITT_ALLREDUCE_CHECK_TH"/>
 			<param name="allreduce_max_slot" type="int" default="65536" doc="Slot size for allreduce" alias="ITT_ALLREDUCE_MAX_SLOT"/>
-			<param name="collectives_init_hook" type="funcptr" default="sctk_collectives_init_opt_noalloc_split_messages" doc=""/>
+			<param name="collectives_init_hook" type="funcptr" default="mpc_mp_coll_init_noalloc" doc=""/>
 		</struct>
 
 		<!-- ############################## -->

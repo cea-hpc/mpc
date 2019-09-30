@@ -5663,14 +5663,14 @@ int __MPC_init_node_comm_ctx( struct sctk_comm_coll * coll, MPI_Comm comm )
 
 
 	sctk_assert(tmp_ctx != NULL);
-        sctk_broadcast(  &tmp_ctx, sizeof( void * ), 0, comm );
-	sctk_barrier(comm);
+        mpc_mp_bcast(  &tmp_ctx, sizeof( void * ), 0, comm );
+	mpc_mp_barrier(comm);
 	coll->node_ctx = tmp_ctx;
     }
     else
     {
-        sctk_broadcast(  &tmp_ctx, sizeof( void * ), 0, comm );
-	sctk_barrier(comm);
+        mpc_mp_bcast(  &tmp_ctx, sizeof( void * ), 0, comm );
+	mpc_mp_barrier(comm);
 	coll->node_ctx = tmp_ctx;
     }
 
@@ -13355,7 +13355,7 @@ __INTERNAL__PMPI_Intercomm_merge (MPI_Comm intercomm, int high,
 	}
 
 	sctk_nodebug("rank %d, grank %d : boroadcast comm %d", rank, grank, intercomm);
-	sctk_broadcast(&remote_high,sizeof(int),0,sctk_get_local_comm_id(intercomm));
+	mpc_mp_bcast(&remote_high,sizeof(int),0,sctk_get_local_comm_id(intercomm));
 	
 	sctk_nodebug("rank %d : merge intercomm %d, high = %d, remote_high = %d", rank, intercomm, high, remote_high);
 	/* TODO : Finir le merge avec le placement des groupes en fonction des paramètres "high" */

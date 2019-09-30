@@ -28,7 +28,7 @@
 #include <sctk_thread.h>
 #include <sctk_types.h>
 
-struct sctk_internal_collectives_struct_s;
+struct mpc_mp_coll_s;
 
 /************************************************************************/
 /*collective communication implementation                               */
@@ -47,7 +47,7 @@ typedef struct
 	sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
 } _mpc_coll_barrier_simple_t;
 
-void _mpc_coll_barrier_simple_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+void _mpc_coll_barrier_simple_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
 
 /* Broadcast */
 
@@ -60,7 +60,7 @@ typedef struct
 	size_t size;
 } _mpc_coll_bcast_simple_t;
 
-void _mpc_coll_bcast_simple_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+void _mpc_coll_bcast_simple_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
 
 /* Allreduce */
 
@@ -73,11 +73,11 @@ typedef struct
 	size_t size;
 } _mpc_coll_allreduce_simple_t;
 
-void _mpc_coll_allreduce_simple_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+void _mpc_coll_allreduce_simple_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
 
 /* Init */
 
-void _mpc_coll_init_simple ( sctk_communicator_t id );
+void mpc_mp_coll_init_simple ( sctk_communicator_t id );
 
 /*********************************
  * OPT COLLECTIVE IMPLEMENTATION *
@@ -90,7 +90,7 @@ typedef struct
 	int dummy;
 } _mpc_coll_opt_barrier_t;
 
-void _mpc_coll_opt_barrier_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+void _mpc_coll_opt_barrier_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
 
 /* Broadcast */
 
@@ -99,7 +99,7 @@ typedef struct
 	int dummy;
 } _mpc_coll_opt_bcast_t;
 
-void _mpc_coll_opt_bcast_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+void _mpc_coll_opt_bcast_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
 
 /* Allreduce */
 
@@ -108,11 +108,11 @@ typedef struct
 	int dummy;
 } _mpc_coll_opt_allreduce_t;
 
-void _mpc_coll_opt_allreduce_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+void _mpc_coll_opt_allreduce_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
 
 /* Init */
 
-void _mpc_coll_init_opt ( sctk_communicator_t id );
+void mpc_mp_coll_init_opt ( sctk_communicator_t id );
 
 /************************************
  * HETERO COLLECTIVE IMPLEMENTATION *
@@ -126,7 +126,7 @@ typedef struct
 	volatile unsigned int generation;
 } _mpc_coll_hetero_barrier_t;
 
-void _mpc_coll_hetero_barrier_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+void _mpc_coll_hetero_barrier_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
 
 /* Broadcast */
 
@@ -138,7 +138,7 @@ typedef struct
 	OPA_ptr_t buff_root;
 } _mpc_coll_hetero_bcast_t;
 
-void _mpc_coll_hetero_bcast_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+void _mpc_coll_hetero_bcast_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
 
 /* Allreduce */
 
@@ -151,11 +151,11 @@ typedef struct
 	volatile void *volatile *buff_out;
 } _mpc_coll_hetero_allreduce_t;
 
-void _mpc_coll_hetero_allreduce_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+void _mpc_coll_hetero_allreduce_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
 
 /* Init */
 
-void _mpc_coll_init_hetero ( sctk_communicator_t id );
+void mpc_mp_coll_init_hetero ( sctk_communicator_t id );
 
 /******************************************
  * OPT NO ALLOC COLLECTIBE IMPLEMENTATION *
@@ -169,7 +169,7 @@ typedef struct
 	int dummy;
 } _mpc_coll_noalloc_barrier_t;
 
-void _mpc_coll_noalloc_barrier_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+void _mpc_coll_noalloc_barrier_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
 
 /* Broadcast */
 
@@ -178,7 +178,7 @@ typedef struct
 	int dummy;
 } _mpc_coll_noalloc_bcast_t;
 
-void _mpc_coll_noalloc_bcast_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+void _mpc_coll_noalloc_bcast_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
 
 /* Allreduce */
 
@@ -187,11 +187,11 @@ typedef struct
 	int dummy;
 } _mpc_coll_noalloc_allreduce_t;
 
-void _mpc_coll_noalloc_allreduce_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
+void _mpc_coll_noalloc_allreduce_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
 
 /* Init */
 
-void _mpc_coll_init_noalloc ( sctk_communicator_t id );
+void mpc_mp_coll_init_noalloc ( sctk_communicator_t id );
 
 /**********************************************
  * GENERIC COLLECTIVE COMMUNICATION INTERFACE *
@@ -205,9 +205,9 @@ typedef union
 	_mpc_coll_opt_barrier_t barrier_opt_messages;
 	_mpc_coll_noalloc_barrier_t barrier_opt_noalloc_split_messages;
 	_mpc_coll_hetero_barrier_t barrier_hetero_messages;
-} sctk_barrier_t;
+} mpc_mp_barrier_t;
 
-void sctk_barrier ( const sctk_communicator_t communicator );
+void mpc_mp_barrier ( const sctk_communicator_t communicator );
 
 /* Broadcast */
 
@@ -217,9 +217,9 @@ typedef union
 	_mpc_coll_opt_bcast_t broadcast_opt_messages;
 	_mpc_coll_noalloc_bcast_t broadcast_opt_noalloc_split_messages;
 	_mpc_coll_hetero_bcast_t broadcast_hetero_messages;
-} sctk_broadcast_t;
+} mpc_mp_bcast_t;
 
-void sctk_broadcast ( void *buffer, const size_t size,
+void mpc_mp_bcast ( void *buffer, const size_t size,
                       const int root, const sctk_communicator_t com_id );
 
 /* Allreduce */
@@ -232,7 +232,7 @@ typedef union
 	_mpc_coll_hetero_allreduce_t allreduce_hetero_messages;
 } sctk_allreduce_t;
 
-void sctk_all_reduce ( const void *buffer_in, void *buffer_out,
+void mpc_mp_allreduce ( const void *buffer_in, void *buffer_out,
                        const size_t elem_size,
                        const size_t elem_number,
                        sctk_Op_f func,
@@ -241,16 +241,16 @@ void sctk_all_reduce ( const void *buffer_in, void *buffer_out,
 
 /* Collective Structure */
 
-typedef struct sctk_internal_collectives_struct_s
+typedef struct mpc_mp_coll_s
 {
-	sctk_barrier_t barrier;
+	mpc_mp_barrier_t barrier;
 	void ( *barrier_func ) ( const sctk_communicator_t ,
-	                         struct sctk_internal_collectives_struct_s * );
+	                         struct mpc_mp_coll_s * );
 
-	sctk_broadcast_t broadcast;
+	mpc_mp_bcast_t broadcast;
 	void ( *broadcast_func ) ( void *, const size_t ,
 	                           const int , const sctk_communicator_t,
-	                           struct sctk_internal_collectives_struct_s * );
+	                           struct mpc_mp_coll_s * );
 
 	sctk_allreduce_t allreduce;
 	void ( *allreduce_func ) ( const void *, void *,
@@ -259,17 +259,17 @@ typedef struct sctk_internal_collectives_struct_s
 	                           sctk_Op_f func,
 	                           const sctk_communicator_t ,
 	                           const sctk_datatype_t ,
-	                           struct sctk_internal_collectives_struct_s * );
-} sctk_internal_collectives_struct_t;
+	                           struct mpc_mp_coll_s * );
+} mpc_mp_coll_t;
 
 /* Init */
 
-void sctk_collectives_init ( sctk_communicator_t id,
-                             void ( *barrier ) ( sctk_internal_collectives_struct_t *, sctk_communicator_t id ),
-                             void ( *broadcast ) ( sctk_internal_collectives_struct_t *, sctk_communicator_t id ),
-                             void ( *allreduce ) ( sctk_internal_collectives_struct_t *, sctk_communicator_t id ) );
+void mpc_mp_coll_init ( sctk_communicator_t id,
+                             void ( *barrier ) ( mpc_mp_coll_t *, sctk_communicator_t id ),
+                             void ( *broadcast ) ( mpc_mp_coll_t *, sctk_communicator_t id ),
+                             void ( *allreduce ) ( mpc_mp_coll_t *, sctk_communicator_t id ) );
 
-extern void ( *sctk_collectives_init_hook ) ( sctk_communicator_t id );
+extern void ( *mpc_mp_coll_init_hook ) ( sctk_communicator_t id );
 
 void
 sctk_terminaison_barrier (void);

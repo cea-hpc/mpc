@@ -37,7 +37,7 @@ char *sctk_mpi_handler_gen_filename(void *option, __UNUSED__ void *option1) {
     long long int icomm = (long long int)option1;
     MPI_Comm comm = (MPI_Comm)icomm;
 
-    sctk_broadcast((void *)filename, 128 * sizeof(char), 0, (sctk_communicator_t)comm);
+    mpc_mp_bcast((void *)filename, 128 * sizeof(char), 0, (sctk_communicator_t)comm);
     return true;
   }
 
@@ -55,7 +55,7 @@ char *sctk_mpi_handler_gen_filename(void *option, __UNUSED__ void *option1) {
     long long int icomm = (long long int)option1;
     MPI_Comm comm = (MPI_Comm)icomm;
 
-    sctk_broadcast((void *)filename, 128 * sizeof(char), 0, (sctk_communicator_t)comm);
+    mpc_mp_bcast((void *)filename, 128 * sizeof(char), 0, (sctk_communicator_t)comm);
 
     return filename;
   }

@@ -31,7 +31,7 @@
 #include "sctk_runtime_config.h"
 
 /******************************** STRUCTURE *********************************/
-struct sctk_internal_collectives_struct_s;
+struct mpc_mp_coll_s;
 
 struct shared_mem_barrier_sig {
   OPA_ptr_t *sig_points;
@@ -247,7 +247,7 @@ int sctk_per_node_comm_context_release( struct sctk_per_node_comm_context * ctx 
 
 /******************************** STRUCTURE *********************************/
 
-struct sctk_internal_collectives_struct_s;
+struct mpc_mp_coll_s;
 
 /**
  * Here we define the structure responsible for the communicators.
@@ -257,7 +257,7 @@ typedef struct sctk_internal_communicator_s {
   /** communicator identification number **/
   sctk_communicator_t id;
   /** structure for collectives communications **/
-  struct sctk_internal_collectives_struct_s *collectives;
+  struct mpc_mp_coll_s *collectives;
 
   /** number of tasks in the communicator **/
   int nb_task;
@@ -315,7 +315,7 @@ typedef struct sctk_internal_communicator_s {
 } sctk_internal_communicator_t;
 
 /********************************* FUNCTION *********************************/
-void sctk_set_internal_collectives ( const sctk_communicator_t id, struct sctk_internal_collectives_struct_s *tmp );
+void _mpc_comm_set_internal_coll ( const sctk_communicator_t id, struct mpc_mp_coll_s *tmp );
 void sctk_get_rank_size_total ( const sctk_communicator_t communicator, int *rank, int *size, int glob_rank );
 void sctk_communicator_world_init ( int task_nb );
 void sctk_communicator_self_init();
@@ -445,6 +445,6 @@ sctk_communicator_t sctk_get_local_comm_id ( const sctk_communicator_t communica
 sctk_communicator_t sctk_delete_communicator ( const sctk_communicator_t );
 sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list);
 sctk_communicator_t sctk_create_intercommunicator_from_intercommunicator (const sctk_communicator_t origin_communicator, int remote_leader, int local_com);
-struct sctk_internal_collectives_struct_s *sctk_get_internal_collectives ( const sctk_communicator_t communicator );
+struct mpc_mp_coll_s *_mpc_comm_get_internal_coll ( const sctk_communicator_t communicator );
 
 #endif

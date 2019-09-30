@@ -731,12 +731,12 @@ int __MPC_init_disguise( struct sctk_task_specific_s * my_specific )
 
     }
 
-    sctk_barrier( SCTK_COMM_WORLD );
+    mpc_mp_barrier( SCTK_COMM_WORLD );
 
     ___disguisements[ my_id ] = my_specific;
     ___local_to_global_table[ my_id ] = mpc_common_get_task_rank();
 
-    sctk_barrier( SCTK_COMM_WORLD );
+    mpc_mp_barrier( SCTK_COMM_WORLD );
 
     return 0;
 }
@@ -805,7 +805,7 @@ int __MPC_init_progress(sctk_task_specific_t * tmp )
     sctk_progress_engine_pool_init( &__mpc_progress_pool, local_count );
   }
 
-  sctk_barrier(MPC_COMM_WORLD);
+  mpc_mp_barrier(MPC_COMM_WORLD);
 
   /* Retrieve the ctx pointer */
   tmp->progress_list = sctk_progress_engine_pool_join( &__mpc_progress_pool );
@@ -861,7 +861,7 @@ static inline void __MPC_init_task_specific_t(sctk_task_specific_t *tmp) {
 
   __MPC_init_progress(tmp);
 
-  sctk_barrier((sctk_communicator_t) MPC_COMM_WORLD );
+  mpc_mp_barrier((sctk_communicator_t) MPC_COMM_WORLD );
 
   /* Initialize Data-type array */
   tmp->datatype_array = Datatype_Array_init();
@@ -1512,7 +1512,7 @@ int __MPC_Barrier(MPC_Comm comm) {
   } else {
 
     if (size > 1)
-      sctk_barrier((sctk_communicator_t)comm);
+      mpc_mp_barrier((sctk_communicator_t)comm);
   }
   MPC_ERROR_SUCESS();
 }
@@ -2955,7 +2955,7 @@ int PMPC_Init(__UNUSED__ int *argc, __UNUSED__ char ***argv) {
     return MPC_ERR_OTHER;
   }
 
-  sctk_barrier((sctk_communicator_t)MPC_COMM_WORLD);
+  mpc_mp_barrier((sctk_communicator_t)MPC_COMM_WORLD);
   task_specific->init_done = 1;
   task_specific->thread_level = MPC_THREAD_MULTIPLE;
   SCTK_PROFIL_END(MPC_Init);
@@ -3457,13 +3457,13 @@ int sctk_user_main(int argc, char **argv) {
 
   __MPC_setup_task_specific();
 
-  sctk_barrier((sctk_communicator_t)MPC_COMM_WORLD);
+  mpc_mp_barrier((sctk_communicator_t)MPC_COMM_WORLD);
 
   if (sctk_runtime_config_get()->modules.mpc.hard_checking) {
     MPC_Hard_Check();
   }
 
-  sctk_barrier((sctk_communicator_t)MPC_COMM_WORLD);
+  mpc_mp_barrier((sctk_communicator_t)MPC_COMM_WORLD);
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
   MPC_Task_hook(mpc_common_get_task_rank());
@@ -3475,7 +3475,7 @@ int sctk_user_main(int argc, char **argv) {
 
   sctk_move_to_temp_dir_if_requested_from_env();
 
-  sctk_barrier((sctk_communicator_t)MPC_COMM_WORLD);
+  mpc_mp_barrier((sctk_communicator_t)MPC_COMM_WORLD);
 
 #ifdef HAVE_ENVIRON_VAR
   result = mpc_user_main(argc, argv, environ);
@@ -3483,7 +3483,7 @@ int sctk_user_main(int argc, char **argv) {
   result = mpc_user_main(argc, argv);
 #endif
 
-  sctk_barrier((sctk_communicator_t)MPC_COMM_WORLD);
+  mpc_mp_barrier((sctk_communicator_t)MPC_COMM_WORLD);
 
 #ifdef MPC_Profiler
   sctk_internal_profiler_render();
@@ -3499,7 +3499,7 @@ int sctk_user_main(int argc, char **argv) {
 
   sctk_nodebug("All message done");
 
-  sctk_barrier((sctk_communicator_t)MPC_COMM_WORLD);
+  mpc_mp_barrier((sctk_communicator_t)MPC_COMM_WORLD);
 
   __MPC_delete_task_specific();
 
@@ -5042,7 +5042,7 @@ static inline int __MPC_Bcast(void *buffer, mpc_msg_count count,
     if ((size <= 1) || (count == 0)) {
       MPC_ERROR_SUCESS();
     } else
-      sctk_broadcast(buffer,
+      mpc_mp_bcast(buffer,
                      count * __MPC_Get_datatype_size(datatype, task_specific),
                      root, comm);
   }
@@ -5131,7 +5131,7 @@ static inline int __MPC_Allreduce(void *sendbuf, void *recvbuf,
     __MPC_Bcast(recvbuf, count, datatype, 0, sctk_get_local_comm_id(comm),
                 task_specific);
   } else {
-    sctk_all_reduce(sendbuf, recvbuf,
+    mpc_mp_allreduce(sendbuf, recvbuf,
                     __MPC_Get_datatype_size(datatype, task_specific), count,
                     func, (sctk_communicator_t)comm, (sctk_datatype_t)datatype);
   }
