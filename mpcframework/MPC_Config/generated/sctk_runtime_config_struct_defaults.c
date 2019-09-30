@@ -3543,8 +3543,8 @@ void sctk_runtime_config_struct_init_inter_thread_comm(void * struct_ptr)
 			abort();
 		}
 #endif
-				obj->collectives_init_hook.name = "sctk_collectives_init_opt_noalloc_split_messages";
-	*(void **) &(obj->collectives_init_hook.value) = sctk_runtime_config_get_symbol("sctk_collectives_init_opt_noalloc_split_messages");
+				obj->collectives_init_hook.name = "_mpc_coll_init_noalloc";
+	*(void **) &(obj->collectives_init_hook.value) = sctk_runtime_config_get_symbol("_mpc_coll_init_noalloc");
 	obj->init_done = 1;
 }
 

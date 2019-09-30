@@ -55,7 +55,7 @@ static unsigned int allreduce_max_slot;
 /* Barrier */
 
 static
-void sctk_barrier_simple ( const sctk_communicator_t communicator,
+void _mpc_coll_barrier_simple ( const sctk_communicator_t communicator,
                            sctk_internal_collectives_struct_t *tmp )
 {
 	int local;
@@ -77,14 +77,14 @@ void sctk_barrier_simple ( const sctk_communicator_t communicator,
 	sctk_thread_mutex_unlock ( &tmp->barrier.barrier_simple.lock );
 }
 
-void sctk_barrier_simple_init ( sctk_internal_collectives_struct_t *tmp,  __UNUSED__ sctk_communicator_t id )
+void _mpc_coll_barrier_simple_init ( sctk_internal_collectives_struct_t *tmp,  __UNUSED__ sctk_communicator_t id )
 {
 	if ( mpc_common_get_process_count() == 1 )
 	{
 		tmp->barrier.barrier_simple.done = 0;
 		sctk_thread_mutex_init ( & ( tmp->barrier.barrier_simple.lock ), NULL );
 		sctk_thread_cond_init ( & ( tmp->barrier.barrier_simple.cond ), NULL );
-		tmp->barrier_func = sctk_barrier_simple;
+		tmp->barrier_func = _mpc_coll_barrier_simple;
 	}
 	else
 	{
@@ -94,7 +94,7 @@ void sctk_barrier_simple_init ( sctk_internal_collectives_struct_t *tmp,  __UNUS
 
 /* Broadcast */
 
-void sctk_broadcast_simple ( void *buffer, const size_t size,
+void _mpc_coll_bcast_simple ( void *buffer, const size_t size,
                              const int root, const sctk_communicator_t com_id,
                              struct sctk_internal_collectives_struct_s *tmp )
 {
@@ -138,10 +138,10 @@ void sctk_broadcast_simple ( void *buffer, const size_t size,
 		}
 	}
 	sctk_thread_mutex_unlock ( &tmp->broadcast.broadcast_simple.lock );
-	sctk_barrier_simple ( com_id, tmp );
+	_mpc_coll_barrier_simple ( com_id, tmp );
 }
 
-void sctk_broadcast_simple_init ( struct sctk_internal_collectives_struct_s *tmp,  __UNUSED__ sctk_communicator_t id )
+void _mpc_coll_bcast_simple_init ( struct sctk_internal_collectives_struct_s *tmp,  __UNUSED__ sctk_communicator_t id )
 {
 	if ( mpc_common_get_process_count() == 1 )
 	{
@@ -150,7 +150,7 @@ void sctk_broadcast_simple_init ( struct sctk_internal_collectives_struct_s *tmp
 		tmp->broadcast.broadcast_simple.done = 0;
 		sctk_thread_mutex_init ( & ( tmp->broadcast.broadcast_simple.lock ), NULL );
 		sctk_thread_cond_init ( & ( tmp->broadcast.broadcast_simple.cond ), NULL );
-		tmp->broadcast_func = sctk_broadcast_simple;
+		tmp->broadcast_func = _mpc_coll_bcast_simple;
 	}
 	else
 	{
@@ -160,7 +160,7 @@ void sctk_broadcast_simple_init ( struct sctk_internal_collectives_struct_s *tmp
 
 /* Allreduce Simple */
 
-static void sctk_allreduce_simple ( const void *buffer_in, void *buffer_out,
+static void _mpc_coll_allreduce_simple ( const void *buffer_in, void *buffer_out,
                                     const size_t elem_size,
                                     const size_t elem_number,
                                     void ( *func ) ( const void *, void *, size_t,
@@ -216,10 +216,10 @@ static void sctk_allreduce_simple ( const void *buffer_in, void *buffer_out,
 		memcpy ( buffer_out, tmp->allreduce.allreduce_simple.buffer, size );
 	}
 	sctk_thread_mutex_unlock ( &tmp->allreduce.allreduce_simple.lock );
-	sctk_barrier_simple ( com_id, tmp );
+	_mpc_coll_barrier_simple ( com_id, tmp );
 }
 
-void sctk_allreduce_simple_init ( struct sctk_internal_collectives_struct_s *tmp, __UNUSED__  sctk_communicator_t id )
+void _mpc_coll_allreduce_simple_init ( struct sctk_internal_collectives_struct_s *tmp, __UNUSED__  sctk_communicator_t id )
 {
 	if ( mpc_common_get_process_count() == 1 )
 	{
@@ -228,7 +228,7 @@ void sctk_allreduce_simple_init ( struct sctk_internal_collectives_struct_s *tmp
 		tmp->allreduce.allreduce_simple.done = 0;
 		sctk_thread_mutex_init ( & ( tmp->allreduce.allreduce_simple.lock ), NULL );
 		sctk_thread_cond_init ( & ( tmp->allreduce.allreduce_simple.cond ), NULL );
-		tmp->allreduce_func = sctk_allreduce_simple;
+		tmp->allreduce_func = _mpc_coll_allreduce_simple;
 	}
 	else
 	{
@@ -238,14 +238,14 @@ void sctk_allreduce_simple_init ( struct sctk_internal_collectives_struct_s *tmp
 
 /* Init */
 
-void sctk_collectives_init_simple ( sctk_communicator_t id )
+void _mpc_coll_init_simple ( sctk_communicator_t id )
 {
 	if ( mpc_common_get_process_count() == 1 )
 	{
 		sctk_collectives_init ( id,
-		                        sctk_barrier_simple_init,
-		                        sctk_broadcast_simple_init,
-		                        sctk_allreduce_simple_init );
+		                        _mpc_coll_barrier_simple_init,
+		                        _mpc_coll_bcast_simple_init,
+		                        _mpc_coll_allreduce_simple_init );
 	}
 	else
 	{
@@ -344,7 +344,7 @@ static void sctk_opt_messages_init_items ( sctk_opt_messages_table_t *tab )
 
 /* Barrier */
 
-static void sctk_barrier_opt_messages ( const sctk_communicator_t communicator, __UNUSED__ sctk_internal_collectives_struct_t *tmp )
+static void _mpc_coll_opt_barrier ( const sctk_communicator_t communicator, __UNUSED__ sctk_internal_collectives_struct_t *tmp )
 {
 	if ( !sctk_is_inter_comm ( communicator ) )
 	{
@@ -356,7 +356,7 @@ static void sctk_barrier_opt_messages ( const sctk_communicator_t communicator, 
 		char c = 'c';
 		struct sctk_internal_ptp_s *ptp_internal;
 
-		sctk_nodebug ( "sctk_barrier_opt_messages() begin:" ); //AMAHEO
+		sctk_nodebug ( "_mpc_coll_opt_barrier() begin:" ); //AMAHEO
 
 		sctk_opt_messages_init_items ( &table );
 
@@ -470,11 +470,11 @@ static void sctk_barrier_opt_messages ( const sctk_communicator_t communicator, 
         }
 }
 
-void sctk_barrier_opt_messages_init ( sctk_internal_collectives_struct_t *tmp, __UNUSED__ sctk_communicator_t id )
+void _mpc_coll_opt_barrier_init ( sctk_internal_collectives_struct_t *tmp, __UNUSED__ sctk_communicator_t id )
 {
 	barrier_arity = sctk_runtime_config_get()->modules.inter_thread_comm.barrier_arity;
 
-	tmp->barrier_func = sctk_barrier_opt_messages;
+	tmp->barrier_func = _mpc_coll_opt_barrier;
 }
 
 /* Broadcast */
@@ -485,7 +485,7 @@ void sctk_broadcast_opt_messages ( void *buffer, const size_t size,
 {
 	if ( size == 0 )
 	{
-		sctk_barrier_opt_messages ( communicator, tmp );
+		_mpc_coll_opt_barrier ( communicator, tmp );
 	}
 	else
 	{
@@ -571,7 +571,7 @@ void sctk_broadcast_opt_messages ( void *buffer, const size_t size,
         }
 }
 
-void sctk_broadcast_opt_messages_init ( struct sctk_internal_collectives_struct_s *tmp, __UNUSED__ sctk_communicator_t id )
+void _mpc_coll_opt_bcast_init ( struct sctk_internal_collectives_struct_s *tmp, __UNUSED__ sctk_communicator_t id )
 {
 	broadcast_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_arity_max;
 	broadcast_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_max_size;
@@ -582,7 +582,7 @@ void sctk_broadcast_opt_messages_init ( struct sctk_internal_collectives_struct_
 
 /* Allreduce */
 
-static void sctk_allreduce_opt_messages_intern ( const void *buffer_in, void *buffer_out,
+static void _mpc_coll_opt_allreduce_intern ( const void *buffer_in, void *buffer_out,
                                                  const size_t elem_size,
                                                  const size_t elem_number,
                                                  void ( *func ) ( const void *, void *, size_t,
@@ -593,7 +593,7 @@ static void sctk_allreduce_opt_messages_intern ( const void *buffer_in, void *bu
 {
 	if ( elem_number == 0 )
 	{
-		sctk_barrier_opt_messages ( communicator, tmp );
+		_mpc_coll_opt_barrier ( communicator, tmp );
 	}
 	else
 	{
@@ -742,7 +742,7 @@ static void sctk_allreduce_opt_messages_intern ( const void *buffer_in, void *bu
         }
 }
 
-static void sctk_allreduce_opt_messages ( const void *buffer_in, void *buffer_out,
+static void _mpc_coll_opt_allreduce ( const void *buffer_in, void *buffer_out,
                                           const size_t elem_size,
                                           const size_t elem_number,
                                           void ( *func ) ( const void *, void *, size_t,
@@ -751,26 +751,26 @@ static void sctk_allreduce_opt_messages ( const void *buffer_in, void *buffer_ou
                                           const sctk_datatype_t data_type,
                                           struct sctk_internal_collectives_struct_s *tmp )
 {
-	sctk_allreduce_opt_messages_intern ( buffer_in, buffer_out, elem_size, elem_number, func, communicator, data_type, tmp );
+	_mpc_coll_opt_allreduce_intern ( buffer_in, buffer_out, elem_size, elem_number, func, communicator, data_type, tmp );
 }
 
-void sctk_allreduce_opt_messages_init ( struct sctk_internal_collectives_struct_s *tmp,__UNUSED__ sctk_communicator_t id )
+void _mpc_coll_opt_allreduce_init ( struct sctk_internal_collectives_struct_s *tmp,__UNUSED__ sctk_communicator_t id )
 {
 	allreduce_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_arity_max;
 	allreduce_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_max_size;
 	allreduce_check_threshold = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_check_threshold;
 
-	tmp->allreduce_func = sctk_allreduce_opt_messages;
+	tmp->allreduce_func = _mpc_coll_opt_allreduce;
 }
 
 /* Init */
 
-void sctk_collectives_init_opt_messages ( sctk_communicator_t id )
+void _mpc_coll_init_opt ( sctk_communicator_t id )
 {
 	sctk_collectives_init ( id,
-	                        sctk_barrier_opt_messages_init,
-	                        sctk_broadcast_opt_messages_init,
-	                        sctk_allreduce_opt_messages_init );
+	                        _mpc_coll_opt_barrier_init,
+	                        _mpc_coll_opt_bcast_init,
+	                        _mpc_coll_opt_allreduce_init );
 	/* if(get_process_rank() == 0){ */
 	/*   sctk_warning("Use low performances collectives"); */
 	/* } */
@@ -872,7 +872,7 @@ static int int_cmp ( const void *a, const void *b )
 }
 
 static
-void sctk_barrier_hetero_messages_inter ( const sctk_communicator_t communicator,
+void _mpc_coll_hetero_barrier_inter ( const sctk_communicator_t communicator,
                                           __UNUSED__ sctk_internal_collectives_struct_t *tmp )
 {
 	int myself;
@@ -984,11 +984,11 @@ void sctk_barrier_hetero_messages_inter ( const sctk_communicator_t communicator
 }
 
 static
-void sctk_barrier_hetero_messages ( const sctk_communicator_t communicator,
+void _mpc_coll_hetero_barrier ( const sctk_communicator_t communicator,
                                     sctk_internal_collectives_struct_t *tmp )
 {
 	int nb_tasks_in_node;
-	sctk_barrier_hetero_messages_t *barrier;
+	_mpc_coll_hetero_barrier_t *barrier;
 	unsigned int generation;
 	int task_id_in_node;
 
@@ -1001,7 +1001,7 @@ void sctk_barrier_hetero_messages ( const sctk_communicator_t communicator,
 	if ( task_id_in_node == nb_tasks_in_node - 1 )
 	{
 
-		sctk_barrier_hetero_messages_inter ( communicator, tmp );
+		_mpc_coll_hetero_barrier_inter ( communicator, tmp );
 
 		OPA_store_int ( &barrier->tasks_entered_in_node, 0 );
 		barrier->generation = generation + 1;
@@ -1015,12 +1015,12 @@ void sctk_barrier_hetero_messages ( const sctk_communicator_t communicator,
 }
 
 
-void sctk_barrier_hetero_messages_init ( sctk_internal_collectives_struct_t *tmp, __UNUSED__ sctk_communicator_t id )
+void _mpc_coll_hetero_barrier_init ( sctk_internal_collectives_struct_t *tmp, __UNUSED__ sctk_communicator_t id )
 {
 	barrier_arity = sctk_runtime_config_get()->modules.inter_thread_comm.barrier_arity;
-	tmp->barrier_func = sctk_barrier_hetero_messages;
+	tmp->barrier_func = _mpc_coll_hetero_barrier;
 
-	sctk_barrier_hetero_messages_t *barrier;
+	_mpc_coll_hetero_barrier_t *barrier;
 	barrier = &tmp->barrier.barrier_hetero_messages;
 	OPA_store_int ( &barrier->tasks_entered_in_node, 0 );
 	barrier->generation = 0;
@@ -1028,7 +1028,7 @@ void sctk_barrier_hetero_messages_init ( sctk_internal_collectives_struct_t *tmp
 
 /* Broadcast */
 
-void sctk_broadcast_hetero_messages_inter ( void *buffer, const size_t size,
+void _mpc_coll_hetero_bcast_inter ( void *buffer, const size_t size,
                                             const int root_process, const sctk_communicator_t communicator )
 {
 
@@ -1138,21 +1138,21 @@ void sctk_broadcast_hetero_messages_inter ( void *buffer, const size_t size,
         }
 }
 
-void sctk_broadcast_hetero_messages ( void *buffer, const size_t size,
+void _mpc_coll_hetero_bcast ( void *buffer, const size_t size,
                                       const int root, const sctk_communicator_t communicator,
                                       struct sctk_internal_collectives_struct_s *tmp )
 {
 	int nb_tasks_in_node;
 	int task_id_in_node;
 	unsigned int generation;
-	sctk_broadcast_hetero_messages_t *bcast;
+	_mpc_coll_hetero_bcast_t *bcast;
 	int myself;
 	int is_root_on_node = 0;
 	int root_process;
 
 	if ( size == 0 )
 	{
-		sctk_barrier_hetero_messages ( communicator, tmp );
+		_mpc_coll_hetero_barrier ( communicator, tmp );
 		return;
 	}
 
@@ -1173,7 +1173,7 @@ void sctk_broadcast_hetero_messages ( void *buffer, const size_t size,
 	{
 
 		/* Begin inter node communications */
-		sctk_broadcast_hetero_messages_inter ( buffer, size,
+		_mpc_coll_hetero_bcast_inter ( buffer, size,
 		                                       root_process, communicator );
 		/* End inter node communications */
 
@@ -1207,14 +1207,14 @@ void sctk_broadcast_hetero_messages ( void *buffer, const size_t size,
 	}
 }
 
-void sctk_broadcast_hetero_messages_init ( struct sctk_internal_collectives_struct_s *tmp, __UNUSED__ sctk_communicator_t id )
+void _mpc_coll_hetero_bcast_init ( struct sctk_internal_collectives_struct_s *tmp, __UNUSED__ sctk_communicator_t id )
 {
 	broadcast_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_arity_max;
 	broadcast_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_max_size;
 	broadcast_check_threshold = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_check_threshold;
 
-	tmp->broadcast_func = sctk_broadcast_hetero_messages;
-	sctk_broadcast_hetero_messages_t *bcast;
+	tmp->broadcast_func = _mpc_coll_hetero_bcast;
+	_mpc_coll_hetero_bcast_t *bcast;
 
 	bcast = &tmp->broadcast.broadcast_hetero_messages;
 	OPA_store_int ( &bcast->tasks_entered_in_node, 0 );
@@ -1224,7 +1224,7 @@ void sctk_broadcast_hetero_messages_init ( struct sctk_internal_collectives_stru
 }
 
 /* Allreduce */
-static void sctk_allreduce_hetero_messages_intern_inter ( const void *buffer_in, void *buffer_out,
+static void _mpc_coll_hetero_allreduce_intern_inter ( const void *buffer_in, void *buffer_out,
                                                           const size_t elem_size,
                                                           const size_t elem_number,
                                                           void ( *func ) ( const void *, void *, size_t,
@@ -1388,7 +1388,7 @@ static void sctk_allreduce_hetero_messages_intern_inter ( const void *buffer_in,
 }
 
 
-static void sctk_allreduce_hetero_messages_hetero_intern ( const void *buffer_in, void *buffer_out,
+static void _mpc_coll_hetero_allreduce_hetero_intern ( const void *buffer_in, void *buffer_out,
                                                            const size_t elem_size,
                                                            const size_t elem_number,
                                                            void ( *func ) ( const void *, void *, size_t,
@@ -1399,14 +1399,14 @@ static void sctk_allreduce_hetero_messages_hetero_intern ( const void *buffer_in
 {
 	if ( elem_number == 0 )
 	{
-		sctk_barrier_hetero_messages ( communicator, tmp );
+		_mpc_coll_hetero_barrier ( communicator, tmp );
 	}
 	else
 	{
 		sctk_nodebug ( "Starting allreduce" );
 		int task_id_in_node;
 		int nb_tasks_in_node;
-		sctk_allreduce_hetero_messages_t *allreduce;
+		_mpc_coll_hetero_allreduce_t *allreduce;
 		volatile void *volatile *buff_in;
 		volatile void *volatile *buff_out;
 		unsigned int generation;
@@ -1449,7 +1449,7 @@ static void sctk_allreduce_hetero_messages_hetero_intern ( const void *buffer_in
 			sctk_nodebug ( "Buffer content : %d", * ( ( int * ) buffer_out ) );
 
 			/* Begin allreduce inter-node */
-			sctk_allreduce_hetero_messages_intern_inter ( buffer_in, buffer_out,
+			_mpc_coll_hetero_allreduce_intern_inter ( buffer_in, buffer_out,
 			                                              elem_size, elem_number, func,
 			                                              communicator, data_type, tmp );
 			/* End allreduce inter-node. Result is in buffer_out and must
@@ -1487,7 +1487,7 @@ static void sctk_allreduce_hetero_messages_hetero_intern ( const void *buffer_in
 	}
 }
 
-static void sctk_allreduce_hetero_messages ( const void *buffer_in, void *buffer_out,
+static void _mpc_coll_hetero_allreduce ( const void *buffer_in, void *buffer_out,
                                              const size_t elem_size,
                                              const size_t elem_number,
                                              void ( *func ) ( const void *, void *, size_t,
@@ -1496,17 +1496,17 @@ static void sctk_allreduce_hetero_messages ( const void *buffer_in, void *buffer
                                              const sctk_datatype_t data_type,
                                              struct sctk_internal_collectives_struct_s *tmp )
 {
-	sctk_allreduce_hetero_messages_hetero_intern ( buffer_in, buffer_out, elem_size, elem_number, func, communicator, data_type, tmp );
+	_mpc_coll_hetero_allreduce_hetero_intern ( buffer_in, buffer_out, elem_size, elem_number, func, communicator, data_type, tmp );
 }
 
-void sctk_allreduce_hetero_messages_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id )
+void _mpc_coll_hetero_allreduce_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id )
 {
 	allreduce_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_arity_max;
 	allreduce_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_max_size;
 	allreduce_check_threshold = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_check_threshold;
 
-	tmp->allreduce_func = sctk_allreduce_hetero_messages;
-	sctk_allreduce_hetero_messages_t *allreduce;
+	tmp->allreduce_func = _mpc_coll_hetero_allreduce;
+	_mpc_coll_hetero_allreduce_t *allreduce;
 	int nb_tasks_in_node;
 
 	nb_tasks_in_node = sctk_get_nb_task_local ( id );
@@ -1521,12 +1521,12 @@ void sctk_allreduce_hetero_messages_init ( struct sctk_internal_collectives_stru
 
 /* Init */
 
-void sctk_collectives_init_hetero_messages ( sctk_communicator_t id )
+void _mpc_coll_init_hetero ( sctk_communicator_t id )
 {
 	sctk_collectives_init ( id,
-	                        sctk_barrier_hetero_messages_init,
-	                        sctk_broadcast_hetero_messages_init,
-	                        sctk_allreduce_hetero_messages_init );
+	                        _mpc_coll_hetero_barrier_init,
+	                        _mpc_coll_hetero_bcast_init,
+	                        _mpc_coll_hetero_allreduce_init );
 	/* if(get_process_rank() == 0){ */
 	/*   sctk_warning("Use low performances collectives"); */
 	/* } */
@@ -1630,7 +1630,7 @@ static void sctk_opt_noalloc_split_messages_init_items ( sctk_opt_noalloc_split_
 
 /* Barrier */
 
-static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t communicator,  __UNUSED__ sctk_internal_collectives_struct_t *tmp )
+static void _mpc_coll_noalloc_barrier ( const sctk_communicator_t communicator,  __UNUSED__ sctk_internal_collectives_struct_t *tmp )
 {
 	if ( !sctk_is_inter_comm ( communicator ) )
 	{
@@ -1755,22 +1755,22 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
         }
 }
 
-void sctk_barrier_opt_noalloc_split_messages_init ( sctk_internal_collectives_struct_t *tmp,  __UNUSED__ sctk_communicator_t id )
+void _mpc_coll_noalloc_barrier_init ( sctk_internal_collectives_struct_t *tmp,  __UNUSED__ sctk_communicator_t id )
 {
 	barrier_arity = sctk_runtime_config_get()->modules.inter_thread_comm.barrier_arity;
 
-	tmp->barrier_func = sctk_barrier_opt_noalloc_split_messages;
+	tmp->barrier_func = _mpc_coll_noalloc_barrier;
 }
 
 /* Broadcast */
 
-void sctk_broadcast_opt_noalloc_split_messages ( void *buffer, const size_t size,
+void _mpc_coll_noalloc_bcast ( void *buffer, const size_t size,
                                                  const int root, const sctk_communicator_t communicator,
                                                  struct sctk_internal_collectives_struct_s *tmp )
 {
 	if ( size == 0 )
 	{
-		sctk_barrier_opt_noalloc_split_messages ( communicator, tmp );
+		_mpc_coll_noalloc_barrier ( communicator, tmp );
 	}
 	else
 	{
@@ -1857,13 +1857,13 @@ void sctk_broadcast_opt_noalloc_split_messages ( void *buffer, const size_t size
         }
 }
 
-void sctk_broadcast_opt_noalloc_split_messages_init ( struct sctk_internal_collectives_struct_s *tmp,  __UNUSED__ sctk_communicator_t id )
+void _mpc_coll_noalloc_bcast_init ( struct sctk_internal_collectives_struct_s *tmp,  __UNUSED__ sctk_communicator_t id )
 {
 	broadcast_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_arity_max;
 	broadcast_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_max_size;
 	broadcast_check_threshold = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_check_threshold;
 
-	tmp->broadcast_func = sctk_broadcast_opt_noalloc_split_messages;
+	tmp->broadcast_func = _mpc_coll_noalloc_bcast;
 }
 
 /* Allreduce */
@@ -1877,7 +1877,7 @@ struct di
 };
 
 
-static void sctk_allreduce_opt_noalloc_split_messages_intern ( const void *buffer_in, void *buffer_out,
+static void _mpc_coll_noalloc_allreduce_intern ( const void *buffer_in, void *buffer_out,
                                                                const size_t elem_size,
                                                                const size_t elem_number,
                                                                void ( *func ) ( const void *, void *, size_t,
@@ -2065,7 +2065,7 @@ static void sctk_allreduce_opt_noalloc_split_messages_intern ( const void *buffe
 }
 
 
-static void sctk_allreduce_opt_noalloc_split_messages ( const void *buffer_in, void *buffer_out,
+static void _mpc_coll_noalloc_allreduce ( const void *buffer_in, void *buffer_out,
                                                         const size_t elem_size,
                                                         const size_t elem_number,
                                                         void ( *func ) ( const void *, void *, size_t,
@@ -2076,7 +2076,7 @@ static void sctk_allreduce_opt_noalloc_split_messages ( const void *buffer_in, v
 {
 	if ( elem_number == 0 )
 	{
-		sctk_barrier_opt_noalloc_split_messages ( communicator, tmp );
+		_mpc_coll_noalloc_barrier ( communicator, tmp );
 	}
 	else
 	{
@@ -2102,7 +2102,7 @@ static void sctk_allreduce_opt_noalloc_split_messages ( const void *buffer_in, v
 
 			for ( i = 0; i < elem_number / elem_number_slot; i++ )
 			{
-				sctk_allreduce_opt_noalloc_split_messages_intern ( ( ( char * ) buffer_in ) + ( elem_size * ( elem_number_done ) ),
+				_mpc_coll_noalloc_allreduce_intern ( ( ( char * ) buffer_in ) + ( elem_size * ( elem_number_done ) ),
 				                                                   ( ( char * ) buffer_out ) + ( elem_size * ( elem_number_done ) ),
 				                                                   elem_size, elem_number_slot, func, communicator, data_type );
 				elem_number_done += elem_number_slot;
@@ -2110,44 +2110,44 @@ static void sctk_allreduce_opt_noalloc_split_messages ( const void *buffer_in, v
 
 			if ( elem_number_remain != 0 )
 			{
-				sctk_allreduce_opt_noalloc_split_messages_intern ( ( ( char * ) buffer_in ) + ( elem_size * ( elem_number_done ) ),
+				_mpc_coll_noalloc_allreduce_intern ( ( ( char * ) buffer_in ) + ( elem_size * ( elem_number_done ) ),
 				                                                   ( ( char * ) buffer_out ) + ( elem_size * ( elem_number_done ) ),
 				                                                   elem_size, elem_number_remain, func, communicator, data_type );
 			}
 		}
 		else
 		{
-			sctk_allreduce_opt_noalloc_split_messages_intern ( buffer_in, buffer_out, elem_size, elem_number, func, communicator, data_type );
+			_mpc_coll_noalloc_allreduce_intern ( buffer_in, buffer_out, elem_size, elem_number, func, communicator, data_type );
 		}
 
 #else
-		sctk_allreduce_opt_noalloc_split_messages_intern ( buffer_in, buffer_out, elem_size, elem_number, func, communicator, data_type );
+		_mpc_coll_noalloc_allreduce_intern ( buffer_in, buffer_out, elem_size, elem_number, func, communicator, data_type );
 #endif
 	}
 }
 
-void sctk_allreduce_opt_noalloc_split_messages_allreduce_max_slot ( int t )
+void _mpc_coll_noalloc_allreduce_allreduce_max_slot ( int t )
 {
 	allreduce_max_slot = t;
 }
 
-void sctk_allreduce_opt_noalloc_split_messages_init ( struct sctk_internal_collectives_struct_s   __UNUSED__ *tmp, __UNUSED__ sctk_communicator_t id )
+void _mpc_coll_noalloc_allreduce_init ( struct sctk_internal_collectives_struct_s   __UNUSED__ *tmp, __UNUSED__ sctk_communicator_t id )
 {
 	allreduce_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_arity_max;
 	allreduce_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_max_size;
 	allreduce_check_threshold = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_check_threshold;
 	allreduce_max_slot = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_max_slot;
-	tmp->allreduce_func = sctk_allreduce_opt_noalloc_split_messages;
+	tmp->allreduce_func = _mpc_coll_noalloc_allreduce;
 }
 
 /* Init */
 
-void sctk_collectives_init_opt_noalloc_split_messages ( sctk_communicator_t id )
+void _mpc_coll_init_noalloc ( sctk_communicator_t id )
 {
 	sctk_collectives_init ( id,
-	                        sctk_barrier_opt_noalloc_split_messages_init,
-	                        sctk_broadcast_opt_noalloc_split_messages_init,
-	                        sctk_allreduce_opt_noalloc_split_messages_init );
+	                        _mpc_coll_noalloc_barrier_init,
+	                        _mpc_coll_noalloc_bcast_init,
+	                        _mpc_coll_noalloc_allreduce_init );
 	/* if(get_process_rank() == 0){ */
 	/*   sctk_warning("Use low performances collectives"); */
 	/* } */
@@ -2265,7 +2265,7 @@ void sctk_all_reduce ( const void *buffer_in, void *buffer_out,
 /*INIT                                                                  */
 /************************************************************************/
 
-void ( *sctk_collectives_init_hook ) ( sctk_communicator_t id ) = NULL; //sctk_collectives_init_opt_messages;
+void ( *sctk_collectives_init_hook ) ( sctk_communicator_t id ) = NULL; //_mpc_coll_init_opt;
 
 /*Init data structures used for task i*/
 void sctk_collectives_init ( sctk_communicator_t id,
