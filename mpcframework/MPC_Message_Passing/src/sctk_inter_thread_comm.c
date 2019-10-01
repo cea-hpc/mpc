@@ -44,127 +44,119 @@
 #include <mpc_datatypes.h>
 #endif
 
-/********************************************************************/
-/* Macros for configuration                                         */
-/********************************************************************/
-/* Reentrance enabled */
-#if 0
-#define SCTK_DISABLE_REENTRANCE
-#endif
 
-
-/* Migration disabled */
-#define SCTK_MIGRATION_DISABLED
 /* Task engine disabled */
 //#define SCTK_DISABLE_TASK_ENGINE
 
 static inline int _sctk_is_net_message(int dest);
 
-int sctk_cancel_message(sctk_request_t *msg) {
-  int ret = SCTK_SUCCESS;
+int mpc_mp_comm_cancel_msg( sctk_request_t *msg )
+{
+	int ret = SCTK_SUCCESS;
 
-  switch (msg->request_type) {
-  case REQUEST_GENERALIZED:
-    /* Call the cancel handler with a flag telling if the request was completed
+	switch ( msg->request_type )
+	{
+		case REQUEST_GENERALIZED:
+			/* Call the cancel handler with a flag telling if the request was completed
      * which is our case is the same as not pending anymore */
-    ret = (msg->cancel_fn)(msg->extra_state,
-                           (msg->completion_flag != SCTK_MESSAGE_PENDING));
+			ret = ( msg->cancel_fn )( msg->extra_state,
+						  ( msg->completion_flag != SCTK_MESSAGE_PENDING ) );
+			break;
 
-    if (ret != SCTK_SUCCESS)
-      return ret;
+		case REQUEST_RECV:
+			if ( msg->msg == NULL )
+				return ret;
 
-    break;
+			SCTK_MSG_SPECIFIC_CLASS_SET( msg->msg, SCTK_CANCELLED_RECV );
+			break;
 
-  case REQUEST_RECV:
-    if (msg->msg == NULL)
-      return ret;
+		case REQUEST_SEND:
+			if ( msg->msg == NULL )
+				return ret;
 
-    SCTK_MSG_SPECIFIC_CLASS_SET(msg->msg, SCTK_CANCELLED_RECV);
-    break;
+			/* NOTE: cancelling a Send is deprecated */
+			if ( _sctk_is_net_message( SCTK_MSG_DEST_PROCESS( msg->msg ) ) )
+			{
+				sctk_error( "Try to cancel a network message for %d from UNIX process %d",
+					    SCTK_MSG_DEST_PROCESS( msg->msg ), mpc_common_get_process_rank() );
+				not_implemented();
+			}
 
-  case REQUEST_SEND:
-    if (msg->msg == NULL)
-      return ret;
-    /* NOTE: cancelling a Send is deprecated */
-    if (_sctk_is_net_message(SCTK_MSG_DEST_PROCESS(msg->msg))) {
-      sctk_error("Try to cancel a network message for %d from UNIX process %d",
-                 SCTK_MSG_DEST_PROCESS(msg->msg), mpc_common_get_process_rank());
-      not_implemented();
-    }
+			SCTK_MSG_SPECIFIC_CLASS_SET( msg->msg, SCTK_CANCELLED_SEND );
+			break;
 
-    SCTK_MSG_SPECIFIC_CLASS_SET(msg->msg, SCTK_CANCELLED_SEND);
-    break;
+		default:
+			not_reachable();
+			break;
+	}
 
-  default:
-    not_reachable();
-    break;
-  }
+	msg->completion_flag = SCTK_MESSAGE_CANCELED;
 
-  msg->completion_flag = SCTK_MESSAGE_CANCELED;
-
-  return ret;
+	return ret;
 }
 
 /********************************************************************/
 /*Structres                                                         */
 /********************************************************************/
 
-typedef struct {
-  sctk_communicator_t comm;
-  int dest_src;
-} sctk_comm_dest_key_t;
+typedef struct
+{
+	sctk_communicator_t comm;
+	int dest_src;
+} mpc_comm_dest_key_t;
 
-#define sctk_set_comm_dest_key(key, rank, com)                                 \
-  do {                                                                         \
-    key.dest_src = rank;                                                       \
-    key.comm = com;                                                            \
-  } while (0)
+#define _mpc_comm_dest_key_init( key, rank, com ) \
+	do                                           \
+	{                                            \
+		key.dest_src = rank;                     \
+		key.comm = com;                          \
+	} while ( 0 )
 
-typedef struct {
-  mpc_common_spinlock_t lock;
-  volatile sctk_msg_list_t *list;
-} sctk_internal_ptp_list_incomming_t;
+typedef struct
+{
+	mpc_common_spinlock_t lock;
+	volatile sctk_msg_list_t *list;
+} mpc_comm_ptp_list_incomming_t;
 
-typedef struct {
-  volatile sctk_msg_list_t *list;
-} sctk_internal_ptp_list_pending_t;
+typedef struct
+{
+	volatile sctk_msg_list_t *list;
+} mpc_comm_ptp_list_pending_t;
 
-typedef struct {
-/* Messages are posted to the 'incoming' lists before being merge to
-   the pending list. */
-#ifndef SCTK_DISABLE_REENTRANCE
-  sctk_internal_ptp_list_incomming_t incomming_send;
-  sctk_internal_ptp_list_incomming_t incomming_recv;
-#endif
+typedef struct
+{
+	/* Messages are posted to the 'incoming' lists before being merge to the pending list. */
+	mpc_comm_ptp_list_incomming_t incomming_send;
+	mpc_comm_ptp_list_incomming_t incomming_recv;
 
-  mpc_common_spinlock_t pending_lock;
-  /* Messages in the 'pending' lists are waiting to be
+	mpc_common_spinlock_t pending_lock;
+	/* Messages in the 'pending' lists are waiting to be
    * matched */
-  sctk_internal_ptp_list_pending_t pending_send;
-  sctk_internal_ptp_list_pending_t pending_recv;
-  /* Flag to indicate that new messages have been merged into the 'pending' list
-   */
-  char changed;
+	mpc_comm_ptp_list_pending_t pending_send;
+	mpc_comm_ptp_list_pending_t pending_recv;
+	/* Flag to indicate that new messages have been merged into the 'pending' list */
+	char changed;
 
-} sctk_internal_ptp_message_lists_t;
+} mpc_comm_ptp_message_lists_t;
 
-typedef struct sctk_internal_ptp_s {
-  sctk_comm_dest_key_t key;
-  sctk_comm_dest_key_t key_on_vp;
+typedef struct mpc_comm_ptp_s
+{
+	mpc_comm_dest_key_t key;
+	mpc_comm_dest_key_t key_on_vp;
 
-  sctk_internal_ptp_message_lists_t lists;
+	mpc_comm_ptp_message_lists_t lists;
 
-  /* Number of pending messages for the MPI task */
-  OPA_int_t pending_nb;
+	/* Number of pending messages for the MPI task */
+	OPA_int_t pending_nb;
 
-  UT_hash_handle hh;
-  UT_hash_handle hh_on_vp;
+	UT_hash_handle hh;
+	UT_hash_handle hh_on_vp;
 
-  /* Reorder table / ! \
+	/* Reorder table / ! \
    * This table is now at a task level !*/
-  sctk_reorder_list_t reorder;
+	sctk_reorder_list_t reorder;
 
-} sctk_internal_ptp_t;
+} mpc_comm_ptp_t;
 
 /********************************************************************/
 /*Message Interface                                                 */
@@ -247,7 +239,7 @@ void sctk_message_irecv_class_dest(int src, int dest, void *buffer, size_t size,
 
   int cw_dest = sctk_get_comm_world_rank(comm, dest);
 
-  struct sctk_internal_ptp_s *ptp_internal =
+  struct mpc_comm_ptp_s *ptp_internal =
       sctk_get_internal_ptp(cw_dest, comm);
 
   sctk_thread_ptp_message_t *msg =
@@ -325,7 +317,7 @@ static void sctk_show_requests(sctk_request_t* requests, int req_nb) {
  */
 
 static inline void sctk_internal_ptp_list_incomming_init(
-    sctk_internal_ptp_list_incomming_t *list) {
+    mpc_comm_ptp_list_incomming_t *list) {
   static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
 
   list->list = NULL;
@@ -335,7 +327,7 @@ static inline void sctk_internal_ptp_list_incomming_init(
  * Initialize the 'pending' list
  */
 static inline void
-sctk_internal_ptp_list_pending_init(sctk_internal_ptp_list_pending_t *list) {
+sctk_internal_ptp_list_pending_init(mpc_comm_ptp_list_pending_t *list) {
   list->list = NULL;
 }
 
@@ -343,12 +335,11 @@ sctk_internal_ptp_list_pending_init(sctk_internal_ptp_list_pending_t *list) {
  * Initialize a PTP the 'incoming' and 'pending' message lists.
  */
 static inline void
-sctk_internal_ptp_message_list_init(sctk_internal_ptp_message_lists_t *lists) {
+sctk_internal_ptp_message_list_init(mpc_comm_ptp_message_lists_t *lists) {
   static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
-#ifndef SCTK_DISABLE_REENTRANCE
+
   sctk_internal_ptp_list_incomming_init(&(lists->incomming_send));
   sctk_internal_ptp_list_incomming_init(&(lists->incomming_recv));
-#endif
 
   lists->pending_lock = lock;
   sctk_internal_ptp_list_pending_init(&(lists->pending_send));
@@ -360,8 +351,7 @@ sctk_internal_ptp_message_list_init(sctk_internal_ptp_message_lists_t *lists) {
  * Merge 'incoming' send and receive lists to 'pending' send and receive lists
  */
 static inline void
-sctk_internal_ptp_merge_pending(sctk_internal_ptp_message_lists_t *lists) {
-#ifndef SCTK_DISABLE_REENTRANCE
+sctk_internal_ptp_merge_pending(mpc_comm_ptp_message_lists_t *lists) {
 
   if (lists->incomming_send.list != NULL) {
     if(mpc_common_spinlock_trylock(&(lists->incomming_send.lock)) == 0) {
@@ -383,21 +373,20 @@ sctk_internal_ptp_merge_pending(sctk_internal_ptp_message_lists_t *lists) {
 
   /* Change the flag. New messages have been inserted to the 'pending' lists */
   lists->changed = 1;
-#endif
 }
 
 static inline void
-sctk_internal_ptp_lock_pending(sctk_internal_ptp_message_lists_t *lists) {
+sctk_internal_ptp_lock_pending(mpc_comm_ptp_message_lists_t *lists) {
   mpc_common_spinlock_lock_yield(&(lists->pending_lock));
 }
 
 static inline int
-sctk_internal_ptp_trylock_pending(sctk_internal_ptp_message_lists_t *lists) {
+mpc_comm_ptp_trylock_pending(mpc_comm_ptp_message_lists_t *lists) {
   return mpc_common_spinlock_trylock(&(lists->pending_lock));
 }
 
 static inline void
-sctk_internal_ptp_unlock_pending(sctk_internal_ptp_message_lists_t *lists) {
+sctk_internal_ptp_unlock_pending(mpc_comm_ptp_message_lists_t *lists) {
   mpc_common_spinlock_unlock(&(lists->pending_lock));
 }
 
@@ -405,19 +394,18 @@ sctk_internal_ptp_unlock_pending(sctk_internal_ptp_message_lists_t *lists) {
  * Add message into the 'incoming' recv list
  */
 static inline void
-sctk_internal_ptp_add_pending(sctk_internal_ptp_t *tmp,
+sctk_internal_ptp_add_pending(mpc_comm_ptp_t *tmp,
                               sctk_thread_ptp_message_t *msg) {
   msg->tail.internal_ptp = tmp;
   assume(tmp);
   OPA_incr_int(&tmp->pending_nb);
 }
 
-#ifndef SCTK_DISABLE_REENTRANCE
 /*
  * Add message into the 'incoming' recv list
  */
 static inline void
-sctk_internal_ptp_add_recv_incomming(sctk_internal_ptp_t *tmp,
+sctk_internal_ptp_add_recv_incomming(mpc_comm_ptp_t *tmp,
                                      sctk_thread_ptp_message_t *msg) {
   msg->tail.distant_list.msg = msg;
   mpc_common_spinlock_lock(&(tmp->lists.incomming_recv.lock));
@@ -428,94 +416,29 @@ sctk_internal_ptp_add_recv_incomming(sctk_internal_ptp_t *tmp,
  * Add message into the 'incoming' send list
  */
 static inline void
-sctk_internal_ptp_add_send_incomming(sctk_internal_ptp_t *tmp,
+sctk_internal_ptp_add_send_incomming(mpc_comm_ptp_t *tmp,
                                      sctk_thread_ptp_message_t *msg) {
   msg->tail.distant_list.msg = msg;
   mpc_common_spinlock_lock(&(tmp->lists.incomming_send.lock));
   DL_APPEND(tmp->lists.incomming_send.list, &(msg->tail.distant_list));
   mpc_common_spinlock_unlock(&(tmp->lists.incomming_send.lock));
 }
-#else
-TODO("Using blocking version of send/recv message")
-/*
- * No 'incoming' recv list. We directly add the message into the 'pending' recv
- * list
- */
-static inline void
-sctk_internal_ptp_add_recv_incomming(sctk_internal_ptp_t *tmp,
-                                     sctk_thread_ptp_message_t *msg) {
-  msg->tail.distant_list.msg = msg;
-  sctk_internal_ptp_lock_pending(&(tmp->lists));
-  DL_APPEND(tmp->lists.pending_recv.list, &(msg->tail.distant_list));
-  sctk_internal_ptp_unlock_pending(&(tmp->lists));
-}
-/*
- * No 'incoming' send list. We directly add the message into the 'pending' send
- * list
- */
-static inline void
-sctk_internal_ptp_add_send_incomming(sctk_internal_ptp_t *tmp,
-                                     sctk_thread_ptp_message_t *msg) {
-  msg->tail.distant_list.msg = msg;
-  sctk_internal_ptp_lock_pending(&(tmp->lists));
-  DL_APPEND(tmp->lists.pending_send.list, &(msg->tail.distant_list));
-  sctk_internal_ptp_unlock_pending(&(tmp->lists));
-}
-#endif
+
 
 /************************************************************************/
 /*Data structure accessors                                              */
 /************************************************************************/
 
 /* Table where all msg lists for the process are stored */
-static sctk_internal_ptp_t *sctk_ptp_table = NULL;
+static mpc_comm_ptp_t *sctk_ptp_table = NULL;
 /* Table where all msg lists for the current VP are stored */
-__thread sctk_internal_ptp_t *sctk_ptp_table_on_vp = NULL;
-static sctk_internal_ptp_t ***sctk_ptp_array = NULL;
+__thread mpc_comm_ptp_t *sctk_ptp_table_on_vp = NULL;
+static mpc_comm_ptp_t ***sctk_ptp_array = NULL;
 /* List for process specific messages */
-static sctk_internal_ptp_t *sctk_ptp_admin = NULL;
+static mpc_comm_ptp_t *sctk_ptp_admin = NULL;
 static int sctk_ptp_array_start = 0;
 static int sctk_ptp_array_end = 0;
 
-#ifndef SCTK_MIGRATION_DISABLED
-static sctk_spin_rwlock_t sctk_ptp_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
-#endif
-
-static inline void sctk_ptp_table_write_lock() {
-#ifndef SCTK_MIGRATION_DISABLED
-
-  if (sctk_migration_mode)
-    mpc_common_spinlock_write_lock(&sctk_ptp_table_lock);
-
-#endif
-}
-
-static inline void sctk_ptp_table_write_unlock() {
-#ifndef SCTK_MIGRATION_DISABLED
-
-  if (sctk_migration_mode)
-    mpc_common_spinlock_write_unlock(&sctk_ptp_table_lock);
-
-#endif
-}
-
-static inline void sctk_ptp_table_read_lock() {
-#ifndef SCTK_MIGRATION_DISABLED
-
-  if (sctk_migration_mode)
-    mpc_common_spinlock_read_lock(&sctk_ptp_table_lock);
-
-#endif
-}
-
-static inline void sctk_ptp_table_read_unlock() {
-#ifndef SCTK_MIGRATION_DISABLED
-
-  if (sctk_migration_mode)
-    mpc_common_spinlock_read_unlock(&sctk_ptp_table_lock);
-
-#endif
-}
 
 /*
  * Find an internal ptp according the a key (this key represents the task
@@ -528,7 +451,7 @@ static inline void sctk_ptp_table_read_unlock() {
       tmp = sctk_ptp_admin;                                                    \
     } else {                                                                   \
       if (sctk_migration_mode) {                                               \
-        HASH_FIND(hh, sctk_ptp_table, &(key), sizeof(sctk_comm_dest_key_t),    \
+        HASH_FIND(hh, sctk_ptp_table, &(key), sizeof(mpc_comm_dest_key_t),    \
                   (tmp));                                                      \
       } else {                                                                 \
         int __dest__id;                                                        \
@@ -547,13 +470,13 @@ static inline void sctk_ptp_table_read_unlock() {
 sctk_reorder_list_t *
 sctk_ptp_get_reorder_from_destination(int task,
                                       sctk_communicator_t communicator) {
-  struct sctk_internal_ptp_s *internal_ptp = NULL;
-  sctk_comm_dest_key_t key;
-  sctk_set_comm_dest_key(key, task, communicator);
+  struct mpc_comm_ptp_s *internal_ptp = NULL;
+  mpc_comm_dest_key_t key;
+  _mpc_comm_dest_key_init(key, task, communicator);
 
-  sctk_ptp_table_read_lock();
+
   sctk_ptp_table_find(key, internal_ptp);
-  sctk_ptp_table_read_unlock();
+
 
   sctk_assert(internal_ptp);
 
@@ -565,7 +488,7 @@ sctk_ptp_get_reorder_from_destination(int task,
  * already prensent
  * and fail in this case
  */
-static inline void sctk_ptp_table_insert(sctk_internal_ptp_t *tmp) {
+static inline void sctk_ptp_table_insert(mpc_comm_ptp_t *tmp) {
   static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
   static volatile int done = 0;
 
@@ -578,7 +501,7 @@ static inline void sctk_ptp_table_insert(sctk_internal_ptp_t *tmp) {
 #if 0
         {
           /* Check if the entry has not been already added */
-          sctk_internal_ptp_t *internal_ptp;
+          mpc_comm_ptp_t *internal_ptp;
           sctk_ptp_table_find(tmp->key, internal_ptp);
           assume(internal_ptp == NULL);
         }
@@ -593,28 +516,26 @@ static inline void sctk_ptp_table_insert(sctk_internal_ptp_t *tmp) {
       sctk_ptp_array_end = sctk_get_last_task_local(SCTK_COMM_WORLD);
       sctk_ptp_array =
           sctk_malloc((sctk_ptp_array_end - sctk_ptp_array_start + 1) *
-                      sizeof(sctk_internal_ptp_t **));
+                      sizeof(mpc_comm_ptp_t **));
       memset(sctk_ptp_array, 0,
              (sctk_ptp_array_end - sctk_ptp_array_start + 1) *
-                 sizeof(sctk_internal_ptp_t **));
+                 sizeof(mpc_comm_ptp_t **));
     }
 
     done = 1;
   }
 
-  sctk_ptp_table_write_lock();
-
   /* If migration enabled, we add the current list to sctk_ptp_table */
   if (sctk_migration_mode) {
-    HASH_ADD(hh, sctk_ptp_table, key, sizeof(sctk_comm_dest_key_t), tmp);
+    HASH_ADD(hh, sctk_ptp_table, key, sizeof(mpc_comm_dest_key_t), tmp);
   } else {
     assume(tmp->key.dest_src >= sctk_ptp_array_start);
     assume(tmp->key.dest_src <= sctk_ptp_array_end);
     if (sctk_ptp_array[tmp->key.dest_src - sctk_ptp_array_start] == NULL) {
       sctk_ptp_array[tmp->key.dest_src - sctk_ptp_array_start] = sctk_malloc(
-          SCTK_PARALLEL_COMM_QUEUES_NUMBER * sizeof(sctk_internal_ptp_t *));
+          SCTK_PARALLEL_COMM_QUEUES_NUMBER * sizeof(mpc_comm_ptp_t *));
       memset(sctk_ptp_array[tmp->key.dest_src - sctk_ptp_array_start], 0,
-             SCTK_PARALLEL_COMM_QUEUES_NUMBER * sizeof(sctk_internal_ptp_t *));
+             SCTK_PARALLEL_COMM_QUEUES_NUMBER * sizeof(mpc_comm_ptp_t *));
     }
     assume(sctk_ptp_array[tmp->key.dest_src - sctk_ptp_array_start]
                          [tmp->key.comm % SCTK_PARALLEL_COMM_QUEUES_NUMBER] ==
@@ -624,9 +545,9 @@ static inline void sctk_ptp_table_insert(sctk_internal_ptp_t *tmp) {
                   [tmp->key.comm % SCTK_PARALLEL_COMM_QUEUES_NUMBER] = tmp;
   }
 
-  HASH_ADD(hh_on_vp, sctk_ptp_table_on_vp, key, sizeof(sctk_comm_dest_key_t),
+  HASH_ADD(hh_on_vp, sctk_ptp_table_on_vp, key, sizeof(mpc_comm_dest_key_t),
            tmp);
-  sctk_ptp_table_write_unlock();
+
   mpc_common_spinlock_unlock(&lock);
 }
 
@@ -743,7 +664,7 @@ static inline int sctk_ptp_tasks_perform(int key){
  * Insert a message to copy. The message to insert has already been matched.
  */
 static inline void sctk_ptp_tasks_insert(sctk_message_to_copy_t *tmp,
-                                         sctk_internal_ptp_t *pair) {
+                                         mpc_comm_ptp_t *pair) {
   int key = pair->key.dest_src % PTP_MAX_TASK_LISTS;
   mpc_common_spinlock_lock(&(sctk_ptp_tasks_lock[key]));
   DL_APPEND(sctk_ptp_task_list[key], tmp);
@@ -757,7 +678,7 @@ static inline void sctk_ptp_tasks_insert(sctk_message_to_copy_t *tmp,
  */
 static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t *ptr_recv,
                                               sctk_msg_list_t *ptr_send,
-                                              sctk_internal_ptp_t *pair) {
+                                              mpc_comm_ptp_t *pair) {
   sctk_message_to_copy_t *tmp;
   SCTK_PROFIL_START(MPC_Copy_message);
 
@@ -1573,7 +1494,7 @@ __thread mpc_common_spinlock_t lock_buffered_ptp_message = SCTK_SPINLOCK_INITIAL
  * Init data structures used for task i. Called only once for each task
  */
 void sctk_ptp_per_task_init(int i) {
-  sctk_internal_ptp_t *tmp;
+  mpc_comm_ptp_t *tmp;
   int j;
   int k;
 
@@ -1582,10 +1503,10 @@ void sctk_ptp_per_task_init(int i) {
 #endif
 
   for (k = 0; k < SCTK_PARALLEL_COMM_QUEUES_NUMBER; k++) {
-    tmp = sctk_malloc(sizeof(sctk_internal_ptp_t));
-    memset(tmp, 0, sizeof(sctk_internal_ptp_t));
+    tmp = sctk_malloc(sizeof(mpc_comm_ptp_t));
+    memset(tmp, 0, sizeof(mpc_comm_ptp_t));
     /*   tmp->key.comm = SCTK_COMM_WORLD; */
-    sctk_set_comm_dest_key(tmp->key, i, k);
+    _mpc_comm_dest_key_init(tmp->key, i, k);
     sctk_nodebug("Destination: %d", i);
 
     /* Initialize reordering for the list */
@@ -2120,7 +2041,7 @@ void sctk_inter_thread_comm_no_control_messages_end() {
 }
 
 static inline sctk_msg_list_t *sctk_perform_messages_search_matching(
-                                  sctk_internal_ptp_list_pending_t *pending_list,
+                                  mpc_comm_ptp_list_pending_t *pending_list,
                                   sctk_thread_message_header_t *header,
                                   sctk_thread_ptp_message_t **ctrl_msg) {
   sctk_msg_list_t *ptr_found;
@@ -2225,7 +2146,7 @@ static inline sctk_msg_list_t *sctk_perform_messages_search_matching(
  * Probe for a matching message
  */
 static inline int
-sctk_perform_messages_probe_matching(sctk_internal_ptp_t *pair,
+sctk_perform_messages_probe_matching(mpc_comm_ptp_t *pair,
                                      sctk_thread_message_header_t *header) {
 
   sctk_msg_list_t *ptr_send;
@@ -2305,7 +2226,7 @@ sctk_perform_messages_probe_matching(sctk_internal_ptp_t *pair,
 }
 
 static inline int sctk_perform_messages_matching_from_recv_msg(
-    sctk_internal_ptp_t *pair, sctk_thread_ptp_message_t *msg,
+    mpc_comm_ptp_t *pair, sctk_thread_ptp_message_t *msg,
     sctk_thread_ptp_message_t **ctrl_msg) {
   sctk_msg_list_t *ptr_recv;
   sctk_msg_list_t *ptr_send;
@@ -2361,7 +2282,7 @@ static inline int sctk_perform_messages_matching_from_recv_msg(
  * matched).
  */
 static inline int
-sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t *pair,
+sctk_perform_messages_for_pair_locked(mpc_comm_ptp_t *pair,
                                       sctk_thread_ptp_message_t **ctrl_msg) {
   sctk_msg_list_t *ptr_recv;
   sctk_msg_list_t *tmp;
@@ -2380,25 +2301,24 @@ sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t *pair,
   return nb_messages_copied;
 }
 
-static inline int sctk_perform_messages_for_pair(sctk_internal_ptp_t *pair) {
+static inline int sctk_perform_messages_for_pair(mpc_comm_ptp_t *pair) {
 
   int nb_messages_copied = 0;
 
   if (((pair->lists.pending_send.list != NULL)
-#ifndef SCTK_DISABLE_REENTRANCE
+
        || (pair->lists.incomming_send.list != NULL)
-#endif
+
            ) &&
       ((pair->lists.pending_recv.list != NULL)
-#ifndef SCTK_DISABLE_REENTRANCE
+
        || (pair->lists.incomming_recv.list != NULL)
-#endif
+
            )) {
     if (pair->lists.changed
-#ifndef SCTK_DISABLE_REENTRANCE
+
         || (pair->lists.incomming_send.list != NULL) ||
         (pair->lists.incomming_recv.list != NULL)
-#endif
             ) {
       sctk_thread_ptp_message_t *ctrl_msg = NULL;
 
@@ -2434,7 +2354,7 @@ static inline int sctk_perform_messages_for_pair(sctk_internal_ptp_t *pair) {
  */
 static inline int
 
-sctk_try_perform_messages_for_pair(sctk_internal_ptp_t *pair) {
+sctk_try_perform_messages_for_pair(mpc_comm_ptp_t *pair) {
   if (!pair)
     return -1;
 
@@ -2459,24 +2379,24 @@ void sctk_perform_messages_wait_init(struct sctk_perform_messages_s *wait,
 
   /* If we are in a MPI_Wait function or similar */
   wait->blocking = blocking;
-  sctk_internal_ptp_t **recv_ptp = &wait->recv_ptp;
+  mpc_comm_ptp_t **recv_ptp = &wait->recv_ptp;
 
-  sctk_internal_ptp_t **send_ptp = &wait->send_ptp;
-  sctk_comm_dest_key_t recv_key;
-  sctk_comm_dest_key_t send_key;
+  mpc_comm_ptp_t **send_ptp = &wait->send_ptp;
+  mpc_comm_dest_key_t recv_key;
+  mpc_comm_dest_key_t send_key;
 
   /* key.comm = request->header.communicator; */
-  sctk_set_comm_dest_key(recv_key, request->header.destination_task,
+  _mpc_comm_dest_key_init(recv_key, request->header.destination_task,
                          request->header.communicator);
-  sctk_set_comm_dest_key(send_key, request->header.source_task,
+  _mpc_comm_dest_key_init(send_key, request->header.source_task,
                          request->header.communicator);
 
-  sctk_ptp_table_read_lock();
+
   /* Searching for the pending list corresponding to the
    * dest task */
   sctk_ptp_table_find(recv_key, *recv_ptp);
   sctk_ptp_table_find(send_key, *send_ptp);
-  sctk_ptp_table_read_unlock();
+
 
   /* Compute the rank of the remote process */
   if (request->header.source_task != SCTK_ANY_SOURCE &&
@@ -2499,7 +2419,7 @@ void sctk_perform_messages_wait_init(struct sctk_perform_messages_s *wait,
  */
 static void sctk_perform_messages_done(struct sctk_perform_messages_s *wait) {
   const sctk_request_t *request = wait->request;
-  const sctk_internal_ptp_t *recv_ptp = wait->recv_ptp;
+  const mpc_comm_ptp_t *recv_ptp = wait->recv_ptp;
 
   /* The message is marked as done.
   * However, we need to poll if it is a inter-process message
@@ -2654,8 +2574,8 @@ void sctk_wait_message(sctk_request_t *request) {
 static inline void _sctk_perform_messages(struct sctk_perform_messages_s *wait) {
 
   const sctk_request_t *request = wait->request;
-  sctk_internal_ptp_t *recv_ptp = wait->recv_ptp;
-  sctk_internal_ptp_t *send_ptp = wait->send_ptp;
+  mpc_comm_ptp_t *recv_ptp = wait->recv_ptp;
+  mpc_comm_ptp_t *send_ptp = wait->send_ptp;
   const int remote_process = wait->remote_process;
   const int source_task_id = wait->source_task_id;
   const int polling_task_id = wait->polling_task_id;
@@ -2717,7 +2637,7 @@ void sctk_perform_messages(struct sctk_perform_messages_s *wait) {
  * Wait for all message according to a communicator and a task id
  */
 void sctk_wait_all(const int task, const sctk_communicator_t com) {
-  sctk_internal_ptp_t *pair;
+  mpc_comm_ptp_t *pair;
   int i;
 
   /* Get the pending list associated to the task */
@@ -2811,12 +2731,12 @@ void sctk_send_message_try_check(sctk_thread_ptp_message_t *msg,
 
   } else {
 
-    sctk_comm_dest_key_t src_key, dest_key;
-    sctk_internal_ptp_t *src_pair, *dest_pair;
+    mpc_comm_dest_key_t src_key, dest_key;
+    mpc_comm_ptp_t *src_pair, *dest_pair;
 
-    sctk_set_comm_dest_key(dest_key, SCTK_MSG_DEST_TASK(msg),
+    _mpc_comm_dest_key_init(dest_key, SCTK_MSG_DEST_TASK(msg),
                            SCTK_MSG_COMMUNICATOR(msg));
-    sctk_set_comm_dest_key(src_key, SCTK_MSG_SRC_TASK(msg),
+    _mpc_comm_dest_key_init(src_key, SCTK_MSG_SRC_TASK(msg),
                            SCTK_MSG_COMMUNICATOR(msg));
 
     assume(SCTK_MSG_COMMUNICATOR(msg) >= 0);
@@ -2837,10 +2757,10 @@ void sctk_send_message_try_check(sctk_thread_ptp_message_t *msg,
 
     /* We are searching for the corresponding pending list.
      * If we do not find any entry, we forward the message */
-    sctk_ptp_table_read_lock();
+
     sctk_ptp_table_find(dest_key, dest_pair);
     sctk_ptp_table_find(src_key, src_pair);
-    sctk_ptp_table_read_unlock();
+
 
     if (src_pair == NULL) {
       assume(dest_pair);
@@ -2922,12 +2842,12 @@ void sctk_send_message(sctk_thread_ptp_message_t *msg) {
  * Function called when receiving a message.
  * */
 void sctk_recv_message_try_check(sctk_thread_ptp_message_t *msg,
-                                 sctk_internal_ptp_t *recv_ptp,
+                                 mpc_comm_ptp_t *recv_ptp,
                                  int perform_check) {
-  sctk_comm_dest_key_t send_key;
-  sctk_internal_ptp_t *send_ptp = NULL;
+  mpc_comm_dest_key_t send_key;
+  mpc_comm_ptp_t *send_ptp = NULL;
 
-  sctk_set_comm_dest_key(send_key, SCTK_MSG_SRC_TASK(msg),
+  _mpc_comm_dest_key_init(send_key, SCTK_MSG_SRC_TASK(msg),
                          SCTK_MSG_COMMUNICATOR(msg));
 
   if (SCTK_MSG_COMPLETION_FLAG(msg) != NULL) {
@@ -2944,11 +2864,11 @@ void sctk_recv_message_try_check(sctk_thread_ptp_message_t *msg,
 
   /* We are searching for the list corresponding to the
    * task which receives the message */
-  sctk_ptp_table_read_lock();
+
 
   if (recv_ptp == NULL) {
-    sctk_comm_dest_key_t key;
-    sctk_set_comm_dest_key(key, SCTK_MSG_DEST_TASK(msg),
+    mpc_comm_dest_key_t key;
+    _mpc_comm_dest_key_init(key, SCTK_MSG_DEST_TASK(msg),
                            SCTK_MSG_COMMUNICATOR(msg));
     sctk_ptp_table_find(key, recv_ptp);
   }
@@ -2959,7 +2879,6 @@ void sctk_recv_message_try_check(sctk_thread_ptp_message_t *msg,
     }
   }
 
-  sctk_ptp_table_read_unlock();
   /* We assume that the entry is found. If not, the message received is
    * for a task which is not registered on the node. Possible issue. */
   assume(recv_ptp);
@@ -2989,7 +2908,7 @@ void sctk_recv_message_try_check(sctk_thread_ptp_message_t *msg,
  * Function called for receiving a message (i.e: MPI_Recv).
  * Mostly used by the file mpc.c
  * */
-void sctk_recv_message(sctk_thread_ptp_message_t *msg, sctk_internal_ptp_t *tmp,
+void sctk_recv_message(sctk_thread_ptp_message_t *msg, mpc_comm_ptp_t *tmp,
                        int need_check) {
   sctk_debug(
       "RECV [ %d -> %d ] [ %d -> %d ] (CLASS %s(%d) SPE %d  size %d tag %d)",
@@ -3007,17 +2926,17 @@ void sctk_recv_message(sctk_thread_ptp_message_t *msg, sctk_internal_ptp_t *tmp,
 /*
  * Get the internal pending list for a specific task
  */
-struct sctk_internal_ptp_s *sctk_get_internal_ptp(int glob_id,
+struct mpc_comm_ptp_s *sctk_get_internal_ptp(int glob_id,
                                                   sctk_communicator_t com) {
-  sctk_internal_ptp_t *tmp = NULL;
+  mpc_comm_ptp_t *tmp = NULL;
 
   if (!sctk_migration_mode) {
-    sctk_comm_dest_key_t key;
+    mpc_comm_dest_key_t key;
     key.dest_src = glob_id;
     key.comm = com;
-    sctk_ptp_table_read_lock();
+
     sctk_ptp_table_find(key, tmp);
-    sctk_ptp_table_read_unlock();
+
   }
 
   return tmp;
@@ -3049,14 +2968,14 @@ static inline int _sctk_is_net_message(int dest) {
     return __sctk_is_net.answer;
   }
 
-  sctk_comm_dest_key_t key;
-  sctk_internal_ptp_t *tmp;
+  mpc_comm_dest_key_t key;
+  mpc_comm_ptp_t *tmp;
 
-  sctk_set_comm_dest_key(key, dest, 0);
+  _mpc_comm_dest_key_init(key, dest, 0);
 
-  sctk_ptp_table_read_lock();
+
   sctk_ptp_table_find(key, tmp);
-  sctk_ptp_table_read_unlock();
+
 
   __sctk_is_net.ask = dest;
   __sctk_is_net.answer = (tmp == NULL);
@@ -3080,9 +2999,9 @@ sctk_probe_source_tag_class_func(int destination, int source, int tag,
                                  sctk_message_class_t class,
                                  const sctk_communicator_t comm, int *status,
                                  sctk_thread_message_header_t *msg) {
-  sctk_comm_dest_key_t dest_key, src_key;
-  sctk_internal_ptp_t *dest_ptp;
-  sctk_internal_ptp_t *src_ptp = NULL;
+  mpc_comm_dest_key_t dest_key, src_key;
+  mpc_comm_ptp_t *dest_ptp;
+  mpc_comm_ptp_t *src_ptp = NULL;
 
   int world_source = source;
   int world_destination = destination;
@@ -3095,20 +3014,18 @@ sctk_probe_source_tag_class_func(int destination, int source, int tag,
 
   msg->message_type.type = class;
 
-  sctk_set_comm_dest_key(dest_key, world_destination, comm);
+  _mpc_comm_dest_key_init(dest_key, world_destination, comm);
 
   if (source != SCTK_ANY_SOURCE && src_ptp == NULL) {
-    sctk_set_comm_dest_key(src_key, world_source, comm);
+    _mpc_comm_dest_key_init(src_key, world_source, comm);
   }
 
-  sctk_ptp_table_read_lock();
+
   sctk_ptp_table_find(dest_key, dest_ptp);
 
   if (source != SCTK_ANY_SOURCE) {
     sctk_ptp_table_find(src_key, src_ptp);
   }
-
-  sctk_ptp_table_read_unlock();
 
   if (source != SCTK_ANY_SOURCE && src_ptp == NULL) {
     int src_process = sctk_get_process_rank_from_task_rank(world_source);

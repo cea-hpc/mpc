@@ -57,7 +57,7 @@ typedef enum {
 } sctk_request_type_t;
 
 void sctk_wait_message ( sctk_request_t *request );
-int sctk_cancel_message ( sctk_request_t *msg );
+int mpc_mp_comm_cancel_msg ( sctk_request_t *msg );
 
 /************************************************************************/
 /* Messages Types                                               */
@@ -460,7 +460,7 @@ int sctk_determine_src_process_from_header ( sctk_thread_ptp_message_body_t *bod
 void sctk_determine_task_source_and_destination_from_header ( sctk_thread_ptp_message_body_t *body, int *source_task, int *destination_task );
 
 struct mpc_buffered_msg_s;
-struct sctk_internal_ptp_s;
+struct mpc_comm_ptp_s;
 
 /*Data not to tranfers in inter-process communications*/
 typedef struct
@@ -481,7 +481,7 @@ typedef struct
 	sctk_msg_list_t distant_list;
 	sctk_message_to_copy_t copy_list;
 
-	struct sctk_internal_ptp_s *internal_ptp;
+	struct mpc_comm_ptp_s *internal_ptp;
 
 	/*Destructor*/
 	void ( *free_memory ) ( void * );
@@ -554,8 +554,8 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t *msg, const int mess
                                   sctk_request_type_t request_type );
 void sctk_send_message ( sctk_thread_ptp_message_t *msg );
 void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_check );
-void sctk_recv_message ( sctk_thread_ptp_message_t *msg, struct sctk_internal_ptp_s *tmp, int need_check );
-void sctk_recv_message_try_check ( sctk_thread_ptp_message_t *msg, struct sctk_internal_ptp_s *tmp, int perform_check );
+void sctk_recv_message ( sctk_thread_ptp_message_t *msg, struct mpc_comm_ptp_s *tmp, int need_check );
+void sctk_recv_message_try_check ( sctk_thread_ptp_message_t *msg, struct mpc_comm_ptp_s *tmp, int perform_check );
 void sctk_message_completion_and_free ( sctk_thread_ptp_message_t *send, sctk_thread_ptp_message_t *recv );
 void sctk_complete_and_free_message ( sctk_thread_ptp_message_t *msg );
 void sctk_rebuild_header ( sctk_thread_ptp_message_t *msg );
@@ -581,8 +581,8 @@ typedef struct mpc_buffered_msg_s
 typedef struct sctk_perform_messages_s
 {
 	sctk_request_t *request;
-	struct sctk_internal_ptp_s *recv_ptp;
-	struct sctk_internal_ptp_s *send_ptp;
+	struct mpc_comm_ptp_s *recv_ptp;
+	struct mpc_comm_ptp_s *send_ptp;
 	int remote_process;
 	int source_task_id;
         int dest_task_id;
@@ -603,7 +603,7 @@ void sctk_perform_messages_wait_init_request_type ( struct sctk_perform_messages
 /************************************************************************/
 
 void sctk_wait_all ( const int task, const sctk_communicator_t com );
-struct sctk_internal_ptp_s *sctk_get_internal_ptp(int glob_id,
+struct mpc_comm_ptp_s *sctk_get_internal_ptp(int glob_id,
                                                   sctk_communicator_t com);
 int sctk_is_net_message ( int dest );
 void sctk_ptp_per_task_init ( int i );

@@ -497,7 +497,7 @@ static inline void sctk_mpc_wait_all(const int task,
 }
 
 static inline int sctk_mpc_cancel_message(MPC_Request *msg) {
-  return sctk_cancel_message(msg);
+  return mpc_mp_comm_cancel_msg(msg);
 }
 
 /** \brief This function allows the retrieval of a data-type context
@@ -887,7 +887,7 @@ static inline void __MPC_init_task_specific_t(sctk_task_specific_t *tmp) {
   {
     sctk_communicator_t tmp_comm;
     tmp->my_ptp_internal = sctk_malloc(SCTK_PARALLEL_COMM_QUEUES_NUMBER *
-                                       sizeof(struct sctk_internal_ptp_s *));
+                                       sizeof(struct mpc_comm_ptp_s *));
     for (tmp_comm = 0; tmp_comm < SCTK_PARALLEL_COMM_QUEUES_NUMBER;
          tmp_comm++) {
       tmp->my_ptp_internal[tmp_comm] =

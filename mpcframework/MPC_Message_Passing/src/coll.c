@@ -289,7 +289,7 @@ static void _mpc_coll_message_send( const sctk_communicator_t communicator, int 
 }
 
 static void _mpc_coll_message_recv( const sctk_communicator_t communicator, int src, int myself, int tag, void *buffer, size_t size,
-									sctk_message_class_t message_class, _mpc_coll_messages_t *msg_req, struct sctk_internal_ptp_s *ptp_internal, int check_msg )
+									sctk_message_class_t message_class, _mpc_coll_messages_t *msg_req, struct mpc_comm_ptp_s *ptp_internal, int check_msg )
 {
 	sctk_init_header( &( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS,
 					  _mpc_coll_free_message, sctk_message_copy );
@@ -350,7 +350,7 @@ static void _mpc_coll_opt_barrier( const sctk_communicator_t communicator, __UNU
 		int i;
 		_mpc_coll_messages_table_t table;
 		char c = 'c';
-		struct sctk_internal_ptp_s *ptp_internal;
+		struct mpc_comm_ptp_s *ptp_internal;
 
 		sctk_nodebug( "_mpc_coll_opt_barrier() begin:" ); //AMAHEO
 
@@ -452,7 +452,7 @@ static void _mpc_coll_opt_barrier( const sctk_communicator_t communicator, __UNU
 		int myself;
 		char c = 'c';
 		_mpc_coll_messages_table_t table;
-		struct sctk_internal_ptp_s *ptp_internal;
+		struct mpc_comm_ptp_s *ptp_internal;
 
 		_mpc_coll_message_table_init( &table );
 
@@ -506,7 +506,7 @@ void mpc_mp_bcast_opt_messages( void *buffer, const size_t size,
 		int i;
 		_mpc_coll_messages_table_t table;
 		int BROADCAST_ARRITY = 2;
-		struct sctk_internal_ptp_s *ptp_internal;
+		struct mpc_comm_ptp_s *ptp_internal;
 
 		_mpc_coll_message_table_init( &table );
 
@@ -624,7 +624,7 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
 		_mpc_coll_messages_table_t table;
 		int ALLREDUCE_ARRITY = 2;
 		int total_max;
-		struct sctk_internal_ptp_s *ptp_internal;
+		struct mpc_comm_ptp_s *ptp_internal;
 
 		/*
 		  MPI require that the result of the allreduce is the same on all MPI tasks.
@@ -834,7 +834,7 @@ static void _mpc_coll_hetero_barrier_inter( const sctk_communicator_t communicat
 	int i;
 	_mpc_coll_messages_table_t table;
 	char c = 'c';
-	struct sctk_internal_ptp_s *ptp_internal;
+	struct mpc_comm_ptp_s *ptp_internal;
 
 	/* If only one process involved, we return */
 	if ( total == 1 )
@@ -1007,7 +1007,7 @@ void _mpc_coll_hetero_bcast_inter( void *buffer, const size_t size,
 		int i;
 		_mpc_coll_messages_table_t table;
 		int BROADCAST_ARRITY;
-		struct sctk_internal_ptp_s *ptp_internal;
+		struct mpc_comm_ptp_s *ptp_internal;
 		int specific_tag = SCTK_BROADCAST_HETERO_MESSAGE;
 		int *process_array;
 		int root;
@@ -1203,7 +1203,7 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
 {
 
 	int ALLREDUCE_ARRITY = 2;
-	struct sctk_internal_ptp_s *ptp_internal;
+	struct mpc_comm_ptp_s *ptp_internal;
 	int total_max;
 	_mpc_coll_messages_table_t table;
 	void *buffer_tmp;
@@ -1527,7 +1527,7 @@ static void _mpc_coll_noalloc_barrier( const sctk_communicator_t communicator, _
 		int i;
 		_mpc_coll_messages_table_t table;
 		char c = 'c';
-		struct sctk_internal_ptp_s *ptp_internal;
+		struct mpc_comm_ptp_s *ptp_internal;
 
 		_mpc_coll_message_table_init( &table );
 
@@ -1628,7 +1628,7 @@ static void _mpc_coll_noalloc_barrier( const sctk_communicator_t communicator, _
 		int myself;
 		char c = 'c';
 		_mpc_coll_messages_table_t table;
-		struct sctk_internal_ptp_s *ptp_internal;
+		struct mpc_comm_ptp_s *ptp_internal;
 
 		_mpc_coll_message_table_init( &table );
 
@@ -1682,7 +1682,7 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 		int i;
 		_mpc_coll_messages_table_t table;
 		int BROADCAST_ARRITY;
-		struct sctk_internal_ptp_s *ptp_internal;
+		struct mpc_comm_ptp_s *ptp_internal;
 
 		_mpc_coll_message_table_init( &table );
 
@@ -1796,7 +1796,7 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 	_mpc_coll_messages_table_t table;
 	int ALLREDUCE_ARRITY;
 	int total_max;
-	struct sctk_internal_ptp_s *ptp_internal;
+	struct mpc_comm_ptp_s *ptp_internal;
 	static __thread int buffer_used = 0;
 	int need_free = 0;
 
