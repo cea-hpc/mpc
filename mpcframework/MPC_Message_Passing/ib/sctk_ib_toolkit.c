@@ -27,6 +27,8 @@
 
 #include "sctk_ib_toolkit.h"
 #include <execinfo.h>
+#include <stdlib.h>
+
 
 #define HAVE_SHELL_COLORS
 
