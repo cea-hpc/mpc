@@ -25,10 +25,8 @@
 #include <mpc_mp_coll.h>
 
 
-#include <sctk_inter_thread_comm.h>
+#include "sctk_inter_thread_comm.h"
 
-
-#include <mpc_common_spinlock.h>
 
 
 struct mpc_mp_coll_s;
