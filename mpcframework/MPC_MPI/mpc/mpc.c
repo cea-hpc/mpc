@@ -399,8 +399,7 @@ static inline void sctk_mpc_perform_messages(MPC_Request *request) {
     return;
   }
 
-  sctk_perform_messages_wait_init(&_wait, request, 0);
-  sctk_perform_messages_wait_init_request_type(&_wait);
+  mpc_mp_comm_ptp_msg_wait_init(&_wait, request, 0);
 
   sctk_perform_messages(&_wait);
 }
@@ -4145,7 +4144,7 @@ int __MPC_Waitallp(mpc_msg_count count, MPC_Request *parray_of_requests[],
   wfv.array_of_requests = parray_of_requests;
   wfv.array_of_statuses = array_of_statuses;
   wfv.count = count;
-  sctk_inter_thread_perform_idle((int *)&(wfv.ret), 1,
+  mpc_mp_comm_perform_idle((int *)&(wfv.ret), 1,
                                  (void (*)(void *))wfv_waitall, (void *)&wfv);
 
   MPC_ERROR_SUCESS();
@@ -4871,7 +4870,7 @@ static int __MPC_Probe(int source, int tag, MPC_Comm comm, MPC_Status *status,
                    &probe_struct.flag, status);
 
   if (probe_struct.flag != 1) {
-    sctk_inter_thread_perform_idle(
+    mpc_mp_comm_perform_idle(
         &probe_struct.flag, 1, (void (*)(void *))MPC_Probe_poll, &probe_struct);
   }
   MPC_ERROR_SUCESS();
@@ -6872,7 +6871,7 @@ static inline int __MPC_Add_pack(void *buf, mpc_msg_count count,
 
   msg = sctk_mpc_get_message_in_request(request);
 
-  sctk_add_pack_in_message(msg, buf, count, data_size, begins, ends);
+  mpc_mp_comm_ptp_message_add_pack(msg, buf, count, data_size, begins, ends);
 
   sctk_mpc_register_message_in_request(request, msg);
 
@@ -6913,7 +6912,7 @@ static inline int __MPC_Add_pack_absolute(void *buf, mpc_msg_count count,
 
   msg = sctk_mpc_get_message_in_request(request);
 
-  sctk_add_pack_in_message_absolute(msg, buf, count, data_size, begins, ends);
+  mpc_mp_comm_ptp_message_add_pack_absolute(msg, buf, count, data_size, begins, ends);
 
   sctk_mpc_register_message_in_request(request, msg);
 

@@ -87,7 +87,7 @@ sctk_thread_ptp_message_t * sctk_ib_rdma_recv_done_remote_imm (__UNUSED__  sctk_
 
 
 	SCTK_PROFIL_START ( ib_rdma_idle );
-	sctk_inter_thread_perform_idle ( ( int * ) &rdma->local.ready, 1,
+	mpc_mp_comm_perform_idle ( ( int * ) &rdma->local.ready, 1,
 	                                 ( void ( * ) ( void * ) ) sctk_network_notify_idle_message, NULL );
 	SCTK_PROFIL_END ( ib_rdma_idle );
 
@@ -141,7 +141,7 @@ sctk_ib_rdma_recv_done_remote(__UNUSED__  sctk_rail_info_t *rail, sctk_ibuf_t *i
 
 
   SCTK_PROFIL_START(ib_rdma_idle);
-  sctk_inter_thread_perform_idle(
+  mpc_mp_comm_perform_idle(
       (int *)&dest_msg_header->tail.ib.rdma.local.ready, 1,
       (void (*)(void *))sctk_network_notify_idle_message, NULL);
   SCTK_PROFIL_END(ib_rdma_idle);
@@ -621,7 +621,7 @@ sctk_ib_rdma_rendezvous_recv_ack(__UNUSED__ sctk_rail_info_t *rail, sctk_ibuf_t 
 
   /* Wait while the message becomes ready */
   SCTK_PROFIL_START(ib_rdma_idle);
-  sctk_inter_thread_perform_idle(
+  mpc_mp_comm_perform_idle(
       (int *)&rdma->local.ready, 1,
       (void (*)(void *))sctk_network_notify_idle_message, NULL);
   SCTK_PROFIL_END(ib_rdma_idle);

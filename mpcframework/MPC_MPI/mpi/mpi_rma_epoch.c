@@ -289,8 +289,7 @@ int mpc_MPI_Win_request_array_test(struct mpc_MPI_Win_request_array *pra) {
 
     if (ra->requests[i].request_type != REQUEST_PICKED) {
       struct sctk_perform_messages_s _wait;
-      sctk_perform_messages_wait_init(&_wait, &ra->requests[i], 0);
-      sctk_perform_messages_wait_init_request_type(&_wait);
+      mpc_mp_comm_ptp_msg_wait_init(&_wait, &ra->requests[i], 0);
       sctk_perform_messages(&_wait);
     } else {
       if (!ra->is_emulated)

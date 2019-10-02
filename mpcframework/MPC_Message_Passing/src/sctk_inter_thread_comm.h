@@ -528,11 +528,11 @@ void mpc_mp_comm_ptp_message_header_clear ( sctk_thread_ptp_message_t *tmp, sctk
                         void ( *message_copy ) ( sctk_message_to_copy_t * ) );
 sctk_thread_ptp_message_t *mpc_mp_comm_ptp_message_header_create ( sctk_message_type_t msg_type );
 void mpc_mp_comm_ptp_message_set_contiguous_addr ( sctk_thread_ptp_message_t *restrict msg, void *restrict addr, const size_t size );
-void sctk_add_pack_in_message ( sctk_thread_ptp_message_t *msg, void *adr, const sctk_count_t nb_items,
+void mpc_mp_comm_ptp_message_add_pack ( sctk_thread_ptp_message_t *msg, void *adr, const sctk_count_t nb_items,
                                 const size_t elem_size,
                                 sctk_pack_indexes_t *begins,
                                 sctk_pack_indexes_t *ends );
-void sctk_add_pack_in_message_absolute ( sctk_thread_ptp_message_t *msg, void *adr,
+void mpc_mp_comm_ptp_message_add_pack_absolute ( sctk_thread_ptp_message_t *msg, void *adr,
                                          const sctk_count_t nb_items,
                                          const size_t elem_size,
                                          sctk_pack_absolute_indexes_t *begins,
@@ -601,12 +601,11 @@ typedef struct sctk_perform_messages_s
         int blocking;
 } sctk_perform_messages_t;
 
-void sctk_perform_messages_wait_init ( struct sctk_perform_messages_s *wait, sctk_request_t *request, int blocking );
+void mpc_mp_comm_ptp_msg_wait_init ( struct sctk_perform_messages_s *wait, sctk_request_t *request, int blocking );
 /**
 Check if the message if completed according to the message passed as a request
 */
 void sctk_perform_messages ( struct sctk_perform_messages_s *wait );
-void sctk_perform_messages_wait_init_request_type ( struct sctk_perform_messages_s *wait );
 
 /************************************************************************/
 /* General Functions                                                    */
@@ -623,7 +622,7 @@ void sctk_unregister_thread ( const int i );
 void sctk_notify_idle_message ();
 void sctk_notify_idle_message_inter ();
 
-void sctk_inter_thread_perform_idle ( volatile int *data, int value, void ( *func ) ( void * ), void *arg );
+void mpc_mp_comm_perform_idle ( volatile int *data, int value, void ( *func ) ( void * ), void *arg );
 
 #define SCTK_PARALLEL_COMM_QUEUES_NUMBER 8
 
@@ -638,8 +637,6 @@ static inline int sctk_is_process_specific_message( sctk_thread_message_header_t
 	return sctk_message_class_is_process_specific( class );
 }
 
-void sctk_inter_thread_comm_no_control_messages_start();
-void sctk_inter_thread_comm_no_control_messages_end();
 
 /************************************************************************/
 /* Thread-safe message probing	                                        */
