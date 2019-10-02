@@ -428,7 +428,7 @@ static inline void sctk_mpc_init_request_null() {
 
 void sctk_mpc_init_request(MPC_Request *request, MPC_Comm comm,
                            int request_type) {
-  sctk_init_request(request, comm, request_type);
+  mpc_mp_comm_request_init(request, comm, request_type);
 }
 
 static inline void
@@ -486,7 +486,7 @@ static inline void sctk_mpc_set_header_in_message(
 static inline void sctk_mpc_wait_message(MPC_Request *request) {
   SCTK_PROFIL_START(sctk_mpc_wait_message);
   if (sctk_mpc_message_is_null(request) == 0) {
-    sctk_wait_message(request);
+    mpc_mp_comm_wait(request);
   }
   SCTK_PROFIL_END(sctk_mpc_wait_message);
 }
@@ -891,7 +891,7 @@ static inline void __MPC_init_task_specific_t(sctk_task_specific_t *tmp) {
     for (tmp_comm = 0; tmp_comm < SCTK_PARALLEL_COMM_QUEUES_NUMBER;
          tmp_comm++) {
       tmp->my_ptp_internal[tmp_comm] =
-          sctk_get_internal_ptp(tmp->task_id, tmp_comm);
+          _mpc_comm_ptp_array_get(tmp_comm, tmp->task_id);
     }
   }
 
@@ -3309,77 +3309,6 @@ int PMPC_Get_activity(int nb_item, MPC_Activity_t *tab, double *process_act) {
   }
   proc_act = proc_act / ((double)nb_proc);
   *process_act = proc_act;
-  MPC_ERROR_SUCESS();
-}
-
-int PMPC_Move_to(int process, int cpuid) {
-  int proc;
-  proc = mpc_common_get_pu_rank();
-  sctk_nodebug("move to %d %d(old %d)", process, cpuid, proc);
-  if (process == mpc_common_get_process_rank()) {
-    if (proc != cpuid) {
-      sctk_thread_proc_migration(cpuid);
-    }
-  } else {
-    if (sctk_is_net_migration_available() && sctk_migration_mode) {
-#if 0
-	  FILE *file;
-	  char name[SCTK_MAX_FILENAME_SIZE];
-	  sctk_thread_t self;
-	  void *self_p = NULL;
-	  int rank;
-	  int vp;
-	  sctk_task_specific_t *task_specific;
-	  task_specific = __MPC_get_task_specific ();
-	  __MPC_Comm_rank (MPC_COMM_WORLD, &rank, task_specific);
-
-	  self = sctk_thread_self ();
-	  self_p = self;
-
-	  vp = cpuid;
-
-	  sprintf (name, "%s/Task_%d", sctk_store_dir, rank);
-	  file = fopen (name, "w+");
-	  assume (file != NULL);
-	  fprintf (file, "Restart 0\n");
-	  fprintf (file, "Process %d\n", mpc_common_get_process_rank());
-	  fprintf (file, "Thread %p\n", self_p);
-	  fprintf (file, "Virtual processor %d\n", vp);
-	  fclose (file);
-
-	  memcpy (&self_p, &self, sizeof (long));
-
-	  PMPC_Wait_pending_all_comm ();
-
-	  sctk_unregister_thread (rank);
-
-	  sctk_net_migration (rank, process);
-
-	  PMPC_Processor_rank (&vp);
-
-	  sprintf (name, "%s/Task_%d", sctk_store_dir, rank);
-	  file = fopen (name, "w+");
-	  assume (file != NULL);
-	  fprintf (file, "Restart 0\n");
-	  fprintf (file, "Process %d\n", mpc_common_get_process_rank());
-	  fprintf (file, "Thread %p\n", self_p);
-	  fprintf (file, "Virtual processor %d\n", vp);
-	  fclose (file);
-
-	  sctk_register_thread (rank);
-	  proc = mpc_common_get_pu_rank ();
-	  if (proc != cpuid)
-	    {
-	      sctk_thread_proc_migration (cpuid);
-	    }
-#else
-      not_implemented();
-#endif
-    } else {
-      sctk_warning("Inter process migration Disabled");
-    }
-  }
-  sctk_nodebug("move to %d %d done", process, cpuid);
   MPC_ERROR_SUCESS();
 }
 

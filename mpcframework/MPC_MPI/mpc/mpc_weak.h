@@ -155,7 +155,6 @@
 #pragma weak MPC_Restart = PMPC_Restart
 #pragma weak MPC_Restarted = PMPC_Restarted
 #pragma weak MPC_Get_activity = PMPC_Get_activity
-#pragma weak MPC_Move_to = PMPC_Move_to
   /*Packs */
 #pragma weak MPC_Open_pack = PMPC_Open_pack
 #pragma weak MPC_Default_pack = PMPC_Default_pack

@@ -713,7 +713,6 @@ int MPC_Comm_split(MPC_Comm, int, int, MPC_Comm *);
 
   int MPC_Get_activity (int nb_item, MPC_Activity_t * tab,
 			double *process_act);
-  int MPC_Move_to (int process, int cpuid);
 
   /*Packs */
   int MPC_Open_pack (MPC_Request * request);
@@ -1042,7 +1041,6 @@ int MPC_Comm_split(MPC_Comm, int, int, MPC_Comm *);
 
   int PMPC_Get_activity (int nb_item, MPC_Activity_t * tab,
 			double *process_act);
-  int PMPC_Move_to (int process, int cpuid);
 
   /*Packs */
   int PMPC_Open_pack (MPC_Request * request);

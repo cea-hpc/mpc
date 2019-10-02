@@ -708,17 +708,3 @@ void sctk_net_memory_free_hook ( void * ptr , size_t size )
 	UNUSED(size);
 #endif
 }
-
-/********************************************************************/
-/* Migration                                                        */
-/********************************************************************/
-
-int sctk_is_net_migration_available()
-{
-	if ( sctk_migration_mode == 1 )
-	{
-		not_implemented();
-	}
-
-	return sctk_migration_mode;
-}

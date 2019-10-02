@@ -61,9 +61,9 @@ int mpc_MPI_Win_progress_probe(struct mpc_MPI_Win *desc, void *prebuff,
 
     sctk_request_t req;
     memset(&req, 0, sizeof(sctk_request_t));
-    sctk_message_irecv_class_dest(st.MPI_SOURCE, desc->comm_rank, buff, msize,
+    mpc_mp_comm_irecv_class_dest(st.MPI_SOURCE, desc->comm_rank, buff, msize,
                                   16008, desc->comm, SCTK_P2P_MESSAGE, &req);
-    sctk_wait_message(&req);
+    mpc_mp_comm_wait(&req);
     // PMPI_Recv(buff, msize, MPI_CHAR, st.MPI_SOURCE, 16008, desc->comm, &st);
 
     mpc_MPI_Win_control_message_handler(buff, msize);

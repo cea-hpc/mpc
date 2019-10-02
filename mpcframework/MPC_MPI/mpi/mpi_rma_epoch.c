@@ -183,7 +183,7 @@ int mpc_MPI_Win_request_array_init(struct mpc_MPI_Win_request_array *ra,
 
   for (i = 0; i < MAX_PENDING_RMA; i++) {
     memset(&ra->requests[i], 0, sizeof(sctk_request_t));
-    sctk_init_request(&ra->requests[i], comm, REQUEST_PICKED);
+    mpc_mp_comm_request_init(&ra->requests[i], comm, REQUEST_PICKED);
     /* Register the request counter */
     mpc_MPI_register_request_counter(&ra->requests[i], &ra->available_req);
   }
@@ -318,7 +318,7 @@ mpc_MPI_Win_request_array_pick(struct mpc_MPI_Win_request_array *ra) {
 
           memset(&ra->requests[i], 0, sizeof(sctk_request_t));
 
-          sctk_init_request(&ra->requests[i], ra->comm, REQUEST_PICKED);
+          mpc_mp_comm_request_init(&ra->requests[i], ra->comm, REQUEST_PICKED);
 
           mpc_common_spinlock_unlock(&ra->lock);
 
@@ -395,7 +395,7 @@ int mpc_Win_ctx_ack_remote(struct mpc_MPI_Win_request_array *ra,
 
   assume(0 <= remote_rank);
 
-  sctk_message_isend_class_src(source_rank, remote_rank, &data, sizeof(char),
+  mpc_mp_comm_isend_class_src(source_rank, remote_rank, &data, sizeof(char),
                                TAG_RDMA_ACK + source_rank, ra->comm,
                                SCTK_RDMA_MESSAGE, request);
 
@@ -413,7 +413,7 @@ int mpc_Win_ctx_get_ack_remote(struct mpc_MPI_Win_request_array *ra,
 
   assume(0 <= remote_rank);
 
-  sctk_message_irecv_class_dest(remote_rank, source_rank, &data, sizeof(char),
+  mpc_mp_comm_irecv_class_dest(remote_rank, source_rank, &data, sizeof(char),
                                 TAG_RDMA_ACK + remote_rank, ra->comm,
                                 SCTK_RDMA_MESSAGE, request);
 
@@ -1650,12 +1650,12 @@ static inline int __mpc_MPI_Win_flush(int rank, MPI_Win win, int remote,
         }
 
         static int dummy;
-        sctk_message_irecv_class_dest(rank, desc->comm_rank, &dummy,
+        mpc_mp_comm_irecv_class_dest(rank, desc->comm_rank, &dummy,
                                       sizeof(int), TAG_RDMA_FENCE, desc->comm,
                                       SCTK_RDMA_MESSAGE, req);
 
         if (do_wait) {
-          sctk_wait_message(req);
+          mpc_mp_comm_wait(req);
         }
       }
     }

@@ -383,7 +383,7 @@ int sctk_window_map_remote(int remote_rank, sctk_communicator_t comm,
   } else {
     /* And now prepare to receive the remote win data */
     sctk_request_t req;
-    sctk_message_irecv_class(remote_rank, &remote_win_data,
+    mpc_mp_comm_irecv_class(remote_rank, &remote_win_data,
                              sizeof(struct sctk_window), TAG_RDMA_MAP, comm,
                              SCTK_RDMA_WINDOW_MESSAGES, &req);
 
@@ -395,7 +395,7 @@ int sctk_window_map_remote(int remote_rank, sctk_communicator_t comm,
         SCTK_PROCESS_RDMA_WIN_MAPTO, 0, &mr,
         sizeof(struct sctk_window_map_request));
 
-    sctk_wait_message(&req);
+    mpc_mp_comm_wait(&req);
   }
 
   return sctk_window_build_from_remote(&remote_win_data);
@@ -410,7 +410,7 @@ void sctk_window_map_remote_ctrl_msg_handler( struct sctk_window_map_request * m
 	/* Note that here we are called outside of a task context
 	 * therefore we have to manually retrieve the remote task
 	 * id for the map request to fill the messages accordingly 
-	 * using sctk_message_isend_class_src */
+	 * using mpc_mp_comm_isend_class_src */
 
         sctk_request_t req;
 
@@ -422,11 +422,11 @@ void sctk_window_map_remote_ctrl_msg_handler( struct sctk_window_map_request * m
           dummy_win.id = -1;
 
           /* Send the dummy win */
-          sctk_message_isend_class_src(mr->remote_rank, mr->source_rank,
+          mpc_mp_comm_isend_class_src(mr->remote_rank, mr->source_rank,
                                        &dummy_win, sizeof(struct sctk_window),
                                        TAG_RDMA_MAP, win->comm,
                                        SCTK_RDMA_WINDOW_MESSAGES, &req);
-          // sctk_wait_message ( &req );
+          // mpc_mp_comm_wait ( &req );
           /* Done */
           return;
         }
@@ -440,12 +440,12 @@ void sctk_window_map_remote_ctrl_msg_handler( struct sctk_window_map_request * m
 
         /* Send local win infos to remote */
 
-        sctk_message_isend_class_src(
+        mpc_mp_comm_isend_class_src(
             mr->remote_rank, mr->source_rank, win, sizeof(struct sctk_window),
             TAG_RDMA_MAP, win->comm, SCTK_RDMA_WINDOW_MESSAGES, &req);
         /* DONE */
 
-        sctk_wait_message(&req);
+        mpc_mp_comm_wait(&req);
 }
 
 void sctk_window_relax_ctrl_msg_handler( sctk_window_t win_id )
@@ -509,12 +509,12 @@ void sctk_window_RDMA_emulated_write_ctrl_msg_handler(
   }
 
   sctk_request_t req;
-  sctk_message_irecv_class_dest(sctk_get_rank(win->comm, erma->source_rank),
+  mpc_mp_comm_irecv_class_dest(sctk_get_rank(win->comm, erma->source_rank),
                                 win->comm_rank, win->start_addr + offset,
                                 erma->size, TAG_RDMA_WRITE, win->comm,
                                 SCTK_RDMA_WINDOW_MESSAGES, &req);
 
-  sctk_wait_message(&req);
+  mpc_mp_comm_wait(&req);
 
   OPA_incr_int(&win->incoming_emulated_rma[erma->source_rank]);
 #ifdef MPC_MPI
@@ -582,7 +582,7 @@ static inline void __sctk_window_RDMA_write(sctk_window_t win_id,
                                             sctk_request_t *req) {
   struct sctk_window *win = sctk_win_translate(win_id);
 
-  sctk_init_request(req, win->comm, REQUEST_RDMA);
+  mpc_mp_comm_request_init(req, win->comm, REQUEST_RDMA);
 
   sctk_nodebug("RDMA WRITE");
 
@@ -609,7 +609,7 @@ static inline void __sctk_window_RDMA_write(sctk_window_t win_id,
                                    win->remote_id);
 
     sctk_request_t data_req;
-    sctk_message_isend_class(win->comm_rank, src_addr, size, TAG_RDMA_WRITE,
+    mpc_mp_comm_isend_class(win->comm_rank, src_addr, size, TAG_RDMA_WRITE,
                              win->comm, SCTK_RDMA_WINDOW_MESSAGES, &data_req);
 
     sctk_nodebug("WRITE to rank %d (%d) in %d", win->comm_rank, win->owner,
@@ -623,7 +623,7 @@ static inline void __sctk_window_RDMA_write(sctk_window_t win_id,
     mpc_MPI_Win_notify_src_ctx_counter(win->id);
 #endif
 
-    sctk_wait_message(&data_req);
+    mpc_mp_comm_wait(&data_req);
 
     OPA_incr_int(&win->outgoing_emulated_rma);
 
@@ -685,11 +685,11 @@ void sctk_window_RDMA_emulated_read_ctrl_msg_handler( struct sctk_window_emulate
         }
 
         sctk_request_t req;
-        sctk_message_isend_class_src(
+        mpc_mp_comm_isend_class_src(
             win->comm_rank, sctk_get_rank(win->comm, erma->source_rank),
             win->start_addr + offset, erma->size, TAG_RDMA_READ, win->comm,
             SCTK_RDMA_WINDOW_MESSAGES, &req);
-        sctk_wait_message(&req);
+        mpc_mp_comm_wait(&req);
 }
 
 
@@ -746,7 +746,7 @@ void __sctk_window_RDMA_read( sctk_window_t win_id, sctk_rail_pin_ctx_t * dest_p
 {
 	struct sctk_window * win = sctk_win_translate( win_id );
 
-        sctk_init_request(req, win->comm, REQUEST_RDMA);
+        mpc_mp_comm_request_init(req, win->comm, REQUEST_RDMA);
 
         sctk_nodebug("RDMA READ");
 
@@ -774,7 +774,7 @@ void __sctk_window_RDMA_read( sctk_window_t win_id, sctk_rail_pin_ctx_t * dest_p
           sctk_window_emulated_RDMA_init(&erma, win->owner, src_offset, size,
                                          win->remote_id);
           /* Note that we store the data transfer req in the request */
-          sctk_message_irecv_class(win->comm_rank, dest_addr, size,
+          mpc_mp_comm_irecv_class(win->comm_rank, dest_addr, size,
                                    TAG_RDMA_READ, win->comm,
                                    SCTK_RDMA_WINDOW_MESSAGES, req);
 
@@ -1187,7 +1187,7 @@ void sctk_window_RDMA_fetch_and_op_ctrl_msg_handler( struct sctk_window_emulated
         sctk_window_fetch_and_op_operate(fop->op, fop->type, fop->add,
                                          win->start_addr + offset, &fetch);
 
-        sctk_message_isend_class_src(
+        mpc_mp_comm_isend_class_src(
             win->comm_rank, sctk_get_rank(win->comm, fop->rdma.source_rank),
             &fetch, fop->rdma.size, TAG_RDMA_FETCH_AND_OP, win->comm,
             SCTK_RDMA_MESSAGE, NULL);
@@ -1199,7 +1199,7 @@ static inline void sctk_window_RDMA_fetch_and_op_local(
   struct sctk_window *win = sctk_win_translate(remote_win_id);
 
   // sctk_error("Fetch and add");
-  sctk_init_request(req, win->comm, REQUEST_RDMA);
+  mpc_mp_comm_request_init(req, win->comm, REQUEST_RDMA);
 
   if (!win) {
     sctk_fatal("No such window ID %d", remote_win_id);
@@ -1269,7 +1269,7 @@ static inline void __sctk_window_RDMA_fetch_and_op(
     RDMA_type type, sctk_request_t *req) {
   struct sctk_window *win = sctk_win_translate(remote_win_id);
 
-  sctk_init_request(req, win->comm, REQUEST_RDMA);
+  mpc_mp_comm_request_init(req, win->comm, REQUEST_RDMA);
 
   // sctk_error("Fetch and add");
 
@@ -1315,7 +1315,7 @@ static inline void __sctk_window_RDMA_fetch_and_op(
                                                 win->remote_id, op, type, add);
 
     /* Note that we store the data transfer req in the request */
-    sctk_message_irecv_class(win->comm_rank, fetch_addr, fop.rdma.size,
+    mpc_mp_comm_irecv_class(win->comm_rank, fetch_addr, fop.rdma.size,
                              TAG_RDMA_FETCH_AND_OP, win->comm,
                              SCTK_RDMA_MESSAGE, req);
     sctk_control_messages_send_process(
@@ -1478,7 +1478,7 @@ void sctk_window_RDMA_CAS_ctrl_msg_handler( struct sctk_window_emulated_CAS_RDMA
         sctk_window_RDMA_CAS_local(fcas->rdma.win_id, fcas->rdma.offset,
                                    fcas->comp, fcas->new, res, fcas->type);
 
-        sctk_message_isend_class_src(
+        mpc_mp_comm_isend_class_src(
             win->comm_rank, sctk_get_rank(win->comm, fcas->rdma.source_rank),
             &res, fcas->rdma.size, TAG_RDMA_CAS, win->comm, SCTK_RDMA_MESSAGE,
             NULL);
@@ -1539,7 +1539,7 @@ void __sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, 
 		sctk_fatal("No such window ID %d", remote_win_id);
 	}
 
-        sctk_init_request(req, win->comm, REQUEST_RDMA);
+        mpc_mp_comm_request_init(req, win->comm, REQUEST_RDMA);
 
         /* Now try to see if we pass the RDMA rail gate function for fetch and
          * op */
@@ -1580,7 +1580,7 @@ void __sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, 
                                              win->remote_id, type, comp,
                                              new_data);
 
-          sctk_message_irecv_class(win->comm_rank, res, fcas.rdma.size,
+          mpc_mp_comm_irecv_class(win->comm_rank, res, fcas.rdma.size,
                                    TAG_RDMA_CAS, win->comm, SCTK_RDMA_MESSAGE,
                                    req);
           sctk_control_messages_send_process(
@@ -1630,7 +1630,7 @@ void sctk_window_RDMA_CAS_win( sctk_window_t remote_win_id, size_t remote_offset
 
 void sctk_window_RDMA_wait( sctk_request_t *request )
 {
-	sctk_wait_message( request );
+	mpc_mp_comm_wait( request );
 }
 
 

@@ -352,46 +352,6 @@ sctk_communicator_t sctk_get_local_comm_id ( const sctk_communicator_t communica
 	}
 }
 
-static inline void sctk_communicator_intern_write_lock ( sctk_internal_communicator_t *tmp )
-{
-#ifndef SCTK_MIGRATION_DISABLED
-
-	if ( sctk_migration_mode )
-		mpc_common_spinlock_write_lock ( & ( tmp->lock ) );
-
-#endif
-}
-
-static inline void sctk_communicator_intern_write_unlock ( sctk_internal_communicator_t *tmp )
-{
-#ifndef SCTK_MIGRATION_DISABLED
-
-	if ( sctk_migration_mode )
-		mpc_common_spinlock_write_unlock ( & ( tmp->lock ) );
-
-#endif
-}
-
-static inline void sctk_communicator_intern_read_lock ( sctk_internal_communicator_t *tmp )
-{
-#ifndef SCTK_MIGRATION_DISABLED
-
-	if ( sctk_migration_mode )
-		mpc_common_spinlock_read_lock ( & ( tmp->lock ) );
-
-#endif
-}
-
-static inline void sctk_communicator_intern_read_unlock ( sctk_internal_communicator_t *tmp )
-{
-#ifndef SCTK_MIGRATION_DISABLED
-
-	if ( sctk_migration_mode )
-		mpc_common_spinlock_read_unlock ( & ( tmp->lock ) );
-
-#endif
-}
-
 static inline void sctk_comm_reduce ( const sctk_communicator_t *mpc_restrict  in , sctk_communicator_t *mpc_restrict inout , size_t size , __UNUSED__ sctk_datatype_t datatype )
 {
 	size_t i;
@@ -649,7 +609,7 @@ static inline sctk_communicator_t sctk_intercommunicator_get_new_id ( int local_
 				sctk_nodebug("rank %d : FIRST try intercomm %d", rank, comm);
 			mpc_common_spinlock_unlock ( &sctk_communicator_all_table_lock );
 			//~ exchange comm between leaders
-			sctk_sendrecv( &comm, sizeof(int), remote_leader_rank, tag, &remote_comm,  remote_leader_rank, SCTK_COMM_WORLD );
+			mpc_mp_comm_sendrecv( &comm, sizeof(int), remote_leader_rank, tag, &remote_comm,  remote_leader_rank, SCTK_COMM_WORLD );
 			
 			if ( comm != -1 )
 			{
@@ -723,7 +683,7 @@ static inline sctk_communicator_t sctk_intercommunicator_get_new_id ( int local_
 		//~ echange des resultats du allreduce entre leaders
 		if ( rank == local_leader )
 		{
-			sctk_sendrecv( &ti, sizeof(int), remote_leader_rank, tag, &remote_ti,  remote_leader_rank, SCTK_COMM_WORLD );			
+			mpc_mp_comm_sendrecv( &ti, sizeof(int), remote_leader_rank, tag, &remote_ti,  remote_leader_rank, SCTK_COMM_WORLD );			
 		}
 		//~ broadcast aux autres membres par groupe
 		mpc_mp_bcast (&remote_ti,sizeof(sctk_communicator_t),local_leader,origin_communicator);
@@ -819,7 +779,7 @@ static inline sctk_communicator_t sctk_communicator_get_new_id_from_intercomm ( 
 			mpc_common_spinlock_unlock ( &sctk_communicator_all_table_lock );
 
 			//~ exchange comm between leaders
-			sctk_sendrecv( &comm, sizeof(int), remote_leader_rank, tag, &remote_comm,  remote_leader_rank, SCTK_COMM_WORLD );			
+			mpc_mp_comm_sendrecv( &comm, sizeof(int), remote_leader_rank, tag, &remote_comm,  remote_leader_rank, SCTK_COMM_WORLD );			
 
 			if ( comm != -1 )
 			{
@@ -895,7 +855,7 @@ static inline sctk_communicator_t sctk_communicator_get_new_id_from_intercomm ( 
 		//~ echange des resultats du allreduce entre leaders
 		if ( rank == local_leader )
 		{
-			sctk_sendrecv( &comm, sizeof(int), remote_leader_rank, tag, &remote_comm,  remote_leader_rank, SCTK_COMM_WORLD );
+			mpc_mp_comm_sendrecv( &comm, sizeof(int), remote_leader_rank, tag, &remote_comm,  remote_leader_rank, SCTK_COMM_WORLD );
 		}
 
 		sctk_nodebug ( "after sendrecv comm %d", comm );
@@ -1863,24 +1823,24 @@ int sctk_get_rank(const sctk_communicator_t communicator,
 
     if (result) {
       if (tmp->global_to_local != NULL) {
-        sctk_communicator_intern_read_lock(tmp);
+
         ret = tmp->global_to_local[comm_world_rank];
-        sctk_communicator_intern_read_unlock(tmp);
+
         return ret;
       }
     } else {
       if (tmp->global_to_local != NULL) {
-        sctk_communicator_intern_read_lock(tmp);
+
         ret = tmp->remote_comm->global_to_local[comm_world_rank];
-        sctk_communicator_intern_read_unlock(tmp);
+
         return ret;
       }
     }
   } else {
     if (tmp->global_to_local != NULL) {
-      sctk_communicator_intern_read_lock(tmp);
+
       ret = tmp->global_to_local[comm_world_rank];
-      sctk_communicator_intern_read_unlock(tmp);
+
       return ret;
     } else {
       /* Handle DUP of COMM_SELF case */
@@ -1921,9 +1881,9 @@ int sctk_get_remote_comm_world_rank ( const sctk_communicator_t communicator, co
 
 		if ( tmp->remote_comm->local_to_global != NULL )
 		{
-			sctk_communicator_intern_read_lock ( tmp );
+
 			ret = tmp->remote_comm->local_to_global[rank];
-			sctk_communicator_intern_read_unlock ( tmp );
+
 			return ret;
 		}
 		else
@@ -1935,9 +1895,9 @@ int sctk_get_remote_comm_world_rank ( const sctk_communicator_t communicator, co
 
 		if ( tmp->local_to_global != NULL )
 		{
-			sctk_communicator_intern_read_lock ( tmp );
+
 			ret = tmp->local_to_global[rank];
-			sctk_communicator_intern_read_unlock ( tmp );
+
 			return ret;
 		}
 		else
@@ -1988,9 +1948,9 @@ int _sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const in
 		{
 			if ( tmp->local_to_global != NULL )
 			{
-				sctk_communicator_intern_read_lock ( tmp );
+
 				ret = tmp->local_to_global[rank];
-				sctk_communicator_intern_read_unlock ( tmp );
+
 				return ret;
 			}
 			else
@@ -2000,9 +1960,9 @@ int _sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const in
 		{
 			if ( tmp->remote_comm->local_to_global != NULL )
 			{
-				sctk_communicator_intern_read_lock ( tmp );
+
 				ret = tmp->remote_comm->local_to_global[rank];
-				sctk_communicator_intern_read_unlock ( tmp );
+
 				return ret;
 			}
 			else
@@ -2013,10 +1973,10 @@ int _sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const in
 	{
 		if ( tmp->local_to_global != NULL )
 		{
-			sctk_communicator_intern_read_lock ( tmp );
+
                         assume(rank < tmp->nb_task);
                         ret = tmp->local_to_global[rank];
-                        sctk_communicator_intern_read_unlock(tmp);
+
                         return ret;
                 } else {
                   /* Handle DUP of COMM_SELF case */
@@ -2074,9 +2034,9 @@ int _sctk_get_process_rank_from_task_rank( int rank )
 
 	if ( tmp->task_to_process != NULL )
 	{
-		sctk_communicator_intern_read_lock( tmp );
+
 		proc_rank = tmp->task_to_process[rank];
-		sctk_communicator_intern_read_unlock( tmp );
+
 
 		if(0 <= proc_rank)
 			return proc_rank;
@@ -2407,7 +2367,7 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 	//~ exchange local size
 	if ( grank == local_leader )
 	{
-		sctk_sendrecv( &local_size, sizeof(int), remote_leader_rank, tag, &remote_size,  remote_leader_rank, SCTK_COMM_WORLD );
+		mpc_mp_comm_sendrecv( &local_size, sizeof(int), remote_leader_rank, tag, &remote_size,  remote_leader_rank, SCTK_COMM_WORLD );
 	}
 
 	mpc_mp_bcast (&remote_size,sizeof(int),local_leader,local_comm);
@@ -2426,11 +2386,11 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 		
 		/* Do a sendrecv with varying sizes */
 		sctk_request_t task_sendreq, task_recvreq;
-		sctk_message_isend( remote_leader_rank, task_list, local_size * sizeof(int), tag, SCTK_COMM_WORLD , &task_sendreq );
-		sctk_message_irecv( remote_leader_rank, remote_task_list, remote_size * sizeof(int), tag, SCTK_COMM_WORLD , &task_recvreq );
+		mpc_mp_comm_isend( remote_leader_rank, task_list, local_size * sizeof(int), tag, SCTK_COMM_WORLD , &task_sendreq );
+		mpc_mp_comm_irecv( remote_leader_rank, remote_task_list, remote_size * sizeof(int), tag, SCTK_COMM_WORLD , &task_recvreq );
 		
-		sctk_wait_message( &task_sendreq );
-		sctk_wait_message( &task_recvreq );
+		mpc_mp_comm_wait( &task_sendreq );
+		mpc_mp_comm_wait( &task_recvreq );
 	}
 
 	mpc_mp_bcast (remote_task_list,(remote_size*sizeof(int)),local_leader,local_comm);
@@ -2438,14 +2398,14 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 	//~ exchange leaders
 	if ( grank == local_leader )
 	{
-		sctk_sendrecv( &lleader, sizeof(int), remote_leader_rank, tag, &remote_lleader,  remote_leader_rank, SCTK_COMM_WORLD );
+		mpc_mp_comm_sendrecv( &lleader, sizeof(int), remote_leader_rank, tag, &remote_lleader,  remote_leader_rank, SCTK_COMM_WORLD );
 	}
 
 	mpc_mp_bcast (&remote_lleader,sizeof(int),local_leader,local_comm);
 
 	if ( grank == local_leader )
 	{
-		sctk_sendrecv( &rleader, sizeof(int), remote_leader_rank, tag, &remote_rleader,  remote_leader_rank, SCTK_COMM_WORLD );
+		mpc_mp_comm_sendrecv( &rleader, sizeof(int), remote_leader_rank, tag, &remote_rleader,  remote_leader_rank, SCTK_COMM_WORLD );
 	}
 
 	mpc_mp_bcast (&remote_rleader,sizeof(int),local_leader,local_comm);
@@ -2453,7 +2413,7 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 	//~ exchange local comm ids
 	if ( grank == local_leader )
 	{
-		sctk_sendrecv( &local_id, sizeof(int), remote_leader_rank, tag, &remote_id,  remote_leader_rank, SCTK_COMM_WORLD );
+		mpc_mp_comm_sendrecv( &local_id, sizeof(int), remote_leader_rank, tag, &remote_id,  remote_leader_rank, SCTK_COMM_WORLD );
 	}
 
 	mpc_mp_bcast (&remote_id,sizeof(int),local_leader,local_comm);

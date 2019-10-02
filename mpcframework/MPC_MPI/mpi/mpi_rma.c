@@ -140,10 +140,10 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
     if (!can_write_rma && can_read_rma) {
 
       sctk_request_t req;
-      sctk_init_request(&req, desc->comm, REQUEST_SEND);
+      mpc_mp_comm_request_init(&req, desc->comm, REQUEST_SEND);
       sctk_window_RDMA_read(target_win, tmp_buff, remote_size, target_disp,
                             &req);
-      sctk_wait_message(&req);
+      mpc_mp_comm_wait(&req);
 
       int pos = 0;
       __INTERNAL__PMPI_Unpack(tmp_buff, pack_size, &pos, origin_addr,
@@ -186,7 +186,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
         dest_buff = origin_addr;
       }
 
-      sctk_message_irecv_class_dest(target_rank, desc->comm_rank, dest_buff,
+      mpc_mp_comm_irecv_class_dest(target_rank, desc->comm_rank, dest_buff,
                                     target_pack_size, TAG_RDMA_READ, desc->comm,
                                     SCTK_RDMA_MESSAGE, request);
 
@@ -195,7 +195,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
                                                    stsize);
 
       if (!can_write_rma) {
-        sctk_wait_message(request);
+        mpc_mp_comm_wait(request);
         int pos = 0;
         __INTERNAL__PMPI_Unpack(dest_buff, target_pack_size, &pos, origin_addr,
                                 origin_count, origin_datatype, desc->comm);
@@ -397,7 +397,7 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
     sctk_request_t *request1 =
         mpc_MPI_Win_request_array_pick(&desc->source.requests);
 
-    sctk_message_isend_class_src(desc->comm_rank, target_rank,
+    mpc_mp_comm_isend_class_src(desc->comm_rank, target_rank,
                                  (char *)origin_addr, pack_size, TAG_RDMA_WRITE,
                                  desc->comm, SCTK_RDMA_MESSAGE, request1);
 
@@ -711,7 +711,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
       ref_request->pointer_to_shadow_request = request;
     }
 
-    sctk_message_isend_class_src(desc->comm_rank, target_rank, origin_addr,
+    mpc_mp_comm_isend_class_src(desc->comm_rank, target_rank, origin_addr,
                                  pack_size, TAG_RDMA_ACCUMULATE, desc->comm,
                                  SCTK_RDMA_MESSAGE, request);
 

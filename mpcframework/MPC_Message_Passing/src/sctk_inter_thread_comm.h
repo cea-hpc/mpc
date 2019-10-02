@@ -56,7 +56,7 @@ typedef enum {
   REQUEST_RDMA
 } sctk_request_type_t;
 
-void sctk_wait_message ( sctk_request_t *request );
+void mpc_mp_comm_wait ( sctk_request_t *request );
 int mpc_mp_comm_cancel_msg ( sctk_request_t *msg );
 
 /************************************************************************/
@@ -215,14 +215,14 @@ static inline int sctk_message_class_is_control_message( sctk_message_class_t ty
 /* Low Level Messafe Interface                                          */
 /************************************************************************/
 
-void sctk_init_request (sctk_request_t * request, sctk_communicator_t comm, int request_type);
-void sctk_message_isend_class_src( int src , int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req );
-void sctk_message_irecv_class_dest( int src, int dest, void * buffer, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req );
-void sctk_message_isend_class( int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req );
-void sctk_message_irecv_class( int src, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req );
-void sctk_message_isend( int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req );
-void sctk_message_irecv( int src, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req );
-void sctk_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * recvbuf, int src, int comm );
+void mpc_mp_comm_request_init (sctk_request_t * request, sctk_communicator_t comm, int request_type);
+void mpc_mp_comm_isend_class_src( int src , int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req );
+void mpc_mp_comm_irecv_class_dest( int src, int dest, void * buffer, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req );
+void mpc_mp_comm_isend_class( int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req );
+void mpc_mp_comm_irecv_class( int src, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req );
+void mpc_mp_comm_isend( int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req );
+void mpc_mp_comm_irecv( int src, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req );
+void mpc_mp_comm_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * recvbuf, int src, int comm );
 
 /************************************************************************/
 /* Control Messages Header                                              */

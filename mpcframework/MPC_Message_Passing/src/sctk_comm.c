@@ -59,17 +59,17 @@ sctk_communicator_t MPC_Net_delete_comm( const sctk_communicator_t comm )
 
 void MPC_Net_isend( int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req )
 {
-	sctk_message_isend( dest, data, size, tag, comm , req );
+	mpc_mp_comm_isend( dest, data, size, tag, comm , req );
 }
 
 void MPC_Net_irecv( int src, void * buffer, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req )
 {
-	sctk_message_irecv( src,  buffer, size, tag, comm ,  req );
+	mpc_mp_comm_irecv( src,  buffer, size, tag, comm ,  req );
 }
 
 void MPC_Net_wait( sctk_request_t * request )
 {
-	sctk_wait_message( request );
+	mpc_mp_comm_wait( request );
 }
 
 void MPC_Net_send( int dest, void * data, size_t size, int tag, sctk_communicator_t comm )
@@ -88,7 +88,7 @@ void MPC_Net_recv( int src, void * buffer, size_t size, int tag, sctk_communicat
 
 void MPC_Net_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * recvbuf, int src, sctk_communicator_t comm )
 {
-	sctk_sendrecv( sendbuf, size, dest, tag, recvbuf, src, comm );
+	mpc_mp_comm_sendrecv( sendbuf, size, dest, tag, recvbuf, src, comm );
 }
 
 /*  ###############

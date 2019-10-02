@@ -96,6 +96,28 @@
 </config>
 <config name="MPC_Common">
 	<usertypes>
+		<struct name="debugger" doc="Options for MPC Debugger">
+			<param name="colors" type="bool" default="true" doc="Print colored text in terminal"/>
+			<param name="max_filename_size" type="int" default="1024" doc=""/>
+			<param name="mpc_bt_sig" type="int" default="1" doc="Should MPC capture common signals also connected to the MPC_BT_SIG environment variable which supersedes the config" />
+		</struct>
+	</usertypes>
+	<modules>
+		<module name="debugger" type="debugger"/>
+	</modules>
+</config>
+<config name="MPC_Fault_Tolerance">
+	<usertypes>
+		<struct name="ft" doc="Options for MPC Fault-Tolerance module.">
+			<param name="enabled" type="bool" default="false" doc="Set to true to enable Fault-Tolerance support" />
+		</struct>
+	</usertypes>
+	<modules>
+		<module name="ft_system" type="ft"/>
+	</modules>
+</config>
+<config name="MPC_Launch">
+	<usertypes>
 		<struct name="launcher" doc="Options for MPC launcher.">
 			<param name="verbosity" type="int" default="0" doc="Default verbosity level from 0 to 3. Can be override by -vv on mpcrun." alias="LN_VERBOSITY" />
 			<param name="banner" type="bool" default="true" doc="Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER." alias="LN_BANNER" />
@@ -117,29 +139,11 @@
 			<param name="share_node" type="bool" default="false" doc="Enable the restriction on CPU number to share node" alias="LN_SHARE_NODE" />
 			<param name="restart" type="bool" default="false" doc="Restart MPC from a previous checkpoint" alias="LN_RESTART" />
 			<param name="checkpoint" type="bool" default="false" doc="Enable MPC checkpointing" alias="LN_CHECKPOINT" />
-			<param name="migration" type="bool" default="false" doc="Enable migration" alias="LN_MIGRATION" />
 			<param name="report" type="bool" default="false" doc="Enable reporting." alias="LN_REPORT" />
-		</struct>
-		
-		<struct name="debugger" doc="Options for MPC Debugger">
-			<param name="colors" type="bool" default="true" doc="Print colored text in terminal"/>
-			<param name="max_filename_size" type="int" default="1024" doc=""/>
-			<param name="mpc_bt_sig" type="int" default="1" doc="Should MPC capture common signals also connected to the MPC_BT_SIG environment variable which supersedes the config" />
 		</struct>
 	</usertypes>
 	<modules>
 		<module name="launcher" type="launcher"/>
-		<module name="debugger" type="debugger"/>
-	</modules>
-</config>
-<config name="MPC_Fault_Tolerance">
-	<usertypes>
-		<struct name="ft" doc="Options for MPC Fault-Tolerance module.">
-			<param name="enabled" type="bool" default="false" doc="Set to true to enable Fault-Tolerance support" />
-		</struct>
-	</usertypes>
-	<modules>
-		<module name="ft_system" type="ft"/>
 	</modules>
 </config>
 <config name="MPC_MPI">

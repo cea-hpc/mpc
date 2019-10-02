@@ -95,6 +95,20 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_debugger">
+    <xs:all>
+      <xs:element minOccurs="0" name="colors" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="max_filename_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="mpc_bt_sig" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_ft">
+    <xs:all>
+      <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_launcher">
     <xs:all>
       <xs:element minOccurs="0" name="verbosity" type="xs:integer"/>
@@ -123,22 +137,7 @@
       <xs:element minOccurs="0" name="share_node" type="xs:boolean"/>
       <xs:element minOccurs="0" name="restart" type="xs:boolean"/>
       <xs:element minOccurs="0" name="checkpoint" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="migration" type="xs:boolean"/>
       <xs:element minOccurs="0" name="report" type="xs:boolean"/>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
-  <xs:complexType name="user_type_debugger">
-    <xs:all>
-      <xs:element minOccurs="0" name="colors" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="max_filename_size" type="xs:integer"/>
-      <xs:element minOccurs="0" name="mpc_bt_sig" type="xs:integer"/>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
-  <xs:complexType name="user_type_ft">
-    <xs:all>
-      <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
@@ -1049,9 +1048,9 @@
       <xs:element minOccurs="0" name="accelerator" type="user_type_accl"/>
       <xs:element minOccurs="0" name="arpc" type="user_type_arpc_type"/>
       <xs:element minOccurs="0" name="allocator" type="user_type_allocator"/>
-      <xs:element minOccurs="0" name="launcher" type="user_type_launcher"/>
       <xs:element minOccurs="0" name="debugger" type="user_type_debugger"/>
       <xs:element minOccurs="0" name="ft_system" type="user_type_ft"/>
+      <xs:element minOccurs="0" name="launcher" type="user_type_launcher"/>
       <xs:element minOccurs="0" name="collectives_shm_shared" type="user_type_collectives_shm_shared"/>
       <xs:element minOccurs="0" name="collectives_shm" type="user_type_collectives_shm"/>
       <xs:element minOccurs="0" name="collectives_intra" type="user_type_collectives_intra"/>

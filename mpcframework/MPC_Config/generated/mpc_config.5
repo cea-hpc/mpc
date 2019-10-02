@@ -111,10 +111,6 @@ See type arpc_type.
 Options for MPC memory allocator.
 .br
 See type allocator.
-.It Cm launcher
-Options for MPC launcher.
-.br
-See type launcher.
 .It Cm debugger
 Options for MPC Debugger
 .br
@@ -123,6 +119,10 @@ See type debugger.
 Options for MPC Fault-Tolerance module.
 .br
 See type ft.
+.It Cm launcher
+Options for MPC launcher.
+.br
+See type launcher.
 .It Cm collectives_shm_shared
 Shared Memory Collectives for MPC
 .br
@@ -284,6 +284,36 @@ Type is size. Default value is 8MB.
 .Pp keep_max
 Maximum size of macro blocs to keep in memory source for reuse. Use 0 to disable cache, huge value to keep all.
 .El
+.Sh ENTRIES OF TYPE debugger
+Options for MPC Debugger
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm colors
+Type is bool. Default value is true. 
+.Pp colors
+Print colored text in terminal
+.It Cm max_filename_size
+Type is int. Default value is 1024. 
+.Pp max_filename_size
+
+.It Cm mpc_bt_sig
+Type is int. Default value is 1. 
+.Pp mpc_bt_sig
+Should MPC capture common signals also connected to the MPC_BT_SIG environment variable which supersedes the config
+.El
+.Sh ENTRIES OF TYPE ft
+Options for MPC Fault-Tolerance module.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm enabled
+Type is bool. Default value is false. 
+.Pp enabled
+Set to true to enable Fault-Tolerance support
+.El
 .Sh ENTRIES OF TYPE launcher
 Options for MPC launcher.
 .Pp
@@ -370,44 +400,10 @@ Restart MPC from a previous checkpoint
 Type is bool. Default value is false. 
 .Pp checkpoint
 Enable MPC checkpointing
-.It Cm migration
-Type is bool. Default value is false. 
-.Pp migration
-Enable migration
 .It Cm report
 Type is bool. Default value is false. 
 .Pp report
 Enable reporting.
-.El
-.Sh ENTRIES OF TYPE debugger
-Options for MPC Debugger
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm colors
-Type is bool. Default value is true. 
-.Pp colors
-Print colored text in terminal
-.It Cm max_filename_size
-Type is int. Default value is 1024. 
-.Pp max_filename_size
-
-.It Cm mpc_bt_sig
-Type is int. Default value is 1. 
-.Pp mpc_bt_sig
-Should MPC capture common signals also connected to the MPC_BT_SIG environment variable which supersedes the config
-.El
-.Sh ENTRIES OF TYPE ft
-Options for MPC Fault-Tolerance module.
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm enabled
-Type is bool. Default value is false. 
-.Pp enabled
-Set to true to enable Fault-Tolerance support
 .El
 .Sh ENTRIES OF TYPE collectives_shm_shared
 Shared Memory Collectives for MPC

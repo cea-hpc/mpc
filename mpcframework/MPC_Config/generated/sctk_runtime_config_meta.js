@@ -28,6 +28,14 @@ meta.types = {
 		keep_mem: {mode: 'param', name: "keep_mem", type: "size", doc: "Maximum amount of memory to keep in memory sources (one per NUMA node). Use 0 to disable cache, huge value to keep all.", dflt: "500MB", },
 		keep_max: {mode: 'param', name: "keep_max", type: "size", doc: "Maximum size of macro blocs to keep in memory source for reuse. Use 0 to disable cache, huge value to keep all.", dflt: "8MB", },
 	}},
+	debugger : {type: 'struct', name: "debugger", childs: {
+		colors: {mode: 'param', name: "colors", type: "bool", doc: "Print colored text in terminal", dflt: "true", },
+		max_filename_size: {mode: 'param', name: "max_filename_size", type: "int", doc: "", dflt: "1024", },
+		mpc_bt_sig: {mode: 'param', name: "mpc_bt_sig", type: "int", doc: "Should MPC capture common signals also connected to the MPC_BT_SIG environment variable which supersedes the config", dflt: "1", },
+	}},
+	ft : {type: 'struct', name: "ft", childs: {
+		enabled: {mode: 'param', name: "enabled", type: "bool", doc: "Set to true to enable Fault-Tolerance support", dflt: "false", },
+	}},
 	launcher : {type: 'struct', name: "launcher", childs: {
 		verbosity: {mode: 'param', name: "verbosity", type: "int", doc: "Default verbosity level from 0 to 3. Can be override by -vv on mpcrun.", dflt: "0", },
 		banner: {mode: 'param', name: "banner", type: "bool", doc: "Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER.", dflt: "true", },
@@ -49,16 +57,7 @@ meta.types = {
 		share_node: {mode: 'param', name: "share_node", type: "bool", doc: "Enable the restriction on CPU number to share node", dflt: "false", },
 		restart: {mode: 'param', name: "restart", type: "bool", doc: "Restart MPC from a previous checkpoint", dflt: "false", },
 		checkpoint: {mode: 'param', name: "checkpoint", type: "bool", doc: "Enable MPC checkpointing", dflt: "false", },
-		migration: {mode: 'param', name: "migration", type: "bool", doc: "Enable migration", dflt: "false", },
 		report: {mode: 'param', name: "report", type: "bool", doc: "Enable reporting.", dflt: "false", },
-	}},
-	debugger : {type: 'struct', name: "debugger", childs: {
-		colors: {mode: 'param', name: "colors", type: "bool", doc: "Print colored text in terminal", dflt: "true", },
-		max_filename_size: {mode: 'param', name: "max_filename_size", type: "int", doc: "", dflt: "1024", },
-		mpc_bt_sig: {mode: 'param', name: "mpc_bt_sig", type: "int", doc: "Should MPC capture common signals also connected to the MPC_BT_SIG environment variable which supersedes the config", dflt: "1", },
-	}},
-	ft : {type: 'struct', name: "ft", childs: {
-		enabled: {mode: 'param', name: "enabled", type: "bool", doc: "Set to true to enable Fault-Tolerance support", dflt: "false", },
 	}},
 	collectives_shm_shared : {type: 'struct', name: "collectives_shm_shared", childs: {
 		barrier_intra_shared_node: {mode: 'param', name: "barrier_intra_shared_node", type: "funcptr", doc: "MPI_Barrier intracom algorithm on shared-node comms", dflt: "__INTERNAL__PMPI_Barrier_intra_shared_node", },
@@ -379,9 +378,9 @@ meta.modules = {
 	accelerator: {name: "accelerator", type: "accl"},
 	arpc: {name: "arpc", type: "arpc_type"},
 	allocator: {name: "allocator", type: "allocator"},
-	launcher: {name: "launcher", type: "launcher"},
 	debugger: {name: "debugger", type: "debugger"},
 	ft_system: {name: "ft_system", type: "ft"},
+	launcher: {name: "launcher", type: "launcher"},
 	collectives_shm_shared: {name: "collectives_shm_shared", type: "collectives_shm_shared"},
 	collectives_shm: {name: "collectives_shm", type: "collectives_shm"},
 	collectives_intra: {name: "collectives_intra", type: "collectives_intra"},

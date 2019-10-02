@@ -154,6 +154,36 @@ void sctk_runtime_config_struct_init_allocator(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_debugger(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_debugger * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->colors = true;
+	obj->max_filename_size = 1024;
+	obj->mpc_bt_sig = 1;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_ft(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_ft * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->enabled = false;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_launcher * obj = struct_ptr;
@@ -664,39 +694,6 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 			abort();
 		}
 #endif
-				obj->migration = false;
-
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_MIGRATION" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->migration ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_MIGRATION");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->migration);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_MIGRATION");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_MIGRATION");
-			abort();
-		}
-#endif
 				obj->report = false;
 
 #ifdef MPC_MPI
@@ -731,36 +728,6 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 		}
 #endif
 				obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_debugger(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_debugger * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->colors = true;
-	obj->max_filename_size = 1024;
-	obj->mpc_bt_sig = 1;
-	obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_ft(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_ft * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->enabled = false;
-	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
@@ -3737,9 +3704,9 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_struct_init_arpc_type(&config->modules.arpc);
 	sctk_runtime_config_enum_init_net_layer_type();
 	sctk_runtime_config_struct_init_allocator(&config->modules.allocator);
-	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
 	sctk_runtime_config_struct_init_debugger(&config->modules.debugger);
 	sctk_runtime_config_struct_init_ft(&config->modules.ft_system);
+	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
 	sctk_runtime_config_struct_init_collectives_shm_shared(&config->modules.collectives_shm_shared);
 	sctk_runtime_config_struct_init_collectives_shm(&config->modules.collectives_shm);
 	sctk_runtime_config_struct_init_collectives_intra(&config->modules.collectives_intra);
@@ -3817,12 +3784,6 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 		return;
 	}
 
-	if( !strcmp( structname , "sctk_runtime_config_struct_launcher") )
-	{
-		sctk_runtime_config_struct_init_launcher( ptr );
-		return;
-	}
-
 	if( !strcmp( structname , "sctk_runtime_config_struct_debugger") )
 	{
 		sctk_runtime_config_struct_init_debugger( ptr );
@@ -3832,6 +3793,12 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 	if( !strcmp( structname , "sctk_runtime_config_struct_ft") )
 	{
 		sctk_runtime_config_struct_init_ft( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_launcher") )
+	{
+		sctk_runtime_config_struct_init_launcher( ptr );
 		return;
 	}
 

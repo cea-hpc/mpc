@@ -220,7 +220,7 @@ void __sctk_control_messages_send(int dest, int dest_task,
 
   sctk_send_message_try_check(&msg, 1);
 
-  sctk_wait_message(&request);
+  mpc_mp_comm_wait(&request);
 }
 
 void sctk_control_messages_send_process(int dest_process, int subtype,
@@ -379,9 +379,9 @@ void sctk_control_messages_perform(sctk_thread_ptp_message_t *msg, int force) {
     /* Trigger the copy from network task */
     copy_task.msg_send->tail.message_copy(&copy_task);
   } else {
-    sctk_message_irecv_class(source_rank, tmp_contol_buffer, msg_size, 16000,
+    mpc_mp_comm_irecv_class(source_rank, tmp_contol_buffer, msg_size, 16000,
                              msg_comm, class, &request);
-    sctk_wait_message(&request);
+    mpc_mp_comm_wait(&request);
   }
 
   void *data = tmp_contol_buffer;
@@ -409,7 +409,7 @@ void sctk_control_message_fence_req(int target_task, sctk_communicator_t comm,
 
   static int dummy = 0;
 
-  sctk_message_irecv_class_dest(ctx.remote, ctx.source, &dummy, sizeof(int),
+  mpc_mp_comm_irecv_class_dest(ctx.remote, ctx.source, &dummy, sizeof(int),
                                 ctx.source, comm, SCTK_CONTROL_MESSAGE_FENCE,
                                 req);
 
@@ -426,7 +426,7 @@ void sctk_control_message_fence(int target_task, sctk_communicator_t comm) {
 
   sctk_control_message_fence_req(target_task, comm, &fence_req);
 
-  sctk_wait_message(&fence_req);
+  mpc_mp_comm_wait(&fence_req);
 }
 
 void sctk_control_message_fence_handler( struct sctk_control_message_fence_ctx *ctx )
@@ -436,7 +436,7 @@ void sctk_control_message_fence_handler( struct sctk_control_message_fence_ctx *
 
   sctk_control_message_process_local( mpc_common_get_task_rank());
 
-  sctk_message_isend_class_src(ctx->remote, ctx->source, &dummy, sizeof(int),
+  mpc_mp_comm_isend_class_src(ctx->remote, ctx->source, &dummy, sizeof(int),
                                ctx->source, ctx->comm,
                                SCTK_CONTROL_MESSAGE_FENCE, NULL);
 }

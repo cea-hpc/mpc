@@ -113,6 +113,26 @@ struct sctk_runtime_config_struct_allocator
 };
 
 /******************************** STRUCTURE *********************************/
+/**Options for MPC Debugger**/
+struct sctk_runtime_config_struct_debugger
+{	int init_done;
+	/**Print colored text in terminal**/
+	int colors;
+	/****/
+	int max_filename_size;
+	/**Should MPC capture common signals also connected to the MPC_BT_SIG environment variable which supersedes the config**/
+	int mpc_bt_sig;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Options for MPC Fault-Tolerance module.**/
+struct sctk_runtime_config_struct_ft
+{	int init_done;
+	/**Set to true to enable Fault-Tolerance support**/
+	int enabled;
+};
+
+/******************************** STRUCTURE *********************************/
 /**Options for MPC launcher.**/
 struct sctk_runtime_config_struct_launcher
 {	int init_done;
@@ -156,30 +176,8 @@ struct sctk_runtime_config_struct_launcher
 	int restart;
 	/**Enable MPC checkpointing**/
 	int checkpoint;
-	/**Enable migration**/
-	int migration;
 	/**Enable reporting.**/
 	int report;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Options for MPC Debugger**/
-struct sctk_runtime_config_struct_debugger
-{	int init_done;
-	/**Print colored text in terminal**/
-	int colors;
-	/****/
-	int max_filename_size;
-	/**Should MPC capture common signals also connected to the MPC_BT_SIG environment variable which supersedes the config**/
-	int mpc_bt_sig;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Options for MPC Fault-Tolerance module.**/
-struct sctk_runtime_config_struct_ft
-{	int init_done;
-	/**Set to true to enable Fault-Tolerance support**/
-	int enabled;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -950,9 +948,9 @@ struct sctk_runtime_config_modules
 	struct sctk_runtime_config_struct_accl accelerator;
 	struct sctk_runtime_config_struct_arpc_type arpc;
 	struct sctk_runtime_config_struct_allocator allocator;
-	struct sctk_runtime_config_struct_launcher launcher;
 	struct sctk_runtime_config_struct_debugger debugger;
 	struct sctk_runtime_config_struct_ft ft_system;
+	struct sctk_runtime_config_struct_launcher launcher;
 	struct sctk_runtime_config_struct_collectives_shm_shared collectives_shm_shared;
 	struct sctk_runtime_config_struct_collectives_shm collectives_shm;
 	struct sctk_runtime_config_struct_collectives_intra collectives_intra;

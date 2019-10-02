@@ -60,7 +60,7 @@ extern "C"
   extern bool sctk_enable_graphic_placement;
   extern bool sctk_enable_text_placement;
   extern bool sctk_share_node_capabilities;
-  extern bool sctk_migration_mode;
+
 
   void mpc_start_ (void);
   void mpc_start__ (void);

@@ -539,10 +539,6 @@ void ffunc (mpc_get_activity) (int *nb_item, MPC_Activity_t * tab,
   *err = MPC_Get_activity (*nb_item, tab, process_act);
 }
 
-void ffunc (mpc_move_to) (int *process, int *cpuid, int *err)
-{
-  *err = MPC_Move_to (*process, *cpuid);
-}
 
 /*Packs */
 void ffunc (mpc_open_pack) (MPC_Request * request, int *err)
