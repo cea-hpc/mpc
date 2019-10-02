@@ -393,38 +393,27 @@ TODO("UNDERSTAND WHY IT IS FAILING");
 		}
 	}
 
-#ifdef MPC_Message_Passing
-	mpc_mp_coll_init_hook =
-		*(void**)(&sctk_runtime_config_get()->modules.inter_thread_comm.collectives_init_hook.value);
-	if (sctk_process_nb_val > 1){
-		sctk_ptp_per_task_init(-1);
-	}
-#endif
-
-	if (sctk_task_nb_val)
-	{
-#ifdef MPC_Message_Passing
-		sctk_communicator_world_init (sctk_task_nb_val);
-		sctk_communicator_self_init ();
-#else
-		(void) (0);
-#endif
-	}
-	else
+	if(!sctk_task_nb_val)
 	{
 		fprintf (stderr, "No task number specified!\n");
 		sctk_abort ();
 	}
 
+#ifdef MPC_Message_Passing
+	mpc_mp_coll_init_hook = *(void**)(&sctk_runtime_config_get()->modules.inter_thread_comm.collectives_init_hook.value);
+	sctk_communicator_world_init (sctk_task_nb_val);
+	sctk_communicator_self_init ();
+#endif
+
 #ifdef MPC_Profiler
 	sctk_internal_profiler_init();
 #endif
 
-#ifdef SCTK_LIB_MODE	
+#ifdef SCTK_LIB_MODE
 	/* In LIB mode we create the task context
 	 * at process level (not in an actual task ) */
 	int my_rank = mpc_common_get_process_rank();
-	sctk_ptp_per_task_init (my_rank);
+	mpc_mp_comm_init_per_task (my_rank);
 #endif
 
 	/* Start auxiliary polling thread */

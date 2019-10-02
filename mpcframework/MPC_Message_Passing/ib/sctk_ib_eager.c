@@ -213,13 +213,13 @@ void sctk_ib_eager_recv_free ( sctk_rail_info_t *rail, sctk_thread_ptp_message_t
 	/* Read from recopied buffer */
 	if ( recopy )
 	{
-		sctk_reinit_header ( msg, __free_with_recopy, sctk_net_message_copy );
+		_mpc_comm_ptp_message_set_copy_and_free ( msg, __free_with_recopy, sctk_net_message_copy );
 		sctk_ibuf_release ( &rail->network.ib, ibuf, 0 );
 		/* Read from network buffer  */
 	}
 	else
 	{
-		sctk_reinit_header ( msg, __free_no_recopy, sctk_ib_eager_recv_msg_no_recopy );
+		_mpc_comm_ptp_message_set_copy_and_free ( msg, __free_no_recopy, sctk_ib_eager_recv_msg_no_recopy );
 	}
 }
 
@@ -266,7 +266,7 @@ static sctk_thread_ptp_message_t *sctk_ib_eager_recv ( sctk_rail_info_t *rail, s
 	msg->tail.ib.eager.ibuf = ibuf;
 	msg->tail.ib.protocol = protocol;
 
-	sctk_rebuild_header ( msg );
+	_mpc_comm_ptp_message_clear_request ( msg );
 	return msg;
 }
 

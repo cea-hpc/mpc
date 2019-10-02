@@ -107,8 +107,8 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 			break;
 		}
 
-		sctk_rebuild_header ( msg );
-		sctk_reinit_header ( msg, sctk_free, sctk_net_message_copy );
+		_mpc_comm_ptp_message_clear_request ( msg );
+		_mpc_comm_ptp_message_set_copy_and_free ( msg, sctk_free, sctk_net_message_copy );
 
 
 		tmp->rail->send_message_from_network ( msg );

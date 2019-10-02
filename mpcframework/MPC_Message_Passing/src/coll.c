@@ -278,12 +278,12 @@ typedef struct
 static void _mpc_coll_message_send( const sctk_communicator_t communicator, int myself, int dest, int tag, void *buffer, size_t size,
 									sctk_message_class_t message_class, _mpc_coll_messages_t *msg_req, int check_msg )
 {
-	sctk_init_header( &( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS,
+	mpc_mp_comm_ptp_message_header_clear( &( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS,
 					  _mpc_coll_free_message, sctk_message_copy );
-	sctk_add_adress_in_message( &( msg_req->msg ), buffer, size );
-	sctk_set_header_in_message( &( msg_req->msg ), tag, communicator, myself, dest,
+	mpc_mp_comm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
+	mpc_mp_comm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, myself, dest,
 								&( msg_req->request ), size, message_class,
-								SCTK_DATATYPE_IGNORE, REQUEST_SEND_COLL );
+								SCTK_DATATYPE_IGNORE, REQUEST_SEND );
 
 	sctk_send_message_try_check( &( msg_req->msg ), check_msg );
 }
@@ -291,12 +291,12 @@ static void _mpc_coll_message_send( const sctk_communicator_t communicator, int 
 static void _mpc_coll_message_recv( const sctk_communicator_t communicator, int src, int myself, int tag, void *buffer, size_t size,
 									sctk_message_class_t message_class, _mpc_coll_messages_t *msg_req, struct mpc_comm_ptp_s *ptp_internal, int check_msg )
 {
-	sctk_init_header( &( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS,
+	mpc_mp_comm_ptp_message_header_clear( &( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS,
 					  _mpc_coll_free_message, sctk_message_copy );
-	sctk_add_adress_in_message( &( msg_req->msg ), buffer, size );
-	sctk_set_header_in_message( &( msg_req->msg ), tag, communicator, src, myself,
+	mpc_mp_comm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
+	mpc_mp_comm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, src, myself,
 								&( msg_req->request ), size, message_class,
-								SCTK_DATATYPE_IGNORE, REQUEST_RECV_COLL );
+								SCTK_DATATYPE_IGNORE, REQUEST_RECV );
 
 	sctk_recv_message_try_check( &( msg_req->msg ), ptp_internal, check_msg );
 }
@@ -359,7 +359,7 @@ static void _mpc_coll_opt_barrier( const sctk_communicator_t communicator, __UNU
 		total = sctk_get_nb_task_total( communicator );
 		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
 		ptp_internal =
-			sctk_get_internal_ptp( mpc_common_get_task_rank(), communicator );
+			_mpc_comm_ptp_array_get(communicator, mpc_common_get_task_rank() );
 		sctk_nodebug( "enter barrier total = %d, myself = %d", total,
 					  myself );
 		total_max = log( total ) / log( barrier_arity );
@@ -458,7 +458,7 @@ static void _mpc_coll_opt_barrier( const sctk_communicator_t communicator, __UNU
 
 		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
 		ptp_internal =
-			sctk_get_internal_ptp( mpc_common_get_task_rank(), communicator );
+			_mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
 
 		rsize = sctk_get_nb_task_remote( communicator );
 
@@ -526,7 +526,7 @@ void mpc_mp_bcast_opt_messages( void *buffer, const size_t size,
 		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
 		related_myself = ( myself + total - root ) % total;
 		ptp_internal =
-			sctk_get_internal_ptp( mpc_common_get_task_rank(), communicator );
+			_mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
 		total_max = log( total ) / log( BROADCAST_ARRITY );
 		total_max = pow( BROADCAST_ARRITY, total_max );
 
@@ -668,7 +668,7 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
 		total = sctk_get_nb_task_total( communicator );
 		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
 		ptp_internal =
-			sctk_get_internal_ptp( mpc_common_get_task_rank(), communicator );
+			_mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
 
 		total_max = log( total ) / log( ALLREDUCE_ARRITY );
 		total_max = pow( ALLREDUCE_ARRITY, total_max );
@@ -853,7 +853,7 @@ static void _mpc_coll_hetero_barrier_inter( const sctk_communicator_t communicat
 	assume( myself_ptr );
 	myself = ( myself_ptr - process_array );
 
-	ptp_internal = sctk_get_internal_ptp( -1, communicator );
+	ptp_internal = _mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
 
 	total_max = log( total ) / log( barrier_arity );
 	total_max = pow( barrier_arity, total_max );
@@ -1042,7 +1042,7 @@ void _mpc_coll_hetero_bcast_inter( void *buffer, const size_t size,
 		root = ( myself_ptr - process_array );
 
 		related_myself = ( myself + total - root ) % total;
-		ptp_internal = sctk_get_internal_ptp( -1, communicator );
+		ptp_internal = _mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
 
 		total_max = log( total ) / log( BROADCAST_ARRITY );
 		total_max = pow( BROADCAST_ARRITY, total_max );
@@ -1261,7 +1261,7 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
 	myself = ( myself_ptr - process_array );
 
 	/* We get the PTP list -1  */
-	ptp_internal = sctk_get_internal_ptp( -1, communicator );
+	ptp_internal = _mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
 
 	total_max = log( total ) / log( ALLREDUCE_ARRITY );
 	total_max = pow( ALLREDUCE_ARRITY, total_max );
@@ -1534,7 +1534,7 @@ static void _mpc_coll_noalloc_barrier( const sctk_communicator_t communicator, _
 		total = sctk_get_nb_task_total( communicator );
 		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
 		ptp_internal =
-			sctk_get_internal_ptp( mpc_common_get_task_rank(), communicator );
+			_mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
 		sctk_nodebug( "enter barrier total = %d, myself = %d", total,
 					  myself );
 		total_max = log( total ) / log( barrier_arity );
@@ -1634,7 +1634,7 @@ static void _mpc_coll_noalloc_barrier( const sctk_communicator_t communicator, _
 
 		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
 		ptp_internal =
-			sctk_get_internal_ptp( mpc_common_get_task_rank(), communicator );
+			_mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
 
 		rsize = sctk_get_nb_task_remote( communicator );
 
@@ -1702,7 +1702,7 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
 		related_myself = ( myself + total - root ) % total;
 		ptp_internal =
-			sctk_get_internal_ptp( mpc_common_get_task_rank(), communicator );
+			_mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
 		total_max = log( total ) / log( BROADCAST_ARRITY );
 		total_max = pow( BROADCAST_ARRITY, total_max );
 
@@ -1874,7 +1874,7 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 	total = sctk_get_nb_task_total( communicator );
 	myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
 	ptp_internal =
-		sctk_get_internal_ptp( mpc_common_get_task_rank(), communicator );
+		_mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank());
 
 	total_max = log( total ) / log( ALLREDUCE_ARRITY );
 	total_max = pow( ALLREDUCE_ARRITY, total_max );

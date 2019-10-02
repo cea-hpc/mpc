@@ -70,7 +70,6 @@ typedef struct
   volatile int completion_flag;
   struct sctk_thread_ptp_message_s *msg;
   int is_null;
-  int need_check_in_wait;
   int truncated;
   int status_error;
   /* int ref rank */

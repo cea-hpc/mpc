@@ -278,8 +278,8 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
 		/* Prepare matching */
 		entry->msg.body.completion_flag = NULL;
 		entry->msg.tail.message_type = SCTK_MESSAGE_NETWORK;
-		sctk_rebuild_header ( &entry->msg );
-		sctk_reinit_header ( &entry->msg, sctk_ib_buffered_free_msg,
+		_mpc_comm_ptp_message_clear_request ( &entry->msg );
+		_mpc_comm_ptp_message_set_copy_and_free ( &entry->msg, sctk_ib_buffered_free_msg,
 		                     sctk_ib_buffered_copy );
 		/* Add msg to hashtable */
 		entry->key = key;
@@ -337,7 +337,7 @@ void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 	body = &buffered->msg;
 
 	/* Determine the Source process */
-	src_process = sctk_determine_src_process_from_header ( body );
+	src_process = body->header.source;
 	ib_assume ( src_process != -1 );
 	/* Determine if the message is expected or not (good sequence number) */
 	route_table = sctk_rail_get_any_route_to_process ( rail, src_process );

@@ -103,8 +103,8 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 				SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
 				msg->tail.message_type = SCTK_MESSAGE_NETWORK;
 
-				sctk_rebuild_header ( msg );
-				sctk_reinit_header ( msg, sctk_free, sctk_tcp_rdma_message_copy );
+				_mpc_comm_ptp_message_clear_request ( msg );
+				_mpc_comm_ptp_message_set_copy_and_free ( msg, sctk_free, sctk_tcp_rdma_message_copy );
 
 				sctk_nodebug ( "MSG RECV|%s|", ( char * ) body );
 

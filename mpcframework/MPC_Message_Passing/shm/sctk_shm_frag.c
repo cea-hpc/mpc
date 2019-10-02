@@ -217,8 +217,8 @@ sctk_network_frag_msg_first_recv(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t
    msg = frag_infos->header;
    SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
    msg->tail.message_type = SCTK_MESSAGE_NETWORK;
-   sctk_rebuild_header(msg);
-   sctk_reinit_header(msg, sctk_shm_rdv_free, sctk_shm_rdv_message_copy);
+   _mpc_comm_ptp_message_clear_request(msg);
+   _mpc_comm_ptp_message_set_copy_and_free(msg, sctk_shm_rdv_free, sctk_shm_rdv_message_copy);
    return frag_infos; 
 }
 

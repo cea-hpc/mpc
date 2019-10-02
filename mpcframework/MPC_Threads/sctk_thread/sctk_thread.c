@@ -650,7 +650,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 #ifdef MPC_Message_Passing
   /* We call for all threads as some
      progress threads may need buffered headers */
-  sctk_ptp_per_task_init (tmp.task_id);
+  mpc_mp_comm_init_per_task (tmp.task_id);
   if (tmp.task_id >= 0)
     {
       sctk_net_init_task_level(tmp.task_id, tmp.virtual_processor);

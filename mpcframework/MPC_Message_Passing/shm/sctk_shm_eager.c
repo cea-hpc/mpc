@@ -80,8 +80,8 @@ sctk_network_eager_msg_shm_recv(sctk_shm_cell_t *cell, int copy_enabled) {
   if (SCTK_MSG_COMMUNICATOR(msg) < 0)
     return NULL;
 
-  sctk_rebuild_header(msg);
-  sctk_reinit_header(msg, shm_free_funct, shm_copy_funct);
+  _mpc_comm_ptp_message_clear_request(msg);
+  _mpc_comm_ptp_message_set_copy_and_free(msg, shm_free_funct, shm_copy_funct);
   return msg;
 }
 

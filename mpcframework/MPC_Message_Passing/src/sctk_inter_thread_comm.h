@@ -49,8 +49,6 @@ typedef enum {
   REQUEST_NULL = 0,
   REQUEST_SEND,
   REQUEST_RECV,
-  REQUEST_SEND_COLL,
-  REQUEST_RECV_COLL,
   REQUEST_GENERALIZED,
   REQUEST_PICKED = 133,
   REQUEST_RDMA
@@ -301,6 +299,9 @@ void sctk_probe_any_source_tag_class_comm(int destination, int tag,
 #define SCTK_MSG_COMMUNICATOR( msg ) msg->body.header.communicator
 #define SCTK_MSG_COMMUNICATOR_SET( msg , comm ) do{ msg->body.header.communicator = comm; }while(0)
 
+#define SCTK_DATATYPE( msg ) msg->body.header.datatype
+#define SCTK_MSG_DATATYPE_SET( msg , type ) do{ msg->body.header.datatype = type; }while(0)
+
 #define SCTK_MSG_TAG( msg ) msg->body.header.message_tag
 #define SCTK_MSG_TAG_SET( msg , tag ) do{ msg->body.header.message_tag = tag; }while(0)
 
@@ -456,9 +457,6 @@ typedef struct
 	unsigned long checksum;
 } sctk_thread_ptp_message_body_t;
 
-int sctk_determine_src_process_from_header ( sctk_thread_ptp_message_body_t *body );
-void sctk_determine_task_source_and_destination_from_header ( sctk_thread_ptp_message_body_t *body, int *source_task, int *destination_task );
-
 struct mpc_buffered_msg_s;
 struct mpc_comm_ptp_s;
 
@@ -467,8 +465,6 @@ typedef struct
 {
 	char remote_source;
 	char remote_destination;
-
-	int need_check_in_wait;
 
 	sctk_request_t *request;
 
@@ -528,12 +524,10 @@ typedef struct sctk_thread_ptp_message_s
 } sctk_thread_ptp_message_t;
 
 
-void sctk_init_header ( sctk_thread_ptp_message_t *tmp, sctk_message_type_t msg_type, void ( *free_memory ) ( void * ),
+void mpc_mp_comm_ptp_message_header_clear ( sctk_thread_ptp_message_t *tmp, sctk_message_type_t msg_type, void ( *free_memory ) ( void * ),
                         void ( *message_copy ) ( sctk_message_to_copy_t * ) );
-void sctk_reinit_header ( sctk_thread_ptp_message_t *tmp, void ( *free_memory ) ( void * ),
-                          void ( *message_copy ) ( sctk_message_to_copy_t * ) );
-sctk_thread_ptp_message_t *sctk_create_header ( sctk_message_type_t msg_type );
-void sctk_add_adress_in_message ( sctk_thread_ptp_message_t *restrict msg, void *restrict addr, const size_t size );
+sctk_thread_ptp_message_t *mpc_mp_comm_ptp_message_header_create ( sctk_message_type_t msg_type );
+void mpc_mp_comm_ptp_message_set_contiguous_addr ( sctk_thread_ptp_message_t *restrict msg, void *restrict addr, const size_t size );
 void sctk_add_pack_in_message ( sctk_thread_ptp_message_t *msg, void *adr, const sctk_count_t nb_items,
                                 const size_t elem_size,
                                 sctk_pack_indexes_t *begins,
@@ -543,7 +537,7 @@ void sctk_add_pack_in_message_absolute ( sctk_thread_ptp_message_t *msg, void *a
                                          const size_t elem_size,
                                          sctk_pack_absolute_indexes_t *begins,
                                          sctk_pack_absolute_indexes_t *ends );
-void sctk_set_header_in_message ( sctk_thread_ptp_message_t *msg, const int message_tag,
+void mpc_mp_comm_ptp_message_header_init ( sctk_thread_ptp_message_t *msg, const int message_tag,
                                   const sctk_communicator_t communicator,
                                   const int source,
                                   const int destination,
@@ -558,7 +552,23 @@ void sctk_recv_message ( sctk_thread_ptp_message_t *msg, struct mpc_comm_ptp_s *
 void sctk_recv_message_try_check ( sctk_thread_ptp_message_t *msg, struct mpc_comm_ptp_s *tmp, int perform_check );
 void sctk_message_completion_and_free ( sctk_thread_ptp_message_t *send, sctk_thread_ptp_message_t *recv );
 void sctk_complete_and_free_message ( sctk_thread_ptp_message_t *msg );
-void sctk_rebuild_header ( sctk_thread_ptp_message_t *msg );
+
+static inline void _mpc_comm_ptp_message_clear_request(sctk_thread_ptp_message_t *msg)
+{
+  msg->tail.request = NULL;
+  msg->tail.internal_ptp = NULL;
+}
+
+static inline void _mpc_comm_ptp_message_set_copy_and_free( sctk_thread_ptp_message_t *tmp,
+															void ( *free_memory )( void * ),
+															void ( *message_copy )( sctk_message_to_copy_t * ) )
+{
+	tmp->tail.free_memory = free_memory;
+	tmp->tail.message_copy = message_copy;
+	tmp->tail.buffer_async = NULL;
+
+	memset( &tmp->tail.message.pack, 0, sizeof( tmp->tail.message.pack ) );
+}
 
 /** Buffered Messages **/
 #define MAX_MPC_BUFFERED_SIZE (64 * sizeof(long))
@@ -602,17 +612,17 @@ void sctk_perform_messages_wait_init_request_type ( struct sctk_perform_messages
 /* General Functions                                                    */
 /************************************************************************/
 
+struct mpc_comm_ptp_s * _mpc_comm_ptp_array_get( sctk_communicator_t comm, int rank );
+sctk_reorder_list_t * _mpc_comm_ptp_array_get_reorder(sctk_communicator_t communicator, int rank);
+
 void sctk_wait_all ( const int task, const sctk_communicator_t com );
-struct mpc_comm_ptp_s *sctk_get_internal_ptp(int glob_id,
-                                                  sctk_communicator_t com);
+
 int sctk_is_net_message ( int dest );
-void sctk_ptp_per_task_init ( int i );
+void mpc_mp_comm_init_per_task ( int i );
 void sctk_unregister_thread ( const int i );
 void sctk_notify_idle_message ();
 void sctk_notify_idle_message_inter ();
-sctk_reorder_list_t *
-sctk_ptp_get_reorder_from_destination(int task,
-                                      sctk_communicator_t communicator);
+
 void sctk_inter_thread_perform_idle ( volatile int *data, int value, void ( *func ) ( void * ), void *arg );
 
 #define SCTK_PARALLEL_COMM_QUEUES_NUMBER 8

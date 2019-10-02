@@ -199,7 +199,7 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	sctk_assert(ev.ni_fail_type == PTL_NI_OK);
 
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
-	sctk_init_header(net_msg, SCTK_MESSAGE_CONTIGUOUS , sctk_ptl_rdv_free_memory, sctk_ptl_rdv_message_copy);
+	mpc_mp_comm_ptp_message_header_clear(net_msg, SCTK_MESSAGE_CONTIGUOUS , sctk_ptl_rdv_free_memory, sctk_ptl_rdv_message_copy);
 	SCTK_MSG_SRC_PROCESS_SET     ( net_msg ,  ptr->match.data.rank);
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  ptr->match.data.rank);
 	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  sctk_get_process_rank());
@@ -220,7 +220,7 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	net_msg->tail.ptl.copy = 0;
 
 	/* finish creating an MPC message header */
-	sctk_rebuild_header(net_msg);
+	_mpc_comm_ptp_message_clear_request(net_msg);
 
 	sctk_debug("PORTALS: REPLY-RDV from %d (match=%s, rsize=%llu, size=%llu) -> %p", SCTK_MSG_SRC_TASK(net_msg), __sctk_ptl_match_str(malloc(32), 32, ptr->match.raw),ptr->slot.md.length , ev.mlength, ptr->slot.md.start);
 

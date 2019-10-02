@@ -202,7 +202,7 @@ void __sctk_control_messages_send(int dest, int dest_task,
   //~ return;
   //~ }
 
-  sctk_init_header(&msg, SCTK_MESSAGE_CONTIGUOUS, sctk_free_control_messages,
+  mpc_mp_comm_ptp_message_header_clear(&msg, SCTK_MESSAGE_CONTIGUOUS, sctk_free_control_messages,
                    sctk_message_copy);
 
   /* Fill in control message context (note that class is handled by
@@ -211,10 +211,10 @@ void __sctk_control_messages_send(int dest, int dest_task,
   SCTK_MSG_SPECIFIC_CLASS_SET_PARAM((&msg), param);
   SCTK_MSG_SPECIFIC_CLASS_SET_RAILID((&msg), rail_id);
 
-  sctk_add_adress_in_message(&msg, buffer, size);
+  mpc_mp_comm_ptp_message_set_contiguous_addr(&msg, buffer, size);
 
   // printpayload( buffer, size );
-  sctk_set_header_in_message(&msg, tag, communicator, source,
+  mpc_mp_comm_ptp_message_header_init(&msg, tag, communicator, source,
                              (0 <= dest_task) ? dest_task : dest, &request,
                              size, message_class, SCTK_DATATYPE_IGNORE, REQUEST_SEND);
 
@@ -363,10 +363,10 @@ void sctk_control_messages_perform(sctk_thread_ptp_message_t *msg, int force) {
 
     sctk_thread_ptp_message_t recvmsg;
 
-    sctk_init_header(&recvmsg, SCTK_MESSAGE_CONTIGUOUS,
+    mpc_mp_comm_ptp_message_header_clear(&recvmsg, SCTK_MESSAGE_CONTIGUOUS,
                      sctk_free_control_messages, sctk_message_copy);
-    sctk_add_adress_in_message(&recvmsg, tmp_contol_buffer, msg_size);
-    sctk_set_header_in_message(&recvmsg, 0, msg_comm, SCTK_ANY_SOURCE,
+    mpc_mp_comm_ptp_message_set_contiguous_addr(&recvmsg, tmp_contol_buffer, msg_size);
+    mpc_mp_comm_ptp_message_header_init(&recvmsg, 0, msg_comm, SCTK_ANY_SOURCE,
                                mpc_common_get_process_rank(), &request,
                                SCTK_MSG_SIZE(msg), class, SCTK_DATATYPE_IGNORE, REQUEST_RECV);
 

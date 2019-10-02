@@ -489,8 +489,8 @@ sctk_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
          sizeof(sctk_thread_ptp_message_body_t));
 
   /* We reinit the header before calculating the source */
-  sctk_rebuild_header(msg);
-  sctk_reinit_header(msg, sctk_ib_rdma_net_free_recv,
+  _mpc_comm_ptp_message_clear_request(msg);
+  _mpc_comm_ptp_message_set_copy_and_free(msg, sctk_ib_rdma_net_free_recv,
                      sctk_ib_rdma_rendezvous_net_copy);
   msg->tail.ib.protocol = SCTK_IB_RDMA_PROTOCOL;
   rdma = &msg->tail.ib.rdma;
@@ -514,7 +514,7 @@ sctk_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
     /* Get the remote QP from the remote rail */
     int src_process;
     sctk_endpoint_t *route;
-    src_process = sctk_determine_src_process_from_header(&msg->body);
+    src_process = msg->body.header.source;
     assume(src_process != -1);
     route = sctk_rail_get_any_route_to_process_or_on_demand(rdma->remote_rail,
                                                             src_process);

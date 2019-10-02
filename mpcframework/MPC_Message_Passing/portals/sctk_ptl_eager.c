@@ -88,7 +88,7 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	sctk_assert(ev.mlength <= rail->network.ptl.eager_limit);
 	
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
-	sctk_init_header(net_msg, SCTK_MESSAGE_CONTIGUOUS , sctk_ptl_eager_free_memory, sctk_ptl_eager_message_copy);
+	mpc_mp_comm_ptp_message_header_clear(net_msg, SCTK_MESSAGE_CONTIGUOUS , sctk_ptl_eager_free_memory, sctk_ptl_eager_message_copy);
 	SCTK_MSG_SRC_PROCESS_SET     ( net_msg ,  match.data.rank);
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  match.data.rank);
 	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  sctk_get_process_rank());
@@ -120,7 +120,7 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	net_msg->tail.ptl.user_ptr->slot.me.length = ev.mlength;
 
 	/* finish creating an MPC message heder */
-	sctk_rebuild_header(net_msg);
+	_mpc_comm_ptp_message_clear_request(net_msg);
 
 	sctk_nodebug("PORTALS: RECV-EAGER from %d (idx=%d, match=%s, size=%lu) -> %p", SCTK_MSG_SRC_TASK(net_msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, match.raw), ev.mlength, ev.start);
 

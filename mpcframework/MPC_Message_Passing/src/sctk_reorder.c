@@ -170,8 +170,7 @@ int sctk_send_message_from_network_reorder ( sctk_thread_ptp_message_t *msg )
 		}
 
                 sctk_reorder_list_t *list =
-                    sctk_ptp_get_reorder_from_destination(
-                        dest_task, SCTK_MSG_COMMUNICATOR(msg));
+                    _mpc_comm_ptp_array_get_reorder(SCTK_MSG_COMMUNICATOR(msg), dest_task);
                 sctk_nodebug("GET REORDER LIST FOR %d -> %d", src_task,
                              dest_task);
                 tmp = sctk_get_task_from_reorder(src_task, list);
@@ -247,8 +246,7 @@ int sctk_prepare_send_message_to_network_reorder ( sctk_thread_ptp_message_t *ms
 
 	sctk_nodebug ( "msg->sctk_msg_get_use_message_numbering %d", SCTK_MSG_USE_MESSAGE_NUMBERING ( msg, 0 ); );
 
-        sctk_reorder_list_t *list = sctk_ptp_get_reorder_from_destination(
-            src_task, SCTK_MSG_COMMUNICATOR(msg));
+        sctk_reorder_list_t *list = _mpc_comm_ptp_array_get_reorder(SCTK_MSG_COMMUNICATOR(msg), src_task);
         tmp = sctk_get_task_from_reorder(dest_task,
                                          list);
         assume(tmp);
