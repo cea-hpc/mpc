@@ -617,7 +617,7 @@ mpc_mpc_get_per_comm_data(sctk_communicator_t comm) {
   }
 
   task_specific = __MPC_get_task_specific();
-  tmp = sctk_thread_getspecific_mpc_per_comm(task_specific, comm);
+  tmp = _mpc_m_per_communicator_get(task_specific, comm);
 
   if (tmp == NULL)
     return NULL;

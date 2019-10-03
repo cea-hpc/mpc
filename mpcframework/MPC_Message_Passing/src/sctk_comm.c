@@ -69,7 +69,7 @@ void MPC_Net_irecv( int src, void * buffer, size_t size, int tag, sctk_communica
 
 void MPC_Net_wait( sctk_request_t * request )
 {
-	mpc_mp_comm_wait( request );
+	mpc_mp_comm_request_wait( request );
 }
 
 void MPC_Net_send( int dest, void * data, size_t size, int tag, sctk_communicator_t comm )

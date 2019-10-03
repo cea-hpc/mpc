@@ -49,10 +49,6 @@ typedef enum {
 	REQUEST_RDMA
 } sctk_request_type_t;
 
-void mpc_mp_comm_wait( sctk_request_t *request );
-int mpc_mp_comm_cancel_msg( sctk_request_t *msg );
-void mpc_mp_comm_request_init( sctk_request_t *request, sctk_communicator_t comm, int request_type );
-
 /************************************************************************/
 /* Messages Types                                               */
 /************************************************************************/
@@ -640,7 +636,7 @@ typedef struct mpc_buffered_msg_s
 /* Message Progess                                                      */
 /************************************************************************/
 
-typedef struct mpc_mp_comm_ptp_msg_perform_s
+typedef struct mpc_mp_comm_ptp_msg_progress_s
 {
 	sctk_request_t *request;
 	struct mpc_comm_ptp_s *recv_ptp;
@@ -651,10 +647,10 @@ typedef struct mpc_mp_comm_ptp_msg_perform_s
 	int polling_task_id;
 	/* If we are blocked inside a function similar to MPI_Wait */
 	int blocking;
-} mpc_mp_comm_ptp_msg_perform_t;
+} mpc_mp_comm_ptp_msg_progress_t;
 
-void mpc_mp_comm_ptp_msg_wait_init( struct mpc_mp_comm_ptp_msg_perform_s *wait, sctk_request_t *request, int blocking );
-void mpc_mp_comm_ptp_msg_perform( struct mpc_mp_comm_ptp_msg_perform_s *wait );
+void mpc_mp_comm_ptp_msg_wait_init( struct mpc_mp_comm_ptp_msg_progress_s *wait, sctk_request_t *request, int blocking );
+void mpc_mp_comm_ptp_msg_progress( struct mpc_mp_comm_ptp_msg_progress_s *wait );
 
 /************************************************************************/
 /* General Functions                                                    */
@@ -663,7 +659,7 @@ void mpc_mp_comm_ptp_msg_perform( struct mpc_mp_comm_ptp_msg_perform_s *wait );
 struct mpc_comm_ptp_s *_mpc_comm_ptp_array_get( sctk_communicator_t comm, int rank );
 sctk_reorder_list_t *_mpc_comm_ptp_array_get_reorder( sctk_communicator_t communicator, int rank );
 
-void mpc_mp_comm_wait_all_msgs( const int task, const sctk_communicator_t com );
+void mpc_mp_comm_request_wait_all_msgs( const int task, const sctk_communicator_t com );
 
 int mpc_mp_comm_is_remote_rank( int dest );
 void mpc_mp_comm_init_per_task( int i );
@@ -691,6 +687,52 @@ void sctk_m_probe_matching_init();
 void sctk_m_probe_matching_set( int value );
 void sctk_m_probe_matching_reset();
 int sctk_m_probe_matching_get();
+
+/************************************************************************/
+/* sctk_request_t 		                                                    */
+/************************************************************************/
+
+void mpc_mp_comm_request_wait( sctk_request_t *request );
+int mpc_mp_comm_request_cancel( sctk_request_t *msg );
+void mpc_mp_comm_request_init( sctk_request_t *request, sctk_communicator_t comm, int request_type );
+
+static inline int mpc_mp_comm_request_get_completion(sctk_request_t *request) {
+  return request->completion_flag;
+}
+
+static inline void mpc_mp_comm_request_set_msg(sctk_request_t *request,
+                                     sctk_thread_ptp_message_t *msg) {
+  request->msg = msg;
+}
+
+static inline sctk_thread_ptp_message_t * mpc_mp_comm_request_get_msg(sctk_request_t *request) {
+  return request->msg;
+}
+
+static inline void mpc_mp_comm_request_set_size(sctk_request_t *request) {
+  request->SCTK_MSG_SIZE(msg) = 0;
+}
+
+static inline void mpc_mp_comm_request_inc_size(sctk_request_t *request,
+                                                size_t size) {
+  request->SCTK_MSG_SIZE(msg) += size;
+}
+
+static inline size_t mpc_mp_comm_request_get_size(sctk_request_t *request) {
+  return request->SCTK_MSG_SIZE(msg);
+}
+
+static inline int mpc_mp_comm_request_get_source(sctk_request_t *request) {
+  return request->header.source_task;
+}
+
+static inline int mpc_mp_comm_request_is_null(sctk_request_t *request) {
+  return request->is_null;
+}
+
+static inline void mpc_mp_comm_request_set_null(sctk_request_t *request, int val) {
+  request->is_null = val;
+}
 
 #ifdef __cplusplus
 }

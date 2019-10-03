@@ -288,9 +288,9 @@ int mpc_MPI_Win_request_array_test(struct mpc_MPI_Win_request_array *pra) {
   for (i = 0; i < MAX_PENDING_RMA; i++) {
 
     if (ra->requests[i].request_type != REQUEST_PICKED) {
-      struct mpc_mp_comm_ptp_msg_perform_s _wait;
+      struct mpc_mp_comm_ptp_msg_progress_s _wait;
       mpc_mp_comm_ptp_msg_wait_init(&_wait, &ra->requests[i], 0);
-      mpc_mp_comm_ptp_msg_perform(&_wait);
+      mpc_mp_comm_ptp_msg_progress(&_wait);
     } else {
       if (!ra->is_emulated)
         break;
@@ -1654,7 +1654,7 @@ static inline int __mpc_MPI_Win_flush(int rank, MPI_Win win, int remote,
                                       SCTK_RDMA_MESSAGE, req);
 
         if (do_wait) {
-          mpc_mp_comm_wait(req);
+          mpc_mp_comm_request_wait(req);
         }
       }
     }

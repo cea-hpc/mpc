@@ -143,7 +143,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
       mpc_mp_comm_request_init(&req, desc->comm, REQUEST_SEND);
       sctk_window_RDMA_read(target_win, tmp_buff, remote_size, target_disp,
                             &req);
-      mpc_mp_comm_wait(&req);
+      mpc_mp_comm_request_wait(&req);
 
       int pos = 0;
       __INTERNAL__PMPI_Unpack(tmp_buff, pack_size, &pos, origin_addr,
@@ -195,7 +195,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
                                                    stsize);
 
       if (!can_write_rma) {
-        mpc_mp_comm_wait(request);
+        mpc_mp_comm_request_wait(request);
         int pos = 0;
         __INTERNAL__PMPI_Unpack(dest_buff, target_pack_size, &pos, origin_addr,
                                 origin_count, origin_datatype, desc->comm);

@@ -2389,8 +2389,8 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 		mpc_mp_comm_isend( remote_leader_rank, task_list, local_size * sizeof(int), tag, SCTK_COMM_WORLD , &task_sendreq );
 		mpc_mp_comm_irecv( remote_leader_rank, remote_task_list, remote_size * sizeof(int), tag, SCTK_COMM_WORLD , &task_recvreq );
 		
-		mpc_mp_comm_wait( &task_sendreq );
-		mpc_mp_comm_wait( &task_recvreq );
+		mpc_mp_comm_request_wait( &task_sendreq );
+		mpc_mp_comm_request_wait( &task_recvreq );
 	}
 
 	mpc_mp_bcast (remote_task_list,(remote_size*sizeof(int)),local_leader,local_comm);

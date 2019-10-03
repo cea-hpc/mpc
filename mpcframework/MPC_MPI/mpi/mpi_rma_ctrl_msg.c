@@ -156,7 +156,7 @@ void mpc_MPI_Win_handle_non_contiguous_write(void *data, size_t size) {
   mpc_mp_comm_irecv_class_dest(message->source_rank, desc->comm_rank,
                                 pack_data, pack_size, TAG_RDMA_WRITE,
                                 desc->comm, SCTK_RDMA_MESSAGE, &req);
-  mpc_mp_comm_wait(&req);
+  mpc_mp_comm_request_wait(&req);
 
   size_t target_t_ext;
   PMPC_Type_size(target_type, &target_t_ext);
@@ -285,7 +285,7 @@ void mpc_MPI_Win_handle_non_contiguous_accumulate_send(void *data,
   mpc_mp_comm_irecv_class_dest(message->source_rank, desc->comm_rank,
                                 pack_data, pack_size, TAG_RDMA_ACCUMULATE,
                                 desc->comm, SCTK_RDMA_MESSAGE, &req);
-  mpc_mp_comm_wait(&req);
+  mpc_mp_comm_request_wait(&req);
 
   /* Now pack local data using the remote data-type */
 
@@ -443,7 +443,7 @@ void mpc_MPI_Win_control_message_send(MPI_Win win, int rank,
     mpc_mp_comm_isend_class_src(desc->comm_rank, rank, message,
                                  sizeof(struct mpc_MPI_Win_ctrl_message), 16008,
                                  desc->comm, SCTK_P2P_MESSAGE, &req);
-    mpc_mp_comm_wait(&req);
+    mpc_mp_comm_request_wait(&req);
     // PMPI_Send( message, sizeof(struct mpc_MPI_Win_ctrl_message), MPI_CHAR,
     // rank, 16008, desc->comm);
     // sctk_control_messages_send_to_task ( rank, desc->comm,
@@ -465,7 +465,7 @@ void mpc_MPI_Win_control_message_send_piggybacked(
   sctk_request_t req;
   mpc_mp_comm_isend_class_src(desc->comm_rank, rank, message, size, 16008,
                                desc->comm, SCTK_P2P_MESSAGE, &req);
-  mpc_mp_comm_wait(&req);
+  mpc_mp_comm_request_wait(&req);
 
   sctk_thread_yield();
 }

@@ -308,7 +308,7 @@ static void _mpc_coll_messages_table_wait( _mpc_coll_messages_table_t *tab )
 	for ( i = 0; i < tab->nb_used; i++ )
 	{
 		sctk_nodebug( "Wait for messag %d", i );
-		mpc_mp_comm_wait( &( tab->msg_req[i].request ) );
+		mpc_mp_comm_request_wait( &( tab->msg_req[i].request ) );
 	}
 
 	tab->nb_used = 0;

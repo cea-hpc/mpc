@@ -395,7 +395,7 @@ int sctk_window_map_remote(int remote_rank, sctk_communicator_t comm,
         SCTK_PROCESS_RDMA_WIN_MAPTO, 0, &mr,
         sizeof(struct sctk_window_map_request));
 
-    mpc_mp_comm_wait(&req);
+    mpc_mp_comm_request_wait(&req);
   }
 
   return sctk_window_build_from_remote(&remote_win_data);
@@ -426,7 +426,7 @@ void sctk_window_map_remote_ctrl_msg_handler( struct sctk_window_map_request * m
                                        &dummy_win, sizeof(struct sctk_window),
                                        TAG_RDMA_MAP, win->comm,
                                        SCTK_RDMA_WINDOW_MESSAGES, &req);
-          // mpc_mp_comm_wait ( &req );
+          // mpc_mp_comm_request_wait ( &req );
           /* Done */
           return;
         }
@@ -445,7 +445,7 @@ void sctk_window_map_remote_ctrl_msg_handler( struct sctk_window_map_request * m
             TAG_RDMA_MAP, win->comm, SCTK_RDMA_WINDOW_MESSAGES, &req);
         /* DONE */
 
-        mpc_mp_comm_wait(&req);
+        mpc_mp_comm_request_wait(&req);
 }
 
 void sctk_window_relax_ctrl_msg_handler( sctk_window_t win_id )
@@ -514,7 +514,7 @@ void sctk_window_RDMA_emulated_write_ctrl_msg_handler(
                                 erma->size, TAG_RDMA_WRITE, win->comm,
                                 SCTK_RDMA_WINDOW_MESSAGES, &req);
 
-  mpc_mp_comm_wait(&req);
+  mpc_mp_comm_request_wait(&req);
 
   OPA_incr_int(&win->incoming_emulated_rma[erma->source_rank]);
 #ifdef MPC_MPI
@@ -623,7 +623,7 @@ static inline void __sctk_window_RDMA_write(sctk_window_t win_id,
     mpc_MPI_Win_notify_src_ctx_counter(win->id);
 #endif
 
-    mpc_mp_comm_wait(&data_req);
+    mpc_mp_comm_request_wait(&data_req);
 
     OPA_incr_int(&win->outgoing_emulated_rma);
 
@@ -689,7 +689,7 @@ void sctk_window_RDMA_emulated_read_ctrl_msg_handler( struct sctk_window_emulate
             win->comm_rank, sctk_get_rank(win->comm, erma->source_rank),
             win->start_addr + offset, erma->size, TAG_RDMA_READ, win->comm,
             SCTK_RDMA_WINDOW_MESSAGES, &req);
-        mpc_mp_comm_wait(&req);
+        mpc_mp_comm_request_wait(&req);
 }
 
 
@@ -1630,7 +1630,7 @@ void sctk_window_RDMA_CAS_win( sctk_window_t remote_win_id, size_t remote_offset
 
 void sctk_window_RDMA_wait( sctk_request_t *request )
 {
-	mpc_mp_comm_wait( request );
+	mpc_mp_comm_request_wait( request );
 }
 
 

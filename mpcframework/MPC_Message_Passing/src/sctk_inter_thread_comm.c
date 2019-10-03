@@ -2106,7 +2106,7 @@ static inline int __mpc_comm_ptp_perform_msg_pair_trylock( mpc_comm_ptp_t *pair 
 	return ret;
 }
 
-void mpc_mp_comm_ptp_msg_wait_init( struct mpc_mp_comm_ptp_msg_perform_s *wait,
+void mpc_mp_comm_ptp_msg_wait_init( struct mpc_mp_comm_ptp_msg_progress_s *wait,
 									sctk_request_t *request, int blocking )
 {
 	wait->request = request;
@@ -2150,7 +2150,7 @@ void mpc_mp_comm_ptp_msg_wait_init( struct mpc_mp_comm_ptp_msg_perform_s *wait,
 /*
  *  Function called when the message to receive is already completed
  */
-static inline void __mpc_comm_ptp_msg_done( struct mpc_mp_comm_ptp_msg_perform_s *wait )
+static inline void __mpc_comm_ptp_msg_done( struct mpc_mp_comm_ptp_msg_progress_s *wait )
 {
 	const sctk_request_t *request = wait->request;
 
@@ -2164,11 +2164,11 @@ static inline void __mpc_comm_ptp_msg_done( struct mpc_mp_comm_ptp_msg_perform_s
 	}
 }
 
-static inline void __mpc_comm_ptp_msg_wait( struct mpc_mp_comm_ptp_msg_perform_s *wait );
+static inline void __mpc_comm_ptp_msg_wait( struct mpc_mp_comm_ptp_msg_progress_s *wait );
 
 static void __mpc_comm_perform_msg_wfv( void *a )
 {
-	struct mpc_mp_comm_ptp_msg_perform_s *_wait = (struct mpc_mp_comm_ptp_msg_perform_s *) a;
+	struct mpc_mp_comm_ptp_msg_progress_s *_wait = (struct mpc_mp_comm_ptp_msg_progress_s *) a;
 
 	__mpc_comm_ptp_msg_wait( _wait );
 
@@ -2194,9 +2194,12 @@ void mpc_mp_comm_perform_idle( volatile int *data, int value,
 void __MPC_poll_progress();
 #endif
 
-void mpc_mp_comm_wait( sctk_request_t *request )
+void mpc_mp_comm_request_wait( sctk_request_t *request )
 {
-	struct mpc_mp_comm_ptp_msg_perform_s _wait;
+	if(mpc_mp_comm_request_is_null(request))
+		return;
+
+	struct mpc_mp_comm_ptp_msg_progress_s _wait;
 
 	if ( request->completion_flag == SCTK_MESSAGE_CANCELED )
 	{
@@ -2273,7 +2276,7 @@ void mpc_mp_comm_wait( sctk_request_t *request )
  *
  */
 
-static inline void __mpc_comm_ptp_msg_wait( struct mpc_mp_comm_ptp_msg_perform_s *wait )
+static inline void __mpc_comm_ptp_msg_wait( struct mpc_mp_comm_ptp_msg_progress_s *wait )
 {
 
 	const sctk_request_t *request = wait->request;
@@ -2328,14 +2331,14 @@ static inline void __mpc_comm_ptp_msg_wait( struct mpc_mp_comm_ptp_msg_perform_s
 }
 
 /* This is the exported version */
-void mpc_mp_comm_ptp_msg_perform(struct mpc_mp_comm_ptp_msg_perform_s *wait) {
+void mpc_mp_comm_ptp_msg_progress(struct mpc_mp_comm_ptp_msg_progress_s *wait) {
   return __mpc_comm_ptp_msg_wait(wait);
 }
 
 /*
  * Wait for all message according to a communicator and a task id
  */
-void mpc_mp_comm_wait_all_msgs( const int task, const sctk_communicator_t com )
+void mpc_mp_comm_request_wait_all_msgs( const int task, const sctk_communicator_t com )
 {
 	mpc_comm_ptp_t *pair;
 	int i;
@@ -2640,7 +2643,7 @@ void mpc_mp_comm_request_init( sctk_request_t *request, sctk_communicator_t comm
 	__mpc_comm_request_init( request, comm, request_type );
 }
 
-int mpc_mp_comm_cancel_msg( sctk_request_t *msg )
+int mpc_mp_comm_request_cancel( sctk_request_t *msg )
 {
 	int ret = SCTK_SUCCESS;
 
@@ -2758,7 +2761,7 @@ void mpc_mp_comm_irecv( int src, void *data, size_t size, int tag,
 	mpc_mp_comm_irecv_class( src, data, size, tag, comm, SCTK_P2P_MESSAGE, req );
 }
 
-void mpc_mp_comm_wait( sctk_request_t *request );
+void mpc_mp_comm_request_wait( sctk_request_t *request );
 
 
 void mpc_mp_comm_sendrecv( void *sendbuf, size_t size, int dest, int tag, void *recvbuf,
@@ -2772,6 +2775,6 @@ void mpc_mp_comm_sendrecv( void *sendbuf, size_t size, int dest, int tag, void *
 	mpc_mp_comm_isend( dest, sendbuf, size, tag, comm, &sendreq );
 	mpc_mp_comm_irecv( src, recvbuf, size, tag, comm, &recvreq );
 
-	mpc_mp_comm_wait( &sendreq );
-	mpc_mp_comm_wait( &recvreq );
+	mpc_mp_comm_request_wait( &sendreq );
+	mpc_mp_comm_request_wait( &recvreq );
 }

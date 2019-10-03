@@ -123,26 +123,6 @@ void* sctk_get_ctx_addr(void)
 	return (void*)&sctk_extls_storage;
 }
 
-/** Enabling Copy-on-write TLS */
-#define SCTK_COW_TLS
-
-#if defined(SCTK_COW_TLS)
-/**
- * Function switched depending on SCTK_COW_TLS macro state.
- * @returns 1 if Copy-on-write support is enabled and supported, 0 otherwise.
- */
-int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_COW(){
-  return 1;
-}
-#else
-/**
- * Function switched depending on SCTK_COW_TLS macro state.
- * @returns 1 if Copy-on-write support is enabled and supported, 0 otherwise.
- */
-int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_COW(){
-  return 0;
-}
-#endif
 
 
 /**
@@ -192,51 +172,8 @@ void sctk_tls_dtors_free(struct sctk_tls_dtors_s ** head)
 	}
 }
 
-#ifdef MPC_DISABLE_HLS
-/**
- * Determine if the program enables and supports HLS mode.
- * Controled through MPC_DISABLE_HLS macro state.
- * @returns 1 if HLS are enabled, 0 otherwise
- */
-int MPC_Config_Status_MPC_HAVE_OPTION_HLS(){
-  return 0;
-}
-#else
-/**
- * Determine if the program enables and supports HLS mode.
- * Controled through MPC_DISABLE_HLS macro state.
- * @returns 1 if HLS are enabled, 0 otherwise
- */
-int MPC_Config_Status_MPC_HAVE_OPTION_HLS(){
-  return 1;
-}
-#endif
 
-#else
-#warning "Experimental Ex-TLS support desactivated"
 
-/**
- * Determine if the program enables and supports HLS mode.
- * Controled through MPC_DISABLE_HLS macro state.
- * @returns 1 if HLS are enabled, 0 otherwise
- */
-int MPC_Config_Status_MPC_HAVE_OPTION_HLS(){
-  return 0;
-}
-/**
- * Function switched depending on SCTK_COW_TLS macro state.
- * @returns 1 if Copy-on-write support is enabled and supported, 0 otherwise.
- */
-int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_COW(){
-  return 0;
-}
-/**
- * Function switched by SCTK_USE_OPTIMIZED_TLS value
- * @returns 1 if OPTIMIZED_TLS has been requested and is supported, 0 otherwise.
- */
-int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
-  return 0;
-}
 #endif /* SCTK_USE_TLS */
 
 /**

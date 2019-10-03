@@ -220,7 +220,7 @@ void __sctk_control_messages_send(int dest, int dest_task,
 
   _mpc_comm_ptp_message_send_check(&msg, 1);
 
-  mpc_mp_comm_wait(&request);
+  mpc_mp_comm_request_wait(&request);
 }
 
 void sctk_control_messages_send_process(int dest_process, int subtype,
@@ -381,7 +381,7 @@ void sctk_control_messages_perform(sctk_thread_ptp_message_t *msg, int force) {
   } else {
     mpc_mp_comm_irecv_class(source_rank, tmp_contol_buffer, msg_size, 16000,
                              msg_comm, class, &request);
-    mpc_mp_comm_wait(&request);
+    mpc_mp_comm_request_wait(&request);
   }
 
   void *data = tmp_contol_buffer;
@@ -426,7 +426,7 @@ void sctk_control_message_fence(int target_task, sctk_communicator_t comm) {
 
   sctk_control_message_fence_req(target_task, comm, &fence_req);
 
-  mpc_mp_comm_wait(&fence_req);
+  mpc_mp_comm_request_wait(&fence_req);
 }
 
 void sctk_control_message_fence_handler( struct sctk_control_message_fence_ctx *ctx )
