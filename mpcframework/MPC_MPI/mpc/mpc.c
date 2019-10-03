@@ -4737,18 +4737,18 @@ int MPC_Iprobe_inter(const int source, const int destination, const int tag,
   int __did_process = 0;
 
   if ((source == MPC_ANY_SOURCE) && (tag == MPC_ANY_TAG)) {
-    sctk_probe_any_source_any_tag(destination, comm, flag, &msg);
+    mpc_mp_comm_message_probe_any_source_any_tag(destination, comm, flag, &msg);
     __did_process = 1;
   } else if ((source != MPC_ANY_SOURCE) && (tag != MPC_ANY_TAG)) {
     msg.message_tag = tag;
-    sctk_probe_source_tag(destination, source, comm, flag, &msg);
+    mpc_mp_comm_message_probe(destination, source, comm, flag, &msg);
     __did_process = 1;
   } else if ((source != MPC_ANY_SOURCE) && (tag == MPC_ANY_TAG)) {
-    sctk_probe_source_any_tag(destination, source, comm, flag, &msg);
+    mpc_mp_comm_message_probe_any_tag(destination, source, comm, flag, &msg);
     __did_process = 1;
   } else if ((source == MPC_ANY_SOURCE) && (tag != MPC_ANY_TAG)) {
     msg.message_tag = tag;
-    sctk_probe_any_source_tag(destination, comm, flag, &msg);
+    mpc_mp_comm_message_probe_any_source(destination, comm, flag, &msg);
     __did_process = 1;
   }
 

@@ -264,17 +264,17 @@ typedef struct sctk_thread_message_header_s
         size_t msg_size;          /**< Message size */
 } sctk_thread_message_header_t;
 
-void sctk_probe_source_any_tag ( int destination, int source, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
-void sctk_probe_any_source_any_tag ( int destination, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
-void sctk_probe_source_tag ( int destination, int source, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
-void sctk_probe_any_source_tag ( int destination, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
-void sctk_probe_any_source_tag_class(int destination, int tag,
+void mpc_mp_comm_message_probe_any_tag ( int destination, int source, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
+void mpc_mp_comm_message_probe_any_source_any_tag ( int destination, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
+void mpc_mp_comm_message_probe ( int destination, int source, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
+void mpc_mp_comm_message_probe_any_source ( int destination, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
+void mpc_mp_comm_message_probe_any_source_class(int destination, int tag,
                                      sctk_message_class_t class,
                                      const sctk_communicator_t comm,
                                      int *status,
                                      sctk_thread_message_header_t *msg);
 
-void sctk_probe_any_source_tag_class_comm(int destination, int tag,
+void mpc_mp_comm_message_probe_any_source_class_comm(int destination, int tag,
                                           sctk_message_class_t class,
                                           const sctk_communicator_t comm,
                                           int *status,

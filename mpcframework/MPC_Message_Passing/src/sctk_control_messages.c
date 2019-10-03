@@ -515,7 +515,7 @@ int sctk_control_message_process_local(int rank) {
   sctk_thread_message_header_t msg;
   memset(&msg, 0, sizeof(sctk_thread_message_header_t));
 
-  sctk_probe_any_source_tag_class_comm(rank, 16000, SCTK_P2P_MESSAGE,
+  mpc_mp_comm_message_probe_any_source_class_comm(rank, 16000, SCTK_P2P_MESSAGE,
                                        SCTK_COMM_WORLD, &st, &msg);
 
   ___is_in_sctk_control_message_process_local = 0;

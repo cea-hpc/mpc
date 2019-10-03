@@ -399,45 +399,45 @@ sctk_message_to_copy_t **sctk_ptp_task_list = NULL;
 mpc_common_spinlock_t *sctk_ptp_tasks_lock = 0;
 int sctk_ptp_tasks_count = 0;
 
-static short sctk_ptp_tasks_init_done = 0;
-mpc_common_spinlock_t sctk_ptp_tasks_init_lock = 0;
+static short __mpc_comm_ptp_task_init_done = 0;
+mpc_common_spinlock_t __mpc_comm_ptp_task_init_lock = 0;
 
-#define PTP_MAX_TASK_LISTS 32
+#define PTP_MAX_TASK_LISTS 100
 
-void sctk_ptp_tasks_init()
+static inline void __mpc_comm_ptp_task_init()
 {
-  mpc_common_spinlock_lock(&sctk_ptp_tasks_init_lock);
+	mpc_common_spinlock_lock( &__mpc_comm_ptp_task_init_lock );
 
-  if( sctk_ptp_tasks_init_done )
-  {
-     mpc_common_spinlock_unlock(&sctk_ptp_tasks_init_lock);
-     return;
-  }
+	if ( __mpc_comm_ptp_task_init_done )
+	{
+		mpc_common_spinlock_unlock( &__mpc_comm_ptp_task_init_lock );
+		return;
+	}
 
-  if( mpc_common_get_task_count() < PTP_MAX_TASK_LISTS)
-  {
-    sctk_ptp_tasks_count = mpc_common_get_task_count();
-  }
-  else
-  {
-    sctk_ptp_tasks_count = PTP_MAX_TASK_LISTS;
-  }
+	if ( mpc_common_get_task_count() < PTP_MAX_TASK_LISTS )
+	{
+		sctk_ptp_tasks_count = mpc_common_get_task_count();
+	}
+	else
+	{
+		sctk_ptp_tasks_count = PTP_MAX_TASK_LISTS;
+	}
 
-  sctk_ptp_task_list = sctk_malloc(sizeof(sctk_message_to_copy_t*) * sctk_ptp_tasks_count);
-  assume(sctk_ptp_task_list);
+	sctk_ptp_task_list = sctk_malloc( sizeof( sctk_message_to_copy_t * ) * sctk_ptp_tasks_count );
+	assume( sctk_ptp_task_list );
 
-  sctk_ptp_tasks_lock = sctk_malloc(sizeof(mpc_common_spinlock_t *) * sctk_ptp_tasks_count);
-  assume(sctk_ptp_tasks_lock);
+	sctk_ptp_tasks_lock = sctk_malloc( sizeof( mpc_common_spinlock_t * ) * sctk_ptp_tasks_count );
+	assume( sctk_ptp_tasks_lock );
 
-  int i;
-  for( i = 0 ; i < sctk_ptp_tasks_count; i++)
-  {
-    sctk_ptp_task_list[i] = NULL;
-    sctk_ptp_tasks_lock[i] = 0;
-  }
+	int i;
+	for ( i = 0; i < sctk_ptp_tasks_count; i++ )
+	{
+		sctk_ptp_task_list[i] = NULL;
+		sctk_ptp_tasks_lock[i] = 0;
+	}
 
-  sctk_ptp_tasks_init_done = 1;
-  mpc_common_spinlock_unlock(&sctk_ptp_tasks_init_lock);
+	__mpc_comm_ptp_task_init_done = 1;
+	mpc_common_spinlock_unlock( &__mpc_comm_ptp_task_init_lock );
 }
 
 /*
@@ -445,101 +445,105 @@ void sctk_ptp_tasks_init()
  * pending messages which have been already matched.
  * Only called if the task engine is enabled
  */
-static inline int _sctk_ptp_tasks_perform(int key, int depth) {
-  sctk_message_to_copy_t *tmp;
-  int nb_messages_copied = 0; /* Number of messages processed */
+static inline int ___mpc_comm_ptp_task_perform( int key, int depth )
+{
+	int nb_messages_copied = 0; /* Number of messages processed */
 
-  int target_list = key % sctk_ptp_tasks_count;
+	int target_list = key % sctk_ptp_tasks_count;
 
-  /* Each element of this list has already been matched */
-  while (sctk_ptp_task_list[target_list] != NULL)
-  {
-    tmp = NULL;
+	/* Each element of this list has already been matched */
+	while ( sctk_ptp_task_list[target_list] != NULL )
+	{
+		sctk_message_to_copy_t *tmp = NULL;
 
-    if (mpc_common_spinlock_trylock(&(sctk_ptp_tasks_lock[target_list])) == 0) {
-      tmp = sctk_ptp_task_list[target_list];
+		if ( mpc_common_spinlock_trylock( &( sctk_ptp_tasks_lock[target_list] ) ) == 0 )
+		{
+			tmp = sctk_ptp_task_list[target_list];
 
-      if (tmp != NULL) {
-        /* Message found, we remove it from the list */
-        DL_DELETE(sctk_ptp_task_list[target_list], tmp);
-      }
+			if ( tmp != NULL )
+			{
+				/* Message found, we remove it from the list */
+				DL_DELETE( sctk_ptp_task_list[target_list], tmp );
+			}
 
-      mpc_common_spinlock_unlock(&(sctk_ptp_tasks_lock[target_list]));
-    }
+			mpc_common_spinlock_unlock( &( sctk_ptp_tasks_lock[target_list] ) );
+		}
 
-    if (tmp != NULL) {
-      assume(tmp->msg_send->tail.message_copy);
-      /* Call the copy function to copy the message from the network buffer to
+		if ( tmp != NULL )
+		{
+			assume( tmp->msg_send->tail.message_copy );
+			/* Call the copy function to copy the message from the network buffer to
        * the matching user buffer */
-      tmp->msg_send->tail.message_copy(tmp);
-      nb_messages_copied++;
-    }
-    else
-    {
-      if(depth)
-      {
-        return nb_messages_copied;
-      }
-    }
-  }
+			tmp->msg_send->tail.message_copy( tmp );
+			nb_messages_copied++;
+		}
+		else
+		{
+			if ( depth )
+			{
+				return nb_messages_copied;
+			}
+		}
+	}
 
+	if( (nb_messages_copied == 0) && (depth < 3) )
+	{
+		___mpc_comm_ptp_task_perform(key + 1, depth +1);
+	}
 
-  if( (nb_messages_copied == 0) && (depth < 3) )
-  {
-    _sctk_ptp_tasks_perform(key + 1, depth +1);
-  }
-
-  return nb_messages_copied;
+	return nb_messages_copied;
 }
 
-static inline int sctk_ptp_tasks_perform(int key){
-  return _sctk_ptp_tasks_perform(key, 0);
+static inline int _mpc_comm_ptp_task_perform( int key )
+{
+	return ___mpc_comm_ptp_task_perform( key, 0 );
 }
 
 /*
  * Insert a message to copy. The message to insert has already been matched.
  */
-static inline void sctk_ptp_tasks_insert(sctk_message_to_copy_t *tmp,
-                                         mpc_comm_ptp_t *pair) {
-  int key = pair->key.rank % PTP_MAX_TASK_LISTS;
-  mpc_common_spinlock_lock(&(sctk_ptp_tasks_lock[key]));
-  DL_APPEND(sctk_ptp_task_list[key], tmp);
-  mpc_common_spinlock_unlock(&(sctk_ptp_tasks_lock[key]));
+static inline void _mpc_comm_ptp_task_insert( sctk_message_to_copy_t *tmp,
+					mpc_comm_ptp_t *pair )
+{
+	int key = pair->key.rank % PTP_MAX_TASK_LISTS;
+	mpc_common_spinlock_lock( &( sctk_ptp_tasks_lock[key] ) );
+	DL_APPEND( sctk_ptp_task_list[key], tmp );
+	mpc_common_spinlock_unlock( &( sctk_ptp_tasks_lock[key] ) );
 }
 
 /*
  * Insert the message to copy into the pending list
  */
-static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t *ptr_recv,
-                                              sctk_msg_list_t *ptr_send,
-                                              mpc_comm_ptp_t *pair) {
-  sctk_message_to_copy_t *tmp;
-  SCTK_PROFIL_START(MPC_Copy_message);
+static inline void _mpc_comm_ptp_copy_task_insert( sctk_msg_list_t *ptr_recv,
+						sctk_msg_list_t *ptr_send,
+						mpc_comm_ptp_t *pair )
+{
+	sctk_message_to_copy_t *tmp;
+	SCTK_PROFIL_START( MPC_Copy_message );
 
-  tmp = &(ptr_recv->msg->tail.copy_list);
-  tmp->msg_send = ptr_send->msg;
-  tmp->msg_recv = ptr_recv->msg;
+	tmp = &( ptr_recv->msg->tail.copy_list );
+	tmp->msg_send = ptr_send->msg;
+	tmp->msg_recv = ptr_recv->msg;
 
+	/* If the message is small just copy */
+	if ( tmp->msg_send->tail.message_type == SCTK_MESSAGE_CONTIGUOUS )
+	{
+		if ( tmp->msg_send->tail.message.contiguous.size <= 64 )
+		{
+			assume( tmp->msg_send->tail.message_copy );
+			tmp->msg_send->tail.message_copy( tmp );
+		}
+		else
+		{
+			_mpc_comm_ptp_task_insert( tmp, pair );
+		}
+	}
+	else
+	{
+		_mpc_comm_ptp_task_insert( tmp, pair );
+	}
 
-  /* If the message is small just copy */
-  if(tmp->msg_send->tail.message_type == SCTK_MESSAGE_CONTIGUOUS )
-  {
-    if(tmp->msg_send->tail.message.contiguous.size <= 64 )
-    {
-      assume(tmp->msg_send->tail.message_copy);
-      tmp->msg_send->tail.message_copy(tmp);
-    }
-    else
-    {
-      sctk_ptp_tasks_insert(tmp, pair);
-    }
-  }
-  else
-  {
-    sctk_ptp_tasks_insert(tmp, pair);
-  }
-
-  SCTK_PROFIL_END(MPC_Copy_message);
+	SCTK_PROFIL_END( MPC_Copy_message );
 }
 
 /********************************************************************/
@@ -1460,7 +1464,7 @@ void mpc_mp_comm_init_per_task( int rank )
 
 	int comm_id;
 
-	sctk_ptp_tasks_init();
+	__mpc_comm_ptp_task_init();
 
 	__mpc_comm_buffered_ptp_init();
 
@@ -2029,7 +2033,7 @@ static inline int __mpc_comm_pending_msg_list_search_matching_from_recv( mpc_com
 		}
 
 		/*Insert the matching message to the list of messages that needs to be copied.*/
-		sctk_ptp_copy_tasks_insert( ptr_recv, ptr_send, pair );
+		_mpc_comm_ptp_copy_task_insert( ptr_recv, ptr_send, pair );
 		return 1;
 	}
 
@@ -2076,7 +2080,7 @@ static inline int __mpc_comm_ptp_perform_msg_pair( mpc_comm_ptp_t *pair )
 	}
 
 	/* Call the task engine */
-	return sctk_ptp_tasks_perform( pair->key.rank );
+	return _mpc_comm_ptp_task_perform( pair->key.rank );
 }
 
 /*
@@ -2155,7 +2159,6 @@ void mpc_mp_comm_ptp_msg_wait_init( struct sctk_perform_messages_s *wait,
 static inline void __mpc_comm_ptp_msg_done( struct sctk_perform_messages_s *wait )
 {
 	const sctk_request_t *request = wait->request;
-	const mpc_comm_ptp_t *recv_ptp = wait->recv_ptp;
 
 	/* The message is marked as done.
 	   However, we need to poll if it is a inter-process message
@@ -2587,7 +2590,7 @@ __mpc_comm_probe_source_tag_class_func( int destination, int source, int tag,
 	__mpc_comm_ptp_message_list_unlock_pending( &( dest_ptp->lists ) );
 }
 
-void sctk_probe_source_any_tag( int destination, int source,
+void mpc_mp_comm_message_probe_any_tag( int destination, int source,
 				const sctk_communicator_t comm, int *status,
 				sctk_thread_message_header_t *msg )
 {
@@ -2596,23 +2599,7 @@ void sctk_probe_source_any_tag( int destination, int source,
 					SCTK_P2P_MESSAGE, comm, status, msg );
 }
 
-void sctk_probe_any_source_any_tag( int destination,
-				const sctk_communicator_t comm, int *status,
-				sctk_thread_message_header_t *msg )
-{
-	__mpc_comm_probe_source_tag_class_func( destination, SCTK_ANY_SOURCE, SCTK_ANY_TAG,
-					SCTK_P2P_MESSAGE, comm, status, msg );
-}
-
-void sctk_probe_source_tag( int destination, int source,
-				const sctk_communicator_t comm, int *status,
-				sctk_thread_message_header_t *msg )
-{
-	__mpc_comm_probe_source_tag_class_func( destination, source, msg->message_tag,
-					SCTK_P2P_MESSAGE, comm, status, msg );
-}
-
-void sctk_probe_any_source_tag( int destination, const sctk_communicator_t comm,
+void mpc_mp_comm_message_probe_any_source( int destination, const sctk_communicator_t comm,
 				int *status, sctk_thread_message_header_t *msg )
 {
 	__mpc_comm_probe_source_tag_class_func( destination, SCTK_ANY_SOURCE,
@@ -2620,7 +2607,25 @@ void sctk_probe_any_source_tag( int destination, const sctk_communicator_t comm,
 					status, msg );
 }
 
-void sctk_probe_any_source_tag_class_comm( int destination, int tag,
+void mpc_mp_comm_message_probe_any_source_any_tag( int destination,
+				const sctk_communicator_t comm, int *status,
+				sctk_thread_message_header_t *msg )
+{
+	__mpc_comm_probe_source_tag_class_func( destination, SCTK_ANY_SOURCE, SCTK_ANY_TAG,
+					SCTK_P2P_MESSAGE, comm, status, msg );
+}
+
+void mpc_mp_comm_message_probe( int destination, int source,
+				const sctk_communicator_t comm, int *status,
+				sctk_thread_message_header_t *msg )
+{
+	__mpc_comm_probe_source_tag_class_func( destination, source, msg->message_tag,
+					SCTK_P2P_MESSAGE, comm, status, msg );
+}
+
+
+
+void mpc_mp_comm_message_probe_any_source_class_comm( int destination, int tag,
 					sctk_message_class_t class,
 					const sctk_communicator_t comm,
 					int *status,
@@ -2729,8 +2734,6 @@ void mpc_mp_comm_irecv_class_dest( int src, int dest, void *buffer, size_t size,
 		mpc_mp_comm_request_init( req, comm, REQUEST_RECV );
 		return;
 	}
-
-	int cw_dest = sctk_get_comm_world_rank( comm, dest );
 
 	sctk_thread_ptp_message_t *msg =
 		mpc_mp_comm_ptp_message_header_create( SCTK_MESSAGE_CONTIGUOUS );
