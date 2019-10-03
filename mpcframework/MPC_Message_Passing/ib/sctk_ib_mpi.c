@@ -110,7 +110,7 @@ static void sctk_network_send_message_ib_endpoint ( sctk_thread_ptp_message_t *m
 	        || ( size + IBUF_GET_EAGER_SIZE <= config->eager_limit ) )
 	{
 		sctk_debug ( "Eager" );
-		ibuf = sctk_ib_eager_prepare_msg ( rail_ib, remote, msg, size, sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ) );
+		ibuf = sctk_ib_eager_prepare_msg ( rail_ib, remote, msg, size, _mpc_comm_ptp_message_is_for_process ( SCTK_MSG_SPECIFIC_CLASS( msg ) ) );
 
 		/* Actually, it is possible to get a NULL pointer for ibuf. We falback to buffered */
 		if ( ibuf == NULL )
@@ -118,7 +118,7 @@ static void sctk_network_send_message_ib_endpoint ( sctk_thread_ptp_message_t *m
 
 		/* Send message */
 		sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
-		sctk_complete_and_free_message ( msg );
+		mpc_mp_comm_ptp_message_complete_and_free ( msg );
 		PROF_INC ( rail_ib->rail, ib_eager_nb );
 
 		/* Remote profiling */
@@ -133,7 +133,7 @@ buffered:
 	{
 		sctk_debug ( "Buffered" );
 		sctk_ib_buffered_prepare_msg ( rail, remote, msg, size );
-		sctk_complete_and_free_message ( msg );
+		mpc_mp_comm_ptp_message_complete_and_free ( msg );
 		PROF_INC ( rail_ib->rail, ib_buffered_nb );
 
 		/* Remote profiling */

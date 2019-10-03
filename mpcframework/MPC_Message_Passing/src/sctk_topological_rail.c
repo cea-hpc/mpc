@@ -73,7 +73,7 @@ sctk_endpoint_t * sctk_topological_rail_ellect_endpoint( int remote , sctk_threa
 		else
 		{
 						
-			if( !sctk_message_class_is_control_message( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
+			if( !_mpc_comm_ptp_message_is_for_control( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
 			{
 				/* Intiate an on-demand connection to the remote on the topological rail (to keep connection balanced) */
 				if( topological_rail->on_demand )

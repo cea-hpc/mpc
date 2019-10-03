@@ -107,7 +107,7 @@ void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endp
 	sctk_assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
 
 	/* specific cases: control messages */
-	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg)))
+	if(_mpc_comm_ptp_message_is_for_control(SCTK_MSG_SPECIFIC_CLASS(msg)))
 	{
 		sctk_ptl_cm_send_message(msg, endpoint);
 		return;

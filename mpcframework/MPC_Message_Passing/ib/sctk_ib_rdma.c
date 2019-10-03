@@ -116,7 +116,7 @@ sctk_thread_ptp_message_t * sctk_ib_rdma_recv_done_remote_imm (__UNUSED__  sctk_
           PROF_INC(rail, ib_free_mem);
         }
 
-        sctk_message_completion_and_free(send, recv);
+        _mpc_comm_ptp_message_commit_request(send, recv);
 
         return NULL;
 }
@@ -173,7 +173,7 @@ sctk_ib_rdma_recv_done_remote(__UNUSED__  sctk_rail_info_t *rail, sctk_ibuf_t *i
     PROF_INC(rail, ib_free_mem);
   }
 
-  sctk_message_completion_and_free(send, recv);
+  _mpc_comm_ptp_message_commit_request(send, recv);
 
   return NULL;
 }
@@ -196,7 +196,7 @@ sctk_ib_rdma_recv_done_local ( sctk_thread_ptp_message_t *msg )
 	}
 
 	sctk_nodebug ( "MSG LOCAL FREE %p", msg );
-	sctk_complete_and_free_message ( msg );
+	mpc_mp_comm_ptp_message_complete_and_free ( msg );
 
 }
 
@@ -1021,26 +1021,26 @@ sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 		case SCTK_IB_RDMA_WRITE:
 			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
 			sctk_info ( "RDMA Write DONE" );
-			sctk_complete_and_free_message ( msg );
+			mpc_mp_comm_ptp_message_complete_and_free ( msg );
 			break;
 
 
 		case SCTK_IB_RDMA_READ:
 			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
 			sctk_info ( "RDMA Read DONE" );
-			sctk_complete_and_free_message ( msg );
+			mpc_mp_comm_ptp_message_complete_and_free ( msg );
 			break;
 
 		case SCTK_IB_RDMA_FETCH_AND_ADD:
 			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
 			sctk_info ( "RDMA Fetch and op DONE" );
-			sctk_complete_and_free_message ( msg );
+			mpc_mp_comm_ptp_message_complete_and_free ( msg );
 			break;
 
 		case SCTK_IB_RDMA_CAS:
 			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
 			sctk_info ( "RDMA CAS DONE" );
-			sctk_complete_and_free_message ( msg );
+			mpc_mp_comm_ptp_message_complete_and_free ( msg );
 			break;
 
                 default:

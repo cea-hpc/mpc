@@ -178,7 +178,7 @@ void __sctk_control_messages_send(int dest, int dest_task,
     size = sizeof(int);
   }
 
-  if (!sctk_message_class_is_control_message(message_class)) {
+  if (!_mpc_comm_ptp_message_is_for_control(message_class)) {
     sctk_fatal("Cannot send a non-contol message using this function");
   }
 
@@ -203,7 +203,7 @@ void __sctk_control_messages_send(int dest, int dest_task,
   //~ }
 
   mpc_mp_comm_ptp_message_header_clear(&msg, SCTK_MESSAGE_CONTIGUOUS, sctk_free_control_messages,
-                   sctk_message_copy);
+                   mpc_mp_comm_ptp_message_copy);
 
   /* Fill in control message context (note that class is handled by
    * set_header_in_message) */
@@ -320,7 +320,7 @@ void control_message_submit(sctk_message_class_t class, int rail_id,
 void sctk_control_messages_perform(sctk_thread_ptp_message_t *msg, int force) {
   sctk_message_class_t class = SCTK_MSG_SPECIFIC_CLASS(msg);
 
-  if (!sctk_message_class_is_control_message(class)) {
+  if (!_mpc_comm_ptp_message_is_for_control(class)) {
     sctk_fatal("Cannot process a non-control message using this function (%s)",
                sctk_message_class_name[class]);
   }
@@ -364,7 +364,7 @@ void sctk_control_messages_perform(sctk_thread_ptp_message_t *msg, int force) {
     sctk_thread_ptp_message_t recvmsg;
 
     mpc_mp_comm_ptp_message_header_clear(&recvmsg, SCTK_MESSAGE_CONTIGUOUS,
-                     sctk_free_control_messages, sctk_message_copy);
+                     sctk_free_control_messages, mpc_mp_comm_ptp_message_copy);
     mpc_mp_comm_ptp_message_set_contiguous_addr(&recvmsg, tmp_contol_buffer, msg_size);
     mpc_mp_comm_ptp_message_header_init(&recvmsg, 0, msg_comm, SCTK_ANY_SOURCE,
                                mpc_common_get_process_rank(), &request,

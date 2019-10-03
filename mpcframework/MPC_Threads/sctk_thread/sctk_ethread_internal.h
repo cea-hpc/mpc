@@ -39,7 +39,7 @@
 
 #include "sctk_runtime_config.h"
 #ifdef MPC_Message_Passing
-#include <sctk_inter_thread_comm.h>
+#include <sctk_low_level_comm.h>
 #endif
 #ifdef __cplusplus
 extern "C"

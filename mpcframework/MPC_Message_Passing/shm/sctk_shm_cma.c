@@ -64,7 +64,7 @@ sctk_shm_cma_message_copy_generic(sctk_message_to_copy_t * tmp)
 	    nread = process_vm_readv(shm_send_iov->pid, recv_iov, 1, send_iov, 1, 0);
             assume_m( nread > 0, "Failed process_vm_readv call");
 			
-            sctk_message_completion_and_free ( send, recv );
+            _mpc_comm_ptp_message_commit_request ( send, recv );
 	    sctk_free(recv_iov);
 	    sctk_free(send_iov);
             break;

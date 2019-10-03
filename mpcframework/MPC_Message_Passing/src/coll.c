@@ -279,7 +279,7 @@ static void _mpc_coll_message_send( const sctk_communicator_t communicator, int 
 									sctk_message_class_t message_class, _mpc_coll_messages_t *msg_req, int check_msg )
 {
 	mpc_mp_comm_ptp_message_header_clear( &( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS,
-					  _mpc_coll_free_message, sctk_message_copy );
+					  _mpc_coll_free_message, mpc_mp_comm_ptp_message_copy );
 	mpc_mp_comm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
 	mpc_mp_comm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, myself, dest,
 								&( msg_req->request ), size, message_class,
@@ -292,7 +292,7 @@ static void _mpc_coll_message_recv( const sctk_communicator_t communicator, int 
 									sctk_message_class_t message_class, _mpc_coll_messages_t *msg_req, int check_msg )
 {
 	mpc_mp_comm_ptp_message_header_clear( &( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS,
-					  _mpc_coll_free_message, sctk_message_copy );
+					  _mpc_coll_free_message, mpc_mp_comm_ptp_message_copy );
 	mpc_mp_comm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
 	mpc_mp_comm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, src, myself,
 								&( msg_req->request ), size, message_class,

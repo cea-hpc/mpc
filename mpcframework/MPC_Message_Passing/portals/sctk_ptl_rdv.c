@@ -62,7 +62,7 @@ void sctk_ptl_rdv_message_copy(sctk_message_to_copy_t* msg)
 		sctk_net_message_copy_from_buffer(send_data->slot.me.start, msg, 0);
 	}
 
-	sctk_message_completion_and_free(msg->msg_send, msg->msg_recv);
+	_mpc_comm_ptp_message_commit_request(msg->msg_send, msg->msg_recv);
 }
 
 /**
@@ -248,7 +248,7 @@ static inline void sctk_ptl_rdv_complete_message(sctk_rail_info_t* rail, sctk_pt
 	if(msg->tail.ptl.copy)
 		sctk_free(ptr->slot.me.start);
 
-	sctk_complete_and_free_message(msg);
+	mpc_mp_comm_ptp_message_complete_and_free(msg);
 }
 
 

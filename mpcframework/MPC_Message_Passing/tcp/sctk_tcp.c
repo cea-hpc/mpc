@@ -147,7 +147,7 @@ static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *
 
 	sctk_nodebug("SEND MSG ENDPOINT TCP to %d DONE", endpoint->dest);
 
-	sctk_complete_and_free_message ( msg );
+	mpc_mp_comm_ptp_message_complete_and_free ( msg );
 }
 
 /**

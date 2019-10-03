@@ -53,7 +53,7 @@ static void sctk_network_notify_recv_message_ptl ( sctk_thread_ptp_message_t *ms
 	/* by construction, a network-received CM will generate a local recv
 	 * So, in this case, we have nothing to do here
 	 */
-	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg)))
+	if(_mpc_comm_ptp_message_is_for_control(SCTK_MSG_SPECIFIC_CLASS(msg)))
 	{
 		return;
 	}

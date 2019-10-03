@@ -126,7 +126,7 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 				sctk_net_write_in_fd ( msg, fd );
 				mpc_common_spinlock_unlock ( & ( tmp->data.tcp.lock ) );
 
-				sctk_complete_and_free_message ( msg );
+				mpc_mp_comm_ptp_message_complete_and_free ( msg );
 				break;
 			}
 
@@ -141,7 +141,7 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 
 				send = copy_ptr->msg_send;
 				recv = copy_ptr->msg_recv;
-				sctk_message_completion_and_free ( send, recv );
+				_mpc_comm_ptp_message_commit_request ( send, recv );
 				break;
 			}
 

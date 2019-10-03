@@ -675,7 +675,7 @@ void sctk_ptl_rdma_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			}
 			/* else, complete_and_free_message */
 		case PTL_EVENT_REPLY:  /* READ || CAS || FETCH_AND_OP */
-			sctk_complete_and_free_message(msg);
+			mpc_mp_comm_ptp_message_complete_and_free(msg);
 			sctk_free(ptr);
 			break;
 		case PTL_EVENT_SEND:   /* special case, here will fall extra-allocated MD for atomic ops */

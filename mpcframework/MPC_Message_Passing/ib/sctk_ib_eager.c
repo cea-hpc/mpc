@@ -296,7 +296,7 @@ int sctk_ib_eager_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 
 	sctk_thread_ptp_message_t *msg = NULL;
 
-	if( sctk_message_class_is_process_specific ( msg_ibuf->header.message_type.type ) )
+	if( _mpc_comm_ptp_message_is_for_process ( msg_ibuf->header.message_type.type ) )
 	{
 		recopy = 1;
 	}

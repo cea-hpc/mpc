@@ -77,7 +77,7 @@ static int sctk_network_send_message_dest_shm(sctk_thread_ptp_message_t *msg,
   unsigned int sctk_shm_send_cur_try;
   int is_message_control = 0;
 
-  if (sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg))) {
+  if (_mpc_comm_ptp_message_is_for_control(SCTK_MSG_SPECIFIC_CLASS(msg))) {
     is_message_control = 1;
   }
 
@@ -138,7 +138,7 @@ sctk_network_send_message_from_pending_shm_list( void )
                   SCTK_MSG_DEST_TASK(msg),
                   sctk_message_class_name[(int)SCTK_MSG_SPECIFIC_CLASS(msg)],
                   SCTK_MSG_SPECIFIC_CLASS(msg),
-                  sctk_message_class_is_process_specific(
+                  _mpc_comm_ptp_message_is_for_process(
                       SCTK_MSG_SPECIFIC_CLASS(msg)),
                   SCTK_MSG_SIZE(msg), SCTK_MSG_TAG(msg)); */
 
@@ -215,7 +215,7 @@ sctk_network_notify_idle_message_shm ( __UNUSED__ sctk_rail_info_t *rail )
 		break;
 	    case SCTK_SHM_CMPL:
             	msg = sctk_network_cma_cmpl_msg_shm_recv(cell);
-        	sctk_complete_and_free_message(msg); 
+        	mpc_mp_comm_ptp_message_complete_and_free(msg); 
 		break;
 #endif /* MPC_USE_CMA */
 	    case SCTK_SHM_FIRST_FRAG:

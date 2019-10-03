@@ -60,7 +60,7 @@ sctk_network_eager_msg_shm_recv(sctk_shm_cell_t *cell, int copy_enabled) {
 
   tmp = (sctk_thread_ptp_message_t *)cell->data;
   // if ctrl message disable no copy
-  if (sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(tmp))) {
+  if (_mpc_comm_ptp_message_is_for_control(SCTK_MSG_SPECIFIC_CLASS(tmp))) {
     copy_enabled = 1;
   }
 
@@ -98,7 +98,7 @@ sctk_network_eager_msg_shm_send(sctk_thread_ptp_message_t *msg, sctk_shm_cell_t 
         sctk_net_copy_in_buffer(msg,(char*)cell->data+sizeof(sctk_thread_ptp_message_t)); 
         
     sctk_shm_send_cell(cell);
-    sctk_complete_and_free_message( msg ); 
+    mpc_mp_comm_ptp_message_complete_and_free( msg ); 
 
     return 1;
 }

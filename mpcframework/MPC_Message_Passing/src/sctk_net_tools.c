@@ -173,7 +173,7 @@ void sctk_net_copy_msg_from_iovec( sctk_message_to_copy_t *tmp, sctk_iovec_cpy_t
 		driver_func(result, iovlen, send);
 		sctk_free(result);		
 	}
-	sctk_message_completion_and_free(send,recv);
+	_mpc_comm_ptp_message_commit_request(send,recv);
 }
 
 void sctk_net_read_in_fd ( sctk_thread_ptp_message_t *msg,
@@ -696,7 +696,7 @@ void sctk_net_message_copy ( sctk_message_to_copy_t *tmp )
 
           memcpy(recv->tail.message.contiguous.addr, body, size);
 
-          sctk_message_completion_and_free(send, recv);
+          _mpc_comm_ptp_message_commit_request(send, recv);
           break;
         }
 
@@ -747,7 +747,7 @@ void sctk_net_message_copy ( sctk_message_to_copy_t *tmp )
             }
           }
 
-          sctk_message_completion_and_free(send, recv);
+          _mpc_comm_ptp_message_commit_request(send, recv);
           break;
         }
 
@@ -803,7 +803,7 @@ void sctk_net_message_copy ( sctk_message_to_copy_t *tmp )
             }
           }
 
-          sctk_message_completion_and_free(send, recv);
+          _mpc_comm_ptp_message_commit_request(send, recv);
           break;
         }
 
@@ -834,7 +834,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 			sctk_nodebug ( "RECV size %lu-%lu %lu %p", size, recv->tail.message.contiguous.size, adler32 ( 0, ( unsigned char * ) recv->tail.message.contiguous.addr, size ), recv );
 
 			if ( free_headers )
-				sctk_message_completion_and_free ( send, recv );
+				_mpc_comm_ptp_message_commit_request ( send, recv );
 
 			break;
 		}
@@ -875,7 +875,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 			}
 
 			if ( free_headers )
-				sctk_message_completion_and_free ( send, recv );
+				_mpc_comm_ptp_message_commit_request ( send, recv );
 
 			break;
 		}
@@ -916,7 +916,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 			}
 
 			if ( free_headers )
-				sctk_message_completion_and_free ( send, recv );
+				_mpc_comm_ptp_message_commit_request ( send, recv );
 
 			break;
 		}

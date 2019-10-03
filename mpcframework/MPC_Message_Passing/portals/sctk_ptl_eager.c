@@ -69,7 +69,7 @@ void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 	sctk_ptl_me_free(recv_data, msg->msg_recv->tail.ptl.copy);
 
 	/* flag request as completed */
-	sctk_message_completion_and_free(msg->msg_send, msg->msg_recv);
+	_mpc_comm_ptp_message_commit_request(msg->msg_send, msg->msg_recv);
 }
 
 /**
@@ -317,7 +317,7 @@ void sctk_ptl_eager_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 				sctk_free(user_ptr->slot.md.start);
 			}
 			/* tag the message as completed */
-			sctk_complete_and_free_message(msg);
+			mpc_mp_comm_ptp_message_complete_and_free(msg);
 			sctk_ptl_md_release(user_ptr);
 			break;
 

@@ -276,7 +276,7 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
 		entry->msg.tail.ib.buffered.entry = entry;
 		entry->msg.tail.ib.buffered.rail = rail;
 		/* Prepare matching */
-		entry->msg.body.completion_flag = NULL;
+		entry->msg.tail.completion_flag = NULL;
 		entry->msg.tail.message_type = SCTK_MESSAGE_NETWORK;
 		_mpc_comm_ptp_message_clear_request ( &entry->msg );
 		_mpc_comm_ptp_message_set_copy_and_free ( &entry->msg, sctk_ib_buffered_free_msg,
@@ -404,7 +404,7 @@ void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 				{
 					mpc_common_spinlock_unlock ( &entry->lock );
 					ib_assume ( entry->copy_ptr );
-					sctk_message_completion_and_free ( entry->copy_ptr->msg_send,
+					_mpc_comm_ptp_message_commit_request ( entry->copy_ptr->msg_send,
 					                                   entry->copy_ptr->msg_recv );
 					sctk_free ( entry );
 					PROF_INC ( rail, ib_free_mem );

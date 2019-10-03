@@ -391,7 +391,7 @@ sctk_mpc_get_communicator_from_request(MPC_Request *request) {
 void __MPC_poll_progress();
 
 static inline void sctk_mpc_perform_messages(MPC_Request *request) {
-  struct sctk_perform_messages_s _wait;
+  struct mpc_mp_comm_ptp_msg_perform_s _wait;
   if (request->request_type == REQUEST_GENERALIZED) {
     /* Try to poll the request */
     __MPC_poll_progress();
@@ -401,7 +401,7 @@ static inline void sctk_mpc_perform_messages(MPC_Request *request) {
 
   mpc_mp_comm_ptp_msg_wait_init(&_wait, request, 0);
 
-  sctk_perform_messages(&_wait);
+  mpc_mp_comm_ptp_msg_perform(&_wait);
 }
 
 static inline int sctk_mpc_completion_flag(MPC_Request *request) {
@@ -3192,83 +3192,12 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 }
 
 int PMPC_Migrate() {
-#if 0
-  if (sctk_checkpoint_mode)
-    {
-      FILE *file;
-      char name[SCTK_MAX_FILENAME_SIZE];
-      sctk_thread_t self;
-      void *self_p = NULL;
-      int rank;
-      int vp;
-      sctk_task_specific_t *task_specific;
-      task_specific = __MPC_get_task_specific ();
-      __MPC_Comm_rank (MPC_COMM_WORLD, &rank, task_specific);
-
-      self = sctk_thread_self ();
-      memcpy (&self_p, &self, sizeof (long));
-
-      PMPC_Wait_pending_all_comm ();
-
-      sctk_unregister_thread (rank);
-
-      sctk_nodebug ("Will Migrate");
-      sctk_thread_migrate ();
-      sctk_nodebug ("Migrated");
-
-      PMPC_Processor_rank (&vp);
-
-      sprintf (name, "%s/Task_%d", sctk_store_dir, rank);
-      file = fopen (name, "w+");
-      assume (file != NULL);
-      fprintf (file, "Restart 0\n");
-      fprintf (file, "Process %d\n", mpc_common_get_process_rank());
-      fprintf (file, "Thread %p\n", self_p);
-      fprintf (file, "Virtual processor %d\n", vp);
-      fclose (file);
-
-      sctk_register_thread (rank);
-    }
-  MPC_ERROR_SUCESS ();
-#else
   not_implemented();
-#endif
   return 0;
 }
 
 int PMPC_Restart(__UNUSED__ int rank) {
-#if 0
-  if (sctk_checkpoint_mode)
-    {
-      FILE *file;
-      char name[SCTK_MAX_FILENAME_SIZE];
-      void *self_p = NULL;
-      int tmp;
-      int vp;
-      int res;
-      sprintf (name, "%s/Task_%d", sctk_store_dir, rank);
-
-      file = fopen (name, "r");
-      assume (file != NULL);
-      res = fscanf (file, "Restart %d\n", &tmp);
-      assume (res == 1);
-      res = fscanf (file, "Process %d\n", &tmp);
-      assume (res == 1);
-      res = fscanf (file, "Thread %p\n", &self_p);
-      assume (res == 1);
-      res = fscanf (file, "Virtual processor %d\n", &vp);
-      assume (res == 1);
-      fclose (file);
-
-      sctk_nodebug ("Recover task %d thread %p", rank, self_p);
-
-      sprintf (name, "mig_task_%p", self_p);
-      sctk_thread_restore (self_p, name, vp);
-    }
-  MPC_ERROR_SUCESS ();
-#else
   not_implemented();
-#endif
   return 0;
 }
 
@@ -3606,7 +3535,7 @@ static inline int __MPC_Isend(void *buf, mpc_msg_count count,
 
       /* Initialize the header */
       mpc_mp_comm_ptp_message_header_clear(msg, SCTK_MESSAGE_CONTIGUOUS, sctk_no_free_header,
-                       sctk_message_copy);
+                       mpc_mp_comm_ptp_message_copy);
 
       /* We move asynchronous buffer pool head ahead */
       MPC_per_thread_buffer_pool_step_asynchronous();
@@ -4425,7 +4354,7 @@ static int __MPC_Send(void *restrict buf, mpc_msg_count count,
     msg = &header;
 
     mpc_mp_comm_ptp_message_header_clear(msg, SCTK_MESSAGE_CONTIGUOUS, sctk_no_free_header,
-                     sctk_message_copy);
+                     mpc_mp_comm_ptp_message_copy);
     mpc_mp_comm_ptp_message_set_contiguous_addr(msg, buf, msg_size);
     sctk_mpc_set_header_in_message(msg, tag, comm, src, dest, &request,
                                    msg_size, SCTK_P2P_MESSAGE, datatype, REQUEST_SEND);
@@ -4452,7 +4381,7 @@ static int __MPC_Send(void *restrict buf, mpc_msg_count count,
       msg = &(tmp_buf->header);
       /* Init the header */
       mpc_mp_comm_ptp_message_header_clear(msg, SCTK_MESSAGE_CONTIGUOUS, sctk_no_free_header,
-                       sctk_message_copy);
+                       mpc_mp_comm_ptp_message_copy);
 
       sctk_nodebug("Copied message |%s| -> |%s| %d", buf, tmp_buf->buf,
                    msg_size);

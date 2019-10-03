@@ -209,7 +209,7 @@ void sctk_ptl_cm_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	switch(ev.type)
 	{
 		case PTL_EVENT_ACK:   /* the request reached the process */
-			sctk_complete_and_free_message(msg);
+			mpc_mp_comm_ptp_message_complete_and_free(msg);
 			sctk_ptl_md_release(user_ptr);
 			break;
 

@@ -195,7 +195,7 @@ sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t
    }
    else
    {
-        sctk_complete_and_free_message(msg) ;
+        mpc_mp_comm_ptp_message_complete_and_free(msg) ;
    }
    return frag_infos;
 }
@@ -238,7 +238,7 @@ sctk_network_frag_msg_next_send(sctk_shm_proc_frag_info_t* frag_infos)
   msg_dest = frag_infos->remote_mpi_rank;
 
   sctk_nodebug("[KEY:%d] TRY SEND NEXT PART OF FRAGMENTED MSG", msg_key);
-  if (sctk_message_class_is_control_message(
+  if (_mpc_comm_ptp_message_is_for_control(
           SCTK_MSG_SPECIFIC_CLASS(frag_infos->header))) {
     is_control_msg = 1;
   }
@@ -275,7 +275,7 @@ sctk_network_frag_msg_next_send(sctk_shm_proc_frag_info_t* frag_infos)
         sctk_nodebug("[KEY:%d] SEND END PART MSG", msg_key);
         msg = frag_infos->header;
         sctk_free(frag_infos);
-        sctk_complete_and_free_message(msg) ;
+        mpc_mp_comm_ptp_message_complete_and_free(msg) ;
         frag_infos = NULL;
    }
 
