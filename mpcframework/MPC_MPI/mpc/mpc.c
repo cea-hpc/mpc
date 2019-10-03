@@ -490,10 +490,6 @@ static inline void sctk_mpc_wait_message(MPC_Request *request) {
   SCTK_PROFIL_END(sctk_mpc_wait_message);
 }
 
-static inline void sctk_mpc_wait_all(const int task,
-                                     const sctk_communicator_t com) {
-  sctk_wait_all(task, com);
-}
 
 static inline int sctk_mpc_cancel_message(MPC_Request *msg) {
   return mpc_mp_comm_cancel_msg(msg);
@@ -4263,7 +4259,7 @@ static inline int __MPC_Wait_pending(MPC_Comm comm) {
 
   __MPC_Comm_rank(comm, &src, task_specific);
 
-  sctk_mpc_wait_all(src, comm);
+  mpc_mp_comm_wait_all_msgs(src, comm);
 
   MPC_ERROR_SUCESS();
 }

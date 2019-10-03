@@ -614,13 +614,13 @@ void sctk_perform_messages ( struct sctk_perform_messages_s *wait );
 struct mpc_comm_ptp_s * _mpc_comm_ptp_array_get( sctk_communicator_t comm, int rank );
 sctk_reorder_list_t * _mpc_comm_ptp_array_get_reorder(sctk_communicator_t communicator, int rank);
 
-void sctk_wait_all ( const int task, const sctk_communicator_t com );
+void mpc_mp_comm_wait_all_msgs ( const int task, const sctk_communicator_t com );
 
 int sctk_is_net_message ( int dest );
 void mpc_mp_comm_init_per_task ( int i );
 void sctk_unregister_thread ( const int i );
 void sctk_notify_idle_message ();
-void sctk_notify_idle_message_inter ();
+
 
 void mpc_mp_comm_perform_idle ( volatile int *data, int value, void ( *func ) ( void * ), void *arg );
 

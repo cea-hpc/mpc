@@ -1867,11 +1867,11 @@ static inline int __mpc_comm_ptp_probe( mpc_comm_ptp_t *pair,
 			 /* Match message-type */
 			 ( header->message_type.type == header_send->message_type.type ) &&
 			 /* Match source task (note that we ignore source process
-               here as probe only come from the MPI layer == Only tasks */
+			    here as probe only come from the MPI layer == Only tasks */
 			 ( ( header->source_task == header_send->source_task ) ||
 			   ( header->source_task == SCTK_ANY_SOURCE ) ) &&
 			 /* Match tag while making sure that tags less than 0 are
-           ignored (used for intercomm) */
+			    ignored (used for intercomm) */
 			 ( ( header->message_tag == header_send->message_tag ) ||
 			   ( ( header->message_tag == SCTK_ANY_TAG ) &&
 				 ( header_send->message_tag >= 0 ) ) ) )
@@ -1923,8 +1923,8 @@ static inline int __mpc_comm_pending_msg_list_search_matching_from_recv( mpc_com
 		DL_DELETE( pair->lists.pending_recv.list, ptr_recv );
 
 		/* If the remote source is on a another node, we call the
-     * notify matching hook in the inter-process layer. We do it
-     * before copying the message to the receive buffer */
+		   notify matching hook in the inter-process layer. We do it
+		   before copying the message to the receive buffer */
 		if ( msg->tail.remote_source )
 		{
 			sctk_network_notify_matching_message( msg );
@@ -2058,10 +2058,9 @@ static inline void __mpc_comm_ptp_msg_done( struct sctk_perform_messages_s *wait
 	const mpc_comm_ptp_t *recv_ptp = wait->recv_ptp;
 
 	/* The message is marked as done.
-  * However, we need to poll if it is a inter-process message
-  * and if we are waiting for a SEND request. If we do not do this,
-  * we might overflow the number of send buffers waiting to be released
-  */
+	   However, we need to poll if it is a inter-process message
+	   and if we are waiting for a SEND request. If we do not do this,
+	   we might overflow the number of send buffers waiting to be released */
 	if ( request->header.source_task == SCTK_ANY_SOURCE )
 	{
 		sctk_network_notify_any_source_message( request->header.source_task, 0 );
@@ -2082,8 +2081,6 @@ static void __mpc_comm_perform_msg_wfv( void *a )
 	}
 }
 
-#define SCTK_ENABLE_SPINNING
-
 void mpc_mp_comm_perform_idle( volatile int *data, int value,
 							  void ( *func )( void * ), void *arg )
 {
@@ -2100,69 +2097,70 @@ void mpc_mp_comm_perform_idle( volatile int *data, int value,
 void __MPC_poll_progress();
 #endif
 
+void mpc_mp_comm_wait( sctk_request_t *request )
+{
+	struct sctk_perform_messages_s _wait;
 
-void mpc_mp_comm_wait(sctk_request_t *request) {
-  struct sctk_perform_messages_s _wait;
+	if ( request->completion_flag == SCTK_MESSAGE_CANCELED )
+	{
+		return;
+	}
 
-  if (request->completion_flag == SCTK_MESSAGE_CANCELED) {
-    return;
-  }
+	if ( request->request_type == REQUEST_NULL )
+	{
+		return;
+	}
 
-  if (request->request_type == REQUEST_NULL) {
-    return;
-  }
+	if ( request->request_type == REQUEST_GENERALIZED )
+	{
+		mpc_mp_comm_perform_idle( (int *) &( request->completion_flag ),
+								  SCTK_MESSAGE_DONE, __MPC_poll_progress, NULL );
+	}
+	else
+	{
+		if ( request->completion_flag == SCTK_MESSAGE_DONE )
+			return;
 
-  if (request->request_type == REQUEST_GENERALIZED) {
-      mpc_mp_comm_perform_idle((int *)&(request->completion_flag),
-                                     SCTK_MESSAGE_DONE, __MPC_poll_progress, NULL);
-  } else {
-    if( request->completion_flag == SCTK_MESSAGE_DONE )
-	    return;
+		/* Find the PTPs lists */
+		mpc_mp_comm_ptp_msg_wait_init( &_wait, request, 1 );
 
-    /* Find the PTPs lists */
-    mpc_mp_comm_ptp_msg_wait_init(&_wait, request, 1);
+		/* Fastpath try a few times directly before polling */
+		int trials = 0;
 
-    /* Fastpath try a few times directly before polling */
-    int trials = 0;
-    do {
+		do
+		{
 
-      __mpc_comm_ptp_msg_wait(&_wait);
-      trials++;
-    }while( (request->completion_flag != SCTK_MESSAGE_DONE) && (trials < 3) );
+			__mpc_comm_ptp_msg_wait( &_wait );
+			trials++;
+		} while ( ( request->completion_flag != SCTK_MESSAGE_DONE ) && ( trials < 3 ) );
 
-    if (request->completion_flag != SCTK_MESSAGE_DONE) {
-      sctk_nodebug("Wait from %d to %d (req %p %d) (%p - %p) %d",
-                   request->header.source_task,
-                   request->header.destination_task, request,
-                   request->request_type, _wait.send_ptp, _wait.recv_ptp,
-                   request->header.message_tag);
+		if ( request->completion_flag != SCTK_MESSAGE_DONE )
+		{
+			mpc_mp_comm_perform_idle(
+				(int *) &( _wait.request->completion_flag ), SCTK_MESSAGE_DONE,
+				(void ( * )( void * )) __mpc_comm_perform_msg_wfv,
+				&_wait );
+		}
+		else
+		{
+			__mpc_comm_ptp_msg_done( &_wait );
+		}
 
-      mpc_mp_comm_perform_idle(
-          (int *)&(_wait.request->completion_flag), SCTK_MESSAGE_DONE,
-          (void (*)(void *))__mpc_comm_perform_msg_wfv,
-          &_wait);
+	}
 
-    } else {
-      __mpc_comm_ptp_msg_done(&_wait);
-    }
+	/* Propagate finish to parent request if present */
+	if ( request->pointer_to_source_request )
+	{
+		( (MPC_Request *) request->pointer_to_source_request )->completion_flag =
+			SCTK_MESSAGE_DONE;
+	}
 
-    sctk_nodebug("Wait DONE from %d to %d (req %p %d) (%p - %p)",
-                 request->header.source_task, request->header.destination_task,
-                 request, request->request_type, _wait.send_ptp,
-                 _wait.recv_ptp);
-  }
-
-  /* Propagate finish to parent request if present */
-  if (request->pointer_to_source_request) {
-    ((MPC_Request *)request->pointer_to_source_request)->completion_flag =
-        SCTK_MESSAGE_DONE;
-  }
-
-  /* Free the shadow request bound if present (wait over the source ) */
-  if (request->pointer_to_shadow_request) {
-    ((MPC_Request *)request->pointer_to_shadow_request)
-        ->pointer_to_source_request = NULL;
-  }
+	/* Free the shadow request bound if present (wait over the source ) */
+	if ( request->pointer_to_shadow_request )
+	{
+		( (MPC_Request *) request->pointer_to_shadow_request )
+			->pointer_to_source_request = NULL;
+	}
 }
 
 /*
@@ -2178,60 +2176,58 @@ void mpc_mp_comm_wait(sctk_request_t *request) {
  *
  */
 
-static inline void __mpc_comm_ptp_msg_wait(struct sctk_perform_messages_s *wait) {
+static inline void __mpc_comm_ptp_msg_wait( struct sctk_perform_messages_s *wait )
+{
 
-  const sctk_request_t *request = wait->request;
-  mpc_comm_ptp_t *recv_ptp = wait->recv_ptp;
-  mpc_comm_ptp_t *send_ptp = wait->send_ptp;
-  const int remote_process = wait->remote_process;
-  const int source_task_id = wait->source_task_id;
-  const int polling_task_id = wait->polling_task_id;
-  const int blocking = wait->blocking;
+	const sctk_request_t *request = wait->request;
+	mpc_comm_ptp_t *recv_ptp = wait->recv_ptp;
+	mpc_comm_ptp_t *send_ptp = wait->send_ptp;
+	const int remote_process = wait->remote_process;
+	const int source_task_id = wait->source_task_id;
+	const int polling_task_id = wait->polling_task_id;
+	const int blocking = wait->blocking;
 
-  if (request->completion_flag != SCTK_MESSAGE_DONE) {
-    /* Check the source of the request. We try to poll the
-     * source in order to retreive messages from the network */
+	if ( request->completion_flag != SCTK_MESSAGE_DONE )
+	{
+		/* Check the source of the request. We try to poll the
+     		   source in order to retreive messages from the network */
 
-    // sctk_error("POLL SRCT %d TO DEST %d", source_task_id,
-    // polling_task_id);
-    /* We try to poll for finding a message with a SCTK_ANY_SOURCE source */
-    if (request->header.source_task == SCTK_ANY_SOURCE) {
-      /* We try to poll for finding a message with a SCTK_ANY_SOURCE
-       * source */
-      sctk_network_notify_any_source_message(polling_task_id, blocking);
-    } else if ((request->request_type == REQUEST_SEND && !recv_ptp) ||
-               (request->request_type == REQUEST_RECV && !send_ptp)) {
-      /* We poll the network only if we need it */
-      sctk_network_notify_perform_message(remote_process, source_task_id,
-                                          polling_task_id, blocking);
-    } else if (request->header.source_task ==
-               request->header.destination_task) {
-      /* If the src and the dest tasks are same, we pool the network.
-       * INFO: it is usefull for the overlap benchmark from the
-       * MPC_THREAD_MULTIPLE Test Suite.
-       * An additional thread is created and waiting ob MPI_Recv with src
-       * = dest */
-      sctk_network_notify_perform_message(remote_process, source_task_id,
-                                          polling_task_id, blocking);
-    }
+		/* We try to poll for finding a message with a SCTK_ANY_SOURCE source */
+		if ( request->header.source_task == SCTK_ANY_SOURCE )
+		{
+			/* We try to poll for finding a message with a SCTK_ANY_SOURCE source */
+			sctk_network_notify_any_source_message( polling_task_id, blocking );
+		}
+		else if ( ( request->request_type == REQUEST_SEND && !recv_ptp ) ||
+			  ( request->request_type == REQUEST_RECV && !send_ptp ) ||
+			  ( request->header.source_task == request->header.destination_task ))
+		{
+			/* We poll the network only if we need it (empty queues) */
+			/* If the src and the dest tasks are same, we poll the network.
+			   INFO: it is usefull for the overlap benchmark from the
+       			   MPC_THREAD_MULTIPLE Test Suite.
+       			   An additional thread is created and waiting ob MPI_Recv with src = dest */
+			sctk_network_notify_perform_message( remote_process, source_task_id, polling_task_id, blocking );
+		}
 
-    if ((request->request_type == REQUEST_SEND) && send_ptp) {
-      __mpc_comm_ptp_perform_msg_pair_trylock(send_ptp);
-    } else if ((request->request_type == REQUEST_RECV) && recv_ptp) {
-      __mpc_comm_ptp_perform_msg_pair_trylock(recv_ptp);
-    } else {
-      return;
-    }
-#if 1
+		if ( ( request->request_type == REQUEST_SEND ) && send_ptp )
+		{
+			__mpc_comm_ptp_perform_msg_pair_trylock( send_ptp );
+		}
+		else if ( ( request->request_type == REQUEST_RECV ) && recv_ptp )
+		{
+			__mpc_comm_ptp_perform_msg_pair_trylock( recv_ptp );
+		}
+		else
+		{
+			return;
+		}
 
-    if ((volatile int)request->completion_flag != SCTK_MESSAGE_DONE) {
-      sctk_network_notify_idle_message();
-    }
-
-#endif
-  } else {
-    __mpc_comm_ptp_msg_done(wait);
-  }
+	}
+	else
+	{
+		__mpc_comm_ptp_msg_done( wait );
+	}
 }
 
 /* This is the exported version */
@@ -2239,37 +2235,39 @@ void sctk_perform_messages(struct sctk_perform_messages_s *wait) {
   return __mpc_comm_ptp_msg_wait(wait);
 }
 
-
 /*
  * Wait for all message according to a communicator and a task id
  */
-void sctk_wait_all(const int task, const sctk_communicator_t com) {
-  mpc_comm_ptp_t *pair;
-  int i;
+void mpc_mp_comm_wait_all_msgs( const int task, const sctk_communicator_t com )
+{
+	mpc_comm_ptp_t *pair;
+	int i;
 
-  /* Get the pending list associated to the task */
-  pair = __mpc_comm_ptp_array_get(com, task);
-  sctk_assert(pair);
+	/* Get the pending list associated to the task */
+	pair = __mpc_comm_ptp_array_get( com, task );
+	sctk_assert( pair );
 
-  do {
-    i = OPA_load_int(&pair->pending_nb);
-    sctk_nodebug("pending = %d", pair->pending_nb);
+	do
+	{
+		i = OPA_load_int( &pair->pending_nb );
+		sctk_nodebug( "pending = %d", pair->pending_nb );
 
-    if (i != 0) {
-      /* WARNING: The inter-process module *MUST* implement
+		if ( i != 0 )
+		{
+			/* WARNING: The inter-process module *MUST* implement
        * the 'notify_any_source_message function'. If not,
        * the polling will never occur. */
-      sctk_network_notify_any_source_message(task, 0);
-      __mpc_comm_ptp_perform_msg_pair_trylock(pair);
+			sctk_network_notify_any_source_message( task, 0 );
+			__mpc_comm_ptp_perform_msg_pair_trylock( pair );
 
-      /* Second test to avoid a thread_yield if the message
+			/* Second test to avoid a thread_yield if the message
        * has been handled */
-      i = OPA_load_int(&pair->pending_nb);
+			i = OPA_load_int( &pair->pending_nb );
 
-      if (i != 0)
-        sctk_thread_yield();
-    }
-  } while (i != 0);
+			if ( i != 0 )
+				sctk_thread_yield();
+		}
+	} while ( i != 0 );
 }
 
 void sctk_notify_idle_message() {
