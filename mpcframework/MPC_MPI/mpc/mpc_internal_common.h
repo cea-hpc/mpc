@@ -81,7 +81,6 @@ typedef struct sctk_task_specific_s
 {
 	/* TODO */
 	struct mpc_mpi_data_s* mpc_mpi_data;
-        struct mpc_comm_ptp_s **my_ptp_internal;
 
 	/* Communicator handling */
 	mpc_per_communicator_t*per_communicator;

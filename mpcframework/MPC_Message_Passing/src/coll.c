@@ -285,11 +285,11 @@ static void _mpc_coll_message_send( const sctk_communicator_t communicator, int 
 								&( msg_req->request ), size, message_class,
 								SCTK_DATATYPE_IGNORE, REQUEST_SEND );
 
-	sctk_send_message_try_check( &( msg_req->msg ), check_msg );
+	_mpc_comm_ptp_message_send_check( &( msg_req->msg ), check_msg );
 }
 
 static void _mpc_coll_message_recv( const sctk_communicator_t communicator, int src, int myself, int tag, void *buffer, size_t size,
-									sctk_message_class_t message_class, _mpc_coll_messages_t *msg_req, struct mpc_comm_ptp_s *ptp_internal, int check_msg )
+									sctk_message_class_t message_class, _mpc_coll_messages_t *msg_req, int check_msg )
 {
 	mpc_mp_comm_ptp_message_header_clear( &( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS,
 					  _mpc_coll_free_message, sctk_message_copy );
@@ -298,7 +298,7 @@ static void _mpc_coll_message_recv( const sctk_communicator_t communicator, int 
 								&( msg_req->request ), size, message_class,
 								SCTK_DATATYPE_IGNORE, REQUEST_RECV );
 
-	sctk_recv_message_try_check( &( msg_req->msg ), ptp_internal, check_msg );
+	_mpc_comm_ptp_message_recv_check( &( msg_req->msg ), check_msg );
 }
 
 static void _mpc_coll_messages_table_wait( _mpc_coll_messages_table_t *tab )
@@ -350,7 +350,6 @@ static void _mpc_coll_opt_barrier( const sctk_communicator_t communicator, __UNU
 		int i;
 		_mpc_coll_messages_table_t table;
 		char c = 'c';
-		struct mpc_comm_ptp_s *ptp_internal;
 
 		sctk_nodebug( "_mpc_coll_opt_barrier() begin:" ); //AMAHEO
 
@@ -358,8 +357,7 @@ static void _mpc_coll_opt_barrier( const sctk_communicator_t communicator, __UNU
 
 		total = sctk_get_nb_task_total( communicator );
 		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
-		ptp_internal =
-			_mpc_comm_ptp_array_get(communicator, mpc_common_get_task_rank() );
+
 		sctk_nodebug( "enter barrier total = %d, myself = %d", total,
 					  myself );
 		total_max = log( total ) / log( barrier_arity );
@@ -389,7 +387,7 @@ static void _mpc_coll_opt_barrier( const sctk_communicator_t communicator, __UNU
 							_mpc_coll_message_recv(
 								communicator, src + ( j * ( i / barrier_arity ) ),
 								myself, 0, &c, 1, SCTK_BARRIER_MESSAGE,
-								_mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), ptp_internal, 0 );
+								_mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
 						}
 					}
 
@@ -410,7 +408,7 @@ static void _mpc_coll_opt_barrier( const sctk_communicator_t communicator, __UNU
 						_mpc_coll_message_recv(
 							communicator, dest, myself, 1, &c, 1,
 							SCTK_BARRIER_MESSAGE,
-							_mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), ptp_internal, 0 );
+							_mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
 						_mpc_coll_messages_table_wait( &table );
 						break;
 					}
@@ -452,13 +450,11 @@ static void _mpc_coll_opt_barrier( const sctk_communicator_t communicator, __UNU
 		int myself;
 		char c = 'c';
 		_mpc_coll_messages_table_t table;
-		struct mpc_comm_ptp_s *ptp_internal;
+
 
 		_mpc_coll_message_table_init( &table );
 
 		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
-		ptp_internal =
-			_mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
 
 		rsize = sctk_get_nb_task_remote( communicator );
 
@@ -473,7 +469,7 @@ static void _mpc_coll_opt_barrier( const sctk_communicator_t communicator, __UNU
 		{
 			_mpc_coll_message_recv(
 				communicator, j, myself, 65536, &c, 1, SCTK_BARRIER_MESSAGE,
-				_mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), ptp_internal, 0 );
+				_mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
 		}
 
 		_mpc_coll_messages_table_wait( &table );
@@ -506,7 +502,6 @@ void mpc_mp_bcast_opt_messages( void *buffer, const size_t size,
 		int i;
 		_mpc_coll_messages_table_t table;
 		int BROADCAST_ARRITY = 2;
-		struct mpc_comm_ptp_s *ptp_internal;
 
 		_mpc_coll_message_table_init( &table );
 
@@ -525,8 +520,7 @@ void mpc_mp_bcast_opt_messages( void *buffer, const size_t size,
 		total = sctk_get_nb_task_total( communicator );
 		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
 		related_myself = ( myself + total - root ) % total;
-		ptp_internal =
-			_mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
+
 		total_max = log( total ) / log( BROADCAST_ARRITY );
 		total_max = pow( BROADCAST_ARRITY, total_max );
 
@@ -555,7 +549,7 @@ void mpc_mp_bcast_opt_messages( void *buffer, const size_t size,
 					_mpc_coll_message_recv(
 						communicator, ( dest + root ) % total, myself, root,
 						buffer, size, SCTK_BROADCAST_MESSAGE,
-						_mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), ptp_internal, 0 );
+						_mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
 					_mpc_coll_messages_table_wait( &table );
 					break;
 				}
@@ -624,7 +618,7 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
 		_mpc_coll_messages_table_t table;
 		int ALLREDUCE_ARRITY = 2;
 		int total_max;
-		struct mpc_comm_ptp_s *ptp_internal;
+
 
 		/*
 		  MPI require that the result of the allreduce is the same on all MPI tasks.
@@ -667,8 +661,6 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
 
 		total = sctk_get_nb_task_total( communicator );
 		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
-		ptp_internal =
-			_mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
 
 		total_max = log( total ) / log( ALLREDUCE_ARRITY );
 		total_max = pow( ALLREDUCE_ARRITY, total_max );
@@ -700,7 +692,7 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
 							communicator, src + ( j * ( i / ALLREDUCE_ARRITY ) ),
 							myself, 0, buffer_table[j - 1], size,
 							SCTK_ALLREDUCE_MESSAGE,
-							_mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), ptp_internal, 0 );
+							_mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
 					}
 				}
 
@@ -734,7 +726,7 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
 											buffer_out, size,
 											SCTK_ALLREDUCE_MESSAGE,
 											_mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ),
-											ptp_internal, 0 );
+											 0 );
 					_mpc_coll_messages_table_wait( &table );
 					break;
 				}
@@ -834,7 +826,6 @@ static void _mpc_coll_hetero_barrier_inter( const sctk_communicator_t communicat
 	int i;
 	_mpc_coll_messages_table_t table;
 	char c = 'c';
-	struct mpc_comm_ptp_s *ptp_internal;
 
 	/* If only one process involved, we return */
 	if ( total == 1 )
@@ -852,8 +843,6 @@ static void _mpc_coll_hetero_barrier_inter( const sctk_communicator_t communicat
 	sctk_nodebug( "rank : %d, myself_ptr: %p", mpc_common_get_process_rank(), myself_ptr );
 	assume( myself_ptr );
 	myself = ( myself_ptr - process_array );
-
-	ptp_internal = _mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
 
 	total_max = log( total ) / log( barrier_arity );
 	total_max = pow( barrier_arity, total_max );
@@ -885,7 +874,7 @@ static void _mpc_coll_hetero_barrier_inter( const sctk_communicator_t communicat
 						process_array[src + ( j * ( i / barrier_arity ) )],
 						process_array[myself], 0, &c, 1,
 						SCTK_BARRIER_HETERO_MESSAGE,
-						_mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ), ptp_internal, 1 );
+						_mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ),  1 );
 				}
 			}
 
@@ -908,7 +897,7 @@ static void _mpc_coll_hetero_barrier_inter( const sctk_communicator_t communicat
 				_mpc_coll_message_recv(
 					communicator, process_array[dest], process_array[myself], 1,
 					&c, 1, SCTK_BARRIER_HETERO_MESSAGE,
-					_mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ), ptp_internal, 0 );
+					_mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ),  0 );
 				_mpc_coll_messages_table_wait( &table );
 				break;
 			}
@@ -1007,7 +996,7 @@ void _mpc_coll_hetero_bcast_inter( void *buffer, const size_t size,
 		int i;
 		_mpc_coll_messages_table_t table;
 		int BROADCAST_ARRITY;
-		struct mpc_comm_ptp_s *ptp_internal;
+
 		int specific_tag = SCTK_BROADCAST_HETERO_MESSAGE;
 		int *process_array;
 		int root;
@@ -1042,7 +1031,6 @@ void _mpc_coll_hetero_bcast_inter( void *buffer, const size_t size,
 		root = ( myself_ptr - process_array );
 
 		related_myself = ( myself + total - root ) % total;
-		ptp_internal = _mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
 
 		total_max = log( total ) / log( BROADCAST_ARRITY );
 		total_max = pow( BROADCAST_ARRITY, total_max );
@@ -1069,7 +1057,7 @@ void _mpc_coll_hetero_bcast_inter( void *buffer, const size_t size,
 						communicator, process_array[( dest + root ) % total],
 						process_array[myself], root_process, buffer, size,
 						specific_tag, _mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ),
-						ptp_internal, 1 );
+						 1 );
 					_mpc_coll_messages_table_wait( &table );
 					break;
 				}
@@ -1203,7 +1191,6 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
 {
 
 	int ALLREDUCE_ARRITY = 2;
-	struct mpc_comm_ptp_s *ptp_internal;
 	int total_max;
 	_mpc_coll_messages_table_t table;
 	void *buffer_tmp;
@@ -1260,9 +1247,6 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
 	assume( myself_ptr );
 	myself = ( myself_ptr - process_array );
 
-	/* We get the PTP list -1  */
-	ptp_internal = _mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
-
 	total_max = log( total ) / log( ALLREDUCE_ARRITY );
 	total_max = pow( ALLREDUCE_ARRITY, total_max );
 
@@ -1293,7 +1277,7 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
 						process_array[src + ( j * ( i / ALLREDUCE_ARRITY ) )],
 						process_array[myself], 0, buffer_table[j - 1], size,
 						specific_tag, _mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ),
-						ptp_internal, 0 );
+						 0 );
 				}
 			}
 
@@ -1328,7 +1312,7 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
 				_mpc_coll_message_recv(
 					communicator, process_array[dest], process_array[myself], 1,
 					buffer_out, size, specific_tag,
-					_mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ), ptp_internal, 1 );
+					_mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ),  1 );
 				_mpc_coll_messages_table_wait( &table );
 				break;
 			}
@@ -1527,14 +1511,11 @@ static void _mpc_coll_noalloc_barrier( const sctk_communicator_t communicator, _
 		int i;
 		_mpc_coll_messages_table_t table;
 		char c = 'c';
-		struct mpc_comm_ptp_s *ptp_internal;
 
 		_mpc_coll_message_table_init( &table );
 
 		total = sctk_get_nb_task_total( communicator );
 		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
-		ptp_internal =
-			_mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
 		sctk_nodebug( "enter barrier total = %d, myself = %d", total,
 					  myself );
 		total_max = log( total ) / log( barrier_arity );
@@ -1565,7 +1546,7 @@ static void _mpc_coll_noalloc_barrier( const sctk_communicator_t communicator, _
 								communicator, src + ( j * ( i / barrier_arity ) ),
 								myself, 0, &c, 1, SCTK_BARRIER_MESSAGE,
 								_mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ),
-								ptp_internal, 0 );
+								 0 );
 						}
 					}
 					_mpc_coll_messages_table_wait( &table );
@@ -1586,7 +1567,7 @@ static void _mpc_coll_noalloc_barrier( const sctk_communicator_t communicator, _
 							communicator, dest, myself, 1, &c, 1,
 							SCTK_BARRIER_MESSAGE,
 							_mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ),
-							ptp_internal, 0 );
+							 0 );
 						_mpc_coll_messages_table_wait( &table );
 						break;
 					}
@@ -1628,13 +1609,11 @@ static void _mpc_coll_noalloc_barrier( const sctk_communicator_t communicator, _
 		int myself;
 		char c = 'c';
 		_mpc_coll_messages_table_t table;
-		struct mpc_comm_ptp_s *ptp_internal;
+
 
 		_mpc_coll_message_table_init( &table );
 
 		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
-		ptp_internal =
-			_mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
 
 		rsize = sctk_get_nb_task_remote( communicator );
 
@@ -1649,7 +1628,7 @@ static void _mpc_coll_noalloc_barrier( const sctk_communicator_t communicator, _
 		{
 			_mpc_coll_message_recv(
 				communicator, j, myself, 65536, &c, 1, SCTK_BARRIER_MESSAGE,
-				_mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ), ptp_internal, 0 );
+				_mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ),  0 );
 		}
 
 		_mpc_coll_messages_table_wait( &table );
@@ -1682,7 +1661,7 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 		int i;
 		_mpc_coll_messages_table_t table;
 		int BROADCAST_ARRITY;
-		struct mpc_comm_ptp_s *ptp_internal;
+
 
 		_mpc_coll_message_table_init( &table );
 
@@ -1701,8 +1680,7 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 		total = sctk_get_nb_task_total( communicator );
 		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
 		related_myself = ( myself + total - root ) % total;
-		ptp_internal =
-			_mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank() );
+
 		total_max = log( total ) / log( BROADCAST_ARRITY );
 		total_max = pow( BROADCAST_ARRITY, total_max );
 
@@ -1732,7 +1710,7 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 						communicator, ( dest + root ) % total, myself, root,
 						buffer, size, SCTK_BROADCAST_MESSAGE,
 						_mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ),
-						ptp_internal, 0 );
+						 0 );
 					_mpc_coll_messages_table_wait( &table );
 					break;
 				}
@@ -1796,7 +1774,6 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 	_mpc_coll_messages_table_t table;
 	int ALLREDUCE_ARRITY;
 	int total_max;
-	struct mpc_comm_ptp_s *ptp_internal;
 	static __thread int buffer_used = 0;
 	int need_free = 0;
 
@@ -1873,8 +1850,6 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 
 	total = sctk_get_nb_task_total( communicator );
 	myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
-	ptp_internal =
-		_mpc_comm_ptp_array_get( communicator, mpc_common_get_task_rank());
 
 	total_max = log( total ) / log( ALLREDUCE_ARRITY );
 	total_max = pow( ALLREDUCE_ARRITY, total_max );
@@ -1905,7 +1880,7 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 						communicator, src + ( j * ( i / ALLREDUCE_ARRITY ) ), myself, 0,
 						buffer_table[j - 1], size, SCTK_ALLREDUCE_MESSAGE,
 						_mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ),
-						ptp_internal, 0 );
+						 0 );
 				}
 			}
 
@@ -1938,7 +1913,7 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 					communicator, dest, myself, 1, buffer_out, size,
 					SCTK_ALLREDUCE_MESSAGE,
 					_mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ),
-					ptp_internal, 0 );
+					 0 );
 				_mpc_coll_messages_table_wait( &table );
 				break;
 			}

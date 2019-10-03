@@ -218,7 +218,7 @@ void __sctk_control_messages_send(int dest, int dest_task,
                              (0 <= dest_task) ? dest_task : dest, &request,
                              size, message_class, SCTK_DATATYPE_IGNORE, REQUEST_SEND);
 
-  sctk_send_message_try_check(&msg, 1);
+  _mpc_comm_ptp_message_send_check(&msg, 1);
 
   mpc_mp_comm_wait(&request);
 }

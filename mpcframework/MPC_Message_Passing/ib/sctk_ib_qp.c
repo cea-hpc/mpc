@@ -813,7 +813,6 @@ static void *wait_send ( void *arg )
 	else
 	{
 		sctk_network_notify_idle_message_multirail_ib_wait_send();
-		/*     sctk_notify_idle_message (); */
 	}
 
 	return NULL;

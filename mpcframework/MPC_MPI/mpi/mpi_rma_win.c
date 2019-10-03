@@ -323,7 +323,7 @@ static inline int mpc_MPI_Win_do_registration(sctk_window_t internal_win,
   /* Override access mode from buffer knowledge */
   sctk_window_set_access_mode(win, win_mode);
 
-  if ((win->is_emulated || sctk_is_net_message(win->owner)) &&
+  if ((win->is_emulated || mpc_mp_comm_is_remote_rank(win->owner)) &&
       (win_mode != SCTK_WIN_ACCESS_DIRECT)) {
     desc->source.requests.is_emulated = 1;
     desc->target.requests.is_emulated = 1;
@@ -385,7 +385,7 @@ static inline int mpc_MPI_Win_do_registration(sctk_window_t internal_win,
     /* Override access mode in function of window type */
     sctk_window_set_access_mode(new_win, win_mode);
 
-    if ((new_win->is_emulated || sctk_is_net_message(new_win->owner)) &&
+    if ((new_win->is_emulated || mpc_mp_comm_is_remote_rank(new_win->owner)) &&
         (win_mode != SCTK_WIN_ACCESS_DIRECT)) {
       desc->source.requests.is_emulated |= 1;
       desc->target.requests.is_emulated |= 1;

@@ -216,7 +216,7 @@ int mpc_MPI_Win_request_array_fence_no_ops(
   while (OPA_load_int(&ra->available_req) != MAX_PENDING_RMA) {
     mpc_MPI_Win_request_array_test(ra);
 
-    sctk_notify_idle_message();
+    sctk_network_notify_idle_message();
     mpc_thread_yield();
   }
 
@@ -1616,7 +1616,7 @@ static inline int __mpc_MPI_Win_flush(int rank, MPI_Win win, int remote,
   mpc_MPI_Win_request_array_fence(&desc->source.requests);
   mpc_MPI_Win_request_array_fence(&desc->target.requests);
 
-  if (!sctk_is_net_message(sctk_get_comm_world_rank(desc->comm, rank))) {
+  if (!mpc_mp_comm_is_remote_rank(sctk_get_comm_world_rank(desc->comm, rank))) {
     desc->tainted_wins[rank] = 0;
     return MPI_SUCCESS;
   }
@@ -1740,7 +1740,7 @@ int mpc_Win_contexes_fence_control(MPI_Win win) {
     {
       sctk_control_message_process_all();
       sctk_control_message_process_local(mpc_common_get_task_rank());
-      sctk_notify_idle_message();
+      sctk_network_notify_idle_message();
       mpc_thread_yield();
     }
 

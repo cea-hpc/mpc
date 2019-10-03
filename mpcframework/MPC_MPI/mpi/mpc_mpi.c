@@ -1557,7 +1557,7 @@ static int __INTERNAL__PMPIX_Exchange(void **send_buf , void **recvbuff, int rem
 	int remote = sctk_get_comm_world_rank ((const sctk_communicator_t) comm, remote_rank);
 	
 	/* Now check if we are on the same node for both communications */
-	if( !sctk_is_net_message( remote ) )
+	if( !mpc_mp_comm_is_remote_rank( remote ) )
 	{
 		/* Perform the zero-copy message */
 		
@@ -1599,7 +1599,7 @@ static int __INTERNAL__PMPIX_Swap(void **sendrecv_buf , int remote_rank, MPI_Cou
 	int remote = sctk_get_comm_world_rank ((const sctk_communicator_t) comm, remote_rank);
 	
 	/* Now check if we are on the same node for both communications */
-	if( !sctk_is_net_message( remote ) )
+	if( !mpc_mp_comm_is_remote_rank( remote ) )
 	{
 		/* Perform the zero-copy message */
 		

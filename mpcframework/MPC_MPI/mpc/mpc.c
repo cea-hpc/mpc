@@ -879,17 +879,6 @@ static inline void __MPC_init_task_specific_t(sctk_task_specific_t *tmp) {
   tmp->init_done = 0;
   tmp->thread_level = -1;
 
-  {
-    sctk_communicator_t tmp_comm;
-    tmp->my_ptp_internal = sctk_malloc(SCTK_PARALLEL_COMM_QUEUES_NUMBER *
-                                       sizeof(struct mpc_comm_ptp_s *));
-    for (tmp_comm = 0; tmp_comm < SCTK_PARALLEL_COMM_QUEUES_NUMBER;
-         tmp_comm++) {
-      tmp->my_ptp_internal[tmp_comm] =
-          _mpc_comm_ptp_array_get(tmp_comm, tmp->task_id);
-    }
-  }
-
   /* Create the MPI_Info factory */
   MPC_Info_factory_init(&tmp->info_fact);
 
@@ -3597,7 +3586,7 @@ static inline int __MPC_Isend(void *buf, mpc_msg_count count,
   d_size = __MPC_Get_datatype_size(datatype, task_specific);
   msg_size = count * d_size;
 
-  if ((msg_size > MAX_MPC_BUFFERED_SIZE) || (sctk_is_net_message(dest)) ||
+  if ((msg_size > MAX_MPC_BUFFERED_SIZE) || (mpc_mp_comm_is_remote_rank(dest)) ||
       mpc_disable_buffering) {
   FALLBACK_TO_UNBUFERED_ISEND:
     msg = mpc_mp_comm_ptp_message_header_create(SCTK_MESSAGE_CONTIGUOUS);
@@ -3640,7 +3629,7 @@ static inline int __MPC_Isend(void *buf, mpc_msg_count count,
 
   sctk_nodebug("Message from %d to %d", src, dest);
   sctk_nodebug("isend : snd2, my rank = %d", src);
-  sctk_send_message(msg);
+  mpc_mp_comm_ptp_message_send(msg);
   MPC_ERROR_SUCESS();
 }
 
@@ -3690,7 +3679,7 @@ static inline int __MPC_Issend(void *buf, mpc_msg_count count,
 
   sctk_nodebug("Message from %d to %d", src, dest);
   sctk_nodebug("issend : snd2, my rank = %d", src);
-  sctk_send_message(msg);
+  mpc_mp_comm_ptp_message_send(msg);
   MPC_ERROR_SUCESS();
 }
 
@@ -3798,9 +3787,8 @@ static inline int __MPC_Irecv(void *buf, mpc_msg_count count,
   sctk_mpc_set_header_in_message(msg, tag, comm, source, src, request,
                                  count * d_size, SCTK_P2P_MESSAGE, datatype, REQUEST_RECV);
   sctk_nodebug("ircv : rcv, my rank = %d", src);
-  sctk_recv_message(
+  mpc_mp_comm_ptp_message_recv(
       msg,
-      task_specific->my_ptp_internal[comm % SCTK_PARALLEL_COMM_QUEUES_NUMBER],
       0);
   MPC_ERROR_SUCESS();
 }
@@ -4383,7 +4371,7 @@ static int __MPC_Ssend(void *buf, mpc_msg_count count, MPC_Datatype datatype,
                                  SCTK_P2P_MESSAGE, datatype, REQUEST_SEND);
 
   sctk_nodebug("count = %d, datatype = %d", SCTK_MSG_SIZE(msg), datatype);
-  sctk_send_message(msg);
+  mpc_mp_comm_ptp_message_send(msg);
   sctk_mpc_wait_message(&request);
   MPC_ERROR_SUCESS();
 }
@@ -4431,7 +4419,7 @@ static int __MPC_Send(void *restrict buf, mpc_msg_count count,
 
   msg_size = count * __MPC_Get_datatype_size(datatype, task_specific);
 
-  if ((msg_size > MAX_MPC_BUFFERED_SIZE) || (sctk_is_net_message(dest)) ||
+  if ((msg_size > MAX_MPC_BUFFERED_SIZE) || (mpc_mp_comm_is_remote_rank(dest)) ||
       mpc_disable_buffering) {
   FALLBACK_TO_BLOCKING_SEND:
     msg = &header;
@@ -4443,7 +4431,7 @@ static int __MPC_Send(void *restrict buf, mpc_msg_count count,
                                    msg_size, SCTK_P2P_MESSAGE, datatype, REQUEST_SEND);
 
     /* Send */
-    sctk_send_message(msg);
+    mpc_mp_comm_ptp_message_send(msg);
 
     sctk_nodebug("send request.is_null %d", request.is_null);
     /* Wait */
@@ -4481,7 +4469,7 @@ static int __MPC_Send(void *restrict buf, mpc_msg_count count,
       msg->tail.buffer_async = tmp_buf;
 
       /* Send but do not wait */
-      sctk_send_message(msg);
+      mpc_mp_comm_ptp_message_send(msg);
     }
   }
 
@@ -4598,9 +4586,8 @@ int PMPC_Recv(void *buf, mpc_msg_count count, MPC_Datatype datatype, int source,
   sctk_mpc_set_header_in_message(msg, tag, comm, source, src, &request,
                                  msg_size, SCTK_P2P_MESSAGE, datatype, REQUEST_RECV);
 
-  sctk_recv_message(
+  mpc_mp_comm_ptp_message_recv(
       msg,
-      task_specific->my_ptp_internal[comm % SCTK_PARALLEL_COMM_QUEUES_NUMBER],
       1);
   sctk_nodebug("recv request.is_null %d", request.is_null);
   SCTK_PROFIL_END(MPC_Recv_init_message);
@@ -7049,7 +7036,7 @@ int PMPC_Isend_pack(int dest, int tag, MPC_Comm comm, MPC_Request *request) {
   sctk_mpc_set_header_in_message(msg, tag, comm, src, dest, request,
                                  sctk_mpc_get_message_size(request),
                                  SCTK_P2P_MESSAGE, MPC_PACKED, REQUEST_SEND);
-  sctk_send_message(msg);
+  mpc_mp_comm_ptp_message_send(msg);
   SCTK_PROFIL_END(MPC_Isend_pack);
   MPC_ERROR_SUCESS();
 }
@@ -7097,9 +7084,8 @@ int PMPC_Irecv_pack(int source, int tag, MPC_Comm comm, MPC_Request *request) {
                                  sctk_mpc_get_message_size(request),
                                  SCTK_P2P_MESSAGE, MPC_PACKED, REQUEST_RECV);
 
-  sctk_recv_message(
+  mpc_mp_comm_ptp_message_recv(
       msg,
-      task_specific->my_ptp_internal[comm % SCTK_PARALLEL_COMM_QUEUES_NUMBER],
       0);
   SCTK_PROFIL_END(MPC_Irecv_pack);
   MPC_ERROR_SUCESS();

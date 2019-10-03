@@ -190,7 +190,7 @@ static int sctk_send_message_from_network_tcp ( sctk_thread_ptp_message_t *msg )
 	if ( sctk_send_message_from_network_reorder ( msg ) == REORDER_NO_NUMBERING )
 	{
 		/* No reordering */
-		sctk_send_message_try_check ( msg, 1 );
+		_mpc_comm_ptp_message_send_check ( msg, 1 );
 	}
 
 	return 1;

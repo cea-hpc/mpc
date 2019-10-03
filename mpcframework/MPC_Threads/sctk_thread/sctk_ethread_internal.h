@@ -1505,7 +1505,7 @@ extern "C"
             }
         }     
     #else
-            sctk_notify_idle_message ();
+            sctk_network_notify_idle_message ();
     #endif
 #endif
 # if 0

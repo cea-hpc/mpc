@@ -354,7 +354,7 @@ void sctk_route_messages_send ( int myself, int dest, sctk_message_class_t messa
 	mpc_mp_comm_ptp_message_header_clear ( & ( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS, sctk_free_route_messages, sctk_message_copy );
 	mpc_mp_comm_ptp_message_set_contiguous_addr ( & ( msg_req->msg ), buffer, size );
 	mpc_mp_comm_ptp_message_header_init ( & ( msg_req->msg ), tag, communicator, myself, dest,  & ( msg_req->request ), size, message_class, SCTK_DATATYPE_IGNORE, REQUEST_SEND );
-	sctk_send_message ( & ( msg_req->msg ) );
+	mpc_mp_comm_ptp_message_send ( & ( msg_req->msg ) );
 	mpc_mp_comm_wait ( & ( msg_req->request ) );
 }
 
@@ -371,7 +371,7 @@ void sctk_route_messages_recv ( int src, int myself, sctk_message_class_t messag
 	mpc_mp_comm_ptp_message_header_clear ( & ( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS, sctk_free_route_messages, sctk_message_copy );
 	mpc_mp_comm_ptp_message_set_contiguous_addr ( & ( msg_req->msg ), buffer, size );
 	mpc_mp_comm_ptp_message_header_init ( & ( msg_req->msg ), tag, communicator,  src, myself,  & ( msg_req->request ), size, message_class, SCTK_DATATYPE_IGNORE,REQUEST_RECV );
-	sctk_recv_message ( & ( msg_req->msg ), NULL, 1 );
+	mpc_mp_comm_ptp_message_recv ( & ( msg_req->msg ), 1 );
 	mpc_mp_comm_wait ( & ( msg_req->request ) );
 }
 

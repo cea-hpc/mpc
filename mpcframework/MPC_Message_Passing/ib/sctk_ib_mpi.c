@@ -729,7 +729,7 @@ int sctk_send_message_from_network_mpi_ib ( sctk_thread_ptp_message_t *msg )
 		/*
 		  No reordering
 		*/
-		sctk_send_message_try_check ( msg, 1 );
+		_mpc_comm_ptp_message_send_check ( msg, 1 );
 	}
 
 	return ret;

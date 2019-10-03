@@ -116,7 +116,7 @@ static inline int __send_pending_messages ( sctk_reorder_table_t *tmp )
 				mpc_common_spinlock_unlock ( & ( tmp->lock ) );
 				/* We can not keep the lock during sending the message to MPC or the
 				 * code will deadlock */
-				sctk_send_message_try_check ( reorder->msg, 1 );
+				_mpc_comm_ptp_message_send_check ( reorder->msg, 1 );
 
 				OPA_fetch_and_incr_int ( & ( tmp->message_number_src ) );
 				ret = REORDER_FOUND_EXPECTED;
@@ -186,7 +186,7 @@ int sctk_send_message_from_network_reorder ( sctk_thread_ptp_message_t *msg )
                   sctk_nodebug("Direct Send %d from %p", SCTK_MSG_NUMBER(msg),
                                tmp);
 
-                  sctk_send_message_try_check(msg, 1);
+                  _mpc_comm_ptp_message_send_check(msg, 1);
 
                   OPA_fetch_and_incr_int(&(tmp->message_number_src));
 

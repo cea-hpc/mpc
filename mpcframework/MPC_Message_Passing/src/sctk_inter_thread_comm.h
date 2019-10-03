@@ -546,10 +546,10 @@ void mpc_mp_comm_ptp_message_header_init ( sctk_thread_ptp_message_t *msg, const
                                   sctk_message_class_t message_class,
                                   sctk_datatype_t datatype,
                                   sctk_request_type_t request_type );
-void sctk_send_message ( sctk_thread_ptp_message_t *msg );
-void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_check );
-void sctk_recv_message ( sctk_thread_ptp_message_t *msg, struct mpc_comm_ptp_s *tmp, int need_check );
-void sctk_recv_message_try_check ( sctk_thread_ptp_message_t *msg, struct mpc_comm_ptp_s *tmp, int perform_check );
+void mpc_mp_comm_ptp_message_send ( sctk_thread_ptp_message_t *msg );
+void _mpc_comm_ptp_message_send_check ( sctk_thread_ptp_message_t *msg, int perform_check );
+void mpc_mp_comm_ptp_message_recv ( sctk_thread_ptp_message_t *msg, int need_check );
+void _mpc_comm_ptp_message_recv_check ( sctk_thread_ptp_message_t *msg, int perform_check );
 void sctk_message_completion_and_free ( sctk_thread_ptp_message_t *send, sctk_thread_ptp_message_t *recv );
 void sctk_complete_and_free_message ( sctk_thread_ptp_message_t *msg );
 
@@ -616,10 +616,10 @@ sctk_reorder_list_t * _mpc_comm_ptp_array_get_reorder(sctk_communicator_t commun
 
 void mpc_mp_comm_wait_all_msgs ( const int task, const sctk_communicator_t com );
 
-int sctk_is_net_message ( int dest );
+int mpc_mp_comm_is_remote_rank ( int dest );
 void mpc_mp_comm_init_per_task ( int i );
 void sctk_unregister_thread ( const int i );
-void sctk_notify_idle_message ();
+void sctk_network_notify_idle_message ();
 
 
 void mpc_mp_comm_perform_idle ( volatile int *data, int value, void ( *func ) ( void * ), void *arg );

@@ -254,7 +254,7 @@ void sctk_window_release( sctk_window_t win_id  )
 
         /* Do we need to signal a remote win ? */
         if ((win->owner != mpc_common_get_task_rank()) &&
-            sctk_is_net_message(win->owner)) {
+            mpc_mp_comm_is_remote_rank(win->owner)) {
           sctk_nodebug("Remote is %d on %d", win->remote_id, win->owner);
           /* This is a remote window sigal release
            * to remote rank */
@@ -367,7 +367,7 @@ int sctk_window_map_remote(int remote_rank, sctk_communicator_t comm,
 
   /* Case where we are local */
   if ((mr.source_rank == mr.remote_rank) ||
-      (!sctk_is_net_message(sctk_get_comm_world_rank(
+      (!mpc_mp_comm_is_remote_rank(sctk_get_comm_world_rank(
           comm, mr.remote_rank)))) /* If the target is in the same proces
                                     * just work locally */
   {
@@ -595,7 +595,7 @@ static inline void __sctk_window_RDMA_write(sctk_window_t win_id,
   if ((my_rank == win->owner) /* Same rank */
       || (mpc_MPI_allocmem_is_in_pool(win->start_addr)) ||
       (win->access_mode == SCTK_WIN_ACCESS_DIRECT) /* Forced direct mode */
-      || (!sctk_is_net_message(win->owner)) /* Same process */) {
+      || (!mpc_mp_comm_is_remote_rank(win->owner)) /* Same process */) {
     /* Shared Memory */
     sctk_window_RDMA_write_local(win, src_addr, size, dest_offset);
     sctk_window_complete_request(req);
@@ -762,7 +762,7 @@ void __sctk_window_RDMA_read( sctk_window_t win_id, sctk_rail_pin_ctx_t * dest_p
             || (mpc_MPI_allocmem_is_in_pool(win->start_addr)) ||
             (win->access_mode ==
              SCTK_WIN_ACCESS_DIRECT) /* Forced direct mode */
-            || (!sctk_is_net_message(win->owner)) /* Same process */) {
+            || (!mpc_mp_comm_is_remote_rank(win->owner)) /* Same process */) {
           /* Shared Memory */
           sctk_window_RDMA_read_local(win, dest_addr, size, src_offset);
           sctk_window_complete_request(req);
@@ -1299,7 +1299,7 @@ static inline void __sctk_window_RDMA_fetch_and_op(
   if ((my_rank == win->owner) /* Same rank */
       || (mpc_MPI_allocmem_is_in_pool(win->start_addr)) ||
       (win->access_mode == SCTK_WIN_ACCESS_DIRECT) ||
-      (!sctk_is_net_message(win->owner)) /* Same process */) {
+      (!mpc_mp_comm_is_remote_rank(win->owner)) /* Same process */) {
     /* Shared Memory */
     sctk_window_RDMA_fetch_and_op_local(remote_win_id, remote_offset,
                                         fetch_addr, add, op, type, req);
@@ -1564,7 +1564,7 @@ void __sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, 
         if ((my_rank == win->owner) /* Same rank */
             || (mpc_MPI_allocmem_is_in_pool(win->start_addr)) ||
             (win->access_mode == SCTK_WIN_ACCESS_DIRECT) ||
-            (!sctk_is_net_message(win->owner)) /* Same process */) {
+            (!mpc_mp_comm_is_remote_rank(win->owner)) /* Same process */) {
           /* Shared Memory */
           sctk_window_RDMA_CAS_local(remote_win_id, remote_offset, comp,
                                      new_data, res, type);
@@ -1648,7 +1648,7 @@ void sctk_window_RDMA_fence(sctk_window_t win_id, sctk_request_t *req) {
   if ((my_rank == win->owner) ||
       (mpc_MPI_allocmem_is_in_pool(win->start_addr)) ||
       (win->access_mode == SCTK_WIN_ACCESS_DIRECT) ||
-      (!sctk_is_net_message(win->owner))) {
+      (!mpc_mp_comm_is_remote_rank(win->owner))) {
     /* Nothing to do all operations are local */
     return;
   } else if ((win->is_emulated) ||
