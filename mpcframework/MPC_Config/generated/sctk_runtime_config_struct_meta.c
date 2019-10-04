@@ -264,12 +264,8 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 			, NULL},	{"win_thread_pool_max"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_mpi_rma,win_thread_pool_max)  , sizeof(int) , "int" , NULL , 
 				NULL
 			, NULL},	/* struct */
-	{"sctk_runtime_config_struct_mpc" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_mpc) , NULL , sctk_runtime_config_struct_init_mpc, NULL },	{"log_debug"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_mpc,log_debug)  , sizeof(int) , "int" , NULL , 
-				NULL
-			, NULL},	{"hard_checking"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_mpc,hard_checking)  , sizeof(int) , "int" , NULL , 
-				NULL
-			, NULL},	{"buffering"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_mpc,buffering)  , sizeof(int) , "int" , NULL , 
-				NULL
+	{"sctk_runtime_config_struct_mpc" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_mpc) , NULL , sctk_runtime_config_struct_init_mpc, NULL },	{"disable_message_buffering"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_mpc,disable_message_buffering)  , sizeof(int) , "int" , NULL , 
+				"MPC_DISABLE_BUFFERING"
 			, NULL},	/* struct */
 	{"sctk_runtime_config_struct_net_driver_topological" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_driver_topological) , NULL , sctk_runtime_config_struct_init_net_driver_topological, NULL },	{"dummy"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_topological,dummy)  , sizeof(int) , "int" , NULL , 
 				NULL

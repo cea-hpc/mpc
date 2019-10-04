@@ -721,18 +721,10 @@ Options for MPC Message Passing
 It support parameters :
 .Pp
 .Bl -tag -width Ds
-.It Cm log_debug
+.It Cm disable_message_buffering
 Type is bool. Default value is false. 
-.Pp log_debug
-Print debug messages
-.It Cm hard_checking
-Type is bool. Default value is false. 
-.Pp hard_checking
-
-.It Cm buffering
-Type is bool. Default value is false. 
-.Pp buffering
-
+.Pp disable_message_buffering
+If MPI is allowed to buffer small messages
 .El
 .Sh ENTRIES OF TYPE net_driver_topological
 Declare a topological driver.

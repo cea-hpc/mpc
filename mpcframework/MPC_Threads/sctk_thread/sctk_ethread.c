@@ -170,12 +170,6 @@ sctk_ethread_sched_restore (sctk_thread_t thread, char *type, int vp)
 
 /*   sctk_ethread_print_task((sctk_ethread_t)thread); */
 
-#ifdef MPC_MPI
-  /*Update checkpoint key */
-  __sctk_ethread_setspecific (thread, sctk_get_check_point_key (),
-			      (void *) 1);
-#endif
-
   /*Place in ready queue */
   sctk_ethread_enqueue_task (&virtual_processor, thread);
 

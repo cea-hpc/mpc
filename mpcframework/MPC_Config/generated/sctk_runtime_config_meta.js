@@ -139,9 +139,7 @@ meta.types = {
 		win_thread_pool_max: {mode: 'param', name: "win_thread_pool_max", type: "int", doc: "Maximum number of window threads to keep", dflt: "2", },
 	}},
 	mpc : {type: 'struct', name: "mpc", childs: {
-		log_debug: {mode: 'param', name: "log_debug", type: "bool", doc: "Print debug messages", dflt: "false", },
-		hard_checking: {mode: 'param', name: "hard_checking", type: "bool", doc: "", dflt: "false", },
-		buffering: {mode: 'param', name: "buffering", type: "bool", doc: "", dflt: "false", },
+		disable_message_buffering: {mode: 'param', name: "disable_message_buffering", type: "bool", doc: "If MPI is allowed to buffer small messages", dflt: "false", },
 	}},
 	net_driver_topological : {type: 'struct', name: "net_driver_topological", childs: {
 		dummy: {mode: 'param', name: "dummy", type: "int", doc: "A test Param", dflt: null},

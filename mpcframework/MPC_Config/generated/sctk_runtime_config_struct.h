@@ -354,12 +354,8 @@ struct sctk_runtime_config_struct_mpi_rma
 /**Options for MPC Message Passing**/
 struct sctk_runtime_config_struct_mpc
 {	int init_done;
-	/**Print debug messages**/
-	int log_debug;
-	/****/
-	int hard_checking;
-	/****/
-	int buffering;
+	/**If MPI is allowed to buffer small messages**/
+	int disable_message_buffering;
 };
 
 /********************************** ENUM ************************************/

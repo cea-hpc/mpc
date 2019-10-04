@@ -62,11 +62,6 @@
 					<network_mode>default</network_mode>
 					<dyn_reordering>false</dyn_reordering>
 				</low_level_comm>
-				<mpc>
-					<log_debug>false</log_debug>
-					<hard_checking>false</hard_checking>
-					<buffering>false</buffering>
-				</mpc>
 				<openmp>
 					<vp>0</vp>
 					<schedule>static</schedule>

@@ -196,12 +196,6 @@ sctk_ethread_mxn_sched_restore (sctk_thread_t thread, char *type, int vp)
   cpu = sctk_ethread_mxn_vp_list[vp];
   ((sctk_ethread_t) thread)->vp = sctk_ethread_mxn_vp_list[vp];
 
-#ifdef MPC_MPI
-  /*Update checkpoint key */
-  __sctk_ethread_setspecific (thread, sctk_get_check_point_key (),
-			      (void *) 1);
-#endif
-
   /*Place in ready queue */
   sctk_ethread_mxn_place_task_on_vp (cpu, thread);
 

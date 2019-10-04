@@ -74,7 +74,7 @@ MPC_Op_f sctk_get_common_function(MPC_Datatype datatype, MPC_Op op);
 sctk_thread_key_t mpc_mpi_m_per_mpi_process_ctx;
 static sctk_thread_key_t sctk_check_point_key;
 static sctk_thread_key_t sctk_func_key;
-static int mpc_disable_buffering = 0;
+static int __mpc_m_buffering_enabled = 1;
 
 const MPC_Group_t mpc_group_empty = {0, NULL};
 const MPC_Group_t mpc_group_null = {-1, NULL};
@@ -528,57 +528,56 @@ int MPCX_Undisguise()
 
 static struct _mpc_egreq_progress_pool __mpc_progress_pool;
 
-static inline int __mpc_m_egreq_progress_init(mpc_mpi_m_per_mpi_process_ctx_t * tmp )
+static inline int __mpc_m_egreq_progress_init( mpc_mpi_m_per_mpi_process_ctx_t *tmp )
 {
 
-  int my_local_id = mpc_common_get_local_task_rank();
-  if( my_local_id == 0 )
-  {
-    int local_count = mpc_common_get_local_task_count();
-    _mpc_egreq_progress_pool_init( &__mpc_progress_pool, local_count );
-  }
+	int my_local_id = mpc_common_get_local_task_rank();
+	if ( my_local_id == 0 )
+	{
+		int local_count = mpc_common_get_local_task_count();
+		_mpc_egreq_progress_pool_init( &__mpc_progress_pool, local_count );
+	}
 
-  mpc_mp_barrier(MPC_COMM_WORLD);
+	mpc_mp_barrier( MPC_COMM_WORLD );
 
-  /* Retrieve the ctx pointer */
-  tmp->progress_list = _mpc_egreq_progress_pool_join( &__mpc_progress_pool );
+	/* Retrieve the ctx pointer */
+	tmp->progress_list = _mpc_egreq_progress_pool_join( &__mpc_progress_pool );
 
-  return MPC_SUCCESS;
+	return MPC_SUCCESS;
 }
 
-static inline int __mpc_m_egreq_progress_release( mpc_mpi_m_per_mpi_process_ctx_t * tmp  )
+static inline int __mpc_m_egreq_progress_release( mpc_mpi_m_per_mpi_process_ctx_t *tmp )
 {
-    static mpc_common_spinlock_t l = 0;
-    static mpc_common_spinlock_t d = 0;
+	static mpc_common_spinlock_t l = 0;
+	static mpc_common_spinlock_t d = 0;
 
-    tmp->progress_list = NULL;
+	tmp->progress_list = NULL;
 
-    int done = 0;
-    mpc_common_spinlock_lock( &l );
-    done = d;
-	d=1;
-    mpc_common_spinlock_unlock( &l );
+	int done = 0;
+	mpc_common_spinlock_lock( &l );
+	done = d;
+	d = 1;
+	mpc_common_spinlock_unlock( &l );
 
-    if( done )
-        return MPC_SUCCESS;
+	if ( done )
+		return MPC_SUCCESS;
 
-    _mpc_egreq_progress_pool_release( &__mpc_progress_pool );
-    return MPC_SUCCESS;
+	_mpc_egreq_progress_pool_release( &__mpc_progress_pool );
+	return MPC_SUCCESS;
 }
 
-static inline void __mpc_m_egreq_progress_poll_id(int id)
+static inline void __mpc_m_egreq_progress_poll_id( int id )
 {
-    _mpc_egreq_progress_pool_poll( &__mpc_progress_pool , id );
+	_mpc_egreq_progress_pool_poll( &__mpc_progress_pool, id );
 }
 
 static inline struct mpc_mpi_m_per_mpi_process_ctx_s *__mpc_m_per_mpi_process_ctx_get();
 
 void mpc_mpi_m_egreq_progress_poll()
 {
-    struct mpc_mpi_m_per_mpi_process_ctx_s * spe = __mpc_m_per_mpi_process_ctx_get();
-    __mpc_m_egreq_progress_poll_id( spe->progress_list->id );
+	struct mpc_mpi_m_per_mpi_process_ctx_s *spe = __mpc_m_per_mpi_process_ctx_get();
+	__mpc_m_egreq_progress_poll_id( spe->progress_list->id );
 }
-
 
 /*******************************
  * MPC PER MPI PROCESS CONTEXT *
@@ -1060,21 +1059,29 @@ static inline int __mpc_check_task_msg__( int task, int max_rank )
 	mpc_check_tag( tag, comm )
 
 
+/*******************
+ * VARIOUS GETTERS *
+ *******************/
 
-
-sctk_thread_key_t sctk_get_check_point_key() { return sctk_check_point_key; }
-
-
-int PMPC_Get_multithreading(char *name, int size) {
-  memcpy(name, sctk_multithreading_mode, size - 2);
-  name[size - 1] = '\0';
-  MPC_ERROR_SUCESS();
+int PMPC_Get_multithreading( char *name, int size )
+{
+	strncpy(name, sctk_multithreading_mode, size);
+	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Get_networking(char *name, int size) {
-  memcpy(name, sctk_network_mode, size - 2);
-  name[size - 1] = '\0';
-  MPC_ERROR_SUCESS();
+int PMPC_Get_networking( char *name, int size )
+{
+	strncpy(name, sctk_network_mode, size);
+	MPC_ERROR_SUCESS();
+}
+
+void __mpc_m_disable_buffering()
+{
+	if ( mpc_common_get_task_rank() == 0 )
+	{
+		sctk_warning( "Message Buffering has been disabled in configuration" );
+	}
+	__mpc_m_buffering_enabled = 0;
 }
 
 static inline int *__MPC_Comm_task_list(MPC_Comm comm, int size) {
@@ -1119,20 +1126,6 @@ static inline int __MPC_Comm_remote_size(MPC_Comm comm, int *size) {
 static inline void __MPC_Comm_rank_size(MPC_Comm comm, int *rank, int *size,
                                         mpc_mpi_m_per_mpi_process_ctx_t *task_specific) {
   sctk_get_rank_size_total(comm, rank, size, task_specific->task_id);
-}
-
-static void MPC_Set_buffering(int val) { mpc_disable_buffering = !(val); }
-
-void MPC_Hard_Check() {
-  int rank;
-  int size;
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
-  task_specific = __mpc_m_per_mpi_process_ctx_get();
-  __MPC_Comm_rank_size(MPC_COMM_WORLD, &rank, &size, task_specific);
-  if (rank == 0) {
-    sctk_warning("Enable MPC_HARD_CHECKING");
-  }
-  MPC_Set_buffering(0);
 }
 
 
@@ -2835,9 +2828,6 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 
 		/* If I'm the last task to reach here, increment the global generation counter */ 
 		if(OPA_fetch_and_incr_int(&gen_release) == local_nbtasks -1)
-		{
-			OPA_incr_int(&gen_current);
-		}
 
 		/* the current task finished the work for the current generation */
 		task_generations[local_tasknum]++;
@@ -2964,8 +2954,8 @@ int sctk_user_main(int argc, char **argv) {
 
   mpc_mp_barrier((sctk_communicator_t)MPC_COMM_WORLD);
 
-  if (sctk_runtime_config_get()->modules.mpc.hard_checking) {
-    MPC_Hard_Check();
+  if (sctk_runtime_config_get()->modules.mpc.disable_message_buffering) {
+    __mpc_m_disable_buffering();
   }
 
   mpc_mp_barrier((sctk_communicator_t)MPC_COMM_WORLD);
@@ -3181,7 +3171,7 @@ static inline int __MPC_Isend(void *buf, mpc_msg_count count,
   msg_size = count * d_size;
 
   if ((msg_size > MAX_MPC_BUFFERED_SIZE) || (mpc_mp_comm_is_remote_rank(dest)) ||
-      mpc_disable_buffering) {
+      __mpc_m_buffering_enabled) {
   FALLBACK_TO_UNBUFERED_ISEND:
     msg = mpc_mp_comm_ptp_message_header_create(SCTK_MESSAGE_CONTIGUOUS);
     mpc_mp_comm_ptp_message_set_contiguous_addr(msg, buf, msg_size);
@@ -3954,7 +3944,7 @@ static int __MPC_Send(void *restrict buf, mpc_msg_count count,
   msg_size = count * __MPC_Get_datatype_size(datatype, task_specific);
 
   if ((msg_size > MAX_MPC_BUFFERED_SIZE) || (mpc_mp_comm_is_remote_rank(dest)) ||
-      mpc_disable_buffering) {
+      __mpc_m_buffering_enabled) {
   FALLBACK_TO_BLOCKING_SEND:
     msg = &header;
 

@@ -516,9 +516,7 @@
   <!-- ********************************************************* -->
   <xs:complexType name="user_type_mpc">
     <xs:all>
-      <xs:element minOccurs="0" name="log_debug" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="hard_checking" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="buffering" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="disable_message_buffering" type="xs:boolean"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

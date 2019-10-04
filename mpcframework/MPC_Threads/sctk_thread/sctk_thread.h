@@ -162,7 +162,6 @@ extern "C"
 
   void sctk_thread_init_no_mpc (void);
 
-  sctk_thread_key_t sctk_get_check_point_key (void);
   void sctk_mpc_init_keys (void);
   void sctk_thread_exit_cleanup (void);
   void sctk_ethread_mxn_init_kethread (void);

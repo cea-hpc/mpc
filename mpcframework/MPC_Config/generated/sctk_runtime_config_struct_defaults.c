@@ -1312,10 +1312,40 @@ void sctk_runtime_config_struct_init_mpc(void * struct_ptr)
 	if( obj->init_done != 0 ) return;
 
 	/* Simple params : */
-	obj->log_debug = false;
-	obj->hard_checking = false;
-	obj->buffering = false;
-	obj->init_done = 1;
+	obj->disable_message_buffering = false;
+
+#ifdef MPC_MPI
+		if( mpc_MPI_T_cvar_get_index( "MPC_DISABLE_BUFFERING" , &the_temp_index ) == MPI_SUCCESS )
+		{
+			the_cvar = MPI_T_cvars_array_get( the_temp_index );
+
+			
+			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
+			obj->disable_message_buffering ) )
+			{
+				fprintf(stderr,"Error size mismatch for MPC_DISABLE_BUFFERING");
+				abort();	
+			}
+
+			if( the_cvar )
+			{
+									MPC_T_data_alias(&the_cvar->data, &obj->disable_message_buffering);
+	
+			}
+			else
+			{
+				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPC_DISABLE_BUFFERING");
+				abort();
+			}
+		
+		}
+		else
+		{
+			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPC_DISABLE_BUFFERING");
+			abort();
+		}
+#endif
+				obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/

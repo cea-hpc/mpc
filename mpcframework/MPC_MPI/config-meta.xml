@@ -114,9 +114,7 @@
                 <!-- ############################## -->
 
                 <struct name="mpc" doc="Options for MPC Message Passing">
-                    <param name="log_debug" type="bool" default="false" doc="Print debug messages"/>
-                    <param name="hard_checking" type="bool" default="false" doc=""/>
-                    <param name="buffering" type="bool" default="false" doc=""/>
+                    <param name="disable_message_buffering" type="bool" default="false" doc="If MPI is allowed to buffer small messages" alias="MPC_DISABLE_BUFFERING"/>
                 </struct>
 
 
