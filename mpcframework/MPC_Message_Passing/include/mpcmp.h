@@ -693,7 +693,7 @@ typedef int MPC_Checkpoint_state;
   int PMPC_Copy_from_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
 
   struct Datatype_External_context;
-  int PMPC_Derived_datatype (MPC_Datatype * datatype,
+  int _mpc_m_derived_datatype (MPC_Datatype * datatype,
 			    mpc_pack_absolute_indexes_t * begins,
 			    mpc_pack_absolute_indexes_t * ends,
 			    MPC_Datatype * types,

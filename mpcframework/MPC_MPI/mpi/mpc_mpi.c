@@ -1503,7 +1503,7 @@ __INTERNAL__PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest,
 			int derived_ret = 0;
 			sctk_derived_datatype_t derived_datatype;
 
-			res = MPC_Is_derived_datatype (datatype, &derived_ret, &derived_datatype);
+			res = _mpc_m_derived_datatype_try_get_info (datatype, &derived_ret, &derived_datatype);
 
 			if (res != MPI_SUCCESS)
 			{
@@ -1688,7 +1688,7 @@ __INTERNAL__PMPI_Recv (void *buf, int count, MPI_Datatype datatype,
                         int derived_ret = 0;
                         sctk_derived_datatype_t derived_datatype;
 
-                        res = MPC_Is_derived_datatype(datatype, &derived_ret,
+                        res = _mpc_m_derived_datatype_try_get_info(datatype, &derived_ret,
                                                       &derived_datatype);
                         if (res != MPI_SUCCESS) {
                           return res;
@@ -2129,7 +2129,7 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 			int derived_ret = 0;
 			sctk_derived_datatype_t derived_datatype;
 
-			res = MPC_Is_derived_datatype (datatype, &derived_ret, &derived_datatype);
+			res = _mpc_m_derived_datatype_try_get_info (datatype, &derived_ret, &derived_datatype);
 			if (res != MPI_SUCCESS)
 			{
 				return res;
@@ -2313,7 +2313,7 @@ static int __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype d
 			int derived_ret = 0;
 			sctk_derived_datatype_t derived_datatype;
 
-			res = MPC_Is_derived_datatype (datatype, &derived_ret, &derived_datatype);
+			res = _mpc_m_derived_datatype_try_get_info (datatype, &derived_ret, &derived_datatype);
 			if (res != MPI_SUCCESS)
 			{
 				return res;
@@ -3316,7 +3316,7 @@ static int __INTERNAL__PMPI_Type_contiguous_inherits (unsigned long count, MPI_D
 		sctk_derived_datatype_t input_datatype;
 
 		/* Retrieve input datatype informations */
-		MPC_Is_derived_datatype (data_in, &derived_ret, &input_datatype);
+		_mpc_m_derived_datatype_try_get_info (data_in, &derived_ret, &input_datatype);
 
 		/* Compute the total datatype size including boundaries */
 		unsigned long extent;
@@ -3383,7 +3383,7 @@ static int __INTERNAL__PMPI_Type_contiguous_inherits (unsigned long count, MPI_D
 		}
 		
 		/* Actually create the new datatype */
-		PMPC_Derived_datatype (data_out, begins_out, ends_out, datatypes, count_out, new_lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub, dtctx);
+		_mpc_m_derived_datatype (data_out, begins_out, ends_out, datatypes, count_out, new_lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub, dtctx);
 
 		/* Free temporary buffers */
 		sctk_free (datatypes);
@@ -3393,7 +3393,7 @@ static int __INTERNAL__PMPI_Type_contiguous_inherits (unsigned long count, MPI_D
 	else
 	{
 		/* Here we handle contiguous or common datatypes which can be replicated directly */
-		__INTERNAL___mpc_m_type_hcontiguous (data_out, count, &data_in, dtctx);
+		_mpc_m_type_hcontiguous_ctx (data_out, count, &data_in, dtctx);
 	}
 	
 	return MPI_SUCCESS;
@@ -3443,7 +3443,7 @@ static int __INTERNAL__PMPI_Type_vector (int count, int blocklen, int stride, MP
 	if( (blocklen == stride) && ( 0 <= stride ) )
 	{
 		int ret = __INTERNAL__PMPI_Type_contiguous_inherits (count * blocklen, old_type,  newtype_p, &dtctx);
-		MPC_Datatype_set_context( *newtype_p, &dtctx);
+		_mpc_m_type_ctx_set( *newtype_p, &dtctx);
 		return ret;
 	}
 		
@@ -3455,7 +3455,7 @@ static int __INTERNAL__PMPI_Type_vector (int count, int blocklen, int stride, MP
 	int res =  __INTERNAL__PMPI_Type_hvector( count, blocklen,  stride_t, old_type,  newtype_p);
 	
 
-	MPC_Datatype_set_context( *newtype_p, &dtctx);
+	_mpc_m_type_ctx_set( *newtype_p, &dtctx);
 	
 	return res;
 }
@@ -3494,7 +3494,7 @@ static int __INTERNAL__PMPI_Type_hvector (int count,
 		sctk_derived_datatype_t input_datatype;
 
 		/* Retrieve input datatype informations */
-		MPC_Is_derived_datatype (old_type, &derived_ret, &input_datatype);
+		_mpc_m_derived_datatype_try_get_info (old_type, &derived_ret, &input_datatype);
 		
 		/* Compute the extent */
 		__INTERNAL__PMPI_Type_extent (old_type, (MPI_Aint *) & extent);
@@ -3504,7 +3504,7 @@ static int __INTERNAL__PMPI_Type_hvector (int count,
 		|| (count == 0 ) )
 		{
 			int ret = __INTERNAL__PMPI_Type_contiguous_inherits (count * blocklen, old_type,  newtype_p, &dtctx);
-			MPC_Datatype_set_context( *newtype_p, &dtctx);
+			_mpc_m_type_ctx_set( *newtype_p, &dtctx);
 			return ret;
 		}
 		
@@ -3562,7 +3562,7 @@ static int __INTERNAL__PMPI_Type_hvector (int count,
 		}
 
 		/* Create the derived datatype */
-		PMPC_Derived_datatype (newtype_p, begins_out, ends_out, datatypes, count_out, new_lb, input_datatype.is_lb, new_ub, input_datatype.is_ub, &dtctx);
+		_mpc_m_derived_datatype (newtype_p, begins_out, ends_out, datatypes, count_out, new_lb, input_datatype.is_lb, new_ub, input_datatype.is_ub, &dtctx);
 		
 		/* Free temporary arrays */
 		sctk_free (begins_out);
@@ -3624,7 +3624,7 @@ static int __INTERNAL__PMPI_Type_indexed (int count, int blocklens[], int indice
 	dtctx.array_of_blocklenght = blocklens;
 	dtctx.array_of_displacements = indices;
 	dtctx.oldtype = old_type;
-	MPC_Datatype_set_context( *newtype, &dtctx);
+	_mpc_m_type_ctx_set( *newtype, &dtctx);
 
 	/* Release the temporary byte offset array */
 	sctk_free( byte_offsets );
@@ -3660,7 +3660,7 @@ static int __INTERNAL__PMPI_Type_create_hindexed_block(int count, int blocklengt
 	dtctx.blocklength = blocklength;
 	dtctx.array_of_displacements_addr = indices;
 	dtctx.oldtype = old_type;
-	MPC_Datatype_set_context( *newtype, &dtctx);
+	_mpc_m_type_ctx_set( *newtype, &dtctx);
 	
 	/* Free the tmp buffer */
 	sctk_free( blocklength_array );
@@ -3704,7 +3704,7 @@ static int __INTERNAL__PMPI_Type_create_indexed_block(int count, int blocklength
 	dtctx.blocklength = blocklength;
 	dtctx.array_of_displacements = indices;
 	dtctx.oldtype = old_type;
-	MPC_Datatype_set_context( *newtype, &dtctx);
+	_mpc_m_type_ctx_set( *newtype, &dtctx);
 	
 	/* Free the temporary byte offset */
 	sctk_free( byte_offsets );
@@ -3742,7 +3742,7 @@ static int __INTERNAL__PMPI_Type_hindexed (int count,
 		sctk_derived_datatype_t input_datatype;
 
 		/* Retrieve input datatype informations */
-		MPC_Is_derived_datatype (old_type, &derived_ret, &input_datatype);
+		_mpc_m_derived_datatype_try_get_info (old_type, &derived_ret, &input_datatype);
 		
 		/* Get datatype extent */
 		unsigned long extent;
@@ -3752,7 +3752,7 @@ static int __INTERNAL__PMPI_Type_hindexed (int count,
 		if( count == 0 )
 		{
 			int ret = __INTERNAL__PMPI_Type_contiguous_inherits ( 0, old_type, newtype, &dtctx);
-			MPC_Datatype_set_context( *newtype, &dtctx);
+			_mpc_m_type_ctx_set( *newtype, &dtctx);
 			return ret;
 		}
 		
@@ -3822,7 +3822,7 @@ static int __INTERNAL__PMPI_Type_hindexed (int count,
 		}
 	
 		/* Create the derived datatype */
-		PMPC_Derived_datatype (newtype, begins_out, ends_out, datatypes, count_out, new_lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub, &dtctx);
+		_mpc_m_derived_datatype (newtype, begins_out, ends_out, datatypes, count_out, new_lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub, &dtctx);
 
 		
 		/* Free temporary arrays */
@@ -3881,7 +3881,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 
 			if (sctk_datatype_is_derived(old_types[i]))
 			{
-				MPC_Is_derived_datatype(old_types[i], &derived_ret, &input_datatype);
+				_mpc_m_derived_datatype_try_get_info(old_types[i], &derived_ret, &input_datatype);
 				count_in = input_datatype.count;
 				sctk_nodebug("[%d]Derived length %d", old_types[i], count_in);
 			}
@@ -3919,7 +3919,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 
 			if (sctk_datatype_is_derived(old_types[i]))
 			{
-				MPC_Is_derived_datatype(old_types[i], &derived_ret, &input_datatype);
+				_mpc_m_derived_datatype_try_get_info(old_types[i], &derived_ret, &input_datatype);
 				
 				__INTERNAL__PMPI_Type_extent(old_types[i], (MPI_Aint *) &extent);
 				sctk_nodebug("Extend %lu", extent);
@@ -4113,7 +4113,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	dtctx.array_of_displacements_addr = indices;
 	dtctx.array_of_types = old_types;
 
-	res = PMPC_Derived_datatype(newtype, begins_out, ends_out, datatypes, glob_count_out, new_lb, new_is_lb, new_ub, new_is_ub, &dtctx);
+	res = _mpc_m_derived_datatype(newtype, begins_out, ends_out, datatypes, glob_count_out, new_lb, new_is_lb, new_ub, new_is_ub, &dtctx);
 	assert(res == MPI_SUCCESS);
 
 
@@ -4145,7 +4145,7 @@ static int __INTERNAL__PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint 
 		int derived_ret;
 		sctk_derived_datatype_t input_datatype;
 		/* Retrieve input datatype informations */
-		MPC_Is_derived_datatype (old_type, &derived_ret, &input_datatype);
+		_mpc_m_derived_datatype_try_get_info (old_type, &derived_ret, &input_datatype);
 		
 		struct Datatype_External_context dtctx;
 		sctk_datatype_external_context_clear( &dtctx );
@@ -4155,7 +4155,7 @@ static int __INTERNAL__PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint 
 		dtctx.oldtype = old_type;
 		
 		/* Duplicate it with updated bounds in new_type */
-		PMPC_Derived_datatype ( new_type,
+		_mpc_m_derived_datatype ( new_type,
 					input_datatype.begins,
 					input_datatype.ends,
 					input_datatype.datatypes,
@@ -4622,7 +4622,7 @@ int __INTERNAL__PMPI_Type_create_darray (int size,
 	dtctx.array_of_psizes = array_of_psizes;
 	dtctx.order = order;
 	dtctx.oldtype = oldtype;
-	MPC_Datatype_set_context( *newtype, &dtctx);
+	_mpc_m_type_ctx_set( *newtype, &dtctx);
 	
 	return MPI_SUCCESS;
 }
@@ -4651,7 +4651,7 @@ int __INTERNAL__PMPI_Type_create_subarray (int ndims,
 	dtctx.array_of_starts = array_of_starts;
 	dtctx.order = order;
 	dtctx.oldtype = oldtype;
-	MPC_Datatype_set_context( *new_type, &dtctx);
+	_mpc_m_type_ctx_set( *new_type, &dtctx);
 	
 	return res;
 }
@@ -4746,7 +4746,7 @@ static int __INTERNAL__PMPI_Type_lb (MPI_Datatype datatype, MPI_Aint * displacem
 	int derived_ret = 0;
 	sctk_derived_datatype_t input_datatype;
 
-	MPC_Is_derived_datatype (datatype, &derived_ret, &input_datatype);
+	_mpc_m_derived_datatype_try_get_info (datatype, &derived_ret, &input_datatype);
 	
 	if (derived_ret)
 	{
@@ -4785,7 +4785,7 @@ __INTERNAL__PMPI_Type_ub (MPI_Datatype datatype, MPI_Aint * displacement)
 	int derived_ret = 0;
 	sctk_derived_datatype_t input_datatype;
 
-	MPC_Is_derived_datatype (datatype, &derived_ret, &input_datatype);
+	_mpc_m_derived_datatype_try_get_info (datatype, &derived_ret, &input_datatype);
 	
 	if (derived_ret)
 	{
@@ -5032,7 +5032,7 @@ __INTERNAL__PMPI_Pack (void *inbuf,
 		int derived_ret = 0;
 		sctk_derived_datatype_t input_datatype;
 		
-		MPC_Is_derived_datatype (datatype, &derived_ret, &input_datatype);
+		_mpc_m_derived_datatype_try_get_info (datatype, &derived_ret, &input_datatype);
 
 		for (j = 0; j < incount; j++)
 		{
@@ -5110,7 +5110,7 @@ __INTERNAL__PMPI_Unpack (void *inbuf,
 		int derived_ret = 0;
 		sctk_derived_datatype_t output_datatype;
 
-		MPC_Is_derived_datatype (datatype, &derived_ret, &output_datatype);
+		_mpc_m_derived_datatype_try_get_info (datatype, &derived_ret, &output_datatype);
 		for (j = 0; j < outcount; j++)
 		{
 			for (i = 0; i < output_datatype.opt_count; i++)
@@ -5163,7 +5163,7 @@ __INTERNAL__PMPI_Pack_size (int incount, MPI_Datatype datatype, __UNUSED__ MPI_C
 		int derived_ret = 0;
 		sctk_derived_datatype_t input_datatype;
 		
-		MPC_Is_derived_datatype (datatype, &derived_ret, &input_datatype);
+		_mpc_m_derived_datatype_try_get_info (datatype, &derived_ret, &input_datatype);
 		
 		sctk_nodebug("derived datatype : res %d, count_in %d, lb %d, is_lb %d, ub %d, is_ub %d", derived_ret, input_datatype.count, input_datatype.lb, input_datatype.is_lb, input_datatype.ub, input_datatype.is_ub);
 		
@@ -6397,7 +6397,7 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
   int vec_size;
   sctk_derived_datatype_t input_datatype;
   if(sctk_datatype_is_derived(datatype))  {
-    MPC_Is_derived_datatype (datatype, &derived_ret, &input_datatype);
+    _mpc_m_derived_datatype_try_get_info (datatype, &derived_ret, &input_datatype);
     vec_size = input_datatype.size*count;
   }
   else {

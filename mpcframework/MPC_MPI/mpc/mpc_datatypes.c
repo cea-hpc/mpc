@@ -385,7 +385,7 @@ void __init_a_composed_common_types(MPC_Datatype target_type, MPC_Aint disp, MPC
 	displacements[1] = begins[1];
 
 	/* Create the derived data-type */
-	PMPC_Derived_datatype_on_slot( target_type, begins, ends, types, 2, 0, 0, struct_size, 1);
+	_mpc_m_derived_datatype_on_slot( target_type, begins, ends, types, 2, 0, 0, struct_size, 1);
 
 	/* Fill its context */
 	struct Datatype_External_context dtctx;
@@ -395,7 +395,7 @@ void __init_a_composed_common_types(MPC_Datatype target_type, MPC_Aint disp, MPC
 	dtctx.array_of_blocklenght = blocklengths;
 	dtctx.array_of_displacements_addr = displacements;
 	dtctx.array_of_types = types;
-	MPC_Datatype_set_context( target_type, &dtctx);
+	_mpc_m_type_ctx_set( target_type, &dtctx);
 	
 
 	/* We do this to handle the padding as we
@@ -1145,7 +1145,7 @@ sctk_datatype_t sctk_derived_datatype_deserialize(void *buff, size_t size,
   sctk_datatype_external_context_clear(&dtctx);
   dtctx.combiner = MPC_COMBINER_DUMMY;
 
-  PMPC_Derived_datatype(&ret, begins, ends, types, *count, lb_ub->lb,
+  _mpc_m_derived_datatype(&ret, begins, ends, types, *count, lb_ub->lb,
                         lb_ub->is_lb, lb_ub->ub, lb_ub->is_ub, &dtctx);
 
   if (lb_ub->is_a_padded_struct) {
