@@ -3393,7 +3393,7 @@ static int __INTERNAL__PMPI_Type_contiguous_inherits (unsigned long count, MPI_D
 	else
 	{
 		/* Here we handle contiguous or common datatypes which can be replicated directly */
-		__INTERNAL__PMPC_Type_hcontiguous (data_out, count, &data_in, dtctx);
+		__INTERNAL___mpc_m_type_hcontiguous (data_out, count, &data_in, dtctx);
 	}
 	
 	return MPI_SUCCESS;
@@ -3578,7 +3578,7 @@ static int __INTERNAL__PMPI_Type_hvector (int count,
 		MPI_Datatype data_out;
 		
 		/* Convert the contiguous type to a derived data-type */
-		PMPC_Type_convert_to_derived( old_type, &data_out );
+		_mpc_m_type_convert_to_derived( old_type, &data_out );
 		
 		/* Call vector again with the temporary
 		 * derived types */
@@ -3839,7 +3839,7 @@ static int __INTERNAL__PMPI_Type_hindexed (int count,
 		MPI_Datatype data_out;
 		
 		/* Convert the contiguous/common type to a derived one */
-		PMPC_Type_convert_to_derived( old_type, &data_out );
+		_mpc_m_type_convert_to_derived( old_type, &data_out );
 		
 		/* Call the hindexed function again */
 		res = __INTERNAL__PMPI_Type_hindexed (count, blocklens, indices, data_out, newtype);
@@ -3976,7 +3976,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 				begins_in = &begins_in_static;
 				ends_in = &ends_in_static;
 				begins_in[0] = 0;
-				PMPC_Type_size(old_types[i], &(tmp));
+				_mpc_m_type_size(old_types[i], &(tmp));
 				ends_in[0] = begins_in[0] + tmp - 1;
 				count_in = 1;
 				sctk_nodebug("Type size %lu", tmp);
@@ -4121,7 +4121,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	
 	if( did_pad_struct )
 	{
-		PMPC_Type_flag_padded( *newtype );
+		_mpc_m_type_flag_padded( *newtype );
 	}
 	
 	/*   sctk_nodebug("new_type %d",* newtype); */
@@ -4173,7 +4173,7 @@ static int __INTERNAL__PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint 
 		MPI_Datatype data_out;
 		
 		/* Convert the contiguous/common type to a derived one */
-		PMPC_Type_convert_to_derived( old_type, &data_out );
+		_mpc_m_type_convert_to_derived( old_type, &data_out );
 		
 		/* Call the hindexed function again */
 		res = __INTERNAL__PMPI_Type_create_resized (data_out, lb, extent, new_type);
@@ -4714,7 +4714,7 @@ int __INTERNAL__PMPI_Type_size (MPI_Datatype datatype, int *size)
 	int real_val;
 	int res;
 	
-	res = PMPC_Type_size (datatype, &tmp_size);
+	res = _mpc_m_type_size (datatype, &tmp_size);
 	
 	real_val = tmp_size;
 	*size = real_val;
@@ -4727,7 +4727,7 @@ static int __INTERNAL__PMPI_Type_size_x (MPI_Datatype datatype, MPI_Count *size)
 	MPI_Count real_val;
 	int res;
 
-	res = PMPC_Type_size (datatype, &tmp_size);
+	res = _mpc_m_type_size (datatype, &tmp_size);
 	
 	real_val = tmp_size;
 	*size = real_val;
@@ -4813,7 +4813,7 @@ __INTERNAL__PMPI_Type_ub (MPI_Datatype datatype, MPI_Aint * displacement)
 	else
 	{
 		size_t tmp;
-		PMPC_Type_size (datatype, &tmp);
+		_mpc_m_type_size (datatype, &tmp);
 		*displacement = (MPI_Aint) tmp;
 	}
 	
@@ -4823,12 +4823,12 @@ __INTERNAL__PMPI_Type_ub (MPI_Datatype datatype, MPI_Aint * displacement)
 
 static int __INTERNAL__PMPI_Type_commit (MPI_Datatype * datatype)
 {
-  return PMPC_Type_commit(datatype);
+  return _mpc_m_type_commit(datatype);
 }
 
 static int __INTERNAL__PMPI_Type_free (MPI_Datatype * datatype)
 {
-  return PMPC_Type_free (datatype);
+  return _mpc_m_type_free (datatype);
 }
 
 static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype datatype, MPI_Count *elements)
@@ -5076,7 +5076,7 @@ __INTERNAL__PMPI_Pack (void *inbuf,
 			return MPI_ERR_BUFFER;
 		}
 
-		PMPC_Type_size (datatype, &size);
+		_mpc_m_type_size (datatype, &size);
 		sctk_nodebug ("Pack %lu->%lu, ==> %lu %lu", 0, size * incount, *position, size * incount);
 		memcpy (&(((char *) outbuf)[*position]), inbuf, size * incount);
 		sctk_nodebug ("Pack %lu->%lu, ==> %lu %lu done", 0, size * incount, *position, size * incount);
@@ -5138,7 +5138,7 @@ __INTERNAL__PMPI_Unpack (void *inbuf,
 	else
 	{
 		size_t size;
-		PMPC_Type_size (datatype, &size);
+		_mpc_m_type_size (datatype, &size);
 		sctk_nodebug ("Unpack %lu %lu, ==> %lu->%lu", *position, size * outcount, 0, size * outcount);
 		memcpy (outbuf, &(((char *) inbuf)[*position]), size * outcount);
 		sctk_nodebug ("Unpack %lu %lu, ==> %lu->%lu done", *position, size * outcount, 0, size * outcount);
@@ -5185,7 +5185,7 @@ __INTERNAL__PMPI_Pack_size (int incount, MPI_Datatype datatype, __UNUSED__ MPI_C
 	else
 	{
 		size_t size_t;
-		PMPC_Type_size (datatype, &size_t);
+		_mpc_m_type_size (datatype, &size_t);
 		*size = size_t * incount;
 		sctk_nodebug ("PACK contiguous size %d", *size);
 		return MPI_SUCCESS;
@@ -6380,7 +6380,7 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
         if(ptl_offcoll_enabled() && sctk_datatype_kind(datatype) == MPC_DATATYPES_COMMON)
         {
 		size_t tmp_size;
-		PMPC_Type_size (datatype, &tmp_size);
+		_mpc_m_type_size (datatype, &tmp_size);
 		size_t length = ((size_t)count) * ((size_t)tmp_size);
 
                 res = ptl_offcoll_bcast(comm, rank, size, buffer, length, root);
@@ -16876,17 +16876,17 @@ int PMPI_Type_get_extent_x(MPI_Datatype datatype, MPI_Count *lb, MPI_Count *exte
 
 int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent)
 {
-	return PMPC_Type_get_true_extent( datatype, true_lb, true_extent );
+	return _mpc_m_type_get_true_extent( datatype, true_lb, true_extent );
 }
 
 int PMPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb, MPI_Count *true_extent)
 {
-	return PMPC_Type_get_true_extent( datatype, true_lb, true_extent );
+	return _mpc_m_type_get_true_extent( datatype, true_lb, true_extent );
 }
 
 int PMPI_Type_get_envelope(MPI_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner)
 {
-	return PMPC_Type_get_envelope(datatype, num_integers, num_addresses, num_datatypes, combiner);
+	return _mpc_m_type_get_envelope(datatype, num_integers, num_addresses, num_datatypes, combiner);
 }
 
 int PMPI_Type_get_contents( MPI_Datatype datatype, 
@@ -16897,7 +16897,7 @@ int PMPI_Type_get_contents( MPI_Datatype datatype,
 			    MPI_Aint array_of_addresses[],
 			    MPI_Datatype array_of_datatypes[])
 {
-	return PMPC_Type_get_contents(datatype, max_integers,max_addresses,max_datatypes,array_of_integers,array_of_addresses,array_of_datatypes);
+	return _mpc_m_type_get_contents(datatype, max_integers,max_addresses,max_datatypes,array_of_integers,array_of_addresses,array_of_datatypes);
 }
 
   /* See the 1.1 version of the Standard.  The standard made an
@@ -16982,7 +16982,7 @@ int PMPI_Type_free (MPI_Datatype * datatype)
 
 int PMPI_Type_dup( MPI_Datatype old_type, MPI_Datatype *newtype )
 {
-	return PMPC_Type_dup(old_type, newtype);
+	return _mpc_m_type_dup(old_type, newtype);
 }
 
 int PMPI_Get_elements (MPI_Status * status, MPI_Datatype datatype, int *elements)
@@ -17157,26 +17157,26 @@ int PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm, int *size
 int PMPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn,
                             MPI_Type_delete_attr_function *type_delete_attr_fn,
                             int *type_keyval, void *extra_state) {
-  return PMPC_Type_create_keyval(type_copy_attr_fn, type_delete_attr_fn,
+  return _mpc_m_type_create_keyval(type_copy_attr_fn, type_delete_attr_fn,
                                  type_keyval, extra_state);
 }
 
 int PMPI_Type_free_keyval(int *type_keyval) {
-  return PMPC_Type_free_keyval(type_keyval);
+  return _mpc_m_type_free_keyval(type_keyval);
 }
 
 int PMPI_Type_set_attr(MPI_Datatype datatype, int type_keyval,
                        void *attribute_val) {
-  return PMPC_Type_set_attr(datatype, type_keyval, attribute_val);
+  return _mpc_m_type_set_attr(datatype, type_keyval, attribute_val);
 }
 
 int PMPI_Type_get_attr(MPI_Datatype datatype, int type_keyval,
                        void *attribute_val, int *flag) {
-  return PMPC_Type_get_attr(datatype, type_keyval, attribute_val, flag);
+  return _mpc_m_type_get_attr(datatype, type_keyval, attribute_val, flag);
 }
 
 int PMPI_Type_delete_attr(MPI_Datatype datatype, int type_keyval) {
-  return PMPC_Type_delete_attr(datatype, type_keyval);
+  return _mpc_m_type_delete_attr(datatype, type_keyval);
 }
 
 /************************************************************************/
@@ -17210,12 +17210,12 @@ int PMPI_Unpack_external (char * datarep, void * inbuf, MPI_Aint insize, MPI_Ain
 
 int PMPI_Type_set_name( MPI_Datatype datatype, char *name )
 {
-	return PMPC_Type_set_name(datatype, name);
+	return _mpc_m_type_set_name(datatype, name);
 }
 
 int PMPI_Type_get_name( MPI_Datatype datatype, char *name, int * resultlen )
 {
-	return PMPC_Type_get_name(datatype, name, resultlen);
+	return _mpc_m_type_get_name(datatype, name, resultlen);
 }
 
 

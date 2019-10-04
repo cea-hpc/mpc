@@ -361,7 +361,7 @@ void sctk_common_datatype_display( MPC_Datatype datatype );
 
 /** \brief This structure describes continuous datatypes
  *  Such datatypes are continuous packs of other datatypes
- *  This structure is initialized in \ref PMPC_Type_hcontiguous
+ *  This structure is initialized in \ref _mpc_m_type_hcontiguous
  */
 typedef struct 
 {
@@ -376,7 +376,7 @@ typedef struct
 } sctk_contiguous_datatype_t;
 
 /** \brief sctk_contiguous_datatype_t initializer
- *  this function is called from \ref PMPC_Type_hcontiguous
+ *  this function is called from \ref _mpc_m_type_hcontiguous
  *
  *  \param type Type to be initialized
  *  \param id_rank unique identifier of the  type which is also its offset in the contiguous type array

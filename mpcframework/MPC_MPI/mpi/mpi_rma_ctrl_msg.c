@@ -159,7 +159,7 @@ void mpc_MPI_Win_handle_non_contiguous_write(void *data, size_t size) {
   mpc_mp_comm_request_wait(&req);
 
   size_t target_t_ext;
-  PMPC_Type_size(target_type, &target_t_ext);
+  _mpc_m_type_size(target_type, &target_t_ext);
 
   sctk_nodebug(
       "UNPACK to %p in a win of size %ld starting at %p (disp here %d, remote "
@@ -180,7 +180,7 @@ void mpc_MPI_Win_handle_non_contiguous_write(void *data, size_t size) {
 
   sctk_free(pack_data);
 
-  PMPC_Type_free(&target_type);
+  _mpc_m_type_free(&target_type);
 
   sctk_window_inc_incoming(low_win, message->source_rank);
   OPA_incr_int(&desc->target.ctrl_message_counter);
@@ -220,7 +220,7 @@ void mpc_MPI_Win_handle_non_contiguous_read(void *data, size_t size) {
                low_win->start_addr, low_win->disp_unit, target_disp);
 
   size_t target_t_ext;
-  PMPC_Type_size(target_type, &target_t_ext);
+  _mpc_m_type_size(target_type, &target_t_ext);
 
   sctk_nodebug(
       "PACK to %p in a win of size %ld starting at %p (disp here %d, remote "
@@ -245,7 +245,7 @@ void mpc_MPI_Win_handle_non_contiguous_read(void *data, size_t size) {
   // &__dummy_non_contig_val, sizeof(int), TAG_RDMA_WRITE_ACK, desc->comm ,
   // SCTK_RDMA_MESSAGE,  request);
 
-  PMPC_Type_free(&target_type);
+  _mpc_m_type_free(&target_type);
 }
 
 void mpc_MPI_Win_handle_non_contiguous_accumulate_send(void *data,
@@ -337,7 +337,7 @@ void mpc_MPI_Win_handle_non_contiguous_accumulate_send(void *data,
   sctk_free(pack_data);
   sctk_free(local_pack_data);
 
-  PMPC_Type_free(&target_type);
+  _mpc_m_type_free(&target_type);
 
   sctk_window_inc_incoming(low_win, message->source_rank);
   OPA_incr_int(&desc->target.ctrl_message_counter);

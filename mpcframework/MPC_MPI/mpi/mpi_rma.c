@@ -686,7 +686,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
       /* If the target type is a contiguous one
        * now create a derived one to simplify code
        * branching (removing cases on target) */
-      PMPC_Type_convert_to_derived(target_datatype, &target_datatype);
+      _mpc_m_type_convert_to_derived(target_datatype, &target_datatype);
       do_free_target_type = 1;
     }
 
@@ -727,7 +727,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
     if (do_free_target_type &&
         !sctk_datatype_is_struct_datatype(target_datatype)) {
-      PMPC_Type_free(&target_datatype);
+      _mpc_m_type_free(&target_datatype);
     }
   }
 

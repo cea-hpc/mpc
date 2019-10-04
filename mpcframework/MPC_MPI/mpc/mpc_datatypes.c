@@ -349,8 +349,8 @@ void __init_a_composed_common_types(MPC_Datatype target_type, MPC_Aint disp, MPC
 	/* Compute data-type sizes */
 	size_t sa, sb;
 	
-	PMPC_Type_size(type_a, &sa);
-	PMPC_Type_size(type_b, &sb);
+	_mpc_m_type_size(type_a, &sa);
+	_mpc_m_type_size(type_b, &sb);
 	
 	/* Allocate type context */
  	mpc_pack_absolute_indexes_t * begins = sctk_malloc( sizeof(mpc_pack_absolute_indexes_t) * 2 );
@@ -401,7 +401,7 @@ void __init_a_composed_common_types(MPC_Datatype target_type, MPC_Aint disp, MPC
 	/* We do this to handle the padding as we
 	 * want to guarantee the matching with
 	 * an used defined struct */
-	PMPC_Type_flag_padded(target_type );
+	_mpc_m_type_flag_padded(target_type );
 }
 
 void init_composed_common_types()
@@ -414,7 +414,7 @@ void init_composed_common_types()
 	__init_a_composed_common_types( MPC_FLOAT_INT, disp, MPC_FLOAT, MPC_INT, sizeof(mpc_float_int) );
 	sctk_common_datatype_set_name_helper( MPC_FLOAT_INT, "MPI_FLOAT_INT" );
 	tmp = MPC_FLOAT_INT;
-	PMPC_Type_commit( &tmp );
+	_mpc_m_type_commit( &tmp );
 
         /* MPC_LONG_INT (SCTK_DERIVED_DATATYPE_BASE + 1 */
         mpc_long_int foo_1;
@@ -423,7 +423,7 @@ void init_composed_common_types()
                                        sizeof(mpc_long_int));
         sctk_common_datatype_set_name_helper(MPC_LONG_INT, "MPI_LONG_INT");
         tmp = MPC_LONG_INT;
-        PMPC_Type_commit(&tmp);
+        _mpc_m_type_commit(&tmp);
 
         /* MPC_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 2 */
         mpc_double_int foo_2;
@@ -432,7 +432,7 @@ void init_composed_common_types()
                                        MPC_INT, sizeof(mpc_double_int));
         sctk_common_datatype_set_name_helper(MPC_DOUBLE_INT, "MPI_DOUBLE_INT");
         tmp = MPC_DOUBLE_INT;
-        PMPC_Type_commit(&tmp);
+        _mpc_m_type_commit(&tmp);
 
         /* MPC_SHORT_INT  (SCTK_DERIVED_DATATYPE_BASE + 3 */
         mpc_short_int foo_3;
@@ -441,7 +441,7 @@ void init_composed_common_types()
                                        sizeof(mpc_short_int));
         sctk_common_datatype_set_name_helper(MPC_SHORT_INT, "MPI_SHORT_INT");
         tmp = MPC_SHORT_INT;
-        PMPC_Type_commit(&tmp);
+        _mpc_m_type_commit(&tmp);
 
         /* MPC_2INT  (SCTK_DERIVED_DATATYPE_BASE + 4 */
         mpc_int_int foo_4;
@@ -450,7 +450,7 @@ void init_composed_common_types()
                                        sizeof(mpc_int_int));
         sctk_common_datatype_set_name_helper(MPC_2INT, "MPI_2INT");
         tmp = MPC_2INT;
-        PMPC_Type_commit(&tmp);
+        _mpc_m_type_commit(&tmp);
 
         /* MPC_2FLOAT  (SCTK_DERIVED_DATATYPE_BASE + 5 */
         mpc_float_float foo_5;
@@ -459,21 +459,21 @@ void init_composed_common_types()
                                        sizeof(mpc_float_float));
         sctk_common_datatype_set_name_helper(MPC_2FLOAT, "MPI_2FLOAT");
         tmp = MPC_2FLOAT;
-        PMPC_Type_commit(&tmp);
+        _mpc_m_type_commit(&tmp);
 
         /* MPC_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 6 */
         __init_a_composed_common_types(MPC_COMPLEX, disp, MPC_FLOAT, MPC_FLOAT,
                                        sizeof(mpc_float_float));
         sctk_common_datatype_set_name_helper(MPC_COMPLEX, "MPI_COMPLEX");
         tmp = MPC_COMPLEX;
-        PMPC_Type_commit(&tmp);
+        _mpc_m_type_commit(&tmp);
 
         /* MPC_COMPLEX8  (SCTK_DERIVED_DATATYPE_BASE + 10 */
         __init_a_composed_common_types(MPC_COMPLEX8, disp, MPC_FLOAT, MPC_FLOAT,
                                        sizeof(mpc_float_float));
         sctk_common_datatype_set_name_helper(MPC_COMPLEX8, "MPI_COMPLEX8");
         tmp = MPC_COMPLEX8;
-        PMPC_Type_commit(&tmp);
+        _mpc_m_type_commit(&tmp);
 
         /* MPC_2DOUBLE_PRECISION  (SCTK_DERIVED_DATATYPE_BASE + 7 */
         mpc_double_double foo_6;
@@ -483,14 +483,14 @@ void init_composed_common_types()
         sctk_common_datatype_set_name_helper(MPC_2DOUBLE_PRECISION,
                                              "MPI_2DOUBLE_PRECISION");
         tmp = MPC_2DOUBLE_PRECISION;
-        PMPC_Type_commit(&tmp);
+        _mpc_m_type_commit(&tmp);
 
         /* MPC_COMPLEX16  (SCTK_DERIVED_DATATYPE_BASE + 11 */
         __init_a_composed_common_types(MPC_COMPLEX16, disp, MPC_DOUBLE,
                                        MPC_DOUBLE, sizeof(mpc_double_double));
         sctk_common_datatype_set_name_helper(MPC_COMPLEX16, "MPI_COMPLEX16");
         tmp = MPC_COMPLEX16;
-        PMPC_Type_commit(&tmp);
+        _mpc_m_type_commit(&tmp);
 
         /* MPC_DOUBLE_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 12 */
         __init_a_composed_common_types(MPC_DOUBLE_COMPLEX, disp, MPC_DOUBLE,
@@ -498,7 +498,7 @@ void init_composed_common_types()
         sctk_common_datatype_set_name_helper(MPC_DOUBLE_COMPLEX,
                                              "MPI_DOUBLE_COMPLEX");
         tmp = MPC_DOUBLE_COMPLEX;
-        PMPC_Type_commit(&tmp);
+        _mpc_m_type_commit(&tmp);
 
         /* MPC_LONG_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 8 */
         mpc_long_double_int foo_7;
@@ -509,7 +509,7 @@ void init_composed_common_types()
         sctk_common_datatype_set_name_helper(MPC_LONG_DOUBLE_INT,
                                              "MPI_LONG_DOUBLE_INT");
         tmp = MPC_LONG_DOUBLE_INT;
-        PMPC_Type_commit(&tmp);
+        _mpc_m_type_commit(&tmp);
 
         /* MPC_2INTEGER  (SCTK_DERIVED_DATATYPE_BASE + 13 */
         mpc_integer_integer foo_13;
@@ -519,7 +519,7 @@ void init_composed_common_types()
                                        sizeof(mpc_integer_integer));
         sctk_common_datatype_set_name_helper(MPC_2INTEGER, "MPI_2INTEGER");
         tmp = MPC_2INTEGER;
-        PMPC_Type_commit(&tmp);
+        _mpc_m_type_commit(&tmp);
 
         /* MPC_2REAL  (SCTK_DERIVED_DATATYPE_BASE + 14 */
         mpc_real_real foo_14;
@@ -528,7 +528,7 @@ void init_composed_common_types()
                                        sizeof(mpc_real_real));
         sctk_common_datatype_set_name_helper(MPC_2REAL, "MPI_2REAL");
         tmp = MPC_2REAL;
-        PMPC_Type_commit(&tmp);
+        _mpc_m_type_commit(&tmp);
 
         /* MPC_COMPLEX32  (SCTK_DERIVED_DATATYPE_BASE + 12 */
         mpc_longdouble_longdouble foo_9;
@@ -538,7 +538,7 @@ void init_composed_common_types()
                                        sizeof(mpc_longdouble_longdouble));
         sctk_common_datatype_set_name_helper(MPC_COMPLEX32, "MPI_COMPLEX32");
         tmp = MPC_COMPLEX32;
-        PMPC_Type_commit(&tmp);
+        _mpc_m_type_commit(&tmp);
 }
 
 
@@ -547,35 +547,35 @@ void release_composed_common_types()
 
   MPC_Datatype tmp;
   tmp = MPC_FLOAT_INT;
-  PMPC_Type_free(&tmp);
+  _mpc_m_type_free(&tmp);
   tmp = MPC_LONG_INT;
-  PMPC_Type_free(&tmp);
+  _mpc_m_type_free(&tmp);
   tmp = MPC_DOUBLE_INT;
-  PMPC_Type_free(&tmp);
+  _mpc_m_type_free(&tmp);
   tmp = MPC_SHORT_INT;
-  PMPC_Type_free(&tmp);
+  _mpc_m_type_free(&tmp);
   tmp = MPC_2INT;
-  PMPC_Type_free(&tmp);
+  _mpc_m_type_free(&tmp);
   tmp = MPC_2FLOAT;
-  PMPC_Type_free(&tmp);
+  _mpc_m_type_free(&tmp);
   tmp = MPC_COMPLEX;
-  PMPC_Type_free(&tmp);
+  _mpc_m_type_free(&tmp);
   tmp = MPC_COMPLEX8;
-  PMPC_Type_free(&tmp);
+  _mpc_m_type_free(&tmp);
   tmp = MPC_2DOUBLE_PRECISION;
-  PMPC_Type_free(&tmp);
+  _mpc_m_type_free(&tmp);
   tmp = MPC_COMPLEX16;
-  PMPC_Type_free(&tmp);
+  _mpc_m_type_free(&tmp);
   tmp = MPC_DOUBLE_COMPLEX;
-  PMPC_Type_free(&tmp);
+  _mpc_m_type_free(&tmp);
   tmp = MPC_LONG_DOUBLE_INT;
-  PMPC_Type_free(&tmp);
+  _mpc_m_type_free(&tmp);
   tmp = MPC_2INTEGER;
-  PMPC_Type_free(&tmp);
+  _mpc_m_type_free(&tmp);
   tmp = MPC_2REAL;
-  PMPC_Type_free(&tmp);
+  _mpc_m_type_free(&tmp);
   tmp = MPC_COMPLEX32;
-  PMPC_Type_free(&tmp);
+  _mpc_m_type_free(&tmp);
 }
 
 #define tostring(a) #a
@@ -866,13 +866,13 @@ int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
             /* Now free each type only once */
             for (i = 0; i < MPC_TYPE_COUNT; i++) {
               int not_released_yet = 0;
-              PMPC_Type_is_allocated(i, &not_released_yet);
+              _mpc_m_type_is_allocated(i, &not_released_yet);
 
               if (to_free[i] && not_released_yet &&
                   !sctk_datatype_is_common(i) &&
                   !sctk_datatype_is_boundary(i)) {
                 MPC_Datatype tmp = i;
-                PMPC_Type_free(&tmp);
+                _mpc_m_type_free(&tmp);
               }
             }
           } else {
@@ -1149,10 +1149,10 @@ sctk_datatype_t sctk_derived_datatype_deserialize(void *buff, size_t size,
                         lb_ub->is_lb, lb_ub->ub, lb_ub->is_ub, &dtctx);
 
   if (lb_ub->is_a_padded_struct) {
-    PMPC_Type_flag_padded(ret);
+    _mpc_m_type_flag_padded(ret);
   }
 
-  PMPC_Type_commit(&ret);
+  _mpc_m_type_commit(&ret);
 
   return ret;
 }
@@ -1252,7 +1252,7 @@ void Datatype_Array_release( struct Datatype_Array * da )
 	for( i = 0 ; i < MPC_TYPE_COUNT ; i++ )
 	{
 		int to_release = 0;
-		PMPC_Type_is_allocated ( i, & to_release );
+		_mpc_m_type_is_allocated ( i, & to_release );
 		
 		if( to_release && !sctk_datatype_is_common(i) )
 		{
@@ -1260,7 +1260,7 @@ void Datatype_Array_release( struct Datatype_Array * da )
                              "MPI_Type_free on all your MPI_Datatypes ?",
                              i);
                   MPC_Datatype tmp = i;
-                  PMPC_Type_free(&tmp);
+                  _mpc_m_type_free(&tmp);
                 }
   }
 
@@ -1908,7 +1908,7 @@ void __sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatyp
         /* Increment the refcounters of present datatypes */
         for (j = 0; j < MPC_TYPE_COUNT; j++) {
           if (is_datatype_present[j]) {
-            PMPC_Type_use(j);
+            _mpc_m_type_use(j);
           }
         }
 }
@@ -2042,7 +2042,7 @@ static inline int Datatype_layout_fill( struct Datatype_layout * l, MPC_Datatype
 	assume( l != NULL );
 	l->type = datatype;
 	size_t size;
-	PMPC_Type_size (datatype, &size);
+	_mpc_m_type_size (datatype, &size);
 	l->size = (MPC_Aint) size;
 	
 	return MPC_SUCCESS;
@@ -2076,7 +2076,7 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 			ret = please_allocate_layout( 1 );
 			*ly_count = 1;
 
-			PMPC_Type_is_allocated (ctx->array_of_types[0], &is_allocated );
+			_mpc_m_type_is_allocated (ctx->array_of_types[0], &is_allocated );
 
 			if( !is_allocated )
 			{
@@ -2128,7 +2128,7 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 					 * them in their layout when being freed and of course
 					 * cannot find them. This is here just to solve random
 					 * free order problems where the refcounting cannot be used */
-					PMPC_Type_is_allocated (ctx->array_of_types[i], &is_allocated );
+					_mpc_m_type_is_allocated (ctx->array_of_types[i], &is_allocated );
 					
 					if( !is_allocated )
 						continue;

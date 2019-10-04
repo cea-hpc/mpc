@@ -142,7 +142,7 @@ sctk_derived_datatype_t *_mpc_m_per_mpi_process_ctx_derived_datatype_get(MPC_Dat
  */
 mpc_per_communicator_t* _mpc_m_per_communicator_get(struct mpc_mpi_m_per_mpi_process_ctx_s* task_specific,sctk_communicator_t comm);
 
-int __INTERNAL__PMPC_Type_hcontiguous (MPC_Datatype * datatype, size_t count, MPC_Datatype *data_in, struct Datatype_External_context * ctx);
+int __INTERNAL___mpc_m_type_hcontiguous (MPC_Datatype * datatype, size_t count, MPC_Datatype *data_in, struct Datatype_External_context * ctx);
 
 int MPC_Is_derived_datatype (MPC_Datatype datatype, int *res, sctk_derived_datatype_t *output_datatype );
 
@@ -156,7 +156,7 @@ int PMPC_Derived_datatype_on_slot ( int id,
 				    mpc_pack_absolute_indexes_t lb, int is_lb,
 				    mpc_pack_absolute_indexes_t ub, int is_ub);
 
-int PMPC_Type_set_size(MPC_Datatype datatype, size_t size );
+int _mpc_m_type_set_size(MPC_Datatype datatype, size_t size );
 
 /************************************************************************/
 /* Per Communicating Thread context	                                          */

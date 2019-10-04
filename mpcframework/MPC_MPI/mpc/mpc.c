@@ -52,9 +52,6 @@
 #include "mpcomp_core.h"
 #endif
 
-#ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
-#include "mpc_weak.h"
-#endif
 
 #ifdef MPC_Message_Passing
 #include "sctk_low_level_comm.h"
@@ -1326,150 +1323,160 @@ int PMPC_Grequest_complete( MPC_Request request )
  *  datatype to MPC_DATATYPE_NULL
  *
  */
-int PMPC_Type_free(MPC_Datatype *datatype_p) {
-  /* Dereference the datatype pointer for convenience */
-  MPC_Datatype datatype = *datatype_p;
+int _mpc_m_type_free( MPC_Datatype *datatype_p )
+{
+	/* Dereference the datatype pointer for convenience */
+	MPC_Datatype datatype = *datatype_p;
 
-  SCTK_PROFIL_START(MPC_Type_free);
+	SCTK_PROFIL_START( MPC_Type_free );
 
-  /* Retrieve task context */
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+	/* Retrieve task context */
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  if (datatype == MPC_DATATYPE_NULL || datatype == MPC_LB ||
-      datatype == MPC_UB) {
-    return MPC_ERR_TYPE;
-  }
+	if ( datatype == MPC_DATATYPE_NULL || datatype == MPC_LB ||
+		 datatype == MPC_UB )
+	{
+		return MPC_ERR_TYPE;
+	}
 
-  /* Is the datatype NULL or PACKED ? */
-  if (datatype == MPC_PACKED) {
-    /* ERROR */
-    SCTK_PROFIL_END(MPC_Type_free);
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_TYPE,
-                     "You tried to free an MPI_PACKED datatype");
-  }
+	/* Is the datatype NULL or PACKED ? */
+	if ( datatype == MPC_PACKED )
+	{
+		/* ERROR */
+		SCTK_PROFIL_END( MPC_Type_free );
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_TYPE,
+						  "You tried to free an MPI_PACKED datatype" );
+	}
 
-  sctk_derived_datatype_t *derived_type_target = NULL;
-  sctk_contiguous_datatype_t *continuous_type_target = NULL;
-  /* Choose what to do in function of the datatype kind */
-  switch (sctk_datatype_kind(datatype)) {
-  case MPC_DATATYPES_COMMON:
-    /* You are not supposed to free predefined datatypes */
-    SCTK_PROFIL_END(MPC_Type_free);
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_TYPE,
-                     "You are not allowed to free a COMMON datatype");
-    break;
+	sctk_derived_datatype_t *derived_type_target = NULL;
+	sctk_contiguous_datatype_t *continuous_type_target = NULL;
+	/* Choose what to do in function of the datatype kind */
+	switch ( sctk_datatype_kind( datatype ) )
+	{
+		case MPC_DATATYPES_COMMON:
+			/* You are not supposed to free predefined datatypes */
+			SCTK_PROFIL_END( MPC_Type_free );
+			MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_TYPE,
+							  "You are not allowed to free a COMMON datatype" );
+			break;
 
-  case MPC_DATATYPES_CONTIGUOUS:
-    /* Free a contiguous datatype */
+		case MPC_DATATYPES_CONTIGUOUS:
+			/* Free a contiguous datatype */
 
-    /* Lock the contiguous type array */
-    sctk_datatype_lock(task_specific);
-    /* Retrieve a pointer to the type to be freed */
-    continuous_type_target =
-        _mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);
-    /* Unlock type array */
-    sctk_datatype_unlock(task_specific);
-    /* Free it */
-    sctk_contiguous_datatype_release(continuous_type_target);
+			/* Lock the contiguous type array */
+			sctk_datatype_lock( task_specific );
+			/* Retrieve a pointer to the type to be freed */
+			continuous_type_target =
+				_mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get( task_specific, datatype );
+			/* Unlock type array */
+			sctk_datatype_unlock( task_specific );
+			/* Free it */
+			sctk_contiguous_datatype_release( continuous_type_target );
 
-    break;
+			break;
 
-  case MPC_DATATYPES_DERIVED:
-    /* Free a derived datatype */
+		case MPC_DATATYPES_DERIVED:
+			/* Free a derived datatype */
 
-    /* Lock the derived type array */
-    sctk_datatype_lock(task_specific);
-    /* Retrieve a pointer to the type to be freed */
-    derived_type_target =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
-    /* Unlock the derived type array */
-    sctk_datatype_unlock(task_specific);
+			/* Lock the derived type array */
+			sctk_datatype_lock( task_specific );
+			/* Retrieve a pointer to the type to be freed */
+			derived_type_target =
+				_mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
+			/* Unlock the derived type array */
+			sctk_datatype_unlock( task_specific );
 
-    /* Check if it is really allocated */
-    if (!derived_type_target) {
-      /* ERROR */
-      MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_ARG,
-                       "Tried to release an uninitialized datatype");
-    }
+			/* Check if it is really allocated */
+			if ( !derived_type_target )
+			{
+				/* ERROR */
+				MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_ARG,
+								  "Tried to release an uninitialized datatype" );
+			}
 
-    sctk_nodebug("Free derived [%d] contructor %d", datatype,
-                 derived_type_target->context.combiner);
+			sctk_nodebug( "Free derived [%d] contructor %d", datatype,
+						  derived_type_target->context.combiner );
 
-    /* Free it  (not that the container is also freed in this function */
-    if (sctk_derived_datatype_release(derived_type_target)) {
-      /* Set the pointer to the freed datatype to NULL in the derived datatype
+			/* Free it  (not that the container is also freed in this function */
+			if ( sctk_derived_datatype_release( derived_type_target ) )
+			{
+				/* Set the pointer to the freed datatype to NULL in the derived datatype
        * array */
-      __mpc_m_per_mpi_process_ctx_derived_datatype_set(task_specific, datatype, NULL);
-    }
+				__mpc_m_per_mpi_process_ctx_derived_datatype_set( task_specific, datatype, NULL );
+			}
 
-    break;
+			break;
 
-  case MPC_DATATYPES_UNKNOWN:
-    /* If we are here the type provided must have been erroneous */
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_ARG,
-                     "An unknown datatype was provided");
-    break;
-  }
+		case MPC_DATATYPES_UNKNOWN:
+			/* If we are here the type provided must have been erroneous */
+			MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_ARG,
+							  "An unknown datatype was provided" );
+			break;
+	}
 
-  /* Set the source datatype as freed */
-  *datatype_p = MPC_DATATYPE_NULL;
+	/* Set the source datatype as freed */
+	*datatype_p = MPC_DATATYPE_NULL;
 
-  SCTK_PROFIL_END(MPC_Type_free);
-  MPC_ERROR_SUCESS();
+	SCTK_PROFIL_END( MPC_Type_free );
+	MPC_ERROR_SUCESS();
 }
 
 /** \brief Set a name to an MPC_Datatype
  *  \param datatype Datatype to be named
  *  \param name Name to be set
  */
-int PMPC_Type_set_name(MPC_Datatype datatype, char *name) {
-  if (sctk_datype_set_name(datatype, name)) {
-    MPC_ERROR_REPORT(MPC_COMM_SELF, MPC_ERR_INTERN, "Could not set name");
-  }
+int _mpc_m_type_set_name( MPC_Datatype datatype, char *name )
+{
+	if ( sctk_datype_set_name( datatype, name ) )
+	{
+		MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_INTERN, "Could not set name" );
+	}
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
 /** \brief Duplicate a  datatype
  *  \param old_type Type to be duplicated
  *  \param new_type Copy of old_type
  */
-int PMPC_Type_dup(MPC_Datatype old_type, MPC_Datatype *new_type) {
-  sctk_derived_datatype_t *derived_type_target;
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+int _mpc_m_type_dup( MPC_Datatype old_type, MPC_Datatype *new_type )
+{
+	sctk_derived_datatype_t *derived_type_target;
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  /* Set type context */
-  struct Datatype_External_context dtctx;
-  sctk_datatype_external_context_clear(&dtctx);
-  dtctx.combiner = MPC_COMBINER_DUP;
-  dtctx.oldtype = old_type;
+	/* Set type context */
+	struct Datatype_External_context dtctx;
+	sctk_datatype_external_context_clear( &dtctx );
+	dtctx.combiner = MPC_COMBINER_DUP;
+	dtctx.oldtype = old_type;
 
-  switch (sctk_datatype_kind(old_type)) {
-  case MPC_DATATYPES_COMMON:
-  /* We dup common datatypes in contiguous ones in order
+	switch ( sctk_datatype_kind( old_type ) )
+	{
+		case MPC_DATATYPES_COMMON:
+		/* We dup common datatypes in contiguous ones in order
    * to have a context where to put the DUP combiner */
-  case MPC_DATATYPES_CONTIGUOUS:
-    /* Create a type consisting in one entry of the contiguous block
+		case MPC_DATATYPES_CONTIGUOUS:
+			/* Create a type consisting in one entry of the contiguous block
        here as the combiner is set to be a dup it wont reuse the previous
        contiguous that we are dupping from unless it has already been duped */
-    __INTERNAL__PMPC_Type_hcontiguous(new_type, 1, &old_type, &dtctx);
-    break;
-  case MPC_DATATYPES_DERIVED:
-    /* Here we just build a copy of the derived data-type */
-    derived_type_target =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, old_type);
-    PMPC_Derived_datatype(
-        new_type, derived_type_target->begins, derived_type_target->ends,
-        derived_type_target->datatypes, derived_type_target->count,
-        derived_type_target->lb, derived_type_target->is_lb,
-        derived_type_target->ub, derived_type_target->is_ub, &dtctx);
-    break;
-  case MPC_DATATYPES_UNKNOWN:
-    MPC_ERROR_REPORT(MPC_COMM_SELF, MPC_ERR_ARG, "Bad data-type");
-    break;
-  }
+			__INTERNAL___mpc_m_type_hcontiguous( new_type, 1, &old_type, &dtctx );
+			break;
+		case MPC_DATATYPES_DERIVED:
+			/* Here we just build a copy of the derived data-type */
+			derived_type_target =
+				_mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, old_type );
+			PMPC_Derived_datatype(
+				new_type, derived_type_target->begins, derived_type_target->ends,
+				derived_type_target->datatypes, derived_type_target->count,
+				derived_type_target->lb, derived_type_target->is_lb,
+				derived_type_target->ub, derived_type_target->is_ub, &dtctx );
+			break;
+		case MPC_DATATYPES_UNKNOWN:
+			MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Bad data-type" );
+			break;
+	}
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
 /** \brief Set a name to an MPC_Datatype
@@ -1477,25 +1484,32 @@ int PMPC_Type_dup(MPC_Datatype old_type, MPC_Datatype *new_type) {
  *  \param name Datatype name (OUT)
  *  \param resultlen Maximum length of the target buffer (OUT)
  */
-int PMPC_Type_get_name(MPC_Datatype datatype, char *name, int *resultlen) {
-  char *retname = sctk_datype_get_name(datatype);
+int _mpc_m_type_get_name( MPC_Datatype datatype, char *name, int *resultlen )
+{
+	char *retname = sctk_datype_get_name( datatype );
 
-  if (datatype == MPC_UB) {
-    retname = "MPI_UB";
-  } else if (datatype == MPC_LB) {
-    retname = "MPI_LB";
-  }
+	if ( datatype == MPC_UB )
+	{
+		retname = "MPI_UB";
+	}
+	else if ( datatype == MPC_LB )
+	{
+		retname = "MPI_LB";
+	}
 
-  if (!retname) {
-    /* Return an empty string */
-    name[0] = '\0';
-    *resultlen = 0;
-  } else {
-    sprintf(name, "%s", retname);
-    *resultlen = strlen(name);
-  }
+	if ( !retname )
+	{
+		/* Return an empty string */
+		name[0] = '\0';
+		*resultlen = 0;
+	}
+	else
+	{
+		sprintf( name, "%s", retname );
+		*resultlen = strlen( name );
+	}
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
 /** \brief This call is used to fill the envelope of an MPI type
@@ -1508,87 +1522,93 @@ int PMPC_Type_get_name(MPC_Datatype datatype, char *name, int *resultlen) {
  *
  *
  */
-int PMPC_Type_get_envelope(MPC_Datatype datatype, int *num_integers,
-                           int *num_addresses, int *num_datatypes,
-                           int *combiner) {
-  *num_integers = 0;
-  *num_addresses = 0;
-  *num_datatypes = 0;
+int _mpc_m_type_get_envelope( MPC_Datatype datatype, int *num_integers,
+							int *num_addresses, int *num_datatypes,
+							int *combiner )
+{
+	*num_integers = 0;
+	*num_addresses = 0;
+	*num_datatypes = 0;
 
-  /* Handle the common data-type case */
-  if (sctk_datatype_is_common(datatype) ||
-      sctk_datatype_is_boundary(datatype)) {
-    *combiner = MPC_COMBINER_NAMED;
-    *num_integers = 0;
-    *num_addresses = 0;
-    *num_datatypes = 0;
-    MPC_ERROR_SUCESS();
-  }
+	/* Handle the common data-type case */
+	if ( sctk_datatype_is_common( datatype ) ||
+		 sctk_datatype_is_boundary( datatype ) )
+	{
+		*combiner = MPC_COMBINER_NAMED;
+		*num_integers = 0;
+		*num_addresses = 0;
+		*num_datatypes = 0;
+		MPC_ERROR_SUCESS();
+	}
 
-  struct Datatype_context *dctx = __mpc_m_datatype_get_ctx(datatype);
+	struct Datatype_context *dctx = __mpc_m_datatype_get_ctx( datatype );
 
-  if (!dctx) {
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INTERN,
-                     "This datatype is unknown");
-  }
+	if ( !dctx )
+	{
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INTERN,
+						  "This datatype is unknown" );
+	}
 
-  sctk_datatype_fill_envelope(dctx, num_integers, num_addresses, num_datatypes,
-                              combiner);
+	sctk_datatype_fill_envelope( dctx, num_integers, num_addresses, num_datatypes,
+								 combiner );
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Type_get_contents(MPC_Datatype datatype, int max_integers,
-                           int max_addresses, int max_datatypes,
-                           int array_of_integers[],
-                           MPC_Aint array_of_addresses[],
-                           MPC_Datatype array_of_datatypes[]) {
-  /* First make sure we were not called on a common type */
-  if (sctk_datatype_is_common(datatype)) {
-    MPC_ERROR_REPORT(MPC_COMM_SELF, MPC_ERR_ARG,
-                     "Cannot call MPI_Type_get_contents on a defaut datatype");
-  }
+int _mpc_m_type_get_contents( MPC_Datatype datatype, int max_integers,
+							int max_addresses, int max_datatypes,
+							int array_of_integers[],
+							MPC_Aint array_of_addresses[],
+							MPC_Datatype array_of_datatypes[] )
+{
+	/* First make sure we were not called on a common type */
+	if ( sctk_datatype_is_common( datatype ) )
+	{
+		MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG,
+						  "Cannot call MPI_Type_get_contents on a defaut datatype" );
+	}
 
-  /* Retrieve the context */
-  struct Datatype_context *dctx = __mpc_m_datatype_get_ctx(datatype);
+	/* Retrieve the context */
+	struct Datatype_context *dctx = __mpc_m_datatype_get_ctx( datatype );
 
-  assume(dctx != NULL);
+	assume( dctx != NULL );
 
-  /* Then make sure the user actually called MPI_Get_envelope
+	/* Then make sure the user actually called MPI_Get_envelope
   * with the same datatype or that we have enough room */
-  int n_int = 0;
-  int n_addr = 0;
-  int n_type = 0;
-  int dummy_combiner;
+	int n_int = 0;
+	int n_addr = 0;
+	int n_type = 0;
+	int dummy_combiner;
 
-  sctk_datatype_fill_envelope(dctx, &n_int, &n_addr, &n_type, &dummy_combiner);
+	sctk_datatype_fill_envelope( dctx, &n_int, &n_addr, &n_type, &dummy_combiner );
 
-  if ((max_integers < n_int) || (max_addresses < n_addr) ||
-      (max_datatypes < n_type)) {
-    /* Not enough room */
-    MPC_ERROR_REPORT(
-        MPC_COMM_SELF, MPC_ERR_ARG,
-        "Cannot call MPI_Type_get_contents as it would overflow target arrays");
-  }
+	if ( ( max_integers < n_int ) || ( max_addresses < n_addr ) ||
+		 ( max_datatypes < n_type ) )
+	{
+		/* Not enough room */
+		MPC_ERROR_REPORT(
+			MPC_COMM_SELF, MPC_ERR_ARG,
+			"Cannot call MPI_Type_get_contents as it would overflow target arrays" );
+	}
 
-  /* Now we just copy back the content from the context */
-  if (array_of_integers)
-    memcpy(array_of_integers, dctx->array_of_integers, n_int * sizeof(int));
+	/* Now we just copy back the content from the context */
+	if ( array_of_integers )
+		memcpy( array_of_integers, dctx->array_of_integers, n_int * sizeof( int ) );
 
-  if (array_of_addresses)
-    memcpy(array_of_addresses, dctx->array_of_addresses,
-           n_addr * sizeof(MPC_Aint));
+	if ( array_of_addresses )
+		memcpy( array_of_addresses, dctx->array_of_addresses,
+				n_addr * sizeof( MPC_Aint ) );
 
-  /* Flag the datatypes as duplicated */
-  int i;
-  for (i = 0; i < n_type; i++)
-    PMPC_Type_use(dctx->array_of_types[i]);
+	/* Flag the datatypes as duplicated */
+	int i;
+	for ( i = 0; i < n_type; i++ )
+		_mpc_m_type_use( dctx->array_of_types[i] );
 
-  if (array_of_datatypes)
-    memcpy(array_of_datatypes, dctx->array_of_types,
-           n_type * sizeof(MPC_Datatype));
+	if ( array_of_datatypes )
+		memcpy( array_of_datatypes, dctx->array_of_types,
+				n_type * sizeof( MPC_Datatype ) );
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
 /** \brief Retrieves datatype size
@@ -1600,263 +1620,293 @@ int PMPC_Type_get_contents(MPC_Datatype datatype, int max_integers,
  *
  *  \return the size of the datatype or aborts
  */
-size_t __MPC_Get_datatype_size(MPC_Datatype datatype,
-                               mpc_mpi_m_per_mpi_process_ctx_t *task_specific) {
-  /* Special cases */
-  if (datatype == MPC_DATATYPE_NULL) {
-    /* Here we return 0 for data-type null
+size_t __MPC_Get_datatype_size( MPC_Datatype datatype,
+								mpc_mpi_m_per_mpi_process_ctx_t *task_specific )
+{
+	/* Special cases */
+	if ( datatype == MPC_DATATYPE_NULL )
+	{
+		/* Here we return 0 for data-type null
      * in order to pass the struct-zero-count test */
-    return 0;
-  } else if (datatype == MPC_UB) {
-    return 0;
-  }else if (datatype == MPC_LB) {
-    return 0;
-  }else if (datatype == MPC_PACKED) {
-    return 1;
-  }
+		return 0;
+	}
+	else if ( datatype == MPC_UB )
+	{
+		return 0;
+	}
+	else if ( datatype == MPC_LB )
+	{
+		return 0;
+	}
+	else if ( datatype == MPC_PACKED )
+	{
+		return 1;
+	}
 
-  size_t ret;
-  sctk_contiguous_datatype_t *contiguous_type_target;
-  sctk_derived_datatype_t *derived_type_target;
+	size_t ret;
+	sctk_contiguous_datatype_t *contiguous_type_target;
+	sctk_derived_datatype_t *derived_type_target;
 
-  /* Compute the size in function of the datatype */
-  switch (sctk_datatype_kind(datatype)) {
-  case MPC_DATATYPES_COMMON:
-    /* Common datatype sizes */
+	/* Compute the size in function of the datatype */
+	switch ( sctk_datatype_kind( datatype ) )
+	{
+		case MPC_DATATYPES_COMMON:
+			/* Common datatype sizes */
 
-    return sctk_common_datatype_get_size(datatype);
-    break;
+			return sctk_common_datatype_get_size( datatype );
+			break;
 
-  case MPC_DATATYPES_CONTIGUOUS:
-    /* Contiguous datatype size */
+		case MPC_DATATYPES_CONTIGUOUS:
+			/* Contiguous datatype size */
 
-    /* Get a pointer to the type of interest */
-    contiguous_type_target =
-        _mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);
-    /* Extract its size field */
-    ret = contiguous_type_target->size;
+			/* Get a pointer to the type of interest */
+			contiguous_type_target =
+				_mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get( task_specific, datatype );
+			/* Extract its size field */
+			ret = contiguous_type_target->size;
 
-    /* Return */
-    return ret;
-    break;
+			/* Return */
+			return ret;
+			break;
 
-  case MPC_DATATYPES_DERIVED:
-    /* Derived datatype size */
+		case MPC_DATATYPES_DERIVED:
+			/* Derived datatype size */
 
-    /* Get a pointer to the object of interest */
-    derived_type_target =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
+			/* Get a pointer to the object of interest */
+			derived_type_target =
+				_mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
 
-    /* Is it allocated ? */
-    if (!derived_type_target) {
-      /* ERROR */
-      sctk_fatal("Tried to retrieve an uninitialized datatype %d", datatype);
-    }
+			/* Is it allocated ? */
+			if ( !derived_type_target )
+			{
+				/* ERROR */
+				sctk_fatal( "Tried to retrieve an uninitialized datatype %d", datatype );
+			}
 
-    if (derived_type_target->is_a_padded_struct) {
+			if ( derived_type_target->is_a_padded_struct )
+			{
 
-      /* Here we return UB as the size (padded struct) */
-      ret = derived_type_target->ub;
+				/* Here we return UB as the size (padded struct) */
+				ret = derived_type_target->ub;
+			}
+			else
+			{
+				/* Extract the size field */
+				ret = derived_type_target->size;
+			}
 
-    } else {
-      /* Extract the size field */
-      ret = derived_type_target->size;
-    }
+			/* Return */
+			return ret;
+			break;
 
-    /* Return */
-    return ret;
-    break;
+		case MPC_DATATYPES_UNKNOWN:
+			/* No such datatype */
+			/* ERROR */
+			sctk_fatal( "An unknown datatype was provided" );
+			break;
+	}
 
-  case MPC_DATATYPES_UNKNOWN:
-    /* No such datatype */
-    /* ERROR */
-    sctk_fatal("An unknown datatype was provided");
-    break;
-  }
-
-  /* We shall never arrive here ! */
-  sctk_fatal("This error shall never be reached");
-  return MPC_ERR_INTERN;
+	/* We shall never arrive here ! */
+	sctk_fatal( "This error shall never be reached" );
+	return MPC_ERR_INTERN;
 }
 
-int PMPC_Type_get_true_extent(MPC_Datatype datatype, MPC_Aint *true_lb,
-                              MPC_Aint *true_extent) {
-  sctk_derived_datatype_t *derived_type_target;
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
-  mpc_pack_absolute_indexes_t tmp_true_lb;
-  mpc_pack_absolute_indexes_t tmp_true_ub;
+int _mpc_m_type_get_true_extent( MPC_Datatype datatype, MPC_Aint *true_lb,
+							   MPC_Aint *true_extent )
+{
+	sctk_derived_datatype_t *derived_type_target;
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+	mpc_pack_absolute_indexes_t tmp_true_lb;
+	mpc_pack_absolute_indexes_t tmp_true_ub;
 
-  /* Special cases */
-  if (datatype == MPC_DATATYPE_NULL) {
-    /* Here we return 0 for data-type null
+	/* Special cases */
+	if ( datatype == MPC_DATATYPE_NULL )
+	{
+		/* Here we return 0 for data-type null
      * in order to pass the struct-zero-count test */
-    *true_lb = 0;
-    *true_extent = 0;
-    MPC_ERROR_SUCESS();
-  }
+		*true_lb = 0;
+		*true_extent = 0;
+		MPC_ERROR_SUCESS();
+	}
 
-  switch (sctk_datatype_kind(datatype)) {
-  case MPC_DATATYPES_COMMON:
-  case MPC_DATATYPES_CONTIGUOUS:
-    tmp_true_lb = 0;
-    tmp_true_ub = __MPC_Get_datatype_size(datatype, task_specific);
-    break;
-  case MPC_DATATYPES_DERIVED:
-    derived_type_target =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
-    sctk_derived_datatype_true_extent(derived_type_target, &tmp_true_lb,
-                                      &tmp_true_ub);
-    break;
-  case MPC_DATATYPES_UNKNOWN:
-    MPC_ERROR_REPORT(MPC_COMM_SELF, MPC_ERR_ARG, "Bad data-type");
-    break;
-  }
+	switch ( sctk_datatype_kind( datatype ) )
+	{
+		case MPC_DATATYPES_COMMON:
+		case MPC_DATATYPES_CONTIGUOUS:
+			tmp_true_lb = 0;
+			tmp_true_ub = __MPC_Get_datatype_size( datatype, task_specific );
+			break;
+		case MPC_DATATYPES_DERIVED:
+			derived_type_target =
+				_mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
+			sctk_derived_datatype_true_extent( derived_type_target, &tmp_true_lb,
+											   &tmp_true_ub );
+			break;
+		case MPC_DATATYPES_UNKNOWN:
+			MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Bad data-type" );
+			break;
+	}
 
-  *true_lb = tmp_true_lb;
-  *true_extent = (tmp_true_ub - tmp_true_lb) + 1;
+	*true_lb = tmp_true_lb;
+	*true_extent = ( tmp_true_ub - tmp_true_lb ) + 1;
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
 /** \brief Checks if a datatype has already been released
  *  \param datatype target datatype
  *  \param flag 1 if the type is allocated [OUT]
  */
-int PMPC_Type_is_allocated(MPC_Datatype datatype, int *flag) {
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+int _mpc_m_type_is_allocated( MPC_Datatype datatype, int *flag )
+{
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  sctk_derived_datatype_t *derived_type_target;
-  sctk_contiguous_datatype_t *contiguous_type_target;
+	sctk_derived_datatype_t *derived_type_target;
+	sctk_contiguous_datatype_t *contiguous_type_target;
 
-  *flag = 0;
+	*flag = 0;
 
-  switch (sctk_datatype_kind(datatype)) {
-  case MPC_DATATYPES_COMMON:
-    *flag = 1;
-    break;
-  case MPC_DATATYPES_CONTIGUOUS:
-    contiguous_type_target =
-        _mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);
-    *flag = SCTK_CONTIGUOUS_DATATYPE_IS_IN_USE(contiguous_type_target);
-    break;
-  case MPC_DATATYPES_DERIVED:
-    derived_type_target =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
-    *flag = (derived_type_target != NULL);
-    break;
-  case MPC_DATATYPES_UNKNOWN:
-    *flag = 0;
-    break;
-  }
+	switch ( sctk_datatype_kind( datatype ) )
+	{
+		case MPC_DATATYPES_COMMON:
+			*flag = 1;
+			break;
+		case MPC_DATATYPES_CONTIGUOUS:
+			contiguous_type_target =
+				_mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get( task_specific, datatype );
+			*flag = SCTK_CONTIGUOUS_DATATYPE_IS_IN_USE( contiguous_type_target );
+			break;
+		case MPC_DATATYPES_DERIVED:
+			derived_type_target =
+				_mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
+			*flag = ( derived_type_target != NULL );
+			break;
+		case MPC_DATATYPES_UNKNOWN:
+			*flag = 0;
+			break;
+	}
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
 /** \brief Set a Struct datatype as a padded one to return the extent instead of
  * the size
  *  \param datatype to be flagged as padded
  */
-int PMPC_Type_flag_padded(MPC_Datatype datatype) {
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+int _mpc_m_type_flag_padded( MPC_Datatype datatype )
+{
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  sctk_derived_datatype_t *derived_type_target = NULL;
+	sctk_derived_datatype_t *derived_type_target = NULL;
 
-  switch (sctk_datatype_kind(datatype)) {
-  case MPC_DATATYPES_COMMON:
-  case MPC_DATATYPES_CONTIGUOUS:
-  case MPC_DATATYPES_UNKNOWN:
-    sctk_fatal("Only Common datatypes can be flagged");
-    break;
-  case MPC_DATATYPES_DERIVED:
-    derived_type_target =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
+	switch ( sctk_datatype_kind( datatype ) )
+	{
+		case MPC_DATATYPES_COMMON:
+		case MPC_DATATYPES_CONTIGUOUS:
+		case MPC_DATATYPES_UNKNOWN:
+			sctk_fatal( "Only Common datatypes can be flagged" );
+			break;
+		case MPC_DATATYPES_DERIVED:
+			derived_type_target =
+				_mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
 
-    if (derived_type_target) {
-      derived_type_target->is_a_padded_struct = 1;
-    } else {
-      return MPC_ERR_ARG;
-    }
+			if ( derived_type_target )
+			{
+				derived_type_target->is_a_padded_struct = 1;
+			}
+			else
+			{
+				return MPC_ERR_ARG;
+			}
 
-    break;
-  }
+			break;
+	}
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
 /** \brief Compute the size of a \ref MPC_Datatype
  *  \param datatype target datatype
  *  \param size where to write the size of datatype
  */
-int PMPC_Type_size(MPC_Datatype datatype, size_t *size) {
-  SCTK_PROFIL_START(MPC_Type_size);
+int _mpc_m_type_size( MPC_Datatype datatype, size_t *size )
+{
+	SCTK_PROFIL_START( MPC_Type_size );
 
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  *size = __MPC_Get_datatype_size(datatype, task_specific);
+	*size = __MPC_Get_datatype_size( datatype, task_specific );
 
-  SCTK_PROFIL_END(MPC_Type_size);
-  MPC_ERROR_SUCESS();
+	SCTK_PROFIL_END( MPC_Type_size );
+	MPC_ERROR_SUCESS();
 }
 
 static inline int
-sctk_datatype_check_contiguous(mpc_mpi_m_per_mpi_process_ctx_t *task_specific,
-                               struct Datatype_External_context *ctx,
-                               MPC_Datatype *datatype) {
-  int i;
-  /* see if such a datatype is not already allocated */
-  for (i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++) {
-    /* For each contiguous type slot */
-    sctk_contiguous_datatype_t *current_type =
-        _mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get(
-            task_specific, MPC_TYPE_MAP_FROM_CONTIGUOUS(i));
+sctk_datatype_check_contiguous( mpc_mpi_m_per_mpi_process_ctx_t *task_specific,
+								struct Datatype_External_context *ctx,
+								MPC_Datatype *datatype )
+{
+	int i;
+	/* see if such a datatype is not already allocated */
+	for ( i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++ )
+	{
+		/* For each contiguous type slot */
+		sctk_contiguous_datatype_t *current_type =
+			_mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get(
+				task_specific, MPC_TYPE_MAP_FROM_CONTIGUOUS( i ) );
 
-    /* We are only interested in allocated types */
-    if (SCTK_CONTIGUOUS_DATATYPE_IS_FREE(current_type))
-      continue;
+		/* We are only interested in allocated types */
+		if ( SCTK_CONTIGUOUS_DATATYPE_IS_FREE( current_type ) )
+			continue;
 
-    /* If types match */
-    if (Datatype_context_match(ctx, &current_type->context)) {
-      /* Add a reference to this data-type and we are done */
-      PMPC_Type_use(MPC_TYPE_MAP_FROM_CONTIGUOUS(i));
+		/* If types match */
+		if ( Datatype_context_match( ctx, &current_type->context ) )
+		{
+			/* Add a reference to this data-type and we are done */
+			_mpc_m_type_use( MPC_TYPE_MAP_FROM_CONTIGUOUS( i ) );
 
-      *datatype = MPC_TYPE_MAP_FROM_CONTIGUOUS(i);
+			*datatype = MPC_TYPE_MAP_FROM_CONTIGUOUS( i );
 
-      return 1;
-    }
-  }
+			return 1;
+		}
+	}
 
-  return 0;
+	return 0;
 }
 
 static inline int
-sctk_datatype_check_derived(mpc_mpi_m_per_mpi_process_ctx_t *task_specific,
-                            struct Datatype_External_context *ctx,
-                            MPC_Datatype *datatype) {
-  int i;
+sctk_datatype_check_derived( mpc_mpi_m_per_mpi_process_ctx_t *task_specific,
+							 struct Datatype_External_context *ctx,
+							 MPC_Datatype *datatype )
+{
+	int i;
 
-  /* try to find a data-type with the same footprint in derived  */
-  for (i = MPC_STRUCT_DATATYPE_COUNT; i < SCTK_USER_DATA_TYPES_MAX; i++) {
-    /* For each datatype */
-    sctk_derived_datatype_t *current_user_type =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific,
-                                                MPC_TYPE_MAP_FROM_DERIVED(i));
+	/* try to find a data-type with the same footprint in derived  */
+	for ( i = MPC_STRUCT_DATATYPE_COUNT; i < SCTK_USER_DATA_TYPES_MAX; i++ )
+	{
+		/* For each datatype */
+		sctk_derived_datatype_t *current_user_type =
+			_mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific,
+																MPC_TYPE_MAP_FROM_DERIVED( i ) );
 
-    /* Is the slot NOT free ? */
-    if (current_user_type != NULL) {
+		/* Is the slot NOT free ? */
+		if ( current_user_type != NULL )
+		{
 
-      /* If types match */
-      if (Datatype_context_match(ctx, &current_user_type->context)) {
-        /* Add a reference to this data-type and we are done */
-        PMPC_Type_use(MPC_TYPE_MAP_FROM_DERIVED(i));
+			/* If types match */
+			if ( Datatype_context_match( ctx, &current_user_type->context ) )
+			{
+				/* Add a reference to this data-type and we are done */
+				_mpc_m_type_use( MPC_TYPE_MAP_FROM_DERIVED( i ) );
 
-        *datatype = MPC_TYPE_MAP_FROM_DERIVED(i);
+				*datatype = MPC_TYPE_MAP_FROM_DERIVED( i );
 
-        return 1;
-      }
-    }
-  }
+				return 1;
+			}
+		}
+	}
 
-  return 0;
+	return 0;
 }
 
 /** \brief This function is the generic initializer for
@@ -1869,77 +1919,81 @@ sctk_datatype_check_derived(mpc_mpi_m_per_mpi_process_ctx_t *task_specific,
  *  \param ctx Context of the new data-type in order to allow unicity check
  *
  */
-int __INTERNAL__PMPC_Type_hcontiguous(MPC_Datatype *datatype, size_t count,
-                                      MPC_Datatype *data_in,
-                                      struct Datatype_External_context *ctx) {
-  SCTK_PROFIL_START(MPC_Type_hcontiguous);
+int __INTERNAL___mpc_m_type_hcontiguous( MPC_Datatype *datatype, size_t count,
+									   MPC_Datatype *data_in,
+									   struct Datatype_External_context *ctx )
+{
+	SCTK_PROFIL_START( MPC_Type_hcontiguous );
 
-  /* Retrieve task specific context */
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
-  task_specific = __mpc_m_per_mpi_process_ctx_get();
+	/* Retrieve task specific context */
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
+	task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  /* Set the datatype to NULL in case we do not find a slot */
-  *datatype = MPC_DATATYPE_NULL;
+	/* Set the datatype to NULL in case we do not find a slot */
+	*datatype = MPC_DATATYPE_NULL;
 
-  /* Lock contiguous types array */
-  sctk_datatype_lock(task_specific);
+	/* Lock contiguous types array */
+	sctk_datatype_lock( task_specific );
 
-  /* Retrieve size per element */
-  size_t size;
-  PMPC_Type_size(*data_in, &size);
+	/* Retrieve size per element */
+	size_t size;
+	_mpc_m_type_size( *data_in, &size );
 
-  int i;
+	int i;
 
-  if (sctk_datatype_check_contiguous(task_specific, ctx, datatype)) {
-    sctk_datatype_unlock(task_specific);
-    MPC_ERROR_SUCESS();
-  }
+	if ( sctk_datatype_check_contiguous( task_specific, ctx, datatype ) )
+	{
+		sctk_datatype_unlock( task_specific );
+		MPC_ERROR_SUCESS();
+	}
 
-  /* We did not find a previously defined type with the same footprint
+	/* We did not find a previously defined type with the same footprint
    * Now lets try to find a free slot in the array */
-  for (i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++) {
-    /* For each contiguous type slot */
-    sctk_contiguous_datatype_t *current_type =
-        _mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get(
-            task_specific, MPC_TYPE_MAP_FROM_CONTIGUOUS(i));
+	for ( i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++ )
+	{
+		/* For each contiguous type slot */
+		sctk_contiguous_datatype_t *current_type =
+			_mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get(
+				task_specific, MPC_TYPE_MAP_FROM_CONTIGUOUS( i ) );
 
-    /* Are you free ? */
-    if (SCTK_CONTIGUOUS_DATATYPE_IS_FREE(current_type)) {
-      /* Yes !*/
-      /* Here we create an id falling in the continuous datatype range */
-      int new_id = MPC_TYPE_MAP_FROM_CONTIGUOUS(i);
+		/* Are you free ? */
+		if ( SCTK_CONTIGUOUS_DATATYPE_IS_FREE( current_type ) )
+		{
+			/* Yes !*/
+			/* Here we create an id falling in the continuous datatype range */
+			int new_id = MPC_TYPE_MAP_FROM_CONTIGUOUS( i );
 
-      /* Set the news datatype to the continuous ID we have just allocated */
-      *datatype = new_id;
+			/* Set the news datatype to the continuous ID we have just allocated */
+			*datatype = new_id;
 
-      /* Initialize the datatype */
-      sctk_contiguous_datatype_init(current_type, new_id, size, count,
-                                    *data_in);
+			/* Initialize the datatype */
+			sctk_contiguous_datatype_init( current_type, new_id, size, count,
+										   *data_in );
 
-      /* Set context */
-      MPC_Datatype_set_context(*datatype, ctx);
+			/* Set context */
+			MPC_Datatype_set_context( *datatype, ctx );
 
-      /* Increment target datatype refcounter here we do it once as there is
+			/* Increment target datatype refcounter here we do it once as there is
        * only a single datatype */
-      // PMPC_Type_use( *data_in );
+			// _mpc_m_type_use( *data_in );
 
-      /* Unlock the array */
-      sctk_datatype_unlock(task_specific);
+			/* Unlock the array */
+			sctk_datatype_unlock( task_specific );
 
-      SCTK_PROFIL_END(MPC_Type_hcontiguous);
+			SCTK_PROFIL_END( MPC_Type_hcontiguous );
 
-      /* We are done return */
-      MPC_ERROR_SUCESS();
-    }
-  }
+			/* We are done return */
+			MPC_ERROR_SUCESS();
+		}
+	}
 
-  /* If we are here we did not find any slot so we abort you might think of
+	/* If we are here we did not find any slot so we abort you might think of
    * increasing
    * SCTK_USER_DATA_TYPES_MAX if you app needs more than 265 datatypes =) */
-  sctk_fatal("Not enough datatypes allowed : you requested to many contiguous "
-             "types (forgot to free ?)");
+	sctk_fatal( "Not enough datatypes allowed : you requested to many contiguous "
+				"types (forgot to free ?)" );
 
-  return -1;
+	return -1;
 }
 
 /** \brief This function is the generic initializer for
@@ -1951,90 +2005,97 @@ int __INTERNAL__PMPC_Type_hcontiguous(MPC_Datatype *datatype, size_t count,
  *  \param data_in Type of the entry to be created
  *
  */
-int PMPC_Type_hcontiguous(MPC_Datatype *datatype, size_t count,
-                          MPC_Datatype *data_in) {
-  /* HERE WE SET A DEFAULT CONTEXT */
-  struct Datatype_External_context dtctx;
-  sctk_datatype_external_context_clear(&dtctx);
-  dtctx.combiner = MPC_COMBINER_CONTIGUOUS;
-  dtctx.count = count;
-  dtctx.oldtype = *data_in;
+int _mpc_m_type_hcontiguous( MPC_Datatype *datatype, size_t count,
+						   MPC_Datatype *data_in )
+{
+	/* HERE WE SET A DEFAULT CONTEXT */
+	struct Datatype_External_context dtctx;
+	sctk_datatype_external_context_clear( &dtctx );
+	dtctx.combiner = MPC_COMBINER_CONTIGUOUS;
+	dtctx.count = count;
+	dtctx.oldtype = *data_in;
 
-  return __INTERNAL__PMPC_Type_hcontiguous(datatype, count, data_in, &dtctx);
+	return __INTERNAL___mpc_m_type_hcontiguous( datatype, count, data_in, &dtctx );
 }
 
-int PMPC_Type_commit(MPC_Datatype *datatype) {
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
-  sctk_derived_datatype_t *target_derived_type;
+int _mpc_m_type_commit( MPC_Datatype *datatype )
+{
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+	sctk_derived_datatype_t *target_derived_type;
 
-  if (*datatype == MPC_DATATYPE_NULL) {
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_ARG,
-                     "You are trying to commit a NULL data-type");
-  }
+	if ( *datatype == MPC_DATATYPE_NULL )
+	{
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_ARG,
+						  "You are trying to commit a NULL data-type" );
+	}
 
-  switch (sctk_datatype_kind(*datatype)) {
-  case MPC_DATATYPES_COMMON:
-  case MPC_DATATYPES_CONTIGUOUS:
-    /* Nothing to do here */
-    MPC_ERROR_SUCESS();
-    break;
+	switch ( sctk_datatype_kind( *datatype ) )
+	{
+		case MPC_DATATYPES_COMMON:
+		case MPC_DATATYPES_CONTIGUOUS:
+			/* Nothing to do here */
+			MPC_ERROR_SUCESS();
+			break;
 
-  case MPC_DATATYPES_DERIVED:
+		case MPC_DATATYPES_DERIVED:
 
-    /* Get a pointer to the type of interest */
-    target_derived_type =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, *datatype);
+			/* Get a pointer to the type of interest */
+			target_derived_type =
+				_mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, *datatype );
 
-    /* OPTIMIZE */
-    sctk_derived_datatype_optimize(target_derived_type);
+			/* OPTIMIZE */
+			sctk_derived_datatype_optimize( target_derived_type );
 
-    MPC_ERROR_SUCESS();
-    break;
+			MPC_ERROR_SUCESS();
+			break;
 
-  case MPC_DATATYPES_UNKNOWN:
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INTERN,
-                     "This datatype is unknown");
-    break;
-  }
+		case MPC_DATATYPES_UNKNOWN:
+			MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INTERN,
+							  "This datatype is unknown" );
+			break;
+	}
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
-int MPCX_Type_debug(MPC_Datatype datatype) {
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
-  sctk_derived_datatype_t *target_derived_type;
-  sctk_contiguous_datatype_t *contiguous_type;
+int MPCX_Type_debug( MPC_Datatype datatype )
+{
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+	sctk_derived_datatype_t *target_derived_type;
+	sctk_contiguous_datatype_t *contiguous_type;
 
-  if (datatype == MPC_DATATYPE_NULL) {
-    sctk_error("=============ERROR==================");
-    sctk_error("MPC_DATATYPE_NULL");
-    sctk_error("====================================");
-    MPC_ERROR_SUCESS();
-  }
+	if ( datatype == MPC_DATATYPE_NULL )
+	{
+		sctk_error( "=============ERROR==================" );
+		sctk_error( "MPC_DATATYPE_NULL" );
+		sctk_error( "====================================" );
+		MPC_ERROR_SUCESS();
+	}
 
-  switch (sctk_datatype_kind(datatype)) {
-  case MPC_DATATYPES_COMMON:
-    sctk_common_datatype_display(datatype);
-    break;
-  case MPC_DATATYPES_CONTIGUOUS:
-    contiguous_type =
-        _mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);
-    sctk_contiguous_datatype_display(contiguous_type);
-    break;
+	switch ( sctk_datatype_kind( datatype ) )
+	{
+		case MPC_DATATYPES_COMMON:
+			sctk_common_datatype_display( datatype );
+			break;
+		case MPC_DATATYPES_CONTIGUOUS:
+			contiguous_type =
+				_mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get( task_specific, datatype );
+			sctk_contiguous_datatype_display( contiguous_type );
+			break;
 
-  case MPC_DATATYPES_DERIVED:
-    target_derived_type =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
-    sctk_derived_datatype_display(target_derived_type);
-    break;
+		case MPC_DATATYPES_DERIVED:
+			target_derived_type =
+				_mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
+			sctk_derived_datatype_display( target_derived_type );
+			break;
 
-  case MPC_DATATYPES_UNKNOWN:
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INTERN,
-                     "This datatype is unknown");
-    break;
-  }
+		case MPC_DATATYPES_UNKNOWN:
+			MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INTERN,
+							  "This datatype is unknown" );
+			break;
+	}
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
 /** \brief This function increases the refcounter for a datatype
@@ -2044,84 +2105,88 @@ int MPCX_Type_debug(MPC_Datatype datatype) {
  *  \warning We take no lock here thus the datatype lock shall be held
  *  when manipulating such objects
  */
-int PMPC_Type_use(MPC_Datatype datatype) {
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
-  task_specific = __mpc_m_per_mpi_process_ctx_get();
+int _mpc_m_type_use( MPC_Datatype datatype )
+{
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
+	task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  sctk_contiguous_datatype_t *target_contiguous_type;
-  sctk_derived_datatype_t *target_derived_type;
+	sctk_contiguous_datatype_t *target_contiguous_type;
+	sctk_derived_datatype_t *target_derived_type;
 
-  if (sctk_datatype_is_boundary(datatype))
-    MPC_ERROR_SUCESS();
+	if ( sctk_datatype_is_boundary( datatype ) )
+		MPC_ERROR_SUCESS();
 
-  switch (sctk_datatype_kind(datatype)) {
-  case MPC_DATATYPES_COMMON:
-    /* Nothing to do here */
-    MPC_ERROR_SUCESS();
-    break;
+	switch ( sctk_datatype_kind( datatype ) )
+	{
+		case MPC_DATATYPES_COMMON:
+			/* Nothing to do here */
+			MPC_ERROR_SUCESS();
+			break;
 
-  case MPC_DATATYPES_CONTIGUOUS:
+		case MPC_DATATYPES_CONTIGUOUS:
 
-    /* Get a pointer to the type of interest */
-    target_contiguous_type =
-        _mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);
-    /* Increment the refcounter */
-    target_contiguous_type->ref_count++;
-    sctk_nodebug("Type %d Refcount %d", datatype,
-                 target_contiguous_type->ref_count);
+			/* Get a pointer to the type of interest */
+			target_contiguous_type =
+				_mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get( task_specific, datatype );
+			/* Increment the refcounter */
+			target_contiguous_type->ref_count++;
+			sctk_nodebug( "Type %d Refcount %d", datatype,
+						  target_contiguous_type->ref_count );
 
-    break;
+			break;
 
-  case MPC_DATATYPES_DERIVED:
+		case MPC_DATATYPES_DERIVED:
 
-    /* Get a pointer to the type of interest */
-    target_derived_type =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
-    /* Increment the refcounter */
-    target_derived_type->ref_count++;
-    sctk_nodebug("Type %d Refcount %d", datatype,
-                 target_derived_type->ref_count);
+			/* Get a pointer to the type of interest */
+			target_derived_type =
+				_mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
+			/* Increment the refcounter */
+			target_derived_type->ref_count++;
+			sctk_nodebug( "Type %d Refcount %d", datatype,
+						  target_derived_type->ref_count );
 
-    break;
+			break;
 
-  case MPC_DATATYPES_UNKNOWN:
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INTERN,
-                     "This datatype is unknown");
-    break;
-  }
+		case MPC_DATATYPES_UNKNOWN:
+			MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INTERN,
+							  "This datatype is unknown" );
+			break;
+	}
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Derived_datatype_on_slot(int id, mpc_pack_absolute_indexes_t *begins,
-                                  mpc_pack_absolute_indexes_t *ends,
-                                  MPC_Datatype *types, unsigned long count,
-                                  mpc_pack_absolute_indexes_t lb, int is_lb,
-                                  mpc_pack_absolute_indexes_t ub, int is_ub) {
-  SCTK_PROFIL_START(MPC_Derived_datatype);
+int PMPC_Derived_datatype_on_slot( int id, mpc_pack_absolute_indexes_t *begins,
+								   mpc_pack_absolute_indexes_t *ends,
+								   MPC_Datatype *types, unsigned long count,
+								   mpc_pack_absolute_indexes_t lb, int is_lb,
+								   mpc_pack_absolute_indexes_t ub, int is_ub )
+{
+	SCTK_PROFIL_START( MPC_Derived_datatype );
 
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  /* Here we allocate the new derived datatype */
-  sctk_derived_datatype_t *new_type =
-      (sctk_derived_datatype_t *)sctk_malloc(sizeof(sctk_derived_datatype_t));
+	/* Here we allocate the new derived datatype */
+	sctk_derived_datatype_t *new_type =
+		(sctk_derived_datatype_t *) sctk_malloc( sizeof( sctk_derived_datatype_t ) );
 
-  if (!new_type) {
-    sctk_fatal("Failled to allocate a new derived type");
-  }
+	if ( !new_type )
+	{
+		sctk_fatal( "Failled to allocate a new derived type" );
+	}
 
-  /* And we call the datatype initializer */
-  sctk_derived_datatype_init(new_type, id, count, begins, ends, types, lb,
-                             is_lb, ub, is_ub);
+	/* And we call the datatype initializer */
+	sctk_derived_datatype_init( new_type, id, count, begins, ends, types, lb,
+								is_lb, ub, is_ub );
 
-  /* Now we register the datatype pointer in the derived datatype array */
-  __mpc_m_per_mpi_process_ctx_derived_datatype_set(task_specific, id, new_type);
+	/* Now we register the datatype pointer in the derived datatype array */
+	__mpc_m_per_mpi_process_ctx_derived_datatype_set( task_specific, id, new_type );
 
-  /* We unlock the derived datatype array */
-  sctk_datatype_unlock(task_specific);
+	/* We unlock the derived datatype array */
+	sctk_datatype_unlock( task_specific );
 
-  SCTK_PROFIL_END(MPC_Derived_datatype);
-  MPC_ERROR_SUCESS();
+	SCTK_PROFIL_END( MPC_Derived_datatype );
+	MPC_ERROR_SUCESS();
 }
 
 /** \brief Derived datatype constructor
@@ -2139,74 +2204,79 @@ int PMPC_Derived_datatype_on_slot(int id, mpc_pack_absolute_indexes_t *begins,
  * \param is_b tells if the type has an upper bound
  *
  */
-int PMPC_Derived_datatype(MPC_Datatype *datatype,
-                          mpc_pack_absolute_indexes_t *begins,
-                          mpc_pack_absolute_indexes_t *ends,
-                          MPC_Datatype *types, unsigned long count,
-                          mpc_pack_absolute_indexes_t lb, int is_lb,
-                          mpc_pack_absolute_indexes_t ub, int is_ub,
-                          struct Datatype_External_context *ectx) {
-  SCTK_PROFIL_START(MPC_Derived_datatype);
+int PMPC_Derived_datatype( MPC_Datatype *datatype,
+						   mpc_pack_absolute_indexes_t *begins,
+						   mpc_pack_absolute_indexes_t *ends,
+						   MPC_Datatype *types, unsigned long count,
+						   mpc_pack_absolute_indexes_t lb, int is_lb,
+						   mpc_pack_absolute_indexes_t ub, int is_ub,
+						   struct Datatype_External_context *ectx )
+{
+	SCTK_PROFIL_START( MPC_Derived_datatype );
 
-  /* First the the target datatype to NULL if we do not manage to
+	/* First the the target datatype to NULL if we do not manage to
    * allocate a new slot */
-  *datatype = MPC_DATATYPE_NULL;
+	*datatype = MPC_DATATYPE_NULL;
 
-  /* Retrieve task context */
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+	/* Retrieve task context */
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  /*Lock derived datatype array */
-  sctk_datatype_lock(task_specific);
+	/*Lock derived datatype array */
+	sctk_datatype_lock( task_specific );
 
-  int i;
+	int i;
 
-  /* Here we check against contiguous as in some case
+	/* Here we check against contiguous as in some case
    * a derived datatype can be stored directly as a
    * contiguous one */
-  if (sctk_datatype_check_contiguous(task_specific, ectx, datatype)) {
-    sctk_datatype_unlock(task_specific);
-    MPC_ERROR_SUCESS();
-  }
+	if ( sctk_datatype_check_contiguous( task_specific, ectx, datatype ) )
+	{
+		sctk_datatype_unlock( task_specific );
+		MPC_ERROR_SUCESS();
+	}
 
-  /* We did not find it lets now look at contiguous */
-  if (sctk_datatype_check_derived(task_specific, ectx, datatype)) {
-    sctk_datatype_unlock(task_specific);
-    MPC_ERROR_SUCESS();
-  }
+	/* We did not find it lets now look at contiguous */
+	if ( sctk_datatype_check_derived( task_specific, ectx, datatype ) )
+	{
+		sctk_datatype_unlock( task_specific );
+		MPC_ERROR_SUCESS();
+	}
 
-  /* Here we jump the first MPC_STRUCT_DATATYPE_COUNT items
+	/* Here we jump the first MPC_STRUCT_DATATYPE_COUNT items
    * as they are reserved for common datatypes which are actually
    * derived ones */
-  for (i = MPC_STRUCT_DATATYPE_COUNT; i < SCTK_USER_DATA_TYPES_MAX; i++) {
-    /* For each datatype */
-    sctk_derived_datatype_t *current_user_type =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific,
-                                                MPC_TYPE_MAP_FROM_DERIVED(i));
+	for ( i = MPC_STRUCT_DATATYPE_COUNT; i < SCTK_USER_DATA_TYPES_MAX; i++ )
+	{
+		/* For each datatype */
+		sctk_derived_datatype_t *current_user_type =
+			_mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific,
+																MPC_TYPE_MAP_FROM_DERIVED( i ) );
 
-    /* Is the slot free ? */
-    if (current_user_type == NULL) {
-      /* Here we compute an ID falling in the derived datatype range
+		/* Is the slot free ? */
+		if ( current_user_type == NULL )
+		{
+			/* Here we compute an ID falling in the derived datatype range
       * this range it the converted back to a local id using
       * MPC_TYPE_MAP_TO_DERIVED( datatype) */
-      int new_id = MPC_TYPE_MAP_FROM_DERIVED(i);
+			int new_id = MPC_TYPE_MAP_FROM_DERIVED( i );
 
-      /* Set the new ID in the target datatype */
-      *datatype = new_id;
+			/* Set the new ID in the target datatype */
+			*datatype = new_id;
 
-      int ret = PMPC_Derived_datatype_on_slot(new_id, begins, ends, types,
-                                              count, lb, is_lb, ub, is_ub);
-      MPC_Datatype_set_context(new_id, ectx);
+			int ret = PMPC_Derived_datatype_on_slot( new_id, begins, ends, types,
+													 count, lb, is_lb, ub, is_ub );
+			MPC_Datatype_set_context( new_id, ectx );
 
-      return ret;
-    }
-  }
+			return ret;
+		}
+	}
 
-  /* If we are here we did not find any slot so we abort you might think of
+	/* If we are here we did not find any slot so we abort you might think of
    * increasing
    * SCTK_USER_DATA_TYPES_MAX if you app needs more than 265 datatypes =) */
-  sctk_fatal("Not enough datatypes allowed : you requested too many derived "
-             "types (forgot to free ?)");
-  return MPC_ERR_INTERN;
+	sctk_fatal( "Not enough datatypes allowed : you requested too many derived "
+				"types (forgot to free ?)" );
+	return MPC_ERR_INTERN;
 }
 
 /** \brief this function is used to convert a datatype to a derived datatype
@@ -2215,53 +2285,57 @@ int PMPC_Derived_datatype(MPC_Datatype *datatype,
  *  \param out_datatype Output datatype expressed as a derived datatype
  *
  */
-int PMPC_Type_convert_to_derived(MPC_Datatype in_datatype,
-                                 MPC_Datatype *out_datatype) {
-  /* Is it already a derived datatype ? */
-  if (sctk_datatype_is_derived(in_datatype)) {
-    /* Yes nothing to do here just copy it to the new type */
-    *out_datatype = in_datatype;
-    MPC_ERROR_SUCESS();
-  } else {
-    /* Its either a derived or common datatype */
+int _mpc_m_type_convert_to_derived( MPC_Datatype in_datatype,
+								  MPC_Datatype *out_datatype )
+{
+	/* Is it already a derived datatype ? */
+	if ( sctk_datatype_is_derived( in_datatype ) )
+	{
+		/* Yes nothing to do here just copy it to the new type */
+		*out_datatype = in_datatype;
+		MPC_ERROR_SUCESS();
+	}
+	else
+	{
+		/* Its either a derived or common datatype */
 
-    /* First allocate desriptive arrays for derived datatype */
-    mpc_pack_absolute_indexes_t *begins_out =
-        sctk_malloc(sizeof(mpc_pack_absolute_indexes_t));
-    mpc_pack_absolute_indexes_t *ends_out =
-        sctk_malloc(sizeof(mpc_pack_absolute_indexes_t));
-    sctk_datatype_t *datatypes_out = sctk_malloc(sizeof(sctk_datatype_t));
+		/* First allocate desriptive arrays for derived datatype */
+		mpc_pack_absolute_indexes_t *begins_out =
+			sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) );
+		mpc_pack_absolute_indexes_t *ends_out =
+			sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) );
+		sctk_datatype_t *datatypes_out = sctk_malloc( sizeof( sctk_datatype_t ) );
 
-    /* We have a single contiguous block here all fo the same type starting at
+		/* We have a single contiguous block here all fo the same type starting at
      * offset 0 */
-    begins_out[0] = 0;
+		begins_out[0] = 0;
 
-    /* Compute the datatype block end with contiguous size */
-    size_t type_size;
-    PMPC_Type_size(in_datatype, &type_size);
-    ends_out[0] = type_size - 1;
+		/* Compute the datatype block end with contiguous size */
+		size_t type_size;
+		_mpc_m_type_size( in_datatype, &type_size );
+		ends_out[0] = type_size - 1;
 
-    /* Retrieve previous datatype if the type is contiguous */
-    datatypes_out[0] = in_datatype;
+		/* Retrieve previous datatype if the type is contiguous */
+		datatypes_out[0] = in_datatype;
 
-    /* FILL ctx */
-    struct Datatype_External_context dtctx;
-    sctk_datatype_external_context_clear(&dtctx);
-    dtctx.combiner = MPC_COMBINER_CONTIGUOUS;
-    dtctx.count = 1;
-    dtctx.oldtype = in_datatype;
+		/* FILL ctx */
+		struct Datatype_External_context dtctx;
+		sctk_datatype_external_context_clear( &dtctx );
+		dtctx.combiner = MPC_COMBINER_CONTIGUOUS;
+		dtctx.count = 1;
+		dtctx.oldtype = in_datatype;
 
-    /* Lets now initialize the new derived datatype */
-    PMPC_Derived_datatype(out_datatype, begins_out, ends_out, datatypes_out, 1,
-                          0, 0, 0, 0, &dtctx);
+		/* Lets now initialize the new derived datatype */
+		PMPC_Derived_datatype( out_datatype, begins_out, ends_out, datatypes_out, 1,
+							   0, 0, 0, 0, &dtctx );
 
-    /* Free temporary buffers */
-    sctk_free(begins_out);
-    sctk_free(ends_out);
-    sctk_free(datatypes_out);
-  }
+		/* Free temporary buffers */
+		sctk_free( begins_out );
+		sctk_free( ends_out );
+		sctk_free( datatypes_out );
+	}
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
 /** \brief Pack a derived datatype in a contiguous buffer
@@ -2269,41 +2343,46 @@ int PMPC_Type_convert_to_derived(MPC_Datatype in_datatype,
  *  \param outbuffer The output buffer (has to be allocated to size !)
  *  \param datatype Datatype to be copied
  */
-int PMPC_Copy_in_buffer(void *inbuffer, void *outbuffer,
-                        MPC_Datatype datatype) {
-  /* Only meaningful if its a derived datatype */
-  if (sctk_datatype_is_derived(datatype)) {
-    unsigned int j;
-    char *tmp;
+int PMPC_Copy_in_buffer( void *inbuffer, void *outbuffer,
+						 MPC_Datatype datatype )
+{
+	/* Only meaningful if its a derived datatype */
+	if ( sctk_datatype_is_derived( datatype ) )
+	{
+		unsigned int j;
+		char *tmp;
 
-    /* Retrieve task ctx */
-    mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+		/* Retrieve task ctx */
+		mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-    tmp = (char *)outbuffer;
+		tmp = (char *) outbuffer;
 
-    /* Get a pointer to the target type */
-    sctk_derived_datatype_t *t =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
+		/* Get a pointer to the target type */
+		sctk_derived_datatype_t *t =
+			_mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
 
-    if (!t) {
-      MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_ARG,
-                       "Failed to retrieve this derived datatype");
-    }
+		if ( !t )
+		{
+			MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_ARG,
+							  "Failed to retrieve this derived datatype" );
+		}
 
-    /* Copy ach block one by one in the pack */
-    for (j = 0; j < t->opt_count; j++) {
-      size_t size;
-      /* Sizeof block */
-      size = t->opt_ends[j] - t->opt_begins[j] + 1;
-      memcpy(tmp, ((char *)inbuffer) + t->begins[j], size);
-      /* Increment offset in packed block */
-      tmp += size;
-    }
-
-  } else {
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INTERN, "");
-  }
-  MPC_ERROR_SUCESS();
+		/* Copy ach block one by one in the pack */
+		for ( j = 0; j < t->opt_count; j++ )
+		{
+			size_t size;
+			/* Sizeof block */
+			size = t->opt_ends[j] - t->opt_begins[j] + 1;
+			memcpy( tmp, ( (char *) inbuffer ) + t->begins[j], size );
+			/* Increment offset in packed block */
+			tmp += size;
+		}
+	}
+	else
+	{
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INTERN, "" );
+	}
+	MPC_ERROR_SUCESS();
 }
 
 /** \brief Unpack a derived datatype from contiguous buffer
@@ -2311,43 +2390,48 @@ int PMPC_Copy_in_buffer(void *inbuffer, void *outbuffer,
  *  \param outbuffer The output buffer (has to be allocated to size !)
  *  \param datatype Datatype to be unpacked
  */
-int PMPC_Copy_from_buffer(void *inbuffer, void *outbuffer,
-                          MPC_Datatype datatype) {
-  /* Only meaningful if its a derived datatype */
-  if (sctk_datatype_is_derived(datatype)) {
-    unsigned int j;
-    char *tmp;
+int PMPC_Copy_from_buffer( void *inbuffer, void *outbuffer,
+						   MPC_Datatype datatype )
+{
+	/* Only meaningful if its a derived datatype */
+	if ( sctk_datatype_is_derived( datatype ) )
+	{
+		unsigned int j;
+		char *tmp;
 
-    /* Retrieve task ctx */
-    mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+		/* Retrieve task ctx */
+		mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-    tmp = (char *)inbuffer;
+		tmp = (char *) inbuffer;
 
-    /* Get a pointer to the target type */
-    sctk_derived_datatype_t *t =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
+		/* Get a pointer to the target type */
+		sctk_derived_datatype_t *t =
+			_mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
 
-    if (!t) {
-      MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_ARG,
-                       "Failed to retrieve this derived datatype");
-    }
+		if ( !t )
+		{
+			MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_ARG,
+							  "Failed to retrieve this derived datatype" );
+		}
 
-    /* Unpack each block at the correct offset */
-    for (j = 0; j < t->opt_count; j++) {
-      size_t size;
-      /* Sizeof block */
-      size = t->opt_ends[j] - t->opt_begins[j] + 1;
-      /* Copy at offset */
-      memcpy(((char *)outbuffer) + t->begins[j], tmp, size);
-      /* Move in the contiguous block */
-      tmp += size;
-    }
+		/* Unpack each block at the correct offset */
+		for ( j = 0; j < t->opt_count; j++ )
+		{
+			size_t size;
+			/* Sizeof block */
+			size = t->opt_ends[j] - t->opt_begins[j] + 1;
+			/* Copy at offset */
+			memcpy( ( (char *) outbuffer ) + t->begins[j], tmp, size );
+			/* Move in the contiguous block */
+			tmp += size;
+		}
+	}
+	else
+	{
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INTERN, "" );
+	}
 
-  } else {
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INTERN, "");
-  }
-
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
 /** \brief Extract derived datatype informations
@@ -2359,86 +2443,91 @@ int PMPC_Copy_from_buffer(void *inbuffer, void *outbuffer,
  *  \param output_datatype A derived datatype filled with all the informations
  *
  */
-int MPC_Is_derived_datatype(MPC_Datatype datatype, int *res,
-                            sctk_derived_datatype_t *output_datatype) {
-  /*
+int MPC_Is_derived_datatype( MPC_Datatype datatype, int *res,
+							 sctk_derived_datatype_t *output_datatype )
+{
+	/*
    * Initialize output argument
    * assuming it is not a derived datatype
    */
-  *res = 0;
-  memset(output_datatype, 0, sizeof(sctk_derived_datatype_t));
-  output_datatype->count = 1;
+	*res = 0;
+	memset( output_datatype, 0, sizeof( sctk_derived_datatype_t ) );
+	output_datatype->count = 1;
 
-  /* Check whether the datatype ID falls in the derived range ID */
-  if (sctk_datatype_is_derived(datatype)) {
-    /* Retrieve task specific context */
-    mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
-    task_specific = __mpc_m_per_mpi_process_ctx_get();
+	/* Check whether the datatype ID falls in the derived range ID */
+	if ( sctk_datatype_is_derived( datatype ) )
+	{
+		/* Retrieve task specific context */
+		mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
+		task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-    sctk_nodebug("datatype(%d) - SCTK_COMMON_DATA_TYPE_COUNT(%d) - "
-                 "SCTK_USER_DATA_TYPES_MAX(%d) ==  %d-%d-%d == %d",
-                 datatype, SCTK_COMMON_DATA_TYPE_COUNT,
-                 SCTK_USER_DATA_TYPES_MAX, datatype,
-                 SCTK_COMMON_DATA_TYPE_COUNT, SCTK_USER_DATA_TYPES_MAX,
-                 MPC_TYPE_MAP_TO_DERIVED(datatype));
+		sctk_nodebug( "datatype(%d) - SCTK_COMMON_DATA_TYPE_COUNT(%d) - "
+					  "SCTK_USER_DATA_TYPES_MAX(%d) ==  %d-%d-%d == %d",
+					  datatype, SCTK_COMMON_DATA_TYPE_COUNT,
+					  SCTK_USER_DATA_TYPES_MAX, datatype,
+					  SCTK_COMMON_DATA_TYPE_COUNT, SCTK_USER_DATA_TYPES_MAX,
+					  MPC_TYPE_MAP_TO_DERIVED( datatype ) );
 
-    /* Retrieve the datatype from the array */
-    sctk_derived_datatype_t *target_type =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
+		/* Retrieve the datatype from the array */
+		sctk_derived_datatype_t *target_type =
+			_mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
 
-    if (!target_type) {
-      MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_ARG,
-                       "Failed to retrieve this derived datatype");
-    }
+		if ( !target_type )
+		{
+			MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_ARG,
+							  "Failed to retrieve this derived datatype" );
+		}
 
-    /* We have found a derived datatype */
-    *res = 1;
+		/* We have found a derived datatype */
+		*res = 1;
 
-    /* Copy its content to out arguments */
-    memcpy(output_datatype, target_type, sizeof(sctk_derived_datatype_t));
-  }
+		/* Copy its content to out arguments */
+		memcpy( output_datatype, target_type, sizeof( sctk_derived_datatype_t ) );
+	}
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
-int MPC_Datatype_set_context(MPC_Datatype datatype,
-                             struct Datatype_External_context *dctx) {
+int MPC_Datatype_set_context( MPC_Datatype datatype,
+							  struct Datatype_External_context *dctx )
+{
 
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
-  task_specific = __mpc_m_per_mpi_process_ctx_get();
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
+	task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  sctk_contiguous_datatype_t *target_contiguous_type;
-  sctk_derived_datatype_t *target_derived_type;
+	sctk_contiguous_datatype_t *target_contiguous_type;
+	sctk_derived_datatype_t *target_derived_type;
 
-  switch (sctk_datatype_kind(datatype)) {
-  case MPC_DATATYPES_COMMON:
-    /* Nothing to do here */
-    MPC_ERROR_SUCESS();
-    break;
+	switch ( sctk_datatype_kind( datatype ) )
+	{
+		case MPC_DATATYPES_COMMON:
+			/* Nothing to do here */
+			MPC_ERROR_SUCESS();
+			break;
 
-  case MPC_DATATYPES_CONTIGUOUS:
-    /* Get a pointer to the type of interest */
-    target_contiguous_type =
-        _mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);
-    /* Save the context */
-    sctk_datatype_context_set(&target_contiguous_type->context, dctx);
-    break;
+		case MPC_DATATYPES_CONTIGUOUS:
+			/* Get a pointer to the type of interest */
+			target_contiguous_type =
+				_mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get( task_specific, datatype );
+			/* Save the context */
+			sctk_datatype_context_set( &target_contiguous_type->context, dctx );
+			break;
 
-  case MPC_DATATYPES_DERIVED:
-    /* Get a pointer to the type of interest */
-    target_derived_type =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
-    /* Save the context */
-    sctk_datatype_context_set(&target_derived_type->context, dctx);
-    break;
+		case MPC_DATATYPES_DERIVED:
+			/* Get a pointer to the type of interest */
+			target_derived_type =
+				_mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
+			/* Save the context */
+			sctk_datatype_context_set( &target_derived_type->context, dctx );
+			break;
 
-  case MPC_DATATYPES_UNKNOWN:
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INTERN,
-                     "This datatype is unknown");
-    break;
-  }
+		case MPC_DATATYPES_UNKNOWN:
+			MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INTERN,
+							  "This datatype is unknown" );
+			break;
+	}
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
 /************************************************************************/
@@ -2447,19 +2536,19 @@ int MPC_Datatype_set_context(MPC_Datatype datatype,
 
 /* KEYVALS */
 
-int PMPC_Type_create_keyval(MPC_Type_copy_attr_function *copy,
+int _mpc_m_type_create_keyval(MPC_Type_copy_attr_function *copy,
                             MPC_Type_delete_attr_function *delete,
                             int *type_keyval, void *extra_state) {
   return sctk_type_create_keyval(copy, delete, type_keyval, extra_state);
 }
 
-int PMPC_Type_free_keyval(int *type_keyval) {
+int _mpc_m_type_free_keyval(int *type_keyval) {
   return sctk_type_free_keyval(type_keyval);
 }
 
 /* ATTRS */
 
-int PMPC_Type_get_attr(MPC_Datatype datatype, int type_keyval,
+int _mpc_m_type_get_attr(MPC_Datatype datatype, int type_keyval,
                        void *attribute_val, int *flag) {
   mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
   struct Datatype_Array *da = task_specific->datatype_array;
@@ -2471,7 +2560,7 @@ int PMPC_Type_get_attr(MPC_Datatype datatype, int type_keyval,
   return sctk_type_get_attr(da, datatype, type_keyval, attribute_val, flag);
 }
 
-int PMPC_Type_set_attr(MPC_Datatype datatype, int type_keyval,
+int _mpc_m_type_set_attr(MPC_Datatype datatype, int type_keyval,
                        void *attribute_val) {
   mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
   struct Datatype_Array *da = task_specific->datatype_array;
@@ -2483,7 +2572,7 @@ int PMPC_Type_set_attr(MPC_Datatype datatype, int type_keyval,
   return sctk_type_set_attr(da, datatype, type_keyval, attribute_val);
 }
 
-int PMPC_Type_delete_attr(MPC_Datatype datatype, int type_keyval) {
+int _mpc_m_type_delete_attr(MPC_Datatype datatype, int type_keyval) {
   mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
   struct Datatype_Array *da = task_specific->datatype_array;
 
@@ -4076,7 +4165,7 @@ int PMPC_Status_set_elements_x(MPC_Status *status, MPC_Datatype datatype,
     MPC_ERROR_SUCESS();
 
   size_t elem_size = 0;
-  PMPC_Type_size(datatype, &elem_size);
+  _mpc_m_type_size(datatype, &elem_size);
   status->size = elem_size * count;
 
   MPC_ERROR_SUCESS();
@@ -4084,7 +4173,7 @@ int PMPC_Status_set_elements_x(MPC_Status *status, MPC_Datatype datatype,
 
 int PMPC_Status_set_elements(MPC_Status *status, MPC_Datatype datatype,
                              int count) {
-  return MPC_Status_set_elements_x(status, datatype, count);
+  return PMPC_Status_set_elements_x(status, datatype, count);
 }
 
 int PMPC_Status_set_cancelled(MPC_Status *status, int cancelled) {
@@ -4286,7 +4375,7 @@ int PMPC_Get_count(MPC_Status *status, MPC_Datatype datatype,
     MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_IN_STATUS, "Invalid status");
   }
 
-  res = PMPC_Type_size(datatype, &data_size);
+  res = _mpc_m_type_size(datatype, &data_size);
 
   if (res != MPC_SUCCESS) {
     return res;
@@ -4335,7 +4424,7 @@ int __MPC_Barrier(MPC_Comm comm) {
 	/* Sync A-B */
 	if( rank == 0 )
 	{
-		MPC_Sendrecv( &buf, 1, MPC_INT, 0, MPC_BARRIER_TAG, &buf, 1, MPC_INT, 0, MPC_BARRIER_TAG, comm, MPC_STATUS_IGNORE);	
+		PMPC_Sendrecv( &buf, 1, MPC_INT, 0, MPC_BARRIER_TAG, &buf, 1, MPC_INT, 0, MPC_BARRIER_TAG, comm, MPC_STATUS_IGNORE);
 	}
 
 	/* Sync Local */
@@ -4752,7 +4841,7 @@ int PMPC_Allgatherv(void *sendbuf, mpc_msg_count sendcount,
     if (sendbuf == MPC_IN_PLACE) {
       int i = 0;
       size_t extent;
-      PMPC_Type_size(recvtype, &extent);
+      _mpc_m_type_size(recvtype, &extent);
       sendtype = recvtype;
       sendbuf = (char *)recvbuf;
       for (i = 0; i < rank; ++i) {
@@ -4949,7 +5038,7 @@ static inline int __MPC_Allgather(void *sendbuf, mpc_msg_count sendcount,
   } else {
     if (MPC_IN_PLACE == sendbuf) {
       size_t extent;
-      PMPC_Type_size(recvtype, &extent);
+      _mpc_m_type_size(recvtype, &extent);
       sendbuf = ((char *)recvbuf) + (rank * extent * recvcount);
       sendtype = recvtype;
       sendcount = recvcount;
@@ -5215,8 +5304,8 @@ int PMPC_Alltoall(void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
 
     remote_size = mpc_mp_communicator_remote_size(comm);
 
-    PMPC_Type_size(sendtype, &sendtype_extent);
-    PMPC_Type_size(recvtype, &recvtype_extent);
+    _mpc_m_type_size(sendtype, &sendtype_extent);
+    _mpc_m_type_size(recvtype, &recvtype_extent);
 
     max_size = (local_size < remote_size) ? remote_size : local_size;
     for (i = 0; i < max_size; i++) {
@@ -5306,8 +5395,8 @@ int PMPC_Alltoallv(void *sendbuf, mpc_msg_count *sendcnts,
 
     remote_size = mpc_mp_communicator_remote_size(comm);
 
-    PMPC_Type_size(sendtype, &sendtype_extent);
-    PMPC_Type_size(recvtype, &recvtype_extent);
+    _mpc_m_type_size(sendtype, &sendtype_extent);
+    _mpc_m_type_size(recvtype, &recvtype_extent);
 
     max_size = (local_size < remote_size) ? remote_size : local_size;
     for (i = 0; i < max_size; i++) {
