@@ -2382,7 +2382,7 @@ void mpc_mp_comm_request_wait_all_msgs( const int task, const sctk_communicator_
  * */
 void _mpc_comm_ptp_message_send_check( sctk_thread_ptp_message_t *msg, int poll_receiver_end )
 {
-	assert( mpc_common_get_process_rank() > 0 );
+	assert( mpc_common_get_process_rank() >= 0 );
 	assert( mpc_common_get_process_count() >= SCTK_MSG_DEST_PROCESS( msg  ) );
 
 	/* Flag msg's request as a send one */
