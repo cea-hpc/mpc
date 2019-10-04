@@ -25,11 +25,11 @@
 
 #include <mpc_common_asm.h>
 
-struct sctk_task_specific_s;
+struct mpc_mpi_m_per_mpi_process_ctx_s;
 struct sctk_thread_specific_s;
 
-extern void __MPC_reinit_task_specific (struct sctk_task_specific_s *tmp);
-extern int __MPC_atexit_task_specific(void (*function)(void));
+extern void __MPC_reinit_task_specific (struct mpc_mpi_m_per_mpi_process_ctx_s *tmp);
+extern int mpc_mpi_m_per_mpi_process_ctx_at_exit_register(void (*function)(void));
 extern void __MPC_init_thread_specific();
 extern void __MPC_delete_thread_specific();
 

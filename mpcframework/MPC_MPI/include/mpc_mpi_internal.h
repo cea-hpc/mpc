@@ -238,7 +238,7 @@ void __sctk_add_in_mpc_request(MPI_Request *req, void *t,
 void __sctk_delete_mpc_request(MPI_Request *req,
                                MPI_request_struct_t *requests);
 
-sctk_derived_datatype_t *sctk_get_derived_datatype(MPC_Datatype datatype);
+sctk_derived_datatype_t *_mpc_m_per_mpi_process_ctx_derived_datatype_get(MPC_Datatype datatype);
 int *sctk_group_raw_ranks(MPI_Group group);
 
 typedef struct {

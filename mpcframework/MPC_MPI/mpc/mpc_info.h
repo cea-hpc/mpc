@@ -205,7 +205,7 @@ int MPC_Info_cell_delete( struct MPC_Info_cell * cell , char * key );
  *  usign this trick we do not have to do any conversion when
  *  going back and forth the fortran interface 
  * 
- *  This factory is placed in the \ref sctk_task_specific_s structure
+ *  This factory is placed in the \ref mpc_mpi_m_per_mpi_process_ctx_s structure
  * 
  * */
 struct MPC_Info_factory

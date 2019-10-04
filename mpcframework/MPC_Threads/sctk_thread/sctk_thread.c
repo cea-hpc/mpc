@@ -1021,7 +1021,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   tmp->task_id = -1;
   tmp->user_thread = user_thread;
 #ifdef MPC_MPI
-  tmp->father_data = __MPC_get_task_specific ();
+  tmp->father_data = _mpc_m_per_mpi_process_ctx_get ();
 #else
   tmp->father_data = NULL;
 #endif
@@ -1182,7 +1182,7 @@ int sctk_atexit(void (*function)(void))
 #ifdef MPC_MPI
 	/* We may have a TASK context replacing the proces one */
 	sctk_info("Calling the MPC atexit function");
-	int ret  = __MPC_atexit_task_specific( function );
+	int ret  = mpc_mpi_m_per_mpi_process_ctx_at_exit_register( function );
 	
 	if( ret == 0 )
 	{

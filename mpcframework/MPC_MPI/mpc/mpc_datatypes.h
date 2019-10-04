@@ -697,7 +697,7 @@ static inline int sctk_datatype_contig_mem(MPC_Datatype data_in) {
 /** \brief This structure gathers contiguous and derived datatypes in the same lockable structure
  * 
  *  This structure is the entry point for user defined datatypes
- *  it is inintialized in \ref sctk_task_specific_t
+ *  it is inintialized in \ref mpc_mpi_m_per_mpi_process_ctx_t
  */
 struct Datatype_Array
 {

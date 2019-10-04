@@ -603,7 +603,7 @@ void mpc_mpi_per_communicator_dup_copy_func(mpc_mpi_per_communicator_t** to, mpc
 
 static inline mpc_mpi_per_communicator_t *
 mpc_mpc_get_per_comm_data(sctk_communicator_t comm) {
-  struct sctk_task_specific_s *task_specific;
+  struct mpc_mpi_m_per_mpi_process_ctx_s *task_specific;
   mpc_per_communicator_t *tmp;
 
   static __thread int task_rank = -1;
@@ -616,7 +616,7 @@ mpc_mpc_get_per_comm_data(sctk_communicator_t comm) {
     }
   }
 
-  task_specific = __MPC_get_task_specific();
+  task_specific = _mpc_m_per_mpi_process_ctx_get();
   tmp = _mpc_m_per_communicator_get(task_specific, comm);
 
   if (tmp == NULL)
@@ -644,8 +644,8 @@ int mpc_mpi_per_communicator_init(mpc_mpi_per_communicator_t *pc) {
 
 static inline mpc_mpi_data_t * mpc_mpc_get_per_task_data()
 {
-	struct sctk_task_specific_s * task_specific;
-	task_specific = __MPC_get_task_specific ();
+	struct mpc_mpi_m_per_mpi_process_ctx_s * task_specific;
+	task_specific = _mpc_m_per_mpi_process_ctx_get ();
 	return task_specific->mpc_mpi_data;
 }
 
@@ -4857,7 +4857,7 @@ static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype da
 	MPI_Datatype data_in;
 	int data_in_size = 0;
 	size_t count = 0;
-	sctk_task_specific_t *task_specific = NULL;
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = NULL;
 	unsigned long i = 0;
 
 	*elements = 0;
@@ -4882,11 +4882,11 @@ static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype da
 			 * elements of a single type next to each other
 			 * we have to find out how many elements of this
 			 * type are here */
-			task_specific = __MPC_get_task_specific ();
+			task_specific = _mpc_m_per_mpi_process_ctx_get ();
 			
 			/* First retrieve the contiguous type descriptor */
 			sctk_datatype_lock( task_specific );
-			contiguous_user_types = sctk_task_specific_get_contiguous_datatype( task_specific, datatype );
+			contiguous_user_types = _mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get( task_specific, datatype );
 			/* Number of entries in the contiguous type */
 			count = contiguous_user_types->count;
 			/* Input type */
@@ -4908,7 +4908,7 @@ static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype da
 		
 		case MPC_DATATYPES_DERIVED:
 	
-			task_specific = __MPC_get_task_specific ();
+			task_specific = _mpc_m_per_mpi_process_ctx_get ();
 			
 			/* This is the size we received */
 			size = status->size;
@@ -4918,7 +4918,7 @@ static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype da
 			/* Retrieve the derived datatype */
 			sctk_datatype_lock( task_specific );
 			sctk_assert ( MPC_TYPE_MAP_TO_DERIVED(datatype) < SCTK_USER_DATA_TYPES_MAX);	
-			target_type = sctk_task_specific_get_derived_datatype(  task_specific, datatype );
+			target_type = _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(  task_specific, datatype );
 			sctk_assert ( target_type != NULL);
 			sctk_datatype_unlock( task_specific );
 			
@@ -5201,7 +5201,7 @@ int __INTERNAL__PMPI_Pack_external_size (char *datarep , int incount, MPI_Dataty
 		return MPI_ERR_ARG;
 	}
 
-	sctk_task_specific_t *task_specific = NULL;
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = NULL;
   sctk_derived_datatype_t *derived_user_types = NULL;
   sctk_contiguous_datatype_t *contiguous_user_types = NULL;
 
@@ -5210,9 +5210,9 @@ int __INTERNAL__PMPI_Pack_external_size (char *datarep , int incount, MPI_Dataty
 	switch( sctk_datatype_kind( datatype ) )
 	{
 		case MPC_DATATYPES_CONTIGUOUS:
-			task_specific = __MPC_get_task_specific ();
+			task_specific = _mpc_m_per_mpi_process_ctx_get ();
 			sctk_datatype_lock( task_specific );
-			contiguous_user_types = sctk_task_specific_get_contiguous_datatype( task_specific, datatype );
+			contiguous_user_types = _mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get( task_specific, datatype );
 			sctk_datatype_unlock( task_specific );
 			
 			/* For contiguous it is count times the external extent */
@@ -5229,10 +5229,10 @@ int __INTERNAL__PMPI_Pack_external_size (char *datarep , int incount, MPI_Dataty
 		break;
 		
 		case MPC_DATATYPES_DERIVED:
-			task_specific = __MPC_get_task_specific ();
+			task_specific = _mpc_m_per_mpi_process_ctx_get ();
 		
 			sctk_datatype_lock( task_specific );
-			derived_user_types = sctk_task_specific_get_derived_datatype( task_specific, datatype );
+			derived_user_types = _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
 			sctk_datatype_unlock( task_specific );
 		
 			unsigned int i;
@@ -5275,7 +5275,7 @@ int __INTERNAL__PMPI_Pack_external_size (char *datarep , int incount, MPI_Dataty
 
 MPI_Datatype * sctk_datatype_get_typemask( MPI_Datatype datatype, int * type_mask_count, MPC_Datatype * static_type )
 {
-	sctk_task_specific_t *task_specific;
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
 	
 	*type_mask_count = 0;
 	
@@ -5290,10 +5290,10 @@ MPI_Datatype * sctk_datatype_get_typemask( MPI_Datatype datatype, int * type_mas
 			return static_type;
 		break;
 		case MPC_DATATYPES_CONTIGUOUS:
-			task_specific = __MPC_get_task_specific ();
+			task_specific = _mpc_m_per_mpi_process_ctx_get ();
 			
 			sctk_datatype_lock( task_specific );
-			contiguous_user_types = sctk_task_specific_get_contiguous_datatype( task_specific, datatype );
+			contiguous_user_types = _mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get( task_specific, datatype );
 			sctk_datatype_unlock( task_specific );
 			
 			*type_mask_count = 1;
@@ -5312,10 +5312,10 @@ MPI_Datatype * sctk_datatype_get_typemask( MPI_Datatype datatype, int * type_mas
 		break;
 		
 		case MPC_DATATYPES_DERIVED:
-			task_specific = __MPC_get_task_specific ();
+			task_specific = _mpc_m_per_mpi_process_ctx_get ();
 
 			sctk_datatype_lock( task_specific );
-			derived_user_types = sctk_task_specific_get_derived_datatype( task_specific, datatype );
+			derived_user_types = _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
 			sctk_datatype_unlock( task_specific );
 		
 			*type_mask_count = derived_user_types->count;
@@ -15270,7 +15270,7 @@ static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
     int rank;
 
     mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
-    struct sctk_task_specific_s *task_specific;
+    struct mpc_mpi_m_per_mpi_process_ctx_s *task_specific;
     mpc_per_communicator_t *per_communicator;
     mpc_per_communicator_t *per_communicator_tmp;
 
@@ -15282,7 +15282,7 @@ static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
     }
     is_initialized = 1;
 
-    task_specific = __MPC_get_task_specific();
+    task_specific = _mpc_m_per_mpi_process_ctx_get();
     task_specific->mpc_mpi_data = sctk_malloc(sizeof(struct mpc_mpi_data_s));
     memset(task_specific->mpc_mpi_data, 0, sizeof(struct mpc_mpi_data_s));
     task_specific->mpc_mpi_data->lock = SCTK_SPINLOCK_INITIALIZER;
@@ -15347,8 +15347,8 @@ __INTERNAL__PMPI_Finalize (void)
 {
   int res; 
 
-  struct sctk_task_specific_s * task_specific;
-  task_specific = __MPC_get_task_specific ();
+  struct mpc_mpi_m_per_mpi_process_ctx_s * task_specific;
+  task_specific = _mpc_m_per_mpi_process_ctx_get ();
   if(task_specific->mpc_mpi_data->nbc_initialized_per_task == 1){
     task_specific->mpc_mpi_data->nbc_initialized_per_task = -1;
     sctk_thread_yield();
@@ -19644,8 +19644,8 @@ PMPI_Abort (MPI_Comm comm, int errorcode)
 
 int PMPI_Is_thread_main(int *flag)
 {
-	sctk_task_specific_t *task_specific;
-	task_specific = __MPC_get_task_specific ();
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
+	task_specific = _mpc_m_per_mpi_process_ctx_get ();
 	*flag = task_specific->init_done;
 	return MPI_SUCCESS;
 }

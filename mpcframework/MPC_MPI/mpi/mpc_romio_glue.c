@@ -19,7 +19,7 @@
  */
 void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 {
-	sctk_task_specific_t *task_specific;
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
 
 	*flag = 0;
 
@@ -41,8 +41,8 @@ void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 
 		/* For dereived dat-types we have to check */
 		case MPC_DATATYPES_DERIVED:
-			task_specific = __MPC_get_task_specific ();
-			target_type = sctk_task_specific_get_derived_datatype(  task_specific, datatype );
+			task_specific = _mpc_m_per_mpi_process_ctx_get ();
+			target_type = _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(  task_specific, datatype );
 			assume( target_type != NULL );
 
 			/* If there is no block (0 size) or one block in the optimized representation
@@ -70,7 +70,7 @@ void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
  */
 int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
                       MPI_Aint **indices, MPI_Count *count) {
-  sctk_task_specific_t *task_specific = __MPC_get_task_specific();
+  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = _mpc_m_per_mpi_process_ctx_get();
   sctk_derived_datatype_t *target_derived_type;
   sctk_contiguous_datatype_t *contiguous_type;
 
@@ -102,8 +102,7 @@ int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
     (*blocklen)[0] = sctk_common_datatype_get_size(datatype);
     break;
   case MPC_DATATYPES_CONTIGUOUS:
-    contiguous_type =
-        sctk_task_specific_get_contiguous_datatype(task_specific, datatype);
+    contiguous_type = _mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);
     *count = 1;
 
     *blocklen = sctk_malloc(*count * sizeof(MPI_Aint));
@@ -118,7 +117,7 @@ int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
 
   case MPC_DATATYPES_DERIVED:
     target_derived_type =
-        sctk_task_specific_get_derived_datatype(task_specific, datatype);
+        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
 
     /* Note that we extract the optimized version of the data-type */
     *count = target_derived_type->opt_count;
@@ -156,7 +155,7 @@ int MPIR_Type_flatten(MPI_Datatype type, MPI_Aint **off_array,
 }
 
 MPI_Aint MPCX_Type_get_count(MPI_Datatype datatype) {
-  sctk_task_specific_t *task_specific = __MPC_get_task_specific();
+  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = _mpc_m_per_mpi_process_ctx_get();
   sctk_derived_datatype_t *target_derived_type;
 
 
@@ -175,7 +174,7 @@ MPI_Aint MPCX_Type_get_count(MPI_Datatype datatype) {
 
   case MPC_DATATYPES_DERIVED:
     target_derived_type =
-        sctk_task_specific_get_derived_datatype(task_specific, datatype);
+        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
 
     return target_derived_type->opt_count;
     break;

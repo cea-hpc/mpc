@@ -1072,14 +1072,14 @@ void sctk_derived_datatype_display( sctk_derived_datatype_t *target_type )
 }
 
 extern sctk_derived_datatype_t *
-sctk_get_derived_datatype(MPC_Datatype datatype);
+_mpc_m_per_mpi_process_ctx_derived_datatype_get(MPC_Datatype datatype);
 
 void *sctk_derived_datatype_serialize(sctk_datatype_t type, size_t *size,
                                       size_t header_pad) {
   assume(sctk_datatype_is_derived(type));
   assume(size);
 
-  sctk_derived_datatype_t *dtype = sctk_get_derived_datatype(type);
+  sctk_derived_datatype_t *dtype = _mpc_m_per_mpi_process_ctx_derived_datatype_get(type);
 
   assume(dtype != NULL);
 
@@ -1164,12 +1164,12 @@ sctk_datatype_t sctk_datatype_get_inner_type(sctk_datatype_t type) {
     return type;
 
   if (sctk_datatype_is_contiguous(type)) {
-    sctk_contiguous_datatype_t *ctype = sctk_get_contiguous_datatype(type);
+    sctk_contiguous_datatype_t *ctype = _mpc_m_per_mpi_process_ctx_contiguous_datatype_get(type);
     assume(ctype != NULL);
     return ctype->datatype;
   }
 
-  sctk_derived_datatype_t *dtype = sctk_get_derived_datatype(type);
+  sctk_derived_datatype_t *dtype = _mpc_m_per_mpi_process_ctx_derived_datatype_get(type);
 
   assume(dtype != NULL);
 
