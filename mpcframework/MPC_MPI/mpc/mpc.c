@@ -3379,11 +3379,6 @@ int _mpc_m_waitallp( mpc_msg_count count, MPC_Request *parray_of_requests[],
 	when we have generalized requests*/
 	int contains_generalized = 0;
 
-	if ( _mpc_m_waitall_Grequest( count, parray_of_requests, array_of_statuses ) )
-	{
-		MPC_ERROR_SUCESS()
-	}
-
 	for ( i = 0; i < count; i++ )
 	{
 		if ( parray_of_requests[i]->request_type == REQUEST_GENERALIZED )
@@ -3392,49 +3387,63 @@ int _mpc_m_waitallp( mpc_msg_count count, MPC_Request *parray_of_requests[],
 			break;
 		}
 	}
-	/* Here we force the local polling because of generalized requests
-                This will happen only if classical and generalized requests are
-                mixed or if the wait_fn is not the same for all requests */
-	while ( contains_generalized && ( flag == 0 ) )
+
+	if( contains_generalized || count <= 8 )
 	{
-		flag = 1;
-
-		for ( i = 0; i < count; i++ )
+		/* Can we do a batch wait ? */
+		if(contains_generalized)
 		{
-			int tmp_flag = 0;
-			MPC_Status *status;
-			MPC_Request *request;
-
-			if ( array_of_statuses != NULL )
+			if ( _mpc_m_waitall_Grequest( count, parray_of_requests, array_of_statuses ) )
 			{
-				status = &( array_of_statuses[i % count] );
+				MPC_ERROR_SUCESS()
 			}
-			else
-			{
-				status = MPC_STATUS_IGNORE;
-			}
-
-			request = parray_of_requests[i % count];
-
-			if ( request == &MPC_REQUEST_NULL )
-				continue;
-
-			__mpc_m_test( request, &tmp_flag, status );
-
-			/* We set this flag in order to prevent the status
-       * from being updated repetitivelly in __mpc_m_test */
-			if ( tmp_flag )
-			{
-				mpc_mp_comm_request_set_null( request, 1 );
-			}
-
-			flag = flag & tmp_flag;
 		}
 
-		if ( flag == 1 )
-			MPC_ERROR_SUCESS();
+		/* Here we force the local polling because of generalized requests
+			This will happen only if classical and generalized requests are
+			mixed or if the wait_fn is not the same for all requests */
+		while ( flag == 0 )
+		{
+			flag = 1;
 
-		sctk_thread_yield();
+			for ( i = 0; i < count; i++ )
+			{
+				int tmp_flag = 0;
+
+				MPC_Status *status;
+				MPC_Request *request;
+
+				if ( array_of_statuses != NULL )
+				{
+					status = &( array_of_statuses[i % count] );
+				}
+				else
+				{
+					status = MPC_STATUS_IGNORE;
+				}
+
+				request = parray_of_requests[i % count];
+
+				if ( mpc_mp_comm_request_is_null(request) )
+					continue;
+
+				__mpc_m_test( request, &tmp_flag, status );
+
+				/* We set this flag in order to prevent the status
+				   from being updated repetitivelly in __mpc_m_test */
+				if ( tmp_flag )
+				{
+					mpc_mp_comm_request_set_null( request, 1 );
+				}
+
+				flag = flag & tmp_flag;
+			}
+
+			if ( flag == 1 )
+				MPC_ERROR_SUCESS();
+
+			sctk_thread_yield();
+		}
 	}
 
 	/* XXX: Waitall has been ported for using wait_for_value_and_poll
