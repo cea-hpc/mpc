@@ -401,7 +401,6 @@ static inline void MPC_Extern32_encode( MPC_Datatype type, char * in, char * out
 {
 	if( !sctk_datatype_is_common(type) )
 	{
-		MPCX_Type_debug( type );
 		sctk_fatal("Cannot convert a non-common data-type");
 	}
 	
