@@ -188,10 +188,6 @@ PROBE(MPC_Local_process_rank, MPC_RANK, MPC_Local_process_rank,
 PROBE(MPC_Local_process_number, MPC_RANK, MPC_Local_process_number,
       MPC_Local_process_number_CALL, MPC_Local_process_number_TIME,
       MPC_Local_process_number_TIME_HW, MPC_Local_process_number_TIME_LW)
-PROBE(MPC_Task_rank, MPC_RANK, MPC_Task_rank, MPC_Task_rank_CALL,
-      MPC_Task_rank_TIME, MPC_Task_rank_TIME_HW, MPC_Task_rank_TIME_LW)
-PROBE(MPC_Task_number, MPC_RANK, MPC_Task_number, MPC_Task_number_CALL,
-      MPC_Task_number_TIME, MPC_Task_number_TIME_HW, MPC_Task_number_TIME_LW)
 PROBE(MPC_ERROR, MPC, MPC error related, MPC_ERROR_CALL, MPC_ERROR_TIME,
       MPC_ERROR_TIME_HW, MPC_ERROR_TIME_LW)
 PROBE(MPC_Errhandler_create, MPC_ERROR, MPC_Errhandler_create,

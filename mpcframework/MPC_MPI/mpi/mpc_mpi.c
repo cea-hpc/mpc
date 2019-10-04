@@ -13166,13 +13166,13 @@ static int __INTERNAL__PMPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2,
     *result = MPI_IDENT;
     return MPI_SUCCESS;
   } else {
-    if (sctk_get_nb_task_total(comm1) != sctk_get_nb_task_total(comm2)) {
+    if (mpc_mp_communicator_size(comm1) != mpc_mp_communicator_size(comm2)) {
       *result = MPI_UNEQUAL;
       return MPI_SUCCESS;
     }
 
     if (comm1 == MPI_COMM_SELF || comm2 == MPI_COMM_SELF) {
-      if (sctk_get_nb_task_total(comm1) != sctk_get_nb_task_total(comm2))
+      if (mpc_mp_communicator_size(comm1) != mpc_mp_communicator_size(comm2))
         *result = MPI_UNEQUAL;
       else
         *result = MPI_CONGRUENT;

@@ -501,10 +501,6 @@ int MPC_Process_number(int *number);
 int MPC_Local_process_rank(int *rank);
 int MPC_Local_process_number(int *number);
 
-/* Task global topology */
-int MPC_Task_rank(int *rank);
-int MPC_Task_number(int *number);
-
 /* Task local topology */
 int MPC_Local_task_rank(int *rank);
 int MPC_Local_task_number(int *number);

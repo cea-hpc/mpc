@@ -187,7 +187,7 @@ void __sctk_control_messages_send(int dest, int dest_task,
   if (dest < 0) {
     int cw_rank = sctk_get_comm_world_rank(comm, dest_task);
     dest = sctk_get_process_rank_from_task_rank(cw_rank);
-    source = sctk_get_rank(communicator, mpc_common_get_task_rank());
+    source = mpc_mp_communicator_rank(communicator, mpc_common_get_task_rank());
   } else {
     source = mpc_common_get_process_rank();
   }
@@ -197,7 +197,7 @@ void __sctk_control_messages_send(int dest, int dest_task,
   //~ {
   //~ /* If so we call directly */
   //~ control_message_submit( message_class, rail_id, mpc_common_get_process_rank(),
-  // sctk_get_rank(communicator, mpc_common_get_task_rank() ), subtype, param, buffer,
+  // mpc_mp_communicator_rank(communicator, mpc_common_get_task_rank() ), subtype, param, buffer,
   // size );
   //~ return;
   //~ }
@@ -403,8 +403,8 @@ void sctk_control_message_fence_req(int target_task, sctk_communicator_t comm,
 
   return;
 
-  ctx.source = sctk_get_rank(comm, mpc_common_get_task_rank());
-  ctx.remote = sctk_get_rank(comm, target_task);
+  ctx.source = mpc_mp_communicator_rank(comm, mpc_common_get_task_rank());
+  ctx.remote = mpc_mp_communicator_rank(comm, target_task);
   ctx.comm = comm;
 
   static int dummy = 0;

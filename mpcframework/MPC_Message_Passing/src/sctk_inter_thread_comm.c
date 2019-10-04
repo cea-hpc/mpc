@@ -613,7 +613,7 @@ void _mpc_comm_ptp_message_commit_request( sctk_thread_ptp_message_t *send,
 		   as messages are sent with their comm_world rank this is required
 		   when matching ANY_SOURCE messages in order to fill accordingly
 		   the MPI_Status object from the request data */
-		recv->tail.request->header.source_task = sctk_get_rank( SCTK_MSG_COMMUNICATOR( send ), SCTK_MSG_SRC_TASK( send ) );
+		recv->tail.request->header.source_task = mpc_mp_communicator_rank( SCTK_MSG_COMMUNICATOR( send ), SCTK_MSG_SRC_TASK( send ) );
 		recv->tail.request->header.source = SCTK_MSG_SRC_PROCESS( send );
 		recv->tail.request->header.message_tag = SCTK_MSG_TAG( send );
 		recv->tail.request->header.msg_size = SCTK_MSG_SIZE( send );
@@ -2136,7 +2136,7 @@ void mpc_mp_comm_ptp_msg_wait_init( struct mpc_mp_comm_ptp_msg_progress_s *wait,
 		 request->header.source_task != SCTK_PROC_NULL )
 	{
 		/* Convert task rank to process rank */
-		wait->source_task_id = sctk_get_rank( request->header.communicator,
+		wait->source_task_id = mpc_mp_communicator_rank( request->header.communicator,
 										      request->header.source_task );
 		wait->remote_process = sctk_get_process_rank_from_task_rank( wait->source_task_id );
 	}
@@ -2711,7 +2711,7 @@ void mpc_mp_comm_isend_class( int dest, void *data, size_t size, int tag,
 							   sctk_communicator_t comm,
 							   sctk_message_class_t class, sctk_request_t *req )
 {
-	mpc_mp_comm_isend_class_src( sctk_get_rank(comm, mpc_common_get_task_rank()),
+	mpc_mp_comm_isend_class_src( mpc_mp_communicator_rank(comm, mpc_common_get_task_rank()),
 				      dest,
 				      data,
 				      size,
@@ -2745,7 +2745,7 @@ void mpc_mp_comm_irecv_class(  int src, void *buffer, size_t size, int tag,
                                 sctk_message_class_t class, sctk_request_t *req )
 {
 
-	mpc_mp_comm_irecv_class_dest( src, sctk_get_rank( comm, mpc_common_get_task_rank() ),
+	mpc_mp_comm_irecv_class_dest( src, mpc_mp_communicator_rank( comm, mpc_common_get_task_rank() ),
                                                            buffer, size, tag, comm, class, req );
 }
 

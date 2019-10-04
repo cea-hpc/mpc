@@ -27,7 +27,7 @@
 #include "mpcmp.h"
 #include "mpc_info.h"
 #include "mpc_datatypes.h"
-#include "mpc_extended_request.h"
+#include "egreq_classes.h"
 #include "sctk_debug.h"
 #include "egreq_progress.h"
 #include "sctk_communicator.h"
@@ -97,7 +97,7 @@ typedef struct mpc_mpi_m_per_mpi_process_ctx_s
 	struct Datatype_Array *datatype_array;
 
 	/* Extended Request Class handling */
-	struct GRequest_context grequest_context;
+	struct _mpc_egreq_classes_storage grequest_context;
 
 	/* MPI_Info handling */
 	struct MPC_Info_factory info_fact; /**< This structure is used to store the association

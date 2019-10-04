@@ -316,7 +316,6 @@ typedef struct sctk_internal_communicator_s {
 
 /********************************* FUNCTION *********************************/
 void _mpc_comm_set_internal_coll ( const sctk_communicator_t id, struct mpc_mp_coll_s *tmp );
-void sctk_get_rank_size_total ( const sctk_communicator_t communicator, int *rank, int *size, int glob_rank );
 void sctk_communicator_world_init ( int task_nb );
 void sctk_communicator_self_init();
 void sctk_communicator_delete();
@@ -334,9 +333,9 @@ static inline int sctk_get_comm_world_rank ( const sctk_communicator_t communica
 }
 
 int sctk_get_last_task_local ( const sctk_communicator_t communicator );
-int sctk_get_nb_task_remote ( const sctk_communicator_t communicator );
+int mpc_mp_communicator_remote_size ( const sctk_communicator_t communicator );
 int sctk_get_nb_task_local ( const sctk_communicator_t communicator );
-int sctk_get_nb_task_total ( const sctk_communicator_t communicator );
+int mpc_mp_communicator_size ( const sctk_communicator_t communicator );
 int sctk_is_in_local_group ( const sctk_communicator_t id );
 int sctk_get_remote_leader ( const sctk_communicator_t );
 int sctk_get_local_leader ( const sctk_communicator_t );
@@ -412,7 +411,7 @@ static inline int sctk_is_shared_node(const sctk_communicator_t communicator) {
 
 
 int sctk_is_in_group ( const sctk_communicator_t communicator );
-int sctk_get_rank ( const sctk_communicator_t communicator, const int comm_world_rank );
+int mpc_mp_communicator_rank ( const sctk_communicator_t communicator, const int comm_world_rank );
 int sctk_get_node_rank_from_task_rank ( const int rank );
 
 int _sctk_get_process_rank_from_task_rank ( int rank );

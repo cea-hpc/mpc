@@ -19,8 +19,8 @@
 /* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef MPC_X_REQUESTS_H
-#define MPC_X_REQUESTS_H
+#ifndef MPC_MPI_EGREQ_CLASSES_H_
+#define MPC_MPI_EGREQ_CLASSES_H_
 
 #include "mpcmp.h"
 #include "uthash.h"
@@ -35,13 +35,13 @@ typedef struct MPCX_GRequest_class_s
 	MPC_Grequest_free_function * free_fn;
 	MPCX_Grequest_poll_fn * poll_fn;
 	MPCX_Grequest_wait_fn * wait_fn;
-	
+
 	UT_hash_handle hh; /**< This dummy data structure is required by UTHash is order to make this data structure hashable */
 }MPCX_GRequest_class_t;
 
 
 
-struct GRequest_context
+struct _mpc_egreq_classes_storage
 {
 	MPCX_GRequest_class_t * classes;
 	int current_id;
@@ -49,10 +49,10 @@ struct GRequest_context
 
 
 
-void GRequest_context_init( struct GRequest_context * ctx );
-void GRequest_context_release( struct GRequest_context * ctx );
+void _mpc_egreq_classes_storage_init( struct _mpc_egreq_classes_storage * ctx );
+void _mpc_egreq_classes_storage_release( struct _mpc_egreq_classes_storage * ctx );
 
-int GRequest_context_add_class( struct GRequest_context *ctx,
+int _mpc_egreq_classes_storage_add_class( struct _mpc_egreq_classes_storage *ctx,
 				     MPC_Grequest_query_function * query_fn,
 				     MPC_Grequest_cancel_function * cancel_fn,
 				     MPC_Grequest_free_function * free_fn,
@@ -61,7 +61,7 @@ int GRequest_context_add_class( struct GRequest_context *ctx,
 				     MPCX_Request_class * new_class );
 
 
-MPCX_GRequest_class_t * GRequest_context_get_class( struct GRequest_context *ctx, MPCX_Request_class requested_class );
+MPCX_GRequest_class_t * _mpc_egreq_classes_storage_get_class( struct _mpc_egreq_classes_storage *ctx, MPCX_Request_class requested_class );
 
 
-#endif /* MPC_X_REQUESTS_H */
+#endif /* MPC_MPI_EGREQ_CLASSES_H_ */

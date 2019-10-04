@@ -34,7 +34,7 @@ int MPC_Net_get_rank()
 
 int MPC_Net_get_comm_rank( const sctk_communicator_t communicator )
 {
-	return sctk_get_rank ( communicator, MPC_Net_get_rank() );
+	return mpc_mp_communicator_rank ( communicator, MPC_Net_get_rank() );
 }
 
 /*  ###############

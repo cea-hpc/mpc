@@ -1651,7 +1651,7 @@ int *sctk_get_process_array ( const sctk_communicator_t communicator )
  * @param communicator given communicator.
  * @return the number.
 **/
-int sctk_get_nb_task_total ( const sctk_communicator_t communicator )
+int mpc_mp_communicator_size ( const sctk_communicator_t communicator )
 {
 	sctk_internal_communicator_t *tmp;
 	tmp = sctk_get_internal_communicator ( communicator );
@@ -1683,7 +1683,7 @@ int sctk_get_nb_task_total ( const sctk_communicator_t communicator )
  * @param communicator given intercommunicator.
  * @return the number.
 **/
-int sctk_get_nb_task_remote ( const sctk_communicator_t communicator )
+int mpc_mp_communicator_remote_size ( const sctk_communicator_t communicator )
 {
 	sctk_internal_communicator_t *tmp;
 	tmp = sctk_get_internal_communicator ( communicator );
@@ -1804,7 +1804,7 @@ int sctk_get_remote_leader ( const sctk_communicator_t communicator )
  * @param comm_world_rank comm world rank of the task.
  * @return the rank.
 **/
-int sctk_get_rank(const sctk_communicator_t communicator,
+int mpc_mp_communicator_rank(const sctk_communicator_t communicator,
                   const int comm_world_rank) {
   sctk_nodebug("give rank for comm %d with comm_world_rank %d", communicator,
                comm_world_rank);
@@ -1989,19 +1989,7 @@ int _sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const in
 }
 
 /************************* FUNCTION ************************/
-/**
- * This method get the number of tasks present in a given communicator and
- * the rank of a task in this one.
- * @param communicator given communicator.
- * @param rank of the task in the communicator.
- * @param size number of tasks in the communicator.
- * @param glob_rank comm world rank of the task.
-**/
-void sctk_get_rank_size_total ( const sctk_communicator_t communicator, int *rank, int *size, int glob_rank )
-{
-	*size = sctk_get_nb_task_total ( communicator );
-	*rank = sctk_get_rank ( communicator, glob_rank );
-}
+
 
 
 int sctk_get_node_rank_from_task_rank ( __UNUSED__ const int rank )
@@ -2348,7 +2336,7 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 	rank = mpc_common_get_task_rank();
 	mpc_mp_barrier (local_comm);
 	/* group rank */
-	grank = sctk_get_rank ( local_comm, rank );
+	grank = mpc_mp_communicator_rank ( local_comm, rank );
 	sctk_nodebug ( "get grank %d from rank %d in comm %d", grank, rank, local_comm );
 	/* get comm struct */
 	tmp = sctk_get_internal_communicator ( local_comm );
@@ -2441,7 +2429,7 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 		memset ( local_tmp, 0, sizeof ( sctk_internal_communicator_t ) );
 
 		local_to_global = sctk_malloc ( local_size * sizeof ( int ) );
-		global_to_local = sctk_malloc ( sctk_get_nb_task_total ( SCTK_COMM_WORLD ) * sizeof ( int ) );
+		global_to_local = sctk_malloc ( mpc_mp_communicator_size ( SCTK_COMM_WORLD ) * sizeof ( int ) );
 		task_to_process = sctk_malloc ( local_size * sizeof ( int ) );
 
 		/* fill new comm */
@@ -2512,7 +2500,7 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 		memset ( remote_tmp, 0, sizeof ( sctk_internal_communicator_t ) );
 
 		remote_local_to_global = sctk_malloc ( remote_size * sizeof ( int ) );
-		remote_global_to_local = sctk_malloc ( sctk_get_nb_task_total ( SCTK_COMM_WORLD ) * sizeof ( int ) );
+		remote_global_to_local = sctk_malloc ( mpc_mp_communicator_size ( SCTK_COMM_WORLD ) * sizeof ( int ) );
 		remote_task_to_process = sctk_malloc ( remote_size * sizeof ( int ) );
 
 		/* fill new comm */
@@ -2671,7 +2659,7 @@ sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_
 	/* get task id */
 	rank = mpc_common_get_task_rank();
 	/* get group rank */
-	grank = sctk_get_rank ( origin_communicator, rank );
+	grank = mpc_mp_communicator_rank ( origin_communicator, rank );
 
 	/* get comm struct */
 	tmp = sctk_get_internal_communicator ( origin_communicator );
@@ -2696,7 +2684,7 @@ sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_
 
           local_to_global = sctk_calloc(nb_task_involved, sizeof(int));
           global_to_local =
-              sctk_calloc(sctk_get_nb_task_total(SCTK_COMM_WORLD), sizeof(int));
+              sctk_calloc(mpc_mp_communicator_size(SCTK_COMM_WORLD), sizeof(int));
           task_to_process = sctk_calloc(nb_task_involved, sizeof(int));
 
           /* fill new comm */
@@ -2810,7 +2798,7 @@ sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communi
 	/* get task id */
 	rank = mpc_common_get_task_rank();
 	/* get group rank */
-	grank = sctk_get_rank ( origin_communicator, rank );
+	grank = mpc_mp_communicator_rank ( origin_communicator, rank );
 
 	/* get comm struct */
 	tmp = sctk_get_internal_communicator ( origin_communicator );
@@ -2847,10 +2835,10 @@ sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communi
 		memset ( new_tmp, 0, sizeof ( sctk_internal_communicator_t ) );
 
 		local_to_global = sctk_malloc ( nb_task_involved * sizeof ( int ) );
-		global_to_local = sctk_malloc ( sctk_get_nb_task_total ( SCTK_COMM_WORLD ) * sizeof ( int ) );
-		task_to_process = sctk_malloc ( sctk_get_nb_task_total ( SCTK_COMM_WORLD ) * sizeof ( int ) );
+		global_to_local = sctk_malloc ( mpc_mp_communicator_size ( SCTK_COMM_WORLD ) * sizeof ( int ) );
+		task_to_process = sctk_malloc ( mpc_mp_communicator_size ( SCTK_COMM_WORLD ) * sizeof ( int ) );
 
-		//~ for(i = 0 ; i < sctk_get_nb_task_total(SCTK_COMM_WORLD) ; i++)
+		//~ for(i = 0 ; i < mpc_mp_communicator_size(SCTK_COMM_WORLD) ; i++)
 		//~ global_to_local[i] = -1;
 		/* fill new comm */
 		for ( i = 0; i < nb_task_involved; i++ )

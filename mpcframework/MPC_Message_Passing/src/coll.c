@@ -94,7 +94,7 @@ void _mpc_coll_bcast_simple( void *buffer, const size_t size,
 	int id;
 
 	local = sctk_get_nb_task_local( com_id );
-	id = sctk_get_rank( com_id, mpc_common_get_task_rank() );
+	id = mpc_mp_communicator_rank( com_id, mpc_common_get_task_rank() );
 
 	sctk_thread_mutex_lock( &tmp->broadcast.broadcast_simple.lock );
 	{
@@ -355,8 +355,8 @@ static void _mpc_coll_opt_barrier( const sctk_communicator_t communicator, __UNU
 
 		_mpc_coll_message_table_init( &table );
 
-		total = sctk_get_nb_task_total( communicator );
-		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
+		total = mpc_mp_communicator_size( communicator );
+		myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
 
 		sctk_nodebug( "enter barrier total = %d, myself = %d", total,
 					  myself );
@@ -454,9 +454,9 @@ static void _mpc_coll_opt_barrier( const sctk_communicator_t communicator, __UNU
 
 		_mpc_coll_message_table_init( &table );
 
-		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
+		myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
 
-		rsize = sctk_get_nb_task_remote( communicator );
+		rsize = mpc_mp_communicator_remote_size( communicator );
 
 		for ( i = 0; i < rsize; i++ )
 		{
@@ -517,8 +517,8 @@ void mpc_mp_bcast_opt_messages( void *buffer, const size_t size,
 			BROADCAST_ARRITY = broadcast_arity_max;
 		}
 
-		total = sctk_get_nb_task_total( communicator );
-		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
+		total = mpc_mp_communicator_size( communicator );
+		myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
 		related_myself = ( myself + total - root ) % total;
 
 		total_max = log( total ) / log( BROADCAST_ARRITY );
@@ -659,8 +659,8 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
 
 		assume( size > 0 );
 
-		total = sctk_get_nb_task_total( communicator );
-		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
+		total = mpc_mp_communicator_size( communicator );
+		myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
 
 		total_max = log( total ) / log( ALLREDUCE_ARRITY );
 		total_max = pow( ALLREDUCE_ARRITY, total_max );
@@ -1112,7 +1112,7 @@ void _mpc_coll_hetero_bcast( void *buffer, const size_t size,
 		return;
 	}
 
-	myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
+	myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
 	nb_tasks_in_node = sctk_get_nb_task_local( communicator );
 	bcast = &tmp->broadcast.broadcast_hetero_messages;
 	generation = bcast->generation;
@@ -1514,8 +1514,8 @@ static void _mpc_coll_noalloc_barrier( const sctk_communicator_t communicator, _
 
 		_mpc_coll_message_table_init( &table );
 
-		total = sctk_get_nb_task_total( communicator );
-		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
+		total = mpc_mp_communicator_size( communicator );
+		myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
 		sctk_nodebug( "enter barrier total = %d, myself = %d", total,
 					  myself );
 		total_max = log( total ) / log( barrier_arity );
@@ -1613,9 +1613,9 @@ static void _mpc_coll_noalloc_barrier( const sctk_communicator_t communicator, _
 
 		_mpc_coll_message_table_init( &table );
 
-		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
+		myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
 
-		rsize = sctk_get_nb_task_remote( communicator );
+		rsize = mpc_mp_communicator_remote_size( communicator );
 
 		for ( i = 0; i < rsize; i++ )
 		{
@@ -1677,8 +1677,8 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 			BROADCAST_ARRITY = broadcast_arity_max;
 		}
 
-		total = sctk_get_nb_task_total( communicator );
-		myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
+		total = mpc_mp_communicator_size( communicator );
+		myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
 		related_myself = ( myself + total - root ) % total;
 
 		total_max = log( total ) / log( BROADCAST_ARRITY );
@@ -1848,8 +1848,8 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 
 	assume( size > 0 );
 
-	total = sctk_get_nb_task_total( communicator );
-	myself = sctk_get_rank( communicator, mpc_common_get_task_rank() );
+	total = mpc_mp_communicator_size( communicator );
+	myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
 
 	total_max = log( total ) / log( ALLREDUCE_ARRITY );
 	total_max = pow( ALLREDUCE_ARRITY, total_max );

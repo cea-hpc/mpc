@@ -196,7 +196,7 @@ sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, sctk_
         /* Set window owner task */
         win->owner = mpc_common_get_task_rank();
         win->comm = comm;
-        win->comm_rank = sctk_get_rank(win->comm, win->owner);
+        win->comm_rank = mpc_mp_communicator_rank(win->comm, win->owner);
 
         /* Save CTX */
         win->start_addr = addr;
@@ -205,7 +205,7 @@ sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, sctk_
 
         OPA_store_int(&win->outgoing_emulated_rma, 0);
 
-        int comm_size = sctk_get_nb_task_total(win->comm);
+        int comm_size = mpc_mp_communicator_size(win->comm);
 
         win->incoming_emulated_rma =
             sctk_calloc(comm_size, sizeof(OPA_int_t));
@@ -342,7 +342,7 @@ int sctk_window_build_from_remote(struct sctk_window *remote_win_data) {
 
   /* Warning we have a remote pointer here,
    * this is why we reallocate the counter array */
-  int comm_size = sctk_get_nb_task_total(new_win->comm);
+  int comm_size = mpc_mp_communicator_size(new_win->comm);
 
   new_win->incoming_emulated_rma =
       sctk_calloc(comm_size, sizeof(OPA_int_t));
@@ -509,7 +509,7 @@ void sctk_window_RDMA_emulated_write_ctrl_msg_handler(
   }
 
   sctk_request_t req;
-  mpc_mp_comm_irecv_class_dest(sctk_get_rank(win->comm, erma->source_rank),
+  mpc_mp_comm_irecv_class_dest(mpc_mp_communicator_rank(win->comm, erma->source_rank),
                                 win->comm_rank, win->start_addr + offset,
                                 erma->size, TAG_RDMA_WRITE, win->comm,
                                 SCTK_RDMA_WINDOW_MESSAGES, &req);
@@ -560,7 +560,7 @@ static inline void sctk_window_RDMA_write_net(struct sctk_window *win,
   sctk_thread_ptp_message_t *msg =
       mpc_mp_comm_ptp_message_header_create(SCTK_MESSAGE_CONTIGUOUS);
   mpc_mp_comm_ptp_message_header_init(
-      msg, -8, win->comm, sctk_get_rank(win->comm, mpc_common_get_task_rank()),
+      msg, -8, win->comm, mpc_mp_communicator_rank(win->comm, mpc_common_get_task_rank()),
       win->comm_rank, req, size, SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE, REQUEST_RDMA);
 
   /* Pin local segment */
@@ -686,7 +686,7 @@ void sctk_window_RDMA_emulated_read_ctrl_msg_handler( struct sctk_window_emulate
 
         sctk_request_t req;
         mpc_mp_comm_isend_class_src(
-            win->comm_rank, sctk_get_rank(win->comm, erma->source_rank),
+            win->comm_rank, mpc_mp_communicator_rank(win->comm, erma->source_rank),
             win->start_addr + offset, erma->size, TAG_RDMA_READ, win->comm,
             SCTK_RDMA_WINDOW_MESSAGES, &req);
         mpc_mp_comm_request_wait(&req);
@@ -727,7 +727,7 @@ void sctk_window_RDMA_read_net( struct sctk_window * win, sctk_rail_pin_ctx_t * 
       mpc_mp_comm_ptp_message_header_create(SCTK_MESSAGE_CONTIGUOUS);
 
   mpc_mp_comm_ptp_message_header_init(
-      msg, -8, win->comm, sctk_get_rank(win->comm, mpc_common_get_task_rank()),
+      msg, -8, win->comm, mpc_mp_communicator_rank(win->comm, mpc_common_get_task_rank()),
       win->comm_rank, req, size, SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE, REQUEST_RDMA);
 
   /* Pin local segment */
@@ -1188,7 +1188,7 @@ void sctk_window_RDMA_fetch_and_op_ctrl_msg_handler( struct sctk_window_emulated
                                          win->start_addr + offset, &fetch);
 
         mpc_mp_comm_isend_class_src(
-            win->comm_rank, sctk_get_rank(win->comm, fop->rdma.source_rank),
+            win->comm_rank, mpc_mp_communicator_rank(win->comm, fop->rdma.source_rank),
             &fetch, fop->rdma.size, TAG_RDMA_FETCH_AND_OP, win->comm,
             SCTK_RDMA_MESSAGE, NULL);
 }
@@ -1247,7 +1247,7 @@ static inline void sctk_window_RDMA_fetch_and_op_net(
       mpc_mp_comm_ptp_message_header_create(SCTK_MESSAGE_CONTIGUOUS);
 
   mpc_mp_comm_ptp_message_header_init(msg, -8, win->comm,
-                             sctk_get_rank(win->comm, mpc_common_get_task_rank()),
+                             mpc_mp_communicator_rank(win->comm, mpc_common_get_task_rank()),
                              win->comm_rank, req, RDMA_type_size(type),
                              SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE, REQUEST_RDMA);
 
@@ -1479,7 +1479,7 @@ void sctk_window_RDMA_CAS_ctrl_msg_handler( struct sctk_window_emulated_CAS_RDMA
                                    fcas->comp, fcas->new, res, fcas->type);
 
         mpc_mp_comm_isend_class_src(
-            win->comm_rank, sctk_get_rank(win->comm, fcas->rdma.source_rank),
+            win->comm_rank, mpc_mp_communicator_rank(win->comm, fcas->rdma.source_rank),
             &res, fcas->rdma.size, TAG_RDMA_CAS, win->comm, SCTK_RDMA_MESSAGE,
             NULL);
 }
@@ -1511,7 +1511,7 @@ void sctk_window_RDMA_CAS_net( sctk_window_t remote_win_id, size_t remote_offset
             mpc_mp_comm_ptp_message_header_create(SCTK_MESSAGE_CONTIGUOUS);
 
         mpc_mp_comm_ptp_message_header_init(msg, -8, win->comm,
-                                   sctk_get_rank(win->comm, win->owner),
+                                   mpc_mp_communicator_rank(win->comm, win->owner),
                                    win->comm_rank, req, RDMA_type_size(type),
                                    SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE, REQUEST_RDMA);
 
