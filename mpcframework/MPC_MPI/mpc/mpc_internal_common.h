@@ -29,7 +29,7 @@
 #include "mpc_datatypes.h"
 #include "mpc_extended_request.h"
 #include "sctk_debug.h"
-#include "progress_engine.h"
+#include "egreq_progress.h"
 #include "sctk_communicator.h"
 #include "sctk_inter_thread_comm.h"
 
@@ -68,7 +68,6 @@ struct sctk_task_specific_atexit_s
 	struct sctk_task_specific_atexit_s * next; /**< Following function to call */
 };
 
-
 /**
  *  \brief Describes the context of an MPI task
  *  
@@ -80,17 +79,17 @@ struct sctk_task_specific_atexit_s
 typedef struct sctk_task_specific_s
 {
 	/* TODO */
-	struct mpc_mpi_data_s* mpc_mpi_data;
+	struct mpc_mpi_data_s *mpc_mpi_data;
 
 	/* Communicator handling */
-	mpc_per_communicator_t*per_communicator;
+	mpc_per_communicator_t *per_communicator;
 	mpc_common_spinlock_t per_communicator_lock;
 
 	/* ID */
 	int task_id; /**< MPI comm rank of the task */
 
 	/* Status */
-	int init_done;  /**< =1 if the task has called MPI_Init() 2
+	int init_done; /**< =1 if the task has called MPI_Init() 2
 			     =2 if the task has called MPI_Finalize */
 	int thread_level;
 
@@ -100,21 +99,18 @@ typedef struct sctk_task_specific_s
 	/* Extended Request Class handling */
 	struct GRequest_context grequest_context;
 
-        /* MPI_Info handling */
-        struct MPC_Info_factory
-            info_fact; /**< This structure is used to store the association
-                                      between MPI_Infos structs and their ID */
+	/* MPI_Info handling */
+	struct MPC_Info_factory info_fact; /**< This structure is used to store the association
+                                                between MPI_Infos structs and their ID */
 
-        /* At EXIT */
-        struct sctk_task_specific_atexit_s
-            *exit_handlers; /**< These functions are called when tasks leaves
-                                               (atexit) */
+	/* At EXIT */
+	struct sctk_task_specific_atexit_s  *exit_handlers; /**< These functions are called when tasks leaves (atexit) */
 
-        /* For disguisement */
-        struct sctk_thread_data_s * thread_data;
+	/* For disguisement */
+	struct sctk_thread_data_s *thread_data;
 
-        /* Progresss List */
-        struct sctk_progress_list * progress_list;
+	/* Progresss List */
+	struct _mpc_egreq_progress_list *progress_list;
 } sctk_task_specific_t;
 
 struct sctk_task_specific_s *__MPC_get_task_specific();
@@ -160,40 +156,15 @@ int PMPC_Derived_datatype_on_slot ( int id,
 				    mpc_pack_absolute_indexes_t ub, int is_ub);
 
 int PMPC_Type_set_size(MPC_Datatype datatype, size_t size );
-/************************************************************************/
-/* Per thread context message buffers                                   */
-/************************************************************************/
-
-#define MAX_MPC_BUFFERED_MSG 32
-
-typedef struct 
-{
-	mpc_buffered_msg_t buffer[MAX_MPC_BUFFERED_MSG];
-	volatile int buffer_rank;
-	mpc_common_spinlock_t lock;
-} sctk_buffer_t;
-
-typedef struct sctk_thread_buffer_pool_s
-{
-	sctk_buffer_t sync;
-	sctk_buffer_t async;
-}sctk_thread_buffer_pool_t;
-
 
 /************************************************************************/
-/* Per thread context	                                          */
+/* Per Communicating Thread context	                                          */
 /************************************************************************/
 
-typedef struct sctk_thread_specific_s
-{
-	sctk_thread_buffer_pool_t buffer_pool;
-}sctk_thread_specific_t;
+struct mpc_mpi_m_per_thread_ctx_s;
 
-sctk_thread_specific_t * sctk_get_thread_specific();
-void sctk_set_thread_specific( sctk_thread_specific_t * pointer );
-
-void MPC_Init_thread_specific();
-void MPC_Release_thread_specific();
+void mpc_mpi_m_per_thread_ctx_init();
+void mpc_mpi_m_per_thread_ctx_release();
 
 /************************************************************************/
 /* Non Generic MPI interface function                                   */

@@ -36,11 +36,11 @@ extern void __MPC_delete_thread_specific();
 
 /* Disguisement Fast Path Checker */
 
-extern OPA_int_t ________is_disguised;
+extern OPA_int_t __mpc_p_disguise_flag;
 
 static inline int __MPC_Maybe_disguised()
 {
-    return OPA_load_int(&________is_disguised);
+    return OPA_load_int(&__mpc_p_disguise_flag);
 }
 
 #endif /* end of include guard: MPC_INTERNAL_THREAD_H */

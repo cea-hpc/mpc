@@ -4001,7 +4001,7 @@ static int JJ_NBC_Iexscan(void *sendbuf, void *recvbuf, int count,
  */
 
 
-int __MPC_poll_progress_id(int id);
+int __mpc_m_egreq_progress_poll_id(int id);
 
 void *NBC_Pthread_func( void *ptr ) {
 

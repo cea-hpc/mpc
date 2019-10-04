@@ -169,7 +169,6 @@ static inline mpc_per_communicator_t * __mpc_m_per_communicator_alloc()
 
 static inline void ___mpc_m_per_communicator_copy(sctk_task_specific_t *task_specific,
 						  sctk_communicator_t new_comm,
-						  sctk_communicator_t old_comm,
 						  mpc_per_communicator_t *per_communicator,
 						   void (*copy_fn)(struct mpc_mpi_per_communicator_s**,struct mpc_mpi_per_communicator_s*) )
 {
@@ -194,7 +193,7 @@ static inline void __mpc_m_per_communicator_alloc_from_existing(
 {
 	mpc_per_communicator_t *per_communicator = _mpc_m_per_communicator_get_no_lock(task_specific, old_comm);
 	assume( per_communicator != NULL );
-	___mpc_m_per_communicator_copy(task_specific, new_comm, old_comm, per_communicator, per_communicator->mpc_mpi_per_communicator_copy);
+	___mpc_m_per_communicator_copy(task_specific, new_comm, per_communicator, per_communicator->mpc_mpi_per_communicator_copy);
 }
 
 static inline void __mpc_m_per_communicator_alloc_from_existing_dup(
@@ -203,7 +202,7 @@ static inline void __mpc_m_per_communicator_alloc_from_existing_dup(
 {
 	mpc_per_communicator_t *per_communicator = _mpc_m_per_communicator_get_no_lock(task_specific, old_comm);
 	assume( per_communicator != NULL );
-	___mpc_m_per_communicator_copy(task_specific, new_comm, old_comm, per_communicator, per_communicator->mpc_mpi_per_communicator_copy_dup);
+	___mpc_m_per_communicator_copy(task_specific, new_comm, per_communicator, per_communicator->mpc_mpi_per_communicator_copy_dup);
 }
 
 /************************************************************************/
@@ -251,7 +250,7 @@ static inline void __mpc_m_request_commit_status( sctk_request_t *request,
 	}
 }
 
-void __MPC_poll_progress();
+void mpc_mpi_m_egreq_progress_poll();
 
 static inline void __mpc_m_request_progress( sctk_request_t *request )
 {
@@ -259,7 +258,7 @@ static inline void __mpc_m_request_progress( sctk_request_t *request )
 	if ( request->request_type == REQUEST_GENERALIZED )
 	{
 		/* Try to poll the request */
-		__MPC_poll_progress();
+		mpc_mpi_m_egreq_progress_poll();
 		/* We are done here */
 		return;
 	}
@@ -322,11 +321,39 @@ static inline struct Datatype_context * __mpc_m_datatype_get_ctx(MPC_Datatype da
   return NULL;
 }
 
+
 /************************************************************************/
-/* MPC Asynchronous buffers                                             */
+/* MPC per Thread context                                                   */
 /************************************************************************/
 
-static inline void __mpc_m_thread_buffer_pool_init( sctk_thread_buffer_pool_t *pool )
+/* Asyncronous Buffers Storage */
+
+#define MAX_MPC_BUFFERED_MSG 32
+
+typedef struct
+{
+	mpc_buffered_msg_t buffer[MAX_MPC_BUFFERED_MSG];
+	volatile int buffer_rank;
+	mpc_common_spinlock_t lock;
+} __mpc_m_buffer_t;
+
+typedef struct sctk_thread_buffer_pool_s
+{
+	__mpc_m_buffer_t sync;
+	__mpc_m_buffer_t async;
+}__mpc_m_buffer_pool_t;
+
+/* This is the Per VP data-structure */
+
+typedef struct mpc_mpi_m_per_thread_ctx_s
+{
+	__mpc_m_buffer_pool_t buffer_pool;
+}mpc_mpi_m_per_thread_ctx_t;
+
+
+/* Asyncronous Buffers Interface */
+
+static inline void __mpc_m_thread_buffer_pool_init( __mpc_m_buffer_pool_t *pool )
 {
 	int i;
 
@@ -340,7 +367,7 @@ static inline void __mpc_m_thread_buffer_pool_init( sctk_thread_buffer_pool_t *p
 	pool->async.buffer_rank = 0;
 }
 
-static inline void __mpc_m_thread_buffer_pool_release( sctk_thread_buffer_pool_t *pool )
+static inline void __mpc_m_thread_buffer_pool_release( __mpc_m_buffer_pool_t *pool )
 {
 	int i;
 
@@ -363,9 +390,9 @@ static inline void __mpc_m_thread_buffer_pool_release( sctk_thread_buffer_pool_t
 	}
 }
 
-static inline mpc_buffered_msg_t *__mpc_m_thread_buffer_pool_acquire_sync( sctk_thread_specific_t *thread_spec )
+static inline mpc_buffered_msg_t *__mpc_m_thread_buffer_pool_acquire_sync( mpc_mpi_m_per_thread_ctx_t *thread_spec )
 {
-	sctk_thread_buffer_pool_t *pool = &( thread_spec->buffer_pool );
+	__mpc_m_buffer_pool_t *pool = &( thread_spec->buffer_pool );
 
 	mpc_buffered_msg_t *ret = NULL;
 
@@ -375,17 +402,19 @@ static inline mpc_buffered_msg_t *__mpc_m_thread_buffer_pool_acquire_sync( sctk_
 	return ret;
 }
 
-static inline void __mpc_m_thread_buffer_pool_step_sync( sctk_thread_specific_t *thread_spec )
+static inline void __mpc_m_thread_buffer_pool_step_sync( mpc_mpi_m_per_thread_ctx_t *thread_spec )
 {
-	sctk_thread_buffer_pool_t *pool = &( thread_spec->buffer_pool );
+	__mpc_m_buffer_pool_t *pool = &( thread_spec->buffer_pool );
 
 	int buffer_rank = pool->sync.buffer_rank;
 	pool->sync.buffer_rank = ( buffer_rank + 1 ) % MAX_MPC_BUFFERED_MSG;
 }
 
+static inline mpc_mpi_m_per_thread_ctx_t * __mpc_m_per_thread_ctx_get();
+
 static inline mpc_buffered_msg_t *__mpc_m_thread_buffer_pool_acquire_async()
 {
-	sctk_thread_buffer_pool_t *pool = &( sctk_get_thread_specific()->buffer_pool );
+	__mpc_m_buffer_pool_t *pool = &( __mpc_m_per_thread_ctx_get()->buffer_pool );
 
 	mpc_buffered_msg_t *ret = NULL;
 
@@ -397,187 +426,182 @@ static inline mpc_buffered_msg_t *__mpc_m_thread_buffer_pool_acquire_async()
 
 static inline void __mpc_m_thread_buffer_pool_step_async()
 {
-	sctk_thread_buffer_pool_t *pool = &( sctk_get_thread_specific()->buffer_pool );
+	__mpc_m_buffer_pool_t *pool = &( __mpc_m_per_thread_ctx_get()->buffer_pool );
 
 	int buffer_rank = pool->async.buffer_rank;
 	pool->async.buffer_rank = ( buffer_rank + 1 ) % MAX_MPC_BUFFERED_MSG;
 }
 
-/************************************************************************/
-/* MPC per thread context                                               */
-/************************************************************************/
+/* Per Thread Storage Interface */
 
-__thread struct sctk_thread_specific_s *___sctk_message_passing;
+__thread struct mpc_mpi_m_per_thread_ctx_s *___mpc_p_per_VP_comm_ctx;
 
-sctk_thread_specific_t *sctk_get_thread_specific() {
-  if (!___sctk_message_passing)
-    MPC_Init_thread_specific();
+static inline mpc_mpi_m_per_thread_ctx_t *__mpc_m_per_thread_ctx_get()
+{
+	if ( !___mpc_p_per_VP_comm_ctx )
+		mpc_mpi_m_per_thread_ctx_init();
 
-  return (sctk_thread_specific_t *)___sctk_message_passing;
+	return (mpc_mpi_m_per_thread_ctx_t *) ___mpc_p_per_VP_comm_ctx;
 }
 
-void sctk_set_thread_specific(sctk_thread_specific_t *pointer) {
-  ___sctk_message_passing = (struct sctk_thread_specific_s *)pointer;
+static inline void __mpc_m_per_thread_ctx_set( mpc_mpi_m_per_thread_ctx_t *pointer )
+{
+	___mpc_p_per_VP_comm_ctx = (struct mpc_mpi_m_per_thread_ctx_s *) pointer;
 }
 
-void MPC_Init_thread_specific() {
-  if (___sctk_message_passing)
-    return;
+void mpc_mpi_m_per_thread_ctx_init()
+{
+	if ( ___mpc_p_per_VP_comm_ctx )
+		return;
 
-  /* Allocate */
+	/* Allocate */
 
-  sctk_thread_specific_t *tmp = NULL;
-  tmp = sctk_malloc(sizeof(sctk_thread_specific_t));
-  assume(tmp != NULL);
-  memset(tmp, 0, sizeof(sctk_thread_specific_t));
+	mpc_mpi_m_per_thread_ctx_t *tmp = NULL;
+	tmp = sctk_malloc( sizeof( mpc_mpi_m_per_thread_ctx_t ) );
+	assume( tmp != NULL );
+	memset( tmp, 0, sizeof( mpc_mpi_m_per_thread_ctx_t ) );
 
-  /* Initialize */
-  __mpc_m_thread_buffer_pool_init(&tmp->buffer_pool);
+	/* Initialize */
+	__mpc_m_thread_buffer_pool_init( &tmp->buffer_pool );
 
-  /* Register thread context */
-  sctk_set_thread_specific(tmp);
+	/* Register thread context */
+	__mpc_m_per_thread_ctx_set( tmp );
 }
 
-void MPC_Release_thread_specific() {
-  if (!___sctk_message_passing)
-    return;
+void mpc_mpi_m_per_thread_ctx_release()
+{
+	if ( !___mpc_p_per_VP_comm_ctx )
+		return;
 
-  sctk_thread_specific_t *thread_specific = ___sctk_message_passing;
+	mpc_mpi_m_per_thread_ctx_t *thread_specific = ___mpc_p_per_VP_comm_ctx;
 
-  /* Release */
-  __mpc_m_thread_buffer_pool_release(&thread_specific->buffer_pool);
+	/* Release */
+	__mpc_m_thread_buffer_pool_release( &thread_specific->buffer_pool );
 
-  /* Free */
-  sctk_free(thread_specific);
-  sctk_set_thread_specific(NULL);
+	/* Free */
+	sctk_free( thread_specific );
+	__mpc_m_per_thread_ctx_set( NULL );
 }
 
-/************************************************************************/
-/* Task specific                                                        */
-/************************************************************************/
+/***************************
+ * DISGUISE SUPPORT IN MPC *
+ ***************************/
 
-#ifdef SCTK_PROCESS_MODE
-struct sctk_task_specific_s *___the_process_specific = NULL;
-#endif
+static int *__mpc_p_disguise_local_to_global_table = NULL;
+static struct sctk_task_specific_s **__mpc_p_disguise_costumes = NULL;
+OPA_int_t __mpc_p_disguise_flag;
 
-static int * ___local_to_global_table = NULL;
-static struct sctk_task_specific_s **___disguisements = NULL;
-OPA_int_t ________is_disguised;
-
-int __MPC_init_disguise( struct sctk_task_specific_s * my_specific )
+int __mpc_p_disguise_init( struct sctk_task_specific_s *my_specific )
 {
 
-    int my_id = mpc_common_get_local_task_rank();
+	int my_id = mpc_common_get_local_task_rank();
 
-    if( my_id == 0 )
-    {
-        OPA_store_int(&________is_disguised, 0);
-        int local_count = mpc_common_get_local_task_count();
-        ___disguisements = sctk_malloc( sizeof(struct sctk_task_specific_s *) * local_count );
+	if ( my_id == 0 )
+	{
+		OPA_store_int( &__mpc_p_disguise_flag, 0 );
+		int local_count = mpc_common_get_local_task_count();
+		__mpc_p_disguise_costumes = sctk_malloc( sizeof( struct sctk_task_specific_s * ) * local_count );
 
-        if( ___disguisements == NULL )
-        {
-            perror("malloc");
-            abort();
-        }
+		if ( __mpc_p_disguise_costumes == NULL )
+		{
+			perror( "malloc" );
+			abort();
+		}
 
-        ___local_to_global_table = sctk_malloc( sizeof(int) * local_count );
+		__mpc_p_disguise_local_to_global_table = sctk_malloc( sizeof( int ) * local_count );
 
-        if( ___local_to_global_table == NULL )
-        {
-            perror("malloc");
-            abort();
-        }
+		if ( __mpc_p_disguise_local_to_global_table == NULL )
+		{
+			perror( "malloc" );
+			abort();
+		}
+	}
 
-    }
+	mpc_mp_barrier( SCTK_COMM_WORLD );
 
-    mpc_mp_barrier( SCTK_COMM_WORLD );
+	__mpc_p_disguise_costumes[my_id] = my_specific;
+	__mpc_p_disguise_local_to_global_table[my_id] = mpc_common_get_task_rank();
 
-    ___disguisements[ my_id ] = my_specific;
-    ___local_to_global_table[ my_id ] = mpc_common_get_task_rank();
+	mpc_mp_barrier( SCTK_COMM_WORLD );
 
-    mpc_mp_barrier( SCTK_COMM_WORLD );
-
-    return 0;
+	return 0;
 }
 
 int MPCX_Disguise( MPC_Comm comm, int target_rank )
 {
 
-  sctk_thread_data_t * th = __sctk_thread_data_get(1);
-  
-  if( th->my_disguisement )
-  {
-    /* Sorry I'm already wearing a mask */
-    return MPC_ERR_ARG;
-  }
+	sctk_thread_data_t *th = __sctk_thread_data_get( 1 );
 
-  /* Retrieve the ctx pointer */
-  int cwr = sctk_get_comm_world_rank( (sctk_communicator_t) comm, target_rank );
+	if ( th->my_disguisement )
+	{
+		/* Sorry I'm already wearing a mask */
+		return MPC_ERR_ARG;
+	}
 
-  int local_count = mpc_common_get_local_task_count();
-  
-  int i;
+	/* Retrieve the ctx pointer */
+	int cwr = sctk_get_comm_world_rank( (sctk_communicator_t) comm, target_rank );
 
+	int local_count = mpc_common_get_local_task_count();
 
-  for (i = 0; i < local_count; ++i) {
-      if( ___local_to_global_table[i] == cwr )
-      {
-        OPA_incr_int( &________is_disguised );
-        th->my_disguisement = ___disguisements[i]->thread_data;
-        th->ctx_disguisement = (void *)___disguisements[i];
-        return MPC_SUCCESS;
-      }
-  }
-  
-  return MPC_ERR_ARG;
+	int i;
+
+	for ( i = 0; i < local_count; ++i )
+	{
+		if ( __mpc_p_disguise_local_to_global_table[i] == cwr )
+		{
+			OPA_incr_int( &__mpc_p_disguise_flag );
+			th->my_disguisement = __mpc_p_disguise_costumes[i]->thread_data;
+			th->ctx_disguisement = (void *) __mpc_p_disguise_costumes[i];
+			return MPC_SUCCESS;
+		}
+	}
+
+	return MPC_ERR_ARG;
 }
 
 int MPCX_Undisguise()
 {
-  sctk_thread_data_t * th = __sctk_thread_data_get(1);
+	sctk_thread_data_t *th = __sctk_thread_data_get( 1 );
 
-  if( th->my_disguisement == NULL )
-      return MPC_ERR_ARG;
+	if ( th->my_disguisement == NULL )
+		return MPC_ERR_ARG;
 
+	th->my_disguisement = NULL;
+	th->ctx_disguisement = NULL;
+	OPA_decr_int( &__mpc_p_disguise_flag );
 
-  th->my_disguisement = NULL;
-  th->ctx_disguisement = NULL;
-  OPA_decr_int( &________is_disguised );
-
-  return MPC_SUCCESS;
+	return MPC_SUCCESS;
 }
 
+/***************************************
+ * GENERALIZED REQUEST PROGRESS ENGINE *
+ ***************************************/
 
+static struct _mpc_egreq_progress_pool __mpc_progress_pool;
 
-
-static struct sctk_progress_engine_pool __mpc_progress_pool;
-
-
-
-int __MPC_init_progress(sctk_task_specific_t * tmp )
+static inline int __mpc_m_egreq_progress_init(sctk_task_specific_t * tmp )
 {
 
   int my_local_id = mpc_common_get_local_task_rank();
   if( my_local_id == 0 )
   {
     int local_count = mpc_common_get_local_task_count();
-    sctk_progress_engine_pool_init( &__mpc_progress_pool, local_count );
+    _mpc_egreq_progress_pool_init( &__mpc_progress_pool, local_count );
   }
 
   mpc_mp_barrier(MPC_COMM_WORLD);
 
   /* Retrieve the ctx pointer */
-  tmp->progress_list = sctk_progress_engine_pool_join( &__mpc_progress_pool );
+  tmp->progress_list = _mpc_egreq_progress_pool_join( &__mpc_progress_pool );
 
   return MPC_SUCCESS;
 }
 
-int __MPC_release_progress( sctk_task_specific_t * tmp  )
+static inline int __mpc_m_egreq_progress_release( sctk_task_specific_t * tmp  )
 {
     static mpc_common_spinlock_t l = 0;
     static mpc_common_spinlock_t d = 0;
-  
+
     tmp->progress_list = NULL;
 
     int done = 0;
@@ -589,83 +613,91 @@ int __MPC_release_progress( sctk_task_specific_t * tmp  )
     if( done )
         return MPC_SUCCESS;
 
-    sctk_progress_engine_pool_release( &__mpc_progress_pool );
+    _mpc_egreq_progress_pool_release( &__mpc_progress_pool );
     return MPC_SUCCESS;
 }
 
-
-void __MPC_poll_progress_id(int id)
+static inline void __mpc_m_egreq_progress_poll_id(int id)
 {
-    sctk_progress_engine_pool_poll( &__mpc_progress_pool , id  );
+    _mpc_egreq_progress_pool_poll( &__mpc_progress_pool , id );
 }
 
-void __MPC_poll_progress()
+void mpc_mpi_m_egreq_progress_poll()
 {
     struct sctk_task_specific_s * spe = __MPC_get_task_specific();
-    __MPC_poll_progress_id( spe->progress_list->id );
+    __mpc_m_egreq_progress_poll_id( spe->progress_list->id );
 }
 
 
+/*******************************
+ * MPC PER MPI PROCESS CONTEXT *
+ *******************************/
+
+#ifdef SCTK_PROCESS_MODE
+struct sctk_task_specific_s *___the_process_specific = NULL;
+#endif
 
 /** \brief Initalizes a structure of type \ref sctk_task_specific_t
  */
-static inline void __MPC_init_task_specific_t(sctk_task_specific_t *tmp) {
-  /* First empty the whole sctk_task_specific_t */
-  memset(tmp, 0, sizeof(sctk_task_specific_t));
+static inline void __MPC_init_task_specific_t( sctk_task_specific_t *tmp )
+{
+	/* First empty the whole sctk_task_specific_t */
+	memset( tmp, 0, sizeof( sctk_task_specific_t ) );
 
-  tmp->thread_data = sctk_thread_data_get();
-  tmp->progress_list = NULL;
+	tmp->thread_data = sctk_thread_data_get();
+	tmp->progress_list = NULL;
 
-  /* Set task id */
-  tmp->task_id = mpc_common_get_task_rank();
+	/* Set task id */
+	tmp->task_id = mpc_common_get_task_rank();
 
-  __MPC_init_progress(tmp);
+	__mpc_m_egreq_progress_init( tmp );
 
-  mpc_mp_barrier((sctk_communicator_t) MPC_COMM_WORLD );
+	mpc_mp_barrier( (sctk_communicator_t) MPC_COMM_WORLD );
 
-  /* Initialize Data-type array */
-  tmp->datatype_array = Datatype_Array_init();
+	/* Initialize Data-type array */
+	tmp->datatype_array = Datatype_Array_init();
 
-  /* Set initial per communicator data */
-  mpc_per_communicator_t *per_comm_tmp;
+	/* Set initial per communicator data */
+	mpc_per_communicator_t *per_comm_tmp;
 
-  /* COMM_WORLD */
-  per_comm_tmp = __mpc_m_per_communicator_alloc();
-  __mpc_m_per_communicator_set(tmp, per_comm_tmp, MPC_COMM_WORLD);
+	/* COMM_WORLD */
+	per_comm_tmp = __mpc_m_per_communicator_alloc();
+	__mpc_m_per_communicator_set( tmp, per_comm_tmp, MPC_COMM_WORLD );
 
-  /* COMM_SELF */
-  per_comm_tmp = __mpc_m_per_communicator_alloc();
-  __mpc_m_per_communicator_set(tmp, per_comm_tmp, MPC_COMM_SELF);
+	/* COMM_SELF */
+	per_comm_tmp = __mpc_m_per_communicator_alloc();
+	__mpc_m_per_communicator_set( tmp, per_comm_tmp, MPC_COMM_SELF );
 
-  /* Propagate initialization to the thread context */
-  MPC_Init_thread_specific();
+	/* Propagate initialization to the thread context */
+	mpc_mpi_m_per_thread_ctx_init();
 
-  /* Set MPI status informations */
-  tmp->init_done = 0;
-  tmp->thread_level = -1;
+	/* Set MPI status informations */
+	tmp->init_done = 0;
+	tmp->thread_level = -1;
 
-  /* Create the MPI_Info factory */
-  MPC_Info_factory_init(&tmp->info_fact);
+	/* Create the MPI_Info factory */
+	MPC_Info_factory_init( &tmp->info_fact );
 
-  /* Create the context class handling structure */
-  GRequest_context_init(&tmp->grequest_context);
+	/* Create the context class handling structure */
+	GRequest_context_init( &tmp->grequest_context );
 
-  /* Clear exit handlers */
-  tmp->exit_handlers = NULL;
+	/* Clear exit handlers */
+	tmp->exit_handlers = NULL;
 
 #ifdef SCTK_PROCESS_MODE
-  ___the_process_specific = tmp;
+	___the_process_specific = tmp;
 #endif
 }
 
 /** \brief Relases a structure of type \ref sctk_task_specific_t
  */
-static inline void __MPC_release_task_specific_t(sctk_task_specific_t *tmp) {
-  /* Release the MPI_Info factory */
-  MPC_Info_factory_release(&tmp->info_fact);
+static inline void __MPC_release_task_specific_t( sctk_task_specific_t *tmp )
+{
+	/* Release the MPI_Info factory */
+	MPC_Info_factory_release( &tmp->info_fact );
 
-  /* Release the context class handling structure */
-  GRequest_context_release(&tmp->grequest_context);
+	/* Release the context class handling structure */
+	GRequest_context_release( &tmp->grequest_context );
 }
 
 /** \brief Creation point for MPI task context in an \ref sctk_task_specific_t
@@ -674,164 +706,171 @@ static inline void __MPC_release_task_specific_t(sctk_task_specific_t *tmp) {
  * an sctk_task_specific_t. It also takes care of storing it in the host
  * thread context.
  */
-static void __MPC_setup_task_specific() {
-  /* Retrieve the task ctx pointer */
-  sctk_task_specific_t *tmp;
-  tmp = (sctk_task_specific_t *)sctk_thread_getspecific(sctk_task_specific);
+static void __MPC_setup_task_specific()
+{
+	/* Retrieve the task ctx pointer */
+	sctk_task_specific_t *tmp;
+	tmp = (sctk_task_specific_t *) sctk_thread_getspecific( sctk_task_specific );
 
-  /* Make sure that it is not already present */
-  sctk_assert(tmp == NULL);
+	/* Make sure that it is not already present */
+	sctk_assert( tmp == NULL );
 
-  /* If not allocate a new sctk_task_specific_t */
-  tmp = (sctk_task_specific_t *)sctk_malloc(sizeof(sctk_task_specific_t));
+	/* If not allocate a new sctk_task_specific_t */
+	tmp = (sctk_task_specific_t *) sctk_malloc( sizeof( sctk_task_specific_t ) );
 
-  /* And initalize it */
-  __MPC_init_task_specific_t(tmp);
+	/* And initalize it */
+	__MPC_init_task_specific_t( tmp );
 
-  /* Set the sctk_task_specific key in thread CTX */
-  sctk_thread_setspecific(sctk_task_specific, tmp);
+	/* Set the sctk_task_specific key in thread CTX */
+	sctk_thread_setspecific( sctk_task_specific, tmp );
 
-  /* Register the task specific in the disguisemement array */
-  __MPC_init_disguise(tmp);
+	/* Register the task specific in the disguisemement array */
+	__mpc_p_disguise_init( tmp );
 
-  /* Initialize commond data-types */
-  sctk_datatype_init();
+	/* Initialize commond data-types */
+	sctk_datatype_init();
 
-  /* Initialize composed datatypes */
-  init_composed_common_types();
+	/* Initialize composed datatypes */
+	init_composed_common_types();
 }
 
 /** \brief Define a function to be called when a task leaves
  *  \arg function Function to be callsed when task exits
  *  \return 1 on error 0 otherwise
  */
-int __MPC_atexit_task_specific(void (*function)(void)) {
-  /* Retrieve the task ctx pointer */
-  sctk_task_specific_t *tmp;
-  tmp = (sctk_task_specific_t *)sctk_thread_getspecific(sctk_task_specific);
+int __MPC_atexit_task_specific( void ( *function )( void ) )
+{
+	/* Retrieve the task ctx pointer */
+	sctk_task_specific_t *tmp;
+	tmp = (sctk_task_specific_t *) sctk_thread_getspecific( sctk_task_specific );
 
-  if (!tmp)
-    return 1;
+	if ( !tmp )
+		return 1;
 
-  struct sctk_task_specific_atexit_s *new_exit =
-      sctk_malloc(sizeof(struct sctk_task_specific_atexit_s));
+	struct sctk_task_specific_atexit_s *new_exit =
+		sctk_malloc( sizeof( struct sctk_task_specific_atexit_s ) );
 
-  if (!new_exit) {
-    return 1;
-  }
+	if ( !new_exit )
+	{
+		return 1;
+	}
 
-  sctk_info("Registering task-level atexit handler (%p)", function);
+	sctk_info( "Registering task-level atexit handler (%p)", function );
 
-  new_exit->func = function;
-  new_exit->next = tmp->exit_handlers;
+	new_exit->func = function;
+	new_exit->next = tmp->exit_handlers;
 
-  /* Register the entry */
-  tmp->exit_handlers = new_exit;
+	/* Register the entry */
+	tmp->exit_handlers = new_exit;
 
-  return 0;
+	return 0;
 }
 
 /** \brief Call atexit handlers for the task (mimicking the process behavior)
  */
-void __MPC_atexit_task_specific_trigger() {
-  /* Retrieve the task ctx pointer */
-  sctk_task_specific_t *tmp;
-  tmp = (sctk_task_specific_t *)sctk_thread_getspecific(sctk_task_specific);
+void __MPC_atexit_task_specific_trigger()
+{
+	/* Retrieve the task ctx pointer */
+	sctk_task_specific_t *tmp;
+	tmp = (sctk_task_specific_t *) sctk_thread_getspecific( sctk_task_specific );
 
-  if (!tmp)
-    return;
+	if ( !tmp )
+		return;
 
-  struct sctk_task_specific_atexit_s *current = tmp->exit_handlers;
-  struct sctk_task_specific_atexit_s *to_free;
+	struct sctk_task_specific_atexit_s *current = tmp->exit_handlers;
 
-  while (current) {
-    to_free = current;
+	while ( current )
+	{
+		struct sctk_task_specific_atexit_s *to_free = current;
 
-    if (current->func) {
-      sctk_info("Calling task-level atexit handler (%p)", current->func);
-      (current->func)();
-    }
+		if ( current->func )
+		{
+			sctk_info( "Calling task-level atexit handler (%p)", current->func );
+			( current->func )();
+		}
 
-    current = current->next;
+		current = current->next;
 
-    sctk_free(to_free);
-  }
+		sctk_free( to_free );
+	}
 }
 
 /** \brief Releases and frees task ctx
  *  Also called from  \ref sctk_user_main this function releases
  *  MPI task ctx and remove them from host thread keys
  */
-static void __MPC_delete_task_specific() {
-  /* Retrieve the ctx pointer */
-  sctk_task_specific_t *tmp;
-  tmp = (sctk_task_specific_t *)sctk_thread_getspecific(sctk_task_specific);
+static void __MPC_delete_task_specific()
+{
+	/* Retrieve the ctx pointer */
+	sctk_task_specific_t *tmp;
+	tmp = (sctk_task_specific_t *) sctk_thread_getspecific( sctk_task_specific );
 
-  /* Clear progress */
-  __MPC_release_progress( tmp );
+	/* Clear progress */
+	__mpc_m_egreq_progress_release( tmp );
 
-  /* Free composed datatypes */
-  release_composed_common_types();
+	/* Free composed datatypes */
+	release_composed_common_types();
 
-  /* Free the type array */
-  Datatype_Array_release(tmp->datatype_array);
+	/* Free the type array */
+	Datatype_Array_release( tmp->datatype_array );
 
-  /* Call atexit handlers */
-  __MPC_atexit_task_specific_trigger();
+	/* Call atexit handlers */
+	__MPC_atexit_task_specific_trigger();
 
-  /* Remove the ctx reference in the host thread */
-  sctk_thread_setspecific(sctk_task_specific, NULL);
+	/* Remove the ctx reference in the host thread */
+	sctk_thread_setspecific( sctk_task_specific, NULL );
 
-  /* Release the task ctx */
-  __MPC_release_task_specific_t(tmp);
+	/* Release the task ctx */
+	__MPC_release_task_specific_t( tmp );
 
-  /* Free the task ctx */
-  sctk_free(tmp);
+	/* Free the task ctx */
+	sctk_free( tmp );
 }
 
 /** \brief Set current thread task specific context
  *  \param tmp New value to be set
  */
-void __MPC_reinit_task_specific(struct sctk_task_specific_s *tmp) {
-  sctk_thread_setspecific(sctk_task_specific, tmp);
+void __MPC_reinit_task_specific( struct sctk_task_specific_s *tmp )
+{
+	sctk_thread_setspecific( sctk_task_specific, tmp );
 }
 
 /** \brief Retrieves current thread task specific context
  */
 
-struct sctk_task_specific_s *__MPC_get_task_specific() {
+struct sctk_task_specific_s *__MPC_get_task_specific()
+{
 #ifdef SCTK_PROCESS_MODE
-  return ___the_process_specific;
+	return ___the_process_specific;
 #endif
 
-  struct sctk_task_specific_s *ret = NULL;
-  int maybe_disguised = __MPC_Maybe_disguised();
+	struct sctk_task_specific_s *ret = NULL;
+	int maybe_disguised = __MPC_Maybe_disguised();
 
-  if( maybe_disguised )
-  {
-    sctk_thread_data_t * th = __sctk_thread_data_get(1);
-    if( th->ctx_disguisement )
-    {
-        return th->ctx_disguisement;
-    }
- }
+	if ( maybe_disguised )
+	{
+		sctk_thread_data_t *th = __sctk_thread_data_get( 1 );
+		if ( th->ctx_disguisement )
+		{
+			return th->ctx_disguisement;
+		}
+	}
 
-  static __thread int last_rank = -2;
-  static __thread struct sctk_task_specific_s *last_specific = NULL;
+	static __thread int last_rank = -2;
+	static __thread struct sctk_task_specific_s *last_specific = NULL;
 
-   if ( last_rank == mpc_common_get_task_rank() ) {
-       if( last_specific )
-        return last_specific;
-   }
+	if ( last_rank == mpc_common_get_task_rank() )
+	{
+		if ( last_specific )
+			return last_specific;
+	}
 
-  
-    ret = (struct sctk_task_specific_s *)sctk_thread_getspecific(
-            sctk_task_specific);
+	ret = (struct sctk_task_specific_s *) sctk_thread_getspecific(sctk_task_specific );
 
-  last_specific = ret;
-  last_rank = mpc_common_get_task_rank();
-  
-  return ret;
+	last_specific = ret;
+	last_rank = mpc_common_get_task_rank();
+
+	return ret;
 }
 
 /** \brief Retrieves a pointer to a contiguous datatype from its datatype ID
@@ -841,12 +880,11 @@ struct sctk_task_specific_s *__MPC_get_task_specific() {
  *
  */
 sctk_contiguous_datatype_t *
-sctk_task_specific_get_contiguous_datatype(sctk_task_specific_t *task_specific,
-                                           MPC_Datatype datatype) {
-  sctk_assert(task_specific != NULL);
-  /* Return the pointed sctk_contiguous_datatype_t */
-  return Datatype_Array_get_contiguous_datatype(task_specific->datatype_array,
-                                                datatype);
+sctk_task_specific_get_contiguous_datatype( sctk_task_specific_t *task_specific, MPC_Datatype datatype )
+{
+	sctk_assert( task_specific != NULL );
+	/* Return the pointed sctk_contiguous_datatype_t */
+	return Datatype_Array_get_contiguous_datatype( task_specific->datatype_array, datatype );
 }
 
 /** \brief Retrieves a pointer to a contiguous datatype from its datatype ID
@@ -855,12 +893,12 @@ sctk_task_specific_get_contiguous_datatype(sctk_task_specific_t *task_specific,
  *
  */
 sctk_contiguous_datatype_t *
-sctk_get_contiguous_datatype(MPC_Datatype datatype) {
-  sctk_task_specific_t *task_specific = __MPC_get_task_specific();
-  sctk_assert(task_specific != NULL);
-  /* Return the pointed sctk_contiguous_datatype_t */
-  return Datatype_Array_get_contiguous_datatype(task_specific->datatype_array,
-                                                datatype);
+sctk_get_contiguous_datatype( MPC_Datatype datatype )
+{
+	sctk_task_specific_t *task_specific = __MPC_get_task_specific();
+	sctk_assert( task_specific != NULL );
+	/* Return the pointed sctk_contiguous_datatype_t */
+	return Datatype_Array_get_contiguous_datatype( task_specific->datatype_array,  datatype );
 }
 
 /** \brief Retrieves a pointer to a derived datatype from its datatype ID
@@ -870,11 +908,11 @@ sctk_get_contiguous_datatype(MPC_Datatype datatype) {
  *
  */
 sctk_derived_datatype_t *
-sctk_task_specific_get_derived_datatype(sctk_task_specific_t *task_specific,
-                                        MPC_Datatype datatype) {
-  sctk_assert(task_specific != NULL);
-  return Datatype_Array_get_derived_datatype(task_specific->datatype_array,
-                                             datatype);
+sctk_task_specific_get_derived_datatype( sctk_task_specific_t *task_specific,
+										 MPC_Datatype datatype )
+{
+	sctk_assert( task_specific != NULL );
+	return Datatype_Array_get_derived_datatype( task_specific->datatype_array, datatype );
 }
 
 /** \brief Retrieves a pointer to a derived datatype from its datatype ID
@@ -882,11 +920,11 @@ sctk_task_specific_get_derived_datatype(sctk_task_specific_t *task_specific,
  *  \param datatype datatype ID to be retrieved
  *
  */
-sctk_derived_datatype_t *sctk_get_derived_datatype(MPC_Datatype datatype) {
-  sctk_task_specific_t *task_specific = __MPC_get_task_specific();
-  sctk_assert(task_specific != NULL);
-  return Datatype_Array_get_derived_datatype(task_specific->datatype_array,
-                                             datatype);
+sctk_derived_datatype_t *sctk_get_derived_datatype( MPC_Datatype datatype )
+{
+	sctk_task_specific_t *task_specific = __MPC_get_task_specific();
+	sctk_assert( task_specific != NULL );
+	return Datatype_Array_get_derived_datatype( task_specific->datatype_array, datatype );
 }
 /** \brief Removed a derived datatype from the datatype array
  *
@@ -894,11 +932,11 @@ sctk_derived_datatype_t *sctk_get_derived_datatype(MPC_Datatype datatype) {
  *  \param datatype datatype ID to be removed from datatype array
  */
 void sctk_task_specific_set_derived_datatype(
-    sctk_task_specific_t *task_specific, MPC_Datatype datatype,
-    sctk_derived_datatype_t *value) {
-  sctk_assert(task_specific != NULL);
-  Datatype_Array_set_derived_datatype(task_specific->datatype_array, datatype,
-                                      value);
+	sctk_task_specific_t *task_specific, MPC_Datatype datatype,
+	sctk_derived_datatype_t *value )
+{
+	sctk_assert( task_specific != NULL );
+	Datatype_Array_set_derived_datatype( task_specific->datatype_array, datatype,  value );
 }
 
 /************************************************************************/
@@ -1323,7 +1361,7 @@ void sctk_generic_request_poll( MPC_Request * req )
     if(req->completion_flag == SCTK_MESSAGE_DONE)
         return;
     
-    sctk_progress_work_unit_poll( req->progress_unit );
+    _mpc_egreq_progress_work_unit_poll( req->progress_unit );
 }
 
 
@@ -1375,7 +1413,7 @@ int PMPCX_Grequest_start_generic(MPC_Grequest_query_function *query_fn,
   /* We now push the request inside the progress list */
   struct sctk_task_specific_s *ctx = __MPC_get_task_specific();
   request->progress_unit = NULL;
-  request->progress_unit = (void*)sctk_progress_list_add(ctx->progress_list, ___grequest_disguise_poll, (void *)request );
+  request->progress_unit = (void*)_mpc_egreq_progress_list_add(ctx->progress_list, ___grequest_disguise_poll, (void *)request );
 
   MPC_ERROR_SUCESS()
 }
@@ -1491,7 +1529,7 @@ int PMPC_Grequest_complete(MPC_Request request) {
 
     MPC_Request * src_req = (MPC_Request *)request.pointer_to_source_request; 
 
-    struct sctk_progress_work_unit * pwu = ((struct sctk_progress_work_unit *)src_req->progress_unit);
+    struct _mpc_egreq_progress_work_unit * pwu = ((struct _mpc_egreq_progress_work_unit *)src_req->progress_unit);
 
     pwu->done = 1;
     
@@ -3100,7 +3138,7 @@ int sctk_user_main(int argc, char **argv) {
 
   sctk_nodebug("Wait for pending messages");
 
-  MPC_Release_thread_specific();
+  mpc_mpi_m_per_thread_ctx_release();
 
   sctk_nodebug("All message done");
 
@@ -4132,7 +4170,7 @@ static int __MPC_Send(void *restrict buf, mpc_msg_count count,
     mpc_mp_comm_request_wait(&request);
   } else {
 
-    sctk_thread_specific_t * thread_spec = sctk_get_thread_specific();
+    mpc_mpi_m_per_thread_ctx_t * thread_spec = __mpc_m_per_thread_ctx_get();
     mpc_buffered_msg_t *tmp_buf =
         __mpc_m_thread_buffer_pool_acquire_sync(thread_spec);
 

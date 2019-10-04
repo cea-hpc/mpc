@@ -843,8 +843,8 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 }
 
 
-extern void MPC_Init_thread_specific();
-extern void MPC_Release_thread_specific();
+extern void mpc_mpi_m_per_thread_ctx_init();
+extern void mpc_mpi_m_per_thread_ctx_release();
 
 static void sctk_thread_data_reset();
 static void *
@@ -894,7 +894,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 
 
 #ifdef MPC_MPI
-   MPC_Init_thread_specific();
+   mpc_mpi_m_per_thread_ctx_init();
 #endif
 
    if (sctk_new_scheduler_engine_enabled) {
@@ -910,7 +910,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
    res = tmp.__start_routine(tmp.__arg);
 
 #ifdef MPC_MPI
-  MPC_Release_thread_specific();
+  mpc_mpi_m_per_thread_ctx_release();
 #endif
 
   /** ** **/

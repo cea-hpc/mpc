@@ -46,7 +46,11 @@ static inline int mpc_common_get_task_rank (void)
   return mpc_common_get_process_rank();
 #endif
 
-  int can_be_disguised = __MPC_Maybe_disguised();
+  int can_be_disguised = 0;
+
+#ifdef MPC_MPI
+  can_be_disguised = __MPC_Maybe_disguised();
+#endif
 
   int ret = -1;
 

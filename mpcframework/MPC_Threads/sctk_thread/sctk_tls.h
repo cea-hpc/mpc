@@ -80,7 +80,7 @@ extern "C"
 #endif
 
 #ifdef MPC_MPI
-  extern __thread struct sctk_thread_specific_s * ___sctk_message_passing;
+  extern __thread struct mpc_mpi_m_per_thread_ctx_s * ___mpc_p_per_VP_comm_ctx;
   extern __thread int __mpc_task_rank;
 #endif
 
@@ -110,7 +110,7 @@ extern "C"
     tls_save(mpc_user_tls_1);
 
 #ifdef MPC_MPI
-    tls_save (___sctk_message_passing);
+    tls_save (___mpc_p_per_VP_comm_ctx);
     tls_save(__mpc_task_rank);
 #endif
 
@@ -157,7 +157,7 @@ extern "C"
 #endif
 
 #ifdef MPC_MPI
-    tls_restore (___sctk_message_passing);
+    tls_restore (___mpc_p_per_VP_comm_ctx);
     tls_restore(__mpc_task_rank);
 #endif
 
@@ -206,7 +206,7 @@ extern "C"
     ucp->mpc_user_tls_1 = mpc_user_tls_1;
 
 #ifdef MPC_MPI
-    tls_init (___sctk_message_passing);
+    tls_init (___mpc_p_per_VP_comm_ctx);
     ucp->__mpc_task_rank = -2;
 #endif
 
