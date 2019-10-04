@@ -287,7 +287,7 @@ struct MPC_Info_cell * MPC_Info_cell_init( int id )
 		return NULL;
 	}
 	
-	PMPC_Comm_rank( MPC_COMM_WORLD, &ret->rank );
+	_mpc_m_comm_rank( MPC_COMM_WORLD, &ret->rank );
 	ret->id = id;
 	
 	ret->keys = NULL;

@@ -1521,13 +1521,13 @@ __INTERNAL__PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest,
 			return res;
 			}
 
-			res = PMPC_Isend_pack (dest, tag, comm, &request);
+			res = _mpc_m_isend_pack (dest, tag, comm, &request);
 			if (res != MPI_SUCCESS)
 			{
 			return res;
 			}
 			
-			res = PMPC_Wait (&request, &status);
+			res = _mpc_m_wait (&request, &status);
 			return res;
 		}
 	}
@@ -1706,11 +1706,11 @@ __INTERNAL__PMPI_Recv (void *buf, int count, MPI_Datatype datatype,
                           return res;
                         }
 
-                        res = PMPC_Irecv_pack(source, tag, comm, &request);
+                        res = _mpc_m_irecv_pack(source, tag, comm, &request);
                         if (res != MPI_SUCCESS) {
                           return res;
                         }
-                        res = PMPC_Wait(&request, status);
+                        res = _mpc_m_wait(&request, status);
                         return res;
                 }
         } else {
@@ -2167,7 +2167,7 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 				return res;
 			}
 
-			res = PMPC_Isend_pack (dest, tag, comm, __sctk_convert_mpc_request (request,requests));
+			res = _mpc_m_isend_pack (dest, tag, comm, __sctk_convert_mpc_request (request,requests));
 			return res;
 		}
 	}
@@ -2180,12 +2180,12 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 		}
 		if (is_valid_request)
 		{
-			return PMPC_Isend (buf, count, datatype, dest, tag, comm,
+			return _mpc_m_isend (buf, count, datatype, dest, tag, comm,
 					   __sctk_convert_mpc_request (request,requests));
 		}
 		else
 		{
-			return PMPC_Isend (buf, count, datatype, dest, tag, comm,
+			return _mpc_m_isend (buf, count, datatype, dest, tag, comm,
 					   __sctk_new_mpc_request (request,requests));
 		}
 	}
@@ -2220,12 +2220,12 @@ __INTERNAL__PMPI_Issend_test_req (void *buf, int count, MPI_Datatype datatype,
 	}
       if (is_valid_request)
 	{
-	  return PMPC_Issend (buf, count, datatype, dest, tag, comm,
+	  return _mpc_m_issend (buf, count, datatype, dest, tag, comm,
 			     __sctk_convert_mpc_request (request,requests));
 	}
       else
 	{
-	  return PMPC_Issend (buf, count, datatype, dest, tag, comm,
+	  return _mpc_m_issend (buf, count, datatype, dest, tag, comm,
 			     __sctk_new_mpc_request (request,requests));
 	}
     }
@@ -2254,12 +2254,12 @@ __INTERNAL__PMPI_Irsend_test_req (void *buf, int count, MPI_Datatype datatype,
     {
       if (is_valid_request)
 	{
-	  return PMPC_Irsend (buf, count, datatype, dest, tag, comm,
+	  return _mpc_m_irsend (buf, count, datatype, dest, tag, comm,
 			      __sctk_convert_mpc_request (request,requests));
 	}
       else
 	{
-	  return PMPC_Irsend (buf, count, datatype, dest, tag, comm,
+	  return _mpc_m_irsend (buf, count, datatype, dest, tag, comm,
 			      __sctk_new_mpc_request (request,requests));
 	}
     }
@@ -2353,7 +2353,7 @@ static int __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype d
 			}
 
 			res =
-			PMPC_Irecv_pack (source, tag, comm,
+			_mpc_m_irecv_pack (source, tag, comm,
 					 __sctk_convert_mpc_request (request,requests));
 			return res;
 		}
@@ -2362,12 +2362,12 @@ static int __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype d
 	{
 		if (is_valid_request)
 		{
-			return PMPC_Irecv (buf, count, datatype, source, tag, comm,
+			return _mpc_m_irecv (buf, count, datatype, source, tag, comm,
 					   __sctk_convert_mpc_request (request,requests));
 		}
 		else
 		{
-			return PMPC_Irecv (buf, count, datatype, source, tag, comm,
+			return _mpc_m_irecv (buf, count, datatype, source, tag, comm,
 					   __sctk_new_mpc_request (request,requests));
 		}
 	}
@@ -2401,11 +2401,11 @@ static int __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 
 		if( mpcreq->request_type == REQUEST_GENERALIZED )
 		{
-			res = PMPC_Waitall(1, mpcreq, status); 
+			res = _mpc_m_waitall(1, mpcreq, status); 
 		}
 		else
 		{
-			res = PMPC_Wait ( mpcreq , status);
+			res = _mpc_m_wait ( mpcreq , status);
 		}
 	}
 	__sctk_delete_mpc_request (request,requests);
@@ -2607,7 +2607,7 @@ int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests, MPI_St
         }
 
         /* Call the MPC waitall implementation */
-        int ret = __MPC_Waitallp(count, mpc_array_of_requests,
+        int ret = _mpc_m_waitallp(count, mpc_array_of_requests,
                                  (MPC_Status *)array_of_statuses);
 
         /* Something bad hapenned ? */
@@ -13108,7 +13108,7 @@ static int __INTERNAL__PMPI_Comm_size(MPI_Comm comm, int *size) {
       }
     }
 
-    ret = PMPC_Comm_size(comm, size);
+    ret = _mpc_m_comm_size(comm, size);
 
     last_rank = mpc_common_get_task_rank();
     last_comm = comm;
@@ -13138,7 +13138,7 @@ static int __INTERNAL__PMPI_Comm_rank(MPI_Comm comm, int *rank) {
      }
   }
 
-  int ret = PMPC_Comm_rank(comm, rank);
+  int ret = _mpc_m_comm_rank(comm, rank);
 
   if( (ret == MPI_SUCCESS) && (!__MPC_Maybe_disguised()) )
   {
@@ -13311,7 +13311,7 @@ __INTERNAL__PMPI_Comm_test_inter (MPI_Comm comm, int *flag)
 static int
 __INTERNAL__PMPI_Comm_remote_size (MPI_Comm comm, int *size)
 {
-  return PMPC_Comm_remote_size (comm, size);
+  return _mpc_m_comm_remote_size (comm, size);
 }
 
 static int

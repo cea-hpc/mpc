@@ -521,18 +521,11 @@ typedef int MPC_Checkpoint_state;
   int PMPC_Query_thread (int *provided);
 
   /*Topology informations */
-  int PMPC_Comm_rank (MPC_Comm comm, int *rank);
-  int PMPC_Comm_size (MPC_Comm comm, int *size);
-  int PMPC_Comm_remote_size (MPC_Comm comm, int *size);
+  int _mpc_m_comm_rank (MPC_Comm comm, int *rank);
+  int _mpc_m_comm_size (MPC_Comm comm, int *size);
+  int _mpc_m_comm_remote_size (MPC_Comm comm, int *size);
   int PMPC_Comm_test_inter (MPC_Comm comm, int *flag);
-  int PMPC_Node_rank (int *rank);
-  int PMPC_Node_number (int *number);
-  int PMPC_Processor_rank (int *rank);
-  int PMPC_Processor_number (int *number);
-  int PMPC_Process_rank (int *rank);
-  int PMPC_Process_number (int *number);
-  int PMPC_Local_process_rank (int *rank);
-  int PMPC_Local_process_number (int *rank);
+  int _mpc_m_node_rank (int *rank);
   int PMPC_Get_multithreading (char *name, int size);
   int PMPC_Get_networking (char *name, int size);
   int PMPC_Get_processor_name (char *name, int *resultlen);
@@ -552,26 +545,26 @@ typedef int MPC_Checkpoint_state;
 
 
   /*P-t-P Communications */
-  int PMPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
+  int _mpc_m_isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 		 int dest, int tag, MPC_Comm comm, MPC_Request * request);
-  int PMPC_Ibsend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
+  int _mpc_m_ibsend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
 		  MPC_Request *);
-  int PMPC_Issend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
+  int _mpc_m_issend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
 		  MPC_Request *);
-  int PMPC_Irsend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
+  int _mpc_m_irsend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
 		  MPC_Request *);
 
-  int PMPC_Irecv (void *buf, mpc_msg_count count, MPC_Datatype datatype,
+  int _mpc_m_irecv (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 		 int source, int tag, MPC_Comm comm, MPC_Request * request);
 
-  int PMPC_Wait (MPC_Request * request, MPC_Status * status);
-  int PMPC_Waitall (mpc_msg_count, MPC_Request *, MPC_Status *);
-  int PMPC_Waitsome (mpc_msg_count, MPC_Request *, mpc_msg_count *,
+  int _mpc_m_wait (MPC_Request * request, MPC_Status * status);
+  int _mpc_m_waitall (mpc_msg_count, MPC_Request *, MPC_Status *);
+  int _mpc_m_waitsome (mpc_msg_count, MPC_Request *, mpc_msg_count *,
 		    mpc_msg_count *, MPC_Status *);
-  int PMPC_Waitany (mpc_msg_count count, MPC_Request array_of_requests[],
+  int _mpc_m_waitany (mpc_msg_count count, MPC_Request array_of_requests[],
 		   mpc_msg_count * index, MPC_Status * status);
-  int PMPC_Wait_pending (MPC_Comm comm);
-  int PMPC_Wait_pending_all_comm (void);
+  int _mpc_m_wait_pending (MPC_Comm comm);
+  int _mpc_m_wait_pending_all_comm (void);
 
   int PMPC_Test (MPC_Request *, int *, MPC_Status *);
   int PMPC_Test_no_check (MPC_Request *, int *, MPC_Status *);
@@ -727,9 +720,6 @@ typedef int MPC_Checkpoint_state;
   /*Scheduling */
   int PMPC_Proceed (void);
   int PMPC_Checkpoint (MPC_Checkpoint_state* st);
-  int PMPC_Migrate (void);
-  int PMPC_Restart (int rank);
-  int PMPC_Restarted (int *flag);
 
   int PMPC_Get_activity (int nb_item, MPC_Activity_t * tab,
 			double *process_act);
@@ -756,9 +746,9 @@ typedef int MPC_Checkpoint_state;
 			    MPC_Request * request);
   int PMPC__Add_pack_default_absolute (void *buf, MPC_Datatype datatype,
 				   MPC_Request * request);
-  int PMPC_Isend_pack (int dest, int tag, MPC_Comm comm,
+  int _mpc_m_isend_pack (int dest, int tag, MPC_Comm comm,
 		      MPC_Request * request);
-  int PMPC_Irecv_pack (int source, int tag, MPC_Comm comm,
+  int _mpc_m_irecv_pack (int source, int tag, MPC_Comm comm,
 		      MPC_Request * request);
 
 

@@ -1374,9 +1374,9 @@ inline void mpc_mp_comm_ptp_message_copy_pack_absolute( sctk_message_to_copy_t *
  * BUFFERED PTP *
  ****************/
 
-/* For message creation: a set of buffered ptp_message entries is allocated
- * during init */
-#define BUFFERED_PTP_MESSAGE_NUMBER 64
+/* For message creation: a set of buffered ptp_message entries is allocated during init */
+#define BUFFERED_PTP_MESSAGE_NUMBER 256
+
 __thread sctk_thread_ptp_message_t *buffered_ptp_message = NULL;
 
 static void __mpc_comm_buffered_ptp_init( void )
@@ -1489,11 +1489,10 @@ void mpc_mp_comm_ptp_message_header_clear( sctk_thread_ptp_message_t *tmp,
 					   sctk_message_type_t msg_type, void ( *free_memory )( void * ),
 					   void ( *message_copy )( sctk_message_to_copy_t * ) )
 {
-	memset( tmp, 0, sizeof( sctk_thread_ptp_message_t ) );
-	/*Init message struct*/
+	/* This memset costs 0.03 usecs in pingpong */
+	memset( &tmp->tail, 0, sizeof( sctk_thread_ptp_message_tail_t ) );
+
 	tmp->tail.message_type = msg_type;
-	tmp->tail.internal_ptp = NULL;
-	tmp->tail.request = NULL;
 
 	switch ( tmp->tail.message_type )
 	{
@@ -1561,13 +1560,13 @@ static inline void __mpc_comm_fill_request( sctk_request_t *request,
 }
 
 void mpc_mp_comm_ptp_message_header_init( sctk_thread_ptp_message_t *msg,
-										  const int message_tag,
-										  const sctk_communicator_t communicator,
-										  const int source, const int destination,
-										  sctk_request_t *request, const size_t count,
-										  sctk_message_class_t message_class,
-										  sctk_datatype_t datatype,
-										  sctk_request_type_t request_type )
+					const int message_tag,
+					const sctk_communicator_t communicator,
+					const int source, const int destination,
+					sctk_request_t *request, const size_t count,
+					sctk_message_class_t message_class,
+					sctk_datatype_t datatype,
+					sctk_request_type_t request_type )
 {
 
 	msg->tail.request = request;
@@ -2537,9 +2536,9 @@ void _mpc_comm_ptp_message_recv_check( sctk_thread_ptp_message_t *msg,
  * Function called for receiving a message (i.e: MPI_Recv).
  * Mostly used by the file mpc.c
  * */
-void mpc_mp_comm_ptp_message_recv( sctk_thread_ptp_message_t *msg,
-			int need_check )
+void mpc_mp_comm_ptp_message_recv( sctk_thread_ptp_message_t *msg )
 {
+	int need_check = _mpc_comm_is_remote_rank( SCTK_MSG_DEST_TASK( msg ) );
 	_mpc_comm_ptp_message_recv_check( msg, need_check );
 }
 
@@ -2737,7 +2736,7 @@ void mpc_mp_comm_irecv_class_dest( int src, int dest, void *buffer, size_t size,
 	mpc_mp_comm_ptp_message_set_contiguous_addr( msg, buffer, size );
 	mpc_mp_comm_ptp_message_header_init( msg, tag, comm, src, dest, req, size, class,
                                     SCTK_DATATYPE_IGNORE, REQUEST_RECV );
-	mpc_mp_comm_ptp_message_recv( msg, 0 );
+	mpc_mp_comm_ptp_message_recv( msg );
 }
 
 void mpc_mp_comm_irecv_class(  int src, void *buffer, size_t size, int tag,

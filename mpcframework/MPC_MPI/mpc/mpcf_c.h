@@ -61,42 +61,12 @@ void ffunc (mpc_abort) (MPC_Comm * comm, int *errorcode, int *err)
 /*Topology informations */
 void ffunc (mpc_comm_rank) (MPC_Comm * comm, int *rank, int *err)
 {
-  *err = PMPC_Comm_rank (*comm, rank);
+  *err = _mpc_m_comm_rank (*comm, rank);
 }
 
 void ffunc (mpc_comm_size) (MPC_Comm * comm, int *size, int *err)
 {
-  *err = PMPC_Comm_size (*comm, size);
-}
-
-void ffunc (mpc_node_rank) (int *rank, int *err)
-{
-  *err = PMPC_Node_rank (rank);
-}
-
-void ffunc (mpc_node_number) (int *number, int *err)
-{
-  *err = PMPC_Node_number (number);
-}
-
-void ffunc (mpc_processor_rank) (int *rank, int *err)
-{
-  *err = PMPC_Processor_rank (rank);
-}
-
-void ffunc (mpc_processor_number) (int *number, int *err)
-{
-  *err = PMPC_Processor_number (number);
-}
-
-void ffunc (mpc_process_rank) (int *rank, int *err)
-{
-  *err = PMPC_Process_rank (rank);
-}
-
-void ffunc (mpc_process_number) (int *number, int *err)
-{
-  *err = PMPC_Process_number (number);
+  *err = _mpc_m_comm_size (*comm, size);
 }
 
 void ffunc (mpc_get_multithreading) (char *name, int *size, int *err)
@@ -164,52 +134,52 @@ void ffunc (mpc_isend) (void *buf, int *count, MPC_Datatype * datatype,
 			int *dest, int *tag, MPC_Comm * comm,
 			MPC_Request * req, int *err)
 {
-  *err = PMPC_Isend (buf, *count, *datatype, *dest, *tag, *comm, req);
+  *err = _mpc_m_isend (buf, *count, *datatype, *dest, *tag, *comm, req);
 }
 
 void ffunc (mpc_ibsend) (void *buf, int *count, MPC_Datatype * datatype,
 			 int *dest, int *tag, MPC_Comm * comm,
 			 MPC_Request * req, int *err)
 {
-  *err = PMPC_Isend (buf, *count, *datatype, *dest, *tag, *comm, req);
+  *err = _mpc_m_isend (buf, *count, *datatype, *dest, *tag, *comm, req);
 }
 
 void ffunc (mpc_issend) (void *buf, int *count, MPC_Datatype * datatype,
 			 int *dest, int *tag, MPC_Comm * comm,
 			 MPC_Request * req, int *err)
 {
-  *err = PMPC_Isend (buf, *count, *datatype, *dest, *tag, *comm, req);
+  *err = _mpc_m_isend (buf, *count, *datatype, *dest, *tag, *comm, req);
 }
 
 void ffunc (mpc_irsend) (void *buf, int *count, MPC_Datatype * datatype,
 			 int *dest, int *tag, MPC_Comm * comm,
 			 MPC_Request * req, int *err)
 {
-  *err = PMPC_Isend (buf, *count, *datatype, *dest, *tag, *comm, req);
+  *err = _mpc_m_isend (buf, *count, *datatype, *dest, *tag, *comm, req);
 }
 
 void ffunc (mpc_irecv) (void *buf, int *count, MPC_Datatype * datatype,
 			int *source, int *tag, MPC_Comm * comm,
 			MPC_Request * request, int *err)
 {
-  *err = PMPC_Irecv (buf, *count, *datatype, *source, *tag, *comm, request);
+  *err = _mpc_m_irecv (buf, *count, *datatype, *source, *tag, *comm, request);
 }
 
 void ffunc (mpc_wait) (MPC_Request * request, MPC_Status * status, int *err)
 {
-  *err = PMPC_Wait (request, status);
+  *err = _mpc_m_wait (request, status);
 }
 
 void ffunc (mpc_waitall) (int *count, MPC_Request * request,
 			  MPC_Status * status, int *err)
 {
-  *err = PMPC_Waitall (*count, request, status);
+  *err = _mpc_m_waitall (*count, request, status);
 }
 
 void ffunc (mpc_waitsome) (int *a, MPC_Request * b, int *c, int *d,
 			   MPC_Status * e, int *err)
 {
-  *err = PMPC_Waitsome (*a, b, c, d, e);
+  *err = _mpc_m_waitsome (*a, b, c, d, e);
 }
 
 void ffunc (mpc_waitany) (mpc_msg_count * count,
@@ -217,17 +187,17 @@ void ffunc (mpc_waitany) (mpc_msg_count * count,
 			  mpc_msg_count * index, MPC_Status * status,
 			  int *err)
 {
-  *err = PMPC_Waitany (*count, array_of_requests, index, status);
+  *err = _mpc_m_waitany (*count, array_of_requests, index, status);
 }
 
 void ffunc (mpc_wait_pending) (MPC_Comm * comm, int *err)
 {
-  *err = PMPC_Wait_pending (*comm);
+  *err = _mpc_m_wait_pending (*comm);
 }
 
 void ffunc (mpc_wait_pending_all_comm) (int *err)
 {
-  *err = PMPC_Wait_pending_all_comm ();
+  *err = _mpc_m_wait_pending_all_comm ();
 }
 
 void ffunc (mpc_test) (MPC_Request * req, int *flag, MPC_Status * status,
@@ -504,30 +474,12 @@ void ffunc (mpc_request_free) (MPC_Request * a, int *err)
 }
 
 /*Scheduling */
-void ffunc (mpc_proceed) (int *err)
-{
-  *err = PMPC_Proceed ();
-}
 
 void ffunc (mpc_checkpoint) (MPC_Checkpoint_state* st, int *err)
 {
   *err = PMPC_Checkpoint (st);
 }
 
-void ffunc (mpc_migrate) (int *err)
-{
-  *err = PMPC_Migrate ();
-}
-
-void ffunc (mpc_restart) (int *rank, int *err)
-{
-  *err = PMPC_Restart (*rank);
-}
-
-void ffunc (mpc_restarted) (int *flag, int *err)
-{
-  *err = PMPC_Restarted (flag);
-}
 
 void ffunc (mpc_get_activity) (int *nb_item, MPC_Activity_t * tab,
 			       double *process_act, int *err)
@@ -577,12 +529,12 @@ void ffunc (mpc_add_pack_default) (void *buf, MPC_Datatype datatype,
 void ffunc (mpc_isend_pack) (int *dest, int *tag, MPC_Comm * comm,
 			     MPC_Request * request, int *err)
 {
-  *err = PMPC_Isend_pack (*dest, *tag, *comm, request);
+  *err = _mpc_m_isend_pack (*dest, *tag, *comm, request);
 }
 
 void ffunc (mpc_irecv_pack) (int *source, int *tag, MPC_Comm * comm,
 			     MPC_Request * request, int *err)
 {
-  *err = PMPC_Irecv_pack (*source, *tag, *comm, request);
+  *err = _mpc_m_irecv_pack (*source, *tag, *comm, request);
 }
 

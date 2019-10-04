@@ -73,7 +73,7 @@ struct mpc_mpi_m_per_mpi_process_ctx_atexit_s
  *  
  *  This data structure is initialised by \ref __mpc_m_per_mpi_process_ctx_init and
  * 	released by \ref __mpc_m_per_mpi_process_ctx_release. Initial setup is done
- *  in \ref __mpc_m_per_mpi_process_ctx_init called in \ref sctk_user_main.
+ *  in \ref __mpc_m_per_mpi_process_ctx_init called in \ref mpc_mpi_m_mpi_process_main.
  * 
  */
 typedef struct mpc_mpi_m_per_mpi_process_ctx_s
@@ -171,7 +171,7 @@ void mpc_mpi_m_per_thread_ctx_release();
 /* Non Generic MPI interface function                                   */
 /************************************************************************/
 
-int __MPC_Waitallp (mpc_msg_count count,
+int _mpc_m_waitallp (mpc_msg_count count,
 		   MPC_Request * parray_of_requests[],
 		   MPC_Status array_of_statuses[]);
 

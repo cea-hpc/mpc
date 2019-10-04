@@ -896,7 +896,7 @@ static void * run (sctk_startup_args_t * arg)
 
 /* In libmode there is no main */
 #ifndef SCTK_LIB_MODE
-	main_result = sctk_user_main (argc, argv);
+	main_result = mpc_mpi_m_mpi_process_main (argc, argv);
 #endif /* SCTK_LIB_MODE */
 	
 	for (i = 0; i < argc; i++)

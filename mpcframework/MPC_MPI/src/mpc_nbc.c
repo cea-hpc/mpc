@@ -131,13 +131,13 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
 		printf( "Error in NBC_Init_handle(%i)\n", res );
           return res;
         }
-	res = PMPC_Comm_rank( comm, &rank );
+        res = _mpc_m_comm_rank(comm, &rank);
 	if ( MPI_SUCCESS != res )
 	{
 		printf( "MPI Error in MPI_Comm_rank() (%i)\n", res );
           return res;
         }
-	res = PMPC_Comm_size( comm, &p );
+        res = _mpc_m_comm_size(comm, &p);
 	if ( MPI_SUCCESS != res )
 	{
 		printf( "MPI Error in MPI_Comm_size() (%i)\n", res );
@@ -425,9 +425,9 @@ static int NBC_Iallgatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype, 
 	
 	res = NBC_Init_handle(handle, comm, MPC_IALLGATHERV_TAG);
 	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
-	res = PMPC_Comm_rank(comm, &rank);
+	res = _mpc_m_comm_rank(comm, &rank);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-	res = PMPC_Comm_size(comm, &p);
+	res = _mpc_m_comm_size(comm, &p);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
 	res = __INTERNAL__PMPI_Type_extent(sendtype, &sndext);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
@@ -541,9 +541,9 @@ static int NBC_Iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype 
 
 	res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
 	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
-	res = PMPC_Comm_rank(comm, &rank);
+	res = _mpc_m_comm_rank(comm, &rank);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-	res = PMPC_Comm_size(comm, &p);
+	res = _mpc_m_comm_size(comm, &p);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
 	res = __INTERNAL__PMPI_Type_extent(datatype, &ext);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
@@ -1153,9 +1153,8 @@ static int NBC_Ialltoall( void *sendbuf, int sendcount, MPI_Datatype sendtype, v
 		printf( "Error in NBC_Init_handle(%i)\n", res );
 		return res;
 	}
-	res = PMPC_Comm_rank( comm, &rank );
 	if ( MPI_SUCCESS != res )
-	{
+	res = _mpc_m_comm_size(comm, &p);
 		printf( "MPI Error in MPI_Comm_rank() (%i)\n", res );
 		return res;
 	}
@@ -1506,9 +1505,9 @@ static int NBC_Ialltoallv(void* sendbuf, int *sendcounts, int *sdispls,
 	
 	res = NBC_Init_handle(handle, comm, MPC_IALLTOALLV_TAG);
 	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
-	res = PMPC_Comm_rank(comm, &rank);
+	res = _mpc_m_comm_rank(comm, &rank);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-	res = PMPC_Comm_size(comm, &p);
+	res = _mpc_m_comm_size(comm, &p);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
 	res = __INTERNAL__PMPI_Type_extent(sendtype, &sndext);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
@@ -1610,13 +1609,13 @@ static int NBC_Ibarrier( MPI_Comm comm, NBC_Handle *handle )
 		printf( "Error in NBC_Init_handle(%i)\n", res );
 		return res;
 	}
-	res = PMPC_Comm_rank( comm, &rank );
+  res = _mpc_m_comm_rank(comm, &rank);
 	if ( MPI_SUCCESS != res )
 	{
 		printf( "MPI Error in MPI_Comm_rank() (%i)\n", res );
 		return res;
 	}
-	res = PMPC_Comm_size( comm, &p );
+  res = _mpc_m_comm_size(comm, &p);
 	if ( MPI_SUCCESS != res )
 	{
 		printf( "MPI Error in MPI_Comm_size() (%i)\n", res );
@@ -1753,8 +1752,8 @@ static int NBC_Ibcast( void *buffer, int count, MPI_Datatype datatype, int root,
 	} alg;
 
 	res = NBC_Init_handle( handle, comm, MPC_IBCAST_TAG );
-	res = PMPC_Comm_rank( comm, &rank );
-	res = PMPC_Comm_size( comm, &p );
+  res = _mpc_m_comm_rank(comm, &rank);
+  res = _mpc_m_comm_size(comm, &p);
 	res = __INTERNAL__PMPI_Type_size( datatype, &size );
 
 	segsize = 16384;
@@ -2069,9 +2068,9 @@ static int NBC_Igather(void* sendbuf, int sendcount, MPI_Datatype sendtype, void
 	
 	res = NBC_Init_handle(handle, comm, MPC_IGATHER_TAG);
 	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
-	res = PMPC_Comm_rank(comm, &rank);
+	res = _mpc_m_comm_rank(comm, &rank);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-	res = PMPC_Comm_size(comm, &p);
+	res = _mpc_m_comm_size(comm, &p);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
 	res = __INTERNAL__PMPI_Type_extent(recvtype, &rcvext);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
@@ -2186,9 +2185,9 @@ static int NBC_Igatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype, voi
 	
 	res = NBC_Init_handle(handle, comm, MPC_IGATHERV_TAG);
 	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
-	res = PMPC_Comm_rank(comm, &rank);
+	res = _mpc_m_comm_rank(comm, &rank);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-	res = PMPC_Comm_size(comm, &p);
+	res = _mpc_m_comm_size(comm, &p);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
 	res = __INTERNAL__PMPI_Type_extent(recvtype, &rcvext);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
@@ -2313,13 +2312,13 @@ static int NBC_Ireduce( void *sendbuf, void *recvbuf, int count, MPI_Datatype da
 		printf( "Error in NBC_Init_handle(%i)\n", res );
 		return res;
 	}
-	res = PMPC_Comm_rank( comm, &rank );
+        res = _mpc_m_comm_rank(comm, &rank);
 	if ( MPI_SUCCESS != res )
 	{
 		printf( "MPI Error in MPI_Comm_rank() (%i)\n", res );
 		return res;
 	}
-	res = PMPC_Comm_size( comm, &p );
+        res = _mpc_m_comm_size(comm, &p);
 	if ( MPI_SUCCESS != res )
 	{
 		printf( "MPI Error in MPI_Comm_size() (%i)\n", res );
@@ -2730,12 +2729,12 @@ static int NBC_Ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcounts, MP
     printf("Error in NBC_Init_handle(%i)\n", res);
     return res;
   }
-  res = PMPC_Comm_rank(comm, &rank);
+  res = _mpc_m_comm_rank(comm, &rank);
   if (MPI_SUCCESS != res) {
     printf("MPI Error in MPI_Comm_rank() (%i)\n", res);
     return res;
   }
-  res = PMPC_Comm_size(comm, &p);
+  res = _mpc_m_comm_size(comm, &p);
   if (MPI_SUCCESS != res) {
     printf("MPI Error in MPI_Comm_size() (%i)\n", res);
     return res;
@@ -3001,9 +3000,9 @@ static int NBC_Iscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype datat
 	
 	res = NBC_Init_handle(handle, comm, MPC_ISCAN_TAG);
 	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
-	res = PMPC_Comm_rank(comm, &rank);
+	res = _mpc_m_comm_rank(comm, &rank);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-	res = PMPC_Comm_size(comm, &p);
+	res = _mpc_m_comm_size(comm, &p);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
 	res = __INTERNAL__PMPI_Type_extent(datatype, &ext);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
@@ -3138,9 +3137,9 @@ static int NBC_Iscatter(void* sendbuf, int sendcount, MPI_Datatype sendtype, voi
 	
 	res = NBC_Init_handle(handle, comm, MPC_ISCATTER_TAG);
 	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
-	res = PMPC_Comm_rank(comm, &rank);
+	res = _mpc_m_comm_rank(comm, &rank);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-	res = PMPC_Comm_size(comm, &p);
+	res = _mpc_m_comm_size(comm, &p);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
 	res = __INTERNAL__PMPI_Type_extent(sendtype, &sndext);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
@@ -3256,9 +3255,9 @@ static int NBC_Iscatterv(void* sendbuf, int *sendcounts, int *displs, MPI_Dataty
 	
 	res = NBC_Init_handle(handle, comm, MPC_ISCATTERV_TAG);
 	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
-	res = PMPC_Comm_rank(comm, &rank);
+	res = _mpc_m_comm_rank(comm, &rank);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-	res = PMPC_Comm_size(comm, &p);
+	res = _mpc_m_comm_size(comm, &p);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
 	res = __INTERNAL__PMPI_Type_extent(sendtype, &sndext);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
@@ -3373,9 +3372,9 @@ static int NBC_Ialltoallw(void* sendbuf, int *sendcounts, int *sdispls,
 	
 	res = NBC_Init_handle(handle, comm, MPC_IALLTOALLW_TAG);
 	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
-	res = PMPC_Comm_rank(comm, &rank);
+	res = _mpc_m_comm_rank(comm, &rank);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-	res = PMPC_Comm_size(comm, &p);
+	res = _mpc_m_comm_size(comm, &p);
 	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
 
 	schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
@@ -3437,12 +3436,12 @@ static int NBC_Ireduce_scatter_block(void* sendbuf, void* recvbuf, int recvcount
     printf("Error in NBC_Init_handle(%i)\n", res);
     return res;
   }
-  res = PMPC_Comm_rank(comm, &rank);
+  res = _mpc_m_comm_rank(comm, &rank);
   if (MPI_SUCCESS != res) {
     printf("MPI Error in MPI_Comm_rank() (%i)\n", res);
     return res;
   }
-  res = PMPC_Comm_size(comm, &p);
+  res = _mpc_m_comm_size(comm, &p);
   if (MPI_SUCCESS != res) {
     printf("MPI Error in MPI_Comm_size() (%i)\n", res);
     return res;
@@ -3685,12 +3684,12 @@ static int NBC_Iexscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
           printf("Error in NBC_Init_handle(%i)\n", res);
           return res;
         }
-        res = PMPC_Comm_rank(comm, &rank);
+        res = _mpc_m_comm_rank(comm, &rank);
         if (MPI_SUCCESS != res) {
           printf("MPI Error in MPI_Comm_rank() (%i)\n", res);
           return res;
         }
-        res = PMPC_Comm_size(comm, &p);
+        res = _mpc_m_comm_size(comm, &p);
         if (MPI_SUCCESS != res) {
           printf("MPI Error in MPI_Comm_size() (%i)\n", res);
           return res;
@@ -4714,7 +4713,7 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 				else
 					buf1 = sendargs->buf;
 				NBC_CHECK_NULL( handle->req_array );
-
+        res = _mpc_m_isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, handle->mycomm, __sctk_new_mpc_request (handle->req_array+(old_req_count+req_cpt-1), requests));
 				res = PMPC_Isend( buf1,
                           sendargs->count,
                           sendargs->datatype,
@@ -4744,7 +4743,7 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 					buf1 = recvargs->buf;
 				}
 				NBC_CHECK_NULL( handle->req_array );
-				res = PMPC_Irecv( buf1,
+        res = _mpc_m_irecv(buf1, recvargs->count, recvargs->datatype, recvargs->source, handle->tag, handle->mycomm, __sctk_new_mpc_request (handle->req_array+(old_req_count+req_cpt-1), requests));
                           recvargs->count,
                           recvargs->datatype,
                           recvargs->source,

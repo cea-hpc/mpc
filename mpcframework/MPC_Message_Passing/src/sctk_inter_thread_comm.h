@@ -480,7 +480,7 @@ void mpc_mp_comm_ptp_message_header_init( sctk_thread_ptp_message_t *msg, const 
 
 void mpc_mp_comm_ptp_message_send( sctk_thread_ptp_message_t *msg );
 
-void mpc_mp_comm_ptp_message_recv( sctk_thread_ptp_message_t *msg, int need_check );
+void mpc_mp_comm_ptp_message_recv( sctk_thread_ptp_message_t *msg );
 
 void mpc_mp_comm_ptp_message_complete_and_free( sctk_thread_ptp_message_t *msg );
 
@@ -620,7 +620,7 @@ static inline void _mpc_comm_ptp_message_set_copy_and_free( sctk_thread_ptp_mess
 	} while ( 0 )
 
 /** Buffered Messages **/
-#define MAX_MPC_BUFFERED_SIZE ( 64 * sizeof( long ) )
+#define MAX_MPC_BUFFERED_SIZE ( 8 * sizeof( long ) )
 
 typedef struct mpc_buffered_msg_s
 {
