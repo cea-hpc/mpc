@@ -21,41 +21,18 @@
 /* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
-#define MPC_MAIN_FILE
-#include "mpc.h"
-#undef main
+
+#include "messaging.h"
 
 #include <sctk_launch.h>
 
-#include "mpc_reduction.h"
-#include "mpcthread.h"
+#include "mpc_common_helper.h"
 
-#include "sctk_accessor.h"
-#include "mpc_common_asm.h"
-#include "mpc_mp_coll.h"
-#include "sctk_communicator.h"
-#include "sctk_debug.h"
-#include "sctk_handle.h"
+#include "mpc_reduction.h"
 #include "sctk_inter_thread_comm.h"
-#include "sctk_route.h"
-#include "sctk_runtime_config.h"
-#include "mpc_common_types.h"
-#include <messaging.h>
-#include <sctk_ethread_internal.h>
 #include <sys/time.h>
 #include "sctk_handle.h"
-
-
 #include "mpc_internal_common.h"
-#include <mpc_internal_thread.h>
-#ifdef MPC_OpenMP
-#include "mpcomp_core.h"
-#endif
-
-
-#ifdef MPC_Message_Passing
-#include "sctk_low_level_comm.h"
-#endif
 
 #ifdef MPC_Fault_Tolerance
 #include "sctk_ft_iface.h"
