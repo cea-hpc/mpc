@@ -24,16 +24,6 @@
 #ifndef __SCTK_FT_TYPES_H
 #define __SCTK_FT_TYPES_H
 
-typedef enum sctk_ft_state_e
-{
-  /* MPC_STATE_NO_SUPPORT IS 0
-    and DEFINED IN MPC */
-  MPC_STATE_ERROR=1,
-  MPC_STATE_CHECKPOINT,
-  MPC_STATE_RESTART,
-  MPC_STATE_IGNORE,
-  MPC_STATE_COUNT
-} sctk_ft_state_t;
 
 #endif /* ifndef __SCTK_FT_TYPES_H */
 

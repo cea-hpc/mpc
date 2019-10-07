@@ -54,7 +54,7 @@ void sctk_profile_meta_calibrate_end(struct sctk_profile_meta *meta)
 void sctk_profile_meta_init(struct sctk_profile_meta *meta)
 {
 
-	MPC_Comm_size(MPC_COMM_WORLD, &meta->task_count);
+	MPC_Comm_size(SCTK_COMM_WORLD, &meta->task_count);
 	MPC_Node_number( &meta->node_count );
 	MPC_Process_number( &meta->process_count );
 
@@ -124,7 +124,7 @@ void sctk_profile_meta_end_compute(struct sctk_profile_meta *meta)
 	mpc_common_spinlock_unlock( &meta->lock );
 
 	int rank = 0;
-	MPC_Comm_rank(MPC_COMM_WORLD, &rank);
+	MPC_Comm_rank(SCTK_COMM_WORLD, &rank);
 
 	if( rank == 0)
         sctk_info("Program running at %g ticks per sec", meta->ticks_per_second);

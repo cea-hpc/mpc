@@ -41,7 +41,7 @@ run (void *arg)
   char msg[50];
   char msg2[50];
 
-  my_com = MPC_COMM_WORLD;
+  my_com = SCTK_COMM_WORLD;
   MPC_Comm_rank (my_com, &my_rank);
   MPC_Comm_size (my_com, &dom_size);
 
@@ -55,7 +55,7 @@ run (void *arg)
   sprintf (msg, "nothing");
   sprintf (msg2, "nothing");
 
-  my_com = MPC_COMM_WORLD;
+  my_com = SCTK_COMM_WORLD;
   MPC_Comm_rank (my_com, &my_rank);
   mprintf (stderr, "Avant creation %d\n", my_rank);
   MPC_Comm_create_list (my_com, tab, dom_size, &my_com2);

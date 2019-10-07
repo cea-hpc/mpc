@@ -51,7 +51,7 @@ typedef struct
 } mpc_mp_status_t;
 
 #define SCTK_STATUS_NULL NULL
-#define SCTK_STATUS_INIT {MPC_ANY_SOURCE,MPC_ANY_TAG,MPC_SUCCESS,0,0}
+#define SCTK_STATUS_INIT {SCTK_ANY_SOURCE,SCTK_ANY_TAG,SCTK_SUCCESS,0,0}
 
 
 /** Generalized requests functions **/
@@ -171,6 +171,7 @@ size_t RDMA_type_size( RDMA_type type );
 #define SCTK_PROC_NULL -2
 /** SUCCESS and ERROR **/
 #define SCTK_SUCCESS 0
+
 /** Wildcards **/
 #define SCTK_ANY_TAG -1
 #define SCTK_ANY_SOURCE -1

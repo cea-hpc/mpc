@@ -61,7 +61,7 @@ grep -rh "#include" * | grep -v "~" | grep -v "sctk_" | grep "<" | grep -v ".svn
 | grep -v "mpcalloc.h" \
 | grep -v "mpcdebug.h" \
 | grep -v "mpcmicrothread.h" \
-| grep -v "mpcmp.h" \
+| grep -v "mpc_mpi.h" \
 | grep -v "mpcomp.h" \
 | grep -v "mpcomp_abi.h" \
 | grep -v "mpcprofil.h" \

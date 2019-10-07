@@ -24,7 +24,7 @@
 #define MPC_COMMON_H
 
 #include <uthash.h>
-#include "mpcmp.h"
+#include "messaging.h"
 #include "mpc_info.h"
 #include "mpc_datatypes.h"
 #include "egreq_classes.h"

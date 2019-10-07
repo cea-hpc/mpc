@@ -38,23 +38,23 @@ init ()
 
 
   int size;
-  MPC_Comm_size (MPC_COMM_WORLD, &size);
+  MPC_Comm_size (SCTK_COMM_WORLD, &size);
   mpc_thread_mutex_lock (&lock);
   if (done == 0)
     {
       done = 1;
       is_master = 1;
-      MPC_Comm_rank (MPC_COMM_WORLD, &root);
+      MPC_Comm_rank (SCTK_COMM_WORLD, &root);
       _is_Master = (int *) calloc (size, sizeof (int));
       temp = (int *) calloc (size, sizeof (int));
       printf (" root = %d\n", root);
     }
   mpc_thread_mutex_unlock (&lock);
 
-  MPC_Comm_rank (MPC_COMM_WORLD, &RANK);
+  MPC_Comm_rank (SCTK_COMM_WORLD, &RANK);
   MPC_Process_rank (&process_rank);
   printf (" RANK = %d process_rank = %d\n", RANK, process_rank);
-  MPC_Comm_split (MPC_COMM_WORLD, is_master, process_rank, &comm);
+  MPC_Comm_split (SCTK_COMM_WORLD, is_master, process_rank, &comm);
   printf ("fin de MPC_Comm_split %d \n", RANK);
 
   if (is_master == 1)
@@ -70,9 +70,9 @@ init ()
 	    temp[RANK] = 1;
 	}
     }
-  MPC_Reduce (temp, _is_Master, size, MPC_INT, MPC_SUM, 0, MPC_COMM_WORLD);
-  MPC_Bcast (_is_Master, size, MPC_INT, 0, MPC_COMM_WORLD);
-  MPC_Barrier (MPC_COMM_WORLD);
+  MPC_Reduce (temp, _is_Master, size, MPC_INT, MPC_SUM, 0, SCTK_COMM_WORLD);
+  MPC_Bcast (_is_Master, size, MPC_INT, 0, SCTK_COMM_WORLD);
+  MPC_Barrier (SCTK_COMM_WORLD);
   if (RANK == 0)
     {
       for (i = 0; i < size; i++)

@@ -37,7 +37,7 @@ run (void *arg)
   char msg[50];
   char msg2[50];
 
-  my_com = MPC_COMM_WORLD;
+  my_com = SCTK_COMM_WORLD;
   MPC_Comm_rank (my_com, &my_rank);
 
   sprintf (msg, "nothing");

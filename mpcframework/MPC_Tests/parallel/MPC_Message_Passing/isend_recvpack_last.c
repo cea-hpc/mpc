@@ -43,7 +43,7 @@ run (void *arg)
   unsigned int deb = 0;
   unsigned int fin = 40;
 
-  my_com = MPC_COMM_WORLD;
+  my_com = SCTK_COMM_WORLD;
   MPC_Comm_rank (my_com, &my_rank);
   MPC_Comm_size (my_com, &my_size);
 
@@ -74,7 +74,7 @@ run (void *arg)
 	}
     }
 
-  MPC_Barrier (MPC_COMM_WORLD);
+  MPC_Barrier (SCTK_COMM_WORLD);
 
   if (my_rank == 0)
     {

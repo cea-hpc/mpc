@@ -23,7 +23,7 @@
 #include "mpi_rma.h"
 #include "mpc_datatypes.h"
 #include "mpc_mpi_internal.h"
-#include "mpcmp.h"
+#include "messaging.h"
 #include "sctk_communicator.h"
 #include "sctk_control_messages.h"
 #include <string.h>
@@ -57,7 +57,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
     can_write_rma = 1;
   }
 
-  if (target_rank == MPC_PROC_NULL)
+  if (target_rank == SCTK_PROC_NULL)
     return MPI_SUCCESS;
 
   /* At this point we deal with an RMA capable RDMA */
@@ -268,7 +268,7 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
   int can_write_rma = 0;
 
 
-  if (target_rank == MPC_PROC_NULL)
+  if (target_rank == SCTK_PROC_NULL)
     return MPI_SUCCESS;
 
   /* Do the optimized RMA only if target datatype is contiguous */
@@ -484,7 +484,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
                        int target_rank, MPI_Aint target_disp, int target_count,
                        MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,
                        mpc_mp_request_t *ref_request) {
-  if (target_rank == MPC_PROC_NULL)
+  if (target_rank == SCTK_PROC_NULL)
     return MPI_SUCCESS;
 
   /* First of all reroute to Put if the OP is MPI_REPLACE */
@@ -912,7 +912,7 @@ static inline int mpc_MPI_Get_accumulate_RMA(
     MPI_Datatype result_datatype, int target_rank, MPI_Aint target_disp,
     int target_count, MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,
     mpc_mp_request_t *ref_request) {
-  if (target_rank == MPC_PROC_NULL)
+  if (target_rank == SCTK_PROC_NULL)
     return MPI_SUCCESS;
 
   if ((origin_count == result_count) && (origin_count == target_count) &&
@@ -1075,7 +1075,7 @@ mpc_MPI_Fetch_and_op_RMA(struct mpc_MPI_Win *desc, const void *origin_addr,
                          void *result_addr, MPI_Datatype datatype,
                          int target_rank, MPI_Aint target_disp, MPI_Op op,
                          MPI_Win win, mpc_mp_request_t *ref_request) {
-  if (target_rank == MPC_PROC_NULL)
+  if (target_rank == SCTK_PROC_NULL)
     return MPI_SUCCESS;
 
   /* Handle special operations */
@@ -1198,7 +1198,7 @@ static inline int mpc_MPI_Compare_and_swap_RMA(
     struct mpc_MPI_Win *desc, const void *origin_addr, const void *compare_addr,
     void *result_addr, MPI_Datatype datatype, int target_rank,
     MPI_Aint target_disp, mpc_mp_request_t *ref_request) {
-  if (target_rank == MPC_PROC_NULL)
+  if (target_rank == SCTK_PROC_NULL)
     return MPI_SUCCESS;
 
   RDMA_type rmatype = mpc_RMA_convert_type(datatype);

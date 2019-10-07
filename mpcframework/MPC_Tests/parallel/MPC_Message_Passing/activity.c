@@ -43,8 +43,8 @@ main (int argc, char **argv)
   double dist_res = 0;
   double process_activity;
 
-  MPC_Comm_rank (MPC_COMM_WORLD, &rank);
-  MPC_Comm_size (MPC_COMM_WORLD, &size);
+  MPC_Comm_rank (SCTK_COMM_WORLD, &rank);
+  MPC_Comm_size (SCTK_COMM_WORLD, &size);
 
   MPC_Processor_rank (&vp);
   MPC_Processor_number (&nb_cpu);
@@ -75,11 +75,11 @@ main (int argc, char **argv)
 	  res += i;
 	  res = (sqrt (res) + (double) j) / ((double) i);
 	}
-      MPC_Isend (&res, 1, MPC_DOUBLE, (rank + 1) % size, 0, MPC_COMM_WORLD,
+      MPC_Isend (&res, 1, MPC_DOUBLE, (rank + 1) % size, 0, SCTK_COMM_WORLD,
 		 NULL);
       MPC_Irecv (&dist_res, 1, MPC_DOUBLE, (rank - 1 + size) % size, 0,
-		 MPC_COMM_WORLD, NULL);
-      MPC_Wait_pending (MPC_COMM_WORLD);
+		 SCTK_COMM_WORLD, NULL);
+      MPC_Wait_pending (SCTK_COMM_WORLD);
       res += dist_res;
     }
   sprintf (&(tmp_buf[strlen (tmp_buf)]), "Result %f dist %f\n",

@@ -24,7 +24,7 @@
 
 #include "mpc_internal_common.h"
 #include "mpc_reduction.h"
-#include "mpcmp.h"
+#include "messaging.h"
 #include "sctk_handle.h"
 #include "mpc_common_types.h"
 #include "mpc_common_types.h"
@@ -160,7 +160,7 @@ int Datatype_Keyval_delete(unsigned int type_keyval) {
 
   key->free_cell = 1;
 
-  return MPC_SUCCESS;
+  return SCTK_SUCCESS;
 }
 
 struct Datatype_Keyval *Datatype_Keyval_new(int *type_keyval) {
@@ -269,7 +269,7 @@ int sctk_type_create_keyval(MPC_Type_copy_attr_function *copy,
   new->delete = delete;
   new->extra_state = extra_state;
 
-  return MPC_SUCCESS;
+  return SCTK_SUCCESS;
 }
 
 int sctk_type_free_keyval(int *type_keyval) {
@@ -281,7 +281,7 @@ int sctk_type_free_keyval(int *type_keyval) {
   int ret = Datatype_Keyval_delete(*type_keyval);
 
   /* Clear key handler */
-  if (ret == MPC_SUCCESS)
+  if (ret == SCTK_SUCCESS)
     *type_keyval = MPC_KEYVAL_INVALID;
 
   return ret;
@@ -939,7 +939,7 @@ int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
 	
 	/* Do we have at least two blocks */
 	if( count <= 1 )
-		return MPC_SUCCESS;
+		return SCTK_SUCCESS;
 	
 	/* Extract the layout in cells */
 	struct Derived_datatype_cell * cells = sctk_malloc( sizeof( struct Derived_datatype_cell ) * count);
@@ -1016,7 +1016,7 @@ int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
 	
 	sctk_free(cells);
 	
-	return MPC_SUCCESS;
+	return SCTK_SUCCESS;
 }
 
 void sctk_derived_datatype_display( sctk_derived_datatype_t *target_type )
@@ -1345,7 +1345,7 @@ int sctk_type_set_attr(struct Datatype_Array *da, mpc_mp_datatype_t type,
     mpc_common_hashtable_set(&store->attrs, type_keyval, new);
   }
 
-  return MPC_SUCCESS;
+  return SCTK_SUCCESS;
 }
 
 int sctk_type_get_attr(struct Datatype_Array *da, mpc_mp_datatype_t type,
@@ -1369,7 +1369,7 @@ int sctk_type_get_attr(struct Datatype_Array *da, mpc_mp_datatype_t type,
     *flag = 0;
   }
 
-  return MPC_SUCCESS;
+  return SCTK_SUCCESS;
 }
 
 int sctk_type_delete_attr(struct Datatype_Array *da, mpc_mp_datatype_t type,
@@ -1389,7 +1389,7 @@ int sctk_type_delete_attr(struct Datatype_Array *da, mpc_mp_datatype_t type,
 
   sctk_free(pret);
 
-  return MPC_SUCCESS;
+  return SCTK_SUCCESS;
 }
 
 /************************************************************************/
@@ -2045,7 +2045,7 @@ static inline int Datatype_layout_fill( struct Datatype_layout * l, mpc_mp_datat
 	_mpc_m_type_size (datatype, &size);
 	l->size = (size_t) size;
 	
-	return MPC_SUCCESS;
+	return SCTK_SUCCESS;
 }
 
 struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, size_t * ly_count )

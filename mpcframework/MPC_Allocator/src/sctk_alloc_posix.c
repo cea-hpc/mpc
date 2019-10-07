@@ -59,7 +59,7 @@
 //if have NUMA support
 #ifdef HAVE_HWLOC
 	#include <hwloc.h>
-	// #include "../../../install/include/mpcmp.h"
+	// #include "../../../install/include/messaging.h"
 	/** Select the NUMA memory source init function. **/
 	#define sctk_alloc_posix_mmsrc_init sctk_alloc_posix_mmsrc_numa_init
 #else //HAVE_HWLOC

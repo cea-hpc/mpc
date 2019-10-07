@@ -225,7 +225,7 @@ int sctk_handle_free(sctk_handle id, sctk_handle_type type) {
 
   if (!hctx) {
     mpc_common_spinlock_unlock(&handle_mod_lock);
-    return MPC_ERR_ARG;
+    return -1;
   }
 
   mpc_common_hashtable_delete(&handle_context, sctk_handle_compute(id, type));

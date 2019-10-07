@@ -21,12 +21,14 @@
 /* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK_MPC_MPI_H_
-#define __SCTK_MPC_MPI_H_
+#ifndef MPC_MPI_H_
+#define MPC_MPI_H_
+
+#include <mpc_mpi_messaging.h>
 
 #include <stdlib.h>
 #include <string.h>
-#include <mpcmp.h>
+
 
 
 #ifndef MPC_NO_AUTO_MAIN_REDEF
@@ -74,26 +76,30 @@ extern "C"
 #define MPI_MAX_NAME_STRING MPC_MAX_OBJECT_NAME
 #define MPI_MAX_OBJECT_NAME MPC_MAX_OBJECT_NAME
 #define MPI_MAX_LIBRARY_VERSION_STRING MPC_MAX_LIBRARY_VERSION_STRING
-/* Communication Parameters */
+
+/* Status Struct Members */
 #define MPI_SOURCE MPC_SOURCE
 #define MPI_TAG MPC_TAG
+#define MPI_ERROR MPC_ERROR
+
+/* Communication Parameters */
 #define MPI_UNDEFINED MPC_UNDEFINED
 #define MPI_REQUEST_NULL ((MPI_Request)-1)
-#define MPI_COMM_WORLD MPC_COMM_WORLD
-#define MPI_STATUS_IGNORE MPC_STATUS_IGNORE
-#define MPI_STATUSES_IGNORE MPC_STATUSES_IGNORE
-#define MPI_ANY_TAG MPC_ANY_TAG
-#define MPI_ANY_SOURCE MPC_ANY_SOURCE
-#define MPI_PROC_NULL MPC_PROC_NULL
-#define MPI_COMM_NULL MPC_COMM_NULL
+#define MPI_COMM_WORLD SCTK_COMM_WORLD
+#define MPI_STATUS_IGNORE SCTK_STATUS_NULL
+#define MPI_STATUSES_IGNORE SCTK_STATUS_NULL
+#define MPI_ANY_TAG SCTK_ANY_TAG
+#define MPI_ANY_SOURCE SCTK_ANY_SOURCE
+#define MPI_PROC_NULL SCTK_PROC_NULL
+#define MPI_COMM_NULL SCTK_COMM_NULL
 #define MPI_ROOT MPC_ROOT
 #define MPI_IN_PLACE SCTK_IN_PLACE
-#define MPI_BOTTOM MPC_BOTTOM
-#define MPI_COMM_SELF MPC_COMM_SELF
+#define MPI_BOTTOM ((void*)0)
+#define MPI_COMM_SELF SCTK_COMM_SELF
 
 /* Error Handling */
-#define MPI_SUCCESS MPC_SUCCESS
-#define MPI_ERROR MPC_ERROR
+#define MPI_SUCCESS SCTK_SUCCESS
+
 #define MPI_MAX_ERROR_STRING MPC_MAX_ERROR_STRING
 #define MPI_ERR_BUFFER MPC_ERR_BUFFER
 #define MPI_ERR_COUNT MPC_ERR_COUNT
@@ -150,7 +156,7 @@ extern "C"
 #define MPI_ERR_CONVERSION MPC_ERR_CONVERSION
 #define MPI_ERR_IO MPC_ERR_IO
 
-#define MPI_ERR_RMA_RANGE MPC_ERR_RMA_RANGE 
+#define MPI_ERR_RMA_RANGE MPC_ERR_RMA_RANGE
 #define MPI_ERR_RMA_ATTACH MPC_ERR_RMA_ATTACH
 #define MPI_ERR_RMA_SHARED MPC_ERR_RMA_SHARED
 
@@ -278,7 +284,7 @@ extern "C"
 
 /* These are deprecated MPI 1.0 constants in MPI 3.0
  * however they are never returned by get envelope but as ROMIO uses them */
- 
+
 #define MPI_COMBINER_HINDEXED_INTEGER MPC_COMBINER_HINDEXED_INTEGER
 #define MPI_COMBINER_STRUCT_INTEGER MPC_COMBINER_STRUCT_INTEGER
 #define MPI_COMBINER_HVECTOR_INTEGER MPC_COMBINER_HVECTOR_INTEGER
@@ -294,10 +300,10 @@ extern "C"
 #define MPI_TYPECLASS_COMPLEX 3
 
 /* Threading Level */
-#define MPI_THREAD_SINGLE 0
-#define MPI_THREAD_FUNNELED 1
-#define MPI_THREAD_SERIALIZED 2
-#define  MPI_THREAD_MULTIPLE 3
+#define MPI_THREAD_SINGLE MPC_THREAD_SINGLE
+#define MPI_THREAD_FUNNELED MPC_THREAD_FUNNELED
+#define MPI_THREAD_SERIALIZED MPC_THREAD_SERIALIZED
+#define  MPI_THREAD_MULTIPLE MPC_THREAD_MULTIPLE
 
 /* Basic Ops */
 #define MPI_SUM 0
@@ -339,7 +345,7 @@ extern "C"
 
 #ifdef ROMIO_COMP
 #define MPI_FILE_NULL ((void *)0)
-#endif 
+#endif
 
 #define MPI_BSEND_OVERHEAD (2*sizeof(mpi_buffer_overhead_t))
 
@@ -1921,4 +1927,4 @@ int MPI_Improbe(int , int , MPI_Comm , int *, MPI_Message *, MPI_Status *);
 #ifdef __cplusplus
 }
 #endif
-#endif /* __SCTK_MPC_MPI_H_ */
+#endif /* MPC_MPI_H_ */

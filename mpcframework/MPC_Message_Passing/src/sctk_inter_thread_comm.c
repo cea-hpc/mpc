@@ -1611,7 +1611,7 @@ void mpc_mp_comm_ptp_message_header_init( mpc_mp_ptp_message_t *msg,
 		else
 		{
 			/* If we are not using an inter-comm just translate to COMM_WORLD */
-			if ( source != MPC_ANY_SOURCE )
+			if ( source != SCTK_ANY_SOURCE )
 			{
 				source_task = sctk_get_comm_world_rank( communicator, source );
 			}
@@ -2648,7 +2648,7 @@ int mpc_mp_comm_request_free( mpc_mp_request_t *request )
 		ret = ( request->free_fn )( request->extra_state );
 	}
 
-	mpc_mp_comm_request_init( request, MPC_COMM_NULL, REQUEST_NULL );
+	mpc_mp_comm_request_init( request, SCTK_COMM_NULL, REQUEST_NULL );
 	request->is_null = 1;
 
 	return ret;

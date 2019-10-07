@@ -66,7 +66,7 @@ void sctk_internal_profiler_init()
     /* Fill in the meta informations */
     sctk_profile_meta_init(&sctk_internal_profiler_meta);
 
-    //	__MPC_Barrier(MPC_COMM_WORLD);
+    //	__MPC_Barrier(SCTK_COMM_WORLD);
 
     /* Start Program */
     sctk_profile_meta_begin_compute(&sctk_internal_profiler_meta);
@@ -103,7 +103,7 @@ void sctk_internal_profiler_reduce(int rank)
 		         MPC_LONG_LONG_INT,
 		         MPC_SUM,
 		         0,
-		         MPC_COMM_WORLD);
+		         SCTK_COMM_WORLD);
 
   /* Reduce the run time */
   PMPC_Reduce( &sctk_internal_profiler_get_tls_array()->run_time,
@@ -112,7 +112,7 @@ void sctk_internal_profiler_reduce(int rank)
 		         MPC_LONG_LONG_INT,
 		         MPC_SUM,
 		         0,
-		         MPC_COMM_WORLD);
+		         SCTK_COMM_WORLD);
 
 	PMPC_Reduce( sctk_internal_profiler_get_tls_array()->sctk_profile_value,
 	             reduce_array->sctk_profile_value,
@@ -120,7 +120,7 @@ void sctk_internal_profiler_reduce(int rank)
 		         MPC_LONG_LONG_INT,
 		         MPC_SUM,
 		         0,
-		         MPC_COMM_WORLD);
+		         SCTK_COMM_WORLD);
 
 	PMPC_Reduce( sctk_internal_profiler_get_tls_array()->sctk_profile_max,
 	             reduce_array->sctk_profile_max,
@@ -128,7 +128,7 @@ void sctk_internal_profiler_reduce(int rank)
 		         MPC_LONG_LONG_INT,
 		         MPC_MAX,
 		         0,
-		         MPC_COMM_WORLD);
+		         SCTK_COMM_WORLD);
 
 	PMPC_Reduce( sctk_internal_profiler_get_tls_array()->sctk_profile_min,
 				 reduce_array->sctk_profile_min,
@@ -136,7 +136,7 @@ void sctk_internal_profiler_reduce(int rank)
 		         MPC_LONG_LONG_INT,
 		         MPC_MIN,
 		         0,
-		         MPC_COMM_WORLD);
+		         SCTK_COMM_WORLD);
 
 }
 
@@ -150,7 +150,7 @@ void sctk_internal_profiler_render()
   sctk_profiler_set_finalize_time();
 
 	int rank = 0;
-	MPC_Comm_rank( MPC_COMM_WORLD, &rank );
+	MPC_Comm_rank( SCTK_COMM_WORLD, &rank );
 
 	/* fprintf(stderr,"%s \n",sctk_profiling_outputs); */
 

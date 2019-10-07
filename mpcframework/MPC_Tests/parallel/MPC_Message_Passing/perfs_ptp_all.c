@@ -52,16 +52,16 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
   double end;
   double t;
   double tmp_t;
-  MPC_Barrier (MPC_COMM_WORLD);
-  MPC_Barrier (MPC_COMM_WORLD);
-  MPC_Barrier (MPC_COMM_WORLD);
+  MPC_Barrier (SCTK_COMM_WORLD);
+  MPC_Barrier (SCTK_COMM_WORLD);
+  MPC_Barrier (SCTK_COMM_WORLD);
 
   if (my_rank % 2 == 0)
     {
       for (i = 0; i < iters; i++)
 	{
 	  MPC_Send (msg, size, MPC_CHAR,
-		    (my_rank + my_size / 2 + 1) % my_size, 0, MPC_COMM_WORLD);
+		    (my_rank + my_size / 2 + 1) % my_size, 0, SCTK_COMM_WORLD);
 	}
     }
   else
@@ -71,7 +71,7 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
 	{
 	  MPC_Recv (msg, size, MPC_CHAR,
 		    (my_rank + my_size - my_size / 2 - 1) % my_size, 0,
-		    MPC_COMM_WORLD, &status);
+		    SCTK_COMM_WORLD, &status);
 	}
     }
 
@@ -83,7 +83,7 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
       for (i = 0; i < iters; i++)
 	{
 	  MPC_Send (msg, size, MPC_CHAR,
-		    (my_rank + my_size / 2 + 1) % my_size, 0, MPC_COMM_WORLD);
+		    (my_rank + my_size / 2 + 1) % my_size, 0, SCTK_COMM_WORLD);
 	}
     }
   else
@@ -93,18 +93,18 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
 	{
 	  MPC_Recv (msg, size, MPC_CHAR,
 		    (my_rank + my_size - my_size / 2 - 1) % my_size, 0,
-		    MPC_COMM_WORLD, &status);
+		    SCTK_COMM_WORLD, &status);
 	}
     }
 
 
-/*   MPC_Barrier (MPC_COMM_WORLD); */
+/*   MPC_Barrier (SCTK_COMM_WORLD); */
   end = rrrsctk_get_time_stamp ();
   t = end - start;
   tmp_t = t;
 
-  MPC_Barrier (MPC_COMM_WORLD);
-  MPC_Allreduce (&tmp_t, &t, 1, MPC_DOUBLE, MPC_SUM, MPC_COMM_WORLD);
+  MPC_Barrier (SCTK_COMM_WORLD);
+  MPC_Allreduce (&tmp_t, &t, 1, MPC_DOUBLE, MPC_SUM, SCTK_COMM_WORLD);
   t = t / my_size;
 
   if (my_rank == 0)
@@ -115,7 +115,7 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
 								     1024.0) /
 	     (((t)) / 1000000));
   fflush (stderr);
-  MPC_Barrier (MPC_COMM_WORLD);
+  MPC_Barrier (SCTK_COMM_WORLD);
 
 /*   if(my_rank == my_size-1) */
 /*     fprintf(stderr,"Ping %d size %9lu (MPC_Send->MPC_Recv) %10.2fus %10.2f %10.2fMo/s\n\n",my_rank,size,(end-start)/iters, */
@@ -123,9 +123,9 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
 /* 	    ((double)((iters)*(double)size))/(1024.0*1024.0)/(((end-start))/1000000)); */
 /*   fflush(stderr); */
 
-  MPC_Barrier (MPC_COMM_WORLD);
-  MPC_Barrier (MPC_COMM_WORLD);
-  MPC_Barrier (MPC_COMM_WORLD);
+  MPC_Barrier (SCTK_COMM_WORLD);
+  MPC_Barrier (SCTK_COMM_WORLD);
+  MPC_Barrier (SCTK_COMM_WORLD);
 }
 
 #ifdef __mpc__H
@@ -167,8 +167,8 @@ main (int argc, char **argv)
 
   MPC_Init (&argc, &argv);
 
-  MPC_Comm_rank (MPC_COMM_WORLD, &my_rank);
-  MPC_Comm_size (MPC_COMM_WORLD, &my_size);
+  MPC_Comm_rank (SCTK_COMM_WORLD, &my_rank);
+  MPC_Comm_size (SCTK_COMM_WORLD, &my_size);
 
 #ifndef LARGE_TEST
   message (my_rank, my_size, msg, 1, 100);

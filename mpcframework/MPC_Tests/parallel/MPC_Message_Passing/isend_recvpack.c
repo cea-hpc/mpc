@@ -42,7 +42,7 @@ run (void *arg)
   unsigned int deb = 0;
   unsigned int fin = 40;
 
-  my_com = MPC_COMM_WORLD;
+  my_com = SCTK_COMM_WORLD;
   MPC_Comm_rank (my_com, &my_rank);
 
   if (my_rank == 0)

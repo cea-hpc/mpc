@@ -739,9 +739,9 @@ static int is_initialized = 0;
 
 #define mpi_check_comm(com, comm)                                              \
   if ((is_finalized != 0) || (is_initialized != 1)) {                          \
-    MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_OTHER, "");                       \
+    MPI_ERROR_REPORT(SCTK_COMM_WORLD, MPI_ERR_OTHER, "");                       \
   } else if (com == MPI_COMM_NULL) {                                           \
-    MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_COMM, "Error in communicator");   \
+    MPI_ERROR_REPORT(SCTK_COMM_WORLD, MPI_ERR_COMM, "Error in communicator");   \
   }
 
 #define mpi_check_status(status,comm)		\
@@ -920,7 +920,7 @@ static int mpi_check_op_type(MPI_Op op, MPI_Datatype datatype){
 static int SCTK__MPI_Attr_clean_communicator (MPI_Comm comm);
 static int SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new);
 
-/* const MPI_Comm MPI_COMM_SELF = MPC_COMM_SELF; */
+/* const MPI_Comm MPI_COMM_SELF = SCTK_COMM_SELF; */
 
 /*
  * MPI Level Per Thread CTX 
@@ -1135,7 +1135,7 @@ inline void sctk_check_auto_free_list(MPI_request_struct_t *requests)
 		tmp = (MPI_internal_request_t *)requests->auto_free_list;
 		
 		/* Test it */
-		_mpc_m_test(&(tmp->req), &flag, MPC_STATUS_IGNORE);
+		_mpc_m_test(&(tmp->req), &flag, SCTK_STATUS_NULL);
 		
 		/* If call has ended */
 		if (flag != 0)
@@ -2478,8 +2478,8 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
   int tmp;
   MPI_request_struct_t *requests;
 
-  if (status != MPC_STATUSES_IGNORE) {
-    status->MPI_ERROR = MPC_SUCCESS;
+  if (status != SCTK_STATUS_NULL) {
+    status->MPI_ERROR = SCTK_SUCCESS;
   }
 
   if (!array_of_requests) {
@@ -2636,7 +2636,7 @@ static int __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[],
     MPI_request_struct_t *requests;
     requests = __sctk_internal_get_MPC_requests();
     *flag = 0;
-    if(array_of_statuses != MPC_STATUSES_IGNORE){
+    if(array_of_statuses != SCTK_STATUS_NULL){
         for (i = 0; i < count; i++)
         {
             array_of_statuses[i].MPI_ERROR = MPI_SUCCESS;
@@ -2678,8 +2678,8 @@ static int __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[],
                 } else {
                     tmp = _mpc_m_test(
                             req, &loc_flag,
-                            (array_of_statuses == MPC_STATUSES_IGNORE)
-                            ? MPC_STATUS_IGNORE
+                            (array_of_statuses == SCTK_STATUS_NULL)
+                            ? SCTK_STATUS_NULL
                             : &(array_of_statuses[i]));
                 }
             }
@@ -2769,7 +2769,7 @@ static int __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_reques
 			}
 			else
 			{
-				tmp = _mpc_m_test(req, &loc_flag,(array_of_statuses == MPI_STATUSES_IGNORE) ? MPC_STATUS_IGNORE:&(array_of_statuses[done]));
+				tmp = _mpc_m_test(req, &loc_flag,(array_of_statuses == MPI_STATUSES_IGNORE) ? SCTK_STATUS_NULL:&(array_of_statuses[done]));
 			}
 			if (loc_flag)
 			{
@@ -2849,7 +2849,7 @@ __INTERNAL__PMPI_Send_init (void *buf, int count, MPI_Datatype datatype,
 {
 	MPI_internal_request_t *req;
 	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
-	if(dest == MPC_PROC_NULL)
+	if(dest == SCTK_PROC_NULL)
 	{
 		req->freeable = 0;
 		req->is_active = 0;
@@ -2858,7 +2858,7 @@ __INTERNAL__PMPI_Send_init (void *buf, int count, MPI_Datatype datatype,
 		req->persistant.buf = buf;
 		req->persistant.count = 0;
 		req->persistant.datatype = datatype;
-		req->persistant.dest_source = MPC_PROC_NULL;
+		req->persistant.dest_source = SCTK_PROC_NULL;
 		req->persistant.tag = MPI_ANY_TAG;
 		req->persistant.comm = comm;
 		req->persistant.op = Send_init;
@@ -2890,7 +2890,7 @@ __INTERNAL__PMPI_Bsend_init (void *buf, int count, MPI_Datatype datatype,
 	MPI_internal_request_t *req;
 	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
 	sctk_nodebug("new request %d", *request);
-	if(dest == MPC_PROC_NULL)
+	if(dest == SCTK_PROC_NULL)
 	{
 	  	req->freeable = 0;
 		req->is_active = 0;
@@ -2899,7 +2899,7 @@ __INTERNAL__PMPI_Bsend_init (void *buf, int count, MPI_Datatype datatype,
 		req->persistant.buf = buf;
 		req->persistant.count = 0;
 		req->persistant.datatype = datatype;
-		req->persistant.dest_source = MPC_PROC_NULL;
+		req->persistant.dest_source = SCTK_PROC_NULL;
 		req->persistant.tag = MPI_ANY_TAG;
 		req->persistant.comm = comm;
 		req->persistant.op = Bsend_init;
@@ -2928,7 +2928,7 @@ __INTERNAL__PMPI_Ssend_init (void *buf, int count, MPI_Datatype datatype,
 {
 	MPI_internal_request_t *req;
 	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
-	if(dest == MPC_PROC_NULL)
+	if(dest == SCTK_PROC_NULL)
 	{
 		req->freeable = 0;
 		req->is_active = 0;
@@ -2937,7 +2937,7 @@ __INTERNAL__PMPI_Ssend_init (void *buf, int count, MPI_Datatype datatype,
 		req->persistant.buf = buf;
 		req->persistant.count = 0;
 		req->persistant.datatype = datatype;
-		req->persistant.dest_source = MPC_PROC_NULL;
+		req->persistant.dest_source = SCTK_PROC_NULL;
 		req->persistant.tag = MPI_ANY_TAG;
 		req->persistant.comm = comm;
 		req->persistant.op = Ssend_init;
@@ -2966,7 +2966,7 @@ __INTERNAL__PMPI_Rsend_init (void *buf, int count, MPI_Datatype datatype,
 {
 	MPI_internal_request_t *req;
 	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
-	if(dest == MPC_PROC_NULL)
+	if(dest == SCTK_PROC_NULL)
 	{
 		req->freeable = 0;
 		req->is_active = 0;
@@ -2975,7 +2975,7 @@ __INTERNAL__PMPI_Rsend_init (void *buf, int count, MPI_Datatype datatype,
 		req->persistant.buf = buf;
 		req->persistant.count = 0;
 		req->persistant.datatype = datatype;
-		req->persistant.dest_source = MPC_PROC_NULL;
+		req->persistant.dest_source = SCTK_PROC_NULL;
 		req->persistant.tag = MPI_ANY_TAG;
 		req->persistant.comm = comm;
 		req->persistant.op = Rsend_init;
@@ -7285,7 +7285,7 @@ int __INTERNAL__PMPI_Scatter_intra(void *sendbuf, int sendcnt,
         j++;
       }
       j--;
-      res = __INTERNAL__PMPI_Waitall(size, sendrequest, MPC_STATUSES_IGNORE);
+      res = __INTERNAL__PMPI_Waitall(size, sendrequest, SCTK_STATUS_NULL);
       if (res != MPI_SUCCESS) {
         sctk_free(sendrequest);
         return res;
@@ -7293,7 +7293,7 @@ int __INTERNAL__PMPI_Scatter_intra(void *sendbuf, int sendcnt,
     }
   }
 
-  res = __INTERNAL__PMPI_Wait(&(request), MPC_STATUS_IGNORE);
+  res = __INTERNAL__PMPI_Wait(&(request), SCTK_STATUS_NULL);
   sctk_free(sendrequest);
   return res;
 }
@@ -8330,7 +8330,7 @@ int __INTERNAL__PMPI_Alltoall_intra(void *sendbuf, int sendcount,
         return res;
       }
     }
-    res = __INTERNAL__PMPI_Waitall(2 * ss, requests, MPC_STATUSES_IGNORE);
+    res = __INTERNAL__PMPI_Waitall(2 * ss, requests, SCTK_STATUS_NULL);
     if (res != MPI_SUCCESS) {
       return res;
     }
@@ -8731,7 +8731,7 @@ int __INTERNAL__PMPI_Alltoallv_intra(void *sendbuf, int *sendcnts, int *sdispls,
         return res;
       }
     }
-    res = __INTERNAL__PMPI_Waitall(2 * ss, requests, MPC_STATUS_IGNORE);
+    res = __INTERNAL__PMPI_Waitall(2 * ss, requests, SCTK_STATUS_NULL);
     if (res != MPI_SUCCESS) {
       return res;
     }
@@ -11497,7 +11497,7 @@ __INTERNAL__PMPI_Allreduce_inter (void *sendbuf, void *recvbuf, int count,
 	
 	if(sctk_is_in_local_group(comm))
 	{
-		root = (rank == 0) ? MPC_ROOT : MPC_PROC_NULL;
+		root = (rank == 0) ? MPC_ROOT : SCTK_PROC_NULL;
 		res = __INTERNAL__PMPI_Reduce(sendbuf, recvbuf, count, datatype, 
 		op, root, comm);
 		if(res != MPI_SUCCESS){return res;}
@@ -11516,7 +11516,7 @@ __INTERNAL__PMPI_Allreduce_inter (void *sendbuf, void *recvbuf, int count,
             return res;
           }
 
-          root = (rank == 0) ? MPC_ROOT : MPC_PROC_NULL;
+          root = (rank == 0) ? MPC_ROOT : SCTK_PROC_NULL;
           res = __INTERNAL__PMPI_Reduce(sendbuf, recvbuf, count, datatype, op,
                                         root, comm);
           if (res != MPI_SUCCESS) {
@@ -12260,12 +12260,12 @@ __INTERNAL__PMPI_Group_translate_ranks (MPI_Group mpi_group1, int n, int *ranks1
 	if ( (MPI_GROUP_NULL == mpi_group1) || (MPI_GROUP_NULL == mpi_group2) )
 	{
 		sctk_nodebug("Wrong group 1 : group1 %d, group2 %d", mpi_group1, mpi_group2);
-		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
+		MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_GROUP,"");
 	}
 	if (n > 0 && ((NULL == ranks1) || (NULL == ranks2 )))
 	{
 		sctk_nodebug("Wrong group n > 0 && ((NULL == ranks1) || (NULL == ranks2 ))");
-		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
+		MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_GROUP,"");
 	}
 
 	if(n == 0)
@@ -12564,12 +12564,12 @@ __INTERNAL__PMPI_Group_incl (MPI_Group mpi_group, int n, int *ranks,
 
   for(i = 0; i < n ; i++){
     if((ranks[i] < 0) || (ranks[i] >= group->task_nb))
-      MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Unvalid ranks");
+      MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_RANK,"Unvalid ranks");
   }
   for(i = 0; i < n ; i++){
     for(j = 0; j < n ; j++){
 	if((j != i) && (ranks[i] == ranks[j]))
-	 MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Unvalid ranks");
+	 MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_RANK,"Unvalid ranks");
     }
   }
 
@@ -12593,9 +12593,9 @@ __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
 	_mpc_m_group_t *newgroup;
 
 	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_newgroup) )
-		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
+		MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_GROUP,"");
 	else if ((NULL == ranks && n > 0) || (n < 0))
-		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"");
+		MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_ARG,"");
 
 	group = __sctk_convert_mpc_group (mpi_group);
 	newgroup = __sctk_new_mpc_group (mpi_newgroup);
@@ -12606,12 +12606,12 @@ __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
 		(*mpi_newgroup) = MPI_GROUP_EMPTY;
 		return MPI_SUCCESS;
 	}
-	if(n >=  group->task_nb )MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"");
+	if(n >=  group->task_nb )MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_ARG,"");
 
   for(i = 0; i < n ; i++){
     for(j = 0; j < n ; j++){
         if((j != i) && (ranks[i] == ranks[j]))
-         MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Unvalid ranks");
+         MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_RANK,"Unvalid ranks");
     }
   }
 
@@ -12630,7 +12630,7 @@ __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
 		for(j=0; j<n; j++)
 		{
 			if((ranks[j] < 0) || (ranks[j] >= group->task_nb))
-				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Unvalid ranks");
+				MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_RANK,"Unvalid ranks");
 			if(i == ranks[j])
 			{
 				is_out = 1;
@@ -12668,13 +12668,13 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 	group = __sctk_convert_mpc_group (mpi_group);
 
 	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_newgroup) )
-		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"group must not be MPI_GROUP_NULL");
+		MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_GROUP,"group must not be MPI_GROUP_NULL");
 
 	__INTERNAL__PMPI_Group_size (mpi_group, &group_size);
 	elements_int_list = (int *) sctk_malloc(sizeof(int) * (group_size+1));
 
 	if (NULL == elements_int_list)
-		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_INTERN,"");
+		MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_INTERN,"");
 
 	for (i = 0; i <= group_size; i++)
 		elements_int_list[i] = -1;
@@ -12687,21 +12687,21 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 		
 		if ((first_rank < 0) || (first_rank >= group_size) || (last_rank < 0) || (last_rank >= group_size) || (stride == 0))
 		{
-			MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
+			MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 		}
 
 		if ((first_rank < last_rank))
 		{
 			if (stride < 0)
 			{
-				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
+				MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 			}
 
 			for (index = first_rank; index <= last_rank; index += stride)
 			{
 				if (elements_int_list[index] != -1)
 				{
-					MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
+					MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 				}
 				elements_int_list[index] = i;
 			}
@@ -12710,14 +12710,14 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 		{
 			if (stride > 0)
 			{
-				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
+				MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 			}
 
 			for (index = first_rank; index >= last_rank; index += stride)
 			{
 				if (elements_int_list[index] != -1)
 				{
-					MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
+					MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 				}
 				elements_int_list[index] = i;
 			}
@@ -12727,7 +12727,7 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 			index = first_rank;
 			if (elements_int_list[index] != -1)
 			{
-				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
+				MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 			}
 			elements_int_list[index] = i;
 		}
@@ -12870,13 +12870,13 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 	}
 
 	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_newgroup) )
-		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"group must not be MPI_GROUP_NULL");
+		MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_GROUP,"group must not be MPI_GROUP_NULL");
 
 	__INTERNAL__PMPI_Group_size (mpi_group, &group_size);
 	elements_int_list = (int *) sctk_malloc(sizeof(int) * (group_size+1));
 
 	if (NULL == elements_int_list)
-		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_INTERN,"");
+		MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_INTERN,"");
 
 	for (i = 0; i < group_size; i++)
 		elements_int_list[i] = -1;
@@ -12889,21 +12889,21 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 
 		if ((first_rank < 0) || (first_rank >= group_size) || (last_rank < 0) || (last_rank >= group_size) || (stride == 0))
 		{
-			MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
+			MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 		}
 
 		if ((first_rank < last_rank))
 		{
 			if (stride < 0)
 			{
-				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
+				MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 			}
 
 			for (index = first_rank; index <= last_rank; index += stride)
 			{
 				if (elements_int_list[index] != -1)
 				{
-					MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
+					MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 				}
 				elements_int_list[index] = i;
 			}
@@ -12912,14 +12912,14 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 		{
 			if (stride > 0)
 			{
-				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
+				MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 			}
 
 			for (index = first_rank; index >= last_rank; index += stride)
 			{
 				if (elements_int_list[index] != -1)
 				{
-					MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
+					MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 				}
 				elements_int_list[index] = i;
 			}
@@ -12929,7 +12929,7 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 			index = first_rank;
 			if (elements_int_list[index] != -1)
 			{
-				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
+				MPI_ERROR_REPORT(SCTK_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 			}
 			elements_int_list[index] = i;
 		}
@@ -13081,7 +13081,7 @@ static int __INTERNAL__PMPI_Comm_size(MPI_Comm comm, int *size) {
     last_comm = comm;
     last_size = *size;
 
-    if( comm == MPC_COMM_WORLD )
+    if( comm == SCTK_COMM_WORLD )
     {
       comm_world_size = *size;
     }
@@ -14108,7 +14108,7 @@ INFO("Very simple approach never reorder nor take care of hardware topology")
 	}
     }
 
-	if(*comm_cart != MPC_COMM_NULL)
+	if(*comm_cart != SCTK_COMM_NULL)
 	{
 		tmp = mpc_mpc_get_per_comm_data(*comm_cart);
 		topo = &(tmp->topo);
@@ -15586,7 +15586,7 @@ SCTK__MPI_INIT_REQUEST (MPI_Request * request)
 int PMPIX_Swap (void **sendrecv_buf , int remote_rank, MPI_Count size , MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
-	if(remote_rank == MPC_PROC_NULL)
+	if(remote_rank == SCTK_PROC_NULL)
 	{
 		res = MPI_SUCCESS;
 		SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -15609,7 +15609,7 @@ int PMPIX_Swap (void **sendrecv_buf , int remote_rank, MPI_Count size , MPI_Comm
 int PMPIX_Exchange(void **send_buf , void **recvbuff, int remote_rank, MPI_Count size , MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
-	if(remote_rank == MPC_PROC_NULL)
+	if(remote_rank == SCTK_PROC_NULL)
 	{
 		res = MPI_SUCCESS;
 		SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -15626,7 +15626,7 @@ static inline int PMPI_Send_p(void *buf, int count, MPI_Datatype datatype,
                               int dest, int tag, MPI_Comm comm) {
   int res = MPI_ERR_INTERN;
   sctk_debug ("SEND buf %p type %d tag %d dest %d count %d", buf, datatype,tag,dest,count);
-  if(dest == MPC_PROC_NULL)
+  if(dest == SCTK_PROC_NULL)
   {
 	res = MPI_SUCCESS;
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -15662,7 +15662,7 @@ static inline int PMPI_Recv_p(void *buf, int count, MPI_Datatype datatype,
   sctk_nodebug("MPI_Recv count %d, datatype %d, source %d, tag %d, comm %d",
                count, datatype, source, tag, comm);
   int res = MPI_ERR_INTERN;
-  if (source == MPC_PROC_NULL) {
+  if (source == SCTK_PROC_NULL) {
     res = MPI_SUCCESS;
     MPI_Status empty_status;
     empty_status.MPC_SOURCE = MPI_PROC_NULL;
@@ -15737,7 +15737,7 @@ PMPI_Bsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	    MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-  if(dest == MPC_PROC_NULL)
+  if(dest == SCTK_PROC_NULL)
   {
 	res = MPI_SUCCESS;
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -15763,7 +15763,7 @@ PMPI_Ssend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	    MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-  if(dest == MPC_PROC_NULL)
+  if(dest == SCTK_PROC_NULL)
   {
 	res = MPI_SUCCESS;
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -15789,7 +15789,7 @@ PMPI_Rsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	    MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-  if(dest == MPC_PROC_NULL)
+  if(dest == SCTK_PROC_NULL)
   {
 	res = MPI_SUCCESS;
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -15835,7 +15835,7 @@ PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	sctk_nodebug("Isend");
   int res = MPI_ERR_INTERN;
   SCTK__MPI_INIT_REQUEST (request);
-  if(dest == MPC_PROC_NULL)
+  if(dest == SCTK_PROC_NULL)
   {
 	res = MPI_SUCCESS;
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -15866,7 +15866,7 @@ PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 {
   int res = MPI_ERR_INTERN;
   SCTK__MPI_INIT_REQUEST (request);
-  if(dest == MPC_PROC_NULL)
+  if(dest == SCTK_PROC_NULL)
   {
 	  res = MPI_SUCCESS;
 	  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -15895,7 +15895,7 @@ PMPI_Issend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 {
   int res = MPI_ERR_INTERN;
   SCTK__MPI_INIT_REQUEST (request);
-  if(dest == MPC_PROC_NULL)
+  if(dest == SCTK_PROC_NULL)
   {
 	  res = MPI_SUCCESS;
 	  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -15924,7 +15924,7 @@ PMPI_Irsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 {
   int res = MPI_ERR_INTERN;
   SCTK__MPI_INIT_REQUEST (request);
-  if(dest == MPC_PROC_NULL)
+  if(dest == SCTK_PROC_NULL)
   {
 	res = MPI_SUCCESS;
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -15953,7 +15953,7 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
 {
   int res = MPI_ERR_INTERN;
   SCTK__MPI_INIT_REQUEST (request);
-  if(source == MPC_PROC_NULL)
+  if(source == SCTK_PROC_NULL)
   {
 	res = MPI_SUCCESS;
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);

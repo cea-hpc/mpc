@@ -47,7 +47,7 @@ run (void *arg)
   void *tmp1;
   void *tmp2;
   void *tmp3;
-  my_com = MPC_COMM_WORLD;
+  my_com = SCTK_COMM_WORLD;
   MPC_Comm_rank (my_com, &my_rank);
   gethostname (name, 4095);
   mprintf (stderr, "coucou from %d %s\n", my_rank, name);

@@ -24,7 +24,7 @@
 
 #include "mpc_datatypes.h"
 #include "mpc_mpi_internal.h"
-#include "mpcmp.h"
+#include "messaging.h"
 #include "sctk_communicator.h"
 #include "sctk_control_messages.h"
 #include <string.h>
@@ -1804,7 +1804,7 @@ int mpc_MPI_Win_fence(__UNUSED__ int assert, MPI_Win win) {
 
 int mpc_MPI_Win_lock(int lock_type, int rank, __UNUSED__ int assert, MPI_Win win) {
   sctk_nodebug("LLLLLLLLLLLLLLLLL to %d", rank);
-  if (rank == MPC_PROC_NULL) {
+  if (rank == SCTK_PROC_NULL) {
     return MPI_SUCCESS;
   }
 
@@ -1901,7 +1901,7 @@ int mpc_MPI_Win_lock(int lock_type, int rank, __UNUSED__ int assert, MPI_Win win
 static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
                                        int do_unlock_all) {
   sctk_info("UUUUUUUUUUUUUU to %d", rank);
-  if (rank == MPC_PROC_NULL)
+  if (rank == SCTK_PROC_NULL)
     return MPI_SUCCESS;
 
   /* Retrieve the MPI Desc */

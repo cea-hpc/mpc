@@ -38,7 +38,7 @@ run (void *arg)
   int dom_size;
   int *tab;
 
-  my_com = MPC_COMM_WORLD;
+  my_com = SCTK_COMM_WORLD;
   MPC_Comm_rank (my_com, &my_rank);
   MPC_Comm_size (my_com, &dom_size);
 
