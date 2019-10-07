@@ -32,7 +32,7 @@ int is_printing = 1;
 void
 run (void *arg)
 {
-  sctk_communicator_t my_com;
+  mpc_mp_communicator_t my_com;
   int my_rank;
   int my_size;
   int res;

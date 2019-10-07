@@ -40,7 +40,7 @@
 struct mpc_mpi_per_communicator_s;
 
 typedef struct {
-  sctk_communicator_t key;
+  mpc_mp_communicator_t key;
 
   mpc_common_spinlock_t err_handler_lock;
   MPC_Handler_function*  err_handler;
@@ -132,31 +132,31 @@ static inline void sctk_datatype_unlock( mpc_mpi_m_per_mpi_process_ctx_t *task_s
 }
 
 sctk_contiguous_datatype_t * _mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get( mpc_mpi_m_per_mpi_process_ctx_t *task_specific,
-									            sctk_datatype_t datatype );
-sctk_contiguous_datatype_t *_mpc_m_per_mpi_process_ctx_contiguous_datatype_get(sctk_datatype_t datatype);
+									            mpc_mp_datatype_t datatype );
+sctk_contiguous_datatype_t *_mpc_m_per_mpi_process_ctx_contiguous_datatype_get(mpc_mp_datatype_t datatype);
 
-sctk_derived_datatype_t * _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(  mpc_mpi_m_per_mpi_process_ctx_t *task_specific, sctk_datatype_t datatype );
-sctk_derived_datatype_t *_mpc_m_per_mpi_process_ctx_derived_datatype_get(sctk_datatype_t datatype);
+sctk_derived_datatype_t * _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(  mpc_mpi_m_per_mpi_process_ctx_t *task_specific, mpc_mp_datatype_t datatype );
+sctk_derived_datatype_t *_mpc_m_per_mpi_process_ctx_derived_datatype_get(mpc_mp_datatype_t datatype);
 
 /** \brief Retrieves a given per communicator context from task CTX
  */
-mpc_per_communicator_t* _mpc_m_per_communicator_get(struct mpc_mpi_m_per_mpi_process_ctx_s* task_specific,sctk_communicator_t comm);
+mpc_per_communicator_t* _mpc_m_per_communicator_get(struct mpc_mpi_m_per_mpi_process_ctx_s* task_specific,mpc_mp_communicator_t comm);
 
-int _mpc_m_type_hcontiguous_ctx (sctk_datatype_t * datatype, size_t count, sctk_datatype_t *data_in, struct Datatype_External_context * ctx);
+int _mpc_m_type_hcontiguous_ctx (mpc_mp_datatype_t * datatype, size_t count, mpc_mp_datatype_t *data_in, struct Datatype_External_context * ctx);
 
-int _mpc_m_derived_datatype_try_get_info (sctk_datatype_t datatype, int *res, sctk_derived_datatype_t *output_datatype );
+int _mpc_m_derived_datatype_try_get_info (mpc_mp_datatype_t datatype, int *res, sctk_derived_datatype_t *output_datatype );
 
-int _mpc_m_type_ctx_set( sctk_datatype_t datatype,  struct Datatype_External_context * dctx );
+int _mpc_m_type_ctx_set( mpc_mp_datatype_t datatype,  struct Datatype_External_context * dctx );
 
 int _mpc_m_derived_datatype_on_slot ( int id,
 				    mpc_pack_absolute_indexes_t * begins,
 				    mpc_pack_absolute_indexes_t * ends,
-				    sctk_datatype_t * types,
+				    mpc_mp_datatype_t * types,
 			     	    unsigned long count,
 				    mpc_pack_absolute_indexes_t lb, int is_lb,
 				    mpc_pack_absolute_indexes_t ub, int is_ub);
 
-int _mpc_m_type_set_size(sctk_datatype_t datatype, size_t size );
+int _mpc_m_type_set_size(mpc_mp_datatype_t datatype, size_t size );
 
 /************************************************************************/
 /* Per Communicating Thread context	                                          */
@@ -171,9 +171,9 @@ void mpc_mpi_m_per_thread_ctx_release();
 /* Non Generic MPI interface function                                   */
 /************************************************************************/
 
-int _mpc_m_waitallp (sctk_msg_count_t count,
-		   MPC_Request * parray_of_requests[],
-		   sctk_status_t array_of_statuses[]);
+int _mpc_m_waitallp (mpc_mp_msg_count_t count,
+		   mpc_mp_request_t * parray_of_requests[],
+		   mpc_mp_status_t array_of_statuses[]);
 
 
 #endif /* MPC_COMMON_H */

@@ -59,7 +59,7 @@ typedef enum {
 
 void sctk_control_messages_send_process(int dest_process, int subtype,
                                         char param, void *buffer, size_t size);
-void sctk_control_messages_send_to_task(int dest_task, sctk_communicator_t comm,
+void sctk_control_messages_send_to_task(int dest_task, mpc_mp_communicator_t comm,
                                         int subtype, char param, void *buffer,
                                         size_t size);
 void sctk_control_messages_send_rail( int dest, int subtype, char param, void *buffer, size_t size, int  rail_id );
@@ -76,9 +76,9 @@ struct sctk_control_message_fence_ctx
         int comm;
 };
 
-void sctk_control_message_fence(int target_task, sctk_communicator_t comm);
-void sctk_control_message_fence_req(int target_task, sctk_communicator_t comm,
-                                    sctk_request_t *req);
+void sctk_control_message_fence(int target_task, mpc_mp_communicator_t comm);
+void sctk_control_message_fence_req(int target_task, mpc_mp_communicator_t comm,
+                                    mpc_mp_request_t *req);
 void sctk_control_message_fence_handler( struct sctk_control_message_fence_ctx *ctx );
 
 /************************************************************************/

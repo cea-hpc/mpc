@@ -301,7 +301,7 @@ static inline void BASIC_convert(int type_byte_size, char *src, char *dest)
  *
  *  \warning the data-type mush be a common one !
  */
-static inline size_t MPC_Extern32_common_type_size( sctk_datatype_t common_type )
+static inline size_t MPC_Extern32_common_type_size( mpc_mp_datatype_t common_type )
 {
 	if( !sctk_datatype_is_common( common_type ) )
 	{
@@ -380,7 +380,7 @@ static inline size_t MPC_Extern32_common_type_size( sctk_datatype_t common_type 
  *
  *  \warning the data-type mush be a common one !
  */
-static inline int MPC_Unsigned_type( sctk_datatype_t common_type )
+static inline int MPC_Unsigned_type( mpc_mp_datatype_t common_type )
 {
 	if( !sctk_datatype_is_common( common_type ) )
 	{
@@ -413,7 +413,7 @@ static inline int MPC_Unsigned_type( sctk_datatype_t common_type )
 }
 
 
-void MPC_Extern32_convert( sctk_datatype_t * typevector ,
+void MPC_Extern32_convert( mpc_mp_datatype_t * typevector ,
 						   int type_vector_size, 
 						   char * native_buff, 
 						   size_t max_native_size, 

@@ -25,11 +25,11 @@
 #include <stdlib.h>
 /************************** TYPES **************************/
 /** define the communicator number type **/
-typedef int sctk_communicator_t;
+typedef int mpc_mp_communicator_t;
 /** define a data-type **/
-typedef int sctk_datatype_t;
+typedef int mpc_mp_datatype_t;
 /** Message count **/
-typedef int sctk_msg_count_t;
+typedef int mpc_mp_msg_count_t;
 /** A message header to be put in the request **/
 typedef struct{
 	int source;
@@ -37,8 +37,8 @@ typedef struct{
 	int destination_task;
 	int source_task;
 	int message_tag;
-	sctk_communicator_t communicator;
-	sctk_msg_count_t msg_size;
+	mpc_mp_communicator_t communicator;
+	mpc_mp_msg_count_t msg_size;
 }sctk_header_t;
 /** Status Definition **/
 typedef struct
@@ -47,20 +47,20 @@ typedef struct
 	int MPC_TAG;		/**< Tag of the message */
 	int MPC_ERROR;		/**< Did we encounter an error */
 	int cancelled;		/**< Was the message canceled */
-	sctk_msg_count_t size;	/**< Size of the message */
-} sctk_status_t;
+	mpc_mp_msg_count_t size;	/**< Size of the message */
+} mpc_mp_status_t;
 
 #define SCTK_STATUS_NULL NULL
 #define SCTK_STATUS_INIT {MPC_ANY_SOURCE,MPC_ANY_TAG,MPC_SUCCESS,0,0}
 
 
 /** Generalized requests functions **/
-typedef int sctk_Grequest_query_function( void * extra_state, sctk_status_t *status );
+typedef int sctk_Grequest_query_function( void * extra_state, mpc_mp_status_t *status );
 typedef int sctk_Grequest_cancel_function( void * extra_state, int complete );
 typedef int sctk_Grequest_free_function( void * extra_state );
 /** Extended Generalized requests functions **/
-typedef int sctk_Grequest_poll_fn( void * extra_state , sctk_status_t * status );
-typedef int sctk_Grequest_wait_fn( int count, void ** array_of_states, double timeout, sctk_status_t * status );
+typedef int sctk_Grequest_poll_fn( void * extra_state , mpc_mp_status_t * status );
+typedef int sctk_Grequest_wait_fn( int count, void ** array_of_states, double timeout, mpc_mp_status_t * status );
 /** Generalized Request classes **/
 typedef int sctk_Request_class;
 
@@ -99,11 +99,11 @@ typedef struct
   /* This is a pointer to the registered memory region
    * in order to unpin when request completes */
   void *ptr_to_pin_ctx;
-} sctk_request_t;
+} mpc_mp_request_t;
 
 /** Reduction Operations **/
-typedef void (*sctk_Op_f) (const void *, void *, size_t, sctk_datatype_t);
-typedef void (sctk_Op_User_function) (void *, void *, int *, sctk_datatype_t *);
+typedef void (*sctk_Op_f) (const void *, void *, size_t, mpc_mp_datatype_t);
+typedef void (sctk_Op_User_function) (void *, void *, int *, mpc_mp_datatype_t *);
 
 typedef struct
 {
@@ -160,11 +160,11 @@ size_t RDMA_type_size( RDMA_type type );
 /** define the MPI_COMM_SELF internal communicator number **/
 #define SCTK_COMM_SELF 1
 /** Define the NULL communicator number */
-#define SCTK_COMM_NULL  ((sctk_communicator_t)(-1))
+#define SCTK_COMM_NULL  ((mpc_mp_communicator_t)(-1))
 /** Define the NULL error handler */
 #define SCTK_ERRHANDLER_NULL 0
 /** Not using datatypes */
-#define SCTK_DATATYPE_IGNORE ((sctk_datatype_t)0)
+#define SCTK_DATATYPE_IGNORE ((mpc_mp_datatype_t)0)
 /** In place collectives **/
 #define SCTK_IN_PLACE ((void*)-1)
 /** PROC_NULL **/

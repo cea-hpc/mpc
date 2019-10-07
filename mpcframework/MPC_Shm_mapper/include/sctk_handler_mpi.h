@@ -51,6 +51,6 @@ void sctk_shm_mpi_handler_free(struct sctk_alloc_mapper_handler_s *mpi_handler);
  * @param comm the communicator to be used (stored in the handler desc)
  */
 struct sctk_alloc_mapper_handler_s *
-sctk_shm_mpi_handler_init(sctk_communicator_t comm);
+sctk_shm_mpi_handler_init(mpc_mp_communicator_t comm);
 
 #endif

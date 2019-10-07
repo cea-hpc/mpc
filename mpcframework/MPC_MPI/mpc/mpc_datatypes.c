@@ -220,7 +220,7 @@ struct Datatype_Keyval *Datatype_Keyval_new(int *type_keyval) {
 }
 
 void Datatype_Keyval_hit_delete(int type_keyval, void *attribute_val,
-                                sctk_datatype_t type) {
+                                mpc_mp_datatype_t type) {
   struct Datatype_Keyval *kv = Datatype_Keyval_get(type_keyval);
 
   if (!kv)
@@ -232,7 +232,7 @@ void Datatype_Keyval_hit_delete(int type_keyval, void *attribute_val,
   (kv->delete)(type, type_keyval, attribute_val, kv->extra_state);
 }
 
-void Datatype_Keyval_hit_copy(int type_keyval, sctk_datatype_t oldtype,
+void Datatype_Keyval_hit_copy(int type_keyval, mpc_mp_datatype_t oldtype,
                               void **attribute_val_in, void **attribute_val_out,
                               int *flag) {
   struct Datatype_Keyval *kv = Datatype_Keyval_get(type_keyval);
@@ -307,7 +307,7 @@ int Datatype_Attr_store_init(struct Datatype_Attr_store *store) {
 }
 
 int Datatype_Attr_store_release(struct Datatype_Attr_store *store,
-                                sctk_datatype_t container_type) {
+                                mpc_mp_datatype_t container_type) {
   void *pattr = NULL;
   struct Datatype_Attr *attr = NULL;
 
@@ -334,7 +334,7 @@ int Datatype_Attr_store_release(struct Datatype_Attr_store *store,
 
 /* We need this funtions are MPI_* types are macro replaced by MPC_* ones
  * and the standard wants MPI_* so we replace ... */
-void sctk_common_datatype_set_name_helper( sctk_datatype_t datatype, char * name )
+void sctk_common_datatype_set_name_helper( mpc_mp_datatype_t datatype, char * name )
 {
 	char * tmp = strdup( name );
 	tmp[2] = 'I';
@@ -344,7 +344,7 @@ void sctk_common_datatype_set_name_helper( sctk_datatype_t datatype, char * name
 
 
 
-void __init_a_composed_common_types(sctk_datatype_t target_type, size_t disp, sctk_datatype_t type_a, sctk_datatype_t type_b, size_t struct_size )
+void __init_a_composed_common_types(mpc_mp_datatype_t target_type, size_t disp, mpc_mp_datatype_t type_a, mpc_mp_datatype_t type_b, size_t struct_size )
 {
 	/* Compute data-type sizes */
 	size_t sa, sb;
@@ -355,7 +355,7 @@ void __init_a_composed_common_types(sctk_datatype_t target_type, size_t disp, sc
 	/* Allocate type context */
  	mpc_pack_absolute_indexes_t * begins = sctk_malloc( sizeof(mpc_pack_absolute_indexes_t) * 2 );
 	mpc_pack_absolute_indexes_t * ends = sctk_malloc( sizeof(mpc_pack_absolute_indexes_t) * 2 );
-	sctk_datatype_t * types = sctk_malloc( sizeof(sctk_datatype_t) * 2 );
+	mpc_mp_datatype_t * types = sctk_malloc( sizeof(mpc_mp_datatype_t) * 2 );
 	
 	assume( begins != NULL );
 	assume( ends != NULL );
@@ -407,7 +407,7 @@ void __init_a_composed_common_types(sctk_datatype_t target_type, size_t disp, sc
 void init_composed_common_types()
 {
 	size_t disp;
-	sctk_datatype_t tmp;
+	mpc_mp_datatype_t tmp;
 	/* MPC_FLOAT_INT (SCTK_DERIVED_DATATYPE_BASE */
 	mpc_float_int foo_0;
 	disp = ((char *)&foo_0.b - (char *)&foo_0.a);
@@ -545,7 +545,7 @@ void init_composed_common_types()
 void release_composed_common_types()
 {
 
-  sctk_datatype_t tmp;
+  mpc_mp_datatype_t tmp;
   tmp = MPC_FLOAT_INT;
   _mpc_m_type_free(&tmp);
   tmp = MPC_LONG_INT;
@@ -635,7 +635,7 @@ void sctk_common_datatype_init()
 	sctk_common_datatype_set_name_helper( MPC_PACKED, "MPI_PACKED");
 }
 
-void sctk_common_datatype_display( sctk_datatype_t datatype )
+void sctk_common_datatype_display( mpc_mp_datatype_t datatype )
 {
 	if( !sctk_datatype_is_common( datatype ) )
 	{
@@ -654,7 +654,7 @@ void sctk_common_datatype_display( sctk_datatype_t datatype )
 /* Contiguous Datatype                                                  */
 /************************************************************************/
 
-void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t id_rank , size_t element_size, size_t count, sctk_datatype_t datatype )
+void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t id_rank , size_t element_size, size_t count, mpc_mp_datatype_t datatype )
 {
 	type->id_rank = id_rank;
 	type->size = element_size * count;
@@ -680,7 +680,7 @@ void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
 	{
           /* Attrs */
           Datatype_Attr_store_release(&type->attrs,
-                                      (sctk_datatype_t)type->datatype);
+                                      (mpc_mp_datatype_t)type->datatype);
 
           sctk_datatype_context_free(&type->context);
 
@@ -736,11 +736,11 @@ void sctk_contiguous_datatype_display( sctk_contiguous_datatype_t * target_type 
 /************************************************************************/
 
 void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
-				 sctk_datatype_t id,
+				 mpc_mp_datatype_t id,
 				 unsigned long count,
                                  mpc_pack_absolute_indexes_t * begins,
                                  mpc_pack_absolute_indexes_t * ends,
-                                 sctk_datatype_t * datatypes,
+                                 mpc_mp_datatype_t * datatypes,
                                  mpc_pack_absolute_indexes_t lb, 
 				 int is_lb,
 				 mpc_pack_absolute_indexes_t ub,
@@ -757,7 +757,7 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 	type->opt_begins = type->begins;
 	type->opt_ends = type->ends;
 
-	type->datatypes = (sctk_datatype_t *) sctk_malloc (count * sizeof(sctk_datatype_t));
+	type->datatypes = (mpc_mp_datatype_t *) sctk_malloc (count * sizeof(mpc_mp_datatype_t));
 
 	/*EXPAT*/
 	if( !type->begins || !type->ends || !type->datatypes )
@@ -769,7 +769,7 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 
 	memcpy (type->begins, begins, count * sizeof (mpc_pack_absolute_indexes_t));
 	memcpy (type->ends, ends, count * sizeof (mpc_pack_absolute_indexes_t));
-	memcpy (type->datatypes, datatypes, count * sizeof (sctk_datatype_t));
+	memcpy (type->datatypes, datatypes, count * sizeof (mpc_mp_datatype_t));
 
 	/* Fill the rest of the structure */
 	type->size = 0;
@@ -871,7 +871,7 @@ int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
               if (to_free[i] && not_released_yet &&
                   !sctk_datatype_is_common(i) &&
                   !sctk_datatype_is_boundary(i)) {
-                sctk_datatype_t tmp = i;
+                mpc_mp_datatype_t tmp = i;
                 _mpc_m_type_free(&tmp);
               }
             }
@@ -1072,9 +1072,9 @@ void sctk_derived_datatype_display( sctk_derived_datatype_t *target_type )
 }
 
 extern sctk_derived_datatype_t *
-_mpc_m_per_mpi_process_ctx_derived_datatype_get(sctk_datatype_t datatype);
+_mpc_m_per_mpi_process_ctx_derived_datatype_get(mpc_mp_datatype_t datatype);
 
-void *sctk_derived_datatype_serialize(sctk_datatype_t type, size_t *size,
+void *sctk_derived_datatype_serialize(mpc_mp_datatype_t type, size_t *size,
                                       size_t header_pad) {
   assume(sctk_datatype_is_derived(type));
   assume(size);
@@ -1085,7 +1085,7 @@ void *sctk_derived_datatype_serialize(sctk_datatype_t type, size_t *size,
 
   *size = sizeof(size_t) +
           2 * dtype->count * sizeof(mpc_pack_absolute_indexes_t) +
-          dtype->count * sizeof(sctk_datatype_t) + sizeof(struct inner_lbub) +
+          dtype->count * sizeof(mpc_mp_datatype_t) + sizeof(struct inner_lbub) +
           header_pad + 1;
 
   void *ret = sctk_malloc(*size);
@@ -1098,7 +1098,7 @@ void *sctk_derived_datatype_serialize(sctk_datatype_t type, size_t *size,
   ssize_t *count = (ssize_t *)(ret + header_pad);
   mpc_pack_absolute_indexes_t *begins = (count + 1);
   mpc_pack_absolute_indexes_t *ends = begins + dtype->count;
-  sctk_datatype_t *types = (sctk_datatype_t *)(ends + dtype->count);
+  mpc_mp_datatype_t *types = (mpc_mp_datatype_t *)(ends + dtype->count);
   struct inner_lbub *lb_ub = (struct inner_lbub *)(types + dtype->count);
   char *guard = ((char *)lb_ub + 1);
 
@@ -1126,12 +1126,12 @@ void *sctk_derived_datatype_serialize(sctk_datatype_t type, size_t *size,
   return ret;
 }
 
-sctk_datatype_t sctk_derived_datatype_deserialize(void *buff, size_t size,
+mpc_mp_datatype_t sctk_derived_datatype_deserialize(void *buff, size_t size,
                                                   size_t header_pad) {
   ssize_t *count = (ssize_t *)(buff + header_pad);
   mpc_pack_absolute_indexes_t *begins = (count + 1);
   mpc_pack_absolute_indexes_t *ends = begins + *count;
-  sctk_datatype_t *types = (sctk_datatype_t *)(ends + *count);
+  mpc_mp_datatype_t *types = (mpc_mp_datatype_t *)(ends + *count);
   struct inner_lbub *lb_ub = (struct inner_lbub *)(types + *count);
 
   assume(count < (ssize_t*)(buff + size));
@@ -1139,7 +1139,7 @@ sctk_datatype_t sctk_derived_datatype_deserialize(void *buff, size_t size,
   assume(count < (ssize_t*)(ends + size));
   assume(count < (ssize_t*)(types + size));
 
-  sctk_datatype_t ret;
+  mpc_mp_datatype_t ret;
 
   struct Datatype_External_context dtctx;
   sctk_datatype_external_context_clear(&dtctx);
@@ -1157,7 +1157,7 @@ sctk_datatype_t sctk_derived_datatype_deserialize(void *buff, size_t size,
   return ret;
 }
 
-sctk_datatype_t sctk_datatype_get_inner_type(sctk_datatype_t type) {
+mpc_mp_datatype_t sctk_datatype_get_inner_type(mpc_mp_datatype_t type) {
   assume(!sctk_datatype_is_common(type));
 
   if (sctk_datatype_is_struct_datatype(type))
@@ -1175,7 +1175,7 @@ sctk_datatype_t sctk_datatype_get_inner_type(sctk_datatype_t type) {
 
   // sctk_derived_datatype_display( dtype );
 
-  sctk_datatype_t itype = -1;
+  mpc_mp_datatype_t itype = -1;
 
   size_t i;
 
@@ -1216,7 +1216,7 @@ struct Datatype_Array * Datatype_Array_init()
 }
 
 
-int Datatype_is_allocated( struct Datatype_Array * da, sctk_datatype_t datatype )
+int Datatype_is_allocated( struct Datatype_Array * da, mpc_mp_datatype_t datatype )
 {
 	sctk_contiguous_datatype_t * cont = NULL;
 	sctk_derived_datatype_t * deriv = NULL;
@@ -1259,7 +1259,7 @@ void Datatype_Array_release( struct Datatype_Array * da )
                   sctk_debug("Freeing unfreed datatype [%d] did you call "
                              "MPI_Type_free on all your MPI_Datatypes ?",
                              i);
-                  sctk_datatype_t tmp = i;
+                  mpc_mp_datatype_t tmp = i;
                   _mpc_m_type_free(&tmp);
                 }
   }
@@ -1267,7 +1267,7 @@ void Datatype_Array_release( struct Datatype_Array * da )
   sctk_free(da);
 }
 
-sctk_contiguous_datatype_t *  Datatype_Array_get_contiguous_datatype( struct Datatype_Array * da ,  sctk_datatype_t datatype)
+sctk_contiguous_datatype_t *  Datatype_Array_get_contiguous_datatype( struct Datatype_Array * da ,  mpc_mp_datatype_t datatype)
 {
 	assume( sctk_datatype_is_contiguous( datatype ) );
 
@@ -1276,14 +1276,14 @@ sctk_contiguous_datatype_t *  Datatype_Array_get_contiguous_datatype( struct Dat
 }
 
 
-sctk_derived_datatype_t * Datatype_Array_get_derived_datatype( struct Datatype_Array * da  ,  sctk_datatype_t datatype)
+sctk_derived_datatype_t * Datatype_Array_get_derived_datatype( struct Datatype_Array * da  ,  mpc_mp_datatype_t datatype)
 {
 	assume( sctk_datatype_is_derived( datatype ) );
 
         return da->derived_user_types[MPC_TYPE_MAP_TO_DERIVED(datatype)];
 }
 
-void Datatype_Array_set_derived_datatype( struct Datatype_Array * da ,  sctk_datatype_t datatype, sctk_derived_datatype_t * value )
+void Datatype_Array_set_derived_datatype( struct Datatype_Array * da ,  mpc_mp_datatype_t datatype, sctk_derived_datatype_t * value )
 {
 	assume( sctk_datatype_is_derived( datatype ) );
 
@@ -1295,9 +1295,9 @@ void Datatype_Array_set_derived_datatype( struct Datatype_Array * da ,  sctk_dat
 /************************************************************************/
 
 static inline struct Datatype_Attr_store *
-sctk_type_get_attr_store(struct Datatype_Array *da, sctk_datatype_t type) {
+sctk_type_get_attr_store(struct Datatype_Array *da, mpc_mp_datatype_t type) {
 
-  sctk_datatype_t_kind kind = sctk_datatype_kind(type);
+  mpc_mp_datatype_t_kind kind = sctk_datatype_kind(type);
 
   struct Datatype_Attr_store *store = NULL;
 
@@ -1326,7 +1326,7 @@ sctk_type_get_attr_store(struct Datatype_Array *da, sctk_datatype_t type) {
   return store;
 }
 
-int sctk_type_set_attr(struct Datatype_Array *da, sctk_datatype_t type,
+int sctk_type_set_attr(struct Datatype_Array *da, mpc_mp_datatype_t type,
                        int type_keyval, void *attribute_val) {
   struct Datatype_Attr_store *store = sctk_type_get_attr_store(da, type);
 
@@ -1348,7 +1348,7 @@ int sctk_type_set_attr(struct Datatype_Array *da, sctk_datatype_t type,
   return MPC_SUCCESS;
 }
 
-int sctk_type_get_attr(struct Datatype_Array *da, sctk_datatype_t type,
+int sctk_type_get_attr(struct Datatype_Array *da, mpc_mp_datatype_t type,
                        int type_keyval, void *attribute_val, int *flag) {
   struct Datatype_Attr_store *store = sctk_type_get_attr_store(da, type);
 
@@ -1372,7 +1372,7 @@ int sctk_type_get_attr(struct Datatype_Array *da, sctk_datatype_t type,
   return MPC_SUCCESS;
 }
 
-int sctk_type_delete_attr(struct Datatype_Array *da, sctk_datatype_t type,
+int sctk_type_delete_attr(struct Datatype_Array *da, mpc_mp_datatype_t type,
                           int type_keyval) {
   struct Datatype_Attr_store *store = sctk_type_get_attr_store(da, type);
 
@@ -1402,7 +1402,7 @@ struct Datatype_name_cell * datatype_names = NULL;
 /** \brief Lock protecting \ref datatype_names */
 mpc_common_spinlock_t datatype_names_lock = SCTK_SPINLOCK_INITIALIZER;
 
-static inline struct Datatype_name_cell * sctk_datype_get_name_cell( sctk_datatype_t datatype )
+static inline struct Datatype_name_cell * sctk_datype_get_name_cell( mpc_mp_datatype_t datatype )
 {
 	struct Datatype_name_cell *cell;
 	
@@ -1413,7 +1413,7 @@ static inline struct Datatype_name_cell * sctk_datype_get_name_cell( sctk_dataty
 
 
 
-int sctk_datype_set_name( sctk_datatype_t datatype, char * name )
+int sctk_datype_set_name( mpc_mp_datatype_t datatype, char * name )
 {
 	/* First locate a previous cell */
 	mpc_common_spinlock_lock(&datatype_names_lock);
@@ -1441,7 +1441,7 @@ int sctk_datype_set_name( sctk_datatype_t datatype, char * name )
 }
 
 
-char * sctk_datype_get_name( sctk_datatype_t datatype )
+char * sctk_datype_get_name( mpc_mp_datatype_t datatype )
 {
 	mpc_common_spinlock_lock(&datatype_names_lock);
 	struct Datatype_name_cell *cell = sctk_datype_get_name_cell( datatype );
@@ -1594,12 +1594,12 @@ static inline size_t * please_allocate_an_array_of_addresses( int count )
 	return ret;
 }
 
-static inline sctk_datatype_t * please_allocate_an_array_of_datatypes( int count )
+static inline mpc_mp_datatype_t * please_allocate_an_array_of_datatypes( int count )
 {
 	if( count == 0 )
 		return NULL;
 
-	sctk_datatype_t * ret = sctk_malloc( sizeof( sctk_datatype_t ) * count );
+	mpc_mp_datatype_t * ret = sctk_malloc( sizeof( mpc_mp_datatype_t ) * count );
 	assume( ret != NULL );
 	return ret;
 }
@@ -2037,7 +2037,7 @@ static inline struct Datatype_layout * please_allocate_layout( int count )
 	return ret;
 }
 
-static inline int Datatype_layout_fill( struct Datatype_layout * l, sctk_datatype_t datatype )
+static inline int Datatype_layout_fill( struct Datatype_layout * l, mpc_mp_datatype_t datatype )
 {
 	assume( l != NULL );
 	l->type = datatype;

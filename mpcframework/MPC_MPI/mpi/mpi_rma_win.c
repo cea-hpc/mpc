@@ -36,7 +36,7 @@
 #define TMP_SIZE 4194305
 
 int MPC_Iprobe_inter(const int source, const int destination, const int tag,
-                     const sctk_communicator_t comm, int *flag, sctk_status_t *status);
+                     const mpc_mp_communicator_t comm, int *flag, mpc_mp_status_t *status);
 
 int mpc_MPI_Win_progress_probe(struct mpc_MPI_Win *desc, void *prebuff,
                                size_t buffsize) {
@@ -59,8 +59,8 @@ int mpc_MPI_Win_progress_probe(struct mpc_MPI_Win *desc, void *prebuff,
       assume(buff);
     }
 
-    sctk_request_t req;
-    memset(&req, 0, sizeof(sctk_request_t));
+    mpc_mp_request_t req;
+    memset(&req, 0, sizeof(mpc_mp_request_t));
     mpc_mp_comm_irecv_class_dest(st.MPI_SOURCE, desc->comm_rank, buff, msize,
                                   16008, desc->comm, SCTK_P2P_MESSAGE, &req);
     mpc_mp_comm_request_wait(&req);

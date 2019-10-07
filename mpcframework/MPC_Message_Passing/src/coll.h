@@ -47,7 +47,7 @@ typedef struct
 	sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
 } _mpc_coll_barrier_simple_t;
 
-void _mpc_coll_barrier_simple_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
+void _mpc_coll_barrier_simple_init ( struct mpc_mp_coll_s *tmp, mpc_mp_communicator_t id );
 
 /* Broadcast */
 
@@ -60,7 +60,7 @@ typedef struct
 	size_t size;
 } _mpc_coll_bcast_simple_t;
 
-void _mpc_coll_bcast_simple_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
+void _mpc_coll_bcast_simple_init ( struct mpc_mp_coll_s *tmp, mpc_mp_communicator_t id );
 
 /* Allreduce */
 
@@ -73,11 +73,11 @@ typedef struct
 	size_t size;
 } _mpc_coll_allreduce_simple_t;
 
-void _mpc_coll_allreduce_simple_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
+void _mpc_coll_allreduce_simple_init ( struct mpc_mp_coll_s *tmp, mpc_mp_communicator_t id );
 
 /* Init */
 
-void mpc_mp_coll_init_simple ( sctk_communicator_t id );
+void mpc_mp_coll_init_simple ( mpc_mp_communicator_t id );
 
 /*********************************
  * OPT COLLECTIVE IMPLEMENTATION *
@@ -90,7 +90,7 @@ typedef struct
 	int dummy;
 } _mpc_coll_opt_barrier_t;
 
-void _mpc_coll_opt_barrier_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
+void _mpc_coll_opt_barrier_init ( struct mpc_mp_coll_s *tmp, mpc_mp_communicator_t id );
 
 /* Broadcast */
 
@@ -99,7 +99,7 @@ typedef struct
 	int dummy;
 } _mpc_coll_opt_bcast_t;
 
-void _mpc_coll_opt_bcast_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
+void _mpc_coll_opt_bcast_init ( struct mpc_mp_coll_s *tmp, mpc_mp_communicator_t id );
 
 /* Allreduce */
 
@@ -108,11 +108,11 @@ typedef struct
 	int dummy;
 } _mpc_coll_opt_allreduce_t;
 
-void _mpc_coll_opt_allreduce_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
+void _mpc_coll_opt_allreduce_init ( struct mpc_mp_coll_s *tmp, mpc_mp_communicator_t id );
 
 /* Init */
 
-void mpc_mp_coll_init_opt ( sctk_communicator_t id );
+void mpc_mp_coll_init_opt ( mpc_mp_communicator_t id );
 
 /************************************
  * HETERO COLLECTIVE IMPLEMENTATION *
@@ -126,7 +126,7 @@ typedef struct
 	volatile unsigned int generation;
 } _mpc_coll_hetero_barrier_t;
 
-void _mpc_coll_hetero_barrier_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
+void _mpc_coll_hetero_barrier_init ( struct mpc_mp_coll_s *tmp, mpc_mp_communicator_t id );
 
 /* Broadcast */
 
@@ -138,7 +138,7 @@ typedef struct
 	OPA_ptr_t buff_root;
 } _mpc_coll_hetero_bcast_t;
 
-void _mpc_coll_hetero_bcast_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
+void _mpc_coll_hetero_bcast_init ( struct mpc_mp_coll_s *tmp, mpc_mp_communicator_t id );
 
 /* Allreduce */
 
@@ -151,11 +151,11 @@ typedef struct
 	volatile void *volatile *buff_out;
 } _mpc_coll_hetero_allreduce_t;
 
-void _mpc_coll_hetero_allreduce_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
+void _mpc_coll_hetero_allreduce_init ( struct mpc_mp_coll_s *tmp, mpc_mp_communicator_t id );
 
 /* Init */
 
-void mpc_mp_coll_init_hetero ( sctk_communicator_t id );
+void mpc_mp_coll_init_hetero ( mpc_mp_communicator_t id );
 
 /******************************************
  * OPT NO ALLOC COLLECTIBE IMPLEMENTATION *
@@ -169,7 +169,7 @@ typedef struct
 	int dummy;
 } _mpc_coll_noalloc_barrier_t;
 
-void _mpc_coll_noalloc_barrier_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
+void _mpc_coll_noalloc_barrier_init ( struct mpc_mp_coll_s *tmp, mpc_mp_communicator_t id );
 
 /* Broadcast */
 
@@ -178,7 +178,7 @@ typedef struct
 	int dummy;
 } _mpc_coll_noalloc_bcast_t;
 
-void _mpc_coll_noalloc_bcast_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
+void _mpc_coll_noalloc_bcast_init ( struct mpc_mp_coll_s *tmp, mpc_mp_communicator_t id );
 
 /* Allreduce */
 
@@ -187,11 +187,11 @@ typedef struct
 	int dummy;
 } _mpc_coll_noalloc_allreduce_t;
 
-void _mpc_coll_noalloc_allreduce_init ( struct mpc_mp_coll_s *tmp, sctk_communicator_t id );
+void _mpc_coll_noalloc_allreduce_init ( struct mpc_mp_coll_s *tmp, mpc_mp_communicator_t id );
 
 /* Init */
 
-void mpc_mp_coll_init_noalloc ( sctk_communicator_t id );
+void mpc_mp_coll_init_noalloc ( mpc_mp_communicator_t id );
 
 
 /**************************
@@ -200,10 +200,10 @@ void mpc_mp_coll_init_noalloc ( sctk_communicator_t id );
 
 struct mpc_mp_coll_s;
 
-void _mpc_coll_init ( sctk_communicator_t id,
-			void ( *barrier ) ( struct mpc_mp_coll_s *, sctk_communicator_t id ),
-			void ( *broadcast ) ( struct mpc_mp_coll_s *, sctk_communicator_t id ),
-			void ( *allreduce ) ( struct mpc_mp_coll_s *, sctk_communicator_t id ) );
+void _mpc_coll_init ( mpc_mp_communicator_t id,
+			void ( *barrier ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ),
+			void ( *broadcast ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ),
+			void ( *allreduce ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ) );
 
 
 
@@ -215,10 +215,10 @@ void _mpc_coll_init ( sctk_communicator_t id,
 
 struct mpc_mp_coll_s;
 
-void mpc_mp_coll_init ( sctk_communicator_t id,
-			void ( *barrier ) ( struct mpc_mp_coll_s *, sctk_communicator_t id ),
-			void ( *broadcast ) ( struct mpc_mp_coll_s *, sctk_communicator_t id ),
-			void ( *allreduce ) ( struct mpc_mp_coll_s *, sctk_communicator_t id ) );
+void mpc_mp_coll_init ( mpc_mp_communicator_t id,
+			void ( *barrier ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ),
+			void ( *broadcast ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ),
+			void ( *allreduce ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ) );
 
 
 /* Barrier */
@@ -257,12 +257,12 @@ typedef union
 
 struct mpc_mp_coll_s{
 	mpc_mp_barrier_t barrier;
-	void ( *barrier_func ) ( const sctk_communicator_t ,
+	void ( *barrier_func ) ( const mpc_mp_communicator_t ,
 	                         struct mpc_mp_coll_s * );
 
 	mpc_mp_bcast_t broadcast;
 	void ( *broadcast_func ) ( void *, const size_t ,
-	                           const int , const sctk_communicator_t,
+	                           const int , const mpc_mp_communicator_t,
 	                           struct mpc_mp_coll_s * );
 
 	sctk_allreduce_t allreduce;
@@ -270,8 +270,8 @@ struct mpc_mp_coll_s{
 	                           const size_t ,
 	                           const size_t ,
 	                           sctk_Op_f func,
-	                           const sctk_communicator_t ,
-	                           const sctk_datatype_t ,
+	                           const mpc_mp_communicator_t ,
+	                           const mpc_mp_datatype_t ,
 	                           struct mpc_mp_coll_s * );
 };
 

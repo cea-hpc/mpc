@@ -32,10 +32,10 @@ int is_printing = 1;
 void
 run (void *arg)
 {
-  sctk_communicator_t my_com;
+  mpc_mp_communicator_t my_com;
   int my_rank;
   char msg[50];
-  MPC_Request req;
+  mpc_mp_request_t req;
   unsigned int beg[10];
   unsigned int end[10];
 

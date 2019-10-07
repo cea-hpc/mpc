@@ -336,7 +336,7 @@ static void sctk_free_route_messages ( __UNUSED__ void *ptr )
 
 typedef struct
 {
-	sctk_request_t request;
+	mpc_mp_request_t request;
 	sctk_thread_ptp_message_t msg;
 } sctk_route_messages_t;
 
@@ -345,7 +345,7 @@ void sctk_route_messages_send ( int myself, int dest, sctk_message_class_t messa
 {
 	sctk_info("ROUTE SEND [ %d -> %d ] ( size %d)", myself, dest, size );
 	
-	sctk_communicator_t communicator = SCTK_COMM_WORLD;
+	mpc_mp_communicator_t communicator = SCTK_COMM_WORLD;
 	sctk_route_messages_t msg;
 	sctk_route_messages_t *msg_req;
 	
@@ -362,7 +362,7 @@ void sctk_route_messages_recv ( int src, int myself, sctk_message_class_t messag
 {
 	sctk_info("ROUTE RECV [ %d -> %d ] ( size %d)", src, myself, size );
 	
-	sctk_communicator_t communicator = SCTK_COMM_WORLD;
+	mpc_mp_communicator_t communicator = SCTK_COMM_WORLD;
 	sctk_route_messages_t msg;
 	sctk_route_messages_t *msg_req;
 

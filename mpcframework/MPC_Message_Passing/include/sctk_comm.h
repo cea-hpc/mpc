@@ -44,7 +44,7 @@ int MPC_Net_get_rank();
  * @arg communicator Communicator from which to get the rank
  * @return the rank of the process in the given communicator
  */
-int MPC_Net_get_comm_rank( const sctk_communicator_t communicator );
+int MPC_Net_get_comm_rank( const mpc_mp_communicator_t communicator );
 
 /************************************************************************/
 /* Communicators                                                        */
@@ -60,7 +60,7 @@ int MPC_Net_get_comm_rank( const sctk_communicator_t communicator );
  * 
  * @return Return a new communicator ID usable inside comm calls
  */
-sctk_communicator_t MPC_Net_create_comm( const sctk_communicator_t origin_communicator,
+mpc_mp_communicator_t MPC_Net_create_comm( const mpc_mp_communicator_t origin_communicator,
 										 const int nb_task_involved,
 										 const int *task_list );
 
@@ -69,7 +69,7 @@ sctk_communicator_t MPC_Net_create_comm( const sctk_communicator_t origin_commun
  * 
  * @return SCTK_COMM_NULL if the comm has been deleted the comm otherwise (immutable comm)
  */ 
-sctk_communicator_t MPC_Net_delete_comm( const sctk_communicator_t comm );
+mpc_mp_communicator_t MPC_Net_delete_comm( const mpc_mp_communicator_t comm );
 
 /************************************************************************/
 /* P2P Messages                                                         */
@@ -84,7 +84,7 @@ sctk_communicator_t MPC_Net_delete_comm( const sctk_communicator_t comm );
  * 
  * @param request The request to be waited 
  */
-void MPC_Net_wait( sctk_request_t * request );
+void MPC_Net_wait( mpc_mp_request_t * request );
 
 
 /** Send an asynchronous message
@@ -95,7 +95,7 @@ void MPC_Net_wait( sctk_request_t * request );
  * @param comm Communicator of the message
  * @param req Returned request to be waited with @ref MPC_Net_wait
  */
-void MPC_Net_isend( int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req );
+void MPC_Net_isend( int dest, void * data, size_t size, int tag, mpc_mp_communicator_t comm , mpc_mp_request_t *req );
 
 /** Receive an asynchornous message
  * @param src Source rank
@@ -105,7 +105,7 @@ void MPC_Net_isend( int dest, void * data, size_t size, int tag, sctk_communicat
  * @param comm Communicator of the message
  * @param req Returned request to be waited with @ref MPC_Net_wait
  */
-void MPC_Net_irecv( int src, void * buffer, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req );
+void MPC_Net_irecv( int src, void * buffer, size_t size, int tag, mpc_mp_communicator_t comm , mpc_mp_request_t *req );
 
 /** Send a synchronous message
  * 
@@ -114,7 +114,7 @@ void MPC_Net_irecv( int src, void * buffer, size_t size, int tag, sctk_communica
  * @param tag Message tag
  * @param comm Communicator of the message
  */
-void MPC_Net_send( int dest, void * data, size_t size, int tag, sctk_communicator_t comm );
+void MPC_Net_send( int dest, void * data, size_t size, int tag, mpc_mp_communicator_t comm );
 
 /** Receive a synchornous message
  * @param src Source rank
@@ -123,7 +123,7 @@ void MPC_Net_send( int dest, void * data, size_t size, int tag, sctk_communicato
  * @param tag Message tag
  * @param comm Communicator of the message
  */
-void MPC_Net_recv( int src, void * buffer, size_t size, int tag, sctk_communicator_t comm );
+void MPC_Net_recv( int src, void * buffer, size_t size, int tag, mpc_mp_communicator_t comm );
 
 /** Do a synchronous SendRecv
  * 
@@ -135,7 +135,7 @@ void MPC_Net_recv( int src, void * buffer, size_t size, int tag, sctk_communicat
  * @param src Source of the message
  * @param comm Communicator of the message
  */
-void MPC_Net_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * recvbuf, int src, sctk_communicator_t comm );
+void MPC_Net_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * recvbuf, int src, mpc_mp_communicator_t comm );
 
 /************************************************************************/
 /* Collective Operations                                                */
@@ -146,7 +146,7 @@ void MPC_Net_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * re
 /** Do a barrier on a communicator
  * @param comm Communicator to do a barrier on 
  */
-void MPC_Net_barrier( sctk_communicator_t comm );
+void MPC_Net_barrier( mpc_mp_communicator_t comm );
 
 /** Do a broadcast on a communicator
  * @param buffer Buffer to be broadcasted from root and filled on others
@@ -155,14 +155,14 @@ void MPC_Net_barrier( sctk_communicator_t comm );
  * @param communicator Communicator on which to broadcast
  */
 void MPC_Net_broadcast( void *buffer, const size_t size, 
-                        const int root, const sctk_communicator_t communicator );
+                        const int root, const mpc_mp_communicator_t communicator );
 
 /** Do an allreduce on a communicator
  * @param buffer_in Input buffer (where the result is stored)
  * @param buffer_out Output buffer (where data is read)
  * @param elem_size Size of an element
  * @param elem_count Number of elements
- * @param func @ref sctk_Op_f to be used to do the operation (void (*sctk_Op_f) (const void *, void *, size_t, sctk_datatype_t);)
+ * @param func @ref sctk_Op_f to be used to do the operation (void (*sctk_Op_f) (const void *, void *, size_t, mpc_mp_datatype_t);)
  * @param communicator Communicator on which to do the operation
  * @param datatype Datatype (not used in comms) but can be useful to swich in the reduce operation (passed in arg)
  */
@@ -170,8 +170,8 @@ void MPC_Net_allreduce(const void *buffer_in, void *buffer_out,
                        const size_t elem_size,
                        const size_t elem_count,
                        sctk_Op_f func,
-                       const sctk_communicator_t communicator,
-                       sctk_datatype_t datatype );
+                       const mpc_mp_communicator_t communicator,
+                       mpc_mp_datatype_t datatype );
 
 /************************************************************************/
 /* Setup and Teardow when running in libmode                            */

@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 /************************************************************************/
-/* sctk_request_t		                                                    */
+/* mpc_mp_request_t		                                                    */
 /************************************************************************/
 typedef enum {
 	REQUEST_NULL = 0,
@@ -47,7 +47,7 @@ typedef enum {
 	REQUEST_GENERALIZED,
 	REQUEST_PICKED,
 	REQUEST_RDMA
-} sctk_request_type_t;
+} mpc_mp_request_type_t;
 
 /************************************************************************/
 /* Messages Types                                               */
@@ -199,12 +199,12 @@ static inline int _mpc_comm_ptp_message_is_for_control( sctk_message_class_t typ
 /* Low Level Message Interface                                          */
 /************************************************************************/
 
-void mpc_mp_comm_isend_class_src( int src, int dest, void *data, size_t size, int tag, sctk_communicator_t comm, sctk_message_class_t class, sctk_request_t *req );
-void mpc_mp_comm_irecv_class_dest( int src, int dest, void *buffer, size_t size, int tag, sctk_communicator_t comm, sctk_message_class_t class, sctk_request_t *req );
-void mpc_mp_comm_isend_class( int dest, void *data, size_t size, int tag, sctk_communicator_t comm, sctk_message_class_t class, sctk_request_t *req );
-void mpc_mp_comm_irecv_class( int src, void *data, size_t size, int tag, sctk_communicator_t comm, sctk_message_class_t class, sctk_request_t *req );
-void mpc_mp_comm_isend( int dest, void *data, size_t size, int tag, sctk_communicator_t comm, sctk_request_t *req );
-void mpc_mp_comm_irecv( int src, void *data, size_t size, int tag, sctk_communicator_t comm, sctk_request_t *req );
+void mpc_mp_comm_isend_class_src( int src, int dest, void *data, size_t size, int tag, mpc_mp_communicator_t comm, sctk_message_class_t class, mpc_mp_request_t *req );
+void mpc_mp_comm_irecv_class_dest( int src, int dest, void *buffer, size_t size, int tag, mpc_mp_communicator_t comm, sctk_message_class_t class, mpc_mp_request_t *req );
+void mpc_mp_comm_isend_class( int dest, void *data, size_t size, int tag, mpc_mp_communicator_t comm, sctk_message_class_t class, mpc_mp_request_t *req );
+void mpc_mp_comm_irecv_class( int src, void *data, size_t size, int tag, mpc_mp_communicator_t comm, sctk_message_class_t class, mpc_mp_request_t *req );
+void mpc_mp_comm_isend( int dest, void *data, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *req );
+void mpc_mp_comm_irecv( int src, void *data, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *req );
 void mpc_mp_comm_sendrecv( void *sendbuf, size_t size, int dest, int tag, void *recvbuf, int src, int comm );
 
 /************************************************************************/
@@ -237,29 +237,29 @@ typedef struct sctk_thread_message_header_s
 	int destination_task; /**< Destination Task ID */
 	/* Context */
 	int message_tag;								 /**< Message TAG */
-	sctk_communicator_t communicator;				 /**< Message communicator */
+	mpc_mp_communicator_t communicator;				 /**< Message communicator */
 	struct sctk_control_message_header message_type; /**< Control Message Infos */
 	/* Ordering */
 	int message_number;			/**< Message order (for reorder) */
 	char use_message_numbering; /**< Should this message be reordered */
 	/* Content */
-	sctk_datatype_t datatype; /**< Caried data-type (for matching check) */
+	mpc_mp_datatype_t datatype; /**< Caried data-type (for matching check) */
 	size_t msg_size;		  /**< Message size */
 } sctk_thread_message_header_t;
 
-void mpc_mp_comm_message_probe_any_tag( int destination, int source, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
-void mpc_mp_comm_message_probe_any_source_any_tag( int destination, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
-void mpc_mp_comm_message_probe( int destination, int source, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
-void mpc_mp_comm_message_probe_any_source( int destination, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
+void mpc_mp_comm_message_probe_any_tag( int destination, int source, const mpc_mp_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
+void mpc_mp_comm_message_probe_any_source_any_tag( int destination, const mpc_mp_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
+void mpc_mp_comm_message_probe( int destination, int source, const mpc_mp_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
+void mpc_mp_comm_message_probe_any_source( int destination, const mpc_mp_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
 void mpc_mp_comm_message_probe_any_source_class( int destination, int tag,
 						sctk_message_class_t class,
-						const sctk_communicator_t comm,
+						const mpc_mp_communicator_t comm,
 						int *status,
 						sctk_thread_message_header_t *msg );
 
 void mpc_mp_comm_message_probe_any_source_class_comm( int destination, int tag,
 							sctk_message_class_t class,
-							const sctk_communicator_t comm,
+							const mpc_mp_communicator_t comm,
 							int *status,
 							sctk_thread_message_header_t *msg );
 
@@ -390,7 +390,7 @@ typedef struct
 
 	volatile int *volatile completion_flag;
 
-	sctk_request_t *request;
+	mpc_mp_request_t *request;
 
 	/*Message data*/
 	sctk_message_type_t message_type;
@@ -469,14 +469,14 @@ void mpc_mp_comm_ptp_message_add_pack_absolute( sctk_thread_ptp_message_t *msg, 
 						sctk_pack_absolute_indexes_t *ends );
 
 void mpc_mp_comm_ptp_message_header_init( sctk_thread_ptp_message_t *msg, const int message_tag,
-					const sctk_communicator_t communicator,
+					const mpc_mp_communicator_t communicator,
 					const int source,
 					const int destination,
-					sctk_request_t *request,
+					mpc_mp_request_t *request,
 					const size_t count,
 					sctk_message_class_t message_class,
-					sctk_datatype_t datatype,
-					sctk_request_type_t request_type );
+					mpc_mp_datatype_t datatype,
+					mpc_mp_request_type_t request_type );
 
 void mpc_mp_comm_ptp_message_send( sctk_thread_ptp_message_t *msg );
 
@@ -627,8 +627,8 @@ typedef struct mpc_buffered_msg_s
 	sctk_thread_ptp_message_t header;
 	/* Completion flag to use if the user do not provide a valid request */
 	int completion_flag;
-	/* MPC_Request if the message is buffered  */
-	sctk_request_t request;
+	/* mpc_mp_request_t if the message is buffered  */
+	mpc_mp_request_t request;
 	long buf[( MAX_MPC_BUFFERED_SIZE / sizeof( long ) ) + 1];
 } mpc_buffered_msg_t;
 
@@ -638,7 +638,7 @@ typedef struct mpc_buffered_msg_s
 
 typedef struct mpc_mp_comm_ptp_msg_progress_s
 {
-	sctk_request_t *request;
+	mpc_mp_request_t *request;
 	struct mpc_comm_ptp_s *recv_ptp;
 	struct mpc_comm_ptp_s *send_ptp;
 	int remote_process;
@@ -649,17 +649,17 @@ typedef struct mpc_mp_comm_ptp_msg_progress_s
 	int blocking;
 } mpc_mp_comm_ptp_msg_progress_t;
 
-void mpc_mp_comm_ptp_msg_wait_init( struct mpc_mp_comm_ptp_msg_progress_s *wait, sctk_request_t *request, int blocking );
+void mpc_mp_comm_ptp_msg_wait_init( struct mpc_mp_comm_ptp_msg_progress_s *wait, mpc_mp_request_t *request, int blocking );
 void mpc_mp_comm_ptp_msg_progress( struct mpc_mp_comm_ptp_msg_progress_s *wait );
 
 /************************************************************************/
 /* General Functions                                                    */
 /************************************************************************/
 
-struct mpc_comm_ptp_s *_mpc_comm_ptp_array_get( sctk_communicator_t comm, int rank );
-sctk_reorder_list_t *_mpc_comm_ptp_array_get_reorder( sctk_communicator_t communicator, int rank );
+struct mpc_comm_ptp_s *_mpc_comm_ptp_array_get( mpc_mp_communicator_t comm, int rank );
+sctk_reorder_list_t *_mpc_comm_ptp_array_get_reorder( mpc_mp_communicator_t communicator, int rank );
 
-void mpc_mp_comm_request_wait_all_msgs( const int task, const sctk_communicator_t com );
+void mpc_mp_comm_request_wait_all_msgs( const int task, const mpc_mp_communicator_t com );
 
 int mpc_mp_comm_is_remote_rank( int dest );
 void mpc_mp_comm_init_per_task( int i );
@@ -689,64 +689,64 @@ void sctk_m_probe_matching_reset();
 int sctk_m_probe_matching_get();
 
 /************************************************************************/
-/* sctk_request_t 		                                                    */
+/* mpc_mp_request_t 		                                                    */
 /************************************************************************/
 
-void mpc_mp_comm_request_wait( sctk_request_t *request );
-int mpc_mp_comm_request_cancel( sctk_request_t *msg );
-void mpc_mp_comm_request_init( sctk_request_t *request, sctk_communicator_t comm, int request_type );
+void mpc_mp_comm_request_wait( mpc_mp_request_t *request );
+int mpc_mp_comm_request_cancel( mpc_mp_request_t *msg );
+void mpc_mp_comm_request_init( mpc_mp_request_t *request, mpc_mp_communicator_t comm, int request_type );
 
-static inline int mpc_mp_comm_request_get_completion(sctk_request_t *request) {
+static inline int mpc_mp_comm_request_get_completion(mpc_mp_request_t *request) {
   return request->completion_flag;
 }
 
-static inline void mpc_mp_comm_request_set_msg(sctk_request_t *request,
+static inline void mpc_mp_comm_request_set_msg(mpc_mp_request_t *request,
                                      sctk_thread_ptp_message_t *msg) {
   request->msg = msg;
 }
 
-static inline sctk_thread_ptp_message_t * mpc_mp_comm_request_get_msg(sctk_request_t *request) {
+static inline sctk_thread_ptp_message_t * mpc_mp_comm_request_get_msg(mpc_mp_request_t *request) {
   return request->msg;
 }
 
-static inline void mpc_mp_comm_request_set_size(sctk_request_t *request) {
+static inline void mpc_mp_comm_request_set_size(mpc_mp_request_t *request) {
   request->SCTK_MSG_SIZE(msg) = 0;
 }
 
-static inline void mpc_mp_comm_request_inc_size(sctk_request_t *request,
+static inline void mpc_mp_comm_request_inc_size(mpc_mp_request_t *request,
                                                 size_t size) {
   request->SCTK_MSG_SIZE(msg) += size;
 }
 
-static inline size_t mpc_mp_comm_request_get_size(sctk_request_t *request) {
+static inline size_t mpc_mp_comm_request_get_size(mpc_mp_request_t *request) {
   return request->SCTK_MSG_SIZE(msg);
 }
 
-static inline int mpc_mp_comm_request_get_source(sctk_request_t *request) {
+static inline int mpc_mp_comm_request_get_source(mpc_mp_request_t *request) {
   return request->header.source_task;
 }
 
-static inline int mpc_mp_comm_request_is_null(sctk_request_t *request) {
+static inline int mpc_mp_comm_request_is_null(mpc_mp_request_t *request) {
   return request->is_null;
 }
 
-static inline void mpc_mp_comm_request_set_null(sctk_request_t *request, int val) {
+static inline void mpc_mp_comm_request_set_null(mpc_mp_request_t *request, int val) {
   request->is_null = val;
 }
 
-int mpc_mp_comm_request_cancel( sctk_request_t *request );
+int mpc_mp_comm_request_cancel( mpc_mp_request_t *request );
 
 /************************************************************************/
 /* MPI Status Modification and Query                                    */
 /************************************************************************/
 
-static inline int mpc_mp_comm_status_set_cancelled( sctk_status_t *status, int cancelled )
+static inline int mpc_mp_comm_status_set_cancelled( mpc_mp_status_t *status, int cancelled )
 {
 	status->cancelled = cancelled;
 	return SCTK_SUCCESS;
 }
 
-static inline int mpc_mp_comm_status_get_cancelled( sctk_status_t *status, int *flag )
+static inline int mpc_mp_comm_status_get_cancelled( mpc_mp_status_t *status, int *flag )
 {
 	*flag = ( status->cancelled == 1 );
 	return SCTK_SUCCESS;

@@ -33,7 +33,7 @@ init ()
   int is_master = 0;
   int process_rank;
   int root, RANK, i;
-  sctk_communicator_t comm;
+  mpc_mp_communicator_t comm;
   static int *temp;
 
 

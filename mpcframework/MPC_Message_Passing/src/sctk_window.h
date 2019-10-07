@@ -52,7 +52,7 @@ struct sctk_window
 	int owner;
         int comm_rank;
         sctk_rail_pin_ctx_t pin;
-        sctk_communicator_t comm;
+        mpc_mp_communicator_t comm;
         int is_emulated;
         mpc_common_spinlock_t lock;
         unsigned int refcounter;
@@ -93,7 +93,7 @@ struct sctk_win_translation {
 
 void sctk_win_translation_init(struct sctk_win_translation *wt,
                                struct sctk_window *win);
-void sctk_window_complete_request(sctk_request_t *req);
+void sctk_window_complete_request(mpc_mp_request_t *req);
 
 extern __thread struct sctk_win_translation __forward_translate;
 extern OPA_int_t __rma_generation;

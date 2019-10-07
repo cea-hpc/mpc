@@ -160,13 +160,13 @@ void printpayload( void * pl , size_t size )
 
 void __sctk_control_messages_send(int dest, int dest_task,
                                   sctk_message_class_t message_class,
-                                  sctk_communicator_t comm, int subtype,
+                                  mpc_mp_communicator_t comm, int subtype,
                                   int param, void *buffer, size_t size,
                                   int rail_id) {
-  sctk_communicator_t communicator = comm;
-  sctk_communicator_t tag = 16000;
+  mpc_mp_communicator_t communicator = comm;
+  mpc_mp_communicator_t tag = 16000;
 
-  sctk_request_t request;
+  mpc_mp_request_t request;
 
   sctk_thread_ptp_message_t msg;
 
@@ -230,7 +230,7 @@ void sctk_control_messages_send_process(int dest_process, int subtype,
                                -1);
 }
 
-void sctk_control_messages_send_to_task(int dest_task, sctk_communicator_t comm,
+void sctk_control_messages_send_to_task(int dest_task, mpc_mp_communicator_t comm,
                                         int subtype, char param, void *buffer,
                                         size_t size) {
   sctk_info("Send task to %d (subtype %d)", dest_task, subtype);
@@ -329,7 +329,7 @@ void sctk_control_messages_perform(sctk_thread_ptp_message_t *msg, int force) {
   int source_process = SCTK_MSG_SRC_PROCESS(msg);
   int source_rank = SCTK_MSG_SRC_TASK(msg);
   size_t msg_size = SCTK_MSG_SIZE(msg);
-  sctk_communicator_t msg_comm = SCTK_MSG_COMMUNICATOR(msg);
+  mpc_mp_communicator_t msg_comm = SCTK_MSG_COMMUNICATOR(msg);
   short subtype = SCTK_MSG_SPECIFIC_CLASS_SUBTYPE(msg);
   char param = SCTK_MSG_SPECIFIC_CLASS_PARAM(msg);
   char rail_id = SCTK_MSG_SPECIFIC_CLASS_RAILID(msg);
@@ -355,7 +355,7 @@ void sctk_control_messages_perform(sctk_thread_ptp_message_t *msg, int force) {
 
   assume(tmp_contol_buffer != NULL);
 
-  sctk_request_t request;
+  mpc_mp_request_t request;
 
   if ((SCTK_MSG_DEST_TASK(msg) < 0) || force) {
     /* Generate the paired recv message to fill the buffer in
@@ -397,8 +397,8 @@ void sctk_control_messages_perform(sctk_thread_ptp_message_t *msg, int force) {
   }
 }
 
-void sctk_control_message_fence_req(int target_task, sctk_communicator_t comm,
-                                    sctk_request_t *req) {
+void sctk_control_message_fence_req(int target_task, mpc_mp_communicator_t comm,
+                                    mpc_mp_request_t *req) {
   struct sctk_control_message_fence_ctx ctx;
 
   return;
@@ -420,9 +420,9 @@ void sctk_control_message_fence_req(int target_task, sctk_communicator_t comm,
       sizeof(struct sctk_control_message_fence_ctx));
 }
 
-void sctk_control_message_fence(int target_task, sctk_communicator_t comm) {
+void sctk_control_message_fence(int target_task, mpc_mp_communicator_t comm) {
   return;
-  sctk_request_t fence_req;
+  mpc_mp_request_t fence_req;
 
   sctk_control_message_fence_req(target_task, comm, &fence_req);
 

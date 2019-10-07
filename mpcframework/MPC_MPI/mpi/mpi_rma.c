@@ -39,7 +39,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
                                   MPI_Datatype origin_datatype, int target_rank,
                                   MPI_Aint target_disp, int target_count,
                                   MPI_Datatype target_datatype, MPI_Win win,
-                                  sctk_request_t *ref_request) {
+                                  mpc_mp_request_t *ref_request) {
   int can_read_rma = 0;
   int can_write_rma = 0;
 
@@ -121,7 +121,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
     } else {
 
       /* Pick a Request */
-      sctk_request_t *request =
+      mpc_mp_request_t *request =
           mpc_MPI_Win_request_array_pick(&desc->source.requests);
 
       if (ref_request) {
@@ -139,7 +139,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
     /* Local non-contig, remote contig */
     if (!can_write_rma && can_read_rma) {
 
-      sctk_request_t req;
+      mpc_mp_request_t req;
       mpc_mp_comm_request_init(&req, desc->comm, REQUEST_SEND);
       sctk_window_RDMA_read(target_win, tmp_buff, remote_size, target_disp,
                             &req);
@@ -172,8 +172,8 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
                                     target_pack_size, target_count);
 
       /* Already submit the packed data */
-      sctk_request_t *request = NULL;
-      sctk_request_t local_req;
+      mpc_mp_request_t *request = NULL;
+      mpc_mp_request_t local_req;
       void *dest_buff = NULL;
 
       if (!can_write_rma) {
@@ -240,7 +240,7 @@ int mpc_MPI_Rget(void *origin_addr, int origin_count,
   mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 
   /* Create a new MPI request */
-  sctk_request_t *new_request =
+  mpc_mp_request_t *new_request =
       __sctk_new_mpc_request(request, __sctk_internal_get_MPC_requests());
 
   int ret = MPI_SUCCESS;
@@ -263,7 +263,7 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
                                   MPI_Datatype origin_datatype, int target_rank,
                                   MPI_Aint target_disp, int target_count,
                                   MPI_Datatype target_datatype, MPI_Win win,
-                                  sctk_request_t *ref_request) {
+                                  mpc_mp_request_t *ref_request) {
   int can_read_rma = 0;
   int can_write_rma = 0;
 
@@ -362,7 +362,7 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
     } else {
 
       /* Pick a Request */
-      sctk_request_t *request =
+      mpc_mp_request_t *request =
           mpc_MPI_Win_request_array_pick(&desc->source.requests);
 
       if (ref_request) {
@@ -394,7 +394,7 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
                                   pack_size, target_count);
 
     /* Already submit the packed data */
-    sctk_request_t *request1 =
+    mpc_mp_request_t *request1 =
         mpc_MPI_Win_request_array_pick(&desc->source.requests);
 
     mpc_mp_comm_isend_class_src(desc->comm_rank, target_rank,
@@ -446,7 +446,7 @@ int mpc_MPI_Rput(const void *origin_addr, int origin_count,
   mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 
   /* Create a new MPI request */
-  sctk_request_t *new_request =
+  mpc_mp_request_t *new_request =
       __sctk_new_mpc_request(request, __sctk_internal_get_MPC_requests());
 
   int ret = MPI_SUCCESS;
@@ -464,7 +464,7 @@ int mpc_MPI_Rput(const void *origin_addr, int origin_count,
 /* MPI_Accumulate                                                       */
 /************************************************************************/
 
-/* sctk_Op_f sctk_get_common_function (sctk_datatype_t datatype, sctk_Op op); */
+/* sctk_Op_f sctk_get_common_function (mpc_mp_datatype_t datatype, sctk_Op op); */
 
 /*
  * The algorithm is the following:
@@ -483,7 +483,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
                        int origin_count, MPI_Datatype origin_datatype,
                        int target_rank, MPI_Aint target_disp, int target_count,
                        MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,
-                       sctk_request_t *ref_request) {
+                       mpc_mp_request_t *ref_request) {
   if (target_rank == MPC_PROC_NULL)
     return MPI_SUCCESS;
 
@@ -703,7 +703,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
                                      pack_size, target_count, inner_type, op);
 
     /* Already submit the packed data */
-    sctk_request_t *request =
+    mpc_mp_request_t *request =
         mpc_MPI_Win_request_array_pick(&desc->source.requests);
 
     if (ref_request) {
@@ -767,7 +767,7 @@ int mpc_MPI_Raccumulate(const void *origin_addr, int origin_count,
   mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 
   /* Create a new MPI request */
-  sctk_request_t *new_request =
+  mpc_mp_request_t *new_request =
       __sctk_new_mpc_request(request, __sctk_internal_get_MPC_requests());
 
   int ret = MPI_SUCCESS;
@@ -890,7 +890,7 @@ static inline int
 mpc_MPI_Fetch_and_op_RMA(struct mpc_MPI_Win *desc, const void *origin_addr,
                          void *result_addr, MPI_Datatype datatype,
                          int target_rank, MPI_Aint target_disp, MPI_Op op,
-                         MPI_Win win, sctk_request_t *ref_request);
+                         MPI_Win win, mpc_mp_request_t *ref_request);
 
 static inline int mpc_MPI_GACC_fast_path(RDMA_op op, RDMA_type type) {
   if (op != RDMA_SUM) {
@@ -911,7 +911,7 @@ static inline int mpc_MPI_Get_accumulate_RMA(
     MPI_Datatype origin_datatype, void *result_addr, int result_count,
     MPI_Datatype result_datatype, int target_rank, MPI_Aint target_disp,
     int target_count, MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,
-    sctk_request_t *ref_request) {
+    mpc_mp_request_t *ref_request) {
   if (target_rank == MPC_PROC_NULL)
     return MPI_SUCCESS;
 
@@ -1033,7 +1033,7 @@ int mpc_MPI_Rget_accumulate(const void *origin_addr, int origin_count,
   mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 
   /* Create a new MPI request */
-  sctk_request_t *new_request =
+  mpc_mp_request_t *new_request =
       __sctk_new_mpc_request(request, __sctk_internal_get_MPC_requests());
 
   int ret = MPI_SUCCESS;
@@ -1074,7 +1074,7 @@ static inline int
 mpc_MPI_Fetch_and_op_RMA(struct mpc_MPI_Win *desc, const void *origin_addr,
                          void *result_addr, MPI_Datatype datatype,
                          int target_rank, MPI_Aint target_disp, MPI_Op op,
-                         MPI_Win win, sctk_request_t *ref_request) {
+                         MPI_Win win, mpc_mp_request_t *ref_request) {
   if (target_rank == MPC_PROC_NULL)
     return MPI_SUCCESS;
 
@@ -1136,7 +1136,7 @@ mpc_MPI_Fetch_and_op_RMA(struct mpc_MPI_Win *desc, const void *origin_addr,
 
       /* If we are here we can use the low-level fetch and OP */
       /* Pick a Request */
-      sctk_request_t *request =
+      mpc_mp_request_t *request =
           mpc_MPI_Win_request_array_pick(&desc->source.requests);
 
       if (ref_request) {
@@ -1197,7 +1197,7 @@ static inline int mpc_MPI_CAS_fast_path(size_t type_size) {
 static inline int mpc_MPI_Compare_and_swap_RMA(
     struct mpc_MPI_Win *desc, const void *origin_addr, const void *compare_addr,
     void *result_addr, MPI_Datatype datatype, int target_rank,
-    MPI_Aint target_disp, sctk_request_t *ref_request) {
+    MPI_Aint target_disp, mpc_mp_request_t *ref_request) {
   if (target_rank == MPC_PROC_NULL)
     return MPI_SUCCESS;
 
@@ -1234,7 +1234,7 @@ static inline int mpc_MPI_Compare_and_swap_RMA(
 
     /* If we are here we can use the low-level fetch and OP */
     /* Pick a Request */
-    sctk_request_t *request =
+    mpc_mp_request_t *request =
         mpc_MPI_Win_request_array_pick(&desc->source.requests);
 
     if (ref_request) {

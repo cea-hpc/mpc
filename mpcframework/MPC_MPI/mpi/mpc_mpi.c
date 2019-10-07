@@ -602,7 +602,7 @@ void mpc_mpi_per_communicator_dup_copy_func(mpc_mpi_per_communicator_t** to, mpc
 }
 
 static inline mpc_mpi_per_communicator_t *
-mpc_mpc_get_per_comm_data(sctk_communicator_t comm) {
+mpc_mpc_get_per_comm_data(mpc_mp_communicator_t comm) {
   struct mpc_mpi_m_per_mpi_process_ctx_s *task_specific;
   mpc_per_communicator_t *tmp;
 
@@ -702,7 +702,7 @@ static inline void sctk_init_yield_as_overloaded() {
   ERRORS HANDLING
 */
 inline int
-SCTK__MPI_ERROR_REPORT__ (sctk_communicator_t comm, int error, char *message, char *file,
+SCTK__MPI_ERROR_REPORT__ (mpc_mp_communicator_t comm, int error, char *message, char *file,
 			  int line)
 {
   MPI_Errhandler errh = (MPI_Errhandler)sctk_handle_get_errhandler(
@@ -1154,7 +1154,7 @@ inline void sctk_check_auto_free_list(MPI_request_struct_t *requests)
 
 /** \brief Initialize an \ref MPI_internal_request_t */
 inline void __sctk_init_mpc_request_internal(MPI_internal_request_t *tmp){
-	memset (&(tmp->req), 0, sizeof (MPC_Request));
+	memset (&(tmp->req), 0, sizeof (mpc_mp_request_t));
 }
 
 /** \brief Create a new \ref MPI_internal_request_t 
@@ -1254,15 +1254,16 @@ __sctk_new_mpc_request_internal( MPI_Request *req,
 	return tmp;
 }
 
-/** \brief Create a new \ref MPC_Request */
+/** \brief Create a new \ref mpc_mp_request_t */
 /* extern inline */
-MPC_Request *__sctk_new_mpc_request( MPI_Request *req, MPI_request_struct_t *requests )
+mpc_mp_request_t * __sctk_new_mpc_request (MPI_Request * req,MPI_request_struct_t *requests)
 {
 	MPI_internal_request_t *tmp;
 	/* Acquire a free MPI_Iternal request */
 	tmp = __sctk_new_mpc_request_internal( req, requests );
 
-	/* Return its inner MPC_Request */
+        memset(&tmp->req, 0, sizeof(mpc_mp_request_t));
+        /* Return its inner mpc_mp_request_t */
 	return &( tmp->req );
 }
 
@@ -1320,9 +1321,9 @@ __sctk_convert_mpc_request_internal(MPI_Request *req,
 
 /** \brief Convert an MPI_Request to an MPC_Request
  * \param req Request to convert to an \ref MPC_Request
- * \return a pointer to the MPC_Request NULL if not found
+ * \return a pointer to the mpc_mp_request_t NULL if not found
  */
-inline MPC_Request * __sctk_convert_mpc_request (MPI_Request * req,MPI_request_struct_t *requests)
+inline mpc_mp_request_t * __sctk_convert_mpc_request (MPI_Request * req,MPI_request_struct_t *requests)
 {
 	MPI_internal_request_t *tmp;
 
@@ -1336,7 +1337,7 @@ inline MPC_Request * __sctk_convert_mpc_request (MPI_Request * req,MPI_request_s
 		return &MPC_REQUEST_NULL;
 	}
 	
-	/* Return the MPC_Request field */
+	/* Return the mpc_mp_request_t field */
 	return &(tmp->req);
 }
 
@@ -1377,7 +1378,7 @@ inline void __sctk_delete_mpc_request( MPI_Request *req,
 	/* Retrieve the request */
 	tmp = __sctk_convert_mpc_request_internal( req, requests );
 
-	memset( &tmp->req, 0, sizeof( sctk_request_t ) );
+	memset( &tmp->req, 0, sizeof( mpc_mp_request_t ) );
 
 	/* Clear the request */
 	mpc_common_spinlock_lock( &( tmp->lock ) );
@@ -1497,8 +1498,8 @@ __INTERNAL__PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest,
 		}
 		else
 		{
-			MPC_Request request;
-			sctk_status_t status;
+			mpc_mp_request_t request;
+			mpc_mp_status_t status;
 
 			int derived_ret = 0;
 			sctk_derived_datatype_t derived_datatype;
@@ -1554,7 +1555,7 @@ static int __INTERNAL__PMPIX_Exchange(void **send_buf , void **recvbuff, int rem
 	
 	/* First resolve the source and dest rank
 	 * in the comm_world */
-	int remote = sctk_get_comm_world_rank ((const sctk_communicator_t) comm, remote_rank);
+	int remote = sctk_get_comm_world_rank ((const mpc_mp_communicator_t) comm, remote_rank);
 	
 	/* Now check if we are on the same node for both communications */
 	if( !mpc_mp_comm_is_remote_rank( remote ) )
@@ -1596,7 +1597,7 @@ static int __INTERNAL__PMPIX_Swap(void **sendrecv_buf , int remote_rank, MPI_Cou
 	
 	/* First resolve the source and dest rank
 	 * in the comm_world */
-	int remote = sctk_get_comm_world_rank ((const sctk_communicator_t) comm, remote_rank);
+	int remote = sctk_get_comm_world_rank ((const mpc_mp_communicator_t) comm, remote_rank);
 	
 	/* Now check if we are on the same node for both communications */
 	if( !mpc_mp_comm_is_remote_rank( remote ) )
@@ -1682,8 +1683,8 @@ __INTERNAL__PMPI_Recv (void *buf, int count, MPI_Datatype datatype,
 		}
 		else
 		{
-			MPC_Request request;
-                        memset(&request, 0, sizeof(sctk_request_t));
+			mpc_mp_request_t request;
+                        memset(&request, 0, sizeof(mpc_mp_request_t));
 
                         int derived_ret = 0;
                         sctk_derived_datatype_t derived_datatype;
@@ -2397,7 +2398,7 @@ static int __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 	}
 	else
 	{
-		MPC_Request * mpcreq = __sctk_convert_mpc_request (request,requests);
+		mpc_mp_request_t * mpcreq = __sctk_convert_mpc_request (request,requests);
 
 		if( mpcreq->request_type == REQUEST_GENERALIZED )
 		{
@@ -2493,7 +2494,7 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
     }
 
     {
-      MPC_Request *req;
+      mpc_mp_request_t *req;
       req = __sctk_convert_mpc_request(&(array_of_requests[i]), requests);
       if (req == &MPC_REQUEST_NULL) {
         continue;
@@ -2548,8 +2549,8 @@ int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests, MPI_St
 	/* Convert MPI resquests to MPC ones */
 	
 	/* Prepare an array for MPC requests */
-	MPC_Request ** mpc_array_of_requests;
-	MPC_Request * static_array_of_requests[PMPI_WAIT_ALL_STATIC_TRSH];
+	mpc_mp_request_t ** mpc_array_of_requests;
+	mpc_mp_request_t * static_array_of_requests[PMPI_WAIT_ALL_STATIC_TRSH];
 	
 	if( count < PMPI_WAIT_ALL_STATIC_TRSH )
 	{
@@ -2557,7 +2558,7 @@ int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests, MPI_St
 	}
 	else
 	{
-		mpc_array_of_requests = sctk_malloc(sizeof(MPC_Request *) * count);
+		mpc_array_of_requests = sctk_malloc(sizeof(mpc_mp_request_t *) * count);
 		assume( mpc_array_of_requests != NULL );
 	}
 
@@ -2608,7 +2609,7 @@ int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests, MPI_St
 
         /* Call the MPC waitall implementation */
         int ret = _mpc_m_waitallp(count, mpc_array_of_requests,
-                                 (sctk_status_t *)array_of_statuses);
+                                 (mpc_mp_status_t *)array_of_statuses);
 
         /* Something bad hapenned ? */
         if (ret != MPI_SUCCESS)
@@ -2657,7 +2658,7 @@ static int __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[],
             MPI_internal_request_t *reqtmp;
             reqtmp = __sctk_convert_mpc_request_internal(
                         &(array_of_requests[i]), requests);
-            MPC_Request *req;
+            mpc_mp_request_t *req;
             req = &reqtmp->req;
 
             if (req == &MPC_REQUEST_NULL) {
@@ -2720,7 +2721,7 @@ static int __INTERNAL__PMPI_Waitsome (int incount, MPI_Request * array_of_reques
     if(array_of_requests[i] == MPI_REQUEST_NULL){
       req_null_count++;
     } else {
-      MPC_Request *req;
+      mpc_mp_request_t *req;
       req = __sctk_convert_mpc_request (&(array_of_requests[i]),requests);
       if (req == &MPC_REQUEST_NULL)
 	{
@@ -2758,7 +2759,7 @@ static int __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_reques
 	  if (array_of_requests[i] != MPI_REQUEST_NULL)
 		{
 			int tmp;
-			MPC_Request *req;
+			mpc_mp_request_t *req;
 			req = __sctk_convert_mpc_request (&(array_of_requests[i]),requests);
 			if (req == &MPC_REQUEST_NULL)
 			{
@@ -3227,7 +3228,7 @@ __INTERNAL__PMPI_Sendrecv_replace (void *buf, int count,
 int PMPI_Grequest_start( MPI_Grequest_query_function *query_fn, MPI_Grequest_free_function * free_fn,
 					  MPI_Grequest_cancel_function * cancel_fn, void *extra_state, MPI_Request * request)
 {
-	MPC_Request *new_request = __sctk_new_mpc_request (request,__sctk_internal_get_MPC_requests());
+	mpc_mp_request_t *new_request = __sctk_new_mpc_request (request,__sctk_internal_get_MPC_requests());
 	
 	return PMPC_Grequest_start( query_fn, free_fn, cancel_fn, extra_state, new_request );
 }
@@ -3235,7 +3236,7 @@ int PMPI_Grequest_start( MPI_Grequest_query_function *query_fn, MPI_Grequest_fre
 
 int PMPI_Grequest_complete(  MPI_Request request )
 {
-	MPC_Request *mpc_req = __sctk_convert_mpc_request (&request,__sctk_internal_get_MPC_requests());
+	mpc_mp_request_t *mpc_req = __sctk_convert_mpc_request (&request,__sctk_internal_get_MPC_requests());
 	return PMPC_Grequest_complete( *mpc_req );
 }
 
@@ -3250,7 +3251,7 @@ int PMPI_Grequest_complete(  MPI_Request request )
            		  void *extra_state, 
            		  MPI_Request * request)
   {
-          MPC_Request *new_request = __sctk_new_mpc_request (request,__sctk_internal_get_MPC_requests());
+          mpc_mp_request_t *new_request = __sctk_new_mpc_request (request,__sctk_internal_get_MPC_requests());
 	  return PMPCX_Grequest_start(query_fn, free_fn, cancel_fn, poll_fn, extra_state, new_request);
   }
 
@@ -3270,7 +3271,7 @@ int PMPIX_Grequest_class_create( MPI_Grequest_query_function * query_fn,
   
 int PMPIX_Grequest_class_allocate( MPIX_Grequest_class target_class, void *extra_state, MPI_Request *request )
 {
-        MPC_Request *new_request = __sctk_new_mpc_request (request,__sctk_internal_get_MPC_requests());
+        mpc_mp_request_t *new_request = __sctk_new_mpc_request (request,__sctk_internal_get_MPC_requests());
 	return PMPCX_Grequest_class_allocate( target_class, extra_state, new_request );
 }
 
@@ -3328,7 +3329,7 @@ static int __INTERNAL__PMPI_Type_contiguous_inherits (unsigned long count, MPI_D
 		/* Allocate datatype description */
 		mpc_pack_absolute_indexes_t *begins_out = sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
 		mpc_pack_absolute_indexes_t *ends_out =	sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
-		sctk_datatype_t * datatypes = 	sctk_malloc (count_out * sizeof (sctk_datatype_t));
+		mpc_mp_datatype_t * datatypes = 	sctk_malloc (count_out * sizeof (mpc_mp_datatype_t));
 
 		if( !begins_out || !ends_out || !datatypes )
 		{
@@ -3517,7 +3518,7 @@ static int __INTERNAL__PMPI_Type_hvector (int count,
 		
 		mpc_pack_absolute_indexes_t *begins_out = sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
 		mpc_pack_absolute_indexes_t *ends_out = sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
-		sctk_datatype_t *datatypes = sctk_malloc (count_out * sizeof (sctk_datatype_t));
+		mpc_mp_datatype_t *datatypes = sctk_malloc (count_out * sizeof (mpc_mp_datatype_t));
 		
 		/* Here we flatten the vector */
 		int i;
@@ -3768,7 +3769,7 @@ static int __INTERNAL__PMPI_Type_hindexed (int count,
 		/* Allocate context */
 		mpc_pack_absolute_indexes_t * begins_out = sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
 		mpc_pack_absolute_indexes_t * ends_out = sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
-		sctk_datatype_t *datatypes = sctk_malloc (count_out * sizeof (sctk_datatype_t));
+		mpc_mp_datatype_t *datatypes = sctk_malloc (count_out * sizeof (mpc_mp_datatype_t));
 
 		sctk_nodebug ("%lu extent", extent);
 
@@ -3900,7 +3901,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	sctk_nodebug("my_count_out = %d", my_count_out);
 	mpc_pack_absolute_indexes_t * begins_out = sctk_malloc(my_count_out * sizeof(mpc_pack_absolute_indexes_t));
 	mpc_pack_absolute_indexes_t * ends_out = sctk_malloc(my_count_out * sizeof(mpc_pack_absolute_indexes_t));
-	sctk_datatype_t *datatypes = sctk_malloc (my_count_out * sizeof (sctk_datatype_t));
+	mpc_mp_datatype_t *datatypes = sctk_malloc (my_count_out * sizeof (mpc_mp_datatype_t));
 
 	for (i = 0; i < count; i++)
 	{
@@ -5273,7 +5274,7 @@ int __INTERNAL__PMPI_Pack_external_size (char *datarep , int incount, MPI_Dataty
 }
 
 
-MPI_Datatype * sctk_datatype_get_typemask( MPI_Datatype datatype, int * type_mask_count, sctk_datatype_t * static_type )
+MPI_Datatype * sctk_datatype_get_typemask( MPI_Datatype datatype, int * type_mask_count, mpc_mp_datatype_t * static_type )
 {
 	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
 	
@@ -5362,7 +5363,7 @@ int __INTERNAL__PMPI_Pack_external (char *datarep , void *inbuf, int incount, MP
 
 		int type_vector_count = 0;
 		MPI_Datatype * type_vector = NULL;
-		sctk_datatype_t static_type;
+		mpc_mp_datatype_t static_type;
 		
 		/* Now extract the type mask */
 		type_vector = sctk_datatype_get_typemask( datatype, &type_vector_count, &static_type );
@@ -5407,7 +5408,7 @@ int __INTERNAL__PMPI_Unpack_external (char * datarep, void * inbuf, MPI_Aint ins
 
 		int type_vector_count = 0;
 		MPI_Datatype * type_vector = NULL;
-		sctk_datatype_t static_type;
+		mpc_mp_datatype_t static_type;
 
 		/* Now extract the type mask */
 		type_vector = sctk_datatype_get_typemask( datatype, &type_vector_count, &static_type );
@@ -6043,7 +6044,7 @@ static inline int __INTERNAL__PMPI_Barrier(MPI_Comm comm) {
 int __INTERNAL__PMPI_Bcast_inter(void *buffer, int count, MPI_Datatype datatype,
                                  int root, MPI_Comm comm) {
   int res = MPI_ERR_INTERN;
-  sctk_status_t status;
+  mpc_mp_status_t status;
   int rank;
 
   if (root == MPI_PROC_NULL) {
@@ -8174,7 +8175,7 @@ int __INTERNAL__PMPI_Allgatherv_inter(void *sendbuf, int sendcount,
   int size, rsize, rank, res = MPI_ERR_INTERN;
   int root = 0;
   MPI_Aint extent;
-  sctk_communicator_t local_comm;
+  mpc_mp_communicator_t local_comm;
 
   res = __INTERNAL__PMPI_Comm_rank(comm, &rank);
   if (res != MPI_SUCCESS) {
@@ -8344,7 +8345,7 @@ int __INTERNAL__PMPI_Alltoall_inter(void *sendbuf, int sendcount,
                                     MPI_Comm comm) {
   int res = MPI_ERR_INTERN;
   int local_size, remote_size, max_size, i;
-  sctk_status_t status;
+  mpc_mp_status_t status;
   MPI_Aint sendtype_extent, recvtype_extent;
   int src, dst, rank;
   char *sendaddr, *recvaddr;
@@ -8747,7 +8748,7 @@ int __INTERNAL__PMPI_Alltoallv_inter(void *sendbuf, int *sendcnts, int *sdispls,
                                      MPI_Datatype recvtype, MPI_Comm comm) {
   int res = MPI_ERR_INTERN;
   int local_size, remote_size, max_size, i;
-  sctk_status_t status;
+  mpc_mp_status_t status;
   size_t sendtype_extent, recvtype_extent;
   int src, dst, rank, sendcount, recvcount;
   char *sendaddr, *recvaddr;
@@ -9904,7 +9905,7 @@ sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op) {
     }                                                                          \
   }
 
-sctk_Op_f sctk_get_common_function(sctk_datatype_t datatype, sctk_Op op) {
+sctk_Op_f sctk_get_common_function(mpc_mp_datatype_t datatype, sctk_Op op) {
   sctk_Op_f func;
 
   func = op.func;
@@ -11005,7 +11006,7 @@ __INTERNAL__PMPI_Reduce_inter (void *sendbuf, void *recvbuf, int count,
 	int res = MPI_ERR_INTERN;
 	unsigned long size;
 
-	sctk_status_t status;
+	mpc_mp_status_t status;
 	int rank;
 	void *tmp_buf;
 	
@@ -13303,11 +13304,11 @@ __INTERNAL__PMPI_Intercomm_merge (MPI_Comm intercomm, int high,
 				  MPI_Comm * newintracomm)
 {
 	int rank, grank, remote_high, remote_leader, local_leader;
-	sctk_communicator_t peer_comm;
+	mpc_mp_communicator_t peer_comm;
 	MPI_Group local_group;
 	MPI_Group remote_group;
 	MPI_Group new_group;
-	sctk_status_t status;
+	mpc_mp_status_t status;
 
 	__INTERNAL__PMPI_Comm_rank (MPI_COMM_WORLD, &rank);
 	__INTERNAL__PMPI_Comm_rank (intercomm, &grank);
@@ -16510,7 +16511,7 @@ int PMPI_Status_set_cancelled (MPI_Status *status, int cancelled)
 
 int PMPI_Request_get_status (MPI_Request request, int *flag, MPI_Status *status)
 {
-        MPC_Request *mpc_request =  __sctk_convert_mpc_request(&request,__sctk_internal_get_MPC_requests());
+        mpc_mp_request_t *mpc_request =  __sctk_convert_mpc_request(&request,__sctk_internal_get_MPC_requests());
 	
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;

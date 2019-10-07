@@ -33,7 +33,7 @@ void
 run (void *arg)
 {
   int i;
-  sctk_communicator_t my_com;
+  mpc_mp_communicator_t my_com;
   int my_rank;
   char msg[50];
   sprintf (msg, "nothing");

@@ -37,7 +37,7 @@ char *sctk_mpi_handler_gen_filename(void *option, __UNUSED__ void *option1) {
     long long int icomm = (long long int)option1;
     MPI_Comm comm = (MPI_Comm)icomm;
 
-    mpc_mp_bcast((void *)filename, 128 * sizeof(char), 0, (sctk_communicator_t)comm);
+    mpc_mp_bcast((void *)filename, 128 * sizeof(char), 0, (mpc_mp_communicator_t)comm);
     return true;
   }
 
@@ -55,13 +55,13 @@ char *sctk_mpi_handler_gen_filename(void *option, __UNUSED__ void *option1) {
     long long int icomm = (long long int)option1;
     MPI_Comm comm = (MPI_Comm)icomm;
 
-    mpc_mp_bcast((void *)filename, 128 * sizeof(char), 0, (sctk_communicator_t)comm);
+    mpc_mp_bcast((void *)filename, 128 * sizeof(char), 0, (mpc_mp_communicator_t)comm);
 
     return filename;
   }
 
   struct sctk_alloc_mapper_handler_s *
-  sctk_shm_mpi_handler_init(sctk_communicator_t comm) {
+  sctk_shm_mpi_handler_init(mpc_mp_communicator_t comm) {
 
     char *localhost;
     struct sctk_alloc_mapper_handler_s *mpi_handler;

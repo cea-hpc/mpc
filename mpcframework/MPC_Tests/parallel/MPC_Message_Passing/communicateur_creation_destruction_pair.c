@@ -30,9 +30,9 @@ int is_printing = 1;
 void
 run (void *arg)
 {
-  sctk_communicator_t my_com;
-  sctk_communicator_t my_com2;
-  sctk_communicator_t my_com3;
+  mpc_mp_communicator_t my_com;
+  mpc_mp_communicator_t my_com2;
+  mpc_mp_communicator_t my_com3;
   int my_rank;
   int my_rank2;
   int dom_size;
