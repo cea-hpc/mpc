@@ -5111,244 +5111,272 @@ int _mpc_m_irecv_pack( int source, int tag, mpc_mp_communicator_t comm, mpc_mp_r
 
 /* Utilities functions for this section are located in mpc_info.[ch] */
 
-int PMPC_Info_create(MPC_Info *info) {
-  /* Retrieve task context */
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+int _mpc_m_info_create( MPC_Info *info )
+{
+	/* Retrieve task context */
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  /* First set to NULL */
-  *info = MPC_INFO_NULL;
+	/* First set to NULL */
+	*info = MPC_INFO_NULL;
 
-  /* Create a new entry */
-  int new_id = MPC_Info_factory_create(&task_specific->info_fact);
+	/* Create a new entry */
+	int new_id = MPC_Info_factory_create( &task_specific->info_fact );
 
-  /* We did not get a new entry */
-  if (new_id < 0) {
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INTERN,
-                     "Failled to allocate new MPI_Info");
-  }
+	/* We did not get a new entry */
+	if ( new_id < 0 )
+	{
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INTERN,
+						  "Failled to allocate new MPI_Info" );
+	}
 
-  /* Then set the new ID */
-  *info = new_id;
+	/* Then set the new ID */
+	*info = new_id;
 
-  /* All clear */
-  MPC_ERROR_SUCESS();
+	/* All clear */
+	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Info_free(MPC_Info *info) {
-  /* Retrieve task context */
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+int _mpc_m_info_free( MPC_Info *info )
+{
+	/* Retrieve task context */
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  /* Try to delete from factory */
-  int ret = MPC_Info_factory_delete(&task_specific->info_fact, (int)*info);
+	/* Try to delete from factory */
+	int ret = MPC_Info_factory_delete( &task_specific->info_fact, (int) *info );
 
-  if (ret) {
-    /* Failed to delete no such info */
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INFO,
-                     "Failled to delete MPI_Info");
-  } else {
-    /* Delete was successful */
-    *info = MPC_INFO_NULL;
-    MPC_ERROR_SUCESS();
-  }
+	if ( ret )
+	{
+		/* Failed to delete no such info */
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INFO,
+						  "Failled to delete MPI_Info" );
+	}
+	else
+	{
+		/* Delete was successful */
+		*info = MPC_INFO_NULL;
+		MPC_ERROR_SUCESS();
+	}
 }
 
-int PMPC_Info_set(MPC_Info info, const char *key, const char *value) {
-  /* Retrieve task context */
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+int _mpc_m_info_set( MPC_Info info, const char *key, const char *value )
+{
+	/* Retrieve task context */
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  /* Locate the cell */
-  struct MPC_Info_cell *cell =
-      MPC_Info_factory_resolve(&task_specific->info_fact, (int)info);
+	/* Locate the cell */
+	struct MPC_Info_cell *cell =
+		MPC_Info_factory_resolve( &task_specific->info_fact, (int) info );
 
-  if (!cell) {
-    /* We failed to locate the info */
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INFO, "Failled to get MPI_Info");
-  }
+	if ( !cell )
+	{
+		/* We failed to locate the info */
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INFO, "Failled to get MPI_Info" );
+	}
 
-  /* Check for lenght boundaries */
-  int keylen = strlen(key);
-  int valuelen = strlen(value);
+	/* Check for lenght boundaries */
+	int keylen = strlen( key );
+	int valuelen = strlen( value );
 
-  if (MPC_MAX_INFO_KEY <= keylen)
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INFO_KEY, "");
+	if ( MPC_MAX_INFO_KEY <= keylen )
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INFO_KEY, "" );
 
-  if (MPC_MAX_INFO_VAL <= valuelen)
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INFO_VALUE, "");
+	if ( MPC_MAX_INFO_VAL <= valuelen )
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INFO_VALUE, "" );
 
-  /* Now set the key */
-  MPC_Info_cell_set(cell, (char *)key, (char *)value, 1);
+	/* Now set the key */
+	MPC_Info_cell_set( cell, (char *) key, (char *) value, 1 );
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Info_delete(MPC_Info info, const char *key) {
-  /* Retrieve task context */
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+int _mpc_m_info_delete( MPC_Info info, const char *key )
+{
+	/* Retrieve task context */
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  /* Locate the cell */
-  struct MPC_Info_cell *cell =
-      MPC_Info_factory_resolve(&task_specific->info_fact, (int)info);
+	/* Locate the cell */
+	struct MPC_Info_cell *cell =
+		MPC_Info_factory_resolve( &task_specific->info_fact, (int) info );
 
-  if (!cell) {
-    /* We failed to locate the info */
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INFO,
-                     "Failled to delete MPI_Info");
-  }
+	if ( !cell )
+	{
+		/* We failed to locate the info */
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INFO,
+						  "Failled to delete MPI_Info" );
+	}
 
-  int ret = MPC_Info_cell_delete(cell, (char *)key);
+	int ret = MPC_Info_cell_delete( cell, (char *) key );
 
-  if (ret) {
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INFO_NOKEY,
-                     " Failled to delete key");
-  }
+	if ( ret )
+	{
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INFO_NOKEY,
+						  " Failled to delete key" );
+	}
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Info_get(MPC_Info info, const char *key, int valuelen, char *value,
-                  int *flag) {
-  /* Retrieve task context */
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+int _mpc_m_info_get( MPC_Info info, const char *key, int valuelen, char *value,
+					 int *flag )
+{
+	/* Retrieve task context */
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  /* Locate the cell */
-  struct MPC_Info_cell *cell =
-      MPC_Info_factory_resolve(&task_specific->info_fact, (int)info);
+	/* Locate the cell */
+	struct MPC_Info_cell *cell =
+		MPC_Info_factory_resolve( &task_specific->info_fact, (int) info );
 
-  if (!cell) {
-    /* We failed to locate the info */
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INFO,
-                     "Failled to delete MPI_Info");
-  }
+	if ( !cell )
+	{
+		/* We failed to locate the info */
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INFO,
+						  "Failled to delete MPI_Info" );
+	}
 
-  MPC_Info_cell_get(cell, (char *)key, value, valuelen, flag);
+	MPC_Info_cell_get( cell, (char *) key, value, valuelen, flag );
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Info_get_nkeys(MPC_Info info, int *nkeys) {
-  /* Retrieve task context */
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+int _mpc_m_info_get_nkeys( MPC_Info info, int *nkeys )
+{
+	/* Retrieve task context */
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  *nkeys = 0;
+	*nkeys = 0;
 
-  /* Locate the cell */
-  struct MPC_Info_cell *cell =
-      MPC_Info_factory_resolve(&task_specific->info_fact, (int)info);
+	/* Locate the cell */
+	struct MPC_Info_cell *cell =
+		MPC_Info_factory_resolve( &task_specific->info_fact, (int) info );
 
-  if (!cell) {
-    /* We failed to locate the info */
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INFO,
-                     "Failled to get MPI_Info key count");
-  }
+	if ( !cell )
+	{
+		/* We failed to locate the info */
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INFO,
+						  "Failled to get MPI_Info key count" );
+	}
 
-  *nkeys = MPC_Info_key_count(cell->keys);
+	*nkeys = MPC_Info_key_count( cell->keys );
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Info_get_nthkey(MPC_Info info, int n, char *key) {
-  /* Retrieve task context */
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+int _mpc_m_info_get_count( MPC_Info info, int n, char *key )
+{
+	/* Retrieve task context */
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  /* Locate the cell */
-  struct MPC_Info_cell *cell =
-      MPC_Info_factory_resolve(&task_specific->info_fact, (int)info);
+	/* Locate the cell */
+	struct MPC_Info_cell *cell =
+		MPC_Info_factory_resolve( &task_specific->info_fact, (int) info );
 
-  if (!cell) {
-    /* We failed to locate the info */
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INFO,
-                     "Failled to get MPI_Info key count");
-  }
+	if ( !cell )
+	{
+		/* We failed to locate the info */
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INFO,
+						  "Failled to get MPI_Info key count" );
+	}
 
-  /* Thry to get the nth entry */
-  struct MPC_Info_key *keyEntry = MPC_Info_key_get_nth(cell->keys, n);
+	/* Thry to get the nth entry */
+	struct MPC_Info_key *keyEntry = MPC_Info_key_get_nth( cell->keys, n );
 
-  /* Not found */
-  if (!keyEntry) {
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INFO_NOKEY,
-                     "Failled to retrieve an MPI_Info's key");
-  } else {
-    /* Found just snprintf the key */
-    snprintf(key, MPC_MAX_INFO_KEY, "%s", keyEntry->key);
-  }
+	/* Not found */
+	if ( !keyEntry )
+	{
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INFO_NOKEY,
+						  "Failled to retrieve an MPI_Info's key" );
+	}
+	else
+	{
+		/* Found just snprintf the key */
+		snprintf( key, MPC_MAX_INFO_KEY, "%s", keyEntry->key );
+	}
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Info_dup(MPC_Info info, MPC_Info *newinfo) {
-  /* First create a new entry */
-  int ret = PMPC_Info_create(newinfo);
+int _mpc_m_info_dup( MPC_Info info, MPC_Info *newinfo )
+{
+	/* First create a new entry */
+	int ret = _mpc_m_info_create( newinfo );
 
-  if (ret != MPC_SUCCESS)
-    return ret;
+	if ( ret != MPC_SUCCESS )
+		return ret;
 
-  /* Prepare to copy keys one by one */
-  int num_keys = 0;
-  char keybuf[MPC_MAX_INFO_KEY];
-  /* This is the buffer for the value */
-  char *valbuff = sctk_malloc(MPC_MAX_INFO_VAL * sizeof(char));
+	/* Prepare to copy keys one by one */
+	int num_keys = 0;
+	char keybuf[MPC_MAX_INFO_KEY];
+	/* This is the buffer for the value */
+	char *valbuff = sctk_malloc( MPC_MAX_INFO_VAL * sizeof( char ) );
 
-  if (!valbuff) {
-    perror("sctk_alloc");
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INTERN,
-                     "Failled to allocate temporary value buffer");
-  }
+	if ( !valbuff )
+	{
+		perror( "sctk_alloc" );
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INTERN,
+						  "Failled to allocate temporary value buffer" );
+	}
 
-  int i;
+	int i;
 
-  PMPC_Info_get_nkeys(info, &num_keys);
+	_mpc_m_info_get_nkeys( info, &num_keys );
 
-  int flag = 0;
+	int flag = 0;
 
-  /* Copy keys */
-  for (i = 0; i < num_keys; i++) {
-    /* Get key */
-    PMPC_Info_get_nthkey(info, i, keybuf);
-    /* Get value */
-    PMPC_Info_get(info, keybuf, MPC_MAX_INFO_VAL, valbuff, &flag);
+	/* Copy keys */
+	for ( i = 0; i < num_keys; i++ )
+	{
+		/* Get key */
+		_mpc_m_info_get_count( info, i, keybuf );
+		/* Get value */
+		_mpc_m_info_get( info, keybuf, MPC_MAX_INFO_VAL, valbuff, &flag );
 
-    if (!flag) {
-      /* Shall not happen */
-      sctk_free(valbuff);
-      MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INFO_NOKEY,
-                       "Could not retrieve a key which should have been there");
-    }
+		if ( !flag )
+		{
+			/* Shall not happen */
+			sctk_free( valbuff );
+			MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INFO_NOKEY,
+							  "Could not retrieve a key which should have been there" );
+		}
 
-    /* Store value at key in the newly allocated object */
-    PMPC_Info_set(*newinfo, keybuf, valbuff);
-  }
+		/* Store value at key in the newly allocated object */
+		_mpc_m_info_set( *newinfo, keybuf, valbuff );
+	}
 
-  sctk_free(valbuff);
+	sctk_free( valbuff );
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Info_get_valuelen(MPC_Info info, char *key, int *valuelen, int *flag) {
-  /* Retrieve task context */
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
+int _mpc_m_info_get_valuelen( MPC_Info info, char *key, int *valuelen, int *flag )
+{
+	/* Retrieve task context */
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  /* Locate the cell */
-  struct MPC_Info_cell *cell =
-      MPC_Info_factory_resolve(&task_specific->info_fact, (int)info);
+	/* Locate the cell */
+	struct MPC_Info_cell *cell =
+		MPC_Info_factory_resolve( &task_specific->info_fact, (int) info );
 
-  if (!cell) {
-    /* We failed to locate the info */
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INFO,
-                     "Failled to get MPI_Info key count");
-  }
+	if ( !cell )
+	{
+		/* We failed to locate the info */
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INFO,
+						  "Failled to get MPI_Info key count" );
+	}
 
-  /* Retrieve the cell @ key */
-  struct MPC_Info_key *keyEntry = MPC_Info_key_get(cell->keys, (char *)key);
+	/* Retrieve the cell @ key */
+	struct MPC_Info_key *keyEntry = MPC_Info_key_get( cell->keys, (char *) key );
 
-  if (!keyEntry) {
-    /* Nothing found, set flag */
-    *flag = 0;
-  } else {
-    /* We found it ! set length with strlen */
-    *flag = 1;
-    *valuelen = strlen(keyEntry->value);
-  }
+	if ( !keyEntry )
+	{
+		/* Nothing found, set flag */
+		*flag = 0;
+	}
+	else
+	{
+		/* We found it ! set length with strlen */
+		*flag = 1;
+		*valuelen = strlen( keyEntry->value );
+	}
 
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
-

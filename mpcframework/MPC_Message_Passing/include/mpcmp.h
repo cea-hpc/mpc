@@ -668,15 +668,15 @@ typedef int MPC_Checkpoint_state;
 
   /* MPI Info management */
 
-  int PMPC_Info_set( MPC_Info, const char *, const char * );
-  int PMPC_Info_free( MPC_Info * );
-  int PMPC_Info_create( MPC_Info * );
-  int PMPC_Info_delete( MPC_Info , const char * );
-  int PMPC_Info_get(MPC_Info , const char *, int , char *, int *);
-  int PMPC_Info_dup( MPC_Info , MPC_Info * );
-  int PMPC_Info_get_nkeys (MPC_Info, int *);
-  int PMPC_Info_get_nthkey (MPC_Info, int, char *);
-  int PMPC_Info_get_valuelen (MPC_Info, char *, int *, int *);
+  int _mpc_m_info_set( MPC_Info, const char *, const char * );
+  int _mpc_m_info_free( MPC_Info * );
+  int _mpc_m_info_create( MPC_Info * );
+  int _mpc_m_info_delete( MPC_Info , const char * );
+  int _mpc_m_info_get(MPC_Info , const char *, int , char *, int *);
+  int _mpc_m_info_dup( MPC_Info , MPC_Info * );
+  int _mpc_m_info_get_nkeys (MPC_Info, int *);
+  int _mpc_m_info_get_count (MPC_Info, int, char *);
+  int _mpc_m_info_get_valuelen (MPC_Info, char *, int *, int *);
 
   /* Generalized Requests */
 

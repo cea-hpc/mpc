@@ -20178,47 +20178,47 @@ int PMPI_Alloc_mem(MPI_Aint size, __UNUSED__ MPI_Info info, void *baseptr)
 
 int PMPI_Info_set( MPI_Info info, const char *key, const char *value )
 {
-	return PMPC_Info_set( (MPC_Info)info, key, value );
+	return _mpc_m_info_set( (MPC_Info)info, key, value );
 }
 
 int PMPI_Info_get(MPI_Info info, const char *key, int valuelen, char *value, int *flag)
 {
-	return PMPC_Info_get( (MPC_Info)info, key, valuelen, value, flag );
+	return _mpc_m_info_get( (MPC_Info)info, key, valuelen, value, flag );
 }
 
 int PMPI_Info_free( MPI_Info *info )
 {
-	return PMPC_Info_free( (MPC_Info *)info );
+	return _mpc_m_info_free( (MPC_Info *)info );
 }
 
 int PMPI_Info_dup( MPI_Info info, MPI_Info *newinfo )
 {
-	return PMPC_Info_dup( (MPC_Info) info , (MPC_Info * ) newinfo );
+	return _mpc_m_info_dup( (MPC_Info) info , (MPC_Info * ) newinfo );
 }
 
 int PMPI_Info_delete( MPI_Info info, const char *key )
 {
-	return PMPC_Info_delete( (MPC_Info) info , key );
+	return _mpc_m_info_delete( (MPC_Info) info , key );
 }
 
 int PMPI_Info_create( MPI_Info *info )
 {
-	return PMPC_Info_create( (MPC_Info *) info );
+	return _mpc_m_info_create( (MPC_Info *) info );
 }
 
 int PMPI_Info_get_nkeys( MPI_Info info, int *nkeys )
 {
-	return PMPC_Info_get_nkeys( (MPC_Info) info, nkeys );
+	return _mpc_m_info_get_nkeys( (MPC_Info) info, nkeys );
 }
 
 int PMPI_Info_get_nthkey( MPI_Info info, int n, char *key )
 {
-	return PMPC_Info_get_nthkey( (MPC_Info) info, n , key );
+	return _mpc_m_info_get_count( (MPC_Info) info, n , key );
 }
 
 int PMPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen, int *flag)
 {
-	return PMPC_Info_get_valuelen( (MPC_Info) info , key , valuelen , flag );
+	return _mpc_m_info_get_valuelen( (MPC_Info) info , key , valuelen , flag );
 }
 
 /*************************
