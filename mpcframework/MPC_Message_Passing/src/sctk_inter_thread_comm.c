@@ -2631,11 +2631,29 @@ void mpc_mp_comm_message_probe_any_source_class_comm( int destination, int tag,
 /********************************************************************/
 
 
-void mpc_mp_comm_request_init( mpc_mp_request_t *request, mpc_mp_communicator_t comm,
-							   int request_type )
+void mpc_mp_comm_request_init( mpc_mp_request_t *request, mpc_mp_communicator_t comm, int request_type )
 {
 	__mpc_comm_request_init( request, comm, request_type );
 }
+
+int mpc_mp_comm_request_free( mpc_mp_request_t *request )
+{
+	int ret = SCTK_SUCCESS;
+
+	/* Firstly wait the message before freeing */
+	mpc_mp_comm_request_wait( request );
+
+	if ( request->request_type == REQUEST_GENERALIZED )
+	{
+		ret = ( request->free_fn )( request->extra_state );
+	}
+
+	mpc_mp_comm_request_init( request, MPC_COMM_NULL, REQUEST_NULL );
+	request->is_null = 1;
+
+	return ret;
+}
+
 
 int mpc_mp_comm_request_cancel( mpc_mp_request_t *msg )
 {

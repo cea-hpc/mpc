@@ -735,6 +735,8 @@ static inline void mpc_mp_comm_request_set_null(mpc_mp_request_t *request, int v
 
 int mpc_mp_comm_request_cancel( mpc_mp_request_t *request );
 
+int mpc_mp_comm_request_free( mpc_mp_request_t *request );
+
 /************************************************************************/
 /* MPI Status Modification and Query                                    */
 /************************************************************************/

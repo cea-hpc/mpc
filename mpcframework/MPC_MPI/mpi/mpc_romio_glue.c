@@ -409,7 +409,7 @@ void MPIR_Err_get_string( int errcode, char *msg, int maxlen,__UNUSED__  MPIR_Er
 	buff[0] = '\0';
 	msg[0] = '\0';
 	
-	PMPC_Error_string (errcode, buff, &len);
+	_mpc_m_error_string (errcode, buff, &len);
 
 	if( strlen( buff ) )
 		snprintf( msg, maxlen, "%s", buff );
