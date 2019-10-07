@@ -238,7 +238,7 @@ void __sctk_add_in_mpc_request(MPI_Request *req, void *t,
 void __sctk_delete_mpc_request(MPI_Request *req,
                                MPI_request_struct_t *requests);
 
-sctk_derived_datatype_t *_mpc_m_per_mpi_process_ctx_derived_datatype_get(MPC_Datatype datatype);
+sctk_derived_datatype_t *_mpc_m_per_mpi_process_ctx_derived_datatype_get(sctk_datatype_t datatype);
 int *sctk_group_raw_ranks(MPI_Group group);
 
 typedef struct {
@@ -272,7 +272,7 @@ static inline int sctk_op_can_commute( sctk_op_t * op , MPI_Datatype type )
 
 
 
-MPC_Op_f sctk_get_common_function(MPC_Datatype datatype, MPC_Op op);
+MPC_Op_f sctk_get_common_function(sctk_datatype_t datatype, MPC_Op op);
 
 /*
   SHARED INTERNAL FUNCTIONS
@@ -373,7 +373,7 @@ static inline void sctk_mpi_shared_mem_buffer_get(union shared_mem_buffer *b,
 int __MPC_Error_init();
 
 void SCTK__MPI_INIT_REQUEST (MPI_Request * request);
-int SCTK__MPI_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file, int line);
+int SCTK__MPI_ERROR_REPORT__ (sctk_communicator_t comm, int error, char *message, char *file, int line);
 
 int __INTERNAL__PMPI_Type_extent (MPI_Datatype, MPI_Aint *);
 int __INTERNAL__PMPI_Type_size (MPI_Datatype, int *);

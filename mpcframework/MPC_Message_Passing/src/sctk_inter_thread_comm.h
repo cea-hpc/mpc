@@ -734,6 +734,24 @@ static inline void mpc_mp_comm_request_set_null(sctk_request_t *request, int val
   request->is_null = val;
 }
 
+int mpc_mp_comm_request_cancel( sctk_request_t *request );
+
+/************************************************************************/
+/* MPI Status Modification and Query                                    */
+/************************************************************************/
+
+static inline int mpc_mp_comm_status_set_cancelled( sctk_status_t *status, int cancelled )
+{
+	status->cancelled = cancelled;
+	return SCTK_SUCCESS;
+}
+
+static inline int mpc_mp_comm_status_get_cancelled( sctk_status_t *status, int *flag )
+{
+	*flag = ( status->cancelled == 1 );
+	return SCTK_SUCCESS;
+}
+
 #ifdef __cplusplus
 }
 #endif

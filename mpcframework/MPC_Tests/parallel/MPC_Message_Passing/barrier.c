@@ -46,7 +46,7 @@ main (int argc, char **argv)
 {
   char *printing;
   int my_rank;
-  MPC_Comm my_com;
+  sctk_communicator_t my_com;
   int i;
   double begin, end;
 

@@ -5002,7 +5002,7 @@ static inline int NBC_Start( NBC_Handle *handle, NBC_Schedule *schedule )
 			&( task_specific->mpc_mpi_data->nbc_initialized_per_task ), 1, NULL,
 			NULL );
 		/* wake progress thread up */
-		PMPC_Send( &tmp_send, 1, MPI_INT, 0, 0, MPI_COMM_SELF );
+    _mpc_m_send(&tmp_send, 1, MPI_INT, 0, 0, MPI_COMM_SELF);
 
 		sctk_thread_mutex_lock( lock );
 		list_handles = task_specific->mpc_mpi_data->NBC_Pthread_handles;
@@ -5022,7 +5022,7 @@ static inline int NBC_Start( NBC_Handle *handle, NBC_Schedule *schedule )
 			// sctk_thread_wait_for_value_and_poll(&(task_specific->mpc_mpi_data->nbc_initialized_per_task),
 			// 1, NULL, NULL);
 			///* wake progress thread up */
-			// PMPC_Send(&tmp_send, 1, MPI_INT, 0, 0, MPI_COMM_SELF);
+// _mpc_m_send(&tmp_send, 1, MPI_INT, 0, 0, MPI_COMM_SELF);
 
 #ifdef SCTK_DEBUG_SCHEDULER
 		{

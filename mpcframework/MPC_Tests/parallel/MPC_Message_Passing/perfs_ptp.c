@@ -79,7 +79,7 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
     }
   if (my_rank == my_size - 1)
     {
-      MPC_Status status;
+      sctk_status_t status;
       for (i = 0; i < iters; i++)
 	{
 	  MPC_Recv (msg, size, MPC_CHAR, 0, 0, MPC_COMM_WORLD, &status);

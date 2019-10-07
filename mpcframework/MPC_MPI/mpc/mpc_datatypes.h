@@ -84,7 +84,7 @@ struct Datatype_Keyval *Datatype_Keyval_new(int *type_keyval);
  *  \param type Source data-type
  */
 void Datatype_Keyval_hit_delete(int type_keyval, void *attribute_val,
-                                MPC_Datatype type);
+                                sctk_datatype_t type);
 
 /** \brief Trigger copy handler (if present) on a given data-type
  *  \param type_keyval Target KEYVAL
@@ -92,7 +92,7 @@ void Datatype_Keyval_hit_delete(int type_keyval, void *attribute_val,
  *  \param attribute_val_in old data-type value
  *  \param attribute_val_out new data-type value
  */
-void Datatype_Keyval_hit_copy(int type_keyval, MPC_Datatype oldtype,
+void Datatype_Keyval_hit_copy(int type_keyval, sctk_datatype_t oldtype,
                               void **attribute_val_in, void **attribute_val_out,
                               int *flag);
 
@@ -146,7 +146,7 @@ int Datatype_Attr_store_init(struct Datatype_Attr_store *store);
  *  \return 0 on success
  */
 int Datatype_Attr_store_release(struct Datatype_Attr_store *store,
-                                MPC_Datatype container_type);
+                                sctk_datatype_t container_type);
 
 /************************************************************************/
 /* Datatype  Context                                                    */
@@ -165,7 +165,7 @@ struct Datatype_context
 {
 	/* Internal ref-counting handling */
 
-	MPC_Datatype internal_type; /**< This is the internal type when types are built on top of each other happens for hvector and hindexed */
+	sctk_datatype_t internal_type; /**< This is the internal type when types are built on top of each other happens for hvector and hindexed */
 
 	/* MPI_get_envelope */
 	MPC_Type_combiner combiner; /**< Combiner used to build the datatype */
@@ -177,7 +177,7 @@ struct Datatype_context
 	 * parameters provided uppon type creation  */
 	int * array_of_integers; /** An array of integers */
 	MPC_Aint * array_of_addresses; /* An array of addresses */
-	MPC_Datatype * array_of_types; /** An array of types */
+	sctk_datatype_t * array_of_types; /** An array of types */
 };
 
 /** \brief Clears the context
@@ -209,7 +209,7 @@ struct Datatype_External_context
 	int order;
 	int p;
 	int r;
-	MPC_Datatype oldtype;
+	sctk_datatype_t oldtype;
 	int blocklength;
 	int stride;
 	MPC_Aint stride_addr;
@@ -225,7 +225,7 @@ struct Datatype_External_context
 	int * array_of_starts;
 	int * array_of_displacements;
 	MPC_Aint * array_of_displacements_addr;
-	MPC_Datatype * array_of_types;
+	sctk_datatype_t * array_of_types;
 };
 
 /** \brief Clears the external context
@@ -289,7 +289,7 @@ int sctk_datatype_fill_envelope( struct Datatype_context * ctx , int * num_integ
  */
 struct Datatype_layout
 {
-	MPC_Datatype type;
+	sctk_datatype_t type;
 	MPC_Aint size;
 };
 
@@ -306,7 +306,7 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 
 /** \brief Returns 1 if datatype is a common datatype
  */
-static inline int sctk_datatype_is_common( MPC_Datatype datatype )
+static inline int sctk_datatype_is_common( sctk_datatype_t datatype )
 {
 	if( (0 <= datatype)
 	&&  ( datatype < SCTK_COMMON_DATA_TYPE_COUNT ) )
@@ -332,7 +332,7 @@ extern size_t * __sctk_common_type_sizes;
  *  \param datatype target common datatype
  *  \return datatype size
  */
-static inline size_t sctk_common_datatype_get_size( MPC_Datatype datatype )
+static inline size_t sctk_common_datatype_get_size( sctk_datatype_t datatype )
 {
   assert(sctk_datatype_is_common(datatype));
   return __sctk_common_type_sizes[datatype];
@@ -352,7 +352,7 @@ void release_composed_common_types();
 /** \brief Display debug informations about a common datatype
  *  \param target_type Type to be displayed
  */
-void sctk_common_datatype_display( MPC_Datatype datatype );
+void sctk_common_datatype_display( sctk_datatype_t datatype );
 
 
 /************************************************************************/
@@ -419,7 +419,7 @@ void sctk_contiguous_datatype_display( sctk_contiguous_datatype_t * target_type 
  */
 typedef struct
 {
-	MPC_Datatype id; /**< Integer ID (useful  for debug) */
+	sctk_datatype_t id; /**< Integer ID (useful  for debug) */
 	/* Context */
 	size_t size; /**< Total size of the datatype */
 	unsigned long count; /**< Number of elements in the datatype */
@@ -466,7 +466,7 @@ typedef struct
  * \param is_b tells if the type has an upper bound
  * 
  */
-void sctk_derived_datatype_init(sctk_derived_datatype_t *type, MPC_Datatype id,
+void sctk_derived_datatype_init(sctk_derived_datatype_t *type, sctk_datatype_t id,
                                 unsigned long count,
                                 mpc_pack_absolute_indexes_t *begins,
                                 mpc_pack_absolute_indexes_t *ends,
@@ -497,7 +497,7 @@ struct Derived_datatype_cell
 {
 	mpc_pack_absolute_indexes_t begin;
 	mpc_pack_absolute_indexes_t end;
-	MPC_Datatype type;
+	sctk_datatype_t type;
 	short ignore;
 };
 
@@ -582,11 +582,11 @@ typedef enum
 	MPC_DATATYPES_CONTIGUOUS, /**< These are contiguous datatypes of type \ref sctk_contiguous_datatype_t */
 	MPC_DATATYPES_DERIVED, /**< These are derived datatypes of type \ref sctk_derived_datatype_t */
 	MPC_DATATYPES_UNKNOWN /**< This key is used to detect faulty datatypes IDs */
-} MPC_Datatype_kind;
+} sctk_datatype_t_kind;
 
 /** \brief Returns 1 if datatype is a contiguous datatype
  */
-static inline int sctk_datatype_is_contiguous( MPC_Datatype datatype )
+static inline int sctk_datatype_is_contiguous( sctk_datatype_t datatype )
 {
 	if( (SCTK_COMMON_DATA_TYPE_COUNT <= datatype)
 	&&  ( datatype < ( SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX ) ) )
@@ -599,7 +599,7 @@ static inline int sctk_datatype_is_contiguous( MPC_Datatype datatype )
 
 /** \brief Returns 1 if datatype is a derived datatype
  */
-static inline int sctk_datatype_is_derived (MPC_Datatype data_in)
+static inline int sctk_datatype_is_derived (sctk_datatype_t data_in)
 {
 	if ((data_in >= SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX) 
 	&& (data_in < (SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_USER_DATA_TYPES_MAX)))
@@ -612,7 +612,7 @@ static inline int sctk_datatype_is_derived (MPC_Datatype data_in)
 
 /** \brief Returns 1 if datatype is a stuct datatype datatype
  */
-static inline int sctk_datatype_is_struct_datatype (MPC_Datatype data_in)
+static inline int sctk_datatype_is_struct_datatype (sctk_datatype_t data_in)
 {
 	if ((data_in >= SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX) 
 	&& (data_in < ( SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX + MPC_STRUCT_DATATYPE_COUNT)))
@@ -625,7 +625,7 @@ static inline int sctk_datatype_is_struct_datatype (MPC_Datatype data_in)
 
 /** \brief Returns 1 if the datatype is a boundary (UB or LB)
  */
-static inline int sctk_datatype_is_boundary (MPC_Datatype data_in)
+static inline int sctk_datatype_is_boundary (sctk_datatype_t data_in)
 {
 	if ((data_in == MPC_UB)
 	||  (data_in == MPC_LB))
@@ -638,7 +638,7 @@ static inline int sctk_datatype_is_boundary (MPC_Datatype data_in)
 
 /** \brief Returns 1 if the datatype is occupying a contiguous memory region
  */
-static inline int sctk_datatype_contig_mem(MPC_Datatype data_in) {
+static inline int sctk_datatype_contig_mem(sctk_datatype_t data_in) {
   /* Note that the derived asumption can be optimized
    * for single segment derived with no LB/UB */
   if (sctk_datatype_is_derived(data_in) || sctk_datatype_is_boundary(data_in)) {
@@ -648,14 +648,14 @@ static inline int sctk_datatype_contig_mem(MPC_Datatype data_in) {
   return 1;
 }
 
-/** \brief This functions retuns the \ref MPC_Datatype_kind of an MPC_Datatype
+/** \brief This functions retuns the \ref sctk_datatype_t_kind of an sctk_datatype_t
  * 
  * 	It is useful to switch between datatypes
  * 
  */
- static inline MPC_Datatype_kind sctk_datatype_kind( MPC_Datatype datatype )
+ static inline sctk_datatype_t_kind sctk_datatype_kind( sctk_datatype_t datatype )
  {
-	MPC_Datatype_kind ret = MPC_DATATYPES_UNKNOWN;
+	sctk_datatype_t_kind ret = MPC_DATATYPES_UNKNOWN;
 	
 	if ( sctk_datatype_is_common( datatype ) || sctk_datatype_is_boundary( datatype ) )
 	{
@@ -719,7 +719,7 @@ struct Datatype_Array * Datatype_Array_init();
  *  \param da A pointer to the datatype array
  *  \param datatype The datatype to be freed
  */
-int Datatype_Array_type_can_be_released( struct Datatype_Array * da, MPC_Datatype datatype );
+int Datatype_Array_type_can_be_released( struct Datatype_Array * da, sctk_datatype_t datatype );
 
 /** \brief Releases the datatype array and types not previously freed
  *  \param da A pointer to the datatype array
@@ -750,7 +750,7 @@ static inline void Datatype_Array_unlock(void)
  * 
  *  \warning The datatype must be a contiguous datatype note that event unallocated datatypes are returned !
  */
-sctk_contiguous_datatype_t *  Datatype_Array_get_contiguous_datatype( struct Datatype_Array * da ,  MPC_Datatype datatype);
+sctk_contiguous_datatype_t *  Datatype_Array_get_contiguous_datatype( struct Datatype_Array * da ,  sctk_datatype_t datatype);
 
 /** \brief Returns a pointer to a derived datatype
  *  \param da A pointer to the datatype array
@@ -760,7 +760,7 @@ sctk_contiguous_datatype_t *  Datatype_Array_get_contiguous_datatype( struct Dat
  * 
  *  \warning The datatype must be a derived datatype
  */
-sctk_derived_datatype_t * Datatype_Array_get_derived_datatype( struct Datatype_Array * da  ,  MPC_Datatype datatype);
+sctk_derived_datatype_t * Datatype_Array_get_derived_datatype( struct Datatype_Array * da  ,  sctk_datatype_t datatype);
 
 /** \brief Sets a pointer to a contiguous datatype in the datatype array
  *  \param da A pointer to the datatype array
@@ -771,7 +771,7 @@ sctk_derived_datatype_t * Datatype_Array_get_derived_datatype( struct Datatype_A
  * 
  *  \warning The datatype must be a derived datatype
  */
-void Datatype_Array_set_derived_datatype( struct Datatype_Array * da ,  MPC_Datatype datatype, sctk_derived_datatype_t * value );
+void Datatype_Array_set_derived_datatype( struct Datatype_Array * da ,  sctk_datatype_t datatype, sctk_derived_datatype_t * value );
 
 /************************************************************************/
 /* Datatype  Attribute Getters                                          */
@@ -784,7 +784,7 @@ void Datatype_Array_set_derived_datatype( struct Datatype_Array * da ,  MPC_Data
  *  \param attribute_val Value to be stored
  *  \return MPI_SUCCESS if ok
  */
-int sctk_type_set_attr(struct Datatype_Array *da, MPC_Datatype type,
+int sctk_type_set_attr(struct Datatype_Array *da, sctk_datatype_t type,
                        int type_keyval, void *attribute_val);
 
 /** \brief Get a Datatype attr in a datatype-store (contained inside DT)
@@ -795,7 +795,7 @@ int sctk_type_set_attr(struct Datatype_Array *da, MPC_Datatype type,
  *  \param flag (OUT)False if no attribute found
  *  \return MPI_SUCCESS if ok
  */
-int sctk_type_get_attr(struct Datatype_Array *da, MPC_Datatype type,
+int sctk_type_get_attr(struct Datatype_Array *da, sctk_datatype_t type,
                        int type_keyval, void *attribute_val, int *flag);
 
 /** \brief Delete a Datatype attr in a datatype-store (contained inside DT)
@@ -804,7 +804,7 @@ int sctk_type_get_attr(struct Datatype_Array *da, MPC_Datatype type,
  * 	\param type_keyval Referenced keyval
  *  \return MPI_SUCCESS if ok
  */
-int sctk_type_delete_attr(struct Datatype_Array *da, MPC_Datatype type,
+int sctk_type_delete_attr(struct Datatype_Array *da, sctk_datatype_t type,
                           int type_keyval);
 
 /************************************************************************/
@@ -819,7 +819,7 @@ int sctk_type_delete_attr(struct Datatype_Array *da, MPC_Datatype type,
  */
 struct Datatype_name_cell
 {
-	MPC_Datatype datatype;
+	sctk_datatype_t datatype;
 	char name[MPC_MAX_OBJECT_NAME]; /**< Name given to the datatype */
 	UT_hash_handle hh; /**< This dummy data structure is required by UTHash is order to make this data structure hashable */
 };
@@ -835,7 +835,7 @@ struct Datatype_name_cell
  *  to allow this behaviour
  * 
  */
-int sctk_datype_set_name_nocheck( MPC_Datatype datatype, char * name );
+int sctk_datype_set_name_nocheck( sctk_datatype_t datatype, char * name );
 
 /** \brief Set a name to a given datatype
  *  \param datatype Type which has to be named
@@ -843,14 +843,14 @@ int sctk_datype_set_name_nocheck( MPC_Datatype datatype, char * name );
  *  \return 1 on error 0 otherwise
  * 
  */
-int sctk_datype_set_name( MPC_Datatype datatype, char * name );
+int sctk_datype_set_name( sctk_datatype_t datatype, char * name );
 
 
 /** \brief Returns the name of a data-type
  *  \param datatype Requested data-type
  *  \return NULL if no name the name otherwise
  */
-char * sctk_datype_get_name( MPC_Datatype datatype );
+char * sctk_datype_get_name( sctk_datatype_t datatype );
 
 
 /** \brief Release Data-types names

@@ -40,7 +40,7 @@ sctk_switch_to_long_life_alloc ()
 void
 run (void *arg)
 {
-  MPC_Comm my_com;
+  sctk_communicator_t my_com;
   int my_rank;
   char name[4096];
   int i;

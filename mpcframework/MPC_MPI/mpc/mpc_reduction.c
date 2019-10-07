@@ -34,7 +34,7 @@
 
 void
 mpc_no_exec (const void *mpc_restrict in, void *mpc_restrict inout, size_t size,
-	     MPC_Datatype datatype, int line, char *mpc_restrict file)
+	     sctk_datatype_t datatype, int line, char *mpc_restrict file)
 {
   fprintf (stderr,
 	   "Internal error: This can not be run at line %d in %s in %p out %p size %lu, datatype %d\n",
@@ -43,20 +43,20 @@ mpc_no_exec (const void *mpc_restrict in, void *mpc_restrict inout, size_t size,
 }
 
 static inline void
-mpc_redution_check_type (MPC_Datatype a, MPC_Datatype b)
+mpc_redution_check_type (sctk_datatype_t a, sctk_datatype_t b)
 {
   sctk_assert (a == b);
   sctk_nodebug("%d == %d",a,b);
 }
 
 #define MPC_PROTOTYPES_IMPL(name)						\
-  void MPC_##name##_func(const void* mpc_restrict  in ,void* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_##name##_func(const void* mpc_restrict  in ,void* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }
 
 #define MPC_DEFINED_FUNCS_IMPL(t, tt)                                          \
   void MPC_SUM_func_##t(const tt *mpc_restrict in, tt *mpc_restrict inout,     \
-                        size_t size, MPC_Datatype datatype) {                  \
+                        size_t size, sctk_datatype_t datatype) {                  \
     unsigned int i;                                                            \
     mpc_redution_check_type(datatype, t);                                      \
     for (i = 0; i < size; i++) {                                               \
@@ -64,7 +64,7 @@ mpc_redution_check_type (MPC_Datatype a, MPC_Datatype b)
     }                                                                          \
   }                                                                            \
   void MPC_MIN_func_##t(const tt *mpc_restrict in, tt *mpc_restrict inout,     \
-                        size_t size, MPC_Datatype datatype) {                  \
+                        size_t size, sctk_datatype_t datatype) {                  \
     unsigned int i;                                                            \
     mpc_redution_check_type(datatype, t);                                      \
     for (i = 0; i < size; i++) {                                               \
@@ -73,7 +73,7 @@ mpc_redution_check_type (MPC_Datatype a, MPC_Datatype b)
     }                                                                          \
   }                                                                            \
   void MPC_MAX_func_##t(const tt *mpc_restrict in, tt *mpc_restrict inout,     \
-                        size_t size, MPC_Datatype datatype) {                  \
+                        size_t size, sctk_datatype_t datatype) {                  \
     unsigned int i;                                                            \
     mpc_redution_check_type(datatype, t);                                      \
     for (i = 0; i < size; i++) {                                               \
@@ -82,7 +82,7 @@ mpc_redution_check_type (MPC_Datatype a, MPC_Datatype b)
     }                                                                          \
   }                                                                            \
   void MPC_PROD_func_##t(const tt *mpc_restrict in, tt *mpc_restrict inout,    \
-                         size_t size, MPC_Datatype datatype) {                 \
+                         size_t size, sctk_datatype_t datatype) {                 \
     unsigned int i;                                                            \
     mpc_redution_check_type(datatype, t);                                      \
     for (i = 0; i < size; i++) {                                               \
@@ -93,7 +93,7 @@ mpc_redution_check_type (MPC_Datatype a, MPC_Datatype b)
  void
 MPC_MAX_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
         mpc_float_float * mpc_restrict inout, size_t size,
-        MPC_Datatype datatype)
+        sctk_datatype_t datatype)
 {
   size_t i;
   mpc_redution_check_type (datatype, MPC_COMPLEX8);
@@ -107,7 +107,7 @@ MPC_MAX_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
 void
 MPC_MIN_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
         mpc_float_float * mpc_restrict inout, size_t size,
-        MPC_Datatype datatype)
+        sctk_datatype_t datatype)
 {
   size_t i;
   mpc_redution_check_type (datatype, MPC_COMPLEX8);
@@ -121,7 +121,7 @@ MPC_MIN_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
 void
 MPC_SUM_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
         mpc_float_float * mpc_restrict inout, size_t size,
-        MPC_Datatype datatype)
+        sctk_datatype_t datatype)
 {
   size_t i;
   mpc_redution_check_type (datatype, MPC_COMPLEX8);
@@ -134,7 +134,7 @@ MPC_SUM_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
 void
 MPC_PROD_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
         mpc_float_float * mpc_restrict inout, size_t size,
-        MPC_Datatype datatype)
+        sctk_datatype_t datatype)
 {
   size_t i;
   mpc_redution_check_type (datatype, MPC_COMPLEX8);
@@ -148,7 +148,7 @@ MPC_PROD_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
  void
 MPC_MAX_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
         mpc_double_double * mpc_restrict inout, size_t size,
-        MPC_Datatype datatype)
+        sctk_datatype_t datatype)
 {
   size_t i;
   mpc_redution_check_type (datatype, MPC_COMPLEX16);
@@ -162,7 +162,7 @@ MPC_MAX_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
 void
 MPC_MIN_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
         mpc_double_double * mpc_restrict inout, size_t size,
-        MPC_Datatype datatype)
+        sctk_datatype_t datatype)
 {
   size_t i;
   mpc_redution_check_type (datatype, MPC_COMPLEX16);
@@ -176,7 +176,7 @@ MPC_MIN_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
 void
 MPC_SUM_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
         mpc_double_double * mpc_restrict inout, size_t size,
-        MPC_Datatype datatype)
+        sctk_datatype_t datatype)
 {
   size_t i;
   mpc_redution_check_type (datatype, MPC_COMPLEX16);
@@ -190,7 +190,7 @@ MPC_SUM_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
 void
 MPC_PROD_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
         mpc_double_double * mpc_restrict inout, size_t size,
-        MPC_Datatype datatype)
+        sctk_datatype_t datatype)
 {
   size_t i;
   mpc_redution_check_type (datatype, MPC_COMPLEX16);
@@ -205,7 +205,7 @@ MPC_PROD_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
  void
 MPC_MAX_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble* mpc_restrict in,
         mpc_longdouble_longdouble * mpc_restrict inout, size_t size,
-        MPC_Datatype datatype)
+        sctk_datatype_t datatype)
 {
   size_t i;
   mpc_redution_check_type (datatype, MPC_COMPLEX32);
@@ -219,7 +219,7 @@ MPC_MAX_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble* mpc_restrict in,
 void
 MPC_MIN_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble* mpc_restrict in,
         mpc_longdouble_longdouble * mpc_restrict inout, size_t size,
-        MPC_Datatype datatype)
+        sctk_datatype_t datatype)
 {
   size_t i;
   mpc_redution_check_type (datatype, MPC_COMPLEX32);
@@ -233,7 +233,7 @@ MPC_MIN_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble* mpc_restrict in,
 void
 MPC_SUM_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble * mpc_restrict in,
         mpc_longdouble_longdouble* mpc_restrict inout, size_t size,
-        MPC_Datatype datatype)
+        sctk_datatype_t datatype)
 {
   size_t i;
   mpc_redution_check_type (datatype, MPC_COMPLEX32);
@@ -246,7 +246,7 @@ MPC_SUM_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble * mpc_restrict in,
 void
 MPC_PROD_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble * mpc_restrict in,
         mpc_longdouble_longdouble * mpc_restrict inout, size_t size,
-        MPC_Datatype datatype)
+        sctk_datatype_t datatype)
 {
   size_t i;
   mpc_redution_check_type (datatype, MPC_COMPLEX32);
@@ -260,7 +260,7 @@ MPC_PROD_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble * mpc_restrict in,
 void
 MPC_SUM_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
 			  mpc_double_double * mpc_restrict inout, size_t size,
-			  MPC_Datatype datatype)
+			  sctk_datatype_t datatype)
 {
   size_t i;
   mpc_redution_check_type (datatype, MPC_DOUBLE_COMPLEX);
@@ -274,7 +274,7 @@ MPC_SUM_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
 void
 MPC_MIN_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
 			  mpc_double_double * mpc_restrict inout, size_t size,
-			  MPC_Datatype datatype)
+			  sctk_datatype_t datatype)
 {
   mpc_redution_check_type (datatype, MPC_DOUBLE_COMPLEX);
   not_available ();
@@ -287,7 +287,7 @@ MPC_MIN_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
 void
 MPC_MAX_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
 			  mpc_double_double * mpc_restrict inout, size_t size,
-			  MPC_Datatype datatype)
+			  sctk_datatype_t datatype)
 {
   mpc_redution_check_type (datatype, MPC_DOUBLE_COMPLEX);
   not_available ();
@@ -300,7 +300,7 @@ MPC_MAX_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
 void
 MPC_PROD_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
 			   mpc_double_double * mpc_restrict inout, size_t size,
-			   MPC_Datatype datatype)
+			   sctk_datatype_t datatype)
 {
   size_t i;
   mpc_redution_check_type (datatype, MPC_DOUBLE_COMPLEX);
@@ -314,7 +314,7 @@ MPC_PROD_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
 void
 MPC_SUM_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 			  mpc_float_float * mpc_restrict inout, size_t size,
-			  MPC_Datatype datatype)
+			  sctk_datatype_t datatype)
 {
   size_t i;
   mpc_redution_check_type (datatype, MPC_COMPLEX);
@@ -327,7 +327,7 @@ MPC_SUM_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 void
 MPC_MIN_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 			  mpc_float_float * mpc_restrict inout, size_t size,
-			  MPC_Datatype datatype)
+			  sctk_datatype_t datatype)
 {
   mpc_redution_check_type (datatype, MPC_COMPLEX);
   not_available ();
@@ -340,7 +340,7 @@ MPC_MIN_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 void
 MPC_MAX_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 			  mpc_float_float * mpc_restrict inout, size_t size,
-			  MPC_Datatype datatype)
+			  sctk_datatype_t datatype)
 {
   mpc_redution_check_type (datatype, MPC_COMPLEX);
   not_available ();
@@ -353,7 +353,7 @@ MPC_MAX_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 void
 MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 			   mpc_float_float * mpc_restrict inout, size_t size,
-			   MPC_Datatype datatype)
+			   sctk_datatype_t datatype)
 {
   size_t i;
   mpc_redution_check_type (datatype, MPC_COMPLEX);
@@ -365,42 +365,42 @@ MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 }
 
 #define MPC_DEFINED_FUNCS_NOIMPL(t,tt)						\
-  void MPC_SUM_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_SUM_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }									\
-  void MPC_MIN_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_MIN_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }									\
-  void MPC_MAX_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_MAX_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }									\
-  void MPC_PROD_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_PROD_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }
 
 #define MPC_DEFINED_FUNCS_IMPL2(t,tt)						\
-  void MPC_BAND_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_BAND_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       inout[i] = (tt)(in[i] & inout[i]);				\
     }									\
   }									\
-  void MPC_LAND_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_LAND_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       inout[i] = (tt)(in[i] && inout[i]);				\
     }									\
   }									\
-  void MPC_BXOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_BXOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       inout[i] = (tt)(in[i] ^ inout[i]);				\
     }									\
   }									\
-  void MPC_LXOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_LXOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
@@ -408,14 +408,14 @@ MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 					       && inout[i]));		\
     }									\
   }									\
-  void MPC_BOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_BOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       inout[i] = (tt)(in[i] | inout[i]);				\
     }									\
   }									\
-  void MPC_LOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_LOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
@@ -424,28 +424,28 @@ MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
   }
 
 #define MPC_DEFINED_FUNCS_IMPL2_LOG(t,tt)						\
-  void MPC_BAND_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_BAND_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       inout[i] = (tt)(in[i] & inout[i]);				\
     }									\
   }									\
-  void MPC_LAND_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_LAND_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       inout[i] = (tt)(in[i] && inout[i]);				\
     }									\
   }									\
-  void MPC_BXOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_BXOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       inout[i] = (tt)(in[i] ^ inout[i]);				\
     }									\
   }									\
-  void MPC_LXOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_LXOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
@@ -453,14 +453,14 @@ MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 					       && inout[i]));		\
     }									\
   }									\
-  void MPC_BOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_BOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       inout[i] = (tt)(in[i] | inout[i]);				\
     }									\
   }									\
-  void MPC_LOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_LOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
@@ -471,27 +471,27 @@ MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
   }
 
 #define MPC_DEFINED_FUNCS_NOIMPL2(t,tt)						\
-  void MPC_BAND_func_##t(const tt* in ,tt*inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_BAND_func_##t(const tt* in ,tt*inout ,size_t size ,sctk_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }									\
-  void MPC_LAND_func_##t(const tt* in ,tt*inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_LAND_func_##t(const tt* in ,tt*inout ,size_t size ,sctk_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }									\
-  void MPC_BXOR_func_##t(const tt* in ,tt*inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_BXOR_func_##t(const tt* in ,tt*inout ,size_t size ,sctk_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }									\
-  void MPC_LXOR_func_##t(const tt* in ,tt*inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_LXOR_func_##t(const tt* in ,tt*inout ,size_t size ,sctk_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }									\
-  void MPC_BOR_func_##t(const tt* in ,tt*inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_BOR_func_##t(const tt* in ,tt*inout ,size_t size ,sctk_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }									\
-  void MPC_LOR_func_##t(const tt* in ,tt*inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_LOR_func_##t(const tt* in ,tt*inout ,size_t size ,sctk_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }
 
 #define MPC_DEFINED_FUNCS_IMPL3(t,tt)					\
-  void MPC_MAXLOC_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_MAXLOC_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
@@ -501,7 +501,7 @@ MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 	inout[i] = in[i];						\
     }									\
   }									\
-  void MPC_MINLOC_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_MINLOC_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
@@ -513,10 +513,10 @@ MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
   }
 
 #define MPC_DEFINED_FUNCS_NOIMPL3(t,tt)					\
-  void MPC_MAXLOC_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_MAXLOC_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }									\
-  void MPC_MINLOC_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
+  void MPC_MINLOC_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,sctk_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }
 

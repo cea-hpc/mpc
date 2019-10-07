@@ -441,8 +441,8 @@ extern "C"
 /*  Type Definitions                                                    */
 /************************************************************************/
 
-typedef MPC_Datatype MPI_Datatype; /* unsigned int */
-typedef MPC_Comm MPI_Comm; /* unsigned int */
+typedef sctk_datatype_t MPI_Datatype; /* unsigned int */
+typedef sctk_communicator_t MPI_Comm; /* unsigned int */
 typedef int MPI_Request;
 typedef MPC_Aint MPI_Aint;
 typedef MPC_Count MPI_Count;
@@ -450,7 +450,7 @@ typedef int MPI_Errhandler;
 typedef MPC_User_function MPI_User_function;
 typedef int MPI_Op;
 typedef int MPI_Group;
-typedef MPC_Status MPI_Status;
+typedef sctk_status_t MPI_Status;
 typedef MPC_Handler_function MPI_Handler_function;
 typedef int MPI_Fint;
 

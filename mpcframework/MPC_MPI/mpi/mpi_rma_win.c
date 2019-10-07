@@ -36,7 +36,7 @@
 #define TMP_SIZE 4194305
 
 int MPC_Iprobe_inter(const int source, const int destination, const int tag,
-                     const MPC_Comm comm, int *flag, MPC_Status *status);
+                     const sctk_communicator_t comm, int *flag, sctk_status_t *status);
 
 int mpc_MPI_Win_progress_probe(struct mpc_MPI_Win *desc, void *prebuff,
                                size_t buffsize) {

@@ -49,6 +49,11 @@ typedef struct
 	int cancelled;		/**< Was the message canceled */
 	sctk_msg_count_t size;	/**< Size of the message */
 } sctk_status_t;
+
+#define SCTK_STATUS_NULL NULL
+#define SCTK_STATUS_INIT {MPC_ANY_SOURCE,MPC_ANY_TAG,MPC_SUCCESS,0,0}
+
+
 /** Generalized requests functions **/
 typedef int sctk_Grequest_query_function( void * extra_state, sctk_status_t *status );
 typedef int sctk_Grequest_cancel_function( void * extra_state, int complete );

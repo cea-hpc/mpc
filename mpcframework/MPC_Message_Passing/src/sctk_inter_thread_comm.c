@@ -2228,10 +2228,9 @@ void mpc_mp_comm_request_wait( sctk_request_t *request )
 
 		do
 		{
-
 			__mpc_comm_ptp_msg_wait( &_wait );
 			trials++;
-		} while ( ( request->completion_flag != SCTK_MESSAGE_DONE ) && ( trials < 3 ) );
+		} while ( ( request->completion_flag != SCTK_MESSAGE_DONE )  && (trials < 32));
 
 		if ( request->completion_flag != SCTK_MESSAGE_DONE )
 		{

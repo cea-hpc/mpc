@@ -464,7 +464,7 @@ int mpc_MPI_Rput(const void *origin_addr, int origin_count,
 /* MPI_Accumulate                                                       */
 /************************************************************************/
 
-/* MPC_Op_f sctk_get_common_function (MPC_Datatype datatype, MPC_Op op); */
+/* MPC_Op_f sctk_get_common_function (sctk_datatype_t datatype, MPC_Op op); */
 
 /*
  * The algorithm is the following:
