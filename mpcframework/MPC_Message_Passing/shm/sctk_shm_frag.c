@@ -116,7 +116,7 @@ sctk_shm_send_register_new_frag_msg(int dest)
 }
 
 static sctk_shm_proc_frag_info_t* 
-sctk_shm_init_send_frag_msg( int remote, sctk_thread_ptp_message_t* msg)
+sctk_shm_init_send_frag_msg( int remote, mpc_mp_ptp_message_t* msg)
 {
    sctk_shm_proc_frag_info_t* frag_infos = NULL;
    frag_infos = sctk_shm_send_register_new_frag_msg(remote);
@@ -141,7 +141,7 @@ sctk_shm_init_send_frag_msg( int remote, sctk_thread_ptp_message_t* msg)
 }
 
 static sctk_shm_proc_frag_info_t* 
-sctk_shm_init_recv_frag_msg(int key, int remote, sctk_thread_ptp_message_t* msg)
+sctk_shm_init_recv_frag_msg(int key, int remote, mpc_mp_ptp_message_t* msg)
 {
    sctk_shm_proc_frag_info_t* frag_infos = NULL;
    const size_t msg_size = SCTK_MSG_SIZE(msg);
@@ -154,8 +154,8 @@ sctk_shm_init_recv_frag_msg(int key, int remote, sctk_thread_ptp_message_t* msg)
    frag_infos->size_copied = 0;
    frag_infos->remote_mpi_rank = remote;
    frag_infos->local_mpi_rank = mpc_common_get_local_process_rank();
-   frag_infos->header = (sctk_thread_ptp_message_t*) sctk_malloc(msg_size+sizeof(sctk_thread_ptp_message_t));
-   frag_infos->msg = (char*) frag_infos->header + sizeof(sctk_thread_ptp_message_t);
+   frag_infos->header = (mpc_mp_ptp_message_t*) sctk_malloc(msg_size+sizeof(mpc_mp_ptp_message_t));
+   frag_infos->msg = (char*) frag_infos->header + sizeof(mpc_mp_ptp_message_t);
 
    if(msg_size)
    {
@@ -168,7 +168,7 @@ sctk_shm_init_recv_frag_msg(int key, int remote, sctk_thread_ptp_message_t* msg)
 }
 
 static sctk_shm_proc_frag_info_t*
-sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t *cell)
+sctk_network_frag_msg_first_send(mpc_mp_ptp_message_t* msg, sctk_shm_cell_t *cell)
 {
    sctk_shm_proc_frag_info_t* frag_infos = NULL;
    
@@ -183,7 +183,7 @@ sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t
    if(SCTK_MSG_SIZE(msg) > 0 && !frag_infos)
       return NULL;
 
-   memcpy(cell->data, msg, sizeof(sctk_thread_ptp_message_body_t));
+   memcpy(cell->data, msg, sizeof(mpc_mp_ptp_message_body_t));
 
    cell->frag_hkey = (frag_infos) ? frag_infos->msg_frag_key : -1; 
    cell->msg_type = SCTK_SHM_FIRST_FRAG;
@@ -201,7 +201,7 @@ sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t
 }
 
 static sctk_shm_proc_frag_info_t*
-sctk_network_frag_msg_first_recv(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t *cell)
+sctk_network_frag_msg_first_recv(mpc_mp_ptp_message_t* msg, sctk_shm_cell_t *cell)
 {
    int msg_key, msg_src;
    sctk_shm_proc_frag_info_t* frag_infos = NULL;
@@ -210,8 +210,8 @@ sctk_network_frag_msg_first_recv(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t
    msg_key = cell->frag_hkey; 
 
    frag_infos = sctk_shm_init_recv_frag_msg(msg_key, msg_src, msg);
-   memcpy(frag_infos->header, cell->data, sizeof(sctk_thread_ptp_message_body_t));
-   //sctk_nodebug("[KEY:%d-%ld]\t\tRECV FIRST PART MSG (HEADER:%lu)", msg_key, SCTK_MSG_SIZE(msg), hash_payload(frag_infos->header, sizeof(sctk_thread_ptp_message_body_t)));
+   memcpy(frag_infos->header, cell->data, sizeof(mpc_mp_ptp_message_body_t));
+   //sctk_nodebug("[KEY:%d-%ld]\t\tRECV FIRST PART MSG (HEADER:%lu)", msg_key, SCTK_MSG_SIZE(msg), hash_payload(frag_infos->header, sizeof(mpc_mp_ptp_message_body_t)));
    
    /* reset tail */
    msg = frag_infos->header;
@@ -228,7 +228,7 @@ sctk_network_frag_msg_next_send(sctk_shm_proc_frag_info_t* frag_infos)
   int msg_key, msg_dest, is_control_msg;
   size_t size = 0;
   sctk_shm_cell_t *cell = NULL;
-  sctk_thread_ptp_message_t *msg = NULL;
+  mpc_mp_ptp_message_t *msg = NULL;
 
   if (mpc_common_spinlock_trylock(&(frag_infos->is_ready)))
     return 0;
@@ -310,7 +310,7 @@ sctk_network_frag_msg_shm_idle(int max_try)
 }
 
 int 
-sctk_network_frag_msg_shm_send(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t* cell)
+sctk_network_frag_msg_shm_send(mpc_mp_ptp_message_t* msg, sctk_shm_cell_t* cell)
 {
    sctk_shm_proc_frag_info_t* infos = sctk_network_frag_msg_first_send(msg, cell);
    
@@ -320,19 +320,19 @@ sctk_network_frag_msg_shm_send(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t* 
    return 1;
 }
 
-sctk_thread_ptp_message_t *
+mpc_mp_ptp_message_t *
 sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell)
 {
    int msg_key, msg_src;
    sctk_shm_proc_frag_info_t* frag_infos = NULL;
-   sctk_thread_ptp_message_t* msg_hdr = NULL;
+   mpc_mp_ptp_message_t* msg_hdr = NULL;
    
    msg_src = cell->src; 
    msg_key = cell->frag_hkey; 
 
    if( cell->msg_type == SCTK_SHM_FIRST_FRAG )
    {
-     frag_infos = sctk_network_frag_msg_first_recv((sctk_thread_ptp_message_t *)cell->data, cell);
+     frag_infos = sctk_network_frag_msg_first_recv((mpc_mp_ptp_message_t *)cell->data, cell);
    }
    else
    {

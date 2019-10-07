@@ -72,11 +72,11 @@ static inline void sctk_ib_rdma_align_msg ( void *addr, size_t  size,
  *----------------------------------------------------------*/
 
 
-sctk_thread_ptp_message_t * sctk_ib_rdma_recv_done_remote_imm (__UNUSED__  sctk_rail_info_t *rail, int imm_data )
+mpc_mp_ptp_message_t * sctk_ib_rdma_recv_done_remote_imm (__UNUSED__  sctk_rail_info_t *rail, int imm_data )
 {
 	sctk_ib_header_rdma_t *rdma = NULL;
-	sctk_thread_ptp_message_t *send;
-	sctk_thread_ptp_message_t *recv;
+	mpc_mp_ptp_message_t *send;
+	mpc_mp_ptp_message_t *recv;
 
 	/* Save the values of the ack because the buffer will be reused */
 	mpc_common_spinlock_lock ( &recv_rdma_headers_lock );
@@ -126,13 +126,13 @@ sctk_thread_ptp_message_t * sctk_ib_rdma_recv_done_remote_imm (__UNUSED__  sctk_
 /*
  * RECV DONE REMOTE
  */
-static inline sctk_thread_ptp_message_t *
+static inline mpc_mp_ptp_message_t *
 sctk_ib_rdma_recv_done_remote(__UNUSED__  sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
   sctk_ib_rdma_done_t *rdma_done;
   sctk_ib_header_rdma_t *rdma;
-  sctk_thread_ptp_message_t *send;
-  sctk_thread_ptp_message_t *recv;
-  sctk_thread_ptp_message_t *dest_msg_header;
+  mpc_mp_ptp_message_t *send;
+  mpc_mp_ptp_message_t *recv;
+  mpc_mp_ptp_message_t *dest_msg_header;
 
   /* Save the values of the ack because the buffer will be reused */
   rdma_done = IBUF_GET_RDMA_DONE(ibuf->buffer);
@@ -182,7 +182,7 @@ sctk_ib_rdma_recv_done_remote(__UNUSED__  sctk_rail_info_t *rail, sctk_ibuf_t *i
  * RECV DONE LOCAL
  */
 static inline void
-sctk_ib_rdma_recv_done_local ( sctk_thread_ptp_message_t *msg )
+sctk_ib_rdma_recv_done_local ( mpc_mp_ptp_message_t *msg )
 {
 	assume ( msg->tail.ib.rdma.local.mmu_entry );
 	sctk_ib_mmu_relax ( msg->tail.ib.rdma.local.mmu_entry );
@@ -205,7 +205,7 @@ sctk_ib_rdma_recv_done_local ( sctk_thread_ptp_message_t *msg )
  *----------------------------------------------------------*/
 void sctk_ib_rdma_net_free_recv ( void *arg )
 {
-	sctk_thread_ptp_message_t *msg = ( sctk_thread_ptp_message_t * ) arg;
+	mpc_mp_ptp_message_t *msg = ( mpc_mp_ptp_message_t * ) arg;
 	sctk_ib_header_rdma_t *rdma = &msg->tail.ib.rdma;
 
 
@@ -228,7 +228,7 @@ void sctk_ib_rdma_net_free_recv ( void *arg )
  *----------------------------------------------------------*/
 
 
-static void sctk_ib_rdma_prepare_recv_zerocopy ( sctk_thread_ptp_message_t *msg )
+static void sctk_ib_rdma_prepare_recv_zerocopy ( mpc_mp_ptp_message_t *msg )
 {
 	sctk_ib_msg_header_t *send_header;
 
@@ -240,7 +240,7 @@ static void sctk_ib_rdma_prepare_recv_zerocopy ( sctk_thread_ptp_message_t *msg 
 
 }
 
-static void sctk_ib_rdma_prepare_recv_recopy ( sctk_thread_ptp_message_t *msg )
+static void sctk_ib_rdma_prepare_recv_recopy ( mpc_mp_ptp_message_t *msg )
 {
 	sctk_ib_msg_header_t *send_header;
 	size_t page_size;
@@ -303,7 +303,7 @@ complete and free
 /* ACKS */
 
 static inline sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_ack ( __UNUSED__ sctk_rail_info_t *rail,
-                                                      sctk_thread_ptp_message_t *msg )
+                                                      mpc_mp_ptp_message_t *msg )
 {
 	sctk_ib_header_rdma_t *rdma = &msg->tail.ib.rdma;
 	sctk_ibuf_t *ibuf;
@@ -336,7 +336,7 @@ static inline sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_ack ( __UNUSED__ sctk
 	return ibuf;
 }
 
-static void sctk_ib_rdma_rendezvous_send_ack ( sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg )
+static void sctk_ib_rdma_rendezvous_send_ack ( sctk_rail_info_t *rail, mpc_mp_ptp_message_t *msg )
 {
 	sctk_ibuf_t *ibuf;
 
@@ -365,7 +365,7 @@ static void sctk_ib_rdma_rendezvous_send_ack ( sctk_rail_info_t *rail, sctk_thre
 
 sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req(sctk_rail_info_t *rail,
                                                  sctk_ib_qp_t *remote,
-                                                 sctk_thread_ptp_message_t *msg,
+                                                 mpc_mp_ptp_message_t *msg,
                                                  size_t size) {
   LOAD_RAIL(rail);
   sctk_ib_header_rdma_t *rdma = &msg->tail.ib.rdma;
@@ -386,7 +386,7 @@ sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req(sctk_rail_info_t *rail,
   rdma_req = IBUF_GET_RDMA_REQ(ibuf->buffer);
 
   /* Initialization of the msg header */
-  memcpy(&rdma_req->msg_header, msg, sizeof(sctk_thread_ptp_message_body_t));
+  memcpy(&rdma_req->msg_header, msg, sizeof(mpc_mp_ptp_message_body_t));
   /* Message not ready: memory not pinned */
   rdma->local.ready = 0;
   rdma->rail = rail;
@@ -397,7 +397,7 @@ sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req(sctk_rail_info_t *rail,
   rdma_req->remote_rail = rdma->rail->rail_number;
 
   /* Initialization of the request */
-  rdma_req->requested_size = size - sizeof(sctk_thread_ptp_message_body_t);
+  rdma_req->requested_size = size - sizeof(mpc_mp_ptp_message_body_t);
   rdma_req->dest_msg_header = msg;
   /* Register the type of the message */
   rdma_req->message_type = msg->tail.message_type;
@@ -419,8 +419,8 @@ sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req(sctk_rail_info_t *rail,
 
 void sctk_ib_rdma_rendezvous_net_copy ( sctk_message_to_copy_t *tmp )
 {
-	sctk_thread_ptp_message_t *send;
-	sctk_thread_ptp_message_t *recv;
+	mpc_mp_ptp_message_t *send;
+	mpc_mp_ptp_message_t *recv;
 	sctk_ib_msg_header_t *send_header;
 
 	send = tmp->msg_send;
@@ -477,16 +477,16 @@ void sctk_ib_rdma_rendezvous_net_copy ( sctk_message_to_copy_t *tmp )
 	mpc_common_spinlock_unlock ( &send_header->rdma.lock );
 }
 
-static inline sctk_thread_ptp_message_t *
+static inline mpc_mp_ptp_message_t *
 sctk_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
   sctk_ib_header_rdma_t *rdma;
-  sctk_thread_ptp_message_t *msg;
+  mpc_mp_ptp_message_t *msg;
   sctk_ib_rdma_req_t *rdma_req = IBUF_GET_RDMA_REQ(ibuf->buffer);
 
-  msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
+  msg = sctk_malloc(sizeof(mpc_mp_ptp_message_t));
   PROF_INC(rail, ib_alloc_mem);
   memcpy(&msg->body, &rdma_req->msg_header,
-         sizeof(sctk_thread_ptp_message_body_t));
+         sizeof(mpc_mp_ptp_message_body_t));
 
   /* We reinit the header before calculating the source */
   _mpc_comm_ptp_message_clear_request(msg);
@@ -553,7 +553,7 @@ sctk_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
   return msg;
 }
 
-void sctk_ib_rdma_rendezvous_prepare_send_msg ( sctk_thread_ptp_message_t *msg, size_t size )
+void sctk_ib_rdma_rendezvous_prepare_send_msg ( mpc_mp_ptp_message_t *msg, size_t size )
 {
 	sctk_ib_header_rdma_t *rdma = &msg->tail.ib.rdma;
 	void *aligned_addr = NULL;
@@ -574,7 +574,7 @@ void sctk_ib_rdma_rendezvous_prepare_send_msg ( sctk_thread_ptp_message_t *msg, 
 	else
 	{
 		size_t page_size;
-		aligned_size = size - sizeof ( sctk_thread_ptp_message_body_t );
+		aligned_size = size - sizeof ( mpc_mp_ptp_message_body_t );
 		page_size = getpagesize();
 
 		posix_memalign ( ( void ** ) &aligned_addr, page_size, aligned_size );
@@ -604,11 +604,11 @@ void sctk_ib_rdma_rendezvous_prepare_send_msg ( sctk_thread_ptp_message_t *msg, 
 	rdma->local.ready = 1;
 }
 
-static inline sctk_thread_ptp_message_t *
+static inline mpc_mp_ptp_message_t *
 sctk_ib_rdma_rendezvous_recv_ack(__UNUSED__ sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
   sctk_ib_rdma_ack_t *rdma_ack;
-  sctk_thread_ptp_message_t *dest_msg_header;
-  sctk_thread_ptp_message_t *src_msg_header;
+  mpc_mp_ptp_message_t *dest_msg_header;
+  mpc_mp_ptp_message_t *src_msg_header;
   sctk_ib_header_rdma_t *rdma;
 
   /* Save the values of the ack because the buffer will be reused */
@@ -637,7 +637,7 @@ sctk_ib_rdma_rendezvous_recv_ack(__UNUSED__ sctk_rail_info_t *rail, sctk_ibuf_t 
 }
 
 void sctk_ib_rdma_rendezvous_prepare_data_write(
-  __UNUSED__ sctk_rail_info_t *rail, sctk_thread_ptp_message_t *src_msg_header) {
+  __UNUSED__ sctk_rail_info_t *rail, mpc_mp_ptp_message_t *src_msg_header) {
 
   sctk_ib_header_rdma_t *rdma = &src_msg_header->tail.ib.rdma;
   sctk_ib_rdma_data_write_t *rdma_data_write;
@@ -677,13 +677,13 @@ void sctk_ib_rdma_rendezvous_prepare_data_write(
   rdma->local.send_rdma_timestamp = sctk_ib_prof_get_time_stamp();
 }
 
-static inline sctk_thread_ptp_message_t *
+static inline mpc_mp_ptp_message_t *
 sctk_ib_rdma_rendezvous_prepare_done_write(sctk_rail_info_t *rail,
                                            sctk_ibuf_t *incoming_ibuf) {
   LOAD_RAIL(rail);
   sctk_ib_header_rdma_t *rdma;
-  sctk_thread_ptp_message_t *src_msg_header;
-  sctk_thread_ptp_message_t *dest_msg_header;
+  mpc_mp_ptp_message_t *src_msg_header;
+  mpc_mp_ptp_message_t *dest_msg_header;
   sctk_ib_rdma_data_write_t *rdma_data_write;
   sctk_ibuf_t *ibuf;
   size_t ibuf_size = IBUF_GET_RDMA_DONE_SIZE;
@@ -761,17 +761,17 @@ int sctk_ib_rdma_cas_gate( __UNUSED__ sctk_rail_info_t *rail, size_t size,  __UN
  *  RDMA READ & WRITE
  *----------------------------------------------------------*/
 
-sctk_thread_ptp_message_t * sctk_ib_rdma_retrieve_msg_ptr(  sctk_ibuf_t *ibuf )
+mpc_mp_ptp_message_t * sctk_ib_rdma_retrieve_msg_ptr(  sctk_ibuf_t *ibuf )
 {
 	sctk_ib_rdma_t *rdma_header  = IBUF_GET_RDMA_HEADER ( ibuf->buffer );
 
-        sctk_thread_ptp_message_t *ret = IBUF_GET_RDMA_POINTER(rdma_header);
+        mpc_mp_ptp_message_t *ret = IBUF_GET_RDMA_POINTER(rdma_header);
 
         return ret;
 }
 
 
-void sctk_ib_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+void sctk_ib_rdma_write(  sctk_rail_info_t *rail, mpc_mp_ptp_message_t *msg,
                          void * src_addr, struct sctk_rail_pin_ctx_list * local_key,
                          void * dest_addr, struct sctk_rail_pin_ctx_list * remote_key,
                          size_t size )
@@ -804,7 +804,7 @@ void sctk_ib_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg
         sctk_ib_qp_send_ibuf(&rail->network.ib, route->data.ib.remote, ibuf);
 }
 
-void sctk_ib_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+void sctk_ib_rdma_read(   sctk_rail_info_t *rail, mpc_mp_ptp_message_t *msg,
                          void * src_addr, struct  sctk_rail_pin_ctx_list * remote_key,
                          void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
                          size_t size )
@@ -839,7 +839,7 @@ void sctk_ib_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg
 }
 
 void sctk_ib_rdma_fetch_and_op(sctk_rail_info_t *rail,
-                               sctk_thread_ptp_message_t *msg, void *fetch_addr,
+                               mpc_mp_ptp_message_t *msg, void *fetch_addr,
                                struct sctk_rail_pin_ctx_list *local_key,
                                void *remote_addr,
                                struct sctk_rail_pin_ctx_list *remote_key,
@@ -885,7 +885,7 @@ void sctk_ib_rdma_fetch_and_op(sctk_rail_info_t *rail,
 }
 
 void sctk_ib_rdma_cas(    sctk_rail_info_t *rail,
-						  sctk_thread_ptp_message_t *msg,
+						  mpc_mp_ptp_message_t *msg,
 						  void *  res_addr,
 						  struct  sctk_rail_pin_ctx_list * local_key,
 						  void * remote_addr,
@@ -942,7 +942,7 @@ void sctk_ib_rdma_cas(    sctk_rail_info_t *rail,
 int sctk_ib_rdma_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 {
 	sctk_ib_rdma_t *rdma_header;
-	sctk_thread_ptp_message_t *header;
+	mpc_mp_ptp_message_t *header;
 
 	IBUF_CHECK_POISON ( ibuf->buffer );
 	rdma_header = IBUF_GET_RDMA_HEADER ( ibuf->buffer );
@@ -991,7 +991,7 @@ sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 	sctk_ib_rdma_t *rdma_header;
 	/* If the buffer *MUST* be released */
 	int release_ibuf = 1;
-	sctk_thread_ptp_message_t *msg;
+	mpc_mp_ptp_message_t *msg;
 
 	IBUF_CHECK_POISON ( ibuf->buffer );
 	rdma_header = IBUF_GET_RDMA_HEADER ( ibuf->buffer );
@@ -1066,7 +1066,7 @@ sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 /*-----------------------------------------------------------
  *  PRINT
  *----------------------------------------------------------*/
-void sctk_ib_rdma_print ( sctk_thread_ptp_message_t *msg )
+void sctk_ib_rdma_print ( mpc_mp_ptp_message_t *msg )
 {
 	sctk_ib_msg_header_t *h = &msg->tail.ib;
 

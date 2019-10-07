@@ -75,7 +75,7 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 
 	while ( 1 )
 	{
-		sctk_thread_ptp_message_t *msg;
+		mpc_mp_ptp_message_t *msg;
 		size_t size;
 		sctk_tcp_rdma_type_t op_type;
 		ssize_t res;
@@ -91,12 +91,12 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 		{
 			case SCTK_RDMA_MESSAGE_HEADER:
 			{
-				size = sizeof ( sctk_thread_ptp_message_t );
+				size = sizeof ( mpc_mp_ptp_message_t );
 				msg = sctk_malloc ( size );
 
 				/* Recv header*/
-				sctk_nodebug ( "Read %d", sizeof ( sctk_thread_ptp_message_body_t ) );
-				mpc_common_io_safe_read ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
+				sctk_nodebug ( "Read %d", sizeof ( mpc_mp_ptp_message_body_t ) );
+				mpc_common_io_safe_read ( fd, ( char * ) msg, sizeof ( mpc_mp_ptp_message_body_t ) );
 				mpc_common_io_safe_read ( fd, & ( msg->tail.rdma_src ), sizeof ( void * ) );
 				msg->tail.route_table = tmp;
 
@@ -133,8 +133,8 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 			case SCTK_RDMA_WRITE :
 			{
 				sctk_message_to_copy_t *copy_ptr;
-				sctk_thread_ptp_message_t *send = NULL;
-				sctk_thread_ptp_message_t *recv = NULL;
+				mpc_mp_ptp_message_t *send = NULL;
+				mpc_mp_ptp_message_t *recv = NULL;
 
 				mpc_common_io_safe_read ( fd, ( char * ) &copy_ptr, sizeof ( void * ) );
 				sctk_net_read_in_fd ( copy_ptr->msg_recv, fd );
@@ -159,7 +159,7 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
  * \param[in] msg the message to send
  * \param[in] endpoint the route to use
  */
-static void sctk_network_send_message_tcp_rdma_endpoint ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+static void sctk_network_send_message_tcp_rdma_endpoint ( mpc_mp_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
 	int fd;
 
@@ -172,7 +172,7 @@ static void sctk_network_send_message_tcp_rdma_endpoint ( sctk_thread_ptp_messag
 	sctk_tcp_rdma_type_t op_type = SCTK_RDMA_MESSAGE_HEADER;
 
 	mpc_common_io_safe_write ( fd, &op_type, sizeof ( sctk_tcp_rdma_type_t ) );
-	mpc_common_io_safe_write ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
+	mpc_common_io_safe_write ( fd, ( char * ) msg, sizeof ( mpc_mp_ptp_message_body_t ) );
 	mpc_common_io_safe_write ( fd, &msg, sizeof ( void * ) );
 
 	mpc_common_spinlock_unlock ( & ( endpoint->data.tcp.lock ) );
@@ -184,14 +184,14 @@ static void sctk_network_send_message_tcp_rdma_endpoint ( sctk_thread_ptp_messag
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_recv_message_tcp_rdma ( __UNUSED__ sctk_thread_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail ) {}
+static void sctk_network_notify_recv_message_tcp_rdma ( __UNUSED__ mpc_mp_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_matching_message_tcp_rdma ( __UNUSED__ sctk_thread_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail ) {}
+static void sctk_network_notify_matching_message_tcp_rdma ( __UNUSED__ mpc_mp_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.

@@ -55,7 +55,7 @@
 /* Handle non contiguous messages. Returns 1 if the message was handled, 0 if not */
 static inline void *sctk_ib_buffered_send_non_contiguous_msg ( __UNUSED__ sctk_rail_info_t *rail,
                                                                __UNUSED__ sctk_ib_qp_t *remote,
-                                                               sctk_thread_ptp_message_t *msg,
+                                                               mpc_mp_ptp_message_t *msg,
                                                                size_t size )
 {
 	void *buffer = NULL;
@@ -67,11 +67,11 @@ static inline void *sctk_ib_buffered_send_non_contiguous_msg ( __UNUSED__ sctk_r
 
 
 int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
-                                   sctk_ib_qp_t *remote, sctk_thread_ptp_message_t *msg, size_t size )
+                                   sctk_ib_qp_t *remote, mpc_mp_ptp_message_t *msg, size_t size )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	/* Maximum size for an eager buffer */
-	size = size - sizeof ( sctk_thread_ptp_message_body_t );
+	size = size - sizeof ( mpc_mp_ptp_message_body_t );
 	int    buffer_index = 0;
 	size_t msg_copied = 0;
 	size_t payload_size;
@@ -102,15 +102,15 @@ int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
 
 		size_t buffer_size = ibuf_size;
 		/* We remove the buffered header's size from the size */
-		sctk_nodebug ( "Payload with size %lu %lu", buffer_size, sizeof ( sctk_thread_ptp_message_body_t ) );
+		sctk_nodebug ( "Payload with size %lu %lu", buffer_size, sizeof ( mpc_mp_ptp_message_body_t ) );
 		buffer_size -= IBUF_GET_BUFFERED_SIZE;
 		sctk_nodebug ( "Sending a message with size %lu", buffer_size );
 
 		buffered = IBUF_GET_BUFFERED_HEADER ( ibuf->buffer );
 		buffered->number = number;
 
-		ib_assume ( buffer_size >= sizeof ( sctk_thread_ptp_message_body_t ) );
-		memcpy ( &buffered->msg, msg, sizeof ( sctk_thread_ptp_message_body_t ) );
+		ib_assume ( buffer_size >= sizeof ( mpc_mp_ptp_message_body_t ) );
+		memcpy ( &buffered->msg, msg, sizeof ( mpc_mp_ptp_message_body_t ) );
 		sctk_nodebug ( "Send number %d, src:%d, dest:%d", SCTK_MSG_NUMBER ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ) );
 
 		if ( msg_copied + buffer_size > size )
@@ -160,7 +160,7 @@ int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
 
 void sctk_ib_buffered_free_msg ( void *arg )
 {
-	sctk_thread_ptp_message_t *msg = ( sctk_thread_ptp_message_t * ) arg;
+	mpc_mp_ptp_message_t *msg = ( mpc_mp_ptp_message_t * ) arg;
 	sctk_ib_buffered_entry_t *entry = NULL;
 	__UNUSED__ sctk_rail_info_t *rail;
 
@@ -189,8 +189,8 @@ void sctk_ib_buffered_copy ( sctk_message_to_copy_t *tmp )
 {
 	sctk_ib_buffered_entry_t *entry = NULL;
 	__UNUSED__ sctk_rail_info_t *rail;
-	sctk_thread_ptp_message_t *send;
-	sctk_thread_ptp_message_t *recv;
+	mpc_mp_ptp_message_t *send;
+	mpc_mp_ptp_message_t *recv;
 
 	recv = tmp->msg_recv;
 	send = tmp->msg_send;
@@ -252,7 +252,7 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
                                                                      sctk_ibuf_t *ibuf )
 {
 	sctk_ib_buffered_entry_t *entry = NULL;
-	sctk_thread_ptp_message_body_t *body;
+	mpc_mp_ptp_message_body_t *body;
 	sctk_ib_buffered_t *buffered;
 	int key;
 
@@ -271,7 +271,7 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
 		ib_assume ( entry );
 		PROF_INC ( rail, ib_alloc_mem );
 		/* Copy message header */
-		memcpy ( &entry->msg.body, body, sizeof ( sctk_thread_ptp_message_body_t ) );
+		memcpy ( &entry->msg.body, body, sizeof ( mpc_mp_ptp_message_body_t ) );
 		entry->msg.tail.ib.protocol = SCTK_IB_BUFFERED_PROTOCOL;
 		entry->msg.tail.ib.buffered.entry = entry;
 		entry->msg.tail.ib.buffered.rail = rail;
@@ -322,7 +322,7 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
 
 void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 {
-	sctk_thread_ptp_message_body_t *body;
+	mpc_mp_ptp_message_body_t *body;
 	sctk_ib_buffered_t *buffered;
 	sctk_endpoint_t *route_table;
 	sctk_ib_buffered_entry_t *entry = NULL;

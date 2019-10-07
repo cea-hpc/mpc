@@ -52,11 +52,11 @@ void sctk_ib_eager_init ( sctk_ib_rail_info_t *rail_ib )
 	rail_ib->eager_buffered_ptp_message = NULL;
 	rail_ib->eager_lock_buffered_ptp_message = SCTK_SPINLOCK_INITIALIZER;
 
-	sctk_thread_ptp_message_t *tmp = sctk_malloc ( EAGER_BUFFER_SIZE * sizeof ( sctk_thread_ptp_message_t ) );
+	mpc_mp_ptp_message_t *tmp = sctk_malloc ( EAGER_BUFFER_SIZE * sizeof ( mpc_mp_ptp_message_t ) );
 
 	for ( i = 0; i < EAGER_BUFFER_SIZE; ++i )
 	{
-		sctk_thread_ptp_message_t *entry = &tmp[i];
+		mpc_mp_ptp_message_t *entry = &tmp[i];
 		entry->from_buffered = 1;
 		/* Add the entry to the list */
 		LL_PREPEND ( rail_ib->eager_buffered_ptp_message, entry );
@@ -66,12 +66,12 @@ void sctk_ib_eager_init ( sctk_ib_rail_info_t *rail_ib )
 
 void sctk_ib_eager_finalize(sctk_ib_rail_info_t *rail_ib)
 {
-	sctk_thread_ptp_message_t *elt, *tmp;
+	mpc_mp_ptp_message_t *elt, *tmp;
 
 	LL_FOREACH_SAFE(rail_ib->eager_buffered_ptp_message, elt, tmp)
 	{
 		/* if the ptp_message has been dynamically allocated */
-		if(((unsigned long int)elt) > ((unsigned long int) (rail_ib->eager_buffered_start_addr + (EAGER_BUFFER_SIZE * sizeof( sctk_thread_ptp_message_t)))))
+		if(((unsigned long int)elt) > ((unsigned long int) (rail_ib->eager_buffered_start_addr + (EAGER_BUFFER_SIZE * sizeof( mpc_mp_ptp_message_t)))))
 			sctk_free(elt);
 
 		LL_DELETE(rail_ib->eager_buffered_ptp_message, elt);
@@ -87,11 +87,11 @@ void sctk_ib_eager_finalize(sctk_ib_rail_info_t *rail_ib)
  * Try to pick a buffered MPC header or
  * if not found, allocate one
  */
-static inline sctk_thread_ptp_message_t *sctk_ib_eager_pick_buffered_ptp_message ( sctk_rail_info_t *rail )
+static inline mpc_mp_ptp_message_t *sctk_ib_eager_pick_buffered_ptp_message ( sctk_rail_info_t *rail )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 
-	sctk_thread_ptp_message_t *tmp = NULL;
+	mpc_mp_ptp_message_t *tmp = NULL;
 
 	if ( rail_ib->eager_buffered_ptp_message )
 	{
@@ -110,7 +110,7 @@ static inline sctk_thread_ptp_message_t *sctk_ib_eager_pick_buffered_ptp_message
 	if ( tmp == NULL )
 	{
 		PROF_INC ( rail, ib_alloc_mem );
-		tmp = sctk_malloc ( sizeof ( sctk_thread_ptp_message_t ) );
+		tmp = sctk_malloc ( sizeof ( mpc_mp_ptp_message_t ) );
 		/* This header must be freed after use */
 		tmp->from_buffered = 0;
 	}
@@ -121,7 +121,7 @@ static inline sctk_thread_ptp_message_t *sctk_ib_eager_pick_buffered_ptp_message
 /*
  * Release an MPC header according to its origin (buffered or allocated)
  */
-void sctk_ib_eager_release_buffered_ptp_message ( sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg )
+void sctk_ib_eager_release_buffered_ptp_message ( sctk_rail_info_t *rail, mpc_mp_ptp_message_t *msg )
 {
 	if ( msg->from_buffered )
 	{
@@ -140,7 +140,7 @@ void sctk_ib_eager_release_buffered_ptp_message ( sctk_rail_info_t *rail, sctk_t
 }
 
 
-sctk_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,  sctk_ib_qp_t *remote, sctk_thread_ptp_message_t *msg, size_t size, char is_control_message )
+sctk_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,  sctk_ib_qp_t *remote, mpc_mp_ptp_message_t *msg, size_t size, char is_control_message )
 {
 	sctk_ibuf_t *ibuf;
 	sctk_ib_eager_t *eager_header;
@@ -168,13 +168,13 @@ sctk_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,  sctk_ib_
 
 	PROF_TIME_START ( rail_ib->rail, ib_ibuf_memcpy );
 	/* Copy header */
-	memcpy ( IBUF_GET_EAGER_MSG_HEADER ( ibuf->buffer ), msg, sizeof ( sctk_thread_ptp_message_body_t ) );
+	memcpy ( IBUF_GET_EAGER_MSG_HEADER ( ibuf->buffer ), msg, sizeof ( mpc_mp_ptp_message_body_t ) );
 	/* Copy payload */
 	sctk_net_copy_in_buffer ( msg, IBUF_GET_EAGER_MSG_PAYLOAD ( ibuf->buffer ) );
 	PROF_TIME_END ( rail_ib->rail, ib_ibuf_memcpy );
 
 	eager_header = IBUF_GET_EAGER_HEADER ( ibuf->buffer );
-	eager_header->payload_size = size - sizeof ( sctk_thread_ptp_message_body_t );
+	eager_header->payload_size = size - sizeof ( mpc_mp_ptp_message_body_t );
 	IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_EAGER_PROTOCOL );
 
 	return ibuf;
@@ -186,7 +186,7 @@ sctk_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,  sctk_ib_
  *----------------------------------------------------------*/
 static void __free_no_recopy ( void *arg )
 {
-	sctk_thread_ptp_message_t *msg = ( sctk_thread_ptp_message_t * ) arg;
+	mpc_mp_ptp_message_t *msg = ( mpc_mp_ptp_message_t * ) arg;
 	sctk_ibuf_t *ibuf = NULL;
 
 	/* Assume msg not recopies */
@@ -198,7 +198,7 @@ static void __free_no_recopy ( void *arg )
 
 static void __free_with_recopy ( void *arg )
 {
-	sctk_thread_ptp_message_t *msg = ( sctk_thread_ptp_message_t * ) arg;
+	mpc_mp_ptp_message_t *msg = ( mpc_mp_ptp_message_t * ) arg;
 	sctk_ibuf_t *ibuf = NULL;
 
 	ibuf = msg->tail.ib.eager.ibuf;
@@ -208,7 +208,7 @@ static void __free_with_recopy ( void *arg )
 /*-----------------------------------------------------------
  *  Ibuf free function
  *----------------------------------------------------------*/
-void sctk_ib_eager_recv_free ( sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,  sctk_ibuf_t *ibuf, int recopy )
+void sctk_ib_eager_recv_free ( sctk_rail_info_t *rail, mpc_mp_ptp_message_t *msg,  sctk_ibuf_t *ibuf, int recopy )
 {
 	/* Read from recopied buffer */
 	if ( recopy )
@@ -224,10 +224,10 @@ void sctk_ib_eager_recv_free ( sctk_rail_info_t *rail, sctk_thread_ptp_message_t
 }
 
 
-static sctk_thread_ptp_message_t *sctk_ib_eager_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf, int recopy,  sctk_ib_protocol_t protocol )
+static mpc_mp_ptp_message_t *sctk_ib_eager_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf, int recopy,  sctk_ib_protocol_t protocol )
 {
 	size_t size;
-	sctk_thread_ptp_message_t *msg;
+	mpc_mp_ptp_message_t *msg;
 	void *body;
 	IBUF_CHECK_POISON ( ibuf->buffer );
 	/* XXX: select if a recopy is needed for the message */
@@ -240,13 +240,13 @@ static sctk_thread_ptp_message_t *sctk_ib_eager_recv ( sctk_rail_info_t *rail, s
 		eager_header = IBUF_GET_EAGER_HEADER ( ibuf->buffer );
 
 		size = eager_header->payload_size;
-		msg = sctk_malloc ( size + sizeof ( sctk_thread_ptp_message_t ) );
+		msg = sctk_malloc ( size + sizeof ( mpc_mp_ptp_message_t ) );
 		PROF_INC ( rail, ib_alloc_mem );
 		ib_assume ( msg );
 
-		body = ( char * ) msg + sizeof ( sctk_thread_ptp_message_t );
+		body = ( char * ) msg + sizeof ( mpc_mp_ptp_message_t );
 		/* Copy the header of the message */
-		memcpy ( msg, IBUF_GET_EAGER_MSG_HEADER ( ibuf->buffer ), sizeof ( sctk_thread_ptp_message_body_t ) );
+		memcpy ( msg, IBUF_GET_EAGER_MSG_HEADER ( ibuf->buffer ), sizeof ( mpc_mp_ptp_message_body_t ) );
 
 		/* Copy the body of the message */
 		memcpy ( body, IBUF_GET_EAGER_MSG_PAYLOAD ( ibuf->buffer ), size );
@@ -257,7 +257,7 @@ static sctk_thread_ptp_message_t *sctk_ib_eager_recv ( sctk_rail_info_t *rail, s
 		ib_assume ( msg );
 
 		/* Copy the header of the message */
-		memcpy ( msg, IBUF_GET_EAGER_MSG_HEADER ( ibuf->buffer ), sizeof ( sctk_thread_ptp_message_body_t ) );
+		memcpy ( msg, IBUF_GET_EAGER_MSG_HEADER ( ibuf->buffer ), sizeof ( mpc_mp_ptp_message_body_t ) );
 	}
 
 	SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
@@ -272,7 +272,7 @@ static sctk_thread_ptp_message_t *sctk_ib_eager_recv ( sctk_rail_info_t *rail, s
 
 void sctk_ib_eager_recv_msg_no_recopy ( sctk_message_to_copy_t *tmp )
 {
-	sctk_thread_ptp_message_t *send;
+	mpc_mp_ptp_message_t *send;
 
 	sctk_ibuf_t *ibuf;
 	void *body;
@@ -290,11 +290,11 @@ void sctk_ib_eager_recv_msg_no_recopy ( sctk_message_to_copy_t *tmp )
 
 int sctk_ib_eager_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 {
-	sctk_thread_ptp_message_body_t *msg_ibuf = IBUF_GET_EAGER_MSG_HEADER ( ibuf->buffer );
+	mpc_mp_ptp_message_body_t *msg_ibuf = IBUF_GET_EAGER_MSG_HEADER ( ibuf->buffer );
 	const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL ( ibuf->buffer );
 	int recopy = 0;
 
-	sctk_thread_ptp_message_t *msg = NULL;
+	mpc_mp_ptp_message_t *msg = NULL;
 
 	if( _mpc_comm_ptp_message_is_for_process ( msg_ibuf->header.message_type.type ) )
 	{

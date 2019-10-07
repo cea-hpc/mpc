@@ -79,7 +79,7 @@ void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
  */
 static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
-	sctk_thread_ptp_message_t* net_msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
+	mpc_mp_ptp_message_t* net_msg = sctk_malloc(sizeof(mpc_mp_ptp_message_t));
 	sctk_ptl_matchbits_t match = (sctk_ptl_matchbits_t) ev.match_bits;
 
 	/* sanity checks */
@@ -134,7 +134,7 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
  * \param[in] msg the message to send
  * \param[in] endpoint the route to use
  */
-void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endpoint)
+void sctk_ptl_eager_send_message(mpc_mp_ptp_message_t* msg, sctk_endpoint_t* endpoint)
 {
 	sctk_ptl_local_data_t* request = NULL;
 	sctk_ptl_rail_info_t* srail    = &endpoint->rail->network.ptl;
@@ -200,7 +200,7 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
  * \param[in] msg the generated RECV
  * \param[in] srail the Portals rail
  */
-void sctk_ptl_eager_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info_t* srail)
+void sctk_ptl_eager_notify_recv(mpc_mp_ptp_message_t* msg, sctk_ptl_rail_info_t* srail)
 {
 	void* start                     = NULL;
 	size_t size                     = 0;
@@ -305,7 +305,7 @@ void sctk_ptl_eager_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 void sctk_ptl_eager_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
-	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)user_ptr->msg;
+	mpc_mp_ptp_message_t* msg = (mpc_mp_ptp_message_t*)user_ptr->msg;
 
 	UNUSED(rail); 
 

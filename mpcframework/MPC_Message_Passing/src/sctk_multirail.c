@@ -31,13 +31,13 @@
 
 /* HERE ARE DEFAULT GATES */
 
-int sctk_rail_gate_boolean( __UNUSED__ sctk_rail_info_t * rail, __UNUSED__ sctk_thread_ptp_message_t * message , void * gate_config )
+int sctk_rail_gate_boolean( __UNUSED__ sctk_rail_info_t * rail, __UNUSED__ mpc_mp_ptp_message_t * message , void * gate_config )
 {
 	struct sctk_runtime_config_struct_gate_boolean * conf = (struct sctk_runtime_config_struct_gate_boolean *)gate_config;
 	return conf->value;
 }
 
-int sctk_rail_gate_probabilistic(  __UNUSED__ sctk_rail_info_t * rail, __UNUSED__ sctk_thread_ptp_message_t * message , void * gate_config )
+int sctk_rail_gate_probabilistic(  __UNUSED__ sctk_rail_info_t * rail, __UNUSED__ mpc_mp_ptp_message_t * message , void * gate_config )
 {
 	struct sctk_runtime_config_struct_gate_probabilistic * conf = (struct sctk_runtime_config_struct_gate_probabilistic *)gate_config;
 	
@@ -46,7 +46,7 @@ int sctk_rail_gate_probabilistic(  __UNUSED__ sctk_rail_info_t * rail, __UNUSED_
 	return ( num < conf->probability );
 }
 
-int sctk_rail_gate_minsize( __UNUSED__ sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
+int sctk_rail_gate_minsize( __UNUSED__ sctk_rail_info_t * rail, mpc_mp_ptp_message_t * message , void * gate_config )
 {
 	struct sctk_runtime_config_struct_gate_min_size * conf = (struct sctk_runtime_config_struct_gate_min_size *)gate_config;
 	
@@ -55,7 +55,7 @@ int sctk_rail_gate_minsize( __UNUSED__ sctk_rail_info_t * rail, sctk_thread_ptp_
 	return ( conf->value < message_size );
 }
 
-int sctk_rail_gate_maxsize( __UNUSED__ sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
+int sctk_rail_gate_maxsize( __UNUSED__ sctk_rail_info_t * rail, mpc_mp_ptp_message_t * message , void * gate_config )
 {
 	struct sctk_runtime_config_struct_gate_max_size * conf = (struct sctk_runtime_config_struct_gate_max_size *)gate_config;
 	
@@ -65,14 +65,14 @@ int sctk_rail_gate_maxsize( __UNUSED__ sctk_rail_info_t * rail, sctk_thread_ptp_
 }
 
 
-int sctk_rail_gate_msgtype( __UNUSED__ sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
+int sctk_rail_gate_msgtype( __UNUSED__ sctk_rail_info_t * rail, mpc_mp_ptp_message_t * message , void * gate_config )
 {
 	struct sctk_runtime_config_struct_gate_message_type * conf = (struct sctk_runtime_config_struct_gate_message_type *)gate_config;
 	
 	int is_process_specific = sctk_is_process_specific_message ( SCTK_MSG_HEADER ( message ) );
         int tag = SCTK_MSG_TAG(message);
 
-        sctk_message_class_t class =
+        mpc_mp_ptp_message_class_t class =
             (SCTK_MSG_HEADER(message))->message_type.type;
 
         /* It is a emulated RMA and it is not allowed */
@@ -99,7 +99,7 @@ int sctk_rail_gate_msgtype( __UNUSED__ sctk_rail_info_t * rail, sctk_thread_ptp_
 
 struct sctk_gate_context
 {
-	int (*func)( sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config );
+	int (*func)( sctk_rail_info_t * rail, mpc_mp_ptp_message_t * message , void * gate_config );
 	void * params;
 };
 
@@ -115,28 +115,28 @@ static inline void sctk_gate_get_context( struct sctk_runtime_config_struct_net_
 	switch( gate->type )
 	{
 		case SCTK_RTCFG_net_gate_boolean:
-			ctx->func = (int (*)( sctk_rail_info_t *, sctk_thread_ptp_message_t *, void *))gate->value.boolean.gatefunc.value;
+			ctx->func = (int (*)( sctk_rail_info_t *, mpc_mp_ptp_message_t *, void *))gate->value.boolean.gatefunc.value;
 			ctx->params = (void *)&gate->value.boolean;
 		break;
 		case SCTK_RTCFG_net_gate_probabilistic:
-			ctx->func = (int (*)( sctk_rail_info_t *, sctk_thread_ptp_message_t *, void *))gate->value.probabilistic.gatefunc.value;
+			ctx->func = (int (*)( sctk_rail_info_t *, mpc_mp_ptp_message_t *, void *))gate->value.probabilistic.gatefunc.value;
 			ctx->params = (void *)&gate->value.probabilistic;
 		break;
 		case SCTK_RTCFG_net_gate_minsize:
-			ctx->func = (int (*)( sctk_rail_info_t *, sctk_thread_ptp_message_t *, void *))gate->value.minsize.gatefunc.value;
+			ctx->func = (int (*)( sctk_rail_info_t *, mpc_mp_ptp_message_t *, void *))gate->value.minsize.gatefunc.value;
 			ctx->params = (void *)&gate->value.minsize;		
 		break;
 		case SCTK_RTCFG_net_gate_maxsize:
-			ctx->func = (int (*)( sctk_rail_info_t *, sctk_thread_ptp_message_t *, void *))gate->value.maxsize.gatefunc.value;
+			ctx->func = (int (*)( sctk_rail_info_t *, mpc_mp_ptp_message_t *, void *))gate->value.maxsize.gatefunc.value;
 			ctx->params = (void *)&gate->value.maxsize;			
 		break;
 		case SCTK_RTCFG_net_gate_user:
-			ctx->func = (int (*)( sctk_rail_info_t *, sctk_thread_ptp_message_t *, void *))gate->value.user.gatefunc.value;
+			ctx->func = (int (*)( sctk_rail_info_t *, mpc_mp_ptp_message_t *, void *))gate->value.user.gatefunc.value;
 			ctx->params = (void *)&gate->value.user;		
 		break;
 		
 		case SCTK_RTCFG_net_gate_msgtype:
-			ctx->func = (int (*)( sctk_rail_info_t *, sctk_thread_ptp_message_t *, void *))gate->value.msgtype.gatefunc.value;
+			ctx->func = (int (*)( sctk_rail_info_t *, mpc_mp_ptp_message_t *, void *))gate->value.msgtype.gatefunc.value;
 			ctx->params = (void *)&gate->value.msgtype;		
 		break;
 		
@@ -450,7 +450,7 @@ static inline struct sctk_multirail_destination_table * sctk_multirail_destinati
  * \param[in] ext_routes route array to iterate with (will be locked).
  * \return a pointer to the matching route, NULL otherwise (the route lock will NOT be hold in case of match)
  */
-sctk_endpoint_t * sctk_multirail_ellect_endpoint( sctk_thread_ptp_message_t *msg, int destination_process, int is_process_specific, int is_for_on_demand, sctk_multirail_destination_table_entry_t ** ext_routes )
+sctk_endpoint_t * sctk_multirail_ellect_endpoint( mpc_mp_ptp_message_t *msg, int destination_process, int is_process_specific, int is_for_on_demand, sctk_multirail_destination_table_entry_t ** ext_routes )
 {
 	
 	sctk_multirail_destination_table_entry_t * routes = sctk_multirail_destination_table_acquire_routes( destination_process );
@@ -625,7 +625,7 @@ void sctk_pending_on_demand_process()
  * Called to create a new route for the sending the given message.
  * \param[in] msg the message to send.
  */
-void sctk_multirail_on_demand_connection( sctk_thread_ptp_message_t *msg )
+void sctk_multirail_on_demand_connection( mpc_mp_ptp_message_t *msg )
 {
 	
 	int count = sctk_rail_count();
@@ -751,7 +751,7 @@ void sctk_multirail_on_demand_connection( sctk_thread_ptp_message_t *msg )
  * Main entry point in low_level_comm for sending a message.
  * \param[in] msg the message to send.
  */
-void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
+void sctk_multirail_send_message( mpc_mp_ptp_message_t *msg )
 {
 	int retry;
 	int destination_process;
@@ -828,7 +828,7 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
  * ALL RAILS WILL BE NOTIFIED (not only the one that may be the real recever).
  * \param[in] msg the locally-posted RECV.
  */
-void sctk_multirail_notify_receive( sctk_thread_ptp_message_t * msg )
+void sctk_multirail_notify_receive( mpc_mp_ptp_message_t * msg )
 {
 	int count = sctk_rail_count();
 	int i;
@@ -844,7 +844,7 @@ void sctk_multirail_notify_receive( sctk_thread_ptp_message_t * msg )
 	}
 }
 
-void sctk_multirail_notify_matching( sctk_thread_ptp_message_t * msg )
+void sctk_multirail_notify_matching( mpc_mp_ptp_message_t * msg )
 {
 	int count = sctk_rail_count();
 	int i;

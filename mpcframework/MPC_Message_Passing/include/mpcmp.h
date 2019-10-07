@@ -687,13 +687,7 @@ typedef int MPC_Checkpoint_state;
 
   /*Packs */
   int PMPC_Open_pack (mpc_mp_request_t * request);
-  int PMPC_Default_pack (mpc_mp_msg_count_t count,
-			mpc_pack_indexes_t * begins,
-			mpc_pack_indexes_t * ends, mpc_mp_request_t * request);
-  int PMPC__Default_pack_absolute (mpc_mp_msg_count_t count,
-			       mpc_pack_absolute_indexes_t * begins,
-			       mpc_pack_absolute_indexes_t * ends,
-			       mpc_mp_request_t * request);
+
   int PMPC_Add_pack (void *buf, mpc_mp_msg_count_t count,
 		    mpc_pack_indexes_t * begins,
 		    mpc_pack_indexes_t * ends, mpc_mp_datatype_t datatype,
@@ -703,10 +697,6 @@ typedef int MPC_Checkpoint_state;
 			   mpc_pack_absolute_indexes_t * ends,
 			   mpc_mp_datatype_t datatype, mpc_mp_request_t * request);
 
-  int PMPC_Add_pack_default (void *buf, mpc_mp_datatype_t datatype,
-			    mpc_mp_request_t * request);
-  int PMPC__Add_pack_default_absolute (void *buf, mpc_mp_datatype_t datatype,
-				   mpc_mp_request_t * request);
   int _mpc_m_isend_pack (int dest, int tag, mpc_mp_communicator_t comm,
 		      mpc_mp_request_t * request);
   int _mpc_m_irecv_pack (int source, int tag, mpc_mp_communicator_t comm,

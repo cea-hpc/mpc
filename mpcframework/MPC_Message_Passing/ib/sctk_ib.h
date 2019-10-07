@@ -228,13 +228,13 @@ void sctk_ib_route_dynamic_set_connected ( struct sctk_endpoint_s *tmp, int conn
 
 /* MPC header */
 #define IBUF_GET_EAGER_MSG_HEADER(buffer) \
-(sctk_thread_ptp_message_body_t*) IBUF_GET_EAGER_PAYLOAD(buffer)
+(mpc_mp_ptp_message_body_t*) IBUF_GET_EAGER_PAYLOAD(buffer)
 
 /* MPC payload */
 #define IBUF_GET_EAGER_MSG_PAYLOAD(buffer) \
-(void*) ((char*) IBUF_GET_EAGER_PAYLOAD(buffer) + sizeof(sctk_thread_ptp_message_body_t))
+(void*) ((char*) IBUF_GET_EAGER_PAYLOAD(buffer) + sizeof(mpc_mp_ptp_message_body_t))
 #define IBUF_GET_RDMA_MSG_PAYLOAD(buffer) \
-(void*) ((char*) IBUF_GET_RDMA_PAYLOAD(buffer) + sizeof(sctk_thread_ptp_message_body_t))
+(void*) ((char*) IBUF_GET_RDMA_PAYLOAD(buffer) + sizeof(mpc_mp_ptp_message_body_t))
 
 /* Different types of messages */
 #define IBUF_GET_RDMA_REQ(buffer) ((sctk_ib_rdma_req_t*) IBUF_GET_RDMA_PAYLOAD(buffer))

@@ -112,7 +112,7 @@ char *sctk_ib_print_procotol ( sctk_ib_protocol_t p )
 	return NULL;
 }
 
-void sctk_ib_print_msg ( sctk_thread_ptp_message_t *msg )
+void sctk_ib_print_msg ( mpc_mp_ptp_message_t *msg )
 {
 	sctk_error ( "IB protocol: %s", sctk_ib_print_procotol ( msg->tail.ib.protocol ) );
 

@@ -155,7 +155,7 @@ void sctk_ib_config_mutate ( sctk_ib_rail_info_t *rail_ib )
 	LOAD_CONFIG ( rail_ib );
 
 	config->eager_limit       = ALIGN_ON ( config->eager_limit + IBUF_GET_EAGER_SIZE, 64 );
-	config->buffered_limit  = ( config->buffered_limit + sizeof ( sctk_thread_ptp_message_body_t ) );
+	config->buffered_limit  = ( config->buffered_limit + sizeof ( mpc_mp_ptp_message_body_t ) );
 }
 
 void sctk_ib_config_init ( sctk_ib_rail_info_t *rail_ib, __UNUSED__ char *network_name )

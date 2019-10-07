@@ -159,17 +159,17 @@ struct sctk_rail_info_s
 	void ( *initialize_task ) ( struct sctk_rail_info_s * , int taskid, int rank);
 
 	/* Network interactions */
-	void ( *send_message_endpoint ) ( sctk_thread_ptp_message_t *, sctk_endpoint_t * );
+	void ( *send_message_endpoint ) ( mpc_mp_ptp_message_t *, sctk_endpoint_t * );
 
-	void ( *notify_recv_message ) ( sctk_thread_ptp_message_t * , struct sctk_rail_info_s * );
-	void ( *notify_matching_message ) ( sctk_thread_ptp_message_t * , struct sctk_rail_info_s * );
+	void ( *notify_recv_message ) ( mpc_mp_ptp_message_t * , struct sctk_rail_info_s * );
+	void ( *notify_matching_message ) ( mpc_mp_ptp_message_t * , struct sctk_rail_info_s * );
 	void ( *notify_perform_message ) ( int , int, int, int, struct sctk_rail_info_s * );
 	void ( *notify_idle_message ) ( struct sctk_rail_info_s * );
 	void ( *notify_any_source_message ) ( int, int, struct sctk_rail_info_s * );
 	void ( *notify_probe_message) (struct sctk_rail_info_s*, sctk_thread_message_header_t*, int*);
 	void ( *notify_new_comm)(struct sctk_rail_info_s*, sctk_communicator_t, size_t);
 
-	int ( *send_message_from_network ) ( sctk_thread_ptp_message_t * );
+	int ( *send_message_from_network ) ( mpc_mp_ptp_message_t * );
 	void ( *connect_on_demand ) ( struct sctk_rail_info_s * rail , int dest );
 
 	void (*control_message_handler)( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data, size_t size );
@@ -180,7 +180,7 @@ struct sctk_rail_info_s
 
 
 	void (*rdma_fetch_and_op)(  sctk_rail_info_t *rail,
-							    sctk_thread_ptp_message_t *msg,
+							    mpc_mp_ptp_message_t *msg,
 							    void * fetch_addr,
 							    struct  sctk_rail_pin_ctx_list * local_key,
 							    void * remote_addr,
@@ -195,7 +195,7 @@ struct sctk_rail_info_s
 	int (*rdma_cas_gate)( sctk_rail_info_t *rail, size_t size, RDMA_type type );
 
 	void (*rdma_cas)(   sctk_rail_info_t *rail,
-						  sctk_thread_ptp_message_t *msg,
+						  mpc_mp_ptp_message_t *msg,
 						  void *  res_addr,
 						  struct  sctk_rail_pin_ctx_list * local_key,
 						  void * remote_addr,
@@ -204,12 +204,12 @@ struct sctk_rail_info_s
 						  void * new,
 						  RDMA_type type );
 
-	void (*rdma_write)(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+	void (*rdma_write)(  sctk_rail_info_t *rail, mpc_mp_ptp_message_t *msg,
                          void * src_addr, struct sctk_rail_pin_ctx_list * local_key,
                          void * dest_addr, struct  sctk_rail_pin_ctx_list * remote_key,
                          size_t size );
 
-	void (*rdma_read)(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+	void (*rdma_read)(  sctk_rail_info_t *rail, mpc_mp_ptp_message_t *msg,
                          void * src_addr,  struct  sctk_rail_pin_ctx_list * remote_key,
                          void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
                          size_t size );

@@ -26,7 +26,7 @@
 #include <sctk_multirail.h>
 
 
-sctk_endpoint_t * sctk_topological_rail_ellect_endpoint( int remote , sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+sctk_endpoint_t * sctk_topological_rail_ellect_endpoint( int remote , mpc_mp_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
 	int vp_id = mpc_common_get_pu_rank();
 	
@@ -98,7 +98,7 @@ sctk_endpoint_t * sctk_topological_rail_ellect_endpoint( int remote , sctk_threa
 
 
 
-static void sctk_network_send_message_endpoint_topological ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+static void sctk_network_send_message_endpoint_topological ( mpc_mp_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
 	sctk_endpoint_t * topo_endpoint = sctk_topological_rail_ellect_endpoint( SCTK_MSG_DEST_PROCESS( msg ) , msg, endpoint );
 	
@@ -111,12 +111,12 @@ static void sctk_network_send_message_endpoint_topological ( sctk_thread_ptp_mes
 	endpoint_rail->send_message_endpoint( msg, topo_endpoint );
 }
 
-static void sctk_network_notify_recv_message_topological ( __UNUSED__ sctk_thread_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail )
+static void sctk_network_notify_recv_message_topological ( __UNUSED__ mpc_mp_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail )
 {
 	/* Done in subrails */
 }
 
-static void sctk_network_notify_matching_message_topological ( __UNUSED__ sctk_thread_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail )
+static void sctk_network_notify_matching_message_topological ( __UNUSED__ mpc_mp_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail )
 {
 	/* Done in subrails */
 }
@@ -142,7 +142,7 @@ static void sctk_network_notify_any_source_message_topological ( __UNUSED__ int 
 	/* Done in subrails */
 }
 
-static int sctk_send_message_from_network_topological ( __UNUSED__ sctk_thread_ptp_message_t *msg )
+static int sctk_send_message_from_network_topological ( __UNUSED__ mpc_mp_ptp_message_t *msg )
 {
 	/* Done in subrails */
 	return 1;
@@ -413,7 +413,7 @@ void sctk_topological_rail_unpin_region( struct sctk_rail_info_s * rail, struct 
 }
 
 void sctk_topological_rail_rdma_write(
-    sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg, void *src_addr,
+    sctk_rail_info_t *rail, mpc_mp_ptp_message_t *msg, void *src_addr,
     struct sctk_rail_pin_ctx_list *local_key, void *dest_addr,
     struct sctk_rail_pin_ctx_list *remote_key, size_t size) {
   sctk_endpoint_t *topo_endpoint =
@@ -445,7 +445,7 @@ void sctk_topological_rail_rdma_write(
                             remote_key + subrail_id, size);
 }
 
-void sctk_topological_rail_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+void sctk_topological_rail_rdma_read(   sctk_rail_info_t *rail, mpc_mp_ptp_message_t *msg,
                          void * src_addr, struct  sctk_rail_pin_ctx_list * remote_key,
                          void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
                          size_t size )
@@ -480,7 +480,7 @@ void sctk_topological_rail_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_
 }
 
 void sctk_topological_rail_rdma_fetch_and_op(   sctk_rail_info_t *rail,
-												sctk_thread_ptp_message_t *msg,
+												mpc_mp_ptp_message_t *msg,
 												void * fetch_addr,
 												struct  sctk_rail_pin_ctx_list * local_key,
 												void * remote_addr,
@@ -519,7 +519,7 @@ void sctk_topological_rail_rdma_fetch_and_op(   sctk_rail_info_t *rail,
 }
 
 void sctk_topological_rail_cas(   sctk_rail_info_t *rail,
-								  sctk_thread_ptp_message_t *msg,
+								  mpc_mp_ptp_message_t *msg,
 								  void *  res_addr,
 						          struct  sctk_rail_pin_ctx_list * local_key,
 								  void * remote_addr,

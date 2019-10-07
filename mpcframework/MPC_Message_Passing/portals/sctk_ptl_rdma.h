@@ -28,7 +28,7 @@
 
 int sctk_ptl_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type );
 void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
-		sctk_thread_ptp_message_t *msg,
+		mpc_mp_ptp_message_t *msg,
 		void * fetch_addr,
 		struct  sctk_rail_pin_ctx_list * local_key,
 		void * remote_addr,
@@ -38,7 +38,7 @@ void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 		RDMA_type type );
 int sctk_ptl_rdma_cas_gate( sctk_rail_info_t *rail, size_t size, RDMA_type type );
 void sctk_ptl_rdma_cas(   sctk_rail_info_t *rail,
-		sctk_thread_ptp_message_t *msg,
+		mpc_mp_ptp_message_t *msg,
 		void *  res_addr,
 		struct  sctk_rail_pin_ctx_list * local_key,
 		void * remote_addr,
@@ -46,11 +46,11 @@ void sctk_ptl_rdma_cas(   sctk_rail_info_t *rail,
 		void * comp,
 		void * new,
 		RDMA_type type );
-void sctk_ptl_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+void sctk_ptl_rdma_write(  sctk_rail_info_t *rail, mpc_mp_ptp_message_t *msg,
 		void * src_addr, struct sctk_rail_pin_ctx_list * local_key,
 		void * dest_addr, struct  sctk_rail_pin_ctx_list * remote_key,
 		size_t size );
-void sctk_ptl_rdma_read(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+void sctk_ptl_rdma_read(  sctk_rail_info_t *rail, mpc_mp_ptp_message_t *msg,
 		void * src_addr,  struct  sctk_rail_pin_ctx_list * remote_key,
 		void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
 		size_t size );

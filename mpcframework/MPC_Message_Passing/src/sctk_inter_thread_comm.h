@@ -83,7 +83,7 @@ typedef enum {
 	SCTK_CONTROL_MESSAGE_TASK,	 /**< This message goes to a task */
 	SCTK_CONTROL_MESSAGE_USER,	 /**< This message goes to the application using an optionnal handler */
 	SCTK_MESSAGE_CLASS_COUNT	   /**< This value allows to track the  number of control message types */
-} sctk_message_class_t;
+} mpc_mp_ptp_message_class_t;
 
 static const char *const sctk_message_class_name[SCTK_MESSAGE_CLASS_COUNT] = {
 	"SCTK_CLASS_NONE",
@@ -114,7 +114,7 @@ static const char *const sctk_message_class_name[SCTK_MESSAGE_CLASS_COUNT] = {
 	"SCTK_CONTROL_MESSAGE_TASK",
 	"SCTK_CONTROL_MESSAGE_USER"};
 
-static inline int _mpc_comm_ptp_message_is_for_process( sctk_message_class_t type )
+static inline int _mpc_comm_ptp_message_is_for_process( mpc_mp_ptp_message_class_t type )
 {
 	switch ( type )
 	{
@@ -156,7 +156,7 @@ static inline int _mpc_comm_ptp_message_is_for_process( sctk_message_class_t typ
 	return 0;
 }
 
-static inline int _mpc_comm_ptp_message_is_for_control( sctk_message_class_t type )
+static inline int _mpc_comm_ptp_message_is_for_control( mpc_mp_ptp_message_class_t type )
 {
 	switch ( type )
 	{
@@ -199,10 +199,10 @@ static inline int _mpc_comm_ptp_message_is_for_control( sctk_message_class_t typ
 /* Low Level Message Interface                                          */
 /************************************************************************/
 
-void mpc_mp_comm_isend_class_src( int src, int dest, void *data, size_t size, int tag, mpc_mp_communicator_t comm, sctk_message_class_t class, mpc_mp_request_t *req );
-void mpc_mp_comm_irecv_class_dest( int src, int dest, void *buffer, size_t size, int tag, mpc_mp_communicator_t comm, sctk_message_class_t class, mpc_mp_request_t *req );
-void mpc_mp_comm_isend_class( int dest, void *data, size_t size, int tag, mpc_mp_communicator_t comm, sctk_message_class_t class, mpc_mp_request_t *req );
-void mpc_mp_comm_irecv_class( int src, void *data, size_t size, int tag, mpc_mp_communicator_t comm, sctk_message_class_t class, mpc_mp_request_t *req );
+void mpc_mp_comm_isend_class_src( int src, int dest, void *data, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_ptp_message_class_t class, mpc_mp_request_t *req );
+void mpc_mp_comm_irecv_class_dest( int src, int dest, void *buffer, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_ptp_message_class_t class, mpc_mp_request_t *req );
+void mpc_mp_comm_isend_class( int dest, void *data, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_ptp_message_class_t class, mpc_mp_request_t *req );
+void mpc_mp_comm_irecv_class( int src, void *data, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_ptp_message_class_t class, mpc_mp_request_t *req );
 void mpc_mp_comm_isend( int dest, void *data, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *req );
 void mpc_mp_comm_irecv( int src, void *data, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *req );
 void mpc_mp_comm_sendrecv( void *sendbuf, size_t size, int dest, int tag, void *recvbuf, int src, int comm );
@@ -252,13 +252,13 @@ void mpc_mp_comm_message_probe_any_source_any_tag( int destination, const mpc_mp
 void mpc_mp_comm_message_probe( int destination, int source, const mpc_mp_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
 void mpc_mp_comm_message_probe_any_source( int destination, const mpc_mp_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
 void mpc_mp_comm_message_probe_any_source_class( int destination, int tag,
-						sctk_message_class_t class,
+						mpc_mp_ptp_message_class_t class,
 						const mpc_mp_communicator_t comm,
 						int *status,
 						sctk_thread_message_header_t *msg );
 
 void mpc_mp_comm_message_probe_any_source_class_comm( int destination, int tag,
-							sctk_message_class_t class,
+							mpc_mp_ptp_message_class_t class,
 							const mpc_mp_communicator_t comm,
 							int *status,
 							sctk_thread_message_header_t *msg );
@@ -279,7 +279,7 @@ typedef enum {
 	SCTK_MESSAGE_PACK_ABSOLUTE,
 	SCTK_MESSAGE_PACK_UNDEFINED,
 	SCTK_MESSAGE_NETWORK
-} sctk_message_type_t;
+} mpc_mp_ptp_message_type_t;
 
 /** SCTK_MESSAGE_CONTIGUOUS */
 typedef struct
@@ -377,7 +377,7 @@ typedef struct
 #ifdef SCTK_USE_CHECKSUM
 	unsigned long checksum;
 #endif
-} sctk_thread_ptp_message_body_t;
+} mpc_mp_ptp_message_body_t;
 
 struct mpc_buffered_msg_s;
 struct mpc_comm_ptp_s;
@@ -393,9 +393,8 @@ typedef struct
 	mpc_mp_request_t *request;
 
 	/*Message data*/
-	sctk_message_type_t message_type;
+	mpc_mp_ptp_message_type_t message_type;
 	sctk_message_t message;
-	sctk_message_pack_default_t default_pack;
 
 	/*Storage structs*/
 	sctk_msg_list_t distant_list;
@@ -431,16 +430,16 @@ typedef struct
 
 	/* XXX:Specific to IB */
 	struct sctk_ib_msg_header_s ib;
-} sctk_thread_ptp_message_tail_t;
+} mpc_mp_ptp_message_tail_t;
 
 /************************************************************************/
-/* sctk_thread_ptp_message_t Point to Point message descriptor          */
+/* mpc_mp_ptp_message_t Point to Point message descriptor          */
 /************************************************************************/
 
 typedef struct sctk_thread_ptp_message_s
 {
-	sctk_thread_ptp_message_body_t body;
-	sctk_thread_ptp_message_tail_t tail;
+	mpc_mp_ptp_message_body_t body;
+	mpc_mp_ptp_message_tail_t tail;
 
 	/* Pointers for chaining elements */
 	struct sctk_thread_ptp_message_s *prev;
@@ -448,53 +447,53 @@ typedef struct sctk_thread_ptp_message_s
 
 	/* If the entry comes from a buffered list */
 	char from_buffered;
-} sctk_thread_ptp_message_t;
+} mpc_mp_ptp_message_t;
 
-void mpc_mp_comm_ptp_message_header_clear( sctk_thread_ptp_message_t *tmp, sctk_message_type_t msg_type, void ( *free_memory )( void * ),
+void mpc_mp_comm_ptp_message_header_clear( mpc_mp_ptp_message_t *tmp, mpc_mp_ptp_message_type_t msg_type, void ( *free_memory )( void * ),
 										   void ( *message_copy )( sctk_message_to_copy_t * ) );
 
-sctk_thread_ptp_message_t *mpc_mp_comm_ptp_message_header_create( sctk_message_type_t msg_type );
+mpc_mp_ptp_message_t *mpc_mp_comm_ptp_message_header_create( mpc_mp_ptp_message_type_t msg_type );
 
-void mpc_mp_comm_ptp_message_set_contiguous_addr( sctk_thread_ptp_message_t *restrict msg, void *restrict addr, const size_t size );
+void mpc_mp_comm_ptp_message_set_contiguous_addr( mpc_mp_ptp_message_t *restrict msg, void *restrict addr, const size_t size );
 
-void mpc_mp_comm_ptp_message_add_pack( sctk_thread_ptp_message_t *msg, void *adr, const sctk_count_t nb_items,
+void mpc_mp_comm_ptp_message_add_pack( mpc_mp_ptp_message_t *msg, void *adr, const sctk_count_t nb_items,
 					const size_t elem_size,
 					sctk_pack_indexes_t *begins,
 					sctk_pack_indexes_t *ends );
 
-void mpc_mp_comm_ptp_message_add_pack_absolute( sctk_thread_ptp_message_t *msg, void *adr,
+void mpc_mp_comm_ptp_message_add_pack_absolute( mpc_mp_ptp_message_t *msg, void *adr,
 						const sctk_count_t nb_items,
 						const size_t elem_size,
 						sctk_pack_absolute_indexes_t *begins,
 						sctk_pack_absolute_indexes_t *ends );
 
-void mpc_mp_comm_ptp_message_header_init( sctk_thread_ptp_message_t *msg, const int message_tag,
+void mpc_mp_comm_ptp_message_header_init( mpc_mp_ptp_message_t *msg, const int message_tag,
 					const mpc_mp_communicator_t communicator,
 					const int source,
 					const int destination,
 					mpc_mp_request_t *request,
 					const size_t count,
-					sctk_message_class_t message_class,
+					mpc_mp_ptp_message_class_t message_class,
 					mpc_mp_datatype_t datatype,
 					mpc_mp_request_type_t request_type );
 
-void mpc_mp_comm_ptp_message_send( sctk_thread_ptp_message_t *msg );
+void mpc_mp_comm_ptp_message_send( mpc_mp_ptp_message_t *msg );
 
-void mpc_mp_comm_ptp_message_recv( sctk_thread_ptp_message_t *msg );
+void mpc_mp_comm_ptp_message_recv( mpc_mp_ptp_message_t *msg );
 
-void mpc_mp_comm_ptp_message_complete_and_free( sctk_thread_ptp_message_t *msg );
+void mpc_mp_comm_ptp_message_complete_and_free( mpc_mp_ptp_message_t *msg );
 
-void _mpc_comm_ptp_message_send_check( sctk_thread_ptp_message_t *msg, int perform_check );
-void _mpc_comm_ptp_message_recv_check( sctk_thread_ptp_message_t *msg, int perform_check );
-void _mpc_comm_ptp_message_commit_request( sctk_thread_ptp_message_t *send, sctk_thread_ptp_message_t *recv );
+void _mpc_comm_ptp_message_send_check( mpc_mp_ptp_message_t *msg, int perform_check );
+void _mpc_comm_ptp_message_recv_check( mpc_mp_ptp_message_t *msg, int perform_check );
+void _mpc_comm_ptp_message_commit_request( mpc_mp_ptp_message_t *send, mpc_mp_ptp_message_t *recv );
 
-static inline void _mpc_comm_ptp_message_clear_request( sctk_thread_ptp_message_t *msg )
+static inline void _mpc_comm_ptp_message_clear_request( mpc_mp_ptp_message_t *msg )
 {
 	msg->tail.request = NULL;
 	msg->tail.internal_ptp = NULL;
 }
 
-static inline void _mpc_comm_ptp_message_set_copy_and_free( sctk_thread_ptp_message_t *tmp,
+static inline void _mpc_comm_ptp_message_set_copy_and_free( mpc_mp_ptp_message_t *tmp,
 							void ( *free_memory )( void * ),
 							void ( *message_copy )( sctk_message_to_copy_t * ) )
 {
@@ -624,7 +623,7 @@ static inline void _mpc_comm_ptp_message_set_copy_and_free( sctk_thread_ptp_mess
 
 typedef struct mpc_buffered_msg_s
 {
-	sctk_thread_ptp_message_t header;
+	mpc_mp_ptp_message_t header;
 	/* Completion flag to use if the user do not provide a valid request */
 	int completion_flag;
 	/* mpc_mp_request_t if the message is buffered  */
@@ -675,7 +674,7 @@ void mpc_mp_comm_perform_idle( volatile int *data, int value, void ( *func )( vo
 /** Message for a process with ordering and a tag */
 static inline int sctk_is_process_specific_message( sctk_thread_message_header_t *header )
 {
-	sctk_message_class_t class = header->message_type.type;
+	mpc_mp_ptp_message_class_t class = header->message_type.type;
 	return _mpc_comm_ptp_message_is_for_process( class );
 }
 
@@ -701,11 +700,11 @@ static inline int mpc_mp_comm_request_get_completion(mpc_mp_request_t *request) 
 }
 
 static inline void mpc_mp_comm_request_set_msg(mpc_mp_request_t *request,
-                                     sctk_thread_ptp_message_t *msg) {
+                                     mpc_mp_ptp_message_t *msg) {
   request->msg = msg;
 }
 
-static inline sctk_thread_ptp_message_t * mpc_mp_comm_request_get_msg(mpc_mp_request_t *request) {
+static inline mpc_mp_ptp_message_t * mpc_mp_comm_request_get_msg(mpc_mp_request_t *request) {
   return request->msg;
 }
 

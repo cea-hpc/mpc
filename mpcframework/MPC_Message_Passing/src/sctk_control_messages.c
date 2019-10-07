@@ -159,7 +159,7 @@ void printpayload( void * pl , size_t size )
 }
 
 void __sctk_control_messages_send(int dest, int dest_task,
-                                  sctk_message_class_t message_class,
+                                  mpc_mp_ptp_message_class_t message_class,
                                   mpc_mp_communicator_t comm, int subtype,
                                   int param, void *buffer, size_t size,
                                   int rail_id) {
@@ -168,7 +168,7 @@ void __sctk_control_messages_send(int dest, int dest_task,
 
   mpc_mp_request_t request;
 
-  sctk_thread_ptp_message_t msg;
+  mpc_mp_ptp_message_t msg;
 
   /* Add a dummy payload */
   static int dummy_data = 42;
@@ -245,9 +245,9 @@ void sctk_control_messages_send_rail( int dest, int subtype, char  param, void *
                                rail_id);
 }
 
-void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg )
+void sctk_control_messages_incoming( mpc_mp_ptp_message_t * msg )
 {
-	sctk_message_class_t class = SCTK_MSG_SPECIFIC_CLASS( msg );
+	mpc_mp_ptp_message_class_t class = SCTK_MSG_SPECIFIC_CLASS( msg );
 
         switch (class) {
         /* Direct processing possibly outside of MPI context */
@@ -267,7 +267,7 @@ void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg )
         }
 }
 
-void control_message_submit(sctk_message_class_t class, int rail_id,
+void control_message_submit(mpc_mp_ptp_message_class_t class, int rail_id,
                             int source_process, int source_rank, int subtype,
                             int param, void *data, size_t msg_size) {
   switch (class) {
@@ -317,8 +317,8 @@ void control_message_submit(sctk_message_class_t class, int rail_id,
 
 #define SCTK_CTRL_MSG_STATICBUFFER_SIZE 2048
 
-void sctk_control_messages_perform(sctk_thread_ptp_message_t *msg, int force) {
-  sctk_message_class_t class = SCTK_MSG_SPECIFIC_CLASS(msg);
+void sctk_control_messages_perform(mpc_mp_ptp_message_t *msg, int force) {
+  mpc_mp_ptp_message_class_t class = SCTK_MSG_SPECIFIC_CLASS(msg);
 
   if (!_mpc_comm_ptp_message_is_for_control(class)) {
     sctk_fatal("Cannot process a non-control message using this function (%s)",
@@ -361,7 +361,7 @@ void sctk_control_messages_perform(sctk_thread_ptp_message_t *msg, int force) {
     /* Generate the paired recv message to fill the buffer in
     * a portable way (idependently from driver) */
 
-    sctk_thread_ptp_message_t recvmsg;
+    mpc_mp_ptp_message_t recvmsg;
 
     mpc_mp_comm_ptp_message_header_clear(&recvmsg, SCTK_MESSAGE_CONTIGUOUS,
                      sctk_free_control_messages, mpc_mp_comm_ptp_message_copy);
@@ -449,7 +449,7 @@ struct sctk_topological_polling_tree ___control_message_list_polling_tree;
 
 struct sctk_ctrl_msg_cell
 {
-	sctk_thread_ptp_message_t * msg;
+	mpc_mp_ptp_message_t * msg;
 	
 	struct sctk_ctrl_msg_cell *prev;
 	struct sctk_ctrl_msg_cell *next;
@@ -458,7 +458,7 @@ struct sctk_ctrl_msg_cell
 struct sctk_ctrl_msg_cell * __ctrl_msg_list = NULL;
 mpc_common_spinlock_t __ctrl_msg_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
-void sctk_control_message_push( sctk_thread_ptp_message_t * msg )
+void sctk_control_message_push( mpc_mp_ptp_message_t * msg )
 {
 	struct sctk_ctrl_msg_cell * cell = sctk_malloc( sizeof( struct sctk_ctrl_msg_cell ) );
 	cell->msg = msg;

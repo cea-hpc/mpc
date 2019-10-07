@@ -38,7 +38,7 @@ static long sctk_shm_roundup_powerof2(unsigned long n)
 }
 
 #if 0
-void sctk_shm_network_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+void sctk_shm_network_rdma_write(  sctk_rail_info_t *rail, mpc_mp_ptp_message_t *msg,
                          void * src_addr, struct sctk_rail_pin_ctx_list * local_key,
                          void * dest_addr, struct  sctk_rail_pin_ctx_list * remote_key,
                          size_t size )
@@ -47,7 +47,7 @@ void sctk_shm_network_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_messa
 
 }
 
-void sctk_shm_network_rdma_read(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+void sctk_shm_network_rdma_read(  sctk_rail_info_t *rail, mpc_mp_ptp_message_t *msg,
                          void * src_addr,  struct  sctk_rail_pin_ctx_list * remote_key,
                          void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
                          size_t size )
@@ -57,7 +57,7 @@ void sctk_shm_network_rdma_read(  sctk_rail_info_t *rail, sctk_thread_ptp_messag
 #endif
 
 static void
-sctk_network_add_message_to_pending_shm_list( sctk_thread_ptp_message_t *msg, int sctk_shm_dest, int with_lock)
+sctk_network_add_message_to_pending_shm_list( mpc_mp_ptp_message_t *msg, int sctk_shm_dest, int with_lock)
 {
    sctk_shm_msg_list_t *tmp = sctk_malloc(sizeof(sctk_shm_msg_list_t));
    tmp->msg = msg;
@@ -70,7 +70,7 @@ sctk_network_add_message_to_pending_shm_list( sctk_thread_ptp_message_t *msg, in
       mpc_common_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
 }
 
-static int sctk_network_send_message_dest_shm(sctk_thread_ptp_message_t *msg,
+static int sctk_network_send_message_dest_shm(mpc_mp_ptp_message_t *msg,
                                               int sctk_shm_dest,
                                               int with_lock) {
   sctk_shm_cell_t *cell = NULL;
@@ -129,7 +129,7 @@ sctk_network_send_message_from_pending_shm_list( void )
               /* If we are here the element
                * was back pushed to the pending list */
 
-              /* sctk_thread_ptp_message_t *msg = elt->msg;
+              /* mpc_mp_ptp_message_t *msg = elt->msg;
               sctk_debug(
                   "!%d!  [ %d -> %d ] [ %d -> %d ] (CLASS "
                   "%s(%d) SPE %d SIZE %d TAG %d)",
@@ -152,13 +152,13 @@ sctk_network_send_message_from_pending_shm_list( void )
 }
 
 static void 
-sctk_network_send_message_endpoint_shm ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+sctk_network_send_message_endpoint_shm ( mpc_mp_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
 	sctk_network_send_message_dest_shm( msg, endpoint->data.shm.dest, 1);
 }
 
 static void 
-sctk_network_notify_matching_message_shm ( __UNUSED__ sctk_thread_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail )
+sctk_network_notify_matching_message_shm ( __UNUSED__ mpc_mp_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail )
 {
 }
 
@@ -169,7 +169,7 @@ sctk_network_notify_perform_message_shm ( __UNUSED__ int remote, __UNUSED__ int 
 }
 
 static int 
-sctk_send_message_from_network_shm ( sctk_thread_ptp_message_t *msg )
+sctk_send_message_from_network_shm ( mpc_mp_ptp_message_t *msg )
 {
 	if ( sctk_send_message_from_network_reorder ( msg ) == REORDER_NO_NUMBERING )
 	{
@@ -186,7 +186,7 @@ static void
 sctk_network_notify_idle_message_shm ( __UNUSED__ sctk_rail_info_t *rail )
 {
     sctk_shm_cell_t * cell;
-    sctk_thread_ptp_message_t *msg;
+    mpc_mp_ptp_message_t *msg;
 
     if(!sctk_shm_driver_initialized)
         return;
@@ -238,7 +238,7 @@ sctk_network_notify_idle_message_shm ( __UNUSED__ sctk_rail_info_t *rail )
 
 }
 
-static void sctk_network_notify_recv_message_shm ( __UNUSED__ sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
+static void sctk_network_notify_recv_message_shm ( __UNUSED__ mpc_mp_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
     sctk_network_notify_idle_message_shm ( rail );
 }

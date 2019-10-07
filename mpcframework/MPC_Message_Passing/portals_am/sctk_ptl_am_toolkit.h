@@ -38,8 +38,8 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t co
 void sctk_ptl_init_interface(sctk_rail_info_t* rail);
 void sctk_ptl_fini_interface(sctk_rail_info_t* rail);
 
-void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endpoint);
-void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail);
+void sctk_ptl_send_message(mpc_mp_ptp_message_t* msg, sctk_endpoint_t* endpoint);
+void sctk_ptl_notify_recv(mpc_mp_ptp_message_t* msg, sctk_rail_info_t* rail);
 
 #endif
 #endif

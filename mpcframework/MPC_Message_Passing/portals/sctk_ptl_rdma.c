@@ -258,7 +258,7 @@ int sctk_ptl_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_o
  */
 #define BUF_SIZE 32
 void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
-		sctk_thread_ptp_message_t *msg,
+		mpc_mp_ptp_message_t *msg,
 		void * fetch_addr,
 		struct  sctk_rail_pin_ctx_list * local_key,
 		void * remote_addr,
@@ -352,7 +352,7 @@ int sctk_ptl_rdma_cas_gate( sctk_rail_info_t *rail, size_t size, RDMA_type type 
  * \param[in] type the type of res_addr, remote_addr, comp & new
  */
 void sctk_ptl_rdma_cas(sctk_rail_info_t *rail,
-		sctk_thread_ptp_message_t *msg,
+		mpc_mp_ptp_message_t *msg,
 		void *  res_addr,
 		struct  sctk_rail_pin_ctx_list * local_key,
 		void * remote_addr,
@@ -428,7 +428,7 @@ void sctk_ptl_rdma_cas(sctk_rail_info_t *rail,
  * \param[in] remote_key the remote RDMA struct associated to dest_addr
  * \param[in] size the amount of bytes to send
  */
-void sctk_ptl_rdma_write(sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+void sctk_ptl_rdma_write(sctk_rail_info_t *rail, mpc_mp_ptp_message_t *msg,
 		void * src_addr, struct sctk_rail_pin_ctx_list * local_key,
 		void * dest_addr, struct  sctk_rail_pin_ctx_list * remote_key,
 		size_t size)
@@ -487,7 +487,7 @@ void sctk_ptl_rdma_write(sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
  * \param[in] remote_key the local RDMA struct associated to dest_addr
  * \param[in] size the amount of bytes to send
  */
-void sctk_ptl_rdma_read(sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+void sctk_ptl_rdma_read(sctk_rail_info_t *rail, mpc_mp_ptp_message_t *msg,
 		void * src_addr,  struct  sctk_rail_pin_ctx_list * remote_key,
 		void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
 		size_t size)
@@ -661,7 +661,7 @@ void sctk_ptl_rdma_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 void sctk_ptl_rdma_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
-	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)ptr->msg;
+	mpc_mp_ptp_message_t* msg = (mpc_mp_ptp_message_t*)ptr->msg;
 	sctk_ptl_local_data_t* atomic_ptr = (sctk_ptl_local_data_t*)msg->tail.ptl.user_ptr;
 
 	UNUSED(rail);

@@ -557,7 +557,7 @@ static inline void sctk_window_RDMA_write_net(struct sctk_window *win,
 
   sctk_nodebug("RDMA WRITE NET");
 
-  sctk_thread_ptp_message_t *msg =
+  mpc_mp_ptp_message_t *msg =
       mpc_mp_comm_ptp_message_header_create(SCTK_MESSAGE_CONTIGUOUS);
   mpc_mp_comm_ptp_message_header_init(
       msg, -8, win->comm, mpc_mp_communicator_rank(win->comm, mpc_common_get_task_rank()),
@@ -723,7 +723,7 @@ void sctk_window_RDMA_read_net( struct sctk_window * win, sctk_rail_pin_ctx_t * 
     sctk_fatal("Error RDMA read operation overflows the window");
   }
 
-  sctk_thread_ptp_message_t *msg =
+  mpc_mp_ptp_message_t *msg =
       mpc_mp_comm_ptp_message_header_create(SCTK_MESSAGE_CONTIGUOUS);
 
   mpc_mp_comm_ptp_message_header_init(
@@ -1243,7 +1243,7 @@ static inline void sctk_window_RDMA_fetch_and_op_net(
     sctk_fatal("Error RDMA fetch and op operation overflows the window");
   }
 
-  sctk_thread_ptp_message_t *msg =
+  mpc_mp_ptp_message_t *msg =
       mpc_mp_comm_ptp_message_header_create(SCTK_MESSAGE_CONTIGUOUS);
 
   mpc_mp_comm_ptp_message_header_init(msg, -8, win->comm,
@@ -1507,7 +1507,7 @@ void sctk_window_RDMA_CAS_net( sctk_window_t remote_win_id, size_t remote_offset
           sctk_fatal("Error RDMA CAS operation overflows the window");
         }
 
-        sctk_thread_ptp_message_t *msg =
+        mpc_mp_ptp_message_t *msg =
             mpc_mp_comm_ptp_message_header_create(SCTK_MESSAGE_CONTIGUOUS);
 
         mpc_mp_comm_ptp_message_header_init(msg, -8, win->comm,

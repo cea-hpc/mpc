@@ -31,8 +31,8 @@
 
 static bool checksum_enabled;
 
-unsigned long sctk_checksum_message ( sctk_thread_ptp_message_t *send,
-                                      sctk_thread_ptp_message_t *recv )
+unsigned long sctk_checksum_message ( mpc_mp_ptp_message_t *send,
+                                      mpc_mp_ptp_message_t *recv )
 {
 	unsigned long adler = 0;
 
@@ -61,7 +61,7 @@ unsigned long sctk_checksum_message ( sctk_thread_ptp_message_t *send,
 			void *body;
 
 			size = SCTK_MSG_SIZE ( recv );
-			body = ( char * ) recv + sizeof ( sctk_thread_ptp_message_t );
+			body = ( char * ) recv + sizeof ( mpc_mp_ptp_message_t );
 
 			adler = adler32 ( adler, ( unsigned char * ) body, size );
 			break;
@@ -115,7 +115,7 @@ unsigned long sctk_checksum_message ( sctk_thread_ptp_message_t *send,
 }
 
 unsigned long sctk_checksum_buffer ( char *body,
-                                     sctk_thread_ptp_message_t *msg )
+                                     mpc_mp_ptp_message_t *msg )
 {
 	uLong adler = 0;
 
@@ -186,16 +186,16 @@ unsigned long sctk_checksum_buffer ( char *body,
 }
 
 
-void sctk_checksum_register ( sctk_thread_ptp_message_t *msg )
+void sctk_checksum_register ( mpc_mp_ptp_message_t *msg )
 {
 	msg->body.checksum = sctk_checksum_message ( msg, msg );
 }
-void sctk_checksum_unregister ( sctk_thread_ptp_message_t *msg )
+void sctk_checksum_unregister ( mpc_mp_ptp_message_t *msg )
 {
 	msg->body.checksum = 0;
 }
 
-unsigned long sctk_checksum_verify ( sctk_thread_ptp_message_t *send, sctk_thread_ptp_message_t *recv )
+unsigned long sctk_checksum_verify ( mpc_mp_ptp_message_t *send, mpc_mp_ptp_message_t *recv )
 {
 	unsigned long adler = 0;
 

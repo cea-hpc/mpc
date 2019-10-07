@@ -32,27 +32,27 @@ extern "C"
 
 /* IOVEC NET FUNCS */
 /* Copy function for net driver copy */
-typedef void(*sctk_iovec_cpy_t)(struct iovec*, int, sctk_thread_ptp_message_t*);
+typedef void(*sctk_iovec_cpy_t)(struct iovec*, int, mpc_mp_ptp_message_t*);
 /* Convert sctk_thread_ptp_msg_t to struct iovec */
-struct iovec * sctk_net_convert_msg_to_iovec(sctk_thread_ptp_message_t *,int*,size_t);
+struct iovec * sctk_net_convert_msg_to_iovec(mpc_mp_ptp_message_t *,int*,size_t);
 /* sctk_net_copy for iovec */
 void sctk_net_copy_msg_from_iovec( sctk_message_to_copy_t *, sctk_iovec_cpy_t); 
 
-void sctk_net_copy_in_buffer ( sctk_thread_ptp_message_t *msg,
+void sctk_net_copy_in_buffer ( mpc_mp_ptp_message_t *msg,
                                char *buffer );
 
-void *sctk_net_if_one_msg_in_buffer ( sctk_thread_ptp_message_t *msg );
+void *sctk_net_if_one_msg_in_buffer ( mpc_mp_ptp_message_t *msg );
 
-size_t sctk_net_determine_message_size ( sctk_thread_ptp_message_t *msg );
+size_t sctk_net_determine_message_size ( mpc_mp_ptp_message_t *msg );
 
 int sctk_net_copy_frag_msg (
-    const sctk_thread_ptp_message_t *msg,
+    const mpc_mp_ptp_message_t *msg,
     char *buffer,
     const size_t curr_copy,
     const size_t max_copy );
-void sctk_net_write_in_fd ( sctk_thread_ptp_message_t *msg,
+void sctk_net_write_in_fd ( mpc_mp_ptp_message_t *msg,
                             int fd );
-void sctk_net_read_in_fd ( sctk_thread_ptp_message_t *msg,
+void sctk_net_read_in_fd ( mpc_mp_ptp_message_t *msg,
                            int fd );
 void sctk_net_message_copy ( sctk_message_to_copy_t *tmp );
 

@@ -111,7 +111,7 @@ void sctk_pending_on_demand_push( sctk_rail_info_t * rail, int dest );
 void sctk_pending_on_demand_release( sctk_pending_on_demand_t * pod );
 sctk_pending_on_demand_t * sctk_pending_on_demand_get();
 void sctk_pending_on_demand_process();
-void sctk_multirail_on_demand_connection(sctk_thread_ptp_message_t*);
+void sctk_multirail_on_demand_connection(mpc_mp_ptp_message_t*);
 void sctk_multirail_on_demand_disconnection_process(int);
 void sctk_multirail_on_demand_disconnection_rail(sctk_rail_info_t*);
 void sctk_multirail_on_demand_disconnection_routes(sctk_route_origin_t);

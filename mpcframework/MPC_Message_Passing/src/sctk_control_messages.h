@@ -63,11 +63,11 @@ void sctk_control_messages_send_to_task(int dest_task, mpc_mp_communicator_t com
                                         int subtype, char param, void *buffer,
                                         size_t size);
 void sctk_control_messages_send_rail( int dest, int subtype, char param, void *buffer, size_t size, int  rail_id );
-void control_message_submit(sctk_message_class_t class, int rail_id,
+void control_message_submit(mpc_mp_ptp_message_class_t class, int rail_id,
                             int source_process, int source_rank, int subtype,
                             int param, void *data, size_t msg_size);
-void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg );
-void sctk_control_messages_perform(sctk_thread_ptp_message_t *msg, int force);
+void sctk_control_messages_incoming( mpc_mp_ptp_message_t * msg );
+void sctk_control_messages_perform(mpc_mp_ptp_message_t *msg, int force);
 
 struct sctk_control_message_fence_ctx
 {
@@ -86,7 +86,7 @@ void sctk_control_message_fence_handler( struct sctk_control_message_fence_ctx *
 /************************************************************************/
 
 void sctk_control_message_init();
-void sctk_control_message_push( sctk_thread_ptp_message_t * msg );
+void sctk_control_message_push( mpc_mp_ptp_message_t * msg );
 void sctk_control_message_process();
 void sctk_control_message_process_all();
 int sctk_control_message_process_local(int rank);

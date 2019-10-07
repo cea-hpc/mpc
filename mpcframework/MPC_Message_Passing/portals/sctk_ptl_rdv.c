@@ -81,7 +81,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	sctk_ptl_pte_t* pte                = NULL;
 	sctk_ptl_rail_info_t* srail        = &rail->network.ptl;
 	sctk_ptl_local_data_t* ptr         = (sctk_ptl_local_data_t*) ev.user_ptr;
-	sctk_thread_ptp_message_t* msg    = (sctk_thread_ptp_message_t*) ptr->msg;
+	mpc_mp_ptp_message_t* msg     = (mpc_mp_ptp_message_t*) ptr->msg;
 	void* start;
 	size_t cur_off, chunk_sz, chunk_nb, chunk, chunk_rest, sz_sent;
 	int flags;
@@ -190,9 +190,9 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
  */
 static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
-	sctk_thread_ptp_message_t* net_msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
+	mpc_mp_ptp_message_t* net_msg = sctk_malloc(sizeof(mpc_mp_ptp_message_t));
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
-	sctk_thread_ptp_message_t* recv_msg = (sctk_thread_ptp_message_t*)ptr->msg;
+	mpc_mp_ptp_message_t* recv_msg = (mpc_mp_ptp_message_t*)ptr->msg;
 
 	/* sanity checks */
 	sctk_assert(rail);
@@ -240,7 +240,7 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 static inline void sctk_ptl_rdv_complete_message(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
-	sctk_thread_ptp_message_t *msg = (sctk_thread_ptp_message_t*)ptr->msg;
+	mpc_mp_ptp_message_t *msg = (mpc_mp_ptp_message_t*)ptr->msg;
 
 	UNUSED(rail);
 
@@ -257,7 +257,7 @@ static inline void sctk_ptl_rdv_complete_message(sctk_rail_info_t* rail, sctk_pt
  * \param[in] msg the msg to send
  * \param[in] endpoint the route to use
  */
-void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endpoint)
+void sctk_ptl_rdv_send_message(mpc_mp_ptp_message_t* msg, sctk_endpoint_t* endpoint)
 {
 	sctk_ptl_rail_info_t* srail    = &endpoint->rail->network.ptl;
 	sctk_ptl_route_info_t* infos   = &endpoint->data.ptl;
@@ -356,7 +356,7 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
  * \param[in] the generated msg
  * \param[in] srail the Portals-specific rail
  */
-void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info_t* srail)
+void sctk_ptl_rdv_notify_recv(mpc_mp_ptp_message_t* msg, sctk_ptl_rail_info_t* srail)
 {
 	sctk_ptl_matchbits_t match, ign;
 	sctk_ptl_pte_t* pte;
@@ -410,6 +410,7 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
+	mpc_mp_ptp_message_t* msg = (mpc_mp_ptp_message_t*)ptr->msg;
 	int cur = 0;
 
 	switch(ev.type)
@@ -470,7 +471,7 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
-	//sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)ptr->msg;
+	mpc_mp_ptp_message_t* msg = (mpc_mp_ptp_message_t*)ptr->msg;
 	int cur = 0;
 	switch(ev.type)
 	{

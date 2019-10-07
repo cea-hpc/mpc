@@ -3032,7 +3032,7 @@ int _mpc_m_isend( void *buf, mpc_mp_msg_count_t count,
 	size_t d_size = __mpc_m_datatype_get_size( datatype, task_specific );
 	size_t msg_size = count * d_size;
 
-	sctk_thread_ptp_message_t *msg = NULL;
+	mpc_mp_ptp_message_t *msg = NULL;
 
 	/* Here we see if we can get a slot to buffer small message content
 	   otherwise we simply get a regular message header */
@@ -3101,7 +3101,7 @@ int _mpc_m_issend( void *buf, mpc_mp_msg_count_t count,
 	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
 	int myself = mpc_mp_communicator_rank( comm, task_specific->task_id );
 
-	sctk_thread_ptp_message_t *msg = mpc_mp_comm_ptp_message_header_create( SCTK_MESSAGE_CONTIGUOUS );
+	mpc_mp_ptp_message_t *msg = mpc_mp_comm_ptp_message_header_create( SCTK_MESSAGE_CONTIGUOUS );
 	size_t d_size = __mpc_m_datatype_get_size( datatype, task_specific );
 	size_t msg_size = count * d_size;
 
@@ -3142,7 +3142,7 @@ int _mpc_m_irecv( void *buf, mpc_mp_msg_count_t count,
 	int myself = mpc_mp_communicator_rank( comm, task_specific->task_id );
 
 
-	sctk_thread_ptp_message_t * msg = mpc_mp_comm_ptp_message_header_create( SCTK_MESSAGE_CONTIGUOUS );
+	mpc_mp_ptp_message_t * msg = mpc_mp_comm_ptp_message_header_create( SCTK_MESSAGE_CONTIGUOUS );
 
 	size_t d_size = __mpc_m_datatype_get_size( datatype, task_specific );
 
@@ -3193,9 +3193,9 @@ int _mpc_m_send( void *restrict buf, mpc_mp_msg_count_t count,
 
 	size_t msg_size = count * __mpc_m_datatype_get_size( datatype, task_specific );
 
-	sctk_thread_ptp_message_t *msg = NULL;
+	mpc_mp_ptp_message_t *msg = NULL;
 
-	sctk_thread_ptp_message_t header;
+	mpc_mp_ptp_message_t header;
 
 	if ( ( msg_size >= MAX_MPC_BUFFERED_SIZE ) || !__mpc_m_buffering_enabled )
 	{
@@ -5029,7 +5029,7 @@ int PMPC_Request_free(mpc_mp_request_t *request) {
 /************************************************************************/
 
 int PMPC_Open_pack(mpc_mp_request_t *request) {
-  sctk_thread_ptp_message_t *msg;
+  mpc_mp_ptp_message_t *msg;
   int src;
   mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
   SCTK_PROFIL_START(MPC_Open_pack);
@@ -5048,66 +5048,13 @@ int PMPC_Open_pack(mpc_mp_request_t *request) {
   MPC_ERROR_SUCESS();
 }
 
-int PMPC_Default_pack(mpc_mp_msg_count_t count, mpc_pack_indexes_t *begins,
-                      mpc_pack_indexes_t *ends, mpc_mp_request_t *request) {
-  sctk_thread_ptp_message_t *msg;
-  int src;
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
-  SCTK_PROFIL_START(MPC_Default_pack);
-  task_specific = __mpc_m_per_mpi_process_ctx_get();
-  if (request == NULL) {
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_REQUEST, "");
-  }
-
-  /*   sctk_mpc_init_pack_std(request,count,begins,ends); */
-
-  src = mpc_mp_communicator_rank(MPC_COMM_WORLD, task_specific->task_id);
-
-  msg = mpc_mp_comm_ptp_message_header_create(SCTK_MESSAGE_PACK);
-  msg->tail.default_pack.std.count = count;
-  msg->tail.default_pack.std.begins = begins;
-  msg->tail.default_pack.std.ends = ends;
-
-  mpc_mp_comm_request_set_msg(request, msg);
-  mpc_mp_comm_request_set_size(request);
-  SCTK_PROFIL_END(MPC_Default_pack);
-  MPC_ERROR_SUCESS();
-}
-
-int PMPC_Default_pack_absolute(mpc_mp_msg_count_t count,
-                               mpc_pack_absolute_indexes_t *begins,
-                               mpc_pack_absolute_indexes_t *ends,
-                               mpc_mp_request_t *request) {
-  sctk_thread_ptp_message_t *msg;
-  int src;
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
-  SCTK_PROFIL_START(MPC_Default_pack);
-  task_specific = __mpc_m_per_mpi_process_ctx_get();
-  if (request == NULL) {
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_REQUEST, "");
-  }
-
-  /*   sctk_mpc_init_pack_absolute(request,count,begins,ends); */
-
-  src = mpc_mp_communicator_rank(MPC_COMM_WORLD, task_specific->task_id);
-
-  msg = mpc_mp_comm_ptp_message_header_create(SCTK_MESSAGE_PACK_ABSOLUTE);
-  msg->tail.default_pack.absolute.count = count;
-  msg->tail.default_pack.absolute.begins = begins;
-  msg->tail.default_pack.absolute.ends = ends;
-
-  mpc_mp_comm_request_set_msg(request, msg);
-  mpc_mp_comm_request_set_size(request);
-  SCTK_PROFIL_END(MPC_Default_pack);
-  MPC_ERROR_SUCESS();
-}
 
 static inline int __MPC_Add_pack(void *buf, mpc_mp_msg_count_t count,
                                  mpc_pack_indexes_t *begins,
                                  mpc_pack_indexes_t *ends,
                                  mpc_mp_datatype_t datatype, mpc_mp_request_t *request,
                                  mpc_mpi_m_per_mpi_process_ctx_t *task_specific) {
-  sctk_thread_ptp_message_t *msg;
+  mpc_mp_ptp_message_t *msg;
   int i;
   size_t data_size;
   size_t total = 0;
@@ -5148,7 +5095,7 @@ static inline int __MPC_Add_pack_absolute(void *buf, mpc_mp_msg_count_t count,
                                           mpc_mp_datatype_t datatype,
                                           mpc_mp_request_t *request,
                                           mpc_mpi_m_per_mpi_process_ctx_t *task_specific) {
-  sctk_thread_ptp_message_t *msg;
+  mpc_mp_ptp_message_t *msg;
   int i;
   size_t data_size;
   size_t total = 0;
@@ -5215,50 +5162,9 @@ int PMPC_Add_pack(void *buf, mpc_mp_msg_count_t count, mpc_pack_indexes_t *begin
   return res;
 }
 
-int PMPC_Add_pack_default(void *buf, mpc_mp_datatype_t datatype,
-                          mpc_mp_request_t *request) {
-  int res;
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
-  SCTK_PROFIL_START(MPC_Add_pack_default);
-  task_specific = __mpc_m_per_mpi_process_ctx_get();
-  if (request == NULL) {
-    SCTK_PROFIL_END(MPC_Add_pack_default);
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_REQUEST, "");
-  }
-
-
-  res = __MPC_Add_pack(buf, request->msg->tail.default_pack.std.count,
-                       request->msg->tail.default_pack.std.begins,
-                       request->msg->tail.default_pack.std.ends, datatype,
-                       request, task_specific);
-
-  SCTK_PROFIL_END(MPC_Add_pack_default);
-  return res;
-}
-
-int PMPC_Add_pack_default_absolute(void *buf, mpc_mp_datatype_t datatype,
-                                   mpc_mp_request_t *request) {
-  int res;
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
-  SCTK_PROFIL_START(MPC_Add_pack_default);
-  task_specific = __mpc_m_per_mpi_process_ctx_get();
-  if (request == NULL) {
-    SCTK_PROFIL_END(MPC_Add_pack_default);
-    MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_REQUEST, "");
-  }
-
-  res = __MPC_Add_pack_absolute(buf,
-                                request->msg->tail.default_pack.absolute.count,
-                                request->msg->tail.default_pack.absolute.begins,
-                                request->msg->tail.default_pack.absolute.ends,
-                                datatype, request, task_specific);
-
-  SCTK_PROFIL_END(MPC_Add_pack_default);
-  return res;
-}
 
 int _mpc_m_isend_pack(int dest, int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *request) {
-  sctk_thread_ptp_message_t *msg;
+  mpc_mp_ptp_message_t *msg;
   int src;
   int size;
   mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
@@ -5300,7 +5206,7 @@ int _mpc_m_isend_pack(int dest, int tag, mpc_mp_communicator_t comm, mpc_mp_requ
 }
 
 int _mpc_m_irecv_pack(int source, int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *request) {
-  sctk_thread_ptp_message_t *msg;
+  mpc_mp_ptp_message_t *msg;
   int src;
   int size;
   mpc_mpi_m_per_mpi_process_ctx_t *task_specific;

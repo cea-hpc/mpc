@@ -44,7 +44,7 @@ typedef struct sctk_ib_buffered_table_s
 
 typedef struct sctk_ib_buffered_s
 {
-	sctk_thread_ptp_message_body_t msg;
+	mpc_mp_ptp_message_body_t msg;
 	int number;
 	int index;
 	int nb;

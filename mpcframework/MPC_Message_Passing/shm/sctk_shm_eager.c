@@ -18,10 +18,10 @@ sctk_shm_eager_message_copy_nocopy ( sctk_message_to_copy_t * tmp )
     sctk_net_message_copy(tmp);
 }
 
-static sctk_thread_ptp_message_t *
+static mpc_mp_ptp_message_t *
 sctk_network_preform_eager_msg_shm_nocopy( sctk_shm_cell_t * cell )
 {
-    return (sctk_thread_ptp_message_t*) cell->data;
+    return (mpc_mp_ptp_message_t*) cell->data;
 }
 
 /**
@@ -39,26 +39,26 @@ sctk_shm_eager_message_copy_withcopy ( sctk_message_to_copy_t * tmp )
     sctk_net_message_copy(tmp);
 }
 
-static sctk_thread_ptp_message_t *
+static mpc_mp_ptp_message_t *
 sctk_network_preform_eager_msg_shm_withcopy(sctk_shm_cell_t * cell)
 {
     size_t size;
-    sctk_thread_ptp_message_t *msg, *tmp; 
-    tmp = (sctk_thread_ptp_message_t *) cell->data;
-    size = SCTK_MSG_SIZE (tmp) + sizeof(sctk_thread_ptp_message_t); 
+    mpc_mp_ptp_message_t *msg, *tmp; 
+    tmp = (mpc_mp_ptp_message_t *) cell->data;
+    size = SCTK_MSG_SIZE (tmp) + sizeof(mpc_mp_ptp_message_t); 
     msg = sctk_malloc (size);
     memcpy( (char *) msg, cell->data, size);       
     return msg;	
 }
 
-sctk_thread_ptp_message_t *
+mpc_mp_ptp_message_t *
 sctk_network_eager_msg_shm_recv(sctk_shm_cell_t *cell, int copy_enabled) {
 
-  sctk_thread_ptp_message_t *msg, *tmp;
+  mpc_mp_ptp_message_t *msg, *tmp;
   void (*shm_free_funct)(void *) = NULL;
   void (*shm_copy_funct)(sctk_message_to_copy_t *) = NULL;
 
-  tmp = (sctk_thread_ptp_message_t *)cell->data;
+  tmp = (mpc_mp_ptp_message_t *)cell->data;
   // if ctrl message disable no copy
   if (_mpc_comm_ptp_message_is_for_control(SCTK_MSG_SPECIFIC_CLASS(tmp))) {
     copy_enabled = 1;
@@ -86,16 +86,16 @@ sctk_network_eager_msg_shm_recv(sctk_shm_cell_t *cell, int copy_enabled) {
 }
 
 int
-sctk_network_eager_msg_shm_send(sctk_thread_ptp_message_t *msg, sctk_shm_cell_t *cell)
+sctk_network_eager_msg_shm_send(mpc_mp_ptp_message_t *msg, sctk_shm_cell_t *cell)
 {
-    if(SCTK_MSG_SIZE(msg)+sizeof(sctk_thread_ptp_message_t) > SCTK_SHM_CELL_SIZE)
+    if(SCTK_MSG_SIZE(msg)+sizeof(mpc_mp_ptp_message_t) > SCTK_SHM_CELL_SIZE)
         return 0;
 
     cell->msg_type = SCTK_SHM_EAGER;
-    memcpy(cell->data,(char*)msg,sizeof(sctk_thread_ptp_message_body_t));       
+    memcpy(cell->data,(char*)msg,sizeof(mpc_mp_ptp_message_body_t));       
 
     if(SCTK_MSG_SIZE(msg) > 0)
-        sctk_net_copy_in_buffer(msg,(char*)cell->data+sizeof(sctk_thread_ptp_message_t)); 
+        sctk_net_copy_in_buffer(msg,(char*)cell->data+sizeof(mpc_mp_ptp_message_t)); 
         
     sctk_shm_send_cell(cell);
     mpc_mp_comm_ptp_message_complete_and_free( msg ); 

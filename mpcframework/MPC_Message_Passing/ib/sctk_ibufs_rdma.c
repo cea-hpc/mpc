@@ -1266,7 +1266,7 @@ static int sctk_ibuf_rdma_determine_config ( sctk_ib_rail_info_t *rail_ib,
 //  *determined_nb *= 1.1;
 
 	/* Realign on 64 bits and adjust with the size of the headers */
-	*determined_size = ALIGN_ON ( ( *determined_size + sizeof ( sctk_thread_ptp_message_body_t ) +
+	*determined_size = ALIGN_ON ( ( *determined_size + sizeof ( mpc_mp_ptp_message_body_t ) +
 	                                IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE ), 1024 );
 
 	if ( resizing == 0 )
