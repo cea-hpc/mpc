@@ -61,7 +61,7 @@
 #include "sctk_ft_iface.h"
 #endif
 
-MPC_Op_f sctk_get_common_function(sctk_datatype_t datatype, MPC_Op op);
+sctk_Op_f sctk_get_common_function(sctk_datatype_t datatype, sctk_Op op);
 
 
 /************************************************************************/
@@ -889,7 +889,7 @@ static inline struct Datatype_context *__mpc_m_datatype_get_ctx( sctk_datatype_t
 
 #undef MPC_CREATE_INTERN_FUNC
 #define MPC_CREATE_INTERN_FUNC( name ) \
-	const MPC_Op MPC_##name = {MPC_##name##_func, NULL}
+	const sctk_Op MPC_##name = {MPC_##name##_func, NULL}
 
 MPC_CREATE_INTERN_FUNC( SUM );
 MPC_CREATE_INTERN_FUNC( MAX );
@@ -1562,7 +1562,7 @@ int _mpc_m_type_get_envelope( sctk_datatype_t datatype, int *num_integers,
 int _mpc_m_type_get_contents( sctk_datatype_t datatype, int max_integers,
 							int max_addresses, int max_datatypes,
 							int array_of_integers[],
-							MPC_Aint array_of_addresses[],
+							size_t array_of_addresses[],
 							sctk_datatype_t array_of_datatypes[] )
 {
 	/* First make sure we were not called on a common type */
@@ -1601,7 +1601,7 @@ int _mpc_m_type_get_contents( sctk_datatype_t datatype, int max_integers,
 
 	if ( array_of_addresses )
 		memcpy( array_of_addresses, dctx->array_of_addresses,
-				n_addr * sizeof( MPC_Aint ) );
+				n_addr * sizeof( size_t ) );
 
 	/* Flag the datatypes as duplicated */
 	int i;
@@ -1722,8 +1722,8 @@ static inline size_t __mpc_m_datatype_get_size( sctk_datatype_t datatype,
 	return MPC_ERR_INTERN;
 }
 
-int _mpc_m_type_get_true_extent( sctk_datatype_t datatype, MPC_Aint *true_lb,
-							   MPC_Aint *true_extent )
+int _mpc_m_type_get_true_extent( sctk_datatype_t datatype, size_t *true_lb,
+							   size_t *true_extent )
 {
 	sctk_derived_datatype_t *derived_type_target;
 	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_m_per_mpi_process_ctx_get();
@@ -4043,8 +4043,8 @@ int PMPC_Probe( int source, int tag, sctk_communicator_t comm, sctk_status_t *st
  * MPC REDUCE OPERATIONS *
  *************************/
 
-int _mpc_m_op_create(MPC_User_function *function, int commute, MPC_Op *op) {
-  MPC_Op init = MPC_OP_INIT;
+int _mpc_m_op_create(sctk_Op_User_function *function, int commute, sctk_Op *op) {
+  sctk_Op init = SCTK_OP_INIT;
   assume(commute);
   *op = init;
   op->u_func = function;
@@ -4052,8 +4052,8 @@ int _mpc_m_op_create(MPC_User_function *function, int commute, MPC_Op *op) {
   MPC_ERROR_SUCESS();
 }
 
-int _mpc_m_op_free(MPC_Op *op) {
-  MPC_Op init = MPC_OP_INIT;
+int _mpc_m_op_free(sctk_Op *op) {
+  sctk_Op init = SCTK_OP_INIT;
   *op = init;
   MPC_ERROR_SUCESS();
 }

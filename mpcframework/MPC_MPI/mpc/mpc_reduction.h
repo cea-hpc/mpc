@@ -107,9 +107,9 @@ MPC_DEFINED_FUNCS (MPC_INT8_T, int8_t,name);   \
 MPC_DEFINED_FUNCS (MPC_INT16_T, int16_t,name);   \
 MPC_DEFINED_FUNCS (MPC_INT32_T, int32_t,name);   \
 MPC_DEFINED_FUNCS (MPC_INT64_T, int64_t,name);   \
-MPC_DEFINED_FUNCS (MPC_COUNT, MPC_Count, name);       \
-MPC_DEFINED_FUNCS (MPC_AINT, MPC_Aint, name);         \
-MPC_DEFINED_FUNCS (MPC_OFFSET, MPC_Aint, name);       \
+MPC_DEFINED_FUNCS (MPC_COUNT, size_t, name);       \
+MPC_DEFINED_FUNCS (MPC_AINT, size_t, name);         \
+MPC_DEFINED_FUNCS (MPC_OFFSET, size_t, name);       \
 MPC_DEFINED_FUNCS (MPC_C_BOOL, char, name)
 
 MPC_PROTOTYPES (MIN);

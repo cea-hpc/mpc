@@ -176,7 +176,7 @@ struct Datatype_context
 	 * they are defined in the standard as a pack of the 
 	 * parameters provided uppon type creation  */
 	int * array_of_integers; /** An array of integers */
-	MPC_Aint * array_of_addresses; /* An array of addresses */
+	size_t * array_of_addresses; /* An array of addresses */
 	sctk_datatype_t * array_of_types; /** An array of types */
 };
 
@@ -212,9 +212,9 @@ struct Datatype_External_context
 	sctk_datatype_t oldtype;
 	int blocklength;
 	int stride;
-	MPC_Aint stride_addr;
-	MPC_Aint lb;
-	MPC_Aint extent;
+	size_t stride_addr;
+	size_t lb;
+	size_t extent;
 	int * array_of_gsizes;
 	int * array_of_distribs;
 	int * array_of_dargs;
@@ -224,7 +224,7 @@ struct Datatype_External_context
 	int * array_of_subsizes;
 	int * array_of_starts;
 	int * array_of_displacements;
-	MPC_Aint * array_of_displacements_addr;
+	size_t * array_of_displacements_addr;
 	sctk_datatype_t * array_of_types;
 };
 
@@ -290,7 +290,7 @@ int sctk_datatype_fill_envelope( struct Datatype_context * ctx , int * num_integ
 struct Datatype_layout
 {
 	sctk_datatype_t type;
-	MPC_Aint size;
+	size_t size;
 };
 
 /** \brief Retrieve a type layout from its context 

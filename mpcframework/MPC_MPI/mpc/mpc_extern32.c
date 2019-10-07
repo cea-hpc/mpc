@@ -482,14 +482,14 @@ static inline void MPC_Extern32_decode( sctk_datatype_t type, char * in, char * 
 void MPC_Extern32_convert( sctk_datatype_t * typevector ,
 						   int type_vector_size, 
 						   char * native_buff, 
-						   MPC_Aint max_native_size, 
+						   size_t max_native_size, 
 						   char * extern_buff, 
-						   MPC_Aint max_extern_size , 
+						   size_t max_extern_size , 
 						   int encode )
 {
 	int typeIdx = 0;
-	MPC_Aint current_offset = 0;
-	MPC_Aint extern_offset = 0;
+	size_t current_offset = 0;
+	size_t extern_offset = 0;
 	
 	char * current_entry = native_buff;
 	char * current_extern_entry = extern_buff;

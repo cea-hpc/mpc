@@ -464,7 +464,7 @@ int mpc_MPI_Rput(const void *origin_addr, int origin_count,
 /* MPI_Accumulate                                                       */
 /************************************************************************/
 
-/* MPC_Op_f sctk_get_common_function (sctk_datatype_t datatype, MPC_Op op); */
+/* sctk_Op_f sctk_get_common_function (sctk_datatype_t datatype, sctk_Op op); */
 
 /*
  * The algorithm is the following:
@@ -646,8 +646,8 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
     /* Now do the OP directly */
     sctk_op_t *mpi_op = sctk_convert_to_mpc_op(op);
-    MPC_Op mpc_op = mpi_op->op;
-    MPC_Op_f func = sctk_get_common_function(inner_type, mpc_op);
+    sctk_Op mpc_op = mpi_op->op;
+    sctk_Op_f func = sctk_get_common_function(inner_type, mpc_op);
 
     MPI_Count per_elem_size = 0;
     PMPI_Type_size_x(inner_type, &per_elem_size);

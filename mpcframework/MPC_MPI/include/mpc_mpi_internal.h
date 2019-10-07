@@ -242,7 +242,7 @@ sctk_derived_datatype_t *_mpc_m_per_mpi_process_ctx_derived_datatype_get(sctk_da
 int *sctk_group_raw_ranks(MPI_Group group);
 
 typedef struct {
-  MPC_Op op;
+  sctk_Op op;
   int used;
   int commute;
 } sctk_op_t;
@@ -272,7 +272,7 @@ static inline int sctk_op_can_commute( sctk_op_t * op , MPI_Datatype type )
 
 
 
-MPC_Op_f sctk_get_common_function(sctk_datatype_t datatype, MPC_Op op);
+sctk_Op_f sctk_get_common_function(sctk_datatype_t datatype, sctk_Op op);
 
 /*
   SHARED INTERNAL FUNCTIONS

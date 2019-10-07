@@ -317,8 +317,8 @@ void mpc_MPI_Win_handle_non_contiguous_accumulate_send(void *data,
    * local_pack_data : contains data from target */
 
   sctk_op_t *mpi_op = sctk_convert_to_mpc_op(op);
-  MPC_Op mpc_op = mpi_op->op;
-  MPC_Op_f func = sctk_get_common_function(inner_type, mpc_op);
+  sctk_Op mpc_op = mpi_op->op;
+  sctk_Op_f func = sctk_get_common_function(inner_type, mpc_op);
 
   MPI_Count per_elem_size = 0;
   PMPI_Type_size_x(inner_type, &per_elem_size);

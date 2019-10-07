@@ -9790,7 +9790,7 @@ sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op) {
 
 #define ADD_FUNC_HANDLER(func, t, op)                                          \
   case t:                                                                      \
-    op = (MPC_Op_f)func##_##t;                                                 \
+    op = (sctk_Op_f)func##_##t;                                                 \
     break
 #define COMPAT_DATA_TYPE(op, func)                                             \
   if (op == func) {                                                            \
@@ -9904,8 +9904,8 @@ sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op) {
     }                                                                          \
   }
 
-MPC_Op_f sctk_get_common_function(sctk_datatype_t datatype, MPC_Op op) {
-  MPC_Op_f func;
+sctk_Op_f sctk_get_common_function(sctk_datatype_t datatype, sctk_Op op) {
+  sctk_Op_f func;
 
   func = op.func;
 
@@ -10013,13 +10013,13 @@ sctk_mpi_shared_mem_buffer_collect(union shared_mem_buffer *b,
 
 static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_ring(
 		void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
-		int root, MPI_Comm comm, MPC_Op mpc_op, int size,
+		int root, MPI_Comm comm, sctk_Op mpc_op, int size,
 		int rank) {
 	int res;
 	void *tmp_buf;
 	int allocated = 0;
 	int is_MPI_IN_PLACE = 0;
-	MPC_Op_f func;
+	sctk_Op_f func;
 
 	tmp_buf = recvbuf;
 
@@ -10122,7 +10122,7 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_ring(
 
 static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 		void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
-		int root, MPI_Comm comm, MPC_Op mpc_op, int size,
+		int root, MPI_Comm comm, sctk_Op mpc_op, int size,
 		int rank) {
 
 	int res;
@@ -10271,7 +10271,7 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
         if (mpc_op.u_func != NULL) {
           mpc_op.u_func( sumbuff + (blob * (i-1)),  sumbuff + (blob * i), &count, &datatype);
         } else {
-          MPC_Op_f func;
+          sctk_Op_f func;
           func = sctk_get_common_function(datatype, mpc_op);
           func(sumbuff + (blob * (i-1)), sumbuff + (blob * i), count, datatype);
         }
@@ -10302,7 +10302,7 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 
 static inline int __INTERNAL__PMPI_Reduce_derived_no_commute(
 		void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
-		int root, MPI_Comm comm, MPC_Op mpc_op, int size,
+		int root, MPI_Comm comm, sctk_Op mpc_op, int size,
 		int rank) {
 
 	int res;
@@ -10331,7 +10331,7 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute(
 static inline int
 __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *recvbuf, int count,
 		MPI_Datatype datatype,
-		int root, MPI_Comm comm, MPC_Op mpc_op, int size, int rank) {
+		int root, MPI_Comm comm, sctk_Op mpc_op, int size, int rank) {
 	int res;
 
     /* Temporary buffers for LC & RC contributions */
@@ -10355,7 +10355,7 @@ __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *recvbuf, int count,
     int allocated = count * dsize < MPI_RED_TREE_STATIC_BUFF ? 0 : 1;
 
     /* Retrieve operation function */
-    MPC_Op_f func = NULL;
+    sctk_Op_f func = NULL;
     if (mpc_op.u_func == NULL)
         func = sctk_get_common_function(datatype, mpc_op);
 
@@ -10658,7 +10658,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
   size_t reduce_pipelined_tresh = 0;
   size_t reduce_force_nocommute = 0;
   sctk_op_t *mpi_op = NULL;
-  MPC_Op mpc_op = {0};
+  sctk_Op mpc_op = {0};
 
 
   /* This is the TMP buffer case fastpath */
@@ -10712,7 +10712,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
           if (mpc_op.u_func != NULL) {
             mpc_op.u_func(from, to, &per_lock, &datatype);
           } else {
-            MPC_Op_f func;
+            sctk_Op_f func;
             func = sctk_get_common_function(datatype, mpc_op);
             func(from, to, per_lock, datatype);
           }
@@ -10727,7 +10727,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
             if (mpc_op.u_func != NULL) {
               mpc_op.u_func(from, to, &rest, &datatype);
             } else {
-              MPC_Op_f func;
+              sctk_Op_f func;
               func = sctk_get_common_function(datatype, mpc_op);
               func(from, to, rest, datatype);
             }
@@ -10775,7 +10775,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
         if (mpc_op.u_func != NULL) {
           mpc_op.u_func(data_buff, reduce_ctx->target_buff, &count, &datatype);
         } else {
-          MPC_Op_f func;
+          sctk_Op_f func;
           func = sctk_get_common_function(datatype, mpc_op);
           func(data_buff, reduce_ctx->target_buff, count, datatype);
         }
@@ -10809,7 +10809,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
               if (mpc_op.u_func != NULL) {
                 mpc_op.u_func(from, to, &rest, &datatype);
               } else {
-                MPC_Op_f func;
+                sctk_Op_f func;
                 func = sctk_get_common_function(datatype, mpc_op);
                 func(from, to, rest, datatype);
               }
@@ -10833,7 +10833,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
           if (mpc_op.u_func != NULL) {
             mpc_op.u_func(from, to, &per_lock, &datatype);
           } else {
-            MPC_Op_f func;
+            sctk_Op_f func;
             func = sctk_get_common_function(datatype, mpc_op);
             func(from, to, per_lock, datatype);
           }
@@ -10848,7 +10848,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
         if (mpc_op.u_func != NULL) {
           mpc_op.u_func(data_buff, reduce_ctx->target_buff, &count, &datatype);
         } else {
-          MPC_Op_f func;
+          sctk_Op_f func;
           func = sctk_get_common_function(datatype, mpc_op);
           func(data_buff, reduce_ctx->target_buff, count, datatype);
         }
@@ -10915,7 +10915,7 @@ __INTERNAL__PMPI_Reduce_intra (void *sendbuf, void *recvbuf, int count,
 	int size;
 	int rank;
 	int res;
-	MPC_Op mpc_op;
+	sctk_Op mpc_op;
 	sctk_op_t *mpi_op;
 
 	mpi_op = sctk_convert_to_mpc_op (op);
@@ -11081,7 +11081,7 @@ static int
 __INTERNAL__PMPI_Op_create (MPI_User_function * function, int commute,
 			    MPI_Op * op)
 {
-  MPC_Op *mpc_op = NULL;
+  sctk_Op *mpc_op = NULL;
   sctk_mpi_ops_t *ops;
   int i;
 
@@ -11127,7 +11127,7 @@ __INTERNAL__PMPI_Op_create (MPI_User_function * function, int commute,
 static int
 __INTERNAL__PMPI_Op_free (MPI_Op * op)
 {
-  MPC_Op *mpc_op = NULL;
+  sctk_Op *mpc_op = NULL;
   sctk_mpi_ops_t *ops;
 
   PMPC_Get_op ( &ops);
@@ -11183,7 +11183,7 @@ __INTERNAL__PMPI_Allreduce_intra_pipeline(void *sendbuf, void *recvbuf, int coun
 	int to_free = 0;
 
 	sctk_op_t *mpi_op = sctk_convert_to_mpc_op(op);
-  	MPC_Op mpc_op = mpi_op->op;
+  	sctk_Op mpc_op = mpi_op->op;
 
 
 	MPI_Aint dsize;
@@ -11281,7 +11281,7 @@ __INTERNAL__PMPI_Allreduce_intra_pipeline(void *sendbuf, void *recvbuf, int coun
 				if (mpc_op.u_func != NULL) {
 						mpc_op.u_func(tmp_buff1, recvbuf + sent * dsize, &to_send, &datatype);
 				} else {
-						MPC_Op_f func;
+						sctk_Op_f func;
 						func = sctk_get_common_function(datatype, mpc_op);
 						func(tmp_buff1, recvbuf + sent * dsize, to_send, datatype);
 				}
@@ -11374,7 +11374,7 @@ __INTERNAL__PMPI_Allreduce_intra_binary_tree (void *sendbuf, void *recvbuf, int 
 					      MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-  MPC_Op mpc_op;
+  sctk_Op mpc_op;
   sctk_op_t *mpi_op;
   int size;
   int rank;
@@ -11400,7 +11400,7 @@ __INTERNAL__PMPI_Allreduce_intra_binary_tree (void *sendbuf, void *recvbuf, int 
       int is_MPI_IN_PLACE = 0;
       int step = 2;
 
-      MPC_Op_f func;
+      sctk_Op_f func;
       func = sctk_get_common_function(datatype, mpc_op);
 
       res = __INTERNAL__PMPI_Type_extent (datatype, &dsize);
@@ -11602,9 +11602,9 @@ __INTERNAL__PMPI_Reduce_scatter_inter (void *sendbuf, void *recvbuf, int *recvcn
     char *tmpbuf = NULL, *tmpbuf2 = NULL;
     MPI_Request req;
     int *disps = NULL;
-    MPC_Op mpc_op;
+    sctk_Op mpc_op;
 	sctk_op_t *mpi_op;
-	MPC_Op_f func;
+	sctk_Op_f func;
 
 	mpi_op = sctk_convert_to_mpc_op (op);
 	mpc_op = mpi_op->op;
@@ -11766,9 +11766,9 @@ __INTERNAL__PMPI_Reduce_scatter_block_inter (void *sendbuf, void *recvbuf, int r
     MPI_Aint extent;
     char *tmpbuf = NULL, *tmpbuf2 = NULL;
     MPI_Request req;
-    MPC_Op mpc_op;
+    sctk_Op mpc_op;
 	sctk_op_t *mpi_op;
-	MPC_Op_f func;
+	sctk_Op_f func;
 
 	mpi_op = sctk_convert_to_mpc_op (op);
 	mpc_op = mpi_op->op;
@@ -11868,7 +11868,7 @@ int
 __INTERNAL__PMPI_Scan_intra (void *sendbuf, void *recvbuf, int count,
 		       MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
-	MPC_Op mpc_op;
+	sctk_Op mpc_op;
 	sctk_op_t *mpi_op;
 	int size, dsize;
 	int rank;
@@ -11915,7 +11915,7 @@ __INTERNAL__PMPI_Scan_intra (void *sendbuf, void *recvbuf, int count,
 		}
 		else
 		{
-			MPC_Op_f func;
+			sctk_Op_f func;
 			func = sctk_get_common_function (datatype, mpc_op);
 			func (tmp, recvbuf, count, datatype);
 		}
@@ -11955,7 +11955,7 @@ int
 __INTERNAL__PMPI_Exscan_intra (void *sendbuf, void *recvbuf, int count,
 		       MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
-	MPC_Op mpc_op;
+	sctk_Op mpc_op;
 	sctk_op_t *mpi_op;
 	int size;
 	int rank;
@@ -12005,7 +12005,7 @@ __INTERNAL__PMPI_Exscan_intra (void *sendbuf, void *recvbuf, int count,
 		}
 		else
 		{
-			MPC_Op_f func;
+			sctk_Op_f func;
 			func = sctk_get_common_function (datatype, mpc_op);
 			func (recvbuf, tmp, count, datatype);
 		}

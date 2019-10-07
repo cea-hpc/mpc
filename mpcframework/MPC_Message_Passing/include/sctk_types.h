@@ -111,6 +111,8 @@ typedef struct
 	sctk_Op_User_function *u_func;
 } sctk_Op;
 
+#define SCTK_OP_INIT {NULL,NULL}
+
 /** RDMA windows */
 typedef int sctk_window_t;
 

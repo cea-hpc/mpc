@@ -63,8 +63,6 @@ extern "C"
 
   typedef unsigned int mpc_pack_indexes_t;
   typedef long mpc_pack_absolute_indexes_t;
-  typedef size_t MPC_Aint;
-  typedef size_t MPC_Count;
 
   typedef struct {
     int task_nb;
@@ -86,12 +84,6 @@ extern const MPC_Group_t mpc_group_null;
 
 typedef void(MPC_Handler_function)(void *, int *, ...);
 typedef int MPC_Errhandler;
-
-/** Reduction Operations */
-typedef sctk_Op_f MPC_Op_f;
-typedef sctk_Op_User_function MPC_User_function;
-typedef sctk_Op MPC_Op;
-#define MPC_OP_INIT {NULL,NULL}
 
 
 struct sctk_thread_ptp_message_s;
@@ -302,7 +294,7 @@ extern MPC_Request mpc_request_null;
  */
 typedef int MPC_Info;
 
-#define MPC_CREATE_INTERN_FUNC(name) extern  const MPC_Op MPC_##name
+#define MPC_CREATE_INTERN_FUNC(name) extern  const sctk_Op MPC_##name
 
 MPC_CREATE_INTERN_FUNC (SUM);
 MPC_CREATE_INTERN_FUNC (MAX);
@@ -512,7 +504,7 @@ typedef int MPC_Checkpoint_state;
   int MPC_Init_thread (int *argc, char ***argv, int required, int *provided);
   int PMPC_Initialized (int *flag);
   int PMPC_Finalize (void);
-  int PMPC_Abort (MPC_Comm, int);
+  int PMPC_Abort (sctk_communicator_t, int);
   int PMPC_Query_thread (int *provided);
 
   /*Topology informations */
@@ -538,19 +530,19 @@ typedef int MPC_Checkpoint_state;
 		sctk_msg_count_t recvcount,
 		sctk_datatype_t recvtype, sctk_communicator_t comm);
 
-  int _mpc_m_op_create (MPC_User_function *, int, MPC_Op *);
-  int _mpc_m_op_free (MPC_Op *);
+  int _mpc_m_op_create (sctk_Op_User_function *, int, sctk_Op *);
+  int _mpc_m_op_free (sctk_Op *);
 
 
 
   /*P-t-P Communications */
   int _mpc_m_isend (void *buf, sctk_msg_count_t count, sctk_datatype_t datatype,
 		 int dest, int tag, sctk_communicator_t comm, MPC_Request * request);
-  int _mpc_m_ibsend (void *, sctk_msg_count_t, sctk_datatype_t, int, int, MPC_Comm,
+  int _mpc_m_ibsend (void *, sctk_msg_count_t, sctk_datatype_t, int, int, sctk_communicator_t,
 		  MPC_Request *);
-  int _mpc_m_issend (void *, sctk_msg_count_t, sctk_datatype_t, int, int, MPC_Comm,
+  int _mpc_m_issend (void *, sctk_msg_count_t, sctk_datatype_t, int, int, sctk_communicator_t,
 		  MPC_Request *);
-  int _mpc_m_irsend (void *, sctk_msg_count_t, sctk_datatype_t, int, int, MPC_Comm,
+  int _mpc_m_irsend (void *, sctk_msg_count_t, sctk_datatype_t, int, int, sctk_communicator_t,
 		  MPC_Request *);
 
   int _mpc_m_irecv (void *buf, sctk_msg_count_t count, sctk_datatype_t datatype,
@@ -568,19 +560,19 @@ typedef int MPC_Checkpoint_state;
 
   int _mpc_m_test( MPC_Request *request, int *flag, sctk_status_t *status );
 
-  int PMPC_Iprobe (int, int, MPC_Comm, int *, sctk_status_t *);
-  int PMPC_Probe (int, int, MPC_Comm, sctk_status_t *);
+  int PMPC_Iprobe (int, int, sctk_communicator_t, int *, sctk_status_t *);
+  int PMPC_Probe (int, int, sctk_communicator_t, sctk_status_t *);
   int _mpc_m_status_get_count (sctk_status_t *, sctk_datatype_t, sctk_msg_count_t *);
 
-  int  _mpc_m_send(void *, sctk_msg_count_t, sctk_datatype_t, int, int, MPC_Comm);
+  int  _mpc_m_send(void *, sctk_msg_count_t, sctk_datatype_t, int, int, sctk_communicator_t);
 
-  int _mpc_m_ssend (void *, sctk_msg_count_t, sctk_datatype_t, int, int, MPC_Comm);
+  int _mpc_m_ssend (void *, sctk_msg_count_t, sctk_datatype_t, int, int, sctk_communicator_t);
 
-  int _mpc_m_recv (void *, sctk_msg_count_t, sctk_datatype_t, int, int, MPC_Comm,
+  int _mpc_m_recv (void *, sctk_msg_count_t, sctk_datatype_t, int, int, sctk_communicator_t,
 		sctk_status_t *);
 
   int recv (void *, sctk_msg_count_t, sctk_datatype_t, int, int, void *,
-		    sctk_msg_count_t, sctk_datatype_t, int, int, MPC_Comm,
+		    sctk_msg_count_t, sctk_datatype_t, int, int, sctk_communicator_t,
 		    sctk_status_t *);
 
   /*Status */
@@ -588,21 +580,21 @@ typedef int MPC_Checkpoint_state;
 
 
   /*Groups */
-  int PMPC_Comm_group (MPC_Comm, MPC_Group *);
-  int PMPC_Comm_remote_group (MPC_Comm, MPC_Group *);
+  int PMPC_Comm_group (sctk_communicator_t, MPC_Group *);
+  int PMPC_Comm_remote_group (sctk_communicator_t, MPC_Group *);
   int PMPC_Group_free (MPC_Group *);
   int PMPC_Group_incl (MPC_Group, int, int *, MPC_Group *);
   int PMPC_Group_difference (MPC_Group, MPC_Group, MPC_Group *);
 
   /*Communicators */
   int PMPC_Convert_to_intercomm (sctk_communicator_t comm, MPC_Group group);
-  int PMPC_Comm_create_list (MPC_Comm, int *list, int nb_elem, sctk_communicator_t *);
-  int PMPC_Comm_create (MPC_Comm, MPC_Group, sctk_communicator_t *);
+  int PMPC_Comm_create_list (sctk_communicator_t, int *list, int nb_elem, sctk_communicator_t *);
+  int PMPC_Comm_create (sctk_communicator_t, MPC_Group, sctk_communicator_t *);
   int PMPC_Intercomm_create (sctk_communicator_t local_comm, int local_leader, sctk_communicator_t peer_comm, int remote_leader, int tag, sctk_communicator_t * newintercomm);
-  int PMPC_Comm_create_from_intercomm (MPC_Comm, MPC_Group, sctk_communicator_t *);
+  int PMPC_Comm_create_from_intercomm (sctk_communicator_t, MPC_Group, sctk_communicator_t *);
   int PMPC_Comm_free (sctk_communicator_t *);
-  int PMPC_Comm_dup (MPC_Comm, sctk_communicator_t *);
-  int PMPC_Comm_split (MPC_Comm, int, int, sctk_communicator_t *);
+  int PMPC_Comm_dup (sctk_communicator_t, sctk_communicator_t *);
+  int PMPC_Comm_split (sctk_communicator_t, int, int, sctk_communicator_t *);
 
   /*Error_handler */
   void PMPC_Default_error (sctk_communicator_t * comm, int *error, char *msg,
@@ -610,8 +602,8 @@ typedef int MPC_Checkpoint_state;
   void PMPC_Return_error (sctk_communicator_t * comm, int *error, ...);
 
   int PMPC_Errhandler_create (MPC_Handler_function *, MPC_Errhandler *);
-  int PMPC_Errhandler_set (MPC_Comm, MPC_Errhandler);
-  int PMPC_Errhandler_get (MPC_Comm, MPC_Errhandler *);
+  int PMPC_Errhandler_set (sctk_communicator_t, MPC_Errhandler);
+  int PMPC_Errhandler_get (sctk_communicator_t, MPC_Errhandler *);
   int PMPC_Errhandler_free (MPC_Errhandler *);
   int PMPC_Error_string (int, char *, int *);
   int PMPC_Error_class (int, int *);
@@ -636,7 +628,7 @@ typedef int MPC_Checkpoint_state;
 			      int max_addresses,
 			      int max_datatypes,
 			      int array_of_integers[],
-			      MPC_Aint array_of_addresses[],
+			      size_t array_of_addresses[],
 			      sctk_datatype_t array_of_datatypes[]);
   int _mpc_m_type_commit( sctk_datatype_t * type );
 
@@ -665,7 +657,7 @@ typedef int MPC_Checkpoint_state;
 			    mpc_pack_absolute_indexes_t ub, int is_ub,
 			    struct Datatype_External_context *ectx );
 
-  int _mpc_m_type_get_true_extent(sctk_datatype_t datatype, MPC_Aint *true_lb, MPC_Aint *true_extent);
+  int _mpc_m_type_get_true_extent(sctk_datatype_t datatype, size_t *true_lb, size_t *true_extent);
   int _mpc_m_type_convert_to_derived( sctk_datatype_t in_datatype, sctk_datatype_t * out_datatype );
   int _mpc_m_type_use (sctk_datatype_t datatype);
 /*   int PMPC_Get_keys (void **keys); */

@@ -224,8 +224,8 @@ PROBE(MPC_OP, MPC, MPC Operation related, MPC_OP_CALL, MPC_OP_TIME,
       MPC_OP_TIME_HW, MPC_OP_TIME_LW)
 PROBE(MPC_Op_create, MPC_OP, MPC_Op_create, MPC_Op_create_CALL,
       MPC_Op_create_TIME, MPC_Op_create_TIME_HW, MPC_Op_create_TIME_LW)
-PROBE(MPC_Op_free, MPC_OP, MPC_Op_free, MPC_Op_free_CALL, MPC_Op_free_TIME,
-      MPC_Op_free_TIME_HW, MPC_Op_free_TIME_LW)
+PROBE(sctk_Op_free, MPC_OP, sctk_Op_free, sctk_Op_free_CALL, sctk_Op_free_TIME,
+      sctk_Op_free_TIME_HW, sctk_Op_free_TIME_LW)
 PROBE(MPC_SETUP, MPC, MPC Init and release, MPC_SETUP_CALL, MPC_SETUP_TIME,
       MPC_SETUP_TIME_HW, MPC_SETUP_TIME_LW)
 PROBE(MPC_Finalize, MPC_SETUP, MPC_Finalize, MPC_Finalize_CALL,

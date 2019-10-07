@@ -444,10 +444,10 @@ extern "C"
 typedef sctk_datatype_t MPI_Datatype; /* unsigned int */
 typedef sctk_communicator_t MPI_Comm; /* unsigned int */
 typedef int MPI_Request;
-typedef MPC_Aint MPI_Aint;
-typedef MPC_Count MPI_Count;
+typedef size_t MPI_Aint;
+typedef size_t MPI_Count;
 typedef int MPI_Errhandler;
-typedef MPC_User_function MPI_User_function;
+typedef sctk_Op_User_function MPI_User_function;
 typedef int MPI_Op;
 typedef int MPI_Group;
 typedef sctk_status_t MPI_Status;

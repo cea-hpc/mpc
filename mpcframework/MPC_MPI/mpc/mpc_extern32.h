@@ -416,8 +416,8 @@ static inline int MPC_Unsigned_type( sctk_datatype_t common_type )
 void MPC_Extern32_convert( sctk_datatype_t * typevector ,
 						   int type_vector_size, 
 						   char * native_buff, 
-						   MPC_Aint max_native_size, 
+						   size_t max_native_size, 
 						   char * extern_buff, 
-						   MPC_Aint max_extern_size , 
+						   size_t max_extern_size , 
 						   int encode );
 #endif

@@ -344,7 +344,7 @@ void sctk_common_datatype_set_name_helper( sctk_datatype_t datatype, char * name
 
 
 
-void __init_a_composed_common_types(sctk_datatype_t target_type, MPC_Aint disp, sctk_datatype_t type_a, sctk_datatype_t type_b, size_t struct_size )
+void __init_a_composed_common_types(sctk_datatype_t target_type, size_t disp, sctk_datatype_t type_a, sctk_datatype_t type_b, size_t struct_size )
 {
 	/* Compute data-type sizes */
 	size_t sa, sb;
@@ -373,7 +373,7 @@ void __init_a_composed_common_types(sctk_datatype_t target_type, MPC_Aint disp, 
 	types[1] = type_b;
 
 	int * blocklengths = sctk_malloc( 2 * sizeof( int ) );
-	MPC_Aint * displacements = sctk_malloc( 2 * sizeof( void * ) );
+	size_t * displacements = sctk_malloc( 2 * sizeof( void * ) );
 	
 	assume( blocklengths != NULL );
 	assume( displacements != NULL );
@@ -406,7 +406,7 @@ void __init_a_composed_common_types(sctk_datatype_t target_type, MPC_Aint disp, 
 
 void init_composed_common_types()
 {
-	MPC_Aint disp;
+	size_t disp;
 	sctk_datatype_t tmp;
 	/* MPC_FLOAT_INT (SCTK_DERIVED_DATATYPE_BASE */
 	mpc_float_int foo_0;
@@ -619,9 +619,9 @@ void sctk_common_datatype_init()
 	SCTK_INIT_TYPE_SIZE (MPC_INT64_T, int64_t );
 	SCTK_INIT_TYPE_SIZE (MPC_UINT64_T, uint64_t );
 	SCTK_INIT_TYPE_SIZE (MPC_WCHAR, sctk_wchar_t );
-	SCTK_INIT_TYPE_SIZE (MPC_AINT, MPC_Aint );
-	SCTK_INIT_TYPE_SIZE (MPC_OFFSET, MPC_Aint );
-	SCTK_INIT_TYPE_SIZE (MPC_COUNT, MPC_Count );
+	SCTK_INIT_TYPE_SIZE (MPC_AINT, size_t );
+	SCTK_INIT_TYPE_SIZE (MPC_OFFSET, size_t );
+	SCTK_INIT_TYPE_SIZE (MPC_COUNT, size_t );
 	SCTK_INIT_TYPE_SIZE (MPC_LONG_LONG_INT, long long int );
 	SCTK_INIT_TYPE_SIZE (MPC_C_BOOL, char );
 	SCTK_INIT_TYPE_SIZE (MPC_CHARACTER, char );
@@ -934,7 +934,7 @@ void sctk_derived_datatype_true_extent( sctk_derived_datatype_t * type , mpc_pac
 int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
 {
 	/* Extract cout */
-	MPC_Aint count = target_type->count;
+	size_t count = target_type->count;
 	
 	
 	/* Do we have at least two blocks */
@@ -946,7 +946,7 @@ int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
 	
 	assume( cells != NULL );
 	
-	MPC_Aint i, j;
+	size_t i, j;
 	
 	for( i = 0; i < count ; i++ )
 	{
@@ -956,7 +956,7 @@ int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
 		cells[i].ignore = 0;
 	}
 	
-	MPC_Aint new_count = count;
+	size_t new_count = count;
 	
 	for( i = 0; i < count ; i++ )
 	{
@@ -1584,12 +1584,12 @@ static inline int * please_allocate_an_array_of_integers( int count )
 	return ret;
 }
 
-static inline MPC_Aint * please_allocate_an_array_of_addresses( int count )
+static inline size_t * please_allocate_an_array_of_addresses( int count )
 {
 	if( count == 0 )
 		return NULL;
 
-	MPC_Aint * ret = sctk_malloc( sizeof( MPC_Aint ) * count );
+	size_t * ret = sctk_malloc( sizeof( size_t ) * count );
 	assume( ret != NULL );
 	return ret;
 }
@@ -2043,7 +2043,7 @@ static inline int Datatype_layout_fill( struct Datatype_layout * l, sctk_datatyp
 	l->type = datatype;
 	size_t size;
 	_mpc_m_type_size (datatype, &size);
-	l->size = (MPC_Aint) size;
+	l->size = (size_t) size;
 	
 	return MPC_SUCCESS;
 }
