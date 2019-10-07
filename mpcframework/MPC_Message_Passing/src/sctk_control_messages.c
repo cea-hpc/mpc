@@ -371,7 +371,7 @@ void sctk_control_messages_perform(mpc_mp_ptp_message_t *msg, int force) {
                                SCTK_MSG_SIZE(msg), class, SCTK_DATATYPE_IGNORE, REQUEST_RECV);
 
     /* Trigger the receive task (as if we matched) */
-    sctk_message_to_copy_t copy_task;
+    mpc_mp_ptp_message_content_to_copy_t copy_task;
     copy_task.msg_send = msg;
     copy_task.msg_recv = &recvmsg;
     copy_task.prev = NULL;

@@ -185,7 +185,7 @@ void sctk_ib_buffered_free_msg ( void *arg )
 	}
 }
 
-void sctk_ib_buffered_copy ( sctk_message_to_copy_t *tmp )
+void sctk_ib_buffered_copy ( mpc_mp_ptp_message_content_to_copy_t *tmp )
 {
 	sctk_ib_buffered_entry_t *entry = NULL;
 	__UNUSED__ sctk_rail_info_t *rail;

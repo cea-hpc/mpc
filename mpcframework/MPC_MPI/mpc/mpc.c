@@ -72,8 +72,8 @@ sctk_thread_key_t mpc_mpi_m_per_mpi_process_ctx;
 static sctk_thread_key_t sctk_func_key;
 static int __mpc_m_buffering_enabled = 1;
 
-const MPC_Group_t mpc_group_empty = {0, NULL};
-const MPC_Group_t mpc_group_null = {-1, NULL};
+const _mpc_m_group_t mpc_group_empty = {0, NULL};
+const _mpc_m_group_t mpc_group_null = {-1, NULL};
 mpc_mp_request_t mpc_request_null;
 
 /** \brief Intitializes thread context keys
@@ -4352,534 +4352,588 @@ int _mpc_m_allgather( void *sendbuf, mpc_mp_msg_count_t sendcount,
 	MPC_ERROR_SUCESS();
 }
 
-/************************************************************************/
-/* Groups and communicators                                             */
-/************************************************************************/
+/********************
+ * GROUP MANAGEMENT *
+ ********************/
 
-static inline int __MPC_Comm_group(mpc_mp_communicator_t comm, MPC_Group *group) {
-  int size;
-  int i;
-  size = mpc_mp_communicator_size(comm);
+int _mpc_m_comm_group( mpc_mp_communicator_t comm, _mpc_m_group_t **group )
+{
+	int size;
+	int i;
+	size = mpc_mp_communicator_size( comm );
 
-  sctk_nodebug("MPC_Comm_group");
+	sctk_nodebug( "MPC_Comm_group" );
 
-  *group = (MPC_Group)sctk_malloc(sizeof(MPC_Group_t));
+	*group = (_mpc_m_group_t *) sctk_malloc( sizeof( _mpc_m_group_t ) );
 
-  (*group)->task_nb = size;
-  (*group)->task_list_in_global_ranks = (int *)sctk_malloc(size * sizeof(int));
+	( *group )->task_nb = size;
+	( *group )->task_list_in_global_ranks = (int *) sctk_malloc( size * sizeof( int ) );
 
-  for (i = 0; i < size; i++) {
-    (*group)->task_list_in_global_ranks[i] = sctk_get_comm_world_rank(comm, i);
-  }
-  MPC_ERROR_SUCESS();
+	for ( i = 0; i < size; i++ )
+	{
+		( *group )->task_list_in_global_ranks[i] = sctk_get_comm_world_rank( comm, i );
+	}
+	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Comm_group(mpc_mp_communicator_t comm, MPC_Group *group) {
 
-  return __MPC_Comm_group(comm, group);
+int _mpc_m_comm_remote_group( mpc_mp_communicator_t comm, _mpc_m_group_t **group )
+{
+	int size;
+	int i;
+	size = mpc_mp_communicator_remote_size( comm );
+	sctk_nodebug( "MPC_Comm_group" );
+
+	*group = (_mpc_m_group_t *) sctk_malloc( sizeof( _mpc_m_group_t ) );
+
+	( *group )->task_nb = size;
+	( *group )->task_list_in_global_ranks = (int *) sctk_malloc( size * sizeof( int ) );
+
+	for ( i = 0; i < size; i++ )
+	{
+		( *group )->task_list_in_global_ranks[i] =
+			sctk_get_remote_comm_world_rank( comm, i );
+	}
+	MPC_ERROR_SUCESS();
 }
 
-static inline int __MPC_Comm_remote_group(mpc_mp_communicator_t comm, MPC_Group *group) {
-  int size;
-  int i;
-  size = mpc_mp_communicator_remote_size(comm);
-  sctk_nodebug("MPC_Comm_group");
 
-  *group = (MPC_Group)sctk_malloc(sizeof(MPC_Group_t));
-
-  (*group)->task_nb = size;
-  (*group)->task_list_in_global_ranks = (int *)sctk_malloc(size * sizeof(int));
-
-  for (i = 0; i < size; i++) {
-    (*group)->task_list_in_global_ranks[i] =
-        sctk_get_remote_comm_world_rank(comm, i);
-  }
-  MPC_ERROR_SUCESS();
+int _mpc_m_group_free( _mpc_m_group_t **group )
+{
+	if ( *group != MPC_GROUP_NULL )
+	{
+		sctk_free( ( *group )->task_list_in_global_ranks );
+		sctk_free( *group );
+		*group = MPC_GROUP_NULL;
+	}
+	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Comm_remote_group(mpc_mp_communicator_t comm, MPC_Group *group) {
-  return __MPC_Comm_remote_group(comm, group);
+
+int _mpc_m_group_incl( _mpc_m_group_t *group, int n, int *ranks, _mpc_m_group_t **newgroup )
+{
+	int i;
+
+	( *newgroup ) = (_mpc_m_group_t *) sctk_malloc( sizeof( _mpc_m_group_t ) );
+	assume( ( *newgroup ) != NULL );
+
+	( *newgroup )->task_nb = n;
+	( *newgroup )->task_list_in_global_ranks = (int *) sctk_malloc( n * sizeof( int ) );
+	assume( ( ( *newgroup )->task_list_in_global_ranks ) != NULL );
+
+	for ( i = 0; i < n; i++ )
+	{
+		( *newgroup )->task_list_in_global_ranks[i] =
+			group->task_list_in_global_ranks[ranks[i]];
+		sctk_nodebug( "%d", group->task_list_in_global_ranks[ranks[i]] );
+	}
+
+	MPC_ERROR_SUCESS();
 }
 
-static inline int __MPC_Group_free(MPC_Group *group) {
-  if (*group != MPC_GROUP_NULL) {
-    sctk_free((*group)->task_list_in_global_ranks);
-    sctk_free(*group);
-    *group = MPC_GROUP_NULL;
-  }
-  MPC_ERROR_SUCESS();
+int _mpc_m_group_difference( _mpc_m_group_t *group1, _mpc_m_group_t *group2,
+						   _mpc_m_group_t **newgroup )
+{
+	int size;
+	int i, j, k;
+	int not_in;
+
+	for ( i = 0; i < group1->task_nb; i++ )
+		sctk_nodebug( "group1[%d] = %d", i, group1->task_list_in_global_ranks[i] );
+	for ( i = 0; i < group2->task_nb; i++ )
+		sctk_nodebug( "group2[%d] = %d", i, group2->task_list_in_global_ranks[i] );
+	/* get the size of newgroup */
+	size = 0;
+	for ( i = 0; i < group1->task_nb; i++ )
+	{
+		not_in = 1;
+		for ( j = 0; j < group2->task_nb; j++ )
+		{
+			if ( group1->task_list_in_global_ranks[i] ==
+				 group2->task_list_in_global_ranks[j] )
+				not_in = 0;
+		}
+		if ( not_in )
+			size++;
+	}
+
+	/* allocation */
+	*newgroup = (_mpc_m_group_t *) sctk_malloc( sizeof( _mpc_m_group_t ) );
+
+	( *newgroup )->task_nb = size;
+	if ( size == 0 )
+	{
+		MPC_ERROR_SUCESS();
+	}
+
+	( *newgroup )->task_nb = size;
+	( *newgroup )->task_list_in_global_ranks =
+		(int *) sctk_malloc( size * sizeof( int ) );
+
+	/* fill the newgroup */
+	k = 0;
+	for ( i = 0; i < group1->task_nb; i++ )
+	{
+		not_in = 1;
+		for ( j = 0; j < group2->task_nb; j++ )
+		{
+			if ( group1->task_list_in_global_ranks[i] ==
+				 group2->task_list_in_global_ranks[j] )
+				not_in = 0;
+		}
+		if ( not_in )
+		{
+			( *newgroup )->task_list_in_global_ranks[k] =
+				group1->task_list_in_global_ranks[i];
+			k++;
+		}
+	}
+
+	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Convert_to_intercomm(__UNUSED__ mpc_mp_communicator_t comm, __UNUSED__  MPC_Group group) {
-  not_implemented();
-  MPC_ERROR_SUCESS();
+/***************************
+ * COMMUNICATOR MANAGEMENT *
+ ***************************/
+
+static inline int __MPC_Comm_create_from_intercomm( mpc_mp_communicator_t comm,
+						_mpc_m_group_t *group,
+						mpc_mp_communicator_t *comm_out )
+{
+	int rank;
+	int i;
+	int present = 0;
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
+	task_specific = __mpc_m_per_mpi_process_ctx_get();
+	mpc_check_comm( comm, comm );
+	rank = mpc_mp_communicator_rank( MPC_COMM_WORLD, task_specific->task_id );
+
+	sctk_assert( comm != MPC_COMM_NULL );
+
+	_mpc_m_barrier( comm );
+
+	for ( i = 0; i < group->task_nb; i++ )
+	{
+		if ( group->task_list_in_global_ranks[i] == rank )
+		{
+			sctk_nodebug( "%d present", rank );
+			present = 1;
+			break;
+		}
+	}
+
+	for ( i = 0; i < group->task_nb; i++ )
+	{
+		sctk_nodebug( "task_list[%d] = %d", i, group->task_list_in_global_ranks[i] );
+	}
+
+	if ( sctk_is_in_local_group( comm ) )
+		( *comm_out ) = sctk_create_communicator_from_intercomm(
+			comm, group->task_nb, group->task_list_in_global_ranks );
+	else
+		( *comm_out ) = sctk_create_communicator_from_intercomm(
+			comm, group->task_nb, group->task_list_in_global_ranks );
+	sctk_nodebug( "\tnew comm from intercomm %d", *comm_out );
+	_mpc_m_barrier( comm );
+
+	if ( present == 1 )
+	{
+		sctk_nodebug( "from intercomm barrier comm %d", *comm_out );
+		_mpc_m_barrier( *comm_out );
+		sctk_nodebug( "sortie barrier" );
+		__mpc_m_per_communicator_alloc_from_existing( task_specific, *comm_out, comm );
+	}
+	sctk_nodebug( "comm %d created from intercomm %d", *comm_out, comm );
+	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Group_free(MPC_Group *group) {
-  return __MPC_Group_free(group);
+int PMPC_Comm_create_from_intercomm( mpc_mp_communicator_t comm, _mpc_m_group_t *group,
+									 mpc_mp_communicator_t *comm_out )
+{
+	return __MPC_Comm_create_from_intercomm( comm, group, comm_out );
 }
 
-int PMPC_Group_incl(MPC_Group group, int n, int *ranks, MPC_Group *newgroup) {
-  int i;
+static inline int __MPC_Comm_create( mpc_mp_communicator_t comm, _mpc_m_group_t *group,
+									 mpc_mp_communicator_t *comm_out, int is_inter_comm )
+{
+	int grank, rank;
+	int i;
+	int present = 0;
+	mpc_mp_status_t status;
+	mpc_mp_communicator_t intra_comm;
+	int remote_leader;
+	int rleader;
+	int local_leader = 0;
+	int tag = 729;
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
+	task_specific = __mpc_m_per_mpi_process_ctx_get();
+	mpc_check_comm( comm, comm );
+	rank = mpc_mp_communicator_rank( MPC_COMM_WORLD, task_specific->task_id );
+	grank = mpc_mp_communicator_rank( comm, task_specific->task_id );
 
-  (*newgroup) = (MPC_Group)sctk_malloc(sizeof(MPC_Group_t));
-  assume((*newgroup) != NULL);
+	sctk_assert( comm != MPC_COMM_NULL );
+	_mpc_m_barrier( comm );
 
-  (*newgroup)->task_nb = n;
-  (*newgroup)->task_list_in_global_ranks = (int *)sctk_malloc(n * sizeof(int));
-  assume(((*newgroup)->task_list_in_global_ranks) != NULL);
+	for ( i = 0; i < group->task_nb; i++ )
+	{
+		if ( group->task_list_in_global_ranks[i] == rank )
+		{
+			present = 1;
+			break;
+		}
+	}
 
-  for (i = 0; i < n; i++) {
-    (*newgroup)->task_list_in_global_ranks[i] =
-        group->task_list_in_global_ranks[ranks[i]];
-    sctk_nodebug("%d", group->task_list_in_global_ranks[ranks[i]]);
-  }
+	if ( is_inter_comm )
+	{
+		rleader = sctk_get_remote_leader( comm );
+		/* get remote_leader */
+		if ( grank == local_leader )
+		{
+			int tmp = group->task_list_in_global_ranks[local_leader];
+			_mpc_m_sendrecv( &tmp, 1, MPC_INT, rleader, tag, &remote_leader, 1, MPC_INT,
+							 rleader, tag, sctk_get_peer_comm( comm ), &status );
+		}
+		_mpc_m_bcast( &remote_leader, 1, MPC_INT, local_leader,
+					  sctk_get_local_comm_id( comm ) );
 
-  MPC_ERROR_SUCESS();
+		/* create local_comm */
+		__MPC_Comm_create( sctk_get_local_comm_id( comm ), group, &intra_comm, 0 );
+
+		_mpc_m_barrier( comm );
+
+		if ( intra_comm != MPC_COMM_NULL )
+		{
+			/* create intercomm */
+			( *comm_out ) = sctk_create_intercommunicator_from_intercommunicator(
+				comm, remote_leader,
+				intra_comm );
+			sctk_nodebug( "\trank %d: new intercomm -> %d", rank, *comm_out );
+		}
+		else
+			( *comm_out ) = MPC_COMM_NULL;
+	}
+	else
+	{
+		( *comm_out ) = sctk_create_communicator( comm, group->task_nb,
+												  group->task_list_in_global_ranks );
+		sctk_nodebug( "\trank %d: new intracomm -> %d", rank, *comm_out );
+	}
+
+	_mpc_m_barrier( comm );
+
+	if ( present == 1 )
+	{
+		_mpc_m_barrier( *comm_out );
+		__mpc_m_per_communicator_alloc_from_existing( task_specific, *comm_out, comm );
+	}
+	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Group_difference(MPC_Group group1, MPC_Group group2,
-                          MPC_Group *newgroup) {
-  int size;
-  int i, j, k;
-  int not_in;
-
-  for (i = 0; i < group1->task_nb; i++)
-    sctk_nodebug("group1[%d] = %d", i, group1->task_list_in_global_ranks[i]);
-  for (i = 0; i < group2->task_nb; i++)
-    sctk_nodebug("group2[%d] = %d", i, group2->task_list_in_global_ranks[i]);
-  /* get the size of newgroup */
-  size = 0;
-  for (i = 0; i < group1->task_nb; i++) {
-    not_in = 1;
-    for (j = 0; j < group2->task_nb; j++) {
-      if (group1->task_list_in_global_ranks[i] ==
-          group2->task_list_in_global_ranks[j])
-        not_in = 0;
-    }
-    if (not_in)
-      size++;
-  }
-
-  /* allocation */
-  *newgroup = (MPC_Group)sctk_malloc(sizeof(MPC_Group_t));
-
-  (*newgroup)->task_nb = size;
-  if (size == 0) {
-    MPC_ERROR_SUCESS();
-  }
-
-  (*newgroup)->task_nb = size;
-  (*newgroup)->task_list_in_global_ranks =
-      (int *)sctk_malloc(size * sizeof(int));
-
-  /* fill the newgroup */
-  k = 0;
-  for (i = 0; i < group1->task_nb; i++) {
-    not_in = 1;
-    for (j = 0; j < group2->task_nb; j++) {
-      if (group1->task_list_in_global_ranks[i] ==
-          group2->task_list_in_global_ranks[j])
-        not_in = 0;
-    }
-    if (not_in) {
-      (*newgroup)->task_list_in_global_ranks[k] =
-          group1->task_list_in_global_ranks[i];
-      k++;
-    }
-  }
-
-  MPC_ERROR_SUCESS();
+int PMPC_Comm_create( mpc_mp_communicator_t comm, _mpc_m_group_t *group, mpc_mp_communicator_t *comm_out )
+{
+	return __MPC_Comm_create( comm, group, comm_out, sctk_is_inter_comm( comm ) );
 }
 
-static inline int __MPC_Comm_create_from_intercomm(mpc_mp_communicator_t comm,
-                                                   MPC_Group group,
-                                                   mpc_mp_communicator_t *comm_out) {
-  int rank;
-  int i;
-  int present = 0;
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
-  task_specific = __mpc_m_per_mpi_process_ctx_get();
-  mpc_check_comm(comm, comm);
-  rank = mpc_mp_communicator_rank(MPC_COMM_WORLD, task_specific->task_id);
-
-  sctk_assert(comm != MPC_COMM_NULL);
-
-  _mpc_m_barrier(comm);
-
-  for (i = 0; i < group->task_nb; i++) {
-    if (group->task_list_in_global_ranks[i] == rank) {
-      sctk_nodebug("%d present", rank);
-      present = 1;
-      break;
-    }
-  }
-
-  for (i = 0; i < group->task_nb; i++) {
-    sctk_nodebug("task_list[%d] = %d", i, group->task_list_in_global_ranks[i]);
-  }
-
-  if (sctk_is_in_local_group(comm))
-    (*comm_out) = sctk_create_communicator_from_intercomm(
-        comm, group->task_nb, group->task_list_in_global_ranks);
-  else
-    (*comm_out) = sctk_create_communicator_from_intercomm(
-        comm, group->task_nb, group->task_list_in_global_ranks);
-  sctk_nodebug("\tnew comm from intercomm %d", *comm_out);
-  _mpc_m_barrier(comm);
-
-  if (present == 1) {
-    sctk_nodebug("from intercomm barrier comm %d", *comm_out);
-    _mpc_m_barrier(*comm_out);
-    sctk_nodebug("sortie barrier");
-    __mpc_m_per_communicator_alloc_from_existing(task_specific, *comm_out, comm);
-  }
-  sctk_nodebug("comm %d created from intercomm %d", *comm_out, comm);
-  MPC_ERROR_SUCESS();
+static inline int *__mpc_m_comm_task_list( mpc_mp_communicator_t comm, int size )
+{
+	int i;
+	int *task_list = sctk_malloc( size * sizeof( int ) );
+	for ( i = 0; i < size; i++ )
+	{
+		task_list[i] = sctk_get_comm_world_rank( comm, i );
+	}
+	return task_list;
 }
 
-int PMPC_Comm_create_from_intercomm(mpc_mp_communicator_t comm, MPC_Group group,
-                                    mpc_mp_communicator_t *comm_out) {
-  return __MPC_Comm_create_from_intercomm(comm, group, comm_out);
+static inline int __MPC_Intercomm_create( mpc_mp_communicator_t local_comm, int local_leader,
+										  mpc_mp_communicator_t peer_comm, int remote_leader,
+										  int tag, mpc_mp_communicator_t *newintercomm )
+{
+	int rank, grank;
+	int i;
+	int present = 0;
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
+	task_specific = __mpc_m_per_mpi_process_ctx_get();
+	mpc_check_comm( local_comm, local_comm );
+	mpc_check_comm( peer_comm, peer_comm );
+	int *task_list;
+	int size;
+	int other_leader;
+	int first = 0;
+	mpc_mp_status_t status;
+
+	rank = mpc_mp_communicator_rank( MPC_COMM_WORLD, task_specific->task_id );
+	grank = mpc_mp_communicator_rank( local_comm, task_specific->task_id );
+
+	size = mpc_mp_communicator_size( local_comm );
+	sctk_assert( local_comm != MPC_COMM_NULL );
+
+	task_list = __mpc_m_comm_task_list( local_comm, size );
+
+	if ( grank == local_leader )
+	{
+		_mpc_m_sendrecv( &remote_leader, 1, MPC_INT, remote_leader, tag, &other_leader,
+						 1, MPC_INT, remote_leader, tag, peer_comm, &status );
+		if ( other_leader < remote_leader )
+			first = 1;
+		else
+			first = 0;
+	}
+
+	_mpc_m_bcast( &first, 1, MPC_INT, local_leader, local_comm );
+
+	( *newintercomm ) = sctk_create_intercommunicator(
+		local_comm, local_leader, peer_comm, remote_leader, tag, first );
+	sctk_nodebug( "new intercomm %d", *newintercomm );
+
+	_mpc_m_barrier( local_comm );
+
+	for ( i = 0; i < size; i++ )
+	{
+		if ( task_list[i] == rank )
+		{
+			present = 1;
+			break;
+		}
+	}
+	if ( present )
+	{
+		__mpc_m_per_communicator_alloc_from_existing(
+			task_specific, *newintercomm, local_comm );
+		_mpc_m_barrier( local_comm );
+	}
+
+	MPC_ERROR_SUCESS();
 }
 
-static inline int __MPC_Comm_create(mpc_mp_communicator_t comm, MPC_Group group,
-                                    mpc_mp_communicator_t *comm_out, int is_inter_comm) {
-  int grank, rank;
-  int i;
-  int present = 0;
-  mpc_mp_status_t status;
-  mpc_mp_communicator_t intra_comm;
-  int remote_leader;
-  int rleader;
-  int local_leader = 0;
-  int tag = 729;
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
-  task_specific = __mpc_m_per_mpi_process_ctx_get();
-  mpc_check_comm(comm, comm);
-  rank = mpc_mp_communicator_rank(MPC_COMM_WORLD, task_specific->task_id);
-  grank = mpc_mp_communicator_rank(comm, task_specific->task_id);
-
-  sctk_assert(comm != MPC_COMM_NULL);
-  _mpc_m_barrier(comm);
-
-  for (i = 0; i < group->task_nb; i++) {
-    if (group->task_list_in_global_ranks[i] == rank) {
-      present = 1;
-      break;
-    }
-  }
-
-  if (is_inter_comm) {
-    rleader = sctk_get_remote_leader(comm);
-    /* get remote_leader */
-    if (grank == local_leader) {
-      int tmp = group->task_list_in_global_ranks[local_leader];
-      _mpc_m_sendrecv(&tmp, 1, MPC_INT, rleader, tag, &remote_leader, 1, MPC_INT,
-                    rleader, tag, sctk_get_peer_comm(comm), &status);
-    }
-    _mpc_m_bcast(&remote_leader, 1, MPC_INT, local_leader,
-               sctk_get_local_comm_id(comm));
-
-    /* create local_comm */
-    __MPC_Comm_create(sctk_get_local_comm_id(comm), group, &intra_comm, 0);
-
-    _mpc_m_barrier(comm);
-
-    if (intra_comm != MPC_COMM_NULL) {
-      /* create intercomm */
-      (*comm_out) = sctk_create_intercommunicator_from_intercommunicator(
-          comm, remote_leader,
-          intra_comm);
-      sctk_nodebug("\trank %d: new intercomm -> %d", rank, *comm_out);
-    } else
-      (*comm_out) = MPC_COMM_NULL;
-  } else {
-    (*comm_out) = sctk_create_communicator(comm, group->task_nb,
-                                           group->task_list_in_global_ranks);
-    sctk_nodebug("\trank %d: new intracomm -> %d", rank, *comm_out);
-  }
-
-  _mpc_m_barrier(comm);
-
-  if (present == 1) {
-    _mpc_m_barrier(*comm_out);
-    __mpc_m_per_communicator_alloc_from_existing(task_specific, *comm_out, comm);
-  }
-  MPC_ERROR_SUCESS();
+int PMPC_Intercomm_create( mpc_mp_communicator_t local_comm, int local_leader,
+						   mpc_mp_communicator_t peer_comm, int remote_leader, int tag,
+						   mpc_mp_communicator_t *newintercomm )
+{
+	return __MPC_Intercomm_create( local_comm, local_leader, peer_comm,
+								   remote_leader, tag, newintercomm );
 }
 
-int PMPC_Comm_create(mpc_mp_communicator_t comm, MPC_Group group, mpc_mp_communicator_t *comm_out) {
-  return __MPC_Comm_create(comm, group, comm_out, sctk_is_inter_comm(comm));
+int PMPC_Comm_create_list( mpc_mp_communicator_t comm, int *list, int nb_elem,
+						   mpc_mp_communicator_t *comm_out )
+{
+	_mpc_m_group_t group;
+	int i;
+
+	group.task_nb = nb_elem;
+	group.task_list_in_global_ranks = sctk_malloc( nb_elem * sizeof( int ) );
+
+	for ( i = 0; i < nb_elem; i++ )
+	{
+		group.task_list_in_global_ranks[i] =
+			sctk_get_comm_world_rank( comm, list[i] );
+	}
+
+	__MPC_Comm_create( comm, &group, comm_out, 0 );
+
+	sctk_free( group.task_list_in_global_ranks );
+
+	MPC_ERROR_SUCESS();
 }
 
-static inline int *__mpc_m_comm_task_list(mpc_mp_communicator_t comm, int size) {
-  int i;
-  int *task_list = sctk_malloc(size * sizeof(int));
-  for (i = 0; i < size; i++) {
-    task_list[i] = sctk_get_comm_world_rank(comm, i);
-  }
-  return task_list;
+static inline int __MPC_Comm_free( mpc_mp_communicator_t *comm )
+{
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
+	task_specific = __mpc_m_per_mpi_process_ctx_get();
+
+	if ( *comm == MPC_COMM_WORLD )
+	{
+		MPC_ERROR_SUCESS();
+	}
+
+	mpc_mp_communicator_t old_comm = *comm;
+	*comm = MPC_COMM_NULL;
+	INFO( "Comm free disabled" )
+	MPC_ERROR_SUCESS();
+	sctk_nodebug( "Comm free %d", old_comm );
+	mpc_check_comm( old_comm, MPC_COMM_WORLD );
+	sctk_assert( old_comm != MPC_COMM_NULL );
+	_mpc_m_barrier( old_comm );
+	sctk_nodebug( "Delete Comm %d", old_comm );
+	sctk_delete_communicator( old_comm );
+	sctk_nodebug( "Comm free done %d", old_comm );
+	__mpc_m_per_communicator_delete( task_specific, old_comm );
+
+	*comm = MPC_COMM_NULL;
+	sctk_nodebug( "COMM FREE DONE" );
+	MPC_ERROR_SUCESS();
 }
 
-static inline int __MPC_Intercomm_create(mpc_mp_communicator_t local_comm, int local_leader,
-                                         mpc_mp_communicator_t peer_comm, int remote_leader,
-                                         int tag, mpc_mp_communicator_t *newintercomm) {
-  int rank, grank;
-  int i;
-  int present = 0;
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
-  task_specific = __mpc_m_per_mpi_process_ctx_get();
-  mpc_check_comm(local_comm, local_comm);
-  mpc_check_comm(peer_comm, peer_comm);
-  int *task_list;
-  int size;
-  int other_leader;
-  int first = 0;
-  mpc_mp_status_t status;
-
-  rank = mpc_mp_communicator_rank(MPC_COMM_WORLD, task_specific->task_id);
-  grank = mpc_mp_communicator_rank(local_comm, task_specific->task_id);
-
-  size = mpc_mp_communicator_size(local_comm);
-  sctk_assert(local_comm != MPC_COMM_NULL);
-
-  task_list = __mpc_m_comm_task_list(local_comm, size);
-
-  if (grank == local_leader) {
-    _mpc_m_sendrecv(&remote_leader, 1, MPC_INT, remote_leader, tag, &other_leader,
-                  1, MPC_INT, remote_leader, tag, peer_comm, &status);
-    if (other_leader < remote_leader)
-      first = 1;
-    else
-      first = 0;
-  }
-
-  _mpc_m_bcast(&first, 1, MPC_INT, local_leader, local_comm);
-
-  (*newintercomm) = sctk_create_intercommunicator(
-      local_comm, local_leader, peer_comm, remote_leader, tag, first);
-  sctk_nodebug("new intercomm %d", *newintercomm);
-
-  _mpc_m_barrier(local_comm);
-
-  for (i = 0; i < size; i++) {
-    if (task_list[i] == rank) {
-      present = 1;
-      break;
-    }
-  }
-  if (present) {
-    __mpc_m_per_communicator_alloc_from_existing(
-        task_specific, *newintercomm, local_comm);
-    _mpc_m_barrier(local_comm);
-  }
-
-  MPC_ERROR_SUCESS();
+int PMPC_Comm_free( mpc_mp_communicator_t *comm )
+{
+	return __MPC_Comm_free( comm );
 }
 
-int PMPC_Intercomm_create(mpc_mp_communicator_t local_comm, int local_leader,
-                          mpc_mp_communicator_t peer_comm, int remote_leader, int tag,
-                          mpc_mp_communicator_t *newintercomm) {
-  return __MPC_Intercomm_create(local_comm, local_leader, peer_comm,
-                                remote_leader, tag, newintercomm);
+int PMPC_Comm_dup( mpc_mp_communicator_t comm, mpc_mp_communicator_t *comm_out )
+{
+	sctk_nodebug( "duplicate comm %d", comm );
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
+	int rank;
+	mpc_check_comm( comm, comm );
+
+	task_specific = __mpc_m_per_mpi_process_ctx_get();
+	rank = mpc_mp_communicator_rank( comm, task_specific->task_id );
+
+	rank = mpc_mp_communicator_rank( comm, task_specific->task_id );
+
+	*comm_out = sctk_duplicate_communicator( comm, sctk_is_inter_comm( comm ), rank );
+	if ( sctk_is_inter_comm( comm ) )
+		sctk_nodebug( "intercomm %d duplicate --> newintercomm %d", comm, *comm_out );
+	else
+		sctk_nodebug( "comm %d duplicate --> newcomm %d", comm, *comm_out );
+
+	__mpc_m_per_communicator_alloc_from_existing_dup( task_specific,
+													  *comm_out, comm );
+	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Comm_create_list(mpc_mp_communicator_t comm, int *list, int nb_elem,
-                          mpc_mp_communicator_t *comm_out) {
-  MPC_Group_t group;
-  int i;
-
-  group.task_nb = nb_elem;
-  group.task_list_in_global_ranks = sctk_malloc(nb_elem * sizeof(int));
-
-  for (i = 0; i < nb_elem; i++) {
-    group.task_list_in_global_ranks[i] =
-        sctk_get_comm_world_rank(comm, list[i]);
-  }
-
-  __MPC_Comm_create(comm, &group, comm_out, 0);
-
-  sctk_free(group.task_list_in_global_ranks);
-
-  MPC_ERROR_SUCESS();
-}
-
-static inline int __MPC_Comm_free(mpc_mp_communicator_t *comm) {
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
-  task_specific = __mpc_m_per_mpi_process_ctx_get();
-
-  if (*comm == MPC_COMM_WORLD) {
-    MPC_ERROR_SUCESS();
-  }
-
-  mpc_mp_communicator_t old_comm = *comm;
-  *comm = MPC_COMM_NULL;
-  INFO("Comm free disabled")
-  MPC_ERROR_SUCESS();
-  sctk_nodebug("Comm free %d", old_comm);
-  mpc_check_comm(old_comm, MPC_COMM_WORLD);
-  sctk_assert(old_comm != MPC_COMM_NULL);
-  _mpc_m_barrier(old_comm);
-  sctk_nodebug("Delete Comm %d", old_comm);
-  sctk_delete_communicator(old_comm);
-  sctk_nodebug("Comm free done %d", old_comm);
-  __mpc_m_per_communicator_delete(task_specific, old_comm);
-
-  *comm = MPC_COMM_NULL;
-  sctk_nodebug("COMM FREE DONE");
-  MPC_ERROR_SUCESS();
-}
-
-int PMPC_Comm_free(mpc_mp_communicator_t *comm) {
-  return __MPC_Comm_free(comm);
-}
-
-int PMPC_Comm_dup(mpc_mp_communicator_t comm, mpc_mp_communicator_t *comm_out) {
-  sctk_nodebug("duplicate comm %d", comm);
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
-  int rank;
-  mpc_check_comm(comm, comm);
-
-  task_specific = __mpc_m_per_mpi_process_ctx_get();
-  rank = mpc_mp_communicator_rank(comm, task_specific->task_id);
-
-  rank = mpc_mp_communicator_rank(comm, task_specific->task_id);
-
-  *comm_out = sctk_duplicate_communicator(comm, sctk_is_inter_comm(comm), rank);
-  if (sctk_is_inter_comm(comm))
-    sctk_nodebug("intercomm %d duplicate --> newintercomm %d", comm, *comm_out);
-  else
-    sctk_nodebug("comm %d duplicate --> newcomm %d", comm, *comm_out);
-
-  __mpc_m_per_communicator_alloc_from_existing_dup(task_specific,
-                                                            *comm_out, comm);
-  MPC_ERROR_SUCESS();
-}
-
-typedef struct {
-  int color;
-  int key;
-  int rank;
+typedef struct
+{
+	int color;
+	int key;
+	int rank;
 } mpc_comm_split_t;
 
-int PMPC_Comm_split(mpc_mp_communicator_t comm, int color, int key, mpc_mp_communicator_t *comm_out) {
-  mpc_comm_split_t *tab;
-  mpc_comm_split_t tab_this;
-  mpc_comm_split_t tab_tmp;
-  int size;
-  int group_size;
-  int i, j, k;
-  int tmp_color;
-  int color_number;
-  int *color_tab;
-  int rank;
-  MPC_Group_t group;
+int PMPC_Comm_split( mpc_mp_communicator_t comm, int color, int key, mpc_mp_communicator_t *comm_out )
+{
+	mpc_comm_split_t *tab;
+	mpc_comm_split_t tab_this;
+	mpc_comm_split_t tab_tmp;
+	int size;
+	int group_size;
+	int i, j, k;
+	int tmp_color;
+	int color_number;
+	int *color_tab;
+	int rank;
+	_mpc_m_group_t group;
 
-  mpc_mp_communicator_t comm_res = MPC_COMM_NULL;
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
-  task_specific = __mpc_m_per_mpi_process_ctx_get();
+	mpc_mp_communicator_t comm_res = MPC_COMM_NULL;
+	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
+	task_specific = __mpc_m_per_mpi_process_ctx_get();
 
-  mpc_check_comm(comm, comm);
+	mpc_check_comm( comm, comm );
 
-  sctk_nodebug("MPC_Comm_split color=%d key=%d out_comm=%p", color, key,
-               comm_out);
+	sctk_nodebug( "MPC_Comm_split color=%d key=%d out_comm=%p", color, key,
+				  comm_out );
 
-  size = mpc_mp_communicator_size(comm);
-  rank = mpc_mp_communicator_rank(comm, task_specific->task_id);
+	size = mpc_mp_communicator_size( comm );
+	rank = mpc_mp_communicator_rank( comm, task_specific->task_id );
 
-  sctk_nodebug("rank %d : PMPC_Comm_split with comm %d, color %d and key %d",
-               rank, comm, color, key);
-  tab = (mpc_comm_split_t *)sctk_malloc(size * sizeof(mpc_comm_split_t));
-  color_tab = (int *)sctk_malloc(size * sizeof(int));
+	sctk_nodebug( "rank %d : PMPC_Comm_split with comm %d, color %d and key %d",
+				  rank, comm, color, key );
+	tab = (mpc_comm_split_t *) sctk_malloc( size * sizeof( mpc_comm_split_t ) );
+	color_tab = (int *) sctk_malloc( size * sizeof( int ) );
 
-  tab_this.rank = rank;
+	tab_this.rank = rank;
 
-  tab_this.color = color;
-  tab_this.key = key;
-  sctk_nodebug("Allgather...");
-  _mpc_m_allgather(&tab_this, sizeof(mpc_comm_split_t), MPC_CHAR, tab,
-                  sizeof(mpc_comm_split_t), MPC_CHAR, comm);
+	tab_this.color = color;
+	tab_this.key = key;
+	sctk_nodebug( "Allgather..." );
+	_mpc_m_allgather( &tab_this, sizeof( mpc_comm_split_t ), MPC_CHAR, tab,
+					  sizeof( mpc_comm_split_t ), MPC_CHAR, comm );
 
-  sctk_nodebug("done");
-  /*Sort the new tab */
-  for (i = 0; i < size; i++) {
-    for (j = 0; j < size - 1; j++) {
-      if (tab[j].color > tab[j + 1].color) {
-        tab_tmp = tab[j + 1];
-        tab[j + 1] = tab[j];
-        tab[j] = tab_tmp;
-      } else {
-        if ((tab[j].color == tab[j + 1].color) &&
-            (tab[j].key > tab[j + 1].key)) {
-          tab_tmp = tab[j + 1];
-          tab[j + 1] = tab[j];
-          tab[j] = tab_tmp;
-        }
-      }
-    }
-  }
+	sctk_nodebug( "done" );
+	/*Sort the new tab */
+	for ( i = 0; i < size; i++ )
+	{
+		for ( j = 0; j < size - 1; j++ )
+		{
+			if ( tab[j].color > tab[j + 1].color )
+			{
+				tab_tmp = tab[j + 1];
+				tab[j + 1] = tab[j];
+				tab[j] = tab_tmp;
+			}
+			else
+			{
+				if ( ( tab[j].color == tab[j + 1].color ) &&
+					 ( tab[j].key > tab[j + 1].key ) )
+				{
+					tab_tmp = tab[j + 1];
+					tab[j + 1] = tab[j];
+					tab[j] = tab_tmp;
+				}
+			}
+		}
+	}
 
-  color_number = 0;
-  for (i = 0; i < size; i++) {
-    for (j = 0; j < color_number; j++) {
-      if (color_tab[j] == tab[i].color) {
-        break;
-      }
-    }
-    if (j == color_number) {
-      color_tab[j] = tab[i].color;
-      color_number++;
-    }
-    sctk_nodebug("rank %d color %d", i, tab[i].color, tab[i].rank);
-  }
+	color_number = 0;
+	for ( i = 0; i < size; i++ )
+	{
+		for ( j = 0; j < color_number; j++ )
+		{
+			if ( color_tab[j] == tab[i].color )
+			{
+				break;
+			}
+		}
+		if ( j == color_number )
+		{
+			color_tab[j] = tab[i].color;
+			color_number++;
+		}
+		sctk_nodebug( "rank %d color %d", i, tab[i].color, tab[i].rank );
+	}
 
-  sctk_nodebug("%d colors", color_number);
+	sctk_nodebug( "%d colors", color_number );
 
-  /*We need on comm_create per color */
-  for (k = 0; k < color_number; k++) {
-    tmp_color = color_tab[k];
-    if (tmp_color != MPC_UNDEFINED) {
-      group_size = 0;
-      for (i = 0; i < size; i++) {
-        if (tab[i].color == tmp_color) {
-          group_size++;
-        }
-      }
+	/*We need on comm_create per color */
+	for ( k = 0; k < color_number; k++ )
+	{
+		tmp_color = color_tab[k];
+		if ( tmp_color != MPC_UNDEFINED )
+		{
+			group_size = 0;
+			for ( i = 0; i < size; i++ )
+			{
+				if ( tab[i].color == tmp_color )
+				{
+					group_size++;
+				}
+			}
 
-      group.task_nb = group_size;
-      group.task_list_in_global_ranks =
-          (int *)sctk_malloc(group_size * sizeof(int));
+			group.task_nb = group_size;
+			group.task_list_in_global_ranks =
+				(int *) sctk_malloc( group_size * sizeof( int ) );
 
-      j = 0;
-      for (i = 0; i < size; i++) {
-        if (tab[i].color == tmp_color) {
-          group.task_list_in_global_ranks[j] =
-              sctk_get_comm_world_rank(comm, tab[i].rank);
-          sctk_nodebug("Thread %d color (%d) size %d on %d rank %d", tmp_color,
-                       k, j, group_size, tab[i].rank);
-          j++;
-        }
-      }
+			j = 0;
+			for ( i = 0; i < size; i++ )
+			{
+				if ( tab[i].color == tmp_color )
+				{
+					group.task_list_in_global_ranks[j] =
+						sctk_get_comm_world_rank( comm, tab[i].rank );
+					sctk_nodebug( "Thread %d color (%d) size %d on %d rank %d", tmp_color,
+								  k, j, group_size, tab[i].rank );
+					j++;
+				}
+			}
 
-      __MPC_Comm_create(comm, &group, comm_out, sctk_is_inter_comm(comm));
-      if (*comm_out != MPC_COMM_NULL) {
-        comm_res = *comm_out;
-        sctk_nodebug("Split done -> new %s %d",
-                     (sctk_is_inter_comm(comm)) ? "intercomm" : "intracom",
-                     comm_res);
-      }
+			__MPC_Comm_create( comm, &group, comm_out, sctk_is_inter_comm( comm ) );
+			if ( *comm_out != MPC_COMM_NULL )
+			{
+				comm_res = *comm_out;
+				sctk_nodebug( "Split done -> new %s %d",
+							  ( sctk_is_inter_comm( comm ) ) ? "intercomm" : "intracom",
+							  comm_res );
+			}
 
-      sctk_free(group.task_list_in_global_ranks);
-      sctk_nodebug("Split color %d done", tmp_color);
-    }
-  }
+			sctk_free( group.task_list_in_global_ranks );
+			sctk_nodebug( "Split color %d done", tmp_color );
+		}
+	}
 
-  sctk_free(color_tab);
-  sctk_free(tab);
-  sctk_nodebug("Split done");
-  *comm_out = comm_res;
-  MPC_ERROR_SUCESS();
+	sctk_free( color_tab );
+	sctk_free( tab );
+	sctk_nodebug( "Split done" );
+	*comm_out = comm_res;
+	MPC_ERROR_SUCESS();
 }
 
 /************************************************************************/

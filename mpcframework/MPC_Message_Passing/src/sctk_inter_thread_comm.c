@@ -63,12 +63,12 @@ static inline void _mpc_comm_dest_key_init( mpc_comm_dest_key_t* key, mpc_mp_com
 typedef struct
 {
 	mpc_common_spinlock_t lock;
-	volatile sctk_msg_list_t *list;
+	volatile mpc_mp_msg_list_t *list;
 } mpc_comm_ptp_list_incomming_t;
 
 typedef struct
 {
-	volatile sctk_msg_list_t *list;
+	volatile mpc_mp_msg_list_t *list;
 } mpc_comm_ptp_list_pending_t;
 
 typedef struct
@@ -185,7 +185,7 @@ static inline void __mpc_comm_ptp_message_list_merge_pending( mpc_comm_ptp_messa
 		if ( mpc_common_spinlock_trylock( &( lists->incomming_send.lock ) ) == 0 )
 		{
 			DL_CONCAT( lists->pending_send.list,
-					   (sctk_msg_list_t *) lists->incomming_send.list );
+					   (mpc_mp_msg_list_t *) lists->incomming_send.list );
 			lists->incomming_send.list = NULL;
 			mpc_common_spinlock_unlock( &( lists->incomming_send.lock ) );
 		}
@@ -196,7 +196,7 @@ static inline void __mpc_comm_ptp_message_list_merge_pending( mpc_comm_ptp_messa
 		if ( mpc_common_spinlock_trylock( &( lists->incomming_recv.lock ) ) == 0 )
 		{
 			DL_CONCAT( lists->pending_recv.list,
-					   (sctk_msg_list_t *) lists->incomming_recv.list );
+					   (mpc_mp_msg_list_t *) lists->incomming_recv.list );
 			lists->incomming_recv.list = NULL;
 			mpc_common_spinlock_unlock( &( lists->incomming_recv.lock ) );
 		}
@@ -390,7 +390,7 @@ int mpc_mp_comm_is_remote_rank( int dest )
 
 /* Messages in the '__mpc_ptp_task_list' have already been
  * matched and are wainting to be copied */
-sctk_message_to_copy_t **__mpc_ptp_task_list = NULL;
+mpc_mp_ptp_message_content_to_copy_t **__mpc_ptp_task_list = NULL;
 mpc_common_spinlock_t *__mpc_ptp_task_lock = 0;
 int sctk_ptp_tasks_count = 0;
 
@@ -418,7 +418,7 @@ static inline void __mpc_comm_ptp_task_init()
 		sctk_ptp_tasks_count = PTP_MAX_TASK_LISTS;
 	}
 
-	__mpc_ptp_task_list = sctk_malloc( sizeof( sctk_message_to_copy_t * ) * sctk_ptp_tasks_count );
+	__mpc_ptp_task_list = sctk_malloc( sizeof( mpc_mp_ptp_message_content_to_copy_t * ) * sctk_ptp_tasks_count );
 	assume( __mpc_ptp_task_list );
 
 	__mpc_ptp_task_lock = sctk_malloc( sizeof( mpc_common_spinlock_t * ) * sctk_ptp_tasks_count );
@@ -449,7 +449,7 @@ static inline int ___mpc_comm_ptp_task_perform( int key, int depth )
 	/* Each element of this list has already been matched */
 	while ( __mpc_ptp_task_list[target_list] != NULL )
 	{
-		sctk_message_to_copy_t *tmp = NULL;
+		mpc_mp_ptp_message_content_to_copy_t *tmp = NULL;
 
 		if ( mpc_common_spinlock_trylock( &( __mpc_ptp_task_lock[target_list] ) ) == 0 )
 		{
@@ -497,7 +497,7 @@ static inline int _mpc_comm_ptp_task_perform( int key )
 /*
  * Insert a message to copy. The message to insert has already been matched.
  */
-static inline void _mpc_comm_ptp_task_insert( sctk_message_to_copy_t *tmp,
+static inline void _mpc_comm_ptp_task_insert( mpc_mp_ptp_message_content_to_copy_t *tmp,
 					mpc_comm_ptp_t *pair )
 {
 	int key = pair->key.rank % PTP_MAX_TASK_LISTS;
@@ -509,11 +509,11 @@ static inline void _mpc_comm_ptp_task_insert( sctk_message_to_copy_t *tmp,
 /*
  * Insert the message to copy into the pending list
  */
-static inline void _mpc_comm_ptp_copy_task_insert( sctk_msg_list_t *ptr_recv,
-						sctk_msg_list_t *ptr_send,
+static inline void _mpc_comm_ptp_copy_task_insert( mpc_mp_msg_list_t *ptr_recv,
+						mpc_mp_msg_list_t *ptr_send,
 						mpc_comm_ptp_t *pair )
 {
-	sctk_message_to_copy_t *tmp;
+	mpc_mp_ptp_message_content_to_copy_t *tmp;
 	SCTK_PROFIL_START( MPC_Copy_message );
 
 	tmp = &( ptr_recv->msg->tail.copy_list );
@@ -639,7 +639,7 @@ void _mpc_comm_ptp_message_commit_request( mpc_mp_ptp_message_t *send,
 	mpc_mp_comm_ptp_message_complete_and_free( recv );
 }
 
-inline void mpc_mp_comm_ptp_message_copy( sctk_message_to_copy_t *tmp )
+inline void mpc_mp_comm_ptp_message_copy( mpc_mp_ptp_message_content_to_copy_t *tmp )
 {
 	mpc_mp_ptp_message_t *send;
 	mpc_mp_ptp_message_t *recv;
@@ -1154,7 +1154,7 @@ static inline void __mpc_comm_copy_buffer_absolute_absolute(
 /*
  * Function without description
  */
-inline void mpc_mp_comm_ptp_message_copy_pack( sctk_message_to_copy_t *tmp )
+inline void mpc_mp_comm_ptp_message_copy_pack( mpc_mp_ptp_message_content_to_copy_t *tmp )
 {
 	mpc_mp_ptp_message_t *send;
 	mpc_mp_ptp_message_t *recv;
@@ -1252,7 +1252,7 @@ inline void mpc_mp_comm_ptp_message_copy_pack( sctk_message_to_copy_t *tmp )
 /*
  * Function without description
  */
-inline void mpc_mp_comm_ptp_message_copy_pack_absolute( sctk_message_to_copy_t *tmp )
+inline void mpc_mp_comm_ptp_message_copy_pack_absolute( mpc_mp_ptp_message_content_to_copy_t *tmp )
 {
 	mpc_mp_ptp_message_t *send;
 	mpc_mp_ptp_message_t *recv;
@@ -1487,7 +1487,7 @@ void __mpc_comm_ptp_message_pack_free(void *);
 
 void mpc_mp_comm_ptp_message_header_clear( mpc_mp_ptp_message_t *tmp,
 					   mpc_mp_ptp_message_type_t msg_type, void ( *free_memory )( void * ),
-					   void ( *message_copy )( sctk_message_to_copy_t * ) )
+					   void ( *message_copy )( mpc_mp_ptp_message_content_to_copy_t * ) )
 {
 	/* This memset costs 0.03 usecs in pingpong */
 	memset( &tmp->tail, 0, sizeof( mpc_mp_ptp_message_tail_t ) );
@@ -1843,11 +1843,11 @@ int sctk_m_probe_matching_get()
 
 __thread volatile int already_processsing_a_control_message = 0;
 
-static inline sctk_msg_list_t * __mpc_comm_pending_msg_list_search_matching( mpc_comm_ptp_list_pending_t *pending_list,
+static inline mpc_mp_msg_list_t * __mpc_comm_pending_msg_list_search_matching( mpc_comm_ptp_list_pending_t *pending_list,
 																	        sctk_thread_message_header_t *header )
 {
-	sctk_msg_list_t *ptr_found;
-	sctk_msg_list_t *tmp;
+	mpc_mp_msg_list_t *ptr_found;
+	mpc_mp_msg_list_t *tmp;
 
 	/* Loop on all  pending messages */
 	DL_FOREACH_SAFE( pending_list->list, ptr_found, tmp )
@@ -1937,8 +1937,8 @@ static inline int __mpc_comm_ptp_probe( mpc_comm_ptp_t *pair,
 										sctk_thread_message_header_t *header )
 {
 
-	sctk_msg_list_t *ptr_send;
-	sctk_msg_list_t *tmp;
+	mpc_mp_msg_list_t *ptr_send;
+	mpc_mp_msg_list_t *tmp;
 
 	__mpc_comm_ptp_message_list_merge_pending( &( pair->lists ) );
 
@@ -1992,8 +1992,8 @@ static inline int __mpc_comm_pending_msg_list_search_matching_from_recv( mpc_com
 
 	sctk_assert( msg != NULL );
 
-	sctk_msg_list_t *ptr_recv = &msg->tail.distant_list;
-	sctk_msg_list_t *ptr_send = __mpc_comm_pending_msg_list_search_matching( &pair->lists.pending_send, &( msg->body.header ) );
+	mpc_mp_msg_list_t *ptr_recv = &msg->tail.distant_list;
+	mpc_mp_msg_list_t *ptr_send = __mpc_comm_pending_msg_list_search_matching( &pair->lists.pending_send, &( msg->body.header ) );
 
 	if ( SCTK_MSG_SPECIFIC_CLASS( msg ) == SCTK_CANCELLED_RECV )
 	{
@@ -2044,8 +2044,8 @@ static inline int __mpc_comm_pending_msg_list_search_matching_from_recv( mpc_com
  */
 static inline int __mpc_comm_ptp_perform_msg_pair_locked( mpc_comm_ptp_t *pair )
 {
-	sctk_msg_list_t *ptr_recv;
-	sctk_msg_list_t *tmp;
+	mpc_mp_msg_list_t *ptr_recv;
+	mpc_mp_msg_list_t *tmp;
 	int nb_messages_copied = 0;
 
 	__mpc_comm_ptp_message_list_merge_pending( &( pair->lists ) );
@@ -2392,8 +2392,6 @@ void _mpc_comm_ptp_message_send_check( mpc_mp_ptp_message_t *msg, int poll_recei
 	/*  Message has not reached its destination */
 	if ( SCTK_MSG_DEST_PROCESS( msg ) != mpc_common_get_process_rank() )
 	{
-		msg->tail.remote_destination = 1;
-
 		/* We forward the message */
 		sctk_network_send_message( msg );
 		return;
@@ -2422,7 +2420,6 @@ void _mpc_comm_ptp_message_send_check( mpc_mp_ptp_message_t *msg, int poll_recei
 
 	/* Flag the Message as all local */
 	msg->tail.remote_source = 0;
-	msg->tail.remote_destination = 0;
 
 	/* We are searching for the corresponding pending list. If we do not find any entry, we forward the message */
 
@@ -2507,7 +2504,6 @@ void _mpc_comm_ptp_message_recv_check( mpc_mp_ptp_message_t *msg,
 
 	/* We assume that the entry is found. If not, the message received is for a task which is not registered on the node. Possible issue. */
 	assume( recv_ptp );
-	msg->tail.remote_destination = 0;
 
 	if ( send_ptp == NULL )
 	{

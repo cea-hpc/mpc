@@ -71,7 +71,7 @@ sctk_shm_rdv_free(void* ptr)
 }
 
 static void
-sctk_shm_rdv_message_copy(sctk_message_to_copy_t* tmp)
+sctk_shm_rdv_message_copy(mpc_mp_ptp_message_content_to_copy_t* tmp)
 {
    sctk_net_message_copy(tmp);
 }

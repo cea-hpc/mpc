@@ -150,7 +150,7 @@ sctk_net_convert_msg_to_iovec( mpc_mp_ptp_message_t *msg, int *iovlen, size_t ma
 	return result;
 }
 
-void sctk_net_copy_msg_from_iovec( sctk_message_to_copy_t *tmp, sctk_iovec_cpy_t driver_func )  
+void sctk_net_copy_msg_from_iovec( mpc_mp_ptp_message_content_to_copy_t *tmp, sctk_iovec_cpy_t driver_func )  
 {
 	int iovlen;
 	mpc_mp_ptp_message_t *send;
@@ -670,7 +670,7 @@ int sctk_net_copy_frag_msg (
 	return 0;
 }
 
-void sctk_net_message_copy ( sctk_message_to_copy_t *tmp )
+void sctk_net_message_copy ( mpc_mp_ptp_message_content_to_copy_t *tmp )
 {
 	mpc_mp_ptp_message_t *send;
 	mpc_mp_ptp_message_t *recv;
@@ -813,7 +813,7 @@ void sctk_net_message_copy ( sctk_message_to_copy_t *tmp )
 }
 
 void sctk_net_message_copy_from_buffer ( char *body,
-                                         sctk_message_to_copy_t *tmp, char free_headers )
+                                         mpc_mp_ptp_message_content_to_copy_t *tmp, char free_headers )
 {
 	mpc_mp_ptp_message_t *send;
 	mpc_mp_ptp_message_t *recv;

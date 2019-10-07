@@ -12045,7 +12045,7 @@ __INTERNAL__PMPI_Exscan (void *sendbuf, void *recvbuf, int count,
 
 typedef struct MPI_internal_group_s
 {
-  MPC_Group group;
+  _mpc_m_group_t *group;
   int used;
   volatile struct MPI_internal_group_s *next;
   int rank;
@@ -12104,8 +12104,7 @@ __sctk_new_mpc_group_internal (MPI_Group * group)
   return tmp;
 }
 
-static inline MPC_Group
-__sctk_new_mpc_group (MPI_Group * group)
+static inline _mpc_m_group_t * __sctk_new_mpc_group (MPI_Group * group)
 {
   MPI_internal_group_t *tmp;
   tmp = __sctk_new_mpc_group_internal (group);
@@ -12117,7 +12116,7 @@ __sctk_init_mpc_group ()
 {
   MPI_group_struct_t *groups;
   MPI_Group EMPTY;
-  static MPC_Group_t mpc_mpi_group_empty;
+  static _mpc_m_group_t mpc_mpi_group_empty;
 
   groups = sctk_malloc (sizeof (MPI_group_struct_t));
 
@@ -12130,14 +12129,13 @@ __sctk_init_mpc_group ()
   PMPC_Set_groups (groups);
 
   /* Init group empty */
-  memcpy (&mpc_mpi_group_empty, &mpc_group_empty, sizeof (MPC_Group_t));
+  memcpy (&mpc_mpi_group_empty, &mpc_group_empty, sizeof (_mpc_m_group_t));
   __sctk_new_mpc_group_internal (&EMPTY)->group = &mpc_mpi_group_empty;
   assume (EMPTY == MPI_GROUP_EMPTY);
 
 }
 
-static inline MPI_internal_group_t *
-__sctk_convert_mpc_group_internal (MPI_Group group)
+static inline MPI_internal_group_t * __sctk_convert_mpc_group_internal (MPI_Group group)
 {
   MPI_internal_group_t *tmp;
   MPI_group_struct_t *groups;
@@ -12163,8 +12161,7 @@ __sctk_convert_mpc_group_internal (MPI_Group group)
   assume (tmp != NULL);
   return tmp;
 }
-static inline MPC_Group
-__sctk_convert_mpc_group (MPI_Group group)
+static inline _mpc_m_group_t * __sctk_convert_mpc_group (MPI_Group group)
 {
   MPI_internal_group_t *tmp;
 
@@ -12209,7 +12206,7 @@ static inline int
 __sctk_is_part_of_group(MPI_Group group)
 {
 	int rank, i;
-	MPC_Group temp_group = __sctk_convert_mpc_group (group);
+	_mpc_m_group_t *temp_group = __sctk_convert_mpc_group (group);
 	__INTERNAL__PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	for(i = 0 ; i <  temp_group->task_nb ; i++)
 	{
@@ -12238,7 +12235,7 @@ __INTERNAL__PMPI_Group_rank (MPI_Group mpi_group, int *rank)
 {
   int i;
   int grank;
-  MPC_Group group;
+  _mpc_m_group_t *group;
   group = __sctk_convert_mpc_group (mpi_group);
   __INTERNAL__PMPI_Comm_rank (MPI_COMM_WORLD, &grank);
   *rank = MPI_UNDEFINED;
@@ -12257,8 +12254,8 @@ static int
 __INTERNAL__PMPI_Group_translate_ranks (MPI_Group mpi_group1, int n, int *ranks1, MPI_Group mpi_group2, int *ranks2)
 {
 	int i,j;
-	MPC_Group group1;
-	MPC_Group group2;
+	_mpc_m_group_t *group1;
+	_mpc_m_group_t *group2;
 
 	if ( (MPI_GROUP_NULL == mpi_group1) || (MPI_GROUP_NULL == mpi_group2) )
 	{
@@ -12338,8 +12335,8 @@ __INTERNAL__PMPI_Group_compare (MPI_Group mpi_group1, MPI_Group mpi_group2,
 	int i;
 	int is_ident = 1;
 	int is_similar = 1;
-	MPC_Group group1;
-	MPC_Group group2;
+	_mpc_m_group_t *group1;
+	_mpc_m_group_t *group2;
 
 	*result = MPI_UNEQUAL;
 
@@ -12412,7 +12409,7 @@ __INTERNAL__PMPI_Comm_group (MPI_Comm comm, MPI_Group * mpi_newgroup)
 {
   MPI_internal_group_t *newgroup;
   newgroup = __sctk_new_mpc_group_internal (mpi_newgroup);
-  return PMPC_Comm_group (comm, &(newgroup->group));
+  return _mpc_m_comm_group (comm, &(newgroup->group));
 }
 
 static int
@@ -12422,9 +12419,9 @@ __INTERNAL__PMPI_Group_union (MPI_Group mpi_group1, MPI_Group mpi_group2,
   int size;
   int j;
   int i;
-  MPC_Group group1;
-  MPC_Group group2;
-  MPC_Group newgroup;
+  _mpc_m_group_t *group1;
+  _mpc_m_group_t *group2;
+  _mpc_m_group_t *newgroup;
   group1 = __sctk_convert_mpc_group (mpi_group1);
   group2 = __sctk_convert_mpc_group (mpi_group2);
 
@@ -12437,7 +12434,7 @@ __INTERNAL__PMPI_Group_union (MPI_Group mpi_group1, MPI_Group mpi_group2,
   size = group1->task_nb + group2->task_nb;
   newgroup = __sctk_new_mpc_group (mpi_newgroup);
 
-  newgroup = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
+  newgroup = (_mpc_m_group_t *) sctk_malloc (sizeof (_mpc_m_group_t));
   (newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (size * sizeof (int));
   (newgroup)->task_nb = size;
   __sctk_convert_mpc_group_internal (*mpi_newgroup)->group = newgroup;
@@ -12487,16 +12484,16 @@ __INTERNAL__PMPI_Group_intersection (MPI_Group mpi_group1,
 {
   int i;
   int size;
-  MPC_Group group1;
-  MPC_Group group2;
-  MPC_Group newgroup;
+  _mpc_m_group_t *group1;
+  _mpc_m_group_t *group2;
+  _mpc_m_group_t *newgroup;
   group1 = __sctk_convert_mpc_group (mpi_group1);
   group2 = __sctk_convert_mpc_group (mpi_group2);
   newgroup = __sctk_new_mpc_group (mpi_newgroup);
 
   size = group1->task_nb;
 
-  newgroup = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
+  newgroup = (_mpc_m_group_t *) sctk_malloc (sizeof (_mpc_m_group_t));
   (newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (size * sizeof (int));
   (newgroup)->task_nb = size;
   __sctk_convert_mpc_group_internal (*mpi_newgroup)->group = newgroup;
@@ -12526,14 +12523,14 @@ __INTERNAL__PMPI_Group_difference (MPI_Group mpi_group1, MPI_Group mpi_group2,
 				   MPI_Group * mpi_newgroup)
 {
   int result;
-  MPC_Group group1;
-  MPC_Group group2;
+  _mpc_m_group_t *group1;
+  _mpc_m_group_t *group2;
   MPI_internal_group_t *newgroup;
 
   group1 = __sctk_convert_mpc_group (mpi_group1);
   group2 = __sctk_convert_mpc_group (mpi_group2);
   newgroup = __sctk_new_mpc_group_internal (mpi_newgroup);
-  result = PMPC_Group_difference (group1, group2, &(newgroup->group));
+  result = _mpc_m_group_difference (group1, group2, &(newgroup->group));
   if(result != MPI_SUCCESS)
 	return result;
   if(newgroup->group->task_nb == 0)
@@ -12547,7 +12544,7 @@ __INTERNAL__PMPI_Group_incl (MPI_Group mpi_group, int n, int *ranks,
 			     MPI_Group * mpi_newgroup)
 {
   int res;
-  MPC_Group group;
+  _mpc_m_group_t *group;
   int i;
   int j; 
   MPI_internal_group_t *newgroup;
@@ -12578,7 +12575,7 @@ __INTERNAL__PMPI_Group_incl (MPI_Group mpi_group, int n, int *ranks,
 
   newgroup = __sctk_new_mpc_group_internal (mpi_newgroup);
 
-  res = PMPC_Group_incl (group, n, ranks, &(newgroup->group));
+  res = _mpc_m_group_incl (group, n, ranks, &(newgroup->group));
 
   return res;
 }
@@ -12592,8 +12589,8 @@ __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
 	int k;
 	int is_out;
 	int size;
-	MPC_Group group;
-	MPC_Group newgroup;
+	_mpc_m_group_t *group;
+	_mpc_m_group_t *newgroup;
 
 	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_newgroup) )
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
@@ -12619,7 +12616,7 @@ __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
   }
 
 
-	newgroup = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
+	newgroup = (_mpc_m_group_t *) sctk_malloc (sizeof (_mpc_m_group_t));
 	(newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (size * sizeof (int));
 	(newgroup)->task_nb = size;
 	__sctk_convert_mpc_group_internal (*mpi_newgroup)->group = newgroup;
@@ -12665,7 +12662,7 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
     int first_rank,last_rank,stride;
     int count,result;
 	sctk_nodebug("MPI_Group_range_excl");
-	MPC_Group group;
+	_mpc_m_group_t *group;
 
 /* Error checking */
 	group = __sctk_convert_mpc_group (mpi_group);
@@ -13035,7 +13032,7 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 
 static int __INTERNAL__PMPI_Group_free(MPI_Group *mpi_group) {
   int res;
-  MPC_Group group;
+  _mpc_m_group_t *group;
 
   if (*mpi_group == MPI_GROUP_EMPTY) {
     //    *mpi_group=MPI_GROUP_NULL
@@ -13048,7 +13045,7 @@ static int __INTERNAL__PMPI_Group_free(MPI_Group *mpi_group) {
 
   group = __sctk_convert_mpc_group(*mpi_group);
 
-  res = PMPC_Group_free(&group);
+  res = _mpc_m_group_free(&group);
 
   __sctk_delete_mpc_group(mpi_group);
 
@@ -13289,7 +13286,7 @@ __INTERNAL__PMPI_Comm_remote_group (MPI_Comm comm, MPI_Group * mpi_newgroup)
 {
   MPI_internal_group_t *newgroup;
   newgroup = __sctk_new_mpc_group_internal (mpi_newgroup);
-  return PMPC_Comm_remote_group (comm, &(newgroup->group));
+  return _mpc_m_comm_remote_group (comm, &(newgroup->group));
 }
 static int
 __INTERNAL__PMPI_Intercomm_create (MPI_Comm local_comm, int local_leader,

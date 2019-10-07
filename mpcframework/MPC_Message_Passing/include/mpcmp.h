@@ -68,15 +68,13 @@ extern "C"
     int task_nb;
     /* Task list rank are valid in COMM_WORLD  */
     int *task_list_in_global_ranks;
-} MPC_Group_t;
+} _mpc_m_group_t;
 
-typedef MPC_Group_t *MPC_Group;
-
-extern const MPC_Group_t mpc_group_empty;
-extern const MPC_Group_t mpc_group_null;
+extern const _mpc_m_group_t mpc_group_empty;
+extern const _mpc_m_group_t mpc_group_null;
 
 #define MPC_GROUP_EMPTY &mpc_group_empty
-#define MPC_GROUP_NULL ((MPC_Group)NULL)
+#define MPC_GROUP_NULL ((_mpc_m_group_t *)NULL)
 
 /* #define MPC_STATUS_SIZE 80 */
 /* #define MPC_REQUEST_SIZE 30 */
@@ -579,18 +577,17 @@ typedef int MPC_Checkpoint_state;
 
 
   /*Groups */
-  int PMPC_Comm_group (mpc_mp_communicator_t, MPC_Group *);
-  int PMPC_Comm_remote_group (mpc_mp_communicator_t, MPC_Group *);
-  int PMPC_Group_free (MPC_Group *);
-  int PMPC_Group_incl (MPC_Group, int, int *, MPC_Group *);
-  int PMPC_Group_difference (MPC_Group, MPC_Group, MPC_Group *);
+  int _mpc_m_comm_group (mpc_mp_communicator_t, _mpc_m_group_t **);
+  int _mpc_m_comm_remote_group (mpc_mp_communicator_t, _mpc_m_group_t **);
+  int _mpc_m_group_free (_mpc_m_group_t **);
+  int _mpc_m_group_incl (_mpc_m_group_t *, int, int *, _mpc_m_group_t **);
+  int _mpc_m_group_difference (_mpc_m_group_t *, _mpc_m_group_t *, _mpc_m_group_t **);
 
   /*Communicators */
-  int PMPC_Convert_to_intercomm (mpc_mp_communicator_t comm, MPC_Group group);
   int PMPC_Comm_create_list (mpc_mp_communicator_t, int *list, int nb_elem, mpc_mp_communicator_t *);
-  int PMPC_Comm_create (mpc_mp_communicator_t, MPC_Group, mpc_mp_communicator_t *);
+  int PMPC_Comm_create (mpc_mp_communicator_t, _mpc_m_group_t *, mpc_mp_communicator_t *);
   int PMPC_Intercomm_create (mpc_mp_communicator_t local_comm, int local_leader, mpc_mp_communicator_t peer_comm, int remote_leader, int tag, mpc_mp_communicator_t * newintercomm);
-  int PMPC_Comm_create_from_intercomm (mpc_mp_communicator_t, MPC_Group, mpc_mp_communicator_t *);
+  int PMPC_Comm_create_from_intercomm (mpc_mp_communicator_t, _mpc_m_group_t *, mpc_mp_communicator_t *);
   int PMPC_Comm_free (mpc_mp_communicator_t *);
   int PMPC_Comm_dup (mpc_mp_communicator_t, mpc_mp_communicator_t *);
   int PMPC_Comm_split (mpc_mp_communicator_t, int, int, mpc_mp_communicator_t *);

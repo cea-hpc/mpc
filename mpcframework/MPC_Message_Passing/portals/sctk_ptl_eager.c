@@ -40,7 +40,7 @@ void sctk_ptl_eager_free_memory(void* msg)
  *  
  *  \param[in,out] msg the send/recv bundle where both message headers are stored
  */
-void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
+void sctk_ptl_eager_message_copy(mpc_mp_ptp_message_content_to_copy_t* msg)
 {
 	sctk_ptl_local_data_t* recv_data = msg->msg_recv->tail.ptl.user_ptr;
 	

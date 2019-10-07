@@ -36,7 +36,7 @@ typedef void(*sctk_iovec_cpy_t)(struct iovec*, int, mpc_mp_ptp_message_t*);
 /* Convert sctk_thread_ptp_msg_t to struct iovec */
 struct iovec * sctk_net_convert_msg_to_iovec(mpc_mp_ptp_message_t *,int*,size_t);
 /* sctk_net_copy for iovec */
-void sctk_net_copy_msg_from_iovec( sctk_message_to_copy_t *, sctk_iovec_cpy_t); 
+void sctk_net_copy_msg_from_iovec( mpc_mp_ptp_message_content_to_copy_t *, sctk_iovec_cpy_t); 
 
 void sctk_net_copy_in_buffer ( mpc_mp_ptp_message_t *msg,
                                char *buffer );
@@ -54,10 +54,10 @@ void sctk_net_write_in_fd ( mpc_mp_ptp_message_t *msg,
                             int fd );
 void sctk_net_read_in_fd ( mpc_mp_ptp_message_t *msg,
                            int fd );
-void sctk_net_message_copy ( sctk_message_to_copy_t *tmp );
+void sctk_net_message_copy ( mpc_mp_ptp_message_content_to_copy_t *tmp );
 
 void sctk_net_message_copy_from_buffer ( char *body,
-                                         sctk_message_to_copy_t *tmp, char free_headers );
+                                         mpc_mp_ptp_message_content_to_copy_t *tmp, char free_headers );
 #ifdef __cplusplus
 }
 #endif

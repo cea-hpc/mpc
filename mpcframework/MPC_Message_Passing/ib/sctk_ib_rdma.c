@@ -417,7 +417,7 @@ sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req(sctk_rail_info_t *rail,
 
 
 
-void sctk_ib_rdma_rendezvous_net_copy ( sctk_message_to_copy_t *tmp )
+void sctk_ib_rdma_rendezvous_net_copy ( mpc_mp_ptp_message_content_to_copy_t *tmp )
 {
 	mpc_mp_ptp_message_t *send;
 	mpc_mp_ptp_message_t *recv;

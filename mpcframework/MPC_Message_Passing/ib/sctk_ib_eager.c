@@ -270,7 +270,7 @@ static mpc_mp_ptp_message_t *sctk_ib_eager_recv ( sctk_rail_info_t *rail, sctk_i
 	return msg;
 }
 
-void sctk_ib_eager_recv_msg_no_recopy ( sctk_message_to_copy_t *tmp )
+void sctk_ib_eager_recv_msg_no_recopy ( mpc_mp_ptp_message_content_to_copy_t *tmp )
 {
 	mpc_mp_ptp_message_t *send;
 

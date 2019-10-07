@@ -38,7 +38,7 @@ typedef enum
  * Called when a net message matched with a local RECV.
  * \param[in] tmp the request object (local-recv,remote-send)
  */
-static void sctk_tcp_rdma_message_copy ( sctk_message_to_copy_t *tmp )
+static void sctk_tcp_rdma_message_copy ( mpc_mp_ptp_message_content_to_copy_t *tmp )
 {
 	sctk_endpoint_t *route;
 	int fd;
@@ -115,7 +115,7 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 
 			case SCTK_RDMA_READ :
 			{
-				sctk_message_to_copy_t *copy_ptr;
+				mpc_mp_ptp_message_content_to_copy_t *copy_ptr;
 				mpc_common_io_safe_read ( fd, ( char * ) &msg, sizeof ( void * ) );
 				mpc_common_io_safe_read ( fd, ( char * ) &copy_ptr, sizeof ( void * ) );
 
@@ -132,7 +132,7 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 
 			case SCTK_RDMA_WRITE :
 			{
-				sctk_message_to_copy_t *copy_ptr;
+				mpc_mp_ptp_message_content_to_copy_t *copy_ptr;
 				mpc_mp_ptp_message_t *send = NULL;
 				mpc_mp_ptp_message_t *recv = NULL;
 

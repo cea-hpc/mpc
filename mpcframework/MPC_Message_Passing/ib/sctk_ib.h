@@ -66,7 +66,7 @@ struct sctk_ib_qp_s;
 struct sctk_ib_cp_s;
 struct sctk_thread_ptp_message_s;
 struct sctk_rail_info_s;
-struct sctk_message_to_copy_s;
+struct mpc_mp_ptp_message_content_to_copy_s;
 struct sctk_ib_buffered_entry_s;
 struct sctk_ib_qp_ht_s;
 
@@ -140,7 +140,7 @@ typedef struct sctk_ib_header_rdma_s
 	struct sctk_rail_info_s *rail;
 	struct sctk_rail_info_s *remote_rail;
 	struct sctk_ib_qp_s *remote_peer;
-	struct sctk_message_to_copy_s *copy_ptr;
+	struct mpc_mp_ptp_message_content_to_copy_s *copy_ptr;
 	/* For collaborative polling: src and dest of msg */
 	int source_task;
 	int destination_task;

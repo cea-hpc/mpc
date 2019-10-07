@@ -46,7 +46,7 @@ void sctk_ptl_rdv_free_memory(void* msg)
  *  
  *  \param[in,out] msg the send/recv bundle where both message headers are stored
  */
-void sctk_ptl_rdv_message_copy(sctk_message_to_copy_t* msg)
+void sctk_ptl_rdv_message_copy(mpc_mp_ptp_message_content_to_copy_t* msg)
 {
 	/* in this very-specific case (RDV), no contiguous data should be copied.
 	 * By construction, data moves by zero-(re)copy.

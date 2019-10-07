@@ -29,7 +29,7 @@ sctk_shm_cma_driver_iovec(struct iovec* liovec, int liovlen, mpc_mp_ptp_message_
 }
 
 static void 
-sctk_shm_cma_message_copy_generic(sctk_message_to_copy_t * tmp)
+sctk_shm_cma_message_copy_generic(mpc_mp_ptp_message_content_to_copy_t * tmp)
 {
    sctk_shm_cell_t * cell = NULL;
    mpc_mp_ptp_message_t *send;
@@ -109,7 +109,7 @@ sctk_shm_cma_message_free_nocopy(void *tmp)
 }
 
 static void 
-sctk_shm_cma_message_copy_nocopy(sctk_message_to_copy_t * tmp)
+sctk_shm_cma_message_copy_nocopy(mpc_mp_ptp_message_content_to_copy_t * tmp)
 {
     sctk_shm_cma_message_copy_generic( tmp );  
 }
@@ -137,7 +137,7 @@ sctk_shm_cma_message_free_withcopy(void *tmp)
 }
 
 static void 
-sctk_shm_cma_message_copy_withcopy(sctk_message_to_copy_t * tmp)
+sctk_shm_cma_message_copy_withcopy(mpc_mp_ptp_message_content_to_copy_t * tmp)
 {
 	sctk_shm_cma_message_copy_generic(tmp);
 }
@@ -175,7 +175,7 @@ sctk_network_cma_msg_shm_recv(sctk_shm_cell_t * cell,int copy_enabled)
 {
     mpc_mp_ptp_message_t *msg; 
     void (*shm_free_funct)(void*) = NULL;
-    void (*shm_copy_funct)(sctk_message_to_copy_t *) = NULL;
+    void (*shm_copy_funct)(mpc_mp_ptp_message_content_to_copy_t *) = NULL;
     copy_enabled = 1;
     if( copy_enabled )
     {

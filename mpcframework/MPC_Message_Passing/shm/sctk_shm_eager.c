@@ -13,7 +13,7 @@ sctk_shm_eager_message_free_nocopy ( void *tmp )
 }
 
 static void 
-sctk_shm_eager_message_copy_nocopy ( sctk_message_to_copy_t * tmp )
+sctk_shm_eager_message_copy_nocopy ( mpc_mp_ptp_message_content_to_copy_t * tmp )
 {
     sctk_net_message_copy(tmp);
 }
@@ -34,7 +34,7 @@ sctk_shm_eager_message_free_withcopy ( void *tmp )
 }
 
 static void 
-sctk_shm_eager_message_copy_withcopy ( sctk_message_to_copy_t * tmp )
+sctk_shm_eager_message_copy_withcopy ( mpc_mp_ptp_message_content_to_copy_t * tmp )
 {
     sctk_net_message_copy(tmp);
 }
@@ -56,7 +56,7 @@ sctk_network_eager_msg_shm_recv(sctk_shm_cell_t *cell, int copy_enabled) {
 
   mpc_mp_ptp_message_t *msg, *tmp;
   void (*shm_free_funct)(void *) = NULL;
-  void (*shm_copy_funct)(sctk_message_to_copy_t *) = NULL;
+  void (*shm_copy_funct)(mpc_mp_ptp_message_content_to_copy_t *) = NULL;
 
   tmp = (mpc_mp_ptp_message_t *)cell->data;
   // if ctrl message disable no copy

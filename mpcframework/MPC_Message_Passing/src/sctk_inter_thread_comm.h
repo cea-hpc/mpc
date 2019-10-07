@@ -331,7 +331,7 @@ typedef union {
 typedef union {
 	sctk_message_contiguous_t contiguous; /** Contiguous case */
 	sctk_message_pack_t pack;			  /** Packed case */
-} sctk_message_t;
+} mpc_mp_ptp_message_content_t;
 
 /************************************************************************/
 /* Message List                                                         */
@@ -343,22 +343,22 @@ typedef volatile struct sctk_msg_list_s
 {
 	struct sctk_thread_ptp_message_s *msg;
 	volatile struct sctk_msg_list_s *prev, *next;
-} sctk_msg_list_t;
+} mpc_mp_msg_list_t;
 
 /************************************************************************/
 /* Message Copy                                                         */
 /************************************************************************/
 
-typedef struct sctk_message_to_copy_s
+typedef struct mpc_mp_ptp_message_content_to_copy_s
 {
 	struct sctk_thread_ptp_message_s *msg_send;
 	struct sctk_thread_ptp_message_s *msg_recv;
-	struct sctk_message_to_copy_s *prev, *next;
-} sctk_message_to_copy_t;
+	struct mpc_mp_ptp_message_content_to_copy_s *prev, *next;
+} mpc_mp_ptp_message_content_to_copy_t;
 
-void mpc_mp_comm_ptp_message_copy( sctk_message_to_copy_t *tmp );
-void mpc_mp_comm_ptp_message_copy_pack( sctk_message_to_copy_t *tmp );
-void mpc_mp_comm_ptp_message_copy_pack_absolute( sctk_message_to_copy_t *tmp );
+void mpc_mp_comm_ptp_message_copy( mpc_mp_ptp_message_content_to_copy_t *tmp );
+void mpc_mp_comm_ptp_message_copy_pack( mpc_mp_ptp_message_content_to_copy_t *tmp );
+void mpc_mp_comm_ptp_message_copy_pack_absolute( mpc_mp_ptp_message_content_to_copy_t *tmp );
 
 /************************************************************************/
 /* Message Content                                                      */
@@ -386,19 +386,21 @@ struct mpc_comm_ptp_s;
 typedef struct
 {
 	char remote_source;
-	char remote_destination;
 
 	volatile int *volatile completion_flag;
+
+	/* Matchind ID used for MPROBE */
+	OPA_int_t matching_id; /**< 0 By default unique id otherwise */
 
 	mpc_mp_request_t *request;
 
 	/*Message data*/
 	mpc_mp_ptp_message_type_t message_type;
-	sctk_message_t message;
+	mpc_mp_ptp_message_content_t message;
 
 	/*Storage structs*/
-	sctk_msg_list_t distant_list;
-	sctk_message_to_copy_t copy_list;
+	mpc_mp_msg_list_t distant_list;
+	mpc_mp_ptp_message_content_to_copy_t copy_list;
 
 	struct mpc_comm_ptp_s *internal_ptp;
 
@@ -406,7 +408,7 @@ typedef struct
 	void ( *free_memory )( void * );
 
 	/*Copy operator*/
-	void ( *message_copy )( sctk_message_to_copy_t * );
+	void ( *message_copy )( mpc_mp_ptp_message_content_to_copy_t * );
 
 	/*Reorder buffer struct*/
 	sctk_reorder_buffer_t reorder;
@@ -425,11 +427,9 @@ typedef struct
 	struct sctk_ptl_tail_s ptl;
 #endif
 
-	/* Matchind ID used for MPROBE */
-	OPA_int_t matching_id; /**< 0 By default unique id otherwise */
-
-	/* XXX:Specific to IB */
+#ifdef MPC_USE_INFINIBAND
 	struct sctk_ib_msg_header_s ib;
+#endif
 } mpc_mp_ptp_message_tail_t;
 
 /************************************************************************/
@@ -450,7 +450,7 @@ typedef struct sctk_thread_ptp_message_s
 } mpc_mp_ptp_message_t;
 
 void mpc_mp_comm_ptp_message_header_clear( mpc_mp_ptp_message_t *tmp, mpc_mp_ptp_message_type_t msg_type, void ( *free_memory )( void * ),
-										   void ( *message_copy )( sctk_message_to_copy_t * ) );
+										   void ( *message_copy )( mpc_mp_ptp_message_content_to_copy_t * ) );
 
 mpc_mp_ptp_message_t *mpc_mp_comm_ptp_message_header_create( mpc_mp_ptp_message_type_t msg_type );
 
@@ -495,7 +495,7 @@ static inline void _mpc_comm_ptp_message_clear_request( mpc_mp_ptp_message_t *ms
 
 static inline void _mpc_comm_ptp_message_set_copy_and_free( mpc_mp_ptp_message_t *tmp,
 							void ( *free_memory )( void * ),
-							void ( *message_copy )( sctk_message_to_copy_t * ) )
+							void ( *message_copy )( mpc_mp_ptp_message_content_to_copy_t * ) )
 {
 	tmp->tail.free_memory = free_memory;
 	tmp->tail.message_copy = message_copy;

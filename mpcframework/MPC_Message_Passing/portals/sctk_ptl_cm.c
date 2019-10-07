@@ -44,7 +44,7 @@ void sctk_ptl_cm_free_memory(void* msg)
  * compliant with the inter_thread_comm matching process.
  * message_copy() just have to memcpy() the received data to the emulated recv.
  */
-void sctk_ptl_cm_message_copy(sctk_message_to_copy_t* msg)
+void sctk_ptl_cm_message_copy(mpc_mp_ptp_message_content_to_copy_t* msg)
 {
 	/* dirty line: get back the ME address, where data are located 
 	 * + complete and free the message.
