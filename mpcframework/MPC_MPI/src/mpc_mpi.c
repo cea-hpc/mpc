@@ -1458,95 +1458,72 @@ static inline void __sctk_init_mpc_halo ()
 	mpc_common_spinlock_unlock( &__sctk_halo_initialized_lock );
 }
 
-
-
-
-
 static int
-__INTERNAL__PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest,
-		       int tag, MPI_Comm comm)
+__INTERNAL__PMPI_Send( void *buf, int count, MPI_Datatype datatype, int dest,
+					   int tag, MPI_Comm comm )
 {
-        sctk_nodebug ("SEND buf %p type %d tag %d", buf, datatype,tag);
-	if (sctk_datatype_is_derived (datatype) && (count != 0))
+	if ( sctk_datatype_contig_mem( datatype ) )
 	{
-		int res;
-
-		sctk_nodebug ("Send derived type");
-
-		if (count > 1)
-		{
-			sctk_nodebug("count > 1");
-			MPI_Datatype new_datatype;
-			res =
-			__INTERNAL__PMPI_Type_contiguous (count, datatype, &new_datatype);
-			if (res != MPI_SUCCESS)
-			{
-			return res;
-			}
-			res = __INTERNAL__PMPI_Type_commit (&new_datatype);
-			if (res != MPI_SUCCESS)
-			{
-			return res;
-			}
-			res = __INTERNAL__PMPI_Send (buf, 1, new_datatype, dest, tag, comm);
-			if (res != MPI_SUCCESS)
-			{
-			return res;
-			}
-			res = __INTERNAL__PMPI_Type_free (&new_datatype);
-			return res;
-		}
-		else
-		{
-			mpc_mp_request_t request;
-			mpc_mp_status_t status;
-
-			int derived_ret = 0;
-			sctk_derived_datatype_t derived_datatype;
-
-			res = _mpc_m_derived_datatype_try_get_info (datatype, &derived_ret, &derived_datatype);
-
-			if (res != MPI_SUCCESS)
-			{
-			return res;
-			}
-			res = _mpc_m_open_pack (&request);
-			if (res != MPI_SUCCESS)
-			{
-			return res;
-			}
-
-			res = _mpc_m_add_pack_absolute (buf, derived_datatype.count, derived_datatype.begins, derived_datatype.ends, MPC_CHAR, &request);
-			if (res != MPI_SUCCESS)
-			{
-			return res;
-			}
-
-			res = _mpc_m_isend_pack (dest, tag, comm, &request);
-			if (res != MPI_SUCCESS)
-			{
-			return res;
-			}
-			
-			res = _mpc_m_wait (&request, &status);
-			return res;
-		}
+		return _mpc_m_send( buf, count, datatype, dest, tag, comm );
 	}
-	else
+
+	int res;
+
+	if ( count > 1 )
 	{
-		sctk_nodebug ("Send contiguous type");
-		if (buf == NULL && count != 0)
+		sctk_nodebug( "count > 1" );
+		MPI_Datatype new_datatype;
+		res =
+			__INTERNAL__PMPI_Type_contiguous( count, datatype, &new_datatype );
+		if ( res != MPI_SUCCESS )
 		{
-                  MPI_ERROR_REPORT(comm, MPI_ERR_BUFFER, "");
-                }
+			return res;
+		}
+		res = __INTERNAL__PMPI_Type_commit( &new_datatype );
+		if ( res != MPI_SUCCESS )
+		{
+			return res;
+		}
+		res = __INTERNAL__PMPI_Send( buf, 1, new_datatype, dest, tag, comm );
+		if ( res != MPI_SUCCESS )
+		{
+			return res;
+		}
+		res = __INTERNAL__PMPI_Type_free( &new_datatype );
+		return res;
+	}
 
-                if (count == 0) {
-                  /* code to avoid derived datatype */
-                  datatype = MPC_CHAR;
-                }
+	mpc_mp_request_t request;
+	mpc_mp_status_t status;
 
-                return _mpc_m_send(buf, count, datatype, dest, tag, comm);
-        }
+	int derived_ret = 0;
+	sctk_derived_datatype_t derived_datatype;
+
+	res = _mpc_m_derived_datatype_try_get_info( datatype, &derived_ret, &derived_datatype );
+
+	if ( res != MPI_SUCCESS )
+	{
+		return res;
+	}
+	res = _mpc_m_open_pack( &request );
+	if ( res != MPI_SUCCESS )
+	{
+		return res;
+	}
+
+	res = _mpc_m_add_pack_absolute( buf, derived_datatype.count, derived_datatype.begins, derived_datatype.ends, MPC_CHAR, &request );
+	if ( res != MPI_SUCCESS )
+	{
+		return res;
+	}
+
+	res = _mpc_m_isend_pack( dest, tag, comm, &request );
+	if ( res != MPI_SUCCESS )
+	{
+		return res;
+	}
+
+	return _mpc_m_wait( &request, &status );
 }
 
 static int __INTERNAL__PMPIX_Exchange(void **send_buf , void **recvbuff, int remote_rank, MPI_Count size , MPI_Comm comm)
@@ -1652,75 +1629,67 @@ __INTERNAL__PMPI_Recv (void *buf, int count, MPI_Datatype datatype,
 		       int source, int tag, MPI_Comm comm,
 		       MPI_Status * status)
 {
-	sctk_nodebug ("RECV buf %p", buf);
-	if (sctk_datatype_is_derived (datatype))
+	if( sctk_datatype_contig_mem(datatype) )
 	{
-		int res;
+		return _mpc_m_recv(buf, count, datatype, source, tag, comm, status);
+	}
 
-		if (count > 1)
+	int res;
+
+	if (count > 1)
+	{
+		MPI_Datatype new_datatype;
+		res =
+		__INTERNAL__PMPI_Type_contiguous (count, datatype, &new_datatype);
+		if (res != MPI_SUCCESS)
 		{
-			MPI_Datatype new_datatype;
-			res =
-			__INTERNAL__PMPI_Type_contiguous (count, datatype, &new_datatype);
-			if (res != MPI_SUCCESS)
-			{
-				return res;
-			}
-			res = __INTERNAL__PMPI_Type_commit (&new_datatype);
-			if (res != MPI_SUCCESS)
-			{
-				return res;
-			}
-			res =
-			__INTERNAL__PMPI_Recv (buf, 1, new_datatype, source, tag, comm,
-			status);
-			if (res != MPI_SUCCESS)
-			{
-				return res;
-			}
-			res = __INTERNAL__PMPI_Type_free (&new_datatype);
 			return res;
 		}
-		else
+		res = __INTERNAL__PMPI_Type_commit (&new_datatype);
+		if (res != MPI_SUCCESS)
 		{
-			mpc_mp_request_t request;
-                        memset(&request, 0, sizeof(mpc_mp_request_t));
+			return res;
+		}
+		res =
+		__INTERNAL__PMPI_Recv (buf, 1, new_datatype, source, tag, comm,
+		status);
+		if (res != MPI_SUCCESS)
+		{
+			return res;
+		}
+		res = __INTERNAL__PMPI_Type_free (&new_datatype);
+		return res;
+	}
 
-                        int derived_ret = 0;
-                        sctk_derived_datatype_t derived_datatype;
+	mpc_mp_request_t request;
+	memset(&request, 0, sizeof(mpc_mp_request_t));
 
-                        res = _mpc_m_derived_datatype_try_get_info(datatype, &derived_ret,
-                                                      &derived_datatype);
-                        if (res != MPI_SUCCESS) {
-                          return res;
-                        }
-                        res = _mpc_m_open_pack(&request);
-                        if (res != MPI_SUCCESS) {
-                          return res;
-                        }
+	int derived_ret = 0;
+	sctk_derived_datatype_t derived_datatype;
 
-                        res = _mpc_m_add_pack_absolute(
-                            buf, derived_datatype.count,
-                            derived_datatype.begins, derived_datatype.ends,
-                            MPC_CHAR, &request);
-                        if (res != MPI_SUCCESS) {
-                          return res;
-                        }
+	res = _mpc_m_derived_datatype_try_get_info(datatype, &derived_ret,
+					&derived_datatype);
+	if (res != MPI_SUCCESS) {
+		return res;
+	}
+	res = _mpc_m_open_pack(&request);
+	if (res != MPI_SUCCESS) {
+		return res;
+	}
 
-                        res = _mpc_m_irecv_pack(source, tag, comm, &request);
-                        if (res != MPI_SUCCESS) {
-                          return res;
-                        }
-                        res = _mpc_m_wait(&request, status);
-                        return res;
-                }
-        } else {
-          sctk_nodebug("Recv contiguous type");
-          if (buf == NULL && count != 0) {
-            MPI_ERROR_REPORT(comm, MPI_ERR_BUFFER, "");
-          }
-          return _mpc_m_recv(buf, count, datatype, source, tag, comm, status);
-        }
+	res = _mpc_m_add_pack_absolute(
+		buf, derived_datatype.count,
+		derived_datatype.begins, derived_datatype.ends,
+		MPC_CHAR, &request);
+	if (res != MPI_SUCCESS) {
+		return res;
+	}
+
+	res = _mpc_m_irecv_pack(source, tag, comm, &request);
+	if (res != MPI_SUCCESS) {
+		return res;
+	}
+	return _mpc_m_wait(&request, status);
 }
 
 
@@ -3112,42 +3081,43 @@ __INTERNAL__PMPI_Startall (int count, MPI_Request * array_of_requests)
   return MPI_SUCCESS;
 }
 
-static int __INTERNAL__PMPI_Sendrecv (void *sendbuf, int sendcount,
-			   MPI_Datatype sendtype, int dest, int sendtag,
-			   void *recvbuf, int recvcount,
-			   MPI_Datatype recvtype, int source, int recvtag,
-			   MPI_Comm comm, MPI_Status * status)
+static int __INTERNAL__PMPI_Sendrecv( void *sendbuf, int sendcount,
+					MPI_Datatype sendtype, int dest, int sendtag,
+					void *recvbuf, int recvcount,
+					MPI_Datatype recvtype, int source, int recvtag,
+					MPI_Comm comm, MPI_Status *status )
 {
 	int res;
 	MPI_Request s_request;
 	MPI_Request r_request;
 	MPI_Status s_status;
 
-	sctk_nodebug ("__INTERNAL__PMPI_Sendrecv TYPE %d %d", sendtype, recvtype);
+	sctk_nodebug( "__INTERNAL__PMPI_Sendrecv TYPE %d %d", sendtype, recvtype );
 
-	res = __INTERNAL__PMPI_Isend (sendbuf, sendcount, sendtype, dest, sendtag, comm, &s_request);
-	
-	if (res != MPI_SUCCESS)
-	{
-		return res;
-	}
-	res = __INTERNAL__PMPI_Irecv (recvbuf, recvcount, recvtype, source, recvtag, comm, &r_request);
-	
-	if (res != MPI_SUCCESS)
-	{
-		return res;
-	}
-	
-	res = __INTERNAL__PMPI_Wait (&s_request, &s_status);
-	
-	if (res != MPI_SUCCESS)
-	{
-		return res;
-	}
-	
-	res = __INTERNAL__PMPI_Wait (&r_request, status);
+	res = __INTERNAL__PMPI_Isend( sendbuf, sendcount, sendtype, dest, sendtag, comm, &s_request );
 
-	sctk_nodebug ("__INTERNAL__PMPI_Sendrecv TYPE %d %d done", sendtype, recvtype);
+	if ( res != MPI_SUCCESS )
+	{
+		return res;
+	}
+
+	res = __INTERNAL__PMPI_Irecv( recvbuf, recvcount, recvtype, source, recvtag, comm, &r_request );
+
+	if ( res != MPI_SUCCESS )
+	{
+		return res;
+	}
+
+	res = __INTERNAL__PMPI_Wait( &s_request, &s_status );
+
+	if ( res != MPI_SUCCESS )
+	{
+		return res;
+	}
+
+	res = __INTERNAL__PMPI_Wait( &r_request, status );
+
+	sctk_nodebug( "__INTERNAL__PMPI_Sendrecv TYPE %d %d done", sendtype, recvtype );
 	return res;
 }
 
@@ -15224,7 +15194,6 @@ static int __INTERNAL__PMPI_Init_thread(int *argc, char ***argv, int required,
 
 
 
-
 static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
   int res;
   int flag;
@@ -15304,7 +15273,6 @@ static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
     __INTERNAL__PMPI_Comm_size(MPI_COMM_WORLD, &MPI_UNIVERSE_SIZE_VALUE);
     __INTERNAL__PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    __INTERNAL__PMPI_Barrier(MPI_COMM_WORLD);
   }
   return res;
 }
@@ -15622,38 +15590,40 @@ int PMPIX_Exchange(void **send_buf , void **recvbuff, int remote_rank, MPI_Count
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
-static inline int PMPI_Send_p(void *buf, int count, MPI_Datatype datatype,
-                              int dest, int tag, MPI_Comm comm) {
-  int res = MPI_ERR_INTERN;
-  sctk_debug ("SEND buf %p type %d tag %d dest %d count %d", buf, datatype,tag,dest,count);
-  if(dest == SCTK_PROC_NULL)
-  {
-	res = MPI_SUCCESS;
-	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
-  }
-  {
-    mpi_check_comm (comm, comm);
-    mpi_check_type (datatype, comm);
-    mpi_check_count (count, comm);
-    sctk_nodebug ("tag %d", tag);
-    mpi_check_tag_send (tag, comm);
+static inline int PMPI_Send_p( void *buf, int count, MPI_Datatype datatype,
+							   int dest, int tag, MPI_Comm comm )
+{
+	int res = MPI_ERR_INTERN;
+	sctk_debug( "SEND buf %p type %d tag %d dest %d count %d", buf, datatype, tag, dest, count );
+	if ( dest == SCTK_PROC_NULL )
+	{
+		res = MPI_SUCCESS;
+		SCTK_MPI_CHECK_RETURN_VAL( res, comm );
+	}
+	{
+		mpi_check_comm( comm, comm );
+		mpi_check_type( datatype, comm );
+		mpi_check_count( count, comm );
+		sctk_nodebug( "tag %d", tag );
+		mpi_check_tag_send( tag, comm );
 
-    if (count != 0)
-    {
-	    mpi_check_buf (buf, comm);
-    }
-  }
-  res = __INTERNAL__PMPI_Send (buf, count, datatype, dest, tag, comm);
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+		if ( count != 0 )
+		{
+			mpi_check_buf( buf, comm );
+		}
+	}
+	res = __INTERNAL__PMPI_Send( buf, count, datatype, dest, tag, comm );
+	SCTK_MPI_CHECK_RETURN_VAL( res, comm );
 }
 
-int PMPI_Send(void *buf, int count, MPI_Datatype datatype, int dest, int tag,
-              MPI_Comm comm) {
-  int res;
-  SCTK_PROFIL_START(MPI_Send);
-  res = PMPI_Send_p(buf, count, datatype, dest, tag, comm);
-  SCTK_PROFIL_END(MPI_Send);
-  return res;
+int PMPI_Send( void *buf, int count, MPI_Datatype datatype, int dest, int tag,
+			   MPI_Comm comm )
+{
+	int res;
+	SCTK_PROFIL_START( MPI_Send );
+	res = PMPI_Send_p( buf, count, datatype, dest, tag, comm );
+	SCTK_PROFIL_END( MPI_Send );
+	return res;
 }
 
 static inline int PMPI_Recv_p(void *buf, int count, MPI_Datatype datatype,

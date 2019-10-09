@@ -80,7 +80,7 @@ extern mpc_mp_request_t mpc_request_null;
 
 
 
-#define MPC_KEYVAL_INVALID -1
+
 
 #define MPC_TYPE_NULL_DELETE_FN ( NULL )
 #define MPC_TYPE_NULL_COPY_FN ( NULL )

@@ -56,6 +56,7 @@ typedef int MPC_Checkpoint_state;
 
 #define MPC_UNDEFINED ( -1 )
 #define MPC_ROOT -4
+#define MPC_KEYVAL_INVALID -1
 
 /****************
  * STRING SIZES *
