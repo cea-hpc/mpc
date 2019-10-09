@@ -112,8 +112,7 @@ static inline int mpc_common_spinlock_trylock( mpc_common_spinlock_t *lock )
 
 static inline int mpc_common_spinlock_unlock( mpc_common_spinlock_t *lock )
 {
-	*lock = 0;
-
+	mpc_common_spinlock_init(lock, 0);
 	return 0;
 }
 

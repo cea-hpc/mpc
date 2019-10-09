@@ -1,5 +1,5 @@
 GTEST_PREFIX=$(PWD)/BUILD/gtest
-CXX_FLAGS=-std=c++11 -I$(GTEST_PREFIX)/include/ -I$(PWD)/../ -fno-mpc-privatize
+CXX_FLAGS=-std=c++11 -I$(GTEST_PREFIX)/include/ -I$(PWD) -I$(PWD)/../ -fno-mpc-privatize
 LD_FLAGS=-L$(GTEST_PREFIX)/lib/ -lgtest
 CXX=mpc_cxx
 

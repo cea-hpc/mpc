@@ -32,6 +32,7 @@ extern "C" {
 /********
  * BOOL *
  ********/
+#ifndef __cplusplus
 
 #ifdef HAVE_STDBOOL_H
 	#include <stdbool.h>
@@ -41,6 +42,8 @@ extern "C" {
 	#define false 0
 #endif
 
+#endif
+
 /**********
  * STDINT *
  **********/
@@ -48,7 +51,7 @@ extern "C" {
 //stdint.h is C99, if we didn't get support of it, fall-back on manual
 //definitions of uint64_t... For compatibility, please use sctk_stdin.h in MPC
 //in place of stdint.h
-#ifdef HAVE_STDINT_H
+#if defined(HAVE_STDINT_H) || defined(__cplusplus)
 	//use standard defs
 	#include <stdint.h>
 #else //HAVE_STDINT_H
@@ -77,7 +80,7 @@ extern "C" {
  * WIDE CHARS *
  **************/
 
-#ifdef HAVE_WCHAR_H
+#if defined(HAVE_WCHAR_H) || defined(__cplusplus)
 	#include <wchar.h>
 	#define sctk_wchar_t wchar_t
 #else

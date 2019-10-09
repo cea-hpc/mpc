@@ -2473,7 +2473,8 @@ void _mpc_comm_ptp_message_send_check( mpc_mp_ptp_message_t *msg, int poll_recei
  * */
 void mpc_mp_comm_ptp_message_send( mpc_mp_ptp_message_t *msg )
 {
-	int need_check = _mpc_comm_is_remote_rank( SCTK_MSG_DEST_TASK( msg ) );
+	int need_check = 0;
+	//!_mpc_comm_is_remote_rank( SCTK_MSG_DEST_TASK( msg ) );
 	_mpc_comm_ptp_message_send_check( msg, need_check );
 }
 
@@ -2533,7 +2534,8 @@ void _mpc_comm_ptp_message_recv_check( mpc_mp_ptp_message_t *msg,
  * */
 void mpc_mp_comm_ptp_message_recv( mpc_mp_ptp_message_t *msg )
 {
-	int need_check = _mpc_comm_is_remote_rank( SCTK_MSG_DEST_TASK( msg ) );
+	int need_check = 0;
+	//!_mpc_comm_is_remote_rank( SCTK_MSG_DEST_TASK( msg ) );
 	_mpc_comm_ptp_message_recv_check( msg, need_check );
 }
 
