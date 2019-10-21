@@ -24,11 +24,11 @@ void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 	*flag = 0;
 
 	/* UB or LB are not contiguous */
-	if( sctk_datatype_is_boundary(datatype) )
+	if( _mpc_dt_is_boundary(datatype) )
 		return;
 
-  sctk_derived_datatype_t *target_type = NULL;
-	switch( sctk_datatype_kind( datatype ) )
+  _mpc_dt_derived_t *target_type = NULL;
+	switch( _mpc_dt_get_kind( datatype ) )
 	{
 		/* CONT and COMMON are contiguous by definition */
 		case MPC_DATATYPES_CONTIGUOUS:
@@ -41,8 +41,8 @@ void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 
 		/* For dereived dat-types we have to check */
 		case MPC_DATATYPES_DERIVED:
-			task_specific = _mpc_m_per_mpi_process_ctx_get ();
-			target_type = _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(  task_specific, datatype );
+			task_specific = _mpc_cl_per_mpi_process_ctx_get ();
+			target_type = _mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get(  task_specific, datatype );
 			assume( target_type != NULL );
 
 			/* If there is no block (0 size) or one block in the optimized representation
@@ -70,9 +70,9 @@ void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
  */
 int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
                       MPI_Aint **indices, MPI_Count *count) {
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = _mpc_m_per_mpi_process_ctx_get();
-  sctk_derived_datatype_t *target_derived_type;
-  sctk_contiguous_datatype_t *contiguous_type;
+  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
+  _mpc_dt_derived_t *target_derived_type;
+  _mpc_dt_contiguout_t *contiguous_type;
 
   /* Nothing to do */
   if (datatype == MPI_DATATYPE_NULL) {
@@ -88,7 +88,7 @@ int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
    * 	=> Extract the flattened representation from MPC
    */
 
-  switch (sctk_datatype_kind(datatype)) {
+  switch (_mpc_dt_get_kind(datatype)) {
   case MPC_DATATYPES_COMMON:
     *count = 1;
 
@@ -99,10 +99,10 @@ int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
     assume(*indices != NULL);
 
     (*indices)[0] = 0;
-    (*blocklen)[0] = sctk_common_datatype_get_size(datatype);
+    (*blocklen)[0] = _mpc_dt_common_get_size(datatype);
     break;
   case MPC_DATATYPES_CONTIGUOUS:
-    contiguous_type = _mpc_m_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);
+    contiguous_type = _mpc_cl_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);
     *count = 1;
 
     *blocklen = sctk_malloc(*count * sizeof(MPI_Aint));
@@ -117,7 +117,7 @@ int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
 
   case MPC_DATATYPES_DERIVED:
     target_derived_type =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
+        _mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
 
     /* Note that we extract the optimized version of the data-type */
     *count = target_derived_type->opt_count;
@@ -155,8 +155,8 @@ int MPIR_Type_flatten(MPI_Datatype type, MPI_Aint **off_array,
 }
 
 MPI_Aint MPCX_Type_get_count(MPI_Datatype datatype) {
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = _mpc_m_per_mpi_process_ctx_get();
-  sctk_derived_datatype_t *target_derived_type;
+  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
+  _mpc_dt_derived_t *target_derived_type;
 
 
   /* Nothing to do */
@@ -164,7 +164,7 @@ MPI_Aint MPCX_Type_get_count(MPI_Datatype datatype) {
     return MPI_SUCCESS;
   }
 
-  switch (sctk_datatype_kind(datatype)) {
+  switch (_mpc_dt_get_kind(datatype)) {
   case MPC_DATATYPES_COMMON:
     return 1;
     break;
@@ -174,7 +174,7 @@ MPI_Aint MPCX_Type_get_count(MPI_Datatype datatype) {
 
   case MPC_DATATYPES_DERIVED:
     target_derived_type =
-        _mpc_m_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
+        _mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
 
     return target_derived_type->opt_count;
     break;
@@ -409,7 +409,7 @@ void MPIR_Err_get_string( int errcode, char *msg, int maxlen,__UNUSED__  MPIR_Er
 	buff[0] = '\0';
 	msg[0] = '\0';
 	
-	_mpc_m_error_string (errcode, buff, &len);
+	_mpc_cl_error_string (errcode, buff, &len);
 
 	if( strlen( buff ) )
 		snprintf( msg, maxlen, "%s", buff );

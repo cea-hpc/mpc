@@ -44,16 +44,16 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
   int can_write_rma = 0;
 
   /* Do the optimized RMA only if target datatype is contiguous */
-  if (sctk_datatype_is_common(target_datatype) ||
-      sctk_datatype_is_contiguous(target_datatype) ||
-      sctk_datatype_is_struct_datatype(target_datatype)) {
+  if (_mpc_dt_is_common(target_datatype) ||
+      _mpc_dt_is_contiguous(target_datatype) ||
+      _mpc_dt_is_struct(target_datatype)) {
     can_read_rma = 1;
   }
 
   /* Can the RMA directly target the local buffer (ie contig) ? */
-  if (sctk_datatype_is_common(origin_datatype) ||
-      sctk_datatype_is_contiguous(origin_datatype) ||
-      sctk_datatype_is_struct_datatype(origin_datatype)) {
+  if (_mpc_dt_is_common(origin_datatype) ||
+      _mpc_dt_is_contiguous(origin_datatype) ||
+      _mpc_dt_is_struct(origin_datatype)) {
     can_write_rma = 1;
   }
 
@@ -161,7 +161,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
                 target_rank);
       /* Emit fractionned Read */
       size_t stsize;
-      void *serialized_type = sctk_derived_datatype_serialize(
+      void *serialized_type = _mpc_cl_derived_type_serialize(
           target_datatype, &stsize, sizeof(struct mpc_MPI_Win_ctrl_message));
 
       struct mpc_MPI_Win_ctrl_message *message =
@@ -272,16 +272,16 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
     return MPI_SUCCESS;
 
   /* Do the optimized RMA only if target datatype is contiguous */
-  if (sctk_datatype_is_common(target_datatype) ||
-      sctk_datatype_is_contiguous(target_datatype) ||
-      sctk_datatype_is_struct_datatype(target_datatype)) {
+  if (_mpc_dt_is_common(target_datatype) ||
+      _mpc_dt_is_contiguous(target_datatype) ||
+      _mpc_dt_is_struct(target_datatype)) {
     can_write_rma = 1;
   }
 
   /* Can the RMA directly target the local buffer (ie contig) ? */
-  if (sctk_datatype_is_common(origin_datatype) ||
-      sctk_datatype_is_contiguous(origin_datatype) ||
-      sctk_datatype_is_struct_datatype(origin_datatype)) {
+  if (_mpc_dt_is_common(origin_datatype) ||
+      _mpc_dt_is_contiguous(origin_datatype) ||
+      _mpc_dt_is_struct(origin_datatype)) {
     can_read_rma = 1;
   }
 
@@ -382,7 +382,7 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
 
     /* Emit fractionned Write */
     size_t stsize;
-    void *serialized_type = sctk_derived_datatype_serialize(
+    void *serialized_type = _mpc_cl_derived_type_serialize(
         target_datatype, &stsize, sizeof(struct mpc_MPI_Win_ctrl_message));
 
     struct mpc_MPI_Win_ctrl_message *message =
@@ -501,16 +501,16 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
 
   /* Do the optimized RMA only if target datatype is contiguous */
-  if (sctk_datatype_is_common(target_datatype) ||
-      sctk_datatype_is_contiguous(target_datatype) ||
-      sctk_datatype_is_struct_datatype(target_datatype)) {
+  if (_mpc_dt_is_common(target_datatype) ||
+      _mpc_dt_is_contiguous(target_datatype) ||
+      _mpc_dt_is_struct(target_datatype)) {
     can_write_rma = 1;
   }
 
   /* Can the RMA directly target the local buffer (ie contig) ? */
-  if (sctk_datatype_is_common(origin_datatype) ||
-      sctk_datatype_is_contiguous(origin_datatype) ||
-      sctk_datatype_is_struct_datatype(origin_datatype)) {
+  if (_mpc_dt_is_common(origin_datatype) ||
+      _mpc_dt_is_contiguous(origin_datatype) ||
+      _mpc_dt_is_struct(origin_datatype)) {
     can_read_rma = 1;
   }
 
@@ -583,14 +583,14 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
   MPI_Datatype inner_type = -1;
 
-  if (sctk_datatype_is_common(target_datatype)) {
+  if (_mpc_dt_is_common(target_datatype)) {
     inner_type = target_datatype;
   } else {
-    inner_type = sctk_datatype_get_inner_type(target_datatype);
+    inner_type = _mpc_cl_type_get_inner(target_datatype);
   }
 
-  if (!sctk_datatype_is_common(inner_type) &&
-      !sctk_datatype_is_struct_datatype(inner_type)) {
+  if (!_mpc_dt_is_common(inner_type) &&
+      !_mpc_dt_is_struct(inner_type)) {
     sctk_warning("MPI_Accumulate : cannot accumulate a derived datatype which "
                  "is not made of a single predefined type");
     mpc_MPI_accumulate_op_unlock();
@@ -686,13 +686,13 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
       /* If the target type is a contiguous one
        * now create a derived one to simplify code
        * branching (removing cases on target) */
-      _mpc_m_type_convert_to_derived(target_datatype, &target_datatype);
+      _mpc_cl_type_convert_to_derived(target_datatype, &target_datatype);
       do_free_target_type = 1;
     }
 
     /* Serialize the remote type */
     size_t stsize;
-    void *serialized_type = sctk_derived_datatype_serialize(
+    void *serialized_type = _mpc_cl_derived_type_serialize(
         target_datatype, &stsize, sizeof(struct mpc_MPI_Win_ctrl_message));
 
     struct mpc_MPI_Win_ctrl_message *message =
@@ -726,8 +726,8 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
                                                  stsize);
 
     if (do_free_target_type &&
-        !sctk_datatype_is_struct_datatype(target_datatype)) {
-      _mpc_m_type_free(&target_datatype);
+        !_mpc_dt_is_struct(target_datatype)) {
+      _mpc_cl_type_free(&target_datatype);
     }
   }
 
@@ -921,9 +921,9 @@ static inline int mpc_MPI_Get_accumulate_RMA(
   }
 
   /* Check if we can use the optimized case (fallback to FOP) */
-  if (sctk_datatype_is_common(origin_datatype) &&
-      sctk_datatype_is_common(result_datatype) &&
-      sctk_datatype_is_common(target_datatype)) {
+  if (_mpc_dt_is_common(origin_datatype) &&
+      _mpc_dt_is_common(result_datatype) &&
+      _mpc_dt_is_common(target_datatype)) {
     if ((origin_datatype == result_datatype) &&
         (origin_datatype == target_datatype)) {
       RDMA_op rmaop = mpc_RMA_convert_op(op);

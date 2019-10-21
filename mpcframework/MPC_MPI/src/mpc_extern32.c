@@ -399,13 +399,13 @@ void sctk_integer_convert_width( void * in, size_t in_size, int unsgn, void * ou
 
 static inline void MPC_Extern32_encode( mpc_mp_datatype_t type, char * in, char * out )
 {
-	if( !sctk_datatype_is_common(type) )
+	if( !_mpc_dt_is_common(type) )
 	{
 		sctk_fatal("Cannot convert a non-common data-type");
 	}
 	
 	/* Prepare for width Conversion */
-	size_t type_size = sctk_common_datatype_get_size( type );
+	size_t type_size = _mpc_dt_common_get_size( type );
 	size_t type_extern_size = MPC_Extern32_common_type_size( type );
 	
 	if( type_size != type_extern_size )
@@ -445,7 +445,7 @@ static inline void MPC_Extern32_encode( mpc_mp_datatype_t type, char * in, char 
 static inline void MPC_Extern32_decode( mpc_mp_datatype_t type, char * in, char * out )
 {
 	
-	size_t type_size = sctk_common_datatype_get_size( type );
+	size_t type_size = _mpc_dt_common_get_size( type );
 	size_t type_extern_size = MPC_Extern32_common_type_size( type );
 
 	/* Apply indianess conversion and store in OUT */
@@ -511,7 +511,7 @@ void MPC_Extern32_convert( mpc_mp_datatype_t * typevector ,
 		}
 		
 		/* Move in the input */
-		current_offset += sctk_common_datatype_get_size( current_type );
+		current_offset += _mpc_dt_common_get_size( current_type );
 		current_entry = native_buff + current_offset;
 		
 		/* Move in the output */

@@ -238,7 +238,7 @@ void __sctk_add_in_mpc_request(MPI_Request *req, void *t,
 void __sctk_delete_mpc_request(MPI_Request *req,
                                MPI_request_struct_t *requests);
 
-sctk_derived_datatype_t *_mpc_m_per_mpi_process_ctx_derived_datatype_get(mpc_mp_datatype_t datatype);
+_mpc_dt_derived_t *_mpc_cl_per_mpi_process_ctx_derived_datatype_get(mpc_mp_datatype_t datatype);
 int *sctk_group_raw_ranks(MPI_Group group);
 
 typedef struct {
@@ -370,7 +370,7 @@ static inline void sctk_mpi_shared_mem_buffer_get(union shared_mem_buffer *b,
 }
 
 #define MPI_ERROR_REPORT(comm, error,message) return SCTK__MPI_ERROR_REPORT__(comm, error,message,__FILE__, __LINE__)
-int _mpc_m_error_init();
+int _mpc_cl_error_init();
 
 void SCTK__MPI_INIT_REQUEST (MPI_Request * request);
 int SCTK__MPI_ERROR_REPORT__ (mpc_mp_communicator_t comm, int error, char *message, char *file, int line);

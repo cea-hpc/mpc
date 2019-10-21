@@ -276,7 +276,7 @@ typedef int MPC_Message;
  *  are offseted of SCTK_DERIVED_DATATYPE_BASE
  *  actually making them derived ones.
  *  As common ones they are initialized in
- *  \ref sctk_common_datatype_init however
+ *  \ref __mpc_common_types_init however
  *  they are derived ones !
  *
  * See how the value is incremented and how MPC_STRUCT_DATATYPE_COUNT

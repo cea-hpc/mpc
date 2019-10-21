@@ -36,80 +36,89 @@
 /* GLOBALS                                                              */
 /************************************************************************/
 
-/** Common datatypes sizes are initialized in \ref sctk_common_datatype_init */
-size_t * __sctk_common_type_sizes;
+/** Common datatypes sizes are initialized in \ref __mpc_common_types_init */
+size_t *__sctk_common_type_sizes;
 
-static const char * const type_combiner_names[MPC_COMBINER_COUNT__] =
-{
-    "MPC_COMBINER_UNKNOWN",
-    "MPC_COMBINER_NAMED",
-    "MPC_COMBINER_DUP",
-    "MPC_COMBINER_CONTIGUOUS",
-    "MPC_COMBINER_VECTOR",
-    "MPC_COMBINER_HVECTOR",
-    "MPC_COMBINER_INDEXED",
-    "MPC_COMBINER_HINDEXED",
-    "MPC_COMBINER_INDEXED_BLOCK",
-    "MPC_COMBINER_HINDEXED_BLOCK",
-    "MPC_COMBINER_STRUCT",
-    "MPC_COMBINER_SUBARRAY",
-    "MPC_COMBINER_DARRAY",
-    "MPC_COMBINER_F90_REAL",
-    "MPC_COMBINER_F90_COMPLEX",
-    "MPC_COMBINER_F90_INTEGER",
-    "MPC_COMBINER_RESIZED",
-    "MPC_COMBINER_HINDEXED_INTEGER",
-    "MPC_COMBINER_STRUCT_INTEGER",
-    "MPC_COMBINER_HVECTOR_INTEGER"
-};
-
-
-char * sctk_datype_combiner(MPC_Type_combiner combiner)
-{
-	if( (combiner < MPC_COMBINER_COUNT__) && ( 0 <= combiner ) )
+static const char *const type_combiner_names[MPC_COMBINER_COUNT__] =
 	{
-		return (char *)type_combiner_names[ combiner ];
-	}
-	
-	return (char *)type_combiner_names[ MPC_COMBINER_UNKNOWN ];
-}
+		"MPC_COMBINER_UNKNOWN",
+		"MPC_COMBINER_NAMED",
+		"MPC_COMBINER_DUP",
+		"MPC_COMBINER_CONTIGUOUS",
+		"MPC_COMBINER_VECTOR",
+		"MPC_COMBINER_HVECTOR",
+		"MPC_COMBINER_INDEXED",
+		"MPC_COMBINER_HINDEXED",
+		"MPC_COMBINER_INDEXED_BLOCK",
+		"MPC_COMBINER_HINDEXED_BLOCK",
+		"MPC_COMBINER_STRUCT",
+		"MPC_COMBINER_SUBARRAY",
+		"MPC_COMBINER_DARRAY",
+		"MPC_COMBINER_F90_REAL",
+		"MPC_COMBINER_F90_COMPLEX",
+		"MPC_COMBINER_F90_INTEGER",
+		"MPC_COMBINER_RESIZED",
+		"MPC_COMBINER_HINDEXED_INTEGER",
+		"MPC_COMBINER_STRUCT_INTEGER",
+		"MPC_COMBINER_HVECTOR_INTEGER"};
 
+char *_mpc_dt_get_combiner_name( MPC_Type_combiner combiner )
+{
+	if ( ( combiner < MPC_COMBINER_COUNT__ ) && ( 0 <= combiner ) )
+	{
+		return (char *) type_combiner_names[combiner];
+	}
+
+	return (char *) type_combiner_names[MPC_COMBINER_UNKNOWN];
+}
 
 /************************************************************************/
 /* Datatype Init and Release                                            */
 /************************************************************************/
-static volatile int dt_init = 0;
 
-int sctk_datatype_initialized() { return dt_init; }
+static volatile int __mpc_dt_initialized = 0;
 
-void sctk_datatype_init()
+static inline void __mpc_common_types_init(void);
+
+void _mpc_dt_init()
 {
-  if (sctk_datatype_initialized())
-    return;
+	if ( __mpc_dt_initialized )
+		return;
 
-  __sctk_common_type_sizes =
-  sctk_malloc(sizeof(size_t) * SCTK_COMMON_DATA_TYPE_COUNT);
-  assume(__sctk_common_type_sizes != NULL);
-  sctk_common_datatype_init();
-  dt_init = 1;
+	__mpc_dt_initialized = 1;
+
+	__sctk_common_type_sizes =
+		sctk_malloc( sizeof( size_t ) * SCTK_COMMON_DATA_TYPE_COUNT );
+	assume( __sctk_common_type_sizes != NULL );
+	__mpc_common_types_init();
+
 }
 
-void sctk_datatype_release()
+void _mpc_dt_release()
 {
-  if (!sctk_datatype_initialized())
-    return;
+	if ( !__mpc_dt_initialized )
+		return;
+	__mpc_dt_initialized = 0;
 
-  dt_init = 0;
-  sctk_datype_name_release();
-  sctk_free(__sctk_common_type_sizes);
+	sctk_datype_name_release();
+	sctk_free( __sctk_common_type_sizes );
 }
 
 /************************************************************************/
 /* Datatype  Attribute Handling                                         */
 /************************************************************************/
 
+/** \brief This structure defines a Datatype Keyval */
+struct __mpc_dt_keyval
+{
+	MPC_Type_copy_attr_function *copy;	 /**< Keyval copy func */
+	MPC_Type_delete_attr_function *delete; /**< Keyval delete func */
+void *extra_state;			   /**< An extra state to be stored */
+	int free_cell;			   /**< Initally 0, 1 is the keyval is then freed */
+};
+
 /** Here we store Type Keyvals as a linear array */
-static struct Datatype_Keyval *__keyval_array = NULL;
+static struct __mpc_dt_keyval *__keyval_array = NULL;
 /** This is the current array size */
 static unsigned int __keyval_array_size = 0;
 /** This is the current ID offset */
@@ -117,641 +126,694 @@ static unsigned int __keyval_array_offset = 0;
 /** This is the Keyval array lock */
 mpc_common_spinlock_t __keyval_array_lock = 0;
 
-struct Datatype_Keyval *Datatype_Keyval_get(unsigned int type_keyval) {
-  if (__keyval_array_size <= type_keyval)
-    return NULL;
+/** \brief This function retrieves a keyval from an id
+ * 	\param type_keyval ID of keyval to retrieve (offset in a static table)
+ *  \return Pointer to keyval (or NULL if keyval freed or invalid)
+ */
+static inline struct __mpc_dt_keyval *__mpc_dt_keyval_get( unsigned int type_keyval )
+{
+	if ( __keyval_array_size <= type_keyval )
+		return NULL;
 
-  mpc_common_spinlock_lock(&__keyval_array_lock);
-  struct Datatype_Keyval *cell = &__keyval_array[type_keyval];
-  mpc_common_spinlock_unlock(&__keyval_array_lock);
+	mpc_common_spinlock_lock( &__keyval_array_lock );
+	struct __mpc_dt_keyval *cell = &__keyval_array[type_keyval];
+	mpc_common_spinlock_unlock( &__keyval_array_lock );
 
-  if (cell->free_cell) {
-    /* Already freed */
-    return NULL;
-  }
+	if ( cell->free_cell )
+	{
+		/* Already freed */
+		return NULL;
+	}
 
-  return cell;
+	return cell;
 }
 
-int Datatype_Keyval_delete(unsigned int type_keyval) {
-  struct Datatype_Keyval *key = Datatype_Keyval_get(type_keyval);
+/** \brief This function deletes a keyval from an id
+ * 	\param type_keyval ID of keyval to delete (offset in a static table)
+ *  \return MPI_SUCCESS if ok
+ */
+static inline int __mpc_dt_keyval_delete( unsigned int type_keyval )
+{
+	struct __mpc_dt_keyval *key = __mpc_dt_keyval_get( type_keyval );
 
-  if (!key) {
-    return MPC_ERR_ARG;
-  }
+	if ( !key )
+	{
+		return MPC_ERR_ARG;
+	}
 
-  key->free_cell = 1;
+	key->free_cell = 1;
 
-  return SCTK_SUCCESS;
+	return SCTK_SUCCESS;
 }
 
-struct Datatype_Keyval *Datatype_Keyval_new(int *type_keyval) {
-  struct Datatype_Keyval *ret = NULL;
-  int need_realloc = 0;
+/** \brief This function create a new keyval
+ *  \param type_keyval (OUT) Id of the new keyval
+ *  \return Pointer to a newly created keyval entry
+ */
+static inline struct __mpc_dt_keyval *__mpc_dt_keyval_new( int *type_keyval )
+{
+	struct __mpc_dt_keyval *ret = NULL;
+	int need_realloc = 0;
 
-  mpc_common_spinlock_lock(&__keyval_array_lock);
+	mpc_common_spinlock_lock( &__keyval_array_lock );
 
-  if (__keyval_array_size == 0) {
-    /* No keyval array yet */
-    __keyval_array_size = 4;
-    need_realloc = 1;
-  }
+	if ( __keyval_array_size == 0 )
+	{
+		/* No keyval array yet */
+		__keyval_array_size = 4;
+		need_realloc = 1;
+	}
 
-  int new_id = -1;
+	int new_id = -1;
 
-  unsigned int i;
+	unsigned int i;
 
-  /* Try to do some recycling */
-  for (i = 0; i < __keyval_array_offset; i++) {
-    if (__keyval_array[i].free_cell) {
-      new_id = i;
-      break;
-    }
-  }
+	/* Try to do some recycling */
+	for ( i = 0; i < __keyval_array_offset; i++ )
+	{
+		if ( __keyval_array[i].free_cell )
+		{
+			new_id = i;
+			break;
+		}
+	}
 
-  /* We create a new entry */
-  if (new_id < 0) {
-    new_id = __keyval_array_offset;
-    __keyval_array_offset++;
-  }
+	/* We create a new entry */
+	if ( new_id < 0 )
+	{
+		new_id = __keyval_array_offset;
+		__keyval_array_offset++;
+	}
 
-  if (__keyval_array_size <= __keyval_array_offset) {
-    /* We are at the end of the array */
-    __keyval_array_size *= 2;
-    need_realloc = 1;
-  }
+	if ( __keyval_array_size <= __keyval_array_offset )
+	{
+		/* We are at the end of the array */
+		__keyval_array_size *= 2;
+		need_realloc = 1;
+	}
 
-  if (need_realloc) {
-    /* We are here if we had to realloc */
-    __keyval_array = sctk_realloc(
-        __keyval_array, sizeof(struct Datatype_Keyval) * __keyval_array_size);
+	if ( need_realloc )
+	{
+		/* We are here if we had to realloc */
+		__keyval_array = sctk_realloc(
+			__keyval_array, sizeof( struct __mpc_dt_keyval ) * __keyval_array_size );
 
-    if (!__keyval_array) {
-      perror("realloc");
-      abort();
-    }
-  }
+		if ( !__keyval_array )
+		{
+			perror( "realloc" );
+			abort();
+		}
+	}
 
-  /* Now that we booked a slot export its ID and prepare to return the entry */
-  *type_keyval = new_id;
-  ret = &__keyval_array[new_id];
+	/* Now that we booked a slot export its ID and prepare to return the entry */
+	*type_keyval = new_id;
+	ret = &__keyval_array[new_id];
 
-  mpc_common_spinlock_unlock(&__keyval_array_lock);
+	mpc_common_spinlock_unlock( &__keyval_array_lock );
 
-  return ret;
+	return ret;
 }
 
-void Datatype_Keyval_hit_delete(int type_keyval, void *attribute_val,
-                                mpc_mp_datatype_t type) {
-  struct Datatype_Keyval *kv = Datatype_Keyval_get(type_keyval);
+/** \brief Trigger delete handler (if present) on a given data-type
+ *  \param type_keyval Target KEYVAL
+ *  \param type Source data-type
+ */
+static inline void __mpc_dt_keyval_hit_delete( int type_keyval, void *attribute_val,
+						mpc_mp_datatype_t type )
+{
+	struct __mpc_dt_keyval *kv = __mpc_dt_keyval_get( type_keyval );
 
-  if (!kv)
-    return;
+	if ( !kv )
+		return;
 
-  if (kv->delete == MPC_TYPE_NULL_DELETE_FN)
-    return;
+	if ( kv->delete == MPC_TYPE_NULL_DELETE_FN )
+		return;
 
-  (kv->delete)(type, type_keyval, attribute_val, kv->extra_state);
+	( kv->delete )( type, type_keyval, attribute_val, kv->extra_state );
 }
 
-void Datatype_Keyval_hit_copy(int type_keyval, mpc_mp_datatype_t oldtype,
-                              void **attribute_val_in, void **attribute_val_out,
-                              int *flag) {
-  struct Datatype_Keyval *kv = Datatype_Keyval_get(type_keyval);
+/** \brief Trigger copy handler (if present) on a given data-type
+ *  \param type_keyval Target KEYVAL
+ *  \param oldtype old data-type
+ *  \param attribute_val_in old data-type value
+ *  \param attribute_val_out new data-type value
+ */
+static inline void __mpc_dt_keyval_hit_copy( int type_keyval, mpc_mp_datatype_t oldtype,
+					void **attribute_val_in, void **attribute_val_out,
+					int *flag )
+{
+	struct __mpc_dt_keyval *kv = __mpc_dt_keyval_get( type_keyval );
 
-  if (!kv)
-    return;
+	if ( !kv )
+		return;
 
-  *flag = 0;
+	*flag = 0;
 
-  if (kv->delete == MPC_TYPE_NULL_COPY_FN)
-    return;
+	if ( kv->delete == MPC_TYPE_NULL_COPY_FN )
+		return;
 
-  if (kv->delete == MPC_TYPE_NULL_DUP_FN) {
-    *flag = 1;
-    *attribute_val_out = *attribute_val_in;
-    return;
-  }
+	if ( kv->delete == MPC_TYPE_NULL_DUP_FN )
+	{
+		*flag = 1;
+		*attribute_val_out = *attribute_val_in;
+		return;
+	}
 
-  (kv->copy)(oldtype, type_keyval, kv->extra_state, attribute_val_in,
-             attribute_val_out, flag);
+	( kv->copy )( oldtype, type_keyval, kv->extra_state, attribute_val_in,
+				  attribute_val_out, flag );
 }
 
-int sctk_type_create_keyval(MPC_Type_copy_attr_function *copy,
-                            MPC_Type_delete_attr_function *delete,
-                            int *type_keyval, void *extra_state) {
-  /* Create a new slot */
-  struct Datatype_Keyval *new = Datatype_Keyval_new(type_keyval);
+/** \brief Create a new data-type keyval
+ *  \param copy Copy func
+ *  \param delete Delete func
+ *  \param type_keyval (OUT) ID of the newly create keyval
+ *  \param extra_state Extra pointer to be stored in the keyval
+ *  \return MPI_SUCCESS if ok
+ */
+int _mpc_dt_keyval_create( MPC_Type_copy_attr_function *copy,
+						   MPC_Type_delete_attr_function *delete,
+						   int *type_keyval, void *extra_state )
+{
+	/* Create a new slot */
+	struct __mpc_dt_keyval *new = __mpc_dt_keyval_new( type_keyval );
 
-  if (!new)
-    return MPC_ERR_INTERN;
+	if ( !new )
+		return MPC_ERR_INTERN;
 
-  /* Fill content */
-  new->copy = copy;
-  new->delete = delete;
-  new->extra_state = extra_state;
+	/* Fill content */
+	new->copy = copy;
+	new->delete = delete;
+	new->extra_state = extra_state;
 
-  return SCTK_SUCCESS;
+	return SCTK_SUCCESS;
 }
 
-int sctk_type_free_keyval(int *type_keyval) {
-  /* Is is already freed ? */
-  if (*type_keyval == MPC_KEYVAL_INVALID)
-    return MPC_ERR_ARG;
+/** \brief Delete a keyval
+ *  \param type_keyval Delete a keyval
+ *  \return MPI_SUCCESS if ok
+ */
+int _mpc_dt_keyval_free( int *type_keyval )
+{
+	/* Is is already freed ? */
+	if ( *type_keyval == MPC_KEYVAL_INVALID )
+		return MPC_ERR_ARG;
 
-  /* Delete in the internal container */
-  int ret = Datatype_Keyval_delete(*type_keyval);
+	/* Delete in the internal container */
+	int ret = __mpc_dt_keyval_delete( *type_keyval );
 
-  /* Clear key handler */
-  if (ret == SCTK_SUCCESS)
-    *type_keyval = MPC_KEYVAL_INVALID;
+	/* Clear key handler */
+	if ( ret == SCTK_SUCCESS )
+		*type_keyval = MPC_KEYVAL_INVALID;
 
-  return ret;
+	return ret;
 }
 
-struct Datatype_Attr *Datatype_Attr_new(int type_keyval, void *attribute_val) {
-  struct Datatype_Attr *new = sctk_malloc(sizeof(struct Datatype_Attr));
+/** \brief This defines a datatype ATTR storing the attribute val
+ *          to be manipulalted by \ref __mpc_dt_attr_store
+ */
+struct __mpc_dt_attr
+{
+	void *attribute_val; /**< Value of the attribute */
+	int type_keyval;	 /**< Referecne keyval */
+};
 
-  if (!new) {
-    perror("malloc");
-    return NULL;
-  }
 
-  new->type_keyval = type_keyval;
-  new->attribute_val = attribute_val;
+/** \brief Create a new attr entry (alloc)
+ *  \param type_keyval Associated keyval
+ *  \param attribute_val Attribute to be stored
+ *  \param Return a pointer to a newly allocated Attr (NULL on error)
+ */
+static inline struct __mpc_dt_attr *__mpc_dt_attr_new( int type_keyval, void *attribute_val )
+{
+	struct __mpc_dt_attr *new = sctk_malloc( sizeof( struct __mpc_dt_attr ) );
 
-  return new;
+	if ( !new )
+	{
+		perror( "malloc" );
+		return NULL;
+	}
+
+	new->type_keyval = type_keyval;
+	new->attribute_val = attribute_val;
+
+	return new;
 }
 
-int Datatype_Attr_store_init(struct Datatype_Attr_store *store) {
-  mpc_common_hashtable_init(&store->attrs, 11);
-  return 0;
+/** \brief Initialize a data-type store
+ *  \param store Pointer to the target store
+ *  \return 0 on success
+ */
+static inline int __mpc_dt_attr_store_init( struct __mpc_dt_attr_store *store )
+{
+	mpc_common_hashtable_init( &store->attrs, 1 );
+	return 0;
 }
 
-int Datatype_Attr_store_release(struct Datatype_Attr_store *store,
-                                mpc_mp_datatype_t container_type) {
-  void *pattr = NULL;
-  struct Datatype_Attr *attr = NULL;
+/** \brief Release a data-type store
+ *  \param store Pointer to the target store
+ *  \param container_type Datatype being released
+ *  \return 0 on success
+ */
+static inline int __mpc_dt_attr_store_release( struct __mpc_dt_attr_store *store,
+						mpc_mp_datatype_t container_type )
+{
+	void *pattr = NULL;
 
-  /* Call delete handlers for this type */
-  MPC_HT_ITER(&store->attrs, pattr)
+	/* Call delete handlers for this type */
+	MPC_HT_ITER( &store->attrs, pattr )
 
-  if (pattr) {
-    attr = (struct Datatype_Attr *)pattr;
-    Datatype_Keyval_hit_delete(attr->type_keyval, attr->attribute_val,
-                               container_type);
-    sctk_free(attr);
-  }
+	if ( pattr )
+	{
+		struct __mpc_dt_attr *attr = (struct __mpc_dt_attr *) pattr;
+		__mpc_dt_keyval_hit_delete( attr->type_keyval, attr->attribute_val,
+									container_type );
+		sctk_free( attr );
+	}
 
-  MPC_HT_ITER_END
+	MPC_HT_ITER_END
 
-  mpc_common_hashtable_release(&store->attrs);
+	mpc_common_hashtable_release( &store->attrs );
 
-  return 0;
+	return 0;
 }
 
 /************************************************************************/
 /* Common Datatype                                                      */
 /************************************************************************/
 
-/* We need this funtions are MPI_* types are macro replaced by MPC_* ones
+/* We need this funtions as MPI_* types are macro replaced by MPC_* ones
  * and the standard wants MPI_* so we replace ... */
-void sctk_common_datatype_set_name_helper( mpc_mp_datatype_t datatype, char * name )
+static inline void __mpc_common_dt_set_name( mpc_mp_datatype_t datatype, char *name )
 {
-	char * tmp = strdup( name );
+	char *tmp = strdup( name );
 	tmp[2] = 'I';
 	sctk_datype_set_name( datatype, tmp );
 	free( tmp );
 }
 
-
-
-void __init_a_composed_common_types(mpc_mp_datatype_t target_type, size_t disp, mpc_mp_datatype_t type_a, mpc_mp_datatype_t type_b, size_t struct_size )
+static inline void ___mpc_init_composed_common_type( mpc_mp_datatype_t target_type,
+													 size_t disp,
+													 mpc_mp_datatype_t type_a,
+													 mpc_mp_datatype_t type_b,
+													 size_t struct_size )
 {
 	/* Compute data-type sizes */
 	size_t sa, sb;
-	
-	_mpc_m_type_size(type_a, &sa);
-	_mpc_m_type_size(type_b, &sb);
-	
+
+	_mpc_cl_type_size( type_a, &sa );
+	_mpc_cl_type_size( type_b, &sb );
+
 	/* Allocate type context */
- 	mpc_pack_absolute_indexes_t * begins = sctk_malloc( sizeof(mpc_pack_absolute_indexes_t) * 2 );
-	mpc_pack_absolute_indexes_t * ends = sctk_malloc( sizeof(mpc_pack_absolute_indexes_t) * 2 );
-	mpc_mp_datatype_t * types = sctk_malloc( sizeof(mpc_mp_datatype_t) * 2 );
-	
+	mpc_pack_absolute_indexes_t *begins = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * 2 );
+	mpc_pack_absolute_indexes_t *ends = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * 2 );
+	mpc_mp_datatype_t *types = sctk_malloc( sizeof( mpc_mp_datatype_t ) * 2 );
+
 	assume( begins != NULL );
 	assume( ends != NULL );
 	assume( types != NULL );
-	
+
 	/* Fill type context according to collected data */
 	begins[0] = 0;
 	begins[1] = disp;
-	
+
 	/* YES datatypes bounds are inclusive ! */
-	ends[0] = sa -1;
+	ends[0] = sa - 1;
 	ends[1] = disp + sb - 1;
-	
+
 	types[0] = type_a;
 	types[1] = type_b;
 
-	int * blocklengths = sctk_malloc( 2 * sizeof( int ) );
-	size_t * displacements = sctk_malloc( 2 * sizeof( void * ) );
-	
+	int *blocklengths = sctk_malloc( 2 * sizeof( int ) );
+	size_t *displacements = sctk_malloc( 2 * sizeof( void * ) );
+
 	assume( blocklengths != NULL );
 	assume( displacements != NULL );
-	
+
 	blocklengths[0] = 1;
 	blocklengths[1] = 1;
-	
+
 	displacements[0] = begins[0];
 	displacements[1] = begins[1];
 
 	/* Create the derived data-type */
-	_mpc_m_derived_datatype_on_slot( target_type, begins, ends, types, 2, 0, 0, struct_size, 1);
+	_mpc_cl_derived_datatype_on_slot( target_type, begins, ends, types, 2, 0, 0, struct_size, 1 );
 
 	/* Fill its context */
-	struct Datatype_External_context dtctx;
-	sctk_datatype_external_context_clear( &dtctx );
+	struct _mpc_dt_context dtctx;
+	_mpc_dt_context_clear( &dtctx );
 	dtctx.combiner = MPC_COMBINER_STRUCT;
 	dtctx.count = 2;
 	dtctx.array_of_blocklenght = blocklengths;
 	dtctx.array_of_displacements_addr = displacements;
 	dtctx.array_of_types = types;
-	_mpc_m_type_ctx_set( target_type, &dtctx);
-	
+	_mpc_cl_type_ctx_set( target_type, &dtctx );
 
 	/* We do this to handle the padding as we
 	 * want to guarantee the matching with
 	 * an used defined struct */
-	_mpc_m_type_flag_padded(target_type );
+	_mpc_cl_type_flag_padded( target_type );
 }
 
-void init_composed_common_types()
+/** \brief Initialize Common data-types based on derived ones
+ *  This is called at mpi tasc context creation
+ */
+static inline void __mpc_composed_common_types_init()
 {
 	size_t disp;
 	mpc_mp_datatype_t tmp;
 	/* MPC_FLOAT_INT (SCTK_DERIVED_DATATYPE_BASE */
 	mpc_float_int foo_0;
-	disp = ((char *)&foo_0.b - (char *)&foo_0.a);
-	__init_a_composed_common_types( MPC_FLOAT_INT, disp, MPC_FLOAT, MPC_INT, sizeof(mpc_float_int) );
-	sctk_common_datatype_set_name_helper( MPC_FLOAT_INT, "MPI_FLOAT_INT" );
+	disp = ( (char *) &foo_0.b - (char *) &foo_0.a );
+	___mpc_init_composed_common_type( MPC_FLOAT_INT, disp, MPC_FLOAT, MPC_INT, sizeof( mpc_float_int ) );
+	__mpc_common_dt_set_name( MPC_FLOAT_INT, "MPI_FLOAT_INT" );
 	tmp = MPC_FLOAT_INT;
-	_mpc_m_type_commit( &tmp );
+	_mpc_cl_type_commit( &tmp );
 
-        /* MPC_LONG_INT (SCTK_DERIVED_DATATYPE_BASE + 1 */
-        mpc_long_int foo_1;
-        disp = ((char *)&foo_1.b - (char *)&foo_1.a);
-        __init_a_composed_common_types(MPC_LONG_INT, disp, MPC_LONG, MPC_INT,
-                                       sizeof(mpc_long_int));
-        sctk_common_datatype_set_name_helper(MPC_LONG_INT, "MPI_LONG_INT");
-        tmp = MPC_LONG_INT;
-        _mpc_m_type_commit(&tmp);
+	/* MPC_LONG_INT (SCTK_DERIVED_DATATYPE_BASE + 1 */
+	mpc_long_int foo_1;
+	disp = ( (char *) &foo_1.b - (char *) &foo_1.a );
+	___mpc_init_composed_common_type( MPC_LONG_INT, disp, MPC_LONG, MPC_INT,
+									  sizeof( mpc_long_int ) );
+	__mpc_common_dt_set_name( MPC_LONG_INT, "MPI_LONG_INT" );
+	tmp = MPC_LONG_INT;
+	_mpc_cl_type_commit( &tmp );
 
-        /* MPC_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 2 */
-        mpc_double_int foo_2;
-        disp = ((char *)&foo_2.b - (char *)&foo_2.a);
-        __init_a_composed_common_types(MPC_DOUBLE_INT, disp, MPC_DOUBLE,
-                                       MPC_INT, sizeof(mpc_double_int));
-        sctk_common_datatype_set_name_helper(MPC_DOUBLE_INT, "MPI_DOUBLE_INT");
-        tmp = MPC_DOUBLE_INT;
-        _mpc_m_type_commit(&tmp);
+	/* MPC_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 2 */
+	mpc_double_int foo_2;
+	disp = ( (char *) &foo_2.b - (char *) &foo_2.a );
+	___mpc_init_composed_common_type( MPC_DOUBLE_INT, disp, MPC_DOUBLE,
+									  MPC_INT, sizeof( mpc_double_int ) );
+	__mpc_common_dt_set_name( MPC_DOUBLE_INT, "MPI_DOUBLE_INT" );
+	tmp = MPC_DOUBLE_INT;
+	_mpc_cl_type_commit( &tmp );
 
-        /* MPC_SHORT_INT  (SCTK_DERIVED_DATATYPE_BASE + 3 */
-        mpc_short_int foo_3;
-        disp = ((char *)&foo_3.b - (char *)&foo_3.a);
-        __init_a_composed_common_types(MPC_SHORT_INT, disp, MPC_SHORT, MPC_INT,
-                                       sizeof(mpc_short_int));
-        sctk_common_datatype_set_name_helper(MPC_SHORT_INT, "MPI_SHORT_INT");
-        tmp = MPC_SHORT_INT;
-        _mpc_m_type_commit(&tmp);
+	/* MPC_SHORT_INT  (SCTK_DERIVED_DATATYPE_BASE + 3 */
+	mpc_short_int foo_3;
+	disp = ( (char *) &foo_3.b - (char *) &foo_3.a );
+	___mpc_init_composed_common_type( MPC_SHORT_INT, disp, MPC_SHORT, MPC_INT,
+									  sizeof( mpc_short_int ) );
+	__mpc_common_dt_set_name( MPC_SHORT_INT, "MPI_SHORT_INT" );
+	tmp = MPC_SHORT_INT;
+	_mpc_cl_type_commit( &tmp );
 
-        /* MPC_2INT  (SCTK_DERIVED_DATATYPE_BASE + 4 */
-        mpc_int_int foo_4;
-        disp = ((char *)&foo_4.b - (char *)&foo_4.a);
-        __init_a_composed_common_types(MPC_2INT, disp, MPC_INT, MPC_INT,
-                                       sizeof(mpc_int_int));
-        sctk_common_datatype_set_name_helper(MPC_2INT, "MPI_2INT");
-        tmp = MPC_2INT;
-        _mpc_m_type_commit(&tmp);
+	/* MPC_2INT  (SCTK_DERIVED_DATATYPE_BASE + 4 */
+	mpc_int_int foo_4;
+	disp = ( (char *) &foo_4.b - (char *) &foo_4.a );
+	___mpc_init_composed_common_type( MPC_2INT, disp, MPC_INT, MPC_INT,
+									  sizeof( mpc_int_int ) );
+	__mpc_common_dt_set_name( MPC_2INT, "MPI_2INT" );
+	tmp = MPC_2INT;
+	_mpc_cl_type_commit( &tmp );
 
-        /* MPC_2FLOAT  (SCTK_DERIVED_DATATYPE_BASE + 5 */
-        mpc_float_float foo_5;
-        disp = ((char *)&foo_5.b - (char *)&foo_5.a);
-        __init_a_composed_common_types(MPC_2FLOAT, disp, MPC_FLOAT, MPC_FLOAT,
-                                       sizeof(mpc_float_float));
-        sctk_common_datatype_set_name_helper(MPC_2FLOAT, "MPI_2FLOAT");
-        tmp = MPC_2FLOAT;
-        _mpc_m_type_commit(&tmp);
+	/* MPC_2FLOAT  (SCTK_DERIVED_DATATYPE_BASE + 5 */
+	mpc_float_float foo_5;
+	disp = ( (char *) &foo_5.b - (char *) &foo_5.a );
+	___mpc_init_composed_common_type( MPC_2FLOAT, disp, MPC_FLOAT, MPC_FLOAT,
+									  sizeof( mpc_float_float ) );
+	__mpc_common_dt_set_name( MPC_2FLOAT, "MPI_2FLOAT" );
+	tmp = MPC_2FLOAT;
+	_mpc_cl_type_commit( &tmp );
 
-        /* MPC_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 6 */
-        __init_a_composed_common_types(MPC_COMPLEX, disp, MPC_FLOAT, MPC_FLOAT,
-                                       sizeof(mpc_float_float));
-        sctk_common_datatype_set_name_helper(MPC_COMPLEX, "MPI_COMPLEX");
-        tmp = MPC_COMPLEX;
-        _mpc_m_type_commit(&tmp);
+	/* MPC_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 6 */
+	___mpc_init_composed_common_type( MPC_COMPLEX, disp, MPC_FLOAT, MPC_FLOAT,
+									  sizeof( mpc_float_float ) );
+	__mpc_common_dt_set_name( MPC_COMPLEX, "MPI_COMPLEX" );
+	tmp = MPC_COMPLEX;
+	_mpc_cl_type_commit( &tmp );
 
-        /* MPC_COMPLEX8  (SCTK_DERIVED_DATATYPE_BASE + 10 */
-        __init_a_composed_common_types(MPC_COMPLEX8, disp, MPC_FLOAT, MPC_FLOAT,
-                                       sizeof(mpc_float_float));
-        sctk_common_datatype_set_name_helper(MPC_COMPLEX8, "MPI_COMPLEX8");
-        tmp = MPC_COMPLEX8;
-        _mpc_m_type_commit(&tmp);
+	/* MPC_COMPLEX8  (SCTK_DERIVED_DATATYPE_BASE + 10 */
+	___mpc_init_composed_common_type( MPC_COMPLEX8, disp, MPC_FLOAT, MPC_FLOAT,
+									  sizeof( mpc_float_float ) );
+	__mpc_common_dt_set_name( MPC_COMPLEX8, "MPI_COMPLEX8" );
+	tmp = MPC_COMPLEX8;
+	_mpc_cl_type_commit( &tmp );
 
-        /* MPC_2DOUBLE_PRECISION  (SCTK_DERIVED_DATATYPE_BASE + 7 */
-        mpc_double_double foo_6;
-        disp = ((char *)&foo_6.b - (char *)&foo_6.a);
-        __init_a_composed_common_types(MPC_2DOUBLE_PRECISION, disp, MPC_DOUBLE,
-                                       MPC_DOUBLE, sizeof(mpc_double_double));
-        sctk_common_datatype_set_name_helper(MPC_2DOUBLE_PRECISION,
-                                             "MPI_2DOUBLE_PRECISION");
-        tmp = MPC_2DOUBLE_PRECISION;
-        _mpc_m_type_commit(&tmp);
+	/* MPC_2DOUBLE_PRECISION  (SCTK_DERIVED_DATATYPE_BASE + 7 */
+	mpc_double_double foo_6;
+	disp = ( (char *) &foo_6.b - (char *) &foo_6.a );
+	___mpc_init_composed_common_type( MPC_2DOUBLE_PRECISION, disp, MPC_DOUBLE,
+									  MPC_DOUBLE, sizeof( mpc_double_double ) );
+	__mpc_common_dt_set_name( MPC_2DOUBLE_PRECISION,
+							  "MPI_2DOUBLE_PRECISION" );
+	tmp = MPC_2DOUBLE_PRECISION;
+	_mpc_cl_type_commit( &tmp );
 
-        /* MPC_COMPLEX16  (SCTK_DERIVED_DATATYPE_BASE + 11 */
-        __init_a_composed_common_types(MPC_COMPLEX16, disp, MPC_DOUBLE,
-                                       MPC_DOUBLE, sizeof(mpc_double_double));
-        sctk_common_datatype_set_name_helper(MPC_COMPLEX16, "MPI_COMPLEX16");
-        tmp = MPC_COMPLEX16;
-        _mpc_m_type_commit(&tmp);
+	/* MPC_COMPLEX16  (SCTK_DERIVED_DATATYPE_BASE + 11 */
+	___mpc_init_composed_common_type( MPC_COMPLEX16, disp, MPC_DOUBLE,
+									  MPC_DOUBLE, sizeof( mpc_double_double ) );
+	__mpc_common_dt_set_name( MPC_COMPLEX16, "MPI_COMPLEX16" );
+	tmp = MPC_COMPLEX16;
+	_mpc_cl_type_commit( &tmp );
 
-        /* MPC_DOUBLE_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 12 */
-        __init_a_composed_common_types(MPC_DOUBLE_COMPLEX, disp, MPC_DOUBLE,
-                                       MPC_DOUBLE, sizeof(mpc_double_double));
-        sctk_common_datatype_set_name_helper(MPC_DOUBLE_COMPLEX,
-                                             "MPI_DOUBLE_COMPLEX");
-        tmp = MPC_DOUBLE_COMPLEX;
-        _mpc_m_type_commit(&tmp);
+	/* MPC_DOUBLE_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 12 */
+	___mpc_init_composed_common_type( MPC_DOUBLE_COMPLEX, disp, MPC_DOUBLE,
+									  MPC_DOUBLE, sizeof( mpc_double_double ) );
+	__mpc_common_dt_set_name( MPC_DOUBLE_COMPLEX,
+							  "MPI_DOUBLE_COMPLEX" );
+	tmp = MPC_DOUBLE_COMPLEX;
+	_mpc_cl_type_commit( &tmp );
 
-        /* MPC_LONG_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 8 */
-        mpc_long_double_int foo_7;
-        disp = ((char *)&foo_7.b - (char *)&foo_7.a);
-        __init_a_composed_common_types(MPC_LONG_DOUBLE_INT, disp,
-                                       MPC_LONG_DOUBLE, MPC_INT,
-                                       sizeof(mpc_long_double_int));
-        sctk_common_datatype_set_name_helper(MPC_LONG_DOUBLE_INT,
-                                             "MPI_LONG_DOUBLE_INT");
-        tmp = MPC_LONG_DOUBLE_INT;
-        _mpc_m_type_commit(&tmp);
+	/* MPC_LONG_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 8 */
+	mpc_long_double_int foo_7;
+	disp = ( (char *) &foo_7.b - (char *) &foo_7.a );
+	___mpc_init_composed_common_type( MPC_LONG_DOUBLE_INT, disp,
+									  MPC_LONG_DOUBLE, MPC_INT,
+									  sizeof( mpc_long_double_int ) );
+	__mpc_common_dt_set_name( MPC_LONG_DOUBLE_INT,
+							  "MPI_LONG_DOUBLE_INT" );
+	tmp = MPC_LONG_DOUBLE_INT;
+	_mpc_cl_type_commit( &tmp );
 
-        /* MPC_2INTEGER  (SCTK_DERIVED_DATATYPE_BASE + 13 */
-        mpc_integer_integer foo_13;
-        disp = ((char *)&foo_13.b - (char *)&foo_13.a);
-        __init_a_composed_common_types(MPC_2INTEGER, disp, MPC_INTEGER,
-                                       MPC_INTEGER,
-                                       sizeof(mpc_integer_integer));
-        sctk_common_datatype_set_name_helper(MPC_2INTEGER, "MPI_2INTEGER");
-        tmp = MPC_2INTEGER;
-        _mpc_m_type_commit(&tmp);
+	/* MPC_2INTEGER  (SCTK_DERIVED_DATATYPE_BASE + 13 */
+	mpc_integer_integer foo_13;
+	disp = ( (char *) &foo_13.b - (char *) &foo_13.a );
+	___mpc_init_composed_common_type( MPC_2INTEGER, disp, MPC_INTEGER,
+									  MPC_INTEGER,
+									  sizeof( mpc_integer_integer ) );
+	__mpc_common_dt_set_name( MPC_2INTEGER, "MPI_2INTEGER" );
+	tmp = MPC_2INTEGER;
+	_mpc_cl_type_commit( &tmp );
 
-        /* MPC_2REAL  (SCTK_DERIVED_DATATYPE_BASE + 14 */
-        mpc_real_real foo_14;
-        disp = ((char *)&foo_14.b - (char *)&foo_14.a);
-        __init_a_composed_common_types(MPC_2REAL, disp, MPC_REAL, MPC_REAL,
-                                       sizeof(mpc_real_real));
-        sctk_common_datatype_set_name_helper(MPC_2REAL, "MPI_2REAL");
-        tmp = MPC_2REAL;
-        _mpc_m_type_commit(&tmp);
+	/* MPC_2REAL  (SCTK_DERIVED_DATATYPE_BASE + 14 */
+	mpc_real_real foo_14;
+	disp = ( (char *) &foo_14.b - (char *) &foo_14.a );
+	___mpc_init_composed_common_type( MPC_2REAL, disp, MPC_REAL, MPC_REAL,
+									  sizeof( mpc_real_real ) );
+	__mpc_common_dt_set_name( MPC_2REAL, "MPI_2REAL" );
+	tmp = MPC_2REAL;
+	_mpc_cl_type_commit( &tmp );
 
-        /* MPC_COMPLEX32  (SCTK_DERIVED_DATATYPE_BASE + 12 */
-        mpc_longdouble_longdouble foo_9;
-        disp = ((char *)&foo_9.b - (char *)&foo_9.a);
-        __init_a_composed_common_types(MPC_COMPLEX32, disp, MPC_LONG_DOUBLE,
-                                       MPC_LONG_DOUBLE,
-                                       sizeof(mpc_longdouble_longdouble));
-        sctk_common_datatype_set_name_helper(MPC_COMPLEX32, "MPI_COMPLEX32");
-        tmp = MPC_COMPLEX32;
-        _mpc_m_type_commit(&tmp);
+	/* MPC_COMPLEX32  (SCTK_DERIVED_DATATYPE_BASE + 12 */
+	mpc_longdouble_longdouble foo_9;
+	disp = ( (char *) &foo_9.b - (char *) &foo_9.a );
+	___mpc_init_composed_common_type( MPC_COMPLEX32, disp, MPC_LONG_DOUBLE,
+									  MPC_LONG_DOUBLE,
+									  sizeof( mpc_longdouble_longdouble ) );
+	__mpc_common_dt_set_name( MPC_COMPLEX32, "MPI_COMPLEX32" );
+	tmp = MPC_COMPLEX32;
+	_mpc_cl_type_commit( &tmp );
 }
 
+#define tostring( a ) #a
+#define SCTK_INIT_TYPE_SIZE( datatype, t )              \
+	__sctk_common_type_sizes[datatype] = sizeof( t );   \
+	sctk_assert( datatype >= 0 );                       \
+	sctk_assert( _mpc_dt_is_common( datatype ) ); \
+	__mpc_common_dt_set_name( datatype, #datatype );
 
-void release_composed_common_types()
+
+/** \brief Initilalize common datatype sizes
+ */
+static inline void __mpc_common_types_init(void)
 {
-
-  mpc_mp_datatype_t tmp;
-  tmp = MPC_FLOAT_INT;
-  _mpc_m_type_free(&tmp);
-  tmp = MPC_LONG_INT;
-  _mpc_m_type_free(&tmp);
-  tmp = MPC_DOUBLE_INT;
-  _mpc_m_type_free(&tmp);
-  tmp = MPC_SHORT_INT;
-  _mpc_m_type_free(&tmp);
-  tmp = MPC_2INT;
-  _mpc_m_type_free(&tmp);
-  tmp = MPC_2FLOAT;
-  _mpc_m_type_free(&tmp);
-  tmp = MPC_COMPLEX;
-  _mpc_m_type_free(&tmp);
-  tmp = MPC_COMPLEX8;
-  _mpc_m_type_free(&tmp);
-  tmp = MPC_2DOUBLE_PRECISION;
-  _mpc_m_type_free(&tmp);
-  tmp = MPC_COMPLEX16;
-  _mpc_m_type_free(&tmp);
-  tmp = MPC_DOUBLE_COMPLEX;
-  _mpc_m_type_free(&tmp);
-  tmp = MPC_LONG_DOUBLE_INT;
-  _mpc_m_type_free(&tmp);
-  tmp = MPC_2INTEGER;
-  _mpc_m_type_free(&tmp);
-  tmp = MPC_2REAL;
-  _mpc_m_type_free(&tmp);
-  tmp = MPC_COMPLEX32;
-  _mpc_m_type_free(&tmp);
-}
-
-#define tostring(a) #a
-#define SCTK_INIT_TYPE_SIZE(datatype,t) __sctk_common_type_sizes[datatype] = sizeof(t) ; \
-					sctk_assert(datatype >=0 ); \
-					sctk_assert( sctk_datatype_is_common( datatype ) );\
-					sctk_common_datatype_set_name_helper( datatype, #datatype );
-
-void sctk_common_datatype_init()
-{
-	SCTK_INIT_TYPE_SIZE (MPC_CHAR, char);
-	SCTK_INIT_TYPE_SIZE (MPC_LOGICAL, int);
-	SCTK_INIT_TYPE_SIZE (MPC_BYTE, unsigned char);
-	SCTK_INIT_TYPE_SIZE (MPC_SHORT, short);
-	SCTK_INIT_TYPE_SIZE (MPC_INT, int);
-	SCTK_INIT_TYPE_SIZE (MPC_LONG, long);
-	SCTK_INIT_TYPE_SIZE (MPC_FLOAT, float);
-	SCTK_INIT_TYPE_SIZE (MPC_DOUBLE, double);
-	SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED_CHAR, unsigned char);
-	SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED_SHORT, unsigned short);
-	SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED, unsigned int);
-	SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED_LONG, unsigned long);
-	SCTK_INIT_TYPE_SIZE (MPC_LONG_DOUBLE, long double);
-	SCTK_INIT_TYPE_SIZE (MPC_LONG_LONG, long long);
-	SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED_LONG_LONG, unsigned long long);
-	SCTK_INIT_TYPE_SIZE (MPC_INTEGER1, int8_t);
-	SCTK_INIT_TYPE_SIZE (MPC_INTEGER2, int16_t);
-	SCTK_INIT_TYPE_SIZE (MPC_INTEGER4, int32_t);
-	SCTK_INIT_TYPE_SIZE (MPC_INTEGER8, int64_t);
-	SCTK_INIT_TYPE_SIZE (MPC_INTEGER16, int64_t[2] );
-	SCTK_INIT_TYPE_SIZE (MPC_REAL4, float);
-	SCTK_INIT_TYPE_SIZE (MPC_REAL8, double);
-	SCTK_INIT_TYPE_SIZE (MPC_REAL16, long double);
-	SCTK_INIT_TYPE_SIZE (MPC_SIGNED_CHAR, char);
-	SCTK_INIT_TYPE_SIZE (MPC_INT8_T, int8_t );
-	SCTK_INIT_TYPE_SIZE (MPC_UINT8_T, uint8_t );
-	SCTK_INIT_TYPE_SIZE (MPC_INT16_T, int16_t );
-	SCTK_INIT_TYPE_SIZE (MPC_UINT16_T, uint16_t );
-	SCTK_INIT_TYPE_SIZE (MPC_INT32_T, int32_t );
-	SCTK_INIT_TYPE_SIZE (MPC_UINT32_T, uint32_t );
-	SCTK_INIT_TYPE_SIZE (MPC_INT64_T, int64_t );
-	SCTK_INIT_TYPE_SIZE (MPC_UINT64_T, uint64_t );
-	SCTK_INIT_TYPE_SIZE (MPC_WCHAR, sctk_wchar_t );
-	SCTK_INIT_TYPE_SIZE (MPC_AINT, size_t );
-	SCTK_INIT_TYPE_SIZE (MPC_OFFSET, size_t );
-	SCTK_INIT_TYPE_SIZE (MPC_COUNT, size_t );
-	SCTK_INIT_TYPE_SIZE (MPC_LONG_LONG_INT, long long int );
-	SCTK_INIT_TYPE_SIZE (MPC_C_BOOL, char );
-	SCTK_INIT_TYPE_SIZE (MPC_CHARACTER, char );
-	SCTK_INIT_TYPE_SIZE (MPC_INTEGER, int );
-	SCTK_INIT_TYPE_SIZE (MPC_REAL, float );
-	SCTK_INIT_TYPE_SIZE (MPC_DOUBLE_PRECISION, double );
-
+	SCTK_INIT_TYPE_SIZE( MPC_CHAR, char );
+	SCTK_INIT_TYPE_SIZE( MPC_LOGICAL, int );
+	SCTK_INIT_TYPE_SIZE( MPC_BYTE, unsigned char );
+	SCTK_INIT_TYPE_SIZE( MPC_SHORT, short );
+	SCTK_INIT_TYPE_SIZE( MPC_INT, int );
+	SCTK_INIT_TYPE_SIZE( MPC_LONG, long );
+	SCTK_INIT_TYPE_SIZE( MPC_FLOAT, float );
+	SCTK_INIT_TYPE_SIZE( MPC_DOUBLE, double );
+	SCTK_INIT_TYPE_SIZE( MPC_UNSIGNED_CHAR, unsigned char );
+	SCTK_INIT_TYPE_SIZE( MPC_UNSIGNED_SHORT, unsigned short );
+	SCTK_INIT_TYPE_SIZE( MPC_UNSIGNED, unsigned int );
+	SCTK_INIT_TYPE_SIZE( MPC_UNSIGNED_LONG, unsigned long );
+	SCTK_INIT_TYPE_SIZE( MPC_LONG_DOUBLE, long double );
+	SCTK_INIT_TYPE_SIZE( MPC_LONG_LONG, long long );
+	SCTK_INIT_TYPE_SIZE( MPC_UNSIGNED_LONG_LONG, unsigned long long );
+	SCTK_INIT_TYPE_SIZE( MPC_INTEGER1, int8_t );
+	SCTK_INIT_TYPE_SIZE( MPC_INTEGER2, int16_t );
+	SCTK_INIT_TYPE_SIZE( MPC_INTEGER4, int32_t );
+	SCTK_INIT_TYPE_SIZE( MPC_INTEGER8, int64_t );
+	SCTK_INIT_TYPE_SIZE( MPC_INTEGER16, int64_t[2] );
+	SCTK_INIT_TYPE_SIZE( MPC_REAL4, float );
+	SCTK_INIT_TYPE_SIZE( MPC_REAL8, double );
+	SCTK_INIT_TYPE_SIZE( MPC_REAL16, long double );
+	SCTK_INIT_TYPE_SIZE( MPC_SIGNED_CHAR, char );
+	SCTK_INIT_TYPE_SIZE( MPC_INT8_T, int8_t );
+	SCTK_INIT_TYPE_SIZE( MPC_UINT8_T, uint8_t );
+	SCTK_INIT_TYPE_SIZE( MPC_INT16_T, int16_t );
+	SCTK_INIT_TYPE_SIZE( MPC_UINT16_T, uint16_t );
+	SCTK_INIT_TYPE_SIZE( MPC_INT32_T, int32_t );
+	SCTK_INIT_TYPE_SIZE( MPC_UINT32_T, uint32_t );
+	SCTK_INIT_TYPE_SIZE( MPC_INT64_T, int64_t );
+	SCTK_INIT_TYPE_SIZE( MPC_UINT64_T, uint64_t );
+	SCTK_INIT_TYPE_SIZE( MPC_WCHAR, sctk_wchar_t );
+	SCTK_INIT_TYPE_SIZE( MPC_AINT, size_t );
+	SCTK_INIT_TYPE_SIZE( MPC_OFFSET, size_t );
+	SCTK_INIT_TYPE_SIZE( MPC_COUNT, size_t );
+	SCTK_INIT_TYPE_SIZE( MPC_LONG_LONG_INT, long long int );
+	SCTK_INIT_TYPE_SIZE( MPC_C_BOOL, char );
+	SCTK_INIT_TYPE_SIZE( MPC_CHARACTER, char );
+	SCTK_INIT_TYPE_SIZE( MPC_INTEGER, int );
+	SCTK_INIT_TYPE_SIZE( MPC_REAL, float );
+	SCTK_INIT_TYPE_SIZE( MPC_DOUBLE_PRECISION, double );
 
 	/* Special cases */
 	__sctk_common_type_sizes[MPC_PACKED] = 0;
-	sctk_common_datatype_set_name_helper( MPC_PACKED, "MPI_PACKED");
+	__mpc_common_dt_set_name( MPC_PACKED, "MPI_PACKED" );
+
+	/* Initialize composed datatypes */
+	__mpc_composed_common_types_init();
 }
 
-void sctk_common_datatype_display( mpc_mp_datatype_t datatype )
+void _mpc_dt_common_display( mpc_mp_datatype_t datatype )
 {
-	if( !sctk_datatype_is_common( datatype ) )
+	if ( !_mpc_dt_is_common( datatype ) )
 	{
-		sctk_error("Unknown datatype provided to %s\n", __FUNCTION__ );
+		sctk_error( "Unknown datatype provided to %s\n", __FUNCTION__ );
 		abort();
 	}
-	
-	sctk_error("=============COMMON=================");
-	sctk_error("NAME %s", sctk_datype_get_name( datatype ) );
-	sctk_error("SIZE %ld",__sctk_common_type_sizes[ datatype ]);
-	sctk_error("====================================");
-}
 
+	sctk_error( "=============COMMON=================" );
+	sctk_error( "NAME %s", sctk_datype_get_name( datatype ) );
+	sctk_error( "SIZE %ld", __sctk_common_type_sizes[datatype] );
+	sctk_error( "====================================" );
+}
 
 /************************************************************************/
 /* Contiguous Datatype                                                  */
 /************************************************************************/
 
-void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t id_rank , size_t element_size, size_t count, mpc_mp_datatype_t datatype )
+static inline void __mpc_dt_footprint_clear( struct _mpc_dt_footprint *ctx );
+
+void _mpc_dt_contiguous_init( _mpc_dt_contiguout_t *type, size_t id_rank, size_t element_size, size_t count, mpc_mp_datatype_t datatype )
 {
 	type->id_rank = id_rank;
 	type->size = element_size * count;
-	type->count =  count;
+	type->count = count;
 	type->element_size = element_size;
 	type->datatype = datatype;
 	type->ref_count = 1;
-	
+
 	/* Clear context */
-	sctk_datatype_context_clear( &type->context );
+	__mpc_dt_footprint_clear( &type->context );
 
-        sctk_handle_new_from_id(datatype, SCTK_HANDLE_DATATYPE);
+	sctk_handle_new_from_id( datatype, SCTK_HANDLE_DATATYPE );
 
-        /* Attrs */
-        Datatype_Attr_store_init(&type->attrs);
+	/* Attrs */
+	__mpc_dt_attr_store_init( &type->attrs );
 }
 
-void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
+static inline void __mpc_context_free( struct _mpc_dt_footprint * ctx );
+
+void _mpc_dt_contiguous_release( _mpc_dt_contiguout_t *type )
 {
 	type->ref_count--;
-	
-	if( type->ref_count == 0 )
+
+	if ( type->ref_count == 0 )
 	{
-          /* Attrs */
-          Datatype_Attr_store_release(&type->attrs,
-                                      (mpc_mp_datatype_t)type->datatype);
+		/* Attrs */
+		__mpc_dt_attr_store_release( &type->attrs,
+									 (mpc_mp_datatype_t) type->datatype );
 
-          sctk_datatype_context_free(&type->context);
+		__mpc_context_free( &type->context );
 
-          sctk_handle_free(type->datatype, SCTK_HANDLE_DATATYPE);
-          /* Counter == 0 then free */
-          memset(type, 0, sizeof(sctk_contiguous_datatype_t));
-        }
+		sctk_handle_free( type->datatype, SCTK_HANDLE_DATATYPE );
+		/* Counter == 0 then free */
+		memset( type, 0, sizeof( _mpc_dt_contiguout_t ) );
+	}
 }
 
-void sctk_contiguous_datatype_display( sctk_contiguous_datatype_t * target_type )
+void _mpc_dt_contiguous_display( _mpc_dt_contiguout_t *target_type )
 {
-	sctk_error("=============CONTIGUOUS==================");
-	sctk_error("ID_RANK %ld", target_type->id_rank );
-	sctk_error("REF_COUNT %ld", target_type->ref_count );
-	sctk_error("SIZE %ld", target_type->size );
-	sctk_error("ELEM SIZE %ld", target_type->element_size );
-	sctk_error("COUNT %ld", target_type->count );
-	sctk_error("DTYPE %d", target_type->datatype );
-	
-	
+	sctk_error( "=============CONTIGUOUS==================" );
+	sctk_error( "ID_RANK %ld", target_type->id_rank );
+	sctk_error( "REF_COUNT %ld", target_type->ref_count );
+	sctk_error( "SIZE %ld", target_type->size );
+	sctk_error( "ELEM SIZE %ld", target_type->element_size );
+	sctk_error( "COUNT %ld", target_type->count );
+	sctk_error( "DTYPE %d", target_type->datatype );
+
 	int ni, na, nd, c;
 
-	sctk_datatype_fill_envelope( &target_type->context , &ni, &na , &nd , &c );
-	sctk_error("COMBINER : %s[%d]", sctk_datype_combiner(c), c );
-	
+	_mpc_dt_fill_envelope( &target_type->context, &ni, &na, &nd, &c );
+	sctk_error( "COMBINER : %s[%d]", _mpc_dt_get_combiner_name( c ), c );
+
 	int i;
-	
-	printf("INT : [");
-	for( i = 0 ; i < ni ; i++ )
+
+	printf( "INT : [" );
+	for ( i = 0; i < ni; i++ )
 	{
-		printf("[%d] %d , ", i, target_type->context.array_of_integers[i] );
+		printf( "[%d] %d , ", i, target_type->context.array_of_integers[i] );
 	}
-	printf("]\n");
-	
-	printf("ADD : [");
-	for( i = 0 ; i < na ; i++ )
+	printf( "]\n" );
+
+	printf( "ADD : [" );
+	for ( i = 0; i < na; i++ )
 	{
-		printf("[%d] %ld , ", i, target_type->context.array_of_addresses[i] );
+		printf( "[%d] %lu , ", i, (unsigned long)target_type->context.array_of_addresses[i] );
 	}
-	printf("]\n");
-	
-	printf("TYP : [");
-	for( i = 0 ; i < nd ; i++ )
+	printf( "]\n" );
+
+	printf( "TYP : [" );
+	for ( i = 0; i < nd; i++ )
 	{
-		printf("[%d] %d , ", i, target_type->context.array_of_types[i] );
+		printf( "[%d] %d , ", i, target_type->context.array_of_types[i] );
 	}
-	printf("]\n");
-	sctk_error("==============================================");
+	printf( "]\n" );
+	sctk_error( "==============================================" );
 }
 
 /************************************************************************/
 /* Derived Datatype                                                     */
 /************************************************************************/
 
-void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
-				 mpc_mp_datatype_t id,
-				 unsigned long count,
-                                 mpc_pack_absolute_indexes_t * begins,
-                                 mpc_pack_absolute_indexes_t * ends,
-                                 mpc_mp_datatype_t * datatypes,
-                                 mpc_pack_absolute_indexes_t lb, 
-				 int is_lb,
-				 mpc_pack_absolute_indexes_t ub,
-				 int is_ub )
+void _mpc_dt_derived_init( _mpc_dt_derived_t *type,
+						   mpc_mp_datatype_t id,
+						   unsigned long count,
+						   mpc_pack_absolute_indexes_t *begins,
+						   mpc_pack_absolute_indexes_t *ends,
+						   mpc_mp_datatype_t *datatypes,
+						   mpc_pack_absolute_indexes_t lb,
+						   int is_lb,
+						   mpc_pack_absolute_indexes_t ub,
+						   int is_ub )
 {
-	sctk_nodebug( "Derived create ID %d", id);
+	sctk_nodebug( "Derived create ID %d", id );
 	/* Set the integer id */
 	type->id = id;
-	
+
 	/* We now allocate the offset pairs */
-	type->begins = (mpc_pack_absolute_indexes_t *) sctk_malloc (count * sizeof(mpc_pack_absolute_indexes_t));
-	type->ends = (mpc_pack_absolute_indexes_t *) sctk_malloc (count * sizeof(mpc_pack_absolute_indexes_t));
-	
+	type->begins = (mpc_pack_absolute_indexes_t *) sctk_malloc( count * sizeof( mpc_pack_absolute_indexes_t ) );
+	type->ends = (mpc_pack_absolute_indexes_t *) sctk_malloc( count * sizeof( mpc_pack_absolute_indexes_t ) );
+
 	type->opt_begins = type->begins;
 	type->opt_ends = type->ends;
 
-	type->datatypes = (mpc_mp_datatype_t *) sctk_malloc (count * sizeof(mpc_mp_datatype_t));
+	type->datatypes = (mpc_mp_datatype_t *) sctk_malloc( count * sizeof( mpc_mp_datatype_t ) );
 
 	/*EXPAT*/
-	if( !type->begins || !type->ends || !type->datatypes )
+	if ( !type->begins || !type->ends || !type->datatypes )
 	{
-		sctk_fatal("Failled to allocate derived type content" );
+		sctk_fatal( "Failled to allocate derived type content" );
 	}
 
 	/* And we fill them from the parameters */
 
-	memcpy (type->begins, begins, count * sizeof (mpc_pack_absolute_indexes_t));
-	memcpy (type->ends, ends, count * sizeof (mpc_pack_absolute_indexes_t));
-	memcpy (type->datatypes, datatypes, count * sizeof (mpc_mp_datatype_t));
+	memcpy( type->begins, begins, count * sizeof( mpc_pack_absolute_indexes_t ) );
+	memcpy( type->ends, ends, count * sizeof( mpc_pack_absolute_indexes_t ) );
+	memcpy( type->datatypes, datatypes, count * sizeof( mpc_mp_datatype_t ) );
 
 	/* Fill the rest of the structure */
 	type->size = 0;
@@ -759,196 +821,212 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 	/* At the beginning before optimization opt_count == count */
 	type->opt_count = count;
 	type->ref_count = 1;
-	
+
 	/* Here we compute the total size of the type
 		* by summing sections */
 	unsigned long j;
-	
-	for (j = 0; j < count; j++)
+
+	for ( j = 0; j < count; j++ )
 	{
-		sctk_nodebug("( %d / %d ) => B : %d  E : %d D : %d ",j, count - 1 , type->begins[j], type->ends[j], type->datatypes[j]);
+		sctk_nodebug( "( %d / %d ) => B : %d  E : %d D : %d ", j, count - 1, type->begins[j], type->ends[j], type->datatypes[j] );
 		type->size += type->ends[j] - type->begins[j] + 1;
 	}
-	
-	sctk_nodebug("TYPE SIZE : %d", type->size );
-	
+
+	sctk_nodebug( "TYPE SIZE : %d", type->size );
+
 	/* Set lower and upper bound parameters */
 	type->ub = ub;
 	type->lb = lb;
 	type->is_ub = is_ub;
 	type->is_lb = is_lb;
-	
+
 	/* We assume 0 this value is set in the Struct constructor afterwards */
 	type->is_a_padded_struct = 0;
-	
-	/* Clear context */
-	sctk_datatype_context_clear( &type->context );
 
-        sctk_handle_new_from_id(id, SCTK_HANDLE_DATATYPE);
-        /* Attrs */
-        Datatype_Attr_store_init(&type->attrs);
+	/* Clear context */
+	__mpc_dt_footprint_clear( &type->context );
+
+	sctk_handle_new_from_id( id, SCTK_HANDLE_DATATYPE );
+	/* Attrs */
+	__mpc_dt_attr_store_init( &type->attrs );
 }
 
-
-int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
+int _mpc_dt_derived_release( _mpc_dt_derived_t *type )
 {
 	sctk_nodebug( "Derived %d free REF : %d", type->id, type->ref_count );
-	
-	
+
 	/* Here we decrement the refcounter */
 	type->ref_count--;
-	
+
 	if ( type->ref_count == 0 )
 	{
 
-          sctk_handle_free(type->id, SCTK_HANDLE_DATATYPE);
+		sctk_handle_free( type->id, SCTK_HANDLE_DATATYPE );
 
-          /* Attrs */
-          Datatype_Attr_store_release(&type->attrs, type->id);
+		/* Attrs */
+		__mpc_dt_attr_store_release( &type->attrs, type->id );
 
-          /* First call free on each embedded derived type
+		/* First call free on each embedded derived type
                   * but we must do this only once per type, therefore
                   * we accumulate counter for each type and only
                   * call on those which are non-zero */
-          short is_datatype_present[MPC_TYPE_COUNT];
-          memset(is_datatype_present, 0, sizeof(short) * MPC_TYPE_COUNT);
+		short is_datatype_present[MPC_TYPE_COUNT];
+		memset( is_datatype_present, 0, sizeof( short ) * MPC_TYPE_COUNT );
 
-          /* We now have to decrement the refcounter
+		/* We now have to decrement the refcounter
            * First we try to get the layout and if we fail we
            * abort as it means that this datatype has
            * no layout and was not handled in set_context */
 
-          /* Try to rely on the datype layout */
-          unsigned int i;
-          size_t count;
-          struct Datatype_layout *layout =
-              sctk_datatype_layout(&type->context, &count);
+		/* Try to rely on the datype layout */
+		unsigned int i;
+		size_t count;
+		struct _mpc_dt_layout *layout =
+			_mpc_dt_get_layout( &type->context, &count );
 
-          if (layout) {
-            int to_free[MPC_TYPE_COUNT];
+		if ( layout )
+		{
+			int to_free[MPC_TYPE_COUNT];
 
-            memset(to_free, 0, sizeof(int) * MPC_TYPE_COUNT);
+			memset( to_free, 0, sizeof( int ) * MPC_TYPE_COUNT );
 
-            for (i = 0; i < count; i++) {
-              if (sctk_datatype_is_boundary(layout[i].type))
-                continue;
+			for ( i = 0; i < count; i++ )
+			{
+				if ( _mpc_dt_is_boundary( layout[i].type ) )
+					continue;
 
-              to_free[layout[i].type] = 1;
-            }
+				to_free[layout[i].type] = 1;
+			}
 
-            if (count) {
-              if (type->context.internal_type != layout[0].type &&
-                  type->context.internal_type != MPC_DATATYPE_NULL) {
-                to_free[type->context.internal_type] = 1;
-              }
-            }
+			if ( count )
+			{
+				if ( type->context.internal_type != layout[0].type &&
+					 type->context.internal_type != MPC_DATATYPE_NULL )
+				{
+					to_free[type->context.internal_type] = 1;
+				}
+			}
 
-            sctk_free(layout);
+			sctk_free( layout );
 
-            /* Now free each type only once */
-            for (i = 0; i < MPC_TYPE_COUNT; i++) {
-              int not_released_yet = 0;
-              _mpc_m_type_is_allocated(i, &not_released_yet);
+			/* Now free each type only once */
+			for ( i = 0; i < MPC_TYPE_COUNT; i++ )
+			{
+				int not_released_yet = 0;
+				_mpc_cl_type_is_allocated( i, &not_released_yet );
 
-              if (to_free[i] && not_released_yet &&
-                  !sctk_datatype_is_common(i) &&
-                  !sctk_datatype_is_boundary(i)) {
-                mpc_mp_datatype_t tmp = i;
-                _mpc_m_type_free(&tmp);
-              }
-            }
-          } else {
-            if (type->context.combiner != MPC_COMBINER_DUMMY)
-              sctk_fatal("We found a derived datatype %d with no layout",
-                         type->id);
-          }
-          /* Counter == 0 then free */
-          if (type->opt_begins != type->begins)
-            sctk_free(type->opt_begins);
+				if ( to_free[i] && not_released_yet &&
+					 !_mpc_dt_is_common( i ) &&
+					 !_mpc_dt_is_boundary( i ) )
+				{
+					mpc_mp_datatype_t tmp = i;
+					_mpc_cl_type_free( &tmp );
+				}
+			}
+		}
+		else
+		{
+			if ( type->context.combiner != MPC_COMBINER_DUMMY )
+				sctk_fatal( "We found a derived datatype %d with no layout",
+							type->id );
+		}
+		/* Counter == 0 then free */
+		if ( type->opt_begins != type->begins )
+			sctk_free( type->opt_begins );
 
-          if (type->opt_ends != type->ends)
-            sctk_free(type->opt_ends);
+		if ( type->opt_ends != type->ends )
+			sctk_free( type->opt_ends );
 
-          sctk_free(type->begins);
-          sctk_free(type->ends);
+		sctk_free( type->begins );
+		sctk_free( type->ends );
 
-          sctk_free(type->datatypes);
+		sctk_free( type->datatypes );
 
-          sctk_datatype_context_free(&type->context);
+		__mpc_context_free( &type->context );
 
-          memset(type, 0, sizeof(sctk_derived_datatype_t));
+		memset( type, 0, sizeof( _mpc_dt_derived_t ) );
 
-          sctk_free(type);
+		sctk_free( type );
 
-          return 1;
-        }
+		return 1;
+	}
 
-        return 0;
+	return 0;
 }
 
-
-void sctk_derived_datatype_true_extent( sctk_derived_datatype_t * type , mpc_pack_absolute_indexes_t * true_lb, mpc_pack_absolute_indexes_t * true_ub)
+void _mpc_dt_derived_true_extend( _mpc_dt_derived_t *type, mpc_pack_absolute_indexes_t *true_lb, mpc_pack_absolute_indexes_t *true_ub )
 {
 	mpc_pack_absolute_indexes_t min_index, max_index;
 	int min_set = 0, max_set = 0;
-	
+
 	unsigned int i;
-	
-	for( i = 0 ; i < type->count ; i++ )
+
+	for ( i = 0; i < type->count; i++ )
 	{
-	  if( !min_set || ( type->begins[i] < min_index ) ){
-	    min_index = type->begins[i];
-	    min_set = 1;
-	  }
-		
-	  if( !max_set || ( max_index < type->ends[i] ) ){
-	    max_index = type->ends[i];
-	    max_set = 1;
-	  }
-		
+		if ( !min_set || ( type->begins[i] < min_index ) )
+		{
+			min_index = type->begins[i];
+			min_set = 1;
+		}
+
+		if ( !max_set || ( max_index < type->ends[i] ) )
+		{
+			max_index = type->ends[i];
+			max_set = 1;
+		}
 	}
-	
+
 	*true_lb = min_index;
 	*true_ub = max_index;
 }
 
 
-int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
+/** \brief This stucture is used to optimize a derived datatype
+ *  It is easier to manipulate pairs of begin and ends instead of two arrays
+ */
+struct __mpc_derived_type_desc
+{
+	mpc_pack_absolute_indexes_t begin;
+	mpc_pack_absolute_indexes_t end;
+	mpc_mp_datatype_t type;
+	short ignore;
+};
+
+int _mpc_dt_derived_optimize( _mpc_dt_derived_t *target_type )
 {
 	/* Extract cout */
 	size_t count = target_type->count;
-	
-	
+
 	/* Do we have at least two blocks */
-	if( count <= 1 )
+	if ( count <= 1 )
 		return SCTK_SUCCESS;
-	
+
 	/* Extract the layout in cells */
-	struct Derived_datatype_cell * cells = sctk_malloc( sizeof( struct Derived_datatype_cell ) * count);
-	
+	struct __mpc_derived_type_desc *cells = sctk_malloc( sizeof( struct __mpc_derived_type_desc ) * count );
+
 	assume( cells != NULL );
-	
+
 	size_t i, j;
-	
-	for( i = 0; i < count ; i++ )
+
+	for ( i = 0; i < count; i++ )
 	{
 		cells[i].begin = target_type->begins[i];
 		cells[i].end = target_type->ends[i];
 		cells[i].type = target_type->datatypes[i];
 		cells[i].ignore = 0;
 	}
-	
+
 	size_t new_count = count;
-	
-	for( i = 0; i < count ; i++ )
+
+	for ( i = 0; i < count; i++ )
 	{
-		if( cells[i].ignore )
+		if ( cells[i].ignore )
 			continue;
 
-		for( j = (i + 1) ; j < count ; j++ )
+		for ( j = ( i + 1 ); j < count; j++ )
 		{
-			sctk_nodebug("[%d]{%d,%d} <=> [%d]{%d,%d} (%d == %d)[%d]", i, cells[i].begin , cells[i].end, j, cells[j].begin, cells[j].end,  cells[i].end +1 , cells[j].begin, (cells[i].end +1) == cells[j].begin );
-			if((cells[i].end + 1 ) == cells[j].begin)
+			sctk_nodebug( "[%d]{%d,%d} <=> [%d]{%d,%d} (%d == %d)[%d]", i, cells[i].begin, cells[i].end, j, cells[j].begin, cells[j].end, cells[i].end + 1, cells[j].begin, ( cells[i].end + 1 ) == cells[j].begin );
+			if ( ( cells[i].end + 1 ) == cells[j].begin )
 			{
 				/* If cells are contiguous we merge with
 				 * the previous cell */
@@ -960,48 +1038,46 @@ int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
 			{
 				break;
 			}
-			
 		}
-		
 	}
-	
+
 	assume( new_count != 0 );
-	
-	if( count != new_count )
+
+	if ( count != new_count )
 	{
-		sctk_nodebug("Datatype Optimizer : merged %.4g percents of copies %s", (count  - new_count) * 100.0 / count , (new_count == 1 )?"[Type is now Contiguous]":"" );
+		sctk_nodebug( "Datatype Optimizer : merged %.4g percents of copies %s", ( count - new_count ) * 100.0 / count, ( new_count == 1 ) ? "[Type is now Contiguous]" : "" );
 
 		target_type->opt_begins = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * new_count );
 		target_type->opt_ends = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * new_count );
-		
+
 		assume( target_type->opt_begins != NULL );
 		assume( target_type->opt_ends != NULL );
 	}
-	
+
 	/* Copy back the content */
-	
+
 	unsigned int cnt = 0;
-	for( i = 0; i < count ; i++ )
+	for ( i = 0; i < count; i++ )
 	{
-		if( cells[i].ignore )
+		if ( cells[i].ignore )
 			continue;
-		
-		sctk_nodebug("{%d - %d}",  cells[i].begin, cells[i].end);
+
+		sctk_nodebug( "{%d - %d}", cells[i].begin, cells[i].end );
 		target_type->opt_begins[cnt] = cells[i].begin;
 		target_type->opt_ends[cnt] = cells[i].end;
 		cnt++;
 	}
-	
+
 	assume( cnt == new_count );
-	
+
 	target_type->opt_count = new_count;
-	
-	sctk_free(cells);
-	
+
+	sctk_free( cells );
+
 	return SCTK_SUCCESS;
 }
 
-void sctk_derived_datatype_display( sctk_derived_datatype_t *target_type )
+void _mpc_dt_derived_display( _mpc_dt_derived_t *target_type )
 {
 	sctk_error( "============DERIVED===================" );
 	sctk_error( "TYPE %d", target_type->id );
@@ -1013,8 +1089,8 @@ void sctk_derived_datatype_display( sctk_derived_datatype_t *target_type )
 
 	int ni, na, nd, c;
 
-	sctk_datatype_fill_envelope( &target_type->context, &ni, &na, &nd, &c );
-	sctk_error( "COMBINER : %s[%d]", sctk_datype_combiner( c ), c );
+	_mpc_dt_fill_envelope( &target_type->context, &ni, &na, &nd, &c );
+	sctk_error( "COMBINER : %s[%d]", _mpc_dt_get_combiner_name( c ), c );
 
 	int i;
 
@@ -1053,145 +1129,21 @@ void sctk_derived_datatype_display( sctk_derived_datatype_t *target_type )
 	sctk_error( "==============================================" );
 }
 
-extern sctk_derived_datatype_t *
-_mpc_m_per_mpi_process_ctx_derived_datatype_get(mpc_mp_datatype_t datatype);
-
-void *sctk_derived_datatype_serialize(mpc_mp_datatype_t type, size_t *size,
-                                      size_t header_pad) {
-  assume(sctk_datatype_is_derived(type));
-  assume(size);
-
-  sctk_derived_datatype_t *dtype = _mpc_m_per_mpi_process_ctx_derived_datatype_get(type);
-
-  assume(dtype != NULL);
-
-  *size = sizeof(size_t) +
-          2 * dtype->count * sizeof(mpc_pack_absolute_indexes_t) +
-          dtype->count * sizeof(mpc_mp_datatype_t) + sizeof(struct inner_lbub) +
-          header_pad + 1;
-
-  void *ret = sctk_malloc(*size);
-
-  if (!ret) {
-    perror("malloc");
-    return NULL;
-  }
-
-  ssize_t *count = (ssize_t *)(ret + header_pad);
-  mpc_pack_absolute_indexes_t *begins = (count + 1);
-  mpc_pack_absolute_indexes_t *ends = begins + dtype->count;
-  mpc_mp_datatype_t *types = (mpc_mp_datatype_t *)(ends + dtype->count);
-  struct inner_lbub *lb_ub = (struct inner_lbub *)(types + dtype->count);
-  char *guard = ((char *)lb_ub + 1);
-
-  *guard = 77;
-
-  *count = dtype->count;
-
-  size_t i;
-
-  for (i = 0; i < dtype->count; i++) {
-    begins[i] = dtype->begins[i];
-    ends[i] = dtype->ends[i];
-    types[i] = dtype->datatypes[i];
-  }
-
-  lb_ub->lb = dtype->lb;
-  lb_ub->is_lb = dtype->is_lb;
-  lb_ub->ub = dtype->ub;
-  lb_ub->is_ub = dtype->is_ub;
-  lb_ub->is_a_padded_struct = dtype->is_a_padded_struct;
-
-  assert(*guard == 77);
-  assert(guard < (char*)(ret + *size));
-
-  return ret;
-}
-
-mpc_mp_datatype_t sctk_derived_datatype_deserialize(void *buff, size_t size,
-                                                  size_t header_pad) {
-  ssize_t *count = (ssize_t *)(buff + header_pad);
-  mpc_pack_absolute_indexes_t *begins = (count + 1);
-  mpc_pack_absolute_indexes_t *ends = begins + *count;
-  mpc_mp_datatype_t *types = (mpc_mp_datatype_t *)(ends + *count);
-  struct inner_lbub *lb_ub = (struct inner_lbub *)(types + *count);
-
-  assume(count < (ssize_t*)(buff + size));
-  assume(count < (ssize_t*)(begins + size));
-  assume(count < (ssize_t*)(ends + size));
-  assume(count < (ssize_t*)(types + size));
-
-  mpc_mp_datatype_t ret;
-
-  struct Datatype_External_context dtctx;
-  sctk_datatype_external_context_clear(&dtctx);
-  dtctx.combiner = MPC_COMBINER_DUMMY;
-
-  _mpc_m_derived_datatype(&ret, begins, ends, types, *count, lb_ub->lb,
-                        lb_ub->is_lb, lb_ub->ub, lb_ub->is_ub, &dtctx);
-
-  if (lb_ub->is_a_padded_struct) {
-    _mpc_m_type_flag_padded(ret);
-  }
-
-  _mpc_m_type_commit(&ret);
-
-  return ret;
-}
-
-mpc_mp_datatype_t sctk_datatype_get_inner_type(mpc_mp_datatype_t type) {
-  assume(!sctk_datatype_is_common(type));
-
-  if (sctk_datatype_is_struct_datatype(type))
-    return type;
-
-  if (sctk_datatype_is_contiguous(type)) {
-    sctk_contiguous_datatype_t *ctype = _mpc_m_per_mpi_process_ctx_contiguous_datatype_get(type);
-    assume(ctype != NULL);
-    return ctype->datatype;
-  }
-
-  sctk_derived_datatype_t *dtype = _mpc_m_per_mpi_process_ctx_derived_datatype_get(type);
-
-  assume(dtype != NULL);
-
-  // sctk_derived_datatype_display( dtype );
-
-  mpc_mp_datatype_t itype = -1;
-
-  size_t i;
-
-  for (i = 0; i < dtype->count; i++) {
-    if (itype < 0) {
-      itype = dtype->datatypes[i];
-    } else {
-      if (itype != dtype->datatypes[i])
-        return -1;
-    }
-  }
-
-  assume(sctk_datatype_is_common(itype));
-
-  /* if we are here, all types are the same */
-  return itype;
-}
-
 /************************************************************************/
 /* Datatype  Array                                                      */
 /************************************************************************/
 
-struct Datatype_Array * Datatype_Array_init()
+struct _mpc_dt_storage * _mpc_dt_storage_init()
 {
-	sctk_datatype_init();
 
-  struct Datatype_Array * da = sctk_malloc(sizeof(struct Datatype_Array));
+  struct _mpc_dt_storage * da = sctk_malloc(sizeof(struct _mpc_dt_storage));
 
 	int i;
 
 	for (i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++)
 	{
 		da->derived_user_types[i] = NULL;
-		memset( &da->contiguous_user_types[i] , 0 , sizeof( sctk_contiguous_datatype_t) );
+		memset( &da->contiguous_user_types[i] , 0 , sizeof( _mpc_dt_contiguout_t) );
 	}
 
 	da->datatype_lock = 0;
@@ -1200,20 +1152,20 @@ struct Datatype_Array * Datatype_Array_init()
 }
 
 
-int Datatype_is_allocated( struct Datatype_Array * da, mpc_mp_datatype_t datatype )
+int _mpc_dt_storage_type_can_be_released( struct _mpc_dt_storage * da, mpc_mp_datatype_t datatype )
 {
-	sctk_contiguous_datatype_t * cont = NULL;
-	sctk_derived_datatype_t * deriv = NULL;
+	_mpc_dt_contiguout_t * cont = NULL;
+	_mpc_dt_derived_t * deriv = NULL;
 
-	switch( sctk_datatype_kind( datatype ) )
+	switch( _mpc_dt_get_kind( datatype ) )
 	{
 		case MPC_DATATYPES_COMMON:
 			return 0;
 		case MPC_DATATYPES_CONTIGUOUS :
-			cont = Datatype_Array_get_contiguous_datatype( da, datatype );
-			return SCTK_CONTIGUOUS_DATATYPE_IS_IN_USE( cont );
+			cont = _mpc_dt_storage_get_contiguous_datatype( da, datatype );
+			return _MPC_DT_CONTIGUOUS_IS_USED( cont );
 		case MPC_DATATYPES_DERIVED:
-			deriv = Datatype_Array_get_derived_datatype( da, datatype );
+			deriv = _mpc_dt_storage_get_derived_datatype( da, datatype );
 			return (deriv!=NULL)?1:0;
 		case MPC_DATATYPES_UNKNOWN:
 			return 0;
@@ -1223,72 +1175,69 @@ int Datatype_is_allocated( struct Datatype_Array * da, mpc_mp_datatype_t datatyp
 }
 
 
-void Datatype_Array_release( struct Datatype_Array * da )
+void _mpc_dt_storage_release( struct _mpc_dt_storage * da )
 {
 	int i;
-
 
 	/* Now we can free all datatypes */
 	for( i = 0 ; i < MPC_TYPE_COUNT ; i++ )
 	{
 		int to_release = 0;
-		_mpc_m_type_is_allocated ( i, & to_release );
+		to_release = _mpc_dt_storage_type_can_be_released(da, i);
 
-		if( to_release && !sctk_datatype_is_common(i) )
+		if( to_release && !_mpc_dt_is_common(i) )
 		{
                   sctk_debug("Freeing unfreed datatype [%d] did you call "
                              "MPI_Type_free on all your MPI_Datatypes ?",
                              i);
                   mpc_mp_datatype_t tmp = i;
-                  _mpc_m_type_free(&tmp);
+                  _mpc_cl_type_free(&tmp);
                 }
   }
-
-  sctk_datatype_release();
 
   sctk_free(da);
 }
 
-sctk_contiguous_datatype_t *  Datatype_Array_get_contiguous_datatype( struct Datatype_Array * da ,  mpc_mp_datatype_t datatype)
+_mpc_dt_contiguout_t *  _mpc_dt_storage_get_contiguous_datatype( struct _mpc_dt_storage * da ,  mpc_mp_datatype_t datatype)
 {
-	assume( sctk_datatype_is_contiguous( datatype ) );
+	assume( _mpc_dt_is_contiguous( datatype ) );
 
-	/* Return the pointed sctk_contiguous_datatype_t */ 
-	return &(da->contiguous_user_types[ MPC_TYPE_MAP_TO_CONTIGUOUS( datatype ) ]);	
+	/* Return the pointed _mpc_dt_contiguout_t */
+	return &(da->contiguous_user_types[ _MPC_DT_MAP_TO_CONTIGUOUS( datatype ) ]);
 }
 
 
-sctk_derived_datatype_t * Datatype_Array_get_derived_datatype( struct Datatype_Array * da  ,  mpc_mp_datatype_t datatype)
+_mpc_dt_derived_t * _mpc_dt_storage_get_derived_datatype( struct _mpc_dt_storage * da  ,  mpc_mp_datatype_t datatype)
 {
-	assume( sctk_datatype_is_derived( datatype ) );
+	assume( _mpc_dt_is_derived( datatype ) );
 
-        return da->derived_user_types[MPC_TYPE_MAP_TO_DERIVED(datatype)];
+        return da->derived_user_types[_MPC_DT_MAP_TO_DERIVED(datatype)];
 }
 
-void Datatype_Array_set_derived_datatype( struct Datatype_Array * da ,  mpc_mp_datatype_t datatype, sctk_derived_datatype_t * value )
+void _mpc_dt_storage_set_derived_datatype( struct _mpc_dt_storage * da ,  mpc_mp_datatype_t datatype, _mpc_dt_derived_t * value )
 {
-	assume( sctk_datatype_is_derived( datatype ) );
+	assume( _mpc_dt_is_derived( datatype ) );
 
-        da->derived_user_types[MPC_TYPE_MAP_TO_DERIVED(datatype)] = value;
+        da->derived_user_types[_MPC_DT_MAP_TO_DERIVED(datatype)] = value;
 }
 
 /************************************************************************/
 /* Datatype  Attribute Getters                                          */
 /************************************************************************/
 
-static inline struct Datatype_Attr_store *
-sctk_type_get_attr_store(struct Datatype_Array *da, mpc_mp_datatype_t type) {
+static inline struct __mpc_dt_attr_store *
+sctk_type_get_attr_store(struct _mpc_dt_storage *da, mpc_mp_datatype_t type) {
 
-  mpc_mp_datatype_t_kind kind = sctk_datatype_kind(type);
+  mpc_dt_kind_t kind = _mpc_dt_get_kind(type);
 
-  struct Datatype_Attr_store *store = NULL;
+  struct __mpc_dt_attr_store *store = NULL;
 
-  sctk_contiguous_datatype_t *cont = NULL;
-  sctk_derived_datatype_t *deriv = NULL;
+  _mpc_dt_contiguout_t *cont = NULL;
+  _mpc_dt_derived_t *deriv = NULL;
 
   switch (kind) {
   case MPC_DATATYPES_CONTIGUOUS:
-    cont = Datatype_Array_get_contiguous_datatype(da, type);
+    cont = _mpc_dt_storage_get_contiguous_datatype(da, type);
 
     if (cont)
       store = &cont->attrs;
@@ -1296,7 +1245,7 @@ sctk_type_get_attr_store(struct Datatype_Array *da, mpc_mp_datatype_t type) {
     break;
 
   case MPC_DATATYPES_DERIVED:
-    deriv = Datatype_Array_get_derived_datatype(da, type);
+    deriv = _mpc_dt_storage_get_derived_datatype(da, type);
 
     if (deriv)
       store = &deriv->attrs;
@@ -1308,41 +1257,41 @@ sctk_type_get_attr_store(struct Datatype_Array *da, mpc_mp_datatype_t type) {
   return store;
 }
 
-int sctk_type_set_attr(struct Datatype_Array *da, mpc_mp_datatype_t type,
+int sctk_type_set_attr(struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
                        int type_keyval, void *attribute_val) {
-  struct Datatype_Attr_store *store = sctk_type_get_attr_store(da, type);
+  struct __mpc_dt_attr_store *store = sctk_type_get_attr_store(da, type);
 
   if (!store)
     return MPC_ERR_ARG;
 
-  struct Datatype_Attr *new = NULL;
+  struct __mpc_dt_attr *new = NULL;
 
   void *pnew = mpc_common_hashtable_get(&store->attrs, type_keyval);
 
   if (pnew) {
-    new = (struct Datatype_Attr *)pnew;
+    new = (struct __mpc_dt_attr *)pnew;
     new->attribute_val = attribute_val;
   } else {
-    new = Datatype_Attr_new(type_keyval, attribute_val);
+    new = __mpc_dt_attr_new(type_keyval, attribute_val);
     mpc_common_hashtable_set(&store->attrs, type_keyval, new);
   }
 
   return SCTK_SUCCESS;
 }
 
-int sctk_type_get_attr(struct Datatype_Array *da, mpc_mp_datatype_t type,
+int sctk_type_get_attr(struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
                        int type_keyval, void *attribute_val, int *flag) {
-  struct Datatype_Attr_store *store = sctk_type_get_attr_store(da, type);
+  struct __mpc_dt_attr_store *store = sctk_type_get_attr_store(da, type);
 
   if (!store)
     return MPC_ERR_ARG;
 
-  struct Datatype_Attr *ret = NULL;
+  struct __mpc_dt_attr *ret = NULL;
 
   void *pret = mpc_common_hashtable_get(&store->attrs, type_keyval);
 
   if (pret) {
-    ret = (struct Datatype_Attr *)pret;
+    ret = (struct __mpc_dt_attr *)pret;
 
     *((void **)attribute_val) = ret->attribute_val;
 
@@ -1354,9 +1303,9 @@ int sctk_type_get_attr(struct Datatype_Array *da, mpc_mp_datatype_t type,
   return SCTK_SUCCESS;
 }
 
-int sctk_type_delete_attr(struct Datatype_Array *da, mpc_mp_datatype_t type,
+int sctk_type_delete_attr(struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
                           int type_keyval) {
-  struct Datatype_Attr_store *store = sctk_type_get_attr_store(da, type);
+  struct __mpc_dt_attr_store *store = sctk_type_get_attr_store(da, type);
 
   if (!store)
     return MPC_ERR_ARG;
@@ -1452,7 +1401,7 @@ void sctk_datype_name_release()
 /* Datatype  Context                                                    */
 /************************************************************************/
 
-static int Datatype_context_check_envelope( struct Datatype_context * ref, struct Datatype_context * candidate )
+static int _mpc_dt_footprint_check_envelope( struct _mpc_dt_footprint * ref, struct _mpc_dt_footprint * candidate )
 {
 	int num_integers = 0;
 	int num_addresses = 0;
@@ -1460,7 +1409,7 @@ static int Datatype_context_check_envelope( struct Datatype_context * ref, struc
 	int dummy_combiner = MPC_COMBINER_UNKNOWN;
 	
 	/* Retrieve envelope */
-	sctk_datatype_fill_envelope( ref , &num_integers, &num_addresses , &num_datatypes , &dummy_combiner );
+	_mpc_dt_fill_envelope( ref , &num_integers, &num_addresses , &num_datatypes , &dummy_combiner );
 	
 	/* Now compare each array */
 	
@@ -1518,7 +1467,9 @@ static int Datatype_context_check_envelope( struct Datatype_context * ref, struc
 }
 
 
-int Datatype_context_match( struct Datatype_External_context * eref, struct Datatype_context * candidate )
+static void __mpc_context_set_refcount( struct _mpc_dt_footprint * ctx , struct _mpc_dt_context * dctx, int enable_refcounting  );
+
+int _mpc_dt_footprint_match( struct _mpc_dt_context * eref, struct _mpc_dt_footprint * candidate )
 {
 	if( !eref || !candidate )
 		return 0;
@@ -1526,30 +1477,30 @@ int Datatype_context_match( struct Datatype_External_context * eref, struct Data
 	/* No need to fill if at least combiner are not the same */
 	if( eref->combiner != candidate->combiner )
 		return 0;
-	struct Datatype_context ref;
-	sctk_datatype_context_clear(&ref);
+	struct _mpc_dt_footprint ref;
+	__mpc_dt_footprint_clear(&ref);
 	
-	__sctk_datatype_context_set( &ref , eref, 0  );
+	__mpc_context_set_refcount( &ref , eref, 0  );
 	
 	/* Now check if combiners are equal */
-	int ret =  Datatype_context_check_envelope( &ref, candidate );
+	int ret =  _mpc_dt_footprint_check_envelope( &ref, candidate );
 
 	/* Release the temporary context */
-	sctk_datatype_context_free( &ref );
+	__mpc_context_free( &ref );
 	
 	return ret;
 }
 
 
-void sctk_datatype_context_clear( struct Datatype_context * ctx )
+static inline void __mpc_dt_footprint_clear( struct _mpc_dt_footprint * ctx )
 {
-	memset( ctx, 0, sizeof( struct Datatype_context ) );
+	memset( ctx, 0, sizeof( struct _mpc_dt_footprint ) );
 	ctx->internal_type = MPC_DATATYPE_NULL;
 }
 
-void sctk_datatype_external_context_clear( struct Datatype_External_context * ctx )
+void _mpc_dt_context_clear( struct _mpc_dt_context * ctx )
 {
-	memset( ctx, 0, sizeof( struct Datatype_External_context ) );	
+	memset( ctx, 0, sizeof( struct _mpc_dt_context ) );	
 }
 
 /*
@@ -1588,12 +1539,12 @@ static inline mpc_mp_datatype_t * please_allocate_an_array_of_datatypes( int cou
 
 #define CHECK_OVERFLOW( cnt , limit ) do{ assume( cnt < limit ); } while(0)
 
-void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_External_context * dctx  )
+void _mpc_dt_context_set( struct _mpc_dt_footprint * ctx , struct _mpc_dt_context * dctx  )
 {
-	__sctk_datatype_context_set( ctx , dctx, 1 );
+	__mpc_context_set_refcount( ctx , dctx, 1 );
 }
 
-void __sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_External_context * dctx, int enable_refcounting  )
+static void __mpc_context_set_refcount( struct _mpc_dt_footprint * ctx , struct _mpc_dt_context * dctx, int enable_refcounting  )
 {
 	/* Do we have a context and a type context */
 	assume( ctx != NULL );
@@ -1605,7 +1556,7 @@ void __sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatyp
         /* First we check if there is no previously allocated array
          * as it might happen as some datatype constructors
          * are built on top of other datatypes */
-        sctk_datatype_context_free(ctx);
+        __mpc_context_free(ctx);
 
         /* Save the combiner which is always needed */
         sctk_nodebug("Setting combiner to %d\n", dctx->combiner);
@@ -1629,7 +1580,7 @@ void __sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatyp
 
         /* The context is not yet fully initialized but we can
          * already switch the data-type as we have just set it */
-        sctk_datatype_fill_envelope(ctx, &n_int, &n_addr, &n_type,
+        _mpc_dt_fill_envelope(ctx, &n_int, &n_addr, &n_type,
                                     &dummy_combiner);
 
         /* We call all allocs as if count == 0 it returns NULL */
@@ -1881,7 +1832,7 @@ void __sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatyp
         for (j = 0; j < n_type; j++) {
           /* As UB and LB are negative it would break
            * everyting in the array */
-          if (sctk_datatype_is_boundary(ctx->array_of_types[j]))
+          if (_mpc_dt_is_boundary(ctx->array_of_types[j]))
             continue;
 
           is_datatype_present[ctx->array_of_types[j]] = 1;
@@ -1890,13 +1841,15 @@ void __sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatyp
         /* Increment the refcounters of present datatypes */
         for (j = 0; j < MPC_TYPE_COUNT; j++) {
           if (is_datatype_present[j]) {
-            _mpc_m_type_use(j);
+            _mpc_cl_type_use(j);
           }
         }
 }
 
-
-void sctk_datatype_context_free( struct Datatype_context * ctx )
+/** \brief Frees the data stored in a data-type context
+ *  \param ctx Context to free
+ */
+static inline void __mpc_context_free( struct _mpc_dt_footprint * ctx )
 {
 	sctk_free( ctx->array_of_integers );
 	sctk_free( ctx->array_of_addresses );
@@ -1906,7 +1859,7 @@ void sctk_datatype_context_free( struct Datatype_context * ctx )
 
 
 
-int sctk_datatype_fill_envelope( struct Datatype_context * ctx , int * num_integers, int * num_addresses , int * num_datatypes , int * combiner )
+int _mpc_dt_fill_envelope( struct _mpc_dt_footprint * ctx , int * num_integers, int * num_addresses , int * num_datatypes , int * combiner )
 {
 	if( !ctx )
 		return 1;
@@ -2012,27 +1965,27 @@ int sctk_datatype_fill_envelope( struct Datatype_context * ctx , int * num_integ
 /* Datatype  Layout                                                     */
 /************************************************************************/
 
-static inline struct Datatype_layout * please_allocate_layout( int count )
+static inline struct _mpc_dt_layout * please_allocate_layout( int count )
 {
-	struct Datatype_layout * ret = sctk_malloc( sizeof( struct Datatype_layout ) * count );
+	struct _mpc_dt_layout * ret = sctk_malloc( sizeof( struct _mpc_dt_layout ) * count );
 	assume( ret != NULL );
 	return ret;
 }
 
-static inline int Datatype_layout_fill( struct Datatype_layout * l, mpc_mp_datatype_t datatype )
+static inline int _mpc_dt_layout_fill( struct _mpc_dt_layout * l, mpc_mp_datatype_t datatype )
 {
 	assume( l != NULL );
 	l->type = datatype;
 	size_t size;
-	_mpc_m_type_size (datatype, &size);
+	_mpc_cl_type_size (datatype, &size);
 	l->size = (size_t) size;
 	
 	return SCTK_SUCCESS;
 }
 
-struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, size_t * ly_count )
+struct _mpc_dt_layout * _mpc_dt_get_layout( struct _mpc_dt_footprint * ctx, size_t * ly_count )
 {
-	struct Datatype_layout *ret = NULL;
+	struct _mpc_dt_layout *ret = NULL;
 	size_t count = 0;
 
 	unsigned int i = 0;
@@ -2058,7 +2011,7 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 			ret = please_allocate_layout( 1 );
 			*ly_count = 1;
 
-			_mpc_m_type_is_allocated (ctx->array_of_types[0], &is_allocated );
+			_mpc_cl_type_is_allocated (ctx->array_of_types[0], &is_allocated );
 
 			if( !is_allocated )
 			{
@@ -2067,7 +2020,7 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 			}
 			else
 			{
-				Datatype_layout_fill( &ret[0] , ctx->array_of_types[0] );
+				_mpc_dt_layout_fill( &ret[0] , ctx->array_of_types[0] );
 			}
 		break;
 		case MPC_COMBINER_STRUCT:
@@ -2110,12 +2063,12 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 					 * them in their layout when being freed and of course
 					 * cannot find them. This is here just to solve random
 					 * free order problems where the refcounting cannot be used */
-					_mpc_m_type_is_allocated (ctx->array_of_types[i], &is_allocated );
+					_mpc_cl_type_is_allocated (ctx->array_of_types[i], &is_allocated );
 					
 					if( !is_allocated )
 						continue;
 					
-					Datatype_layout_fill( &ret[cnt] , ctx->array_of_types[i] );
+					_mpc_dt_layout_fill( &ret[cnt] , ctx->array_of_types[i] );
 					cnt++;
 				}
 			}

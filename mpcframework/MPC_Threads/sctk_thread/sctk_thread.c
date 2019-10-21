@@ -1020,7 +1020,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   tmp->task_id = -1;
   tmp->user_thread = user_thread;
 #ifdef MPC_MPI
-  tmp->father_data = _mpc_m_per_mpi_process_ctx_get ();
+  tmp->father_data = _mpc_cl_per_mpi_process_ctx_get ();
 #else
   tmp->father_data = NULL;
 #endif
