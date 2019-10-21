@@ -22,7 +22,7 @@
 #ifndef MPC_MPI_EGREQ_CLASSES_H_
 #define MPC_MPI_EGREQ_CLASSES_H_
 
-#include "messaging.h"
+#include "comm_lib.h"
 #include "uthash.h"
 
 typedef struct MPCX_GRequest_class_s

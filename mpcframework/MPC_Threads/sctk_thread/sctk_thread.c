@@ -69,7 +69,6 @@
 
 #ifdef MPC_MPI
 #include <mpc_internal_thread.h>
-#include "mpc_datatypes.h"
 #include "mpc_internal_common.h"
 #endif
 
@@ -2608,9 +2607,6 @@ sctk_start_func (void *(*run) (void *), void *arg)
         sctk_thread_t *threads = NULL;
         int thread_to_join = 0;
 
-#ifdef MPC_MPI
-	sctk_datatype_init();
-#endif
 
 	sctk_thread_key_create (&_sctk_thread_handler_key, (void (*)(void *)) NULL);
 	ptr_cleanup = NULL;
@@ -2916,10 +2912,6 @@ sctk_start_func (void *(*run) (void *), void *arg)
         sctk_multithreading_initialised = 0;
 
         sctk_thread_running = 0;
-
-#ifdef MPC_MPI
-        sctk_datatype_release();
-#endif
 
 #ifdef MPC_Message_Passing
         sctk_ignore_sigpipe();

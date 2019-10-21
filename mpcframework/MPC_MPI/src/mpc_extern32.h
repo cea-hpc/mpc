@@ -24,10 +24,10 @@
 #define MPC_EXTERN32_H
 
 #include <string.h>
-#include "messaging.h"
+#include "comm_lib.h"
 #include "mpc_internal_common.h"
 #include "mpc_common_types.h"
-#include "mpc_datatypes.h"
+#include "datatype.h"
 
 /* This file defines the extern32 data-rep following
  * MPI standard 1.3: 13.5.2 External Data Representation: “external32”

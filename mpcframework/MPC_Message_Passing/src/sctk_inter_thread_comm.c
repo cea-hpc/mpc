@@ -40,9 +40,6 @@
 #include "sctk_handle.h"
 #endif /* SCTK_LIB_MODE */
 
-#ifdef MPC_MPI
-#include <mpc_datatypes.h>
-#endif
 
 /********************************************************************/
 /*Structres                                                         */
@@ -108,6 +105,7 @@ static inline void __mpc_comm_request_init( mpc_mp_request_t *request,
 {
 
 	static mpc_mp_request_t the_initial_request = {
+		.completion_flag = SCTK_MESSAGE_DONE,
 		.header.source = SCTK_PROC_NULL,
 		.header.destination = SCTK_PROC_NULL,
 		.header.source_task = SCTK_PROC_NULL,
@@ -115,7 +113,8 @@ static inline void __mpc_comm_request_init( mpc_mp_request_t *request,
 		.header.message_tag = SCTK_ANY_TAG,
 		.header.communicator = SCTK_COMM_NULL,
 		.header.msg_size = 0,
-		.completion_flag = SCTK_MESSAGE_DONE,
+		.source_type = 0,
+		.dest_type = 0,
 		.request_type = 0,
 		.is_null = 0,
 		.truncated = 0,
@@ -1888,31 +1887,12 @@ static inline mpc_mp_msg_list_t * __mpc_comm_pending_msg_list_search_matching( m
 			/* Message found. We delete it  */
 			DL_DELETE( pending_list->list, ptr_found );
 
-#ifdef MPC_MPI
-			/* update the status with ERR_TYPE if datatypes don't match*/
-			if ( header->datatype != header_found->datatype )
+			/* Save matching datatypes inside the request */
+			if ( ptr_found->msg->tail.request)
 			{
-				if ( /* See page 33 of 3.0 PACKED and BYTE are exceptions */
-					 header->datatype != MPC_PACKED &&
-					 header_found->datatype != MPC_PACKED &&
-					 header->datatype != MPC_BYTE && header_found->datatype != MPC_BYTE &&
-					 header->msg_size > 0 && header_found->msg_size > 0 )
-				{
-					if ( sctk_datatype_is_common( header->datatype ) &&
-						 sctk_datatype_is_common( header_found->datatype ) )
-					{
-
-						if ( ptr_found->msg->tail.request == NULL )
-						{
-							mpc_mp_request_t req;
-							ptr_found->msg->tail.request = &req;
-						}
-
-						ptr_found->msg->tail.request->status_error = MPC_ERR_TYPE;
-					}
-				}
+				ptr_found->msg->tail.request->source_type = header->datatype;
+				ptr_found->msg->tail.request->dest_type = header_found->datatype;
 			}
-#endif
 
 			/* We return the pointer to the request */
 			return ptr_found;

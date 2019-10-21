@@ -22,7 +22,7 @@
 
 #include "mpit_internal.h"
 
-#include "messaging.h"
+#include "comm_lib.h"
 #include "sctk_thread.h"
 #include "sctk_debug.h"
 

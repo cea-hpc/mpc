@@ -70,10 +70,12 @@ struct progressWorkUnit;
 /** Request definition **/
 typedef struct
 {
+  volatile int completion_flag;
   volatile int request_type;
   volatile sctk_header_t header;
-  volatile int completion_flag;
   struct sctk_thread_ptp_message_s *msg;
+  mpc_mp_datatype_t source_type; /**< Type in the remote message */
+  mpc_mp_datatype_t dest_type; /**< Type in the local message */
   int is_null;
   int truncated;
   int status_error;

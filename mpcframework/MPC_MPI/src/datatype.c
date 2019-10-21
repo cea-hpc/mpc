@@ -20,11 +20,11 @@
 /* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "mpc_datatypes.h"
+#include "datatype.h"
 
 #include "mpc_internal_common.h"
 #include "mpc_reduction.h"
-#include "messaging.h"
+#include "comm_lib.h"
 #include "sctk_handle.h"
 #include "mpc_common_types.h"
 #include "mpc_common_types.h"
@@ -84,42 +84,24 @@ int sctk_datatype_initialized() { return dt_init; }
 
 void sctk_datatype_init()
 {
-  static sctk_spinlock_t init_lock = SCTK_SPINLOCK_INITIALIZER;
-
-  sctk_spinlock_lock(&init_lock);
-
   if (sctk_datatype_initialized())
-  {
-    sctk_spinlock_unlock(&init_lock);
     return;
-  }
 
   __sctk_common_type_sizes =
   sctk_malloc(sizeof(size_t) * SCTK_COMMON_DATA_TYPE_COUNT);
   assume(__sctk_common_type_sizes != NULL);
   sctk_common_datatype_init();
   dt_init = 1;
-
-    sctk_spinlock_unlock(&init_lock);
 }
 
 void sctk_datatype_release()
 {
-  static sctk_spinlock_t release_lock = SCTK_SPINLOCK_INITIALIZER;
-
-  sctk_spinlock_lock(&release_lock);
-
-  if(!dt_init)
-  {
-          sctk_spinlock_unlock(&release_lock);
-          return;
-  }
+  if (!sctk_datatype_initialized())
+    return;
 
   dt_init = 0;
   sctk_datype_name_release();
   sctk_free(__sctk_common_type_sizes);
-
-  sctk_spinlock_unlock(&release_lock);
 }
 
 /************************************************************************/
@@ -1200,6 +1182,8 @@ mpc_mp_datatype_t sctk_datatype_get_inner_type(mpc_mp_datatype_t type) {
 
 struct Datatype_Array * Datatype_Array_init()
 {
+	sctk_datatype_init();
+
   struct Datatype_Array * da = sctk_malloc(sizeof(struct Datatype_Array));
 
 	int i;
@@ -1244,16 +1228,12 @@ void Datatype_Array_release( struct Datatype_Array * da )
 	int i;
 
 
-	/* Handle derived datatypes */
-	
-
-	
 	/* Now we can free all datatypes */
 	for( i = 0 ; i < MPC_TYPE_COUNT ; i++ )
 	{
 		int to_release = 0;
 		_mpc_m_type_is_allocated ( i, & to_release );
-		
+
 		if( to_release && !sctk_datatype_is_common(i) )
 		{
                   sctk_debug("Freeing unfreed datatype [%d] did you call "
@@ -1263,6 +1243,8 @@ void Datatype_Array_release( struct Datatype_Array * da )
                   _mpc_m_type_free(&tmp);
                 }
   }
+
+  sctk_datatype_release();
 
   sctk_free(da);
 }

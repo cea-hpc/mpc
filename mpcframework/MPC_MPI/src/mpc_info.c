@@ -24,7 +24,7 @@
 #include "sctk_debug.h"
 #include "sctk_alloc.h"
 #include "string.h"
-#include "messaging.h"
+#include "comm_lib.h"
 
 /***************
 * MPC_Info_key *

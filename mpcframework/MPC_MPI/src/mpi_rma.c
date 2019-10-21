@@ -21,9 +21,9 @@
 /* ######################################################################## */
 
 #include "mpi_rma.h"
-#include "mpc_datatypes.h"
+#include "datatype.h"
 #include "mpc_mpi_internal.h"
-#include "messaging.h"
+#include "comm_lib.h"
 #include "sctk_communicator.h"
 #include "sctk_control_messages.h"
 #include <string.h>

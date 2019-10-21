@@ -1,5 +1,5 @@
 #include "mpc_internal_common.h"
-#include "mpc_datatypes.h"
+#include "datatype.h"
 #include "mpc_mpi.h"
 #include "mpc_launch_pmi.h"
 #include "sctk_debug.h"

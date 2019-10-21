@@ -22,7 +22,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "messaging.h"
+#include "comm_lib.h"
 
 #include <sctk_launch.h>
 
@@ -215,6 +215,22 @@ static inline void __mpc_m_request_commit_status( mpc_mp_request_t *request,
 		else
 		{
 			status->cancelled = 0;
+		}
+
+		if ( request->source_type != request->dest_type )
+		{
+			if ( /* See page 33 of 3.0 PACKED and BYTE are exceptions */
+					request->source_type != MPC_PACKED &&
+					request->dest_type != MPC_PACKED &&
+					request->source_type != MPC_BYTE && request->dest_type != MPC_BYTE &&
+					request->header.msg_size > 0 )
+			{
+				if ( sctk_datatype_is_common( request->source_type ) &&
+				     sctk_datatype_is_common( request->dest_type ) )
+				{
+					request->status_error = MPC_ERR_TYPE;
+				}
+			}
 		}
 	}
 }

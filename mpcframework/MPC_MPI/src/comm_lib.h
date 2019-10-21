@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-#include <mpc_mpi_messaging.h>
+#include <mpc_mpi_comm_lib.h>
 
 #include <stdlib.h>
 #include <unistd.h>

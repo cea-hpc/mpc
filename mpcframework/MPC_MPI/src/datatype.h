@@ -23,7 +23,7 @@
 #ifndef MPC_DATATYPES_H
 #define MPC_DATATYPES_H
 
-#include "messaging.h" /* mpc_pack_absolute_indexes_t */
+#include "comm_lib.h" /* mpc_pack_absolute_indexes_t */
 #include "mpc_common_asm.h"
 #include "mpc_mp_coll.h" /* mpc_mp_datatype_t */
 #include "mpc_common_datastructure.h"

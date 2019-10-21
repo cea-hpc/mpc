@@ -24,7 +24,7 @@
 #ifndef MPC_MPI_H_
 #define MPC_MPI_H_
 
-#include <mpc_mpi_messaging.h>
+#include <mpc_mpi_comm_lib.h>
 
 #include <stdlib.h>
 #include <string.h>
