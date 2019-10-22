@@ -22,7 +22,6 @@
 /* ######################################################################## */
 #include "datatype.h"
 
-#include "mpc_internal_common.h"
 #include "mpc_reduction.h"
 #include "comm_lib.h"
 #include "sctk_handle.h"
@@ -430,8 +429,8 @@ static inline void ___mpc_init_composed_common_type( mpc_mp_datatype_t target_ty
 	_mpc_cl_type_size( type_b, &sb );
 
 	/* Allocate type context */
-	mpc_pack_absolute_indexes_t *begins = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * 2 );
-	mpc_pack_absolute_indexes_t *ends = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * 2 );
+	long *begins = sctk_malloc( sizeof( long ) * 2 );
+	long *ends = sctk_malloc( sizeof( long ) * 2 );
 	mpc_mp_datatype_t *types = sctk_malloc( sizeof( mpc_mp_datatype_t ) * 2 );
 
 	assume( begins != NULL );
@@ -788,12 +787,12 @@ void _mpc_dt_contiguous_display( _mpc_dt_contiguout_t *target_type )
 void _mpc_dt_derived_init( _mpc_dt_derived_t *type,
 						   mpc_mp_datatype_t id,
 						   unsigned long count,
-						   mpc_pack_absolute_indexes_t *begins,
-						   mpc_pack_absolute_indexes_t *ends,
+						   long *begins,
+						   long *ends,
 						   mpc_mp_datatype_t *datatypes,
-						   mpc_pack_absolute_indexes_t lb,
+						   long lb,
 						   int is_lb,
-						   mpc_pack_absolute_indexes_t ub,
+						   long ub,
 						   int is_ub )
 {
 	sctk_nodebug( "Derived create ID %d", id );
@@ -801,8 +800,8 @@ void _mpc_dt_derived_init( _mpc_dt_derived_t *type,
 	type->id = id;
 
 	/* We now allocate the offset pairs */
-	type->begins = (mpc_pack_absolute_indexes_t *) sctk_malloc( count * sizeof( mpc_pack_absolute_indexes_t ) );
-	type->ends = (mpc_pack_absolute_indexes_t *) sctk_malloc( count * sizeof( mpc_pack_absolute_indexes_t ) );
+	type->begins = (long *) sctk_malloc( count * sizeof( long ) );
+	type->ends = (long *) sctk_malloc( count * sizeof( long ) );
 
 	type->opt_begins = type->begins;
 	type->opt_ends = type->ends;
@@ -817,8 +816,8 @@ void _mpc_dt_derived_init( _mpc_dt_derived_t *type,
 
 	/* And we fill them from the parameters */
 
-	memcpy( type->begins, begins, count * sizeof( mpc_pack_absolute_indexes_t ) );
-	memcpy( type->ends, ends, count * sizeof( mpc_pack_absolute_indexes_t ) );
+	memcpy( type->begins, begins, count * sizeof( long ) );
+	memcpy( type->ends, ends, count * sizeof( long ) );
 	memcpy( type->datatypes, datatypes, count * sizeof( mpc_mp_datatype_t ) );
 
 	/* Fill the rest of the structure */
@@ -960,9 +959,9 @@ int _mpc_dt_derived_release( _mpc_dt_derived_t *type )
 	return 0;
 }
 
-void _mpc_dt_derived_true_extend( _mpc_dt_derived_t *type, mpc_pack_absolute_indexes_t *true_lb, mpc_pack_absolute_indexes_t *true_ub )
+void _mpc_dt_derived_true_extend( _mpc_dt_derived_t *type, long *true_lb, long *true_ub )
 {
-	mpc_pack_absolute_indexes_t min_index, max_index;
+	long min_index, max_index;
 	int min_set = 0, max_set = 0;
 
 	unsigned int i;
@@ -992,8 +991,8 @@ void _mpc_dt_derived_true_extend( _mpc_dt_derived_t *type, mpc_pack_absolute_ind
  */
 struct __mpc_derived_type_desc
 {
-	mpc_pack_absolute_indexes_t begin;
-	mpc_pack_absolute_indexes_t end;
+	long begin;
+	long end;
 	mpc_mp_datatype_t type;
 	short ignore;
 };
@@ -1053,8 +1052,8 @@ int _mpc_dt_derived_optimize( _mpc_dt_derived_t *target_type )
 	{
 		sctk_nodebug( "Datatype Optimizer : merged %.4g percents of copies %s", ( count - new_count ) * 100.0 / count, ( new_count == 1 ) ? "[Type is now Contiguous]" : "" );
 
-		target_type->opt_begins = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * new_count );
-		target_type->opt_ends = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * new_count );
+		target_type->opt_begins = sctk_malloc( sizeof( long ) * new_count );
+		target_type->opt_ends = sctk_malloc( sizeof( long ) * new_count );
 
 		assume( target_type->opt_begins != NULL );
 		assume( target_type->opt_ends != NULL );

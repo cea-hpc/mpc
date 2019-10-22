@@ -23,8 +23,9 @@
 #ifndef MPC_DATATYPES_H
 #define MPC_DATATYPES_H
 
-#include "comm_lib.h" /* mpc_pack_absolute_indexes_t */
-#include "mpc_common_asm.h"
+#include <mpc_mpi_comm_lib.h>
+#include <mpc_common_asm.h>
+
 #include "mpc_mp_coll.h" /* mpc_mp_datatype_t */
 #include "mpc_common_datastructure.h"
 #include "mpc_common_spinlock.h"
@@ -314,19 +315,19 @@ typedef struct
 	unsigned int ref_count; /**< Ref counter to manage freeing */
 
 	/* Content */
-	mpc_pack_absolute_indexes_t *begins; /**< Begin offsets */
-	mpc_pack_absolute_indexes_t *ends;   /**< End offsets */
+	long *begins; /**< Begin offsets */
+	long *ends;   /**< End offsets */
 
 	/* Optimized Content */
 	unsigned long opt_count;				 /**< Number of blocks with optimization */
-	mpc_pack_absolute_indexes_t *opt_begins; /**< Begin offsets with optimization */
-	mpc_pack_absolute_indexes_t *opt_ends;   /**< End offsets with optimization */
+	long *opt_begins; /**< Begin offsets with optimization */
+	long *opt_ends;   /**< End offsets with optimization */
 	mpc_mp_datatype_t *datatypes;			 /**< Datatypes for each block */
 
 	/* Bounds */
-	mpc_pack_absolute_indexes_t lb; /**< Lower bound offset  */
+	long lb; /**< Lower bound offset  */
 	int is_lb;						/**< Does type has a lower bound */
-	mpc_pack_absolute_indexes_t ub; /**< Upper bound offset */
+	long ub; /**< Upper bound offset */
 	int is_ub;						/**< Does type has an upper bound */
 	int is_a_padded_struct;			/**< Was the type padded with UB during construction ? */
 
@@ -355,11 +356,11 @@ typedef struct
  */
 void _mpc_dt_derived_init( _mpc_dt_derived_t *type, mpc_mp_datatype_t id,
 						   unsigned long count,
-						   mpc_pack_absolute_indexes_t *begins,
-						   mpc_pack_absolute_indexes_t *ends,
+						   long *begins,
+						   long *ends,
 						   mpc_mp_datatype_t *datatypes,
-						   mpc_pack_absolute_indexes_t lb, int is_lb,
-						   mpc_pack_absolute_indexes_t ub, int is_ub );
+						   long lb, int is_lb,
+						   long ub, int is_ub );
 
 /** \brief Releases a derived datatype
  *
@@ -375,7 +376,7 @@ int _mpc_dt_derived_release( _mpc_dt_derived_t *type );
  *  \param true_lb the true lb of the datatype
  *  \param size size true LB to true UB
  */
-void _mpc_dt_derived_true_extend( _mpc_dt_derived_t *type, mpc_pack_absolute_indexes_t *true_lb, mpc_pack_absolute_indexes_t *true_ub );
+void _mpc_dt_derived_true_extend( _mpc_dt_derived_t *type, long *true_lb, long *true_ub );
 
 /** \brief Try to optimize a derived datatype (called by \ref PMPC_Commit)
  *  \param target_type Type to be optimized

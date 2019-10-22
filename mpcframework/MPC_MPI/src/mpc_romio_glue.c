@@ -1,4 +1,8 @@
-#include "mpc_internal_common.h"
+#include "comm_lib.h"
+
+
+#include "sctk_communicator.h"
+#include "mpc_common_rank.h"
 #include "datatype.h"
 #include "mpc_mpi.h"
 #include "mpc_launch_pmi.h"
@@ -41,7 +45,7 @@ void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 
 		/* For dereived dat-types we have to check */
 		case MPC_DATATYPES_DERIVED:
-			task_specific = _mpc_cl_per_mpi_process_ctx_get ();
+			task_specific = mpc_cl_per_mpi_process_ctx_get ();
 			target_type = _mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get(  task_specific, datatype );
 			assume( target_type != NULL );
 
@@ -70,7 +74,7 @@ void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
  */
 int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
                       MPI_Aint **indices, MPI_Count *count) {
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
+  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = mpc_cl_per_mpi_process_ctx_get();
   _mpc_dt_derived_t *target_derived_type;
   _mpc_dt_contiguout_t *contiguous_type;
 
@@ -155,7 +159,7 @@ int MPIR_Type_flatten(MPI_Datatype type, MPI_Aint **off_array,
 }
 
 MPI_Aint MPCX_Type_get_count(MPI_Datatype datatype) {
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
+  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = mpc_cl_per_mpi_process_ctx_get();
   _mpc_dt_derived_t *target_derived_type;
 
 

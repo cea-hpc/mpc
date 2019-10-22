@@ -33,7 +33,11 @@
 
 #include <mpc_launch_pmi.h>
 #include "sctk_tls.h"
-#include "mpc_internal_thread.h"
+
+#ifdef MPC_MPI
+#include <mpc_mpi_comm_lib.h>
+#endif
+
 
 #ifdef __cplusplus
 extern "C"

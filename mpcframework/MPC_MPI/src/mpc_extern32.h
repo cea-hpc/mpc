@@ -25,7 +25,6 @@
 
 #include <string.h>
 #include "comm_lib.h"
-#include "mpc_internal_common.h"
 #include "mpc_common_types.h"
 #include "datatype.h"
 

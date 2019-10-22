@@ -22,7 +22,7 @@
 #ifndef MPC_MPI_EGREQ_CLASSES_H_
 #define MPC_MPI_EGREQ_CLASSES_H_
 
-#include "comm_lib.h"
+#include <sctk_types.h>
 #include "uthash.h"
 
 typedef struct MPCX_GRequest_class_s
@@ -30,11 +30,11 @@ typedef struct MPCX_GRequest_class_s
 	int class_id; /**< Unique identifier of this request class */
 
 	/* Request context */
-	MPC_Grequest_query_function * query_fn;
-	MPC_Grequest_cancel_function * cancel_fn;
-	MPC_Grequest_free_function * free_fn;
-	MPCX_Grequest_poll_fn * poll_fn;
-	MPCX_Grequest_wait_fn * wait_fn;
+	sctk_Grequest_query_function * query_fn;
+	sctk_Grequest_cancel_function * cancel_fn;
+	sctk_Grequest_free_function * free_fn;
+	sctk_Grequest_poll_fn * poll_fn;
+	sctk_Grequest_wait_fn * wait_fn;
 
 	UT_hash_handle hh; /**< This dummy data structure is required by UTHash is order to make this data structure hashable */
 }MPCX_GRequest_class_t;
@@ -53,15 +53,15 @@ void _mpc_egreq_classes_storage_init( struct _mpc_egreq_classes_storage * ctx );
 void _mpc_egreq_classes_storage_release( struct _mpc_egreq_classes_storage * ctx );
 
 int _mpc_egreq_classes_storage_add_class( struct _mpc_egreq_classes_storage *ctx,
-				     MPC_Grequest_query_function * query_fn,
-				     MPC_Grequest_cancel_function * cancel_fn,
-				     MPC_Grequest_free_function * free_fn,
-				     MPCX_Grequest_poll_fn * poll_fn,
-				     MPCX_Grequest_wait_fn * wait_fn,
-				     MPCX_Request_class * new_class );
+				     sctk_Grequest_query_function * query_fn,
+				     sctk_Grequest_cancel_function * cancel_fn,
+				     sctk_Grequest_free_function * free_fn,
+				     sctk_Grequest_poll_fn * poll_fn,
+				     sctk_Grequest_wait_fn * wait_fn,
+				     sctk_Request_class * new_class );
 
 
-MPCX_GRequest_class_t * _mpc_egreq_classes_storage_get_class( struct _mpc_egreq_classes_storage *ctx, MPCX_Request_class requested_class );
+MPCX_GRequest_class_t * _mpc_egreq_classes_storage_get_class( struct _mpc_egreq_classes_storage *ctx, sctk_Request_class requested_class );
 
 
 #endif /* MPC_MPI_EGREQ_CLASSES_H_ */

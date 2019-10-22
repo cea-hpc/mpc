@@ -43,12 +43,12 @@ void _mpc_egreq_classes_storage_release( struct _mpc_egreq_classes_storage *ctx 
 }
 
 int _mpc_egreq_classes_storage_add_class( struct _mpc_egreq_classes_storage *ctx,
-					MPC_Grequest_query_function *query_fn,
-					MPC_Grequest_cancel_function *cancel_fn,
-					MPC_Grequest_free_function *free_fn,
-					MPCX_Grequest_poll_fn *poll_fn,
-					MPCX_Grequest_wait_fn *wait_fn,
-					MPCX_Request_class *new_class )
+					sctk_Grequest_query_function *query_fn,
+					sctk_Grequest_cancel_function *cancel_fn,
+					sctk_Grequest_free_function *free_fn,
+					sctk_Grequest_poll_fn *poll_fn,
+					sctk_Grequest_wait_fn *wait_fn,
+					sctk_Request_class *new_class )
 {
 	/* Allocate a new entry */
 	MPCX_GRequest_class_t *pnew_class = sctk_calloc( 1, sizeof( MPCX_GRequest_class_t ) );
@@ -66,7 +66,7 @@ int _mpc_egreq_classes_storage_add_class( struct _mpc_egreq_classes_storage *ctx
 	HASH_ADD_INT( ctx->classes, class_id, pnew_class );
 
 	/* Set the new_class id */
-	*new_class = (MPCX_Request_class) pnew_class->class_id;
+	*new_class = (sctk_Request_class) pnew_class->class_id;
 
 	/* Increment Id */
 	ctx->current_id++;
@@ -74,7 +74,7 @@ int _mpc_egreq_classes_storage_add_class( struct _mpc_egreq_classes_storage *ctx
 	return SCTK_SUCCESS;
 }
 
-MPCX_GRequest_class_t *_mpc_egreq_classes_storage_get_class( struct _mpc_egreq_classes_storage *ctx, MPCX_Request_class requested_class )
+MPCX_GRequest_class_t *_mpc_egreq_classes_storage_get_class( struct _mpc_egreq_classes_storage *ctx, sctk_Request_class requested_class )
 {
 	MPCX_GRequest_class_t *pclass;
 

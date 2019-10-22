@@ -68,8 +68,7 @@
 #endif
 
 #ifdef MPC_MPI
-#include <mpc_internal_thread.h>
-#include "mpc_internal_common.h"
+#include <mpc_mpi_comm_lib.h>
 #endif
 
 #ifdef MPC_Message_Passing
@@ -868,7 +867,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   sctk_thread_setspecific (_sctk_thread_handler_key, ptr_cleanup);
 
 #ifdef MPC_MPI
-  __MPC_reinit_task_specific (tmp.father_data);
+  mpc_mpi_m_per_mpi_process_ctx_reinit (tmp.father_data);
 #endif
 
   sctk_free (__arg);
@@ -1020,7 +1019,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   tmp->task_id = -1;
   tmp->user_thread = user_thread;
 #ifdef MPC_MPI
-  tmp->father_data = _mpc_cl_per_mpi_process_ctx_get ();
+  tmp->father_data = mpc_cl_per_mpi_process_ctx_get ();
 #else
   tmp->father_data = NULL;
 #endif

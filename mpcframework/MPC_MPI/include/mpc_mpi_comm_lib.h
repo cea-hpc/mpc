@@ -20,16 +20,16 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef MPC_MPI_MESSAGING_H_
-#define MPC_MPI_MESSAGING_H_
+#ifndef MPC_COMM_LIB_H_
+#define MPC_COMM_LIB_H_
 
 #include <sctk_types.h>
+#include <mpc_common_asm.h>
+
 
 /*******************
  * FAULT TOLERANCE *
  *******************/
-
-
 
 #if defined( MPC_Fault_Tolerance ) || defined( MPC_MODULE_MPC_Fault_Tolerance )
 
@@ -49,10 +49,39 @@ typedef int MPC_Checkpoint_state;
 
 #endif
 
+/************************************************************************/
+/* Per thread context                                                   */
+/************************************************************************/
+
+struct mpc_mpi_m_per_thread_ctx_s;
+
+void mpc_mpi_m_per_thread_ctx_init();
+void mpc_mpi_m_per_thread_ctx_release();
+
+/************************************************************************/
+/* Per Process context                                                  */
+/************************************************************************/
+
+struct mpc_mpi_m_per_mpi_process_ctx_s;
+
+struct mpc_mpi_m_per_mpi_process_ctx_s *mpc_cl_per_mpi_process_ctx_get();
+
+void mpc_mpi_m_per_mpi_process_ctx_reinit (struct mpc_mpi_m_per_mpi_process_ctx_s *tmp);
+int mpc_mpi_m_per_mpi_process_ctx_at_exit_register(void (*function)(void));
+
+/* Disguisement Fast Path Checker */
+
+extern OPA_int_t __mpc_p_disguise_flag;
+
+static inline int __MPC_Maybe_disguised()
+{
+    return OPA_load_int(&__mpc_p_disguise_flag);
+}
+
+
 /****************
  * MISC DEFINES *
  ****************/
-
 
 #define MPC_UNDEFINED ( -1 )
 #define MPC_ROOT -4
@@ -361,4 +390,4 @@ typedef int( MPC_Type_delete_attr_function )( mpc_mp_datatype_t datatype,
                                         void *attribute_val,
                                         void *extra_state );
 
-#endif /* MPC_MPI_MESSAGING_H_ */
+#endif /* MPC_COMM_LIB_H_ */

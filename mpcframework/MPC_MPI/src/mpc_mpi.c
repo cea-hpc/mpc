@@ -23,7 +23,6 @@
 #include <math.h>
 #include <string.h>
 #include <mpc_mpi_internal.h>
-#include <mpc_internal_thread.h>
 #include <mpc_common_helper.h>
 #include <sctk_launch.h>
 #include <mpc_common_datastructure.h>
@@ -616,7 +615,7 @@ mpc_mpc_get_per_comm_data(mpc_mp_communicator_t comm) {
     }
   }
 
-  task_specific = _mpc_cl_per_mpi_process_ctx_get();
+  task_specific = mpc_cl_per_mpi_process_ctx_get();
   tmp = _mpc_cl_per_communicator_get(task_specific, comm);
 
   if (tmp == NULL)
@@ -645,7 +644,7 @@ int mpc_mpi_per_communicator_init(mpc_mpi_per_communicator_t *pc) {
 static inline mpc_mpi_data_t * mpc_mpc_get_per_task_data()
 {
 	struct mpc_mpi_m_per_mpi_process_ctx_s * task_specific;
-	task_specific = _mpc_cl_per_mpi_process_ctx_get ();
+	task_specific = mpc_cl_per_mpi_process_ctx_get ();
 	return task_specific->mpc_mpi_data;
 }
 
@@ -2119,12 +2118,12 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 			}
 
 			{
-				mpc_pack_absolute_indexes_t *tmp;
-				tmp = sctk_malloc (derived_datatype.opt_count * 2 * sizeof (mpc_pack_absolute_indexes_t));
+				long *tmp;
+				tmp = sctk_malloc (derived_datatype.opt_count * 2 * sizeof (long));
 				__sctk_add_in_mpc_request (request, tmp,requests);
 				
-				memcpy (tmp, derived_datatype.opt_begins, derived_datatype.opt_count * sizeof (mpc_pack_absolute_indexes_t));
-				memcpy (&(tmp[derived_datatype.opt_count]), derived_datatype.opt_ends, derived_datatype.opt_count * sizeof (mpc_pack_absolute_indexes_t));
+				memcpy (tmp, derived_datatype.opt_begins, derived_datatype.opt_count * sizeof (long));
+				memcpy (&(tmp[derived_datatype.opt_count]), derived_datatype.opt_ends, derived_datatype.opt_count * sizeof (long));
 				
 				derived_datatype.opt_begins = tmp;
 				derived_datatype.opt_ends = &(tmp[derived_datatype.opt_count]);
@@ -2304,12 +2303,12 @@ static int __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype d
 			}
 
 			{
-				mpc_pack_absolute_indexes_t *tmp;
-				tmp = sctk_malloc (derived_datatype.opt_count * 2 * sizeof (mpc_pack_absolute_indexes_t));
+				long *tmp;
+				tmp = sctk_malloc (derived_datatype.opt_count * 2 * sizeof (long));
 				__sctk_add_in_mpc_request (request, tmp,requests);
 
-				memcpy (tmp, derived_datatype.opt_begins, derived_datatype.opt_count * sizeof (mpc_pack_absolute_indexes_t));
-				memcpy (&(tmp[derived_datatype.opt_count]), derived_datatype.opt_ends, derived_datatype.opt_count * sizeof (mpc_pack_absolute_indexes_t));
+				memcpy (tmp, derived_datatype.opt_begins, derived_datatype.opt_count * sizeof (long));
+				memcpy (&(tmp[derived_datatype.opt_count]), derived_datatype.opt_ends, derived_datatype.opt_count * sizeof (long));
 
 				derived_datatype.opt_begins = tmp;
 				derived_datatype.opt_ends = &(tmp[derived_datatype.opt_count]);
@@ -3297,8 +3296,8 @@ static int __INTERNAL__PMPI_Type_contiguous_inherits (unsigned long count, MPI_D
 		unsigned long count_out = input_datatype.count * count ;
 		
 		/* Allocate datatype description */
-		mpc_pack_absolute_indexes_t *begins_out = sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
-		mpc_pack_absolute_indexes_t *ends_out =	sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
+		long *begins_out = sctk_malloc (count_out * sizeof (long));
+		long *ends_out =	sctk_malloc (count_out * sizeof (long));
 		mpc_mp_datatype_t * datatypes = 	sctk_malloc (count_out * sizeof (mpc_mp_datatype_t));
 
 		if( !begins_out || !ends_out || !datatypes )
@@ -3486,8 +3485,8 @@ static int __INTERNAL__PMPI_Type_hvector (int count,
 		 * contains input_datatype.count entries */
 		unsigned long count_out = input_datatype.count * count * blocklen;
 		
-		mpc_pack_absolute_indexes_t *begins_out = sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
-		mpc_pack_absolute_indexes_t *ends_out = sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
+		long *begins_out = sctk_malloc (count_out * sizeof (long));
+		long *ends_out = sctk_malloc (count_out * sizeof (long));
 		mpc_mp_datatype_t *datatypes = sctk_malloc (count_out * sizeof (mpc_mp_datatype_t));
 		
 		/* Here we flatten the vector */
@@ -3737,8 +3736,8 @@ static int __INTERNAL__PMPI_Type_hindexed (int count,
 		}
 
 		/* Allocate context */
-		mpc_pack_absolute_indexes_t * begins_out = sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
-		mpc_pack_absolute_indexes_t * ends_out = sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
+		long * begins_out = sctk_malloc (count_out * sizeof (long));
+		long * ends_out = sctk_malloc (count_out * sizeof (long));
 		mpc_mp_datatype_t *datatypes = sctk_malloc (count_out * sizeof (mpc_mp_datatype_t));
 
 		sctk_nodebug ("%lu extent", extent);
@@ -3829,10 +3828,10 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 
 	unsigned long count_out = 0;
 	unsigned long glob_count_out = 0;
-	mpc_pack_absolute_indexes_t new_lb = (mpc_pack_absolute_indexes_t) (-1);
+	long new_lb = (long) (-1);
 	int new_is_lb = 0;
-	mpc_pack_absolute_indexes_t new_ub = 0;
-	mpc_pack_absolute_indexes_t common_type_size = 0;
+	long new_ub = 0;
+	long common_type_size = 0;
 	int new_is_ub = 0;
 	unsigned long my_count_out = 0;
 	
@@ -3869,8 +3868,8 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	
 	
 	sctk_nodebug("my_count_out = %d", my_count_out);
-	mpc_pack_absolute_indexes_t * begins_out = sctk_malloc(my_count_out * sizeof(mpc_pack_absolute_indexes_t));
-	mpc_pack_absolute_indexes_t * ends_out = sctk_malloc(my_count_out * sizeof(mpc_pack_absolute_indexes_t));
+	long * begins_out = sctk_malloc(my_count_out * sizeof(long));
+	long * ends_out = sctk_malloc(my_count_out * sizeof(long));
 	mpc_mp_datatype_t *datatypes = sctk_malloc (my_count_out * sizeof (mpc_mp_datatype_t));
 
 	for (i = 0; i < count; i++)
@@ -3915,7 +3914,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 				
 				if (input_datatype.is_ub)
 				{
-					mpc_pack_absolute_indexes_t new_b;
+					long new_b;
 					new_b = input_datatype.ub + indices[i] + extent * (blocklens[i] - 1);
 					sctk_nodebug("cur ub %d", new_b);
 					if ((long int) new_b > (long int) new_ub || new_is_ub == 0)
@@ -3927,7 +3926,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 				
 				if (input_datatype.is_lb)
 				{
-					mpc_pack_absolute_indexes_t new_b;
+					long new_b;
 					new_b = input_datatype.lb + indices[i];
 					sctk_nodebug("cur lb %d", new_b);
 					if ((long int) new_b < (long int) new_lb || new_is_lb == 0)
@@ -3941,8 +3940,8 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 			}
 			else
 			{
-				mpc_pack_absolute_indexes_t *begins_in, *ends_in;
-				mpc_pack_absolute_indexes_t begins_in_static, ends_in_static;
+				long *begins_in, *ends_in;
+				long begins_in_static, ends_in_static;
 				
 				begins_in = &begins_in_static;
 				ends_in = &ends_in_static;
@@ -4727,7 +4726,7 @@ static int __INTERNAL__PMPI_Type_lb (MPI_Datatype datatype, MPI_Aint * displacem
 			*displacement = (MPI_Aint) input_datatype.opt_begins[0];
 			for (i = 0; i < input_datatype.opt_count; i++)
 			{
-				if ((mpc_pack_absolute_indexes_t) * displacement > input_datatype.opt_begins[i])
+				if ((long) * displacement > input_datatype.opt_begins[i])
 				{
 					*displacement = (MPI_Aint) input_datatype.opt_begins[i];
 				}
@@ -4766,7 +4765,7 @@ __INTERNAL__PMPI_Type_ub (MPI_Datatype datatype, MPI_Aint * displacement)
 			
 			for (i = 0; i < input_datatype.opt_count; i++)
 			{
-				if ((mpc_pack_absolute_indexes_t) * displacement < input_datatype.opt_ends[i])
+				if ((long) * displacement < input_datatype.opt_ends[i])
 				{
 					*displacement = (MPI_Aint) input_datatype.opt_ends[i];
 				}
@@ -4853,7 +4852,7 @@ static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype da
 			 * elements of a single type next to each other
 			 * we have to find out how many elements of this
 			 * type are here */
-			task_specific = _mpc_cl_per_mpi_process_ctx_get ();
+			task_specific = mpc_cl_per_mpi_process_ctx_get ();
 			
 			/* First retrieve the contiguous type descriptor */
 			contiguous_user_types = _mpc_cl_per_mpi_process_ctx_contiguous_datatype_ts_get( task_specific, datatype );
@@ -4877,7 +4876,7 @@ static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype da
 		
 		case MPC_DATATYPES_DERIVED:
 	
-			task_specific = _mpc_cl_per_mpi_process_ctx_get ();
+			task_specific = mpc_cl_per_mpi_process_ctx_get ();
 			
 			/* This is the size we received */
 			size = status->size;
@@ -5177,7 +5176,7 @@ int __INTERNAL__PMPI_Pack_external_size (char *datarep , int incount, MPI_Dataty
 	switch( _mpc_dt_get_kind( datatype ) )
 	{
 		case MPC_DATATYPES_CONTIGUOUS:
-			task_specific = _mpc_cl_per_mpi_process_ctx_get ();
+			task_specific = mpc_cl_per_mpi_process_ctx_get ();
 			contiguous_user_types = _mpc_cl_per_mpi_process_ctx_contiguous_datatype_ts_get( task_specific, datatype );
 			
 			/* For contiguous it is count times the external extent */
@@ -5194,7 +5193,7 @@ int __INTERNAL__PMPI_Pack_external_size (char *datarep , int incount, MPI_Dataty
 		break;
 		
 		case MPC_DATATYPES_DERIVED:
-			task_specific = _mpc_cl_per_mpi_process_ctx_get ();
+			task_specific = mpc_cl_per_mpi_process_ctx_get ();
 		
 			derived_user_types = _mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
 		
@@ -5253,7 +5252,7 @@ MPI_Datatype * sctk_datatype_get_typemask( MPI_Datatype datatype, int * type_mas
 			return static_type;
 		break;
 		case MPC_DATATYPES_CONTIGUOUS:
-			task_specific = _mpc_cl_per_mpi_process_ctx_get ();
+			task_specific = mpc_cl_per_mpi_process_ctx_get ();
 			
 			contiguous_user_types = _mpc_cl_per_mpi_process_ctx_contiguous_datatype_ts_get( task_specific, datatype );
 			
@@ -5273,7 +5272,7 @@ MPI_Datatype * sctk_datatype_get_typemask( MPI_Datatype datatype, int * type_mas
 		break;
 		
 		case MPC_DATATYPES_DERIVED:
-			task_specific = _mpc_cl_per_mpi_process_ctx_get ();
+			task_specific = mpc_cl_per_mpi_process_ctx_get ();
 
 			derived_user_types = _mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
 		
@@ -15206,7 +15205,7 @@ static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
     }
     is_initialized = 1;
 
-    task_specific = _mpc_cl_per_mpi_process_ctx_get();
+    task_specific = mpc_cl_per_mpi_process_ctx_get();
     task_specific->mpc_mpi_data = sctk_malloc(sizeof(struct mpc_mpi_data_s));
     memset(task_specific->mpc_mpi_data, 0, sizeof(struct mpc_mpi_data_s));
     task_specific->mpc_mpi_data->lock = SCTK_SPINLOCK_INITIALIZER;
@@ -15271,7 +15270,7 @@ __INTERNAL__PMPI_Finalize (void)
   int res; 
 
   struct mpc_mpi_m_per_mpi_process_ctx_s * task_specific;
-  task_specific = _mpc_cl_per_mpi_process_ctx_get ();
+  task_specific = mpc_cl_per_mpi_process_ctx_get ();
   if(task_specific->mpc_mpi_data->nbc_initialized_per_task == 1){
     task_specific->mpc_mpi_data->nbc_initialized_per_task = -1;
     sctk_thread_yield();
@@ -19570,7 +19569,7 @@ PMPI_Abort (MPI_Comm comm, int errorcode)
 int PMPI_Is_thread_main(int *flag)
 {
 	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
-	task_specific = _mpc_cl_per_mpi_process_ctx_get ();
+	task_specific = mpc_cl_per_mpi_process_ctx_get ();
 	*flag = task_specific->init_done;
 	return MPI_SUCCESS;
 }

@@ -21,7 +21,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 //#include "sctk_alloc.h"
-#include "mpc_internal_common.h"
 #include "mpc_reduction.h"
 #include "mpcthread.h"
 #include "mpi_alloc_mem.h"

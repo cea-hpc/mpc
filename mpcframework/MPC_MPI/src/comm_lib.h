@@ -29,6 +29,10 @@ extern "C" {
 
 #include <mpc_mpi_comm_lib.h>
 
+#include "datatype.h"
+#include "egreq_classes.h"
+#include "mpc_info.h"
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -114,16 +118,6 @@ int _mpc_cl_group_difference( _mpc_cl_group_t *, _mpc_cl_group_t *, _mpc_cl_grou
  * (EXTENDED) GENERALIZED REQUESTS *
  ***********************************/
 
-/** Generalized requests functions **/
-typedef sctk_Grequest_query_function MPC_Grequest_query_function;
-typedef sctk_Grequest_cancel_function MPC_Grequest_cancel_function;
-typedef sctk_Grequest_free_function MPC_Grequest_free_function;
-/** Extended Generalized requests functions **/
-typedef sctk_Grequest_poll_fn MPCX_Grequest_poll_fn;
-typedef sctk_Grequest_wait_fn MPCX_Grequest_wait_fn;
-/** Generalized Request classes **/
-typedef sctk_Request_class MPCX_Request_class;
-
 /** \brief This function starts a generic request
 *
 * \param query_fn Query function called to fill the status object
@@ -138,8 +132,8 @@ typedef sctk_Request_class MPCX_Request_class;
 * Once the operation completes, the user has to call \ref _mpc_cl_grequest_complete
 *
 */
-int _mpc_cl_grequest_start( MPC_Grequest_query_function *query_fr, MPC_Grequest_free_function *free_fn,
-				MPC_Grequest_cancel_function *cancel_fn, void *extra_state, mpc_mp_request_t *request );
+int _mpc_cl_grequest_start( sctk_Grequest_query_function *query_fr, sctk_Grequest_free_function *free_fn,
+				sctk_Grequest_cancel_function *cancel_fn, void *extra_state, mpc_mp_request_t *request );
 
 /** \brief Starts an extended generalized request with a polling function
  *
@@ -150,10 +144,10 @@ int _mpc_cl_grequest_start( MPC_Grequest_query_function *query_fr, MPC_Grequest_
  *  \param extra_state Extra pointer passed to every handler
  *  \param request The request object we are creating (output)
  */
-int _mpc_cl_egrequest_start( MPC_Grequest_query_function *query_fn,
-				MPC_Grequest_free_function *free_fn,
-				MPC_Grequest_cancel_function *cancel_fn,
-				MPCX_Grequest_poll_fn *poll_fn,
+int _mpc_cl_egrequest_start( sctk_Grequest_query_function *query_fn,
+				sctk_Grequest_free_function *free_fn,
+				sctk_Grequest_cancel_function *cancel_fn,
+				sctk_Grequest_poll_fn *poll_fn,
 				void *extra_state,
 				mpc_mp_request_t *request );
 
@@ -170,9 +164,9 @@ int _mpc_cl_grequest_complete( mpc_mp_request_t request );
  *  \param extra_state Extra pointer passed to every handler
  *  \param request The request object we are creating (output)
  */
-int _mpc_cl_grequest_start( MPC_Grequest_query_function *query_fn,
-				MPC_Grequest_free_function *free_fn,
-				MPC_Grequest_cancel_function *cancel_fn,
+int _mpc_cl_grequest_start( sctk_Grequest_query_function *query_fn,
+				sctk_Grequest_free_function *free_fn,
+				sctk_Grequest_cancel_function *cancel_fn,
 				void *extra_state, mpc_mp_request_t *request );
 
 /** \brief This creates a request class which can be referred to later on
@@ -185,21 +179,21 @@ int _mpc_cl_grequest_start( MPC_Grequest_query_function *query_fn,
  * of the same type (CAN BE NULL)
  *  \param new_class The identifier of the class we are creating (output)
  */
-int _mpc_cl_grequest_class_create( MPC_Grequest_query_function *query_fn,
-					MPC_Grequest_cancel_function *cancel_fn,
-					MPC_Grequest_free_function *free_fn,
-					MPCX_Grequest_poll_fn *poll_fn,
-					MPCX_Grequest_wait_fn *wait_fn,
-					MPCX_Request_class *new_class );
+int _mpc_cl_grequest_class_create( sctk_Grequest_query_function *query_fn,
+					sctk_Grequest_cancel_function *cancel_fn,
+					sctk_Grequest_free_function *free_fn,
+					sctk_Grequest_poll_fn *poll_fn,
+					sctk_Grequest_wait_fn *wait_fn,
+					sctk_Request_class *new_class );
 
-/** \brief Create a request linked to an \ref MPCX_Request_class type
+/** \brief Create a request linked to an \ref sctk_Request_class type
  *
  *  \param target_class Identifier of the class of work we launch as created by
  * \ref PMPIX_GRequest_class_create
  *  \param extra_state Extra pointer passed to every handler
  *  \param request The request object we are creating (output)
  */
-int _mpc_cl_grequest_class_allocate( MPCX_Request_class target_class, void *extra_state, mpc_mp_request_t *request );
+int _mpc_cl_grequest_class_allocate( sctk_Request_class target_class, void *extra_state, mpc_mp_request_t *request );
 
 /******************************
  * MPC COMMON INFO MANAGEMENT *
@@ -242,20 +236,16 @@ int _mpc_cl_status_get_count( mpc_mp_status_t *, mpc_mp_datatype_t, mpc_mp_msg_c
  * PACK MANAGEMENT *
  *******************/
 
-typedef unsigned int mpc_pack_indexes_t;
-typedef long mpc_pack_absolute_indexes_t;
-
-
 int _mpc_cl_open_pack( mpc_mp_request_t *request );
 
 int _mpc_cl_add_pack( void *buf, mpc_mp_msg_count_t count,
-					 mpc_pack_indexes_t *begins,
-					 mpc_pack_indexes_t *ends, mpc_mp_datatype_t datatype,
+					 unsigned int *begins,
+					 unsigned int *ends, mpc_mp_datatype_t datatype,
 					 mpc_mp_request_t *request );
 
 int _mpc_cl_add_pack_absolute( void *buf, mpc_mp_msg_count_t count,
-							  mpc_pack_absolute_indexes_t *begins,
-							  mpc_pack_absolute_indexes_t *ends,
+							  long *begins,
+							  long *ends,
 							  mpc_mp_datatype_t datatype, mpc_mp_request_t *request );
 
 int _mpc_cl_isend_pack( int dest, int tag, mpc_mp_communicator_t comm,
@@ -263,6 +253,286 @@ int _mpc_cl_isend_pack( int dest, int tag, mpc_mp_communicator_t comm,
 
 int _mpc_cl_irecv_pack( int source, int tag, mpc_mp_communicator_t comm,
 					   mpc_mp_request_t *request );
+
+/********************
+ * TOPOLOGY GETTERS *
+ ********************/
+
+int _mpc_cl_comm_rank( mpc_mp_communicator_t comm, int *rank );
+int _mpc_cl_comm_size( mpc_mp_communicator_t comm, int *size );
+int _mpc_cl_comm_remote_size( mpc_mp_communicator_t comm, int *size );
+int _mpc_cl_node_rank( int *rank );
+int _mpc_cl_get_processor_name( char *name, int *resultlen );
+
+/*************************
+ * COLLECTIVE OPERATIONS *
+ *************************/
+
+#define MPC_CREATE_INTERN_FUNC( name ) extern const sctk_Op MPC_##name
+
+MPC_CREATE_INTERN_FUNC( SUM );
+MPC_CREATE_INTERN_FUNC( MAX );
+MPC_CREATE_INTERN_FUNC( MIN );
+MPC_CREATE_INTERN_FUNC( PROD );
+MPC_CREATE_INTERN_FUNC( LAND );
+MPC_CREATE_INTERN_FUNC( BAND );
+MPC_CREATE_INTERN_FUNC( LOR );
+MPC_CREATE_INTERN_FUNC( BOR );
+MPC_CREATE_INTERN_FUNC( LXOR );
+MPC_CREATE_INTERN_FUNC( BXOR );
+MPC_CREATE_INTERN_FUNC( MINLOC );
+MPC_CREATE_INTERN_FUNC( MAXLOC );
+
+int _mpc_cl_barrier( mpc_mp_communicator_t comm );
+int _mpc_cl_bcast( void *buffer, mpc_mp_msg_count_t count,
+				  mpc_mp_datatype_t datatype, int root, mpc_mp_communicator_t comm );
+int _mpc_cl_gather( void *sendbuf, mpc_mp_msg_count_t sendcnt,
+				   mpc_mp_datatype_t sendtype, void *recvbuf,
+				   mpc_mp_msg_count_t recvcount, mpc_mp_datatype_t recvtype,
+				   int root, mpc_mp_communicator_t comm );
+int _mpc_cl_allgather( void *sendbuf, mpc_mp_msg_count_t sendcount,
+					  mpc_mp_datatype_t sendtype, void *recvbuf,
+					  mpc_mp_msg_count_t recvcount,
+					  mpc_mp_datatype_t recvtype, mpc_mp_communicator_t comm );
+
+int _mpc_cl_op_create( sctk_Op_User_function *, int, sctk_Op * );
+int _mpc_cl_op_free( sctk_Op * );
+
+/*****************************
+ * POINT TO POINT OPERATIONS *
+ *****************************/
+
+int _mpc_cl_isend( void *buf, mpc_mp_msg_count_t count,
+		mpc_mp_datatype_t datatype, int dest, int tag,
+		mpc_mp_communicator_t comm, mpc_mp_request_t *request );
+
+int _mpc_cl_ibsend(void *buf, mpc_mp_msg_count_t count, mpc_mp_datatype_t datatype, int dest,
+                int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *request);
+
+
+int _mpc_cl_issend( void *buf, mpc_mp_msg_count_t count,
+		   mpc_mp_datatype_t datatype, int dest, int tag,
+	 	   mpc_mp_communicator_t comm, mpc_mp_request_t *request );
+
+int _mpc_cl_irsend(void *buf, mpc_mp_msg_count_t count, mpc_mp_datatype_t datatype, int dest,
+                int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *request);
+
+
+
+int _mpc_cl_irecv( void *buf, mpc_mp_msg_count_t count, mpc_mp_datatype_t datatype,
+				  int source, int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *request );
+
+int _mpc_cl_send( void * buf, mpc_mp_msg_count_t count,
+				 mpc_mp_datatype_t datatype, int dest, int tag, mpc_mp_communicator_t comm );
+
+int _mpc_cl_ssend( void *buf, mpc_mp_msg_count_t count, mpc_mp_datatype_t datatype,
+		  int dest, int tag, mpc_mp_communicator_t comm );
+
+int _mpc_cl_recv( void *buf, mpc_mp_msg_count_t count, mpc_mp_datatype_t datatype, int source,
+		 int tag, mpc_mp_communicator_t comm, mpc_mp_status_t *status );
+
+
+/*******************
+ * WAIT OPERATIONS *
+ *******************/
+
+int _mpc_cl_wait( mpc_mp_request_t *request, mpc_mp_status_t *status );
+
+/** \brief Internal MPI_Waitall implementation relying on pointer to requests
+ *
+ *  This function is needed in order to call the MPC interface from
+ *  the MPI one without having to rely on a set of MPI_Tests as before
+ *  now the progress from MPI_Waitall functions can also be polled
+ *
+ *  \warning This function is not MPI_Waitall (see the mpc_mp_request_t *
+ * parray_of_requests[] argument)
+ *
+ */
+int _mpc_cl_waitallp( mpc_mp_msg_count_t count, mpc_mp_request_t *parray_of_requests[],
+					 mpc_mp_status_t array_of_statuses[] );
+
+int _mpc_cl_waitall( mpc_mp_msg_count_t count, mpc_mp_request_t array_of_requests[],
+					mpc_mp_status_t array_of_statuses[] );
+
+int _mpc_cl_waitsome( mpc_mp_msg_count_t incount, mpc_mp_request_t array_of_requests[],
+					 mpc_mp_msg_count_t *outcount, mpc_mp_msg_count_t array_of_indices[],
+					 mpc_mp_status_t array_of_statuses[] );
+
+int _mpc_cl_waitany( mpc_mp_msg_count_t count, mpc_mp_request_t array_of_requests[],
+					mpc_mp_msg_count_t *index, mpc_mp_status_t *status );
+
+int _mpc_cl_wait_pending( mpc_mp_communicator_t comm );
+
+int _mpc_cl_wait_pending_all_comm( void );
+
+int _mpc_cl_test( mpc_mp_request_t *request, int *flag, mpc_mp_status_t *status );
+
+int _mpc_cl_iprobe( int source, int tag, mpc_mp_communicator_t comm, int *flag,
+				 mpc_mp_status_t *status );
+
+int _mpc_cl_probe( int source, int tag, mpc_mp_communicator_t comm, mpc_mp_status_t *status );
+
+
+/*****************
+ * COMMUNICATORS *
+ *****************/
+
+int _mpc_cl_comm_create( mpc_mp_communicator_t comm, _mpc_cl_group_t *group, mpc_mp_communicator_t *comm_out );
+
+int _mpc_cl_intercomm_create( mpc_mp_communicator_t local_comm,
+			      int local_leader, mpc_mp_communicator_t peer_comm,
+			      int remote_leader, int tag, mpc_mp_communicator_t *newintercomm );
+
+int _mpc_cl_comm_create_from_intercomm( mpc_mp_communicator_t comm,
+				    _mpc_cl_group_t *group,
+				    mpc_mp_communicator_t *comm_out );
+
+int _mpc_cl_comm_free( mpc_mp_communicator_t *comm );
+
+int _mpc_cl_comm_dup( mpc_mp_communicator_t incomm, mpc_mp_communicator_t *outcomm);
+
+int _mpc_cl_comm_split( mpc_mp_communicator_t comm, int color, int key, mpc_mp_communicator_t *comm_out );
+
+/******************
+ * ERROR HANDLING *
+ ******************/
+
+void _mpc_cl_default_error( mpc_mp_communicator_t *comm, int *error, char *msg, char *file, int line );
+
+void _mpc_cl_return_error( mpc_mp_communicator_t *comm, int *error, ... );
+
+int _mpc_cl_errhandler_create( MPC_Handler_function *function,
+							MPC_Errhandler *errhandler );
+
+int _mpc_cl_errhandler_set( mpc_mp_communicator_t comm, MPC_Errhandler errhandler );
+
+int _mpc_cl_errhandler_get( mpc_mp_communicator_t comm, MPC_Errhandler *errhandler );
+
+int _mpc_cl_errhandler_free( MPC_Errhandler *errhandler );
+
+int _mpc_cl_error_string( int code, char *str, int *len );
+
+int _mpc_cl_error_class( int errorcode, int *errorclass );
+
+/************************
+ * TIMING AND PROFILING *
+ ************************/
+
+double _mpc_cl_wtime( void );
+double _mpc_cl_wtick( void );
+
+typedef struct
+{
+	int virtual_cpuid;
+	double usage;
+} MPC_Activity_t;
+
+int _mpc_cl_get_activity( int nb_item, MPC_Activity_t *tab, double *process_act );
+
+/**************
+ * CHECKPOINT *
+ **************/
+
+/**
+ * Trigger a checkpoint for the whole application.
+ *
+ * We are aware this functino implements somehow a barrier through three "expensive" atomics
+ * But keep in mind that creating a checkpoint for the whole application is far more expensive
+ * than that.
+ *
+ * This function sets "state" depending on the application state:
+ *   - If we reach this function, it is a simple checkpoint -> MPC_STATE_CHECKPOINT
+ *   - If we restart from a snapshot, it is a restart -> MPC_STATE_RESTART
+ *
+ * \param[out] state The state after the procedure.
+ */
+int _mpc_cl_checkpoint( MPC_Checkpoint_state *st );
+
+
+/************************************************************************/
+/* Per communicator context                                             */
+/************************************************************************/
+
+struct mpc_mpi_per_communicator_s;
+
+typedef struct {
+  mpc_mp_communicator_t key;
+
+  mpc_common_spinlock_t err_handler_lock;
+  MPC_Handler_function*  err_handler;
+
+  struct mpc_mpi_per_communicator_s* mpc_mpi_per_communicator;
+  void (*mpc_mpi_per_communicator_copy)(struct mpc_mpi_per_communicator_s**,struct mpc_mpi_per_communicator_s*);
+  void (*mpc_mpi_per_communicator_copy_dup)(struct mpc_mpi_per_communicator_s**,struct mpc_mpi_per_communicator_s*);
+
+  UT_hash_handle hh;
+}mpc_per_communicator_t;
+
+/** \brief Retrieves a given per communicator context from task CTX
+ */
+mpc_per_communicator_t* _mpc_cl_per_communicator_get(struct mpc_mpi_m_per_mpi_process_ctx_s* task_specific,mpc_mp_communicator_t comm);
+
+
+/************************************************************************/
+/* Per task context                                                     */
+/************************************************************************/
+
+/**
+ *  \brief This structure describes an atexit handler for a task
+ *
+ *  \warning atexit is rewitten in mpc_main.h generated by the configure
+ *            this is just in case you were wondering.
+ */
+struct mpc_mpi_m_per_mpi_process_ctx_atexit_s
+{
+	void (*func)(); /**< Function to be called when task exits */
+	struct mpc_mpi_m_per_mpi_process_ctx_atexit_s * next; /**< Following function to call */
+};
+
+/**
+ *  \brief Describes the context of an MPI task
+ *
+ *  This data structure is initialised by \ref __mpc_cl_per_mpi_process_ctx_init and
+ * 	released by \ref __mpc_cl_per_mpi_process_ctx_release. Initial setup is done
+ *  in \ref __mpc_cl_per_mpi_process_ctx_init called in \ref mpc_mpi_m_mpi_process_main.
+ *
+ */
+typedef struct mpc_mpi_m_per_mpi_process_ctx_s
+{
+	/* TODO */
+	struct mpc_mpi_data_s *mpc_mpi_data;
+
+	/* Communicator handling */
+	mpc_per_communicator_t *per_communicator;
+	mpc_common_spinlock_t per_communicator_lock;
+
+	/* ID */
+	int task_id; /**< MPI comm rank of the task */
+
+	/* Status */
+	int init_done; /**< =1 if the task has called MPI_Init() 2
+			     =2 if the task has called MPI_Finalize */
+	int thread_level;
+
+	/* Data-types */
+	struct _mpc_dt_storage *datatype_array;
+
+	/* Extended Request Class handling */
+	struct _mpc_egreq_classes_storage grequest_context;
+
+	/* MPI_Info handling */
+	struct MPC_Info_factory info_fact; /**< This structure is used to store the association
+                                                between MPI_Infos structs and their ID */
+
+	/* At EXIT */
+	struct mpc_mpi_m_per_mpi_process_ctx_atexit_s  *exit_handlers; /**< These functions are called when tasks leaves (atexit) */
+
+	/* For disguisement */
+	struct sctk_thread_data_s *thread_data;
+
+	/* Progresss List */
+	struct _mpc_egreq_progress_list *progress_list;
+} mpc_mpi_m_per_mpi_process_ctx_t;
 
 /***********************
  * DATATYPE MANAGEMENT *
@@ -403,211 +673,43 @@ int _mpc_cl_type_get_attr( mpc_mp_datatype_t datatype, int attribute_val,
 
 struct _mpc_dt_context;
 int _mpc_cl_derived_datatype( mpc_mp_datatype_t *datatype,
-							 mpc_pack_absolute_indexes_t *begins,
-							 mpc_pack_absolute_indexes_t *ends,
+							 long *begins,
+							 long *ends,
 							 mpc_mp_datatype_t *types,
 							 unsigned long count,
-							 mpc_pack_absolute_indexes_t lb, int is_lb,
-							 mpc_pack_absolute_indexes_t ub, int is_ub,
+							 long lb, int is_lb,
+							 long ub, int is_ub,
 							 struct _mpc_dt_context *ectx );
 
 int _mpc_cl_type_get_true_extent( mpc_mp_datatype_t datatype, size_t *true_lb, size_t *true_extent );
+
 int _mpc_cl_type_convert_to_derived( mpc_mp_datatype_t in_datatype, mpc_mp_datatype_t *out_datatype );
+
 int _mpc_cl_type_use( mpc_mp_datatype_t datatype );
 
-/********************
- * TOPOLOGY GETTERS *
- ********************/
+_mpc_dt_contiguout_t * _mpc_cl_per_mpi_process_ctx_contiguous_datatype_ts_get( mpc_mpi_m_per_mpi_process_ctx_t *task_specific,
+									            mpc_mp_datatype_t datatype );
+_mpc_dt_contiguout_t *_mpc_cl_per_mpi_process_ctx_contiguous_datatype_get(mpc_mp_datatype_t datatype);
 
-int _mpc_cl_comm_rank( mpc_mp_communicator_t comm, int *rank );
-int _mpc_cl_comm_size( mpc_mp_communicator_t comm, int *size );
-int _mpc_cl_comm_remote_size( mpc_mp_communicator_t comm, int *size );
-int _mpc_cl_node_rank( int *rank );
-int _mpc_cl_get_processor_name( char *name, int *resultlen );
+_mpc_dt_derived_t * _mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get(  mpc_mpi_m_per_mpi_process_ctx_t *task_specific, mpc_mp_datatype_t datatype );
+_mpc_dt_derived_t *_mpc_cl_per_mpi_process_ctx_derived_datatype_get(mpc_mp_datatype_t datatype);
 
-/*************************
- * COLLECTIVE OPERATIONS *
- *************************/
+int _mpc_cl_type_hcontiguous_ctx (mpc_mp_datatype_t * datatype, size_t count, mpc_mp_datatype_t *data_in, struct _mpc_dt_context * ctx);
 
-#define MPC_CREATE_INTERN_FUNC( name ) extern const sctk_Op MPC_##name
+int _mpc_cl_derived_datatype_try_get_info (mpc_mp_datatype_t datatype, int *res, _mpc_dt_derived_t *output_datatype );
 
-MPC_CREATE_INTERN_FUNC( SUM );
-MPC_CREATE_INTERN_FUNC( MAX );
-MPC_CREATE_INTERN_FUNC( MIN );
-MPC_CREATE_INTERN_FUNC( PROD );
-MPC_CREATE_INTERN_FUNC( LAND );
-MPC_CREATE_INTERN_FUNC( BAND );
-MPC_CREATE_INTERN_FUNC( LOR );
-MPC_CREATE_INTERN_FUNC( BOR );
-MPC_CREATE_INTERN_FUNC( LXOR );
-MPC_CREATE_INTERN_FUNC( BXOR );
-MPC_CREATE_INTERN_FUNC( MINLOC );
-MPC_CREATE_INTERN_FUNC( MAXLOC );
+int _mpc_cl_type_ctx_set( mpc_mp_datatype_t datatype,  struct _mpc_dt_context * dctx );
 
-int _mpc_cl_barrier( mpc_mp_communicator_t comm );
-int _mpc_cl_bcast( void *buffer, mpc_mp_msg_count_t count,
-				  mpc_mp_datatype_t datatype, int root, mpc_mp_communicator_t comm );
-int _mpc_cl_gather( void *sendbuf, mpc_mp_msg_count_t sendcnt,
-				   mpc_mp_datatype_t sendtype, void *recvbuf,
-				   mpc_mp_msg_count_t recvcount, mpc_mp_datatype_t recvtype,
-				   int root, mpc_mp_communicator_t comm );
-int _mpc_cl_allgather( void *sendbuf, mpc_mp_msg_count_t sendcount,
-					  mpc_mp_datatype_t sendtype, void *recvbuf,
-					  mpc_mp_msg_count_t recvcount,
-					  mpc_mp_datatype_t recvtype, mpc_mp_communicator_t comm );
+int _mpc_cl_derived_datatype_on_slot ( int id,
+				    long * begins,
+				    long * ends,
+				    mpc_mp_datatype_t * types,
+			     	    unsigned long count,
+				    long lb, int is_lb,
+				    long ub, int is_ub);
 
-int _mpc_cl_op_create( sctk_Op_User_function *, int, sctk_Op * );
-int _mpc_cl_op_free( sctk_Op * );
+int _mpc_cl_type_set_size(mpc_mp_datatype_t datatype, size_t size );
 
-/*****************************
- * POINT TO POINT OPERATIONS *
- *****************************/
-
-int _mpc_cl_isend( void *buf, mpc_mp_msg_count_t count,
-		mpc_mp_datatype_t datatype, int dest, int tag,
-		mpc_mp_communicator_t comm, mpc_mp_request_t *request );
-
-int _mpc_cl_ibsend(void *buf, mpc_mp_msg_count_t count, mpc_mp_datatype_t datatype, int dest,
-                int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *request);
-
-
-int _mpc_cl_issend( void *buf, mpc_mp_msg_count_t count,
-		   mpc_mp_datatype_t datatype, int dest, int tag,
-	 	   mpc_mp_communicator_t comm, mpc_mp_request_t *request );
-
-int _mpc_cl_irsend(void *buf, mpc_mp_msg_count_t count, mpc_mp_datatype_t datatype, int dest,
-                int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *request);
-
-
-
-int _mpc_cl_irecv( void *buf, mpc_mp_msg_count_t count, mpc_mp_datatype_t datatype,
-				  int source, int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *request );
-
-int _mpc_cl_send( void *restrict buf, mpc_mp_msg_count_t count,
-				 mpc_mp_datatype_t datatype, int dest, int tag, mpc_mp_communicator_t comm );
-
-int _mpc_cl_ssend( void *buf, mpc_mp_msg_count_t count, mpc_mp_datatype_t datatype,
-		  int dest, int tag, mpc_mp_communicator_t comm );
-
-int _mpc_cl_recv( void *buf, mpc_mp_msg_count_t count, mpc_mp_datatype_t datatype, int source,
-		 int tag, mpc_mp_communicator_t comm, mpc_mp_status_t *status );
-
-
-/*******************
- * WAIT OPERATIONS *
- *******************/
-
-int _mpc_cl_wait( mpc_mp_request_t *request, mpc_mp_status_t *status );
-
-/** \brief Internal MPI_Waitall implementation relying on pointer to requests
- *
- *  This function is needed in order to call the MPC interface from
- *  the MPI one without having to rely on a set of MPI_Tests as before
- *  now the progress from MPI_Waitall functions can also be polled
- *
- *  \warning This function is not MPI_Waitall (see the mpc_mp_request_t *
- * parray_of_requests[] argument)
- *
- */
-int _mpc_cl_waitallp( mpc_mp_msg_count_t count, mpc_mp_request_t *parray_of_requests[],
-					 mpc_mp_status_t array_of_statuses[] );
-
-int _mpc_cl_waitall( mpc_mp_msg_count_t count, mpc_mp_request_t array_of_requests[],
-					mpc_mp_status_t array_of_statuses[] );
-
-int _mpc_cl_waitsome( mpc_mp_msg_count_t incount, mpc_mp_request_t array_of_requests[],
-					 mpc_mp_msg_count_t *outcount, mpc_mp_msg_count_t array_of_indices[],
-					 mpc_mp_status_t array_of_statuses[] );
-
-int _mpc_cl_waitany( mpc_mp_msg_count_t count, mpc_mp_request_t array_of_requests[],
-					mpc_mp_msg_count_t *index, mpc_mp_status_t *status );
-
-int _mpc_cl_wait_pending( mpc_mp_communicator_t comm );
-
-int _mpc_cl_wait_pending_all_comm( void );
-
-int _mpc_cl_test( mpc_mp_request_t *request, int *flag, mpc_mp_status_t *status );
-
-int _mpc_cl_iprobe( int source, int tag, mpc_mp_communicator_t comm, int *flag,
-				 mpc_mp_status_t *status );
-
-int _mpc_cl_probe( int source, int tag, mpc_mp_communicator_t comm, mpc_mp_status_t *status );
-
-
-/*****************
- * COMMUNICATORS *
- *****************/
-
-int _mpc_cl_comm_create( mpc_mp_communicator_t comm, _mpc_cl_group_t *group, mpc_mp_communicator_t *comm_out );
-
-int _mpc_cl_intercomm_create( mpc_mp_communicator_t local_comm,
-			      int local_leader, mpc_mp_communicator_t peer_comm,
-			      int remote_leader, int tag, mpc_mp_communicator_t *newintercomm );
-
-int _mpc_cl_comm_create_from_intercomm( mpc_mp_communicator_t comm,
-				    _mpc_cl_group_t *group,
-				    mpc_mp_communicator_t *comm_out );
-
-int _mpc_cl_comm_free( mpc_mp_communicator_t *comm );
-
-int _mpc_cl_comm_dup( mpc_mp_communicator_t incomm, mpc_mp_communicator_t *outcomm);
-
-int _mpc_cl_comm_split( mpc_mp_communicator_t comm, int color, int key, mpc_mp_communicator_t *comm_out );
-
-/******************
- * ERROR HANDLING *
- ******************/
-
-void _mpc_cl_default_error( mpc_mp_communicator_t *comm, int *error, char *msg, char *file, int line );
-
-void _mpc_cl_return_error( mpc_mp_communicator_t *comm, int *error, ... );
-
-int _mpc_cl_errhandler_create( MPC_Handler_function *function,
-							MPC_Errhandler *errhandler );
-
-int _mpc_cl_errhandler_set( mpc_mp_communicator_t comm, MPC_Errhandler errhandler );
-
-int _mpc_cl_errhandler_get( mpc_mp_communicator_t comm, MPC_Errhandler *errhandler );
-
-int _mpc_cl_errhandler_free( MPC_Errhandler *errhandler );
-
-int _mpc_cl_error_string( int code, char *str, int *len );
-
-int _mpc_cl_error_class( int errorcode, int *errorclass );
-
-/************************
- * TIMING AND PROFILING *
- ************************/
-
-double _mpc_cl_wtime( void );
-double _mpc_cl_wtick( void );
-
-typedef struct
-{
-	int virtual_cpuid;
-	double usage;
-} MPC_Activity_t;
-
-int _mpc_cl_get_activity( int nb_item, MPC_Activity_t *tab, double *process_act );
-
-/**************
- * CHECKPOINT *
- **************/
-
-/**
- * Trigger a checkpoint for the whole application.
- *
- * We are aware this functino implements somehow a barrier through three "expensive" atomics
- * But keep in mind that creating a checkpoint for the whole application is far more expensive
- * than that.
- *
- * This function sets "state" depending on the application state:
- *   - If we reach this function, it is a simple checkpoint -> MPC_STATE_CHECKPOINT
- *   - If we restart from a snapshot, it is a restart -> MPC_STATE_RESTART
- *
- * \param[out] state The state after the procedure.
- */
-int _mpc_cl_checkpoint( MPC_Checkpoint_state *st );
 
 #ifdef __cplusplus
 }
