@@ -29,7 +29,6 @@
 #include "mpcomp.h"
 
 #include "mpc_common_asm.h"
-#include "mpc_common_asm.h"
 #include "sctk_context.h"
 #include "sctk_tls.h"
 
@@ -38,11 +37,8 @@
 #include "sctk_debug.h"
 #include "mpcomp_task_locked_list.h"
 
-#ifdef MPCOMP_USE_MCS_LOCK
 #include "mpc_common_spinlock.h"
-#else /* MPCOMP_USE_MCS_LOCK */
-#include "mpc_common_spinlock.h"
-#endif /* MPCOMP_USE_MCS_LOCK */
+
 
 #define MPCOMP_TASK_LOCKFREE_CACHELINE_PADDING 128
 

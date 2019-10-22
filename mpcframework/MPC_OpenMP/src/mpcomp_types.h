@@ -25,6 +25,7 @@
 #ifndef __MPCOMP_TYPES_H__
 #define __MPCOMP_TYPES_H__
 
+#include <mpc_common_asm.h>
 #include "mpcomp_task.h"
 #include "mpcomp_types_def.h"
 #include "mpcomp_types_enum.h"

@@ -49,10 +49,10 @@
 extern ompt_callback_t* OMPT_Callbacks;
 
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
-  static OPA_int_t __private_perf_call_steal = OPA_INT_T_INITIALIZER(0);
-  static OPA_int_t __private_perf_success_steal = OPA_INT_T_INITIALIZER(0);
-  static OPA_int_t __private_perf_create_task = OPA_INT_T_INITIALIZER(0);
-  static OPA_int_t __private_perf_executed_task = OPA_INT_T_INITIALIZER(0);
+  static OPA_int __private_perf_call_steal = OPA_INT_T_INIT(0);
+  static OPA_int __private_perf_success_steal = OPA_INT_T_INIT(0);
+  static OPA_int __private_perf_create_task = OPA_INT_T_INIT(0);
+  static OPA_int __private_perf_executed_task = OPA_INT_T_INIT(0);
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
 
   int (*mpcomp_task_list_isempty) (mpcomp_task_list_t *);
@@ -821,7 +821,7 @@ mpcomp_taskwait(void)
     sctk_assert(current_task); // Fail if tasks disable...(from full barrier call)
 
 #if OMPT_SUPPORT 
-    if( sctk_atomics_load_int(&(current_task->refcount)) != 1) {
+    if( OPA_load_int(&(current_task->refcount)) != 1) {
       ompt_sync_wait = 1;
 
       if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks ) {

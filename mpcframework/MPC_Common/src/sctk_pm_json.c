@@ -1493,7 +1493,7 @@ json_parse_object_error:
 json_t * _json_parse( char ** buff )
 {
 
-	if( *buff == '\0' )
+	if( *buff == NULL )
 		return NULL;
 
 	switch( json_infer_type( *buff ) )

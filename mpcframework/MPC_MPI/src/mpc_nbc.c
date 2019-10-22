@@ -3839,12 +3839,12 @@ static int JJ_NBC_Iexscan(void *sendbuf, void *recvbuf, int count,
     printf("Error in NBC_Init_handle(%i)\n", res);
     return res;
   }
-  res = PMPC_Comm_rank(comm, &rank);
+  res = _mpc_cl_comm_rank(comm, &rank);
   if (MPI_SUCCESS != res) {
     printf("MPI Error in MPI_Comm_rank() (%i)\n", res);
     return res;
   }
-  res = PMPC_Comm_size(comm, &p);
+  res = _mpc_cl_comm_size(comm, &p);
   if (MPI_SUCCESS != res) {
     printf("MPI Error in MPI_Comm_size() (%i)\n", res);
     return res;

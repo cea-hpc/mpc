@@ -14,6 +14,7 @@
 #include "mpcomp_task_stealing.h"
 
 #include "mpcomp_task_dep.h"
+
 #include "mpc_common_asm.h"
 
 #include "sctk_debug.h"

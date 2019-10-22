@@ -62,8 +62,7 @@ void sctk_formated_assert_print( FILE *stream, const int line,
 
 void MPC_printf( const char *fmt, ... );
 void sctk_debug_root( const char *fmt, ... );
-/* Print infos on processus and threads */
-char *sctk_print_debug_infos();
+
 
 #ifdef SCTK_DEBUG_MESSAGES
         void sctk_debug( const char *fmt, ... );

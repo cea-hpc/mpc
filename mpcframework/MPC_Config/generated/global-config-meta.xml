@@ -133,7 +133,6 @@
 			<param name="nb_node" type="int" default="1" doc="Define the number of compute nodes" alias="LN_MPC_NODE" />
 			<param name="launcher" type="string" default="none" doc="Define which launcher to use" />
 			<param name="max_try" type="int" default="10" doc="Define the max number of tries to access the topology file before failing" alias="LN_MAX_TOPO_TRY" />
-			<param name="vers_details" type="bool" default="false" doc="Print the MPC version number" alias="LN_DISPLAY_VERS" />
 			<param name="profiling" type="string" default="stdout" doc="Select the type of outputs for the profiling" />
 			<param name="enable_smt" type="bool" default="false" doc="Enable usage of hyperthreaded cores if available on current architecture." alias="LN_ENABLE_SMT" />
 			<param name="share_node" type="bool" default="false" doc="Enable the restriction on CPU number to share node" alias="LN_SHARE_NODE" />
@@ -655,5 +654,8 @@
 		<module name="thread" type="thread"/>
 		<module name="scheduler" type="scheduler"/>
 	</modules>
+</config>
+<config name="MPC_Topology">
+
 </config>
 </all>

@@ -131,7 +131,6 @@
       <xs:element minOccurs="0" name="nb_node" type="xs:integer"/>
       <xs:element minOccurs="0" name="launcher" type="xs:string"/>
       <xs:element minOccurs="0" name="max_try" type="xs:integer"/>
-      <xs:element minOccurs="0" name="vers_details" type="xs:boolean"/>
       <xs:element minOccurs="0" name="profiling" type="xs:string"/>
       <xs:element minOccurs="0" name="enable_smt" type="xs:boolean"/>
       <xs:element minOccurs="0" name="share_node" type="xs:boolean"/>

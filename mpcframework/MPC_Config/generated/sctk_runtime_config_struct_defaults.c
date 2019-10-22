@@ -528,39 +528,6 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 			abort();
 		}
 #endif
-				obj->vers_details = false;
-
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_DISPLAY_VERS" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->vers_details ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_DISPLAY_VERS");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->vers_details);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_DISPLAY_VERS");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_DISPLAY_VERS");
-			abort();
-		}
-#endif
 				obj->profiling = "stdout";
 	obj->enable_smt = false;
 

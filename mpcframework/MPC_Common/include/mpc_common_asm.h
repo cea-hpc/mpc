@@ -23,7 +23,6 @@
 #define __SCTK_ASM_H_
 
 #include "sctk_config.h"
-#include "mpc_common_asm.h"
 
 #include <sched.h>
 #include <libpause.h>

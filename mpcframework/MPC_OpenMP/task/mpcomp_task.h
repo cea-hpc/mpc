@@ -28,6 +28,7 @@
 #define __SCTK_MPCOMP_TASK_H__
 
 #include "stdbool.h"
+#include <mpc_common_asm.h>
 #include "mpc_common_spinlock.h"
 #include "mpcomp_types_icv.h"
 #include "mpcomp_task_macros.h"

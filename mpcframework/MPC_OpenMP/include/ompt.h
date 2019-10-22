@@ -1,7 +1,7 @@
 #ifndef __MPCOMP_OMPT_H__
 #define __MPCOMP_OMPT_H__
 
-#include <mpc_common_types.h>
+#include <stdint.h>
 
 void * __ompt_get_return_address(unsigned int level);
 

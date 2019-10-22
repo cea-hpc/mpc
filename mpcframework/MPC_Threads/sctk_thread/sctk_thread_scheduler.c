@@ -2033,10 +2033,8 @@ quick_swap:
         strcat(hostname2, current_vp);
 
         FILE *fd = fopen(hostname2, "a");
-        fprintf(fd, "%s from %p[%2d-%2d|%2d,%2d] to %p[%2d-%2d|%2d,%2d] t=[%f "
+        sctk_log(fd, "%p[%2d-%2d|%2d,%2d] to %p[%2d-%2d|%2d,%2d] t=[%f "
                     "count(%f)]\n",
-                sctk_print_debug_infos(),
-
                 sched, sched->th->attr.kind.mask, sched->status,
                 sched->th->attr.current_priority,
                 sched->th->attr.basic_priority,

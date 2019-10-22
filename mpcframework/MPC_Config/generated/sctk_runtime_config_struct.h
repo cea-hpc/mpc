@@ -164,8 +164,6 @@ struct sctk_runtime_config_struct_launcher
 	char * launcher;
 	/**Define the max number of tries to access the topology file before failing**/
 	int max_try;
-	/**Print the MPC version number**/
-	int vers_details;
 	/**Select the type of outputs for the profiling**/
 	char * profiling;
 	/**Enable usage of hyperthreaded cores if available on current architecture.**/

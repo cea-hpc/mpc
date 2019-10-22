@@ -20,7 +20,6 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-
 #include <sctk_debug.h>
 
 #include "mpcomp_core.h"

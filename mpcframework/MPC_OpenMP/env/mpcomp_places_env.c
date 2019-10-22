@@ -119,7 +119,8 @@ mpcomp_places_build_numas_places( const int places_number, int* error )
    hwloc_topology_t topology;
    hwloc_obj_t prev_numa, next_numa;
    hwloc_obj_t prev_pu, next_pu;
-	topology = mpc_topology_get();
+
+   topology = mpc_topology_get();
    prev_numa = NULL;
 
    places_string = (char*) malloc( 4096 * sizeof( char ) );
@@ -202,7 +203,8 @@ mpcomp_places_build_sockets_places( const int places_number, int *error )
    hwloc_topology_t topology;
    hwloc_obj_t prev_socket, next_socket;
    hwloc_obj_t prev_pu, next_pu;
-	topology = mpc_topology_get();
+
+   topology = mpc_topology_get();
    prev_socket = NULL;
 
    places_string = (char*) malloc( 4096 * sizeof( char ) );
@@ -281,7 +283,8 @@ mpcomp_places_build_threads_places( const int places_number, int* error )
    char* places_string;
    hwloc_topology_t topology;
    hwloc_obj_t prev_pu, next_pu;
-	topology = mpc_topology_get();
+
+   topology = mpc_topology_get();
    prev_pu = NULL;
 
    places_string = (char*) malloc( 4096 * sizeof( char ) );
@@ -334,7 +337,8 @@ mpcomp_places_build_cores_places( const int places_number, int *error )
    char* places_string;
    hwloc_topology_t topology;
    hwloc_obj_t prev_core, next_core; 
-	topology = mpc_topology_get();
+
+   topology = mpc_topology_get();
    prev_core = NULL;
 
    places_string = (char*) malloc( 4096 * sizeof( char ) );
@@ -574,7 +578,7 @@ mpcomp_places_get_default_include_bitmap( const int nb_mvps )
         if( !__default_num_threads_bitmap )
         {
            hwloc_bitmap_t __tmp_default_bitmap_places = hwloc_bitmap_alloc();
-			hwloc_topology_t topology = mpc_topology_get();
+           hwloc_topology_t topology = mpc_topology_get(); 
            hwloc_bitmap_zero ( __tmp_default_bitmap_places );
            for( i = 0; i < nb_mvps ; i++ )
            {

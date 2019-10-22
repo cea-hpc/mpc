@@ -109,8 +109,6 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 				NULL
 			, NULL},	{"max_try"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,max_try)  , sizeof(int) , "int" , NULL , 
 				"LN_MAX_TOPO_TRY"
-			, NULL},	{"vers_details"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,vers_details)  , sizeof(int) , "int" , NULL , 
-				"LN_DISPLAY_VERS"
 			, NULL},	{"profiling"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,profiling)  , sizeof(char *) , "char *" , NULL , 
 				NULL
 			, NULL},	{"enable_smt"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,enable_smt)  , sizeof(int) , "int" , NULL , 
