@@ -825,7 +825,7 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 				  sctk_thread_create_tmp_start_routine,
 				  (void *) tmp);
 
-  mpc_common_toporender_notify(tmp->task_id);
+  mpc_common_toporender_notify(task_id);
         int min_index[3] = {0,0,0};
 
   /* We reset the binding */
