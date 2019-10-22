@@ -257,14 +257,14 @@ void _mpc_dt_common_display( mpc_mp_datatype_t datatype );
  */
 typedef struct
 {
-	size_t id_rank;				  /**< Identifier of the contiguous type which is also its offset in the contiguous type table*/
-	size_t size;				  /**< Total size of the contiguous type */
+	size_t id_rank;					  /**< Identifier of the contiguous type which is also its offset in the contiguous type table*/
+	size_t size;					  /**< Total size of the contiguous type */
 	size_t element_size;			  /**< Size of an element of type */
-	size_t count;				  /**< Number of elements of type "datatype" in the type */
+	size_t count;					  /**< Number of elements of type "datatype" in the type */
 	mpc_mp_datatype_t datatype;		  /**< Type packed within the datatype */
 	unsigned int ref_count;			  /**< Flag telling if the datatype slot is free for use */
-	struct _mpc_dt_footprint context;	  /**< Saves the creation context for MPI_get_envelope & MPI_Get_contents */
-	struct __mpc_dt_attr_store attrs;	  /**< ATTR array for this type */
+	struct _mpc_dt_footprint context; /**< Saves the creation context for MPI_get_envelope & MPI_Get_contents */
+	struct __mpc_dt_attr_store attrs; /**< ATTR array for this type */
 } _mpc_dt_contiguout_t;
 
 /** \brief _mpc_dt_contiguout_t initializer
@@ -535,61 +535,60 @@ static inline mpc_dt_kind_t _mpc_dt_get_kind( mpc_mp_datatype_t datatype )
 struct _mpc_dt_storage
 {
 	_mpc_dt_contiguout_t contiguous_user_types[SCTK_USER_DATA_TYPES_MAX]; /**< Contiguous datatype array */
-	_mpc_dt_derived_t * derived_user_types[SCTK_USER_DATA_TYPES_MAX];  /**< Derived datatype array */
-	mpc_common_spinlock_t datatype_lock; /**< A lock protecting both datatypes types */
+	_mpc_dt_derived_t *derived_user_types[SCTK_USER_DATA_TYPES_MAX];	  /**< Derived datatype array */
+	mpc_common_spinlock_t datatype_lock;								  /**< A lock protecting both datatypes types */
 };
 
 /** \brief Initializes the datatype array
- *  
+ *
  *  This sets every datatype to not initialized
- * 
+ *
  *  \param da A pointer to the datatype array to be initialized
  */
-struct _mpc_dt_storage * _mpc_dt_storage_init();
+struct _mpc_dt_storage *_mpc_dt_storage_init();
 
-/** \brief Helper funtion to release only allocated datatypes 
- * 
+/** \brief Helper funtion to release only allocated datatypes
+ *
  *  \param da A pointer to the datatype array
  *  \param datatype The datatype to be freed
  */
-int _mpc_dt_storage_type_can_be_released( struct _mpc_dt_storage * da, mpc_mp_datatype_t datatype );
+int _mpc_dt_storage_type_can_be_released( struct _mpc_dt_storage *da, mpc_mp_datatype_t datatype );
 
 /** \brief Releases the datatype array and types not previously freed
  *  \param da A pointer to the datatype array
  */
-void _mpc_dt_storage_release( struct _mpc_dt_storage * da );
-
+void _mpc_dt_storage_release( struct _mpc_dt_storage *da );
 
 /** \brief Returns a pointer to a contiguous datatype
  *  \param da A pointer to the datatype array
  *  \param datatype The datatype ID we want to retrieve
- * 
+ *
  *  \return Returns the cell of the requested datatype (allocated or not !)
- * 
+ *
  *  \warning The datatype must be a contiguous datatype note that event unallocated datatypes are returned !
  */
-_mpc_dt_contiguout_t *  _mpc_dt_storage_get_contiguous_datatype( struct _mpc_dt_storage * da ,  mpc_mp_datatype_t datatype);
+_mpc_dt_contiguout_t *_mpc_dt_storage_get_contiguous_datatype( struct _mpc_dt_storage *da, mpc_mp_datatype_t datatype );
 
 /** \brief Returns a pointer to a derived datatype
  *  \param da A pointer to the datatype array
  *  \param datatype The datatype ID we want to retrieve
- * 
+ *
  *  \return NULL id not allocated a valid pointer otherwise
- * 
+ *
  *  \warning The datatype must be a derived datatype
  */
-_mpc_dt_derived_t * _mpc_dt_storage_get_derived_datatype( struct _mpc_dt_storage * da  ,  mpc_mp_datatype_t datatype);
+_mpc_dt_derived_t *_mpc_dt_storage_get_derived_datatype( struct _mpc_dt_storage *da, mpc_mp_datatype_t datatype );
 
 /** \brief Sets a pointer to a contiguous datatype in the datatype array
  *  \param da A pointer to the datatype array
  *  \param datatype The datatype ID we want to set
- *  \param value the pointer to the datatype array
- * 
+ *  \param value the pointer to the datatype array
+ *
  *  \return NULL id not allocated a valid pointer otherwise
- * 
+ *
  *  \warning The datatype must be a derived datatype
  */
-void _mpc_dt_storage_set_derived_datatype( struct _mpc_dt_storage * da ,  mpc_mp_datatype_t datatype, _mpc_dt_derived_t * value );
+void _mpc_dt_storage_set_derived_datatype( struct _mpc_dt_storage *da, mpc_mp_datatype_t datatype, _mpc_dt_derived_t *value );
 
 /************************************************************************/
 /* Datatype  Attribute Getters                                          */
@@ -602,8 +601,8 @@ void _mpc_dt_storage_set_derived_datatype( struct _mpc_dt_storage * da ,  mpc_mp
  *  \param attribute_val Value to be stored
  *  \return MPI_SUCCESS if ok
  */
-int sctk_type_set_attr(struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
-                       int type_keyval, void *attribute_val);
+int _mpc_dt_attr_set( struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
+					  int type_keyval, void *attribute_val );
 
 /** \brief Get a Datatype attr in a datatype-store (contained inside DT)
  *  \param da A pointer to the datatype array
@@ -613,8 +612,8 @@ int sctk_type_set_attr(struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
  *  \param flag (OUT)False if no attribute found
  *  \return MPI_SUCCESS if ok
  */
-int sctk_type_get_attr(struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
-                       int type_keyval, void *attribute_val, int *flag);
+int _mpc_dt_attr_get( struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
+					  int type_keyval, void *attribute_val, int *flag );
 
 /** \brief Delete a Datatype attr in a datatype-store (contained inside DT)
  *  \param da A pointer to the datatype array
@@ -622,57 +621,37 @@ int sctk_type_get_attr(struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
  * 	\param type_keyval Referenced keyval
  *  \return MPI_SUCCESS if ok
  */
-int sctk_type_delete_attr(struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
-                          int type_keyval);
+int _mpc_dt_attr_delete( struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
+						 int type_keyval );
 
 /************************************************************************/
 /* Datatype  Naming                                                     */
 /************************************************************************/
 
-/** \brief This struct is used to store the name given to a datatype
- * 
- *  We privileged an hash table instead of a static  array to
- *  save memory as type naming is really a secondary feature
- *  (Here we need it for MPICH Datatype tests)
- */
-struct Datatype_name_cell
-{
-	mpc_mp_datatype_t datatype;
-	char name[MPC_MAX_OBJECT_NAME]; /**< Name given to the datatype */
-	UT_hash_handle hh; /**< This dummy data structure is required by UTHash is order to make this data structure hashable */
-};
-
-
 /** \brief Set a name to a given datatype
  *  \param datatype Type which has to be named
  *  \param name Name we want to give
  *  \return 1 on error 0 otherwise
- * 
+ *
  *  This version is used internally to set common data-type
  *  name we add it as we do not want the MPI_Type_set_name
  *  to allow this behaviour
- * 
+ *
  */
-int sctk_datype_set_name_nocheck( mpc_mp_datatype_t datatype, char * name );
+int _mpc_dt_name_set_nocheck( mpc_mp_datatype_t datatype, char *name );
 
 /** \brief Set a name to a given datatype
  *  \param datatype Type which has to be named
  *  \param name Name we want to give
  *  \return 1 on error 0 otherwise
- * 
+ *
  */
-int sctk_datype_set_name( mpc_mp_datatype_t datatype, char * name );
-
+int _mpc_dt_name_set( mpc_mp_datatype_t datatype, char *name );
 
 /** \brief Returns the name of a data-type
  *  \param datatype Requested data-type
  *  \return NULL if no name the name otherwise
  */
-char * sctk_datype_get_name( mpc_mp_datatype_t datatype );
-
-
-/** \brief Release Data-types names
- */
-void sctk_datype_name_release();
+char *_mpc_dt_name_get( mpc_mp_datatype_t datatype );
 
 #endif /* MPC_DATATYPES_H */

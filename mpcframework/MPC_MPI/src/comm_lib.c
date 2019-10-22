@@ -1335,7 +1335,7 @@ int _mpc_cl_type_free( mpc_mp_datatype_t *datatype_p )
  */
 int _mpc_cl_type_set_name( mpc_mp_datatype_t datatype, char *name )
 {
-	if ( sctk_datype_set_name( datatype, name ) )
+	if ( _mpc_dt_name_set( datatype, name ) )
 	{
 		MPC_ERROR_REPORT( SCTK_COMM_SELF, MPC_ERR_INTERN, "Could not set name" );
 	}
@@ -1394,7 +1394,7 @@ int _mpc_cl_type_dup( mpc_mp_datatype_t old_type, mpc_mp_datatype_t *new_type )
  */
 int _mpc_cl_type_get_name( mpc_mp_datatype_t datatype, char *name, int *resultlen )
 {
-	char *retname = sctk_datype_get_name( datatype );
+	char *retname = _mpc_dt_name_get( datatype );
 
 	if ( datatype == MPC_UB )
 	{
@@ -2424,7 +2424,7 @@ int _mpc_cl_type_get_attr( mpc_mp_datatype_t datatype, int type_keyval,
 		return MPC_ERR_INTERN;
 	}
 
-	return sctk_type_get_attr( da, datatype, type_keyval, attribute_val, flag );
+	return _mpc_dt_attr_get( da, datatype, type_keyval, attribute_val, flag );
 }
 
 int _mpc_cl_type_set_attr( mpc_mp_datatype_t datatype, int type_keyval,
@@ -2438,7 +2438,7 @@ int _mpc_cl_type_set_attr( mpc_mp_datatype_t datatype, int type_keyval,
 		return MPC_ERR_INTERN;
 	}
 
-	return sctk_type_set_attr( da, datatype, type_keyval, attribute_val );
+	return _mpc_dt_attr_set( da, datatype, type_keyval, attribute_val );
 }
 
 int _mpc_cl_type_delete_attr( mpc_mp_datatype_t datatype, int type_keyval )
@@ -2451,7 +2451,7 @@ int _mpc_cl_type_delete_attr( mpc_mp_datatype_t datatype, int type_keyval )
 		return MPC_ERR_INTERN;
 	}
 
-	return sctk_type_delete_attr( da, datatype, type_keyval );
+	return _mpc_dt_attr_delete( da, datatype, type_keyval );
 }
 
 /** \brief This struct is used to serialize these boundaries all
