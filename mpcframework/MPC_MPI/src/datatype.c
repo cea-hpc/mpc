@@ -36,6 +36,10 @@
 /* GLOBALS                                                              */
 /************************************************************************/
 
+/** \brief Macro to obtain the total number of datatypes */
+#define MPC_TYPE_COUNT ( SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_USER_DATA_TYPES_MAX )
+
+
 /** Common datatypes sizes are initialized in \ref __mpc_common_types_init */
 size_t *__sctk_common_type_sizes;
 

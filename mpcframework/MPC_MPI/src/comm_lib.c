@@ -1096,15 +1096,7 @@ static inline int __mpc_cl_egreq_generic_start( MPC_Grequest_query_function *que
 	MPC_ERROR_SUCESS()
 }
 
-/** \brief Starts a generalized request with a polling function
- *
- *  \param query_fn Function used to fill in the status information
- *  \param free_fn Function used to free the extra_state dummy object
- *  \param cancel_fn Function called when the request is cancelled
- *  \param poll_fn Polling function called by the MPI runtime
- *  \param extra_state Extra pointer passed to every handler
- *  \param request The request object we are creating (output)
- */
+
 int _mpc_cl_egrequest_start( MPC_Grequest_query_function *query_fn,
 			MPC_Grequest_free_function *free_fn,
 			MPC_Grequest_cancel_function *cancel_fn,
@@ -1118,16 +1110,7 @@ int _mpc_cl_egrequest_start( MPC_Grequest_query_function *query_fn,
 /* Extended Generalized Requests Request Classes                        */
 /************************************************************************/
 
-/** \brief This creates a request class which can be referred to later on
- *
- *  \param query_fn Function used to fill in the status information
- *  \param free_fn Function used to free the extra_state dummy object
- *  \param cancel_fn Function called when the request is cancelled
- *  \param poll_fn Polling function called by the MPI runtime (CAN BE NULL)
- *  \param wait_fn Wait function called when the runtime waits several requests
- * of the same type (CAN BE NULL)
- *  \param new_class The identifier of the class we are creating (output)
- */
+
 int _mpc_cl_grequest_class_create( MPC_Grequest_query_function *query_fn,
 								 MPC_Grequest_cancel_function *cancel_fn,
 								 MPC_Grequest_free_function *free_fn,
@@ -1145,13 +1128,6 @@ int _mpc_cl_grequest_class_create( MPC_Grequest_query_function *query_fn,
 					   poll_fn, wait_fn, new_class );
 }
 
-/** \brief Create a request linked to an \ref MPCX_Request_class type
- *
- *  \param target_class Identifier of the class of work we launch as created by
- * \ref PMPIX_GRequest_class_create
- *  \param extra_state Extra pointer passed to every handler
- *  \param request The request object we are creating (output)
- */
 int _mpc_cl_grequest_class_allocate( MPCX_Request_class target_class,
 								   void *extra_state, mpc_mp_request_t *request )
 {
@@ -1179,20 +1155,7 @@ int _mpc_cl_grequest_class_allocate( MPCX_Request_class target_class,
 /* Generalized Requests                                                 */
 /************************************************************************/
 
-/** \brief This function starts a generic request
-*
-* \param query_fn Query function called to fill the status object
-* \param free_fn Free function which frees extra arg
-* \param cancel_fn Function called when the request is canceled
-* \param extra_state Extra context passed to every handlers
-* \param request New request to be created
-*
-* \warning Generalized Requests are not progressed by MPI the user are
-*          in charge of providing the progress mechanism.
-*
-* Once the operation completes, the user has to call \ref _mpc_cl_grequest_complete
-*
-*/
+
 int _mpc_cl_grequest_start( MPC_Grequest_query_function *query_fn,
 						 MPC_Grequest_free_function *free_fn,
 						 MPC_Grequest_cancel_function *cancel_fn,
@@ -1202,9 +1165,6 @@ int _mpc_cl_grequest_start( MPC_Grequest_query_function *query_fn,
 					    extra_state, request );
 }
 
-/** \brief Flag a Generalized Request as finished
-* \param request Request we want to finish
-*/
 int _mpc_cl_grequest_complete( mpc_mp_request_t request )
 {
 
@@ -1329,10 +1289,7 @@ int _mpc_cl_type_free( mpc_mp_datatype_t *datatype_p )
 	MPC_ERROR_SUCESS();
 }
 
-/** \brief Set a name to an mpc_mp_datatype_t
- *  \param datatype Datatype to be named
- *  \param name Name to be set
- */
+
 int _mpc_cl_type_set_name( mpc_mp_datatype_t datatype, char *name )
 {
 	if ( _mpc_dt_name_set( datatype, name ) )
@@ -1343,10 +1300,6 @@ int _mpc_cl_type_set_name( mpc_mp_datatype_t datatype, char *name )
 	MPC_ERROR_SUCESS();
 }
 
-/** \brief Duplicate a  datatype
- *  \param old_type Type to be duplicated
- *  \param new_type Copy of old_type
- */
 int _mpc_cl_type_dup( mpc_mp_datatype_t old_type, mpc_mp_datatype_t *new_type )
 {
 	_mpc_dt_derived_t *derived_type_target;
@@ -1387,11 +1340,7 @@ int _mpc_cl_type_dup( mpc_mp_datatype_t old_type, mpc_mp_datatype_t *new_type )
 	MPC_ERROR_SUCESS();
 }
 
-/** \brief Set a name to an mpc_mp_datatype_t
- *  \param datatype Datatype to get the name of
- *  \param name Datatype name (OUT)
- *  \param resultlen Maximum length of the target buffer (OUT)
- */
+
 int _mpc_cl_type_get_name( mpc_mp_datatype_t datatype, char *name, int *resultlen )
 {
 	char *retname = _mpc_dt_name_get( datatype );
@@ -1420,16 +1369,6 @@ int _mpc_cl_type_get_name( mpc_mp_datatype_t datatype, char *name, int *resultle
 	MPC_ERROR_SUCESS();
 }
 
-/** \brief This call is used to fill the envelope of an MPI type
- *
- *  \param ctx Source context
- *  \param num_integers Number of input integers [OUT]
- *  \param num_addresses Number of input addresses [OUT]
- *  \param num_datatypes Number of input datatypes [OUT]
- *  \param combiner Combiner used to build the datatype [OUT]
- *
- *
- */
 int _mpc_cl_type_get_envelope( mpc_mp_datatype_t datatype, int *num_integers,
 				int *num_addresses, int *num_datatypes,
 				int *combiner )
@@ -1668,10 +1607,7 @@ int _mpc_cl_type_get_true_extent( mpc_mp_datatype_t datatype, size_t *true_lb,
 	MPC_ERROR_SUCESS();
 }
 
-/** \brief Checks if a datatype has already been released
- *  \param datatype target datatype
- *  \param flag 1 if the type is allocated [OUT]
- */
+
 int _mpc_cl_type_is_allocated( mpc_mp_datatype_t datatype, int *flag )
 {
 	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_cl_per_mpi_process_ctx_get();
@@ -1681,10 +1617,6 @@ int _mpc_cl_type_is_allocated( mpc_mp_datatype_t datatype, int *flag )
 	MPC_ERROR_SUCESS();
 }
 
-/** \brief Set a Struct datatype as a padded one to return the extent instead of
- * the size
- *  \param datatype to be flagged as padded
- */
 int _mpc_cl_type_flag_padded( mpc_mp_datatype_t datatype )
 {
 	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_cl_per_mpi_process_ctx_get();
@@ -1717,10 +1649,7 @@ int _mpc_cl_type_flag_padded( mpc_mp_datatype_t datatype )
 	MPC_ERROR_SUCESS();
 }
 
-/** \brief Compute the size of a \ref mpc_mp_datatype_t
- *  \param datatype target datatype
- *  \param size where to write the size of datatype
- */
+
 int _mpc_cl_type_size( mpc_mp_datatype_t datatype, size_t *size )
 {
 	SCTK_PROFIL_START( MPC_Type_size );
@@ -1799,16 +1728,7 @@ static inline int __mpc_cl_type_derived_check( mpc_mpi_m_per_mpi_process_ctx_t *
 	return 0;
 }
 
-/** \brief This function is the generic initializer for
- * _mpc_dt_contiguout_t
- *  Creates a contiguous datatypes of count data_in while checking for unicity
- *
- *  \param datatype Output datatype to be created
- *  \param count Number of entries of type data_in
- *  \param data_in Type of the entry to be created
- *  \param ctx Context of the new data-type in order to allow unicity check
- *
- */
+
 int _mpc_cl_type_hcontiguous_ctx( mpc_mp_datatype_t *datatype, size_t count,
 				mpc_mp_datatype_t *data_in,
 				struct _mpc_dt_context *ctx )
@@ -2201,102 +2121,6 @@ int _mpc_cl_type_convert_to_derived( mpc_mp_datatype_t in_datatype,
 		sctk_free( begins_out );
 		sctk_free( ends_out );
 		sctk_free( datatypes_out );
-	}
-
-	MPC_ERROR_SUCESS();
-}
-
-/** \brief Pack a derived datatype in a contiguous buffer
- *  \param inbuffer The input buffer
- *  \param outbuffer The output buffer (has to be allocated to size !)
- *  \param datatype Datatype to be copied
- */
-int PMPC_Copy_in_buffer( void *inbuffer, void *outbuffer,
-						 mpc_mp_datatype_t datatype )
-{
-	/* Only meaningful if its a derived datatype */
-	if ( _mpc_dt_is_derived( datatype ) )
-	{
-		unsigned int j;
-		char *tmp;
-
-		/* Retrieve task ctx */
-		mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_cl_per_mpi_process_ctx_get();
-
-		tmp = (char *) outbuffer;
-
-		/* Get a pointer to the target type */
-		_mpc_dt_derived_t *t =
-			_mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
-
-		if ( !t )
-		{
-			MPC_ERROR_REPORT( SCTK_COMM_WORLD, MPC_ERR_ARG,
-							  "Failed to retrieve this derived datatype" );
-		}
-
-		/* Copy ach block one by one in the pack */
-		for ( j = 0; j < t->opt_count; j++ )
-		{
-			size_t size;
-			/* Sizeof block */
-			size = t->opt_ends[j] - t->opt_begins[j] + 1;
-			memcpy( tmp, ( (char *) inbuffer ) + t->begins[j], size );
-			/* Increment offset in packed block */
-			tmp += size;
-		}
-	}
-	else
-	{
-		MPC_ERROR_REPORT( SCTK_COMM_WORLD, MPC_ERR_INTERN, "" );
-	}
-	MPC_ERROR_SUCESS();
-}
-
-/** \brief Unpack a derived datatype from contiguous buffer
- *  \param inbuffer The input buffer
- *  \param outbuffer The output buffer (has to be allocated to size !)
- *  \param datatype Datatype to be unpacked
- */
-int PMPC_Copy_from_buffer( void *inbuffer, void *outbuffer,
-						   mpc_mp_datatype_t datatype )
-{
-	/* Only meaningful if its a derived datatype */
-	if ( _mpc_dt_is_derived( datatype ) )
-	{
-		unsigned int j;
-		char *tmp;
-
-		/* Retrieve task ctx */
-		mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_cl_per_mpi_process_ctx_get();
-
-		tmp = (char *) inbuffer;
-
-		/* Get a pointer to the target type */
-		_mpc_dt_derived_t *t =
-			_mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
-
-		if ( !t )
-		{
-			MPC_ERROR_REPORT( SCTK_COMM_WORLD, MPC_ERR_ARG,
-							  "Failed to retrieve this derived datatype" );
-		}
-
-		/* Unpack each block at the correct offset */
-		for ( j = 0; j < t->opt_count; j++ )
-		{
-			size_t size;
-			/* Sizeof block */
-			size = t->opt_ends[j] - t->opt_begins[j] + 1;
-			/* Copy at offset */
-			memcpy( ( (char *) outbuffer ) + t->begins[j], tmp, size );
-			/* Move in the contiguous block */
-			tmp += size;
-		}
-	}
-	else
-	{
-		MPC_ERROR_REPORT( SCTK_COMM_WORLD, MPC_ERR_INTERN, "" );
 	}
 
 	MPC_ERROR_SUCESS();
@@ -3682,7 +3506,6 @@ int MPC_Iprobe_inter( const int source, const int destination, const int tag,
 
 	mpc_mp_status_t status_init = SCTK_STATUS_INIT;
 
-	
 
 	int has_status = 1;
 
@@ -3762,7 +3585,7 @@ int MPC_Iprobe_inter( const int source, const int destination, const int tag,
 	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Iprobe( int source, int tag, mpc_mp_communicator_t comm, int *flag,
+int _mpc_cl_iprobe( int source, int tag, mpc_mp_communicator_t comm, int *flag,
 				 mpc_mp_status_t *status )
 {
 	int destination;
@@ -3772,8 +3595,6 @@ int PMPC_Iprobe( int source, int tag, mpc_mp_communicator_t comm, int *flag,
 	SCTK_PROFIL_START( MPC_Iprobe );
 
 	task_specific = __mpc_cl_per_mpi_process_ctx_get();
-
-	
 
 	destination = mpc_mp_communicator_rank( comm, task_specific->task_id );
 
@@ -3811,18 +3632,18 @@ typedef struct
 	int tag;
 	mpc_mp_communicator_t comm;
 	mpc_mp_status_t *status;
-} MPC_probe_struct_t;
+} __mpc_probe_t;
 
-static void MPC_Probe_poll( MPC_probe_struct_t *arg )
+static void __mpc_probe_poll( __mpc_probe_t *arg )
 {
 	MPC_Iprobe_inter( arg->source, arg->destination, arg->tag, arg->comm,
 					  &( arg->flag ), arg->status );
 }
 
-static int __MPC_Probe( int source, int tag, mpc_mp_communicator_t comm, mpc_mp_status_t *status,
+static int __mpc_probe( int source, int tag, mpc_mp_communicator_t comm, mpc_mp_status_t *status,
 						mpc_mpi_m_per_mpi_process_ctx_t *task_specific )
 {
-	MPC_probe_struct_t probe_struct;
+	__mpc_probe_t probe_struct;
 	int comm_rank = mpc_mp_communicator_rank( comm, task_specific->task_id );
 
 	if ( source != SCTK_ANY_SOURCE )
@@ -3853,19 +3674,19 @@ static int __MPC_Probe( int source, int tag, mpc_mp_communicator_t comm, mpc_mp_
 	if ( probe_struct.flag != 1 )
 	{
 		mpc_mp_comm_perform_idle(
-			&probe_struct.flag, 1, (void ( * )( void * )) MPC_Probe_poll, &probe_struct );
+			&probe_struct.flag, 1, (void ( * )( void * )) __mpc_probe_poll, &probe_struct );
 	}
 	MPC_ERROR_SUCESS();
 }
 
-int PMPC_Probe( int source, int tag, mpc_mp_communicator_t comm, mpc_mp_status_t *status )
+int _mpc_cl_probe( int source, int tag, mpc_mp_communicator_t comm, mpc_mp_status_t *status )
 {
 	int res;
 	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
 	SCTK_PROFIL_START( MPC_Probe );
 	task_specific = __mpc_cl_per_mpi_process_ctx_get();
-	
-	res = __MPC_Probe( source, tag, comm, status, task_specific );
+
+	res = __mpc_probe( source, tag, comm, status, task_specific );
 	SCTK_PROFIL_END( MPC_Probe );
 	return res;
 }
@@ -3897,7 +3718,7 @@ int _mpc_cl_barrier( mpc_mp_communicator_t comm )
 {
 	int size;
 	_mpc_cl_comm_size( comm, &size );
-	
+
 
 	if ( sctk_is_inter_comm( comm ) )
 	{
@@ -3937,11 +3758,8 @@ int _mpc_cl_bcast( void *buffer, mpc_mp_msg_count_t count,
 	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = __mpc_cl_per_mpi_process_ctx_get();
 	int size, rank;
 	mpc_mp_status_t status;
-	
+
 	size = mpc_mp_communicator_size( comm );
-	
-	
-	
 
 	if ( sctk_is_inter_comm( comm ) )
 	{
@@ -4001,23 +3819,9 @@ int _mpc_cl_gather( void *sendbuf, mpc_mp_msg_count_t sendcnt,
 
 	assume( recvrequest != NULL );
 
-	
 	size = mpc_mp_communicator_size( comm );
 	rank = mpc_mp_communicator_rank( comm, task_specific->task_id );
 
-	if ( rank != root )
-	{
-		
-		
-		
-	}
-	else
-	{
-		
-		
-		
-	}
-	
 
 	if ( sctk_is_inter_comm( comm ) )
 	{
@@ -4109,14 +3913,6 @@ int _mpc_cl_allgather( void *sendbuf, mpc_mp_msg_count_t sendcount,
 	int size, rank, remote_size;
 	int root = 0;
 	void *tmp_buf;
-	
-	
-	
-	
-	
-	
-	if ( sendbuf != SCTK_IN_PLACE )
-		
 
 	size = mpc_mp_communicator_size( comm );
 	rank = mpc_mp_communicator_rank( comm, task_specific->task_id );
@@ -4340,7 +4136,7 @@ int _mpc_cl_comm_create_from_intercomm( mpc_mp_communicator_t comm,
 	int present = 0;
 	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
 	task_specific = __mpc_cl_per_mpi_process_ctx_get();
-	
+
 	rank = mpc_mp_communicator_rank( SCTK_COMM_WORLD, task_specific->task_id );
 
 	sctk_assert( comm != SCTK_COMM_NULL );
@@ -4397,7 +4193,7 @@ static inline int __mpc_cl_comm_create( mpc_mp_communicator_t comm, _mpc_cl_grou
 	int tag = 729;
 	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
 	task_specific = __mpc_cl_per_mpi_process_ctx_get();
-	
+
 	rank = mpc_mp_communicator_rank( SCTK_COMM_WORLD, task_specific->task_id );
 	grank = mpc_mp_communicator_rank( comm, task_specific->task_id );
 
@@ -4484,8 +4280,7 @@ int _mpc_cl_intercomm_create( mpc_mp_communicator_t local_comm, int local_leader
 	int present = 0;
 	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
 	task_specific = __mpc_cl_per_mpi_process_ctx_get();
-	
-	
+
 	int *task_list;
 	int size;
 	int other_leader;
@@ -4567,7 +4362,6 @@ int _mpc_cl_comm_dup( mpc_mp_communicator_t comm, mpc_mp_communicator_t *comm_ou
 	sctk_nodebug( "duplicate comm %d", comm );
 	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
 	int rank;
-	
 
 	task_specific = __mpc_cl_per_mpi_process_ctx_get();
 	rank = mpc_mp_communicator_rank( comm, task_specific->task_id );
@@ -4607,7 +4401,6 @@ int _mpc_cl_comm_split( mpc_mp_communicator_t comm, int color, int key, mpc_mp_c
 	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
 	task_specific = __mpc_cl_per_mpi_process_ctx_get();
 
-	
 
 	sctk_nodebug( "MPC_Comm_split color=%d key=%d out_comm=%p", color, key,
 				  comm_out );
@@ -4888,19 +4681,6 @@ static volatile MPC_Checkpoint_state global_state = MPC_STATE_ERROR;
 static volatile MPC_Checkpoint_state global_state = '\0';
 #endif
 
-/**
- * Trigger a checkpoint for the whole application.
- *
- * We are aware this functino implements somehow a barrier through three "expensive" atomics
- * But keep in mind that creating a checkpoint for the whole application is far more expensive
- * than that.
- *
- * This function sets "state" depending on the application state:
- *   - If we reach this function, it is a simple checkpoint -> MPC_STATE_CHECKPOINT
- *   - If we restart from a snapshot, it is a restart -> MPC_STATE_RESTART
- *
- * \param[out] state The state after the procedure.
- */
 int _mpc_cl_checkpoint( MPC_Checkpoint_state *state )
 {
 #ifdef MPC_Fault_Tolerance

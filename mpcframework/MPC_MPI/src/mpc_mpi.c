@@ -2773,7 +2773,7 @@ __INTERNAL__PMPI_Iprobe (int source, int tag, MPI_Comm comm, int *flag,
 			 MPI_Status * status)
 {
   int res;
-  res = PMPC_Iprobe (source, tag, comm, flag, status);
+  res = _mpc_cl_iprobe (source, tag, comm, flag, status);
   if (!(*flag)) sctk_thread_yield ();
   return res;
 }
@@ -2782,7 +2782,7 @@ static int
 __INTERNAL__PMPI_Probe (int source, int tag, MPI_Comm comm,
 			MPI_Status * status)
 {
-  return PMPC_Probe (source, tag, comm, status);
+  return _mpc_cl_probe (source, tag, comm, status);
 }
 
 static int

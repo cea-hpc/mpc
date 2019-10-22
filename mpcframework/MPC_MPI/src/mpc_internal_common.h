@@ -152,13 +152,7 @@ struct mpc_mpi_m_per_thread_ctx_s;
 void mpc_mpi_m_per_thread_ctx_init();
 void mpc_mpi_m_per_thread_ctx_release();
 
-/************************************************************************/
-/* Non Generic MPI interface function                                   */
-/************************************************************************/
 
-int _mpc_cl_waitallp (mpc_mp_msg_count_t count,
-		   mpc_mp_request_t * parray_of_requests[],
-		   mpc_mp_status_t array_of_statuses[]);
 
 
 #endif /* MPC_COMMON_H */
