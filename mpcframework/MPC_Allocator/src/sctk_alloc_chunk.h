@@ -52,9 +52,9 @@ enum sctk_alloc_chunk_type
 enum sctk_alloc_chunk_state
 {
 	/** Mark the chunk as free for reuse. **/
-	SCTK_ALLOC_CHUNK_STATE_FREE      = 1,
+	SCTK_ALLOC_CHUNK_STATE_FREE      = 0,
 	/** The chunk is allocated by application, not ready for reuse. **/
-	SCTK_ALLOC_CHUNK_STATE_ALLOCATED = 2
+	SCTK_ALLOC_CHUNK_STATE_ALLOCATED = 1
 };
 
 /********************************** ENUM ************************************/
@@ -79,9 +79,9 @@ struct sctk_alloc_chunk_info
 	/** Type of bloc (large of small for now) **/
 	unsigned char type:2;
 	/** Status of current bloc, free or allocated. **/
-	unsigned char state:2;
+	unsigned char state:1;
 	/** Unused bits, filled with a magic constant to be used as a canary for now and detect bugs. **/
-	unsigned char unused_magik:4;
+	unsigned char unused_magik:5;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -182,8 +182,6 @@ void *sctk_alloc_chunk_body(sctk_alloc_vchunk vchunk);
 void sctk_alloc_create_stopper(void *ptr, void *prev);
 sctk_size_t sctk_alloc_align_size(sctk_size_t size, sctk_size_t align);
 sctk_alloc_vchunk sctk_alloc_get_prev_chunk(sctk_alloc_vchunk chunk);
-void sctk_alloc_dump_chunk(void* ptr);
-void sctk_alloc_dump_chunk_obj(sctk_alloc_vchunk chunk);
 //static __inline__ sctk_alloc_vchunk sctk_alloc_get_next_chunk(sctk_alloc_vchunk chunk);
 
 #ifdef __cplusplus

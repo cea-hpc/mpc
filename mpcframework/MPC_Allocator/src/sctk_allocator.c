@@ -118,31 +118,6 @@ const sctk_ssize_t SCTK_ALLOC_MMS_FREE_SIZES[SCTK_ALLOC_NB_FREE_LIST] = {
 /** Default value to initialize the vchunk values. **/
 const sctk_alloc_vchunk SCTK_ALLOC_DEFAULT_CHUNK = NULL;
 
-void sctk_alloc_dump_chunk_obj(sctk_alloc_vchunk chunk)
-{
-	if(chunk)
-	{
-		fprintf(stderr, "=============================\n");
-		fprintf(stderr, "chunk infos @ %p\n", chunk);
-		fprintf(stderr, "TYPE: %d\n", (int)chunk->type);
-		fprintf(stderr, "STATE: %d\n", (int)chunk->state);
-		fprintf(stderr, "MAGIK: %d\n", (int)chunk->unused_magik);
-		fprintf(stderr, "=============================\n");
-	}
-	else
-	{
-		fprintf(stderr, "BAD chunk\n");
-	}
-}
-
-
-
-void sctk_alloc_dump_chunk(void* ptr)
-{
-	sctk_alloc_vchunk chunk = sctk_alloc_get_chunk((unsigned long int)ptr);
-  sctk_alloc_dump_chunk_obj(chunk);
-}
-
 /************************* FUNCTION ************************/
 /**
  * Permit to wrap a standard (small or large) chunk to add padding rules. Caution, it work only on allocated

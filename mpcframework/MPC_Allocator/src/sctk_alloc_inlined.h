@@ -222,8 +222,6 @@ static __inline__ void * sctk_alloc_get_ptr(sctk_alloc_vchunk vchunk)
 		case SCTK_ALLOC_CHUNK_TYPE_PADDED:
 			return sctk_alloc_get_padded(vchunk);
 		default:
-			sctk_alloc_dump_chunk_obj(vchunk);
-
 			assume_m(false,"Invalid type of vchunk.");
 			return NULL;
 	}
