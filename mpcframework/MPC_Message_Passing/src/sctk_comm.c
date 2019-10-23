@@ -24,7 +24,7 @@
 #include "sctk_inter_thread_comm.h"
 
 /*  ###############
- *  Rank Querry 
+ *  Rank Querry
  *  ############### */
 
 int MPC_Net_get_rank()
@@ -38,12 +38,12 @@ int MPC_Net_get_comm_rank( const mpc_mp_communicator_t communicator )
 }
 
 /*  ###############
- *  Communicators 
+ *  Communicators
  *  ############### */
 
 mpc_mp_communicator_t MPC_Net_create_comm( const mpc_mp_communicator_t origin_communicator,
-										 const int nb_task_involved,
-										 const int *task_list )
+        const int nb_task_involved,
+        const int *task_list )
 {
 	return sctk_create_communicator ( origin_communicator, nb_task_involved, task_list );
 }
@@ -54,45 +54,45 @@ mpc_mp_communicator_t MPC_Net_delete_comm( const mpc_mp_communicator_t comm )
 }
 
 /*  ###############
- *  Messages 
+ *  Messages
  *  ############### */
 
-void MPC_Net_isend( int dest, void * data, size_t size, int tag, mpc_mp_communicator_t comm , mpc_mp_request_t *req )
+void MPC_Net_isend( int dest, void *data, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *req )
 {
-	mpc_mp_comm_isend( dest, data, size, tag, comm , req );
+	mpc_mp_comm_isend( dest, data, size, tag, comm, req );
 }
 
-void MPC_Net_irecv( int src, void * buffer, size_t size, int tag, mpc_mp_communicator_t comm , mpc_mp_request_t *req )
+void MPC_Net_irecv( int src, void *buffer, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *req )
 {
-	mpc_mp_comm_irecv( src,  buffer, size, tag, comm ,  req );
+	mpc_mp_comm_irecv( src,  buffer, size, tag, comm,  req );
 }
 
-void MPC_Net_wait( mpc_mp_request_t * request )
+void MPC_Net_wait( mpc_mp_request_t *request )
 {
 	mpc_mp_comm_request_wait( request );
 }
 
-void MPC_Net_send( int dest, void * data, size_t size, int tag, mpc_mp_communicator_t comm )
+void MPC_Net_send( int dest, void *data, size_t size, int tag, mpc_mp_communicator_t comm )
 {
-	mpc_mp_request_t req; 
-	MPC_Net_isend( dest, data, size, tag, comm , &req );
+	mpc_mp_request_t req;
+	MPC_Net_isend( dest, data, size, tag, comm, &req );
 	MPC_Net_wait( &req );
 }
 
-void MPC_Net_recv( int src, void * buffer, size_t size, int tag, mpc_mp_communicator_t comm )
+void MPC_Net_recv( int src, void *buffer, size_t size, int tag, mpc_mp_communicator_t comm )
 {
-	mpc_mp_request_t req; 
+	mpc_mp_request_t req;
 	MPC_Net_irecv( src, buffer, size, tag, comm, &req );
 	MPC_Net_wait( &req );
 }
 
-void MPC_Net_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * recvbuf, int src, mpc_mp_communicator_t comm )
+void MPC_Net_sendrecv( void *sendbuf, size_t size, int dest, int tag, void *recvbuf, int src, mpc_mp_communicator_t comm )
 {
 	mpc_mp_comm_sendrecv( sendbuf, size, dest, tag, recvbuf, src, comm );
 }
 
 /*  ###############
- *  Collectives 
+ *  Collectives
  *  ############### */
 
 void MPC_Net_barrier( mpc_mp_communicator_t comm )
@@ -100,36 +100,36 @@ void MPC_Net_barrier( mpc_mp_communicator_t comm )
 	mpc_mp_barrier ( comm );
 }
 
-void MPC_Net_broadcast( void *buffer, const size_t size, 
+void MPC_Net_broadcast( void *buffer, const size_t size,
                         const int root, const mpc_mp_communicator_t communicator )
 {
 	mpc_mp_bcast ( buffer, size, root, communicator );
 }
 
-void MPC_Net_allreduce(const void *buffer_in, void *buffer_out,
-                       const size_t elem_size,
-                       const size_t elem_count,
-                       sctk_Op_f func,
-                       const mpc_mp_communicator_t communicator,
-                       mpc_mp_datatype_t datatype )
+void MPC_Net_allreduce( const void *buffer_in, void *buffer_out,
+                        const size_t elem_size,
+                        const size_t elem_count,
+                        sctk_Op_f func,
+                        const mpc_mp_communicator_t communicator,
+                        mpc_mp_datatype_t datatype )
 {
-	mpc_mp_allreduce ( buffer_in, buffer_out,elem_size, elem_count,
-	                  func, communicator, datatype );
+	mpc_mp_allreduce ( buffer_in, buffer_out, elem_size, elem_count,
+	                   func, communicator, datatype );
 }
 
 /*  ###############
- *  Setup & Teardown 
+ *  Setup & Teardown
  *  ############### */
- 
- void sctk_init_mpc_runtime();
- 
- void MPC_Net_init()
- {
-	 sctk_init_mpc_runtime();
-	 MPC_Net_barrier( SCTK_COMM_WORLD );
- }
 
- void MPC_Net_release()
- {
-	 MPC_Net_barrier( SCTK_COMM_WORLD );
- }
+void sctk_init_mpc_runtime();
+
+void MPC_Net_init()
+{
+	sctk_init_mpc_runtime();
+	MPC_Net_barrier( SCTK_COMM_WORLD );
+}
+
+void MPC_Net_release()
+{
+	MPC_Net_barrier( SCTK_COMM_WORLD );
+}

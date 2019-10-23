@@ -201,9 +201,9 @@ void mpc_mp_coll_init_noalloc ( mpc_mp_communicator_t id );
 struct mpc_mp_coll_s;
 
 void _mpc_coll_init ( mpc_mp_communicator_t id,
-			void ( *barrier ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ),
-			void ( *broadcast ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ),
-			void ( *allreduce ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ) );
+                      void ( *barrier ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ),
+                      void ( *broadcast ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ),
+                      void ( *allreduce ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ) );
 
 
 
@@ -216,9 +216,9 @@ void _mpc_coll_init ( mpc_mp_communicator_t id,
 struct mpc_mp_coll_s;
 
 void mpc_mp_coll_init ( mpc_mp_communicator_t id,
-			void ( *barrier ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ),
-			void ( *broadcast ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ),
-			void ( *allreduce ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ) );
+                        void ( *barrier ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ),
+                        void ( *broadcast ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ),
+                        void ( *allreduce ) ( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ) );
 
 
 /* Barrier */
@@ -255,23 +255,24 @@ typedef union
 
 /* Collective Structure */
 
-struct mpc_mp_coll_s{
+struct mpc_mp_coll_s
+{
 	mpc_mp_barrier_t barrier;
-	void ( *barrier_func ) ( const mpc_mp_communicator_t ,
+	void ( *barrier_func ) ( const mpc_mp_communicator_t,
 	                         struct mpc_mp_coll_s * );
 
 	mpc_mp_bcast_t broadcast;
-	void ( *broadcast_func ) ( void *, const size_t ,
-	                           const int , const mpc_mp_communicator_t,
+	void ( *broadcast_func ) ( void *, const size_t,
+	                           const int, const mpc_mp_communicator_t,
 	                           struct mpc_mp_coll_s * );
 
 	sctk_allreduce_t allreduce;
 	void ( *allreduce_func ) ( const void *, void *,
-	                           const size_t ,
-	                           const size_t ,
+	                           const size_t,
+	                           const size_t,
 	                           sctk_Op_f func,
-	                           const mpc_mp_communicator_t ,
-	                           const mpc_mp_datatype_t ,
+	                           const mpc_mp_communicator_t,
+	                           const mpc_mp_datatype_t,
 	                           struct mpc_mp_coll_s * );
 };
 
