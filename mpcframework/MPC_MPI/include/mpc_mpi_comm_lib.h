@@ -33,7 +33,8 @@
 
 #if defined( MPC_Fault_Tolerance ) || defined( MPC_MODULE_MPC_Fault_Tolerance )
 
-typedef enum sctk_ft_state_e {
+typedef enum sctk_ft_state_e
+{
 	MPC_STATE_NO_SUPPORT = 0,
 	MPC_STATE_ERROR,
 	MPC_STATE_CHECKPOINT,
@@ -66,8 +67,8 @@ struct mpc_mpi_m_per_mpi_process_ctx_s;
 
 struct mpc_mpi_m_per_mpi_process_ctx_s *mpc_cl_per_mpi_process_ctx_get();
 
-void mpc_mpi_m_per_mpi_process_ctx_reinit (struct mpc_mpi_m_per_mpi_process_ctx_s *tmp);
-int mpc_mpi_m_per_mpi_process_ctx_at_exit_register(void (*function)(void));
+void mpc_mpi_m_per_mpi_process_ctx_reinit ( struct mpc_mpi_m_per_mpi_process_ctx_s *tmp );
+int mpc_mpi_m_per_mpi_process_ctx_at_exit_register( void ( *function )( void ) );
 
 /* Disguisement Fast Path Checker */
 
@@ -75,7 +76,7 @@ extern OPA_int_t __mpc_p_disguise_flag;
 
 static inline int __MPC_Maybe_disguised()
 {
-    return OPA_load_int(&__mpc_p_disguise_flag);
+	return OPA_load_int( &__mpc_p_disguise_flag );
 }
 
 
@@ -128,7 +129,7 @@ typedef int MPC_Errhandler;
 #define MPC_ERR_TRUNCATE 15 /* Message truncated on receive */
 #define MPC_ERR_NOT_SAME 39 /* Collective argument not identical on all processess, \
 							   or collective routines called in a different order   \
-                                                               by different processes */
+by different processes */
 
 /* MPC Objects (other than COMM) */
 #define MPC_ERR_GROUP 9   /* Invalid group */
@@ -161,7 +162,7 @@ typedef int MPC_Errhandler;
 #define MPC_ERR_ACCESS 46			   /* Permission denied */
 #define MPC_ERR_READ_ONLY 49		   /* Read-only file or file system */
 #define MPC_ERR_FILE_IN_USE 50		   /* File operation could not completed, as the file is \
-										  currently open by some process */
+currently open by some process */
 #define MPC_ERR_IO 53				   /* Other I/O error */
 
 /* Multiple completion has two special error classes */
@@ -183,12 +184,12 @@ typedef int MPC_Errhandler;
 #define MPC_ERR_RMA_CONFLICT 36			 /* Conflicting accesses to window */
 #define MPC_ERR_RMA_SYNC 37				 /* Wrong synchronization of RMA calls */
 #define MPC_ERR_UNSUPPORTED_OPERATION 42 /* Unsupported operation, such as seeking on a file which \
-											supports sequential access only*/
+supports sequential access only*/
 #define MPC_ERR_NO_SPACE 47				 /* Not enough space */
 #define MPC_ERR_QUOTA 48				 /* Quota exceeded */
 #define MPC_ERR_DUP_DATAREP 51			 /* Conversion functions could not be regiestered because a \
                                                         data representation identifier that was already defined \
-                                                        was passed to MPI_REGISTER_DATAREP */
+was passed to MPI_REGISTER_DATAREP */
 #define MPC_ERR_CONVERSION 52			 /* An error occured in a user supplied data conversion function */
 #define MPC_ERR_OTHER 16				 /* Other error; use Error_string */
 
@@ -207,10 +208,10 @@ typedef int MPC_Errhandler;
 #define MPC_T_ERR_NOT_INITIALIZED 60 /* Interface not initialized */
 #define MPC_T_ERR_CANNOT_INIT           \
 	61 /* Interface not in the state to \
-		  be initialized */
+be initialized */
 #define MPC_T_ERR_INVALID_INDEX                                  \
 	62								  /* The index is invalid or \
-										 has been deleted  */
+has been deleted  */
 #define MPC_T_ERR_INVALID_ITEM 63	 /* Item index queried is out of range */
 #define MPC_T_ERR_INVALID_HANDLE 64   /* The handle is invalid */
 #define MPC_T_ERR_OUT_OF_HANDLES 65   /* No more handles available */
@@ -219,7 +220,7 @@ typedef int MPC_Errhandler;
 #define MPC_T_ERR_CVAR_SET_NOT_NOW 68 /* Cvar can't be set at this moment */
 #define MPC_T_ERR_CVAR_SET_NEVER                                  \
 	69								   /* Cvar can't be set until \
-										   end of execution */
+end of execution */
 #define MPC_T_ERR_PVAR_NO_STARTSTOP 70 /* Pvar can't be started or stopped */
 #define MPC_T_ERR_PVAR_NO_WRITE 71	 /* Pvar can't be written or reset */
 #define MPC_T_ERR_PVAR_NO_ATOMIC 72	/* Pvar can't be R/W atomically */
@@ -353,7 +354,8 @@ typedef int MPC_Message;
 
 /* Datatype decoders */
 
-typedef enum {
+typedef enum
+{
 	MPC_COMBINER_UNKNOWN = 0,
 	MPC_COMBINER_NAMED = 1,
 	MPC_COMBINER_DUP = 2,
@@ -372,8 +374,8 @@ typedef enum {
 	MPC_COMBINER_F90_INTEGER = 15,
 	MPC_COMBINER_RESIZED = 16,
 	/* *_INTEGER COMBINER ARE DEPRECATED
-   * in MPI 3.0 consequently they
-   * are never returned by get_envelope */
+	* in MPI 3.0 consequently they
+	* are never returned by get_envelope */
 	MPC_COMBINER_HINDEXED_INTEGER = 17,
 	MPC_COMBINER_STRUCT_INTEGER = 18,
 	MPC_COMBINER_HVECTOR_INTEGER = 19,
@@ -382,12 +384,12 @@ typedef enum {
 } MPC_Type_combiner;
 
 typedef int( MPC_Type_copy_attr_function )( mpc_mp_datatype_t old_type,
-                                        int type_keyval, void *extra_state,
-                                        void *attribute_val_in,
-                                        void *attribute_val_out, int *flag );
+        int type_keyval, void *extra_state,
+        void *attribute_val_in,
+        void *attribute_val_out, int *flag );
 typedef int( MPC_Type_delete_attr_function )( mpc_mp_datatype_t datatype,
-                                        int type_keyval,
-                                        void *attribute_val,
-                                        void *extra_state );
+        int type_keyval,
+        void *attribute_val,
+        void *extra_state );
 
 #endif /* MPC_COMM_LIB_H_ */
