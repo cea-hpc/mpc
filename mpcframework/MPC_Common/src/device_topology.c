@@ -713,6 +713,7 @@ void mpc_common_topo_device_init( hwloc_topology_t topology )
 
 	while ( pci_dev )
 	{
+		assume(off < __mpc_topo_device_list_count);
 		if ( !pci_dev->arity )
 		{
 			_mpc_topo_device_init( topology, &__mpc_topo_device_list[off], pci_dev, 0 );
@@ -749,7 +750,7 @@ void mpc_common_topo_device_init( hwloc_topology_t topology )
 	__mpc_topo_device_matrix_init( topology );
 }
 
-void mpc_common_topo_device_release()
+void _mpc_common_topo_device_release()
 {
 	sctk_free( __mpc_topo_device_list );
 	__mpc_topo_device_list = NULL;

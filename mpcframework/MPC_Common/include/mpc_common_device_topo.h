@@ -103,7 +103,7 @@ typedef struct sctk_device_s
  ********************/
 
 void mpc_common_topo_device_init( hwloc_topology_t topology );
-void mpc_common_topo_device_release();
+void _mpc_common_topo_device_release();
 
 /*****************
  * DEVICE GETTER *
