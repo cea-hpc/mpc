@@ -18,6 +18,7 @@
 /* ######################################################################## */
 #include <mpc_common_datastructure.h>
 
+#include "sctk_alloc.h"
 #include "sctk_debug.h"
 #include <string.h>
 
@@ -46,7 +47,7 @@ void mpc_common_bit_array_init(struct mpc_common_bit_array *ba, uint64_t size) {
 
   size_t array_size = (size >> 3);
 
-  void *array = malloc(array_size * sizeof(uint8_t));
+  void *array = sctk_malloc(array_size * sizeof(uint8_t));
 
   if (!array) {
     sctk_fatal("Failed to allocate a mpc_common_bit_array \n");

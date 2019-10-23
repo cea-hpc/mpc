@@ -18,6 +18,8 @@
 /* ######################################################################## */
 #include "fifo.h"
 
+#include "sctk_alloc.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -41,7 +43,7 @@ void mpc_common_fifo_chunk_init( struct mpc_common_fifo_chunk *ch,
 	ch->start_offset = 0;
 	ch->end_offset = 0;
 
-	ch->payload = malloc( chunk_size * elem_size );
+	ch->payload = sctk_malloc( chunk_size * elem_size );
 
 	if ( !ch->payload )
 	{
@@ -54,7 +56,7 @@ void mpc_common_fifo_chunk_init( struct mpc_common_fifo_chunk *ch,
 
 struct mpc_common_fifo_chunk *mpc_common_fifo_chunk_new( uint64_t chunk_size, uint64_t elem_size )
 {
-	struct mpc_common_fifo_chunk *ret = malloc( sizeof( struct mpc_common_fifo_chunk ) );
+	struct mpc_common_fifo_chunk *ret = sctk_malloc( sizeof( struct mpc_common_fifo_chunk ) );
 
 	if ( !ret )
 	{

@@ -513,12 +513,12 @@ static void sctk_init_text_option(struct sctk_text_option_s **tab_option){
     int lenght = hwloc_get_nbobjs_by_type(mpc_common_topology_get(), HWLOC_OBJ_PU);
     *tab_option = (struct sctk_text_option_s *)malloc(sizeof(struct sctk_text_option_s)); 
     (*tab_option)->os_index = (int *)malloc(sizeof(int)*lenght);
-    (*tab_option)->vp_tab = malloc(sizeof(int)*lenght);
-    (*tab_option)->rank_mpi= malloc(sizeof(int)*lenght);
-    (*tab_option)->compact_tab = malloc(sizeof(int)*lenght);
-    (*tab_option)->scatter_tab = malloc(sizeof(int)*lenght);
-    (*tab_option)->balanced_tab = malloc(sizeof(int)*lenght);
-    (*tab_option)->pid_tab = malloc(sizeof(int)*lenght);
+    (*tab_option)->vp_tab = sctk_malloc(sizeof(int)*lenght);
+    (*tab_option)->rank_mpi= sctk_malloc(sizeof(int)*lenght);
+    (*tab_option)->compact_tab = sctk_malloc(sizeof(int)*lenght);
+    (*tab_option)->scatter_tab = sctk_malloc(sizeof(int)*lenght);
+    (*tab_option)->balanced_tab = sctk_malloc(sizeof(int)*lenght);
+    (*tab_option)->pid_tab = sctk_malloc(sizeof(int)*lenght);
     int l=0;
     struct sctk_text_option_s * temp = *tab_option;
     for(l=0; l< lenght; l++){
@@ -548,13 +548,13 @@ static void sctk_read_format_option_text_placement(FILE *f_textual, struct sctk_
     int cpt_ligne = 0;
     while(1){// one ligne per iteration
         //malloc buffer for infos of other ranks in the same processus
-        char * os_indbuff = (char *)malloc(64*lenght);
-        char * infosbuff = (char *)malloc(64*lenght);
-        char * infos_rank_mpibuff= (char *)malloc(64*lenght);
-        char * infos_compactbuff = (char *)malloc(64*lenght);
-        char * infos_scatterbuff = (char *)malloc(64*lenght);
-        char * infos_balancedbuff = (char *)malloc(64*lenght);
-        char * infos_pidbuff = (char *)malloc(64*lenght);
+        char * os_indbuff = (char *)sctk_malloc(64*lenght);
+        char * infosbuff = (char *)sctk_malloc(64*lenght);
+        char * infos_rank_mpibuff= (char *)sctk_malloc(64*lenght);
+        char * infos_compactbuff = (char *)sctk_malloc(64*lenght);
+        char * infos_scatterbuff = (char *)sctk_malloc(64*lenght);
+        char * infos_balancedbuff = (char *)sctk_malloc(64*lenght);
+        char * infos_pidbuff = (char *)sctk_malloc(64*lenght);
         /* read os ind infos */
         int c = getc(f_textual);
         int cpt = 0;

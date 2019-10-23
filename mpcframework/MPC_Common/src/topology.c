@@ -904,7 +904,7 @@ void mpc_common_topology_init()
 
 	hwloc_topology_init( &__mpc_module_topology );
 
-	hwloc_topology_set_flags(__mpc_module_topology, HWLOC_TOPOLOGY_FLAG_IO_DEVICES);
+	hwloc_topology_set_flags( __mpc_module_topology, HWLOC_TOPOLOGY_FLAG_IO_DEVICES );
 
 	if ( xml_path != NULL )
 	{
@@ -914,21 +914,19 @@ void mpc_common_topology_init()
 
 	hwloc_topology_load( __mpc_module_topology );
 
- 	_mpc_common_toporender_init();
+	_mpc_common_toporender_init();
 
-	_mpc_topo_apply_mpc_process_constraints(__mpc_module_topology);
+	_mpc_topo_apply_mpc_process_constraints( __mpc_module_topology );
 
 	/*  load devices */
-	 mpc_common_topo_device_init( __mpc_module_topology );
+	mpc_common_topo_device_init( __mpc_module_topology );
 }
 
 void mpc_common_topology_destroy( void )
 {
 	mpc_common_topo_device_release();
 	_mpc_common_toporender_render();
-
-	// This crashes malloc mix ?
-	//hwloc_topology_destroy( __mpc_module_topology );
+	hwloc_topology_destroy( __mpc_module_topology );
 }
 
 void mpc_common_topo_get_pu_neighborhood( int cpuid, unsigned int nb_cpus, int *neighborhood )

@@ -1374,7 +1374,7 @@ inline void mpc_mp_comm_ptp_message_copy_pack_absolute( mpc_mp_ptp_message_conte
  ****************/
 
 /* For message creation: a set of buffered ptp_message entries is allocated during init */
-#define BUFFERED_PTP_MESSAGE_NUMBER 256
+#define BUFFERED_PTP_MESSAGE_NUMBER 4096
 
 __thread mpc_mp_ptp_message_t *buffered_ptp_message = NULL;
 

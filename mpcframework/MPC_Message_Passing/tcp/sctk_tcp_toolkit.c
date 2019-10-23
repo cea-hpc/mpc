@@ -359,7 +359,7 @@ struct sctk_tcp_connection_context
 {
 	int from;                            /**< the process id that initiated the request */
 	int to;                              /**< the process id to be notified from the request */
-char dest_connection_infos[MPC_COMMON_MAX_STRING_SIZE]; /**< the connection string( host:port) */
+	char dest_connection_infos[MPC_COMMON_MAX_STRING_SIZE]; /**< the connection string( host:port) */
 };
 
 /**
@@ -405,13 +405,13 @@ static void __sctk_network_connection_from_tcp( int from, int to, sctk_rail_info
 {
 	int src_socket;
 	/*Send connection informations*/
-	
+
 	struct sctk_tcp_connection_context ctx;
-	
+	memset(&ctx, 0, sizeof(struct sctk_tcp_connection_context ));
 	ctx.from = from;
 	ctx.to = to;
 	snprintf( ctx.dest_connection_infos, MPC_COMMON_MAX_STRING_SIZE, "%s", rail->network.tcp.connection_infos);
-	
+
 	if( route_type == ROUTE_ORIGIN_STATIC )
 	{
 		sctk_control_messages_send_rail ( to, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC, 0, &ctx, sizeof( struct sctk_tcp_connection_context ) , rail->rail_number);
@@ -428,7 +428,7 @@ static void __sctk_network_connection_from_tcp( int from, int to, sctk_rail_info
 		perror ( "Connection error" );
 		sctk_abort();
 	}
-	
+
 	sctk_tcp_add_route ( to, src_socket, rail, ( void * ( * ) ( sctk_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ), route_type );
 }
 

@@ -33,11 +33,11 @@
 #include <regex.h>
 
 #if defined( MPC_Accelerators )
-#include <sctk_accelerators.h>
+	#include <sctk_accelerators.h>
 #endif // MPC_Accelerators
 
 #ifdef MPC_USE_INFINIBAND
-#include <infiniband/verbs.h>
+	#include <infiniband/verbs.h>
 #endif
 
 /************************************************************************/
@@ -51,26 +51,33 @@ const char *mpc_common_topo_device_type_to_char( mpc_common_topo_device_type_t t
 		case MPC_COMMON_TOPO_DEVICE_BLOCK:
 			return "MPC_COMMON_TOPO_DEVICE_BLOCK";
 			break;
+
 		case MPC_COMMON_TOPO_DEVICE_NETWORK_HANDLE:
 			return "MPC_COMMON_TOPO_DEVICE_NETWORK_HANDLE";
 			break;
+
 		case MPC_COMMON_TOPO_DEVICE_NETWORK_OFA:
 			return "MPC_COMMON_TOPO_DEVICE_NETWORK_OFA";
 			break;
+
 		case MPC_COMMON_TOPO_DEVICE_GPU:
 			return "MPC_COMMON_TOPO_DEVICE_GPU";
 			break;
+
 		case MPC_COMMON_TOPO_DEVICE_COPROCESSOR:
 			return "MPC_COMMON_TOPO_DEVICE_COPROCESSOR";
 			break;
+
 		case MPC_COMMON_TOPO_DEVICE_DMA:
 			return "MPC_COMMON_TOPO_DEVICE_DMA";
 			break;
+
 		case MPC_COMMON_TOPO_DEVICE_UKNOWN:
 		default:
 			return "MPC_COMMON_TOPO_DEVICE_UKNOWN";
 			break;
 	}
+
 	not_reachable();
 	return NULL;
 }
@@ -82,13 +89,16 @@ const char *mpc_common_topo_device_container_to_char( mpc_common_topo_device_con
 		case MPC_COMMON_TOPO_MACHINE_LEVEL_DEVICE:
 			return "MPC_COMMON_TOPO_MACHINE_LEVEL_DEVICE";
 			break;
+
 		case MPC_COMMON_TOPO_TOPOLOGICAL_DEVICE:
 			return "MPC_COMMON_TOPO_TOPOLOGICAL_DEVICE";
 			break;
+
 		default:
 			return NULL;
 			break;
 	}
+
 	not_reachable();
 	return NULL;
 }
@@ -142,21 +152,20 @@ static inline int __mpc_topo_device__count_pu_on_numa( hwloc_obj_t obj )
 static inline void __mpc_topo_device_load_topology_limits( hwloc_topology_t topology )
 {
 	int numa = mpc_common_topo_get_numa_node_count();
+
 	/* Assume 1 when not a numa machine */
 	if ( numa == 0 )
+	{
 		numa = 1;
+	}
 
 	___numa_count = numa;
-
 	/* Allocate a current core ID for each numa */
 	___current_core_id = sctk_calloc( ___numa_count, sizeof( int ) );
 	assume( ___current_core_id != NULL );
-
 	hwloc_obj_t numa_node = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_NODE, NULL );
-
 	/* Assume 1 to begin with */
 	___core_count = 1;
-
 	/* Prepare to walk numa nodes */
 	int has_numa = 0;
 	int last_count = -1;
@@ -164,14 +173,14 @@ static inline void __mpc_topo_device_load_topology_limits( hwloc_topology_t topo
 	while ( numa_node )
 	{
 		has_numa |= 1;
-
 		int local_count = __mpc_topo_device__count_pu_on_numa( numa_node );
 
 		if ( local_count != 0 )
 		{
-
 			if ( last_count < 0 )
+			{
 				last_count = local_count;
+			}
 
 			if ( local_count < last_count )
 			{
@@ -207,19 +216,18 @@ static inline void __mpc_topo_device_load_topology_limits( hwloc_topology_t topo
 }
 
 static inline int __mpc_topo_device_get_ith_logical_on_numa( hwloc_topology_t topology,
-															 int numa_id,
-															 int core_id )
+        int numa_id,
+        int core_id )
 {
 	int ret = -1;
-
 	hwloc_cpuset_t local_cpuset;
 	hwloc_obj_t numa = hwloc_get_obj_by_type( topology, HWLOC_OBJ_NODE, numa_id );
 
 	if ( !numa )
 	{
 		/* This machine has no numa with this id (can also be non-numa)
-	    * then work on the autorized CPUSET */
-		local_cpuset = (hwloc_cpuset_t) hwloc_topology_get_allowed_cpuset( topology );
+		* then work on the autorized CPUSET */
+		local_cpuset = ( hwloc_cpuset_t ) hwloc_topology_get_allowed_cpuset( topology );
 	}
 	else
 	{
@@ -247,7 +255,8 @@ static inline int __mpc_topo_device_get_ith_logical_on_numa( hwloc_topology_t to
 		}
 
 		i++;
-	} while ( 0 <= ret );
+	}
+	while ( 0 <= ret );
 
 	/* Not found */
 	return 0;
@@ -259,32 +268,25 @@ static inline int __mpc_topo_device_get_ith_logical_on_numa( hwloc_topology_t to
 
 void mpc_common_topo_device_print( mpc_common_topo_device_t *dev )
 {
-	printf( "#######################################\n");
+	printf( "#######################################\n" );
 	printf( "Type : %s\n", mpc_common_topo_device_type_to_char( dev->type ) );
 	printf( "Container : %s\n", mpc_common_topo_device_container_to_char( dev->container ) );
 	printf( "Name : %s\n", dev->name );
 	printf( "Vendor : '%s'\n", dev->vendor );
 	printf( "Device : '%s'\n", dev->device );
-
 	char cpuset[512];
 	hwloc_bitmap_list_snprintf( cpuset, 512, dev->cpuset );
-
 	char cpusetraw[512];
 	hwloc_bitmap_snprintf( cpusetraw, 512, dev->cpuset );
-
 	printf( "CPU set : '%s' (%s)\n", cpuset, cpusetraw );
-
 	char nodeset[512];
 	hwloc_bitmap_list_snprintf( nodeset, 512, dev->nodeset );
-
 	char nodesetraw[512];
 	hwloc_bitmap_snprintf( nodesetraw, 512, dev->nodeset );
-
 	printf( "NODE set : '%s' (%s)\n", nodeset, nodesetraw );
 	printf( "Root numa : '%d'\n", dev->root_numa );
 	printf( "Root core : '%d'\n", dev->root_core );
 	printf( "Device ID : '%d'\n", dev->device_id );
-
 	printf( "#######################################\n" );
 }
 
@@ -296,9 +298,7 @@ void _mpc_topo_device_init( hwloc_topology_t topology, mpc_common_topo_device_t 
 	}
 
 	/* First clear everything */
-
 	memset( dev, 0, sizeof( mpc_common_topo_device_t ) );
-
 	/* Fill HWloc obj */
 	dev->obj = obj;
 	dev->non_io_parent_obj = hwloc_get_non_io_ancestor_obj( topology, obj );
@@ -333,7 +333,6 @@ void _mpc_topo_device_init( hwloc_topology_t topology, mpc_common_topo_device_t 
 	{
 		dev->cpuset = hwloc_bitmap_dup( dev->non_io_parent_obj->cpuset );
 		dev->nodeset = hwloc_bitmap_dup( dev->non_io_parent_obj->nodeset );
-
 		hwloc_const_cpuset_t allowed_cpuset = hwloc_topology_get_allowed_cpuset( topology );
 
 		/* If the device CPUset it diferent from the whole process
@@ -344,25 +343,25 @@ void _mpc_topo_device_init( hwloc_topology_t topology, mpc_common_topo_device_t 
 			/* We set this flag to inform that the
 			 * device is locality sensitive */
 			dev->container = MPC_COMMON_TOPO_TOPOLOGICAL_DEVICE;
-
 			hwloc_obj_t numa_hwl = hwloc_get_obj_inside_cpuset_by_type( topology,
-																		  dev->cpuset,
-																		  HWLOC_OBJ_NUMANODE,
-																		  0 );
-			if(numa_hwl)
+			                       dev->cpuset,
+			                       HWLOC_OBJ_NUMANODE,
+			                       0 );
+
+			if ( numa_hwl )
 			{
 				dev->root_numa = numa_hwl->logical_index;
 			}
 
 			hwloc_obj_t pu_hwl = hwloc_get_obj_inside_cpuset_by_type( topology,
-																   	    dev->cpuset,
-																		HWLOC_OBJ_PU,
-																		0 );
-			if(pu_hwl)
+			                     dev->cpuset,
+			                     HWLOC_OBJ_PU,
+			                     0 );
+
+			if ( pu_hwl )
 			{
 				dev->root_core = pu_hwl->logical_index;
 			}
-
 		}
 		else
 		{
@@ -370,7 +369,6 @@ void _mpc_topo_device_init( hwloc_topology_t topology, mpc_common_topo_device_t 
 			 * we then apply a scatter algoritms to elect
 			 * a preferential NUMA node */
 			dev->container = MPC_COMMON_TOPO_MACHINE_LEVEL_DEVICE;
-
 			mpc_common_spinlock_lock( &___counter_lock );
 
 			/* If needed first load the topology */
@@ -382,14 +380,11 @@ void _mpc_topo_device_init( hwloc_topology_t topology, mpc_common_topo_device_t 
 			/* Increment Numa */
 			___current_numa_id = ( ___current_numa_id + 1 ) % ___numa_count;
 			dev->root_numa = ___current_numa_id;
-
 			/* Increment Thread */
 			___current_core_id[dev->root_numa] = ( ___current_core_id[dev->root_numa] + 1 ) % ___core_count;
-
 			dev->root_core = __mpc_topo_device_get_ith_logical_on_numa( topology,
-																		dev->root_numa,
-																		___current_core_id[dev->root_numa] );
-
+			                 dev->root_numa,
+			                 ___current_core_id[dev->root_numa] );
 			mpc_common_spinlock_unlock( &___counter_lock );
 		}
 	}
@@ -400,7 +395,6 @@ void _mpc_topo_device_init( hwloc_topology_t topology, mpc_common_topo_device_t 
 	}
 
 	/* Retrieve to OS level child */
-
 	hwloc_obj_t os_level_obj = NULL;
 
 	if ( obj->children )
@@ -419,7 +413,6 @@ void _mpc_topo_device_init( hwloc_topology_t topology, mpc_common_topo_device_t 
 	}
 
 	/* Type resolution */
-
 	dev->type = MPC_COMMON_TOPO_DEVICE_UKNOWN;
 
 	if ( os_level_obj != NULL )
@@ -436,7 +429,6 @@ void _mpc_topo_device_init( hwloc_topology_t topology, mpc_common_topo_device_t 
 		}
 
 		/* Do we have an attr ? */
-
 		struct hwloc_osdev_attr_s *dev_attr = NULL;
 
 		if ( os_level_obj->attr )
@@ -463,7 +455,6 @@ static inline void __mpc_topo_device_fill_in_infiniband_info( mpc_common_topo_de
 	int devices_nb;
 	/* Retrieve device list from verbs */
 	struct ibv_device **dev_list = ibv_get_device_list( &devices_nb );
-
 	int id;
 
 	/* For all the devices */
@@ -484,12 +475,15 @@ static inline void __mpc_topo_device_enrich_topology()
 	int i;
 #if defined( MPC_USE_CUDA )
 	int num_devices = 0;
+
 	/* init() returns 0 if succeed (maybe not obvious) */
 	if ( !sctk_accl_cuda_init() )
 	{
 		cudaGetDeviceCount( &num_devices );
 	}
+
 #endif
+
 	for ( i = 0; i < __mpc_topo_device_list_count; i++ )
 	{
 		mpc_common_topo_device_t *device = &__mpc_topo_device_list[i];
@@ -502,12 +496,12 @@ static inline void __mpc_topo_device_enrich_topology()
 		}
 
 #if defined( MPC_USE_CUDA )
+
 		if ( num_devices > 0 )
 		{
 			char attrs[128], save_ptr[128], busid_str[32];
 			const char *attr_sep = "#";
 			hwloc_obj_attr_snprintf( attrs, 128, device->obj, "#", 1 );
-
 			char *cur_attr = NULL;
 
 			/* if the current attr is the bus ID: STOP */
@@ -521,7 +515,6 @@ static inline void __mpc_topo_device_enrich_topology()
 
 			/* Read the PCI bus ID from the found attr */
 			sscanf( cur_attr, "busid=%s", busid_str );
-
 			/* maybe the init() should be done only once ? */
 			CUdevice dev = 0;
 			CUresult test = sctk_cuDeviceGetByPCIBusId( &dev, busid_str );
@@ -529,31 +522,31 @@ static inline void __mpc_topo_device_enrich_topology()
 			/* if the PCI bus ID matches a CUDA-enabled device */
 			if ( test == CUDA_SUCCESS )
 			{
-
 				/** RENAMING THE DEVICE */
 				const short name_prefix_size = 17;
 				const char *name_prefix = "cuda-enabled-card";
-
 				/* we suppose 4 digits to encode GPU ids is enough ! */
 				const short name_size = name_prefix_size + 4;
 				char *name = sctk_malloc( sizeof( char ) * name_size );
 				int check;
-
 				/* Creating one single string */
-				check = snprintf( name, name_size, "%s%d", name_prefix, (int) dev );
+				check = snprintf( name, name_size, "%s%d", name_prefix, ( int ) dev );
 				assert( check < name_size );
-
 				device->name = name;
-				device->device_id = (int) dev;
+				device->device_id = ( int ) dev;
 				sctk_nodebug( "Detected GPU: %s (%s)", device->name, busid_str );
 			}
 			else
 			{
 				if ( device->name == NULL )
+				{
 					device->name = "Unknown";
+				}
+
 				device->device_id = -1;
 			}
 		}
+
 #endif
 	}
 }
@@ -566,13 +559,19 @@ static inline void __mpc_topo_device_enrich_topology()
 static inline int *__mpc_topo_device_matrix_get_cell( int pu_id, int device_id )
 {
 	if ( !__mpc_topo_device_matrix.distances )
+	{
 		return NULL;
+	}
 
 	if ( ( pu_id < 0 ) || ( __mpc_topo_device_matrix.pu_count <= pu_id ) )
+	{
 		return NULL;
+	}
 
 	if ( ( device_id < 0 ) || ( __mpc_topo_device_matrix.device_count <= device_id ) )
+	{
 		return NULL;
+	}
 
 	return &__mpc_topo_device_matrix.distances[pu_id * __mpc_topo_device_matrix.device_count + device_id];
 }
@@ -583,7 +582,9 @@ static inline int __mpc_topo_device_matrix_get_value( int pu_id, int device_id )
 	int *ret = __mpc_topo_device_matrix_get_cell( pu_id, device_id );
 
 	if ( !ret )
+	{
 		return -1;
+	}
 
 	return *ret;
 }
@@ -601,11 +602,8 @@ static inline void __mpc_topo_device_matrix_init( hwloc_topology_t topology )
 {
 	__mpc_topo_device_matrix.device_count = __mpc_topo_device_list_count;
 	__mpc_topo_device_matrix.pu_count = mpc_common_topo_get_pu_count();
-
 	__mpc_topo_device_matrix.distances = sctk_malloc( sizeof( int ) * __mpc_topo_device_matrix.device_count * __mpc_topo_device_matrix.pu_count );
-
 	assume( __mpc_topo_device_matrix.distances != NULL );
-
 	int i, j;
 
 	/* For each device */
@@ -626,9 +624,8 @@ static inline void __mpc_topo_device_matrix_init( hwloc_topology_t topology )
 
 			/* Compute the distance */
 			*cell = _mpc_topo_get_distance_from_pu( topology, j, device_obj );
-
 			sctk_nodebug( "Distance (PU %d, DEV %d (%s)) == %d", j,
-						  i, __mpc_topo_device_list[i].name, *cell );
+			              i, __mpc_topo_device_list[i].name, *cell );
 		}
 	}
 }
@@ -650,7 +647,6 @@ int mpc_common_topo_device_matrix_is_equidistant( char *matching_regexp )
 
 	for ( i = 0; i < count; i++ )
 	{
-
 		for ( j = 0; j < __mpc_topo_device_matrix.pu_count; j++ )
 		{
 			mpc_common_topo_device_t *dev = device_list[i];
@@ -672,7 +668,6 @@ int mpc_common_topo_device_matrix_is_equidistant( char *matching_regexp )
 	}
 
 	sctk_free( device_list );
-
 	/* If we are still here topology is even */
 	return 1;
 }
@@ -704,23 +699,20 @@ void mpc_common_topo_device_init( hwloc_topology_t topology )
 				}
 			}
 		}
+
 		pci_dev = hwloc_get_next_pcidev( topology, pci_dev );
 	}
 
 	sctk_nodebug( "sctk_topology located %d PCI devices",
-				  __mpc_topo_device_list_count );
-
+	              __mpc_topo_device_list_count );
 	/* Allocate devices */
 	__mpc_topo_device_list = sctk_malloc( sizeof( mpc_common_topo_device_t ) * __mpc_topo_device_list_count );
-
 	/* Then walk again to fill devices */
 	pci_dev = hwloc_get_next_pcidev( topology, NULL );
-
 	int off = 0;
 
 	while ( pci_dev )
 	{
-
 		if ( !pci_dev->arity )
 		{
 			_mpc_topo_device_init( topology, &__mpc_topo_device_list[off], pci_dev, 0 );
@@ -746,7 +738,6 @@ void mpc_common_topo_device_init( hwloc_topology_t topology )
 
 	__mpc_topo_device_enrich_topology();
 	// hwloc_topology_export_xml(topology, "-");
-
 	/*
 	int j;
 	for ( j = 0; j < __mpc_topo_device_list_count; j++ )
@@ -775,7 +766,9 @@ mpc_common_topo_device_t *mpc_common_topo_device_get_from_handle( char *handle )
 	int i;
 
 	if ( !handle )
+	{
 		return NULL;
+	}
 
 	/* Try as an OS id  (eth0, eth1, sda, ... )*/
 	for ( i = 0; i < __mpc_topo_device_list_count; i++ )
@@ -787,7 +780,6 @@ mpc_common_topo_device_t *mpc_common_topo_device_get_from_handle( char *handle )
 	}
 
 	/* Try as a PCI id (xxxx:yy:zz.t or yy:zz.t) */
-
 	hwloc_obj_t pci_dev = hwloc_get_pcidev_by_busidstring( mpc_common_topology_get(), handle );
 
 	if ( !pci_dev )
@@ -821,7 +813,7 @@ int mpc_common_topo_device_get_id_from_handle( char *handle )
 }
 
 mpc_common_topo_device_t **mpc_common_topo_device_get_from_handle_regexp( char *handle_reg_exp,
-																		  int *count )
+        int *count )
 {
 	if ( !handle_reg_exp )
 	{
@@ -830,16 +822,17 @@ mpc_common_topo_device_t **mpc_common_topo_device_get_from_handle_regexp( char *
 
 	/* For simplicity just allocate an array of the number of devices (make it NULL terminated) */
 	mpc_common_topo_device_t **ret_dev = sctk_malloc( sizeof( mpc_common_topo_device_t * ) * ( __mpc_topo_device_list_count + 1 ) );
-
 	/* Set it to NULL */
 	int i;
+
 	for ( i = 0; i < __mpc_topo_device_list_count + 1; i++ )
+	{
 		ret_dev[i] = NULL;
+	}
 
 	/* Prepare the regexp */
 	regex_t regexp;
 	char msg_buff[100];
-
 	int ret = regcomp( &regexp, handle_reg_exp, 0 );
 
 	if ( ret )
@@ -871,17 +864,18 @@ mpc_common_topo_device_t **mpc_common_topo_device_get_from_handle_regexp( char *
 		{
 			regerror( ret, &regexp, msg_buff, 100 );
 			sctk_fatal( "Could not execute device regexp %s on %s ( %s )", handle_reg_exp,
-						__mpc_topo_device_list[i].name,
-						msg_buff );
+			            __mpc_topo_device_list[i].name,
+			            msg_buff );
 		}
 	}
 
 	if ( count )
+	{
 		*count = current_count;
+	}
 
 	/* Free the regexp */
 	regfree( &regexp );
-
 	return ret_dev;
 }
 
@@ -906,13 +900,14 @@ mpc_common_topo_device_t *mpc_common_topo_device_attach_freest_device_from( mpc_
 	mpc_common_topo_device_t *freest_elem = NULL;
 
 	if ( count < 1 )
+	{
 		return NULL;
+	}
 
 	/* for each selected device */
 	for ( i = 0; i < count; i++ )
 	{
 		mpc_common_topo_device_t *current = device_list[i];
-
 		/* lock the counter */
 		mpc_common_spinlock_lock( &current->res_lock );
 
@@ -922,16 +917,16 @@ mpc_common_topo_device_t *mpc_common_topo_device_attach_freest_device_from( mpc_
 			freest_value = current->nb_res;
 			freest_elem = current;
 			sctk_nodebug( "First device: %d (%d)", freest_elem->device_id,
-						  freest_elem->nb_res );
+			              freest_elem->nb_res );
 		}
-		else if ( (int) current->nb_res < freest_value )
+		else if ( ( int ) current->nb_res < freest_value )
 		{
 			/* free the previous selected device */
 			mpc_common_spinlock_unlock( &freest_elem->res_lock );
 			freest_value = current->nb_res;
 			freest_elem = current;
 			sctk_nodebug( "New best device: %d (%d)", freest_elem->device_id,
-						  freest_elem->nb_res );
+			              freest_elem->nb_res );
 		}
 		else
 		{
@@ -943,7 +938,6 @@ mpc_common_topo_device_t *mpc_common_topo_device_attach_freest_device_from( mpc_
 	assert( freest_elem != NULL );
 	freest_elem->nb_res++;
 	mpc_common_spinlock_unlock( &freest_elem->res_lock );
-
 	return freest_elem;
 }
 
@@ -951,10 +945,9 @@ mpc_common_topo_device_t *mpc_common_topo_device_attach_freest_device( char *han
 {
 	int count;
 	mpc_common_topo_device_t **device_list =
-		mpc_common_topo_device_get_from_handle_regexp( handle_reg_exp, &count );
+	    mpc_common_topo_device_get_from_handle_regexp( handle_reg_exp, &count );
 	mpc_common_topo_device_t *device_res =
-		mpc_common_topo_device_attach_freest_device_from( device_list, count );
-
+	    mpc_common_topo_device_attach_freest_device_from( device_list, count );
 	sctk_free( device_list );
 	return device_res;
 }
@@ -964,21 +957,20 @@ mpc_common_topo_device_t *mpc_common_topo_device_get_closest_from_pu( int pu_id,
 {
 	int dummy;
 	mpc_common_topo_device_t **device_list = mpc_common_topo_device_matrix_get_list_closest_from_pu(
-		pu_id, matching_regexp, &dummy );
+	            pu_id, matching_regexp, &dummy );
 	mpc_common_topo_device_t *first = device_list[0];
-
 	sctk_free( device_list );
-
 	return first;
 }
 
 mpc_common_topo_device_t **mpc_common_topo_device_matrix_get_list_closest_from_pu( int pu_id, char *matching_regexp,
-																				   int *count_out )
+        int *count_out )
 {
 	/* Retrieve devices matching the regexp */
 	int count;
 	mpc_common_topo_device_t **device_list =
-		mpc_common_topo_device_get_from_handle_regexp( matching_regexp, &count );
+	    mpc_common_topo_device_get_from_handle_regexp( matching_regexp, &count );
+
 	if ( count < 1 )
 	{
 		return NULL;
@@ -986,9 +978,12 @@ mpc_common_topo_device_t **mpc_common_topo_device_matrix_get_list_closest_from_p
 
 	mpc_common_topo_device_t **ret_list = sctk_malloc( count * sizeof( mpc_common_topo_device_t ) );
 	int i;
+
 	/* init the array */
 	for ( i = 0; i < count; i++ )
+	{
 		ret_list[i] = NULL;
+	}
 
 	int minimal_distance = -1;
 	*count_out = 0;
@@ -1013,11 +1008,12 @@ mpc_common_topo_device_t **mpc_common_topo_device_matrix_get_list_closest_from_p
 	}
 
 	/* now we have the minimum distance, look for any device which match with it
-   */
+	*/
 	for ( i = 0; i < count; i++ )
 	{
 		mpc_common_topo_device_t *dev = device_list[i];
 		int distance = __mpc_topo_device_matrix_get_value( pu_id, dev->id );
+
 		if ( distance == minimal_distance )
 		{
 			ret_list[*count_out] = dev;
@@ -1026,7 +1022,7 @@ mpc_common_topo_device_t **mpc_common_topo_device_matrix_get_list_closest_from_p
 	}
 
 	/* don't forget to free the malloc'd vector from
-   * mpc_common_topo_device_get_from_handle_regexp() */
+	* mpc_common_topo_device_get_from_handle_regexp() */
 	sctk_free( device_list );
 	return ret_list;
 }

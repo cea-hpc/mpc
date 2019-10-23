@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <limits.h>
 
+#include "sctk_alloc.h"
 #include "sctk_pm_json.h"
 #include "sctk_debug.h"
 
@@ -93,7 +94,7 @@ json_t * __json_t_init( json_type type )
 	   ALLOCATE
 	   */
 
-	json_t * json = (json_t *)malloc( sizeof( json_t ) + extra_type_size );
+	json_t * json = (json_t *)sctk_malloc( sizeof( json_t ) + extra_type_size );
 
 	if (!json )
 	{
@@ -208,7 +209,7 @@ json_t * json_string_l( const char *string , int len )
 	/* INIT PACKED */
 	json_string_t * s = json_to_string( ret );
 
-	s->value = (char *)malloc( len + 1 );
+	s->value = (char *)sctk_malloc( len + 1 );
 
 	if( ! s->value )
 	{
@@ -272,7 +273,7 @@ struct ObjectHT_entry * ObjectHT_entry_new( const char *key, json_t * elem )
 	if( !strlen( key ) || !elem )
 		return NULL;
 
-	struct ObjectHT_entry * ret = (struct ObjectHT_entry *)malloc( sizeof( struct ObjectHT_entry ) );
+	struct ObjectHT_entry * ret = (struct ObjectHT_entry *)sctk_malloc( sizeof( struct ObjectHT_entry ) );
 
 	if( !ret )
 	{
@@ -960,7 +961,7 @@ void __json_dump( char *tmp_buff, struct string_buff *out, json_t * json, int de
 
 char * json_dump( json_t * json, json_format mode )
 {
-	char *tmp_buff = (char *)malloc( 4096 );
+	char *tmp_buff = (char *)sctk_malloc( 4096 );
 
 	if( !tmp_buff )
 	{
