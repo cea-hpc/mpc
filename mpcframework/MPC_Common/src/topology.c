@@ -925,7 +925,7 @@ void mpc_common_topology_init()
 void mpc_common_topology_destroy( void )
 {
 	_mpc_common_toporender_render();
-	_mpc_common_topo_device_release();
+	//_mpc_common_topo_device_release();
 
 	hwloc_topology_destroy( __mpc_module_topology );
 }
