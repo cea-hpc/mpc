@@ -76,7 +76,7 @@ extern "C"
 
 /************************** CONSTS *************************/
 /** Magic value to be used as check in common header. **/
-#define SCTK_ALLOC_MAGIC_STATUS 0x10
+#define SCTK_ALLOC_MAGIC_STATUS 0xF
 /** Constant to say to memory source that it wasn't binded on a specific numa node. **/
 #define SCTK_ALLOC_NOT_BINDED -1
 /**
