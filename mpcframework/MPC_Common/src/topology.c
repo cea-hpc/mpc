@@ -856,7 +856,7 @@ void _mpc_topo_get_pu_neighborhood(hwloc_topology_t target_topo, int cpuid, unsi
 	objs = sctk_malloc( nb_cpus * sizeof( hwloc_obj_t ) );
 	sctk_assert( objs != NULL );
 
-	/* The closest CPU is actually... the current CPU :-). 
+	/* The closest CPU is actually... the current CPU :-).
 	* Set the closest CPU as the current CPU */
 	objs[0] = currentCPU;
 

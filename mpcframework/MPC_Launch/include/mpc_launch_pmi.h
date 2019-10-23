@@ -136,7 +136,7 @@ int mpc_launch_pmi_get_as_rank( char *value, size_t size, int tag, int rank );
  * @param key corresponding key
  * @return int SCTK_PMI_SUCCESS / _FAIL
  */
-int mpc_launch_pmi_put(char *value, char *key );
+int mpc_launch_pmi_put( char *value, char *key );
 
 /**
  * @brief Get a value at key in the KVS
@@ -146,7 +146,7 @@ int mpc_launch_pmi_put(char *value, char *key );
  * @param key corresponding key
  * @return int SCTK_PMI_SUCCESS / _FAIL
  */
-int mpc_launch_pmi_get(char *value, size_t size, char *key);
+int mpc_launch_pmi_get( char *value, size_t size, char *key );
 
 /*********************
  * OS PROCESS LAYOUT *
@@ -223,7 +223,7 @@ void MPC_Net_hook_barrier();
  * @param size size of the data in bytes
  * @param target target rank
  */
-void MPC_Net_hook_send_to( void * data, size_t size, int target );
+void MPC_Net_hook_send_to( void *data, size_t size, int target );
 
 /**
  * @brief Receive data from a given rank
@@ -232,7 +232,7 @@ void MPC_Net_hook_send_to( void * data, size_t size, int target );
  * @param size size of the data in bytes
  * @param source source rank
  */
-void MPC_Net_hook_recv_from( void * data, size_t size, int source );
+void MPC_Net_hook_recv_from( void *data, size_t size, int source );
 
 #endif /* SCTK_LIB_MODE */
 
