@@ -124,7 +124,6 @@ void _mpc_dt_release()
 	__mpc_dt_name_clear();
 	sctk_free( __sctk_common_type_sizes );
 
-
 	mpc_common_spinlock_unlock(&clear_lock);
 
 }
@@ -1210,7 +1209,7 @@ void _mpc_dt_storage_release( struct _mpc_dt_storage * da )
 		int to_release = 0;
 		to_release = _mpc_dt_storage_type_can_be_released(da, i);
 
-		if( to_release && !_mpc_dt_is_common(i) )
+		if( to_release && !_mpc_dt_is_common(i) && !_mpc_dt_is_struct(i))
 		{
                   sctk_debug("Freeing unfreed datatype [%d] did you call "
                              "MPI_Type_free on all your MPI_Datatypes ?",
