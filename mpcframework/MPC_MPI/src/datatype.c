@@ -85,8 +85,15 @@ static inline void __mpc_common_types_init(void);
 
 void _mpc_dt_init()
 {
+	static mpc_common_spinlock_t init_lock = SCTK_SPINLOCK_INITIALIZER;
+
+	mpc_common_spinlock_lock(&init_lock);
+
 	if ( __mpc_dt_initialized )
+	{
+		mpc_common_spinlock_unlock(&init_lock);
 		return;
+	}
 
 	__mpc_dt_initialized = 1;
 
@@ -95,18 +102,31 @@ void _mpc_dt_init()
 	assume( __sctk_common_type_sizes != NULL );
 	__mpc_common_types_init();
 
+	mpc_common_spinlock_unlock(&init_lock);
 }
 
 static inline void __mpc_dt_name_clear();
 
 void _mpc_dt_release()
 {
+	static mpc_common_spinlock_t clear_lock = SCTK_SPINLOCK_INITIALIZER;
+
+	mpc_common_spinlock_lock(&clear_lock);
+
 	if ( !__mpc_dt_initialized )
+	{
+		mpc_common_spinlock_unlock(&clear_lock);
 		return;
+	}
+
 	__mpc_dt_initialized = 0;
 
 	__mpc_dt_name_clear();
 	sctk_free( __sctk_common_type_sizes );
+
+
+	mpc_common_spinlock_unlock(&clear_lock);
+
 }
 
 /************************************************************************/
@@ -1426,6 +1446,7 @@ static inline void __mpc_dt_name_clear()
 		HASH_DEL( datatype_names, current );
 		sctk_free( current );
 	}
+
 }
 
 /************************************************************************/

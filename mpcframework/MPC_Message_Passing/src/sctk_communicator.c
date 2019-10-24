@@ -2020,6 +2020,11 @@ int _sctk_get_process_rank_from_task_rank( int rank )
 
 	tmp = sctk_get_internal_communicator( SCTK_COMM_WORLD );
 
+	if(rank < 0 )
+	{
+		return -1;
+	}
+
 	if ( tmp->task_to_process != NULL )
 	{
 
