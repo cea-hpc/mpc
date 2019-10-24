@@ -115,8 +115,7 @@ static inline sctk_internal_communicator_t *sctk_get_internal_communicator ( con
 
 	if ( tmp == NULL )
 	{
-		sctk_error ( "Communicator %d does not exist", communicator );
-		not_reachable();
+		sctk_fatal ( "Communicator %d does not exist", communicator );
 	}
 
 	return tmp;

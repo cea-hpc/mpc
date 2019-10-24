@@ -4158,11 +4158,11 @@ int _mpc_cl_comm_free( mpc_mp_communicator_t *comm )
 	}
 
 	__mpc_cl_per_communicator_delete( task_specific, *comm );
-	MPC_ERROR_SUCESS();
-	mpc_mp_communicator_t old_comm = *comm;
-	TODO( "THIS CODE IS BAD LEADS TO DEADLOCKS" );
-	sctk_delete_communicator( old_comm );
+
+	TODO( "THIS CODE IS BAD TODO FIX COMM REFCOUNTING TO FIX ANL/COMMUNICATOR/SPLIT1" );
+	//sctk_delete_communicator( *old_comm );
 	*comm = SCTK_COMM_NULL;
+
 	MPC_ERROR_SUCESS();
 }
 
