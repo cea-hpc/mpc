@@ -996,7 +996,7 @@ extern char ** environ;
 
 int
 /* main (int argc, char **argv) */
-mpc_mpi_m_mpi_process_main (int argc, char **argv)
+mpc_mpi_cl_mpi_process_main (int argc, char **argv)
 {
   int result;
 

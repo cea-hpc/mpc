@@ -23,7 +23,7 @@
  */
 void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 {
-	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
+	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific;
 
 	*flag = 0;
 
@@ -74,7 +74,7 @@ void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
  */
 int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
                       MPI_Aint **indices, MPI_Count *count) {
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = mpc_cl_per_mpi_process_ctx_get();
+  mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = mpc_cl_per_mpi_process_ctx_get();
   _mpc_dt_derived_t *target_derived_type;
   _mpc_dt_contiguout_t *contiguous_type;
 
@@ -159,7 +159,7 @@ int MPIR_Type_flatten(MPI_Datatype type, MPI_Aint **off_array,
 }
 
 MPI_Aint MPCX_Type_get_count(MPI_Datatype datatype) {
-  mpc_mpi_m_per_mpi_process_ctx_t *task_specific = mpc_cl_per_mpi_process_ctx_get();
+  mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = mpc_cl_per_mpi_process_ctx_get();
   _mpc_dt_derived_t *target_derived_type;
 
 

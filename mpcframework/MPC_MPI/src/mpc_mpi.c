@@ -602,7 +602,7 @@ void mpc_mpi_per_communicator_dup_copy_func(mpc_mpi_per_communicator_t** to, mpc
 
 static inline mpc_mpi_per_communicator_t *
 mpc_mpc_get_per_comm_data(mpc_mp_communicator_t comm) {
-  struct mpc_mpi_m_per_mpi_process_ctx_s *task_specific;
+  struct mpc_mpi_cl_per_mpi_process_ctx_s *task_specific;
   mpc_per_communicator_t *tmp;
 
   static __thread int task_rank = -1;
@@ -643,7 +643,7 @@ int mpc_mpi_per_communicator_init(mpc_mpi_per_communicator_t *pc) {
 
 static inline mpc_mpi_data_t * mpc_mpc_get_per_task_data()
 {
-	struct mpc_mpi_m_per_mpi_process_ctx_s * task_specific;
+	struct mpc_mpi_cl_per_mpi_process_ctx_s * task_specific;
 	task_specific = mpc_cl_per_mpi_process_ctx_get ();
 	return task_specific->mpc_mpi_data;
 }
@@ -1504,19 +1504,19 @@ __INTERNAL__PMPI_Send( void *buf, int count, MPI_Datatype datatype, int dest,
 	{
 		return res;
 	}
-	res = _mpc_cl_open_pack( &request );
+	res = mpc_mpi_cl_open_pack( &request );
 	if ( res != MPI_SUCCESS )
 	{
 		return res;
 	}
 
-	res = _mpc_cl_add_pack_absolute( buf, derived_datatype.count, derived_datatype.begins, derived_datatype.ends, MPC_CHAR, &request );
+	res = mpc_mpi_cl_add_pack_absolute( buf, derived_datatype.count, derived_datatype.begins, derived_datatype.ends, MPC_CHAR, &request );
 	if ( res != MPI_SUCCESS )
 	{
 		return res;
 	}
 
-	res = _mpc_cl_isend_pack( dest, tag, comm, &request );
+	res = mpc_mpi_cl_isend_pack( dest, tag, comm, &request );
 	if ( res != MPI_SUCCESS )
 	{
 		return res;
@@ -1671,12 +1671,12 @@ __INTERNAL__PMPI_Recv (void *buf, int count, MPI_Datatype datatype,
 	if (res != MPI_SUCCESS) {
 		return res;
 	}
-	res = _mpc_cl_open_pack(&request);
+	res = mpc_mpi_cl_open_pack(&request);
 	if (res != MPI_SUCCESS) {
 		return res;
 	}
 
-	res = _mpc_cl_add_pack_absolute(
+	res = mpc_mpi_cl_add_pack_absolute(
 		buf, derived_datatype.count,
 		derived_datatype.begins, derived_datatype.ends,
 		MPC_CHAR, &request);
@@ -1684,7 +1684,7 @@ __INTERNAL__PMPI_Recv (void *buf, int count, MPI_Datatype datatype,
 		return res;
 	}
 
-	res = _mpc_cl_irecv_pack(source, tag, comm, &request);
+	res = mpc_mpi_cl_irecv_pack(source, tag, comm, &request);
 	if (res != MPI_SUCCESS) {
 		return res;
 	}
@@ -2106,11 +2106,11 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 
 			if (is_valid_request)
 			{
-			  res = _mpc_cl_open_pack (__sctk_convert_mpc_request (request,requests));
+			  res = mpc_mpi_cl_open_pack (__sctk_convert_mpc_request (request,requests));
 			}
 			else
 			{
-			  res = _mpc_cl_open_pack (__sctk_new_mpc_request (request,requests));
+			  res = mpc_mpi_cl_open_pack (__sctk_new_mpc_request (request,requests));
 			}
 			if (res != MPI_SUCCESS)
 			{
@@ -2129,14 +2129,14 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 				derived_datatype.opt_ends = &(tmp[derived_datatype.opt_count]);
 			}
 
-			res = _mpc_cl_add_pack_absolute (buf, derived_datatype.opt_count, derived_datatype.opt_begins, derived_datatype.opt_ends, MPC_CHAR,	__sctk_convert_mpc_request (request,requests));
+			res = mpc_mpi_cl_add_pack_absolute (buf, derived_datatype.opt_count, derived_datatype.opt_begins, derived_datatype.opt_ends, MPC_CHAR,	__sctk_convert_mpc_request (request,requests));
 		
 			if (res != MPI_SUCCESS)
 			{
 				return res;
 			}
 
-			res = _mpc_cl_isend_pack (dest, tag, comm, __sctk_convert_mpc_request (request,requests));
+			res = mpc_mpi_cl_isend_pack (dest, tag, comm, __sctk_convert_mpc_request (request,requests));
 			return res;
 		}
 	}
@@ -2290,11 +2290,11 @@ static int __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype d
 			
 			if (is_valid_request)
 			{
-			  res = _mpc_cl_open_pack (__sctk_convert_mpc_request (request,requests));
+			  res = mpc_mpi_cl_open_pack (__sctk_convert_mpc_request (request,requests));
 			}
 			else
 			{
-			  res = _mpc_cl_open_pack (__sctk_new_mpc_request (request,requests));
+			  res = mpc_mpi_cl_open_pack (__sctk_new_mpc_request (request,requests));
 			}
 			
 			if (res != MPI_SUCCESS)
@@ -2315,14 +2315,14 @@ static int __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype d
 			}
 
 			res =
-			  _mpc_cl_add_pack_absolute (buf, derived_datatype.opt_count, derived_datatype.opt_begins, derived_datatype.opt_ends, MPC_CHAR, __sctk_convert_mpc_request (request,requests));
+			  mpc_mpi_cl_add_pack_absolute (buf, derived_datatype.opt_count, derived_datatype.opt_begins, derived_datatype.opt_ends, MPC_CHAR, __sctk_convert_mpc_request (request,requests));
 			if (res != MPI_SUCCESS)
 			{
 				return res;
 			}
 
 			res =
-			_mpc_cl_irecv_pack (source, tag, comm,
+			mpc_mpi_cl_irecv_pack (source, tag, comm,
 					 __sctk_convert_mpc_request (request,requests));
 			return res;
 		}
@@ -4827,7 +4827,7 @@ static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype da
 	MPI_Datatype data_in;
 	int data_in_size = 0;
 	size_t count = 0;
-	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = NULL;
+	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = NULL;
 	unsigned long i = 0;
 
 	*elements = 0;
@@ -5167,7 +5167,7 @@ int __INTERNAL__PMPI_Pack_external_size (char *datarep , int incount, MPI_Dataty
 		return MPI_ERR_ARG;
 	}
 
-	mpc_mpi_m_per_mpi_process_ctx_t *task_specific = NULL;
+	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = NULL;
   _mpc_dt_derived_t *derived_user_types = NULL;
   _mpc_dt_contiguout_t *contiguous_user_types = NULL;
 
@@ -5237,7 +5237,7 @@ int __INTERNAL__PMPI_Pack_external_size (char *datarep , int incount, MPI_Dataty
 
 MPI_Datatype * sctk_datatype_get_typemask( MPI_Datatype datatype, int * type_mask_count, mpc_mp_datatype_t * static_type )
 {
-	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
+	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific;
 	
 	*type_mask_count = 0;
 	
@@ -5467,7 +5467,7 @@ int (*exscan_intra)(void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
 
 
 /* Collectives */
-int mpc_mpi_m_egreq_progress_poll();
+int mpc_mpi_cl_egreq_progress_poll();
 
 int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm) {
   struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
@@ -5492,13 +5492,13 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm) {
     while (*toll != OPA_load_int(&barrier_ctx->fare)) {
       sctk_thread_yield();
       if( (cnt++ & 0xFF) == 0 )
-        mpc_mpi_m_egreq_progress_poll();
+        mpc_mpi_cl_egreq_progress_poll();
     }
   } else {
     while (*toll != OPA_load_int(&barrier_ctx->fare)) {
       sctk_cpu_relax();
       if( (cnt++ & 0xFF) == 0 )
-        mpc_mpi_m_egreq_progress_poll();
+        mpc_mpi_cl_egreq_progress_poll();
     }
   }
 
@@ -5531,13 +5531,13 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm) {
       while (the_signal == 0) {
         sctk_thread_yield();
         if( (cnt++ & 0xFF) == 0 )
-            mpc_mpi_m_egreq_progress_poll();
+            mpc_mpi_cl_egreq_progress_poll();
       }
     } else {
       while (the_signal == 0) {
         sctk_cpu_relax();
         if( (cnt++ & 0xFF) == 0 )
-            mpc_mpi_m_egreq_progress_poll();
+            mpc_mpi_cl_egreq_progress_poll();
       }
     }
   }
@@ -15193,7 +15193,7 @@ static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
     int rank;
 
     mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
-    struct mpc_mpi_m_per_mpi_process_ctx_s *task_specific;
+    struct mpc_mpi_cl_per_mpi_process_ctx_s *task_specific;
     mpc_per_communicator_t *per_communicator;
     mpc_per_communicator_t *per_communicator_tmp;
 
@@ -15269,7 +15269,7 @@ __INTERNAL__PMPI_Finalize (void)
 {
   int res; 
 
-  struct mpc_mpi_m_per_mpi_process_ctx_s * task_specific;
+  struct mpc_mpi_cl_per_mpi_process_ctx_s * task_specific;
   task_specific = mpc_cl_per_mpi_process_ctx_get ();
   if(task_specific->mpc_mpi_data->nbc_initialized_per_task == 1){
     task_specific->mpc_mpi_data->nbc_initialized_per_task = -1;
@@ -19568,7 +19568,7 @@ PMPI_Abort (MPI_Comm comm, int errorcode)
 
 int PMPI_Is_thread_main(int *flag)
 {
-	mpc_mpi_m_per_mpi_process_ctx_t *task_specific;
+	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific;
 	task_specific = mpc_cl_per_mpi_process_ctx_get ();
 	*flag = task_specific->init_done;
 	return MPI_SUCCESS;

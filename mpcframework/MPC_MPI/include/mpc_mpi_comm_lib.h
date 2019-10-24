@@ -54,21 +54,21 @@ typedef int MPC_Checkpoint_state;
 /* Per thread context                                                   */
 /************************************************************************/
 
-struct mpc_mpi_m_per_thread_ctx_s;
+struct mpc_mpi_cl_per_thread_ctx_s;
 
-void mpc_mpi_m_per_thread_ctx_init();
-void mpc_mpi_m_per_thread_ctx_release();
+void mpc_mpi_cl_per_thread_ctx_init();
+void mpc_mpi_cl_per_thread_ctx_release();
 
 /************************************************************************/
 /* Per Process context                                                  */
 /************************************************************************/
 
-struct mpc_mpi_m_per_mpi_process_ctx_s;
+struct mpc_mpi_cl_per_mpi_process_ctx_s;
 
-struct mpc_mpi_m_per_mpi_process_ctx_s *mpc_cl_per_mpi_process_ctx_get();
+struct mpc_mpi_cl_per_mpi_process_ctx_s *mpc_cl_per_mpi_process_ctx_get();
 
-void mpc_mpi_m_per_mpi_process_ctx_reinit ( struct mpc_mpi_m_per_mpi_process_ctx_s *tmp );
-int mpc_mpi_m_per_mpi_process_ctx_at_exit_register( void ( *function )( void ) );
+void mpc_mpi_cl_per_mpi_process_ctx_reinit ( struct mpc_mpi_cl_per_mpi_process_ctx_s *tmp );
+int mpc_mpi_cl_per_mpi_process_ctx_at_exit_register( void ( *function )( void ) );
 
 /* Disguisement Fast Path Checker */
 
@@ -78,6 +78,50 @@ static inline int __MPC_Maybe_disguised()
 {
 	return OPA_load_int( &__mpc_p_disguise_flag );
 }
+
+
+/*******************
+ * PACK MANAGEMENT *
+ *******************/
+
+int mpc_mpi_cl_open_pack( mpc_mp_request_t *request );
+
+int mpc_mpi_cl_add_pack( void *buf, mpc_mp_msg_count_t count,
+                      unsigned int *begins,
+                      unsigned int *ends, mpc_mp_datatype_t datatype,
+                      mpc_mp_request_t *request );
+
+int mpc_mpi_cl_add_pack_absolute( void *buf, mpc_mp_msg_count_t count,
+                               long *begins,
+                               long *ends,
+                               mpc_mp_datatype_t datatype, mpc_mp_request_t *request );
+
+int mpc_mpi_cl_isend_pack( int dest, int tag, mpc_mp_communicator_t comm,
+                        mpc_mp_request_t *request );
+
+int mpc_mpi_cl_irecv_pack( int source, int tag, mpc_mp_communicator_t comm,
+                        mpc_mp_request_t *request );
+
+/*******************
+ * WAIT OPERATIONS *
+ *******************/
+
+int mpc_mpi_cl_wait_pending( mpc_mp_communicator_t comm );
+
+int mpc_mpi_cl_wait_pending_all_comm( void );
+
+
+/************************
+ * TIMING AND PROFILING *
+ ************************/
+
+typedef struct
+{
+	int virtual_cpuid;
+	double usage;
+} mpc_mpi_cl_activity_t;
+
+int mpc_mpi_cl_get_activity( int nb_item, mpc_mpi_cl_activity_t *tab, double *process_act );
 
 
 /****************

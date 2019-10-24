@@ -28,12 +28,12 @@ main (int argc, char **argv)
 {
   int rank, size;
   char name[1024];
-  MPC_Init (&argc, &argv);
-  MPC_Comm_size (SCTK_COMM_WORLD, &size);
-  MPC_Comm_rank (SCTK_COMM_WORLD, &rank);
+  MPI_Init (&argc, &argv);
+  MPI_Comm_size (SCTK_COMM_WORLD, &size);
+  MPI_Comm_rank (SCTK_COMM_WORLD, &rank);
   gethostname (name, 1023);
-  MPC_Barrier(SCTK_COMM_WORLD);
+  MPI_Barrier(SCTK_COMM_WORLD);
   printf ("Hello world from process %d of %d %s\n", rank, size, name);
-  MPC_Finalize ();
+  MPI_Finalize ();
   return 0;
 }

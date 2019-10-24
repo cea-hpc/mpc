@@ -32,14 +32,15 @@ int is_printing = 1;
 void
 run (void *arg)
 {
-  mpc_mp_communicator_t my_com;
+  MPI_Comm my_com;
+  MPI_Request req, req2;
   int my_rank;
   int my_size;
   char msg[50];
 
-  my_com = SCTK_COMM_WORLD;
-  MPC_Comm_rank (my_com, &my_rank);
-  MPC_Comm_size (my_com, &my_size);
+  my_com = MPI_COMM_WORLD;
+  MPI_Comm_rank (my_com, &my_rank);
+  MPI_Comm_size (my_com, &my_size);
 
 
 
@@ -50,19 +51,20 @@ run (void *arg)
       sprintf (msg, "it works");
       mprintf (stderr, "from %d to %d\n", 0, (my_size - 1));
       mprintf (stderr, "init msg = %s\n", msg);
-      MPC_Isend (msg, 40, MPC_CHAR, (my_size - 1), 0, my_com, NULL);
+      MPI_Isend (msg, 40, MPI_CHAR, (my_size - 1), 0, my_com, &req);
       mprintf (stderr, "init msg = %s %p\n", msg, msg);
-      MPC_Wait_pending (my_com);
+      mpc_mpi_cl_wait_pending (my_com);
       mprintf (stderr, "init msg wait done = %s done \n", msg);
     }
   else
     {
+      sleep(5);
       if (my_rank == (my_size - 1))
 	{
 	  mprintf (stderr, "recv %d to %d\n", 0, (my_size - 1));
 	  mprintf (stderr, "msg = %s\n", msg);
-	  MPC_Irecv (msg, 40, MPC_CHAR, 0, 0, my_com, NULL);
-	  MPC_Wait_pending (my_com);
+	  MPI_Irecv (msg, 40, MPI_CHAR, 0, 0, my_com, &req);
+	  mpc_mpi_cl_wait_pending (my_com);
 	  mprintf (stderr, "msg recv done = %s\n", msg);
 	  assert (strcmp (msg, "it works") == 0);
 	}
@@ -75,9 +77,9 @@ run (void *arg)
       sprintf (msg, "it works2");
       mprintf (stderr, "from %d to %d 2\n", 0, (my_size - 1));
       mprintf (stderr, "init msg = %s\n", msg);
-      MPC_Isend (msg, 40, MPC_CHAR, (my_size - 1), 0, my_com, NULL);
+      MPI_Isend (msg, 40, MPI_CHAR, (my_size - 1), 1, my_com, &req2);
       mprintf (stderr, "init msg = %s\n", msg);
-      MPC_Wait_pending (my_com);
+      mpc_mpi_cl_wait_pending (my_com);
       mprintf (stderr, "init msg wait done 2 = %s done \n", msg);
     }
   else
@@ -86,25 +88,27 @@ run (void *arg)
 	{
 	  mprintf (stderr, "recv %d to %d 2\n", 0, (my_size - 1));
 	  mprintf (stderr, "msg = %s\n", msg);
-	  MPC_Irecv (msg, 40, MPC_CHAR, 0, 0, my_com, NULL);
-	  MPC_Wait_pending (my_com);
+	  MPI_Irecv (msg, 40, MPI_CHAR, 0, 1, my_com, &req2);
+	  mpc_mpi_cl_wait_pending (my_com);
 	  mprintf (stderr, "msg recv done = %s\n", msg);
 	  assert (strcmp (msg, "it works2") == 0);
 	}
     }
-  mprintf (stderr, "ALL DONE RUN\n");
+  mprintf (stderr, "ALL DONE RUN %d\n",my_rank);
 }
 
 int
 main (int argc, char **argv)
 {
+  MPI_Init(&argc, &argv);
   char *printing;
 
-  printing = getenv ("MPC_TEST_SILENCE");
+  printing = getenv ("MPI_TEST_SILENCE");
   if (printing != NULL)
     is_printing = 0;
 
   run (NULL);
   mprintf (stderr, "ALL DONE\n");
+  MPI_Finalize();
   return 0;
 }

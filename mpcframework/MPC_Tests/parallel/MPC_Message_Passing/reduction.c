@@ -37,38 +37,43 @@ run (void *arg)
   int my_size;
   int res;
   my_com = SCTK_COMM_WORLD;
-  MPC_Comm_rank (my_com, &my_rank);
-  MPC_Comm_size (my_com, &my_size);
+  MPI_Comm_rank (my_com, &my_rank);
+  MPI_Comm_size (my_com, &my_size);
 
 
-  MPC_Allreduce (&my_rank, &res, 1, MPC_INT, MPC_MIN, my_com);
+  MPI_Allreduce (&my_rank, &res, 1, MPI_INT, MPI_MIN, my_com);
   mprintf (stderr, "%d val %d\n", my_rank, res);
   assert (res == 0);
-  MPC_Comm_rank (my_com, &res);
+  MPI_Comm_rank (my_com, &res);
   assert (my_rank == res);
 
-  MPC_Allreduce (&my_rank, &res, 1, MPC_INT, MPC_MAX, my_com);
+  MPI_Allreduce (&my_rank, &res, 1, MPI_INT, MPI_MAX, my_com);
   mprintf (stderr, "%d val %d\n", my_rank, res);
   assert (res == my_size - 1);
-  MPC_Comm_rank (my_com, &res);
+  MPI_Comm_rank (my_com, &res);
   assert (my_rank == res);
 
-  MPC_Allreduce (&my_rank, &res, 1, MPC_INT, MPC_SUM, my_com);
+  MPI_Allreduce (&my_rank, &res, 1, MPI_INT, MPI_SUM, my_com);
   mprintf (stderr, "%d val %d\n", my_rank, res);
   assert (res == ((float) ((my_size - 1) * my_size) / ((float) 2)));
-  MPC_Comm_rank (my_com, &res);
+  MPI_Comm_rank (my_com, &res);
   assert (my_rank == res);
 }
 
 int
 main (int argc, char **argv)
 {
+  MPI_Init(&argc, &argv);
+
   char *printing;
 
-  printing = getenv ("MPC_TEST_SILENCE");
+  printing = getenv ("MPI_TEST_SILENCE");
   if (printing != NULL)
     is_printing = 0;
 
   run (NULL);
+
+  MPI_Finalize();
+
   return 0;
 }

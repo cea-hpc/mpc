@@ -32,7 +32,7 @@ int is_printing = 1;
 void
 run (void *arg)
 {
-  mpc_mp_communicator_t my_com;
+  MPI_Comm my_com;
   int my_rank;
   char msg[50];
   mpc_mp_request_t req;
@@ -42,18 +42,18 @@ run (void *arg)
   unsigned int deb = 0;
   unsigned int fin = 40;
 
-  my_com = SCTK_COMM_WORLD;
-  MPC_Comm_rank (my_com, &my_rank);
+  my_com = MPI_COMM_WORLD;
+  MPI_Comm_rank (my_com, &my_rank);
 
   if (my_rank == 0)
     {
       sprintf (msg, "it works");
 
-      MPC_Open_pack (&req);
-      MPC_Add_pack (msg, 1, &deb, &fin, MPC_CHAR, &req);
-      MPC_Isend_pack (1, 0, my_com, &req);
+      mpc_mpi_cl_open_pack (&req);
+      mpc_mpi_cl_add_pack (msg, 1, &deb, &fin, MPI_CHAR, &req);
+      mpc_mpi_cl_isend_pack (1, 0, my_com, &req);
 
-      MPC_Wait_pending (my_com);
+      mpc_mpi_cl_wait_pending (my_com);
     }
   else
     {
@@ -61,11 +61,11 @@ run (void *arg)
 	{
 	  sprintf (msg, "nothing");
 
-	  MPC_Open_pack (&req);
-	  MPC_Add_pack (msg, 1, &deb, &fin, MPC_CHAR, &req);
-	  MPC_Irecv_pack (0, 0, my_com, &req);
+	  mpc_mpi_cl_open_pack (&req);
+	  mpc_mpi_cl_add_pack (msg, 1, &deb, &fin, MPI_CHAR, &req);
+	  mpc_mpi_cl_irecv_pack (0, 0, my_com, &req);
 
-	  MPC_Wait_pending (my_com);
+	  mpc_mpi_cl_wait_pending (my_com);
 	  mprintf (stderr, "msg = %s\n", msg);
 	  assert (strcmp (msg, "it works") == 0);
 	}
@@ -79,11 +79,11 @@ run (void *arg)
       beg[0] = 0;
       end[0] = 7;
 
-      MPC_Open_pack (&req);
-      MPC_Add_pack (msg, 1, beg, end, MPC_CHAR, &req);
-      MPC_Isend_pack (1, 0, my_com, &req);
+      mpc_mpi_cl_open_pack (&req);
+      mpc_mpi_cl_add_pack (msg, 1, beg, end, MPI_CHAR, &req);
+      mpc_mpi_cl_isend_pack (1, 0, my_com, &req);
 
-      MPC_Wait_pending (my_com);
+      mpc_mpi_cl_wait_pending (my_com);
     }
   else
     {
@@ -96,11 +96,11 @@ run (void *arg)
 	  beg[1] = 0;
 	  end[1] = 3;
 
-	  MPC_Open_pack (&req);
-	  MPC_Add_pack (msg, 2, beg, end, MPC_CHAR, &req);
-	  MPC_Irecv_pack (0, 0, my_com, &req);
+	  mpc_mpi_cl_open_pack (&req);
+	  mpc_mpi_cl_add_pack (msg, 2, beg, end, MPI_CHAR, &req);
+	  mpc_mpi_cl_irecv_pack (0, 0, my_com, &req);
 
-	  MPC_Wait_pending (my_com);
+	  mpc_mpi_cl_wait_pending (my_com);
 	  mprintf (stderr, "msg = %s\n", msg);
 	  assert (strcmp (msg, "orksit w") == 0);
 	}
@@ -110,12 +110,14 @@ run (void *arg)
 int
 main (int argc, char **argv)
 {
+  MPI_Init(&argc, &argv);
   char *printing;
 
-  printing = getenv ("MPC_TEST_SILENCE");
+  printing = getenv ("MPI_TEST_SILENCE");
   if (printing != NULL)
     is_printing = 0;
 
   run (NULL);
+  MPI_Finalize();
   return 0;
 }

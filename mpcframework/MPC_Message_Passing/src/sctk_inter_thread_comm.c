@@ -2101,7 +2101,7 @@ void mpc_mp_comm_perform_idle( volatile int *data, int value,
 }
 
 #ifdef MPC_MPI
-	void mpc_mpi_m_egreq_progress_poll();
+	void mpc_mpi_cl_egreq_progress_poll();
 #endif
 
 void mpc_mp_comm_request_wait( mpc_mp_request_t *request )
@@ -2126,7 +2126,7 @@ void mpc_mp_comm_request_wait( mpc_mp_request_t *request )
 	if ( request->request_type == REQUEST_GENERALIZED )
 	{
 		mpc_mp_comm_perform_idle( ( int * ) & ( request->completion_flag ),
-		                          SCTK_MESSAGE_DONE, mpc_mpi_m_egreq_progress_poll, NULL );
+		                          SCTK_MESSAGE_DONE, mpc_mpi_cl_egreq_progress_poll, NULL );
 	}
 	else
 	{

@@ -531,7 +531,7 @@ static inline mpc_dt_kind_t _mpc_dt_get_kind( mpc_mp_datatype_t datatype )
 /** \brief This structure gathers contiguous and derived datatypes in the same lockable structure
  * 
  *  This structure is the entry point for user defined datatypes
- *  it is inintialized in \ref mpc_mpi_m_per_mpi_process_ctx_t
+ *  it is inintialized in \ref mpc_mpi_cl_per_mpi_process_ctx_t
  */
 struct _mpc_dt_storage
 {

@@ -120,9 +120,6 @@ PROBE(MPC_COMMUNICATORS, MPC, MPC Communicator, MPC_COMMUNICATORS_CALL,
       MPC_COMMUNICATORS_TIME_LW)
 PROBE(MPC_Comm_create, MPC_COMMUNICATORS, MPC_Comm_create, MPC_Comm_create_CALL,
       MPC_Comm_create_TIME, MPC_Comm_create_TIME_HW, MPC_Comm_create_TIME_LW)
-PROBE(MPC_Comm_create_list, MPC_COMMUNICATORS, MPC_Comm_create_list,
-      MPC_Comm_create_list_CALL, MPC_Comm_create_list_TIME,
-      MPC_Comm_create_list_TIME_HW, MPC_Comm_create_list_TIME_LW)
 PROBE(MPC_Comm_dup, MPC_COMMUNICATORS, MPC_Comm_dup, MPC_Comm_dup_CALL,
       MPC_Comm_dup_TIME, MPC_Comm_dup_TIME_HW, MPC_Comm_dup_TIME_LW)
 PROBE(MPC_Comm_free, MPC_COMMUNICATORS, MPC_Comm_free, MPC_Comm_free_CALL,

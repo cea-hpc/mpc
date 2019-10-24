@@ -34,7 +34,7 @@ run (void *arg)
   int my_rank;
   char name[4096];
   my_com = SCTK_COMM_WORLD;
-  MPC_Comm_rank (my_com, &my_rank);
+  MPI_Comm_rank (my_com, &my_rank);
   gethostname (name, 4095);
   mprintf (stderr, "coucou from %d %s\n", my_rank, name);
 }
@@ -44,7 +44,7 @@ main (int argc, char **argv)
 {
   char *printing;
 
-  printing = getenv ("MPC_TEST_SILENCE");
+  printing = getenv ("MPI_TEST_SILENCE");
   if (printing != NULL)
     is_printing = 0;
 

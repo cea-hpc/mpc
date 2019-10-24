@@ -35,7 +35,7 @@ extern void sctk_abort ();
 static void
 sctk_require_page_handler (int signo, siginfo_t * info, void *context)
 {
-  static mpc_thread_mutex_t lock = MPC_THREAD_MUTEX_INITIALIZER;
+  static mpc_thread_mutex_t lock = MPI_THREAD_MUTEX_INITIALIZER;
   mpc_thread_mutex_lock (&lock);
   fprintf (stderr, "Erreure de segmentation\n");
   sctk_abort ();
@@ -65,16 +65,16 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
   int i;
   double start;
   double end;
-  MPC_Barrier (SCTK_COMM_WORLD);
-  MPC_Barrier (SCTK_COMM_WORLD);
-  MPC_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (SCTK_COMM_WORLD);
 
   start = rrrsctk_get_time_stamp ();
   if (my_rank == 0)
     {
       for (i = 0; i < iters; i++)
 	{
-	  MPC_Send (msg, size, MPC_CHAR, my_size - 1, 0, SCTK_COMM_WORLD);
+	  MPI_Send (msg, size, MPI_CHAR, my_size - 1, 0, SCTK_COMM_WORLD);
 	}
     }
   if (my_rank == my_size - 1)
@@ -82,31 +82,31 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
       mpc_mp_status_t status;
       for (i = 0; i < iters; i++)
 	{
-	  MPC_Recv (msg, size, MPC_CHAR, 0, 0, SCTK_COMM_WORLD, &status);
+	  MPI_Recv (msg, size, MPI_CHAR, 0, 0, SCTK_COMM_WORLD, &status);
 	}
     }
-  MPC_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (SCTK_COMM_WORLD);
   end = rrrsctk_get_time_stamp ();
-  MPC_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (SCTK_COMM_WORLD);
   if (my_rank == 0)
     fprintf (stderr,
-	     "Ping %d size %9lu (MPC_Send->MPC_Recv) %10.2fus %10.2f %10.2fMo/s\n",
+	     "Ping %d size %9lu (MPI_Send->MPI_Recv) %10.2fus %10.2f %10.2fMo/s\n",
 	     my_rank, size, (end - start) / iters,
 	     (((end - start) / iters) * 1600) / 4,
 	     ((double) ((iters) * (double) size)) / (1024.0 * 1024.0) /
 	     (((end - start)) / 1000000));
   fflush (stderr);
-  MPC_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (SCTK_COMM_WORLD);
 
 /*   if(my_rank == my_size-1) */
-/*     fprintf(stderr,"Ping %d size %9lu (MPC_Send->MPC_Recv) %10.2fus %10.2f %10.2fMo/s\n\n",my_rank,size,(end-start)/iters, */
+/*     fprintf(stderr,"Ping %d size %9lu (MPI_Send->MPI_Recv) %10.2fus %10.2f %10.2fMo/s\n\n",my_rank,size,(end-start)/iters, */
 /* 	    (((end-start)/iters)*1600)/4, */
 /* 	    ((double)((iters)*(double)size))/(1024.0*1024.0)/(((end-start))/1000000)); */
 /*   fflush(stderr); */
 
-  MPC_Barrier (SCTK_COMM_WORLD);
-  MPC_Barrier (SCTK_COMM_WORLD);
-  MPC_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (SCTK_COMM_WORLD);
 }
 
 int
@@ -127,13 +127,13 @@ main (int argc, char **argv)
   sigaction (SIGSEGV, &sigparam, NULL);
 #endif
 
-  MPC_Init (&argc, &argv);
+  MPI_Init (&argc, &argv);
   msg = malloc (max_tab_size);
   memset (msg, 'a', max_tab_size);
 
 
-  MPC_Comm_rank (SCTK_COMM_WORLD, &my_rank);
-  MPC_Comm_size (SCTK_COMM_WORLD, &my_size);
+  MPI_Comm_rank (SCTK_COMM_WORLD, &my_rank);
+  MPI_Comm_size (SCTK_COMM_WORLD, &my_size);
 
 //#ifndef LARGE_TEST
 //  message (my_rank, my_size, msg, 7*1024, 100000);
@@ -156,6 +156,6 @@ main (int argc, char **argv)
     }
   message (my_rank, 2, msg, max_tab_size, 1000);
 
-  MPC_Finalize ();
+  MPI_Finalize ();
   return 0;
 }

@@ -841,8 +841,8 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 }
 
 
-extern void mpc_mpi_m_per_thread_ctx_init();
-extern void mpc_mpi_m_per_thread_ctx_release();
+extern void mpc_mpi_cl_per_thread_ctx_init();
+extern void mpc_mpi_cl_per_thread_ctx_release();
 
 static void sctk_thread_data_reset();
 static void *
@@ -867,7 +867,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   sctk_thread_setspecific (_sctk_thread_handler_key, ptr_cleanup);
 
 #ifdef MPC_MPI
-  mpc_mpi_m_per_mpi_process_ctx_reinit (tmp.father_data);
+  mpc_mpi_cl_per_mpi_process_ctx_reinit (tmp.father_data);
 #endif
 
   sctk_free (__arg);
@@ -892,7 +892,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 
 
 #ifdef MPC_MPI
-   mpc_mpi_m_per_thread_ctx_init();
+   mpc_mpi_cl_per_thread_ctx_init();
 #endif
 
    if (sctk_new_scheduler_engine_enabled) {
@@ -908,7 +908,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
    res = tmp.__start_routine(tmp.__arg);
 
 #ifdef MPC_MPI
-  mpc_mpi_m_per_thread_ctx_release();
+  mpc_mpi_cl_per_thread_ctx_release();
 #endif
 
   /** ** **/
@@ -1180,7 +1180,7 @@ int sctk_atexit(void (*function)(void))
 #ifdef MPC_MPI
 	/* We may have a TASK context replacing the proces one */
 	sctk_info("Calling the MPC atexit function");
-	int ret  = mpc_mpi_m_per_mpi_process_ctx_at_exit_register( function );
+	int ret  = mpc_mpi_cl_per_mpi_process_ctx_at_exit_register( function );
 	
 	if( ret == 0 )
 	{

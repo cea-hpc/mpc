@@ -4006,7 +4006,7 @@ void *NBC_Pthread_func( void *ptr ) {
   MPI_Request req=MPI_REQUEST_NULL;
   int tmp_recv;
 
-  struct mpc_mpi_m_per_mpi_process_ctx_s * task_specific;
+  struct mpc_mpi_cl_per_mpi_process_ctx_s * task_specific;
 
   struct sctk_list_elem * list_handles;
   sctk_thread_mutex_t * lock;
@@ -4458,7 +4458,7 @@ static inline int NBC_Free(NBC_Handle* handle) {
 
   if (use_progress_thread == 1) {
 
-    struct mpc_mpi_m_per_mpi_process_ctx_s *task_specific;
+    struct mpc_mpi_cl_per_mpi_process_ctx_s *task_specific;
     struct sctk_list_elem *list_handles;
     sctk_thread_mutex_t *lock;
     task_specific = mpc_cl_per_mpi_process_ctx_get();
@@ -4858,7 +4858,7 @@ static inline int NBC_Start_round( NBC_Handle *handle )
 static inline int NBC_Initialize() {
   if(sctk_runtime_config_get()->modules.nbc.use_progress_thread == 1)
   { 
-  struct mpc_mpi_m_per_mpi_process_ctx_s * task_specific;
+  struct mpc_mpi_cl_per_mpi_process_ctx_s * task_specific;
   task_specific = mpc_cl_per_mpi_process_ctx_get ();
 
   // sctk_thread_generic_attr_t attr;
@@ -4932,7 +4932,7 @@ static inline int NBC_Init_handle( NBC_Handle *handle, MPI_Comm comm, int tag )
 
 	if ( sctk_runtime_config_get()->modules.nbc.use_progress_thread == 1 )
 	{
-  struct mpc_mpi_m_per_mpi_process_ctx_s * task_specific;
+  struct mpc_mpi_cl_per_mpi_process_ctx_s * task_specific;
   task_specific = mpc_cl_per_mpi_process_ctx_get ();
 
 		sctk_thread_mutex_t *lock = &( task_specific->mpc_mpi_data->nbc_initializer_lock );
@@ -4985,7 +4985,7 @@ static inline int NBC_Start( NBC_Handle *handle, NBC_Schedule *schedule )
    * thread - the handle must not be touched by the user thread from now
    * on !!! */
 
-    struct mpc_mpi_m_per_mpi_process_ctx_s * task_specific;
+    struct mpc_mpi_cl_per_mpi_process_ctx_s * task_specific;
 		struct sctk_list_elem *list_handles;
 		sctk_thread_mutex_t *lock;
     task_specific = mpc_cl_per_mpi_process_ctx_get ();

@@ -50813,55 +50813,6 @@
 							<atomic>0</atomic>
 						</pvar>
 		</MPC_Comm_create>
-		<MPC_Comm_create_list>
-
-						<pvar>
-							<name>MPC_Comm_create_list_TIME</name>
-							<verbosity>MPI_T_VERBOSITY_USER_BASIC</verbosity>
-							<class>MPI_T_PVAR_CLASS_COUNTER</class>
-							<datatype>MPI_UNSIGNED_LONG_LONG</datatype>
-							<desc>MPC_Comm_create_list total time</desc>
-							<bind>MPI_T_BIND_NO_OBJECT</bind>
-							<readonly>1</readonly>
-							<continuous>0</continuous>
-							<atomic>0</atomic>
-						</pvar>
-
-						<pvar>
-							<name>MPC_Comm_create_list_CALL</name>
-							<verbosity>MPI_T_VERBOSITY_USER_BASIC</verbosity>
-							<class>MPI_T_PVAR_CLASS_COUNTER</class>
-							<datatype>MPI_UNSIGNED_LONG_LONG</datatype>
-							<desc>MPC_Comm_create_list number of calls</desc>
-							<bind>MPI_T_BIND_NO_OBJECT</bind>
-							<readonly>1</readonly>
-							<continuous>0</continuous>
-							<atomic>0</atomic>
-						</pvar>
-						<pvar>
-							<name>MPC_Comm_create_list_TIME_LW</name>
-							<verbosity>MPI_T_VERBOSITY_USER_BASIC</verbosity>
-							<class>MPI_T_PVAR_CLASS_LOWWATERMARK</class>
-							<datatype>MPI_UNSIGNED_LONG_LONG</datatype>
-							<desc>MPC_Comm_create_list low-watermark</desc>
-							<bind>MPI_T_BIND_NO_OBJECT</bind>
-							<readonly>1</readonly>
-							<continuous>0</continuous>
-							<atomic>0</atomic>
-						</pvar>
-
-						<pvar>
-							<name>MPC_Comm_create_list_TIME_HW</name>
-							<verbosity>MPI_T_VERBOSITY_USER_BASIC</verbosity>
-							<class>MPI_T_PVAR_CLASS_HIGHWATERMARK</class>
-							<datatype>MPI_UNSIGNED_LONG_LONG</datatype>
-							<desc>MPC_Comm_create_list High-watermark</desc>
-							<bind>MPI_T_BIND_NO_OBJECT</bind>
-							<readonly>1</readonly>
-							<continuous>0</continuous>
-							<atomic>0</atomic>
-						</pvar>
-		</MPC_Comm_create_list>
 		<MPC_Comm_dup>
 
 						<pvar>

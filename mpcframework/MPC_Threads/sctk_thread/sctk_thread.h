@@ -105,7 +105,7 @@ extern "C"
   #define sctk_thread_check_status TD_THR_ACTIVE
 #endif
 
-  struct mpc_mpi_m_per_mpi_process_ctx_s;
+  struct mpc_mpi_cl_per_mpi_process_ctx_s;
   struct sctk_tls_dtors_s;
   
   typedef struct sctk_thread_data_s
@@ -123,7 +123,7 @@ extern "C"
     unsigned long thread_number;
     sctk_thread_t tid;
     volatile sctk_thread_status_t status;
-    struct mpc_mpi_m_per_mpi_process_ctx_s *father_data;
+    struct mpc_mpi_cl_per_mpi_process_ctx_s *father_data;
 	  struct sctk_tls_dtors_s* dtors_head;
     /* Where the thread must be bound */
     unsigned int bind_to;

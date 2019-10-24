@@ -37,7 +37,7 @@ run (void *arg)
   char msg[50];
 
   my_com = SCTK_COMM_WORLD;
-  MPC_Comm_rank (my_com, &my_rank);
+  MPI_Comm_rank (my_com, &my_rank);
 
   sprintf (msg, "nothing");
 
@@ -45,7 +45,7 @@ run (void *arg)
     {
       sprintf (msg, "it works");
       mprintf (stderr, "init msg = %s\n", msg);
-      MPC_Send (msg, 40, MPC_CHAR, 1, 40, my_com);
+      MPI_Send (msg, 40, MPI_CHAR, 1, 40, my_com);
       mprintf (stderr, "init msg = %s\n", msg);
     }
   else
@@ -53,7 +53,7 @@ run (void *arg)
       if (my_rank == 1)
 	{
 	  mprintf (stderr, "msg = %s\n", msg);
-	  MPC_Recv (msg, 40, MPC_CHAR, 0, 40, my_com, NULL);
+	  MPI_Recv (msg, 40, MPI_CHAR, 0, 40, my_com, NULL);
 	  mprintf (stderr, "msg = %s\n", msg);
 	  assert (strcmp (msg, "it works") == 0);
 	}
@@ -65,7 +65,7 @@ run (void *arg)
     {
       sprintf (msg, "it works");
       mprintf (stderr, "init msg = %s\n", msg);
-      MPC_Send (msg, 40, MPC_CHAR, 1, 10, my_com);
+      MPI_Send (msg, 40, MPI_CHAR, 1, 10, my_com);
       mprintf (stderr, "init msg = %s\n", msg);
     }
   else
@@ -73,7 +73,7 @@ run (void *arg)
       if (my_rank == 1)
 	{
 	  mprintf (stderr, "msg = %s\n", msg);
-	  MPC_Recv (msg, 40, MPC_CHAR, 0, 10, my_com, NULL);
+	  MPI_Recv (msg, 40, MPI_CHAR, 0, 10, my_com, NULL);
 	  mprintf (stderr, "msg = %s\n", msg);
 	  assert (strcmp (msg, "it works") == 0);
 	}
@@ -83,12 +83,17 @@ run (void *arg)
 int
 main (int argc, char **argv)
 {
+  MPI_Init(&argc, &argv);
+
   char *printing;
 
-  printing = getenv ("MPC_TEST_SILENCE");
+  printing = getenv ("MPI_TEST_SILENCE");
   if (printing != NULL)
     is_printing = 0;
 
   run (NULL);
+
+  MPI_Finalize();
+
   return 0;
 }

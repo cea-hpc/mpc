@@ -32,12 +32,13 @@ int is_printing = 1;
 void
 run (void *arg)
 {
-  mpc_mp_communicator_t my_com;
+  MPI_Comm my_com;
+  MPI_Request req, req2;
   int my_rank;
   char msg[50];
 
-  my_com = SCTK_COMM_WORLD;
-  MPC_Comm_rank (my_com, &my_rank);
+  my_com = MPI_COMM_WORLD;
+  MPI_Comm_rank (my_com, &my_rank);
 
   sprintf (msg, "nothing");
 
@@ -45,9 +46,9 @@ run (void *arg)
     {
       sprintf (msg, "it works");
       mprintf (stderr, "init msg = %s\n", msg);
-      MPC_Isend (msg, 40, MPC_CHAR, 1, 0, my_com, NULL);
+      MPI_Isend (msg, 40, MPI_CHAR, 1, 0, my_com, &req);
       mprintf (stderr, "init msg = %s\n", msg);
-      MPC_Wait_pending (my_com);
+      mpc_mpi_cl_wait_pending (my_com);
       mprintf (stderr, "init msg = %s\n", msg);
     }
   else
@@ -55,8 +56,8 @@ run (void *arg)
       if (my_rank == 1)
 	{
 	  mprintf (stderr, "msg = %s\n", msg);
-	  MPC_Irecv (msg, 40, MPC_CHAR, 0, 0, my_com, NULL);
-	  MPC_Wait_pending (my_com);
+	  MPI_Irecv (msg, 40, MPI_CHAR, 0, 0, my_com, &req);
+	  mpc_mpi_cl_wait_pending (my_com);
 	  mprintf (stderr, "msg = %s\n", msg);
 	  assert (strcmp (msg, "it works") == 0);
 	}
@@ -68,9 +69,9 @@ run (void *arg)
     {
       sprintf (msg, "it works");
       mprintf (stderr, "init msg = %s\n", msg);
-      MPC_Isend (msg, 40, MPC_CHAR, 1, 0, my_com, NULL);
+      MPI_Isend (msg, 40, MPI_CHAR, 1, 1, my_com, &req2);
       mprintf (stderr, "init msg = %s\n", msg);
-      MPC_Wait_pending (my_com);
+      mpc_mpi_cl_wait_pending (my_com);
       mprintf (stderr, "init msg = %s\n", msg);
     }
   else
@@ -78,8 +79,8 @@ run (void *arg)
       if (my_rank == 1)
 	{
 	  mprintf (stderr, "msg = %s\n", msg);
-	  MPC_Irecv (msg, 40, MPC_CHAR, 0, 0, my_com, NULL);
-	  MPC_Wait_pending (my_com);
+	  MPI_Irecv (msg, 40, MPI_CHAR, 0, 1, my_com, &req2);
+	  mpc_mpi_cl_wait_pending (my_com);
 	  mprintf (stderr, "msg = %s\n", msg);
 	  assert (strcmp (msg, "it works") == 0);
 	}
@@ -89,12 +90,14 @@ run (void *arg)
 int
 main (int argc, char **argv)
 {
+  MPI_Init(&argc, &argv);
   char *printing;
 
-  printing = getenv ("MPC_TEST_SILENCE");
+  printing = getenv ("MPI_TEST_SILENCE");
   if (printing != NULL)
     is_printing = 0;
 
   run (NULL);
+  MPI_Finalize();
   return 0;
 }
