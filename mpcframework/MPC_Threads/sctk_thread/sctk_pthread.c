@@ -40,7 +40,7 @@
 #include "sctk_kernel_thread.h"
 #include <semaphore.h>
 #ifdef MPC_Message_Passing
-#include <sctk_inter_thread_comm.h>
+#include <comm.h>
 #include <sctk_communicator.h>
 #include "mpc_common_asm.h"
 #endif

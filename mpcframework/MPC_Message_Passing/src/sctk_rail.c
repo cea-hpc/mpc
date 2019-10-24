@@ -28,6 +28,8 @@
 #include <mpc_launch_pmi.h>
 #include <sctk_accessor.h>
 
+#include <sctk_communicator.h>
+
 #include <stdio.h>
 #include <unistd.h>
 

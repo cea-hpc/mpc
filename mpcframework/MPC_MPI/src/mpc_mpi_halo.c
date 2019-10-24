@@ -21,7 +21,7 @@
 /* ######################################################################## */
 #include "mpc_mpi_halo.h"
 #include "sctk_debug.h"
-#include "sctk_inter_thread_comm.h"
+#include "mpc_mp_comm.h"
 #include <string.h>
 
 

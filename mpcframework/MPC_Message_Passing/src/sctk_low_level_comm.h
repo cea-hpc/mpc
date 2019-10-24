@@ -22,7 +22,7 @@
 #ifndef __SCTK_LOW_LEVEL_COMM_H_
 #define __SCTK_LOW_LEVEL_COMM_H_
 
-#include <sctk_inter_thread_comm.h>
+#include <comm.h>
 
 
 struct sctk_rail_info_s;

@@ -22,7 +22,7 @@
 #ifndef SCTK_RAIL_H
 #define SCTK_RAIL_H
 
-#include <sctk_inter_thread_comm.h>
+#include <comm.h>
 #include <sctk_runtime_config.h>
 #include <mpc_common_device_topo.h>
 #include "sctk_topological_polling.h"

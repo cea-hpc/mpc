@@ -37,6 +37,9 @@
 #include "sctk_ib_topology.h"
 #include "sctk_rail.h"
 
+#include <sctk_thread.h>
+#include <mpc_common_topology.h>
+
 /* used to remember __thread var init for IB re-enabling */
 extern volatile char* vps_reset;
 

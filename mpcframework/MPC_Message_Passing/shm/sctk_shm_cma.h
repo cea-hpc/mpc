@@ -2,7 +2,7 @@
 #define __SCTK_SHM_CMA_H__
 
 #include "sctk_shm_raw_queues.h"
-#include "sctk_inter_thread_comm.h"
+#include "comm.h"
 
 #ifdef MPC_USE_CMA
 

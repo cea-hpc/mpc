@@ -28,7 +28,7 @@
 #include <mpc_common_spinlock.h>
 #include <uthash.h>
 #include <opa_primitives.h>
-#include <sctk_inter_thread_comm.h>
+#include <comm.h>
 #include <sctk_ib_buffered.h>
 #include <sctk_alloc.h>
 

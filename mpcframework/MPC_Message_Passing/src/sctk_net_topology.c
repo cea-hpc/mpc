@@ -23,6 +23,7 @@
 #include "sctk_route.h"
 
 #include <mpc_launch_pmi.h>
+#include <mpc_common_rank.h>
 
 /************************************************************************/
 /* None                                                                 */

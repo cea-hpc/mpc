@@ -2,7 +2,7 @@
 #define __SCTK_SHM_EAGER_MSG_H__
 
 #include "sctk_shm_raw_queues.h"
-#include "sctk_inter_thread_comm.h"
+#include "comm.h"
 
 #define SCTK_SHM_PTP_ALIGN ((sizeof(mpc_mp_ptp_message_t)+63) & (~63))
 //#define SCTK_SHM_PTP_ALIGN sizeof(mpc_mp_ptp_message_t)

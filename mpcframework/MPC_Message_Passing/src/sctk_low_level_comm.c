@@ -28,6 +28,9 @@
 #include "sctk_runtime_config.h"
 #include "sctk_control_messages.h"
 #include <sctk_launch.h>
+
+#include <mpc_common_rank.h>
+
 /*Networks*/
 #include <sctk_ib_mpi.h>
 #include <sctk_route.h>

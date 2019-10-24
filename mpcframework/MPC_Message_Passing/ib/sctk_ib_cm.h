@@ -28,7 +28,7 @@
 #define __SCTK__IB_CM_H_
 
 #include "sctk_route.h"
-#include "sctk_inter_thread_comm.h"
+#include "comm.h"
 /*-----------------------------------------------------------
  *  MACROS
  *----------------------------------------------------------*/

@@ -28,7 +28,7 @@
 
 //#define SCTK_USE_CHECKSUM
 
-#include "sctk_inter_thread_comm.h"
+#include "comm.h"
 
 unsigned long sctk_checksum_message ( mpc_mp_ptp_message_t *send,
                                       mpc_mp_ptp_message_t *recv );

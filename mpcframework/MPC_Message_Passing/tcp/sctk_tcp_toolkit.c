@@ -41,6 +41,9 @@
 #include <errno.h>
 #include <sctk_control_messages.h>
 
+#include <sctk_thread.h>
+#include <mpc_common_rank.h>
+
 /********************************************************************/
 /* Connection Setup                                                 */
 /********************************************************************/

@@ -25,7 +25,7 @@
 #include <mpc_mp_coll.h>
 
 
-#include "sctk_inter_thread_comm.h"
+#include "comm.h"
 
 
 struct mpc_mp_coll_s;

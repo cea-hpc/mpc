@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <sctk_inter_thread_comm.h>
+#include <comm.h>
 #include <sctk_low_level_comm.h>
 #include <sctk_communicator.h>
 
@@ -771,16 +771,16 @@ inline void mpc_mp_comm_ptp_message_copy( mpc_mp_ptp_message_content_to_copy_t *
 	}
 }
 
-static inline void __mpc_comm_copy_buffer_pack_pack( sctk_pack_indexes_t *restrict in_begins,
-        sctk_pack_indexes_t *restrict in_ends, size_t in_sizes,
+static inline void __mpc_comm_copy_buffer_pack_pack( unsigned long *restrict in_begins,
+        unsigned long *restrict in_ends, size_t in_sizes,
         void *restrict in_adress, size_t in_elem_size,
-        sctk_pack_indexes_t *restrict out_begins,
-        sctk_pack_indexes_t *restrict out_ends,
+        unsigned long *restrict out_begins,
+        unsigned long *restrict out_ends,
         size_t out_sizes, void *restrict out_adress,
         size_t out_elem_size )
 {
-	sctk_pack_indexes_t tmp_begin[1];
-	sctk_pack_indexes_t tmp_end[1];
+	unsigned long tmp_begin[1];
+	unsigned long tmp_end[1];
 
 	if ( ( in_begins == NULL ) && ( out_begins == NULL ) )
 	{
@@ -855,17 +855,17 @@ static inline void __mpc_comm_copy_buffer_pack_pack( sctk_pack_indexes_t *restri
 }
 
 
-static inline void __mpc_comm_copy_buffer_absolute_pack( sctk_pack_absolute_indexes_t *restrict in_begins,
-        sctk_pack_absolute_indexes_t *restrict in_ends, size_t in_sizes,
+static inline void __mpc_comm_copy_buffer_absolute_pack( long *restrict in_begins,
+        long *restrict in_ends, size_t in_sizes,
         void *restrict in_adress, size_t in_elem_size,
-        sctk_pack_indexes_t *restrict out_begins,
-        sctk_pack_indexes_t *restrict out_ends, size_t out_sizes,
+        unsigned long *restrict out_begins,
+        unsigned long *restrict out_ends, size_t out_sizes,
         void *restrict out_adress, size_t out_elem_size )
 {
-	sctk_pack_indexes_t tmp_begin[1];
-	sctk_pack_indexes_t tmp_end[1];
-	sctk_pack_absolute_indexes_t tmp_begin_abs[1];
-	sctk_pack_absolute_indexes_t tmp_end_abs[1];
+	unsigned long tmp_begin[1];
+	unsigned long tmp_end[1];
+	long tmp_begin_abs[1];
+	long tmp_end_abs[1];
 
 	if ( ( in_begins == NULL ) && ( out_begins == NULL ) )
 	{
@@ -943,17 +943,17 @@ static inline void __mpc_comm_copy_buffer_absolute_pack( sctk_pack_absolute_inde
  * Function without description
  */
 static inline void __mpc_comm_copy_buffer_pack_absolute(
-    sctk_pack_indexes_t *restrict in_begins,
-    sctk_pack_indexes_t *restrict in_ends, size_t in_sizes,
+    unsigned long *restrict in_begins,
+    unsigned long *restrict in_ends, size_t in_sizes,
     void *restrict in_adress, size_t in_elem_size,
-    sctk_pack_absolute_indexes_t *restrict out_begins,
-    sctk_pack_absolute_indexes_t *restrict out_ends, size_t out_sizes,
+    long *restrict out_begins,
+    long *restrict out_ends, size_t out_sizes,
     void *restrict out_adress, size_t out_elem_size )
 {
-	sctk_pack_indexes_t tmp_begin[1];
-	sctk_pack_indexes_t tmp_end[1];
-	sctk_pack_absolute_indexes_t tmp_begin_abs[1];
-	sctk_pack_absolute_indexes_t tmp_end_abs[1];
+	unsigned long tmp_begin[1];
+	unsigned long tmp_end[1];
+	long tmp_begin_abs[1];
+	long tmp_end_abs[1];
 
 	if ( ( in_begins == NULL ) && ( out_begins == NULL ) )
 	{
@@ -1034,15 +1034,15 @@ static inline void __mpc_comm_copy_buffer_pack_absolute(
  * Function without description
  */
 static inline void __mpc_comm_copy_buffer_absolute_absolute(
-    sctk_pack_absolute_indexes_t *restrict in_begins,
-    sctk_pack_absolute_indexes_t *restrict in_ends, size_t in_sizes,
+    long *restrict in_begins,
+    long *restrict in_ends, size_t in_sizes,
     void *restrict in_adress, size_t in_elem_size,
-    sctk_pack_absolute_indexes_t *restrict out_begins,
-    sctk_pack_absolute_indexes_t *restrict out_ends, size_t out_sizes,
+    long *restrict out_begins,
+    long *restrict out_ends, size_t out_sizes,
     void *restrict out_adress, size_t out_elem_size )
 {
-	sctk_pack_absolute_indexes_t tmp_begin[1];
-	sctk_pack_absolute_indexes_t tmp_end[1];
+	long tmp_begin[1];
+	long tmp_end[1];
 
 	if ( ( in_begins == NULL ) && ( out_begins == NULL ) )
 	{
@@ -1673,10 +1673,10 @@ void __mpc_comm_ptp_message_pack_free( void *tmp )
 }
 
 void mpc_mp_comm_ptp_message_add_pack( mpc_mp_ptp_message_t *msg, void *adr,
-                                       const sctk_count_t nb_items,
+                                       const unsigned int nb_items,
                                        const size_t elem_size,
-                                       sctk_pack_indexes_t *begins,
-                                       sctk_pack_indexes_t *ends )
+                                       unsigned long *begins,
+                                       unsigned long *ends )
 {
 	int step;
 
@@ -1706,10 +1706,10 @@ void mpc_mp_comm_ptp_message_add_pack( mpc_mp_ptp_message_t *msg, void *adr,
 	msg->tail.message.pack.count++;
 }
 void mpc_mp_comm_ptp_message_add_pack_absolute( mpc_mp_ptp_message_t *msg,
-        void *adr, const sctk_count_t nb_items,
+        void *adr, const unsigned int nb_items,
         const size_t elem_size,
-        sctk_pack_absolute_indexes_t *begins,
-        sctk_pack_absolute_indexes_t *ends )
+        long *begins,
+        long *ends )
 {
 	int step;
 

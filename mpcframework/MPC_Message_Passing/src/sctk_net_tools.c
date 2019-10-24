@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_inter_thread_comm.h"
+#include "comm.h"
 #include "sctk_low_level_comm.h"
 #include "sctk_debug.h"
 #include "sctk_net_tools.h"

@@ -23,7 +23,7 @@
 #ifndef SCTK_CONTROL_MESSAGE_H
 #define SCTK_CONTROL_MESSAGE_H
 
-#include <sctk_inter_thread_comm.h>
+#include <comm.h>
 
 
 /************************************************************************/

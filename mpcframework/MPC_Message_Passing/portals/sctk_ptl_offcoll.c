@@ -28,7 +28,7 @@
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_toolkit.h"
 #include "sctk_ptl_offcoll.h"
-//#include "sctk_inter_thread_comm.h"
+//#include "comm.h"
 
 #define COLL_ARITY 2
 

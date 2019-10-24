@@ -24,6 +24,9 @@
 
 #include <math.h>
 
+#include <sctk_thread.h>
+#include <sctk_communicator.h>
+
 /************************************************************************/
 /*collective communication implementation                               */
 /************************************************************************/

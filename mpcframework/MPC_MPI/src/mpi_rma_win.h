@@ -24,6 +24,7 @@
 #define MPI_RMA_WINDOW_H
 
 #include "mpc_mpi.h"
+#include <sctk_communicator.h>
 #include "mpi_alloc_mem.h"
 #include "mpi_rma_epoch.h"
 #include "mpc_common_asm.h"

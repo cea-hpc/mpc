@@ -13,6 +13,8 @@
 #include "utlist.h"
 #include "sctk_shm_raw_queues_internals.h"
 
+#include <mpc_common_rank.h>
+
 static int sctk_shm_proc_local_rank_on_node = -1;
 static volatile int sctk_shm_driver_initialized = 0;
 static unsigned int sctk_shm_send_max_try = 2;

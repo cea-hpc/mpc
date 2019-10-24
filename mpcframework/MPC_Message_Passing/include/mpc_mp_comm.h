@@ -1,41 +1,10 @@
-/* ############################# MPC License ############################## */
-/* # Wed Nov 19 15:19:19 CET 2008                                         # */
-/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* #                                                                      # */
-/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
-/* # This file is part of the MPC Runtime.                                # */
-/* #                                                                      # */
-/* # This software is governed by the CeCILL-C license under French law   # */
-/* # and abiding by the rules of distribution of free software.  You can  # */
-/* # use, modify and/ or redistribute the software under the terms of     # */
-/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
-/* # following URL http://www.cecill.info.                                # */
-/* #                                                                      # */
-/* # The fact that you are presently reading this means that you have     # */
-/* # had knowledge of the CeCILL-C license and that you accept its        # */
-/* # terms.                                                               # */
-/* #                                                                      # */
-/* # Authors:                                                             # */
-/* #   - PERACHE Marc    marc.perache@cea.fr                              # */
-/* #                                                                      # */
-/* ######################################################################## */
-#ifndef __SCTK_INTER_THREAD_COMMUNICATIONS_H_
-#define __SCTK_INTER_THREAD_COMMUNICATIONS_H_
+#ifndef MPC_MESSAGE_PASSING_INCLUDE_COMM_H_
+#define MPC_MESSAGE_PASSING_INCLUDE_COMM_H_
 
-#include <sctk_config.h>
-#include <sctk_debug.h>
-#include <sctk_communicator.h>
-#include <mpc_mp_coll.h>
-#include <sctk_reorder.h>
-
-#include <mpc_common_asm.h>
 #include <sctk_types.h>
-
+#include <sctk_reorder.h>
 #include <sctk_ib.h>
 #include <sctk_portals.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /************************************************************************/
 /* mpc_mp_request_t		                                                    */
@@ -49,6 +18,7 @@ typedef enum
 	REQUEST_PICKED,
 	REQUEST_RDMA
 } mpc_mp_request_type_t;
+
 
 /************************************************************************/
 /* Messages Types                                               */
@@ -118,87 +88,6 @@ static const char *const sctk_message_class_name[SCTK_MESSAGE_CLASS_COUNT] =
 	"SCTK_CONTROL_MESSAGE_USER"
 };
 
-static inline int _mpc_comm_ptp_message_is_for_process( mpc_mp_ptp_message_class_t type )
-{
-	switch ( type )
-	{
-		case SCTK_CLASS_NONE:
-			not_implemented();
-
-		case SCTK_CANCELLED_SEND:
-		case SCTK_CANCELLED_RECV:
-		case SCTK_P2P_MESSAGE:
-		case SCTK_RDMA_MESSAGE:
-		case SCTK_BARRIER_MESSAGE:
-		case SCTK_BROADCAST_MESSAGE:
-		case SCTK_ALLREDUCE_MESSAGE:
-		case SCTK_CONTROL_MESSAGE_TASK:
-		case SCTK_CONTROL_MESSAGE_FENCE:
-		case SCTK_RDMA_WINDOW_MESSAGES: /* Note that the RDMA win message
-                                           is not process specific to force
-                                           on-demand connections between the
-                                           RDMA peers prior to emitting RDMA */
-			return 0;
-
-		case SCTK_CONTROL_MESSAGE_INTERNAL:
-		case SCTK_ALLREDUCE_HETERO_MESSAGE:
-		case SCTK_BROADCAST_HETERO_MESSAGE:
-		case SCTK_BARRIER_HETERO_MESSAGE:
-		case SCTK_BARRIER_OFFLOAD_MESSAGE:
-		case SCTK_BROADCAST_OFFLOAD_MESSAGE:
-		case SCTK_REDUCE_OFFLOAD_MESSAGE:
-		case SCTK_ALLREDUCE_OFFLOAD_MESSAGE:
-		case SCTK_CONTROL_MESSAGE_RAIL:
-		case SCTK_CONTROL_MESSAGE_PROCESS:
-		case SCTK_CONTROL_MESSAGE_USER:
-			return 1;
-
-		case SCTK_MESSAGE_CLASS_COUNT:
-			return 0;
-	}
-
-	return 0;
-}
-
-static inline int _mpc_comm_ptp_message_is_for_control( mpc_mp_ptp_message_class_t type )
-{
-	switch ( type )
-	{
-		case SCTK_CLASS_NONE:
-			not_implemented();
-
-		case SCTK_CANCELLED_SEND:
-		case SCTK_CANCELLED_RECV:
-		case SCTK_P2P_MESSAGE:
-		case SCTK_RDMA_MESSAGE:
-		case SCTK_BARRIER_MESSAGE:
-		case SCTK_BROADCAST_MESSAGE:
-		case SCTK_ALLREDUCE_MESSAGE:
-		case SCTK_ALLREDUCE_HETERO_MESSAGE:
-		case SCTK_BROADCAST_HETERO_MESSAGE:
-		case SCTK_BARRIER_HETERO_MESSAGE:
-		case SCTK_BARRIER_OFFLOAD_MESSAGE:
-		case SCTK_BROADCAST_OFFLOAD_MESSAGE:
-		case SCTK_REDUCE_OFFLOAD_MESSAGE:
-		case SCTK_ALLREDUCE_OFFLOAD_MESSAGE:
-		case SCTK_RDMA_WINDOW_MESSAGES:
-		case SCTK_CONTROL_MESSAGE_FENCE:
-		case SCTK_CONTROL_MESSAGE_INTERNAL:
-			return 0;
-
-		case SCTK_CONTROL_MESSAGE_TASK:
-		case SCTK_CONTROL_MESSAGE_RAIL:
-		case SCTK_CONTROL_MESSAGE_PROCESS:
-		case SCTK_CONTROL_MESSAGE_USER:
-			return 1;
-
-		case SCTK_MESSAGE_CLASS_COUNT:
-			return 0;
-	}
-
-	return 0;
-}
-
 /************************************************************************/
 /* Low Level Message Interface                                          */
 /************************************************************************/
@@ -210,6 +99,7 @@ void mpc_mp_comm_irecv_class( int src, void *data, size_t size, int tag, mpc_mp_
 void mpc_mp_comm_isend( int dest, void *data, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *req );
 void mpc_mp_comm_irecv( int src, void *data, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *req );
 void mpc_mp_comm_sendrecv( void *sendbuf, size_t size, int dest, int tag, void *recvbuf, int src, int comm );
+
 
 /************************************************************************/
 /* Control Messages Header                                              */
@@ -225,6 +115,7 @@ struct sctk_control_message_header
 	char rail_id; /**< The id of the rail sending the message (set during multirail selection \ref sctk_multirail_send_message)
 					             it allows RAIL level messages to be routed accordingly */
 };
+
 
 /************************************************************************/
 /* sctk_thread_message_header_t                                         */
@@ -267,15 +158,24 @@ void mpc_mp_comm_message_probe_any_source_class_comm( int destination, int tag,
         int *status,
         sctk_thread_message_header_t *msg );
 
-/************************************************/
+/************************************************************************/
+/* Message Copy                                                         */
+/************************************************************************/
+
+typedef struct mpc_mp_ptp_message_content_to_copy_s
+{
+	struct sctk_thread_ptp_message_s *msg_send;
+	struct sctk_thread_ptp_message_s *msg_recv;
+	struct mpc_mp_ptp_message_content_to_copy_s *prev, *next;
+} mpc_mp_ptp_message_content_to_copy_t;
+
+void mpc_mp_comm_ptp_message_copy( mpc_mp_ptp_message_content_to_copy_t *tmp );
+void mpc_mp_comm_ptp_message_copy_pack( mpc_mp_ptp_message_content_to_copy_t *tmp );
+void mpc_mp_comm_ptp_message_copy_pack_absolute( mpc_mp_ptp_message_content_to_copy_t *tmp );
 
 /************************************************************************/
 /* Message Content Descriptors                                          */
 /************************************************************************/
-
-typedef unsigned int sctk_pack_indexes_t;
-typedef long sctk_pack_absolute_indexes_t;
-typedef unsigned int sctk_count_t;
 
 typedef enum
 {
@@ -296,9 +196,9 @@ typedef struct
 /** SCTK_MESSAGE_PACK */
 typedef struct
 {
-	sctk_count_t count;
-	sctk_pack_indexes_t *begins;
-	sctk_pack_indexes_t *ends;
+	unsigned int count;
+	unsigned long *begins;
+	unsigned long *ends;
 	void *addr;
 	size_t elem_size;
 } sctk_message_pack_std_list_t;
@@ -306,9 +206,9 @@ typedef struct
 /** SCTK_MESSAGE_PACK_ABSOLUTE */
 typedef struct
 {
-	sctk_count_t count;
-	sctk_pack_absolute_indexes_t *begins;
-	sctk_pack_absolute_indexes_t *ends;
+	unsigned int count;
+	long *begins;
+	long *ends;
 	void *addr;
 	size_t elem_size;
 } sctk_message_pack_absolute_list_t;
@@ -352,21 +252,6 @@ typedef volatile struct sctk_msg_list_s
 	struct sctk_thread_ptp_message_s *msg;
 	volatile struct sctk_msg_list_s *prev, *next;
 } mpc_mp_msg_list_t;
-
-/************************************************************************/
-/* Message Copy                                                         */
-/************************************************************************/
-
-typedef struct mpc_mp_ptp_message_content_to_copy_s
-{
-	struct sctk_thread_ptp_message_s *msg_send;
-	struct sctk_thread_ptp_message_s *msg_recv;
-	struct mpc_mp_ptp_message_content_to_copy_s *prev, *next;
-} mpc_mp_ptp_message_content_to_copy_t;
-
-void mpc_mp_comm_ptp_message_copy( mpc_mp_ptp_message_content_to_copy_t *tmp );
-void mpc_mp_comm_ptp_message_copy_pack( mpc_mp_ptp_message_content_to_copy_t *tmp );
-void mpc_mp_comm_ptp_message_copy_pack_absolute( mpc_mp_ptp_message_content_to_copy_t *tmp );
 
 /************************************************************************/
 /* Message Content                                                      */
@@ -465,16 +350,16 @@ mpc_mp_ptp_message_t *mpc_mp_comm_ptp_message_header_create( mpc_mp_ptp_message_
 
 void mpc_mp_comm_ptp_message_set_contiguous_addr( mpc_mp_ptp_message_t *restrict msg, void *restrict addr, const size_t size );
 
-void mpc_mp_comm_ptp_message_add_pack( mpc_mp_ptp_message_t *msg, void *adr, const sctk_count_t nb_items,
+void mpc_mp_comm_ptp_message_add_pack( mpc_mp_ptp_message_t *msg, void *adr, const unsigned int nb_items,
                                        const size_t elem_size,
-                                       sctk_pack_indexes_t *begins,
-                                       sctk_pack_indexes_t *ends );
+                                       unsigned long *begins,
+                                       unsigned long *ends );
 
 void mpc_mp_comm_ptp_message_add_pack_absolute( mpc_mp_ptp_message_t *msg, void *adr,
-        const sctk_count_t nb_items,
+        const unsigned int nb_items,
         const size_t elem_size,
-        sctk_pack_absolute_indexes_t *begins,
-        sctk_pack_absolute_indexes_t *ends );
+        long *begins,
+        long *ends );
 
 void mpc_mp_comm_ptp_message_header_init( mpc_mp_ptp_message_t *msg, const int message_tag,
         const mpc_mp_communicator_t communicator,
@@ -492,141 +377,10 @@ void mpc_mp_comm_ptp_message_recv( mpc_mp_ptp_message_t *msg );
 
 void mpc_mp_comm_ptp_message_complete_and_free( mpc_mp_ptp_message_t *msg );
 
-void _mpc_comm_ptp_message_send_check( mpc_mp_ptp_message_t *msg, int perform_check );
-void _mpc_comm_ptp_message_recv_check( mpc_mp_ptp_message_t *msg, int perform_check );
-void _mpc_comm_ptp_message_commit_request( mpc_mp_ptp_message_t *send, mpc_mp_ptp_message_t *recv );
+/*********************
+ * BUFFERED MESSAGES *
+ *********************/
 
-static inline void _mpc_comm_ptp_message_clear_request( mpc_mp_ptp_message_t *msg )
-{
-	msg->tail.request = NULL;
-	msg->tail.internal_ptp = NULL;
-}
-
-static inline void _mpc_comm_ptp_message_set_copy_and_free( mpc_mp_ptp_message_t *tmp,
-        void ( *free_memory )( void * ),
-        void ( *message_copy )( mpc_mp_ptp_message_content_to_copy_t * ) )
-{
-	tmp->tail.free_memory = free_memory;
-	tmp->tail.message_copy = message_copy;
-	tmp->tail.buffer_async = NULL;
-	memset( &tmp->tail.message.pack, 0, sizeof( tmp->tail.message.pack ) );
-}
-
-/** sctk_thread_message_header_t GETTERS and Setters */
-
-#define SCTK_MSG_USE_MESSAGE_NUMBERING( msg ) msg->body.header.use_message_numbering
-#define SCTK_MSG_USE_MESSAGE_NUMBERING_SET( msg, num ) \
-	do                                                 \
-	{                                                  \
-		msg->body.header.use_message_numbering = num;  \
-	} while ( 0 )
-
-#define SCTK_MSG_SRC_PROCESS( msg ) msg->body.header.source
-#define SCTK_MSG_SRC_PROCESS_SET( msg, src ) \
-	do                                       \
-	{                                        \
-		msg->body.header.source = src;       \
-	} while ( 0 )
-
-#define SCTK_MSG_DEST_PROCESS( msg ) msg->body.header.destination
-#define SCTK_MSG_DEST_PROCESS_SET( msg, dest ) \
-	do                                         \
-	{                                          \
-		msg->body.header.destination = dest;   \
-	} while ( 0 )
-
-#define SCTK_MSG_SRC_TASK( msg ) msg->body.header.source_task
-#define SCTK_MSG_SRC_TASK_SET( msg, src )   \
-	do                                      \
-	{                                       \
-		msg->body.header.source_task = src; \
-	} while ( 0 )
-
-#define SCTK_MSG_DEST_TASK( msg ) msg->body.header.destination_task
-#define SCTK_MSG_DEST_TASK_SET( msg, dest )       \
-	do                                            \
-	{                                             \
-		msg->body.header.destination_task = dest; \
-	} while ( 0 )
-
-#define SCTK_MSG_COMMUNICATOR( msg ) msg->body.header.communicator
-#define SCTK_MSG_COMMUNICATOR_SET( msg, comm ) \
-	do                                         \
-	{                                          \
-		msg->body.header.communicator = comm;  \
-	} while ( 0 )
-
-#define SCTK_DATATYPE( msg ) msg->body.header.datatype
-#define SCTK_MSG_DATATYPE_SET( msg, type ) \
-	do                                     \
-	{                                      \
-		msg->body.header.datatype = type;  \
-	} while ( 0 )
-
-#define SCTK_MSG_TAG( msg ) msg->body.header.message_tag
-#define SCTK_MSG_TAG_SET( msg, tag )        \
-	do                                      \
-	{                                       \
-		msg->body.header.message_tag = tag; \
-	} while ( 0 )
-
-#define SCTK_MSG_NUMBER( msg ) msg->body.header.message_number
-#define SCTK_MSG_NUMBER_SET( msg, number )        \
-	do                                            \
-	{                                             \
-		msg->body.header.message_number = number; \
-	} while ( 0 )
-
-#define SCTK_MSG_MATCH( msg ) OPA_load_int( &msg->tail.matching_id )
-#define SCTK_MSG_MATCH_SET( msg, match ) OPA_store_int( &msg->tail.matching_id, match )
-
-#define SCTK_MSG_SPECIFIC_CLASS( msg ) msg->body.header.message_type.type
-#define SCTK_MSG_SPECIFIC_CLASS_SET( msg, specific_tag )   \
-	do                                                     \
-	{                                                      \
-		msg->body.header.message_type.type = specific_tag; \
-	} while ( 0 )
-
-#define SCTK_MSG_SPECIFIC_CLASS_SUBTYPE( msg ) msg->body.header.message_type.subtype
-#define SCTK_MSG_SPECIFIC_CLASS_SET_SUBTYPE( msg, sub_type ) \
-	do                                                       \
-	{                                                        \
-		msg->body.header.message_type.subtype = sub_type;    \
-	} while ( 0 )
-
-#define SCTK_MSG_SPECIFIC_CLASS_PARAM( msg ) msg->body.header.message_type.param
-#define SCTK_MSG_SPECIFIC_CLASS_SET_PARAM( msg, param ) \
-	do                                                  \
-	{                                                   \
-		msg->body.header.message_type.param = param;    \
-	} while ( 0 )
-
-#define SCTK_MSG_SPECIFIC_CLASS_RAILID( msg ) msg->body.header.message_type.rail_id
-#define SCTK_MSG_SPECIFIC_CLASS_SET_RAILID( msg, raildid ) \
-	do                                                     \
-	{                                                      \
-		msg->body.header.message_type.rail_id = raildid;   \
-	} while ( 0 )
-
-#define SCTK_MSG_HEADER( msg ) &msg->body.header
-
-#define SCTK_MSG_SIZE( msg ) msg->body.header.msg_size
-#define SCTK_MSG_SIZE_SET( msg, size )    \
-	do                                    \
-	{                                     \
-		msg->body.header.msg_size = size; \
-	} while ( 0 )
-
-#define SCTK_MSG_REQUEST( msg ) msg->tail.request
-
-#define SCTK_MSG_COMPLETION_FLAG( msg ) msg->tail.completion_flag
-#define SCTK_MSG_COMPLETION_FLAG_SET( msg, completion ) \
-	do                                                  \
-	{                                                   \
-		msg->tail.completion_flag = completion;         \
-	} while ( 0 )
-
-/** Buffered Messages **/
 #define MAX_MPC_BUFFERED_SIZE ( 8 * sizeof( long ) )
 
 typedef struct mpc_buffered_msg_s
@@ -638,6 +392,7 @@ typedef struct mpc_buffered_msg_s
 	mpc_mp_request_t request;
 	long buf[( MAX_MPC_BUFFERED_SIZE / sizeof( long ) ) + 1];
 } mpc_buffered_msg_t;
+
 
 /************************************************************************/
 /* Message Progess                                                      */
@@ -659,12 +414,10 @@ typedef struct mpc_mp_comm_ptp_msg_progress_s
 void mpc_mp_comm_ptp_msg_wait_init( struct mpc_mp_comm_ptp_msg_progress_s *wait, mpc_mp_request_t *request, int blocking );
 void mpc_mp_comm_ptp_msg_progress( struct mpc_mp_comm_ptp_msg_progress_s *wait );
 
+
 /************************************************************************/
 /* General Functions                                                    */
 /************************************************************************/
-
-struct mpc_comm_ptp_s *_mpc_comm_ptp_array_get( mpc_mp_communicator_t comm, int rank );
-sctk_reorder_list_t *_mpc_comm_ptp_array_get_reorder( mpc_mp_communicator_t communicator, int rank );
 
 void mpc_mp_comm_request_wait_all_msgs( const int task, const mpc_mp_communicator_t com );
 
@@ -672,28 +425,6 @@ int mpc_mp_comm_is_remote_rank( int dest );
 void mpc_mp_comm_init_per_task( int i );
 
 void mpc_mp_comm_perform_idle( volatile int *data, int value, void ( *func )( void * ), void *arg );
-
-#define SCTK_PARALLEL_COMM_QUEUES_NUMBER 8
-
-/************************************************************************/
-/* Specific Message Tagging	                                          */
-/************************************************************************/
-
-/** Message for a process with ordering and a tag */
-static inline int sctk_is_process_specific_message( sctk_thread_message_header_t *header )
-{
-	mpc_mp_ptp_message_class_t class = header->message_type.type;
-	return _mpc_comm_ptp_message_is_for_process( class );
-}
-
-/************************************************************************/
-/* Thread-safe message probing	                                        */
-/************************************************************************/
-
-void sctk_m_probe_matching_init();
-void sctk_m_probe_matching_set( int value );
-void sctk_m_probe_matching_reset();
-int sctk_m_probe_matching_get();
 
 /************************************************************************/
 /* mpc_mp_request_t 		                                                    */
@@ -721,18 +452,18 @@ static inline mpc_mp_ptp_message_t *mpc_mp_comm_request_get_msg( mpc_mp_request_
 
 static inline void mpc_mp_comm_request_set_size( mpc_mp_request_t *request )
 {
-	request->SCTK_MSG_SIZE( msg ) = 0;
+	request->msg->body.header.msg_size = 0;
 }
 
 static inline void mpc_mp_comm_request_inc_size( mpc_mp_request_t *request,
         size_t size )
 {
-	request->SCTK_MSG_SIZE( msg ) += size;
+	request->msg->body.header.msg_size += size;
 }
 
 static inline size_t mpc_mp_comm_request_get_size( mpc_mp_request_t *request )
 {
-	return request->SCTK_MSG_SIZE( msg );
+	return request->msg->body.header.msg_size;
 }
 
 static inline int mpc_mp_comm_request_get_source( mpc_mp_request_t *request )
@@ -770,8 +501,4 @@ static inline int mpc_mp_comm_status_get_cancelled( mpc_mp_status_t *status, int
 	return SCTK_SUCCESS;
 }
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+#endif /* MPC_MESSAGE_PASSING_INCLUDE_COMM_H_ */

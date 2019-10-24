@@ -21,7 +21,9 @@
 /* ######################################################################## */
 #include "sctk_comm.h"
 
-#include "sctk_inter_thread_comm.h"
+#include "comm.h"
+
+#include <sctk_communicator.h>
 
 /*  ###############
  *  Rank Querry

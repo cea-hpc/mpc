@@ -31,7 +31,7 @@
 #include "sctk_communicator.h"
 #include "sctk_debug.h"
 #include "sctk_handle.h"
-#include "sctk_inter_thread_comm.h"
+#include <mpc_mp_comm.h>
 #include "sctk_runtime_config.h"
 #include "mpc_common_spinlock.h"
 #include "sctk_thread.h"

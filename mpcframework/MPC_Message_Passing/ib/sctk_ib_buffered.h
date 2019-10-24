@@ -29,7 +29,7 @@
 
 #include <mpc_common_spinlock.h>
 #include <uthash.h>
-#include <sctk_inter_thread_comm.h>
+#include <comm.h>
 
 /********************************************************************/
 /* Structures                                                       */

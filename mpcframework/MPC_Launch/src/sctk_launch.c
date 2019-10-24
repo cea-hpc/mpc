@@ -30,6 +30,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <sctk_runtime_config.h>
+#include <sctk_communicator.h>
 
 
 #if !defined(NO_INTERNAL_ASSERT)
@@ -45,7 +46,7 @@
 #include "mpc_common_asm.h"
 #include "mpc_common_asm.h"
 #ifdef MPC_Message_Passing
-	#include "sctk_inter_thread_comm.h"
+	#include "comm.h"
 	#include "sctk_low_level_comm.h"
 	#ifdef MPC_USE_INFINIBAND
 		#include <sctk_ib_cp.h>

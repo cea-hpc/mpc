@@ -3,7 +3,7 @@
 
 #include "mpc_common_datastructure.h"
 #include "sctk_shm_raw_queues.h"
-#include "sctk_inter_thread_comm.h"
+#include "comm.h"
 
 #define SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS 128
 typedef enum {SCTK_SHM_MULTI_FRAG, SCTK_SHM_MONO_FRAG} sctk_shm_frag_type_t;
