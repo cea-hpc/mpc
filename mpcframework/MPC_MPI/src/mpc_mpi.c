@@ -5587,61 +5587,56 @@ int __INTERNAL__PMPI_Barrier_intra_shm(MPI_Comm comm) {
   return __INTERNAL__PMPI_Barrier_intra_shm_on_ctx( barrier_ctx, coll->comm_size );
 }
 
-
-int __MPC_init_node_comm_ctx( struct sctk_comm_coll * coll, MPI_Comm comm )
+int __MPC_init_node_comm_ctx( struct sctk_comm_coll *coll, MPI_Comm comm )
 {
-    int is_shared = 0;
+	int is_shared = 0;
 
-    int rank = 0;
-    void* tmp_ctx;
+	int rank = 0;
+	void *tmp_ctx;
 
-    PMPI_Comm_size( comm, &coll->comm_size );
-    PMPI_Comm_rank( comm, &rank );
+	PMPI_Comm_size( comm, &coll->comm_size );
+	PMPI_Comm_rank( comm, &rank );
 
+	if ( !rank )
+	{
+		tmp_ctx = mpc_MPI_allocmem_pool_alloc_check( sizeof( struct sctk_comm_coll ),
+													 &is_shared );
 
-    if( !rank )
-    {
-        tmp_ctx = mpc_MPI_allocmem_pool_alloc_check(sizeof(struct sctk_comm_coll),
-                &is_shared);
+		if ( is_shared == 0 )
+		{
+			sctk_free( tmp_ctx );
+			tmp_ctx = NULL;
+		}
 
-        if( is_shared == 0 )
-        {
-            sctk_free( tmp_ctx);
-            tmp_ctx = NULL;
-        }
+		if ( !tmp_ctx )
+		{
+			tmp_ctx = (void *) 0x1;
+		}
+		else
+		{
+			sctk_per_node_comm_context_init( tmp_ctx, comm, coll->comm_size );
+		}
 
-        if( !tmp_ctx )
-        {
-            tmp_ctx = (void *)0x1;
-        }
-        else
-        {
-            sctk_per_node_comm_context_init( tmp_ctx, comm,  coll->comm_size );
-        }
+		sctk_assert( tmp_ctx != NULL );
+		mpc_mp_bcast( &tmp_ctx, sizeof( void * ), 0, comm );
+		mpc_mp_barrier( comm );
+		coll->node_ctx = tmp_ctx;
+	}
+	else
+	{
+		mpc_mp_bcast( &tmp_ctx, sizeof( void * ), 0, comm );
+		mpc_mp_barrier( comm );
+		coll->node_ctx = tmp_ctx;
+	}
 
-
-	sctk_assert(tmp_ctx != NULL);
-        mpc_mp_bcast(  &tmp_ctx, sizeof( void * ), 0, comm );
-	mpc_mp_barrier(comm);
-	coll->node_ctx = tmp_ctx;
-    }
-    else
-    {
-        mpc_mp_bcast(  &tmp_ctx, sizeof( void * ), 0, comm );
-	mpc_mp_barrier(comm);
-	coll->node_ctx = tmp_ctx;
-    }
-
-    return MPI_SUCCESS;
+	return MPI_SUCCESS;
 }
-
-
 
 static inline int __MPC_node_comm_coll_check(  struct sctk_comm_coll *coll , MPI_Comm comm )
 {
         if( coll->node_ctx == (void *)0x1 )
         {
-                /* A previous alloc failed */
+                /* A previous alloc failed*/
                 return 0;
         }
 
@@ -11117,7 +11112,7 @@ __INTERNAL__PMPI_Allreduce_intra_simple(void *sendbuf, void *recvbuf, int count,
 	if (res != MPI_SUCCESS) {
 		return res;
 	}
-	
+
 	res = __INTERNAL__PMPI_Bcast(recvbuf, count, datatype, 0, comm);
 	if (res != MPI_SUCCESS) {
 		return res;
@@ -11491,7 +11486,7 @@ __INTERNAL__PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
 			    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
-	
+
 	/* Intercomm */
 	if(sctk_is_inter_comm(comm))
 	{
@@ -11509,7 +11504,6 @@ __INTERNAL__PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
 		allreduce_intra = (int (*)(void *, void *, int, MPI_Datatype, 
 		MPI_Op, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.allreduce_intra.value);
 		res = allreduce_intra(sendbuf, recvbuf, count, datatype, op, comm);
-		if(res != MPI_SUCCESS){return res;}
 	}
 	return res;
 }

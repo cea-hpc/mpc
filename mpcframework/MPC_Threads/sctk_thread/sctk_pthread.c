@@ -55,39 +55,33 @@
 #define SCTK_LOCAL_VERSION_MINOR 1
 
 static void
-pthread_wait_for_value_and_poll (volatile int *data, int value,
-				 void (*func) (void *), void *arg)
+pthread_wait_for_value_and_poll( volatile int *data, int value,
+								 void ( *func )( void * ), void *arg )
 {
-  int i = 0;
-  while ((*data) != value)
-    {
-      if (func != NULL)
+	int i = 0;
+	while ( ( *data ) != value )
 	{
-	  func (arg);
+		if ( func != NULL )
+		{
+			func( arg );
+		}
+
+		if ( ( *data ) != value )
+		{
+			if ( i >= 100 )
+			{
+				kthread_usleep( 5 );
+				i = 0;
+			}
+			else
+			{
+
+				sctk_cpu_relax();
+			}
+
+			i++;
+		}
 	}
-/*       sctk_thread_yield(); */
-      if ((*data) != value)
-	{
-	  if (i >= 100)
-	    {
-#ifndef SCTK_ENABLE_SPINNING
-        sched_yield();
-#else
-	      kthread_usleep (10);
-#endif
-	      i = 0;
-	    } else {
-        /* If the spinning is enable, we slow down the the progression thread */
-#ifdef SCTK_ENABLE_SPINNING
-        sleep(1);
-#endif
-		 sctk_cpu_relax ();
-	  }
-	  /* 	  else */
-/* 	    sched_yield (); */
-	  i++;
-	}
-    }
 }
 
 typedef struct sctk_cell_s

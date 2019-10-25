@@ -54,7 +54,7 @@ extern "C"
 #define mpc_thread_cond_t sctk_thread_cond_t
 #define mpc_thread_mutex_t sctk_thread_mutex_t
 #define mpc_thread_mutexattr_t sctk_thread_mutexattr_t
-#define mpc_thread_key_t sctk_thread_key_t
+#define sctk_thread_key_t sctk_thread_key_t
 #define mpc_thread_once_t sctk_thread_once_t
 
 #define mpc_thread_barrierattr_t sctk_thread_barrierattr_t

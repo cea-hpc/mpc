@@ -247,21 +247,6 @@ int _mpc_cl_get_processor_name( char *name, int *resultlen );
  * COLLECTIVE OPERATIONS *
  *************************/
 
-#define MPC_CREATE_INTERN_FUNC( name ) extern const sctk_Op MPC_##name
-
-MPC_CREATE_INTERN_FUNC( SUM );
-MPC_CREATE_INTERN_FUNC( MAX );
-MPC_CREATE_INTERN_FUNC( MIN );
-MPC_CREATE_INTERN_FUNC( PROD );
-MPC_CREATE_INTERN_FUNC( LAND );
-MPC_CREATE_INTERN_FUNC( BAND );
-MPC_CREATE_INTERN_FUNC( LOR );
-MPC_CREATE_INTERN_FUNC( BOR );
-MPC_CREATE_INTERN_FUNC( LXOR );
-MPC_CREATE_INTERN_FUNC( BXOR );
-MPC_CREATE_INTERN_FUNC( MINLOC );
-MPC_CREATE_INTERN_FUNC( MAXLOC );
-
 int _mpc_cl_barrier( mpc_mp_communicator_t comm );
 int _mpc_cl_bcast( void *buffer, mpc_mp_msg_count_t count,
                    mpc_mp_datatype_t datatype, int root, mpc_mp_communicator_t comm );

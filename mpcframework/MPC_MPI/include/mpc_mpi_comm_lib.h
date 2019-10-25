@@ -110,6 +110,25 @@ int mpc_mpi_cl_wait_pending( mpc_mp_communicator_t comm );
 
 int mpc_mpi_cl_wait_pending_all_comm( void );
 
+/*************************
+ * COLLECTIVE OPERATIONS *
+ *************************/
+
+#define MPC_CREATE_INTERN_FUNC( name ) extern const sctk_Op MPC_##name
+
+MPC_CREATE_INTERN_FUNC( SUM );
+MPC_CREATE_INTERN_FUNC( MAX );
+MPC_CREATE_INTERN_FUNC( MIN );
+MPC_CREATE_INTERN_FUNC( PROD );
+MPC_CREATE_INTERN_FUNC( LAND );
+MPC_CREATE_INTERN_FUNC( BAND );
+MPC_CREATE_INTERN_FUNC( LOR );
+MPC_CREATE_INTERN_FUNC( BOR );
+MPC_CREATE_INTERN_FUNC( LXOR );
+MPC_CREATE_INTERN_FUNC( BXOR );
+MPC_CREATE_INTERN_FUNC( MINLOC );
+MPC_CREATE_INTERN_FUNC( MAXLOC );
+
 
 /************************
  * TIMING AND PROFILING *

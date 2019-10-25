@@ -1589,6 +1589,10 @@ void mpc_mp_comm_ptp_message_header_init( mpc_mp_ptp_message_t *msg,
 
 		SCTK_MSG_DEST_TASK_SET( msg, dest_task );
 		SCTK_MSG_DEST_PROCESS_SET( msg, sctk_get_process_rank_from_task_rank( SCTK_MSG_DEST_TASK( msg ) ) );
+
+
+		sctk_debug("[%d -> %d P(%d -> %d)]", source_task, dest_task, source, destination);
+
 #if 0
 
 		/* If source matters */
@@ -2203,7 +2207,8 @@ static inline void __mpc_comm_ptp_msg_wait( struct mpc_mp_comm_ptp_msg_progress_
 		/* Check the source of the request. We try to poll the
 			   source in order to retreive messages from the network */
 
-		/* We try to poll for finding a message with a SCTK_ANY_SOURCE source */
+		/* We try to poll for finding a message with a SCTK_ANY_SOURCE source
+		   also in case we are blocked we punctually poll any-source */
 		if ( request->header.source_task == SCTK_ANY_SOURCE )
 		{
 			/* We try to poll for finding a message with a SCTK_ANY_SOURCE source */
@@ -2233,6 +2238,11 @@ static inline void __mpc_comm_ptp_msg_wait( struct mpc_mp_comm_ptp_msg_progress_
 		{
 			return;
 		}
+
+                if (  request->completion_flag != SCTK_MESSAGE_DONE )
+                {
+		        sctk_network_notify_idle_message();
+                }
 	}
 	else
 	{
@@ -2311,7 +2321,7 @@ void _mpc_comm_ptp_message_send_check( mpc_mp_ptp_message_t *msg, int poll_recei
 		return;
 	}
 
-	if ( _mpc_comm_ptp_message_is_for_process( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
+	if ( _mpc_comm_ptp_message_is_for_control( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
 	{
 		/* If we are on the right process with a control message */
 		/* Message is for local process call the handler (such message are never pending)
@@ -2381,8 +2391,7 @@ void _mpc_comm_ptp_message_send_check( mpc_mp_ptp_message_t *msg, int poll_recei
  * */
 void mpc_mp_comm_ptp_message_send( mpc_mp_ptp_message_t *msg )
 {
-	int need_check = 0;
-	//!_mpc_comm_is_remote_rank( SCTK_MSG_DEST_TASK( msg ) );
+	int need_check = !_mpc_comm_is_remote_rank( SCTK_MSG_DEST_TASK( msg ) );
 	_mpc_comm_ptp_message_send_check( msg, need_check );
 }
 
@@ -2440,8 +2449,7 @@ void _mpc_comm_ptp_message_recv_check( mpc_mp_ptp_message_t *msg,
  * */
 void mpc_mp_comm_ptp_message_recv( mpc_mp_ptp_message_t *msg )
 {
-	int need_check = 0;
-	//!_mpc_comm_is_remote_rank( SCTK_MSG_DEST_TASK( msg ) );
+	int need_check = !_mpc_comm_is_remote_rank( SCTK_MSG_DEST_TASK( msg ) );
 	_mpc_comm_ptp_message_recv_check( msg, need_check );
 }
 

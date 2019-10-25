@@ -2445,12 +2445,9 @@ int mpc_mpi_cl_mpi_process_main( int argc, char **argv )
 	__mpc_cl_request_init_null();
 	sctk_size_checking_eq( SCTK_COMM_WORLD, SCTK_COMM_WORLD, "SCTK_COMM_WORLD",  "SCTK_COMM_WORLD", __FILE__, __LINE__ );
 	sctk_size_checking_eq( SCTK_COMM_SELF, SCTK_COMM_SELF, "SCTK_COMM_SELF",  "SCTK_COMM_SELF", __FILE__, __LINE__ );
-	sctk_check_equal_types( mpc_mp_datatype_t, mpc_mp_datatype_t );
-	sctk_check_equal_types( mpc_mp_communicator_t, mpc_mp_communicator_t );
-	sctk_check_equal_types( unsigned long, unsigned int );
-	sctk_check_equal_types( long, long );
-	sctk_check_equal_types( unsigned int, mpc_mp_msg_count_t );
-	sctk_check_equal_types( sctk_thread_key_t, mpc_thread_key_t );
+
+	sctk_check_equal_types(mpc_mp_msg_count_t, unsigned int );
+
 	__mpc_cl_per_mpi_process_ctx_init();
 
 	if ( sctk_runtime_config_get()->modules.mpc.disable_message_buffering )

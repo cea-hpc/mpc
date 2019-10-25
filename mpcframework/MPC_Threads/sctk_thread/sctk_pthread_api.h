@@ -39,7 +39,7 @@ extern "C"
 #define pthread_cond_t mpc_thread_cond_t
 #define pthread_mutex_t mpc_thread_mutex_t
 #define pthread_mutexattr_t mpc_thread_mutexattr_t
-#define pthread_key_t mpc_thread_key_t
+#define pthread_key_t sctk_thread_key_t
 #define pthread_once_t mpc_thread_once_t
 
 #define pthread_barrierattr_t mpc_thread_barrierattr_t
