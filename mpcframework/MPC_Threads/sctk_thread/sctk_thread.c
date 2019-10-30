@@ -1136,7 +1136,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
                 core_depth = hwloc_get_type_depth(topology_option_text, HWLOC_OBJ_CORE);
             }
             int * min_index = (int*)malloc(sizeof(int) * MPCOMP_AFFINITY_NB);
-            min_index = __mpcomp_tree_array_compute_thread_openmp_min_rank( tree_shape, max_depth, rank, core_depth );
+            min_index = mpc_omp_tree_array_compute_thread_min_rank( tree_shape, max_depth, rank, core_depth );
             /* get os ind */
             int master = mpc_topology_render_get_current_binding();
             // need the logical pu of the master from the total compute node topo computin with the os index to use for origin */

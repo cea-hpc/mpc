@@ -27,7 +27,6 @@
 #include "mpcomp_types.h"
 #include "mpc_common_asm.h"
 #include "mpcomp_types.h"
-#include "mpcomp_ompt_specific.h"
 #include "mpcomp_ompt_types_internal.h"
 
 static OPA_int_t mpcomp_OMPT_wait_id = OPA_INT_T_INITIALIZER(1); 

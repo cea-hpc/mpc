@@ -350,7 +350,7 @@ __mpcomp_init_omp_task_tree( const int num_mvps, int* shape, const int* cpus_ord
         place_size = 1;
      }
 
-	 __mpcomp_alloc_openmp_tree_struct( tree_shape, max_depth, cpus_order, place_depth, place_size, icvs );	
+	 _mpc_omp_tree_alloc( tree_shape, max_depth, cpus_order, place_depth, place_size, &icvs );
 }
 
 /*

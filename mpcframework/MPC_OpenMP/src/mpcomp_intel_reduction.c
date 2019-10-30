@@ -25,7 +25,6 @@
 #include "mpcomp_types.h"
 #include "mpcomp_intel_types.h"
 #include "mpcomp_intel_global.h"
-#include "mpcomp_intel_reduction.h"
 
 #include "mpcomp_sync.h"
 #include "mpcomp_barrier.h"
