@@ -4665,8 +4665,8 @@ int mpc_mpi_cl_open_pack( mpc_mp_request_t *request )
 }
 
 int mpc_mpi_cl_add_pack( void *buf, mpc_mp_msg_count_t count,
-                      unsigned int *ibegins,
-                      unsigned int *iends,
+                      unsigned long *begins,
+                      unsigned long *ends,
                       mpc_mp_datatype_t datatype, mpc_mp_request_t *request )
 {
 	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
@@ -4676,12 +4676,12 @@ int mpc_mpi_cl_add_pack( void *buf, mpc_mp_msg_count_t count,
 		MPC_ERROR_REPORT( SCTK_COMM_WORLD, MPC_ERR_REQUEST, "" );
 	}
 
-	if ( ibegins == NULL )
+	if ( begins == NULL )
 	{
 		MPC_ERROR_REPORT( SCTK_COMM_WORLD, MPC_ERR_ARG, "" );
 	}
 
-	if ( iends == NULL )
+	if ( ends == NULL )
 	{
 		MPC_ERROR_REPORT( SCTK_COMM_WORLD, MPC_ERR_ARG, "" );
 	}
@@ -4691,25 +4691,13 @@ int mpc_mpi_cl_add_pack( void *buf, mpc_mp_msg_count_t count,
 		MPC_ERROR_REPORT( SCTK_COMM_WORLD, MPC_ERR_ARG, "" );
 	}
 
-	unsigned long * begins = sctk_malloc(count * sizeof(unsigned long));
-	assume(begins != NULL);
-
-	unsigned long * ends = sctk_malloc(count * sizeof(unsigned long));
-	assume(ends != NULL);
-
-
-	int i;
-	for(i = 0 ; i < count ; i++)
-	{
-		begins[i] = ibegins[i];
-		ends[i] = iends[i];
-	}
-
 	size_t data_size = __mpc_cl_datatype_get_size( datatype, task_specific );
 	mpc_mp_ptp_message_t *msg = mpc_mp_comm_request_get_msg( request );
 	mpc_mp_comm_ptp_message_add_pack( msg, buf, count, data_size, begins, ends );
 	mpc_mp_comm_request_set_msg( request, msg );
 	size_t total = 0;
+
+        int i;
 
 	/*Compute message size */
 	for ( i = 0; i < count; i++ )
@@ -4718,9 +4706,6 @@ int mpc_mpi_cl_add_pack( void *buf, mpc_mp_msg_count_t count,
 	}
 
 	mpc_mp_comm_request_inc_size( request, total * data_size );
-
-	sctk_free(begins);
-	sctk_free(ends);
 
 	MPC_ERROR_SUCESS();
 }

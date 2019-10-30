@@ -87,8 +87,8 @@ static inline int __MPC_Maybe_disguised()
 int mpc_mpi_cl_open_pack( mpc_mp_request_t *request );
 
 int mpc_mpi_cl_add_pack( void *buf, mpc_mp_msg_count_t count,
-                      unsigned int *begins,
-                      unsigned int *ends, mpc_mp_datatype_t datatype,
+                      unsigned long *begins,
+                      unsigned long *ends, mpc_mp_datatype_t datatype,
                       mpc_mp_request_t *request );
 
 int mpc_mpi_cl_add_pack_absolute( void *buf, mpc_mp_msg_count_t count,

@@ -36,11 +36,11 @@ run (void *arg)
   int my_rank;
   char msg[50];
   mpc_mp_request_t req;
-  unsigned int beg[10];
-  unsigned int end[10];
+  unsigned long beg[10];
+  unsigned long end[10];
 
-  unsigned int deb = 0;
-  unsigned int fin = 40;
+  unsigned long deb = 0;
+  unsigned long fin = 40;
 
   my_com = MPI_COMM_WORLD;
   MPI_Comm_rank (my_com, &my_rank);
