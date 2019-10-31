@@ -1,54 +1,123 @@
+#Available stages to run in 'automatic' processing:
+# For convenience, implicit stages have been made explicit here...
 stages:
-- build
-- cleanup_build
-- test_simple
-- test
-- cleanup
+  - Initialization
+  - Builds
+  - Basic Testing
+  - Regular Testing
+  - Large Testing
+  - Finalization
 
-build_job:
-  stage: build
+############################
+##### EXTRA ACTIONS ########
+############################
+#these actions should herit from implicit stages ".pre" and ".post"
+
+# pre-actions to cleanup the machine before the run
+# this job will be run in ANY pipeline -> ensure to enable all proper tags
+# CAUTION : Otherwise tag-specific runners won't allow to run the whole pipeline because
+# both .pre and .post cannot be scheduled (thus, why not using user-defined pre and post
+# to avoid them to be run systematically ?)
+Env Sanitize:
+  stage: Initialization
   script:
-  - mkdir -p $HOME/mpc_tmp_builds/$CI_PIPELINE_ID
-  - echo "#!/bin/sh" > ./build.sh
-  - echo "set -e" >> ./build.sh
-  - echo "rm -fr /dev/shm/${CI_PIPELINE_ID}_BUILD" >> ./build.sh
-  - echo "mkdir /dev/shm/${CI_PIPELINE_ID}_BUILD" >> ./build.sh
-  - echo "ln -s /dev/shm/${CI_PIPELINE_ID}_BUILD BUILD" >> ./build.sh
-  - echo "cd ./BUILD/" >> ./build.sh
-  - echo "${CI_PROJECT_DIR}/installmpc --prefix=$HOME/mpc_tmp_builds/$CI_PIPELINE_ID -j4 --mpc-option='--with-slurm --enable-debug'; rm -fr /dev/shm/${CI_PIPELINE_ID}_BUILD/" >> ./build.sh
-  - chmod +x ./build.sh
-  - srun -N 1 -c 8 ./build.sh
+    - mkdir -p $HOME/GL_$CI_PIPELINE_ID/{build,install,test}
+    - echo "Environment Cleaned !"
 
-simple:
-  stage: test_simple
+# post-actions to cleanup the machine after the run
+# The last line may not be necessary as a pipeline start run something like a "git clean" before running
+# This implies a probable issue when multiple piplines are run concurrently on the same project :(
+# Please read the CAUTION above !
+Artifact Deletion:
+  stage: Finalization
+  allow_failure: true
+  when: on_success
   script:
-  - $HOME/run_valid.sh ${CI_PROJECT_DIR}/MPC_Test_Suite/ $HOME/mpc_tmp_builds/$CI_PIPELINE_ID/ ./simple
+    - $HOME/clean_old_pipelines.sh
+    - rm -rf $HOME/$CI_PIPELINE_ID/
 
-privatization:
-  stage: test
-  script:
-  - $HOME/run_valid.sh ${CI_PROJECT_DIR}/MPC_Test_Suite/ $HOME/mpc_tmp_builds/$CI_PIPELINE_ID/ ./gcc
-
-messagepassing:
-  stage: test
-  script:
-  - $HOME/run_valid.sh ${CI_PROJECT_DIR}/MPC_Test_Suite/ $HOME/mpc_tmp_builds/$CI_PIPELINE_ID/ ./MPI/MessagePassing/
-
-imb:
-  stage: test
-  script:
-  - $HOME/run_valid.sh ${CI_PROJECT_DIR}/MPC_Test_Suite/ $HOME/mpc_tmp_builds/$CI_PIPELINE_ID/ ./MPI/IMB/check/
-
-mpi:
-  stage: test
-  script:
-  - $HOME/run_valid.sh ${CI_PROJECT_DIR}/MPC_Test_Suite/ $HOME/mpc_tmp_builds/$CI_PIPELINE_ID/ ./MPI/Intel_ANL/communicators
-
-cleanup_job:
-  stage: cleanup
+Resource Reliquishing:
+  stage: Finalization
+  allow_failure: true
   when: always
   script:
-  - srun -N 4 rm -fr /dev/shm/*_BUILD/
+  #
+  - scancel --name GL-build_$CI_PIPELINE_ID
+  # Ugly, our way to kill allocations from tests
   - scancel -u $USER
-  - rm -fr $HOME/mpc_tmp_builds/$CI_PIPELINE_ID
-  - rm -fr /dev/shm/${CI_PIPELINE_ID}_BUILD
+
+
+############################
+####### BUILD STAGE ########
+############################
+
+# MPC should be built (almost) before anything else
+MPC Compilation:
+  stage: Builds
+  script:
+  - cd $HOME/GL_$CI_PIPELINE_ID/build
+  - srun -J GL-build_$CI_PIPELINE_ID -N 1 -c 8 ${CI_PROJECT_DIR}/installmpc --prefix=$HOME/GL_$CI_PIPELINE_ID/install -j8 --mpc-option='--with-slurm --enable-debug'
+
+############################
+####### TEST STAGE ########
+############################
+
+# a BASIC one, to stop the pipeline early in case of major issue (not able to compile/run a simple test)
+Simple:
+  stage: Basic Testing
+  script:
+    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=simple --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/simple
+
+# a regular test, to assess some basic MPC feature
+Privatization:
+  stage: Regular Testing
+  script:
+    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=gcc --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/privatization
+
+Message Passing:
+  stage: Regular Testing
+  script:
+    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/MessagePassing --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/mp
+
+# a larger test, known to take more time and to stress the runtime a bit more than previous jobs
+IMB (Check):
+  stage: Large Testing
+  script:
+    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/IMB/check --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/imb
+
+Communicators (ANL):
+  stage: Large Testing
+  script:
+    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/Intel_ANL/communicators --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/comms
+
+###################################
+####### MANUALLY TRIGGERED ########
+###################################
+#This section gathers jobs not scheduled to be part of the standard pipeline.
+#They could be run manually or periodically.
+
+#When triggered through a variable, MPC is built in containers with fixed software stack (base compiler, libc, etc...)
+# to ensure MPC to compile in a large variety of environments
+
+Debian Stretch:
+  stage: Regular Testing
+  script: "docker run --rm -it paratoolsfrance/mpc-env:debian-stretch $HOME/docker/run_installmpc.sh"
+  tags:
+    - "docker"
+  only:
+    variables:
+      - $MPC_CI_MODE == "multibuild"
+
+Centos 7:
+  stage: Regular Testing
+  script: "docker run --rm -it paratoolsfrance/mpc-env:centos-7 $HOME/docker/run_installmpc.sh"
+  tags:
+    - "docker"
+  only:
+    variables:
+      - $MPC_CI_MODE == "multibuild"
