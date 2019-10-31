@@ -38,7 +38,7 @@
 #include "mpc_common_spinlock.h"
 
 #ifdef MPCOMP_USE_INTEL_ABI
-#include "mpcomp_intel_types.h"
+#include "omp_intel_types.h"
 #endif /* MPCOMP_USE_INTEL_ABI */
 
 #include "ompt.h"

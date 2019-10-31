@@ -24,8 +24,8 @@
 
 #include "sctk_debug.h"
 #include "mpcomp_types.h"
-#include "mpcomp_intel_types.h"
-#include "mpcomp_intel_atomics.h"
+#include "omp_intel_types.h"
+#include "omp_intel_atomics.h"
 
 void __kmpc_atomic_4(__UNUSED__ ident_t *id_ref, __UNUSED__ int gtid, void *lhs, void *rhs,
                      void (*f)(void *, void *, void *)) {

@@ -9,8 +9,7 @@
 #include "mpcomp_task_utils.h"
 
 #ifdef MPCOMP_USE_INTEL_ABI
-#include "mpcomp_intel_types.h"
-#include "mpcomp_intel_threadprivate.h"
+#include "omp_intel.h"
 #endif /* MPCOMP_USE_INTEL_ABI */
 
 static inline void mpcomp_thread_infos_reset(mpcomp_thread_t *thread) {
