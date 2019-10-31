@@ -32,7 +32,7 @@
 #include "mpcomp_openmp_tls.h"
 
 #include "ompt.h"
-#include "mpcomp_ompt_general.h"
+#include "omp_ompt.h"
 
 /****
  *
@@ -202,7 +202,7 @@ int __mpcomp_static_loop_begin (long lb, long b, long incr, long chunk_size,
    __mpcomp_static_loop_init(t, lb, b, incr, chunk_size);
 	
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{
@@ -259,7 +259,7 @@ int __mpcomp_static_loop_next (long *from, long *to)
 void __mpcomp_static_loop_end_nowait ()
 {
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{

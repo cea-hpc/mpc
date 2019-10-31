@@ -132,7 +132,7 @@ int __mpcomp_sections_begin(int nb_sections) {
   sctk_assert( num_threads > 0 ) ;
 
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{
@@ -210,7 +210,7 @@ int __mpcomp_sections_next(void) {
 void __mpcomp_sections_end_nowait(void) { 
 
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{

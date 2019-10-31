@@ -129,7 +129,7 @@ int __mpcomp_loop_ull_dynamic_begin(bool up, unsigned long long lb,
 
 #if OMPT_SUPPORT
 	/* Avoid double call during runtime schedule policy */
-	if( ( t->schedule_type == MPCOMP_COMBINED_DYN_LOOP ) && mpcomp_ompt_is_enabled() )
+	if( ( t->schedule_type == MPCOMP_COMBINED_DYN_LOOP ) && _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{

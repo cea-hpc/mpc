@@ -34,7 +34,7 @@
 
 #if OMPT_SUPPORT
 #include "ompt.h"
-#include "mpcomp_ompt_general.h"
+#include "omp_ompt.h"
 #endif /* OMPT_SUPPORT */
 
 static int __mpcomp_dynamic_loop_get_chunk_from_rank(mpcomp_thread_t *t,
@@ -124,7 +124,7 @@ int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size,
   	__mpcomp_dynamic_loop_init(t, lb, b, incr, chunk_size);
 
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	    if( OMPT_Callbacks )
    	    {
@@ -251,7 +251,7 @@ void __mpcomp_dynamic_loop_end_nowait(void) {
 
 #if OMPT_SUPPORT
 	/* Avoid double call during runtime schedule policy */
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{

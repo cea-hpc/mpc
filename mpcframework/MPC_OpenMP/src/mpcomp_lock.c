@@ -30,7 +30,7 @@
 #include "mpcomp_alloc.h"
 
 #include "ompt.h"
-#include "mpcomp_ompt_general.h"
+#include "omp_ompt.h"
 
 extern ompt_callback_t* OMPT_Callbacks;
 
@@ -52,7 +52,7 @@ static void __internal_omp_init_lock_with_hint(omp_lock_t *lock, omp_lock_hint_t
   	sctk_thread_mutex_init(&(mpcomp_user_lock->lock), 0);
 
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{
@@ -97,7 +97,7 @@ void omp_destroy_lock(omp_lock_t *lock)
   mpcomp_user_lock = (mpcomp_lock_t *)*lock;
 
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{
@@ -125,7 +125,7 @@ void omp_set_lock(omp_lock_t *lock)
   mpcomp_user_lock = (mpcomp_lock_t *)*lock;
 
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{
@@ -145,7 +145,7 @@ void omp_set_lock(omp_lock_t *lock)
   sctk_thread_mutex_lock(&(mpcomp_user_lock->lock));
 
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{
@@ -171,7 +171,7 @@ void omp_unset_lock(omp_lock_t *lock)
   sctk_thread_mutex_unlock(&(mpcomp_user_lock->lock));
 
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{
@@ -196,7 +196,7 @@ int omp_test_lock(omp_lock_t *lock)
   mpcomp_user_lock = (mpcomp_lock_t *)*lock;
 
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{
@@ -216,7 +216,7 @@ int omp_test_lock(omp_lock_t *lock)
   retval = !sctk_thread_mutex_trylock(&(mpcomp_user_lock->lock));
 
 #if OMPT_SUPPORT
-	if( retval && mpcomp_ompt_is_enabled() )
+	if( retval && _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{
@@ -247,7 +247,7 @@ static void __internal_omp_init_nest_lock_with_hint(omp_nest_lock_t *lock, omp_l
   	sctk_thread_mutex_init(&(mpcomp_user_nest_lock->lock), 0);
 
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{
@@ -291,7 +291,7 @@ void omp_destroy_nest_lock(omp_nest_lock_t *lock) {
   mpcomp_user_nest_lock = (mpcomp_nest_lock_t *)*lock;
 
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{
@@ -321,7 +321,7 @@ void omp_set_nest_lock(omp_nest_lock_t *lock)
   mpcomp_user_nest_lock = (mpcomp_nest_lock_t *)*lock;
 
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{
@@ -353,7 +353,7 @@ void omp_set_nest_lock(omp_nest_lock_t *lock)
   }
 
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{
@@ -392,7 +392,7 @@ void omp_unset_nest_lock(omp_nest_lock_t *lock) {
   mpcomp_user_nest_lock = (mpcomp_nest_lock_t *)*lock;
 
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{
@@ -416,7 +416,7 @@ void omp_unset_nest_lock(omp_nest_lock_t *lock) {
     mpcomp_user_nest_lock->owner_task = NULL;
 #endif
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{
@@ -444,7 +444,7 @@ int omp_test_nest_lock(omp_nest_lock_t *lock)
   mpcomp_user_nest_lock = (mpcomp_nest_lock_t *)*lock;
 
 #if OMPT_SUPPORT
-   if( mpcomp_ompt_is_enabled() )
+   if( _mpc_omp_ompt_is_enabled() )
    {
       if( OMPT_Callbacks )
       {
@@ -478,7 +478,7 @@ int omp_test_nest_lock(omp_nest_lock_t *lock)
   }
 
 #if OMPT_SUPPORT
-   if( mpcomp_ompt_is_enabled() )
+   if( _mpc_omp_ompt_is_enabled() )
    {
       if( OMPT_Callbacks )
       {

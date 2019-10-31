@@ -24,6 +24,8 @@
 
 #include "sctk_thread_generic_kind.h"
 
+#include <mpc_common_rank.h>
+
 
 #include "sctk_debug.h"
 #include "mpc_topology.h"
@@ -33,7 +35,9 @@
 
 #include "sctk_launch.h"
 
-#include "mpcomp_types.h"
+#include "mpcomp_task.h"
+#include "mpcomp_sections.h"
+#include "mpcomp_sync.h"
 #include "mpcomp_tree_structs.h"
 #include "mpcomp_task_utils.h"
 #include "mpcomp_sections.h"
@@ -376,17 +380,19 @@ static inline void __mpcomp_read_env_variables() {
         OMP_MICROVP_NUMBER, 0);
     OMP_MICROVP_NUMBER = 0;
   }
-  if (OMP_MICROVP_NUMBER > mpc_topology_get_pu_count()) {
+
     fprintf(stderr, "Warning: Number of microVPs should be at most the number "
                     "of cores per node: %d\n"
                     "Switching to default value %d\n",
-            mpc_topology_get_pu_count(), OMP_MICROVP_NUMBER);
+		         mpc_topology_get_pu_count(), OMP_MICROVP_NUMBER );
     OMP_MICROVP_NUMBER = 0;
-  }
+  
 
   /******* OMP_SCHEDULE *********/
   env = sctk_runtime_config_get()->modules.openmp.schedule;
+
   OMP_SCHEDULE = omp_sched_static; /* DEFAULT */
+
   if (env != NULL) {
     int ok = 0;
     int offset = 0;
@@ -783,14 +789,15 @@ void __mpcomp_init(void) {
       case MPCOMP_MODE_ALTERNATING:
         nb_mvps = 1;
         if (mpc_common_get_local_task_rank() == 0) {
-          nb_mvps = mpc_topology_get_pu_count();
+				if ( mpc_common_get_local_task_rank() == 0 )
+					nb_mvps = mpc_topology_get_pu_count();
         }
         break;
       case MPCOMP_MODE_OVERSUBSCRIBED_MIXED:
         not_implemented();
         break;
       case MPCOMP_MODE_FULLY_MIXED:
-        nb_mvps = mpc_topology_get_pu_count();
+				nb_mvps = mpc_topology_get_pu_count();
         break;
       default:
         not_reachable();
@@ -803,15 +810,15 @@ void __mpcomp_init(void) {
       sctk_debug(
           "%s: MPI rank=%d, process_rank=%d, local_task_rank=%d => %d mvp(s) "
           "out of %d core(s) A",
-          __func__, task_rank, mpc_common_get_local_task_rank(),
-          mpc_common_get_local_task_rank(), mpc_topology_get_pu_count(),
-          mpc_topology_get_pu_count());
+		    __func__, task_rank, mpc_common_get_local_process_rank(),
+		    mpc_common_get_local_task_rank(), mpc_topology_get_pu_count(),
+		    mpc_topology_get_pu_count() );
     } else {
       sctk_debug("%s: MPI rank=%d, process_rank=%d, local_task_rank=%d => %d "
                  "mvp(s) out of %d core(s)",
-                 __func__, task_rank, mpc_common_get_local_task_rank(),
+		            __func__, task_rank, mpc_common_get_local_process_rank(),
                  mpc_common_get_local_task_rank(), nb_mvps,
-                 mpc_topology_get_pu_count());
+		            mpc_topology_get_pu_count() );
     }
 
     /* Update some global icvs according the number of mvps */

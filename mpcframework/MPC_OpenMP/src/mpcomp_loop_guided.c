@@ -28,7 +28,7 @@
 #include "mpcomp_loop_dyn.h"
 #include "mpcomp_loop_dyn_utils.h"
 
-#include "mpcomp_ompt_general.h"
+#include "omp_ompt.h"
 
 /* 
    This file includes the function related to the 'guided' schedule of a shared
@@ -125,7 +125,7 @@ void __mpcomp_guided_loop_end_nowait()
 
 #if OMPT_SUPPORT
 	/* Avoid double call during runtime schedule policy */
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{

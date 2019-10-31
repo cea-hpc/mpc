@@ -28,7 +28,7 @@
 #include "mpcomp_openmp_tls.h"
 
 #include "ompt.h"
-#include "mpcomp_ompt_general.h"
+#include "omp_ompt.h"
 
 #if OMPT_SUPPORT
 extern ompt_callback_t* OMPT_Callbacks; 
@@ -96,7 +96,7 @@ int __mpcomp_do_single(void)
 	}
 
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
    	{

@@ -31,6 +31,7 @@
 #include "mpcomp_types_enum.h"
 #include "mpcomp_types_struct.h"
 
+
 extern __thread void *sctk_openmp_thread_tls;
 extern mpcomp_global_icv_t mpcomp_global_icvs;
 

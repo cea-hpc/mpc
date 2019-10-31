@@ -33,7 +33,7 @@
 #include "mpcomp_types_def.h"
 #include "mpcomp_types_icv.h"
 #include "mpcomp_types_loop.h"
-
+#include "mpcomp_task.h"
 #include "mpcomp_tree_array.h"
 #include "mpc_common_spinlock.h"
 
@@ -48,11 +48,6 @@ extern "C" {
 #endif
 
 /*****  BREAK CIRCLE DEPS FOR TASK API *****/
-struct mpcomp_task_mvp_infos_s;
-struct mpcomp_task_node_infos_s;
-struct mpcomp_task_team_infos_s;
-struct mpcomp_task_thread_infos_s;
-struct mpcomp_task_instance_infos_s;
 
 
 /********************

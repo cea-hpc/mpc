@@ -18,7 +18,7 @@ void mpcomp_task_ref_parent_task(mpcomp_task_t *task);
 void mpcomp_task_unref_parent_task(mpcomp_task_t *task);
 
 #include "ompt.h"
-#include "mpcomp_ompt_general.h"
+#include "omp_ompt.h"
 #if OMPT_SUPPORT
 extern ompt_callback_t* OMPT_Callbacks;
 #endif
@@ -241,7 +241,7 @@ static inline void mpcomp_task_thread_infos_init(struct mpcomp_thread_s *thread)
 #endif /* MPCOMP_USE_TASKDEP */
 
 #if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
+	if( _mpc_omp_ompt_is_enabled() )
 	{
         if( OMPT_Callbacks &&
             thread->instance->nb_mvps == 1 &&

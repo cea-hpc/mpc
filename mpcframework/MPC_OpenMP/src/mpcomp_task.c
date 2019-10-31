@@ -45,7 +45,7 @@
 #include "mpcomp_core.h" /* mpcomp_init */
 
 #include "ompt.h"
-#include "mpcomp_ompt_general.h"
+#include "omp_ompt.h"
 extern ompt_callback_t* OMPT_Callbacks;
 
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
@@ -132,7 +132,7 @@ __mpcomp_task_execute(mpcomp_task_t *task)
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
 
 #if OMPT_SUPPORT
-   if( mpcomp_ompt_is_enabled() )
+   if( _mpc_omp_ompt_is_enabled() )
    {
 	   if( OMPT_Callbacks )
 	   {
@@ -160,7 +160,7 @@ __mpcomp_task_execute(mpcomp_task_t *task)
   thread->info.icvs = saved_icvs;
 
 #if OMPT_SUPPORT
-  if( mpcomp_ompt_is_enabled() )
+  if( _mpc_omp_ompt_is_enabled() )
   {
     if( OMPT_Callbacks )
 	 {
@@ -342,7 +342,7 @@ __mpcomp_task_alloc(void (*fn)(void *), void *data,
   else new_task->far_ancestor = new_task->parent->far_ancestor;
 
   #if OMPT_SUPPORT
-  if( mpcomp_ompt_is_enabled() )
+  if( _mpc_omp_ompt_is_enabled() )
   {
     if( OMPT_Callbacks )
 	 {

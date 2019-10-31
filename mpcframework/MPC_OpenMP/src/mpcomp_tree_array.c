@@ -515,6 +515,7 @@ static inline int __tree_node_init( mpcomp_meta_tree_node_t *root, const int *tr
 
 	new_node = ( mpcomp_node_t * )me->user_pointer;
 	new_node->tree_array = root;
+
 	// Get infos from parent node
 	new_node->depth = __tree_array_get_node_depth( tree_shape, max_depth, rank );
 	const int num_children = tree_shape[new_node->depth];

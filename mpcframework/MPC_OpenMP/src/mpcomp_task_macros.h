@@ -4,8 +4,7 @@
 #define __MPCOMP_TASK_MACROS_H__
 
 #include "mpc_common_asm.h"
-#include "mpcomp_types.h"
-#include "mpcomp_task.h"
+
 
 #if KMP_ARCH_X86
 #define KMP_SIZE_T_MAX (0xFFFFFFFF)
