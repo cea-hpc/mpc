@@ -35,7 +35,6 @@
 
 #include "ompt.h"
 
-#define MPCOMP_USE_TASKDEP 1
 #define MPCOMP_NB_REUSABLE_TASKS 100
 #define MPCOMP_TASKS_DEPTH_JUMP 10
 /** Declaration  mpcomp_types.h

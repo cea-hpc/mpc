@@ -36,6 +36,8 @@
 #define MPCOMP_TASK 1
 #endif /* MPCOMP_OPENMP_3_0 */
 
+#define MPCOMP_USE_TASKDEP 1
+
 
 /* Enable/Disable OMPT support */
 #define OMPT_SUPPORT 0
