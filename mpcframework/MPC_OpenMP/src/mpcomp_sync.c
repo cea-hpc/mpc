@@ -27,22 +27,20 @@
 #include "mpcomp_sync.h"
 
 #include "mpcomp_task_utils.h"
-
 #include "mpcomp_types.h"
-
 #include "mpcomp_core.h"
 #include "mpcomp_openmp_tls.h"
 #include "ompt.h"
 #include "mpcomp.h"
 #include "mpc_common_spinlock.h"
 #include "omp_ompt.h"
-
-
 #include "sched.h"
 #include "mpc_common_asm.h"
 #include "sctk_thread.h"
 
-extern ompt_callback_t *OMPT_Callbacks;
+#if OMPT_SUPPORT
+	extern ompt_callback_t *OMPT_Callbacks;
+#endif /* OMPT_SUPPORT */
 
 /***********
  * ATOMICS *
@@ -411,11 +409,6 @@ void __mpcomp_named_critical_end( void **l )
 /**********
  * SINGLE *
  **********/
-
-
-#if OMPT_SUPPORT
-	extern ompt_callback_t *OMPT_Callbacks;
-#endif /* OMPT_SUPPORT */
 
 /* 
    Perform a single construct.
@@ -823,8 +816,6 @@ void __mpcomp_barrier(void) {
  * SECTIONS *
  ************/
 
-
-
 #if OMPT_SUPPORT
 #include "ompt.h"
 extern ompt_callback_t* OMPT_Callbacks;
@@ -834,7 +825,7 @@ extern ompt_callback_t* OMPT_Callbacks;
    This file contains all functions related to SECTIONS constructs in OpenMP
  */
 
-static int __mpcomp_sections_internal_next(mpcomp_thread_t *t,
+static int __sync_section_next(mpcomp_thread_t *t,
                                            mpcomp_team_t *team) {
   int r ;
   int success ;
@@ -962,7 +953,7 @@ int __mpcomp_sections_begin(int nb_sections) {
   team = t->instance->team ;
   sctk_assert( team != NULL ) ;
 
-  return __mpcomp_sections_internal_next( t, team ) ;
+  return __sync_section_next( t, team ) ;
 }
 
 int __mpcomp_sections_next(void) {
@@ -1002,7 +993,7 @@ int __mpcomp_sections_next(void) {
   team = t->instance->team ;
   sctk_assert( team != NULL ) ;
 
-  return __mpcomp_sections_internal_next( t, team ) ;
+  return __sync_section_next( t, team ) ;
 }
 
 
@@ -1043,16 +1034,13 @@ int __mpcomp_sections_coherency_barrier(void) { return 0; }
  * LOCKS *
  *********/
 
-
-extern ompt_callback_t *OMPT_Callbacks;
-
 /**
  *  \fn void omp_init_lock_with_hint( omp_lock_t *lock, omp_lock_hint_t hint)
  *  \brief These routines initialize an OpenMP lock with a hint. The effect of
  * the hint is implementation-defined. The OpenMP implementation can ignore the
  * hint without changing program semantics.
  */
-static void __internal_omp_init_lock_with_hint( omp_lock_t *lock, omp_lock_hint_t hint )
+static void __sync_lock_init_with_hint( omp_lock_t *lock, omp_lock_hint_t hint )
 {
 	mpcomp_lock_t *mpcomp_user_lock = NULL;
 	__mpcomp_init();
@@ -1087,7 +1075,7 @@ static void __internal_omp_init_lock_with_hint( omp_lock_t *lock, omp_lock_hint_
 
 void omp_init_lock_with_hint( omp_lock_t *lock, omp_lock_hint_t hint )
 {
-	__internal_omp_init_lock_with_hint( lock, hint );
+	__sync_lock_init_with_hint( lock, hint );
 }
 
 /**
@@ -1098,7 +1086,7 @@ void omp_init_lock_with_hint( omp_lock_t *lock, omp_lock_hint_t hint )
  */
 void omp_init_lock( omp_lock_t *lock )
 {
-	__internal_omp_init_lock_with_hint( lock, omp_lock_hint_none );
+	__sync_lock_init_with_hint( lock, omp_lock_hint_none );
 }
 
 void omp_destroy_lock( omp_lock_t *lock )
@@ -1253,7 +1241,7 @@ int omp_test_lock( omp_lock_t *lock )
 	return retval;
 }
 
-static void __internal_omp_init_nest_lock_with_hint( omp_nest_lock_t *lock, omp_lock_hint_t hint )
+static void __sync_nest_lock_init_with_hint( omp_nest_lock_t *lock, omp_lock_hint_t hint )
 {
 	mpcomp_nest_lock_t *mpcomp_user_nest_lock = NULL;
 	__mpcomp_init();
@@ -1294,12 +1282,12 @@ static void __internal_omp_init_nest_lock_with_hint( omp_nest_lock_t *lock, omp_
  */
 void omp_init_nest_lock( omp_nest_lock_t *lock )
 {
-	__internal_omp_init_nest_lock_with_hint( lock, omp_lock_hint_none );
+	__sync_nest_lock_init_with_hint( lock, omp_lock_hint_none );
 }
 
 void omp_init_nest_lock_with_hint( omp_nest_lock_t *lock, omp_lock_hint_t hint )
 {
-	__internal_omp_init_nest_lock_with_hint( lock, hint );
+	__sync_nest_lock_init_with_hint( lock, hint );
 }
 
 void omp_destroy_nest_lock( omp_nest_lock_t *lock )
