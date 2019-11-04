@@ -34,23 +34,21 @@
 #include "mpcomp_task_utils.h"
 #include "mpcomp_task_gomp_constants.h"
 
-static inline int
-__mpcomp_loop_dyn_get_for_dyn_current( struct mpcomp_thread_s *thread )
+static inline int __loop_dyn_get_for_dyn_current( struct mpcomp_thread_s *thread )
 {
 	return OPA_load_int( &( thread->for_dyn_ull_current ) );
 }
 
-static inline int
-__mpcomp_loop_dyn_get_for_dyn_prev_index( struct mpcomp_thread_s *thread )
+static inline int __loop_dyn_get_for_dyn_prev_index( struct mpcomp_thread_s *thread )
 {
-	const int for_dyn_current = __mpcomp_loop_dyn_get_for_dyn_current( thread );
+	const int for_dyn_current = __loop_dyn_get_for_dyn_current( thread );
 	return ( for_dyn_current + MPCOMP_MAX_ALIVE_FOR_DYN - 1 ) %
 	       ( MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
 }
 
-static inline int __mpcomp_loop_dyn_get_for_dyn_index( struct mpcomp_thread_s *thread )
+static inline int __loop_dyn_get_for_dyn_index( struct mpcomp_thread_s *thread )
 {
-	const int for_dyn_current = __mpcomp_loop_dyn_get_for_dyn_current( thread );
+	const int for_dyn_current = __loop_dyn_get_for_dyn_current( thread );
 	return ( for_dyn_current % ( MPCOMP_MAX_ALIVE_FOR_DYN + 1 ) );
 }
 
@@ -60,13 +58,56 @@ static inline int __mpcomp_loop_dyn_get_for_dyn_index( struct mpcomp_thread_s *t
 
 /* Chunk Manipulation */
 
+static inline unsigned long long __loop_get_num_iters_ull( unsigned long long start,
+        unsigned long long end,
+        unsigned long long step, bool up )
+{
+	unsigned long long ret = ( unsigned long long ) 0;
+	ret = ( up && start < end )
+	      ? ( end - start + step - ( unsigned long long ) 1 ) / step
+	      : ret;
+	ret = ( !up && start > end )
+	      ? ( start - end - step - ( unsigned long long ) 1 ) / -step
+	      : ret;
+	return ret;
+}
+
+static inline long __loop_get_num_iters( long start, long end,
+        long step )
+{
+	long ret = 0;
+	const bool up = ( step > 0 );
+	ret = ( up && start < end ) ? ( end - start + step - ( long ) 1 ) / step : ret;
+	ret = ( !up && start > end ) ? ( start - end - step - ( long ) 1 ) / -step : ret;
+	return ( ret >= 0 ) ? ret : -ret;
+}
+
+static inline uint64_t __loop_get_num_iters_gen( mpcomp_loop_gen_info_t *loop_infos )
+{
+	uint64_t count = 0;
+
+	if ( loop_infos->type == MPCOMP_LOOP_TYPE_LONG )
+	{
+		mpcomp_loop_long_iter_t *long_loop = &( loop_infos->loop.mpcomp_long );
+		count = __loop_get_num_iters( long_loop->lb, long_loop->b, long_loop->incr );
+	}
+	else
+	{
+		mpcomp_loop_ull_iter_t *ull_loop = &( loop_infos->loop.mpcomp_ull );
+		count = __loop_get_num_iters_ull( ull_loop->lb, ull_loop->b, ull_loop->incr, ull_loop->up );
+	}
+
+	return count;
+}
+
+
 /* Return the number of chunks that a static schedule will create for the thread 'rank' */
-int __mpcomp_get_static_nb_chunks_per_rank( int rank, int num_threads,
+static inline int __loop_get_static_nb_chunks_per_rank( int rank, int num_threads,
         mpcomp_loop_long_iter_t *loop )
 {
 	long nb_chunks_per_thread;
 	const long trip_count =
-	    __mpcomp_internal_loop_get_num_iters( loop->lb, loop->b, loop->incr );
+	    __loop_get_num_iters( loop->lb, loop->b, loop->incr );
 	/* Compute the number of chunks per thread (floor value) */
 	loop->chunk_size =
 	    ( loop->chunk_size ) ? loop->chunk_size : trip_count / num_threads;
@@ -90,14 +131,13 @@ int __mpcomp_get_static_nb_chunks_per_rank( int rank, int num_threads,
 /* ULL Chunk Manipulation */
 
 /* Return the number of chunks that a static schedule will create for the thread 'rank' */
-unsigned long long
-__mpcomp_get_static_nb_chunks_per_rank_ull( unsigned long long rank,
+static inline unsigned long long __loop_get_static_nb_chunks_per_rank_ull( unsigned long long rank,
         unsigned long long num_threads,
         mpcomp_loop_ull_iter_t *loop )
 {
 	unsigned long long nb_chunks_per_thread, chunk_size;
 	const unsigned long long trip_count =
-	    __mpcomp_internal_loop_get_num_iters_ull( loop->lb, loop->b, loop->incr,
+	    __loop_get_num_iters_ull( loop->lb, loop->b, loop->incr,
 	            loop->up );
 	chunk_size = ( loop->chunk_size ) ? loop->chunk_size : trip_count / num_threads;
 	chunk_size = ( chunk_size ) ? chunk_size : ( unsigned long long ) 1;
@@ -120,6 +160,8 @@ __mpcomp_get_static_nb_chunks_per_rank_ull( unsigned long long rank,
 	return nb_chunks_per_thread;
 }
 
+#if 0
+
 void __mpcomp_get_specific_chunk_per_rank( __UNUSED__ int rank, __UNUSED__ int num_threads, __UNUSED__ long lb,
         __UNUSED__ long b, __UNUSED__ long incr, __UNUSED__ long chunk_size,
         __UNUSED__ long chunk_num, __UNUSED__ long *from,
@@ -128,7 +170,6 @@ void __mpcomp_get_specific_chunk_per_rank( __UNUSED__ int rank, __UNUSED__ int n
 	not_implemented();
 }
 
-#if 0
 void
 __mpcomp_get_specific_chunk_per_rank_ull ( unsigned long rank, unsigned long nb_threads,
         unsigned long long lb, unsigned long long b, unsigned long long incr,
@@ -168,14 +209,14 @@ __mpcomp_get_specific_chunk_per_rank_ull ( unsigned long rank, unsigned long nb_
 	different */
 	if ( rank == ( trip_count / chunk_size ) % nb_threads
 	     && trip_count % chunk_size != 0
-	     && chunk_num == __mpcomp_get_static_nb_chunks_per_rank_ull ( rank,
+	     && chunk_num == __loop_get_static_nb_chunks_per_rank_ull ( rank,
 	             nb_threads, lb,
 	             b, incr,
 	             chunk_size ) - 1 )
 	{
 		local_from = lb + ( trip_count / chunk_size ) * chunk_size * incr;
 		local_to = lb + trip_count * incr;
-		sctk_nodebug ( "__mpcomp_static_schedule_get_specific_chunk: "
+		sctk_nodebug ( "__loop_static_schedule_get_specific_chunk: "
 		               "Thread %d: %ld -> %ld (excl) step %ld => "
 		               "%ld -> %ld (excl) step %ld (chunk of %ld)\n",
 		               rank, lb, b, incr, local_from, local_to, incr,
@@ -187,7 +228,7 @@ __mpcomp_get_specific_chunk_per_rank_ull ( unsigned long rank, unsigned long nb_
 		             chunk_size * incr * rank;
 		local_to   = lb + chunk_num * nb_threads * chunk_size * incr +
 		             chunk_size * incr * rank + chunk_size * incr;
-		sctk_nodebug ( "__mpcomp_static_schedule_get_specific_chunk: "
+		sctk_nodebug ( "__loop_static_schedule_get_specific_chunk: "
 		               "Thread %d / Chunk %ld: %ld -> %ld (excl) step %ld => "
 		               "%ld -> %ld (excl) step %ld (chunk of %ld)\n",
 		               rank, chunk_num, lb, b, incr, local_from, local_to, incr,
@@ -210,7 +251,7 @@ __mpcomp_get_specific_chunk_per_rank_ull ( unsigned long rank, unsigned long nb_
  *
  *****/
 /* Compute the chunk for a static schedule (without specific chunk size) */
-int __mpcomp_static_schedule_get_single_chunk( long lb, long b, long incr,
+static inline int __loop_static_schedule_get_single_chunk( long lb, long b, long incr,
         long *from, long *to )
 {
 	/*
@@ -231,7 +272,7 @@ int __mpcomp_static_schedule_get_single_chunk( long lb, long b, long incr,
 
 	if ( trip_count <= t->rank )
 	{
-		sctk_nodebug( "____mpcomp_static_schedule_get_single_chunk: "
+		sctk_nodebug( "____loop_static_schedule_get_single_chunk: "
 		              "#%d (%d -> %d step %d) -> NO CHUNK",
 		              rank, lb, b, incr );
 		return 0;
@@ -256,14 +297,14 @@ int __mpcomp_static_schedule_get_single_chunk( long lb, long b, long incr,
 	}
 
 	sctk_assert( ( incr > 0 ) ? ( *to - incr <= b ) : ( *to - incr >= b ) );
-	sctk_nodebug( "____mpcomp_static_schedule_get_single_chunk: "
+	sctk_nodebug( "____loop_static_schedule_get_single_chunk: "
 	              "#%d (%d -> %d step %d) -> (%d -> %d step %d)",
 	              rank, lb, b, incr, *from, *to, incr );
 	return 1;
 }
 
 /* Return the number of chunks that a static schedule would create */
-int __mpcomp_static_schedule_get_nb_chunks( long lb, long b, long incr,
+static inline int __loop_static_schedule_get_nb_chunks( long lb, long b, long incr,
         long chunk_size )
 {
 	/* Original loop: lb -> b step incr */
@@ -298,7 +339,7 @@ int __mpcomp_static_schedule_get_nb_chunks( long lb, long b, long incr,
 		nb_chunks_per_thread++;
 	}
 
-	sctk_nodebug( "____mpcomp_static_schedule_get_nb_chunks[%d]: %ld -> [%ld] "
+	sctk_nodebug( "____loop_static_schedule_get_nb_chunks[%d]: %ld -> [%ld] "
 	              "(cs=%ld) final nb_chunks = %ld",
 	              rank, lb, b, incr, chunk_size, nb_chunks_per_thread );
 	return nb_chunks_per_thread;
@@ -306,7 +347,7 @@ int __mpcomp_static_schedule_get_nb_chunks( long lb, long b, long incr,
 
 /* Return the chunk #'chunk_num' assuming a static schedule with 'chunk_size'
  * as a chunk size */
-void __mpcomp_static_schedule_get_specific_chunk( long rank, long num_threads,
+void __loop_static_schedule_get_specific_chunk( long rank, long num_threads,
         mpcomp_loop_long_iter_t *loop,
         long chunk_num, long *from,
         long *to )
@@ -358,7 +399,7 @@ void __mpcomp_static_loop_init( struct mpcomp_thread_s *t, long lb, long b, long
 	}
 
 	/* Compute the number of chunk for this thread */
-	t->static_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank(
+	t->static_nb_chunks = __loop_get_static_nb_chunks_per_rank(
 	                          t->rank, t->info.num_threads, &( loop_infos->loop.mpcomp_long ) );
 	sctk_nodebug( "[%d] %s: Got %d chunk(s)", t->rank, __func__,
 	              t->static_nb_chunks );
@@ -381,7 +422,7 @@ int __mpcomp_static_loop_begin( long lb, long b, long incr, long chunk_size,
 			if( callback )
 			{
 				uint64_t ompt_iter_count = 0;
-				ompt_iter_count = __mpcomp_internal_loop_get_num_iters_gen(&(t->info.loop_infos));
+				ompt_iter_count = __loop_get_num_iters_gen( &( t->info.loop_infos ) );
 				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
                 ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
 				const void* code_ra = __ompt_get_return_address(2);
@@ -413,11 +454,11 @@ int __mpcomp_static_loop_next( long *from, long *to )
 	if ( !( loop_infos->ischunked ) )
 	{
 		mpcomp_loop_long_iter_t *loop = &( loop_infos->loop.mpcomp_long );
-		return __mpcomp_static_schedule_get_single_chunk( loop->lb, loop->b,
+		return __loop_static_schedule_get_single_chunk( loop->lb, loop->b,
 		        loop->incr, from, to );
 	}
 
-	__mpcomp_static_schedule_get_specific_chunk(
+	__loop_static_schedule_get_specific_chunk(
 	    rank, nb_threads, &( loop_infos->loop.mpcomp_long ),
 	    t->static_current_chunk, from, to );
 	sctk_nodebug( "[%d] ____mpcomp_static_loop_next: got a chunk %d -> %d",
@@ -438,7 +479,7 @@ void __mpcomp_static_loop_end_nowait()
 			{
   				mpcomp_thread_t *t = mpcomp_get_thread_tls();
 				uint64_t ompt_iter_count =
-			      __mpcomp_internal_loop_get_num_iters_gen(&(t->info.loop_infos));
+				ompt_iter_count = __loop_get_num_iters_gen( &( t->info.loop_infos ) );
 				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
                 ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
 				const void* code_ra = __builtin_return_address(0);	
@@ -502,7 +543,7 @@ void __mpcomp_ordered_static_loop_end_nowait()
 /* Return the chunk #'chunk_num' assuming a static schedule with 'chunk_size'
  * as a chunk size */
 
-void __mpcomp_static_schedule_get_specific_chunk_ull(
+static inline void __loop_static_schedule_get_specific_chunk_ull(
     unsigned long long rank, unsigned long long num_threads,
     mpcomp_loop_ull_iter_t *loop, unsigned long long chunk_num,
     unsigned long long *from, unsigned long long *to )
@@ -513,14 +554,6 @@ void __mpcomp_static_schedule_get_specific_chunk_ull(
 	*to = *from + loop->chunk_size * loop->incr;
 	*to = ( loop->up && *to > loop->b ) ? loop->b : *to;
 	*to = ( !loop->up && *to < loop->b ) ? loop->b : *to;
-}
-
-void __mpcomp_static_loop_init_ull( __UNUSED__ mpcomp_thread_t *t, __UNUSED__ unsigned long long lb,
-                                    __UNUSED__ unsigned long long b,
-                                    __UNUSED__ unsigned long long incr,
-                                    __UNUSED__ unsigned long long chunk_size )
-{
-	return;
 }
 
 int __mpcomp_static_loop_begin_ull( bool up, unsigned long long lb,
@@ -545,7 +578,7 @@ int __mpcomp_static_loop_begin_ull( bool up, unsigned long long lb,
 	loop->b = b;
 	loop->incr = incr;
 	loop->chunk_size = chunk_size;
-	t->static_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank_ull(
+	t->static_nb_chunks = __loop_get_static_nb_chunks_per_rank_ull(
 	                          t->rank, t->info.num_threads, loop );
 	/* As the loop_next function consider a chunk as already been realised
 	   we need to initialize to 0 minus 1 */
@@ -576,7 +609,7 @@ int __mpcomp_static_loop_next_ull( unsigned long long *from,
 		return 0;
 	}
 
-	__mpcomp_static_schedule_get_specific_chunk_ull(
+	__loop_static_schedule_get_specific_chunk_ull(
 	    rank, num_threads, &( t->info.loop_infos.loop.mpcomp_ull ),
 	    t->static_current_chunk, from, to );
 	return 1;
@@ -638,7 +671,7 @@ int __mpcomp_guided_loop_begin( long lb, long b, long incr, long chunk_size,
 	t->schedule_type =
 	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;
 	t->schedule_is_forced = 1;
-	const int index = __mpcomp_loop_dyn_get_for_dyn_index( t );
+	const int index = __loop_dyn_get_for_dyn_index( t );
 
 	/* if current thread is too much ahead */
 	while ( OPA_load_int( &( t->instance->team->for_dyn_nb_threads_exited[index].i ) ) ==
@@ -668,7 +701,7 @@ int __mpcomp_guided_loop_next( long *from, long *to )
 	mpcomp_loop_long_iter_t *loop = &( t->info.loop_infos.loop.mpcomp_long );
 	const long num_threads = ( long ) t->info.num_threads;
 	long long int ret = 0, anc_from, chunk_size, new_from;
-	const int index = __mpcomp_loop_dyn_get_for_dyn_index( t );
+	const int index = __loop_dyn_get_for_dyn_index( t );
 
 	while ( ret == 0 ) /* will loop again if another thread changed from value at the same time */
 	{
@@ -722,7 +755,7 @@ void __mpcomp_guided_loop_end_nowait()
 	/* Number of threads in the current team */
 	const int num_threads = t->info.num_threads;
 	/* Compute the index of the dynamic for construct */
-	const int index = __mpcomp_loop_dyn_get_for_dyn_index( t );
+	const int index = __loop_dyn_get_for_dyn_index( t );
 	sctk_assert( index >= 0 && index < MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
 #if OMPT_SUPPORT
 	/* Avoid double call during runtime schedule policy */
@@ -735,7 +768,7 @@ void __mpcomp_guided_loop_end_nowait()
 			if( callback )
 			{
 				uint64_t ompt_iter_count = 0;
-				ompt_iter_count = __mpcomp_internal_loop_get_num_iters_gen(&(t->info.loop_infos));
+				ompt_iter_count = __loop_get_num_iters_gen( &( t->info.loop_infos ) );
 				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
                 ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
 				const void* code_ra = __builtin_return_address(0);	
@@ -761,7 +794,7 @@ void __mpcomp_guided_loop_end_nowait()
 	if ( nb_threads_exited == num_threads )
 	{
 		t->instance->team->is_first[index] = 1;
-		const int previous_index = __mpcomp_loop_dyn_get_for_dyn_prev_index( t );
+		const int previous_index = __loop_dyn_get_for_dyn_prev_index( t );
 		sctk_assert( previous_index >= 0 &&
 		             previous_index < MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
 		OPA_store_int( &( team_info->for_dyn_nb_threads_exited[index].i ),
@@ -777,22 +810,7 @@ void __mpcomp_guided_loop_end()
 	__mpcomp_barrier();
 }
 
-/* Start a loop shared by the team w/ a guided schedule.
-   !WARNING! This function assumes that there is no loops w/ guided schedule
-   and nowait clause previously executed in the same parallel region
-*/
-int __mpcomp_guided_loop_begin_ignore_nowait( __UNUSED__ long lb, __UNUSED__ long b, __UNUSED__ long incr,
-        __UNUSED__ long chunk_size, __UNUSED__ long *from,
-        __UNUSED__ long *to )
-{
-	not_implemented();
-	return 0;
-}
 
-int __mpcomp_guided_loop_next_ignore_nowait( long *from, long *to )
-{
-	return __mpcomp_dynamic_loop_next_ignore_nowait( from, to );
-}
 
 /****
  *
@@ -853,7 +871,7 @@ int __mpcomp_loop_ull_guided_begin( bool up, unsigned long long lb,
 	t->schedule_type =
 	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;
 	t->schedule_is_forced = 1;
-	const int index = __mpcomp_loop_dyn_get_for_dyn_index( t );
+	const int index = __loop_dyn_get_for_dyn_index( t );
 
 	while ( OPA_load_int( &( t->instance->team->for_dyn_nb_threads_exited[index].i ) ) ==
 	        MPCOMP_NOWAIT_STOP_SYMBOL )
@@ -884,7 +902,7 @@ int __mpcomp_loop_ull_guided_next( unsigned long long *from,
 	mpcomp_loop_ull_iter_t *loop = ( mpcomp_loop_ull_iter_t * ) & ( t->info.loop_infos.loop.mpcomp_ull );
 	const unsigned long long num_threads = ( unsigned long long ) t->info.num_threads;
 	unsigned long long ret = 0, anc_from, chunk_size, new_from;
-	const int index = __mpcomp_loop_dyn_get_for_dyn_index( t );
+	const int index = __loop_dyn_get_for_dyn_index( t );
 
 	while ( ret == 0 ) /* will loop again if another thread changed from value at the same time */
 	{
@@ -984,7 +1002,7 @@ int __mpcomp_loop_ull_ordered_guided_next( unsigned long long *from,
 
 /* dest = src1+src2 in base 'base' of size 'depth' up to dimension 'max_depth'
  */
-static inline int __mpcomp_loop_dyn_dynamic_add( int *dest, int *src1, int *src2,
+static inline int __loop_dyn_add( int *dest, int *src1, int *src2,
         int *base, int depth,
         int max_depth,
         int include_carry_over )
@@ -1011,7 +1029,7 @@ static inline int __mpcomp_loop_dyn_dynamic_add( int *dest, int *src1, int *src2
 }
 
 /* Return 1 if overflow, otherwise 0 */
-static inline int __mpcomp_loop_dyn_dynamic_increase( int *target, int *base,
+static inline int __loop_dyn_increase( int *target, int *base,
         int depth, int max_depth,
         int include_carry_over )
 {
@@ -1037,13 +1055,12 @@ static inline int __mpcomp_loop_dyn_dynamic_increase( int *target, int *base,
 	return ret;
 }
 
-static inline void
-__mpcomp_loop_dyn_init_target_chunk_ull( struct mpcomp_thread_s *thread,
+static inline void __loop_dyn_init_target_chunk_ull( struct mpcomp_thread_s *thread,
         struct mpcomp_thread_s *target,
         unsigned int num_threads )
 {
 	/* Compute the index of the dynamic for construct */
-	const int index = __mpcomp_loop_dyn_get_for_dyn_index( thread );
+	const int index = __loop_dyn_get_for_dyn_index( thread );
 	int cur = OPA_load_int( &( target->for_dyn_remain[index].i ) );
 
 	if ( cur < 0 )
@@ -1053,10 +1070,10 @@ __mpcomp_loop_dyn_init_target_chunk_ull( struct mpcomp_thread_s *thread,
 			/* Get the current id of remaining chunk for the target */
 			cur = OPA_load_int( &( target->for_dyn_remain[index].i ) );
 
-			if ( cur < 0 && ( __mpcomp_loop_dyn_get_for_dyn_current( thread ) >
-			                  __mpcomp_loop_dyn_get_for_dyn_current( target ) ) )
+			if ( cur < 0 && ( __loop_dyn_get_for_dyn_current( thread ) >
+			                  __loop_dyn_get_for_dyn_current( target ) ) )
 			{
-				target->for_dyn_total[index] = __mpcomp_get_static_nb_chunks_per_rank_ull(
+				target->for_dyn_total[index] = __loop_get_static_nb_chunks_per_rank_ull(
 				                                   ( unsigned long long ) target->rank, ( unsigned long long ) num_threads, &( thread->info.loop_infos.loop.mpcomp_ull ) );
 				OPA_cas_int( &( target->for_dyn_remain[index].i ), -1,
 				             target->for_dyn_total[index] );
@@ -1067,13 +1084,12 @@ __mpcomp_loop_dyn_init_target_chunk_ull( struct mpcomp_thread_s *thread,
 	}
 }
 
-static inline void
-__mpcomp_loop_dyn_init_target_chunk( struct mpcomp_thread_s *thread,
+static inline void __loop_dyn_init_target_chunk( struct mpcomp_thread_s *thread,
                                      struct mpcomp_thread_s *target,
                                      unsigned int num_threads )
 {
 	/* Compute the index of the dynamic for construct */
-	const int index = __mpcomp_loop_dyn_get_for_dyn_index( thread );
+	const int index = __loop_dyn_get_for_dyn_index( thread );
 	int cur = OPA_load_int( &( target->for_dyn_remain[index].i ) );
 
 	if ( cur < 0 )
@@ -1083,10 +1099,10 @@ __mpcomp_loop_dyn_init_target_chunk( struct mpcomp_thread_s *thread,
 			/* Get the current id of remaining chunk for the target */
 			cur = OPA_load_int( &( target->for_dyn_remain[index].i ) );
 
-			if ( cur < 0 && ( __mpcomp_loop_dyn_get_for_dyn_current( thread ) >
-			                  __mpcomp_loop_dyn_get_for_dyn_current( target ) ) )
+			if ( cur < 0 && ( __loop_dyn_get_for_dyn_current( thread ) >
+			                  __loop_dyn_get_for_dyn_current( target ) ) )
 			{
-				target->for_dyn_total[index] = __mpcomp_get_static_nb_chunks_per_rank(
+				target->for_dyn_total[index] = __loop_get_static_nb_chunks_per_rank(
 				                                   target->rank, num_threads, &( thread->info.loop_infos.loop.mpcomp_long ) );
 				OPA_cas_int( &( target->for_dyn_remain[index].i ), -1,
 				             target->for_dyn_total[index] );
@@ -1097,13 +1113,12 @@ __mpcomp_loop_dyn_init_target_chunk( struct mpcomp_thread_s *thread,
 	}
 }
 
-static inline int
-__mpcomp_loop_dyn_get_chunk_from_target( struct mpcomp_thread_s *thread,
+static inline int __loop_dyn_get_chunk_from_target( struct mpcomp_thread_s *thread,
         struct mpcomp_thread_s *target )
 {
 	int prev, cur;
 	/* Compute the index of the dynamic for construct */
-	const int index = __mpcomp_loop_dyn_get_for_dyn_index( thread );
+	const int index = __loop_dyn_get_for_dyn_index( thread );
 	cur = OPA_load_int( &( target->for_dyn_remain[index].i ) );
 
 	/* Init target chunk if it is not */
@@ -1111,11 +1126,11 @@ __mpcomp_loop_dyn_get_chunk_from_target( struct mpcomp_thread_s *thread,
 	{
 		if ( thread->info.loop_infos.type == MPCOMP_LOOP_TYPE_LONG )
 		{
-			__mpcomp_loop_dyn_init_target_chunk( thread, target, thread->info.num_threads );
+			__loop_dyn_init_target_chunk( thread, target, thread->info.num_threads );
 		}
 		else
 		{
-			__mpcomp_loop_dyn_init_target_chunk_ull( thread, target, thread->info.num_threads );
+			__loop_dyn_init_target_chunk_ull( thread, target, thread->info.num_threads );
 		}
 
 		cur = OPA_load_int( &( target->for_dyn_remain[index].i ) );
@@ -1141,15 +1156,15 @@ __mpcomp_loop_dyn_get_chunk_from_target( struct mpcomp_thread_s *thread,
 		}
 		else
 		{
-			if ( __mpcomp_loop_dyn_get_for_dyn_current( thread ) >=
-			     __mpcomp_loop_dyn_get_for_dyn_current( target ) )
+			if ( __loop_dyn_get_for_dyn_current( thread ) >=
+			     __loop_dyn_get_for_dyn_current( target ) )
 			{
 				if ( !mpc_common_spinlock_trylock( &( target->info.update_lock ) ) )
 				{
 					cur = OPA_load_int( &( target->for_dyn_remain[index].i ) );
 
-					if ( ( __mpcomp_loop_dyn_get_for_dyn_current( thread ) >=
-					       __mpcomp_loop_dyn_get_for_dyn_current( target ) ) &&
+					if ( ( __loop_dyn_get_for_dyn_current( thread ) >=
+					       __loop_dyn_get_for_dyn_current( target ) ) &&
 					     cur > 0 )
 					{
 						prev = cur;
@@ -1183,7 +1198,7 @@ __mpcomp_loop_dyn_get_chunk_from_target( struct mpcomp_thread_s *thread,
 	return ( cur > 0 && success ) ? ( int ) ( for_dyn_total - cur ) : -1;
 }
 
-static inline int __mpcomp_loop_dyn_get_victim_rank( struct mpcomp_thread_s *thread )
+static inline int __loop_dyn_get_victim_rank( struct mpcomp_thread_s *thread )
 {
 	int i;
 	unsigned int target;
@@ -1206,7 +1221,7 @@ static inline int __mpcomp_loop_dyn_get_victim_rank( struct mpcomp_thread_s *thr
 	return target;
 }
 
-static inline void __mpcomp_loop_dyn_target_reset( struct mpcomp_thread_s *thread )
+static inline void __loop_dyn_target_reset( struct mpcomp_thread_s *thread )
 {
 	int i;
 	sctk_assert( thread );
@@ -1225,7 +1240,7 @@ static inline void __mpcomp_loop_dyn_target_reset( struct mpcomp_thread_s *threa
 	}
 }
 
-static inline void __mpcomp_loop_dyn_target_init( struct mpcomp_thread_s *thread )
+static inline void __loop_dyn_target_init( struct mpcomp_thread_s *thread )
 {
 	sctk_assert( thread );
 
@@ -1242,12 +1257,12 @@ static inline void __mpcomp_loop_dyn_target_init( struct mpcomp_thread_s *thread
 	sctk_assert( thread->for_dyn_shift );
 	sctk_assert( thread->mvp );
 	sctk_assert( thread->mvp->tree_rank );
-	__mpcomp_loop_dyn_target_reset( thread );
+	__loop_dyn_target_reset( thread );
 	sctk_nodebug( "[%d] %s: initialization of target and shift", thread->rank,
 	              __func__ );
 }
 
-static int __mpcomp_dynamic_loop_get_chunk_from_rank( struct mpcomp_thread_s *t,
+static int __loop_dyn_get_chunk_from_rank( struct mpcomp_thread_s *t,
         struct mpcomp_thread_s *target,
         long *from, long *to )
 {
@@ -1262,14 +1277,14 @@ static int __mpcomp_dynamic_loop_get_chunk_from_rank( struct mpcomp_thread_s *t,
 	const long num_threads = ( long ) t->info.num_threads;
 	sctk_assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_LONG );
 	mpcomp_loop_long_iter_t *loop = &( t->info.loop_infos.loop.mpcomp_long );
-	cur = __mpcomp_loop_dyn_get_chunk_from_target( t, target );
+	cur = __loop_dyn_get_chunk_from_target( t, target );
 
 	if ( cur < 0 )
 	{
 		return 0;
 	}
 
-	__mpcomp_static_schedule_get_specific_chunk( rank, num_threads, loop,
+	__loop_static_schedule_get_specific_chunk( rank, num_threads, loop,
 	        cur, from, to );
 	return 1;
 }
@@ -1286,7 +1301,7 @@ void __mpcomp_dynamic_loop_init( struct mpcomp_thread_s *t, long lb, long b, lon
 	* Reinitialize the flag for the last iteration of the loop */
 	t->for_dyn_last_loop_iteration = 0;
 	const long num_threads = ( long ) t->info.num_threads;
-	const int index = __mpcomp_loop_dyn_get_for_dyn_index( t );
+	const int index = __loop_dyn_get_for_dyn_index( t );
 	t->schedule_type =
 	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;
 	t->schedule_is_forced = 0;
@@ -1303,7 +1318,7 @@ void __mpcomp_dynamic_loop_init( struct mpcomp_thread_s *t, long lb, long b, lon
 	__mpcomp_loop_gen_infos_init( &( t->info.loop_infos ), lb, b, incr, chunk_size );
 	/* Try to change the number of remaining chunks */
 	t->dyn_last_target = t;
-	t->for_dyn_total[index] = __mpcomp_get_static_nb_chunks_per_rank(
+	t->for_dyn_total[index] = __loop_get_static_nb_chunks_per_rank(
 	                              t->rank, num_threads, &( t->info.loop_infos.loop.mpcomp_long ) );
 	( void ) OPA_cas_int( &( t->for_dyn_remain[index].i ), -1, t->for_dyn_total[index] );
 }
@@ -1340,8 +1355,8 @@ int __mpcomp_dynamic_loop_begin( long lb, long b, long incr, long chunk_size,
 			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
 			if( callback )
 			{
-				uint64_t ompt_iter_count =
-				  __mpcomp_internal_loop_get_num_iters_gen(&(t->info.loop_infos));
+				uint64_t ompt_iter_count = 0;
+				ompt_iter_count = __loop_get_num_iters_gen( &( t->info.loop_infos ) );
 				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
                 ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
 				const void* code_ra = __ompt_get_return_address(2);
@@ -1368,11 +1383,11 @@ int __mpcomp_dynamic_loop_next( long *from, long *to )
 	/* 1 thread => no stealing, directly get a chunk */
 	if ( num_threads == 1 )
 	{
-		return __mpcomp_dynamic_loop_get_chunk_from_rank( t, t, from, to );
+		return __loop_dyn_get_chunk_from_rank( t, t, from, to );
 	}
 
 	/* Check that the target is allocated */
-	__mpcomp_loop_dyn_target_init( t );
+	__loop_dyn_target_init( t );
 
 	/*
 	 * WORKAROUND (pr35196.c):
@@ -1381,7 +1396,7 @@ int __mpcomp_dynamic_loop_next( long *from, long *to )
 	 */
 	if ( t->for_dyn_last_loop_iteration == 1 )
 	{
-		__mpcomp_loop_dyn_target_reset( t );
+		__loop_dyn_target_reset( t );
 		return 0;
 	}
 
@@ -1394,7 +1409,7 @@ int __mpcomp_dynamic_loop_next( long *from, long *to )
 	ret = 0;
 
 	/* While it is not possible to get a chunk */
-	while ( !__mpcomp_dynamic_loop_get_chunk_from_rank( t, target, from, to ) )
+	while ( !__loop_dyn_get_chunk_from_rank( t, target, from, to ) )
 	{
 do_increase:
 
@@ -1404,11 +1419,11 @@ do_increase:
 			break;
 		}
 
-		ret = __mpcomp_loop_dyn_dynamic_increase( t->for_dyn_shift, tree_base, tree_depth, max_depth, 1 );
+		ret = __loop_dyn_increase( t->for_dyn_shift, tree_base, tree_depth, max_depth, 1 );
 		/* Add t->for_dyn_shift and t->mvp->tree_rank[i] w/out carry over and store it into t->for_dyn_target */
-		__mpcomp_loop_dyn_dynamic_add( t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank, tree_base, tree_depth, max_depth, 0 );
+		__loop_dyn_add( t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank, tree_base, tree_depth, max_depth, 0 );
 		/* Compute the index of the target */
-		target_idx = __mpcomp_loop_dyn_get_victim_rank( t );
+		target_idx = __loop_dyn_get_victim_rank( t );
 		target_mvp = t->instance->mvps[target_idx].ptr.mvp;
 		target = ( target_mvp ) ? target_mvp->threads : NULL;
 
@@ -1457,7 +1472,7 @@ void __mpcomp_dynamic_loop_end_nowait( void )
 	/* Number of threads in the current team */
 	const int num_threads = t->info.num_threads;
 	/* Compute the index of the dynamic for construct */
-	const int index = __mpcomp_loop_dyn_get_for_dyn_index( t );
+	const int index = __loop_dyn_get_for_dyn_index( t );
 	sctk_assert( index >= 0 && index < MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
 #if OMPT_SUPPORT
 	/* Avoid double call during runtime schedule policy */
@@ -1469,8 +1484,8 @@ void __mpcomp_dynamic_loop_end_nowait( void )
 			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
 			if( callback )
 			{
-				uint64_t ompt_iter_count = 
-				  __mpcomp_internal_loop_get_num_iters_gen(&(t->info.loop_infos));
+				uint64_t ompt_iter_count = 0;
+				ompt_iter_count = __loop_get_num_iters_gen( &( t->info.loop_infos ) );
 				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
                 ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
 				const void* code_ra = __builtin_return_address(0);	
@@ -1505,7 +1520,7 @@ void __mpcomp_dynamic_loop_end_nowait( void )
 
 	if ( nb_threads_exited == num_threads )
 	{
-		const int previous_index = __mpcomp_loop_dyn_get_for_dyn_prev_index( t );
+		const int previous_index = __loop_dyn_get_for_dyn_prev_index( t );
 		sctk_assert( previous_index >= 0 &&
 		             previous_index < MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
 		OPA_store_int( &( team_info->for_dyn_nb_threads_exited[index].i ),
@@ -1697,7 +1712,7 @@ void __mpcomp_for_dyn_coherency_end_parallel_region(
 
 /* From thread t, try to steal a chunk from thread target
  * Returns 1 on success, 0 otherwise */
-static int __mpcomp_dynamic_loop_get_chunk_from_rank_ull(
+static int __loop_dyn_get_chunk_from_rank_ull(
     struct mpcomp_thread_s *t, struct mpcomp_thread_s *target, unsigned long long *from,
     unsigned long long *to )
 {
@@ -1714,14 +1729,14 @@ static int __mpcomp_dynamic_loop_get_chunk_from_rank_ull(
 	    ( unsigned long long ) t->info.num_threads;
 	sctk_assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_ULL );
 	mpcomp_loop_ull_iter_t *loop = &( t->info.loop_infos.loop.mpcomp_ull );
-	cur = __mpcomp_loop_dyn_get_chunk_from_target( t, target );
+	cur = __loop_dyn_get_chunk_from_target( t, target );
 
 	if ( cur < 0 )
 	{
 		return 0;
 	}
 
-	__mpcomp_static_schedule_get_specific_chunk_ull( rank, num_threads, loop,
+	__loop_static_schedule_get_specific_chunk_ull( rank, num_threads, loop,
 	        cur, from, to );
 	return 1;
 }
@@ -1732,7 +1747,7 @@ static int __mpcomp_dynamic_loop_get_chunk_from_rank_ull(
  *
  *
  *****/
-void __mpcomp_dynamic_loop_init_ull( struct mpcomp_thread_s *t, bool up,
+static inline void __loop_dyn_init_ull( struct mpcomp_thread_s *t, bool up,
                                      unsigned long long lb, unsigned long long b,
                                      unsigned long long incr,
                                      unsigned long long chunk_size )
@@ -1745,7 +1760,7 @@ void __mpcomp_dynamic_loop_init_ull( struct mpcomp_thread_s *t, bool up,
 	* Reinitialize the flag for the last iteration of the loop */
 	t->for_dyn_last_loop_iteration = 0;
 	const int num_threads = t->info.num_threads;
-	const int index = __mpcomp_loop_dyn_get_for_dyn_index( t );
+	const int index = __loop_dyn_get_for_dyn_index( t );
 	t->schedule_type =
 	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;
 	t->schedule_is_forced = 0;
@@ -1767,7 +1782,7 @@ void __mpcomp_dynamic_loop_init_ull( struct mpcomp_thread_s *t, bool up,
 	loop->incr = incr;
 	loop->chunk_size = chunk_size;
 	/* Try to change the number of remaining chunks */
-	t->for_dyn_total[index] = __mpcomp_get_static_nb_chunks_per_rank_ull(
+	t->for_dyn_total[index] = __loop_get_static_nb_chunks_per_rank_ull(
 	                              t->rank, num_threads, &( t->info.loop_infos.loop.mpcomp_ull ) );
 	( void ) OPA_cas_int( &( t->for_dyn_remain[index].i ), -1, t->for_dyn_total[index] );
 }
@@ -1799,7 +1814,7 @@ int __mpcomp_loop_ull_dynamic_begin( bool up, unsigned long long lb,
 
 	/* Initialization of loop internals */
 	t->for_dyn_last_loop_iteration = 0;
-	__mpcomp_dynamic_loop_init_ull( t, up, lb, b, incr, chunk_size );
+	__loop_dyn_init_ull( t, up, lb, b, incr, chunk_size );
 #if OMPT_SUPPORT
 	/* Avoid double call during runtime schedule policy */
 	if( ( t->schedule_type == MPCOMP_COMBINED_DYN_LOOP ) && _mpc_omp_ompt_is_enabled() )
@@ -1810,8 +1825,8 @@ int __mpcomp_loop_ull_dynamic_begin( bool up, unsigned long long lb,
 			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
 			if( callback )
 			{
-				uint64_t ompt_iter_count =
-				  __mpcomp_internal_loop_get_num_iters_gen(&(t->info.loop_infos));
+				uint64_t ompt_iter_count = 0;
+				ompt_iter_count = __loop_get_num_iters_gen( &( t->info.loop_infos ) );
 				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
                 ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
 				const void* code_ra = __ompt_get_return_address(3);
@@ -1857,11 +1872,11 @@ int __mpcomp_loop_ull_dynamic_next( unsigned long long *from,
 	/* 1 thread => no stealing, directly get a chunk */
 	if ( num_threads == 1 )
 	{
-		return __mpcomp_dynamic_loop_get_chunk_from_rank_ull( t, t, from, to );
+		return __loop_dyn_get_chunk_from_rank_ull( t, t, from, to );
 	}
 
 	/* Check that the target is allocated */
-	__mpcomp_loop_dyn_target_init( t );
+	__loop_dyn_target_init( t );
 
 	/*
 	 * WORKAROUND (pr35196.c):
@@ -1870,7 +1885,7 @@ int __mpcomp_loop_ull_dynamic_next( unsigned long long *from,
 	 */
 	if ( t->for_dyn_last_loop_iteration == 1 )
 	{
-		__mpcomp_loop_dyn_target_reset( t );
+		__loop_dyn_target_reset( t );
 		return 0;
 	}
 
@@ -1883,7 +1898,7 @@ int __mpcomp_loop_ull_dynamic_next( unsigned long long *from,
 	ret = 0;
 
 	/* While it is not possible to get a chunk */
-	while ( !__mpcomp_dynamic_loop_get_chunk_from_rank_ull( t, target, from, to ) )
+	while ( !__loop_dyn_get_chunk_from_rank_ull( t, target, from, to ) )
 	{
 do_increase:
 
@@ -1893,11 +1908,11 @@ do_increase:
 			break;
 		}
 
-		ret = __mpcomp_loop_dyn_dynamic_increase( t->for_dyn_shift, tree_base, tree_depth, max_depth, 1 );
+		ret = __loop_dyn_increase( t->for_dyn_shift, tree_base, tree_depth, max_depth, 1 );
 		/* Add t->for_dyn_shift and t->mvp->tree_rank[i] w/out carry over and store it into t->for_dyn_target */
-		__mpcomp_loop_dyn_dynamic_add( t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank, tree_base, tree_depth, max_depth, 0 );
+		__loop_dyn_add( t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank, tree_base, tree_depth, max_depth, 0 );
 		/* Compute the index of the target */
-		target_idx = __mpcomp_loop_dyn_get_victim_rank( t );
+		target_idx = __loop_dyn_get_victim_rank( t );
 		target_mvp = t->instance->mvps[target_idx].ptr.mvp;
 		target = ( target_mvp ) ? target_mvp->threads : NULL;
 
@@ -2491,8 +2506,7 @@ static unsigned long mpcomp_taskloop_compute_num_iters(long start, long end,
   return (end - start + step + decal) / step;
 }
 
-static unsigned long
-mpcomp_taskloop_compute_loop_value(long iteration_num, unsigned long num_tasks,
+static unsigned long __loop_taskloop_compute_loop_value(long iteration_num, unsigned long num_tasks,
                                    long step, long *taskstep,
                                    unsigned long *extra_chunk) {
   long compute_taskstep;
@@ -2529,7 +2543,7 @@ mpcomp_taskloop_compute_loop_value(long iteration_num, unsigned long num_tasks,
   return compute_num_tasks;
 }
 
-static unsigned long mpcomp_taskloop_compute_loop_value_grainsize(
+static unsigned long __loop_taskloop_compute_loop_value_grainsize(
     long iteration_num, unsigned long num_tasks, long step, long *taskstep,
     unsigned long *extra_chunk) {
   long compute_taskstep;
@@ -2584,10 +2598,10 @@ void mpcomp_taskloop(void (*fn)(void *), void *data,
   }
 
   if (!(flags & MPCOMP_TASK_FLAG_GRAINSIZE)) {
-    num_tasks = mpcomp_taskloop_compute_loop_value(num_iters, num_tasks, step,
+    num_tasks = __loop_taskloop_compute_loop_value(num_iters, num_tasks, step,
                                                    &taskstep, &extra_chunk);
   } else {
-    num_tasks = mpcomp_taskloop_compute_loop_value_grainsize(
+    num_tasks = __loop_taskloop_compute_loop_value_grainsize(
         num_iters, num_tasks, step, &taskstep, &extra_chunk);
     taskstep = (num_tasks == 1) ? end - start : taskstep;
   }
@@ -2631,7 +2645,7 @@ __asm__(".symver mpcomp_taskloop, GOMP_taskloop@@GOMP_4.0");
  ***********/
 
 
-static inline void __mpcomp_internal_ordered_begin( mpcomp_thread_t *t, mpcomp_loop_gen_info_t* loop_infos )
+static inline void __loop_internal_ordered_begin( mpcomp_thread_t *t, mpcomp_loop_gen_info_t* loop_infos )
 {
     sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG );
     mpcomp_loop_long_iter_t* loop = &( loop_infos->loop.mpcomp_long );
@@ -2651,7 +2665,7 @@ static inline void __mpcomp_internal_ordered_begin( mpcomp_thread_t *t, mpcomp_l
 	    sctk_thread_yield();
 } 
 
-static inline void __mpcomp_internal_ordered_begin_ull( mpcomp_thread_t *t, mpcomp_loop_gen_info_t* loop_infos )
+static inline void __loop_internal_ordered_begin_ull( mpcomp_thread_t *t, mpcomp_loop_gen_info_t* loop_infos )
 {
     sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_ULL );
     mpcomp_loop_ull_iter_t* loop = &( loop_infos->loop.mpcomp_ull );
@@ -2690,11 +2704,11 @@ void __mpcomp_ordered_begin( void )
     if( loop_infos->type == MPCOMP_LOOP_TYPE_LONG )
     { 
 //        fprintf(stderr, ":: %s :: Start ordered  %d\n", __func__, t->rank);
-        __mpcomp_internal_ordered_begin( t, loop_infos );
+        __loop_internal_ordered_begin( t, loop_infos );
     }
     else
     {
-        __mpcomp_internal_ordered_begin_ull( t, loop_infos );
+        __loop_internal_ordered_begin_ull( t, loop_infos );
     }
 }
 

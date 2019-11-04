@@ -25,7 +25,8 @@
 #ifndef MPCOMP_LOOP_H_
 #define MPCOMP_LOOP_H_
 
-
+#include <string.h>
+#include "sctk_debug.h"
 #include "mpcomp_types_def.h"
 #include <mpc_common_types.h>
 
@@ -120,55 +121,6 @@ __mpcomp_loop_gen_loop_infos_reset( mpcomp_loop_gen_info_t *loop )
 	memset( loop, 0, sizeof( mpcomp_loop_gen_info_t ) );
 }
 
-static inline unsigned long long
-__mpcomp_internal_loop_get_num_iters_ull( unsigned long long start,
-        unsigned long long end,
-        unsigned long long step, bool up )
-{
-	unsigned long long ret = ( unsigned long long ) 0;
-	ret = ( up && start < end )
-	      ? ( end - start + step - ( unsigned long long ) 1 ) / step
-	      : ret;
-	ret = ( !up && start > end )
-	      ? ( start - end - step - ( unsigned long long ) 1 ) / -step
-	      : ret;
-	return ret;
-}
-
-static inline long __mpcomp_internal_loop_get_num_iters( long start, long end,
-        long step )
-{
-	long ret = 0;
-	const bool up = ( step > 0 );
-	ret = ( up && start < end ) ? ( end - start + step - ( long ) 1 ) / step : ret;
-	ret = ( !up && start > end ) ? ( start - end - step - ( long ) 1 ) / -step : ret;
-	return ( ret >= 0 ) ? ret : -ret;
-}
-
-static inline uint64_t __mpcomp_internal_loop_get_num_iters_gen( mpcomp_loop_gen_info_t *loop_infos )
-{
-	uint64_t count = 0;
-
-	if ( loop_infos->type == MPCOMP_LOOP_TYPE_LONG )
-	{
-		mpcomp_loop_long_iter_t *long_loop = &( loop_infos->loop.mpcomp_long );
-		count = __mpcomp_internal_loop_get_num_iters( long_loop->lb, long_loop->b, long_loop->incr );
-	}
-	else
-	{
-		mpcomp_loop_ull_iter_t *ull_loop = &( loop_infos->loop.mpcomp_ull );
-		count = __mpcomp_internal_loop_get_num_iters_ull( ull_loop->lb, ull_loop->b, ull_loop->incr, ull_loop->up );
-	}
-
-	return count;
-}
-
-unsigned long long __mpcomp_get_static_nb_chunks_per_rank_ull(
-    unsigned long long, unsigned long long, mpcomp_loop_ull_iter_t * );
-
-int __mpcomp_get_static_nb_chunks_per_rank( int rank, int num_threads,
-        mpcomp_loop_long_iter_t *loop );
-
 /***************
  * LOOP STATIC *
  ***************/
@@ -176,10 +128,6 @@ int __mpcomp_get_static_nb_chunks_per_rank( int rank, int num_threads,
 void __mpcomp_static_loop_init( struct mpcomp_thread_s *, long, long, long,
                                 long );
 
-int __mpcomp_static_schedule_get_single_chunk( long, long, long, long *, long * );
-int __mpcomp_static_schedule_get_nb_chunks( long, long, long, long );
-void __mpcomp_static_schedule_get_specific_chunk( long, long, mpcomp_loop_long_iter_t *,
-        long, long *, long * );
 
 int __mpcomp_static_loop_begin( long, long, long, long, long *, long * );
 int __mpcomp_static_loop_next( long *, long * );
@@ -220,9 +168,7 @@ int __mpcomp_guided_loop_begin( long, long, long, long, long *, long * );
 int __mpcomp_guided_loop_next( long *, long * );
 void __mpcomp_guided_loop_end( void );
 void __mpcomp_guided_loop_end_nowait( void );
-int __mpcomp_guided_loop_begin_ignore_nowait( long, long, long, long, long *,
-        long * );
-int __mpcomp_guided_loop_next_ignore_nowait( long *, long * );
+
 int __mpcomp_ordered_guided_loop_begin( long, long, long, long, long *, long * );
 int __mpcomp_ordered_guided_loop_next( long *, long * );
 void __mpcomp_ordered_guided_loop_end( void );
@@ -248,10 +194,6 @@ struct mpcomp_instance_s;
 
 void __mpcomp_dynamic_loop_init( struct mpcomp_thread_s *, long, long, long,
                                  long );
-void __mpcomp_dynamic_loop_init_ull( struct mpcomp_thread_s *t, bool up,
-                                     unsigned long long lb, unsigned long long b,
-                                     unsigned long long incr,
-                                     unsigned long long chunk_size );
 
 int __mpcomp_dynamic_loop_begin( long, long, long, long, long *, long * );
 int __mpcomp_dynamic_loop_next( long *, long * );
