@@ -4,11 +4,11 @@
 
 #include "mpcomp_core.h"
 #include "mpcomp_loop.h"
-#include "mpcomp_barrier.h"
+
 #include "mpcomp_parallel_region.h"
-#include "mpcomp_single.h"
+
 #include "mpcomp_sync.h"
-#include "mpcomp_lock.h"
+
 #include "mpcomp_task.h"
 #include "mpcomp_task_utils.h"
 #include "mpcomp_taskgroup.h"

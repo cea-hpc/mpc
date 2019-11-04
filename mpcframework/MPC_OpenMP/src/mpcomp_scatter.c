@@ -1,6 +1,7 @@
 #include "mpcomp_types.h"
 
-#include "mpcomp_barrier.h"
+
+#include "mpcomp_sync.h"
 #include "mpcomp_spinning_core.h"
 
 #if defined( MPCOMP_OPENMP_3_0 )

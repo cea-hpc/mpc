@@ -36,11 +36,11 @@
 #include "sctk_launch.h"
 
 #include "mpcomp_task.h"
-#include "mpcomp_sections.h"
 #include "mpcomp_sync.h"
 #include "mpcomp_tree_structs.h"
 #include "mpcomp_task_utils.h"
-#include "mpcomp_sections.h"
+
+#include "mpcomp_sync.h"
 #include "mpcomp_core.h"
 
 /* Loop declaration */

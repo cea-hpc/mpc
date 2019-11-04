@@ -1,8 +1,8 @@
 #include "mpcomp_types.h"
 #include "mpcomp_core.h"
 #include "mpc_common_asm.h"
-#include "mpcomp_barrier.h"
 
+#include "mpcomp_sync.h"
 
 
 #if defined( MPCOMP_OPENMP_3_0 )

@@ -7,11 +7,10 @@
 #include "mpcomp_sync.h"
 #include "mpcomp_core.h"
 #include "mpcomp_tree_structs.h"
-#include "mpcomp_barrier.h"
+
 #include "mpcomp_loop.h"
 #include "mpcomp_taskgroup.h"
 #include "mpcomp_task_dep.h"
-#include "mpcomp_sections.h"
 
 #include "mpcomp_task_utils.h"
 #include "mpcomp_parallel_region.h"
