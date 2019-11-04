@@ -32,7 +32,7 @@
 #include "mpc_topology.h"
 #include "mpcomp_types_def.h"
 #include "mpcomp_types_icv.h"
-#include "mpcomp_types_loop.h"
+#include "mpcomp_loop.h"
 #include "mpcomp_task.h"
 #include "mpcomp_tree_array.h"
 #include "mpc_common_spinlock.h"

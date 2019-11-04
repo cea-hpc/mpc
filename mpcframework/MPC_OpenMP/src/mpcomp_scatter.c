@@ -1,5 +1,5 @@
 #include "mpcomp_types.h"
-#include "mpcomp_alloc.h"
+
 #include "mpcomp_barrier.h"
 #include "mpcomp_spinning_core.h"
 

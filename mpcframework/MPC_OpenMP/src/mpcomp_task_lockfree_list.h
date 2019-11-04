@@ -33,7 +33,7 @@
 #include "sctk_tls.h"
 
 #include "mpcomp_task.h"
-#include "mpcomp_alloc.h"
+
 #include "sctk_debug.h"
 #include "mpcomp_task_locked_list.h"
 

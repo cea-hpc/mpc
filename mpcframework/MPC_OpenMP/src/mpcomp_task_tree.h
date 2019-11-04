@@ -5,7 +5,8 @@
 
 #include "mpc_common_helper.h"
 #include "mpcomp_types.h"
-#include "mpcomp_alloc.h"
+#include "mpcomp_core.h"
+
 #include "sctk_debug.h"
 
 typedef struct mpcomp_task_tree_infos_s {

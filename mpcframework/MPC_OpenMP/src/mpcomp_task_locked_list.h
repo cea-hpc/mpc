@@ -34,7 +34,7 @@
 #include "sctk_tls.h"
 
 #include "mpcomp_task.h"
-#include "mpcomp_alloc.h"
+
 #include "sctk_debug.h"
 
 #include "mpc_common_spinlock.h"

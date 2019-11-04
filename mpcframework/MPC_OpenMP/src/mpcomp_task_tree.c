@@ -3,7 +3,7 @@
 #if MPCOMP_TASK
 
 #include "sctk_debug.h"
-#include "mpcomp_alloc.h"
+
 #include "mpcomp_types.h"
 #include "mpcomp_task_list.h"
 #include "mpcomp_task_utils.h"

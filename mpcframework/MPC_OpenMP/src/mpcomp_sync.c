@@ -29,7 +29,7 @@
 #include "mpc_common_spinlock.h"
 #include "omp_ompt.h"
 
-#include "mpcomp_alloc.h"
+
 #include "sched.h"
 #include "mpc_common_asm.h"
 #include "sctk_thread.h"
@@ -65,7 +65,7 @@ void __mpcomp_atomic_begin(void)
 		//prevent multi call to init 
 		if( !OPA_cas_int( &__mpcomp_atomic_lock_init_once, 0, 1))
 		{
-			__mpcomp_omp_global_atomic_lock = (mpc_common_spinlock_t*) mpcomp_alloc(sizeof(mpc_common_spinlock_t));
+			__mpcomp_omp_global_atomic_lock = (mpc_common_spinlock_t*) sctk_malloc(sizeof(mpc_common_spinlock_t));
 			sctk_assert( __mpcomp_omp_global_atomic_lock );
 			mpc_common_spinlock_init(__mpcomp_omp_global_atomic_lock, SCTK_SPINLOCK_INITIALIZER );
 
@@ -163,7 +163,7 @@ void __mpcomp_anonymous_critical_begin(void)
 		//prevent multi call to init 
 		if( !OPA_cas_int( &__mpcomp_critical_lock_init_once, 0, 1))
 		{
-			__mpcomp_omp_global_critical_lock = (mpcomp_lock_t *) mpcomp_alloc( sizeof( mpcomp_lock_t ));
+			__mpcomp_omp_global_critical_lock = (mpcomp_lock_t *) sctk_malloc( sizeof( mpcomp_lock_t ));
 			sctk_assert(__mpcomp_omp_global_critical_lock);
    		memset(__mpcomp_omp_global_critical_lock, 0, sizeof(mpcomp_lock_t));
    		sctk_thread_mutex_init(&(__mpcomp_omp_global_critical_lock->lock), 0);
@@ -269,7 +269,7 @@ void __mpcomp_named_critical_begin(void **l)
 		
     	if( *l == NULL ) 
 		{
-			named_critical_lock = (mpcomp_lock_t *) mpcomp_alloc( sizeof( mpcomp_lock_t ));
+			named_critical_lock = (mpcomp_lock_t *) sctk_malloc( sizeof( mpcomp_lock_t ));
 			sctk_assert( named_critical_lock );
 			memset(named_critical_lock, 0, sizeof(mpcomp_lock_t));
 			sctk_thread_mutex_init(&(named_critical_lock->lock), 0);

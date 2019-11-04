@@ -2,8 +2,9 @@
 #define __SCTK_MPCOMP_TASK_STEALING_H__
 
 #include "sctk_debug.h"
-#include "mpcomp_alloc.h"
+
 #include "mpcomp_types.h"
+#include "mpcomp_core.h"
 
 struct mpcomp_task_stealing_funcs_s {
   char *namePolicy;

@@ -27,6 +27,24 @@
 
 #include "mpcomp_types.h" /* need mpcomp_mvp_t && mpcomp_instance_t */
 
+/**************
+ * ALLOC HOOK *
+ **************/
+
+static inline void* mpcomp_alloc( int size ) 
+{
+  return sctk_malloc(size);
+}
+
+static inline void mpcomp_free( void *p ) 
+{ 
+    sctk_free(p); 
+}
+
+/*******************************
+ * INITIALIZATION AND FINALIZE *
+ *******************************/
+
 void __mpcomp_init(void);
 void __mpcomp_exit(void);
 void __mpcomp_instance_init(mpcomp_instance_t *, int, mpcomp_team_t *);

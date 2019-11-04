@@ -12,20 +12,16 @@
 #include "mpcomp_taskgroup.h"
 #include "mpcomp_task_dep.h"
 #include "mpcomp_sections.h"
-#include "mpcomp_loop_dyn.h"
+
 #include "mpcomp_task_utils.h"
-#include "mpcomp_loop_static.h"
 #include "mpcomp_parallel_region.h"
-#include "mpcomp_loop_guided.h"
-#include "mpcomp_loop_runtime.h"
+
 #include "mpcomp_parallel_region_no_mpc_types.h"
-#include "mpcomp_loop_static_ull_no_mpc_types.h"
+
 
 /***********
  * ORDERED *
  ***********/
-
-#include "mpcomp_ordered.h"
 
 void mpcomp_GOMP_ordered_start( void )
 {

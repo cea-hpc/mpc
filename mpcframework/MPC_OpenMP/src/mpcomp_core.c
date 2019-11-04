@@ -44,13 +44,11 @@
 #include "mpcomp_core.h"
 
 /* Loop declaration */
-#include "mpcomp_loop_dyn.h"
-#include "mpcomp_loop_guided.h"
-#include "mpcomp_loop_runtime.h"
-#include "mpcomp_loop_static.h"
+#include "mpcomp_loop.h"
+
 
 #include "sctk_thread.h"
-#include "mpcomp_alloc.h"
+
 
 #include "ompt.h"
 /* parsing OMP_PLACES */

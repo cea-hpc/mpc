@@ -3,7 +3,7 @@
 #include "mpc_common_asm.h"
 #include "mpcomp_barrier.h"
 
-#include "mpcomp_alloc.h"
+
 
 #if defined( MPCOMP_OPENMP_3_0 )
 #include "mpcomp_task_utils.h"

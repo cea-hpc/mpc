@@ -22,55 +22,306 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __MPCOMP_LOOP_CORE_H__
-#define __MPCOMP_LOOP_CORE_H__
+#ifndef MPCOMP_LOOP_H_
+#define MPCOMP_LOOP_H_
 
-#include "mpcomp_types_loop.h"
+
+#include "mpcomp_types_def.h"
+#include <mpc_common_types.h>
+
+/*******************
+ * LOOP CORE TYPES *
+ *******************/
+
+typedef enum mpcomp_loop_gen_type_e
+{
+	MPCOMP_LOOP_TYPE_LONG,
+	MPCOMP_LOOP_TYPE_ULL,
+} mpcomp_loop_gen_type_t;
+
+typedef struct mpcomp_loop_long_iter_s
+{
+	bool up;
+	long lb;		 /* Lower bound          */
+	long b;			 /* Upper bound          */
+	long incr;		 /* Step                 */
+	long chunk_size; /* Size of each chunk   */
+	long cur_ordered_iter;
+} mpcomp_loop_long_iter_t;
+
+typedef struct mpcomp_loop_ull_iter_s
+{
+	bool up;
+	unsigned long long lb;		   /* Lower bound              */
+	unsigned long long b;		   /* Upper bound              */
+	unsigned long long incr;	   /* Step                     */
+	unsigned long long chunk_size; /* Size of each chunk       */
+	unsigned long long cur_ordered_iter;
+} mpcomp_loop_ull_iter_t;
+
+typedef union mpcomp_loop_gen_iter_u
+{
+	mpcomp_loop_ull_iter_t mpcomp_ull;
+	mpcomp_loop_long_iter_t mpcomp_long;
+} mpcomp_loop_gen_iter_t;
+
+typedef struct mpcomp_loop_gen_info_s
+{
+	int fresh;
+	int ischunked;
+	mpcomp_loop_gen_type_t type;
+	mpcomp_loop_gen_iter_t loop;
+} mpcomp_loop_gen_info_t;
+
+static inline void
+__mpcomp_loop_gen_infos_init( mpcomp_loop_gen_info_t *loop_infos, long lb,
+                              long b, long incr, long chunk_size )
+{
+	sctk_assert( loop_infos );
+	loop_infos->fresh = true;
+	loop_infos->ischunked = ( chunk_size ) ? 1 : 0;
+	loop_infos->type = MPCOMP_LOOP_TYPE_LONG;
+	loop_infos->loop.mpcomp_long.up = ( incr > 0 );
+	loop_infos->loop.mpcomp_long.b = b;
+	loop_infos->loop.mpcomp_long.lb = lb;
+	loop_infos->loop.mpcomp_long.incr = incr;
+	/* Automatic chunk size -> at most one chunk */
+	loop_infos->loop.mpcomp_long.chunk_size = ( chunk_size ) ? chunk_size : 1;
+}
+
+static inline void
+__mpcomp_loop_gen_infos_init_ull( mpcomp_loop_gen_info_t *loop_infos,
+                                  unsigned long long lb, unsigned long long b,
+                                  unsigned long long incr,
+                                  unsigned long long chunk_size )
+{
+	sctk_assert( loop_infos );
+	loop_infos->fresh = true;
+	loop_infos->ischunked = ( chunk_size ) ? 1 : 0;
+	loop_infos->type = MPCOMP_LOOP_TYPE_ULL;
+	loop_infos->loop.mpcomp_ull.up = ( incr > 0 );
+	loop_infos->loop.mpcomp_ull.b = b;
+	loop_infos->loop.mpcomp_ull.lb = lb;
+	loop_infos->loop.mpcomp_ull.incr = incr;
+	/* Automatic chunk size -> at most one chunk */
+	loop_infos->loop.mpcomp_ull.chunk_size = ( chunk_size ) ? chunk_size : 1;
+}
+
+static inline void
+__mpcomp_loop_gen_loop_infos_cpy( mpcomp_loop_gen_info_t *in,
+                                  mpcomp_loop_gen_info_t *out )
+{
+	memcpy( out, in, sizeof( mpcomp_loop_gen_info_t ) );
+}
+
+static inline void
+__mpcomp_loop_gen_loop_infos_reset( mpcomp_loop_gen_info_t *loop )
+{
+	memset( loop, 0, sizeof( mpcomp_loop_gen_info_t ) );
+}
 
 static inline unsigned long long
-__mpcomp_internal_loop_get_num_iters_ull(unsigned long long start,
-                                         unsigned long long end,
-                                         unsigned long long step, bool up) {
-  unsigned long long ret = (unsigned long long)0;
-  ret = (up && start < end)
-            ? (end - start + step - (unsigned long long)1) / step
-            : ret;
-  ret = (!up && start > end)
-            ? (start - end - step - (unsigned long long)1) / -step
-            : ret;
-  return ret;
-}
-
-static inline long __mpcomp_internal_loop_get_num_iters(long start, long end,
-                                                        long step) {
-  long ret = 0;
-  const bool up = (step > 0);
-
-  ret = (up && start < end) ? (end - start + step - (long)1) / step : ret;
-  ret = (!up && start > end) ? (start - end - step - (long)1) / -step : ret;
-  return (ret >= 0) ? ret : -ret;
-}
-
-static inline uint64_t __mpcomp_internal_loop_get_num_iters_gen( mpcomp_loop_gen_info_t* loop_infos )
+__mpcomp_internal_loop_get_num_iters_ull( unsigned long long start,
+        unsigned long long end,
+        unsigned long long step, bool up )
 {
-	uint64_t count = 0;	
+	unsigned long long ret = ( unsigned long long ) 0;
+	ret = ( up && start < end )
+	      ? ( end - start + step - ( unsigned long long ) 1 ) / step
+	      : ret;
+	ret = ( !up && start > end )
+	      ? ( start - end - step - ( unsigned long long ) 1 ) / -step
+	      : ret;
+	return ret;
+}
 
-	if( loop_infos->type == MPCOMP_LOOP_TYPE_LONG )
+static inline long __mpcomp_internal_loop_get_num_iters( long start, long end,
+        long step )
+{
+	long ret = 0;
+	const bool up = ( step > 0 );
+	ret = ( up && start < end ) ? ( end - start + step - ( long ) 1 ) / step : ret;
+	ret = ( !up && start > end ) ? ( start - end - step - ( long ) 1 ) / -step : ret;
+	return ( ret >= 0 ) ? ret : -ret;
+}
+
+static inline uint64_t __mpcomp_internal_loop_get_num_iters_gen( mpcomp_loop_gen_info_t *loop_infos )
+{
+	uint64_t count = 0;
+
+	if ( loop_infos->type == MPCOMP_LOOP_TYPE_LONG )
 	{
-		mpcomp_loop_long_iter_t* long_loop = &( loop_infos->loop.mpcomp_long );
-		count = __mpcomp_internal_loop_get_num_iters(long_loop->lb , long_loop->b, long_loop->incr );
+		mpcomp_loop_long_iter_t *long_loop = &( loop_infos->loop.mpcomp_long );
+		count = __mpcomp_internal_loop_get_num_iters( long_loop->lb, long_loop->b, long_loop->incr );
 	}
 	else
 	{
-		mpcomp_loop_ull_iter_t* ull_loop = &( loop_infos->loop.mpcomp_ull );
-		count = __mpcomp_internal_loop_get_num_iters_ull(ull_loop->lb , ull_loop->b, ull_loop->incr, ull_loop->up );
+		mpcomp_loop_ull_iter_t *ull_loop = &( loop_infos->loop.mpcomp_ull );
+		count = __mpcomp_internal_loop_get_num_iters_ull( ull_loop->lb, ull_loop->b, ull_loop->incr, ull_loop->up );
 	}
+
 	return count;
 }
 
 unsigned long long __mpcomp_get_static_nb_chunks_per_rank_ull(
-    unsigned long long, unsigned long long, mpcomp_loop_ull_iter_t *);
+    unsigned long long, unsigned long long, mpcomp_loop_ull_iter_t * );
 
-int __mpcomp_get_static_nb_chunks_per_rank(int rank, int num_threads,
-                                           mpcomp_loop_long_iter_t *loop);
-#endif /* __MPCOMP_LOOP_CORE_H__ */
+int __mpcomp_get_static_nb_chunks_per_rank( int rank, int num_threads,
+        mpcomp_loop_long_iter_t *loop );
+
+/***************
+ * LOOP STATIC *
+ ***************/
+
+void __mpcomp_static_loop_init( struct mpcomp_thread_s *, long, long, long,
+                                long );
+
+int __mpcomp_static_schedule_get_single_chunk( long, long, long, long *, long * );
+int __mpcomp_static_schedule_get_nb_chunks( long, long, long, long );
+void __mpcomp_static_schedule_get_specific_chunk( long, long, mpcomp_loop_long_iter_t *,
+        long, long *, long * );
+
+int __mpcomp_static_loop_begin( long, long, long, long, long *, long * );
+int __mpcomp_static_loop_next( long *, long * );
+void __mpcomp_static_loop_end( void );
+void __mpcomp_static_loop_end_nowait( void );
+
+int __mpcomp_ordered_static_loop_begin( long, long b, long, long, long *,
+                                        long * );
+int __mpcomp_ordered_static_loop_next( long *, long * );
+void __mpcomp_ordered_static_loop_end( void );
+void __mpcomp_ordered_static_loop_end_nowait( void );
+
+int __mpcomp_static_loop_begin_ull( bool up, unsigned long long lb,
+                                    unsigned long long b,
+                                    unsigned long long incr,
+                                    unsigned long long chunk_size,
+                                    unsigned long long *from,
+                                    unsigned long long *to );
+
+int __mpcomp_static_loop_next_ull( unsigned long long *from,
+                                   unsigned long long *to );
+
+int __mpcomp_ordered_static_loop_begin_ull( bool up, unsigned long long lb,
+        unsigned long long b,
+        unsigned long long incr,
+        unsigned long long chunk_size,
+        unsigned long long *from,
+        unsigned long long *to );
+
+int __mpcomp_ordered_static_loop_next_ull( unsigned long long *from,
+        unsigned long long *to );
+
+/***************
+ * LOOP GUIDED *
+ ***************/
+
+int __mpcomp_guided_loop_begin( long, long, long, long, long *, long * );
+int __mpcomp_guided_loop_next( long *, long * );
+void __mpcomp_guided_loop_end( void );
+void __mpcomp_guided_loop_end_nowait( void );
+int __mpcomp_guided_loop_begin_ignore_nowait( long, long, long, long, long *,
+        long * );
+int __mpcomp_guided_loop_next_ignore_nowait( long *, long * );
+int __mpcomp_ordered_guided_loop_begin( long, long, long, long, long *, long * );
+int __mpcomp_ordered_guided_loop_next( long *, long * );
+void __mpcomp_ordered_guided_loop_end( void );
+void __mpcomp_ordered_guided_loop_end_nowait( void );
+int __mpcomp_loop_ull_guided_begin( bool, unsigned long long, unsigned long long,
+                                    unsigned long long, unsigned long long,
+                                    unsigned long long *, unsigned long long * );
+int __mpcomp_loop_ull_guided_next( unsigned long long *, unsigned long long * );
+void __mpcomp_guided_loop_ull_end( void );
+void __mpcomp_guided_loop_ull_end_nowait( void );
+int __mpcomp_loop_ull_ordered_guided_begin(
+    bool, unsigned long long, unsigned long long, unsigned long long,
+    unsigned long long, unsigned long long *, unsigned long long * );
+int __mpcomp_loop_ull_ordered_guided_next( unsigned long long *,
+        unsigned long long * );
+
+/****************
+ * LOOP DYNAMIC *
+ ****************/
+
+struct mpcomp_thread_s;
+struct mpcomp_instance_s;
+
+void __mpcomp_dynamic_loop_init( struct mpcomp_thread_s *, long, long, long,
+                                 long );
+void __mpcomp_dynamic_loop_init_ull( struct mpcomp_thread_s *t, bool up,
+                                     unsigned long long lb, unsigned long long b,
+                                     unsigned long long incr,
+                                     unsigned long long chunk_size );
+
+int __mpcomp_dynamic_loop_begin( long, long, long, long, long *, long * );
+int __mpcomp_dynamic_loop_next( long *, long * );
+int __mpcomp_loop_ull_dynamic_begin( bool, unsigned long long,
+                                     unsigned long long, unsigned long long,
+                                     unsigned long long, unsigned long long *,
+                                     unsigned long long * );
+int __mpcomp_loop_ull_dynamic_next( unsigned long long *, unsigned long long * );
+void __mpcomp_dynamic_loop_end( void );
+void __mpcomp_dynamic_loop_end_nowait( void );
+int __mpcomp_dynamic_loop_next_ignore_nowait( long *, long * );
+
+int __mpcomp_ordered_dynamic_loop_begin( long, long, long, long, long *, long * );
+int __mpcomp_ordered_dynamic_loop_next( long *, long * );
+int __mpcomp_loop_ull_ordered_dynamic_begin(
+    bool, unsigned long long, unsigned long long, unsigned long long,
+    unsigned long long, unsigned long long *, unsigned long long * );
+int __mpcomp_loop_ull_ordered_dynamic_next( unsigned long long *,
+        unsigned long long * );
+void __mpcomp_ordered_dynamic_loop_end( void );
+void __mpcomp_ordered_dynamic_loop_end_nowait( void );
+
+void __mpcomp_for_dyn_coherency_end_barrier( void );
+void __mpcomp_for_dyn_coherency_end_parallel_region( struct mpcomp_instance_s * );
+
+/****************
+ * LOOP RUNTIME *
+ ****************/
+
+int __mpcomp_runtime_loop_begin( long, long, long, long *, long * );
+int __mpcomp_runtime_loop_next( long *, long * );
+int __mpcomp_loop_ull_runtime_begin( bool, unsigned long long,
+                                     unsigned long long, unsigned long long,
+                                     unsigned long long *, unsigned long long * );
+int __mpcomp_loop_ull_runtime_next( unsigned long long *, unsigned long long * );
+void __mpcomp_runtime_loop_end( void );
+void __mpcomp_runtime_loop_end_nowait( void );
+
+int __mpcomp_ordered_runtime_loop_begin( long, long, long, long *, long * );
+int __mpcomp_ordered_runtime_loop_next( long *, long * );
+int __mpcomp_loop_ull_ordered_runtime_begin( bool, unsigned long long,
+        unsigned long long,
+        unsigned long long,
+        unsigned long long *,
+        unsigned long long * );
+int __mpcomp_loop_ull_ordered_runtime_next( unsigned long long *,
+        unsigned long long * );
+void __mpcomp_ordered_runtime_loop_end( void );
+void __mpcomp_ordered_runtime_loop_end_nowait( void );
+
+/************
+ * TASKLOOP *
+ ************/
+
+#if MPCOMP_TASK
+
+void mpcomp_taskloop(void (*)(void *), void *, void (*)(void *, void *), long,
+                     long, unsigned, unsigned long, int, long, long, long);
+void mpcomp_taskloop_ull(void (*)(void *), void *, void (*)(void *, void *),
+                         long, long, unsigned, unsigned long, int,
+                         unsigned long long, unsigned long long,
+                         unsigned long long);
+
+#endif
+
+/***********
+ * ORDERED *
+ ***********/
+
+void __mpcomp_ordered_begin( void );
+void __mpcomp_ordered_end( void );
+
+#endif /* MPCOMP_LOOP_H_ */

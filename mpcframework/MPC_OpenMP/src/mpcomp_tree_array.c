@@ -4,7 +4,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "mpcomp_alloc.h"
+
 
 #include "mpcthread.h"
 #include "mpc_common_asm.h"

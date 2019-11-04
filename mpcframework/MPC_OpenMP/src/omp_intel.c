@@ -3,6 +3,15 @@
 #include "sctk_debug.h"
 
 #include "mpcomp_core.h"
+#include "mpcomp_loop.h"
+#include "mpcomp_barrier.h"
+#include "mpcomp_parallel_region.h"
+#include "mpcomp_single.h"
+#include "mpcomp_sync.h"
+#include "mpcomp_lock.h"
+#include "mpcomp_task.h"
+#include "mpcomp_task_utils.h"
+#include "mpcomp_taskgroup.h"
 
 /********************
  * GLOBAL VARIABLES *
@@ -71,9 +80,7 @@ void __kmpc_flush( __UNUSED__ ident_t *loc, ... )
 
 /***********
  * BARRIER *
- ***********/
-
-#include "mpcomp_barrier.h"
+ * ********/
 
 void __kmpc_barrier( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
@@ -120,7 +127,7 @@ void __intel_wrapper_func( void *arg )
  * PARALLEL REGION *
  *******************/
 
-#include "mpcomp_parallel_region.h"
+
 
 kmp_int32 __kmpc_ok_to_fork( __UNUSED__ ident_t *loc )
 {
@@ -269,9 +276,7 @@ void __kmpc_fork_teams( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 argc, __UN
  * SYNCHRONIZATION *
  *******************/
 
-#include "mpcomp_single.h"
-#include "mpcomp_sync.h"
-#include "mpcomp_ordered.h"
+
 
 kmp_int32 __kmpc_master( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
@@ -331,7 +336,6 @@ void __kmpc_end_single( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid
  * LOCKS *
  *********/
 
-#include "mpcomp_lock.h"
 
 void __kmpc_init_lock( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 gtid, void **user_lock )
 {
@@ -929,9 +933,7 @@ void __kmpc_end_reduce( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid
  * STATIC *
  **********/
 
-#include "mpcomp_loop.h"
-#include "mpcomp_loop_static.h"
-#include "mpcomp_loop_static_ull.h"
+
 
 void __kmpc_for_static_init_4( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid, kmp_int32 schedtype,
                                kmp_int32 *plastiter, kmp_int32 *plower,
@@ -1491,11 +1493,6 @@ void __kmpc_for_static_fini( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 globa
  * DISPATCH *
  ************/
 
-#include "mpcomp_loop_dyn.h"
-#include "mpcomp_loop_guided.h"
-#include "mpcomp_loop_runtime.h"
-
-
 static inline void __intel_dispatch_init_long( mpcomp_thread_t *t, long lb,
         long b, long incr,
         long chunk )
@@ -2035,10 +2032,6 @@ kmpc_thunk_t *__kmpc_task_buffer( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 
 /***********
  * TASKING *
  ***********/
-
-#include "mpcomp_task.h"
-#include "mpcomp_task_utils.h"
-#include "mpcomp_taskgroup.h"
 
 #if MPCOMP_TASK
 kmp_int32 __kmpc_omp_task( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid,
