@@ -37,7 +37,7 @@
 #include "mpcomp_task_macros.h"
 #include "mpcomp_task_list.h"
 #include "mpcomp_task_utils.h"
-#include "mpcomp_tree_utils.h"
+
 #include "mpcomp_task_stealing.h"
 #include "mpc_common_asm.h"
 #include "mpcomp_task_dep.h"

@@ -31,7 +31,7 @@
 #include "mpcomp_parallel_region.h"
 #include "mpcomp_loop.h"
 #include "mpcomp_task_utils.h"
-#include "mpcomp_tree_structs.h"
+
 
 #if OMPT_SUPPORT
 #include "ompt.h"

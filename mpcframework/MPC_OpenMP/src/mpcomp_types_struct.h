@@ -31,10 +31,11 @@
 #include "mpc_common_asm.h"
 #include "mpc_topology.h"
 #include "mpcomp_types_def.h"
+#include "mpcomp_types_enum.h"
 #include "mpcomp_types_icv.h"
 #include "mpcomp_loop.h"
 #include "mpcomp_task.h"
-#include "mpcomp_tree_array.h"
+#include "mpcomp_tree.h"
 #include "mpc_common_spinlock.h"
 
 #ifdef MPCOMP_USE_INTEL_ABI
@@ -49,6 +50,7 @@ extern "C" {
 
 /*****  BREAK CIRCLE DEPS FOR TASK API *****/
 
+#include "mpcomp_task.h"
 
 /********************
  ****** Threadprivate
@@ -94,6 +96,21 @@ typedef struct mpcomp_new_parallel_region_info_s {
 #endif /* OMPT_SUPPORT */
 
 } mpcomp_parallel_region_t;
+
+static inline void
+__mpcomp_parallel_region_infos_reset( mpcomp_parallel_region_t *info )
+{
+	sctk_assert( info );
+	memset( info, 0, sizeof( mpcomp_parallel_region_t ) );
+}
+
+static inline void
+__mpcomp_parallel_region_infos_init( mpcomp_parallel_region_t *info )
+{
+	sctk_assert( info );
+	__mpcomp_parallel_region_infos_reset( info );
+	info->combined_pragma = MPCOMP_COMBINED_NONE;
+}
 
 /* Team of OpenMP threads */
 typedef struct mpcomp_team_s {
@@ -334,12 +351,14 @@ typedef struct mpcomp_mvp_s
     struct mpcomp_mvp_saved_context_s*  prev_node_father;
 } mpcomp_mvp_t;
 
+struct mpcomp_meta_tree_node_s;
+
 /* OpenMP Node */
 typedef struct mpcomp_node_s 
 {
     int already_init;
     /* -- MVP Thread specific informations --                   */
-    mpcomp_meta_tree_node_t *tree_array;
+    struct mpcomp_meta_tree_node_s *tree_array;
     int* tree_array_ancestor_path;  
     long tree_array_rank; 
     /** MVP spinning as a node                                  */

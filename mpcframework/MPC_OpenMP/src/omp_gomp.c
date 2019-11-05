@@ -6,7 +6,6 @@
 #include "mpcomp_abi.h"
 #include "mpcomp_sync.h"
 #include "mpcomp_core.h"
-#include "mpcomp_tree_structs.h"
 
 #include "mpcomp_loop.h"
 #include "mpcomp_taskgroup.h"

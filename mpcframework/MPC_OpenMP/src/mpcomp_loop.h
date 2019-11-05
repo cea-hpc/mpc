@@ -125,6 +125,8 @@ __mpcomp_loop_gen_loop_infos_reset( mpcomp_loop_gen_info_t *loop )
  * LOOP STATIC *
  ***************/
 
+struct mpcomp_thread_s;
+
 void __mpcomp_static_loop_init( struct mpcomp_thread_s *, long, long, long,
                                 long );
 

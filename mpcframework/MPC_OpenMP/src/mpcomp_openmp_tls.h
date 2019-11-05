@@ -10,7 +10,7 @@ static inline mpcomp_thread_t *mpcomp_get_thread_tls(void) {
   return thread;
 }
 
-static inline mpcomp_thread_t *mpcomp_get_ancestor_thread_tls(int level) {
+static inline mpcomp_thread_t *mpc_omp_tree_array_ancestor_get_thread_tls(int level) {
   int i;
   mpcomp_thread_t *thread = mpcomp_get_thread_tls();
   const int max_level_var = thread->info.icvs.levels_var;

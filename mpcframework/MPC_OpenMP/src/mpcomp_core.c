@@ -37,7 +37,6 @@
 
 #include "mpcomp_task.h"
 #include "mpcomp_sync.h"
-#include "mpcomp_tree_structs.h"
 #include "mpcomp_task_utils.h"
 
 #include "mpcomp_sync.h"

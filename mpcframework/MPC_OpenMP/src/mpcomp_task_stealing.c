@@ -10,7 +10,6 @@
 #include "mpcomp_types.h"
 #include "mpcomp_task_list.h"
 #include "mpcomp_task_utils.h"
-#include "mpcomp_tree_utils.h"
 #include "mpcomp_task_stealing.h"
 
 #if MPCOMP_TASK
@@ -61,7 +60,7 @@ int mpcomp_task_get_victim_default(int globalRank, __UNUSED__ int index,
 
 int mpcomp_task_get_victim_hierarchical(int globalRank, __UNUSED__ int index,
                                         __UNUSED__ mpcomp_tasklist_type_t type) {
-  return mpcomp_get_neighbour(globalRank, index);
+  return mpc_omp_tree_array_get_neighbor(globalRank, index);
 }
 
 /** Random stealing policy **/

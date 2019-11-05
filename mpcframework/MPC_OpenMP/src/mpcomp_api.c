@@ -188,7 +188,7 @@ int omp_get_active_level(void) {
 int omp_get_ancestor_thread_num(int level) {
   __mpcomp_init();
   if( !level ) return 0; 
-  mpcomp_thread_t *t = mpcomp_get_ancestor_thread_tls(level);
+  mpcomp_thread_t *t = mpc_omp_tree_array_ancestor_get_thread_tls(level);
   return (t == NULL) ? -1 : t->rank;
 }
 
@@ -202,7 +202,7 @@ int omp_get_ancestor_thread_num(int level) {
 int omp_get_team_size(int level) {
   __mpcomp_init();
   if( !level ) return 1;
-  mpcomp_thread_t *t = mpcomp_get_ancestor_thread_tls(level);
+  mpcomp_thread_t *t = mpc_omp_tree_array_ancestor_get_thread_tls(level);
   return (t == NULL) ? -1 : t->info.num_threads;
 }
 
