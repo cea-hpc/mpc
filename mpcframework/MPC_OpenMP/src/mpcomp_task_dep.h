@@ -5,9 +5,11 @@
 #define __MPCOMP_TASK_DEP_H__
 
 #include <mpc_common_types.h>
-#include <mpc_common_types.h>
 #include <mpc_common_asm.h>
-#include <mpc_common_asm.h>
+
+#include "mpcomp_types.h"
+#include "mpcomp_task_macros.h"
+
 
 #define MPCOMP_TASK_DEP_GOMP_DEPS_FLAG 8
 
@@ -215,6 +217,16 @@ mpcomp_task_dep_free_task_htable(mpcomp_task_dep_ht_table_t *htable) {
     }
   }
   return removed_entries;
+}
+
+static inline long mpcomp_task_align_single_malloc(long size, long arg_align) {
+  if (size & (arg_align - 1)) {
+    const size_t tmp_size = size & (~(arg_align - 1));
+    if (tmp_size <= KMP_SIZE_T_MAX - arg_align) {
+      return tmp_size + arg_align;
+    }
+  }
+  return size;
 }
 
 /**

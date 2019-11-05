@@ -6,11 +6,14 @@
 #include <mpc_common_types.h>
 #include <mpc_common_asm.h>
 
+#include "mpcomp_tree.h"
+
 #include "sctk_debug.h"
 #include "mpcomp_types.h"
 #include "mpcomp_task_list.h"
 #include "mpcomp_task_utils.h"
 #include "mpcomp_task_stealing.h"
+
 
 #if MPCOMP_TASK
 

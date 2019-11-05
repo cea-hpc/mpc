@@ -21,9 +21,10 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "mpcomp_types_def.h"
+
 
 #include "mpc_common_types.h"
+#include "mpcomp_types.h"
 
 #if MPCOMP_TASK
 

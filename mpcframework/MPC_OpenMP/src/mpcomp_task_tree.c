@@ -1,4 +1,4 @@
-#include "mpcomp_types_def.h"
+#include "mpcomp_types.h"
 
 #if MPCOMP_TASK
 

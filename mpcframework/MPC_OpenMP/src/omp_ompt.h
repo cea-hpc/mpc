@@ -4,7 +4,7 @@
 #include <string.h>
 
 /* For definition of OMPT_SUPPORT macro */
-#include "mpcomp_types_def.h"
+#include "mpcomp_types.h"
 #include "sctk_alloc.h"
 
 #include "ompt.h"

@@ -3,8 +3,7 @@
 
 #include "mpc_common_types.h"
 
-/* For MPCOMP_TASK and MPCOMP_USE_TASKDEP */
-#include "mpcomp_types_def.h"
+#include "mpcomp_types.h"
 
 /**********************
  * SYMBOL VERSIONNING *

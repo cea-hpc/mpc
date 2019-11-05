@@ -1,7 +1,7 @@
 #ifndef MPCOMP_TREE_H_
 #define MPCOMP_TREE_H_
 
-#include "mpcomp_types_struct.h"
+#include "mpcomp_types.h"
 
 /***************
  * TREE STRUCT *
@@ -119,58 +119,13 @@ static inline void __mpcomp_team_infos_init( mpcomp_team_t *team )
 	int mpc_omp_tree_array_get_neighbor( int globalRank, int i );
 	int mpc_omp_tree_array_ancestor_get( int globalRank, int depth );
 
-	void __mpcomp_task_check_neighbourhood( void );
+	void _mpc_omp_tree_task_check_neigborhood( void );
 
 #endif /* MPCOMP_TASK */
 
 /**************
  * TREE ARRAY *
  **************/
-
-
-typedef enum
-{
-	MPCOMP_META_TREE_UNDEF      = 0,
-	MPCOMP_META_TREE_NODE       = 1,
-	MPCOMP_META_TREE_LEAF       = 2,
-	MPCOMP_META_TREE_NONE       = 3
-} mpcomp_meta_tree_type_t;
-
-
-typedef struct mpcomp_tree_array_global_info_s
-{
-	int *tree_shape;
-	int max_depth;
-} mpcomp_tree_array_global_info_t;
-
-typedef struct mpcomp_meta_tree_node_s
-{
-	/* Generic information */
-	mpcomp_meta_tree_type_t type;
-	/* Father information */
-	int *fathers_array;
-	unsigned int fathers_array_size;
-	/* Children information */
-	int *first_child_array;
-	unsigned int *children_num_array;
-	unsigned int children_array_size;
-
-	/* Places */
-
-	/* Min index */
-	void *user_pointer;
-	OPA_int_t children_ready;
-} mpcomp_meta_tree_node_t;
-
-typedef struct mpcomp_mvp_thread_args_s
-{
-	unsigned int rank;
-	mpcomp_meta_tree_node_t *array;
-	unsigned int place_id;
-	unsigned int target_vp;
-	unsigned int place_depth;
-} mpcomp_mvp_thread_args_t;
-
 
 void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, const int place_depth, const int place_size, const mpcomp_local_icv_t *icvs );
 

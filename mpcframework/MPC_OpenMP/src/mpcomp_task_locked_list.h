@@ -21,7 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "mpcomp_types_def.h"
+#include "mpcomp_types.h"
 
 #if (!defined(__MPCOMP_TASK_LOCKED_LIST_H__) && defined(MPCOMP_TASK))
 #define __MPCOMP_TASK_LOCKED_LIST_H__

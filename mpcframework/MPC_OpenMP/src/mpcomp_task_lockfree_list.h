@@ -21,14 +21,11 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "mpcomp_types_def.h"
+#include "mpcomp_types.h"
 
 #if (!defined(__MPCOMP_TASK_LOCKFREE_LIST_H__) && defined(MPCOMP_TASK))
 #define __MPCOMP_TASK_LOCKFREE_LIST_H__
 
-#include "mpcomp.h"
-
-#include "mpc_common_asm.h"
 #include "sctk_context.h"
 #include "sctk_tls.h"
 

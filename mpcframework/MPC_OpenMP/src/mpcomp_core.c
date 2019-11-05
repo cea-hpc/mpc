@@ -41,6 +41,7 @@
 
 #include "mpcomp_sync.h"
 #include "mpcomp_core.h"
+#include "mpcomp_tree.h"
 
 /* Loop declaration */
 #include "mpcomp_loop.h"

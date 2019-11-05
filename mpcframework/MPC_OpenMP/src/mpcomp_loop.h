@@ -26,53 +26,15 @@
 #define MPCOMP_LOOP_H_
 
 #include <string.h>
+
 #include "sctk_debug.h"
-#include "mpcomp_types_def.h"
 #include <mpc_common_types.h>
+
+#include "mpcomp_types.h"
 
 /*******************
  * LOOP CORE TYPES *
  *******************/
-
-typedef enum mpcomp_loop_gen_type_e
-{
-	MPCOMP_LOOP_TYPE_LONG,
-	MPCOMP_LOOP_TYPE_ULL,
-} mpcomp_loop_gen_type_t;
-
-typedef struct mpcomp_loop_long_iter_s
-{
-	bool up;
-	long lb;		 /* Lower bound          */
-	long b;			 /* Upper bound          */
-	long incr;		 /* Step                 */
-	long chunk_size; /* Size of each chunk   */
-	long cur_ordered_iter;
-} mpcomp_loop_long_iter_t;
-
-typedef struct mpcomp_loop_ull_iter_s
-{
-	bool up;
-	unsigned long long lb;		   /* Lower bound              */
-	unsigned long long b;		   /* Upper bound              */
-	unsigned long long incr;	   /* Step                     */
-	unsigned long long chunk_size; /* Size of each chunk       */
-	unsigned long long cur_ordered_iter;
-} mpcomp_loop_ull_iter_t;
-
-typedef union mpcomp_loop_gen_iter_u
-{
-	mpcomp_loop_ull_iter_t mpcomp_ull;
-	mpcomp_loop_long_iter_t mpcomp_long;
-} mpcomp_loop_gen_iter_t;
-
-typedef struct mpcomp_loop_gen_info_s
-{
-	int fresh;
-	int ischunked;
-	mpcomp_loop_gen_type_t type;
-	mpcomp_loop_gen_iter_t loop;
-} mpcomp_loop_gen_info_t;
 
 static inline void
 __mpcomp_loop_gen_infos_init( mpcomp_loop_gen_info_t *loop_infos, long lb,

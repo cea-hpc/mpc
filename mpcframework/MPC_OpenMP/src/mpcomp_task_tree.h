@@ -1,9 +1,8 @@
-#include "mpcomp_types_def.h"
-
 #if (!defined(__MPCOMP_TASK_TREE_H__) && MPCOMP_TASK)
 #define __MPCOMP_TASK_TREE_H__
 
 #include "mpc_common_helper.h"
+#include <mpc_topology.h>
 #include "mpcomp_types.h"
 #include "mpcomp_core.h"
 
