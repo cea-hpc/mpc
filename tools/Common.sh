@@ -238,68 +238,12 @@ setBuildCompiler()
 }
 
 ######################################################
-# Create Home link to current installation path, if necessary
-# Args: None
-#Variables: CHECKSUM_TOOL, MPC_RPREFIX
-#Result: Expose HOME_CFILEPATH vars (can be empty if HOME link cannot be created)
-cleanHomeLink()
-{
-	HOME_CFILEPATH=
-	export HOME_CFILEPATH
-
-	which ${CHECKSUM_TOOL} > /dev/null 2>&1
-	if test "$?" != "0";
-	then
-		printf "Warning: This installation cannot find to ${CHECKSUM_TOOL}.\n"
-		printf "Warning: Please ensure a valid checksum tool is available to fully exploit dynamic compiler switch facilities\n"
-	else
-		clean_path="`echo "$MPC_RPREFIX" | sed -e "s#//*#/#g"`"
-		install_hash="`echo "$clean_path" | $CHECKSUM_TOOL | cut -f1 -d" "`"
-		HOME_CFILEPATH=$HOME/.mpcompil/${install_hash}
-
-		#remove previous installation if exists (Warning: There are some deletions here)
-		test -w $HOME -a -f $HOME_CFILEPATH/mpc_install_path && rm -rf $HOME_CFILEPATH
-	fi
-	echo $HOME_CFILEPATH
-}
-
-createHomeLink()
-{
-	#Clean again if needed
-	HOME_CFILEPATH="`cleanHomeLink`"
-	if test -w $HOME
-	then
-		mkdir -p $HOME_CFILEPATH
-		echo "$clean_path" > ${HOME_CFILEPATH}/mpc_install_path
-	else
-		printf "Warning: HOME directory is not writable. Any modifications to compilers will directly impact the installation directory\n"
-	fi
-}
-
-######################################################
-#function create compiler configuration file into both HOME and installation path
+#function printing compilers (copying them in ~/.mpcompil implictly by the manager)
 #Args   : None
-#Variables: MPC_RPREFIX, MPC_HOST, MPC_TARGET, BUILD_CC, BUILD_CXX, BUILD_FC, BUILD_FAMILY
-#Result : create MPC_RPREFIX/.*_compilers.cfg and HOME/.mpcompil/HASH/.*_compilers.cfg
+#Result : create HOME/.mpcompil/HASH/ directory
 storeMPCcompilers()
 {
-	#manager called in MPC copied files into HOME_CFILEPATH if set: copy back these files in the installation
-	createHomeLink
-	if test -n "$HOME_CFILEPATH"; then
-		#copy config files first (needed by manager just few lines later)
-		cp ${MPC_RPREFIX}/.*_compilers.cfg ${HOME_CFILEPATH}/
-		#needed to regen fortran modules
-		cp -r ${MPC_RPREFIX}/fortran_gen ${HOME_CFILEPATH}/
-		#retrieve and copy compiler-specific directories
-		for lang in c cxx fortran; 
-		do 
-			CHASH=`$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager get_detail $lang 1 | cut -f4 -d":"`
-			test -n "$CHASH" -a -d "$MPC_RPREFIX/$CHASH/" && cp -r ${MPC_RPREFIX}/${CHASH} ${HOME_CFILEPATH}/
-		done
-	fi
-
-	#print default compilers
-	$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager list_default
+	$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager --global list_default
 }
 
 ######################################################

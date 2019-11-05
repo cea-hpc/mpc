@@ -408,10 +408,10 @@ if test "$SCTK_LIB_MODE" != "1" ; then
 printf "\t@echo \"MOD fortran modules\"" >> Makefile; echo "" >> Makefile
 printf "\t@cp -r \${MPC_SOURCE_DIR}/MPC_Tools/fortran_gen \${MPC_RPREFIX}/" >> Makefile; echo "" >> Makefile
 printf "\t@cp -r \${MPC_SOURCE_DIR}/MPC_MPI/include/mpc_mpi.h \${MPC_RPREFIX}/fortran_gen" >> Makefile; echo "" >> Makefile
-printf "\t@MPC_RPREFIX=\${DESTDIR} \${DESTDIR}${SCTK_BIN_DIR}/mpc_compiler_manager --global add c ${SCTK_CC} ${SCTK_FAMILY} >/dev/null 2>&1" >> Makefile; echo "" >> Makefile
-printf "\t@MPC_RPREFIX=\${DESTDIR} \${DESTDIR}${SCTK_BIN_DIR}/mpc_compiler_manager --global add cxx ${SCTK_CXX} ${SCTK_FAMILY} >/dev/null 2>&1" >> Makefile; echo "" >> Makefile
+printf "\t@\${DESTDIR}${SCTK_BIN_DIR}/mpc_compiler_manager --global add c ${SCTK_CC} ${SCTK_FAMILY} >/dev/null 2>&1" >> Makefile; echo "" >> Makefile
+printf "\t@\${DESTDIR}${SCTK_BIN_DIR}/mpc_compiler_manager --global add cxx ${SCTK_CXX} ${SCTK_FAMILY} >/dev/null 2>&1" >> Makefile; echo "" >> Makefile
 if test "$SCTK_FORTRAN" = "1"; then
-printf "\t@MPC_RPREFIX=\${DESTDIR} \${DESTDIR}${SCTK_BIN_DIR}/mpc_compiler_manager --global add fortran ${SCTK_F77} ${SCTK_FAMILY} >/dev/null 2>&1" >> Makefile; echo "" >> Makefile
+printf "\t@\${DESTDIR}${SCTK_BIN_DIR}/mpc_compiler_manager --global add fortran ${SCTK_F77} ${SCTK_FAMILY} >/dev/null 2>&1" >> Makefile; echo "" >> Makefile
 fi
 fi
 if test "$SCTK_ACTIVE_MESSAGE" = 1; then

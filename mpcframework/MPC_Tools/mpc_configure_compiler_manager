@@ -102,7 +102,8 @@ is_valid_language()
 
 create_home()
 {
-	test ! -d "\${user_prefix}" || die "Error occured when creating the HOME link"
+	test -n "\${user_prefix}" || die "Error occured when reading user_prefix in create_home()"
+	test ! -d "\${user_prefix}" -o ! -w "\${user_prefix}" || die "Error occured when creating the HOME link"
 	mkdir -p \${user_prefix}
 	echo "\$MPC_RPREFIX" | sed -e "s#//*#/#g" > \${user_prefix}/mpc_install_path
 	echo "\$CREATION_TIMESTAMP" > \${user_prefix}/.creation_timestamp
@@ -124,13 +125,18 @@ is_valid_home()
 	test -f "\$COMPILER_FILEPATH/mpc_install_path" || die "Sanity check failed !"
 
 	timestamp_f="\${COMPILER_FILEPATH}/.creation_timestamp"
+	timestamp_v="\`cat \${timestamp_f} 2> /dev/null\`"
 	#check existence for compatibility
-	if test ! -f "\$timestamp_f" -o "\$CREATION_TIMESTAMP" != "\`cat \$timestamp_f 2> /dev/null\`"; then
-
-		warn "MPC has been installed again in the same path after the HOME creation."
+	if test ! -f "\$timestamp_f" -o "\$CREATION_TIMESTAMP" != "\$timestamp_v"; then
+		reinstall_date="\`date -u -d @\${CREATION_TIMESTAMP}\`"
+		old_copy_date="\`date -u -d @\${timestamp_v}\`"
+		warn "A more recent MPC configuration exists for this installation path:"
+		warn "Local copy Timestamp: \${old_copy_date}"
+		warn "New configuration Timestamp: \${reinstall_date}"
+		warn "This may due to a MPC re-installation within the same prefix."
 		backup="\${COMPILER_FILEPATH}-backup"
-		test -d "\${backup}" && die "A backup cannot be erased. Please remove \${backup} directory"
-		warn "The HOME will be copied to \$backup and a new link will be generated"
+		test -d "\${backup}" && die "A previous backup exists. Please remove \${backup} directory first!"
+		warn "The local copy is saved under \$backup."
 		mv \${COMPILER_FILEPATH} \$backup
 		create_home
 	fi
@@ -400,7 +406,7 @@ YEL="\`printf "\033[1;33m"\`"
 DEF="\`printf "\033[0;0m"\`"
 fi
 
-install_hash=\`echo \$MPC_RPREFIX | sed -e "s#//*#/#g" | hash_content \`
+install_hash=\`echo \$MPC_RPREFIX | sed -e "s#//*#/#g" -e 's#/\$##g' | hash_content \`
 user_prefix=\$HOME/.mpcompil/\$install_hash
 COMPILER_FILEPATH=
 ARGS=
@@ -424,12 +430,6 @@ do
 	esac
 done
 
-if test -z "\$COMPILER_FILEPATH"
-then
-	COMPILER_FILEPATH=\$user_prefix
-	test ! -e \$user_prefix && create_home
-fi
-
 #default values
 command="help"
 lang="c"
@@ -447,6 +447,13 @@ arg="\`echo "\$ARGS" | cut -s -d" " -f4\`"
 test -n "\$4" && family="\$arg"
 
 is_valid_language "\$lang"
+
+if test -z "\$COMPILER_FILEPATH"
+then
+	COMPILER_FILEPATH=\$user_prefix
+	test ! -e \$user_prefix && create_home
+fi
+
 # do this check only when working this the local link
 test "\$COMPILER_FILEPATH" != "\$MPC_RPREFIX" && is_valid_home
 test ! -e \$COMPILER_FILEPATH/.\${lang}_compilers.cfg && touch \$COMPILER_FILEPATH/.\${lang}_compilers.cfg 
