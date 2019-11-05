@@ -506,9 +506,6 @@ if test "${CHECK_INSTALL}" = "true"; then
 	checkIfInstallAlreadyExists
 fi
 
-#clean HOME link in case of reinstallation (nothing happens for a first installation here)
-cleanHomeLink > /dev/null
-
 ######################################################
 #Check for specific arch libs
 if test "${MPC_TARGET}" = "k1om"; then

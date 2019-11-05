@@ -30,16 +30,17 @@ list_languages=" c cxx fortran "
 CHECKSUM_TOOL=sha1sum
 CREATION_TIMESTAMP="`date -u +"%s"`"
 
-if test -z \${MPC_RPREFIX}; then
-	echo "################################################################" 1>&2
-	echo "# No MPC_RPREFIX defined. it is the root of the actual prefix  #" 1>&2
-	echo "# You should source the mpcvars.sh file in root of MPC prefix  #" 1>&2
-	echo "################################################################" 1>&2
+# Some clarifications:
+# This script needs root prefix directory AND host/target specifialization (Fortran compilation)
+# To get these two paths, 2 scenarios can occur:
+# 1. MPC is installed and the user sourced mpcvars.sh, both these values can be found in the environment
+# 2. Any other situation, this script can still be called (should not by the user), for example by installmpc/Makefile during installation process. For this second case, we have to test for MPC_SUBPREFIX
+if test -n "\${MPC_RPREFIX}" -a -n "\${MPC_SUBPREFIX}"; then
+	MPC_prefix=\$MPC_RPREFIX/\$MPC_SUBPREFIX/
+else
 	#attempt to guess MPC prefix = current script looks like PREFIX/host/target/bin/manager
 	MPC_prefix=\`dirname \$0\`/../
 	MPC_RPREFIX="\`readlink -e \$MPC_prefix/../../\`"
-else
-	MPC_prefix=\$MPC_RPREFIX/\$MPC_SUBPREFIX/
 fi
 
 die()
