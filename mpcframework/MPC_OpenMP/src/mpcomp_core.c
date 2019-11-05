@@ -45,14 +45,14 @@
 
 /* Loop declaration */
 #include "mpcomp_loop.h"
-
+#include "mpcomp_tree.h"
 
 #include "sctk_thread.h"
 
 
 #include "ompt.h"
 /* parsing OMP_PLACES */
-#include "mpcomp_parsing_env.h"
+#include "mpcomp_places_env.h"
 
 /*****************
   ****** GLOBAL VARIABLES

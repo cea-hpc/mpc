@@ -3,251 +3,170 @@
 
 #include "mpcomp_types.h"
 
-#if defined( MPCOMP_OPENMP_3_0 ) 
-#include "mpcomp_task_utils.h"
+#if defined( MPCOMP_OPENMP_3_0 )
+	#include "mpcomp_task_utils.h"
 #endif /* defined( MPCOMP_OPENMP_3_0 ) */
 
 void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp );
-mpcomp_mvp_t* __mpcomp_wakeup_node( mpcomp_node_t* node );
+mpcomp_mvp_t *__mpcomp_wakeup_node( mpcomp_node_t *node );
 void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp );
 
-static inline void
-__mpcomp_instance_tree_array_root_init( struct mpcomp_node_s* root, mpcomp_instance_t* instance, const int nthreads )
+static inline void __mpcomp_instance_tree_array_root_init( struct mpcomp_node_s *root, mpcomp_instance_t *instance, const int nthreads )
 {
-    struct mpcomp_generic_node_s* meta_node;
+	struct mpcomp_generic_node_s *meta_node;
 
-    if( !root ) return;
+	if ( !root )
+	{
+		return;
+	}
 
-    root->mvp_first_id = 0;
-    root->instance = instance;
-    root->num_threads = nthreads;
-
-    root->instance_global_rank = 1;
-    root->instance_stage_first_rank = 1;
-
-    meta_node = &( instance->tree_array[0] );
-    meta_node->ptr.node = root;
-    meta_node->type = MPCOMP_CHILDREN_NODE;
-
-    #if defined( MPCOMP_OPENMP_3_0 ) 
-    __mpcomp_task_root_infos_init( root );
-    #endif /* defined( MPCOMP_OPENMP_3_0 )  */
+	root->mvp_first_id = 0;
+	root->instance = instance;
+	root->num_threads = nthreads;
+	root->instance_global_rank = 1;
+	root->instance_stage_first_rank = 1;
+	meta_node = &( instance->tree_array[0] );
+	meta_node->ptr.node = root;
+	meta_node->type = MPCOMP_CHILDREN_NODE;
+#if defined( MPCOMP_OPENMP_3_0 )
+	__mpcomp_task_root_infos_init( root );
+#endif /* defined( MPCOMP_OPENMP_3_0 )  */
 }
 
-static inline void 
-__mpcomp_instance_tree_array_node_init(struct mpcomp_node_s* parent, struct mpcomp_node_s* child, const int index)
+#if 0
+
+static inline mpcomp_thread_t * __mpcomp_spinning_push_mvp_thread( mpcomp_mvp_t *mvp, mpcomp_thread_t *new_thread )
 {
-    int i;
-    mpcomp_instance_t* instance;
-    struct mpcomp_generic_node_s* meta_node;
-
-    sctk_assert( parent->instance );
-    instance = parent->instance;
-
-    const int vdepth = parent->depth - parent->instance->root->depth +1;
-    const int next_tree_base_val = parent->instance->tree_base[vdepth+1];
-
-    const int global_rank = parent->instance_global_rank + index; 
-    child->instance_stage_first_rank = parent->instance_stage_first_rank + instance->tree_nb_nodes_per_depth[vdepth];
-    const int local_rank = global_rank - parent->instance_stage_first_rank;
-    child->instance_global_rank = child->instance_stage_first_rank + local_rank * next_tree_base_val;
-    
-    meta_node = &( parent->instance->tree_array[global_rank] );
-    sctk_assert( meta_node );
-    meta_node->ptr.node = child;    
-    meta_node->type = MPCOMP_CHILDREN_NODE;
-
-    child->tree_array_rank = global_rank; 
-
-    child->tree_array_ancestor_path = (int*) mpcomp_alloc( (vdepth) * sizeof( int ) );
-    sctk_assert( child->tree_array_ancestor_path );
-    memset( child->tree_array_ancestor_path, 0, ( vdepth + 1) * sizeof( int ) );
-    
-    for( i = 0; i < vdepth-1; i++ )
-    {
-        child->tree_array_ancestor_path[i] = parent->tree_array_ancestor_path[i];
-    }
-    child->tree_array_ancestor_path[vdepth-1] = parent->tree_array_rank;
-    child->tree_array_ancestor_path[vdepth] = child->tree_array_rank;
-
-#if defined( MPCOMP_OPENMP_3_0 ) 
-    __mpcomp_task_node_infos_init( parent, child );
-#endif /* defined( MPCOMP_OPENMP_3_0 ) */
+	sctk_assert( mvp );
+	sctk_assert( new_thread );
+	new_thread->father = mvp->threads;
+	mvp->threads = new_thread;
+	return new_thread;
 }
 
-static inline void 
-__mpcomp_instance_tree_array_mvp_init( struct mpcomp_node_s* parent, struct mpcomp_mvp_s* mvp, const int index )
+static inline mpcomp_thread_t * __mpcomp_spinning_pop_mvp_thread( mpcomp_mvp_t *mvp )
 {
-    int i;
-    struct mpcomp_generic_node_s* meta_node;
-
-    const int vdepth = parent->depth - parent->instance->root->depth +1; 
-
-    const int global_rank = parent->instance_global_rank + index;
-
-    meta_node = &( parent->instance->tree_array[global_rank] );
-    sctk_assert( meta_node );
-    meta_node->ptr.mvp = mvp; 
-    meta_node->type = MPCOMP_CHILDREN_LEAF;
-    sctk_assert( mvp->threads );
-    sctk_assert( mvp->threads );
-
-    mvp->threads->tree_array_rank = global_rank;
-
-    mvp->threads->tree_array_ancestor_path = (int*) mpcomp_alloc( ( vdepth + 1 ) * sizeof( int ) );
-    sctk_assert( mvp->threads->tree_array_ancestor_path );
-    memset( mvp->threads->tree_array_ancestor_path, 0,  ( vdepth + 1 ) * sizeof( int ) );
-    
-    for( i = 0; i < vdepth-1; i++ )
-    {
-       mvp->threads->tree_array_ancestor_path[i] = parent->tree_array_ancestor_path[i];
-    }
-    mvp->threads->tree_array_ancestor_path[vdepth-1] = parent->tree_array_rank;
-    mvp->threads->tree_array_ancestor_path[vdepth] = mvp->threads->tree_array_rank;
-
-#if defined( MPCOMP_OPENMP_3_0 ) 
-    __mpcomp_task_mvp_infos_init( parent, mvp );
-#endif /* defined( MPCOMP_OPENMP_3_0 ) */
+	mpcomp_thread_t *cur_thread;
+	sctk_assert( mvp );
+	sctk_assert( mvp->threads );
+	cur_thread = mvp->threads;
+	mvp->threads = cur_thread->father;
+	return cur_thread;
 }
 
-
-
-static inline mpcomp_thread_t* 
-__mpcomp_spinning_push_mvp_thread( mpcomp_mvp_t* mvp, mpcomp_thread_t* new_thread )
+static inline mpcomp_thread_t * __mpcomp_spinning_get_thread_ancestor( mpcomp_thread_t *thread, const int depth )
 {
-    sctk_assert( mvp ); 
-    sctk_assert( new_thread ); 
+	int i;
+	mpcomp_thread_t *ancestor;
+	ancestor = thread;
 
-    new_thread->father = mvp->threads;
-    mvp->threads = new_thread;
-   
-    return new_thread; 
+	for ( i = 0; i < depth; i++ )
+	{
+		if ( ancestor == NULL )
+		{
+			break;
+		}
+
+		ancestor = ancestor->father;
+	}
+
+	return ancestor;
 }
 
-static inline mpcomp_thread_t*
-__mpcomp_spinning_pop_mvp_thread( mpcomp_mvp_t* mvp )
+static inline mpcomp_thread_t * __mpcomp_spinning_get_mvp_thread_ancestor( mpcomp_mvp_t *mvp, const int depth )
 {
-    mpcomp_thread_t* cur_thread;
-
-    sctk_assert( mvp );
-    sctk_assert( mvp->threads );
-
-    cur_thread = mvp->threads;    
-    mvp->threads = cur_thread->father; 
-
-    return cur_thread;
+	mpcomp_thread_t *mvp_thread, *ancestor;
+	sctk_assert( mvp );
+	mvp_thread = mvp->threads;
+	ancestor = __mpcomp_spinning_get_thread_ancestor( mvp_thread, depth );
+	return ancestor;
 }
 
-static inline mpcomp_thread_t*
-__mpcomp_spinning_get_thread_ancestor( mpcomp_thread_t* thread, const int depth )
+static inline mpcomp_node_t * __mpcomp_spinning_get_thread_root_node( mpcomp_thread_t *thread )
 {
-    int i;
-    mpcomp_thread_t* ancestor;
-   
-    ancestor = thread; 
-    
-    for( i = 0; i < depth; i++ )
-    {
-        if( ancestor == NULL )
-            break;
-
-        ancestor = ancestor->father;
-    } 
-
-    return ancestor;
+	sctk_assert( thread );
+	return thread->root;
 }
 
-static inline mpcomp_thread_t*
-__mpcomp_spinning_get_mvp_thread_ancestor( mpcomp_mvp_t* mvp, const int depth )
+static inline int __mpcomp_spining_get_instance_max_depth( mpcomp_instance_t *instance )
 {
-    mpcomp_thread_t *mvp_thread, *ancestor;
-    sctk_assert( mvp );
-    mvp_thread = mvp->threads;
-    ancestor = __mpcomp_spinning_get_thread_ancestor( mvp_thread, depth ); 
-    return ancestor;
-} 
-
-static inline mpcomp_node_t*
-__mpcomp_spinning_get_thread_root_node( mpcomp_thread_t* thread )
-{
-    sctk_assert( thread );
-    return thread->root;
+	mpcomp_node_t *root = instance->root;
+	assert( root ); //TODO instance root can be NULL when leaf create new parallel region
+	return root->depth + root->tree_depth - 1;
 }
 
-static inline int
-__mpcomp_spining_get_instance_max_depth( mpcomp_instance_t* instance )
+static inline char * __mpcomp_spinning_get_debug_thread_infos( __UNUSED__ mpcomp_thread_t *thread )
 {
-    mpcomp_node_t* root = instance->root;
-    assert( root ); //TODO instance root can be NULL when leaf create new parallel region
-    return root->depth + root->tree_depth -1;
+	return NULL;
 }
 
-static inline char* 
-__mpcomp_spinning_get_debug_thread_infos( __UNUSED__ mpcomp_thread_t* thread )
+static inline mpcomp_node_t * __mpcomp_spinning_get_mvp_father_node( mpcomp_mvp_t *mvp, mpcomp_instance_t *instance )
 {
-    return NULL; 
+	int *mvp_father_array;
+	mpcomp_meta_tree_node_t *tree_array_node, *tree_array;
+	sctk_assert( mvp );
+	sctk_assert( instance );
+
+	if ( !( instance->root ) )
+	{
+		return  mvp->father;
+	}
+
+	const int max_depth = mvp->depth;
+	const int father_depth = instance->root->depth + instance->tree_depth - 1;
+	const unsigned int mvp_ancestor_node = max_depth - father_depth;
+
+	if ( !mvp_ancestor_node )
+	{
+		return mvp->father;
+	}
+
+	sctk_assert( mvp->father );
+	tree_array = mvp->father->tree_array;
+	sctk_assert( tree_array );
+	mvp_father_array = tree_array[mvp->global_rank].fathers_array;
+	sctk_assert( mvp_ancestor_node < tree_array[mvp->global_rank].fathers_array_size );
+	tree_array_node = &( tree_array[mvp_father_array[father_depth - 1]] );
+	return ( mpcomp_node_t * ) tree_array_node->user_pointer;
 }
 
-static inline mpcomp_node_t*
-__mpcomp_spinning_get_mvp_father_node( mpcomp_mvp_t* mvp, mpcomp_instance_t* instance )
+static inline int __mpcomp_spinning_node_compute_rank( mpcomp_node_t *node, const int num_threads, int rank, int *first )
 {
-    int* mvp_father_array;
-    mpcomp_meta_tree_node_t* tree_array_node, *tree_array; 
+	sctk_assert( node );
+	sctk_assert( num_threads > 0 );
+	sctk_assert( first );
+	const int quot = num_threads / node->nb_children;
+	const int rest = num_threads % node->nb_children;
+	const int min = ( num_threads > node->nb_children ) ? node->nb_children : num_threads;
+	*first = -1;
 
-    sctk_assert( mvp );
-    sctk_assert( instance );
+	if ( rank >= min )
+	{
+		return 0;
+	}
 
-    if( !( instance->root ) ) return  mvp->father;
-
-    const int max_depth = mvp->depth;
-    const int father_depth = instance->root->depth + instance->tree_depth -1;
-    const unsigned int mvp_ancestor_node = max_depth - father_depth;
-
-    if( !mvp_ancestor_node ) return mvp->father;
-
-    sctk_assert( mvp->father );
-    tree_array = mvp->father->tree_array;
-    sctk_assert( tree_array );
-
-    mvp_father_array = tree_array[mvp->global_rank].fathers_array;
-    sctk_assert( mvp_ancestor_node < tree_array[mvp->global_rank].fathers_array_size );
-
-    tree_array_node = &( tree_array[mvp_father_array[father_depth-1]] );
-    return ( mpcomp_node_t* ) tree_array_node->user_pointer;
+	*first = ( rank < rest ) ? ( ( quot + 1 ) * rank ) : ( quot * rank + rest );
+	return ( rank < rest ) ? quot + 1 : quot;
 }
 
-static inline int
-__mpcomp_spinning_node_compute_rank( mpcomp_node_t* node, const int num_threads, int rank, int *first ) 
+static inline int __mpcomp_spinning_leaf_compute_rank( mpcomp_node_t *node, const int num_threads, const int first_rank, const int rank )
 {
-    sctk_assert( node );
-    sctk_assert( num_threads > 0 );
-    sctk_assert( first );
+	int i;
+	sctk_assert( node );
+	sctk_assert( num_threads > 0 );
+	const int quot = node->nb_children / num_threads;
 
-    const int quot = num_threads / node->nb_children;
-    const int rest = num_threads % node->nb_children;
-    const int min = (num_threads > node->nb_children) ? node->nb_children : num_threads; 
+	for ( i = 0; i < node->nb_children; i++ )
+	{
+		if ( i * quot + first_rank == rank )
+		{
+			break;
+		}
+	}
 
-    *first = -1;
-    if( rank >= min ) return 0;
-    
-    *first = ( rank < rest ) ? ((quot+1) * rank) : (quot * rank + rest);
-    return ( rank < rest ) ? quot+1 : quot; 
+	return i;
 }
 
-static inline int
-__mpcomp_spinning_leaf_compute_rank( mpcomp_node_t* node, const int num_threads, const int first_rank, const int rank )
-{
-    int i;
-    sctk_assert( node );
-    sctk_assert( num_threads > 0 );
-
-    const int quot = node->nb_children / num_threads;
-    for( i = 0; i < node->nb_children; i++ )
-    {
-        if( i * quot + first_rank == rank )
-            break;
-    }
-    return i; 
-}
+#endif
 
 #endif /* __MPCOMP_SPINNING_CORE_H__ */

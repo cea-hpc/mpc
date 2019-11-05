@@ -14,8 +14,6 @@
 #include "mpcomp_task_utils.h"
 #include "mpcomp_parallel_region.h"
 
-#include "mpcomp_parallel_region_no_mpc_types.h"
-
 
 /***********
  * ORDERED *

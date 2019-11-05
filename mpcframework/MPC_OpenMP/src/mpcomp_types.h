@@ -799,8 +799,6 @@ typedef struct mpcomp_mvp_s
 	struct mpcomp_mvp_saved_context_s *prev_node_father;
 } mpcomp_mvp_t;
 
-struct mpcomp_meta_tree_node_s;
-
 /* OpenMP Node */
 typedef struct mpcomp_node_s
 {

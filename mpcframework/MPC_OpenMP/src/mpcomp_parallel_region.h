@@ -22,24 +22,45 @@
 /* ######################################################################## */
 
 #ifndef __MPCOMP_PARALLEL_REGION_H__
-#define  __MPCOMP_PARALLEL_REGION_H__
+#define __MPCOMP_PARALLEL_REGION_H__
 
-#include "mpcomp_parallel_region_no_mpc_types.h"
+#include "mpcomp_types.h"
 
-void 
-__mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const unsigned expected_num_threads ); 
+void __mpcomp_start_parallel_region( void ( *func )( void * ), void *shared,
+                                     unsigned arg_num_threads );
 
-void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance);
+void __mpcomp_start_sections_parallel_region( void ( *func )( void * ), void *shared,
+        unsigned arg_num_threads,
+        unsigned nb_sections );
+
+void __mpcomp_start_parallel_dynamic_loop( void ( *func )( void * ), void *shared,
+        unsigned arg_num_threads, long lb,
+        long b, long incr, long chunk_size );
+
+void __mpcomp_start_parallel_static_loop( void ( *func )( void * ), void *shared,
+        unsigned arg_num_threads, long lb,
+        long b, long incr, long chunk_size );
+
+void __mpcomp_start_parallel_guided_loop( void ( *func )( void * ), void *shared,
+        unsigned arg_num_threads, long lb,
+        long b, long incr, long chunk_size );
+
+void __mpcomp_start_parallel_runtime_loop( void ( *func )( void * ), void *shared,
+        unsigned arg_num_threads, long lb,
+        long b, long incr, long chunk_size );
+
+void __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const unsigned expected_num_threads );
+
+void __mpcomp_internal_end_parallel_region( mpcomp_instance_t *instance );
 
 static inline void __mpcomp_parallel_set_specific_infos(
-    mpcomp_parallel_region_t *info, void *(*func)(void *), void *data,
-    mpcomp_local_icv_t icvs, mpcomp_combined_mode_t type) {
-
-  sctk_assert(info);
-
-  info->func = (void *(*)(void *))func;
-  info->shared = data;
-  info->icvs = icvs;
-  info->combined_pragma = type;
+    mpcomp_parallel_region_t *info, void *( *func )( void * ), void *data,
+    mpcomp_local_icv_t icvs, mpcomp_combined_mode_t type )
+{
+	sctk_assert( info );
+	info->func = ( void *( * ) ( void * ) ) func;
+	info->shared = data;
+	info->icvs = icvs;
+	info->combined_pragma = type;
 }
 #endif /*  __MPCOMP_PARALLEL_REGION_H__ */
