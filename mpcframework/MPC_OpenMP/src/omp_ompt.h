@@ -137,6 +137,7 @@ static inline mpcomp_ompt_thread_info_t *mpcomp_ompt_thread_info_alloc( void )
 }
 
 extern int _omp_ompt_enabled_flag;
+extern ompt_callback_t* OMPT_Callbacks;
 
 static inline int _mpc_omp_ompt_is_enabled( void )
 {

@@ -30,14 +30,11 @@
 
 #include "mpcomp_parallel_region.h"
 #include "mpcomp_loop.h"
-#include "mpcomp_task_utils.h"
+#include "mpcomp_task.h"
 
 
-#if OMPT_SUPPORT
-#include "ompt.h"
 #include "mpcomp_ompt_general.h"
-extern ompt_callback_t* OMPT_Callbacks;
-#endif /* OMPT_SUPPORT */
+
 
 /* Add header for spinning core */
 mpcomp_instance_t* __mpcomp_tree_array_instance_init( mpcomp_thread_t*, const int);
@@ -130,7 +127,7 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     if( !t->children_instance->buffered ) 
         __mpcomp_instance_tree_array_root_init( t->root, t->children_instance, instance_info->num_threads );
 
-    __mpcomp_wakeup_node( t->root );    
+    _mpc_spin_node_wakeup( t->root );    
 
 	return ;
 }
@@ -160,7 +157,7 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance)
            root->barrier_num_threads) {
       sctk_thread_yield();
 #ifdef MPCOMP_TASK
-//      mpcomp_task_schedule();
+//      _mpc_task_schedule();
 #endif /* MPCOMP_TASK */
     }
 
@@ -177,7 +174,7 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance)
 //__mpcomp_for_dyn_coherency_end_parallel_region( instance ) ;
 //__mpcomp_single_coherency_end_barrier() ;
 #if MPCOMP_TASK
-                __mpcomp_task_coherency_ending_parallel_region();
+                _mpc_task_new_coherency_ending_parallel_region();
 #endif // MPCOMP_TASK
 #endif
 

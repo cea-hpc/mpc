@@ -30,9 +30,7 @@
 #include "mpcomp_loop.h"
 #include "mpcomp_openmp_tls.h"
 #include "mpcomp_sync.h"
-#include "mpcomp_taskgroup.h"
-#include "mpcomp_task_utils.h"
-#include "mpcomp_task_gomp_constants.h"
+#include "mpcomp_task.h"
 
 static inline int __loop_dyn_get_for_dyn_current( struct mpcomp_thread_s *thread )
 {
@@ -2607,22 +2605,22 @@ void mpcomp_taskloop(void (*fn)(void *), void *data,
   }
 
   if (!(flags & MPCOMP_TASK_FLAG_NOGROUP)) {
-    mpcomp_taskgroup_start();
+    _mpc_task_taskgroup_start();
   }
 
   for (i = 0; i < num_tasks; i++) {
     mpcomp_task_t *new_task = NULL;
-    new_task = __mpcomp_task_alloc(fn, data, cpyfn, arg_size, arg_align, 0,
+    new_task = _mpc_task_alloc(fn, data, cpyfn, arg_size, arg_align, 0,
                                    flags, 0 /* no deps */);
     ((long *)new_task->data)[0] = start;
     ((long *)new_task->data)[1] = start + taskstep;
     start += taskstep;
     taskstep -= (i == extra_chunk) ? step : 0;
-    __mpcomp_task_process(new_task, 0);
+    _mpc_task_process(new_task, 0);
   }
 
   if (!(flags & MPCOMP_TASK_FLAG_NOGROUP)) {
-    mpcomp_taskgroup_end();
+    _mpc_task_taskgroup_end();
   }
 }
 

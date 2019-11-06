@@ -28,7 +28,7 @@
 #include <sctk_ib_cp.h>
 #endif
 
-#include <mpc_topology.h>
+#include "mpc_topology.h"
 #include <mpc_topology_render.h>
 
 #undef sleep
@@ -44,7 +44,7 @@
 #include "sctk_kernel_thread.h"
 #include "sctk_alloc.h"
 #include "sctk_launch.h"
-#include "mpc_topology.h"
+
 #include "mpc_common_asm.h"
 #include "sctk_tls.h"
 #include <unistd.h>
@@ -595,106 +595,109 @@ void __tbb_finalize_for_mpc()
 }
 
 static void *
-sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
+sctk_thread_create_tmp_start_routine( sctk_thread_data_t *__arg )
 {
-  void *res;
-  sctk_thread_data_t tmp;
-  struct _sctk_thread_cleanup_buffer *ptr_cleanup;
-  tmp = *__arg;
+	void *res;
+	sctk_thread_data_t tmp;
+	struct _sctk_thread_cleanup_buffer *ptr_cleanup;
+	tmp = *__arg;
 
-  // DEBUG
+	// DEBUG
 	assume_m( mpc_topology_get_current_cpu() == (int)tmp.bind_to,
-           "sctk_thread_create_tmp_start_routine BUGUED");
+			  "sctk_thread_create_tmp_start_routine BUGUED" );
 	// assert(mpc_topology_get_current_cpu() == tmp.bind_to);
-  // ENDDEBUG
+	// ENDDEBUG
 
-  /* Bind the thread to the right core if we are using pthreads */
-  if (sctk_get_thread_val() == sctk_pthread_thread_init) {
+	/* Bind the thread to the right core if we are using pthreads */
+	if ( sctk_get_thread_val() == sctk_pthread_thread_init )
+	{
 		mpc_topology_bind_to_cpu( tmp.bind_to );
-  }
+	}
 
-  //mark the given TLS as currant thread allocator
-  sctk_set_tls (tmp.tls);
+	//mark the given TLS as currant thread allocator
+	sctk_set_tls( tmp.tls );
 
-  // we do not have an MPI
-  tmp.mpi_per_thread = NULL;
+	// we do not have an MPI
+	tmp.mpi_per_thread = NULL;
 
-  // Set no disguise
-  tmp.my_disguisement = NULL;
-  tmp.ctx_disguisement = NULL;
+	// Set no disguise
+	tmp.my_disguisement = NULL;
+	tmp.ctx_disguisement = NULL;
 
-  //do NUMA migration if required
-  sctk_alloc_posix_numa_migrate();
+	//do NUMA migration if required
+	sctk_alloc_posix_numa_migrate();
 
-  ptr_cleanup = NULL;
-  sctk_thread_setspecific (_sctk_thread_handler_key, &ptr_cleanup);
+	ptr_cleanup = NULL;
+	sctk_thread_setspecific( _sctk_thread_handler_key, &ptr_cleanup );
 
-  sctk_free (__arg);
-  tmp.virtual_processor = sctk_thread_get_vp ();
-  sctk_nodebug ("%d on %d", tmp.task_id, tmp.virtual_processor);
+	sctk_free( __arg );
+	tmp.virtual_processor = sctk_thread_get_vp();
+	sctk_nodebug( "%d on %d", tmp.task_id, tmp.virtual_processor );
 
-  sctk_thread_data_set (&tmp);
-  sctk_thread_add (&tmp, sctk_thread_self());
+	sctk_thread_data_set( &tmp );
+	sctk_thread_add( &tmp, sctk_thread_self() );
 
-  sctk_nodebug ("%d on %d", tmp.task_id, tmp.virtual_processor);
+	sctk_nodebug( "%d on %d", tmp.task_id, tmp.virtual_processor );
 
-  /* Initialization of the profiler */
+	/* Initialization of the profiler */
 #ifdef MPC_Profiler
 	sctk_internal_profiler_init();
 #endif
 
-  sctk_tls_dtors_init(&(tmp.dtors_head));
 
 #ifdef MPC_Message_Passing
   /* We call for all threads as some
      progress threads may need buffered headers */
-  mpc_mp_comm_init_per_task (tmp.task_id);
-  if (tmp.task_id >= 0)
-    {
-      sctk_net_init_task_level(tmp.task_id, tmp.virtual_processor);
 
-#if defined(MPC_USE_EXTLS)
-      /* TLS INTIALIZATION */
-      sctk_tls_init();
-      sctk_call_dynamic_initializers();
+	if ( tmp.task_id >= 0 )
+	{
+		mpc_mp_comm_init_per_task( tmp.task_id );
+		sctk_net_init_task_level( tmp.task_id, tmp.virtual_processor );
+
+#if defined( MPC_USE_EXTLS )
+		/* TLS INTIALIZATION */
+		sctk_tls_init();
+		sctk_call_dynamic_initializers();
 #endif
-      sctk_register_thread_initial (tmp.task_id);
-      mpc_mp_terminaison_barrier ();
+		sctk_register_thread_initial( tmp.task_id );
+		mpc_mp_terminaison_barrier();
 #ifdef MPC_USE_INFINIBAND
-      sctk_ib_prof_init_reference_clock();
+		sctk_ib_prof_init_reference_clock();
 #endif
-      mpc_mp_terminaison_barrier ();
-    }
+		mpc_mp_terminaison_barrier();
+	}
 #endif
 
-  /** ** **/
-  sctk_report_creation (sctk_thread_self());
-  /** **/
+	/** ** **/
+	sctk_report_creation( sctk_thread_self() );
+	/** **/
 
 #ifndef MPC_Message_Passing
 #ifdef MPC_OpenMP
-  __mpcomp_init() ;
+	__mpcomp_init();
 #endif
 #endif
-  // thread priority
-  if (sctk_new_scheduler_engine_enabled) {
-    sctk_thread_generic_addkind_mask_self(KIND_MASK_MPI);
-    sctk_thread_generic_set_basic_priority_self(
-        sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
-    sctk_thread_generic_setkind_priority_self(
-        sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
-    sctk_thread_generic_set_current_priority_self(
-        sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
-  }
+	// thread priority
+	if ( sctk_new_scheduler_engine_enabled )
+	{
+		sctk_thread_generic_addkind_mask_self( KIND_MASK_MPI );
+		sctk_thread_generic_set_basic_priority_self(
+			sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority );
+		sctk_thread_generic_setkind_priority_self(
+			sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority );
+		sctk_thread_generic_set_current_priority_self(
+			sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority );
+	}
 
-#if defined(MPC_USE_CUDA)
-  sctk_thread_yield();
-  sctk_accl_cuda_init_context();
+#if defined( MPC_USE_CUDA )
+	sctk_thread_yield();
+	sctk_accl_cuda_init_context();
 #endif
 
-  
-  /* BEGIN TBB SETUP */
-  /**
+	sctk_tls_dtors_init( &( tmp.dtors_head ) );
+
+	/* BEGIN TBB SETUP */
+	/**
    * #define macros are not used for TBB code injections
    * avoiding MPC recompilation when the user code wants to load TBB
    * Instead, we define two functions :
@@ -707,61 +710,62 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
    * TODO: due to some issues, weak functions are replaced by dlsym accesses for now
    */
 	int init_cpu = mpc_topology_get_current_cpu();
-  int nbvps, i, nb_cpusets;
-  cpu_set_t * cpuset;
+	int nbvps, i, nb_cpusets;
+	cpu_set_t *cpuset;
 
-  sctk_get_init_vp_and_nbvp (mpc_common_get_task_rank(), &nbvps);
+	sctk_get_init_vp_and_nbvp( mpc_common_get_task_rank(), &nbvps );
 	init_cpu = mpc_topology_convert_logical_pu_to_os( init_cpu );
-  
-  nb_cpusets = 1;
-  cpuset = sctk_malloc(sizeof(cpu_set_t) * nb_cpusets);
 
-  CPU_ZERO(cpuset);
- 
-  for (i = 0; i < nbvps; ++i) {
-	CPU_SET(init_cpu + i, cpuset);
-  }
-  
-  __tbb_init_for_mpc(cpuset, nb_cpusets);
-  /* END TBB SETUP */
+	nb_cpusets = 1;
+	cpuset = sctk_malloc( sizeof( cpu_set_t ) * nb_cpusets );
 
-  res = tmp.__start_routine (tmp.__arg);
+	CPU_ZERO( cpuset );
 
-  /** ** **/
-  sctk_report_death (sctk_thread_self());
-  /** **/
+	for ( i = 0; i < nbvps; ++i )
+	{
+		CPU_SET( init_cpu + i, cpuset );
+	}
 
-  /* BEGIN TBB FINALIZE */
-  __tbb_finalize_for_mpc();
-  /* END TBB FINALIZE */
-  
-  sctk_tls_dtors_free(&(tmp.dtors_head));
+	__tbb_init_for_mpc( cpuset, nb_cpusets );
+	/* END TBB SETUP */
+
+	res = tmp.__start_routine( tmp.__arg );
+
+	/** ** **/
+	sctk_report_death( sctk_thread_self() );
+	/** **/
+
+	/* BEGIN TBB FINALIZE */
+	__tbb_finalize_for_mpc();
+	/* END TBB FINALIZE */
+
+	sctk_tls_dtors_free( &( tmp.dtors_head ) );
 
 #ifdef MPC_Message_Passing
-  if (tmp.task_id >= 0)
-    {
-      sctk_nodebug ("mpc_mp_terminaison_barrier");
-      mpc_mp_terminaison_barrier ();
-      mpc_mp_terminaison_barrier ();
-      sctk_nodebug ("mpc_mp_terminaison_barrier done");
-      sctk_net_finalize_task_level(tmp.task_id, tmp.virtual_processor);
-      sctk_unregister_task (tmp.task_id);
-      sctk_net_send_task_end (tmp.task_id, mpc_common_get_process_rank());
-    }
-  else
-    {
-      not_reachable ();
-    }
+	if ( tmp.task_id >= 0 )
+	{
+		sctk_nodebug( "mpc_mp_terminaison_barrier" );
+		mpc_mp_terminaison_barrier();
+		mpc_mp_terminaison_barrier();
+		sctk_nodebug( "mpc_mp_terminaison_barrier done" );
+		sctk_net_finalize_task_level( tmp.task_id, tmp.virtual_processor );
+		sctk_unregister_task( tmp.task_id );
+		sctk_net_send_task_end( tmp.task_id, mpc_common_get_process_rank() );
+	}
+	else
+	{
+		not_reachable();
+	}
 #else
-  sctk_thread_mutex_lock (&sctk_current_local_tasks_lock);
-  sctk_current_local_tasks_nb--;
-  sctk_thread_mutex_unlock (&sctk_current_local_tasks_lock);
+	sctk_thread_mutex_lock( &sctk_current_local_tasks_lock );
+	sctk_current_local_tasks_nb--;
+	sctk_thread_mutex_unlock( &sctk_current_local_tasks_lock );
 #endif
 
-  sctk_thread_remove (&tmp);
-  sctk_thread_data_set (NULL);
-  sctk_nodebug ("THREAD END");
-  return res;
+	sctk_thread_remove( &tmp );
+	sctk_thread_data_set( NULL );
+	sctk_nodebug( "THREAD END" );
+	return res;
 }
 
 int
@@ -2229,254 +2233,265 @@ sctk_thread_timer (void *arg)
   return NULL;
 }
 
-
 static int sctk_first_local = 0;
 static int sctk_last_local = 0;
 
 extern double __sctk_profiling__start__sctk_init_MPC;
 extern double __sctk_profiling__end__sctk_init_MPC;
 
-double sctk_profiling_get_init_time() {
-  return (__sctk_profiling__end__sctk_init_MPC-__sctk_profiling__start__sctk_init_MPC)/1000000;
+double sctk_profiling_get_init_time()
+{
+	return ( __sctk_profiling__end__sctk_init_MPC - __sctk_profiling__start__sctk_init_MPC ) / 1000000;
 }
 
 // default algorithme
-int sctk_get_init_vp_and_nbvp_default(int i, int *nbVp) {
+int sctk_get_init_vp_and_nbvp_default( int i, int *nbVp )
+{
 
-  /*   int rank_in_node; */
-  int slot_size;
-  int task_nb;
-  int proc;
-  int first;
-  int last;
-  int cpu_nb;
-  int total_tasks_number;
-  int cpu_per_task;
-  int j;
+	/*   int rank_in_node; */
+	int slot_size;
+	int task_nb;
+	int proc = -1;
+	int first;
+	int last;
+	int cpu_nb;
+	int total_tasks_number;
+	int cpu_per_task;
+	int j;
 
 	cpu_nb = mpc_topology_get_pu_count(); // number of cpu per process
 
-  total_tasks_number = sctk_get_total_tasks_number();
+	total_tasks_number = sctk_get_total_tasks_number();
 
-/*   rank_in_node = i - sctk_first_local; */
+	/*   rank_in_node = i - sctk_first_local; */
 
-/*   sctk_nodebug("check for %d(%d) %d cpu",i,rank_in_node,cpu_nb); */
+	/*   sctk_nodebug("check for %d(%d) %d cpu",i,rank_in_node,cpu_nb); */
 
-  assume ((sctk_last_local != 0) || (total_tasks_number == 1)
-	  || (mpc_common_get_process_rank() == 0));
+	assume( ( sctk_last_local != 0 ) || ( total_tasks_number == 1 ) || ( mpc_common_get_process_rank() == 0 ) );
 
-  task_nb = sctk_last_local - sctk_first_local + 1;
+	task_nb = sctk_last_local - sctk_first_local + 1;
 
-  slot_size = task_nb / cpu_nb;
-  cpu_per_task = cpu_nb / task_nb;
+	slot_size = task_nb / cpu_nb;
+	cpu_per_task = cpu_nb / task_nb;
 
-  if(cpu_per_task < 1){
-    cpu_per_task = 1;
-  }
+	if ( cpu_per_task < 1 )
+	{
+		cpu_per_task = 1;
+	}
 
-  /* TODO: cpu_per_task=1 => put MPI tasks close */
-  // cpu_per_task = 1 ;
+	/* TODO: cpu_per_task=1 => put MPI tasks close */
+	// cpu_per_task = 1 ;
 
-  /* Normalize i if i the the global number insted of localnumber*/
-  // hmt
-  if(i >= task_nb) i = i - sctk_first_local;
-  sctk_nodebug("i normalized=%d", i);
+	/* Normalize i if i the the global number insted of localnumber*/
+	// hmt
+	if ( i >= task_nb )
+		i = i - sctk_first_local;
+	sctk_nodebug( "i normalized=%d", i );
 
-  first = 0;
-  sctk_nodebug("cpu_per_task %d", cpu_per_task);
-  j = 0;
-  for (proc = 0; proc < cpu_nb; proc += cpu_per_task) {
-    int local_slot_size;
-    local_slot_size = slot_size;
-    sctk_nodebug("local_slot_size=%d", local_slot_size);
-    if ((task_nb % cpu_nb) > j) {
-      local_slot_size++;
-      sctk_nodebug("local_slot_size inside the if=%d", local_slot_size);
-    }
+	first = 0;
+	sctk_nodebug( "cpu_per_task %d", cpu_per_task );
+	j = 0;
+	for ( proc = 0; proc < cpu_nb; proc += cpu_per_task )
+	{
+		int local_slot_size;
+		local_slot_size = slot_size;
+		sctk_nodebug( "local_slot_size=%d", local_slot_size );
+		if ( ( task_nb % cpu_nb ) > j )
+		{
+			local_slot_size++;
+			sctk_nodebug( "local_slot_size inside the if=%d", local_slot_size );
+		}
 
-    sctk_nodebug("%d proc %d slot size", proc, local_slot_size);
-    last = first + local_slot_size - 1;
-    sctk_nodebug("First %d last %d", first, last);
-    if ((i >= first) && (i <= last)) {
-      if ((cpu_nb % task_nb > j) && (cpu_nb > task_nb)) {
-        *nbVp = cpu_per_task + 1;
-      } else {
-        *nbVp = cpu_per_task;
-      }
-      sctk_nodebug("sctk_get_init_vp: Put task %d on VP %d", i, proc);
-      return proc;
-    }
-    first = last + 1;
-    j++;
-    if ((cpu_nb % task_nb >= j) && (cpu_nb > task_nb))
-      proc++;
-  }
-  sctk_nodebug("sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc);
-  fflush(stdout);
-  sctk_abort();
-  return proc;
+		sctk_nodebug( "%d proc %d slot size", proc, local_slot_size );
+		last = first + local_slot_size - 1;
+		sctk_nodebug( "First %d last %d", first, last );
+		if ( ( i >= first ) && ( i <= last ) )
+		{
+			if ( ( cpu_nb % task_nb > j ) && ( cpu_nb > task_nb ) )
+			{
+				*nbVp = cpu_per_task + 1;
+			}
+			else
+			{
+				*nbVp = cpu_per_task;
+			}
+			sctk_nodebug( "sctk_get_init_vp: Put task %d on VP %d", i, proc );
+			return proc;
+		}
+		first = last + 1;
+		j++;
+		if ( ( cpu_nb % task_nb >= j ) && ( cpu_nb > task_nb ) )
+			proc++;
+	}
+	sctk_nodebug( "sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc );
+	fflush( stdout );
+	sctk_abort();
+	return proc;
 }
 
-int sctk_get_init_vp_and_nbvp_numa_packed(int i, int *nbVp) {
+int sctk_get_init_vp_and_nbvp_numa_packed( int i, int *nbVp )
+{
 
-  /*   int rank_in_node; */
-  // declaration
+	/*   int rank_in_node; */
+	// declaration
   int slot_size;
   int task_nb;
-  int proc;
+	int proc;
   int first;
   int last;
-  int cpu_nb;
+	int cpu_nb;
   int total_tasks_number;
   int cpu_per_task;
   int j;
-
-  int nb_numa_node_per_node;
+	int nb_numa_node_per_node;
   int nb_cpu_per_numa_node;
   int nb_task_per_numa_node;
-
-  // initialization
+	// initialization
 	cpu_nb = mpc_topology_get_pu_count(); // number of cpu per process
-  total_tasks_number = sctk_get_total_tasks_number();
 
-  nb_numa_node_per_node =
+	nb_numa_node_per_node =
 		mpc_topology_get_numa_node_count(); // number of numa nodes in the node
-  nb_cpu_per_numa_node =
-      cpu_nb / nb_numa_node_per_node; // number of cores per numa nodes
 
-  // config
-  int T = sctk_last_local - sctk_first_local + 1; // number of task per node
-  int C = cpu_nb;                                 // number of cpu per node
-  int N = nb_numa_node_per_node;                  // number of numa nodes
-  int t = T % N;                                  // buffer task
-  int cpu_per_numa_node = C / N;                  // cpu per numa node
+	// config
+	int T = sctk_last_local - sctk_first_local + 1; // number of task per node
+	int C = cpu_nb;									// number of cpu per node
+	int N = nb_numa_node_per_node;					// number of numa nodes
+	int t = T % N;									// buffer task
+	int cpu_per_numa_node = C / N;					// cpu per numa node
 
-  int Tnk; // task per numa node
+	int Tnk; // task per numa node
 
-  // task already treated
-  int tat = 0;
+	// task already treated
+	int tat = 0;
 
-  *nbVp = 1;
+	*nbVp = 1;
 
-  int k; // numa_node ID
-  for (k = 0; k < N; k++) {
+	int k; // numa_node ID
+	for ( k = 0; k < N; k++ )
+	{
 
-    // printf("for k=%d\n",k);
-    // On ajoute une tache en plus aux premiers noeuds numas
-    Tnk = T / N;
-    if (k < t) {
-      Tnk += 1;
-      // printf("if [k=%d] < [t=%d] -> Tnk+=1 %d\n", k, t, Tnk);
-    }
+		// printf("for k=%d\n",k);
+		// On ajoute une tache en plus aux premiers noeuds numas
+		Tnk = T / N;
+		if ( k < t )
+		{
+			Tnk += 1;
+			// printf("if [k=%d] < [t=%d] -> Tnk+=1 %d\n", k, t, Tnk);
+		}
 
-    // Si  tat <= i < Tnk+tat // est ce qu on est dans ce noeud numa la ?
-    if (tat <= i && i < (Tnk + tat)) {
-      // printf("if [tat=%d] <= [i=%d] < [Tnk=%d+tat=%d] %d\n", tat, i, Tnk,
-      // tat, Tnk+tat);
+		// Si  tat <= i < Tnk+tat // est ce qu on est dans ce noeud numa la ?
+		if ( tat <= i && i < ( Tnk + tat ) )
+		{
+			// printf("if [tat=%d] <= [i=%d] < [Tnk=%d+tat=%d] %d\n", tat, i, Tnk,
+			// tat, Tnk+tat);
 
-      // update *nbVP
-      if (k * (cpu_per_numa_node) + (i - tat) ==
-          k * (cpu_per_numa_node) + Tnk - 1)
-        *nbVp = (cpu_per_numa_node - Tnk) + 1;
+			// update *nbVP
+			if ( k * ( cpu_per_numa_node ) + ( i - tat ) ==
+				 k * ( cpu_per_numa_node ) + Tnk - 1 )
+				*nbVp = ( cpu_per_numa_node - Tnk ) + 1;
 
-      // printf("proc=%d, *nbVp=%d\n", k*(cpu_per_numa_node) + (i-tat),*nbVp);
+			// printf("proc=%d, *nbVp=%d\n", k*(cpu_per_numa_node) + (i-tat),*nbVp);
 
-      // return numanode id * (C/N) + (i - tat)
-      //      fixe premier cpu du noeud numa     + difference de la tache en
-      //      cours
-      return k * (cpu_per_numa_node) + (i - tat);
-    }
-    // Si nous avons une tache en plus
-    // printf("else tat=%d += Tnk=%d -> %d\n", tat, Tnk, tat+Tnk);
-    tat += Tnk;
-  }
+			// return numanode id * (C/N) + (i - tat)
+			//      fixe premier cpu du noeud numa     + difference de la tache en
+			//      cours
+			return k * ( cpu_per_numa_node ) + ( i - tat );
+		}
+		// Si nous avons une tache en plus
+		// printf("else tat=%d += Tnk=%d -> %d\n", tat, Tnk, tat+Tnk);
+		tat += Tnk;
+	}
 
-  sctk_nodebug("sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc);
-  not_reachable();
-  return -1;
+	//sctk_debug("sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc);
+	sctk_abort();
+	return proc;
 }
 
-int sctk_get_init_vp_and_nbvp_numa(int i, int *nbVp) {
-  int task_nb =
-      sctk_last_local - sctk_first_local + 1; // number of task per process
+int sctk_get_init_vp_and_nbvp_numa( int i, int *nbVp )
+{
+	int task_nb = mpc_common_get_local_task_count();
 	int cpu_nb = mpc_topology_get_pu_count(); // number of cpu per process
 	int numa_node_per_node_nb = mpc_topology_get_numa_node_count();
-  int cpu_per_numa_node = cpu_nb / numa_node_per_node_nb;
+	int cpu_per_numa_node = cpu_nb / numa_node_per_node_nb;
 
 	int global_id = i;
 	int numa_node_id = ( global_id * numa_node_per_node_nb ) / task_nb;
 	int local_id = mpc_common_get_local_task_rank();
+		global_id - ( ( ( numa_node_id * task_nb ) + numa_node_per_node_nb - 1 ) /
+					  numa_node_per_node_nb );
 
-  int task_per_numa_node =
-      (((numa_node_id + 1) * task_nb + numa_node_per_node_nb - 1) /
-       numa_node_per_node_nb) -
-      (((numa_node_id)*task_nb + numa_node_per_node_nb - 1) /
-       numa_node_per_node_nb);
+	int task_per_numa_node =
+		( ( ( numa_node_id + 1 ) * task_nb + numa_node_per_node_nb - 1 ) /
+		  numa_node_per_node_nb ) -
+		( ( (numa_node_id) *task_nb + numa_node_per_node_nb - 1 ) /
+		  numa_node_per_node_nb );
 
-  int proc_local = (local_id * cpu_per_numa_node) / task_per_numa_node;
-  int proc_global = proc_local + (numa_node_id * cpu_per_numa_node);
+	int proc_local = ( local_id * cpu_per_numa_node ) / task_per_numa_node;
+	int proc_global = proc_local + ( numa_node_id * cpu_per_numa_node );
 
-  // calculate nbVp value
-  int proc_next_global;
-  int proc_next_local;
+	// calculate nbVp value
+	int proc_next_global;
+	int proc_next_local;
 
-  if (local_id < task_per_numa_node) {
-    proc_next_global =
-        ((local_id + 1) * cpu_per_numa_node) / task_per_numa_node;
-    proc_next_local = proc_next_global + numa_node_id * cpu_per_numa_node;
-    *nbVp = proc_next_local - proc_global;
-  } else {
-    *nbVp = cpu_per_numa_node - proc_local;
-  }
-  if (*nbVp < 1)
-    *nbVp = 1;
+	if ( local_id < task_per_numa_node )
+	{
+		proc_next_global =
+			( ( local_id + 1 ) * cpu_per_numa_node ) / task_per_numa_node;
+		proc_next_local = proc_next_global + numa_node_id * cpu_per_numa_node;
+		*nbVp = proc_next_local - proc_global;
+	}
+	else
+	{
+		*nbVp = cpu_per_numa_node - proc_local;
+	}
+	if ( *nbVp < 1 )
+		*nbVp = 1;
 
-  // DEBUG
-  // char hostname[1024];
-  // gethostname(hostname,1024);
-  // FILE *hostname_fd = fopen(strcat(hostname,".log"),"a");
-  // fprintf(hostname_fd,"INIT        task_nb %d cpu_per_node %d
-  // numa_node_per_node_nb %d numa_node_id %d task_per_numa_node %d local_id %d
-  // global_id %d proc_global %d current_cpu %d mpc_common_get_local_task_count %d
-  // nbVp %d\n",
-  //        task_nb,
-  //        cpu_nb ,
-  //        numa_node_per_node_nb,
-  //        numa_node_id ,
-  //        task_per_numa_node,
-  //        local_id  ,
-  //        global_id ,
-  //        proc_global,
+	// DEBUG
+	// char hostname[1024];
+	// gethostname(hostname,1024);
+	// FILE *hostname_fd = fopen(strcat(hostname,".log"),"a");
+	// fprintf(hostname_fd,"INIT        task_nb %d cpu_per_node %d
+	// numa_node_per_node_nb %d numa_node_id %d task_per_numa_node %d local_id %d
+	// global_id %d proc_global %d current_cpu %d mpc_common_get_local_task_count %d
+	// nbVp %d\n",
+	//        task_nb,
+	//        cpu_nb ,
+	//        numa_node_per_node_nb,
+	//        numa_node_id ,
+	//        task_per_numa_node,
+	//        local_id  ,
+	//        global_id ,
+	//        proc_global,
 	//        mpc_topology_get_current_cpu(),
-  //        mpc_common_get_local_task_count(),
-  //        *nbVp
-  //       );
-  // fflush(hostname_fd);
-  // fclose(hostname_fd);
-  // ENDDEBUG
+	//        mpc_common_get_local_task_count(),
+	//        *nbVp
+	//       );
+	// fflush(hostname_fd);
+	// fclose(hostname_fd);
+	// ENDDEBUG
 
-  return proc_global;
+	return proc_global;
 }
 
-int sctk_get_init_vp_and_nbvp(int i, int *nbVp) {
-  // return sctk_get_init_vp_and_nbvp_default (i, nbVp);
-  // return sctk_get_init_vp_and_nbvp_numa (i, nbVp);
-  // return sctk_get_init_vp_and_nbvp_numa_packed (i, nbVp);
-
-  // function pointer to get the thread placement policy from the config
-  int (*thread_placement_policy)(int i, int *nbVp);
-  thread_placement_policy = (int (*)(int, int *))sctk_runtime_config_get()
-                                ->modules.thread.placement_policy.value;
-  return thread_placement_policy(i, nbVp);
-}
-
-int
-sctk_get_init_vp (int i)
+int sctk_get_init_vp_and_nbvp( int i, int *nbVp )
 {
-     int dummy;
-     return sctk_get_init_vp_and_nbvp (i, &dummy);
+	// return sctk_get_init_vp_and_nbvp_default (i, nbVp);
+	// return sctk_get_init_vp_and_nbvp_numa (i, nbVp);
+	// return sctk_get_init_vp_and_nbvp_numa_packed (i, nbVp);
+
+	// function pointer to get the thread placement policy from the config
+	int ( *thread_placement_policy )( int i, int *nbVp );
+	thread_placement_policy = (int ( * )( int, int * )) sctk_runtime_config_get()
+								  ->modules.thread.placement_policy.value;
+	return thread_placement_policy( i, nbVp );
 }
 
+int sctk_get_init_vp( int i )
+{
+	int dummy;
+	return sctk_get_init_vp_and_nbvp( i, &dummy );
+}
 
 static struct _sctk_thread_cleanup_buffer
   *ptr_cleanup_sctk_thread_init_no_mpc;
@@ -2654,45 +2669,45 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	MPC_Process_hook();
 #endif
 
-	if (sctk_restart_mode == 0)
+	if ( sctk_restart_mode == 0 )
 	{
-		sctk_leave_no_alloc_land ();
+		sctk_leave_no_alloc_land();
 
 
-    local_threads = total_tasks_number / mpc_common_get_process_count();
-    if (total_tasks_number % mpc_common_get_process_count() > mpc_common_get_process_rank())
-      local_threads++;
+		local_threads = total_tasks_number / mpc_common_get_process_count();
+		if ( total_tasks_number % mpc_common_get_process_count() > mpc_common_get_process_rank() )
+			local_threads++;
 
-    start_thread = local_threads * mpc_common_get_process_rank();
-    if (total_tasks_number % mpc_common_get_process_count() <= mpc_common_get_process_rank())
-      start_thread += total_tasks_number % mpc_common_get_process_count();
+		start_thread = local_threads * mpc_common_get_process_rank();
+		if ( total_tasks_number % mpc_common_get_process_count() <= mpc_common_get_process_rank() )
+			start_thread += total_tasks_number % mpc_common_get_process_count();
 
-/* 		if (sctk_checkpoint_mode) */
-/* 		{ */
-/* 			file = fopen (name, "w"); */
-/* 			fprintf (file, "Task %d->%d\n", start_thread, */
-/* 						   start_thread + local_threads - 1); */
-/* 			fprintf (file, "%lu\n", sctk_get_heap_size ()); */
-/* 			fclose (file); */
-/* 		} */
+		/* 		if (sctk_checkpoint_mode) */
+		/* 		{ */
+		/* 			file = fopen (name, "w"); */
+		/* 			fprintf (file, "Task %d->%d\n", start_thread, */
+		/* 						   start_thread + local_threads - 1); */
+		/* 			fprintf (file, "%lu\n", sctk_get_heap_size ()); */
+		/* 			fclose (file); */
+		/* 		} */
 
 		sctk_first_local = start_thread;
 		sctk_last_local = start_thread + local_threads - 1;
 		threads =
-		(sctk_thread_t *) sctk_malloc (local_threads * sizeof (sctk_thread_t));
+			(sctk_thread_t *) sctk_malloc( local_threads * sizeof( sctk_thread_t ) );
 		sctk_current_local_tasks_nb = local_threads;
 
 		cnt = 0;
 
-		for (i = start_thread; i < start_thread + local_threads; i++)
+		for ( i = start_thread; i < start_thread + local_threads; i++ )
 		{
-			sctk_nodebug ("Thread %d try create", i);
-			sctk_thread_create (&(threads[thread_to_join]), NULL, run, arg, (long) i, cnt++);
-			sctk_nodebug ("Thread %d created", i);
+			sctk_nodebug( "Thread %d try create", i );
+			sctk_thread_create( &( threads[thread_to_join] ), NULL, run, arg, (long) i, cnt++ );
+			sctk_nodebug( "Thread %d created", i );
 			thread_to_join++;
 		}
 
-		sctk_nodebug ("All thread created");
+		sctk_nodebug( "All thread created" );
 	}
 	else
 	{

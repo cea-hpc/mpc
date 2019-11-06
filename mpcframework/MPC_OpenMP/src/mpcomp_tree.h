@@ -8,6 +8,60 @@
  ***************/
 
 #if 0
+
+static inline void mpcomp_task_thread_infos_init( struct mpcomp_thread_s *thread )
+{
+	sctk_assert( thread );
+
+	if ( !MPCOMP_TASK_THREAD_IS_INITIALIZED( thread ) )
+	{
+		mpcomp_task_t *implicit_task;
+		mpcomp_task_list_t *tied_tasks_list;
+		/* Allocate the default current task (no func, no data, no parent) */
+		implicit_task = ( mpcomp_task_t * ) mpcomp_alloc( sizeof( mpcomp_task_t ) );
+		sctk_assert( implicit_task );
+		MPCOMP_TASK_THREAD_SET_CURRENT_TASK( thread, NULL );
+		_mpc_task_info_init( implicit_task, NULL, NULL, thread );
+#ifdef MPCOMP_USE_TASKDEP
+		implicit_task->task_dep_infos = ( mpcomp_task_dep_task_infos_t * )
+		                                mpcomp_alloc( sizeof( mpcomp_task_dep_task_infos_t ) );
+		sctk_assert( implicit_task->task_dep_infos );
+		memset( implicit_task->task_dep_infos, 0,
+		        sizeof( mpcomp_task_dep_task_infos_t ) );
+#endif /* MPCOMP_USE_TASKDEP */
+#if OMPT_SUPPORT
+
+		if ( _mpc_omp_ompt_is_enabled() )
+		{
+			ompt_task_type_t task_type = ompt_task_implicit;
+
+			if ( OMPT_Callbacks )
+			{
+				ompt_callback_task_create_t callback;
+				callback = ( ompt_callback_task_create_t ) OMPT_Callbacks[ompt_callback_task_create];
+
+				if ( callback )
+				{
+					ompt_data_t *task_data = &( implicit_task->ompt_task_data );
+					const void *code_ra = __builtin_return_address( 0 );
+					callback( NULL, NULL, task_data, task_type, ompt_task_initial, code_ra );
+				}
+			}
+		}
+
+#endif /* OMPT_SUPPORT */
+		/* Allocate private task data structures */
+		tied_tasks_list = ( mpcomp_task_list_t * ) mpcomp_alloc( sizeof( mpcomp_task_list_t ) );
+		sctk_assert( tied_tasks_list );
+		MPCOMP_TASK_THREAD_SET_CURRENT_TASK( thread, implicit_task );
+		MPCOMP_TASK_THREAD_SET_TIED_TASK_LIST_HEAD( thread, tied_tasks_list );
+		OPA_store_int( &( implicit_task->refcount ), 1 );
+		/* Change tasking_init_done to avoid multiple thread init */
+		MPCOMP_TASK_THREAD_CMPL_INIT( thread );
+	}
+}
+
+
 static inline void mpcomp_thread_infos_reset( mpcomp_thread_t *thread )
 {
 	sctk_assert( thread );

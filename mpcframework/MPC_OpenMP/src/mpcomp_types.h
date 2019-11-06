@@ -46,6 +46,7 @@
 #define SCTK_OMP_VERSION_MINOR 1
 
 #define MPCOMP_TASK 1
+#define MPCOMP_TASKGROUP 1
 #define MPCOMP_USE_INTEL_ABI 1
 
 #define MPCOMP_OPENMP_3_0
@@ -127,6 +128,20 @@
 
 	/* A task which forces his children to be included  */
 	#define MPCOMP_TASK_FINAL 0x00000010
+
+
+        #define MPCOMP_TASK_DEP_GOMP_DEPS_FLAG 8
+
+        #define MPCOMP_TASK_DEP_INTEL_HTABLE_SIZE 997
+        #define MPCOMP_TASK_DEP_INTEL_HTABLE_SEED 6
+
+        #define MPCOMP_TASK_DEP_MPC_HTABLE_SIZE 1001 /* 7 * 11 * 13 */
+        #define MPCOMP_TASK_DEP_MPC_HTABLE_SEED 2
+
+        #define MPCOMP_TASK_DEP_LOCK_NODE(node) mpc_common_spinlock_lock(&(node->lock))
+
+        #define MPCOMP_TASK_DEP_UNLOCK_NODE(node) mpc_common_spinlock_unlock(&(node->lock))
+
 
 #endif
 
@@ -243,12 +258,60 @@ typedef enum mpcomp_loop_gen_type_e
 
 #if MPCOMP_TASK
 
+/*** MPCOMP_TASK_INIT_STATUS ***/
+
+typedef enum mpcomp_task_init_status_e {
+  MPCOMP_TASK_INIT_STATUS_UNINITIALIZED,
+  MPCOMP_TASK_INIT_STATUS_INIT_IN_PROCESS,
+  MPCOMP_TASK_INIT_STATUS_INITIALIZED,
+  MPCOMP_TASK_INIT_STATUS_COUNT
+} mpcomp_task_init_status_t;
+
 typedef enum mpcomp_tasklist_type_e
 {
 	MPCOMP_TASK_TYPE_NEW = 0,
 	MPCOMP_TASK_TYPE_UNTIED = 1,
 	MPCOMP_TASK_TYPE_COUNT = 2,
 } mpcomp_tasklist_type_t;
+
+/**
+ * Don't modify order NONE < IN < OUT */
+typedef enum mpcomp_task_dep_type_e {
+  MPCOMP_TASK_DEP_NONE = 0,
+  MPCOMP_TASK_DEP_IN = 1,
+  MPCOMP_TASK_DEP_OUT = 2,
+  MPCOMP_TASK_DEP_COUNT = 3,
+} mpcomp_task_dep_type_t;
+
+__UNUSED__ static char *mpcomp_task_dep_type_to_string[MPCOMP_TASK_DEP_COUNT] = {
+    "MPCOMP_TASK_DEP_NONE", /*  MPCOMP_TASK_DEP_NONE    = 0 */
+    "MPCOMP_TASK_DEP_IN  ", /*  MPCOMP_TASK_DEP_IN      = 1 */
+    "MPCOMP_TASK_DEP_OUT "  /*  MPCOMP_TASK_DEP_IN      = 2 */
+};
+
+typedef enum mpcomp_task_dep_htable_op_e {
+  MPCOMP_TASK_DEP_HTABLE_OP_INSERT = 0,
+  MPCOMP_TASK_DEP_HTABLE_OP_DELETE = 1,
+  MPCOMP_TASK_DEP_HTABLE_OP_SEARCH = 2,
+  MPCOMP_TASK_DEP_HTABLE_OP_COUNT = 3,
+} mpcomp_task_dep_htable_op_t;
+
+__UNUSED__ static char
+    *mpcomp_task_dep_htable_op_to_string[MPCOMP_TASK_DEP_HTABLE_OP_COUNT] = {
+        "MPCOMP_TASK_DEP_HTABLE_OP_INSERT", "MPCOMP_TASK_DEP_HTABLE_OP_DELETE",
+        "MPCOMP_TASK_DEP_HTABLE_OP_SEARCH"};
+
+typedef enum mpcomp_task_dep_task_status_e {
+  MPCOMP_TASK_DEP_TASK_PROCESS_DEP = 0,
+  MPCOMP_TASK_DEP_TASK_NOT_EXECUTE = 1,
+  MPCOMP_TASK_DEP_TASK_RELEASED = 2,
+  MPCOMP_TASK_DEP_TASK_FINALIZED = 3,
+  MPCOMP_TASK_DEP_TASK_COUNT = 4
+} mpcomp_task_dep_task_status_t;
+
+__UNUSED__ static char *mpcomp_task_dep_task_status_to_string[MPCOMP_TASK_DEP_TASK_COUNT] =
+    {"MPCOMP_TASK_DEP_TASK_PROCESS_DEP", "MPCOMP_TASK_DEP_TASK_NOT_EXECUTE",
+     "MPCOMP_TASK_DEP_TASK_RELEASED", "MPCOMP_TASK_DEP_TASK_FINALIZED"};
 
 #endif
 
@@ -302,8 +365,6 @@ typedef struct mpcomp_local_icv_s
 
 #if MPCOMP_TASK
 
-
-
 typedef struct mpcomp_tree_array_global_info_s
 {
 	int *tree_shape;
@@ -349,6 +410,36 @@ typedef struct mpcomp_task_taskgroup_s
 	struct mpcomp_task_taskgroup_s *prev;
 	OPA_int_t children_num;
 } mpcomp_task_taskgroup_t;
+
+#define MPCOMP_TASK_LOCKFREE_CACHELINE_PADDING 128
+
+#ifdef MPCOMP_USE_MCS_LOCK
+	typedef sctk_mcslock_t mpcomp_task_lock_t;
+#else  /* MPCOMP_USE_MCS_LOCK */
+	typedef mpc_common_spinlock_t mpcomp_task_lock_t;
+#endif /* MPCOMP_USE_MCS_LOCK */
+
+/** OpenMP task list data structure */
+typedef struct mpcomp_task_list_s
+{
+	OPA_ptr_t lockfree_head;
+	OPA_ptr_t lockfree_tail;
+	char pad1[MPCOMP_TASK_LOCKFREE_CACHELINE_PADDING - 2 * sizeof( OPA_ptr_t )];
+	OPA_ptr_t lockfree_shadow_head;
+	char pad2[MPCOMP_TASK_LOCKFREE_CACHELINE_PADDING - 1 * sizeof( OPA_ptr_t )];
+	OPA_int_t nb_elements;					  /**< Number of tasks in the list */
+	mpcomp_task_lock_t mpcomp_task_lock; /**< Lock of the list                                 */
+	int total;
+	struct mpcomp_task_s *head; /**< First task of the list */
+	struct mpcomp_task_s *tail; /**< Last task of the list */
+	OPA_int_t nb_larcenies;		/**< Number of tasks in the list */
+} mpcomp_task_list_t;
+
+static inline void __task_list_reset( mpcomp_task_list_t *list )
+{
+	memset( list, 0, sizeof( mpcomp_task_list_t ) );
+}
+
 
 /** OpenMP task data structure */
 typedef struct mpcomp_task_s
@@ -457,6 +548,66 @@ typedef struct mpcomp_task_team_infos_s
 	int tasklist_depth[MPCOMP_TASK_TYPE_COUNT]; /**< Depth in the tree of task
                                                  lists 			*/
 } mpcomp_task_team_infos_t;
+
+
+typedef struct mpcomp_task_dep_node_s {
+  mpc_common_spinlock_t lock;
+  OPA_int_t ref_counter;
+  OPA_int_t predecessors;
+  struct mpcomp_task_s *task;
+  OPA_int_t status;
+  struct mpcomp_task_dep_node_list_s *successors;
+  bool if_clause;
+} mpcomp_task_dep_node_t;
+
+typedef struct mpcomp_task_dep_node_list_s {
+  mpcomp_task_dep_node_t *node;
+  struct mpcomp_task_dep_node_list_s *next;
+} mpcomp_task_dep_node_list_t;
+
+typedef struct mpcomp_task_dep_ht_entry_s {
+  uintptr_t base_addr;
+  mpcomp_task_dep_node_t *last_out;
+  mpcomp_task_dep_node_list_t *last_in;
+  struct mpcomp_task_dep_ht_entry_s *next;
+} mpcomp_task_dep_ht_entry_t;
+
+typedef struct mpcomp_task_dep_ht_bucket_s {
+  int num_entries;
+  uint64_t base_addr;
+  bool redundant_out;
+  uint64_t *base_addr_list;
+  mpcomp_task_dep_type_t type;
+  mpcomp_task_dep_ht_entry_t *entry;
+} mpcomp_task_dep_ht_bucket_t;
+
+/**
+ * \param[in] 	addr	uintptr_t	depend addr ptr
+ * \param[in] 	size	uint32_t 	max hash size value
+ * \param[in] 	seed	uint32_t 	seed value (can be ignored)
+ * \return 		hash 	uint32_t 	hash computed value
+ */
+typedef uint32_t (*mpcomp_task_dep_hash_func_t)(uintptr_t, uint32_t, uint32_t);
+
+typedef struct mpcomp_task_dep_ht_table_s {
+  uint32_t hsize;
+  uint32_t hseed;
+  mpc_common_spinlock_t hlock;
+  mpcomp_task_dep_hash_func_t hfunc;
+  struct mpcomp_task_dep_ht_bucket_s *buckets;
+} mpcomp_task_dep_ht_table_t;
+
+typedef struct mpcomp_task_dep_task_infos_s {
+  mpcomp_task_dep_node_t *node;
+  struct mpcomp_task_dep_ht_table_s *htable;
+} mpcomp_task_dep_task_infos_t;
+
+typedef struct mpcomp_task_stealing_funcs_s {
+  char *namePolicy;
+  int allowMultipleVictims;
+  int (*pre_init)(void);
+  int (*get_victim)(int globalRank, int index, mpcomp_tasklist_type_t type);
+}mpcomp_task_stealing_funcs_t;
 
 #endif /* MPCOMP_TASK */
 
@@ -879,6 +1030,7 @@ typedef struct mpcomp_node_s
 	void **reduce_data;
 
 } mpcomp_node_t;
+
 
 typedef struct mpcomp_node_s *mpcomp_node_ptr_t;
 

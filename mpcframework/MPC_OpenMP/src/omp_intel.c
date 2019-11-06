@@ -10,8 +10,7 @@
 #include "mpcomp_sync.h"
 
 #include "mpcomp_task.h"
-#include "mpcomp_task_utils.h"
-#include "mpcomp_taskgroup.h"
+
 
 /********************
  * GLOBAL VARIABLES *
@@ -2040,7 +2039,7 @@ kmp_int32 __kmpc_omp_task( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gti
 	struct mpcomp_task_s *mpcomp_task =
 	    ( struct mpcomp_task_s * ) ( ( char * )new_task - sizeof( struct mpcomp_task_s ) );
 	// TODO: Handle final clause
-	__mpcomp_task_process( mpcomp_task, true );
+	_mpc_task_process( mpcomp_task, true );
 	return ( kmp_int32 )0;
 }
 
@@ -2063,9 +2062,9 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
 	// mpcomp_task + arg_size
 	const long mpcomp_kmp_taskdata = sizeof( mpcomp_task_t ) + sizeof_kmp_task_t;
 	const long mpcomp_task_info_size =
-	    mpcomp_task_align_single_malloc( mpcomp_kmp_taskdata, align_size );
+	    _mpc_task_align_single_malloc( mpcomp_kmp_taskdata, align_size );
 	const long mpcomp_task_data_size =
-	    mpcomp_task_align_single_malloc( sizeof_shareds, align_size );
+	    _mpc_task_align_single_malloc( sizeof_shareds, align_size );
 	/* Compute task total size */
 	long mpcomp_task_tot_size = mpcomp_task_info_size;
 	sctk_assert( MPCOMP_OVERFLOW_SANITY_CHECK( ( unsigned long )mpcomp_task_tot_size,
@@ -2115,7 +2114,7 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
 	/* Create new task */
 	kmp_task_t *compiler_infos =
 	    ( kmp_task_t * )( ( char * )new_task + sizeof( struct mpcomp_task_s ) );
-	__mpcomp_task_infos_init( new_task, __kmp_omp_task_wrapper, compiler_infos, t );
+	_mpc_task_info_init( new_task, __kmp_omp_task_wrapper, compiler_infos, t );
 	/* MPCOMP_USE_TASKDEP */
 	compiler_infos->shareds = task_data;
 	compiler_infos->routine = task_entry;
@@ -2123,7 +2122,7 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
 	/* taskgroup */
 	mpcomp_task_t *current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( t );
 	mpcomp_taskgroup_add_task( new_task );
-	mpcomp_task_ref_parent_task( new_task );
+	_mpc_task_ref_parent_task( new_task );
 	new_task->is_stealed = false;
 	new_task->task_size = t->task_infos.max_task_tot_size;
 
@@ -2139,7 +2138,7 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
 	t->task_infos.sizeof_kmp_task_t = sizeof_kmp_task_t;
 
 	/* If its parent task is final, the new task must be final too */
-	if ( mpcomp_task_is_final( flags, new_task->parent ) )
+	if ( _mpc_task_is_final( flags, new_task->parent ) )
 	{
 		mpcomp_task_set_property( &( new_task->property ), MPCOMP_TASK_FINAL );
 	}
@@ -2170,9 +2169,9 @@ void __kmpc_omp_task_complete_if0( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
 	struct mpcomp_task_s *mpcomp_task = ( struct mpcomp_task_s * )
 	                                    ( ( char * )task - sizeof( struct mpcomp_task_s ) );
 	sctk_assert( t );
-	__mpcomp_task_finalize_deps( mpcomp_task ); /* if task if0 with deps */
+	_mpc_task_dep_new_finalize( mpcomp_task ); /* if task if0 with deps */
 	mpcomp_taskgroup_del_task( mpcomp_task );
-	mpcomp_task_unref_parent_task( mpcomp_task );
+	_mpc_task_unref_parent_task( mpcomp_task );
 	MPCOMP_TASK_THREAD_SET_CURRENT_TASK( t, mpcomp_task->parent );
 	t->info.icvs = mpcomp_task->prev_icvs;
 }
@@ -2183,13 +2182,13 @@ kmp_int32 __kmpc_omp_task_parts( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int
 	// TODO: Check if this is the correct way to implement __kmpc_omp_task_parts
 	struct mpcomp_task_s *mpcomp_task = ( struct mpcomp_task_s * )
 	                                    ( ( char * )new_task - sizeof( struct mpcomp_task_s ) );
-	__mpcomp_task_process( mpcomp_task, true );
+	_mpc_task_process( mpcomp_task, true );
 	return ( kmp_int32 )0;
 }
 
 kmp_int32 __kmpc_omp_taskwait( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid )
 {
-	mpcomp_taskwait();
+	_mpc_task_wait();
 	return ( kmp_int32 )0;
 }
 
@@ -2216,12 +2215,12 @@ void __kmpc_omp_task_complete( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32
 
 void __kmpc_taskgroup( __UNUSED__ ident_t *loc, __UNUSED__ int gtid )
 {
-	mpcomp_taskgroup_start();
+	_mpc_task_taskgroup_start();
 }
 
 void __kmpc_end_taskgroup( __UNUSED__ ident_t *loc, __UNUSED__ int gtid )
 {
-	mpcomp_taskgroup_end();
+	_mpc_task_taskgroup_end();
 }
 
 static void mpcomp_intel_translate_taskdep_to_gomp(  kmp_int32 ndeps, kmp_depend_info_t *dep_list, kmp_int32 ndeps_noalias, __UNUSED__ kmp_depend_info_t *noalias_dep_list, void **gomp_list_deps )
@@ -2278,7 +2277,7 @@ kmp_int32 __kmpc_omp_task_with_deps( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp
 	depend = ( void ** )sctk_malloc( sizeof( uintptr_t ) * ( ( int )( ndeps + ndeps_noalias ) + 2 ) );
 	mpcomp_intel_translate_taskdep_to_gomp( ndeps, dep_list, ndeps_noalias, noalias_dep_list, depend );
 	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
-	mpcomp_task_with_deps( mpcomp_task->func, data, NULL, arg_size, arg_align,
+	_mpc_task_new_with_deps( mpcomp_task->func, data, NULL, arg_size, arg_align,
 	                       if_clause, flags, depend, true, mpcomp_task );
 	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
 	return ( kmp_int32 )0;
@@ -2298,7 +2297,7 @@ void __kmpc_omp_wait_deps( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gti
 	void **depend = ( void ** )sctk_malloc( sizeof( uintptr_t ) * ( ( int )( ndeps + ndeps_noalias ) + 2 ) );
 	mpcomp_intel_translate_taskdep_to_gomp( ndeps, dep_list, ndeps_noalias, noalias_dep_list, depend );
 	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
-	mpcomp_task_with_deps( NULL, NULL, NULL, arg_size, arg_align,
+	_mpc_task_new_with_deps( NULL, NULL, NULL, arg_size, arg_align,
 	                       if_clause, flags, depend, true, task ); /* create the dep node and set the task to the node then return */
 	/* next call should be __kmpc_omp_task_begin_if0 to execute undeferred if0 task */
 	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
@@ -2326,7 +2325,7 @@ void __kmpc_taskloop( ident_t *loc, int gtid, kmp_task_t *task, __UNUSED__ int i
 
 	if ( nogroup == 0 )
 	{
-		mpcomp_taskgroup_start();
+		_mpc_task_taskgroup_start();
 	}
 
 	if ( st == 1 )     // most common case
@@ -2434,7 +2433,7 @@ void __kmpc_taskloop( ident_t *loc, int gtid, kmp_task_t *task, __UNUSED__ int i
 		*( kmp_uint64 * )( ( char * )next_task + upper_offset ) = upper;
 		struct mpcomp_task_s *mpcomp_task =
 		    ( struct mpcomp_task_s * ) ( ( char * )next_task - sizeof( struct mpcomp_task_s ) );
-		__mpcomp_task_process( mpcomp_task, true );
+		_mpc_task_process( mpcomp_task, true );
 		lower = upper + st;
 	}
 
@@ -2442,11 +2441,11 @@ void __kmpc_taskloop( ident_t *loc, int gtid, kmp_task_t *task, __UNUSED__ int i
 	struct mpcomp_task_s *mpcomp_taskloop_task =
 	    ( struct mpcomp_task_s * ) ( ( char * )task - sizeof( struct mpcomp_task_s ) );
 	mpcomp_taskgroup_del_task( mpcomp_taskloop_task );
-	mpcomp_task_unref_parent_task( mpcomp_taskloop_task );
+	_mpc_task_unref_parent_task( mpcomp_taskloop_task );
 
 	if ( nogroup == 0 )
 	{
-		mpcomp_taskgroup_end();
+		_mpc_task_taskgroup_end();
 	}
 }
 #endif

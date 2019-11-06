@@ -6,13 +6,12 @@
 #include <string.h>
 #include <assert.h>
 
-
-
+#include <mpc_common_topology.h>
+#include "mpcomp_core.h"
 #include "mpcthread.h"
 #include "mpc_common_asm.h"
 #include "mpcomp_types.h"
 #include "mpcomp_spinning_core.h"
-
 
 #if( MPCOMP_TASK || defined( MPCOMP_OPENMP_3_0 ) )
 
@@ -1141,7 +1140,7 @@ static inline void *__tree_mvp_init( void *args )
 	sctk_assert( new_mvp->threads );
 	memset( new_mvp->threads, 0, sizeof( mpcomp_thread_t ) );
 #if defined( MPCOMP_OPENMP_3_0 )
-	mpcomp_tree_array_task_thread_init( new_mvp->threads );
+	_mpc_task_tree_array_thread_init( new_mvp->threads );
 #endif /* MPCOMP_OPENMP_3_0 */
 	new_mvp->threads->next = NULL;
 	new_mvp->threads->info.num_threads = 1;
@@ -1180,6 +1179,7 @@ static inline void *__tree_mvp_init( void *args )
 	mpcomp_slave_mvp_node( new_mvp );
 	return NULL;
 }
+
 
 static inline void __tree_master_thread_init( mpcomp_node_t *root, mpcomp_meta_tree_node_t *tree_array, const mpcomp_local_icv_t *icvs )
 {
@@ -1220,7 +1220,7 @@ static inline void __tree_master_thread_init( mpcomp_node_t *root, mpcomp_meta_t
 	master->info.num_threads = 1;
 	assert( root->mvp );
 #if defined( MPCOMP_OPENMP_3_0 )
-	mpcomp_tree_array_task_thread_init( master );
+	_mpc_task_tree_array_thread_init( master );
 #endif /* MPCOMP_OPENMP_3_0 */
 }
 

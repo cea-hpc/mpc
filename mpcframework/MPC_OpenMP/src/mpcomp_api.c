@@ -24,7 +24,7 @@
 #include "sctk_debug.h"
 #include "mpcomp_core.h"
 #include "mpcomp_types.h"
-#include "mpcomp_task_utils.h"
+#include "mpcomp_task.h"
 #include "mpcomp_openmp_tls.h"
 
 void omp_set_num_threads(int num_threads) {

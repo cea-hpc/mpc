@@ -151,11 +151,11 @@ GOMP_ABI_FUNC(GOMP_loop_ull_static_start, "GOMP_2.0",
               mpcomp_GOMP_loop_ull_static_start,
               mpcomp_GOMP_loop_ull_static_start)
 GOMP_ABI_FUNC(GOMP_taskwait, "GOMP_2.0", mpcomp_GOMP_taskwait,
-              __mpcomp_taskwait)
+              _mpc_task_newwait)
 
 //All"GOMP_3.0"symbols
 GOMP_ABI_FUNC(GOMP_taskyield, "GOMP_3.0", mpcomp_GOMP_taskyield,
-              __mpcomp_taskyield)
+              _mpc_task_newyield)
 
 //AllGOMP_4.0symbols
 

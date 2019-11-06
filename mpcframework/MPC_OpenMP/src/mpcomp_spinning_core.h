@@ -4,11 +4,11 @@
 #include "mpcomp_types.h"
 
 #if defined( MPCOMP_OPENMP_3_0 )
-	#include "mpcomp_task_utils.h"
+	#include "mpcomp_task.h"
 #endif /* defined( MPCOMP_OPENMP_3_0 ) */
 
 void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp );
-mpcomp_mvp_t *__mpcomp_wakeup_node( mpcomp_node_t *node );
+mpcomp_mvp_t *_mpc_spin_node_wakeup( mpcomp_node_t *node );
 void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp );
 
 static inline void __mpcomp_instance_tree_array_root_init( struct mpcomp_node_s *root, mpcomp_instance_t *instance, const int nthreads )
@@ -29,7 +29,7 @@ static inline void __mpcomp_instance_tree_array_root_init( struct mpcomp_node_s 
 	meta_node->ptr.node = root;
 	meta_node->type = MPCOMP_CHILDREN_NODE;
 #if defined( MPCOMP_OPENMP_3_0 )
-	__mpcomp_task_root_infos_init( root );
+	_mpc_task_root_info_init( root );
 #endif /* defined( MPCOMP_OPENMP_3_0 )  */
 }
 

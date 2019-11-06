@@ -26,7 +26,7 @@
 
 #include "mpcomp_sync.h"
 
-#include "mpcomp_task_utils.h"
+#include "mpcomp_task.h"
 #include "mpcomp_types.h"
 #include "mpcomp_core.h"
 #include "mpcomp_openmp_tls.h"
@@ -37,10 +37,6 @@
 #include "sched.h"
 #include "mpc_common_asm.h"
 #include "sctk_thread.h"
-
-#if OMPT_SUPPORT
-	extern ompt_callback_t *OMPT_Callbacks;
-#endif /* OMPT_SUPPORT */
 
 /***********
  * ATOMICS *
@@ -573,7 +569,7 @@ __asm__( ".symver __mpcomp_do_single, GOMP_single_start@@GOMP_1.0" );
 
 
 // missing forward declaration
-void mpcomp_taskwait( void );
+void _mpc_task_wait( void );
 
 /** Barrier for all threads of the same team */
 void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
@@ -596,7 +592,7 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
   new_root = thread->instance->root;
 
 #if MPCOMP_TASK
-  mpcomp_taskwait();
+	_mpc_task_wait();
 #endif /* MPCOMP_TASK */
 
   /* Step 1: Climb in the tree */
@@ -632,7 +628,7 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
     while (b_done == c->barrier_done) {
       sctk_thread_yield();
 #if MPCOMP_TASK
-      mpcomp_task_schedule(1);
+			_mpc_task_schedule( 1 );
 #endif /* MPCOMP_TASK */
     }
 
@@ -815,11 +811,6 @@ void __mpcomp_barrier(void) {
 /************
  * SECTIONS *
  ************/
-
-#if OMPT_SUPPORT
-#include "ompt.h"
-extern ompt_callback_t* OMPT_Callbacks;
-#endif /* OMPT_SUPPORT */
 
 /*
    This file contains all functions related to SECTIONS constructs in OpenMP

@@ -8,10 +8,8 @@
 #include "mpcomp_core.h"
 
 #include "mpcomp_loop.h"
-#include "mpcomp_taskgroup.h"
-#include "mpcomp_task_dep.h"
 
-#include "mpcomp_task_utils.h"
+#include "mpcomp_task.h"
 #include "mpcomp_parallel_region.h"
 
 
@@ -180,7 +178,7 @@ static inline void __gomp_in_order_scheduler_master_end( void )
 	}
 
 	//t->done = 1;
-	// mpcomp_taskwait();
+	// _mpc_task_wait();
 	/* Restore previous TLS */
 	sctk_openmp_thread_tls = t->father;
 }
@@ -1662,10 +1660,10 @@ void mpcomp_GOMP_task( void ( *fn )( void * ), void *data,
 {
 	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
 #if MPCOMP_USE_TASKDEP
-	mpcomp_task_with_deps( ( void ( * )( void * ) ) fn, data, cpyfn, arg_size, arg_align,
+	_mpc_task_new_with_deps( ( void ( * )( void * ) ) fn, data, cpyfn, arg_size, arg_align,
 	                       if_clause, flags, depend, false, NULL );
 #else
-	__mpcomp_task( ( void *( * ) ( void * ) ) fn, data, cpyfn, arg_size, arg_align,
+	_mpc_task_new( ( void *( * ) ( void * ) ) fn, data, cpyfn, arg_size, arg_align,
 	               if_clause, flags );
 #endif
 	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
@@ -1674,7 +1672,7 @@ void mpcomp_GOMP_task( void ( *fn )( void * ), void *data,
 void mpcomp_GOMP_taskwait( void )
 {
 	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
-	mpcomp_taskwait();
+	_mpc_task_wait();
 	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
 }
 
@@ -1682,7 +1680,7 @@ void mpcomp_GOMP_taskyield( void )
 {
 	/* Nothing at the moment.  */
 	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
-	mpcomp_taskyield();
+	_mpc_taskyield();
 	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
 }
 
@@ -1690,14 +1688,14 @@ void mpcomp_GOMP_taskyield( void )
 void mpcomp_GOMP_taskgroup_start( void )
 {
 	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
-	mpcomp_taskgroup_start();
+	_mpc_task_taskgroup_start();
 	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_taskgroup_end( void )
 {
 	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
-	mpcomp_taskgroup_end();
+	_mpc_task_taskgroup_end();
 	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
 }
 #endif /* MPCOMP_TASK */

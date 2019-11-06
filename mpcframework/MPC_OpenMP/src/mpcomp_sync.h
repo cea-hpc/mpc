@@ -26,7 +26,7 @@
 #define __MPCOMP_SYNC_H__
 
 #include "mpcomp_core.h"
-#include "mpcomp_task_macros.h"
+#include "mpcomp_task.h"
 #include "mpcomp_types.h"
 #include "sctk_debug.h"
 
