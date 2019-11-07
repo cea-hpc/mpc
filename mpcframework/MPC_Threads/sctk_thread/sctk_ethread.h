@@ -40,12 +40,6 @@
 #include <asm/unistd.h>
 #endif
 
-#ifdef MPC_Debugger
-#include "sctk_thread_dbg.h"
-#else
-#define sctk_enable_lib_thread_db() (void)(0)
-#endif
-
 #ifdef __cplusplus
 extern "C"
 {

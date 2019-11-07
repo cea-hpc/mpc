@@ -57,7 +57,7 @@ static __thread struct sctk_ib_topology_numa_node_s **numa_node_task = NULL;
 
 static void sctk_ib_topology_check_and_allocate_tls (void)
 {
-	int nvp = sctk_thread_get_vp();
+	int nvp = mpc_topology_get_pu();
 	/* if __thread vars need to be reset when re-enabling the rail */
 	if(vps_reset[nvp] == 0)
 	{
@@ -297,7 +297,7 @@ sctk_ib_topology_get_numa_node ( struct sctk_ib_rail_info_s *rail_ib )
 	if ( numa_node_task[rail_nb] == NULL )
 	{
 		struct sctk_ib_topology_s * topo = rail_ib->topology;
-		int vp = sctk_thread_get_vp();
+		int vp = mpc_topology_get_pu();
 		struct sctk_ib_topology_numa_node_s *node;
 
 

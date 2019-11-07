@@ -82,9 +82,6 @@
 
 #define SCTK_START_KEYWORD "--sctk-args--"
 
-#define SCTK_LOCAL_VERSION_MAJOR 0
-#define SCTK_LOCAL_VERSION_MINOR 1
-
 #ifdef HAVE_ENVIRON_VAR
 	extern char **environ;
 #endif
@@ -202,7 +199,6 @@ __sctk_add_arg_eq ( char *arg,
 
 #define sctk_add_arg_eq(arg,action) if(__sctk_add_arg_eq(arg,action,word) == 0) return 0
 
-static bool sctk_version_details_val;
 static void ( *sctk_thread_val ) ( void ) = NULL;
 static int sctk_task_nb_val;
 static int sctk_process_nb_val;
@@ -364,11 +360,6 @@ static void sctk_perform_initialisation ( void )
 
 	sctk_thread_init ();
 
-	if ( sctk_version_details_val )
-	{
-		sctk_set_version_details ();
-	}
-
 #ifdef SCTK_LIB_MODE
 	/* In lib mode we force the pthread MODE */
 	sctk_use_pthread();
@@ -459,15 +450,10 @@ static void sctk_perform_initialisation ( void )
 #endif
 	sctk_atomics_cpu_freq_init();
 	sctk_print_banner( 0 /* not in restart mode */ );
-	sctk_flush_version ();
 	/* We passed the init phase we can stop the bootstrap polling */
 	__polling_done = 1;
 }
 
-static void sctk_version_details ( void )
-{
-	sctk_version_details_val = 1;
-}
 //////////////////////////////////
 // OLD SCHEDULER
 //
@@ -692,7 +678,6 @@ sctk_proceed_arg ( char *word )
 	sctk_add_arg_eq ( "--text-placement", sctk_def_text_placement );
 	sctk_add_arg_eq ( "--disable-smt", sctk_def_disable_smt );
 	sctk_add_arg_eq ( "--directory", sctk_def_directory );
-	sctk_add_arg ( "--version-details", sctk_version_details );
 	sctk_add_arg_eq ( "--mpc-verbose", sctk_set_verbosity );
 	sctk_add_arg ( "--use-pthread_ng", sctk_use_pthread_ng );
 	sctk_add_arg ( "--use-pthread", sctk_use_pthread );
@@ -744,8 +729,6 @@ static int sctk_env_init_intern( int *argc, char ***argv )
 	sctk_init();
 	sctk_initial_argc = *argc;
 	init_argument = *argv;
-	sctk_print_version( "Init Launch", SCTK_LOCAL_VERSION_MAJOR,
-	                    SCTK_LOCAL_VERSION_MINOR );
 
 	for ( i = 0; i < sctk_initial_argc; i++ )
 	{
@@ -989,14 +972,14 @@ auto_kill_func ( void *arg )
 	{
 		if ( sctk_runtime_config_get()->modules.launcher.banner && !sctk_is_in_fortran )
 		{
-			sctk_noalloc_fprintf ( stderr, "Autokill in %ds\n", timeout );
+			mpc_common_io_noalloc_fprintf ( stderr, "Autokill in %ds\n", timeout );
 		}
 
 		sleep ( timeout );
 
 		if ( !sctk_is_in_fortran )
 		{
-			sctk_noalloc_fprintf ( stderr, "TIMEOUT reached\n" );
+			mpc_common_io_noalloc_fprintf ( stderr, "TIMEOUT reached\n" );
 		}
 
 		abort ();
@@ -1076,7 +1059,6 @@ void sctk_init_mpc_runtime()
 	sctk_node_nb_val = sctk_runtime_config_get()->modules.launcher.nb_node;
 	sctk_verbosity = sctk_runtime_config_get()->modules.launcher.verbosity;
 	sctk_launcher_mode = sctk_runtime_config_get()->modules.launcher.launcher;
-	sctk_version_details_val = sctk_runtime_config_get()->modules.launcher.vers_details;
 	sctk_profiling_outputs = sctk_runtime_config_get()->modules.launcher.profiling;
 	sctk_enable_smt_capabilities = sctk_runtime_config_get()->modules.launcher.enable_smt;
 	sctk_share_node_capabilities = sctk_runtime_config_get()->modules.launcher.share_node;

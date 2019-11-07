@@ -215,7 +215,7 @@ void sctk_ib_prof_qp_init_task ( int task_id, int vp )
 void sctk_ib_prof_qp_flush()
 {
 	struct sctk_ib_prof_qp_s *tmp;
-	tmp = sctk_ib_prof_qp_get ( sctk_thread_get_vp() );
+	tmp = sctk_ib_prof_qp_get ( mpc_topology_get_pu() );
 
 	sctk_nodebug ( "Dumping file with %lu elements", tmp->head );
 	write ( tmp->fd, tmp->buff,
@@ -228,7 +228,7 @@ void sctk_ib_prof_qp_write ( int proc, size_t size, double ts, char from )
 {
 
 	struct sctk_ib_prof_qp_s *tmp;
-	tmp = sctk_ib_prof_qp_get ( sctk_thread_get_vp() );
+	tmp = sctk_ib_prof_qp_get ( mpc_topology_get_pu() );
 	assume ( tmp );
 
 	/* We flush */
@@ -240,7 +240,7 @@ void sctk_ib_prof_qp_write ( int proc, size_t size, double ts, char from )
 
 	if ( from == PROF_QP_CREAT )
 	{
-		sctk_debug ( "CREATION FOUND for rank %d on vp %d!!!", proc, sctk_thread_get_vp() );
+		sctk_debug ( "CREATION FOUND for rank %d on vp %d!!!", proc, mpc_topology_get_pu() );
 	}
 
 	tmp->buff[tmp->head].proc = proc;
@@ -254,7 +254,7 @@ void sctk_ib_prof_qp_write ( int proc, size_t size, double ts, char from )
 void sctk_ib_prof_qp_finalize_task ( int task_id )
 {
 	struct sctk_ib_prof_qp_s *tmp;
-	tmp = sctk_ib_prof_qp_get ( sctk_thread_get_vp() );
+	tmp = sctk_ib_prof_qp_get ( mpc_topology_get_pu() );
 	/* End marker */
 	sctk_ib_prof_qp_write ( -1, 0, sctk_get_time_stamp(), PROF_QP_SYNC );
 	sctk_nodebug ( "End of task %d (head:%d)", task_id, tmp->head );

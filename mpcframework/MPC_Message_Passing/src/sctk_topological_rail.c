@@ -28,7 +28,7 @@
 
 sctk_endpoint_t * sctk_topological_rail_ellect_endpoint( int remote , mpc_mp_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
-	int vp_id = mpc_common_get_pu_rank();
+	int vp_id = mpc_topology_get_pu();
 	
 	if( vp_id < 0 )
 	{
@@ -150,7 +150,7 @@ static int sctk_send_message_from_network_topological ( __UNUSED__ mpc_mp_ptp_me
 
 void topological_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process )
 {
-	int vp_id = mpc_common_get_pu_rank();
+	int vp_id = mpc_topology_get_pu();
 	
 	if( vp_id < 0 )
 	{

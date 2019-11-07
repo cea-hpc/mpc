@@ -1273,7 +1273,7 @@ void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, cons
 	for ( i = 1; i < leaf_n_num; i++ )
 	{
 		const int target_vp = ( cpus_order ) ? cpus_order[i] : i;
-		const int pu_id = ( mpc_topology_get_current_cpu() + target_vp ) % mpc_topology_get_pu_count();
+		const int pu_id = ( mpc_topology_get_pu() + target_vp ) % mpc_topology_get_pu_count();
 		place_id += ( !( i % place_size ) ) ? 1 : 0;
 		args[i].target_vp = target_vp;
 		sctk_thread_attr_t __attr;

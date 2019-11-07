@@ -398,7 +398,7 @@ retry:
 int sctk_ib_cp_poll_global_list ( struct sctk_ib_polling_s *poll )
 {
 	sctk_ib_cp_task_t *task = NULL;
-	int vp = sctk_thread_get_vp();
+	int vp = mpc_topology_get_pu();
 
 	if ( vp < 0 )
 		return 0;
@@ -434,7 +434,7 @@ int sctk_ib_cp_poll ( struct sctk_ib_polling_s *poll, int task_id )
         int vp = -1;
 
         if (tls_vp == NULL) {
-          vp = sctk_thread_get_vp();
+          vp = mpc_topology_get_pu();
 
           if (vp < 0 || vps == NULL )
             return 0;
@@ -534,7 +534,7 @@ exit:
 int sctk_ib_cp_steal ( struct sctk_ib_polling_s *poll, char other_numa )
 {
 	int nb_found = 0;
-	int vp = sctk_thread_get_vp();
+	int vp = mpc_topology_get_pu();
 	sctk_ib_cp_task_t *stealing_task = NULL;
 	sctk_ib_cp_task_t *task = NULL;
 	vp_t *tmp_vp;

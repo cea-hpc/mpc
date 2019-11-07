@@ -114,7 +114,7 @@ int init_done = 0;
 
 void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * tree,  sctk_topological_polling_set_t trigger, sctk_topological_polling_set_t range, int root_pu )
 {
-	int number_of_vp = mpc_common_get_pu_count();
+	int number_of_vp = mpc_topology_get_pu_count();
 	assume( number_of_vp != 0 );
 	tree->cell_count = number_of_vp;
 	
@@ -317,7 +317,7 @@ void sctk_topological_polling_tree_poll( struct sctk_topological_polling_tree * 
 	static __thread int cpu_id = -1;
 
 	if( cpu_id < 0 )
-		cpu_id = mpc_common_get_pu_rank();
+		cpu_id = mpc_topology_get_pu();
 
 	/* Nothing to do */
 	if( !func )

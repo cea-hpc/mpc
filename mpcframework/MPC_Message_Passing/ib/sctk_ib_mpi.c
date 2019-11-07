@@ -918,7 +918,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	}
 
 	sctk_ib_topology_init_rail ( rail_ib );
-	sctk_ib_topology_init_task ( rail, sctk_thread_get_vp() );
+	sctk_ib_topology_init_task ( rail, mpc_topology_get_pu() );
 	
 	/* Initialize network */
         sprintf(network_name, "IB-MT - %dx %s (%d Gb/s)", device->link_width,device->link_rate, device->data_rate);

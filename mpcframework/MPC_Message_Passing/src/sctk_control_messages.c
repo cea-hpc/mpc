@@ -145,7 +145,7 @@ static void sctk_free_control_messages (__UNUSED__  void *ptr )
 }
 
 
-void printpayload( void * pl , size_t size )
+void printpayload( __UNUSED__ void * pl , size_t size )
 {
 	size_t i;
 

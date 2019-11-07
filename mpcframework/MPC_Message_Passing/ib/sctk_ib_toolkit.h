@@ -61,7 +61,7 @@ __UNUSED__ static void sctk_ib_debug ( const char *fmt, ... )
 		           SCTK_IB_MODULE_NAME_STR ), fmt );
 #endif
 
-		sctk_noalloc_vfprintf ( stderr, buff, ap );
+		mpc_common_io_noalloc_vfprintf ( stderr, buff, ap );
 		va_end ( ap );
 	}
 }

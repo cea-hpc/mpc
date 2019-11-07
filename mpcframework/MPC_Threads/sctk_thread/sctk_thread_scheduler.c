@@ -392,12 +392,6 @@ static sctk_thread_generic_scheduler_t* sctk_multiple_queues_get_from_list(){
   core = core_id;
   assert(core >= 0);
 
-  // mpc_common_spinlock_lock(&debug_lock);
-  // if (core==0)fprintf(stderr,"%s\n",sctk_print_debug_infos());
-  // mpc_common_spinlock_unlock(&debug_lock);
-
-  // hmt
-
   char hostname[128];
   gethostname(hostname, 128);
 

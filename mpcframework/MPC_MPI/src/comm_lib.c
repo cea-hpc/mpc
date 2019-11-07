@@ -2362,7 +2362,7 @@ int mpc_mpi_cl_get_activity( int nb_item, mpc_mpi_cl_activity_t *tab, double *pr
 	int i;
 	int nb_proc;
 	double proc_act = 0;
-	nb_proc = mpc_common_get_pu_count();
+	nb_proc = mpc_topology_get_pu_count();
 	sctk_nodebug( "Activity %d/%d:", nb_item, nb_proc );
 
 	for ( i = 0; ( i < nb_item ) && ( i < nb_proc ); i++ )

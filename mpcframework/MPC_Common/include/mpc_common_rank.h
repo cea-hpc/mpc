@@ -3,6 +3,9 @@
 
 #include <sctk_config.h>
 
+     #include <sys/types.h>
+       #include <unistd.h>
+
 /**
  * @addtogroup MPC_Common
  * @{
@@ -181,6 +184,36 @@ static inline int mpc_common_get_local_task_count( void )
 static inline int mpc_common_get_local_task_rank( void )
 {
 	return 0;
+}
+
+/**
+ * @brief Return the thread id for current thread (only when in MPC threads)
+ *        returns the PID otherwise
+ * @return int thread id when in MPC's scheduler (PID otherwise)
+ */
+static inline int mpc_common_get_thread_id( void )
+{
+	return (int)getpid();
+}
+
+/**
+ * @brief Return the rank of PU executing this thread
+ *
+ * @return int PU id for this thread
+ */
+static inline int mpc_topology_get_pu ( void )
+{
+        return 0;
+}
+
+/**
+ * @brief Returns the number of PU for this process
+ *
+ * @return int number of pu
+ */
+static inline int mpc_common_get_pu_count( void )
+{
+        return 1;
 }
 
 /* End Generic task-rank getters */

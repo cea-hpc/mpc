@@ -241,8 +241,8 @@ sctk_vprint_backtrace (const char *format, va_list ap)
   unw_getcontext (&uc);
   unw_init_local (&cursor, &uc);
 
-  sctk_noalloc_fprintf (stderr, "---------- EVENT TRACE START ----------\n");
-  sctk_noalloc_vfprintf (stderr, format, ap);
+  mpc_common_io_noalloc_fprintf (stderr, "---------- EVENT TRACE START ----------\n");
+  mpc_common_io_noalloc_vfprintf (stderr, format, ap);
 
 
   while (unw_step (&cursor) > 0)
@@ -299,7 +299,7 @@ sctk_vprint_backtrace (const char *format, va_list ap)
 	  sctk_nodebug ("dir %s", ptr.dir);
 	  sctk_nodebug ("file %s", ptr.file);
 	  sctk_nodebug ("absolute %s", ptr.absolute);
-	  sctk_noalloc_fprintf (stderr, "%16llx %-50s %s/%s/%s:%d (%s)\n",
+	  mpc_common_io_noalloc_fprintf (stderr, "%16llx %-50s %s/%s/%s:%d (%s)\n",
 				(sctk_long_long) ip,
 				/*ptr.name, */ func_name_buf,
 				ptr.absolute,
@@ -307,7 +307,7 @@ sctk_vprint_backtrace (const char *format, va_list ap)
 	}
       else
 	{
-	  sctk_noalloc_fprintf (stderr, "%16llx %-50s (%s)\n",
+	  mpc_common_io_noalloc_fprintf (stderr, "%16llx %-50s (%s)\n",
 				(sctk_long_long) ip,
 				/*ptr.name, */ func_name_buf,
 				map[i].file);
@@ -317,7 +317,7 @@ sctk_vprint_backtrace (const char *format, va_list ap)
 	  break;
 	}
     }
-  sctk_noalloc_fprintf (stderr, "----------- EVENT TRACE END -----------\n");
+  mpc_common_io_noalloc_fprintf (stderr, "----------- EVENT TRACE END -----------\n");
 
   mpc_common_spinlock_unlock (&big_lock);
 #elif defined SCTK_DEBUG_BACKTRACE
@@ -329,8 +329,8 @@ sctk_vprint_backtrace (const char *format, va_list ap)
 
   size = 20;
 
-  sctk_noalloc_fprintf (stderr, "---------- EVENT TRACE START ----------\n");
-  sctk_noalloc_vfprintf (stderr, format, ap);
+  mpc_common_io_noalloc_fprintf (stderr, "---------- EVENT TRACE START ----------\n");
+  mpc_common_io_noalloc_vfprintf (stderr, format, ap);
 #if 0
   {
     int i;
@@ -376,7 +376,7 @@ sctk_vprint_backtrace (const char *format, va_list ap)
 
 	if (ptr.line != -1)
 	  {
-	    sctk_noalloc_fprintf (stderr, "%16llx %-50s %s/%s/%s:%d (%s)\n",
+	    mpc_common_io_noalloc_fprintf (stderr, "%16llx %-50s %s/%s/%s:%d (%s)\n",
 				  (sctk_long_long) ip,
 				  /*ptr.name, */ func_name_buf,
 				  ptr.absolute,
@@ -384,7 +384,7 @@ sctk_vprint_backtrace (const char *format, va_list ap)
 	  }
 	else
 	  {
-	    sctk_noalloc_fprintf (stderr, "%16llx %-50s (%s)\n",
+	    mpc_common_io_noalloc_fprintf (stderr, "%16llx %-50s (%s)\n",
 				  (sctk_long_long) ip,
 				  /*ptr.name, */ func_name_buf,
 				  map[i].file);
@@ -398,7 +398,7 @@ sctk_vprint_backtrace (const char *format, va_list ap)
   }
 #endif
   backtrace_symbols_fd (array, size, 2);
-  sctk_noalloc_fprintf (stderr, "----------- EVENT TRACE END -----------\n");
+  mpc_common_io_noalloc_fprintf (stderr, "----------- EVENT TRACE END -----------\n");
   mpc_common_spinlock_unlock (&big_lock);
 #else
   void *array[20];
@@ -409,10 +409,10 @@ sctk_vprint_backtrace (const char *format, va_list ap)
   read_map ();
 
 
-  sctk_noalloc_fprintf (stderr, "---------- EVENT TRACE START ----------\n");
-  sctk_noalloc_vfprintf (stderr, format, ap);
-  sctk_noalloc_fprintf (stderr, "UNABLE TO BACKTRACE\n");
-  sctk_noalloc_fprintf (stderr, "----------- EVENT TRACE END -----------\n");
+  mpc_common_io_noalloc_fprintf (stderr, "---------- EVENT TRACE START ----------\n");
+  mpc_common_io_noalloc_vfprintf (stderr, format, ap);
+  mpc_common_io_noalloc_fprintf (stderr, "UNABLE TO BACKTRACE\n");
+  mpc_common_io_noalloc_fprintf (stderr, "----------- EVENT TRACE END -----------\n");
   mpc_common_spinlock_unlock (&big_lock);
 #endif
 }

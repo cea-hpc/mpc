@@ -51,9 +51,6 @@
 #error "Bad pthread detection"
 #endif
 
-#define SCTK_LOCAL_VERSION_MAJOR 0
-#define SCTK_LOCAL_VERSION_MINOR 1
-
 static void
 pthread_wait_for_value_and_poll( volatile int *data, int value,
 								 void ( *func )( void * ), void *arg )
@@ -329,9 +326,7 @@ local_pthread_create (pthread_t * restrict thread,
       env = getenv("MPC_ENABLE_PTHREAD_PINNING");
       if ( env != NULL ){
         sctk_thread_data_t * data = (sctk_thread_data_t*) arg;
-        int cpu_number = mpc_topology_get_pu_count ();
-
-        sctk_debug("Bind VP to core %d\n", data->local_task_id % cpu_number);
+        sctk_debug("Bind VP to core %d\n", data->local_task_id % mpc_topology_get_pu_count ());
         mpc_topology_bind_to_cpu (data->local_task_id);
       }
 
@@ -444,9 +439,6 @@ sctk_pthread_thread_init (void)
 
   pthread_atfork(sctk_pthread_at_fork_prepare, sctk_pthread_at_fork_parent,
                  sctk_pthread_at_fork_child);
-
-  sctk_print_version ("Init Pthread", SCTK_LOCAL_VERSION_MAJOR,
-		      SCTK_LOCAL_VERSION_MINOR);
 
   pthread_check_size (pthread_mutex_t, sctk_thread_mutex_t);
   pthread_check_size (pthread_mutexattr_t, sctk_thread_mutexattr_t);

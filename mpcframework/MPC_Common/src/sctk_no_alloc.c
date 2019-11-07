@@ -34,10 +34,6 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
-/********************  MACRO  ***********************/
-#define SCTK_LOCAL_VERSION_MAJOR 0
-#define SCTK_LOCAL_VERSION_MINOR 1
-
 /*******************  FUNCTION  *********************/
 void sctk_dsm_prefetch (void *addr)
 {
@@ -149,8 +145,7 @@ char * sctk_alloc_mode (void)
 /*******************  FUNCTION  *********************/
 void sctk_init_alloc (void)
 {
-	sctk_print_version ("Init Standard Alloc", SCTK_LOCAL_VERSION_MAJOR,
-	                    SCTK_LOCAL_VERSION_MINOR);
+
 }
 
 /*******************  FUNCTION  *********************/

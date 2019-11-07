@@ -1764,9 +1764,8 @@ void sctk_m_probe_matching_set( int value )
 		sctk_thread_yield();
 	}
 
-	int task_id;
-	int thread_id;
-	sctk_get_thread_info( &task_id, &thread_id );
+	int thread_id = mpc_common_get_thread_id();
+
 	sctk_nodebug( "THREAD ID %d", thread_id );
 	OPA_store_int( &m_probe_id_task, thread_id + 1 );
 }
@@ -1779,9 +1778,7 @@ void sctk_m_probe_matching_reset()
 
 int sctk_m_probe_matching_get()
 {
-	int task_id;
-	int thread_id;
-	sctk_get_thread_info( &task_id, &thread_id );
+	int thread_id = mpc_common_get_thread_id();
 
 	if ( OPA_load_int( &m_probe_id_task ) != ( thread_id + 1 ) )
 	{

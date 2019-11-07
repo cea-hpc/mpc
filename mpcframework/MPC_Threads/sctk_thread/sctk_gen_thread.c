@@ -1599,15 +1599,9 @@ int (*__sctk_ptr_thread_futex)(void *addr1, int op, int val1,
 								struct timespec *timeout, void *addr2, int val3) =
 								sctk_gen_thread_futex;
 
-
-#define SCTK_LOCAL_VERSION_MAJOR 0
-#define SCTK_LOCAL_VERSION_MINOR 1
-
 void
 sctk_gen_thread_init ()
-{         
-  sctk_print_version ("Init Gen", SCTK_LOCAL_VERSION_MAJOR,
-		      SCTK_LOCAL_VERSION_MINOR);
+{
   __sctk_ptr_thread_atfork = sctk_gen_thread_atfork;
   __sctk_ptr_thread_attr_destroy = sctk_gen_thread_attr_destroy;
   __sctk_ptr_thread_attr_getdetachstate = sctk_gen_thread_attr_getdetachstate;

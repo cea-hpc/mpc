@@ -4026,7 +4026,7 @@ void *NBC_Pthread_func( void *ptr ) {
       char current_vp[5];
       gethostname(hostname, 128);
       strncpy(hostname2, hostname, 128);
-      sprintf(current_vp, "_%03d", sctk_thread_get_vp());
+      sprintf(current_vp, "_%03d", mpc_topology_get_pu());
       strcat(hostname2, current_vp);
 
       FILE *fd = fopen(hostname2, "a");
@@ -4482,7 +4482,7 @@ static inline int NBC_Free(NBC_Handle* handle) {
         char current_vp[5];
         gethostname(hostname, 128);
         strncpy(hostname2, hostname, 128);
-        sprintf(current_vp, "_%03d", sctk_thread_get_vp());
+        sprintf(current_vp, "_%03d", mpc_topology_get_pu());
         strcat(hostname2, current_vp);
 
         FILE *fd = fopen(hostname2, "a");
@@ -5030,7 +5030,7 @@ static inline int NBC_Start( NBC_Handle *handle, NBC_Schedule *schedule )
 			char current_vp[5];
 			gethostname( hostname, 128 );
 			strncpy( hostname2, hostname, 128 );
-			sprintf( current_vp, "_%03d", sctk_thread_get_vp() );
+      sprintf(current_vp, "_%03d", mpc_topology_get_pu());
 			strcat( hostname2, current_vp );
 
 			FILE *fd = fopen( hostname2, "a" );

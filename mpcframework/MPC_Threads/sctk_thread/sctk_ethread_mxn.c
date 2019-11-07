@@ -34,9 +34,6 @@
 #include "mpc_topology.h"
 #include "sctk_posix_ethread_mxn.h"
 
-#define SCTK_LOCAL_VERSION_MAJOR 0
-#define SCTK_LOCAL_VERSION_MINOR 2
-
 static volatile unsigned int sctk_nb_vp_initialized = 1;
 mpc_common_spinlock_t sctk_ethread_key_spinlock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_ethread_virtual_processor_t **sctk_ethread_mxn_vp_list = NULL;
@@ -871,9 +868,6 @@ sctk_ethread_mxn_thread_init (void)
   sctk_init_default_sigset ();
 
   sctk_ethread_check_size_eq (int, sctk_ethread_status_t);
-
-  sctk_print_version ("Init Ethread_mxn", SCTK_LOCAL_VERSION_MAJOR,
-		      SCTK_LOCAL_VERSION_MINOR);
 
   sctk_ethread_check_size (sctk_ethread_mutex_t, sctk_thread_mutex_t);
   sctk_ethread_check_size (sctk_ethread_mutexattr_t, sctk_thread_mutexattr_t);

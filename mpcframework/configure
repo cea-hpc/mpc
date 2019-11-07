@@ -407,20 +407,15 @@ for arg in "$@" ; do
     SCTK_DEBUG_MESSAGES="1"
     ;;
     --disable-debug-messages)
-    SCTK_DEBUG_MESSAGES_DISABLED="1"
     SCTK_DEBUG_MESSAGES="0"
     ;;
     --enable-debug-noassert)
     SCTK_DEBUG="1"
     SCTK_NOASSERT="1"
     SCTK_DEBUG_MESSAGES="0"
-    SCTK_DEBUG_MESSAGES_DISABLED="1"
     ;;
     --enable-debug)
     SCTK_DEBUG="1"
-    if [ "$SCTK_DEBUG_MESSAGES_DISABLED" -eq "0" ]; then
-      SCTK_DEBUG_MESSAGES="1"
-    fi
     ;;
     --enable-debug-strict)
     SCTK_DEBUG="1"

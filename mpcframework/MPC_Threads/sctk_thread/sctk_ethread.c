@@ -32,9 +32,6 @@
 #include "sctk_posix_ethread.h"
 #include "mpc_topology.h"
 
-#define SCTK_LOCAL_VERSION_MAJOR 0
-#define SCTK_LOCAL_VERSION_MINOR 2
-
 /*Key data structures shared with ethread*/
 int sctk_ethread_key_pos = 0;
 stck_ethread_key_destr_function_t
@@ -442,9 +439,6 @@ sctk_ethread_thread_init (void)
   kthread_setspecific (sctk_ethread_key, &virtual_processor);
 
   sctk_ethread_check_size_eq (int, sctk_ethread_status_t);
-
-  sctk_print_version ("Init Ethread", SCTK_LOCAL_VERSION_MAJOR,
-		      SCTK_LOCAL_VERSION_MINOR);
 
   sctk_ethread_check_size (sctk_ethread_mutex_t, sctk_thread_mutex_t);
   sctk_ethread_check_size (sctk_ethread_mutexattr_t, sctk_thread_mutexattr_t);

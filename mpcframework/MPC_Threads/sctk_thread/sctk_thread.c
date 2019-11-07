@@ -2966,21 +2966,6 @@ _sctk_thread_cleanup_pop (struct _sctk_thread_cleanup_buffer *__buffer,
     }
 }
 
-void
-sctk_get_thread_info (int *task_id, int *thread_id)
-{
-  sctk_thread_data_t *task_id_p;
-  sctk_thread_data_t tmp = SCTK_THREAD_DATA_INIT;
-
-  task_id_p = sctk_thread_data_get ();
-  if (task_id_p != NULL)
-    {
-      tmp = *task_id_p;
-    }
-  *task_id = tmp.task_id;
-  *thread_id = tmp.user_thread;
-}
-
 unsigned long
 sctk_thread_atomic_add (volatile unsigned long *ptr, unsigned long val)
 {

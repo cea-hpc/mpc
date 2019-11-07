@@ -39,7 +39,7 @@ void sctk_polling_tree_init_empty( struct sctk_polling_tree * tree )
 	
 	/* We assume that only the number of thread can
 	 * enter the polling function */
-	tree->max_load = mpc_common_get_pu_count();
+	tree->max_load = mpc_topology_get_pu_count();
 	/* Note that we set max load here
 	 * as the rail might want to override it */
 }

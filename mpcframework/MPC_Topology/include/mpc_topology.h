@@ -150,6 +150,41 @@ int mpc_topology_get_pu_count(void);
 */
 int mpc_topology_get_current_cpu(void);
 
+#ifndef MPC_Threads
+
+/**
+ * @brief Return the PU executing current thread
+ * @note This version relies on HWLOC as MPC has no scheduler
+ *
+ * @return int current PU executing this thread
+ */
+int mpc_topology_get_pu( void )
+{
+        return mpc_topology_get_current_cpu();
+}
+
+#else
+
+/* Forward static declaration to solve recursive
+   include loop */
+static inline int mpc_thread_get_pu ( void );
+
+#include "sctk_accessor.h"
+
+/**
+ * @brief Return the PU executing current thread
+ * @note This version relies on MPC scheduler
+ *
+ * @return int current PU executing this thread
+ */
+static inline int mpc_topology_get_pu( void )
+{
+        return mpc_thread_get_pu();
+}
+
+#endif
+
+
 /**
  * @brief Convert a PU id from OS to logical numbering
  *

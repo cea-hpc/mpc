@@ -92,7 +92,6 @@ cat << EOF >> ${SCTK_CONF_C}
 #define SCTK_COMPILER "__INTEL_COMPILER"
 #endif
 
-extern int sctk_only_once_while_val;
 extern FILE *std_output;
 
 
@@ -213,20 +212,19 @@ sctk_opac_init_func (void *init, size_t orig_t_size, char *t_char)
 #define sctk_opac_init(orig_t,t,tt) do{                         \
     tt ____tmp = orig_t;                                        \
     sctk_opac_init_func(&____tmp,sizeof(tt),SCTK_STRING(t));    \
-  }while(sctk_only_once_while_val)
+  }while(0)
 #define sctk_def_opac_init(orig_t,t,tt) do{             \
     void* ____tmp;                                      \
     ____tmp =  malloc(tt);                              \
     memset(____tmp,0,tt);                               \
     sctk_opac_init_func(____tmp,tt,SCTK_STRING(t));     \
     free(____tmp);                                      \
-  }while(sctk_only_once_while_val)
+  }while(0)
 
 #define sctk_define_arg(val,arg) fprintf(std_output,"#define %s %ld\n",SCTK_STRING(val),(long)(arg))
 #define sctk_define_arg_ndef(val,arg) fprintf(std_output,"#define %s %ld /*WARN: Not really defined*/\n",SCTK_STRING(val),(long)(arg))
 #define sctk_define_arg_ptr(val,arg) fprintf(std_output,"#define %s (void*)%ld\n",SCTK_STRING(val),(long)(arg))
 
-int sctk_only_once_while_val = 0;
 FILE* std_output;
 
 void gen_signals(){
