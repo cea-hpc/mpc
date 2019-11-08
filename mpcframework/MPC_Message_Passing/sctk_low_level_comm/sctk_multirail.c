@@ -876,6 +876,56 @@ void sctk_multirail_notify_perform( int remote, int remote_task_id, int polling_
 	}
 }
 
+static void sctk_multirail_notify_probe (int task_id, int remote_rank, int tag, sctk_communicator_t comm, int* status, size_t* msg_size)
+{
+	int count = sctk_rail_count();
+	int i;
+	int ret = -1, tmp_ret = -1;
+	static int no_rail_support = 0;
+
+	if(no_rail_support) /* shortcut when no rail support probing at all */
+        {
+                *status = -1;
+                return;
+        }
+
+	for( i = 0 ; i < count ; i++ )
+	{
+		sctk_rail_info_t * rail = sctk_rail_get_by_id ( i );
+		
+		/* if current driver can handle a probing procedure... */
+		if( rail->notify_probe_message )
+		{
+			/* possible values of tmp_ret:
+			 * -1 -> driver-specific probing not handled (either because no function pointer set or the function returns -1)
+			 * 0 -> No matching message found
+			 * 1 -> At least one message found based on requirements
+			 */
+			(rail->notify_probe_message)( rail, task_id, remote_rank, tag, comm, &tmp_ret, msg_size);
+		}
+		
+		sctk_assert(tmp_ret == -1 || tmp_ret == 1 || tmp_ret == 0);
+		
+		/* three scenarios based on that :
+		 * - If a rail found a matching message -> returns 1
+		 * - If all rails support probing, and returns 0 -> returns 0
+		 * - If at least one rail returns -1 AND probing failed -> returns -1, meaning that the previous behavior (logical header lookup through perform()) should be run.
+		 */
+		if(tmp_ret == 1) /* found */
+		{
+			*status = 1;
+			return;
+			
+		}
+		ret += tmp_ret;
+	}
+	*status = ret;
+	if(ret == -count) /* not a single rail support probing: stop running this function */
+        {
+                no_rail_support = 1;
+        }
+}
+
 void notify_idle_message_trampoline( void * prail )
 {
 	sctk_rail_info_t * rail = (sctk_rail_info_t * )prail;
@@ -974,6 +1024,7 @@ void sctk_multirail_destination_table_init()
 	sctk_network_notify_idle_message_set ( sctk_multirail_notify_idle );
 	sctk_network_notify_any_source_message_set ( sctk_multirail_notify_anysource );
 	sctk_network_notify_new_communicator_set( sctk_multirail_notify_new_comm );
+	sctk_network_notify_probe_message_set( sctk_multirail_notify_probe );
 	
 	
 }

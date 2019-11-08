@@ -3091,8 +3091,21 @@ sctk_probe_source_tag_class_func(int destination, int source, int tag,
   msg->destination_task = world_destination;
   msg->message_tag = tag;
   msg->communicator = comm;
-
   msg->message_type.type = class;
+  
+  sctk_network_notify_probe_message(destination, source, tag, comm, status, msg->msg_size);
+  
+  switch(*status)
+  {
+    case 0: /* all rails supported probing request AND not found */
+    case 1: /* found a match ! */
+      return;
+      break;
+    default: /* not found AND at least one rail does not support low-level probing */
+      *status = 0; 
+      msg->msg_size = 0;
+      break;
+  }
 
   sctk_set_comm_dest_key(dest_key, world_destination, comm);
 

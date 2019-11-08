@@ -131,6 +131,12 @@ static void sctk_network_notify_idle_message_topological ()
 	/* Done in subrails */
 }
 
+static void sctk_network_notify_probe_message_topological (sctk_rail_info_t* rail, int task_id, int remote_rank, int tag, sctk_communicator_t comm, int* status)
+{
+	/* Done in subrails */
+}
+
+
 static void sctk_network_notify_any_source_message_topological ( __UNUSED__ int polling_task_id, __UNUSED__ int blocking, __UNUSED__ sctk_rail_info_t *rail )
 {
 	/* Done in subrails */
@@ -613,6 +619,7 @@ void sctk_network_init_topological ( sctk_rail_info_t *rail )
 	rail->notify_matching_message = sctk_network_notify_matching_message_topological;
 	rail->notify_perform_message = sctk_network_notify_perform_message_topological;
 	rail->notify_idle_message = sctk_network_notify_idle_message_topological;
+	rail->notify_probe_message = sctk_network_notify_probe_message_topological;
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_topological;
 	rail->send_message_from_network = sctk_send_message_from_network_topological;
 	rail->control_message_handler = topological_control_message_handler;

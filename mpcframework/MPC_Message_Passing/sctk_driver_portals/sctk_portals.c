@@ -77,6 +77,7 @@ static void sctk_network_notify_perform_message_ptl ( int remote, int remote_tas
 	/* nothing to do */
 	UNUSED(remote);
 	UNUSED(remote_task_id);
+	
 	UNUSED(polling_task_id);
 	UNUSED(blocking);
 	UNUSED(rail);
@@ -106,6 +107,11 @@ static void sctk_network_notify_any_source_message_ptl ( int polling_task_id, in
 	UNUSED(polling_task_id);
 	UNUSED(blocking);
 	UNUSED(rail);
+}
+
+static void sctk_network_notify_probe_message_ptl (sctk_rail_info_t* rail, int task_id, int remote_rank, int tag, sctk_communicator_t comm, int* status, size_t* msg_size)
+{
+	
 }
 
 /**
@@ -261,6 +267,7 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_ptl;
 	rail->notify_new_comm           = sctk_network_notify_new_communicator_ptl;
 	rail->send_message_from_network = sctk_send_message_from_network_ptl;
+	rail->notify_probe_message      = sctk_network_notify_probe_message_ptl;
 
 	/* RDMA */
 	rail->rail_pin_region        = sctk_ptl_pin_region;

@@ -141,6 +141,33 @@ void sctk_network_notify_perform_message_set ( void ( *sctk_network_notify_perfo
 	sctk_network_notify_perform_message_ptr = sctk_network_notify_perform_message_val;
 }
 
+/********** NOTIFY_PROBE ************/
+
+void sctk_network_notify_probe_message_default (int task_id, int remote_rank, int tag, sctk_communicator_t comm, int* status, size_t* msg_size)
+{
+        *status = -1; /* probe not supported */
+}
+
+static void  ( *sctk_network_notify_probe_message_ptr ) () = sctk_network_notify_probe_message_default;
+
+
+void sctk_network_notify_probe_message (int task_id, int remote_rank, int tag, sctk_communicator_t comm, int* status, size_t* msg_size)
+{
+#ifdef MPC_Fault_Tolerance
+	if(sctk_ft_no_suspend_start())
+        {
+#endif
+        *status = -1; /* not supported */
+	sctk_network_notify_probe_message_ptr (task_id, remote_rank, tag, comm, status, msg_size);
+
+#ifdef MPC_Fault_Tolerance
+	sctk_ft_no_suspend_end();
+       }
+#endif
+	
+}
+
+
 /********** NOTIFY_IDLE ************/
 
 void sctk_network_notify_idle_message_default ()
@@ -169,6 +196,11 @@ void sctk_network_notify_idle_message ()
 void sctk_network_notify_idle_message_set ( void ( *sctk_network_notify_idle_message_val ) () )
 {
 	sctk_network_notify_idle_message_ptr = sctk_network_notify_idle_message_val;
+}
+
+void sctk_network_notify_probe_message_set (void ( *sctk_network_notify_probe_message_val) () )
+{
+	sctk_network_notify_probe_message_ptr = sctk_network_notify_probe_message_val;
 }
 
 /********** NOTIFY_ANY_SOURCE ************/

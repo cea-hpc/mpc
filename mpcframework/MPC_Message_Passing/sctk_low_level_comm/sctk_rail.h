@@ -166,7 +166,8 @@ struct sctk_rail_info_s
 	void ( *notify_perform_message ) ( int , int, int, int, struct sctk_rail_info_s * );
 	void ( *notify_idle_message ) ( struct sctk_rail_info_s * );
 	void ( *notify_any_source_message ) ( int, int, struct sctk_rail_info_s * );
-	void ( *notify_new_comm)(struct sctk_rail_info_s*, int, size_t);
+	void ( *notify_probe_message) (struct sctk_rail_info_s*, int, int, int, sctk_communicator_t, int*, size_t*);
+	void ( *notify_new_comm)(struct sctk_rail_info_s*, sctk_communicator_t, size_t);
 
 	int ( *send_message_from_network ) ( sctk_thread_ptp_message_t * );
 	void ( *connect_on_demand ) ( struct sctk_rail_info_s * rail , int dest );
