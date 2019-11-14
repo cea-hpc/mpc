@@ -51,7 +51,7 @@ static inline int __sctk_ptl_offcoll_enabled(sctk_ptl_rail_info_t* srail)
 
 int ptl_offcoll_enabled()
 {
-	return (grail);
+	return (grail != NULL);
 }
 
 int sctk_ptl_offcoll_enabled(sctk_ptl_rail_info_t* srail)
@@ -299,7 +299,7 @@ static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, s
         size_t i, nb_children; 
 	int cnt_prev_ops;
 	sctk_ptl_cnth_t *me_cnt_up, *me_cnt_down;
-        sctk_ptl_cnt_t dummy, dummy2; 
+        sctk_ptl_cnt_t dummy; 
 	sctk_ptl_offcoll_tree_node_t* bnode; 
 
 	bnode        = pte->node + SCTK_PTL_OFFCOLL_BARRIER;
@@ -682,7 +682,7 @@ void sctk_ptl_offcoll_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
  */
 void sctk_ptl_offcoll_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
-	sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
+	//sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
 	/*sctk_warning("PORTALS: MDS EVENT '%s' from %s, type=%d, prot=%d",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), user_ptr->type, user_ptr->prot);*/
 	UNUSED(rail);
 

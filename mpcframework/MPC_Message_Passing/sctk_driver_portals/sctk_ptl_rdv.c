@@ -263,8 +263,8 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	sctk_ptl_route_info_t* infos   = &endpoint->data.ptl;
 	sctk_ptl_local_data_t *md_request , *me_request;
 	int md_flags                      , me_flags;
-	void* start, *chunk_addr;
-	size_t chunk_nb, chunk_sz, chunk, chunk_rest;
+	void* start;
+	size_t chunk_nb, chunk_sz, chunk_rest;
 	sctk_ptl_id_t remote;
 	sctk_ptl_pte_t* pte;
 	sctk_ptl_matchbits_t match, ign;
@@ -359,7 +359,7 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 {
 	sctk_ptl_matchbits_t match, ign;
 	sctk_ptl_pte_t* pte;
-	sctk_ptl_local_data_t *put_request, *get_request;
+	sctk_ptl_local_data_t *put_request;
 	int put_flags;
 
 	/****** INIT COMMON ATTRIBUTES ******/
@@ -404,7 +404,7 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
-	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)ptr->msg;
+	//sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)ptr->msg;
 	int cur = 0;
 
 	switch(ev.type)
@@ -465,7 +465,7 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
-	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)ptr->msg;
+	//sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)ptr->msg;
 	int cur = 0;
 	switch(ev.type)
 	{

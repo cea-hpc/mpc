@@ -78,14 +78,7 @@ void sctk_ptl_add_route(int dest, sctk_ptl_id_t id, sctk_rail_info_t* rail, sctk
 void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail)
 {
 	sctk_ptl_rail_info_t* srail     = &rail->network.ptl;
-	void* start                     = NULL;
-	size_t size                     = 0;
-	sctk_ptl_matchbits_t match      = SCTK_PTL_MATCH_INIT;
-	sctk_ptl_matchbits_t ign        = SCTK_PTL_MATCH_INIT;
-	int flags                       = 0;
-	sctk_ptl_local_data_t* user_ptr = NULL;
-	sctk_ptl_id_t remote            = SCTK_PTL_ANY_PROCESS;
-
+	
 	/* pre-actions */
 	sctk_assert(msg);
 	sctk_assert(rail);
@@ -109,7 +102,6 @@ void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail
  */
 void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endpoint)
 {
-	int process_rank            = sctk_get_process_rank();
 	sctk_ptl_rail_info_t* srail = &endpoint->rail->network.ptl;
 
 	sctk_assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));

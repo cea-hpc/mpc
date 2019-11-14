@@ -137,7 +137,6 @@ typedef enum {
 #define SCTK_PTL_PTE_ENTRY(table, comm) (MPCHT_get(&table, (comm)+SCTK_PTL_PTE_HIDDEN))
 /** Check if a given comm already has corresponding PT entry */
 #define SCTK_PTL_PTE_EXIST(table, comm) (SCTK_PTL_PTE_ENTRY(table, comm) != NULL)
-#define SCTK_PTL_STR_TYPE(i) __sctk_ptl_str_type[i]
 typedef enum {
 	SCTK_PTL_TYPE_RECOVERY,
 	SCTK_PTL_TYPE_CM,
@@ -147,8 +146,6 @@ typedef enum {
 	SCTK_PTL_TYPE_NONE,
 	SCTK_PTL_TYPE_NB,
 } sctk_ptl_mtype_t;
-
-#define SCTK_PTL_STR_PROT(i) __sctk_ptl_str_prot[i]
 typedef enum {
 	SCTK_PTL_PROT_EAGER,
 	SCTK_PTL_PROT_RDV,

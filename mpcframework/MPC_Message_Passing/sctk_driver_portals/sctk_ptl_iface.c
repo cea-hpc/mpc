@@ -33,7 +33,7 @@
 #include "sctk_ptl_offcoll.h"
 #include "sctk_low_level_comm.h"
 
-static sctk_atomics_int nb_mes = SCTK_ATOMICS_INT_T_INIT(0);
+//static sctk_atomics_int nb_mes = SCTK_ATOMICS_INT_T_INIT(0);
 static sctk_atomics_int nb_mds = SCTK_ATOMICS_INT_T_INIT(0);
 
 /**

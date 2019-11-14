@@ -37,6 +37,28 @@
 #include "sctk_rail.h"
 
 #if !defined(NDEBUG)
+#define SCTK_PTL_STR_PROT(i) __sctk_ptl_str_prot[i]
+#define SCTK_PTL_STR_TYPE(i) __sctk_ptl_str_type[i]
+/** global static array to stringify type ID (through SCTK_PTL_STR_TYPE macro) */
+static char * __sctk_ptl_str_type[] = {
+	"SCTK_PTL_TYPE_RECOVERY", 
+	"SCTK_PTL_TYPE_CM",
+	"SCTK_PTL_TYPE_RDMA",
+	"SCTK_PTL_TYPE_STD",
+	"SCTK_PTL_TYPE_OFFCOLL",
+	"SCTK_PTL_TYPE_NONE",
+	"SCTK_PTL_TYPE_NB",
+}; 
+
+/** global static array to stringify protocol ID (through SCTK_PTL_STR_PROT macro) */
+static char * __sctk_ptl_str_prot[] = {
+
+	"SCTK_PTL_PROT_EAGER",
+	"SCTK_PTL_PROT_RDV",
+	"SCTK_PTL_PROT_NONE",
+	"SCTK_PTL_PROT_NB"
+};
+
 #define sctk_ptl_chk(x) do { int __ret = 0; \
     static int ___env = -1; \
 	if(___env == -1) { \
@@ -52,6 +74,8 @@
     } } while (0)
 #else
 #define sctk_ptl_chk(x) x
+#define SCTK_PTL_STR_PROT(i) "`OPT-OUT`"
+#define SCTK_PTL_STR_TYPE(i) "`OPT-OUT`"
 #endif
 
 /**************************************************************/
@@ -424,26 +448,5 @@ static inline void sctk_ptl_compute_chunks(sctk_ptl_rail_info_t* srail, size_t d
 	*nb_out   = nb;
 	*rest_out = (total > 0) ? total % size : 0; /* special care (very rare) where data_sz equals to zero */
 }
-
-/** global static array to stringify type ID (through SCTK_PTL_STR_TYPE macro) */
-static char * __sctk_ptl_str_type[] = {
-	"SCTK_PTL_TYPE_RECOVERY", 
-	"SCTK_PTL_TYPE_CM",
-	"SCTK_PTL_TYPE_RDMA",
-	"SCTK_PTL_TYPE_STD",
-	"SCTK_PTL_TYPE_OFFCOLL",
-	"SCTK_PTL_TYPE_NONE",
-	"SCTK_PTL_TYPE_NB",
-}; 
-
-/** global static array to stringify protocol ID (through SCTK_PTL_STR_PROT macro) */
-static char * __sctk_ptl_str_prot[] = {
-
-	"SCTK_PTL_PROT_EAGER",
-	"SCTK_PTL_PROT_RDV",
-	"SCTK_PTL_PROT_NONE",
-	"SCTK_PTL_PROT_NB"
-};
-
 #endif
 #endif
