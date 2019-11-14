@@ -40,6 +40,7 @@ void sctk_ptl_fini_interface(sctk_rail_info_t* rail);
 
 void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endpoint);
 void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail);
+int sctk_ptl_pending_me_probe(sctk_ptl_rail_info_t* prail, int remote, int tag, sctk_communicator_t comm, size_t* msg_size);
 
 static inline sctk_rail_info_t* sctk_ptl_promote_to_rail(sctk_ptl_rail_info_t* srail)
 {

@@ -303,7 +303,12 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 		sctk_ptl_offcoll_pte_init(srail, pte);
 	}
 
-	sctk_ptl_me_feed(srail, pte, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_OVERFLOW_LIST, SCTK_PTL_TYPE_STD, SCTK_PTL_PROT_NONE);
+	sctk_ptl_me_feed(srail, pte, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_OVERFLOW_LIST, SCTK_PTL_TYPE_STD,
+	 SCTK_PTL_PROT_NONE);
+	 
+	sctk_spinlock_init(&pte->pending.lock, NULL);
+	sctk_atomics_store_int(&pte->pending.start, 0);
+	sctk_atomics_store_int(&pte->pending.end, 0);
 	
 	/*pte->taglocks = sctk_malloc(sizeof(sctk_spinlock_t) * SCTK_PTL_PTE_NB_LOCKS);*/
 	/*int j;*/

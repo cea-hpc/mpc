@@ -384,6 +384,14 @@ typedef enum sctk_ptl_offcoll_type_e
 	SCTK_PTL_OFFCOLL_NB
 } sctk_ptl_offcoll_type_t;
 
+typedef struct sctk_ptl_pte_pending_s
+{
+	sctk_spinlock_t lock; /**< msg from network without a matching recv */
+	void* pending_array[SCTK_PTL_ME_OVERFLOW_NB];
+	sctk_atomics_int start;
+	sctk_atomics_int end;
+} sctk_ptl_pte_pending_t;
+
 /**
  * Representing a PT entry in the driver.
  */
@@ -391,7 +399,8 @@ typedef struct sctk_ptl_pte_s
 {
 	ptl_pt_index_t idx; /**< the effective PT index */
 	sctk_ptl_eq_t eq;   /**< the EQ for this entry */
-        sctk_ptl_offcoll_tree_node_t node[SCTK_PTL_OFFCOLL_NB]; /**< what is necessary to optimise collectives for this entry */
+	struct sctk_ptl_pte_pending_s pending;
+	struct sctk_ptl_offcoll_tree_node_s node[SCTK_PTL_OFFCOLL_NB]; /**< what is necessary to optimise collectives for this entry */
 } sctk_ptl_pte_t;
 
 

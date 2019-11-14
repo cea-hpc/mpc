@@ -83,7 +83,6 @@ void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail
 	sctk_ptl_matchbits_t match      = SCTK_PTL_MATCH_INIT;
 	sctk_ptl_matchbits_t ign        = SCTK_PTL_MATCH_INIT;
 	int flags                       = 0;
-	sctk_ptl_pte_t* pte             = NULL;
 	sctk_ptl_local_data_t* user_ptr = NULL;
 	sctk_ptl_id_t remote            = SCTK_PTL_ANY_PROCESS;
 
@@ -92,7 +91,6 @@ void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail
 	sctk_assert(rail);
 	sctk_assert(srail);
 	sctk_assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
-
 	if(SCTK_MSG_SIZE(msg) <= srail->eager_limit)
 	{
 		sctk_ptl_eager_notify_recv(msg, srail);
@@ -133,6 +131,42 @@ void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endp
 		sctk_ptl_rdv_send_message(msg, endpoint);
 	}
 }
+
+static sctk_ptl_local_data_t* sctk_ptl_pending_me_lookup(sctk_ptl_rail_info_t* prail, int remote, int tag, sctk_communicator_t comm)
+{
+	sctk_ptl_local_data_t* ret = NULL;
+	sctk_assert(comm >= 0);
+	sctk_ptl_pte_t* pte = MPCHT_get(&prail->pt_table, (int)((comm + SCTK_PTL_PTE_HIDDEN_NB) % prail->nb_entries));
+	sctk_spinlock_lock(&pte->pending.lock);
+
+	sctk_spinlock_unlock(&pte->pending.lock);
+	return ret;
+}
+
+static void sctk_ptl_pending_me_pop(sctk_ptl_rail_info_t* prail, sctk_ptl_pte_t* pte, sctk_ptl_local_data_t* user_ptr)
+{
+	sctk_spinlock_lock(&pte->pending.lock);
+	sctk_spinlock_unlock(&pte->pending.lock);
+}
+
+static void sctk_ptl_pending_me_push(sctk_ptl_rail_info_t* prail, sctk_ptl_pte_t* pte, sctk_ptl_local_data_t* user_ptr)
+{
+	sctk_spinlock_lock(&pte->pending.lock);
+	sctk_spinlock_unlock(&pte->pending.lock);
+}
+
+int sctk_ptl_pending_me_probe(sctk_ptl_rail_info_t* prail, int remote, int tag, sctk_communicator_t comm, size_t* msg_size)
+{
+	sctk_ptl_local_data_t* req = sctk_ptl_pending_me_lookup(prail, remote, tag, comm);
+	if(req == NULL)
+	{
+		*msg_size = 0;
+		return 0;
+	}
+	//msg_size = req->...;
+	return 1;
+}
+
 
 /**
  * Routine called periodically to notify upper-layer from incoming messages.
@@ -183,8 +217,10 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 			/* if the request consumed an unexpected slot, append a new one */
 			if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST)
 			{
-				sctk_ptl_pte_t fake = (sctk_ptl_pte_t){.idx = ev.pt_index};
-				sctk_ptl_me_feed(srail,  &fake,  srail->eager_limit, 1, SCTK_PTL_OVERFLOW_LIST, SCTK_PTL_TYPE_STD, SCTK_PTL_PROT_NONE);
+				sctk_ptl_me_feed(srail,  cur_pte,  srail->eager_limit, 1, SCTK_PTL_OVERFLOW_LIST, SCTK_PTL_TYPE_STD, SCTK_PTL_PROT_NONE);
+				/** TODO: store ev data in the user_ptr */
+				
+				sctk_ptl_pending_me_push(srail, cur_pte, user_ptr);
 				sctk_free(user_ptr);
 				continue;
 			}
@@ -486,5 +522,4 @@ void sctk_ptl_fini_interface(sctk_rail_info_t* rail)
 {
 	UNUSED(rail);
 }
-
 #endif
