@@ -268,9 +268,14 @@ void sctk_ptl_eager_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_in
  */
 void sctk_ptl_eager_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
+	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
+	sctk_ptl_matchbits_t match = (sctk_ptl_matchbits_t)ev.match_bits;
+	sctk_ptl_pte_t* pte;
 	switch(ev.type)
 	{
 		case PTL_EVENT_PUT_OVERFLOW:          /* a previous received PUT matched a just appended ME */
+			pte = SCTK_PTL_PTE_ENTRY(srail->pt_table, ev.pt_index - SCTK_PTL_PTE_HIDDEN);
+			sctk_ptl_pending_me_pop(srail, pte, match.data.rank, match.data.tag, ev.mlength, ((void*)ev.start -1));
 		case PTL_EVENT_PUT:                   /* a Put() reached the local process */
 			/* we don't care about unexpected messaged reaching the OVERFLOW_LIST, we will just wait for their local counter-part */
 			/* indexes from 0 to SCTK_PTL_PTE_HIDDEN-1 maps RECOVERY, CM & RDMA queues

@@ -309,6 +309,13 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 	sctk_spinlock_init(&pte->pending.lock, NULL);
 	sctk_atomics_store_int(&pte->pending.start, 0);
 	sctk_atomics_store_int(&pte->pending.end, 0);
+
+	int j;
+	for (j = 0; j < SCTK_PTL_OVERFLOW_LIST; j++)
+	{
+		sctk_atomics_store_int(&pte->pending.pending_array[j].avail, 0);
+	}
+	
 	
 	/*pte->taglocks = sctk_malloc(sizeof(sctk_spinlock_t) * SCTK_PTL_PTE_NB_LOCKS);*/
 	/*int j;*/
@@ -650,15 +657,28 @@ sctk_ptl_id_t sctk_ptl_self(sctk_ptl_rail_info_t* srail)
 void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb, int list, char type, char protocol)
 {
 	int j;
+	void* buf, *start;
 
 	sctk_assert(list == SCTK_PTL_PRIORITY_LIST || list == SCTK_PTL_OVERFLOW_LIST);
+	if(list == SCTK_PTL_OVERFLOW_LIST)
+	{
+		/* extend the memory to allocate with the size of a pointer */
+		me_size += sizeof(void*);
+		buf = sctk_malloc(me_size);
+		start = (char*)buf + sizeof(void*);
+	}
+	else
+	{
+		buf = sctk_malloc(me_size);
+		start = buf;
+	}
+	
 	for (j = 0; j < nb; j++)
 	{
-		void* buf = sctk_malloc(me_size);
 		sctk_ptl_local_data_t* user;
 
 		user = sctk_ptl_me_create(
-				buf, /* temporary buffer to pin */
+				start, /* temporary buffer to pin */
 				me_size, /* buffer size */
 				SCTK_PTL_ANY_PROCESS, /* targetable by any process */
 				SCTK_PTL_MATCH_INIT, /* we don't care the match_bits */ 
@@ -1015,6 +1035,72 @@ int sctk_ptl_emit_trig_cnt_set(sctk_ptl_cnth_t target_cnt, size_t val, sctk_ptl_
 	));
 
 	return PTL_OK;
+}
+
+sctk_ptl_pending_entry_t* sctk_ptl_pending_me_lookup(sctk_ptl_rail_info_t* prail, sctk_ptl_pte_t* pte, int rank, int tag, char dequeue)
+{
+	sctk_ptl_pending_entry_t* ret = NULL;
+	
+	sctk_spinlock_lock(&pte->pending.lock);
+
+	/** TODO: pick up a used entry */
+
+	if(dequeue)
+	{
+		sctk_assert(ret);
+		/** TODO: Pop the elemt */
+		sctk_atomics_store_int(&ret->avail, 1);
+	}
+
+	sctk_spinlock_unlock(&pte->pending.lock);
+	return ret;
+}
+
+void sctk_ptl_pending_me_pop(sctk_ptl_rail_info_t* prail, sctk_ptl_pte_t* pte, int rank, int tag, size_t size, void* addr)
+{
+	sctk_assert( ! (pte->idx < SCTK_PTL_PTE_HIDDEN));
+	if(addr)
+	{
+		sctk_ptl_pending_entry_t* entry = (sctk_ptl_pending_entry_t*) addr;
+		sctk_atomics_store_int(&entry->avail, 1);
+	}
+	else
+	{
+		sctk_ptl_pending_me_lookup(prail, pte, rank, tag, (char)1);
+	}
+}
+
+void sctk_ptl_pending_me_push(sctk_ptl_rail_info_t* prail, sctk_ptl_pte_t* pte, int rank, int tag, size_t size, void* addr)
+{
+	sctk_spinlock_lock(&pte->pending.lock);
+	sctk_ptl_pending_entry_t* entry;
+
+	/** TODO: pick up a free entry */
+	
+	sctk_atomics_store_int(&entry->avail, 0);
+	entry->rank = rank;
+	entry->tag= tag;
+	entry->size= size;
+	if(addr)
+	{
+		memcpy(addr, &entry, sizeof(sctk_ptl_pending_entry_t*));
+	}
+	sctk_spinlock_unlock(&pte->pending.lock);
+}
+
+int sctk_ptl_pending_me_probe(sctk_ptl_rail_info_t* prail, sctk_communicator_t comm, int rank, int tag,  size_t* msg_size)
+{
+	sctk_ptl_pte_t* pte = MPCHT_get(&prail->pt_table, (int)((comm + SCTK_PTL_PTE_HIDDEN_NB) % prail->nb_entries));
+	/* 0 means 'Do not dequeue the element if a match exist' */
+	sctk_ptl_pending_entry_t* req = sctk_ptl_pending_me_lookup(prail, pte, rank, tag, (char)0);
+	if(req == NULL)
+	{
+		*msg_size = 0;
+		return 0;
+	}
+
+	*msg_size = req->size;
+	return 1;
 }
 
 #endif

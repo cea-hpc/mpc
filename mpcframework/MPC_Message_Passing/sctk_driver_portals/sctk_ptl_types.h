@@ -261,7 +261,7 @@ typedef union sctk_ptl_imm_data_s
 {
 	uint64_t raw;                   /**< the raw */
 	struct sctk_ptl_cm_data_s cm;   /**< imm_data for CM */
-	struct sctk_ptl_std_data_s std; /**< imm-data for eager */
+	struct sctk_ptl_std_data_s std; /**< imm-data for regular msgs */
 	struct sctk_ptl_offload_data_s offload; /**< imm-data for offload */
 } sctk_ptl_imm_data_t;
 
@@ -381,10 +381,19 @@ typedef enum sctk_ptl_offcoll_type_e
 	SCTK_PTL_OFFCOLL_NB
 } sctk_ptl_offcoll_type_t;
 
+typedef struct sctk_ptl_pending_entry_s
+{
+	sctk_atomics_int avail;
+	int rank;
+	int tag;
+	size_t size;
+	
+} sctk_ptl_pending_entry_t;
+
 typedef struct sctk_ptl_pte_pending_s
 {
 	sctk_spinlock_t lock; /**< msg from network without a matching recv */
-	void* pending_array[SCTK_PTL_ME_OVERFLOW_NB];
+	sctk_ptl_pending_entry_t pending_array[SCTK_PTL_ME_OVERFLOW_NB];
 	sctk_atomics_int start;
 	sctk_atomics_int end;
 } sctk_ptl_pte_pending_t;
