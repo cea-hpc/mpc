@@ -85,7 +85,7 @@
 /** Macro to automatically unlink an ME when a match occurs (not always used, ex: RDMA) */
 #define SCTK_PTL_ONCE (PTL_ME_USE_ONCE)
 /** Number of slots to maintain in the OVERFLOW_LIST of each PT entry */
-#define SCTK_PTL_ME_OVERFLOW_NB 128
+#define SCTK_PTL_ME_OVERFLOW_NB 1
 
 
 /*********************************/
@@ -385,19 +385,20 @@ typedef enum sctk_ptl_offcoll_type_e
 
 typedef struct sctk_ptl_pending_entry_s
 {
-	sctk_atomics_int avail;
+	int avail;
 	int rank;
 	int tag;
+	int magick;
 	size_t size;
+	char pad[8];
+	sctk_spinlock_t lock;
+	
 	
 } sctk_ptl_pending_entry_t;
 
 typedef struct sctk_ptl_pte_pending_s
 {
-	sctk_spinlock_t lock; /**< msg from network without a matching recv */
-	sctk_ptl_pending_entry_t pending_array[SCTK_PTL_ME_OVERFLOW_NB];
-	sctk_atomics_int start;
-	sctk_atomics_int end;
+	sctk_ptl_pending_entry_t cells[SCTK_PTL_ME_OVERFLOW_NB];
 } sctk_ptl_pte_pending_t;
 
 /**

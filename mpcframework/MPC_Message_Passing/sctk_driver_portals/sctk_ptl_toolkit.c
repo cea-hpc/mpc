@@ -174,10 +174,10 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 			if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST)
 			{
 				sctk_ptl_me_feed(srail,  cur_pte,  srail->eager_limit, 1, SCTK_PTL_OVERFLOW_LIST, SCTK_PTL_TYPE_STD, SCTK_PTL_PROT_NONE);
-				
+				sleep(1);
 				sctk_ptl_matchbits_t match = (sctk_ptl_matchbits_t)ev.match_bits;
 				/** issue here... ev.mlength = 0 for RDV protocol... */
-				sctk_ptl_pending_me_push(srail, cur_pte, match.data.rank, match.data.tag, ev.mlength, (void*)ev.start - 1);
+				sctk_ptl_pending_me_push(srail, cur_pte, match.data.rank, match.data.tag, ev.mlength, ev.start);
 				sctk_free(user_ptr);
 				continue;
 			}

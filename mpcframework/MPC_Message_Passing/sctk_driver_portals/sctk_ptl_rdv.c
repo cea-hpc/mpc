@@ -422,7 +422,8 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			 * 	2. Unable to differentiate protocol from two incoming messages (before Recv)
 			 */
 			pte = SCTK_PTL_PTE_ENTRY(srail->pt_table, ev.pt_index - SCTK_PTL_PTE_HIDDEN);
-			sctk_ptl_pending_me_pop(srail, pte, SCTK_MSG_SRC_PROCESS(msg), SCTK_MSG_TAG(msg), SCTK_MSG_SIZE(msg), NULL);
+			sctk_ptl_pending_me_pop(srail, pte, SCTK_MSG_SRC_PROCESS(msg), SCTK_MSG_TAG(msg), SCTK_MSG_SIZE(msg), (void*)ev.start -1);
+			sctk_free((void*)ev.start -1);
 		case PTL_EVENT_PUT:                  /* a Put() reached the local process */
 			/* we don't care about unexpected messaged reaching the OVERFLOW_LIST, we will just wait for their local counter-part */
 			/* indexes from 0 to SCTK_PTL_PTE_HIDDEN-1 maps RECOVERY, CM & RDMA queues

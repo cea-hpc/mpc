@@ -62,7 +62,7 @@ void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 		 */
 		if(msg->msg_send->tail.ptl.copy)
 		{
-			sctk_free(send_data->slot.me.start);
+			sctk_free((void*)send_data->slot.me.start -1);
 		}
 	}
 
@@ -275,7 +275,8 @@ void sctk_ptl_eager_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	{
 		case PTL_EVENT_PUT_OVERFLOW:          /* a previous received PUT matched a just appended ME */
 			pte = SCTK_PTL_PTE_ENTRY(srail->pt_table, ev.pt_index - SCTK_PTL_PTE_HIDDEN);
-			sctk_ptl_pending_me_pop(srail, pte, match.data.rank, match.data.tag, ev.mlength, ((void*)ev.start -1));
+			sctk_ptl_pending_me_pop(srail, pte, match.data.rank, match.data.tag, ev.mlength, ev.start);
+
 		case PTL_EVENT_PUT:                   /* a Put() reached the local process */
 			/* we don't care about unexpected messaged reaching the OVERFLOW_LIST, we will just wait for their local counter-part */
 			/* indexes from 0 to SCTK_PTL_PTE_HIDDEN-1 maps RECOVERY, CM & RDMA queues

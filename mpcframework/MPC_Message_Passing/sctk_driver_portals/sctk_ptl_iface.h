@@ -114,7 +114,6 @@ void sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t*);
 void sctk_ptl_md_release(sctk_ptl_local_data_t*);
 
 /* unmatched ME management */
-sctk_ptl_pending_entry_t* sctk_ptl_pending_me_lookup(sctk_ptl_rail_info_t* prail, sctk_ptl_pte_t* pte, int rank, int tag, char dequeue);
 void sctk_ptl_pending_me_pop(sctk_ptl_rail_info_t* prail, sctk_ptl_pte_t* pte, int rank, int tag, size_t size, void* addr);
 void sctk_ptl_pending_me_push(sctk_ptl_rail_info_t* prail, sctk_ptl_pte_t* pte, int rank, int tag, size_t size, void* addr);
 int sctk_ptl_pending_me_probe(sctk_ptl_rail_info_t* prail, sctk_communicator_t comm, int rank, int tag,  size_t* msg_size);
