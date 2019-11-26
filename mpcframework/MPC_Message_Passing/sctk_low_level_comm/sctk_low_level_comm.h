@@ -87,7 +87,8 @@ void sctk_network_notify_any_source_message_set ( void ( *sctk_network_notify_pe
 void sctk_network_notify_new_communicator ( int comm_idx, size_t comm_size);
 void sctk_network_notify_new_communicator_set ( void ( *sctk_network_notify_new_comm_val ) ( int comm_idx, size_t comm_size ) );
 
-void sctk_network_notify_probe_message_set (void ( *sctk_network_notify_probe_message_val) () );
+void sctk_network_notify_probe_message (int task_id, int remote_rank, int tag, sctk_communicator_t comm, int* status, size_t* msg_size);
+void sctk_network_notify_probe_message_set (void ( *sctk_network_notify_probe_message_val) (int task_id, int remote_rank, int tag, sctk_communicator_t comm, int* status, size_t* msg_size) );
 
 size_t sctk_net_memory_allocation_hook ( size_t size_origin );
 void sctk_net_memory_free_hook ( void * ptr , size_t size );
