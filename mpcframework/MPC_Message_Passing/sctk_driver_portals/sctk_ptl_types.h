@@ -85,7 +85,7 @@
 /** Macro to automatically unlink an ME when a match occurs (not always used, ex: RDMA) */
 #define SCTK_PTL_ONCE (PTL_ME_USE_ONCE)
 /** Number of slots to maintain in the OVERFLOW_LIST of each PT entry */
-#define SCTK_PTL_ME_OVERFLOW_NB 1
+#define SCTK_PTL_ME_OVERFLOW_NB 128
 
 
 /*********************************/

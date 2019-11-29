@@ -112,7 +112,7 @@ static void sctk_network_notify_any_source_message_ptl ( int polling_task_id, in
 static void sctk_network_notify_probe_message_ptl (sctk_rail_info_t* rail, int task_id, int remote_rank, int tag, sctk_communicator_t comm, int* status, size_t* msg_size)
 {
 	UNUSED(task_id);
-	*status = sctk_ptl_pending_me_probe(&rail->network.ptl, remote_rank, tag, comm, msg_size);
+	*status = sctk_ptl_pending_me_probe(&rail->network.ptl, comm, remote_rank, tag, msg_size);
 }
 
 /**

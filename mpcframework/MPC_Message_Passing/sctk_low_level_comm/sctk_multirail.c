@@ -880,7 +880,7 @@ static void sctk_multirail_notify_probe (int task_id, int remote_rank, int tag, 
 {
 	int count = sctk_rail_count();
 	int i;
-	int ret = -1, tmp_ret = -1;
+	int ret = 0, tmp_ret = -1;
 	static int no_rail_support = 0;
 
 	if(no_rail_support) /* shortcut when no rail support probing at all */
@@ -892,6 +892,7 @@ static void sctk_multirail_notify_probe (int task_id, int remote_rank, int tag, 
 	for( i = 0 ; i < count ; i++ )
 	{
 		sctk_rail_info_t * rail = sctk_rail_get_by_id ( i );
+		tmp_ret = -1; /* re-init for next rail */
 		
 		/* if current driver can handle a probing procedure... */
 		if( rail->notify_probe_message )

@@ -26,6 +26,7 @@
 #include "sctk_route.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_eager.h"
+#include "sctk_ptl_probe.h"
 #include "sctk_net_tools.h"
 
 /**
@@ -60,10 +61,7 @@ void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 		 * If msg reached the OVERFLOW_LIST --> free the request & the temp buffer
 		 * otherwise, the request is the same than the one free'd above
 		 */
-		if(msg->msg_send->tail.ptl.copy)
-		{
-			sctk_free((void*)send_data->slot.me.start -1);
-		}
+		sctk_ptl_me_free(send_data, msg->msg_send->tail.ptl.copy);
 	}
 
 	/* First, free local resources (PRIORITY ME)
