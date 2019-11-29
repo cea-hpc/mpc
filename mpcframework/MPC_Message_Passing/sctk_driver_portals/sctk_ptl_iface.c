@@ -27,6 +27,7 @@
 #include "sctk_debug.h"
 #include "sctk_alloc.h"
 #include "sctk_io_helper.h"
+#include "sctk_atomics.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_types.h"
 #include "sctk_ht.h"
@@ -658,7 +659,7 @@ void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t m
 	sctk_assert(list == SCTK_PTL_PRIORITY_LIST || list == SCTK_PTL_OVERFLOW_LIST);
 	if(list == SCTK_PTL_OVERFLOW_LIST)
 	{
-		extra_space = sizeof(sctk_ptl_pending_entry_t*);
+		extra_space = sizeof(sctk_atomics_ptr);
 	}
 
 	for (j = 0; j < nb; j++)
@@ -666,6 +667,7 @@ void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t m
 		sctk_ptl_local_data_t* user;
 		void* buf = sctk_malloc(me_size + extra_space);
 		memset(buf, 0, extra_space);
+		sctk_atomics_store_ptr((sctk_atomics_ptr*)buf, NULL);
 		user = sctk_ptl_me_create(
 				(char*)buf + extra_space, /* keep it explicit... */
 				me_size, /* buffer size */
@@ -1034,7 +1036,7 @@ static sctk_ptl_pending_entry_t* __sctk_ptl_pending_me_lock_cell(sctk_ptl_pte_t*
 	{
 		sctk_ptl_pending_entry_t* cell = &pte->pending.cells[i];
 		sctk_spinlock_lock(&cell->lock);
-		if(cell->rank == rank && cell->tag == tag && cell->avail == avail);
+		if(cell->rank == rank && cell->tag == tag && cell->avail == avail)
 		{
 			return cell;
 		}
@@ -1065,10 +1067,19 @@ void sctk_ptl_pending_me_pop(sctk_ptl_rail_info_t* prail, sctk_ptl_pte_t* pte, i
 	sctk_assert( ! (pte->idx < SCTK_PTL_PTE_HIDDEN));
 	if(me_addr)
 	{
-		sctk_ptl_pending_entry_t* entry = *(((char*)me_addr) - sizeof(sctk_ptl_pending_entry_t**));
+		sctk_ptl_pending_entry_t* entry;
+		sctk_atomics_ptr* saved_slot = ((char*)me_addr) - sizeof(sctk_atomics_ptr);
+		sctk_warning("POP: c%d r%d t%d s%llu (addr=%p)", pte->idx - SCTK_PTL_PTE_HIDDEN, rank, tag, size, saved_slot);
+	
+		do
+		{
+			entry = (sctk_ptl_pending_entry_t**)sctk_atomics_swap_ptr(saved_slot, NULL);
+		}
+		while(entry == NULL);
 		sctk_warning("POP: c%d r%d t%d s%llu (entry=%p)", pte->idx - SCTK_PTL_PTE_HIDDEN, rank, tag, size, entry);
 	
 		sctk_assert(entry != NULL);
+		
 		sctk_spinlock_lock(&entry->lock);
 		entry->avail = 1;
 		sctk_spinlock_unlock(&entry->lock);
@@ -1082,7 +1093,7 @@ void sctk_ptl_pending_me_pop(sctk_ptl_rail_info_t* prail, sctk_ptl_pte_t* pte, i
 void sctk_ptl_pending_me_push(sctk_ptl_rail_info_t* prail, sctk_ptl_pte_t* pte, int rank, int tag, size_t size, void* me_addr)
 {
 	sctk_ptl_pending_entry_t* entry = __sctk_ptl_pending_me_lock_cell(pte, rank, tag, (char)1);
-	sctk_ptl_pending_entry_t** saved_slot = ((char*)me_addr) - sizeof(sctk_ptl_pending_entry_t**);
+	sctk_atomics_ptr* saved_slot = ((char*)me_addr) - sizeof(sctk_atomics_ptr);
 
 	if(entry)
 	{
@@ -1093,8 +1104,8 @@ void sctk_ptl_pending_me_push(sctk_ptl_rail_info_t* prail, sctk_ptl_pte_t* pte, 
 		sctk_error("PUSH: c%d r%d t%d s%llu (entry=%p)", pte->idx - SCTK_PTL_PTE_HIDDEN, rank, tag, size, entry);
 		if(me_addr)
 		{
-			sctk_assert((*saved_slot) == NULL);
-			*saved_slot = entry;
+			sctk_assert(sctk_atomics_cas_ptr(saved_slot, NULL, NULL) == NULL);
+			sctk_atomics_store_ptr(saved_slot, entry);
 		}
 		sctk_spinlock_unlock(&entry->lock);
 	}
