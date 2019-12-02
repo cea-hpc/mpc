@@ -52,14 +52,15 @@ static sctk_ptl_pending_entry_t* __sctk_ptl_pending_me_lock_cell(sctk_ptl_pte_t*
 		sctk_spinlock_unlock(&cell->lock);
 	}
 	return NULL;
-
 }
 
 static int sctk_ptl_pending_me_lookup(sctk_ptl_rail_info_t* prail, sctk_ptl_pte_t* pte, int rank, int tag, size_t* size, char dequeue)
 {
+	UNUSED(prail);
 	sctk_ptl_pending_entry_t* ret = __sctk_ptl_pending_me_lock_cell(pte, rank, tag, (char)0);
 	if(ret)
 	{
+		assume_m(ret->size != __INT32_MAX__, "Message larger than %luB cannot be  probed (yet) !", __INT32_MAX__ - 1);
 		*size = ret->size;
 		if(dequeue)
 		{
@@ -77,11 +78,11 @@ void sctk_ptl_pending_me_pop(sctk_ptl_rail_info_t* prail, sctk_ptl_pte_t* pte, i
 	if(me_addr)
 	{
 		sctk_ptl_pending_entry_t* entry;
-		sctk_atomics_ptr* saved_slot = ((char*)me_addr) - sizeof(sctk_atomics_ptr);
+		sctk_atomics_ptr* saved_slot = (sctk_atomics_ptr*)(((char*)me_addr) - sizeof(sctk_atomics_ptr));
 	
 		do
 		{
-			entry = (sctk_ptl_pending_entry_t**)sctk_atomics_swap_ptr(saved_slot, NULL);
+			entry = (sctk_ptl_pending_entry_t*)sctk_atomics_swap_ptr(saved_slot, NULL);
 		}
 		while(entry == NULL);
 		sctk_debug("POP: c%d r%d t%d s%llu (entry=%p)", pte->idx - SCTK_PTL_PTE_HIDDEN, rank, tag, size, entry);
@@ -100,8 +101,9 @@ void sctk_ptl_pending_me_pop(sctk_ptl_rail_info_t* prail, sctk_ptl_pte_t* pte, i
 
 void sctk_ptl_pending_me_push(sctk_ptl_rail_info_t* prail, sctk_ptl_pte_t* pte, int rank, int tag, size_t size, void* me_addr)
 {
+	UNUSED(prail);
 	sctk_ptl_pending_entry_t* entry = __sctk_ptl_pending_me_lock_cell(pte, rank, tag, (char)1);
-	sctk_atomics_ptr* saved_slot = ((char*)me_addr) - sizeof(sctk_atomics_ptr);
+	sctk_atomics_ptr* saved_slot = (sctk_atomics_ptr*)(((char*)me_addr) - sizeof(sctk_atomics_ptr));
 
 	if(entry)
 	{

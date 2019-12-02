@@ -25,6 +25,7 @@
 #ifdef MPC_USE_PORTALS
 #include "sctk_route.h"
 #include "sctk_ptl_rdv.h"
+#include "sctk_ptl_probe.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_net_tools.h"
 
@@ -37,6 +38,7 @@ extern sctk_ptl_id_t* ranks_ids_map;
  */
 void sctk_ptl_rdv_free_memory(void* msg)
 {
+	sctk_ptl_me_free(((sctk_thread_ptp_message_t*)msg)->tail.ptl.user_ptr, 1);
 	sctk_free(msg);
 	/*not_implemented();*/
 }
@@ -61,7 +63,6 @@ void sctk_ptl_rdv_message_copy(sctk_message_to_copy_t* msg)
 		sctk_ptl_local_data_t* recv_data = msg->msg_recv->tail.ptl.user_ptr;
 
 		sctk_net_message_copy_from_buffer(send_data->slot.me.start, msg, 0);
-		sctk_ptl_me_free(recv_data, 1);
 	}
 
 	sctk_message_completion_and_free(msg->msg_send, msg->msg_recv);
@@ -129,17 +130,17 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	/* this function will compute byte equal distribution between multiple GET, if needed */
 	sctk_ptl_compute_chunks(srail, SCTK_MSG_SIZE(msg), &chunk_sz, &chunk_nb, &chunk_rest);
 	sctk_assert(chunk_nb > 0);
-	sctk_assert(chunk_rest < chunk_nb);
+   	sctk_assert(chunk_rest < chunk_nb);
 	/* create a new MD and configure it */
 	get_request = sctk_ptl_md_create(
 		srail, 
-		start, 
+		start,  
 		SCTK_MSG_SIZE(msg),
 		flags
 	);
 	sctk_assert(get_request);
 
-	get_request->msg                   = msg;
+	get_request->msg                    = msg;
 	get_request->list                  = SCTK_PTL_PRIORITY_LIST;
 	get_request->type                  = SCTK_PTL_TYPE_STD;
 	get_request->prot                  = SCTK_PTL_PROT_RDV;
@@ -294,6 +295,8 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	md_request->prot = SCTK_PTL_PROT_RDV;
 	md_request->match = match;
 	hdr.std.msg_seq_nb = SCTK_MSG_NUMBER(msg);
+	/* the size may be truncated as msg_size is 32-bit int */
+	hdr.std.msg_size = (SCTK_MSG_SIZE(msg) >> 32) ? __UINT32_MAX__ : SCTK_MSG_SIZE(msg);
 	sctk_ptl_md_register(srail, md_request);
 
 	/***************************/
@@ -422,8 +425,7 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			 * 	2. Unable to differentiate protocol from two incoming messages (before Recv)
 			 */
 			pte = SCTK_PTL_PTE_ENTRY(srail->pt_table, ev.pt_index - SCTK_PTL_PTE_HIDDEN);
-			sctk_ptl_pending_me_pop(srail, pte, SCTK_MSG_SRC_PROCESS(msg), SCTK_MSG_TAG(msg), SCTK_MSG_SIZE(msg), (void*)ev.start -1);
-			sctk_free((void*)ev.start -1);
+			sctk_ptl_pending_me_pop(srail, pte, SCTK_MSG_SRC_PROCESS(msg), SCTK_MSG_TAG(msg), SCTK_MSG_SIZE(msg), ev.start);
 		case PTL_EVENT_PUT:                  /* a Put() reached the local process */
 			/* we don't care about unexpected messaged reaching the OVERFLOW_LIST, we will just wait for their local counter-part */
 			/* indexes from 0 to SCTK_PTL_PTE_HIDDEN-1 maps RECOVERY, CM & RDMA queues

@@ -247,7 +247,7 @@ typedef struct sctk_ptl_cm_data_s
 typedef struct sctk_ptl_std_data_s
 {
 	int msg_seq_nb; /**< the MSG_NUMBER, for the matching */
-	char pad[4];  /**< padding */
+	unsigned int msg_size; /**< careful ! can be truncated (low-level handles size_t) */
 } sctk_ptl_std_data_t;
 
 typedef struct sctk_ptl_offload_data_s

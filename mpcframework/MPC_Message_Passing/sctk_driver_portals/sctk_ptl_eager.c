@@ -183,6 +183,7 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 	request->prot = SCTK_PTL_PROT_EAGER;
 	request->msg_seq_nb = SCTK_MSG_NUMBER(msg);
 	hdr.std.msg_seq_nb     = SCTK_MSG_NUMBER(msg);
+	hdr.std.msg_size = (SCTK_MSG_SIZE(msg) >> 32) ? __UINT32_MAX__ : SCTK_MSG_SIZE(msg);
 	msg->tail.ptl.user_ptr = request;
 
 	/* emit the request */

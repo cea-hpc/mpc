@@ -29,6 +29,7 @@
 #include "sctk_io_helper.h" /* for MAX_STRING_SIZE */
 #include "sctk_ptl_types.h"
 #include "sctk_ptl_iface.h"
+#include "sctk_ptl_probe.h"
 #include "sctk_ptl_rdv.h"
 #include "sctk_ptl_eager.h"
 #include "sctk_ptl_rdma.h"
@@ -173,15 +174,17 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 			/* if the request consumed an unexpected slot, append a new one */
 			if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST)
 			{
+				size_t msg_sz = (ev.mlength == 0) ?((sctk_ptl_imm_data_t)ev.hdr_data).std.msg_size : ev.mlength;
 				sctk_ptl_me_feed(srail,  cur_pte,  srail->eager_limit, 1, SCTK_PTL_OVERFLOW_LIST, SCTK_PTL_TYPE_STD, SCTK_PTL_PROT_NONE);
 				sctk_ptl_matchbits_t match = (sctk_ptl_matchbits_t)ev.match_bits;
 				/** issue here... ev.mlength = 0 for RDV protocol... */
-				sctk_ptl_pending_me_push(srail, cur_pte, match.data.rank, match.data.tag, ev.mlength, ev.start);
+				sctk_ptl_pending_me_push(srail, cur_pte, match.data.rank, match.data.tag, msg_sz, ev.start);
 				sctk_free(user_ptr);
 				continue;
 			}
 			
 			switch((int)user_ptr->type) /* normal message */
+
 			{
 				case SCTK_PTL_TYPE_STD:
 					switch((int)user_ptr->prot)
