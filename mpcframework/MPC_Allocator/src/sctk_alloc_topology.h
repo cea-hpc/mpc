@@ -28,7 +28,7 @@
 
 //optional header
 #ifdef MPC_Threads
-#include <mpc_common_topology.h>
+#include <mpc_topology.h>
 #elif defined(HAVE_HWLOC)
 #include <hwloc.h>
 #endif
@@ -40,8 +40,8 @@ extern "C"
 
 /************************* FUNCTION ************************/
 #ifndef MPC_Threads
-SCTK_INTERN int mpc_common_topo_has_numa_nodes(void);
-SCTK_INTERN int mpc_common_topo_get_numa_node_count (void);
+SCTK_INTERN int mpc_topology_has_numa_nodes(void);
+SCTK_INTERN int mpc_topology_get_numa_node_count (void);
 #endif
 
 SCTK_INTERN void sctk_alloc_init_topology(void);
@@ -51,7 +51,7 @@ SCTK_INTERN void sctk_alloc_topology_bind_thread_on_core(int id);
 SCTK_INTERN bool sctk_alloc_is_numa(void);
 
 #ifdef HAVE_HWLOC
-SCTK_INTERN hwloc_topology_t mpc_common_topology_get(void);
+SCTK_INTERN hwloc_topology_t mpc_topology_get(void);
 SCTK_INTERN void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_node);
 #endif //HAVE_HWLOC
 

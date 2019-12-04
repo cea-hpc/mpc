@@ -35,7 +35,7 @@
 #include "sctk_runtime_config.h"
 #include "mpc_common_spinlock.h"
 #include "sctk_thread.h"
-#include "mpc_common_topology.h"
+#include "mpc_topology.h"
 #include <mpc.h>
 #include <mpc_extern32.h>
 #include <mpc_mpi.h>

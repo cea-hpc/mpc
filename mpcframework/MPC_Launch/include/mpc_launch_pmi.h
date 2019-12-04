@@ -34,6 +34,40 @@ extern "C"
 {
 #endif
 
+/**
+ * @addtogroup MPC_Launch
+ * @{
+ */
+
+/****************
+ * FILE CONTENT *
+ ****************/
+
+/**
+ * @defgroup pmi Process Management Interface
+ * This implemented getters and setters for the PMI interface in MPC
+ */
+
+        /**
+         * @defgroup libmode_hooks MPC Library mode hooks
+        * Libmode allows MPC to run alongside another MPI instance
+        * to do so simply compile mpc with ./installmpc --lib-mode.
+        * Note that a TCP rail is required to bootstrap the comm ring
+        * to enable on demand connections on high speed networks.
+        *
+        * These function are the weak implementation to be overriden
+        * by actual ones in the target implementation.
+         */
+
+/***********
+ * MPC PMI *
+ ***********/
+
+/**
+ * @addtogroup pmi
+ * @{
+ */
+
 /*************************
  * PMI ERROR DEFINITIONS *
  *************************/
@@ -181,17 +215,21 @@ int mpc_launch_pmi_get_process_layout( struct mpc_launch_pmi_process_layout **la
 */
 int mpc_launch_pmi_get_job_id( int *id );
 
-/*******************************
- * LIBRARY MODE TOLOGY GETTERS *
- *******************************/
 
-/** Libmode allows MPC to run alongside another MPI instance
- * to do so simply compile mpc with ./installmpc --lib-mode.
- * Note that a TCP rail is required to bootstrap the comm ring
- * to enable on demand connections on high speed networks.
- *
- * These function are the weak implementation to be overriden
- * by actual ones in the target implementation.
+
+
+
+/*********************************
+ * LIBRARY MODE TOPOLOGY GETTERS *
+ *********************************/
+
+/**
+ * @addtogroup libmode_hooks
+ * @{
+ */
+
+
+/**
  */
 
 #ifdef SCTK_LIB_MODE
@@ -235,6 +273,21 @@ void MPC_Net_hook_send_to( void *data, size_t size, int target );
 void MPC_Net_hook_recv_from( void *data, size_t size, int source );
 
 #endif /* SCTK_LIB_MODE */
+
+/* End Lib-mode hooks */
+/**
+ * @}
+ */
+
+/* End Process Management Interface */
+/**
+ * @}
+ */
+
+/* End MPC_Launch */
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }

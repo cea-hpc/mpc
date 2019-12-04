@@ -27,7 +27,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include "sctk_kernel_thread.h"
-#include <mpc_common_topology.h>
+#include <mpc_topology.h>
 #include <string.h>
 
 #define SCTK_BLOCKING_LOCK_TABLE_SIZE 6
@@ -2467,7 +2467,7 @@ void sctk_register_thread_type(char* type){
 int sctk_get_env_cpu_nuber(){
   int cpu_number; 
   char* env;
-  cpu_number = mpc_common_topo_get_pu_count ();
+  cpu_number = mpc_topology_get_pu_count ();
   env = getenv("SCTK_SET_CORE_NUMBER");
   if(env != NULL){
     cpu_number = atoi(env);

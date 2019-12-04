@@ -21,28 +21,67 @@
 /* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef MPC_COMMON_INCLUDE_MPC_COMMON_TOPOLOGY_H_
-#define MPC_COMMON_INCLUDE_MPC_COMMON_TOPOLOGY_H_
-
-#include <stdio.h>
-#include <hwloc.h>
+#ifndef MPC_COMMON_INCLUDE_MPC_TOPOLOGY_H_
+#define MPC_COMMON_INCLUDE_MPC_TOPOLOGY_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include <stdio.h>
+#include <hwloc.h>
+
+
+/**
+ * @addtogroup MPC_Topology
+ * @{
+ */
+
+/****************
+ * FILE CONTENT *
+ ****************/
+
+/**
+ * @defgroup topology_interface General Topology Interface
+ * This module provides the general topology getters for MPC
+ */
+
+        /**
+         * @defgroup topology_interface_init Init and Release
+         * These functions are the initalization and release points for
+         * the topology interface
+         */
+
+        /**
+         * @defgroup topology_interface_getters Topology query functions
+         * These functions are used to retrieve topology for current process in MPC
+         */
+
 /**************************
- * MPC TOPOLOGY ACCESSORS *
+ * MPC TOPOLOGY INTERFACE *
  **************************/
 
+/**
+ * @addtogroup topology_interface
+ * @{
+ */
 
-/*! \brief Initialize the topology module
-*/
-void mpc_common_topology_init(void);
+/********************
+ * INIT AND RELEASE *
+ ********************/
 
-/*! \brief Destroy the topology module
+/**
+ * @addtogroup topology_interface_init
+ * @{
+ */
+
+/** @brief Initialize the topology module
 */
-void mpc_common_topology_destroy(void);
+void mpc_topology_init(void);
+
+/** @brief Destroy the topology module
+*/
+void mpc_topology_destroy(void);
 
 /*
    ! ALL the following functions are dependent
@@ -50,52 +89,66 @@ void mpc_common_topology_destroy(void);
    ! of the topology module
 */
 
+/* End topology_interface_init */
+/**
+ * @}
+ */
+
+/**************************
+ * MPC TOPOLOGY ACCESSORS *
+ **************************/
+
+/**
+ * @addtogroup topology_interface_getters
+ * @{
+ */
+
 /**
  * @brief Retrieve the Main Topology Object from MPC
  *
  * @return hwloc_topology_t MPC's main topology object
  */
-hwloc_topology_t mpc_common_topology_get(void);
+hwloc_topology_t mpc_topology_get(void);
 
-/*! \brief Return the closest core_id
+/** @brief Return the closest core_id
  * @param cpuid Main core_id
  * @param nb_cpus Number of neighbor
  * @param neighborhood Neighbor list
 */
-void mpc_common_topo_get_pu_neighborhood(int cpuid, unsigned int nb_cpus, int *neighborhood);
+void mpc_topology_get_pu_neighborhood(int cpuid, unsigned int nb_cpus, int *neighborhood);
 
-/*! \brief return the Numa node associated with a given CPUID
+/** @brief return the Numa node associated with a given CPUID
  * @param cpuid The target CPUID (logical)
  * @return identifier of the numa node matching cpuid (0 if none)
  */
-int mpc_common_topo_get_numa_node_from_cpu(const int cpuid);
+int mpc_topology_get_numa_node_from_cpu(const int cpuid);
 
-/*! \brief Return the number of NUMA nodes */
-int mpc_common_topo_get_numa_node_count(void);
+/** @brief Return the number of NUMA nodes */
+int mpc_topology_get_numa_node_count(void);
 
-/*! \brief Return 1 if the current node is a NUMA node, 0 otherwise */
-int mpc_common_topo_has_numa_nodes(void);
+/** @brief Return 1 if the current node is a NUMA node, 0 otherwise */
+int mpc_topology_has_numa_nodes(void);
 
-/*! \brief Bind the current thread
+/** @brief Bind the current thread
  * @ param i The cpu_id to bind
 */
-int mpc_common_topo_bind_to_cpu(int i);
+int mpc_topology_bind_to_cpu(int i);
 
-void mpc_common_topo_bind_to_process_cpuset();
+void mpc_topology_bind_to_process_cpuset();
 
-/*! \brief Print the topology tree into a file
+/** @brief Print the topology tree into a file
  * @param fd Destination file descriptor
 */
-void mpc_common_topo_print(FILE *fd);
+void mpc_topology_print(FILE *fd);
 
-/*! \brief get the number of processing units (PU) as seen by MPC
+/** @brief get the number of processing units (PU) as seen by MPC
  * @return Number of PUs in curent MPC topology
  */
-int mpc_common_topo_get_pu_count(void);
+int mpc_topology_get_pu_count(void);
 
-/*! \brief Return the current core_id
+/** @brief Return the current core_id
 */
-int mpc_common_topo_get_current_cpu(void);
+int mpc_topology_get_current_cpu(void);
 
 /**
  * @brief Convert a PU id from OS to logical numbering
@@ -103,7 +156,7 @@ int mpc_common_topo_get_current_cpu(void);
  * @param pu_os_id OS id of the source PU
  * @return int Logical ID of the PU (used in Hwloc)
  */
-int mpc_common_topo_convert_os_pu_to_logical( int pu_os_id );
+int mpc_topology_convert_os_pu_to_logical( int pu_os_id );
 
 /**
  * @brief Convert a PU id from logical to OS numbering
@@ -111,7 +164,7 @@ int mpc_common_topo_convert_os_pu_to_logical( int pu_os_id );
  * @param cpuid logical id of the source PU
  * @return int OS ID of the PU
  */
-int mpc_common_topo_convert_logical_pu_to_os( int cpuid );
+int mpc_topology_convert_logical_pu_to_os( int cpuid );
 
 
 /**
@@ -119,7 +172,7 @@ int mpc_common_topo_convert_logical_pu_to_os( int cpuid );
  *
  * @return hwloc_const_cpuset_t process cpuset
  */
-hwloc_const_cpuset_t mpc_common_topo_get_process_cpuset();
+hwloc_const_cpuset_t mpc_topology_get_process_cpuset();
 
 /**
  * @brief Return the numa node (or whole machine if none) of cpuid
@@ -127,7 +180,7 @@ hwloc_const_cpuset_t mpc_common_topo_get_process_cpuset();
  * @param cpuid PU id to query for
  * @return hwloc_cpuset_t corresponding NUMA cpuset
  */
-hwloc_cpuset_t mpc_common_topo_get_parent_numa_cpuset(int cpuid);
+hwloc_cpuset_t mpc_topology_get_parent_numa_cpuset(int cpuid);
 
 /**
  * @brief Return the socket of cpuid
@@ -135,7 +188,7 @@ hwloc_cpuset_t mpc_common_topo_get_parent_numa_cpuset(int cpuid);
  * @param cpuid PU id to query for
  * @return hwloc_cpuset_t corresponding socket cpuset
  */
-hwloc_cpuset_t mpc_common_topo_get_parent_socket_cpuset(int cpuid);
+hwloc_cpuset_t mpc_topology_get_parent_socket_cpuset(int cpuid);
 
 /**
  * @brief Return the PU cupset of cpuid
@@ -143,7 +196,7 @@ hwloc_cpuset_t mpc_common_topo_get_parent_socket_cpuset(int cpuid);
  * @param cpuid PU id to query for
  * @return hwloc_cpuset_t corresponding PU cpuset
  */
-hwloc_cpuset_t mpc_common_topo_get_pu_cpuset(int cpuid);
+hwloc_cpuset_t mpc_topology_get_pu_cpuset(int cpuid);
 
 /**
  * @brief Return the core cupset of cpuid
@@ -151,7 +204,7 @@ hwloc_cpuset_t mpc_common_topo_get_pu_cpuset(int cpuid);
  * @param cpuid PU id to query for
  * @return hwloc_cpuset_t corresponding core cpuset
  */
-hwloc_cpuset_t mpc_common_topo_get_parent_core_cpuset(int cpuid);
+hwloc_cpuset_t mpc_topology_get_parent_core_cpuset(int cpuid);
 
 /**
  * @brief Return the first PU in the given node level
@@ -159,35 +212,47 @@ hwloc_cpuset_t mpc_common_topo_get_parent_core_cpuset(int cpuid);
  * @param type Type of level to search for
  * @return hwloc_cpuset_t cpuset with a single core according to level
  */
-hwloc_cpuset_t mpc_common_topo_get_first_pu_for_level(hwloc_obj_type_t type);
+hwloc_cpuset_t mpc_topology_get_first_pu_for_level(hwloc_obj_type_t type);
 
 /**
  * @brief Number of active PU for the topology
  *
  * @return int number of active PUs
  */
-int mpc_common_topo_get_pu_count();
+int mpc_topology_get_pu_count();
 
 /**
  * @brief Number of processing units per core (Hyperhtreads)
  *
  * @return int number of PU per CORE
  */
-int mpc_common_topo_get_ht_per_core(void);
+int mpc_topology_get_ht_per_core(void);
 
-void mpc_common_topo_clear_cpu_pinning_cache();
+void mpc_topology_clear_cpu_pinning_cache();
 
-
-/*! \brief Set the number of core usable for the current process
- * @ param n Number of cores
- * used for ethread
+/** @brief Set the number of core usable for the current process
+ * @param n Number of cores used for ethread
 */
-int mpc_common_topo_set_pu_count(int n);
+int mpc_topology_set_pu_count(int n);
 
+/* End topology_interface_getters */
+/**
+ * @}
+ */
+
+/* End topology_interface */
+/**
+ * @}
+ */
+
+/* End MPC_Topology */
+/**
+ * @}
+ */
 
 
 
 #ifdef __cplusplus
 }
 #endif
-#endif /* MPC_COMMON_INCLUDE_MPC_COMMON_TOPOLOGY_H_ */
+#endif /* MPC_COMMON_INCLUDE_MPC_TOPOLOGY_H_ */

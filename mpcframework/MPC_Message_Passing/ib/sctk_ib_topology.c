@@ -38,7 +38,7 @@
 #include "sctk_rail.h"
 
 #include <sctk_thread.h>
-#include <mpc_common_topology.h>
+#include <mpc_topology.h>
 
 /* used to remember __thread var init for IB re-enabling */
 extern volatile char* vps_reset;
@@ -90,7 +90,7 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	struct sctk_ib_topology_s * topo = rail_ib->topology;
 	struct sctk_runtime_config_struct_net_driver_infiniband *config = rail_ib->config;
-	int node_nb =  mpc_common_topo_get_numa_node_from_cpu ( vp );
+	int node_nb =  mpc_topology_get_numa_node_from_cpu ( vp );
 	int numa_node_count = topo->numa_node_count;
 
 	sctk_ib_topology_numa_node_init_t *init = &topo->init[node_nb];
@@ -199,7 +199,7 @@ void sctk_ib_topology_init( sctk_ib_topology_t * topology )
 
 	/* Compute node and alloc count */
 	
-	int numa_node_count = mpc_common_topo_get_numa_node_count();
+	int numa_node_count = mpc_topology_get_numa_node_count();
 	/* FIXME: get_numa_node_number may return 1 when SMP */
 	numa_node_count = ( numa_node_count == 0 ) ? 1 : numa_node_count;
 	/* We allocate a pool in addition in order to store the SRQ buffers */
@@ -308,7 +308,7 @@ sctk_ib_topology_get_numa_node ( struct sctk_ib_rail_info_s *rail_ib )
 		}
 		else
 		{
-			int node_num =  mpc_common_topo_get_numa_node_from_cpu ( vp );
+			int node_num =  mpc_topology_get_numa_node_from_cpu ( vp );
 			assume ( topo );
 
 			if( topo->numa_node_count == 0 )

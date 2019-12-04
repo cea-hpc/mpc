@@ -36,7 +36,7 @@
 #include "mpc_common_rank.h"
 
 #include "topology_render.h"
-#include <mpc_common_device_topo.h>
+#include "topology_device.h"
 
 #ifdef MPC_USE_EXTLS
 #include <extls.h>
@@ -52,7 +52,7 @@
  * MPC TOPOLOGY OBJECT INTERFACE *
  *********************************/
 
-void _mpc_topo_map_and_restrict_by_cpuset(hwloc_topology_t target_topology,
+void _mpc_topology_map_and_restrict_by_cpuset(hwloc_topology_t target_topology,
 								const int processor_count,
 								const unsigned int index_first_processor,
 								hwloc_cpuset_t pinning_constraints)
@@ -115,7 +115,7 @@ static void _topo_add_cpuid_to_pin_cpuset( hwloc_cpuset_t pin_cpuset,
 
 }
 
-hwloc_cpuset_t _mpc_topo_get_pinning_constraints(int processor_count)
+hwloc_cpuset_t _mpc_topology_get_pinning_constraints(int processor_count)
 {
 	hwloc_cpuset_t pining_constraints = hwloc_bitmap_alloc();
 	hwloc_bitmap_zero( pining_constraints );
@@ -182,7 +182,7 @@ hwloc_cpuset_t _mpc_topo_get_pinning_constraints(int processor_count)
 	return pining_constraints;
 }
 
-void _mpc_topo_apply_smt_configuration(hwloc_topology_t target_topology,
+void _mpc_topology_apply_smt_configuration(hwloc_topology_t target_topology,
 					  		      int * processor_count)
 {
 restart_restrict:
@@ -229,14 +229,14 @@ restart_restrict:
 	}
 }
 
-void _mpc_topo_apply_mpc_process_constraints(hwloc_topology_t target_topology)
+void _mpc_topology_apply_mpc_process_constraints(hwloc_topology_t target_topology)
 {
 	int processor_count = 0;
 
-	_mpc_topo_apply_smt_configuration(target_topology,
+	_mpc_topology_apply_smt_configuration(target_topology,
 			 						  &processor_count);
 
-	hwloc_cpuset_t pinning_constraints = _mpc_topo_get_pinning_constraints(processor_count);
+	hwloc_cpuset_t pinning_constraints = _mpc_topology_get_pinning_constraints(processor_count);
 
 	int processor_per_process = processor_count;
 
@@ -273,7 +273,7 @@ void _mpc_topo_apply_mpc_process_constraints(hwloc_topology_t target_topology)
 			}
 		}
 
-		_mpc_topo_map_and_restrict_by_cpuset(target_topology,
+		_mpc_topology_map_and_restrict_by_cpuset(target_topology,
 										processor_per_process,
 										start,
 										pinning_constraints);
@@ -297,7 +297,7 @@ void _mpc_topo_apply_mpc_process_constraints(hwloc_topology_t target_topology)
 							 mpc_common_get_process_rank(),
 							 requested_processor_per_process, processor_per_process );
 
-				_mpc_topo_map_and_restrict_by_cpuset(target_topology,
+				_mpc_topology_map_and_restrict_by_cpuset(target_topology,
 												requested_processor_per_process,
 												0,
 												pinning_constraints);
@@ -309,7 +309,7 @@ void _mpc_topo_apply_mpc_process_constraints(hwloc_topology_t target_topology)
 }
 
 
-void _mpc_topo_print( hwloc_topology_t target_topology, FILE *fd )
+void _mpc_topology_print( hwloc_topology_t target_topology, FILE *fd )
 {
 	char hostname[128];
 
@@ -349,11 +349,11 @@ void _mpc_topo_print( hwloc_topology_t target_topology, FILE *fd )
 				 node_os_index, tmp[1]->logical_index, tmp[2]->logical_index );
 	}
 
-	fprintf( fd, "\tNUMA: %d\n", _mpc_topo_has_numa_nodes(target_topology) );
+	fprintf( fd, "\tNUMA: %d\n", _mpc_topology_has_numa_nodes(target_topology) );
 
-	if ( _mpc_topo_has_numa_nodes(target_topology) )
+	if ( _mpc_topology_has_numa_nodes(target_topology) )
 	{
-		fprintf( fd, "\t\t* Node nb %d\n", _mpc_topo_get_numa_node_count(target_topology) );
+		fprintf( fd, "\t\t* Node nb %d\n", _mpc_topology_get_numa_node_count(target_topology) );
 	}
 
 	return;
@@ -364,7 +364,7 @@ hwloc_topology_t* sctk_get_topology_addr(void)
 	return &topology;
 }
 
-int _mpc_topo_convert_os_pu_to_logical(hwloc_topology_t target_topo, int pu_os_id)
+int _mpc_topology_convert_os_pu_to_logical(hwloc_topology_t target_topo, int pu_os_id)
 {
 	hwloc_cpuset_t this_pu_cpuset = hwloc_bitmap_alloc();
 	hwloc_bitmap_only( this_pu_cpuset, pu_os_id );
@@ -381,7 +381,7 @@ int _mpc_topo_convert_os_pu_to_logical(hwloc_topology_t target_topo, int pu_os_i
 	return pu->logical_index;
 }
 
-int _mpc_topo_convert_logical_pu_to_os(hwloc_topology_t target_topo, int cpuid)
+int _mpc_topology_convert_logical_pu_to_os(hwloc_topology_t target_topo, int cpuid)
 {
 	hwloc_obj_t target_pu = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_PU, cpuid );
 
@@ -395,7 +395,7 @@ int _mpc_topo_convert_logical_pu_to_os(hwloc_topology_t target_topo, int cpuid)
 }
 
 
-hwloc_cpuset_t _mpc_topo_get_pu_parent_cpuset_by_type(hwloc_topology_t target_topo,
+hwloc_cpuset_t _mpc_topology_get_pu_parent_cpuset_by_type(hwloc_topology_t target_topo,
 												 hwloc_obj_type_t parent_type,
 												 int cpuid)
 {
@@ -418,37 +418,37 @@ hwloc_cpuset_t _mpc_topo_get_pu_parent_cpuset_by_type(hwloc_topology_t target_to
 }
 
 
-hwloc_const_cpuset_t _mpc_topo_get_process_cpuset(hwloc_topology_t target_topo)
+hwloc_const_cpuset_t _mpc_topology_get_process_cpuset(hwloc_topology_t target_topo)
 {
 	return hwloc_topology_get_allowed_cpuset( target_topo );
 }
 
-hwloc_cpuset_t _mpc_topo_get_parent_numa_cpuset( hwloc_topology_t target_topo, int cpuid )
+hwloc_cpuset_t _mpc_topology_get_parent_numa_cpuset( hwloc_topology_t target_topo, int cpuid )
 {
-	if ( !_mpc_topo_has_numa_nodes(target_topo) )
+	if ( !_mpc_topology_has_numa_nodes(target_topo) )
 	{
-		return (hwloc_cpuset_t)_mpc_topo_get_process_cpuset( target_topo );
+		return (hwloc_cpuset_t)_mpc_topology_get_process_cpuset( target_topo );
 	}
 	else
 	{
-		return _mpc_topo_get_pu_parent_cpuset_by_type(target_topo, HWLOC_OBJ_NODE, cpuid);
+		return _mpc_topology_get_pu_parent_cpuset_by_type(target_topo, HWLOC_OBJ_NODE, cpuid);
 	}
 
 	not_reachable();
 }
 
-hwloc_cpuset_t _mpc_topo_get_parent_socket_cpuset( hwloc_topology_t target_topo, int cpuid )
+hwloc_cpuset_t _mpc_topology_get_parent_socket_cpuset( hwloc_topology_t target_topo, int cpuid )
 {
-	return _mpc_topo_get_pu_parent_cpuset_by_type(target_topo, HWLOC_OBJ_SOCKET, cpuid);
+	return _mpc_topology_get_pu_parent_cpuset_by_type(target_topo, HWLOC_OBJ_SOCKET, cpuid);
 }
 
 
-hwloc_cpuset_t _mpc_topo_get_parent_core_cpuset(hwloc_topology_t target_topo, int cpuid)
+hwloc_cpuset_t _mpc_topology_get_parent_core_cpuset(hwloc_topology_t target_topo, int cpuid)
 {
-	return _mpc_topo_get_pu_parent_cpuset_by_type(target_topo, HWLOC_OBJ_CORE, cpuid);
+	return _mpc_topology_get_pu_parent_cpuset_by_type(target_topo, HWLOC_OBJ_CORE, cpuid);
 }
 
-hwloc_cpuset_t _mpc_topo_get_pu_cpuset(hwloc_topology_t target_topo,  int cpuid)
+hwloc_cpuset_t _mpc_topology_get_pu_cpuset(hwloc_topology_t target_topo,  int cpuid)
 {
 	hwloc_obj_t target_pu = hwloc_get_obj_by_type(target_topo, HWLOC_OBJ_PU, cpuid);
 	assume( target_pu != NULL );
@@ -456,14 +456,14 @@ hwloc_cpuset_t _mpc_topo_get_pu_cpuset(hwloc_topology_t target_topo,  int cpuid)
 }
 
 
-int _mpc_topo_get_socket_count( hwloc_topology_t target_topo)
+int _mpc_topology_get_socket_count( hwloc_topology_t target_topo)
 {
 	return hwloc_get_nbobjs_by_type( target_topo, HWLOC_OBJ_SOCKET );
 }
 
-int _mpc_topo_get_socket_id( hwloc_topology_t target_topo, int os_level )
+int _mpc_topology_get_socket_id( hwloc_topology_t target_topo, int os_level )
 {
-	int cpu = mpc_common_topo_get_current_cpu();
+	int cpu = mpc_topology_get_current_cpu();
 
 	if ( cpu < 0 )
 	{
@@ -519,12 +519,12 @@ int _topo_get_first_pu_for_level( hwloc_obj_t obj, hwloc_cpuset_t roots )
 	return ret;
 }
 
-hwloc_cpuset_t _mpc_topo_get_first_pu_for_level( hwloc_topology_t target_topo, hwloc_obj_type_t type )
+hwloc_cpuset_t _mpc_topology_get_first_pu_for_level( hwloc_topology_t target_topo, hwloc_obj_type_t type )
 {
 	hwloc_cpuset_t roots = hwloc_bitmap_alloc();
 
 	/* Handle the case where the node is not a numa node */
-	if ( !mpc_common_topo_has_numa_nodes() )
+	if ( !mpc_topology_has_numa_nodes() )
 	{
 		/* Just tell that the expected value was MACHINE */
 		type = HWLOC_OBJ_MACHINE;
@@ -548,7 +548,7 @@ hwloc_cpuset_t _mpc_topo_get_first_pu_for_level( hwloc_topology_t target_topo, h
 	return roots;
 }
 
-int __mpc_topo_get_distance_from_pu_fill_prefix( hwloc_obj_t *prefix,
+int __mpc_topology_get_distance_from_pu_fill_prefix( hwloc_obj_t *prefix,
 										    hwloc_obj_t target_obj )
 {
 	/* Register in the tree */
@@ -588,7 +588,7 @@ int __mpc_topo_get_distance_from_pu_fill_prefix( hwloc_obj_t *prefix,
 	return depth;
 }
 
-int _mpc_topo_get_distance_from_pu(hwloc_topology_t target_topo, int source_pu, hwloc_obj_t target_obj )
+int _mpc_topology_get_distance_from_pu(hwloc_topology_t target_topo, int source_pu, hwloc_obj_t target_obj )
 {
 	hwloc_obj_t source_pu_obj = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_PU, source_pu );
 
@@ -597,20 +597,20 @@ int _mpc_topo_get_distance_from_pu(hwloc_topology_t target_topo, int source_pu, 
 		return -1;
 
 	/* Compute topology depth */
-	int _mpc_topo_depth = hwloc_topology_get_depth( target_topo );
+	int _mpc_topology_depth = hwloc_topology_get_depth( target_topo );
 
 	/* Allocate prefix lists */
 	hwloc_obj_t *prefix_PU =
-		sctk_malloc( ( _mpc_topo_depth + 1 ) * sizeof( hwloc_obj_t ) );
+		sctk_malloc( ( _mpc_topology_depth + 1 ) * sizeof( hwloc_obj_t ) );
 	hwloc_obj_t *prefix_target =
-		sctk_malloc( ( _mpc_topo_depth + 1 ) * sizeof( hwloc_obj_t ) );
+		sctk_malloc( ( _mpc_topology_depth + 1 ) * sizeof( hwloc_obj_t ) );
 
 	assume( prefix_PU != NULL );
 	assume( prefix_target != NULL );
 
 	/* Fill them with zeroes */
 	int i;
-	for ( i = 0; i < _mpc_topo_depth; i++ )
+	for ( i = 0; i < _mpc_topology_depth; i++ )
 	{
 		prefix_PU[i] = NULL;
 		prefix_target[i] = NULL;
@@ -618,13 +618,13 @@ int _mpc_topo_get_distance_from_pu(hwloc_topology_t target_topo, int source_pu, 
 
 	/* Compute the prefix of the two objects in the tree */
 	int pu_depth =
-	 __mpc_topo_get_distance_from_pu_fill_prefix( prefix_PU, source_pu_obj );
+	 __mpc_topology_get_distance_from_pu_fill_prefix( prefix_PU, source_pu_obj );
 	int obj_depth =
-	 __mpc_topo_get_distance_from_pu_fill_prefix( prefix_target, target_obj );
+	 __mpc_topology_get_distance_from_pu_fill_prefix( prefix_target, target_obj );
 
 	/* Extract the common prefix */
 	int common_prefix = 0;
-	for ( i = 0; i < _mpc_topo_depth; i++ )
+	for ( i = 0; i < _mpc_topology_depth; i++ )
 	{
 		if ( prefix_PU[i]->type == prefix_target[i]->type &&
 			 prefix_PU[i]->logical_index == prefix_target[i]->logical_index )
@@ -654,7 +654,7 @@ int _mpc_topo_get_distance_from_pu(hwloc_topology_t target_topo, int source_pu, 
 
 /*! \brief Return the current core_id
 */
-static inline int _mpc_topo_get_current_cpu(hwloc_topology_t target_topo)
+static inline int _mpc_topology_get_current_cpu(hwloc_topology_t target_topo)
 {
 	hwloc_cpuset_t set = hwloc_bitmap_alloc();
 
@@ -676,7 +676,7 @@ static inline int _mpc_topo_get_current_cpu(hwloc_topology_t target_topo)
 	return pu->logical_index;
 }
 
-int _mpc_topo_get_pu_per_core_count(hwloc_topology_t target_topo, int cpuid)
+int _mpc_topology_get_pu_per_core_count(hwloc_topology_t target_topo, int cpuid)
 {
 	int pu_per_core;
 
@@ -695,11 +695,11 @@ int _mpc_topo_get_pu_per_core_count(hwloc_topology_t target_topo, int cpuid)
 
 
 /* Restrict the binding to the current cpu_set */
-void _mpc_topo_bind_to_process(hwloc_topology_t target_topo)
+void _mpc_topology_bind_to_process(hwloc_topology_t target_topo)
 {
 	int err;
 	err = hwloc_set_cpubind( target_topo,
-							 _mpc_topo_get_process_cpuset(target_topo),
+							 _mpc_topology_get_process_cpuset(target_topo),
 							 HWLOC_CPUBIND_THREAD );
 	assume( !err );
 }
@@ -708,19 +708,19 @@ void _mpc_topo_bind_to_process(hwloc_topology_t target_topo)
  * was previously bound to a core that was not managed by the HWLOC topology
  * @ param i The cpu_id to bind
  */
-int _mpc_topo_bind_to_pu(hwloc_topology_t target_topo, int cpuid)
+int _mpc_topology_bind_to_pu(hwloc_topology_t target_topo, int cpuid)
 {
 	static mpc_common_spinlock_t pin_lock = 0;
 
 	if ( cpuid < 0 )
 	{
-		_mpc_topo_bind_to_process(target_topo);
+		_mpc_topology_bind_to_process(target_topo);
 		return -1;
 	}
 
 	mpc_common_spinlock_lock( &pin_lock);
 
-	int ret = _mpc_topo_get_current_cpu(target_topo);
+	int ret = _mpc_topology_get_current_cpu(target_topo);
 
 	hwloc_obj_t pu = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_PU, cpuid );
 	assume( pu );
@@ -740,7 +740,7 @@ int _mpc_topo_bind_to_pu(hwloc_topology_t target_topo, int cpuid)
 /*! \brief Return the first core_id for a NUMA node
  * @ param node NUMA node id.
  */
-int _mpc_topo_get_first_cpu_in_numa_node(hwloc_topology_t target_topo, int node)
+int _mpc_topology_get_first_cpu_in_numa_node(hwloc_topology_t target_topo, int node)
 {
 	hwloc_obj_t currentNode = hwloc_get_obj_by_type(target_topo, HWLOC_OBJ_NODE, node);
 
@@ -755,7 +755,7 @@ int _mpc_topo_get_first_cpu_in_numa_node(hwloc_topology_t target_topo, int node)
 
 /*! \brief Return the total number of core for the process
 */
-int _mpc_topo_get_pu_count(hwloc_topology_t target_topo)
+int _mpc_topology_get_pu_count(hwloc_topology_t target_topo)
 {
 	return hwloc_get_nbobjs_by_type( target_topo, HWLOC_OBJ_PU );
 }
@@ -764,13 +764,13 @@ int _mpc_topo_get_pu_count(hwloc_topology_t target_topo)
  * @ param n Number of cores
  * used in ethread
  */
-int _mpc_topo_set_process_pu_count(hwloc_topology_t target_topo, int n)
+int _mpc_topology_set_process_pu_count(hwloc_topology_t target_topo, int n)
 {
 	hwloc_cpuset_t empty_set = hwloc_bitmap_alloc();
 
-	if ( n <= _mpc_topo_get_pu_count(target_topo) )
+	if ( n <= _mpc_topology_get_pu_count(target_topo) )
 	{
-		_mpc_topo_map_and_restrict_by_cpuset( target_topo,
+		_mpc_topology_map_and_restrict_by_cpuset( target_topo,
 										 n,
 										 0,
 										 empty_set);
@@ -782,21 +782,21 @@ int _mpc_topo_set_process_pu_count(hwloc_topology_t target_topo, int n)
 }
 
 
-int _mpc_topo_has_numa_nodes(hwloc_topology_t target_topo)
+int _mpc_topology_has_numa_nodes(hwloc_topology_t target_topo)
 {
 	return hwloc_get_nbobjs_by_type( target_topo, HWLOC_OBJ_NODE ) != 0;
 }
 
 
-int _mpc_topo_get_numa_node_count(hwloc_topology_t target_topo)
+int _mpc_topology_get_numa_node_count(hwloc_topology_t target_topo)
 {
 	return hwloc_get_nbobjs_by_type( target_topo, HWLOC_OBJ_NODE );
 }
 
 
-int _mpc_topo_get_numa_node_from_cpu(hwloc_topology_t target_topo, const int cpuid)
+int _mpc_topology_get_numa_node_from_cpu(hwloc_topology_t target_topo, const int cpuid)
 {
-	if ( _mpc_topo_has_numa_nodes( target_topo ) )
+	if ( _mpc_topology_has_numa_nodes( target_topo ) )
 	{
 		const hwloc_obj_t pu = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_PU, cpuid );
 		assume( pu );
@@ -815,7 +815,7 @@ void _topo_print_cpu_neighborhood(hwloc_topology_t target_topo, int cpuid, int n
 {
 	int i;
 	hwloc_obj_t currentCPU = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_PU, cpuid );
-	hwloc_obj_type_t type = ( mpc_common_topo_has_numa_nodes() ) ? HWLOC_OBJ_NODE : HWLOC_OBJ_MACHINE;
+	hwloc_obj_type_t type = ( mpc_topology_has_numa_nodes() ) ? HWLOC_OBJ_NODE : HWLOC_OBJ_MACHINE;
 	int currentCPU_node_id = hwloc_get_ancestor_obj_by_type( target_topo, type, currentCPU )->logical_index;
 	int currentCPU_socket_id = hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_SOCKET, currentCPU )->logical_index;
 	int currentCPU_core_id = hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_CORE, currentCPU )->logical_index;
@@ -841,7 +841,7 @@ void _topo_print_cpu_neighborhood(hwloc_topology_t target_topo, int cpuid, int n
  * @param nb_cpus Number of neighbor
  * @param neighborhood Neighbor list
  */
-void _mpc_topo_get_pu_neighborhood(hwloc_topology_t target_topo, int cpuid, unsigned int nb_cpus, int *neighborhood)
+void _mpc_topology_get_pu_neighborhood(hwloc_topology_t target_topo, int cpuid, unsigned int nb_cpus, int *neighborhood)
 {
 	unsigned int i;
 	hwloc_obj_t *objs;
@@ -887,7 +887,7 @@ void _mpc_topo_get_pu_neighborhood(hwloc_topology_t target_topo, int cpuid, unsi
 
 static hwloc_topology_t __mpc_module_topology;
 
-hwloc_topology_t mpc_common_topology_get()
+hwloc_topology_t mpc_topology_get()
 {
 	return __mpc_module_topology;
 }
@@ -898,7 +898,7 @@ extls_topo_t *extls_get_topology_addr()
 	return &__mpc_module_topology;
 }
 
-void mpc_common_topology_init()
+void mpc_topology_init()
 {
 	char *xml_path = getenv( "MPC_SET_XML_TOPOLOGY_FILE" );
 
@@ -914,55 +914,55 @@ void mpc_common_topology_init()
 
 	hwloc_topology_load( __mpc_module_topology );
 
-	_mpc_common_toporender_init();
+	_mpc_topology_render_init();
 
-	_mpc_topo_apply_mpc_process_constraints( __mpc_module_topology );
+	_mpc_topology_apply_mpc_process_constraints( __mpc_module_topology );
 
 	/*  load devices */
-	mpc_common_topo_device_init( __mpc_module_topology );
+	_mpc_topology_device_init( __mpc_module_topology );
 }
 
-void mpc_common_topology_destroy( void )
+void mpc_topology_destroy( void )
 {
-	_mpc_common_toporender_render();
-	//_mpc_common_topo_device_release();
+	_mpc_topology_render_render();
+	//_mpc_topology_device_release();
 
 	hwloc_topology_destroy( __mpc_module_topology );
 }
 
-void mpc_common_topo_get_pu_neighborhood( int cpuid, unsigned int nb_cpus, int *neighborhood )
+void mpc_topology_get_pu_neighborhood( int cpuid, unsigned int nb_cpus, int *neighborhood )
 {
-	_mpc_topo_get_pu_neighborhood( __mpc_module_topology, cpuid, nb_cpus, neighborhood );
+	_mpc_topology_get_pu_neighborhood( __mpc_module_topology, cpuid, nb_cpus, neighborhood );
 }
 
-int mpc_common_topo_get_numa_node_from_cpu(const int cpuid)
+int mpc_topology_get_numa_node_from_cpu(const int cpuid)
 {
-	return _mpc_topo_get_numa_node_from_cpu( __mpc_module_topology, cpuid );
+	return _mpc_topology_get_numa_node_from_cpu( __mpc_module_topology, cpuid );
 }
 
-int mpc_common_topo_get_numa_node_count()
+int mpc_topology_get_numa_node_count()
 {
-	return _mpc_topo_get_numa_node_count( __mpc_module_topology);
+	return _mpc_topology_get_numa_node_count( __mpc_module_topology);
 }
 
-int mpc_common_topo_has_numa_nodes(void)
+int mpc_topology_has_numa_nodes(void)
 {
-	return _mpc_topo_has_numa_nodes(__mpc_module_topology);
+	return _mpc_topology_has_numa_nodes(__mpc_module_topology);
 }
 
-int mpc_common_topo_set_pu_count( int n )
+int mpc_topology_set_pu_count( int n )
 {
-	return _mpc_topo_set_process_pu_count(__mpc_module_topology, n);
+	return _mpc_topology_set_process_pu_count(__mpc_module_topology, n);
 }
 
-int mpc_common_topo_get_pu_count(void)
+int mpc_topology_get_pu_count(void)
 {
-	return _mpc_topo_get_pu_count(__mpc_module_topology);
+	return _mpc_topology_get_pu_count(__mpc_module_topology);
 }
 
 static __thread int __topo_cpu_pinning_caching_value = -1;
 
-void mpc_common_topo_clear_cpu_pinning_cache()
+void mpc_topology_clear_cpu_pinning_cache()
 {
 	__topo_cpu_pinning_caching_value = -1;
 }
@@ -972,26 +972,26 @@ void _set_cpu_pinning_cache(int logical_id)
 	__topo_cpu_pinning_caching_value = logical_id;
 }
 
-int mpc_common_topo_bind_to_cpu(int cpuid)
+int mpc_topology_bind_to_cpu(int cpuid)
 {
-	int ret = _mpc_topo_bind_to_pu(__mpc_module_topology, cpuid);
+	int ret = _mpc_topology_bind_to_pu(__mpc_module_topology, cpuid);
 
  	_set_cpu_pinning_cache(cpuid);
 
 	return ret;
 }
 
-void mpc_common_topo_bind_to_process_cpuset(void)
+void mpc_topology_bind_to_process_cpuset(void)
 {
-	_mpc_topo_bind_to_process(__mpc_module_topology);
-	mpc_common_topo_clear_cpu_pinning_cache();
+	_mpc_topology_bind_to_process(__mpc_module_topology);
+	mpc_topology_clear_cpu_pinning_cache();
 }
 
-int mpc_common_topo_get_current_cpu()
+int mpc_topology_get_current_cpu()
 {
 	if ( __topo_cpu_pinning_caching_value < 0 )
 	{
-		return _mpc_topo_get_current_cpu(__mpc_module_topology);
+		return _mpc_topology_get_current_cpu(__mpc_module_topology);
 	}
 	else
 	{
@@ -999,13 +999,13 @@ int mpc_common_topo_get_current_cpu()
 	}
 }
 
-void mpc_common_topo_print(FILE *fd)
+void mpc_topology_print(FILE *fd)
 {
-	_mpc_topo_print(__mpc_module_topology, fd);
+	_mpc_topology_print(__mpc_module_topology, fd);
 }
 
 
-int mpc_common_topo_get_ht_per_core(void)
+int mpc_topology_get_ht_per_core(void)
 {
 	static int ret = -1;
 
@@ -1015,7 +1015,7 @@ int mpc_common_topo_get_ht_per_core(void)
 		hwloc_topology_init( &temp_topo );
 		hwloc_topology_load( temp_topo );
 
-		ret = _mpc_topo_get_pu_per_core_count(temp_topo, 0);
+		ret = _mpc_topology_get_pu_per_core_count(temp_topo, 0);
 
 		hwloc_topology_destroy(temp_topo);
 	}
@@ -1023,42 +1023,42 @@ int mpc_common_topo_get_ht_per_core(void)
 	return ret;
 }
 
-hwloc_const_cpuset_t mpc_common_topo_get_process_cpuset()
+hwloc_const_cpuset_t mpc_topology_get_process_cpuset()
 {
-	return _mpc_topo_get_process_cpuset(__mpc_module_topology);
+	return _mpc_topology_get_process_cpuset(__mpc_module_topology);
 }
 
-hwloc_cpuset_t mpc_common_topo_get_parent_numa_cpuset(int cpuid)
+hwloc_cpuset_t mpc_topology_get_parent_numa_cpuset(int cpuid)
 {
-	return _mpc_topo_get_parent_numa_cpuset(__mpc_module_topology, cpuid);
+	return _mpc_topology_get_parent_numa_cpuset(__mpc_module_topology, cpuid);
 }
 
-hwloc_cpuset_t mpc_common_topo_get_parent_socket_cpuset(int cpuid)
+hwloc_cpuset_t mpc_topology_get_parent_socket_cpuset(int cpuid)
 {
-	return _mpc_topo_get_parent_socket_cpuset(__mpc_module_topology, cpuid);
+	return _mpc_topology_get_parent_socket_cpuset(__mpc_module_topology, cpuid);
 }
 
-hwloc_cpuset_t mpc_common_topo_get_parent_core_cpuset(int cpuid)
+hwloc_cpuset_t mpc_topology_get_parent_core_cpuset(int cpuid)
 {
-	return _mpc_topo_get_parent_core_cpuset(__mpc_module_topology, cpuid);
+	return _mpc_topology_get_parent_core_cpuset(__mpc_module_topology, cpuid);
 }
 
-hwloc_cpuset_t mpc_common_topo_get_pu_cpuset(int cpuid)
+hwloc_cpuset_t mpc_topology_get_pu_cpuset(int cpuid)
 {
-	return _mpc_topo_get_pu_cpuset(__mpc_module_topology, cpuid);
+	return _mpc_topology_get_pu_cpuset(__mpc_module_topology, cpuid);
 }
 
-hwloc_cpuset_t mpc_common_topo_get_first_pu_for_level(hwloc_obj_type_t type)
+hwloc_cpuset_t mpc_topology_get_first_pu_for_level(hwloc_obj_type_t type)
 {
-	return _mpc_topo_get_first_pu_for_level(__mpc_module_topology, type);
+	return _mpc_topology_get_first_pu_for_level(__mpc_module_topology, type);
 }
 
-int mpc_common_topo_convert_logical_pu_to_os( int cpuid )
+int mpc_topology_convert_logical_pu_to_os( int cpuid )
 {
-	return _mpc_topo_convert_logical_pu_to_os(__mpc_module_topology, cpuid);
+	return _mpc_topology_convert_logical_pu_to_os(__mpc_module_topology, cpuid);
 }
 
-int mpc_common_topo_convert_os_pu_to_logical( int pu_os_id )
+int mpc_topology_convert_os_pu_to_logical( int pu_os_id )
 {
-	return _mpc_topo_convert_os_pu_to_logical(__mpc_module_topology, pu_os_id);
+	return _mpc_topology_convert_os_pu_to_logical(__mpc_module_topology, pu_os_id);
 }

@@ -27,7 +27,7 @@
 
 #include "sctk_ib_config.h"
 #include <sctk_route.h>
-#include <mpc_common_topology.h>
+#include <mpc_topology.h>
 #include <sctk_thread.h>
 
 /* IB debug macros */
@@ -70,7 +70,7 @@ void *async_thread ( void *arg )
 	struct ibv_async_event event;
 	struct ibv_srq_attr mod_attr;
 	int rc;
- mpc_common_topo_bind_to_cpu(-1);
+ mpc_topology_bind_to_cpu(-1);
 
 	sctk_ib_nodebug ( "Async thread running on context %p", device->context );
 

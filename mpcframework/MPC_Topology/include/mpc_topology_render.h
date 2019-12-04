@@ -27,10 +27,27 @@
 #ifndef MPC_COMMON_INCLUDE_TOPOLOGY_GRAPH_H_
 #define MPC_COMMON_INCLUDE_TOPOLOGY_GRAPH_H_
 
-#include <mpc_common_toporender.h>
 
-void _mpc_common_toporender_init(void);
-void _mpc_common_toporender_render(void);
+/* used by option graphic */
+void mpc_topology_render_create(int pu, int master_pu,int task_id);
 
+/* used by option text */
+void mpc_topology_render_text(int os_pu, int os_master_pu, int task_id, int vp, int rank_open_mp, int* min_idex, int pid);
+
+/* Get the os index from the topology_compute_node where the current thread is binding */
+int mpc_topology_render_get_current_binding();
+
+/* Get the logical index from the os one from the topology_compute_node */
+int mpc_topology_render_get_logical_from_os_id(unsigned int cpu_os);
+
+/* Get the os index from the logical one from the topology_compute_node */
+int mpc_topology_render_get_current_binding_from_logical( int logical_pu);
+
+void _mpc_topology_render_init(void);
+void _mpc_topology_render_render(void);
+
+void mpc_topology_render_lock();
+void mpc_topology_render_unlock();
+void mpc_topology_render_notify(int task_id);
 
 #endif /* MPC_COMMON_INCLUDE_TOPOLOGY_GRAPH_H_ */

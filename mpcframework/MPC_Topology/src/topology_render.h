@@ -22,16 +22,15 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #   - TCHIBOUKDJIAN Marc marc.tchiboukdjian@exascale-computing.eu      # */
 /* #   - BOUHROUR Stephane stephane.bouhrour@exascale-computing.eu        # */
-/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef MPC_COMMON_INCLUDE_MPC_COMMON_H_
-#define MPC_COMMON_INCLUDE_MPC_COMMON_H_
+#ifndef MPC_COMMON_INCLUDE_TOPOLOGY_GRAPH_H_
+#define MPC_COMMON_INCLUDE_TOPOLOGY_GRAPH_H_
+
+#include <mpc_topology_render.h>
+
+void _mpc_topology_render_init(void);
+void _mpc_topology_render_render(void);
 
 
-#include <mpc_common_helper.h>
-#include <mpc_common_rank.h>
-#include <mpc_topology.h>
-
-
-#endif /* MPC_COMMON_INCLUDE_MPC_COMMON_H_ */
+#endif /* MPC_COMMON_INCLUDE_TOPOLOGY_GRAPH_H_ */

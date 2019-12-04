@@ -101,7 +101,7 @@ static inline sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_run
 	new_rail->route_table = sctk_route_table_new();
 
 	/* Load and save Rail Device (NULL if not found) */
-	new_rail->rail_device = mpc_common_topo_device_get_from_handle( runtime_config_rail->device );
+	new_rail->rail_device = mpc_topology_device_get_from_handle( runtime_config_rail->device );
 
     if( ! new_rail->rail_device )
 	{

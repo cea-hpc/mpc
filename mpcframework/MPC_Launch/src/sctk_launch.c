@@ -53,7 +53,7 @@
 	#endif /* MPC_USE_INFINIBAND */
 	#include "sctk_window.h"
 #endif /* MPC_Message_Passing */
-#include "mpc_common_topology.h"
+#include "mpc_topology.h"
 #include "mpc_common_asm.h"
 /* #include "sctk_daemons.h" */
 /* #include "sctk_io.h" */
@@ -241,7 +241,7 @@ void *polling_thread( __UNUSED__ void *dummy )
 	 *
 	 * Note that as polling is hierarchical
 	 * the contention is limited */
-	mpc_common_topo_bind_to_cpu( -1 );
+	mpc_topology_bind_to_cpu( -1 );
 
 	while ( 1 )
 	{
@@ -280,7 +280,7 @@ void sctk_print_banner( bool restart )
 				          "MPC version %d.%d.%d%s %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s %s\n",
 				          SCTK_VERSION_MAJOR, SCTK_VERSION_MINOR, SCTK_VERSION_REVISION,
 				          SCTK_VERSION_PRE, mpc_lang, sctk_task_nb_val,
-				          sctk_process_nb_val, mpc_common_topo_get_pu_count (), sctk_atomics_get_cpu_freq() / 1000000000.0,
+				          sctk_process_nb_val, mpc_topology_get_pu_count (), sctk_atomics_get_cpu_freq() / 1000000000.0,
 				          sctk_multithreading_mode,
 				          sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_checkpoint_str, sctk_network_mode );
 			}
@@ -289,7 +289,7 @@ void sctk_print_banner( bool restart )
 				fprintf ( stderr,
 				          "MPC experimental version %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s %s\n",
 				          mpc_lang, sctk_task_nb_val, sctk_process_nb_val,
-				          mpc_common_topo_get_pu_count (), sctk_atomics_get_cpu_freq() / 1000000000.0,  sctk_multithreading_mode,
+				          mpc_topology_get_pu_count (), sctk_atomics_get_cpu_freq() / 1000000000.0,  sctk_multithreading_mode,
 				          sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_checkpoint_str, sctk_network_mode );
 			}
 		}
@@ -318,7 +318,7 @@ static void sctk_perform_initialisation ( void )
 
 	/* As a first step initialize the PMI */
 	mpc_launch_pmi_init();
-	mpc_common_topology_init ();
+	mpc_topology_init ();
 #if defined (MPC_USE_EXTLS) && !defined(MPC_DISABLE_HLS)
 	extls_hls_topology_construct();
 
@@ -340,7 +340,7 @@ static void sctk_perform_initialisation ( void )
 	const unsigned int core = 0;
 	int binding = 0;
 	binding = sctk_get_init_vp ( core );
-	mpc_common_topo_bind_to_cpu ( binding );
+	mpc_topology_bind_to_cpu ( binding );
 	sctk_nodebug( "Init: thread bound to thread %d", binding );
 #endif
 #endif
@@ -391,7 +391,7 @@ static void sctk_perform_initialisation ( void )
 		if ( sctk_process_nb_val > 1 )
 		{
 			int cpu_detected;
-			cpu_detected = mpc_common_topo_get_pu_count ();
+			cpu_detected = mpc_topology_get_pu_count ();
 
 			if ( cpu_detected < sctk_processor_nb_val )
 			{
@@ -792,7 +792,7 @@ static int sctk_env_init_intern( int *argc, char ***argv )
 
 	if ( sctk_enable_smt_capabilities == 1 )
 	{
-		sctk_processor_nb_val *= mpc_common_topo_get_ht_per_core();
+		sctk_processor_nb_val *= mpc_topology_get_ht_per_core();
 	}
 
 	i++;
@@ -829,7 +829,7 @@ sctk_env_init ( int *argc, char ***argv )
 int
 sctk_env_exit ()
 {
-	mpc_common_topology_destroy();
+	mpc_topology_destroy();
 #ifdef MPC_AIO_ENABLED
 	mpc_common_aio_threads_release();
 #endif

@@ -253,7 +253,7 @@ void sctk_alloc_force_segment_binding(
   // use hwloc to bind the segment
   // 0 on HWLOC_MEMBIND_THREAD for windows
   if (light_source->nodeset != NULL)
-    hwloc_set_area_membind_nodeset(mpc_common_topology_get(), base, size,
+    hwloc_set_area_membind_nodeset(mpc_topology_get(), base, size,
                                          light_source->nodeset,
                                          HWLOC_MEMBIND_BIND, 0);
 }

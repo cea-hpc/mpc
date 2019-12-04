@@ -26,7 +26,7 @@
 #include "sctk_ib_device.h"
 #include "sctk_ib_toolkit.h"
 
-#include <mpc_common_device_topo.h>
+#include <mpc_topology_device.h>
 
 #include <string.h>
 #include <arpa/inet.h> /* ntohs() */
@@ -101,7 +101,7 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, cha
 		if( strlen( device_name ) && strcmp("default", device_name ) )
 		{
 			/* Try to resolve the device */
-			device_id = mpc_common_topo_device_get_id_from_handle( device_name );
+			device_id = mpc_topology_device_get_id_from_handle( device_name );
 			
 			if( device_id < 0 )
 			{

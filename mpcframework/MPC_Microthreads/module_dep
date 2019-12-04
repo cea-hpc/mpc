@@ -21,5 +21,6 @@
 #                                                                      #
 ########################################################################
 need_module MPC_Threads
+need_module MPC_Topology
 need_module MPC_Common
 SCTK_INCLUDE_FILES="mpcmicrothread.h"

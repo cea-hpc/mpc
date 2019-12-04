@@ -25,6 +25,7 @@ need_module MPC_Launch
 need_module MPC_Shm_mapper
 need_module MPC_Common
 need_module MPC_Config
+need_module MPC_Topology
 
 
 #Disable mpi inter-node network

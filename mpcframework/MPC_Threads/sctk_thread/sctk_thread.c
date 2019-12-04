@@ -28,8 +28,8 @@
 #include <sctk_ib_cp.h>
 #endif
 
-#include <mpc_common_topology.h>
-#include <mpc_common_toporender.h>
+#include <mpc_topology.h>
+#include <mpc_topology_render.h>
 
 #undef sleep
 #undef usleep
@@ -44,7 +44,7 @@
 #include "sctk_kernel_thread.h"
 #include "sctk_alloc.h"
 #include "sctk_launch.h"
-#include "mpc_common_topology.h"
+#include "mpc_topology.h"
 #include "mpc_common_asm.h"
 #include "sctk_tls.h"
 #include <unistd.h>
@@ -603,14 +603,14 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   tmp = *__arg;
 
   // DEBUG
-  assume_m(mpc_common_topo_get_current_cpu() == tmp.bind_to,
+	assume_m( mpc_topology_get_current_cpu() == tmp.bind_to,
            "sctk_thread_create_tmp_start_routine BUGUED");
-  // assert(mpc_common_topo_get_current_cpu() == tmp.bind_to);
+	// assert(mpc_topology_get_current_cpu() == tmp.bind_to);
   // ENDDEBUG
 
   /* Bind the thread to the right core if we are using pthreads */
   if (sctk_get_thread_val() == sctk_pthread_thread_init) {
-    mpc_common_topo_bind_to_cpu (tmp.bind_to);
+		mpc_topology_bind_to_cpu( tmp.bind_to );
   }
 
   //mark the given TLS as currant thread allocator
@@ -706,12 +706,12 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
    *
    * TODO: due to some issues, weak functions are replaced by dlsym accesses for now
    */
-  int init_cpu = mpc_common_topo_get_current_cpu();
+	int init_cpu = mpc_topology_get_current_cpu();
   int nbvps, i, nb_cpusets;
   cpu_set_t * cpuset;
 
   sctk_get_init_vp_and_nbvp (mpc_common_get_task_rank(), &nbvps);
-  init_cpu = mpc_common_topo_convert_logical_pu_to_os(init_cpu);
+	init_cpu = mpc_topology_convert_logical_pu_to_os( init_cpu );
   
   nb_cpusets = 1;
   cpuset = sctk_malloc(sizeof(cpu_set_t) * nb_cpusets);
@@ -786,10 +786,10 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 
   core++;
 
-  previous_binding = mpc_common_topo_bind_to_cpu (new_binding);
+  previous_binding = mpc_topology_bind_to_cpu (new_binding);
 
   // DEBUG
-  assert(new_binding == mpc_common_topo_get_current_cpu());
+  assert(new_binding == mpc_topology_get_current_cpu());
   // ENDDEBUG
 
   tls = __sctk_create_thread_memory_area ();
@@ -825,12 +825,12 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 				  sctk_thread_create_tmp_start_routine,
 				  (void *) tmp);
 
-  mpc_common_toporender_notify(task_id);
+  mpc_topology_render_notify(task_id);
         int min_index[3] = {0,0,0};
 
   /* We reset the binding */
   {
-    mpc_common_topo_bind_to_cpu(previous_binding);
+    mpc_topology_bind_to_cpu(previous_binding);
 #ifdef MPC_USE_EXTLS
   	extls_ctx_restore(old_ctx);
 #endif
@@ -1037,10 +1037,10 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
       sctk_thread_attr_getscope (__attr, &scope_init);
       sctk_nodebug ("Thread to create with scope %d ", scope_init);
       if (scope_init == SCTK_THREAD_SCOPE_SYSTEM) {
-        mpc_common_topo_bind_to_process_cpuset();
+        mpc_topology_bind_to_process_cpuset();
       }
     } else {
-        mpc_common_topo_bind_to_process_cpuset();
+        mpc_topology_bind_to_process_cpuset();
     }
 #endif
 
@@ -1089,17 +1089,17 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
             struct mpcomp_mvp_thread_args_s *temp = (struct mpcomp_mvp_thread_args_s *)__arg;
             int vp_local_processus = temp->target_vp;
             /* get os ind */
-            int master = mpc_common_toporender_get_current_binding();
+            int master = mpc_topology_render_get_current_binding();
             /* need the logical pu of the master from the total compute node topo computing with the os index */
-            int master_logical = mpc_common_toporender_get_logical_from_os_id(master);
+            int master_logical = mpc_topology_render_get_logical_from_os_id(master);
             /* in the global scope of compute node topology the pu is*/
             int logical_pu = (master_logical + vp_local_processus);
             /* convert logical in os ind in topology_compute_node */
-            int os_pu = mpc_common_toporender_get_current_binding_from_logical(logical_pu);
-            mpc_common_toporender_lock();
+            int os_pu = mpc_topology_render_get_current_binding_from_logical(logical_pu);
+            mpc_topology_render_lock();
             /* fill file to communicate between process of the same compute node */
-            mpc_common_toporender_create(os_pu, master, mpc_common_get_task_rank()); 
-            mpc_common_toporender_unlock();
+            mpc_topology_render_create(os_pu, master, mpc_common_get_task_rank()); 
+            mpc_topology_render_unlock();
         }
     }
     /* option text placement */
@@ -1121,13 +1121,13 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
             tree_shape = root_node->tree_base + 1;
             int core_depth;
             static int done_init = 1;
-            mpc_common_toporender_lock();
+            mpc_topology_render_lock();
             if(done_init){
                 hwloc_topology_init(&topology_option_text);
                 hwloc_topology_load(topology_option_text);
                 done_init = 0;
             }
-            mpc_common_toporender_unlock();
+            mpc_topology_render_unlock();
             if(sctk_enable_smt_capabilities){
                 core_depth = hwloc_get_type_depth(topology_option_text, HWLOC_OBJ_PU);
             }
@@ -1138,16 +1138,16 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
             int * min_index = (int*)malloc(sizeof(int) * MPCOMP_AFFINITY_NB);
             min_index = __mpcomp_tree_array_compute_thread_openmp_min_rank( tree_shape, max_depth, rank, core_depth );
             /* get os ind */
-            int master = mpc_common_toporender_get_current_binding();
+            int master = mpc_topology_render_get_current_binding();
             // need the logical pu of the master from the total compute node topo computin with the os index to use for origin */
-            int master_logical = mpc_common_toporender_get_logical_from_os_id(master);
+            int master_logical = mpc_topology_render_get_logical_from_os_id(master);
             /* in the global compute node topology the processus is*/
             int logical_pu = (master_logical + target_vp);
             /* convert logical in os ind in topology_compute_node */
-            int os_pu = mpc_common_toporender_get_current_binding_from_logical(logical_pu);
-            mpc_common_toporender_lock();
-            mpc_common_toporender_text(os_pu, master, mpc_common_get_task_rank(), target_vp, 0, min_index, 0); 
-            mpc_common_toporender_unlock();
+            int os_pu = mpc_topology_render_get_current_binding_from_logical(logical_pu);
+            mpc_topology_render_lock();
+            mpc_topology_render_text(os_pu, master, mpc_common_get_task_rank(), target_vp, 0, min_index, 0); 
+            mpc_topology_render_unlock();
             free(min_index);
         }
     }
@@ -2269,7 +2269,7 @@ int sctk_get_init_vp_and_nbvp_default(int i, int *nbVp) {
   int cpu_per_task;
   int j;
 
-  cpu_nb = mpc_common_topo_get_pu_count(); // number of cpu per process
+	cpu_nb = mpc_topology_get_pu_count(); // number of cpu per process
 
   total_tasks_number = sctk_get_total_tasks_number();
 
@@ -2351,11 +2351,11 @@ int sctk_get_init_vp_and_nbvp_numa_packed(int i, int *nbVp) {
   int nb_task_per_numa_node;
 
   // initialization
-  cpu_nb = mpc_common_topo_get_pu_count(); // number of cpu per process
+	cpu_nb = mpc_topology_get_pu_count(); // number of cpu per process
   total_tasks_number = sctk_get_total_tasks_number();
 
   nb_numa_node_per_node =
-      mpc_common_topo_get_numa_node_count(); // number of numa nodes in the node
+		mpc_topology_get_numa_node_count(); // number of numa nodes in the node
   nb_cpu_per_numa_node =
       cpu_nb / nb_numa_node_per_node; // number of cores per numa nodes
 
@@ -2414,8 +2414,8 @@ int sctk_get_init_vp_and_nbvp_numa_packed(int i, int *nbVp) {
 int sctk_get_init_vp_and_nbvp_numa(int i, int *nbVp) {
   int task_nb =
       sctk_last_local - sctk_first_local + 1; // number of task per process
-  int cpu_nb = mpc_common_topo_get_pu_count();         // number of cpu per process
-  int numa_node_per_node_nb = mpc_common_topo_get_numa_node_count();
+	int cpu_nb = mpc_topology_get_pu_count(); // number of cpu per process
+	int numa_node_per_node_nb = mpc_topology_get_numa_node_count();
   int cpu_per_numa_node = cpu_nb / numa_node_per_node_nb;
 
   int global_id = i;
@@ -2464,7 +2464,7 @@ int sctk_get_init_vp_and_nbvp_numa(int i, int *nbVp) {
   //        local_id  ,
   //        global_id ,
   //        proc_global,
-  //        mpc_common_topo_get_current_cpu(),
+	//        mpc_topology_get_current_cpu(),
   //        mpc_common_get_local_task_count(),
   //        *nbVp
   //       );

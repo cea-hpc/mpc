@@ -131,7 +131,7 @@ sctk_pthread_mutex_init (sctk_thread_mutex_t * mutex,
 static int
 sctk_pthread_get_vp ()
 {
-  int cpu = mpc_common_topo_get_current_cpu();
+  int cpu = mpc_topology_get_current_cpu();
   return cpu;
 }
 
@@ -329,10 +329,10 @@ local_pthread_create (pthread_t * restrict thread,
       env = getenv("MPC_ENABLE_PTHREAD_PINNING");
       if ( env != NULL ){
         sctk_thread_data_t * data = (sctk_thread_data_t*) arg;
-        int cpu_number = mpc_common_topo_get_pu_count ();
+        int cpu_number = mpc_topology_get_pu_count ();
 
         sctk_debug("Bind VP to core %d\n", data->local_task_id % cpu_number);
-        mpc_common_topo_bind_to_cpu (data->local_task_id);
+        mpc_topology_bind_to_cpu (data->local_task_id);
       }
 
       if (sctk_is_in_fortran == 1)

@@ -22,4 +22,5 @@
 ########################################################################
 # MPC Common Dependency Check
 need_module MPC_Common
+need_module MPC_Topology
 

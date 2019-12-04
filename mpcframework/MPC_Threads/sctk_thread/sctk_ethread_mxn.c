@@ -31,7 +31,7 @@
 #include "sctk_internal_thread.h"
 #include "sctk_context.h"
 #include "mpc_common_spinlock.h"
-#include "mpc_common_topology.h"
+#include "mpc_topology.h"
 #include "sctk_posix_ethread_mxn.h"
 
 #define SCTK_LOCAL_VERSION_MAJOR 0
@@ -419,10 +419,10 @@ sctk_ethread_mxn_user_create (sctk_ethread_t * threadp,
  * @return cpu to bind current thread to have a numa placement
  */
 // int sctk_ethread_get_init_vp_numa(int pos){
-//    int nb_cpu_per_node = mpc_common_topo_get_pu_count();
-//    int nb_numa_node_per_node = mpc_common_topo_get_numa_node_count();
+//    int nb_cpu_per_node = mpc_topology_get_pu_count();
+//    int nb_numa_node_per_node = mpc_topology_get_numa_node_count();
 //    int nb_cpu_per_numa_node = nb_cpu_per_node / nb_numa_node_per_node;
-//    int current_cpu = mpc_common_topo_get_current_cpu();
+//    int current_cpu = mpc_topology_get_current_cpu();
 //
 //
 //    //TODO algo de bind numa et il faudrais verifier aussi comment les threads
@@ -463,9 +463,9 @@ sctk_ethread_mxn_create (sctk_ethread_t * threadp,
   // char hostname[1024];
   // gethostname(hostname,1024);
   // FILE *hostname_fd = fopen(strcat(hostname,".log"),"a");
-  // fprintf(hostname_fd,"SCTK_ETHREAD current_vp->bind_to %d mpc_common_topo_get_current_cpu() %d
+  // fprintf(hostname_fd,"SCTK_ETHREAD current_vp->bind_to %d mpc_topology_get_current_cpu() %d
   // new_binding %d pos
-  // %d\n",current_vp[new_binding].bind_to,mpc_common_topo_get_current_cpu(),new_binding, pos);
+  // %d\n",current_vp[new_binding].bind_to,mpc_topology_get_current_cpu(),new_binding, pos);
   // fflush(hostname_fd);
   // fclose(hostname_fd);
   // DEBUG
@@ -537,10 +537,10 @@ sctk_ethread_mxn_func_kernel_thread (void *arg)
 
   if (vp != NULL)
     {
-      mpc_common_topo_bind_to_cpu (vp->bind_to);
+      mpc_topology_bind_to_cpu (vp->bind_to);
 /*     fprintf(stderr,"bind thread to %d\n",vp->bind_to); */
     }
-  sctk_nodebug ("%d %d", mpc_common_topo_get_current_cpu (), vp->bind_to);
+  sctk_nodebug ("%d %d", mpc_topology_get_current_cpu (), vp->bind_to);
   __sctk_ethread_idle_task (&th_data);
   return NULL;
 }
@@ -553,7 +553,7 @@ sctk_ethread_gen_func_kernel_thread (void *arg)
   int i;
   sctk_thread_data_t tmp = SCTK_THREAD_DATA_INIT;
   vp = (sctk_ethread_virtual_processor_t *) arg;
-  mpc_common_topo_bind_to_cpu (vp->bind_to);
+  mpc_topology_bind_to_cpu (vp->bind_to);
   sctk_ethread_init_data (&th_data);
   for (i = 0; i < SCTK_THREAD_KEYS_MAX; i++)
     {
@@ -584,7 +584,7 @@ sctk_ethread_mxn_start_kernel_thread (int pos)
   kthread_t pid;
   sctk_ethread_virtual_processor_t tmp_init = SCTK_ETHREAD_VP_INIT;
   sctk_ethread_virtual_processor_t *tmp;
-  mpc_common_topo_bind_to_cpu (pos);
+  mpc_topology_bind_to_cpu (pos);
   if (pos != 0)
     {
       tmp = (sctk_ethread_virtual_processor_t *)
@@ -600,7 +600,7 @@ sctk_ethread_mxn_start_kernel_thread (int pos)
   kthread_create (&pid,
 		  sctk_ethread_mxn_func_kernel_thread,
 		  sctk_ethread_mxn_vp_list[pos]);
-/*   mpc_common_topo_bind_to_cpu(0); */
+/*   mpc_topology_bind_to_cpu(0); */
 }
 
 sctk_ethread_virtual_processor_t *
@@ -669,7 +669,7 @@ sctk_ethread_mxn_init_virtual_processors ()
   /*Init main thread and virtual processor */
   sctk_ethread_mxn_init_vp (&sctk_ethread_main_thread, &virtual_processor);
 
-  cpu_number = mpc_common_topo_get_pu_count ();
+  cpu_number = mpc_topology_get_pu_count ();
 
   sctk_nodebug ("starts %d virtual processors", cpu_number);
 
@@ -683,7 +683,7 @@ sctk_ethread_mxn_init_virtual_processors ()
     {
       sctk_ethread_mxn_start_kernel_thread (i);
     }
-  mpc_common_topo_bind_to_cpu (0);
+  mpc_topology_bind_to_cpu (0);
 
   sctk_nodebug ("I'am %p", sctk_ethread_mxn_self ());
   while (cpu_number != sctk_nb_vp_initialized)
@@ -764,9 +764,9 @@ sctk_ethread_mxn_thread_proc_migration (const int cpu)
   sctk_assert (current->vp == current_vp);
   sctk_assert (last == sctk_thread_get_vp ());
   assume (cpu >= 0);
-  assume (cpu < mpc_common_topo_get_pu_count ());
+  assume (cpu < mpc_topology_get_pu_count ());
   assume (last >= 0);
-  assume (last < mpc_common_topo_get_pu_count ());
+  assume (last < mpc_topology_get_pu_count ());
 
   sctk_nodebug ("task %p Jump from %d to %d", current, last, cpu);
 

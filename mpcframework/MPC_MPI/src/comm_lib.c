@@ -4588,7 +4588,7 @@ int _mpc_cl_checkpoint( MPC_Checkpoint_state *state )
 		}
 
 		/* re-init the network at task level if necessary */
-		sctk_net_init_task_level( task_rank, mpc_common_topo_get_current_cpu() );
+		sctk_net_init_task_level( task_rank, mpc_topology_get_current_cpu() );
 		mpc_mp_terminaison_barrier( task_rank );
 
 		/* If I'm the last task to reach here, increment the global generation counter */

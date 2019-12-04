@@ -24,7 +24,7 @@
 
 #include <stdlib.h>
 
-#include <mpc_common_topology.h>
+#include <mpc_topology.h>
 
 #include "sctk_config.h"
 #include "mpc_common_rank.h"
@@ -149,7 +149,7 @@ static inline int mpc_common_get_pu_count (void)
   static int ret = -1;
 
   if (ret == -1) {
-    ret = mpc_common_topo_get_pu_count();
+    ret = mpc_topology_get_pu_count();
   }
 
   return ret;

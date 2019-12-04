@@ -24,3 +24,4 @@ avail_module MPC_Allocator
 need_module MPC_Threads
 need_module MPC_Common
 need_module MPC_Config
+MPC_Message_Passing

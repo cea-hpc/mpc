@@ -18,11 +18,10 @@
 # Authors:                                                             #
 #   - PERACHE Marc marc.perache@cea.fr                                 #
 #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+#   - TABOADA Hugo hugo.taboada.ocre@cea.fr                            #
 #                                                                      #
 ########################################################################
-need_module MPC_Threads
-need_module MPC_Common
-need_module MPC_Topology
-need_module MPC_Launch
-SCTK_INCLUDE_FILES="mpcomp.h"
-SCTK_CHECK_OPTION "-DATOMICS"
+# MPC Module System Dependency Check
+
+SCTK_CHECK_LIB_HWLOC
+

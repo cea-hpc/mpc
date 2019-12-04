@@ -22,32 +22,37 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #   - TCHIBOUKDJIAN Marc marc.tchiboukdjian@exascale-computing.eu      # */
 /* #   - BOUHROUR Stephane stephane.bouhrour@exascale-computing.eu        # */
+/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef MPC_COMMON_INCLUDE_TOPOLOGY_GRAPH_H_
-#define MPC_COMMON_INCLUDE_TOPOLOGY_GRAPH_H_
+#ifndef MPC_COMMON_SRC_TOPOLOGY_DEVICE_H_
+#define MPC_COMMON_SRC_TOPOLOGY_DEVICE_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <mpc_topology_device.h>
+
+/********************
+ * INIT AND RELEASE *
+ ********************/
+
+/**
+ * @brief Initalize device topology state
+ *
+ * @param topology reference topology
+ */
+void _mpc_topology_device_init( hwloc_topology_t topology );
+
+/**
+ * @brief Release device topology
+ *
+ */
+void _mpc_topology_device_release();
 
 
-/* used by option graphic */
-void mpc_common_toporender_create(int pu, int master_pu,int task_id);
-
-/* used by option text */
-void mpc_common_toporender_text(int os_pu, int os_master_pu, int task_id, int vp, int rank_open_mp, int* min_idex, int pid);
-
-/* Get the os index from the topology_compute_node where the current thread is binding */
-int mpc_common_toporender_get_current_binding();
-
-/* Get the logical index from the os one from the topology_compute_node */
-int mpc_common_toporender_get_logical_from_os_id(unsigned int cpu_os);
-
-/* Get the os index from the logical one from the topology_compute_node */
-int mpc_common_toporender_get_current_binding_from_logical( int logical_pu);
-
-void _mpc_common_toporender_init(void);
-void _mpc_common_toporender_render(void);
-
-void mpc_common_toporender_lock();
-void mpc_common_toporender_unlock();
-void mpc_common_toporender_notify(int task_id);
-
-#endif /* MPC_COMMON_INCLUDE_TOPOLOGY_GRAPH_H_ */
+#ifdef __cplusplus
+}
+#endif
+#endif /* MPC_COMMON_SRC_TOPOLOGY_DEVICE_H_ */

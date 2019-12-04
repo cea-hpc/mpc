@@ -20,9 +20,6 @@
 #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
 #                                                                      #
 ########################################################################
-need_module MPC_Threads
+# MPC Common Dependency Check
 need_module MPC_Common
-need_module MPC_Topology
-need_module MPC_Launch
-SCTK_INCLUDE_FILES="mpcomp.h"
-SCTK_CHECK_OPTION "-DATOMICS"
+

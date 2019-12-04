@@ -198,7 +198,7 @@ void sctk_network_init_topological_rail_info(  sctk_rail_info_t *rail )
 	sctk_topological_rail_info_t  * infos = &rail->network.topological;
 	
 	/* Allocate an array of CPU size */
-	infos->max_vp = mpc_common_topo_get_pu_count();
+	infos->max_vp = mpc_topology_get_pu_count();
 	
 	infos->vp_to_subrail = sctk_malloc( infos->max_vp * sizeof( int ) );
 	assume( infos->vp_to_subrail != NULL );
@@ -323,7 +323,7 @@ void sctk_network_init_topological_rail_info(  sctk_rail_info_t *rail )
 	}
 		
 	/* Is the topology flat ? */
-	if( mpc_common_topo_device_matrix_is_equidistant( device_regexp ) )
+	if( mpc_topology_device_matrix_is_equidistant( device_regexp ) )
 	{
 		/* In this case we split the devices among the PUs as the topology
 		 * is flat therefore no need to think of distances just split
@@ -356,7 +356,7 @@ void sctk_network_init_topological_rail_info(  sctk_rail_info_t *rail )
 		for( i = 0 ; i < infos->max_vp ; i++ )
 		{
 			/* Always choose first rail */
-		 mpc_common_topo_device_t * dev = mpc_common_topo_device_get_closest_from_pu( i, device_regexp );
+		 mpc_topology_device_t * dev = mpc_topology_device_get_closest_from_pu( i, device_regexp );
 			/* Map device to subrail */
 			infos->vp_to_subrail[i] = sctk_rail_get_subrail_id_with_device( rail, dev );
 		}

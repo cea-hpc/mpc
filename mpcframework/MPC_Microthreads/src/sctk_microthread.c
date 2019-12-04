@@ -31,7 +31,7 @@
 #include "sctk_alloc.h"
 #include "sctk_context.h"
 #include "sctk_thread.h"
-#include "mpc_common_topology.h"
+#include "mpc_topology.h"
 #include "sctk_debug.h"
 
 static mpc_thread_once_t sctk_microthread_key_is_initialized =
@@ -230,11 +230,11 @@ sctk_microthread_init (long nb_vp, sctk_microthread_t * self)
   /* Grab the current VP this thread is already binded to */
   current_mpc_vp = sctk_thread_get_vp ();
 
-  order = sctk_malloc( mpc_common_topo_get_pu_count () * sizeof( int ) ) ;
+  order = sctk_malloc( mpc_topology_get_pu_count () * sizeof( int ) ) ;
   sctk_assert( order != NULL ) ;
 
   /* Grab the right order to allocate microVPs */
-  mpc_common_topo_get_pu_neighborhood( current_mpc_vp, mpc_common_topo_get_pu_count (), order ) ;
+  mpc_topology_get_pu_neighborhood( current_mpc_vp, mpc_topology_get_pu_count (), order ) ;
 
   /* Create all VPs */
   for (i = 0; i < nb_vp; i++)
@@ -269,8 +269,8 @@ sctk_microthread_init (long nb_vp, sctk_microthread_t * self)
       sctk_nodebug( "sctk_microthread_init: Before computing target vp" ) ;
 
       TODO("Placement policy of microVPs is not optimal when #microVPs > #VPs")
-      // target_vp = (current_mpc_vp + i) % (mpc_common_topo_get_pu_count ()) ;
-      target_vp = order[i%mpc_common_topo_get_pu_count ()] ;
+      // target_vp = (current_mpc_vp + i) % (mpc_topology_get_pu_count ()) ;
+      target_vp = order[i%mpc_topology_get_pu_count ()] ;
 
       sctk_nodebug( "Putting microVP %d on VP %d", i, target_vp ) ;
 

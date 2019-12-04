@@ -26,7 +26,7 @@
 #include "sctk_pthread.h"
 #include "sctk_kernel_thread.h"
 #include "mpc_common_spinlock.h"
-#include "mpc_common_topology.h"
+#include "mpc_topology.h"
 #include <string.h>
 #include <semaphore.h>
 #include "sctk_runtime_config.h"
@@ -96,7 +96,7 @@ kthread_create_start_routine (void *t_arg)
 {
   kthread_create_start_t slot;
 
-  mpc_common_topo_clear_cpu_pinning_cache();
+  mpc_topology_clear_cpu_pinning_cache();
 
   memcpy(&slot,t_arg,sizeof(kthread_create_start_t));
   ((kthread_create_start_t*)t_arg)->started = 1;
