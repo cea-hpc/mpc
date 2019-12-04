@@ -48,7 +48,7 @@ static char * __sctk_ptl_str_type[] = {
 	"SCTK_PTL_TYPE_OFFCOLL",
 	"SCTK_PTL_TYPE_NONE",
 	"SCTK_PTL_TYPE_NB",
-}; 
+};
 
 /** global static array to stringify protocol ID (through SCTK_PTL_STR_PROT macro) */
 static char * __sctk_ptl_str_prot[] = {
@@ -100,6 +100,10 @@ void sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t*, s
 void sctk_ptl_me_release(sctk_ptl_local_data_t*);
 void sctk_ptl_me_free(sctk_ptl_local_data_t*, int);
 void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb, int list, char type, char protocol);
+#define SCTK_PTL_ME_PROBE_ONLY PTL_SEARCH_ONLY
+#define SCTK_PTL_ME_PROBE_DEL PTL_SEARCH_DELETE
+int sctk_ptl_me_emit_probe(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, sctk_ptl_local_data_t* user, int probe_level );
+
 
 /* event management */
 void sctk_ptl_ct_alloc(sctk_ptl_rail_info_t* srail, sctk_ptl_cnth_t* cnth_ptr);
@@ -165,7 +169,7 @@ int sctk_ptl_emit_trig_cnt_set(sctk_ptl_cnth_t target_cnt, size_t val, sctk_ptl_
 /**************************************************************/
 sctk_ptl_id_t sctk_ptl_self(sctk_ptl_rail_info_t* srail);
 
-static inline const char const * sctk_ptl_rc_decode(int rc)
+static inline const char * sctk_ptl_rc_decode(int rc)
 {
 	switch(rc)
 	{
@@ -199,7 +203,7 @@ static inline const char const * sctk_ptl_rc_decode(int rc)
 	return NULL;
 }
 
-static inline const char const * sctk_ptl_event_decode(sctk_ptl_event_t ev)
+static inline const char * sctk_ptl_event_decode(sctk_ptl_event_t ev)
 {
 	switch(ev.type)
 	{
@@ -231,7 +235,7 @@ static inline const char const * sctk_ptl_event_decode(sctk_ptl_event_t ev)
 	return NULL;
 }
 
-static inline const char const * sctk_ptl_ni_fail_decode(sctk_ptl_event_t ev)
+static inline const char * sctk_ptl_ni_fail_decode(sctk_ptl_event_t ev)
 {
 	switch(ev.ni_fail_type)
 	{
@@ -378,7 +382,7 @@ static inline int sctk_ptl_eq_poll_me(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_
  * \param[in] m the match_bits to format
  * \return buf (first parameter)
  */
-static inline const char const* __sctk_ptl_match_str(char*buf, size_t s, ptl_match_bits_t m)
+static inline const char * __sctk_ptl_match_str(char*buf, size_t s, ptl_match_bits_t m)
 {
 	sctk_ptl_matchbits_t m2;
 	m2.raw = m;

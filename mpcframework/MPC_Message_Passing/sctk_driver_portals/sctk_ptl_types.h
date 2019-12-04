@@ -145,6 +145,7 @@ typedef enum {
 	SCTK_PTL_TYPE_RDMA,
 	SCTK_PTL_TYPE_STD,
 	SCTK_PTL_TYPE_OFFCOLL,
+	SCTK_PTL_TYPE_PROBE,
 	SCTK_PTL_TYPE_NONE,
 	SCTK_PTL_TYPE_NB,
 } sctk_ptl_mtype_t;
@@ -190,7 +191,7 @@ typedef enum {
 /** default number of chunks when RDV protocol wants to split big messages */
 #define SCTK_PTL_MAX_RDV_BLOCKS 4
 #ifndef UNUSED
-#define UNUSED(a) (void*)&a
+#define UNUSED(a) (void)(sizeof(a))
 #endif
 
 #define SCTK_PTL_MAX_TAGS  (( size_t)(~ (( uint32_t)0)))
@@ -281,6 +282,15 @@ union sctk_ptl_slot_h_u
 	sctk_ptl_mdh_t mdh; /**< request is a MD */
 };
 
+
+typedef struct sctk_ptl_probing_data_s
+{
+	sctk_atomics_int found;
+	size_t size;
+	int rank;
+	int tag;
+
+} sctk_ptl_probing_data_t;
 /**
  * Structure storing everything we need locally to map 
  * a msg with a PTL request
@@ -296,6 +306,7 @@ typedef struct sctk_ptl_local_data_s
 	sctk_ptl_list_t list;           /**< the list the request issued from */
 	sctk_ptl_protocol_t prot;       /**< request protocol */
 	sctk_ptl_mtype_t type;          /**< request type */
+	sctk_ptl_probing_data_t probe;
 } sctk_ptl_local_data_t;
 
 /**

@@ -143,7 +143,7 @@ void sctk_network_notify_perform_message_set ( void ( *sctk_network_notify_perfo
 
 /********** NOTIFY_PROBE ************/
 
-void sctk_network_notify_probe_message_default (int task_id, int remote_rank, int tag, sctk_communicator_t comm, int* status, size_t* msg_size)
+void sctk_network_notify_probe_message_default (sctk_thread_message_header_t* hdr, int *status)
 {
         *status = -1; /* probe not supported */
 }
@@ -151,14 +151,14 @@ void sctk_network_notify_probe_message_default (int task_id, int remote_rank, in
 static void  ( *sctk_network_notify_probe_message_ptr ) () = sctk_network_notify_probe_message_default;
 
 
-void sctk_network_notify_probe_message (int task_id, int remote_rank, int tag, sctk_communicator_t comm, int* status, size_t* msg_size)
+void sctk_network_notify_probe_message  (sctk_thread_message_header_t* hdr, int *status)
 {
 #ifdef MPC_Fault_Tolerance
 	if(sctk_ft_no_suspend_start())
         {
 #endif
         *status = -1; /* not supported */
-	sctk_network_notify_probe_message_ptr (task_id, remote_rank, tag, comm, status, msg_size);
+	sctk_network_notify_probe_message_ptr (hdr, status);
 
 #ifdef MPC_Fault_Tolerance
 	sctk_ft_no_suspend_end();

@@ -26,7 +26,6 @@
 #include "sctk_route.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_eager.h"
-#include "sctk_ptl_probe.h"
 #include "sctk_net_tools.h"
 
 /**
@@ -118,6 +117,7 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	 * By convenience, it uses the same attribute.
 	 */
 	net_msg->tail.ptl.user_ptr->slot.me.start = ev.start;
+	net_msg->tail.ptl.user_ptr->slot.me.length = ev.mlength;
 
 	/* finish creating an MPC message heder */
 	sctk_rebuild_header(net_msg);
@@ -273,8 +273,8 @@ void sctk_ptl_eager_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	switch(ev.type)
 	{
 		case PTL_EVENT_PUT_OVERFLOW:          /* a previous received PUT matched a just appended ME */
-			pte = SCTK_PTL_PTE_ENTRY(srail->pt_table, ev.pt_index - SCTK_PTL_PTE_HIDDEN);
-			sctk_ptl_pending_me_pop(srail, pte, match.data.rank, match.data.tag, ev.mlength, ev.start);
+			//pte = SCTK_PTL_PTE_ENTRY(srail->pt_table, ev.pt_index - SCTK_PTL_PTE_HIDDEN);
+			//sctk_ptl_pending_me_pop(srail, pte, match.data.rank, match.data.tag, ev.mlength, ev.start);
 
 		case PTL_EVENT_PUT:                   /* a Put() reached the local process */
 			/* we don't care about unexpected messaged reaching the OVERFLOW_LIST, we will just wait for their local counter-part */

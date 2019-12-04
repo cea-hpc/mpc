@@ -876,7 +876,7 @@ void sctk_multirail_notify_perform( int remote, int remote_task_id, int polling_
 	}
 }
 
-static void sctk_multirail_notify_probe (int task_id, int remote_rank, int tag, sctk_communicator_t comm, int* status, size_t* msg_size)
+static void sctk_multirail_notify_probe  (sctk_thread_message_header_t* hdr, int *status)
 {
 	int count = sctk_rail_count();
 	int i;
@@ -902,7 +902,7 @@ static void sctk_multirail_notify_probe (int task_id, int remote_rank, int tag, 
 			 * 0 -> No matching message found
 			 * 1 -> At least one message found based on requirements
 			 */
-			(rail->notify_probe_message)( rail, task_id, remote_rank, tag, comm, &tmp_ret, msg_size);
+			(rail->notify_probe_message)( rail, hdr, &tmp_ret);
 		}
 		
 		sctk_assert(tmp_ret == -1 || tmp_ret == 1 || tmp_ret == 0);

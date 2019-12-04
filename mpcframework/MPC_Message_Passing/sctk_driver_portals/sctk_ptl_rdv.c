@@ -25,7 +25,6 @@
 #ifdef MPC_USE_PORTALS
 #include "sctk_route.h"
 #include "sctk_ptl_rdv.h"
-#include "sctk_ptl_probe.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_net_tools.h"
 
@@ -84,7 +83,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	sctk_ptl_pte_t* pte                = NULL;
 	sctk_ptl_rail_info_t* srail        = &rail->network.ptl;
 	sctk_ptl_local_data_t* ptr         = (sctk_ptl_local_data_t*) ev.user_ptr;
-	sctk_thread_ptp_message_t* msg     = (sctk_thread_ptp_message_t*) ptr->msg;
+	sctk_thread_ptp_message_t* msg    = (sctk_thread_ptp_message_t*) ptr->msg;
 	void* start;
 	size_t cur_off, chunk_sz, chunk_nb, chunk, chunk_rest;
 	int flags;
@@ -424,8 +423,8 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			 *  	1. Put() will carry data (will it slow the traffic ?)
 			 * 	2. Unable to differentiate protocol from two incoming messages (before Recv)
 			 */
-			pte = SCTK_PTL_PTE_ENTRY(srail->pt_table, ev.pt_index - SCTK_PTL_PTE_HIDDEN);
-			sctk_ptl_pending_me_pop(srail, pte, SCTK_MSG_SRC_PROCESS(msg), SCTK_MSG_TAG(msg), SCTK_MSG_SIZE(msg), ev.start);
+			//pte = SCTK_PTL_PTE_ENTRY(srail->pt_table, ev.pt_index - SCTK_PTL_PTE_HIDDEN);
+			//sctk_ptl_pending_me_pop(srail, pte, SCTK_MSG_SRC_PROCESS(msg), SCTK_MSG_TAG(msg), SCTK_MSG_SIZE(msg), ev.start);
 		case PTL_EVENT_PUT:                  /* a Put() reached the local process */
 			/* we don't care about unexpected messaged reaching the OVERFLOW_LIST, we will just wait for their local counter-part */
 			/* indexes from 0 to SCTK_PTL_PTE_HIDDEN-1 maps RECOVERY, CM & RDMA queues

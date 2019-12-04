@@ -29,7 +29,6 @@
 #include "sctk_io_helper.h" /* for MAX_STRING_SIZE */
 #include "sctk_ptl_types.h"
 #include "sctk_ptl_iface.h"
-#include "sctk_ptl_probe.h"
 #include "sctk_ptl_rdv.h"
 #include "sctk_ptl_eager.h"
 #include "sctk_ptl_rdma.h"
@@ -164,27 +163,41 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 		{
 			sctk_nodebug("PORTALS: EQS EVENT '%s' idx=%d, from %s, type=%s, prot=%s, match=%s,  sz=%llu, user=%p", sctk_ptl_event_decode(ev), ev.pt_index, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), ev.mlength, ev.user_ptr);
 
-	
+			if(ev.type == PTL_EVENT_SEARCH)
+			{
+				sctk_assert(user_ptr->type == SCTK_PTL_TYPE_PROBE);
+				/* dealing with : 
+				 * - Regular probing (Iprobe & Probe): just check the ev.ni_fail_type status.
+				 * - matched probing (Mprobe): consider it as an already posted recv() from driver implementation POV
+				 */
+				sctk_error("FOUND?%s", sctk_ptl_ni_fail_decode(ev));
+				user_ptr->probe.size = ev.mlength;
+				user_ptr->probe.rank = ((sctk_ptl_matchbits_t)ev.match_bits).data.rank;
+				user_ptr->probe.tag  = ((sctk_ptl_matchbits_t)ev.match_bits).data.tag;
+				sctk_atomics_store_int(&user_ptr->probe.found, (ev.ni_fail_type == PTL_NI_OK));
+				sctk_free(user_ptr);
+				continue;
+			}
+
 			/* we only consider Portals-succeded events */
-			if(ev.ni_fail_type != PTL_NI_OK) 
+			if(ev.ni_fail_type != PTL_NI_OK)
 			{
 				sctk_fatal("PORTALS: FAILED EQS EVENT '%s' idx=%d, from %s, type=%s, prot=%s, match=%s,  sz=%llu, user=%p err='%s'", sctk_ptl_event_decode(ev), ev.pt_index, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), ev.mlength, ev.user_ptr, sctk_ptl_ni_fail_decode(ev));
 			}
 		
-			/* if the request consumed an unexpected slot, append a new one */
+			/* if the reques t consumed an unexpected slot, append a new one */
 			if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST)
 			{
-				size_t msg_sz = (ev.mlength == 0) ?((sctk_ptl_imm_data_t)ev.hdr_data).std.msg_size : ev.mlength;
+				//size_t msg_sz = (ev.mlength == 0) ?((sctk_ptl_imm_data_t)ev.hdr_data).std.msg_size : ev.mlength;
 				sctk_ptl_me_feed(srail,  cur_pte,  srail->eager_limit, 1, SCTK_PTL_OVERFLOW_LIST, SCTK_PTL_TYPE_STD, SCTK_PTL_PROT_NONE);
-				sctk_ptl_matchbits_t match = (sctk_ptl_matchbits_t)ev.match_bits;
+				//sctk_ptl_matchbits_t match = (sctk_ptl_matchbits_t)ev.match_bits;
 				/** issue here... ev.mlength = 0 for RDV protocol... */
-				sctk_ptl_pending_me_push(srail, cur_pte, match.data.rank, match.data.tag, msg_sz, ev.start);
+				//sctk_ptl_pending_me_push(srail, cur_pte, match.data.rank, match.data.tag, msg_sz, ev.start);
 				sctk_free(user_ptr);
 				continue;
 			}
 			
 			switch((int)user_ptr->type) /* normal message */
-
 			{
 				case SCTK_PTL_TYPE_STD:
 					switch((int)user_ptr->prot)
@@ -197,6 +210,8 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 							/*not_reachable();*/
 							break;
 					}
+					break;
+				case SCTK_PTL_TYPE_PROBE:
 					break;
 				case SCTK_PTL_TYPE_OFFCOLL:
 					sctk_ptl_offcoll_event_me(rail, ev);
@@ -425,6 +440,50 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t co
 		sctk_ptl_pte_t* new_entry = sctk_malloc(sizeof(sctk_ptl_pte_t));
 		sctk_ptl_pte_create(srail, new_entry, comm_idx + SCTK_PTL_PTE_HIDDEN);
 	}
+}
+
+int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, sctk_thread_message_header_t* hdr, int probe_level)
+{
+	sctk_communicator_t comm = hdr->communicator;
+	int rank = hdr->source_task;
+	int tag = hdr->message_tag;
+
+	sctk_warning("PROBE: c%d r%d t%d", comm, rank, tag);
+	
+	sctk_ptl_rail_info_t* prail = &rail->network.ptl;
+	sctk_ptl_pte_t* pte = MPCHT_get(&prail->pt_table, (int)((comm + SCTK_PTL_PTE_HIDDEN_NB) % prail->nb_entries));
+	sctk_ptl_matchbits_t match, ign;
+
+	match.data = (sctk_ptl_std_content_t)
+	{
+		.rank = rank,
+		.tag = tag
+	};
+
+	ign.data = (sctk_ptl_std_content_t)
+	{
+		.rank = (rank == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK,
+		.tag = (tag == SCTK_ANY_TAG) ? SCTK_PTL_IGN_TAG : SCTK_PTL_MATCH_TAG,
+		.type = hdr->message_type.type,
+		.uid = SCTK_PTL_IGN_UID
+	};
+	
+	int ret = -1;
+	sctk_ptl_local_data_t* data = sctk_ptl_me_create(NULL, 0, SCTK_PTL_ANY_PROCESS, match, ign, SCTK_PTL_ME_PUT_FLAGS);
+	sctk_atomics_store_int(&data->probe.found, -1);
+	sctk_ptl_me_emit_probe(prail, pte, data, probe_level);
+
+	while((ret = sctk_atomics_load_int(&data->probe.found)) == -1)
+	{
+		sctk_ptl_eqs_poll(rail, 1);
+	}
+	if(ret)
+	{
+		hdr->source_task = data->probe.rank;
+		hdr->msg_size = data->probe.size;
+		hdr->message_tag = data->probe.tag;
+	}
+	return ret;
 }
 
 /**

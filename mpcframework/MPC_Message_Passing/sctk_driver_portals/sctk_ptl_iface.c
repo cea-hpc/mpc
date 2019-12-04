@@ -27,7 +27,6 @@
 #include "sctk_debug.h"
 #include "sctk_alloc.h"
 #include "sctk_io_helper.h"
-#include "sctk_ptl_probe.h"
 #include "sctk_atomics.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_types.h"
@@ -469,6 +468,7 @@ sctk_ptl_local_data_t* sctk_ptl_me_create(void * start, size_t size, sctk_ptl_id
 		.cnt_frag = SCTK_ATOMICS_INT_T_INIT(0),
 		.match = SCTK_PTL_MATCH_INIT,
 		.msg_seq_nb = -1,
+		.probe = SCTK_ATOMICS_INT_T_INIT(0),
 		.msg = NULL /* later filled */
 	};
 
@@ -688,6 +688,20 @@ void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t m
 
 		sctk_ptl_me_register(srail, user, pte);
 	}
+}
+
+int sctk_ptl_me_emit_probe(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, sctk_ptl_local_data_t* user, int probe_level )
+{
+	user->type = SCTK_PTL_TYPE_PROBE;
+	sctk_ptl_chk(PtlMESearch(
+		srail->iface,
+		pte->idx,
+		&user->slot.me,
+		probe_level,
+		user
+	));
+
+	return PTL_OK;
 }
 
 /**
@@ -1032,4 +1046,5 @@ int sctk_ptl_emit_trig_cnt_set(sctk_ptl_cnth_t target_cnt, size_t val, sctk_ptl_
 
 	return PTL_OK;
 }
+
 #endif
