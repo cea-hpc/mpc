@@ -85,7 +85,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	sctk_ptl_local_data_t* ptr         = (sctk_ptl_local_data_t*) ev.user_ptr;
 	sctk_thread_ptp_message_t* msg    = (sctk_thread_ptp_message_t*) ptr->msg;
 	void* start;
-	size_t cur_off, chunk_sz, chunk_nb, chunk, chunk_rest;
+	size_t cur_off, chunk_sz, chunk_nb, chunk, chunk_rest, sz_sent;
 	int flags;
 
 	sctk_assert(msg);
@@ -124,17 +124,19 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	/* configure the MD */
 	pte       = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
 	flags     = SCTK_PTL_MD_GET_FLAGS;
+	sz_sent  = *(size_t*)ev.start;
 	sctk_assert(pte);
 
 	/* this function will compute byte equal distribution between multiple GET, if needed */
-	sctk_ptl_compute_chunks(srail, SCTK_MSG_SIZE(msg), &chunk_sz, &chunk_nb, &chunk_rest);
+	sctk_assert(((sctk_ptl_imm_data_t)ev.hdr_data).std.putsz);
+	sctk_ptl_compute_chunks(srail, sz_sent, &chunk_sz, &chunk_nb, &chunk_rest);
 	sctk_assert(chunk_nb > 0);
    	sctk_assert(chunk_rest < chunk_nb);
 	/* create a new MD and configure it */
 	get_request = sctk_ptl_md_create(
-		srail, 
-		start,  
-		SCTK_MSG_SIZE(msg),
+		srail,
+		start,
+		sz_sent,
 		flags
 	);
 	sctk_assert(get_request);
@@ -288,14 +290,13 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	/* 1. Configure the PUT */
 	/************************/
 	md_flags         = SCTK_PTL_MD_PUT_FLAGS;
-	md_request       = sctk_ptl_md_create(srail, NULL, 0, md_flags);
+	md_request       = sctk_ptl_md_create(srail, &(SCTK_MSG_SIZE(msg)), sizeof(size_t), md_flags);
 	md_request->msg  = msg;
 	md_request->type = SCTK_PTL_TYPE_STD;
 	md_request->prot = SCTK_PTL_PROT_RDV;
 	md_request->match = match;
 	hdr.std.msg_seq_nb = SCTK_MSG_NUMBER(msg);
-	/* the size may be truncated as msg_size is 32-bit int */
-	hdr.std.msg_size = (SCTK_MSG_SIZE(msg) >> 32) ? __UINT32_MAX__ : SCTK_MSG_SIZE(msg);
+	hdr.std.putsz = 1;
 	sctk_ptl_md_register(srail, md_request);
 
 	/***************************/
@@ -346,7 +347,7 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	msg->tail.ptl.user_ptr = me_request;
 	sctk_ptl_me_register(srail, me_request, pte);
 	
-	sctk_ptl_emit_put(md_request, 0, remote, pte, match, 0, 0, hdr.raw, md_request); /* empty Put() */
+	sctk_ptl_emit_put(md_request, sizeof(size_t), remote, pte, match, 0, 0, hdr.raw, md_request); /* empty Put() */
 
 	/* TODO: Need to handle the case where the data is larger than the max ME size */
 	sctk_debug("PORTALS: SEND-RDV to %d (idx=%d, match=%s, chunk_nb=%llu, ch_sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), chunk_nb , chunk_sz);
@@ -380,7 +381,10 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 	 * Here, we want a CT event attached to this ME (for triggered Op)
 	 */
 	put_flags = SCTK_PTL_ME_PUT_FLAGS | SCTK_PTL_ONCE;
-	put_request  = sctk_ptl_me_create(NULL, 0, SCTK_PTL_ANY_PROCESS, match, ign, put_flags);
+	put_request  = sctk_ptl_me_create(NULL, sizeof(size_t), SCTK_PTL_ANY_PROCESS, match, ign, put_flags);
+
+	/* this is ABSOLUTELY disgusting, :( (but it avoids an extra, useless malloc()) */
+	put_request->slot.me.start = &put_request->probe.size;
 
 	sctk_assert(put_request);
 	sctk_assert(pte);

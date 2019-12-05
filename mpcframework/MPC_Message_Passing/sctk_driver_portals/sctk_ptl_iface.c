@@ -468,7 +468,6 @@ sctk_ptl_local_data_t* sctk_ptl_me_create(void * start, size_t size, sctk_ptl_id
 		.cnt_frag = SCTK_ATOMICS_INT_T_INIT(0),
 		.match = SCTK_PTL_MATCH_INIT,
 		.msg_seq_nb = -1,
-		.probe = SCTK_ATOMICS_INT_T_INIT(0),
 		.msg = NULL /* later filled */
 	};
 
@@ -659,22 +658,15 @@ sctk_ptl_id_t sctk_ptl_self(sctk_ptl_rail_info_t* srail)
  */
 void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb, int list, char type, char protocol)
 {
-	int j, extra_space = 0;
-
+	int j;
 	sctk_assert(list == SCTK_PTL_PRIORITY_LIST || list == SCTK_PTL_OVERFLOW_LIST);
-	if(list == SCTK_PTL_OVERFLOW_LIST)
-	{
-		extra_space = sizeof(sctk_atomics_ptr);
-	}
 
 	for (j = 0; j < nb; j++)
 	{
 		sctk_ptl_local_data_t* user;
-		void* buf = sctk_malloc(me_size + extra_space);
-		memset(buf, 0, extra_space);
-		sctk_atomics_store_ptr((sctk_atomics_ptr*)buf, NULL);
+		void* buf = sctk_malloc(me_size);
 		user = sctk_ptl_me_create(
-				(char*)buf + extra_space, /* keep it explicit... */
+				buf, /* keep it explicit... */
 				me_size, /* buffer size */
 				SCTK_PTL_ANY_PROCESS, /* targetable by any process */
 				SCTK_PTL_MATCH_INIT, /* we don't care the match_bits */ 

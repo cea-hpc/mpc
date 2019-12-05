@@ -170,8 +170,8 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 				 * - Regular probing (Iprobe & Probe): just check the ev.ni_fail_type status.
 				 * - matched probing (Mprobe): consider it as an already posted recv() from driver implementation POV
 				 */
-				sctk_error("FOUND?%s", sctk_ptl_ni_fail_decode(ev));
-				user_ptr->probe.size = ev.mlength;
+				
+				user_ptr->probe.size = (((sctk_ptl_imm_data_t)ev.hdr_data).std.putsz) ? *((size_t*)ev.start) : ev.mlength;
 				user_ptr->probe.rank = ((sctk_ptl_matchbits_t)ev.match_bits).data.rank;
 				user_ptr->probe.tag  = ((sctk_ptl_matchbits_t)ev.match_bits).data.tag;
 				sctk_atomics_store_int(&user_ptr->probe.found, (ev.ni_fail_type == PTL_NI_OK));
@@ -448,7 +448,7 @@ int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, sctk_thread_message_header
 	int rank = hdr->source_task;
 	int tag = hdr->message_tag;
 
-	sctk_warning("PROBE: c%d r%d t%d", comm, rank, tag);
+	//sctk_warning("PROBE: c%d r%d t%d", comm, rank, tag);
 	
 	sctk_ptl_rail_info_t* prail = &rail->network.ptl;
 	sctk_ptl_pte_t* pte = MPCHT_get(&prail->pt_table, (int)((comm + SCTK_PTL_PTE_HIDDEN_NB) % prail->nb_entries));
