@@ -382,9 +382,11 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 	 */
 	put_flags = SCTK_PTL_ME_PUT_FLAGS | SCTK_PTL_ONCE;
 	put_request  = sctk_ptl_me_create(NULL, sizeof(size_t), SCTK_PTL_ANY_PROCESS, match, ign, put_flags);
-
-	/* this is ABSOLUTELY disgusting, :( (but it avoids an extra, useless malloc()) */
-	put_request->slot.me.start = &put_request->probe.size;
+	/* when dealing with RDV, the first PUT will transfer the total size to send
+	 * As we prepare a buffer in the local_data to receive it (but me_create() 
+	 * allocates it, we need to set up AFTER calling the IFACE function
+	 */
+	 put_request->slot.me.start = &put_request->req_sz;
 
 	sctk_assert(put_request);
 	sctk_assert(pte);

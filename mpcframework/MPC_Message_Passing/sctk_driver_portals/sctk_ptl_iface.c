@@ -468,6 +468,7 @@ sctk_ptl_local_data_t* sctk_ptl_me_create(void * start, size_t size, sctk_ptl_id
 		.cnt_frag = SCTK_ATOMICS_INT_T_INIT(0),
 		.match = SCTK_PTL_MATCH_INIT,
 		.msg_seq_nb = -1,
+		.req_sz = 0,
 		.msg = NULL /* later filled */
 	};
 

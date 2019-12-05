@@ -299,14 +299,16 @@ typedef struct sctk_ptl_local_data_s
 {
 	union sctk_ptl_slot_u slot;     /**< the request (MD or ME) */
 	union sctk_ptl_slot_h_u slot_h; /**< the request Handle */
-	sctk_ptl_matchbits_t match;     /**< request match bits */
-	sctk_atomics_int cnt_frag;      /**< number of chunks before being released */
 	int msg_seq_nb; 
 	void* msg;                      /**< link to the msg */
 	sctk_ptl_list_t list;           /**< the list the request issued from */
 	sctk_ptl_protocol_t prot;       /**< request protocol */
 	sctk_ptl_mtype_t type;          /**< request type */
 	sctk_ptl_probing_data_t probe;
+	sctk_ptl_matchbits_t match;     /**< request match bits (RDV-spec) */
+	sctk_atomics_int cnt_frag;      /**< number of chunks before being released (RDV-spec) */
+	size_t req_sz; /**< message size intented to be retrieved (RDV spec) */
+	
 } sctk_ptl_local_data_t;
 
 /**

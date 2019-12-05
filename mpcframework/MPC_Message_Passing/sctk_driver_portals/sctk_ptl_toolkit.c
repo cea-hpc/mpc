@@ -499,6 +499,11 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	eager_limit = rail->runtime_config_driver_config->driver.value.portals.eager_limit;
 	min_comms   = rail->runtime_config_driver_config->driver.value.portals.min_comms;
 	offloading  = SCTK_PTL_OFFLOAD_NONE_FLAG;
+	
+	
+	/* avoid truncating size_t payload in RDV protocols */
+	if(eager_limit < sizeof(size_t))
+	eager_limit = sizeof(size_t);
 
 	if(rail->runtime_config_driver_config->driver.value.portals.offloading.ondemand)
 		offloading |= SCTK_PTL_OFFLOAD_OD_FLAG;
