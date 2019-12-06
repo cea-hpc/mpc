@@ -179,11 +179,11 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 
 	/* double-linking */
 	request->msg           = msg;
-	request->type = SCTK_PTL_TYPE_STD;
-	request->prot = SCTK_PTL_PROT_EAGER;
-	request->msg_seq_nb = SCTK_MSG_NUMBER(msg);
+	request->type          = SCTK_PTL_TYPE_STD;
+	request->prot          = SCTK_PTL_PROT_EAGER;
+	request->msg_seq_nb    = SCTK_MSG_NUMBER(msg);
 	hdr.std.msg_seq_nb     = SCTK_MSG_NUMBER(msg);
-	hdr.std.putsz = 0;
+	hdr.std.putsz          = 0; /* this set the protocol in imm_data for receiver optimizations */
 	msg->tail.ptl.user_ptr = request;
 
 	/* emit the request */
@@ -267,15 +267,9 @@ void sctk_ptl_eager_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_in
  */
 void sctk_ptl_eager_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
-	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
-	sctk_ptl_matchbits_t match = (sctk_ptl_matchbits_t)ev.match_bits;
-	sctk_ptl_pte_t* pte;
 	switch(ev.type)
 	{
 		case PTL_EVENT_PUT_OVERFLOW:          /* a previous received PUT matched a just appended ME */
-			//pte = SCTK_PTL_PTE_ENTRY(srail->pt_table, ev.pt_index - SCTK_PTL_PTE_HIDDEN);
-			//sctk_ptl_pending_me_pop(srail, pte, match.data.rank, match.data.tag, ev.mlength, ev.start);
-
 		case PTL_EVENT_PUT:                   /* a Put() reached the local process */
 			/* we don't care about unexpected messaged reaching the OVERFLOW_LIST, we will just wait for their local counter-part */
 			/* indexes from 0 to SCTK_PTL_PTE_HIDDEN-1 maps RECOVERY, CM & RDMA queues

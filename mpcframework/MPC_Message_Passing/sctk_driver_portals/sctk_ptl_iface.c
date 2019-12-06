@@ -306,21 +306,7 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 
 	sctk_ptl_me_feed(srail, pte, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_OVERFLOW_LIST, SCTK_PTL_TYPE_STD,
 	 SCTK_PTL_PROT_NONE);
-	
-	int j;
-	for (j = 0; j < SCTK_PTL_ME_OVERFLOW_NB; j++)
-	{
-		pte->pending.cells[j].avail = 1;
-		sctk_spinlock_init(&pte->pending.cells[j].lock, 0);
-	}
-	
-	
-	/*pte->taglocks = sctk_malloc(sizeof(sctk_spinlock_t) * SCTK_PTL_PTE_NB_LOCKS);*/
-	/*int j;*/
-	/*for (j = 0; j < SCTK_PTL_PTE_NB_LOCKS; ++j) */
-	/*{*/
-		/*pte->taglocks[j] = SCTK_SPINLOCK_INITIALIZER;*/
-	/*}*/
+
 	MPCHT_set(&srail->pt_table, key, pte);
 	/* suppose that comm_idx always increase
 	 * We add 1, because  (key + HIDDEN) is an idx */
@@ -508,6 +494,7 @@ sctk_ptl_local_data_t* sctk_ptl_me_create_with_cnt(sctk_ptl_rail_info_t* srail, 
 void sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* user_ptr, sctk_ptl_pte_t* pte)
 {
 	assert(user_ptr);
+	sctk_assert(user_ptr->slot.me.start);
 	sctk_ptl_chk(PtlMEAppend(
 		srail->iface,         /* the NI handler */
 		pte->idx,             /* the targeted PT entry */

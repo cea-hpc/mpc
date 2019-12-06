@@ -161,21 +161,23 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 
 		if(ret == PTL_OK)
 		{
-			sctk_nodebug("PORTALS: EQS EVENT '%s' idx=%d, from %s, type=%s, prot=%s, match=%s,  sz=%llu, user=%p", sctk_ptl_event_decode(ev), ev.pt_index, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), ev.mlength, ev.user_ptr);
-
+			sctk_nodebug("PORTALS: EQS EVENT '%s' idx=%d, from %s, type=%s, prot=%s, match=%s,  sz=%llu, user=%p, start=%p", sctk_ptl_event_decode(ev), ev.pt_index, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), ev.mlength, ev.user_ptr, ev.start);
+			
+			/* if the event is related to a probe request */
 			if(ev.type == PTL_EVENT_SEARCH)
 			{
+				/* sanity check */
 				sctk_assert(user_ptr->type == SCTK_PTL_TYPE_PROBE);
-				/* dealing with : 
-				 * - Regular probing (Iprobe & Probe): just check the ev.ni_fail_type status.
-				 * - matched probing (Mprobe): consider it as an already posted recv() from driver implementation POV
-				 */
-				
-				user_ptr->probe.size = (((sctk_ptl_imm_data_t)ev.hdr_data).std.putsz) ? *((size_t*)ev.start) : ev.mlength;
-				user_ptr->probe.rank = ((sctk_ptl_matchbits_t)ev.match_bits).data.rank;
-				user_ptr->probe.tag  = ((sctk_ptl_matchbits_t)ev.match_bits).data.tag;
-				sctk_atomics_store_int(&user_ptr->probe.found, (ev.ni_fail_type == PTL_NI_OK));
-				sctk_free(user_ptr);
+				int found = (ev.ni_fail_type == PTL_NI_OK);
+				if(found)
+				{
+					/* when the RDV protocol is used, the initial PUT contains the total message size. The overflow event contains the imm_data of this PUT */
+					user_ptr->probe.size = (((sctk_ptl_imm_data_t)ev.hdr_data).std.putsz) ? *((size_t*)ev.start) : ev.mlength;
+					user_ptr->probe.rank = ((sctk_ptl_matchbits_t)ev.match_bits).data.rank;
+					user_ptr->probe.tag  = ((sctk_ptl_matchbits_t)ev.match_bits).data.tag;
+				}
+				/* unlock the polling (if not done by the same thread) */
+				sctk_atomics_store_int(&user_ptr->probe.found, found );
 				continue;
 			}
 
@@ -185,14 +187,10 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 				sctk_fatal("PORTALS: FAILED EQS EVENT '%s' idx=%d, from %s, type=%s, prot=%s, match=%s,  sz=%llu, user=%p err='%s'", sctk_ptl_event_decode(ev), ev.pt_index, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), ev.mlength, ev.user_ptr, sctk_ptl_ni_fail_decode(ev));
 			}
 		
-			/* if the reques t consumed an unexpected slot, append a new one */
+			/* if the request consumed an unexpected slot, append a new one */
 			if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST)
 			{
-				//size_t msg_sz = (ev.mlength == 0) ?((sctk_ptl_imm_data_t)ev.hdr_data).std.msg_size : ev.mlength;
 				sctk_ptl_me_feed(srail,  cur_pte,  srail->eager_limit, 1, SCTK_PTL_OVERFLOW_LIST, SCTK_PTL_TYPE_STD, SCTK_PTL_PROT_NONE);
-				//sctk_ptl_matchbits_t match = (sctk_ptl_matchbits_t)ev.match_bits;
-				/** issue here... ev.mlength = 0 for RDV protocol... */
-				//sctk_ptl_pending_me_push(srail, cur_pte, match.data.rank, match.data.tag, msg_sz, ev.start);
 				sctk_free(user_ptr);
 				continue;
 			}
@@ -442,24 +440,41 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t co
 	}
 }
 
+/**
+ * @brief probe a message described by its header.
+ * 
+ * This function will block until a request is notified from the Portals interface.
+ * 
+ * @param rail the Portals rail
+ * @param hdr the message header built from upstream
+ * @param probe_level searching level, from Portals semantics (SEARCH_ONLY | SEARCH_DELETE)
+ * @return 1 if a matching message is found, zero otherwise
+ */
 int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, sctk_thread_message_header_t* hdr, int probe_level)
 {
 	sctk_communicator_t comm = hdr->communicator;
 	int rank = hdr->source_task;
 	int tag = hdr->message_tag;
+	int ret = -1;
 
-	//sctk_warning("PROBE: c%d r%d t%d", comm, rank, tag);
+	sctk_nodebug("PROBE: c%d r%d t%d", comm, rank, tag);
 	
 	sctk_ptl_rail_info_t* prail = &rail->network.ptl;
 	sctk_ptl_pte_t* pte = MPCHT_get(&prail->pt_table, (int)((comm + SCTK_PTL_PTE_HIDDEN_NB) % prail->nb_entries));
 	sctk_ptl_matchbits_t match, ign;
 
+	/* build a temporary ME to match caller criteria */
 	match.data = (sctk_ptl_std_content_t)
 	{
 		.rank = rank,
 		.tag = tag
 	};
 
+	/* almost sure the rank could be translated to the corresponding PID/NID and be used
+	 * as an additional criteria. This is not mandatory as the rank is already part of the 
+	 * match_bits. The @see ranks_ids_map table could be used. However, the struct could not 
+	 * be defined if no route have been created to the remote process yet.
+	 */
 	ign.data = (sctk_ptl_std_content_t)
 	{
 		.rank = (rank == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK,
@@ -468,11 +483,17 @@ int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, sctk_thread_message_header
 		.uid = SCTK_PTL_IGN_UID
 	};
 	
-	int ret = -1;
-	sctk_ptl_local_data_t* data = sctk_ptl_me_create(NULL, 0, SCTK_PTL_ANY_PROCESS, match, ign, SCTK_PTL_ME_PUT_FLAGS);
+	/* create the ME to match. The 'start' field does not need to be valid,
+	 * in case of a match, the event will return the address of the overflow buffer.
+	 * The size could be used if, one day, the NO_TRUNCATE attribute is set,
+	 */
+	sctk_ptl_local_data_t* data = sctk_ptl_me_create(NULL, sizeof(size_t), SCTK_PTL_ANY_PROCESS, match, ign, SCTK_PTL_ME_PUT_FLAGS);
+
+	/* -1 means "request submitted and not completed yet" */
 	sctk_atomics_store_int(&data->probe.found, -1);
 	sctk_ptl_me_emit_probe(prail, pte, data, probe_level);
 
+	/* Active polling */
 	while((ret = sctk_atomics_load_int(&data->probe.found)) == -1)
 	{
 		sctk_ptl_eqs_poll(rail, 1);
@@ -483,6 +504,7 @@ int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, sctk_thread_message_header
 		hdr->msg_size = data->probe.size;
 		hdr->message_tag = data->probe.tag;
 	}
+	sctk_free(data);
 	return ret;
 }
 
@@ -500,10 +522,9 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	min_comms   = rail->runtime_config_driver_config->driver.value.portals.min_comms;
 	offloading  = SCTK_PTL_OFFLOAD_NONE_FLAG;
 	
-	
 	/* avoid truncating size_t payload in RDV protocols */
 	if(eager_limit < sizeof(size_t))
-	eager_limit = sizeof(size_t);
+		eager_limit = sizeof(size_t);
 
 	if(rail->runtime_config_driver_config->driver.value.portals.offloading.ondemand)
 		offloading |= SCTK_PTL_OFFLOAD_OD_FLAG;

@@ -143,7 +143,7 @@ void sctk_network_notify_perform_message_set ( void ( *sctk_network_notify_perfo
 
 /********** NOTIFY_PROBE ************/
 
-void sctk_network_notify_probe_message_default (sctk_thread_message_header_t* hdr, int *status)
+void sctk_network_notify_probe_message_default (__UNUSED__  sctk_thread_message_header_t* hdr, __UNUSED__ int *status)
 {
         *status = -1; /* probe not supported */
 }
@@ -649,7 +649,8 @@ size_t sctk_net_memory_allocation_hook ( size_t size_origin )
 	{
 		return sctk_network_memory_allocator_hook_ib ( size_origin );
 	}
-
+#else
+	UNUSED(size_origin);
 #endif
 	return 0;
 }
@@ -663,7 +664,9 @@ void sctk_net_memory_free_hook ( void * ptr , size_t size )
 	{
 		return sctk_network_memory_free_hook_ib ( ptr, size );
 	}
-
+#else
+	UNUSED(ptr);
+	UNUSED(size);
 #endif
 }
 

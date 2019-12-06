@@ -131,7 +131,7 @@ static void sctk_network_notify_idle_message_topological ()
 	/* Done in subrails */
 }
 
-static void sctk_network_notify_probe_message_topological (sctk_rail_info_t* rail, int task_id, int remote_rank, int tag, sctk_communicator_t comm, int* status, size_t* msg_size)
+static void sctk_network_notify_probe_message_topological (__UNUSED__ sctk_rail_info_t* rail, __UNUSED__ sctk_thread_message_header_t* hdr, __UNUSED__ int* status)
 {
 	/* Done in subrails */
 }

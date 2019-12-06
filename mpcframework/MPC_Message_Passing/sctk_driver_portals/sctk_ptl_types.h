@@ -181,7 +181,6 @@ typedef enum {
 #define SCTK_PTL_IS_OFFLOAD_OD(u) ((u & SCTK_PTL_OFFLOAD_OD_FLAG) >> 0)
 #define SCTK_PTL_IS_OFFLOAD_COLL(u) ((u & SCTK_PTL_OFFLOAD_COLL_FLAG) >> 1)
 
-
 /*********************************/
 /**** OTHER USEFUL CONSTANTS  ****/
 /*********************************/
@@ -205,10 +204,10 @@ typedef enum {
  */
 typedef struct sctk_ptl_std_content_s
 {
-	uint32_t tag;     /**< MPI tag */
-	uint16_t rank;    /**< MPI/MPC rank */
-	uint8_t uid;     /**< unique per-route ID */
-	uint8_t type;    /**< message type, redundant in case of CM */
+	uint32_t tag;  /**< MPI tag */
+	uint16_t rank; /**< MPI/MPC rank */
+	uint8_t uid;   /**< unique per-route ID */
+	uint8_t type;  /**< message type, redundant in case of CM */
 } sctk_ptl_std_content_t;
 
 typedef struct sctk_ptl_offload_content_s
@@ -225,9 +224,9 @@ typedef struct sctk_ptl_offload_content_s
  */
 typedef union sctk_ptl_matchbits_t
 {
-	ptl_match_bits_t raw;                /**< raw */
-	struct sctk_ptl_std_content_s data; /**< driver-managed */
-	struct sctk_ptl_offload_content_s offload;
+	ptl_match_bits_t raw;                      /**< raw */
+	struct sctk_ptl_std_content_s data;        /**< driver-managed */
+	struct sctk_ptl_offload_content_s offload; /**< collective-offload related */
 } sctk_ptl_matchbits_t;
 
 /**
@@ -262,9 +261,9 @@ typedef struct sctk_ptl_offload_data_s
  */
 typedef union sctk_ptl_imm_data_s
 {
-	uint64_t raw;                   /**< the raw */
-	struct sctk_ptl_cm_data_s cm;   /**< imm_data for CM */
-	struct sctk_ptl_std_data_s std; /**< imm-data for regular msgs */
+	uint64_t raw;                           /**< the raw */
+	struct sctk_ptl_cm_data_s cm;           /**< imm_data for CM */
+	struct sctk_ptl_std_data_s std;         /**< imm-data for regular msgs */
 	struct sctk_ptl_offload_data_s offload; /**< imm-data for offload */
 } sctk_ptl_imm_data_t;
 
@@ -282,15 +281,15 @@ union sctk_ptl_slot_h_u
 	sctk_ptl_mdh_t mdh; /**< request is a MD */
 };
 
-
+/* data used to make information persistent between posted probing request & notification */
 typedef struct sctk_ptl_probing_data_s
 {
-	sctk_atomics_int found;
-	size_t size;
-	int rank;
-	int tag;
-
+	sctk_atomics_int found; /**< does the probing successful ? */
+	size_t size;            /**< if so, size of the message */
+	int rank;               /**< if so, rank of the remote */
+	int tag;                /**< if so, tag of the message */
 } sctk_ptl_probing_data_t;
+
 /**
  * Structure storing everything we need locally to map 
  * a msg with a PTL request
@@ -299,15 +298,15 @@ typedef struct sctk_ptl_local_data_s
 {
 	union sctk_ptl_slot_u slot;     /**< the request (MD or ME) */
 	union sctk_ptl_slot_h_u slot_h; /**< the request Handle */
-	int msg_seq_nb; 
+	int msg_seq_nb;                 /**< mesage sequence number (not truncated) */
 	void* msg;                      /**< link to the msg */
 	sctk_ptl_list_t list;           /**< the list the request issued from */
 	sctk_ptl_protocol_t prot;       /**< request protocol */
 	sctk_ptl_mtype_t type;          /**< request type */
-	sctk_ptl_probing_data_t probe;
+	sctk_ptl_probing_data_t probe;  /**< related to probing */
 	sctk_ptl_matchbits_t match;     /**< request match bits (RDV-spec) */
 	sctk_atomics_int cnt_frag;      /**< number of chunks before being released (RDV-spec) */
-	size_t req_sz; /**< message size intented to be retrieved (RDV spec) */
+	size_t req_sz;                  /**< message size intented to be retrieved (RDV spec) */
 	
 } sctk_ptl_local_data_t;
 
@@ -333,7 +332,6 @@ typedef struct sctk_ptl_tail_s
 	int copy;                               /**< true if data has been temporarily copied */
 } sctk_ptl_tail_t;
 
-
 /**
  * Portals-specific information describing a route.
  * Is contained by route.h
@@ -349,7 +347,7 @@ sctk_ptl_route_info_t;
  */
 typedef struct sctk_ptl_offcoll_barrier_s
 {
-	sctk_ptl_cnth_t* cnt_hb_up; /**< counter handling propagation of the first half barrier */
+	sctk_ptl_cnth_t* cnt_hb_up;   /**< counter handling propagation of the first half barrier */
 	sctk_ptl_cnth_t* cnt_hb_down; /**< counter handling propagation  of the second balf barrier */
 } sctk_ptl_offcoll_barrier_t;
 
@@ -367,7 +365,7 @@ typedef struct sctk_ptl_offcoll_bcast_s
 typedef union sctk_ptl_offcoll_spec_u
 {
 	struct sctk_ptl_offcoll_barrier_s barrier; /**< data hosts barrier infos */
-	struct sctk_ptl_offcoll_bcast_s bcast; /**< data hosts bcas infos */
+	struct sctk_ptl_offcoll_bcast_s bcast;     /**< data hosts bcas infos */
 } sctk_ptl_offcoll_spec_t;
 
 /**
@@ -376,13 +374,13 @@ typedef union sctk_ptl_offcoll_spec_u
  */
 typedef struct sctk_ptl_offcoll_tree_node_s
 {
-        sctk_spinlock_t lock;   /**< the lock */
-	sctk_atomics_int iter; /**< iteration number (because PTL does not whant us to decr a counter) */
-	sctk_ptl_id_t parent; /**< the PTL id for the parent of the current process in this given tree */
-	sctk_ptl_id_t* children; /**< PTS id array of all children for the current process */
-	size_t nb_children; /**< size of the array above */
-	int root; /**< is this process the root of the tree ? */
-	int leaf; /**< is this process a leaf of the tree ? (these two fields could be merged...) */
+        sctk_spinlock_t lock;               /**< the lock */
+	sctk_atomics_int iter;              /**< iteration number (because PTL does not whant us to decr a counter) */
+	sctk_ptl_id_t parent;               /**< the PTL id for the parent of the current process in this given tree */
+	sctk_ptl_id_t* children;            /**< PTS id array of all children for the current process */
+	size_t nb_children;                 /**< size of the array above */
+	int root;                           /**< is this process the root of the tree ? */
+	int leaf;                           /**< is this process a leaf of the tree ? (these two fields could be merged...) */
 	union sctk_ptl_offcoll_spec_u spec; /**< info stored for the specific collective to process */
 } sctk_ptl_offcoll_tree_node_t;
 
@@ -396,32 +394,13 @@ typedef enum sctk_ptl_offcoll_type_e
 	SCTK_PTL_OFFCOLL_NB
 } sctk_ptl_offcoll_type_t;
 
-typedef struct sctk_ptl_pending_entry_s
-{
-	int avail;
-	int rank;
-	int tag;
-	int magick;
-	size_t size;
-	char pad[8];
-	sctk_spinlock_t lock;
-	
-	
-} sctk_ptl_pending_entry_t;
-
-typedef struct sctk_ptl_pte_pending_s
-{
-	sctk_ptl_pending_entry_t cells[SCTK_PTL_ME_OVERFLOW_NB];
-} sctk_ptl_pte_pending_t;
-
 /**
  * Representing a PT entry in the driver.
  */
 typedef struct sctk_ptl_pte_s
 {
-	ptl_pt_index_t idx; /**< the effective PT index */
-	sctk_ptl_eq_t eq;   /**< the EQ for this entry */
-	struct sctk_ptl_pte_pending_s pending;
+	ptl_pt_index_t idx;                                            /**< the effective PT index */
+	sctk_ptl_eq_t eq;                                              /**< the EQ for this entry */
 	struct sctk_ptl_offcoll_tree_node_s node[SCTK_PTL_OFFCOLL_NB]; /**< what is necessary to optimise collectives for this entry */
 } sctk_ptl_pte_t;
 

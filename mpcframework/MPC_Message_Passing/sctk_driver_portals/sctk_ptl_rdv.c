@@ -59,8 +59,6 @@ void sctk_ptl_rdv_message_copy(sctk_message_to_copy_t* msg)
 	if(msg->msg_recv->tail.ptl.copy)
 	{
 		sctk_ptl_local_data_t* send_data = msg->msg_send->tail.ptl.user_ptr;
-		sctk_ptl_local_data_t* recv_data = msg->msg_recv->tail.ptl.user_ptr;
-
 		sctk_net_message_copy_from_buffer(send_data->slot.me.start, msg, 0);
 	}
 
@@ -289,14 +287,14 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	/************************/
 	/* 1. Configure the PUT */
 	/************************/
-	md_flags         = SCTK_PTL_MD_PUT_FLAGS;
-	md_request       = sctk_ptl_md_create(srail, &(SCTK_MSG_SIZE(msg)), sizeof(size_t), md_flags);
-	md_request->msg  = msg;
-	md_request->type = SCTK_PTL_TYPE_STD;
-	md_request->prot = SCTK_PTL_PROT_RDV;
-	md_request->match = match;
+	md_flags           = SCTK_PTL_MD_PUT_FLAGS;
+	md_request         = sctk_ptl_md_create(srail, &(SCTK_MSG_SIZE(msg)), sizeof(size_t), md_flags);
+	md_request->msg    = msg;
+	md_request->type   = SCTK_PTL_TYPE_STD;
+	md_request->prot   = SCTK_PTL_PROT_RDV;
+	md_request->match  = match;
 	hdr.std.msg_seq_nb = SCTK_MSG_NUMBER(msg);
-	hdr.std.putsz = 1;
+	hdr.std.putsz      = 1; /**< this means to the receiver : "The payload of this PUT is the message size" */
 	sctk_ptl_md_register(srail, md_request);
 
 	/***************************/
@@ -411,26 +409,12 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
  */
 void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
-	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
-	sctk_ptl_matchbits_t match = (sctk_ptl_matchbits_t)ev.match_bits;
-	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)ptr->msg;
-	sctk_ptl_pte_t* pte;
-	
 	int cur = 0;
 
 	switch(ev.type)
 	{
 		case PTL_EVENT_PUT_OVERFLOW:         /* a previous received PUT matched a just appended ME */
-			/** TODO:
-			 * We have an issue here. RDV protocol does not carry the size on the first Put(),
-			 * the probe mechanism cannot return the incoming msg size.
-			 * The actual size received (before the Recv() being posted) is zero (an empty Put() is emitted for RDV protocol). Not sure putting the actual size is a good idea as:
-			 *  	1. Put() will carry data (will it slow the traffic ?)
-			 * 	2. Unable to differentiate protocol from two incoming messages (before Recv)
-			 */
-			//pte = SCTK_PTL_PTE_ENTRY(srail->pt_table, ev.pt_index - SCTK_PTL_PTE_HIDDEN);
-			//sctk_ptl_pending_me_pop(srail, pte, SCTK_MSG_SRC_PROCESS(msg), SCTK_MSG_TAG(msg), SCTK_MSG_SIZE(msg), ev.start);
 		case PTL_EVENT_PUT:                  /* a Put() reached the local process */
 			/* we don't care about unexpected messaged reaching the OVERFLOW_LIST, we will just wait for their local counter-part */
 			/* indexes from 0 to SCTK_PTL_PTE_HIDDEN-1 maps RECOVERY, CM & RDMA queues
