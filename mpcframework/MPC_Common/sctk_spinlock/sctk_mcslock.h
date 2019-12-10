@@ -26,13 +26,13 @@
 extern "C" {
 #endif
 
-#if defined(sctk_cpu_relax)
-#define SCTK_MCSLOCK_CPU_RELAX() sctk_cpu_relax()
-#else /* defined(sctk_cpu_relax) */
+#ifdef __x86_64__
 #define SCTK_MCSLOCK_CPU_RELAX()                                               \
   do {                                                                         \
     __asm__ __volatile__("rep;nop" ::: "memory");                              \
   } while (0)
+#else /* defined(sctk_cpu_relax) */
+#define SCTK_MCSLOCK_CPU_RELAX() sctk_cpu_relax()
 #endif /* defined(sctk_cpu_relax) */
 
 #include "opa_primitives.h"
