@@ -15,6 +15,5 @@ MPC_Debugger            ;   disabled    ;   MPC threads support for GDB
 MPC_Fault_Tolerance     ;   disabled    ;   MPC FT system ( based on DMTCP)
 MPC_Active_Message      ;   disabled    ;   MPC Active Message implementation
 MPC_Tools               ;   ignored     ;   Scripts for MPC source management
-MPC_Virtual_Machines    ;   ignored     ;   MPC virtual machine support
 MPC_Tests               ;   ignored     ;   MPC test suite
 MPC_Doc                 ;   ignored     ;   MPC Documentation
