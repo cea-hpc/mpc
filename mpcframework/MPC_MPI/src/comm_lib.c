@@ -4412,7 +4412,7 @@ int _mpc_cl_error_class( int errorcode, int *errorclass )
 	MPC_ERROR_SUCESS();
 }
 
-int _mpc_cl_abort( mpc_mp_communicator_t comm, int errorcode )
+int _mpc_cl_abort( __UNUSED__ mpc_mp_communicator_t comm, int errorcode )
 {
 	sctk_error( "MPC_Abort with error %d", errorcode );
 	fflush( stderr );

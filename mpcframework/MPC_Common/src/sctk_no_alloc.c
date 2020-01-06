@@ -64,7 +64,7 @@ int sctk_reset_watchpoint ()
 }
 
 /*******************  FUNCTION  *********************/
-int sctk_set_watchpoint (char *(*func_watchpoint) (size_t mem_alloc,
+int sctk_set_watchpoint (__UNUSED__ char *(*func_watchpoint) (size_t mem_alloc,
                          size_t mem_used,
                          size_t nb_block,
                          size_t size,
@@ -131,7 +131,7 @@ void sctk_flush_alloc_buffers (void)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_relocalise_memory (void *ptr, size_t size)
+void sctk_relocalise_memory (__UNUSED__ void *ptr, __UNUSED__ size_t size)
 {
 }
 
@@ -154,35 +154,35 @@ void sctk_init_alloc (void)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_buffered_alloc_create (sctk_alloc_buffer_t * buf, size_t elemsize)
+void sctk_buffered_alloc_create (__UNUSED__ sctk_alloc_buffer_t * buf, __UNUSED__ size_t elemsize)
 {
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_buffered_alloc_delete (sctk_alloc_buffer_t * buf)
+void sctk_buffered_alloc_delete (__UNUSED__ sctk_alloc_buffer_t * buf)
 {
 }
 
 /*******************  FUNCTION  *********************/
-int sctk_is_buffered (void *ptr)
+int sctk_is_buffered (__UNUSED__ void *ptr)
 {
 	return 0;
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_buffered_free (void *ptr)
+void sctk_buffered_free (__UNUSED__ void *ptr)
 {
 	free (ptr);
 }
 
 /*******************  FUNCTION  *********************/
-void * sctk_buffered_malloc (sctk_alloc_buffer_t * buf, size_t size)
+void * sctk_buffered_malloc (__UNUSED__ sctk_alloc_buffer_t * buf, __UNUSED__ size_t size)
 {
 	return malloc (size);
 }
 
 /*******************  FUNCTION  *********************/
-void __sctk_update_memory (char *file_name)
+void __sctk_update_memory (__UNUSED__ char *file_name)
 {
 }
 
@@ -193,7 +193,7 @@ struct sctk_alloc_chain * __sctk_create_thread_memory_area (void)
 }
 
 /*******************  FUNCTION  *********************/
-void __sctk_delete_thread_memory_area (struct sctk_alloc_chain * tmp)
+void __sctk_delete_thread_memory_area (__UNUSED__ struct sctk_alloc_chain * tmp)
 {
 }
 
@@ -214,7 +214,7 @@ struct sctk_alloc_chain * sctk_get_current_alloc_chain(void)
 }
 
 /*******************  FUNCTION  *********************/
-int __sctk_posix_memalign (void **memptr, size_t alignment, size_t size,struct sctk_alloc_chain * tls)
+int __sctk_posix_memalign (void **memptr, size_t alignment, size_t size, __UNUSED__ struct sctk_alloc_chain * tls)
 {
 	#ifdef HAVE_POSIX_MEMALIGN
 	return posix_memalign (memptr, alignment, size);
@@ -225,31 +225,31 @@ int __sctk_posix_memalign (void **memptr, size_t alignment, size_t size,struct s
 }
 
 /*******************  FUNCTION  *********************/
-void * __sctk_realloc (void *ptr, size_t size, struct sctk_alloc_chain * tls)
+void * __sctk_realloc (void *ptr, size_t size, __UNUSED__ struct sctk_alloc_chain * tls)
 {
 	return realloc (ptr, size);
 }
 
 /*******************  FUNCTION  *********************/
-void __sctk_free (void *ptr, struct sctk_alloc_chain * tls)
+void __sctk_free (void *ptr, __UNUSED__ struct sctk_alloc_chain * tls)
 {
 	free (ptr);
 }
 
 /*******************  FUNCTION  *********************/
-void * __sctk_calloc (size_t nmemb, size_t size, struct sctk_alloc_chain * tls)
+void * __sctk_calloc (size_t nmemb, size_t size, __UNUSED__ struct sctk_alloc_chain * tls)
 {
 	return calloc (nmemb, size);
 }
 
 /*******************  FUNCTION  *********************/
-void * __sctk_malloc (size_t size, struct sctk_alloc_chain * tls)
+void * __sctk_malloc (size_t size, __UNUSED__ struct sctk_alloc_chain * tls)
 {
 	return malloc (size);
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_mem_reset_heap (size_t start, size_t max_size)
+void sctk_mem_reset_heap (__UNUSED__ size_t start,  __UNUSED__ size_t max_size)
 {
 }
 
@@ -271,7 +271,7 @@ void sctk_view_local_memory (void)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_set_tls (struct sctk_alloc_chain * tls)
+void sctk_set_tls (__UNUSED__ struct sctk_alloc_chain * tls)
 {
 }
 
@@ -282,33 +282,33 @@ struct sctk_alloc_chain * sctk_get_tls (void)
 }
 
 /*******************  FUNCTION  *********************/
-void __sctk_dump_tls (struct sctk_alloc_chain * tls, char *file_name)
+void __sctk_dump_tls (__UNUSED__ struct sctk_alloc_chain * tls, __UNUSED__ char *file_name)
 {
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_dump_tls (char *file_name)
+void sctk_dump_tls (__UNUSED__ char *file_name)
 {
 }
 
 /*******************  FUNCTION  *********************/
-void __sctk_restore_tls (struct sctk_alloc_chain ** tls, char *file_name)
+void __sctk_restore_tls (__UNUSED__ struct sctk_alloc_chain ** tls, __UNUSED__ char *file_name)
 {
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_restore_tls (char *file_name)
+void sctk_restore_tls (__UNUSED__ char *file_name)
 {
 }
 
 /*******************  FUNCTION  *********************/
-int sctk_check_file (char *file_name)
+int sctk_check_file (__UNUSED__ char *file_name)
 {
 	return 0;
 }
 
 /*******************  FUNCTION  *********************/
-void __sctk_view_local_memory (struct sctk_alloc_chain * tls)
+void __sctk_view_local_memory (__UNUSED__ struct sctk_alloc_chain * tls)
 {
 }
 
@@ -397,19 +397,19 @@ int sctk_is_no_alloc_land (void)
 }
 
 /*******************  FUNCTION  *********************/
-void * __sctk_malloc_on_node (size_t size, int node, struct sctk_alloc_chain * tls)
+void * __sctk_malloc_on_node (size_t size, __UNUSED__ int node, __UNUSED__ struct sctk_alloc_chain * tls)
 {
 	return malloc (size);
 }
 
 /*******************  FUNCTION  *********************/
-void * __sctk_malloc_new (size_t size, struct sctk_alloc_chain * tls)
+void * __sctk_malloc_new (size_t size, __UNUSED__ struct sctk_alloc_chain * tls)
 {
 	return malloc (size);
 }
 
 /*******************  FUNCTION  *********************/
-void * sctk_malloc_on_node (size_t size, int node)
+void * sctk_malloc_on_node (size_t size, __UNUSED__ int node)
 {
 	return malloc (size);
 }
@@ -444,7 +444,7 @@ void sctk_alloc_posix_numa_migrate(void)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_alloc_posix_numa_migrate_chain(struct sctk_alloc_chain * chain)
+void sctk_alloc_posix_numa_migrate_chain(__UNUSED__ struct sctk_alloc_chain * chain)
 {
 }
 

@@ -603,7 +603,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   tmp = *__arg;
 
   // DEBUG
-	assume_m( mpc_topology_get_current_cpu() == tmp.bind_to,
+	assume_m( mpc_topology_get_current_cpu() == (int)tmp.bind_to,
            "sctk_thread_create_tmp_start_routine BUGUED");
 	// assert(mpc_topology_get_current_cpu() == tmp.bind_to);
   // ENDDEBUG
@@ -2229,21 +2229,6 @@ sctk_thread_timer (void *arg)
   return NULL;
 }
 
-#ifdef MPC_MPI
-static void *
-sctk_thread_migration (void *arg)
-{
-  sctk_ethread_mxn_init_kethread ();
-  assume (arg == NULL);
-  while (sctk_thread_running)
-    {
-      kthread_usleep (100 * 1000);
-      sctk_net_migration_check();
-    }
-  return NULL;
-}
-#endif
-
 
 static int sctk_first_local = 0;
 static int sctk_last_local = 0;
@@ -2418,11 +2403,9 @@ int sctk_get_init_vp_and_nbvp_numa(int i, int *nbVp) {
 	int numa_node_per_node_nb = mpc_topology_get_numa_node_count();
   int cpu_per_numa_node = cpu_nb / numa_node_per_node_nb;
 
-  int global_id = i;
-  int numa_node_id = (global_id * numa_node_per_node_nb) / task_nb;
-  int local_id =
-      global_id - (((numa_node_id * task_nb) + numa_node_per_node_nb - 1) /
-                   numa_node_per_node_nb);
+	int global_id = i;
+	int numa_node_id = ( global_id * numa_node_per_node_nb ) / task_nb;
+	int local_id = mpc_common_get_local_task_rank();
 
   int task_per_numa_node =
       (((numa_node_id + 1) * task_nb + numa_node_per_node_nb - 1) /
@@ -2596,11 +2579,6 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	int start_thread;
 	kthread_t timer_thread;
 
-#ifdef MPC_MPI
-	sctk_thread_t migration_thread;
-	sctk_thread_attr_t migration_thread_attr;
-#endif
-	FILE *file;
 	struct _sctk_thread_cleanup_buffer *ptr_cleanup;
         /*	char name[SCTK_MAX_FILENAME_SIZE]; */
         sctk_thread_t *threads = NULL;

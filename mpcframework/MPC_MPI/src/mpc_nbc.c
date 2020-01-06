@@ -121,7 +121,7 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
 	int rank, p, res, r;
 	MPI_Aint rcvext, sndext;
 	NBC_Schedule *schedule;
-	char *rbuf, *sbuf, inplace;
+	char *rbuf, inplace;
 
 	NBC_IN_PLACE( sendbuf, recvbuf, inplace );
 
@@ -249,7 +249,7 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
 //      sends = (int)ceil((log(p) / LOG2));
       sends = maxr;
     } else {
-      int r;
+
       sends = 0;
 //      int maxr = (int)ceil((log(p) / LOG2));
       for (r = 0; r < maxr; r++) {

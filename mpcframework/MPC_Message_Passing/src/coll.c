@@ -269,7 +269,7 @@ typedef struct
 typedef struct
 {
 	_mpc_coll_messages_t msg_req[64 /* Update for ASYNC */];
-	int nb_used;
+	unsigned int nb_used;
 } _mpc_coll_messages_table_t;
 
 /* Internal functions */
@@ -300,7 +300,7 @@ static void _mpc_coll_message_recv( const mpc_mp_communicator_t communicator, in
 
 static void _mpc_coll_messages_table_wait( _mpc_coll_messages_table_t *tab )
 {
-	int i;
+	unsigned int i;
 
 	for ( i = 0; i < tab->nb_used; i++ )
 	{
@@ -1039,7 +1039,7 @@ void _mpc_coll_hetero_bcast_inter( void *buffer, const size_t size,
 						                  total],
 						    root_process, buffer, size, specific_tag,
 						    _mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ),
-						    ( size < broadcast_check_threshold ) );
+						    ( size < (size_t)broadcast_check_threshold ) );
 					}
 				}
 			}
@@ -1288,7 +1288,7 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
 					    process_array[dest + ( j * ( i / ALLREDUCE_ARRITY ) )], 1,
 					    buffer_out, size, specific_tag,
 					    _mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ),
-					    ( size < allreduce_check_threshold ) );
+					    ( size < (size_t)allreduce_check_threshold ) );
 				}
 			}
 		}
