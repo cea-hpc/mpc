@@ -640,6 +640,8 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 	sctk_internal_profiler_init();
 #endif
 
+  sctk_tls_dtors_init(&(tmp.dtors_head));
+
 #ifdef MPC_Message_Passing
   /* We call for all threads as some
      progress threads may need buffered headers */
@@ -688,7 +690,6 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   sctk_accl_cuda_init_context();
 #endif
 
-  sctk_tls_dtors_init(&(tmp.dtors_head));
   
   /* BEGIN TBB SETUP */
   /**
@@ -3008,6 +3009,10 @@ sctk_start_func (void *(*run) (void *), void *arg)
         /* remove(name); */
 
         sctk_runtime_config_clean_hash_tables();
+
+        /* Make sure to call desctructors for main thread */
+        sctk_tls_dtors_free(&(sctk_main_datas.dtors_head));
+
 }
 
 void
