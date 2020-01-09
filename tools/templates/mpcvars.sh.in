@@ -43,11 +43,8 @@ export MPC_RPREFIX
 
 uname=`uname -m`
 host="${uname}"
-if test "$#" = "1"; then
-	target="${1}"
-else 
-    target=${host}
-fi
+target="$MPC_CROSS_TARGET"
+test -n "$target" && target=${host}
 
 if test "${host}" = "0" -o "${target}" = "0"; then
 	echo "######################################################################"
@@ -55,7 +52,7 @@ if test "${host}" = "0" -o "${target}" = "0"; then
 	echo "######################################################################"
 else	
 	echo "load ${host}/${target} module (${MPC_RPREFIX})"
-   	. "${MPC_RPREFIX}/${target}/${target}/bin/mpcvars.sh"
+   	. "${MPC_RPREFIX}/${host}/${target}/bin/mpcvars.sh"
        
     MPC_HOST_SUBPREFIX="${host}"
     export MPC_HOST_SUBPREFIX

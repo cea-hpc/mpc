@@ -1,5 +1,5 @@
 ARG img_tag=7
-FROM centos:${img_tag} AS base
+FROM centos:${img_tag} AS env
 
 RUN yum install -y --nogpgcheck \
 	gcc gcc-c++ \
@@ -14,10 +14,10 @@ RUN yum install -y --nogpgcheck \
 RUN groupadd sudo; exit 0
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 RUN useradd -G sudo -ms /bin/bash mpcuser
+RUN mkdir -p /install /build && chown mpcuser:mpcuser /build /install
 
 USER mpcuser
 WORKDIR /home/mpcuser
-RUN mkdir -p /home/mpcuser/{build,install}
 CMD /bin/bash
 
 LABEL \
@@ -28,12 +28,25 @@ LABEL \
 	maintainer.project = "Marc Perache <marc.perache@cea.fr>" \
 	maintainer.docker = "Julien Adam <adamj@paratools.com>"
 
-FROM base AS install
+FROM env AS inst
 ARG mpc_version=3.3.1
 
-ADD --chown=mpcuser:mpcuser https://france.paratools.com/mpc/releases/MPC_${mpc_version}.tar.gz /home/mpcuser/
-RUN tar xf ./MPC_${mpc_version}.tar.gz \
-	&& cd ./build/ \
-	&& ../MPC_${mpc_version}/installmpc --prefix=/home/mpcuser/install/ --disable-color -j2 \
-	&& rm -rf /home/mpcuser/build/ \
-	&& rm -rf /home/mpcuser/MPC_${mpc_version}
+ADD --chown=mpcuser:mpcuser https://france.paratools.com/mpc/releases/MPC_${mpc_version}.tar.gz /build/
+RUN cd /build \
+	&& tar xf MPC_${mpc_version}.tar.gz \
+	&& /build/MPC_${mpc_version}/installmpc --prefix=/install/ --disable-color -j2 \
+	&& rm -rf /build/*
+COPY docker_entrypoint.sh /install/
+ENTRYPOINT ["/bin/bash", "/install/docker_entrypoint.sh"]
+
+FROM inst as demo
+
+USER root
+RUN yum install -y --nogpgcheck \
+	vim \
+	nano \
+	emacs \
+	gdb \
+	htop \
+	&& yum clean all
+USER myuser

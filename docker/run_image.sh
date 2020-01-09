@@ -7,19 +7,19 @@ FROM_NET=no
 MPC_ENV=alpine
 MPC_PATH="$SRC/.."
 
-function check_no_multiple_container()
+check_no_multiple_container()
 {
 	n="`echo "$1" | wc -l`"
 	test "$n" != "1" && die "Multiple containers already exist. Please handle this by yourself \n$1"
 }
 
-function die()
+die()
 {
 	printf "Error: $@\n" 1>&2
 	exit 42
 }
 
-function read_param()
+read_param()
 {
 	echo "xxA$1" | sed -e "s@xxA$2@@"
 }
