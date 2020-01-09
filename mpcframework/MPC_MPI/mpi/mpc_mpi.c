@@ -931,11 +931,6 @@ static int SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new);
     #define MPC_MPI_REQUEST_CACHE_SIZE 128
 #endif
 
-
-#ifdef MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
-    #define MPC_MPI_LOCAL_REQUESTS_QUEUE_SIZE 10
-#endif
-
 typedef struct MPI_per_thread_ctx_s
 {
 #ifdef MPC_MPI_USE_REQUEST_CACHE
@@ -1066,14 +1061,14 @@ inline void sctk_delete_internal_request_clean(MPI_internal_request_t *tmp)
 
 
 #ifdef MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
-#define MPC_MPI_LOCAL_REQUESTS_QUEUE_SIZE 10
+#define MPC_MPI_LOCAL_REQUESTS_QUEUE_SIZE 1024
 
 inline MPI_internal_request_t * __sctk_new_mpc_request_internal_local_get (MPI_Request * req,
                                  MPI_request_struct_t *requests)
 {
 	MPI_internal_request_t *tmp = NULL;
 
-        MPI_per_thread_ctx_t *tctx = MPI_per_thread_ctx_get();
+  MPI_per_thread_ctx_t *tctx = MPI_per_thread_ctx_get();
 
 	tmp = tctx->mpc_mpi_local_request_queue;
 	
@@ -1166,112 +1161,108 @@ inline void __sctk_init_mpc_request_internal(MPI_internal_request_t *tmp){
  *  \param req Request to allocate (will be written with the ID of the request)
  * */
 /* extern inline */
-MPI_internal_request_t * 
-__sctk_new_mpc_request_internal (MPI_Request * req, 
-				 MPI_request_struct_t *requests)
+MPI_internal_request_t *
+__sctk_new_mpc_request_internal( MPI_Request *req,
+								 MPI_request_struct_t *requests )
 {
 	MPI_internal_request_t *tmp;
 
-	tmp = __sctk_new_mpc_request_internal_local_get(req,requests);
-	
-	if(tmp == NULL){
+	tmp = __sctk_new_mpc_request_internal_local_get( req, requests );
+
+	if ( tmp == NULL )
+	{
 		/* Lock the request struct */
-		sctk_spinlock_lock (&(requests->lock));
-	
+		sctk_spinlock_lock( &( requests->lock ) );
+
 		/* Try to free the HEAD of the auto free list */
-		sctk_check_auto_free_list(requests);
-	
+		sctk_check_auto_free_list( requests );
+
 		/* If the free list is empty */
-		if (requests->free_list == NULL)
+		if ( requests->free_list == NULL )
 		{
 			int old_size;
 			int i;
-			
+
 			/* Previous size */
 			old_size = requests->max_size;
 			/* New incremented size */
-			requests->max_size += 10;
+			requests->max_size += 5;
 			/* Allocate TAB */
-			requests->tab = sctk_realloc (requests->tab,  requests->max_size * sizeof (MPI_internal_request_t *));
-		
-			assume (requests->tab != NULL);
-		
+			requests->tab = sctk_realloc( requests->tab, requests->max_size * sizeof( MPI_internal_request_t * ) );
+
+			assume( requests->tab != NULL );
+
 			/* Fill in the new array slots */
-			for (i = old_size; i < requests->max_size; i++)
+			for ( i = old_size; i < requests->max_size; i++ )
 			{
-				sctk_nodebug ("%lu", i);
+				sctk_nodebug( "%lu", i );
 				/* Allocate the MPI_internal_request_t */
-				tmp = sctk_buffered_malloc (&(requests->buf),  sizeof (MPI_internal_request_t));
-				assume (tmp != NULL);
-				
+				tmp = sctk_buffered_malloc( &( requests->buf ), sizeof( MPI_internal_request_t ) );
+				assume( tmp != NULL );
+
 				/* Save it in the array */
 				requests->tab[i] = tmp;
-				
+
 				/* Set not used */
 				tmp->used = 0;
 				tmp->lock = 0;
 				tmp->task_req_id = requests;
-				
+
 				/* Put the newly allocated slot in the free list */
 				tmp->next = requests->free_list;
 				requests->free_list = tmp;
-				
+
 				/* Register its offset in the tab array */
 				tmp->rank = i;
 				tmp->saved_datatype = NULL;
 			}
 		}
-	
+
 		/* Now we should have a request in the free list */
-		
+
 		/* Take head from the free list */
 		tmp = (MPI_internal_request_t *) requests->free_list;
 
 		/* Remove from free list */
 		requests->free_list = tmp->next;
 
-		sctk_spinlock_unlock (&(requests->lock));
+		sctk_spinlock_unlock( &( requests->lock ) );
 	}
 
-        /* Mark it as used */
-        tmp->used = 1;
-        /* Mark it as freable */
-        tmp->freeable = 1;
-        /* Mark it as active */
-        tmp->is_active = 1;
-        /* Disable auto-free */
-        tmp->auto_free = 0;
-        tmp->saved_datatype = NULL;
+	/* Mark it as used */
+	tmp->used = 1;
+	/* Mark it as freable */
+	tmp->freeable = 1;
+	/* Mark it as active */
+	tmp->is_active = 1;
+	/* Disable auto-free */
+	tmp->auto_free = 0;
+	tmp->saved_datatype = NULL;
 
 	/* Mark it as not an nbc */
 	tmp->is_nbc = 0;
 
+	__sctk_convert_mpc_request_internal_cache_register( tmp );
 
-
-	__sctk_convert_mpc_request_internal_cache_register(tmp);
-	
 	/* Set request to be the id in the tab array (rank) */
 	*req = tmp->rank;
 
 	/* Intialize request content */
-	__sctk_init_mpc_request_internal(tmp);
+	__sctk_init_mpc_request_internal( tmp );
 
 	return tmp;
 }
 
 /** \brief Create a new \ref MPC_Request */
 /* extern inline */
-MPC_Request * __sctk_new_mpc_request (MPI_Request * req,MPI_request_struct_t *requests)
+MPC_Request *__sctk_new_mpc_request( MPI_Request *req, MPI_request_struct_t *requests )
 {
 	MPI_internal_request_t *tmp;
 	/* Acquire a free MPI_Iternal request */
-	tmp = __sctk_new_mpc_request_internal (req,requests);
+	tmp = __sctk_new_mpc_request_internal( req, requests );
 
-        /* Clear request */
-        memset(&tmp->req, 0, sizeof(sctk_request_t));
-
-        /* Return its inner MPC_Request */
-        return &(tmp->req);
+	/* Return its inner MPC_Request */
+	return &( tmp->req );
 }
 
 /** \brief Convert an \ref MPI_Request to an \ref MPI_internal_request_t
@@ -5595,34 +5586,37 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm) {
   return MPI_SUCCESS;
 }
 
+int __INTERNAL__PMPI_Barrier_intra_shm_on_ctx( struct shared_mem_barrier *barrier_ctx,
+											   int comm_size )
+{
 
+	int my_phase = !sctk_atomics_load_int( &barrier_ctx->phase );
 
-int __INTERNAL__PMPI_Barrier_intra_shm_on_ctx(struct shared_mem_barrier *barrier_ctx,
-                                              int comm_size) {
+	if ( sctk_atomics_fetch_and_decr_int( &barrier_ctx->counter ) == 1 )
+	{
+		sctk_atomics_store_int( &barrier_ctx->counter, comm_size );
+		sctk_atomics_store_int( &barrier_ctx->phase, my_phase );
+	}
+	else
+	{
+		if ( __do_yield )
+		{
+			while ( sctk_atomics_load_int( &barrier_ctx->phase ) != my_phase )
+			{
+				sched_yield();
+			}
+		}
+		else
+		{
+			while ( sctk_atomics_load_int( &barrier_ctx->phase ) != my_phase )
+			{
+				sctk_cpu_relax();
+			}
+		}
+	}
 
-  int my_phase = !sctk_atomics_load_int(&barrier_ctx->phase);
-
-  if (sctk_atomics_fetch_and_decr_int(&barrier_ctx->counter) == 1) {
-    sctk_atomics_store_int(&barrier_ctx->counter, comm_size);
-    sctk_atomics_store_int(&barrier_ctx->phase, my_phase);
-  } else {
-    if (__do_yield ) {
-      while (sctk_atomics_load_int(&barrier_ctx->phase) != my_phase) {
-		sched_yield();
-	  }
-    } else {
-      while (sctk_atomics_load_int(&barrier_ctx->phase) != my_phase) {
-      	sctk_cpu_relax();
-	  }
-    }
-  }
-
-  return MPI_SUCCESS;
+	return MPI_SUCCESS;
 }
-
-
-
-
 
 int __INTERNAL__PMPI_Barrier_intra_shm(MPI_Comm comm) {
   struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);

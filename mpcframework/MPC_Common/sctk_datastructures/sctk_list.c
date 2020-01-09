@@ -37,21 +37,21 @@ sctk_list_new(struct sctk_list* list, sctk_uint8_t is_collector, size_t size_pay
   list->is_collector = is_collector;
   list->size_payload = size_payload;
   list->is_initialized = 1;
-  sctk_buffered_alloc_create(&list->alloc_buff, size_payload + sizeof(struct sctk_list_elem));
+  sctk_buffered_alloc_create(&list->alloc_buff, size_payload + sizeof(struct sctk_internal_list_elem));
   list->head = NULL;
   list->tail = NULL;
 }
 
 
-static struct sctk_list_elem*
+static struct sctk_internal_list_elem*
 sctk_list_alloc_elem(struct sctk_list* list, void* elem, size_t size, sctk_uint8_t collector )
 {
-  struct sctk_list_elem *tmp =
-    sctk_buffered_malloc(&list->alloc_buff, sizeof(struct sctk_list_elem) + size);
+  struct sctk_internal_list_elem *tmp = (struct sctk_internal_list_elem *)
+    sctk_buffered_malloc(&list->alloc_buff, sizeof(struct sctk_internal_list_elem) + size);
 
   if (collector)
   {
-    tmp->elem = (char*) tmp + sizeof(struct sctk_list_elem);
+    tmp->elem = (char*) tmp + sizeof(struct sctk_internal_list_elem);
     memcpy(tmp->elem, elem, size);
   }
   else
@@ -66,7 +66,7 @@ sctk_list_alloc_elem(struct sctk_list* list, void* elem, size_t size, sctk_uint8
 void *
 sctk_list_get_from_head(struct sctk_list* list, sctk_uint32_t n)
 {
-  struct sctk_list_elem *tmp = list->head;
+  struct sctk_internal_list_elem *tmp = list->head;
 
   assume(list->is_initialized);
 
@@ -81,7 +81,7 @@ sctk_list_get_from_head(struct sctk_list* list, sctk_uint32_t n)
 }
 
   void*
-sctk_list_remove(struct sctk_list* list, struct sctk_list_elem* elem)
+sctk_list_remove(struct sctk_list* list, struct sctk_internal_list_elem* elem)
 {
   void* payload;
 
@@ -133,7 +133,7 @@ sctk_list_pop(struct sctk_list* list)
 void *
 sctk_list_push(struct sctk_list* list, void *elem)
 {
-  struct sctk_list_elem *new_elem = NULL;
+  struct sctk_internal_list_elem *new_elem = NULL;
 
   assume(list->is_initialized);
 
@@ -163,7 +163,7 @@ sctk_list_push(struct sctk_list* list, void *elem)
 void* sctk_list_search_and_free(struct sctk_list* list,
     void* elem)
 {
-  struct sctk_list_elem *tmp = list->head;
+  struct sctk_internal_list_elem *tmp = list->head;
   int i = 0;
   sctk_nodebug("Free : %p", list->head->elem);
 
@@ -189,7 +189,7 @@ void* sctk_list_search_and_free(struct sctk_list* list,
 void* sctk_list_walk(struct sctk_list* list,
     void* (*funct) (void* elem), int remove)
 {
-  struct sctk_list_elem *tmp = list->head;
+  struct sctk_internal_list_elem *tmp = list->head;
   assume(funct);
   void* ret = NULL;
   int i = 0;
@@ -217,7 +217,7 @@ void* sctk_list_walk(struct sctk_list* list,
 void* sctk_list_walk_on_cond(struct sctk_list* list, int cond,
     void* (*funct) (void* elem, int cond), int remove)
 {
-  struct sctk_list_elem *tmp = NULL;
+  struct sctk_internal_list_elem *tmp = NULL;
   assume(funct);
   void* ret = NULL;
   int i = 0;

@@ -20,8 +20,9 @@
 
 /* correct fortran bindings */
 
-#include <mpc_mpi.h>
-#include <mpc_thread.h>
+#include "mpc_mpi.h"
+#include "mpc_thread.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -78,6 +79,7 @@ typedef struct {
 	volatile int req_count;
 	sctk_thread_mutex_t lock;
 	sctk_thread_sem_t semid;
+	volatile int actual_req_count;
 	MPI_Request *req_array;
 	NBC_Comminfo *comminfo;
 	volatile NBC_Schedule *schedule;
@@ -165,35 +167,17 @@ typedef enum {
 typedef struct {
 	void *buf;
 	char tmpbuf;
-	int count;
-	MPI_Datatype datatype;
-	int dest;
-} NBC_Args_send;
-
-/* the receive argument struct */
-typedef struct {
-	void *buf;
-	char tmpbuf;
-	int count;
-	MPI_Datatype datatype;
-	int source;
-} NBC_Args_recv;
-
-/* the operation argument struct */
-typedef struct {
 	void *buf1;
 	char tmpbuf1;
 	void *buf2;
 	char tmpbuf2;
 	void *buf3;
 	char tmpbuf3;
-	int count;
 	MPI_Op op;
+	int count;
 	MPI_Datatype datatype;
-} NBC_Args_op;
-
-/* the copy argument struct */
-typedef struct {
+	int dest;
+	int source;
 	void *src; 
 	char tmpsrc;
 	int srccount;
@@ -202,17 +186,11 @@ typedef struct {
 	char tmptgt;
 	int tgtcount;
 	MPI_Datatype tgttype;
-} NBC_Args_copy;
-
-/* unpack operation arguments */
-typedef struct {
 	void *inbuf; 
 	char tmpinbuf;
-	int count;
-	MPI_Datatype datatype;
 	void *outbuf; 
 	char tmpoutbuf;
-} NBC_Args_unpack;
+} NBC_Args;
 
 
 /* internal function prototypes */
@@ -226,7 +204,7 @@ typedef struct {
  * [round-schedule] ::= [num][type][type-args][type][type-args]...
  * [num] ::= number of elements in round (int)
  * [type] ::= function type (NBC_Fn_type)
- * [type-args] ::= type specific arguments (NBC_Args_send, NBC_Args_recv or, NBC_Args_op)
+ * [type-args] ::= type specific arguments (NBC_Args, NBC_Args or, NBC_Args)
  * [delimiter] ::= 1 (char) - indicates that a round follows
  * [end] ::= 0 (char) - indicates that this is the last round 
  */
@@ -234,49 +212,12 @@ typedef struct {
 /* NBC_GET_ROUND_SIZE returns the size in bytes of a round of a NBC_Schedule
  * schedule. A round has the format:
  * [num]{[type][type-args]}
- * e.g. [(int)2][(NBC_Fn_type)SEND][(NBC_Args_send)SEND-ARGS][(NBC_Fn_type)RECV][(NBC_Args_recv)RECV-ARGS] */
+ * e.g. [(int)2][(NBC_Fn_type)SEND][(NBC_Args)SEND-ARGS][(NBC_Fn_type)RECV][(NBC_Args)RECV-ARGS] */
 #define NBC_GET_ROUND_SIZE(schedule, size) \
  {	\
 	 int *numptr; \
-	 NBC_Fn_type *typeptr; \
-	 int i;	\
-		 \
 	 numptr = (int*)schedule; \
-	 /*NBC_DEBUG(10, "GET_ROUND_SIZE got %i elements\n", *numptr); */\
-	 /* end is increased by sizeof(int) bytes to point to type */ \
-	 typeptr = (NBC_Fn_type*)((int*)(schedule)+1); \
-	 for (i=0; i<*numptr; i++) { \
-		 /* go sizeof op-data forward */ \
-		 switch(*typeptr) { \
-			 case SEND: \
-				 /*printf("found a SEND at offset %i\n", (int)typeptr-(int)schedule); */\
-				 typeptr = (NBC_Fn_type*)((NBC_Args_send*)typeptr+1); \
-				 break; \
-			 case RECV: \
-				 /*printf("found a RECV at offset %i\n", (int)typeptr-(int)schedule); */\
-				 typeptr = (NBC_Fn_type*)((NBC_Args_recv*)typeptr+1); \
-				 break; \
-			 case OP: \
-				 /*printf("found a OP at offset %i\n", (int)typeptr-(int)schedule); */\
-				 typeptr = (NBC_Fn_type*)((NBC_Args_op*)typeptr+1); \
-				 break; \
-			 case COPY: \
-				 /*printf("found a COPY at offset %i\n", (int)typeptr-(int)schedule); */\
-				 typeptr = (NBC_Fn_type*)((NBC_Args_copy*)typeptr+1); \
-				 break; \
-			 case UNPACK: \
-				 /*printf("found a UNPACK at offset %i\n", (int)typeptr-(int)schedule); */\
-				 typeptr = (NBC_Fn_type*)((NBC_Args_unpack*)typeptr+1); \
-				 break; \
-			 default: \
-				 printf("NBC_GET_ROUND_SIZE: bad type %li at offset %li\n", (long)*typeptr, (long)typeptr-(long)schedule); \
-				 return NBC_BAD_SCHED; \
-		 } \
-		 /* increase ptr by size of fn_type enum */ \
-		 typeptr = (NBC_Fn_type*)((NBC_Fn_type*)typeptr+1); \
-	 } \
-	 /* this could be optimized if typeptr would be used directly */ \
-	 size = (long)typeptr-(long)schedule; \
+	 size = *numptr * (sizeof(NBC_Fn_type) + sizeof(NBC_Args)) + sizeof(int);\
  }
 
 /* returns the size of a schedule in bytes */
@@ -325,11 +266,11 @@ typedef struct {
  {	\
 	 int myrank, *numptr; \
 	 NBC_Fn_type *typeptr; \
-	 NBC_Args_send *sendargs; \
-	 NBC_Args_recv *recvargs; \
-	 NBC_Args_op *opargs; \
-	 NBC_Args_copy *copyargs; \
-	 NBC_Args_unpack *unpackargs; \
+	 NBC_Args *sendargs; \
+	 NBC_Args *recvargs; \
+	 NBC_Args *opargs; \
+	 NBC_Args *copyargs; \
+	 NBC_Args *unpackargs; \
 	 int i;	\
 		 \
 	 numptr = (int*)schedule; \
@@ -342,33 +283,33 @@ typedef struct {
 		 switch(*typeptr) { \
 			 case SEND: \
 				 printf("[%i]	SEND (offset %li) ", myrank, (long)typeptr-(long)schedule); \
-				 sendargs = (NBC_Args_send*)(typeptr+1); \
+				 sendargs = (NBC_Args*)(typeptr+1); \
 				 printf("*buf: %lu, count: %i, type: %lu, dest: %i)\n", (unsigned long)sendargs->buf, sendargs->count, (unsigned long)sendargs->datatype, sendargs->dest); \
-				 typeptr = (NBC_Fn_type*)((NBC_Args_send*)typeptr+1); \
+				 typeptr = (NBC_Fn_type*)((NBC_Args*)typeptr+1); \
 				 break; \
 			 case RECV: \
 				 printf("[%i]	RECV (offset %li) ", myrank, (long)typeptr-(long)schedule); \
-				 recvargs = (NBC_Args_recv*)(typeptr+1); \
+				 recvargs = (NBC_Args*)(typeptr+1); \
 				 printf("*buf: %lu, count: %i, type: %lu, source: %i)\n", (unsigned long)recvargs->buf, recvargs->count, (unsigned long)recvargs->datatype, recvargs->source); \
-				 typeptr = (NBC_Fn_type*)((NBC_Args_recv*)typeptr+1); \
+				 typeptr = (NBC_Fn_type*)((NBC_Args*)typeptr+1); \
 				 break; \
 			 case OP: \
 				 printf("[%i]	OP	 (offset %li) ", myrank, (long)typeptr-(long)schedule); \
-				 opargs = (NBC_Args_op*)(typeptr+1); \
+				 opargs = (NBC_Args*)(typeptr+1); \
 				 printf("*buf1: %lu, buf2: %lu, count: %i, type: %lu)\n", (unsigned long)opargs->buf1, (unsigned long)opargs->buf2, opargs->count, (unsigned long)opargs->datatype); \
-				 typeptr = (NBC_Fn_type*)((NBC_Args_op*)typeptr+1); \
+				 typeptr = (NBC_Fn_type*)((NBC_Args*)typeptr+1); \
 				 break; \
 			 case COPY: \
 				 printf("[%i]	COPY	 (offset %li) ", myrank, (long)typeptr-(long)schedule); \
-				 copyargs = (NBC_Args_copy*)(typeptr+1); \
+				 copyargs = (NBC_Args*)(typeptr+1); \
 				 printf("*src: %lu, srccount: %i, srctype: %lu, *tgt: %lu, tgtcount: %i, tgttype: %lu)\n", (unsigned long)copyargs->src, copyargs->srccount, (unsigned long)copyargs->srctype, (unsigned long)copyargs->tgt, copyargs->tgtcount, (unsigned long)copyargs->tgttype); \
-				 typeptr = (NBC_Fn_type*)((NBC_Args_copy*)typeptr+1); \
+				 typeptr = (NBC_Fn_type*)((NBC_Args*)typeptr+1); \
 				 break; \
 			 case UNPACK: \
 				 printf("[%i]	UNPACK	 (offset %li) ", myrank, (long)typeptr-(long)schedule); \
-				 unpackargs = (NBC_Args_unpack*)(typeptr+1); \
+				 unpackargs = (NBC_Args*)(typeptr+1); \
 				 printf("*src: %lu, srccount: %i, srctype: %lu, *tgt: %lu\n",(unsigned long)unpackargs->inbuf, unpackargs->count, (unsigned long)unpackargs->datatype, (unsigned long)unpackargs->outbuf); \
-				 typeptr = (NBC_Fn_type*)((NBC_Args_unpack*)typeptr+1); \
+				 typeptr = (NBC_Fn_type*)((NBC_Args*)typeptr+1); \
 				 break; \
 			 default: \
 				 printf("[%i] NBC_PRINT_ROUND: bad type %li at offset %li\n", myrank, (long)*typeptr, (long)typeptr-(long)schedule); \
@@ -406,7 +347,7 @@ typedef struct {
 #define NBC_CHECK_NULL(ptr) \
 { \
 	if(ptr == NULL) { \
-		printf("realloc error :-(\n"); \
+		CRASH();\
 	} \
 }
 
