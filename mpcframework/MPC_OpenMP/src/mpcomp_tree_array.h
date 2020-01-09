@@ -10,11 +10,13 @@ typedef enum
 } mpcomp_meta_tree_type_t;
 
 
+#if 0
 typedef struct mpcomp_tree_array_global_info_s
 {
     int* tree_shape;
     int max_depth;
 } mpcomp_tree_array_global_info_t;
+#endif
 
 typedef struct mpcomp_meta_tree_node_s
 { 

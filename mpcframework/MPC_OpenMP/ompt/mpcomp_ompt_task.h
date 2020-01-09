@@ -1,7 +1,7 @@
 #ifndef __MPCOMP_OMPT_TASK_H__
 #define __MPCOMP_OMPT_TASK_H__
 
-static inline void __mpcomp_ompt_task_create( mpcomp_task_t* new_task, ompt_task_type_t type, bool has_dependence)
+static inline void __mpcomp_ompt_task_create( mpcomp_task_t* new_task, ompt_task_flag_t type, bool has_dependence)
 {
 #if OMPT_SUPPORT
 	ompt_frame_t* parent_frame;

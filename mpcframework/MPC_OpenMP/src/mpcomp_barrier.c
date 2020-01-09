@@ -53,49 +53,77 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
   new_root = thread->instance->root;
 
 #if MPCOMP_TASK
-   mpcomp_taskwait();
+  mpcomp_taskwait();
 #endif /* MPCOMP_TASK */
 
-	/* Step 1: Climb in the tree */
-	b_done = c->barrier_done; /* Move out of sync region? */
-        b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
+  /* Step 1: Climb in the tree */
+  b_done = c->barrier_done; /* Move out of sync region? */
+  b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
 
-        while (b == c->barrier_num_threads && c != new_root) {
-          sctk_atomics_store_int(&(c->barrier), 0);
-          c = c->father;
-          b_done = c->barrier_done;
-          b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
-        }
+  while (b == c->barrier_num_threads && c != new_root) {
+    sctk_atomics_store_int(&(c->barrier), 0);
+    c = c->father;
+    b_done = c->barrier_done;
+    b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
+  }
 
-        /* Step 2 - Wait for the barrier to be done */
-        if (c != new_root || (c == new_root && b != c->barrier_num_threads)) {
-          /* Wait for c->barrier == c->barrier_num_threads */
-          while (b_done == c->barrier_done) {
-              sctk_thread_yield();
+  /* Step 2 - Wait for the barrier to be done */
+  if (c != new_root || (c == new_root && b != c->barrier_num_threads)) {
+#if OMPT_SUPPORT
+    if( mpcomp_ompt_is_enabled() && OMPT_Callbacks ) {
+      ompt_callback_sync_region_t callback;
+      callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync_region_wait];
+
+      if( callback ) {
+         mpcomp_thread_t *t = mvp->threads;
+         ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
+         ompt_data_t* task_data = &(MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t)->ompt_task_data );
+         const void* code_ra = __builtin_return_address( 1 );
+
+         callback( ompt_sync_region_barrier, ompt_scope_begin, parallel_data, task_data, code_ra );
+      }
+    }
+#endif /* OMPT_SUPPORT */
+
+    /* Wait for c->barrier == c->barrier_num_threads */
+    while (b_done == c->barrier_done) {
+      sctk_thread_yield();
 #if MPCOMP_TASK
-            mpcomp_task_schedule(1);
+      mpcomp_task_schedule(1);
 #endif /* MPCOMP_TASK */
-		}
-	} else {
+    }
 
-		sctk_atomics_store_int(&(c->barrier), 0);
+#if OMPT_SUPPORT
+    if( mpcomp_ompt_is_enabled() && OMPT_Callbacks ) {
+      ompt_callback_sync_region_t callback;
+      callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync_region_wait];
+
+      if( callback ) {
+         mpcomp_thread_t *t = mvp->threads;
+         ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
+         ompt_data_t* task_data = &(MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t)->ompt_task_data );
+         const void* code_ra = __builtin_return_address( 1 );
+
+         callback( ompt_sync_region_barrier, ompt_scope_end, parallel_data, task_data, code_ra );
+      }
+    }
+#endif /* OMPT_SUPPORT */
+  } else {
+    sctk_atomics_store_int(&(c->barrier), 0);
 
 #if MPCOMP_COHERENCY_CHECKING
-                mpcomp_for_dyn_coherency_end_barrier();
-                mpcomp_single_coherency_end_barrier();
+    mpcomp_for_dyn_coherency_end_barrier();
+    mpcomp_single_coherency_end_barrier();
 #endif
 
-		c->barrier_done++ ; /* No need to lock I think... */
-	}
+    c->barrier_done++ ; /* No need to lock I think... */
+  }
 
-
-	/* Step 3 - Go down */
-	while ( c->child_type != MPCOMP_CHILDREN_LEAF ) {
-		c = c->children.node[mvp->tree_rank[c->depth]];
-		c->barrier_done++; /* No need to lock I think... */
-	}
-
-
+  /* Step 3 - Go down */
+  while ( c->child_type != MPCOMP_CHILDREN_LEAF ) {
+    c = c->children.node[mvp->tree_rank[c->depth]];
+    c->barrier_done++; /* No need to lock I think... */
+  }
 #if MPCOMP_TASK
 #if MPCOMP_COHERENCY_CHECKING
 // mpcomp_task_coherency_barrier();
@@ -169,34 +197,67 @@ void __mpcomp_barrier(void) {
                t->info.num_threads);
 
 #if OMPT_SUPPORT
-	//__mpcomp_ompt_barrier_begin( false );	
+  if( mpcomp_ompt_is_enabled() && OMPT_Callbacks ) {
+    ompt_data_t* parallel_data;
+    ompt_data_t* task_data;
+
+    if( t->info.in_single ) {
+      t->info.in_single = 0;
+      ompt_work_t wstype = (t->rank == t->instance->team->info.doing_single) ? ompt_work_single_executor : ompt_work_single_other;
+      if( wstype == ompt_work_single_executor ) t->instance->team->info.doing_single = -1;
+
+      ompt_callback_work_t callback_work;
+      callback_work = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
+
+      if( callback_work ) {
+        parallel_data = &(t->instance->team->info.ompt_region_data );
+        task_data = &( t->task_infos.current_task->ompt_task_data );
+        const void* code_ra = __builtin_return_address( 0 );
+        callback_work( wstype, ompt_scope_end, parallel_data, task_data, 1, code_ra );
+      }
+    }
+
+    ompt_callback_sync_region_t callback_sync;
+    callback_sync = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync_region];
+
+    if( callback_sync ) {
+      parallel_data = &( t->instance->team->info.ompt_region_data );
+      task_data = &(MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t)->ompt_task_data );
+      const void* code_ra = __builtin_return_address( 1 );
+
+      callback_sync( ompt_sync_region_barrier, ompt_scope_begin, parallel_data, task_data, code_ra );
+    }
+  //__mpcomp_ompt_barrier_begin( false );
+  }
 #endif /* OMPT_SUPPORT */
 
-  	if (t->info.num_threads != 1)
-	{
-
-#if OMPT_SUPPORT 
-	//__mpcomp_ompt_barrier_begin( true );
-#endif /* OMPT_SUPPORT */
-
-  /* Get the corresponding microVP */
-  mpcomp_mvp_t *mvp = t->mvp;
-  sctk_assert(mvp != NULL);
-  sctk_nodebug("[%d] %s: t->mvp = %p", t->rank, __func__, t->mvp);
+  if (t->info.num_threads != 1)
+  {
+    /* Get the corresponding microVP */
+    mpcomp_mvp_t *mvp = t->mvp;
+    sctk_assert(mvp != NULL);
+    sctk_nodebug("[%d] %s: t->mvp = %p", t->rank, __func__, t->mvp);
  
-  /* Call the real barrier */
-  sctk_assert( t->info.num_threads == t->mvp->threads->info.num_threads );
-  __mpcomp_internal_full_barrier(mvp);
-
-#if OMPT_SUPPORT 
-	//__mpcomp_ompt_barrier_end( true );
-#endif /* OMPT_SUPPORT */
-}
+    /* Call the real barrier */
+    sctk_assert( t->info.num_threads == t->mvp->threads->info.num_threads );
+    __mpcomp_internal_full_barrier(mvp);
+  }
 
 #if OMPT_SUPPORT
-	//__mpcomp_ompt_barrier_end( true );
+  if( mpcomp_ompt_is_enabled() && OMPT_Callbacks ) {
+    ompt_callback_sync_region_t callback;
+    callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync_region];
+
+    if( callback ) {
+       ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
+       ompt_data_t* task_data = &(MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t)->ompt_task_data );
+       const void* code_ra = __builtin_return_address( 1 );
+
+       callback( ompt_sync_region_barrier, ompt_scope_end, parallel_data, task_data, code_ra );
+    }
+  }
+  //__mpcomp_ompt_barrier_end( true );
 #endif /* OMPT_SUPPORT */
-	
 }
 
 /* GOMP OPTIMIZED_1_0_WRAPPING */

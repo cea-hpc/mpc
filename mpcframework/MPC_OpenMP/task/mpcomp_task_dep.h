@@ -44,7 +44,7 @@ typedef enum mpcomp_task_dep_type_e {
 __UNUSED__ static char *mpcomp_task_dep_type_to_string[MPCOMP_TASK_DEP_COUNT] = {
     "MPCOMP_TASK_DEP_NONE", /*  MPCOMP_TASK_DEP_NONE    = 0 */
     "MPCOMP_TASK_DEP_IN  ", /*  MPCOMP_TASK_DEP_IN      = 1 */
-    "MPCOMP_TASK_DEP_OUT "  /*  MPCOMP_TASK_DEP_IN      = 2 */
+    "MPCOMP_TASK_DEP_OUT "  /*  MPCOMP_TASK_DEP_OUT     = 2 */
 };
 
 typedef enum mpcomp_task_dep_htable_op_e {
@@ -79,6 +79,9 @@ typedef struct mpcomp_task_dep_node_s {
   sctk_atomics_int status;
   struct mpcomp_task_dep_node_list_s *successors;
   bool if_clause;
+#if OMPT_SUPPORT
+  ompt_dependence_t* ompt_task_deps;
+#endif
 } mpcomp_task_dep_node_t;
 
 typedef struct mpcomp_task_dep_node_list_s {
@@ -143,6 +146,7 @@ static inline mpcomp_task_dep_node_t *mpcomp_task_dep_new_node(void) {
 static inline mpcomp_task_dep_node_t *
 mpcomp_task_dep_node_ref(mpcomp_task_dep_node_t *node) {
   sctk_assert(node);
+  sctk_atomics_fetch_and_incr_int(&(node->ref_counter));
   return node;
 }
 

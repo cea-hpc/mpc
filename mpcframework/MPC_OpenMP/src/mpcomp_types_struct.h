@@ -94,6 +94,8 @@ typedef struct mpcomp_new_parallel_region_info_s {
 
 #if 1 // OMPT_SUPPORT
 	ompt_data_t ompt_region_data;
+    int doing_single;
+    int in_single;
 #endif /* OMPT_SUPPORT */
 
 } mpcomp_parallel_region_t;

@@ -52,6 +52,21 @@ void mpcomp_taskgroup_start(void) {
   memset(new_taskgroup, 0, sizeof(mpcomp_task_taskgroup_t));
   new_taskgroup->prev = current_task->taskgroup;
   current_task->taskgroup = new_taskgroup;
+
+#if OMPT_SUPPORT 
+  if( mpcomp_ompt_is_enabled() && OMPT_Callbacks ) {
+    ompt_callback_sync_region_t callback;
+    callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync_region];
+
+    if( callback ) {
+       ompt_data_t* parallel_data = &( omp_thread_tls->instance->team->info.ompt_region_data );
+       ompt_data_t* task_data = &( current_task->ompt_task_data );
+       const void* code_ra = __builtin_return_address( 1 );
+
+       callback( ompt_sync_region_taskgroup, ompt_scope_begin, parallel_data, task_data, code_ra );
+    }
+  }
+#endif /* OMPT_SUPPORT */
 }
 
 void mpcomp_taskgroup_end(void) {
@@ -70,12 +85,67 @@ void mpcomp_taskgroup_end(void) {
   if (!taskgroup)
     return;
 
+#if OMPT_SUPPORT 
+  static int ompt_sync_wait = 0;
+
+  if( sctk_atomics_load_int( &( taskgroup->children_num ))) {
+    ompt_sync_wait = 1;
+
+    if( mpcomp_ompt_is_enabled() && OMPT_Callbacks ) {
+      ompt_callback_sync_region_t callback;
+      callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync_region_wait];
+
+      if( callback ) {
+        ompt_data_t* parallel_data = &( omp_thread_tls->instance->team->info.ompt_region_data );
+        ompt_data_t* task_data = &( current_task->ompt_task_data );
+        const void* code_ra = __builtin_return_address( 1 );
+
+        callback( ompt_sync_region_taskgroup, ompt_scope_begin, parallel_data, task_data, code_ra );
+      }
+    }
+  }
+#endif /* OMPT_SUPPORT */
+
   while (sctk_atomics_load_int(&(taskgroup->children_num))) {
     mpcomp_task_schedule(1);
   }
 
+#if OMPT_SUPPORT 
+  if( ompt_sync_wait ) {
+    ompt_sync_wait = 0;
+
+    if( mpcomp_ompt_is_enabled() && OMPT_Callbacks ) {
+      ompt_callback_sync_region_t callback;
+      callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync_region_wait];
+
+      if( callback ) {
+        ompt_data_t* parallel_data = &( omp_thread_tls->instance->team->info.ompt_region_data );
+        ompt_data_t* task_data = &( current_task->ompt_task_data );
+        const void* code_ra = __builtin_return_address( 1 );
+
+        callback( ompt_sync_region_taskgroup, ompt_scope_end, parallel_data, task_data, code_ra );
+      }
+    }
+  }
+#endif /* OMPT_SUPPORT */
+
   current_task->taskgroup = taskgroup->prev;
   sctk_free(taskgroup);
+
+#if OMPT_SUPPORT 
+  if( mpcomp_ompt_is_enabled() && OMPT_Callbacks ) {
+    ompt_callback_sync_region_t callback;
+    callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync_region];
+
+    if( callback ) {
+       ompt_data_t* parallel_data = &( omp_thread_tls->instance->team->info.ompt_region_data );
+       ompt_data_t* task_data = &( current_task->ompt_task_data );
+       const void* code_ra = __builtin_return_address( 1 );
+
+       callback( ompt_sync_region_taskgroup, ompt_scope_end, parallel_data, task_data, code_ra );
+    }
+  }
+#endif /* OMPT_SUPPORT */
 }
 #else  /* MPCOMP_TASKGROUP */
 void mpcomp_taskgroup_start(void) {}

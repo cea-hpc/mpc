@@ -104,9 +104,13 @@ int __mpcomp_do_single(void)
 			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
 			if( callback )
 			{
-				ompt_worksharing_type_t wstype = (retval) ? ompt_worksharing_single_executor : ompt_worksharing_single_other;
+                t->info.in_single = 1;
+                if( retval ) team->info.doing_single = t->rank;
+                ompt_data_t* parallel_data = &(team->info.ompt_region_data);
+                ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
+				ompt_work_t wstype = (retval) ? ompt_work_single_executor : ompt_work_single_other;
 				const void* code_ra = __builtin_return_address(0);	
-				callback( wstype, ompt_scope_begin, NULL, NULL, 1, code_ra);
+				callback( wstype, ompt_scope_begin, parallel_data, task_data, 1, code_ra);
 			}
 		}
 	}

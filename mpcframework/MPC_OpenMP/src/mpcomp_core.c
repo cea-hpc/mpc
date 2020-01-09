@@ -880,7 +880,7 @@ void __mpcomp_init(void) {
     {
         shape = NULL; cpus_order = NULL;
     }
-   
+  
     __mpcomp_init_omp_task_tree( nb_mvps, shape, cpus_order, icvs );
 	
 #if MPCOMP_TASK
@@ -945,7 +945,9 @@ void __mpcomp_in_order_scheduler( mpcomp_thread_t* thread )
 			if( callback )
 			{
 				ompt_data_t* parallel_data = &(thread->instance->team->info.ompt_region_data);	
-				callback( ompt_scope_begin, parallel_data, NULL, thread->rank );  
+                ompt_data_t* task_data = &( thread->task_infos.current_task->ompt_task_data );
+
+				callback( ompt_scope_begin, parallel_data, task_data, thread->instance->nb_mvps, thread->rank, ompt_task_implicit );  
 			}
 		}
 	}
@@ -962,8 +964,9 @@ void __mpcomp_in_order_scheduler( mpcomp_thread_t* thread )
 			callback = (ompt_callback_implicit_task_t) OMPT_Callbacks[ompt_callback_implicit_task];
 			if( callback )
 			{
-				ompt_data_t* parallel_data = &(thread->instance->team->info.ompt_region_data);	
-				callback( ompt_scope_end, parallel_data, NULL, thread->rank );  
+                ompt_data_t* task_data = &( thread->task_infos.current_task->ompt_task_data );
+
+				callback( ompt_scope_end, NULL, task_data, thread->instance->nb_mvps, thread->rank, ompt_task_implicit );
 			}
 		}
 	}
