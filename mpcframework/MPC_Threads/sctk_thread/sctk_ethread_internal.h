@@ -36,6 +36,7 @@
 #endif
 #include "sched.h"
 #include "mpc_common_asm.h"
+#include "mpc_common_helper.h"
 
 #include "sctk_runtime_config.h"
 #ifdef MPC_Message_Passing
@@ -402,7 +403,7 @@ extern "C"
 	  }
 	if (vp->dump != NULL)
 	  {
-	    char name[SCTK_MAX_FILENAME_SIZE];
+	    char name[MPC_COMMON_MAX_FILENAME_SIZE];
 #if 1
 	    not_implemented();
 #else
@@ -511,7 +512,7 @@ extern "C"
 	    {
 	      if (vp->dump != NULL)
 		{
-		  char name[SCTK_MAX_FILENAME_SIZE];
+		  char name[MPC_COMMON_MAX_FILENAME_SIZE];
 #if 1
 		  not_implemented();
 #else

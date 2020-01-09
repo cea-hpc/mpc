@@ -213,7 +213,7 @@ sctk_ethread_mxn_sched_dump_clean ()
 {
   /*
   sctk_ethread_t self;
-  char name[SCTK_MAX_FILENAME_SIZE];
+  char name[MPC_COMMON_MAX_FILENAME_SIZE];
   unsigned long step = 0;
   FILE *file;
   self = sctk_ethread_mxn_self ();

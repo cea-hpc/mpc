@@ -82,6 +82,7 @@
  ***********/
 
 #define MPC_COMMON_MAX_STRING_SIZE  512
+#define MPC_COMMON_MAX_FILENAME_SIZE 1024
 
 /*************
  * MIN & MAX *

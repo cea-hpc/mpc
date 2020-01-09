@@ -40,8 +40,6 @@ extern "C"
 #include "mpc_common_types.h"
 #include "sctk_keywords.h"
 
-#define SCTK_MAX_FILENAME_SIZE 1024
-#define SCTK_DBG_INFO stderr, __LINE__, __FILE__, SCTK_FUNCTION
 
 extern bool sctk_restart_mode;
 extern bool sctk_checkpoint_mode;
@@ -66,21 +64,22 @@ void MPC_printf( const char *fmt, ... );
 void sctk_debug_root( const char *fmt, ... );
 /* Print infos on processus and threads */
 char *sctk_print_debug_infos();
+
 #ifdef SCTK_DEBUG_MESSAGES
-void sctk_debug( const char *fmt, ... );
-void sctk_info( const char *fmt, ... );
+        void sctk_debug( const char *fmt, ... );
+        void sctk_info( const char *fmt, ... );
 #else
-#if defined( __GNU_COMPILER ) || defined( __INTEL_COMPILER )
-#define sctk_debug( fmt, ... ) (void) ( 0 )
-#define sctk_info( fmt, ... ) (void) ( 0 )
-#else
-static inline void sctk_debug( const char *fmt, ... )
-{
-}
-static inline void sctk_info( const char *fmt, ... )
-{
-}
-#endif
+        #if defined( __GNU_COMPILER ) || defined( __INTEL_COMPILER )
+                #define sctk_debug( fmt, ... ) (void) ( 0 )
+                #define sctk_info( fmt, ... ) (void) ( 0 )
+        #else
+                static inline void sctk_debug( const char *fmt, ... )
+                {
+                }
+                static inline void sctk_info( const char *fmt, ... )
+                {
+                }
+        #endif
 #endif
 
 #if ( defined SCTK_HAVE_PRAGMA_MESSAGE ) && ( defined SCTK_DEBUG_MESSAGES )
@@ -103,7 +102,7 @@ static inline void sctk_info( const char *fmt, ... )
 #endif
 #define UNUSED(a) (void)&a
 
-void sctk_silent_debug( const char *fmt, ... );
+
 void sctk_log( FILE *file, const char *fmt, ... );
 void sctk_warning( const char *fmt, ... );
 
@@ -153,6 +152,11 @@ static inline int sctk_safe_cast_long_int( long l )
 #else
 #define sctk_safe_cast_long_int( l ) l
 #endif
+
+
+
+#define SCTK_DBG_INFO stderr, __LINE__, __FILE__, SCTK_FUNCTION
+
 
 #define verb_abort() sctk_formated_assert_print( SCTK_DBG_INFO, \
         "Verbose abort" )
@@ -235,36 +239,37 @@ static inline void sctk_nodebug( const char *fmt, ... )
 
 //for standard assert function, rewrite but maintain -DNDEBUG convention
 #if !defined( NDEBUG ) || !defined( NO_INTERNAL_ASSERT )
-#undef assert
-#define assert( op )                                                        \
-	do                                                                      \
-	{                                                                       \
-		if ( expect_false( !( op ) ) )                                      \
-			sctk_formated_assert_print( SCTK_DBG_INFO, SCTK_STRING( op ) ); \
-	} while ( 0 )
-#endif //NDEBUG, NO_INTERNAL_ASSERT
+        #undef assert
+        #define assert( op )                                                        \
+                do                                                                      \
+                {                                                                       \
+                        if ( expect_false( !( op ) ) )                                      \
+                                sctk_formated_assert_print( SCTK_DBG_INFO, SCTK_STRING( op ) ); \
+                } while ( 0 )
+        #endif //NDEBUG, NO_INTERNAL_ASSERT
 
-/** Assume stay present independently of NDEBUG/NO_INTERNAL_ASSERT **/
-#define assume( op )                                                        \
-	do                                                                      \
-	{                                                                       \
-		if ( expect_false( !( op ) ) )                                      \
-			sctk_formated_assert_print( SCTK_DBG_INFO, SCTK_STRING( op ) ); \
-	} while ( 0 )
+        /** Assume stay present independently of NDEBUG/NO_INTERNAL_ASSERT **/
+        #define assume( op )                                                        \
+                do                                                                      \
+                {                                                                       \
+                        if ( expect_false( !( op ) ) )                                      \
+                                sctk_formated_assert_print( SCTK_DBG_INFO, SCTK_STRING( op ) ); \
+                } while ( 0 )
 
-#ifdef NO_INTERNAL_ASSERT
-#define sctk_assert( op ) (void) ( 0 )
-#define sctk_assert_func( op ) (void) ( 0 )
-#else //NO_INTERNAL_ASSERT
-#define sctk_assert_func( op ) \
-	do                         \
-	{                          \
-		op                     \
-	} while ( 0 )
-#define sctk_assert( op )                      \
-	if ( expect_false( !( op ) ) )             \
-		sctk_formated_assert_print( SCTK_DBG_INFO, \
-		                            SCTK_STRING( op ) )
+        #ifdef NO_INTERNAL_ASSERT
+                #define sctk_assert( op ) (void) ( 0 )
+                #define sctk_assert_func( op ) (void) ( 0 )
+        #else //NO_INTERNAL_ASSERT
+                #define sctk_assert_func( op ) \
+                        do                         \
+                        {                          \
+                                op                     \
+                        } while ( 0 )
+
+                #define sctk_assert( op )                      \
+                        if ( expect_false( !( op ) ) )             \
+                                sctk_formated_assert_print( SCTK_DBG_INFO, \
+                                                        SCTK_STRING( op ) )
 #endif //NO_INTERNAL_ASSERT
 
 #define sctk_only_once()                                                                             \

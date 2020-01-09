@@ -2580,7 +2580,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	kthread_t timer_thread;
 
 	struct _sctk_thread_cleanup_buffer *ptr_cleanup;
-        /*	char name[SCTK_MAX_FILENAME_SIZE]; */
+        /*	char name[MPC_COMMON_MAX_FILENAME_SIZE]; */
         sctk_thread_t *threads = NULL;
         int thread_to_join = 0;
 
@@ -2702,7 +2702,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 #else
 		FILE *last;
 		unsigned long step;
-		char task_name[SCTK_MAX_FILENAME_SIZE];
+		char task_name[MPC_COMMON_MAX_FILENAME_SIZE];
 		int error = 0;
 
 		sprintf (task_name, "%s/last_point", sctk_store_dir);
@@ -2729,7 +2729,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 
 		for (i = 0; i < total_tasks_number; i++)
 		{
-			char file_name[SCTK_MAX_FILENAME_SIZE];
+			char file_name[MPC_COMMON_MAX_FILENAME_SIZE];
 			int restart = 0;
 			int proc = 0;
 			void *self_p = NULL;

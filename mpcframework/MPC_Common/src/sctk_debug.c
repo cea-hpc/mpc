@@ -424,9 +424,6 @@ void sctk_formated_assert_print( FILE *stream, const int line, const char *file,
 	sctk_abort();
 }
 
-void sctk_silent_debug( __UNUSED__ const char *fmt, ... )
-{
-}
 
 void sctk_log( FILE *file, const char *fmt, ... )
 {
