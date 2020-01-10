@@ -25,7 +25,7 @@
 #include <sctk_types.h>
 #include <sctk_atomics.h>
 #include <sctk_spinlock.h>
-#include <sctk.h>
+
 #include "sctk_runtime_config.h"
 
 /******************************** STRUCTURE *********************************/
@@ -209,9 +209,9 @@ static inline int sctk_comm_coll_get_id_red(struct sctk_comm_coll *coll,
   return __sctk_comm_coll_get_id(coll, rank) & (coll->reduce_interleave - 1);
 }
 
-static inline struct shared_mem_reduce * sctk_comm_coll_get_red(struct sctk_comm_coll *coll, int rank)
+static inline struct shared_mem_reduce * sctk_comm_coll_get_red(struct sctk_comm_coll *coll, __UNUSED__ int rank)
 {
-  int xid = sctk_comm_coll_get_id_red(coll, rank);
+  //int xid = sctk_comm_coll_get_id_red(coll, rank);
   return &coll->shm_reduce[0];
 }
 
@@ -220,9 +220,9 @@ static inline int sctk_comm_coll_get_id_bcast(struct sctk_comm_coll *coll,
   return __sctk_comm_coll_get_id(coll, rank) & (coll->bcast_interleave - 1);
 }
 
-static inline struct shared_mem_bcast * sctk_comm_coll_get_bcast(struct sctk_comm_coll *coll, int rank)
+static inline struct shared_mem_bcast * sctk_comm_coll_get_bcast(struct sctk_comm_coll *coll, __UNUSED__ int rank)
 {
-  int xid = sctk_comm_coll_get_id_bcast(coll, rank);
+  //int xid = sctk_comm_coll_get_id_bcast(coll, rank);
   return &coll->shm_bcast[0];
 }
 
@@ -312,10 +312,6 @@ typedef struct sctk_internal_communicator_s {
 
 } sctk_internal_communicator_t;
 
-/* The fast Comm Storage */
-
-extern sctk_internal_communicator_t *sctk_communicator_array[SCTK_MAX_COMMUNICATOR_TAB];
-
 /********************************* FUNCTION *********************************/
 void sctk_set_internal_collectives ( const sctk_communicator_t id, struct sctk_internal_collectives_struct_s *tmp );
 void sctk_get_rank_size_total ( const sctk_communicator_t communicator, int *rank, int *size, int glob_rank );
@@ -325,7 +321,16 @@ void sctk_communicator_delete();
 
 int sctk_get_remote_comm_world_rank ( const sctk_communicator_t communicator, const int rank );
 int sctk_get_first_task_local ( const sctk_communicator_t communicator );
-int sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const int rank );
+
+int _sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const int rank );
+
+static inline int sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const int rank ) {
+  if( communicator == SCTK_COMM_WORLD)
+    return rank;
+  else
+    return _sctk_get_comm_world_rank(communicator, rank);
+}
+
 int sctk_get_last_task_local ( const sctk_communicator_t communicator );
 int sctk_get_nb_task_remote ( const sctk_communicator_t communicator );
 int sctk_get_nb_task_local ( const sctk_communicator_t communicator );
@@ -333,40 +338,6 @@ int sctk_get_nb_task_total ( const sctk_communicator_t communicator );
 int sctk_is_in_local_group ( const sctk_communicator_t id );
 int sctk_get_remote_leader ( const sctk_communicator_t );
 int sctk_get_local_leader ( const sctk_communicator_t );
-
-
-sctk_internal_communicator_t *sctk_check_internal_communicator ( const sctk_communicator_t communicator );
-
-
-/**
- * This method is used to check if the communicator "communicator" exist.
- * It calls the function sctk_check_internal_communicator() and check for errors.
- * @param communicator Identification number of the communicator.
- * @return the communicator structure corresponding to the identification number
- * or exit the function after displaying error.
-**/
-
-static inline sctk_internal_communicator_t *sctk_get_internal_communicator ( const sctk_communicator_t communicator )
-{
-	sctk_internal_communicator_t *tmp;
-
-	if ( communicator <= SCTK_MAX_COMMUNICATOR_TAB )
-	{
-		return sctk_communicator_array[communicator];
-	}
-	
-	tmp = sctk_check_internal_communicator ( communicator );
-
-	if ( tmp == NULL )
-	{
-		sctk_error ( "Communicator %d does not exist", communicator );
-		not_reachable();
-	}
-
-	return tmp;
-}
-
-
 
 /************************* FUNCTION ************************/
 /**
@@ -378,8 +349,12 @@ static inline sctk_internal_communicator_t *sctk_get_internal_communicator ( con
 int __sctk_is_inter_comm(const sctk_communicator_t);
 
 static inline int sctk_is_inter_comm(const sctk_communicator_t communicator) {
-  static int __thread last_comm = -2;
-  static int __thread last_val = -1;
+
+  if( communicator == SCTK_COMM_WORLD )
+    return 0;
+
+  static __thread int last_comm = -2;
+  static __thread int last_val = -1;
 
   if (last_comm == communicator) {
     return last_val;
@@ -401,8 +376,8 @@ static inline int sctk_is_inter_comm(const sctk_communicator_t communicator) {
 int __sctk_is_shared_mem(const sctk_communicator_t communicator);
 
 static inline int sctk_is_shared_mem(const sctk_communicator_t communicator) {
-  static int __thread last_comm = -2;
-  static int __thread last_val = -1;
+  static __thread int last_comm = -2;
+  static __thread int last_val = -1;
 
   if (last_comm == communicator) {
     return last_val;
@@ -419,8 +394,8 @@ static inline int sctk_is_shared_mem(const sctk_communicator_t communicator) {
 int __sctk_is_shared_node(const sctk_communicator_t communicator);
 
 static inline int sctk_is_shared_node(const sctk_communicator_t communicator) {
-  static int __thread last_comm = -2;
-  static int __thread last_val = -1;
+  static __thread int last_comm = -2;
+  static __thread int last_val = -1;
 
   if (last_comm == communicator) {
     return last_val;
@@ -438,30 +413,21 @@ int sctk_is_in_group ( const sctk_communicator_t communicator );
 int sctk_get_rank ( const sctk_communicator_t communicator, const int comm_world_rank );
 int sctk_get_node_rank_from_task_rank ( const int rank );
 
-int sctk_get_process_rank_from_task_rank_with_lock( int rank );
+int _sctk_get_process_rank_from_task_rank ( int rank );
+extern int sctk_process_number;
 
-
-/**
- * This method get the rank of the process which handle the given task.
- * @param rank rank of the task in comm world.
- * @return the rank.
-**/
 static inline int sctk_get_process_rank_from_task_rank( int rank )
 {
 #ifdef SCTK_PROCESS_MODE
 	return rank;
 #endif
-#ifndef SCTK_MIGRATION_DISABLED
-	return sctk_get_process_rank_from_task_rank_with_lock( rank );
-#endif
-	sctk_internal_communicator_t *tmp;
-	int proc_rank;
 
-	tmp = sctk_get_internal_communicator( SCTK_COMM_WORLD );
-	proc_rank = tmp->task_to_process[rank];
-
-	return proc_rank;
+	if ( sctk_process_number == 1 )
+		return 0;
+  
+  return _sctk_get_process_rank_from_task_rank(rank);
 }
+
 
 int sctk_get_comm_number();
 
@@ -475,8 +441,8 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t origin_communicator, int is_inter_comm, int rank );
 sctk_communicator_t sctk_get_local_comm_id ( const sctk_communicator_t communicator );
 sctk_communicator_t sctk_delete_communicator ( const sctk_communicator_t );
-sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list, int first );
-sctk_communicator_t sctk_create_intercommunicator_from_intercommunicator (const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list, int remote_leader, int local_com);
+sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list);
+sctk_communicator_t sctk_create_intercommunicator_from_intercommunicator (const sctk_communicator_t origin_communicator, int remote_leader, int local_com);
 struct sctk_internal_collectives_struct_s *sctk_get_internal_collectives ( const sctk_communicator_t communicator );
 
 #endif
