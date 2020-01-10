@@ -44,7 +44,7 @@ export MPC_RPREFIX
 uname=`uname -m`
 host="${uname}"
 target="$MPC_CROSS_TARGET"
-test -n "$target" && target=${host}
+test -z "$target" && target=${host}
 
 if test "${host}" = "0" -o "${target}" = "0"; then
 	echo "######################################################################"
