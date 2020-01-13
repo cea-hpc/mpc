@@ -88,7 +88,7 @@ class Mpcframework(Package):
     variant('mpc-process-mode', default=False, description='mpc-process-mode')
     variant('mpc-debug', default=False, description='debug-mode')
     variant('mpc-ft', default=False, description="Fault-Tolerance support")
-    varian('color', default=False, description="colored output");
+    variant('color', default=False, description="colored output");
 
 
     def install(self, spec, prefix):
