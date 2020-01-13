@@ -33,8 +33,6 @@
 #include "mpcomp_task.h"
 
 
-#include "mpcomp_ompt_general.h"
-
 
 /* Add header for spinning core */
 mpcomp_instance_t* __mpcomp_tree_array_instance_init( mpcomp_thread_t*, const int);

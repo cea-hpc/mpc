@@ -411,7 +411,7 @@ static inline void __mpcomp_read_env_variables()
 		OMP_MICROVP_NUMBER = 0;
 	}
 
-	if ( OMP_MICROVP_NUMBER > mpc_common_get_pu_count() )
+	if ( OMP_MICROVP_NUMBER > mpc_topology_get_pu_count() )
 	{
 		fprintf( stderr, "Warning: Number of microVPs should be at most the number "
 		         "of cores per node: %d\n"
@@ -905,6 +905,7 @@ void __mpcomp_init( void )
 				nb_mvps = 1;
 
 				if ( mpc_common_get_local_task_rank() == 0 )
+                                {
 					nb_mvps = mpc_topology_get_pu_count();
 				}
 

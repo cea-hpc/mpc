@@ -137,6 +137,7 @@ static inline int mpc_common_get_node_rank( void )
 	return __node_rank;
 }
 
+
 #ifndef MPC_Threads
 
 /**
@@ -204,16 +205,6 @@ static inline int mpc_common_get_thread_id( void )
 static inline int mpc_topology_get_pu ( void )
 {
         return 0;
-}
-
-/**
- * @brief Returns the number of PU for this process
- *
- * @return int number of pu
- */
-static inline int mpc_common_get_pu_count( void )
-{
-        return 1;
 }
 
 /* End Generic task-rank getters */

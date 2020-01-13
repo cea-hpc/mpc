@@ -24,7 +24,7 @@
 #include "utlist.h"
 #include "sctk_runtime_config.h"
 #include "mpc_common_spinlock.h"
-#include "mpc_common_topology.h"
+#include "mpc_topology.h"
 #include "mpcomp_places_env.h"
 
 static inline void mpcomp_places_restrict_bitmap( hwloc_bitmap_t res, const int nb_mvps )
@@ -845,7 +845,7 @@ mpcomp_places_get_default_include_bitmap( const int nb_mvps )
 		if ( !__default_num_threads_bitmap )
 		{
 			hwloc_bitmap_t __tmp_default_bitmap_places = hwloc_bitmap_alloc();
-           hwloc_topology_t topology = mpc_topology_get(); 
+			hwloc_topology_t topology = mpc_topology_get();
 			hwloc_bitmap_zero( __tmp_default_bitmap_places );
 
 			for ( i = 0; i < nb_mvps; i++ )
