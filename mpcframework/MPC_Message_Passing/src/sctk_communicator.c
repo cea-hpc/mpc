@@ -2042,11 +2042,15 @@ int sctk_get_node_rank_from_task_rank ( __UNUSED__ const int rank )
 /* This function is inlined in the header */
 int _sctk_get_process_rank_from_task_rank( int rank )
 {
+        if( rank == -1)
+                return -1;
+
 	sctk_internal_communicator_t *tmp;
 	int proc_rank;
 #ifdef SCTK_PROCESS_MODE
 	return rank;
 #endif
+
 
 	if ( mpc_common_get_process_count() == 1 )
 	{
