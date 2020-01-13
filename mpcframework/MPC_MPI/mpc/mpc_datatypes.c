@@ -84,21 +84,42 @@ int sctk_datatype_initialized() { return dt_init; }
 
 void sctk_datatype_init()
 {
+  static sctk_spinlock_t init_lock = SCTK_SPINLOCK_INITIALIZER;
+
+  sctk_spinlock_lock(&init_lock);
+
   if (sctk_datatype_initialized())
+  {
+    sctk_spinlock_unlock(&init_lock);
     return;
+  }
 
   __sctk_common_type_sizes =
   sctk_malloc(sizeof(size_t) * SCTK_COMMON_DATA_TYPE_COUNT);
   assume(__sctk_common_type_sizes != NULL);
   sctk_common_datatype_init();
   dt_init = 1;
+
+    sctk_spinlock_unlock(&init_lock);
 }
 
 void sctk_datatype_release()
 {
+  static sctk_spinlock_t release_lock = SCTK_SPINLOCK_INITIALIZER;
+
+  sctk_spinlock_lock(&release_lock);
+
+  if(!dt_init)
+  {
+          sctk_spinlock_unlock(&release_lock);
+          return;
+  }
+
   dt_init = 0;
   sctk_datype_name_release();
   sctk_free(__sctk_common_type_sizes);
+
+  sctk_spinlock_unlock(&release_lock);
 }
 
 /************************************************************************/

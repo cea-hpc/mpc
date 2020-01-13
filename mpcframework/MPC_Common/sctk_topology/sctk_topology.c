@@ -1898,7 +1898,6 @@ void sctk_topology_destroy (void)
             }
         }
     }
-    hwloc_topology_destroy(topology);
 }
 
 

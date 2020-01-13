@@ -656,12 +656,12 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
       sctk_call_dynamic_initializers();
 #endif
       sctk_register_thread_initial (tmp.task_id);
-      sctk_terminaison_barrier (tmp.task_id);
+      sctk_terminaison_barrier ();
       sctk_online_program = 1;
 #ifdef MPC_USE_INFINIBAND
       sctk_ib_prof_init_reference_clock();
 #endif
-      sctk_terminaison_barrier (tmp.task_id);
+      sctk_terminaison_barrier ();
     }
 #endif
 
@@ -739,9 +739,9 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   if (tmp.task_id >= 0)
     {
       sctk_nodebug ("sctk_terminaison_barrier");
-      sctk_terminaison_barrier (tmp.task_id);
+      sctk_terminaison_barrier ();
       sctk_online_program = 0;
-      sctk_terminaison_barrier (tmp.task_id);
+      sctk_terminaison_barrier ();
       sctk_nodebug ("sctk_terminaison_barrier done");
       sctk_net_finalize_task_level(tmp.task_id, tmp.virtual_processor);
       sctk_unregister_task (tmp.task_id);
@@ -1268,7 +1268,7 @@ sctk_thread_exit_cleanup ()
       if (tmp->task_id >= 0 && tmp->user_thread == 0)
 	{
 	  sctk_nodebug ("sctk_terminaison_barrier");
-	  sctk_terminaison_barrier (tmp->task_id);
+	  sctk_terminaison_barrier ();
 	  sctk_nodebug ("sctk_terminaison_barrier done");
 	  sctk_unregister_task (tmp->task_id);
 	  sctk_net_send_task_end (tmp->task_id, sctk_process_rank);

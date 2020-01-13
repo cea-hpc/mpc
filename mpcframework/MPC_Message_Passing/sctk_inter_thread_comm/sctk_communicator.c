@@ -29,6 +29,11 @@
 #include <opa_primitives.h>
 #include <uthash.h>
 #include "sctk_handle.h"
+#include "sctk_low_level_comm.h"
+
+#ifdef MPC_THREAD
+#include "sctk_thread.h"
+#endif
 
 typedef struct sctk_process_ht_s
 {
@@ -39,11 +44,11 @@ typedef struct sctk_process_ht_s
 /************************* GLOBALS *************************/
 /** communicators table **/
 static sctk_internal_communicator_t *sctk_communicator_table = NULL;
-sctk_internal_communicator_t *sctk_communicator_array[SCTK_MAX_COMMUNICATOR_TAB];
+static sctk_internal_communicator_t *sctk_communicator_array[SCTK_MAX_COMMUNICATOR_TAB];
 /** spinlock for communicators table **/
 static sctk_spin_rwlock_t sctk_communicator_local_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 static sctk_spinlock_t sctk_communicator_all_table_lock = SCTK_SPINLOCK_INITIALIZER;
-static sctk_spin_rwlock_t sctk_process_from_rank_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+
 extern volatile int sctk_online_program;
 
 /************************* FUNCTION ************************/
@@ -55,7 +60,7 @@ extern volatile int sctk_online_program;
 **/
 static inline sctk_internal_communicator_t *sctk_check_internal_communicator_no_lock ( const sctk_communicator_t communicator )
 {
-	int i=0, j=0;
+
 	sctk_internal_communicator_t *tmp = NULL;
 
 	assume ( communicator >= 0 );
@@ -63,8 +68,10 @@ static inline sctk_internal_communicator_t *sctk_check_internal_communicator_no_
 	if ( communicator >= SCTK_MAX_COMMUNICATOR_TAB )
 	{
           while (
-              sctk_spinlock_read_trylock(&sctk_communicator_local_table_lock)) {
-            mpc_thread_yield();
+            sctk_spinlock_read_trylock(&sctk_communicator_local_table_lock)) {
+            #ifdef MPC_THREAD
+	    mpc_thread_yield();
+	    #endif
           }
           //~ check in the hash table
           HASH_FIND(hh, sctk_communicator_table, &communicator,
@@ -86,13 +93,40 @@ static inline sctk_internal_communicator_t *sctk_check_internal_communicator_no_
  * @return the communicator structure corresponding to the identification number
  * or NULL if it doesn't exist.
 **/
-sctk_internal_communicator_t *sctk_check_internal_communicator ( const sctk_communicator_t communicator )
+static inline sctk_internal_communicator_t *sctk_check_internal_communicator ( const sctk_communicator_t communicator )
 {
 	sctk_internal_communicator_t *tmp;
 	tmp = sctk_check_internal_communicator_no_lock ( communicator );
 	return tmp;
 }
 
+/************************* FUNCTION ************************/
+/**
+ * This method is used to check if the communicator "communicator" exist.
+ * It calls the function sctk_check_internal_communicator() and check for errors.
+ * @param communicator Identification number of the communicator.
+ * @return the communicator structure corresponding to the identification number
+ * or exit the function after displaying error.
+**/
+static inline sctk_internal_communicator_t *sctk_get_internal_communicator ( const sctk_communicator_t communicator )
+{
+	sctk_internal_communicator_t *tmp;
+	tmp = sctk_check_internal_communicator ( communicator );
+
+	if ( tmp == NULL )
+	{
+		sctk_error ( "Communicator %d does not exist", communicator );
+
+		if ( sctk_online_program == 0 )
+		{
+			exit ( 0 );
+		}
+
+		not_reachable();
+	}
+
+	return tmp;
+}
 
 /**
  * This method is used to retrieve the collective object
@@ -364,7 +398,7 @@ static inline void sctk_communicator_intern_read_unlock ( sctk_internal_communic
 #endif
 }
 
-static inline void sctk_comm_reduce ( const sctk_communicator_t *mpc_restrict  in , sctk_communicator_t *mpc_restrict inout , size_t size , sctk_datatype_t datatype )
+static inline void sctk_comm_reduce ( const sctk_communicator_t *mpc_restrict  in , sctk_communicator_t *mpc_restrict inout , size_t size , __UNUSED__ sctk_datatype_t datatype )
 {
 	size_t i;
 
@@ -582,12 +616,12 @@ static inline sctk_communicator_t sctk_intercommunicator_get_new_id ( int local_
 	sctk_communicator_t i = 0;
 	sctk_communicator_t ti = 0;
 	sctk_communicator_t remote_ti = 0;
-	sctk_status_t status;
-	int wrank;
+
+
 	int need_clean;
-	int change_i = 1;
+
 	int tag = 628;
-	wrank = sctk_get_task_rank();
+
 	
 	sctk_nodebug ( "rank %d : get new id for intercomm, local_leader = %d, remote_leader = %d, local_root = %d, peer_comm = %d", rank, local_leader, remote_leader, local_root, peer_comm );
 
@@ -665,7 +699,6 @@ static inline sctk_communicator_t sctk_intercommunicator_get_new_id ( int local_
 			if ( comm != -1 )
 			{
 				/*Check if available*/
-				sctk_internal_communicator_t *tmp_check;
 				tmp->id = comm;
 				tmp->remote_comm->id = comm;
 				sctk_nodebug ( "Check intercomm %d", comm );
@@ -746,10 +779,10 @@ static inline sctk_communicator_t sctk_communicator_get_new_id_from_intercomm ( 
 	sctk_communicator_t i = 0;
 	sctk_communicator_t ti = 0;
 	sctk_communicator_t peer_comm = 0;
-	sctk_communicator_t remote_ti = 0;
-	sctk_status_t status;
+
+
 	int need_clean;
-	int change_i = 1;
+
 	int tag = 628;
 	sctk_nodebug ( "rank %d : get new id from intercomm %d, local_root %d, lleader %d, rleader %d", rank, origin_communicator, local_root, local_leader, remote_leader );
 
@@ -838,7 +871,6 @@ static inline sctk_communicator_t sctk_communicator_get_new_id_from_intercomm ( 
 			if ( comm != -1 )
 			{
 				/*Check if available*/
-				sctk_internal_communicator_t *tmp_check;
 				tmp->id = comm;
 				sctk_nodebug ( "check comm from intercomm %d", comm );
 				sctk_spinlock_lock ( &sctk_communicator_all_table_lock );
@@ -984,7 +1016,7 @@ int sctk_shared_mem_barrier_init(struct shared_mem_barrier *shmb, int nb_task) {
   return 0;
 }
 
-int sctk_shared_mem_barrier_release(struct shared_mem_barrier *shmb) {
+int sctk_shared_mem_barrier_release(__UNUSED__ struct shared_mem_barrier *shmb) {
   return 0;
 }
 
@@ -1202,7 +1234,7 @@ int sctk_comm_coll_init(struct sctk_comm_coll *coll, int nb_task) {
   /* Allocate coll id array */
   coll->coll_id = sctk_malloc(nb_task * sizeof(unsigned int));
   assume(coll->coll_id != NULL);
-  memset(coll->coll_id, 0, sizeof(int) * nb_task);
+  memset((void *)coll->coll_id, 0, sizeof(int) * nb_task);
 
   int i;
   /* The barrier structure */
@@ -1261,7 +1293,7 @@ int sctk_comm_coll_release(struct sctk_comm_coll *coll) {
   /* NB task for all */
   coll->comm_size = 0;
   /* Allocate coll id array */
-  sctk_free(coll->coll_id);
+  sctk_free((void*)coll->coll_id);
   coll->coll_id = NULL;
 
   int i;
@@ -1300,14 +1332,14 @@ int sctk_comm_coll_release(struct sctk_comm_coll *coll) {
 
 
 int sctk_per_node_comm_context_init(struct sctk_per_node_comm_context *ctx,
-                                     sctk_communicator_t comm, int nb_task )
+                                     __UNUSED__ sctk_communicator_t comm, int nb_task )
 {
-       sctk_shared_mem_barrier_init(&ctx->shm_barrier, nb_task);
+       return sctk_shared_mem_barrier_init(&ctx->shm_barrier, nb_task);
 }
 
 int sctk_per_node_comm_context_release( struct sctk_per_node_comm_context * ctx )
 {
-       sctk_shared_mem_barrier_release(&ctx->shm_barrier);
+       return sctk_shared_mem_barrier_release(&ctx->shm_barrier);
 }
 
 
@@ -1463,33 +1495,12 @@ void sctk_communicator_self_init()
 }
 
 
+
 /************************* FUNCTION ************************/
 /**
  * This method initializes the MPI_COMM_WORLD communicator.
  * @param nb_task Number of tasks present in MPI_COMM_WORLD.
 **/
-
-
-static int compute_process_from_rank ( int rank, int process_number, int task_number )
-{
-	int proc_rank;
-	int local_tasks;
-	int remain_tasks;
-
-	local_tasks = task_number / sctk_process_number;
-	remain_tasks = task_number % sctk_process_number;
-
-	if (rank < (local_tasks + 1) * remain_tasks)
-		proc_rank = rank / (local_tasks + 1);
-	else
-		proc_rank =
-		remain_tasks +
-		((rank - (local_tasks + 1) * remain_tasks) / local_tasks);
-
-        return proc_rank;
-}
-
-
 void sctk_communicator_world_init ( const int nb_task )
 {
 	int i;
@@ -1498,7 +1509,6 @@ void sctk_communicator_world_init ( const int nb_task )
 	int first_local;
 	int local_tasks;
 	int *process_array;
-	int *task_to_process;
 
 	pos = sctk_process_rank;
 
@@ -1517,18 +1527,22 @@ void sctk_communicator_world_init ( const int nb_task )
 	last_local = first_local + local_tasks - 1;
 
 
+	int * task_to_process = NULL;
+	if(sctk_process_number < 1024 )
+	{
+		task_to_process = sctk_malloc(sizeof(int) * nb_task);
+		assume(task_to_process);
+
+		for ( i = 0; i < nb_task; ++i )
+			/* We delay resolution to later on in sctk_get_process_rank_from_task_rank() */
+			task_to_process[i] = -1;
+	}
+
 	/* Construct the list of processes */
-	process_array = (int *)sctk_malloc ( sctk_process_number * sizeof ( int ) );
+	process_array = sctk_malloc ( sctk_process_number * sizeof ( int ) );
 
 	for ( i = 0; i < sctk_process_number; ++i )
 		process_array[i] = i;
-
-#ifdef SCTK_MIGRATION_DISABLED
-	task_to_process = (int*)sctk_malloc ( nb_task * sizeof ( int ) );
-
-	for ( i = 0; i < nb_task; ++i )
-		task_to_process[i] = compute_process_from_rank(i, sctk_process_number, nb_task);
-#endif
 
 	sctk_communicator_init_intern ( nb_task, SCTK_COMM_WORLD, last_local, first_local, local_tasks, NULL, NULL, task_to_process, process_array, sctk_process_number );
 
@@ -1561,7 +1575,6 @@ sctk_communicator_t sctk_delete_communicator ( const sctk_communicator_t comm )
 	else
 	{
 		sctk_internal_communicator_t *tmp;
-		int is_master = 0;
 		int val;
 		int max_val;
 		sctk_barrier (comm);
@@ -1573,11 +1586,13 @@ sctk_communicator_t sctk_delete_communicator ( const sctk_communicator_t comm )
 
 		if ( val == max_val - 1 )
 		{
-			is_master = 1;
 			sctk_spinlock_lock ( &sctk_communicator_all_table_lock );
 			sctk_free ( tmp->local_to_global );
 			sctk_free ( tmp->global_to_local );
 			sctk_free ( tmp->task_to_process );
+			tmp->task_to_process = NULL;
+			tmp->global_to_local = NULL;
+			tmp->local_to_global = NULL;
 			sctk_del_internal_communicator_no_lock_no_check ( comm );
 
                         if (tmp->coll.init_done) {
@@ -1586,8 +1601,6 @@ sctk_communicator_t sctk_delete_communicator ( const sctk_communicator_t comm )
 
                         sctk_free(tmp);
                         sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
-                } else {
-                  is_master = 0;
                 }
 
                 return SCTK_COMM_NULL;
@@ -1899,7 +1912,7 @@ int sctk_get_remote_comm_world_rank ( const sctk_communicator_t communicator, co
 {
 	sctk_internal_communicator_t *tmp;
 	int ret;
-	int i;
+
 
 	/* Other communicators */
 	tmp = sctk_get_internal_communicator ( communicator );
@@ -1952,11 +1965,12 @@ int sctk_get_remote_comm_world_rank ( const sctk_communicator_t communicator, co
  * @param rank rank of the task in the local group.
  * @return the rank.
 **/
-int sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const int rank )
+/* This is exported as a static inline function in the header */
+int _sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const int rank )
 {
 	sctk_internal_communicator_t *tmp;
 	int ret;
-	int i;
+
 
 	if ( communicator == SCTK_COMM_WORLD )
 		return rank;
@@ -2036,8 +2050,9 @@ void sctk_get_rank_size_total ( const sctk_communicator_t communicator, int *ran
 }
 
 
-int sctk_get_node_rank_from_task_rank ( const int rank )
+int sctk_get_node_rank_from_task_rank ( __UNUSED__ const int rank )
 {
+	not_implemented();
 	return -1;
 }
 
@@ -2045,26 +2060,55 @@ int sctk_get_node_rank_from_task_rank ( const int rank )
 /************************* FUNCTION ************************/
 /**
  * This method get the rank of the process which handle the given task.
- * This version is called when migration is on
  * @param rank rank of the task in comm world.
  * @return the rank.
 **/
-int sctk_get_process_rank_from_task_rank_with_lock ( int rank )
+/* This function is inlined in the header */
+int _sctk_get_process_rank_from_task_rank( int rank )
 {
 	sctk_internal_communicator_t *tmp;
 	int proc_rank;
 
 #ifdef SCTK_PROCESS_MODE
-        return rank;
+	return rank;
 #endif
-        tmp = sctk_get_internal_communicator(SCTK_COMM_WORLD);
 
-        sctk_communicator_intern_read_lock(tmp);
-        proc_rank = tmp->task_to_process[rank];
-        sctk_communicator_intern_read_unlock(tmp);
+	if ( sctk_process_number == 1 )
+		return 0;
+
+	tmp = sctk_get_internal_communicator( SCTK_COMM_WORLD );
+
+	if ( tmp->task_to_process != NULL )
+	{
+		sctk_communicator_intern_read_lock( tmp );
+		proc_rank = tmp->task_to_process[rank];
+		sctk_communicator_intern_read_unlock( tmp );
+
+		if(0 <= proc_rank)
+			return proc_rank;
+	}
+
+	/* Compute the task number */
+
+	int local_tasks;
+	int remain_tasks;
+	local_tasks = tmp->nb_task / sctk_process_number;
+	remain_tasks = tmp->nb_task % sctk_process_number;
+
+	if ( rank < ( local_tasks + 1 ) * remain_tasks )
+		proc_rank = rank / ( local_tasks + 1 );
+	else
+		proc_rank =
+			remain_tasks +
+			( ( rank - ( local_tasks + 1 ) * remain_tasks ) / local_tasks );
+
+	if ( tmp->task_to_process != NULL )
+	{
+		tmp->task_to_process[rank] = proc_rank;
+	}
 
 
-        return proc_rank;
+	return proc_rank;
 }
 
 /************************************************************************/
@@ -2105,6 +2149,15 @@ sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t orig
 			new_tmp = sctk_malloc ( sizeof ( sctk_internal_communicator_t ) );
 			memset ( new_tmp, 0, sizeof ( sctk_internal_communicator_t ) );
 
+			void * dup_task_to_process = tmp->task_to_process; 
+				
+			if( tmp->task_to_process )
+			{
+				dup_task_to_process = malloc(sizeof(int) * tmp->nb_task);
+				sctk_assert(dup_task_to_process != NULL);
+				memcpy(dup_task_to_process, tmp->task_to_process, sizeof(int) * tmp->nb_task);
+			}
+
 			tmp->new_comm = new_tmp;
 			sctk_communicator_init_intern_init_only ( tmp->nb_task,
 			                                          tmp->last_local,
@@ -2112,7 +2165,7 @@ sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t orig
 			                                          tmp->local_tasks,
 			                                          tmp->local_to_global,
 			                                          tmp->global_to_local,
-			                                          tmp->task_to_process,
+			                                          dup_task_to_process,
 			                                          /* FIXME: process and process_nb have not been
 			                                          * tested for now. Could aim to trouble */
 			                                          tmp->process,
@@ -2182,7 +2235,7 @@ sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t orig
 	{
 		assume ( tmp->remote_comm != NULL );
 		sctk_internal_communicator_t *new_tmp;
-		sctk_internal_communicator_t *remote_tmp;
+
 		int local_root = 0, local_leader = 0, remote_leader = 0;
 
 		if ( sctk_is_in_local_group ( origin_communicator ) )
@@ -2328,12 +2381,12 @@ sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t orig
 sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t local_comm, const int local_leader,
                                                     const sctk_communicator_t peer_comm, const int remote_leader, const int tag, const int first )
 {
-	sctk_status_t status;
+
 	sctk_communicator_t comm;
 	sctk_internal_communicator_t *tmp;
 	sctk_internal_communicator_t *local_tmp;
 	sctk_internal_communicator_t *remote_tmp;
-	int local_root = 0, i, rank, grank, nb_task_involved, local_size, remote_leader_rank,
+	int local_root = 0, i, rank, grank, local_size, remote_leader_rank,
 	    remote_size, remote_lleader, remote_rleader, rleader, lleader, local_id, remote_id;
 	int *remote_task_list;
 	/* get task id */
@@ -2467,7 +2520,7 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 		{
 			process_array[i++] = current_process->process_id;
 			HASH_DEL ( process, current_process );
-			free ( current_process );
+			//free ( current_process );
 		}
 		tmp->new_comm = local_tmp;
 		/* init new comm */
@@ -2538,7 +2591,7 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 		{
 			remote_process_array[i++] = remote_current_process->process_id;
 			HASH_DEL ( remote_process, remote_current_process );
-			free ( remote_current_process );
+			//free ( remote_current_process );
 		}
 
 		tmp->remote_comm = remote_tmp;
@@ -2719,7 +2772,7 @@ sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_
           HASH_ITER(hh, process, current_process, tmp_process) {
             process_array[i++] = current_process->process_id;
             HASH_DEL(process, current_process);
-            sctk_free(current_process);
+            //sctk_free(current_process);
           }
 
           tmp->new_comm = new_tmp;
@@ -2791,7 +2844,7 @@ sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_
  * @param is_inter_comm determine if it is an intercommunicator.
  * @return the identification number of the new communicator.
 **/
-sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list, int first )
+sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list )
 {
 	sctk_internal_communicator_t *tmp;
 	sctk_internal_communicator_t *new_tmp;
@@ -2841,7 +2894,7 @@ sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communi
 
 		local_to_global = sctk_malloc ( nb_task_involved * sizeof ( int ) );
 		global_to_local = sctk_malloc ( sctk_get_nb_task_total ( SCTK_COMM_WORLD ) * sizeof ( int ) );
-		task_to_process = sctk_malloc ( nb_task_involved * sizeof ( int ) );
+		task_to_process = sctk_malloc ( sctk_get_nb_task_total ( SCTK_COMM_WORLD ) * sizeof ( int ) );
 
 		//~ for(i = 0 ; i < sctk_get_nb_task_total(SCTK_COMM_WORLD) ; i++)
 		//~ global_to_local[i] = -1;
@@ -2875,7 +2928,7 @@ sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communi
 		{
 			process_array[i++] = current_process->process_id;
 			HASH_DEL ( process, current_process );
-			free ( current_process );
+			//free ( current_process );
 		}
 
 		tmp->new_comm = new_tmp;
@@ -2951,28 +3004,23 @@ sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communi
  * @param local_comm local communicator for local group.
  * @return the identification number of the new communicator.
 **/
-sctk_communicator_t sctk_create_intercommunicator_from_intercommunicator (const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list, int remote_leader, int local_com)
+sctk_communicator_t sctk_create_intercommunicator_from_intercommunicator (const sctk_communicator_t origin_communicator, int remote_leader, int local_com)
 {
-	sctk_internal_communicator_t * tmp;
+
 	sctk_communicator_t newintercomm;
 	sctk_communicator_t peer_comm;
-	sctk_status_t status;
-	int local_comm;
+
 	int local_leader = 0;
 	int tag = 730;
 	int first;
-	int rank, grank;
+
 	
 	sctk_nodebug("sctk_create_intercommunicator_from_intercommunicator origin_comm %d, local_comm %d", origin_communicator, local_com);
-	/* get task id */
-	rank = sctk_get_task_rank();
-	/* get group rank */
-	grank = sctk_get_rank(origin_communicator, rank);
-	local_comm = sctk_get_local_comm_id(origin_communicator);
+
 	peer_comm = sctk_get_peer_comm(origin_communicator);
 	
 	/* get comm struct */
-	tmp = sctk_get_internal_communicator(origin_communicator);
+
 	
 	if(sctk_is_in_local_group(origin_communicator))
 		first = 1;
