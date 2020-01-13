@@ -5556,17 +5556,10 @@ int __INTERNAL__PMPI_Barrier_intra_shm_on_ctx( struct shared_mem_barrier *barrie
     OPA_store_int(&barrier_ctx->phase, my_phase);
 	}
 	else
-      while (OPA_load_int(&barrier_ctx->phase) != my_phase) {
-		if ( __do_yield )
-		{
-			while ( sctk_atomics_load_int( &barrier_ctx->phase ) != my_phase )
-			{
-				sched_yield();
-			}
-		}
+
       while (OPA_load_int(&barrier_ctx->phase) != my_phase) {
 		{
-			while ( sctk_atomics_load_int( &barrier_ctx->phase ) != my_phase )
+			while ( OPA_load_int( &barrier_ctx->phase ) != my_phase )
 			{
 				sctk_cpu_relax();
 			}

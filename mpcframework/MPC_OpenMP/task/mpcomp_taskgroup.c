@@ -88,7 +88,7 @@ void mpcomp_taskgroup_end(void) {
 #if OMPT_SUPPORT 
   static int ompt_sync_wait = 0;
 
-  if( sctk_atomics_load_int( &( taskgroup->children_num ))) {
+  if( OPA_load_int( &( taskgroup->children_num ))) {
     ompt_sync_wait = 1;
 
     if( mpcomp_ompt_is_enabled() && OMPT_Callbacks ) {
@@ -106,7 +106,7 @@ void mpcomp_taskgroup_end(void) {
   }
 #endif /* OMPT_SUPPORT */
 
-  while (sctk_atomics_load_int(&(taskgroup->children_num))) {
+  while (OPA_load_int(&(taskgroup->children_num))) {
     mpcomp_task_schedule(1);
   }
 

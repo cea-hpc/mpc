@@ -121,7 +121,7 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
 	int rank, p, res, r;
 	MPI_Aint rcvext, sndext;
 	NBC_Schedule *schedule;
-	char *rbuf, inplace;
+	char *sbuf, *rbuf, inplace;
 
 	NBC_IN_PLACE( sendbuf, recvbuf, inplace );
 
@@ -179,10 +179,7 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
         }
 
         int alloc_size;
-        int round_size;
-        int i;
-        int maxr;
-        int peer;
+   
 /* The second algorithm led to segfaults
    after rebase */
 #if 1
@@ -225,7 +222,10 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
           }
         }
 #else
-
+     int round_size;
+        int i;
+        int maxr;
+        int peer;
 /* Algo Gather + Bcast */
                 if (rank == 0) {
                   alloc_size =
@@ -531,7 +531,7 @@ static inline int allred_sched_ring(int rank, int p, int count, MPI_Datatype dat
 
 
 static int NBC_Iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
-	int rank, p, res, size;
+	int rank, p, res = -1, size;
 	MPI_Aint ext;
 	NBC_Schedule *schedule;
 	enum { NBC_ARED_BINOMIAL, NBC_ARED_RING } alg;
@@ -577,10 +577,9 @@ static int NBC_Iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype 
         int recv_op_rounds = 0;
 
         int sends = 0;
-        int recvs = 0;
-        int ops = 0;
+
         int maxr = (int)ceil((log(p) / LOG2));
-        int cpts[maxr][3];
+
         int root = 0;
 
         switch (alg) {
@@ -851,7 +850,7 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
   return NBC_OK;
 }
 
-static inline int allred_sched_chain(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize) {
+static inline int allred_sched_chain(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule,  __UNUSED__ NBC_Handle *handle, int fragsize) {
 	int res, rrpeer, rbpeer, srpeer, sbpeer, numfrag, fragnum, fragcount, thiscount, bstart, bend;
 	long roffset, boffset;
 	
@@ -941,11 +940,10 @@ static inline int allred_sched_chain(int rank, int p, int count, MPI_Datatype da
 	return NBC_OK;
 }
 
-static inline int allred_sched_ring(int r, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule, NBC_Handle *handle) {
+static inline int allred_sched_ring(int r, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, __UNUSED__ int size, int ext, NBC_Schedule *schedule,  __UNUSED__ NBC_Handle *handle) {
 	int i; /* runner */
 	int segsize, *segsizes, *segoffsets; /* segment sizes and offsets per segment (number of segments == number of nodes */
 	int speer, rpeer; /* send and recvpeer */
-	int res;
 
 	if(count == 0) return NBC_OK;
 
@@ -1153,11 +1151,15 @@ static int NBC_Ialltoall( void *sendbuf, int sendcount, MPI_Datatype sendtype, v
 		printf( "Error in NBC_Init_handle(%i)\n", res );
 		return res;
 	}
+
+        res = _mpc_cl_comm_rank( comm, &rank );
 	if ( MPI_SUCCESS != res )
+        {
 		printf( "MPI Error in MPI_Comm_rank() (%i)\n", res );
 		return res;
 	}
-	res = PMPC_Comm_size( comm, &p );
+
+	res = _mpc_cl_comm_size( comm, &p );
 	if ( MPI_SUCCESS != res )
 	{
 		printf( "MPI Error in MPI_Comm_size() (%i)\n", res );
@@ -1344,7 +1346,7 @@ static int NBC_Ialltoall( void *sendbuf, int sendcount, MPI_Datatype sendtype, v
 	return MPI_SUCCESS;
 }
 
-static inline int a2a_sched_pairwise(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
+static inline int a2a_sched_pairwise(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm) {
 	int res, r, sndpeer, rcvpeer;
 	char *rbuf, *sbuf;
 
@@ -1372,7 +1374,7 @@ static inline int a2a_sched_pairwise(int rank, int p, MPI_Aint sndext, MPI_Aint 
 	return res;
 }
 
-static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
+static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, __UNUSED__  MPI_Comm comm) {
 	int res, r;
 	char *rbuf, *sbuf;
 
@@ -1396,7 +1398,7 @@ static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rc
 	return res;
 }
 
-static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
+static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, __UNUSED__  void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
 	int res, i, r, speer, rpeer, datasize, offset, virtp;
 	char *rbuf, *rtmpbuf, *stmpbuf;
 
@@ -1741,7 +1743,7 @@ static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *sch
 
 static int NBC_Ibcast( void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle *handle )
 {
-	int rank, p, res, size, segsize;
+	int rank, p, res = -1, size, segsize;
 	NBC_Schedule *schedule;
 	enum
 	{
@@ -2293,7 +2295,7 @@ static inline int red_sched_chain(int rank, int p, int root, void *sendbuf, void
 /* the non-blocking reduce */
 static int NBC_Ireduce( void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, NBC_Handle *handle )
 {
-	int rank, p, res, segsize = 0, size;
+	int rank, p, res = -1, segsize = 0, size;
 	MPI_Aint ext;
 	NBC_Schedule *schedule;
 	char *redbuf = NULL, inplace;
@@ -4713,7 +4715,7 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 					buf1 = sendargs->buf;
 				NBC_CHECK_NULL( handle->req_array );
         res = _mpc_cl_isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, handle->mycomm, __sctk_new_mpc_request (handle->req_array+(old_req_count+req_cpt-1), requests));
-				res = PMPC_Isend( buf1,
+				res = _mpc_cl_isend( buf1,
                           sendargs->count,
                           sendargs->datatype,
                           sendargs->dest,
@@ -4743,12 +4745,7 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 				}
 				NBC_CHECK_NULL( handle->req_array );
         res = _mpc_cl_irecv(buf1, recvargs->count, recvargs->datatype, recvargs->source, handle->tag, handle->mycomm, __sctk_new_mpc_request (handle->req_array+(old_req_count+req_cpt-1), requests));
-                          recvargs->count,
-                          recvargs->datatype,
-                          recvargs->source,
-                          handle->tag,
-                          handle->mycomm,
-                          __sctk_new_mpc_request( handle->req_array + ( old_req_count + req_cpt - 1 ), requests ) );
+ 
 				if ( MPI_SUCCESS != res )
 				{
 					printf( "Error in MPI_Irecv(%lu, %i, %lu, %i, %i, %lu) (%i)\n", (unsigned long) buf1, recvargs->count, (unsigned long) recvargs->datatype, recvargs->source, handle->tag, (unsigned long) handle->mycomm, res );

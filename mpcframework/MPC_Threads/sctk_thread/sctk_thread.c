@@ -2657,8 +2657,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	if (sctk_restart_mode == 0)
 	{
 		sctk_leave_no_alloc_land ();
-			host_number = (getenv("SCTK_NB_HOST") != NULL) ? atoi(getenv("SCTK_NB_HOST")) : 0;
-			mic_nb_task = (getenv("SCTK_MIC_NB_TASK") != NULL) ? atoi(getenv("SCTK_MIC_NB_TASK")) : 0;
+
 
     local_threads = total_tasks_number / mpc_common_get_process_count();
     if (total_tasks_number % mpc_common_get_process_count() > mpc_common_get_process_rank())

@@ -61,10 +61,10 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
         b = OPA_fetch_and_incr_int(&(c->barrier)) + 1;
 
   while (b == c->barrier_num_threads && c != new_root) {
-    sctk_atomics_store_int(&(c->barrier), 0);
+    OPA_store_int(&(c->barrier), 0);
     c = c->father;
     b_done = c->barrier_done;
-    b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
+    b = OPA_fetch_and_incr_int(&(c->barrier)) + 1;
   }
 
   /* Step 2 - Wait for the barrier to be done */
@@ -109,7 +109,7 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
     }
 #endif /* OMPT_SUPPORT */
   } else {
-    sctk_atomics_store_int(&(c->barrier), 0);
+    OPA_store_int(&(c->barrier), 0);
 
 #if MPCOMP_COHERENCY_CHECKING
     mpcomp_for_dyn_coherency_end_barrier();
@@ -154,11 +154,11 @@ void __mpcomp_internal_half_barrier_start( mpcomp_mvp_t *mvp )
 #endif /* MPCOMP_TASK */
 
   /* Step 1: Climb in the tree */
-  long b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
+  long b = OPA_fetch_and_incr_int(&(c->barrier)) + 1;
   while (b == c->barrier_num_threads && c != new_root) {
-    sctk_atomics_store_int(&(c->barrier), 0);
+    OPA_store_int(&(c->barrier), 0);
     c = c->father;
-    b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
+    b = OPA_fetch_and_incr_int(&(c->barrier)) + 1;
   }
 }
 
@@ -175,9 +175,9 @@ void __mpcomp_internal_half_barrier_end( mpcomp_mvp_t *mvp )
     
     root = cur_thread->instance->root; 
     const int expected_num_threads = root->barrier_num_threads;
-    while (sctk_atomics_load_int(&(root->barrier)) != expected_num_threads) 
+    while (OPA_load_int(&(root->barrier)) != expected_num_threads) 
         sctk_thread_yield();        
-    sctk_atomics_store_int( &( root->barrier ), 0); 
+    OPA_store_int( &( root->barrier ), 0); 
 }
 
 /*

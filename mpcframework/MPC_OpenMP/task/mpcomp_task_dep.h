@@ -146,7 +146,7 @@ static inline mpcomp_task_dep_node_t *mpcomp_task_dep_new_node(void) {
 static inline mpcomp_task_dep_node_t *
 mpcomp_task_dep_node_ref(mpcomp_task_dep_node_t *node) {
   sctk_assert(node);
-  sctk_atomics_fetch_and_incr_int(&(node->ref_counter));
+  OPA_fetch_and_incr_int(&(node->ref_counter));
   return node;
 }
 

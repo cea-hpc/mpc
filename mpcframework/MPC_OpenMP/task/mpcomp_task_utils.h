@@ -169,7 +169,7 @@ mpcomp_task_thread_get_numa_node_id(struct mpcomp_thread_s *thread) {
     sctk_assert(thread->mvp && thread->mvp->father);
     return thread->mvp->father->id_numa;
   }
-  return mpc_common_topo_get_numa_node_from_cpu(sctk_get_init_vp(mpc_common_get_task_rank()));
+  return  mpc_topology_get_numa_node_from_cpu(sctk_get_init_vp(mpc_common_get_task_rank()));
 }
 
 static inline void
