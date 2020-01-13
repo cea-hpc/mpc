@@ -64,7 +64,7 @@
 		<xsl:value-of select="@name"/>
 		<xsl:text>) , NULL , sctk_runtime_config_struct_init_</xsl:text>
 		<xsl:value-of select="@name"/>
-		<xsl:text>, NULL },</xsl:text>
+		<xsl:text>},</xsl:text>
 		<xsl:apply-templates select="param"/>
 		<xsl:apply-templates select="array"/>
 	</xsl:template>
@@ -90,7 +90,7 @@
 				NULL
 			</xsl:otherwise>
 		</xsl:choose>
-		<xsl:text>, NULL},</xsl:text>
+		<xsl:text>},</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
