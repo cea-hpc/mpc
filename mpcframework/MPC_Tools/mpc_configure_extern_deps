@@ -38,6 +38,34 @@ MPC_ALLOC_IS_SETUP="no"
 HYDRA_MODULE="${PWD}/../hydra_simple"
 PMI_LIB=""
 
+#
+# $1 : Package to find
+# Returns:
+# PKG_FOUND : 0 or 1 if package is located with success
+# PKG_CFLAGS : cflags for the pkg
+# PKG_LDFLAGS : ldflags for the pkg
+#
+pkg_config_locate()
+{
+        PKG_FOUND=0
+        PKG_CFLAGS=""
+        PKG_LDFLAGS=""
+
+        if test "x$#" = "x0"; then
+                return
+        fi
+
+        PKG_TO_FIND=$1
+
+
+        pkg-config --exists $PKG_TO_FIND
+        if test "x$?" = "x0" ; then
+                PKG_FOUND=1
+                PKG_CFLAGS="`pkg-config ${PKG_TO_FIND} --cflags`"
+                PKG_LDFLAGS="`pkg-config ${PKG_TO_FIND} --libs`"
+        fi
+}
+
 # Setup vars to use lib hydra
 # Params:
 # Global variales:
@@ -316,6 +344,17 @@ SCTK_CHECK_LIB_OPENCL()
 }
 
 
+sctk_enable_mpc_allocator()
+{
+        sctk_printf "MPC Allocator (mpcalloc) FOUND"
+        SCTK_CHECK_HEADER "mpcalloc.h"
+        SCTK_CHECK_HEADER "sctk_alloc_posix.h"
+        SCTK_CHECK_HEADER "sctk_alloc_on_node.h"
+        SCTK_CHECK_LDOPTION "-lmpcalloc"
+        SCTK_CHECK_OPTION "-DMPC_Allocator"
+}
+
+
 # Setup vars to use mpc allocator
 # Params :
 # Global variables :
@@ -343,12 +382,23 @@ sctk_internal_setup_mpc_allocator()
                                 error "You might check the prefix you provided for MPC_Allocator"
                         fi
 
-                        SCTK_CHECK_HEADER "mpcalloc.h"
-                        SCTK_CHECK_HEADER "sctk_alloc_posix.h"
-                        SCTK_CHECK_HEADER "sctk_alloc_on_node.h"
-                        SCTK_CHECK_LDOPTION "-lmpcalloc"
-                        SCTK_CHECK_OPTION "-DMPC_Allocator"
+                        sctk_enable_mpc_allocator
+                else
+
+                        #Attempt to locate from pkg-config
+                        pkg_config_locate "mpcalloc"
+
+                        if test "x$PKG_FOUND" = "x1"; then
+                                SCTK_CFLAGS="${SCTK_CFLAGS} $PKG_CFLAGS"
+                                SCTK_LDFLAGS="${SCTK_LDFLAGS} $PKG_LDFLAGS"
+
+                                sctk_enable_mpc_allocator
+                        else
+                                sctk_printf "MPC Allocator (mpcalloc) not found using Std. Allocator"
+                        fi
+
                 fi
+
                 MPC_ALLOC_IS_SETUP="yes"
         fi
 }
