@@ -180,8 +180,6 @@ static __inline__ sctk_alloc_vchunk sctk_alloc_get_chunk(sctk_addr_t ptr)
 	//check type and magik number
 	if (vchunk->unused_magik != SCTK_ALLOC_MAGIC_STATUS)
 	{
-
-	CRASH();
 		SCTK_PDEBUG("Bad address is %p.",ptr);
 		warning("Header content error while trying to find chunk header.");
                 warning("Did you free a system malloc chunk with MPC ?");
