@@ -22,7 +22,7 @@
 
 #include "mpc_mpi.h"
 #include "mpc_thread.h"
-
+#include "sctk_debug.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>

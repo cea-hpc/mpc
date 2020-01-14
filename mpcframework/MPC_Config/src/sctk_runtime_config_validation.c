@@ -48,9 +48,6 @@ void sctk_runtime_config_validate(struct sctk_runtime_config * config)
 	/* call all post actions */
 	sctk_runtime_config_old_getenv_compatibility(config);
 	sctk_runtime_config_override_by_getenv(config);
-#ifdef MPC_Allocator
-	sctk_runtime_config_validate_allocator(config);
-#endif
 	sctk_runtime_config_override_by_getenv_openmp(config);
 }
 
@@ -103,27 +100,6 @@ void sctk_runtime_config_override_by_getenv(struct sctk_runtime_config * config)
 
 }
 
-/********************************* FUNCTION *********************************/
-/**
- * Function to validate MPC_Allocator configuration.
-**/
-void sctk_runtime_config_validate_allocator(struct sctk_runtime_config * config)
-{
-	/* vars */
-	//const char * scope = config->modules.allocator.scope;
-
-	/* check some integer options */
-	/** @TODO Maybe add constrain checker in config-meta.xml format (field constrain='...') **/
-	assume_m(config->modules.allocator.realloc_factor >= 1,
-	         "Option modules.allocator.realloc_factor must be greater or equal to 1, get %d.",
-	         config->modules.allocator.realloc_factor);
-
-	/* check scope option */
-	/* TODO re-enable this when implemented */
-	/*assume_m(scope != NULL,"Invalid NULL or empty value for allocator.scope.");
-	if (strcmp(scope,"process") != 0 && strcmp(scope,"thread") != 0 && strcmp(scope,"vp") != 0)
-		sctk_fatal("Invalid configuration value for allocator.scope : %s, require (process | thread | vp)",scope);*/
-}
 
 /********************************* FUNCTION *********************************/
 /**

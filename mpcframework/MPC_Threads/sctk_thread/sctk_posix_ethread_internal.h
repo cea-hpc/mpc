@@ -335,7 +335,7 @@ extern "C"
 	sctk_thread_mutex_lock (&lock);
 	if (__sctk_ethread_once_initialized (once_control))
 	  {
-#ifdef MPC_PosixAllocator
+#ifdef MPC_Allocator
 #ifdef SCTK_USE_TLS
 	    sctk_add_global_var ((void *) once_control,
 				 sizeof (sctk_ethread_once_t));

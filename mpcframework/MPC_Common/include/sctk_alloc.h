@@ -64,7 +64,7 @@
 #endif
 
 
-#ifndef MPC_PosixAllocator
+#ifndef MPC_Allocator
 #include "sctk_no_alloc.h"
 #else
 #include <sctk_alloc_posix.h>

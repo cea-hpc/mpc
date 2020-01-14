@@ -20,7 +20,6 @@
 #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
 #                                                                      #
 ########################################################################
-avail_module MPC_Allocator
 need_module MPC_Common
 need_module MPC_Config
 need_module MPC_Accelerators

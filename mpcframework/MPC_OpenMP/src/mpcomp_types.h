@@ -25,6 +25,7 @@
 #ifndef __MPCOMP_TYPES_H__
 #define __MPCOMP_TYPES_H__
 
+#include "sctk_debug.h"
 #include <mpc_common_asm.h>
 #include "sctk_context.h"
 #include "mpc_common_types.h"

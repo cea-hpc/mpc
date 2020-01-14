@@ -9705,7 +9705,7 @@ void __sctk_init_mpi_op() {
   }
   sctk_thread_mutex_unlock(&lock);
 
-#ifdef MPC_PosixAllocator
+#ifdef MPC_Allocator
   sctk_add_global_var(defined_op, sizeof(defined_op));
 #endif
 

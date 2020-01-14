@@ -104,7 +104,7 @@ void
 sctk_thread_init (void)
 {
   sctk_thread_tls = sctk_get_current_alloc_chain();
-#ifdef MPC_PosixAllocator
+#ifdef MPC_Allocator
   assert(sctk_thread_tls != NULL);
 #endif
 #ifdef SCTK_CHECK_CODE_RETURN

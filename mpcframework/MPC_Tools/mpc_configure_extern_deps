@@ -34,6 +34,7 @@ OPENIB_IS_SETUP="no"
 PORTALS_IS_SETUP="no"
 LIBXML_IS_SETUP="no"
 LIBSCTK_ARCH_IS_SETUP="no"
+MPC_ALLOC_IS_SETUP="no"
 HYDRA_MODULE="${PWD}/../hydra_simple"
 PMI_LIB=""
 
@@ -313,6 +314,58 @@ SCTK_CHECK_LIB_OPENCL()
 	SCTK_CHECK_OPTION "-DMPC_USE_OPENCL"
 	end_section
 }
+
+
+# Setup vars to use mpc allocator
+# Params :
+# Global variables :
+#   - MPC_ALLOCATOR_USER_PREFIX : Prefix used to search allocator
+sctk_internal_setup_mpc_allocator()
+{
+	if test "$MPC_ALLOC_IS_SETUP" != "yes"; then
+                if test "$MPC_ALLOCATOR_USER_PREFIX" != "none"; then
+                        #We are relying on a provided OpenPA
+                        if [ -e "$MPC_ALLOCATOR_USER_PREFIX/include/mpcalloc.h" ]; then
+                                SCTK_CFLAGS="${SCTK_CFLAGS} -I`echo \"$MPC_ALLOCATOR_USER_PREFIX\"/include/`"
+                                SCTK_CFLAGS="${SCTK_CFLAGS} -I`echo \"$MPC_ALLOCATOR_USER_PREFIX\"/include/mpcalloc/`"
+                        else
+                                sctk_printf "Could not locate mpcalloc.h header in directory $MPC_ALLOCATOR_USER_PREFIX/include/"
+                                error "You might check the prefix you provided for MPC_Allocator"
+                        fi
+
+                        #setup rpaths and -L
+                        if [ -e "$MPC_ALLOCATOR_USER_PREFIX/lib/libmpcalloc.so" ]; then
+                                SCTK_LDFLAGS="${SCTK_LDFLAGS} -L`echo \"$MPC_ALLOCATOR_USER_PREFIX\"`/lib  -Wl,-rpath,`echo \"$MPC_ALLOCATOR_USER_PREFIX\"`/lib"
+                                ADD_TO_LIBRARY_PATH="$MPC_ALLOCATOR_USER_PREFIX/lib:$ADD_TO_LIBRARY_PATH"
+                                SCTK_ARFLAGS="${SCTK_ARFLAGS} $MPC_ALLOCATOR_USER_PREFIX/lib/libmpcalloc.so"
+                        else
+                                sctk_printf "Could not locate libmpcalloc.so in directory $MPC_ALLOCATOR_USER_PREFIX/lib/"
+                                error "You might check the prefix you provided for MPC_Allocator"
+                        fi
+
+                        SCTK_CHECK_HEADER "mpcalloc.h"
+                        SCTK_CHECK_HEADER "sctk_alloc_posix.h"
+                        SCTK_CHECK_HEADER "sctk_alloc_on_node.h"
+                        SCTK_CHECK_LDOPTION "-lmpcalloc"
+                        SCTK_CHECK_OPTION "-DMPC_Allocator"
+                fi
+                MPC_ALLOC_IS_SETUP="yes"
+        fi
+}
+
+
+SCTK_CHECK_MPC_ALLOCATOR()
+{
+	#mark test section
+	begin_section MPC_Allocator
+
+	#setup if needed
+	sctk_internal_setup_mpc_allocator
+
+	#end of test section
+	end_section
+}
+
 
 
 # Setup vars to use lib openpa

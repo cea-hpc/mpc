@@ -363,10 +363,11 @@ begin_section Valgrind
 check_debug
 end_section
 
+SCTK_CHECK_MPC_ALLOCATOR
+
 SCTK_CHECK_LIB_OPENPA
 
 SCTK_CHECK_LIBSCTK_ARCH
-
 
 SCTK_CHECK_LIB_HWLOC
 

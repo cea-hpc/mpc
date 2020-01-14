@@ -226,6 +226,7 @@ SCTK_MPC_MMAP="0"
 SCTK_VALGRIND_MEMCHECK='0'
 HWLOC_USER_PREFIX=""
 OPENPA_USER_PREFIX=""
+MPC_ALLOCATOR_USER_PREFIX="none"
 OPENIB_USER_PREFIX=""
 PORTALS_USER_PREFIX=""
 CUDA_USER_PREFIX=""
@@ -503,6 +504,9 @@ for arg in "$@" ; do
     ;;
     --with-openpa=*)
     OPENPA_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openpa=//g'`"
+    ;;
+    --with-mpcallocator=*)
+    MPC_ALLOCATOR_USER_PREFIX="`echo A$arg | sed -e 's/A--with-mpcallocator=//g'`"
     ;;
     --with-openib=*)
     OPENIB_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openib=//g'`"

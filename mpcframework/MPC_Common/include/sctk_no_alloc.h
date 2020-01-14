@@ -30,7 +30,7 @@ extern "C"
 
 /********************  HEADERS  *********************/
 #include "sctk_config.h"
-#ifdef MPC_PosixAllocator
+#ifdef MPC_Allocator
 #error "don't have do be included"
 #endif
 

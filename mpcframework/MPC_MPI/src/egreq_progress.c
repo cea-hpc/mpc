@@ -1,5 +1,7 @@
 #include "egreq_progress.h"
 
+#include "sctk_debug.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>

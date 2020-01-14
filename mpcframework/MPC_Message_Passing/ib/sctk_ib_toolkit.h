@@ -23,6 +23,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include "sctk_debug.h"
 #include "sctk_launch.h"
 #include "string.h"
 
