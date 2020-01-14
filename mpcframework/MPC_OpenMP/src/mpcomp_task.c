@@ -2139,6 +2139,24 @@ void _mpc_task_wait( void )
 	sctk_assert( omp_thread_tls );
 	sctk_assert( omp_thread_tls->info.num_threads > 0 );
 
+#if OMPT_SUPPORT
+  static int ompt_sync_wait = 0;
+
+  if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks ) {
+    ompt_callback_sync_region_t callback;
+    callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync_re
+
+    if( callback ) {
+       ompt_data_t* parallel_data = &( omp_thread_tls->instance->team->info.ompt_
+       ompt_data_t* task_data =
+         &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(omp_thread_tls)->ompt_task_data )
+       const void* code_ra = __builtin_return_address( 1 );
+
+       callback( ompt_sync_region_taskwait, ompt_scope_begin, parallel_data, task_data, code_ra );
+    }
+  }
+#endif /* OMPT_SUPPORT */
+
 	/* Perform this construct only with multiple threads
 	 * (with one threads, tasks are schedulded directly,
 	 * therefore taskwait has no effect)
@@ -2146,8 +2164,27 @@ void _mpc_task_wait( void )
 	if ( omp_thread_tls->info.num_threads > 1 )
 	{
 		current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( omp_thread_tls );
-		sctk_assert(
-		    current_task ); // Fail if tasks disable...(from full barrier call)
+
+                sctk_assert(current_task); // Fail if tasks disable...(from full barrier call
+
+                #if OMPT_SUPPORT
+                if( sctk_atomics_load_int(&(current_task->refcount)) != 1) {
+                ompt_sync_wait = 1;
+
+                if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks ) {
+                        ompt_callback_sync_region_t callback;
+                        callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_syn
+
+                        if( callback ) {
+                        ompt_data_t* parallel_data = &( omp_thread_tls->instance->team->info.o
+                        ompt_data_t* task_data = &( current_task->ompt_task_data );
+                        const void* code_ra = __builtin_return_address( 1 );
+
+                        callback( ompt_sync_region_taskwait, ompt_scope_begin, parallel_data, task_data, code_ra );
+                        }
+                }
+                }
+                #endif /* OMPT_SUPPORT */
 
 		/* Look for a children tasks list */
 		while ( OPA_load_int( &( current_task->refcount ) ) != 1 )
@@ -2156,6 +2193,26 @@ void _mpc_task_wait( void )
 			 * prevent recursive calls to _mpc_task_wait with argument 0 */
 			_mpc_task_schedule( 0 );
 		}
+
+                #if OMPT_SUPPORT
+                if( ompt_sync_wait ) {
+                        ompt_sync_wait = 0;
+
+                        if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks ) {
+                                ompt_callback_sync_region_t callback;
+                                callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_syn
+
+                                if( callback ) {
+                                ompt_data_t* parallel_data = &( omp_thread_tls->instance->team->info.o
+                                ompt_data_t* task_data = &( current_task->ompt_task_data );
+                                const void* code_ra = __builtin_return_address( 1 );
+
+                                callback( ompt_sync_region_taskwait, ompt_scope_begin, parallel_data, task_data, code_ra );
+                                }
+                        }
+                }
+                #endif /* OMPT_SUPPORT */
+
 	}
 
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
@@ -2170,6 +2227,23 @@ void _mpc_task_wait( void )
 	}
 
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
+
+
+        #if OMPT_SUPPORT
+        if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks ) {
+        ompt_callback_sync_region_t callback;
+        callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync_
+
+        if( callback ) {
+                ompt_data_t* parallel_data = &( omp_thread_tls->instance->team->info.omp
+                ompt_data_t* task_data =
+                &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(omp_thread_tls)->ompt_task_data
+                const void* code_ra = __builtin_return_address( 1 );
+
+                callback( ompt_sync_region_taskwait, ompt_scope_begin, parallel_data, task_data, code_ra );
+        }
+        }
+        #endif /* OMPT_SUPPORT */
 }
 
 /**
@@ -2434,6 +2508,7 @@ static inline mpcomp_task_dep_node_t * ___task_dep_new_node( void )
 static inline mpcomp_task_dep_node_t * ___task_dep_node_ref( mpcomp_task_dep_node_t *node )
 {
 	sctk_assert( node );
+        OPA_fetch_and_incr_int(&(node->ref_counter));
 	return node;
 }
 
@@ -2599,6 +2674,10 @@ static inline int ___task_dep_process( mpcomp_task_dep_node_t *task_node,
                                        mpcomp_task_dep_ht_table_t *htable,
                                        void **depend )
 {
+        sctk_assert(task_node);
+        sctk_assert(htable);
+        sctk_assert(depend);
+
 	size_t i, j;
 	int predecessors_num;
 	mpcomp_task_dep_ht_entry_t *entry;
@@ -2612,10 +2691,19 @@ static inline int ___task_dep_process( mpcomp_task_dep_node_t *task_node,
 	}
 
 	// Filter redundant value
+#if OMPT_SUPPORT
+  uintptr_t task_already_process_num = 0;
+
+  ompt_dependence_t* task_deps =
+    (ompt_dependence_t*) sctk_malloc( sizeof( ompt_dependence_t) * tot_deps_num );
+  sctk_assert( task_deps );
+  memset( task_deps, 0, sizeof( ompt_dependence_t) * tot_deps_num );
+#else
 	size_t task_already_process_num = 0;
 	uintptr_t *task_already_process_list =
 	    ( uintptr_t * ) sctk_malloc( sizeof( uintptr_t ) * tot_deps_num );
 	sctk_assert( task_already_process_list );
+#endif /* OMPT_SUPPORT */
 	predecessors_num = 0;
 
 	for ( i = 0; i < tot_deps_num; i++ )
@@ -2627,13 +2715,29 @@ static inline int ___task_dep_process( mpcomp_task_dep_node_t *task_node,
 		    ( i < out_deps_num ) ? MPCOMP_TASK_DEP_OUT : MPCOMP_TASK_DEP_IN;
 		sctk_assert( task_already_process_num < tot_deps_num );
 
+                #if OMPT_SUPPORT
+                ompt_dependence_type_t ompt_type = (i < out_deps_num) ?
+                ompt_dependence_type_out : ompt_dependence_type_in;
+                #endif /* OMPT_SUPPORT */
+
+
 		for ( j = 0; j < task_already_process_num; j++ )
 		{
+#if OMPT_SUPPORT
+      if( (uintptr_t)task_deps[j].variable.ptr == addr ) {
+        if( task_deps[j].dependence_type != ompt_dependence_type_inout
+              && ompt_type != task_deps[j].dependence_type )
+          task_deps[j].dependence_type = ompt_dependence_type_inout;
+        redundant = 1;
+        break;
+      }
+#else
 			if ( task_already_process_list[j] == addr )
 			{
 				redundant = 1;
 				break;
 			}
+#endif /* OMPT_SUPPORT */
 		}
 
 		sctk_nodebug( "task: %p deps: %p redundant : %d \n", task_node, addr,
@@ -2645,7 +2749,13 @@ static inline int ___task_dep_process( mpcomp_task_dep_node_t *task_node,
 			continue;
 		}
 
+                #if OMPT_SUPPORT
+                task_deps[task_already_process_num].variable.ptr = (void*) addr;
+                task_deps[task_already_process_num].dependence_type = ompt_type;
+                task_already_process_num++;
+                #else
 		task_already_process_list[task_already_process_num++] = addr;
+                #endif /* OMPT_SUPPORT */
 		entry = ___task_dep_ht_add( htable, addr );
 		sctk_assert( entry );
 		last_out = entry->last_out;
@@ -2719,7 +2829,12 @@ static inline int ___task_dep_process( mpcomp_task_dep_node_t *task_node,
 		}
 	}
 
+#if OMPT_SUPPORT
+  task_node->ompt_task_deps = task_deps;
+  depend[0] = (void*) task_already_process_num;
+#else
 	sctk_free( task_already_process_list );
+#endif /* OMPT_SUPPORT */
 	return predecessors_num;
 }
 
@@ -2774,6 +2889,15 @@ void _mpc_task_dep_new_finalize( mpcomp_task_t *task )
 		___task_dep_node_unref( succ_node );
 		sctk_free( list_elt );
 	}
+
+
+#if OMPT_SUPPORT
+  if( task_node->ompt_task_deps ) {
+    sctk_free( task_node->ompt_task_deps );
+    task_node->ompt_task_deps = NULL;
+  }
+#endif /* OMPT_SUPPORT */
+
 
 	___task_dep_node_unref( task_node );
 	return;
@@ -2837,39 +2961,7 @@ void _mpc_task_new_with_deps( void ( *fn )( void * ), void *data,
 	memset( new_task->task_dep_infos, 0, sizeof( mpcomp_task_dep_task_infos_t ) );
 	/* TODO remove redundant assignement (see ___task_dep_new_node) */
 	task_node->task = NULL;
-#if OMPT_SUPPORT
 
-	if ( _mpc_omp_ompt_is_enabled() )
-	{
-		if ( OMPT_Callbacks )
-		{
-			ompt_callback_task_dependences_t callback;
-			callback = ( ompt_callback_task_dependences_t ) OMPT_Callbacks[ompt_callback_task_dependences];
-
-			if ( callback )
-			{
-				uintptr_t i, tot_deps_num, out_deps_num;
-				ompt_task_dependence_t *ompt_task_deps;
-				tot_deps_num = ( uintptr_t ) depend[0];
-				out_deps_num = ( uintptr_t ) depend[1];
-				ompt_task_deps = ( ompt_task_dependence_t * ) sctk_malloc( sizeof( ompt_task_dependence_t ) * tot_deps_num );
-				sctk_assert( ompt_task_deps );
-
-				for ( i = 0; i < tot_deps_num; i++ )
-				{
-					ompt_task_dependence_flag_t dep_flag = 0;
-					dep_flag = ( i < out_deps_num ) ? ompt_task_dependence_type_out : ompt_task_dependence_type_in;
-					ompt_task_deps[i].variable_addr = ( void * ) depend[i + 2];
-					ompt_task_deps[i].dependence_flags = dep_flag;
-				}
-
-				new_task->ompt_task_data = ompt_data_none;
-				callback( &( new_task->ompt_task_data ), ompt_task_deps, tot_deps_num );
-			}
-		}
-	}
-
-#endif /* OMPT_SUPPORT */
 	/* Can't be execute by release func */
 	OPA_store_int( &( task_node->predecessors ), 0 );
 	OPA_store_int( &( task_node->status ),
@@ -2881,6 +2973,21 @@ void _mpc_task_new_with_deps( void ( *fn )( void * ), void *data,
 	new_task->task_dep_infos->node = task_node;
 	/* Should be remove TOTEST */
 	OPA_read_write_barrier();
+
+#if OMPT_SUPPORT
+  if( mpcomp_ompt_is_enabled() && OMPT_Callbacks ) {
+    ompt_callback_dependences_t callback;
+    callback = (ompt_callback_dependences_t) OMPT_Callbacks[ompt_callback_dependences];
+
+    if( callback ) {
+      int tot_deps_num = (int) depend[0];
+
+      callback( &( new_task->ompt_task_data ), new_task->task_dep_infos->node->ompt_task_deps, tot_deps_num );
+    }
+  }
+#endif
+
+
 	/* task_node->predecessors can be update by release task */
 	OPA_add_int( &( task_node->predecessors ), predecessors_num );
 	OPA_store_int( &( task_node->status ),
@@ -2938,6 +3045,22 @@ void _mpc_task_taskgroup_start( void )
 	memset( new_taskgroup, 0, sizeof( mpcomp_task_taskgroup_t ) );
 	new_taskgroup->prev = current_task->taskgroup;
 	current_task->taskgroup = new_taskgroup;
+
+
+        #if OMPT_SUPPORT
+        if( mpcomp_ompt_is_enabled() && OMPT_Callbacks ) {
+        ompt_callback_sync_region_t callback;
+        callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync_re
+
+        if( callback ) {
+        ompt_data_t* parallel_data = &( omp_thread_tls->instance->team->info.ompt_
+        ompt_data_t* task_data = &( current_task->ompt_task_data );
+        const void* code_ra = __builtin_return_address( 1 );
+
+        callback( ompt_sync_region_taskgroup, ompt_scope_begin, parallel_data, tas
+        }
+        }
+        #endif /* OMPT_SUPPORT */
 }
 
 void _mpc_task_taskgroup_end( void )
@@ -2956,13 +3079,71 @@ void _mpc_task_taskgroup_end( void )
 		return;
 	}
 
+#if OMPT_SUPPORT
+  static int ompt_sync_wait = 0;
+
+  if( sctk_atomics_load_int( &( taskgroup->children_num ))) {
+    ompt_sync_wait = 1;
+
+    if( mpcomp_ompt_is_enabled() && OMPT_Callbacks ) {
+      ompt_callback_sync_region_t callback;
+      callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync_
+
+      if( callback ) {
+        ompt_data_t* parallel_data = &( omp_thread_tls->instance->team->info.ompt
+        ompt_data_t* task_data = &( current_task->ompt_task_data );
+        const void* code_ra = __builtin_return_address( 1 );
+
+        callback( ompt_sync_region_taskgroup, ompt_scope_begin, parallel_data, ta
+      }
+    }
+  }
+#endif /* OMPT_SUPPORT */
+
 	while ( OPA_load_int( &( taskgroup->children_num ) ) )
 	{
 		_mpc_task_schedule( 1 );
 	}
 
+#if OMPT_SUPPORT
+  if( ompt_sync_wait ) {
+    ompt_sync_wait = 0;
+
+    if( mpcomp_ompt_is_enabled() && OMPT_Callbacks ) {
+      ompt_callback_sync_region_t callback;
+      callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync_
+
+      if( callback ) {
+        ompt_data_t* parallel_data = &( omp_thread_tls->instance->team->info.ompt
+        ompt_data_t* task_data = &( current_task->ompt_task_data );
+        const void* code_ra = __builtin_return_address( 1 );
+
+        callback( ompt_sync_region_taskgroup, ompt_scope_end, parallel_data, task
+      }
+    }
+  }
+#endif /* OMPT_SUPPORT */
+
+
 	current_task->taskgroup = taskgroup->prev;
 	sctk_free( taskgroup );
+
+
+#if OMPT_SUPPORT
+  if( mpcomp_ompt_is_enabled() && OMPT_Callbacks ) {
+    ompt_callback_sync_region_t callback;
+    callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync_re
+
+    if( callback ) {
+       ompt_data_t* parallel_data = &( omp_thread_tls->instance->team->info.ompt_
+       ompt_data_t* task_data = &( current_task->ompt_task_data );
+       const void* code_ra = __builtin_return_address( 1 );
+
+       callback( ompt_sync_region_taskgroup, ompt_scope_end, parallel_data, task_
+    }
+  }
+#endif /* OMPT_SUPPORT */
+
 }
 #else  /* MPCOMP_TASKGROUP */
 void _mpc_task_taskgroup_start( void )

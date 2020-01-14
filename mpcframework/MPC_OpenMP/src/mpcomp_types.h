@@ -558,6 +558,9 @@ typedef struct mpcomp_task_dep_node_s {
   OPA_int_t status;
   struct mpcomp_task_dep_node_list_s *successors;
   bool if_clause;
+#if OMPT_SUPPORT
+  ompt_dependence_t* ompt_task_deps;
+#endif
 } mpcomp_task_dep_node_t;
 
 typedef struct mpcomp_task_dep_node_list_s {
