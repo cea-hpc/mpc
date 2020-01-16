@@ -9,6 +9,17 @@ stages:
   - Applications
   - Finalization
 
+.run_by_all: &run_by_all
+  only:
+  - branches
+
+.run_by_main: &run_by_main
+  only:
+  - master
+  - devel
+  - pt_devel
+  - merge_requests
+
 ############################
 ##### EXTRA ACTIONS ########
 ############################
@@ -20,6 +31,7 @@ stages:
 # both .pre and .post cannot be scheduled (thus, why not using user-defined pre and post
 # to avoid them to be run systematically ?)
 Env Sanitize:
+  <<: *run_by_main
   stage: Initialization
   script:
     - mkdir -p $HOME/GL_$CI_PIPELINE_ID/{build,install,test}
@@ -30,6 +42,7 @@ Env Sanitize:
 # This implies a probable issue when multiple piplines are run concurrently on the same project :(
 # Please read the CAUTION above !
 Artifact Deletion:
+  <<: *run_by_main
   stage: Finalization
   allow_failure: true
   when: on_success
@@ -38,6 +51,7 @@ Artifact Deletion:
     - rm -rf $HOME/$CI_PIPELINE_ID/
 
 Resource Relinquishing:
+  <<: *run_by_main
   stage: Finalization
   allow_failure: true
   when: always
@@ -54,6 +68,7 @@ Resource Relinquishing:
 
 # MPC should be built (almost) before anything else
 MPC Compilation:
+  <<: *run_by_main
   stage: Builds
   script:
   - cd $HOME/GL_$CI_PIPELINE_ID/build
@@ -65,18 +80,21 @@ MPC Compilation:
 
 # a BASIC one, to stop the pipeline early in case of major issue (not able to compile/run a simple test)
 Simple run:
+  <<: *run_by_main
   stage: Basic Testing
   script:
     - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
     - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=simple --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/simple
 
 MPC Config:
+  <<: *run_by_main
   stage: Basic Testing
   script:
     - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
     - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPC_Config --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/mpc_config
 
 Fortran:
+  <<: *run_by_main
   stage: Basic Testing
   script:
     - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
@@ -90,24 +108,28 @@ Fortran:
 
 # a regular test, to assess some basic MPC feature
 Privatization:
+  <<: *run_by_main
   stage: Regular Testing
   script:
     - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
     - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=gcc --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/privatization
 
 Message Passing:
+  <<: *run_by_main
   stage: Regular Testing
   script:
     - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
     - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/MessagePassing --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/mp
 
 OpenMP:
+  <<: *run_by_main
   stage: Regular Testing
   script:
     - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
     - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=OpenMP/BOTS --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/omp
 
 Fortran 90:
+  <<: *run_by_main
   stage: Regular Testing
   script:
     - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
@@ -115,24 +137,28 @@ Fortran 90:
 
 # a larger test, known to take more time and to stress the runtime a bit more than previous jobs
 IMB (Check):
+  <<: *run_by_main
   stage: Benchmarks
   script:
     - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
     - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/IMB/check --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/imb
 
 Communicators (ANL):
+  <<: *run_by_main
   stage: Benchmarks
   script:
     - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
     - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/Intel_ANL/communicators --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/comms
 
 Lulesh:
+  <<: *run_by_main
   stage: Applications
   script:
     - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
     - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=applications/lulesh --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/lulesh
 
 MiniFE:
+  <<: *run_by_main
   stage: Applications
   script:
     - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
