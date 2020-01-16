@@ -49,4 +49,4 @@ RUN yum install -y --nogpgcheck \
 	gdb \
 	htop \
 	&& yum clean all
-USER myuser
+USER mpcuser

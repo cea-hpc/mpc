@@ -50,5 +50,5 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 	htop \
 	&& apt-get autoremove -y \
 	&& rm -rf /var/lib/apt/lists/*
-USER myuser
+USER mpcuser
 
