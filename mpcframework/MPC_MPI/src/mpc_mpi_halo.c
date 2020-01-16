@@ -621,7 +621,7 @@ static inline int __sctk_mpi_halo_exchange_compute_valency( struct sctk_mpi_halo
 	PMPI_Allreduce( valency_array, valency_array_recv, size, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
 	
 	/* Free send array */
-	free( valency_array );
+	sctk_free( valency_array );
 	/* Keep only received data */
 	valency_array = valency_array_recv;
 	
@@ -629,7 +629,7 @@ static inline int __sctk_mpi_halo_exchange_compute_valency( struct sctk_mpi_halo
 	int expected_messages = valency_array[ rank ];
 	
 	/* We are now done with the valency array */
-	free( valency_array );
+	sctk_free( valency_array );
 	
 	return expected_messages;
 }
@@ -798,7 +798,6 @@ int sctk_mpi_halo_exchange_commit( struct sctk_mpi_halo_exchange_s * ex )
 
 int sctk_mpi_halo_iexchange( struct sctk_mpi_halo_exchange_s *ex )
 {
-	PMPI_Barrier( MPI_COMM_WORLD );
 	/* Trigger All requests */
 	struct sctk_mpi_halo_exchange_action_s * current_action = ex->halo_actions;
 	
@@ -859,8 +858,6 @@ int sctk_mpi_halo_exchange_wait( struct sctk_mpi_halo_exchange_s *ex )
 	{
 		sctk_free( req );
 	}
-	
-	PMPI_Barrier( MPI_COMM_WORLD );
 	
 	return 0;
 }
