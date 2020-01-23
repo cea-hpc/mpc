@@ -27,7 +27,7 @@
 #include <sctk_config.h>
 #include <sctk_debug.h>
 
-#include <mpc_lowcomm_coll.h>
+#include <mpc_lowcomm.h>
 
 
 #include <mpc_common_asm.h>

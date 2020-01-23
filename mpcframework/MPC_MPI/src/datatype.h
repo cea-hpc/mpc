@@ -26,7 +26,7 @@
 #include <mpc_mpi_comm_lib.h>
 #include <mpc_common_asm.h>
 
-#include "mpc_lowcomm_coll.h" /* mpc_lowcomm_datatype_t */
+#include "mpc_lowcomm.h" /* mpc_lowcomm_datatype_t */
 #include "mpc_common_datastructure.h"
 #include "mpc_common_spinlock.h"
 #include "sctk_thread.h"

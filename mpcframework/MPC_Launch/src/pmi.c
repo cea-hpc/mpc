@@ -84,33 +84,33 @@ LIBRARY MODE TOLOGY GETTERS
 ******************************************************************************/
 #ifdef SCTK_LIB_MODE
 /* Here are the hook used by the host MPI when running in libmode */
-#pragma weak MPC_Net_hook_rank
-int MPC_Net_hook_rank()
+#pragma weak mpc_lowcomm_hook_rank
+int mpc_lowcomm_hook_rank()
 {
 	return 0;
 }
 
-#pragma weak MPC_Net_hook_size
-int MPC_Net_hook_size()
+#pragma weak mpc_lowcomm_hook_size
+int mpc_lowcomm_hook_size()
 {
 	return 1;
 }
 
-#pragma weak MPC_Net_hook_barrier
-void MPC_Net_hook_barrier()
+#pragma weak mpc_lowcomm_hook_barrier
+void mpc_lowcomm_hook_barrier()
 {
 }
 
-#pragma weak MPC_Net_hook_send_to
-void MPC_Net_hook_send_to( void *data, size_t size, int target )
+#pragma weak mpc_lowcomm_hook_send_to
+void mpc_lowcomm_hook_send_to( void *data, size_t size, int target )
 {
-	sctk_fatal( "You must implement the MPC_Net_send_to function to run in multiprocess" );
+	sctk_fatal( "You must implement the mpc_lowcomm_send_to function to run in multiprocess" );
 }
 
-#pragma weak MPC_Net_hook_recv_from
-void MPC_Net_hook_recv_from( void *data, size_t size, int source )
+#pragma weak mpc_lowcomm_hook_recv_from
+void mpc_lowcomm_hook_recv_from( void *data, size_t size, int source )
 {
-	sctk_fatal( "You must implement the MPC_Net_recv_from function to run in multiprocess" );
+	sctk_fatal( "You must implement the mpc_lowcomm_recv_from function to run in multiprocess" );
 }
 #endif
 
@@ -121,8 +121,8 @@ INITIALIZATION/FINALIZE
 #ifdef SCTK_LIB_MODE
 static inline int __mpc_pmi_init_lib_mode()
 {
-	pmi_context.process_rank = MPC_Net_hook_rank();
-	pmi_context.process_count = MPC_Net_hook_size();
+	pmi_context.process_rank = mpc_lowcomm_hook_rank();
+	pmi_context.process_count = mpc_lowcomm_hook_size();
 	/* Consider nodes as processes */
 	mpc_common_set_node_rank( pmi_context.process_rank );
 	mpc_common_set_node_count( pmi_context.process_count );
@@ -532,7 +532,7 @@ SYNCHRONIZATION
 int mpc_launch_pmi_barrier()
 {
 #ifdef SCTK_LIB_MODE
-	MPC_Net_hook_barrier();
+	mpc_lowcomm_hook_barrier();
 	return MPC_LAUNCH_PMI_SUCCESS;
 #endif /* SCTK_LIB_MODE */
 	int rc;

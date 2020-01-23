@@ -239,20 +239,20 @@ int mpc_launch_pmi_get_job_id( int *id );
  *
  * @return int rank
  */
-int MPC_Net_hook_rank();
+int mpc_lowcomm_hook_rank();
 
 /**
  * @brief Return the communicator size
  *
  * @return int comm size
  */
-int MPC_Net_hook_size();
+int mpc_lowcomm_hook_size();
 
 /**
  * @brief Implement a barrier between processes
  *
  */
-void MPC_Net_hook_barrier();
+void mpc_lowcomm_hook_barrier();
 
 /**
  * @brief Send data to a given rank
@@ -261,7 +261,7 @@ void MPC_Net_hook_barrier();
  * @param size size of the data in bytes
  * @param target target rank
  */
-void MPC_Net_hook_send_to( void *data, size_t size, int target );
+void mpc_lowcomm_hook_send_to( void *data, size_t size, int target );
 
 /**
  * @brief Receive data from a given rank
@@ -270,7 +270,7 @@ void MPC_Net_hook_send_to( void *data, size_t size, int target );
  * @param size size of the data in bytes
  * @param source source rank
  */
-void MPC_Net_hook_recv_from( void *data, size_t size, int source );
+void mpc_lowcomm_hook_recv_from( void *data, size_t size, int source );
 
 #endif /* SCTK_LIB_MODE */
 

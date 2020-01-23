@@ -38,13 +38,13 @@
 /** Get SCTK_COMM_WORLD rank
  * @return the comm world rank
  */
-int MPC_Net_get_rank();
+int mpc_lowcomm_get_rank();
 
 /** Get Rank in a communicator
  * @arg communicator Communicator from which to get the rank
  * @return the rank of the process in the given communicator
  */
-int MPC_Net_get_comm_rank( const mpc_lowcomm_communicator_t communicator );
+int mpc_lowcomm_get_comm_rank( const mpc_lowcomm_communicator_t communicator );
 
 /************************************************************************/
 /* Communicators                                                        */
@@ -60,7 +60,7 @@ int MPC_Net_get_comm_rank( const mpc_lowcomm_communicator_t communicator );
  * 
  * @return Return a new communicator ID usable inside comm calls
  */
-mpc_lowcomm_communicator_t MPC_Net_create_comm( const mpc_lowcomm_communicator_t origin_communicator,
+mpc_lowcomm_communicator_t mpc_lowcomm_create_comm( const mpc_lowcomm_communicator_t origin_communicator,
 										 const int nb_task_involved,
 										 const int *task_list );
 
@@ -69,7 +69,7 @@ mpc_lowcomm_communicator_t MPC_Net_create_comm( const mpc_lowcomm_communicator_t
  * 
  * @return SCTK_COMM_NULL if the comm has been deleted the comm otherwise (immutable comm)
  */ 
-mpc_lowcomm_communicator_t MPC_Net_delete_comm( const mpc_lowcomm_communicator_t comm );
+mpc_lowcomm_communicator_t mpc_lowcomm_delete_comm( const mpc_lowcomm_communicator_t comm );
 
 /************************************************************************/
 /* P2P Messages                                                         */
@@ -84,7 +84,7 @@ mpc_lowcomm_communicator_t MPC_Net_delete_comm( const mpc_lowcomm_communicator_t
  * 
  * @param request The request to be waited 
  */
-void MPC_Net_wait( mpc_lowcomm_request_t * request );
+void mpc_lowcomm_wait( mpc_lowcomm_request_t * request );
 
 
 /** Send an asynchronous message
@@ -93,9 +93,9 @@ void MPC_Net_wait( mpc_lowcomm_request_t * request );
  * @param data Data to be send
  * @param tag Message tag
  * @param comm Communicator of the message
- * @param req Returned request to be waited with @ref MPC_Net_wait
+ * @param req Returned request to be waited with @ref mpc_lowcomm_wait
  */
-void MPC_Net_isend( int dest, void * data, size_t size, int tag, mpc_lowcomm_communicator_t comm , mpc_lowcomm_request_t *req );
+void mpc_lowcomm_isend( int dest, void * data, size_t size, int tag, mpc_lowcomm_communicator_t comm , mpc_lowcomm_request_t *req );
 
 /** Receive an asynchornous message
  * @param src Source rank
@@ -103,9 +103,9 @@ void MPC_Net_isend( int dest, void * data, size_t size, int tag, mpc_lowcomm_com
  * @param size Size of the data to be received
  * @param tag Message tag
  * @param comm Communicator of the message
- * @param req Returned request to be waited with @ref MPC_Net_wait
+ * @param req Returned request to be waited with @ref mpc_lowcomm_wait
  */
-void MPC_Net_irecv( int src, void * buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm , mpc_lowcomm_request_t *req );
+void mpc_lowcomm_irecv( int src, void * buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm , mpc_lowcomm_request_t *req );
 
 /** Send a synchronous message
  * 
@@ -114,7 +114,7 @@ void MPC_Net_irecv( int src, void * buffer, size_t size, int tag, mpc_lowcomm_co
  * @param tag Message tag
  * @param comm Communicator of the message
  */
-void MPC_Net_send( int dest, void * data, size_t size, int tag, mpc_lowcomm_communicator_t comm );
+void mpc_lowcomm_send( int dest, void * data, size_t size, int tag, mpc_lowcomm_communicator_t comm );
 
 /** Receive a synchornous message
  * @param src Source rank
@@ -123,7 +123,7 @@ void MPC_Net_send( int dest, void * data, size_t size, int tag, mpc_lowcomm_comm
  * @param tag Message tag
  * @param comm Communicator of the message
  */
-void MPC_Net_recv( int src, void * buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm );
+void mpc_lowcomm_recv( int src, void * buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm );
 
 /** Do a synchronous SendRecv
  * 
@@ -135,7 +135,7 @@ void MPC_Net_recv( int src, void * buffer, size_t size, int tag, mpc_lowcomm_com
  * @param src Source of the message
  * @param comm Communicator of the message
  */
-void MPC_Net_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * recvbuf, int src, mpc_lowcomm_communicator_t comm );
+void mpc_lowcomm_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * recvbuf, int src, mpc_lowcomm_communicator_t comm );
 
 /************************************************************************/
 /* Collective Operations                                                */
@@ -146,7 +146,7 @@ void MPC_Net_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * re
 /** Do a barrier on a communicator
  * @param comm Communicator to do a barrier on 
  */
-void MPC_Net_barrier( mpc_lowcomm_communicator_t comm );
+void mpc_lowcomm_barrier( mpc_lowcomm_communicator_t comm );
 
 /** Do a broadcast on a communicator
  * @param buffer Buffer to be broadcasted from root and filled on others
@@ -154,7 +154,7 @@ void MPC_Net_barrier( mpc_lowcomm_communicator_t comm );
  * @param root Root from which to read the buffer
  * @param communicator Communicator on which to broadcast
  */
-void MPC_Net_broadcast( void *buffer, const size_t size, 
+void mpc_lowcomm_bcast( void *buffer, const size_t size, 
                         const int root, const mpc_lowcomm_communicator_t communicator );
 
 /** Do an allreduce on a communicator
@@ -166,12 +166,16 @@ void MPC_Net_broadcast( void *buffer, const size_t size,
  * @param communicator Communicator on which to do the operation
  * @param datatype Datatype (not used in comms) but can be useful to swich in the reduce operation (passed in arg)
  */
-void MPC_Net_allreduce(const void *buffer_in, void *buffer_out,
+void mpc_lowcomm_allreduce(const void *buffer_in, void *buffer_out,
                        const size_t elem_size,
                        const size_t elem_count,
                        sctk_Op_f func,
                        const mpc_lowcomm_communicator_t communicator,
                        mpc_lowcomm_datatype_t datatype );
+
+void mpc_lowcomm_terminaison_barrier (void);
+
+extern void ( *mpc_lowcomm_coll_init_hook ) ( mpc_lowcomm_communicator_t id );
 
 /************************************************************************/
 /* Setup and Teardow when running in libmode                            */
@@ -184,11 +188,11 @@ void MPC_Net_allreduce(const void *buffer_in, void *buffer_out,
  * 
  * The following hooks have to be defined in the host application (see example below):
  * 
- * - int MPC_Net_hook_rank() -> Return an unique rank
- * - int MPC_Net_hook_size() -> Return the communicator size
- * - void MPC_Net_hook_barrier() -> Implement a barrier between processes
- * - void MPC_Net_hook_send_to( void * data, size_t size, int target ) -> Send data to a given rank
- * - void MPC_Net_hook_recv_from( void * data, size_t size, int source ) -> Receive data from a given rank
+ * - int mpc_lowcomm_hook_rank() -> Return an unique rank
+ * - int mpc_lowcomm_hook_size() -> Return the communicator size
+ * - void mpc_lowcomm_hook_barrier() -> Implement a barrier between processes
+ * - void mpc_lowcomm_hook_send_to( void * data, size_t size, int target ) -> Send data to a given rank
+ * - void mpc_lowcomm_hook_recv_from( void * data, size_t size, int source ) -> Receive data from a given rank
  * 
  * Here is a simple example of program running in libmode
  * as a guest inside another MPI note how the rank informations
@@ -203,9 +207,9 @@ void MPC_Net_allreduce(const void *buffer_in, void *buffer_out,
  
 	#include <stdio.h>
 	#include <mpi.h>
-	#include <sctk_comm.h>
+	#include <mpc_lowcomm.h>
 
-	int MPC_Net_hook_rank()
+	int mpc_lowcomm_hook_rank()
 	{
 		int rank;
 
@@ -213,7 +217,7 @@ void MPC_Net_allreduce(const void *buffer_in, void *buffer_out,
 		return  rank;
 	}
 
-	int MPC_Net_hook_size()
+	int mpc_lowcomm_hook_size()
 	{
 		int size;
 
@@ -222,17 +226,17 @@ void MPC_Net_allreduce(const void *buffer_in, void *buffer_out,
 		return  size;
 	}
 
-	void MPC_Net_hook_barrier()
+	void mpc_lowcomm_hook_barrier()
 	{
 		MPI_Barrier( MPI_COMM_WORLD );
 	}
 
-	void MPC_Net_hook_send_to( void * data, size_t size, int target )
+	void mpc_lowcomm_hook_send_to( void * data, size_t size, int target )
 	{
 		MPI_Send( data, size, MPI_CHAR, target, 48895, MPI_COMM_WORLD );
 	}
 
-	void MPC_Net_hook_recv_from( void * data, size_t size, int source )
+	void mpc_lowcomm_hook_recv_from( void * data, size_t size, int source )
 	{
 		MPI_Recv( data, size, MPI_CHAR, source, 48895, MPI_COMM_WORLD, MPI_STATUS_IGNORE );
 	}
@@ -240,17 +244,17 @@ void MPC_Net_allreduce(const void *buffer_in, void *buffer_out,
 	int main( int argc, char ** argv )
 	{
 		MPI_Init( &argc, &argv );
-		MPC_Net_init();
+		mpc_lowcomm_libmode_init();
 
 		int i;
 		
 		for( i = 0 ; i < 1024 ; i++ )
 		{
 			MPI_Barrier( MPI_COMM_WORLD );
-			MPC_Net_barrier( SCTK_COMM_WORLD );
+			mpc_lowcomm_barrier( SCTK_COMM_WORLD );
 		}
 
-		MPC_Net_release();
+		mpc_lowcomm_libmode_release();
 		MPI_Finalize();
 
 		return 0;
@@ -263,7 +267,7 @@ void MPC_Net_allreduce(const void *buffer_in, void *buffer_out,
   * @warning This function has to be called when running MPC in libmode
   * it must be called after MPI_Init
   */
- void MPC_Net_init();
+ void mpc_lowcomm_libmode_init();
  
  /** Release the MPC_Net environment
   * This function has to be called to release the MPC
@@ -271,7 +275,7 @@ void MPC_Net_allreduce(const void *buffer_in, void *buffer_out,
   * 
   * @warning After this call it is invalid to emit any MPC_Net call
   */
- void MPC_Net_release();
+ void mpc_lowcomm_libmode_release();
  
 
 #endif /* SCTK_COMM_H */

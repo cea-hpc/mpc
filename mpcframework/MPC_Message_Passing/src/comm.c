@@ -2670,6 +2670,47 @@ void mpc_lowcomm_irecv_class(  int src, void *buffer, size_t size, int tag,
 	                              buffer, size, tag, comm, class, req );
 }
 
+
+/*************************
+ * PUBLIC COMM INTERFACE *
+ *************************/
+
+
+/*  ###############
+ *  Rank Querry
+ *  ############### */
+
+int mpc_lowcomm_get_rank()
+{
+	return mpc_common_get_task_rank();
+}
+
+int mpc_lowcomm_get_comm_rank( const mpc_lowcomm_communicator_t communicator )
+{
+	return mpc_lowcomm_communicator_rank ( communicator, mpc_lowcomm_get_rank() );
+}
+
+/*  ###############
+ *  Communicators
+ *  ############### */
+
+mpc_lowcomm_communicator_t mpc_lowcomm_create_comm( const mpc_lowcomm_communicator_t origin_communicator,
+        const int nb_task_involved,
+        const int *task_list )
+{
+	return sctk_create_communicator ( origin_communicator, nb_task_involved, task_list );
+}
+
+mpc_lowcomm_communicator_t mpc_lowcomm_delete_comm( const mpc_lowcomm_communicator_t comm )
+{
+	return sctk_delete_communicator ( comm );
+}
+
+/*  ###############
+ *  Messages
+ *  ############### */
+
+
 void mpc_lowcomm_isend( int dest, void *data, size_t size, int tag,
                         mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req )
 {
@@ -2693,4 +2734,42 @@ void mpc_lowcomm_sendrecv( void *sendbuf, size_t size, int dest, int tag, void *
 	mpc_lowcomm_irecv( src, recvbuf, size, tag, comm, &recvreq );
 	mpc_lowcomm_request_wait( &sendreq );
 	mpc_lowcomm_request_wait( &recvreq );
+}
+
+
+void mpc_lowcomm_wait( mpc_lowcomm_request_t *request )
+{
+	mpc_lowcomm_request_wait( request );
+}
+
+void mpc_lowcomm_send( int dest, void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm )
+{
+	mpc_lowcomm_request_t req;
+	mpc_lowcomm_isend( dest, data, size, tag, comm, &req );
+	mpc_lowcomm_wait( &req );
+}
+
+void mpc_lowcomm_recv( int src, void *buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm )
+{
+	mpc_lowcomm_request_t req;
+	mpc_lowcomm_irecv( src, buffer, size, tag, comm, &req );
+	mpc_lowcomm_wait( &req );
+}
+
+
+/*  ###############
+ *  Setup & Teardown
+ *  ############### */
+
+void sctk_init_mpc_runtime();
+
+void mpc_lowcomm_libmode_init()
+{
+	sctk_init_mpc_runtime();
+	mpc_lowcomm_barrier( SCTK_COMM_WORLD );
+}
+
+void mpc_lowcomm_libmode_release()
+{
+	mpc_lowcomm_barrier( SCTK_COMM_WORLD );
 }

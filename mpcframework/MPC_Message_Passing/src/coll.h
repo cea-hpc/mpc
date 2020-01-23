@@ -22,7 +22,7 @@
 #ifndef __SCTK_COLLECTIVE_COMMUNICATIONS_H_
 #define __SCTK_COLLECTIVE_COMMUNICATIONS_H_
 
-#include <mpc_lowcomm_coll.h>
+#include <mpc_lowcomm.h>
 
 
 #include "comm.h"

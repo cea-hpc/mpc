@@ -22,7 +22,7 @@
 
 #include "mpi_alloc_mem.h"
 
-#include "mpc_lowcomm_coll.h"
+#include "mpc_lowcomm.h"
 #include <mpc_common_helper.h>
 #include "mpc_mpi.h"
 #include "mpc_thread.h"

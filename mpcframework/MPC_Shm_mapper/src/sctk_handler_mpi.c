@@ -1,6 +1,6 @@
 #ifndef SCTK_LIB_MODE
 #include "mpi.h"
-#include "mpc_lowcomm_coll.h"
+#include "mpc_lowcomm.h"
 #include "sctk_debug.h"
 #include "sctk_shm_mapper.h"
 #include "mpc_common_types.h"

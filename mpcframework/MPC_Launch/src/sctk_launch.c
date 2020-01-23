@@ -1049,8 +1049,8 @@ void sctk_init_mpc_runtime()
 #ifdef SCTK_LIB_MODE
 	/* In LIB mode comm size is inherited from
 	 * the host application (not from the launcher) */
-	sctk_process_nb_val = MPC_Net_hook_size();
-	sctk_task_nb_val = MPC_Net_hook_size();
+	sctk_process_nb_val = mpc_lowcomm_hook_size();
+	sctk_task_nb_val = mpc_lowcomm_hook_size();
 #else
 	sctk_task_nb_val = sctk_runtime_config_get()->modules.launcher.nb_task;
 	sctk_process_nb_val = sctk_runtime_config_get()->modules.launcher.nb_process;
