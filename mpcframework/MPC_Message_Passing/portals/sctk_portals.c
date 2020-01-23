@@ -109,7 +109,7 @@ static void sctk_network_notify_any_source_message_ptl ( int polling_task_id, in
 	UNUSED(rail);
 }
 
-static void sctk_network_notify_probe_message_ptl (sctk_rail_info_t* rail, sctk_thread_message_header_t* hdr, int *status)
+static void sctk_network_notify_probe_message_ptl (sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_header_t* hdr, int *status)
 {
 	*status = sctk_ptl_pending_me_probe(rail, hdr, SCTK_PTL_ME_PROBE_ONLY);
 }

@@ -131,7 +131,7 @@ static void sctk_network_notify_idle_message_topological ()
 	/* Done in subrails */
 }
 
-static void sctk_network_notify_probe_message_topological (__UNUSED__ sctk_rail_info_t* rail, __UNUSED__ sctk_thread_message_header_t* hdr, __UNUSED__ int* status)
+static void sctk_network_notify_probe_message_topological (__UNUSED__ sctk_rail_info_t* rail, __UNUSED__ mpc_lowcomm_ptp_message_header_t* hdr, __UNUSED__ int* status)
 {
 	/* Done in subrails */
 }

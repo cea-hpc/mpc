@@ -435,7 +435,7 @@ void sctk_ib_rdma_rendezvous_net_copy ( mpc_lowcomm_ptp_message_content_to_copy_
 	if ( send_header->rdma.local.status == SCTK_IB_RDMA_NOT_SET )
 	{
 
-		if ( recv->tail.message_type == SCTK_MESSAGE_CONTIGUOUS )
+		if ( recv->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS )
 		{
 
 			/* XXX: Check if the size requested is the size of the message posted */
@@ -497,7 +497,7 @@ sctk_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
   rdma->local.req_timestamp = sctk_ib_prof_get_time_stamp();
 
   SCTK_MSG_COMPLETION_FLAG_SET(msg, NULL);
-  msg->tail.message_type = SCTK_MESSAGE_NETWORK;
+  msg->tail.message_type = MPC_LOWCOMM_MESSAGE_NETWORK;
   /* Remote addr initially set to NULL */
   rdma->lock = SCTK_SPINLOCK_INITIALIZER;
   rdma->local.status = SCTK_IB_RDMA_NOT_SET;
@@ -560,7 +560,7 @@ void sctk_ib_rdma_rendezvous_prepare_send_msg ( mpc_lowcomm_ptp_message_t *msg, 
 	size_t aligned_size = 0;
 
 	/* Do not allocate memory if contiguous message */
-	if ( msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS )
+	if ( msg->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS )
 	{
 
 		sctk_ib_rdma_align_msg ( msg->tail.message.contiguous.addr,

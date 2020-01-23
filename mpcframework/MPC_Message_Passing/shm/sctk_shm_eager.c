@@ -76,7 +76,7 @@ sctk_network_eager_msg_shm_recv(sctk_shm_cell_t *cell, int copy_enabled) {
   }
 
   SCTK_MSG_COMPLETION_FLAG_SET(msg, NULL);
-  msg->tail.message_type = SCTK_MESSAGE_NETWORK;
+  msg->tail.message_type = MPC_LOWCOMM_MESSAGE_NETWORK;
   if (SCTK_MSG_COMMUNICATOR(msg) < 0)
     return NULL;
 

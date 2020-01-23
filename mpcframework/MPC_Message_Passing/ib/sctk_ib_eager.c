@@ -261,7 +261,7 @@ static mpc_lowcomm_ptp_message_t *sctk_ib_eager_recv ( sctk_rail_info_t *rail, s
 	}
 
 	SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
-	msg->tail.message_type = SCTK_MESSAGE_NETWORK;
+	msg->tail.message_type = MPC_LOWCOMM_MESSAGE_NETWORK;
 	msg->tail.ib.eager.recopied = recopy;
 	msg->tail.ib.eager.ibuf = ibuf;
 	msg->tail.ib.protocol = protocol;

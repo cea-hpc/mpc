@@ -37,11 +37,11 @@
 #define SCTK_PTL_ME_GET_NOEV_FLAGS (SCTK_PTL_ME_GET_FLAGS  | PTL_ME_EVENT_COMM_DISABLE )
 #define SCTK_PTL_MD_PUT_NOEV_FLAGS (SCTK_PTL_MD_PUT_FLAGS | PTL_MD_EVENT_SUCCESS_DISABLE )
 #define SCTK_PTL_MD_GET_NOEV_FLAGS (SCTK_PTL_MD_GET_FLAGS | PTL_MD_EVENT_SUCCESS_DISABLE )
-#define SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP (sctk_ptl_matchbits_t) {.offload.type = SCTK_BARRIER_OFFLOAD_MESSAGE, .offload.iter = 0, .offload.pad2 = 0, .offload.dir = SCTK_PTL_OFFCOLL_UP}
-#define SCTK_PTL_MATCH_OFFCOLL_BARRIER_DOWN (sctk_ptl_matchbits_t) {.offload.type = SCTK_BARRIER_OFFLOAD_MESSAGE, .offload.iter = 0, .offload.pad2 = 0, .offload.dir = SCTK_PTL_OFFCOLL_DOWN}
-#define SCTK_PTL_MATCH_OFFCOLL_BCAST (sctk_ptl_matchbits_t) {.offload.type = SCTK_BROADCAST_OFFLOAD_MESSAGE, .offload.iter = 0, .offload.pad2 = 0, .offload.dir = 0}
-#define SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGE (sctk_ptl_matchbits_t) {.offload.type = SCTK_BROADCAST_OFFLOAD_MESSAGE, .offload.iter = 0, .offload.pad2 = 0, .offload.dir = 1}
-#define SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(x) (sctk_ptl_matchbits_t) {.offload.type = SCTK_BROADCAST_OFFLOAD_MESSAGE, .offload.iter = x, .offload.pad2 = 0, .offload.dir = 2}
+#define SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP (sctk_ptl_matchbits_t) {.offload.type = MPC_LOWCOMM_BARRIER_OFFLOAD_MESSAGE, .offload.iter = 0, .offload.pad2 = 0, .offload.dir = SCTK_PTL_OFFCOLL_UP}
+#define SCTK_PTL_MATCH_OFFCOLL_BARRIER_DOWN (sctk_ptl_matchbits_t) {.offload.type = MPC_LOWCOMM_BARRIER_OFFLOAD_MESSAGE, .offload.iter = 0, .offload.pad2 = 0, .offload.dir = SCTK_PTL_OFFCOLL_DOWN}
+#define SCTK_PTL_MATCH_OFFCOLL_BCAST (sctk_ptl_matchbits_t) {.offload.type = MPC_LOWCOMM_BROADCAST_OFFLOAD_MESSAGE, .offload.iter = 0, .offload.pad2 = 0, .offload.dir = 0}
+#define SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGE (sctk_ptl_matchbits_t) {.offload.type = MPC_LOWCOMM_BROADCAST_OFFLOAD_MESSAGE, .offload.iter = 0, .offload.pad2 = 0, .offload.dir = 1}
+#define SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(x) (sctk_ptl_matchbits_t) {.offload.type = MPC_LOWCOMM_BROADCAST_OFFLOAD_MESSAGE, .offload.iter = x, .offload.pad2 = 0, .offload.dir = 2}
 
 int sctk_ptl_offcoll_enabled(sctk_ptl_rail_info_t* rail);
 void sctk_ptl_offcoll_init(sctk_ptl_rail_info_t* rail);

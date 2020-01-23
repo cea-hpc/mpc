@@ -88,7 +88,7 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	sctk_assert(ev.mlength <= rail->network.ptl.eager_limit);
 	
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
-	mpc_lowcomm_comm_ptp_message_header_clear(net_msg, SCTK_MESSAGE_CONTIGUOUS , sctk_ptl_eager_free_memory, sctk_ptl_eager_message_copy);
+	mpc_lowcomm_comm_ptp_message_header_clear(net_msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS , sctk_ptl_eager_free_memory, sctk_ptl_eager_message_copy);
 	SCTK_MSG_SRC_PROCESS_SET     ( net_msg ,  match.data.rank);
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  match.data.rank);
 	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  sctk_get_process_rank());
@@ -151,7 +151,7 @@ void sctk_ptl_eager_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t
 	memset(&msg->tail.ptl, 0, sizeof(sctk_ptl_tail_t));
 
 	/* if the message is non-contiguous, we need a copy to 'pack' it first */
-	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
+	if(msg->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
 	{
 		start = msg->tail.message.contiguous.addr;
 	}
@@ -215,7 +215,7 @@ void sctk_ptl_eager_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_in
 	memset(&msg->tail.ptl, 0, sizeof(sctk_ptl_tail_t));
 	
 	/* is the message contiguous ? */
-	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
+	if(msg->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
 	{
 		start = msg->tail.message.contiguous.addr;
 	}

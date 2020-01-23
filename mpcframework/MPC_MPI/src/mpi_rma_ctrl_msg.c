@@ -110,7 +110,7 @@ void mpc_MPI_Win_handle_win_flush(void *data ) {
       mpc_MPI_Win_request_array_pick(&desc->target.requests);
   mpc_lowcomm_comm_isend_class_src(desc->comm_rank, message->source_rank, &dummy,
                                sizeof(int), TAG_RDMA_FENCE, desc->comm,
-                               SCTK_RDMA_MESSAGE, request);
+                               MPC_LOWCOMM_RDMA_MESSAGE, request);
 
   mpc_MPI_Win_request_array_fence(&desc->target.requests);
   mpc_Win_exposure_end();
@@ -155,7 +155,7 @@ void mpc_MPI_Win_handle_non_contiguous_write(void *data, size_t size) {
   mpc_lowcomm_request_t req;
   mpc_lowcomm_comm_irecv_class_dest(message->source_rank, desc->comm_rank,
                                 pack_data, pack_size, TAG_RDMA_WRITE,
-                                desc->comm, SCTK_RDMA_MESSAGE, &req);
+                                desc->comm, MPC_LOWCOMM_RDMA_MESSAGE, &req);
   mpc_lowcomm_comm_request_wait(&req);
 
   size_t target_t_ext;
@@ -176,7 +176,7 @@ void mpc_MPI_Win_handle_non_contiguous_write(void *data, size_t size) {
   // &desc->target.requests );
   // mpc_lowcomm_comm_isend_class_src(desc->comm_rank, message->source_rank,
   // &__dummy_non_contig_val, sizeof(int), TAG_RDMA_WRITE_ACK, desc->comm ,
-  // SCTK_RDMA_MESSAGE,  request);
+  // MPC_LOWCOMM_RDMA_MESSAGE,  request);
 
   sctk_free(pack_data);
 
@@ -237,13 +237,13 @@ void mpc_MPI_Win_handle_non_contiguous_read(void *data, size_t size) {
       mpc_MPI_Win_request_array_pick(&desc->target.requests);
   mpc_lowcomm_comm_isend_class_src(desc->comm_rank, message->source_rank, pack_data,
                                pack_size, TAG_RDMA_READ, desc->comm,
-                               SCTK_RDMA_MESSAGE, request);
+                               MPC_LOWCOMM_RDMA_MESSAGE, request);
 
   /* Now ACK */
   //
   // mpc_lowcomm_comm_isend_class_src(desc->comm_rank, message->source_rank,
   // &__dummy_non_contig_val, sizeof(int), TAG_RDMA_WRITE_ACK, desc->comm ,
-  // SCTK_RDMA_MESSAGE,  request);
+  // MPC_LOWCOMM_RDMA_MESSAGE,  request);
 
   _mpc_cl_type_free(&target_type);
 }
@@ -284,7 +284,7 @@ void mpc_MPI_Win_handle_non_contiguous_accumulate_send(void *data,
   mpc_lowcomm_request_t req;
   mpc_lowcomm_comm_irecv_class_dest(message->source_rank, desc->comm_rank,
                                 pack_data, pack_size, TAG_RDMA_ACCUMULATE,
-                                desc->comm, SCTK_RDMA_MESSAGE, &req);
+                                desc->comm, MPC_LOWCOMM_RDMA_MESSAGE, &req);
   mpc_lowcomm_comm_request_wait(&req);
 
   /* Now pack local data using the remote data-type */
@@ -442,7 +442,7 @@ void mpc_MPI_Win_control_message_send(MPI_Win win, int rank,
     memset(&req, 0, sizeof(mpc_lowcomm_request_t));
     mpc_lowcomm_comm_isend_class_src(desc->comm_rank, rank, message,
                                  sizeof(struct mpc_MPI_Win_ctrl_message), 16008,
-                                 desc->comm, SCTK_P2P_MESSAGE, &req);
+                                 desc->comm, MPC_LOWCOMM_P2P_MESSAGE, &req);
     mpc_lowcomm_comm_request_wait(&req);
     // PMPI_Send( message, sizeof(struct mpc_MPI_Win_ctrl_message), MPI_CHAR,
     // rank, 16008, desc->comm);
@@ -464,7 +464,7 @@ void mpc_MPI_Win_control_message_send_piggybacked(
 
   mpc_lowcomm_request_t req;
   mpc_lowcomm_comm_isend_class_src(desc->comm_rank, rank, message, size, 16008,
-                               desc->comm, SCTK_P2P_MESSAGE, &req);
+                               desc->comm, MPC_LOWCOMM_P2P_MESSAGE, &req);
   mpc_lowcomm_comm_request_wait(&req);
 
   sctk_thread_yield();

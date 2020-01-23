@@ -40,7 +40,7 @@ void sctk_ptl_fini_interface(sctk_rail_info_t* rail);
 
 void sctk_ptl_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* endpoint);
 void sctk_ptl_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_rail_info_t* rail);
-int sctk_ptl_pending_me_probe(sctk_rail_info_t* prail, sctk_thread_message_header_t* hdr, int probe_level);
+int sctk_ptl_pending_me_probe(sctk_rail_info_t* prail, mpc_lowcomm_ptp_message_header_t* hdr, int probe_level);
 
 static inline sctk_rail_info_t* sctk_ptl_promote_to_rail(sctk_ptl_rail_info_t* srail)
 {

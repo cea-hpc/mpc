@@ -188,7 +188,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
       mpc_lowcomm_comm_irecv_class_dest(target_rank, desc->comm_rank, dest_buff,
                                     target_pack_size, TAG_RDMA_READ, desc->comm,
-                                    SCTK_RDMA_MESSAGE, request);
+                                    MPC_LOWCOMM_RDMA_MESSAGE, request);
 
       /* Now notify remote */
       mpc_MPI_Win_control_message_send_piggybacked(win, target_rank, message,
@@ -399,7 +399,7 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
 
     mpc_lowcomm_comm_isend_class_src(desc->comm_rank, target_rank,
                                  (char *)origin_addr, pack_size, TAG_RDMA_WRITE,
-                                 desc->comm, SCTK_RDMA_MESSAGE, request1);
+                                 desc->comm, MPC_LOWCOMM_RDMA_MESSAGE, request1);
 
     int target_win = mpc_MPI_win_get_remote_win(desc, target_rank, 1);
     struct sctk_window *low_remote_win = sctk_win_translate(target_win);
@@ -713,7 +713,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
     mpc_lowcomm_comm_isend_class_src(desc->comm_rank, target_rank, origin_addr,
                                  pack_size, TAG_RDMA_ACCUMULATE, desc->comm,
-                                 SCTK_RDMA_MESSAGE, request);
+                                 MPC_LOWCOMM_RDMA_MESSAGE, request);
 
     target_win = mpc_MPI_win_get_remote_win(desc, target_rank, 1);
     struct sctk_window *low_remote_win = sctk_win_translate(target_win);
@@ -1043,7 +1043,7 @@ int mpc_MPI_Rget_accumulate(const void *origin_addr, int origin_count,
       result_count, result_datatype, target_rank, target_disp, target_count,
       target_datatype, op, win, new_request);
 
-  new_request->completion_flag = SCTK_MESSAGE_DONE;
+  new_request->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
 
   mpc_MPI_Win_request_array_add_done(&desc->source.requests);
 

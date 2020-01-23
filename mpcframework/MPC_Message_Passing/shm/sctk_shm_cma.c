@@ -48,7 +48,7 @@ sctk_shm_cma_message_copy_generic(mpc_lowcomm_ptp_message_content_to_copy_t * tm
 
     switch ( recv->tail.message_type )
     {
-        case SCTK_MESSAGE_CONTIGUOUS:
+        case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
         {
             size_t size;
             size = SCTK_MSG_SIZE ( send );
@@ -192,7 +192,7 @@ sctk_network_cma_msg_shm_recv(sctk_shm_cell_t * cell,int copy_enabled)
     }
 
     SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
-    msg->tail.message_type = SCTK_MESSAGE_NETWORK;
+    msg->tail.message_type = MPC_LOWCOMM_MESSAGE_NETWORK;
     if ( SCTK_MSG_COMMUNICATOR ( msg ) < 0 )
         return NULL;
     _mpc_comm_ptp_message_clear_request ( msg );    
@@ -209,7 +209,7 @@ sctk_network_cma_msg_shm_send(mpc_lowcomm_ptp_message_t *msg, sctk_shm_cell_t * 
     sctk_shm_iovec_info_t * shm_iov;
     void * msg_buffer_tmp;
 
-    if( msg->tail.message_type != SCTK_MESSAGE_CONTIGUOUS)
+    if( msg->tail.message_type != MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
 	return 0;
 
     size = sizeof(mpc_lowcomm_ptp_message_t) + sizeof(sctk_shm_iovec_info_t);

@@ -41,7 +41,7 @@ unsigned long sctk_checksum_message ( mpc_lowcomm_ptp_message_t *send,
 
 	switch ( recv->tail.message_type )
 	{
-		case SCTK_MESSAGE_CONTIGUOUS:
+		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
 		{
 			size_t size;
 			size = SCTK_MSG_SIZE ( send );
@@ -55,7 +55,7 @@ unsigned long sctk_checksum_message ( mpc_lowcomm_ptp_message_t *send,
 			break;
 		}
 
-		case SCTK_MESSAGE_NETWORK:
+		case MPC_LOWCOMM_MESSAGE_NETWORK:
 		{
 			size_t size;
 			void *body;
@@ -67,7 +67,7 @@ unsigned long sctk_checksum_message ( mpc_lowcomm_ptp_message_t *send,
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK:
+		case MPC_LOWCOMM_MESSAGE_PACK:
 		{
 			size_t i;
 			size_t j;
@@ -87,7 +87,7 @@ unsigned long sctk_checksum_message ( mpc_lowcomm_ptp_message_t *send,
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK_ABSOLUTE:
+		case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
 		{
 			size_t i;
 			size_t j;
@@ -124,7 +124,7 @@ unsigned long sctk_checksum_buffer ( char *body,
 
 	switch ( msg->tail.message_type )
 	{
-		case SCTK_MESSAGE_CONTIGUOUS:
+		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
 		{
 			size_t size;
 			size = SCTK_MSG_SIZE ( msg );
@@ -139,7 +139,7 @@ unsigned long sctk_checksum_buffer ( char *body,
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK:
+		case MPC_LOWCOMM_MESSAGE_PACK:
 		{
 			size_t i;
 			size_t j;
@@ -158,7 +158,7 @@ unsigned long sctk_checksum_buffer ( char *body,
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK_ABSOLUTE:
+		case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
 		{
 			size_t i;
 			size_t j;

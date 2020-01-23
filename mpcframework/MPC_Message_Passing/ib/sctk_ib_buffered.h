@@ -55,7 +55,7 @@ __attribute__ ( ( aligned ( 16 ) ) ) sctk_ib_buffered_t;
 
 typedef struct sctk_ib_buffered_entry_s
 {
-	struct sctk_thread_ptp_message_s msg;
+	struct mpc_lowcomm_ptp_message_s msg;
 	int key;
 	UT_hash_handle hh;
 	int total;
@@ -78,7 +78,7 @@ struct sctk_ibuf_s;
 
 int sctk_ib_buffered_prepare_msg ( struct sctk_rail_info_s *rail,
                                    struct sctk_ib_qp_s *remote,
-                                   struct sctk_thread_ptp_message_s *msg,
+                                   struct mpc_lowcomm_ptp_message_s *msg,
                                    size_t size );
 
 void sctk_ib_buffered_poll_recv ( struct sctk_rail_info_s *rail, struct sctk_ibuf_s *ibuf );

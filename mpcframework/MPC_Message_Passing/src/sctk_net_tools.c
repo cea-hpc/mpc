@@ -37,7 +37,7 @@ sctk_net_convert_msg_to_iovec( mpc_lowcomm_ptp_message_t *msg, int *iovlen, size
 
 	switch ( msg->tail.message_type )
 	{
-		case SCTK_MESSAGE_CONTIGUOUS:
+		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
 		{
 			*iovlen = 1;
 			result = (struct iovec*) sctk_malloc(1*sizeof(struct iovec));
@@ -46,7 +46,7 @@ sctk_net_convert_msg_to_iovec( mpc_lowcomm_ptp_message_t *msg, int *iovlen, size
 			break;
 		}
 
-		case SCTK_MESSAGE_NETWORK:
+		case MPC_LOWCOMM_MESSAGE_NETWORK:
 		{
 			*iovlen = 1;
 			void *body = (char *) msg + sizeof (mpc_lowcomm_ptp_message_t);
@@ -56,7 +56,7 @@ sctk_net_convert_msg_to_iovec( mpc_lowcomm_ptp_message_t *msg, int *iovlen, size
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK:
+		case MPC_LOWCOMM_MESSAGE_PACK:
 		{
 			int pos;
 			char skip = 0;
@@ -100,7 +100,7 @@ sctk_net_convert_msg_to_iovec( mpc_lowcomm_ptp_message_t *msg, int *iovlen, size
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK_ABSOLUTE:
+		case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
 		{
 			int pos;
 			char skip = 0;
@@ -183,7 +183,7 @@ void sctk_net_read_in_fd ( mpc_lowcomm_ptp_message_t *msg,
 
 	switch ( msg->tail.message_type )
 	{
-		case SCTK_MESSAGE_CONTIGUOUS:
+		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
 		{
 			size_t size;
 
@@ -194,7 +194,7 @@ void sctk_net_read_in_fd ( mpc_lowcomm_ptp_message_t *msg,
 			break;
 		}
 
-		case SCTK_MESSAGE_NETWORK:
+		case MPC_LOWCOMM_MESSAGE_NETWORK:
 		{
 			size_t size;
 			void *body;
@@ -206,7 +206,7 @@ void sctk_net_read_in_fd ( mpc_lowcomm_ptp_message_t *msg,
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK:
+		case MPC_LOWCOMM_MESSAGE_PACK:
 		{
 			size_t i;
 			size_t j;
@@ -230,7 +230,7 @@ void sctk_net_read_in_fd ( mpc_lowcomm_ptp_message_t *msg,
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK_ABSOLUTE:
+		case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
 		{
 			size_t i;
 			size_t j;
@@ -264,7 +264,7 @@ void sctk_net_write_in_fd ( mpc_lowcomm_ptp_message_t *msg,
 {
 	switch ( msg->tail.message_type )
 	{
-		case SCTK_MESSAGE_CONTIGUOUS:
+		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
 		{
 			size_t size;
 
@@ -276,7 +276,7 @@ void sctk_net_write_in_fd ( mpc_lowcomm_ptp_message_t *msg,
 			break;
 		}
 
-		case SCTK_MESSAGE_NETWORK:
+		case MPC_LOWCOMM_MESSAGE_NETWORK:
 		{
 			size_t size;
 			void *body;
@@ -288,7 +288,7 @@ void sctk_net_write_in_fd ( mpc_lowcomm_ptp_message_t *msg,
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK:
+		case MPC_LOWCOMM_MESSAGE_PACK:
 		{
 			size_t i;
 			size_t j;
@@ -312,7 +312,7 @@ void sctk_net_write_in_fd ( mpc_lowcomm_ptp_message_t *msg,
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK_ABSOLUTE:
+		case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
 		{
 			size_t i;
 			size_t j;
@@ -346,7 +346,7 @@ void sctk_get_iovec_in_buffer( mpc_lowcomm_ptp_message_t *msg, struct iovec **io
 
 	switch ( msg->tail.message_type )
 	{
-		case SCTK_MESSAGE_CONTIGUOUS:
+		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
 		{
 			*iov = (struct iovec *) sctk_malloc( sizeof( struct iovec ) );
 			*iovlen = 1;
@@ -355,7 +355,7 @@ void sctk_get_iovec_in_buffer( mpc_lowcomm_ptp_message_t *msg, struct iovec **io
 			break;
 		}
 
-		case SCTK_MESSAGE_NETWORK:
+		case MPC_LOWCOMM_MESSAGE_NETWORK:
 		{
 			*iov = (struct iovec *) sctk_malloc( sizeof( struct iovec ) );
 			*iovlen = 1;
@@ -374,7 +374,7 @@ void sctk_net_copy_in_buffer ( mpc_lowcomm_ptp_message_t *msg,
 {
 	switch ( msg->tail.message_type )
 	{
-		case SCTK_MESSAGE_CONTIGUOUS:
+		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
 		{
 			size_t size;
 
@@ -388,7 +388,7 @@ void sctk_net_copy_in_buffer ( mpc_lowcomm_ptp_message_t *msg,
 			break;
 		}
 
-		case SCTK_MESSAGE_NETWORK:
+		case MPC_LOWCOMM_MESSAGE_NETWORK:
 		{
 			size_t size;
 			void *body;
@@ -401,7 +401,7 @@ void sctk_net_copy_in_buffer ( mpc_lowcomm_ptp_message_t *msg,
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK:
+		case MPC_LOWCOMM_MESSAGE_PACK:
 		{
 			size_t i;
 			size_t j;
@@ -426,7 +426,7 @@ void sctk_net_copy_in_buffer ( mpc_lowcomm_ptp_message_t *msg,
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK_ABSOLUTE:
+		case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
 		{
 			size_t i;
 			size_t j;
@@ -501,7 +501,7 @@ int sctk_net_copy_frag_msg (
 
 	switch ( msg->tail.message_type )
 	{
-		case SCTK_MESSAGE_CONTIGUOUS:
+		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
 		{
 			size_t size;
 			size = SCTK_MSG_SIZE ( msg );
@@ -517,7 +517,7 @@ int sctk_net_copy_frag_msg (
 			break;
 		}
 
-		case SCTK_MESSAGE_NETWORK:
+		case MPC_LOWCOMM_MESSAGE_NETWORK:
 		{
 			size_t size;
 			void *body;
@@ -530,7 +530,7 @@ int sctk_net_copy_frag_msg (
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK:
+		case MPC_LOWCOMM_MESSAGE_PACK:
 		{
 			size_t i;
 			size_t j;
@@ -551,7 +551,7 @@ int sctk_net_copy_frag_msg (
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK_ABSOLUTE:
+		case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
 		{
 			size_t i;
 			size_t j;
@@ -688,7 +688,7 @@ void sctk_net_message_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
         sctk_nodebug("MSG |%s|", (char *)body);
 
         switch (recv->tail.message_type) {
-        case SCTK_MESSAGE_CONTIGUOUS: {
+        case MPC_LOWCOMM_MESSAGE_CONTIGUOUS: {
           size_t size;
           size = SCTK_MSG_SIZE(send);
           size =
@@ -700,7 +700,7 @@ void sctk_net_message_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
           break;
         }
 
-        case SCTK_MESSAGE_PACK: {
+        case MPC_LOWCOMM_MESSAGE_PACK: {
           size_t i;
           size_t j;
           size_t size;
@@ -751,7 +751,7 @@ void sctk_net_message_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
           break;
         }
 
-        case SCTK_MESSAGE_PACK_ABSOLUTE: {
+        case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE: {
           size_t i;
           size_t j;
           size_t size;
@@ -824,7 +824,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 
 	switch ( recv->tail.message_type )
 	{
-		case SCTK_MESSAGE_CONTIGUOUS:
+		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
 		{
 			size_t size;
 			size = SCTK_MSG_SIZE ( send );
@@ -839,7 +839,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK:
+		case MPC_LOWCOMM_MESSAGE_PACK:
 		{
 			size_t i;
 			size_t j;
@@ -880,7 +880,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK_ABSOLUTE:
+		case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
 		{
 			size_t i;
 			size_t j;

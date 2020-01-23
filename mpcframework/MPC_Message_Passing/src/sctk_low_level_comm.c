@@ -185,7 +185,7 @@ void sctk_network_notify_perform_message_set ( void ( *sctk_network_notify_perfo
 
 /********** NOTIFY_PROBE ************/
 
-void sctk_network_notify_probe_message_default (__UNUSED__  sctk_thread_message_header_t* hdr, __UNUSED__ int *status)
+void sctk_network_notify_probe_message_default (__UNUSED__  mpc_lowcomm_ptp_message_header_t* hdr, __UNUSED__ int *status)
 {
         *status = -1; /* probe not supported */
 }
@@ -193,7 +193,7 @@ void sctk_network_notify_probe_message_default (__UNUSED__  sctk_thread_message_
 static void  ( *sctk_network_notify_probe_message_ptr ) () = sctk_network_notify_probe_message_default;
 
 
-void sctk_network_notify_probe_message  (sctk_thread_message_header_t* hdr, int *status)
+void sctk_network_notify_probe_message  (mpc_lowcomm_ptp_message_header_t* hdr, int *status)
 {
 #ifdef MPC_Fault_Tolerance
 	if(sctk_ft_no_suspend_start())
@@ -595,7 +595,7 @@ void sctk_net_init_driver ( char *name )
 		sctk_fatal("There cannot be more than 255 rails");
 		/* If you want to remove this limation make sure that 
 		 * the rail ID is encoded with a larger type in
-		 * struct sctk_control_message_header */
+		 * struct mpc_lowcomm_ptp_ctrl_message_header_s */
 	}
 
 	/* HERE note that we are going in reverse order so that

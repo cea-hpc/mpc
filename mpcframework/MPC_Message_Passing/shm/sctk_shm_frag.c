@@ -134,7 +134,7 @@ sctk_shm_init_send_frag_msg( int remote, mpc_lowcomm_ptp_message_t* msg)
    frag_infos->header = msg;
    frag_infos->msg = (void*) msg->tail.message.contiguous.addr;
     
-   if( msg->tail.message_type != SCTK_MESSAGE_CONTIGUOUS)
+   if( msg->tail.message_type != MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
    {
       frag_infos->msg = sctk_malloc(SCTK_MSG_SIZE(msg));
       sctk_net_copy_in_buffer( msg, frag_infos->msg);	
@@ -219,7 +219,7 @@ sctk_network_frag_msg_first_recv(mpc_lowcomm_ptp_message_t* msg, sctk_shm_cell_t
    /* reset tail */
    msg = frag_infos->header;
    SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
-   msg->tail.message_type = SCTK_MESSAGE_NETWORK;
+   msg->tail.message_type = MPC_LOWCOMM_MESSAGE_NETWORK;
    _mpc_comm_ptp_message_clear_request(msg);
    _mpc_comm_ptp_message_set_copy_and_free(msg, sctk_shm_rdv_free, sctk_shm_rdv_message_copy);
    return frag_infos; 

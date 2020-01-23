@@ -64,7 +64,7 @@ struct sctk_ib_config_s;
 struct sctk_ib_device_s;
 struct sctk_ib_qp_s;
 struct sctk_ib_cp_s;
-struct sctk_thread_ptp_message_s;
+struct mpc_lowcomm_ptp_message_s;
 struct sctk_rail_info_s;
 struct mpc_lowcomm_ptp_message_content_to_copy_s;
 struct sctk_ib_buffered_entry_s;
@@ -89,7 +89,7 @@ typedef struct sctk_ib_rail_info_s
 	int rail_nb;
 
 	/* For Eager messages -> pool of MPC headers */
-	struct sctk_thread_ptp_message_s *eager_buffered_ptp_message;
+	struct mpc_lowcomm_ptp_message_s *eager_buffered_ptp_message;
 	void* eager_buffered_start_addr;
 	mpc_common_spinlock_t eager_lock_buffered_ptp_message;
 } sctk_ib_rail_info_t;
@@ -147,7 +147,7 @@ typedef struct sctk_ib_header_rdma_s
 	/* Local structure */
 	struct
 	{
-		struct sctk_thread_ptp_message_s *msg_header;
+		struct mpc_lowcomm_ptp_message_s *msg_header;
 		sctk_ib_rdma_status_t status;
 		struct sctk_ib_mmu_entry_s *mmu_entry;
 		void  *addr;
@@ -165,7 +165,7 @@ typedef struct sctk_ib_header_rdma_s
 	struct
 	{
 		/* msg_header of the remote peer */
-		struct sctk_thread_ptp_message_s *msg_header;
+		struct mpc_lowcomm_ptp_message_s *msg_header;
 		void  *addr;
 		size_t size;
 		uint32_t rkey;
@@ -176,7 +176,7 @@ typedef struct sctk_ib_header_rdma_s
 
 
 /* Structure included in msg header */
-typedef struct sctk_ib_msg_header_s
+typedef struct mpc_lowcomm_ib_tail_s
 {
 	sctk_ib_protocol_t protocol;
 
@@ -255,7 +255,7 @@ void sctk_ib_route_dynamic_set_connected ( struct sctk_endpoint_s *tmp, int conn
 #define IBUF_GET_RDMA_DATA_READ_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_data_read_t))
 #define IBUF_GET_RDMA_DATA_WRITE_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_data_write_t))
 
-void sctk_network_free_msg ( struct sctk_thread_ptp_message_s *msg );
+void sctk_network_free_msg ( struct mpc_lowcomm_ptp_message_s *msg );
 /* For getting stats from network usage */
 
 #ifdef __cplusplus

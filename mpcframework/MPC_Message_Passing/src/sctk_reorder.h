@@ -25,7 +25,7 @@
 #include <uthash.h>
 #include <opa_primitives.h>
 #include <mpc_common_spinlock.h>
-struct sctk_thread_ptp_message_s;
+struct mpc_lowcomm_ptp_message_s;
 struct sctk_ib_buffered_table_s;
 
 /*NOT THREAD SAFE use to add a route at initialisation time*/
@@ -48,15 +48,15 @@ void sctk_add_dynamic_reorder_buffer ( int dest );
 /* Message not found */
 #define REORDER_NOT_FOUND 3
 
-int sctk_send_message_from_network_reorder ( struct sctk_thread_ptp_message_s *msg );
-int sctk_prepare_send_message_to_network_reorder ( struct sctk_thread_ptp_message_s *msg );
+int sctk_send_message_from_network_reorder ( struct mpc_lowcomm_ptp_message_s *msg );
+int sctk_prepare_send_message_to_network_reorder ( struct mpc_lowcomm_ptp_message_s *msg );
 
 typedef struct
 {
 	int key;
-	struct sctk_thread_ptp_message_s *msg;
+	struct mpc_lowcomm_ptp_message_s *msg;
 	UT_hash_handle hh;
-} sctk_reorder_buffer_t;
+} mpc_lowcomm_reorder_buffer_t;
 
 typedef struct
 {
@@ -71,7 +71,7 @@ typedef struct sctk_reorder_table_s
 	OPA_int_t message_number_dest;
 
 	mpc_common_spinlock_t lock;
-	sctk_reorder_buffer_t *buffer;
+	mpc_lowcomm_reorder_buffer_t *buffer;
 
 	UT_hash_handle hh;
 } sctk_reorder_table_t;

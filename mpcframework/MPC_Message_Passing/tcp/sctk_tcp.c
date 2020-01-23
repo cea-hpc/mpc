@@ -89,7 +89,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		}
 
 		SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
-		msg->tail.message_type = SCTK_MESSAGE_NETWORK;
+		msg->tail.message_type = MPC_LOWCOMM_MESSAGE_NETWORK;
 
 		if ( SCTK_MSG_COMMUNICATOR ( msg ) < 0 )
 		{

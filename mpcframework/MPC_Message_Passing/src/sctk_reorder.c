@@ -100,7 +100,7 @@ static inline int __send_pending_messages ( sctk_reorder_table_t *tmp )
 
 	if ( tmp->buffer != NULL )
 	{
-		sctk_reorder_buffer_t *reorder;
+		mpc_lowcomm_reorder_buffer_t *reorder;
 		int key;
 
 		do
@@ -196,7 +196,7 @@ int sctk_send_message_from_network_reorder ( mpc_lowcomm_ptp_message_t *msg )
                   return REORDER_FOUND_EXPECTED;
 
                 } else {
-                  sctk_reorder_buffer_t *reorder;
+                  mpc_lowcomm_reorder_buffer_t *reorder;
 
                   reorder = &(msg->tail.reorder);
 

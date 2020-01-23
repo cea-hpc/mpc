@@ -2027,14 +2027,14 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
 			MPI_internal_request_t* tmp_request;
 
 			tmp_request = __sctk_convert_mpc_request_internal (request,requests);
-			tmp_request->req.completion_flag = SCTK_MESSAGE_DONE;
+			tmp_request->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
 
 		} else {
 			//	*request = MPI_REQUEST_NULL;
 			MPI_internal_request_t* tmp_request;
 			__sctk_new_mpc_request (request,requests);
 			tmp_request = __sctk_convert_mpc_request_internal (request,requests);
-			tmp_request->req.completion_flag = SCTK_MESSAGE_DONE;
+			tmp_request->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
 		}
 
 

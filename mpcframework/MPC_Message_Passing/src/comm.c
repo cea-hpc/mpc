@@ -105,7 +105,7 @@ static inline void __mpc_comm_request_init( mpc_lowcomm_request_t *request,
 {
 	static mpc_lowcomm_request_t the_initial_request =
 	{
-		.completion_flag = SCTK_MESSAGE_DONE,
+		.completion_flag = MPC_LOWCOMM_MESSAGE_DONE,
 		.header.source = SCTK_PROC_NULL,
 		.header.destination = SCTK_PROC_NULL,
 		.header.source_task = SCTK_PROC_NULL,
@@ -508,7 +508,7 @@ static inline void _mpc_comm_ptp_copy_task_insert( mpc_lowcomm_msg_list_t *ptr_r
 	tmp->msg_recv = ptr_recv->msg;
 
 	/* If the message is small just copy */
-	if ( tmp->msg_send->tail.message_type == SCTK_MESSAGE_CONTIGUOUS )
+	if ( tmp->msg_send->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS )
 	{
 		if ( tmp->msg_send->tail.message.contiguous.size <= 64 )
 		{
@@ -578,12 +578,12 @@ void mpc_lowcomm_comm_ptp_message_complete_and_free( mpc_lowcomm_ptp_message_t *
 	if ( msg->tail.buffer_async )
 	{
 		mpc_buffered_msg_t *buffer_async = msg->tail.buffer_async;
-		buffer_async->completion_flag = SCTK_MESSAGE_DONE;
+		buffer_async->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
 	}
 
 	if ( SCTK_MSG_COMPLETION_FLAG( msg ) )
 	{
-		*( SCTK_MSG_COMPLETION_FLAG( msg ) ) = SCTK_MESSAGE_DONE;
+		*( SCTK_MSG_COMPLETION_FLAG( msg ) ) = MPC_LOWCOMM_MESSAGE_DONE;
 	}
 
 	( free_memory )( msg );
@@ -629,13 +629,13 @@ inline void mpc_lowcomm_comm_ptp_message_copy( mpc_lowcomm_ptp_message_content_t
 	mpc_lowcomm_ptp_message_t *recv;
 	send = tmp->msg_send;
 	recv = tmp->msg_recv;
-	assume( send->tail.message_type == SCTK_MESSAGE_CONTIGUOUS );
+	assume( send->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS );
 
 	switch ( recv->tail.message_type )
 	{
-		case SCTK_MESSAGE_CONTIGUOUS:
+		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
 		{
-			sctk_nodebug( "SCTK_MESSAGE_CONTIGUOUS - SCTK_MESSAGE_CONTIGUOUS" );
+			sctk_nodebug( "MPC_LOWCOMM_MESSAGE_CONTIGUOUS - MPC_LOWCOMM_MESSAGE_CONTIGUOUS" );
 			size_t size;
 			size = mpc_common_min( send->tail.message.contiguous.size,
 			                       recv->tail.message.contiguous.size );
@@ -645,9 +645,9 @@ inline void mpc_lowcomm_comm_ptp_message_copy( mpc_lowcomm_ptp_message_content_t
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK:
+		case MPC_LOWCOMM_MESSAGE_PACK:
 		{
-			sctk_nodebug( "SCTK_MESSAGE_CONTIGUOUS - SCTK_MESSAGE_PACK size %d",
+			sctk_nodebug( "MPC_LOWCOMM_MESSAGE_CONTIGUOUS - MPC_LOWCOMM_MESSAGE_PACK size %d",
 			              send->tail.message.contiguous.size );
 			size_t i;
 			ssize_t j;
@@ -705,9 +705,9 @@ inline void mpc_lowcomm_comm_ptp_message_copy( mpc_lowcomm_ptp_message_content_t
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK_ABSOLUTE:
+		case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
 		{
-			sctk_nodebug( "SCTK_MESSAGE_CONTIGUOUS - SCTK_MESSAGE_PACK_ABSOLUTE size %d",
+			sctk_nodebug( "MPC_LOWCOMM_MESSAGE_CONTIGUOUS - MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE size %d",
 			              send->tail.message.contiguous.size );
 			size_t i;
 			ssize_t j;
@@ -1134,13 +1134,13 @@ inline void mpc_lowcomm_comm_ptp_message_copy_pack( mpc_lowcomm_ptp_message_cont
 	mpc_lowcomm_ptp_message_t *recv;
 	send = tmp->msg_send;
 	recv = tmp->msg_recv;
-	assume( send->tail.message_type == SCTK_MESSAGE_PACK );
+	assume( send->tail.message_type == MPC_LOWCOMM_MESSAGE_PACK );
 
 	switch ( recv->tail.message_type )
 	{
-		case SCTK_MESSAGE_PACK:
+		case MPC_LOWCOMM_MESSAGE_PACK:
 		{
-			sctk_nodebug( "SCTK_MESSAGE_PACK - SCTK_MESSAGE_PACK" );
+			sctk_nodebug( "MPC_LOWCOMM_MESSAGE_PACK - MPC_LOWCOMM_MESSAGE_PACK" );
 			size_t i;
 
 			for ( i = 0; i < send->tail.message.pack.count; i++ )
@@ -1161,9 +1161,9 @@ inline void mpc_lowcomm_comm_ptp_message_copy_pack( mpc_lowcomm_ptp_message_cont
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK_ABSOLUTE:
+		case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
 		{
-			sctk_nodebug( "SCTK_MESSAGE_PACK - SCTK_MESSAGE_PACK_ABSOLUTE" );
+			sctk_nodebug( "MPC_LOWCOMM_MESSAGE_PACK - MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE" );
 			size_t i;
 
 			for ( i = 0; i < send->tail.message.pack.count; i++ )
@@ -1185,9 +1185,9 @@ inline void mpc_lowcomm_comm_ptp_message_copy_pack( mpc_lowcomm_ptp_message_cont
 			break;
 		}
 
-		case SCTK_MESSAGE_CONTIGUOUS:
+		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
 		{
-			sctk_nodebug( "SCTK_MESSAGE_PACK - SCTK_MESSAGE_CONTIGUOUS" );
+			sctk_nodebug( "MPC_LOWCOMM_MESSAGE_PACK - MPC_LOWCOMM_MESSAGE_CONTIGUOUS" );
 			size_t i;
 			ssize_t j;
 			size_t size;
@@ -1228,13 +1228,13 @@ inline void mpc_lowcomm_comm_ptp_message_copy_pack_absolute( mpc_lowcomm_ptp_mes
 	mpc_lowcomm_ptp_message_t *recv;
 	send = tmp->msg_send;
 	recv = tmp->msg_recv;
-	assume( send->tail.message_type == SCTK_MESSAGE_PACK_ABSOLUTE );
+	assume( send->tail.message_type == MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE );
 
 	switch ( recv->tail.message_type )
 	{
-		case SCTK_MESSAGE_PACK:
+		case MPC_LOWCOMM_MESSAGE_PACK:
 		{
-			sctk_nodebug( "SCTK_MESSAGE_PACK_ABSOLUTE - SCTK_MESSAGE_PACK" );
+			sctk_nodebug( "MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE - MPC_LOWCOMM_MESSAGE_PACK" );
 			size_t i;
 
 			for ( i = 0; i < send->tail.message.pack.count; i++ )
@@ -1256,10 +1256,10 @@ inline void mpc_lowcomm_comm_ptp_message_copy_pack_absolute( mpc_lowcomm_ptp_mes
 			break;
 		}
 
-		case SCTK_MESSAGE_PACK_ABSOLUTE:
+		case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
 		{
 			sctk_nodebug(
-			    "SCTK_MESSAGE_PACK_ABSOLUTE - SCTK_MESSAGE_PACK_ABSOLUTE count == %d",
+			    "MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE - MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE count == %d",
 			    send->tail.message.pack.count );
 			size_t i;
 
@@ -1282,9 +1282,9 @@ inline void mpc_lowcomm_comm_ptp_message_copy_pack_absolute( mpc_lowcomm_ptp_mes
 			break;
 		}
 
-		case SCTK_MESSAGE_CONTIGUOUS:
+		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
 		{
-			sctk_nodebug( "SCTK_MESSAGE_PACK_ABSOLUTE - SCTK_MESSAGE_CONTIGUOUS" );
+			sctk_nodebug( "MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE - MPC_LOWCOMM_MESSAGE_CONTIGUOUS" );
 			size_t i;
 			ssize_t j;
 			size_t size;
@@ -1454,11 +1454,11 @@ void mpc_lowcomm_comm_ptp_message_header_clear( mpc_lowcomm_ptp_message_t *tmp,
 
 	switch ( tmp->tail.message_type )
 	{
-		case SCTK_MESSAGE_PACK:
+		case MPC_LOWCOMM_MESSAGE_PACK:
 			_mpc_comm_ptp_message_set_copy_and_free( tmp, __mpc_comm_ptp_message_pack_free, mpc_lowcomm_comm_ptp_message_copy_pack );
 			break;
 
-		case SCTK_MESSAGE_PACK_ABSOLUTE:
+		case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
 			_mpc_comm_ptp_message_set_copy_and_free( tmp, __mpc_comm_ptp_message_pack_free, mpc_lowcomm_comm_ptp_message_copy_pack_absolute );
 			break;
 
@@ -1491,7 +1491,7 @@ static inline void __mpc_comm_ptp_message_set_contiguous_addr( mpc_lowcomm_ptp_m
 void mpc_lowcomm_comm_ptp_message_set_contiguous_addr( mpc_lowcomm_ptp_message_t *restrict msg,
         void *restrict addr, const size_t size )
 {
-	assert( msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS );
+	assert( msg->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS );
 	__mpc_comm_ptp_message_set_contiguous_addr( msg, addr, size );
 }
 
@@ -1648,7 +1648,7 @@ void mpc_lowcomm_comm_ptp_message_header_init( mpc_lowcomm_ptp_message_t *msg,
 	/* A message can be sent with a NULL request (see the MPI standard) */
 	if ( request )
 	{
-		__mpc_comm_fill_request( request, SCTK_MESSAGE_PENDING, msg, request_type );
+		__mpc_comm_fill_request( request, MPC_LOWCOMM_MESSAGE_PENDING, msg, request_type );
 		SCTK_MSG_COMPLETION_FLAG_SET( msg, &( request->completion_flag ) );
 	}
 }
@@ -1664,7 +1664,7 @@ void __mpc_comm_ptp_message_pack_free( void *tmp )
 	mpc_lowcomm_ptp_message_t *msg;
 	msg = tmp;
 
-	if ( msg->tail.message_type == SCTK_MESSAGE_PACK_ABSOLUTE )
+	if ( msg->tail.message_type == MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE )
 	{
 		sctk_free( msg->tail.message.pack.list.absolute );
 	}
@@ -1684,13 +1684,13 @@ void mpc_lowcomm_comm_ptp_message_add_pack( mpc_lowcomm_ptp_message_t *msg, void
 {
 	int step;
 
-	if ( msg->tail.message_type == SCTK_MESSAGE_PACK_UNDEFINED )
+	if ( msg->tail.message_type == MPC_LOWCOMM_MESSAGE_PACK_UNDEFINED )
 	{
-		msg->tail.message_type = SCTK_MESSAGE_PACK;
+		msg->tail.message_type = MPC_LOWCOMM_MESSAGE_PACK;
 		_mpc_comm_ptp_message_set_copy_and_free( msg, __mpc_comm_ptp_message_pack_free, mpc_lowcomm_comm_ptp_message_copy_pack );
 	}
 
-	assume( msg->tail.message_type == SCTK_MESSAGE_PACK );
+	assume( msg->tail.message_type == MPC_LOWCOMM_MESSAGE_PACK );
 
 	if ( msg->tail.message.pack.count >= msg->tail.message.pack.max_count )
 	{
@@ -1698,7 +1698,7 @@ void mpc_lowcomm_comm_ptp_message_add_pack( mpc_lowcomm_ptp_message_t *msg, void
 		msg->tail.message.pack.list.std =
 		    sctk_realloc( msg->tail.message.pack.list.std,
 		                  msg->tail.message.pack.max_count *
-		                  sizeof( sctk_message_pack_std_list_t ) );
+		                  sizeof( mpc_lowcomm_ptp_message_pack_std_list_t ) );
 	}
 
 	step = msg->tail.message.pack.count;
@@ -1717,13 +1717,13 @@ void mpc_lowcomm_comm_ptp_message_add_pack_absolute( mpc_lowcomm_ptp_message_t *
 {
 	int step;
 
-	if ( msg->tail.message_type == SCTK_MESSAGE_PACK_UNDEFINED )
+	if ( msg->tail.message_type == MPC_LOWCOMM_MESSAGE_PACK_UNDEFINED )
 	{
-		msg->tail.message_type = SCTK_MESSAGE_PACK_ABSOLUTE;
+		msg->tail.message_type = MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE;
 		_mpc_comm_ptp_message_set_copy_and_free( msg, __mpc_comm_ptp_message_pack_free, mpc_lowcomm_comm_ptp_message_copy_pack_absolute );
 	}
 
-	assume( msg->tail.message_type == SCTK_MESSAGE_PACK_ABSOLUTE );
+	assume( msg->tail.message_type == MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE );
 
 	if ( msg->tail.message.pack.count >= msg->tail.message.pack.max_count )
 	{
@@ -1731,7 +1731,7 @@ void mpc_lowcomm_comm_ptp_message_add_pack_absolute( mpc_lowcomm_ptp_message_t *
 		msg->tail.message.pack.list.absolute =
 		    sctk_realloc( msg->tail.message.pack.list.absolute,
 		                  msg->tail.message.pack.max_count *
-		                  sizeof( sctk_message_pack_absolute_list_t ) );
+		                  sizeof( mpc_lowcomm_ptp_message_pack_absolute_list_t ) );
 	}
 
 	step = msg->tail.message.pack.count;
@@ -1791,19 +1791,19 @@ int sctk_m_probe_matching_get()
 __thread volatile int already_processsing_a_control_message = 0;
 
 static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matching( mpc_comm_ptp_list_pending_t *pending_list,
-        sctk_thread_message_header_t *header )
+        mpc_lowcomm_ptp_message_header_t *header )
 {
 	mpc_lowcomm_msg_list_t *ptr_found;
 	mpc_lowcomm_msg_list_t *tmp;
 	/* Loop on all  pending messages */
 	DL_FOREACH_SAFE( pending_list->list, ptr_found, tmp )
 	{
-		sctk_thread_message_header_t *header_found;
+		mpc_lowcomm_ptp_message_header_t *header_found;
 		sctk_assert( ptr_found->msg != NULL );
 		header_found = &( ptr_found->msg->body.header );
 
 		/* Control Message Handling */
-		if ( header_found->message_type.type == SCTK_CONTROL_MESSAGE_TASK )
+		if ( header_found->message_type.type == MPC_LOWCOMM_CONTROL_MESSAGE_TASK )
 		{
 			if ( !already_processsing_a_control_message )
 			{
@@ -1846,7 +1846,7 @@ static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matchin
 		}
 
 		/* Check for canceled send messages*/
-		if ( header_found->message_type.type == SCTK_CANCELLED_SEND )
+		if ( header_found->message_type.type == MPC_LOWCOMM_CANCELLED_SEND )
 		{
 			/* Message found. We delete it  */
 			DL_DELETE( pending_list->list, ptr_found );
@@ -1860,7 +1860,7 @@ static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matchin
  * Probe for a matching message
  */
 static inline int __mpc_comm_ptp_probe( mpc_comm_ptp_t *pair,
-                                        sctk_thread_message_header_t *header )
+                                        mpc_lowcomm_ptp_message_header_t *header )
 {
 	mpc_lowcomm_msg_list_t *ptr_send;
 	mpc_lowcomm_msg_list_t *tmp;
@@ -1868,7 +1868,7 @@ static inline int __mpc_comm_ptp_probe( mpc_comm_ptp_t *pair,
 	DL_FOREACH_SAFE( pair->lists.pending_send.list, ptr_send, tmp )
 	{
 		sctk_assert( ptr_send->msg != NULL );
-		sctk_thread_message_header_t *header_send = &( ptr_send->msg->body.header );
+		mpc_lowcomm_ptp_message_header_t *header_send = &( ptr_send->msg->body.header );
 		mpc_lowcomm_ptp_message_tail_t *tail_send = &( ptr_send->msg->tail );
 		int send_message_matching_id =
 		    OPA_load_int( &tail_send->matching_id );
@@ -1901,7 +1901,7 @@ static inline int __mpc_comm_ptp_probe( mpc_comm_ptp_t *pair,
 			}
 
 			memcpy( header, &( ptr_send->msg->body.header ),
-			        sizeof( sctk_thread_message_header_t ) );
+			        sizeof( mpc_lowcomm_ptp_message_header_t ) );
 			return 1;
 		}
 	}
@@ -1914,7 +1914,7 @@ static inline int __mpc_comm_pending_msg_list_search_matching_from_recv( mpc_com
 	mpc_lowcomm_msg_list_t *ptr_recv = &msg->tail.distant_list;
 	mpc_lowcomm_msg_list_t *ptr_send = __mpc_comm_pending_msg_list_search_matching( &pair->lists.pending_send, &( msg->body.header ) );
 
-	if ( SCTK_MSG_SPECIFIC_CLASS( msg ) == SCTK_CANCELLED_RECV )
+	if ( SCTK_MSG_SPECIFIC_CLASS( msg ) == MPC_LOWCOMM_CANCELLED_RECV )
 	{
 		DL_DELETE( pair->lists.pending_recv.list, ptr_recv );
 		assume( ptr_send == NULL );
@@ -2084,7 +2084,7 @@ static void __mpc_comm_perform_msg_wfv( void *a )
 	struct mpc_lowcomm_comm_ptp_msg_progress_s *_wait = ( struct mpc_lowcomm_comm_ptp_msg_progress_s * ) a;
 	__mpc_comm_ptp_msg_wait( _wait );
 
-	if ( ( volatile int ) _wait->request->completion_flag != SCTK_MESSAGE_DONE )
+	if ( ( volatile int ) _wait->request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE )
 	{
 		sctk_network_notify_idle_message();
 	}
@@ -2114,7 +2114,7 @@ void mpc_lowcomm_comm_request_wait( mpc_lowcomm_request_t *request )
 
 	struct mpc_lowcomm_comm_ptp_msg_progress_s _wait;
 
-	if ( request->completion_flag == SCTK_MESSAGE_CANCELED )
+	if ( request->completion_flag == MPC_LOWCOMM_MESSAGE_CANCELED )
 	{
 		return;
 	}
@@ -2127,11 +2127,11 @@ void mpc_lowcomm_comm_request_wait( mpc_lowcomm_request_t *request )
 	if ( request->request_type == REQUEST_GENERALIZED )
 	{
 		mpc_lowcomm_comm_perform_idle( ( int * ) & ( request->completion_flag ),
-		                          SCTK_MESSAGE_DONE, mpc_mpi_cl_egreq_progress_poll, NULL );
+		                          MPC_LOWCOMM_MESSAGE_DONE, mpc_mpi_cl_egreq_progress_poll, NULL );
 	}
 	else
 	{
-		if ( request->completion_flag == SCTK_MESSAGE_DONE )
+		if ( request->completion_flag == MPC_LOWCOMM_MESSAGE_DONE )
 		{
 			return;
 		}
@@ -2146,12 +2146,12 @@ void mpc_lowcomm_comm_request_wait( mpc_lowcomm_request_t *request )
 			__mpc_comm_ptp_msg_wait( &_wait );
 			trials++;
 		}
-		while ( ( request->completion_flag != SCTK_MESSAGE_DONE )  && ( trials < 32 ) );
+		while ( ( request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE )  && ( trials < 32 ) );
 
-		if ( request->completion_flag != SCTK_MESSAGE_DONE )
+		if ( request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE )
 		{
 			mpc_lowcomm_comm_perform_idle(
-			    ( int * ) & ( _wait.request->completion_flag ), SCTK_MESSAGE_DONE,
+			    ( int * ) & ( _wait.request->completion_flag ), MPC_LOWCOMM_MESSAGE_DONE,
 			    ( void ( * )( void * ) ) __mpc_comm_perform_msg_wfv,
 			    &_wait );
 		}
@@ -2165,7 +2165,7 @@ void mpc_lowcomm_comm_request_wait( mpc_lowcomm_request_t *request )
 	if ( request->pointer_to_source_request )
 	{
 		( ( mpc_lowcomm_request_t * ) request->pointer_to_source_request )->completion_flag =
-		    SCTK_MESSAGE_DONE;
+		    MPC_LOWCOMM_MESSAGE_DONE;
 	}
 
 	/* Free the shadow request bound if present (wait over the source ) */
@@ -2199,7 +2199,7 @@ static inline void __mpc_comm_ptp_msg_wait( struct mpc_lowcomm_comm_ptp_msg_prog
 	const int polling_task_id = wait->polling_task_id;
 	const int blocking = wait->blocking;
 
-	if ( request->completion_flag != SCTK_MESSAGE_DONE )
+	if ( request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE )
 	{
 		/* Check the source of the request. We try to poll the
 			   source in order to retreive messages from the network */
@@ -2236,7 +2236,7 @@ static inline void __mpc_comm_ptp_msg_wait( struct mpc_lowcomm_comm_ptp_msg_prog
 			return;
 		}
 
-                if (  request->completion_flag != SCTK_MESSAGE_DONE )
+                if (  request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE )
                 {
 		        sctk_network_notify_idle_message();
                 }
@@ -2333,7 +2333,7 @@ void _mpc_comm_ptp_message_send_check( mpc_lowcomm_ptp_message_t *msg, int poll_
 
 	if ( SCTK_MSG_COMPLETION_FLAG( msg ) != NULL )
 	{
-		*( SCTK_MSG_COMPLETION_FLAG( msg ) ) = SCTK_MESSAGE_PENDING;
+		*( SCTK_MSG_COMPLETION_FLAG( msg ) ) = MPC_LOWCOMM_MESSAGE_PENDING;
 	}
 
 	/* Flag the Message as all local */
@@ -2404,7 +2404,7 @@ void _mpc_comm_ptp_message_recv_check( mpc_lowcomm_ptp_message_t *msg,
 {
 	if ( SCTK_MSG_COMPLETION_FLAG( msg ) != NULL )
 	{
-		*( SCTK_MSG_COMPLETION_FLAG( msg ) ) = SCTK_MESSAGE_PENDING;
+		*( SCTK_MSG_COMPLETION_FLAG( msg ) ) = MPC_LOWCOMM_MESSAGE_PENDING;
 	}
 
 	if ( msg->tail.request != NULL )
@@ -2459,7 +2459,7 @@ __mpc_comm_probe_source_tag_class_func( int destination, int source, int tag,
                                         mpc_lowcomm_ptp_message_class_t class,
                                         const mpc_lowcomm_communicator_t comm,
                                         int *status,
-                                        sctk_thread_message_header_t *msg )
+                                        mpc_lowcomm_ptp_message_header_t *msg )
 {
 	int world_source = source;
 	int world_destination = destination;
@@ -2493,34 +2493,34 @@ __mpc_comm_probe_source_tag_class_func( int destination, int source, int tag,
 
 void mpc_lowcomm_comm_message_probe_any_tag( int destination, int source,
                                         const mpc_lowcomm_communicator_t comm, int *status,
-                                        sctk_thread_message_header_t *msg )
+                                        mpc_lowcomm_ptp_message_header_t *msg )
 {
 	__mpc_comm_probe_source_tag_class_func( destination, source, SCTK_ANY_TAG,
-	                                        SCTK_P2P_MESSAGE, comm, status, msg );
+	                                        MPC_LOWCOMM_P2P_MESSAGE, comm, status, msg );
 }
 
 void mpc_lowcomm_comm_message_probe_any_source( int destination, const mpc_lowcomm_communicator_t comm,
-        int *status, sctk_thread_message_header_t *msg )
+        int *status, mpc_lowcomm_ptp_message_header_t *msg )
 {
 	__mpc_comm_probe_source_tag_class_func( destination, SCTK_ANY_SOURCE,
-	                                        msg->message_tag, SCTK_P2P_MESSAGE, comm,
+	                                        msg->message_tag, MPC_LOWCOMM_P2P_MESSAGE, comm,
 	                                        status, msg );
 }
 
 void mpc_lowcomm_comm_message_probe_any_source_any_tag( int destination,
         const mpc_lowcomm_communicator_t comm, int *status,
-        sctk_thread_message_header_t *msg )
+        mpc_lowcomm_ptp_message_header_t *msg )
 {
 	__mpc_comm_probe_source_tag_class_func( destination, SCTK_ANY_SOURCE, SCTK_ANY_TAG,
-	                                        SCTK_P2P_MESSAGE, comm, status, msg );
+	                                        MPC_LOWCOMM_P2P_MESSAGE, comm, status, msg );
 }
 
 void mpc_lowcomm_comm_message_probe( int destination, int source,
                                 const mpc_lowcomm_communicator_t comm, int *status,
-                                sctk_thread_message_header_t *msg )
+                                mpc_lowcomm_ptp_message_header_t *msg )
 {
 	__mpc_comm_probe_source_tag_class_func( destination, source, msg->message_tag,
-	                                        SCTK_P2P_MESSAGE, comm, status, msg );
+	                                        MPC_LOWCOMM_P2P_MESSAGE, comm, status, msg );
 }
 
 
@@ -2529,7 +2529,7 @@ void mpc_lowcomm_comm_message_probe_any_source_class_comm( int destination, int 
         mpc_lowcomm_ptp_message_class_t class,
         const mpc_lowcomm_communicator_t comm,
         int *status,
-        sctk_thread_message_header_t *msg )
+        mpc_lowcomm_ptp_message_header_t *msg )
 {
 	__mpc_comm_probe_source_tag_class_func( destination, SCTK_ANY_SOURCE, tag, class,
 	                                        comm, status, msg );
@@ -2572,7 +2572,7 @@ int mpc_lowcomm_comm_request_cancel( mpc_lowcomm_request_t *msg )
 			/* Call the cancel handler with a flag telling if the request was completed
 			* which is our case is the same as not pending anymore */
 			ret = ( msg->cancel_fn )( msg->extra_state,
-			                          ( msg->completion_flag != SCTK_MESSAGE_PENDING ) );
+			                          ( msg->completion_flag != MPC_LOWCOMM_MESSAGE_PENDING ) );
 			break;
 
 		case REQUEST_RECV:
@@ -2581,7 +2581,7 @@ int mpc_lowcomm_comm_request_cancel( mpc_lowcomm_request_t *msg )
 				return ret;
 			}
 
-			SCTK_MSG_SPECIFIC_CLASS_SET( msg->msg, SCTK_CANCELLED_RECV );
+			SCTK_MSG_SPECIFIC_CLASS_SET( msg->msg, MPC_LOWCOMM_CANCELLED_RECV );
 			break;
 
 		case REQUEST_SEND:
@@ -2598,7 +2598,7 @@ int mpc_lowcomm_comm_request_cancel( mpc_lowcomm_request_t *msg )
 				not_implemented();
 			}
 
-			SCTK_MSG_SPECIFIC_CLASS_SET( msg->msg, SCTK_CANCELLED_SEND );
+			SCTK_MSG_SPECIFIC_CLASS_SET( msg->msg, MPC_LOWCOMM_CANCELLED_SEND );
 			break;
 
 		default:
@@ -2606,7 +2606,7 @@ int mpc_lowcomm_comm_request_cancel( mpc_lowcomm_request_t *msg )
 			break;
 	}
 
-	msg->completion_flag = SCTK_MESSAGE_CANCELED;
+	msg->completion_flag = MPC_LOWCOMM_MESSAGE_CANCELED;
 	return ret;
 }
 
@@ -2622,7 +2622,7 @@ void mpc_lowcomm_comm_isend_class_src( int src, int dest, void *data, size_t siz
 	}
 
 	mpc_lowcomm_ptp_message_t *msg =
-	    mpc_lowcomm_comm_ptp_message_header_create( SCTK_MESSAGE_CONTIGUOUS );
+	    mpc_lowcomm_comm_ptp_message_header_create( MPC_LOWCOMM_MESSAGE_CONTIGUOUS );
 	mpc_lowcomm_comm_ptp_message_set_contiguous_addr( msg, data, size );
 	mpc_lowcomm_comm_ptp_message_header_init( msg, tag, comm, src, dest, req, size, class,
 	                                     SCTK_DATATYPE_IGNORE, REQUEST_SEND );
@@ -2655,7 +2655,7 @@ void mpc_lowcomm_comm_irecv_class_dest( int src, int dest, void *buffer, size_t 
 	}
 
 	mpc_lowcomm_ptp_message_t *msg =
-	    mpc_lowcomm_comm_ptp_message_header_create( SCTK_MESSAGE_CONTIGUOUS );
+	    mpc_lowcomm_comm_ptp_message_header_create( MPC_LOWCOMM_MESSAGE_CONTIGUOUS );
 	mpc_lowcomm_comm_ptp_message_set_contiguous_addr( msg, buffer, size );
 	mpc_lowcomm_comm_ptp_message_header_init( msg, tag, comm, src, dest, req, size, class,
 	                                     SCTK_DATATYPE_IGNORE, REQUEST_RECV );
@@ -2673,13 +2673,13 @@ void mpc_lowcomm_comm_irecv_class(  int src, void *buffer, size_t size, int tag,
 void mpc_lowcomm_comm_isend( int dest, void *data, size_t size, int tag,
                         mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req )
 {
-	mpc_lowcomm_comm_isend_class( dest, data, size, tag, comm, SCTK_P2P_MESSAGE, req );
+	mpc_lowcomm_comm_isend_class( dest, data, size, tag, comm, MPC_LOWCOMM_P2P_MESSAGE, req );
 }
 
 void mpc_lowcomm_comm_irecv( int src, void *data, size_t size, int tag,
                         mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req )
 {
-	mpc_lowcomm_comm_irecv_class( src, data, size, tag, comm, SCTK_P2P_MESSAGE, req );
+	mpc_lowcomm_comm_irecv_class( src, data, size, tag, comm, MPC_LOWCOMM_P2P_MESSAGE, req );
 }
 
 void mpc_lowcomm_comm_request_wait( mpc_lowcomm_request_t *request );

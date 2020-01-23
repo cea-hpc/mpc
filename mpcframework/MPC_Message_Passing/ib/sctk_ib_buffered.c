@@ -80,7 +80,7 @@ int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
 	void *payload;
 	int number;
 
-	if ( msg->tail.message_type != SCTK_MESSAGE_CONTIGUOUS )
+	if ( msg->tail.message_type != MPC_LOWCOMM_MESSAGE_CONTIGUOUS )
 	{
 		payload = sctk_ib_buffered_send_non_contiguous_msg ( rail, remote, msg, size );
 		assume ( payload );
@@ -148,7 +148,7 @@ int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
 	while ( msg_copied < size );
 
 	/* We free the temp copy */
-	if ( msg->tail.message_type != SCTK_MESSAGE_CONTIGUOUS )
+	if ( msg->tail.message_type != MPC_LOWCOMM_MESSAGE_CONTIGUOUS )
 	{
 		assume ( payload );
 		sctk_free ( payload );
@@ -197,7 +197,7 @@ void sctk_ib_buffered_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
 	rail = send->tail.ib.buffered.rail;
 	entry = send->tail.ib.buffered.entry;
 	ib_assume ( entry );
-	//ib_assume(recv->tail.message_type == SCTK_MESSAGE_CONTIGUOUS);
+	//ib_assume(recv->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 
 	mpc_common_spinlock_lock ( &entry->lock );
 	entry->copy_ptr = tmp;
@@ -208,7 +208,7 @@ void sctk_ib_buffered_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
 		case SCTK_IB_RDMA_NOT_SET:
 			sctk_nodebug ( "Message directly copied (entry:%p)", entry );
 
-			if ( recv->tail.message_type == SCTK_MESSAGE_CONTIGUOUS )
+			if ( recv->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS )
 			{
 				entry->payload = recv->tail.message.contiguous.addr;
 				/* Add matching OK */
@@ -277,7 +277,7 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
 		entry->msg.tail.ib.buffered.rail = rail;
 		/* Prepare matching */
 		entry->msg.tail.completion_flag = NULL;
-		entry->msg.tail.message_type = SCTK_MESSAGE_NETWORK;
+		entry->msg.tail.message_type = MPC_LOWCOMM_MESSAGE_NETWORK;
 		_mpc_comm_ptp_message_clear_request ( &entry->msg );
 		_mpc_comm_ptp_message_set_copy_and_free ( &entry->msg, sctk_ib_buffered_free_msg,
 		                     sctk_ib_buffered_copy );

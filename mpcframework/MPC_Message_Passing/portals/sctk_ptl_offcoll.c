@@ -645,7 +645,7 @@ void sctk_ptl_offcoll_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 				memcpy(user_ptr->slot.me.start, ev.start, ev.mlength);
 		case PTL_EVENT_PUT:                  /* a Put() reached the local process */
 			if(user_ptr->prot == SCTK_PTL_PROT_EAGER &&
-				((sctk_ptl_matchbits_t)ev.match_bits).offload.type == SCTK_BROADCAST_OFFLOAD_MESSAGE)
+				((sctk_ptl_matchbits_t)ev.match_bits).offload.type == MPC_LOWCOMM_BROADCAST_OFFLOAD_MESSAGE)
 			{
 				PtlCTSet(
 				user_ptr->slot.me.ct_handle,

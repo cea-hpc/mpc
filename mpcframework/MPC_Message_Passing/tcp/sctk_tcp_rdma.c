@@ -29,7 +29,7 @@
  */
 typedef enum
 {
-    SCTK_RDMA_MESSAGE_HEADER, /**< It is an RDMA header */
+    MPC_LOWCOMM_RDMA_MESSAGE_HEADER, /**< It is an RDMA header */
     SCTK_RDMA_READ,           /**< RDMA read */
     SCTK_RDMA_WRITE           /**< RDMA write */
 } sctk_tcp_rdma_type_t;
@@ -89,7 +89,7 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 
 		switch ( op_type )
 		{
-			case SCTK_RDMA_MESSAGE_HEADER:
+			case MPC_LOWCOMM_RDMA_MESSAGE_HEADER:
 			{
 				size = sizeof ( mpc_lowcomm_ptp_message_t );
 				msg = sctk_malloc ( size );
@@ -101,7 +101,7 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 				msg->tail.route_table = tmp;
 
 				SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
-				msg->tail.message_type = SCTK_MESSAGE_NETWORK;
+				msg->tail.message_type = MPC_LOWCOMM_MESSAGE_NETWORK;
 
 				_mpc_comm_ptp_message_clear_request ( msg );
 				_mpc_comm_ptp_message_set_copy_and_free ( msg, sctk_free, sctk_tcp_rdma_message_copy );
@@ -169,7 +169,7 @@ static void sctk_network_send_message_tcp_rdma_endpoint ( mpc_lowcomm_ptp_messag
 
 	fd = endpoint->data.tcp.fd;
 
-	sctk_tcp_rdma_type_t op_type = SCTK_RDMA_MESSAGE_HEADER;
+	sctk_tcp_rdma_type_t op_type = MPC_LOWCOMM_RDMA_MESSAGE_HEADER;
 
 	mpc_common_io_safe_write ( fd, &op_type, sizeof ( sctk_tcp_rdma_type_t ) );
 	mpc_common_io_safe_write ( fd, ( char * ) msg, sizeof ( mpc_lowcomm_ptp_message_body_t ) );

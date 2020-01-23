@@ -138,7 +138,7 @@ sctk_network_send_message_from_pending_shm_list( void )
                   mpc_common_get_process_rank(), SCTK_MSG_SRC_PROCESS(msg),
                   SCTK_MSG_DEST_PROCESS(msg), SCTK_MSG_SRC_TASK(msg),
                   SCTK_MSG_DEST_TASK(msg),
-                  sctk_message_class_name[(int)SCTK_MSG_SPECIFIC_CLASS(msg)],
+                  mpc_lowcomm_ptp_message_class_name[(int)SCTK_MSG_SPECIFIC_CLASS(msg)],
                   SCTK_MSG_SPECIFIC_CLASS(msg),
                   _mpc_comm_ptp_message_is_for_process(
                       SCTK_MSG_SPECIFIC_CLASS(msg)),

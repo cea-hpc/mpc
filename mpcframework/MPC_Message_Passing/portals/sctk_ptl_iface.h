@@ -389,8 +389,8 @@ static inline const char * __sctk_ptl_match_str(char*buf, size_t s, ptl_match_bi
 
 	switch(m2.data.type)
 	{
-		case SCTK_BARRIER_OFFLOAD_MESSAGE:
-		case SCTK_BROADCAST_OFFLOAD_MESSAGE:
+		case MPC_LOWCOMM_BARRIER_OFFLOAD_MESSAGE:
+		case MPC_LOWCOMM_BROADCAST_OFFLOAD_MESSAGE:
 			snprintf(buf, s, "it:%u[%u]:%u", (unsigned int)m2.offload.iter, (int)m2.offload.dir, (int)m2.offload.type);
 			break;
 		default:

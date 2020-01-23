@@ -107,7 +107,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	 */
 	
 	/* is the message contiguous ? Maybe we could try to get an IOVEC instead of packing ? */
-	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
+	if(msg->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
 	{
 		start = msg->tail.message.contiguous.addr;
 	}
@@ -199,7 +199,7 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	sctk_assert(ev.ni_fail_type == PTL_NI_OK);
 
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
-	mpc_lowcomm_comm_ptp_message_header_clear(net_msg, SCTK_MESSAGE_CONTIGUOUS , sctk_ptl_rdv_free_memory, sctk_ptl_rdv_message_copy);
+	mpc_lowcomm_comm_ptp_message_header_clear(net_msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS , sctk_ptl_rdv_free_memory, sctk_ptl_rdv_message_copy);
 	SCTK_MSG_SRC_PROCESS_SET     ( net_msg ,  ptr->match.data.rank);
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  ptr->match.data.rank);
 	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  sctk_get_process_rank());
@@ -306,7 +306,7 @@ void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* 
 	sctk_assert(chunk_rest < chunk_nb);
 	me_flags         = SCTK_PTL_ME_GET_FLAGS | ((chunk_nb == 1) ? SCTK_PTL_ONCE : 0);
 	/* if the message is non-contiguous, we need a copy to 'pack' it first */
-	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
+	if(msg->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
 	{
 		start = msg->tail.message.contiguous.addr;
 	}

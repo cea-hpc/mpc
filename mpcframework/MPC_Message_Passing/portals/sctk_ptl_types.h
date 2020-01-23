@@ -327,7 +327,7 @@ typedef struct sctk_ptl_rdma_ctx
 /**
  * Portals-specific data stored in msg tail.
  */
-typedef struct sctk_ptl_tail_s
+typedef struct mpc_lowcomm_ptl_tail_s
 {
 	struct sctk_ptl_local_data_s* user_ptr; /**< user_ptr, attached to the request */
 	int copy;                               /**< true if data has been temporarily copied */

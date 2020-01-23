@@ -277,7 +277,7 @@ typedef struct
 static void _mpc_coll_message_send( const mpc_lowcomm_communicator_t communicator, int myself, int dest, int tag, void *buffer, size_t size,
                                     mpc_lowcomm_ptp_message_class_t message_class, _mpc_coll_messages_t *msg_req, int check_msg )
 {
-	mpc_lowcomm_comm_ptp_message_header_clear( &( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS,
+	mpc_lowcomm_comm_ptp_message_header_clear( &( msg_req->msg ), MPC_LOWCOMM_MESSAGE_CONTIGUOUS,
 	                                      _mpc_coll_free_message, mpc_lowcomm_comm_ptp_message_copy );
 	mpc_lowcomm_comm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
 	mpc_lowcomm_comm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, myself, dest,
@@ -289,7 +289,7 @@ static void _mpc_coll_message_send( const mpc_lowcomm_communicator_t communicato
 static void _mpc_coll_message_recv( const mpc_lowcomm_communicator_t communicator, int src, int myself, int tag, void *buffer, size_t size,
                                     mpc_lowcomm_ptp_message_class_t message_class, _mpc_coll_messages_t *msg_req, int check_msg )
 {
-	mpc_lowcomm_comm_ptp_message_header_clear( &( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS,
+	mpc_lowcomm_comm_ptp_message_header_clear( &( msg_req->msg ), MPC_LOWCOMM_MESSAGE_CONTIGUOUS,
 	                                      _mpc_coll_free_message, mpc_lowcomm_comm_ptp_message_copy );
 	mpc_lowcomm_comm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
 	mpc_lowcomm_comm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, src, myself,
@@ -378,7 +378,7 @@ static void _mpc_coll_opt_barrier( const mpc_lowcomm_communicator_t communicator
 						{
 							_mpc_coll_message_recv(
 							    communicator, src + ( j * ( i / barrier_arity ) ),
-							    myself, 0, &c, 1, SCTK_BARRIER_MESSAGE,
+							    myself, 0, &c, 1, MPC_LOWCOMM_BARRIER_MESSAGE,
 							    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
 						}
 					}
@@ -394,11 +394,11 @@ static void _mpc_coll_opt_barrier( const mpc_lowcomm_communicator_t communicator
 					{
 						_mpc_coll_message_send(
 						    communicator, myself, dest, 0, &c, 1,
-						    SCTK_BARRIER_MESSAGE,
+						    MPC_LOWCOMM_BARRIER_MESSAGE,
 						    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
 						_mpc_coll_message_recv(
 						    communicator, dest, myself, 1, &c, 1,
-						    SCTK_BARRIER_MESSAGE,
+						    MPC_LOWCOMM_BARRIER_MESSAGE,
 						    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
 						_mpc_coll_messages_table_wait( &table );
 						break;
@@ -424,7 +424,7 @@ static void _mpc_coll_opt_barrier( const mpc_lowcomm_communicator_t communicator
 						_mpc_coll_message_send(
 						    communicator, myself,
 						    dest + ( j * ( i / barrier_arity ) ), 1, &c, 1,
-						    SCTK_BARRIER_MESSAGE,
+						    MPC_LOWCOMM_BARRIER_MESSAGE,
 						    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
 					}
 				}
@@ -447,14 +447,14 @@ static void _mpc_coll_opt_barrier( const mpc_lowcomm_communicator_t communicator
 		for ( i = 0; i < rsize; i++ )
 		{
 			_mpc_coll_message_send( communicator, myself, i, 65536, &c, 1,
-			                        SCTK_BARRIER_MESSAGE,
+			                        MPC_LOWCOMM_BARRIER_MESSAGE,
 			                        _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
 		}
 
 		for ( j = 0; j < rsize; j++ )
 		{
 			_mpc_coll_message_recv(
-			    communicator, j, myself, 65536, &c, 1, SCTK_BARRIER_MESSAGE,
+			    communicator, j, myself, 65536, &c, 1, MPC_LOWCOMM_BARRIER_MESSAGE,
 			    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
 		}
 
@@ -528,7 +528,7 @@ void mpc_lowcomm_bcast_opt_messages( void *buffer, const size_t size,
 				{
 					_mpc_coll_message_recv(
 					    communicator, ( dest + root ) % total, myself, root,
-					    buffer, size, SCTK_BROADCAST_MESSAGE,
+					    buffer, size, MPC_LOWCOMM_BROADCAST_MESSAGE,
 					    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
 					_mpc_coll_messages_table_wait( &table );
 					break;
@@ -552,7 +552,7 @@ void mpc_lowcomm_bcast_opt_messages( void *buffer, const size_t size,
 						    communicator, myself,
 						    ( dest + root + ( j * ( i / BROADCAST_ARRITY ) ) ) %
 						    total,
-						    root, buffer, size, SCTK_BROADCAST_MESSAGE,
+						    root, buffer, size, MPC_LOWCOMM_BROADCAST_MESSAGE,
 						    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
 					}
 				}
@@ -663,7 +663,7 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
 						_mpc_coll_message_recv(
 						    communicator, src + ( j * ( i / ALLREDUCE_ARRITY ) ),
 						    myself, 0, buffer_table[j - 1], size,
-						    SCTK_ALLREDUCE_MESSAGE,
+						    MPC_LOWCOMM_ALLREDUCE_MESSAGE,
 						    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
 					}
 				}
@@ -690,12 +690,12 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
 					sctk_nodebug( "Leaf send to %d", dest );
 					_mpc_coll_message_send(
 					    communicator, myself, dest, 0, buffer_tmp, size,
-					    SCTK_ALLREDUCE_MESSAGE,
+					    MPC_LOWCOMM_ALLREDUCE_MESSAGE,
 					    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
 					sctk_nodebug( "Leaf Recv from %d", dest );
 					_mpc_coll_message_recv( communicator, dest, myself, 1,
 					                        buffer_out, size,
-					                        SCTK_ALLREDUCE_MESSAGE,
+					                        MPC_LOWCOMM_ALLREDUCE_MESSAGE,
 					                        _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ),
 					                        0 );
 					_mpc_coll_messages_table_wait( &table );
@@ -723,7 +723,7 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
 						_mpc_coll_message_send(
 						    communicator, myself,
 						    dest + ( j * ( i / ALLREDUCE_ARRITY ) ), 1, buffer_out,
-						    size, SCTK_ALLREDUCE_MESSAGE,
+						    size, MPC_LOWCOMM_ALLREDUCE_MESSAGE,
 						    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
 					}
 				}
@@ -840,7 +840,7 @@ static void _mpc_coll_hetero_barrier_inter( const mpc_lowcomm_communicator_t com
 					    communicator,
 					    process_array[src + ( j * ( i / barrier_arity ) )],
 					    process_array[myself], 0, &c, 1,
-					    SCTK_BARRIER_HETERO_MESSAGE,
+					    MPC_LOWCOMM_BARRIER_HETERO_MESSAGE,
 					    _mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ),  1 );
 				}
 			}
@@ -857,12 +857,12 @@ static void _mpc_coll_hetero_barrier_inter( const mpc_lowcomm_communicator_t com
 				sctk_nodebug( "send %d to %d", myself, dest );
 				_mpc_coll_message_send(
 				    communicator, process_array[myself], process_array[dest], 0,
-				    &c, 1, SCTK_BARRIER_HETERO_MESSAGE,
+				    &c, 1, MPC_LOWCOMM_BARRIER_HETERO_MESSAGE,
 				    _mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ), 0 );
 				sctk_nodebug( "recv %d to %d", dest, myself );
 				_mpc_coll_message_recv(
 				    communicator, process_array[dest], process_array[myself], 1,
-				    &c, 1, SCTK_BARRIER_HETERO_MESSAGE,
+				    &c, 1, MPC_LOWCOMM_BARRIER_HETERO_MESSAGE,
 				    _mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ),  0 );
 				_mpc_coll_messages_table_wait( &table );
 				break;
@@ -889,7 +889,7 @@ static void _mpc_coll_hetero_barrier_inter( const mpc_lowcomm_communicator_t com
 					_mpc_coll_message_send(
 					    communicator, process_array[myself],
 					    process_array[dest + ( j * ( i / barrier_arity ) )], 1, &c, 1,
-					    SCTK_BARRIER_HETERO_MESSAGE,
+					    MPC_LOWCOMM_BARRIER_HETERO_MESSAGE,
 					    _mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ), 1 );
 				}
 			}
@@ -960,7 +960,7 @@ void _mpc_coll_hetero_bcast_inter( void *buffer, const size_t size,
 		int i;
 		_mpc_coll_messages_table_t table;
 		int BROADCAST_ARRITY;
-		int specific_tag = SCTK_BROADCAST_HETERO_MESSAGE;
+		int specific_tag = MPC_LOWCOMM_BROADCAST_HETERO_MESSAGE;
 		int *process_array;
 		int root;
 		_mpc_coll_message_table_init( &table );
@@ -1154,7 +1154,7 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
 	int myself;
 	int *myself_ptr;
 	size_t size = elem_size * elem_number;
-	int specific_tag = SCTK_ALLREDUCE_HETERO_MESSAGE;
+	int specific_tag = MPC_LOWCOMM_ALLREDUCE_HETERO_MESSAGE;
 	int total = sctk_get_process_nb_in_array( communicator );
 	int i;
 	int *process_array;
@@ -1487,7 +1487,7 @@ static void _mpc_coll_noalloc_barrier( const mpc_lowcomm_communicator_t communic
 						{
 							_mpc_coll_message_recv(
 							    communicator, src + ( j * ( i / barrier_arity ) ),
-							    myself, 0, &c, 1, SCTK_BARRIER_MESSAGE,
+							    myself, 0, &c, 1, MPC_LOWCOMM_BARRIER_MESSAGE,
 							    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ),
 							    0 );
 						}
@@ -1504,11 +1504,11 @@ static void _mpc_coll_noalloc_barrier( const mpc_lowcomm_communicator_t communic
 					{
 						_mpc_coll_message_send(
 						    communicator, myself, dest, 0, &c, 1,
-						    SCTK_BARRIER_MESSAGE,
+						    MPC_LOWCOMM_BARRIER_MESSAGE,
 						    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ), 0 );
 						_mpc_coll_message_recv(
 						    communicator, dest, myself, 1, &c, 1,
-						    SCTK_BARRIER_MESSAGE,
+						    MPC_LOWCOMM_BARRIER_MESSAGE,
 						    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ),
 						    0 );
 						_mpc_coll_messages_table_wait( &table );
@@ -1535,7 +1535,7 @@ static void _mpc_coll_noalloc_barrier( const mpc_lowcomm_communicator_t communic
 						_mpc_coll_message_send(
 						    communicator, myself,
 						    dest + ( j * ( i / barrier_arity ) ), 1, &c, 1,
-						    SCTK_BARRIER_MESSAGE,
+						    MPC_LOWCOMM_BARRIER_MESSAGE,
 						    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ), 0 );
 					}
 				}
@@ -1558,14 +1558,14 @@ static void _mpc_coll_noalloc_barrier( const mpc_lowcomm_communicator_t communic
 		for ( i = 0; i < rsize; i++ )
 		{
 			_mpc_coll_message_send(
-			    communicator, myself, i, 65536, &c, 1, SCTK_BARRIER_MESSAGE,
+			    communicator, myself, i, 65536, &c, 1, MPC_LOWCOMM_BARRIER_MESSAGE,
 			    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ), 0 );
 		}
 
 		for ( j = 0; j < rsize; j++ )
 		{
 			_mpc_coll_message_recv(
-			    communicator, j, myself, 65536, &c, 1, SCTK_BARRIER_MESSAGE,
+			    communicator, j, myself, 65536, &c, 1, MPC_LOWCOMM_BARRIER_MESSAGE,
 			    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ),  0 );
 		}
 
@@ -1639,7 +1639,7 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 				{
 					_mpc_coll_message_recv(
 					    communicator, ( dest + root ) % total, myself, root,
-					    buffer, size, SCTK_BROADCAST_MESSAGE,
+					    buffer, size, MPC_LOWCOMM_BROADCAST_MESSAGE,
 					    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ),
 					    0 );
 					_mpc_coll_messages_table_wait( &table );
@@ -1664,7 +1664,7 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 						    communicator, myself,
 						    ( dest + root + ( j * ( i / BROADCAST_ARRITY ) ) ) %
 						    total,
-						    root, buffer, size, SCTK_BROADCAST_MESSAGE,
+						    root, buffer, size, MPC_LOWCOMM_BROADCAST_MESSAGE,
 						    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ), 0 );
 					}
 				}
@@ -1801,7 +1801,7 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 					              src + ( j * ( i / ALLREDUCE_ARRITY ) ) );
 					_mpc_coll_message_recv(
 					    communicator, src + ( j * ( i / ALLREDUCE_ARRITY ) ), myself, 0,
-					    buffer_table[j - 1], size, SCTK_ALLREDUCE_MESSAGE,
+					    buffer_table[j - 1], size, MPC_LOWCOMM_ALLREDUCE_MESSAGE,
 					    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ),
 					    0 );
 				}
@@ -1828,12 +1828,12 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 				sctk_nodebug( "Leaf send to %d", dest );
 				_mpc_coll_message_send(
 				    communicator, myself, dest, 0, buffer_tmp, size,
-				    SCTK_ALLREDUCE_MESSAGE,
+				    MPC_LOWCOMM_ALLREDUCE_MESSAGE,
 				    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ), 0 );
 				sctk_nodebug( "Leaf Recv from %d", dest );
 				_mpc_coll_message_recv(
 				    communicator, dest, myself, 1, buffer_out, size,
-				    SCTK_ALLREDUCE_MESSAGE,
+				    MPC_LOWCOMM_ALLREDUCE_MESSAGE,
 				    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ),
 				    0 );
 				_mpc_coll_messages_table_wait( &table );
@@ -1859,7 +1859,7 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 					sctk_nodebug( "send to %d", dest + ( j * ( i / ALLREDUCE_ARRITY ) ) );
 					_mpc_coll_message_send(
 					    communicator, myself, dest + ( j * ( i / ALLREDUCE_ARRITY ) ),
-					    1, buffer_out, size, SCTK_ALLREDUCE_MESSAGE,
+					    1, buffer_out, size, MPC_LOWCOMM_ALLREDUCE_MESSAGE,
 					    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ), 0 );
 				}
 			}

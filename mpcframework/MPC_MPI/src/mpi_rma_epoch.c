@@ -396,7 +396,7 @@ int mpc_Win_ctx_ack_remote(struct mpc_MPI_Win_request_array *ra,
 
   mpc_lowcomm_comm_isend_class_src(source_rank, remote_rank, &data, sizeof(char),
                                TAG_RDMA_ACK + source_rank, ra->comm,
-                               SCTK_RDMA_MESSAGE, request);
+                               MPC_LOWCOMM_RDMA_MESSAGE, request);
 
   return 0;
 }
@@ -414,7 +414,7 @@ int mpc_Win_ctx_get_ack_remote(struct mpc_MPI_Win_request_array *ra,
 
   mpc_lowcomm_comm_irecv_class_dest(remote_rank, source_rank, &data, sizeof(char),
                                 TAG_RDMA_ACK + remote_rank, ra->comm,
-                                SCTK_RDMA_MESSAGE, request);
+                                MPC_LOWCOMM_RDMA_MESSAGE, request);
 
   return 0;
 }
@@ -1651,7 +1651,7 @@ static inline int __mpc_MPI_Win_flush(int rank, MPI_Win win, int remote,
         static int dummy;
         mpc_lowcomm_comm_irecv_class_dest(rank, desc->comm_rank, &dummy,
                                       sizeof(int), TAG_RDMA_FENCE, desc->comm,
-                                      SCTK_RDMA_MESSAGE, req);
+                                      MPC_LOWCOMM_RDMA_MESSAGE, req);
 
         if (do_wait) {
           mpc_lowcomm_comm_request_wait(req);

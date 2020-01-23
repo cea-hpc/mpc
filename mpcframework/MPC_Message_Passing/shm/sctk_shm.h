@@ -16,7 +16,7 @@
 
 typedef volatile struct sctk_shm_msg_list_s
 {
-	struct sctk_thread_ptp_message_s *msg;
+	struct mpc_lowcomm_ptp_message_s *msg;
 	int sctk_shm_dest;
 	volatile struct sctk_shm_msg_list_s *prev, *next;
 } sctk_shm_msg_list_t;

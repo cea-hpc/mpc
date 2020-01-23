@@ -5751,7 +5751,7 @@ PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request)
     res = PMPI_Barrier(comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
@@ -5784,7 +5784,7 @@ PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root,
     res = __INTERNAL__PMPI_Bcast (buffer, count, datatype, root, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
@@ -5823,7 +5823,7 @@ PMPI_Igather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			     recvtype, root, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
@@ -5860,7 +5860,7 @@ PMPI_Igatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			     displs, recvtype, root, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
@@ -5901,7 +5901,7 @@ PMPI_Iscatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			      recvtype, root, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
@@ -5937,7 +5937,7 @@ PMPI_Iscatterv (void *sendbuf, int *sendcnts, int *displs,
 			      recvtype, root, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
@@ -5972,7 +5972,7 @@ PMPI_Iallgather (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 				recvcount, recvtype, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
@@ -6005,7 +6005,7 @@ PMPI_Iallgatherv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 				 recvcounts, displs, recvtype, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
@@ -6039,7 +6039,7 @@ PMPI_Ialltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 			       recvcount, recvtype, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
@@ -6073,7 +6073,7 @@ PMPI_Ialltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 				recvcnts, rdispls, recvtype, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
@@ -6105,7 +6105,7 @@ int PMPI_Ialltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *se
         recvcnts, rdispls, recvtypes, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
@@ -6146,7 +6146,7 @@ PMPI_Ireduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 			     comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
@@ -6179,7 +6179,7 @@ PMPI_Iallreduce (void *sendbuf, void *recvbuf, int count,
     res = __INTERNAL__PMPI_Allreduce (sendbuf, recvbuf, count, datatype, op, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
@@ -6211,7 +6211,7 @@ PMPI_Ireduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 				     comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
@@ -6243,7 +6243,7 @@ PMPI_Iscan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
     res = __INTERNAL__PMPI_Scan (sendbuf, recvbuf, count, datatype, op, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
@@ -6274,7 +6274,7 @@ PMPI_Ireduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
 				     comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {
@@ -6306,7 +6306,7 @@ PMPI_Iexscan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
     res = __INTERNAL__PMPI_Exscan (sendbuf, recvbuf, count, datatype, op, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
   }
   else
   {

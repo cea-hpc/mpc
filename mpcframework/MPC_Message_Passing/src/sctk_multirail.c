@@ -76,12 +76,12 @@ int sctk_rail_gate_msgtype( __UNUSED__ sctk_rail_info_t * rail, mpc_lowcomm_ptp_
             (SCTK_MSG_HEADER(message))->message_type.type;
 
         /* It is a emulated RMA and it is not allowed */
-        if ((class == SCTK_RDMA_MESSAGE) && !conf->emulated_rma) {
+        if ((class == MPC_LOWCOMM_RDMA_MESSAGE) && !conf->emulated_rma) {
           return 0;
         }
 
         /* It is a task level control  message and it is not allowed */
-        if (((class == SCTK_CONTROL_MESSAGE_TASK) || (tag == 16008)) &&
+        if (((class == MPC_LOWCOMM_CONTROL_MESSAGE_TASK) || (tag == 16008)) &&
             !conf->task) {
           return 0;
         }
@@ -876,7 +876,7 @@ void sctk_multirail_notify_perform( int remote, int remote_task_id, int polling_
 	}
 }
 
-static void sctk_multirail_notify_probe  (sctk_thread_message_header_t* hdr, int *status)
+static void sctk_multirail_notify_probe  (mpc_lowcomm_ptp_message_header_t* hdr, int *status)
 {
 	int count = sctk_rail_count();
 	int i;

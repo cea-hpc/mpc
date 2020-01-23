@@ -198,7 +198,7 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 
 #ifdef MPC_MPI
     struct mpc_mpi_cl_per_thread_ctx_s *___mpc_p_per_VP_comm_ctx;
-    void *___sctk_message_passing;
+    void *___mpc_lowcomm_ptp_message_passing;
     int __mpc_task_rank;
 #endif
 

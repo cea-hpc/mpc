@@ -450,7 +450,7 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t co
  * @param probe_level searching level, from Portals semantics (SEARCH_ONLY | SEARCH_DELETE)
  * @return 1 if a matching message is found, zero otherwise
  */
-int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, sctk_thread_message_header_t* hdr, int probe_level)
+int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_header_t* hdr, int probe_level)
 {
 	sctk_communicator_t comm = hdr->communicator;
 	int rank = hdr->source_task;
