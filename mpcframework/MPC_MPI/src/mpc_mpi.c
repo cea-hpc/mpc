@@ -1534,7 +1534,7 @@ static int __INTERNAL__PMPIX_Exchange(void **send_buf , void **recvbuff, int rem
 	int remote = sctk_get_comm_world_rank ((const mpc_lowcomm_communicator_t) comm, remote_rank);
 	
 	/* Now check if we are on the same node for both communications */
-	if( !mpc_lowcomm_comm_is_remote_rank( remote ) )
+	if( !mpc_lowcomm_is_remote_rank( remote ) )
 	{
 		/* Perform the zero-copy message */
 		
@@ -1576,7 +1576,7 @@ static int __INTERNAL__PMPIX_Swap(void **sendrecv_buf , int remote_rank, MPI_Cou
 	int remote = sctk_get_comm_world_rank ((const mpc_lowcomm_communicator_t) comm, remote_rank);
 	
 	/* Now check if we are on the same node for both communications */
-	if( !mpc_lowcomm_comm_is_remote_rank( remote ) )
+	if( !mpc_lowcomm_is_remote_rank( remote ) )
 	{
 		/* Perform the zero-copy message */
 		
@@ -2795,7 +2795,7 @@ __INTERNAL__PMPI_Cancel (MPI_Request * request)
   req = __sctk_convert_mpc_request_internal (request,requests);
   if (req->is_active == 1)
 	{
-	  res = mpc_lowcomm_comm_request_cancel (__sctk_convert_mpc_request (request,requests));
+	  res = mpc_lowcomm_request_cancel (__sctk_convert_mpc_request (request,requests));
 	}
   else
     {
@@ -2806,7 +2806,7 @@ __INTERNAL__PMPI_Cancel (MPI_Request * request)
 
 static int __INTERNAL__PMPI_Test_cancelled (MPI_Status * status, int *flag)
 {
-	mpc_lowcomm_comm_status_get_cancelled (status, flag);
+	mpc_lowcomm_status_get_cancelled (status, flag);
 	return MPI_SUCCESS;
 }
 
@@ -16446,7 +16446,7 @@ int PMPI_Status_set_cancelled (MPI_Status *status, int cancelled)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
-	res = mpc_lowcomm_comm_status_set_cancelled (status, cancelled);
+	res = mpc_lowcomm_status_set_cancelled (status, cancelled);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 

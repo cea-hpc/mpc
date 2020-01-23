@@ -22,7 +22,7 @@
 #ifndef __SCTK_INTER_THREAD_COMMUNICATIONS_H_
 #define __SCTK_INTER_THREAD_COMMUNICATIONS_H_
 
-#include <mpc_lowcomm_comm.h>
+#include <mpc_lowcomm_msg.h>
 
 #include <sctk_config.h>
 #include <sctk_debug.h>

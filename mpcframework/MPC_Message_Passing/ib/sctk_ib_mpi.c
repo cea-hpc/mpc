@@ -118,7 +118,7 @@ static void sctk_network_send_message_ib_endpoint ( mpc_lowcomm_ptp_message_t *m
 
 		/* Send message */
 		sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
-		mpc_lowcomm_comm_ptp_message_complete_and_free ( msg );
+		mpc_lowcomm_ptp_message_complete_and_free ( msg );
 		PROF_INC ( rail_ib->rail, ib_eager_nb );
 
 		/* Remote profiling */
@@ -133,7 +133,7 @@ buffered:
 	{
 		sctk_debug ( "Buffered" );
 		sctk_ib_buffered_prepare_msg ( rail, remote, msg, size );
-		mpc_lowcomm_comm_ptp_message_complete_and_free ( msg );
+		mpc_lowcomm_ptp_message_complete_and_free ( msg );
 		PROF_INC ( rail_ib->rail, ib_buffered_nb );
 
 		/* Remote profiling */

@@ -217,7 +217,7 @@ sctk_network_notify_idle_message_shm ( __UNUSED__ sctk_rail_info_t *rail )
 		break;
 	    case SCTK_SHM_CMPL:
             	msg = sctk_network_cma_cmpl_msg_shm_recv(cell);
-        	mpc_lowcomm_comm_ptp_message_complete_and_free(msg); 
+        	mpc_lowcomm_ptp_message_complete_and_free(msg); 
 		break;
 #endif /* MPC_USE_CMA */
 	    case SCTK_SHM_FIRST_FRAG:

@@ -277,10 +277,10 @@ typedef struct
 static void _mpc_coll_message_send( const mpc_lowcomm_communicator_t communicator, int myself, int dest, int tag, void *buffer, size_t size,
                                     mpc_lowcomm_ptp_message_class_t message_class, _mpc_coll_messages_t *msg_req, int check_msg )
 {
-	mpc_lowcomm_comm_ptp_message_header_clear( &( msg_req->msg ), MPC_LOWCOMM_MESSAGE_CONTIGUOUS,
-	                                      _mpc_coll_free_message, mpc_lowcomm_comm_ptp_message_copy );
-	mpc_lowcomm_comm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
-	mpc_lowcomm_comm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, myself, dest,
+	mpc_lowcomm_ptp_message_header_clear( &( msg_req->msg ), MPC_LOWCOMM_MESSAGE_CONTIGUOUS,
+	                                      _mpc_coll_free_message, mpc_lowcomm_ptp_message_copy );
+	mpc_lowcomm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
+	mpc_lowcomm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, myself, dest,
 	                                     &( msg_req->request ), size, message_class,
 	                                     SCTK_DATATYPE_IGNORE, REQUEST_SEND );
 	_mpc_comm_ptp_message_send_check( &( msg_req->msg ), check_msg );
@@ -289,10 +289,10 @@ static void _mpc_coll_message_send( const mpc_lowcomm_communicator_t communicato
 static void _mpc_coll_message_recv( const mpc_lowcomm_communicator_t communicator, int src, int myself, int tag, void *buffer, size_t size,
                                     mpc_lowcomm_ptp_message_class_t message_class, _mpc_coll_messages_t *msg_req, int check_msg )
 {
-	mpc_lowcomm_comm_ptp_message_header_clear( &( msg_req->msg ), MPC_LOWCOMM_MESSAGE_CONTIGUOUS,
-	                                      _mpc_coll_free_message, mpc_lowcomm_comm_ptp_message_copy );
-	mpc_lowcomm_comm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
-	mpc_lowcomm_comm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, src, myself,
+	mpc_lowcomm_ptp_message_header_clear( &( msg_req->msg ), MPC_LOWCOMM_MESSAGE_CONTIGUOUS,
+	                                      _mpc_coll_free_message, mpc_lowcomm_ptp_message_copy );
+	mpc_lowcomm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
+	mpc_lowcomm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, src, myself,
 	                                     &( msg_req->request ), size, message_class,
 	                                     SCTK_DATATYPE_IGNORE, REQUEST_RECV );
 	_mpc_comm_ptp_message_recv_check( &( msg_req->msg ), check_msg );
@@ -305,7 +305,7 @@ static void _mpc_coll_messages_table_wait( _mpc_coll_messages_table_t *tab )
 	for ( i = 0; i < tab->nb_used; i++ )
 	{
 		sctk_nodebug( "Wait for messag %d", i );
-		mpc_lowcomm_comm_request_wait( &( tab->msg_req[i].request ) );
+		mpc_lowcomm_request_wait( &( tab->msg_req[i].request ) );
 	}
 
 	tab->nb_used = 0;

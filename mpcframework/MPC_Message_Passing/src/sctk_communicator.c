@@ -614,7 +614,7 @@ static inline mpc_lowcomm_communicator_t sctk_intercommunicator_get_new_id ( int
 			sctk_nodebug( "rank %d : FIRST try intercomm %d", rank, comm );
 			mpc_common_spinlock_unlock ( &sctk_communicator_all_table_lock );
 			//~ exchange comm between leaders
-			mpc_lowcomm_comm_sendrecv( &comm, sizeof( int ), remote_leader_rank, tag, &remote_comm,  remote_leader_rank, SCTK_COMM_WORLD );
+			mpc_lowcomm_sendrecv( &comm, sizeof( int ), remote_leader_rank, tag, &remote_comm,  remote_leader_rank, SCTK_COMM_WORLD );
 
 			if ( comm != -1 )
 			{
@@ -696,7 +696,7 @@ static inline mpc_lowcomm_communicator_t sctk_intercommunicator_get_new_id ( int
 		//~ echange des resultats du allreduce entre leaders
 		if ( rank == local_leader )
 		{
-			mpc_lowcomm_comm_sendrecv( &ti, sizeof( int ), remote_leader_rank, tag, &remote_ti,  remote_leader_rank, SCTK_COMM_WORLD );
+			mpc_lowcomm_sendrecv( &ti, sizeof( int ), remote_leader_rank, tag, &remote_ti,  remote_leader_rank, SCTK_COMM_WORLD );
 		}
 
 		//~ broadcast aux autres membres par groupe
@@ -796,7 +796,7 @@ static inline mpc_lowcomm_communicator_t sctk_communicator_get_new_id_from_inter
 			sctk_nodebug ( "take comm %d", comm );
 			mpc_common_spinlock_unlock ( &sctk_communicator_all_table_lock );
 			//~ exchange comm between leaders
-			mpc_lowcomm_comm_sendrecv( &comm, sizeof( int ), remote_leader_rank, tag, &remote_comm,  remote_leader_rank, SCTK_COMM_WORLD );
+			mpc_lowcomm_sendrecv( &comm, sizeof( int ), remote_leader_rank, tag, &remote_comm,  remote_leader_rank, SCTK_COMM_WORLD );
 
 			if ( comm != -1 )
 			{
@@ -878,7 +878,7 @@ static inline mpc_lowcomm_communicator_t sctk_communicator_get_new_id_from_inter
 		//~ echange des resultats du allreduce entre leaders
 		if ( rank == local_leader )
 		{
-			mpc_lowcomm_comm_sendrecv( &comm, sizeof( int ), remote_leader_rank, tag, &remote_comm,  remote_leader_rank, SCTK_COMM_WORLD );
+			mpc_lowcomm_sendrecv( &comm, sizeof( int ), remote_leader_rank, tag, &remote_comm,  remote_leader_rank, SCTK_COMM_WORLD );
 		}
 
 		sctk_nodebug ( "after sendrecv comm %d", comm );
@@ -2388,7 +2388,7 @@ mpc_lowcomm_communicator_t sctk_create_intercommunicator ( const mpc_lowcomm_com
 	//~ exchange local size
 	if ( grank == local_leader )
 	{
-		mpc_lowcomm_comm_sendrecv( &local_size, sizeof( int ), remote_leader_rank, tag, &remote_size,  remote_leader_rank, SCTK_COMM_WORLD );
+		mpc_lowcomm_sendrecv( &local_size, sizeof( int ), remote_leader_rank, tag, &remote_size,  remote_leader_rank, SCTK_COMM_WORLD );
 	}
 
 	mpc_lowcomm_bcast ( &remote_size, sizeof( int ), local_leader, local_comm );
@@ -2406,10 +2406,10 @@ mpc_lowcomm_communicator_t sctk_create_intercommunicator ( const mpc_lowcomm_com
 
 		/* Do a sendrecv with varying sizes */
 		mpc_lowcomm_request_t task_sendreq, task_recvreq;
-		mpc_lowcomm_comm_isend( remote_leader_rank, task_list, local_size * sizeof( int ), tag, SCTK_COMM_WORLD, &task_sendreq );
-		mpc_lowcomm_comm_irecv( remote_leader_rank, remote_task_list, remote_size * sizeof( int ), tag, SCTK_COMM_WORLD, &task_recvreq );
-		mpc_lowcomm_comm_request_wait( &task_sendreq );
-		mpc_lowcomm_comm_request_wait( &task_recvreq );
+		mpc_lowcomm_isend( remote_leader_rank, task_list, local_size * sizeof( int ), tag, SCTK_COMM_WORLD, &task_sendreq );
+		mpc_lowcomm_irecv( remote_leader_rank, remote_task_list, remote_size * sizeof( int ), tag, SCTK_COMM_WORLD, &task_recvreq );
+		mpc_lowcomm_request_wait( &task_sendreq );
+		mpc_lowcomm_request_wait( &task_recvreq );
 	}
 
 	mpc_lowcomm_bcast ( remote_task_list, ( remote_size * sizeof( int ) ), local_leader, local_comm );
@@ -2417,14 +2417,14 @@ mpc_lowcomm_communicator_t sctk_create_intercommunicator ( const mpc_lowcomm_com
 	//~ exchange leaders
 	if ( grank == local_leader )
 	{
-		mpc_lowcomm_comm_sendrecv( &lleader, sizeof( int ), remote_leader_rank, tag, &remote_lleader,  remote_leader_rank, SCTK_COMM_WORLD );
+		mpc_lowcomm_sendrecv( &lleader, sizeof( int ), remote_leader_rank, tag, &remote_lleader,  remote_leader_rank, SCTK_COMM_WORLD );
 	}
 
 	mpc_lowcomm_bcast ( &remote_lleader, sizeof( int ), local_leader, local_comm );
 
 	if ( grank == local_leader )
 	{
-		mpc_lowcomm_comm_sendrecv( &rleader, sizeof( int ), remote_leader_rank, tag, &remote_rleader,  remote_leader_rank, SCTK_COMM_WORLD );
+		mpc_lowcomm_sendrecv( &rleader, sizeof( int ), remote_leader_rank, tag, &remote_rleader,  remote_leader_rank, SCTK_COMM_WORLD );
 	}
 
 	mpc_lowcomm_bcast ( &remote_rleader, sizeof( int ), local_leader, local_comm );
@@ -2432,7 +2432,7 @@ mpc_lowcomm_communicator_t sctk_create_intercommunicator ( const mpc_lowcomm_com
 	//~ exchange local comm ids
 	if ( grank == local_leader )
 	{
-		mpc_lowcomm_comm_sendrecv( &local_id, sizeof( int ), remote_leader_rank, tag, &remote_id,  remote_leader_rank, SCTK_COMM_WORLD );
+		mpc_lowcomm_sendrecv( &local_id, sizeof( int ), remote_leader_rank, tag, &remote_id,  remote_leader_rank, SCTK_COMM_WORLD );
 	}
 
 	mpc_lowcomm_bcast ( &remote_id, sizeof( int ), local_leader, local_comm );

@@ -651,7 +651,7 @@ sctk_thread_create_tmp_start_routine( sctk_thread_data_t *__arg )
 
 	if ( tmp.task_id >= 0 )
 	{
-		mpc_lowcomm_comm_init_per_task( tmp.task_id );
+		mpc_lowcomm_init_per_task( tmp.task_id );
 		sctk_net_init_task_level( tmp.task_id, tmp.virtual_processor );
 
 #if defined( MPC_USE_EXTLS )

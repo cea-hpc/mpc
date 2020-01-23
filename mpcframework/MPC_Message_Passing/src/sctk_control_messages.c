@@ -202,8 +202,8 @@ void __sctk_control_messages_send(int dest, int dest_task,
   //~ return;
   //~ }
 
-  mpc_lowcomm_comm_ptp_message_header_clear(&msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS, sctk_free_control_messages,
-                   mpc_lowcomm_comm_ptp_message_copy);
+  mpc_lowcomm_ptp_message_header_clear(&msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS, sctk_free_control_messages,
+                   mpc_lowcomm_ptp_message_copy);
 
   /* Fill in control message context (note that class is handled by
    * set_header_in_message) */
@@ -211,16 +211,16 @@ void __sctk_control_messages_send(int dest, int dest_task,
   SCTK_MSG_SPECIFIC_CLASS_SET_PARAM((&msg), param);
   SCTK_MSG_SPECIFIC_CLASS_SET_RAILID((&msg), rail_id);
 
-  mpc_lowcomm_comm_ptp_message_set_contiguous_addr(&msg, buffer, size);
+  mpc_lowcomm_ptp_message_set_contiguous_addr(&msg, buffer, size);
 
   // printpayload( buffer, size );
-  mpc_lowcomm_comm_ptp_message_header_init(&msg, tag, communicator, source,
+  mpc_lowcomm_ptp_message_header_init(&msg, tag, communicator, source,
                              (0 <= dest_task) ? dest_task : dest, &request,
                              size, message_class, SCTK_DATATYPE_IGNORE, REQUEST_SEND);
 
   _mpc_comm_ptp_message_send_check(&msg, 1);
 
-  mpc_lowcomm_comm_request_wait(&request);
+  mpc_lowcomm_request_wait(&request);
 }
 
 void sctk_control_messages_send_process(int dest_process, int subtype,
@@ -363,10 +363,10 @@ void sctk_control_messages_perform(mpc_lowcomm_ptp_message_t *msg, int force) {
 
     mpc_lowcomm_ptp_message_t recvmsg;
 
-    mpc_lowcomm_comm_ptp_message_header_clear(&recvmsg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS,
-                     sctk_free_control_messages, mpc_lowcomm_comm_ptp_message_copy);
-    mpc_lowcomm_comm_ptp_message_set_contiguous_addr(&recvmsg, tmp_contol_buffer, msg_size);
-    mpc_lowcomm_comm_ptp_message_header_init(&recvmsg, 0, msg_comm, SCTK_ANY_SOURCE,
+    mpc_lowcomm_ptp_message_header_clear(&recvmsg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS,
+                     sctk_free_control_messages, mpc_lowcomm_ptp_message_copy);
+    mpc_lowcomm_ptp_message_set_contiguous_addr(&recvmsg, tmp_contol_buffer, msg_size);
+    mpc_lowcomm_ptp_message_header_init(&recvmsg, 0, msg_comm, SCTK_ANY_SOURCE,
                                mpc_common_get_process_rank(), &request,
                                SCTK_MSG_SIZE(msg), class, SCTK_DATATYPE_IGNORE, REQUEST_RECV);
 
@@ -379,9 +379,9 @@ void sctk_control_messages_perform(mpc_lowcomm_ptp_message_t *msg, int force) {
     /* Trigger the copy from network task */
     copy_task.msg_send->tail.message_copy(&copy_task);
   } else {
-    mpc_lowcomm_comm_irecv_class(source_rank, tmp_contol_buffer, msg_size, 16000,
+    mpc_lowcomm_irecv_class(source_rank, tmp_contol_buffer, msg_size, 16000,
                              msg_comm, class, &request);
-    mpc_lowcomm_comm_request_wait(&request);
+    mpc_lowcomm_request_wait(&request);
   }
 
   void *data = tmp_contol_buffer;
@@ -409,7 +409,7 @@ void sctk_control_message_fence_req(int target_task, mpc_lowcomm_communicator_t 
 
   static int dummy = 0;
 
-  mpc_lowcomm_comm_irecv_class_dest(ctx.remote, ctx.source, &dummy, sizeof(int),
+  mpc_lowcomm_irecv_class_dest(ctx.remote, ctx.source, &dummy, sizeof(int),
                                 ctx.source, comm, MPC_LOWCOMM_CONTROL_MESSAGE_FENCE,
                                 req);
 
@@ -426,7 +426,7 @@ void sctk_control_message_fence(int target_task, mpc_lowcomm_communicator_t comm
 
   sctk_control_message_fence_req(target_task, comm, &fence_req);
 
-  mpc_lowcomm_comm_request_wait(&fence_req);
+  mpc_lowcomm_request_wait(&fence_req);
 }
 
 void sctk_control_message_fence_handler( struct sctk_control_message_fence_ctx *ctx )
@@ -436,7 +436,7 @@ void sctk_control_message_fence_handler( struct sctk_control_message_fence_ctx *
 
   sctk_control_message_process_local( mpc_common_get_task_rank());
 
-  mpc_lowcomm_comm_isend_class_src(ctx->remote, ctx->source, &dummy, sizeof(int),
+  mpc_lowcomm_isend_class_src(ctx->remote, ctx->source, &dummy, sizeof(int),
                                ctx->source, ctx->comm,
                                MPC_LOWCOMM_CONTROL_MESSAGE_FENCE, NULL);
 }
@@ -515,7 +515,7 @@ int sctk_control_message_process_local(int rank) {
   mpc_lowcomm_ptp_message_header_t msg;
   memset(&msg, 0, sizeof(mpc_lowcomm_ptp_message_header_t));
 
-  mpc_lowcomm_comm_message_probe_any_source_class_comm(rank, 16000, MPC_LOWCOMM_P2P_MESSAGE,
+  mpc_lowcomm_message_probe_any_source_class_comm(rank, 16000, MPC_LOWCOMM_P2P_MESSAGE,
                                        SCTK_COMM_WORLD, &st, &msg);
 
   ___is_in_sctk_control_message_process_local = 0;

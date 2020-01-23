@@ -61,17 +61,17 @@ mpc_lowcomm_communicator_t MPC_Net_delete_comm( const mpc_lowcomm_communicator_t
 
 void MPC_Net_isend( int dest, void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req )
 {
-	mpc_lowcomm_comm_isend( dest, data, size, tag, comm, req );
+	mpc_lowcomm_isend( dest, data, size, tag, comm, req );
 }
 
 void MPC_Net_irecv( int src, void *buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req )
 {
-	mpc_lowcomm_comm_irecv( src,  buffer, size, tag, comm,  req );
+	mpc_lowcomm_irecv( src,  buffer, size, tag, comm,  req );
 }
 
 void MPC_Net_wait( mpc_lowcomm_request_t *request )
 {
-	mpc_lowcomm_comm_request_wait( request );
+	mpc_lowcomm_request_wait( request );
 }
 
 void MPC_Net_send( int dest, void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm )
@@ -90,7 +90,7 @@ void MPC_Net_recv( int src, void *buffer, size_t size, int tag, mpc_lowcomm_comm
 
 void MPC_Net_sendrecv( void *sendbuf, size_t size, int dest, int tag, void *recvbuf, int src, mpc_lowcomm_communicator_t comm )
 {
-	mpc_lowcomm_comm_sendrecv( sendbuf, size, dest, tag, recvbuf, src, comm );
+	mpc_lowcomm_sendrecv( sendbuf, size, dest, tag, recvbuf, src, comm );
 }
 
 /*  ###############

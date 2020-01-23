@@ -351,11 +351,11 @@ void sctk_route_messages_send ( int myself, int dest, mpc_lowcomm_ptp_message_cl
 	
 	msg_req = &msg;
 	
-	mpc_lowcomm_comm_ptp_message_header_clear ( & ( msg_req->msg ), MPC_LOWCOMM_MESSAGE_CONTIGUOUS, sctk_free_route_messages, mpc_lowcomm_comm_ptp_message_copy );
-	mpc_lowcomm_comm_ptp_message_set_contiguous_addr ( & ( msg_req->msg ), buffer, size );
-	mpc_lowcomm_comm_ptp_message_header_init ( & ( msg_req->msg ), tag, communicator, myself, dest,  & ( msg_req->request ), size, message_class, SCTK_DATATYPE_IGNORE, REQUEST_SEND );
-	mpc_lowcomm_comm_ptp_message_send ( & ( msg_req->msg ) );
-	mpc_lowcomm_comm_request_wait ( & ( msg_req->request ) );
+	mpc_lowcomm_ptp_message_header_clear ( & ( msg_req->msg ), MPC_LOWCOMM_MESSAGE_CONTIGUOUS, sctk_free_route_messages, mpc_lowcomm_ptp_message_copy );
+	mpc_lowcomm_ptp_message_set_contiguous_addr ( & ( msg_req->msg ), buffer, size );
+	mpc_lowcomm_ptp_message_header_init ( & ( msg_req->msg ), tag, communicator, myself, dest,  & ( msg_req->request ), size, message_class, SCTK_DATATYPE_IGNORE, REQUEST_SEND );
+	mpc_lowcomm_ptp_message_send ( & ( msg_req->msg ) );
+	mpc_lowcomm_request_wait ( & ( msg_req->request ) );
 }
 
 void sctk_route_messages_recv ( int src, int myself, mpc_lowcomm_ptp_message_class_t message_class, int tag, void *buffer, size_t size )
@@ -368,11 +368,11 @@ void sctk_route_messages_recv ( int src, int myself, mpc_lowcomm_ptp_message_cla
 
 	msg_req = &msg;
 
-	mpc_lowcomm_comm_ptp_message_header_clear ( & ( msg_req->msg ), MPC_LOWCOMM_MESSAGE_CONTIGUOUS, sctk_free_route_messages, mpc_lowcomm_comm_ptp_message_copy );
-	mpc_lowcomm_comm_ptp_message_set_contiguous_addr ( & ( msg_req->msg ), buffer, size );
-	mpc_lowcomm_comm_ptp_message_header_init ( & ( msg_req->msg ), tag, communicator,  src, myself,  & ( msg_req->request ), size, message_class, SCTK_DATATYPE_IGNORE,REQUEST_RECV );
-	mpc_lowcomm_comm_ptp_message_recv ( & ( msg_req->msg ) );
-	mpc_lowcomm_comm_request_wait ( & ( msg_req->request ) );
+	mpc_lowcomm_ptp_message_header_clear ( & ( msg_req->msg ), MPC_LOWCOMM_MESSAGE_CONTIGUOUS, sctk_free_route_messages, mpc_lowcomm_ptp_message_copy );
+	mpc_lowcomm_ptp_message_set_contiguous_addr ( & ( msg_req->msg ), buffer, size );
+	mpc_lowcomm_ptp_message_header_init ( & ( msg_req->msg ), tag, communicator,  src, myself,  & ( msg_req->request ), size, message_class, SCTK_DATATYPE_IGNORE,REQUEST_RECV );
+	mpc_lowcomm_ptp_message_recv ( & ( msg_req->msg ) );
+	mpc_lowcomm_request_wait ( & ( msg_req->request ) );
 }
 
 

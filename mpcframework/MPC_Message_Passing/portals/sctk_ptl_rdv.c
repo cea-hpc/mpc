@@ -199,7 +199,7 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	sctk_assert(ev.ni_fail_type == PTL_NI_OK);
 
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
-	mpc_lowcomm_comm_ptp_message_header_clear(net_msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS , sctk_ptl_rdv_free_memory, sctk_ptl_rdv_message_copy);
+	mpc_lowcomm_ptp_message_header_clear(net_msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS , sctk_ptl_rdv_free_memory, sctk_ptl_rdv_message_copy);
 	SCTK_MSG_SRC_PROCESS_SET     ( net_msg ,  ptr->match.data.rank);
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  ptr->match.data.rank);
 	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  sctk_get_process_rank());
@@ -248,7 +248,7 @@ static inline void sctk_ptl_rdv_complete_message(sctk_rail_info_t* rail, sctk_pt
 	if(msg->tail.ptl.copy)
 		sctk_free(ptr->slot.me.start);
 
-	mpc_lowcomm_comm_ptp_message_complete_and_free(msg);
+	mpc_lowcomm_ptp_message_complete_and_free(msg);
 }
 
 

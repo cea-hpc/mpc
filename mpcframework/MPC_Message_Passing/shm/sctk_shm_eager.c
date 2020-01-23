@@ -98,7 +98,7 @@ sctk_network_eager_msg_shm_send(mpc_lowcomm_ptp_message_t *msg, sctk_shm_cell_t 
         sctk_net_copy_in_buffer(msg,(char*)cell->data+sizeof(mpc_lowcomm_ptp_message_t)); 
         
     sctk_shm_send_cell(cell);
-    mpc_lowcomm_comm_ptp_message_complete_and_free( msg ); 
+    mpc_lowcomm_ptp_message_complete_and_free( msg ); 
 
     return 1;
 }

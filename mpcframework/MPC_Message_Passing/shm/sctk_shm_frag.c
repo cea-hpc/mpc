@@ -198,7 +198,7 @@ sctk_network_frag_msg_first_send(mpc_lowcomm_ptp_message_t* msg, sctk_shm_cell_t
    }
    else
    {
-        mpc_lowcomm_comm_ptp_message_complete_and_free(msg) ;
+        mpc_lowcomm_ptp_message_complete_and_free(msg) ;
    }
    return frag_infos;
 }
@@ -278,7 +278,7 @@ sctk_network_frag_msg_next_send(sctk_shm_proc_frag_info_t* frag_infos)
         sctk_nodebug("[KEY:%d] SEND END PART MSG", msg_key);
         msg = frag_infos->header;
         sctk_free(frag_infos);
-        mpc_lowcomm_comm_ptp_message_complete_and_free(msg) ;
+        mpc_lowcomm_ptp_message_complete_and_free(msg) ;
         frag_infos = NULL;
    }
 

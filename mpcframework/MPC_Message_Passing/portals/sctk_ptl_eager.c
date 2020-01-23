@@ -88,7 +88,7 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	sctk_assert(ev.mlength <= rail->network.ptl.eager_limit);
 	
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
-	mpc_lowcomm_comm_ptp_message_header_clear(net_msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS , sctk_ptl_eager_free_memory, sctk_ptl_eager_message_copy);
+	mpc_lowcomm_ptp_message_header_clear(net_msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS , sctk_ptl_eager_free_memory, sctk_ptl_eager_message_copy);
 	SCTK_MSG_SRC_PROCESS_SET     ( net_msg ,  match.data.rank);
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  match.data.rank);
 	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  sctk_get_process_rank());
@@ -317,7 +317,7 @@ void sctk_ptl_eager_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 				sctk_free(user_ptr->slot.md.start);
 			}
 			/* tag the message as completed */
-			mpc_lowcomm_comm_ptp_message_complete_and_free(msg);
+			mpc_lowcomm_ptp_message_complete_and_free(msg);
 			sctk_ptl_md_release(user_ptr);
 			break;
 

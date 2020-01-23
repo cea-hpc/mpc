@@ -87,7 +87,7 @@ mpc_lowcomm_ptp_message_t * sctk_ib_rdma_recv_done_remote_imm (__UNUSED__  sctk_
 
 
 	SCTK_PROFIL_START ( ib_rdma_idle );
-	mpc_lowcomm_comm_perform_idle ( ( int * ) &rdma->local.ready, 1,
+	mpc_lowcomm_perform_idle ( ( int * ) &rdma->local.ready, 1,
 	                                 ( void ( * ) ( void * ) ) sctk_network_notify_idle_message, NULL );
 	SCTK_PROFIL_END ( ib_rdma_idle );
 
@@ -141,7 +141,7 @@ sctk_ib_rdma_recv_done_remote(__UNUSED__  sctk_rail_info_t *rail, sctk_ibuf_t *i
 
 
   SCTK_PROFIL_START(ib_rdma_idle);
-  mpc_lowcomm_comm_perform_idle(
+  mpc_lowcomm_perform_idle(
       (int *)&dest_msg_header->tail.ib.rdma.local.ready, 1,
       (void (*)(void *))sctk_network_notify_idle_message, NULL);
   SCTK_PROFIL_END(ib_rdma_idle);
@@ -196,7 +196,7 @@ sctk_ib_rdma_recv_done_local ( mpc_lowcomm_ptp_message_t *msg )
 	}
 
 	sctk_nodebug ( "MSG LOCAL FREE %p", msg );
-	mpc_lowcomm_comm_ptp_message_complete_and_free ( msg );
+	mpc_lowcomm_ptp_message_complete_and_free ( msg );
 
 }
 
@@ -621,7 +621,7 @@ sctk_ib_rdma_rendezvous_recv_ack(__UNUSED__ sctk_rail_info_t *rail, sctk_ibuf_t 
 
   /* Wait while the message becomes ready */
   SCTK_PROFIL_START(ib_rdma_idle);
-  mpc_lowcomm_comm_perform_idle(
+  mpc_lowcomm_perform_idle(
       (int *)&rdma->local.ready, 1,
       (void (*)(void *))sctk_network_notify_idle_message, NULL);
   SCTK_PROFIL_END(ib_rdma_idle);
@@ -1021,26 +1021,26 @@ sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 		case SCTK_IB_RDMA_WRITE:
 			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
 			sctk_info ( "RDMA Write DONE" );
-			mpc_lowcomm_comm_ptp_message_complete_and_free ( msg );
+			mpc_lowcomm_ptp_message_complete_and_free ( msg );
 			break;
 
 
 		case SCTK_IB_RDMA_READ:
 			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
 			sctk_info ( "RDMA Read DONE" );
-			mpc_lowcomm_comm_ptp_message_complete_and_free ( msg );
+			mpc_lowcomm_ptp_message_complete_and_free ( msg );
 			break;
 
 		case SCTK_IB_RDMA_FETCH_AND_ADD:
 			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
 			sctk_info ( "RDMA Fetch and op DONE" );
-			mpc_lowcomm_comm_ptp_message_complete_and_free ( msg );
+			mpc_lowcomm_ptp_message_complete_and_free ( msg );
 			break;
 
 		case SCTK_IB_RDMA_CAS:
 			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
 			sctk_info ( "RDMA CAS DONE" );
-			mpc_lowcomm_comm_ptp_message_complete_and_free ( msg );
+			mpc_lowcomm_ptp_message_complete_and_free ( msg );
 			break;
 
                 default:

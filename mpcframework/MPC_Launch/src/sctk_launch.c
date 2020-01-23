@@ -411,7 +411,7 @@ static void sctk_perform_initialisation ( void )
 	/* In LIB mode we create the task context
 	 * at process level (not in an actual task ) */
 	int my_rank = mpc_common_get_process_rank();
-	mpc_lowcomm_comm_init_per_task ( my_rank );
+	mpc_lowcomm_init_per_task ( my_rank );
 #endif
 	/* Start auxiliary polling thread */
 	/*

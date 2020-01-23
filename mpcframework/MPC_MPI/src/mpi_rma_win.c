@@ -61,9 +61,9 @@ int mpc_MPI_Win_progress_probe(struct mpc_MPI_Win *desc, void *prebuff,
 
     mpc_lowcomm_request_t req;
     memset(&req, 0, sizeof(mpc_lowcomm_request_t));
-    mpc_lowcomm_comm_irecv_class_dest(st.MPI_SOURCE, desc->comm_rank, buff, msize,
+    mpc_lowcomm_irecv_class_dest(st.MPI_SOURCE, desc->comm_rank, buff, msize,
                                   16008, desc->comm, MPC_LOWCOMM_P2P_MESSAGE, &req);
-    mpc_lowcomm_comm_request_wait(&req);
+    mpc_lowcomm_request_wait(&req);
     // PMPI_Recv(buff, msize, MPI_CHAR, st.MPI_SOURCE, 16008, desc->comm, &st);
 
     mpc_MPI_Win_control_message_handler(buff, msize);
@@ -323,7 +323,7 @@ static inline int mpc_MPI_Win_do_registration(sctk_window_t internal_win,
   /* Override access mode from buffer knowledge */
   sctk_window_set_access_mode(win, win_mode);
 
-  if ((win->is_emulated || mpc_lowcomm_comm_is_remote_rank(win->owner)) &&
+  if ((win->is_emulated || mpc_lowcomm_is_remote_rank(win->owner)) &&
       (win_mode != SCTK_WIN_ACCESS_DIRECT)) {
     desc->source.requests.is_emulated = 1;
     desc->target.requests.is_emulated = 1;
@@ -385,7 +385,7 @@ static inline int mpc_MPI_Win_do_registration(sctk_window_t internal_win,
     /* Override access mode in function of window type */
     sctk_window_set_access_mode(new_win, win_mode);
 
-    if ((new_win->is_emulated || mpc_lowcomm_comm_is_remote_rank(new_win->owner)) &&
+    if ((new_win->is_emulated || mpc_lowcomm_is_remote_rank(new_win->owner)) &&
         (win_mode != SCTK_WIN_ACCESS_DIRECT)) {
       desc->source.requests.is_emulated |= 1;
       desc->target.requests.is_emulated |= 1;
