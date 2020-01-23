@@ -1,7 +1,7 @@
 #ifndef MPC_MESSAGE_PASSING_INCLUDE_COLL_H_
 #define MPC_MESSAGE_PASSING_INCLUDE_COLL_H_
 
-#include <sctk_types.h>
+#include <mpc_lowcomm_types.h>
 
 /* Barrier */
 

@@ -1,7 +1,7 @@
 #ifndef MPC_MESSAGE_PASSING_INCLUDE_COMM_H_
 #define MPC_MESSAGE_PASSING_INCLUDE_COMM_H_
 
-#include <sctk_types.h>
+#include <mpc_lowcomm_types.h>
 #include <sctk_reorder.h>
 #include <sctk_ib.h>
 #include <sctk_portals.h>

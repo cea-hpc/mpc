@@ -22,7 +22,7 @@
 #ifndef MPC_MPI_EGREQ_CLASSES_H_
 #define MPC_MPI_EGREQ_CLASSES_H_
 
-#include <sctk_types.h>
+#include <mpc_lowcomm_types.h>
 #include "uthash.h"
 
 typedef struct MPCX_GRequest_class_s

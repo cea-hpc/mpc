@@ -22,7 +22,7 @@
 #ifndef __SCTK_COMMUNICATOR_H_
 #define __SCTK_COMMUNICATOR_H_
 
-#include <sctk_types.h>
+#include <mpc_lowcomm_types.h>
 #include <mpc_common_asm.h>
 #include <mpc_common_spinlock.h>
 

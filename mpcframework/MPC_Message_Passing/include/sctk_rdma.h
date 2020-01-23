@@ -23,7 +23,7 @@
 #ifndef SCTK_RDMA_H
 #define SCTK_RDMA_H
 
-#include "sctk_types.h"
+#include "mpc_lowcomm_types.h"
 
 /** This is the MPC low-level RDMA interface defining both windows
  * and operations on remote memory areas this interface has been

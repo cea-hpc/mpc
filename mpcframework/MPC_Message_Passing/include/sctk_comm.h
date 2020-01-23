@@ -21,7 +21,7 @@
 /* ######################################################################## */
 #ifndef SCTK_COMM_H
 #define SCTK_COMM_H
-#include "sctk_types.h"
+#include "mpc_lowcomm_types.h"
 
 /** This file define the low-level communication layer for MPC
  * it also documents the libmode to bootstrap the communication layer

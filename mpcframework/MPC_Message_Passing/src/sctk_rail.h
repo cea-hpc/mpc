@@ -26,7 +26,7 @@
 #include <sctk_runtime_config.h>
 #include <mpc_topology_device.h>
 #include "sctk_topological_polling.h"
-#include "sctk_types.h"
+#include "mpc_lowcomm_types.h"
 
 /* Forward struct declarations */
 typedef struct sctk_rail_info_s sctk_rail_info_t;

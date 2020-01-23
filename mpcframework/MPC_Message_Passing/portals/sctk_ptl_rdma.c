@@ -24,7 +24,7 @@
 
 #ifdef MPC_USE_PORTALS
 
-#include "sctk_types.h"
+#include "mpc_lowcomm_types.h"
 #include "sctk_route.h"
 #include "sctk_ptl_rdma.h"
 #include "sctk_ptl_iface.h"

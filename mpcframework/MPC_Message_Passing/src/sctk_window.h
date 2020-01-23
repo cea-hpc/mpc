@@ -31,7 +31,7 @@
 #include "sctk_rdma.h"
 
 #include "sctk_thread.h"
-#include "sctk_types.h"
+#include "mpc_lowcomm_types.h"
 
 /************************************************************************/
 /* Definition of an RDMA window                                         */

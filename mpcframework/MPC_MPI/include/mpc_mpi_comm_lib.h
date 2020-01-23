@@ -23,7 +23,7 @@
 #ifndef MPC_COMM_LIB_H_
 #define MPC_COMM_LIB_H_
 
-#include <sctk_types.h>
+#include <mpc_lowcomm_types.h>
 #include <mpc_common_asm.h>
 
 
