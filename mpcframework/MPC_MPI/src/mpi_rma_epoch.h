@@ -62,20 +62,20 @@ void mpc_MPI_Win_tmp_purge(struct mpc_MPI_Win_tmp *tmp);
  *	@arg pool_cnt A pointer incremented when the request is processes
  *	@return non-zero on error
  */
-int mpc_MPI_register_request_counter(mpc_mp_request_t *request,
+int mpc_MPI_register_request_counter(mpc_lowcomm_request_t *request,
                                      OPA_int_t *pool_cnt);
 
 /** This remove a request from the counter pool
  * @arg request Request to be removed
  * @return non-zero on error
  */
-int mpc_MPI_unregister_request_counter(mpc_mp_request_t *request);
+int mpc_MPI_unregister_request_counter(mpc_lowcomm_request_t *request);
 
 /** This notifies the counter (if any) that the request is completed
  * @arg Address of the request to notify
  * @return non null if notified
  */
-int mpc_MPI_notify_request_counter(mpc_mp_request_t *request);
+int mpc_MPI_notify_request_counter(mpc_lowcomm_request_t *request);
 
 /************************************************************************/
 /* MPI Window request handling                                          */
@@ -92,7 +92,7 @@ int mpc_MPI_notify_request_counter(mpc_mp_request_t *request);
 struct mpc_MPI_Win_request_array {
   volatile int pending_rma;       /*<< The number of pending RMA operations */
   OPA_int_t available_req; /*<< The number of available requests */
-  mpc_mp_request_t requests[MAX_PENDING_RMA]; /*<< The MPC request array */
+  mpc_lowcomm_request_t requests[MAX_PENDING_RMA]; /*<< The MPC request array */
   MPI_Comm comm;        /*<< The communicator associated with the array */
   mpc_common_spinlock_t lock; /*<< A lock to protect the RMA array */
   int is_emulated;      /*<< Wether the window is emulated or not */
@@ -141,7 +141,7 @@ int mpc_MPI_Win_request_array_release(struct mpc_MPI_Win_request_array *ra);
  * @arg ra Pointer to an initialized request array
  * @return pointer to a ready to use request
  */
-mpc_mp_request_t *
+mpc_lowcomm_request_t *
 mpc_MPI_Win_request_array_pick(struct mpc_MPI_Win_request_array *ra);
 
 /** Poll the request array trying to progress requests

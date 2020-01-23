@@ -79,7 +79,7 @@ void sctk_ptl_add_route(int dest, sctk_ptl_id_t id, sctk_rail_info_t* rail, sctk
  * \param[in] msg the local request
  * \param[in] rail the Portals rail
  */
-void sctk_ptl_notify_recv(mpc_mp_ptp_message_t* msg, sctk_rail_info_t* rail)
+void sctk_ptl_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_rail_info_t* rail)
 {
 	sctk_ptl_rail_info_t* srail     = &rail->network.ptl;
 	void* start                     = NULL;
@@ -113,7 +113,7 @@ void sctk_ptl_notify_recv(mpc_mp_ptp_message_t* msg, sctk_rail_info_t* rail)
  * \param[in] msg the message to send
  * \param[in] endpoint the route to use
  */
-void sctk_ptl_send_message(mpc_mp_ptp_message_t* msg, sctk_endpoint_t* endpoint)
+void sctk_ptl_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* endpoint)
 {
 	int process_rank            = sctk_get_process_rank();
 	sctk_ptl_rail_info_t* srail = &endpoint->rail->network.ptl;

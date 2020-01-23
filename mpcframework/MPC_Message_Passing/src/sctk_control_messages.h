@@ -59,15 +59,15 @@ typedef enum {
 
 void sctk_control_messages_send_process(int dest_process, int subtype,
                                         char param, void *buffer, size_t size);
-void sctk_control_messages_send_to_task(int dest_task, mpc_mp_communicator_t comm,
+void sctk_control_messages_send_to_task(int dest_task, mpc_lowcomm_communicator_t comm,
                                         int subtype, char param, void *buffer,
                                         size_t size);
 void sctk_control_messages_send_rail( int dest, int subtype, char param, void *buffer, size_t size, int  rail_id );
-void control_message_submit(mpc_mp_ptp_message_class_t class, int rail_id,
+void control_message_submit(mpc_lowcomm_ptp_message_class_t class, int rail_id,
                             int source_process, int source_rank, int subtype,
                             int param, void *data, size_t msg_size);
-void sctk_control_messages_incoming( mpc_mp_ptp_message_t * msg );
-void sctk_control_messages_perform(mpc_mp_ptp_message_t *msg, int force);
+void sctk_control_messages_incoming( mpc_lowcomm_ptp_message_t * msg );
+void sctk_control_messages_perform(mpc_lowcomm_ptp_message_t *msg, int force);
 
 struct sctk_control_message_fence_ctx
 {
@@ -76,9 +76,9 @@ struct sctk_control_message_fence_ctx
         int comm;
 };
 
-void sctk_control_message_fence(int target_task, mpc_mp_communicator_t comm);
-void sctk_control_message_fence_req(int target_task, mpc_mp_communicator_t comm,
-                                    mpc_mp_request_t *req);
+void sctk_control_message_fence(int target_task, mpc_lowcomm_communicator_t comm);
+void sctk_control_message_fence_req(int target_task, mpc_lowcomm_communicator_t comm,
+                                    mpc_lowcomm_request_t *req);
 void sctk_control_message_fence_handler( struct sctk_control_message_fence_ctx *ctx );
 
 /************************************************************************/
@@ -86,7 +86,7 @@ void sctk_control_message_fence_handler( struct sctk_control_message_fence_ctx *
 /************************************************************************/
 
 void sctk_control_message_init();
-void sctk_control_message_push( mpc_mp_ptp_message_t * msg );
+void sctk_control_message_push( mpc_lowcomm_ptp_message_t * msg );
 void sctk_control_message_process();
 void sctk_control_message_process_all();
 int sctk_control_message_process_local(int rank);

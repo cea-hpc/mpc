@@ -36,7 +36,7 @@ run (void *arg)
   int my_rank;
   char msg[50];
   int my_size;
-  mpc_mp_request_t req;
+  mpc_lowcomm_request_t req;
   unsigned long beg[10];
   unsigned long end[10];
 

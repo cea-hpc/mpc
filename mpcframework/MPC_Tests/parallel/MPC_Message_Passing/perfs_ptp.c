@@ -79,7 +79,7 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
     }
   if (my_rank == my_size - 1)
     {
-      mpc_mp_status_t status;
+      mpc_lowcomm_status_t status;
       for (i = 0; i < iters; i++)
 	{
 	  MPI_Recv (msg, size, MPI_CHAR, 0, 0, SCTK_COMM_WORLD, &status);

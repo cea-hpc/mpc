@@ -1,6 +1,6 @@
 #ifndef SCTK_LIB_MODE
 #include "mpi.h"
-#include "mpc_mp_coll.h"
+#include "mpc_lowcomm_coll.h"
 #include "sctk_debug.h"
 #include "sctk_shm_mapper.h"
 #include "mpc_common_types.h"
@@ -37,7 +37,7 @@ char *sctk_mpi_handler_gen_filename(void *option, __UNUSED__ void *option1) {
     long long int icomm = (long long int)option1;
     MPI_Comm comm = (MPI_Comm)icomm;
 
-    mpc_mp_bcast((void *)filename, 128 * sizeof(char), 0, (mpc_mp_communicator_t)comm);
+    mpc_lowcomm_bcast((void *)filename, 128 * sizeof(char), 0, (mpc_lowcomm_communicator_t)comm);
     return true;
   }
 
@@ -55,13 +55,13 @@ char *sctk_mpi_handler_gen_filename(void *option, __UNUSED__ void *option1) {
     long long int icomm = (long long int)option1;
     MPI_Comm comm = (MPI_Comm)icomm;
 
-    mpc_mp_bcast((void *)filename, 128 * sizeof(char), 0, (mpc_mp_communicator_t)comm);
+    mpc_lowcomm_bcast((void *)filename, 128 * sizeof(char), 0, (mpc_lowcomm_communicator_t)comm);
 
     return filename;
   }
 
   struct sctk_alloc_mapper_handler_s *
-  sctk_shm_mpi_handler_init(mpc_mp_communicator_t comm) {
+  sctk_shm_mpi_handler_init(mpc_lowcomm_communicator_t comm) {
 
     char *localhost;
     struct sctk_alloc_mapper_handler_s *mpi_handler;

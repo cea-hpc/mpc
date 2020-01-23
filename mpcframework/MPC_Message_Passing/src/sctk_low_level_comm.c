@@ -54,19 +54,18 @@
  *
  * \param[in] msg the message to send
  */
-void sctk_network_send_message_default (  __UNUSED__ mpc_mp_ptp_message_t *msg )
+void sctk_network_send_message_default ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg )
 {
 	not_reachable();
 }
 
 /** send_message() function pointer used by later trampolines */
-static void ( *sctk_network_send_message_ptr ) ( mpc_mp_ptp_message_t * ) = sctk_network_send_message_default;
-/** send_message() function pointer used by later trampolines */
+static void ( *sctk_network_send_message_ptr ) ( mpc_lowcomm_ptp_message_t * ) = sctk_network_send_message_default;
 
 /** trampoline function to set to the dyamically-defined send() routine.
  * \param[in] msg the message to send
  */
-void sctk_network_send_message ( mpc_mp_ptp_message_t *msg )
+void sctk_network_send_message ( mpc_lowcomm_ptp_message_t *msg )
 {
 	sctk_network_send_message_ptr ( msg );
 }
@@ -83,6 +82,7 @@ void sctk_network_send_message_set ( void ( *sctk_network_send_message_val ) ( m
 
 /********** NOTIFY_RECV ************/
 
+
 /**
  * Default handler when a RECV message is locally posted.
  *
@@ -91,12 +91,12 @@ void sctk_network_send_message_set ( void ( *sctk_network_send_message_val ) ( m
  *
  * \param[in] msg the message hosting RECV infos
  */
-void sctk_network_notify_recv_message_default ( __UNUSED__ mpc_mp_ptp_message_t *msg )
+void sctk_network_notify_recv_message_default ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg )
 {
 }
 
 /** recv_mesg() function pointer used by later calls */
-static void ( *sctk_network_notify_recv_message_ptr ) ( mpc_mp_ptp_message_t * ) = sctk_network_notify_recv_message_default;
+static void ( *sctk_network_notify_recv_message_ptr ) ( mpc_lowcomm_ptp_message_t * ) = sctk_network_notify_recv_message_default;
 
 
 /**
@@ -114,7 +114,7 @@ void sctk_network_notify_recv_message ( sctk_thread_ptp_message_t *msg )
  *
  * \param[in] sctk_network_notify_recv_message_val 
  */
-void sctk_network_notify_recv_message_set ( void ( *sctk_network_notify_recv_message_val ) ( mpc_mp_ptp_message_t * ) )
+void sctk_network_notify_recv_message_set ( void ( *sctk_network_notify_recv_message_val ) ( mpc_lowcomm_ptp_message_t * ) )
 {
 	sctk_network_notify_recv_message_ptr = sctk_network_notify_recv_message_val;
 }
@@ -130,19 +130,19 @@ void sctk_network_notify_recv_message_set ( void ( *sctk_network_notify_recv_mes
  * \param[in] msg the matched message
  */
 /**
-void sctk_network_notify_matching_message_default (  __UNUSED__ mpc_mp_ptp_message_t *msg )
+void sctk_network_notify_matching_message_default (  __UNUSED__ mpc_lowcomm_ptp_message_t *msg )
 {
 }
 
 /** notify_msg() function pointe rused by later calls */
-static void ( *sctk_network_notify_matching_message_ptr ) ( mpc_mp_ptp_message_t * ) = sctk_network_notify_matching_message_default;
+static void ( *sctk_network_notify_matching_message_ptr ) ( mpc_lowcomm_ptp_message_t * ) = sctk_network_notify_matching_message_default;
 
 /**
  * trampoline function to set the dynamically-defined notify_matching() function.
  *
  * \param[in] msg the matching message
  */
-void sctk_network_notify_matching_message ( mpc_mp_ptp_message_t *msg )
+void sctk_network_notify_matching_message ( mpc_lowcomm_ptp_message_t *msg )
 {
 	sctk_network_notify_matching_message_ptr ( msg );
 }
@@ -150,7 +150,7 @@ void sctk_network_notify_matching_message ( mpc_mp_ptp_message_t *msg )
 /** Set the routine used to notify local matching messages.
  * \param[in] msg the matching message
  */
-void sctk_network_notify_matching_message_set ( void ( *sctk_network_notify_matching_message_val ) ( mpc_mp_ptp_message_t * ) )
+void sctk_network_notify_matching_message_set ( void ( *sctk_network_notify_matching_message_val ) ( mpc_lowcomm_ptp_message_t * ) )
 {
 	sctk_network_notify_matching_message_ptr = sctk_network_notify_matching_message_val;
 }

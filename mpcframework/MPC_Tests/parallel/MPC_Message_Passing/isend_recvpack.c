@@ -35,7 +35,7 @@ run (void *arg)
   MPI_Comm my_com;
   int my_rank;
   char msg[50];
-  mpc_mp_request_t req;
+  mpc_lowcomm_request_t req;
   unsigned long beg[10];
   unsigned long end[10];
 

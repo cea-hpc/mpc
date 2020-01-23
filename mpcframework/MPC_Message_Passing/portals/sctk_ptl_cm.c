@@ -44,7 +44,7 @@ void sctk_ptl_cm_free_memory(void* msg)
  * compliant with the inter_thread_comm matching process.
  * message_copy() just have to memcpy() the received data to the emulated recv.
  */
-void sctk_ptl_cm_message_copy(mpc_mp_ptp_message_content_to_copy_t* msg)
+void sctk_ptl_cm_message_copy(mpc_lowcomm_ptp_message_content_to_copy_t* msg)
 {
 	/* dirty line: get back the ME address, where data are located 
 	 * + complete and free the message.
@@ -59,7 +59,7 @@ void sctk_ptl_cm_message_copy(mpc_mp_ptp_message_content_to_copy_t* msg)
  */
 static inline void sctk_ptl_cm_recv_message(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
-	mpc_mp_ptp_message_t* net_msg = sctk_malloc(sizeof(mpc_mp_ptp_message_t));
+	mpc_lowcomm_ptp_message_t* net_msg = sctk_malloc(sizeof(mpc_lowcomm_ptp_message_t));
 	sctk_ptl_matchbits_t match         = (sctk_ptl_matchbits_t) ev.match_bits;
 	sctk_ptl_imm_data_t hdr ;
 
@@ -70,7 +70,7 @@ static inline void sctk_ptl_cm_recv_message(sctk_rail_info_t* rail, sctk_ptl_eve
 	sctk_assert(ev.type == PTL_EVENT_PUT);
 	
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
-	mpc_mp_comm_ptp_message_header_clear(net_msg, SCTK_MESSAGE_CONTIGUOUS , sctk_ptl_cm_free_memory, sctk_ptl_cm_message_copy);
+	mpc_lowcomm_comm_ptp_message_header_clear(net_msg, SCTK_MESSAGE_CONTIGUOUS , sctk_ptl_cm_free_memory, sctk_ptl_cm_message_copy);
 	SCTK_MSG_SRC_PROCESS_SET     ( net_msg ,  match.data.rank);
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  match.data.rank);
 	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  sctk_get_process_rank());
@@ -108,7 +108,7 @@ static inline void sctk_ptl_cm_recv_message(sctk_rail_info_t* rail, sctk_ptl_eve
  * \param[in] msg the message to send.
  * \param[in] endpoint the route to use.
  */
-void sctk_ptl_cm_send_message(mpc_mp_ptp_message_t* msg, sctk_endpoint_t* endpoint)
+void sctk_ptl_cm_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* endpoint)
 {
 	sctk_ptl_local_data_t* request = NULL;
 	sctk_ptl_rail_info_t* srail    = &endpoint->rail->network.ptl;
@@ -203,13 +203,13 @@ void sctk_ptl_cm_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 void sctk_ptl_cm_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
-	mpc_mp_ptp_message_t* msg = (mpc_mp_ptp_message_t*)user_ptr->msg;
+	mpc_lowcomm_ptp_message_t* msg = (mpc_lowcomm_ptp_message_t*)user_ptr->msg;
 
 	UNUSED(rail);
 	switch(ev.type)
 	{
 		case PTL_EVENT_ACK:   /* the request reached the process */
-			mpc_mp_comm_ptp_message_complete_and_free(msg);
+			mpc_lowcomm_comm_ptp_message_complete_and_free(msg);
 			sctk_ptl_md_release(user_ptr);
 			break;
 

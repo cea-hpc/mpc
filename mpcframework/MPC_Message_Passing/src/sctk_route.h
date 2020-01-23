@@ -184,8 +184,8 @@ static inline void sctk_walk_all_routes ( sctk_route_table_t * table, void ( *fu
 /* Signalization rails: getters and setters                             */
 /************************************************************************/
 /* Routes */
-void sctk_route_messages_send ( int myself, int dest, mpc_mp_ptp_message_class_t message_class, int tag, void *buffer, size_t size );
-void sctk_route_messages_recv ( int src, int myself, mpc_mp_ptp_message_class_t message_class, int tag, void *buffer, size_t size );
+void sctk_route_messages_send ( int myself, int dest, mpc_lowcomm_ptp_message_class_t message_class, int tag, void *buffer, size_t size );
+void sctk_route_messages_recv ( int src, int myself, mpc_lowcomm_ptp_message_class_t message_class, int tag, void *buffer, size_t size );
 
 
 #endif

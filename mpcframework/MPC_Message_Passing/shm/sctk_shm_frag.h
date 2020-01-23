@@ -16,7 +16,7 @@ typedef struct
     int msg_frag_key;
     int local_mpi_rank;
     int remote_mpi_rank;
-    mpc_mp_ptp_message_t* header;
+    mpc_lowcomm_ptp_message_t* header;
     char *msg;
     mpc_common_spinlock_t is_ready;
 }sctk_shm_proc_frag_info_t;
@@ -33,7 +33,7 @@ typedef struct
 void sctk_network_frag_shm_interface_init(void);
 void sctk_network_frag_shm_interface_free(void);
 void sctk_network_frag_msg_shm_idle(int);
-mpc_mp_ptp_message_t *sctk_network_frag_msg_shm_recv(sctk_shm_cell_t*);
-int sctk_network_frag_msg_shm_send(mpc_mp_ptp_message_t*,sctk_shm_cell_t*);
+mpc_lowcomm_ptp_message_t *sctk_network_frag_msg_shm_recv(sctk_shm_cell_t*);
+int sctk_network_frag_msg_shm_send(mpc_lowcomm_ptp_message_t*,sctk_shm_cell_t*);
 
 #endif /* __SCTK_SHM_FRAG__ */

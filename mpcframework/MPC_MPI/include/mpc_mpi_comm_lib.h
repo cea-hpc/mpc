@@ -84,29 +84,29 @@ static inline int __MPC_Maybe_disguised()
  * PACK MANAGEMENT *
  *******************/
 
-int mpc_mpi_cl_open_pack( mpc_mp_request_t *request );
+int mpc_mpi_cl_open_pack( mpc_lowcomm_request_t *request );
 
-int mpc_mpi_cl_add_pack( void *buf, mpc_mp_msg_count_t count,
+int mpc_mpi_cl_add_pack( void *buf, mpc_lowcomm_msg_count_t count,
                       unsigned long *begins,
-                      unsigned long *ends, mpc_mp_datatype_t datatype,
-                      mpc_mp_request_t *request );
+                      unsigned long *ends, mpc_lowcomm_datatype_t datatype,
+                      mpc_lowcomm_request_t *request );
 
-int mpc_mpi_cl_add_pack_absolute( void *buf, mpc_mp_msg_count_t count,
+int mpc_mpi_cl_add_pack_absolute( void *buf, mpc_lowcomm_msg_count_t count,
                                long *begins,
                                long *ends,
-                               mpc_mp_datatype_t datatype, mpc_mp_request_t *request );
+                               mpc_lowcomm_datatype_t datatype, mpc_lowcomm_request_t *request );
 
-int mpc_mpi_cl_isend_pack( int dest, int tag, mpc_mp_communicator_t comm,
-                        mpc_mp_request_t *request );
+int mpc_mpi_cl_isend_pack( int dest, int tag, mpc_lowcomm_communicator_t comm,
+                        mpc_lowcomm_request_t *request );
 
-int mpc_mpi_cl_irecv_pack( int source, int tag, mpc_mp_communicator_t comm,
-                        mpc_mp_request_t *request );
+int mpc_mpi_cl_irecv_pack( int source, int tag, mpc_lowcomm_communicator_t comm,
+                        mpc_lowcomm_request_t *request );
 
 /*******************
  * WAIT OPERATIONS *
  *******************/
 
-int mpc_mpi_cl_wait_pending( mpc_mp_communicator_t comm );
+int mpc_mpi_cl_wait_pending( mpc_lowcomm_communicator_t comm );
 
 int mpc_mpi_cl_wait_pending_all_comm( void );
 
@@ -306,9 +306,9 @@ typedef int MPC_Message;
  * DATATYPES *
  *************/
 
-#define MPC_DATATYPE_NULL ( (mpc_mp_datatype_t) -1 )
-#define MPC_UB ( (mpc_mp_datatype_t) -2 )
-#define MPC_LB ( (mpc_mp_datatype_t) -3 )
+#define MPC_DATATYPE_NULL ( (mpc_lowcomm_datatype_t) -1 )
+#define MPC_UB ( (mpc_lowcomm_datatype_t) -2 )
+#define MPC_LB ( (mpc_lowcomm_datatype_t) -3 )
 #define MPC_PACKED 0
 #define MPC_BYTE 1
 #define MPC_SHORT 2
@@ -446,11 +446,11 @@ typedef enum
 	MPC_COMBINER_COUNT__
 } MPC_Type_combiner;
 
-typedef int( MPC_Type_copy_attr_function )( mpc_mp_datatype_t old_type,
+typedef int( MPC_Type_copy_attr_function )( mpc_lowcomm_datatype_t old_type,
         int type_keyval, void *extra_state,
         void *attribute_val_in,
         void *attribute_val_out, int *flag );
-typedef int( MPC_Type_delete_attr_function )( mpc_mp_datatype_t datatype,
+typedef int( MPC_Type_delete_attr_function )( mpc_lowcomm_datatype_t datatype,
         int type_keyval,
         void *attribute_val,
         void *extra_state );

@@ -79,7 +79,7 @@ static char *sctk_ib_protocol_print ( sctk_ib_protocol_t prot )
 #endif
 
 
-static void sctk_network_send_message_ib_endpoint ( mpc_mp_ptp_message_t *msg , sctk_endpoint_t *endpoint )
+static void sctk_network_send_message_ib_endpoint ( mpc_lowcomm_ptp_message_t *msg , sctk_endpoint_t *endpoint )
 {
 	sctk_rail_info_t * rail = endpoint->rail;
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -96,7 +96,7 @@ static void sctk_network_send_message_ib_endpoint ( mpc_mp_ptp_message_t *msg , 
 	remote = route_data->remote;
 
 	/* Check if the remote task is in low mem mode */
-	size = SCTK_MSG_SIZE ( msg ) + sizeof ( mpc_mp_ptp_message_body_t );
+	size = SCTK_MSG_SIZE ( msg ) + sizeof ( mpc_lowcomm_ptp_message_body_t );
 
 	sctk_ib_prof_qp_write ( remote->rank, size, sctk_get_time_stamp(), PROF_QP_SEND );
 
@@ -118,7 +118,7 @@ static void sctk_network_send_message_ib_endpoint ( mpc_mp_ptp_message_t *msg , 
 
 		/* Send message */
 		sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
-		mpc_mp_comm_ptp_message_complete_and_free ( msg );
+		mpc_lowcomm_comm_ptp_message_complete_and_free ( msg );
 		PROF_INC ( rail_ib->rail, ib_eager_nb );
 
 		/* Remote profiling */
@@ -133,7 +133,7 @@ buffered:
 	{
 		sctk_debug ( "Buffered" );
 		sctk_ib_buffered_prepare_msg ( rail, remote, msg, size );
-		mpc_mp_comm_ptp_message_complete_and_free ( msg );
+		mpc_lowcomm_comm_ptp_message_complete_and_free ( msg );
 		PROF_INC ( rail_ib->rail, ib_buffered_nb );
 
 		/* Remote profiling */
@@ -568,12 +568,12 @@ void sctk_network_poll_all_cq ( sctk_rail_info_t *rail, sctk_ib_polling_t *poll 
 	sctk_ib_cp_poll_global_list(poll);
 }
 
-static void sctk_network_notify_recv_message_ib ( __UNUSED__ mpc_mp_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail )
+static void sctk_network_notify_recv_message_ib ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail )
 {
 
 }
 
-static void sctk_network_notify_matching_message_ib (  __UNUSED__ mpc_mp_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail )
+static void sctk_network_notify_matching_message_ib (  __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail )
 {
 
 }
@@ -720,7 +720,7 @@ sctk_network_connection_from_ib ( int from, int to, sctk_rail_info_t *rail )
 
 
 
-int sctk_send_message_from_network_mpi_ib ( mpc_mp_ptp_message_t *msg )
+int sctk_send_message_from_network_mpi_ib ( mpc_lowcomm_ptp_message_t *msg )
 {
 	int ret = sctk_send_message_from_network_reorder ( msg );
 

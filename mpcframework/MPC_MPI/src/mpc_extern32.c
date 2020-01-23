@@ -44,7 +44,7 @@ static void FLOAT_convert(int type_byte_size, char *src, char *dest) {
   }
 }
 
-static inline int sctk_is_float_datatype( mpc_mp_datatype_t type)
+static inline int sctk_is_float_datatype( mpc_lowcomm_datatype_t type)
 {
     return ((type == MPC_FLOAT) || 
 	    (type == MPC_DOUBLE) ||
@@ -397,7 +397,7 @@ void sctk_integer_convert_width( void * in, size_t in_size, int unsgn, void * ou
 
 
 
-static inline void MPC_Extern32_encode( mpc_mp_datatype_t type, char * in, char * out )
+static inline void MPC_Extern32_encode( mpc_lowcomm_datatype_t type, char * in, char * out )
 {
 	if( !_mpc_dt_is_common(type) )
 	{
@@ -442,7 +442,7 @@ static inline void MPC_Extern32_encode( mpc_mp_datatype_t type, char * in, char 
 	}
 }
 
-static inline void MPC_Extern32_decode( mpc_mp_datatype_t type, char * in, char * out )
+static inline void MPC_Extern32_decode( mpc_lowcomm_datatype_t type, char * in, char * out )
 {
 	
 	size_t type_size = _mpc_dt_common_get_size( type );
@@ -479,7 +479,7 @@ static inline void MPC_Extern32_decode( mpc_mp_datatype_t type, char * in, char 
 
 
 
-void MPC_Extern32_convert( mpc_mp_datatype_t * typevector ,
+void MPC_Extern32_convert( mpc_lowcomm_datatype_t * typevector ,
 						   int type_vector_size, 
 						   char * native_buff, 
 						   size_t max_native_size, 
@@ -496,7 +496,7 @@ void MPC_Extern32_convert( mpc_mp_datatype_t * typevector ,
 	
 	while( 1 )
 	{
-		mpc_mp_datatype_t current_type = typevector[ typeIdx ];
+		mpc_lowcomm_datatype_t current_type = typevector[ typeIdx ];
 		typeIdx = ( typeIdx + 1 ) % type_vector_size;
 		
 		/* Apply conversion */

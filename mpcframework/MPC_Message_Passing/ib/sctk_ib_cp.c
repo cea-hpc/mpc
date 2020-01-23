@@ -50,7 +50,7 @@
 
 #define SCTK_IB_PROFILER
 
-extern mpc_mp_request_t *blocked_request;
+extern mpc_lowcomm_request_t *blocked_request;
 /* used to remember __thread var init for IB re-enabling */
 extern volatile char* vps_reset;
 

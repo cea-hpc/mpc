@@ -44,7 +44,7 @@ typedef struct sctk_ib_buffered_table_s
 
 typedef struct sctk_ib_buffered_s
 {
-	mpc_mp_ptp_message_body_t msg;
+	mpc_lowcomm_ptp_message_body_t msg;
 	int number;
 	int index;
 	int nb;
@@ -67,7 +67,7 @@ typedef struct sctk_ib_buffered_entry_s
 	mpc_common_spinlock_t current_copied_lock;
 	size_t current_copied;
 
-	struct mpc_mp_ptp_message_content_to_copy_s *copy_ptr;
+	struct mpc_lowcomm_ptp_message_content_to_copy_s *copy_ptr;
 } sctk_ib_buffered_entry_t;
 
 struct sctk_ibuf_s;

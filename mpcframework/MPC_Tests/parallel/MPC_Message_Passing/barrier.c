@@ -46,7 +46,7 @@ main (int argc, char **argv)
 {
   char *printing;
   int my_rank;
-  mpc_mp_communicator_t my_com;
+  mpc_lowcomm_communicator_t my_com;
   int i;
   double begin, end;
 

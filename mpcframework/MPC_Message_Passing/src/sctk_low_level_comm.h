@@ -62,14 +62,14 @@ struct sctk_runtime_config_struct_net_rail *sctk_get_rail_config_by_name ( char 
 */
 struct sctk_runtime_config_struct_net_driver_config *sctk_get_driver_config_by_name ( char *name );
 
-void sctk_network_send_message ( mpc_mp_ptp_message_t *msg );
-void sctk_network_send_message_set ( void ( *sctk_network_send_message_val ) ( mpc_mp_ptp_message_t * ) );
+void sctk_network_send_message ( mpc_lowcomm_ptp_message_t *msg );
+void sctk_network_send_message_set ( void ( *sctk_network_send_message_val ) ( mpc_lowcomm_ptp_message_t * ) );
 
-void sctk_network_notify_recv_message ( mpc_mp_ptp_message_t *msg );
-void sctk_network_notify_recv_message_set ( void ( *sctk_network_notify_recv_message_val ) ( mpc_mp_ptp_message_t * ) );
+void sctk_network_notify_recv_message ( mpc_lowcomm_ptp_message_t *msg );
+void sctk_network_notify_recv_message_set ( void ( *sctk_network_notify_recv_message_val ) ( mpc_lowcomm_ptp_message_t * ) );
 
-void sctk_network_notify_matching_message ( mpc_mp_ptp_message_t *msg );
-void sctk_network_notify_matching_message_set ( void ( *sctk_network_notify_matching_message_val ) ( mpc_mp_ptp_message_t * ) );
+void sctk_network_notify_matching_message ( mpc_lowcomm_ptp_message_t *msg );
+void sctk_network_notify_matching_message_set ( void ( *sctk_network_notify_matching_message_val ) ( mpc_lowcomm_ptp_message_t * ) );
 
 void sctk_network_notify_perform_message ( int remote_process, int remote_task_id, int polling_task_id, int blocking );
 void sctk_network_notify_perform_message_set ( void ( *sctk_network_notify_perform_message_val ) ( int, int, int, int ) );

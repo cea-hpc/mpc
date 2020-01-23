@@ -38,7 +38,7 @@ static volatile short rail_is_ready = 0;
  * @param[in,out] msg message to send
  * @param[in]  endpoint connection handler to take for routing
  */
-static void sctk_network_send_message_endpoint_ptl ( mpc_mp_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+static void sctk_network_send_message_endpoint_ptl ( mpc_lowcomm_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
 	sctk_ptl_send_message(msg, endpoint);
 }
@@ -48,7 +48,7 @@ static void sctk_network_send_message_endpoint_ptl ( mpc_mp_ptp_message_t *msg, 
  * \param[in] msg the posted msdg
  * \param[in] rail the Portals rail
  */
-static void sctk_network_notify_recv_message_ptl ( mpc_mp_ptp_message_t *msg, sctk_rail_info_t *rail )
+static void sctk_network_notify_recv_message_ptl ( mpc_lowcomm_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
 	/* by construction, a network-received CM will generate a local recv
 	 * So, in this case, we have nothing to do here
@@ -64,7 +64,7 @@ static void sctk_network_notify_recv_message_ptl ( mpc_mp_ptp_message_t *msg, sc
 
 /**
  * Not relevant in this implementation */
-static void sctk_network_notify_matching_message_ptl ( mpc_mp_ptp_message_t *msg, sctk_rail_info_t *rail )
+static void sctk_network_notify_matching_message_ptl ( mpc_lowcomm_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
 	/* nothing to do */
 	UNUSED(msg);
@@ -134,7 +134,7 @@ static void sctk_network_notify_new_communicator_ptl(sctk_rail_info_t* rail, int
  *
  * @returns 1, in any case
  */
-static int sctk_send_message_from_network_ptl ( mpc_mp_ptp_message_t *msg )
+static int sctk_send_message_from_network_ptl ( mpc_lowcomm_ptp_message_t *msg )
 {
 	if ( sctk_send_message_from_network_reorder ( msg ) == REORDER_NO_NUMBERING )
 	{

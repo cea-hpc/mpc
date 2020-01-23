@@ -8,15 +8,15 @@
 
 typedef struct
 {
-  mpc_mp_ptp_message_t * msg;
+  mpc_lowcomm_ptp_message_t * msg;
   int iovec_len;
   pid_t pid;
 } sctk_shm_iovec_info_t;
 
 int sctk_network_cma_shm_interface_init(void*);
-mpc_mp_ptp_message_t *sctk_network_cma_cmpl_msg_shm_recv(sctk_shm_cell_t*);
-mpc_mp_ptp_message_t *sctk_network_cma_msg_shm_recv(sctk_shm_cell_t *,int);
-int sctk_network_cma_msg_shm_send(mpc_mp_ptp_message_t*,sctk_shm_cell_t*);
+mpc_lowcomm_ptp_message_t *sctk_network_cma_cmpl_msg_shm_recv(sctk_shm_cell_t*);
+mpc_lowcomm_ptp_message_t *sctk_network_cma_msg_shm_recv(sctk_shm_cell_t *,int);
+int sctk_network_cma_msg_shm_send(mpc_lowcomm_ptp_message_t*,sctk_shm_cell_t*);
 
 #endif /* MPC_USE_CMA */
 

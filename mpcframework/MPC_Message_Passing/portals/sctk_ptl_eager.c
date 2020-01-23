@@ -40,7 +40,7 @@ void sctk_ptl_eager_free_memory(void* msg)
  *  
  *  \param[in,out] msg the send/recv bundle where both message headers are stored
  */
-void sctk_ptl_eager_message_copy(mpc_mp_ptp_message_content_to_copy_t* msg)
+void sctk_ptl_eager_message_copy(mpc_lowcomm_ptp_message_content_to_copy_t* msg)
 {
 	sctk_ptl_local_data_t* recv_data = msg->msg_recv->tail.ptl.user_ptr;
 	
@@ -79,7 +79,7 @@ void sctk_ptl_eager_message_copy(mpc_mp_ptp_message_content_to_copy_t* msg)
  */
 static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
-	mpc_mp_ptp_message_t* net_msg = sctk_malloc(sizeof(mpc_mp_ptp_message_t));
+	mpc_lowcomm_ptp_message_t* net_msg = sctk_malloc(sizeof(mpc_lowcomm_ptp_message_t));
 	sctk_ptl_matchbits_t match = (sctk_ptl_matchbits_t) ev.match_bits;
 
 	/* sanity checks */
@@ -88,7 +88,7 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	sctk_assert(ev.mlength <= rail->network.ptl.eager_limit);
 	
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
-	mpc_mp_comm_ptp_message_header_clear(net_msg, SCTK_MESSAGE_CONTIGUOUS , sctk_ptl_eager_free_memory, sctk_ptl_eager_message_copy);
+	mpc_lowcomm_comm_ptp_message_header_clear(net_msg, SCTK_MESSAGE_CONTIGUOUS , sctk_ptl_eager_free_memory, sctk_ptl_eager_message_copy);
 	SCTK_MSG_SRC_PROCESS_SET     ( net_msg ,  match.data.rank);
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  match.data.rank);
 	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  sctk_get_process_rank());
@@ -134,7 +134,7 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
  * \param[in] msg the message to send
  * \param[in] endpoint the route to use
  */
-void sctk_ptl_eager_send_message(mpc_mp_ptp_message_t* msg, sctk_endpoint_t* endpoint)
+void sctk_ptl_eager_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* endpoint)
 {
 	sctk_ptl_local_data_t* request = NULL;
 	sctk_ptl_rail_info_t* srail    = &endpoint->rail->network.ptl;
@@ -200,7 +200,7 @@ void sctk_ptl_eager_send_message(mpc_mp_ptp_message_t* msg, sctk_endpoint_t* end
  * \param[in] msg the generated RECV
  * \param[in] srail the Portals rail
  */
-void sctk_ptl_eager_notify_recv(mpc_mp_ptp_message_t* msg, sctk_ptl_rail_info_t* srail)
+void sctk_ptl_eager_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_info_t* srail)
 {
 	void* start                     = NULL;
 	size_t size                     = 0;
@@ -305,7 +305,7 @@ void sctk_ptl_eager_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 void sctk_ptl_eager_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
-	mpc_mp_ptp_message_t* msg = (mpc_mp_ptp_message_t*)user_ptr->msg;
+	mpc_lowcomm_ptp_message_t* msg = (mpc_lowcomm_ptp_message_t*)user_ptr->msg;
 
 	UNUSED(rail); 
 
@@ -317,7 +317,7 @@ void sctk_ptl_eager_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 				sctk_free(user_ptr->slot.md.start);
 			}
 			/* tag the message as completed */
-			mpc_mp_comm_ptp_message_complete_and_free(msg);
+			mpc_lowcomm_comm_ptp_message_complete_and_free(msg);
 			sctk_ptl_md_release(user_ptr);
 			break;
 

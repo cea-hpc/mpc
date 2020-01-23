@@ -400,7 +400,7 @@ static void sctk_perform_initialisation ( void )
 	}
 
 #ifdef MPC_Message_Passing
-	mpc_mp_coll_init_hook = *( void ** )( &sctk_runtime_config_get()->modules.inter_thread_comm.collectives_init_hook.value );
+	mpc_lowcomm_coll_init_hook = *( void ** )( &sctk_runtime_config_get()->modules.inter_thread_comm.collectives_init_hook.value );
 	sctk_communicator_world_init ( sctk_task_nb_val );
 	sctk_communicator_self_init ();
 #endif
@@ -411,7 +411,7 @@ static void sctk_perform_initialisation ( void )
 	/* In LIB mode we create the task context
 	 * at process level (not in an actual task ) */
 	int my_rank = mpc_common_get_process_rank();
-	mpc_mp_comm_init_per_task ( my_rank );
+	mpc_lowcomm_comm_init_per_task ( my_rank );
 #endif
 	/* Start auxiliary polling thread */
 	/*

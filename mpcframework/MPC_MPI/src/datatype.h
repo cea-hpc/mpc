@@ -26,7 +26,7 @@
 #include <mpc_mpi_comm_lib.h>
 #include <mpc_common_asm.h>
 
-#include "mpc_mp_coll.h" /* mpc_mp_datatype_t */
+#include "mpc_lowcomm_coll.h" /* mpc_lowcomm_datatype_t */
 #include "mpc_common_datastructure.h"
 #include "mpc_common_spinlock.h"
 #include "sctk_thread.h"
@@ -93,7 +93,7 @@ struct _mpc_dt_footprint
 {
 	/* Internal ref-counting handling */
 
-	mpc_mp_datatype_t internal_type; /**< This is the internal type when types are built on top of each other happens for hvector and hindexed */
+	mpc_lowcomm_datatype_t internal_type; /**< This is the internal type when types are built on top of each other happens for hvector and hindexed */
 
 	/* MPI_get_envelope */
 	MPC_Type_combiner combiner; /**< Combiner used to build the datatype */
@@ -105,7 +105,7 @@ struct _mpc_dt_footprint
 	 * parameters provided uppon type creation  */
 	int *array_of_integers;			   /** An array of integers */
 	size_t *array_of_addresses;		   /* An array of addresses */
-	mpc_mp_datatype_t *array_of_types; /** An array of types */
+	mpc_lowcomm_datatype_t *array_of_types; /** An array of types */
 };
 
 /** \brief This structure is used to pass the parameters to \ref _mpc_dt_context_set
@@ -132,7 +132,7 @@ struct _mpc_dt_context
 	int order;
 	int p;
 	int r;
-	mpc_mp_datatype_t oldtype;
+	mpc_lowcomm_datatype_t oldtype;
 	int blocklength;
 	int stride;
 	size_t stride_addr;
@@ -148,7 +148,7 @@ struct _mpc_dt_context
 	int *array_of_starts;
 	int *array_of_displacements;
 	size_t *array_of_displacements_addr;
-	mpc_mp_datatype_t *array_of_types;
+	mpc_lowcomm_datatype_t *array_of_types;
 };
 
 /** \brief Clears the external context
@@ -201,7 +201,7 @@ int _mpc_dt_fill_envelope( struct _mpc_dt_footprint *ctx, int *num_integers, int
  */
 struct _mpc_dt_layout
 {
-	mpc_mp_datatype_t type;
+	mpc_lowcomm_datatype_t type;
 	size_t size;
 };
 
@@ -217,7 +217,7 @@ struct _mpc_dt_layout *_mpc_dt_get_layout( struct _mpc_dt_footprint *ctx, size_t
 
 /** \brief Returns 1 if datatype is a common datatype
  */
-static inline int _mpc_dt_is_common( mpc_mp_datatype_t datatype )
+static inline int _mpc_dt_is_common( mpc_lowcomm_datatype_t datatype )
 {
 	if ( ( 0 <= datatype ) && ( datatype < SCTK_COMMON_DATA_TYPE_COUNT ) )
 	{
@@ -237,7 +237,7 @@ extern size_t *__sctk_common_type_sizes;
  *  \param datatype target common datatype
  *  \return datatype size
  */
-static inline size_t _mpc_dt_common_get_size( mpc_mp_datatype_t datatype )
+static inline size_t _mpc_dt_common_get_size( mpc_lowcomm_datatype_t datatype )
 {
 	assert( _mpc_dt_is_common( datatype ) );
 	return __sctk_common_type_sizes[datatype];
@@ -246,7 +246,7 @@ static inline size_t _mpc_dt_common_get_size( mpc_mp_datatype_t datatype )
 /** \brief Display debug informations about a common datatype
  *  \param target_type Type to be displayed
  */
-void _mpc_dt_common_display( mpc_mp_datatype_t datatype );
+void _mpc_dt_common_display( mpc_lowcomm_datatype_t datatype );
 
 /************************************************************************/
 /* Contiguous Datatype                                                  */
@@ -262,7 +262,7 @@ typedef struct
 	size_t size;					  /**< Total size of the contiguous type */
 	size_t element_size;			  /**< Size of an element of type */
 	size_t count;					  /**< Number of elements of type "datatype" in the type */
-	mpc_mp_datatype_t datatype;		  /**< Type packed within the datatype */
+	mpc_lowcomm_datatype_t datatype;		  /**< Type packed within the datatype */
 	unsigned int ref_count;			  /**< Flag telling if the datatype slot is free for use */
 	struct _mpc_dt_footprint context; /**< Saves the creation context for MPI_get_envelope & MPI_Get_contents */
 	struct __mpc_dt_attr_store attrs; /**< ATTR array for this type */
@@ -278,7 +278,7 @@ typedef struct
  *  \param source original datatype id
  *
  */
-void _mpc_dt_contiguous_init( _mpc_dt_contiguout_t *type, size_t id_rank, size_t element_size, size_t count, mpc_mp_datatype_t datatype );
+void _mpc_dt_contiguous_init( _mpc_dt_contiguout_t *type, size_t id_rank, size_t element_size, size_t count, mpc_lowcomm_datatype_t datatype );
 
 /** \brief Releases a contiguous datatype
  *  \param type This is the datatype to be freed
@@ -308,7 +308,7 @@ void _mpc_dt_contiguous_display( _mpc_dt_contiguout_t *target_type );
  */
 typedef struct
 {
-	mpc_mp_datatype_t id; /**< Integer ID (useful  for debug) */
+	mpc_lowcomm_datatype_t id; /**< Integer ID (useful  for debug) */
 	/* Context */
 	size_t size;			/**< Total size of the datatype */
 	unsigned long count;	/**< Number of elements in the datatype */
@@ -322,7 +322,7 @@ typedef struct
 	unsigned long opt_count;				 /**< Number of blocks with optimization */
 	long *opt_begins; /**< Begin offsets with optimization */
 	long *opt_ends;   /**< End offsets with optimization */
-	mpc_mp_datatype_t *datatypes;			 /**< Datatypes for each block */
+	mpc_lowcomm_datatype_t *datatypes;			 /**< Datatypes for each block */
 
 	/* Bounds */
 	long lb; /**< Lower bound offset  */
@@ -354,11 +354,11 @@ typedef struct
  * \param is_b tells if the type has an upper bound
  *
  */
-void _mpc_dt_derived_init( _mpc_dt_derived_t *type, mpc_mp_datatype_t id,
+void _mpc_dt_derived_init( _mpc_dt_derived_t *type, mpc_lowcomm_datatype_t id,
 						   unsigned long count,
 						   long *begins,
 						   long *ends,
-						   mpc_mp_datatype_t *datatypes,
+						   mpc_lowcomm_datatype_t *datatypes,
 						   long lb, int is_lb,
 						   long ub, int is_ub );
 
@@ -425,7 +425,7 @@ typedef enum {
 
 /** \brief Returns 1 if datatype is a contiguous datatype
  */
-static inline int _mpc_dt_is_contiguous( mpc_mp_datatype_t datatype )
+static inline int _mpc_dt_is_contiguous( mpc_lowcomm_datatype_t datatype )
 {
 	if ( ( SCTK_COMMON_DATA_TYPE_COUNT <= datatype ) && ( datatype < ( SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX ) ) )
 	{
@@ -437,7 +437,7 @@ static inline int _mpc_dt_is_contiguous( mpc_mp_datatype_t datatype )
 
 /** \brief Returns 1 if datatype is a derived datatype
  */
-static inline int _mpc_dt_is_derived( mpc_mp_datatype_t data_in )
+static inline int _mpc_dt_is_derived( mpc_lowcomm_datatype_t data_in )
 {
 	if ( ( data_in >= SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX ) && ( data_in < ( SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_USER_DATA_TYPES_MAX ) ) )
 	{
@@ -449,7 +449,7 @@ static inline int _mpc_dt_is_derived( mpc_mp_datatype_t data_in )
 
 /** \brief Returns 1 if datatype is a stuct datatype datatype
  */
-static inline int _mpc_dt_is_struct( mpc_mp_datatype_t data_in )
+static inline int _mpc_dt_is_struct( mpc_lowcomm_datatype_t data_in )
 {
 	if ( ( data_in >= SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX ) && ( data_in < ( SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX + MPC_STRUCT_DATATYPE_COUNT ) ) )
 	{
@@ -461,7 +461,7 @@ static inline int _mpc_dt_is_struct( mpc_mp_datatype_t data_in )
 
 /** \brief Returns 1 if the datatype is a boundary (UB or LB)
  */
-static inline int _mpc_dt_is_boundary( mpc_mp_datatype_t data_in )
+static inline int _mpc_dt_is_boundary( mpc_lowcomm_datatype_t data_in )
 {
 	if ( ( data_in == MPC_UB ) || ( data_in == MPC_LB ) )
 	{
@@ -473,7 +473,7 @@ static inline int _mpc_dt_is_boundary( mpc_mp_datatype_t data_in )
 
 /** \brief Returns 1 if the datatype is occupying a contiguous memory region
  */
-static inline int _mpc_dt_is_contig_mem( mpc_mp_datatype_t data_in )
+static inline int _mpc_dt_is_contig_mem( mpc_lowcomm_datatype_t data_in )
 {
 	/* Note that the derived asumption can be optimized
    * for single segment derived with no LB/UB */
@@ -485,12 +485,12 @@ static inline int _mpc_dt_is_contig_mem( mpc_mp_datatype_t data_in )
 	return 1;
 }
 
-/** \brief This functions retuns the \ref mpc_dt_kind_t of an mpc_mp_datatype_t
+/** \brief This functions retuns the \ref mpc_dt_kind_t of an mpc_lowcomm_datatype_t
  *
  * 	It is useful to switch between datatypes
  *
  */
-static inline mpc_dt_kind_t _mpc_dt_get_kind( mpc_mp_datatype_t datatype )
+static inline mpc_dt_kind_t _mpc_dt_get_kind( mpc_lowcomm_datatype_t datatype )
 {
 	mpc_dt_kind_t ret = MPC_DATATYPES_UNKNOWN;
 
@@ -553,7 +553,7 @@ struct _mpc_dt_storage *_mpc_dt_storage_init();
  *  \param da A pointer to the datatype array
  *  \param datatype The datatype to be freed
  */
-int _mpc_dt_storage_type_can_be_released( struct _mpc_dt_storage *da, mpc_mp_datatype_t datatype );
+int _mpc_dt_storage_type_can_be_released( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t datatype );
 
 /** \brief Releases the datatype array and types not previously freed
  *  \param da A pointer to the datatype array
@@ -568,7 +568,7 @@ void _mpc_dt_storage_release( struct _mpc_dt_storage *da );
  *
  *  \warning The datatype must be a contiguous datatype note that event unallocated datatypes are returned !
  */
-_mpc_dt_contiguout_t *_mpc_dt_storage_get_contiguous_datatype( struct _mpc_dt_storage *da, mpc_mp_datatype_t datatype );
+_mpc_dt_contiguout_t *_mpc_dt_storage_get_contiguous_datatype( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t datatype );
 
 /** \brief Returns a pointer to a derived datatype
  *  \param da A pointer to the datatype array
@@ -578,7 +578,7 @@ _mpc_dt_contiguout_t *_mpc_dt_storage_get_contiguous_datatype( struct _mpc_dt_st
  *
  *  \warning The datatype must be a derived datatype
  */
-_mpc_dt_derived_t *_mpc_dt_storage_get_derived_datatype( struct _mpc_dt_storage *da, mpc_mp_datatype_t datatype );
+_mpc_dt_derived_t *_mpc_dt_storage_get_derived_datatype( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t datatype );
 
 /** \brief Sets a pointer to a contiguous datatype in the datatype array
  *  \param da A pointer to the datatype array
@@ -589,7 +589,7 @@ _mpc_dt_derived_t *_mpc_dt_storage_get_derived_datatype( struct _mpc_dt_storage 
  *
  *  \warning The datatype must be a derived datatype
  */
-void _mpc_dt_storage_set_derived_datatype( struct _mpc_dt_storage *da, mpc_mp_datatype_t datatype, _mpc_dt_derived_t *value );
+void _mpc_dt_storage_set_derived_datatype( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t datatype, _mpc_dt_derived_t *value );
 
 /************************************************************************/
 /* Datatype  Attribute Getters                                          */
@@ -602,7 +602,7 @@ void _mpc_dt_storage_set_derived_datatype( struct _mpc_dt_storage *da, mpc_mp_da
  *  \param attribute_val Value to be stored
  *  \return MPI_SUCCESS if ok
  */
-int _mpc_dt_attr_set( struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
+int _mpc_dt_attr_set( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
 					  int type_keyval, void *attribute_val );
 
 /** \brief Get a Datatype attr in a datatype-store (contained inside DT)
@@ -613,7 +613,7 @@ int _mpc_dt_attr_set( struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
  *  \param flag (OUT)False if no attribute found
  *  \return MPI_SUCCESS if ok
  */
-int _mpc_dt_attr_get( struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
+int _mpc_dt_attr_get( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
 					  int type_keyval, void *attribute_val, int *flag );
 
 /** \brief Delete a Datatype attr in a datatype-store (contained inside DT)
@@ -622,7 +622,7 @@ int _mpc_dt_attr_get( struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
  * 	\param type_keyval Referenced keyval
  *  \return MPI_SUCCESS if ok
  */
-int _mpc_dt_attr_delete( struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
+int _mpc_dt_attr_delete( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
 						 int type_keyval );
 
 /************************************************************************/
@@ -639,7 +639,7 @@ int _mpc_dt_attr_delete( struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
  *  to allow this behaviour
  *
  */
-int _mpc_dt_name_set_nocheck( mpc_mp_datatype_t datatype, char *name );
+int _mpc_dt_name_set_nocheck( mpc_lowcomm_datatype_t datatype, char *name );
 
 /** \brief Set a name to a given datatype
  *  \param datatype Type which has to be named
@@ -647,12 +647,12 @@ int _mpc_dt_name_set_nocheck( mpc_mp_datatype_t datatype, char *name );
  *  \return 1 on error 0 otherwise
  *
  */
-int _mpc_dt_name_set( mpc_mp_datatype_t datatype, char *name );
+int _mpc_dt_name_set( mpc_lowcomm_datatype_t datatype, char *name );
 
 /** \brief Returns the name of a data-type
  *  \param datatype Requested data-type
  *  \return NULL if no name the name otherwise
  */
-char *_mpc_dt_name_get( mpc_mp_datatype_t datatype );
+char *_mpc_dt_name_get( mpc_lowcomm_datatype_t datatype );
 
 #endif /* MPC_DATATYPES_H */

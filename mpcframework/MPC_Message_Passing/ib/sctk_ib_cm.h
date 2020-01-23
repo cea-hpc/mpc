@@ -128,7 +128,7 @@ void sctk_ib_cm_connect_to ( int from, int to, struct sctk_rail_info_s *rail );
 void sctk_ib_cm_connect_from ( int from, int to, sctk_rail_info_t *rail );
 
 /* On-demand connexions */
-int sctk_ib_cm_on_demand_recv_check ( mpc_mp_ptp_message_body_t *msg );
+int sctk_ib_cm_on_demand_recv_check ( mpc_lowcomm_ptp_message_body_t *msg );
  
 void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int process_src, int source_rank, char subtype,  char param, void * payload, size_t size );
 

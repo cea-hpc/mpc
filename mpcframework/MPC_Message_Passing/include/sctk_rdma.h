@@ -59,7 +59,7 @@
  * 
  * @return The ID of the newly created window (is an integer)
  */
-sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, mpc_mp_communicator_t comm );
+sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, mpc_lowcomm_communicator_t comm );
 
 /** Map to a remote window in order to initiate RDMAs
  *
@@ -76,7 +76,7 @@ sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, mpc_m
  * remote
  */
 
-sctk_window_t sctk_window_map_remote(int remote_rank, mpc_mp_communicator_t comm,
+sctk_window_t sctk_window_map_remote(int remote_rank, mpc_lowcomm_communicator_t comm,
                                      sctk_window_t win_id);
 
 /** Release a window (either remote or local)
@@ -105,7 +105,7 @@ void sctk_window_release( sctk_window_t win );
  * 
  * @arg win_id The window to emit a fence on (generally remote)
  */
-void sctk_window_RDMA_fence(sctk_window_t win_id, mpc_mp_request_t *req);
+void sctk_window_RDMA_fence(sctk_window_t win_id, mpc_lowcomm_request_t *req);
 
 /************************************************************************/
 /* Window Wait Operation                                                */
@@ -121,7 +121,7 @@ void sctk_window_RDMA_fence(sctk_window_t win_id, mpc_mp_request_t *req);
  * 
  * @arg request Request returned by an RMA call
  */
-void sctk_window_RDMA_wait( mpc_mp_request_t *request );
+void sctk_window_RDMA_wait( mpc_lowcomm_request_t *request );
 
 /************************************************************************/
 /* Window RDMA Operations                                               */
@@ -159,7 +159,7 @@ void sctk_window_RDMA_wait( mpc_mp_request_t *request );
  * @arg dest_offset Offset in the target window (note that it is dependent from the disp_offset given at window initialization)
  * @arg req A request to wait the RMA with @ref sctk_window_RDMA_wait
  */
-void sctk_window_RDMA_write( sctk_window_t win_id, void * src_addr, size_t size, size_t dest_offset, mpc_mp_request_t  * req  );
+void sctk_window_RDMA_write( sctk_window_t win_id, void * src_addr, size_t size, size_t dest_offset, mpc_lowcomm_request_t  * req  );
 
 /** Write a contiguous data-segment in a window from another window
  * 
@@ -174,7 +174,7 @@ void sctk_window_RDMA_write( sctk_window_t win_id, void * src_addr, size_t size,
  * @arg dest_offset the offset to write to in the dest window
  * @arg req A request to wait the RMA with @ref sctk_window_RDMA_wait
  */
-void sctk_window_RDMA_write_win( sctk_window_t src_win_id, size_t src_offset, size_t size,  sctk_window_t dest_win_id, size_t dest_offset, mpc_mp_request_t  * req  );
+void sctk_window_RDMA_write_win( sctk_window_t src_win_id, size_t src_offset, size_t size,  sctk_window_t dest_win_id, size_t dest_offset, mpc_lowcomm_request_t  * req  );
 
 /*
  * RDMA Read
@@ -188,7 +188,7 @@ void sctk_window_RDMA_write_win( sctk_window_t src_win_id, size_t src_offset, si
  * @arg src_offset Offset in the target window where to read from (function of disp_unit)
  * @arg req A request to wait the RMA with @ref sctk_window_RDMA_wait
  */
-void sctk_window_RDMA_read( sctk_window_t win_id, void * dest_addr, size_t size, size_t src_offset, mpc_mp_request_t  * req  );
+void sctk_window_RDMA_read( sctk_window_t win_id, void * dest_addr, size_t size, size_t src_offset, mpc_lowcomm_request_t  * req  );
 
 /** Read data from a window to a window
  * 
@@ -203,7 +203,7 @@ void sctk_window_RDMA_read( sctk_window_t win_id, void * dest_addr, size_t size,
  * @arg dest_offset Dest offset in the destination window
  * @arg req A request to wait the RMA with @ref sctk_window_RDMA_wait
  */
-void sctk_window_RDMA_read_win( sctk_window_t src_win_id, size_t src_offset, size_t size, sctk_window_t dest_win_id, size_t dest_offset, mpc_mp_request_t  * req );
+void sctk_window_RDMA_read_win( sctk_window_t src_win_id, size_t src_offset, size_t size, sctk_window_t dest_win_id, size_t dest_offset, mpc_lowcomm_request_t  * req );
 
 /************************************************************************/
 /* Window Atomic Operations                                             */
@@ -267,7 +267,7 @@ void sctk_window_RDMA_read_win( sctk_window_t src_win_id, size_t src_offset, siz
  * @arg type Type of the @ref fetch_addr, window target and @ref add segments
  * @arg req A request to wait the RMA with @ref sctk_window_RDMA_wait
  */
-void sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote_offset, void * fetch_addr, void * add, RDMA_op op,  RDMA_type type, mpc_mp_request_t  * req );
+void sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote_offset, void * fetch_addr, void * add, RDMA_op op,  RDMA_type type, mpc_lowcomm_request_t  * req );
 
 /** Emit an RDMA fetch and op to a window with a fetch address in another window
  * 
@@ -284,7 +284,7 @@ void sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote_o
  * @arg type Type of the operands (fetch, remote and add)
  * @arg req A request to wait the RMA with @ref sctk_window_RDMA_wait
  */
-void sctk_window_RDMA_fetch_and_op_win( sctk_window_t remote_win_id, size_t remote_offset, sctk_window_t local_win_id, size_t fetch_offset, void * add, RDMA_op op,  RDMA_type type, mpc_mp_request_t  * req );
+void sctk_window_RDMA_fetch_and_op_win( sctk_window_t remote_win_id, size_t remote_offset, sctk_window_t local_win_id, size_t fetch_offset, void * add, RDMA_op op,  RDMA_type type, mpc_lowcomm_request_t  * req );
 
 /*
  * RDMA Cas
@@ -304,7 +304,7 @@ void sctk_window_RDMA_fetch_and_op_win( sctk_window_t remote_win_id, size_t remo
  * @arg type Type of the operants (res, new_data, target)
  * @arg req A request to wait the RMA with @ref sctk_window_RDMA_wait
  */ 
-void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void  * res, RDMA_type type, mpc_mp_request_t  * req );
+void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void  * res, RDMA_type type, mpc_lowcomm_request_t  * req );
 
 /** Emit a compare and swap (CAS) on a remote window with a fetch address
  * in a local window
@@ -322,6 +322,6 @@ void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, vo
  * @arg type Type of the operants (res, new_data, target)
  * @arg req A request to wait the RMA with @ref sctk_window_RDMA_wait
  */
-void sctk_window_RDMA_CAS_win( sctk_window_t remote_win_id, size_t remote_offset,  sctk_window_t local_win_id, size_t res_offset, void * comp, void * new_data, RDMA_type type, mpc_mp_request_t  * req );
+void sctk_window_RDMA_CAS_win( sctk_window_t remote_win_id, size_t remote_offset,  sctk_window_t local_win_id, size_t res_offset, void * comp, void * new_data, RDMA_type type, mpc_lowcomm_request_t  * req );
 
 #endif /* SCTK_RDMA_H */

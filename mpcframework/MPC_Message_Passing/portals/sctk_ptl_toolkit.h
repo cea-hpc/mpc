@@ -33,13 +33,13 @@ void sctk_ptl_add_route(int dest, sctk_ptl_id_t id, sctk_rail_info_t* rail, sctk
 void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold);
 void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold);
 void sctk_ptl_free_memory(void* msg);
-void sctk_ptl_message_copy(mpc_mp_ptp_message_content_to_copy_t);
+void sctk_ptl_message_copy(mpc_lowcomm_ptp_message_content_to_copy_t);
 void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t comm_size);
 void sctk_ptl_init_interface(sctk_rail_info_t* rail);
 void sctk_ptl_fini_interface(sctk_rail_info_t* rail);
 
-void sctk_ptl_send_message(mpc_mp_ptp_message_t* msg, sctk_endpoint_t* endpoint);
-void sctk_ptl_notify_recv(mpc_mp_ptp_message_t* msg, sctk_rail_info_t* rail);
+void sctk_ptl_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* endpoint);
+void sctk_ptl_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_rail_info_t* rail);
 int sctk_ptl_pending_me_probe(sctk_rail_info_t* prail, sctk_thread_message_header_t* hdr, int probe_level);
 
 static inline sctk_rail_info_t* sctk_ptl_promote_to_rail(sctk_ptl_rail_info_t* srail)

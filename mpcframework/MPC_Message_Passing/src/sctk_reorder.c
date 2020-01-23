@@ -136,7 +136,7 @@ static inline int __send_pending_messages ( sctk_reorder_table_t *tmp )
 /*
  * Receive message from network
  * */
-int sctk_send_message_from_network_reorder ( mpc_mp_ptp_message_t *msg )
+int sctk_send_message_from_network_reorder ( mpc_lowcomm_ptp_message_t *msg )
 {
 	const int src_task  = SCTK_MSG_SRC_TASK ( msg );
 	const int dest_task = SCTK_MSG_DEST_TASK ( msg );
@@ -227,7 +227,7 @@ int sctk_send_message_from_network_reorder ( mpc_mp_ptp_message_t *msg )
 /*
  * Send message to network
  * */
-int sctk_prepare_send_message_to_network_reorder ( mpc_mp_ptp_message_t *msg )
+int sctk_prepare_send_message_to_network_reorder ( mpc_lowcomm_ptp_message_t *msg )
 {
 	sctk_reorder_table_t *tmp;
 	const int src_task  = SCTK_MSG_SRC_TASK ( msg );

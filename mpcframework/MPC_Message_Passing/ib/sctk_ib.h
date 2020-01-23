@@ -66,7 +66,7 @@ struct sctk_ib_qp_s;
 struct sctk_ib_cp_s;
 struct sctk_thread_ptp_message_s;
 struct sctk_rail_info_s;
-struct mpc_mp_ptp_message_content_to_copy_s;
+struct mpc_lowcomm_ptp_message_content_to_copy_s;
 struct sctk_ib_buffered_entry_s;
 struct sctk_ib_qp_ht_s;
 
@@ -140,7 +140,7 @@ typedef struct sctk_ib_header_rdma_s
 	struct sctk_rail_info_s *rail;
 	struct sctk_rail_info_s *remote_rail;
 	struct sctk_ib_qp_s *remote_peer;
-	struct mpc_mp_ptp_message_content_to_copy_s *copy_ptr;
+	struct mpc_lowcomm_ptp_message_content_to_copy_s *copy_ptr;
 	/* For collaborative polling: src and dest of msg */
 	int source_task;
 	int destination_task;
@@ -228,13 +228,13 @@ void sctk_ib_route_dynamic_set_connected ( struct sctk_endpoint_s *tmp, int conn
 
 /* MPC header */
 #define IBUF_GET_EAGER_MSG_HEADER(buffer) \
-(mpc_mp_ptp_message_body_t*) IBUF_GET_EAGER_PAYLOAD(buffer)
+(mpc_lowcomm_ptp_message_body_t*) IBUF_GET_EAGER_PAYLOAD(buffer)
 
 /* MPC payload */
 #define IBUF_GET_EAGER_MSG_PAYLOAD(buffer) \
-(void*) ((char*) IBUF_GET_EAGER_PAYLOAD(buffer) + sizeof(mpc_mp_ptp_message_body_t))
+(void*) ((char*) IBUF_GET_EAGER_PAYLOAD(buffer) + sizeof(mpc_lowcomm_ptp_message_body_t))
 #define IBUF_GET_RDMA_MSG_PAYLOAD(buffer) \
-(void*) ((char*) IBUF_GET_RDMA_PAYLOAD(buffer) + sizeof(mpc_mp_ptp_message_body_t))
+(void*) ((char*) IBUF_GET_RDMA_PAYLOAD(buffer) + sizeof(mpc_lowcomm_ptp_message_body_t))
 
 /* Different types of messages */
 #define IBUF_GET_RDMA_REQ(buffer) ((sctk_ib_rdma_req_t*) IBUF_GET_RDMA_PAYLOAD(buffer))

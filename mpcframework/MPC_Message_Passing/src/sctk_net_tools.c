@@ -31,7 +31,7 @@
 #include <sys/uio.h>
 
 struct iovec *
-sctk_net_convert_msg_to_iovec( mpc_mp_ptp_message_t *msg, int *iovlen, size_t max_size)
+sctk_net_convert_msg_to_iovec( mpc_lowcomm_ptp_message_t *msg, int *iovlen, size_t max_size)
 {
 	struct iovec * result = NULL;
 
@@ -49,7 +49,7 @@ sctk_net_convert_msg_to_iovec( mpc_mp_ptp_message_t *msg, int *iovlen, size_t ma
 		case SCTK_MESSAGE_NETWORK:
 		{
 			*iovlen = 1;
-			void *body = (char *) msg + sizeof (mpc_mp_ptp_message_t);
+			void *body = (char *) msg + sizeof (mpc_lowcomm_ptp_message_t);
 			result = (struct iovec*) sctk_malloc(1*sizeof(struct iovec));
 			result->iov_len = SCTK_MSG_SIZE ( msg );
 			result->iov_base = body;
@@ -150,11 +150,11 @@ sctk_net_convert_msg_to_iovec( mpc_mp_ptp_message_t *msg, int *iovlen, size_t ma
 	return result;
 }
 
-void sctk_net_copy_msg_from_iovec( mpc_mp_ptp_message_content_to_copy_t *tmp, sctk_iovec_cpy_t driver_func )  
+void sctk_net_copy_msg_from_iovec( mpc_lowcomm_ptp_message_content_to_copy_t *tmp, sctk_iovec_cpy_t driver_func )  
 {
 	int iovlen;
-	mpc_mp_ptp_message_t *send;
-	mpc_mp_ptp_message_t *recv;
+	mpc_lowcomm_ptp_message_t *send;
+	mpc_lowcomm_ptp_message_t *recv;
 	struct iovec * result;
 
 	send = tmp->msg_send;
@@ -176,7 +176,7 @@ void sctk_net_copy_msg_from_iovec( mpc_mp_ptp_message_content_to_copy_t *tmp, sc
 	_mpc_comm_ptp_message_commit_request(send,recv);
 }
 
-void sctk_net_read_in_fd ( mpc_mp_ptp_message_t *msg,
+void sctk_net_read_in_fd ( mpc_lowcomm_ptp_message_t *msg,
                            int fd )
 {
 	TODO ( "Deal with partial reception" )
@@ -200,7 +200,7 @@ void sctk_net_read_in_fd ( mpc_mp_ptp_message_t *msg,
 			void *body;
 
 			size = SCTK_MSG_SIZE ( msg );
-			body = ( char * ) msg + sizeof ( mpc_mp_ptp_message_t );
+			body = ( char * ) msg + sizeof ( mpc_lowcomm_ptp_message_t );
 
 			mpc_common_io_safe_read ( fd, body, size );
 			break;
@@ -259,7 +259,7 @@ void sctk_net_read_in_fd ( mpc_mp_ptp_message_t *msg,
 	}
 }
 
-void sctk_net_write_in_fd ( mpc_mp_ptp_message_t *msg,
+void sctk_net_write_in_fd ( mpc_lowcomm_ptp_message_t *msg,
                             int fd )
 {
 	switch ( msg->tail.message_type )
@@ -282,7 +282,7 @@ void sctk_net_write_in_fd ( mpc_mp_ptp_message_t *msg,
 			void *body;
 
 			size = SCTK_MSG_SIZE ( msg );
-			body = ( char * ) msg + sizeof ( mpc_mp_ptp_message_t );
+			body = ( char * ) msg + sizeof ( mpc_lowcomm_ptp_message_t );
 
 			mpc_common_io_safe_write ( fd, body, size );
 			break;
@@ -341,7 +341,7 @@ void sctk_net_write_in_fd ( mpc_mp_ptp_message_t *msg,
 	}
 }
 
-void sctk_get_iovec_in_buffer( mpc_mp_ptp_message_t *msg, struct iovec **iov, int *iovlen )
+void sctk_get_iovec_in_buffer( mpc_lowcomm_ptp_message_t *msg, struct iovec **iov, int *iovlen )
 {
 
 	switch ( msg->tail.message_type )
@@ -359,7 +359,7 @@ void sctk_get_iovec_in_buffer( mpc_mp_ptp_message_t *msg, struct iovec **iov, in
 		{
 			*iov = (struct iovec *) sctk_malloc( sizeof( struct iovec ) );
 			*iovlen = 1;
-			( *iov )->iov_base = (char *) msg + sizeof( mpc_mp_ptp_message_t );
+			( *iov )->iov_base = (char *) msg + sizeof( mpc_lowcomm_ptp_message_t );
 			( *iov )->iov_len = SCTK_MSG_SIZE( msg );
 			break;
 		}
@@ -369,7 +369,7 @@ void sctk_get_iovec_in_buffer( mpc_mp_ptp_message_t *msg, struct iovec **iov, in
 	}
 }
 
-void sctk_net_copy_in_buffer ( mpc_mp_ptp_message_t *msg,
+void sctk_net_copy_in_buffer ( mpc_lowcomm_ptp_message_t *msg,
                                char *buffer )
 {
 	switch ( msg->tail.message_type )
@@ -394,7 +394,7 @@ void sctk_net_copy_in_buffer ( mpc_mp_ptp_message_t *msg,
 			void *body;
 
 			size = SCTK_MSG_SIZE ( msg );
-			body = ( char * ) msg + sizeof ( mpc_mp_ptp_message_t );
+			body = ( char * ) msg + sizeof ( mpc_lowcomm_ptp_message_t );
 
 			memcpy ( buffer, body, size );
 			buffer += size;
@@ -457,7 +457,7 @@ void sctk_net_copy_in_buffer ( mpc_mp_ptp_message_t *msg,
 }
 
 
-void *sctk_net_if_one_msg_in_buffer (  __UNUSED__ mpc_mp_ptp_message_t *msg )
+void *sctk_net_if_one_msg_in_buffer (  __UNUSED__ mpc_lowcomm_ptp_message_t *msg )
 {
 	not_implemented();
 	return NULL;
@@ -465,7 +465,7 @@ void *sctk_net_if_one_msg_in_buffer (  __UNUSED__ mpc_mp_ptp_message_t *msg )
 
 
 
-size_t sctk_net_determine_message_size ( mpc_mp_ptp_message_t *
+size_t sctk_net_determine_message_size ( mpc_lowcomm_ptp_message_t *
                                          msg )
 {
 	return SCTK_MSG_SIZE ( msg );
@@ -492,7 +492,7 @@ copy_frag (  __UNUSED__ char *msg,
 
 
 int sctk_net_copy_frag_msg (
-    const mpc_mp_ptp_message_t *msg,
+    const mpc_lowcomm_ptp_message_t *msg,
     char *buffer,
     const size_t curr_copy,
     const size_t max_copy )
@@ -523,7 +523,7 @@ int sctk_net_copy_frag_msg (
 			void *body;
 
 			size = SCTK_MSG_SIZE ( msg );
-			body = ( char * ) msg + sizeof ( mpc_mp_ptp_message_t );
+			body = ( char * ) msg + sizeof ( mpc_lowcomm_ptp_message_t );
 
 			memcpy ( buffer, body, size );
 			buffer += size;
@@ -670,16 +670,16 @@ int sctk_net_copy_frag_msg (
 	return 0;
 }
 
-void sctk_net_message_copy ( mpc_mp_ptp_message_content_to_copy_t *tmp )
+void sctk_net_message_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
 {
-	mpc_mp_ptp_message_t *send;
-	mpc_mp_ptp_message_t *recv;
+	mpc_lowcomm_ptp_message_t *send;
+	mpc_lowcomm_ptp_message_t *recv;
 	char *body;
 
 	send = tmp->msg_send;
 	recv = tmp->msg_recv;
 
-	body = ( char * ) send + sizeof ( mpc_mp_ptp_message_t );
+	body = ( char * ) send + sizeof ( mpc_lowcomm_ptp_message_t );
 
 	SCTK_MSG_COMPLETION_FLAG_SET ( send , NULL );
 
@@ -813,10 +813,10 @@ void sctk_net_message_copy ( mpc_mp_ptp_message_content_to_copy_t *tmp )
 }
 
 void sctk_net_message_copy_from_buffer ( char *body,
-                                         mpc_mp_ptp_message_content_to_copy_t *tmp, char free_headers )
+                                         mpc_lowcomm_ptp_message_content_to_copy_t *tmp, char free_headers )
 {
-	mpc_mp_ptp_message_t *send;
-	mpc_mp_ptp_message_t *recv;
+	mpc_lowcomm_ptp_message_t *send;
+	mpc_lowcomm_ptp_message_t *recv;
 
 	sctk_nodebug ( "MSG RECV |%s|", ( char * ) body );
 	send = tmp->msg_send;

@@ -22,12 +22,12 @@
 #ifndef __SCTK_INTER_THREAD_COMMUNICATIONS_H_
 #define __SCTK_INTER_THREAD_COMMUNICATIONS_H_
 
-#include <mpc_mp_comm.h>
+#include <mpc_lowcomm_comm.h>
 
 #include <sctk_config.h>
 #include <sctk_debug.h>
 
-#include <mpc_mp_coll.h>
+#include <mpc_lowcomm_coll.h>
 
 
 #include <mpc_common_asm.h>
@@ -43,7 +43,7 @@ extern "C" {
 /************************************************************************/
 
 
-static inline int _mpc_comm_ptp_message_is_for_process( mpc_mp_ptp_message_class_t type )
+static inline int _mpc_comm_ptp_message_is_for_process( mpc_lowcomm_ptp_message_class_t type )
 {
 	switch ( type )
 	{
@@ -85,7 +85,7 @@ static inline int _mpc_comm_ptp_message_is_for_process( mpc_mp_ptp_message_class
 	return 0;
 }
 
-static inline int _mpc_comm_ptp_message_is_for_control( mpc_mp_ptp_message_class_t type )
+static inline int _mpc_comm_ptp_message_is_for_control( mpc_lowcomm_ptp_message_class_t type )
 {
 	switch ( type )
 	{
@@ -126,23 +126,23 @@ static inline int _mpc_comm_ptp_message_is_for_control( mpc_mp_ptp_message_class
 
 
 /************************************************************************/
-/* mpc_mp_ptp_message_t Point to Point message descriptor          */
+/* mpc_lowcomm_ptp_message_t Point to Point message descriptor          */
 /************************************************************************/
 
 
-void _mpc_comm_ptp_message_send_check( mpc_mp_ptp_message_t *msg, int perform_check );
-void _mpc_comm_ptp_message_recv_check( mpc_mp_ptp_message_t *msg, int perform_check );
-void _mpc_comm_ptp_message_commit_request( mpc_mp_ptp_message_t *send, mpc_mp_ptp_message_t *recv );
+void _mpc_comm_ptp_message_send_check( mpc_lowcomm_ptp_message_t *msg, int perform_check );
+void _mpc_comm_ptp_message_recv_check( mpc_lowcomm_ptp_message_t *msg, int perform_check );
+void _mpc_comm_ptp_message_commit_request( mpc_lowcomm_ptp_message_t *send, mpc_lowcomm_ptp_message_t *recv );
 
-static inline void _mpc_comm_ptp_message_clear_request( mpc_mp_ptp_message_t *msg )
+static inline void _mpc_comm_ptp_message_clear_request( mpc_lowcomm_ptp_message_t *msg )
 {
 	msg->tail.request = NULL;
 	msg->tail.internal_ptp = NULL;
 }
 
-static inline void _mpc_comm_ptp_message_set_copy_and_free( mpc_mp_ptp_message_t *tmp,
+static inline void _mpc_comm_ptp_message_set_copy_and_free( mpc_lowcomm_ptp_message_t *tmp,
         void ( *free_memory )( void * ),
-        void ( *message_copy )( mpc_mp_ptp_message_content_to_copy_t * ) )
+        void ( *message_copy )( mpc_lowcomm_ptp_message_content_to_copy_t * ) )
 {
 	tmp->tail.free_memory = free_memory;
 	tmp->tail.message_copy = message_copy;
@@ -270,8 +270,8 @@ static inline void _mpc_comm_ptp_message_set_copy_and_free( mpc_mp_ptp_message_t
 /* General Functions                                                    */
 /************************************************************************/
 
-struct mpc_comm_ptp_s *_mpc_comm_ptp_array_get( mpc_mp_communicator_t comm, int rank );
-sctk_reorder_list_t *_mpc_comm_ptp_array_get_reorder( mpc_mp_communicator_t communicator, int rank );
+struct mpc_comm_ptp_s *_mpc_comm_ptp_array_get( mpc_lowcomm_communicator_t comm, int rank );
+sctk_reorder_list_t *_mpc_comm_ptp_array_get_reorder( mpc_lowcomm_communicator_t communicator, int rank );
 
 #define SCTK_PARALLEL_COMM_QUEUES_NUMBER 8
 
@@ -282,7 +282,7 @@ sctk_reorder_list_t *_mpc_comm_ptp_array_get_reorder( mpc_mp_communicator_t comm
 /** Message for a process with ordering and a tag */
 static inline int sctk_is_process_specific_message( sctk_thread_message_header_t *header )
 {
-	mpc_mp_ptp_message_class_t class = header->message_type.type;
+	mpc_lowcomm_ptp_message_class_t class = header->message_type.type;
 	return _mpc_comm_ptp_message_is_for_process( class );
 }
 

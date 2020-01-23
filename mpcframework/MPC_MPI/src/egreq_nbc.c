@@ -6,7 +6,7 @@
 #include "sctk_debug.h"
 
 #include "sctk_alloc.h"
-#include "mpc_mp_comm.h"
+#include "mpc_lowcomm_comm.h"
 #include "egreq_nbc.h"
 
 #include "mpc_common_spinlock.h"

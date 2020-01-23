@@ -21,7 +21,7 @@
 /* ######################################################################## */
 #include "mpc_mpi_halo.h"
 #include "sctk_debug.h"
-#include "mpc_mp_comm.h"
+#include "mpc_lowcomm_comm.h"
 #include <string.h>
 
 
@@ -522,7 +522,7 @@ int sctk_mpi_halo_bind_remote( struct sctk_mpi_halo_exchange_s *ex, struct sctk_
 	halo->halo_remote = remote;
 	
 	/* Check if remote is local or not */
-	if( mpc_mp_comm_is_remote_rank( remote ) || halo_force_alloc )
+	if( mpc_lowcomm_comm_is_remote_rank( remote ) || halo_force_alloc )
 	{
 		/* Remote process allocate a buffer */
 		halo->halo_buffer_type = MPI_HALO_BUFFER_ALLOCATED;
@@ -742,7 +742,7 @@ int sctk_mpi_halo_exchange_commit( struct sctk_mpi_halo_exchange_s * ex )
 		 * Note that as this relationship is symetrical
 		 * the buffer is allocated a the other end if actually remote
 		 * */
-		int is_remote = mpc_mp_comm_is_remote_rank( current_req->source_process );
+		int is_remote = mpc_lowcomm_comm_is_remote_rank( current_req->source_process );
 		
 		if( is_remote || halo_force_alloc )
 		{
@@ -766,7 +766,7 @@ int sctk_mpi_halo_exchange_commit( struct sctk_mpi_halo_exchange_s * ex )
 		
 		if( current_halo->type == MPI_HALO_CELL_REMOTE )
 		{
-			int is_remote = mpc_mp_comm_is_remote_rank( current_halo->halo_remote );
+			int is_remote = mpc_lowcomm_comm_is_remote_rank( current_halo->halo_remote );
 			
 			if( is_remote || halo_force_alloc )
 			{

@@ -42,7 +42,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 
 	while ( 1 )
 	{
-		mpc_mp_ptp_message_t *msg;
+		mpc_lowcomm_ptp_message_t *msg;
 		void *body;
 		size_t size;
 		ssize_t res;
@@ -60,22 +60,22 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 			break;
 		}
 
-		if ( size < sizeof ( mpc_mp_ptp_message_body_t ) )
+		if ( size < sizeof ( mpc_lowcomm_ptp_message_body_t ) )
 		{
 			break;
 		}
 
-		size = size - sizeof ( mpc_mp_ptp_message_body_t ) + sizeof ( mpc_mp_ptp_message_t );
+		size = size - sizeof ( mpc_lowcomm_ptp_message_body_t ) + sizeof ( mpc_lowcomm_ptp_message_t );
 
 		msg = sctk_malloc ( size );
 		
 		assume( msg != NULL );
 		
-		body = ( char * ) msg + sizeof ( mpc_mp_ptp_message_t );
+		body = ( char * ) msg + sizeof ( mpc_lowcomm_ptp_message_t );
 
 
 		/* Recv header*/
-		res = mpc_common_io_safe_read ( fd, ( char * ) msg, sizeof ( mpc_mp_ptp_message_body_t ) );
+		res = mpc_common_io_safe_read ( fd, ( char * ) msg, sizeof ( mpc_lowcomm_ptp_message_body_t ) );
 
 		if( (res <= 0) )
 		{
@@ -83,7 +83,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 			break;
 		}
 
-		if ( res != sizeof ( mpc_mp_ptp_message_body_t ) )
+		if ( res != sizeof ( mpc_lowcomm_ptp_message_body_t ) )
 		{
 			break;
 		}
@@ -97,7 +97,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		}
 
 		/* Recv body*/
-		size = size - sizeof ( mpc_mp_ptp_message_t );
+		size = size - sizeof ( mpc_lowcomm_ptp_message_t );
 		
 		res = mpc_common_io_safe_read ( fd, ( char * ) body, size );
 
@@ -125,7 +125,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
  * \param[in] msg the message to send
  * \param[in] endpoint the route to use
  */
-static void sctk_network_send_message_endpoint_tcp ( mpc_mp_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+static void sctk_network_send_message_endpoint_tcp ( mpc_lowcomm_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
 	size_t size;
 	int fd;
@@ -134,20 +134,20 @@ static void sctk_network_send_message_endpoint_tcp ( mpc_mp_ptp_message_t *msg, 
 
 	fd = endpoint->data.tcp.fd;
 
-	size = SCTK_MSG_SIZE ( msg ) + sizeof ( mpc_mp_ptp_message_body_t );
+	size = SCTK_MSG_SIZE ( msg ) + sizeof ( mpc_lowcomm_ptp_message_body_t );
 
 	sctk_nodebug("SEND MSG of size %d ENDPOINT TCP to %d", size, endpoint->dest);
 
 	mpc_common_io_safe_write ( fd, ( char * ) &size, sizeof ( size_t ) );
 
-	mpc_common_io_safe_write ( fd, ( char * ) msg, sizeof ( mpc_mp_ptp_message_body_t ) );
+	mpc_common_io_safe_write ( fd, ( char * ) msg, sizeof ( mpc_lowcomm_ptp_message_body_t ) );
 
 	sctk_net_write_in_fd ( msg, fd );
 	mpc_common_spinlock_unlock ( & ( endpoint->data.tcp.lock ) );
 
 	sctk_nodebug("SEND MSG ENDPOINT TCP to %d DONE", endpoint->dest);
 
-	mpc_mp_comm_ptp_message_complete_and_free ( msg );
+	mpc_lowcomm_comm_ptp_message_complete_and_free ( msg );
 }
 
 /**
@@ -155,14 +155,14 @@ static void sctk_network_send_message_endpoint_tcp ( mpc_mp_ptp_message_t *msg, 
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_recv_message_tcp ( __UNUSED__ mpc_mp_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
+static void sctk_network_notify_recv_message_tcp ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_matching_message_tcp (  __UNUSED__ mpc_mp_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
+static void sctk_network_notify_matching_message_tcp (  __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
@@ -185,7 +185,7 @@ static void sctk_network_notify_any_source_message_tcp ( __UNUSED__  int polling
  * Handler triggering the send_message_from_network call, before reaching the inter_thread_comm matching process.
  * \param[in] msg the message received from the network, to be matched w/ a local RECV.
  */
-static int sctk_send_message_from_network_tcp ( mpc_mp_ptp_message_t *msg )
+static int sctk_send_message_from_network_tcp ( mpc_lowcomm_ptp_message_t *msg )
 {
 	if ( sctk_send_message_from_network_reorder ( msg ) == REORDER_NO_NUMBERING )
 	{

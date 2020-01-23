@@ -132,20 +132,20 @@ static inline void request_poll_ht_check_init() {
   mpc_common_spinlock_unlock(&__request_pool_lock);
 }
 
-int mpc_MPI_register_request_counter(mpc_mp_request_t *request,
+int mpc_MPI_register_request_counter(mpc_lowcomm_request_t *request,
                                      OPA_int_t *pool_cnt) {
   request_poll_ht_check_init();
   mpc_common_hashtable_set(&__request_pool_ht, (uint64_t)request, (void *)pool_cnt);
   return 0;
 }
 
-int mpc_MPI_unregister_request_counter(mpc_mp_request_t *request) {
+int mpc_MPI_unregister_request_counter(mpc_lowcomm_request_t *request) {
   request_poll_ht_check_init();
   mpc_common_hashtable_delete(&__request_pool_ht, (uint64_t)request);
   return 0;
 }
 
-int mpc_MPI_notify_request_counter(mpc_mp_request_t *request) {
+int mpc_MPI_notify_request_counter(mpc_lowcomm_request_t *request) {
   request_poll_ht_check_init();
 
   OPA_int_t *pool_cnt =
@@ -177,13 +177,13 @@ int mpc_MPI_Win_request_array_init(struct mpc_MPI_Win_request_array *ra,
 
   ra->test_start = 0;
 
-  memset(ra->requests, 0, sizeof(mpc_mp_request_t) * MAX_PENDING_RMA);
+  memset(ra->requests, 0, sizeof(mpc_lowcomm_request_t) * MAX_PENDING_RMA);
 
   int i;
 
   for (i = 0; i < MAX_PENDING_RMA; i++) {
-    memset(&ra->requests[i], 0, sizeof(mpc_mp_request_t));
-    mpc_mp_comm_request_init(&ra->requests[i], comm, REQUEST_PICKED);
+    memset(&ra->requests[i], 0, sizeof(mpc_lowcomm_request_t));
+    mpc_lowcomm_comm_request_init(&ra->requests[i], comm, REQUEST_PICKED);
     /* Register the request counter */
     mpc_MPI_register_request_counter(&ra->requests[i], &ra->available_req);
   }
@@ -288,9 +288,9 @@ int mpc_MPI_Win_request_array_test(struct mpc_MPI_Win_request_array *pra) {
   for (i = 0; i < MAX_PENDING_RMA; i++) {
 
     if (ra->requests[i].request_type != REQUEST_PICKED) {
-      struct mpc_mp_comm_ptp_msg_progress_s _wait;
-      mpc_mp_comm_ptp_msg_wait_init(&_wait, &ra->requests[i], 0);
-      mpc_mp_comm_ptp_msg_progress(&_wait);
+      struct mpc_lowcomm_comm_ptp_msg_progress_s _wait;
+      mpc_lowcomm_comm_ptp_msg_wait_init(&_wait, &ra->requests[i], 0);
+      mpc_lowcomm_comm_ptp_msg_progress(&_wait);
     } else {
       if (!ra->is_emulated)
         break;
@@ -302,7 +302,7 @@ int mpc_MPI_Win_request_array_test(struct mpc_MPI_Win_request_array *pra) {
   return 1;
 }
 
-mpc_mp_request_t *
+mpc_lowcomm_request_t *
 mpc_MPI_Win_request_array_pick(struct mpc_MPI_Win_request_array *ra) {
 
   while (1) {
@@ -315,9 +315,9 @@ mpc_MPI_Win_request_array_pick(struct mpc_MPI_Win_request_array *ra) {
         if (ra->requests[i].completion_flag == 1) {
           OPA_decr_int(&ra->available_req);
 
-          memset(&ra->requests[i], 0, sizeof(mpc_mp_request_t));
+          memset(&ra->requests[i], 0, sizeof(mpc_lowcomm_request_t));
 
-          mpc_mp_comm_request_init(&ra->requests[i], ra->comm, REQUEST_PICKED);
+          mpc_lowcomm_comm_request_init(&ra->requests[i], ra->comm, REQUEST_PICKED);
 
           mpc_common_spinlock_unlock(&ra->lock);
 
@@ -388,13 +388,13 @@ int mpc_Win_ctx_ack_remote(struct mpc_MPI_Win_request_array *ra,
 
   char data = 0;
 
-  mpc_mp_request_t *request = mpc_MPI_Win_request_array_pick(ra);
+  mpc_lowcomm_request_t *request = mpc_MPI_Win_request_array_pick(ra);
 
   sctk_info("ACK FROM %d to %d", source_rank, remote_rank);
 
   assume(0 <= remote_rank);
 
-  mpc_mp_comm_isend_class_src(source_rank, remote_rank, &data, sizeof(char),
+  mpc_lowcomm_comm_isend_class_src(source_rank, remote_rank, &data, sizeof(char),
                                TAG_RDMA_ACK + source_rank, ra->comm,
                                SCTK_RDMA_MESSAGE, request);
 
@@ -404,7 +404,7 @@ int mpc_Win_ctx_ack_remote(struct mpc_MPI_Win_request_array *ra,
 int mpc_Win_ctx_get_ack_remote(struct mpc_MPI_Win_request_array *ra,
                                int source_rank, int remote_rank) {
   assume(ra != NULL);
-  mpc_mp_request_t *request = mpc_MPI_Win_request_array_pick(ra);
+  mpc_lowcomm_request_t *request = mpc_MPI_Win_request_array_pick(ra);
 
   char data = 0;
 
@@ -412,7 +412,7 @@ int mpc_Win_ctx_get_ack_remote(struct mpc_MPI_Win_request_array *ra,
 
   assume(0 <= remote_rank);
 
-  mpc_mp_comm_irecv_class_dest(remote_rank, source_rank, &data, sizeof(char),
+  mpc_lowcomm_comm_irecv_class_dest(remote_rank, source_rank, &data, sizeof(char),
                                 TAG_RDMA_ACK + remote_rank, ra->comm,
                                 SCTK_RDMA_MESSAGE, request);
 
@@ -1616,7 +1616,7 @@ static inline int __mpc_MPI_Win_flush(int rank, MPI_Win win, int remote,
   mpc_MPI_Win_request_array_fence(&desc->source.requests);
   mpc_MPI_Win_request_array_fence(&desc->target.requests);
 
-  if (!mpc_mp_comm_is_remote_rank(sctk_get_comm_world_rank(desc->comm, rank))) {
+  if (!mpc_lowcomm_comm_is_remote_rank(sctk_get_comm_world_rank(desc->comm, rank))) {
     desc->tainted_wins[rank] = 0;
     return MPI_SUCCESS;
   }
@@ -1641,20 +1641,20 @@ static inline int __mpc_MPI_Win_flush(int rank, MPI_Win win, int remote,
 
         mpc_MPI_Win_control_message_send(win, rank, &fm);
 
-        mpc_mp_request_t _req;
-        mpc_mp_request_t *req = &_req;
+        mpc_lowcomm_request_t _req;
+        mpc_lowcomm_request_t *req = &_req;
 
         if (!do_wait) {
           req = mpc_MPI_Win_request_array_pick(&desc->source.requests);
         }
 
         static int dummy;
-        mpc_mp_comm_irecv_class_dest(rank, desc->comm_rank, &dummy,
+        mpc_lowcomm_comm_irecv_class_dest(rank, desc->comm_rank, &dummy,
                                       sizeof(int), TAG_RDMA_FENCE, desc->comm,
                                       SCTK_RDMA_MESSAGE, req);
 
         if (do_wait) {
-          mpc_mp_comm_request_wait(req);
+          mpc_lowcomm_comm_request_wait(req);
         }
       }
     }

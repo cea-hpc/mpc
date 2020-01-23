@@ -263,7 +263,7 @@ static inline struct __mpc_dt_keyval *__mpc_dt_keyval_new( int *type_keyval )
  *  \param type Source data-type
  */
 static inline void __mpc_dt_keyval_hit_delete( int type_keyval, void *attribute_val,
-						mpc_mp_datatype_t type )
+						mpc_lowcomm_datatype_t type )
 {
 	struct __mpc_dt_keyval *kv = __mpc_dt_keyval_get( type_keyval );
 
@@ -282,7 +282,7 @@ static inline void __mpc_dt_keyval_hit_delete( int type_keyval, void *attribute_
  *  \param attribute_val_in old data-type value
  *  \param attribute_val_out new data-type value
  */
-static inline void __mpc_dt_keyval_hit_copy( int type_keyval, mpc_mp_datatype_t oldtype,
+static inline void __mpc_dt_keyval_hit_copy( int type_keyval, mpc_lowcomm_datatype_t oldtype,
 					void **attribute_val_in, void **attribute_val_out,
 					int *flag )
 {
@@ -399,7 +399,7 @@ static inline int __mpc_dt_attr_store_init( struct __mpc_dt_attr_store *store )
  *  \return 0 on success
  */
 static inline int __mpc_dt_attr_store_release( struct __mpc_dt_attr_store *store,
-						mpc_mp_datatype_t container_type )
+						mpc_lowcomm_datatype_t container_type )
 {
 	void *pattr = NULL;
 
@@ -427,7 +427,7 @@ static inline int __mpc_dt_attr_store_release( struct __mpc_dt_attr_store *store
 
 /* We need this funtions as MPI_* types are macro replaced by MPC_* ones
  * and the standard wants MPI_* so we replace ... */
-static inline void __mpc_common_dt_set_name( mpc_mp_datatype_t datatype, char *name )
+static inline void __mpc_common_dt_set_name( mpc_lowcomm_datatype_t datatype, char *name )
 {
 	char *tmp = strdup( name );
 	tmp[2] = 'I';
@@ -435,10 +435,10 @@ static inline void __mpc_common_dt_set_name( mpc_mp_datatype_t datatype, char *n
 	free( tmp );
 }
 
-static inline void ___mpc_init_composed_common_type( mpc_mp_datatype_t target_type,
+static inline void ___mpc_init_composed_common_type( mpc_lowcomm_datatype_t target_type,
 													 size_t disp,
-													 mpc_mp_datatype_t type_a,
-													 mpc_mp_datatype_t type_b,
+													 mpc_lowcomm_datatype_t type_a,
+													 mpc_lowcomm_datatype_t type_b,
 													 size_t struct_size )
 {
 	/* Compute data-type sizes */
@@ -450,7 +450,7 @@ static inline void ___mpc_init_composed_common_type( mpc_mp_datatype_t target_ty
 	/* Allocate type context */
 	long *begins = sctk_malloc( sizeof( long ) * 2 );
 	long *ends = sctk_malloc( sizeof( long ) * 2 );
-	mpc_mp_datatype_t *types = sctk_malloc( sizeof( mpc_mp_datatype_t ) * 2 );
+	mpc_lowcomm_datatype_t *types = sctk_malloc( sizeof( mpc_lowcomm_datatype_t ) * 2 );
 
 	assume( begins != NULL );
 	assume( ends != NULL );
@@ -504,7 +504,7 @@ static inline void ___mpc_init_composed_common_type( mpc_mp_datatype_t target_ty
 static inline void __mpc_composed_common_types_init()
 {
 	size_t disp;
-	mpc_mp_datatype_t tmp;
+	mpc_lowcomm_datatype_t tmp;
 	/* MPC_FLOAT_INT (SCTK_DERIVED_DATATYPE_BASE */
 	mpc_float_int foo_0;
 	disp = ( (char *) &foo_0.b - (char *) &foo_0.a );
@@ -701,7 +701,7 @@ static inline void __mpc_common_types_init(void)
 	__mpc_composed_common_types_init();
 }
 
-void _mpc_dt_common_display( mpc_mp_datatype_t datatype )
+void _mpc_dt_common_display( mpc_lowcomm_datatype_t datatype )
 {
 	if ( !_mpc_dt_is_common( datatype ) )
 	{
@@ -721,7 +721,7 @@ void _mpc_dt_common_display( mpc_mp_datatype_t datatype )
 
 static inline void __mpc_dt_footprint_clear( struct _mpc_dt_footprint *ctx );
 
-void _mpc_dt_contiguous_init( _mpc_dt_contiguout_t *type, size_t id_rank, size_t element_size, size_t count, mpc_mp_datatype_t datatype )
+void _mpc_dt_contiguous_init( _mpc_dt_contiguout_t *type, size_t id_rank, size_t element_size, size_t count, mpc_lowcomm_datatype_t datatype )
 {
 	type->id_rank = id_rank;
 	type->size = element_size * count;
@@ -749,7 +749,7 @@ void _mpc_dt_contiguous_release( _mpc_dt_contiguout_t *type )
 	{
 		/* Attrs */
 		__mpc_dt_attr_store_release( &type->attrs,
-									 (mpc_mp_datatype_t) type->datatype );
+									 (mpc_lowcomm_datatype_t) type->datatype );
 
 		__mpc_context_free( &type->context );
 
@@ -804,11 +804,11 @@ void _mpc_dt_contiguous_display( _mpc_dt_contiguout_t *target_type )
 /************************************************************************/
 
 void _mpc_dt_derived_init( _mpc_dt_derived_t *type,
-						   mpc_mp_datatype_t id,
+						   mpc_lowcomm_datatype_t id,
 						   unsigned long count,
 						   long *begins,
 						   long *ends,
-						   mpc_mp_datatype_t *datatypes,
+						   mpc_lowcomm_datatype_t *datatypes,
 						   long lb,
 						   int is_lb,
 						   long ub,
@@ -825,7 +825,7 @@ void _mpc_dt_derived_init( _mpc_dt_derived_t *type,
 	type->opt_begins = type->begins;
 	type->opt_ends = type->ends;
 
-	type->datatypes = (mpc_mp_datatype_t *) sctk_malloc( count * sizeof( mpc_mp_datatype_t ) );
+	type->datatypes = (mpc_lowcomm_datatype_t *) sctk_malloc( count * sizeof( mpc_lowcomm_datatype_t ) );
 
 	/*EXPAT*/
 	if ( !type->begins || !type->ends || !type->datatypes )
@@ -837,7 +837,7 @@ void _mpc_dt_derived_init( _mpc_dt_derived_t *type,
 
 	memcpy( type->begins, begins, count * sizeof( long ) );
 	memcpy( type->ends, ends, count * sizeof( long ) );
-	memcpy( type->datatypes, datatypes, count * sizeof( mpc_mp_datatype_t ) );
+	memcpy( type->datatypes, datatypes, count * sizeof( mpc_lowcomm_datatype_t ) );
 
 	/* Fill the rest of the structure */
 	type->size = 0;
@@ -943,7 +943,7 @@ int _mpc_dt_derived_release( _mpc_dt_derived_t *type )
 					 !_mpc_dt_is_common( i ) &&
 					 !_mpc_dt_is_boundary( i ) )
 				{
-					mpc_mp_datatype_t tmp = i;
+					mpc_lowcomm_datatype_t tmp = i;
 					_mpc_cl_type_free( &tmp );
 				}
 			}
@@ -1012,7 +1012,7 @@ struct __mpc_derived_type_desc
 {
 	long begin;
 	long end;
-	mpc_mp_datatype_t type;
+	mpc_lowcomm_datatype_t type;
 	short ignore;
 };
 
@@ -1176,7 +1176,7 @@ struct _mpc_dt_storage * _mpc_dt_storage_init()
 }
 
 
-int _mpc_dt_storage_type_can_be_released( struct _mpc_dt_storage * da, mpc_mp_datatype_t datatype )
+int _mpc_dt_storage_type_can_be_released( struct _mpc_dt_storage * da, mpc_lowcomm_datatype_t datatype )
 {
 	_mpc_dt_contiguout_t * cont = NULL;
 	_mpc_dt_derived_t * deriv = NULL;
@@ -1214,7 +1214,7 @@ void _mpc_dt_storage_release( struct _mpc_dt_storage * da )
                   sctk_debug("Freeing unfreed datatype [%d] did you call "
                              "MPI_Type_free on all your MPI_Datatypes ?",
                              i);
-                  mpc_mp_datatype_t tmp = i;
+                  mpc_lowcomm_datatype_t tmp = i;
                   _mpc_cl_type_free(&tmp);
                 }
   }
@@ -1222,7 +1222,7 @@ void _mpc_dt_storage_release( struct _mpc_dt_storage * da )
   sctk_free(da);
 }
 
-_mpc_dt_contiguout_t *  _mpc_dt_storage_get_contiguous_datatype( struct _mpc_dt_storage * da ,  mpc_mp_datatype_t datatype)
+_mpc_dt_contiguout_t *  _mpc_dt_storage_get_contiguous_datatype( struct _mpc_dt_storage * da ,  mpc_lowcomm_datatype_t datatype)
 {
 	assume( _mpc_dt_is_contiguous( datatype ) );
 
@@ -1231,14 +1231,14 @@ _mpc_dt_contiguout_t *  _mpc_dt_storage_get_contiguous_datatype( struct _mpc_dt_
 }
 
 
-_mpc_dt_derived_t * _mpc_dt_storage_get_derived_datatype( struct _mpc_dt_storage * da  ,  mpc_mp_datatype_t datatype)
+_mpc_dt_derived_t * _mpc_dt_storage_get_derived_datatype( struct _mpc_dt_storage * da  ,  mpc_lowcomm_datatype_t datatype)
 {
 	assume( _mpc_dt_is_derived( datatype ) );
 
         return da->derived_user_types[_MPC_DT_MAP_TO_DERIVED(datatype)];
 }
 
-void _mpc_dt_storage_set_derived_datatype( struct _mpc_dt_storage * da ,  mpc_mp_datatype_t datatype, _mpc_dt_derived_t * value )
+void _mpc_dt_storage_set_derived_datatype( struct _mpc_dt_storage * da ,  mpc_lowcomm_datatype_t datatype, _mpc_dt_derived_t * value )
 {
 	assume( _mpc_dt_is_derived( datatype ) );
 
@@ -1250,7 +1250,7 @@ void _mpc_dt_storage_set_derived_datatype( struct _mpc_dt_storage * da ,  mpc_mp
 /************************************************************************/
 
 static inline struct __mpc_dt_attr_store *
-__mpc_dt_get_attr_store( struct _mpc_dt_storage *da, mpc_mp_datatype_t type )
+__mpc_dt_get_attr_store( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type )
 {
 
 	mpc_dt_kind_t kind = _mpc_dt_get_kind( type );
@@ -1283,7 +1283,7 @@ __mpc_dt_get_attr_store( struct _mpc_dt_storage *da, mpc_mp_datatype_t type )
 	return store;
 }
 
-int _mpc_dt_attr_set( struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
+int _mpc_dt_attr_set( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
 					  int type_keyval, void *attribute_val )
 {
 	struct __mpc_dt_attr_store *store = __mpc_dt_get_attr_store( da, type );
@@ -1309,7 +1309,7 @@ int _mpc_dt_attr_set( struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
 	return SCTK_SUCCESS;
 }
 
-int _mpc_dt_attr_get( struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
+int _mpc_dt_attr_get( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
 					  int type_keyval, void *attribute_val, int *flag )
 {
 	struct __mpc_dt_attr_store *store = __mpc_dt_get_attr_store( da, type );
@@ -1337,7 +1337,7 @@ int _mpc_dt_attr_get( struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
 	return SCTK_SUCCESS;
 }
 
-int _mpc_dt_attr_delete( struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
+int _mpc_dt_attr_delete( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
 						 int type_keyval )
 {
 	struct __mpc_dt_attr_store *store = __mpc_dt_get_attr_store( da, type );
@@ -1372,7 +1372,7 @@ int _mpc_dt_attr_delete( struct _mpc_dt_storage *da, mpc_mp_datatype_t type,
  */
 struct __mpc_dt_name_cell
 {
-	mpc_mp_datatype_t datatype;
+	mpc_lowcomm_datatype_t datatype;
 	char name[MPC_MAX_OBJECT_NAME]; /**< Name given to the datatype */
 	UT_hash_handle hh; /**< This dummy data structure is required by UTHash is order to make this data structure hashable */
 };
@@ -1383,7 +1383,7 @@ struct __mpc_dt_name_cell *datatype_names = NULL;
 /** \brief Lock protecting \ref datatype_names */
 mpc_common_spinlock_t datatype_names_lock = SCTK_SPINLOCK_INITIALIZER;
 
-static inline struct __mpc_dt_name_cell *__mpc_dt_get_name_cell( mpc_mp_datatype_t datatype )
+static inline struct __mpc_dt_name_cell *__mpc_dt_get_name_cell( mpc_lowcomm_datatype_t datatype )
 {
 	struct __mpc_dt_name_cell *cell;
 
@@ -1392,7 +1392,7 @@ static inline struct __mpc_dt_name_cell *__mpc_dt_get_name_cell( mpc_mp_datatype
 	return cell;
 }
 
-int _mpc_dt_name_set( mpc_mp_datatype_t datatype, char *name )
+int _mpc_dt_name_set( mpc_lowcomm_datatype_t datatype, char *name )
 {
 	/* First locate a previous cell */
 	mpc_common_spinlock_lock( &datatype_names_lock );
@@ -1419,7 +1419,7 @@ int _mpc_dt_name_set( mpc_mp_datatype_t datatype, char *name )
 	return 0;
 }
 
-char *_mpc_dt_name_get( mpc_mp_datatype_t datatype )
+char *_mpc_dt_name_get( mpc_lowcomm_datatype_t datatype )
 {
 	mpc_common_spinlock_lock( &datatype_names_lock );
 	struct __mpc_dt_name_cell *cell = __mpc_dt_get_name_cell( datatype );
@@ -1575,12 +1575,12 @@ static inline size_t *__alloc_addr_array( int count )
 	return ret;
 }
 
-static inline mpc_mp_datatype_t *__alloc_datatype_array( int count )
+static inline mpc_lowcomm_datatype_t *__alloc_datatype_array( int count )
 {
 	if ( count == 0 )
 		return NULL;
 
-	mpc_mp_datatype_t *ret = sctk_malloc( sizeof( mpc_mp_datatype_t ) * count );
+	mpc_lowcomm_datatype_t *ret = sctk_malloc( sizeof( mpc_lowcomm_datatype_t ) * count );
 	assume( ret != NULL );
 	return ret;
 }
@@ -2040,7 +2040,7 @@ static inline struct _mpc_dt_layout *please_allocate_layout( int count )
 	return ret;
 }
 
-static inline int _mpc_dt_layout_fill( struct _mpc_dt_layout *l, mpc_mp_datatype_t datatype )
+static inline int _mpc_dt_layout_fill( struct _mpc_dt_layout *l, mpc_lowcomm_datatype_t datatype )
 {
 	assume( l != NULL );
 	l->type = datatype;

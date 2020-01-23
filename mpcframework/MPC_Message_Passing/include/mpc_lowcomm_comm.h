@@ -7,7 +7,7 @@
 #include <sctk_portals.h>
 
 /************************************************************************/
-/* mpc_mp_request_t		                                                    */
+/* mpc_lowcomm_request_t		                                                    */
 /************************************************************************/
 typedef enum
 {
@@ -17,7 +17,7 @@ typedef enum
 	REQUEST_GENERALIZED,
 	REQUEST_PICKED,
 	REQUEST_RDMA
-} mpc_mp_request_type_t;
+} mpc_lowcomm_request_type_t;
 
 
 /************************************************************************/
@@ -55,7 +55,7 @@ typedef enum
 	SCTK_CONTROL_MESSAGE_TASK,	 /**< This message goes to a task */
 	SCTK_CONTROL_MESSAGE_USER,	 /**< This message goes to the application using an optionnal handler */
 	SCTK_MESSAGE_CLASS_COUNT	   /**< This value allows to track the  number of control message types */
-} mpc_mp_ptp_message_class_t;
+} mpc_lowcomm_ptp_message_class_t;
 
 static const char *const sctk_message_class_name[SCTK_MESSAGE_CLASS_COUNT] =
 {
@@ -92,13 +92,13 @@ static const char *const sctk_message_class_name[SCTK_MESSAGE_CLASS_COUNT] =
 /* Low Level Message Interface                                          */
 /************************************************************************/
 
-void mpc_mp_comm_isend_class_src( int src, int dest, void *data, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_ptp_message_class_t class, mpc_mp_request_t *req );
-void mpc_mp_comm_irecv_class_dest( int src, int dest, void *buffer, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_ptp_message_class_t class, mpc_mp_request_t *req );
-void mpc_mp_comm_isend_class( int dest, void *data, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_ptp_message_class_t class, mpc_mp_request_t *req );
-void mpc_mp_comm_irecv_class( int src, void *data, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_ptp_message_class_t class, mpc_mp_request_t *req );
-void mpc_mp_comm_isend( int dest, void *data, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *req );
-void mpc_mp_comm_irecv( int src, void *data, size_t size, int tag, mpc_mp_communicator_t comm, mpc_mp_request_t *req );
-void mpc_mp_comm_sendrecv( void *sendbuf, size_t size, int dest, int tag, void *recvbuf, int src, int comm );
+void mpc_lowcomm_comm_isend_class_src( int src, int dest, void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req );
+void mpc_lowcomm_comm_irecv_class_dest( int src, int dest, void *buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req );
+void mpc_lowcomm_comm_isend_class( int dest, void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req );
+void mpc_lowcomm_comm_irecv_class( int src, void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req );
+void mpc_lowcomm_comm_isend( int dest, void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req );
+void mpc_lowcomm_comm_irecv( int src, void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req );
+void mpc_lowcomm_comm_sendrecv( void *sendbuf, size_t size, int dest, int tag, void *recvbuf, int src, int comm );
 
 
 /************************************************************************/
@@ -132,29 +132,29 @@ typedef struct sctk_thread_message_header_s
 	int destination_task; /**< Destination Task ID */
 	/* Context */
 	int message_tag;								 /**< Message TAG */
-	mpc_mp_communicator_t communicator;				 /**< Message communicator */
+	mpc_lowcomm_communicator_t communicator;				 /**< Message communicator */
 	struct sctk_control_message_header message_type; /**< Control Message Infos */
 	/* Ordering */
 	int message_number;			/**< Message order (for reorder) */
 	char use_message_numbering; /**< Should this message be reordered */
 	/* Content */
-	mpc_mp_datatype_t datatype; /**< Caried data-type (for matching check) */
+	mpc_lowcomm_datatype_t datatype; /**< Caried data-type (for matching check) */
 	size_t msg_size;		  /**< Message size */
 } sctk_thread_message_header_t;
 
-void mpc_mp_comm_message_probe_any_tag( int destination, int source, const mpc_mp_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
-void mpc_mp_comm_message_probe_any_source_any_tag( int destination, const mpc_mp_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
-void mpc_mp_comm_message_probe( int destination, int source, const mpc_mp_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
-void mpc_mp_comm_message_probe_any_source( int destination, const mpc_mp_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
-void mpc_mp_comm_message_probe_any_source_class( int destination, int tag,
-        mpc_mp_ptp_message_class_t class,
-        const mpc_mp_communicator_t comm,
+void mpc_lowcomm_comm_message_probe_any_tag( int destination, int source, const mpc_lowcomm_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
+void mpc_lowcomm_comm_message_probe_any_source_any_tag( int destination, const mpc_lowcomm_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
+void mpc_lowcomm_comm_message_probe( int destination, int source, const mpc_lowcomm_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
+void mpc_lowcomm_comm_message_probe_any_source( int destination, const mpc_lowcomm_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
+void mpc_lowcomm_comm_message_probe_any_source_class( int destination, int tag,
+        mpc_lowcomm_ptp_message_class_t class,
+        const mpc_lowcomm_communicator_t comm,
         int *status,
         sctk_thread_message_header_t *msg );
 
-void mpc_mp_comm_message_probe_any_source_class_comm( int destination, int tag,
-        mpc_mp_ptp_message_class_t class,
-        const mpc_mp_communicator_t comm,
+void mpc_lowcomm_comm_message_probe_any_source_class_comm( int destination, int tag,
+        mpc_lowcomm_ptp_message_class_t class,
+        const mpc_lowcomm_communicator_t comm,
         int *status,
         sctk_thread_message_header_t *msg );
 
@@ -162,16 +162,16 @@ void mpc_mp_comm_message_probe_any_source_class_comm( int destination, int tag,
 /* Message Copy                                                         */
 /************************************************************************/
 
-typedef struct mpc_mp_ptp_message_content_to_copy_s
+typedef struct mpc_lowcomm_ptp_message_content_to_copy_s
 {
 	struct sctk_thread_ptp_message_s *msg_send;
 	struct sctk_thread_ptp_message_s *msg_recv;
-	struct mpc_mp_ptp_message_content_to_copy_s *prev, *next;
-} mpc_mp_ptp_message_content_to_copy_t;
+	struct mpc_lowcomm_ptp_message_content_to_copy_s *prev, *next;
+} mpc_lowcomm_ptp_message_content_to_copy_t;
 
-void mpc_mp_comm_ptp_message_copy( mpc_mp_ptp_message_content_to_copy_t *tmp );
-void mpc_mp_comm_ptp_message_copy_pack( mpc_mp_ptp_message_content_to_copy_t *tmp );
-void mpc_mp_comm_ptp_message_copy_pack_absolute( mpc_mp_ptp_message_content_to_copy_t *tmp );
+void mpc_lowcomm_comm_ptp_message_copy( mpc_lowcomm_ptp_message_content_to_copy_t *tmp );
+void mpc_lowcomm_comm_ptp_message_copy_pack( mpc_lowcomm_ptp_message_content_to_copy_t *tmp );
+void mpc_lowcomm_comm_ptp_message_copy_pack_absolute( mpc_lowcomm_ptp_message_content_to_copy_t *tmp );
 
 /************************************************************************/
 /* Message Content Descriptors                                          */
@@ -184,7 +184,7 @@ typedef enum
 	SCTK_MESSAGE_PACK_ABSOLUTE,
 	SCTK_MESSAGE_PACK_UNDEFINED,
 	SCTK_MESSAGE_NETWORK
-} mpc_mp_ptp_message_type_t;
+} mpc_lowcomm_ptp_message_type_t;
 
 /** SCTK_MESSAGE_CONTIGUOUS */
 typedef struct
@@ -239,7 +239,7 @@ typedef union
 {
 	sctk_message_contiguous_t contiguous; /** Contiguous case */
 	sctk_message_pack_t pack;			  /** Packed case */
-} mpc_mp_ptp_message_content_t;
+} mpc_lowcomm_ptp_message_content_t;
 
 /************************************************************************/
 /* Message List                                                         */
@@ -251,7 +251,7 @@ typedef volatile struct sctk_msg_list_s
 {
 	struct sctk_thread_ptp_message_s *msg;
 	volatile struct sctk_msg_list_s *prev, *next;
-} mpc_mp_msg_list_t;
+} mpc_lowcomm_msg_list_t;
 
 /************************************************************************/
 /* Message Content                                                      */
@@ -271,7 +271,7 @@ typedef struct
 #ifdef SCTK_USE_CHECKSUM
 	unsigned long checksum;
 #endif
-} mpc_mp_ptp_message_body_t;
+} mpc_lowcomm_ptp_message_body_t;
 
 struct mpc_buffered_msg_s;
 struct mpc_comm_ptp_s;
@@ -286,15 +286,15 @@ typedef struct
 	/* Matchind ID used for MPROBE */
 	OPA_int_t matching_id; /**< 0 By default unique id otherwise */
 
-	mpc_mp_request_t *request;
+	mpc_lowcomm_request_t *request;
 
 	/*Message data*/
-	mpc_mp_ptp_message_type_t message_type;
-	mpc_mp_ptp_message_content_t message;
+	mpc_lowcomm_ptp_message_type_t message_type;
+	mpc_lowcomm_ptp_message_content_t message;
 
 	/*Storage structs*/
-	mpc_mp_msg_list_t distant_list;
-	mpc_mp_ptp_message_content_to_copy_t copy_list;
+	mpc_lowcomm_msg_list_t distant_list;
+	mpc_lowcomm_ptp_message_content_to_copy_t copy_list;
 
 	struct mpc_comm_ptp_s *internal_ptp;
 
@@ -302,7 +302,7 @@ typedef struct
 	void ( *free_memory )( void * );
 
 	/*Copy operator*/
-	void ( *message_copy )( mpc_mp_ptp_message_content_to_copy_t * );
+	void ( *message_copy )( mpc_lowcomm_ptp_message_content_to_copy_t * );
 
 	/*Reorder buffer struct*/
 	sctk_reorder_buffer_t reorder;
@@ -324,16 +324,16 @@ typedef struct
 #ifdef MPC_USE_INFINIBAND
 	struct sctk_ib_msg_header_s ib;
 #endif
-} mpc_mp_ptp_message_tail_t;
+} mpc_lowcomm_ptp_message_tail_t;
 
 /************************************************************************/
-/* mpc_mp_ptp_message_t Point to Point message descriptor          */
+/* mpc_lowcomm_ptp_message_t Point to Point message descriptor          */
 /************************************************************************/
 
 typedef struct sctk_thread_ptp_message_s
 {
-	mpc_mp_ptp_message_body_t body;
-	mpc_mp_ptp_message_tail_t tail;
+	mpc_lowcomm_ptp_message_body_t body;
+	mpc_lowcomm_ptp_message_tail_t tail;
 
 	/* Pointers for chaining elements */
 	struct sctk_thread_ptp_message_s *prev;
@@ -341,41 +341,41 @@ typedef struct sctk_thread_ptp_message_s
 
 	/* If the entry comes from a buffered list */
 	char from_buffered;
-} mpc_mp_ptp_message_t;
+} mpc_lowcomm_ptp_message_t;
 
-void mpc_mp_comm_ptp_message_header_clear( mpc_mp_ptp_message_t *tmp, mpc_mp_ptp_message_type_t msg_type, void ( *free_memory )( void * ),
-        void ( *message_copy )( mpc_mp_ptp_message_content_to_copy_t * ) );
+void mpc_lowcomm_comm_ptp_message_header_clear( mpc_lowcomm_ptp_message_t *tmp, mpc_lowcomm_ptp_message_type_t msg_type, void ( *free_memory )( void * ),
+        void ( *message_copy )( mpc_lowcomm_ptp_message_content_to_copy_t * ) );
 
-mpc_mp_ptp_message_t *mpc_mp_comm_ptp_message_header_create( mpc_mp_ptp_message_type_t msg_type );
+mpc_lowcomm_ptp_message_t *mpc_lowcomm_comm_ptp_message_header_create( mpc_lowcomm_ptp_message_type_t msg_type );
 
-void mpc_mp_comm_ptp_message_set_contiguous_addr( mpc_mp_ptp_message_t *restrict msg, void *restrict addr, const size_t size );
+void mpc_lowcomm_comm_ptp_message_set_contiguous_addr( mpc_lowcomm_ptp_message_t *restrict msg, void *restrict addr, const size_t size );
 
-void mpc_mp_comm_ptp_message_add_pack( mpc_mp_ptp_message_t *msg, void *adr, const unsigned int nb_items,
+void mpc_lowcomm_comm_ptp_message_add_pack( mpc_lowcomm_ptp_message_t *msg, void *adr, const unsigned int nb_items,
                                        const size_t elem_size,
                                        unsigned long *begins,
                                        unsigned long *ends );
 
-void mpc_mp_comm_ptp_message_add_pack_absolute( mpc_mp_ptp_message_t *msg, void *adr,
+void mpc_lowcomm_comm_ptp_message_add_pack_absolute( mpc_lowcomm_ptp_message_t *msg, void *adr,
         const unsigned int nb_items,
         const size_t elem_size,
         long *begins,
         long *ends );
 
-void mpc_mp_comm_ptp_message_header_init( mpc_mp_ptp_message_t *msg, const int message_tag,
-        const mpc_mp_communicator_t communicator,
+void mpc_lowcomm_comm_ptp_message_header_init( mpc_lowcomm_ptp_message_t *msg, const int message_tag,
+        const mpc_lowcomm_communicator_t communicator,
         const int source,
         const int destination,
-        mpc_mp_request_t *request,
+        mpc_lowcomm_request_t *request,
         const size_t count,
-        mpc_mp_ptp_message_class_t message_class,
-        mpc_mp_datatype_t datatype,
-        mpc_mp_request_type_t request_type );
+        mpc_lowcomm_ptp_message_class_t message_class,
+        mpc_lowcomm_datatype_t datatype,
+        mpc_lowcomm_request_type_t request_type );
 
-void mpc_mp_comm_ptp_message_send( mpc_mp_ptp_message_t *msg );
+void mpc_lowcomm_comm_ptp_message_send( mpc_lowcomm_ptp_message_t *msg );
 
-void mpc_mp_comm_ptp_message_recv( mpc_mp_ptp_message_t *msg );
+void mpc_lowcomm_comm_ptp_message_recv( mpc_lowcomm_ptp_message_t *msg );
 
-void mpc_mp_comm_ptp_message_complete_and_free( mpc_mp_ptp_message_t *msg );
+void mpc_lowcomm_comm_ptp_message_complete_and_free( mpc_lowcomm_ptp_message_t *msg );
 
 /*********************
  * BUFFERED MESSAGES *
@@ -385,11 +385,11 @@ void mpc_mp_comm_ptp_message_complete_and_free( mpc_mp_ptp_message_t *msg );
 
 typedef struct mpc_buffered_msg_s
 {
-	mpc_mp_ptp_message_t header;
+	mpc_lowcomm_ptp_message_t header;
 	/* Completion flag to use if the user do not provide a valid request */
 	int completion_flag;
-	/* mpc_mp_request_t if the message is buffered  */
-	mpc_mp_request_t request;
+	/* mpc_lowcomm_request_t if the message is buffered  */
+	mpc_lowcomm_request_t request;
 	long buf[( MAX_MPC_BUFFERED_SIZE / sizeof( long ) ) + 1];
 } mpc_buffered_msg_t;
 
@@ -398,9 +398,9 @@ typedef struct mpc_buffered_msg_s
 /* Message Progess                                                      */
 /************************************************************************/
 
-typedef struct mpc_mp_comm_ptp_msg_progress_s
+typedef struct mpc_lowcomm_comm_ptp_msg_progress_s
 {
-	mpc_mp_request_t *request;
+	mpc_lowcomm_request_t *request;
 	struct mpc_comm_ptp_s *recv_ptp;
 	struct mpc_comm_ptp_s *send_ptp;
 	int remote_process;
@@ -409,93 +409,93 @@ typedef struct mpc_mp_comm_ptp_msg_progress_s
 	int polling_task_id;
 	/* If we are blocked inside a function similar to MPI_Wait */
 	int blocking;
-} mpc_mp_comm_ptp_msg_progress_t;
+} mpc_lowcomm_comm_ptp_msg_progress_t;
 
-void mpc_mp_comm_ptp_msg_wait_init( struct mpc_mp_comm_ptp_msg_progress_s *wait, mpc_mp_request_t *request, int blocking );
-void mpc_mp_comm_ptp_msg_progress( struct mpc_mp_comm_ptp_msg_progress_s *wait );
+void mpc_lowcomm_comm_ptp_msg_wait_init( struct mpc_lowcomm_comm_ptp_msg_progress_s *wait, mpc_lowcomm_request_t *request, int blocking );
+void mpc_lowcomm_comm_ptp_msg_progress( struct mpc_lowcomm_comm_ptp_msg_progress_s *wait );
 
 
 /************************************************************************/
 /* General Functions                                                    */
 /************************************************************************/
 
-void mpc_mp_comm_request_wait_all_msgs( const int task, const mpc_mp_communicator_t com );
+void mpc_lowcomm_comm_request_wait_all_msgs( const int task, const mpc_lowcomm_communicator_t com );
 
-int mpc_mp_comm_is_remote_rank( int dest );
-void mpc_mp_comm_init_per_task( int i );
+int mpc_lowcomm_comm_is_remote_rank( int dest );
+void mpc_lowcomm_comm_init_per_task( int i );
 
-void mpc_mp_comm_perform_idle( volatile int *data, int value, void ( *func )( void * ), void *arg );
+void mpc_lowcomm_comm_perform_idle( volatile int *data, int value, void ( *func )( void * ), void *arg );
 
 /************************************************************************/
-/* mpc_mp_request_t 		                                                    */
+/* mpc_lowcomm_request_t 		                                                    */
 /************************************************************************/
 
-void mpc_mp_comm_request_wait( mpc_mp_request_t *request );
-int mpc_mp_comm_request_cancel( mpc_mp_request_t *msg );
-void mpc_mp_comm_request_init( mpc_mp_request_t *request, mpc_mp_communicator_t comm, int request_type );
+void mpc_lowcomm_comm_request_wait( mpc_lowcomm_request_t *request );
+int mpc_lowcomm_comm_request_cancel( mpc_lowcomm_request_t *msg );
+void mpc_lowcomm_comm_request_init( mpc_lowcomm_request_t *request, mpc_lowcomm_communicator_t comm, int request_type );
 
-static inline int mpc_mp_comm_request_get_completion( mpc_mp_request_t *request )
+static inline int mpc_lowcomm_comm_request_get_completion( mpc_lowcomm_request_t *request )
 {
 	return request->completion_flag;
 }
 
-static inline void mpc_mp_comm_request_set_msg( mpc_mp_request_t *request,
-        mpc_mp_ptp_message_t *msg )
+static inline void mpc_lowcomm_comm_request_set_msg( mpc_lowcomm_request_t *request,
+        mpc_lowcomm_ptp_message_t *msg )
 {
 	request->msg = msg;
 }
 
-static inline mpc_mp_ptp_message_t *mpc_mp_comm_request_get_msg( mpc_mp_request_t *request )
+static inline mpc_lowcomm_ptp_message_t *mpc_lowcomm_comm_request_get_msg( mpc_lowcomm_request_t *request )
 {
 	return request->msg;
 }
 
-static inline void mpc_mp_comm_request_set_size( mpc_mp_request_t *request )
+static inline void mpc_lowcomm_comm_request_set_size( mpc_lowcomm_request_t *request )
 {
 	request->msg->body.header.msg_size = 0;
 }
 
-static inline void mpc_mp_comm_request_inc_size( mpc_mp_request_t *request,
+static inline void mpc_lowcomm_comm_request_inc_size( mpc_lowcomm_request_t *request,
         size_t size )
 {
 	request->msg->body.header.msg_size += size;
 }
 
-static inline size_t mpc_mp_comm_request_get_size( mpc_mp_request_t *request )
+static inline size_t mpc_lowcomm_comm_request_get_size( mpc_lowcomm_request_t *request )
 {
 	return request->msg->body.header.msg_size;
 }
 
-static inline int mpc_mp_comm_request_get_source( mpc_mp_request_t *request )
+static inline int mpc_lowcomm_comm_request_get_source( mpc_lowcomm_request_t *request )
 {
 	return request->header.source_task;
 }
 
-static inline int mpc_mp_comm_request_is_null( mpc_mp_request_t *request )
+static inline int mpc_lowcomm_comm_request_is_null( mpc_lowcomm_request_t *request )
 {
 	return request->is_null;
 }
 
-static inline void mpc_mp_comm_request_set_null( mpc_mp_request_t *request, int val )
+static inline void mpc_lowcomm_comm_request_set_null( mpc_lowcomm_request_t *request, int val )
 {
 	request->is_null = val;
 }
 
-int mpc_mp_comm_request_cancel( mpc_mp_request_t *request );
+int mpc_lowcomm_comm_request_cancel( mpc_lowcomm_request_t *request );
 
-int mpc_mp_comm_request_free( mpc_mp_request_t *request );
+int mpc_lowcomm_comm_request_free( mpc_lowcomm_request_t *request );
 
 /************************************************************************/
 /* MPI Status Modification and Query                                    */
 /************************************************************************/
 
-static inline int mpc_mp_comm_status_set_cancelled( mpc_mp_status_t *status, int cancelled )
+static inline int mpc_lowcomm_comm_status_set_cancelled( mpc_lowcomm_status_t *status, int cancelled )
 {
 	status->cancelled = cancelled;
 	return SCTK_SUCCESS;
 }
 
-static inline int mpc_mp_comm_status_get_cancelled( mpc_mp_status_t *status, int *flag )
+static inline int mpc_lowcomm_comm_status_get_cancelled( mpc_lowcomm_status_t *status, int *flag )
 {
 	*flag = ( status->cancelled == 1 );
 	return SCTK_SUCCESS;

@@ -30,7 +30,7 @@ int is_printing = 1;
 void
 run (void *arg)
 {
-  mpc_mp_communicator_t my_com;
+  mpc_lowcomm_communicator_t my_com;
   int my_rank;
   char name[4096];
   my_com = SCTK_COMM_WORLD;

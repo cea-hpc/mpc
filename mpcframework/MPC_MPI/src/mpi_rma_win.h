@@ -157,7 +157,7 @@ static inline int mpc_MPI_win_can_write_directly(struct mpc_MPI_Win *desc,
   }
 
   /* Is in the same process */
-  if (!mpc_mp_comm_is_remote_rank(sctk_get_comm_world_rank(desc->comm, target_rank))) {
+  if (!mpc_lowcomm_comm_is_remote_rank(sctk_get_comm_world_rank(desc->comm, target_rank))) {
     return 1;
   }
 

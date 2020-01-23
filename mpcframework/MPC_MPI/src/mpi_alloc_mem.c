@@ -22,7 +22,7 @@
 
 #include "mpi_alloc_mem.h"
 
-#include "mpc_mp_coll.h"
+#include "mpc_lowcomm_coll.h"
 #include <mpc_common_helper.h>
 #include "mpc_mpi.h"
 #include "mpc_thread.h"
@@ -187,7 +187,7 @@ int mpc_MPI_allocmem_pool_init()
 		PMPI_Comm_free( &process_master_comm );
 	}
 
-	mpc_mp_barrier( MPI_COMM_WORLD );
+	mpc_lowcomm_barrier( MPI_COMM_WORLD );
 	assume( ____mpc_sctk_mpi_alloc_mem_pool._pool != NULL );
 
 	if ( do_init )
@@ -216,13 +216,13 @@ int mpc_MPI_allocmem_pool_init()
 
 	mpc_MPI_accumulate_op_lock_init();
 
-	mpc_mp_barrier( MPI_COMM_WORLD );
+	mpc_lowcomm_barrier( MPI_COMM_WORLD );
 	return 0;
 }
 
 int mpc_MPI_allocmem_pool_release()
 {
-	mpc_mp_barrier( MPI_COMM_WORLD );
+	mpc_lowcomm_barrier( MPI_COMM_WORLD );
 
 	/* Are all the tasks in the same process ? */
 	if ( _pool_only_local ||
@@ -256,7 +256,7 @@ int mpc_MPI_allocmem_pool_release()
 		                       ____mpc_sctk_mpi_alloc_mem_pool.mapped_size );
 	}
 
-	mpc_mp_barrier( MPI_COMM_WORLD );
+	mpc_lowcomm_barrier( MPI_COMM_WORLD );
 
 	if ( is_master )
 	{
@@ -478,7 +478,7 @@ void mpc_MPI_accumulate_op_lock_init()
 		*( ( mpc_common_spinlock_t * )p ) = 0;
 	}
 
-	mpc_mp_bcast( &p, sizeof( MPI_Aint ), 0, node_comm );
+	mpc_lowcomm_bcast( &p, sizeof( MPI_Aint ), 0, node_comm );
 	__accululate_master_lock = ( mpc_common_spinlock_t * )p;
 	PMPI_Comm_free( &node_comm );
 }

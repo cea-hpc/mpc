@@ -50,8 +50,8 @@ static unsigned int allreduce_max_slot;
 
 /* Barrier */
 
-static void _mpc_coll_barrier_simple( const mpc_mp_communicator_t communicator,
-                                      struct mpc_mp_coll_s *tmp )
+static void _mpc_coll_barrier_simple( const mpc_lowcomm_communicator_t communicator,
+                                      struct mpc_lowcomm_coll_s *tmp )
 {
 	int local;
 	local = sctk_get_nb_task_local( communicator );
@@ -72,7 +72,7 @@ static void _mpc_coll_barrier_simple( const mpc_mp_communicator_t communicator,
 	sctk_thread_mutex_unlock( &tmp->barrier.barrier_simple.lock );
 }
 
-void _mpc_coll_barrier_simple_init( struct mpc_mp_coll_s *tmp, __UNUSED__ mpc_mp_communicator_t id )
+void _mpc_coll_barrier_simple_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
 	if ( mpc_common_get_process_count() == 1 )
 	{
@@ -90,13 +90,13 @@ void _mpc_coll_barrier_simple_init( struct mpc_mp_coll_s *tmp, __UNUSED__ mpc_mp
 /* Broadcast */
 
 void _mpc_coll_bcast_simple( void *buffer, const size_t size,
-                             const int root, const mpc_mp_communicator_t com_id,
-                             struct mpc_mp_coll_s *tmp )
+                             const int root, const mpc_lowcomm_communicator_t com_id,
+                             struct mpc_lowcomm_coll_s *tmp )
 {
 	int local;
 	int id;
 	local = sctk_get_nb_task_local( com_id );
-	id = mpc_mp_communicator_rank( com_id, mpc_common_get_task_rank() );
+	id = mpc_lowcomm_communicator_rank( com_id, mpc_common_get_task_rank() );
 	sctk_thread_mutex_lock( &tmp->broadcast.broadcast_simple.lock );
 	{
 		if ( size > tmp->broadcast.broadcast_simple.size )
@@ -133,7 +133,7 @@ void _mpc_coll_bcast_simple( void *buffer, const size_t size,
 	_mpc_coll_barrier_simple( com_id, tmp );
 }
 
-void _mpc_coll_bcast_simple_init( struct mpc_mp_coll_s *tmp, __UNUSED__ mpc_mp_communicator_t id )
+void _mpc_coll_bcast_simple_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
 	if ( mpc_common_get_process_count() == 1 )
 	{
@@ -156,10 +156,10 @@ static void _mpc_coll_allreduce_simple( const void *buffer_in, void *buffer_out,
                                         const size_t elem_size,
                                         const size_t elem_number,
                                         void ( *func )( const void *, void *, size_t,
-                                                mpc_mp_datatype_t ),
-                                        const mpc_mp_communicator_t com_id,
-                                        const mpc_mp_datatype_t data_type,
-                                        struct mpc_mp_coll_s *tmp )
+                                                mpc_lowcomm_datatype_t ),
+                                        const mpc_lowcomm_communicator_t com_id,
+                                        const mpc_lowcomm_datatype_t data_type,
+                                        struct mpc_lowcomm_coll_s *tmp )
 {
 	int local;
 	size_t size;
@@ -209,7 +209,7 @@ static void _mpc_coll_allreduce_simple( const void *buffer_in, void *buffer_out,
 	_mpc_coll_barrier_simple( com_id, tmp );
 }
 
-void _mpc_coll_allreduce_simple_init( struct mpc_mp_coll_s *tmp, __UNUSED__ mpc_mp_communicator_t id )
+void _mpc_coll_allreduce_simple_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
 	if ( mpc_common_get_process_count() == 1 )
 	{
@@ -228,7 +228,7 @@ void _mpc_coll_allreduce_simple_init( struct mpc_mp_coll_s *tmp, __UNUSED__ mpc_
 
 /* Init */
 
-void mpc_mp_coll_init_simple( mpc_mp_communicator_t id )
+void mpc_lowcomm_coll_init_simple( mpc_lowcomm_communicator_t id )
 {
 	if ( mpc_common_get_process_count() == 1 )
 	{
@@ -254,8 +254,8 @@ static void _mpc_coll_free_message( __UNUSED__ void *ptr )
 
 typedef struct
 {
-	mpc_mp_request_t request;
-	mpc_mp_ptp_message_t msg;
+	mpc_lowcomm_request_t request;
+	mpc_lowcomm_ptp_message_t msg;
 } _mpc_coll_messages_t;
 
 /* WARNING: if you change values below
@@ -274,25 +274,25 @@ typedef struct
 
 /* Internal functions */
 
-static void _mpc_coll_message_send( const mpc_mp_communicator_t communicator, int myself, int dest, int tag, void *buffer, size_t size,
-                                    mpc_mp_ptp_message_class_t message_class, _mpc_coll_messages_t *msg_req, int check_msg )
+static void _mpc_coll_message_send( const mpc_lowcomm_communicator_t communicator, int myself, int dest, int tag, void *buffer, size_t size,
+                                    mpc_lowcomm_ptp_message_class_t message_class, _mpc_coll_messages_t *msg_req, int check_msg )
 {
-	mpc_mp_comm_ptp_message_header_clear( &( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS,
-	                                      _mpc_coll_free_message, mpc_mp_comm_ptp_message_copy );
-	mpc_mp_comm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
-	mpc_mp_comm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, myself, dest,
+	mpc_lowcomm_comm_ptp_message_header_clear( &( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS,
+	                                      _mpc_coll_free_message, mpc_lowcomm_comm_ptp_message_copy );
+	mpc_lowcomm_comm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
+	mpc_lowcomm_comm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, myself, dest,
 	                                     &( msg_req->request ), size, message_class,
 	                                     SCTK_DATATYPE_IGNORE, REQUEST_SEND );
 	_mpc_comm_ptp_message_send_check( &( msg_req->msg ), check_msg );
 }
 
-static void _mpc_coll_message_recv( const mpc_mp_communicator_t communicator, int src, int myself, int tag, void *buffer, size_t size,
-                                    mpc_mp_ptp_message_class_t message_class, _mpc_coll_messages_t *msg_req, int check_msg )
+static void _mpc_coll_message_recv( const mpc_lowcomm_communicator_t communicator, int src, int myself, int tag, void *buffer, size_t size,
+                                    mpc_lowcomm_ptp_message_class_t message_class, _mpc_coll_messages_t *msg_req, int check_msg )
 {
-	mpc_mp_comm_ptp_message_header_clear( &( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS,
-	                                      _mpc_coll_free_message, mpc_mp_comm_ptp_message_copy );
-	mpc_mp_comm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
-	mpc_mp_comm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, src, myself,
+	mpc_lowcomm_comm_ptp_message_header_clear( &( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS,
+	                                      _mpc_coll_free_message, mpc_lowcomm_comm_ptp_message_copy );
+	mpc_lowcomm_comm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
+	mpc_lowcomm_comm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, src, myself,
 	                                     &( msg_req->request ), size, message_class,
 	                                     SCTK_DATATYPE_IGNORE, REQUEST_RECV );
 	_mpc_comm_ptp_message_recv_check( &( msg_req->msg ), check_msg );
@@ -305,7 +305,7 @@ static void _mpc_coll_messages_table_wait( _mpc_coll_messages_table_t *tab )
 	for ( i = 0; i < tab->nb_used; i++ )
 	{
 		sctk_nodebug( "Wait for messag %d", i );
-		mpc_mp_comm_request_wait( &( tab->msg_req[i].request ) );
+		mpc_lowcomm_comm_request_wait( &( tab->msg_req[i].request ) );
 	}
 
 	tab->nb_used = 0;
@@ -337,7 +337,7 @@ static void _mpc_coll_message_table_init( _mpc_coll_messages_table_t *tab )
 
 /* Barrier */
 
-static void _mpc_coll_opt_barrier( const mpc_mp_communicator_t communicator, __UNUSED__ struct mpc_mp_coll_s *tmp )
+static void _mpc_coll_opt_barrier( const mpc_lowcomm_communicator_t communicator, __UNUSED__ struct mpc_lowcomm_coll_s *tmp )
 {
 	if ( !sctk_is_inter_comm( communicator ) )
 	{
@@ -349,8 +349,8 @@ static void _mpc_coll_opt_barrier( const mpc_mp_communicator_t communicator, __U
 		char c = 'c';
 		sctk_nodebug( "_mpc_coll_opt_barrier() begin:" ); //AMAHEO
 		_mpc_coll_message_table_init( &table );
-		total = mpc_mp_communicator_size( communicator );
-		myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
+		total = mpc_lowcomm_communicator_size( communicator );
+		myself = mpc_lowcomm_communicator_rank( communicator, mpc_common_get_task_rank() );
 		sctk_nodebug( "enter barrier total = %d, myself = %d", total,
 		              myself );
 		total_max = log( total ) / log( barrier_arity );
@@ -441,8 +441,8 @@ static void _mpc_coll_opt_barrier( const mpc_mp_communicator_t communicator, __U
 		char c = 'c';
 		_mpc_coll_messages_table_t table;
 		_mpc_coll_message_table_init( &table );
-		myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
-		rsize = mpc_mp_communicator_remote_size( communicator );
+		myself = mpc_lowcomm_communicator_rank( communicator, mpc_common_get_task_rank() );
+		rsize = mpc_lowcomm_communicator_remote_size( communicator );
 
 		for ( i = 0; i < rsize; i++ )
 		{
@@ -462,7 +462,7 @@ static void _mpc_coll_opt_barrier( const mpc_mp_communicator_t communicator, __U
 	}
 }
 
-void _mpc_coll_opt_barrier_init( struct mpc_mp_coll_s *tmp, __UNUSED__ mpc_mp_communicator_t id )
+void _mpc_coll_opt_barrier_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
 	barrier_arity = sctk_runtime_config_get()->modules.inter_thread_comm.barrier_arity;
 	tmp->barrier_func = _mpc_coll_opt_barrier;
@@ -470,9 +470,9 @@ void _mpc_coll_opt_barrier_init( struct mpc_mp_coll_s *tmp, __UNUSED__ mpc_mp_co
 
 /* Broadcast */
 
-void mpc_mp_bcast_opt_messages( void *buffer, const size_t size,
-                                const int root, const mpc_mp_communicator_t communicator,
-                                struct mpc_mp_coll_s *tmp )
+void mpc_lowcomm_bcast_opt_messages( void *buffer, const size_t size,
+                                const int root, const mpc_lowcomm_communicator_t communicator,
+                                struct mpc_lowcomm_coll_s *tmp )
 {
 	if ( size == 0 )
 	{
@@ -500,8 +500,8 @@ void mpc_mp_bcast_opt_messages( void *buffer, const size_t size,
 			BROADCAST_ARRITY = broadcast_arity_max;
 		}
 
-		total = mpc_mp_communicator_size( communicator );
-		myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
+		total = mpc_lowcomm_communicator_size( communicator );
+		myself = mpc_lowcomm_communicator_rank( communicator, mpc_common_get_task_rank() );
 		related_myself = ( myself + total - root ) % total;
 		total_max = log( total ) / log( BROADCAST_ARRITY );
 		total_max = pow( BROADCAST_ARRITY, total_max );
@@ -563,12 +563,12 @@ void mpc_mp_bcast_opt_messages( void *buffer, const size_t size,
 	}
 }
 
-void _mpc_coll_opt_bcast_init( struct mpc_mp_coll_s *tmp, __UNUSED__ mpc_mp_communicator_t id )
+void _mpc_coll_opt_bcast_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
 	broadcast_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_arity_max;
 	broadcast_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_max_size;
 	broadcast_check_threshold = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_check_threshold;
-	tmp->broadcast_func = mpc_mp_bcast_opt_messages;
+	tmp->broadcast_func = mpc_lowcomm_bcast_opt_messages;
 }
 
 /* Allreduce */
@@ -577,10 +577,10 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
         const size_t elem_size,
         const size_t elem_number,
         void ( *func )( const void *, void *, size_t,
-                        mpc_mp_datatype_t ),
-        const mpc_mp_communicator_t communicator,
-        const mpc_mp_datatype_t data_type,
-        struct mpc_mp_coll_s *tmp )
+                        mpc_lowcomm_datatype_t ),
+        const mpc_lowcomm_communicator_t communicator,
+        const mpc_lowcomm_datatype_t data_type,
+        struct mpc_lowcomm_coll_s *tmp )
 {
 	if ( elem_number == 0 )
 	{
@@ -633,8 +633,8 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
 		}
 
 		assume( size > 0 );
-		total = mpc_mp_communicator_size( communicator );
-		myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
+		total = mpc_lowcomm_communicator_size( communicator );
+		myself = mpc_lowcomm_communicator_rank( communicator, mpc_common_get_task_rank() );
 		total_max = log( total ) / log( ALLREDUCE_ARRITY );
 		total_max = pow( ALLREDUCE_ARRITY, total_max );
 
@@ -740,15 +740,15 @@ static void _mpc_coll_opt_allreduce( const void *buffer_in, void *buffer_out,
                                      const size_t elem_size,
                                      const size_t elem_number,
                                      void ( *func )( const void *, void *, size_t,
-                                             mpc_mp_datatype_t ),
-                                     const mpc_mp_communicator_t communicator,
-                                     const mpc_mp_datatype_t data_type,
-                                     struct mpc_mp_coll_s *tmp )
+                                             mpc_lowcomm_datatype_t ),
+                                     const mpc_lowcomm_communicator_t communicator,
+                                     const mpc_lowcomm_datatype_t data_type,
+                                     struct mpc_lowcomm_coll_s *tmp )
 {
 	_mpc_coll_opt_allreduce_intern( buffer_in, buffer_out, elem_size, elem_number, func, communicator, data_type, tmp );
 }
 
-void _mpc_coll_opt_allreduce_init( struct mpc_mp_coll_s *tmp, __UNUSED__ mpc_mp_communicator_t id )
+void _mpc_coll_opt_allreduce_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
 	allreduce_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_arity_max;
 	allreduce_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_max_size;
@@ -758,7 +758,7 @@ void _mpc_coll_opt_allreduce_init( struct mpc_mp_coll_s *tmp, __UNUSED__ mpc_mp_
 
 /* Init */
 
-void mpc_mp_coll_init_opt( mpc_mp_communicator_t id )
+void mpc_lowcomm_coll_init_opt( mpc_lowcomm_communicator_t id )
 {
 	_mpc_coll_init( id,
 	                _mpc_coll_opt_barrier_init,
@@ -784,8 +784,8 @@ static int int_cmp( const void *a, const void *b )
 	return *ia - *ib;
 }
 
-static void _mpc_coll_hetero_barrier_inter( const mpc_mp_communicator_t communicator,
-        __UNUSED__ struct mpc_mp_coll_s *tmp )
+static void _mpc_coll_hetero_barrier_inter( const mpc_lowcomm_communicator_t communicator,
+        __UNUSED__ struct mpc_lowcomm_coll_s *tmp )
 {
 	int myself;
 	int *process_array;
@@ -900,8 +900,8 @@ static void _mpc_coll_hetero_barrier_inter( const mpc_mp_communicator_t communic
 	sctk_nodebug( "End inter" );
 }
 
-static void _mpc_coll_hetero_barrier( const mpc_mp_communicator_t communicator,
-                                      struct mpc_mp_coll_s *tmp )
+static void _mpc_coll_hetero_barrier( const mpc_lowcomm_communicator_t communicator,
+                                      struct mpc_lowcomm_coll_s *tmp )
 {
 	int nb_tasks_in_node;
 	_mpc_coll_hetero_barrier_t *barrier;
@@ -929,7 +929,7 @@ static void _mpc_coll_hetero_barrier( const mpc_mp_communicator_t communicator,
 	}
 }
 
-void _mpc_coll_hetero_barrier_init( struct mpc_mp_coll_s *tmp, __UNUSED__ mpc_mp_communicator_t id )
+void _mpc_coll_hetero_barrier_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
 	barrier_arity = sctk_runtime_config_get()->modules.inter_thread_comm.barrier_arity;
 	tmp->barrier_func = _mpc_coll_hetero_barrier;
@@ -942,7 +942,7 @@ void _mpc_coll_hetero_barrier_init( struct mpc_mp_coll_s *tmp, __UNUSED__ mpc_mp
 /* Broadcast */
 
 void _mpc_coll_hetero_bcast_inter( void *buffer, const size_t size,
-                                   const int root_process, const mpc_mp_communicator_t communicator )
+                                   const int root_process, const mpc_lowcomm_communicator_t communicator )
 {
 	/* If only one process involved, we return */
 	int total = sctk_get_process_nb_in_array( communicator );
@@ -1050,8 +1050,8 @@ void _mpc_coll_hetero_bcast_inter( void *buffer, const size_t size,
 }
 
 void _mpc_coll_hetero_bcast( void *buffer, const size_t size,
-                             const int root, const mpc_mp_communicator_t communicator,
-                             struct mpc_mp_coll_s *tmp )
+                             const int root, const mpc_lowcomm_communicator_t communicator,
+                             struct mpc_lowcomm_coll_s *tmp )
 {
 	int nb_tasks_in_node;
 	int task_id_in_node;
@@ -1067,7 +1067,7 @@ void _mpc_coll_hetero_bcast( void *buffer, const size_t size,
 		return;
 	}
 
-	myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
+	myself = mpc_lowcomm_communicator_rank( communicator, mpc_common_get_task_rank() );
 	nb_tasks_in_node = sctk_get_nb_task_local( communicator );
 	bcast = &tmp->broadcast.broadcast_hetero_messages;
 	generation = bcast->generation;
@@ -1122,7 +1122,7 @@ void _mpc_coll_hetero_bcast( void *buffer, const size_t size,
 	}
 }
 
-void _mpc_coll_hetero_bcast_init( struct mpc_mp_coll_s *tmp, __UNUSED__ mpc_mp_communicator_t id )
+void _mpc_coll_hetero_bcast_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
 	broadcast_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_arity_max;
 	broadcast_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_max_size;
@@ -1141,10 +1141,10 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
         const size_t elem_size,
         const size_t elem_number,
         void ( *func )( const void *, void *, size_t,
-                        mpc_mp_datatype_t ),
-        const mpc_mp_communicator_t communicator,
-        const mpc_mp_datatype_t data_type,
-        __UNUSED__ struct mpc_mp_coll_s *tmp )
+                        mpc_lowcomm_datatype_t ),
+        const mpc_lowcomm_communicator_t communicator,
+        const mpc_lowcomm_datatype_t data_type,
+        __UNUSED__ struct mpc_lowcomm_coll_s *tmp )
 {
 	int ALLREDUCE_ARRITY = 2;
 	int total_max;
@@ -1303,10 +1303,10 @@ static void _mpc_coll_hetero_allreduce_hetero_intern( const void *buffer_in, voi
         const size_t elem_size,
         const size_t elem_number,
         void ( *func )( const void *, void *, size_t,
-                        mpc_mp_datatype_t ),
-        const mpc_mp_communicator_t communicator,
-        const mpc_mp_datatype_t data_type,
-        struct mpc_mp_coll_s *tmp )
+                        mpc_lowcomm_datatype_t ),
+        const mpc_lowcomm_communicator_t communicator,
+        const mpc_lowcomm_datatype_t data_type,
+        struct mpc_lowcomm_coll_s *tmp )
 {
 	if ( elem_number == 0 )
 	{
@@ -1402,15 +1402,15 @@ static void _mpc_coll_hetero_allreduce( const void *buffer_in, void *buffer_out,
                                         const size_t elem_size,
                                         const size_t elem_number,
                                         void ( *func )( const void *, void *, size_t,
-                                                mpc_mp_datatype_t ),
-                                        const mpc_mp_communicator_t communicator,
-                                        const mpc_mp_datatype_t data_type,
-                                        struct mpc_mp_coll_s *tmp )
+                                                mpc_lowcomm_datatype_t ),
+                                        const mpc_lowcomm_communicator_t communicator,
+                                        const mpc_lowcomm_datatype_t data_type,
+                                        struct mpc_lowcomm_coll_s *tmp )
 {
 	_mpc_coll_hetero_allreduce_hetero_intern( buffer_in, buffer_out, elem_size, elem_number, func, communicator, data_type, tmp );
 }
 
-void _mpc_coll_hetero_allreduce_init( struct mpc_mp_coll_s *tmp, mpc_mp_communicator_t id )
+void _mpc_coll_hetero_allreduce_init( struct mpc_lowcomm_coll_s *tmp, mpc_lowcomm_communicator_t id )
 {
 	allreduce_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_arity_max;
 	allreduce_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_max_size;
@@ -1430,7 +1430,7 @@ void _mpc_coll_hetero_allreduce_init( struct mpc_mp_coll_s *tmp, mpc_mp_communic
 
 /* Init */
 
-void mpc_mp_coll_init_hetero( mpc_mp_communicator_t id )
+void mpc_lowcomm_coll_init_hetero( mpc_lowcomm_communicator_t id )
 {
 	_mpc_coll_init( id,
 	                _mpc_coll_hetero_barrier_init,
@@ -1447,7 +1447,7 @@ void mpc_mp_coll_init_hetero( mpc_mp_communicator_t id )
 
 /* Barrier */
 
-static void _mpc_coll_noalloc_barrier( const mpc_mp_communicator_t communicator, __UNUSED__ struct mpc_mp_coll_s *tmp )
+static void _mpc_coll_noalloc_barrier( const mpc_lowcomm_communicator_t communicator, __UNUSED__ struct mpc_lowcomm_coll_s *tmp )
 {
 	if ( !sctk_is_inter_comm( communicator ) )
 	{
@@ -1458,8 +1458,8 @@ static void _mpc_coll_noalloc_barrier( const mpc_mp_communicator_t communicator,
 		_mpc_coll_messages_table_t table;
 		char c = 'c';
 		_mpc_coll_message_table_init( &table );
-		total = mpc_mp_communicator_size( communicator );
-		myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
+		total = mpc_lowcomm_communicator_size( communicator );
+		myself = mpc_lowcomm_communicator_rank( communicator, mpc_common_get_task_rank() );
 		sctk_nodebug( "enter barrier total = %d, myself = %d", total,
 		              myself );
 		total_max = log( total ) / log( barrier_arity );
@@ -1552,8 +1552,8 @@ static void _mpc_coll_noalloc_barrier( const mpc_mp_communicator_t communicator,
 		char c = 'c';
 		_mpc_coll_messages_table_t table;
 		_mpc_coll_message_table_init( &table );
-		myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
-		rsize = mpc_mp_communicator_remote_size( communicator );
+		myself = mpc_lowcomm_communicator_rank( communicator, mpc_common_get_task_rank() );
+		rsize = mpc_lowcomm_communicator_remote_size( communicator );
 
 		for ( i = 0; i < rsize; i++ )
 		{
@@ -1573,7 +1573,7 @@ static void _mpc_coll_noalloc_barrier( const mpc_mp_communicator_t communicator,
 	}
 }
 
-void _mpc_coll_noalloc_barrier_init( struct mpc_mp_coll_s *tmp, __UNUSED__ mpc_mp_communicator_t id )
+void _mpc_coll_noalloc_barrier_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
 	barrier_arity = sctk_runtime_config_get()->modules.inter_thread_comm.barrier_arity;
 	tmp->barrier_func = _mpc_coll_noalloc_barrier;
@@ -1582,8 +1582,8 @@ void _mpc_coll_noalloc_barrier_init( struct mpc_mp_coll_s *tmp, __UNUSED__ mpc_m
 /* Broadcast */
 
 void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
-                              const int root, const mpc_mp_communicator_t communicator,
-                              struct mpc_mp_coll_s *tmp )
+                              const int root, const mpc_lowcomm_communicator_t communicator,
+                              struct mpc_lowcomm_coll_s *tmp )
 {
 	if ( size == 0 )
 	{
@@ -1611,8 +1611,8 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 			BROADCAST_ARRITY = broadcast_arity_max;
 		}
 
-		total = mpc_mp_communicator_size( communicator );
-		myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
+		total = mpc_lowcomm_communicator_size( communicator );
+		myself = mpc_lowcomm_communicator_rank( communicator, mpc_common_get_task_rank() );
 		related_myself = ( myself + total - root ) % total;
 		total_max = log( total ) / log( BROADCAST_ARRITY );
 		total_max = pow( BROADCAST_ARRITY, total_max );
@@ -1675,7 +1675,7 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 	}
 }
 
-void _mpc_coll_noalloc_bcast_init( struct mpc_mp_coll_s *tmp, __UNUSED__ mpc_mp_communicator_t id )
+void _mpc_coll_noalloc_bcast_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
 	broadcast_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_arity_max;
 	broadcast_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_max_size;
@@ -1691,9 +1691,9 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
         const size_t elem_size,
         const size_t elem_number,
         void ( *func )( const void *, void *, size_t,
-                        mpc_mp_datatype_t ),
-        const mpc_mp_communicator_t communicator,
-        const mpc_mp_datatype_t data_type )
+                        mpc_lowcomm_datatype_t ),
+        const mpc_lowcomm_communicator_t communicator,
+        const mpc_lowcomm_datatype_t data_type )
 {
 	int myself;
 	int total;
@@ -1773,8 +1773,8 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 	}
 
 	assume( size > 0 );
-	total = mpc_mp_communicator_size( communicator );
-	myself = mpc_mp_communicator_rank( communicator, mpc_common_get_task_rank() );
+	total = mpc_lowcomm_communicator_size( communicator );
+	myself = mpc_lowcomm_communicator_rank( communicator, mpc_common_get_task_rank() );
 	total_max = log( total ) / log( ALLREDUCE_ARRITY );
 	total_max = pow( ALLREDUCE_ARRITY, total_max );
 
@@ -1883,10 +1883,10 @@ static void _mpc_coll_noalloc_allreduce( const void *buffer_in, void *buffer_out
         const size_t elem_size,
         const size_t elem_number,
         void ( *func )( const void *, void *, size_t,
-                        mpc_mp_datatype_t ),
-        const mpc_mp_communicator_t communicator,
-        const mpc_mp_datatype_t data_type,
-        struct mpc_mp_coll_s *tmp )
+                        mpc_lowcomm_datatype_t ),
+        const mpc_lowcomm_communicator_t communicator,
+        const mpc_lowcomm_datatype_t data_type,
+        struct mpc_lowcomm_coll_s *tmp )
 {
 	if ( elem_number == 0 )
 	{
@@ -1944,7 +1944,7 @@ void _mpc_coll_noalloc_allreduce_allreduce_max_slot( int t )
 	allreduce_max_slot = t;
 }
 
-void _mpc_coll_noalloc_allreduce_init( struct mpc_mp_coll_s __UNUSED__ *tmp, __UNUSED__ mpc_mp_communicator_t id )
+void _mpc_coll_noalloc_allreduce_init( struct mpc_lowcomm_coll_s __UNUSED__ *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
 	allreduce_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_arity_max;
 	allreduce_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_max_size;
@@ -1955,7 +1955,7 @@ void _mpc_coll_noalloc_allreduce_init( struct mpc_mp_coll_s __UNUSED__ *tmp, __U
 
 /* Init */
 
-void mpc_mp_coll_init_noalloc( mpc_mp_communicator_t id )
+void mpc_lowcomm_coll_init_noalloc( mpc_lowcomm_communicator_t id )
 {
 	_mpc_coll_init( id,
 	                _mpc_coll_noalloc_barrier_init,
@@ -1973,7 +1973,7 @@ void mpc_mp_coll_init_noalloc( mpc_mp_communicator_t id )
 /************************************************************************/
 /*Terminaison Barrier                                                   */
 /************************************************************************/
-void mpc_mp_terminaison_barrier( void )
+void mpc_lowcomm_terminaison_barrier( void )
 {
 	int local;
 	static volatile int done = 0;
@@ -1982,7 +1982,7 @@ void mpc_mp_terminaison_barrier( void )
 	local = sctk_get_nb_task_local( SCTK_COMM_WORLD );
 	sctk_thread_mutex_lock( &lock );
 	done++;
-	sctk_nodebug( "mpc_mp_terminaison_barrier %d %d", done, local );
+	sctk_nodebug( "mpc_lowcomm_terminaison_barrier %d %d", done, local );
 
 	if ( done == local )
 	{
@@ -1999,26 +1999,26 @@ void mpc_mp_terminaison_barrier( void )
 		}
 
 #endif
-		sctk_nodebug( "WAKE ALL in mpc_mp_terminaison_barrier" );
+		sctk_nodebug( "WAKE ALL in mpc_lowcomm_terminaison_barrier" );
 		sctk_thread_cond_broadcast( &cond );
 	}
 	else
 	{
-		sctk_nodebug( "WAIT in mpc_mp_terminaison_barrier" );
+		sctk_nodebug( "WAIT in mpc_lowcomm_terminaison_barrier" );
 		sctk_thread_cond_wait( &cond, &lock );
 	}
 
 	sctk_thread_mutex_unlock( &lock );
-	sctk_nodebug( "mpc_mp_terminaison_barrier %d %d DONE", done, local );
+	sctk_nodebug( "mpc_lowcomm_terminaison_barrier %d %d DONE", done, local );
 }
 
 /************************************************************************/
 /*BARRIER                                                               */
 /************************************************************************/
 
-void mpc_mp_barrier( const mpc_mp_communicator_t communicator )
+void mpc_lowcomm_barrier( const mpc_lowcomm_communicator_t communicator )
 {
-	struct mpc_mp_coll_s *tmp;
+	struct mpc_lowcomm_coll_s *tmp;
 
 	if ( communicator != SCTK_COMM_SELF )
 	{
@@ -2030,10 +2030,10 @@ void mpc_mp_barrier( const mpc_mp_communicator_t communicator )
 /************************************************************************/
 /*Broadcast                                                             */
 /************************************************************************/
-void mpc_mp_bcast( void *buffer, const size_t size,
-                   const int root, const mpc_mp_communicator_t communicator )
+void mpc_lowcomm_bcast( void *buffer, const size_t size,
+                   const int root, const mpc_lowcomm_communicator_t communicator )
 {
-	struct mpc_mp_coll_s *tmp;
+	struct mpc_lowcomm_coll_s *tmp;
 
 	if ( communicator != SCTK_COMM_SELF )
 	{
@@ -2045,14 +2045,14 @@ void mpc_mp_bcast( void *buffer, const size_t size,
 /************************************************************************/
 /*Allreduce                                                             */
 /************************************************************************/
-void mpc_mp_allreduce( const void *buffer_in, void *buffer_out,
+void mpc_lowcomm_allreduce( const void *buffer_in, void *buffer_out,
                        const size_t elem_size,
                        const size_t elem_number,
                        sctk_Op_f func,
-                       const mpc_mp_communicator_t communicator,
-                       const mpc_mp_datatype_t data_type )
+                       const mpc_lowcomm_communicator_t communicator,
+                       const mpc_lowcomm_datatype_t data_type )
 {
-	struct mpc_mp_coll_s *tmp;
+	struct mpc_lowcomm_coll_s *tmp;
 
 	if ( communicator != SCTK_COMM_SELF )
 	{
@@ -2071,17 +2071,17 @@ void mpc_mp_allreduce( const void *buffer_in, void *buffer_out,
 /*INIT                                                                  */
 /************************************************************************/
 
-void ( *mpc_mp_coll_init_hook )( mpc_mp_communicator_t id ) = NULL; //_mpc_coll_init_opt;
+void ( *mpc_lowcomm_coll_init_hook )( mpc_lowcomm_communicator_t id ) = NULL; //_mpc_coll_init_opt;
 
 /*Init data structures used for task i*/
-void _mpc_coll_init( mpc_mp_communicator_t id,
-                     void ( *barrier )( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ),
-                     void ( *broadcast )( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ),
-                     void ( *allreduce )( struct mpc_mp_coll_s *, mpc_mp_communicator_t id ) )
+void _mpc_coll_init( mpc_lowcomm_communicator_t id,
+                     void ( *barrier )( struct mpc_lowcomm_coll_s *, mpc_lowcomm_communicator_t id ),
+                     void ( *broadcast )( struct mpc_lowcomm_coll_s *, mpc_lowcomm_communicator_t id ),
+                     void ( *allreduce )( struct mpc_lowcomm_coll_s *, mpc_lowcomm_communicator_t id ) )
 {
-	struct mpc_mp_coll_s *tmp;
-	tmp = sctk_malloc( sizeof( struct mpc_mp_coll_s ) );
-	memset( tmp, 0, sizeof( struct mpc_mp_coll_s ) );
+	struct mpc_lowcomm_coll_s *tmp;
+	tmp = sctk_malloc( sizeof( struct mpc_lowcomm_coll_s ) );
+	memset( tmp, 0, sizeof( struct mpc_lowcomm_coll_s ) );
 	barrier( tmp, id );
 	broadcast( tmp, id );
 	allreduce( tmp, id );
