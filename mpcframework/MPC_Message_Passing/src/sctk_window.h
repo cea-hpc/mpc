@@ -28,7 +28,7 @@
 #include <mpc_common_rank.h>
 
 #include "sctk_rail.h"
-#include "sctk_rdma.h"
+#include "mpc_lowcomm_rdma.h"
 
 #include "sctk_thread.h"
 #include "mpc_lowcomm_types.h"
