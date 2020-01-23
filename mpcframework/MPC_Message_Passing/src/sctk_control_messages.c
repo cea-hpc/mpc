@@ -36,7 +36,7 @@
 #include <sctk_reorder.h>
 #include <sctk_rail.h>
 #include <sctk_alloc.h>
-#include <sctk_window.h>
+#include <mpc_lowcomm_rdma.h>
 #include "sctk_topological_polling.h"
 
 
@@ -86,11 +86,11 @@ void sctk_control_message_task_level(__UNUSED__ int source_process, __UNUSED__ i
 void sctk_control_message_process_level(__UNUSED__ int source_process, __UNUSED__ int source_rank,
                                         char subtype, __UNUSED__ char param, void *data,
                                         __UNUSED__ size_t size) {
-  struct sctk_window_map_request *mr = NULL;
-  struct sctk_window_emulated_RDMA *erma = NULL;
+  struct mpc_lowcomm_rdma_window_map_request *mr = NULL;
+  struct mpc_lowcomm_rdma_window_emulated_RDMA *erma = NULL;
   __UNUSED__ struct sctk_control_message_fence_ctx *fence = NULL;
-  struct sctk_window_emulated_fetch_and_op_RDMA *fop = NULL;
-  struct sctk_window_emulated_CAS_RDMA *fcas = NULL;
+  struct mpc_lowcomm_rdma_window_emulated_fetch_and_op_RDMA *fop = NULL;
+  struct mpc_lowcomm_rdma_window_emulated_CAS_RDMA *fcas = NULL;
   int win_id = -1;
 
   switch (subtype) {
@@ -101,34 +101,34 @@ void sctk_control_message_process_level(__UNUSED__ int source_process, __UNUSED_
 
   case SCTK_PROCESS_RDMA_WIN_MAPTO:
     sctk_nodebug("Received a MAP remote from %d", source_rank);
-    mr = (struct sctk_window_map_request *)data;
-    sctk_window_map_remote_ctrl_msg_handler(mr);
+    mr = (struct mpc_lowcomm_rdma_window_map_request *)data;
+    mpc_lowcomm_rdma_window_map_remote_ctrl_msg_handler(mr);
     break;
 
   case SCTK_PROCESS_RDMA_WIN_RELAX:
     memcpy(&win_id, data, sizeof(int));
     sctk_nodebug("Received a  WIN relax from %d on %d", source_rank, win_id);
-    sctk_window_relax_ctrl_msg_handler(win_id);
+    mpc_lowcomm_rdma_window_relax_ctrl_msg_handler(win_id);
     break;
 
   case SCTK_PROCESS_RDMA_EMULATED_WRITE:
-    erma = (struct sctk_window_emulated_RDMA *)data;
-    sctk_window_RDMA_emulated_write_ctrl_msg_handler(erma);
+    erma = (struct mpc_lowcomm_rdma_window_emulated_RDMA *)data;
+    mpc_lowcomm_rdma_window_RDMA_emulated_write_ctrl_msg_handler(erma);
     break;
 
   case SCTK_PROCESS_RDMA_EMULATED_READ:
-    erma = (struct sctk_window_emulated_RDMA *)data;
-    sctk_window_RDMA_emulated_read_ctrl_msg_handler(erma);
+    erma = (struct mpc_lowcomm_rdma_window_emulated_RDMA *)data;
+    mpc_lowcomm_rdma_window_RDMA_emulated_read_ctrl_msg_handler(erma);
     break;
 
   case SCTK_PROCESS_RDMA_EMULATED_FETCH_AND_OP:
-    fop = (struct sctk_window_emulated_fetch_and_op_RDMA *)data;
-    sctk_window_RDMA_fetch_and_op_ctrl_msg_handler(fop);
+    fop = (struct mpc_lowcomm_rdma_window_emulated_fetch_and_op_RDMA *)data;
+    mpc_lowcomm_rdma_window_RDMA_fetch_and_op_ctrl_msg_handler(fop);
     break;
 
   case SCTK_PROCESS_RDMA_EMULATED_CAS:
-    fcas = (struct sctk_window_emulated_CAS_RDMA *)data;
-    sctk_window_RDMA_CAS_ctrl_msg_handler(fcas);
+    fcas = (struct mpc_lowcomm_rdma_window_emulated_CAS_RDMA *)data;
+    mpc_lowcomm_rdma_window_RDMA_CAS_ctrl_msg_handler(fcas);
     break;
   default:
     not_implemented();

@@ -116,7 +116,7 @@ typedef struct
 #define SCTK_OP_INIT {NULL,NULL}
 
 /** RDMA windows */
-typedef int sctk_window_t;
+typedef int mpc_lowcomm_rdma_window_t;
 
 typedef enum {
   RDMA_SUM,

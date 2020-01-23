@@ -60,12 +60,12 @@ struct mpc_MPI_Win_attr {
   int keyval;
   void *value;
   struct mpc_MPI_Win_keyval keyval_pl;
-  sctk_window_t win;
+  mpc_lowcomm_rdma_window_t win;
 };
 
 struct mpc_MPI_Win_attr *
 mpc_MPI_Win_attr_init(int keyval, void *value,
-                      struct mpc_MPI_Win_keyval *keyval_pl, sctk_window_t win);
+                      struct mpc_MPI_Win_keyval *keyval_pl, mpc_lowcomm_rdma_window_t win);
 
 struct mpc_MPI_Win_attr_ht {
   struct mpc_common_hashtable ht;
@@ -111,7 +111,7 @@ struct mpc_MPI_Win {
 
   int flavor; /*<< MPI Win flavor (as per the standard) */
   int model;  /*<< MPI Win model (as per the standard) */
-  sctk_window_access_mode
+  mpc_lowcomm_rdma_window_access_mode_t
       mode; /*<< MPI Win access_mode (as per the standard) */
 
   void
@@ -128,7 +128,7 @@ struct mpc_MPI_Win {
   size_t win_size; /*<< The size of this win */
   size_t win_disp; /*<< The Displacement unit of this win */
 
-  sctk_window_t *remote_wins; /*<< List of low windows (comm_size) */
+  mpc_lowcomm_rdma_window_t *remote_wins; /*<< List of low windows (comm_size) */
   char
       *tainted_wins; /*<< The data state of the remote wins (comm_size)
                                                   1 == used, 4 == used for write

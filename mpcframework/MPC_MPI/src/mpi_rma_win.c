@@ -295,11 +295,11 @@ int mpc_MPI_Win_release(struct mpc_MPI_Win *win_desc) {
 /* INTERNAL MPI Window Creation Implementation                          */
 /************************************************************************/
 
-static inline int mpc_MPI_Win_do_registration(sctk_window_t internal_win,
+static inline int mpc_MPI_Win_do_registration(mpc_lowcomm_rdma_window_t internal_win,
                                               int WIN_FLAVOR) {
   /* Retrieve the MPI Desc */
   struct mpc_MPI_Win *desc =
-      (struct mpc_MPI_Win *)sctk_window_get_payload(internal_win);
+      (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(internal_win);
 
   if (!desc) {
     sctk_error("Could not retrieve internal payload");
@@ -309,7 +309,7 @@ static inline int mpc_MPI_Win_do_registration(sctk_window_t internal_win,
   /* Make sure that the call is collective */
   PMPI_Barrier(desc->comm);
 
-  sctk_window_access_mode win_mode = SCTK_WIN_ACCESS_AUTO;
+  mpc_lowcomm_rdma_window_access_mode_t win_mode = SCTK_WIN_ACCESS_AUTO;
 
   if (WIN_FLAVOR == MPI_WIN_FLAVOR_DYNAMIC) {
     win_mode = SCTK_WIN_ACCESS_EMULATED;
@@ -318,10 +318,10 @@ static inline int mpc_MPI_Win_do_registration(sctk_window_t internal_win,
   }
 
   int my_win_id = internal_win;
-  struct sctk_window *win = sctk_win_translate(my_win_id);
+  struct mpc_lowcomm_rdma_window *win = sctk_win_translate(my_win_id);
 
   /* Override access mode from buffer knowledge */
-  sctk_window_set_access_mode(win, win_mode);
+  mpc_lowcomm_rdma_window_set_access_mode(win, win_mode);
 
   if ((win->is_emulated || mpc_lowcomm_is_remote_rank(win->owner)) &&
       (win_mode != SCTK_WIN_ACCESS_DIRECT)) {
@@ -347,8 +347,8 @@ static inline int mpc_MPI_Win_do_registration(sctk_window_t internal_win,
    * when the remote caries data -1 if not the array size
    * is the communiticator cardilality */
 
-  struct sctk_window *remote_windows =
-      sctk_calloc(desc->comm_size, sizeof(struct sctk_window));
+  struct mpc_lowcomm_rdma_window *remote_windows =
+      sctk_calloc(desc->comm_size, sizeof(struct mpc_lowcomm_rdma_window));
 
   if (!remote_windows) {
     perror("calloc");
@@ -357,8 +357,8 @@ static inline int mpc_MPI_Win_do_registration(sctk_window_t internal_win,
 
   /* We now exchange the remote windows all at once */
   ret =
-      PMPI_Allgather(win, sizeof(struct sctk_window), MPI_CHAR, remote_windows,
-                     sizeof(struct sctk_window), MPI_CHAR, desc->comm);
+      PMPI_Allgather(win, sizeof(struct mpc_lowcomm_rdma_window), MPI_CHAR, remote_windows,
+                     sizeof(struct mpc_lowcomm_rdma_window), MPI_CHAR, desc->comm);
 
   if (ret != MPI_SUCCESS) {
     return ret;
@@ -378,12 +378,12 @@ static inline int mpc_MPI_Win_do_registration(sctk_window_t internal_win,
     if (desc->remote_wins[i] == -1)
       continue;
 
-    desc->remote_wins[i] = sctk_window_build_from_remote(&remote_windows[i]);
+    desc->remote_wins[i] = mpc_lowcomm_rdma_window_build_from_remote(&remote_windows[i]);
 
-    struct sctk_window *new_win = sctk_win_translate(desc->remote_wins[i]);
+    struct mpc_lowcomm_rdma_window *new_win = sctk_win_translate(desc->remote_wins[i]);
 
     /* Override access mode in function of window type */
-    sctk_window_set_access_mode(new_win, win_mode);
+    mpc_lowcomm_rdma_window_set_access_mode(new_win, win_mode);
 
     if ((new_win->is_emulated || mpc_lowcomm_is_remote_rank(new_win->owner)) &&
         (win_mode != SCTK_WIN_ACCESS_DIRECT)) {
@@ -428,10 +428,10 @@ int __mpc_MPI_Win_create(void *base, MPI_Aint size, int disp_unit,
 
   /* We now create the local window */
 
-  sctk_window_t internal_win = sctk_window_init(base, size, disp_unit, comm);
+  mpc_lowcomm_rdma_window_t internal_win = mpc_lowcomm_rdma_window_init(base, size, disp_unit, comm);
 
   /* Attach the MPI descriptor */
-  sctk_window_set_payload(internal_win, (void *)desc);
+  mpc_lowcomm_rdma_window_set_payload(internal_win, (void *)desc);
 
   /* Save win_id */
   desc->win_id = internal_win;
@@ -499,7 +499,7 @@ int mpc_MPI_Win_allocate(MPI_Aint size, int disp_unit, MPI_Info info,
 
     /* Restore the correct flavor */
     struct mpc_MPI_Win *desc =
-        (struct mpc_MPI_Win *)sctk_window_get_payload(*win);
+        (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(*win);
     assume(desc != NULL);
     desc->flavor = MPI_WIN_FLAVOR_ALLOCATE;
 
@@ -637,7 +637,7 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
 
   /* Store the win segment to allow future releases */
   struct mpc_MPI_Win *desc =
-      (struct mpc_MPI_Win *)sctk_window_get_payload(*win);
+      (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(*win);
   desc->win_segment = win_segment;
   desc->mmaped_size = to_map_size;
 
@@ -653,7 +653,7 @@ int mpc_MPI_Win_free(MPI_Win *win) {
   }
 
   /* Retrieve the MPI Desc */
-  struct sctk_window *low_win = sctk_win_translate(*win);
+  struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(*win);
 
   struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)low_win->payload;
 
@@ -688,7 +688,7 @@ int mpc_MPI_Win_free(MPI_Win *win) {
       continue;
     }
 
-    sctk_window_local_release(desc->remote_wins[i]);
+    mpc_lowcomm_rdma_window_local_release(desc->remote_wins[i]);
   }
 
   int rank;
@@ -736,13 +736,13 @@ int mpc_MPI_Win_free(MPI_Win *win) {
 
   PMPI_Barrier(desc->comm);
 
-  sctk_window_set_payload(*win, NULL);
+  mpc_lowcomm_rdma_window_set_payload(*win, NULL);
 
   mpc_MPI_Win_release(desc);
 
   sctk_info("FREED win %d", *win);
 
-  sctk_window_local_release(*win);
+  mpc_lowcomm_rdma_window_local_release(*win);
 
   *win = MPI_WIN_NULL;
 
@@ -755,7 +755,7 @@ int mpc_MPI_Win_free(MPI_Win *win) {
 
 int mpc_PMPI_Win_get_group(MPI_Win win, MPI_Group *group) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   if (!desc)
     return MPI_ERR_INTERN;
@@ -770,7 +770,7 @@ int mpc_PMPI_Win_get_group(MPI_Win win, MPI_Group *group) {
 int mpc_MPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size,
                              int *disp_unit, void *baseptr) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   if (!desc)
     return MPI_ERR_INTERN;
@@ -801,7 +801,7 @@ int mpc_MPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size,
 
   int remote_win = mpc_MPI_win_get_remote_win(desc, rank, 0);
 
-  struct sctk_window *low_win = NULL;
+  struct mpc_lowcomm_rdma_window *low_win = NULL;
 
   if (remote_win < 0) {
     /* Empty window */
@@ -888,7 +888,7 @@ mpc_MPI_Win_keyval_init(MPI_Win_copy_attr_function *copy_fn,
 
 struct mpc_MPI_Win_attr *
 mpc_MPI_Win_attr_init(int keyval, void *value,
-                      struct mpc_MPI_Win_keyval *keyval_pl, sctk_window_t win) {
+                      struct mpc_MPI_Win_keyval *keyval_pl, mpc_lowcomm_rdma_window_t win) {
   struct mpc_MPI_Win_attr *ret =
       sctk_calloc(1, sizeof(struct mpc_MPI_Win_attr));
 
@@ -961,7 +961,7 @@ int mpc_MPI_Win_set_attr(MPI_Win win, int keyval, void *attr_val) {
   }
 
   /* Retrieve win desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   if (!desc) {
     return MPI_ERR_WIN;
@@ -1002,13 +1002,13 @@ int mpc_MPI_Win_get_attr(MPI_Win win, int keyval, void *attr_val, int *flag) {
   }
 
   /* Retrieve win desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   if (!desc) {
     return MPI_ERR_WIN;
   }
 
-  struct sctk_window *low_win = sctk_win_translate(win);
+  struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(win);
   uintptr_t val;
 
   /* First handle special values */
@@ -1067,7 +1067,7 @@ int mpc_MPI_Win_delete_attr(MPI_Win win, int keyval) {
   win_keyval_ht_init_once();
 
   /* Retrieve win desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   if (!desc) {
     return MPI_ERR_WIN;

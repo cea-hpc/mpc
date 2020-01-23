@@ -20478,7 +20478,7 @@ int PMPI_Win_call_errhandler(MPI_Win win, int errorcode) {
 
 int PMPI_Win_set_info(MPI_Win win, MPI_Info info) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
   if (!desc)
     return MPI_ERR_ARG;
 
@@ -20489,7 +20489,7 @@ int PMPI_Win_set_info(MPI_Win win, MPI_Info info) {
 
 int PMPI_Win_get_info(MPI_Win win, MPI_Info *info) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   if (!desc)
     return MPI_ERR_ARG;
@@ -20503,7 +20503,7 @@ int PMPI_Win_get_info(MPI_Win win, MPI_Info *info) {
 
 int PMPI_Win_set_name(MPI_Win win, const char *name) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   if (!desc) {
     return MPI_ERR_ARG;
@@ -20521,7 +20521,7 @@ int PMPI_Win_set_name(MPI_Win win, const char *name) {
 
 int PMPI_Win_get_name(MPI_Win win, char *name, int *len) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   if (!desc)
     return MPI_ERR_ARG;

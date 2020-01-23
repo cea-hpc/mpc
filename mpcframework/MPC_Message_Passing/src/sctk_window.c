@@ -47,7 +47,7 @@ static inline int mpc_MPI_allocmem_is_in_pool(void *ptr) { return 0; }
 OPA_int_t __rma_generation;
 
 void sctk_win_translation_init(struct sctk_win_translation *wt,
-                               struct sctk_window *win) {
+                               struct mpc_lowcomm_rdma_window *win) {
   wt->win = win;
   wt->generation = OPA_load_int(&__rma_generation);
 }
@@ -56,17 +56,17 @@ static struct mpc_common_hashtable ___window_hash_table;
 
 OPA_int_t __current_win_id;
 
-void sctk_window_init_ht() {
+void mpc_lowcomm_rdma_window_init_ht() {
   mpc_common_hashtable_init(&___window_hash_table, 512);
   OPA_store_int(&__current_win_id, 1);
 }
 
-void sctk_window_release_ht() {
+void mpc_lowcomm_rdma_window_release_ht() {
   void *var = NULL;
 
   MPC_HT_ITER(&___window_hash_table, var)
 
-  struct sctk_window *win = (struct sctk_window *)var;
+  struct mpc_lowcomm_rdma_window *win = (struct mpc_lowcomm_rdma_window *)var;
 
   sctk_info("Unfreed window on comm %d, size %ld, disp_unit %ld", win->comm,
             win->size, win->disp_unit);
@@ -80,11 +80,11 @@ void sctk_window_release_ht() {
 
 /* The ID to win translation HT */
 
-static struct sctk_window * sctk_win_register()
+static struct mpc_lowcomm_rdma_window * sctk_win_register()
 {
-  struct sctk_window *new = sctk_malloc(sizeof(struct sctk_window));
+  struct mpc_lowcomm_rdma_window *new = sctk_malloc(sizeof(struct mpc_lowcomm_rdma_window));
   assume(new);
-  memset(new, 0, sizeof(struct sctk_window));
+  memset(new, 0, sizeof(struct mpc_lowcomm_rdma_window));
 
   int new_id = OPA_fetch_and_add_int(&__current_win_id, 1);
 
@@ -99,8 +99,8 @@ static struct sctk_window * sctk_win_register()
 
 __thread struct sctk_win_translation __forward_translate = {0};
 
-struct sctk_window *__sctk_win_translate(sctk_window_t win_id) {
-  struct sctk_window *ret = NULL;
+struct mpc_lowcomm_rdma_window *__sctk_win_translate(mpc_lowcomm_rdma_window_t win_id) {
+  struct mpc_lowcomm_rdma_window *ret = NULL;
 
   ret = mpc_common_hashtable_get(&___window_hash_table, win_id);
 
@@ -117,7 +117,7 @@ struct sctk_window *__sctk_win_translate(sctk_window_t win_id) {
   return ret;
 }
 
-static void sctk_win_delete( struct sctk_window * win )
+static void sctk_win_delete( struct mpc_lowcomm_rdma_window * win )
 {
   if (!win)
     return;
@@ -131,7 +131,7 @@ static void sctk_win_delete( struct sctk_window * win )
   sctk_handle_free(id, SCTK_HANDLE_WIN);
 
   sctk_free(win->incoming_emulated_rma);
-  memset(win, 0, sizeof(struct sctk_window));
+  memset(win, 0, sizeof(struct mpc_lowcomm_rdma_window));
   sctk_free(win);
 }
 
@@ -139,7 +139,7 @@ static void sctk_win_delete( struct sctk_window * win )
 /* Definition of an RDMA window                                         */
 /************************************************************************/
 
-static void _sctk_win_acquire( struct sctk_window * win )
+static void _sctk_win_acquire( struct mpc_lowcomm_rdma_window * win )
 {
 	mpc_common_spinlock_lock( &win->lock );
 
@@ -148,9 +148,9 @@ static void _sctk_win_acquire( struct sctk_window * win )
         mpc_common_spinlock_unlock(&win->lock);
 }
 
-void sctk_win_acquire( sctk_window_t win_id )
+void sctk_win_acquire( mpc_lowcomm_rdma_window_t win_id )
 {
-	struct sctk_window * win = sctk_win_translate( win_id );
+	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( win_id );
 
         if (!win) {
           sctk_fatal("No such window ID");
@@ -160,7 +160,7 @@ void sctk_win_acquire( sctk_window_t win_id )
 }
 
 
-static int _sctk_win_relax( struct sctk_window * win )
+static int _sctk_win_relax( struct mpc_lowcomm_rdma_window * win )
 {
 	sctk_nodebug("%s win_id %d on %d", __FUNCTION__, win->id, mpc_common_get_task_rank() );
 	int ret = 0;
@@ -176,10 +176,10 @@ static int _sctk_win_relax( struct sctk_window * win )
 }
 
 
-int sctk_win_relax( sctk_window_t win_id )
+int sctk_win_relax( mpc_lowcomm_rdma_window_t win_id )
 {
 	sctk_error("%s", __FUNCTION__ );
-	struct sctk_window * win = sctk_win_translate( win_id );
+	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( win_id );
 
         if (!win) {
           sctk_fatal("No such window ID");
@@ -188,9 +188,9 @@ int sctk_win_relax( sctk_window_t win_id )
         return _sctk_win_relax(win);
 }
 
-sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, mpc_lowcomm_communicator_t comm )
+mpc_lowcomm_rdma_window_t mpc_lowcomm_rdma_window_init( void *addr, size_t size, size_t disp_unit, mpc_lowcomm_communicator_t comm )
 {
-	struct sctk_window * win = sctk_win_register();
+	struct mpc_lowcomm_rdma_window * win = sctk_win_register();
 
         /* We are local and therefore have no remote id */
         win->remote_id = -1;
@@ -243,9 +243,9 @@ sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, mpc_l
 }
 
 
-void sctk_window_release( sctk_window_t win_id  )
+void mpc_lowcomm_rdma_window_release( mpc_lowcomm_rdma_window_t win_id  )
 {
-	struct sctk_window * win = sctk_win_translate( win_id );
+	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( win_id );
 
         sctk_nodebug("%s %p win_id %d on %d RC %d", __FUNCTION__, win, win_id,
                      mpc_common_get_task_rank(), win->refcounter);
@@ -286,11 +286,11 @@ void sctk_window_release( sctk_window_t win_id  )
 
         /* If we are at "0" we free the window */
 
-        sctk_window_local_release(win_id);
+        mpc_lowcomm_rdma_window_local_release(win_id);
 }
 
-void sctk_window_local_release(sctk_window_t win_id) {
-  struct sctk_window *win = sctk_win_translate(win_id);
+void mpc_lowcomm_rdma_window_local_release(mpc_lowcomm_rdma_window_t win_id) {
+  struct mpc_lowcomm_rdma_window *win = sctk_win_translate(win_id);
 
   if (!win) {
     sctk_fatal("No such window ID");
@@ -308,7 +308,7 @@ void sctk_window_local_release(sctk_window_t win_id) {
   sctk_win_delete(win);
 }
 
-int sctk_window_build_from_remote(struct sctk_window *remote_win_data) {
+int mpc_lowcomm_rdma_window_build_from_remote(struct mpc_lowcomm_rdma_window *remote_win_data) {
   if (remote_win_data->id < 0) {
     /* No such remote */
     sctk_error("NO SUCH remote");
@@ -318,7 +318,7 @@ int sctk_window_build_from_remote(struct sctk_window *remote_win_data) {
   /* If we are here we received the remote and it existed */
 
   /* Create a new window */
-  struct sctk_window *new_win = sctk_win_register();
+  struct mpc_lowcomm_rdma_window *new_win = sctk_win_register();
 
   int local_id = new_win->id;
   int remote_id = remote_win_data->id;
@@ -327,7 +327,7 @@ int sctk_window_build_from_remote(struct sctk_window *remote_win_data) {
                new_win);
 
   /* Copy remote inside it */
-  memcpy(new_win, remote_win_data, sizeof(struct sctk_window));
+  memcpy(new_win, remote_win_data, sizeof(struct mpc_lowcomm_rdma_window));
 
   /* Update refcounting (1 as it is a window mirror) */
   new_win->refcounter = 1;
@@ -357,15 +357,15 @@ int sctk_window_build_from_remote(struct sctk_window *remote_win_data) {
   return new_win->id;
 }
 
-int sctk_window_map_remote(int remote_rank, mpc_lowcomm_communicator_t comm,
-                           sctk_window_t win_id) {
+int mpc_lowcomm_rdma_window_map_remote(int remote_rank, mpc_lowcomm_communicator_t comm,
+                           mpc_lowcomm_rdma_window_t win_id) {
   sctk_nodebug("%s winid is %d", __FUNCTION__, win_id);
 
-  struct sctk_window_map_request mr;
-  sctk_window_map_request_init(&mr, remote_rank, win_id);
+  struct mpc_lowcomm_rdma_window_map_request mr;
+  mpc_lowcomm_rdma_window_map_request_init(&mr, remote_rank, win_id);
 
-  struct sctk_window remote_win_data;
-  memset(&remote_win_data, 0, sizeof(struct sctk_window));
+  struct mpc_lowcomm_rdma_window remote_win_data;
+  memset(&remote_win_data, 0, sizeof(struct mpc_lowcomm_rdma_window));
 
   /* Case where we are local */
   if ((mr.source_rank == mr.remote_rank) ||
@@ -373,7 +373,7 @@ int sctk_window_map_remote(int remote_rank, mpc_lowcomm_communicator_t comm,
           comm, mr.remote_rank)))) /* If the target is in the same proces
                                     * just work locally */
   {
-    struct sctk_window *win = sctk_win_translate(win_id);
+    struct mpc_lowcomm_rdma_window *win = sctk_win_translate(win_id);
 
     if (!win) {
       /* No such window */
@@ -381,12 +381,12 @@ int sctk_window_map_remote(int remote_rank, mpc_lowcomm_communicator_t comm,
       return -1;
     }
 
-    memcpy(&remote_win_data, win, sizeof(struct sctk_window));
+    memcpy(&remote_win_data, win, sizeof(struct mpc_lowcomm_rdma_window));
   } else {
     /* And now prepare to receive the remote win data */
     mpc_lowcomm_request_t req;
     mpc_lowcomm_irecv_class(remote_rank, &remote_win_data,
-                             sizeof(struct sctk_window), TAG_RDMA_MAP, comm,
+                             sizeof(struct mpc_lowcomm_rdma_window), TAG_RDMA_MAP, comm,
                              MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req);
 
     /* Send a map request to remote task */
@@ -395,19 +395,19 @@ int sctk_window_map_remote(int remote_rank, mpc_lowcomm_communicator_t comm,
     sctk_control_messages_send_process(
         sctk_get_process_rank_from_task_rank(cw_rank),
         SCTK_PROCESS_RDMA_WIN_MAPTO, 0, &mr,
-        sizeof(struct sctk_window_map_request));
+        sizeof(struct mpc_lowcomm_rdma_window_map_request));
 
     mpc_lowcomm_request_wait(&req);
   }
 
-  return sctk_window_build_from_remote(&remote_win_data);
+  return mpc_lowcomm_rdma_window_build_from_remote(&remote_win_data);
 }
 
 /* Control messages handler */
 
-void sctk_window_map_remote_ctrl_msg_handler( struct sctk_window_map_request * mr )
+void mpc_lowcomm_rdma_window_map_remote_ctrl_msg_handler( struct mpc_lowcomm_rdma_window_map_request * mr )
 {
-	struct sctk_window * win = sctk_win_translate( mr->win_id );
+	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( mr->win_id );
 
 	/* Note that here we are called outside of a task context
 	 * therefore we have to manually retrieve the remote task
@@ -419,13 +419,13 @@ void sctk_window_map_remote_ctrl_msg_handler( struct sctk_window_map_request * m
         if (!win) {
           /* We did not find the requested win
            * send a dummy window with a negative ID*/
-          struct sctk_window dummy_win;
-          memset(&dummy_win, 0, sizeof(struct sctk_window));
+          struct mpc_lowcomm_rdma_window dummy_win;
+          memset(&dummy_win, 0, sizeof(struct mpc_lowcomm_rdma_window));
           dummy_win.id = -1;
 
           /* Send the dummy win */
           mpc_lowcomm_isend_class_src(mr->remote_rank, mr->source_rank,
-                                       &dummy_win, sizeof(struct sctk_window),
+                                       &dummy_win, sizeof(struct mpc_lowcomm_rdma_window),
                                        TAG_RDMA_MAP, win->comm,
                                        MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req);
           // mpc_lowcomm_request_wait ( &req );
@@ -443,16 +443,16 @@ void sctk_window_map_remote_ctrl_msg_handler( struct sctk_window_map_request * m
         /* Send local win infos to remote */
 
         mpc_lowcomm_isend_class_src(
-            mr->remote_rank, mr->source_rank, win, sizeof(struct sctk_window),
+            mr->remote_rank, mr->source_rank, win, sizeof(struct mpc_lowcomm_rdma_window),
             TAG_RDMA_MAP, win->comm, MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req);
         /* DONE */
 
         mpc_lowcomm_request_wait(&req);
 }
 
-void sctk_window_relax_ctrl_msg_handler( sctk_window_t win_id )
+void mpc_lowcomm_rdma_window_relax_ctrl_msg_handler( mpc_lowcomm_rdma_window_t win_id )
 {
-	struct sctk_window * win = sctk_win_translate( win_id );
+	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( win_id );
 
 	sctk_nodebug("%s win is %p target is %d (RC %d)", __FUNCTION__, win, win_id , win->refcounter);
 
@@ -461,7 +461,7 @@ void sctk_window_relax_ctrl_msg_handler( sctk_window_t win_id )
           return;
         }
 
-        sctk_window_release(win_id);
+        mpc_lowcomm_rdma_window_release(win_id);
 }
 
 
@@ -474,7 +474,7 @@ void sctk_window_relax_ctrl_msg_handler( sctk_window_t win_id )
 int mpc_MPI_notify_request_counter(mpc_lowcomm_request_t *req);
 #endif
 
-void sctk_window_complete_request(mpc_lowcomm_request_t *req) {
+void mpc_lowcomm_rdma_window_complete_request(mpc_lowcomm_request_t *req) {
   req->completion_flag = 1;
 
 #ifdef MPC_MPI
@@ -490,14 +490,14 @@ void sctk_window_complete_request(mpc_lowcomm_request_t *req) {
 /* WRITE ======================= */
 
 #ifdef MPC_MPI
-void mpc_MPI_Win_notify_dest_ctx_counter(sctk_window_t win);
-void mpc_MPI_Win_notify_src_ctx_counter(sctk_window_t win);
+void mpc_MPI_Win_notify_dest_ctx_counter(mpc_lowcomm_rdma_window_t win);
+void mpc_MPI_Win_notify_src_ctx_counter(mpc_lowcomm_rdma_window_t win);
 #endif
 
-void sctk_window_RDMA_emulated_write_ctrl_msg_handler(
-    struct sctk_window_emulated_RDMA *erma) {
+void mpc_lowcomm_rdma_window_RDMA_emulated_write_ctrl_msg_handler(
+    struct mpc_lowcomm_rdma_window_emulated_RDMA *erma) {
 
-  struct sctk_window *win = sctk_win_translate(erma->win_id);
+  struct mpc_lowcomm_rdma_window *win = sctk_win_translate(erma->win_id);
 
   if (!win) {
     sctk_fatal("No such window in emulated RDMA write");
@@ -524,7 +524,7 @@ void sctk_window_RDMA_emulated_write_ctrl_msg_handler(
 #endif
 }
 
-static inline void sctk_window_RDMA_write_local(struct sctk_window *win,
+static inline void mpc_lowcomm_rdma_window_RDMA_write_local(struct mpc_lowcomm_rdma_window *win,
                                                 void *src_addr, size_t size,
                                                 size_t dest_offset) {
 
@@ -539,7 +539,7 @@ static inline void sctk_window_RDMA_write_local(struct sctk_window *win,
   memcpy(win->start_addr + offset, src_addr, size);
 }
 
-static inline void sctk_window_RDMA_write_net(struct sctk_window *win,
+static inline void mpc_lowcomm_rdma_window_RDMA_write_net(struct mpc_lowcomm_rdma_window *win,
                                               sctk_rail_pin_ctx_t *src_pin,
                                               void *src_addr, size_t size,
                                               size_t dest_offset,
@@ -577,12 +577,12 @@ static inline void sctk_window_RDMA_write_net(struct sctk_window *win,
                         win->pin.list, size);
 }
 
-static inline void __sctk_window_RDMA_write(sctk_window_t win_id,
+static inline void __mpc_lowcomm_rdma_window_RDMA_write(mpc_lowcomm_rdma_window_t win_id,
                                             sctk_rail_pin_ctx_t *src_pin,
                                             void *src_addr, size_t size,
                                             size_t dest_offset,
                                             mpc_lowcomm_request_t *req) {
-  struct sctk_window *win = sctk_win_translate(win_id);
+  struct mpc_lowcomm_rdma_window *win = sctk_win_translate(win_id);
 
   mpc_lowcomm_request_init(req, win->comm, REQUEST_RDMA);
 
@@ -599,15 +599,15 @@ static inline void __sctk_window_RDMA_write(sctk_window_t win_id,
       (win->access_mode == SCTK_WIN_ACCESS_DIRECT) /* Forced direct mode */
       || (!mpc_lowcomm_is_remote_rank(win->owner)) /* Same process */) {
     /* Shared Memory */
-    sctk_window_RDMA_write_local(win, src_addr, size, dest_offset);
-    sctk_window_complete_request(req);
+    mpc_lowcomm_rdma_window_RDMA_write_local(win, src_addr, size, dest_offset);
+    mpc_lowcomm_rdma_window_complete_request(req);
     /* Done */
     return;
   } else if ((win->is_emulated) ||
              (win->access_mode == SCTK_WIN_ACCESS_EMULATED)) {
     /* Emulated write using control messages */
-    struct sctk_window_emulated_RDMA erma;
-    sctk_window_emulated_RDMA_init(&erma, win->owner, dest_offset, size,
+    struct mpc_lowcomm_rdma_window_emulated_RDMA erma;
+    mpc_lowcomm_rdma_window_emulated_RDMA_init(&erma, win->owner, dest_offset, size,
                                    win->remote_id);
 
     mpc_lowcomm_request_t data_req;
@@ -619,7 +619,7 @@ static inline void __sctk_window_RDMA_write(sctk_window_t win_id,
     sctk_control_messages_send_process(
         sctk_get_process_rank_from_task_rank(win->owner),
         SCTK_PROCESS_RDMA_EMULATED_WRITE, 0, &erma,
-        sizeof(struct sctk_window_emulated_RDMA));
+        sizeof(struct mpc_lowcomm_rdma_window_emulated_RDMA));
 
 #ifdef MPC_MPI
     mpc_MPI_Win_notify_src_ctx_counter(win->id);
@@ -629,22 +629,22 @@ static inline void __sctk_window_RDMA_write(sctk_window_t win_id,
 
     OPA_incr_int(&win->outgoing_emulated_rma);
 
-    sctk_window_complete_request(req);
+    mpc_lowcomm_rdma_window_complete_request(req);
   } else {
-    sctk_window_RDMA_write_net(win, src_pin, src_addr, size, dest_offset, req);
+    mpc_lowcomm_rdma_window_RDMA_write_net(win, src_pin, src_addr, size, dest_offset, req);
   }
 }
 
 
-void sctk_window_RDMA_write( sctk_window_t win_id, void * src_addr, size_t size, size_t dest_offset, mpc_lowcomm_request_t  * req  )
+void mpc_lowcomm_rdma_window_RDMA_write( mpc_lowcomm_rdma_window_t win_id, void * src_addr, size_t size, size_t dest_offset, mpc_lowcomm_request_t  * req  )
 {
-	__sctk_window_RDMA_write( win_id, NULL, src_addr, size, dest_offset,  req  );
+	__mpc_lowcomm_rdma_window_RDMA_write( win_id, NULL, src_addr, size, dest_offset,  req  );
 }
 
 
-void sctk_window_RDMA_write_win( sctk_window_t src_win_id, size_t src_offset, size_t size,  sctk_window_t dest_win_id, size_t dest_offset, mpc_lowcomm_request_t  * req  )
+void mpc_lowcomm_rdma_window_RDMA_write_win( mpc_lowcomm_rdma_window_t src_win_id, size_t src_offset, size_t size,  mpc_lowcomm_rdma_window_t dest_win_id, size_t dest_offset, mpc_lowcomm_request_t  * req  )
 {
-	struct sctk_window * src_win = sctk_win_translate( src_win_id );
+	struct mpc_lowcomm_rdma_window * src_win = sctk_win_translate( src_win_id );
 
 	if( !src_win )
 	{
@@ -659,7 +659,7 @@ void sctk_window_RDMA_write_win( sctk_window_t src_win_id, size_t src_offset, si
           sctk_fatal("Error RDMA write operation overflows the window");
         }
 
-        __sctk_window_RDMA_write(dest_win_id, &src_win->pin, src_addr, size,
+        __mpc_lowcomm_rdma_window_RDMA_write(dest_win_id, &src_win->pin, src_addr, size,
                                  dest_offset, req);
 }
 
@@ -669,9 +669,9 @@ void sctk_window_RDMA_write_win( sctk_window_t src_win_id, size_t src_offset, si
 
 /* READ ======================= */
 
-void sctk_window_RDMA_emulated_read_ctrl_msg_handler( struct sctk_window_emulated_RDMA *erma )
+void mpc_lowcomm_rdma_window_RDMA_emulated_read_ctrl_msg_handler( struct mpc_lowcomm_rdma_window_emulated_RDMA *erma )
 {
-	struct sctk_window * win = sctk_win_translate( erma->win_id );
+	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( erma->win_id );
 
         if (!win) {
           sctk_fatal("No such window in emulated RDMA write");
@@ -695,7 +695,7 @@ void sctk_window_RDMA_emulated_read_ctrl_msg_handler( struct sctk_window_emulate
 }
 
 
-void sctk_window_RDMA_read_local( struct sctk_window * win,  void * dest_addr, size_t size, size_t src_offset )
+void mpc_lowcomm_rdma_window_RDMA_read_local( struct mpc_lowcomm_rdma_window * win,  void * dest_addr, size_t size, size_t src_offset )
 {
 	size_t offset = src_offset * win->disp_unit;
 
@@ -708,7 +708,7 @@ void sctk_window_RDMA_read_local( struct sctk_window * win,  void * dest_addr, s
         memcpy(dest_addr, win->start_addr + offset, size);
 }
 
-void sctk_window_RDMA_read_net( struct sctk_window * win, sctk_rail_pin_ctx_t * dest_pin, void * dest_addr, size_t size, size_t src_offset, mpc_lowcomm_request_t  * req  )
+void mpc_lowcomm_rdma_window_RDMA_read_net( struct mpc_lowcomm_rdma_window * win, sctk_rail_pin_ctx_t * dest_pin, void * dest_addr, size_t size, size_t src_offset, mpc_lowcomm_request_t  * req  )
 {
 
   sctk_rail_info_t *rdma_rail = sctk_rail_get_rdma();
@@ -744,9 +744,9 @@ void sctk_window_RDMA_read_net( struct sctk_window * win, sctk_rail_pin_ctx_t * 
                        dest_pin->list, size);
 }
 
-void __sctk_window_RDMA_read( sctk_window_t win_id, sctk_rail_pin_ctx_t * dest_pin, void * dest_addr, size_t size, size_t src_offset, mpc_lowcomm_request_t  * req )
+void __mpc_lowcomm_rdma_window_RDMA_read( mpc_lowcomm_rdma_window_t win_id, sctk_rail_pin_ctx_t * dest_pin, void * dest_addr, size_t size, size_t src_offset, mpc_lowcomm_request_t  * req )
 {
-	struct sctk_window * win = sctk_win_translate( win_id );
+	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( win_id );
 
         mpc_lowcomm_request_init(req, win->comm, REQUEST_RDMA);
 
@@ -766,14 +766,14 @@ void __sctk_window_RDMA_read( sctk_window_t win_id, sctk_rail_pin_ctx_t * dest_p
              SCTK_WIN_ACCESS_DIRECT) /* Forced direct mode */
             || (!mpc_lowcomm_is_remote_rank(win->owner)) /* Same process */) {
           /* Shared Memory */
-          sctk_window_RDMA_read_local(win, dest_addr, size, src_offset);
-          sctk_window_complete_request(req);
+          mpc_lowcomm_rdma_window_RDMA_read_local(win, dest_addr, size, src_offset);
+          mpc_lowcomm_rdma_window_complete_request(req);
           return;
         } else if ((win->is_emulated) ||
                    (win->access_mode == SCTK_WIN_ACCESS_EMULATED)) {
           /* Emulated write using control messages */
-          struct sctk_window_emulated_RDMA erma;
-          sctk_window_emulated_RDMA_init(&erma, win->owner, src_offset, size,
+          struct mpc_lowcomm_rdma_window_emulated_RDMA erma;
+          mpc_lowcomm_rdma_window_emulated_RDMA_init(&erma, win->owner, src_offset, size,
                                          win->remote_id);
           /* Note that we store the data transfer req in the request */
           mpc_lowcomm_irecv_class(win->comm_rank, dest_addr, size,
@@ -783,23 +783,23 @@ void __sctk_window_RDMA_read( sctk_window_t win_id, sctk_rail_pin_ctx_t * dest_p
           sctk_control_messages_send_process(
               sctk_get_process_rank_from_task_rank(win->owner),
               SCTK_PROCESS_RDMA_EMULATED_READ, 0, &erma,
-              sizeof(struct sctk_window_emulated_RDMA));
+              sizeof(struct mpc_lowcomm_rdma_window_emulated_RDMA));
 
         } else {
-          sctk_window_RDMA_read_net(win, dest_pin, dest_addr, size, src_offset,
+          mpc_lowcomm_rdma_window_RDMA_read_net(win, dest_pin, dest_addr, size, src_offset,
                                     req);
         }
 }
 
-void sctk_window_RDMA_read( sctk_window_t win_id, void * dest_addr, size_t size, size_t src_offset, mpc_lowcomm_request_t  * req )
+void mpc_lowcomm_rdma_window_RDMA_read( mpc_lowcomm_rdma_window_t win_id, void * dest_addr, size_t size, size_t src_offset, mpc_lowcomm_request_t  * req )
 {
-	__sctk_window_RDMA_read( win_id, NULL, dest_addr, size, src_offset, req );
+	__mpc_lowcomm_rdma_window_RDMA_read( win_id, NULL, dest_addr, size, src_offset, req );
 }
 
 
-void sctk_window_RDMA_read_win( sctk_window_t src_win_id, size_t src_offset, size_t size, sctk_window_t dest_win_id, size_t dest_offset, mpc_lowcomm_request_t  * req )
+void mpc_lowcomm_rdma_window_RDMA_read_win( mpc_lowcomm_rdma_window_t src_win_id, size_t src_offset, size_t size, mpc_lowcomm_rdma_window_t dest_win_id, size_t dest_offset, mpc_lowcomm_request_t  * req )
 {
-	struct sctk_window * dest_win = sctk_win_translate( dest_win_id );
+	struct mpc_lowcomm_rdma_window * dest_win = sctk_win_translate( dest_win_id );
 
 	if( !dest_win )
 	{
@@ -815,7 +815,7 @@ void sctk_window_RDMA_read_win( sctk_window_t src_win_id, size_t src_offset, siz
           sctk_fatal("Error RDMA read operation overflows the window");
         }
 
-        __sctk_window_RDMA_read(src_win_id, &dest_win->pin, dest_addr, size,
+        __mpc_lowcomm_rdma_window_RDMA_read(src_win_id, &dest_win->pin, dest_addr, size,
                                 src_offset, req);
 }
 
@@ -869,7 +869,7 @@ size_t RDMA_type_size( RDMA_type type )
 		return -1;
 }
 
-static inline void sctk_window_fetch_and_op_operate_int(RDMA_op op, void *add,
+static inline void mpc_lowcomm_rdma_window_fetch_and_op_operate_int(RDMA_op op, void *add,
                                                         void *src, void *dest) {
   int result = 0;
 
@@ -957,7 +957,7 @@ static inline void sctk_window_fetch_and_op_operate_int(RDMA_op op, void *add,
   static mpc_common_spinlock_t __RDMA_OP_##type##type2##type3##_lock =               \
       SCTK_SPINLOCK_INITIALIZER;                                               \
                                                                                \
-  static inline void sctk_window_fetch_and_op_operate_##type##type2##type3##_( \
+  static inline void mpc_lowcomm_rdma_window_fetch_and_op_operate_##type##type2##type3##_( \
       RDMA_op op, void *add, void *src, void *dest) {                          \
     type type2 type3 *to_add = (type type2 type3 *)add;                        \
     type type2 type3 *src_addr = (type type2 type3 *)src;                      \
@@ -1025,7 +1025,7 @@ static inline void sctk_window_fetch_and_op_operate_int(RDMA_op op, void *add,
   static mpc_common_spinlock_t __RDMA_OP_##type##type2##_lock =                      \
       SCTK_SPINLOCK_INITIALIZER;                                               \
                                                                                \
-  static inline void sctk_window_fetch_and_op_operate_##type##type2##_(        \
+  static inline void mpc_lowcomm_rdma_window_fetch_and_op_operate_##type##type2##_(        \
       RDMA_op op, void *add, void *src, void *dest) {                          \
     type type2 *to_add = (type type2 *)add;                                    \
     type type2 *src_addr = (type type2 *)src;                                  \
@@ -1106,69 +1106,69 @@ RDMA_OP_def(unsigned, short, )
 RDMA_OP_def(sctk_wchar_t, , )
 
 
-                        static inline void sctk_window_fetch_and_op_operate(
+                        static inline void mpc_lowcomm_rdma_window_fetch_and_op_operate(
                             RDMA_op op, RDMA_type type, void *add, void *src,
                             void *dest) {
   switch (type) {
   case RDMA_TYPE_CHAR:
-    sctk_window_fetch_and_op_operate_char_(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_char_(op, add, src, dest);
     return;
   case RDMA_TYPE_DOUBLE:
-    sctk_window_fetch_and_op_operate_double_(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_double_(op, add, src, dest);
     return;
   case RDMA_TYPE_FLOAT:
-    sctk_window_fetch_and_op_operate_float_(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_float_(op, add, src, dest);
     return;
   case RDMA_TYPE_INT:
-    sctk_window_fetch_and_op_operate_int(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_int(op, add, src, dest);
     return;
   case RDMA_TYPE_LONG:
-    sctk_window_fetch_and_op_operate_long_(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_long_(op, add, src, dest);
     return;
   case RDMA_TYPE_LONG_DOUBLE:
-    sctk_window_fetch_and_op_operate_longdouble_(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_longdouble_(op, add, src, dest);
     return;
   case RDMA_TYPE_LONG_LONG:
-    sctk_window_fetch_and_op_operate_longlong_(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_longlong_(op, add, src, dest);
     return;
   case RDMA_TYPE_LONG_LONG_INT:
-    sctk_window_fetch_and_op_operate_longlongint_(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_longlongint_(op, add, src, dest);
     return;
   case RDMA_TYPE_SHORT:
-    sctk_window_fetch_and_op_operate_short_(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_short_(op, add, src, dest);
     return;
   case RDMA_TYPE_SIGNED_CHAR:
-    sctk_window_fetch_and_op_operate_signedchar_(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_signedchar_(op, add, src, dest);
     return;
   case RDMA_TYPE_UNSIGNED:
-    sctk_window_fetch_and_op_operate_unsigned_(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_unsigned_(op, add, src, dest);
     return;
   case RDMA_TYPE_UNSIGNED_CHAR:
-    sctk_window_fetch_and_op_operate_unsignedchar_(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_unsignedchar_(op, add, src, dest);
     return;
   case RDMA_TYPE_UNSIGNED_LONG:
-    sctk_window_fetch_and_op_operate_long_(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_long_(op, add, src, dest);
     return;
   case RDMA_TYPE_UNSIGNED_LONG_LONG:
-    sctk_window_fetch_and_op_operate_unsignedlonglong_(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_unsignedlonglong_(op, add, src, dest);
     return;
   case RDMA_TYPE_UNSIGNED_SHORT:
     return;
-    sctk_window_fetch_and_op_operate_unsignedshort_(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_unsignedshort_(op, add, src, dest);
   case RDMA_TYPE_WCHAR:
-    sctk_window_fetch_and_op_operate_sctk_wchar_t_(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_sctk_wchar_t_(op, add, src, dest);
     return;
   case RDMA_TYPE_AINT:
-    sctk_window_fetch_and_op_operate_unsignedlonglong_(op, add, src, dest);
+    mpc_lowcomm_rdma_window_fetch_and_op_operate_unsignedlonglong_(op, add, src, dest);
     return;
   }
 }
 
 
 
-void sctk_window_RDMA_fetch_and_op_ctrl_msg_handler( struct sctk_window_emulated_fetch_and_op_RDMA *fop )
+void mpc_lowcomm_rdma_window_RDMA_fetch_and_op_ctrl_msg_handler( struct mpc_lowcomm_rdma_window_emulated_fetch_and_op_RDMA *fop )
 {
-	struct sctk_window * win = sctk_win_translate( fop->rdma.win_id );
+	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( fop->rdma.win_id );
 
         if (!win) {
           sctk_fatal("No such window in emulated RDMA fetch and op");
@@ -1186,7 +1186,7 @@ void sctk_window_RDMA_fetch_and_op_ctrl_msg_handler( struct sctk_window_emulated
 
         char fetch[16];
 
-        sctk_window_fetch_and_op_operate(fop->op, fop->type, fop->add,
+        mpc_lowcomm_rdma_window_fetch_and_op_operate(fop->op, fop->type, fop->add,
                                          win->start_addr + offset, &fetch);
 
         mpc_lowcomm_isend_class_src(
@@ -1195,10 +1195,10 @@ void sctk_window_RDMA_fetch_and_op_ctrl_msg_handler( struct sctk_window_emulated
             MPC_LOWCOMM_RDMA_MESSAGE, NULL);
 }
 
-static inline void sctk_window_RDMA_fetch_and_op_local(
-    sctk_window_t remote_win_id, size_t remote_offset, void *fetch_addr,
+static inline void mpc_lowcomm_rdma_window_RDMA_fetch_and_op_local(
+    mpc_lowcomm_rdma_window_t remote_win_id, size_t remote_offset, void *fetch_addr,
     void *add, RDMA_op op, RDMA_type type, mpc_lowcomm_request_t *req) {
-  struct sctk_window *win = sctk_win_translate(remote_win_id);
+  struct mpc_lowcomm_rdma_window *win = sctk_win_translate(remote_win_id);
 
   // sctk_error("Fetch and add");
   mpc_lowcomm_request_init(req, win->comm, REQUEST_RDMA);
@@ -1216,13 +1216,13 @@ static inline void sctk_window_RDMA_fetch_and_op_local(
 
   void *remote_addr = win->start_addr + offset;
 
-  sctk_window_fetch_and_op_operate(op, type, add, remote_addr, fetch_addr);
+  mpc_lowcomm_rdma_window_fetch_and_op_operate(op, type, add, remote_addr, fetch_addr);
 
-  sctk_window_complete_request(req);
+  mpc_lowcomm_rdma_window_complete_request(req);
 }
 
-static inline void sctk_window_RDMA_fetch_and_op_net(
-    sctk_window_t remote_win_id, size_t remote_offset,
+static inline void mpc_lowcomm_rdma_window_RDMA_fetch_and_op_net(
+    mpc_lowcomm_rdma_window_t remote_win_id, size_t remote_offset,
     sctk_rail_pin_ctx_t *fetch_pin, void *fetch_addr, void *add, RDMA_op op,
     RDMA_type type, mpc_lowcomm_request_t *req) {
   sctk_rail_info_t *rdma_rail = sctk_rail_get_rdma();
@@ -1231,7 +1231,7 @@ static inline void sctk_window_RDMA_fetch_and_op_net(
     sctk_fatal("This rails despite flagged RDMA did not define fetch and op");
   }
 
-  struct sctk_window *win = sctk_win_translate(remote_win_id);
+  struct mpc_lowcomm_rdma_window *win = sctk_win_translate(remote_win_id);
 
   if (!win) {
     sctk_fatal("No such window ID %d", remote_win_id);
@@ -1265,11 +1265,11 @@ static inline void sctk_window_RDMA_fetch_and_op_net(
                                src_address, win->pin.list, add, op, type);
 }
 
-static inline void __sctk_window_RDMA_fetch_and_op(
-    sctk_window_t remote_win_id, size_t remote_offset,
+static inline void __mpc_lowcomm_rdma_window_RDMA_fetch_and_op(
+    mpc_lowcomm_rdma_window_t remote_win_id, size_t remote_offset,
     sctk_rail_pin_ctx_t *fetch_pin, void *fetch_addr, void *add, RDMA_op op,
     RDMA_type type, mpc_lowcomm_request_t *req) {
-  struct sctk_window *win = sctk_win_translate(remote_win_id);
+  struct mpc_lowcomm_rdma_window *win = sctk_win_translate(remote_win_id);
 
   mpc_lowcomm_request_init(req, win->comm, REQUEST_RDMA);
 
@@ -1303,17 +1303,17 @@ static inline void __sctk_window_RDMA_fetch_and_op(
       (win->access_mode == SCTK_WIN_ACCESS_DIRECT) ||
       (!mpc_lowcomm_is_remote_rank(win->owner)) /* Same process */) {
     /* Shared Memory */
-    sctk_window_RDMA_fetch_and_op_local(remote_win_id, remote_offset,
+    mpc_lowcomm_rdma_window_RDMA_fetch_and_op_local(remote_win_id, remote_offset,
                                         fetch_addr, add, op, type, req);
-    sctk_window_complete_request(req);
+    mpc_lowcomm_rdma_window_complete_request(req);
     return;
   } else if (
       (win->is_emulated) ||
       (RDMA_fetch_and_op_gate_passed ==
        0 /* Network does not support this RDMA atomic fallback to emulated */) ||
       (win->access_mode == SCTK_WIN_ACCESS_EMULATED)) {
-    struct sctk_window_emulated_fetch_and_op_RDMA fop;
-    sctk_window_emulated_fetch_and_op_RDMA_init(&fop, win->owner, remote_offset,
+    struct mpc_lowcomm_rdma_window_emulated_fetch_and_op_RDMA fop;
+    mpc_lowcomm_rdma_window_emulated_fetch_and_op_RDMA_init(&fop, win->owner, remote_offset,
                                                 win->remote_id, op, type, add);
 
     /* Note that we store the data transfer req in the request */
@@ -1323,24 +1323,24 @@ static inline void __sctk_window_RDMA_fetch_and_op(
     sctk_control_messages_send_process(
         sctk_get_process_rank_from_task_rank(win->owner),
         SCTK_PROCESS_RDMA_EMULATED_FETCH_AND_OP, 0, &fop,
-        sizeof(struct sctk_window_emulated_fetch_and_op_RDMA));
+        sizeof(struct mpc_lowcomm_rdma_window_emulated_fetch_and_op_RDMA));
 
   } else {
-    sctk_window_RDMA_fetch_and_op_net(remote_win_id, remote_offset, fetch_pin,
+    mpc_lowcomm_rdma_window_RDMA_fetch_and_op_net(remote_win_id, remote_offset, fetch_pin,
                                       fetch_addr, add, op, type, req);
   }
 }
 
 
-void sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote_offset, void * fetch_addr, void * add, RDMA_op op,  RDMA_type type, mpc_lowcomm_request_t  * req )
+void mpc_lowcomm_rdma_window_RDMA_fetch_and_op( mpc_lowcomm_rdma_window_t remote_win_id, size_t remote_offset, void * fetch_addr, void * add, RDMA_op op,  RDMA_type type, mpc_lowcomm_request_t  * req )
 {
-	__sctk_window_RDMA_fetch_and_op( remote_win_id, remote_offset, NULL, fetch_addr, add, op, type, req );	
+	__mpc_lowcomm_rdma_window_RDMA_fetch_and_op( remote_win_id, remote_offset, NULL, fetch_addr, add, op, type, req );	
 }
 
 
-void sctk_window_RDMA_fetch_and_add_win( sctk_window_t remote_win_id, size_t remote_offset, sctk_window_t local_win_id, size_t fetch_offset, void * add, RDMA_op op,  RDMA_type type, mpc_lowcomm_request_t  * req )
+void mpc_lowcomm_rdma_window_RDMA_fetch_and_add_win( mpc_lowcomm_rdma_window_t remote_win_id, size_t remote_offset, mpc_lowcomm_rdma_window_t local_win_id, size_t fetch_offset, void * add, RDMA_op op,  RDMA_type type, mpc_lowcomm_request_t  * req )
 {
-	struct sctk_window * local_win = sctk_win_translate( local_win_id );
+	struct mpc_lowcomm_rdma_window * local_win = sctk_win_translate( local_win_id );
 
 	if( !local_win )
 	{
@@ -1356,7 +1356,7 @@ void sctk_window_RDMA_fetch_and_add_win( sctk_window_t remote_win_id, size_t rem
           sctk_fatal("Error RDMA Fetch and OP operation overflows the window");
         }
 
-        __sctk_window_RDMA_fetch_and_op(remote_win_id, remote_offset,
+        __mpc_lowcomm_rdma_window_RDMA_fetch_and_op(remote_win_id, remote_offset,
                                         &local_win->pin, dest_addr, add, op,
                                         type, req);
 }
@@ -1365,7 +1365,7 @@ void sctk_window_RDMA_fetch_and_add_win( sctk_window_t remote_win_id, size_t rem
 /* Compare and SWAP =================== */
 
 
-void sctk_window_RDMA_CAS_int_local( void * cmp , void * new, void * target, void * res )
+void mpc_lowcomm_rdma_window_RDMA_CAS_int_local( void * cmp , void * new, void * target, void * res )
 {
 	int oldv = *((int *)cmp );
 	int newv = *((int *)new );
@@ -1382,7 +1382,7 @@ void sctk_window_RDMA_CAS_int_local( void * cmp , void * new, void * target, voi
           *pres = local;
 }
 
-void sctk_window_RDMA_CAS_ptr_local( void ** cmp , void ** new, void * target, void  * res )
+void mpc_lowcomm_rdma_window_RDMA_CAS_ptr_local( void ** cmp , void ** new, void * target, void  * res )
 {
 	OPA_ptr_t * ptarget = (OPA_ptr_t *)target;
 
@@ -1394,7 +1394,7 @@ void sctk_window_RDMA_CAS_ptr_local( void ** cmp , void ** new, void * target, v
 
 static mpc_common_spinlock_t __RDMA_CAS_16_lock = SCTK_SPINLOCK_INITIALIZER;
 
-void sctk_window_RDMA_CAS_16_local( void * cmp , void * new, void * target, void * res )
+void mpc_lowcomm_rdma_window_RDMA_CAS_16_local( void * cmp , void * new, void * target, void * res )
 {
 	mpc_common_spinlock_lock( &__RDMA_CAS_16_lock );
 
@@ -1410,7 +1410,7 @@ void sctk_window_RDMA_CAS_16_local( void * cmp , void * new, void * target, void
 
 static mpc_common_spinlock_t __RDMA_CAS_any_lock = SCTK_SPINLOCK_INITIALIZER;
 
-void sctk_window_RDMA_CAS_any_local( void * cmp , void * new, void * target, void * res, size_t size )
+void mpc_lowcomm_rdma_window_RDMA_CAS_any_local( void * cmp , void * new, void * target, void * res, size_t size )
 {
 	mpc_common_spinlock_lock( &__RDMA_CAS_any_lock );
 
@@ -1425,9 +1425,9 @@ void sctk_window_RDMA_CAS_any_local( void * cmp , void * new, void * target, voi
 }
 
 
-void sctk_window_RDMA_CAS_local( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void * res,  RDMA_type type )
+void mpc_lowcomm_rdma_window_RDMA_CAS_local( mpc_lowcomm_rdma_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void * res,  RDMA_type type )
 {
-	struct sctk_window * win = sctk_win_translate( remote_win_id );
+	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( remote_win_id );
 
 	if( !win )
 	{
@@ -1446,22 +1446,22 @@ void sctk_window_RDMA_CAS_local( sctk_window_t remote_win_id, size_t remote_offs
         size_t type_size = RDMA_type_size(type);
 
         if (type_size == sizeof(OPA_int_t)) {
-          sctk_window_RDMA_CAS_int_local(comp, new_data, remote_addr, res);
+          mpc_lowcomm_rdma_window_RDMA_CAS_int_local(comp, new_data, remote_addr, res);
         } else if (type_size == sizeof(OPA_ptr_t)) {
-          sctk_window_RDMA_CAS_ptr_local(comp, new_data, remote_addr, res);
+          mpc_lowcomm_rdma_window_RDMA_CAS_ptr_local(comp, new_data, remote_addr, res);
         } else if (type_size == 16) {
-          sctk_window_RDMA_CAS_16_local(comp, new_data, remote_addr, res);
+          mpc_lowcomm_rdma_window_RDMA_CAS_16_local(comp, new_data, remote_addr, res);
         } else {
-          sctk_window_RDMA_CAS_any_local(comp, new_data, remote_addr, res,
+          mpc_lowcomm_rdma_window_RDMA_CAS_any_local(comp, new_data, remote_addr, res,
                                          type_size);
         }
 }
 
 
 
-void sctk_window_RDMA_CAS_ctrl_msg_handler( struct sctk_window_emulated_CAS_RDMA *fcas )
+void mpc_lowcomm_rdma_window_RDMA_CAS_ctrl_msg_handler( struct mpc_lowcomm_rdma_window_emulated_CAS_RDMA *fcas )
 {
-	struct sctk_window * win = sctk_win_translate( fcas->rdma.win_id );
+	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( fcas->rdma.win_id );
 
         if (!win) {
           sctk_fatal("No such window in emulated RDMA CAS");
@@ -1477,7 +1477,7 @@ void sctk_window_RDMA_CAS_ctrl_msg_handler( struct sctk_window_emulated_CAS_RDMA
         }
 
         char res[16];
-        sctk_window_RDMA_CAS_local(fcas->rdma.win_id, fcas->rdma.offset,
+        mpc_lowcomm_rdma_window_RDMA_CAS_local(fcas->rdma.win_id, fcas->rdma.offset,
                                    fcas->comp, fcas->new, res, fcas->type);
 
         mpc_lowcomm_isend_class_src(
@@ -1487,7 +1487,7 @@ void sctk_window_RDMA_CAS_ctrl_msg_handler( struct sctk_window_emulated_CAS_RDMA
 }
 
 
-void sctk_window_RDMA_CAS_net( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void * res,  sctk_rail_pin_ctx_t * res_pin,  RDMA_type type, mpc_lowcomm_request_t  * req )
+void mpc_lowcomm_rdma_window_RDMA_CAS_net( mpc_lowcomm_rdma_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void * res,  sctk_rail_pin_ctx_t * res_pin,  RDMA_type type, mpc_lowcomm_request_t  * req )
 {
 	sctk_rail_info_t * rdma_rail = sctk_rail_get_rdma ();
 
@@ -1495,7 +1495,7 @@ void sctk_window_RDMA_CAS_net( sctk_window_t remote_win_id, size_t remote_offset
           sctk_fatal("This rails despite flagged RDMA did not define CAS");
         }
 
-        struct sctk_window *win = sctk_win_translate(remote_win_id);
+        struct mpc_lowcomm_rdma_window *win = sctk_win_translate(remote_win_id);
 
         if (!win) {
           sctk_fatal("No such window ID %d", remote_win_id);
@@ -1532,9 +1532,9 @@ void sctk_window_RDMA_CAS_net( sctk_window_t remote_win_id, size_t remote_offset
 
 
 
-void __sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void * res,  sctk_rail_pin_ctx_t * res_pin,   RDMA_type type, mpc_lowcomm_request_t  * req )
+void __mpc_lowcomm_rdma_window_RDMA_CAS( mpc_lowcomm_rdma_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void * res,  sctk_rail_pin_ctx_t * res_pin,   RDMA_type type, mpc_lowcomm_request_t  * req )
 {
-	struct sctk_window * win = sctk_win_translate( remote_win_id );
+	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( remote_win_id );
 
 	if( !win )
 	{
@@ -1568,17 +1568,17 @@ void __sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, 
             (win->access_mode == SCTK_WIN_ACCESS_DIRECT) ||
             (!mpc_lowcomm_is_remote_rank(win->owner)) /* Same process */) {
           /* Shared Memory */
-          sctk_window_RDMA_CAS_local(remote_win_id, remote_offset, comp,
+          mpc_lowcomm_rdma_window_RDMA_CAS_local(remote_win_id, remote_offset, comp,
                                      new_data, res, type);
-          sctk_window_complete_request(req);
+          mpc_lowcomm_rdma_window_complete_request(req);
           return;
         } else if (
             (win->is_emulated) ||
             (RDMA_CAS_gate_passed ==
              0 /* Network does not support this RDMA atomic fallback to emulated */) ||
             (win->access_mode == SCTK_WIN_ACCESS_EMULATED)) {
-          struct sctk_window_emulated_CAS_RDMA fcas;
-          sctk_window_emulated_CAS_RDMA_init(&fcas, win->owner, remote_offset,
+          struct mpc_lowcomm_rdma_window_emulated_CAS_RDMA fcas;
+          mpc_lowcomm_rdma_window_emulated_CAS_RDMA_init(&fcas, win->owner, remote_offset,
                                              win->remote_id, type, comp,
                                              new_data);
 
@@ -1588,24 +1588,24 @@ void __sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, 
           sctk_control_messages_send_process(
               sctk_get_process_rank_from_task_rank(win->owner),
               SCTK_PROCESS_RDMA_EMULATED_CAS, 0, &fcas,
-              sizeof(struct sctk_window_emulated_CAS_RDMA));
+              sizeof(struct mpc_lowcomm_rdma_window_emulated_CAS_RDMA));
 
         } else {
-          sctk_window_RDMA_CAS_net(remote_win_id, remote_offset, comp, new_data,
+          mpc_lowcomm_rdma_window_RDMA_CAS_net(remote_win_id, remote_offset, comp, new_data,
                                    res, res_pin, type, req);
         }
 }
 
 
-void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void * res, RDMA_type type, mpc_lowcomm_request_t  * req )
+void mpc_lowcomm_rdma_window_RDMA_CAS( mpc_lowcomm_rdma_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void * res, RDMA_type type, mpc_lowcomm_request_t  * req )
 {
-	__sctk_window_RDMA_CAS(  remote_win_id,  remote_offset,  comp, new_data, res, NULL, type, req );
+	__mpc_lowcomm_rdma_window_RDMA_CAS(  remote_win_id,  remote_offset,  comp, new_data, res, NULL, type, req );
 }
 
 
-void sctk_window_RDMA_CAS_win( sctk_window_t remote_win_id, size_t remote_offset,  sctk_window_t local_win_id, size_t res_offset, void * comp, void * new_data, RDMA_type type, mpc_lowcomm_request_t  * req )
+void mpc_lowcomm_rdma_window_RDMA_CAS_win( mpc_lowcomm_rdma_window_t remote_win_id, size_t remote_offset,  mpc_lowcomm_rdma_window_t local_win_id, size_t res_offset, void * comp, void * new_data, RDMA_type type, mpc_lowcomm_request_t  * req )
 {
-	struct sctk_window * local_win = sctk_win_translate( local_win_id );
+	struct mpc_lowcomm_rdma_window * local_win = sctk_win_translate( local_win_id );
 
 	if( !local_win )
 	{
@@ -1621,7 +1621,7 @@ void sctk_window_RDMA_CAS_win( sctk_window_t remote_win_id, size_t remote_offset
           sctk_fatal("Error RDMA CAS operation overflows the window");
         }
 
-        __sctk_window_RDMA_CAS(remote_win_id, remote_offset, comp, new_data,
+        __mpc_lowcomm_rdma_window_RDMA_CAS(remote_win_id, remote_offset, comp, new_data,
                                res_addr, &local_win->pin, type, req);
 }
 
@@ -1630,7 +1630,7 @@ void sctk_window_RDMA_CAS_win( sctk_window_t remote_win_id, size_t remote_offset
 
 /* WAIT =================== */
 
-void sctk_window_RDMA_wait( mpc_lowcomm_request_t *request )
+void mpc_lowcomm_rdma_window_RDMA_wait( mpc_lowcomm_request_t *request )
 {
 	mpc_lowcomm_request_wait( request );
 }
@@ -1638,8 +1638,8 @@ void sctk_window_RDMA_wait( mpc_lowcomm_request_t *request )
 
 /* FENCE =================== */
 
-void sctk_window_RDMA_fence(sctk_window_t win_id, mpc_lowcomm_request_t *req) {
-  struct sctk_window *win = sctk_win_translate(win_id);
+void mpc_lowcomm_rdma_window_RDMA_fence(mpc_lowcomm_rdma_window_t win_id, mpc_lowcomm_request_t *req) {
+  struct mpc_lowcomm_rdma_window *win = sctk_win_translate(win_id);
 
   if (!win) {
     sctk_fatal("No such window ID");

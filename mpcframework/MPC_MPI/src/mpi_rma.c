@@ -27,7 +27,7 @@
 #include "sctk_communicator.h"
 #include "sctk_control_messages.h"
 #include <string.h>
-
+#include "sctk_window.h"
 #include "mpi_rma_ctrl_msg.h"
 
 /************************************************************************/
@@ -110,7 +110,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
   if (can_write_rma && can_read_rma) {
 
-    struct sctk_window *low_remote_win = sctk_win_translate(target_win);
+    struct mpc_lowcomm_rdma_window *low_remote_win = sctk_win_translate(target_win);
 
     void *target_addr =
         low_remote_win->start_addr + target_disp * desc->win_disp;
@@ -129,7 +129,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
         ref_request->pointer_to_shadow_request = request;
       }
 
-      sctk_window_RDMA_read(target_win, origin_addr, remote_size, target_disp,
+      mpc_lowcomm_rdma_window_RDMA_read(target_win, origin_addr, remote_size, target_disp,
                             request);
     }
 
@@ -141,7 +141,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
       mpc_lowcomm_request_t req;
       mpc_lowcomm_request_init(&req, desc->comm, REQUEST_SEND);
-      sctk_window_RDMA_read(target_win, tmp_buff, remote_size, target_disp,
+      mpc_lowcomm_rdma_window_RDMA_read(target_win, tmp_buff, remote_size, target_disp,
                             &req);
       mpc_lowcomm_request_wait(&req);
 
@@ -214,7 +214,7 @@ int mpc_MPI_Get(void *origin_addr, int origin_count,
                 MPI_Aint target_disp, int target_count,
                 MPI_Datatype target_data_type, MPI_Win win) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   int ret = MPI_SUCCESS;
 
@@ -235,7 +235,7 @@ int mpc_MPI_Rget(void *origin_addr, int origin_count,
                  MPI_Datatype target_data_type, MPI_Win win,
                  MPI_Request *request) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 
@@ -351,7 +351,7 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
   if (can_write_rma && can_read_rma) {
 
     int target_win_direct = mpc_MPI_win_get_remote_win(desc, target_rank, 0);
-    struct sctk_window *low_remote_win = sctk_win_translate(target_win_direct);
+    struct mpc_lowcomm_rdma_window *low_remote_win = sctk_win_translate(target_win_direct);
 
     void *target_addr =
         low_remote_win->start_addr + target_disp * desc->win_disp;
@@ -373,7 +373,7 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
       int target_win = mpc_MPI_win_get_remote_win(desc, target_rank, 1);
       sctk_nodebug("--> %d %p write %d to off %d", target_rank, origin_addr,
                    remote_size, target_disp);
-      sctk_window_RDMA_write(target_win, (void *)origin_addr, remote_size,
+      mpc_lowcomm_rdma_window_RDMA_write(target_win, (void *)origin_addr, remote_size,
                              target_disp, request);
 
       // OPA_incr_int( &desc->source.ctrl_message_counter );
@@ -402,8 +402,8 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
                                  desc->comm, MPC_LOWCOMM_RDMA_MESSAGE, request1);
 
     int target_win = mpc_MPI_win_get_remote_win(desc, target_rank, 1);
-    struct sctk_window *low_remote_win = sctk_win_translate(target_win);
-    sctk_window_inc_outgoing(low_remote_win);
+    struct mpc_lowcomm_rdma_window *low_remote_win = sctk_win_translate(target_win);
+    mpc_lowcomm_rdma_window_inc_outgoing(low_remote_win);
 
     OPA_incr_int(&desc->source.ctrl_message_counter);
 
@@ -420,7 +420,7 @@ int mpc_MPI_Put(const void *origin_addr, int origin_count,
                 MPI_Aint target_disp, int target_count,
                 MPI_Datatype target_datatype, MPI_Win win) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   int ret = MPI_SUCCESS;
 
@@ -441,7 +441,7 @@ int mpc_MPI_Rput(const void *origin_addr, int origin_count,
                  MPI_Datatype target_datatype, MPI_Win win,
                  MPI_Request *request) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 
@@ -597,7 +597,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
     return MPI_ERR_ARG;
   }
 
-  struct sctk_window *low_win = sctk_win_translate(target_win);
+  struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(target_win);
   assume(low_win);
 
   void *start_addr =
@@ -716,8 +716,8 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
                                  MPC_LOWCOMM_RDMA_MESSAGE, request);
 
     target_win = mpc_MPI_win_get_remote_win(desc, target_rank, 1);
-    struct sctk_window *low_remote_win = sctk_win_translate(target_win);
-    sctk_window_inc_outgoing(low_remote_win);
+    struct mpc_lowcomm_rdma_window *low_remote_win = sctk_win_translate(target_win);
+    mpc_lowcomm_rdma_window_inc_outgoing(low_remote_win);
 
     OPA_incr_int(&desc->source.ctrl_message_counter);
 
@@ -741,7 +741,7 @@ int mpc_MPI_Accumulate(const void *origin_addr, int origin_count,
                        MPI_Aint target_disp, int target_count,
                        MPI_Datatype target_datatype, MPI_Op op, MPI_Win win) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   int ret = MPI_SUCCESS;
 
@@ -762,7 +762,7 @@ int mpc_MPI_Raccumulate(const void *origin_addr, int origin_count,
                         MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,
                         MPI_Request *request) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 
@@ -934,7 +934,7 @@ static inline int mpc_MPI_Get_accumulate_RMA(
 
         int target_win_direct =
             mpc_MPI_win_get_remote_win(desc, target_rank, 0);
-        struct sctk_window *low_remote_win =
+        struct mpc_lowcomm_rdma_window *low_remote_win =
             sctk_win_translate(target_win_direct);
 
         void *ptarget =
@@ -1005,7 +1005,7 @@ int mpc_MPI_Get_accumulate(const void *origin_addr, int origin_count,
                            int target_count, MPI_Datatype target_datatype,
                            MPI_Op op, MPI_Win win) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 
@@ -1028,7 +1028,7 @@ int mpc_MPI_Rget_accumulate(const void *origin_addr, int origin_count,
                             int target_count, MPI_Datatype target_datatype,
                             MPI_Op op, MPI_Win win, MPI_Request *request) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 
@@ -1107,7 +1107,7 @@ mpc_MPI_Fetch_and_op_RMA(struct mpc_MPI_Win *desc, const void *origin_addr,
 
     if (0 <= rmatype) {
       int target_win_direct = mpc_MPI_win_get_remote_win(desc, target_rank, 0);
-      struct sctk_window *low_remote_win =
+      struct mpc_lowcomm_rdma_window *low_remote_win =
           sctk_win_translate(target_win_direct);
 
       void *ptarg = low_remote_win->start_addr + target_disp * desc->win_disp;
@@ -1146,7 +1146,7 @@ mpc_MPI_Fetch_and_op_RMA(struct mpc_MPI_Win *desc, const void *origin_addr,
 
       int target_win = mpc_MPI_win_get_remote_win(desc, target_rank, 1);
 
-      sctk_window_RDMA_fetch_and_op(target_win, target_disp, result_addr,
+      mpc_lowcomm_rdma_window_RDMA_fetch_and_op(target_win, target_disp, result_addr,
                                     (void *)origin_addr, rmaop, rmatype,
                                     request);
 
@@ -1166,7 +1166,7 @@ int mpc_MPI_Fetch_and_op(const void *origin_addr, void *result_addr,
                          MPI_Datatype datatype, int target_rank,
                          MPI_Aint target_disp, MPI_Op op, MPI_Win win) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 
@@ -1207,7 +1207,7 @@ static inline int mpc_MPI_Compare_and_swap_RMA(
     size_t rmatsize = RDMA_type_size(rmatype);
 
     int target_win_direct = mpc_MPI_win_get_remote_win(desc, target_rank, 0);
-    struct sctk_window *low_remote_win = sctk_win_translate(target_win_direct);
+    struct mpc_lowcomm_rdma_window *low_remote_win = sctk_win_translate(target_win_direct);
 
     void *ptarget = low_remote_win->start_addr + target_disp * desc->win_disp;
 
@@ -1244,7 +1244,7 @@ static inline int mpc_MPI_Compare_and_swap_RMA(
 
     int target_win = mpc_MPI_win_get_remote_win(desc, target_rank, 1);
 
-    sctk_window_RDMA_CAS(target_win, target_disp, (char *)compare_addr,
+    mpc_lowcomm_rdma_window_RDMA_CAS(target_win, target_disp, (char *)compare_addr,
                          (char *)origin_addr, result_addr, rmatype, request);
   } else {
     return MPI_ERR_ARG;
@@ -1258,7 +1258,7 @@ int mpc_MPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,
                              int target_rank, MPI_Aint target_disp,
                              MPI_Win win) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 

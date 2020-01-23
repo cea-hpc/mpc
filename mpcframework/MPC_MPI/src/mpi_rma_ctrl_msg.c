@@ -42,7 +42,7 @@ void mpc_MPI_Win_handle_shadow_win_flush(void *data, size_t size) {
   void *shadow_region = data + sizeof(struct mpc_MPI_Win_ctrl_message);
   size_t shadow_size = size - sizeof(struct mpc_MPI_Win_ctrl_message);
 
-  struct sctk_window *low_win = sctk_win_translate(message->target_win);
+  struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(message->target_win);
   assume(low_win);
 
 
@@ -69,7 +69,7 @@ void mpc_MPI_Win_handle_win_flush(void *data ) {
   struct mpc_MPI_Win_ctrl_message *message =
       (struct mpc_MPI_Win_ctrl_message *)data;
 
-  struct sctk_window *low_win = sctk_win_translate(message->target_win);
+  struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(message->target_win);
   assume(low_win);
   struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)low_win->payload;
 
@@ -133,13 +133,13 @@ void mpc_MPI_Win_handle_non_contiguous_write(void *data, size_t size) {
   mpc_lowcomm_datatype_t target_type = _mpc_cl_derived_type_deserialize(
       data, size, sizeof(struct mpc_MPI_Win_ctrl_message));
 
-  struct sctk_window *low_win = sctk_win_translate(message->target_win);
+  struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(message->target_win);
   assume(low_win);
 
   /* Retrieve the MPI Desc */
 
   struct mpc_MPI_Win *desc =
-      (struct mpc_MPI_Win *)sctk_window_get_payload(message->target_win);
+      (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(message->target_win);
   assume(desc);
 
   void *pack_data = sctk_malloc(pack_size);
@@ -182,7 +182,7 @@ void mpc_MPI_Win_handle_non_contiguous_write(void *data, size_t size) {
 
   _mpc_cl_type_free(&target_type);
 
-  sctk_window_inc_incoming(low_win, message->source_rank);
+  mpc_lowcomm_rdma_window_inc_incoming(low_win, message->source_rank);
   OPA_incr_int(&desc->target.ctrl_message_counter);
 }
 
@@ -197,13 +197,13 @@ void mpc_MPI_Win_handle_non_contiguous_read(void *data, size_t size) {
   mpc_lowcomm_datatype_t target_type = _mpc_cl_derived_type_deserialize(
       data, size, sizeof(struct mpc_MPI_Win_ctrl_message));
 
-  struct sctk_window *low_win = sctk_win_translate(message->target_win);
+  struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(message->target_win);
   assume(low_win);
 
   /* Retrieve the MPI Desc */
 
   struct mpc_MPI_Win *desc =
-      (struct mpc_MPI_Win *)sctk_window_get_payload(message->target_win);
+      (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(message->target_win);
   assume(desc);
 
   void *pack_data = mpc_MPI_Win_tmp_alloc(&desc->target.tmp_buffs, pack_size);
@@ -262,13 +262,13 @@ void mpc_MPI_Win_handle_non_contiguous_accumulate_send(void *data,
   mpc_lowcomm_datatype_t target_type = _mpc_cl_derived_type_deserialize(
       data, size, sizeof(struct mpc_MPI_Win_ctrl_message));
 
-  struct sctk_window *low_win = sctk_win_translate(message->target_win);
+  struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(message->target_win);
   assume(low_win);
 
   /* Retrieve the MPI Desc */
 
   struct mpc_MPI_Win *desc =
-      (struct mpc_MPI_Win *)sctk_window_get_payload(message->target_win);
+      (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(message->target_win);
   assume(desc);
 
   /* Allocate pack_storage (from source) */
@@ -339,7 +339,7 @@ void mpc_MPI_Win_handle_non_contiguous_accumulate_send(void *data,
 
   _mpc_cl_type_free(&target_type);
 
-  sctk_window_inc_incoming(low_win, message->source_rank);
+  mpc_lowcomm_rdma_window_inc_incoming(low_win, message->source_rank);
   OPA_incr_int(&desc->target.ctrl_message_counter);
 }
 
@@ -364,7 +364,7 @@ void mpc_MPI_Win_control_message_handler(void *data, size_t size) {
 
   /* Get target win desc */
   struct mpc_MPI_Win *desc =
-      (struct mpc_MPI_Win *)sctk_window_get_payload(message->target_win);
+      (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(message->target_win);
   /* Get target context */
   struct mpc_Win_target_ctx *ctx = &desc->target;
 
@@ -431,7 +431,7 @@ void mpc_MPI_Win_control_message_handler(void *data, size_t size) {
 void mpc_MPI_Win_control_message_send(MPI_Win win, int rank,
                                       struct mpc_MPI_Win_ctrl_message *message) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
 
   if (desc->is_single_process) {
@@ -460,7 +460,7 @@ void mpc_MPI_Win_control_message_send_piggybacked(
   assume(sizeof(struct mpc_MPI_Win_ctrl_message) <= size);
 
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   mpc_lowcomm_request_t req;
   mpc_lowcomm_isend_class_src(desc->comm_rank, rank, message, size, 16008,
@@ -474,7 +474,7 @@ int __mpc_MPI_Win_init_message(MPI_Win win,
                                struct mpc_MPI_Win_ctrl_message *message,
                                mpc_MPI_Win_ctrl_message_t type, int remote) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   memset(message, 0, sizeof(struct mpc_MPI_Win_ctrl_message));
 
@@ -494,7 +494,7 @@ int __mpc_MPI_Win_init_message(MPI_Win win,
     if (local_win < 0)
       return 1;
 
-    struct sctk_window *low_win = sctk_win_translate(local_win);
+    struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(local_win);
 
     if (!low_win) {
       return 1;
@@ -565,10 +565,10 @@ int mpc_MPI_Win_init_flush(struct mpc_MPI_Win_ctrl_message *message,
   int ret =
       __mpc_MPI_Win_init_message(win, message, MPC_MPI_WIN_CTRL_FLUSH, dest);
 
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
   int target_win = mpc_MPI_win_get_remote_win(desc, dest, 0);
 
-  struct sctk_window *low_win = sctk_win_translate(target_win);
+  struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(target_win);
 
   assume(low_win);
 
@@ -579,7 +579,7 @@ int mpc_MPI_Win_init_flush(struct mpc_MPI_Win_ctrl_message *message,
 
 void mpc_MPI_Win_notify_dest_ctx_counter(MPI_Win win) {
 
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   if (!desc)
     return;
@@ -591,7 +591,7 @@ void mpc_MPI_Win_notify_dest_ctx_counter(MPI_Win win) {
 
 void mpc_MPI_Win_notify_src_ctx_counter(MPI_Win win) {
 
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   if (!desc)
     return;

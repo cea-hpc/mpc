@@ -443,7 +443,7 @@ static void sctk_perform_initialisation ( void )
 		sctk_net_init_driver( sctk_network_driver_name );
 	}
 
-	sctk_window_init_ht();
+	mpc_lowcomm_rdma_window_init_ht();
 #endif
 #ifdef SCTK_LIB_MODE
 	sctk_net_init_task_level ( my_rank, 0 );
@@ -1163,7 +1163,7 @@ void sctk_init_mpc_runtime()
 
 void sctk_release_mpc_runtime()
 {
-	sctk_window_release_ht();
+	mpc_lowcomm_rdma_window_release_ht();
 #ifdef MPC_USE_EXTLS
 	extls_fini();
 #endif

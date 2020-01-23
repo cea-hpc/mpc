@@ -623,7 +623,7 @@ int mpc_Win_target_ctx_release(struct mpc_Win_target_ctx *ctx) {
 }
 
 int mpc_Win_target_ctx_check_for_pending_locks(MPI_Win win) {
-  struct sctk_window *low_win = sctk_win_translate(win);
+  struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(win);
   struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)low_win->payload;
   struct mpc_Win_target_ctx *ctx = &desc->target;
   /* Are there pending locks on the target
@@ -677,7 +677,7 @@ int mpc_Win_target_ctx_start_exposure_no_lock(MPI_Win win, mpc_Win_arity arity,
                                               mpc_Win_target_state state) {
   /* Retrieve the MPI Desc */
 
-  struct sctk_window *low_win = sctk_win_translate(win);
+  struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(win);
   struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)low_win->payload;
   struct mpc_Win_target_ctx *ctx = &desc->target;
 
@@ -970,7 +970,7 @@ int mpc_Win_target_ctx_start_exposure(MPI_Win win, mpc_Win_arity arity,
                                       int *remotes, int remote_count,
                                       mpc_Win_target_state state) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   struct mpc_Win_target_ctx *ctx = &desc->target;
 
@@ -993,7 +993,7 @@ int mpc_Win_target_ctx_start_exposure(MPI_Win win, mpc_Win_arity arity,
 int mpc_Win_target_ctx_end_exposure_no_lock(MPI_Win win,
                                             mpc_Win_target_state state,
                                             int source_rank) {
-  struct sctk_window *low_win = sctk_win_translate(win);
+  struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(win);
   /* Retrieve the MPI Desc */
   struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)low_win->payload;
   struct mpc_Win_target_ctx *ctx = &desc->target;
@@ -1167,7 +1167,7 @@ int mpc_Win_target_ctx_end_exposure_no_lock(MPI_Win win,
 int mpc_Win_target_ctx_end_exposure(MPI_Win win, mpc_Win_target_state state,
                                     int source_rank) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   struct mpc_Win_target_ctx *ctx = &desc->target;
 
@@ -1239,7 +1239,7 @@ int mpc_Win_source_ctx_release(struct mpc_Win_source_ctx *ctx) {
 int mpc_Win_source_ctx_start_access_no_lock(MPI_Win win, mpc_Win_arity arity,
                                             int *remotes, int remote_count,
                                             mpc_Win_source_state state) {
-  struct sctk_window *low_win = sctk_win_translate(win);
+  struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(win);
   /* Retrieve the MPI Desc */
   struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)low_win->payload;
   struct mpc_Win_source_ctx *ctx = &desc->source;
@@ -1411,7 +1411,7 @@ int mpc_Win_source_ctx_start_access(MPI_Win win, mpc_Win_arity arity,
                                     int *remotes, int remote_count,
                                     mpc_Win_source_state state) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   struct mpc_Win_source_ctx *ctx = &desc->source;
 
@@ -1430,7 +1430,7 @@ int mpc_Win_source_ctx_start_access(MPI_Win win, mpc_Win_arity arity,
 int mpc_Win_source_ctx_end_access_no_lock(MPI_Win win,
                                           mpc_Win_source_state state,
                                           int remote_rank) {
-  struct sctk_window *low_win = sctk_win_translate(win);
+  struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(win);
   /* Retrieve the MPI Desc */
   struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)low_win->payload;
   struct mpc_Win_source_ctx *ctx = &desc->source;
@@ -1568,7 +1568,7 @@ int mpc_Win_source_ctx_end_access_no_lock(MPI_Win win,
 int mpc_Win_source_ctx_end_access(MPI_Win win, mpc_Win_source_state state,
                                   int remote_rank) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   struct mpc_Win_source_ctx *ctx = &desc->source;
 
@@ -1588,7 +1588,7 @@ int mpc_Win_source_ctx_end_access(MPI_Win win, mpc_Win_source_state state,
 /************************************************************************/
 
 int mpc_MPI_Win_sync(MPI_Win win) {
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   if (desc->source.requests.is_emulated == 0) {
     return MPI_SUCCESS;
@@ -1604,7 +1604,7 @@ int mpc_MPI_Win_sync(MPI_Win win) {
 static inline int __mpc_MPI_Win_flush(int rank, MPI_Win win, int remote,
                                       int do_wait) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   /* Did we communicate with this window ? */
   if ((desc->source.requests.is_emulated == 0) || (desc->is_single_process)) {
@@ -1679,7 +1679,7 @@ int mpc_MPI_Win_flush_local(int rank, MPI_Win win) {
 
 int __mpc_MPI_Win_flush_all(MPI_Win win, int remote) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   mpc_MPI_Win_sync(win);
 
@@ -1711,7 +1711,7 @@ int mpc_MPI_Win_flush_local_all(MPI_Win win) {
 
 int mpc_Win_contexes_fence_control(MPI_Win win) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   struct mpc_Win_source_ctx *sctx = &desc->source;
   struct mpc_Win_target_ctx *tctx = &desc->target;
@@ -1766,7 +1766,7 @@ int mpc_Win_contexes_fence_control(MPI_Win win) {
 int mpc_MPI_Win_fence(__UNUSED__ int assert, MPI_Win win) {
 
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   /* Wait for local pending */
   mpc_MPI_Win_request_array_fence(&desc->source.requests);
@@ -1816,7 +1816,7 @@ int mpc_MPI_Win_lock(int lock_type, int rank, __UNUSED__ int assert, MPI_Win win
   }
 
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   /* Are we in the single process case
    * is so directly use read-write locks */
@@ -1827,7 +1827,7 @@ int mpc_MPI_Win_lock(int lock_type, int rank, __UNUSED__ int assert, MPI_Win win
       return MPI_SUCCESS;
 
     struct mpc_MPI_Win *rdesc =
-        (struct mpc_MPI_Win *)sctk_window_get_payload(remote_win);
+        (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(remote_win);
 
     if (lock_type == MPI_LOCK_EXCLUSIVE) {
       while (mpc_common_spinlock_write_trylock(&rdesc->target.locks.win_lock) != 0) {
@@ -1905,7 +1905,7 @@ static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
     return MPI_SUCCESS;
 
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
   int local_win = -1;
 
   /* Are we in shared ? */
@@ -1916,7 +1916,7 @@ static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
       return MPI_SUCCESS;
 
     struct mpc_MPI_Win *rdesc =
-        (struct mpc_MPI_Win *)sctk_window_get_payload(remote_win);
+        (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(remote_win);
 
     if (rdesc->target.state == MPC_WIN_TARGET_PASSIVE_EXCL) {
 
@@ -2017,7 +2017,7 @@ int mpc_MPI_Win_unlock(int rank, MPI_Win win) {
 int mpc_MPI_Win_lock_all(__UNUSED__ int assert, MPI_Win win) {
 
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   int i;
 
@@ -2040,7 +2040,7 @@ int mpc_MPI_Win_lock_all(__UNUSED__ int assert, MPI_Win win) {
 
 int mpc_MPI_Win_unlock_all(MPI_Win win) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   mpc_Win_source_ctx_end_access(win, MPC_WIN_SOURCE_PASIVE, -1);
 
@@ -2089,7 +2089,7 @@ int mpc_MPI_Win_wait(MPI_Win win) {
 
 int mpc_MPI_Win_test(MPI_Win win, int *flag) {
   /* Retrieve the MPI Desc */
-  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)sctk_window_get_payload(win);
+  struct mpc_MPI_Win *desc = (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(win);
 
   int a = mpc_MPI_Win_request_array_test(&desc->source.requests);
   int b = mpc_MPI_Win_request_array_test(&desc->target.requests);
