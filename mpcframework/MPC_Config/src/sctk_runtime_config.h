@@ -26,7 +26,7 @@
 /********************************* INCLUDES *********************************/
 #include <sctk_debug.h>
 #include "sctk_runtime_config_struct.h"
-#include <sctk_keywords.h>
+#include <mpc_keywords.h>
 /********************************** GLOBALS *********************************/
 /**
  * Global variable to store mpc runtime configuration loaded from XML.

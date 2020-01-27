@@ -32,13 +32,13 @@ extern "C"
 #include <unistd.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <sctk_keywords.h>
+#include <mpc_keywords.h>
 #include <sctk_config.h>
 #include <assert.h>
 #include <signal.h>
 
 #include "mpc_common_types.h"
-#include "sctk_keywords.h"
+#include "mpc_keywords.h"
 
 
 extern bool sctk_restart_mode;
