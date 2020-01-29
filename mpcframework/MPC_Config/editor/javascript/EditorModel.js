@@ -1003,10 +1003,26 @@ Model.generateArrayXML = function(hh_array, array_js) {
  * \return String The XML code as a string.
  */
 Model.generateUnionXML = function(hh_union, union_js) {
+        if(hh_union == undefined)
+                return
+
 	var xml = [];
 	var values = hh_union.value;
-	var values_keys = Object.keys(values);
-	var type = hh_union.value.type;
+
+        var values_keys = {}
+        var type = undefined;
+
+        if(values)
+        {
+	        values_keys = Object.keys(values);
+                type = hh_union.value.type;
+        }
+        else
+        {
+                console.log(hh_union)
+                return
+        }
+
 
 	xml.push("<" + hh_union.name + ">");
 	xml.push("<" + hh_union.value.name + ">");

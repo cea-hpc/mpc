@@ -125,8 +125,13 @@ XML.getNodeValue = function (element) {
 	if (element.nodeType == Node.ATTRIBUTE_NODE) {
 		return element.nodeValue;
 	} else {
-		return element.childNodes[0].nodeValue;
-	}
+                if(element.childNodes[0])
+                {
+		        return element.childNodes[0].nodeValue;
+        	}
+        }
+
+        return undefined
 };
 
 /*

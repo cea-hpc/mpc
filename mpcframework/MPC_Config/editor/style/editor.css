@@ -98,7 +98,6 @@ ul, ul li {
 
 /* Profile + network */
 
-table.config-module,
 table.config-network,
 table.config-cli_options,
 table.config-rail,
@@ -111,7 +110,6 @@ table.config-driver {
 	border: 0;
 }
 
-table.config-module tbody tr th,
 table.config-network tbody tr td,
 table.config-cli_options tbody tr th,
 table.config-rail tbody tr th,
@@ -119,7 +117,6 @@ table.config-driver tbody tr th {
 	background: url(../images/tabletree-dots.gif) 18px 54% no-repeat;
 }
 
-table.config-module tbody th, table.config-module tbody td,
 table.config-network tbody th, table.config-network tbody td,
 table.config-cli_options tbody th, table.config-cli_options tbody td,
 table.config-rail tbody th, table.config-rail tbody td,
@@ -127,7 +124,6 @@ table.config-driver tbody th, table.config-driver tbody td {
 	padding-left: 30px;
 }
 
-table.config-module tbody tr:last-child th,
 table.config-network tbody tr:last-child td,
 table.config-cli_options tbody tr:last-child th,
 table.config-rail tbody tr:last-child th,
@@ -135,9 +131,6 @@ table.config-driver tbody tr:last-child th {
 	background: url(../images/tabletree-dots2.gif) 18px 54% no-repeat;
 }
 
-table.config-module tbody, table.config-module tbody tr {
-	width: 100%;
-}
 
 #config thead th 
 {
@@ -150,13 +143,23 @@ table.config-module tbody, table.config-module tbody tr {
 }
 
 .config-profile,
-.config-module,
 #networks_profile table {
 	width: 100%;
 	padding-right: 10px;
 }
 
-.config-network, .config-networks,
+.config-profile,
+tbody {
+        display: table;
+}
+
+
+.config-profile,
+tr, td {
+        width: 100%;
+}
+
+ .config-network, .config-networks,
 .config-networks td, .config-network td,
 table.config-network tbody, table.config-network tbody tr {
 	width: 210px;

@@ -25,6 +25,9 @@ var list_drivers = [];
  * \return String The HTML code for the given property
  */
 View.createParamView = function (profile_name, module_name, var_name, module, print, network) {
+        if(View.createView[module.type] == undefined)
+                return
+
 	return View.createView[module.type](profile_name, module_name, var_name, module, print, network);
 };
 
