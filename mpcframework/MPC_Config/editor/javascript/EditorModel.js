@@ -766,16 +766,19 @@ Model.generateXmlConfig = function() {
 				var current_element = current_module[current_element_name];
 				var current_element_mode = current_element.mode;
 				var current_default_value = myModel["default"].modules[current_module_name][current_element_name].value;
-				
+
 				// If the element has a value..
 				if (current_element.value != undefined) {
 					// If the profile is the "default"
 					// Else if the current value is different from the default one
 					if (current_profile_name == "default" 
 						|| (current_profile_name != "default" && current_element.value != current_default_value)) {
-						xml_elements.push("<" + current_element_name + ">" 
-								+ current_element.value 
-								+ "</" + current_element_name + ">");
+                                                        if(!(current_element.value instanceof Object))
+                                                        {
+                                                                xml_elements.push("<" + current_element_name + ">" 
+                                                                                + current_element.value 
+                                                                                + "</" + current_element_name + ">");
+                                                        }
 					}
 				}
 				// If the element is an array
@@ -1006,21 +1009,23 @@ Model.generateUnionXML = function(hh_union, union_js) {
         if(hh_union == undefined)
                 return
 
+
+
 	var xml = [];
-	var values = hh_union.value;
 
         var values_keys = {}
         var type = undefined;
 
-        if(values)
+        if(hh_union.value)
         {
-	        values_keys = Object.keys(values);
+	        values_keys = Object.keys(hh_union.value);
                 type = hh_union.value.type;
+
         }
         else
         {
-                console.log(hh_union)
-                return
+                                console.log(hh_union)
+                                return
         }
 
 

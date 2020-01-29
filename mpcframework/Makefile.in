@@ -311,12 +311,17 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
+XML2_CFLAGS = @XML2_CFLAGS@
+XML2_LIBS = @XML2_LIBS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -371,9 +376,11 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+xmllint = @xmllint@
+xsltproc = @xsltproc@
 mpc_headerdir = $(includedir)/mpc/
 mpc_header_HEADERS = $(abs_top_builddir)/mpc_config.h $(abs_top_srcdir)/include/mpc.h  $(abs_top_srcdir)/include/mpc_keywords.h  $(abs_top_srcdir)/include/mpc_main.h
-SUBDIRS = MPC_Arch MPC_Common
+SUBDIRS = MPC_Arch MPC_Common MPC_Config
 all: mpc_config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -883,6 +890,13 @@ uninstall-am: uninstall-mpc_headerHEADERS
 
 .PRECIOUS: Makefile
 
+
+# Generate and copy back to sources to ensure transparent update on success
+@CAN_GENERATE_CONFIG_TRUE@config:
+@CAN_GENERATE_CONFIG_TRUE@	$(abs_top_srcdir)/MPC_Config/generators/mpc_gen_runtime_config $(abs_top_srcdir) $(abs_top_srcdir)/MPC_Config/generators/ $(abs_top_srcdir)/MPC_Config/src/generated/
+@CAN_GENERATE_CONFIG_FALSE@config:
+@CAN_GENERATE_CONFIG_FALSE@	@echo "ERROR: Both 'xsltproc' and 'xmllint' are needed to generate the configuration"
+@CAN_GENERATE_CONFIG_FALSE@	@echo "ERROR: Install them and reconfigure the project"
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

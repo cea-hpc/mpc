@@ -1,10 +1,10 @@
 #ifndef MPC_COMMON_RANK_H_
 #define MPC_COMMON_RANK_H_
 
-#include <sctk_config.h>
+#include <mpc_config.h>
 
-     #include <sys/types.h>
-       #include <unistd.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 /**
  * @addtogroup MPC_Common

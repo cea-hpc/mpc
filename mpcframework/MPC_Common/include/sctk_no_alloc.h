@@ -29,7 +29,8 @@ extern "C"
 #endif
 
 /********************  HEADERS  *********************/
-#include "sctk_config.h"
+#include <mpc_config.h>
+
 #ifdef MPC_Allocator
 #error "don't have do be included"
 #endif

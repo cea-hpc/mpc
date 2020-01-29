@@ -1,4 +1,4 @@
-AC_INIT([mpc_core], [1.0], [france@paratools.com])
+AC_INIT([mpc], [4.0], [france@paratools.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AC_LANG(C)
@@ -13,6 +13,15 @@ LT_LANG([C])
 LT_INIT
 AC_PROG_CXX
 
+# Define MPC_VERSION
+
+AC_DEFINE([SCTK_VERSION_MAJOR], [4], [MPC Major Version 3])
+AC_DEFINE([SCTK_VERSION_MINOR], [0], [MPC Minor Version 3])
+AC_DEFINE([SCTK_VERSION_PRE], [0], [MPC Pre Version 3])
+
+AC_DEFINE_UNQUOTED([MPC_PREFIX_PATH], ["$prefix"], [Prefix Path for MPC])
+
+
 # General Configuration
 
 MPC_SUPPORTED_ARCHITECTURES_LIST="x86_64 ia64 i686 arm aarch64 powerpc64"
@@ -25,7 +34,19 @@ AM_PROG_AS
 
 AC_LANG_C
 
+# Optionnal XML generators
+
+AC_CHECK_PROG([xsltproc],[xsltproc],[yes],[no])
+AC_CHECK_PROG([xmllint],[xmllint],[yes],[no])
+
+AM_CONDITIONAL([CAN_GENERATE_CONFIG], [test "x$xsltproc" = xyes -o "x$xmllint" = xyes])
+
 # Checks for libraries.
+
+PKG_CHECK_MODULES([XML2], [libxml-2.0])
+
+AC_SUBST([XML2_CFLAGS])
+AC_SUBST([XML2_LIBS])
 
 # Checks for header files.
 
@@ -422,3 +443,4 @@ AC_OUTPUT([MPC_Arch/include/mpc_arch.h])
 AC_OUTPUT([Makefile])
 AC_OUTPUT([MPC_Arch/Makefile MPC_Arch/src/Makefile])
 AC_OUTPUT([MPC_Common/Makefile MPC_Common/src/Makefile])
+AC_OUTPUT([MPC_Config/Makefile MPC_Config/src/Makefile])

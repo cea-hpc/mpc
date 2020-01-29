@@ -611,6 +611,9 @@
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
+/* Prefix Path for MPC */
+#undef MPC_PREFIX_PATH
+
 /* Name of package */
 #undef PACKAGE
 
@@ -631,6 +634,15 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* MPC Major Version 3 */
+#undef SCTK_VERSION_MAJOR
+
+/* MPC Minor Version 3 */
+#undef SCTK_VERSION_MINOR
+
+/* MPC Pre Version 3 */
+#undef SCTK_VERSION_PRE
 
 /* The size of `char', as computed by sizeof. */
 #undef SIZEOF_CHAR

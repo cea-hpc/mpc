@@ -35,11 +35,7 @@
 
 #include "sctk_debug.h"
 
-#ifndef MPC_Thread
-#include "sctk_thread.h"
-#else
 #include "pthread.h"
-#endif
 
 
 #define MAX_SCTK_AIO_THREADS 16

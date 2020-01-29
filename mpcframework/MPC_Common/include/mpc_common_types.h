@@ -24,6 +24,8 @@
 #ifndef MPC_COMMON_INCLUDE_MPC_COMMON_TYPES_H_
 #define MPC_COMMON_INCLUDE_MPC_COMMON_TYPES_H_
 
+#include <mpc_config.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

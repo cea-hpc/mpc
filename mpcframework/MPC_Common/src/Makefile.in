@@ -131,11 +131,12 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libmpcommon_la_LIBADD =
-am_libmpcommon_la_OBJECTS = aio.lo bit_array.lo fifo.lo hashtable.lo \
+libmpccommon_la_DEPENDENCIES =  \
+	$(abs_top_builddir)/MPC_Arch/src/libmpcarch.la
+am_libmpccommon_la_OBJECTS = aio.lo bit_array.lo fifo.lo hashtable.lo \
 	io_helper.lo rank.lo sctk_debug.lo sctk_no_alloc.lo \
 	sctk_pm_json.lo
-libmpcommon_la_OBJECTS = $(am_libmpcommon_la_OBJECTS)
+libmpccommon_la_OBJECTS = $(am_libmpccommon_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -174,8 +175,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libmpcommon_la_SOURCES)
-DIST_SOURCES = $(libmpcommon_la_SOURCES)
+SOURCES = $(libmpccommon_la_SOURCES)
+DIST_SOURCES = $(libmpccommon_la_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -270,12 +271,17 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
+XML2_CFLAGS = @XML2_CFLAGS@
+XML2_LIBS = @XML2_LIBS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -330,9 +336,12 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ -I$(abs_top_srcdir)/include/
-lib_LTLIBRARIES = libmpcommon.la
-libmpcommon_la_SOURCES = aio.c  bit_array.c  fifo.c  hashtable.c  io_helper.c  rank.c  sctk_debug.c  sctk_no_alloc.c  sctk_pm_json.c
+xmllint = @xmllint@
+xsltproc = @xsltproc@
+AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ -I$(abs_top_srcdir)/include/ -I$(abs_top_builddir)/MPC_Arch/include/  -I$(abs_top_srcdir)/MPC_Arch/include/
+lib_LTLIBRARIES = libmpccommon.la
+libmpccommon_la_SOURCES = aio.c  bit_array.c  fifo.c  hashtable.c  io_helper.c  rank.c  sctk_debug.c  sctk_no_alloc.c  sctk_pm_json.c
+libmpccommon_la_LIBADD = $(abs_top_builddir)/MPC_Arch/src/libmpcarch.la
 all: all-am
 
 .SUFFIXES:
@@ -402,8 +411,8 @@ clean-libLTLIBRARIES:
 	  rm -f $${locs}; \
 	}
 
-libmpcommon.la: $(libmpcommon_la_OBJECTS) $(libmpcommon_la_DEPENDENCIES) $(EXTRA_libmpcommon_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libmpcommon_la_OBJECTS) $(libmpcommon_la_LIBADD) $(LIBS)
+libmpccommon.la: $(libmpccommon_la_OBJECTS) $(libmpccommon_la_DEPENDENCIES) $(EXTRA_libmpccommon_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libmpccommon_la_OBJECTS) $(libmpccommon_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

@@ -1,4 +1,12 @@
 mpc_headerdir=$(includedir)/mpc/
-mpc_header_HEADERS=$(abs_top_builddir)/MPC_Arch/include/mpc_arch.h $(abs_top_srcdir)/MPC_Arch/include/mpc_arch_context.h
+mpc_header_HEADERS=./include/mpc_runtime_config.h
+
+# Editor installation
+
+install-data-local:
+	cp -r $(abs_top_srcdir)/MPC_Config/editor $(pkgdatadir)
+	install -m 0644 -D $(abs_top_srcdir)/MPC_Config/src/generated/mpc_config_meta.js $(pkgdatadir)/editor/javascript/
+	install -m 0644 -D $(abs_top_srcdir)/MPC_Config/src/generated/mpc_config_xsd.js $(pkgdatadir)/editor/javascript/
+
 
 SUBDIRS=src

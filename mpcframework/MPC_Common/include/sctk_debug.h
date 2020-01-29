@@ -33,7 +33,8 @@ extern "C"
 #include <stdio.h>
 #include <stdarg.h>
 #include <mpc_keywords.h>
-#include <sctk_config.h>
+#include <mpc_config.h>
+#include <mpc_arch.h>
 #include <assert.h>
 #include <signal.h>
 

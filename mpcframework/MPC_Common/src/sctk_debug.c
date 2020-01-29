@@ -37,12 +37,11 @@
 #endif
 
 #include "mpc_common_rank.h"
-#include "sctk_config.h"
 #include "sctk_debug.h"
 #include "mpc_common_spinlock.h"
 
 #include "mpc_common_helper.h"
-#include "sctk_runtime_config.h"
+
 
 #ifdef MPC_Debugger
 	#include <sctk_debugger.h>
@@ -50,7 +49,6 @@
 
 #define SMALL_BUFFER_SIZE ( 4 * 1024 )
 #define DEBUG_INFO_SIZE ( 64 )
-static bool sctk_have_shell_colors;
 
 int sctk_is_in_fortran = 0;
 
@@ -60,8 +58,7 @@ int sctk_is_in_fortran = 0;
 
 static inline char *__debug_print_info( char *buffer )
 {
-	if ( sctk_have_shell_colors )
-	{
+#ifdef MPC_ENABLE_SHELL_COLORS
 		snprintf( buffer,
 		          DEBUG_INFO_SIZE,
 		          SCTK_COLOR_GREEN( [ )
@@ -69,14 +66,12 @@ static inline char *__debug_print_info( char *buffer )
 		                            SCTK_COLOR_BLUE( P % dN % d )
 		                            SCTK_COLOR_GREEN( ] ),
 		          mpc_common_get_task_rank(), mpc_common_get_process_rank(), mpc_common_get_node_rank() );
-	}
-	else
-	{
+#else
 		snprintf( buffer,
 		          DEBUG_INFO_SIZE,
 		          "[R%4dP%4dN%4d]",
 		          mpc_common_get_task_rank(), mpc_common_get_process_rank(), mpc_common_get_node_rank() );
-	}
+#endif
 
 	return buffer;
 }
@@ -220,6 +215,7 @@ void sctk_install_bt_sig_handler()
 		}
 	}
 
+#if 0
 	if ( cmd || sctk_runtime_config_get()->modules.debugger.mpc_bt_sig )
 	{
 		sigaction( SIGSEGV, &action, NULL );
@@ -231,6 +227,7 @@ void sctk_install_bt_sig_handler()
 		sigaction( SIGBUS, &action, NULL );
 		sigaction( SIGTERM, &action, NULL );
 	}
+#endif
 }
 
 /**********************************************************************/
@@ -282,14 +279,11 @@ void sctk_debug_root( const char *fmt, ... )
 
 	va_start( ap, fmt );
 
-	if ( sctk_have_shell_colors )
-	{
+#ifdef MPC_ENABLE_SHELL_COLORS
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE, SCTK_COLOR_RED_BOLD( "%s" ) "\n", fmt );
-	}
-	else
-	{
+#else
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE, "%s\n", fmt );
-	}
+#endif
 
 	mpc_common_io_noalloc_vfprintf( stderr, buff, ap );
 	fflush( stderr );
@@ -312,22 +306,19 @@ void sctk_info( const char *fmt, ... )
 	char buff[SMALL_BUFFER_SIZE];
 	va_start( ap, fmt );
 
-	if ( sctk_have_shell_colors )
-	{
+#ifdef MPC_ENABLE_SHELL_COLORS
 		char info_message[SMALL_BUFFER_SIZE];
 		mpc_common_io_noalloc_snprintf( info_message, SMALL_BUFFER_SIZE, SCTK_COLOR_GRAY_BOLD( "%s" ), fmt );
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s INFO %s\n",
 		                                __debug_print_info( debug_info ),
 		                                info_message );
-	}
-	else
-	{
+#else
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s INFO %s\n",
 		                                __debug_print_info( debug_info ),
 		                                fmt );
-	}
+#endif
 
 	mpc_common_io_noalloc_vfprintf( stderr, buff, ap );
 	va_end( ap );
@@ -348,22 +339,19 @@ void sctk_debug( const char *fmt, ... )
 	char buff[SMALL_BUFFER_SIZE];
 	va_start( ap, fmt );
 
-	if ( sctk_have_shell_colors )
-	{
+#ifdef MPC_ENABLE_SHELL_COLORS
 		char debug_message[SMALL_BUFFER_SIZE];
 		mpc_common_io_noalloc_snprintf( debug_message, SMALL_BUFFER_SIZE, SCTK_COLOR_CYAN_BOLD( "%s" ), fmt );
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s DEBUG %s\n",
 		                                __debug_print_info( debug_info ),
 		                                debug_message );
-	}
-	else
-	{
+#else
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s DEBUG %s\n",
 		                                __debug_print_info( debug_info ),
 		                                fmt );
-	}
+#endif
 
 	mpc_common_io_noalloc_vfprintf( stderr, buff, ap );
 	fflush( stderr );
@@ -378,22 +366,19 @@ void sctk_error( const char *fmt, ... )
 	char buff[SMALL_BUFFER_SIZE];
 	va_start( ap, fmt );
 
-	if ( sctk_have_shell_colors )
-	{
+#ifdef MPC_ENABLE_SHELL_COLORS
 		char error_message[SMALL_BUFFER_SIZE];
 		mpc_common_io_noalloc_snprintf( error_message, SMALL_BUFFER_SIZE, SCTK_COLOR_RED_BOLD( "%s" ), fmt );
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s ERROR %s\n",
 		                                __debug_print_info( debug_info ),
 		                                error_message );
-	}
-	else
-	{
+#else
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s ERROR %s\n",
 		                                __debug_print_info( debug_info ),
 		                                fmt );
-	}
+#endif
 
 	mpc_common_io_noalloc_vfprintf( stderr, buff, ap );
 	va_end( ap );
@@ -451,22 +436,19 @@ void sctk_warning( const char *fmt, ... )
 	char buff[SMALL_BUFFER_SIZE];
 	va_start( ap, fmt );
 
-	if ( sctk_have_shell_colors )
-	{
+#ifdef MPC_ENABLE_SHELL_COLORS
 		char warning_message[SMALL_BUFFER_SIZE];
 		mpc_common_io_noalloc_snprintf( warning_message, SMALL_BUFFER_SIZE, SCTK_COLOR_YELLOW_BOLD( "%s" ), fmt );
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s WARNING %s\n",
 		                                __debug_print_info( debug_info ),
 		                                warning_message );
-	}
-	else
-	{
+#else
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s WARNING %s\n",
 		                                __debug_print_info( debug_info ),
 		                                fmt );
-	}
+#endif
 
 	mpc_common_io_noalloc_vfprintf( stderr, buff, ap );
 	va_end( ap );
@@ -525,8 +507,9 @@ void sctk_size_checking_eq( size_t a, size_t b, char *ca, char *cb, char *file,
 
 void sctk_init( void )
 {
-	sctk_have_shell_colors = sctk_runtime_config_get()->modules.debugger.colors;
+
 }
+
 void sctk_leave( void )
 {
 }

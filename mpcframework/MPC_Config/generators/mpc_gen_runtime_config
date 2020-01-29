@@ -1,0 +1,158 @@
+#!/bin/sh
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - VALAT Sebastien sebastien.valat@cea.fr                           #
+#                                                                      #
+########################################################################
+
+# Doc :
+# This script aims to help MPC developer to re-generate MPC runtime config file management sources.
+# It will use the files config-meta.xml in modules to generate the source code used for managing
+# config loading, displaying and documentation.
+#
+# Used :
+#    - command xsltproc
+#    - command xmllint
+#    - files in MPC_Config/generators
+#    - files MPC_*/config-meta.xml
+#
+# Generate
+#    - Files in MPC_Config/generated
+
+#setup commands
+XSLTPROC=xsltproc
+XMLLINT=xmllint
+
+MPC_ROOT_DIR=""
+MPC_GENERATOR_DIRECTORY=""
+DESTINATION_DIRECTORY=""
+
+# Argument Management
+if test "x$#" != "x3"; then
+        echo "USAGE: $0 [MPC_ROOT_DIRECTORY] [MPC_GENERATOR_DIRECTORY] [DESTINATION_DIRECTORY]"
+        exit 1
+else
+        MPC_ROOT_DIR="$1"
+        MPC_GENERATOR_DIRECTORY="$2"
+        DESTINATION_DIRECTORY="$3"
+fi
+
+
+#get files
+CONFIG_FILES=${MPC_ROOT_DIR}/MPC_*/config-meta.xml
+GENERATORS=${MPC_GENERATOR_DIRECTORY}/*.xsl
+GLOBAL_CONFIG_FILE=${DESTINATION_DIRECTORY}/global-config-meta.xml
+
+
+if test ! -d ${DESTINATION_DIRECTORY}; then
+        mkdir ${DESTINATION_DIRECTORY}
+fi
+
+#wrapper do display and check execution
+safe_exec()
+{
+	echo "$*" >&2
+	$* || exit 1
+}
+
+#generate files from global xml file by using XSLTs
+apply_generators()
+{
+	echo "Generate all targets"
+
+	#loop on generator to generate all files
+	for gen in ${GENERATORS}
+	do
+		target_filename=$(basename $(echo "${gen}" | sed -e 's/\.xsl//g'))
+                target="${DESTINATION_DIRECTORY}/${target_filename}"
+		echo "   - xsltproc -o $target $gen ${GLOBAL_CONFIG_FILE}"
+		${XSLTPROC} -o $target $gen ${GLOBAL_CONFIG_FILE} || exit 1
+	done
+}
+
+#validate meta files of all modules before generating final files
+check_meta_files()
+{
+	echo "Check all files config-meta.xml"
+	for tmp in ${CONFIG_FILES}
+	do
+		echo "   - Check $tmp"
+		${XMLLINT} --noout --dtdvalid ${MPC_ROOT_DIR}/MPC_Config/extra/config-meta.dtd "$tmp" || exit 1
+	done
+}
+
+#generate aggregated config file
+gen_global_config_file()
+{
+	echo "Generate ${GLOBAL_CONFIG_FILE}"
+
+	#file header
+	echo "<?xml version=\"1.0\"?>" > ${GLOBAL_CONFIG_FILE}
+	echo "<all>" >> ${GLOBAL_CONFIG_FILE}
+
+	#generate body
+	for tmp in ${CONFIG_FILES}
+	do
+		echo "   - Use $tmp"
+		module_name=$(basename $(dirname ${tmp}))
+		cat ${tmp} | grep -v "<?xml version=\"1.0\"?>" | sed -e "s/<config>/<config name=\"${module_name}\">/g" >> ${GLOBAL_CONFIG_FILE}
+	done
+
+	#footer
+	echo "</all>" >> ${GLOBAL_CONFIG_FILE}
+
+	#remove inner invalid dtd declarations
+	sed -i "/<!DOCTYPE config SYSTEM .*>/d" ${GLOBAL_CONFIG_FILE}
+}
+
+XSD=${DESTINATION_DIRECTORY}/*.xsd
+
+# gen xsd file for configuration editor
+gen_xsd_file_editor()
+{
+	for tmp in ${XSD}
+	do
+		first=1
+		while read line
+		do
+			if [ $first -eq 1 ]; then
+				modified_line=`echo "$line" | sed -e "s/\"/\'/g"`
+				printf "var mpc_config_xsd = \"$modified_line "
+				first=0
+			else
+				printf "$line " | sed -e "s/x27/\'/g" -e "s/\"/\'/g"
+			fi
+		done < $tmp
+	done
+	echo "\";"
+}
+
+#main
+check_meta_files
+gen_global_config_file
+apply_generators
+gen_xsd_file_editor > ${DESTINATION_DIRECTORY}/mpc_config_xsd.js
+
+#echo "Copyig files"
+#echo "   - cp MPC_Config/generated/mpc_config_meta.js MPC_Config/editor/javascript/mpc_config_meta.js"
+#cp MPC_Config/generated/mpc_config_meta.js MPC_Config/editor/javascript/mpc_config_meta.js
+#echo "   - cp MPC_Config/generated/mpc_config_xsd.js MPC_Config/editor/javascript/mpc_config_xsd.js"
+#cp MPC_Config/generated/mpc_config_xsd.js MPC_Config/editor/javascript/mpc_config_xsd.js
+
+echo "Finish"

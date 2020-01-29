@@ -19,7 +19,7 @@
 #include "fifo.h"
 
 #include "sctk_alloc.h"
-
+#include <mpc_common_spinlock.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -37,7 +37,7 @@ uint64_t mpc_common_fifo_count( struct mpc_common_fifo *fifo )
 void mpc_common_fifo_chunk_init( struct mpc_common_fifo_chunk *ch,
 							   uint64_t chunk_size, uint64_t elem_size )
 {
-	ch->lock = 0;
+	mpc_common_spinlock_init(&ch->lock, 0);
 	ch->chunk_size = chunk_size;
 	ch->elem_size = elem_size;
 	ch->start_offset = 0;
@@ -118,15 +118,17 @@ void *mpc_common_fifo_chunk_pop( struct mpc_common_fifo_chunk *ch, void *dest )
 
 void mpc_common_fifo_init( struct mpc_common_fifo *fifo, uint64_t chunk_size, size_t elem_size )
 {
-	fifo->head_lock = 0;
+        mpc_common_spinlock_init(&fifo->head_lock, 0);
+
 	fifo->head = NULL;
-	fifo->tail_lock = 0;
+
+        mpc_common_spinlock_init(&fifo->tail_lock, 0);
 	fifo->tail = NULL;
 
 	fifo->chunk_size = chunk_size;
 	fifo->elem_size = elem_size;
 
-	fifo->lock = 0;
+        mpc_common_spinlock_init(&fifo->lock, 0);
 	fifo->elem_count = 0;
 }
 

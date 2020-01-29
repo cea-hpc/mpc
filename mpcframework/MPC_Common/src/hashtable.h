@@ -24,7 +24,6 @@
 
 #include <mpc_common_datastructure.h>
 
-
 /**
  * @addtogroup _mpc_ht_cell_
  * @{

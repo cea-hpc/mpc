@@ -30,53 +30,22 @@
 			<name>default</name>
 			<modules>
 				<collectives_intra>
-					<barrier_intra>__INTERNAL__PMPI_Barrier_btree_mpi</barrier_intra>
-				
 				</collectives_intra>
 			</modules>
 			<networks>
-				<!-- net config contain complexe structures so default value cannot be setup into config-meta.xml -->
 				<configs>
 					<config>
 						<name>ib_config_mpi</name>
 						<driver>
-							<infiniband>
-								<network_type>1</network_type>
-							</infiniband>
+							<infiniband/>
 						</driver>
 					</config>
 					<config>
-						<name>ib_config_signalization</name>
+						<name>opa_config_mpi</name>
 						<driver>
-							<infiniband>
-								<network_type>0</network_type>
-								<qp_tx_depth>1000</qp_tx_depth>
-								<cq_depth>2000</cq_depth>
-								<init_ibufs>100</init_ibufs>
-								<init_recv_ibufs>20</init_recv_ibufs>
-								<max_srq_ibufs_posted>100</max_srq_ibufs_posted>
-								<max_srq_ibufs>100</max_srq_ibufs>
-								<srq_credit_limit>100</srq_credit_limit>
-								<steal>0</steal>
-								<rdma_min_size>0</rdma_min_size>
-								<rdma_max_size>0</rdma_max_size>
-								<rdma_min_nb>0</rdma_min_nb>
-								<rdma_max_nb>0</rdma_max_nb>
-								<rdma_resizing_min_size>0</rdma_resizing_min_size>
-								<rdma_resizing_max_size>0</rdma_resizing_max_size>
-								<rdma_resizing_min_nb>0</rdma_resizing_min_nb>
-								<rdma_resizing_max_nb>0</rdma_resizing_max_nb>
-								<size_recv_ibufs_chunk>50</size_recv_ibufs_chunk>
-							</infiniband>
+							<infiniband/>
 						</driver>
-                   	
 					</config>
-                    <config>
-                        <name>portals</name>
-                        <driver>
-                            <tcp/>
-                        </driver>
-                    </config>
 
 					<config>
 						<name>tcp_config_mpi</name>
@@ -84,33 +53,62 @@
 							<tcp/>
 						</driver>
 					</config>
-				         
+					<config>
+						<name>portals_config</name>
+						<driver>
+							<portals/>
+						</driver>
+					</config>
+
+					<config>
+						<name>shm_config_mpi</name>
+						<driver>
+							<shm/>
+						</driver>
+					</config>
+
 				</configs>
 
 				<rails>
 					<rail>
 						<name>ib_mpi</name>
-						<device>0</device>
-						<topology>ondemand</topology>
+						<device>!mlx.*</device>
+						<!-- Restrict Idle Polling only to the device NUMA -->
+						<idle_polling>
+							<range>RAIL_POLL_MACHINE</range>
+							<trigger>RAIL_POLL_SOCKET</trigger>
+						</idle_polling>
+						<priority>1</priority>
+						<rdma>1</rdma>
+						<ondemand>1</ondemand>
+						<topology>ring</topology>
 						<config>ib_config_mpi</config>
 					</rail>
 					<rail>
-						<name>ib_signalization</name>
-						<device>0</device>
-						<topology>torus</topology>
-						<config>ib_config_signalization</config>
+						<name>opa_mpi</name>
+						<device>!hfi1*</device>
+						<!-- Restrict Idle Polling only to the device NUMA -->
+						<idle_polling>
+							<range>RAIL_POLL_MACHINE</range>
+							<trigger>RAIL_POLL_SOCKET</trigger>
+						</idle_polling>
+						<priority>1</priority>
+						<rdma>1</rdma>
+						<ondemand>1</ondemand>
+						<topology>ring</topology>
+						<config>opa_config_mpi</config>
 					</rail>
 					<rail>
 						<name>tcp_mpi</name>
-						<priority>1</priority>
-						<device>0</device>
-						<topology>fully</topology>
+						<priority>9</priority>
+						<ondemand>1</ondemand>
+						<topology>ring</topology>
 						<config>tcp_config_mpi</config>
 					</rail>
 					<rail>
 						<name>tcp_large</name>
 						<priority>10</priority>
-						<device>0</device>
+						<ondemand>1</ondemand>
 						<topology>fully</topology>
 						<config>tcp_config_mpi</config>
 						<gates>
@@ -122,38 +120,59 @@
 						</gates>
 					</rail>
 					<rail>
-						<name>tcp_mpi_ring</name>
-						<device>0</device>
-						<topology>ring</topology>
-						<config>tcp_config_mpi</config>
-					</rail>
-					<rail>
 						<name>portals_mpi</name>
-						<device>0</device>
-						<topology>ring</topology>
-						<config>portals</config>
+						<priority>6</priority>
+						<ondemand>1</ondemand>
+						<rdma>1</rdma>
+						<config>portals_config</config>
+					</rail>
+
+					<rail>
+						<name>shm_mpi</name>
+						<priority>99</priority>
+						<ondemand>0</ondemand>
+						<topology>fully</topology>
+						<config>shm_config_mpi</config>
+						<gates>
+							<gate>
+								<msgtype>
+									<task>1</task>
+									<emulated_rma>1</emulated_rma>
+								</msgtype>
+							</gate>
+						</gates>
+	
 					</rail>
 				</rails>
-
 				<cli_options>
 					<cli_option>
 						<name>ib</name>
 						<rails>
+							<rail>shm_mpi</rail>
 							<rail>ib_mpi</rail>
-							<rail>ib_signalization</rail>
 						</rails>
 					</cli_option>
 					<cli_option>
+						<name>opa</name>
+						<rails>
+							<rail>shm_mpi</rail>
+							<rail>opa_mpi</rail>
+						</rails>
+					</cli_option>
+
+
+					<cli_option>
 						<name>tcp</name>
 						<rails>
+							<rail>shm_mpi</rail>
 							<rail>tcp_mpi</rail>
 						</rails>
 					</cli_option>
 					<cli_option>
 						<name>multirail_tcp</name>
 						<rails>
+							<rail>shm_mpi</rail>
 							<rail>tcp_large</rail>
-							<rail>tcp_mpi</rail>
 						</rails>
 					</cli_option>
 					<cli_option>
@@ -163,10 +182,16 @@
 						</rails>
 					</cli_option>
 					<cli_option>
+						<name>shm</name>
+						<rails>
+							<rail>shm_mpi</rail>
+						</rails>
+					</cli_option>
+					<cli_option>
 						<name>default</name>
 						<rails>
+							<rail>shm_mpi</rail>
 							<rail>ib_mpi</rail>
-							<rail>ib_signalization</rail>
 						</rails>
 					</cli_option>
 				</cli_options>

@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-#include "sctk_config.h"
+#include "mpc_config.h"
 #include "opa_primitives.h"
 #include "mpc_common_asm.h"
 #include "sctk_alloc.h"
@@ -134,8 +134,8 @@ typedef struct
 #define sctk_spin_rwlock_init( a )                      \
 	do                                                  \
 	{                                                   \
-		( a )->writer_lock = SCTK_SPINLOCK_INITIALIZER, \
-			OPA_store_int( &( a )->reader_number, 0 );  \
+                mpc_common_spinlock_init(&( a )->writer_lock , SCTK_SPINLOCK_INITIALIZER); \
+		OPA_store_int( &( a )->reader_number, 0 );  \
 	} while ( 0 )
 
 static inline int mpc_common_spinlock_read_lock( sctk_spin_rwlock_t *lock )

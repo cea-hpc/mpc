@@ -22,10 +22,10 @@
 #ifndef __SCTK_ASM_H_
 #define __SCTK_ASM_H_
 
-#include "sctk_config.h"
+#include "mpc_config.h"
 
 #include <sched.h>
-#include <libpause.h>
+#include <mpc_arch.h>
 #ifdef __MIC__
 #include <immintrin.h>
 #endif
@@ -39,7 +39,6 @@ extern "C" {
  **********************/
 
 #include "opa_config.h"
-#include "sctk_config.h"
 
 #if defined(OPA_USE_UNSAFE_PRIMITIVES)\
         || defined(OPA_HAVE_GCC_AND_POWERPC_ASM)\
@@ -59,8 +58,6 @@ extern "C" {
 /**********
  * TIMERS *
  **********/
-
-#include <libtimer.h>
 
 #define sctk_get_time_stamp sctk_atomics_get_timestamp
 #define sctk_get_time_stamp_gettimeofday sctk_atomics_get_timestamp_gettimeofday
