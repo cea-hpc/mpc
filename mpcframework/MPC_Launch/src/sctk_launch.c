@@ -31,6 +31,7 @@
 #include <signal.h>
 #include <sctk_runtime_config.h>
 #include <sctk_communicator.h>
+#include <mpc_common_flags.h>
 
 
 #if !defined(NO_INTERNAL_ASSERT)
@@ -42,9 +43,9 @@
 #include "sctk_thread.h"
 #include "sctk_launch.h"
 #include "sctk_debug.h"
-#include "sctk_config.h"
+#include "mpc_config.h"
 #include "mpc_common_asm.h"
-#include "mpc_common_asm.h"
+
 #ifdef MPC_Message_Passing
 	#include "comm.h"
 	#include "sctk_low_level_comm.h"
@@ -54,7 +55,7 @@
 	#include "sctk_window.h"
 #endif /* MPC_Message_Passing */
 #include "mpc_topology.h"
-#include "mpc_common_asm.h"
+
 /* #include "sctk_daemons.h" */
 /* #include "sctk_io.h" */
 #include "sctk_runtime_config.h"
@@ -108,9 +109,7 @@ char *sctk_multithreading_mode;
 int sctk_new_scheduler_engine_enabled = 0;
 char *sctk_network_mode = "none";
 char *sctk_checkpoint_str = "";
-bool sctk_enable_smt_capabilities;
-bool sctk_enable_graphic_placement;
-bool sctk_enable_text_placement;
+
 bool sctk_share_node_capabilities;
 
 double __sctk_profiling__start__sctk_init_MPC;
@@ -203,7 +202,7 @@ static void ( *sctk_thread_val ) ( void ) = NULL;
 static int sctk_task_nb_val;
 static int sctk_process_nb_val;
 static int sctk_processor_nb_val;
-static int sctk_node_nb_val;
+
 static int sctk_verbosity;
 static char *sctk_launcher_mode;
 /* Name of the inter-process driver to use. NULL means default driver */
@@ -521,11 +520,6 @@ void ( *sctk_get_thread_val( void ) ) ()
 	return sctk_thread_val;
 }
 
-int
-sctk_get_process_nb ()
-{
-	return sctk_process_nb_val;
-}
 
 int
 sctk_get_total_tasks_number()
@@ -537,13 +531,7 @@ sctk_get_total_tasks_number()
 static void
 sctk_def_processor_nb ( char *arg )
 {
-	sctk_processor_nb_val = atoi ( arg );
-}
-
-int
-sctk_get_processor_nb ()
-{
-	return sctk_processor_nb_val;
+	mpc_common_get_flags()->processor_number = atoi ( arg );
 }
 
 static void
@@ -557,34 +545,29 @@ sctk_get_launcher_mode()
 	return sctk_launcher_mode;
 }
 
-static void
-sctk_def_node_nb ( char *arg )
-{
-	sctk_node_nb_val = atoi ( arg );
-}
 
 static void
 sctk_def_enable_smt ( __UNUSED__ char *arg )
 {
-	sctk_enable_smt_capabilities = 1;
+	mpc_common_get_flags()->enable_smt_capabilities = 1;
 }
 
 static void
 sctk_def_disable_smt ( __UNUSED__ char *arg )
 {
-	sctk_enable_smt_capabilities = 0;
+	mpc_common_get_flags()->enable_smt_capabilities = 0;
 }
 
 static void
 sctk_def_text_placement( __UNUSED__ char *arg )
 {
-	sctk_enable_text_placement = 1;
+	mpc_common_get_flags()->enable_topology_text_placement = 1;
 }
 
 static void
 sctk_def_graphic_placement( __UNUSED__ char *arg )
 {
-	sctk_enable_graphic_placement = 1;
+	mpc_common_get_flags()->enable_topology_graphic_placement = 1;
 }
 
 static void
@@ -691,7 +674,6 @@ sctk_proceed_arg ( char *word )
 	sctk_add_arg_eq ( "--sctk_use_host", sctk_def_use_host );
 	sctk_add_arg_eq ( "--task-number", sctk_def_task_nb );
 	sctk_add_arg_eq ( "--process-number", sctk_def_process_nb );
-	sctk_add_arg_eq ( "--node-number", sctk_def_node_nb );
 	sctk_add_arg_eq ( "--share-node", sctk_def_share_node );
 	sctk_add_arg_eq ( "--processor-number", sctk_def_processor_nb );
 	sctk_add_arg_eq ( "--profiling", sctk_set_profiling );
@@ -773,7 +755,7 @@ static int sctk_env_init_intern( int *argc, char ***argv )
 		}
 	}
 
-	if ( sctk_enable_smt_capabilities == 1 )
+	if ( mpc_common_get_flags()->enable_smt_capabilities == 1 )
 	{
 		sctk_processor_nb_val *= mpc_topology_get_ht_per_core();
 	}
@@ -1056,11 +1038,10 @@ void sctk_init_mpc_runtime()
 	sctk_process_nb_val = sctk_runtime_config_get()->modules.launcher.nb_process;
 #endif
 	sctk_processor_nb_val = sctk_runtime_config_get()->modules.launcher.nb_processor;
-	sctk_node_nb_val = sctk_runtime_config_get()->modules.launcher.nb_node;
 	sctk_verbosity = sctk_runtime_config_get()->modules.launcher.verbosity;
 	sctk_launcher_mode = sctk_runtime_config_get()->modules.launcher.launcher;
 	sctk_profiling_outputs = sctk_runtime_config_get()->modules.launcher.profiling;
-	sctk_enable_smt_capabilities = sctk_runtime_config_get()->modules.launcher.enable_smt;
+	mpc_common_get_flags()->enable_smt_capabilities = sctk_runtime_config_get()->modules.launcher.enable_smt;
 	sctk_share_node_capabilities = sctk_runtime_config_get()->modules.launcher.share_node;
 	sctk_restart_mode = sctk_runtime_config_get()->modules.launcher.restart;
 	sctk_checkpoint_mode = sctk_runtime_config_get()->modules.launcher.checkpoint;
@@ -1068,7 +1049,7 @@ void sctk_init_mpc_runtime()
 	    sctk_runtime_config_get()->modules.accelerator.enabled;
 	/* forece smt on MIC */
 #ifdef __MIC__
-	sctk_enable_smt_capabilities = 1;
+	mpc_common_get_flags()->enable_smt_capabilities = 1;
 #endif
 	/*   sctk_exception_catch (11); */
 	/*   sctk_set_execuatble_name (argv[0]); */

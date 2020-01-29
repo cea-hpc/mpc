@@ -27,7 +27,7 @@
 
 #include <assert.h>
 #ifdef MPC_Debugger
-#include "sctk_config.h"
+#include "mpc_config.h"
 #endif
 #include <thread_db.h>
 #include <string.h>

@@ -25,10 +25,13 @@
 
 #include <string.h>
 #include <sched.h>
-#include "sctk_config.h"
-#include "sctk_posix_thread.h"
-#include "sctk_thread_api.h"
-#include "stdarg.h"
+#include <stdarg.h>
+
+#include <mpc_config.h>
+
+#include <sctk_posix_thread.h>
+#include <sctk_thread_api.h>
+
 
 #ifndef SCTK_LIB_MODE
 	#ifndef MPC_NO_AUTO_MAIN_REDEF

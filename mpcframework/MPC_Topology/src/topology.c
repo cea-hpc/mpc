@@ -27,12 +27,11 @@
 /* ######################################################################## */
 #include "topology.h"
 
-#include "sctk_launch.h"
-#include "sctk_config.h"
-
+#include "mpc_config.h"
 #include "sctk_debug.h"
 #include "machine_info.h"
 #include "mpc_common_helper.h"
+#include "mpc_common_flags.h"
 #include "mpc_common_rank.h"
 
 #include "topology_render.h"
@@ -41,6 +40,7 @@
 #ifdef MPC_USE_EXTLS
 #include <extls.h>
 #endif
+
 
 
 #include <stdio.h>
@@ -78,7 +78,7 @@ void _mpc_topology_map_and_restrict_by_cpuset(hwloc_topology_t target_topology,
 														  pinning_constraints,
 														  HWLOC_OBJ_PU );
 
-		if ( sum != sctk_get_processor_nb() )
+		if ( sum != mpc_common_get_flags()->processor_number )
 		{
 			sctk_error("MPC_PIN_PROCESSOR_LIST is set with"
 			           " a different number of processor than"
@@ -186,7 +186,7 @@ void _mpc_topology_apply_smt_configuration(hwloc_topology_t target_topology,
 					  		      int * processor_count)
 {
 restart_restrict:
-	if(!sctk_enable_smt_capabilities)
+	if(!mpc_common_get_flags()->enable_smt_capabilities)
 	{
 		unsigned int i;
 
@@ -214,7 +214,7 @@ restart_restrict:
 		{
 			hwloc_bitmap_free( topology_cpuset );
 			hwloc_bitmap_free( set );
-			sctk_enable_smt_capabilities = 1;
+			mpc_common_get_flags()->enable_smt_capabilities = 1;
 			sctk_warning( "Failed to restrict topology : enabling SMT support" );
 			goto restart_restrict;
 		}
@@ -281,7 +281,7 @@ void _mpc_topology_apply_mpc_process_constraints(hwloc_topology_t target_topolog
 
 	/* Apply processor number from command line if possible */
 	{
-		int requested_processor_per_process = sctk_get_processor_nb();
+		int requested_processor_per_process = mpc_common_get_flags()->processor_number;
 
 		if ( requested_processor_per_process > 0 )
 		{
@@ -710,7 +710,7 @@ void _mpc_topology_bind_to_process(hwloc_topology_t target_topo)
  */
 int _mpc_topology_bind_to_pu(hwloc_topology_t target_topo, int cpuid)
 {
-	static mpc_common_spinlock_t pin_lock = 0;
+	static mpc_common_spinlock_t pin_lock = SCTK_SPINLOCK_INITIALIZER;
 
 	if ( cpuid < 0 )
 	{

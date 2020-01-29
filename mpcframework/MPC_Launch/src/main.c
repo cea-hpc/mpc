@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "sctk_launch.h"
-#include "sctk_config.h"
+#include "mpc_config.h"
 #include "sctk_debug.h"
 
 #include <stdlib.h>

@@ -57,7 +57,7 @@ typedef OPA_int_t mpc_common_spinlock_t;
  * @brief Used to initialize a spinlock statically
  *
  */
-#define SCTK_SPINLOCK_INITIALIZER 0
+#define SCTK_SPINLOCK_INITIALIZER { 0 }
 
 #endif
 
@@ -134,7 +134,7 @@ typedef struct
 #define sctk_spin_rwlock_init( a )                      \
 	do                                                  \
 	{                                                   \
-                mpc_common_spinlock_init(&( a )->writer_lock , SCTK_SPINLOCK_INITIALIZER); \
+                mpc_common_spinlock_init(&( a )->writer_lock , 0); \
 		OPA_store_int( &( a )->reader_number, 0 );  \
 	} while ( 0 )
 

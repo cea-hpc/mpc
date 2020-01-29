@@ -27,7 +27,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "sctk_config.h"
+#include "mpc_config.h"
 #include "sctk_debug.h"
 #include "sctk_thread_dbg.h"
 #include "sctk_debug.h"

@@ -25,7 +25,7 @@
 #ifdef MPC_USE_PORTALS
 #include "ptl_layer.h"
 #include "sctk_ptl_am_iface.h"
-#include "sctk_config.h"
+#include "mpc_config.h"
 #include "sctk_accessor.h"
 
 static sctk_ptl_am_rail_info_t srail;

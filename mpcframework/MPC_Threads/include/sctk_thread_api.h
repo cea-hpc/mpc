@@ -29,7 +29,8 @@
 #include <sys/types.h>
 #include <signal.h>
 #include <time.h>
-#include "sctk_config.h"
+#include <mpc_config.h>
+
 #if defined(SunOS_SYS) || defined(AIX_SYS) || defined(HP_UX_SYS)
 /* typedef clockid_t __clockid_t; */
 struct timespec;

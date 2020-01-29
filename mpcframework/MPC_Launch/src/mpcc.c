@@ -21,7 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "sctk_launch.h"
-#include "sctk_config.h"
+#include "mpc_config.h"
 #include "sctk_debug.h"
 #include <string.h>
 #include <stdlib.h>

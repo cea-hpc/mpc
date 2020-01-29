@@ -5,7 +5,7 @@ AC_LANG(C)
 AM_INIT_AUTOMAKE([subdir-objects])
 AC_CONFIG_SRCDIR([MPC_Arch/src/timer.c])
 AC_CONFIG_HEADERS([mpc_config.h])
-
+AM_SILENT_RULES([yes])
 LT_PREREQ([2.4.6])
 
 LT_INIT
@@ -48,6 +48,16 @@ PKG_CHECK_MODULES([XML2], [libxml-2.0])
 AC_SUBST([XML2_CFLAGS])
 AC_SUBST([XML2_LIBS])
 
+PKG_CHECK_MODULES([HWLOC], [hwloc < 2.0])
+
+AC_SUBST([HWLOC_CFLAGS])
+AC_SUBST([HWLOC_LIBS])
+
+PKG_CHECK_MODULES([OPENPA], [openpa])
+
+AC_SUBST([OPENPA_CFLAGS])
+AC_SUBST([OPENPA_LIBS])
+
 # Checks for header files.
 
 AC_HEADER_STDC
@@ -82,6 +92,7 @@ AC_CHECK_HEADERS([sys/param.h])
 AC_CHECK_HEADERS([sys/pstat.h])
 AC_CHECK_HEADERS([sys/socket.h])
 AC_CHECK_HEADERS([sys/stat.h])
+AC_CHECK_HEADERS([sys/syscall.h])
 AC_CHECK_HEADERS([sys/time.h])
 AC_CHECK_HEADERS([sys/types.h])
 AC_CHECK_HEADERS([sys/ucontext.h])
@@ -435,12 +446,34 @@ AM_CONDITIONAL([MPC_ARCH_GENERIC_MICROTASK], [test "x${MPC_ARCH_MICROTASK_ARCH}"
 
 
 #
+# Modular MPC configuration
+#
+
+AC_ARG_WITH([threads],
+[AS_HELP_STRING([--with-threads],
+                [Compile MPC with pthread and user-level thread support])],
+[mpc_thread_enabled=$withval],
+[mpc_thread_enabled=yes])
+
+if test "x${mpc_thread_enabled}" = "xyes"; then
+        AC_DEFINE([MPC_THREADS], [1], [MPC_THREAD module was enabled])
+fi
+
+AM_CONDITIONAL([MPC_THREAD_ENABLED], [test "x${mpc_thread_enabled}" = "xyes"])
+
+#
 # Final Output
 #
 
 AC_OUTPUT([MPC_Arch/include/mpc_arch.h])
 
-AC_OUTPUT([Makefile])
-AC_OUTPUT([MPC_Arch/Makefile MPC_Arch/src/Makefile])
-AC_OUTPUT([MPC_Common/Makefile MPC_Common/src/Makefile])
-AC_OUTPUT([MPC_Config/Makefile MPC_Config/src/Makefile])
+AC_OUTPUT([Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile
+           MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile
+           MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile
+           MPC_Threads/Makefile MPC_Threads/src/Makefile])
+
+echo "========== MPC Configuration =========="
+echo "PREFIX: $prefix"
+echo "MPC_Thread : $mpc_thread_enabled"
+echo "======================================="
+

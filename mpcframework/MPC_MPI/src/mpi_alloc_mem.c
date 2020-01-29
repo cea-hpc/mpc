@@ -25,7 +25,7 @@
 #include "mpc_lowcomm.h"
 #include <mpc_common_helper.h>
 #include "mpc_mpi.h"
-#include "mpc_thread.h"
+#include "mpcthread.h"
 #include "sctk_accessor.h"
 #include "sctk_handler_mpi.h"
 #include "sctk_runtime_config.h"

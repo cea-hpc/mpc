@@ -158,10 +158,8 @@ am_mpc_print_config_OBJECTS =  \
 	./print_config/mpc_print_config_sh.$(OBJEXT) \
 	./print_config/mpc_print_config_xml.$(OBJEXT)
 mpc_print_config_OBJECTS = $(am_mpc_print_config_OBJECTS)
-mpc_print_config_DEPENDENCIES =  \
-	$(abs_top_builddir)/MPC_Common/src/libmpccommon.la \
-	$(abs_top_builddir)/MPC_Config/src/libmpcconfig.la \
-	$(am__DEPENDENCIES_1)
+mpc_print_config_DEPENDENCIES = ../../MPC_Common/src/libmpccommon.la \
+	./libmpcconfig.la $(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -259,6 +257,8 @@ EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 GREP = @GREP@
+HWLOC_CFLAGS = @HWLOC_CFLAGS@
+HWLOC_LIBS = @HWLOC_LIBS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -283,6 +283,8 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
+OPENPA_CFLAGS = @OPENPA_CFLAGS@
+OPENPA_LIBS = @OPENPA_LIBS@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -387,7 +389,7 @@ mpc_print_config_SOURCES = ./print_config/mpc_print_config.c \
 	./print_config/mpc_print_config_sh.h \
 	./print_config/mpc_print_config_xml.c \
 	./print_config/mpc_print_config_xml.h
-mpc_print_config_LDADD = $(abs_top_builddir)/MPC_Common/src/libmpccommon.la $(abs_top_builddir)/MPC_Config/src/libmpcconfig.la $(XML2_LIBS)
+mpc_print_config_LDADD = ../../MPC_Common/src/libmpccommon.la ./libmpcconfig.la $(XML2_LIBS)
 all: all-am
 
 .SUFFIXES:

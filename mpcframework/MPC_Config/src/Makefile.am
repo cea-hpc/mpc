@@ -36,4 +36,4 @@ bin_PROGRAMS = mpc_print_config
 
 mpc_print_config_SOURCES = ./print_config/mpc_print_config.c ./print_config/mpc_print_config_sh.c ./print_config/mpc_print_config_sh.h
 mpc_print_config_SOURCES += ./print_config/mpc_print_config_xml.c ./print_config/mpc_print_config_xml.h
-mpc_print_config_LDADD = $(abs_top_builddir)/MPC_Common/src/libmpccommon.la $(abs_top_builddir)/MPC_Config/src/libmpcconfig.la $(XML2_LIBS)
+mpc_print_config_LDADD = ../../MPC_Common/src/libmpccommon.la ./libmpcconfig.la $(XML2_LIBS)

@@ -24,7 +24,7 @@
 #include <mpc_topology_device.h>
 
 #include "sctk_debug.h"
-#include "sctk_thread.h"
+
 #include "mpc_common_spinlock.h"
 
 #include "topology.h"
@@ -444,7 +444,7 @@ static void __topology_device_init( hwloc_topology_t topology, mpc_topology_devi
 
 	dev->device_id = -1;
 	dev->nb_res = 0;
-	dev->res_lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&dev->res_lock, 0);
 }
 
 #ifdef MPC_USE_INFINIBAND

@@ -28,7 +28,7 @@ extern "C"
 #endif
 #include <stdio.h>
 #include <stdarg.h>
-#include <sctk_config.h>
+#include <mpc_config.h>
 
   typedef struct
   {

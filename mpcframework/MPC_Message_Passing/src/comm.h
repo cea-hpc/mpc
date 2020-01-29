@@ -24,7 +24,7 @@
 
 #include <mpc_lowcomm_msg.h>
 
-#include <sctk_config.h>
+#include <mpc_config.h>
 #include <sctk_debug.h>
 
 #include <mpc_lowcomm.h>

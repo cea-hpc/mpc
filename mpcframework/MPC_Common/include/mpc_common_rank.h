@@ -197,15 +197,6 @@ static inline int mpc_common_get_thread_id( void )
 	return (int)getpid();
 }
 
-/**
- * @brief Return the rank of PU executing this thread
- *
- * @return int PU id for this thread
- */
-static inline int mpc_topology_get_pu ( void )
-{
-        return 0;
-}
 
 /* End Generic task-rank getters */
 /**

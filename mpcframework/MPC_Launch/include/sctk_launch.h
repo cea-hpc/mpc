@@ -23,7 +23,7 @@
 #ifndef __SCTK_LAUNCH_H_
 #define __SCTK_LAUNCH_H_
 
-#include "sctk_config.h"
+#include "mpc_config.h"
 #include "mpc_common_types.h"
 #include <stdio.h>
 #ifdef __cplusplus
@@ -47,8 +47,6 @@ extern "C"
   int mpc_user_main (int, char **);
 #endif
 
-  int sctk_get_process_nb (void);
-  int sctk_get_processor_nb (void);
   char* sctk_get_launcher_mode(void);
   char *get_debug_mode();
   int sctk_get_node_nb();
@@ -56,9 +54,8 @@ extern "C"
   void (*sctk_get_thread_val(void)) ();
   void sctk_set_net_val (void (*val) (int *, char ***));
 
-  extern bool sctk_enable_smt_capabilities;
-  extern bool sctk_enable_graphic_placement;
-  extern bool sctk_enable_text_placement;
+  extern bool mpc_common_get_flags()->enable_topology_graphic_placement;
+  extern bool mpc_common_get_flags()->enable_topology_text_placement;
   extern bool sctk_share_node_capabilities;
 
 

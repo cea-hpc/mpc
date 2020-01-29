@@ -158,7 +158,7 @@ int mpc_topology_get_current_cpu(void);
  *
  * @return int current PU executing this thread
  */
-int mpc_topology_get_pu( void )
+static inline int mpc_topology_get_pu( void )
 {
         return mpc_topology_get_current_cpu();
 }

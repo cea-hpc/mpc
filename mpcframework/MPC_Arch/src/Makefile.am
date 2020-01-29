@@ -1,8 +1,10 @@
-AM_CPPFLAGS=-I$(abs_top_srcdir)/MPC_Arch/include/ -I$(abs_top_builddir)/MPC_Arch/include/
+AM_CPPFLAGS=-I$(abs_top_srcdir)/MPC_Arch/include/ -I$(abs_top_builddir)/MPC_Arch/include/ $(OPENPA_CFLAGS)
 
 lib_LTLIBRARIES = libmpcarch.la
 
 libmpcarch_la_SOURCES = ./pause.c ./timer.c
+
+libmpcarch_la_LIBADD = $(OPENPA_LIBS)
 
 # Optimized Context Switches
 

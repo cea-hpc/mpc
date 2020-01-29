@@ -25,7 +25,7 @@
 #include "comm_lib.h"
 
 
-#include <sctk_config.h>
+#include <mpc_config.h>
 #include <sctk_communicator.h>
 
 #include <sctk_launch.h>

@@ -1,13 +1,12 @@
 #include "topology_render.h"
 
-
-#include "sctk_debug.h"
-
+#include <sys/types.h>
+#include <sys/syscall.h>
+#include <sctk_debug.h>
+#include <mpc_common_spinlock.h>
 #include <mpc_topology.h>
-
 #include <mpc_common_rank.h>
-
-#include "MPC_Launch/include/sctk_launch.h"
+#include <mpc_common_flags.h>
 
 static char file_placement[128];
 static char placement_txt[128];
@@ -43,7 +42,7 @@ int mpc_topology_render_get_current_binding()
 	assume( !hwloc_bitmap_iszero( set ) );
 
 	hwloc_obj_t pu;
-	if ( sctk_enable_smt_capabilities )
+	if ( mpc_common_get_flags()->enable_smt_capabilities )
 	{
 		pu = hwloc_get_obj_inside_cpuset_by_type( topology_compute_node, set, HWLOC_OBJ_PU, 0 );
 	}
@@ -73,7 +72,7 @@ int mpc_topology_render_get_logical_from_os_id( unsigned int cpu_os )
     return cpu->logical_index;*/
 	unsigned int nb;
 	unsigned int i;
-	if ( sctk_enable_smt_capabilities )
+	if ( mpc_common_get_flags()->enable_smt_capabilities )
 	{
 		nb = hwloc_get_nbobjs_by_type( topology_compute_node, HWLOC_OBJ_PU );
 
@@ -106,7 +105,7 @@ int mpc_topology_render_get_logical_from_os_id( unsigned int cpu_os )
 int mpc_topology_render_get_current_binding_from_logical( int logical_pu )
 {
 	hwloc_obj_t pu;
-	if ( sctk_enable_smt_capabilities )
+	if ( mpc_common_get_flags()->enable_smt_capabilities )
 	{
 		pu = hwloc_get_obj_by_type( topology_compute_node, HWLOC_OBJ_PU, logical_pu );
 	}
@@ -385,7 +384,7 @@ void mpc_topology_render_create(int os_pu, int os_master_pu, int task_id){
     }
 }
 
-static mpc_common_spinlock_t __lock_graphic = 0;
+static mpc_common_spinlock_t __lock_graphic = SCTK_SPINLOCK_INITIALIZER;
 
 void mpc_topology_render_lock()
 {
@@ -402,7 +401,7 @@ void mpc_topology_render_notify(int task_id)
 {
 
     /* graphic placement option */
-    if(sctk_enable_graphic_placement){
+    if(mpc_common_get_flags()->enable_topology_graphic_placement){
         /* get os ind */
         int master = mpc_topology_render_get_current_binding();
         mpc_topology_render_lock();
@@ -411,7 +410,7 @@ void mpc_topology_render_notify(int task_id)
         mpc_topology_render_unlock();
     }
 	/* text placement option */
-    if(sctk_enable_text_placement){
+    if(mpc_common_get_flags()->enable_topology_text_placement){
         int master = mpc_topology_render_get_current_binding();
         mpc_topology_render_lock();
         /* need to lock to write in the node file for each mpi master of the processus */
@@ -466,7 +465,7 @@ static void sctk_read_format_option_graphic_placement_and_complet_topo_infos(FIL
         int logical_ind = 
             mpc_topology_render_get_logical_from_os_id(atoi(os_ind));
         hwloc_obj_t obj;
-        if(sctk_enable_smt_capabilities){
+        if(mpc_common_get_flags()->enable_smt_capabilities){
             obj = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_PU, logical_ind);
         }
         else{
@@ -674,7 +673,7 @@ static void print_children(hwloc_topology_t hwtopology, hwloc_obj_t obj,
         for(k = 0; k < num_os; k++){
             hwloc_obj_t pu;
             int os_index_to_compare;
-            if(sctk_enable_smt_capabilities){
+            if(mpc_common_get_flags()->enable_smt_capabilities){
                 os_index_to_compare = obj->os_index;
             }
             else{
@@ -758,7 +757,7 @@ static int determine_lower_logical(int *os_index, int lenght){
     hwloc_obj_t pu;
     for(i=0;i<lenght;i++){
         if(os_index[i] != -1){
-                if(sctk_enable_smt_capabilities){
+                if(mpc_common_get_flags()->enable_smt_capabilities){
                     pu = hwloc_get_pu_obj_by_os_index(topology_compute_node, os_index[i]);
                 }
                 else{
@@ -785,7 +784,7 @@ static int sctk_determine_higher_logical(int *os_index, int lenght){
     hwloc_obj_t pu; 
     for(i=0;i<lenght;i++){
         if(os_index[i] != -1){
-                if(sctk_enable_smt_capabilities){
+                if(mpc_common_get_flags()->enable_smt_capabilities){
                     pu = hwloc_get_pu_obj_by_os_index(topology_compute_node, os_index[i]);
                 }
                 else{
@@ -815,7 +814,7 @@ sctk_restrict_topology_compute_node ()
 
 restart_restrict:
 
-    if (sctk_enable_smt_capabilities)
+    if (mpc_common_get_flags()->enable_smt_capabilities)
     {
         int i;
         sctk_warning ("SMT capabilities ENABLED");
@@ -853,7 +852,7 @@ restart_restrict:
         {
             hwloc_bitmap_free(cpuset);
             hwloc_bitmap_free(set);
-            sctk_enable_smt_capabilities = 1;
+            mpc_common_get_flags()->enable_smt_capabilities = 1;
             sctk_warning ("Topology reduction issue");
             goto restart_restrict;
         }
@@ -864,7 +863,7 @@ restart_restrict:
 void _mpc_topology_render_init(void)
 {
     /*graphical option*/
-    if(sctk_enable_graphic_placement || sctk_enable_text_placement){
+    if(mpc_common_get_flags()->enable_topology_graphic_placement || mpc_common_get_flags()->enable_topology_text_placement){
 
 
 	    hwloc_topology_init( &topology_compute_node );
@@ -949,7 +948,7 @@ void topology_graph_enable_text_placement( void )
 	int lenght;
 	lenght_max = hwloc_get_nbobjs_by_type( mpc_topology_get(), HWLOC_OBJ_PU );
 	lenght_min = hwloc_get_nbobjs_by_type( mpc_topology_get(), HWLOC_OBJ_CORE );
-	if ( sctk_enable_smt_capabilities )
+	if ( mpc_common_get_flags()->enable_smt_capabilities )
 	{
 		lenght = lenght_max;
 	}
@@ -999,10 +998,10 @@ void topology_graph_enable_text_placement( void )
 void _mpc_topology_render_render(void)
 {
     if( mpc_common_get_local_process_rank() == 0){
-        if(sctk_enable_graphic_placement){
+        if(mpc_common_get_flags()->enable_topology_graphic_placement){
             topology_graph_enable_graphic_placement();
         }
-        if(sctk_enable_text_placement){
+        if(mpc_common_get_flags()->enable_topology_text_placement){
             topology_graph_enable_text_placement();
         }
     }

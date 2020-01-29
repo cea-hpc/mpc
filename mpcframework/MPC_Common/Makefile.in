@@ -14,6 +14,8 @@
 
 @SET_MAKE@
 
+#mpc_headerdir=$(includedir)/mpc/
+#mpc_header_HEADERS= $(abs_top_srcdir)/MPC_Common/include/mpc_common_aio.h $(abs_top_srcdir)/MPC_Common/include/mpc_common_asm.h $(abs_top_srcdir)/MPC_Common/include/mpc_common_datastructure.h $(abs_top_srcdir)/MPC_Common/include/mpc_common.h $(abs_top_srcdir)/MPC_Common/include/mpc_common_helper.h $(abs_top_srcdir)/MPC_Common/include/mpc_common_rank.h $(abs_top_srcdir)/MPC_Common/include/mpc_common_spinlock.h $(abs_top_srcdir)/MPC_Common/include/mpc_common_types.h $(abs_top_srcdir)/MPC_Common/include/sctk_alloc.h $(abs_top_srcdir)/MPC_Common/include/sctk_debug.h $(abs_top_srcdir)/MPC_Common/include/sctk_dummy.h $(abs_top_srcdir)/MPC_Common/include/sctk_no_alloc.h $(abs_top_srcdir)/MPC_Common/include/sctk_pm_json.h $(abs_top_srcdir)/MPC_Common/include/utarray.h $(abs_top_srcdir)/MPC_Common/include/uthash.h $(abs_top_srcdir)/MPC_Common/include/utlist.h
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -97,8 +99,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_gcc_builtin.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
-DIST_COMMON = $(srcdir)/Makefile.am $(mpc_header_HEADERS) \
-	$(am__DIST_COMMON)
+DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/mpc_config.h
 CONFIG_CLEAN_FILES =
@@ -130,35 +131,6 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
-am__vpath_adj = case $$p in \
-    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-    *) f=$$p;; \
-  esac;
-am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
-am__install_max = 40
-am__nobase_strip_setup = \
-  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
-am__nobase_strip = \
-  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
-am__nobase_list = $(am__nobase_strip_setup); \
-  for p in $$list; do echo "$$p $$p"; done | \
-  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
-  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
-    if (++n[$$2] == $(am__install_max)) \
-      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
-    END { for (dir in files) print dir, files[dir] }'
-am__base_list = \
-  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
-  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__uninstall_files_from_dir = { \
-  test -z "$$files" \
-    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
-    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
-         $(am__cd) "$$dir" && rm -f $$files; }; \
-  }
-am__installdirs = "$(DESTDIR)$(mpc_headerdir)"
-HEADERS = $(mpc_header_HEADERS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 am__recursive_targets = \
@@ -247,6 +219,8 @@ EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 GREP = @GREP@
+HWLOC_CFLAGS = @HWLOC_CFLAGS@
+HWLOC_LIBS = @HWLOC_LIBS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -271,6 +245,8 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
+OPENPA_CFLAGS = @OPENPA_CFLAGS@
+OPENPA_LIBS = @OPENPA_LIBS@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -348,8 +324,6 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 xmllint = @xmllint@
 xsltproc = @xsltproc@
-mpc_headerdir = $(includedir)/mpc/
-mpc_header_HEADERS = $(abs_top_builddir)/MPC_Arch/include/mpc_arch.h $(abs_top_srcdir)/MPC_Arch/include/mpc_arch_context.h
 SUBDIRS = src
 all: all-recursive
 
@@ -389,27 +363,6 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
-install-mpc_headerHEADERS: $(mpc_header_HEADERS)
-	@$(NORMAL_INSTALL)
-	@list='$(mpc_header_HEADERS)'; test -n "$(mpc_headerdir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(mpc_headerdir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(mpc_headerdir)" || exit 1; \
-	fi; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(mpc_headerdir)'"; \
-	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(mpc_headerdir)" || exit $$?; \
-	done
-
-uninstall-mpc_headerHEADERS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(mpc_header_HEADERS)'; test -n "$(mpc_headerdir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	dir='$(DESTDIR)$(mpc_headerdir)'; $(am__uninstall_files_from_dir)
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run 'make' without going through this Makefile.
@@ -567,12 +520,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(HEADERS)
+all-am: Makefile
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(mpc_headerdir)"; do \
-	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
-	done
 install: install-recursive
 install-exec: install-exec-recursive
 install-data: install-data-recursive
@@ -623,7 +573,7 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-mpc_headerHEADERS
+install-data-am:
 
 install-dvi: install-dvi-recursive
 
@@ -667,7 +617,7 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-mpc_headerHEADERS
+uninstall-am:
 
 .MAKE: $(am__recursive_targets) install-am install-strip
 
@@ -678,12 +628,11 @@ uninstall-am: uninstall-mpc_headerHEADERS
 	install install-am install-data install-data-am install-dvi \
 	install-dvi-am install-exec install-exec-am install-html \
 	install-html-am install-info install-info-am install-man \
-	install-mpc_headerHEADERS install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am uninstall-mpc_headerHEADERS
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	installdirs-am maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-generic mostlyclean-libtool pdf pdf-am \
+	ps ps-am tags tags-am uninstall uninstall-am
 
 .PRECIOUS: Makefile
 

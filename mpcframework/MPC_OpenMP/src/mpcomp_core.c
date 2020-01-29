@@ -282,7 +282,7 @@ int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t *restrictedTopology,
 
 		for ( pu = 0; pu < num_mvps; pu++ )
 		{
-			if ( sctk_enable_smt_capabilities )
+			if ( mpc_common_get_flags()->enable_smt_capabilities )
 			{
 				core_obj = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, taskVp + pu );
 				pu_obj = core_obj;

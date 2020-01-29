@@ -142,7 +142,8 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libmpcarch_la_LIBADD =
+am__DEPENDENCIES_1 =
+libmpcarch_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am__libmpcarch_la_SOURCES_DIST = ./pause.c ./timer.c \
 	./context/x86_64/getcontext.S ./context/x86_64/makecontext.c \
 	./context/x86_64/setcontext.S ./context/x86_64/startcontext.S \
@@ -270,6 +271,8 @@ EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 GREP = @GREP@
+HWLOC_CFLAGS = @HWLOC_CFLAGS@
+HWLOC_LIBS = @HWLOC_LIBS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -294,6 +297,8 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
+OPENPA_CFLAGS = @OPENPA_CFLAGS@
+OPENPA_LIBS = @OPENPA_LIBS@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -371,10 +376,11 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 xmllint = @xmllint@
 xsltproc = @xsltproc@
-AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Arch/include/ -I$(abs_top_builddir)/MPC_Arch/include/
+AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Arch/include/ -I$(abs_top_builddir)/MPC_Arch/include/ $(OPENPA_CFLAGS)
 lib_LTLIBRARIES = libmpcarch.la
 libmpcarch_la_SOURCES = ./pause.c ./timer.c $(am__append_1) \
 	$(am__append_2) $(am__append_3)
+libmpcarch_la_LIBADD = $(OPENPA_LIBS)
 all: all-am
 
 .SUFFIXES:

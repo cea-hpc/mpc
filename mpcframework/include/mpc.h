@@ -22,7 +22,7 @@
 /* ######################################################################## */
 #ifndef ___MPC___GLOBAL___HEADER___FILE___
 #define ___MPC___GLOBAL___HEADER___FILE___
-#include <sctk_config.h>
+#include <mpc_config.h>
 #include <mpc_main.h>
 int MPC_check_compatibility_lib(int major, int minor, char* pre);
 void MPC_printf (const char *fmt, ...);

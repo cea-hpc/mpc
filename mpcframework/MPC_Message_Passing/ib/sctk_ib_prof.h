@@ -30,7 +30,7 @@
 
 #include <mpc_common_spinlock.h>
 #include <sctk_debug.h>
-#include <sctk_config.h>
+#include <mpc_config.h>
 #include "opa_primitives.h"
 #include "mpc_common_types.h"
 #include <mpc_common_asm.h>
