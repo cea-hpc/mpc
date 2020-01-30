@@ -25,7 +25,7 @@
 #include <stdlib.h>
 
 #include <mpc_topology.h>
-
+#include <mpc_common_flags.h>
 #include "mpcthread_config.h"
 #include "mpc_common_rank.h"
 #include "sctk_debug.h"
@@ -96,11 +96,10 @@ static inline int mpc_common_get_task_rank ( void )
 	return ret;
 }
 
-int sctk_get_total_tasks_number();
 
 static inline int mpc_common_get_task_count( void )
 {
-	return sctk_get_total_tasks_number();
+	return mpc_common_get_flags()->task_number;
 }
 
 static inline int mpc_common_get_local_task_rank ( void )

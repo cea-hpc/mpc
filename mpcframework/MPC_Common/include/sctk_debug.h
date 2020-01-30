@@ -40,8 +40,6 @@ extern "C"
 #include "mpc_common_types.h"
 #include "mpc_keywords.h"
 
-
-extern bool sctk_restart_mode;
 extern bool sctk_checkpoint_mode;
 
 extern char *sctk_network_mode;

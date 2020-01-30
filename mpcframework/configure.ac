@@ -18,6 +18,7 @@ AC_PROG_CXX
 AC_DEFINE([SCTK_VERSION_MAJOR], [4], [MPC Major Version 3])
 AC_DEFINE([SCTK_VERSION_MINOR], [0], [MPC Minor Version 3])
 AC_DEFINE([SCTK_VERSION_PRE], [0], [MPC Pre Version 3])
+AC_DEFINE([SCTK_VERSION_REVISION], [0], [MPC Revision Version 3])
 
 AC_DEFINE_UNQUOTED([MPC_PREFIX_PATH], ["$prefix"], [Prefix Path for MPC])
 
@@ -193,6 +194,26 @@ else
    AC_MSG_RESULT(no)
    AC_MSG_ERROR([Unable to convert to string])
 fi
+
+# Checking for ENVIRON variable
+
+
+AC_MSG_CHECKING([if environ variable is present])
+
+AC_COMPILE_IFELSE(AC_LANG_PROGRAM([#include <stdlib.h>
+                                   #include <stdio.h>
+                                   extern char ** environ;
+                                   ],
+                                [fprintf(stderr,"%p\n",environ);]),
+                                res_macro=yes,res_macro=no)
+
+if test "$res_macro" = "yes" ; then 
+   AC_MSG_RESULT(yes)
+   AC_DEFINE([HAVE_ENVIRON_VAR],[1],[The environ variable is present])
+else
+   AC_MSG_RESULT(no)
+fi
+
 
 # Checking for builtin
 
@@ -536,6 +557,7 @@ AC_OUTPUT([MPC_Arch/include/mpc_arch.h])
 
 AC_OUTPUT([Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile
            MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile
+           MPC_Launch/src/Makefile MPC_Launch/Makefile
            MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile
            MPC_Threads/Makefile MPC_Threads/src/Makefile])
 

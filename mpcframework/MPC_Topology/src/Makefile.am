@@ -6,7 +6,7 @@ endif
 
 mpc_headerdir=$(includedir)/mpc/
 
-lib_LTLIBRARIES = libmpctopology.la
+noinst_LTLIBRARIES = libmpctopology.la
 
 libmpctopology_la_SOURCES = topology.c  topology_device.c  topology_render.c
 

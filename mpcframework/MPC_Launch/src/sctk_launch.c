@@ -20,6 +20,9 @@
 /* #   - BOUHROUR Stephane stephane.bouhrour@exascale-computing.eu        # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include <mpc_config.h>
+
+
 #if defined(MPC_Message_Passing) || defined(MPC_Threads)
 
 #include <string.h>
@@ -30,7 +33,9 @@
 #include <pthread.h>
 #include <signal.h>
 #include <mpc_runtime_config.h>
+#ifdef MPC_Message_Passing
 #include <sctk_communicator.h>
+#endif
 #include <mpc_common_flags.h>
 
 
@@ -96,7 +101,6 @@ static char *sctk_save_argument[SCTK_LAUNCH_MAX_ARG];
 static int sctk_initial_argc = 0;
 static int sctk_start_argc = 0;
 static char **init_argument = NULL;
-bool sctk_restart_mode;
 bool sctk_checkpoint_mode;
 
 bool sctk_accl_support;
@@ -109,8 +113,6 @@ char *sctk_checkpoint_str = "";
 
 bool sctk_share_node_capabilities;
 
-double __sctk_profiling__start__sctk_init_MPC;
-double __sctk_profiling__end__sctk_init_MPC;
 char *sctk_profiling_outputs;
 
 char *get_debug_mode()
@@ -195,7 +197,6 @@ __sctk_add_arg_eq ( char *arg,
 
 #define sctk_add_arg_eq(arg,action) if(__sctk_add_arg_eq(arg,action,word) == 0) return 0
 
-static int sctk_task_nb_val;
 static int sctk_process_nb_val;
 static int sctk_processor_nb_val;
 
@@ -236,7 +237,9 @@ void *polling_thread( __UNUSED__ void *dummy )
 
 	while ( 1 )
 	{
+                #ifdef MPC_Message_Passing
 		sctk_network_notify_idle_message();
+                #endif
 
 		if ( __polling_done )
 		{
@@ -270,7 +273,7 @@ void sctk_print_banner( bool restart )
 				fprintf ( stderr,
 				          "MPC version %d.%d.%d%s %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s %s\n",
 				          SCTK_VERSION_MAJOR, SCTK_VERSION_MINOR, SCTK_VERSION_REVISION,
-				          SCTK_VERSION_PRE, mpc_lang, sctk_task_nb_val,
+				          SCTK_VERSION_PRE, mpc_lang, mpc_common_get_flags()->task_number,
 				          sctk_process_nb_val, mpc_topology_get_pu_count (), sctk_atomics_get_cpu_freq() / 1000000000.0,
 				          mpc_common_get_flags()->thread_library_kind,
 				          sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_checkpoint_str, sctk_network_mode );
@@ -279,7 +282,7 @@ void sctk_print_banner( bool restart )
 			{
 				fprintf ( stderr,
 				          "MPC experimental version %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s %s\n",
-				          mpc_lang, sctk_task_nb_val, sctk_process_nb_val,
+				          mpc_lang, mpc_common_get_flags()->task_number, sctk_process_nb_val,
 				          mpc_topology_get_pu_count (), sctk_atomics_get_cpu_freq() / 1000000000.0,  mpc_common_get_flags()->thread_library_kind,
 				          sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_checkpoint_str, sctk_network_mode );
 			}
@@ -290,11 +293,11 @@ void sctk_print_banner( bool restart )
 static void sctk_perform_initialisation ( void )
 {
 	/*   mkdir (sctk_store_dir, 0777); */
-	if ( sctk_process_nb_val && sctk_task_nb_val )
+	if ( sctk_process_nb_val && mpc_common_get_flags()->task_number )
 	{
-		if ( sctk_task_nb_val < sctk_process_nb_val )
+		if ( mpc_common_get_flags()->task_number < sctk_process_nb_val )
 		{
-			sctk_error( "\n--process-nb=%d\n--nb-task=%d\n Nb tasks must be greater than nb processes\n Run your program with option --nb-task=(>=%d) or --nb-process=(<=%d)", sctk_process_nb_val, sctk_task_nb_val, sctk_process_nb_val, sctk_task_nb_val );
+			sctk_error( "\n--process-nb=%d\n--nb-task=%d\n Nb tasks must be greater than nb processes\n Run your program with option --nb-task=(>=%d) or --nb-process=(<=%d)", sctk_process_nb_val, mpc_common_get_flags()->task_number, sctk_process_nb_val, mpc_common_get_flags()->task_number );
 			abort();
 		}
 	}
@@ -308,7 +311,8 @@ static void sctk_perform_initialisation ( void )
 	}
 
 	/* As a first step initialize the PMI */
-	mpc_launch_pmi_init();
+	
+        mpc_launch_pmi_init();
 	mpc_topology_init ();
 #if defined (MPC_USE_EXTLS) && !defined(MPC_DISABLE_HLS)
 	extls_hls_topology_construct();
@@ -388,7 +392,7 @@ static void sctk_perform_initialisation ( void )
 		}
 	}
 
-	if ( !sctk_task_nb_val )
+	if ( !mpc_common_get_flags()->task_number )
 	{
 		fprintf ( stderr, "No task number specified!\n" );
 		sctk_abort ();
@@ -396,7 +400,7 @@ static void sctk_perform_initialisation ( void )
 
 #ifdef MPC_Message_Passing
 	mpc_lowcomm_coll_init_hook = *( void ** )( &sctk_runtime_config_get()->modules.inter_thread_comm.collectives_init_hook.value );
-	sctk_communicator_world_init ( sctk_task_nb_val );
+	sctk_communicator_world_init ( mpc_common_get_flags()->task_number );
 	sctk_communicator_self_init ();
 #endif
 #ifdef MPC_Profiler
@@ -499,22 +503,14 @@ static void sctk_def_directory( __UNUSED__ char *arg ) /*   sctk_store_dir = arg
 
 static void sctk_def_task_nb( char *arg )
 {
-	int task_nb;
-	task_nb = atoi( arg );
-	sctk_task_nb_val = task_nb;
+	int task_nb = atoi( arg );
+	mpc_common_get_flags()->task_number = task_nb;
 }
 
 static void
 sctk_def_process_nb ( char *arg )
 {
 	sctk_process_nb_val = atoi ( arg );
-}
-
-
-int
-sctk_get_total_tasks_number()
-{
-	return sctk_task_nb_val;
 }
 
 
@@ -572,12 +568,6 @@ sctk_checkpoint ( void )
 	sctk_checkpoint_mode = 1;
 }
 
-
-static void
-sctk_restart ( void )
-{
-	sctk_restart_mode = 1;
-}
 
 static void sctk_def_accl_support( void )
 {
@@ -669,7 +659,6 @@ sctk_proceed_arg ( char *word )
 	sctk_add_arg_eq ( "--profiling", sctk_set_profiling );
 	sctk_add_arg_eq ( "--launcher", sctk_def_launcher_mode );
 	sctk_add_arg ( "--checkpoint", sctk_checkpoint );
-	sctk_add_arg ( "--restart", sctk_restart );
 	sctk_add_arg( "--use-accl", sctk_def_accl_support );
 
 	if ( strcmp( word, "--sctk-args-end--" ) == 0 )
@@ -769,14 +758,7 @@ sctk_env_init ( int *argc, char ***argv )
 {
 	sctk_env_init_intern ( argc, argv );
 
-	if ( sctk_restart_mode == 1 )
-	{
-		return 1;
-	}
-	else
-	{
-		sctk_perform_initialisation ();
-	}
+	sctk_perform_initialisation ();
 
 	return 0;
 }
@@ -986,8 +968,7 @@ void sctk_init_mpc_runtime()
 	sctk_runtime_config_init();
 	// Now attach signal handlers (if allowed by the config)
 	sctk_install_bt_sig_handler();
-	__sctk_profiling__start__sctk_init_MPC =
-	    sctk_get_time_stamp_gettimeofday();
+
 	auto_kill = sctk_runtime_config_get()->modules.launcher.autokill;
 
 	if ( auto_kill > 0 )
@@ -1022,9 +1003,9 @@ void sctk_init_mpc_runtime()
 	/* In LIB mode comm size is inherited from
 	 * the host application (not from the launcher) */
 	sctk_process_nb_val = mpc_lowcomm_hook_size();
-	sctk_task_nb_val = mpc_lowcomm_hook_size();
+	mpc_common_get_flags()->task_number = mpc_lowcomm_hook_size();
 #else
-	sctk_task_nb_val = sctk_runtime_config_get()->modules.launcher.nb_task;
+	mpc_common_get_flags()->task_number = sctk_runtime_config_get()->modules.launcher.nb_task;
 	sctk_process_nb_val = sctk_runtime_config_get()->modules.launcher.nb_process;
 #endif
 	sctk_processor_nb_val = sctk_runtime_config_get()->modules.launcher.nb_processor;
@@ -1033,7 +1014,6 @@ void sctk_init_mpc_runtime()
 	sctk_profiling_outputs = sctk_runtime_config_get()->modules.launcher.profiling;
 	mpc_common_get_flags()->enable_smt_capabilities = sctk_runtime_config_get()->modules.launcher.enable_smt;
 	sctk_share_node_capabilities = sctk_runtime_config_get()->modules.launcher.share_node;
-	sctk_restart_mode = sctk_runtime_config_get()->modules.launcher.restart;
 	sctk_checkpoint_mode = sctk_runtime_config_get()->modules.launcher.checkpoint;
 	sctk_accl_support =
 	    sctk_runtime_config_get()->modules.accelerator.enabled;
@@ -1134,7 +1114,10 @@ void sctk_init_mpc_runtime()
 
 void sctk_release_mpc_runtime()
 {
+#ifdef MPC_Message_Passing
 	mpc_lowcomm_rdma_window_release_ht();
+#endif
+
 #ifdef MPC_USE_EXTLS
 	extls_fini();
 #endif

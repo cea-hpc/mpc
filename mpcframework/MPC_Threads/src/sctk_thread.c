@@ -2238,8 +2238,9 @@ sctk_thread_timer (void *arg)
 static int sctk_first_local = 0;
 static int sctk_last_local = 0;
 
-extern double __sctk_profiling__start__sctk_init_MPC;
-extern double __sctk_profiling__end__sctk_init_MPC;
+static double __sctk_profiling__start__sctk_init_MPC;
+static double __sctk_profiling__end__sctk_init_MPC;
+
 
 double sctk_profiling_get_init_time()
 {
@@ -2263,7 +2264,7 @@ int sctk_get_init_vp_and_nbvp_default( int i, int *nbVp )
 
 	cpu_nb = mpc_topology_get_pu_count(); // number of cpu per process
 
-	total_tasks_number = sctk_get_total_tasks_number();
+	total_tasks_number = mpc_common_get_task_count();
 
 	/*   rank_in_node = i - sctk_first_local; */
 
@@ -2588,6 +2589,7 @@ static int sctk_ignore_sigpipe()
     }
     return 0 ;
 }
+
 void
 sctk_start_func (void *(*run) (void *), void *arg)
 {
@@ -2602,6 +2604,8 @@ sctk_start_func (void *(*run) (void *), void *arg)
         sctk_thread_t *threads = NULL;
         int thread_to_join = 0;
 
+
+        __sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday();
 
 	sctk_thread_key_create (&_sctk_thread_handler_key, (void (*)(void *)) NULL);
 	ptr_cleanup = NULL;
@@ -2618,7 +2622,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
   sctk_profiler_array_init_parent_keys();
 #endif
 
-	total_tasks_number = sctk_get_total_tasks_number();
+	total_tasks_number = mpc_common_get_task_count();
 
 /* 	sprintf (name, "%s/Process_%d", sctk_store_dir, mpc_common_get_process_rank()); */
 
@@ -2672,225 +2676,48 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	MPC_Process_hook();
 #endif
 
-	if ( sctk_restart_mode == 0 )
-	{
-		sctk_leave_no_alloc_land();
+
+        sctk_leave_no_alloc_land();
 
 
-		local_threads = total_tasks_number / mpc_common_get_process_count();
-		if ( total_tasks_number % mpc_common_get_process_count() > mpc_common_get_process_rank() )
-			local_threads++;
+        local_threads = total_tasks_number / mpc_common_get_process_count();
+        if ( total_tasks_number % mpc_common_get_process_count() > mpc_common_get_process_rank() )
+                local_threads++;
 
-		start_thread = local_threads * mpc_common_get_process_rank();
-		if ( total_tasks_number % mpc_common_get_process_count() <= mpc_common_get_process_rank() )
-			start_thread += total_tasks_number % mpc_common_get_process_count();
+        start_thread = local_threads * mpc_common_get_process_rank();
+        if ( total_tasks_number % mpc_common_get_process_count() <= mpc_common_get_process_rank() )
+                start_thread += total_tasks_number % mpc_common_get_process_count();
 
-		/* 		if (sctk_checkpoint_mode) */
-		/* 		{ */
-		/* 			file = fopen (name, "w"); */
-		/* 			fprintf (file, "Task %d->%d\n", start_thread, */
-		/* 						   start_thread + local_threads - 1); */
-		/* 			fprintf (file, "%lu\n", sctk_get_heap_size ()); */
-		/* 			fclose (file); */
-		/* 		} */
+        /* 		if (sctk_checkpoint_mode) */
+        /* 		{ */
+        /* 			file = fopen (name, "w"); */
+        /* 			fprintf (file, "Task %d->%d\n", start_thread, */
+        /* 						   start_thread + local_threads - 1); */
+        /* 			fprintf (file, "%lu\n", sctk_get_heap_size ()); */
+        /* 			fclose (file); */
+        /* 		} */
 
-		sctk_first_local = start_thread;
-		sctk_last_local = start_thread + local_threads - 1;
-		threads =
-			(sctk_thread_t *) sctk_malloc( local_threads * sizeof( sctk_thread_t ) );
-		sctk_current_local_tasks_nb = local_threads;
+        sctk_first_local = start_thread;
+        sctk_last_local = start_thread + local_threads - 1;
+        threads =
+                (sctk_thread_t *) sctk_malloc( local_threads * sizeof( sctk_thread_t ) );
+        sctk_current_local_tasks_nb = local_threads;
 
-		cnt = 0;
+        cnt = 0;
 
-		for ( i = start_thread; i < start_thread + local_threads; i++ )
-		{
-			sctk_nodebug( "Thread %d try create", i );
-			sctk_thread_create( &( threads[thread_to_join] ), NULL, run, arg, (long) i, cnt++ );
-			sctk_nodebug( "Thread %d created", i );
-			thread_to_join++;
-		}
+        for ( i = start_thread; i < start_thread + local_threads; i++ )
+        {
+                sctk_nodebug( "Thread %d try create", i );
+                sctk_thread_create( &( threads[thread_to_join] ), NULL, run, arg, (long) i, cnt++ );
+                sctk_nodebug( "Thread %d created", i );
+                thread_to_join++;
+        }
 
-		sctk_nodebug( "All thread created" );
-	}
-	else
-	{
-#if 1
-	  not_implemented();
-#else
-		FILE *last;
-		unsigned long step;
-		char task_name[MPC_COMMON_MAX_FILENAME_SIZE];
-		int error = 0;
-
-		sprintf (task_name, "%s/last_point", sctk_store_dir);
-		last = fopen (task_name, "r");
-		if (last != NULL)
-		{
-			assume(fscanf (last, "%lu\n", &step) == 1);
-			fclose (last);
-		}
-		else
-		{
-			step = 0;
-		}
-		if(step == 0)
-		{
-			sctk_error ("%s corrupted. Repair it manually!", task_name);
-			abort ();
-		}
-
-		  sctk_nodebug ("Total task number = %d", total_tasks_number);
-
-		check:
-		sctk_current_local_tasks_nb = 0;
-
-		for (i = 0; i < total_tasks_number; i++)
-		{
-			char file_name[MPC_COMMON_MAX_FILENAME_SIZE];
-			int restart = 0;
-			int proc = 0;
-			void *self_p = NULL;
-			int vp = 0;
-			sprintf (task_name, "%s/Task_%d", sctk_store_dir, i);
-			file = fopen (task_name, "r");
-			if (file == NULL)
-			{
-			  sctk_error ("Unable to restore: file %s missing", task_name);
-			  abort ();
-			}
-			assume (file != NULL);
-			assume(fscanf (file, "Restart %d\n", &restart) == 1);
-			assume(fscanf (file, "Process %d\n", &proc) == 1);
-			assume(fscanf (file, "Thread %p\n", &self_p) == 1);
-			assume(fscanf (file, "Virtual processor %d\n", &vp) == 1);
-			fclose (file);
-			sprintf (file_name, "%s/task_%p_%lu", sctk_store_dir, self_p, step);
-			if (sctk_check_file (file_name) != 0)
-			{
-			  if (0 == mpc_common_get_process_rank())
-			{
-			  fprintf (stderr, "File %s corrupted!!!!\n", file_name);
-			}
-			  error = 1;
-			  break;
-			}
-			error = 0;
-		}
-
-		if(error != 0)
-		{
-			assume (step > 0);
-			step--;
-			error = 0;
-			goto check;
-		}
-
-		if(0 == mpc_common_get_process_rank())
-		{
-			fprintf (stderr, "Restart from checkpoint %lu\n", step);
-		}
-
-		/*Update memory */
-		if (0 == mpc_common_get_process_rank())
-		{
-			fprintf (stderr, "Restore dynamic allocations ");
-		}
-		for (i = 0; i < total_tasks_number; i++)
-		{
-			int restart = 0;
-			int proc = 0;
-			void *self_p = NULL;
-			int vp = 0;
-
-			sprintf (task_name, "%s/Task_%d", sctk_store_dir, i);
-			file = fopen (task_name, "r");
-
-			assume (file != NULL);
-			assume(fscanf (file, "Restart %d\n", &restart) == 1);
-			assume(fscanf (file, "Process %d\n", &proc) == 1);
-			assume(fscanf (file, "Thread %p\n", &self_p) == 1);
-			assume(fscanf (file, "Virtual processor %d\n", &vp) == 1);
-
-			fclose (file);
-			sctk_nodebug ("Task %d is in %d with %p on vp %d", i, proc,
-			self_p, vp);
-			/*update brk dues to migrations */
-			sprintf (task_name, "%s/task_%p_%lu", sctk_store_dir, self_p, step);
-			__sctk_update_memory (task_name);
-
-			if (0 == mpc_common_get_process_rank())
-			{
-				fprintf (stderr, ".");
-			}
-		}
-
-		if (0 == mpc_common_get_process_rank())
-		{
-			fprintf (stderr, " done\n");
-		}
-
-		sctk_leave_no_alloc_land ();
-
-		if (0 == mpc_common_get_process_rank())
-		{
-			fprintf (stderr, "Restore tasks ");
-		}
-
-		for (i = 0; i < total_tasks_number; i++)
-		{
-			int restart = 0;
-			int proc = 0;
-			void *self_p = NULL;
-			int vp = 0;
-			sprintf (task_name, "%s/Task_%d", sctk_store_dir, i);
-			file = fopen (task_name, "r");
-			assume (file != NULL);
-			assume(fscanf (file, "Restart %d\n", &restart) == 1);
-			assume(fscanf (file, "Process %d\n", &proc) == 1);
-			assume(fscanf (file, "Thread %p\n", &self_p) == 1);
-			assume(fscanf (file, "Virtual processor %d\n", &vp) == 1);
-			fclose (file);
-			sctk_nodebug ("Task %d is in %d with %p on vp %d", i, proc,
-			self_p, vp);
-
-                        sctk_error("MISTER T");
-#ifdef MPC_Message_Passing
-			sctk_register_task(i);
-			sctk_register_restart_thread (i, proc);
-#endif
-
-			if (proc == mpc_common_get_process_rank())
-			{
-				sctk_nodebug ("Restore task %d", i);
-				sprintf (task_name, "%s/task_%p_%lu", sctk_store_dir,
-				self_p, step);
-				sctk_thread_restore (self_p, task_name, vp);
-				sctk_nodebug ("Restore task %d done", i);
-			}
-			else
-			{
-				/*update brk dues to migrations */
-				sprintf (task_name, "%s/task_%p_%lu", sctk_store_dir,
-				self_p, step);
-				__sctk_update_memory (task_name);
-			}
-			if (0 == mpc_common_get_process_rank())
-			{
-				fprintf (stderr, ".");
-			}
-		}
-
-		if (0 == mpc_common_get_process_rank())
-		{
-			fprintf (stderr, " done\n");
-		}
-#endif
-	}
+        sctk_nodebug( "All thread created" );
 
 	sctk_nodebug("sctk_current_local_tasks_nb %d",sctk_current_local_tasks_nb);
         start_func_done = 1;
-        __sctk_profiling__end__sctk_init_MPC =
-            sctk_get_time_stamp_gettimeofday();
+        __sctk_profiling__end__sctk_init_MPC = sctk_get_time_stamp_gettimeofday();
         if (mpc_common_get_process_rank() == 0) {
           if (sctk_runtime_config_get()->modules.launcher.banner) {
             fprintf(stderr,
@@ -2935,12 +2762,6 @@ sctk_kthread_wait_for_value_and_poll (int *data, int value,
 	}
       kthread_usleep (500);
     }
-}
-
-int
-sctk_is_restarted ()
-{
-  return (sctk_restart_mode != 0);
 }
 
 int

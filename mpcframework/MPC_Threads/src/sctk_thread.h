@@ -157,7 +157,7 @@ extern "C"
   extern struct sctk_alloc_chain *sctk_thread_tls;
 
 #define sctk_time_interval 10	/*millisecondes */
-  int sctk_is_restarted (void);
+
 
   int sctk_thread_proc_migration (const int cpu);
 

@@ -53,8 +53,6 @@ extern "C"
   int sctk_get_verbosity();
   void sctk_set_net_val (void (*val) (int *, char ***));
 
-  extern bool mpc_common_get_flags()->enable_topology_graphic_placement;
-  extern bool mpc_common_get_flags()->enable_topology_text_placement;
   extern bool sctk_share_node_capabilities;
 
 
@@ -75,10 +73,6 @@ extern "C"
 	#endif
 
 #endif /* SCTK_LIB_MODE */
-
-  /*  return the number of tasks involved */
-  int sctk_get_total_tasks_number();
-
 
 
 #ifdef __cplusplus

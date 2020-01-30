@@ -24,6 +24,9 @@
 /* Define to 1 if you have the `dup2' function. */
 #undef HAVE_DUP2
 
+/* The environ variable is present */
+#undef HAVE_ENVIRON_VAR
+
 /* Define to 1 if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
 
@@ -655,6 +658,9 @@
 
 /* MPC Pre Version 3 */
 #undef SCTK_VERSION_PRE
+
+/* MPC Revision Version 3 */
+#undef SCTK_VERSION_REVISION
 
 /* The size of `char', as computed by sizeof. */
 #undef SIZEOF_CHAR
