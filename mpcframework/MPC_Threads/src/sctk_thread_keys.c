@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "mpc_config.h"
+#include "mpcthread_config.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_internal_thread.h"
@@ -43,7 +43,7 @@ sctk_thread_generic_keys_setspecific (sctk_thread_key_t __key, const void *__poi
     keys->keys[__key] = __pointer;
     return 0;
   } else {
-    return SCTK_EINVAL;
+    return EINVAL;
   }
 }
 
@@ -74,7 +74,7 @@ sctk_thread_generic_keys_key_create (sctk_thread_key_t * __key,
   }
   mpc_common_spinlock_unlock(&key_lock);
   if(i == SCTK_THREAD_KEYS_MAX){
-    return SCTK_EAGAIN;
+    return EAGAIN;
   }
   
   return 0;

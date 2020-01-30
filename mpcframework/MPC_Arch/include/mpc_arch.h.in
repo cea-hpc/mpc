@@ -67,12 +67,6 @@ double sctk_atomics_get_timestamp ();
 
 void sctk_cpu_relax ();
 
-/****************************
- * PTHREAD MUTEX DEFINITION *
- ****************************/
-
-typedef int sctk_thread_mutex_t[SIZEOF_PTHREAD_MUTEX_T/sizeof(int)];
-
 /*********************************
  * CONTEXT SWITCH IMPLEMENTATION *
  *********************************/

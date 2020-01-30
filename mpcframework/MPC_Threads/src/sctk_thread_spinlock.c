@@ -41,9 +41,9 @@ sctk_thread_generic_spinlocks_spin_destroy( sctk_thread_generic_spinlock_t* spin
 	*/
 
 	printf("%d %d\n",sctk_spin_destroyed,spinlock->state);
-  if( spinlock == NULL || spinlock->state != sctk_spin_initialized ) return SCTK_EINVAL;
+  if( spinlock == NULL || spinlock->state != sctk_spin_initialized ) return EINVAL;
   mpc_common_spinlock_t* p_lock = &(spinlock->lock);
-  if( (*p_lock) != 0 ) return SCTK_EBUSY;
+  if( (*p_lock) != 0 ) return EBUSY;
 
   spinlock->state = sctk_spin_destroyed;
   return 0;
@@ -63,13 +63,13 @@ sctk_thread_generic_spinlocks_spin_init( sctk_thread_generic_spinlock_t* spinloc
 	  ENOMEM |>NOT IMPLEMENTED<| Insufficient memory exists to initialize the lock
 	*/
 
-  if( spinlock == NULL ) return SCTK_EINVAL;
+  if( spinlock == NULL ) return EINVAL;
   mpc_common_spinlock_t* p_lock = &(spinlock->lock);
   if( ( spinlock->state == sctk_spin_initialized || spinlock->state == sctk_spin_destroyed ) 
-		  && ( (*p_lock) != 0 )) return SCTK_EBUSY;
+		  && ( (*p_lock) != 0 )) return EBUSY;
   if( pshared == SCTK_THREAD_PROCESS_SHARED ){
 	fprintf (stderr, "Invalid pshared value in attr, MPC doesn't handle process shared spinlocks\n");
-	return SCTK_ENOTSUP;
+	return ENOTSUP;
   }
 
   sctk_thread_generic_spinlock_t local = SCTK_THREAD_GENERIC_SPINLOCK_INIT;
@@ -91,8 +91,8 @@ sctk_thread_generic_spinlocks_spin_lock( sctk_thread_generic_spinlock_t* spinloc
 	  EDEADLK The calling thread already holds the lock
 	*/
 
-  if( spinlock == NULL ) return SCTK_EINVAL;
-  if( spinlock->owner == sched ) return SCTK_EDEADLK;
+  if( spinlock == NULL ) return EINVAL;
+  if( spinlock->owner == sched ) return EDEADLK;
 
   long i = SCTK_SPIN_DELAY;
   mpc_common_spinlock_t* p_lock = &(spinlock->lock);
@@ -121,11 +121,11 @@ sctk_thread_generic_spinlocks_spin_trylock( sctk_thread_generic_spinlock_t* spin
 	  EBUSY   Another thread currently holds the lock
 	*/
 
-  if( spinlock == NULL ) return SCTK_EINVAL;
-  if( spinlock->owner == sched ) return SCTK_EDEADLK;
+  if( spinlock == NULL ) return EINVAL;
+  if( spinlock->owner == sched ) return EDEADLK;
 
   if( mpc_common_spinlock_trylock( &(spinlock->lock) ) != 0 )
-	return SCTK_EBUSY;
+	return EBUSY;
   else{
 	spinlock->owner = sched;
 	return 0;
@@ -142,8 +142,8 @@ sctk_thread_generic_spinlocks_spin_unlock( sctk_thread_generic_spinlock_t* spinl
 	  EPERM  The calling thread does not hold the lock
 	*/
 
-  if( spinlock == NULL ) return SCTK_EINVAL;
-  if( spinlock->owner != sched ) return SCTK_EPERM;
+  if( spinlock == NULL ) return EINVAL;
+  if( spinlock->owner != sched ) return EPERM;
 
   spinlock->owner = NULL;
   mpc_common_spinlock_unlock( &(spinlock->lock) );

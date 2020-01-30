@@ -1,5 +1,9 @@
 AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ -I$(abs_top_srcdir)/MPC_Topology/include/ -I$(abs_top_srcdir)/MPC_Arch/include/ -I$(abs_top_builddir)/MPC_Arch/include/ -I$(abs_top_srcdir)/include/ $(HWLOC_CFLAGS)
 
+if MPC_THREAD_ENABLED
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Threads/src/ -I$(abs_top_srcdir)/MPC_Threads/include/ -I$(abs_top_srcdir)/MPC_Topology/include/
+endif
+
 mpc_headerdir=$(includedir)/mpc/
 
 lib_LTLIBRARIES = libmpctopology.la

@@ -24,7 +24,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "mpc_config.h"
+#include "mpcthread_config.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "mpc_common_spinlock.h"
@@ -33,7 +33,7 @@
 #include <utlist.h>
 #include <semaphore.h>
 
-#include "sctk_runtime_config.h"
+#include "mpc_runtime_config.h"
 
 /***************************************/
 /* THREAD SCHEDULING                   */

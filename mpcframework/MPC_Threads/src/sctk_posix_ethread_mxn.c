@@ -28,7 +28,7 @@
 static sctk_ethread_sem_head_list __sctk_head_sem = SCTK_SEM_HEAD_INITIALIZER;
 
 static int
-sctk_ethread_mxn_once (sctk_ethread_once_t * once_control,
+sctk_ethread_mxn_once (sctk_thread_once_t * once_control,
 		       void (*init_routine) (void))
 {
   return __sctk_ethread_once (once_control, init_routine);
@@ -217,7 +217,7 @@ sctk_ethread_mxn_sem_open (const char *name, int oflag, ...)
 {
   int value = 0;
   int mode = 0;
-  if (oflag & SCTK_O_CREAT)
+  if (oflag & O_CREAT)
     {
       va_list ap;
       va_start (ap, oflag);
@@ -548,7 +548,7 @@ void
 sctk_posix_ethread_mxn ()
 {
   sctk_ethread_check_size (sctk_ethread_t, sctk_thread_t);
-  sctk_ethread_check_size (sctk_ethread_once_t, sctk_thread_once_t);
+  sctk_ethread_check_size (sctk_thread_once_t, sctk_thread_once_t);
   sctk_ethread_check_size (sctk_ethread_attr_t, sctk_thread_attr_t);
   sctk_ethread_check_size (sctk_ethread_t, sctk_thread_t);
   sctk_ethread_check_size (sctk_ethread_sem_t, sctk_thread_sem_t);

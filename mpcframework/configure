@@ -18731,6 +18731,18 @@ fi
 
 done
 
+for ac_header in pthread.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "pthread.h" "ac_cv_header_pthread_h" "$ac_includes_default"
+if test "x$ac_cv_header_pthread_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_PTHREAD_H 1
+_ACEOF
+
+fi
+
+done
+
 for ac_header in regex.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "regex.h" "ac_cv_header_regex_h" "$ac_includes_default"
@@ -20871,6 +20883,40 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of sigset_t" >&5
+$as_echo_n "checking size of sigset_t... " >&6; }
+if ${ac_cv_sizeof_sigset_t+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (sigset_t))" "ac_cv_sizeof_sigset_t"        "#include <signal.h>
+"; then :
+
+else
+  if test "$ac_cv_type_sigset_t" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (sigset_t)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_sigset_t=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_sigset_t" >&5
+$as_echo "$ac_cv_sizeof_sigset_t" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_SIGSET_T $ac_cv_sizeof_sigset_t
+_ACEOF
+
+
 
 for ac_func in pthread_yield
 do :
@@ -21050,6 +21096,158 @@ _ACEOF
 
 fi
 done
+
+# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of pthread_key_t" >&5
+$as_echo_n "checking size of pthread_key_t... " >&6; }
+if ${ac_cv_sizeof_pthread_key_t+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (pthread_key_t))" "ac_cv_sizeof_pthread_key_t"        "$ac_includes_default"; then :
+
+else
+  if test "$ac_cv_type_pthread_key_t" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (pthread_key_t)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_pthread_key_t=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_pthread_key_t" >&5
+$as_echo "$ac_cv_sizeof_pthread_key_t" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_PTHREAD_KEY_T $ac_cv_sizeof_pthread_key_t
+_ACEOF
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Checking if PTHREAD_KEYS_MAX is defined" >&5
+$as_echo_n "checking Checking if PTHREAD_KEYS_MAX is defined... " >&6; }
+
+have_pthread_keys_max=no
+if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+                                #include <pthread.h>
+
+int
+main ()
+{
+
+                                #ifndef PTHREAD_KEYS_MAX
+                                exit(1);
+                                #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  have_pthread_keys_max=yes
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_pthread_keys_max" >&5
+$as_echo "$have_pthread_keys_max" >&6; }
+
+
+if test "x$have_pthread_keys_max" = "x1"; then
+
+$as_echo "#define MPC_THREAD_KEYS_MAX PTHREAD_KEYS_MAX" >>confdefs.h
+
+else
+        for key_count in `seq 0 128 65536`
+        do
+
+        current_key_count_supported=0
+
+        have_pthread_keys_max=no
+        if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+                                        #include <pthread.h>
+
+int
+main ()
+{
+
+                                        int ptkm = 0;
+
+                                        do
+                                        {
+                                                int i;
+                                                pthread_key_t k;
+
+                                                /*Pthread key max determination */
+                                                /* ensure to fail one step ahead reason for + 128 */
+                                                for ( i = 0; i < $key_count + 128; i++ )
+                                                {
+                                                        if ( pthread_key_create ( &k, NULL ) != 0 )
+                                                        {
+                                                                return 1;
+                                                        }
+                                                }
+
+                                                ptkm = i;
+                                        }
+                                        while ( 0 );
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  current_key_count_supported=1
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+        if test "x$current_key_count_supported" != "x1"; then
+                break
+        fi
+
+        done
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking Experimentally determined PTHREAD_KEYS_MAX to be" >&5
+$as_echo_n "checking Experimentally determined PTHREAD_KEYS_MAX to be... " >&6; }
+
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_THREAD_KEYS_MAX $key_count
+_ACEOF
+
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $key_count" >&5
+$as_echo "$key_count" >&6; }
+
+fi
 
 
 ac_fn_c_check_type "$LINENO" "pthread_attr_t" "ac_cv_type_pthread_attr_t" "#include <pthread.h>
@@ -21588,6 +21786,40 @@ $as_echo "$ac_cv_sizeof_pthread_condattr_t" >&6; }
 
 cat >>confdefs.h <<_ACEOF
 #define SIZEOF_PTHREAD_CONDATTR_T $ac_cv_sizeof_pthread_condattr_t
+_ACEOF
+
+
+        # The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of pthread_once_t" >&5
+$as_echo_n "checking size of pthread_once_t... " >&6; }
+if ${ac_cv_sizeof_pthread_once_t+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (pthread_once_t))" "ac_cv_sizeof_pthread_once_t"        "#include <pthread.h>
+"; then :
+
+else
+  if test "$ac_cv_type_pthread_once_t" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (pthread_once_t)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_pthread_once_t=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_pthread_once_t" >&5
+$as_echo "$ac_cv_sizeof_pthread_once_t" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_PTHREAD_ONCE_T $ac_cv_sizeof_pthread_once_t
 _ACEOF
 
 
@@ -22774,7 +23006,7 @@ fi
 
 if test "x${mpc_thread_enabled}" = "xyes"; then
 
-$as_echo "#define MPC_THREADS 1" >>confdefs.h
+$as_echo "#define MPC_Threads 1" >>confdefs.h
 
 fi
 

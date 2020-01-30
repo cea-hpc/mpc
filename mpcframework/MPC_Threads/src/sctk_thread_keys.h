@@ -24,7 +24,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "mpc_config.h"
+#include "mpcthread_config.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_internal_thread.h"

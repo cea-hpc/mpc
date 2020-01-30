@@ -24,7 +24,7 @@
 #define __SCTK_THREAD_SPINLOCK_H_
 
 #include <stdlib.h>
-#include "mpc_config.h"
+#include "mpcthread_config.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_internal_thread.h"

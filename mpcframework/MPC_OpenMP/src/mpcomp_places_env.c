@@ -22,7 +22,7 @@
 /* ######################################################################## */
 #include "hwloc.h"
 #include "utlist.h"
-#include "sctk_runtime_config.h"
+#include "mpc_runtime_config.h"
 #include "mpc_common_spinlock.h"
 #include "mpc_topology.h"
 #include "mpcomp_places_env.h"

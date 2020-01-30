@@ -719,10 +719,10 @@ sctk_ethread_mxn_thread_attr_setbinding (sctk_thread_attr_t * __attr, int __bind
 
   attr = (sctk_ethread_attr_t *)__attr;
   if(attr == NULL){
-    return SCTK_EINVAL;
+    return EINVAL;
   }
   if(attr->ptr == NULL){
-      return SCTK_EINVAL;
+      return EINVAL;
     }
 
 
@@ -737,10 +737,10 @@ sctk_ethread_mxn_thread_attr_getbinding (sctk_thread_attr_t * __attr, int *__bin
 
   attr = (sctk_ethread_attr_t *)__attr;
   if(attr == NULL){
-    return SCTK_EINVAL;
+    return EINVAL;
   }
   if(attr->ptr == NULL){
-      return SCTK_EINVAL;
+      return EINVAL;
     }
 
 

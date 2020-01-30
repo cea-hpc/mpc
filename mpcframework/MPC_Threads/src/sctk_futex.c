@@ -275,7 +275,7 @@ struct futex_queue * futex_queue_new( int * futex_key )
 		return NULL;
 	}
 	
-	ret->queue_is_wake_tainted = 0;
+	mpc_common_spinlock_init(&ret->queue_is_wake_tainted, 0);
 
 	mpc_common_fifo_init(&ret->wait_list, 32, sizeof(struct futex_cell *));
 	

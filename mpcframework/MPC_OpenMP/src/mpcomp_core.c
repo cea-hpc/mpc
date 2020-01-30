@@ -27,7 +27,7 @@
 #include <mpc_common_rank.h>
 #include "sctk_debug.h"
 #include "mpc_topology.h"
-#include "sctk_runtime_config.h"
+#include "mpc_runtime_config.h"
 #include <sys/time.h>
 #include <ctype.h>
 

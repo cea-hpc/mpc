@@ -1,5 +1,7 @@
 #include "mpc_common_rank.h"
 
+/* Context switched task rank storage */
+__thread int __mpc_task_rank = -2;
 
 /* OS Process Count Getters */
 

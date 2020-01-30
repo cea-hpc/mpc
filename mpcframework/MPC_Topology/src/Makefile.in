@@ -88,6 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@MPC_THREAD_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/MPC_Threads/src/ -I$(abs_top_srcdir)/MPC_Threads/include/ -I$(abs_top_srcdir)/MPC_Topology/include/
 subdir = MPC_Topology/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_gcc_builtin.m4 \
@@ -343,7 +344,11 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 xmllint = @xmllint@
 xsltproc = @xsltproc@
-AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ -I$(abs_top_srcdir)/MPC_Topology/include/ -I$(abs_top_srcdir)/MPC_Arch/include/ -I$(abs_top_builddir)/MPC_Arch/include/ -I$(abs_top_srcdir)/include/ $(HWLOC_CFLAGS)
+AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ \
+	-I$(abs_top_srcdir)/MPC_Topology/include/ \
+	-I$(abs_top_srcdir)/MPC_Arch/include/ \
+	-I$(abs_top_builddir)/MPC_Arch/include/ \
+	-I$(abs_top_srcdir)/include/ $(HWLOC_CFLAGS) $(am__append_1)
 mpc_headerdir = $(includedir)/mpc/
 lib_LTLIBRARIES = libmpctopology.la
 libmpctopology_la_SOURCES = topology.c  topology_device.c  topology_render.c

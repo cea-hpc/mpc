@@ -31,7 +31,7 @@ sctk_thread_generic_barriers_barrierattr_destroy( sctk_thread_generic_barrieratt
 	EINVAL The value specified for the argument is not correct
 	*/
 
-  if( attr == NULL ) return SCTK_EINVAL;
+  if( attr == NULL ) return EINVAL;
 
   return 0;
 }
@@ -46,7 +46,7 @@ sctk_thread_generic_barriers_barrierattr_init( sctk_thread_generic_barrierattr_t
 		   attributes object
 	*/
 
-  if( attr == NULL ) return SCTK_EINVAL;
+  if( attr == NULL ) return EINVAL;
 
   attr->pshared = SCTK_THREAD_PROCESS_PRIVATE;
 
@@ -62,7 +62,7 @@ sctk_thread_generic_barriers_barrierattr_getpshared( const sctk_thread_generic_b
 	EINVAL The value specified for the argument is not correct
 	*/
 
-  if( attr == NULL || pshared == NULL ) return SCTK_EINVAL;
+  if( attr == NULL || pshared == NULL ) return EINVAL;
 
   (*pshared) = attr->pshared;
 
@@ -78,14 +78,14 @@ sctk_thread_generic_barriers_barrierattr_setpshared( sctk_thread_generic_barrier
 	EINVAL The value specified for the argument is not correct
 	*/
 
-  if( attr == NULL ) return SCTK_EINVAL;
+  if( attr == NULL ) return EINVAL;
   if( pshared != SCTK_THREAD_PROCESS_PRIVATE
-		  && pshared != SCTK_THREAD_PROCESS_SHARED ) return SCTK_EINVAL;
+		  && pshared != SCTK_THREAD_PROCESS_SHARED ) return EINVAL;
 
   int ret = 0;
   if( pshared == SCTK_THREAD_PROCESS_SHARED ){
 	fprintf (stderr, "Invalid pshared value in attr, MPC doesn't handle process shared barriers\n");
-	ret = SCTK_ENOTSUP;
+	ret = ENOTSUP;
   }
   attr->pshared = pshared;
 
@@ -101,8 +101,8 @@ sctk_thread_generic_barriers_barrier_destroy( sctk_thread_generic_barrier_t* bar
 	EBUSY  The implementation has detected an attempt to destroy a barrier while it is in use
 	*/
 
-  if( barrier == NULL ) return SCTK_EINVAL;
-  if( barrier->blocked != NULL ) return SCTK_EBUSY;
+  if( barrier == NULL ) return EINVAL;
+  if( barrier->blocked != NULL ) return EBUSY;
 
   return 0;
 }
@@ -121,7 +121,7 @@ sctk_thread_generic_barriers_barrier_init( sctk_thread_generic_barrier_t* restri
 		   barrier while it is in use
 	*/
 
-  if( barrier == NULL || count == 0 ) return SCTK_EINVAL;
+  if( barrier == NULL || count == 0 ) return EINVAL;
 
   sctk_thread_generic_barrier_t loc = SCTK_THREAD_GENERIC_BARRIER_INIT;
   sctk_thread_generic_barrier_t* ptr_loc = &loc;
@@ -130,7 +130,7 @@ sctk_thread_generic_barriers_barrier_init( sctk_thread_generic_barrier_t* restri
   if( attr != NULL ){
 	if( attr->pshared == SCTK_THREAD_PROCESS_SHARED ){
 	  fprintf (stderr, "Invalid pshared value in attr, MPC doesn't handle process shared barriers\n");
-	  ret = SCTK_ENOTSUP;
+	  ret = ENOTSUP;
 	}
   }
   ptr_loc->nb_current = count;
@@ -149,7 +149,7 @@ sctk_thread_generic_barriers_barrier_wait( sctk_thread_generic_barrier_t* barrie
 	EINVAL The value specified for the argument is not correct or count is equal to zero
 	*/
 
-  if( barrier == NULL ) return SCTK_EINVAL;
+  if( barrier == NULL ) return EINVAL;
 
   int ret = 0;
   sctk_thread_generic_barrier_cell_t cell;

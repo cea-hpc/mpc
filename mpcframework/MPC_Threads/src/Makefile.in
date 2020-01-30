@@ -353,7 +353,10 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/include/ \
 	-I$(abs_top_builddir)/MPC_Arch/include/ \
 	-I$(abs_top_srcdir)/MPC_Arch/include/ \
-	-I$(abs_top_srcdir)/MPC_Threads/include/
+	-I$(abs_top_srcdir)/MPC_Threads/include/ \
+	-I$(abs_top_srcdir)/MPC_Config/include/ \
+	-I$(abs_top_srcdir)/MPC_Config/src/generated/ \
+	-I$(abs_top_srcdir)/MPC_Topology/include/
 lib_LTLIBRARIES = libmpcthread.la
 libmpcthread_la_SOURCES = sctk_context.c sctk_ethread.c \
 	sctk_ethread_mxn.c sctk_futex.c sctk_gen_thread.c \

@@ -3,6 +3,10 @@ mpc_header_HEADERS=$(abs_top_builddir)/mpc_config.h $(abs_top_srcdir)/include/mp
 
 SUBDIRS=MPC_Arch MPC_Common MPC_Config MPC_Topology
 
+if MPC_THREAD_ENABLED
+        SUBDIRS += MPC_Threads
+endif
+
 
 if CAN_GENERATE_CONFIG
 # Generate and copy back to sources to ensure transparent update on success
@@ -15,6 +19,12 @@ config:
 endif
 
 
-if MPC_THREAD_ENABLED
-        SUBDIRS += MPC_Threads
-endif
+#
+# Print Config Program
+#
+
+bin_PROGRAMS = mpc_print_config
+
+mpc_print_config_SOURCES = ./MPC_Config/src/print_config/mpc_print_config.c ./MPC_Config/src/print_config/mpc_print_config_sh.c ./MPC_Config/src/print_config/mpc_print_config_sh.h
+mpc_print_config_SOURCES += ./MPC_Config/src/print_config/mpc_print_config_xml.c ./MPC_Config/src/print_config/mpc_print_config_xml.h
+mpc_print_config_LDADD = ./MPC_Common/src/libmpccommon.la .MPC_Config/MPC_Thread/libmpcthread.la $(XML2_LIBS)

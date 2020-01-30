@@ -855,7 +855,7 @@ int mpc_thread_sem_destroy (sctk_thread_sem_t * sem)
 sctk_thread_sem_t *mpc_thread_sem_open (const char *name,
 					int oflag, ...)
 {
-  if ((oflag & SCTK_O_CREAT))
+  if ((oflag & O_CREAT))
     {
 
       va_list ap;

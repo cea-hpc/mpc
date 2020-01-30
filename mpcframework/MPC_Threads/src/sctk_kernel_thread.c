@@ -29,7 +29,7 @@
 #include "mpc_topology.h"
 #include <string.h>
 #include <semaphore.h>
-#include "sctk_runtime_config.h"
+#include "mpc_runtime_config.h"
 #include "sctk_alloc.h"
 #include "sctk_tls.h"
 
@@ -88,7 +88,7 @@ typedef struct kthread_create_start_s
   sem_t sem;
 } kthread_create_start_t;
 
-static mpc_common_spinlock_t lock = 0;
+static mpc_common_spinlock_t lock = { 0 };
 static volatile kthread_create_start_t* list = NULL;
 
 static void *

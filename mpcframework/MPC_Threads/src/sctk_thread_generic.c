@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <stdio.h>
-#include <mpc_config.h>
+#include <mpcthread_config.h>
 #include <sctk_thread.h>
 #include <sctk_thread_generic.h>
 #include <stdlib.h>
@@ -670,7 +670,7 @@ int __sctk_thread_generic_sigmask(sctk_thread_generic_t threadp, int how,
                                   const sigset_t *newmask, sigset_t *oldmask) {
   int res = -1;
   if( how != SIG_BLOCK && how != SIG_UNBLOCK && how != SIG_SETMASK ){
-	return SCTK_EINVAL;
+	return EINVAL;
   }
   sctk_thread_generic_p_t* th = threadp;
   sigset_t set;
@@ -723,7 +723,7 @@ int __sctk_thread_generic_sigsuspend(sctk_thread_generic_t threadp,
   }
 
   __sctk_thread_generic_sigmask( th, SIG_SETMASK, &oldmask, NULL );
-  errno = SCTK_EINTR;
+  errno = EINTR;
   return -1;
 }
 
@@ -928,13 +928,13 @@ sctk_thread_generic_kill( sctk_thread_generic_t threadp, int val ){
   sctk_thread_generic_p_t* th = threadp;
   if( th->sched.status == sctk_thread_generic_joined 
 		  || th->sched.status == sctk_thread_generic_zombie )
-	  return SCTK_ESRCH;
+	  return ESRCH;
 
   if( val == 0 ) return 0;
   val--;
   if( val < 0 || val > SCTK_NSIG ) {
     errno = EINVAL;
-    return SCTK_EINVAL;
+    return EINVAL;
   }
 
   if( (&(th->attr.spinlock )) != (&(sctk_thread_generic_self()->attr.spinlock ))){
@@ -1030,11 +1030,11 @@ sctk_thread_generic_getattr_np( sctk_thread_generic_t threadp,
 	ESRCH
 	*/
 
-  if( threadp == NULL || attr == NULL ) return SCTK_EINVAL;
+  if( threadp == NULL || attr == NULL ) return EINVAL;
   sctk_thread_generic_p_t* th = threadp;
   if( th->sched.status == sctk_thread_generic_joined
 		  || th->sched.status == sctk_thread_generic_zombie )
-	  return SCTK_ESRCH;
+	  return ESRCH;
 
   /* if(attr->ptr == NULL){ */
     sctk_thread_generic_attr_init(attr);
@@ -1073,7 +1073,7 @@ static int
 sctk_thread_generic_attr_setscope (sctk_thread_generic_attr_t * attr, int scope)
 {
   if( scope != PTHREAD_SCOPE_SYSTEM && scope != PTHREAD_SCOPE_PROCESS )
-	  return SCTK_EINVAL;
+	  return EINVAL;
   if(attr->ptr == NULL){
     sctk_thread_generic_attr_init(attr);
   }
@@ -1145,7 +1145,7 @@ sctk_thread_generic_attr_getstacksize (sctk_thread_generic_attr_t * attr,
 	EINVAL The stacksize argument is not valide
 	*/
 
-  if( stacksize == NULL ) return SCTK_EINVAL;
+  if( stacksize == NULL ) return EINVAL;
 
   sctk_thread_generic_intern_attr_t init;
   sctk_thread_generic_intern_attr_init(&init);
@@ -1171,7 +1171,7 @@ sctk_thread_generic_attr_setstacksize (sctk_thread_generic_attr_t * attr,
 	EINVAL The stacksize value is less than PTHREAD_STACK_MIN
 	*/
 
-  if( stacksize < SCTK_THREAD_STACK_MIN ) return SCTK_EINVAL;
+  if( stacksize < SCTK_THREAD_STACK_MIN ) return EINVAL;
 
   if(attr->ptr == NULL){
     sctk_thread_generic_attr_init(attr);
@@ -1190,7 +1190,7 @@ sctk_thread_generic_attr_getstackaddr (sctk_thread_generic_attr_t * attr,
 	EINVAL The addr argument is not valide 
 	*/
 
-  if( addr == NULL ) return SCTK_EINVAL;
+  if( addr == NULL ) return EINVAL;
 
   sctk_thread_generic_intern_attr_t init;
   sctk_thread_generic_intern_attr_init(&init);
@@ -1216,7 +1216,7 @@ sctk_thread_generic_attr_setstackaddr (sctk_thread_generic_attr_t * attr, void *
 	EINVAL The addr argument is not valide 
 	*/
 
-  if( addr == NULL ) return SCTK_EINVAL;
+  if( addr == NULL ) return EINVAL;
 
   if(attr->ptr == NULL){
     sctk_thread_generic_attr_init(attr);
@@ -1236,7 +1236,7 @@ sctk_thread_generic_attr_getstack( const sctk_thread_generic_attr_t* attr,
 	*/
 
   if( attr == NULL ||stackaddr == NULL 
-		  || stacksize == NULL ) return SCTK_EINVAL;
+		  || stacksize == NULL ) return EINVAL;
 
   *stackaddr = (void *) attr->ptr->stack;
   *stacksize = attr->ptr->stack_size;
@@ -1255,7 +1255,7 @@ sctk_thread_generic_attr_setstack( sctk_thread_generic_attr_t* attr,
 	*/
 
   if( stackaddr == NULL || stacksize < SCTK_THREAD_STACK_MIN )
-	  return SCTK_EINVAL;
+	  return EINVAL;
 
   if(attr->ptr == NULL){
     sctk_thread_generic_attr_init(attr);
@@ -1277,7 +1277,7 @@ sctk_thread_generic_attr_getguardsize( sctk_thread_generic_attr_t* attr,
 	EINVAL Invalid arguments for the function
 	*/
 
-  if( attr == NULL || guardsize == NULL ) return SCTK_EINVAL;
+  if( attr == NULL || guardsize == NULL ) return EINVAL;
   if(attr->ptr == NULL){
 	sctk_thread_generic_attr_init(attr);
   }
@@ -1295,7 +1295,7 @@ sctk_thread_generic_attr_setguardsize( sctk_thread_generic_attr_t* attr,
 	EINVAL Invalid arguments for the function
 	*/
 
-  if( attr == NULL ) return SCTK_EINVAL;
+  if( attr == NULL ) return EINVAL;
 
   if(attr->ptr == NULL){
 	sctk_thread_generic_attr_init(attr);
@@ -1317,7 +1317,7 @@ sctk_thread_generic_attr_getschedparam( sctk_thread_generic_attr_t* attr,
 	EINVAL  Arguments of function are invalid
 	*/
 
-  if( attr == NULL || param == NULL ) return SCTK_EINVAL;
+  if( attr == NULL || param == NULL ) return EINVAL;
   param->__sched_priority = 0;
   return 0;
 }
@@ -1332,8 +1332,8 @@ sctk_thread_generic_attr_setschedparam( sctk_thread_generic_attr_t* attr,
 	ENOTSUP Only priority 0 (default) is supported
 	*/
 
-  if( attr == NULL || param == NULL ) return SCTK_EINVAL;
-  if( param->__sched_priority != 0 ) return SCTK_ENOTSUP;
+  if( attr == NULL || param == NULL ) return EINVAL;
+  if( param->__sched_priority != 0 ) return ENOTSUP;
   return 0;
 }
 
@@ -1342,8 +1342,8 @@ sctk_thread_generic_attr_setschedpolicy( sctk_thread_generic_attr_t* attr,
 					int policy ){
 
   if( policy == SCTK_SCHED_FIFO 
-		  || policy == SCTK_SCHED_RR ) return SCTK_ENOTSUP;
-  if( policy != SCTK_SCHED_OTHER ) return SCTK_EINVAL;
+		  || policy == SCTK_SCHED_RR ) return ENOTSUP;
+  if( policy != SCTK_SCHED_OTHER ) return EINVAL;
 
   if(attr->ptr == NULL){
 	sctk_thread_generic_attr_init(attr);
@@ -1389,7 +1389,7 @@ sctk_thread_generic_attr_setinheritsched( sctk_thread_generic_attr_t* attr,
   }
   if( inheritsched != SCTK_THREAD_INHERIT_SCHED &&
 		  inheritsched != SCTK_THREAD_EXPLICIT_SCHED )
-	  return SCTK_EINVAL;
+	  return EINVAL;
 
   attr->ptr->inheritsched = inheritsched;
 
@@ -1414,7 +1414,7 @@ sctk_thread_generic_attr_setdetachstate( sctk_thread_generic_attr_t* attr,
 					int detachstate ){
 
   if( detachstate != PTHREAD_CREATE_DETACHED && detachstate != PTHREAD_CREATE_JOINABLE )
-	  return SCTK_EINVAL;
+	  return EINVAL;
 
   if(attr->ptr == NULL){
 	sctk_thread_generic_attr_init(attr);
@@ -1519,7 +1519,7 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 	    if ( stack == NULL || ret_mem != 0 )
 	      {
 		sctk_free(thread_id);
-		return SCTK_EAGAIN;
+		return EAGAIN;
 	      }
 	  if( ( ret = mprotect( stack, stack_guardsize, PROT_NONE )) != 0 ){
 		sctk_free(stack);
@@ -1533,14 +1533,14 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 	    if (stack == NULL)
 	      {
 		sctk_free(thread_id);
-		return SCTK_EAGAIN;
+		return EAGAIN;
 	      }
 	  }
       }
     else if (stack_size <= 0)
       {
 	sctk_free(thread_id);
-	return SCTK_EINVAL;
+	return EINVAL;
       }
 
 	if( stack_guardsize > 0 ){
@@ -1620,7 +1620,7 @@ sctk_thread_generic_sched_get_priority_min( int sched_policy ){
 
   if( sched_policy != SCTK_SCHED_FIFO && sched_policy != SCTK_SCHED_RR
 		  && sched_policy != SCTK_SCHED_OTHER ){
-	  errno = SCTK_EINVAL;
+	  errno = EINVAL;
 	  return -1;
   }
 
@@ -1637,7 +1637,7 @@ sctk_thread_generic_sched_get_priority_max( int sched_policy ){
 
   if( sched_policy != SCTK_SCHED_FIFO && sched_policy != SCTK_SCHED_RR
 		  && sched_policy != SCTK_SCHED_OTHER ){
-	  errno = SCTK_EINVAL;
+	  errno = EINVAL;
 	  return -1;
   }
 
@@ -1654,11 +1654,11 @@ sctk_thread_generic_getschedparam( sctk_thread_generic_t threadp,
 	ESRCH No thread with the ID threadp could be found
 	*/
 
-  if( threadp == NULL || policy == NULL || param == NULL ) return SCTK_EINVAL;
+  if( threadp == NULL || policy == NULL || param == NULL ) return EINVAL;
   sctk_thread_generic_p_t* th = threadp;
   if( th->sched.status == sctk_thread_generic_zombie
 		  || th->sched.status == sctk_thread_generic_joined )
-	  return SCTK_ESRCH;
+	  return ESRCH;
 
   param->__sched_priority = 0;
   (*policy) = SCHED_OTHER;
@@ -1678,14 +1678,14 @@ sctk_thread_generic_setschedparam( sctk_thread_generic_t threadp,
 	privileges to set the specified scheduling policy and parameters
 	*/
 
-  if( threadp == NULL || param == NULL ) return SCTK_EINVAL;
-  if( policy != SCTK_SCHED_OTHER ) return SCTK_EINVAL;
+  if( threadp == NULL || param == NULL ) return EINVAL;
+  if( policy != SCTK_SCHED_OTHER ) return EINVAL;
   sctk_thread_generic_p_t* th = threadp;
   if( th->sched.status == sctk_thread_generic_zombie
 		  || th->sched.status == sctk_thread_generic_joined )
-	  return SCTK_ESRCH;
+	  return ESRCH;
   if( param->__sched_priority != 0 )
-	  return SCTK_EINVAL;
+	  return EINVAL;
 
   return 0;
 }
@@ -1744,10 +1744,10 @@ sctk_thread_generic_cancel( sctk_thread_generic_t threadp ){
   sctk_thread_generic_p_t* th = threadp;
   sctk_debug ("thread to cancel: %p\n", th);
 
-  if( th == NULL ) return SCTK_EINVAL;
+  if( th == NULL ) return EINVAL;
   if( th->sched.status == sctk_thread_generic_zombie
 		  || th->sched.status == sctk_thread_generic_joined ) 
-	  return SCTK_ESRCH;
+	  return ESRCH;
 
   if( th->attr.cancel_state == PTHREAD_CANCEL_ENABLE ){
 	th->attr.cancel_status = 1;
@@ -1775,7 +1775,7 @@ sctk_thread_generic_setcancelstate( int state, int* oldstate ){
 	  (*oldstate) = attr.ptr->cancel_state;
 
   if( state != PTHREAD_CANCEL_ENABLE && state != PTHREAD_CANCEL_DISABLE )
-	  return SCTK_EINVAL;
+	  return EINVAL;
 
   attr.ptr->cancel_state = state;
 
@@ -1798,7 +1798,7 @@ sctk_thread_generic_setcanceltype( int type, int* oldtype ){
 	  (*oldtype) = attr.ptr->cancel_type;
 
   if( type != PTHREAD_CANCEL_DEFERRED 
-		  && type != PTHREAD_CANCEL_ASYNCHRONOUS ) return SCTK_EINVAL;
+		  && type != PTHREAD_CANCEL_ASYNCHRONOUS ) return EINVAL;
 
   attr.ptr->cancel_type = type;
 
@@ -1816,12 +1816,12 @@ sctk_thread_generic_setschedprio( sctk_thread_generic_t threadp, int prio ){
 	ESRCH  No thread with the ID thread could be found
 	*/
 
-  if( threadp == NULL || prio != 0 ) return SCTK_EINVAL;
+  if( threadp == NULL || prio != 0 ) return EINVAL;
 
   sctk_thread_generic_p_t* th = threadp;
   if( th->sched.status == sctk_thread_generic_joined ||
 		  th->sched.status == sctk_thread_generic_zombie )
-	  return SCTK_ESRCH;
+	  return ESRCH;
 
   sctk_nodebug("Only Priority 0 handled in current version of MPC, priority remains the same as before the call");
 
@@ -1893,11 +1893,11 @@ sctk_thread_generic_join ( sctk_thread_generic_t threadp, void** val ){
   sctk_thread_generic_check_signals( 0 );
 
   if( th != current ){
-	if( th->sched.status == sctk_thread_generic_joined ) return SCTK_ESRCH;
-	if( th->attr.detachstate != 0 ) return SCTK_EINVAL;
+	if( th->sched.status == sctk_thread_generic_joined ) return ESRCH;
+	if( th->attr.detachstate != 0 ) return EINVAL;
 
 	th->attr.nb_wait_for_join++;
-	if (th->attr.nb_wait_for_join != 1) return SCTK_EINVAL;
+	if (th->attr.nb_wait_for_join != 1) return EINVAL;
 
 	status = (sctk_thread_generic_thread_status_t*) &(th->sched.status);
 	sctk_nodebug ("TO Join Thread %p", th);
@@ -1916,7 +1916,7 @@ sctk_thread_generic_join ( sctk_thread_generic_t threadp, void** val ){
 	//sctk_thread_generic_handle_zombies( &(th->sched.generic ));
 
   }else{
-    return SCTK_EDEADLK;
+    return EDEADLK;
   }
 
   return 0;
@@ -1995,14 +1995,14 @@ sctk_thread_generic_detach( sctk_thread_generic_t threadp ){
 	ESRCH  No thread with the ID threadp could be found
 	*/
 
-  if( threadp == NULL ) return SCTK_ESRCH;
+  if( threadp == NULL ) return ESRCH;
   sctk_thread_generic_p_t* th = threadp;
 
   if( th->sched.status == sctk_thread_generic_joined /*||
 		  th->sched.status == sctk_thread_generic_zombie*/ )
-	  return SCTK_ESRCH;
+	  return ESRCH;
   if( th->attr.detachstate == SCTK_THREAD_CREATE_DETACHED )
-	  return SCTK_EINVAL;
+	  return EINVAL;
 
   th->attr.detachstate = SCTK_THREAD_CREATE_DETACHED;
 
@@ -2015,8 +2015,8 @@ sctk_thread_generic_detach( sctk_thread_generic_t threadp ){
 
 static int
 sctk_thread_generic_setconcurrency( int new_level ){
-  if( new_level < 0 ) return SCTK_EINVAL;
-  if( new_level != 0 ) return SCTK_ENOTSUP;
+  if( new_level < 0 ) return EINVAL;
+  if( new_level != 0 ) return ENOTSUP;
   return 0;
 }
 
@@ -2041,17 +2041,17 @@ sctk_thread_generic_getcpuclockid( sctk_thread_generic_t threadp,
 	EINVAL Invalid arguments for function call
 	*/
 
-  if( threadp == NULL || clock_id == NULL ) return SCTK_EINVAL;
+  if( threadp == NULL || clock_id == NULL ) return EINVAL;
   sctk_thread_generic_p_t* th = threadp;
   if( th->sched.status == sctk_thread_generic_zombie
 		  || th->sched.status == sctk_thread_generic_joined )
-	  return SCTK_ESRCH;
+	  return ESRCH;
 
   int ret = 0;
 #ifdef _POSIX_THREAD_CPUTIME
   (*clock_id) = CLOCK_THREAD_CPUTIME_ID;
 #else
-  ret = SCTK_ENOENT;
+  ret = ENOENT;
 #endif
 
   return ret;

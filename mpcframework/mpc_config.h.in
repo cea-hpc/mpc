@@ -277,6 +277,9 @@
 /* Define to 1 if you have the `pthread_getspecific' function. */
 #undef HAVE_PTHREAD_GETSPECIFIC
 
+/* Define to 1 if you have the <pthread.h> header file. */
+#undef HAVE_PTHREAD_H
+
 /* Define to 1 if you have the `pthread_join' function. */
 #undef HAVE_PTHREAD_JOIN
 
@@ -617,8 +620,11 @@
 /* Prefix Path for MPC */
 #undef MPC_PREFIX_PATH
 
+/* Experimentally defined PTHREAD_KEYS_MAX */
+#undef MPC_THREAD_KEYS_MAX
+
 /* MPC_THREAD module was enabled */
-#undef MPC_THREADS
+#undef MPC_Threads
 
 /* Name of package */
 #undef PACKAGE
@@ -683,11 +689,17 @@
 /* The size of `pthread_cond_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_COND_T
 
+/* The size of `pthread_key_t', as computed by sizeof. */
+#undef SIZEOF_PTHREAD_KEY_T
+
 /* The size of `pthread_mutexattr_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_MUTEXATTR_T
 
 /* The size of `pthread_mutex_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_MUTEX_T
+
+/* The size of `pthread_once_t', as computed by sizeof. */
+#undef SIZEOF_PTHREAD_ONCE_T
 
 /* The size of `pthread_rwlockattr_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_RWLOCKATTR_T
@@ -706,6 +718,9 @@
 
 /* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT
+
+/* The size of `sigset_t', as computed by sizeof. */
+#undef SIZEOF_SIGSET_T
 
 /* The size of `size_t', as computed by sizeof. */
 #undef SIZEOF_SIZE_T

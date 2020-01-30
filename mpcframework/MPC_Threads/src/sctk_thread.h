@@ -23,7 +23,7 @@
 #ifndef __SCTK_THREADS_H_
 #define __SCTK_THREADS_H_
 
-#include "mpc_config.h"
+#include "mpcthread_config.h"
 #include <stdlib.h>
 #include <signal.h>
 #include "sctk_debug.h"

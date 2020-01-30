@@ -22,7 +22,7 @@
 #ifndef __SCTK_THREAD_GENERIC_H_
 #define __SCTK_THREAD_GENERIC_H_
 
-#include "mpc_config.h"
+#include "mpcthread_config.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_thread_generic_kind.h"

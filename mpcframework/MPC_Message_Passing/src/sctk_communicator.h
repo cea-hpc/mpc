@@ -28,7 +28,7 @@
 
 #include <mpc_common_rank.h>
 
-#include "sctk_runtime_config.h"
+#include "mpc_runtime_config.h"
 
 /******************************** STRUCTURE *********************************/
 struct mpc_lowcomm_coll_s;

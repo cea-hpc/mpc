@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "mpc_config.h"
+#include "mpcthread_config.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_internal_thread.h"
@@ -40,7 +40,7 @@ sctk_thread_generic_conds_condattr_destroy( sctk_thread_generic_condattr_t* attr
     EINVAL The value specified for the argument is not correct
 	*/
 
-  if( attr == NULL ) return SCTK_EINVAL;
+  if( attr == NULL ) return EINVAL;
 
   return 0;
 }
@@ -54,7 +54,7 @@ sctk_thread_generic_conds_condattr_getpshared( sctk_thread_generic_condattr_t* a
     EINVAL The value specified for the argument is not correct
 	*/
 
-  if( attr == NULL || pshared == NULL ) return SCTK_EINVAL;
+  if( attr == NULL || pshared == NULL ) return EINVAL;
 
   (*pshared) = ( (attr->attrs >> 2) & 1);
 
@@ -71,7 +71,7 @@ sctk_thread_generic_conds_condattr_init( sctk_thread_generic_condattr_t* attr ){
 		   variable attributes object
 	*/
 
-  if( attr == NULL ) return SCTK_EINVAL;
+  if( attr == NULL ) return EINVAL;
 
   attr->attrs &= ~( 1 << 2 );
   attr->attrs = ((attr->attrs & ~3) | (0 & 3));
@@ -88,14 +88,14 @@ sctk_thread_generic_conds_condattr_setpshared( sctk_thread_generic_condattr_t* a
     EINVAL The value specified for the argument is not correct
 	*/
 
-  if( attr == NULL ) return SCTK_EINVAL;
-  if( pshared != SCTK_THREAD_PROCESS_PRIVATE && pshared != SCTK_THREAD_PROCESS_SHARED ) return SCTK_EINVAL;
+  if( attr == NULL ) return EINVAL;
+  if( pshared != SCTK_THREAD_PROCESS_PRIVATE && pshared != SCTK_THREAD_PROCESS_SHARED ) return EINVAL;
 
   int ret = 0;
   if( pshared == SCTK_THREAD_PROCESS_SHARED ){
 	attr->attrs |= (1<<2);
 	fprintf (stderr, "Invalid pshared value in attr, MPC doesn't handle process shared conds\n");
-	ret = SCTK_ENOTSUP;
+	ret = ENOTSUP;
   } else {
 	attr->attrs &= ~(1<<2);
   }
@@ -112,10 +112,10 @@ sctk_thread_generic_conds_condattr_setclock( sctk_thread_generic_condattr_t* att
     EINVAL The value specified for the argument is not correct
 	*/
 
-  if( attr == NULL ) return SCTK_EINVAL;
+  if( attr == NULL ) return EINVAL;
   if(  clock_id != CLOCK_REALTIME && clock_id != CLOCK_MONOTONIC
-		&& clock_id != CLOCK_PROCESS_CPUTIME_ID && clock_id != CLOCK_THREAD_CPUTIME_ID ) return SCTK_EINVAL;
-  if( clock_id == CLOCK_PROCESS_CPUTIME_ID || clock_id == CLOCK_THREAD_CPUTIME_ID ) return SCTK_EINVAL;
+		&& clock_id != CLOCK_PROCESS_CPUTIME_ID && clock_id != CLOCK_THREAD_CPUTIME_ID ) return EINVAL;
+  if( clock_id == CLOCK_PROCESS_CPUTIME_ID || clock_id == CLOCK_THREAD_CPUTIME_ID ) return EINVAL;
 
   attr->attrs = ((attr->attrs & ~3) | (clock_id & 3));
 
@@ -131,7 +131,7 @@ sctk_thread_generic_conds_condattr_getclock( sctk_thread_generic_condattr_t* res
     EINVAL The value specified for the argument is not correct
 	*/
 
-  if( attr == NULL || clock_id == NULL ) return SCTK_EINVAL;
+  if( attr == NULL || clock_id == NULL ) return EINVAL;
 
   (*clock_id) = (attr->attrs & 3 );
 
@@ -147,8 +147,8 @@ sctk_thread_generic_conds_cond_destroy( sctk_thread_generic_cond_t* lock ){
 	EBUSY  The lock argument is currently used
 	*/
 
-  if( lock == NULL ) return SCTK_EINVAL;
-  if( lock->blocked != NULL ) return SCTK_EBUSY;
+  if( lock == NULL ) return EINVAL;
+  if( lock->blocked != NULL ) return EBUSY;
 
   lock->clock_id = -1;
 
@@ -172,7 +172,7 @@ sctk_thread_generic_conds_cond_init (sctk_thread_generic_cond_t * lock,
 	EINVAL The value specified for the argument is not correct
 	*/
 
-  if( lock == NULL ) return SCTK_EINVAL;
+  if( lock == NULL ) return EINVAL;
 
   int ret = 0;
   sctk_thread_generic_cond_t local = SCTK_THREAD_GENERIC_COND_INIT;
@@ -181,7 +181,7 @@ sctk_thread_generic_conds_cond_init (sctk_thread_generic_cond_t * lock,
   if( attr != NULL ){
 	if( ((attr->attrs >> 2) & 1) == SCTK_THREAD_PROCESS_SHARED ){
 	  fprintf (stderr, "Invalid pshared value in attr, MPC doesn't handle process shared conds\n");
-	  ret = SCTK_ENOTSUP;
+	  ret = ENOTSUP;
 	}
 	ptrl->clock_id = ( attr->attrs & 3 );
   }
@@ -204,7 +204,7 @@ int sctk_thread_generic_conds_cond_wait (sctk_thread_generic_cond_t* restrict co
 	EPERM     The mutex was not owned by the current thread
 	*/
 
-  if( cond == NULL || mutex == NULL ) return SCTK_EINVAL;
+  if( cond == NULL || mutex == NULL ) return EINVAL;
 
   /* test cancel */
   sctk_thread_generic_check_signals( 0 );
@@ -214,11 +214,11 @@ int sctk_thread_generic_conds_cond_wait (sctk_thread_generic_cond_t* restrict co
   void** tmp = (void**) sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
   mpc_common_spinlock_lock(&(cond->lock));
   if( cond->blocked == NULL ){
-	if( sched != mutex->owner ) return SCTK_EPERM;
+	if( sched != mutex->owner ) return EPERM;
 	cell.binded = mutex;
   } else {
-	if( cond->blocked->binded != mutex ) return SCTK_EINVAL;
-	if( sched != mutex->owner ) return SCTK_EPERM;
+	if( cond->blocked->binded != mutex ) return EINVAL;
+	if( sched != mutex->owner ) return EPERM;
 	cell.binded = mutex;
   }
   sctk_thread_generic_mutexes_mutex_unlock(mutex,sched);
@@ -250,7 +250,7 @@ int sctk_thread_generic_conds_cond_signal (sctk_thread_generic_cond_t* cond,
 	EINVAL The value specified for the argument is not correct
 	*/
 
-  if( cond == NULL ) return SCTK_EINVAL;
+  if( cond == NULL ) return EINVAL;
 
   sctk_thread_generic_cond_cell_t* task;
   mpc_common_spinlock_lock(&(cond->lock));
@@ -336,9 +336,9 @@ sctk_thread_generic_conds_cond_timedwait( sctk_thread_generic_cond_t* restrict c
 	ENOMEM    Lack of memory
 	*/
 
-  if( cond == NULL || mutex == NULL || time == NULL ) return SCTK_EINVAL;
-  if( time->tv_nsec < 0 || time->tv_nsec >= 1000000000 ) return SCTK_EINVAL;
-  if( sched != mutex->owner ) return SCTK_EPERM;
+  if( cond == NULL || mutex == NULL || time == NULL ) return EINVAL;
+  if( time->tv_nsec < 0 || time->tv_nsec >= 1000000000 ) return EINVAL;
+  if( sched != mutex->owner ) return EPERM;
 
   /* test cancel */
   sctk_thread_generic_check_signals( 0 );
@@ -352,18 +352,18 @@ sctk_thread_generic_conds_cond_timedwait( sctk_thread_generic_cond_t* restrict c
   void** tmp = (void**) sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
 
   cond_timedwait_task = (sctk_thread_generic_task_t*) sctk_malloc( sizeof( sctk_thread_generic_task_t ));
-  if( cond_timedwait_task == NULL ) return SCTK_ENOMEM;
+  if( cond_timedwait_task == NULL ) return ENOMEM;
   args = (struct sctk_cond_timedwait_args_s*) sctk_malloc( sizeof( struct sctk_cond_timedwait_args_s ));
-  if( args == NULL ) return SCTK_ENOMEM;
+  if( args == NULL ) return ENOMEM;
 
   mpc_common_spinlock_lock(&(cond->lock));
   if( cond->blocked == NULL ){
-	if( sched != mutex->owner ) return SCTK_EPERM;
+	if( sched != mutex->owner ) return EPERM;
 	cell.binded = mutex;
   }
   else {
-	if( cond->blocked->binded != mutex ) return SCTK_EINVAL;
-	if( sched != mutex->owner ) return SCTK_EPERM;
+	if( cond->blocked->binded != mutex ) return EINVAL;
+	if( sched != mutex->owner ) return EPERM;
 	cell.binded = mutex;
   }
   sctk_thread_generic_mutexes_mutex_unlock(mutex,sched);
@@ -393,7 +393,7 @@ sctk_thread_generic_conds_cond_timedwait( sctk_thread_generic_cond_t* restrict c
 	tmp[sctk_thread_generic_cond] = NULL;
 	sctk_thread_generic_mutexes_mutex_lock( mutex, sched );
 	mpc_common_spinlock_unlock( &(cond->lock ));
-	return SCTK_ETIMEDOUT;
+	return ETIMEDOUT;
   }
 
   sctk_thread_generic_thread_status(sched,sctk_thread_generic_blocked);
@@ -406,7 +406,7 @@ sctk_thread_generic_conds_cond_timedwait( sctk_thread_generic_cond_t* restrict c
 
   /* test cancel */
   sctk_thread_generic_check_signals( 0 );
-  if( timeout ) return SCTK_ETIMEDOUT;
+  if( timeout ) return ETIMEDOUT;
 
   return 0;
 }
@@ -419,7 +419,7 @@ int sctk_thread_generic_conds_cond_broadcast (sctk_thread_generic_cond_t * cond,
 	EINVAL The value specified for the argument is not correct
 	*/
 
-  if( cond == NULL ) return SCTK_EINVAL;
+  if( cond == NULL ) return EINVAL;
 
   sctk_thread_generic_cond_cell_t* task;
   sctk_thread_generic_cond_cell_t* task_tmp;

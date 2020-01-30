@@ -38,7 +38,7 @@
 #include "mpc_common_asm.h"
 #include "mpc_common_helper.h"
 
-#include "sctk_runtime_config.h"
+#include "mpc_runtime_config.h"
 #ifdef MPC_Message_Passing
 #include <sctk_low_level_comm.h>
 #endif
@@ -302,7 +302,7 @@ extern "C"
 	  }
       }
     __sctk_ethread_sigmask (cur, SIG_SETMASK, &oldmask, NULL);
-    errno = SCTK_EINTR;
+    errno = EINTR;
 #endif
     return -1;
   }
@@ -320,13 +320,13 @@ extern "C"
     sctk_nodebug ("__sctk_ethread_kill %p %d set", thread, val);
     if (thread->status == ethread_joined)
       {
-	return SCTK_ESRCH;
+	return ESRCH;
       }
     if (val == 0)
       return 0;
     val--;
     if ((val < 0) || (val >= SCTK_NSIG))
-      return SCTK_EINVAL;
+      return EINVAL;
 
     mpc_common_spinlock_lock (&(thread->spinlock));
     if (thread->thread_sigpending[val] == 0)
@@ -859,14 +859,14 @@ extern "C"
       {
 	if (th->status == ethread_joined)
 	  {
-	    return SCTK_ESRCH;
+	    return ESRCH;
 	  }
 	if (th->attr.detached != SCTK_ETHREAD_CREATE_JOINABLE)
-	  return SCTK_EINVAL;
+	  return EINVAL;
 
 	th->nb_wait_for_join++;
 	if (th->nb_wait_for_join != 1)
-	  return SCTK_EINVAL;
+	  return EINVAL;
 
 	status = (sctk_ethread_status_t *) & (th->status);
 	sctk_nodebug ("TO Join Thread %p", th);
@@ -888,7 +888,7 @@ extern "C"
       }
     else
       {
-	return SCTK_EDEADLK;
+	return EDEADLK;
       }
     return 0;
   }
@@ -931,7 +931,7 @@ extern "C"
 	else if (lock->type == SCTK_THREAD_MUTEX_ERRORCHECK)
 	  {
 /* 	    assume (lock->owner != owner); */
-	    return SCTK_EDEADLK;
+	    return EDEADLK;
 	  }
       }
 
@@ -1009,7 +1009,7 @@ extern "C"
 	else if (lock->type == SCTK_THREAD_MUTEX_ERRORCHECK)
 	  {
 	    /*      assume (lock->owner != owner); */
-	    return SCTK_EDEADLK;
+	    return EDEADLK;
 	  }
       }
 
@@ -1104,13 +1104,13 @@ extern "C"
 	else if (lock->type == SCTK_THREAD_MUTEX_ERRORCHECK)
 	  {
 /* 	    assume (lock->owner != owner); */
-	    return SCTK_EDEADLK;
+	    return EDEADLK;
 	  }
 
       }
 
     if (lock->lock > 0)
-      return SCTK_EBUSY;
+      return EBUSY;
 
     /*
        In order to limit contention
@@ -1122,14 +1122,14 @@ extern "C"
      */
     if (mpc_common_spinlock_trylock (&lock->spinlock))
       {
-	return SCTK_EBUSY;
+	return EBUSY;
       }
 
 
     if (lock->lock > 0)
       {
 	mpc_common_spinlock_unlock (&lock->spinlock);
-	return SCTK_EBUSY;
+	return EBUSY;
       }
     else
       {
@@ -1151,7 +1151,7 @@ extern "C"
 	sctk_ethread_print_task (owner);
 	sctk_ethread_print_task ((sctk_ethread_per_thread_t *) lock->owner);
 	sctk_assert (lock->owner == owner);
-	return SCTK_EPERM;
+	return EPERM;
       }
 
     return 0;
@@ -1173,7 +1173,7 @@ extern "C"
        owner, lock->owner, vp->current);
     if (lock->owner != owner)
       {
-	return SCTK_EPERM;
+	return EPERM;
       }
 
     if (lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
@@ -1240,7 +1240,7 @@ extern "C"
       }
     else
       {
-	return SCTK_EAGAIN;
+	return EAGAIN;
       }
   }
 
@@ -1255,7 +1255,7 @@ extern "C"
 	  }
 	return 0;
       }
-    return SCTK_EINVAL;
+    return EINVAL;
   }
 
   static inline
@@ -1269,7 +1269,7 @@ extern "C"
       }
     else
       {
-	return SCTK_EINVAL;
+	return EINVAL;
       }
   }
 
@@ -1650,21 +1650,21 @@ extern "C"
     if (attr->priority != 0)
       {
 	__sctk_free (th_data, tmp.tls);
-	return SCTK_EPERM;
+	return EPERM;
       }
     if (attr->scope == SCTK_ETHREAD_SCOPE_SYSTEM)
       {
 	status = ethread_system;
 /*
 	__sctk_free (th_data, tmp.tls);
-	return SCTK_EINVAL;
+	return EINVAL;
 */
       }
 
     if (attr->schedpolicy != SCTK_ETHREAD_SCHED_OTHER)
       {
 	__sctk_free (th_data, tmp.tls);
-	return SCTK_EPERM;
+	return EPERM;
       }
 
     /*Check_inherited */
@@ -1698,7 +1698,7 @@ extern "C"
 	    if (stack == NULL)
 	      {
 		__sctk_free (th_data, tmp.tls);
-		return SCTK_EAGAIN;
+		return EAGAIN;
 	      }
 	  }
 	th_data->stack = stack;
@@ -1713,7 +1713,7 @@ extern "C"
     else if (stack_size <= 0)
       {
 	__sctk_free (th_data, tmp.tls);
-	return SCTK_EINVAL;
+	return EINVAL;
       }
     else
       {

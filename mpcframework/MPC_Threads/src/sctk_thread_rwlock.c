@@ -55,7 +55,7 @@ int sctk_thread_generic_rwlocks_store_rwlock(
   sctk_thread_rwlock_in_use_t* tmp = (sctk_thread_rwlock_in_use_t*) 
 	  sctk_malloc( sizeof(sctk_thread_rwlock_in_use_t));
 
-  if( tmp == NULL ) return SCTK_ENOMEM;
+  if( tmp == NULL ) return ENOMEM;
 
   tmp->rwlock = _rwlock;
   HASH_ADD(hh,(sched->th->attr.rwlocks_owned),rwlock,sizeof(void*),tmp);
@@ -77,7 +77,7 @@ int sctk_thread_generic_rwlocks_retrieve_rwlock(
 
   HASH_FIND(hh,(sched->th->attr.rwlocks_owned),(&_rwlock),sizeof(void*),tmp);
 
-  if( tmp == NULL ) return SCTK_EPERM;
+  if( tmp == NULL ) return EPERM;
 
   HASH_DELETE(hh,(sched->th->attr.rwlocks_owned),tmp);
 
@@ -92,7 +92,7 @@ __sctk_thread_generic_rwlocks_rwlockattr_destroy( sctk_thread_generic_rwlockattr
       EINVAL The value specified for the argument is not correct
 	*/
 	  
-  if( attr == NULL ) return SCTK_EINVAL;
+  if( attr == NULL ) return EINVAL;
 
   return 0;
 }
@@ -106,7 +106,7 @@ __sctk_thread_generic_rwlocks_rwlockattr_getpshared( const sctk_thread_generic_r
       EINVAL The value specified for the argument is not correct
 	*/
 
-  if( attr == NULL || val == NULL ) return SCTK_EINVAL;
+  if( attr == NULL || val == NULL ) return EINVAL;
 
   (*val) = attr->pshared;
 
@@ -123,7 +123,7 @@ __sctk_thread_generic_rwlocks_rwlockattr_init( sctk_thread_generic_rwlockattr_t*
             the read-write lock attributes object
    */
 
-  if( attr == NULL ) return SCTK_EINVAL;
+  if( attr == NULL ) return EINVAL;
 
   attr->pshared = SCTK_THREAD_PROCESS_PRIVATE;
 
@@ -139,13 +139,13 @@ __sctk_thread_generic_rwlocks_rwlockattr_setpshared( sctk_thread_generic_rwlocka
      EINVAL The value specified for the argument is not correct
     */
 
-  if( attr == NULL ) return SCTK_EINVAL;
-  if( val != SCTK_THREAD_PROCESS_PRIVATE && val != SCTK_THREAD_PROCESS_SHARED ) return SCTK_EINVAL;
+  if( attr == NULL ) return EINVAL;
+  if( val != SCTK_THREAD_PROCESS_PRIVATE && val != SCTK_THREAD_PROCESS_SHARED ) return EINVAL;
 
   int ret = 0;
   if( val == SCTK_THREAD_PROCESS_SHARED ){
 	fprintf (stderr, "Invalid pshared value in attr, MPC doesn't handle process shared rwlokcs\n");
-	ret = SCTK_ENOTSUP;
+	ret = ENOTSUP;
   }
 
   attr->pshared = val;
@@ -162,8 +162,8 @@ __sctk_thread_generic_rwlocks_rwlock_destroy( sctk_thread_generic_rwlock_t* lock
      EBUSY  The specified lock is currently owned by a thread
     */
 
-  if( lock == NULL ) return SCTK_EINVAL;
-  if( lock->count > 0 ) return SCTK_EBUSY;
+  if( lock == NULL ) return EINVAL;
+  if( lock->count > 0 ) return EBUSY;
 
   lock->status = SCTK_DESTROYED;
 
@@ -188,8 +188,8 @@ __sctk_thread_generic_rwlocks_rwlock_init( sctk_thread_generic_rwlock_t* lock,
             but not yet destroyed read-write lock
    */
 
-  if( lock == NULL ) return SCTK_EINVAL;
-  if( lock->status == SCTK_INITIALIZED ) return SCTK_EBUSY;
+  if( lock == NULL ) return EINVAL;
+  if( lock->status == SCTK_INITIALIZED ) return EBUSY;
 
   int ret = 0;
   sctk_thread_generic_rwlock_t local = SCTK_THREAD_GENERIC_RWLOCK_INIT;
@@ -197,7 +197,7 @@ __sctk_thread_generic_rwlocks_rwlock_init( sctk_thread_generic_rwlock_t* lock,
   if( attr != NULL ){
 	  if( attr->pshared == SCTK_THREAD_PROCESS_SHARED ){
 		  fprintf (stderr, "Invalid pshared value in attr, MPC doesn't handle process shared rwlokcs\n");
-		  ret = SCTK_ENOTSUP;
+		  ret = ENOTSUP;
 	  }
   }
 
@@ -220,8 +220,8 @@ __sctk_thread_generic_rwlocks_rwlock_lock( sctk_thread_generic_rwlock_t* lock,
              because the maximum number of read locks for rwlock has been exceeded
     */
 
-  if( lock == NULL ) return SCTK_EINVAL;
-  if( lock->status != SCTK_INITIALIZED ) return SCTK_EINVAL;
+  if( lock == NULL ) return EINVAL;
+  if( lock->status != SCTK_INITIALIZED ) return EINVAL;
 
   sctk_thread_generic_rwlock_cell_t cell;
   sctk_thread_generic_rwlocks_init_cell( &cell );
@@ -234,14 +234,14 @@ __sctk_thread_generic_rwlocks_rwlock_lock( sctk_thread_generic_rwlock_t* lock,
   unsigned int ltype = type;
   if( type != SCTK_RWLOCK_READ && type != SCTK_RWLOCK_WRITE ){
 	  if( type == SCTK_RWLOCK_TRYREAD ){
-		  if( mpc_common_spinlock_trylock ( &(lock->lock) )) return SCTK_EBUSY;
+		  if( mpc_common_spinlock_trylock ( &(lock->lock) )) return EBUSY;
 		  ltype = SCTK_RWLOCK_READ;
 	  }
 	  else if( type == SCTK_RWLOCK_TRYWRITE ){
-		  if( mpc_common_spinlock_trylock ( &(lock->lock) )) return SCTK_EBUSY;
+		  if( mpc_common_spinlock_trylock ( &(lock->lock) )) return EBUSY;
 		  ltype = SCTK_RWLOCK_WRITE;
 	  } else {
-		  return SCTK_EINVAL;
+		  return EINVAL;
 	  }
   } else {
 	  mpc_common_spinlock_lock ( &(lock->lock) );
@@ -270,7 +270,7 @@ __sctk_thread_generic_rwlocks_rwlock_lock( sctk_thread_generic_rwlock_t* lock,
 	  else if( sched == lock->writer ){
 		  lock->count--;
 		  mpc_common_spinlock_unlock ( &(lock->lock) );
-		  return SCTK_EDEADLK;
+		  return EDEADLK;
 	  }
 	  /* We cannot take the lock for reading and we prepare to block */
   }
@@ -293,7 +293,7 @@ __sctk_thread_generic_rwlocks_rwlock_lock( sctk_thread_generic_rwlock_t* lock,
 	  else if( sched == lock->writer ){
 		  lock->count--;
 		  mpc_common_spinlock_unlock ( &(lock->lock) );
-		  return SCTK_EDEADLK;
+		  return EDEADLK;
 	  }
 	  lock->wait = SCTK_RWLOCK_WR_WAITING;
 	  /* We cannot take the lock for writing and we prepare to block */
@@ -306,7 +306,7 @@ __sctk_thread_generic_rwlocks_rwlock_lock( sctk_thread_generic_rwlock_t* lock,
   if( type != SCTK_RWLOCK_READ && type != SCTK_RWLOCK_WRITE ){
 	  lock->count--;
 	  mpc_common_spinlock_unlock ( &(lock->lock) );
-	  return SCTK_EBUSY;
+	  return EBUSY;
   }
 
   /* We add the lock to a hash table owned by the current thread*/
@@ -342,8 +342,8 @@ __sctk_thread_generic_rwlocks_rwlock_unlock( sctk_thread_generic_rwlock_t* lock,
      EPERM The current thread does not hold a lock on the read-write lock
     */
 
-  if( lock == NULL ) return SCTK_EINVAL;
-  if( lock->status != SCTK_INITIALIZED ) return SCTK_EINVAL;
+  if( lock == NULL ) return EINVAL;
+  if( lock->status != SCTK_INITIALIZED ) return EINVAL;
 
   int ret = sctk_thread_generic_rwlocks_retrieve_rwlock( lock, sched  );
   if( ret != 0 ) return ret;
@@ -412,15 +412,15 @@ __sctk_thread_generic_rwlocks_rwlock_timedrdlock( sctk_thread_generic_rwlock_t* 
      EDEADLK   The calling thread already holds a write lock on argument lock
     */
 
-  if( lock == NULL || time == NULL ) return SCTK_EINVAL;
-  if( time->tv_nsec < 0 || time->tv_nsec >= 1000000000 ) return SCTK_EINVAL;
+  if( lock == NULL || time == NULL ) return EINVAL;
+  if( time->tv_nsec < 0 || time->tv_nsec >= 1000000000 ) return EINVAL;
 
   int ret;
   struct timespec t_current;
 
   do{
 	  ret = __sctk_thread_generic_rwlocks_rwlock_lock( lock, SCTK_RWLOCK_TRYREAD, sched );
-	  if( ret != SCTK_EBUSY ){
+	  if( ret != EBUSY ){
 		  return ret;
 	  }
 	  clock_gettime( CLOCK_REALTIME, &t_current );
@@ -428,7 +428,7 @@ __sctk_thread_generic_rwlocks_rwlock_timedrdlock( sctk_thread_generic_rwlock_t* 
 			  ( t_current.tv_sec == time->tv_sec && t_current.tv_nsec < time->tv_nsec ) ) );
 
   if( ret != 0 ){
-	  return SCTK_ETIMEDOUT;
+	  return ETIMEDOUT;
   }
 
   return 0;
@@ -448,15 +448,15 @@ __sctk_thread_generic_rwlocks_rwlock_timedwrlock( sctk_thread_generic_rwlock_t* 
      EDEADLK   The calling thread already holds the argument lock for writing
   */
 
-  if( lock == NULL || time == NULL ) return SCTK_EINVAL;
-  if( time->tv_nsec < 0 || time->tv_nsec >= 1000000000 ) return SCTK_EINVAL;
+  if( lock == NULL || time == NULL ) return EINVAL;
+  if( time->tv_nsec < 0 || time->tv_nsec >= 1000000000 ) return EINVAL;
 
   int ret;
   struct timespec t_current;
 
   do{
 	  ret = __sctk_thread_generic_rwlocks_rwlock_lock( lock, SCTK_RWLOCK_TRYWRITE, sched );
-	  if( ret != SCTK_EBUSY ){
+	  if( ret != EBUSY ){
 		  return ret;
 	  }
 	  clock_gettime( CLOCK_REALTIME, &t_current );
@@ -464,7 +464,7 @@ __sctk_thread_generic_rwlocks_rwlock_timedwrlock( sctk_thread_generic_rwlock_t* 
 			  ( t_current.tv_sec == time->tv_sec && t_current.tv_nsec < time->tv_nsec ) ) );
 
   if( ret != 0 ){
-	  return SCTK_ETIMEDOUT;
+	  return ETIMEDOUT;
   }
 
   return 0;

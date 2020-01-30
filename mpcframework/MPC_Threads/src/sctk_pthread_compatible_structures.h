@@ -37,9 +37,6 @@ extern "C"
 {
 #endif
 
-  typedef volatile int mpc_common_spinlock_t;
-#define SCTK_SPINLOCK_INITIALIZER 0
-
   /*Threads definitions */
   struct sctk_ethread_per_thread_s;
   typedef struct sctk_ethread_per_thread_s *sctk_ethread_t;

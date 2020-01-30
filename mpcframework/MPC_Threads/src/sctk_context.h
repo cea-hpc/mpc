@@ -28,7 +28,7 @@
 #ifdef MPC_USE_EXTLS
 #include <extls.h>
 #endif
-#include "mpc_config.h"
+#include "mpcthread_config.h"
 
 #ifdef __cplusplus
 extern "C"

@@ -22,7 +22,7 @@
 #ifndef __SCTK_POSIX_ETHREAD_MXN_H_
 #define __SCTK_POSIX_ETHREAD_MXN_H_
 #include <stdio.h>
-#include "mpc_config.h"
+#include "mpcthread_config.h"
 #include "sctk_debug.h"
 
 #ifdef __cplusplus

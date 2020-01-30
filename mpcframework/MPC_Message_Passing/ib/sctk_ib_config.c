@@ -37,7 +37,7 @@
 #include "sctk_ib_eager.h"
 #include "sctk_ibufs_rdma.h"
 #include "sctk_ib_buffered.h"
-#include "sctk_runtime_config.h"
+#include "mpc_runtime_config.h"
 
 #include <mpc_common_rank.h>
 

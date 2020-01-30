@@ -38,12 +38,13 @@
 #include "sctk_debug.h"
 
 #include "mpc_common_rank.h"
+#include <mpc_common_flags.h>
 
-#include "mpc_config.h"
+#include "mpcthread_config.h"
 #include "sctk_thread.h"
 #include "sctk_kernel_thread.h"
 #include "sctk_alloc.h"
-#include "sctk_launch.h"
+
 
 #include "mpc_common_asm.h"
 #include "sctk_tls.h"
@@ -58,8 +59,8 @@
 #endif
 
 #include "sctk_context.h"
-#include "sctk_runtime_config.h"
-#include "sctk_runtime_config_struct_defaults.h"
+#include "mpc_runtime_config.h"
+
 
 #include "sctk_thread_generic.h"
 
@@ -1664,7 +1665,7 @@ sctk_thread_sem_t *
 sctk_thread_sem_open (const char *__name, int __oflag, ...)
 {
   sctk_thread_sem_t *tmp;
-  if ((__oflag & SCTK_O_CREAT))
+  if ((__oflag & O_CREAT))
     {
 
       va_list ap;
@@ -2028,9 +2029,9 @@ int
 sctk_thread_nanosleep (const struct timespec *req, struct timespec *rem)
 {
   if (req == NULL)
-    return SCTK_EINVAL;
+    return EINVAL;
   if ((req->tv_sec < 0) || (req->tv_nsec < 0) || (req->tv_nsec > 999999999)){
-	errno = SCTK_EINVAL;
+	errno = EINVAL;
     return -1;
   }
   sctk_thread_sleep (req->tv_sec);

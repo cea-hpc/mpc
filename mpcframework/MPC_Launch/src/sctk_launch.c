@@ -29,7 +29,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
-#include <sctk_runtime_config.h>
+#include <mpc_runtime_config.h>
 #include <sctk_communicator.h>
 #include <mpc_common_flags.h>
 
@@ -58,7 +58,7 @@
 
 /* #include "sctk_daemons.h" */
 /* #include "sctk_io.h" */
-#include "sctk_runtime_config.h"
+#include "mpc_runtime_config.h"
 #include "mpc_common_types.h"
 
 #ifdef MPC_USE_EXTLS

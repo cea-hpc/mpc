@@ -26,12 +26,11 @@
 
 #include <mpc_topology.h>
 
-#include "mpc_config.h"
+#include "mpcthread_config.h"
 #include "mpc_common_rank.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 
-#include <mpc_launch_pmi.h>
 #include "sctk_tls.h"
 
 #ifdef MPC_MPI

@@ -25,7 +25,7 @@
 #include <mpc_launch_pmi.h>
 #include <string.h>
 #include "sctk_checksum.h"
-#include "sctk_runtime_config.h"
+#include "mpc_runtime_config.h"
 #include "sctk_control_messages.h"
 #include <sctk_launch.h>
 

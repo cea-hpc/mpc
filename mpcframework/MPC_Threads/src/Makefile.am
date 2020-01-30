@@ -1,5 +1,8 @@
 AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ -I$(abs_top_srcdir)/include/ -I$(abs_top_builddir)/MPC_Arch/include/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Arch/include/ -I$(abs_top_srcdir)/MPC_Threads/include/
+AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Config/include/ -I$(abs_top_srcdir)/MPC_Config/src/generated/
+AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Topology/include/
+
 
 lib_LTLIBRARIES = libmpcthread.la
 

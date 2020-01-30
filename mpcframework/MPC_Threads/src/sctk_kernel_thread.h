@@ -22,9 +22,9 @@
 #ifndef __SCTK_KTHREAD_H_
 #define __SCTK_KTHREAD_H_
 
-#include "mpc_config.h"
+#include "mpcthread_config.h"
 #include "sctk_debug.h"
-#include "sctk_keywords.h"
+
 #include <unistd.h>
 #include <signal.h>
 #ifdef WINDOWS_SYS

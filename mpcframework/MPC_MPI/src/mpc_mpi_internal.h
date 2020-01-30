@@ -32,7 +32,7 @@
 #include "sctk_debug.h"
 #include "sctk_handle.h"
 #include <mpc_lowcomm_msg.h>
-#include "sctk_runtime_config.h"
+#include "mpc_runtime_config.h"
 #include "mpc_common_spinlock.h"
 #include "sctk_thread.h"
 #include "mpc_topology.h"

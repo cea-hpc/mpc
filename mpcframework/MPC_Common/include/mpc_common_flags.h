@@ -11,6 +11,10 @@ struct mpc_common_flags
         short enable_topology_graphic_placement;/*< Should current pinning be dumped graphically */
         short enable_topology_text_placement;   /*< Should current pinning be dumped in text */
 
+        /* Thread-library */
+        char * thread_library_kind;             /*< Type of threading library requested */
+
+        /* Launch configuration */
         unsigned int processor_number;          /*< Number of cores passed on the command-line */
 
 };

@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include "sctk_debug.h"
-#include "mpc_config.h"
+#include "mpcthread_config.h"
 #include "sctk_thread_api.h"
 
 #ifdef __cplusplus

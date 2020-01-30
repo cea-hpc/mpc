@@ -28,7 +28,7 @@
 
 #include "sctk_performance_tree.h"
 #include "sctk_profile_meta.h"
-#include "sctk_runtime_config.h"
+#include "mpc_runtime_config.h"
 #include "sctk_profiler_array.h"
 
 typedef enum

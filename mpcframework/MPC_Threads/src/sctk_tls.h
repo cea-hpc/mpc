@@ -79,9 +79,14 @@ extern "C"
 
 #endif
 
+#ifdef MPC_Threads
+/* Note storage of this variable is in rank.c in MPC_Common to
+   avoid circular link dependencies */
+extern __thread int __mpc_task_rank;
+#endif
+
 #ifdef MPC_MPI
   extern __thread struct mpc_mpi_cl_per_thread_ctx_s * ___mpc_p_per_VP_comm_ctx;
-  extern __thread int __mpc_task_rank;
 #endif
 
 /** macro copying the global value to the context */

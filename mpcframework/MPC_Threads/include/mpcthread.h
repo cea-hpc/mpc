@@ -27,7 +27,7 @@
 #include <sched.h>
 #include <stdarg.h>
 
-#include <mpc_config.h>
+#include <mpcthread_config.h>
 
 #include <sctk_posix_thread.h>
 #include <sctk_thread_api.h>
@@ -81,7 +81,7 @@ extern "C"
 
 #define MPC_THREAD_COND_INITIALIZER SCTK_THREAD_COND_INITIALIZER
 #define MPC_THREAD_ONCE_INIT SCTK_THREAD_ONCE_INIT
-#define MPC_THREAD_KEYS_MAX SCTK_THREAD_KEYS_MAX
+
 #define MPC_THREAD_CREATE_JOINABLE SCTK_THREAD_CREATE_JOINABLE
 #define MPC_THREAD_CREATE_DETACHED SCTK_THREAD_CREATE_DETACHED
 #define MPC_THREAD_INHERIT_SCHED SCTK_THREAD_INHERIT_SCHED

@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_config_pthread.h"
+#include "mpcthread_config.h"
 
 #if HAVE_PTHREAD_ATTR_SETAFFINITY_NP
 #define _GNU_SOURCE

@@ -43,9 +43,13 @@ extern "C" {
 #if defined( MPC_Threads )
 
 extern int sctk_thread_yield( void );
-#include "sctk_pthread_compatible_structures.h"
 
 #else
+
+#include <pthread.h>
+#define sctk_thread_yield pthread_yield
+
+#endif
 
 /**
  * @brief This defines the mpc spinlock object
@@ -59,7 +63,6 @@ typedef OPA_int_t mpc_common_spinlock_t;
  */
 #define SCTK_SPINLOCK_INITIALIZER { 0 }
 
-#endif
 
 static inline void mpc_common_spinlock_init( mpc_common_spinlock_t *lock, int value )
 {

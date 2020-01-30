@@ -23,7 +23,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <sctk_runtime_config.h>
+#include <mpc_runtime_config.h>
 #include "sctk_checksum.h"
 #ifdef SCTK_USE_CHECKSUM
 #include "mpc_common_helper.h"

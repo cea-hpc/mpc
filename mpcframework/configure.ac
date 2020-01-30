@@ -80,6 +80,7 @@ AC_CHECK_HEADERS([linux/personality.h])
 AC_CHECK_HEADERS([netdb.h])
 AC_CHECK_HEADERS([netinet/in.h])
 AC_CHECK_HEADERS([netinet/tcp.h])
+AC_CHECK_HEADERS([pthread.h])
 AC_CHECK_HEADERS([regex.h])
 AC_CHECK_HEADERS([sched.h])
 AC_CHECK_HEADERS([semaphore.h])
@@ -242,6 +243,7 @@ AC_MSG_NOTICE(Check Pthreads functions)
 AC_CHECK_HEADER([pthread.h])
 AC_CHECK_LIB(pthread,pthread_create,LIBS="$LIBS -lpthread")
 AC_CHECK_SIZEOF(pthread_t,,[#include <pthread.h>])
+AC_CHECK_SIZEOF(sigset_t,,[#include <signal.h>])
 
 AC_CHECK_FUNCS(pthread_yield)
 AC_CHECK_FUNCS(pthread_atfork )
@@ -258,6 +260,70 @@ AC_CHECK_FUNCS(pthread_join )
 AC_CHECK_FUNCS(pthread_key_create )
 AC_CHECK_FUNCS(pthread_key_delete )
 AC_CHECK_FUNCS(pthread_once )
+AC_CHECK_SIZEOF(pthread_key_t)
+
+AC_MSG_CHECKING([Checking if PTHREAD_KEYS_MAX is defined])
+
+have_pthread_keys_max=no
+AC_RUN_IFELSE([AC_LANG_PROGRAM([
+                                #include <pthread.h>
+                                ],[
+                                #ifndef PTHREAD_KEYS_MAX
+                                exit(1);
+                                #endif
+                                ])], [have_pthread_keys_max=yes])
+
+AC_MSG_RESULT([$have_pthread_keys_max])
+
+
+if test "x$have_pthread_keys_max" = "x1"; then
+        AC_DEFINE([MPC_THREAD_KEYS_MAX], [PTHREAD_KEYS_MAX], [PTHREAD_KEYS_MAX from header (requires pthread.h)])
+else
+        for key_count in `seq 0 128 65536`
+        do
+
+        current_key_count_supported=0
+
+        have_pthread_keys_max=no
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([
+                                        #include <pthread.h>
+                                        ],[
+                                        int ptkm = 0;
+
+                                        do
+                                        {
+                                                int i;
+                                                pthread_key_t k;
+
+                                                /*Pthread key max determination */
+                                                /* ensure to fail one step ahead reason for + 128 */
+                                                for ( i = 0; i < $key_count + 128; i++ )
+                                                {
+                                                        if ( pthread_key_create ( &k, NULL ) != 0 )
+                                                        {
+                                                                return 1;
+                                                        }
+                                                }
+
+                                                ptkm = i;
+                                        }
+                                        while ( 0 );
+                                        ])], [current_key_count_supported=1])
+
+        if test "x$current_key_count_supported" != "x1"; then
+                break
+        fi
+
+        done
+
+        AC_MSG_CHECKING([Experimentally determined PTHREAD_KEYS_MAX to be])
+
+        AC_DEFINE_UNQUOTED([MPC_THREAD_KEYS_MAX], [$key_count], [Experimentally defined PTHREAD_KEYS_MAX])
+
+        AC_MSG_RESULT([$key_count])
+
+fi
+
 
 AC_CHECK_TYPE(pthread_attr_t,is_thread=yes,is_thread=no,[#include <pthread.h>])
 
@@ -304,6 +370,7 @@ AC_CHECK_TYPE(pthread_cond_t,is_cond=yes,is_cond=no,[#include <pthread.h>])
 if test "$is_cond" = "yes" ; then
         AC_CHECK_SIZEOF(pthread_cond_t,,[#include <pthread.h>])
         AC_CHECK_SIZEOF(pthread_condattr_t,,[#include <pthread.h>])
+        AC_CHECK_SIZEOF(pthread_once_t,,[#include <pthread.h>])
         AC_CHECK_FUNCS(pthread_cond_broadcast )
         AC_CHECK_FUNCS(pthread_cond_destroy )
         AC_CHECK_FUNCS(pthread_cond_init )
@@ -456,7 +523,7 @@ AC_ARG_WITH([threads],
 [mpc_thread_enabled=yes])
 
 if test "x${mpc_thread_enabled}" = "xyes"; then
-        AC_DEFINE([MPC_THREADS], [1], [MPC_THREAD module was enabled])
+        AC_DEFINE([MPC_Threads], [1], [MPC_THREAD module was enabled])
 fi
 
 AM_CONDITIONAL([MPC_THREAD_ENABLED], [test "x${mpc_thread_enabled}" = "xyes"])

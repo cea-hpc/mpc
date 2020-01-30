@@ -19,12 +19,17 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "mpc_config.h"
+/* Needed to activate the whole interface */
+#define _GNU_SOURCE
+
+
+#include "mpcthread_config.h"
 #include "sctk_default_pthread_flags.h"
+
 
 #include <pthread.h>
 #include <semaphore.h>
-#include "sctk_config_pthread.h"
+#include "mpcthread_config.h"
 #include "sctk_posix_pthread.h"
 #include "sctk_internal_thread.h"
 #include "sctk_posix_ethread_np.h"
@@ -144,7 +149,7 @@ sctk_posix_pthread ()
 #ifdef HAVE_PTHREAD_DETACH
   sctk_add_func_type (pthread, detach, int (*)(sctk_thread_t));
 #endif
-  /*les sémaphores  */
+  /*les sï¿½maphores  */
 #ifdef HAVE_SEM_INIT
   __sctk_ptr_thread_sem_init = (int (*)(sctk_thread_sem_t *,
 					int, unsigned int)) sem_init;
@@ -337,7 +342,7 @@ sctk_posix_pthread ()
 #endif
 
 
-/*Non implémenté dans ethread(_mxn)*/
+/*Non implï¿½mentï¿½ dans ethread(_mxn)*/
 #ifdef HAVE_PTHREAD_ATTR_GETGUARDSIZE
   sctk_add_func_type (pthread, attr_getguardsize,
 		      int (*)(const sctk_thread_attr_t *, size_t *));
@@ -391,6 +396,9 @@ sctk_posix_pthread ()
 		      int (*)(sctk_thread_mutex_t *,
 			      const struct timespec *));
 #endif
+
+#define sctk_add_func_type(newlib,func,t) __sctk_ptr_thread_##func = (t)newlib##_##func
+
 #ifdef HAVE_PTHREAD_GETCONCURRENCY
   sctk_add_func_type (pthread, getconcurrency, int (*)(void));
 #endif

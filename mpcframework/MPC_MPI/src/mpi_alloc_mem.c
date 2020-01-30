@@ -28,7 +28,7 @@
 #include "mpcthread.h"
 #include "sctk_accessor.h"
 #include "sctk_handler_mpi.h"
-#include "sctk_runtime_config.h"
+#include "mpc_runtime_config.h"
 #include "sctk_shm_mapper.h"
 #include "sctk_thread.h"
 #include "string.h"

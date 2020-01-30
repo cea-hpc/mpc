@@ -15,7 +15,6 @@
 @SET_MAKE@
 
 
-
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -90,7 +89,6 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = mpc_print_config$(EXEEXT)
 subdir = MPC_Config/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_gcc_builtin.m4 \
@@ -133,8 +131,7 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
-	"$(DESTDIR)$(mpc_headerdir)"
+am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(mpc_headerdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libmpcconfig_la_DEPENDENCIES =  \
@@ -152,14 +149,6 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-PROGRAMS = $(bin_PROGRAMS)
-am_mpc_print_config_OBJECTS =  \
-	./print_config/mpc_print_config.$(OBJEXT) \
-	./print_config/mpc_print_config_sh.$(OBJEXT) \
-	./print_config/mpc_print_config_xml.$(OBJEXT)
-mpc_print_config_OBJECTS = $(am_mpc_print_config_OBJECTS)
-mpc_print_config_DEPENDENCIES = ../../MPC_Common/src/libmpccommon.la \
-	./libmpcconfig.la $(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -194,8 +183,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libmpcconfig_la_SOURCES) $(mpc_print_config_SOURCES)
-DIST_SOURCES = $(libmpcconfig_la_SOURCES) $(mpc_print_config_SOURCES)
+SOURCES = $(libmpcconfig_la_SOURCES)
+DIST_SOURCES = $(libmpcconfig_la_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -384,12 +373,6 @@ libmpcconfig_la_SOURCES = libxml_helper.c runtime_config_mapper.c \
 # Use pre-generated files
 mpc_header_HEADERS = ./generated/mpc_config_struct_defaults.h ./generated/mpc_config_struct.h
 libmpcconfig_la_LIBADD = $(abs_top_builddir)/MPC_Common/src/libmpccommon.la $(XML2_LIBS)
-mpc_print_config_SOURCES = ./print_config/mpc_print_config.c \
-	./print_config/mpc_print_config_sh.c \
-	./print_config/mpc_print_config_sh.h \
-	./print_config/mpc_print_config_xml.c \
-	./print_config/mpc_print_config_xml.h
-mpc_print_config_LDADD = ../../MPC_Common/src/libmpccommon.la ./libmpcconfig.la $(XML2_LIBS)
 all: all-am
 
 .SUFFIXES:
@@ -471,80 +454,11 @@ generated/$(DEPDIR)/$(am__dirstamp):
 
 libmpcconfig.la: $(libmpcconfig_la_OBJECTS) $(libmpcconfig_la_DEPENDENCIES) $(EXTRA_libmpcconfig_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libmpcconfig_la_OBJECTS) $(libmpcconfig_la_LIBADD) $(LIBS)
-install-binPROGRAMS: $(bin_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(bindir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(bindir)" || exit 1; \
-	fi; \
-	for p in $$list; do echo "$$p $$p"; done | \
-	sed 's/$(EXEEXT)$$//' | \
-	while read p p1; do if test -f $$p \
-	 || test -f $$p1 \
-	  ; then echo "$$p"; echo "$$p"; else :; fi; \
-	done | \
-	sed -e 'p;s,.*/,,;n;h' \
-	    -e 's|.*|.|' \
-	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
-	sed 'N;N;N;s,\n, ,g' | \
-	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
-	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
-	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
-	    else { print "f", $$3 "/" $$4, $$1; } } \
-	  END { for (d in files) print "f", d, files[d] }' | \
-	while read type dir files; do \
-	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
-	    test -z "$$files" || { \
-	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
-	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
-	    } \
-	; done
-
-uninstall-binPROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
-	files=`for p in $$list; do echo "$$p"; done | \
-	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
-	      -e 's/$$/$(EXEEXT)/' \
-	`; \
-	test -n "$$list" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(bindir)" && rm -f $$files
-
-clean-binPROGRAMS:
-	@list='$(bin_PROGRAMS)'; test -n "$$list" || exit 0; \
-	echo " rm -f" $$list; \
-	rm -f $$list || exit $$?; \
-	test -n "$(EXEEXT)" || exit 0; \
-	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
-	echo " rm -f" $$list; \
-	rm -f $$list
-print_config/$(am__dirstamp):
-	@$(MKDIR_P) ./print_config
-	@: > print_config/$(am__dirstamp)
-print_config/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) ./print_config/$(DEPDIR)
-	@: > print_config/$(DEPDIR)/$(am__dirstamp)
-./print_config/mpc_print_config.$(OBJEXT):  \
-	print_config/$(am__dirstamp) \
-	print_config/$(DEPDIR)/$(am__dirstamp)
-./print_config/mpc_print_config_sh.$(OBJEXT):  \
-	print_config/$(am__dirstamp) \
-	print_config/$(DEPDIR)/$(am__dirstamp)
-./print_config/mpc_print_config_xml.$(OBJEXT):  \
-	print_config/$(am__dirstamp) \
-	print_config/$(DEPDIR)/$(am__dirstamp)
-
-mpc_print_config$(EXEEXT): $(mpc_print_config_OBJECTS) $(mpc_print_config_DEPENDENCIES) $(EXTRA_mpc_print_config_DEPENDENCIES) 
-	@rm -f mpc_print_config$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(mpc_print_config_OBJECTS) $(mpc_print_config_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f ./generated/*.$(OBJEXT)
 	-rm -f ./generated/*.lo
-	-rm -f ./print_config/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -559,9 +473,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/runtime_config_walk.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./generated/$(DEPDIR)/mpc_config_struct_defaults.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./generated/$(DEPDIR)/mpc_config_struct_meta.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./print_config/$(DEPDIR)/mpc_print_config.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./print_config/$(DEPDIR)/mpc_print_config_sh.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./print_config/$(DEPDIR)/mpc_print_config_xml.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -699,11 +610,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(HEADERS)
-install-binPROGRAMS: install-libLTLIBRARIES
-
+all-am: Makefile $(LTLIBRARIES) $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(mpc_headerdir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(mpc_headerdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -734,19 +643,17 @@ distclean-generic:
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f generated/$(DEPDIR)/$(am__dirstamp)
 	-rm -f generated/$(am__dirstamp)
-	-rm -f print_config/$(DEPDIR)/$(am__dirstamp)
-	-rm -f print_config/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
-	clean-libtool mostlyclean-am
+clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
+	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR) ./generated/$(DEPDIR) ./print_config/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./generated/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -769,7 +676,7 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS install-libLTLIBRARIES
+install-exec-am: install-libLTLIBRARIES
 
 install-html: install-html-am
 
@@ -792,7 +699,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR) ./generated/$(DEPDIR) ./print_config/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./generated/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -809,17 +716,15 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-libLTLIBRARIES \
-	uninstall-mpc_headerHEADERS
+uninstall-am: uninstall-libLTLIBRARIES uninstall-mpc_headerHEADERS
 
 .MAKE: install-am install-strip
 
-.PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
-	clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
-	clean-libtool cscopelist-am ctags ctags-am distclean \
-	distclean-compile distclean-generic distclean-libtool \
-	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-binPROGRAMS install-data \
+.PHONY: CTAGS GTAGS TAGS all all-am check check-am clean clean-generic \
+	clean-libLTLIBRARIES clean-libtool cscopelist-am ctags \
+	ctags-am distclean distclean-compile distclean-generic \
+	distclean-libtool distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-data \
 	install-data-am install-data-local install-dvi install-dvi-am \
 	install-exec install-exec-am install-html install-html-am \
 	install-info install-info-am install-libLTLIBRARIES \
@@ -828,8 +733,8 @@ uninstall-am: uninstall-binPROGRAMS uninstall-libLTLIBRARIES \
 	installcheck installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-libLTLIBRARIES uninstall-mpc_headerHEADERS
+	tags tags-am uninstall uninstall-am uninstall-libLTLIBRARIES \
+	uninstall-mpc_headerHEADERS
 
 .PRECIOUS: Makefile
 

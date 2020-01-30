@@ -22,7 +22,7 @@
 
 #include "sctk_thread.h"
 #include "libtimer.h"
-#include "mpc_config.h"
+#include "mpcthread_config.h"
 #include "sctk_debug.h"
 #include "sctk_internal_thread.h"
 #include "sctk_kernel_thread.h"

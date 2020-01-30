@@ -23,17 +23,9 @@ libmpcconfig_la_SOURCES += ./generated/mpc_config_struct_meta.c
 
 libmpcconfig_la_LIBADD = $(abs_top_builddir)/MPC_Common/src/libmpccommon.la $(XML2_LIBS)
 
+
 # Default configuration file and schema installation
 install-data-local:
 	install -m 0644 -D $(abs_top_srcdir)/MPC_Config/extra/config.xml.example $(pkgdatadir)/config.xml
 	install -m 0644 -D $(abs_top_srcdir)/MPC_Config/src/generated/mpc-config.xsd $(pkgdatadir)/mpc-config.xsd
 
-#
-# Print Config Program
-#
-
-bin_PROGRAMS = mpc_print_config
-
-mpc_print_config_SOURCES = ./print_config/mpc_print_config.c ./print_config/mpc_print_config_sh.c ./print_config/mpc_print_config_sh.h
-mpc_print_config_SOURCES += ./print_config/mpc_print_config_xml.c ./print_config/mpc_print_config_xml.h
-mpc_print_config_LDADD = ../../MPC_Common/src/libmpccommon.la ./libmpcconfig.la $(XML2_LIBS)

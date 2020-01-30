@@ -36,7 +36,7 @@
 #include <mpc_launch_pmi.h>
 #include "utlist.h"
 
-#include "sctk_runtime_config.h"
+#include "mpc_runtime_config.h"
 
 typedef struct sctk_ib_polling_s
 {

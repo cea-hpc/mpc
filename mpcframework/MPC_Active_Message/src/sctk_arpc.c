@@ -28,7 +28,7 @@
 #include <stdio.h>
 
 #ifdef MPC_Active_Message
-#include <sctk_runtime_config.h>
+#include <mpc_runtime_config.h>
 #else
 #include <assert.h>
 #include <stdlib.h>

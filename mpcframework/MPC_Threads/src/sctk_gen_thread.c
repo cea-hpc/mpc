@@ -22,7 +22,6 @@
 /* ######################################################################## */
 #include "sctk_debug.h"
 #include "sctk_thread.h"
-#include "sctk_launch.h"
 #include "sctk_internal_thread.h"
 #include "sctk_futex.h"
 
@@ -809,7 +808,7 @@ sctk_gen_thread_sem_open (const char *name, int oflag, ...)
 {
   sctk_init_mpc_runtime();
   assume(sctk_gen_thread_sem_open != __sctk_ptr_thread_sem_open);
-  if ((oflag & SCTK_O_CREAT)){
+  if ((oflag & O_CREAT)){
     va_list ap;
     int mode, value;
     va_start (ap, oflag);

@@ -25,7 +25,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/time.h>
-#include "mpc_config.h"
+#include "mpcthread_config.h"
 #include "sctk_debug.h"
 #include "sctk_ethread_internal.h"
 #include "mpc_common_spinlock.h"
@@ -39,7 +39,7 @@ extern "C"
 #endif
 
 
-#define sctk_ethread_check_attr(attr) do{if(attr == NULL){return SCTK_EINVAL;}if(attr->ptr == NULL){return SCTK_EINVAL;}}while(0)
+#define sctk_ethread_check_attr(attr) do{if(attr == NULL){return EINVAL;}if(attr->ptr == NULL){return EINVAL;}}while(0)
 
   /**pthread_attr*/
   static inline
@@ -60,7 +60,7 @@ extern "C"
 
     if (detachstate != SCTK_THREAD_CREATE_JOINABLE
 	&& detachstate != SCTK_THREAD_CREATE_DETACHED)
-      return SCTK_EINVAL;
+      return EINVAL;
     else
       {
 	(attr->ptr)->detached = detachstate;
@@ -87,9 +87,9 @@ extern "C"
      */
     sctk_ethread_check_attr (attr);
     if (policy == SCTK_SCHED_FIFO || policy == SCTK_SCHED_RR)
-      return SCTK_ENOTSUP;
+      return ENOTSUP;
     else if (policy != SCTK_SCHED_OTHER)
-      return SCTK_EINVAL;
+      return EINVAL;
     else
       attr->ptr->schedpolicy = policy;
     return 0;
@@ -114,7 +114,7 @@ extern "C"
     sctk_ethread_check_attr (attr);
     if (inherit != SCTK_THREAD_INHERIT_SCHED
 	&& inherit != SCTK_THREAD_EXPLICIT_SCHED)
-      return SCTK_EINVAL;
+      return EINVAL;
     else
       attr->ptr->inheritsched = inherit;
     return 0;
@@ -134,7 +134,7 @@ extern "C"
   {
     sctk_ethread_check_attr (attr);
     if (attr == NULL)
-      return SCTK_ESRCH;	/*la norme ne pr�cise pas le signal a envoyer */
+      return ESRCH;	/*la norme ne pr�cise pas le signal a envoyer */
     sctk_ethread_check_attr (attr);
     attr->ptr->stack = (char *) stackaddr;
     return 0;
@@ -145,7 +145,7 @@ extern "C"
 					  attr, void **stackaddr)
   {
     if (attr == NULL || stackaddr == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     sctk_ethread_check_attr (attr);
     *stackaddr = (void *) attr->ptr->stack;
     return 0;
@@ -155,10 +155,10 @@ extern "C"
 					  size_t stacksize)
   {
     if (stacksize < SCTK_THREAD_STACK_MIN)
-      return SCTK_EINVAL;
+      return EINVAL;
 
     else if (attr == NULL)
-      return SCTK_ESRCH;
+      return ESRCH;
     sctk_ethread_check_attr (attr);
     attr->ptr->stack_size = (int) stacksize;
     return 0;
@@ -168,7 +168,7 @@ extern "C"
 					  attr, size_t * stacksize)
   {
     if (attr == NULL || stacksize == NULL)
-      return SCTK_ESRCH;
+      return ESRCH;
     else
       {
 	sctk_ethread_check_attr (attr);
@@ -196,7 +196,7 @@ extern "C"
   {
     sctk_ethread_check_attr (attr);
     if (attr == NULL || stacksize < SCTK_THREAD_STACK_MIN)	/*on effectue pas  le test d'alignement */
-      return SCTK_EINVAL;
+      return EINVAL;
     attr->ptr->stack_size = (int) stacksize;
     attr->ptr->stack = (char *) stackaddr;
     return 0;
@@ -217,7 +217,7 @@ extern "C"
   {
     sctk_ethread_check_attr (attr);
     if (attr == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     attr->ptr->guardsize = guardsize;
     return 0;
   }
@@ -228,7 +228,7 @@ extern "C"
   {  
     sctk_ethread_check_attr (attr);
     if (attr == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     *guardsize = attr->ptr->guardsize;
     return 0;
   }
@@ -238,13 +238,13 @@ extern "C"
   {
     sctk_ethread_check_attr (attr);
     if (attr == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     if (scope != SCTK_ETHREAD_SCOPE_SYSTEM
 	&& scope != SCTK_ETHREAD_SCOPE_PROCESS)
-      return SCTK_EINVAL;
+      return EINVAL;
 /*
     if (scope == SCTK_ETHREAD_SCOPE_SYSTEM)
-      return SCTK_ENOTSUP;
+      return ENOTSUP;
 */
     attr->ptr->scope = scope;
     return 0;
@@ -254,9 +254,9 @@ extern "C"
   {
     sctk_nodebug ("target vaux : %d", target);
     if (target == NULL)
-      return SCTK_ESRCH;
+      return ESRCH;
     if (target->status == ethread_joined)
-      return SCTK_ESRCH;
+      return ESRCH;
 
     if (target->cancel_state != SCTK_THREAD_CANCEL_DISABLE)
       target->cancel_status = 1;
@@ -274,7 +274,7 @@ extern "C"
     if (state != SCTK_THREAD_CANCEL_DISABLE
 	&& state != SCTK_THREAD_CANCEL_ENABLE)
       {
-	return SCTK_EINVAL;
+	return EINVAL;
       }
     else
       {
@@ -297,7 +297,7 @@ extern "C"
       {
 	sctk_nodebug ("%d %d %d", type != SCTK_THREAD_CANCEL_DEFERRED,
 		      type != SCTK_THREAD_CANCEL_ASYNCHRONOUS, type);
-	return SCTK_EINVAL;
+	return EINVAL;
       }
     else
       {
@@ -309,9 +309,8 @@ extern "C"
 
 
   /**pthread_once**/
-  typedef mpc_common_spinlock_t sctk_ethread_once_t;
 
-  static inline int __sctk_ethread_once_initialized (sctk_ethread_once_t *
+  static inline int __sctk_ethread_once_initialized (sctk_thread_once_t *
 						     once_control)
   {
 #ifdef sctk_thread_once_t_is_contiguous_int
@@ -325,7 +324,7 @@ extern "C"
   }
 
   static inline
-    int __sctk_ethread_once (sctk_ethread_once_t * once_control,
+    int __sctk_ethread_once (sctk_thread_once_t * once_control,
 			     void (*init_routine) (void))
   {
     static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
@@ -338,7 +337,7 @@ extern "C"
 #ifdef MPC_Allocator
 #ifdef SCTK_USE_TLS
 	    sctk_add_global_var ((void *) once_control,
-				 sizeof (sctk_ethread_once_t));
+				 sizeof (sctk_thread_once_t));
 #else
 #warning "Once backup disabled"
 #endif
@@ -347,7 +346,7 @@ extern "C"
 #ifdef sctk_thread_once_t_is_contiguous_int
 	    *once_control = !SCTK_THREAD_ONCE_INIT;
 #else
-	    once_control[0] = 1;
+	    once_control[0] = SCTK_THREAD_ONCE_INIT;
 #endif
 	  }
 	sctk_thread_mutex_unlock (&lock);
@@ -364,7 +363,7 @@ extern "C"
   {
 
     if (cond == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     if (attr != NULL)
       {
 	if (attr->pshared == SCTK_THREAD_PROCESS_SHARED)
@@ -384,9 +383,9 @@ extern "C"
   {
     sctk_nodebug (" %p %p %d\n", cond->list, cond->list_tail, cond->is_init);
     if (cond->is_init != 0)
-      return SCTK_EINVAL;
+      return EINVAL;
     if (cond->list != NULL && cond->list_tail != NULL)
-      return SCTK_EBUSY;
+      return EBUSY;
     return 0;
   }
 
@@ -407,7 +406,7 @@ extern "C"
     __sctk_ethread_testcancel (owner);
     mpc_common_spinlock_lock (&(cond->lock));
     if (cond == NULL || mutex == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     cell.my_self = owner;
     cell.next = NULL;
     cell.wake = 0;
@@ -437,7 +436,7 @@ extern "C"
 	    owner->status = ethread_ready;
 	    owner->no_auto_enqueue = 0;
 	    mpc_common_spinlock_unlock (&(cond->lock));
-	    return SCTK_EPERM;
+	    return EPERM;
 	  }
 	mpc_common_spinlock_unlock (&(cond->lock));
 	__sctk_ethread_sched_yield_vp_poll (vp, owner);
@@ -453,7 +452,7 @@ extern "C"
 		cond->list_tail = NULL;
 	      }
 	    mpc_common_spinlock_unlock (&(cond->lock));
-	    return SCTK_EPERM;
+	    return EPERM;
 	  }
 	mpc_common_spinlock_unlock (&(cond->lock));
 	while (cell.wake != 1)
@@ -485,7 +484,7 @@ extern "C"
     int ret;
     __sctk_ethread_testcancel (owner);
     if (cond == NULL || mutex == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     gettimeofday (&tv, NULL);
     sctk_nodebug ("temps : %d %d  =  %d %d ", tv.tv_sec,
 		  tv.tv_usec * 1000, abstime->tv_sec, abstime->tv_nsec);
@@ -493,7 +492,7 @@ extern "C"
       if (tv.tv_usec * 1000 > (abstime->tv_nsec))
 	{
 	  sctk_nodebug ("sortie direct");
-	  return SCTK_ETIMEDOUT;
+	  return ETIMEDOUT;
 	}
 
     mpc_common_spinlock_lock (&(cond->lock));
@@ -522,7 +521,7 @@ extern "C"
 	owner->no_auto_enqueue = 0;
 	mpc_common_spinlock_unlock (&(cond->lock));
 	sctk_nodebug ("sortie eperm");
-	return SCTK_EPERM;
+	return EPERM;
       }
     sctk_nodebug ("cond ->list = %p", cond->list);
     mpc_common_spinlock_unlock (&(cond->lock));
@@ -565,7 +564,7 @@ extern "C"
 	      if (cond->list == NULL)
 		cond->list_tail = NULL;
 
-	      ret = SCTK_ETIMEDOUT;
+	      ret = ETIMEDOUT;
 	      sctk_nodebug ("cond ->list 3 = %p", cond->list);
 	      mpc_common_spinlock_unlock (&(cond->lock));
 	    }
@@ -606,7 +605,7 @@ extern "C"
     sctk_ethread_per_thread_t *to_wake;
     sctk_ethread_mutex_cell_t *cell, *cell_next;
     if (cond == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     mpc_common_spinlock_lock (&(cond->lock));
     while (cond->list != NULL)
       {
@@ -636,7 +635,7 @@ extern "C"
     sctk_ethread_per_thread_t *to_wake;
     sctk_ethread_mutex_cell_t *cell, *cell_next;
     if (cond == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     mpc_common_spinlock_lock (&(cond->lock));
     if (cond->list != NULL)
       {
@@ -664,14 +663,14 @@ extern "C"
     int __sctk_ethread_condattr_destroy (sctk_ethread_condattr_t * attr)
   {
     if (attr == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     return 0;
   }
   static inline
     int __sctk_ethread_condattr_init (sctk_ethread_condattr_t * attr)
   {
     if (attr == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     attr->pshared = SCTK_THREAD_PROCESS_PRIVATE;
     attr->clock = 0;
     return 0;
@@ -682,7 +681,7 @@ extern "C"
 							* attr, int *pshared)
   {
     if (attr == NULL || pshared == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     *pshared = attr->pshared;
     return 0;
   }
@@ -691,12 +690,12 @@ extern "C"
 					    attr, int pshared)
   {
     if (attr == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     if (pshared != SCTK_THREAD_PROCESS_PRIVATE
 	&& pshared != SCTK_THREAD_PROCESS_SHARED)
-      return SCTK_EINVAL;
+      return EINVAL;
     if (pshared == SCTK_THREAD_PROCESS_SHARED)
-      return SCTK_ENOTSUP;
+      return ENOTSUP;
     attr->pshared = (char) pshared;
     return 0;
   }
@@ -707,11 +706,11 @@ extern "C"
   static inline int __sctk_ethread_detach (sctk_ethread_t th)
   {
     if (th == NULL)
-      return SCTK_ESRCH;
+      return ESRCH;
     else if (th->status == ethread_joined)
-      return SCTK_ESRCH;
+      return ESRCH;
     else if (th->attr.detached == SCTK_ETHREAD_CREATE_DETACHED)
-      return SCTK_EINVAL;
+      return EINVAL;
     else
       return 0;
   }
@@ -724,7 +723,7 @@ extern "C"
     lock_tmp.lock = (int) value;
     if (value > SCTK_SEM_VALUE_MAX)
       {
-	return SCTK_EINVAL;
+	return EINVAL;
       }
     if (pshared)
       {
@@ -797,7 +796,7 @@ extern "C"
     if (lock->lock <= 0)
       {
 	sctk_nodebug ("try_wait : sem occup�");
-	errno = SCTK_EAGAIN;
+	errno = EAGAIN;
 	return -1;
       }
     mpc_common_spinlock_lock (&lock->spinlock);
@@ -806,7 +805,7 @@ extern "C"
       {
 	sctk_nodebug ("try_wait : sem occup�");
 	mpc_common_spinlock_unlock (&lock->spinlock);
-	errno = SCTK_EAGAIN;
+	errno = EAGAIN;
 	return -1;
       }
     else
@@ -857,7 +856,7 @@ extern "C"
   static inline int __sctk_ethread_sem_destroy (sctk_ethread_sem_t * sem)
   {
     if (sem->list != NULL)
-      return SCTK_EBUSY;
+      return EBUSY;
     else
       return 0;
   }
@@ -894,7 +893,7 @@ extern "C"
 	  sem_struct = head->next;
 	  if ( name == NULL )
 	  {
-		  errno = SCTK_EINVAL;
+		  errno = EINVAL;
 		  return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
 	  }
 
@@ -924,7 +923,7 @@ extern "C"
 		  }
 	  }
 
-	  if ( ( tmp != NULL ) && ( ( flags & SCTK_O_CREAT ) && ( flags & SCTK_O_EXCL ) ) )
+	  if ( ( tmp != NULL ) && ( ( flags & O_CREAT ) && ( flags & O_EXCL ) ) )
 	  {
 		  errno = EEXIST;
 		  mpc_common_spinlock_unlock( &head->spinlock );
@@ -937,7 +936,7 @@ extern "C"
 		  mpc_common_spinlock_unlock( &head->spinlock );
 		  return tmp->sem;
 	  }
-	  if ( tmp == NULL && ( flags & SCTK_O_CREAT ) )
+	  if ( tmp == NULL && ( flags & O_CREAT ) )
 	  {
 		  sctk_ethread_sem_name_t *maillon;
 		  int ret;
@@ -946,7 +945,7 @@ extern "C"
 		  if ( sem == NULL )
 		  {
 			  sctk_free( _name );
-			  errno = SCTK_ENOSPC;
+			  errno = ENOSPC;
 			  mpc_common_spinlock_unlock( &head->spinlock );
 			  return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
 		  }
@@ -967,7 +966,7 @@ extern "C"
 		  {
 			  sctk_free( _name );
 			  sctk_free( sem );
-			  errno = SCTK_ENOSPC;
+			  errno = ENOSPC;
 			  mpc_common_spinlock_unlock( &head->spinlock );
 			  return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
 		  }
@@ -987,10 +986,10 @@ extern "C"
 		  sctk_nodebug( "head %p pointe sur %p avec maillon vaux %p\n",
 						head, head->next, maillon );
 	  }
-	  if ( tmp == NULL && !( flags & SCTK_O_CREAT ) )
+	  if ( tmp == NULL && !( flags & O_CREAT ) )
 	  {
 		  sctk_free( _name );
-		  errno = SCTK_ENOENT;
+		  errno = ENOENT;
 		  mpc_common_spinlock_unlock( &head->spinlock );
 		  return (sctk_ethread_sem_t *) SCTK_SEM_FAILED;
 	  }
@@ -1021,7 +1020,7 @@ extern "C"
     sem_struct = head->next;
     if (name == NULL)
       {
-	errno = SCTK_ENOENT;
+	errno = ENOENT;
 	return -1;
       }
 
@@ -1053,7 +1052,7 @@ extern "C"
     if (tmp == NULL)
       {
 	sctk_free (_name);
-	errno = SCTK_ENOENT;
+	errno = ENOENT;
 	mpc_common_spinlock_unlock (&head->spinlock);
 	return -1;
       }
@@ -1098,7 +1097,7 @@ extern "C"
 		  tmp, sem);
     if (tmp == NULL)
       {
-	errno = SCTK_EINVAL;
+	errno = EINVAL;
 	mpc_common_spinlock_unlock (&head->spinlock);
 	return -1;
       }
@@ -1127,7 +1126,7 @@ extern "C"
   {
     if (policy != SCTK_SCHED_FIFO && policy != SCTK_SCHED_RR
 	&& policy != SCTK_SCHED_OTHER)
-      return SCTK_EINVAL;
+      return EINVAL;
     else
       return 0;
   }
@@ -1135,7 +1134,7 @@ extern "C"
   {
     if (policy != SCTK_SCHED_FIFO && policy != SCTK_SCHED_RR
 	&& policy != SCTK_SCHED_OTHER)
-      return SCTK_EINVAL;
+      return EINVAL;
     else
       return 0;
   }
@@ -1147,7 +1146,7 @@ extern "C"
     int __sctk_ethread_mutexattr_init (sctk_ethread_mutexattr_t * attr)
   {
     if (attr == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     attr->kind = SCTK_THREAD_MUTEX_DEFAULT;
     return 0;
   }
@@ -1155,7 +1154,7 @@ extern "C"
     int __sctk_ethread_mutexattr_destroy (sctk_ethread_mutexattr_t * attr)
   {
     if (attr == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     return 0;
   }
   static inline
@@ -1167,7 +1166,7 @@ extern "C"
 	    && kind != SCTK_THREAD_MUTEX_RECURSIVE
 	    && kind != SCTK_THREAD_MUTEX_ERRORCHECK
 	    && kind != SCTK_THREAD_MUTEX_NORMAL))
-      return SCTK_EINVAL;
+      return EINVAL;
     attr->kind = kind;
     return 0;
   }
@@ -1176,7 +1175,7 @@ extern "C"
 					  * attr, int *kind)
   {
     if (attr == NULL || kind == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     *kind = attr->kind;
     return 0;
   }
@@ -1185,7 +1184,7 @@ extern "C"
 							 * attr, int *pshared)
   {
     if (attr == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     *pshared = SCTK_THREAD_PROCESS_PRIVATE;
     return 0;
   }
@@ -1196,9 +1195,9 @@ extern "C"
     if (attr == NULL
 	|| (pshared != SCTK_THREAD_PROCESS_SHARED
 	    && pshared != SCTK_THREAD_PROCESS_PRIVATE))
-      return SCTK_EINVAL;
+      return EINVAL;
     if (pshared == SCTK_THREAD_PROCESS_SHARED)
-      return SCTK_ENOTSUP;	/*pas dans la norme mais on le supporte pas */
+      return ENOTSUP;	/*pas dans la norme mais on le supporte pas */
     return 0;
   }
 
@@ -1207,7 +1206,7 @@ extern "C"
     int __sctk_ethread_mutex_destroy (sctk_ethread_mutex_t * mutex)
   {
     if (mutex->lock > 0)
-      return SCTK_EBUSY;
+      return EBUSY;
     return 0;
   }
 
@@ -1218,22 +1217,22 @@ extern "C"
   static inline
     int __sctk_ethread_spin_init (sctk_ethread_spinlock_t * lock, int pshared)
   {
-    *lock = SCTK_SPINLOCK_INITIALIZER;
+    mpc_common_spinlock_init(lock, 0);
     if (pshared == SCTK_THREAD_PROCESS_SHARED)
-      return SCTK_ENOTSUP;	/*pas dans la norme mais on le supporte pas */
+      return ENOTSUP;	/*pas dans la norme mais on le supporte pas */
     return 0;
   }
   static inline
     int __sctk_ethread_spin_destroy (sctk_ethread_spinlock_t * lock)
   {
-    if (*lock != 0)
+    if ( OPA_load_int(lock) != 0)
       {
-	return SCTK_EBUSY;
+	return EBUSY;
       }
     return 0;
   }
   /*on ne supporte pas le EDEADLOCK
-   *La norme n'est pas pr�cise � ce sujet
+   *La norme n'est pas precise a ce sujet
    */
   int sctk_thread_yield (void);
 #define SCTK_SPIN_DELAY 10
@@ -1243,7 +1242,7 @@ extern "C"
     long i = SCTK_SPIN_DELAY;
     while (mpc_common_spinlock_trylock (lock))
       {
-	while (expect_true (*lock != 0))
+	while (expect_true ( OPA_load_int(lock) != 0))
 	  {
 	    i--;
 	    if (expect_false (i <= 0))
@@ -1259,7 +1258,7 @@ extern "C"
     int __sctk_ethread_spin_trylock (sctk_ethread_spinlock_t * lock)
   {
     if (mpc_common_spinlock_trylock (lock) != 0)
-      return SCTK_EBUSY;
+      return EBUSY;
     else
       return 0;
   }
@@ -1287,7 +1286,7 @@ extern "C"
 	  }
       }
     if (rwlock == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     *rwlock = rwlock2;
     return 0;
   }
@@ -1295,7 +1294,7 @@ extern "C"
     int __sctk_ethread_rwlock_destroy (sctk_ethread_rwlock_t * rwlock)
   {
     if (rwlock == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     return 0;
   }
   static inline int __sctk_ethread_rwlock_lock (sctk_ethread_rwlock_t *
@@ -1466,21 +1465,21 @@ extern "C"
 	return 0;
       }
     mpc_common_spinlock_unlock (&rwlock->spinlock);
-    return SCTK_EBUSY;
+    return EBUSY;
   }
   /*les attributs des rwlock */
   static inline
     int __sctk_ethread_rwlockattr_destroy (sctk_ethread_rwlockattr_t * attr)
   {
     if (attr == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     return 0;
   }
   static inline
     int __sctk_ethread_rwlockattr_init (sctk_ethread_rwlockattr_t * attr)
   {
     if (attr == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     attr->pshared = SCTK_THREAD_PROCESS_PRIVATE;
     return 0;
   }
@@ -1491,7 +1490,7 @@ extern "C"
 							  int *pshared)
   {
     if (attr == NULL || pshared == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     *pshared = attr->pshared;
     return 0;
   }
@@ -1500,12 +1499,12 @@ extern "C"
 					      * attr, int pshared)
   {
     if (attr == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     if (pshared != SCTK_THREAD_PROCESS_PRIVATE
 	&& pshared != SCTK_THREAD_PROCESS_SHARED)
-      return SCTK_EINVAL;
+      return EINVAL;
     if (pshared == SCTK_THREAD_PROCESS_SHARED)
-      return SCTK_ENOTSUP;
+      return ENOTSUP;
     attr->pshared = pshared;
     return 0;
   }
@@ -1524,9 +1523,9 @@ extern "C"
 				 unsigned count)
   {
     if (barrier == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     if (count == 0)
-      return SCTK_EINVAL;
+      return EINVAL;
     if (attr != NULL)
       {
 	if (attr->pshared == SCTK_THREAD_PROCESS_SHARED)
@@ -1535,7 +1534,8 @@ extern "C"
 	    abort ();
 	  }
       }
-    barrier->spinlock = SCTK_SPINLOCK_INITIALIZER;
+
+    mpc_common_spinlock_init( &barrier->spinlock, 0);
     barrier->list = NULL;
     barrier->list_tail = NULL;
     barrier->nb_max = count;
@@ -1546,7 +1546,7 @@ extern "C"
     __sctk_ethread_barrier_destroy (sctk_ethread_barrier_t * barrier)
   {
     if (barrier == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     return 0;
   }
   static inline int __sctk_ethread_barrier_wait (sctk_ethread_barrier_t *
@@ -1636,14 +1636,14 @@ extern "C"
     int __sctk_ethread_barrierattr_destroy (sctk_ethread_barrierattr_t * attr)
   {
     if (attr == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     return 0;
   }
   static inline
     int __sctk_ethread_barrierattr_init (sctk_ethread_barrierattr_t * attr)
   {
     if (attr == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     attr->pshared = SCTK_THREAD_PROCESS_PRIVATE;
     return 0;
   }
@@ -1654,7 +1654,7 @@ extern "C"
 							   int *pshared)
   {
     if (attr == NULL || pshared == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     *pshared = attr->pshared;
     return 0;
   }
@@ -1663,12 +1663,12 @@ extern "C"
 					   attr, int pshared)
   {
     if (attr == NULL)
-      return SCTK_EINVAL;
+      return EINVAL;
     if (pshared != SCTK_THREAD_PROCESS_PRIVATE
 	&& pshared != SCTK_THREAD_PROCESS_SHARED)
-      return SCTK_EINVAL;
+      return EINVAL;
     if (pshared == SCTK_THREAD_PROCESS_SHARED)
-      return SCTK_ENOTSUP;
+      return ENOTSUP;
     attr->pshared = pshared;
     return 0;
   }
