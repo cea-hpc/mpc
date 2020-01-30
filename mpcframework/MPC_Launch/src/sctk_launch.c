@@ -104,9 +104,6 @@ bool sctk_accl_support;
 #define MAX_NAME_FORMAT 30
 /* const char *sctk_store_dir = "/dev/null"; */
 
-
-char *sctk_multithreading_mode;
-int sctk_new_scheduler_engine_enabled = 0;
 char *sctk_network_mode = "none";
 char *sctk_checkpoint_str = "";
 
@@ -198,7 +195,6 @@ __sctk_add_arg_eq ( char *arg,
 
 #define sctk_add_arg_eq(arg,action) if(__sctk_add_arg_eq(arg,action,word) == 0) return 0
 
-static void ( *sctk_thread_val ) ( void ) = NULL;
 static int sctk_task_nb_val;
 static int sctk_process_nb_val;
 static int sctk_processor_nb_val;
@@ -216,8 +212,8 @@ static char *sctk_network_driver_name = NULL;
 
 void sctk_use_pthread( void )
 {
-	sctk_multithreading_mode = "pthread";
-	sctk_thread_val = sctk_pthread_thread_init;
+	mpc_common_get_flags()->thread_library_kind = "pthread";
+	mpc_common_get_flags()->thread_library_init = sctk_pthread_thread_init;
 }
 
 /* Note that we start with an agressive frequency
@@ -276,7 +272,7 @@ void sctk_print_banner( bool restart )
 				          SCTK_VERSION_MAJOR, SCTK_VERSION_MINOR, SCTK_VERSION_REVISION,
 				          SCTK_VERSION_PRE, mpc_lang, sctk_task_nb_val,
 				          sctk_process_nb_val, mpc_topology_get_pu_count (), sctk_atomics_get_cpu_freq() / 1000000000.0,
-				          sctk_multithreading_mode,
+				          mpc_common_get_flags()->thread_library_kind,
 				          sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_checkpoint_str, sctk_network_mode );
 			}
 			else
@@ -284,7 +280,7 @@ void sctk_print_banner( bool restart )
 				fprintf ( stderr,
 				          "MPC experimental version %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s %s\n",
 				          mpc_lang, sctk_task_nb_val, sctk_process_nb_val,
-				          mpc_topology_get_pu_count (), sctk_atomics_get_cpu_freq() / 1000000000.0,  sctk_multithreading_mode,
+				          mpc_topology_get_pu_count (), sctk_atomics_get_cpu_freq() / 1000000000.0,  mpc_common_get_flags()->thread_library_kind,
 				          sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_checkpoint_str, sctk_network_mode );
 			}
 		}
@@ -364,9 +360,9 @@ static void sctk_perform_initialisation ( void )
 	sctk_use_pthread();
 #endif
 
-	if ( sctk_thread_val != NULL )
+	if ( mpc_common_get_flags()->thread_library_init != NULL )
 	{
-		sctk_thread_val ();
+		mpc_common_get_flags()->thread_library_init ();
 	}
 	else
 	{
@@ -458,15 +454,15 @@ static void sctk_perform_initialisation ( void )
 //
 static void sctk_use_ethread ( void )
 {
-	sctk_multithreading_mode = "ethread";
-	sctk_thread_val = sctk_ethread_thread_init;
+	mpc_common_get_flags()->thread_library_kind = "ethread";
+	mpc_common_get_flags()->thread_library_init = sctk_ethread_thread_init;
 }
 
 void
 sctk_use_ethread_mxn ( void )
 {
-	sctk_multithreading_mode = "ethread_mxn";
-	sctk_thread_val = sctk_ethread_mxn_thread_init;
+	mpc_common_get_flags()->thread_library_kind = "ethread_mxn";
+	mpc_common_get_flags()->thread_library_init = sctk_ethread_mxn_thread_init;
 }
 //////////////////////////////////
 // END OLD SCHEDULER
@@ -478,22 +474,22 @@ sctk_use_ethread_mxn ( void )
 /********* ETHREAD MXN ************/
 void sctk_use_ethread_mxn_ng( void )
 {
-	sctk_multithreading_mode = "ethread_mxn_ng";
-	sctk_thread_val = sctk_ethread_mxn_ng_thread_init;
+	mpc_common_get_flags()->thread_library_kind = "ethread_mxn_ng";
+	mpc_common_get_flags()->thread_library_init = sctk_ethread_mxn_ng_thread_init;
 }
 
 /********* ETHREAD ************/
 void sctk_use_ethread_ng( void )
 {
-	sctk_multithreading_mode = "ethread_ng";
-	sctk_thread_val = sctk_ethread_ng_thread_init;
+	mpc_common_get_flags()->thread_library_kind = "ethread_ng";
+	mpc_common_get_flags()->thread_library_init = sctk_ethread_ng_thread_init;
 }
 
 /********* PTHREAD ************/
 void sctk_use_pthread_ng( void )
 {
-	sctk_multithreading_mode = "pthread_ng";
-	sctk_thread_val = sctk_pthread_ng_thread_init;
+	mpc_common_get_flags()->thread_library_kind = "pthread_ng";
+	mpc_common_get_flags()->thread_library_init = sctk_pthread_ng_thread_init;
 }
 /*********  END NG ************/
 
@@ -512,12 +508,6 @@ static void
 sctk_def_process_nb ( char *arg )
 {
 	sctk_process_nb_val = atoi ( arg );
-}
-
-
-void ( *sctk_get_thread_val( void ) ) ()
-{
-	return sctk_thread_val;
 }
 
 
@@ -1022,10 +1012,10 @@ void sctk_init_mpc_runtime()
 		sctk_runtime_config_get()->modules.launcher.thread_init.value();
 	}
 
-	/* if(strstr(sctk_multithreading_mode, "_ng") != NULL){ */
-	/*     sctk_new_scheduler_engine_enabled=1; */
+	/* if(strstr(mpc_common_get_flags()->thread_library_kind, "_ng") != NULL){ */
+	/*     mpc_common_get_flags()->new_scheduler_engine_enabled=1; */
 	/* }else{ */
-	/*     sctk_new_scheduler_engine_enabled=0; */
+	/*     mpc_common_get_flags()->new_scheduler_engine_enabled=0; */
 	/* } */
 	/* Move this in a post-config function */
 #ifdef SCTK_LIB_MODE

@@ -13,12 +13,20 @@ struct mpc_common_flags
 
         /* Thread-library */
         char * thread_library_kind;             /*< Type of threading library requested */
+        void ( *thread_library_init ) ( void ); /*< Function called to initialize the thread library */
+        short new_scheduler_engine_enabled;     /*< If the new thread engine has been enabled */
 
         /* Launch configuration */
         unsigned int processor_number;          /*< Number of cores passed on the command-line */
+        unsigned int task_number;               /*< Number of MPC tasks passed on the CLI */
 
 };
 
-struct mpc_common_flags * mpc_common_get_flags();
+extern struct mpc_common_flags ___mpc_flags;
+
+static inline struct mpc_common_flags * mpc_common_get_flags()
+{
+        return &___mpc_flags;
+}
 
 #endif /* MPC_COMMON_FLAGS_H_ */

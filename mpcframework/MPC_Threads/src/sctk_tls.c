@@ -44,6 +44,8 @@
 #include <dlfcn.h>
 
 #ifdef MPC_USE_EXTLS
+
+#if MPC_USE_EXTLS
 #include <extls.h>
 #endif
 
@@ -63,6 +65,7 @@ int sctk_locate_dynamic_initializers()
 {
 #ifdef MPC_USE_EXTLS
 	char * ckpt_wrapper = (sctk_checkpoint_mode) ? "dmtcp_nocheckpoint" : "";
+#if MPC_USE_EXTLS
 	extls_ret_t ret = extls_locate_dynamic_initializers(ckpt_wrapper);
 	return (ret == EXTLS_SUCCESS)?0:1;
 #else
@@ -95,14 +98,16 @@ int sctk_call_dynamic_initializers()
 #endif
 }
 
-#if defined(SCTK_USE_TLS) && defined(Linux_SYS)
-
 /**
  * Function switched by SCTK_USE_OPTIMIZED_TLS value
  * @returns 1 if OPTIMIZED_TLS has been requested and is supported, 0 otherwise.
  */
 int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
+#if MPC_USE_EXTLS
   return 1;
+#else
+  return 0;
+#endif
 }
 
 /**
@@ -171,7 +176,7 @@ void sctk_tls_dtors_free(struct sctk_tls_dtors_s ** head)
 
 
 
-#endif /* SCTK_USE_TLS */
+#endif /* TLS_SUPPORT */
 
 /**
  * Interface call to get the TLS block size for the current program.

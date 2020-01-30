@@ -402,7 +402,7 @@ td_err_e test_td_thr_setprio (const td_thrhandle_t *th, int prio){
 
 
 /* Set pending signals for thread TH.  */
-#if defined (TDB_Linux_SYS)
+#if defined (TDB___linux__)
 td_err_e test_td_thr_setsigpending (const td_thrhandle_t *th, 
                                unsigned char n, const sigset_t *ss)
 #else
@@ -422,7 +422,7 @@ td_err_e test_td_thr_setsigpending (const td_thrhandle_t *th,
 }
 
 /* Set signal mask for thread TH.  */
-#if defined (TDB_Linux_SYS)
+#if defined (TDB___linux__)
 td_err_e test_td_thr_sigsetmask (const td_thrhandle_t *th,
                                    const sigset_t *ss)
 #else

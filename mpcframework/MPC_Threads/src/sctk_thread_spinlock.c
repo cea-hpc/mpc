@@ -43,7 +43,7 @@ sctk_thread_generic_spinlocks_spin_destroy( sctk_thread_generic_spinlock_t* spin
 	printf("%d %d\n",sctk_spin_destroyed,spinlock->state);
   if( spinlock == NULL || spinlock->state != sctk_spin_initialized ) return EINVAL;
   mpc_common_spinlock_t* p_lock = &(spinlock->lock);
-  if( (*p_lock) != 0 ) return EBUSY;
+  if( OPA_load_int(p_lock) != 0 ) return EBUSY;
 
   spinlock->state = sctk_spin_destroyed;
   return 0;
@@ -66,7 +66,7 @@ sctk_thread_generic_spinlocks_spin_init( sctk_thread_generic_spinlock_t* spinloc
   if( spinlock == NULL ) return EINVAL;
   mpc_common_spinlock_t* p_lock = &(spinlock->lock);
   if( ( spinlock->state == sctk_spin_initialized || spinlock->state == sctk_spin_destroyed ) 
-		  && ( (*p_lock) != 0 )) return EBUSY;
+		  && ( OPA_load_int(p_lock) != 0 )) return EBUSY;
   if( pshared == SCTK_THREAD_PROCESS_SHARED ){
 	fprintf (stderr, "Invalid pshared value in attr, MPC doesn't handle process shared spinlocks\n");
 	return ENOTSUP;
@@ -97,7 +97,7 @@ sctk_thread_generic_spinlocks_spin_lock( sctk_thread_generic_spinlock_t* spinloc
   long i = SCTK_SPIN_DELAY;
   mpc_common_spinlock_t* p_lock = &(spinlock->lock);
   while( mpc_common_spinlock_trylock( &(spinlock->lock) )){
-	while( expect_true( (*p_lock) != 0 ) ){
+	while( expect_true( OPA_load_int(p_lock) != 0 ) ){
 	  i--;
 	  if( expect_false( i <= 0 ) ){
 		sctk_thread_generic_sched_yield( sched );

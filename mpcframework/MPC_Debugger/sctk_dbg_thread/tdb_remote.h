@@ -278,7 +278,7 @@ extern "C"
 
   static inline lwpid_t rtdb_get_lid (void) {
     lwpid_t lid ;
-#if defined (TDB_Linux_SYS)
+#if defined (TDB___linux__)
     lid = syscall(SYS_gettid);
 #elif defined (TDB_SunOS_SYS)
     lid = lwp_self() ;

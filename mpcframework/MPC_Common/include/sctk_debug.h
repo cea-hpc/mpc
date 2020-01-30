@@ -32,7 +32,6 @@ extern "C"
 #include <unistd.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <mpc_keywords.h>
 #include <mpc_config.h>
 #include <mpc_arch.h>
 #include <assert.h>
@@ -44,8 +43,7 @@ extern "C"
 
 extern bool sctk_restart_mode;
 extern bool sctk_checkpoint_mode;
-extern char *sctk_multithreading_mode;
-extern int sctk_new_scheduler_engine_enabled;
+
 extern char *sctk_network_mode;
 /*   extern const char *sctk_store_dir; */
 extern int sctk_is_in_fortran;

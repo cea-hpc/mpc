@@ -610,7 +610,7 @@ sctk_thread_create_tmp_start_routine( sctk_thread_data_t *__arg )
 	// ENDDEBUG
 
 	/* Bind the thread to the right core if we are using pthreads */
-	if ( sctk_get_thread_val() == sctk_pthread_thread_init )
+	if (mpc_common_get_flags()->thread_library_init == sctk_pthread_thread_init )
 	{
 		mpc_topology_bind_to_cpu( tmp.bind_to );
 	}
@@ -679,7 +679,7 @@ sctk_thread_create_tmp_start_routine( sctk_thread_data_t *__arg )
 #endif
 #endif
 	// thread priority
-	if ( sctk_new_scheduler_engine_enabled )
+	if ( mpc_common_get_flags()->new_scheduler_engine_enabled )
 	{
 		sctk_thread_generic_addkind_mask_self( KIND_MASK_MPI );
 		sctk_thread_generic_set_basic_priority_self(
@@ -900,7 +900,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
    mpc_mpi_cl_per_thread_ctx_init();
 #endif
 
-   if (sctk_new_scheduler_engine_enabled) {
+   if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
      sctk_thread_generic_addkind_mask_self(KIND_MASK_PTHREAD);
      sctk_thread_generic_set_basic_priority_self(
          sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
@@ -1001,7 +1001,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   sctk_thread_data_t *tmp;
   sctk_thread_data_t *tmp_father;
   struct sctk_alloc_chain *tls;
-  static mpc_common_spinlock_t lock = 0;
+  static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
   int user_thread;
   int scope_init;
 
@@ -1084,7 +1084,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
     }
 #endif
 
-
+#ifdef MPC_OpenMP
    TODO("THIS CODE IS UGLY !");
 
     /* option graphic placement */
@@ -1156,6 +1156,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
             free(min_index);
         }
     }
+#endif
 
   return res;
 }
@@ -2505,9 +2506,9 @@ sctk_thread_init_no_mpc (void)
 			   &ptr_cleanup_sctk_thread_init_no_mpc);
 }
 
-
-#if defined(Linux_SYS)
 typedef  unsigned long poff_t;
+
+#if defined(__linux__)
 
 static poff_t dataused(void) {
   poff_t mem_used = 0;
@@ -2555,6 +2556,7 @@ static poff_t dataused(void) {
   return mem_used ;
 }
 #else
+
 poff_t dataused(void) {
   return 0;
 }

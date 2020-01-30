@@ -351,9 +351,6 @@ sctk_thread_generic_sems_sem_open( const char* name, int oflag, ...){
 	}
   }
 
-  sctk_nodebug("la recherche a trouvé : %p , la création est à  : %d \n",
-		  list, flags & O_CREAT);
-
   if( list != NULL && ((oflag & O_CREAT) 
 			  && (oflag & O_EXCL))){
 	mpc_common_spinlock_unlock( &sem_named_lock );
@@ -425,8 +422,6 @@ sctk_thread_generic_sems_sem_open( const char* name, int oflag, ...){
 
 	mpc_common_spinlock_unlock( &sem_named_lock );
 
-	sctk_nodebug ("head %p pointe sur sem %p named %s\n",
-			named_list_head, named_list_head->sem, head->name);
   }
   else {
 	sctk_free( _name );

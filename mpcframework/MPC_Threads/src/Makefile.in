@@ -131,8 +131,9 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libmpcthread_la_DEPENDENCIES =  \
-	$(abs_top_builddir)/MPC_Arch/src/libmpcarch.la
+libmpcthread_la_DEPENDENCIES = ../../MPC_Arch/src/libmpcarch.la \
+	../../MPC_Common/src/libmpccommon.la \
+	../../MPC_Topology/src/libmpctopology.la
 am_libmpcthread_la_OBJECTS = sctk_context.lo sctk_ethread.lo \
 	sctk_ethread_mxn.lo sctk_futex.lo sctk_gen_thread.lo \
 	sctk_kernel_thread.lo sctk_posix_ethread.lo \
@@ -368,7 +369,7 @@ libmpcthread_la_SOURCES = sctk_context.c sctk_ethread.c \
 	sctk_thread_mutex.c sctk_thread_rwlock.c \
 	sctk_thread_scheduler.c sctk_thread_sem.c \
 	sctk_thread_spinlock.c sctk_tls.c
-libmpcthread_la_LIBADD = $(abs_top_builddir)/MPC_Arch/src/libmpcarch.la -lpthread
+libmpcthread_la_LIBADD = ../../MPC_Arch/src/libmpcarch.la ../../MPC_Common/src/libmpccommon.la ../../MPC_Topology/src/libmpctopology.la  -lpthread
 all: all-am
 
 .SUFFIXES:

@@ -21,8 +21,11 @@
 /* ######################################################################## */
 
 #include "sctk_thread.h"
-#include "libtimer.h"
+
 #include "mpcthread_config.h"
+
+#include <mpc_arch.h>
+
 #include "sctk_debug.h"
 #include "sctk_internal_thread.h"
 #include "sctk_kernel_thread.h"
@@ -31,10 +34,10 @@
 #include "sctk_thread_scheduler.h"
 #include "mpc_topology.h"
 #include <errno.h>
-#include <libpause.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <mpc_common_flags.h>
 
 //#define SCTK_DEBUG_SCHEDULER
 
@@ -2401,7 +2404,7 @@ static void sctk_generic_scheduler_init_thread_common(sctk_thread_generic_schedu
   sched->generic.next = NULL;
   sched->generic.prev = NULL;
   sched->generic.is_idle_mode = 0;
-  sched->generic.lock = SCTK_SPINLOCK_INITIALIZER;
+  mpc_common_spinlock_init(&sched->generic.lock, 0);
   
   assume(sem_init(&(sched->generic.sem),0,0) == 0);
   sctk_nodebug("INIT DONE FOR TASK %p status %d type %d %d cancel status %d %p",sched,sched->status,sched->generic.vp_type,sctk_thread_generic_zombie,sched->th->attr.cancel_status,sched->th);
@@ -2614,7 +2617,7 @@ void sctk_thread_generic_polling_init(int vp_number) {
     attr_intern->ptr->stack_size = 8*1024;
 
     // add kind in the attr of the POLLING THREADS
-    if (sctk_new_scheduler_engine_enabled) {
+    if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
       attr_intern->ptr->kind.mask = KIND_MASK_MPC_POLLING_THREAD;
       attr_intern->ptr->basic_priority =
           sctk_runtime_config_get()
@@ -2638,7 +2641,7 @@ void sctk_thread_generic_scheduler_init_thread(sctk_thread_generic_scheduler_t* 
 					       struct sctk_thread_generic_p_s* th){
   sched->th = th;
   sched->status = sctk_thread_generic_running;
-  sched->debug_lock = SCTK_SPINLOCK_INITIALIZER;
+  mpc_common_spinlock_init(&sched->debug_lock, 0);
   sctk_thread_generic_scheduler_init_thread_p(sched);
 }
 

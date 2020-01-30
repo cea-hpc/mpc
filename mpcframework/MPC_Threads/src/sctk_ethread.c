@@ -551,7 +551,4 @@ sctk_ethread_thread_init (void)
 
   sctk_thread_data_init ();
   mpc_topology_set_pu_count (1);
-#ifdef MPC_Allocator
-  sctk_add_global_var (&sctk_ethread_key_pos, sizeof (int));
-#endif
 }

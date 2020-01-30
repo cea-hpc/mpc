@@ -1228,13 +1228,6 @@ extern "C"
 	sctk_ethread_destr_func_tab[sctk_ethread_key_pos] = destr_func;
 	*key = sctk_ethread_key_pos;
 	sctk_ethread_key_pos++;
-#ifdef MPC_Allocator
-#ifdef SCTK_USE_TLS
-	sctk_add_global_var (key, sizeof (int));
-#else
-#warning "Key backup disabled"
-#endif
-#endif
 	mpc_common_spinlock_unlock (&sctk_ethread_key_spinlock);
 	return 0;
       }

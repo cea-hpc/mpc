@@ -1,5 +1,6 @@
 #include "sctk_thread_generic_kind.h"
 #include "sctk_thread_generic.h"
+#include <mpc_common_flags.h>
 
 ///////////////////////////////////
 // setters
@@ -18,7 +19,7 @@ void sctk_thread_generic_setkind_mask_self(unsigned int kind_mask) {
 }
 
 void sctk_thread_generic_setkind_priority_self(int priority) {
-  if (sctk_new_scheduler_engine_enabled) {
+  if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
     sctk_thread_generic_scheduler_t *sched;
     sched = &(sctk_thread_generic_self()->sched);
     sched->th->attr.kind.priority = priority;
@@ -26,7 +27,7 @@ void sctk_thread_generic_setkind_priority_self(int priority) {
 }
 
 void sctk_thread_generic_set_basic_priority_self(int basic_priority) {
-  if (sctk_new_scheduler_engine_enabled) {
+  if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
     sctk_thread_generic_scheduler_t *sched;
     sched = &(sctk_thread_generic_self()->sched);
     sched->th->attr.basic_priority = basic_priority;
@@ -34,7 +35,7 @@ void sctk_thread_generic_set_basic_priority_self(int basic_priority) {
 }
 
 void sctk_thread_generic_set_current_priority_self(int current_priority) {
-  if (sctk_new_scheduler_engine_enabled) {
+  if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
     sctk_thread_generic_scheduler_t *sched;
     sched = &(sctk_thread_generic_self()->sched);
     sched->th->attr.current_priority = current_priority;
@@ -72,7 +73,7 @@ int sctk_thread_generic_getkind_priority_self() {
 // functions
 //
 void sctk_thread_generic_addkind_mask_self(unsigned int kind_mask) {
-  if (sctk_new_scheduler_engine_enabled) {
+  if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
     sctk_thread_generic_scheduler_t *sched;
     sched = &(sctk_thread_generic_self()->sched);
     sched->th->attr.kind.mask |= kind_mask;

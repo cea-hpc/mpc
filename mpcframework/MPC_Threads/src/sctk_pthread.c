@@ -19,11 +19,12 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
+#define _GNU_SOURCE
 
 #include "mpcthread_config.h"
 
 #if HAVE_PTHREAD_ATTR_SETAFFINITY_NP
-#define _GNU_SOURCE
+
 #include <sched.h>
 #endif /* HAVE_PTHREAD_ATTR_SETAFFINITY_NP */
 
@@ -45,6 +46,8 @@
 #include "mpc_common_asm.h"
 #endif
 #include "mpc_common_asm.h"
+
+#include <mpc_topology.h>
 
 
 #if !defined(HAVE_PTHREAD_CREATE)

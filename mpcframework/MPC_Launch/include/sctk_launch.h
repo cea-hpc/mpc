@@ -51,7 +51,6 @@ extern "C"
   char *get_debug_mode();
   int sctk_get_node_nb();
   int sctk_get_verbosity();
-  void (*sctk_get_thread_val(void)) ();
   void sctk_set_net_val (void (*val) (int *, char ***));
 
   extern bool mpc_common_get_flags()->enable_topology_graphic_placement;

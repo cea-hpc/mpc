@@ -175,7 +175,7 @@ void sctk_refresh_thread_debug_migration (sctk_ethread_per_thread_t *tid) {
 /*     return ; */
 /*   } */
  
-#if defined (TDB_Linux_SYS)
+#if defined (TDB___linux__)
   lid = syscall(SYS_gettid);
 #else
   lid = _lwp_self() ;

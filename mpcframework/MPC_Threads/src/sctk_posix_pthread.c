@@ -20,12 +20,9 @@
 /* #                                                                      # */
 /* ######################################################################## */
 /* Needed to activate the whole interface */
-#define _GNU_SOURCE
-
-
-#include "mpcthread_config.h"
 #include "sctk_default_pthread_flags.h"
 
+#include "mpcthread_config.h"
 
 #include <pthread.h>
 #include <semaphore.h>

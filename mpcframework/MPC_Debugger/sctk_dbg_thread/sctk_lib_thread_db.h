@@ -65,7 +65,7 @@
  * (not present in the system under Linux)
  * 
  * */
-#if defined (TDB_Linux_SYS)
+#if defined (TDB___linux__)
   #include "my_proc_service.h"
 #else
   #include <proc_service.h>  

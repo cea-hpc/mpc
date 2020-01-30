@@ -1,5 +1,5 @@
 mpc_headerdir=$(includedir)/mpc/
-mpc_header_HEADERS=$(abs_top_builddir)/mpc_config.h $(abs_top_srcdir)/include/mpc.h  $(abs_top_srcdir)/include/mpc_keywords.h  $(abs_top_srcdir)/include/mpc_main.h
+mpc_header_HEADERS=$(abs_top_builddir)/mpc_config.h $(abs_top_srcdir)/include/mpc.h $(abs_top_srcdir)/include/mpc_main.h
 
 SUBDIRS=MPC_Arch MPC_Common MPC_Config MPC_Topology
 
@@ -23,8 +23,17 @@ endif
 # Print Config Program
 #
 
+AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ -I$(abs_top_srcdir)/include/ -I$(abs_top_srcdir)/MPC_Config/include/
+AM_CPPFLAGS += -I$(abs_top_builddir)/MPC_Arch/include/  -I$(abs_top_srcdir)/MPC_Arch/include/ $(XML2_CFLAGS)
+AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Config/include/ -I$(abs_top_srcdir)/MPC_Config/src/ -I$(abs_top_srcdir)/MPC_Config/src/generated/
+
+
 bin_PROGRAMS = mpc_print_config
 
 mpc_print_config_SOURCES = ./MPC_Config/src/print_config/mpc_print_config.c ./MPC_Config/src/print_config/mpc_print_config_sh.c ./MPC_Config/src/print_config/mpc_print_config_sh.h
 mpc_print_config_SOURCES += ./MPC_Config/src/print_config/mpc_print_config_xml.c ./MPC_Config/src/print_config/mpc_print_config_xml.h
-mpc_print_config_LDADD = ./MPC_Common/src/libmpccommon.la .MPC_Config/MPC_Thread/libmpcthread.la $(XML2_LIBS)
+mpc_print_config_LDADD = ./MPC_Common/src/libmpccommon.la ./MPC_Config/src/libmpcconfig.la  $(XML2_LIBS)
+
+if MPC_THREAD_ENABLED
+        mpc_print_config_LDADD += ./MPC_Threads/src/libmpcthread.la
+endif

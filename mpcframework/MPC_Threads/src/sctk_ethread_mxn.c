@@ -972,9 +972,6 @@ sctk_ethread_mxn_thread_init (void)
   sctk_thread_data_init ();
 
   sctk_ethread_mxn_sched_yield ();
-#ifdef MPC_Allocator
-  sctk_add_global_var (&sctk_ethread_key_pos, sizeof (int));
-#endif
 }
 
 

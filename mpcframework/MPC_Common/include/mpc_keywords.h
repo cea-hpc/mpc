@@ -34,8 +34,4 @@
         #define expect_false(expr) (expr)
 #endif
 
-#if TLS_SUPPORT
-        #define SCTK_USE_TLS
-#endif
-
 #endif

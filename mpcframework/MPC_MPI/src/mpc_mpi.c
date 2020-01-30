@@ -9704,11 +9704,6 @@ void __sctk_init_mpi_op() {
     done = 1;
   }
   sctk_thread_mutex_unlock(&lock);
-
-#ifdef MPC_Allocator
-  sctk_add_global_var(defined_op, sizeof(defined_op));
-#endif
-
   PMPC_Set_op(ops);
 }
 
@@ -17146,7 +17141,7 @@ int PMPI_Barrier (MPI_Comm comm)
         mpi_check_comm(comm, comm);
 
         /* Internal */
-        if (sctk_new_scheduler_engine_enabled) {
+        if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
           sctk_thread_generic_scheduler_t *sched;
           sched = &(sctk_thread_generic_self()->sched);
           sched->th->attr.basic_priority +=
@@ -17202,7 +17197,7 @@ int PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_Co
 	mpi_check_type (datatype, comm);
 
 	/* Internal */
-        if (sctk_new_scheduler_engine_enabled) {
+        if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
           sctk_thread_generic_scheduler_t *sched;
           sched = &(sctk_thread_generic_self()->sched);
           sched->th->attr.basic_priority +=
@@ -17301,7 +17296,7 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	
 		
 	/* Internal */
-        if (sctk_new_scheduler_engine_enabled) {
+        if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
           sctk_thread_generic_scheduler_t *sched;
           sched = &(sctk_thread_generic_self()->sched);
           sched->th->attr.basic_priority +=
@@ -17371,7 +17366,7 @@ PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	}
 
         /* Internal */
-        if (sctk_new_scheduler_engine_enabled) {
+        if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
           sctk_thread_generic_scheduler_t *sched;
           sched = &(sctk_thread_generic_self()->sched);
           sched->th->attr.basic_priority +=
@@ -17463,7 +17458,7 @@ PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	}
 
         /* Internal */
-        if (sctk_new_scheduler_engine_enabled) {
+        if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
           sctk_thread_generic_scheduler_t *sched;
           sched = &(sctk_thread_generic_self()->sched);
           sched->th->attr.basic_priority +=
@@ -17577,7 +17572,7 @@ PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	}
 
         /* Internal */
-        if (sctk_new_scheduler_engine_enabled) {
+        if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
           sctk_thread_generic_scheduler_t *sched;
           sched = &(sctk_thread_generic_self()->sched);
           sched->th->attr.basic_priority +=
@@ -17656,7 +17651,7 @@ PMPI_Allgather (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	}
 
         /* Internal */
-        if (sctk_new_scheduler_engine_enabled) {
+        if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
           sctk_thread_generic_scheduler_t *sched;
           sched = &(sctk_thread_generic_self()->sched);
           sched->th->attr.basic_priority +=
@@ -17718,7 +17713,7 @@ PMPI_Allgatherv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	}
 
         /* Internal */
-        if (sctk_new_scheduler_engine_enabled) {
+        if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
           sctk_thread_generic_scheduler_t *sched;
           sched = &(sctk_thread_generic_self()->sched);
           sched->th->attr.basic_priority +=
@@ -17788,7 +17783,7 @@ PMPI_Alltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	}
     /* Internal */
-        if (sctk_new_scheduler_engine_enabled) {
+        if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
           sctk_thread_generic_scheduler_t *sched;
           sched = &(sctk_thread_generic_self()->sched);
           sched->th->attr.basic_priority +=
@@ -17860,7 +17855,7 @@ PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
     MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 
 	/* Internal */
-    if (sctk_new_scheduler_engine_enabled) {
+    if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
       sctk_thread_generic_scheduler_t *sched;
       sched = &(sctk_thread_generic_self()->sched);
       sched->th->attr.basic_priority +=
@@ -17951,7 +17946,7 @@ int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sen
 		
 		
 	/* Internal */
-    if (sctk_new_scheduler_engine_enabled) {
+    if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
       sctk_thread_generic_scheduler_t *sched;
       sched = &(sctk_thread_generic_self()->sched);
       sched->th->attr.basic_priority +=
@@ -18277,7 +18272,7 @@ int PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
         }
 
         /* Internal */
-        if (sctk_new_scheduler_engine_enabled) {
+        if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
           sctk_thread_generic_scheduler_t *sched;
           sched = &(sctk_thread_generic_self()->sched);
           sched->th->attr.basic_priority +=
@@ -18370,7 +18365,7 @@ PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
     }
     
     /* Internal */
-    if (sctk_new_scheduler_engine_enabled) {
+    if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
       sctk_thread_generic_scheduler_t *sched;
       sched = &(sctk_thread_generic_self()->sched);
       sched->th->attr.basic_priority +=
@@ -18429,7 +18424,7 @@ PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 	mpi_check_op (op,datatype, comm);
 	
 	/* Internal */
-        if (sctk_new_scheduler_engine_enabled) {
+        if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
           sctk_thread_generic_scheduler_t *sched;
           sched = &(sctk_thread_generic_self()->sched);
           sched->th->attr.basic_priority +=
@@ -18490,7 +18485,7 @@ PMPI_Reduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
 	mpi_check_op (op,datatype, comm);
 
 	/* Internal */
-        if (sctk_new_scheduler_engine_enabled) {
+        if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
           sctk_thread_generic_scheduler_t *sched;
           sched = &(sctk_thread_generic_self()->sched);
           sched->th->attr.basic_priority +=
@@ -18547,7 +18542,7 @@ PMPI_Scan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 
 	
 	/* Internal */
-        if (sctk_new_scheduler_engine_enabled) {
+        if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
           sctk_thread_generic_scheduler_t *sched;
           sched = &(sctk_thread_generic_self()->sched);
           sched->th->attr.basic_priority +=
@@ -18602,7 +18597,7 @@ PMPI_Exscan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	mpi_check_op (op, datatype,comm);
 	
 	/* Internal */
-        if (sctk_new_scheduler_engine_enabled) {
+        if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
           sctk_thread_generic_scheduler_t *sched;
           sched = &(sctk_thread_generic_self()->sched);
           sched->th->attr.basic_priority +=

@@ -334,14 +334,6 @@ extern "C"
 	sctk_thread_mutex_lock (&lock);
 	if (__sctk_ethread_once_initialized (once_control))
 	  {
-#ifdef MPC_Allocator
-#ifdef SCTK_USE_TLS
-	    sctk_add_global_var ((void *) once_control,
-				 sizeof (sctk_thread_once_t));
-#else
-#warning "Once backup disabled"
-#endif
-#endif
 	    init_routine ();
 #ifdef sctk_thread_once_t_is_contiguous_int
 	    *once_control = !SCTK_THREAD_ONCE_INIT;

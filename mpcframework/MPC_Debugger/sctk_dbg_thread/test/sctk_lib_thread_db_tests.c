@@ -208,7 +208,7 @@ int test_td_consistency_callback (const td_thrhandle_t *th_p, void *cbdata_p) {
     td_thr_events_t events_mask ;
     
     tdb_log("test_td_consistency_callback@%p", th_p->th_unique);
-#if defined(TDB_Linux_SYS) && 0
+#if defined(TDB___linux__) && 0
     if (th_p->th_unique == IDLE_THREAD) {
       tdb_log("skip the idle thread");
       return TD_OK ; 
@@ -386,7 +386,7 @@ int test_td_check_thread_eq(const td_thrinfo_t *info1, const td_thrinfo_t *info2
   eq = (info1->ti_ta_p == info2->ti_ta_p) ;
   assert(eq);
     
-#if defined (TDB_Linux_SYS) && 0
+#if defined (TDB___linux__) && 0
   if (info1->ti_tid == (thread_t) IDLE_THREAD) {
     if (info2->ti_tid != (thread_t) IDLE_THREAD) {
       assert(0);       

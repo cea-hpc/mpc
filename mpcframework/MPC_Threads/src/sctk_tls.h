@@ -39,7 +39,7 @@ extern "C"
 #endif
 
 
-#if defined(SCTK_USE_TLS)
+#if defined(TLS_SUPPORT)
 
 	/**
 	 * Element of destructor list, stored at task-level.
@@ -55,10 +55,6 @@ extern "C"
 
   int sctk_locate_dynamic_initializers();
   int sctk_call_dynamic_initializers();
-
-#if defined (MPC_Allocator)
-  extern __thread struct sctk_alloc_chain * sctk_current_alloc_chain;
-#endif
 
 #if defined(MPC_USE_CUDA)
   extern __thread void *sctk_cuda_ctx;
@@ -103,10 +99,7 @@ extern __thread int __mpc_task_rank;
    */
   static inline void sctk_context_save_tls (sctk_mctx_t * ucp)
   {
-#if defined(SCTK_USE_TLS)
-#if defined (MPC_Allocator)
-    ucp->sctk_current_alloc_chain_local = sctk_current_alloc_chain;
-#endif
+#if defined(TLS_SUPPORT)
 
 #if defined (MPC_OpenMP)
     /* MPC OpenMP TLS */
@@ -136,7 +129,7 @@ extern __thread int __mpc_task_rank;
     if (ucp->tls_ctx != NULL)
       extls_ctx_save(ucp->tls_ctx);
 #endif
-#endif /* SCTK_USE_TLS */
+#endif /* TLS_SUPPORT */
   }
 
   /**
@@ -146,10 +139,7 @@ extern __thread int __mpc_task_rank;
    */
   static inline void sctk_context_restore_tls (sctk_mctx_t * ucp)
   {
-#if defined(SCTK_USE_TLS)
-#if defined (MPC_Allocator)
-    sctk_current_alloc_chain = ucp->sctk_current_alloc_chain_local;
-#endif
+#if defined(TLS_SUPPORT)
 
 #if defined (MPC_OpenMP)
     tls_restore (sctk_openmp_thread_tls);
@@ -189,7 +179,7 @@ extern __thread int __mpc_task_rank;
    */
   static inline void sctk_context_init_tls (sctk_mctx_t * ucp)
   {
-#if defined(SCTK_USE_TLS)
+#if defined(TLS_SUPPORT)
     /* Create a new TLS context, probably not the place it has to be.
 	 * more suited to be in sctk_thread.c w/ thread creation.
 	 * Moreover, it should use ctx_herit instead of ctx_init (need to reference process level)
@@ -197,10 +187,6 @@ extern __thread int __mpc_task_rank;
 	  /* Nothing should have to be done here. The init is done per thread in sctk_thread.c */
 #ifdef MPC_USE_EXTLS
     ucp->tls_ctx = (extls_ctx_t*)sctk_extls_storage;
-#endif
-
-#if defined (MPC_Allocator)
-    ucp->sctk_current_alloc_chain_local = NULL;
 #endif
 
 #if defined (MPC_OpenMP)
@@ -218,7 +204,7 @@ extern __thread int __mpc_task_rank;
 #if defined(MPC_USE_CUDA)
     tls_init(sctk_cuda_ctx);
 #endif
-    
+
 #if defined MPC_Fault_Tolerance
     sctk_ft_critical_section = 0;
 #endif

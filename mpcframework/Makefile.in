@@ -91,6 +91,7 @@ build_triplet = @build@
 host_triplet = @host@
 @MPC_THREAD_ENABLED_TRUE@am__append_1 = MPC_Threads
 bin_PROGRAMS = mpc_print_config$(EXEEXT)
+@MPC_THREAD_ENABLED_TRUE@am__append_2 = ./MPC_Threads/src/libmpcthread.la
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_gcc_builtin.m4 \
@@ -118,7 +119,8 @@ am_mpc_print_config_OBJECTS =  \
 mpc_print_config_OBJECTS = $(am_mpc_print_config_OBJECTS)
 am__DEPENDENCIES_1 =
 mpc_print_config_DEPENDENCIES = ./MPC_Common/src/libmpccommon.la \
-	.MPC_Config/MPC_Thread/libmpcthread.la $(am__DEPENDENCIES_1)
+	./MPC_Config/src/libmpcconfig.la $(am__DEPENDENCIES_1) \
+	$(am__append_2)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -423,15 +425,28 @@ top_srcdir = @top_srcdir@
 xmllint = @xmllint@
 xsltproc = @xsltproc@
 mpc_headerdir = $(includedir)/mpc/
-mpc_header_HEADERS = $(abs_top_builddir)/mpc_config.h $(abs_top_srcdir)/include/mpc.h  $(abs_top_srcdir)/include/mpc_keywords.h  $(abs_top_srcdir)/include/mpc_main.h
+mpc_header_HEADERS = $(abs_top_builddir)/mpc_config.h $(abs_top_srcdir)/include/mpc.h $(abs_top_srcdir)/include/mpc_main.h
 SUBDIRS = MPC_Arch MPC_Common MPC_Config MPC_Topology $(am__append_1)
+
+#
+# Print Config Program
+#
+AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ \
+	-I$(abs_top_srcdir)/include/ \
+	-I$(abs_top_srcdir)/MPC_Config/include/ \
+	-I$(abs_top_builddir)/MPC_Arch/include/ \
+	-I$(abs_top_srcdir)/MPC_Arch/include/ $(XML2_CFLAGS) \
+	-I$(abs_top_srcdir)/MPC_Config/include/ \
+	-I$(abs_top_srcdir)/MPC_Config/src/ \
+	-I$(abs_top_srcdir)/MPC_Config/src/generated/
 mpc_print_config_SOURCES =  \
 	./MPC_Config/src/print_config/mpc_print_config.c \
 	./MPC_Config/src/print_config/mpc_print_config_sh.c \
 	./MPC_Config/src/print_config/mpc_print_config_sh.h \
 	./MPC_Config/src/print_config/mpc_print_config_xml.c \
 	./MPC_Config/src/print_config/mpc_print_config_xml.h
-mpc_print_config_LDADD = ./MPC_Common/src/libmpccommon.la .MPC_Config/MPC_Thread/libmpcthread.la $(XML2_LIBS)
+mpc_print_config_LDADD = ./MPC_Common/src/libmpccommon.la \
+	./MPC_Config/src/libmpcconfig.la $(XML2_LIBS) $(am__append_2)
 all: mpc_config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 

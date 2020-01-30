@@ -29,6 +29,7 @@
 #include "sctk_kernel_thread.h"
 #include <mpc_topology.h>
 #include <string.h>
+#include <mpc_common_flags.h>
 
 #define SCTK_BLOCKING_LOCK_TABLE_SIZE 6
 
@@ -997,7 +998,7 @@ static inline void sctk_thread_generic_intern_attr_init(sctk_thread_generic_inte
     attr->cancel_state = PTHREAD_CANCEL_ENABLE;
     attr->cancel_type = PTHREAD_CANCEL_DEFERRED;
     attr->bind_to = -1;
-    attr->spinlock = SCTK_SPINLOCK_INITIALIZER;
+    mpc_common_spinlock_init(&attr->spinlock, 0);
     sctk_thread_generic_kind_t knd = sctk_thread_generic_kind_init;
     attr->kind = knd;
     attr->basic_priority = 10;
@@ -1790,7 +1791,6 @@ sctk_thread_generic_setcanceltype( int type, int* oldtype ){
 	EINVAL Invalid value for type
 	*/
 
-  sctk_nodebug ("%d %d", type, sctk_thread_generic_self()->cancel_type);
   sctk_thread_generic_attr_t attr;
   attr.ptr = &(sctk_thread_generic_self()->attr);
 
@@ -1935,8 +1935,6 @@ sctk_thread_generic_exit( void* retval ){
   /* test cancel */
   sctk_thread_generic_check_signals( 0 );
 
-  sctk_nodebug ("Exit Thread %p", th );
-
   /* Get the current thread */
   sched = &(sctk_thread_generic_self()->sched);
   current = sched->th;
@@ -2060,10 +2058,9 @@ sctk_thread_generic_getcpuclockid( sctk_thread_generic_t threadp,
 /***************************************/
 /* THREAD ONCE                         */
 /***************************************/
-typedef mpc_common_spinlock_t sctk_thread_generic_once_t;
 
 static int __sctk_thread_generic_once_initialized(
-    sctk_thread_generic_once_t *once_control) {
+    sctk_thread_once_t *once_control) {
 #ifdef sctk_thread_once_t_is_contiguous_int
     return (*((sctk_thread_once_t *) once_control) == SCTK_THREAD_ONCE_INIT);
 #else
@@ -2075,7 +2072,7 @@ static int __sctk_thread_generic_once_initialized(
   }
 
 static int
-sctk_thread_generic_once (sctk_thread_generic_once_t * once_control,
+sctk_thread_generic_once (sctk_thread_once_t * once_control,
 			  void (*init_routine) (void))
 {
     static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
@@ -2084,14 +2081,6 @@ sctk_thread_generic_once (sctk_thread_generic_once_t * once_control,
 	sctk_thread_mutex_lock (&lock);
 	if (__sctk_thread_generic_once_initialized (once_control))
 	  {
-#ifdef MPC_Allocator
-#ifdef SCTK_USE_TLS
-	    sctk_add_global_var ((void *) once_control,
-				 sizeof (sctk_thread_generic_once_t));
-#else
-#warning "Once backup disabled"
-#endif
-#endif
 	    init_routine ();
 #ifdef sctk_thread_once_t_is_contiguous_int
 	    *once_control = !SCTK_THREAD_ONCE_INIT;
@@ -2440,7 +2429,7 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
   sctk_add_func (sctk_thread_generic, wait_for_value_and_poll);
   
   /****** THREAD ONCE ******/ 
-  sctk_thread_generic_check_size (sctk_thread_generic_once_t, sctk_thread_once_t);
+  sctk_thread_generic_check_size (sctk_thread_once_t, sctk_thread_once_t);
   sctk_add_func_type (sctk_thread_generic, once,
 		      int (*)(sctk_thread_once_t *, void (*)(void)));
 
@@ -2458,11 +2447,6 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
 /***************************************/
 /* IMPLEMENTATION SPECIFIC             */
 /***************************************/
-static char sched_type[4096];
-void sctk_register_thread_type(char* type){
-  sprintf(sched_type,"[%s:%s]",type,sctk_thread_generic_scheduler_get_name());
-  sctk_multithreading_mode = sched_type;
-}
 
 int sctk_get_env_cpu_nuber(){
   int cpu_number; 
@@ -2479,28 +2463,25 @@ int sctk_get_env_cpu_nuber(){
 /********* ETHREAD MXN ************/
 void
 sctk_ethread_mxn_ng_thread_init (void){
-  sctk_new_scheduler_engine_enabled = 1;
+  mpc_common_get_flags()->new_scheduler_engine_enabled = 1;
   // sctk_thread_generic_thread_init
   // ("ethread_mxn","generic/multiple_queues",sctk_get_env_cpu_nuber());
   sctk_thread_generic_thread_init("ethread_mxn",
                                   "generic/multiple_queues_with_priority",
                                   sctk_get_env_cpu_nuber());
-  sctk_register_thread_type("ethread_mxn_ng");
 }
 
 /********* ETHREAD ************/
 void
 sctk_ethread_ng_thread_init (void){
-  sctk_new_scheduler_engine_enabled = 1;
+  mpc_common_get_flags()->new_scheduler_engine_enabled = 1;
   sctk_thread_generic_thread_init ("ethread_mxn","generic/multiple_queues",1);
-  sctk_register_thread_type("ethread_ng");
 }
 
 /********* PTHREAD ************/
 void
 sctk_pthread_ng_thread_init (void){
-  sctk_new_scheduler_engine_enabled = 1;
+  mpc_common_get_flags()->new_scheduler_engine_enabled = 1;
   sctk_thread_generic_thread_init ("pthread","generic/multiple_queues",sctk_get_env_cpu_nuber());
-  sctk_register_thread_type("pthread_ng");
 }
 

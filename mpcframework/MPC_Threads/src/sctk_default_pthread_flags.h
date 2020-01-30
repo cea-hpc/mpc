@@ -19,6 +19,6 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifdef Linux_SYS
+#ifdef __linux__
 #define _XOPEN_SOURCE 600
 #endif

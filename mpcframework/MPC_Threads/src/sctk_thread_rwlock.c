@@ -21,6 +21,7 @@
 /* ######################################################################## */
 
 #include "sctk_thread_rwlock.h"
+#include "sctk_pthread_compatible_structures.h"
 #include "sctk_thread_generic.h"
 
 

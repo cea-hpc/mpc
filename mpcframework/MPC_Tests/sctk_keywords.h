@@ -30,5 +30,5 @@
 #define expect_false(expr) __builtin_expect(!!(expr),0)
 #define mpc_inline inline
 #define mpc_restrict restrict
-#define SCTK_USE_TLS
+#define TLS_SUPPORT
 #endif

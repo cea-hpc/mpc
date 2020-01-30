@@ -4016,7 +4016,7 @@ void *NBC_Pthread_func( void *ptr ) {
 
   task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;
 
-  if (sctk_new_scheduler_engine_enabled) {
+  if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
     if (sctk_multiple_queues_sched_NBC_Pthread_sched_init != NULL) {
       sctk_multiple_queues_sched_NBC_Pthread_sched_init();
     }
@@ -4476,7 +4476,7 @@ static inline int NBC_Free(NBC_Handle* handle) {
     DL_DELETE(task_specific->mpc_mpi_data->NBC_Pthread_handles, elem_tmp);
     task_specific->mpc_mpi_data->NBC_Pthread_nb--;
 
-    if (sctk_new_scheduler_engine_enabled) {
+    if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
 #ifdef SCTK_DEBUG_SCHEDULER
       {
         char hostname[128];
@@ -4874,7 +4874,7 @@ static inline int NBC_Initialize() {
   sctk_thread_attr_setbinding((sctk_thread_attr_t *)&attr,
                               cpu_id_to_bind_progress_thread);
 
-  if (sctk_new_scheduler_engine_enabled) {
+  if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
     sctk_thread_generic_attr_t *attr_intern;
     attr_intern = (sctk_thread_generic_attr_t *)&attr;
 
@@ -5006,7 +5006,7 @@ static inline int NBC_Start( NBC_Handle *handle, NBC_Schedule *schedule )
 		task_specific->mpc_mpi_data->NBC_Pthread_nb++;
 		sctk_thread_mutex_unlock( lock );
 
-		if ( sctk_new_scheduler_engine_enabled )
+		if ( mpc_common_get_flags()->new_scheduler_engine_enabled )
 		{
 			if ( sctk_multiple_queues_sched_NBC_Pthread_sched_increase_priority !=
 				 NULL )

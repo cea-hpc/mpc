@@ -73,7 +73,7 @@ make install with --enable-debug. Seams to be impacted by -OX option.
 Need to check this in more depth for futur version ( > 2.4.0-1).
 
 #ifndef DONOTHAVE_CONTEXTS
-#if (defined(Linux_SYS) && (defined(__GLIBC__) && ((__GLIBC__ >= 2) &&  (__GLIBC_MINOR__ >= 12)) ))
+#if (defined(__linux__) && (defined(__GLIBC__) && ((__GLIBC__ >= 2) &&  (__GLIBC_MINOR__ >= 12)) ))
 #define SCTK_USE_CONTEXT_FOR_CREATION
 #endif
 #endif
@@ -188,7 +188,6 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
     sigset_t sigs;
     int error;
     void *thread_lib;
-    void *sctk_current_alloc_chain_local;
     void *sctk_tls_trace_local;
     void *mpc_user_tls_1;
 #ifdef MPC_USE_EXTLS
