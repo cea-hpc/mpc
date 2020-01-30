@@ -107,7 +107,7 @@ LTLIBRARIES = $(noinst_LTLIBRARIES)
 libmpclaunch_la_DEPENDENCIES =  \
 	../../MPC_Topology/src/libmpctopology.la
 am_libmpclaunch_la_OBJECTS = main.lo mpcc.lo mpc_libc_main.lo \
-	sctk_launch.lo
+	sctk_launch.lo pmi.lo
 libmpclaunch_la_OBJECTS = $(am_libmpclaunch_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -324,7 +324,7 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/MPC_Config/src/generated/ $(am__append_1)
 mpc_headerdir = $(includedir)/mpc/
 noinst_LTLIBRARIES = libmpclaunch.la
-libmpclaunch_la_SOURCES = main.c  mpcc.c  mpc_libc_main.c  sctk_launch.c
+libmpclaunch_la_SOURCES = main.c  mpcc.c  mpc_libc_main.c  sctk_launch.c pmi.c
 libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la
 all: all-am
 
@@ -383,6 +383,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_libc_main.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpcc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pmi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_launch.Plo@am__quote@
 
 .c.o:

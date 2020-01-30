@@ -800,6 +800,8 @@ enable_dependency_tracking
 with_gnu_ld
 with_sysroot
 enable_libtool_lock
+with_hydra
+with_slurm
 with_threads
 '
       ac_precious_vars='build_alias
@@ -1479,6 +1481,9 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-sysroot[=DIR]    Search for dependent libraries within DIR (or the
                           compiler's sysroot if not specified).
+  --with-hydra            Compile MPC with hydra support (requires an external
+                          hydra launcher)
+  --with-slurm            Compile MPC against SLURM's PMI
   --with-threads          Compile MPC with pthread and user-level thread
                           support
 
@@ -23034,6 +23039,133 @@ fi
 
 
 #
+# Configure MPC Launch
+#
+
+mpc_launcher="Hydra"
+
+mpc_hydra_enabled=""
+
+
+# Check whether --with-hydra was given.
+if test "${with_hydra+set}" = set; then :
+  withval=$with_hydra; mpc_hydra_enabled=$withval
+else
+  mpc_hydra_enabled=default
+fi
+
+
+mpc_slurm_enabled=""
+
+
+# Check whether --with-slurm was given.
+if test "${with_slurm+set}" = set; then :
+  withval=$with_slurm; mpc_slurm_enabled=$withval
+else
+  mpc_slurm_enabled=no
+fi
+
+
+if test -n $mpc_slurm_enabled; then
+
+        echo "HYDRA : $mpc_hydra_enabled"
+
+        if test "x$mpc_hydra_enabled" = "xdefault"; then
+                mpc_hydra_enabled=""
+        fi
+
+        if test -n "$mpc_hydra_enabled"; then
+                as_fn_error $? "Both SLURM and Hydra support cannot be enabled simultaneously" "$LINENO" 5
+        fi
+
+        mpc_launcher="Slurm PMI"
+else
+        if test -n $mpc_hydra_enabled; then
+                as_fn_error $? "You must have either SLURM or Hydra Launcher compiled in to run MPC" "$LINENO" 5
+        fi
+
+        # All other cases default to hydra
+        mpc_hydra_enabled="yes"
+fi
+
+
+
+if test -n $mpc_slurm_enabled; then
+        # IF this is a directory add as prefix
+        if test -d $mpc_slurm_enabled; then
+                CFLAGS += " -I${mpc_slurm_enabled}/include/slurm/"
+                LDFLAGS += " -L${mpc_slurm_enabled}/lib/ -L${mpc_slurm_enabled}/lib64/"
+        else
+                CFLAGS+=" -I/usr/include/slurm/ -I/usr/local/include/slurm/"
+                echo  $CFLAGS
+        fi
+
+        # First try to locate the PMI (libmpi.so from slurm)
+        # only if hydra has not been forced
+
+        ac_fn_c_check_header_mongrel "$LINENO" "pmi.h" "ac_cv_header_pmi_h" "$ac_includes_default"
+if test "x$ac_cv_header_pmi_h" = xyes; then :
+
+fi
+
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for  in -l" >&5
+$as_echo_n "checking for  in -l... " >&6; }
+if ${ac_cv_lib__+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char  ();
+int
+main ()
+{
+return  ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib__=yes
+else
+  ac_cv_lib__=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib__" >&5
+$as_echo "$ac_cv_lib__" >&6; }
+if test "x$ac_cv_lib__" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIB 1
+_ACEOF
+
+  LIBS="-l $LIBS"
+
+fi
+ (pmi, pmi_init, libpmi_found=yes, libpmi_found=no)
+
+else
+
+# Here we look for hydra only if hydra has not been disabled
+echo "HYDRA"
+
+fi
+
+
+
+
+#
 # Modular MPC configuration
 #
 
@@ -28253,6 +28385,11 @@ fi
 
 echo "========== MPC Configuration =========="
 echo "PREFIX: $prefix"
+echo ""
+echo "Process Launcher: $mpc_launcher"
+echo ""
+echo "The following modules will be built:"
+echo ""
 echo "MPC_Thread : $mpc_thread_enabled"
 echo "======================================="
 

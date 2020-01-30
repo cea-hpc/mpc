@@ -534,6 +534,78 @@ AM_CONDITIONAL([MPC_ARCH_GENERIC_MICROTASK], [test "x${MPC_ARCH_MICROTASK_ARCH}"
 
 
 #
+# Configure MPC Launch
+#
+
+mpc_launcher="Hydra"
+
+mpc_hydra_enabled=""
+
+AC_ARG_WITH([hydra],
+[AS_HELP_STRING([--with-hydra],
+                [Compile MPC with hydra support (requires an external hydra launcher)])],
+[mpc_hydra_enabled=$withval],
+[mpc_hydra_enabled=default])
+
+mpc_slurm_enabled=""
+
+AC_ARG_WITH([slurm],
+[AS_HELP_STRING([--with-slurm],
+                [Compile MPC against SLURM's PMI])],
+[mpc_slurm_enabled=$withval],
+[mpc_slurm_enabled=no])
+
+if test -n $mpc_slurm_enabled; then
+
+        echo "HYDRA : $mpc_hydra_enabled"
+
+        if test "x$mpc_hydra_enabled" = "xdefault"; then
+                mpc_hydra_enabled=""
+        fi
+
+        if test -n "$mpc_hydra_enabled"; then
+                AC_MSG_ERROR([Both SLURM and Hydra support cannot be enabled simultaneously])
+        fi
+
+        mpc_launcher="Slurm PMI"
+else
+        if test -n $mpc_hydra_enabled; then
+                AC_MSG_ERROR([You must have either SLURM or Hydra Launcher compiled in to run MPC])
+        fi
+
+        # All other cases default to hydra
+        mpc_hydra_enabled="yes"
+fi
+
+
+
+if test -n $mpc_slurm_enabled; then
+        # IF this is a directory add as prefix
+        if test -d $mpc_slurm_enabled; then
+                CFLAGS += " -I${mpc_slurm_enabled}/include/slurm/"
+                LDFLAGS += " -L${mpc_slurm_enabled}/lib/ -L${mpc_slurm_enabled}/lib64/"
+        else
+                CFLAGS+=" -I/usr/include/slurm/ -I/usr/local/include/slurm/"
+                echo  $CFLAGS
+        fi
+
+        # First try to locate the PMI (libmpi.so from slurm)
+        # only if hydra has not been forced
+
+        AC_CHECK_HEADER([pmi.h])
+        AC_CHECK_LIB ([pmi], [pmi_init], [libpmi_found=yes], [libpmi_found=no])
+
+else
+
+# Here we look for hydra only if hydra has not been disabled
+echo "HYDRA"
+
+fi
+
+
+
+
+#
 # Modular MPC configuration
 #
 
@@ -563,6 +635,11 @@ AC_OUTPUT([Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile
 
 echo "========== MPC Configuration =========="
 echo "PREFIX: $prefix"
+echo ""
+echo "Process Launcher: $mpc_launcher"
+echo ""
+echo "The following modules will be built:"
+echo ""
 echo "MPC_Thread : $mpc_thread_enabled"
 echo "======================================="
 
