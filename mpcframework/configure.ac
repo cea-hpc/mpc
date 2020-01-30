@@ -33,7 +33,7 @@ AC_PROG_INSTALL
 AC_PROG_CC
 AM_PROG_AS
 
-AC_LANG_C
+
 
 # Optionnal XML generators
 
@@ -113,7 +113,8 @@ AC_CHECK_HEADERS([wchar.h])
 #TODO CHECK PMI
 #TODO CHECK STDBOOL
 #TODO CHECK VALGRIND
-AC_CHECK_HEADERS([pmi.h])
+
+
 AC_CHECK_HEADERS([valgrind/memcheck.h])
 AC_CHECK_HEADERS([valgrind/valgrind.h])
 AC_CHECK_HEADER_STDBOOL
@@ -547,17 +548,15 @@ AC_ARG_WITH([hydra],
 [mpc_hydra_enabled=$withval],
 [mpc_hydra_enabled=default])
 
-mpc_slurm_enabled=""
+mpc_slurm_enabled="no"
 
 AC_ARG_WITH([slurm],
 [AS_HELP_STRING([--with-slurm],
-                [Compile MPC against SLURM's PMI])],
+                [Compile MPC against SLURMs PMI])],
 [mpc_slurm_enabled=$withval],
-[mpc_slurm_enabled=no])
+[mpc_slurm_enabled=""])
 
 if test -n $mpc_slurm_enabled; then
-
-        echo "HYDRA : $mpc_hydra_enabled"
 
         if test "x$mpc_hydra_enabled" = "xdefault"; then
                 mpc_hydra_enabled=""
@@ -577,23 +576,31 @@ else
         mpc_hydra_enabled="yes"
 fi
 
-
-
 if test -n $mpc_slurm_enabled; then
         # IF this is a directory add as prefix
         if test -d $mpc_slurm_enabled; then
-                CFLAGS += " -I${mpc_slurm_enabled}/include/slurm/"
-                LDFLAGS += " -L${mpc_slurm_enabled}/lib/ -L${mpc_slurm_enabled}/lib64/"
+                CPPFLAGS+=" -I${mpc_slurm_enabled}/include/ -I${mpc_slurm_enabled}/include/slurm/"
+                LDFLAGS+=" -L${mpc_slurm_enabled}/lib/ -L${mpc_slurm_enabled}/lib64/"
         else
-                CFLAGS+=" -I/usr/include/slurm/ -I/usr/local/include/slurm/"
-                echo  $CFLAGS
+                AC_MSG_CHECKING([Trying to locate pmi.h])
+                pmih_in="not found"
+                for h in /usr/include/slurm/ /usr/local/include/slurm/ /usr/include/slurm-wlm/ $withval
+                do
+                        if test -f $h/pmi.h; then
+                                CPPFLAGS+=" -I$h"
+                                pmih_in=$h
+                                break
+                        fi
+                done
+
+                AC_MSG_RESULT([$pmih_in])
         fi
 
         # First try to locate the PMI (libmpi.so from slurm)
         # only if hydra has not been forced
 
         AC_CHECK_HEADER([pmi.h])
-        AC_CHECK_LIB ([pmi], [pmi_init], [libpmi_found=yes], [libpmi_found=no])
+        AC_CHECK_LIB(pmi, PMI_Finalize, libpmi_found=yes, libpmi_found=no)
 
 else
 

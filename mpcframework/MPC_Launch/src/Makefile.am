@@ -12,4 +12,4 @@ noinst_LTLIBRARIES = libmpclaunch.la
 
 libmpclaunch_la_SOURCES = main.c  mpcc.c  mpc_libc_main.c  sctk_launch.c pmi.c
 
-libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la
+libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la -lpmi

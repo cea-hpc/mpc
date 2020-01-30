@@ -1483,7 +1483,7 @@ Optional Packages:
                           compiler's sysroot if not specified).
   --with-hydra            Compile MPC with hydra support (requires an external
                           hydra launcher)
-  --with-slurm            Compile MPC against SLURM's PMI
+  --with-slurm            Compile MPC against SLURMs PMI
   --with-threads          Compile MPC with pthread and user-level thread
                           support
 
@@ -17906,11 +17906,6 @@ fi
 
 
 
-ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 # Optionnal XML generators
@@ -19035,17 +19030,7 @@ done
 #TODO CHECK PMI
 #TODO CHECK STDBOOL
 #TODO CHECK VALGRIND
-for ac_header in pmi.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "pmi.h" "ac_cv_header_pmi_h" "$ac_includes_default"
-if test "x$ac_cv_header_pmi_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_PMI_H 1
-_ACEOF
 
-fi
-
-done
 
 for ac_header in valgrind/memcheck.h
 do :
@@ -20628,6 +20613,8 @@ main ()
     if (*(data + i) != *(data3 + i))
       return 14;
   close (fd);
+  free (data);
+  free (data3);
   return 0;
 }
 _ACEOF
@@ -23055,20 +23042,18 @@ else
 fi
 
 
-mpc_slurm_enabled=""
+mpc_slurm_enabled="no"
 
 
 # Check whether --with-slurm was given.
 if test "${with_slurm+set}" = set; then :
   withval=$with_slurm; mpc_slurm_enabled=$withval
 else
-  mpc_slurm_enabled=no
+  mpc_slurm_enabled=""
 fi
 
 
 if test -n $mpc_slurm_enabled; then
-
-        echo "HYDRA : $mpc_hydra_enabled"
 
         if test "x$mpc_hydra_enabled" = "xdefault"; then
                 mpc_hydra_enabled=""
@@ -23088,16 +23073,26 @@ else
         mpc_hydra_enabled="yes"
 fi
 
-
-
 if test -n $mpc_slurm_enabled; then
         # IF this is a directory add as prefix
         if test -d $mpc_slurm_enabled; then
-                CFLAGS += " -I${mpc_slurm_enabled}/include/slurm/"
-                LDFLAGS += " -L${mpc_slurm_enabled}/lib/ -L${mpc_slurm_enabled}/lib64/"
+                CPPFLAGS+=" -I${mpc_slurm_enabled}/include/ -I${mpc_slurm_enabled}/include/slurm/"
+                LDFLAGS+=" -L${mpc_slurm_enabled}/lib/ -L${mpc_slurm_enabled}/lib64/"
         else
-                CFLAGS+=" -I/usr/include/slurm/ -I/usr/local/include/slurm/"
-                echo  $CFLAGS
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Trying to locate pmi.h" >&5
+$as_echo_n "checking Trying to locate pmi.h... " >&6; }
+                pmih_in="not found"
+                for h in /usr/include/slurm/ /usr/local/include/slurm/ /usr/include/slurm-wlm/ $withval
+                do
+                        if test -f $h/pmi.h; then
+                                CPPFLAGS+=" -I$h"
+                                pmih_in=$h
+                                break
+                        fi
+                done
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pmih_in" >&5
+$as_echo "$pmih_in" >&6; }
         fi
 
         # First try to locate the PMI (libmpi.so from slurm)
@@ -23109,13 +23104,13 @@ if test "x$ac_cv_header_pmi_h" = xyes; then :
 fi
 
 
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for  in -l" >&5
-$as_echo_n "checking for  in -l... " >&6; }
-if ${ac_cv_lib__+:} false; then :
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PMI_Finalize in -lpmi" >&5
+$as_echo_n "checking for PMI_Finalize in -lpmi... " >&6; }
+if ${ac_cv_lib_pmi_PMI_Finalize+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-l  $LIBS"
+LIBS="-lpmi  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -23125,35 +23120,32 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char  ();
+char PMI_Finalize ();
 int
 main ()
 {
-return  ();
+return PMI_Finalize ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib__=yes
+  ac_cv_lib_pmi_PMI_Finalize=yes
 else
-  ac_cv_lib__=no
+  ac_cv_lib_pmi_PMI_Finalize=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib__" >&5
-$as_echo "$ac_cv_lib__" >&6; }
-if test "x$ac_cv_lib__" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIB 1
-_ACEOF
-
-  LIBS="-l $LIBS"
-
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pmi_PMI_Finalize" >&5
+$as_echo "$ac_cv_lib_pmi_PMI_Finalize" >&6; }
+if test "x$ac_cv_lib_pmi_PMI_Finalize" = xyes; then :
+  libpmi_found=yes
+else
+  libpmi_found=no
 fi
- (pmi, pmi_init, libpmi_found=yes, libpmi_found=no)
+
 
 else
 
