@@ -278,7 +278,7 @@ static inline int nbc_op_test( struct nbc_op * op  )
 }
 
 
-static mpc_common_spinlock_t rpool_lock = 0;
+static mpc_common_spinlock_t rpool_lock = SCTK_SPINLOCK_INITIALIZER;
 static int rpool_count = 0;
 static xMPI_Request * rpool = NULL;
 
@@ -366,7 +366,7 @@ static inline xMPI_Request * xMPI_Request_new(MPI_Request * parent, int size)
     ret->myself = parent;
     ret->current_off = 1;
 
-    ret->lock = 0;
+    mpc_common_spinlock_init(&ret->lock, 0);
     ret->next = NULL;
 
 

@@ -796,6 +796,17 @@ fi
 AM_CONDITIONAL([MPC_MESSAGE_PASSING_ENABLED], [test "x${mpc_lowcom_enabled}" = "xyes"])
 
 
+AC_ARG_ENABLE([mpi],
+[AS_HELP_STRING([--enable-mpi],
+                [Compile MPC's MPI interface])],
+[mpc_mpi_enabled=$enableval],
+[mpc_mpi_enabled=yes])
+
+if test "x${mpc_mpi_enabled}" = "xyes"; then
+        AC_DEFINE([MPC_MPI], [1], [MPC_MPI module was enabled])
+fi
+
+AM_CONDITIONAL([MPC_MPI_ENABLED], [test "x${mpc_mpi_enabled}" = "xyes"])
 
 #
 # Final Output
@@ -807,6 +818,7 @@ AC_OUTPUT([Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile
            MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile
            MPC_Launch/src/Makefile MPC_Launch/Makefile
            MPC_Message_Passing/src/Makefile MPC_Message_Passing/Makefile
+           MPC_MPI/src/Makefile MPC_MPI/Makefile
            MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile
            MPC_Threads/Makefile MPC_Threads/src/Makefile])
 
@@ -819,5 +831,6 @@ echo "The following modules will be built:"
 echo ""
 echo "MPC_Thread : $mpc_thread_enabled"
 echo "MPC_Message_passing : $mpc_lowcom_enabled"
+echo "MPC_MPI : $mpc_lowcom_enabled"
 echo "======================================="
 

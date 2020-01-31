@@ -638,9 +638,6 @@ sctk_thread_create_tmp_start_routine( sctk_thread_data_t *__arg )
 	sctk_thread_data_set( &tmp );
 	sctk_thread_add( &tmp, sctk_thread_self() );
 
-        sctk_error("LOCAL TID %d TADTA TID %d L %p R %p", tmp.task_id, sctk_thread_data_get()->task_id,tmp, sctk_thread_data_get());
-        sctk_error("COMM RANK %d", mpc_common_get_task_rank());
-
 	/* Initialization of the profiler */
 #ifdef MPC_Profiler
 	sctk_internal_profiler_init();

@@ -148,7 +148,7 @@ static unsigned int __keyval_array_size = 0;
 /** This is the current ID offset */
 static unsigned int __keyval_array_offset = 0;
 /** This is the Keyval array lock */
-mpc_common_spinlock_t __keyval_array_lock = 0;
+mpc_common_spinlock_t __keyval_array_lock = SCTK_SPINLOCK_INITIALIZER;
 
 /** \brief This function retrieves a keyval from an id
  * 	\param type_keyval ID of keyval to retrieve (offset in a static table)
@@ -1170,7 +1170,7 @@ struct _mpc_dt_storage * _mpc_dt_storage_init()
 		memset( &da->contiguous_user_types[i] , 0 , sizeof( _mpc_dt_contiguout_t) );
 	}
 
-	da->datatype_lock = 0;
+	mpc_common_spinlock_init(&da->datatype_lock, 0);
 
   return da;
 }

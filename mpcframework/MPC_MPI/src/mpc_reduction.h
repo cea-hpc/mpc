@@ -27,7 +27,8 @@ extern "C"
 #endif
 
 #include "mpc.h"
-#include "mpc_common_types.h"
+
+#include "mpc_mpi_comm_lib.h"
 
 typedef struct {float a ; int b;} mpc_float_int;
 typedef struct {double a ; int b;} mpc_double_int;
@@ -49,8 +50,8 @@ typedef mpc_long_long  mpc_long_long_int;
 void mpc_no_exec (const void *in, void *inout, size_t size, mpc_lowcomm_datatype_t datatype, int line, char *file);
 
 #define MPC_DEFINED_FUNCS(t, tt, name)                                         \
-  void MPC_##name##_func##_##t(const tt *mpc_restrict in,                      \
-                               tt *mpc_restrict inout, size_t size,            \
+  void MPC_##name##_func##_##t(const tt * restrict in,                      \
+                               tt * restrict inout, size_t size,            \
                                mpc_lowcomm_datatype_t datatype)
 
 #define MPC_PROTOTYPES(name)						\

@@ -578,7 +578,7 @@ void mpc_mpi_per_communicator_copy_func(mpc_mpi_per_communicator_t** to, mpc_mpi
 	}
 
         /* Reset TOPO */
-        (*to)->topo.lock = 0;
+        mpc_common_spinlock_init(&(*to)->topo.lock, 0);
         (*to)->topo.type = MPI_UNDEFINED;
 
         mpc_common_spinlock_unlock(&(from->lock));
@@ -593,7 +593,7 @@ void mpc_mpi_per_communicator_dup_copy_func(mpc_mpi_per_communicator_t** to, mpc
 	memcpy(*to,from,sizeof(mpc_mpi_per_communicator_t));
 
 	/* Reset TOPO */
-        (*to)->topo.lock = 0;
+        mpc_common_spinlock_init(&(*to)->topo.lock, 0);
         (*to)->topo.type = MPI_UNDEFINED;
 
         mpc_common_spinlock_unlock(&(from->lock));
@@ -636,7 +636,7 @@ static void __sctk_init_mpi_topo_per_comm(mpc_mpi_per_communicator_t *tmp) {
 int mpc_mpi_per_communicator_init(mpc_mpi_per_communicator_t *pc) {
   __sctk_init_mpi_topo_per_comm(pc);
   pc->max_number = 0;
-  pc->topo.lock = SCTK_SPINLOCK_INITIALIZER;
+  mpc_common_spinlock_init(&pc->topo.lock, 0);
 
   return 0;
 }
@@ -1002,7 +1002,7 @@ void __sctk_init_mpc_request() {
   requests = sctk_malloc(sizeof(MPI_request_struct_t));
 
   /*Init request struct */
-  requests->lock = 0;
+  mpc_common_spinlock_init(&requests->lock, 0);
   requests->tab = NULL;
   requests->free_list = NULL;
   requests->auto_free_list = NULL;
@@ -1205,7 +1205,7 @@ __sctk_new_mpc_request_internal( MPI_Request *req,
 
 				/* Set not used */
 				tmp->used = 0;
-				tmp->lock = 0;
+				mpc_common_spinlock_init(&tmp->lock, 0);
 				tmp->task_req_id = requests;
 
 				/* Put the newly allocated slot in the free list */
@@ -1429,7 +1429,7 @@ inline void __sctk_delete_mpc_request( MPI_Request *req,
 /************************************************************************/
 
 static volatile int __sctk_halo_initialized = 0;
-mpc_common_spinlock_t __sctk_halo_initialized_lock = 0;
+mpc_common_spinlock_t __sctk_halo_initialized_lock = SCTK_SPINLOCK_INITIALIZER;
 static struct sctk_mpi_halo_context __sctk_halo_context;
 
 /** \brief Halo Context getter for MPI */
@@ -1777,7 +1777,7 @@ __sctk_init_mpi_buffer ()
   tmp = sctk_malloc (sizeof (mpi_buffer_t));
   tmp->size = 0;
   tmp->buffer = NULL;
-  tmp->lock = 0;
+  mpc_common_spinlock_init(&tmp->lock, 0);
   PMPC_Set_buffers (tmp);
 }
 
@@ -9681,7 +9681,7 @@ void __sctk_init_mpi_op() {
   ops = (sctk_mpi_ops_t *)sctk_malloc(sizeof(sctk_mpi_ops_t));
   ops->size = 0;
   ops->ops = NULL;
-  ops->lock = 0;
+  mpc_common_spinlock_init(&ops->lock, 0);
 
   sctk_thread_mutex_lock(&lock);
   if (done == 0) {
@@ -12059,7 +12059,7 @@ __sctk_init_mpc_group ()
 
   groups = sctk_malloc (sizeof (MPI_group_struct_t));
 
-  groups->lock = 0;
+  mpc_common_spinlock_init(&groups->lock, 0);
   groups->tab = NULL;
   groups->free_list = NULL;
   groups->max_size = 0;
@@ -14909,7 +14909,7 @@ __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
 		topo_new->type = MPI_CART;
 		topo_new->data.cart.ndims = ndims;
 		topo_new->data.cart.reorder = 0;
-		topo_new->lock = SCTK_SPINLOCK_INITIALIZER;
+		mpc_common_spinlock_init(&topo_new->lock, 0);
 		topo_new->data.cart.dims = sctk_malloc (ndims * sizeof (int));
 		topo_new->data.cart.periods = sctk_malloc (ndims * sizeof (int));
 
@@ -15190,7 +15190,7 @@ static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
     task_specific = mpc_cl_per_mpi_process_ctx_get();
     task_specific->mpc_mpi_data = sctk_malloc(sizeof(struct mpc_mpi_data_s));
     memset(task_specific->mpc_mpi_data, 0, sizeof(struct mpc_mpi_data_s));
-    task_specific->mpc_mpi_data->lock = SCTK_SPINLOCK_INITIALIZER;
+    mpc_common_spinlock_init(&task_specific->mpc_mpi_data->lock, 0);
     task_specific->mpc_mpi_data->requests = NULL;
     task_specific->mpc_mpi_data->groups = NULL;
     task_specific->mpc_mpi_data->buffers = NULL;
@@ -19568,7 +19568,7 @@ PMPI_Pcontrol (__UNUSED__  const int level, ...)
 **************************************/
 
 /** This lock protects message handles attribution */
-static mpc_common_spinlock_t __message_handle_lock = 0;
+static mpc_common_spinlock_t __message_handle_lock = SCTK_SPINLOCK_INITIALIZER;
 
 /** This is where message handle ids are generated */
 static int __message_handle_id = 1;

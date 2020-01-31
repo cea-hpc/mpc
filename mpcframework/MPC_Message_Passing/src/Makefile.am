@@ -23,4 +23,4 @@ libmpclowcomm_la_SOURCES += ./tcp/sctk_tcp.c  ./tcp/sctk_tcp_rdma.c  ./tcp/sctk_
 libmpclowcomm_la_SOURCES += ./shm/sctk_handler_mpi.c  ./shm/sctk_shm.c      ./shm/sctk_shm_eager.c  ./shm/sctk_shm_mapper.c  ./shm/sctk_shm_raw_queues.c
 libmpclowcomm_la_SOURCES += ./shm/sctk_handler_pmi.c  ./shm/sctk_shm_cma.c  ./shm/sctk_shm_frag.c   ./shm/sctk_shm_qemu.c    ./shm/sctk_shm_raw_queues_internals.c
 
-libmpclowcomm_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la  -lrt
+libmpclowcomm_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la  -lpthread -lrt

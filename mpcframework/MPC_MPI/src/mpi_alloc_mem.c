@@ -37,7 +37,7 @@ struct mpc_MPI_allocmem_pool ____mpc_sctk_mpi_alloc_mem_pool;
 
 static int _pool_init_done = 0;
 static int _pool_only_local = 0;
-static mpc_common_spinlock_t _pool_init_lock = 0;
+static mpc_common_spinlock_t _pool_init_lock = SCTK_SPINLOCK_INITIALIZER;
 
 static size_t _forced_pool_size = 0;
 
@@ -452,7 +452,7 @@ int mpc_MPI_allocmem_is_in_pool( void *ptr )
 /* This is the accumulate pool protection */
 
 static mpc_common_spinlock_t *__accululate_master_lock = NULL;
-static mpc_common_spinlock_t __static_lock_for_acc = 0;
+static mpc_common_spinlock_t __static_lock_for_acc = SCTK_SPINLOCK_INITIALIZER;
 
 void mpc_MPI_accumulate_op_lock_init_shared()
 {
@@ -475,7 +475,7 @@ void mpc_MPI_accumulate_op_lock_init()
 	if ( !my_rank )
 	{
 		p = mpc_MPI_allocmem_pool_alloc( sizeof( mpc_common_spinlock_t ) );
-		*( ( mpc_common_spinlock_t * )p ) = 0;
+		OPA_store_int(p, 0);
 	}
 
 	mpc_lowcomm_bcast( &p, sizeof( MPI_Aint ), 0, node_comm );

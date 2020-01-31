@@ -92,13 +92,14 @@ build_triplet = @build@
 host_triplet = @host@
 @MPC_THREAD_ENABLED_TRUE@am__append_1 = MPC_Launch MPC_Threads
 @MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_2 = MPC_Message_Passing
-@MPC_THREAD_ENABLED_TRUE@am__append_3 =  \
+@MPC_MPI_ENABLED_TRUE@am__append_3 = MPC_MPI
+@MPC_THREAD_ENABLED_TRUE@am__append_4 =  \
 @MPC_THREAD_ENABLED_TRUE@	./MPC_Launch/src/libmpclaunch.la \
 @MPC_THREAD_ENABLED_TRUE@	./MPC_Threads/src/libmpcthread.la
-@MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_4 = ./MPC_Message_Passing/src/libmpclowcomm.la
+@MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_5 = ./MPC_Message_Passing/src/libmpclowcomm.la
 bin_PROGRAMS = mpc_print_config$(EXEEXT)
-@MPC_THREAD_ENABLED_TRUE@am__append_5 = ./MPC_Threads/src/libmpcthread.la  ./MPC_Launch/src/libmpclaunch.la
-@MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_6 = ./MPC_Message_Passing/src/libmpclowcomm.la
+@MPC_THREAD_ENABLED_TRUE@am__append_6 = ./MPC_Threads/src/libmpcthread.la  ./MPC_Launch/src/libmpclaunch.la
+@MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_7 = ./MPC_Message_Passing/src/libmpclowcomm.la
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_gcc_builtin.m4 \
@@ -148,7 +149,7 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(mpc_headerdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libmpc_la_DEPENDENCIES = ./MPC_Config/src/libmpcconfig.la \
-	$(am__append_3) $(am__append_4)
+	$(am__append_4) $(am__append_5)
 am_libmpc_la_OBJECTS =
 libmpc_la_OBJECTS = $(am_libmpc_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -164,8 +165,8 @@ am_mpc_print_config_OBJECTS =  \
 mpc_print_config_OBJECTS = $(am_mpc_print_config_OBJECTS)
 am__DEPENDENCIES_1 =
 mpc_print_config_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	./MPC_Config/src/libmpcconfig.la $(am__append_5) \
-	$(am__append_6)
+	./MPC_Config/src/libmpcconfig.la $(am__append_6) \
+	$(am__append_7)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -246,7 +247,7 @@ ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = MPC_Arch MPC_Common MPC_Config MPC_Topology MPC_Launch \
-	MPC_Threads MPC_Message_Passing
+	MPC_Threads MPC_Message_Passing MPC_MPI
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mpc_config.h.in \
 	$(top_srcdir)/MPC_Arch/include/mpc_arch.h.in \
 	$(top_srcdir)/build-aux/compile \
@@ -445,14 +446,14 @@ xsltproc = @xsltproc@
 mpc_headerdir = $(includedir)/mpc/
 mpc_header_HEADERS = $(abs_top_builddir)/mpc_config.h $(abs_top_srcdir)/include/mpc.h $(abs_top_srcdir)/include/mpc_main.h
 SUBDIRS = MPC_Arch MPC_Common MPC_Config MPC_Topology $(am__append_1) \
-	$(am__append_2)
+	$(am__append_2) $(am__append_3)
 
 #
 # Define the MPC Library
 #
 lib_LTLIBRARIES = libmpc.la
-libmpc_la_LIBADD = ./MPC_Config/src/libmpcconfig.la $(am__append_3) \
-	$(am__append_4)
+libmpc_la_LIBADD = ./MPC_Config/src/libmpcconfig.la $(am__append_4) \
+	$(am__append_5)
 libmpc_la_SOURCES = 
 
 #
@@ -473,7 +474,7 @@ mpc_print_config_SOURCES =  \
 	./MPC_Config/src/print_config/mpc_print_config_xml.c \
 	./MPC_Config/src/print_config/mpc_print_config_xml.h
 mpc_print_config_LDADD = $(XML2_LIBS) ./MPC_Config/src/libmpcconfig.la \
-	$(am__append_5) $(am__append_6)
+	$(am__append_6) $(am__append_7)
 all: mpc_config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 

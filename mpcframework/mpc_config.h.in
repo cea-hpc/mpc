@@ -623,6 +623,9 @@
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
+/* MPC_MPI module was enabled */
+#undef MPC_MPI
+
 /* MPC_MESSAGE_PASSING module was enabled */
 #undef MPC_Message_Passing
 

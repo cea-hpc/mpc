@@ -34,7 +34,7 @@
 #include <sctk_communicator.h>
 
 #ifdef MPC_MPI
-#include "mpi_alloc_mem.h"
+int mpc_MPI_allocmem_is_in_pool(void *ptr);
 #else
 /* Handle the "low-level RMA case */
 static inline int mpc_MPI_allocmem_is_in_pool(void *ptr) { return 0; }

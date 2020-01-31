@@ -15,6 +15,10 @@ if MPC_MESSAGE_PASSING_ENABLED
         SUBDIRS += MPC_Message_Passing
 endif
 
+if MPC_MPI_ENABLED
+        SUBDIRS += MPC_MPI
+endif
+
 if CAN_GENERATE_CONFIG
 # Generate and copy back to sources to ensure transparent update on success
 config:

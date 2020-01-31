@@ -33,7 +33,7 @@
 /************************************************************************/
 
 volatile int ___mpi_t_is_running = 0;
-static mpc_common_spinlock_t mpit_init_lock = 0;
+static mpc_common_spinlock_t mpit_init_lock = SCTK_SPINLOCK_INITIALIZER;
 
 int mpc_MPI_T_init_thread(__UNUSED__ int required, int *provided) {
   if (!provided) {
@@ -173,7 +173,7 @@ int MPC_T_data_init(struct MPC_T_data *tdata, MPI_Datatype type, int continuous,
 
   tdata->refcount = 0;
   tdata->type = type;
-  tdata->lock = 0;
+  mpc_common_spinlock_init(&tdata->lock, 0);
   tdata->enabled = continuous;
   tdata->continuous = continuous;
   tdata->readonly = readonly;
@@ -293,7 +293,7 @@ int MPC_T_data_alias(struct MPC_T_data *tdata, void *data) {
 
 /** This is where the CVARS (meta) are being stored */
 
-static mpc_common_spinlock_t cvar_array_lock = 0;
+static mpc_common_spinlock_t cvar_array_lock = SCTK_SPINLOCK_INITIALIZER;
 static int cvar_array_initialized = 0;
 static struct MPC_T_cvars_array __cvar_array;
 
@@ -340,7 +340,7 @@ int MPI_T_cvars_array_init() {
 
   __cvar_array.dyn_cvar_count = 0;
   __cvar_array.dyn_cvars = NULL;
-  __cvar_array.lock = 0;
+  mpc_common_spinlock_init(&__cvar_array.lock, 0);
 
   MPI_T_cvar_fill_info_from_config();
 
@@ -601,7 +601,7 @@ int mpc_MPI_T_cvar_write(MPI_T_cvar_handle handle, const void *buff) {
 
 static struct MPC_T_pvars_array __pvar_array;
 static int pvar_array_initialized = 0;
-static mpc_common_spinlock_t pvar_array_lock = 0;
+static mpc_common_spinlock_t pvar_array_lock = SCTK_SPINLOCK_INITIALIZER;
 
 #define CATEGORIES(cat, parent, desc)
 #define CVAR(name, verbosity, type, desc, bind, scope, cat)
@@ -647,7 +647,7 @@ int MPI_T_pvars_array_init() {
 
   __pvar_array.dyn_pvar_count = 0;
   __pvar_array.dyn_pvars = NULL;
-  __pvar_array.lock = 0;
+  mpc_common_spinlock_init(&__pvar_array.lock, 0);
 
   MPI_T_pvar_fill_info_from_config();
 
@@ -1245,7 +1245,7 @@ struct MPC_T_pvar_handle *MPC_T_pvar_handle_new(MPI_T_pvar_session session,
   ret->index = pvar->pvar_index;
   ret->session = session;
   ret->mpi_handle = mpi_handle;
-  ret->lock = 0;
+  mpc_common_spinlock_init(&ret->lock, 0);
 
   ret->next = NULL;
 

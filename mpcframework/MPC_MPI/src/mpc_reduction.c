@@ -24,17 +24,19 @@
 #include "mpc_reduction.h"
 #include "mpc_common_types.h"
 
+
+
 #if 0
 #if (__GNUC__ == 4) && (__GNUC_MINOR__ == 4) && (__GNUC_PATCHLEVEL__ == 0)
 /* Optim bug with BUG GCC4.4.0: remove restrict keyword*/
-#undef mpc_restrict
-#define mpc_restrict 
+#undef  restrict
+#define  restrict 
 #endif
 #endif
 
 void
-mpc_no_exec (const void *mpc_restrict in, void *mpc_restrict inout, size_t size,
-	     mpc_lowcomm_datatype_t datatype, int line, char *mpc_restrict file)
+mpc_no_exec (const void * restrict in, void * restrict inout, size_t size,
+	     mpc_lowcomm_datatype_t datatype, int line, char * restrict file)
 {
   fprintf (stderr,
 	   "Internal error: This can not be run at line %d in %s in %p out %p size %lu, datatype %d\n",
@@ -50,12 +52,12 @@ mpc_redution_check_type (mpc_lowcomm_datatype_t a, mpc_lowcomm_datatype_t b)
 }
 
 #define MPC_PROTOTYPES_IMPL(name)						\
-  void MPC_##name##_func(const void* mpc_restrict  in ,void* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_##name##_func(const void*  restrict  in ,void*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }
 
 #define MPC_DEFINED_FUNCS_IMPL(t, tt)                                          \
-  void MPC_SUM_func_##t(const tt *mpc_restrict in, tt *mpc_restrict inout,     \
+  void MPC_SUM_func_##t(const tt * restrict in, tt * restrict inout,     \
                         size_t size, mpc_lowcomm_datatype_t datatype) {                  \
     unsigned int i;                                                            \
     mpc_redution_check_type(datatype, t);                                      \
@@ -63,7 +65,7 @@ mpc_redution_check_type (mpc_lowcomm_datatype_t a, mpc_lowcomm_datatype_t b)
       inout[i] = in[i] + inout[i];                                             \
     }                                                                          \
   }                                                                            \
-  void MPC_MIN_func_##t(const tt *mpc_restrict in, tt *mpc_restrict inout,     \
+  void MPC_MIN_func_##t(const tt * restrict in, tt * restrict inout,     \
                         size_t size, mpc_lowcomm_datatype_t datatype) {                  \
     unsigned int i;                                                            \
     mpc_redution_check_type(datatype, t);                                      \
@@ -72,7 +74,7 @@ mpc_redution_check_type (mpc_lowcomm_datatype_t a, mpc_lowcomm_datatype_t b)
         inout[i] = in[i];                                                      \
     }                                                                          \
   }                                                                            \
-  void MPC_MAX_func_##t(const tt *mpc_restrict in, tt *mpc_restrict inout,     \
+  void MPC_MAX_func_##t(const tt * restrict in, tt * restrict inout,     \
                         size_t size, mpc_lowcomm_datatype_t datatype) {                  \
     unsigned int i;                                                            \
     mpc_redution_check_type(datatype, t);                                      \
@@ -81,7 +83,7 @@ mpc_redution_check_type (mpc_lowcomm_datatype_t a, mpc_lowcomm_datatype_t b)
         inout[i] = in[i];                                                      \
     }                                                                          \
   }                                                                            \
-  void MPC_PROD_func_##t(const tt *mpc_restrict in, tt *mpc_restrict inout,    \
+  void MPC_PROD_func_##t(const tt * restrict in, tt * restrict inout,    \
                          size_t size, mpc_lowcomm_datatype_t datatype) {                 \
     unsigned int i;                                                            \
     mpc_redution_check_type(datatype, t);                                      \
@@ -91,8 +93,8 @@ mpc_redution_check_type (mpc_lowcomm_datatype_t a, mpc_lowcomm_datatype_t b)
   }
 
  void
-MPC_MAX_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
-        mpc_float_float * mpc_restrict inout, size_t size,
+MPC_MAX_func_MPC_COMPLEX8 (const mpc_float_float *  restrict in,
+        mpc_float_float *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
@@ -105,8 +107,8 @@ MPC_MAX_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
 }
 
 void
-MPC_MIN_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
-        mpc_float_float * mpc_restrict inout, size_t size,
+MPC_MIN_func_MPC_COMPLEX8 (const mpc_float_float *  restrict in,
+        mpc_float_float *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
@@ -119,8 +121,8 @@ MPC_MIN_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
 }
 
 void
-MPC_SUM_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
-        mpc_float_float * mpc_restrict inout, size_t size,
+MPC_SUM_func_MPC_COMPLEX8 (const mpc_float_float *  restrict in,
+        mpc_float_float *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
@@ -132,8 +134,8 @@ MPC_SUM_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
     }
 }
 void
-MPC_PROD_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
-        mpc_float_float * mpc_restrict inout, size_t size,
+MPC_PROD_func_MPC_COMPLEX8 (const mpc_float_float *  restrict in,
+        mpc_float_float *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
@@ -146,8 +148,8 @@ MPC_PROD_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
 }
 
  void
-MPC_MAX_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
-        mpc_double_double * mpc_restrict inout, size_t size,
+MPC_MAX_func_MPC_COMPLEX16 (const mpc_double_double *  restrict in,
+        mpc_double_double *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
@@ -160,8 +162,8 @@ MPC_MAX_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
 }
 
 void
-MPC_MIN_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
-        mpc_double_double * mpc_restrict inout, size_t size,
+MPC_MIN_func_MPC_COMPLEX16 (const mpc_double_double *  restrict in,
+        mpc_double_double *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
@@ -174,8 +176,8 @@ MPC_MIN_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
 }
 
 void
-MPC_SUM_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
-        mpc_double_double * mpc_restrict inout, size_t size,
+MPC_SUM_func_MPC_COMPLEX16 (const mpc_double_double *  restrict in,
+        mpc_double_double *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
@@ -188,8 +190,8 @@ MPC_SUM_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
 
 }
 void
-MPC_PROD_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
-        mpc_double_double * mpc_restrict inout, size_t size,
+MPC_PROD_func_MPC_COMPLEX16 (const mpc_double_double *  restrict in,
+        mpc_double_double *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
@@ -203,8 +205,8 @@ MPC_PROD_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
 }
 
  void
-MPC_MAX_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble* mpc_restrict in,
-        mpc_longdouble_longdouble * mpc_restrict inout, size_t size,
+MPC_MAX_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble*  restrict in,
+        mpc_longdouble_longdouble *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
@@ -217,8 +219,8 @@ MPC_MAX_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble* mpc_restrict in,
 }
 
 void
-MPC_MIN_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble* mpc_restrict in,
-        mpc_longdouble_longdouble * mpc_restrict inout, size_t size,
+MPC_MIN_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble*  restrict in,
+        mpc_longdouble_longdouble *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
@@ -231,8 +233,8 @@ MPC_MIN_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble* mpc_restrict in,
 }
 
 void
-MPC_SUM_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble * mpc_restrict in,
-        mpc_longdouble_longdouble* mpc_restrict inout, size_t size,
+MPC_SUM_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble *  restrict in,
+        mpc_longdouble_longdouble*  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
@@ -244,8 +246,8 @@ MPC_SUM_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble * mpc_restrict in,
     }
 }
 void
-MPC_PROD_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble * mpc_restrict in,
-        mpc_longdouble_longdouble * mpc_restrict inout, size_t size,
+MPC_PROD_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble *  restrict in,
+        mpc_longdouble_longdouble *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
@@ -258,8 +260,8 @@ MPC_PROD_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble * mpc_restrict in,
 }
 
 void
-MPC_SUM_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
-			  mpc_double_double * mpc_restrict inout, size_t size,
+MPC_SUM_func_MPC_DOUBLE_COMPLEX (const mpc_double_double *  restrict in,
+			  mpc_double_double *  restrict inout, size_t size,
 			  mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
@@ -272,8 +274,8 @@ MPC_SUM_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
 }
 
 void
-MPC_MIN_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
-			  mpc_double_double * mpc_restrict inout, size_t size,
+MPC_MIN_func_MPC_DOUBLE_COMPLEX (const mpc_double_double *  restrict in,
+			  mpc_double_double *  restrict inout, size_t size,
 			  mpc_lowcomm_datatype_t datatype)
 {
   mpc_redution_check_type (datatype, MPC_DOUBLE_COMPLEX);
@@ -285,8 +287,8 @@ MPC_MIN_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
 }
 
 void
-MPC_MAX_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
-			  mpc_double_double * mpc_restrict inout, size_t size,
+MPC_MAX_func_MPC_DOUBLE_COMPLEX (const mpc_double_double *  restrict in,
+			  mpc_double_double *  restrict inout, size_t size,
 			  mpc_lowcomm_datatype_t datatype)
 {
   mpc_redution_check_type (datatype, MPC_DOUBLE_COMPLEX);
@@ -298,8 +300,8 @@ MPC_MAX_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
 }
 
 void
-MPC_PROD_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
-			   mpc_double_double * mpc_restrict inout, size_t size,
+MPC_PROD_func_MPC_DOUBLE_COMPLEX (const mpc_double_double *  restrict in,
+			   mpc_double_double *  restrict inout, size_t size,
 			   mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
@@ -312,8 +314,8 @@ MPC_PROD_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
 }
 
 void
-MPC_SUM_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
-			  mpc_float_float * mpc_restrict inout, size_t size,
+MPC_SUM_func_MPC_COMPLEX (const mpc_float_float *  restrict in,
+			  mpc_float_float *  restrict inout, size_t size,
 			  mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
@@ -325,8 +327,8 @@ MPC_SUM_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
     }
 }
 void
-MPC_MIN_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
-			  mpc_float_float * mpc_restrict inout, size_t size,
+MPC_MIN_func_MPC_COMPLEX (const mpc_float_float *  restrict in,
+			  mpc_float_float *  restrict inout, size_t size,
 			  mpc_lowcomm_datatype_t datatype)
 {
   mpc_redution_check_type (datatype, MPC_COMPLEX);
@@ -338,8 +340,8 @@ MPC_MIN_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 }
 
 void
-MPC_MAX_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
-			  mpc_float_float * mpc_restrict inout, size_t size,
+MPC_MAX_func_MPC_COMPLEX (const mpc_float_float *  restrict in,
+			  mpc_float_float *  restrict inout, size_t size,
 			  mpc_lowcomm_datatype_t datatype)
 {
   mpc_redution_check_type (datatype, MPC_COMPLEX);
@@ -351,8 +353,8 @@ MPC_MAX_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 }
 
 void
-MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
-			   mpc_float_float * mpc_restrict inout, size_t size,
+MPC_PROD_func_MPC_COMPLEX (const mpc_float_float *  restrict in,
+			   mpc_float_float *  restrict inout, size_t size,
 			   mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
@@ -365,42 +367,42 @@ MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 }
 
 #define MPC_DEFINED_FUNCS_NOIMPL(t,tt)						\
-  void MPC_SUM_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_SUM_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }									\
-  void MPC_MIN_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_MIN_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }									\
-  void MPC_MAX_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_MAX_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }									\
-  void MPC_PROD_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_PROD_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }
 
 #define MPC_DEFINED_FUNCS_IMPL2(t,tt)						\
-  void MPC_BAND_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_BAND_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       inout[i] = (tt)(in[i] & inout[i]);				\
     }									\
   }									\
-  void MPC_LAND_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_LAND_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       inout[i] = (tt)(in[i] && inout[i]);				\
     }									\
   }									\
-  void MPC_BXOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_BXOR_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       inout[i] = (tt)(in[i] ^ inout[i]);				\
     }									\
   }									\
-  void MPC_LXOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_LXOR_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
@@ -408,14 +410,14 @@ MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 					       && inout[i]));		\
     }									\
   }									\
-  void MPC_BOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_BOR_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       inout[i] = (tt)(in[i] | inout[i]);				\
     }									\
   }									\
-  void MPC_LOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_LOR_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
@@ -424,28 +426,28 @@ MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
   }
 
 #define MPC_DEFINED_FUNCS_IMPL2_LOG(t,tt)						\
-  void MPC_BAND_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_BAND_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       inout[i] = (tt)(in[i] & inout[i]);				\
     }									\
   }									\
-  void MPC_LAND_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_LAND_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       inout[i] = (tt)(in[i] && inout[i]);				\
     }									\
   }									\
-  void MPC_BXOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_BXOR_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       inout[i] = (tt)(in[i] ^ inout[i]);				\
     }									\
   }									\
-  void MPC_LXOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_LXOR_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
@@ -453,14 +455,14 @@ MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 					       && inout[i]));		\
     }									\
   }									\
-  void MPC_BOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_BOR_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       inout[i] = (tt)(in[i] | inout[i]);				\
     }									\
   }									\
-  void MPC_LOR_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_LOR_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
@@ -491,7 +493,7 @@ MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
   }
 
 #define MPC_DEFINED_FUNCS_IMPL3(t,tt)					\
-  void MPC_MAXLOC_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_MAXLOC_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
@@ -501,7 +503,7 @@ MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 	inout[i] = in[i];						\
     }									\
   }									\
-  void MPC_MINLOC_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_MINLOC_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     size_t i;								\
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
@@ -513,10 +515,10 @@ MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
   }
 
 #define MPC_DEFINED_FUNCS_NOIMPL3(t,tt)					\
-  void MPC_MAXLOC_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_MAXLOC_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }									\
-  void MPC_MINLOC_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
+  void MPC_MINLOC_func_##t(const tt*   restrict in ,tt*  restrict inout ,size_t size ,mpc_lowcomm_datatype_t datatype){ \
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }
 

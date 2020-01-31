@@ -70,16 +70,6 @@ struct mpc_mpi_cl_per_mpi_process_ctx_s *mpc_cl_per_mpi_process_ctx_get();
 void mpc_mpi_cl_per_mpi_process_ctx_reinit ( struct mpc_mpi_cl_per_mpi_process_ctx_s *tmp );
 int mpc_mpi_cl_per_mpi_process_ctx_at_exit_register( void ( *function )( void ) );
 
-/* Disguisement Fast Path Checker */
-
-extern OPA_int_t __mpc_p_disguise_flag;
-
-static inline int __MPC_Maybe_disguised()
-{
-	return OPA_load_int( &__mpc_p_disguise_flag );
-}
-
-
 /*******************
  * PACK MANAGEMENT *
  *******************/

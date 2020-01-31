@@ -266,7 +266,7 @@ void MPIR_Ext_cs_yield(void) { sctk_thread_yield(); }
  * as global variables and it is not what we want. */
 
 /* STRIDED LOCK */
-mpc_common_spinlock_t mpio_strided_lock = 0;
+mpc_common_spinlock_t mpio_strided_lock = SCTK_SPINLOCK_INITIALIZER;
 
 void MPIO_lock_strided()
 {
@@ -280,7 +280,7 @@ void MPIO_unlock_strided()
 }
 
 /* SHARED LOCK */
-mpc_common_spinlock_t mpio_shared_lock = 0;
+mpc_common_spinlock_t mpio_shared_lock = SCTK_SPINLOCK_INITIALIZER;
 
 void MPIO_lock_shared()
 {

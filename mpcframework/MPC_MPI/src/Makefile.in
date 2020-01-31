@@ -89,7 +89,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @MPC_THREAD_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/MPC_Threads/src/ -I$(abs_top_srcdir)/MPC_Threads/include/ -I$(abs_top_srcdir)/MPC_Topology/include/
-subdir = MPC_Message_Passing/src
+subdir = MPC_MPI/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_gcc_builtin.m4 \
 	$(top_srcdir)/m4/ax_reset_header_cache.m4 \
@@ -133,21 +133,15 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libmpclowcomm_la_DEPENDENCIES = ../../MPC_Launch/src/libmpclaunch.la
-am__dirstamp = $(am__leading_dot)dirstamp
-am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
-	sctk_communicator.lo sctk_control_messages.lo sctk_handle.lo \
-	sctk_low_level_comm.lo sctk_multirail.lo sctk_net_tools.lo \
-	sctk_net_topology.lo sctk_polling.lo sctk_rail.lo \
-	sctk_reorder.lo sctk_route.lo sctk_topological_polling.lo \
-	sctk_topological_rail.lo sctk_window.lo ./tcp/sctk_tcp.lo \
-	./tcp/sctk_tcp_rdma.lo ./tcp/sctk_tcp_toolkit.lo \
-	./shm/sctk_handler_mpi.lo ./shm/sctk_shm.lo \
-	./shm/sctk_shm_eager.lo ./shm/sctk_shm_mapper.lo \
-	./shm/sctk_shm_raw_queues.lo ./shm/sctk_handler_pmi.lo \
-	./shm/sctk_shm_cma.lo ./shm/sctk_shm_frag.lo \
-	./shm/sctk_shm_qemu.lo ./shm/sctk_shm_raw_queues_internals.lo
-libmpclowcomm_la_OBJECTS = $(am_libmpclowcomm_la_OBJECTS)
+libmpcmpi_la_DEPENDENCIES =  \
+	../../MPC_Message_Passing/src/libmpclowcomm.la
+am_libmpcmpi_la_OBJECTS = comm_lib.lo egreq_nbc.lo mpc_extern32.lo \
+	mpc_mpi_halo.lo mpc_reduction.lo mpi_rma.lo mpi_rma_win.lo \
+	datatype.lo egreq_progress.lo mpc_info.lo mpc_nbc.lo \
+	mpc_romio_glue.lo mpi_rma_ctrl_msg.lo mpit.lo egreq_classes.lo \
+	mpc_cs.lo mpc_mpi.lo mpc_nbc_progress_thread_binding.lo \
+	mpi_alloc_mem.lo mpi_rma_epoch.lo
+libmpcmpi_la_OBJECTS = $(am_libmpcmpi_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -186,8 +180,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libmpclowcomm_la_SOURCES)
-DIST_SOURCES = $(libmpclowcomm_la_SOURCES)
+SOURCES = $(libmpcmpi_la_SOURCES)
+DIST_SOURCES = $(libmpcmpi_la_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -356,6 +350,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 xmllint = @xmllint@
 xsltproc = @xsltproc@
+
+#Yes drivers are leaking out
 AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/include/ \
 	-I$(abs_top_builddir)/MPC_Arch/include/ \
@@ -365,24 +361,19 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/MPC_Config/src/generated/ \
 	-I$(abs_top_srcdir)/MPC_Topology/include/ \
 	-I$(abs_top_srcdir)/MPC_Message_Passing/include/ \
+	-I$(abs_top_srcdir)/MPC_Message_Passing/src/ \
 	-I$(abs_top_srcdir)/MPC_Launch/include/ \
+	-I$(abs_top_srcdir)/MPC_MPI/include/ $(am__append_1) \
 	-I$(abs_top_srcdir)/MPC_Message_Passing/src/tcp/ \
-	-I$(abs_top_srcdir)/MPC_Message_Passing/src/shm/ \
-	$(am__append_1)
-lib_LTLIBRARIES = libmpclowcomm.la
-libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
-	sctk_communicator.c sctk_control_messages.c sctk_handle.c \
-	sctk_low_level_comm.c sctk_multirail.c sctk_net_tools.c \
-	sctk_net_topology.c sctk_polling.c sctk_rail.c sctk_reorder.c \
-	sctk_route.c sctk_topological_polling.c \
-	sctk_topological_rail.c sctk_window.c ./tcp/sctk_tcp.c \
-	./tcp/sctk_tcp_rdma.c ./tcp/sctk_tcp_toolkit.c \
-	./shm/sctk_handler_mpi.c ./shm/sctk_shm.c \
-	./shm/sctk_shm_eager.c ./shm/sctk_shm_mapper.c \
-	./shm/sctk_shm_raw_queues.c ./shm/sctk_handler_pmi.c \
-	./shm/sctk_shm_cma.c ./shm/sctk_shm_frag.c \
-	./shm/sctk_shm_qemu.c ./shm/sctk_shm_raw_queues_internals.c
-libmpclowcomm_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la  -lpthread -lrt
+	-I$(abs_top_srcdir)/MPC_Message_Passing/src/shm/
+lib_LTLIBRARIES = libmpcmpi.la
+libmpcmpi_la_SOURCES = comm_lib.c egreq_nbc.c mpc_extern32.c \
+	mpc_mpi_halo.c mpc_reduction.c mpi_rma.c mpi_rma_win.c \
+	datatype.c egreq_progress.c mpc_info.c mpc_nbc.c \
+	mpc_romio_glue.c mpi_rma_ctrl_msg.c mpit.c egreq_classes.c \
+	mpc_cs.c mpc_mpi.c mpc_nbc_progress_thread_binding.c \
+	mpi_alloc_mem.c mpi_rma_epoch.c
+libmpcmpi_la_LIBADD = ../../MPC_Message_Passing/src/libmpclowcomm.la -lrt
 all: all-am
 
 .SUFFIXES:
@@ -396,9 +387,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu MPC_Message_Passing/src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu MPC_MPI/src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu MPC_Message_Passing/src/Makefile
+	  $(AUTOMAKE) --gnu MPC_MPI/src/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -451,86 +442,36 @@ clean-libLTLIBRARIES:
 	  echo rm -f $${locs}; \
 	  rm -f $${locs}; \
 	}
-tcp/$(am__dirstamp):
-	@$(MKDIR_P) ./tcp
-	@: > tcp/$(am__dirstamp)
-tcp/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) ./tcp/$(DEPDIR)
-	@: > tcp/$(DEPDIR)/$(am__dirstamp)
-./tcp/sctk_tcp.lo: tcp/$(am__dirstamp) tcp/$(DEPDIR)/$(am__dirstamp)
-./tcp/sctk_tcp_rdma.lo: tcp/$(am__dirstamp) \
-	tcp/$(DEPDIR)/$(am__dirstamp)
-./tcp/sctk_tcp_toolkit.lo: tcp/$(am__dirstamp) \
-	tcp/$(DEPDIR)/$(am__dirstamp)
-shm/$(am__dirstamp):
-	@$(MKDIR_P) ./shm
-	@: > shm/$(am__dirstamp)
-shm/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) ./shm/$(DEPDIR)
-	@: > shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_handler_mpi.lo: shm/$(am__dirstamp) \
-	shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_shm.lo: shm/$(am__dirstamp) shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_shm_eager.lo: shm/$(am__dirstamp) \
-	shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_shm_mapper.lo: shm/$(am__dirstamp) \
-	shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_shm_raw_queues.lo: shm/$(am__dirstamp) \
-	shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_handler_pmi.lo: shm/$(am__dirstamp) \
-	shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_shm_cma.lo: shm/$(am__dirstamp) \
-	shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_shm_frag.lo: shm/$(am__dirstamp) \
-	shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_shm_qemu.lo: shm/$(am__dirstamp) \
-	shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_shm_raw_queues_internals.lo: shm/$(am__dirstamp) \
-	shm/$(DEPDIR)/$(am__dirstamp)
 
-libmpclowcomm.la: $(libmpclowcomm_la_OBJECTS) $(libmpclowcomm_la_DEPENDENCIES) $(EXTRA_libmpclowcomm_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libmpclowcomm_la_OBJECTS) $(libmpclowcomm_la_LIBADD) $(LIBS)
+libmpcmpi.la: $(libmpcmpi_la_OBJECTS) $(libmpcmpi_la_DEPENDENCIES) $(EXTRA_libmpcmpi_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libmpcmpi_la_OBJECTS) $(libmpcmpi_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
-	-rm -f ./shm/*.$(OBJEXT)
-	-rm -f ./shm/*.lo
-	-rm -f ./tcp/*.$(OBJEXT)
-	-rm -f ./tcp/*.lo
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/coll.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/comm.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_checksum.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_communicator.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_control_messages.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_handle.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_low_level_comm.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_multirail.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_net_tools.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_net_topology.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_polling.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_rail.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_reorder.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_route.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_topological_polling.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_topological_rail.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_window.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_handler_mpi.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_handler_pmi.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm_cma.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm_eager.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm_frag.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm_mapper.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm_qemu.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm_raw_queues.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm_raw_queues_internals.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./tcp/$(DEPDIR)/sctk_tcp.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./tcp/$(DEPDIR)/sctk_tcp_rdma.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./tcp/$(DEPDIR)/sctk_tcp_toolkit.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/comm_lib.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/datatype.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/egreq_classes.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/egreq_nbc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/egreq_progress.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_cs.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_extern32.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_info.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_mpi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_mpi_halo.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_nbc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_nbc_progress_thread_binding.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_reduction.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_romio_glue.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpi_alloc_mem.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpi_rma.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpi_rma_ctrl_msg.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpi_rma_epoch.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpi_rma_win.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpit.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -561,8 +502,6 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
-	-rm -rf ./shm/.libs ./shm/_libs
-	-rm -rf ./tcp/.libs ./tcp/_libs
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -679,10 +618,6 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
-	-rm -f shm/$(DEPDIR)/$(am__dirstamp)
-	-rm -f shm/$(am__dirstamp)
-	-rm -f tcp/$(DEPDIR)/$(am__dirstamp)
-	-rm -f tcp/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -693,7 +628,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
+	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -739,7 +674,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
+	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

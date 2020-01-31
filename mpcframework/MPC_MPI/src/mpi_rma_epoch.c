@@ -38,7 +38,7 @@
 
 void mpc_MPI_Win_tmp_init(struct mpc_MPI_Win_tmp *tmp) {
   tmp->head = NULL;
-  tmp->lock = 0;
+  mpc_common_spinlock_init(&tmp->lock, 0);
 }
 
 void mpc_MPI_Win_tmp_purge(struct mpc_MPI_Win_tmp *tmp) {
@@ -116,7 +116,7 @@ void *mpc_MPI_Win_tmp_alloc(struct mpc_MPI_Win_tmp *tmp, size_t size) {
 /************************************************************************/
 
 static struct mpc_common_hashtable __request_pool_ht;
-static mpc_common_spinlock_t __request_pool_lock = 0;
+static mpc_common_spinlock_t __request_pool_lock = SCTK_SPINLOCK_INITIALIZER;
 static volatile int __request_pool_init_done = 0;
 
 static inline void request_poll_ht_check_init() {
@@ -167,7 +167,7 @@ int mpc_MPI_notify_request_counter(mpc_lowcomm_request_t *request) {
 
 int mpc_MPI_Win_request_array_init(struct mpc_MPI_Win_request_array *ra,
                                    MPI_Comm comm) {
-  ra->lock = 0;
+  mpc_common_spinlock_init(&ra->lock, 0);
   ra->comm = comm;
   ra->is_emulated = 0;
   ra->pending_rma = 0;
@@ -484,7 +484,7 @@ int mpc_MPI_win_locks_init(struct mpc_MPI_win_locks *locks) {
   assert(MPI_LOCK_EXCLUSIVE != WIN_LOCK_ALL);
 
   locks->head = NULL;
-  locks->lock = 0;
+  mpc_common_spinlock_init(&locks->lock, 0);
 
   sctk_spin_rwlock_init(&locks->win_lock);
 
@@ -594,7 +594,7 @@ int mpc_Win_target_ctx_init(struct mpc_Win_target_ctx *ctx, MPI_Comm comm) {
   ctx->remote_ranks = NULL;
   ctx->remote_count = 0;
   ctx->state = MPC_WIN_TARGET_NONE;
-  ctx->lock = 0;
+  mpc_common_spinlock_init(&ctx->lock, 0);
   OPA_store_int(&ctx->ctrl_message_counter, 0);
   ctx->passive_exposure_count = 0;
   mpc_MPI_win_locks_init(&ctx->locks);
@@ -616,7 +616,7 @@ int mpc_Win_target_ctx_release(struct mpc_Win_target_ctx *ctx) {
 
   mpc_MPI_Win_tmp_release(&ctx->tmp_buffs);
 
-  ctx->lock = 0;
+  mpc_common_spinlock_init(&ctx->lock, 0);
   OPA_store_int(&ctx->ctrl_message_counter, 0);
 
   return 0;
@@ -1214,7 +1214,7 @@ int mpc_Win_source_ctx_init(struct mpc_Win_source_ctx *ctx, MPI_Comm comm) {
   ctx->state = MPC_WIN_SOURCE_NONE;
   ctx->remote_count = 0;
   OPA_store_int(&ctx->stacked_acess, 0);
-  ctx->lock = 0;
+  mpc_common_spinlock_init(&ctx->lock, 0);
   OPA_store_int(&ctx->ctrl_message_counter, 0);
 
   mpc_MPI_Win_request_array_init(&ctx->requests, comm);
@@ -1228,7 +1228,7 @@ int mpc_Win_source_ctx_release(struct mpc_Win_source_ctx *ctx) {
   ctx->remote_ranks = NULL;
   ctx->state = MPC_WIN_SOURCE_NONE;
   ctx->remote_count = 0;
-  ctx->lock = 0;
+  mpc_common_spinlock_init(&ctx->lock, 0);
   mpc_MPI_Win_request_array_release(&ctx->requests);
   mpc_MPI_Win_tmp_release(&ctx->tmp_buffs);
   OPA_store_int(&ctx->ctrl_message_counter, 0);

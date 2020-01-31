@@ -636,6 +636,8 @@ ac_header_list=
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+MPC_MPI_ENABLED_FALSE
+MPC_MPI_ENABLED_TRUE
 MPC_MESSAGE_PASSING_ENABLED_FALSE
 MPC_MESSAGE_PASSING_ENABLED_TRUE
 MPC_THREAD_ENABLED_FALSE
@@ -823,6 +825,7 @@ with_pmi_include
 with_pmi_libs
 enable_threads
 enable_message_passing
+enable_mpi
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1495,6 +1498,7 @@ Optional Features:
                           support
   --enable-message-passing
                           Compile MPC with Message Passing Support
+  --enable-mpi            Compile MPC's MPI interface
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -23745,6 +23749,28 @@ fi
 
 
 
+# Check whether --enable-mpi was given.
+if test "${enable_mpi+set}" = set; then :
+  enableval=$enable_mpi; mpc_mpi_enabled=$enableval
+else
+  mpc_mpi_enabled=yes
+fi
+
+
+if test "x${mpc_mpi_enabled}" = "xyes"; then
+
+$as_echo "#define MPC_MPI 1" >>confdefs.h
+
+fi
+
+ if test "x${mpc_mpi_enabled}" = "xyes"; then
+  MPC_MPI_ENABLED_TRUE=
+  MPC_MPI_ENABLED_FALSE='#'
+else
+  MPC_MPI_ENABLED_TRUE='#'
+  MPC_MPI_ENABLED_FALSE=
+fi
+
 
 #
 # Final Output
@@ -23927,6 +23953,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_MESSAGE_PASSING_ENABLED_TRUE}" && test -z "${MPC_MESSAGE_PASSING_ENABLED_FALSE}"; then
   as_fn_error $? "conditional \"MPC_MESSAGE_PASSING_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPC_MPI_ENABLED_TRUE}" && test -z "${MPC_MPI_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_MPI_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
@@ -26342,7 +26372,7 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
-ac_config_files="$ac_config_files Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Launch/src/Makefile MPC_Launch/Makefile MPC_Message_Passing/src/Makefile MPC_Message_Passing/Makefile MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile"
+ac_config_files="$ac_config_files Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Launch/src/Makefile MPC_Launch/Makefile MPC_Message_Passing/src/Makefile MPC_Message_Passing/Makefile MPC_MPI/src/Makefile MPC_MPI/Makefile MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -26519,6 +26549,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_MESSAGE_PASSING_ENABLED_TRUE}" && test -z "${MPC_MESSAGE_PASSING_ENABLED_FALSE}"; then
   as_fn_error $? "conditional \"MPC_MESSAGE_PASSING_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPC_MPI_ENABLED_TRUE}" && test -z "${MPC_MPI_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_MPI_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__EXEEXT_TRUE}" && test -z "${am__EXEEXT_FALSE}"; then
@@ -27513,6 +27547,8 @@ do
     "MPC_Launch/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Launch/Makefile" ;;
     "MPC_Message_Passing/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Message_Passing/src/Makefile" ;;
     "MPC_Message_Passing/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Message_Passing/Makefile" ;;
+    "MPC_MPI/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_MPI/src/Makefile" ;;
+    "MPC_MPI/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_MPI/Makefile" ;;
     "MPC_Config/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Config/src/Makefile" ;;
     "MPC_Topology/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Topology/Makefile" ;;
     "MPC_Topology/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Topology/src/Makefile" ;;
@@ -28963,5 +28999,6 @@ echo "The following modules will be built:"
 echo ""
 echo "MPC_Thread : $mpc_thread_enabled"
 echo "MPC_Message_passing : $mpc_lowcom_enabled"
+echo "MPC_MPI : $mpc_lowcom_enabled"
 echo "======================================="
 

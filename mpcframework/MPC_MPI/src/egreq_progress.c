@@ -34,7 +34,7 @@ static inline void __mpc_egreq_progress_work_unit_clear( struct _mpc_egreq_progr
 
 static inline int __mpc_egreq_progress_work_unit_init( struct _mpc_egreq_progress_work_unit *pwu )
 {
-	pwu->unit_lock = 0;
+	mpc_common_spinlock_init(&pwu->unit_lock, 0);
 	__mpc_egreq_progress_work_unit_clear( pwu );
 
 	return 0;
@@ -43,7 +43,7 @@ static inline int __mpc_egreq_progress_work_unit_init( struct _mpc_egreq_progres
 static inline int __mpc_egreq_progress_work_unit_release( struct _mpc_egreq_progress_work_unit *pwu )
 {
 	__mpc_egreq_progress_work_unit_clear( pwu );
-	pwu->unit_lock = 0;
+	mpc_common_spinlock_init(&pwu->unit_lock, 0);
 
 	return 0;
 }
@@ -124,7 +124,7 @@ static inline int __mpc_egreq_progress_list_init( struct _mpc_egreq_progress_lis
 	pl->work_count = 0;
 	pl->no_work_count = 0;
 
-	pl->list_lock = 0;
+	mpc_common_spinlock_init(&pl->list_lock, 0);
 
 	pl->is_free = 1;
 
@@ -140,7 +140,7 @@ static inline int __mpc_egreq_progress_list_release( struct _mpc_egreq_progress_
 		__mpc_egreq_progress_work_unit_release( &pl->works[i] );
 	}
 
-	pl->list_lock = 0;
+	mpc_common_spinlock_init(&pl->list_lock, 0);
 
 	pl->work_count = 0;
 	pl->no_work_count = 0;
@@ -283,7 +283,7 @@ int _mpc_egreq_progress_pool_init( struct _mpc_egreq_progress_pool *p, unsigned 
 		}
 	}
 
-	p->pool_lock = 0;
+	mpc_common_spinlock_init(&p->pool_lock, 0);
 
 	return 0;
 }
@@ -303,7 +303,7 @@ int _mpc_egreq_progress_pool_release( struct _mpc_egreq_progress_pool *p )
 		}
 	}
 
-	p->pool_lock = 0;
+	mpc_common_spinlock_init(&p->pool_lock, 0);
 
 	sctk_free( p->lists );
 	p->lists = NULL;

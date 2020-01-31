@@ -305,12 +305,6 @@ static inline void __mpc_cl_thread_buffer_pool_release( __mpc_cl_buffer_pool_t *
 
 	for ( i = 0; i < MAX_MPC_BUFFERED_MSG; i++ )
 	{
-		sctk_nodebug( "WAIT message %d type %d src %d dest %d tag %d size %ld", i,
-		              tmp->sync.buffer[i].request.request_type,
-		              tmp->sync.buffer[i].request.header.source,
-		              tmp->sync.buffer[i].request.header.destination,
-		              tmp->sync.buffer[i].request.header.message_tag,
-		              tmp->sync.buffer[i].request.header.msg_size );
 		mpc_lowcomm_request_wait( &( pool->sync.buffer[i].request ) );
 	}
 
@@ -413,7 +407,6 @@ void mpc_mpi_cl_per_thread_ctx_release()
 
 static int *__mpc_p_disguise_local_to_global_table = NULL;
 static struct mpc_mpi_cl_per_mpi_process_ctx_s **__mpc_p_disguise_costumes = NULL;
-OPA_int_t __mpc_p_disguise_flag;
 
 int __mpc_p_disguise_init( struct mpc_mpi_cl_per_mpi_process_ctx_s *my_specific )
 {
@@ -907,13 +900,13 @@ static inline int __mpc_cl_egreq_progress_init( mpc_mpi_cl_per_mpi_process_ctx_t
 
 static inline int __mpc_cl_egreq_progress_release( mpc_mpi_cl_per_mpi_process_ctx_t *tmp )
 {
-	static mpc_common_spinlock_t l = 0;
-	static mpc_common_spinlock_t d = 0;
+	static mpc_common_spinlock_t l = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t d = SCTK_SPINLOCK_INITIALIZER;
 	tmp->progress_list = NULL;
 	int done = 0;
 	mpc_common_spinlock_lock( &l );
-	done = d;
-	d = 1;
+	done = OPA_load_int(&d);
+	OPA_store_int(&d, 1);
 	mpc_common_spinlock_unlock( &l );
 
 	if ( done )

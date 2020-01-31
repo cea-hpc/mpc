@@ -1,6 +1,13 @@
 AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ -I$(abs_top_srcdir)/include/ -I$(abs_top_srcdir)/MPC_Config/include/
 AM_CPPFLAGS += -I$(abs_top_builddir)/MPC_Arch/include/  -I$(abs_top_srcdir)/MPC_Arch/include/ $(XML2_CFLAGS)
 
+
+if MPC_MPI_ENABLED
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_MPI/include/ -I$(abs_top_srcdir)/MPC_MPI/src/
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Message_Passing/include/ 
+endif
+
+
 #
 # MPC_Config Library
 #

@@ -1,6 +1,7 @@
 #ifndef MPC_COMMON_FLAGS_H_
 #define MPC_COMMON_FLAGS_H_
 
+#include "opa_primitives.h"
 
 struct mpc_common_flags
 {
@@ -27,6 +28,15 @@ extern struct mpc_common_flags ___mpc_flags;
 static inline struct mpc_common_flags * mpc_common_get_flags()
 {
         return &___mpc_flags;
+}
+
+/* Disguisement Fast Path Checker */
+
+extern OPA_int_t __mpc_p_disguise_flag;
+
+static inline int __MPC_Maybe_disguised()
+{
+	return OPA_load_int( &__mpc_p_disguise_flag );
 }
 
 #endif /* MPC_COMMON_FLAGS_H_ */

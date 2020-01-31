@@ -7,6 +7,11 @@ if MPC_MESSAGE_PASSING_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Message_Passing/src/ -I$(abs_top_srcdir)/MPC_Message_Passing/include/
 endif
 
+if MPC_MPI_ENABLED
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_MPI/include/ -I$(abs_top_srcdir)/MPC_MPI/src/
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Message_Passing/include/
+endif
+
 
 lib_LTLIBRARIES = libmpcthread.la
 

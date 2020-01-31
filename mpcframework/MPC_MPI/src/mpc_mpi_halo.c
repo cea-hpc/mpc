@@ -46,7 +46,7 @@ void sctk_mpi_halo_context_init( struct sctk_mpi_halo_context * ctx )
 	ctx->exchange_counter = 0;
 	ctx->exchange_size = 0;
 	
-	ctx->lock = 0;
+	mpc_common_spinlock_init(&ctx->lock, 0);
 	
 	if( getenv("HALO_FORCE") )
 	{
@@ -229,7 +229,7 @@ struct sctk_mpi_halo_exchange_s *  sctk_mpi_halo_context_exchange_new( struct sc
 /************************************************************************/
 
 static volatile int __halo_local_tag = 25000;
-mpc_common_spinlock_t  __halo_local_tag_lock = 0;
+mpc_common_spinlock_t  __halo_local_tag_lock = SCTK_SPINLOCK_INITIALIZER;
 
 int sctk_mpi_halo_init( struct sctk_mpi_halo_s * halo , char * label , MPI_Datatype type, int count )
 {
