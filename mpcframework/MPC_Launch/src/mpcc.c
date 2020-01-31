@@ -25,6 +25,7 @@
 #include "sctk_debug.h"
 #include <string.h>
 #include <stdlib.h>
+#include <sctk_launch.h>
 
 #ifdef HAVE_ENVIRON_VAR
 	#include <stdlib.h>

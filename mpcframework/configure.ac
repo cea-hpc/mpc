@@ -267,6 +267,12 @@ if test "x$mpc_slurm_enabled" = "xyes"; then
 
         AC_DEFINE([MPC_USE_SLURM], [1], [Slurm PMI will be used to launch parallel programs])
 else
+        AC_CHECK_PROG([HAVE_MPIEXEC], [mpiexec.hydra], [yes], [no])
+
+        if test "x$HAVE_MPIEXEC" = "xno"
+        then
+                AC_MSG_ERROR([Could not locate Hydra's 'mpiexec.hydra' in PATH])
+        fi
 
         # Here we look for hydra only if hydra has not been disabled
         mpc_launcher="Hydra"
@@ -275,6 +281,8 @@ else
 
         if test "x$can_access_hydra_pmi_socket" = "xno" ; then
                 AC_DEFINE(USE_PMI_PORT,1,[HYDRA supports sockets])
+        else
+                AC_MSG_ERROR([Hydra requires socket support])
         fi
 
         AC_DEFINE([MPC_USE_HYDRA], [1], [Hydra will be used to launch parallel programs])
