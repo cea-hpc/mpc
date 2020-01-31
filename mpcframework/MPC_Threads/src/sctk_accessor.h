@@ -78,8 +78,10 @@ static inline int mpc_common_get_task_rank ( void )
 		}
 
 		ret = ( int )( data->task_id );
-		/* Save for next call */
-		__mpc_task_rank = ret;
+
+                /* Save for next call */
+                __mpc_task_rank = ret;
+
 	}
 	else
 	{

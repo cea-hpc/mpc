@@ -638,7 +638,8 @@ sctk_thread_create_tmp_start_routine( sctk_thread_data_t *__arg )
 	sctk_thread_data_set( &tmp );
 	sctk_thread_add( &tmp, sctk_thread_self() );
 
-	sctk_nodebug( "%d on %d", tmp.task_id, tmp.virtual_processor );
+        sctk_error("LOCAL TID %d TADTA TID %d L %p R %p", tmp.task_id, sctk_thread_data_get()->task_id,tmp, sctk_thread_data_get());
+        sctk_error("COMM RANK %d", mpc_common_get_task_rank());
 
 	/* Initialization of the profiler */
 #ifdef MPC_Profiler
@@ -2170,8 +2171,7 @@ void sctk_thread_data_set(sctk_thread_data_t *task_id) {
   sctk_thread_setspecific (stck_task_data, (void *) task_id);
 }
 
-sctk_thread_data_t *
-__sctk_thread_data_get (int no_disguise)
+sctk_thread_data_t * __sctk_thread_data_get (int no_disguise)
 {
   sctk_thread_data_t *tmp;
   if (sctk_multithreading_initialised == 0)
@@ -2273,6 +2273,7 @@ int sctk_get_init_vp_and_nbvp_default( int i, int *nbVp )
 	assume( ( sctk_last_local != 0 ) || ( total_tasks_number == 1 ) || ( mpc_common_get_process_rank() == 0 ) );
 
 	task_nb = sctk_last_local - sctk_first_local + 1;
+
 
 	slot_size = task_nb / cpu_nb;
 	cpu_per_task = cpu_nb / task_nb;

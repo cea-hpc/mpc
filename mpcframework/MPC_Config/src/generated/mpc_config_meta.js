@@ -295,7 +295,7 @@ meta.types = {
 		allreduce_max_size: {mode: 'param', name: "allreduce_max_size", type: "int", doc: "", dflt: "4096", },
 		allreduce_check_threshold: {mode: 'param', name: "allreduce_check_threshold", type: "int", doc: "", dflt: "8192", },
 		allreduce_max_slot: {mode: 'param', name: "allreduce_max_slot", type: "int", doc: "Slot size for allreduce", dflt: "65536", },
-		collectives_init_hook: {mode: 'param', name: "collectives_init_hook", type: "funcptr", doc: "", dflt: "mpc_mp_coll_init_noalloc", },
+		collectives_init_hook: {mode: 'param', name: "collectives_init_hook", type: "funcptr", doc: "", dflt: "mpc_lowcomm_coll_init_noalloc", },
 	}},
 	low_level_comm : {type: 'struct', name: "low_level_comm", childs: {
 		checksum: {mode: 'param', name: "checksum", type: "bool", doc: "", dflt: "true", },

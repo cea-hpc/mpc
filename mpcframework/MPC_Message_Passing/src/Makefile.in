@@ -382,7 +382,7 @@ libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	./shm/sctk_shm_raw_queues.c ./shm/sctk_handler_pmi.c \
 	./shm/sctk_shm_cma.c ./shm/sctk_shm_frag.c \
 	./shm/sctk_shm_qemu.c ./shm/sctk_shm_raw_queues_internals.c
-libmpclowcomm_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la  -lpthread
+libmpclowcomm_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la  -lrt
 all: all-am
 
 .SUFFIXES:

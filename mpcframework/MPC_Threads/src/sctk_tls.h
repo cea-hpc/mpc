@@ -109,6 +109,9 @@ extern __thread int __mpc_task_rank;
 
 #ifdef MPC_MPI
     tls_save (___mpc_p_per_VP_comm_ctx);
+#endif
+
+#ifdef MPC_Message_Passing
     tls_save(__mpc_task_rank);
 #endif
 
@@ -153,6 +156,9 @@ extern __thread int __mpc_task_rank;
 
 #ifdef MPC_MPI
     tls_restore (___mpc_p_per_VP_comm_ctx);
+#endif
+
+#ifdef MPC_Message_Passing
     tls_restore(__mpc_task_rank);
 #endif
 
@@ -198,6 +204,9 @@ extern __thread int __mpc_task_rank;
 
 #ifdef MPC_MPI
     tls_init (___mpc_p_per_VP_comm_ctx);
+#endif
+
+#ifdef MPC_Message_Passing
     ucp->__mpc_task_rank = -2;
 #endif
 

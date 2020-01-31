@@ -26,6 +26,26 @@ config:
 endif
 
 
+
+#
+# Define the MPC Library
+#
+
+lib_LTLIBRARIES = libmpc.la
+
+libmpc_la_LIBADD =  ./MPC_Config/src/libmpcconfig.la
+
+libmpc_la_SOURCES=
+
+if MPC_THREAD_ENABLED
+        libmpc_la_LIBADD +=  ./MPC_Launch/src/libmpclaunch.la
+        libmpc_la_LIBADD +=  ./MPC_Threads/src/libmpcthread.la
+endif
+
+if MPC_MESSAGE_PASSING_ENABLED
+        libmpc_la_LIBADD += ./MPC_Message_Passing/src/libmpclowcomm.la
+endif
+
 #
 # Print Config Program
 #
@@ -42,7 +62,7 @@ mpc_print_config_SOURCES += ./MPC_Config/src/print_config/mpc_print_config_xml.c
 
 mpc_print_config_LDADD = $(XML2_LIBS)
 
-mpc_print_config_LDADD += ./MPC_Config/src/libmpcconfig.la -lrt
+mpc_print_config_LDADD += ./MPC_Config/src/libmpcconfig.la
 
 if MPC_THREAD_ENABLED
         mpc_print_config_LDADD += ./MPC_Threads/src/libmpcthread.la  ./MPC_Launch/src/libmpclaunch.la
