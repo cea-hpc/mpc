@@ -9,16 +9,12 @@ stages:
   - Applications
   - Finalization
 
-.run_by_all: &run_by_all
-  only:
-  - branches
-
 .run_by_main: &run_by_main
   only:
-  - master
   - devel
   - pt_devel
   - merge_requests
+  - web
 
 ############################
 ##### EXTRA ACTIONS ########
