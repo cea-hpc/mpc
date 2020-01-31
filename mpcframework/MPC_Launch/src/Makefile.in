@@ -89,8 +89,9 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @MPC_THREAD_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/MPC_Threads/src/ -I$(abs_top_srcdir)/MPC_Threads/include/ -I$(abs_top_srcdir)/MPC_Topology/include/
-@HYDRA_CLIENT_LIB_ENABED_TRUE@am__append_2 = -I$(abs_top_srcdir)/MPC_Launch/src/hydra_client
-@HYDRA_CLIENT_LIB_ENABED_TRUE@am__append_3 = ./hydra_client/safestr2.c  ./hydra_client/simple_pmi.c  ./hydra_client/simple_pmiutil.c
+@MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_2 = -I$(abs_top_srcdir)/MPC_Message_Passing/src/ -I$(abs_top_srcdir)/MPC_Message_Passing/include/
+@HYDRA_CLIENT_LIB_ENABED_TRUE@am__append_3 = -I$(abs_top_srcdir)/MPC_Launch/src/hydra_client
+@HYDRA_CLIENT_LIB_ENABED_TRUE@am__append_4 = ./hydra_client/safestr2.c  ./hydra_client/simple_pmi.c  ./hydra_client/simple_pmiutil.c
 subdir = MPC_Launch/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_gcc_builtin.m4 \
@@ -336,11 +337,11 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/include/ \
 	-I$(abs_top_srcdir)/MPC_Config/include/ \
 	-I$(abs_top_srcdir)/MPC_Config/src/generated/ $(am__append_1) \
-	$(am__append_2)
+	$(am__append_2) $(am__append_3)
 mpc_headerdir = $(includedir)/mpc/
 noinst_LTLIBRARIES = libmpclaunch.la
 libmpclaunch_la_SOURCES = main.c mpcc.c mpc_libc_main.c sctk_launch.c \
-	pmi.c $(am__append_3)
+	pmi.c $(am__append_4)
 libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la -lpmi
 all: all-am
 

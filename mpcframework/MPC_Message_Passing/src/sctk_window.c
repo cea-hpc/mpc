@@ -231,7 +231,7 @@ mpc_lowcomm_rdma_window_t mpc_lowcomm_rdma_window_init( void *addr, size_t size,
         }
 
         /* Set refcounter */
-        win->lock = SCTK_SPINLOCK_INITIALIZER;
+        mpc_common_spinlock_init(&win->lock, 0);
         win->refcounter = 1;
 
         win->access_mode = SCTK_WIN_ACCESS_AUTO;
@@ -331,7 +331,7 @@ int mpc_lowcomm_rdma_window_build_from_remote(struct mpc_lowcomm_rdma_window *re
 
   /* Update refcounting (1 as it is a window mirror) */
   new_win->refcounter = 1;
-  new_win->lock = SCTK_SPINLOCK_INITIALIZER;
+  mpc_common_spinlock_init(&new_win->lock, 0);
 
   /* Restore local ID overwritten by the copy and save remote id */
   new_win->remote_id = remote_id;

@@ -37,6 +37,7 @@
 #include <sctk_communicator.h>
 #endif
 #include <mpc_common_flags.h>
+#include <mpc_common_helper.h>
 
 
 #if !defined(NO_INTERNAL_ASSERT)
@@ -57,9 +58,9 @@
 	#ifdef MPC_USE_INFINIBAND
 		#include <sctk_ib_cp.h>
 	#endif /* MPC_USE_INFINIBAND */
-	#include "sctk_window.h"
 #endif /* MPC_Message_Passing */
 #include "mpc_topology.h"
+#include <mpc_launch_pmi.h>
 
 /* #include "sctk_daemons.h" */
 /* #include "sctk_io.h" */
@@ -290,6 +291,9 @@ void sctk_print_banner( bool restart )
 	}
 }
 
+void mpc_lowcomm_rdma_window_init_ht();
+void mpc_lowcomm_rdma_window_release_ht();
+
 static void sctk_perform_initialisation ( void )
 {
 	/*   mkdir (sctk_store_dir, 0777); */
@@ -442,6 +446,8 @@ static void sctk_perform_initialisation ( void )
 		sctk_net_init_driver( sctk_network_driver_name );
 	}
 
+
+        TODO("FIX THIS ASAP");
 	mpc_lowcomm_rdma_window_init_ht();
 #endif
 #ifdef SCTK_LIB_MODE
@@ -1115,6 +1121,7 @@ void sctk_init_mpc_runtime()
 void sctk_release_mpc_runtime()
 {
 #ifdef MPC_Message_Passing
+        TODO("FIX THIS ASAP");
 	mpc_lowcomm_rdma_window_release_ht();
 #endif
 

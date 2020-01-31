@@ -1,7 +1,7 @@
 #ifndef __SCTK_SHM_RAW_QUEUES_ARCHDEFS_H__
 #define __SCTK_SHM_RAW_QUEUES_ARCHDEFS_H__
 
-#include <libpause.h>
+#include <mpc_arch.h>
 
 #ifndef PAGE_SIZE
 #define PAGE_SIZE 4096

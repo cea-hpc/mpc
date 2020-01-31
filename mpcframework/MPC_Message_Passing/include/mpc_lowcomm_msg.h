@@ -1,10 +1,17 @@
 #ifndef MPC_MESSAGE_PASSING_INCLUDE_COMM_H_
 #define MPC_MESSAGE_PASSING_INCLUDE_COMM_H_
 
+#include <mpc_config.h>
 #include <mpc_lowcomm_types.h>
 #include <sctk_reorder.h>
+
+#ifdef MPC_USE_INFINIBAND
 #include <sctk_ib.h>
+#endif
+
+#ifdef MPC_USE_PORTALS
 #include <sctk_portals.h>
+#endif
 
 /************************************************************************/
 /* mpc_lowcomm_request_t		                                                    */

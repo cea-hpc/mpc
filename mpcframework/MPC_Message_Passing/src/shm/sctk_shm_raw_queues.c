@@ -44,11 +44,11 @@ void sctk_shm_reset_process_queues(int rank)
     sctk_shm_reset_region_queues(sctk_shm_get_region_infos(rank),rank);
 }
 
-static volatile sctk_shm_list_t *
+static sctk_shm_list_t *
 sctk_shm_get_queue_by_type(sctk_shm_list_type_t type, int rank)
 {
     sctk_shm_region_infos_t *shmem = sctk_shm_get_region_infos(rank);
-    volatile sctk_shm_list_t *queue = NULL;
+    sctk_shm_list_t *queue = NULL;
 
     switch(type)
     {
@@ -80,7 +80,7 @@ sctk_shm_pop_cell_dest(sctk_shm_list_type_t type, int rank)
     
     sctk_shm_region_infos_t *item_shm_infos;
     sctk_shm_item_t * item;
-    volatile sctk_shm_list_t *queue;
+    sctk_shm_list_t *queue;
 
     item_shm_infos = sctk_shm_get_region_infos(rank);
     queue = sctk_shm_get_queue_by_type(type,rank);
@@ -93,7 +93,7 @@ sctk_shm_recv_cell(void)
 {
     sctk_shm_region_infos_t *item_shm_infos;
     sctk_shm_item_t * item;
-    volatile sctk_shm_list_t *queue;
+    sctk_shm_list_t *queue;
 
     item_shm_infos = sctk_shm_get_region_infos( mpc_common_get_local_process_rank() );
     queue = sctk_shm_get_queue_by_type(SCTK_SHM_CELLS_QUEUE_RECV, mpc_common_get_local_process_rank());
@@ -105,7 +105,7 @@ sctk_shm_recv_cell(void)
 sctk_shm_cell_t *sctk_shm_get_cell(int dest, int is_control_msg) {
   sctk_shm_region_infos_t *item_shm_infos;
   sctk_shm_item_t *item;
-  volatile sctk_shm_list_t *queue;
+  sctk_shm_list_t *queue;
 
   item_shm_infos = sctk_shm_get_region_infos(dest);
   queue = sctk_shm_get_queue_by_type(SCTK_SHM_CELLS_QUEUE_FREE, dest);
@@ -123,7 +123,7 @@ void
 sctk_shm_send_cell(sctk_shm_cell_t * cell)
 {
     sctk_shm_item_t * item;
-    volatile sctk_shm_list_t *queue;
+    sctk_shm_list_t *queue;
     char *item_asymm_addr;
     sctk_shm_region_infos_t *item_shm_infos;
 
@@ -138,7 +138,7 @@ void
 sctk_shm_release_cell(sctk_shm_cell_t * cell)
 {
     sctk_shm_item_t * item;
-    volatile sctk_shm_list_t *queue;
+    sctk_shm_list_t *queue;
     char *item_asymm_addr;
     sctk_shm_region_infos_t *item_shm_infos;
 
@@ -153,7 +153,7 @@ void
 sctk_shm_push_cell_dest(sctk_shm_list_type_t type, sctk_shm_cell_t * cell, int process_rank)
 {
     sctk_shm_item_t * item;
-    volatile sctk_shm_list_t *queue;
+    sctk_shm_list_t *queue;
     char *dest_asymm_addr, *item_asymm_addr;
     sctk_shm_region_infos_t *dest_shm_infos, *item_shm_infos;
 
@@ -175,7 +175,7 @@ void
 sctk_shm_push_cell_origin(sctk_shm_list_type_t type, sctk_shm_cell_t *cell)
 {
     sctk_shm_item_t * item;
-    volatile sctk_shm_list_t *queue;
+    sctk_shm_list_t *queue;
     char *item_asymm_addr;
     sctk_shm_region_infos_t *item_shm_infos;
 

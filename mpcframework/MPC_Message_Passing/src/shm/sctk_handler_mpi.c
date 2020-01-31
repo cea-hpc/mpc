@@ -1,5 +1,5 @@
 #ifndef SCTK_LIB_MODE
-#include "mpi.h"
+
 #include "mpc_lowcomm.h"
 #include "sctk_debug.h"
 #include "sctk_shm_mapper.h"
@@ -35,7 +35,7 @@ char *sctk_mpi_handler_gen_filename(void *option, __UNUSED__ void *option1) {
     }
 
     long long int icomm = (long long int)option1;
-    MPI_Comm comm = (MPI_Comm)icomm;
+    mpc_lowcomm_communicator_t comm = (mpc_lowcomm_communicator_t)icomm;
 
     mpc_lowcomm_bcast((void *)filename, 128 * sizeof(char), 0, (mpc_lowcomm_communicator_t)comm);
     return true;
@@ -53,7 +53,7 @@ char *sctk_mpi_handler_gen_filename(void *option, __UNUSED__ void *option1) {
     }
 
     long long int icomm = (long long int)option1;
-    MPI_Comm comm = (MPI_Comm)icomm;
+    mpc_lowcomm_communicator_t comm = (mpc_lowcomm_communicator_t)icomm;
 
     mpc_lowcomm_bcast((void *)filename, 128 * sizeof(char), 0, (mpc_lowcomm_communicator_t)comm);
 

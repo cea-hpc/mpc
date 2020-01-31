@@ -28,6 +28,7 @@
 
 #include <portals4.h>
 #include <stddef.h>
+#include <mpc_keywords.h>
 #include "mpc_common_datastructure.h"
 #include "mpc_common_helper.h"
 #include "mpc_common_asm.h"
@@ -189,9 +190,6 @@ typedef enum {
 #define sctk_ptl_limits_t ptl_ni_limits_t /**< Portals NIC limits */
 /** default number of chunks when RDV protocol wants to split big messages */
 #define SCTK_PTL_MAX_RDV_BLOCKS 4
-#ifndef UNUSED
-#define UNUSED(a) (void)(sizeof(a))
-#endif
 
 #define SCTK_PTL_MAX_TAGS  (( size_t)(~ (( uint32_t)0)))
 #define SCTK_PTL_MAX_RANKS (( size_t)(~ (( uint16_t)0)))

@@ -11,6 +11,9 @@ if MPC_THREAD_ENABLED
         SUBDIRS += MPC_Threads
 endif
 
+if MPC_MESSAGE_PASSING_ENABLED
+        SUBDIRS += MPC_Message_Passing
+endif
 
 if CAN_GENERATE_CONFIG
 # Generate and copy back to sources to ensure transparent update on success
@@ -39,8 +42,12 @@ mpc_print_config_SOURCES += ./MPC_Config/src/print_config/mpc_print_config_xml.c
 
 mpc_print_config_LDADD = $(XML2_LIBS)
 
-mpc_print_config_LDADD += ./MPC_Config/src/libmpcconfig.la
+mpc_print_config_LDADD += ./MPC_Config/src/libmpcconfig.la -lrt
 
 if MPC_THREAD_ENABLED
         mpc_print_config_LDADD += ./MPC_Threads/src/libmpcthread.la  ./MPC_Launch/src/libmpclaunch.la
+endif
+
+if MPC_MESSAGE_PASSING_ENABLED
+        mpc_print_config_LDADD += ./MPC_Message_Passing/src/libmpclowcomm.la
 endif

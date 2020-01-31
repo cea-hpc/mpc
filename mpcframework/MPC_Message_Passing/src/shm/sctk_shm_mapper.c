@@ -161,7 +161,7 @@ sctk_shm_mapper_sync_header_init(void *ptr, sctk_size_t size,
 **/
 
 static OPA_int_t local_gen;
-static mpc_common_spinlock_t gen_lock = 0;
+static mpc_common_spinlock_t gen_lock = SCTK_SPINLOCK_INITIALIZER;
 static int gen_init_done = 0;
 
 SCTK_STATIC void sctk_shm_mapper_barrier( sctk_shm_mapper_sync_header_t * sync_header,__UNUSED__ sctk_shm_mapper_role_t role,int participants)

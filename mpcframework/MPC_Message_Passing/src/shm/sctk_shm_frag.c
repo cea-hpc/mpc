@@ -86,7 +86,8 @@ sctk_shm_send_register_new_frag_msg(int dest)
    sctk_shm_proc_frag_info_t* frag_infos = NULL;
    /* Prevent polling thread activity */ 
    frag_infos = sctk_malloc(sizeof(sctk_shm_proc_frag_info_t));
-   frag_infos->is_ready = SCTK_SPINLOCK_INITIALIZER;
+   mpc_common_spinlock_init(&frag_infos->is_ready, 0);
+
    mpc_common_spinlock_lock(&(frag_infos->is_ready));
  
    /* Try to get an empty key in hastable */  
@@ -150,7 +151,7 @@ sctk_shm_init_recv_frag_msg(int key, int remote, mpc_lowcomm_ptp_message_t* msg)
    const size_t msg_size = SCTK_MSG_SIZE(msg);
 
    frag_infos = (sctk_shm_proc_frag_info_t*) sctk_malloc(sizeof(sctk_shm_proc_frag_info_t));
-   frag_infos->is_ready = SCTK_SPINLOCK_INITIALIZER;
+   mpc_common_spinlock_init(&frag_infos->is_ready, 0);
    mpc_common_spinlock_lock(&(frag_infos->is_ready));
 
    frag_infos->size_total = msg_size;

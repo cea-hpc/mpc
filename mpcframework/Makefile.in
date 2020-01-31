@@ -90,8 +90,10 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @MPC_THREAD_ENABLED_TRUE@am__append_1 = MPC_Launch MPC_Threads
+@MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_2 = MPC_Message_Passing
 bin_PROGRAMS = mpc_print_config$(EXEEXT)
-@MPC_THREAD_ENABLED_TRUE@am__append_2 = ./MPC_Threads/src/libmpcthread.la  ./MPC_Launch/src/libmpclaunch.la
+@MPC_THREAD_ENABLED_TRUE@am__append_3 = ./MPC_Threads/src/libmpcthread.la  ./MPC_Launch/src/libmpclaunch.la
+@MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_4 = ./MPC_Message_Passing/src/libmpclowcomm.la
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_gcc_builtin.m4 \
@@ -120,7 +122,8 @@ am_mpc_print_config_OBJECTS =  \
 mpc_print_config_OBJECTS = $(am_mpc_print_config_OBJECTS)
 am__DEPENDENCIES_1 =
 mpc_print_config_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	./MPC_Config/src/libmpcconfig.la $(am__append_2)
+	./MPC_Config/src/libmpcconfig.la $(am__append_3) \
+	$(am__append_4)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -232,7 +235,7 @@ ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = MPC_Arch MPC_Common MPC_Config MPC_Topology MPC_Launch \
-	MPC_Threads
+	MPC_Threads MPC_Message_Passing
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mpc_config.h.in \
 	$(top_srcdir)/MPC_Arch/include/mpc_arch.h.in \
 	$(top_srcdir)/build-aux/compile \
@@ -430,7 +433,8 @@ xmllint = @xmllint@
 xsltproc = @xsltproc@
 mpc_headerdir = $(includedir)/mpc/
 mpc_header_HEADERS = $(abs_top_builddir)/mpc_config.h $(abs_top_srcdir)/include/mpc.h $(abs_top_srcdir)/include/mpc_main.h
-SUBDIRS = MPC_Arch MPC_Common MPC_Config MPC_Topology $(am__append_1)
+SUBDIRS = MPC_Arch MPC_Common MPC_Config MPC_Topology $(am__append_1) \
+	$(am__append_2)
 
 #
 # Print Config Program
@@ -450,7 +454,7 @@ mpc_print_config_SOURCES =  \
 	./MPC_Config/src/print_config/mpc_print_config_xml.c \
 	./MPC_Config/src/print_config/mpc_print_config_xml.h
 mpc_print_config_LDADD = $(XML2_LIBS) ./MPC_Config/src/libmpcconfig.la \
-	$(am__append_2)
+	-lrt $(am__append_3) $(am__append_4)
 all: mpc_config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 

@@ -636,6 +636,8 @@ ac_header_list=
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+MPC_MESSAGE_PASSING_ENABLED_FALSE
+MPC_MESSAGE_PASSING_ENABLED_TRUE
 MPC_THREAD_ENABLED_FALSE
 MPC_THREAD_ENABLED_TRUE
 MPC_ARCH_GENERIC_MICROTASK_FALSE
@@ -819,7 +821,8 @@ with_slurm
 with_pmi
 with_pmi_include
 with_pmi_libs
-with_threads
+enable_threads
+enable_message_passing
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1488,6 +1491,10 @@ Optional Features:
   --disable-dependency-tracking
                           speeds up one-time build
   --disable-libtool-lock  avoid locking (might break parallel builds)
+  --enable-threads        Compile MPC with pthread and user-level thread
+                          support
+  --enable-message-passing
+                          Compile MPC with Message Passing Support
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1515,8 +1522,6 @@ Optional Packages:
   --with-pmi              Provide prefix for pmi
   --with-pmi-inc          Provide include path for pmi
   --with-pmi-libs         Provide library path for pmi
-  --with-threads          Compile MPC with pthread and user-level thread
-                          support
 
 Some influential environment variables:
   CC          C compiler command
@@ -23692,10 +23697,9 @@ fi
 # Modular MPC configuration
 #
 
-
-# Check whether --with-threads was given.
-if test "${with_threads+set}" = set; then :
-  withval=$with_threads; mpc_thread_enabled=$withval
+# Check whether --enable-threads was given.
+if test "${enable_threads+set}" = set; then :
+  enableval=$enable_threads; mpc_thread_enabled=$enableval
 else
   mpc_thread_enabled=yes
 fi
@@ -23714,6 +23718,32 @@ else
   MPC_THREAD_ENABLED_TRUE='#'
   MPC_THREAD_ENABLED_FALSE=
 fi
+
+
+
+# Check whether --enable-message-passing was given.
+if test "${enable_message_passing+set}" = set; then :
+  enableval=$enable_message_passing; mpc_lowcom_enabled=$enableval
+else
+  mpc_lowcom_enabled=yes
+fi
+
+
+if test "x${mpc_lowcom_enabled}" = "xyes"; then
+
+$as_echo "#define MPC_Message_Passing 1" >>confdefs.h
+
+fi
+
+ if test "x${mpc_lowcom_enabled}" = "xyes"; then
+  MPC_MESSAGE_PASSING_ENABLED_TRUE=
+  MPC_MESSAGE_PASSING_ENABLED_FALSE='#'
+else
+  MPC_MESSAGE_PASSING_ENABLED_TRUE='#'
+  MPC_MESSAGE_PASSING_ENABLED_FALSE=
+fi
+
+
 
 
 #
@@ -23893,6 +23923,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_THREAD_ENABLED_TRUE}" && test -z "${MPC_THREAD_ENABLED_FALSE}"; then
   as_fn_error $? "conditional \"MPC_THREAD_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPC_MESSAGE_PASSING_ENABLED_TRUE}" && test -z "${MPC_MESSAGE_PASSING_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_MESSAGE_PASSING_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
@@ -26308,7 +26342,7 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
-ac_config_files="$ac_config_files Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Launch/src/Makefile MPC_Launch/Makefile MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile"
+ac_config_files="$ac_config_files Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Launch/src/Makefile MPC_Launch/Makefile MPC_Message_Passing/src/Makefile MPC_Message_Passing/Makefile MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -26481,6 +26515,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_THREAD_ENABLED_TRUE}" && test -z "${MPC_THREAD_ENABLED_FALSE}"; then
   as_fn_error $? "conditional \"MPC_THREAD_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPC_MESSAGE_PASSING_ENABLED_TRUE}" && test -z "${MPC_MESSAGE_PASSING_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_MESSAGE_PASSING_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__EXEEXT_TRUE}" && test -z "${am__EXEEXT_FALSE}"; then
@@ -27473,6 +27511,8 @@ do
     "MPC_Config/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Config/Makefile" ;;
     "MPC_Launch/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Launch/src/Makefile" ;;
     "MPC_Launch/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Launch/Makefile" ;;
+    "MPC_Message_Passing/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Message_Passing/src/Makefile" ;;
+    "MPC_Message_Passing/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Message_Passing/Makefile" ;;
     "MPC_Config/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Config/src/Makefile" ;;
     "MPC_Topology/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Topology/Makefile" ;;
     "MPC_Topology/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Topology/src/Makefile" ;;
@@ -28922,5 +28962,6 @@ echo ""
 echo "The following modules will be built:"
 echo ""
 echo "MPC_Thread : $mpc_thread_enabled"
+echo "MPC_Message_passing : $mpc_lowcom_enabled"
 echo "======================================="
 

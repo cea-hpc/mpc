@@ -356,7 +356,7 @@ mpc_lowcomm_communicator_t sctk_get_local_comm_id ( const mpc_lowcomm_communicat
 	}
 }
 
-static inline void sctk_comm_reduce ( const mpc_lowcomm_communicator_t *mpc_restrict  in, mpc_lowcomm_communicator_t *mpc_restrict inout, size_t size, __UNUSED__ mpc_lowcomm_datatype_t datatype )
+static inline void sctk_comm_reduce ( const mpc_lowcomm_communicator_t * restrict  in, mpc_lowcomm_communicator_t * restrict inout, size_t size, __UNUSED__ mpc_lowcomm_datatype_t datatype )
 {
 	size_t i;
 
@@ -1015,7 +1015,7 @@ int sctk_shared_mem_reduce_init( struct shared_mem_reduce *shmr, int nb_task )
 
 	for ( i = 0; i < pipelined_blocks; ++i )
 	{
-		shmr->buff_lock[i] = 0;
+		mpc_common_spinlock_init(&shmr->buff_lock[i], 0);
 	}
 
 	shmr->tollgate = sctk_malloc( nb_task * sizeof( int ) );
@@ -2975,7 +2975,6 @@ mpc_lowcomm_communicator_t sctk_create_intercommunicator_from_intercommunicator 
 		first = 0;
 	}
 
-	sctk_nodebug( "rank %d: newintercomm local_comm %d, local_leader %d, peer_comm %d, remote_leader %d, first %d", rank, local_com, local_leader, origin_communicator, remote_leader, first );
 	newintercomm = sctk_create_intercommunicator ( local_com, local_leader, peer_comm, remote_leader, tag, first );
 	return newintercomm;
 }

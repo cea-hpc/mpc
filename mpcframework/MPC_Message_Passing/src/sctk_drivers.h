@@ -22,12 +22,19 @@
 #ifndef SCTK_DRIVER_LIST_H
 #define SCTK_DRIVER_LIST_H
 
-
+#include <mpc_config.h>
 
 /* Networks */
 #include <sctk_tcp.h>
+
+#ifdef MPC_USE_INFINIBAND
 #include <sctk_ib.h>
+#endif
+
+#ifdef MPC_USE_PORTALS
 #include <sctk_portals.h>
+#endif
+
 #include <sctk_shm.h>
 #include <sctk_topological_rail.h>
 

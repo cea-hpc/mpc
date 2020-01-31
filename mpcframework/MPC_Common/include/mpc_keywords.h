@@ -34,4 +34,6 @@
         #define expect_false(expr) (expr)
 #endif
 
+#define UNUSED(a) (void)(sizeof(a))
+
 #endif

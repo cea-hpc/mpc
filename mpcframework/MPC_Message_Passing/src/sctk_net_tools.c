@@ -161,7 +161,6 @@ void sctk_net_copy_msg_from_iovec( mpc_lowcomm_ptp_message_content_to_copy_t *tm
 	recv = tmp->msg_recv;
 
 	SCTK_MSG_COMPLETION_FLAG_SET ( send , NULL );
-	sctk_nodebug ( "MSG |%s|", ( char * ) body );
 	
 	/* MPI 1.3 : The length of the received message must be less than or equal 
 		     to the length of the receive buffer */
@@ -379,9 +378,6 @@ void sctk_net_copy_in_buffer ( mpc_lowcomm_ptp_message_t *msg,
 			size_t size;
 
 			size = SCTK_MSG_SIZE ( msg );
-			sctk_nodebug ( "SEND size %lu %lu", size,
-			               adler32 ( 0, ( unsigned char * ) msg->tail.message.contiguous.addr, size ) );
-
 			sctk_nodebug ( "MSG SEND |%s|", ( char * ) msg->tail.message.contiguous.addr );
 			memcpy ( buffer, msg->tail.message.contiguous.addr, size );
 			buffer += size;
@@ -831,7 +827,6 @@ void sctk_net_message_copy_from_buffer ( char *body,
 			size = mpc_common_min ( SCTK_MSG_SIZE ( send ), recv->tail.message.contiguous.size );
 
 			memcpy ( recv->tail.message.contiguous.addr, body, size );
-			sctk_nodebug ( "RECV size %lu-%lu %lu %p", size, recv->tail.message.contiguous.size, adler32 ( 0, ( unsigned char * ) recv->tail.message.contiguous.addr, size ), recv );
 
 			if ( free_headers )
 				_mpc_comm_ptp_message_commit_request ( send, recv );

@@ -70,9 +70,6 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 	int fd;
 	fd = tmp->data.tcp.fd;
 
-	sctk_nodebug ( "Rail %d from %d launched", tmp->rail->rail_number,
-	               tmp->key.destination );
-
 	while ( 1 )
 	{
 		mpc_lowcomm_ptp_message_t *msg;
@@ -105,8 +102,6 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 
 				_mpc_comm_ptp_message_clear_request ( msg );
 				_mpc_comm_ptp_message_set_copy_and_free ( msg, sctk_free, sctk_tcp_rdma_message_copy );
-
-				sctk_nodebug ( "MSG RECV|%s|", ( char * ) body );
 
 				sctk_nodebug ( "Msg recved" );
 				tmp->rail->send_message_from_network ( msg );
@@ -162,8 +157,6 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 static void sctk_network_send_message_tcp_rdma_endpoint ( mpc_lowcomm_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
 	int fd;
-
-	sctk_nodebug ( "send message through rail %d", rail->rail_number );
 
 	mpc_common_spinlock_lock ( & ( endpoint->data.tcp.lock ) );
 

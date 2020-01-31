@@ -6,10 +6,13 @@ if MPC_THREAD_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Threads/src/ -I$(abs_top_srcdir)/MPC_Threads/include/ -I$(abs_top_srcdir)/MPC_Topology/include/
 endif
 
+if MPC_MESSAGE_PASSING_ENABLED
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Message_Passing/src/ -I$(abs_top_srcdir)/MPC_Message_Passing/include/
+endif
+
 if HYDRA_CLIENT_LIB_ENABED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Launch/src/hydra_client
 endif
-
 
 mpc_headerdir=$(includedir)/mpc/
 

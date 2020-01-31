@@ -29,15 +29,21 @@
 #include <uthash.h>
 #include <opa_primitives.h>
 #include <comm.h>
+
+#ifdef MPC_USE_INFINIBAND
 #include <sctk_ib_buffered.h>
+#endif
+
 #include <sctk_alloc.h>
+
+
 
 /*
  * Initialize the reordering for the list
  */
 void sctk_reorder_list_init ( sctk_reorder_list_t *reorder )
 {
-	reorder->lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&reorder->lock, 0 );
 	reorder->table = NULL;
 }
 
@@ -56,7 +62,7 @@ sctk_reorder_table_t *sctk_init_task_to_reorder ( int dest )
 
 	OPA_store_int ( & ( tmp->message_number_src ), 0 );
 	OPA_store_int ( & ( tmp->message_number_dest ), 0 );
-	tmp->lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&tmp->lock, 0);
 	tmp->buffer = NULL;
 	tmp->key.destination = dest;
 
@@ -70,8 +76,6 @@ sctk_reorder_table_t *sctk_get_task_from_reorder ( int dest, sctk_reorder_list_t
 {
 	sctk_reorder_key_t key;
 	sctk_reorder_table_t *tmp;
-
-	sctk_nodebug("[%p] LOOK %d / %d", reorder, dest, process_specific );
 
 	key.destination = dest;
 
@@ -244,7 +248,6 @@ int sctk_prepare_send_message_to_network_reorder ( mpc_lowcomm_ptp_message_t *ms
 		return 0;
 	}
 
-	sctk_nodebug ( "msg->sctk_msg_get_use_message_numbering %d", SCTK_MSG_USE_MESSAGE_NUMBERING ( msg, 0 ); );
 
         sctk_reorder_list_t *list = _mpc_comm_ptp_array_get_reorder(SCTK_MSG_COMMUNICATOR(msg), src_task);
         tmp = sctk_get_task_from_reorder(dest_task,

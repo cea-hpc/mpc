@@ -70,7 +70,6 @@ int sctk_route_ring ( int dest,  __UNUSED__ sctk_rail_info_t *rail )
 		       ( mpc_common_get_process_rank() + mpc_common_get_process_count() + 1 ) % mpc_common_get_process_count();
 	}
 
-	sctk_nodebug ( "Route via dest - %d to %d (delta1:%d - process_rank:%d - process_number:%d)", dest, old_dest, delta_1, mpc_common_get_process_rank(), mpc_common_get_process_count() );
 
 	return dest;
 }

@@ -21,6 +21,8 @@
 /* ######################################################################## */
 
 #include <comm.h>
+
+#include <mpc_arch.h>
 #include <sctk_low_level_comm.h>
 #include <sctk_communicator.h>
 
@@ -150,7 +152,7 @@ static inline void __mpc_comm_request_init( mpc_lowcomm_request_t *request,
 static inline void __mpc_comm_ptp_list_incoming_init( mpc_comm_ptp_list_incomming_t *list )
 {
 	list->list = NULL;
-	list->lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&list->lock, 0);
 }
 
 /*
@@ -168,7 +170,7 @@ static inline void __mpc_comm_ptp_message_list_init( mpc_comm_ptp_message_lists_
 {
 	__mpc_comm_ptp_list_incoming_init( &( lists->incomming_send ) );
 	__mpc_comm_ptp_list_incoming_init( &( lists->incomming_recv ) );
-	lists->pending_lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&lists->pending_lock, 0);
 	__mpc_comm_ptp_list_pending_init( &( lists->pending_send ) );
 	__mpc_comm_ptp_list_pending_init( &( lists->pending_recv ) );
 }
@@ -385,7 +387,7 @@ mpc_common_spinlock_t *__mpc_ptp_task_lock = 0;
 int sctk_ptp_tasks_count = 0;
 
 static short __mpc_comm_ptp_task_init_done = 0;
-mpc_common_spinlock_t __mpc_comm_ptp_task_init_lock = 0;
+mpc_common_spinlock_t __mpc_comm_ptp_task_init_lock = SCTK_SPINLOCK_INITIALIZER;
 
 #define PTP_MAX_TASK_LISTS 100
 
@@ -417,7 +419,7 @@ static inline void __mpc_comm_ptp_task_init()
 	for ( i = 0; i < sctk_ptp_tasks_count; i++ )
 	{
 		__mpc_ptp_task_list[i] = NULL;
-		__mpc_ptp_task_lock[i] = 0;
+		mpc_common_spinlock_init(&__mpc_ptp_task_lock[i], 0 );
 	}
 
 	__mpc_comm_ptp_task_init_done = 1;
@@ -2008,7 +2010,7 @@ static inline int __mpc_comm_ptp_perform_msg_pair_trylock( mpc_comm_ptp_t *pair 
 	SCTK_PROFIL_START( MPC_Test_message_pair_try );
 
 	/* If the lock has not been taken, we continue */
-	if ( pair->lists.pending_lock == 0 )
+	if ( OPA_load_int(&pair->lists.pending_lock) == 0 )
 	{
 		return __mpc_comm_ptp_perform_msg_pair( pair );
 	}
@@ -2124,12 +2126,14 @@ void mpc_lowcomm_request_wait( mpc_lowcomm_request_t *request )
 		return;
 	}
 
+#ifdef MPC_MPI
 	if ( request->request_type == REQUEST_GENERALIZED )
 	{
 		mpc_lowcomm_perform_idle( ( int * ) & ( request->completion_flag ),
 		                          MPC_LOWCOMM_MESSAGE_DONE, mpc_mpi_cl_egreq_progress_poll, NULL );
-	}
+        }
 	else
+#endif
 	{
 		if ( request->completion_flag == MPC_LOWCOMM_MESSAGE_DONE )
 		{

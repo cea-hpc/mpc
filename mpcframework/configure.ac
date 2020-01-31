@@ -770,10 +770,10 @@ AM_CONDITIONAL([MPC_ARCH_GENERIC_MICROTASK], [test "x${MPC_ARCH_MICROTASK_ARCH}"
 # Modular MPC configuration
 #
 
-AC_ARG_WITH([threads],
-[AS_HELP_STRING([--with-threads],
+AC_ARG_ENABLE([threads],
+[AS_HELP_STRING([--enable-threads],
                 [Compile MPC with pthread and user-level thread support])],
-[mpc_thread_enabled=$withval],
+[mpc_thread_enabled=$enableval],
 [mpc_thread_enabled=yes])
 
 if test "x${mpc_thread_enabled}" = "xyes"; then
@@ -781,6 +781,21 @@ if test "x${mpc_thread_enabled}" = "xyes"; then
 fi
 
 AM_CONDITIONAL([MPC_THREAD_ENABLED], [test "x${mpc_thread_enabled}" = "xyes"])
+
+
+AC_ARG_ENABLE([message-passing],
+[AS_HELP_STRING([--enable-message-passing],
+                [Compile MPC with Message Passing Support])],
+[mpc_lowcom_enabled=$enableval],
+[mpc_lowcom_enabled=yes])
+
+if test "x${mpc_lowcom_enabled}" = "xyes"; then
+        AC_DEFINE([MPC_Message_Passing], [1], [MPC_MESSAGE_PASSING module was enabled])
+fi
+
+AM_CONDITIONAL([MPC_MESSAGE_PASSING_ENABLED], [test "x${mpc_lowcom_enabled}" = "xyes"])
+
+
 
 #
 # Final Output
@@ -791,6 +806,7 @@ AC_OUTPUT([MPC_Arch/include/mpc_arch.h])
 AC_OUTPUT([Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile
            MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile
            MPC_Launch/src/Makefile MPC_Launch/Makefile
+           MPC_Message_Passing/src/Makefile MPC_Message_Passing/Makefile
            MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile
            MPC_Threads/Makefile MPC_Threads/src/Makefile])
 
@@ -802,5 +818,6 @@ echo ""
 echo "The following modules will be built:"
 echo ""
 echo "MPC_Thread : $mpc_thread_enabled"
+echo "MPC_Message_passing : $mpc_lowcom_enabled"
 echo "======================================="
 

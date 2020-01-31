@@ -3,6 +3,10 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Arch/include/ -I$(abs_top_srcdir)/MPC_Thr
 AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Config/include/ -I$(abs_top_srcdir)/MPC_Config/src/generated/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Topology/include/
 
+if MPC_MESSAGE_PASSING_ENABLED
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Message_Passing/src/ -I$(abs_top_srcdir)/MPC_Message_Passing/include/
+endif
+
 
 lib_LTLIBRARIES = libmpcthread.la
 

@@ -328,7 +328,8 @@ static void sctk_tcp_add_route ( int dest, int fd, sctk_rail_info_t *rail,
 
 	sctk_nodebug ( "Register fd %d", fd );
 	new_route->data.tcp.fd = fd;
-	new_route->data.tcp.lock = SCTK_SPINLOCK_INITIALIZER;
+
+	mpc_common_spinlock_init(&new_route->data.tcp.lock, 0);
 
 	/* Add the new route */
 	if( route_type == ROUTE_ORIGIN_STATIC )

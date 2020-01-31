@@ -23,10 +23,9 @@
 #define __SCTK_COLLECTIVE_COMMUNICATIONS_H_
 
 #include <mpc_lowcomm.h>
-
+#include <mpcthread.h>
 
 #include "comm.h"
-
 
 struct mpc_lowcomm_coll_s;
 

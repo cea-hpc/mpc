@@ -26,9 +26,13 @@
 #include <sctk_reorder.h>
 #include <sctk_communicator.h>
 #include <mpc_common_spinlock.h>
-#include <sctk_ib_cm.h>
 #include <sctk_low_level_comm.h>
+
+#ifdef MPC_USE_INFINIBAND
+#include <sctk_ib_cm.h>
 #include "sctk_ib_qp.h"
+#endif
+
 #include <utarray.h>
 #include <sctk_multirail.h>
 
@@ -144,7 +148,7 @@ void sctk_endpoint_init ( sctk_endpoint_t *tmp,  int dest, sctk_rail_info_t *rai
 	sctk_endpoint_set_state ( tmp, STATE_DECONNECTED );
 
 	tmp->is_initiator = CHAR_MAX;
-	tmp->lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&tmp->lock, 0 );
 
 	tmp->origin = origin;
 }

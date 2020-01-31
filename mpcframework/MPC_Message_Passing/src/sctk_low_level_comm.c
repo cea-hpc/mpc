@@ -32,7 +32,10 @@
 #include <mpc_common_rank.h>
 
 /*Networks*/
+#ifdef MPC_USE_INFINIBAND
 #include <sctk_ib_mpi.h>
+#endif
+
 #include <sctk_route.h>
 #include <sctk_multirail.h>
 #ifdef MPC_Fault_Tolerance
@@ -625,8 +628,6 @@ void sctk_net_init_driver ( char *name )
 			sctk_error ( "Rail with name '%s' not found in config!", cli_option->rails[k] );
 			sctk_abort();
 		}
-
-		sctk_nodebug ( "Found rail '%s' to init", rail->name );
 
 		/* For this rail retrieve the config */
 		struct sctk_runtime_config_struct_net_driver_config *driver_config = sctk_get_driver_config_by_name ( rail_config_struct->config );

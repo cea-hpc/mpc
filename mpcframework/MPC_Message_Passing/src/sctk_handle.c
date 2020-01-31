@@ -33,7 +33,7 @@
 /************************************************************************/
 
 static int init_done = 0;
-static mpc_common_spinlock_t init_lock = 0;
+static mpc_common_spinlock_t init_lock = SCTK_SPINLOCK_INITIALIZER;
 
 /* Error handlers */
 static OPA_int_t current_errhandler;
@@ -96,7 +96,6 @@ int sctk_errhandler_register_on_slot(sctk_generic_handler eh,
                                      sctk_errhandler_t slot) {
   mpc_mpi_err_init_once();
   /* Save in the HT */
-  sctk_nodebug("REGISTER Is %p for %d", eh, *errh);
   mpc_common_hashtable_set(&error_handlers, slot, (void *)eh);
   /* All ok */
   return 0;
@@ -157,7 +156,7 @@ struct sctk_handle_context *sctk_handle_context_new(sctk_handle id) {
   return ret;
 }
 
-static mpc_common_spinlock_t handle_mod_lock = 0;
+static mpc_common_spinlock_t handle_mod_lock = SCTK_SPINLOCK_INITIALIZER;
 
 struct sctk_handle_context *sctk_handle_context_no_lock(sctk_handle id,
                                                         sctk_handle_type type) {

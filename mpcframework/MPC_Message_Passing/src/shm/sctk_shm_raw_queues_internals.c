@@ -89,7 +89,7 @@ sctk_shm_set_region_infos(void *shmem_base, size_t shmem_size,int cells_num)
     shmem->all_shm_base = sctk_malloc( mpc_common_get_local_process_count() * sizeof(char*));
     shmem->shm_base = shmem_base; 
     shmem->max_addr = shmem->shm_base + shmem_size;
-    shmem->global_lock = SCTK_SPINLOCK_INITIALIZER;
+    mpc_common_spinlock_init(&shmem->global_lock, 0);
     shmem->send_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_SEND);
     shmem->recv_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_RECV);
     shmem->cmpl_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_CMPL);

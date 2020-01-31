@@ -26,7 +26,7 @@
 
 #include <sctk_route.h>
 #include <mpc_common_spinlock.h>
-#include <sctk_runtime_config_struct.h>
+#include <mpc_config_struct.h>
 
 /************************************************************************/
 /* sctk_endpoint_list                                                   */
