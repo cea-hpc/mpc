@@ -28,6 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <uthash.h>
+#include <mpc_config.h>
 
 #ifdef __cplusplus
 extern "C"

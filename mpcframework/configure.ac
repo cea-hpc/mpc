@@ -8,6 +8,7 @@ AC_CONFIG_HEADERS([mpc_config.h])
 AM_SILENT_RULES([yes])
 LT_PREREQ([2.4.6])
 
+
 LT_INIT
 LT_LANG([C])
 LT_INIT
@@ -22,7 +23,6 @@ AC_DEFINE([SCTK_VERSION_REVISION], [0], [MPC Revision Version 3])
 
 AC_DEFINE_UNQUOTED([MPC_PREFIX_PATH], ["$prefix"], [Prefix Path for MPC])
 
-
 # General Configuration
 
 MPC_SUPPORTED_ARCHITECTURES_LIST="x86_64 ia64 i686 arm aarch64 powerpc64"
@@ -33,8 +33,6 @@ AC_PROG_INSTALL
 AC_PROG_CC
 AM_PROG_AS
 
-
-
 # Optionnal XML generators
 
 AC_CHECK_PROG([xsltproc],[xsltproc],[yes],[no])
@@ -44,20 +42,245 @@ AM_CONDITIONAL([CAN_GENERATE_CONFIG], [test "x$xsltproc" = xyes -o "x$xmllint" =
 
 # Checks for libraries.
 
-PKG_CHECK_MODULES([XML2], [libxml-2.0])
+# Library detector helper
 
-AC_SUBST([XML2_CFLAGS])
-AC_SUBST([XML2_LIBS])
 
-PKG_CHECK_MODULES([HWLOC], [hwloc < 2.0])
+prefix_candidate_path="/usr /usr/local /opt"
+prefix_candidate_sub_include_path=". include include/slurm include/slurm-wml"
 
-AC_SUBST([HWLOC_CFLAGS])
-AC_SUBST([HWLOC_LIBS])
+#
+# $1 header name
+# $2 provided prefix
+#
+# Sets check_or_infer_prefix_include or returns ""
+#
+__check_or_infer_prefix_include()
+{
+        check_or_infer_prefix_include="no"
+        looked_up_header=$1
+        provided_prefix=$2
 
-PKG_CHECK_MODULES([OPENPA], [openpa])
+        for pref in $provided_prefix $prefix_candidate_path
+        do
+                for suffix in $prefix_candidate_sub_include_path
+                do
+                        AC_MSG_CHECKING([for '$looked_up_header' in '$pref/$suffix'])
+                        if test -f "$pref/$suffix/$looked_up_header"
+                        then
+                                AC_MSG_RESULT([yes])
+                                # Set include path for matched header
+                                CPPFLAGS+=" -I$pref/$suffix/"
+                                AX_RESET_HEADERS_CACHE([$looked_up_header])
+                                AC_CHECK_HEADER([$looked_up_header],[],[AC_MSG_ERROR([Failed to autodetect '$looked_up_header' in '$pref/$suffix'])])
+                                check_or_infer_prefix_include=yes
+                                return
+                        fi
+                        AC_MSG_RESULT([no])
+                done
+        done
+}
 
-AC_SUBST([OPENPA_CFLAGS])
-AC_SUBST([OPENPA_LIBS])
+prefix_candidate_sub_lib_path=". lib lib64"
+
+#
+# libname
+#
+___unset_lib_cache()
+{
+        cache_vars=$(set | cut -d "=" -f 1 | grep ac_cv_lib)
+        for i in $cache_vars
+        do
+                AS_UNSET([$i])
+        done
+}
+
+
+#
+# $1 lib name
+# $2 lib function name
+# $3 provided prefix
+#
+# Sets check_or_infer_prefix_include or returns ""
+#
+__check_or_infer_prefix_lib()
+{
+        check_or_infer_prefix_lib="no"
+        looked_up_lib=$1
+        looked_up_function=$2
+        provided_prefix=$3
+
+        for pref in $provided_prefix $prefix_candidate_path
+        do
+                for suffix in $prefix_candidate_sub_lib_path
+                do
+                        lib_found=0
+
+
+                        OLD_LDFLAGS=$LDFLAGS
+
+                        LDFLAGS+=" -L$pref/$suffix"
+
+                        ___unset_lib_cache
+                        AC_CHECK_LIB($looked_up_lib, $looked_up_function, [lib_found=1], [lib_found=0])
+                        AC_MSG_CHECKING([Looking for '$looked_up_lib' in '$pref/$suffix'])
+
+                        if test "x$lib_found" = "x1"
+                        then
+                                AC_MSG_RESULT([yes])
+                                check_or_infer_prefix_lib=yes
+                                return
+                        fi
+
+                        AC_MSG_RESULT([no])
+                        LDFLAGS=$OLD_LDFLAGS
+
+                done
+        done
+}
+
+#
+# $1 header_name (ex. hwloc.h)
+# $2 libname     (ex. hwloc)
+# $3 looked up function (ex. hwloc_topology_init)
+# $4 LIBCODE (ex XML, HWLOC, ...)
+# $5 optionnal library version (need pkg-config)
+#
+AC_DEFUN([MPC_DETECT_DEPENDENCY],
+         [
+                AS_VAR_PUSHDEF([dep_found], [mpc_dep_found])
+                AC_ARG_WITH([$2],
+                [AS_HELP_STRING([--with-$2],
+                                [Provide prefix for $2])],
+                [prefix=$withval],[])
+
+                AC_ARG_WITH([$2-include],
+                [AS_HELP_STRING([--with-$2-inc],
+                                [Provide include path for $2])],
+                [inc_prefix=$withval],[])
+
+                AC_ARG_WITH([$2-libs],
+                [AS_HELP_STRING([--with-$2-libs],
+                                [Provide library path for $2])],
+                [lib_prefix=$withval],[])
+
+                check_or_infer_prefix_result="no"
+                header_name=$1
+                libname=$2
+                function_name=$3
+                version="$5"
+
+                if test -n "$lib_prefix"
+                then
+                        lib_prefix=$prefix
+                fi
+
+                if test -n "$inc_prefix"
+                then
+                        inc_prefix=$prefix
+                fi
+
+                # First try with PKG config
+                PKG_CHECK_MODULES([$4], [$libname $version], [pkg_found=1], [pkg_found=0])
+
+                if test "x$pkg_found" = "x1"
+                then
+                        #Insert flags
+                        CPPFLAGS+=" ${$3_CFLAGS}"
+                        LDFLAGS+=" ${$4_LIBS}"
+                        AC_MSG_NOTICE([$libname found using pkg-config])
+                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                        check_or_infer_prefix_result="yes"
+                else
+                        __check_or_infer_prefix_include $header_name $inc_prefix
+                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix
+
+                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                        then
+                                check_or_infer_prefix_result="yes"
+                        else
+                                check_or_infer_prefix_result="no"
+                        fi
+                fi
+
+                AS_VAR_SET([dep_found], [$check_or_infer_prefix_result])
+         ])
+
+
+AC_DEFUN([MPC_REQUIRED_DEPENDENCY],
+         [
+                if test "x$2" = "xno"
+                then
+                        AC_MSG_NOTICE([consider using --with-$1=PREFIX])
+                        AC_MSG_NOTICE([consider using --with-$1-libs=LIBS])
+                        AC_MSG_NOTICE([consider using --with-$1-include=INCS])
+                        AC_MSG_ERROR([Failed to locate required dependency $1])
+                fi
+         ])
+
+MPC_DETECT_DEPENDENCY([libxml/tree.h],[libxml-2.0], [xmlStrcmp], [XML2])
+MPC_REQUIRED_DEPENDENCY([libxml-2.0], [$mpc_dep_found])
+
+MPC_DETECT_DEPENDENCY([hwloc.h],[hwloc], [hwloc_topology_init], [HWLOC], [< 2.0.0])
+MPC_REQUIRED_DEPENDENCY([hwloc], [$mpc_dep_found])
+
+MPC_DETECT_DEPENDENCY([opa.h],[openpa], [OPA_load_int], [OPA])
+MPC_REQUIRED_DEPENDENCY([openpa], [$mpc_dep_found])
+
+
+
+#
+# Configure MPC Launch
+#
+
+mpc_hydra_enabled=yes
+
+AC_ARG_WITH([hydra],
+[AS_HELP_STRING([--with-hydra],
+                [Compile MPC with hydra support (requires an external hydra launcher)])],
+[mpc_hydra_enabled=$withval],
+[mpc_hydra_enabled=yes])
+
+AC_ARG_WITH([slurm],
+[AS_HELP_STRING([--with-slurm],
+                [Rely on SLURM's PMI])],
+[mpc_hydra_enabled=no; mpc_slurm_enabled=$withval],
+[mpc_slurm_enabled=no])
+
+if test "x$mpc_hydra_enabled" = "xyes" -a  "x$mpc_slurm_enabled" = "xyes"
+then
+        AC_MSG_ERROR([You mush choose between Hydra and Slurm (--with-hydra or --with-slurm)])
+fi
+
+if test "x$mpc_hydra_enabled" = "xyes" -o  "x$mpc_slurm_enabled" = "xyes"
+then
+        #All good
+        dummy=1337
+else
+        AC_MSG_ERROR([You mush activate either Hydra and Slurm (--with-hydra or --with-slurm)])
+fi
+
+if test "x$mpc_slurm_enabled" = "xyes"; then
+
+        mpc_launcher="Slurm PMI"
+        MPC_DETECT_DEPENDENCY([pmi.h],[pmi], [PMI_Finalize], [PMI])
+        MPC_REQUIRED_DEPENDENCY([pmi], [$mpc_dep_found])
+
+        AC_DEFINE([MPC_USE_SLURM], [1], [Slurm PMI will be used to launch parallel programs])
+else
+
+        # Here we look for hydra only if hydra has not been disabled
+        mpc_launcher="Hydra"
+
+        AC_CHECK_FUNCS([socket setsockopt gethostbyname],[can_access_hydra_pmi_socket=no], [can_access_hydra_pmi_socket=yes])
+
+        if test "x$can_access_hydra_pmi_socket" = "xno" ; then
+                AC_DEFINE(USE_PMI_PORT,1,[HYDRA supports sockets])
+        fi
+
+        AC_DEFINE([MPC_USE_HYDRA], [1], [Hydra will be used to launch parallel programs])
+fi
+
+AM_CONDITIONAL([HYDRA_CLIENT_LIB_ENABED], [test "x$mpc_launcher" = "xHydra"])
 
 # Checks for header files.
 
@@ -88,7 +311,9 @@ AC_CHECK_HEADERS([semaphore.h])
 AC_CHECK_HEADERS([setjmp.h])
 AC_CHECK_HEADERS([signal.h])
 AC_CHECK_HEADERS([stddef.h])
+AC_CHECK_HEADERS([stdlib.h])
 AC_CHECK_HEADERS([stdint.h])
+AC_CHECK_HEADERS([string.h])
 AC_CHECK_HEADERS([sys/mman.h])
 AC_CHECK_HEADERS([sys/param.h])
 AC_CHECK_HEADERS([sys/pstat.h])
@@ -113,7 +338,6 @@ AC_CHECK_HEADERS([wchar.h])
 #TODO CHECK PMI
 #TODO CHECK STDBOOL
 #TODO CHECK VALGRIND
-
 
 AC_CHECK_HEADERS([valgrind/memcheck.h])
 AC_CHECK_HEADERS([valgrind/valgrind.h])
@@ -248,7 +472,7 @@ AC_FUNC_MALLOC
 AC_FUNC_MMAP
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memcpy memmove memset])
-AC_CHECK_FUNCS([strcasecmp strchr strdup strerror strstr strtol])
+AC_CHECK_FUNCS([strcasecmp strchr strdup strerror strstr strtol snprintf])
 AC_CHECK_FUNCS([gethostbyname gethostname])
 AC_CHECK_FUNCS([gettimeofday])
 AC_CHECK_FUNCS([munmap])
@@ -532,84 +756,6 @@ fi
 AM_CONDITIONAL([MPC_ARCH_X86_64_MICROTASK], [test "x${MPC_ARCH_MICROTASK_ARCH}" = "xx86_64"])
 # Note that by construction the following conditionnals are multually exclusive
 AM_CONDITIONAL([MPC_ARCH_GENERIC_MICROTASK], [test "x${MPC_ARCH_MICROTASK_ARCH}" = "xgeneric"])
-
-
-#
-# Configure MPC Launch
-#
-
-mpc_launcher="Hydra"
-
-mpc_hydra_enabled=""
-
-AC_ARG_WITH([hydra],
-[AS_HELP_STRING([--with-hydra],
-                [Compile MPC with hydra support (requires an external hydra launcher)])],
-[mpc_hydra_enabled=$withval],
-[mpc_hydra_enabled=default])
-
-mpc_slurm_enabled="no"
-
-AC_ARG_WITH([slurm],
-[AS_HELP_STRING([--with-slurm],
-                [Compile MPC against SLURMs PMI])],
-[mpc_slurm_enabled=$withval],
-[mpc_slurm_enabled=""])
-
-if test -n $mpc_slurm_enabled; then
-
-        if test "x$mpc_hydra_enabled" = "xdefault"; then
-                mpc_hydra_enabled=""
-        fi
-
-        if test -n "$mpc_hydra_enabled"; then
-                AC_MSG_ERROR([Both SLURM and Hydra support cannot be enabled simultaneously])
-        fi
-
-        mpc_launcher="Slurm PMI"
-else
-        if test -n $mpc_hydra_enabled; then
-                AC_MSG_ERROR([You must have either SLURM or Hydra Launcher compiled in to run MPC])
-        fi
-
-        # All other cases default to hydra
-        mpc_hydra_enabled="yes"
-fi
-
-if test -n $mpc_slurm_enabled; then
-        # IF this is a directory add as prefix
-        if test -d $mpc_slurm_enabled; then
-                CPPFLAGS+=" -I${mpc_slurm_enabled}/include/ -I${mpc_slurm_enabled}/include/slurm/"
-                LDFLAGS+=" -L${mpc_slurm_enabled}/lib/ -L${mpc_slurm_enabled}/lib64/"
-        else
-                AC_MSG_CHECKING([Trying to locate pmi.h])
-                pmih_in="not found"
-                for h in /usr/include/slurm/ /usr/local/include/slurm/ /usr/include/slurm-wlm/ $withval
-                do
-                        if test -f $h/pmi.h; then
-                                CPPFLAGS+=" -I$h"
-                                pmih_in=$h
-                                break
-                        fi
-                done
-
-                AC_MSG_RESULT([$pmih_in])
-        fi
-
-        # First try to locate the PMI (libmpi.so from slurm)
-        # only if hydra has not been forced
-
-        AC_CHECK_HEADER([pmi.h])
-        AC_CHECK_LIB(pmi, PMI_Finalize, libpmi_found=yes, libpmi_found=no)
-
-else
-
-# Here we look for hydra only if hydra has not been disabled
-echo "HYDRA"
-
-fi
-
-
 
 
 #

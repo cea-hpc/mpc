@@ -648,8 +648,12 @@ LIBOBJS
 MPC_ARCH_DETECTED_STRING
 MPC_ARCH_DETECTED_FUNCTION
 MPC_TARGET_ARCHITECTURE
-OPENPA_LIBS
-OPENPA_CFLAGS
+HYDRA_CLIENT_LIB_ENABED_FALSE
+HYDRA_CLIENT_LIB_ENABED_TRUE
+PMI_LIBS
+PMI_CFLAGS
+OPA_LIBS
+OPA_CFLAGS
 HWLOC_LIBS
 HWLOC_CFLAGS
 XML2_LIBS
@@ -800,8 +804,20 @@ enable_dependency_tracking
 with_gnu_ld
 with_sysroot
 enable_libtool_lock
+with_libxml_2_0
+with_libxml_2_0_include
+with_libxml_2_0_libs
+with_hwloc
+with_hwloc_include
+with_hwloc_libs
+with_openpa
+with_openpa_include
+with_openpa_libs
 with_hydra
 with_slurm
+with_pmi
+with_pmi_include
+with_pmi_libs
 with_threads
 '
       ac_precious_vars='build_alias
@@ -827,8 +843,10 @@ XML2_CFLAGS
 XML2_LIBS
 HWLOC_CFLAGS
 HWLOC_LIBS
-OPENPA_CFLAGS
-OPENPA_LIBS'
+OPA_CFLAGS
+OPA_LIBS
+PMI_CFLAGS
+PMI_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1481,9 +1499,21 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-sysroot[=DIR]    Search for dependent libraries within DIR (or the
                           compiler's sysroot if not specified).
+  --with-libxml-2.0       Provide prefix for libxml-2.0
+  --with-libxml-2.0-inc   Provide include path for libxml-2.0
+  --with-libxml-2.0-libs  Provide library path for libxml-2.0
+  --with-hwloc            Provide prefix for hwloc
+  --with-hwloc-inc        Provide include path for hwloc
+  --with-hwloc-libs       Provide library path for hwloc
+  --with-openpa           Provide prefix for openpa
+  --with-openpa-inc       Provide include path for openpa
+  --with-openpa-libs      Provide library path for openpa
   --with-hydra            Compile MPC with hydra support (requires an external
                           hydra launcher)
-  --with-slurm            Compile MPC against SLURMs PMI
+  --with-slurm            Rely on SLURM's PMI
+  --with-pmi              Provide prefix for pmi
+  --with-pmi-inc          Provide include path for pmi
+  --with-pmi-libs         Provide library path for pmi
   --with-threads          Compile MPC with pthread and user-level thread
                           support
 
@@ -1513,9 +1543,10 @@ Some influential environment variables:
   HWLOC_CFLAGS
               C compiler flags for HWLOC, overriding pkg-config
   HWLOC_LIBS  linker flags for HWLOC, overriding pkg-config
-  OPENPA_CFLAGS
-              C compiler flags for OPENPA, overriding pkg-config
-  OPENPA_LIBS linker flags for OPENPA, overriding pkg-config
+  OPA_CFLAGS  C compiler flags for OPA, overriding pkg-config
+  OPA_LIBS    linker flags for OPA, overriding pkg-config
+  PMI_CFLAGS  C compiler flags for PMI, overriding pkg-config
+  PMI_LIBS    linker flags for PMI, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -3447,6 +3478,7 @@ else
   AM_DEFAULT_V=$AM_DEFAULT_VERBOSITY
 fi
 AM_BACKSLASH='\'
+
 
 
 
@@ -16313,7 +16345,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-
 # General Configuration
 
 MPC_SUPPORTED_ARCHITECTURES_LIST="x86_64 ia64 i686 arm aarch64 powerpc64"
@@ -17906,8 +17937,6 @@ fi
 
 
 
-
-
 # Optionnal XML generators
 
 # Extract the first word of "xsltproc", so it can be a program name with args.
@@ -17997,6 +18026,181 @@ fi
 
 
 # Checks for libraries.
+
+# Library detector helper
+
+
+prefix_candidate_path="/usr /usr/local /opt"
+prefix_candidate_sub_include_path=". include include/slurm include/slurm-wml"
+
+#
+# $1 header name
+# $2 provided prefix
+#
+# Sets check_or_infer_prefix_include or returns ""
+#
+__check_or_infer_prefix_include()
+{
+        check_or_infer_prefix_include="no"
+        looked_up_header=$1
+        provided_prefix=$2
+
+        for pref in $provided_prefix $prefix_candidate_path
+        do
+                for suffix in $prefix_candidate_sub_include_path
+                do
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for '$looked_up_header' in '$pref/$suffix'" >&5
+$as_echo_n "checking for '$looked_up_header' in '$pref/$suffix'... " >&6; }
+                        if test -f "$pref/$suffix/$looked_up_header"
+                        then
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+                                # Set include path for matched header
+                                CPPFLAGS+=" -I$pref/$suffix/"
+
+    for ax_var in $looked_up_header
+do :
+
+                as_ax_Var=`$as_echo "ac_cv_header_${ax_var}" | $as_tr_sh`
+
+        { eval $as_ax_Var=; unset $as_ax_Var;}
+
+
+done
+
+                                as_ac_Header=`$as_echo "ac_cv_header_$looked_up_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$looked_up_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+
+else
+  as_fn_error $? "Failed to autodetect '$looked_up_header' in '$pref/$suffix'" "$LINENO" 5
+fi
+
+
+                                check_or_infer_prefix_include=yes
+                                return
+                        fi
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                done
+        done
+}
+
+prefix_candidate_sub_lib_path=". lib lib64"
+
+#
+# libname
+#
+___unset_lib_cache()
+{
+        cache_vars=$(set | cut -d "=" -f 1 | grep ac_cv_lib)
+        for i in $cache_vars
+        do
+                { eval $i=; unset $i;}
+        done
+}
+
+
+#
+# $1 lib name
+# $2 lib function name
+# $3 provided prefix
+#
+# Sets check_or_infer_prefix_include or returns ""
+#
+__check_or_infer_prefix_lib()
+{
+        check_or_infer_prefix_lib="no"
+        looked_up_lib=$1
+        looked_up_function=$2
+        provided_prefix=$3
+
+        for pref in $provided_prefix $prefix_candidate_path
+        do
+                for suffix in $prefix_candidate_sub_lib_path
+                do
+                        lib_found=0
+
+
+                        OLD_LDFLAGS=$LDFLAGS
+
+                        LDFLAGS+=" -L$pref/$suffix"
+
+                        ___unset_lib_cache
+                        as_ac_Lib=`$as_echo "ac_cv_lib_$looked_up_lib''_$looked_up_function" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $looked_up_function in -l$looked_up_lib" >&5
+$as_echo_n "checking for $looked_up_function in -l$looked_up_lib... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l$looked_up_lib  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char $looked_up_function ();
+int
+main ()
+{
+return $looked_up_function ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  lib_found=1
+else
+  lib_found=0
+fi
+
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking Looking for '$looked_up_lib' in '$pref/$suffix'" >&5
+$as_echo_n "checking Looking for '$looked_up_lib' in '$pref/$suffix'... " >&6; }
+
+                        if test "x$lib_found" = "x1"
+                        then
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+                                check_or_infer_prefix_lib=yes
+                                return
+                        fi
+
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                        LDFLAGS=$OLD_LDFLAGS
+
+                done
+        done
+}
+
+#
+# $1 header_name (ex. hwloc.h)
+# $2 libname     (ex. hwloc)
+# $3 looked up function (ex. hwloc_topology_init)
+# $4 LIBCODE (ex XML, HWLOC, ...)
+# $5 optionnal library version (need pkg-config)
+#
+
+
+
+
 
 
 
@@ -18119,6 +18323,46 @@ $as_echo "no" >&6; }
 	fi
 fi
 
+
+
+# Check whether --with-libxml-2.0 was given.
+if test "${with_libxml_2_0+set}" = set; then :
+  withval=$with_libxml_2_0; prefix=$withval
+fi
+
+
+
+# Check whether --with-libxml-2.0-include was given.
+if test "${with_libxml_2_0_include+set}" = set; then :
+  withval=$with_libxml_2_0_include; inc_prefix=$withval
+fi
+
+
+
+# Check whether --with-libxml-2.0-libs was given.
+if test "${with_libxml_2_0_libs+set}" = set; then :
+  withval=$with_libxml_2_0_libs; lib_prefix=$withval
+fi
+
+
+                check_or_infer_prefix_result="no"
+                header_name=libxml/tree.h
+                libname=libxml-2.0
+                function_name=xmlStrcmp
+                version=""
+
+                if test -n "$lib_prefix"
+                then
+                        lib_prefix=$prefix
+                fi
+
+                if test -n "$inc_prefix"
+                then
+                        inc_prefix=$prefix
+                fi
+
+                # First try with PKG config
+
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XML2" >&5
 $as_echo_n "checking for XML2... " >&6; }
@@ -18127,12 +18371,12 @@ if test -n "$XML2_CFLAGS"; then
     pkg_cv_XML2_CFLAGS="$XML2_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libxml-2.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "libxml-2.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_XML2_CFLAGS=`$PKG_CONFIG --cflags "libxml-2.0" 2>/dev/null`
+  pkg_cv_XML2_CFLAGS=`$PKG_CONFIG --cflags "$libname $version" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -18144,12 +18388,12 @@ if test -n "$XML2_LIBS"; then
     pkg_cv_XML2_LIBS="$XML2_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libxml-2.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "libxml-2.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_XML2_LIBS=`$PKG_CONFIG --libs "libxml-2.0" 2>/dev/null`
+  pkg_cv_XML2_LIBS=`$PKG_CONFIG --libs "$libname $version" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -18170,49 +18414,102 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        XML2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libxml-2.0" 2>&1`
+	        XML2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$libname $version" 2>&1`
         else
-	        XML2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libxml-2.0" 2>&1`
+	        XML2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$libname $version" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$XML2_PKG_ERRORS" >&5
 
-	as_fn_error $? "Package requirements (libxml-2.0) were not met:
-
-$XML2_PKG_ERRORS
-
-Consider adjusting the PKG_CONFIG_PATH environment variable if you
-installed software in a non-standard prefix.
-
-Alternatively, you may set the environment variables XML2_CFLAGS
-and XML2_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details." "$LINENO" 5
+	pkg_found=0
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
-is in your PATH or set the PKG_CONFIG environment variable to the full
-path to pkg-config.
-
-Alternatively, you may set the environment variables XML2_CFLAGS
-and XML2_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details.
-
-To get pkg-config, see <http://pkg-config.freedesktop.org/>.
-See \`config.log' for more details" "$LINENO" 5; }
+	pkg_found=0
 else
 	XML2_CFLAGS=$pkg_cv_XML2_CFLAGS
 	XML2_LIBS=$pkg_cv_XML2_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+	pkg_found=1
+fi
 
+                if test "x$pkg_found" = "x1"
+                then
+                        #Insert flags
+                        CPPFLAGS+=" ${xmlStrcmp_CFLAGS}"
+                        LDFLAGS+=" ${XML2_LIBS}"
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                        check_or_infer_prefix_result="yes"
+                else
+                        __check_or_infer_prefix_include $header_name $inc_prefix
+                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix
+
+                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                        then
+                                check_or_infer_prefix_result="yes"
+                        else
+                                check_or_infer_prefix_result="no"
+                        fi
+                fi
+
+                mpc_dep_found=$check_or_infer_prefix_result
+
+
+                if test "x$mpc_dep_found" = "xno"
+                then
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-libxml-2.0=PREFIX" >&5
+$as_echo "$as_me: consider using --with-libxml-2.0=PREFIX" >&6;}
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-libxml-2.0-libs=LIBS" >&5
+$as_echo "$as_me: consider using --with-libxml-2.0-libs=LIBS" >&6;}
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-libxml-2.0-include=INCS" >&5
+$as_echo "$as_me: consider using --with-libxml-2.0-include=INCS" >&6;}
+                        as_fn_error $? "Failed to locate required dependency libxml-2.0" "$LINENO" 5
+                fi
+
+
+
+
+
+# Check whether --with-hwloc was given.
+if test "${with_hwloc+set}" = set; then :
+  withval=$with_hwloc; prefix=$withval
 fi
 
 
 
+# Check whether --with-hwloc-include was given.
+if test "${with_hwloc_include+set}" = set; then :
+  withval=$with_hwloc_include; inc_prefix=$withval
+fi
 
+
+
+# Check whether --with-hwloc-libs was given.
+if test "${with_hwloc_libs+set}" = set; then :
+  withval=$with_hwloc_libs; lib_prefix=$withval
+fi
+
+
+                check_or_infer_prefix_result="no"
+                header_name=hwloc.h
+                libname=hwloc
+                function_name=hwloc_topology_init
+                version="< 2.0.0"
+
+                if test -n "$lib_prefix"
+                then
+                        lib_prefix=$prefix
+                fi
+
+                if test -n "$inc_prefix"
+                then
+                        inc_prefix=$prefix
+                fi
+
+                # First try with PKG config
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for HWLOC" >&5
@@ -18222,12 +18519,12 @@ if test -n "$HWLOC_CFLAGS"; then
     pkg_cv_HWLOC_CFLAGS="$HWLOC_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"hwloc < 2.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "hwloc < 2.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_HWLOC_CFLAGS=`$PKG_CONFIG --cflags "hwloc < 2.0" 2>/dev/null`
+  pkg_cv_HWLOC_CFLAGS=`$PKG_CONFIG --cflags "$libname $version" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -18239,12 +18536,12 @@ if test -n "$HWLOC_LIBS"; then
     pkg_cv_HWLOC_LIBS="$HWLOC_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"hwloc < 2.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "hwloc < 2.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_HWLOC_LIBS=`$PKG_CONFIG --libs "hwloc < 2.0" 2>/dev/null`
+  pkg_cv_HWLOC_LIBS=`$PKG_CONFIG --libs "$libname $version" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -18265,64 +18562,117 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        HWLOC_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "hwloc < 2.0" 2>&1`
+	        HWLOC_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$libname $version" 2>&1`
         else
-	        HWLOC_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "hwloc < 2.0" 2>&1`
+	        HWLOC_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$libname $version" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$HWLOC_PKG_ERRORS" >&5
 
-	as_fn_error $? "Package requirements (hwloc < 2.0) were not met:
-
-$HWLOC_PKG_ERRORS
-
-Consider adjusting the PKG_CONFIG_PATH environment variable if you
-installed software in a non-standard prefix.
-
-Alternatively, you may set the environment variables HWLOC_CFLAGS
-and HWLOC_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details." "$LINENO" 5
+	pkg_found=0
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
-is in your PATH or set the PKG_CONFIG environment variable to the full
-path to pkg-config.
-
-Alternatively, you may set the environment variables HWLOC_CFLAGS
-and HWLOC_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details.
-
-To get pkg-config, see <http://pkg-config.freedesktop.org/>.
-See \`config.log' for more details" "$LINENO" 5; }
+	pkg_found=0
 else
 	HWLOC_CFLAGS=$pkg_cv_HWLOC_CFLAGS
 	HWLOC_LIBS=$pkg_cv_HWLOC_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+	pkg_found=1
+fi
 
+                if test "x$pkg_found" = "x1"
+                then
+                        #Insert flags
+                        CPPFLAGS+=" ${hwloc_topology_init_CFLAGS}"
+                        LDFLAGS+=" ${HWLOC_LIBS}"
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                        check_or_infer_prefix_result="yes"
+                else
+                        __check_or_infer_prefix_include $header_name $inc_prefix
+                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix
+
+                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                        then
+                                check_or_infer_prefix_result="yes"
+                        else
+                                check_or_infer_prefix_result="no"
+                        fi
+                fi
+
+                mpc_dep_found=$check_or_infer_prefix_result
+
+
+                if test "x$mpc_dep_found" = "xno"
+                then
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-hwloc=PREFIX" >&5
+$as_echo "$as_me: consider using --with-hwloc=PREFIX" >&6;}
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-hwloc-libs=LIBS" >&5
+$as_echo "$as_me: consider using --with-hwloc-libs=LIBS" >&6;}
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-hwloc-include=INCS" >&5
+$as_echo "$as_me: consider using --with-hwloc-include=INCS" >&6;}
+                        as_fn_error $? "Failed to locate required dependency hwloc" "$LINENO" 5
+                fi
+
+
+
+
+
+# Check whether --with-openpa was given.
+if test "${with_openpa+set}" = set; then :
+  withval=$with_openpa; prefix=$withval
 fi
 
 
 
+# Check whether --with-openpa-include was given.
+if test "${with_openpa_include+set}" = set; then :
+  withval=$with_openpa_include; inc_prefix=$withval
+fi
 
+
+
+# Check whether --with-openpa-libs was given.
+if test "${with_openpa_libs+set}" = set; then :
+  withval=$with_openpa_libs; lib_prefix=$withval
+fi
+
+
+                check_or_infer_prefix_result="no"
+                header_name=opa.h
+                libname=openpa
+                function_name=OPA_load_int
+                version=""
+
+                if test -n "$lib_prefix"
+                then
+                        lib_prefix=$prefix
+                fi
+
+                if test -n "$inc_prefix"
+                then
+                        inc_prefix=$prefix
+                fi
+
+                # First try with PKG config
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OPENPA" >&5
-$as_echo_n "checking for OPENPA... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OPA" >&5
+$as_echo_n "checking for OPA... " >&6; }
 
-if test -n "$OPENPA_CFLAGS"; then
-    pkg_cv_OPENPA_CFLAGS="$OPENPA_CFLAGS"
+if test -n "$OPA_CFLAGS"; then
+    pkg_cv_OPA_CFLAGS="$OPA_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"openpa\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "openpa") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_OPENPA_CFLAGS=`$PKG_CONFIG --cflags "openpa" 2>/dev/null`
+  pkg_cv_OPA_CFLAGS=`$PKG_CONFIG --cflags "$libname $version" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -18330,16 +18680,16 @@ fi
  else
     pkg_failed=untried
 fi
-if test -n "$OPENPA_LIBS"; then
-    pkg_cv_OPENPA_LIBS="$OPENPA_LIBS"
+if test -n "$OPA_LIBS"; then
+    pkg_cv_OPA_LIBS="$OPA_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"openpa\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "openpa") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_OPENPA_LIBS=`$PKG_CONFIG --libs "openpa" 2>/dev/null`
+  pkg_cv_OPA_LIBS=`$PKG_CONFIG --libs "$libname $version" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -18360,47 +18710,293 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        OPENPA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "openpa" 2>&1`
+	        OPA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$libname $version" 2>&1`
         else
-	        OPENPA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "openpa" 2>&1`
+	        OPA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$libname $version" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
-	echo "$OPENPA_PKG_ERRORS" >&5
+	echo "$OPA_PKG_ERRORS" >&5
 
-	as_fn_error $? "Package requirements (openpa) were not met:
-
-$OPENPA_PKG_ERRORS
-
-Consider adjusting the PKG_CONFIG_PATH environment variable if you
-installed software in a non-standard prefix.
-
-Alternatively, you may set the environment variables OPENPA_CFLAGS
-and OPENPA_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details." "$LINENO" 5
+	pkg_found=0
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
-is in your PATH or set the PKG_CONFIG environment variable to the full
-path to pkg-config.
-
-Alternatively, you may set the environment variables OPENPA_CFLAGS
-and OPENPA_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details.
-
-To get pkg-config, see <http://pkg-config.freedesktop.org/>.
-See \`config.log' for more details" "$LINENO" 5; }
+	pkg_found=0
 else
-	OPENPA_CFLAGS=$pkg_cv_OPENPA_CFLAGS
-	OPENPA_LIBS=$pkg_cv_OPENPA_LIBS
+	OPA_CFLAGS=$pkg_cv_OPA_CFLAGS
+	OPA_LIBS=$pkg_cv_OPA_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+	pkg_found=1
+fi
 
+                if test "x$pkg_found" = "x1"
+                then
+                        #Insert flags
+                        CPPFLAGS+=" ${OPA_load_int_CFLAGS}"
+                        LDFLAGS+=" ${OPA_LIBS}"
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                        check_or_infer_prefix_result="yes"
+                else
+                        __check_or_infer_prefix_include $header_name $inc_prefix
+                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix
+
+                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                        then
+                                check_or_infer_prefix_result="yes"
+                        else
+                                check_or_infer_prefix_result="no"
+                        fi
+                fi
+
+                mpc_dep_found=$check_or_infer_prefix_result
+
+
+                if test "x$mpc_dep_found" = "xno"
+                then
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-openpa=PREFIX" >&5
+$as_echo "$as_me: consider using --with-openpa=PREFIX" >&6;}
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-openpa-libs=LIBS" >&5
+$as_echo "$as_me: consider using --with-openpa-libs=LIBS" >&6;}
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-openpa-include=INCS" >&5
+$as_echo "$as_me: consider using --with-openpa-include=INCS" >&6;}
+                        as_fn_error $? "Failed to locate required dependency openpa" "$LINENO" 5
+                fi
+
+
+
+
+#
+# Configure MPC Launch
+#
+
+mpc_hydra_enabled=yes
+
+
+# Check whether --with-hydra was given.
+if test "${with_hydra+set}" = set; then :
+  withval=$with_hydra; mpc_hydra_enabled=$withval
+else
+  mpc_hydra_enabled=yes
 fi
 
 
+
+# Check whether --with-slurm was given.
+if test "${with_slurm+set}" = set; then :
+  withval=$with_slurm; mpc_hydra_enabled=no; mpc_slurm_enabled=$withval
+else
+  mpc_slurm_enabled=no
+fi
+
+
+if test "x$mpc_hydra_enabled" = "xyes" -a  "x$mpc_slurm_enabled" = "xyes"
+then
+        as_fn_error $? "You mush choose between Hydra and Slurm (--with-hydra or --with-slurm)" "$LINENO" 5
+fi
+
+if test "x$mpc_hydra_enabled" = "xyes" -o  "x$mpc_slurm_enabled" = "xyes"
+then
+        #All good
+        dummy=1337
+else
+        as_fn_error $? "You mush activate either Hydra and Slurm (--with-hydra or --with-slurm)" "$LINENO" 5
+fi
+
+if test "x$mpc_slurm_enabled" = "xyes"; then
+
+        mpc_launcher="Slurm PMI"
+
+
+
+# Check whether --with-pmi was given.
+if test "${with_pmi+set}" = set; then :
+  withval=$with_pmi; prefix=$withval
+fi
+
+
+
+# Check whether --with-pmi-include was given.
+if test "${with_pmi_include+set}" = set; then :
+  withval=$with_pmi_include; inc_prefix=$withval
+fi
+
+
+
+# Check whether --with-pmi-libs was given.
+if test "${with_pmi_libs+set}" = set; then :
+  withval=$with_pmi_libs; lib_prefix=$withval
+fi
+
+
+                check_or_infer_prefix_result="no"
+                header_name=pmi.h
+                libname=pmi
+                function_name=PMI_Finalize
+                version=""
+
+                if test -n "$lib_prefix"
+                then
+                        lib_prefix=$prefix
+                fi
+
+                if test -n "$inc_prefix"
+                then
+                        inc_prefix=$prefix
+                fi
+
+                # First try with PKG config
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for PMI" >&5
+$as_echo_n "checking for PMI... " >&6; }
+
+if test -n "$PMI_CFLAGS"; then
+    pkg_cv_PMI_CFLAGS="$PMI_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_PMI_CFLAGS=`$PKG_CONFIG --cflags "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$PMI_LIBS"; then
+    pkg_cv_PMI_LIBS="$PMI_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_PMI_LIBS=`$PKG_CONFIG --libs "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        PMI_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$libname $version" 2>&1`
+        else
+	        PMI_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$libname $version" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$PMI_PKG_ERRORS" >&5
+
+	pkg_found=0
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	pkg_found=0
+else
+	PMI_CFLAGS=$pkg_cv_PMI_CFLAGS
+	PMI_LIBS=$pkg_cv_PMI_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	pkg_found=1
+fi
+
+                if test "x$pkg_found" = "x1"
+                then
+                        #Insert flags
+                        CPPFLAGS+=" ${PMI_Finalize_CFLAGS}"
+                        LDFLAGS+=" ${PMI_LIBS}"
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                        check_or_infer_prefix_result="yes"
+                else
+                        __check_or_infer_prefix_include $header_name $inc_prefix
+                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix
+
+                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                        then
+                                check_or_infer_prefix_result="yes"
+                        else
+                                check_or_infer_prefix_result="no"
+                        fi
+                fi
+
+                mpc_dep_found=$check_or_infer_prefix_result
+
+
+                if test "x$mpc_dep_found" = "xno"
+                then
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-pmi=PREFIX" >&5
+$as_echo "$as_me: consider using --with-pmi=PREFIX" >&6;}
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-pmi-libs=LIBS" >&5
+$as_echo "$as_me: consider using --with-pmi-libs=LIBS" >&6;}
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-pmi-include=INCS" >&5
+$as_echo "$as_me: consider using --with-pmi-include=INCS" >&6;}
+                        as_fn_error $? "Failed to locate required dependency pmi" "$LINENO" 5
+                fi
+
+
+
+$as_echo "#define MPC_USE_SLURM 1" >>confdefs.h
+
+else
+
+        # Here we look for hydra only if hydra has not been disabled
+        mpc_launcher="Hydra"
+
+        for ac_func in socket setsockopt gethostbyname
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+ can_access_hydra_pmi_socket=no
+else
+  can_access_hydra_pmi_socket=yes
+fi
+done
+
+
+        if test "x$can_access_hydra_pmi_socket" = "xno" ; then
+
+$as_echo "#define USE_PMI_PORT 1" >>confdefs.h
+
+        fi
+
+
+$as_echo "#define MPC_USE_HYDRA 1" >>confdefs.h
+
+fi
+
+ if test "x$mpc_launcher" = "xHydra"; then
+  HYDRA_CLIENT_LIB_ENABED_TRUE=
+  HYDRA_CLIENT_LIB_ENABED_FALSE='#'
+else
+  HYDRA_CLIENT_LIB_ENABED_TRUE='#'
+  HYDRA_CLIENT_LIB_ENABED_FALSE=
+fi
 
 
 # Checks for header files.
@@ -18818,12 +19414,36 @@ fi
 
 done
 
+for ac_header in stdlib.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "stdlib.h" "ac_cv_header_stdlib_h" "$ac_includes_default"
+if test "x$ac_cv_header_stdlib_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STDLIB_H 1
+_ACEOF
+
+fi
+
+done
+
 for ac_header in stdint.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "stdint.h" "ac_cv_header_stdint_h" "$ac_includes_default"
 if test "x$ac_cv_header_stdint_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_STDINT_H 1
+_ACEOF
+
+fi
+
+done
+
+for ac_header in string.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "string.h" "ac_cv_header_string_h" "$ac_includes_default"
+if test "x$ac_cv_header_string_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STRING_H 1
 _ACEOF
 
 fi
@@ -19030,7 +19650,6 @@ done
 #TODO CHECK PMI
 #TODO CHECK STDBOOL
 #TODO CHECK VALGRIND
-
 
 for ac_header in valgrind/memcheck.h
 do :
@@ -20613,8 +21232,6 @@ main ()
     if (*(data + i) != *(data3 + i))
       return 14;
   close (fd);
-  free (data);
-  free (data3);
   return 0;
 }
 _ACEOF
@@ -20716,7 +21333,7 @@ _ACEOF
 fi
 done
 
-for ac_func in strcasecmp strchr strdup strerror strstr strtol
+for ac_func in strcasecmp strchr strdup strerror strstr strtol snprintf
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -23026,138 +23643,6 @@ fi
 
 
 #
-# Configure MPC Launch
-#
-
-mpc_launcher="Hydra"
-
-mpc_hydra_enabled=""
-
-
-# Check whether --with-hydra was given.
-if test "${with_hydra+set}" = set; then :
-  withval=$with_hydra; mpc_hydra_enabled=$withval
-else
-  mpc_hydra_enabled=default
-fi
-
-
-mpc_slurm_enabled="no"
-
-
-# Check whether --with-slurm was given.
-if test "${with_slurm+set}" = set; then :
-  withval=$with_slurm; mpc_slurm_enabled=$withval
-else
-  mpc_slurm_enabled=""
-fi
-
-
-if test -n $mpc_slurm_enabled; then
-
-        if test "x$mpc_hydra_enabled" = "xdefault"; then
-                mpc_hydra_enabled=""
-        fi
-
-        if test -n "$mpc_hydra_enabled"; then
-                as_fn_error $? "Both SLURM and Hydra support cannot be enabled simultaneously" "$LINENO" 5
-        fi
-
-        mpc_launcher="Slurm PMI"
-else
-        if test -n $mpc_hydra_enabled; then
-                as_fn_error $? "You must have either SLURM or Hydra Launcher compiled in to run MPC" "$LINENO" 5
-        fi
-
-        # All other cases default to hydra
-        mpc_hydra_enabled="yes"
-fi
-
-if test -n $mpc_slurm_enabled; then
-        # IF this is a directory add as prefix
-        if test -d $mpc_slurm_enabled; then
-                CPPFLAGS+=" -I${mpc_slurm_enabled}/include/ -I${mpc_slurm_enabled}/include/slurm/"
-                LDFLAGS+=" -L${mpc_slurm_enabled}/lib/ -L${mpc_slurm_enabled}/lib64/"
-        else
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Trying to locate pmi.h" >&5
-$as_echo_n "checking Trying to locate pmi.h... " >&6; }
-                pmih_in="not found"
-                for h in /usr/include/slurm/ /usr/local/include/slurm/ /usr/include/slurm-wlm/ $withval
-                do
-                        if test -f $h/pmi.h; then
-                                CPPFLAGS+=" -I$h"
-                                pmih_in=$h
-                                break
-                        fi
-                done
-
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pmih_in" >&5
-$as_echo "$pmih_in" >&6; }
-        fi
-
-        # First try to locate the PMI (libmpi.so from slurm)
-        # only if hydra has not been forced
-
-        ac_fn_c_check_header_mongrel "$LINENO" "pmi.h" "ac_cv_header_pmi_h" "$ac_includes_default"
-if test "x$ac_cv_header_pmi_h" = xyes; then :
-
-fi
-
-
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PMI_Finalize in -lpmi" >&5
-$as_echo_n "checking for PMI_Finalize in -lpmi... " >&6; }
-if ${ac_cv_lib_pmi_PMI_Finalize+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpmi  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char PMI_Finalize ();
-int
-main ()
-{
-return PMI_Finalize ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_pmi_PMI_Finalize=yes
-else
-  ac_cv_lib_pmi_PMI_Finalize=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pmi_PMI_Finalize" >&5
-$as_echo "$ac_cv_lib_pmi_PMI_Finalize" >&6; }
-if test "x$ac_cv_lib_pmi_PMI_Finalize" = xyes; then :
-  libpmi_found=yes
-else
-  libpmi_found=no
-fi
-
-
-else
-
-# Here we look for hydra only if hydra has not been disabled
-echo "HYDRA"
-
-fi
-
-
-
-
-#
 # Modular MPC configuration
 #
 
@@ -23342,6 +23827,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${CAN_GENERATE_CONFIG_TRUE}" && test -z "${CAN_GENERATE_CONFIG_FALSE}"; then
   as_fn_error $? "conditional \"CAN_GENERATE_CONFIG\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HYDRA_CLIENT_LIB_ENABED_TRUE}" && test -z "${HYDRA_CLIENT_LIB_ENABED_FALSE}"; then
+  as_fn_error $? "conditional \"HYDRA_CLIENT_LIB_ENABED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_ARCH_X86_64_CONTEXT_SWITCH_TRUE}" && test -z "${MPC_ARCH_X86_64_CONTEXT_SWITCH_FALSE}"; then
@@ -25926,6 +26415,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${CAN_GENERATE_CONFIG_TRUE}" && test -z "${CAN_GENERATE_CONFIG_FALSE}"; then
   as_fn_error $? "conditional \"CAN_GENERATE_CONFIG\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HYDRA_CLIENT_LIB_ENABED_TRUE}" && test -z "${HYDRA_CLIENT_LIB_ENABED_FALSE}"; then
+  as_fn_error $? "conditional \"HYDRA_CLIENT_LIB_ENABED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_ARCH_X86_64_CONTEXT_SWITCH_TRUE}" && test -z "${MPC_ARCH_X86_64_CONTEXT_SWITCH_FALSE}"; then
