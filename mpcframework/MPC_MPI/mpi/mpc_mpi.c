@@ -14339,11 +14339,8 @@ __INTERNAL__PMPI_Dims_create (int nnodes, int ndims, int *dims)
     int *p;
     int err;
 
-	if (NULL == dims)
-		MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_ARG, "Invalid arg dims");
-
-	if (1 > ndims)
-		MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_DIMS, "Invalid dims");
+		if (ndims < 0)
+       MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_DIMS, "Invalid dims");
 
     /* Get # of free-to-be-assigned processes and # of free dimensions */
     freeprocs = nnodes;
@@ -14549,6 +14546,7 @@ __INTERNAL__PMPI_Cartdim_get (MPI_Comm comm, int *ndims)
 
   tmp = mpc_mpc_get_per_comm_data(comm);
   topo = &(tmp->topo);
+
 
   sctk_spinlock_lock (&(topo->lock));
 
@@ -14910,6 +14908,18 @@ __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
 	__INTERNAL__PMPI_Comm_rank (comm, &rank);
 	sctk_spinlock_lock (&(topo->lock));
 
+	if(remain_dims == NULL)
+	{
+		MPI_Comm_dup(MPI_COMM_SELF, comm_new);
+		tmp = mpc_mpc_get_per_comm_data(*comm_new);
+		topo_new = &(tmp->topo);
+
+		topo_new->type = MPI_CART;
+		topo_new->data.cart.ndims = ndims;
+		topo_new->lock = SCTK_SPINLOCK_INITIALIZER;
+		sctk_spinlock_unlock (&(topo->lock));
+		return MPI_SUCCESS;
+	}
 
 		if (topo->type != MPI_CART)
 		{
@@ -19189,23 +19199,12 @@ PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims, int *periods,
   int size;
   int sum = 1;
   
-  if (comm_old == MPI_COMM_NULL)
+  if (comm_old == MPI_COMM_NULL || ndims < 0)
       MPI_ERROR_REPORT (comm_old, MPI_ERR_COMM, "");
 
   __INTERNAL__PMPI_Comm_size (comm_old, &size);
   
-  if(ndims <= 0 || dims == NULL)
-  {
-    MPI_ERROR_REPORT (comm_old, MPI_ERR_DIMS, "");
-  }
-  
-  if( size <= ndims )
-  {
-	  *comm_cart = MPI_COMM_NULL;
-	  MPI_ERROR_REPORT (comm_old, MPI_ERR_DIMS, "");
-  }
-  
-  else if (ndims >= 1 && 
+  if (ndims >= 1 && 
 	  (periods == NULL || comm_cart == NULL))
   {
 	MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
@@ -19332,9 +19331,7 @@ PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims, int *periods,
 
   int size;
   __INTERNAL__PMPI_Comm_size (comm, &size);
-  if((maxdims <= 0) || (maxdims > size)){
-        MPI_ERROR_REPORT (comm, MPI_ERR_DIMS, "");
-  }
+
   }
 
   res = __INTERNAL__PMPI_Cart_get (comm, maxdims, dims, periods, coords);
@@ -19422,7 +19419,7 @@ PMPI_Cart_map (MPI_Comm comm_old, int ndims, int *dims, int *periods,
   int size;
   int sum = 1;
   __INTERNAL__PMPI_Comm_size (comm_old, &size);
-  if((ndims <= 0) || (ndims > size)){
+  if(ndims < 0){
         MPI_ERROR_REPORT (comm_old, MPI_ERR_DIMS, "");
   }
   for(i = 0; i < ndims; i++){
