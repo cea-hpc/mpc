@@ -14821,8 +14821,8 @@ __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
 
 		topo_new->type = MPI_CART;
 		topo_new->data.cart.ndims = ndims;
-		topo_new->lock = SCTK_SPINLOCK_INITIALIZER;
-		sctk_spinlock_unlock (&(topo->lock));
+		mpc_common_spinlock_init(&topo_new->lock, 0);
+		mpc_common_spinlock_unlock (&(topo->lock));
 		return MPI_SUCCESS;
 	}
 
