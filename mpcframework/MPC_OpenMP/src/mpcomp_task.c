@@ -2844,12 +2844,12 @@ void _mpc_task_dep_new_finalize( mpcomp_task_t *task )
 	mpcomp_task_dep_node_list_t *list_elt;
 	sctk_assert( task );
 
-	if ( !( task->task_dep_infos->htable ) )
-	{
+	//if ( !( task->task_dep_infos->htable ) )
+	//{
 		/* remove all elements from task dep hash table */
 		//(void) ___task_dep_free_hash_table( task->task_dep_infos->htable );
 		// task->task_dep_infos->htable = NULL;
-	}
+	//}
 
 	if ( !( task->task_dep_infos ) )
 	{
