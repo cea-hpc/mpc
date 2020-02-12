@@ -1653,7 +1653,7 @@ void ffunc (pmpi_cart_shift) (MPI_Comm * comm, int *direction, int *displ,
 
 }
 
-void ffunc (pmpi_cart_sub) (MPI_Comm * comm, char *remain_dims,
+void ffunc (pmpi_cart_sub) (MPI_Comm * comm, int *remain_dims,
 			    MPI_Comm * comm_new, int *res)
 {
   int d = 0;
