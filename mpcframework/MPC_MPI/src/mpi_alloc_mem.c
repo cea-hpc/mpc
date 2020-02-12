@@ -87,6 +87,9 @@ size_t mpc_MPI_allocmem_get_pool_size()
 
 int mpc_MPI_allocmem_pool_init()
 {
+        /* Check for particular programs */
+        mpc_MPI_allocmem_adapt(mpc_common_get_flags()->exename);
+
 	size_t pool_size = mpc_MPI_allocmem_get_pool_size();
 	int do_init = 0;
 	mpc_common_spinlock_lock( &_pool_init_lock );

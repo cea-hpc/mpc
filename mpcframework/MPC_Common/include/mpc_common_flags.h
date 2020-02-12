@@ -5,6 +5,9 @@
 
 struct mpc_common_flags
 {
+        /* Launch command */
+        char * exename;
+
         /* Topology Management */
         short enable_smt_capabilities;          /*< Should MPC run on hyperthreads */
 

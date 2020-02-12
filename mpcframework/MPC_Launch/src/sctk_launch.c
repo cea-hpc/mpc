@@ -949,10 +949,6 @@ auto_kill_func ( void *arg )
 	return NULL;
 }
 
-#ifdef MPC_MPI
-	void mpc_MPI_allocmem_adapt( char *exename );
-#endif
-
 void sctk_init_mpc_runtime()
 {
 	if ( sctk_mpc_env_initialized == 1 )
@@ -1100,9 +1096,9 @@ void sctk_init_mpc_runtime()
 	sctk_nodebug ( "init argc %d", argc );
 	sctk_env_init ( &argc, &argv );
 	sctk_nodebug ( "init argc %d", argc );
-#ifdef MPC_MPI
-	mpc_MPI_allocmem_adapt( argv[0] );
-#endif
+
+	mpc_common_get_flags()->exename = argv[0];
+
 	sctk_free( argv );
 
 	if ( tofree != NULL )
