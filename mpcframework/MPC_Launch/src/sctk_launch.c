@@ -1113,25 +1113,22 @@ static void __unpack_arguments()
 	}
 }
 
-void sctk_init_mpc_runtime()
+
+void mpc_launch_init_function() __attribute__((constructor));
+
+void mpc_launch_init_function()
 {
-	if ( sctk_mpc_env_initialized == 1 )
-	{
-		return;
-	}
+        static int __already_done = 0;
 
-	sctk_mpc_env_initialized = 1;
-
-        mpc_common_init_init();
+        if(__already_done)
+                return;
 
         /* Create the Initialization list for MPC */
 
-        mpc_common_init_list_register("Base Runtime Init");
-
-	//load mpc configuration from XML files if not already done.
+        //load mpc configuration from XML files if not already done.
         mpc_common_init_callback_register("Base Runtime Init", "Config", sctk_runtime_config_init, 0);
 
-	// Now attach signal handlers (if allowed by the config)
+        // Now attach signal handlers (if allowed by the config)
         mpc_common_init_callback_register("Base Runtime Init", "Sig Handlers", sctk_install_bt_sig_handler, 1);
 
         // Start autokill thread if needed
@@ -1142,6 +1139,21 @@ void sctk_init_mpc_runtime()
 
         // Unpack arguments from ENV
         mpc_common_init_callback_register("Base Runtime Init", "Parse CLI arguments", __unpack_arguments, 4);
+
+        __already_done = 1;
+}
+
+
+void sctk_init_mpc_runtime()
+{
+	if ( sctk_mpc_env_initialized == 1 )
+	{
+		return;
+	}
+
+	sctk_mpc_env_initialized = 1;
+
+   
 
         mpc_common_init_print();
 

@@ -85,14 +85,8 @@ struct mpc_common_init
         unsigned int list_count;
 };
 
-static struct mpc_common_init __mpc_init;
+static struct mpc_common_init __mpc_init = { 0 };
 
-
-void mpc_common_init_init()
-{
-        memset(&__mpc_init, 0, sizeof(struct mpc_common_init));
-        mpc_common_spinlock_init(&__mpc_init.lock, 0);
-}
 
 static inline struct mpc_common_init_list * _init_get_list(char * level_name)
 {
@@ -151,6 +145,9 @@ void mpc_common_init_list_register(char * list_name)
 
 void mpc_common_init_callback_register(char * list_name, char * callback_name, void (*callback)(), int priority )
 {
+        mpc_common_init_list_register(list_name);
+
+
         struct mpc_common_init_list * list = _init_get_list(list_name);
 
         if(!list)

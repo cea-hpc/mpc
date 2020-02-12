@@ -844,86 +844,110 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 }
 
 
+static void __per_thread_call_dynamic_initializers()
+{
+#ifdef MPC_USE_EXTLS
+	sctk_call_dynamic_initializers();
+#endif
+}
+
+
+
+
+void mpc_thread_per_thread_init_function() __attribute__((constructor));
+
+void mpc_thread_per_thread_init_function()
+{
+        static int __already_done = 0;
+
+        if(__already_done)
+                return;
+
+        mpc_common_init_callback_register("Per Thread Init", "Allocator Numa Migrate", sctk_alloc_posix_numa_migrate, 0);
+        mpc_common_init_callback_register("Per Thread Init", "Dynamic Initializers", __per_thread_call_dynamic_initializers, 1);
+
+
+        __already_done = 1;
+}
+
+
 extern void mpc_mpi_cl_per_thread_ctx_init();
 extern void mpc_mpi_cl_per_thread_ctx_release();
 
 static void sctk_thread_data_reset();
 static void *
-sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
+sctk_thread_create_tmp_start_routine_user( sctk_thread_data_t *__arg )
 {
-  void *res;
-  sctk_thread_data_t tmp;
-  memset( &tmp, 0, sizeof(sctk_thread_data_t));
-  while (start_func_done == 0)
-    sctk_thread_yield();
-  sctk_thread_data_reset();
+	void *res;
+	sctk_thread_data_t tmp;
+	memset( &tmp, 0, sizeof( sctk_thread_data_t ) );
 
-  /* FIXME Intel OMP: at some point, in pthread mode, the ptr_cleanup variable seems to
+	while ( start_func_done == 0 )
+		sctk_thread_yield();
+
+	sctk_thread_data_reset();
+
+	/* FIXME Intel OMP: at some point, in pthread mode, the ptr_cleanup variable seems to
    * be corrupted. */
-  struct _sctk_thread_cleanup_buffer ** ptr_cleanup = malloc(
-      sizeof(struct _sctk_thread_cleanup_buffer*));
-  tmp = *__arg;
+	struct _sctk_thread_cleanup_buffer **ptr_cleanup = malloc( sizeof( struct _sctk_thread_cleanup_buffer * ) );
+	tmp = *__arg;
 
-
-  sctk_set_tls (tmp.tls);
-  *ptr_cleanup = NULL;
-  sctk_thread_setspecific (_sctk_thread_handler_key, ptr_cleanup);
+	sctk_set_tls( tmp.tls );
+	*ptr_cleanup = NULL;
+	sctk_thread_setspecific( _sctk_thread_handler_key, ptr_cleanup );
 
 #ifdef MPC_MPI
-  mpc_mpi_cl_per_mpi_process_ctx_reinit (tmp.father_data);
+	mpc_mpi_cl_per_mpi_process_ctx_reinit( tmp.father_data );
 #endif
 
-  sctk_free (__arg);
-  tmp.virtual_processor = sctk_thread_get_vp ();
-  sctk_nodebug("%d on %d", tmp.task_id, tmp.virtual_processor);
+	sctk_free( __arg );
+	tmp.virtual_processor = sctk_thread_get_vp();
+	sctk_nodebug( "%d on %d", tmp.task_id, tmp.virtual_processor );
 
-  sctk_thread_data_set (&tmp);
-  sctk_thread_add (&tmp,sctk_thread_self());
+	sctk_thread_data_set( &tmp );
+	sctk_thread_add( &tmp, sctk_thread_self() );
 
-  sctk_alloc_posix_numa_migrate();
+	/* Note that the profiler is not initialized in user threads */
 
+	/** ** **/
 
-#ifdef MPC_USE_EXTLS
-  sctk_call_dynamic_initializers();
-#endif
-  /* Note that the profiler is not initialized in user threads */
-
-  /** ** **/
-
-  sctk_report_creation (sctk_thread_self());
-  /** **/
-
+	sctk_report_creation( sctk_thread_self() );
+/** **/
 
 #ifdef MPC_MPI
-   mpc_mpi_cl_per_thread_ctx_init();
+	mpc_mpi_cl_per_thread_ctx_init();
 #endif
 
-   if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
-     sctk_thread_generic_addkind_mask_self(KIND_MASK_PTHREAD);
-     sctk_thread_generic_set_basic_priority_self(
-         sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
-     sctk_thread_generic_setkind_priority_self(
-         sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
-     sctk_thread_generic_set_current_priority_self(
-         sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
-   }
+	if ( mpc_common_get_flags()->new_scheduler_engine_enabled )
+	{
+		sctk_thread_generic_addkind_mask_self( KIND_MASK_PTHREAD );
+		sctk_thread_generic_set_basic_priority_self(
+			sctk_runtime_config_get()->modules.scheduler.posix_basic_priority );
+		sctk_thread_generic_setkind_priority_self(
+			sctk_runtime_config_get()->modules.scheduler.posix_basic_priority );
+		sctk_thread_generic_set_current_priority_self(
+			sctk_runtime_config_get()->modules.scheduler.posix_basic_priority );
+	}
 
-   res = tmp.__start_routine(tmp.__arg);
+        mpc_common_init_trigger("Per Thread Init");
+
+	res = tmp.__start_routine( tmp.__arg );
 
 #ifdef MPC_MPI
-  mpc_mpi_cl_per_thread_ctx_release();
+	mpc_mpi_cl_per_thread_ctx_release();
 #endif
 
-  /** ** **/
-  sctk_report_death (sctk_thread_self());
-  /** **/
+        mpc_common_init_trigger("Per Thread Release");
 
-  sctk_free(ptr_cleanup);
-  sctk_thread_remove (&tmp);
-  sctk_thread_data_set (NULL);
-  return res;
+	/** ** **/
+	sctk_report_death( sctk_thread_self() );
+	/** **/
+
+	sctk_free( ptr_cleanup );
+	sctk_thread_remove( &tmp );
+	sctk_thread_data_set( NULL );
+	return res;
 }
-
 
 /*
  * Sylvain: the following code was use for creating Intel OpenMP threads with MPC.
