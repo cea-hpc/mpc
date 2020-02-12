@@ -831,6 +831,6 @@ echo "The following modules will be built:"
 echo ""
 echo "MPC_Thread : $mpc_thread_enabled"
 echo "MPC_Message_passing : $mpc_lowcom_enabled"
-echo "MPC_MPI : $mpc_lowcom_enabled"
+echo "MPC_MPI : $mpc_mpi_enabled"
 echo "======================================="
 

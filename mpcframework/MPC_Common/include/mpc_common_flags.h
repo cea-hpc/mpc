@@ -3,6 +3,10 @@
 
 #include "opa_primitives.h"
 
+/******************
+ * FLAG STRUCTURE *
+ ******************/
+
 struct mpc_common_flags
 {
         /* Launch command */
@@ -41,5 +45,15 @@ static inline int __MPC_Maybe_disguised()
 {
 	return OPA_load_int( &__mpc_p_disguise_flag );
 }
+
+/***********************
+ * INTIALIZATION LISTS *
+ ***********************/
+
+void mpc_common_init_init();
+void mpc_common_init_trigger(char * level_name);
+void mpc_common_init_list_register(char * list_name);
+void mpc_common_init_callback_register(char * list_name, char * callback_name, void (*callback)(), int priority );
+
 
 #endif /* MPC_COMMON_FLAGS_H_ */

@@ -923,8 +923,7 @@ sctk_disable_addr_randomize ( int argc, char **argv )
 }
 #endif
 
-static void *
-auto_kill_func ( void *arg )
+static void * ___auto_kill_func ( void *arg )
 {
 	int timeout = *( int * )arg;
 
@@ -949,36 +948,22 @@ auto_kill_func ( void *arg )
 	return NULL;
 }
 
-void sctk_init_mpc_runtime()
+static void __create_autokill_thread()
 {
-	if ( sctk_mpc_env_initialized == 1 )
-	{
-		return;
-	}
+        static int auto_kill = 0;
 
-	char *sctk_argument;
-	int argc = 1;
-	char **argv;
-	void **tofree = NULL;
-	int tofree_nb = 0;
-	static int auto_kill;
-	char *argv_tmp[1];
-	argv = argv_tmp;
-	argv[0] = "main";
-	sctk_mpc_env_initialized = 1;
-	//load mpc configuration from XML files if not already done.
-	sctk_runtime_config_init();
-	// Now attach signal handlers (if allowed by the config)
-	sctk_install_bt_sig_handler();
-
-	auto_kill = sctk_runtime_config_get()->modules.launcher.autokill;
+        auto_kill = sctk_runtime_config_get()->modules.launcher.autokill;
 
 	if ( auto_kill > 0 )
 	{
 		pthread_t pid;
-		/*       sctk_warning ("Auto kill in %s s",auto_kill); */
-		pthread_create( &pid, NULL, auto_kill_func, &auto_kill );
+		pthread_create( &pid, NULL, ___auto_kill_func, &auto_kill );
 	}
+}
+
+
+static void __set_default_values()
+{
 
 	/* Default values */
 	// this function is called 2 times, one here and one with the function
@@ -1033,6 +1018,20 @@ void sctk_init_mpc_runtime()
 	   return mpc_user_main (argc, argv);
 	   }
 	 */
+}
+
+static void __unpack_arguments()
+{
+	char *sctk_argument;
+	int argc = 1;
+	char **argv;
+	void **tofree = NULL;
+	int tofree_nb = 0;
+	static int auto_kill;
+	char *argv_tmp[1];
+	argv = argv_tmp;
+	argv[0] = "main";
+
 	sctk_argument = getenv ( "MPC_STARTUP_ARGS" );
 
 	if ( sctk_argument != NULL )
@@ -1112,6 +1111,42 @@ void sctk_init_mpc_runtime()
 
 		sctk_free( tofree );
 	}
+}
+
+void sctk_init_mpc_runtime()
+{
+	if ( sctk_mpc_env_initialized == 1 )
+	{
+		return;
+	}
+
+	sctk_mpc_env_initialized = 1;
+
+        mpc_common_init_init();
+
+        /* Create the Initialization list for MPC */
+
+        mpc_common_init_list_register("Base Runtime Init");
+
+	//load mpc configuration from XML files if not already done.
+        mpc_common_init_callback_register("Base Runtime Init", "Config", sctk_runtime_config_init, 0);
+
+	// Now attach signal handlers (if allowed by the config)
+        mpc_common_init_callback_register("Base Runtime Init", "Sig Handlers", sctk_install_bt_sig_handler, 1);
+
+        // Start autokill thread if needed
+        mpc_common_init_callback_register("Base Runtime Init", "Autokill", __create_autokill_thread, 2);
+
+        // Default values unpacking
+        mpc_common_init_callback_register("Base Runtime Init", "Default Config", __set_default_values, 3);
+
+        // Unpack arguments from ENV
+        mpc_common_init_callback_register("Base Runtime Init", "Parse CLI arguments", __unpack_arguments, 4);
+
+        mpc_common_init_print();
+
+        mpc_common_init_trigger("Base Runtime Init");
+
 }
 
 void sctk_release_mpc_runtime()
