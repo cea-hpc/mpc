@@ -106,6 +106,7 @@ extern "C"
 #else
 #define __UNUSED__
 #endif
+#define UNUSED(a) (void)&a
 
 
   void sctk_silent_debug (const char *fmt, ...);

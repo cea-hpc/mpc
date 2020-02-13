@@ -42,7 +42,10 @@
 #include <fcntl.h>
 #include <utlist.h>
 #include <dlfcn.h>
+
+#ifdef MPC_USE_EXTLS
 #include <extls.h>
+#endif
 
 #if defined(SCTK_USE_TLS)
 /** storage slot used by libextls to store its own data.
@@ -61,9 +64,13 @@ __thread int __mpc_task_rank = -2;
  */
 int sctk_locate_dynamic_initializers()
 {
+#ifdef MPC_USE_EXTLS
 	char * ckpt_wrapper = (sctk_checkpoint_mode) ? "dmtcp_nocheckpoint" : "";
 	extls_ret_t ret = extls_locate_dynamic_initializers(ckpt_wrapper);
 	return (ret == EXTLS_SUCCESS)?0:1;
+#else
+	return 0;
+#endif
 }
 
 /**
@@ -75,6 +82,7 @@ int sctk_locate_dynamic_initializers()
  */
 int sctk_call_dynamic_initializers()
 {
+#ifdef MPC_USE_EXTLS
 	extls_ret_t ret = extls_call_dynamic_initializers();
 
 	if( ret != EXTLS_SUCCESS)
@@ -85,6 +93,9 @@ int sctk_call_dynamic_initializers()
 	ret = extls_call_static_constructors();
 
 	return (ret == EXTLS_SUCCESS)?0:1;
+#else
+	return 0;
+#endif
 }
 
 #if defined(SCTK_USE_TLS) && defined(Linux_SYS)
