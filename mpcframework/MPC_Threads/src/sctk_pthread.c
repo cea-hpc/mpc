@@ -40,11 +40,8 @@
 #include "sctk_posix_pthread.h"
 #include "sctk_kernel_thread.h"
 #include <semaphore.h>
-#ifdef MPC_Message_Passing
-#include <comm.h>
-#include <sctk_communicator.h>
-#include "mpc_common_asm.h"
-#endif
+
+
 #include "mpc_common_asm.h"
 
 #include <mpc_topology.h>

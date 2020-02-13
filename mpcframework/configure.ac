@@ -88,7 +88,7 @@ prefix_candidate_sub_lib_path=". lib lib64"
 #
 ___unset_lib_cache()
 {
-        cache_vars=$(set | cut -d "=" -f 1 | grep ac_cv_lib)
+        cache_vars=$(set | cut -d "=" -f 1 | grep ac_cv_lib | sed "s/'//g")
         for i in $cache_vars
         do
                 AS_UNSET([$i])
@@ -247,6 +247,33 @@ if test "x$mpc_dep_found" = "xyes"; then
 else
         AC_MSG_RESULT([Standard allocator])
 fi
+
+#
+# Network list
+#
+
+mpc_net_list = "tcp shm"
+
+#
+# Detect libibverbs presence
+#
+
+infiniband_enabled="no"
+
+MPC_DETECT_DEPENDENCY([infiniband/verbs.h], [ibverbs], [ibv_query_qp], [IBV])
+
+AC_MSG_CHECKING([Checking for libiverbs to enable verbs support])
+
+if test "x$mpc_dep_found" = "xyes"; then
+        AC_MSG_RESULT([yes])
+        mpc_net_list="$mpc_net_list verbs"
+        AC_DEFINE([MPC_USE_INFINIBAND], [1], [Infiniband support is enabled])
+        infiniband_enabled="yes"
+else
+        AC_MSG_RESULT([no])
+fi
+
+AM_CONDITIONAL([INFINIBAND_DRIVER_ENABLED], [test "x$infiniband_enabled" = "xyes"])
 
 #
 # Configure MPC Launch
@@ -868,6 +895,8 @@ echo ""
 echo "Process Launcher: $mpc_launcher"
 echo "Allocator: $mpc_allocator"
 echo "Privatization support: $mpc_privatization_support"
+echo ""
+echo "Enabled networks: $mpc_net_list"
 echo ""
 echo "The following modules will be built:"
 echo ""

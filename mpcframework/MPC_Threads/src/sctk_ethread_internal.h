@@ -22,6 +22,8 @@
 #ifndef __SCTK_ETHREAD_INTERNALS_H_
 #define __SCTK_ETHREAD_INTERNALS_H_
 
+#include <mpc_config.h>
+
 #ifdef __MIC__
 	#include <immintrin.h>
 #endif
@@ -39,9 +41,7 @@
 #include "mpc_common_helper.h"
 
 #include "mpc_runtime_config.h"
-#ifdef MPC_Message_Passing
-#include <sctk_low_level_comm.h>
-#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -1499,7 +1499,8 @@ extern "C"
             }
         }     
     #else
-            sctk_network_notify_idle_message ();
+        TODO("CHECK CONSEQUENCES OF COMMENT");
+        //sctk_network_notify_idle_message();
     #endif
 #endif
 # if 0

@@ -461,7 +461,6 @@ static inline void __topology_device_fill_in_infiniband_info( mpc_topology_devic
 	{
 		if ( !strcmp( dev_list[id]->name, device->name ) || !strcmp( dev_list[id]->dev_name, device->name ) )
 		{
-			sctk_nodebug( "OFA device %s has ID %d", ofa_osdev->name, id );
 			device->device_id = id;
 			break;
 		}

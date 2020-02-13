@@ -2813,3 +2813,12 @@ void mpc_lowcomm_libmode_release()
 {
 	mpc_lowcomm_barrier( SCTK_COMM_WORLD );
 }
+
+void mpc_lowcomm_init() __attribute__((constructor));
+
+void mpc_lowcomm_init()
+{
+        MPC_INIT_CALL_ONLY_ONCE
+
+
+}

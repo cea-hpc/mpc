@@ -14,6 +14,13 @@ if HYDRA_CLIENT_LIB_ENABED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Launch/src/hydra_client
 endif
 
+AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Message_Passing/src/tcp/
+AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Message_Passing/src/shm/
+
+if INFINIBAND_DRIVER_ENABLED
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Message_Passing/src/ib/
+endif
+
 mpc_headerdir=$(includedir)/mpc/
 
 noinst_LTLIBRARIES = libmpclaunch.la

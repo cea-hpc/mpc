@@ -8,6 +8,11 @@ if MPC_THREAD_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Threads/src/ -I$(abs_top_srcdir)/MPC_Threads/include/ -I$(abs_top_srcdir)/MPC_Topology/include/
 endif
 
+if INFINIBAND_DRIVER_ENABLED
+AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Message_Passing/src/ib/
+endif
+
+
 #Yes drivers are leaking out
 
 AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Message_Passing/src/tcp/

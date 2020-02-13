@@ -659,6 +659,10 @@ HYDRA_CLIENT_LIB_ENABED_TRUE
 HAVE_MPIEXEC
 PMI_LIBS
 PMI_CFLAGS
+INFINIBAND_DRIVER_ENABLED_FALSE
+INFINIBAND_DRIVER_ENABLED_TRUE
+IBV_LIBS
+IBV_CFLAGS
 ALLOC_LIBS
 ALLOC_CFLAGS
 OPA_LIBS
@@ -825,6 +829,9 @@ with_openpa_libs
 with_mpcalloc
 with_mpcalloc_include
 with_mpcalloc_libs
+with_ibverbs
+with_ibverbs_include
+with_ibverbs_libs
 with_hydra
 with_slurm
 with_pmi
@@ -864,6 +871,8 @@ OPA_CFLAGS
 OPA_LIBS
 ALLOC_CFLAGS
 ALLOC_LIBS
+IBV_CFLAGS
+IBV_LIBS
 PMI_CFLAGS
 PMI_LIBS
 EXTLS_CFLAGS
@@ -1537,6 +1546,9 @@ Optional Packages:
   --with-mpcalloc         Provide prefix for mpcalloc
   --with-mpcalloc-inc     Provide include path for mpcalloc
   --with-mpcalloc-libs    Provide library path for mpcalloc
+  --with-ibverbs          Provide prefix for ibverbs
+  --with-ibverbs-inc      Provide include path for ibverbs
+  --with-ibverbs-libs     Provide library path for ibverbs
   --with-hydra            Compile MPC with hydra support (requires an external
                           hydra launcher)
   --with-slurm            Rely on SLURM's PMI
@@ -1578,6 +1590,8 @@ Some influential environment variables:
   ALLOC_CFLAGS
               C compiler flags for ALLOC, overriding pkg-config
   ALLOC_LIBS  linker flags for ALLOC, overriding pkg-config
+  IBV_CFLAGS  C compiler flags for IBV, overriding pkg-config
+  IBV_LIBS    linker flags for IBV, overriding pkg-config
   PMI_CFLAGS  C compiler flags for PMI, overriding pkg-config
   PMI_LIBS    linker flags for PMI, overriding pkg-config
   EXTLS_CFLAGS
@@ -18130,7 +18144,7 @@ prefix_candidate_sub_lib_path=". lib lib64"
 #
 ___unset_lib_cache()
 {
-        cache_vars=$(set | cut -d "=" -f 1 | grep ac_cv_lib)
+        cache_vars=$(set | cut -d "=" -f 1 | grep ac_cv_lib | sed "s/'//g")
         for i in $cache_vars
         do
                 { eval $i=; unset $i;}
@@ -18965,6 +18979,180 @@ else
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: Standard allocator" >&5
 $as_echo "Standard allocator" >&6; }
 fi
+
+#
+# Network list
+#
+
+mpc_net_list = "tcp shm"
+
+#
+# Detect libibverbs presence
+#
+
+infiniband_enabled="no"
+
+
+
+
+# Check whether --with-ibverbs was given.
+if test "${with_ibverbs+set}" = set; then :
+  withval=$with_ibverbs; prefix=$withval
+fi
+
+
+
+# Check whether --with-ibverbs-include was given.
+if test "${with_ibverbs_include+set}" = set; then :
+  withval=$with_ibverbs_include; inc_prefix=$withval
+fi
+
+
+
+# Check whether --with-ibverbs-libs was given.
+if test "${with_ibverbs_libs+set}" = set; then :
+  withval=$with_ibverbs_libs; lib_prefix=$withval
+fi
+
+
+                check_or_infer_prefix_result="no"
+                header_name=infiniband/verbs.h
+                libname=ibverbs
+                function_name=ibv_query_qp
+                version=""
+
+                if test -n "$lib_prefix"
+                then
+                        lib_prefix=$prefix
+                fi
+
+                if test -n "$inc_prefix"
+                then
+                        inc_prefix=$prefix
+                fi
+
+                # First try with PKG config
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for IBV" >&5
+$as_echo_n "checking for IBV... " >&6; }
+
+if test -n "$IBV_CFLAGS"; then
+    pkg_cv_IBV_CFLAGS="$IBV_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_IBV_CFLAGS=`$PKG_CONFIG --cflags "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$IBV_LIBS"; then
+    pkg_cv_IBV_LIBS="$IBV_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_IBV_LIBS=`$PKG_CONFIG --libs "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        IBV_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$libname $version" 2>&1`
+        else
+	        IBV_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$libname $version" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$IBV_PKG_ERRORS" >&5
+
+	pkg_found=0
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	pkg_found=0
+else
+	IBV_CFLAGS=$pkg_cv_IBV_CFLAGS
+	IBV_LIBS=$pkg_cv_IBV_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	pkg_found=1
+fi
+
+                if test "x$pkg_found" = "x1"
+                then
+                        #Insert flags
+                        CPPFLAGS+=" ${IBV_CFLAGS}"
+
+                        LDFLAGS+=" ${IBV_LIBS}"
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                        check_or_infer_prefix_result="yes"
+                else
+                        __check_or_infer_prefix_include $header_name $inc_prefix
+                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix
+
+                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                        then
+                                check_or_infer_prefix_result="yes"
+                        else
+                                check_or_infer_prefix_result="no"
+                        fi
+                fi
+
+                mpc_dep_found=$check_or_infer_prefix_result
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Checking for libiverbs to enable verbs support" >&5
+$as_echo_n "checking Checking for libiverbs to enable verbs support... " >&6; }
+
+if test "x$mpc_dep_found" = "xyes"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        mpc_net_list="$mpc_net_list verbs"
+
+$as_echo "#define MPC_USE_INFINIBAND 1" >>confdefs.h
+
+        infiniband_enabled="yes"
+else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+ if test "x$infiniband_enabled" = "xyes"; then
+  INFINIBAND_DRIVER_ENABLED_TRUE=
+  INFINIBAND_DRIVER_ENABLED_FALSE='#'
+else
+  INFINIBAND_DRIVER_ENABLED_TRUE='#'
+  INFINIBAND_DRIVER_ENABLED_FALSE=
+fi
+
 
 #
 # Configure MPC Launch
@@ -24280,6 +24468,10 @@ if test -z "${CAN_GENERATE_CONFIG_TRUE}" && test -z "${CAN_GENERATE_CONFIG_FALSE
   as_fn_error $? "conditional \"CAN_GENERATE_CONFIG\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${INFINIBAND_DRIVER_ENABLED_TRUE}" && test -z "${INFINIBAND_DRIVER_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"INFINIBAND_DRIVER_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${HYDRA_CLIENT_LIB_ENABED_TRUE}" && test -z "${HYDRA_CLIENT_LIB_ENABED_FALSE}"; then
   as_fn_error $? "conditional \"HYDRA_CLIENT_LIB_ENABED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -26876,6 +27068,10 @@ if test -z "${CAN_GENERATE_CONFIG_TRUE}" && test -z "${CAN_GENERATE_CONFIG_FALSE
   as_fn_error $? "conditional \"CAN_GENERATE_CONFIG\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${INFINIBAND_DRIVER_ENABLED_TRUE}" && test -z "${INFINIBAND_DRIVER_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"INFINIBAND_DRIVER_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${HYDRA_CLIENT_LIB_ENABED_TRUE}" && test -z "${HYDRA_CLIENT_LIB_ENABED_FALSE}"; then
   as_fn_error $? "conditional \"HYDRA_CLIENT_LIB_ENABED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -29345,6 +29541,8 @@ echo ""
 echo "Process Launcher: $mpc_launcher"
 echo "Allocator: $mpc_allocator"
 echo "Privatization support: $mpc_privatization_support"
+echo ""
+echo "Enabled networks: $mpc_net_list"
 echo ""
 echo "The following modules will be built:"
 echo ""

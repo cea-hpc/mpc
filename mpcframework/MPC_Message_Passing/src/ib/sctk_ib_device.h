@@ -30,7 +30,7 @@
 
 #include "mpc_common_spinlock.h"
 #include "sctk_ib.h"
-#include "sctk_runtime_config_struct.h"
+#include "mpc_runtime_config.h"
 
 struct sctk_ib_qp_s;
 

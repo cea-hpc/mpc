@@ -88,7 +88,26 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@MPC_THREAD_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/MPC_Threads/src/ -I$(abs_top_srcdir)/MPC_Threads/include/ -I$(abs_top_srcdir)/MPC_Topology/include/
+@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/MPC_Message_Passing/src/ib/
+@MPC_THREAD_ENABLED_TRUE@am__append_2 = -I$(abs_top_srcdir)/MPC_Threads/src/ -I$(abs_top_srcdir)/MPC_Threads/include/ -I$(abs_top_srcdir)/MPC_Topology/include/
+@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_3 = ./ib/sctk_ib_async.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_buffered.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_cm.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_config.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_cp.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_device.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_eager.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_mmu.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_mpi.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_polling.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_prof.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_qp.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_rdma.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_toolkit.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_topology.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ibufs.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ibufs_rdma.c
 subdir = MPC_Message_Passing/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_gcc_builtin.m4 \
@@ -134,7 +153,44 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libmpclowcomm_la_DEPENDENCIES = ../../MPC_Launch/src/libmpclaunch.la
+am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
+	sctk_communicator.c sctk_control_messages.c sctk_handle.c \
+	sctk_low_level_comm.c sctk_multirail.c sctk_net_tools.c \
+	sctk_net_topology.c sctk_polling.c sctk_rail.c sctk_reorder.c \
+	sctk_route.c sctk_topological_polling.c \
+	sctk_topological_rail.c sctk_window.c ./tcp/sctk_tcp.c \
+	./tcp/sctk_tcp_rdma.c ./tcp/sctk_tcp_toolkit.c \
+	./shm/sctk_handler_mpi.c ./shm/sctk_shm.c \
+	./shm/sctk_shm_eager.c ./shm/sctk_shm_mapper.c \
+	./shm/sctk_shm_raw_queues.c ./shm/sctk_handler_pmi.c \
+	./shm/sctk_shm_cma.c ./shm/sctk_shm_frag.c \
+	./shm/sctk_shm_qemu.c ./shm/sctk_shm_raw_queues_internals.c \
+	./ib/sctk_ib_async.c ./ib/sctk_ib_buffered.c ./ib/sctk_ib.c \
+	./ib/sctk_ib_cm.c ./ib/sctk_ib_config.c ./ib/sctk_ib_cp.c \
+	./ib/sctk_ib_device.c ./ib/sctk_ib_eager.c ./ib/sctk_ib_mmu.c \
+	./ib/sctk_ib_mpi.c ./ib/sctk_ib_polling.c ./ib/sctk_ib_prof.c \
+	./ib/sctk_ib_qp.c ./ib/sctk_ib_rdma.c ./ib/sctk_ib_toolkit.c \
+	./ib/sctk_ib_topology.c ./ib/sctk_ibufs.c \
+	./ib/sctk_ibufs_rdma.c
 am__dirstamp = $(am__leading_dot)dirstamp
+@INFINIBAND_DRIVER_ENABLED_TRUE@am__objects_1 = ./ib/sctk_ib_async.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_buffered.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_cm.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_config.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_cp.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_device.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_eager.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_mmu.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_mpi.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_polling.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_prof.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_qp.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_rdma.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_toolkit.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_topology.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ibufs.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ibufs_rdma.lo
 am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
 	sctk_communicator.lo sctk_control_messages.lo sctk_handle.lo \
 	sctk_low_level_comm.lo sctk_multirail.lo sctk_net_tools.lo \
@@ -146,7 +202,8 @@ am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
 	./shm/sctk_shm_eager.lo ./shm/sctk_shm_mapper.lo \
 	./shm/sctk_shm_raw_queues.lo ./shm/sctk_handler_pmi.lo \
 	./shm/sctk_shm_cma.lo ./shm/sctk_shm_frag.lo \
-	./shm/sctk_shm_qemu.lo ./shm/sctk_shm_raw_queues_internals.lo
+	./shm/sctk_shm_qemu.lo ./shm/sctk_shm_raw_queues_internals.lo \
+	$(am__objects_1)
 libmpclowcomm_la_OBJECTS = $(am_libmpclowcomm_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -187,7 +244,7 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libmpclowcomm_la_SOURCES)
-DIST_SOURCES = $(libmpclowcomm_la_SOURCES)
+DIST_SOURCES = $(am__libmpclowcomm_la_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -255,6 +312,8 @@ GREP = @GREP@
 HAVE_MPIEXEC = @HAVE_MPIEXEC@
 HWLOC_CFLAGS = @HWLOC_CFLAGS@
 HWLOC_LIBS = @HWLOC_LIBS@
+IBV_CFLAGS = @IBV_CFLAGS@
+IBV_LIBS = @IBV_LIBS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -372,7 +431,7 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/MPC_Launch/include/ \
 	-I$(abs_top_srcdir)/MPC_Message_Passing/src/tcp/ \
 	-I$(abs_top_srcdir)/MPC_Message_Passing/src/shm/ \
-	$(am__append_1)
+	$(am__append_1) $(am__append_2)
 lib_LTLIBRARIES = libmpclowcomm.la
 libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	sctk_communicator.c sctk_control_messages.c sctk_handle.c \
@@ -385,7 +444,8 @@ libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	./shm/sctk_shm_eager.c ./shm/sctk_shm_mapper.c \
 	./shm/sctk_shm_raw_queues.c ./shm/sctk_handler_pmi.c \
 	./shm/sctk_shm_cma.c ./shm/sctk_shm_frag.c \
-	./shm/sctk_shm_qemu.c ./shm/sctk_shm_raw_queues_internals.c
+	./shm/sctk_shm_qemu.c ./shm/sctk_shm_raw_queues_internals.c \
+	$(am__append_3)
 libmpclowcomm_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la  -lpthread -lrt
 all: all-am
 
@@ -491,12 +551,45 @@ shm/$(DEPDIR)/$(am__dirstamp):
 	shm/$(DEPDIR)/$(am__dirstamp)
 ./shm/sctk_shm_raw_queues_internals.lo: shm/$(am__dirstamp) \
 	shm/$(DEPDIR)/$(am__dirstamp)
+ib/$(am__dirstamp):
+	@$(MKDIR_P) ./ib
+	@: > ib/$(am__dirstamp)
+ib/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ./ib/$(DEPDIR)
+	@: > ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ib_async.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ib_buffered.lo: ib/$(am__dirstamp) \
+	ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ib.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ib_cm.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ib_config.lo: ib/$(am__dirstamp) \
+	ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ib_cp.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ib_device.lo: ib/$(am__dirstamp) \
+	ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ib_eager.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ib_mmu.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ib_mpi.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ib_polling.lo: ib/$(am__dirstamp) \
+	ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ib_prof.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ib_qp.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ib_rdma.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ib_toolkit.lo: ib/$(am__dirstamp) \
+	ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ib_topology.lo: ib/$(am__dirstamp) \
+	ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ibufs.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/sctk_ibufs_rdma.lo: ib/$(am__dirstamp) \
+	ib/$(DEPDIR)/$(am__dirstamp)
 
 libmpclowcomm.la: $(libmpclowcomm_la_OBJECTS) $(libmpclowcomm_la_DEPENDENCIES) $(EXTRA_libmpclowcomm_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libmpclowcomm_la_OBJECTS) $(libmpclowcomm_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f ./ib/*.$(OBJEXT)
+	-rm -f ./ib/*.lo
 	-rm -f ./shm/*.$(OBJEXT)
 	-rm -f ./shm/*.lo
 	-rm -f ./tcp/*.$(OBJEXT)
@@ -522,6 +615,24 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_topological_polling.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_topological_rail.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_window.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_async.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_buffered.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_cm.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_config.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_cp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_device.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_eager.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_mmu.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_mpi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_polling.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_prof.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_qp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_rdma.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_toolkit.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_topology.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ibufs.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ibufs_rdma.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_handler_mpi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_handler_pmi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm.Plo@am__quote@
@@ -565,6 +676,7 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf ./ib/.libs ./ib/_libs
 	-rm -rf ./shm/.libs ./shm/_libs
 	-rm -rf ./tcp/.libs ./tcp/_libs
 
@@ -683,6 +795,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f ib/$(DEPDIR)/$(am__dirstamp)
+	-rm -f ib/$(am__dirstamp)
 	-rm -f shm/$(DEPDIR)/$(am__dirstamp)
 	-rm -f shm/$(am__dirstamp)
 	-rm -f tcp/$(DEPDIR)/$(am__dirstamp)
@@ -697,7 +811,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./ib/$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -743,7 +857,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./ib/$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

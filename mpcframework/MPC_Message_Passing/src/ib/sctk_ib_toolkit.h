@@ -32,7 +32,7 @@
 #define __SCTK__IB_TOOLKIT_H_
 
 #include "mpc_common_helper.h"
-#include "sctk_runtime_config_struct.h"
+#include "mpc_runtime_config.h"
 
 #define SMALL_BUFFER_SIZE (4*1024)
 #define HAVE_SHELL_COLORS
