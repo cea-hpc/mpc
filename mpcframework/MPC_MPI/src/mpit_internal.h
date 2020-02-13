@@ -233,15 +233,24 @@ struct MPC_T_cvars_array {
   mpc_common_spinlock_t lock;         /**<< A lock to rule them all */
 };
 
+/**
+ * @brief Bind a variable to its configuration value
+ *
+ * @param name MPIT CVAR name
+ * @param size size of the variable in config
+ * @param data_addr Address of the configuration variable
+ */
+void mpc_MPI_T_bind_variable(char *name, size_t size, void * data_addr);
+
 /** Initialize the CVAR array storage (done once)
  * @return Non-zero on error
  */
-int MPI_T_cvars_array_init();
+void MPI_T_cvars_array_init();
 
 /** Release the CVAR array storage (done once)
  * @return Non-zero on error
  */
-int MPI_T_cvars_array_release();
+void MPI_T_cvars_array_release();
 
 /** Get a CVAR either from the dynamic array or the static one
  * @note Use this function to store static CVARS

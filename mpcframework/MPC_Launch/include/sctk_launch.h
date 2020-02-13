@@ -39,8 +39,6 @@ extern "C"
   void sctk_launch_contribution (FILE * file);
   void sctk_print_banner(bool);
 
-  int mpc_mpi_cl_mpi_process_main (int argc, char **argv);
-  
 #ifdef HAVE_ENVIRON_VAR
   int mpc_user_main (int, char **, char**);
 #else
@@ -66,7 +64,7 @@ extern "C"
 	#else
 	  extern int mpc_user_main__ (int, char **);
 	#endif
-	
+
 	#if defined(MPC_Message_Passing) || defined(MPC_Threads)
 	int main_c (int argc, char **argv);
 	int main_fortran (int argc, char **argv);

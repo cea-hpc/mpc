@@ -538,11 +538,34 @@ static inline void _mpc_comm_ptp_copy_task_insert( mpc_lowcomm_msg_list_t *ptr_r
  * Mark a message received as DONE and call the 'free' function associated
  * to the message
  */
+int ___mpi_windows_in_use = 0;
 
-#ifdef MPC_MPI
-	int mpc_MPI_use_windows();
-	int mpc_MPI_notify_request_counter( mpc_lowcomm_request_t *req );
-#endif
+static inline int __MPC_MPI_windows_in_use()
+{
+        return ___mpi_windows_in_use;
+}
+
+void mpc_lowcomm_rdma_MPI_windows_in_use(void)
+{
+        ___mpi_windows_in_use |= 1;
+}
+
+static int (*___notify_request_completion_trampoline)( mpc_lowcomm_request_t *req ) = NULL;
+
+void mpc_lowcomm_set_request_completion_trampoline( int trampoline( mpc_lowcomm_request_t *req) )
+{
+        ___notify_request_completion_trampoline = trampoline;
+}
+
+int mpc_lowcomm_notify_request_completion(mpc_lowcomm_request_t *req)
+{
+        if( ___notify_request_completion_trampoline )
+        {
+                return (___notify_request_completion_trampoline)(req);
+        }
+
+        return 0;
+}
 
 void mpc_lowcomm_ptp_message_complete_and_free( mpc_lowcomm_ptp_message_t *msg )
 {
@@ -552,9 +575,9 @@ void mpc_lowcomm_ptp_message_complete_and_free( mpc_lowcomm_ptp_message_t *msg )
 	{
 #ifdef MPC_MPI
 
-		if ( mpc_MPI_use_windows() )
+		if ( __MPC_MPI_windows_in_use() )
 		{
-			mpc_MPI_notify_request_counter( req );
+			mpc_lowcomm_notify_request_completion( req );
 		}
 
 #endif
@@ -2103,9 +2126,22 @@ void mpc_lowcomm_perform_idle( volatile int *data, int value,
 	sctk_thread_wait_for_value_and_poll( data, value, func, arg );
 }
 
-#ifdef MPC_MPI
-	void mpc_mpi_cl_egreq_progress_poll();
-#endif
+
+static void (*__egreq_poll_trampoline)(void) = NULL;
+
+void mpc_lowcomm_egreq_poll_set_trampoline(  void (*trampoline)(void) )
+{
+        __egreq_poll_trampoline = trampoline;
+}
+
+static inline void __egreq_poll()
+{
+        if(__egreq_poll_trampoline)
+        {
+                (__egreq_poll_trampoline)();
+        }
+}
+
 
 void mpc_lowcomm_request_wait( mpc_lowcomm_request_t *request )
 {
@@ -2130,7 +2166,7 @@ void mpc_lowcomm_request_wait( mpc_lowcomm_request_t *request )
 	if ( request->request_type == REQUEST_GENERALIZED )
 	{
 		mpc_lowcomm_perform_idle( ( int * ) & ( request->completion_flag ),
-		                          MPC_LOWCOMM_MESSAGE_DONE, mpc_mpi_cl_egreq_progress_poll, NULL );
+		                          MPC_LOWCOMM_MESSAGE_DONE, __egreq_poll, NULL );
         }
 	else
 #endif

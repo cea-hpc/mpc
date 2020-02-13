@@ -973,31 +973,3 @@ sctk_ethread_mxn_thread_init (void)
 
   sctk_ethread_mxn_sched_yield ();
 }
-
-
-#ifndef MPC_MPI
-#ifndef SCTK_LIB_MODE
-
-#ifdef HAVE_ENVIRON_VAR
-#include <stdlib.h>
-#include <stdio.h>
-extern char ** environ;
-#endif
-
-
-int
-/* main (int argc, char **argv) */
-mpc_mpi_cl_mpi_process_main (int argc, char **argv)
-{
-  int result;
-
-#ifdef HAVE_ENVIRON_VAR
-  result = mpc_user_main (argc, argv,environ);
-#else
-  result = mpc_user_main (argc, argv);
-#endif
-
-  return result;
-}
-#endif /* MPC_MPI */
-#endif /* SCTK_LIB_MODE */

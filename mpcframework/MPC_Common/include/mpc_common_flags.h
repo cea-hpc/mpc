@@ -50,6 +50,11 @@ static inline int __MPC_Maybe_disguised()
  * INTIALIZATION LISTS *
  ***********************/
 
+#define MPC_INIT_CALL_ONLY_ONCE         static int __already_done = 0;\
+                                        if(__already_done)\
+                                                return;\
+                                        __already_done = 1;
+
 void mpc_common_init_init();
 void mpc_common_init_trigger(char * level_name);
 void mpc_common_init_list_register(char * list_name);

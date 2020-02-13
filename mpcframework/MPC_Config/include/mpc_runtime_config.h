@@ -88,4 +88,8 @@ static inline const struct sctk_runtime_config * sctk_runtime_config_get_nocheck
 	return &__sctk_global_runtime_config__;
 }
 
+
+/** Function used to register the MPIT variable registration callback */
+void sctk_runtime_config_mpit_bind_variable_set_trampoline( void (*trampoline)(char *, size_t, void *));
+
 #endif /*SCTK_RUNTIME_CONFIG_H*/

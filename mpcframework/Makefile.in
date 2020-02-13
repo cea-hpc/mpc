@@ -97,9 +97,11 @@ host_triplet = @host@
 @MPC_THREAD_ENABLED_TRUE@	./MPC_Launch/src/libmpclaunch.la \
 @MPC_THREAD_ENABLED_TRUE@	./MPC_Threads/src/libmpcthread.la
 @MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_5 = ./MPC_Message_Passing/src/libmpclowcomm.la
+@MPC_MPI_ENABLED_TRUE@am__append_6 = ./MPC_MPI/src/libmpcmpi.la
 bin_PROGRAMS = mpc_print_config$(EXEEXT)
-@MPC_THREAD_ENABLED_TRUE@am__append_6 = ./MPC_Threads/src/libmpcthread.la  ./MPC_Launch/src/libmpclaunch.la
-@MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_7 = ./MPC_Message_Passing/src/libmpclowcomm.la
+@MPC_THREAD_ENABLED_TRUE@am__append_7 = ./MPC_Threads/src/libmpcthread.la  ./MPC_Launch/src/libmpclaunch.la
+@MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_8 = ./MPC_Message_Passing/src/libmpclowcomm.la
+@MPC_MPI_ENABLED_TRUE@am__append_9 = ./MPC_MPI/src/libmpcmpi.la
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_gcc_builtin.m4 \
@@ -148,10 +150,10 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(mpc_headerdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libmpc_la_DEPENDENCIES = ./MPC_Config/src/libmpcconfig.la \
-	$(am__append_4) $(am__append_5)
-am_libmpc_la_OBJECTS =
-libmpc_la_OBJECTS = $(am_libmpc_la_OBJECTS)
+libmpcframework_la_DEPENDENCIES = ./MPC_Config/src/libmpcconfig.la \
+	$(am__append_4) $(am__append_5) $(am__append_6)
+am_libmpcframework_la_OBJECTS =
+libmpcframework_la_OBJECTS = $(am_libmpcframework_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -165,8 +167,8 @@ am_mpc_print_config_OBJECTS =  \
 mpc_print_config_OBJECTS = $(am_mpc_print_config_OBJECTS)
 am__DEPENDENCIES_1 =
 mpc_print_config_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	./MPC_Config/src/libmpcconfig.la $(am__append_6) \
-	$(am__append_7)
+	./MPC_Config/src/libmpcconfig.la $(am__append_7) \
+	$(am__append_8) $(am__append_9)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -201,8 +203,9 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libmpc_la_SOURCES) $(mpc_print_config_SOURCES)
-DIST_SOURCES = $(libmpc_la_SOURCES) $(mpc_print_config_SOURCES)
+SOURCES = $(libmpcframework_la_SOURCES) $(mpc_print_config_SOURCES)
+DIST_SOURCES = $(libmpcframework_la_SOURCES) \
+	$(mpc_print_config_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -451,10 +454,10 @@ SUBDIRS = MPC_Arch MPC_Common MPC_Config MPC_Topology $(am__append_1) \
 #
 # Define the MPC Library
 #
-lib_LTLIBRARIES = libmpc.la
-libmpc_la_LIBADD = ./MPC_Config/src/libmpcconfig.la $(am__append_4) \
-	$(am__append_5)
-libmpc_la_SOURCES = 
+lib_LTLIBRARIES = libmpcframework.la
+libmpcframework_la_LIBADD = ./MPC_Config/src/libmpcconfig.la \
+	$(am__append_4) $(am__append_5) $(am__append_6)
+libmpcframework_la_SOURCES = 
 
 #
 # Print Config Program
@@ -474,7 +477,7 @@ mpc_print_config_SOURCES =  \
 	./MPC_Config/src/print_config/mpc_print_config_xml.c \
 	./MPC_Config/src/print_config/mpc_print_config_xml.h
 mpc_print_config_LDADD = $(XML2_LIBS) ./MPC_Config/src/libmpcconfig.la \
-	$(am__append_6) $(am__append_7)
+	$(am__append_7) $(am__append_8) $(am__append_9)
 all: mpc_config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -566,8 +569,8 @@ clean-libLTLIBRARIES:
 	  rm -f $${locs}; \
 	}
 
-libmpc.la: $(libmpc_la_OBJECTS) $(libmpc_la_DEPENDENCIES) $(EXTRA_libmpc_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libmpc_la_OBJECTS) $(libmpc_la_LIBADD) $(LIBS)
+libmpcframework.la: $(libmpcframework_la_OBJECTS) $(libmpcframework_la_DEPENDENCIES) $(EXTRA_libmpcframework_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libmpcframework_la_OBJECTS) $(libmpcframework_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \

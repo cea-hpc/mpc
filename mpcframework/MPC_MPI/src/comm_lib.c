@@ -33,11 +33,19 @@
 #include <mpc_common_rank.h>
 #include <mpc_common_helper.h>
 
+#include "mpi_alloc_mem.h"
+#include "mpi_rma_epoch.h"
+#include "mpi_rma_ctrl_msg.h"
+
 #include "mpc_reduction.h"
 
 #include <sys/time.h>
 #include "sctk_handle.h"
 #include "egreq_progress.h"
+
+#ifdef MPC_Threads
+        #include <mpcthread.h>
+#endif
 
 #ifdef MPC_Fault_Tolerance
 	#include "sctk_ft_iface.h"
@@ -59,10 +67,9 @@ const _mpc_cl_group_t mpc_group_null = {-1, NULL};
 mpc_lowcomm_request_t mpc_request_null;
 
 /** \brief Intitializes thread context keys
- * This function is called in sctk_thread.c:2212
- * by sctk_start_func
+ * This function is called by sctk_start_func
  */
-void sctk_mpc_init_keys()
+void mpc_cl_init_thread_keys()
 {
 	sctk_thread_key_create( &sctk_func_key, NULL );
 	sctk_thread_key_create( &mpc_mpi_cl_per_mpi_process_ctx, NULL );
@@ -351,8 +358,6 @@ static inline void __mpc_cl_thread_buffer_pool_step_async()
 
 /* Per Thread Storage Interface */
 
-__thread struct mpc_mpi_cl_per_thread_ctx_s *___mpc_p_per_VP_comm_ctx;
-
 static inline mpc_mpi_cl_per_thread_ctx_t *__mpc_cl_per_thread_ctx_get()
 {
 	if ( !___mpc_p_per_VP_comm_ctx )
@@ -544,7 +549,7 @@ static inline void ___mpc_cl_per_mpi_process_ctx_release( mpc_mpi_cl_per_mpi_pro
 
 /** \brief Creation point for MPI task context in an \ref mpc_mpi_cl_per_mpi_process_ctx_t
  *
- * Called from \ref mpc_mpi_cl_mpi_process_main this function allocates and initialises
+ * This function allocates and initialises
  * an mpc_mpi_cl_per_mpi_process_ctx_t. It also takes care of storing it in the host
  * thread context.
  */
@@ -631,8 +636,7 @@ static inline void __mpc_cl_per_mpi_process_ctx_at_exit_trigger()
 static inline int __mpc_cl_egreq_progress_release( mpc_mpi_cl_per_mpi_process_ctx_t *tmp );
 
 /** \brief Releases and frees task ctx
- *  Also called from  \ref mpc_mpi_cl_mpi_process_main this function releases
- *  MPI task ctx and remove them from host thread keys
+ *  This function releases MPI task ctx and remove them from host thread keys
  */
 static void __mpc_cl_per_mpi_process_ctx_release()
 {
@@ -2425,43 +2429,6 @@ static inline void __mpc_cl_enter_tmp_directory()
 	}
 }
 
-#ifdef HAVE_ENVIRON_VAR
-	#include <stdlib.h>
-	#include <stdio.h>
-	extern char **environ;
-#endif
-
-/* main (int argc, char **argv) */
-int mpc_mpi_cl_mpi_process_main( int argc, char **argv )
-{
-	int result;
-	__mpc_cl_request_init_null();
-	sctk_size_checking_eq( SCTK_COMM_WORLD, SCTK_COMM_WORLD, "SCTK_COMM_WORLD",  "SCTK_COMM_WORLD", __FILE__, __LINE__ );
-	sctk_size_checking_eq( SCTK_COMM_SELF, SCTK_COMM_SELF, "SCTK_COMM_SELF",  "SCTK_COMM_SELF", __FILE__, __LINE__ );
-
-	sctk_check_equal_types(mpc_lowcomm_msg_count_t, unsigned int );
-
-	__mpc_cl_per_mpi_process_ctx_init();
-
-	if ( sctk_runtime_config_get()->modules.mpc.disable_message_buffering )
-	{
-		__mpc_cl_disable_buffering();
-	}
-
-	__mpc_cl_enter_tmp_directory();
-#ifdef HAVE_ENVIRON_VAR
-	result = mpc_user_main( argc, argv, environ );
-#else
-	result = mpc_user_main( argc, argv );
-#endif
-#ifdef MPC_Profiler
-	sctk_internal_profiler_render();
-#endif
-	mpc_mpi_cl_per_thread_ctx_release();
-	mpc_lowcomm_barrier( ( mpc_lowcomm_communicator_t ) SCTK_COMM_WORLD );
-	__mpc_cl_per_mpi_process_ctx_release();
-	return result;
-}
 
 /************************************************************************/
 /* Topology Informations                                                */
@@ -5058,4 +5025,133 @@ int _mpc_cl_info_get_valuelen( MPC_Info info, char *key, int *valuelen, int *fla
 	}
 
 	MPC_ERROR_SUCESS();
+}
+
+
+/*****************************************
+ * COMM LIB REGISTATION AND CONSTRUCTORS *
+ *****************************************/
+
+static void __init_basic_checks()
+{
+	__mpc_cl_request_init_null();
+	sctk_size_checking_eq( SCTK_COMM_WORLD, SCTK_COMM_WORLD, "SCTK_COMM_WORLD",  "SCTK_COMM_WORLD", __FILE__, __LINE__ );
+	sctk_size_checking_eq( SCTK_COMM_SELF, SCTK_COMM_SELF, "SCTK_COMM_SELF",  "SCTK_COMM_SELF", __FILE__, __LINE__ );
+
+	sctk_check_equal_types(mpc_lowcomm_msg_count_t, unsigned int );
+}
+
+static void __init_buffering()
+{
+	if ( sctk_runtime_config_get()->modules.mpc.disable_message_buffering )
+	{
+		__mpc_cl_disable_buffering();
+	}
+}
+
+static void __release_barrier()
+{
+	mpc_lowcomm_barrier( ( mpc_lowcomm_communicator_t ) SCTK_COMM_WORLD );
+}
+
+static void __set_thread_trampoline()
+{
+        mpc_thread_per_mpi_task_atexit_set_trampoline(mpc_mpi_cl_per_mpi_process_ctx_at_exit_register);
+        mpc_thread_get_mpi_process_ctx_set_trampoline(mpc_cl_per_mpi_process_ctx_get);
+}
+
+static void __set_lowcomm_trampoline()
+{
+        mpc_lowcomm_egreq_poll_set_trampoline(mpc_mpi_cl_egreq_progress_poll);
+        mpc_lowcomm_rdma_allocmem_is_in_pool_set_trampoline(mpc_MPI_allocmem_is_in_pool);
+        mpc_lowcomm_set_request_completion_trampoline(mpc_MPI_notify_request_counter);
+        mpc_lowcomm_rdma_MPC_MPI_notify_src_ctx_set_trampoline(mpc_MPI_Win_notify_src_ctx_counter);
+        mpc_lowcomm_rdma_MPC_MPI_notify_dest_ctx_set_trampoline(mpc_MPI_Win_notify_dest_ctx_counter);
+}
+
+
+void mpc_cl_comm_lib_init() __attribute__((constructor));
+
+void mpc_cl_comm_lib_init()
+{
+        MPC_INIT_CALL_ONLY_ONCE
+
+        /* Before Starting MPI tasks */
+#ifdef MPC_Threads
+        mpc_common_init_callback_register("Start MPI Tasks",
+                                          "Register Threading trampoline for MPI",
+                                          __set_thread_trampoline, 21);
+
+        mpc_common_init_callback_register("Start MPI Tasks",
+                                          "Init thread keys for MPI",
+                                          mpc_cl_init_thread_keys, 22);
+#endif
+
+        mpc_common_init_callback_register("Start MPI Tasks",
+                                          "Register lowcomm trampoline for MPI",
+                                          __set_lowcomm_trampoline, 23);
+
+
+  /* Fill the profiling parent key array */
+#ifdef MPC_Profiler
+        mpc_common_init_callback_register("Start MPI Tasks",
+                                          "Init Profiling keys",
+                                          sctk_profiler_array_init_parent_keys, 24);
+#endif
+
+        /* Thread START */
+
+        mpc_common_init_callback_register("Per Thread Init",
+                                          "Per MPI Process CTX",
+                                          mpc_mpi_cl_per_mpi_process_ctx_reinit, 21);
+
+        mpc_common_init_callback_register("Per Thread Init",
+                                          "Per MPI Thread CTX",
+                                          mpc_mpi_cl_per_thread_ctx_init, 22);
+
+        /* Thread END */
+
+        mpc_common_init_callback_register("Per Thread Release",
+                                          "Per MPI Thread CTX Release",
+                                          mpc_mpi_cl_per_thread_ctx_release, 22);
+
+
+        /* Main START */
+
+        mpc_common_init_callback_register("Starting Main",
+                                          "Basic Type Checks",
+                                          __init_basic_checks, 21);
+
+        mpc_common_init_callback_register("Starting Main",
+                                          "MPI Process CTX Init",
+                                          __mpc_cl_per_mpi_process_ctx_init, 22);
+
+        mpc_common_init_callback_register("Starting Main",
+                                          "Set Buffering Mode",
+                                          __init_buffering, 23);
+
+        mpc_common_init_callback_register("Starting Main",
+                                          "Enter TMP Directory",
+                                          __mpc_cl_enter_tmp_directory, 24);
+
+        /* Main END */
+
+#ifdef MPC_Profiler
+        mpc_common_init_callback_register("Ending Main",
+                                          "Render Profiler",
+                                          sctk_internal_profiler_render, 21);
+#endif
+
+        mpc_common_init_callback_register("Ending Main",
+                                          "Per Thread CTX Release",
+                                          mpc_mpi_cl_per_thread_ctx_release, 22);
+
+        mpc_common_init_callback_register("Ending Main",
+                                          "Release Barrier",
+                                          __release_barrier, 23);
+
+        mpc_common_init_callback_register("Ending Main",
+                                          "Per MPI Process CTX Release",
+                                          __mpc_cl_per_mpi_process_ctx_release, 24);
+
 }

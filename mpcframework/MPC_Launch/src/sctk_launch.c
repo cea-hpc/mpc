@@ -865,9 +865,20 @@ static void *run ( sctk_startup_args_t *arg )
 
 	sctk_nodebug ( "creation argv done" );
 	argv[argc] = NULL;
+
+
+
 	/* In libmode there is no main */
 #ifndef SCTK_LIB_MODE
-	main_result = mpc_mpi_cl_mpi_process_main ( argc, argv );
+        mpc_common_init_trigger("Starting Main");
+
+        #ifdef HAVE_ENVIRON_VAR
+                main_result = mpc_user_main( argc, argv, environ );
+        #else
+                main_result = mpc_user_main( argc, argv );
+        #endif
+
+        mpc_common_init_trigger("Ending Main");
 #endif /* SCTK_LIB_MODE */
 
 	for ( i = 0; i < argc; i++ )
@@ -1118,10 +1129,7 @@ void mpc_launch_init_function() __attribute__((constructor));
 
 void mpc_launch_init_function()
 {
-        static int __already_done = 0;
-
-        if(__already_done)
-                return;
+        MPC_INIT_CALL_ONLY_ONCE
 
         /* Create the Initialization list for MPC */
 
@@ -1139,8 +1147,6 @@ void mpc_launch_init_function()
 
         // Unpack arguments from ENV
         mpc_common_init_callback_register("Base Runtime Init", "Parse CLI arguments", __unpack_arguments, 4);
-
-        __already_done = 1;
 }
 
 

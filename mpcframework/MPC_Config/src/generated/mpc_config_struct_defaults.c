@@ -28,13 +28,6 @@
 #include "mpc_config_struct.h"
 #include "mpc_config_struct_defaults.h"
 #include "runtime_config_mapper.h"
-#ifdef MPC_MPI
-#include "mpit_internal.h"
-/* This is used to avoid variable duplicates for CVAR handles */ 
-static struct MPC_T_cvar * the_cvar = NULL;
-#endif
-/* This is used to avoid variable duplicates for CVAR resolution*/ 
-static int the_temp_index = -1;
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_accl_cuda(void * struct_ptr)
@@ -174,505 +167,85 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 	/* Simple params : */
 	obj->verbosity = 0;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_VERBOSITY" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->verbosity ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_VERBOSITY");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->verbosity);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_VERBOSITY");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_VERBOSITY");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "LN_VERBOSITY",
+                                                                sizeof(obj->verbosity ),
+                                                                &obj->verbosity);
 				obj->banner = true;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_BANNER" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->banner ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_BANNER");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->banner);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_BANNER");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_BANNER");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "LN_BANNER",
+                                                                sizeof(obj->banner ),
+                                                                &obj->banner);
 				obj->autokill = 0;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_AUTOKILL" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->autokill ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_AUTOKILL");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->autokill);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_AUTOKILL");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_AUTOKILL");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "LN_AUTOKILL",
+                                                                sizeof(obj->autokill ),
+                                                                &obj->autokill);
 				obj->user_launchers = "default";
 	obj->keep_rand_addr = true;
 	obj->disable_rand_addr = false;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_ADDR_RAND_DISABLE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->disable_rand_addr ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_ADDR_RAND_DISABLE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->disable_rand_addr);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_ADDR_RAND_DISABLE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_ADDR_RAND_DISABLE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "LN_ADDR_RAND_DISABLE",
+                                                                sizeof(obj->disable_rand_addr ),
+                                                                &obj->disable_rand_addr);
 				obj->disable_mpc = false;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_DISABLE_MPC" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->disable_mpc ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_DISABLE_MPC");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->disable_mpc);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_DISABLE_MPC");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_DISABLE_MPC");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "LN_DISABLE_MPC",
+                                                                sizeof(obj->disable_mpc ),
+                                                                &obj->disable_mpc);
 				obj->thread_init.name = "sctk_use_ethread_mxn";
 	*(void **) &(obj->thread_init.value) = sctk_runtime_config_get_symbol("sctk_use_ethread_mxn");
 	obj->nb_task = 1;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_MPI_TASK" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->nb_task ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_MPI_TASK");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->nb_task);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_MPI_TASK");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_MPI_TASK");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "LN_MPI_TASK",
+                                                                sizeof(obj->nb_task ),
+                                                                &obj->nb_task);
 				obj->nb_process = 1;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_MPC_PROCESS" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->nb_process ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_MPC_PROCESS");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->nb_process);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_MPC_PROCESS");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_MPC_PROCESS");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "LN_MPC_PROCESS",
+                                                                sizeof(obj->nb_process ),
+                                                                &obj->nb_process);
 				obj->nb_processor = 0;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_MPC_VP" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->nb_processor ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_MPC_VP");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->nb_processor);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_MPC_VP");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_MPC_VP");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "LN_MPC_VP",
+                                                                sizeof(obj->nb_processor ),
+                                                                &obj->nb_processor);
 				obj->nb_node = 1;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_MPC_NODE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->nb_node ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_MPC_NODE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->nb_node);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_MPC_NODE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_MPC_NODE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "LN_MPC_NODE",
+                                                                sizeof(obj->nb_node ),
+                                                                &obj->nb_node);
 				obj->launcher = "none";
 	obj->max_try = 10;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_MAX_TOPO_TRY" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->max_try ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_MAX_TOPO_TRY");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->max_try);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_MAX_TOPO_TRY");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_MAX_TOPO_TRY");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "LN_MAX_TOPO_TRY",
+                                                                sizeof(obj->max_try ),
+                                                                &obj->max_try);
 				obj->profiling = "stdout";
 	obj->enable_smt = false;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_ENABLE_SMT" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->enable_smt ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_ENABLE_SMT");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->enable_smt);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_ENABLE_SMT");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_ENABLE_SMT");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "LN_ENABLE_SMT",
+                                                                sizeof(obj->enable_smt ),
+                                                                &obj->enable_smt);
 				obj->share_node = false;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_SHARE_NODE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->share_node ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_SHARE_NODE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->share_node);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_SHARE_NODE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_SHARE_NODE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "LN_SHARE_NODE",
+                                                                sizeof(obj->share_node ),
+                                                                &obj->share_node);
 				obj->restart = false;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_RESTART" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->restart ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_RESTART");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->restart);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_RESTART");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_RESTART");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "LN_RESTART",
+                                                                sizeof(obj->restart ),
+                                                                &obj->restart);
 				obj->checkpoint = false;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_CHECKPOINT" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->checkpoint ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_CHECKPOINT");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->checkpoint);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_CHECKPOINT");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_CHECKPOINT");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "LN_CHECKPOINT",
+                                                                sizeof(obj->checkpoint ),
+                                                                &obj->checkpoint);
 				obj->report = false;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "LN_REPORT" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->report ) )
-			{
-				fprintf(stderr,"Error size mismatch for LN_REPORT");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->report);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for LN_REPORT");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for LN_REPORT");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "LN_REPORT",
+                                                                sizeof(obj->report ),
+                                                                &obj->report);
 				obj->init_done = 1;
 }
 
@@ -721,235 +294,39 @@ void sctk_runtime_config_struct_init_collectives_shm(void * struct_ptr)
 	*(void **) &(obj->reduce_intra_shm.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_shm");
 	obj->topo_tree_arity = -1;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_TOPO_TREE_ARITY" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->topo_tree_arity ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_TOPO_TREE_ARITY");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->topo_tree_arity);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_TOPO_TREE_ARITY");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_TOPO_TREE_ARITY");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "MPI_COLL_TOPO_TREE_ARITY",
+                                                                sizeof(obj->topo_tree_arity ),
+                                                                &obj->topo_tree_arity);
 				obj->topo_tree_dump = false;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_TOPO_TREE_DUMP" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->topo_tree_dump ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_TOPO_TREE_DUMP");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->topo_tree_dump);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_TOPO_TREE_DUMP");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_TOPO_TREE_DUMP");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "MPI_COLL_TOPO_TREE_DUMP",
+                                                                sizeof(obj->topo_tree_dump ),
+                                                                &obj->topo_tree_dump);
 				obj->coll_force_nocommute = false;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_NO_COMMUTE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->coll_force_nocommute ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_NO_COMMUTE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->coll_force_nocommute);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_NO_COMMUTE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_NO_COMMUTE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "MPI_COLL_NO_COMMUTE",
+                                                                sizeof(obj->coll_force_nocommute ),
+                                                                &obj->coll_force_nocommute);
 				obj->reduce_pipelined_blocks = 16;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_REDUCE_PIPELINED_BLOCKS" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->reduce_pipelined_blocks ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_REDUCE_PIPELINED_BLOCKS");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->reduce_pipelined_blocks);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_REDUCE_PIPELINED_BLOCKS");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_REDUCE_PIPELINED_BLOCKS");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "MPI_COLL_REDUCE_PIPELINED_BLOCKS",
+                                                                sizeof(obj->reduce_pipelined_blocks ),
+                                                                &obj->reduce_pipelined_blocks);
 				obj->reduce_pipelined_tresh = sctk_runtime_config_map_entry_parse_size("1KB");
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_REDUCE_INTERLEAVE_TRSH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->reduce_pipelined_tresh ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_REDUCE_INTERLEAVE_TRSH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->reduce_pipelined_tresh);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_REDUCE_INTERLEAVE_TRSH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_REDUCE_INTERLEAVE_TRSH");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "MPI_COLL_REDUCE_INTERLEAVE_TRSH",
+                                                                sizeof(obj->reduce_pipelined_tresh ),
+                                                                &obj->reduce_pipelined_tresh);
 				obj->reduce_interleave = 8;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_REDUCE_INTERLEAVE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->reduce_interleave ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_REDUCE_INTERLEAVE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->reduce_interleave);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_REDUCE_INTERLEAVE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_REDUCE_INTERLEAVE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "MPI_COLL_REDUCE_INTERLEAVE",
+                                                                sizeof(obj->reduce_interleave ),
+                                                                &obj->reduce_interleave);
 				obj->bcast_interleave = 8;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_BCAST_INTERLEAVE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->bcast_interleave ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_BCAST_INTERLEAVE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->bcast_interleave);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_BCAST_INTERLEAVE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_BCAST_INTERLEAVE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "MPI_COLL_BCAST_INTERLEAVE",
+                                                                sizeof(obj->bcast_interleave ),
+                                                                &obj->bcast_interleave);
 				obj->init_done = 1;
 }
 
@@ -967,105 +344,21 @@ void sctk_runtime_config_struct_init_collectives_intra(void * struct_ptr)
 	*(void **) &(obj->barrier_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_intra");
 	obj->barrier_intra_for_trsh = 33;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_BARRIER_FOR_TRSH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->barrier_intra_for_trsh ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_BARRIER_FOR_TRSH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->barrier_intra_for_trsh);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_BARRIER_FOR_TRSH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_BARRIER_FOR_TRSH");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "MPI_COLL_BARRIER_FOR_TRSH",
+                                                                sizeof(obj->barrier_intra_for_trsh ),
+                                                                &obj->barrier_intra_for_trsh);
 				obj->bcast_intra.name = "__INTERNAL__PMPI_Bcast_intra";
 	*(void **) &(obj->bcast_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Bcast_intra");
 	obj->bcast_intra_for_trsh = 33;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_BCAST_FOR_TRSH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->bcast_intra_for_trsh ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_BCAST_FOR_TRSH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->bcast_intra_for_trsh);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_BCAST_FOR_TRSH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_BCAST_FOR_TRSH");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "MPI_COLL_BCAST_FOR_TRSH",
+                                                                sizeof(obj->bcast_intra_for_trsh ),
+                                                                &obj->bcast_intra_for_trsh);
 				obj->bcast_intra_for_count_trsh = 1024;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_BCAST_FOR_ELEM_TRSH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->bcast_intra_for_count_trsh ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_BCAST_FOR_ELEM_TRSH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->bcast_intra_for_count_trsh);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_BCAST_FOR_ELEM_TRSH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_BCAST_FOR_ELEM_TRSH");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "MPI_COLL_BCAST_FOR_ELEM_TRSH",
+                                                                sizeof(obj->bcast_intra_for_count_trsh ),
+                                                                &obj->bcast_intra_for_count_trsh);
 				obj->allgather_intra.name = "__INTERNAL__PMPI_Allgather_intra";
 	*(void **) &(obj->allgather_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgather_intra");
 	obj->allgatherv_intra.name = "__INTERNAL__PMPI_Allgatherv_intra";
@@ -1092,70 +385,14 @@ void sctk_runtime_config_struct_init_collectives_intra(void * struct_ptr)
 	*(void **) &(obj->reduce_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_intra");
 	obj->reduce_intra_for_trsh = 33;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_REDUCE_FOR_TRSH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->reduce_intra_for_trsh ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_REDUCE_FOR_TRSH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->reduce_intra_for_trsh);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_REDUCE_FOR_TRSH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_REDUCE_FOR_TRSH");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "MPI_COLL_REDUCE_FOR_TRSH",
+                                                                sizeof(obj->reduce_intra_for_trsh ),
+                                                                &obj->reduce_intra_for_trsh);
 				obj->reduce_intra_for_count_trsh = 1024;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_REDUCE_FOR_ELEM_TRSH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->reduce_intra_for_count_trsh ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPI_COLL_REDUCE_FOR_ELEM_TRSH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->reduce_intra_for_count_trsh);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_REDUCE_FOR_ELEM_TRSH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_REDUCE_FOR_ELEM_TRSH");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "MPI_COLL_REDUCE_FOR_ELEM_TRSH",
+                                                                sizeof(obj->reduce_intra_for_count_trsh ),
+                                                                &obj->reduce_intra_for_count_trsh);
 				obj->allreduce_intra.name = "__INTERNAL__PMPI_Allreduce_intra";
 	*(void **) &(obj->allreduce_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allreduce_intra");
 	obj->reduce_scatter_intra.name = "__INTERNAL__PMPI_Reduce_scatter_intra";
@@ -1260,37 +497,9 @@ void sctk_runtime_config_struct_init_mpc(void * struct_ptr)
 	/* Simple params : */
 	obj->disable_message_buffering = false;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "MPC_DISABLE_BUFFERING" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->disable_message_buffering ) )
-			{
-				fprintf(stderr,"Error size mismatch for MPC_DISABLE_BUFFERING");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->disable_message_buffering);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPC_DISABLE_BUFFERING");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPC_DISABLE_BUFFERING");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "MPC_DISABLE_BUFFERING",
+                                                                sizeof(obj->disable_message_buffering ),
+                                                                &obj->disable_message_buffering);
 				obj->init_done = 1;
 }
 
@@ -1322,862 +531,134 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 	obj->adm_port = 1;
 	obj->verbose_level = 0;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_VERBOSE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->verbose_level ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_VERBOSE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->verbose_level);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_VERBOSE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_VERBOSE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_VERBOSE",
+                                                                sizeof(obj->verbose_level ),
+                                                                &obj->verbose_level);
 				obj->eager_limit = sctk_runtime_config_map_entry_parse_size("12KB");
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_EAGER_THRESH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->eager_limit ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_EAGER_THRESH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->eager_limit);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_EAGER_THRESH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_EAGER_THRESH");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_EAGER_THRESH",
+                                                                sizeof(obj->eager_limit ),
+                                                                &obj->eager_limit);
 				obj->buffered_limit = sctk_runtime_config_map_entry_parse_size("26KB");
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_BUFFERED_THRESH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->buffered_limit ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_BUFFERED_THRESH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->buffered_limit);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_BUFFERED_THRESH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_BUFFERED_THRESH");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_BUFFERED_THRESH",
+                                                                sizeof(obj->buffered_limit ),
+                                                                &obj->buffered_limit);
 				obj->qp_tx_depth = 15000;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_TX_DEPTH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->qp_tx_depth ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_TX_DEPTH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->qp_tx_depth);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_TX_DEPTH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_TX_DEPTH");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_TX_DEPTH",
+                                                                sizeof(obj->qp_tx_depth ),
+                                                                &obj->qp_tx_depth);
 				obj->qp_rx_depth = 0;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_RX_DEPTH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->qp_rx_depth ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_RX_DEPTH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->qp_rx_depth);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_RX_DEPTH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_RX_DEPTH");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_RX_DEPTH",
+                                                                sizeof(obj->qp_rx_depth ),
+                                                                &obj->qp_rx_depth);
 				obj->cq_depth = 40000;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_CQ_DEPTH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->cq_depth ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_CQ_DEPTH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->cq_depth);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_CQ_DEPTH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_CQ_DEPTH");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_CQ_DEPTH",
+                                                                sizeof(obj->cq_depth ),
+                                                                &obj->cq_depth);
 				obj->rdma_depth = 16;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_RDMA_DEPTH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->rdma_depth ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_RDMA_DEPTH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->rdma_depth);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_RDMA_DEPTH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_RDMA_DEPTH");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_RDMA_DEPTH",
+                                                                sizeof(obj->rdma_depth ),
+                                                                &obj->rdma_depth);
 				obj->max_sg_sq = 4;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_MAX_SG_SQ" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->max_sg_sq ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_MAX_SG_SQ");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->max_sg_sq);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_MAX_SG_SQ");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_MAX_SG_SQ");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_MAX_SG_SQ",
+                                                                sizeof(obj->max_sg_sq ),
+                                                                &obj->max_sg_sq);
 				obj->max_sg_rq = 4;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_MAX_SG_RQ" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->max_sg_rq ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_MAX_SG_RQ");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->max_sg_rq);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_MAX_SG_RQ");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_MAX_SG_RQ");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_MAX_SG_RQ",
+                                                                sizeof(obj->max_sg_rq ),
+                                                                &obj->max_sg_rq);
 				obj->max_inline = sctk_runtime_config_map_entry_parse_size("128B");
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_MAX_INLINE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->max_inline ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_MAX_INLINE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->max_inline);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_MAX_INLINE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_MAX_INLINE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_MAX_INLINE",
+                                                                sizeof(obj->max_inline ),
+                                                                &obj->max_inline);
 				obj->rdma_resizing = 0;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_RDMA_RESIZING" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->rdma_resizing ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_RDMA_RESIZING");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->rdma_resizing);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_RDMA_RESIZING");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_RDMA_RESIZING");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_RDMA_RESIZING",
+                                                                sizeof(obj->rdma_resizing ),
+                                                                &obj->rdma_resizing);
 				obj->max_rdma_connections = 0;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_RDMA_CONN" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->max_rdma_connections ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_RDMA_CONN");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->max_rdma_connections);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_RDMA_CONN");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_RDMA_CONN");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_RDMA_CONN",
+                                                                sizeof(obj->max_rdma_connections ),
+                                                                &obj->max_rdma_connections);
 				obj->max_rdma_resizing = 0;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_RDMA_MAX_RESIZING" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->max_rdma_resizing ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_RDMA_MAX_RESIZING");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->max_rdma_resizing);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_RDMA_MAX_RESIZING");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_RDMA_MAX_RESIZING");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_RDMA_MAX_RESIZING",
+                                                                sizeof(obj->max_rdma_resizing ),
+                                                                &obj->max_rdma_resizing);
 				obj->init_ibufs = 1000;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_INIT_IBUF" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->init_ibufs ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_INIT_IBUF");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->init_ibufs);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_INIT_IBUF");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_INIT_IBUF");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_INIT_IBUF",
+                                                                sizeof(obj->init_ibufs ),
+                                                                &obj->init_ibufs);
 				obj->init_recv_ibufs = 200;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_INIT_RECV_IBUF" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->init_recv_ibufs ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_INIT_RECV_IBUF");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->init_recv_ibufs);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_INIT_RECV_IBUF");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_INIT_RECV_IBUF");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_INIT_RECV_IBUF",
+                                                                sizeof(obj->init_recv_ibufs ),
+                                                                &obj->init_recv_ibufs);
 				obj->max_srq_ibufs_posted = 1500;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_MAX_SRQ_IBUF_POSTED" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->max_srq_ibufs_posted ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_MAX_SRQ_IBUF_POSTED");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->max_srq_ibufs_posted);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_MAX_SRQ_IBUF_POSTED");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_MAX_SRQ_IBUF_POSTED");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_MAX_SRQ_IBUF_POSTED",
+                                                                sizeof(obj->max_srq_ibufs_posted ),
+                                                                &obj->max_srq_ibufs_posted);
 				obj->max_srq_ibufs = 1000;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_MAX_SRQ_IBUF" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->max_srq_ibufs ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_MAX_SRQ_IBUF");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->max_srq_ibufs);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_MAX_SRQ_IBUF");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_MAX_SRQ_IBUF");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_MAX_SRQ_IBUF",
+                                                                sizeof(obj->max_srq_ibufs ),
+                                                                &obj->max_srq_ibufs);
 				obj->srq_credit_limit = 500;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_SRQ_CREDIT_LIMIT" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->srq_credit_limit ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_SRQ_CREDIT_LIMIT");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->srq_credit_limit);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_SRQ_CREDIT_LIMIT");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_SRQ_CREDIT_LIMIT");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_SRQ_CREDIT_LIMIT",
+                                                                sizeof(obj->srq_credit_limit ),
+                                                                &obj->srq_credit_limit);
 				obj->srq_credit_thread_limit = 100;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_SRQ_CREDIT_LIMIT_THREAD" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->srq_credit_thread_limit ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_SRQ_CREDIT_LIMIT_THREAD");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->srq_credit_thread_limit);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_SRQ_CREDIT_LIMIT_THREAD");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_SRQ_CREDIT_LIMIT_THREAD");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_SRQ_CREDIT_LIMIT_THREAD",
+                                                                sizeof(obj->srq_credit_thread_limit ),
+                                                                &obj->srq_credit_thread_limit);
 				obj->size_ibufs_chunk = 100;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_IBUF_CHUNK" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->size_ibufs_chunk ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_IBUF_CHUNK");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->size_ibufs_chunk);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_IBUF_CHUNK");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_IBUF_CHUNK");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_IBUF_CHUNK",
+                                                                sizeof(obj->size_ibufs_chunk ),
+                                                                &obj->size_ibufs_chunk);
 				obj->init_mr = 400;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_MMU_INIT" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->init_mr ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_MMU_INIT");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->init_mr);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_MMU_INIT");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_MMU_INIT");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_MMU_INIT",
+                                                                sizeof(obj->init_mr ),
+                                                                &obj->init_mr);
 				obj->steal = 2;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_CAN_STEAL" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->steal ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_CAN_STEAL");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->steal);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_CAN_STEAL");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_CAN_STEAL");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_CAN_STEAL",
+                                                                sizeof(obj->steal ),
+                                                                &obj->steal);
 				obj->quiet_crash = 0;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_QUIET_CRASH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->quiet_crash ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_QUIET_CRASH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->quiet_crash);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_QUIET_CRASH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_QUIET_CRASH");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_QUIET_CRASH",
+                                                                sizeof(obj->quiet_crash ),
+                                                                &obj->quiet_crash);
 				obj->async_thread = 0;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_ASYNC_THREAD" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->async_thread ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_ASYNC_THREAD");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->async_thread);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_ASYNC_THREAD");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_ASYNC_THREAD");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_ASYNC_THREAD",
+                                                                sizeof(obj->async_thread ),
+                                                                &obj->async_thread);
 				obj->wc_in_number = 0;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_WC_IN" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->wc_in_number ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_WC_IN");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->wc_in_number);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_WC_IN");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_WC_IN");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_WC_IN",
+                                                                sizeof(obj->wc_in_number ),
+                                                                &obj->wc_in_number);
 				obj->wc_out_number = 0;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_WC_OUT" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->wc_out_number ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_WC_OUT");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->wc_out_number);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_WC_OUT");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_WC_OUT");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_WC_OUT",
+                                                                sizeof(obj->wc_out_number ),
+                                                                &obj->wc_out_number);
 				obj->low_memory = false;
 	obj->rdvz_protocol = IBV_RDVZ_WRITE_PROTOCOL;
 	obj->rdma_min_size = sctk_runtime_config_map_entry_parse_size("1KB");
@@ -2190,37 +671,9 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 	obj->rdma_resizing_max_nb = 32;
 	obj->size_recv_ibufs_chunk = 400;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_RECV_IBUF_CHUNK" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->size_recv_ibufs_chunk ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_RECV_IBUF_CHUNK");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->size_recv_ibufs_chunk);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_RECV_IBUF_CHUNK");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_RECV_IBUF_CHUNK");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_RECV_IBUF_CHUNK",
+                                                                sizeof(obj->size_recv_ibufs_chunk ),
+                                                                &obj->size_recv_ibufs_chunk);
 				obj->init_done = 1;
 }
 
@@ -2236,136 +689,24 @@ void sctk_runtime_config_struct_init_ib_global(void * struct_ptr)
 	/* Simple params : */
 	obj->mmu_cache_enabled = 1;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_MMU_CHACHE_ENABLED" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->mmu_cache_enabled ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_MMU_CHACHE_ENABLED");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->mmu_cache_enabled);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_MMU_CHACHE_ENABLED");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_MMU_CHACHE_ENABLED");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_MMU_CHACHE_ENABLED",
+                                                                sizeof(obj->mmu_cache_enabled ),
+                                                                &obj->mmu_cache_enabled);
 				obj->mmu_cache_entry_count = 1000;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_MMU_CHACHE_COUNT" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->mmu_cache_entry_count ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_MMU_CHACHE_COUNT");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->mmu_cache_entry_count);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_MMU_CHACHE_COUNT");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_MMU_CHACHE_COUNT");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_MMU_CHACHE_COUNT",
+                                                                sizeof(obj->mmu_cache_entry_count ),
+                                                                &obj->mmu_cache_entry_count);
 				obj->mmu_cache_maximum_size = sctk_runtime_config_map_entry_parse_size("4GB");
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_MMU_CHACHE_MAX_SIZE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->mmu_cache_maximum_size ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_MMU_CHACHE_MAX_SIZE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->mmu_cache_maximum_size);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_MMU_CHACHE_MAX_SIZE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_MMU_CHACHE_MAX_SIZE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_MMU_CHACHE_MAX_SIZE",
+                                                                sizeof(obj->mmu_cache_maximum_size ),
+                                                                &obj->mmu_cache_maximum_size);
 				obj->mmu_cache_maximum_pin_size = sctk_runtime_config_map_entry_parse_size("1GB");
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "IB_MMU_CHACHE_MAX_PIN_SIZE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->mmu_cache_maximum_pin_size ) )
-			{
-				fprintf(stderr,"Error size mismatch for IB_MMU_CHACHE_MAX_PIN_SIZE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->mmu_cache_maximum_pin_size);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for IB_MMU_CHACHE_MAX_PIN_SIZE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for IB_MMU_CHACHE_MAX_PIN_SIZE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "IB_MMU_CHACHE_MAX_PIN_SIZE",
+                                                                sizeof(obj->mmu_cache_maximum_pin_size ),
+                                                                &obj->mmu_cache_maximum_pin_size);
 				obj->init_done = 1;
 }
 
@@ -2463,499 +804,79 @@ void sctk_runtime_config_struct_init_net_driver_shm(void * struct_ptr)
 	/* Simple params : */
 	obj->buffered_priority = 0;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "SHM_BUFF_PRIORITY" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->buffered_priority ) )
-			{
-				fprintf(stderr,"Error size mismatch for SHM_BUFF_PRIORITY");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->buffered_priority);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for SHM_BUFF_PRIORITY");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for SHM_BUFF_PRIORITY");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "SHM_BUFF_PRIORITY",
+                                                                sizeof(obj->buffered_priority ),
+                                                                &obj->buffered_priority);
 				obj->buffered_min_size = 0;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "SHM_BUFF_MIN_SIZE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->buffered_min_size ) )
-			{
-				fprintf(stderr,"Error size mismatch for SHM_BUFF_MIN_SIZE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->buffered_min_size);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for SHM_BUFF_MIN_SIZE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for SHM_BUFF_MIN_SIZE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "SHM_BUFF_MIN_SIZE",
+                                                                sizeof(obj->buffered_min_size ),
+                                                                &obj->buffered_min_size);
 				obj->buffered_max_size = 4096;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "SHM_BUFF_MAX_SIZE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->buffered_max_size ) )
-			{
-				fprintf(stderr,"Error size mismatch for SHM_BUFF_MAX_SIZE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->buffered_max_size);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for SHM_BUFF_MAX_SIZE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for SHM_BUFF_MAX_SIZE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "SHM_BUFF_MAX_SIZE",
+                                                                sizeof(obj->buffered_max_size ),
+                                                                &obj->buffered_max_size);
 				obj->buffered_zerocopy = false;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "SHM_BUFF_ZEROCOPY" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->buffered_zerocopy ) )
-			{
-				fprintf(stderr,"Error size mismatch for SHM_BUFF_ZEROCOPY");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->buffered_zerocopy);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for SHM_BUFF_ZEROCOPY");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for SHM_BUFF_ZEROCOPY");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "SHM_BUFF_ZEROCOPY",
+                                                                sizeof(obj->buffered_zerocopy ),
+                                                                &obj->buffered_zerocopy);
 				obj->cma_enable = true;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "SHM_CMA_ENABLE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->cma_enable ) )
-			{
-				fprintf(stderr,"Error size mismatch for SHM_CMA_ENABLE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->cma_enable);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for SHM_CMA_ENABLE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for SHM_CMA_ENABLE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "SHM_CMA_ENABLE",
+                                                                sizeof(obj->cma_enable ),
+                                                                &obj->cma_enable);
 				obj->cma_priority = 1;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "SHM_CMA_PRIORITY" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->cma_priority ) )
-			{
-				fprintf(stderr,"Error size mismatch for SHM_CMA_PRIORITY");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->cma_priority);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for SHM_CMA_PRIORITY");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for SHM_CMA_PRIORITY");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "SHM_CMA_PRIORITY",
+                                                                sizeof(obj->cma_priority ),
+                                                                &obj->cma_priority);
 				obj->cma_min_size = 4096;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "SHM_CMA_MIN_SIZE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->cma_min_size ) )
-			{
-				fprintf(stderr,"Error size mismatch for SHM_CMA_MIN_SIZE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->cma_min_size);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for SHM_CMA_MIN_SIZE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for SHM_CMA_MIN_SIZE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "SHM_CMA_MIN_SIZE",
+                                                                sizeof(obj->cma_min_size ),
+                                                                &obj->cma_min_size);
 				obj->cma_max_size = 0;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "SHM_CMA_MAX_SIZE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->cma_max_size ) )
-			{
-				fprintf(stderr,"Error size mismatch for SHM_CMA_MAX_SIZE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->cma_max_size);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for SHM_CMA_MAX_SIZE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for SHM_CMA_MAX_SIZE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "SHM_CMA_MAX_SIZE",
+                                                                sizeof(obj->cma_max_size ),
+                                                                &obj->cma_max_size);
 				obj->cma_zerocopy = false;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "SHM_CMA_ZEROCOPY" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->cma_zerocopy ) )
-			{
-				fprintf(stderr,"Error size mismatch for SHM_CMA_ZEROCOPY");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->cma_zerocopy);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for SHM_CMA_ZEROCOPY");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for SHM_CMA_ZEROCOPY");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "SHM_CMA_ZEROCOPY",
+                                                                sizeof(obj->cma_zerocopy ),
+                                                                &obj->cma_zerocopy);
 				obj->frag_priority = 2;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "SHM_FRAG_PRIORITY" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->frag_priority ) )
-			{
-				fprintf(stderr,"Error size mismatch for SHM_FRAG_PRIORITY");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->frag_priority);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for SHM_FRAG_PRIORITY");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for SHM_FRAG_PRIORITY");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "SHM_FRAG_PRIORITY",
+                                                                sizeof(obj->frag_priority ),
+                                                                &obj->frag_priority);
 				obj->frag_min_size = 4096;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "SHM_FRAG_MIN_SIZE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->frag_min_size ) )
-			{
-				fprintf(stderr,"Error size mismatch for SHM_FRAG_MIN_SIZE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->frag_min_size);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for SHM_FRAG_MIN_SIZE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for SHM_FRAG_MIN_SIZE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "SHM_FRAG_MIN_SIZE",
+                                                                sizeof(obj->frag_min_size ),
+                                                                &obj->frag_min_size);
 				obj->frag_max_size = 0;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "SHM_FRAG_MAX_SIZE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->frag_max_size ) )
-			{
-				fprintf(stderr,"Error size mismatch for SHM_FRAG_MAX_SIZE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->frag_max_size);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for SHM_FRAG_MAX_SIZE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for SHM_FRAG_MAX_SIZE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "SHM_FRAG_MAX_SIZE",
+                                                                sizeof(obj->frag_max_size ),
+                                                                &obj->frag_max_size);
 				obj->frag_zerocopy = false;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "SHM_FRAG_ZEROCOPY" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->frag_zerocopy ) )
-			{
-				fprintf(stderr,"Error size mismatch for SHM_FRAG_ZEROCOPY");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->frag_zerocopy);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for SHM_FRAG_ZEROCOPY");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for SHM_FRAG_ZEROCOPY");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "SHM_FRAG_ZEROCOPY",
+                                                                sizeof(obj->frag_zerocopy ),
+                                                                &obj->frag_zerocopy);
 				obj->shmem_size = 1024;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "SHM_SIZE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->shmem_size ) )
-			{
-				fprintf(stderr,"Error size mismatch for SHM_SIZE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->shmem_size);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for SHM_SIZE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for SHM_SIZE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "SHM_SIZE",
+                                                                sizeof(obj->shmem_size ),
+                                                                &obj->shmem_size);
 				obj->cells_num = 2048;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "SHM_CELLS" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->cells_num ) )
-			{
-				fprintf(stderr,"Error size mismatch for SHM_CELLS");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->cells_num);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for SHM_CELLS");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for SHM_CELLS");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "SHM_CELLS",
+                                                                sizeof(obj->cells_num ),
+                                                                &obj->cells_num);
 				obj->init_done = 1;
 }
 
@@ -3224,268 +1145,44 @@ void sctk_runtime_config_struct_init_inter_thread_comm(void * struct_ptr)
 	/* Simple params : */
 	obj->barrier_arity = 8;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "ITT_BARRIER_ARITY" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->barrier_arity ) )
-			{
-				fprintf(stderr,"Error size mismatch for ITT_BARRIER_ARITY");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->barrier_arity);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for ITT_BARRIER_ARITY");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for ITT_BARRIER_ARITY");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "ITT_BARRIER_ARITY",
+                                                                sizeof(obj->barrier_arity ),
+                                                                &obj->barrier_arity);
 				obj->broadcast_arity_max = 32;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "ITT_BROADCAST_ARITY" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->broadcast_arity_max ) )
-			{
-				fprintf(stderr,"Error size mismatch for ITT_BROADCAST_ARITY");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->broadcast_arity_max);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for ITT_BROADCAST_ARITY");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for ITT_BROADCAST_ARITY");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "ITT_BROADCAST_ARITY",
+                                                                sizeof(obj->broadcast_arity_max ),
+                                                                &obj->broadcast_arity_max);
 				obj->broadcast_max_size = 1024;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "ITT_BROADCAST_MAX_SIZE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->broadcast_max_size ) )
-			{
-				fprintf(stderr,"Error size mismatch for ITT_BROADCAST_MAX_SIZE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->broadcast_max_size);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for ITT_BROADCAST_MAX_SIZE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for ITT_BROADCAST_MAX_SIZE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "ITT_BROADCAST_MAX_SIZE",
+                                                                sizeof(obj->broadcast_max_size ),
+                                                                &obj->broadcast_max_size);
 				obj->broadcast_check_threshold = 512;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "ITT_BROADCAST_CHECK_TH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->broadcast_check_threshold ) )
-			{
-				fprintf(stderr,"Error size mismatch for ITT_BROADCAST_CHECK_TH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->broadcast_check_threshold);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for ITT_BROADCAST_CHECK_TH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for ITT_BROADCAST_CHECK_TH");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "ITT_BROADCAST_CHECK_TH",
+                                                                sizeof(obj->broadcast_check_threshold ),
+                                                                &obj->broadcast_check_threshold);
 				obj->allreduce_arity_max = 8;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "ITT_ALLREDUCE_ARITY_MAX" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->allreduce_arity_max ) )
-			{
-				fprintf(stderr,"Error size mismatch for ITT_ALLREDUCE_ARITY_MAX");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->allreduce_arity_max);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for ITT_ALLREDUCE_ARITY_MAX");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for ITT_ALLREDUCE_ARITY_MAX");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "ITT_ALLREDUCE_ARITY_MAX",
+                                                                sizeof(obj->allreduce_arity_max ),
+                                                                &obj->allreduce_arity_max);
 				obj->allreduce_max_size = 4096;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "ITT_ALLREDUCE_MAX_SIZE" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->allreduce_max_size ) )
-			{
-				fprintf(stderr,"Error size mismatch for ITT_ALLREDUCE_MAX_SIZE");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->allreduce_max_size);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for ITT_ALLREDUCE_MAX_SIZE");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for ITT_ALLREDUCE_MAX_SIZE");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "ITT_ALLREDUCE_MAX_SIZE",
+                                                                sizeof(obj->allreduce_max_size ),
+                                                                &obj->allreduce_max_size);
 				obj->allreduce_check_threshold = 8192;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "ITT_ALLREDUCE_CHECK_TH" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->allreduce_check_threshold ) )
-			{
-				fprintf(stderr,"Error size mismatch for ITT_ALLREDUCE_CHECK_TH");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->allreduce_check_threshold);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for ITT_ALLREDUCE_CHECK_TH");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for ITT_ALLREDUCE_CHECK_TH");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "ITT_ALLREDUCE_CHECK_TH",
+                                                                sizeof(obj->allreduce_check_threshold ),
+                                                                &obj->allreduce_check_threshold);
 				obj->allreduce_max_slot = 65536;
 
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "ITT_ALLREDUCE_MAX_SLOT" , &the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
-			obj->allreduce_max_slot ) )
-			{
-				fprintf(stderr,"Error size mismatch for ITT_ALLREDUCE_MAX_SLOT");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-									MPC_T_data_alias(&the_cvar->data, &obj->allreduce_max_slot);
-	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for ITT_ALLREDUCE_MAX_SLOT");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for ITT_ALLREDUCE_MAX_SLOT");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "ITT_ALLREDUCE_MAX_SLOT",
+                                                                sizeof(obj->allreduce_max_slot ),
+                                                                &obj->allreduce_max_slot);
 				obj->collectives_init_hook.name = "mpc_lowcomm_coll_init_noalloc";
 	*(void **) &(obj->collectives_init_hook.value) = sctk_runtime_config_get_symbol("mpc_lowcomm_coll_init_noalloc");
 	obj->init_done = 1;

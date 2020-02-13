@@ -706,6 +706,13 @@ long  mpc_thread_futex(int sysop, void *addr1, int op, int val1,
 long  mpc_thread_futex_with_vaargs(int sysop, ...);
 
 
+/* MPC_MPI Trampolines */
+
+void mpc_thread_per_mpi_task_atexit_set_trampoline(int (*trampoline)(void (*func)(void)) );
+
+struct mpc_mpi_cl_per_mpi_process_ctx_s;
+void mpc_thread_get_mpi_process_ctx_set_trampoline( struct mpc_mpi_cl_per_mpi_process_ctx_s * (*trampoline)(void) );
+
 #ifdef __cplusplus
 }
 #endif

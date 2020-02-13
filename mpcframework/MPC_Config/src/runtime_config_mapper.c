@@ -703,3 +703,20 @@ void sctk_runtime_config_do_cleanup(__UNUSED__ struct sctk_runtime_config* confi
 {
 
 }
+
+/* MPIT Support */
+
+static void (*__mpi_t_config_trampoline)(char *, size_t, void *) = NULL;
+
+void sctk_runtime_config_mpit_bind_variable_set_trampoline( void (*trampoline)(char *, size_t, void *))
+{
+        __mpi_t_config_trampoline = trampoline;
+}
+
+void sctk_runtime_config_mpit_bind_variable(char *name, size_t size, void * data_addr)
+{
+        if(__mpi_t_config_trampoline)
+        {
+                (__mpi_t_config_trampoline)(name, size, data_addr);
+        }
+}

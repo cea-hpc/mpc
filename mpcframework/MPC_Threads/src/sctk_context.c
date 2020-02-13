@@ -51,6 +51,12 @@ __thread char *mpc_user_tls_1 = NULL;
 __thread void *sctk_openmp_thread_tls;
 #endif
 
+#if defined(MPC_MPI)
+struct mpc_mpi_cl_per_thread_ctx_s;
+__thread struct mpc_mpi_cl_per_thread_ctx_s *___mpc_p_per_VP_comm_ctx;
+#endif
+
+
 unsigned long mpc_user_tls_1_offset = 0;
 unsigned long mpc_user_tls_1_entry_number = 0;
 unsigned long mpc_user_tls_1_entry_number_max = 0;

@@ -122,4 +122,9 @@ int sctk_runtime_config_map_entry_to_enum(xmlNodePtr node, const char * type_nam
 /********************************* FUNCTION *********************************/
 void sctk_runtime_config_do_cleanup(struct sctk_runtime_config * config);
 
+
+/* MPIT Support */
+void sctk_runtime_config_mpit_bind_variable_set_trampoline( void (*trampoline)(char *, size_t, void *));
+void sctk_runtime_config_mpit_bind_variable(char *name, size_t size, void * data_addr);
+
 #endif /*SCTK_RUNTIME_CONFIG_MAPPER_H*/

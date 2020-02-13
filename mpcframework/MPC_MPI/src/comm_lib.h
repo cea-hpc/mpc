@@ -450,7 +450,7 @@ struct mpc_mpi_cl_per_mpi_process_ctx_atexit_s
  *
  *  This data structure is initialised by \ref __mpc_cl_per_mpi_process_ctx_init and
  * 	released by \ref __mpc_cl_per_mpi_process_ctx_release. Initial setup is done
- *  in \ref __mpc_cl_per_mpi_process_ctx_init called in \ref mpc_mpi_cl_mpi_process_main.
+ *  in \ref __mpc_cl_per_mpi_process_ctx_init.
  *
  */
 typedef struct mpc_mpi_cl_per_mpi_process_ctx_s

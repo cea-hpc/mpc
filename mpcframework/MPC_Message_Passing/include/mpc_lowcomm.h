@@ -177,6 +177,58 @@ void mpc_lowcomm_terminaison_barrier (void);
 
 extern void ( *mpc_lowcomm_coll_init_hook ) ( mpc_lowcomm_communicator_t id );
 
+/***************************
+ * MPC LOWCOMM TRAMPOLINES *
+ ***************************/
+
+/**
+ * @brief Trampoline function for polling EGREQ from low-level layers
+ *
+ * @param trampoline MPC_MPI polling function
+ */
+void mpc_lowcomm_egreq_poll_set_trampoline(  void (*trampoline)(void) );
+
+/**
+ * @brief Trampoline function for MPC_MPI to check for allocmem boundaries
+ *
+ * @param trampoline pointer to trampoline function
+ */
+void mpc_lowcomm_rdma_allocmem_is_in_pool_set_trampoline( int (*trampoline)(void *) );
+
+/**
+ * @brief Set a flag to enable MPI window progress
+ */
+void mpc_lowcomm_rdma_MPI_windows_in_use(void);
+
+/**
+ * @brief Set the function to be called on request completion
+ *
+ * @param trampoline request completion callback
+ */
+void mpc_lowcomm_set_request_completion_trampoline( int trampoline( mpc_lowcomm_request_t *) );
+
+/**
+ * @brief Notify the completion of a request from lowcomm to MPC MPI
+ *
+ * @param req request to be completed
+ * @return int 1 if request counter was handled
+ */
+int mpc_lowcomm_notify_request_completion(mpc_lowcomm_request_t *req);
+
+/**
+ * @brief Notify request on source context
+ *
+ * @param trampoline Function to notify to
+ */
+void mpc_lowcomm_rdma_MPC_MPI_notify_src_ctx_set_trampoline( void (*trampoline)(mpc_lowcomm_rdma_window_t) );
+
+/**
+ * @brief Notify request on dest context
+ *
+ * @param trampoline Function to notify to
+ */
+void mpc_lowcomm_rdma_MPC_MPI_notify_dest_ctx_set_trampoline( void (*trampoline)(mpc_lowcomm_rdma_window_t) );
+
 /************************************************************************/
 /* Setup and Teardow when running in libmode                            */
 /************************************************************************/

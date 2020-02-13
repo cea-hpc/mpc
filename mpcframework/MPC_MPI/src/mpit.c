@@ -26,11 +26,36 @@
 #include "sctk_thread.h"
 #include "sctk_debug.h"
 
+#include <mpc_common_flags.h>
+
 #include <string.h>
+
+#include <mpc_runtime_config.h>
 
 /************************************************************************/
 /* INTERNAL MPI_T Init and Finalize                                     */
 /************************************************************************/
+
+static void __set_config_bind_trampoline()
+{
+        sctk_runtime_config_mpit_bind_variable_set_trampoline(mpc_MPI_T_bind_variable);
+}
+
+
+void mpc_MPI_T_init() __attribute__((constructor));
+
+void mpc_MPI_T_init()
+{
+        MPC_INIT_CALL_ONLY_ONCE
+
+        mpc_common_init_callback_register("Before Config INIT",
+                                          "Initialize MPIT variable defaults",
+                                          MPI_T_cvars_array_init, 1);
+
+        mpc_common_init_callback_register("Before Config INIT",
+                                          "Initialize MPIT bind trampoline",
+                                          __set_config_bind_trampoline, 2);
+}
 
 volatile int ___mpi_t_is_running = 0;
 static mpc_common_spinlock_t mpit_init_lock = SCTK_SPINLOCK_INITIALIZER;
@@ -328,14 +353,14 @@ int MPI_T_cvar_fill_info_from_config() {
   return 0;
 }
 
-int MPI_T_cvars_array_init() {
+void MPI_T_cvars_array_init() {
   mpc_common_spinlock_lock(&cvar_array_lock);
 
   if (cvar_array_initialized == 0) {
     cvar_array_initialized = 1;
   } else {
     mpc_common_spinlock_unlock(&cvar_array_lock);
-    return 0;
+    return;
   }
 
   __cvar_array.dyn_cvar_count = 0;
@@ -345,17 +370,16 @@ int MPI_T_cvars_array_init() {
   MPI_T_cvar_fill_info_from_config();
 
   mpc_common_spinlock_unlock(&cvar_array_lock);
-  return 0;
 }
 
-int MPI_T_cvars_array_release() {
+void MPI_T_cvars_array_release() {
   mpc_common_spinlock_lock(&cvar_array_lock);
 
   if (cvar_array_initialized == 1) {
     cvar_array_initialized = 0;
   } else {
     mpc_common_spinlock_unlock(&cvar_array_lock);
-    return 0;
+    return ;
   }
 
   __cvar_array.dyn_cvar_count = 0;
@@ -363,7 +387,6 @@ int MPI_T_cvars_array_release() {
   __cvar_array.dyn_cvars = NULL;
 
   mpc_common_spinlock_unlock(&cvar_array_lock);
-  return 0;
 }
 
 struct MPC_T_cvar *MPI_T_cvars_array_get(MPC_T_cvar_t slot) {
@@ -1542,4 +1565,40 @@ int MPC_T_session_stop(MPI_T_pvar_session session, void *handle,
   mpc_common_spinlock_read_unlock(&___session_array.lock);
 
   return MPI_SUCCESS;
+}
+
+
+/********************
+ * VARIABLE BINDING *
+ ********************/
+
+void mpc_MPI_T_bind_variable(char *name, size_t size, void * data_addr)
+{
+        int the_temp_index;
+
+        if( mpc_MPI_T_cvar_get_index( name , &the_temp_index ) == MPI_SUCCESS )
+        {
+                struct MPC_T_cvar * the_cvar = MPI_T_cvars_array_get( the_temp_index );
+
+                if( MPC_T_data_get_size( &the_cvar->data ) != size )
+                {
+                        fprintf(stderr,"Error size mismatch for %s", name);
+                        abort();
+                }
+
+                if( the_cvar )
+                {
+                        MPC_T_data_alias(&the_cvar->data, data_addr);
+                }
+                else
+                {
+                        fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for %s", name);
+                        abort();
+                }
+        }
+        else
+        {
+                fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for %s", name);
+                abort();
+        }
 }

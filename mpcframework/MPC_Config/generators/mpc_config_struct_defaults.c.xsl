@@ -37,13 +37,6 @@
 		<xsl:text>#include "mpc_config_struct.h"&#10;</xsl:text>
 		<xsl:text>#include "mpc_config_struct_defaults.h"&#10;</xsl:text>
 		<xsl:text>#include "runtime_config_mapper.h"&#10;</xsl:text>
-		<xsl:text>#ifdef MPC_MPI&#10;</xsl:text>
-		<xsl:text>#include "mpit_internal.h"&#10;</xsl:text>
-		<xsl:text>/* This is used to avoid variable duplicates for CVAR handles */ &#10;</xsl:text>
-		<xsl:text>static struct MPC_T_cvar * the_cvar = NULL;&#10;</xsl:text>
-		<xsl:text>#endif&#10;</xsl:text>
-		<xsl:text>/* This is used to avoid variable duplicates for CVAR resolution*/ &#10;</xsl:text>
-		<xsl:text>static int the_temp_index = -1;&#10;</xsl:text>
 		<xsl:apply-templates select='config'/>
 		<xsl:call-template name="gen-main-reset-function"/>
 		<xsl:call-template name="gen-struct-default"/>
@@ -228,36 +221,9 @@
 		</xsl:choose>
 		<xsl:choose>
 			<xsl:when test="@alias">
-#ifdef MPC_MPI
-		if( mpc_MPI_T_cvar_get_index( "<xsl:value-of select='@alias'/>" , &amp;the_temp_index ) == MPI_SUCCESS )
-		{
-			the_cvar = MPI_T_cvars_array_get( the_temp_index );
-
-			
-			if( MPC_T_data_get_size( &amp;the_cvar->data ) != sizeof( 
-			<xsl:value-of select="concat('obj->',@name)"/> ) )
-			{
-				fprintf(stderr,"Error size mismatch for <xsl:value-of select='@alias'/>");
-				abort();	
-			}
-
-			if( the_cvar )
-			{
-							<xsl:value-of select="concat('&#09;&#09;MPC_T_data_alias(&amp;the_cvar->data, &amp;obj->',@name,');&#10;')"/>	
-			}
-			else
-			{
-				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for <xsl:value-of select='@alias'/>");
-				abort();
-			}
-		
-		}
-		else
-		{
-			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for <xsl:value-of select='@alias'/>");
-			abort();
-		}
-#endif
+                        sctk_runtime_config_mpit_bind_variable( "<xsl:value-of select='@alias'/>",
+                                                                sizeof(<xsl:value-of select="concat('obj->',@name)"/> ),
+                                                                <xsl:value-of select="concat('&amp;obj->',@name)"/>);
 			</xsl:when>
 		</xsl:choose>
 	</xsl:template>

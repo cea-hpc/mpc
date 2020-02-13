@@ -858,21 +858,12 @@ void mpc_thread_per_thread_init_function() __attribute__((constructor));
 
 void mpc_thread_per_thread_init_function()
 {
-        static int __already_done = 0;
-
-        if(__already_done)
-                return;
+        MPC_INIT_CALL_ONLY_ONCE
 
         mpc_common_init_callback_register("Per Thread Init", "Allocator Numa Migrate", sctk_alloc_posix_numa_migrate, 0);
         mpc_common_init_callback_register("Per Thread Init", "Dynamic Initializers", __per_thread_call_dynamic_initializers, 1);
 
-
-        __already_done = 1;
 }
-
-
-extern void mpc_mpi_cl_per_thread_ctx_init();
-extern void mpc_mpi_cl_per_thread_ctx_release();
 
 static void sctk_thread_data_reset();
 static void *
@@ -896,10 +887,6 @@ sctk_thread_create_tmp_start_routine_user( sctk_thread_data_t *__arg )
 	*ptr_cleanup = NULL;
 	sctk_thread_setspecific( _sctk_thread_handler_key, ptr_cleanup );
 
-#ifdef MPC_MPI
-	mpc_mpi_cl_per_mpi_process_ctx_reinit( tmp.father_data );
-#endif
-
 	sctk_free( __arg );
 	tmp.virtual_processor = sctk_thread_get_vp();
 	sctk_nodebug( "%d on %d", tmp.task_id, tmp.virtual_processor );
@@ -907,16 +894,11 @@ sctk_thread_create_tmp_start_routine_user( sctk_thread_data_t *__arg )
 	sctk_thread_data_set( &tmp );
 	sctk_thread_add( &tmp, sctk_thread_self() );
 
-	/* Note that the profiler is not initialized in user threads */
-
 	/** ** **/
-
 	sctk_report_creation( sctk_thread_self() );
-/** **/
+        /** **/
 
-#ifdef MPC_MPI
-	mpc_mpi_cl_per_thread_ctx_init();
-#endif
+
 
 	if ( mpc_common_get_flags()->new_scheduler_engine_enabled )
 	{
@@ -932,10 +914,6 @@ sctk_thread_create_tmp_start_routine_user( sctk_thread_data_t *__arg )
         mpc_common_init_trigger("Per Thread Init");
 
 	res = tmp.__start_routine( tmp.__arg );
-
-#ifdef MPC_MPI
-	mpc_mpi_cl_per_thread_ctx_release();
-#endif
 
         mpc_common_init_trigger("Per Thread Release");
 
@@ -1012,12 +990,32 @@ int sctk_pthread_bypass_create(pthread_t  *thread,
 }
 #endif
 
+static struct mpc_mpi_cl_per_mpi_process_ctx_s * (*___get_mpi_process_ctx_trampoline)(void) = NULL;
+
+void mpc_thread_get_mpi_process_ctx_set_trampoline( struct mpc_mpi_cl_per_mpi_process_ctx_s * (*trampoline)(void) )
+{
+        ___get_mpi_process_ctx_trampoline = trampoline;
+}
+
+static inline struct mpc_mpi_cl_per_mpi_process_ctx_s * __get_mpi_process_ctx()
+{
+        if( ___get_mpi_process_ctx_trampoline )
+        {
+                return ___get_mpi_process_ctx_trampoline();
+        }
+
+        return NULL;
+}
+
+
+
+
 static hwloc_topology_t topology_option_text;
-int
-sctk_user_thread_create (sctk_thread_t * restrict __threadp,
-			 const sctk_thread_attr_t * restrict __attr,
-			 void *(*__start_routine) (void *),
-			 void *restrict __arg)
+
+int sctk_user_thread_create (sctk_thread_t * restrict __threadp,
+                                const sctk_thread_attr_t * restrict __attr,
+                                void *(*__start_routine) (void *),
+                                void *restrict __arg)
 {
   int res;
   sctk_thread_data_t *tmp;
@@ -1045,11 +1043,8 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   tmp->__start_routine = __start_routine;
   tmp->task_id = -1;
   tmp->user_thread = user_thread;
-#ifdef MPC_MPI
-  tmp->father_data = mpc_cl_per_mpi_process_ctx_get ();
-#else
-  tmp->father_data = NULL;
-#endif
+  tmp->father_data = __get_mpi_process_ctx();
+
 
   if (tmp_father)
     {
@@ -1203,13 +1198,31 @@ sctk_thread_equal (sctk_thread_t __thread1, sctk_thread_t __thread2)
 
 /* At exit generic trampoline */
 
+static int (*___per_task_atexit_trampoline)(void (*func)(void)) = NULL;
+
+void mpc_thread_per_mpi_task_atexit_set_trampoline(int (*trampoline)(void (*func)(void)) )
+{
+        ___per_task_atexit_trampoline = trampoline;
+}
+
+static inline int __per_mpi_task_atexit(void (*func)(void))
+{
+        if( ___per_task_atexit_trampoline )
+        {
+                return (___per_task_atexit_trampoline)(func);
+        }
+
+        /* No trampoline */
+        return 1;
+}
+
 int sctk_atexit(void (*function)(void))
 {
-#ifdef MPC_MPI
+
 	/* We may have a TASK context replacing the proces one */
 	sctk_info("Calling the MPC atexit function");
-	int ret  = mpc_mpi_cl_per_mpi_process_ctx_at_exit_register( function );
-	
+	int ret  = __per_mpi_task_atexit( function );
+
 	if( ret == 0 )
 	{
 		/* We were in a task and managed to register ourselves */
@@ -1217,7 +1230,7 @@ int sctk_atexit(void (*function)(void))
 	}
 	/* It failed we may not be in a task then call libc */
 	sctk_info("Calling the default atexit function");
-#endif
+
 	/* We have no task level fallback to libc */
 	return atexit( function );
 }
@@ -2612,8 +2625,7 @@ static int sctk_ignore_sigpipe()
     return 0 ;
 }
 
-void
-sctk_start_func (void *(*run) (void *), void *arg)
+void sctk_start_func (void *(*run) (void *), void *arg)
 {
 	int i, cnt;
 	int total_tasks_number;
@@ -2634,15 +2646,6 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	sctk_thread_setspecific (_sctk_thread_handler_key, &ptr_cleanup);
 
 	kthread_create (&timer_thread, sctk_thread_timer, NULL);
-
-#ifdef MPC_MPI
-	sctk_mpc_init_keys ();
-#endif
-
-  /* Fill the profiling parent key array */
-#ifdef MPC_Profiler
-  sctk_profiler_array_init_parent_keys();
-#endif
 
 	total_tasks_number = mpc_common_get_task_count();
 
@@ -2698,7 +2701,6 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	MPC_Process_hook();
 #endif
 
-
         sctk_leave_no_alloc_land();
 
 
@@ -2710,15 +2712,6 @@ sctk_start_func (void *(*run) (void *), void *arg)
         if ( total_tasks_number % mpc_common_get_process_count() <= mpc_common_get_process_rank() )
                 start_thread += total_tasks_number % mpc_common_get_process_count();
 
-        /* 		if (sctk_checkpoint_mode) */
-        /* 		{ */
-        /* 			file = fopen (name, "w"); */
-        /* 			fprintf (file, "Task %d->%d\n", start_thread, */
-        /* 						   start_thread + local_threads - 1); */
-        /* 			fprintf (file, "%lu\n", sctk_get_heap_size ()); */
-        /* 			fclose (file); */
-        /* 		} */
-
         sctk_first_local = start_thread;
         sctk_last_local = start_thread + local_threads - 1;
         threads =
@@ -2726,6 +2719,8 @@ sctk_start_func (void *(*run) (void *), void *arg)
         sctk_current_local_tasks_nb = local_threads;
 
         cnt = 0;
+
+        mpc_common_init_trigger("Start MPI Tasks");
 
         for ( i = start_thread; i < start_thread + local_threads; i++ )
         {
@@ -2753,8 +2748,9 @@ sctk_start_func (void *(*run) (void *), void *arg)
                                             0, NULL, NULL);
 
         sctk_multithreading_initialised = 0;
-
         sctk_thread_running = 0;
+
+        mpc_common_init_trigger("MPI Tasks Done");
 
 #ifdef MPC_Message_Passing
         sctk_ignore_sigpipe();

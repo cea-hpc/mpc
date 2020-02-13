@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #ifdef MPC_USE_EXTLS
-#include <extls.h>
+	#include <extls.h>
 #endif
 
 #include <mpc_config.h>
@@ -90,8 +90,8 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 #endif
 
 #ifdef __MIC__
-	//#undef DONOTHAVE_CONTEXTS
-	//#define DONOTHAVE_CONTEXTS
+//#undef DONOTHAVE_CONTEXTS
+//#define DONOTHAVE_CONTEXTS
 #endif
 
 #ifdef DONOTHAVE_CONTEXTS
@@ -156,12 +156,12 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 #define sctk_setjmp setjmp
 
 #ifdef SCTK_NOT_USE_SIGACTION
-  struct sigaction
-  {
-    void (*sa_handler) (int);
-    sigset_t sa_mask;
-    int sa_flags;
-  };
+struct sigaction
+{
+	void ( *sa_handler ) ( int );
+	sigset_t sa_mask;
+	int sa_flags;
+};
 #define sigaction(a,b,c) signal((a),(b)->sa_handler)
 #endif
 
@@ -172,63 +172,65 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 #include <setjmp.h>
 #endif
 
+#ifdef MPC_MPI
+struct mpc_mpi_cl_per_thread_ctx_s;
+#endif
 
-  typedef struct sctk_mctx_st
-  {
+typedef struct sctk_mctx_st
+{
 #if SCTK_MCTX_MTH(mcsc)
-    ucontext_t uc;
+	ucontext_t uc;
 #elif SCTK_MCTX_MTH(sjlj)
-    jmp_buf jb;
+	jmp_buf jb;
 #elif SCTK_MCTX_MTH(windows)
-    jmp_buf jb;
+	jmp_buf jb;
 #elif SCTK_MCTX_MTH(libcontext)
-    sctk_ucontext_t uc;
+	sctk_ucontext_t uc;
 #else
 #error "unknown mctx method"
 #endif
-    volatile int restored;
-    sigset_t sigs;
-    int error;
-    void *thread_lib;
-    void *sctk_tls_trace_local;
-    void *mpc_user_tls_1;
+	volatile int restored;
+	sigset_t sigs;
+	int error;
+	void *thread_lib;
+	void *sctk_tls_trace_local;
+	void *mpc_user_tls_1;
 #ifdef MPC_USE_EXTLS
-    extls_ctx_t* tls_ctx;
+	extls_ctx_t *tls_ctx;
 #endif
 
 #ifdef MPC_MPI
-    struct mpc_mpi_cl_per_thread_ctx_s *___mpc_p_per_VP_comm_ctx;
-    void *___mpc_lowcomm_ptp_message_passing;
+	struct mpc_mpi_cl_per_thread_ctx_s *___mpc_p_per_VP_comm_ctx;
 #endif
 
 #ifdef MPC_Message_Passing
-    int __mpc_task_rank;
+	int __mpc_task_rank;
 #endif
 
 #if defined(MPC_Accelerators)
-    /* MPC CUDA context */
-    void *sctk_cuda_ctx;
+	/* MPC CUDA context */
+	void *sctk_cuda_ctx;
 #endif
 
 #if defined (MPC_OpenMP)
-    /* MPC OpenMP TLS */
-    void *sctk_openmp_thread_tls ;
+	/* MPC OpenMP TLS */
+	void *sctk_openmp_thread_tls ;
 #endif
 
 #if defined MPC_Fault_Tolerance
-    int sctk_ft_critical_section;
+	int sctk_ft_critical_section;
 #endif
-  } sctk_mctx_t;
+} sctk_mctx_t;
 
-  int sctk_getcontext (sctk_mctx_t * ucp);
-  int sctk_setcontext (sctk_mctx_t * ucp);
-  int sctk_swapcontext (sctk_mctx_t * oucp, sctk_mctx_t * ucp);
-  int sctk_makecontext (sctk_mctx_t * ucp,
-			void *arg,
-			void (*func) (void *),
-			char *stack, size_t stack_size);
+int sctk_getcontext ( sctk_mctx_t *ucp );
+int sctk_setcontext ( sctk_mctx_t *ucp );
+int sctk_swapcontext ( sctk_mctx_t *oucp, sctk_mctx_t *ucp );
+int sctk_makecontext ( sctk_mctx_t *ucp,
+                       void *arg,
+                       void ( *func ) ( void * ),
+                       char *stack, size_t stack_size );
 
-  void sctk_tls_init(void);
+void sctk_tls_init( void );
 
 #ifdef __cplusplus
 }

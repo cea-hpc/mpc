@@ -490,7 +490,7 @@ typedef int MPI_Halo_exchange;
 typedef MPC_Checkpoint_state MPIX_Checkpoint_state;
 
 /* NOT IMPLEMENTED >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
-typedef int MPI_Win;
+typedef mpc_lowcomm_rdma_window_t MPI_Win;
 
 
 typedef MPC_Message MPI_Message;
