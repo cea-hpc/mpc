@@ -648,6 +648,8 @@ MPC_ARCH_X86_64_MICROTASK_FALSE
 MPC_ARCH_X86_64_MICROTASK_TRUE
 MPC_ARCH_X86_64_CONTEXT_SWITCH_FALSE
 MPC_ARCH_X86_64_CONTEXT_SWITCH_TRUE
+EXTLS_LIBS
+EXTLS_CFLAGS
 LIBOBJS
 MPC_ARCH_DETECTED_STRING
 MPC_ARCH_DETECTED_FUNCTION
@@ -823,6 +825,9 @@ with_slurm
 with_pmi
 with_pmi_include
 with_pmi_libs
+with_extls
+with_extls_include
+with_extls_libs
 enable_threads
 enable_message_passing
 enable_mpi
@@ -853,7 +858,9 @@ HWLOC_LIBS
 OPA_CFLAGS
 OPA_LIBS
 PMI_CFLAGS
-PMI_LIBS'
+PMI_LIBS
+EXTLS_CFLAGS
+EXTLS_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1526,6 +1533,9 @@ Optional Packages:
   --with-pmi              Provide prefix for pmi
   --with-pmi-inc          Provide include path for pmi
   --with-pmi-libs         Provide library path for pmi
+  --with-extls            Provide prefix for extls
+  --with-extls-inc        Provide include path for extls
+  --with-extls-libs       Provide library path for extls
 
 Some influential environment variables:
   CC          C compiler command
@@ -1557,6 +1567,9 @@ Some influential environment variables:
   OPA_LIBS    linker flags for OPA, overriding pkg-config
   PMI_CFLAGS  C compiler flags for PMI, overriding pkg-config
   PMI_LIBS    linker flags for PMI, overriding pkg-config
+  EXTLS_CFLAGS
+              C compiler flags for EXTLS, overriding pkg-config
+  EXTLS_LIBS  linker flags for EXTLS, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -18776,8 +18789,6 @@ $as_echo "$as_me: consider using --with-openpa-include=INCS" >&6;}
                 fi
 
 
-
-
 #
 # Configure MPC Launch
 #
@@ -23630,6 +23641,165 @@ _ACEOF
 fi
 done
 
+
+#
+# Configure Privatization Support
+#
+
+mpc_privatization_support="no"
+
+
+
+
+# Check whether --with-extls was given.
+if test "${with_extls+set}" = set; then :
+  withval=$with_extls; prefix=$withval
+fi
+
+
+
+# Check whether --with-extls-include was given.
+if test "${with_extls_include+set}" = set; then :
+  withval=$with_extls_include; inc_prefix=$withval
+fi
+
+
+
+# Check whether --with-extls-libs was given.
+if test "${with_extls_libs+set}" = set; then :
+  withval=$with_extls_libs; lib_prefix=$withval
+fi
+
+
+                check_or_infer_prefix_result="no"
+                header_name=extls.h
+                libname=extls
+                function_name=extls_init
+                version=""
+
+                if test -n "$lib_prefix"
+                then
+                        lib_prefix=$prefix
+                fi
+
+                if test -n "$inc_prefix"
+                then
+                        inc_prefix=$prefix
+                fi
+
+                # First try with PKG config
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for EXTLS" >&5
+$as_echo_n "checking for EXTLS... " >&6; }
+
+if test -n "$EXTLS_CFLAGS"; then
+    pkg_cv_EXTLS_CFLAGS="$EXTLS_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_EXTLS_CFLAGS=`$PKG_CONFIG --cflags "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$EXTLS_LIBS"; then
+    pkg_cv_EXTLS_LIBS="$EXTLS_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_EXTLS_LIBS=`$PKG_CONFIG --libs "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        EXTLS_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$libname $version" 2>&1`
+        else
+	        EXTLS_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$libname $version" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$EXTLS_PKG_ERRORS" >&5
+
+	pkg_found=0
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	pkg_found=0
+else
+	EXTLS_CFLAGS=$pkg_cv_EXTLS_CFLAGS
+	EXTLS_LIBS=$pkg_cv_EXTLS_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	pkg_found=1
+fi
+
+                if test "x$pkg_found" = "x1"
+                then
+                        #Insert flags
+                        CPPFLAGS+=" ${extls_init_CFLAGS}"
+                        LDFLAGS+=" ${EXTLS_LIBS}"
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                        check_or_infer_prefix_result="yes"
+                else
+                        __check_or_infer_prefix_include $header_name $inc_prefix
+                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix
+
+                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                        then
+                                check_or_infer_prefix_result="yes"
+                        else
+                                check_or_infer_prefix_result="no"
+                        fi
+                fi
+
+                mpc_dep_found=$check_or_infer_prefix_result
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Enabling extended TLS support" >&5
+$as_echo_n "checking Enabling extended TLS support... " >&6; }
+
+if test "x$mpc_dep_found" = "xyes"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define MPC_USE_EXTLS 1" >>confdefs.h
+
+
+
+        mpc_privatization_support="yes"
+else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
 
 #
 # Configure MPC_Arch
@@ -28994,6 +29164,7 @@ echo "========== MPC Configuration =========="
 echo "PREFIX: $prefix"
 echo ""
 echo "Process Launcher: $mpc_launcher"
+echo "Privatization support: $mpc_privatization_support"
 echo ""
 echo "The following modules will be built:"
 echo ""

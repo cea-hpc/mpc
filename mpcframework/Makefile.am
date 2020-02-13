@@ -30,6 +30,20 @@ config:
 endif
 
 
+ALL_MPC_LIBS=./MPC_Config/src/libmpcconfig.la
+
+if MPC_THREAD_ENABLED
+ALL_MPC_LIBS+=./MPC_Launch/src/libmpclaunch.la
+ALL_MPC_LIBS+=./MPC_Threads/src/libmpcthread.la
+endif
+
+if MPC_MESSAGE_PASSING_ENABLED
+ALL_MPC_LIBS+=./MPC_Message_Passing/src/libmpclowcomm.la
+endif
+
+if MPC_MPI_ENABLED
+ALL_MPC_LIBS+=./MPC_MPI/src/libmpcmpi.la
+endif
 
 #
 # Define the MPC Library
@@ -37,22 +51,9 @@ endif
 
 lib_LTLIBRARIES = libmpcframework.la
 
-libmpcframework_la_LIBADD =  ./MPC_Config/src/libmpcconfig.la
+libmpcframework_la_LIBADD =  $(ALL_MPC_LIBS)
 
 libmpcframework_la_SOURCES=
-
-if MPC_THREAD_ENABLED
-        libmpcframework_la_LIBADD +=  ./MPC_Launch/src/libmpclaunch.la
-        libmpcframework_la_LIBADD +=  ./MPC_Threads/src/libmpcthread.la
-endif
-
-if MPC_MESSAGE_PASSING_ENABLED
-        libmpcframework_la_LIBADD += ./MPC_Message_Passing/src/libmpclowcomm.la
-endif
-
-if MPC_MPI_ENABLED
-        libmpcframework_la_LIBADD += ./MPC_MPI/src/libmpcmpi.la
-endif
 
 
 #
@@ -71,17 +72,4 @@ mpc_print_config_SOURCES += ./MPC_Config/src/print_config/mpc_print_config_xml.c
 
 mpc_print_config_LDADD = $(XML2_LIBS)
 
-mpc_print_config_LDADD += ./MPC_Config/src/libmpcconfig.la
-
-if MPC_THREAD_ENABLED
-        mpc_print_config_LDADD += ./MPC_Threads/src/libmpcthread.la  ./MPC_Launch/src/libmpclaunch.la
-endif
-
-if MPC_MESSAGE_PASSING_ENABLED
-        mpc_print_config_LDADD += ./MPC_Message_Passing/src/libmpclowcomm.la
-endif
-
-
-if MPC_MPI_ENABLED
-        mpc_print_config_LDADD += ./MPC_MPI/src/libmpcmpi.la
-endif
+mpc_print_config_LDADD += $(ALL_MPC_LIBS)

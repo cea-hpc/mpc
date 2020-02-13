@@ -226,8 +226,6 @@ MPC_REQUIRED_DEPENDENCY([hwloc], [$mpc_dep_found])
 MPC_DETECT_DEPENDENCY([opa.h],[openpa], [OPA_load_int], [OPA])
 MPC_REQUIRED_DEPENDENCY([openpa], [$mpc_dep_found])
 
-
-
 #
 # Configure MPC Launch
 #
@@ -728,6 +726,26 @@ AC_CHECK_FUNCS(sched_get_priority_max )
 AC_CHECK_FUNCS(sched_get_priority_min )
 
 #
+# Configure Privatization Support
+#
+
+mpc_privatization_support="no"
+
+MPC_DETECT_DEPENDENCY([extls.h],[extls], [extls_init], [EXTLS])
+
+AC_MSG_CHECKING([Enabling extended TLS support])
+
+if test "x$mpc_dep_found" = "xyes"; then
+        AC_MSG_RESULT([yes])
+        AC_DEFINE([MPC_USE_EXTLS], [1], [Extls support is enabled])
+
+
+        mpc_privatization_support="yes"
+else
+        AC_MSG_RESULT([no])
+fi
+
+#
 # Configure MPC_Arch
 #
 
@@ -826,6 +844,7 @@ echo "========== MPC Configuration =========="
 echo "PREFIX: $prefix"
 echo ""
 echo "Process Launcher: $mpc_launcher"
+echo "Privatization support: $mpc_privatization_support"
 echo ""
 echo "The following modules will be built:"
 echo ""

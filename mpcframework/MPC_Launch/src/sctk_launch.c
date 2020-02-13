@@ -763,7 +763,6 @@ int
 sctk_env_init ( int *argc, char ***argv )
 {
 	sctk_env_init_intern ( argc, argv );
-
 	sctk_perform_initialisation ();
 
 	return 0;
@@ -1158,8 +1157,6 @@ void sctk_init_mpc_runtime()
 	}
 
 	sctk_mpc_env_initialized = 1;
-
-   
 
         mpc_common_init_print();
 

@@ -638,6 +638,9 @@
 /* MPC_THREAD module was enabled */
 #undef MPC_Threads
 
+/* Extls support is enabled */
+#undef MPC_USE_EXTLS
+
 /* Hydra will be used to launch parallel programs */
 #undef MPC_USE_HYDRA
 
