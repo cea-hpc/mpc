@@ -26,6 +26,7 @@
 extern "C" {
 #endif
 
+#include <mpc_keywords.h>
 #include "mpc_config.h"
 #include "opa_primitives.h"
 #include "mpc_common_asm.h"

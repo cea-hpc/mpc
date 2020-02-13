@@ -70,6 +70,7 @@ __check_or_infer_prefix_include()
                                 AC_MSG_RESULT([yes])
                                 # Set include path for matched header
                                 CPPFLAGS+=" -I$pref/$suffix/"
+
                                 AX_RESET_HEADERS_CACHE([$looked_up_header])
                                 AC_CHECK_HEADER([$looked_up_header],[],[AC_MSG_ERROR([Failed to autodetect '$looked_up_header' in '$pref/$suffix'])])
                                 check_or_infer_prefix_include=yes
@@ -185,7 +186,8 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                 if test "x$pkg_found" = "x1"
                 then
                         #Insert flags
-                        CPPFLAGS+=" ${$3_CFLAGS}"
+                        CPPFLAGS+=" ${$4_CFLAGS}"
+
                         LDFLAGS+=" ${$4_LIBS}"
                         AC_MSG_NOTICE([$libname found using pkg-config])
                         #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
@@ -225,6 +227,26 @@ MPC_REQUIRED_DEPENDENCY([hwloc], [$mpc_dep_found])
 
 MPC_DETECT_DEPENDENCY([opa.h],[openpa], [OPA_load_int], [OPA])
 MPC_REQUIRED_DEPENDENCY([openpa], [$mpc_dep_found])
+
+
+#
+# Detect MPC Allocator
+#
+
+mpc_allocator="Standard"
+
+MPC_DETECT_DEPENDENCY([mpcalloc.h], [mpcalloc], [sctk_malloc], [ALLOC])
+
+AC_MSG_CHECKING([MPC target alocator])
+
+if test "x$mpc_dep_found" = "xyes"; then
+        AC_MSG_RESULT([mpcalloc])
+        AC_DEFINE([MPC_Allocator], [1], [mpcalloc support is enabled])
+
+        mpc_allocator="mpcalloc"
+else
+        AC_MSG_RESULT([Standard allocator])
+fi
 
 #
 # Configure MPC Launch
@@ -844,6 +866,7 @@ echo "========== MPC Configuration =========="
 echo "PREFIX: $prefix"
 echo ""
 echo "Process Launcher: $mpc_launcher"
+echo "Allocator: $mpc_allocator"
 echo "Privatization support: $mpc_privatization_support"
 echo ""
 echo "The following modules will be built:"

@@ -1,6 +1,9 @@
 #include <mpc_common_flags.h>
 #include <mpc_common_spinlock.h>
 
+#include "sctk_debug.h"
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -15,7 +18,6 @@ struct mpc_common_init_entry
         int priority;
         void (*callback)();
 };
-
 
 static inline void __entry_init(struct mpc_common_init_entry * entry, char * callback_name, void (*callback)(), int priority )
 {

@@ -23,6 +23,7 @@
 
 #include <mpc_common_spinlock.h>
 
+#include <sctk_debug.h>
 #include <string.h>
 
 void _mpc_ht_cell_init( struct _mpc_ht_cell *cell, uint64_t key, void *data, struct _mpc_ht_cell *next )

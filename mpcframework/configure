@@ -659,6 +659,8 @@ HYDRA_CLIENT_LIB_ENABED_TRUE
 HAVE_MPIEXEC
 PMI_LIBS
 PMI_CFLAGS
+ALLOC_LIBS
+ALLOC_CFLAGS
 OPA_LIBS
 OPA_CFLAGS
 HWLOC_LIBS
@@ -820,6 +822,9 @@ with_hwloc_libs
 with_openpa
 with_openpa_include
 with_openpa_libs
+with_mpcalloc
+with_mpcalloc_include
+with_mpcalloc_libs
 with_hydra
 with_slurm
 with_pmi
@@ -857,6 +862,8 @@ HWLOC_CFLAGS
 HWLOC_LIBS
 OPA_CFLAGS
 OPA_LIBS
+ALLOC_CFLAGS
+ALLOC_LIBS
 PMI_CFLAGS
 PMI_LIBS
 EXTLS_CFLAGS
@@ -1527,6 +1534,9 @@ Optional Packages:
   --with-openpa           Provide prefix for openpa
   --with-openpa-inc       Provide include path for openpa
   --with-openpa-libs      Provide library path for openpa
+  --with-mpcalloc         Provide prefix for mpcalloc
+  --with-mpcalloc-inc     Provide include path for mpcalloc
+  --with-mpcalloc-libs    Provide library path for mpcalloc
   --with-hydra            Compile MPC with hydra support (requires an external
                           hydra launcher)
   --with-slurm            Rely on SLURM's PMI
@@ -1565,6 +1575,9 @@ Some influential environment variables:
   HWLOC_LIBS  linker flags for HWLOC, overriding pkg-config
   OPA_CFLAGS  C compiler flags for OPA, overriding pkg-config
   OPA_LIBS    linker flags for OPA, overriding pkg-config
+  ALLOC_CFLAGS
+              C compiler flags for ALLOC, overriding pkg-config
+  ALLOC_LIBS  linker flags for ALLOC, overriding pkg-config
   PMI_CFLAGS  C compiler flags for PMI, overriding pkg-config
   PMI_LIBS    linker flags for PMI, overriding pkg-config
   EXTLS_CFLAGS
@@ -18081,6 +18094,7 @@ $as_echo "yes" >&6; }
                                 # Set include path for matched header
                                 CPPFLAGS+=" -I$pref/$suffix/"
 
+
     for ax_var in $looked_up_header
 do :
 
@@ -18460,7 +18474,8 @@ fi
                 if test "x$pkg_found" = "x1"
                 then
                         #Insert flags
-                        CPPFLAGS+=" ${xmlStrcmp_CFLAGS}"
+                        CPPFLAGS+=" ${XML2_CFLAGS}"
+
                         LDFLAGS+=" ${XML2_LIBS}"
                         { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
 $as_echo "$as_me: $libname found using pkg-config" >&6;}
@@ -18608,7 +18623,8 @@ fi
                 if test "x$pkg_found" = "x1"
                 then
                         #Insert flags
-                        CPPFLAGS+=" ${hwloc_topology_init_CFLAGS}"
+                        CPPFLAGS+=" ${HWLOC_CFLAGS}"
+
                         LDFLAGS+=" ${HWLOC_LIBS}"
                         { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
 $as_echo "$as_me: $libname found using pkg-config" >&6;}
@@ -18756,7 +18772,8 @@ fi
                 if test "x$pkg_found" = "x1"
                 then
                         #Insert flags
-                        CPPFLAGS+=" ${OPA_load_int_CFLAGS}"
+                        CPPFLAGS+=" ${OPA_CFLAGS}"
+
                         LDFLAGS+=" ${OPA_LIBS}"
                         { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
 $as_echo "$as_me: $libname found using pkg-config" >&6;}
@@ -18788,6 +18805,166 @@ $as_echo "$as_me: consider using --with-openpa-include=INCS" >&6;}
                         as_fn_error $? "Failed to locate required dependency openpa" "$LINENO" 5
                 fi
 
+
+
+#
+# Detect MPC Allocator
+#
+
+mpc_allocator="Standard"
+
+
+
+
+# Check whether --with-mpcalloc was given.
+if test "${with_mpcalloc+set}" = set; then :
+  withval=$with_mpcalloc; prefix=$withval
+fi
+
+
+
+# Check whether --with-mpcalloc-include was given.
+if test "${with_mpcalloc_include+set}" = set; then :
+  withval=$with_mpcalloc_include; inc_prefix=$withval
+fi
+
+
+
+# Check whether --with-mpcalloc-libs was given.
+if test "${with_mpcalloc_libs+set}" = set; then :
+  withval=$with_mpcalloc_libs; lib_prefix=$withval
+fi
+
+
+                check_or_infer_prefix_result="no"
+                header_name=mpcalloc.h
+                libname=mpcalloc
+                function_name=sctk_malloc
+                version=""
+
+                if test -n "$lib_prefix"
+                then
+                        lib_prefix=$prefix
+                fi
+
+                if test -n "$inc_prefix"
+                then
+                        inc_prefix=$prefix
+                fi
+
+                # First try with PKG config
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ALLOC" >&5
+$as_echo_n "checking for ALLOC... " >&6; }
+
+if test -n "$ALLOC_CFLAGS"; then
+    pkg_cv_ALLOC_CFLAGS="$ALLOC_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_ALLOC_CFLAGS=`$PKG_CONFIG --cflags "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$ALLOC_LIBS"; then
+    pkg_cv_ALLOC_LIBS="$ALLOC_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_ALLOC_LIBS=`$PKG_CONFIG --libs "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        ALLOC_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$libname $version" 2>&1`
+        else
+	        ALLOC_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$libname $version" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$ALLOC_PKG_ERRORS" >&5
+
+	pkg_found=0
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	pkg_found=0
+else
+	ALLOC_CFLAGS=$pkg_cv_ALLOC_CFLAGS
+	ALLOC_LIBS=$pkg_cv_ALLOC_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	pkg_found=1
+fi
+
+                if test "x$pkg_found" = "x1"
+                then
+                        #Insert flags
+                        CPPFLAGS+=" ${ALLOC_CFLAGS}"
+
+                        LDFLAGS+=" ${ALLOC_LIBS}"
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                        check_or_infer_prefix_result="yes"
+                else
+                        __check_or_infer_prefix_include $header_name $inc_prefix
+                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix
+
+                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                        then
+                                check_or_infer_prefix_result="yes"
+                        else
+                                check_or_infer_prefix_result="no"
+                        fi
+                fi
+
+                mpc_dep_found=$check_or_infer_prefix_result
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking MPC target alocator" >&5
+$as_echo_n "checking MPC target alocator... " >&6; }
+
+if test "x$mpc_dep_found" = "xyes"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: mpcalloc" >&5
+$as_echo "mpcalloc" >&6; }
+
+$as_echo "#define MPC_Allocator 1" >>confdefs.h
+
+
+        mpc_allocator="mpcalloc"
+else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: Standard allocator" >&5
+$as_echo "Standard allocator" >&6; }
+fi
 
 #
 # Configure MPC Launch
@@ -18944,7 +19121,8 @@ fi
                 if test "x$pkg_found" = "x1"
                 then
                         #Insert flags
-                        CPPFLAGS+=" ${PMI_Finalize_CFLAGS}"
+                        CPPFLAGS+=" ${PMI_CFLAGS}"
+
                         LDFLAGS+=" ${PMI_LIBS}"
                         { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
 $as_echo "$as_me: $libname found using pkg-config" >&6;}
@@ -23763,7 +23941,8 @@ fi
                 if test "x$pkg_found" = "x1"
                 then
                         #Insert flags
-                        CPPFLAGS+=" ${extls_init_CFLAGS}"
+                        CPPFLAGS+=" ${EXTLS_CFLAGS}"
+
                         LDFLAGS+=" ${EXTLS_LIBS}"
                         { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
 $as_echo "$as_me: $libname found using pkg-config" >&6;}
@@ -29164,6 +29343,7 @@ echo "========== MPC Configuration =========="
 echo "PREFIX: $prefix"
 echo ""
 echo "Process Launcher: $mpc_launcher"
+echo "Allocator: $mpc_allocator"
 echo "Privatization support: $mpc_privatization_support"
 echo ""
 echo "The following modules will be built:"

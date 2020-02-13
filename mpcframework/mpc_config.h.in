@@ -623,6 +623,9 @@
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
+/* mpcalloc support is enabled */
+#undef MPC_Allocator
+
 /* MPC_MPI module was enabled */
 #undef MPC_MPI
 

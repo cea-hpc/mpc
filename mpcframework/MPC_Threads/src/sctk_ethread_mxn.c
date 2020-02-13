@@ -967,8 +967,7 @@ sctk_ethread_mxn_thread_init (void)
   sctk_multithreading_initialised = 1;
   sctk_nodebug ("FORCE allocation");
   sctk_free (sctk_malloc (5));
-  sctk_nodebug ("FORCE allocation done %p %p", sctk_get_tls (),
-		sctk_ethread_mxn_self ());
+
   sctk_thread_data_init ();
 
   sctk_ethread_mxn_sched_yield ();
