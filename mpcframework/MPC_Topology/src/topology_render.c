@@ -472,15 +472,15 @@ static void sctk_read_format_option_graphic_placement_and_complet_topo_infos(FIL
             obj = hwloc_get_obj_by_type(mpc_topology_get(), HWLOC_OBJ_CORE, logical_ind);
         }
         if(!obj){
-            free(infosbuff);
-            free(os_indbuff );
+            sctk_free(infosbuff);
+            sctk_free(os_indbuff );
             return;
         }
 
         hwloc_obj_add_info(obj, "lstopoStyle", infos);
 
-        free(infosbuff);
-        free(os_indbuff );
+        sctk_free(infosbuff);
+        sctk_free(os_indbuff );
     }
     fclose(f);
 }
@@ -632,13 +632,13 @@ static void sctk_read_format_option_text_placement(FILE *f_textual, struct sctk_
         convert_char(infos_pidbuff, cpt, tab_option->pid_tab, cpt_ligne);
 
         /* free buff */
-        free(os_indbuff );
-        free(infos_rank_mpibuff);
-        free(infosbuff );
-        free(infos_balancedbuff);
-        free(infos_scatterbuff);
-        free(infos_compactbuff);
-        free(infos_pidbuff);
+        sctk_free(os_indbuff );
+        sctk_free(infos_rank_mpibuff);
+        sctk_free(infosbuff );
+        sctk_free(infos_balancedbuff);
+        sctk_free(infos_scatterbuff);
+        sctk_free(infos_compactbuff);
+        sctk_free(infos_pidbuff);
         cpt_ligne++;
     }
     fclose(f_textual);
@@ -721,14 +721,14 @@ static void print_children(hwloc_topology_t hwtopology, hwloc_obj_t obj,
 }
 
 static void sctk_destroy_text_option(struct sctk_text_option_s *tab_option){
-                    free(tab_option->os_index);
-                    free(tab_option->vp_tab);
-                    free(tab_option->rank_mpi);
-                    free(tab_option->compact_tab);
-                    free(tab_option->scatter_tab);
-                    free(tab_option->balanced_tab);
-                    free(tab_option->pid_tab);
-                    free(tab_option);
+                    sctk_free(tab_option->os_index);
+                    sctk_free(tab_option->vp_tab);
+                    sctk_free(tab_option->rank_mpi);
+                    sctk_free(tab_option->compact_tab);
+                    sctk_free(tab_option->scatter_tab);
+                    sctk_free(tab_option->balanced_tab);
+                    sctk_free(tab_option->pid_tab);
+                    sctk_free(tab_option);
 }
 
 

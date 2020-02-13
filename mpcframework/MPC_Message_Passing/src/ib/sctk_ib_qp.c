@@ -336,7 +336,7 @@ void sctk_ib_qp_destroy ( sctk_ib_qp_t *remote )
 	if(ret)
 		sctk_fatal("Failure to destroy QP: %s", strerror(ret));
 	/* We do not remove the entry. */
-	 free(remote); 
+	sctk_free(remote); 
 }
 
 struct ibv_qp *sctk_ib_qp_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, struct ibv_qp_init_attr *attr, int rank )
