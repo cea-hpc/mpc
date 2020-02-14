@@ -28,11 +28,13 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include <mpc_config.h>
+
 /***********************
  * SHELL COLOR SUPPORT *
  ***********************/
 
-#ifdef SHELL_COLORS
+#ifdef MPC_ENABLE_SHELL_COLORS
 
 	#define SCTK_COLOR_ESC "\033["
 	/* Normal colors */

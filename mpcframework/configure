@@ -840,6 +840,7 @@ with_pmi_libs
 with_extls
 with_extls_include
 with_extls_libs
+enable_shell_colors
 enable_threads
 enable_message_passing
 enable_mpi
@@ -1517,6 +1518,7 @@ Optional Features:
   --disable-dependency-tracking
                           speeds up one-time build
   --disable-libtool-lock  avoid locking (might break parallel builds)
+  --shell-colors          Activate Color Output in MPC
   --enable-threads        Compile MPC with pthread and user-level thread
                           support
   --enable-message-passing
@@ -24232,6 +24234,24 @@ else
 fi
 
 
+#
+# Mpc Optionnal Flags
+#
+
+
+# Check whether --enable-shell-colors was given.
+if test "${enable_shell_colors+set}" = set; then :
+  enableval=$enable_shell_colors; mpc_shell_color=$enableval
+else
+  mpc_shell_color=yes
+fi
+
+
+if test "x${mpc_shell_color}" = "xyes"; then
+
+$as_echo "#define MPC_ENABLE_SHELL_COLORS 1" >>confdefs.h
+
+fi
 
 #
 # Modular MPC configuration
@@ -29540,6 +29560,7 @@ echo ""
 echo "Process Launcher: $mpc_launcher"
 echo "Allocator: $mpc_allocator"
 echo "Privatization support: $mpc_privatization_support"
+echo "Colored output: $mpc_shell_color"
 echo ""
 echo "Enabled networks: $mpc_net_list"
 echo ""

@@ -626,6 +626,9 @@
 /* mpcalloc support is enabled */
 #undef MPC_Allocator
 
+/* MPC color output was enabled */
+#undef MPC_ENABLE_SHELL_COLORS
+
 /* MPC_MPI module was enabled */
 #undef MPC_MPI
 

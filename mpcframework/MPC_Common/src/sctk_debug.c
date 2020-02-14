@@ -52,6 +52,7 @@
 
 int sctk_is_in_fortran = 0;
 
+
 /**********************************************************************/
 /*Threads support                                                     */
 /**********************************************************************/
@@ -62,8 +63,8 @@ static inline char *__debug_print_info( char *buffer )
 		snprintf( buffer,
 		          DEBUG_INFO_SIZE,
 		          SCTK_COLOR_GREEN( [ )
-		                            SCTK_COLOR_RED( R % d )
-		                            SCTK_COLOR_BLUE( P % dN % d )
+		                            SCTK_COLOR_RED(R%4d)
+		                            SCTK_COLOR_BLUE( P%4dN%4d)
 		                            SCTK_COLOR_GREEN( ] ),
 		          mpc_common_get_task_rank(), mpc_common_get_process_rank(), mpc_common_get_node_rank() );
 #else

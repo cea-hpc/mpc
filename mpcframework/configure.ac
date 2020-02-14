@@ -832,6 +832,20 @@ AM_CONDITIONAL([MPC_ARCH_X86_64_MICROTASK], [test "x${MPC_ARCH_MICROTASK_ARCH}" 
 # Note that by construction the following conditionnals are multually exclusive
 AM_CONDITIONAL([MPC_ARCH_GENERIC_MICROTASK], [test "x${MPC_ARCH_MICROTASK_ARCH}" = "xgeneric"])
 
+#
+# Mpc Optionnal Flags
+#
+
+
+AC_ARG_ENABLE([shell-colors],
+[AS_HELP_STRING([--shell-colors],
+                [Activate Color Output in MPC])],
+[mpc_shell_color=$enableval],
+[mpc_shell_color=yes])
+
+if test "x${mpc_shell_color}" = "xyes"; then
+        AC_DEFINE([MPC_ENABLE_SHELL_COLORS], [1], [MPC color output was enabled])
+fi
 
 #
 # Modular MPC configuration
@@ -895,6 +909,7 @@ echo ""
 echo "Process Launcher: $mpc_launcher"
 echo "Allocator: $mpc_allocator"
 echo "Privatization support: $mpc_privatization_support"
+echo "Colored output: $mpc_shell_color"
 echo ""
 echo "Enabled networks: $mpc_net_list"
 echo ""
