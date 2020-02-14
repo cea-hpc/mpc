@@ -9,6 +9,9 @@
 
 struct mpc_common_flags
 {
+        /* Verbosity level */
+        int verbosity;
+
         /* Launch command */
         char * exename;
 

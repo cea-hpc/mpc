@@ -352,7 +352,7 @@ mpc_headerdir = $(includedir)/mpc/
 noinst_LTLIBRARIES = libmpclaunch.la
 libmpclaunch_la_SOURCES = main.c mpcc.c mpc_libc_main.c sctk_launch.c \
 	pmi.c $(am__append_5)
-libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la -lpmi
+libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la -ldl
 all: all-am
 
 .SUFFIXES:

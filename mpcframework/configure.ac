@@ -494,6 +494,28 @@ else
    AC_MSG_RESULT(no)
 fi
 
+# Check for pragma message support
+
+AC_MSG_CHECKING([Testing if pragma message is supported])
+
+OLD_CFLAGS="$CFLAGS"
+#Set WERROR to catch the ignored pragmas
+CFLAGS="-Werror -Wall"
+
+AC_COMPILE_IFELSE(AC_LANG_PROGRAM([#include <stdio.h>],
+                                [#pragma message "Hello There"]),
+                                res_macro=yes,res_macro=no)
+
+if test "$res_macro" = "yes" ; then
+   AC_MSG_RESULT(yes)
+   AC_DEFINE([HAVE_PRAGMA_MESSAGE],[1],[Message pragmas are supported by the compiler])
+else
+   AC_MSG_RESULT(no)
+fi
+
+#Restore old CFLAGS after pragma test
+CFLAGS="$OLD_CFLAGS"
+
 
 # Checking for builtin
 
@@ -838,13 +860,34 @@ AM_CONDITIONAL([MPC_ARCH_GENERIC_MICROTASK], [test "x${MPC_ARCH_MICROTASK_ARCH}"
 
 
 AC_ARG_ENABLE([shell-colors],
-[AS_HELP_STRING([--shell-colors],
+[AS_HELP_STRING([--enable-shell-colors],
                 [Activate Color Output in MPC])],
 [mpc_shell_color=$enableval],
 [mpc_shell_color=yes])
 
 if test "x${mpc_shell_color}" = "xyes"; then
         AC_DEFINE([MPC_ENABLE_SHELL_COLORS], [1], [MPC color output was enabled])
+fi
+
+
+AC_ARG_ENABLE([debug-messages],
+[AS_HELP_STRING([--enable-debug-messages],
+                [Output debug messages when running MPC])],
+[mpc_debug_messages=$enableval],
+[mpc_debug_messages=no])
+
+if test "x${mpc_debug_messages}" = "xyes"; then
+        AC_DEFINE([MPC_ENABLE_DEBUG_MESSAGES], [1], [MPC debug messages output was enabled])
+fi
+
+AC_ARG_ENABLE([debug],
+[AS_HELP_STRING([--enable-debug],
+                [Compile MPC in debug mode])],
+[mpc_debug=$enableval],
+[mpc_debug=no])
+
+if test "x${mpc_debug}" = "xyes"; then
+        CFLAGS+=" -g"
 fi
 
 #
@@ -905,6 +948,9 @@ AC_OUTPUT([Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile
 
 echo "========== MPC Configuration =========="
 echo "PREFIX: $prefix"
+echo ""
+echo "DEBUG : $mpc_debug"
+echo "Debug messages: $mpc_debug_messages"
 echo ""
 echo "Process Launcher: $mpc_launcher"
 echo "Allocator: $mpc_allocator"

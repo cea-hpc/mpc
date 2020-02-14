@@ -48,7 +48,7 @@ extern "C"
   char* sctk_get_launcher_mode(void);
   char *get_debug_mode();
   int sctk_get_node_nb();
-  int sctk_get_verbosity();
+
   void sctk_set_net_val (void (*val) (int *, char ***));
 
   extern bool sctk_share_node_capabilities;

@@ -386,7 +386,7 @@ libmpcconfig_la_SOURCES = libxml_helper.c runtime_config_mapper.c \
 
 # Use pre-generated files
 mpc_header_HEADERS = ./generated/mpc_config_struct_defaults.h ./generated/mpc_config_struct.h
-libmpcconfig_la_LIBADD = $(abs_top_builddir)/MPC_Common/src/libmpccommon.la $(XML2_LIBS)
+libmpcconfig_la_LIBADD = $(abs_top_builddir)/MPC_Common/src/libmpccommon.la $(XML2_LIBS) -ldl
 all: all-am
 
 .SUFFIXES:

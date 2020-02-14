@@ -32,4 +32,4 @@ if HYDRA_CLIENT_LIB_ENABED
 endif
 
 
-libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la -lpmi
+libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la -ldl

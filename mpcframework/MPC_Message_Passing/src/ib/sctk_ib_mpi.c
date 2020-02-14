@@ -911,7 +911,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	sctk_ib_eager_init ( rail_ib );
 
 	/* Print config */
-	if ( sctk_get_verbosity() >= 2 )
+	if ( mpc_common_get_flags()->verbosity >= 2 )
 	{
 		sctk_ib_config_print ( rail_ib );
 	}

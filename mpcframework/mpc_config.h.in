@@ -127,6 +127,9 @@
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #undef HAVE_NETINET_TCP_H
 
+/* Message pragmas are supported by the compiler */
+#undef HAVE_PRAGMA_MESSAGE
+
 /* Define to 1 if you have the `pthread_atfork' function. */
 #undef HAVE_PTHREAD_ATFORK
 
@@ -625,6 +628,9 @@
 
 /* mpcalloc support is enabled */
 #undef MPC_Allocator
+
+/* MPC debug messages output was enabled */
+#undef MPC_ENABLE_DEBUG_MESSAGES
 
 /* MPC color output was enabled */
 #undef MPC_ENABLE_SHELL_COLORS

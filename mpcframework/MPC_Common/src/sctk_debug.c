@@ -30,6 +30,8 @@
 #include <execinfo.h>
 #include <signal.h>
 
+#include <mpc_config.h>
+
 #define HAS_UCTX
 
 #ifdef HAS_UCTX
@@ -288,12 +290,12 @@ void sctk_debug_root( const char *fmt, ... )
 	va_end( ap );
 }
 
-#ifdef SCTK_DEBUG_MESSAGES
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
 void sctk_info( const char *fmt, ... )
 {
 #if defined( MPC_Message_Passing ) || defined( MPC_Threads )
 
-	if ( sctk_get_verbosity() < 2 )
+	if ( mpc_common_get_flags()->verbosity < 2 )
 	{
 		return;
 	}
@@ -326,7 +328,7 @@ void sctk_debug( const char *fmt, ... )
 {
 #if defined( MPC_Message_Passing ) || defined( MPC_Threads )
 
-	if ( sctk_get_verbosity() < 3 )
+	if ( mpc_common_get_flags()->verbosity < 3 )
 	{
 		return;
 	}
@@ -426,7 +428,7 @@ void sctk_log( FILE *file, const char *fmt, ... )
 void sctk_warning( const char *fmt, ... )
 {
 	/* #if defined(MPC_Message_Passing) || defined(MPC_Threads) */
-	/*   if( sctk_get_verbosity() < 1 ) */
+	/*   if( mpc_common_get_flags()->verbosity < 1 ) */
 	/*     return; */
 	/* #endif */
 	va_list ap;

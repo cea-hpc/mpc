@@ -841,6 +841,8 @@ with_extls
 with_extls_include
 with_extls_libs
 enable_shell_colors
+enable_debug_messages
+enable_debug
 enable_threads
 enable_message_passing
 enable_mpi
@@ -1518,7 +1520,9 @@ Optional Features:
   --disable-dependency-tracking
                           speeds up one-time build
   --disable-libtool-lock  avoid locking (might break parallel builds)
-  --shell-colors          Activate Color Output in MPC
+  --enable-shell-colors   Activate Color Output in MPC
+  --enable-debug-messages Output debug messages when running MPC
+  --enable-debug          Compile MPC in debug mode
   --enable-threads        Compile MPC with pthread and user-level thread
                           support
   --enable-message-passing
@@ -20585,6 +20589,47 @@ else
 $as_echo "no" >&6; }
 fi
 
+# Check for pragma message support
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Testing if pragma message is supported" >&5
+$as_echo_n "checking Testing if pragma message is supported... " >&6; }
+
+OLD_CFLAGS="$CFLAGS"
+#Set WERROR to catch the ignored pragmas
+CFLAGS="-Werror -Wall"
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <stdio.h>
+int
+main ()
+{
+#pragma message "Hello There"
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  res_macro=yes
+else
+  res_macro=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+if test "$res_macro" = "yes" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define HAVE_PRAGMA_MESSAGE 1" >>confdefs.h
+
+else
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+#Restore old CFLAGS after pragma test
+CFLAGS="$OLD_CFLAGS"
+
 
 # Checking for builtin
 
@@ -24251,6 +24296,33 @@ if test "x${mpc_shell_color}" = "xyes"; then
 
 $as_echo "#define MPC_ENABLE_SHELL_COLORS 1" >>confdefs.h
 
+fi
+
+
+# Check whether --enable-debug-messages was given.
+if test "${enable_debug_messages+set}" = set; then :
+  enableval=$enable_debug_messages; mpc_debug_messages=$enableval
+else
+  mpc_debug_messages=no
+fi
+
+
+if test "x${mpc_debug_messages}" = "xyes"; then
+
+$as_echo "#define MPC_ENABLE_DEBUG_MESSAGES 1" >>confdefs.h
+
+fi
+
+# Check whether --enable-debug was given.
+if test "${enable_debug+set}" = set; then :
+  enableval=$enable_debug; mpc_debug=$enableval
+else
+  mpc_debug=no
+fi
+
+
+if test "x${mpc_debug}" = "xyes"; then
+        CFLAGS+=" -g"
 fi
 
 #
@@ -29556,6 +29628,9 @@ fi
 
 echo "========== MPC Configuration =========="
 echo "PREFIX: $prefix"
+echo ""
+echo "DEBUG : $mpc_debug"
+echo "Debug messages: $mpc_debug_messages"
 echo ""
 echo "Process Launcher: $mpc_launcher"
 echo "Allocator: $mpc_allocator"

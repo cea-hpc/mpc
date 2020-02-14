@@ -202,7 +202,7 @@ __sctk_add_arg_eq ( char *arg,
 static int sctk_process_nb_val;
 static int sctk_processor_nb_val;
 
-static int sctk_verbosity;
+
 static char *sctk_launcher_mode;
 /* Name of the inter-process driver to use. NULL means default driver */
 static char *sctk_network_driver_name = NULL;
@@ -592,17 +592,12 @@ static void sctk_set_verbosity( char *arg )
 {
 	int tmp = atoi( arg );
 
-	if ( ( 0 <= tmp ) && ( sctk_verbosity < tmp ) )
+	if ( ( 0 <= tmp ) && ( mpc_common_get_flags()->verbosity < tmp ) )
 	{
-		sctk_verbosity = tmp;
+		mpc_common_get_flags()->verbosity = tmp;
 	}
 }
 
-int
-sctk_get_verbosity ()
-{
-	return sctk_verbosity;
-}
 
 static void
 sctk_use_network ( char *arg )
@@ -675,13 +670,15 @@ sctk_proceed_arg ( char *word )
 	sctk_add_arg ( "--checkpoint", sctk_checkpoint );
 	sctk_add_arg( "--use-accl", sctk_def_accl_support );
 
+        sctk_error("%s", word);
+
 	if ( strcmp( word, "--sctk-args-end--" ) == 0 )
 	{
 		return -1;
 	}
 
 	fprintf( stderr, "Argument %s Unknown\n", word );
-	return -1;
+	return 0;
 }
 
 void
@@ -1043,7 +1040,7 @@ static void __set_default_values()
 	sctk_process_nb_val = sctk_runtime_config_get()->modules.launcher.nb_process;
 #endif
 	sctk_processor_nb_val = sctk_runtime_config_get()->modules.launcher.nb_processor;
-	sctk_verbosity = sctk_runtime_config_get()->modules.launcher.verbosity;
+	mpc_common_get_flags()->verbosity  = sctk_runtime_config_get()->modules.launcher.verbosity;
 	sctk_launcher_mode = sctk_runtime_config_get()->modules.launcher.launcher;
 	sctk_profiling_outputs = sctk_runtime_config_get()->modules.launcher.profiling;
 	mpc_common_get_flags()->enable_smt_capabilities = sctk_runtime_config_get()->modules.launcher.enable_smt;

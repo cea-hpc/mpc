@@ -61,11 +61,11 @@ void MPC_printf( const char *fmt, ... );
 void sctk_debug_root( const char *fmt, ... );
 
 
-#ifdef SCTK_DEBUG_MESSAGES
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
         void sctk_debug( const char *fmt, ... );
         void sctk_info( const char *fmt, ... );
 #else
-        #if defined( __GNU_COMPILER ) || defined( __INTEL_COMPILER )
+        #if defined( __GNUC__ ) || defined( __INTEL_COMPILER )
                 #define sctk_debug( fmt, ... ) (void) ( 0 )
                 #define sctk_info( fmt, ... ) (void) ( 0 )
         #else
@@ -78,7 +78,7 @@ void sctk_debug_root( const char *fmt, ... );
         #endif
 #endif
 
-#if ( defined SCTK_HAVE_PRAGMA_MESSAGE ) && ( defined SCTK_DEBUG_MESSAGES )
+#if ( defined HAVE_PRAGMA_MESSAGE ) && ( defined MPC_ENABLE_DEBUG_MESSAGES )
 /* Add todo support (as stated in GCC doc
 * Supported since GCC 4.4.7 ignored in previous versions*/
 #define DO_PRAGMA( x ) _Pragma( #x )
@@ -165,7 +165,7 @@ static inline int sctk_safe_cast_long_int( long l )
 
 #define sctk_check_equal_types( a, b ) sctk_size_checking_eq( sizeof( a ), sizeof( b ), SCTK_STRING( a ), SCTK_STRING( b ), __FILE__, __LINE__ )
 
-#if defined( __GNU_COMPILER ) || defined( __INTEL_COMPILER )
+#if defined( __GNUC__ ) || defined( __INTEL_COMPILER )
 #define sctk_nodebug( fmt, ... ) (void) ( 0 )
 #else
 static inline void sctk_nodebug( const char *fmt, ... )

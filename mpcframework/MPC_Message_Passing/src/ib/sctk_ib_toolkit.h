@@ -48,7 +48,7 @@ __UNUSED__ static void sctk_ib_debug ( const char *fmt, ... )
 	va_list ap;
 	char buff[SMALL_BUFFER_SIZE];
 
-	if ( sctk_get_verbosity() >= 2 )
+	if ( mpc_common_get_flags()->verbosity >= 2 )
 	{
 		va_start ( ap, fmt );
 #ifdef HAVE_SHELL_COLORS
@@ -66,7 +66,7 @@ __UNUSED__ static void sctk_ib_debug ( const char *fmt, ... )
 	}
 }
 #else
-#if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
+#if defined(__GNUC__) || defined(__INTEL_COMPILER)
 #define sctk_ib_debug(fmt,...) (void)(0)
 #else
 static inline void sctk_ib_debug ( const char *fmt, ... )
@@ -75,7 +75,7 @@ static inline void sctk_ib_debug ( const char *fmt, ... )
 #endif
 #endif
 
-#if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
+#if defined(__GNUC__) || defined(__INTEL_COMPILER)
 #define sctk_ib_nodebug(fmt,...) (void)(0)
 #else
 static inline void sctk_ib_nodebug ( const char *fmt, ... )

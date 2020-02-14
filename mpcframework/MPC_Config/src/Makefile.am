@@ -28,7 +28,7 @@ libmpcconfig_la_SOURCES += ./generated/mpc_config_struct_defaults.c
 libmpcconfig_la_SOURCES += ./generated/mpc_config_struct_meta.c
 
 
-libmpcconfig_la_LIBADD = $(abs_top_builddir)/MPC_Common/src/libmpccommon.la $(XML2_LIBS)
+libmpcconfig_la_LIBADD = $(abs_top_builddir)/MPC_Common/src/libmpccommon.la $(XML2_LIBS) -ldl
 
 
 # Default configuration file and schema installation
