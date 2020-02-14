@@ -24,7 +24,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #include "sctk_ib.h"
 #include "sctk_ib_cp.h"
 #include "sctk_ib_polling.h"
@@ -254,8 +253,8 @@ void sctk_ib_cp_init_task ( int rank, int vp )
 	task->node =  node;
 	task->vp = vp;
 	task->rank = rank;
-	task->local_ibufs_list_lock = SCTK_SPINLOCK_INITIALIZER;
-	task->lock_timers = SCTK_SPINLOCK_INITIALIZER;
+        mpc_common_spinlock_init(&task->local_ibufs_list_lock, 0);
+	mpc_common_spinlock_init(&task->lock_timers, 0);
 	task->ready = 0;
 	task->global_ibufs_list = &__global_ibufs_list;
 	task->global_ibufs_list_lock = &__global_ibufs_list_lock;
@@ -726,7 +725,3 @@ void sctk_network_finalize_task_collaborative_ib (sctk_rail_info_t *rail, int ta
         vps_reset[vp] = 0;
 }
 
-
-
-
-#endif

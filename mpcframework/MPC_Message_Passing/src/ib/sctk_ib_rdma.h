@@ -23,7 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__IB_RDMA_H_
 #define __SCTK__IB_RDMA_H_
 
@@ -180,5 +179,4 @@ sctk_ibuf_t *sctk_ib_rdma_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,
                                               sctk_ib_qp_t *remote, mpc_lowcomm_ptp_message_t *msg, size_t size );
 
 mpc_lowcomm_ptp_message_t * sctk_ib_rdma_recv_done_remote_imm ( sctk_rail_info_t *rail, int imm_data );
-#endif
 #endif

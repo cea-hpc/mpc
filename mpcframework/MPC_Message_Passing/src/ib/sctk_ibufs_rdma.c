@@ -22,7 +22,6 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifdef MPC_USE_INFINIBAND
 
 #include "sctk_ibufs.h"
 
@@ -80,9 +79,9 @@ void sctk_ibuf_rdma_remote_init ( sctk_ib_qp_t *remote )
 {
 	sctk_ibuf_rdma_set_remote_state_rtr ( remote, STATE_DECONNECTED );
 	sctk_ibuf_rdma_set_remote_state_rts ( remote, STATE_DECONNECTED );
-	remote->rdma.pending_data_lock = SCTK_SPINLOCK_INITIALIZER;
-	remote->rdma.lock = SCTK_SPINLOCK_INITIALIZER;
-	remote->rdma.polling_lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&remote->rdma.pending_data_lock, 0);
+	mpc_common_spinlock_init(&remote->rdma.lock, 0);
+	mpc_common_spinlock_init(&remote->rdma.polling_lock, 0);
 	/* Counters */
 	remote->rdma.messages_nb = 0;
 	remote->rdma.max_pending_data = 0;
@@ -91,7 +90,7 @@ void sctk_ibuf_rdma_remote_init ( sctk_ib_qp_t *remote )
 	OPA_store_int ( &remote->rdma.resizing_nb, 0 );
 	OPA_store_int ( &remote->rdma.cancel_nb, 0 );
 	/* Lock for resizing */
-	remote->rdma.flushing_lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&remote->rdma.flushing_lock, 0);
 }
 
 static inline void __init_rdma_slots ( sctk_ibuf_region_t *region,
@@ -243,7 +242,7 @@ sctk_ibuf_rdma_region_resize ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t
 	region->channel = channel;
 	region->ibuf = ibuf;
 	region->remote = remote;
-	region->lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&region->lock, 0);
 	region->polled_nb = 0;
 	region->allocated_size = ( nb_ibufs * ( size_ibufs +  sizeof ( sctk_ibuf_t ) ) );
 
@@ -322,13 +321,12 @@ sctk_ibuf_rdma_region_free ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *
 	if ( channel == ( RDMA_CHANNEL | SEND_CHANNEL ) )
 		/* SEND CHANNEL */
 	{
-		sctk_ib_nodebug ( "FREEING SEND channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d)",
-		                  remote->rank, nb_ibufs, size_ibufs, remote->rdma.pool->send_credit );
+
 
 		/* Reinit counters */
 		remote->rdma.messages_nb = 0;
 		remote->rdma.messages_size = 0;
-		remote->rdma.stats_lock = SCTK_SPINLOCK_INITIALIZER;
+		mpc_common_spinlock_init(&remote->rdma.stats_lock, 0);
 		remote->rdma.max_pending_data = 0;
 		remote->rdma.pool->send_credit = 0;
 		OPA_store_int ( &remote->rdma.miss_nb, 0 );
@@ -340,8 +338,7 @@ sctk_ibuf_rdma_region_free ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *
 		if ( channel == ( RDMA_CHANNEL | RECV_CHANNEL ) )
 			/* RECV CHANNEL */
 		{
-			sctk_ib_nodebug ( "FREEING RECV channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d)",
-			                  remote->rank, nb_ibufs, size_ibufs );
+
 
 			sctk_ibuf_rdma_pool_t *pool = remote->rdma.pool;
 //#warning "We should lock during DELETING the element."
@@ -425,7 +422,7 @@ sctk_ibuf_rdma_region_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *
 	region->channel = channel;
 	region->ibuf = ibuf;
 	region->remote = remote;
-	region->lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&region->lock, 0);
 	region->polled_nb = 0;
 	region->allocated_size = ( nb_ibufs * ( size_ibufs +  sizeof ( sctk_ibuf_t ) ) );
 
@@ -693,10 +690,6 @@ static void __poll_ibuf ( sctk_ib_rail_info_t *rail_ib,
 	 * here.. */
 	ibuf->to_release = IBUF_RELEASE;
 
-	/* const size_t size_flag = *ibuf->size_flag; */
-	/* int *tail_flag = IBUF_RDMA_GET_TAIL_FLAG(ibuf->buffer, size_flag); */
-	sctk_nodebug ( "Buffer size:%d, head flag:%d, tail flag:%d", *ibuf->size_flag, *ibuf->head_flag, *tail_flag );
-
 	const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL ( ibuf->buffer );
 
 	switch ( protocol )
@@ -926,8 +919,6 @@ void sctk_ibuf_rdma_check_piggyback ( sctk_ib_rail_info_t *rail_ib, sctk_ibuf_re
 	int piggyback = 0;
 	sctk_ibuf_t *ibuf;
 
-	sctk_nodebug ( "polled nb: %d -> %f", region->polled_nb, region->nb * ( PIGGYBACK_THRESHOLD ) );
-
 	/* Get the tail */
 	sctk_ibuf_t *tail = IBUF_RDMA_GET_TAIL ( remote, REGION_RECV );
 
@@ -1024,12 +1015,6 @@ void sctk_ibuf_rdma_release ( sctk_ib_rail_info_t *rail_ib, sctk_ibuf_t *ibuf )
 		region->R_bit = 1;
 		sctk_nodebug ( "Set %p as RDMA_POLLED", ibuf );
 
-		/* Check if the buffer is located at the tail adress */
-		sctk_nodebug ( "Flag=%d tail=(%p-%p-%d) next_tail=(%p-%p-%d)", ibuf->flag,
-		               tail, tail->buffer, tail->index,
-		               IBUF_RDMA_GET_NEXT ( tail ),
-		               IBUF_RDMA_GET_NEXT ( tail )->buffer,
-		               IBUF_RDMA_GET_NEXT ( tail )->index );
 
 		/* While a buffer free is found, we increase the piggy back and
 		 * we reset each buffer */
@@ -1134,7 +1119,7 @@ void sctk_ibuf_rdma_connection_cancel ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp
 	 * In a next release, we need to change to deconnected */
 	remote->rdma.messages_nb = 0;
 	remote->rdma.messages_size = 0;
-	remote->rdma.stats_lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&remote->rdma.stats_lock, 0);
 	OPA_incr_int ( &remote->rdma.cancel_nb );
 	sctk_ibuf_rdma_set_remote_state_rts ( remote, STATE_DECONNECTED );
 
@@ -1400,14 +1385,12 @@ void sctk_ibuf_rdma_check_remote ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *r
 						/* Update the slots values requested */
 						remote->rdma.pool->resizing_request.send_keys.nb   = next_nb;
 						remote->rdma.pool->resizing_request.send_keys.size = next_size;
-						sctk_nodebug ( "Resizing the RMDA buffer for remote %d (%d->%d %d->%d)", remote->rank, previous_nb, next_nb, previous_size, next_size );
 						mpc_common_spinlock_unlock ( &remote->rdma.flushing_lock );
 
 						sctk_ibuf_rdma_check_flush_send ( rail_ib, remote );
 					}
 					else
 					{
-						sctk_nodebug ( "NO MODIFICATION Resizing the RMDA buffer for remote %d (%d->%d %d->%d)", remote->rank, previous_nb, next_nb, previous_size, next_size );
 						/* We reset the connection to connected */
 						ret = sctk_ibuf_rdma_cas_remote_state_rts ( remote, STATE_FLUSHING, STATE_CONNECTED );
 						assume ( ret == STATE_FLUSHING );
@@ -1925,6 +1908,3 @@ size_t sctk_ibuf_rdma_remote_disconnect ( sctk_ib_rail_info_t *rail_ib )
 	return memory_used;
 }
 
-
-
-#endif

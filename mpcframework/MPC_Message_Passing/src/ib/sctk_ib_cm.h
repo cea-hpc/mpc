@@ -23,7 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__IB_CM_H_
 #define __SCTK__IB_CM_H_
 
@@ -164,5 +163,4 @@ int sctk_ib_cm_on_demand_rdma_check_request (
 int sctk_ib_cm_on_demand_rdma_request (
     sctk_rail_info_t *rail_targ, struct sctk_ib_qp_s *remote,
     int entry_size, int entry_nb );
-#endif
 #endif

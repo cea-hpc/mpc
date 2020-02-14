@@ -33,6 +33,9 @@
 
 /*#pragma weak main*/
 int main(int argc, char **argv) {
+
+                sctk_error("HERE IS THE MAIN");
+
   if( getenv("MPC_CALL_ORIGINAL_MAIN"))
   {
 	  return mpc_user_main__(argc, argv, NULL);

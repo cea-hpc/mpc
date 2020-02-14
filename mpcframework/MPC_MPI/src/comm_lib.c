@@ -67,7 +67,7 @@ const _mpc_cl_group_t mpc_group_null = {-1, NULL};
 mpc_lowcomm_request_t mpc_request_null;
 
 /** \brief Intitializes thread context keys
- * This function is called by sctk_start_func
+ * This function is called by mpc_thread_spawn_virtual_processors
  */
 void mpc_cl_init_thread_keys()
 {
@@ -5078,23 +5078,23 @@ void mpc_cl_comm_lib_init()
 
         /* Before Starting MPI tasks */
 #ifdef MPC_Threads
-        mpc_common_init_callback_register("Start MPI Tasks",
+        mpc_common_init_callback_register("Before Starting VPs",
                                           "Register Threading trampoline for MPI",
                                           __set_thread_trampoline, 21);
 
-        mpc_common_init_callback_register("Start MPI Tasks",
+        mpc_common_init_callback_register("Before Starting VPs",
                                           "Init thread keys for MPI",
                                           mpc_cl_init_thread_keys, 22);
 #endif
 
-        mpc_common_init_callback_register("Start MPI Tasks",
+        mpc_common_init_callback_register("Before Starting VPs",
                                           "Register lowcomm trampoline for MPI",
                                           __set_lowcomm_trampoline, 23);
 
 
   /* Fill the profiling parent key array */
 #ifdef MPC_Profiler
-        mpc_common_init_callback_register("Start MPI Tasks",
+        mpc_common_init_callback_register("Before Starting VPs",
                                           "Init Profiling keys",
                                           sctk_profiler_array_init_parent_keys, 24);
 #endif

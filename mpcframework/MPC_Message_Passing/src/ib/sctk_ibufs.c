@@ -22,8 +22,6 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifdef MPC_USE_INFINIBAND
-
 #include "sctk_ibufs.h"
 
 //#define SCTK_IB_MODULE_DEBUG
@@ -74,8 +72,8 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
 			pool->default_node = node;
 		}
 
-		node->lock = SCTK_SPINLOCK_INITIALIZER;
-		node->srq_cache_lock = SCTK_SPINLOCK_INITIALIZER;
+		mpc_common_spinlock_init(&node->lock, 0);
+		mpc_common_spinlock_init(&node->srq_cache_lock, 0);
 		node->regions = NULL;
 		node->free_entry = NULL;
 		node->free_srq_cache = NULL;
@@ -132,7 +130,6 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
 
 	node->nb += nb_ibufs;
 
-	sctk_ib_debug ( "Allocation of %d buffers (free_nb:%u got:%u)", nb_ibufs, free_nb, node->nb - free_nb );
 }
 
 void sctk_ibuf_free_numa_node( struct sctk_ibuf_numa_s *node)
@@ -188,7 +185,7 @@ void sctk_ibuf_pool_init ( struct sctk_ib_rail_info_s *rail_ib )
 	/* WARNING: Do not remove the following memset.
 	* Be sure that is_srq_poll is set to 0 !! */
 	memset ( pool, 0, sizeof ( sctk_ibuf_pool_t ) );
-	pool->post_srq_lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&pool->post_srq_lock, 0);
 	/* update pool buffer */
 	rail_ib->pool_buffers = pool;
 }
@@ -373,8 +370,6 @@ sctk_ibuf_t *sctk_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib,
 
 #endif
 		ibuf->flag = BUSY_FLAG;
-
-		sctk_nodebug ( "ibuf: %p, lock:%p, need_lock:%d next free_entryr: %p, nb_free %d, nb_got %d, nb_free_srq %d, node %d)", ibuf, lock, need_lock, node->free_entry, node->nb_free, node->nb_got, node->nb_free_srq, n );
 
 	}
 	else
@@ -1099,7 +1094,4 @@ void sctk_ibuf_print ( sctk_ibuf_t *ibuf, char *desc )
 	          ibuf->desc.sg_entry.length,
 	          poison );
 }
-
-#endif
-
 

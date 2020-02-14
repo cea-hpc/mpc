@@ -26,7 +26,7 @@
 #ifndef __SCTK__IB_PROF_H_
 #define __SCTK__IB_PROF_H_
 
-#ifdef MPC_USE_INFINIBAND
+
 
 #include <mpc_common_spinlock.h>
 #include <sctk_debug.h>
@@ -187,7 +187,6 @@ static double sctk_ib_prof_get_mem_used()
 #endif
 #endif  /* SCTK_IB_PROF */
 
-#endif  /* MPC_USE_INFINIBAND */
 #endif  /* __SCTK__IB_PROF_H_ */
 
 /* In Bytes */

@@ -970,5 +970,7 @@ sctk_ethread_mxn_thread_init (void)
 
   sctk_thread_data_init ();
 
-  sctk_ethread_mxn_sched_yield ();
+
+TODO("UNDERSTAND WHY THIS YIELD TERMINATED US");
+  //sctk_ethread_mxn_sched_yield ();
 }

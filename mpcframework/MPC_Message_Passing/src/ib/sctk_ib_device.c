@@ -22,7 +22,7 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifdef MPC_USE_INFINIBAND
+
 #include "sctk_ib_device.h"
 #include "sctk_ib_toolkit.h"
 
@@ -71,7 +71,7 @@ sctk_ib_device_t *sctk_ib_device_init ( struct sctk_ib_rail_info_s *rail_ib )
 	/* Specific to ondemand (de)connexions */
 	rail_ib->device->ondemand.qp_list = NULL;
 	rail_ib->device->ondemand.qp_list_ptr = NULL;
-	rail_ib->device->ondemand.lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&rail_ib->device->ondemand.lock, 0);
 	rail_ib->device->send_comp_channel = NULL;
 	rail_ib->device->recv_comp_channel = NULL;
 
@@ -306,4 +306,3 @@ void sctk_ib_cq_free(struct ibv_cq * queue)
 	if(ret)
 		sctk_fatal("Failure to destroy CQ: %s", strerror(ret));
 }
-#endif

@@ -25,7 +25,7 @@
 #include <mpc_arch.h>
 #include <sctk_low_level_comm.h>
 #include <sctk_communicator.h>
-
+#include <mpc_common_helper.h>
 #include <sctk_debug.h>
 #include <mpc_common_spinlock.h>
 #include <uthash.h>
@@ -42,6 +42,10 @@
 	#include "sctk_handle.h"
 #endif /* SCTK_LIB_MODE */
 
+
+#ifdef MPC_USE_INFINIBAND
+#include <sctk_ib_prof.h>
+#endif
 
 /********************************************************************/
 /*Structres                                                         */
@@ -2814,11 +2818,52 @@ void mpc_lowcomm_libmode_release()
 	mpc_lowcomm_barrier( SCTK_COMM_WORLD );
 }
 
-void mpc_lowcomm_init() __attribute__((constructor));
+static void __lowcomm_init()
+{
+        int task_rank = mpc_common_get_task_rank();
 
-void mpc_lowcomm_init()
+	/* We call for all threads as some
+	   progress threads may need buffered headers */
+	if ( task_rank >= 0 )
+	{
+		mpc_lowcomm_init_per_task( task_rank );
+		sctk_net_init_task_level( task_rank, sctk_thread_get_vp() );
+
+#ifdef MPC_USE_INFINIBAND
+		sctk_ib_prof_init_reference_clock();
+#endif
+	}
+}
+
+static void __lowcomm_release()
+{
+        int task_rank = mpc_common_get_task_rank();
+
+	if ( task_rank >= 0 )
+	{
+		sctk_nodebug( "mpc_lowcomm_terminaison_barrier" );
+		mpc_lowcomm_terminaison_barrier();
+		mpc_lowcomm_terminaison_barrier();
+		sctk_nodebug( "mpc_lowcomm_terminaison_barrier done" );
+		sctk_net_finalize_task_level( task_rank, sctk_thread_get_vp() );
+		sctk_net_send_task_end( task_rank, mpc_common_get_process_rank() );
+	}
+	else
+	{
+		not_reachable();
+	}
+}
+
+
+void mpc_lowcomm_registration() __attribute__((constructor));
+
+void mpc_lowcomm_registration()
 {
         MPC_INIT_CALL_ONLY_ONCE
 
+        mpc_common_init_callback_register("After Ending VPs", "Block sigpipe", mpc_common_helper_ignore_sigpipe, 0);
 
+        mpc_common_init_callback_register("VP Thread Start", "MPC Message Passing Init", __lowcomm_init, 0);
+
+        mpc_common_init_callback_register("VP Thread End", "MPC Message Passing Release", __lowcomm_release, 0);
 }

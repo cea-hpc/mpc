@@ -183,4 +183,16 @@ int mpc_common_io_noalloc_printf ( const char *format, ... );
 
 #endif /* MPC_Profiler */
 
+/***********
+ * SIGNALS *
+ ***********/
+
+void mpc_common_helper_ignore_sigpipe();
+
+/****************
+ * MEMORY STATS *
+ ****************/
+
+size_t mpc_common_helper_memory_in_use( void );
+
 #endif /* MPC_COMMON_INCLUDE_MPC_COMMON_HELPER_H_ */

@@ -22,8 +22,6 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifdef MPC_USE_INFINIBAND
-
 #include <sctk_debug.h>
 #include <sctk_net_tools.h>
 #include <sctk_ib.h>
@@ -133,5 +131,3 @@ void sctk_ib_print_msg ( mpc_lowcomm_ptp_message_t *msg )
 	}
 
 }
-
-#endif

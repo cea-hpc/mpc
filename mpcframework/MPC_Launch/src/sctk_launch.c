@@ -49,7 +49,6 @@
 #include "sctk_thread.h"
 #include "sctk_launch.h"
 #include "sctk_debug.h"
-#include "mpc_config.h"
 #include "mpc_common_asm.h"
 
 #ifdef MPC_Message_Passing
@@ -298,6 +297,7 @@ void mpc_lowcomm_rdma_window_release_ht();
 
 static void sctk_perform_initialisation ( void )
 {
+
 	/*   mkdir (sctk_store_dir, 0777); */
 	if ( sctk_process_nb_val && mpc_common_get_flags()->task_number )
 	{
@@ -317,7 +317,7 @@ static void sctk_perform_initialisation ( void )
 	}
 
 	/* As a first step initialize the PMI */
-	
+
         mpc_launch_pmi_init();
 	mpc_topology_init ();
 #if defined (MPC_USE_EXTLS) && !defined(MPC_DISABLE_HLS)
@@ -333,6 +333,7 @@ static void sctk_perform_initialisation ( void )
 #ifdef MPC_Active_Message
 	arpc_init();
 #endif
+
 	/* Do not bind in LIB_MODE */
 	TODO( "UNDERSTAND WHY IT IS FAILING" );
 #if 0
@@ -345,6 +346,7 @@ static void sctk_perform_initialisation ( void )
 	sctk_nodebug( "Init: thread bound to thread %d", binding );
 #endif
 #endif
+
 #ifdef HAVE_HWLOC
 	sctk_alloc_posix_mmsrc_numa_init_phase_numa();
 #endif
@@ -364,6 +366,7 @@ static void sctk_perform_initialisation ( void )
 	}
 
 	sctk_thread_init ();
+
 
 #ifdef SCTK_LIB_MODE
 	/* In lib mode we force the pthread MODE */
@@ -412,6 +415,8 @@ static void sctk_perform_initialisation ( void )
 #ifdef MPC_Profiler
 	sctk_internal_profiler_init();
 #endif
+
+
 #ifdef SCTK_LIB_MODE
 	/* In LIB mode we create the task context
 	 * at process level (not in an actual task ) */
@@ -428,8 +433,9 @@ static void sctk_perform_initialisation ( void )
 	sctk_thread_attr_init ( &attr );
 	sctk_thread_attr_setscope ( &attr, SCTK_THREAD_SCOPE_SYSTEM );
 	sctk_user_thread_create( &progress, &attr, polling_thread, NULL );
-#ifdef MPC_Message_Passing
 
+
+#ifdef MPC_Message_Passing
 	if ( sctk_process_nb_val > 1 )
 	{
 #ifdef MPC_USE_INFINIBAND
@@ -764,7 +770,9 @@ static int sctk_env_init_intern( int *argc, char ***argv )
 int
 sctk_env_init ( int *argc, char ***argv )
 {
+
 	sctk_env_init_intern ( argc, argv );
+
 	sctk_perform_initialisation ();
 
 	return 0;
@@ -802,48 +810,60 @@ sctk_skip_token ( char *p )
 	return p;
 }
 
+/*********************
+ * VP START FUNCTION *
+ *********************/
+
 typedef struct
 {
 	int argc;
 	char **argv;
-} sctk_startup_args_t;
+        char **saved_argv;
+} startup_arg_t;
 
-static int main_result = 0;
 
-static void *run ( sctk_startup_args_t *arg )
+static inline startup_arg_t * __startup_arg_extract_and_duplicate(startup_arg_t * input_args)
 {
-	int argc;
-	char **argv, **argv_safe;
-	int i;
-	argc = arg->argc;
-	argv = ( char ** ) sctk_malloc ( ( argc + 1 ) * sizeof ( char * ) );
-	assume( argv != NULL );
+        startup_arg_t * ret = sctk_malloc(sizeof(startup_arg_t ));
+        assume(ret);
+
+        ret->argc = input_args->argc;
+
 	/* We create this extra argv array
 	 * to prevent the case where a (strange)
 	 * program modifies the argv[i] pointers
 	 * preventing them to be freed at exit */
-	argv_safe =  ( char ** ) sctk_malloc ( ( argc + 1 ) * sizeof ( char * ) );
-	assume( argv_safe != NULL );
-	sctk_nodebug ( "creation argv %d", argc );
+        ret->saved_argv = (char**)sctk_malloc(ret->argc * sizeof(char*));
+        assume(ret->saved_argv);
 
-	for ( i = 0; i < argc; i++ )
+        int i;
+        for( i = 0 ; i < ret->argc; i++)
+        {
+                ret->saved_argv[i] = input_args->argv[i];
+        }
+
+        ret->argv = (char**)sctk_malloc(ret->argc * sizeof(char*));
+        assume(ret->argv);
+
+        int argc = 0;
+
+	for ( i = 0; i < ret->argc; i++ )
 	{
 		int j;
 		int k;
 		char *tmp;
-		sctk_nodebug ( "%d %s", i, arg->argv[i] );
-		tmp =  ( char * ) sctk_malloc ( ( strlen ( arg->argv[i] ) + 1 ) * sizeof ( char ) );
+
+		tmp =  ( char * ) sctk_malloc ( ( strlen ( input_args->argv[i] ) + 1 ) * sizeof ( char ) );
 		assume( tmp != NULL );
+
 		j = 0;
 		k = 0;
 
-		while ( arg->argv[i][j] != '\0' )
+		while ( input_args->argv[i][j] != '\0' )
 		{
-			if ( memcmp
-			     ( &( arg->argv[i][j] ), "@MPC_LINK_ARGS@",
-			       strlen ( "@MPC_LINK_ARGS@" ) ) != 0 )
+			if ( memcmp( &( input_args->argv[i][j] ), "@MPC_LINK_ARGS@", strlen ( "@MPC_LINK_ARGS@" ) ) != 0 )
 			{
-				tmp[k] = arg->argv[i][j];
+				tmp[k] = input_args->argv[i][j];
 				j++;
 				k++;
 			}
@@ -855,43 +875,58 @@ static void *run ( sctk_startup_args_t *arg )
 			}
 		}
 
-		tmp[k] = arg->argv[i][j];
-		argv[i] = tmp;
+		tmp[k] = input_args->argv[i][j];
+
+		ret->argv[i] = tmp;
 		/* Here we store the pointer to
 		 * be able to free it later on
 		 * even in case of modification */
-		argv_safe[i] = tmp;
-		sctk_nodebug ( "%d %s done", i, argv[i] );
+		ret->saved_argv[i] = tmp;
 	}
 
-	sctk_nodebug ( "creation argv done" );
-	argv[argc] = NULL;
+	ret->argv[ret->argc] = NULL;
 
+        return ret;
+}
 
+static inline void __startup_arg_free(startup_arg_t * arg)
+{
+        int i;
+
+	for ( i = 0; i < arg->argc; i++ )
+	{
+		/* Here we free using the copy
+		 * of the array to be sure we have
+		 * a valid pointer */
+		sctk_free ( arg->saved_argv[i] );
+	}
+
+	sctk_free ( arg->argv );
+	sctk_free ( arg->saved_argv );
+        sctk_free(arg);
+}
+
+static int main_result = 0;
+
+static void * mpc_launch_vp_start_function ( startup_arg_t *arg )
+{
+        startup_arg_t * duplicate_args = __startup_arg_extract_and_duplicate(arg);
 
 	/* In libmode there is no main */
 #ifndef SCTK_LIB_MODE
         mpc_common_init_trigger("Starting Main");
 
         #ifdef HAVE_ENVIRON_VAR
-                main_result = mpc_user_main( argc, argv, environ );
+                main_result = mpc_user_main(duplicate_args->argc, duplicate_args->argv, environ );
         #else
-                main_result = mpc_user_main( argc, argv );
+                main_result = mpc_user_main(duplicate_args->argc, duplicate_args->argv);
         #endif
 
         mpc_common_init_trigger("Ending Main");
 #endif /* SCTK_LIB_MODE */
 
-	for ( i = 0; i < argc; i++ )
-	{
-		/* Here we free using the copy
-		 * of the array to be sure we have
-		 * a valid pointer */
-		sctk_free ( argv_safe[i] );
-	}
+        __startup_arg_free(duplicate_args);
 
-	sctk_free ( argv );
-	sctk_free ( argv_safe );
 	return NULL;
 }
 
@@ -1020,16 +1055,6 @@ static void __set_default_values()
 #ifdef __MIC__
 	mpc_common_get_flags()->enable_smt_capabilities = 1;
 #endif
-	/*   sctk_exception_catch (11); */
-	/*   sctk_set_execuatble_name (argv[0]); */
-	/*
-	   if (sctk_runtime_config_get()->modules.launcher.disable_mpc)
-	   {
-	   sctk_pthread_thread_init ();
-	   sctk_thread_init_no_mpc ();
-	   return mpc_user_main (argc, argv);
-	   }
-	 */
 }
 
 static void __unpack_arguments()
@@ -1103,6 +1128,7 @@ static void __unpack_arguments()
 		    } */
 	}
 
+
 	memcpy ( sctk_save_argument, argv, argc * sizeof ( char * ) );
 	sctk_nodebug ( "init argc %d", argc );
 	sctk_env_init ( &argc, &argv );
@@ -1126,34 +1152,9 @@ static void __unpack_arguments()
 }
 
 
-void mpc_launch_init_function() __attribute__((constructor));
-
-void mpc_launch_init_function()
+static inline void __base_runtime_init()
 {
-        MPC_INIT_CALL_ONLY_ONCE
-
-        /* Create the Initialization list for MPC */
-
-        //load mpc configuration from XML files if not already done.
-        mpc_common_init_callback_register("Base Runtime Init", "Config", sctk_runtime_config_init, 0);
-
-        // Now attach signal handlers (if allowed by the config)
-        mpc_common_init_callback_register("Base Runtime Init", "Sig Handlers", sctk_install_bt_sig_handler, 1);
-
-        // Start autokill thread if needed
-        mpc_common_init_callback_register("Base Runtime Init", "Autokill", __create_autokill_thread, 2);
-
-        // Default values unpacking
-        mpc_common_init_callback_register("Base Runtime Init", "Default Config", __set_default_values, 3);
-
-        // Unpack arguments from ENV
-        mpc_common_init_callback_register("Base Runtime Init", "Parse CLI arguments", __unpack_arguments, 4);
-}
-
-
-void sctk_init_mpc_runtime()
-{
-	if ( sctk_mpc_env_initialized == 1 )
+        if ( sctk_mpc_env_initialized == 1 )
 	{
 		return;
 	}
@@ -1164,9 +1165,26 @@ void sctk_init_mpc_runtime()
 
         mpc_common_init_trigger("Base Runtime Init");
 
+        /* WARNING !! NO CONFIG before this point */
+
+        if( sctk_runtime_config_get()->modules.debugger.mpc_bt_sig )
+        {
+                sctk_install_bt_sig_handler();
+        }
+
+        __create_autokill_thread();
+        __set_default_values();
+
+
+        __unpack_arguments();
 }
 
-void sctk_release_mpc_runtime()
+void sctk_init_mpc_runtime()
+{
+        __base_runtime_init();
+}
+
+static inline void __base_runtime_finalize()
 {
 #ifdef MPC_Message_Passing
         TODO("FIX THIS ASAP");
@@ -1176,13 +1194,16 @@ void sctk_release_mpc_runtime()
 #ifdef MPC_USE_EXTLS
 	extls_fini();
 #endif
+
+        mpc_common_init_trigger("Base Runtime Finalize");
 }
 
 #ifndef SCTK_LIB_MODE
 
 int sctk_launch_main ( int argc, char **argv )
 {
-	sctk_startup_args_t arg;
+
+	startup_arg_t arg;
 #ifdef MPC_USE_EXTLS
 	extls_init();
 	extls_set_context_storage_addr((void*(*)(void))sctk_get_ctx_addr);
@@ -1190,6 +1211,8 @@ int sctk_launch_main ( int argc, char **argv )
 
 	/* MPC_MAKE_FORTRAN_INTERFACE is set when compiling fortran headers.
 	 * To check why ? */
+        TODO("See how thiscompares to MPC_CALL_ORIGINAL_MAIN");
+
 	if ( getenv( "MPC_MAKE_FORTRAN_INTERFACE" ) != NULL )
 	{
 #ifdef HAVE_ENVIRON_VAR
@@ -1200,20 +1223,21 @@ int sctk_launch_main ( int argc, char **argv )
 	}
 
 	sctk_disable_addr_randomize ( argc, argv );
-	sctk_init_mpc_runtime();
+
+	__base_runtime_init();
+
+
 	sctk_nodebug ( "new argc %d", argc );
 	arg.argc = argc;
 	arg.argv = argv;
-	/*   do{ */
-	/*     int i; */
-	/*     for(i = 0; i <= argc; i++){ */
-	/*       fprintf(stderr,"%d : %s\n",i,argv[i]);       */
-	/*     } */
-	/*   }while(0); */
-	/*   sctk_exception_catch (11); */
-	sctk_start_func ( ( void *( * )( void * ) ) run, &arg );
+
+	mpc_thread_spawn_virtual_processors ( ( void *( * )( void * ) ) mpc_launch_vp_start_function, &arg );
+
 	sctk_env_exit ();
-	sctk_release_mpc_runtime();
+	__base_runtime_finalize();
+
+
+
 	return main_result;
 }
 

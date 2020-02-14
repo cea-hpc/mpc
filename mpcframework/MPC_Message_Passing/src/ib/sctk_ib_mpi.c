@@ -23,7 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #include <sctk_debug.h>
 #include <sctk_ib_toolkit.h>
 #include <sctk_route.h>
@@ -50,7 +49,7 @@
 /** array of VPS, for remembering __thread vars to reset when rail is re-enabled */
 volatile char *vps_reset = NULL;
 
-#if 0
+
 static char *sctk_ib_protocol_print ( sctk_ib_protocol_t prot )
 {
 	switch ( prot )
@@ -76,7 +75,7 @@ static char *sctk_ib_protocol_print ( sctk_ib_protocol_t prot )
 			break;
 	}
 }
-#endif
+
 
 
 static void sctk_network_send_message_ib_endpoint ( mpc_lowcomm_ptp_message_t *msg , sctk_endpoint_t *endpoint )
@@ -979,4 +978,3 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	}
 
 }
-#endif

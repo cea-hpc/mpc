@@ -23,7 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__INFINIBAND_IBUFS_H_
 #define __SCTK__INFINIBAND_IBUFS_H_
 
@@ -360,5 +359,4 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
 void sctk_ibuf_free_numa_node( struct sctk_ibuf_numa_s *node);
 
 
-#endif
 #endif

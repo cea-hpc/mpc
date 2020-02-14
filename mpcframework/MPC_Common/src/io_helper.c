@@ -261,3 +261,91 @@ int mpc_common_io_noalloc_printf ( const char *format, ... )
 
         return ret;
 }
+
+/*****************
+ * BLOCK SIGNALS *
+ *****************/
+
+
+void mpc_common_helper_ignore_sigpipe()
+{
+	struct sigaction act ;
+
+	if ( sigaction( SIGPIPE, ( struct sigaction * )NULL, &act ) == -1 )
+	{
+		return;
+	}
+
+	if ( act.sa_handler == SIG_DFL )
+	{
+		act.sa_handler = SIG_IGN ;
+
+		if ( sigaction( SIGPIPE, &act, ( struct sigaction * )NULL ) == -1 )
+		{
+			return;
+		}
+	}
+
+	return ;
+}
+
+
+/****************
+ * MEMORY STATS *
+ ****************/
+
+
+#if defined(__linux__)
+
+size_t mpc_common_helper_memory_in_use( void )
+{
+	size_t mem_used = 0;
+	FILE *f = fopen( "/proc/self/stat", "r" );
+
+	if ( f )
+	{
+		// See proc(1), category 'stat'
+		int z_pid;
+		char z_comm[4096];
+		char z_state;
+		int z_ppid;
+		int z_pgrp;
+		int z_session;
+		int z_tty_nr;
+		int z_tpgid;
+		unsigned long z_flags;
+		unsigned long z_minflt;
+		unsigned long z_cminflt;
+		unsigned long z_majflt;
+		unsigned long z_cmajflt;
+		unsigned long z_utime;
+		unsigned long z_stime;
+		long z_cutime;
+		long z_cstime;
+		long z_priority;
+		long z_nice;
+		long z_zero;
+		long z_itrealvalue;
+		long z_starttime;
+		unsigned long z_vsize;
+		long z_rss;
+		assume( fscanf( f, "%d %s %c %d %d %d %d %d",
+		                &z_pid, z_comm, &z_state, &z_ppid, &z_pgrp, &z_session, &z_tty_nr, &z_tpgid ) == 8 );
+		assume( fscanf( f, "%lu %lu %lu %lu %lu %lu %lu",
+		                &z_flags, &z_minflt, &z_cminflt, &z_majflt, &z_cmajflt, &z_utime, &z_stime ) == 7 );
+		assume( fscanf( f, "%ld %ld %ld %ld %ld %ld %ld %lu %ld",
+		                &z_cutime, &z_cstime, &z_priority, &z_nice, &z_zero, &z_itrealvalue, &z_starttime, &z_vsize, &z_rss ) == 9 );
+		int pz =  getpagesize();
+		mem_used = ( size_t )( z_rss * pz );
+		fclose( f );
+	}
+
+	return mem_used ;
+}
+#else
+
+size_t mpc_common_helper_memory_in_use( void )
+{
+	return 0;
+}
+#endif

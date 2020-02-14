@@ -23,8 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
-
 #include "sctk_ib_config.h"
 
 /* IB debug macros */
@@ -170,5 +168,3 @@ void sctk_ib_config_init ( sctk_ib_rail_info_t *rail_ib, __UNUSED__ char *networ
 	//Check if the variables are well set
 	sctk_ib_config_check ( rail_ib );
 }
-
-#endif

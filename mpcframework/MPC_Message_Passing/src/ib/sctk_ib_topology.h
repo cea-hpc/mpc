@@ -23,7 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__INFINIBAND_TOPOLOGY_H_
 #define __SCTK__INFINIBAND_TOPOLOGY_H_
 
@@ -74,5 +73,4 @@ sctk_ib_topology_get_numa_node ( struct sctk_ib_rail_info_s *rail_ib );
 sctk_ib_topology_numa_node_t *
 sctk_ib_topology_get_default_numa_node ( struct sctk_ib_rail_info_s *rail_ib );
 
-#endif
 #endif

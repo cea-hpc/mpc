@@ -120,7 +120,7 @@ extern "C"
 				  const struct timespec *__abstime);
   int sctk_thread_cond_wait (sctk_thread_cond_t * __cond,
 			     sctk_thread_mutex_t * __mutex);
-  int sctk_thread_create (sctk_thread_t * __threadp,
+  int mpc_thread_create_vp_thread (sctk_thread_t * __threadp,
 			  const sctk_thread_attr_t * __attr,
 			  void *(*__start_routine) (void *),
 			  void *__arg, long task_id, long local_task_id);

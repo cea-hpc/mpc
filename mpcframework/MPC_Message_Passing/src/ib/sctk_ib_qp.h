@@ -23,7 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__IB_QP_H_
 #define __SCTK__IB_QP_H_
 
@@ -270,5 +269,4 @@ void sctk_ib_qp_try_flush ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *r
  *----------------------------------------------------------*/
 sctk_ib_qp_t  *sctk_ib_qp_ht_find ( struct sctk_ib_rail_info_s *rail_ib, int key );
 
-#endif
 #endif

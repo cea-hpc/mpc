@@ -23,7 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #include "sctk_ib.h"
 #include "sctk_ib_config.h"
 #include "sctk_ibufs.h"
@@ -640,10 +639,10 @@ void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, s
 	remote->psn = lrand48 () & 0xffffff;
 	remote->rank = rank;
 	remote->free_nb = config->qp_tx_depth;
-	remote->post_lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&remote->post_lock, 0);
 	/* For buffered eager */
 	remote->ib_buffered.entries = NULL;
-	remote->ib_buffered.lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&remote->ib_buffered.lock, 0);
 	remote->unsignaled_counter = 0;
 	OPA_store_int ( &remote->ib_buffered.number, 0 );
 
@@ -676,11 +675,11 @@ void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, s
 	sctk_ib_qp_set_local_flush_ack ( remote, ACK_UNSET );
 	sctk_ib_qp_set_remote_flush_ack ( remote, ACK_UNSET );
 
-	remote->lock_rtr = SCTK_SPINLOCK_INITIALIZER;
-	remote->lock_rts = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&remote->lock_rtr, 0);
+	mpc_common_spinlock_init(&remote->lock_rts, 0);
 	/* Lock for sending messages */
-	remote->lock_send = SCTK_SPINLOCK_INITIALIZER;
-	remote->flushing_lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&remote->lock_send, 0);
+	mpc_common_spinlock_init(&remote->flushing_lock, 0);
 	/* RDMA */
 	sctk_ibuf_rdma_remote_init ( remote );
 
@@ -913,5 +912,3 @@ int sctk_ib_qp_send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *re
 
 	return 1;
 }
-
-#endif

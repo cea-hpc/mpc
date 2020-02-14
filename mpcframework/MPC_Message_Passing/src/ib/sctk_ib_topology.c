@@ -22,7 +22,6 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifdef MPC_USE_INFINIBAND
 
 #include "sctk_ibufs.h"
 
@@ -121,7 +120,7 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 			topo->default_node = node;
 
 		node->id = node_nb;
-		node->polling_lock = SCTK_SPINLOCK_INITIALIZER;
+		mpc_common_spinlock_init(&node->polling_lock, 0);
 
 		/* WARNING: we *MUST* initialize the TLS before initializing IB structure
 		 * as they access to the TLS variable*/
@@ -157,7 +156,7 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 		topo->nodes[numa_node_count] = srq_node;
 
 		srq_node->id = numa_node_count;
-		srq_node->polling_lock = SCTK_SPINLOCK_INITIALIZER; /* Not needed */
+		mpc_common_spinlock_init(&srq_node->polling_lock, 0); /* Not needed */
 
 		srq_node->ibufs.numa_node = srq_node;
 
@@ -221,7 +220,7 @@ void sctk_ib_topology_init( sctk_ib_topology_t * topology )
 	for ( i = 0; i < numa_node_count + 1; ++i )
 	{
 		sctk_ib_topology_numa_node_init_t *init = &topology->init[i];
-		init->initialization_lock = SCTK_SPINLOCK_INITIALIZER;
+		mpc_common_spinlock_init(&init->initialization_lock, 0);
 		init->is_leader = 1;
 	}
 }
@@ -333,5 +332,3 @@ sctk_ib_topology_get_numa_node ( struct sctk_ib_rail_info_s *rail_ib )
 
 	return numa_node_task[rail_nb];
 }
-
-#endif

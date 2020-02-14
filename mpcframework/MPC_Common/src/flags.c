@@ -78,7 +78,7 @@ static inline void __list_add_callback(struct mpc_common_init_list * list, char 
 }
 
 
-#define MAX_INIT_LIST 8
+#define MAX_INIT_LIST 16
 
 struct mpc_common_init
 {

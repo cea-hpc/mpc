@@ -22,7 +22,6 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifdef MPC_USE_INFINIBAND
 
 #ifndef __SCTK__IB_CONFIG_H_
 #define __SCTK__IB_CONFIG_H_
@@ -100,5 +99,4 @@ struct sctk_ib_rail_info_s;
 void sctk_ib_config_init ( struct sctk_ib_rail_info_s *rail_ib, char *network_name );
 void sctk_ib_config_print ( struct sctk_ib_rail_info_s *rail_ib );
 
-#endif
 #endif

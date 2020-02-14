@@ -23,7 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__IB_POLLING_H_
 #define __SCTK__IB_POLLING_H_
 
@@ -146,5 +145,4 @@ static inline void sctk_ib_cq_poll ( sctk_rail_info_t *rail,
 	while ( res == WC_COUNT );
 }
 
-#endif
 #endif

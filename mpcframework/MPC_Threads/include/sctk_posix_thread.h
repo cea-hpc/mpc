@@ -33,23 +33,22 @@ extern "C"
     struct _sctk_thread_cleanup_buffer *next;	/* Chaining of cleanup functions.  */
   };
 
+
+void _sctk_thread_cleanup_push (struct _sctk_thread_cleanup_buffer *__buffer,
+					 void (*__routine) (void *),
+					 void *__arg);
+
+
 #define sctk_thread_cleanup_push(routine,arg) \
   { struct _sctk_thread_cleanup_buffer _buffer;				      \
     _sctk_thread_cleanup_push (&_buffer, (routine), (arg));
 
-  extern void _sctk_thread_cleanup_push (struct _sctk_thread_cleanup_buffer
-					 *__buffer,
-					 void (*__routine) (void *),
-					 void *__arg);
+void _sctk_thread_cleanup_pop (struct _sctk_thread_cleanup_buffer *__buffer, int __execute);
 
-/* Remove a cleanup handler installed by the matching sctk_thread_cleanup_push.
-   If EXECUTE is non-zero, the handler function is called. */
+
 
 #define sctk_thread_cleanup_pop(execute) \
     _sctk_thread_cleanup_pop (&_buffer, (execute)); }
-
-  extern void _sctk_thread_cleanup_pop (struct _sctk_thread_cleanup_buffer
-					*__buffer, int __execute);
 
 
 

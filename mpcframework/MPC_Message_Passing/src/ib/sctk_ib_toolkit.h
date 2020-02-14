@@ -27,7 +27,6 @@
 #include "sctk_launch.h"
 #include "string.h"
 
-#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__IB_TOOLKIT_H_
 #define __SCTK__IB_TOOLKIT_H_
 
@@ -107,5 +106,4 @@ char sctk_network_is_ib_used();
 void sctk_network_set_ib_used();
 void sctk_network_set_ib_unused();
 
-#endif
 #endif

@@ -23,7 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__IB_BUFFERED_H_
 #define __SCTK__IB_BUFFERED_H_
 
@@ -83,5 +82,4 @@ int sctk_ib_buffered_prepare_msg ( struct sctk_rail_info_s *rail,
 
 void sctk_ib_buffered_poll_recv ( struct sctk_rail_info_s *rail, struct sctk_ibuf_s *ibuf );
 
-#endif
 #endif

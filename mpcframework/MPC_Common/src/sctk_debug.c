@@ -215,19 +215,16 @@ void sctk_install_bt_sig_handler()
 		}
 	}
 
-#if 0
-	if ( cmd || sctk_runtime_config_get()->modules.debugger.mpc_bt_sig )
-	{
-		sigaction( SIGSEGV, &action, NULL );
-		sigaction( SIGHUP, &action, NULL );
-		sigaction( SIGINT, &action, NULL );
-		sigaction( SIGILL, &action, NULL );
-		sigaction( SIGFPE, &action, NULL );
-		sigaction( SIGQUIT, &action, NULL );
-		sigaction( SIGBUS, &action, NULL );
-		sigaction( SIGTERM, &action, NULL );
-	}
-#endif
+        sigaction( SIGSEGV, &action, NULL );
+        sigaction( SIGHUP, &action, NULL );
+        sigaction( SIGINT, &action, NULL );
+        sigaction( SIGILL, &action, NULL );
+        sigaction( SIGFPE, &action, NULL );
+        sigaction( SIGQUIT, &action, NULL );
+        sigaction( SIGBUS, &action, NULL );
+        sigaction( SIGTERM, &action, NULL );
+
+
 }
 
 /**********************************************************************/

@@ -9,7 +9,7 @@ AM_SILENT_RULES([yes])
 LT_PREREQ([2.4.6])
 
 
-LT_INIT
+LT_INIT([disable-static])
 LT_LANG([C])
 LT_INIT
 AC_PROG_CXX
@@ -119,7 +119,7 @@ __check_or_infer_prefix_lib()
 
                         OLD_LDFLAGS=$LDFLAGS
 
-                        LDFLAGS+=" -L$pref/$suffix"
+                        LDFLAGS+=" -L$pref/$suffix -l$1"
 
                         ___unset_lib_cache
                         AC_CHECK_LIB($looked_up_lib, $looked_up_function, [lib_found=1], [lib_found=0])
@@ -252,7 +252,7 @@ fi
 # Network list
 #
 
-mpc_net_list = "tcp shm"
+mpc_net_list="tcp shm"
 
 #
 # Detect libibverbs presence

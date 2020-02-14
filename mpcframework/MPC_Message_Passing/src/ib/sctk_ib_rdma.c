@@ -23,7 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #include "sctk_ib.h"
 #include "sctk_ib_rdma.h"
 #include "sctk_ib_eager.h"
@@ -94,18 +93,11 @@ mpc_lowcomm_ptp_message_t * sctk_ib_rdma_recv_done_remote_imm (__UNUSED__  sctk_
 	send = rdma->copy_ptr->msg_send;
 	recv = rdma->copy_ptr->msg_recv;
 
-        sctk_nodebug("msg: %p - Rail: %p (%p) copy_ptr:%p (send:%p recv:%p)",
-                     dest_msg_header, rail, ibuf, rdma->copy_ptr, send, recv);
 
         /* If SCTK_IB_RDMA_RECOPY, we delete the temporary msg copy */
         sctk_nodebug("MSG DONE REMOTE");
 
         if (rdma->local.status == SCTK_IB_RDMA_RECOPY) {
-          sctk_nodebug(
-              "MSG with addr %p completed, SCTK_IB_RDMA_RECOPY to %p "
-              "(checksum:%lu)",
-              send->tail.ib.rdma.local.addr, recv->tail.message.contiguous.addr,
-              sctk_checksum_buffer(rdma->local.addr, rdma->copy_ptr->msg_recv));
 
           sctk_net_message_copy_from_buffer(rdma->local.addr, rdma->copy_ptr,
                                             0);
@@ -157,11 +149,6 @@ sctk_ib_rdma_recv_done_remote(__UNUSED__  sctk_rail_info_t *rail, sctk_ibuf_t *i
   sctk_nodebug("MSG DONE REMOTE %p ", dest_msg_header);
 
   if (dest_msg_header->tail.ib.rdma.local.status == SCTK_IB_RDMA_RECOPY) {
-    sctk_nodebug(
-        "MSG with addr %p completed, SCTK_IB_RDMA_RECOPY to %p (checksum:%lu)",
-        send->tail.ib.rdma.local.addr, recv->tail.message.contiguous.addr,
-        sctk_checksum_buffer(dest_msg_header->tail.ib.rdma.local.addr,
-                             dest_msg_header->tail.ib.rdma.copy_ptr->msg_recv));
 
     sctk_net_message_copy_from_buffer(dest_msg_header->tail.ib.rdma.local.addr,
                                       dest_msg_header->tail.ib.rdma.copy_ptr,
@@ -499,7 +486,7 @@ sctk_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
   SCTK_MSG_COMPLETION_FLAG_SET(msg, NULL);
   msg->tail.message_type = MPC_LOWCOMM_MESSAGE_NETWORK;
   /* Remote addr initially set to NULL */
-  rdma->lock = SCTK_SPINLOCK_INITIALIZER;
+  mpc_common_spinlock_init(&rdma->lock, 0);
   rdma->local.status = SCTK_IB_RDMA_NOT_SET;
   rdma->requested_size = rdma_req->requested_size;
 
@@ -581,8 +568,6 @@ void sctk_ib_rdma_rendezvous_prepare_send_msg ( mpc_lowcomm_ptp_message_t *msg, 
 		PROF_INC ( rail_ib->rail, ib_alloc_mem );
 		sctk_net_copy_in_buffer ( msg, aligned_addr );
 
-		sctk_nodebug ( "Sending NOT contiguous message %p of size: %lu, add:%p, type:%d (src cs:%lu, dest cs:%lu)", msg, aligned_size, aligned_addr, msg->tail.message_type, msg->body.checksum, sctk_checksum_buffer ( aligned_addr, msg ) );
-
 		rdma->local.addr = aligned_addr;
 		rdma->local.size = aligned_size;
 		rdma->local.status = SCTK_IB_RDMA_RECOPY;
@@ -590,7 +575,6 @@ void sctk_ib_rdma_rendezvous_prepare_send_msg ( mpc_lowcomm_ptp_message_t *msg, 
 
 	/* Register MMU */
 	PROF_TIME_START ( rail_ib->rail, send_mmu_register );
-	sctk_nodebug ( "[%d] register mmu", rail_ib->rail_nb );
 	rdma->local.mmu_entry =  sctk_ib_mmu_pin ( &rdma->remote_rail->network.ib, aligned_addr, aligned_size );
 	PROF_TIME_END ( rail_ib->rail, send_mmu_register );
 
@@ -1109,4 +1093,3 @@ void sctk_ib_rdma_print ( mpc_lowcomm_ptp_message_t *msg )
 	             h->rdma.remote.aligned_size );
 }
 
-#endif

@@ -23,8 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
-
 #include "sctk_ib_config.h"
 #include <sctk_route.h>
 #include <mpc_topology.h>
@@ -239,5 +237,3 @@ void sctk_ib_async_finalize( sctk_rail_info_t *rail)
 
 	async_pidt = NULL;
 }
-
-#endif

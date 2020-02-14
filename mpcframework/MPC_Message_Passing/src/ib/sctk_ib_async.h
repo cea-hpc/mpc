@@ -22,7 +22,6 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifdef MPC_USE_INFINIBAND
 
 #ifndef __SCTK__IB_ASYNC_H_
 #define __SCTK__IB_ASYNC_H_
@@ -41,5 +40,4 @@ struct sctk_rail_info_s;
 void sctk_ib_async_init ( struct sctk_rail_info_s *rail_ib );
 void sctk_ib_async_finalize( struct sctk_rail_info_s * rail_ib);
 
-#endif
 #endif

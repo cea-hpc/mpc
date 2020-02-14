@@ -23,8 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
-
 #ifndef __SCTK_IB_MPI_H_
 #define __SCTK_IB_MPI_H_
 
@@ -57,8 +55,6 @@ char sctk_network_is_ib_used();
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
 
 #endif

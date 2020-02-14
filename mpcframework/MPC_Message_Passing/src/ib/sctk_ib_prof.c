@@ -23,7 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #include <infiniband/verbs.h>
 #include "sctk_ib_mmu.h"
 #include "sctk_ib.h"
@@ -373,5 +372,4 @@ void sctk_ib_prof_mem_finalize ( sctk_ib_rail_info_t *rail_ib )
 	close ( mem_prof->fd );
 }
 
-#endif
 #endif

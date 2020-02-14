@@ -23,7 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #include "sctk_ib.h"
 #include "sctk_ib_buffered.h"
 #include "sctk_ib_polling.h"
@@ -286,8 +285,8 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
 		entry->total = buffered->nb;
 		entry->status = SCTK_IB_RDMA_NOT_SET;
 		sctk_nodebug ( "Not set: %d (%p)", entry->status, entry );
-		entry->lock = SCTK_SPINLOCK_INITIALIZER;
-		entry->current_copied_lock = SCTK_SPINLOCK_INITIALIZER;
+		mpc_common_spinlock_init(&entry->lock, 0);
+		mpc_common_spinlock_init(&entry->current_copied_lock, 0);
 		entry->current_copied = 0;
 		entry->payload = NULL;
 		entry->copy_ptr = NULL;
@@ -425,4 +424,3 @@ void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 		sctk_nodebug ( "Free done:%p", entry );
 	}
 }
-#endif

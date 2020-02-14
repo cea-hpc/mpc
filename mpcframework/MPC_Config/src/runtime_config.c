@@ -253,3 +253,19 @@ void sctk_runtime_config_init(void)
         }
 }
 
+/********************************* FUNCTION *********************************/
+void mpc_config_registration_function() __attribute__((constructor));
+
+void mpc_config_registration_function()
+{
+        MPC_INIT_CALL_ONLY_ONCE
+
+        /* Create the Initialization list for MPC */
+
+        //load mpc configuration from XML files if not already done.
+        mpc_common_init_callback_register("Base Runtime Init", "Config Initialization", sctk_runtime_config_init, 0);
+
+        mpc_common_init_callback_register("Base Runtime Finalize", "Config Release Hash-Tables", sctk_runtime_config_clean_hash_tables, 99);
+        mpc_common_init_callback_register("Base Runtime Finalize", "Config Release", sctk_runtime_config_runtime_cleanup, 1024);
+
+}

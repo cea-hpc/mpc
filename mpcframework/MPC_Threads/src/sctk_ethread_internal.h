@@ -1449,17 +1449,17 @@ extern "C"
     sctk_nodebug ("Idle %p starts on vp %d", th_data, vp->rank);
 
     th_data->status = ethread_idle;
-    last_timer = sctk_timer;
+    last_timer = ___timer_thread_ticks;
 
     /** ** **/
     sctk_init_idle_thread_dbg (th_data, __sctk_ethread_idle_task) ;
     /** **/
-    while (sctk_thread_running)
+    while (___timer_thread_running)
       {
 	__sctk_grab_zombie (vp);
 	__sctk_ethread_sched_yield_vp_idle (vp, th_data);
 	sctk_assert (vp->idle == th_data);
-	if (sctk_timer != last_timer)
+	if (___timer_thread_ticks != last_timer)
 	  {
 	    double activity;
 	    double idle_activity;
@@ -1468,7 +1468,7 @@ extern "C"
 	    vp->usage = activity / (activity + idle_activity);
 	    vp->idle_activity = 0;
 	    vp->activity = 1;
-	    last_timer = sctk_timer;
+	    last_timer = ___timer_thread_ticks;
 	  }
 /* Idle function is called here to avoid deadlocks.
  * Actually, when calling sctk_thread_yield(), the polling
@@ -1537,7 +1537,7 @@ extern "C"
     sctk_nodebug ("Kernel Idle %p starts on vp %d", th_data, vp->rank);
 
     th_data->status = ethread_idle;
-    last_timer = sctk_timer;
+    last_timer = ___timer_thread_ticks;
 
     /** ** **/
     sctk_init_idle_thread_dbg (th_data, __sctk_ethread_kernel_idle_task) ;
@@ -1548,7 +1548,7 @@ extern "C"
 	sctk_assert (vp->current == th_data);
 	sctk_assert (vp == th_data->vp);
 	sctk_assert (vp->idle == th_data);
-	if (sctk_timer != last_timer)
+	if (___timer_thread_ticks != last_timer)
 	  {
 	    double activity;
 	    double idle_activity;
@@ -1557,7 +1557,7 @@ extern "C"
 	    vp->usage = activity / (activity + idle_activity);
 	    vp->idle_activity = 0;
 	    vp->activity = 1;
-	    last_timer = sctk_timer;
+	    last_timer = ___timer_thread_ticks;
 	  }
 	kthread_usleep (20);
       }

@@ -23,7 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__IB_CP_H_
 #define __SCTK__IB_CP_H_
 
@@ -113,5 +112,4 @@ void sctk_network_finalize_task_collaborative_ib ( sctk_rail_info_t *rail, int r
 
 void sctk_network_finalize_collaborative_ib ();
 
-#endif
 #endif

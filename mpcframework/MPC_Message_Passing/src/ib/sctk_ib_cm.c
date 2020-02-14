@@ -23,7 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #include "sctk_ib.h"
 #include "sctk_ib_cm.h"
 #include "sctk_ib_polling.h"
@@ -712,8 +711,6 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request ( sctk_rail_info_t *ra
 	{
 		/* Can connect to RDMA */
 
-		sctk_nodebug ( "[%d] Can connect to remote %d", rail_ib->rail_number, remote->rank );
-
 		/* We can change to RTR because we are RDMA connectable */
 		send_keys.connected = 1;
 
@@ -949,8 +946,6 @@ void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int pro
 			not_reachable();
 			break;
 
-	}	
+	}
 
 }
-
-#endif

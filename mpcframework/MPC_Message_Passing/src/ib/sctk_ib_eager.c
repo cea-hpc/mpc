@@ -23,7 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #include "sctk_route.h"
 #include "sctk_ib_eager.h"
 #include "sctk_ib_polling.h"
@@ -50,7 +49,7 @@ void sctk_ib_eager_init ( sctk_ib_rail_info_t *rail_ib )
 	int i;
 
 	rail_ib->eager_buffered_ptp_message = NULL;
-	rail_ib->eager_lock_buffered_ptp_message = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&rail_ib->eager_lock_buffered_ptp_message, 0);
 
 	mpc_lowcomm_ptp_message_t *tmp = sctk_malloc ( EAGER_BUFFER_SIZE * sizeof ( mpc_lowcomm_ptp_message_t ) );
 
@@ -309,5 +308,3 @@ int sctk_ib_eager_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 
 	return rail->send_message_from_network ( msg );
 }
-
-#endif

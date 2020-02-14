@@ -23,7 +23,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__INFINIBAND_IBUFS_RDMA_H_
 #define __SCTK__INFINIBAND_IBUFS_RDMA_H_
 
@@ -289,5 +288,4 @@ int sctk_ibuf_rdma_check_flush_send ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t
 int sctk_ibuf_rdma_check_flush_recv ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote );
 size_t sctk_ibuf_rdma_get_regions_get_allocate_size ( sctk_ib_qp_t *remote );
 void sctk_ibuf_rdma_update_max_pending_data ( sctk_ib_qp_t *remote, int current_pending );
-#endif
 #endif
