@@ -24,62 +24,15 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <mpc_config.h>
+/**********
+ * MACROS *
+ **********/
 
-
-#include "mpc_topology.h"
-#include <mpc_topology_render.h>
+#define SCTK_DONOT_REDEFINE_KILL
 
 #undef sleep
 #undef usleep
-#define SCTK_DONOT_REDEFINE_KILL
 
-#include "sctk_debug.h"
-
-#include "mpc_common_rank.h"
-#include <mpc_common_flags.h>
-
-#include "mpcthread_config.h"
-#include "sctk_thread.h"
-#include "sctk_kernel_thread.h"
-#include "sctk_alloc.h"
-
-
-#include "mpc_common_asm.h"
-#include "sctk_tls.h"
-#include <unistd.h>
-#include "sctk_posix_thread.h"
-#include "sctk_internal_thread.h"
-#ifdef MPC_OpenMP
-	#include "mpcomp_core.h"
-#endif
-#ifdef MPC_Debugger
-	#include "sctk_thread_dbg.h"
-#endif
-
-#include "sctk_context.h"
-#include "mpc_runtime_config.h"
-
-
-#include "sctk_thread_generic.h"
-
-#ifdef MPC_USE_EXTLS
-	#include <extls.h>
-#endif
-
-#ifdef MPC_MPI
-	#include <mpc_mpi_comm_lib.h>
-#endif
-
-#include <errno.h>
-#include "sctk_futex.h"
-
-extern int errno;
-typedef unsigned sctk_long_long sctk_timer_t;
-
-volatile int start_func_done = 0;
-
-static sctk_thread_key_t _sctk_thread_handler_key;
 
 /* #define SCTK_CHECK_CODE_RETURN */
 #ifdef SCTK_CHECK_CODE_RETURN
@@ -88,451 +41,72 @@ static sctk_thread_key_t _sctk_thread_handler_key;
 	#define sctk_check(res,val) (void)(0)
 #endif
 
+/***********
+ * HEADERS *
+ ***********/
+
+#include <mpc_config.h>
+#include <mpcthread_config.h>
+#include <mpc_runtime_config.h>
+
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
+
+#include <mpc_topology.h>
+#include <mpc_topology_render.h>
+
+#include <sctk_debug.h>
+#include <mpc_common_rank.h>
+#include <mpc_common_flags.h>
+
+
+#include <sctk_thread.h>
+#include <sctk_posix_thread.h>
+#include <sctk_internal_thread.h>
+#include <sctk_kernel_thread.h>
+#include <sctk_thread_generic.h>
+
+#include <sctk_tls.h>
+
+#include <sctk_futex.h>
+
+#ifdef MPC_OpenMP
+	#include <mpcomp_core.h>
+#endif
+
+#ifdef MPC_Debugger
+	#include <sctk_thread_dbg.h>
+#endif
+
+#ifdef MPC_USE_EXTLS
+	#include <extls.h>
+#endif
+
+/***************
+ * LOCAL TYPES *
+ ***************/
+
+typedef unsigned sctk_long_long sctk_timer_t;
+
+/********************
+ * GLOBAL VARIABLES *
+ ********************/
+
+volatile int start_func_done = 0;
+
+static sctk_thread_key_t _sctk_thread_handler_key;
+
 static volatile long sctk_nb_user_threads = 0;
 
 volatile int sctk_multithreading_initialised = 0;
 
 struct sctk_alloc_chain *sctk_thread_tls = NULL;
 
-void
-sctk_thread_init ( void )
-{
-	sctk_thread_tls = sctk_get_current_alloc_chain();
-#ifdef MPC_Allocator
-	assert( sctk_thread_tls != NULL );
-#endif
-#ifdef SCTK_CHECK_CODE_RETURN
-	fprintf ( stderr, "Thread librarie return code check enable!!\n" );
-#endif
-	sctk_futex_context_init();
-	/*Check all types */
-}
 
-int
-sctk_thread_atfork ( void ( *__prepare ) ( void ), void ( *__parent ) ( void ),
-                     void ( *__child ) ( void ) )
-{
-	int res;
-	res = __sctk_ptr_thread_atfork ( __prepare, __parent, __child );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_destroy ( sctk_thread_attr_t *__attr )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_destroy ( __attr );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_getdetachstate ( const sctk_thread_attr_t *__attr,
-                                  int *__detachstate )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_getdetachstate ( __attr, __detachstate );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_getguardsize ( const sctk_thread_attr_t *restrict __attr,
-                                size_t *restrict __guardsize )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_getguardsize ( __attr, __guardsize );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_getinheritsched ( const sctk_thread_attr_t *
-                                   restrict __attr, int *restrict __inherit )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_getinheritsched ( __attr, __inherit );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_getschedparam ( const sctk_thread_attr_t *restrict __attr,
-                                 struct sched_param *restrict __param )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_getschedparam ( __attr, __param );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_getschedpolicy ( const sctk_thread_attr_t *restrict __attr,
-                                  int *restrict __policy )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_getschedpolicy ( __attr, __policy );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_getscope ( const sctk_thread_attr_t *restrict __attr,
-                            int *restrict __scope )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_getscope ( __attr, __scope );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_getstackaddr ( const sctk_thread_attr_t *restrict __attr,
-                                void **restrict __stackaddr )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_getstackaddr ( __attr, __stackaddr );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_getstack ( const sctk_thread_attr_t *restrict __attr,
-                            void **restrict __stackaddr,
-                            size_t *restrict __stacksize )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_getstack ( __attr, __stackaddr, __stacksize );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_getstacksize ( const sctk_thread_attr_t *restrict __attr,
-                                size_t *restrict __stacksize )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_getstacksize ( __attr, __stacksize );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_init ( sctk_thread_attr_t *__attr )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_init ( __attr );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_setdetachstate ( sctk_thread_attr_t *__attr,
-                                  int __detachstate )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_setdetachstate ( __attr, __detachstate );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_setguardsize ( sctk_thread_attr_t *__attr,
-                                size_t __guardsize )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_setguardsize ( __attr, __guardsize );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_setinheritsched ( sctk_thread_attr_t *__attr, int __inherit )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_setinheritsched ( __attr, __inherit );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_setschedparam ( sctk_thread_attr_t *restrict __attr,
-                                 const struct sched_param *restrict __param )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_setschedparam ( __attr, __param );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_setschedpolicy ( sctk_thread_attr_t *__attr, int __policy )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_setschedpolicy ( __attr, __policy );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_setscope ( sctk_thread_attr_t *__attr, int __scope )
-{
-	int res;
-	sctk_nodebug ( "thread attr_setscope %d == %d || %d", __scope,
-	               SCTK_THREAD_SCOPE_PROCESS, SCTK_THREAD_SCOPE_SYSTEM );
-	res = __sctk_ptr_thread_attr_setscope ( __attr, __scope );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_setstackaddr ( sctk_thread_attr_t *__attr, void *__stackaddr )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_setstackaddr ( __attr, __stackaddr );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_setstack ( sctk_thread_attr_t *__attr, void *__stackaddr,
-                            size_t __stacksize )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_setstack ( __attr, __stackaddr, __stacksize );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_setstacksize ( sctk_thread_attr_t *__attr,
-                                size_t __stacksize )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_setstacksize ( __attr, __stacksize );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_setbinding ( sctk_thread_attr_t *__attr, int __binding )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_setbinding ( __attr, __binding );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_attr_getbinding ( sctk_thread_attr_t *__attr, int *__binding )
-{
-	int res;
-	res = __sctk_ptr_thread_attr_getbinding ( __attr, __binding );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_barrierattr_destroy ( sctk_thread_barrierattr_t *__attr )
-{
-	int res;
-	res = __sctk_ptr_thread_barrierattr_destroy ( __attr );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_barrierattr_init ( sctk_thread_barrierattr_t *__attr )
-{
-	int res;
-	res = __sctk_ptr_thread_barrierattr_init ( __attr );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_barrierattr_setpshared ( sctk_thread_barrierattr_t *__attr,
-                                     int __pshared )
-{
-	int res;
-	res = __sctk_ptr_thread_barrierattr_setpshared ( __attr, __pshared );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_barrierattr_getpshared ( const sctk_thread_barrierattr_t *
-                                     __attr, int *__pshared )
-{
-	int res;
-	res = __sctk_ptr_thread_barrierattr_getpshared ( __attr, __pshared );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_barrier_destroy ( sctk_thread_barrier_t *__barrier )
-{
-	int res;
-	res = __sctk_ptr_thread_barrier_destroy ( __barrier );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_barrier_init ( sctk_thread_barrier_t *restrict __barrier,
-                           const sctk_thread_barrierattr_t *restrict __attr,
-                           unsigned int __count )
-{
-	int res;
-	res = __sctk_ptr_thread_barrier_init ( __barrier, __attr, __count );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_barrier_wait ( sctk_thread_barrier_t *__barrier )
-{
-	int res;
-	res = __sctk_ptr_thread_barrier_wait ( __barrier );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_cancel ( sctk_thread_t __cancelthread )
-{
-	int res;
-	res = __sctk_ptr_thread_cancel ( __cancelthread );
-	sctk_check ( res, 0 );
-	sctk_thread_yield ();
-	return res;
-}
-
-int
-sctk_thread_condattr_destroy ( sctk_thread_condattr_t *__attr )
-{
-	int res;
-	res = __sctk_ptr_thread_condattr_destroy ( __attr );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_condattr_getpshared ( const sctk_thread_condattr_t *
-                                  restrict __attr, int *restrict __pshared )
-{
-	int res;
-	res = __sctk_ptr_thread_condattr_getpshared ( __attr, __pshared );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_condattr_init ( sctk_thread_condattr_t *__attr )
-{
-	int res;
-	res = __sctk_ptr_thread_condattr_init ( __attr );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_condattr_setpshared ( sctk_thread_condattr_t *__attr,
-                                  int __pshared )
-{
-	int res;
-	res = __sctk_ptr_thread_condattr_setpshared ( __attr, __pshared );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_condattr_setclock ( sctk_thread_condattr_t *__attr,
-                                clockid_t __clockid )
-{
-	int res;
-	res = __sctk_ptr_thread_condattr_setclock ( __attr, __clockid );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_condattr_getclock ( sctk_thread_condattr_t *__attr,
-                                clockid_t *__clockid )
-{
-	int res;
-	res = __sctk_ptr_thread_condattr_getclock ( __attr, __clockid );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_cond_broadcast ( sctk_thread_cond_t *__cond )
-{
-	int res;
-	res = __sctk_ptr_thread_cond_broadcast ( __cond );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_cond_destroy ( sctk_thread_cond_t *__cond )
-{
-	int res;
-	res = __sctk_ptr_thread_cond_destroy ( __cond );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_cond_init ( sctk_thread_cond_t *restrict __cond,
-                        const sctk_thread_condattr_t *restrict __cond_attr )
-{
-	int res;
-	res = __sctk_ptr_thread_cond_init ( __cond, __cond_attr );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_cond_signal ( sctk_thread_cond_t *__cond )
-{
-	int res;
-	res = __sctk_ptr_thread_cond_signal ( __cond );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_cond_timedwait ( sctk_thread_cond_t *restrict __cond,
-                             sctk_thread_mutex_t *restrict __mutex,
-                             const struct timespec *restrict __abstime )
-{
-	int res;
-	res = __sctk_ptr_thread_cond_timedwait ( __cond, __mutex, __abstime );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-int
-sctk_thread_cond_wait ( sctk_thread_cond_t *restrict __cond,
-                        sctk_thread_mutex_t *restrict __mutex )
-{
-	int res;
-	res = __sctk_ptr_thread_cond_wait ( __cond, __mutex );
-	sctk_check ( res, 0 );
-	return res;
-}
-
-static sctk_thread_data_t sctk_main_datas = SCTK_THREAD_DATA_INIT;
-
-int
-sctk_thread_get_vp ()
-{
-	return __sctk_ptr_thread_get_vp ();
-}
+/******************
+ * THREAD COUNTER *
+ ******************/
 
 /* Register, unregister running thread */
 volatile int sctk_current_local_tasks_nb = 0;
@@ -560,7 +134,607 @@ int sctk_thread_get_current_local_tasks_nb()
 	return sctk_current_local_tasks_nb;
 }
 
+/***************************
+ * VP LAYOUT AND VP LAUNCH *
+ ***************************/
+
+static sctk_thread_data_t sctk_main_datas = SCTK_THREAD_DATA_INIT;
+
+static int sctk_first_local = 0;
+static int sctk_last_local = 0;
+
+static double __sctk_profiling__start__sctk_init_MPC;
+static double __sctk_profiling__end__sctk_init_MPC;
+
+
+double sctk_profiling_get_init_time()
+{
+	return ( __sctk_profiling__end__sctk_init_MPC - __sctk_profiling__start__sctk_init_MPC ) / 1000000;
+}
+
+// default algorithme
+int sctk_get_init_vp_and_nbvp_default( int i, int *nbVp )
+{
+	/*   int rank_in_node; */
+	int slot_size;
+	int task_nb;
+	int proc = -1;
+	int first;
+	int last;
+	int cpu_nb;
+	int total_tasks_number;
+	int cpu_per_task;
+	int j;
+	cpu_nb = mpc_topology_get_pu_count(); // number of cpu per process
+	total_tasks_number = mpc_common_get_task_count();
+	/*   rank_in_node = i - sctk_first_local; */
+	/*   sctk_nodebug("check for %d(%d) %d cpu",i,rank_in_node,cpu_nb); */
+	assume( ( sctk_last_local != 0 ) || ( total_tasks_number == 1 ) || ( mpc_common_get_process_rank() == 0 ) );
+	task_nb = sctk_last_local - sctk_first_local + 1;
+	slot_size = task_nb / cpu_nb;
+	cpu_per_task = cpu_nb / task_nb;
+
+	if ( cpu_per_task < 1 )
+	{
+		cpu_per_task = 1;
+	}
+
+	/* TODO: cpu_per_task=1 => put MPI tasks close */
+	// cpu_per_task = 1 ;
+
+	/* Normalize i if i the the global number insted of localnumber*/
+	// hmt
+	if ( i >= task_nb )
+	{
+		i = i - sctk_first_local;
+	}
+
+	sctk_nodebug( "i normalized=%d", i );
+	first = 0;
+	sctk_nodebug( "cpu_per_task %d", cpu_per_task );
+	j = 0;
+
+	for ( proc = 0; proc < cpu_nb; proc += cpu_per_task )
+	{
+		int local_slot_size;
+		local_slot_size = slot_size;
+		sctk_nodebug( "local_slot_size=%d", local_slot_size );
+
+		if ( ( task_nb % cpu_nb ) > j )
+		{
+			local_slot_size++;
+			sctk_nodebug( "local_slot_size inside the if=%d", local_slot_size );
+		}
+
+		sctk_nodebug( "%d proc %d slot size", proc, local_slot_size );
+		last = first + local_slot_size - 1;
+		sctk_nodebug( "First %d last %d", first, last );
+
+		if ( ( i >= first ) && ( i <= last ) )
+		{
+			if ( ( cpu_nb % task_nb > j ) && ( cpu_nb > task_nb ) )
+			{
+				*nbVp = cpu_per_task + 1;
+			}
+			else
+			{
+				*nbVp = cpu_per_task;
+			}
+
+			sctk_nodebug( "sctk_get_init_vp: Put task %d on VP %d", i, proc );
+			return proc;
+		}
+
+		first = last + 1;
+		j++;
+
+		if ( ( cpu_nb % task_nb >= j ) && ( cpu_nb > task_nb ) )
+		{
+			proc++;
+		}
+	}
+
+	sctk_nodebug( "sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc );
+	fflush( stdout );
+	sctk_abort();
+	return proc;
+}
+
+int sctk_get_init_vp_and_nbvp_numa_packed( int i, int *nbVp )
+{
+	/*   int rank_in_node; */
+	// declaration
+	int slot_size;
+	int task_nb;
+	int proc;
+	int first;
+	int last;
+	int cpu_nb;
+	int total_tasks_number;
+	int cpu_per_task;
+	int j;
+	int nb_numa_node_per_node;
+	int nb_cpu_per_numa_node;
+	int nb_task_per_numa_node;
+	// initialization
+	cpu_nb = mpc_topology_get_pu_count(); // number of cpu per process
+	nb_numa_node_per_node =
+	    mpc_topology_get_numa_node_count(); // number of numa nodes in the node
+	// config
+	int T = sctk_last_local - sctk_first_local + 1; // number of task per node
+	int C = cpu_nb;									// number of cpu per node
+	int N = nb_numa_node_per_node;					// number of numa nodes
+	int t = T % N;									// buffer task
+	int cpu_per_numa_node = C / N;					// cpu per numa node
+	int Tnk; // task per numa node
+	// task already treated
+	int tat = 0;
+	*nbVp = 1;
+	int k; // numa_node ID
+
+	for ( k = 0; k < N; k++ )
+	{
+		// printf("for k=%d\n",k);
+		// On ajoute une tache en plus aux premiers noeuds numas
+		Tnk = T / N;
+
+		if ( k < t )
+		{
+			Tnk += 1;
+			// printf("if [k=%d] < [t=%d] -> Tnk+=1 %d\n", k, t, Tnk);
+		}
+
+		// Si  tat <= i < Tnk+tat // est ce qu on est dans ce noeud numa la ?
+		if ( tat <= i && i < ( Tnk + tat ) )
+		{
+			// printf("if [tat=%d] <= [i=%d] < [Tnk=%d+tat=%d] %d\n", tat, i, Tnk,
+			// tat, Tnk+tat);
+
+			// update *nbVP
+			if ( k * ( cpu_per_numa_node ) + ( i - tat ) ==
+			     k * ( cpu_per_numa_node ) + Tnk - 1 )
+			{
+				*nbVp = ( cpu_per_numa_node - Tnk ) + 1;
+			}
+
+			// printf("proc=%d, *nbVp=%d\n", k*(cpu_per_numa_node) + (i-tat),*nbVp);
+			// return numanode id * (C/N) + (i - tat)
+			//      fixe premier cpu du noeud numa     + difference de la tache en
+			//      cours
+			return k * ( cpu_per_numa_node ) + ( i - tat );
+		}
+
+		// Si nous avons une tache en plus
+		// printf("else tat=%d += Tnk=%d -> %d\n", tat, Tnk, tat+Tnk);
+		tat += Tnk;
+	}
+
+	//sctk_debug("sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc);
+	sctk_abort();
+	return proc;
+}
+
+int sctk_get_init_vp_and_nbvp_numa( int i, int *nbVp )
+{
+	int task_nb = mpc_common_get_local_task_count();
+	int cpu_nb = mpc_topology_get_pu_count(); // number of cpu per process
+	int numa_node_per_node_nb = mpc_topology_get_numa_node_count();
+	int cpu_per_numa_node = cpu_nb / numa_node_per_node_nb;
+	int global_id = i;
+	int numa_node_id = ( global_id * numa_node_per_node_nb ) / task_nb;
+	int local_id = mpc_common_get_local_task_rank();
+	global_id - ( ( ( numa_node_id * task_nb ) + numa_node_per_node_nb - 1 ) /
+	              numa_node_per_node_nb );
+	int task_per_numa_node =
+	    ( ( ( numa_node_id + 1 ) * task_nb + numa_node_per_node_nb - 1 ) /
+	      numa_node_per_node_nb ) -
+	    ( ( ( numa_node_id ) * task_nb + numa_node_per_node_nb - 1 ) /
+	      numa_node_per_node_nb );
+	int proc_local = ( local_id * cpu_per_numa_node ) / task_per_numa_node;
+	int proc_global = proc_local + ( numa_node_id * cpu_per_numa_node );
+	// calculate nbVp value
+	int proc_next_global;
+	int proc_next_local;
+
+	if ( local_id < task_per_numa_node )
+	{
+		proc_next_global =
+		    ( ( local_id + 1 ) * cpu_per_numa_node ) / task_per_numa_node;
+		proc_next_local = proc_next_global + numa_node_id * cpu_per_numa_node;
+		*nbVp = proc_next_local - proc_global;
+	}
+	else
+	{
+		*nbVp = cpu_per_numa_node - proc_local;
+	}
+
+	if ( *nbVp < 1 )
+	{
+		*nbVp = 1;
+	}
+
+	// DEBUG
+	// char hostname[1024];
+	// gethostname(hostname,1024);
+	// FILE *hostname_fd = fopen(strcat(hostname,".log"),"a");
+	// fprintf(hostname_fd,"INIT        task_nb %d cpu_per_node %d
+	// numa_node_per_node_nb %d numa_node_id %d task_per_numa_node %d local_id %d
+	// global_id %d proc_global %d current_cpu %d mpc_common_get_local_task_count %d
+	// nbVp %d\n",
+	//        task_nb,
+	//        cpu_nb ,
+	//        numa_node_per_node_nb,
+	//        numa_node_id ,
+	//        task_per_numa_node,
+	//        local_id  ,
+	//        global_id ,
+	//        proc_global,
+	//        mpc_topology_get_current_cpu(),
+	//        mpc_common_get_local_task_count(),
+	//        *nbVp
+	//       );
+	// fflush(hostname_fd);
+	// fclose(hostname_fd);
+	// ENDDEBUG
+	return proc_global;
+}
+
+int sctk_get_init_vp_and_nbvp( int i, int *nbVp )
+{
+	// return sctk_get_init_vp_and_nbvp_default (i, nbVp);
+	// return sctk_get_init_vp_and_nbvp_numa (i, nbVp);
+	// return sctk_get_init_vp_and_nbvp_numa_packed (i, nbVp);
+	// function pointer to get the thread placement policy from the config
+	int ( *thread_placement_policy )( int i, int *nbVp );
+	thread_placement_policy = ( int ( * )( int, int * ) ) sctk_runtime_config_get()
+	                          ->modules.thread.placement_policy.value;
+	return thread_placement_policy( i, nbVp );
+}
+
+int sctk_get_init_vp( int i )
+{
+	int dummy;
+	return sctk_get_init_vp_and_nbvp( i, &dummy );
+}
+
+static struct _sctk_thread_cleanup_buffer
+	*ptr_cleanup_sctk_thread_init_no_mpc;
+void
+sctk_thread_init_no_mpc ( void )
+{
+	sctk_thread_key_create ( &_sctk_thread_handler_key, ( void ( * )( void * ) ) NULL );
+	ptr_cleanup_sctk_thread_init_no_mpc = NULL;
+	sctk_thread_setspecific ( _sctk_thread_handler_key,
+	                          &ptr_cleanup_sctk_thread_init_no_mpc );
+}
+
+
+
+volatile sctk_timer_t sctk_timer = 0;
+
+volatile int sctk_thread_running = 1;
+
+static void *
+sctk_thread_timer ( void *arg )
+{
+	sctk_ethread_mxn_init_kethread ();
+	assume ( arg == NULL );
+
+	while ( sctk_thread_running )
+	{
+		kthread_usleep ( sctk_time_interval * 1000 );
+		sctk_timer++;
+	}
+
+	return NULL;
+}
+
+
+typedef  unsigned long poff_t;
+
+#if defined(__linux__)
+
+static poff_t dataused( void )
+{
+	poff_t mem_used = 0;
+	FILE *f = fopen( "/proc/self/stat", "r" );
+
+	if ( f )
+	{
+		// See proc(1), category 'stat'
+		int z_pid;
+		char z_comm[4096];
+		char z_state;
+		int z_ppid;
+		int z_pgrp;
+		int z_session;
+		int z_tty_nr;
+		int z_tpgid;
+		unsigned long z_flags;
+		unsigned long z_minflt;
+		unsigned long z_cminflt;
+		unsigned long z_majflt;
+		unsigned long z_cmajflt;
+		unsigned long z_utime;
+		unsigned long z_stime;
+		long z_cutime;
+		long z_cstime;
+		long z_priority;
+		long z_nice;
+		long z_zero;
+		long z_itrealvalue;
+		long z_starttime;
+		unsigned long z_vsize;
+		long z_rss;
+		assume( fscanf( f, "%d %s %c %d %d %d %d %d",
+		                &z_pid, z_comm, &z_state, &z_ppid, &z_pgrp, &z_session, &z_tty_nr, &z_tpgid ) == 8 );
+		assume( fscanf( f, "%lu %lu %lu %lu %lu %lu %lu",
+		                &z_flags, &z_minflt, &z_cminflt, &z_majflt, &z_cmajflt, &z_utime, &z_stime ) == 7 );
+		assume( fscanf( f, "%ld %ld %ld %ld %ld %ld %ld %lu %ld",
+		                &z_cutime, &z_cstime, &z_priority, &z_nice, &z_zero, &z_itrealvalue, &z_starttime, &z_vsize, &z_rss ) == 9 );
+		int pz =  getpagesize();
+		mem_used = ( poff_t )( z_rss * pz );
+		fclose( f );
+	}
+
+	return mem_used ;
+}
+#else
+
+poff_t dataused( void )
+{
+	return 0;
+}
+#endif
+
+double sctk_profiling_get_dataused()
+{
+	return ( double )dataused();
+}
+
+#ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
+#pragma weak MPC_Process_hook
+void  MPC_Process_hook()
+{
+	/*This function is used to intercept MPC process's creation when profiling*/
+}
+#endif
+
+static int sctk_ignore_sigpipe()
+{
+	struct sigaction act ;
+
+	if ( sigaction( SIGPIPE, ( struct sigaction * )NULL, &act ) == -1 )
+	{
+		return -1 ;
+	}
+
+	if ( act.sa_handler == SIG_DFL )
+	{
+		act.sa_handler = SIG_IGN ;
+
+		if ( sigaction( SIGPIPE, &act, ( struct sigaction * )NULL ) == -1 )
+		{
+			return -1 ;
+		}
+	}
+
+	return 0 ;
+}
+
+void sctk_start_func ( void *( *run ) ( void * ), void *arg )
+{
+	int i, cnt;
+	int total_tasks_number;
+	int local_threads;
+	int start_thread;
+	kthread_t timer_thread;
+	struct _sctk_thread_cleanup_buffer *ptr_cleanup;
+	/*	char name[MPC_COMMON_MAX_FILENAME_SIZE]; */
+	sctk_thread_t *threads = NULL;
+	int thread_to_join = 0;
+	__sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday();
+	sctk_thread_key_create ( &_sctk_thread_handler_key, ( void ( * )( void * ) ) NULL );
+	ptr_cleanup = NULL;
+	sctk_thread_setspecific ( _sctk_thread_handler_key, &ptr_cleanup );
+	kthread_create ( &timer_thread, sctk_thread_timer, NULL );
+	total_tasks_number = mpc_common_get_task_count();
+	/* 	sprintf (name, "%s/Process_%d", sctk_store_dir, mpc_common_get_process_rank()); */
+	/*Prepare free pages */
+	{
+		void *p1, *p2, *p3, *p4;
+		p1 = sctk_malloc ( 1024 * 16 );
+		p2 = sctk_malloc ( 1024 * 16 );
+		p3 = sctk_malloc ( 1024 * 16 );
+		p4 = sctk_malloc ( 1024 * 16 );
+		sctk_free ( p1 );
+		sctk_free ( p2 );
+		sctk_free ( p3 );
+		sctk_free ( p4 );
+	}
+	/*Init brk for tasks */
+	{
+		size_t s;
+		void *tmp;
+		size_t start = 0;
+		size_t size;
+		sctk_enter_no_alloc_land ();
+		size = ( size_t ) ( SCTK_MAX_MEMORY_SIZE );
+		tmp = sctk_get_heap_start ();
+		sctk_nodebug ( "INIT ADRESS %p", tmp );
+		s = ( size_t ) tmp /*  + 1*1024*1024*1024 */ ;
+		sctk_nodebug ( "Max allocation %luMo %lu",
+		               ( unsigned long ) ( size /
+		                                   ( 1024 * 1024 * mpc_common_get_process_count() ) ), s );
+		start = s;
+		start = start / SCTK_MAX_MEMORY_OFFSET;
+		start = start * SCTK_MAX_MEMORY_OFFSET;
+
+		if ( s > start )
+		{
+			start += SCTK_MAX_MEMORY_OFFSET;
+		}
+
+		tmp = ( void * ) start;
+		sctk_nodebug ( "INIT ADRESS REALIGNED %p", tmp );
+
+		if ( mpc_common_get_process_count() > 1 )
+		{
+			sctk_mem_reset_heap ( ( size_t ) tmp, size );
+		}
+
+		sctk_nodebug ( "Heap start at %p (%p %p)", sctk_get_heap_start (),
+		               ( void * ) s, tmp );
+	}
+#ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
+	MPC_Process_hook();
+#endif
+	sctk_leave_no_alloc_land();
+	local_threads = total_tasks_number / mpc_common_get_process_count();
+
+	if ( total_tasks_number % mpc_common_get_process_count() > mpc_common_get_process_rank() )
+	{
+		local_threads++;
+	}
+
+	start_thread = local_threads * mpc_common_get_process_rank();
+
+	if ( total_tasks_number % mpc_common_get_process_count() <= mpc_common_get_process_rank() )
+	{
+		start_thread += total_tasks_number % mpc_common_get_process_count();
+	}
+
+	sctk_first_local = start_thread;
+	sctk_last_local = start_thread + local_threads - 1;
+	threads =
+	    ( sctk_thread_t * ) sctk_malloc( local_threads * sizeof( sctk_thread_t ) );
+	sctk_current_local_tasks_nb = local_threads;
+	cnt = 0;
+	mpc_common_init_trigger( "Start MPI Tasks" );
+
+	for ( i = start_thread; i < start_thread + local_threads; i++ )
+	{
+		sctk_nodebug( "Thread %d try create", i );
+		sctk_thread_create( &( threads[thread_to_join] ), NULL, run, arg, ( long ) i, cnt++ );
+		sctk_nodebug( "Thread %d created", i );
+		thread_to_join++;
+	}
+
+	sctk_nodebug( "All thread created" );
+	sctk_nodebug( "sctk_current_local_tasks_nb %d", sctk_current_local_tasks_nb );
+	start_func_done = 1;
+	__sctk_profiling__end__sctk_init_MPC = sctk_get_time_stamp_gettimeofday();
+
+	if ( mpc_common_get_process_rank() == 0 )
+	{
+		if ( sctk_runtime_config_get()->modules.launcher.banner )
+		{
+			fprintf( stderr,
+			         "Initialization time: %.1fs - Memory used: %0.fMB\n",
+			         sctk_profiling_get_init_time(),
+			         sctk_profiling_get_dataused() / ( 1024.0 * 1024.0 ) );
+		}
+	}
+
+	sctk_thread_wait_for_value_and_poll( ( int * )&sctk_current_local_tasks_nb,
+	                                     0, NULL, NULL );
+	sctk_multithreading_initialised = 0;
+	sctk_thread_running = 0;
+#ifdef MPC_Message_Passing
+	sctk_ignore_sigpipe();
+#endif
+	mpc_common_init_trigger( "End MPI Tasks" );
+	sctk_free( threads );
+	/* remove(name); */
+	sctk_runtime_config_clean_hash_tables();
+	/* Make sure to call desctructors for main thread */
+	sctk_tls_dtors_free( &( sctk_main_datas.dtors_head ) );
+}
+
+
+/******************
+ * INITIALIZATION *
+ ******************/
+
+void sctk_thread_init ( void )
+{
+	sctk_thread_tls = sctk_get_current_alloc_chain();
+#ifdef MPC_Allocator
+	assert( sctk_thread_tls != NULL );
+#endif
+#ifdef SCTK_CHECK_CODE_RETURN
+	fprintf ( stderr, "Thread librarie return code check enable!!\n" );
+#endif
+	sctk_futex_context_init();
+	/*Check all types */
+}
+
+static void _sctk_thread_cleanup_end ( struct _sctk_thread_cleanup_buffer **__buffer )
+{
+	if ( __buffer != NULL )
+	{
+		sctk_nodebug ( "end %p %p", __buffer, *__buffer );
+
+		if ( *__buffer != NULL )
+		{
+			struct _sctk_thread_cleanup_buffer *tmp;
+			tmp = *__buffer;
+
+			while ( tmp != NULL )
+			{
+				tmp->__routine ( tmp->__arg );
+				tmp = tmp->next;
+			}
+		}
+	}
+}
+
+void sctk_thread_exit_cleanup ()
+{
+	sctk_thread_data_t *tmp;
+	struct _sctk_thread_cleanup_buffer **__head;
+	/** ** **/
+	sctk_report_death ( sctk_thread_self() );
+	/** **/
+	tmp = sctk_thread_data_get ();
+	sctk_thread_remove ( tmp );
+	__head = sctk_thread_getspecific ( _sctk_thread_handler_key );
+	_sctk_thread_cleanup_end ( __head );
+	sctk_thread_setspecific ( _sctk_thread_handler_key, NULL );
+	sctk_nodebug ( "%p", tmp );
+
+	if ( tmp != NULL )
+	{
+		sctk_nodebug ( "ici %p %d", tmp, tmp->task_id );
+#ifdef MPC_Message_Passing
+
+		if ( tmp->task_id >= 0 && tmp->user_thread == 0 )
+		{
+			sctk_nodebug ( "mpc_lowcomm_terminaison_barrier" );
+			mpc_lowcomm_terminaison_barrier ();
+			sctk_nodebug ( "mpc_lowcomm_terminaison_barrier done" );
+			sctk_unregister_task ( tmp->task_id );
+			sctk_net_send_task_end ( tmp->task_id, mpc_common_get_process_rank() );
+		}
+
+#endif
+	}
+}
+
+void
+sctk_thread_exit ( void *__retval )
+{
+	sctk_thread_exit_cleanup ();
+	__sctk_ptr_thread_exit ( __retval );
+}
+
+/*******************
+ * THREAD CREATION *
+ *******************/
+
+
 #include <dlfcn.h>
+
 void __tbb_init_for_mpc( cpu_set_t *cpuset, int cpuset_len )
 {
 	void *next = dlsym( RTLD_NEXT, "__tbb_init_for_mpc" );
@@ -1153,6 +1327,436 @@ int sctk_user_thread_create ( sctk_thread_t *restrict __threadp,
 	return res;
 }
 
+
+/*****************
+ * PTHREAD IFACE *
+ *****************/
+
+
+int
+sctk_thread_atfork ( void ( *__prepare ) ( void ), void ( *__parent ) ( void ),
+                     void ( *__child ) ( void ) )
+{
+	int res;
+	res = __sctk_ptr_thread_atfork ( __prepare, __parent, __child );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_destroy ( sctk_thread_attr_t *__attr )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_destroy ( __attr );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_getdetachstate ( const sctk_thread_attr_t *__attr,
+                                  int *__detachstate )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_getdetachstate ( __attr, __detachstate );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_getguardsize ( const sctk_thread_attr_t *restrict __attr,
+                                size_t *restrict __guardsize )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_getguardsize ( __attr, __guardsize );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_getinheritsched ( const sctk_thread_attr_t *
+                                   restrict __attr, int *restrict __inherit )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_getinheritsched ( __attr, __inherit );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_getschedparam ( const sctk_thread_attr_t *restrict __attr,
+                                 struct sched_param *restrict __param )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_getschedparam ( __attr, __param );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_getschedpolicy ( const sctk_thread_attr_t *restrict __attr,
+                                  int *restrict __policy )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_getschedpolicy ( __attr, __policy );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_getscope ( const sctk_thread_attr_t *restrict __attr,
+                            int *restrict __scope )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_getscope ( __attr, __scope );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_getstackaddr ( const sctk_thread_attr_t *restrict __attr,
+                                void **restrict __stackaddr )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_getstackaddr ( __attr, __stackaddr );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_getstack ( const sctk_thread_attr_t *restrict __attr,
+                            void **restrict __stackaddr,
+                            size_t *restrict __stacksize )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_getstack ( __attr, __stackaddr, __stacksize );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_getstacksize ( const sctk_thread_attr_t *restrict __attr,
+                                size_t *restrict __stacksize )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_getstacksize ( __attr, __stacksize );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_init ( sctk_thread_attr_t *__attr )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_init ( __attr );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_setdetachstate ( sctk_thread_attr_t *__attr,
+                                  int __detachstate )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_setdetachstate ( __attr, __detachstate );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_setguardsize ( sctk_thread_attr_t *__attr,
+                                size_t __guardsize )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_setguardsize ( __attr, __guardsize );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_setinheritsched ( sctk_thread_attr_t *__attr, int __inherit )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_setinheritsched ( __attr, __inherit );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_setschedparam ( sctk_thread_attr_t *restrict __attr,
+                                 const struct sched_param *restrict __param )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_setschedparam ( __attr, __param );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_setschedpolicy ( sctk_thread_attr_t *__attr, int __policy )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_setschedpolicy ( __attr, __policy );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_setscope ( sctk_thread_attr_t *__attr, int __scope )
+{
+	int res;
+	sctk_nodebug ( "thread attr_setscope %d == %d || %d", __scope,
+	               SCTK_THREAD_SCOPE_PROCESS, SCTK_THREAD_SCOPE_SYSTEM );
+	res = __sctk_ptr_thread_attr_setscope ( __attr, __scope );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_setstackaddr ( sctk_thread_attr_t *__attr, void *__stackaddr )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_setstackaddr ( __attr, __stackaddr );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_setstack ( sctk_thread_attr_t *__attr, void *__stackaddr,
+                            size_t __stacksize )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_setstack ( __attr, __stackaddr, __stacksize );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_setstacksize ( sctk_thread_attr_t *__attr,
+                                size_t __stacksize )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_setstacksize ( __attr, __stacksize );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_setbinding ( sctk_thread_attr_t *__attr, int __binding )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_setbinding ( __attr, __binding );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_attr_getbinding ( sctk_thread_attr_t *__attr, int *__binding )
+{
+	int res;
+	res = __sctk_ptr_thread_attr_getbinding ( __attr, __binding );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_barrierattr_destroy ( sctk_thread_barrierattr_t *__attr )
+{
+	int res;
+	res = __sctk_ptr_thread_barrierattr_destroy ( __attr );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_barrierattr_init ( sctk_thread_barrierattr_t *__attr )
+{
+	int res;
+	res = __sctk_ptr_thread_barrierattr_init ( __attr );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_barrierattr_setpshared ( sctk_thread_barrierattr_t *__attr,
+                                     int __pshared )
+{
+	int res;
+	res = __sctk_ptr_thread_barrierattr_setpshared ( __attr, __pshared );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_barrierattr_getpshared ( const sctk_thread_barrierattr_t *
+                                     __attr, int *__pshared )
+{
+	int res;
+	res = __sctk_ptr_thread_barrierattr_getpshared ( __attr, __pshared );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_barrier_destroy ( sctk_thread_barrier_t *__barrier )
+{
+	int res;
+	res = __sctk_ptr_thread_barrier_destroy ( __barrier );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_barrier_init ( sctk_thread_barrier_t *restrict __barrier,
+                           const sctk_thread_barrierattr_t *restrict __attr,
+                           unsigned int __count )
+{
+	int res;
+	res = __sctk_ptr_thread_barrier_init ( __barrier, __attr, __count );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_barrier_wait ( sctk_thread_barrier_t *__barrier )
+{
+	int res;
+	res = __sctk_ptr_thread_barrier_wait ( __barrier );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_cancel ( sctk_thread_t __cancelthread )
+{
+	int res;
+	res = __sctk_ptr_thread_cancel ( __cancelthread );
+	sctk_check ( res, 0 );
+	sctk_thread_yield ();
+	return res;
+}
+
+int
+sctk_thread_condattr_destroy ( sctk_thread_condattr_t *__attr )
+{
+	int res;
+	res = __sctk_ptr_thread_condattr_destroy ( __attr );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_condattr_getpshared ( const sctk_thread_condattr_t *
+                                  restrict __attr, int *restrict __pshared )
+{
+	int res;
+	res = __sctk_ptr_thread_condattr_getpshared ( __attr, __pshared );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_condattr_init ( sctk_thread_condattr_t *__attr )
+{
+	int res;
+	res = __sctk_ptr_thread_condattr_init ( __attr );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_condattr_setpshared ( sctk_thread_condattr_t *__attr,
+                                  int __pshared )
+{
+	int res;
+	res = __sctk_ptr_thread_condattr_setpshared ( __attr, __pshared );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_condattr_setclock ( sctk_thread_condattr_t *__attr,
+                                clockid_t __clockid )
+{
+	int res;
+	res = __sctk_ptr_thread_condattr_setclock ( __attr, __clockid );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_condattr_getclock ( sctk_thread_condattr_t *__attr,
+                                clockid_t *__clockid )
+{
+	int res;
+	res = __sctk_ptr_thread_condattr_getclock ( __attr, __clockid );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_cond_broadcast ( sctk_thread_cond_t *__cond )
+{
+	int res;
+	res = __sctk_ptr_thread_cond_broadcast ( __cond );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_cond_destroy ( sctk_thread_cond_t *__cond )
+{
+	int res;
+	res = __sctk_ptr_thread_cond_destroy ( __cond );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_cond_init ( sctk_thread_cond_t *restrict __cond,
+                        const sctk_thread_condattr_t *restrict __cond_attr )
+{
+	int res;
+	res = __sctk_ptr_thread_cond_init ( __cond, __cond_attr );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_cond_signal ( sctk_thread_cond_t *__cond )
+{
+	int res;
+	res = __sctk_ptr_thread_cond_signal ( __cond );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_cond_timedwait ( sctk_thread_cond_t *restrict __cond,
+                             sctk_thread_mutex_t *restrict __mutex,
+                             const struct timespec *restrict __abstime )
+{
+	int res;
+	res = __sctk_ptr_thread_cond_timedwait ( __cond, __mutex, __abstime );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_cond_wait ( sctk_thread_cond_t *restrict __cond,
+                        sctk_thread_mutex_t *restrict __mutex )
+{
+	int res;
+	res = __sctk_ptr_thread_cond_wait ( __cond, __mutex );
+	sctk_check ( res, 0 );
+	return res;
+}
+
+int
+sctk_thread_get_vp ()
+{
+	return __sctk_ptr_thread_get_vp ();
+}
+
 int
 sctk_thread_detach ( sctk_thread_t __th )
 {
@@ -1219,67 +1823,6 @@ int  sctk_thread_futex( void *addr1, int op, int val1,
 	return __sctk_ptr_thread_futex( addr1, op, val1, timeout, addr2, val3 );
 }
 
-
-static void
-_sctk_thread_cleanup_end ( struct _sctk_thread_cleanup_buffer **__buffer )
-{
-	if ( __buffer != NULL )
-	{
-		sctk_nodebug ( "end %p %p", __buffer, *__buffer );
-
-		if ( *__buffer != NULL )
-		{
-			struct _sctk_thread_cleanup_buffer *tmp;
-			tmp = *__buffer;
-
-			while ( tmp != NULL )
-			{
-				tmp->__routine ( tmp->__arg );
-				tmp = tmp->next;
-			}
-		}
-	}
-}
-
-void
-sctk_thread_exit_cleanup ()
-{
-	sctk_thread_data_t *tmp;
-	struct _sctk_thread_cleanup_buffer **__head;
-	/** ** **/
-	sctk_report_death ( sctk_thread_self() );
-	/** **/
-	tmp = sctk_thread_data_get ();
-	sctk_thread_remove ( tmp );
-	__head = sctk_thread_getspecific ( _sctk_thread_handler_key );
-	_sctk_thread_cleanup_end ( __head );
-	sctk_thread_setspecific ( _sctk_thread_handler_key, NULL );
-	sctk_nodebug ( "%p", tmp );
-
-	if ( tmp != NULL )
-	{
-		sctk_nodebug ( "ici %p %d", tmp, tmp->task_id );
-#ifdef MPC_Message_Passing
-
-		if ( tmp->task_id >= 0 && tmp->user_thread == 0 )
-		{
-			sctk_nodebug ( "mpc_lowcomm_terminaison_barrier" );
-			mpc_lowcomm_terminaison_barrier ();
-			sctk_nodebug ( "mpc_lowcomm_terminaison_barrier done" );
-			sctk_unregister_task ( tmp->task_id );
-			sctk_net_send_task_end ( tmp->task_id, mpc_common_get_process_rank() );
-		}
-
-#endif
-	}
-}
-
-void
-sctk_thread_exit ( void *__retval )
-{
-	sctk_thread_exit_cleanup ();
-	__sctk_ptr_thread_exit ( __retval );
-}
 
 int
 sctk_thread_getconcurrency ( void )
@@ -2241,515 +2784,6 @@ sctk_net_poll ( void *arg )
 #endif
 }
 #endif
-
-
-volatile sctk_timer_t sctk_timer = 0;
-
-volatile int sctk_thread_running = 1;
-
-static void *
-sctk_thread_timer ( void *arg )
-{
-	sctk_ethread_mxn_init_kethread ();
-	assume ( arg == NULL );
-
-	while ( sctk_thread_running )
-	{
-		kthread_usleep ( sctk_time_interval * 1000 );
-		sctk_timer++;
-	}
-
-	return NULL;
-}
-
-static int sctk_first_local = 0;
-static int sctk_last_local = 0;
-
-static double __sctk_profiling__start__sctk_init_MPC;
-static double __sctk_profiling__end__sctk_init_MPC;
-
-
-double sctk_profiling_get_init_time()
-{
-	return ( __sctk_profiling__end__sctk_init_MPC - __sctk_profiling__start__sctk_init_MPC ) / 1000000;
-}
-
-// default algorithme
-int sctk_get_init_vp_and_nbvp_default( int i, int *nbVp )
-{
-	/*   int rank_in_node; */
-	int slot_size;
-	int task_nb;
-	int proc = -1;
-	int first;
-	int last;
-	int cpu_nb;
-	int total_tasks_number;
-	int cpu_per_task;
-	int j;
-	cpu_nb = mpc_topology_get_pu_count(); // number of cpu per process
-	total_tasks_number = mpc_common_get_task_count();
-	/*   rank_in_node = i - sctk_first_local; */
-	/*   sctk_nodebug("check for %d(%d) %d cpu",i,rank_in_node,cpu_nb); */
-	assume( ( sctk_last_local != 0 ) || ( total_tasks_number == 1 ) || ( mpc_common_get_process_rank() == 0 ) );
-	task_nb = sctk_last_local - sctk_first_local + 1;
-	slot_size = task_nb / cpu_nb;
-	cpu_per_task = cpu_nb / task_nb;
-
-	if ( cpu_per_task < 1 )
-	{
-		cpu_per_task = 1;
-	}
-
-	/* TODO: cpu_per_task=1 => put MPI tasks close */
-	// cpu_per_task = 1 ;
-
-	/* Normalize i if i the the global number insted of localnumber*/
-	// hmt
-	if ( i >= task_nb )
-	{
-		i = i - sctk_first_local;
-	}
-
-	sctk_nodebug( "i normalized=%d", i );
-	first = 0;
-	sctk_nodebug( "cpu_per_task %d", cpu_per_task );
-	j = 0;
-
-	for ( proc = 0; proc < cpu_nb; proc += cpu_per_task )
-	{
-		int local_slot_size;
-		local_slot_size = slot_size;
-		sctk_nodebug( "local_slot_size=%d", local_slot_size );
-
-		if ( ( task_nb % cpu_nb ) > j )
-		{
-			local_slot_size++;
-			sctk_nodebug( "local_slot_size inside the if=%d", local_slot_size );
-		}
-
-		sctk_nodebug( "%d proc %d slot size", proc, local_slot_size );
-		last = first + local_slot_size - 1;
-		sctk_nodebug( "First %d last %d", first, last );
-
-		if ( ( i >= first ) && ( i <= last ) )
-		{
-			if ( ( cpu_nb % task_nb > j ) && ( cpu_nb > task_nb ) )
-			{
-				*nbVp = cpu_per_task + 1;
-			}
-			else
-			{
-				*nbVp = cpu_per_task;
-			}
-
-			sctk_nodebug( "sctk_get_init_vp: Put task %d on VP %d", i, proc );
-			return proc;
-		}
-
-		first = last + 1;
-		j++;
-
-		if ( ( cpu_nb % task_nb >= j ) && ( cpu_nb > task_nb ) )
-		{
-			proc++;
-		}
-	}
-
-	sctk_nodebug( "sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc );
-	fflush( stdout );
-	sctk_abort();
-	return proc;
-}
-
-int sctk_get_init_vp_and_nbvp_numa_packed( int i, int *nbVp )
-{
-	/*   int rank_in_node; */
-	// declaration
-	int slot_size;
-	int task_nb;
-	int proc;
-	int first;
-	int last;
-	int cpu_nb;
-	int total_tasks_number;
-	int cpu_per_task;
-	int j;
-	int nb_numa_node_per_node;
-	int nb_cpu_per_numa_node;
-	int nb_task_per_numa_node;
-	// initialization
-	cpu_nb = mpc_topology_get_pu_count(); // number of cpu per process
-	nb_numa_node_per_node =
-	    mpc_topology_get_numa_node_count(); // number of numa nodes in the node
-	// config
-	int T = sctk_last_local - sctk_first_local + 1; // number of task per node
-	int C = cpu_nb;									// number of cpu per node
-	int N = nb_numa_node_per_node;					// number of numa nodes
-	int t = T % N;									// buffer task
-	int cpu_per_numa_node = C / N;					// cpu per numa node
-	int Tnk; // task per numa node
-	// task already treated
-	int tat = 0;
-	*nbVp = 1;
-	int k; // numa_node ID
-
-	for ( k = 0; k < N; k++ )
-	{
-		// printf("for k=%d\n",k);
-		// On ajoute une tache en plus aux premiers noeuds numas
-		Tnk = T / N;
-
-		if ( k < t )
-		{
-			Tnk += 1;
-			// printf("if [k=%d] < [t=%d] -> Tnk+=1 %d\n", k, t, Tnk);
-		}
-
-		// Si  tat <= i < Tnk+tat // est ce qu on est dans ce noeud numa la ?
-		if ( tat <= i && i < ( Tnk + tat ) )
-		{
-			// printf("if [tat=%d] <= [i=%d] < [Tnk=%d+tat=%d] %d\n", tat, i, Tnk,
-			// tat, Tnk+tat);
-
-			// update *nbVP
-			if ( k * ( cpu_per_numa_node ) + ( i - tat ) ==
-			     k * ( cpu_per_numa_node ) + Tnk - 1 )
-			{
-				*nbVp = ( cpu_per_numa_node - Tnk ) + 1;
-			}
-
-			// printf("proc=%d, *nbVp=%d\n", k*(cpu_per_numa_node) + (i-tat),*nbVp);
-			// return numanode id * (C/N) + (i - tat)
-			//      fixe premier cpu du noeud numa     + difference de la tache en
-			//      cours
-			return k * ( cpu_per_numa_node ) + ( i - tat );
-		}
-
-		// Si nous avons une tache en plus
-		// printf("else tat=%d += Tnk=%d -> %d\n", tat, Tnk, tat+Tnk);
-		tat += Tnk;
-	}
-
-	//sctk_debug("sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc);
-	sctk_abort();
-	return proc;
-}
-
-int sctk_get_init_vp_and_nbvp_numa( int i, int *nbVp )
-{
-	int task_nb = mpc_common_get_local_task_count();
-	int cpu_nb = mpc_topology_get_pu_count(); // number of cpu per process
-	int numa_node_per_node_nb = mpc_topology_get_numa_node_count();
-	int cpu_per_numa_node = cpu_nb / numa_node_per_node_nb;
-	int global_id = i;
-	int numa_node_id = ( global_id * numa_node_per_node_nb ) / task_nb;
-	int local_id = mpc_common_get_local_task_rank();
-	global_id - ( ( ( numa_node_id * task_nb ) + numa_node_per_node_nb - 1 ) /
-	              numa_node_per_node_nb );
-	int task_per_numa_node =
-	    ( ( ( numa_node_id + 1 ) * task_nb + numa_node_per_node_nb - 1 ) /
-	      numa_node_per_node_nb ) -
-	    ( ( ( numa_node_id ) * task_nb + numa_node_per_node_nb - 1 ) /
-	      numa_node_per_node_nb );
-	int proc_local = ( local_id * cpu_per_numa_node ) / task_per_numa_node;
-	int proc_global = proc_local + ( numa_node_id * cpu_per_numa_node );
-	// calculate nbVp value
-	int proc_next_global;
-	int proc_next_local;
-
-	if ( local_id < task_per_numa_node )
-	{
-		proc_next_global =
-		    ( ( local_id + 1 ) * cpu_per_numa_node ) / task_per_numa_node;
-		proc_next_local = proc_next_global + numa_node_id * cpu_per_numa_node;
-		*nbVp = proc_next_local - proc_global;
-	}
-	else
-	{
-		*nbVp = cpu_per_numa_node - proc_local;
-	}
-
-	if ( *nbVp < 1 )
-	{
-		*nbVp = 1;
-	}
-
-	// DEBUG
-	// char hostname[1024];
-	// gethostname(hostname,1024);
-	// FILE *hostname_fd = fopen(strcat(hostname,".log"),"a");
-	// fprintf(hostname_fd,"INIT        task_nb %d cpu_per_node %d
-	// numa_node_per_node_nb %d numa_node_id %d task_per_numa_node %d local_id %d
-	// global_id %d proc_global %d current_cpu %d mpc_common_get_local_task_count %d
-	// nbVp %d\n",
-	//        task_nb,
-	//        cpu_nb ,
-	//        numa_node_per_node_nb,
-	//        numa_node_id ,
-	//        task_per_numa_node,
-	//        local_id  ,
-	//        global_id ,
-	//        proc_global,
-	//        mpc_topology_get_current_cpu(),
-	//        mpc_common_get_local_task_count(),
-	//        *nbVp
-	//       );
-	// fflush(hostname_fd);
-	// fclose(hostname_fd);
-	// ENDDEBUG
-	return proc_global;
-}
-
-int sctk_get_init_vp_and_nbvp( int i, int *nbVp )
-{
-	// return sctk_get_init_vp_and_nbvp_default (i, nbVp);
-	// return sctk_get_init_vp_and_nbvp_numa (i, nbVp);
-	// return sctk_get_init_vp_and_nbvp_numa_packed (i, nbVp);
-	// function pointer to get the thread placement policy from the config
-	int ( *thread_placement_policy )( int i, int *nbVp );
-	thread_placement_policy = ( int ( * )( int, int * ) ) sctk_runtime_config_get()
-	                          ->modules.thread.placement_policy.value;
-	return thread_placement_policy( i, nbVp );
-}
-
-int sctk_get_init_vp( int i )
-{
-	int dummy;
-	return sctk_get_init_vp_and_nbvp( i, &dummy );
-}
-
-static struct _sctk_thread_cleanup_buffer
-	*ptr_cleanup_sctk_thread_init_no_mpc;
-void
-sctk_thread_init_no_mpc ( void )
-{
-	sctk_thread_key_create ( &_sctk_thread_handler_key, ( void ( * )( void * ) ) NULL );
-	ptr_cleanup_sctk_thread_init_no_mpc = NULL;
-	sctk_thread_setspecific ( _sctk_thread_handler_key,
-	                          &ptr_cleanup_sctk_thread_init_no_mpc );
-}
-
-typedef  unsigned long poff_t;
-
-#if defined(__linux__)
-
-static poff_t dataused( void )
-{
-	poff_t mem_used = 0;
-	FILE *f = fopen( "/proc/self/stat", "r" );
-
-	if ( f )
-	{
-		// See proc(1), category 'stat'
-		int z_pid;
-		char z_comm[4096];
-		char z_state;
-		int z_ppid;
-		int z_pgrp;
-		int z_session;
-		int z_tty_nr;
-		int z_tpgid;
-		unsigned long z_flags;
-		unsigned long z_minflt;
-		unsigned long z_cminflt;
-		unsigned long z_majflt;
-		unsigned long z_cmajflt;
-		unsigned long z_utime;
-		unsigned long z_stime;
-		long z_cutime;
-		long z_cstime;
-		long z_priority;
-		long z_nice;
-		long z_zero;
-		long z_itrealvalue;
-		long z_starttime;
-		unsigned long z_vsize;
-		long z_rss;
-		assume( fscanf( f, "%d %s %c %d %d %d %d %d",
-		                &z_pid, z_comm, &z_state, &z_ppid, &z_pgrp, &z_session, &z_tty_nr, &z_tpgid ) == 8 );
-		assume( fscanf( f, "%lu %lu %lu %lu %lu %lu %lu",
-		                &z_flags, &z_minflt, &z_cminflt, &z_majflt, &z_cmajflt, &z_utime, &z_stime ) == 7 );
-		assume( fscanf( f, "%ld %ld %ld %ld %ld %ld %ld %lu %ld",
-		                &z_cutime, &z_cstime, &z_priority, &z_nice, &z_zero, &z_itrealvalue, &z_starttime, &z_vsize, &z_rss ) == 9 );
-		int pz =  getpagesize();
-		mem_used = ( poff_t )( z_rss * pz );
-		fclose( f );
-	}
-
-	return mem_used ;
-}
-#else
-
-poff_t dataused( void )
-{
-	return 0;
-}
-#endif
-
-double sctk_profiling_get_dataused()
-{
-	return ( double )dataused();
-}
-
-#ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
-#pragma weak MPC_Process_hook
-void  MPC_Process_hook()
-{
-	/*This function is used to intercept MPC process's creation when profiling*/
-}
-#endif
-
-static int sctk_ignore_sigpipe()
-{
-	struct sigaction act ;
-
-	if ( sigaction( SIGPIPE, ( struct sigaction * )NULL, &act ) == -1 )
-	{
-		return -1 ;
-	}
-
-	if ( act.sa_handler == SIG_DFL )
-	{
-		act.sa_handler = SIG_IGN ;
-
-		if ( sigaction( SIGPIPE, &act, ( struct sigaction * )NULL ) == -1 )
-		{
-			return -1 ;
-		}
-	}
-
-	return 0 ;
-}
-
-void sctk_start_func ( void *( *run ) ( void * ), void *arg )
-{
-	int i, cnt;
-	int total_tasks_number;
-	int local_threads;
-	int start_thread;
-	kthread_t timer_thread;
-	struct _sctk_thread_cleanup_buffer *ptr_cleanup;
-	/*	char name[MPC_COMMON_MAX_FILENAME_SIZE]; */
-	sctk_thread_t *threads = NULL;
-	int thread_to_join = 0;
-	__sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday();
-	sctk_thread_key_create ( &_sctk_thread_handler_key, ( void ( * )( void * ) ) NULL );
-	ptr_cleanup = NULL;
-	sctk_thread_setspecific ( _sctk_thread_handler_key, &ptr_cleanup );
-	kthread_create ( &timer_thread, sctk_thread_timer, NULL );
-	total_tasks_number = mpc_common_get_task_count();
-	/* 	sprintf (name, "%s/Process_%d", sctk_store_dir, mpc_common_get_process_rank()); */
-	/*Prepare free pages */
-	{
-		void *p1, *p2, *p3, *p4;
-		p1 = sctk_malloc ( 1024 * 16 );
-		p2 = sctk_malloc ( 1024 * 16 );
-		p3 = sctk_malloc ( 1024 * 16 );
-		p4 = sctk_malloc ( 1024 * 16 );
-		sctk_free ( p1 );
-		sctk_free ( p2 );
-		sctk_free ( p3 );
-		sctk_free ( p4 );
-	}
-	/*Init brk for tasks */
-	{
-		size_t s;
-		void *tmp;
-		size_t start = 0;
-		size_t size;
-		sctk_enter_no_alloc_land ();
-		size = ( size_t ) ( SCTK_MAX_MEMORY_SIZE );
-		tmp = sctk_get_heap_start ();
-		sctk_nodebug ( "INIT ADRESS %p", tmp );
-		s = ( size_t ) tmp /*  + 1*1024*1024*1024 */ ;
-		sctk_nodebug ( "Max allocation %luMo %lu",
-		               ( unsigned long ) ( size /
-		                                   ( 1024 * 1024 * mpc_common_get_process_count() ) ), s );
-		start = s;
-		start = start / SCTK_MAX_MEMORY_OFFSET;
-		start = start * SCTK_MAX_MEMORY_OFFSET;
-
-		if ( s > start )
-		{
-			start += SCTK_MAX_MEMORY_OFFSET;
-		}
-
-		tmp = ( void * ) start;
-		sctk_nodebug ( "INIT ADRESS REALIGNED %p", tmp );
-
-		if ( mpc_common_get_process_count() > 1 )
-		{
-			sctk_mem_reset_heap ( ( size_t ) tmp, size );
-		}
-
-		sctk_nodebug ( "Heap start at %p (%p %p)", sctk_get_heap_start (),
-		               ( void * ) s, tmp );
-	}
-#ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
-	MPC_Process_hook();
-#endif
-	sctk_leave_no_alloc_land();
-	local_threads = total_tasks_number / mpc_common_get_process_count();
-
-	if ( total_tasks_number % mpc_common_get_process_count() > mpc_common_get_process_rank() )
-	{
-		local_threads++;
-	}
-
-	start_thread = local_threads * mpc_common_get_process_rank();
-
-	if ( total_tasks_number % mpc_common_get_process_count() <= mpc_common_get_process_rank() )
-	{
-		start_thread += total_tasks_number % mpc_common_get_process_count();
-	}
-
-	sctk_first_local = start_thread;
-	sctk_last_local = start_thread + local_threads - 1;
-	threads =
-	    ( sctk_thread_t * ) sctk_malloc( local_threads * sizeof( sctk_thread_t ) );
-	sctk_current_local_tasks_nb = local_threads;
-	cnt = 0;
-	mpc_common_init_trigger( "Start MPI Tasks" );
-
-	for ( i = start_thread; i < start_thread + local_threads; i++ )
-	{
-		sctk_nodebug( "Thread %d try create", i );
-		sctk_thread_create( &( threads[thread_to_join] ), NULL, run, arg, ( long ) i, cnt++ );
-		sctk_nodebug( "Thread %d created", i );
-		thread_to_join++;
-	}
-
-	sctk_nodebug( "All thread created" );
-	sctk_nodebug( "sctk_current_local_tasks_nb %d", sctk_current_local_tasks_nb );
-	start_func_done = 1;
-	__sctk_profiling__end__sctk_init_MPC = sctk_get_time_stamp_gettimeofday();
-
-	if ( mpc_common_get_process_rank() == 0 )
-	{
-		if ( sctk_runtime_config_get()->modules.launcher.banner )
-		{
-			fprintf( stderr,
-			         "Initialization time: %.1fs - Memory used: %0.fMB\n",
-			         sctk_profiling_get_init_time(),
-			         sctk_profiling_get_dataused() / ( 1024.0 * 1024.0 ) );
-		}
-	}
-
-	sctk_thread_wait_for_value_and_poll( ( int * )&sctk_current_local_tasks_nb,
-	                                     0, NULL, NULL );
-	sctk_multithreading_initialised = 0;
-	sctk_thread_running = 0;
-#ifdef MPC_Message_Passing
-	sctk_ignore_sigpipe();
-#endif
-	mpc_common_init_trigger( "End MPI Tasks" );
-	sctk_free( threads );
-	/* remove(name); */
-	sctk_runtime_config_clean_hash_tables();
-	/* Make sure to call desctructors for main thread */
-	sctk_tls_dtors_free( &( sctk_main_datas.dtors_head ) );
-}
 
 void
 sctk_kthread_wait_for_value_and_poll ( int *data, int value,
