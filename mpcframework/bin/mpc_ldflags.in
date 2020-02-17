@@ -1,0 +1,77 @@
+#!/bin/sh
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - PERACHE Marc marc.perache@cea.fr                                 #
+#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+#                                                                      #
+########################################################################
+MPC_INSTALL_PREFIX=@prefix@
+
+ROMIO=""
+
+#Only use romio if it is intalled
+#because we use the same compiler
+#to build romio itself
+if test -e "${MPC_INSTALL_PREFIX}/lib/libromio.a"; then
+	#Here we make sure not to link romio during the
+	#bootstrap at it would link ROMIO against ROMIO
+	if test "x${MPC_BOOTSTRAP}" != "xyes"; then
+		ROMIO="-L${MPC_INSTALL_PREFIX}/lib/ -lromio"
+	fi
+fi
+
+if test -e "${MPC_INSTALL_PREFIX}/lib/libmpcgetopt.a"; then
+	if test "x${MPC_BOOTSTRAP}" != "xyes"; then
+		SCTK_GETOPT="-L${MPC_INSTALL_PREFIX}/lib/ -lmpcgetopt"
+	fi
+fi
+
+#adding custom path (if defined)
+if test -n "$2"; then
+	echo " -L$2/lib -Wl,-rpath,$2/lib "
+	if test -f "$2/lib/libmpcfwrapper.so"; then
+		if test "x${MPC_BOOTSTRAP}" != "xyes"; then
+			SCTK_MPCMPISIZEOF="-lmpcfwrapper"
+		fi
+	fi
+fi
+
+FLAGS="-Wl,-rpath,${MPC_INSTALL_PREFIX}/lib -Wl,-rpath,${MPC_INSTALL_PREFIX}/lib/../lib64 -L${MPC_INSTALL_PREFIX}/lib  -lm -lpthread -lrt -L${MPC_INSTALL_PREFIX}/lib -lopa ${ROMIO} ${SCTK_GETOPT}"
+
+if test "$MPC_USE_INTEL_COMPILER" = "1"; then
+MPC_DO_NOT_USE_GNU_LM="1"
+fi
+
+if test "$MPC_DO_NOT_USE_GNU_LM" = "1"; then
+NEW_FLAGS=""
+for i in $FLAGS; do
+if test "$i" = "-lm" ; then
+NEW_FLAGS="$NEW_FLAGS"
+else
+NEW_FLAGS="$NEW_FLAGS '$i'"
+fi
+done
+FLAGS="$NEW_FLAGS"
+fi
+
+if test "$1" != "fortran" ; then
+        echo "-lmpcframework -lmpcmpi  $FLAGS"
+else
+        echo "-L${MPC_INSTALL_PREFIX}/lib -lmpcframework ${SCTK_MPCMPISIZEOF} $FLAGS"
+fi

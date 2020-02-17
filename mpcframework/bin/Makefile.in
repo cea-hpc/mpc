@@ -100,7 +100,8 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/mpc_config.h
-CONFIG_CLEAN_FILES = mpc_compiler_manager.sh mpc_cc.sh
+CONFIG_CLEAN_FILES = mpc_compiler_manager.sh mpc_cc.sh mpc_cflags \
+	mpc_ldflags
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -123,7 +124,8 @@ am__can_run_installinfo = \
   esac
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mpc_cc.sh.in \
-	$(srcdir)/mpc_compiler_manager.sh.in
+	$(srcdir)/mpc_cflags.in $(srcdir)/mpc_compiler_manager.sh.in \
+	$(srcdir)/mpc_ldflags.in
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 ALLOC_CFLAGS = @ALLOC_CFLAGS@
@@ -315,6 +317,10 @@ mpc_compiler_manager.sh: $(top_builddir)/config.status $(srcdir)/mpc_compiler_ma
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 mpc_cc.sh: $(top_builddir)/config.status $(srcdir)/mpc_cc.sh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+mpc_cflags: $(top_builddir)/config.status $(srcdir)/mpc_cflags.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+mpc_ldflags: $(top_builddir)/config.status $(srcdir)/mpc_ldflags.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -499,6 +505,9 @@ install-data-local:
 	$(foreach ccomp,$(MPC_C_COMPILER_LIST), $(call Register_C_compiler, $(ccomp)) )
 	$(foreach cppcomp,$(MPC_CPP_COMPILER_LIST), $(call Register_CPP_compiler, $(cppcomp)) )
 	$(foreach fortrancomp,$(MPC_FORTRAN_COMPILER_LIST), $(call Register_FORTRAN_compiler, $(fortrancomp)) )
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_cflags $(bindir)/mpc_cflags
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_ldflags $(bindir)/mpc_ldflags
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_cc.sh $(bindir)/mpc_cc
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

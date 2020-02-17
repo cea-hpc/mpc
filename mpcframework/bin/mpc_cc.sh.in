@@ -221,7 +221,7 @@ for arg in "$@" ; do
 		exit 0
 	;;
 	-cuda)
-		EXTRA_ADDON_FLAGS="-L$MPC_RPREFIX/${MPC_SUBPREFIX}/lib/stubs -Wl,-rpath=$MPC_RPREFIX/${MPC_SUBPREFIX}/lib/stubs -lmpc_cuda_addon -Wl,--unresolved-symbols=ignore-in-shared-libs"
+		EXTRA_ADDON_FLAGS="-L${MPC_INSTALL_PREFIX}/lib/stubs -Wl,-rpath=${MPC_INSTALL_PREFIX}/lib/stubs -lmpc_cuda_addon -Wl,--unresolved-symbols=ignore-in-shared-libs"
 		addarg=no
 	;;
     ;;
@@ -275,7 +275,7 @@ then
                 PRIV_FLAG=""
         else
 		print_if_stdout "Warning: ${CC} not known: Adding it\n"
-		${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_compiler_manager add c "${CC}" > /dev/null
+		${MPC_INSTALL_PREFIX}/bin/mpc_compiler_manager add c "${CC}" > /dev/null
 		test "x$?" != "x0" && die "Unable to add $CC (because of errors above). Stop."
 		is_defined="`$MPC_MANAGER get_detail c ${CC}`"
         fi
@@ -307,15 +307,15 @@ else
 			;;
 		GNU)
                         #a getenv() is not enough to disable the plugin: better to skip the option
-                        if test -e ${MPC_RPREFIX}/${MPC_HOST_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so -a -n "$MPC_DYN_PRIV_ENABLED";
+                        if test -e ${MPC_INSTALL_PREFIX}/lib/libprivplug.so -a -n "$MPC_DYN_PRIV_ENABLED";
                         then
-                                LIBPRIV_FLAG="-fplugin=${MPC_RPREFIX}/${MPC_HOST_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so"
+                                LIBPRIV_FLAG="-fplugin=${MPC_INSTALL_PREFIX}/lib/libprivplug.so"
                         else
                                 LIBPRIV_FLAG=""
                         fi
-                        if test -e "${MPC_RPREFIX}/${MPC_HOST_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/lib/libmpcgetopt.a"; 
+                        if test -e "${MPC_INSTALL_PREFIX}/lib/libmpcgetopt.a"; 
                         then
-                                MPC_HEADER_INCLUDE="${MPC_HEADER_INCLUDE} -include ${MPC_RPREFIX}/${MPC_HOST_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/include/getopt.h"
+                                MPC_HEADER_INCLUDE="${MPC_HEADER_INCLUDE} -include ${MPC_INSTALL_PREFIX}/include/getopt.h"
                         fi
                                 override_var_if_isset 'PRIV_FLAG' '-fmpc-privatize'
                                 override_var_if_isset 'OMP_FLAG' '-fopenmp'
@@ -345,7 +345,7 @@ fi
 
 #Here we prepend the path which is normally postpended in order
 #to override binutils during the compilation
-export PATH=${MPC_RPREFIX}/${MPC_HOST_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/bin/:${PATH}
+export PATH=${MPC_INSTALL_PREFIX}/bin/:${PATH}
 
 #Used to avoid header global variable privatization when libraries are not privatized
 #mpcmp.h and mpcmicrothread.h have been recopied from GCC patch
@@ -358,13 +358,13 @@ export MPC_UNPRIVATIZED_FILES
 export MPC_UNPRIVATIZED_VARS
 
 #first definition of compiler & linking flags
-CFLAGS="`${MPC_RPREFIX}/${MPC_HOST_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags c $custompath`"
-LDFLAGS="`${MPC_RPREFIX}/${MPC_HOST_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/bin/mpc_ldflags c $custompath`"
+CFLAGS="`${MPC_INSTALL_PREFIX}/bin/mpc_cflags c $custompath`"
+LDFLAGS="`${MPC_INSTALL_PREFIX}/bin/mpc_ldflags c $custompath`"
 LDFLAGS="$EXTRA_ADDON_FLAGS $LDFLAGS"
 
 
 #override flags when patched binutils are used
-LDFLAGS="${LDFLAGS} -B${MPC_RPREFIX}/${MPC_HOST_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/bin"
+LDFLAGS="${LDFLAGS} -B${MPC_INSTALL_PREFIX}/bin"
 #used to append compiler-specific flags
 CFLAGS="$CFLAGS ${PRIV_FLAG} ${OMP_FLAG} $MPC_COMPILER_CFLAGS ${LIBPRIV_FLAG}"
 CFLAGS_FORTRAN_START="${PRIV_FLAG} $MPC_COMPILER_CFLAGS ${LIBPRIV_FLAG}"

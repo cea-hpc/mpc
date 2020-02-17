@@ -1114,7 +1114,7 @@ AC_OUTPUT([Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile
            MPC_MPI/src/Makefile MPC_MPI/Makefile
            MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile
            MPC_Threads/Makefile MPC_Threads/src/Makefile
-           bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh])
+           bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags bin/mpc_ldflags])
 
 echo "========== MPC Configuration =========="
 echo "PREFIX: $prefix"

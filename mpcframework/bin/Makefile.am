@@ -25,4 +25,7 @@ install-data-local:
 	$(foreach ccomp,$(MPC_C_COMPILER_LIST), $(call Register_C_compiler, $(ccomp)) )
 	$(foreach cppcomp,$(MPC_CPP_COMPILER_LIST), $(call Register_CPP_compiler, $(cppcomp)) )
 	$(foreach fortrancomp,$(MPC_FORTRAN_COMPILER_LIST), $(call Register_FORTRAN_compiler, $(fortrancomp)) )
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_cflags $(bindir)/mpc_cflags
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_ldflags $(bindir)/mpc_ldflags
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_cc.sh $(bindir)/mpc_cc
 
