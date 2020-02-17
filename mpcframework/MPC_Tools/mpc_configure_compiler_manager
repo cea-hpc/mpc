@@ -261,22 +261,23 @@ infer_compiler_family()
 		fi
 	done
 
-	#GNU family
-	for comp in gcc gfortran g++
-	do
-		contains \$1 \$comp
-		if test "x\$do_contain" = "xyes"; then
-			compiler_family="GNU"
-			return
-		fi
-	done
-
 	#PGI family
 	for comp in pgcc pgcpp pg++ pgfortran pgf77
 	do
 		contains \$1 \$comp
 		if test "x\$do_contain" = "xyes"; then
 			compiler_family="PGI"
+			return
+		fi
+	done
+
+
+	#GNU family
+	for comp in gcc gfortran g++
+	do
+		contains \$1 \$comp
+		if test "x\$do_contain" = "xyes"; then
+			compiler_family="GNU"
 			return
 		fi
 	done
