@@ -291,6 +291,9 @@ infer_compiler_family()
 			return
 		fi
 	done
+
+	echo "\${RED}Could not infer compiler family consider providing it manually\${DEF}"
+	exit 1
 }
 
 add_compiler()
@@ -325,7 +328,12 @@ add_compiler()
 		PGI)
 			PRIV_FLAG=""
 			;;
+		LLVM)
+			PRIV_FLAG=""
+			;;
 		*)
+			echo "\${YEL}Unknow compiler family \${compiler_family}\${DEF}"
+			echo "\${RED}Assuming privatization is not supported.\${DEF}"
 			PRIV_FLAG=""
 	esac
 
