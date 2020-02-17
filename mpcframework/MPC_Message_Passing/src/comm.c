@@ -2826,12 +2826,20 @@ static void __lowcomm_init()
 	   progress threads may need buffered headers */
 	if ( task_rank >= 0 )
 	{
+
+		mpc_lowcomm_terminaison_barrier();
+
+
 		mpc_lowcomm_init_per_task( task_rank );
 		sctk_net_init_task_level( task_rank, sctk_thread_get_vp() );
 
 #ifdef MPC_USE_INFINIBAND
 		sctk_ib_prof_init_reference_clock();
 #endif
+
+		mpc_lowcomm_terminaison_barrier();
+
+
 	}
 }
 

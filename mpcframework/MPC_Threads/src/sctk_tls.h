@@ -28,6 +28,7 @@
 #include "sctk_context.h"
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <mpc_config.h>
 
 #if defined(MPC_Accelerators)
 #include <sctk_accelerators.h>

@@ -945,6 +945,7 @@ mpc_thread_create_vp_thread ( sctk_thread_t *restrict __threadp,
 	tmp->task_id = sctk_safe_cast_long_int ( task_id );
 	tmp->local_task_id = sctk_safe_cast_long_int ( local_task_id );
 
+
 #ifdef MPC_USE_EXTLS
 	extls_ctx_t *old_ctx = sctk_extls_storage;
   extls_ctx_t** cur_tx = ((extls_ctx_t**)sctk_get_ctx_addr());
@@ -968,7 +969,7 @@ mpc_thread_create_vp_thread ( sctk_thread_t *restrict __threadp,
 
 
 	mpc_topology_render_notify( task_id );
-	int min_index[3] = {0, 0, 0};
+
 	/* We reset the binding */
 	{
 		mpc_topology_bind_to_cpu( previous_binding );

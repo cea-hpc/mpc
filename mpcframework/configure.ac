@@ -119,7 +119,7 @@ __check_or_infer_prefix_lib()
 
                         OLD_LDFLAGS=$LDFLAGS
 
-                        LDFLAGS+=" -L$pref/$suffix -l$1"
+                        LDFLAGS="-L$pref/$suffix -l$1 $LDFLAGS"
 
                         ___unset_lib_cache
                         AC_CHECK_LIB($looked_up_lib, $looked_up_function, [lib_found=1], [lib_found=0])
@@ -186,9 +186,9 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                 if test "x$pkg_found" = "x1"
                 then
                         #Insert flags
-                        CPPFLAGS+=" ${$4_CFLAGS}"
+                        CPPFLAGS="${$4_CFLAGS} $CPPFLAGS"
 
-                        LDFLAGS+=" ${$4_LIBS}"
+                        LDFLAGS="${$4_LIBS} $LDFLAGS"
                         AC_MSG_NOTICE([$libname found using pkg-config])
                         #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                         check_or_infer_prefix_result="yes"
@@ -802,7 +802,8 @@ AC_CHECK_FUNCS(sched_get_priority_min )
 
 mpc_privatization_support="no"
 
-MPC_DETECT_DEPENDENCY([extls.h],[extls], [extls_init], [EXTLS])
+#MPC_DETECT_DEPENDENCY([extls.h],[extls], [extls_init], [EXTLS])
+
 
 AC_MSG_CHECKING([Enabling extended TLS support])
 

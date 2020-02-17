@@ -5561,7 +5561,11 @@ int __INTERNAL__PMPI_Barrier_intra_shm_on_ctx( struct shared_mem_barrier *barrie
 		{
 			while ( OPA_load_int( &barrier_ctx->phase ) != my_phase )
 			{
-				sctk_cpu_relax();
+                                if (__do_yield) {
+                                        sctk_thread_yield();
+                                } else {
+				        sctk_cpu_relax();
+                                };
 			}
 		}
 	}

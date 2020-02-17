@@ -122,6 +122,7 @@ int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
  */
 void* sctk_get_ctx_addr(void)
 {
+        sctk_error("==> %p", sctk_extls_storage);
 	return (void*)&sctk_extls_storage;
 }
 
