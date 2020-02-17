@@ -234,10 +234,66 @@ post_rm_fortran()
 	test -n "\$3" -a -d "\$COMPILER_FILEPATH/\$3/" && rm -rf \$COMPILER_FILEPATH/\$3/
 }
 
+contains()
+{
+	do_contain="no"
+	echo \$1 | grep \$2 2>&1 > /dev/null
 
+	if test "x\$?" = "x0"; then
+		do_contain="yes"
+	fi
+}
+
+infer_compiler_family()
+{
+	if test -n "\$compiler_family"; then
+		#Family is set
+		return
+	fi
+
+	# ICC family
+	for comp in ifort icpc icc
+	do
+		contains \$1 \$comp
+		if test "x\$do_contain" = "xyes"; then
+			compiler_family="INTEL"
+			return
+		fi
+	done
+
+	#GNU family
+	for comp in gcc gfortran g++
+	do
+		contains \$1 \$comp
+		if test "x\$do_contain" = "xyes"; then
+			compiler_family="GNU"
+			return
+		fi
+	done
+
+	#PGI family
+	for comp in pgcc pgcpp pg++ pgfortran pgf77
+	do
+		contains \$1 \$comp
+		if test "x\$do_contain" = "xyes"; then
+			compiler_family="PGI"
+			return
+		fi
+	done
+
+	#LLVM family
+	for comp in clang clang++ flang
+	do
+		contains \$1 \$comp
+		if test "x\$do_contain" = "xyes"; then
+			compiler_family="LLVM"
+			return
+		fi
+	done
+}
 
 add_compiler()
-{	
+{
 	test "x\$2" = "x1" && die "Can't add a compiler if you don't provide a path."
 	test -z "\`which \${2} 2> /dev/null\`" && die "\${2} not found. Not added."
 	hash="\`hash_content \$2\`"
@@ -255,7 +311,10 @@ add_compiler()
 	#inserting the compiler
 	build_main_files
 
-	case \$3 in
+	compiler_family=\$3
+	infer_compiler_family \$2
+
+	case \$compiler_family in
 		GNU)
 			PRIV_FLAG="-fmpc-privatize"
 			;;
@@ -276,7 +335,7 @@ add_compiler()
 
 	post_add_\${1} "\$2" "\$PRIV_FLAG" "\$hash"
 
-	echo "\${3}:\${PRIV_FLAG}:\${2}:\${hash}" >> "\${COMPILER_FILEPATH}/.\${1}_compilers.cfg"
+	echo "\${compiler_family}:\${PRIV_FLAG}:\${2}:\${hash}" >> "\${COMPILER_FILEPATH}/.\${1}_compilers.cfg"
 }
 
 remove_compiler()
@@ -435,7 +494,7 @@ done
 command="help"
 lang="c"
 path="1"
-family="GNU"
+family=""
 
 #retrieve args
 arg="\`echo "\$ARGS" | cut -s -d" " -f1\`"
