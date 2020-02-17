@@ -101,7 +101,7 @@ DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/mpc_config.h
 CONFIG_CLEAN_FILES = mpc_compiler_manager.sh mpc_cc.sh mpc_cflags \
-	mpc_ldflags
+	mpc_ldflags mpc_cxx.sh mpc_f77.sh mpcrun.sh
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -125,7 +125,8 @@ am__can_run_installinfo = \
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mpc_cc.sh.in \
 	$(srcdir)/mpc_cflags.in $(srcdir)/mpc_compiler_manager.sh.in \
-	$(srcdir)/mpc_ldflags.in
+	$(srcdir)/mpc_cxx.sh.in $(srcdir)/mpc_f77.sh.in \
+	$(srcdir)/mpc_ldflags.in $(srcdir)/mpcrun.sh.in
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 ALLOC_CFLAGS = @ALLOC_CFLAGS@
@@ -195,7 +196,13 @@ MPC_ENABLE_SHELL_COLORS = @MPC_ENABLE_SHELL_COLORS@
 MPC_FORTRAN_COMPILER_LIST = @MPC_FORTRAN_COMPILER_LIST@
 MPC_GENERATION_DATE = @MPC_GENERATION_DATE@
 MPC_LANGUAGE_LIST = @MPC_LANGUAGE_LIST@
+MPC_LAUNCHER = @MPC_LAUNCHER@
+MPC_NETWORK_LIST = @MPC_NETWORK_LIST@
 MPC_TARGET_ARCHITECTURE = @MPC_TARGET_ARCHITECTURE@
+MPC_VERSION_MAJOR = @MPC_VERSION_MAJOR@
+MPC_VERSION_MINOR = @MPC_VERSION_MINOR@
+MPC_VERSION_PRE = @MPC_VERSION_PRE@
+MPC_VERSION_REVISION = @MPC_VERSION_REVISION@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
@@ -320,6 +327,12 @@ mpc_cc.sh: $(top_builddir)/config.status $(srcdir)/mpc_cc.sh.in
 mpc_cflags: $(top_builddir)/config.status $(srcdir)/mpc_cflags.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 mpc_ldflags: $(top_builddir)/config.status $(srcdir)/mpc_ldflags.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+mpc_cxx.sh: $(top_builddir)/config.status $(srcdir)/mpc_cxx.sh.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+mpc_f77.sh: $(top_builddir)/config.status $(srcdir)/mpc_f77.sh.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+mpcrun.sh: $(top_builddir)/config.status $(srcdir)/mpcrun.sh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 mostlyclean-libtool:
@@ -499,7 +512,7 @@ endef
 
 # Default configuration file and schema installation
 install-data-local:
-	cp -r $(abs_top_srcdir)/bin/fortran_gen $(pkgdatadir)/fortran_gen/
+	cp -r $(abs_top_srcdir)/bin/fortran_gen $(pkgdatadir)/
 	cp -r $(abs_top_srcdir)/MPC_MPI/include/mpc_mpi.h $(pkgdatadir)/fortran_gen/
 	install -m 0755 -D $(abs_top_builddir)/bin/mpc_compiler_manager.sh $(bindir)/mpc_compiler_manager
 	$(foreach ccomp,$(MPC_C_COMPILER_LIST), $(call Register_C_compiler, $(ccomp)) )
@@ -508,6 +521,12 @@ install-data-local:
 	install -m 0755 -D $(abs_top_builddir)/bin/mpc_cflags $(bindir)/mpc_cflags
 	install -m 0755 -D $(abs_top_builddir)/bin/mpc_ldflags $(bindir)/mpc_ldflags
 	install -m 0755 -D $(abs_top_builddir)/bin/mpc_cc.sh $(bindir)/mpc_cc
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_cxx.sh $(bindir)/mpc_cxx
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_f77.sh $(bindir)/mpc_f77
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_f77.sh $(bindir)/mpc_f90
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_f77.sh $(bindir)/mpc_f08
+	cp -r $(abs_top_srcdir)/bin/mpcrun_opt $(pkgdatadir)/
+	install -m 0755 -D $(abs_top_builddir)/bin/mpcrun.sh $(bindir)/mpcrun
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

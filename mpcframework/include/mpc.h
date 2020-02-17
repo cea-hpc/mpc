@@ -26,5 +26,5 @@
 #include <mpc_main.h>
 int MPC_check_compatibility_lib(int major, int minor, char* pre);
 void MPC_printf (const char *fmt, ...);
-#define MPC_check_compatibility() MPC_check_compatibility_lib(SCTK_VERSION_MAJOR,SCTK_VERSION_MINOR,SCTK_VERSION_PRE)
+#define MPC_check_compatibility() MPC_check_compatibility_lib(MPC_VERSION_MAJOR,MPC_VERSION_MINOR,MPC_VERSION_PRE)
 #endif

@@ -65,7 +65,6 @@ HOME_FILEPATH=$MPC_INSTALL_PREFIX
 
 CC="`$MPC_MANAGER get c 1`"
 
-#LIB_PATH="-Wl,-rpath,${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/lib "
 if test "$MPC_MAKEFILE" != "" ; then 
         LIB_PATH=""
 fi
@@ -203,29 +202,10 @@ for arg in "$@" ; do
 		print_if_stdout "$content\n"
 		exit 0
 		;;
-	-target_list|--target_list)
-		uname=`uname -m`
-		target_list_tmp="`ls -A ${MPC_RPREFIX}/`"
-		for d in `echo $target_list_tmp`; 
-		do
-			if test -d "${MPC_RPREFIX}/${d}"; then
-				target_list="${target_list} ${d}"
-			fi
-		done
-		for d in `echo ${target_list}`; 
-		do
-			if test "${d}" != "${uname}"; then
-				echo "${d}"
-			fi
-		done
-		exit 0
-	;;
 	-cuda)
 		EXTRA_ADDON_FLAGS="-L${MPC_INSTALL_PREFIX}/lib/stubs -Wl,-rpath=${MPC_INSTALL_PREFIX}/lib/stubs -lmpc_cuda_addon -Wl,--unresolved-symbols=ignore-in-shared-libs"
 		addarg=no
 	;;
-    ;;
-
     -show)
     addarg=no
     Show=echo

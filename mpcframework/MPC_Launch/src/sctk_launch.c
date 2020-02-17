@@ -270,12 +270,12 @@ void sctk_print_banner( bool restart )
 				fprintf ( stderr, "+++ Application restarting from checkpoint with the following configuration:\n" );
 			}
 
-			if ( SCTK_VERSION_MINOR >= 0 )
+			if ( MPC_VERSION_MINOR >= 0 )
 			{
 				fprintf ( stderr,
 				          "MPC version %d.%d.%d%s %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s %s\n",
-				          SCTK_VERSION_MAJOR, SCTK_VERSION_MINOR, SCTK_VERSION_REVISION,
-				          SCTK_VERSION_PRE, mpc_lang, mpc_common_get_flags()->task_number,
+				          MPC_VERSION_MAJOR, MPC_VERSION_MINOR, MPC_VERSION_REVISION,
+				          MPC_VERSION_PRE, mpc_lang, mpc_common_get_flags()->task_number,
 				          sctk_process_nb_val, mpc_topology_get_pu_count (), sctk_atomics_get_cpu_freq() / 1000000000.0,
 				          mpc_common_get_flags()->thread_library_kind,
 				          sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_checkpoint_str, sctk_network_mode );

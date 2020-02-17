@@ -19,7 +19,7 @@ endef
 
 # Default configuration file and schema installation
 install-data-local:
-	cp -r $(abs_top_srcdir)/bin/fortran_gen $(pkgdatadir)/fortran_gen/
+	cp -r $(abs_top_srcdir)/bin/fortran_gen $(pkgdatadir)/
 	cp -r $(abs_top_srcdir)/MPC_MPI/include/mpc_mpi.h $(pkgdatadir)/fortran_gen/
 	install -m 0755 -D $(abs_top_builddir)/bin/mpc_compiler_manager.sh $(bindir)/mpc_compiler_manager
 	$(foreach ccomp,$(MPC_C_COMPILER_LIST), $(call Register_C_compiler, $(ccomp)) )
@@ -28,4 +28,11 @@ install-data-local:
 	install -m 0755 -D $(abs_top_builddir)/bin/mpc_cflags $(bindir)/mpc_cflags
 	install -m 0755 -D $(abs_top_builddir)/bin/mpc_ldflags $(bindir)/mpc_ldflags
 	install -m 0755 -D $(abs_top_builddir)/bin/mpc_cc.sh $(bindir)/mpc_cc
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_cxx.sh $(bindir)/mpc_cxx
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_f77.sh $(bindir)/mpc_f77
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_f77.sh $(bindir)/mpc_f90
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_f77.sh $(bindir)/mpc_f08
+	cp -r $(abs_top_srcdir)/bin/mpcrun_opt $(pkgdatadir)/
+	install -m 0755 -D $(abs_top_builddir)/bin/mpcrun.sh $(bindir)/mpcrun
+
 

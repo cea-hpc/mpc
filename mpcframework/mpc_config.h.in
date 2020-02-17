@@ -662,6 +662,18 @@
 /* Slurm PMI will be used to launch parallel programs */
 #undef MPC_USE_SLURM
 
+/* MPC Major Version */
+#undef MPC_VERSION_MAJOR
+
+/* MPC Minor Version */
+#undef MPC_VERSION_MINOR
+
+/* MPC Pre Version */
+#undef MPC_VERSION_PRE
+
+/* MPC Revision Version */
+#undef MPC_VERSION_REVISION
+
 /* Name of package */
 #undef PACKAGE
 
@@ -682,18 +694,6 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
-
-/* MPC Major Version 3 */
-#undef SCTK_VERSION_MAJOR
-
-/* MPC Minor Version 3 */
-#undef SCTK_VERSION_MINOR
-
-/* MPC Pre Version 3 */
-#undef SCTK_VERSION_PRE
-
-/* MPC Revision Version 3 */
-#undef SCTK_VERSION_REVISION
 
 /* The size of `char', as computed by sizeof. */
 #undef SIZEOF_CHAR

@@ -15,11 +15,21 @@ LT_INIT
 AC_PROG_CXX
 
 # Define MPC_VERSION
+MPC_VERSION="4"
+MPC_VERSION_MINOR="0"
+MPC_VERSION_PRE="0"
+MPC_VERSION_REV="0"
 
-AC_DEFINE([SCTK_VERSION_MAJOR], [4], [MPC Major Version 3])
-AC_DEFINE([SCTK_VERSION_MINOR], [0], [MPC Minor Version 3])
-AC_DEFINE([SCTK_VERSION_PRE], [0], [MPC Pre Version 3])
-AC_DEFINE([SCTK_VERSION_REVISION], [0], [MPC Revision Version 3])
+
+AC_DEFINE_UNQUOTED([MPC_VERSION_MAJOR], [$MPC_VERSION], [MPC Major Version])
+AC_DEFINE_UNQUOTED([MPC_VERSION_MINOR], [$MPC_VERSION_MINOR], [MPC Minor Version])
+AC_DEFINE_UNQUOTED([MPC_VERSION_REVISION], [$MPC_VERSION_REV], [MPC Revision Version])
+AC_DEFINE_UNQUOTED([MPC_VERSION_PRE], [$MPC_VERSION_PRE], [MPC Pre Version])
+
+AC_SUBST([MPC_VERSION_MAJOR])
+AC_SUBST([MPC_VERSION_MINOR])
+AC_SUBST([MPC_VERSION_REVISION])
+AC_SUBST([MPC_VERSION_PRE])
 
 AC_DEFINE_UNQUOTED([MPC_PREFIX_PATH], ["$prefix"], [Prefix Path for MPC])
 
@@ -263,7 +273,9 @@ fi
 # Network list
 #
 
-mpc_net_list="tcp shm"
+MPC_NETWORK_LIST="tcp shm"
+
+
 
 #
 # Detect libibverbs presence
@@ -277,7 +289,7 @@ AC_MSG_CHECKING([Checking for libiverbs to enable verbs support])
 
 if test "x$mpc_dep_found" = "xyes"; then
         AC_MSG_RESULT([yes])
-        mpc_net_list="$mpc_net_list verbs"
+        MPC_NETWORK_LIST="$MPC_NETWORK_LIST verbs"
         AC_DEFINE([MPC_USE_INFINIBAND], [1], [Infiniband support is enabled])
         infiniband_enabled="yes"
 else
@@ -285,6 +297,8 @@ else
 fi
 
 AM_CONDITIONAL([INFINIBAND_DRIVER_ENABLED], [test "x$infiniband_enabled" = "xyes"])
+
+AC_SUBST([MPC_NETWORK_LIST])
 
 #
 # Configure MPC Launch
@@ -319,7 +333,7 @@ fi
 
 if test "x$mpc_slurm_enabled" = "xyes"; then
 
-        mpc_launcher="Slurm PMI"
+        MPC_LAUNCHER="SLURM"
         MPC_DETECT_DEPENDENCY([pmi.h],[pmi], [PMI_Finalize], [PMI])
         MPC_REQUIRED_DEPENDENCY([pmi], [$mpc_dep_found])
 
@@ -333,7 +347,7 @@ else
         fi
 
         # Here we look for hydra only if hydra has not been disabled
-        mpc_launcher="Hydra"
+        MPC_LAUNCHER="Hydra"
 
         AC_CHECK_FUNCS([socket setsockopt gethostbyname],[can_access_hydra_pmi_socket=no], [can_access_hydra_pmi_socket=yes])
 
@@ -346,7 +360,9 @@ else
         AC_DEFINE([MPC_USE_HYDRA], [1], [Hydra will be used to launch parallel programs])
 fi
 
-AM_CONDITIONAL([HYDRA_CLIENT_LIB_ENABED], [test "x$mpc_launcher" = "xHydra"])
+AM_CONDITIONAL([HYDRA_CLIENT_LIB_ENABED], [test "x$MPC_LAUNCHER" = "xHydra"])
+
+AC_SUBST([MPC_LAUNCHER])
 
 # Checks for header files.
 
@@ -1114,7 +1130,8 @@ AC_OUTPUT([Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile
            MPC_MPI/src/Makefile MPC_MPI/Makefile
            MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile
            MPC_Threads/Makefile MPC_Threads/src/Makefile
-           bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags bin/mpc_ldflags])
+           bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags
+           bin/mpc_ldflags bin/mpc_cxx.sh bin/mpc_f77.sh  bin/mpcrun.sh])
 
 echo "========== MPC Configuration =========="
 echo "PREFIX: $prefix"
@@ -1125,12 +1142,12 @@ echo ""
 echo "Target languages: $MPC_LANGUAGE_LIST"
 echo "Detected compilers: $MPC_COMPILER_LIST"
 echo ""
-echo "Process Launcher: $mpc_launcher"
+echo "Process Launcher: $MPC_LAUNCHER"
 echo "Allocator: $mpc_allocator"
 echo "Privatization support: $mpc_privatization_support"
 echo "Colored output: $mpc_shell_color"
 echo ""
-echo "Enabled networks: $mpc_net_list"
+echo "Enabled networks: $MPC_NETWORK_LIST"
 echo ""
 echo "The following modules will be built:"
 echo ""

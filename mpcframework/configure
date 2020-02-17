@@ -661,11 +661,13 @@ LIBOBJS
 MPC_ARCH_DETECTED_STRING
 MPC_ARCH_DETECTED_FUNCTION
 MPC_TARGET_ARCHITECTURE
+MPC_LAUNCHER
 HYDRA_CLIENT_LIB_ENABED_FALSE
 HYDRA_CLIENT_LIB_ENABED_TRUE
 HAVE_MPIEXEC
 PMI_LIBS
 PMI_CFLAGS
+MPC_NETWORK_LIST
 INFINIBAND_DRIVER_ENABLED_FALSE
 INFINIBAND_DRIVER_ENABLED_TRUE
 IBV_LIBS
@@ -690,6 +692,10 @@ am__fastdepCCAS_TRUE
 CCASDEPMODE
 CCASFLAGS
 CCAS
+MPC_VERSION_PRE
+MPC_VERSION_REVISION
+MPC_VERSION_MINOR
+MPC_VERSION_MAJOR
 CXXCPP
 am__fastdepCXX_FALSE
 am__fastdepCXX_TRUE
@@ -16387,18 +16393,36 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 # Define MPC_VERSION
+MPC_VERSION="4"
+MPC_VERSION_MINOR="0"
+MPC_VERSION_PRE="0"
+MPC_VERSION_REV="0"
 
 
-$as_echo "#define SCTK_VERSION_MAJOR 4" >>confdefs.h
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_VERSION_MAJOR $MPC_VERSION
+_ACEOF
 
 
-$as_echo "#define SCTK_VERSION_MINOR 0" >>confdefs.h
+cat >>confdefs.h <<_ACEOF
+#define MPC_VERSION_MINOR $MPC_VERSION_MINOR
+_ACEOF
 
 
-$as_echo "#define SCTK_VERSION_PRE 0" >>confdefs.h
+cat >>confdefs.h <<_ACEOF
+#define MPC_VERSION_REVISION $MPC_VERSION_REV
+_ACEOF
 
 
-$as_echo "#define SCTK_VERSION_REVISION 0" >>confdefs.h
+cat >>confdefs.h <<_ACEOF
+#define MPC_VERSION_PRE $MPC_VERSION_PRE
+_ACEOF
+
+
+
+
+
 
 
 
@@ -19010,7 +19034,9 @@ fi
 # Network list
 #
 
-mpc_net_list="tcp shm"
+MPC_NETWORK_LIST="tcp shm"
+
+
 
 #
 # Detect libibverbs presence
@@ -19161,7 +19187,7 @@ $as_echo_n "checking Checking for libiverbs to enable verbs support... " >&6; }
 if test "x$mpc_dep_found" = "xyes"; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-        mpc_net_list="$mpc_net_list verbs"
+        MPC_NETWORK_LIST="$MPC_NETWORK_LIST verbs"
 
 $as_echo "#define MPC_USE_INFINIBAND 1" >>confdefs.h
 
@@ -19178,6 +19204,8 @@ else
   INFINIBAND_DRIVER_ENABLED_TRUE='#'
   INFINIBAND_DRIVER_ENABLED_FALSE=
 fi
+
+
 
 
 #
@@ -19219,7 +19247,7 @@ fi
 
 if test "x$mpc_slurm_enabled" = "xyes"; then
 
-        mpc_launcher="Slurm PMI"
+        MPC_LAUNCHER="Slurm PMI"
 
 
 
@@ -19418,7 +19446,7 @@ fi
         fi
 
         # Here we look for hydra only if hydra has not been disabled
-        mpc_launcher="Hydra"
+        MPC_LAUNCHER="Hydra"
 
         for ac_func in socket setsockopt gethostbyname
 do :
@@ -19448,13 +19476,15 @@ $as_echo "#define MPC_USE_HYDRA 1" >>confdefs.h
 
 fi
 
- if test "x$mpc_launcher" = "xHydra"; then
+ if test "x$MPC_LAUNCHER" = "xHydra"; then
   HYDRA_CLIENT_LIB_ENABED_TRUE=
   HYDRA_CLIENT_LIB_ENABED_FALSE='#'
 else
   HYDRA_CLIENT_LIB_ENABED_TRUE='#'
   HYDRA_CLIENT_LIB_ENABED_FALSE=
 fi
+
+
 
 
 # Checks for header files.
@@ -27196,7 +27226,7 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
-ac_config_files="$ac_config_files Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Launch/src/Makefile MPC_Launch/Makefile MPC_Message_Passing/src/Makefile MPC_Message_Passing/Makefile MPC_MPI/src/Makefile MPC_MPI/Makefile MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags bin/mpc_ldflags"
+ac_config_files="$ac_config_files Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Launch/src/Makefile MPC_Launch/Makefile MPC_Message_Passing/src/Makefile MPC_Message_Passing/Makefile MPC_MPI/src/Makefile MPC_MPI/Makefile MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags bin/mpc_ldflags bin/mpc_cxx.sh bin/mpc_f77.sh bin/mpcrun.sh"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -28387,6 +28417,9 @@ do
     "bin/mpc_cc.sh") CONFIG_FILES="$CONFIG_FILES bin/mpc_cc.sh" ;;
     "bin/mpc_cflags") CONFIG_FILES="$CONFIG_FILES bin/mpc_cflags" ;;
     "bin/mpc_ldflags") CONFIG_FILES="$CONFIG_FILES bin/mpc_ldflags" ;;
+    "bin/mpc_cxx.sh") CONFIG_FILES="$CONFIG_FILES bin/mpc_cxx.sh" ;;
+    "bin/mpc_f77.sh") CONFIG_FILES="$CONFIG_FILES bin/mpc_f77.sh" ;;
+    "bin/mpcrun.sh") CONFIG_FILES="$CONFIG_FILES bin/mpcrun.sh" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -29832,12 +29865,12 @@ echo ""
 echo "Target languages: $MPC_LANGUAGE_LIST"
 echo "Detected compilers: $MPC_COMPILER_LIST"
 echo ""
-echo "Process Launcher: $mpc_launcher"
+echo "Process Launcher: $MPC_LAUNCHER"
 echo "Allocator: $mpc_allocator"
 echo "Privatization support: $mpc_privatization_support"
 echo "Colored output: $mpc_shell_color"
 echo ""
-echo "Enabled networks: $mpc_net_list"
+echo "Enabled networks: $MPC_NETWORK_LIST"
 echo ""
 echo "The following modules will be built:"
 echo ""

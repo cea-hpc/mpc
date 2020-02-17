@@ -1,0 +1,41 @@
+#!/bin/sh
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - PERACHE Marc marc.perache@cea.fr                                 #
+#                                                                      #
+########################################################################
+if [ "$SCTK_JOB_MANAGER" = "HYDRA" ]; then
+	if test "$MPC_AUTO_KILL_TIMEOUT" = "0"  || test  -z "$MPC_AUTO_KILL_TIMEOUT"; then
+		autokill_opt=""
+	else
+		export MPIEXEC_TIMEOUT=${MPC_AUTO_KILL_TIMEOUT}
+		autokill_opt="-t ${MPC_AUTO_KILL_TIMEOUT}"
+	fi
+	
+	if [ "${CPU_NB}" = "" ] || [ "${CPU_NB}" = "0" ]; then
+		opt_core=""
+	else
+		opt_core="-c ${CPU_NB}"
+	fi  
+
+	LAUNCH_COMMAND="salloc $LAUNCH_OPTIONS -n $PROCESS_NB -N $NODE_NB ${opt_core} ${autokill_opt} ${SCTK_HYDRA_BINDIR}mpiexec.hydra -n $PROCESS_NB $BINARY $USER_ARGS $SCTK_ARGS"
+else
+	echo  "ERROR mpc is compiled without Hydra support" 1>&2
+	exit 1
+fi

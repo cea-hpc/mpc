@@ -238,12 +238,12 @@ int MPC_check_compatibility_lib( int major, int minor, char *pre )
 {
 	static char errro_msg[4096];
 
-	if ( ( major != SCTK_VERSION_MAJOR ) || ( minor != SCTK_VERSION_MINOR ) || ( strcmp( pre, SCTK_VERSION_PRE ) != 0 ) )
+	if ( ( major != MPC_VERSION_MAJOR ) || ( minor != MPC_VERSION_MINOR ) || ( strcmp( pre, MPC_VERSION_PRE ) != 0 ) )
 	{
 		sprintf( errro_msg,
 		         "MPC version used for this file (%d.%d%s) differs from the library used for the link (%d.%d%s)\n",
-		         major, minor, pre, SCTK_VERSION_MAJOR, SCTK_VERSION_MINOR,
-		         SCTK_VERSION_PRE );
+		         major, minor, pre, MPC_VERSION_MAJOR, MPC_VERSION_MINOR,
+		         MPC_VERSION_PRE );
 		sctk_warning( errro_msg );
 		return 1;
 	}
