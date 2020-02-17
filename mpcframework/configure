@@ -636,12 +636,19 @@ ac_header_list=
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+MPC_GENERATION_DATE
+MPC_COMPILER_LIST
+MPC_FORTRAN_COMPILER_LIST
+MPC_CPP_COMPILER_LIST
+MPC_C_COMPILER_LIST
+MPC_LANGUAGE_LIST
 MPC_MPI_ENABLED_FALSE
 MPC_MPI_ENABLED_TRUE
 MPC_MESSAGE_PASSING_ENABLED_FALSE
 MPC_MESSAGE_PASSING_ENABLED_TRUE
 MPC_THREAD_ENABLED_FALSE
 MPC_THREAD_ENABLED_TRUE
+MPC_ENABLE_SHELL_COLORS
 MPC_ARCH_GENERIC_MICROTASK_FALSE
 MPC_ARCH_GENERIC_MICROTASK_TRUE
 MPC_ARCH_X86_64_MICROTASK_FALSE
@@ -17992,6 +17999,20 @@ fi
 
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Checking for which program/built-in" >&5
+$as_echo_n "checking Checking for which program/built-in... " >&6; }
+which gcc 2>&1 > /dev/null
+
+if test "x$?" = "x0"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        as_fn_error $? "The which program is required to build MPC" "$LINENO" 5
+fi
+
+
 # Optionnal XML generators
 
 # Extract the first word of "xsltproc", so it can be a program name with args.
@@ -24284,7 +24305,6 @@ fi
 # Mpc Optionnal Flags
 #
 
-
 # Check whether --enable-shell-colors was given.
 if test "${enable_shell_colors+set}" = set; then :
   enableval=$enable_shell_colors; mpc_shell_color=$enableval
@@ -24297,7 +24317,10 @@ if test "x${mpc_shell_color}" = "xyes"; then
 
 $as_echo "#define MPC_ENABLE_SHELL_COLORS 1" >>confdefs.h
 
+        MPC_ENABLE_SHELL_COLORS=1
 fi
+
+
 
 
 # Check whether --enable-debug-messages was given.
@@ -24399,6 +24422,174 @@ else
   MPC_MPI_ENABLED_TRUE='#'
   MPC_MPI_ENABLED_FALSE=
 fi
+
+
+#
+# Configure MPC's compilers
+#
+
+MPC_LANGUAGE_LIST=""
+
+
+MPC_C_COMPILER_LIST=""
+MPC_CPP_COMPILER_LIST=""
+MPC_FORTRAN_COMPILER_LIST=""
+
+value_is_in_list()
+{
+        is_in_list="no"
+
+        echo $1 | grep $2 2>&1 > /dev/null
+
+        if test "x$?" = "x0"; then
+                is_in_list="yes"
+        fi
+}
+
+
+append_to_language_list_if_needed()
+{
+        value_is_in_list "$MPC_LANGUAGE_LIST" $1
+
+        if test "x$is_in_list" = "xyes"; then
+                return
+        else
+                MPC_LANGUAGE_LIST="$MPC_LANGUAGE_LIST $1 "
+        fi
+
+}
+
+
+compiler_to_lang()
+{
+        mpc_comp_type=""
+        case $1 in
+                apcc|gcc|icc|pgcc|clang)
+                        mpc_comp_type="c"
+                        MPC_C_COMPILER_LIST+=" $1"
+                ;;
+                ap++|g++|icpc|pgc++|pgcpp|clang++)
+                        mpc_comp_type="cxx"
+                        MPC_CPP_COMPILER_LIST+=" $1"
+                ;;
+                apfortran|gfortran|ifort|pgfortran|pgf77|flang)
+                        mpc_comp_type="fortran"
+                        MPC_FORTRAN_COMPILER_LIST+=" $1"
+                ;;
+                *)
+                        as_fn_error $? "No such compiler type ${1}" "$LINENO" 5
+                ;;
+        esac
+
+        append_to_language_list_if_needed $mpc_comp_type
+}
+
+locate_bin()
+{
+        locate_bin_path=""
+        which $1 2>&1 > /dev/null
+
+        if test "x$?" = "x0"; then
+                locate_bin_path=$(which $1)
+        fi
+
+}
+
+for prog in gcc g++ gfortran icc icpc ifort pgcc pgc++ pgcpp pgfortran pgf77 clang clang++ flang
+do
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ${prog}" >&5
+$as_echo_n "checking for ${prog}... " >&6; }
+
+        locate_bin $prog
+
+        if test -n "$locate_bin_path"; then
+                compiler_to_lang $prog
+                MPC_COMPILER_LIST="$MPC_COMPILER_LIST $prog"
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        else
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        fi
+
+done
+
+if test "x${mpc_privatization_support}" = "xyes"; then
+
+        at_least_one_privatizing_compiler=""
+
+        for prog in apcc ap++ apfortran
+        do
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ${prog}" >&5
+$as_echo_n "checking for ${prog}... " >&6; }
+                locate_bin $prog
+
+                if test -n "$locate_bin_path"; then
+                        compiler_to_lang $prog
+                        MPC_COMPILER_LIST+=" $prog"
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+                        at_least_one_privatizing_compiler+="yes"
+                else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                fi
+        done
+
+        if test -z "$at_least_one_privatizing_compiler"; then
+                as_fn_error $? "Privatization was enabled but no privatizing compiler was found" "$LINENO" 5
+        fi
+fi
+
+# Check that we at least have a C compiler
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if we have at least a C compiler for MPC" >&5
+$as_echo_n "checking if we have at least a C compiler for MPC... " >&6; }
+
+if test -n "$MPC_C_COMPILER_LIST"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        as_fn_error $? "MPC requires at least a c compiler to be in your PATH" "$LINENO" 5
+fi
+
+
+
+
+
+
+MPC_COMPILER_LIST="$MPC_C_COMPILER_LIST $MPC_CPP_COMPILER_LIST $MPC_FORTRAN_COMPILER_LIST"
+
+
+
+# Generate Compilation timestamp
+
+date +%s 2>&1 > /dev/null
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking build timestamp" >&5
+$as_echo_n "checking build timestamp... " >&6; }
+
+if test "x$?" = "x0"; then
+        # Date was sufficient
+        MPC_GENERATION_DATE=$(date +%s)
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MPC_GENERATION_DATE" >&5
+$as_echo "$MPC_GENERATION_DATE" >&6; }
+else
+        # Try in perl who knows
+        perl -e 'print time, "\n"' 2>&1 > /dev/null
+        if test "x$?" = "x0"; then
+                MPC_GENERATION_DATE=$(perl -e 'print time, "\n"')
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MPC_GENERATION_DATE" >&5
+$as_echo "$MPC_GENERATION_DATE" >&6; }
+        else
+                MPC_GENERATION_DATE=0
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: fail assuming '0'" >&5
+$as_echo "fail assuming '0'" >&6; }
+        fi
+fi
+
 
 
 #
@@ -27005,7 +27196,7 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
-ac_config_files="$ac_config_files Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Launch/src/Makefile MPC_Launch/Makefile MPC_Message_Passing/src/Makefile MPC_Message_Passing/Makefile MPC_MPI/src/Makefile MPC_MPI/Makefile MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile"
+ac_config_files="$ac_config_files Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Launch/src/Makefile MPC_Launch/Makefile MPC_Message_Passing/src/Makefile MPC_Message_Passing/Makefile MPC_MPI/src/Makefile MPC_MPI/Makefile MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -28191,6 +28382,9 @@ do
     "MPC_Topology/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Topology/src/Makefile" ;;
     "MPC_Threads/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Threads/Makefile" ;;
     "MPC_Threads/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Threads/src/Makefile" ;;
+    "bin/Makefile") CONFIG_FILES="$CONFIG_FILES bin/Makefile" ;;
+    "bin/mpc_compiler_manager.sh") CONFIG_FILES="$CONFIG_FILES bin/mpc_compiler_manager.sh" ;;
+    "bin/mpc_cc.sh") CONFIG_FILES="$CONFIG_FILES bin/mpc_cc.sh" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -29632,6 +29826,9 @@ echo "PREFIX: $prefix"
 echo ""
 echo "DEBUG : $mpc_debug"
 echo "Debug messages: $mpc_debug_messages"
+echo ""
+echo "Target languages: $MPC_LANGUAGE_LIST"
+echo "Detected compilers: $MPC_COMPILER_LIST"
 echo ""
 echo "Process Launcher: $mpc_launcher"
 echo "Allocator: $mpc_allocator"

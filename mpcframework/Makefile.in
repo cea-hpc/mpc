@@ -244,7 +244,7 @@ ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = MPC_Arch MPC_Common MPC_Config MPC_Topology MPC_Launch \
-	MPC_Threads MPC_Message_Passing MPC_MPI
+	MPC_Threads MPC_Message_Passing MPC_MPI bin
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mpc_config.h.in \
 	$(top_srcdir)/MPC_Arch/include/mpc_arch.h.in \
 	$(top_srcdir)/build-aux/compile \
@@ -360,6 +360,13 @@ MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
 MPC_ARCH_DETECTED_FUNCTION = @MPC_ARCH_DETECTED_FUNCTION@
 MPC_ARCH_DETECTED_STRING = @MPC_ARCH_DETECTED_STRING@
+MPC_COMPILER_LIST = @MPC_COMPILER_LIST@
+MPC_CPP_COMPILER_LIST = @MPC_CPP_COMPILER_LIST@
+MPC_C_COMPILER_LIST = @MPC_C_COMPILER_LIST@
+MPC_ENABLE_SHELL_COLORS = @MPC_ENABLE_SHELL_COLORS@
+MPC_FORTRAN_COMPILER_LIST = @MPC_FORTRAN_COMPILER_LIST@
+MPC_GENERATION_DATE = @MPC_GENERATION_DATE@
+MPC_LANGUAGE_LIST = @MPC_LANGUAGE_LIST@
 MPC_TARGET_ARCHITECTURE = @MPC_TARGET_ARCHITECTURE@
 NM = @NM@
 NMEDIT = @NMEDIT@
@@ -449,7 +456,7 @@ xsltproc = @xsltproc@
 mpc_headerdir = $(includedir)/mpc/
 mpc_header_HEADERS = $(abs_top_builddir)/mpc_config.h $(abs_top_srcdir)/include/mpc.h $(abs_top_srcdir)/include/mpc_main.h
 SUBDIRS = MPC_Arch MPC_Common MPC_Config MPC_Topology $(am__append_1) \
-	$(am__append_2) $(am__append_3)
+	$(am__append_2) $(am__append_3) bin
 ALL_MPC_LIBS = ./MPC_Config/src/libmpcconfig.la $(am__append_4) \
 	$(am__append_5) $(am__append_6)
 

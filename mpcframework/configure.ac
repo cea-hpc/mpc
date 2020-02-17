@@ -33,6 +33,17 @@ AC_PROG_INSTALL
 AC_PROG_CC
 AM_PROG_AS
 
+AC_MSG_CHECKING([Checking for which program/built-in])
+which gcc 2>&1 > /dev/null
+
+if test "x$?" = "x0"; then
+        AC_MSG_RESULT([yes])
+else
+        AC_MSG_RESULT([no])
+        AC_MSG_ERROR([The which program is required to build MPC])
+fi
+
+
 # Optionnal XML generators
 
 AC_CHECK_PROG([xsltproc],[xsltproc],[yes],[no])
@@ -859,7 +870,6 @@ AM_CONDITIONAL([MPC_ARCH_GENERIC_MICROTASK], [test "x${MPC_ARCH_MICROTASK_ARCH}"
 # Mpc Optionnal Flags
 #
 
-
 AC_ARG_ENABLE([shell-colors],
 [AS_HELP_STRING([--enable-shell-colors],
                 [Activate Color Output in MPC])],
@@ -868,7 +878,10 @@ AC_ARG_ENABLE([shell-colors],
 
 if test "x${mpc_shell_color}" = "xyes"; then
         AC_DEFINE([MPC_ENABLE_SHELL_COLORS], [1], [MPC color output was enabled])
+        MPC_ENABLE_SHELL_COLORS=1
 fi
+
+AC_SUBST([MPC_ENABLE_SHELL_COLORS])
 
 
 AC_ARG_ENABLE([debug-messages],
@@ -934,6 +947,161 @@ fi
 AM_CONDITIONAL([MPC_MPI_ENABLED], [test "x${mpc_mpi_enabled}" = "xyes"])
 
 #
+# Configure MPC's compilers
+#
+
+MPC_LANGUAGE_LIST=""
+
+
+MPC_C_COMPILER_LIST=""
+MPC_CPP_COMPILER_LIST=""
+MPC_FORTRAN_COMPILER_LIST=""
+
+value_is_in_list()
+{
+        is_in_list="no"
+
+        echo $1 | grep $2 2>&1 > /dev/null
+
+        if test "x$?" = "x0"; then
+                is_in_list="yes"
+        fi
+}
+
+
+append_to_language_list_if_needed()
+{
+        value_is_in_list "$MPC_LANGUAGE_LIST" $1
+
+        if test "x$is_in_list" = "xyes"; then
+                return
+        else
+                MPC_LANGUAGE_LIST="$MPC_LANGUAGE_LIST $1 "
+        fi
+
+}
+
+
+compiler_to_lang()
+{
+        mpc_comp_type=""
+        case $1 in
+                apcc|gcc|icc|pgcc|clang)
+                        mpc_comp_type="c"
+                        MPC_C_COMPILER_LIST+=" $1"
+                ;;
+                ap++|g++|icpc|pgc++|pgcpp|clang++)
+                        mpc_comp_type="cxx"
+                        MPC_CPP_COMPILER_LIST+=" $1"
+                ;;
+                apfortran|gfortran|ifort|pgfortran|pgf77|flang)
+                        mpc_comp_type="fortran"
+                        MPC_FORTRAN_COMPILER_LIST+=" $1"
+                ;;
+                *)
+                        AC_MSG_ERROR([No such compiler type ${1}])
+                ;;
+        esac
+
+        append_to_language_list_if_needed $mpc_comp_type
+}
+
+locate_bin()
+{
+        locate_bin_path=""
+        which $1 2>&1 > /dev/null
+
+        if test "x$?" = "x0"; then
+                locate_bin_path=$(which $1)
+        fi
+
+}
+
+for prog in gcc g++ gfortran icc icpc ifort pgcc pgc++ pgcpp pgfortran pgf77 clang clang++ flang
+do
+        AC_MSG_CHECKING([for ${prog}])
+
+        locate_bin $prog
+
+        if test -n "$locate_bin_path"; then
+                compiler_to_lang $prog
+                MPC_COMPILER_LIST="$MPC_COMPILER_LIST $prog"
+                AC_MSG_RESULT([yes])
+        else
+                AC_MSG_RESULT([no])
+        fi
+
+done
+
+if test "x${mpc_privatization_support}" = "xyes"; then
+
+        at_least_one_privatizing_compiler=""
+
+        for prog in apcc ap++ apfortran
+        do
+                AC_MSG_CHECKING([for ${prog}])
+                locate_bin $prog
+
+                if test -n "$locate_bin_path"; then
+                        compiler_to_lang $prog
+                        MPC_COMPILER_LIST+=" $prog"
+                        AC_MSG_RESULT([yes])
+                        at_least_one_privatizing_compiler+="yes"
+                else
+                        AC_MSG_RESULT([no])
+                fi
+        done
+
+        if test -z "$at_least_one_privatizing_compiler"; then
+                AC_MSG_ERROR([Privatization was enabled but no privatizing compiler was found])
+        fi
+fi
+
+# Check that we at least have a C compiler
+
+AC_MSG_CHECKING([if we have at least a C compiler for MPC])
+
+if test -n "$MPC_C_COMPILER_LIST"; then
+        AC_MSG_RESULT([yes])
+else
+        AC_MSG_RESULT([no])
+        AC_MSG_ERROR([MPC requires at least a c compiler to be in your PATH])
+fi
+
+AC_SUBST([MPC_LANGUAGE_LIST])
+AC_SUBST([MPC_C_COMPILER_LIST])
+AC_SUBST([MPC_CPP_COMPILER_LIST])
+AC_SUBST([MPC_FORTRAN_COMPILER_LIST])
+
+MPC_COMPILER_LIST="$MPC_C_COMPILER_LIST $MPC_CPP_COMPILER_LIST $MPC_FORTRAN_COMPILER_LIST"
+
+AC_SUBST([MPC_COMPILER_LIST])
+
+# Generate Compilation timestamp
+
+date +%s 2>&1 > /dev/null
+
+AC_MSG_CHECKING([build timestamp])
+
+if test "x$?" = "x0"; then
+        # Date was sufficient
+        MPC_GENERATION_DATE=$(date +%s)
+        AC_MSG_RESULT([$MPC_GENERATION_DATE])
+else
+        # Try in perl who knows
+        perl -e 'print time, "\n"' 2>&1 > /dev/null
+        if test "x$?" = "x0"; then
+                MPC_GENERATION_DATE=$(perl -e 'print time, "\n"')
+                AC_MSG_RESULT([$MPC_GENERATION_DATE])
+        else
+                MPC_GENERATION_DATE=0
+                AC_MSG_RESULT([fail assuming '0'])
+        fi
+fi
+
+AC_SUBST([MPC_GENERATION_DATE])
+
+#
 # Final Output
 #
 
@@ -945,13 +1113,17 @@ AC_OUTPUT([Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile
            MPC_Message_Passing/src/Makefile MPC_Message_Passing/Makefile
            MPC_MPI/src/Makefile MPC_MPI/Makefile
            MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile
-           MPC_Threads/Makefile MPC_Threads/src/Makefile])
+           MPC_Threads/Makefile MPC_Threads/src/Makefile
+           bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh])
 
 echo "========== MPC Configuration =========="
 echo "PREFIX: $prefix"
 echo ""
 echo "DEBUG : $mpc_debug"
 echo "Debug messages: $mpc_debug_messages"
+echo ""
+echo "Target languages: $MPC_LANGUAGE_LIST"
+echo "Detected compilers: $MPC_COMPILER_LIST"
 echo ""
 echo "Process Launcher: $mpc_launcher"
 echo "Allocator: $mpc_allocator"

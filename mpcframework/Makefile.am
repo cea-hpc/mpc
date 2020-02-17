@@ -19,6 +19,8 @@ if MPC_MPI_ENABLED
         SUBDIRS += MPC_MPI
 endif
 
+SUBDIRS += bin
+
 if CAN_GENERATE_CONFIG
 # Generate and copy back to sources to ensure transparent update on success
 config:
