@@ -314,7 +314,7 @@ stat_compilers()
 	do
 		lang_file=\${COMPILER_FILEPATH}/.\${language}_compilers.cfg
 		nb_compilers="\`cat \${lang_file} | wc -l\`"
-		nb_priv="\`cat \${lang_file} | cut -d":" -f2 | wc -l\`"
+		nb_priv="\`cat \${lang_file} | cut -d":" -f2 | grep "^$" | wc -l\`"
 
 		echo "MPC \${language} compiler supports \${GRE}\${nb_compilers}\${DEF} compilers, \${RED}\${nb_priv}\${DEF} of them are able to privatize."
 	done
