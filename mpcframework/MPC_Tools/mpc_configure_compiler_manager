@@ -332,7 +332,7 @@ add_compiler()
 			PRIV_FLAG=""
 			;;
 		*)
-			echo "\${YEL}Unknow compiler family \${compiler_family}\${DEF}"
+			echo "\${YEL}Unknown compiler family \${compiler_family}\${DEF}"
 			echo "\${RED}Assuming privatization is not supported.\${DEF}"
 			PRIV_FLAG=""
 	esac
