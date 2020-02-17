@@ -802,7 +802,7 @@ AC_CHECK_FUNCS(sched_get_priority_min )
 
 mpc_privatization_support="no"
 
-#MPC_DETECT_DEPENDENCY([extls.h],[extls], [extls_init], [EXTLS])
+MPC_DETECT_DEPENDENCY([extls.h],[extls], [extls_init], [EXTLS])
 
 
 AC_MSG_CHECKING([Enabling extended TLS support])

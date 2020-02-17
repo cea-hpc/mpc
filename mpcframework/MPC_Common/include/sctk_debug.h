@@ -90,13 +90,6 @@ void sctk_debug_root( const char *fmt, ... );
 #define INFO( x )
 #endif
 
-/* For not used fuctions (disable compiler warning */
-#ifdef __GNUC__
-#define __UNUSED__ __attribute__( ( __unused__ ) )
-#else
-#define __UNUSED__
-#endif
-#define UNUSED(a) (void)&a
 
 
 void sctk_log( FILE *file, const char *fmt, ... );

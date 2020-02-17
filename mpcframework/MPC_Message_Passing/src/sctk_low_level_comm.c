@@ -78,7 +78,7 @@ void sctk_network_send_message ( mpc_lowcomm_ptp_message_t *msg )
  *
  * \param[in] sctk_network_send_message_val the function pointer
  */
-void sctk_network_send_message_set ( void ( *sctk_network_send_message_val ) ( mpc_mp_ptp_message_t * ) )
+void sctk_network_send_message_set ( void ( *sctk_network_send_message_val ) ( mpc_lowcomm_ptp_message_t * ) )
 {
 	sctk_network_send_message_ptr = sctk_network_send_message_val;
 }
@@ -107,7 +107,7 @@ static void ( *sctk_network_notify_recv_message_ptr ) ( mpc_lowcomm_ptp_message_
  *
  * \param[in] msg the message hosting RECV infos
  */
-void sctk_network_notify_recv_message ( sctk_thread_ptp_message_t *msg )
+void sctk_network_notify_recv_message ( mpc_lowcomm_ptp_message_t *msg )
 {
 	sctk_network_notify_recv_message_ptr ( msg );
 }
@@ -132,7 +132,6 @@ void sctk_network_notify_recv_message_set ( void ( *sctk_network_notify_recv_mes
  *
  * \param[in] msg the matched message
  */
-/**
 void sctk_network_notify_matching_message_default (  __UNUSED__ mpc_lowcomm_ptp_message_t *msg )
 {
 }

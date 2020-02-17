@@ -34,8 +34,14 @@
         #define expect_false(expr) (expr)
 #endif
 
-#ifndef UNUSED
-#define UNUSED(a) (void)(sizeof(a))
+
+/* For not used fuctions (disable compiler warning */
+#ifdef __GNUC__
+#define __UNUSED__ __attribute__( ( __unused__ ) )
+#else
+#define __UNUSED__
 #endif
+
+#define UNUSED(a) (void)&a
 
 #endif
