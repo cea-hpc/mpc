@@ -109,7 +109,9 @@ create_home()
 	echo "\$MPC_RPREFIX" | sed -e "s#//*#/#g" > \${user_prefix}/mpc_install_path
 	echo "\$CREATION_TIMESTAMP" > \${user_prefix}/.creation_timestamp
 	cp \${MPC_RPREFIX}/.*_compilers.cfg \${user_prefix}/
-	cp -r \${MPC_RPREFIX}/fortran_gen \${user_prefix}/
+	if test -d \${MPC_RPREFIX}/fortran_gen; then
+		cp -r \${MPC_RPREFIX}/fortran_gen \${user_prefix}/
+	fi
 	for mylang in \$list_languages
 	do
 		#copy any existing directory for each language
@@ -302,10 +304,13 @@ add_compiler()
 	test -z "\`which \${2} 2> /dev/null\`" && die "\${2} not found. Not added."
 	hash="\`hash_content \$2\`"
 
+	compiler_family=\$3
+	infer_compiler_family \$2
+
 	# -r: extended regexes
 	# -e: run script
 	# -n: does not create output (only matching w/ /p)
-	exists="\`get_compilers_in "\$1" | sed -n -e "\\,^\$3:.*:\${2}:.*$,p"\`"
+	exists="\`get_compilers_in "\$1" | sed -n -e "\\,^\$compiler_family:.*:\${2}:.*$,p"\`"
 
 	if test -n "\$exists"; then 
 		old_hash="\`echo "\$exists" | cut -f4 -d":"\`"
@@ -315,8 +320,6 @@ add_compiler()
 	#inserting the compiler
 	build_main_files
 
-	compiler_family=\$3
-	infer_compiler_family \$2
 
 	case \$compiler_family in
 		GNU)
@@ -416,7 +419,7 @@ list_compilers()
 
 get_compilers_in()
 {
-	cat \${COMPILER_FILEPATH}/.\${1}_compilers.cfg
+	cat ${COMPILER_FILEPATH}/.\${1}_compilers.cfg 2>/dev/null
 }
 
 get_all_compilers()
