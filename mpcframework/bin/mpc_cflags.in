@@ -22,6 +22,8 @@
 #                                                                      #
 ########################################################################
 MPC_INSTALL_PREFIX=@prefix@
+OPA_CFLAGS=@OPA_CFLAGS@
+
 
 ROMIO=""
 
@@ -53,4 +55,4 @@ if test "$1" = "fortran" ; then
         fi
 fi
 
-echo "-I${MPC_INSTALL_PREFIX}/include/mpc $ROMIO ${SCTK_GETOPT}"
+echo "-I${MPC_INSTALL_PREFIX}/include/mpc $ROMIO ${SCTK_GETOPT} ${OPA_CFLAGS}"

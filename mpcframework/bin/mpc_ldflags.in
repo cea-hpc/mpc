@@ -21,7 +21,8 @@
 #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
 #                                                                      #
 ########################################################################
-MPC_INSTALL_PREFIX=@prefix@
+MPC_INSTALL_PREFIX="@prefix@"
+OPA_LDFLAGS="@OPA_LIBS@"
 
 ROMIO=""
 
@@ -52,7 +53,7 @@ if test -n "$2"; then
 	fi
 fi
 
-FLAGS="-Wl,-rpath,${MPC_INSTALL_PREFIX}/lib -Wl,-rpath,${MPC_INSTALL_PREFIX}/lib/../lib64 -L${MPC_INSTALL_PREFIX}/lib  -lm -lpthread -lrt -L${MPC_INSTALL_PREFIX}/lib -lopa ${ROMIO} ${SCTK_GETOPT}"
+FLAGS="-Wl,-rpath,${MPC_INSTALL_PREFIX}/lib -Wl,-rpath,${MPC_INSTALL_PREFIX}/lib/../lib64 -L${MPC_INSTALL_PREFIX}/lib  -lm -lpthread -lrt -L${MPC_INSTALL_PREFIX}/lib ${ROMIO} ${SCTK_GETOPT} ${OPA_LDFLAGS}"
 
 if test "$MPC_USE_INTEL_COMPILER" = "1"; then
 MPC_DO_NOT_USE_GNU_LM="1"

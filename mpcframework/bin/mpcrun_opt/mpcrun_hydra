@@ -22,7 +22,7 @@
 ########################################################################
 if [ "$SCTK_JOB_MANAGER" = "HYDRA" ]; then
 	if test "$LAUNCH_MODE" = "exec"; then
-		LAUNCH_COMMAND="${SCTK_HYDRA_BINDIR}mpiexec.hydra $LAUNCH_OPTIONS -n $PROCESS_NB $BINARY $USER_ARGS $SCTK_ARGS"
+		LAUNCH_COMMAND="${MPC_MPIEXEC_HYDRA_PATH} $LAUNCH_OPTIONS -n $PROCESS_NB $BINARY $USER_ARGS $SCTK_ARGS"
 	else
 		LAUNCH_COMMAND="$BINARY $USER_ARGS $SCTK_ARGS"
 	fi

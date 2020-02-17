@@ -80,6 +80,7 @@ __check_or_infer_prefix_include()
         check_or_infer_prefix_include="no"
         looked_up_header=$1
         provided_prefix=$2
+        var_prefix=$3
 
         for pref in $provided_prefix $prefix_candidate_path
         do
@@ -130,6 +131,7 @@ __check_or_infer_prefix_lib()
         looked_up_lib=$1
         looked_up_function=$2
         provided_prefix=$3
+        var_prefix=$4
 
         for pref in $provided_prefix $prefix_candidate_path
         do
@@ -189,6 +191,7 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                 header_name=$1
                 libname=$2
                 function_name=$3
+                var_prefix=$4
                 version="$5"
 
                 if test -n "$lib_prefix"
@@ -208,14 +211,17 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                 then
                         #Insert flags
                         CPPFLAGS="${$4_CFLAGS} $CPPFLAGS"
-
                         LDFLAGS="${$4_LIBS} $LDFLAGS"
+
+                        AC_SUBST([$4_CFLAGS])
+                        AC_SUBST([$4_LIBS])
+
                         AC_MSG_NOTICE([$libname found using pkg-config])
                         #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                         check_or_infer_prefix_result="yes"
                 else
-                        __check_or_infer_prefix_include $header_name $inc_prefix
-                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix
+                        __check_or_infer_prefix_include $header_name $inc_prefix $var_prefix
+                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix $var_prefix
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
                         then
@@ -331,6 +337,8 @@ else
         AC_MSG_ERROR([You mush activate either Hydra and Slurm (--with-hydra or --with-slurm)])
 fi
 
+MPC_MPIEXEC_HYDRA_PATH="mpiexec.hydra"
+
 if test "x$mpc_slurm_enabled" = "xyes"; then
 
         MPC_LAUNCHER="SLURM"
@@ -345,6 +353,8 @@ else
         then
                 AC_MSG_ERROR([Could not locate Hydra's 'mpiexec.hydra' in PATH])
         fi
+
+        MPC_MPIEXEC_HYDRA_PATH=$(which mpiexec.hydra)
 
         # Here we look for hydra only if hydra has not been disabled
         MPC_LAUNCHER="Hydra"
@@ -362,6 +372,7 @@ fi
 
 AM_CONDITIONAL([HYDRA_CLIENT_LIB_ENABED], [test "x$MPC_LAUNCHER" = "xHydra"])
 
+AC_SUBST([MPC_MPIEXEC_HYDRA_PATH])
 AC_SUBST([MPC_LAUNCHER])
 
 # Checks for header files.

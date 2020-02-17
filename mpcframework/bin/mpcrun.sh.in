@@ -45,6 +45,9 @@ LAUNCH="mpiexec"
 LAUNCH_MODE="exec"
 BINS_HOME="${MPC_INSTALL_PREFIX}/share/mpc/mpcrun_opt/mpcrun"
 
+MPC_MPIEXEC_HYDRA_PATH="@MPC_MPIEXEC_HYDRA_PATH@"
+
+
 GDB_LIBTHREAD_DB="${MPC_LIB_DIR}/libmpc_thread_db.so"
 export GDB_LIBTHREAD_DB
 # Export job manager type: slurm or hydra

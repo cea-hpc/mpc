@@ -662,6 +662,7 @@ MPC_ARCH_DETECTED_STRING
 MPC_ARCH_DETECTED_FUNCTION
 MPC_TARGET_ARCHITECTURE
 MPC_LAUNCHER
+MPC_MPIEXEC_HYDRA_PATH
 HYDRA_CLIENT_LIB_ENABED_FALSE
 HYDRA_CLIENT_LIB_ENABED_TRUE
 HAVE_MPIEXEC
@@ -18144,6 +18145,7 @@ __check_or_infer_prefix_include()
         check_or_infer_prefix_include="no"
         looked_up_header=$1
         provided_prefix=$2
+        var_prefix=$3
 
         for pref in $provided_prefix $prefix_candidate_path
         do
@@ -18215,6 +18217,7 @@ __check_or_infer_prefix_lib()
         looked_up_lib=$1
         looked_up_function=$2
         provided_prefix=$3
+        var_prefix=$4
 
         for pref in $provided_prefix $prefix_candidate_path
         do
@@ -18450,6 +18453,7 @@ fi
                 header_name=libxml/tree.h
                 libname=libxml-2.0
                 function_name=xmlStrcmp
+                var_prefix=XML2
                 version=""
 
                 if test -n "$lib_prefix"
@@ -18539,15 +18543,18 @@ fi
                 then
                         #Insert flags
                         CPPFLAGS="${XML2_CFLAGS} $CPPFLAGS"
-
                         LDFLAGS="${XML2_LIBS} $LDFLAGS"
+
+
+
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
 $as_echo "$as_me: $libname found using pkg-config" >&6;}
                         #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                         check_or_infer_prefix_result="yes"
                 else
-                        __check_or_infer_prefix_include $header_name $inc_prefix
-                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix
+                        __check_or_infer_prefix_include $header_name $inc_prefix $var_prefix
+                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix $var_prefix
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
                         then
@@ -18599,6 +18606,7 @@ fi
                 header_name=hwloc.h
                 libname=hwloc
                 function_name=hwloc_topology_init
+                var_prefix=HWLOC
                 version="< 2.0.0"
 
                 if test -n "$lib_prefix"
@@ -18688,15 +18696,18 @@ fi
                 then
                         #Insert flags
                         CPPFLAGS="${HWLOC_CFLAGS} $CPPFLAGS"
-
                         LDFLAGS="${HWLOC_LIBS} $LDFLAGS"
+
+
+
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
 $as_echo "$as_me: $libname found using pkg-config" >&6;}
                         #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                         check_or_infer_prefix_result="yes"
                 else
-                        __check_or_infer_prefix_include $header_name $inc_prefix
-                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix
+                        __check_or_infer_prefix_include $header_name $inc_prefix $var_prefix
+                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix $var_prefix
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
                         then
@@ -18748,6 +18759,7 @@ fi
                 header_name=opa.h
                 libname=openpa
                 function_name=OPA_load_int
+                var_prefix=OPA
                 version=""
 
                 if test -n "$lib_prefix"
@@ -18837,15 +18849,18 @@ fi
                 then
                         #Insert flags
                         CPPFLAGS="${OPA_CFLAGS} $CPPFLAGS"
-
                         LDFLAGS="${OPA_LIBS} $LDFLAGS"
+
+
+
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
 $as_echo "$as_me: $libname found using pkg-config" >&6;}
                         #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                         check_or_infer_prefix_result="yes"
                 else
-                        __check_or_infer_prefix_include $header_name $inc_prefix
-                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix
+                        __check_or_infer_prefix_include $header_name $inc_prefix $var_prefix
+                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix $var_prefix
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
                         then
@@ -18904,6 +18919,7 @@ fi
                 header_name=mpcalloc.h
                 libname=mpcalloc
                 function_name=sctk_malloc
+                var_prefix=ALLOC
                 version=""
 
                 if test -n "$lib_prefix"
@@ -18993,15 +19009,18 @@ fi
                 then
                         #Insert flags
                         CPPFLAGS="${ALLOC_CFLAGS} $CPPFLAGS"
-
                         LDFLAGS="${ALLOC_LIBS} $LDFLAGS"
+
+
+
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
 $as_echo "$as_me: $libname found using pkg-config" >&6;}
                         #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                         check_or_infer_prefix_result="yes"
                 else
-                        __check_or_infer_prefix_include $header_name $inc_prefix
-                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix
+                        __check_or_infer_prefix_include $header_name $inc_prefix $var_prefix
+                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix $var_prefix
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
                         then
@@ -19071,6 +19090,7 @@ fi
                 header_name=infiniband/verbs.h
                 libname=ibverbs
                 function_name=ibv_query_qp
+                var_prefix=IBV
                 version=""
 
                 if test -n "$lib_prefix"
@@ -19160,15 +19180,18 @@ fi
                 then
                         #Insert flags
                         CPPFLAGS="${IBV_CFLAGS} $CPPFLAGS"
-
                         LDFLAGS="${IBV_LIBS} $LDFLAGS"
+
+
+
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
 $as_echo "$as_me: $libname found using pkg-config" >&6;}
                         #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                         check_or_infer_prefix_result="yes"
                 else
-                        __check_or_infer_prefix_include $header_name $inc_prefix
-                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix
+                        __check_or_infer_prefix_include $header_name $inc_prefix $var_prefix
+                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix $var_prefix
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
                         then
@@ -19245,9 +19268,11 @@ else
         as_fn_error $? "You mush activate either Hydra and Slurm (--with-hydra or --with-slurm)" "$LINENO" 5
 fi
 
+MPC_MPIEXEC_HYDRA_PATH="mpiexec.hydra"
+
 if test "x$mpc_slurm_enabled" = "xyes"; then
 
-        MPC_LAUNCHER="Slurm PMI"
+        MPC_LAUNCHER="SLURM"
 
 
 
@@ -19275,6 +19300,7 @@ fi
                 header_name=pmi.h
                 libname=pmi
                 function_name=PMI_Finalize
+                var_prefix=PMI
                 version=""
 
                 if test -n "$lib_prefix"
@@ -19364,15 +19390,18 @@ fi
                 then
                         #Insert flags
                         CPPFLAGS="${PMI_CFLAGS} $CPPFLAGS"
-
                         LDFLAGS="${PMI_LIBS} $LDFLAGS"
+
+
+
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
 $as_echo "$as_me: $libname found using pkg-config" >&6;}
                         #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                         check_or_infer_prefix_result="yes"
                 else
-                        __check_or_infer_prefix_include $header_name $inc_prefix
-                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix
+                        __check_or_infer_prefix_include $header_name $inc_prefix $var_prefix
+                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix $var_prefix
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
                         then
@@ -19445,6 +19474,8 @@ fi
                 as_fn_error $? "Could not locate Hydra's 'mpiexec.hydra' in PATH" "$LINENO" 5
         fi
 
+        MPC_MPIEXEC_HYDRA_PATH=$(which mpiexec.hydra)
+
         # Here we look for hydra only if hydra has not been disabled
         MPC_LAUNCHER="Hydra"
 
@@ -19483,6 +19514,7 @@ else
   HYDRA_CLIENT_LIB_ENABED_TRUE='#'
   HYDRA_CLIENT_LIB_ENABED_FALSE=
 fi
+
 
 
 
@@ -24138,6 +24170,7 @@ fi
                 header_name=extls.h
                 libname=extls
                 function_name=extls_init
+                var_prefix=EXTLS
                 version=""
 
                 if test -n "$lib_prefix"
@@ -24227,15 +24260,18 @@ fi
                 then
                         #Insert flags
                         CPPFLAGS="${EXTLS_CFLAGS} $CPPFLAGS"
-
                         LDFLAGS="${EXTLS_LIBS} $LDFLAGS"
+
+
+
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
 $as_echo "$as_me: $libname found using pkg-config" >&6;}
                         #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                         check_or_infer_prefix_result="yes"
                 else
-                        __check_or_infer_prefix_include $header_name $inc_prefix
-                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix
+                        __check_or_infer_prefix_include $header_name $inc_prefix $var_prefix
+                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix $var_prefix
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
                         then
