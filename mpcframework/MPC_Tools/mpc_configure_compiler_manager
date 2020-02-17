@@ -237,7 +237,7 @@ post_rm_fortran()
 contains()
 {
 	do_contain="no"
-	echo \$1 | grep \$2 2>&1 > /dev/null
+	basename "\$1" | grep \$2 2>&1 > /dev/null
 
 	if test "x\$?" = "x0"; then
 		do_contain="yes"
