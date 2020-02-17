@@ -419,7 +419,9 @@ list_compilers()
 
 get_compilers_in()
 {
-	cat ${COMPILER_FILEPATH}/.\${1}_compilers.cfg 2>/dev/null
+        if test -f \${COMPILER_FILEPATH}/.\${1}_compilers.cfg; then
+	        cat \${COMPILER_FILEPATH}/.\${1}_compilers.cfg
+        fi
 }
 
 get_all_compilers()
