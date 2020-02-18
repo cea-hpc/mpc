@@ -23,8 +23,6 @@
 #include <mpc_config.h>
 
 
-#if defined(MPC_Message_Passing) || defined(MPC_Threads)
-
 #include <string.h>
 #include <ctype.h>
 #include <sys/stat.h>
@@ -477,6 +475,11 @@ static void sctk_def_directory( __UNUSED__ char *arg ) /*   sctk_store_dir = arg
 {
 }
 
+static void ignored_argument ( char *arg )
+{
+
+}
+
 static void sctk_def_task_nb( char *arg )
 {
 	int task_nb = atoi( arg );
@@ -625,6 +628,8 @@ sctk_proceed_arg ( char *word )
 	sctk_add_arg_eq ( "--sctk_use_host", sctk_def_use_host );
 	sctk_add_arg_eq ( "--task-number", sctk_def_task_nb );
 	sctk_add_arg_eq ( "--process-number", sctk_def_process_nb );
+        /* Node NB is always coming from PMI */
+	sctk_add_arg_eq ("--node-number", ignored_argument);
 	sctk_add_arg_eq ( "--share-node", sctk_def_share_node );
 	sctk_add_arg_eq ( "--processor-number", sctk_def_processor_nb );
 	sctk_add_arg_eq ( "--profiling", sctk_set_profiling );
@@ -632,15 +637,13 @@ sctk_proceed_arg ( char *word )
 	sctk_add_arg ( "--checkpoint", sctk_checkpoint );
 	sctk_add_arg( "--use-accl", sctk_def_accl_support );
 
-        sctk_error("%s", word);
-
 	if ( strcmp( word, "--sctk-args-end--" ) == 0 )
 	{
 		return -1;
 	}
 
 	fprintf( stderr, "Argument %s Unknown\n", word );
-	return 0;
+	return 1;
 }
 
 void
@@ -1204,4 +1207,3 @@ int sctk_launch_main ( int argc, char **argv )
 
 #endif /* SCTK_LIB_MODE */
 
-#endif
