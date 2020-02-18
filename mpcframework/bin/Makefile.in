@@ -511,23 +511,14 @@ define Register_FORTRAN_compiler
 	$(bindir)/mpc_compiler_manager --global add fortran $(1);
 endef
 
-# Default configuration file and schema installation
-install-data-local:
-	cp -r $(abs_top_srcdir)/bin/fortran_gen $(pkgdatadir)/
-	cp -r $(abs_top_srcdir)/MPC_MPI/include/mpc_mpi.h $(pkgdatadir)/fortran_gen/
-	install -m 0755 -D $(abs_top_builddir)/bin/mpc_compiler_manager.sh $(bindir)/mpc_compiler_manager
-	$(foreach ccomp,$(MPC_C_COMPILER_LIST), $(call Register_C_compiler, $(ccomp)) )
-	$(foreach cppcomp,$(MPC_CPP_COMPILER_LIST), $(call Register_CPP_compiler, $(cppcomp)) )
-	$(foreach fortrancomp,$(MPC_FORTRAN_COMPILER_LIST), $(call Register_FORTRAN_compiler, $(fortrancomp)) )
-	install -m 0755 -D $(abs_top_builddir)/bin/mpc_cflags $(bindir)/mpc_cflags
-	install -m 0755 -D $(abs_top_builddir)/bin/mpc_ldflags $(bindir)/mpc_ldflags
-	install -m 0755 -D $(abs_top_builddir)/bin/mpc_cc.sh $(bindir)/mpc_cc
-	install -m 0755 -D $(abs_top_builddir)/bin/mpc_cxx.sh $(bindir)/mpc_cxx
-	install -m 0755 -D $(abs_top_builddir)/bin/mpc_f77.sh $(bindir)/mpc_f77
-	install -m 0755 -D $(abs_top_builddir)/bin/mpc_f77.sh $(bindir)/mpc_f90
-	install -m 0755 -D $(abs_top_builddir)/bin/mpc_f77.sh $(bindir)/mpc_f08
+deploy_compilers:
+	$(abs_top_srcdir)/bin/deploy_compilers.sh "$(prefix)" "$(abs_top_builddir)" "$(MPC_C_COMPILER_LIST)" "$(MPC_CPP_COMPILER_LIST)" "$(MPC_FORTRAN_COMPILER_LIST)"
+
+deploy_mpcrun:
 	cp -r $(abs_top_srcdir)/bin/mpcrun_opt $(pkgdatadir)/
 	install -m 0755 -D $(abs_top_builddir)/bin/mpcrun.sh $(bindir)/mpcrun
+
+install-data-local: deploy_compilers deploy_mpcrun
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
