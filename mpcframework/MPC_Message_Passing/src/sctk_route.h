@@ -25,6 +25,7 @@
 
 #include <uthash.h>
 #include <math.h>
+#include <mpc_config.h>
 #include <mpc_common_datastructure.h>
 #include <sctk_rail.h>
 

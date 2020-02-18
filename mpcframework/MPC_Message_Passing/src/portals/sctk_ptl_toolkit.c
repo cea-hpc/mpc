@@ -22,8 +22,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_PORTALS
-
 #include "sctk_route.h"
 #include "sctk_net_tools.h"
 #include "mpc_common_helper.h" /* for MPC_COMMON_MAX_STRING_SIZE */
@@ -35,6 +33,10 @@
 #include "sctk_ptl_cm.h"
 #include "sctk_ptl_toolkit.h"
 #include "sctk_ptl_offcoll.h"
+
+#include <mpc_common_datastructure.h>
+#include <mpc_launch_pmi.h>
+#include <mpc_common_rank.h>
 
 /** global shortcut, where each cell maps to the portals process object */
 sctk_ptl_id_t* ranks_ids_map = NULL;
@@ -177,7 +179,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 					user_ptr->probe.tag  = ((sctk_ptl_matchbits_t)ev.match_bits).data.tag;
 				}
 				/* unlock the polling (if not done by the same thread) */
-				sctk_atomics_store_int(&user_ptr->probe.found, found );
+				OPA_store_int(&user_ptr->probe.found, found );
 				continue;
 			}
 
@@ -333,7 +335,7 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 			rail->rail_number             /* rail ID: PMI tag */
 	);
 	assert(tmp_ret == 0);
-	ranks_ids_map[sctk_get_process_rank()] = srail->id;
+	ranks_ids_map[mpc_common_get_process_rank()] = srail->id;
 
 	/* what are my neighbour ranks ? */
 	right_rank = ( mpc_common_get_process_rank() + 1 ) % mpc_common_get_process_count();
@@ -359,7 +361,7 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 	);
 
 	//if we need an initialization to the left process (bidirectional ring)
-	if(get_process_count() > 2)
+	if(mpc_common_get_process_count() > 2)
 	{
 
 		/* retrieve the left neighbour id struct */
@@ -452,7 +454,7 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t co
  */
 int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_header_t* hdr, int probe_level)
 {
-	sctk_communicator_t comm = hdr->communicator;
+	mpc_lowcomm_communicator_t comm = hdr->communicator;
 	int rank = hdr->source_task;
 	int tag = hdr->message_tag;
 	int ret = -1;
@@ -460,7 +462,7 @@ int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_he
 	sctk_nodebug("PROBE: c%d r%d t%d", comm, rank, tag);
 	
 	sctk_ptl_rail_info_t* prail = &rail->network.ptl;
-	sctk_ptl_pte_t* pte = MPCHT_get(&prail->pt_table, (int)((comm + SCTK_PTL_PTE_HIDDEN_NB) % prail->nb_entries));
+	sctk_ptl_pte_t* pte = mpc_common_hashtable_get(&prail->pt_table, (int)((comm + SCTK_PTL_PTE_HIDDEN_NB) % prail->nb_entries));
 	sctk_ptl_matchbits_t match, ign;
 
 	/* build a temporary ME to match caller criteria */
@@ -490,11 +492,11 @@ int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_he
 	sctk_ptl_local_data_t* data = sctk_ptl_me_create(NULL, sizeof(size_t), SCTK_PTL_ANY_PROCESS, match, ign, SCTK_PTL_ME_PUT_FLAGS);
 
 	/* -1 means "request submitted and not completed yet" */
-	sctk_atomics_store_int(&data->probe.found, -1);
+	OPA_store_int(&data->probe.found, -1);
 	sctk_ptl_me_emit_probe(prail, pte, data, probe_level);
 
 	/* Active polling */
-	while((ret = sctk_atomics_load_int(&data->probe.found)) == -1)
+	while((ret = OPA_load_int(&data->probe.found)) == -1)
 	{
 		sctk_ptl_eqs_poll(rail, 1);
 	}
@@ -549,9 +551,9 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 
 	if(!ranks_ids_map)
 	{
-		ranks_ids_map = sctk_malloc(sctk_get_process_number() * sizeof(sctk_ptl_id_t));
+		ranks_ids_map = sctk_malloc(mpc_common_get_process_count() * sizeof(sctk_ptl_id_t));
 		int i;
-		for(i = 0; i < sctk_get_process_number(); i++)
+		for(i = 0; i < mpc_common_get_process_count(); i++)
 		{
 			ranks_ids_map[i] = SCTK_PTL_ANY_PROCESS;
 		}
@@ -566,5 +568,3 @@ void sctk_ptl_fini_interface(sctk_rail_info_t* rail)
 {
 	UNUSED(rail);
 }
-#endif
-  

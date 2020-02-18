@@ -22,13 +22,13 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_PORTALS
-
 #include "sctk_route.h"
 #include "sctk_ptl_cm.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_types.h"
 #include "sctk_net_tools.h"
+
+#include <mpc_common_rank.h>
 
 /**
  * Free the network-originated 'send' msg.
@@ -73,7 +73,7 @@ static inline void sctk_ptl_cm_recv_message(sctk_rail_info_t* rail, sctk_ptl_eve
 	mpc_lowcomm_ptp_message_header_clear(net_msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS , sctk_ptl_cm_free_memory, sctk_ptl_cm_message_copy);
 	SCTK_MSG_SRC_PROCESS_SET     ( net_msg ,  match.data.rank);
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  match.data.rank);
-	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  sctk_get_process_rank());
+	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  mpc_common_get_process_rank());
 	SCTK_MSG_DEST_TASK_SET       ( net_msg ,  -1);
 	SCTK_MSG_COMMUNICATOR_SET    ( net_msg ,  0);
 	SCTK_MSG_TAG_SET             ( net_msg ,  match.data.tag);
@@ -221,4 +221,3 @@ void sctk_ptl_cm_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			break;
 	}
 }
-#endif

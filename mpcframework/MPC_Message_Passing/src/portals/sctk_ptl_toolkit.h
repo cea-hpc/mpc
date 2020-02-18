@@ -22,7 +22,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_PORTALS
+
 #ifndef SCTK_PTL_TOOLKIT_H_
 #define SCTK_PTL_TOOLKIT_H_
 
@@ -47,5 +47,4 @@ static inline sctk_rail_info_t* sctk_ptl_promote_to_rail(sctk_ptl_rail_info_t* s
         return (sctk_rail_info_t*)(container_of(srail, sctk_rail_info_t, network.ptl));
 }
 
-#endif
 #endif

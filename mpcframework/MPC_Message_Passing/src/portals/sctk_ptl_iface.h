@@ -22,7 +22,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_PORTALS
 #ifndef SCTK_PTL_IFACE_H_
 #define SCTK_PTL_IFACE_H_
 
@@ -452,5 +451,4 @@ static inline void sctk_ptl_compute_chunks(sctk_ptl_rail_info_t* srail, size_t d
 	*nb_out   = nb;
 	*rest_out = (total > 0) ? total % size : 0; /* special care (very rare) where data_sz equals to zero */
 }
-#endif
 #endif

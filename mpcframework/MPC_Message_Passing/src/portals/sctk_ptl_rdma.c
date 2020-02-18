@@ -22,8 +22,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_PORTALS
-
 #include "mpc_lowcomm_types.h"
 #include "sctk_route.h"
 #include "sctk_ptl_rdma.h"
@@ -687,5 +685,3 @@ void sctk_ptl_rdma_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			break;
 	}
 }
-
-#endif

@@ -659,6 +659,9 @@
 /* Infiniband support is enabled */
 #undef MPC_USE_INFINIBAND
 
+/* Portals support is enabled */
+#undef MPC_USE_PORTALS
+
 /* Slurm PMI will be used to launch parallel programs */
 #undef MPC_USE_SLURM
 

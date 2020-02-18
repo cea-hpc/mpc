@@ -82,6 +82,7 @@ __check_or_infer_prefix_include()
         provided_prefix=$2
         var_prefix=$3
 
+
         for pref in $provided_prefix $prefix_candidate_path
         do
                 for suffix in $prefix_candidate_sub_include_path
@@ -142,7 +143,7 @@ __check_or_infer_prefix_lib()
 
                         OLD_LDFLAGS=$LDFLAGS
 
-                        LDFLAGS="-L$pref/$suffix -l$1 $LDFLAGS"
+                        LDFLAGS=" -L$pref/$suffix/ -Wl,-rpath=$pref/$suffix/ -l$1 $LDFLAGS"
 
                         ___unset_lib_cache
                         AC_CHECK_LIB($looked_up_lib, $looked_up_function, [lib_found=1], [lib_found=0])
@@ -175,13 +176,14 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                 AC_ARG_WITH([$2],
                 [AS_HELP_STRING([--with-$2],
                                 [Provide prefix for $2])],
-                [prefix=$withval],[])
+                [whole_prefix=$withval],[whole_prefix="/usr/"])
 
+                inc_prefix=""
                 AC_ARG_WITH([$2-include],
                 [AS_HELP_STRING([--with-$2-inc],
                                 [Provide include path for $2])],
                 [inc_prefix=$withval],[])
-
+                lib_prefix=""
                 AC_ARG_WITH([$2-libs],
                 [AS_HELP_STRING([--with-$2-libs],
                                 [Provide library path for $2])],
@@ -194,15 +196,17 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                 var_prefix=$4
                 version="$5"
 
-                if test -n "$lib_prefix"
+                if test -z "$lib_prefix"
                 then
-                        lib_prefix=$prefix
+                        lib_prefix=$whole_prefix
                 fi
 
-                if test -n "$inc_prefix"
+                if test -z "$inc_prefix"
                 then
-                        inc_prefix=$prefix
+                        inc_prefix=$whole_prefix
                 fi
+
+                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
                 PKG_CHECK_MODULES([$4], [$libname $version], [pkg_found=1], [pkg_found=0])
@@ -220,8 +224,8 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                         #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                         check_or_infer_prefix_result="yes"
                 else
-                        __check_or_infer_prefix_include $header_name $inc_prefix $var_prefix
-                        __check_or_infer_prefix_lib $libname $function_name $lib_prefix $var_prefix
+                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
                         then
@@ -303,6 +307,27 @@ else
 fi
 
 AM_CONDITIONAL([INFINIBAND_DRIVER_ENABLED], [test "x$infiniband_enabled" = "xyes"])
+
+#
+# Detect Portals4
+#
+
+portals4_enabled="no"
+
+MPC_DETECT_DEPENDENCY([portals4.h], [portals], [PtlGet], [PORTALS])
+
+AC_MSG_CHECKING([Checking for PORTALS4 to enable portals support])
+
+if test "x$mpc_dep_found" = "xyes"; then
+        AC_MSG_RESULT([yes])
+        MPC_NETWORK_LIST="$MPC_NETWORK_LIST portals4"
+        AC_DEFINE([MPC_USE_PORTALS], [1], [Portals support is enabled])
+        portals4_enabled="yes"
+else
+        AC_MSG_RESULT([no])
+fi
+
+AM_CONDITIONAL([PORTALS4_DRIVER_ENABLED], [test "x$portals4_enabled" = "xyes"])
 
 AC_SUBST([MPC_NETWORK_LIST])
 

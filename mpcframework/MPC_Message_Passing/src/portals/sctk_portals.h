@@ -22,7 +22,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_PORTALS
 #ifndef __SCTK_PORTALS_H_
 #define __SCTK_PORTALS_H_
 #ifdef __cplusplus
@@ -38,6 +37,5 @@ void sctk_network_finalize_ptl ( struct sctk_rail_info_s *rail);
 
 #ifdef __cplusplus
 }
-#endif
 #endif
 #endif

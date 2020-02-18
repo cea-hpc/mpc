@@ -22,11 +22,12 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_PORTALS
 #include "sctk_route.h"
 #include "sctk_ptl_rdv.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_net_tools.h"
+
+#include <mpc_common_rank.h>
 
 /** see sctk_portals.c */
 extern sctk_ptl_id_t* ranks_ids_map;
@@ -37,7 +38,7 @@ extern sctk_ptl_id_t* ranks_ids_map;
  */
 void sctk_ptl_rdv_free_memory(void* msg)
 {
-	sctk_ptl_me_free(((sctk_thread_ptp_message_t*)msg)->tail.ptl.user_ptr, 1);
+	sctk_ptl_me_free(((mpc_lowcomm_ptp_message_t*)msg)->tail.ptl.user_ptr, 1);
 	sctk_free(msg);
 	/*not_implemented();*/
 }
@@ -156,7 +157,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	cur_off = 0;
 	sctk_ptl_matchbits_t md_match = get_request->match;
 	SCTK_PTL_TYPE_RDV_SET(md_match.data.type);
-	md_match.data.rank = sctk_get_process_rank();
+	md_match.data.rank = mpc_common_get_process_rank();
 	for (chunk = 0; chunk < chunk_nb; ++chunk) 
 	{
 		/* if the should take '+1' to compensate non-distributed bytes */
@@ -202,8 +203,8 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	mpc_lowcomm_ptp_message_header_clear(net_msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS , sctk_ptl_rdv_free_memory, sctk_ptl_rdv_message_copy);
 	SCTK_MSG_SRC_PROCESS_SET     ( net_msg ,  ptr->match.data.rank);
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  ptr->match.data.rank);
-	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  sctk_get_process_rank());
-	SCTK_MSG_DEST_TASK_SET       ( net_msg ,  sctk_get_process_rank());
+	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  mpc_common_get_process_rank());
+	SCTK_MSG_DEST_TASK_SET       ( net_msg ,  mpc_common_get_process_rank());
 	SCTK_MSG_COMMUNICATOR_SET    ( net_msg ,  SCTK_MSG_COMMUNICATOR(recv_msg));
 	SCTK_MSG_TAG_SET             ( net_msg ,  ptr->match.data.tag);
 	SCTK_MSG_NUMBER_SET          ( net_msg ,  ptr->msg_seq_nb);
@@ -495,5 +496,3 @@ void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			break;
 	}
 }
-
-#endif

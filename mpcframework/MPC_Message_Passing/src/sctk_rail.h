@@ -23,6 +23,7 @@
 #define SCTK_RAIL_H
 
 #include <comm.h>
+#include <mpc_config.h>
 #include <mpc_runtime_config.h>
 #include <mpc_topology_device.h>
 #include "sctk_topological_polling.h"

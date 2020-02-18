@@ -22,12 +22,11 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_PORTALS
 #include <limits.h>
 #include "sctk_debug.h"
 #include "sctk_alloc.h"
 #include "mpc_common_helper.h"
-#include "sctk_atomics.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_types.h"
 #include "mpc_common_datastructure.h"
@@ -538,7 +537,7 @@ void sctk_ptl_me_free(sctk_ptl_local_data_t* request, int free_buffer)
 		if(request->list == SCTK_PTL_PRIORITY_LIST)
 			sctk_free(request->slot.me.start);
 		else
-			sctk_free((char*)request->slot.me.start - sizeof(sctk_atomics_ptr));
+			sctk_free((char*)request->slot.me.start - sizeof(OPA_ptr_t));
 	}
 	sctk_free(request);
 }
@@ -1026,5 +1025,3 @@ int sctk_ptl_emit_trig_cnt_set(sctk_ptl_cnth_t target_cnt, size_t val, sctk_ptl_
 
 	return PTL_OK;
 }
-
-#endif

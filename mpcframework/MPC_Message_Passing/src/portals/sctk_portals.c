@@ -22,13 +22,14 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_PORTALS
 #include <sctk_debug.h>
 #include "sctk_rail.h"
 #include "sctk_ptl_toolkit.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_rdma.h"
 #include "sctk_route.h"
+
+#include <mpc_common_rank.h>
 
 static volatile short rail_is_ready = 0;
 
@@ -249,7 +250,7 @@ static void sctk_network_connect_from_ptl( int from, int to, sctk_rail_info_t * 
  */
 void sctk_network_init_ptl (sctk_rail_info_t *rail)
 {
-	if(sctk_rail_count() > 1 && sctk_get_process_rank() == 0)
+	if(sctk_rail_count() > 1 && mpc_common_get_process_rank() == 0)
 	{
 		sctk_warning("This Portals 4 process-based driver is not suited for multi-rail usage.");
 		sctk_warning("Please do not consider using more than one rail to avoid memory leaks.");
@@ -295,7 +296,5 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 		sctk_ptl_create_ring( rail );
 
 	rail_is_ready = 1;
-	sctk_info("rank %d mapped to Portals ID (nid/pid): %llu/%llu", sctk_get_process_rank(), rail->network.ptl.id.phys.nid, rail->network.ptl.id.phys.pid);
+	sctk_info("rank %d mapped to Portals ID (nid/pid): %llu/%llu", mpc_common_get_process_rank(), rail->network.ptl.id.phys.nid, rail->network.ptl.id.phys.pid);
 }
-
-#endif

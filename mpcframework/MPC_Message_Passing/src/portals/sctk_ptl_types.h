@@ -22,7 +22,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_PORTALS
 #ifndef SCTK_PTL_TYPES_H_
 #define SCTK_PTL_TYPES_H_
 
@@ -282,7 +281,7 @@ union sctk_ptl_slot_h_u
 /* data used to make information persistent between posted probing request & notification */
 typedef struct sctk_ptl_probing_data_s
 {
-	sctk_atomics_int found; /**< does the probing successful ? */
+	OPA_int_t found; /**< does the probing successful ? */
 	size_t size;            /**< if so, size of the message */
 	int rank;               /**< if so, rank of the remote */
 	int tag;                /**< if so, tag of the message */
@@ -304,7 +303,6 @@ typedef struct sctk_ptl_local_data_s
 	sctk_ptl_mtype_t type;          /**< request type */
 	sctk_ptl_probing_data_t probe;  /**< related to probing */
 	sctk_ptl_matchbits_t match;     /**< request match bits (RDV-spec) */
-	sctk_atomics_int cnt_frag;      /**< number of chunks before being released (RDV-spec) */
 	size_t req_sz;                  /**< message size intented to be retrieved (RDV spec) */
 	
 } sctk_ptl_local_data_t;
@@ -425,5 +423,4 @@ typedef struct sctk_ptl_rail_info_s
 } sctk_ptl_rail_info_t;
 
 
-#endif
 #endif

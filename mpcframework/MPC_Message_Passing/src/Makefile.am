@@ -11,11 +11,13 @@ if INFINIBAND_DRIVER_ENABLED
 AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Message_Passing/src/ib/
 endif
 
+if PORTALS4_DRIVER_ENABLED
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Message_Passing/src/portals/
+endif
+
 if MPC_THREAD_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Threads/src/ -I$(abs_top_srcdir)/MPC_Threads/include/ -I$(abs_top_srcdir)/MPC_Topology/include/
 endif
-
-
 
 lib_LTLIBRARIES = libmpclowcomm.la
 
@@ -36,5 +38,12 @@ libmpclowcomm_la_SOURCES += ./ib/sctk_ib_mmu.c ./ib/sctk_ib_mpi.c ./ib/sctk_ib_p
 libmpclowcomm_la_SOURCES += ./ib/sctk_ib_qp.c ./ib/sctk_ib_rdma.c ./ib/sctk_ib_toolkit.c ./ib/sctk_ib_topology.c
 libmpclowcomm_la_SOURCES += ./ib/sctk_ibufs.c ./ib/sctk_ibufs_rdma.c
 endif
+
+if PORTALS4_DRIVER_ENABLED
+libmpclowcomm_la_SOURCES += ./portals/sctk_portals.c ./portals/sctk_ptl_cm.c ./portals/sctk_ptl_eager.c
+libmpclowcomm_la_SOURCES += ./portals/sctk_ptl_iface.c ./portals/sctk_ptl_offcoll.c ./portals/sctk_ptl_rdma.c
+libmpclowcomm_la_SOURCES += ./portals/sctk_ptl_rdv.c ./portals/sctk_ptl_toolkit.c
+endif
+
 
 libmpclowcomm_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la  -lpthread -lrt

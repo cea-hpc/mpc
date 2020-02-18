@@ -22,8 +22,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_PORTALS
-
 #ifndef SCTK_PTL_OFFCOLL_H_
 #define SCTK_PTL_OFFCOLL_H_
 
@@ -57,4 +55,3 @@ int ptl_offcoll_bcast(int comm_idx, int rank, int size, void* buf, size_t bytes,
 int ptl_offcoll_enabled();
 
 #endif /* SCTK_PTL_OFFCOLL_H_ */
-#endif /* MPC_USE_PORTALS */

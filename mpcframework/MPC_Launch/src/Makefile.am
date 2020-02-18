@@ -21,6 +21,11 @@ if INFINIBAND_DRIVER_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Message_Passing/src/ib/
 endif
 
+if PORTALS4_DRIVER_ENABLED
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/MPC_Message_Passing/src/portals/
+endif
+
+
 mpc_headerdir=$(includedir)/mpc/
 
 noinst_LTLIBRARIES = libmpclaunch.la

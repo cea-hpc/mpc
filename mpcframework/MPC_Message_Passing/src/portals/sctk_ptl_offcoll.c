@@ -22,12 +22,12 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_PORTALS
-
 #include "sctk_alloc.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_toolkit.h"
 #include "sctk_ptl_offcoll.h"
+#include "sctk_communicator.h"
+
 //#include "comm.h"
 
 #define COLL_ARITY 2
@@ -745,6 +745,3 @@ int ptl_offcoll_reduce()
 	not_implemented();
 	return 0;
 }
-
-
-#endif

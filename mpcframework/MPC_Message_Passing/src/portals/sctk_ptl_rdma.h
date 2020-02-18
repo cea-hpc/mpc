@@ -22,7 +22,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_PORTALS
 #ifndef __SCTK_PTL_RDMA_H_
 #define __SCTK_PTL_RDMA_H_
 
@@ -60,4 +59,3 @@ void sctk_ptl_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin
 void sctk_ptl_rdma_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev);
 void sctk_ptl_rdma_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev);
 #endif /* ifndef __SCTK_PTL_RDMA_H_ */
-#endif
