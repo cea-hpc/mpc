@@ -474,7 +474,7 @@ sctk_thread_data_t *sctk_thread_data_get ()
  ****************/
 
 volatile sctk_timer_t ___timer_thread_ticks = 0;
-volatile int ___timer_thread_running = 0;
+volatile int ___timer_thread_running = 1;
 
 static void *___timer_thread_main ( void *arg )
 {
@@ -493,7 +493,6 @@ static void *___timer_thread_main ( void *arg )
 
 void __timer_thread_start( void )
 {
-	___timer_thread_running = 1;
 	/* Create the timer thread */
 	kthread_t timer_thread;
 	kthread_create ( &timer_thread, ___timer_thread_main, NULL );
