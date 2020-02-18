@@ -1,0 +1,370 @@
+#!/bin/sh
+
+MPC_INSTALL_PREFIX=@prefix@
+
+die()
+{
+	printf "Error: $@\n" 1>&2
+	exit 2
+}
+
+#used to override option w/ compiler specific when option has been provided
+# $1: var name
+# $2: compiler-specific option
+override_var_if_isset()
+{
+	content="`eval echo "$"${1}`"
+	if [ ! -z "${content}" ]
+	then
+		content="${2}"
+	else
+		content=""
+	fi
+
+	eval "${1}=${content}"
+}
+
+print_if_stdout()
+{
+    >&2 printf "$@"
+}
+
+#Used by nvcc to automatically blacklist some var patterns
+preprocess_main()
+{
+echo ""
+}
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - PERACHE Marc marc.perache@cea.fr                                 #
+#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+#                                                                      #
+########################################################################
+FFLAGS=
+MPC_COMPILER_CFLAGS=""
+MPC_MANAGER=${MPC_INSTALL_PREFIX}/bin/mpc_compiler_manager
+HOME_FILEPATH=${MPC_INSTALL_PREFIX}
+
+CC="`$MPC_MANAGER get cxx 1`"
+
+if test "$MPC_MAKEFILE" != "" ; then 
+LIB_PATH=""
+fi
+config_temp=`$MPC_MANAGER config-path`
+if test -r $config_temp; then
+	HOME_FILEPATH=$config_temp
+fi
+
+# This variable is updated to 'echo' when '-show' is active
+Show=eval
+
+# Do we have to link eventually?
+linking=yes
+
+# Are we using the pre-processor ? default to NO until seeing -E
+preprocessor=no
+
+# All args concerning the compiling process (w/out mpc_cc-related options)
+allargs=""
+
+# Name of the output filename if the option '-o' is set
+output_filename=""
+output_file=""
+next_arg_is_output=no
+OUTPUT_FILE_ARGS=""
+PRIV_FLAG="-fmpc-privatize"
+EXTRA_ADDON_FLAGS=""
+unset MPC_DISABLE_TLS_OPT
+NO_TLS_OPT=0
+MPC_HEADER_INCLUDE="-include mpc_main.h"
+OMP_FLAG=""
+for arg in "$@" ; do
+    # Set addarg to no if this arg should be ignored by the C compiler
+    addarg=yes
+    qarg=$arg
+
+    if [ $next_arg_is_output = yes ] ; then
+      output_filename=$qarg
+      next_arg_is_output=no
+      OUTPUT_FILE_ARGS="-o $qarg"
+
+#       allargs="$allargs $qarg"
+      continue
+    fi
+
+    case $arg in
+        # ----------------------------------------------------------------
+        # Compiler options that affect whether we are linking or not
+    -E)
+    preprocessor=yes
+    linking=no
+    ;;
+    -c|-S|-M|-MM)
+    # The compiler links by default
+    linking=no
+    ;;
+
+    -cc=*)
+    CC=`echo A$arg | sed -e 's/^A-cc=//g'`
+	CC=`which ${CC} || echo ${CC}`
+    addarg=no
+    MPC_COMPILER_CFLAGS=""
+    ;;
+
+    -o)
+    next_arg_is_output=yes
+    addarg=no
+    ;;
+
+    -threads)
+    CFLAGS="$CFLAGS -threads"
+    ;;
+--showme:link)
+SHOW_LINK="1"
+SHOW_ARGS="1"
+		addarg=no
+;;
+--showme:compile)
+SHOW_COMPILE="1"
+SHOW_ARGS="1"
+		addarg=no
+;;
+--showme:command)
+SHOW_COMMAND="1"
+SHOW_ARGS="1"
+		addarg=no
+;;
+--use:command)
+USE_COMMAND="1"
+		addarg=no
+;;
+	-fmpc-privatize|-fmpcprivatize|-f-mpc-privatize)
+		PRIV_FLAG="$arg"
+    	addarg=no
+	;;
+	-fno-mpc-privatize|-fno-mpc-privatize|-fnompc-privatize|-fnompcprivatize)
+		PRIV_FLAG=""
+		addarg=no
+	;;
+	-fno-mpc-plugin)
+		unset MPC_DYN_PRIV_ENABLED
+		addarg=no
+	;;
+	-fmpc-dyninsert|-fmpc-dyn-insert)
+		export MPC_DYN_INSERT=1
+		addarg=no
+	;;
+	-fmpc-notlsopt|-fmpc-no-tlsopt)
+		NO_TLS_OPT=1
+		addarg=no
+	;;
+	-fmpc-include)
+		#nothing to do, if not fortran, '-include mpc_main.h' is automatically forwarded
+		#This is due to order : '-include' should be set after sources files
+		MPC_HEADER_INCLUDE="${MPC_HEADER_INCLUDE} -include mpc_main.h"
+		addarg=no
+	;;
+	-fno-mpc-include)
+		MPC_HEADER_INCLUDE=""
+		addarg=no
+	;;
+	-fopenmp|-openmp)
+		OMP_FLAG="$arg"
+		addarg=no
+	;;
+	-fno-openmp|-fnoopenmp|-no-openmp|-noopenmp)
+		OMP_FLAG=""
+		addarg=no
+	;;
+	-compilers|--compilers)
+		content="`$MPC_MANAGER list 2>&1`"
+		print_if_stdout "$content\n"
+		exit 0
+		;;
+	-cuda)
+		EXTRA_ADDON_FLAGS="-L${MPC_INSTALL_PREFIX}/lib/stubs -Wl,-rpath=${MPC_INSTALL_PREFIX}/lib/stubs -lmpc_cuda_addon -Wl,--unresolved-symbols=ignore-in-shared-libs"
+		addarg=no
+	;;
+
+    -show)
+    addarg=no
+    Show=echo
+    ;;
+
+    # Verbose mode
+    -v)
+    # Pass this argument to the pre-compiler/compiler as well.
+    echo "mpc_cc for $MPC_VERSION"
+    ;;
+
+    # Help
+    -help)
+    ;;
+
+    *)
+	qarg="'$arg'"
+    ;;
+
+    esac
+
+    # Update compiler arguments
+    if [ $addarg = yes ] ; then
+        # Thanks to Bernd Mohr for the following that handles quotes and spaces (see configure for explanation)
+        modarg=`echo "x$arg" | sed -e 's/^x//' -e 's/"/\\\"/g' -e s,\',%@%\',g -e 's/%@%/\\\/g' -e 's/ /\\\ /g' -e 's#(#\\\(#g' -e 's#)#\\\)#g'`
+        allargs="$allargs $modarg"
+    fi
+done
+
+if test "$USE_COMMAND" = "1"; then 
+MPC_HEADER_INCLUDE=""
+PRIV_FLAG=""
+fi
+
+#When using the preprocessor do not include files
+if test "$preprocessor" = "yes"; then
+	MPC_HEADER_INCLUDE=""
+fi
+
+allargs="${allargs} ${MPC_HEADER_INCLUDE}"
+is_defined="`$MPC_MANAGER get_detail cxx ${CC}`"
+
+#if CC is not present in MPC compiler configuration file
+if test -z "${is_defined}";
+then
+        if test "0" = "1" ; then 
+                PRIV_FLAG=""
+        else
+		print_if_stdout "Warning: ${CC} not known: Adding it\n"
+		${MPC_INSTALL_PREFIX}/bin/mpc_compiler_manager add cxx "${CC}" > /dev/null
+		test "x$?" != "x0" && die "Unable to add $CC (because of errors above). Stop."
+		is_defined="`$MPC_MANAGER get_detail cxx ${CC}`"
+        fi
+fi
+
+CC_FAMILY="`echo ${is_defined} | cut -d":" -f1`"
+CC_PRIV="`echo ${is_defined} | cut -d":" -f2`"
+CC="`echo ${is_defined} | cut -d":" -f3`"
+CC_HASH="`echo ${is_defined} | cut -d":" -f4`"
+
+#if CC does not support privatization and user provides privatization option
+if test -n "${PRIV_FLAG}" -a -z "${CC_PRIV}";
+then
+if test "0" != "1" ; then 
+	print_if_stdout "Warning: '${CC}' does not support privatization. Disabling it.\n"
+	print_if_stdout "Warning: Do not consider using this compiler in thread-based mode.\n"
+fi
+	PRIV_FLAG=""
+else
+	#handle compiler-specific options depending on compiler family
+	case ${CC_FAMILY} in
+		INTEL)
+			override_var_if_isset 'PRIV_FLAG' '-mSYMTAB_mpc_privatize'
+			override_var_if_isset 'OMP_FLAG' '-qopenmp'
+        		FFLAGS="${FFLAGS} -threads -recursive"
+			MPC_USE_INTEL_COMPILER="1"
+			export MPC_USE_INTEL_COMPILER
+			;;
+		GNU)
+		if test -e "${MPC_INSTALL_PREFIX}/lib/libmpcgetopt.a"; 
+		then
+			MPC_HEADER_INCLUDE="${MPC_HEADER_INCLUDE} -include ${MPC_INSTALL_PREFIX}/include/getopt.h"
+		fi
+			override_var_if_isset 'PRIV_FLAG' '-fmpc-privatize'
+			override_var_if_isset 'OMP_FLAG' '-fopenmp'
+			;;
+		*)
+			#Nothing to do, vars set by user option
+			;;
+	esac
+fi
+
+#Do we need to disable TLS optimizations ?
+if test "x${NO_TLS_OPT}" = "x1"; then
+	echo "INFO : TLS optimization disabled" 1>&2
+	export MPC_DISABLE_TLS_OPT=1
+fi
+
+#we need to add -DMPC_PRIVATIZED when privatisation is enabled in order to compile deps (like getopt...)
+if test ! -z "${PRIV_FLAG}";
+then
+	CC_HASH="$CC_HASH/priv"
+	PRIV_FLAG="${PRIV_FLAG} -DMPC_PRIVATIZED"
+else
+	#Without privatization the plugin is useless
+	LIBPRIV_FLAG=""
+	CC_HASH="$CC_HASH/npriv"
+fi
+
+#Here we prepend the path which is normally postpended in order
+#to override binutils during the compilation
+export PATH=${MPC_INSTALL_PREFIX}/bin/:${PATH}
+
+#Used to avoid header global variable privatization when libraries are not privatized
+#mpcmp.h and mpcmicrothread.h have been recopied from GCC patch
+MPC_UNPRIVATIZED_FILES="${MPC_UNPRIVATIZED_FILES}:mpcmp.h:mpcmicrothread.h:ompt.h:"
+MPC_UNPRIVATIZED_VARS="${MPC_UNPRIVATIZED_VARS}:`preprocess_main`"
+
+custompath=""
+
+export MPC_UNPRIVATIZED_FILES
+export MPC_UNPRIVATIZED_VARS
+
+#first definition of compiler & linking flags
+CFLAGS="`${MPC_INSTALL_PREFIX}/bin/mpc_cflags cxx $custompath`"
+LDFLAGS="`${MPC_INSTALL_PREFIX}/bin/mpc_ldflags cxx $custompath`"
+LDFLAGS="$EXTRA_ADDON_FLAGS $LDFLAGS"
+
+
+#override flags when patched binutils are used
+LDFLAGS="${LDFLAGS} -B${MPC_INSTALL_PREFIX}/bin"
+#used to append compiler-specific flags
+CFLAGS="$CFLAGS ${PRIV_FLAG} ${OMP_FLAG} $MPC_COMPILER_CFLAGS ${LIBPRIV_FLAG}"
+CFLAGS_FORTRAN_START="${PRIV_FLAG} $MPC_COMPILER_CFLAGS ${LIBPRIV_FLAG}"
+LDFLAGS="${LDFLAGS}"
+
+if [ "$linking" = yes ] ; then
+if test "$SHOW_ARGS" = "1" ; then 
+if test "$SHOW_COMPILE" = "1"; then 
+echo $CFLAGS
+fi 
+if test "$SHOW_LINK" = "1"; then 
+echo $LIB_PATH $LDFLAGS
+fi 
+if test "$SHOW_COMMAND" = "1"; then 
+echo $CC
+fi 
+else
+if test "$USE_COMMAND" = "1"; then 
+LIB_PATH=""
+LDFLAGS=""
+CFLAGS=""
+fi 
+    $Show $CC $LIB_PATH $LDFLAGS $CFLAGS $allargs $LDFLAGS ${OUTPUT_FILE_ARGS} 
+fi
+    # The first $LDFLAGS should be removed, but still some issues... 
+    # $Show $CC $LIB_PATH $CFLAGS $allargs $LDFLAGS ${OUTPUT_FILE_ARGS} 
+    rc=$?
+else
+    $Show $CC $CFLAGS $allargs ${OUTPUT_FILE_ARGS}
+    rc=$?
+fi
+
+
+exit $rc
+
