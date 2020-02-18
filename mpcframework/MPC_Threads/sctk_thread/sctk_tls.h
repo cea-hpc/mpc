@@ -224,6 +224,7 @@ extern "C"
   void sctk_tls_dtors_init(struct sctk_tls_dtors_s ** head);
   void sctk_tls_dtors_add(struct sctk_tls_dtors_s ** head, void * obj, void (*func)(void *));
   void sctk_tls_dtors_free(struct sctk_tls_dtors_s **head);
+  void* sctk_get_ctx_addr(void); /* to be visible from launch.c */
 
 #ifdef __cplusplus
 }

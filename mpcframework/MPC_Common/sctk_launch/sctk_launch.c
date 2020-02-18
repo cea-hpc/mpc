@@ -309,6 +309,7 @@ static void sctk_perform_initialisation (void)
 	sctk_topology_init ();
 #if defined (MPC_USE_EXTLS) && !defined(MPC_DISABLE_HLS)
 	extls_hls_topology_construct();	
+
 #endif
 
 #ifdef MPC_Accelerators
@@ -1180,6 +1181,7 @@ int sctk_launch_main (int argc, char **argv)
 
 #ifdef MPC_USE_EXTLS
 	extls_init();
+	extls_set_context_storage_addr((void*(*)(void))sctk_get_ctx_addr);
 #endif
 	/* MPC_MAKE_FORTRAN_INTERFACE is set when compiling fortran headers.
 	 * To check why ? */

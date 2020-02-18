@@ -160,7 +160,6 @@ tls_start_routine (void *arg)
   void *res;
   tmp = arg;
 #if defined(MPC_USE_EXTLS)
-  /**((extls_ctx_t**)extls_get_context_storage_addr()) = tmp->tls;*/
   extls_ctx_restore((extls_ctx_t *)tmp->tls);
 #endif
 
@@ -180,7 +179,7 @@ init_tls_start_routine_arg (void *(*start_routine) (void *), void *arg)
   tmp->start_routine = start_routine;
 #ifdef MPC_USE_EXTLS
   extls_ctx_t *ctx = sctk_calloc(1, sizeof(extls_ctx_t));
-  extls_ctx_herit(*((extls_ctx_t**)extls_get_context_storage_addr()), ctx, LEVEL_THREAD);
+  extls_ctx_herit(*((extls_ctx_t**)sctk_get_ctx_addr()), ctx, LEVEL_THREAD);
   tmp->tls = (void*)ctx;
 #endif
   return tmp;

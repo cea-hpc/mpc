@@ -49,7 +49,7 @@
 
 #if defined(SCTK_USE_TLS)
 /** storage slot used by libextls to store its own data.
- * The address of this TLS is provided by extls_get_context_storage_addr()
+ * The address of this TLS is provided by sctk_get_ctx_addr()
  */
 __thread void* sctk_extls_storage = NULL;
 __thread int __mpc_task_rank = -2;
@@ -118,7 +118,7 @@ int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
  * (__thread level storage duration)
  * @returns the address to the dedicated memory space.
  */
-inline void* extls_get_context_storage_addr(void)
+void* sctk_get_ctx_addr(void)
 {
 	return (void*)&sctk_extls_storage;
 }

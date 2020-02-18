@@ -272,6 +272,7 @@ int sctk_get_logical_from_os_compute_node_topology(unsigned int cpu_os);
 
 /* Get the os index from the logical one from the topology_compute_node */
 int sctk_get_cpu_compute_node_topology_from_logical( int logical_pu);
+
 #ifdef __cplusplus
 }
 #endif

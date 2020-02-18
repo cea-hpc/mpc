@@ -38,6 +38,10 @@
 #include "sctk_pmi.h"
 #endif
 
+#ifdef MPC_USE_EXTLS
+#include <extls.h>
+#endif
+
 #include <dirent.h>
 
 #include <stdio.h>
@@ -1284,8 +1288,8 @@ uname (struct utsname *buf)
 
 #endif
 
-typedef hwloc_topology_t extls_topo_t;
-extls_topo_t* extls_get_topology_addr()
+/* libextls requirement */
+hwloc_topology_t* sctk_get_topology_addr(void)
 {
 	return &topology;
 }
@@ -1807,6 +1811,10 @@ void sctk_topology_init ()
 	#endif
 
 	uname (&utsname);
+
+#ifdef MPC_USE_EXTLS && !defined(MPC_DISABLE_HLS)
+	extls_set_topology_addr((void*(*)(void))sctk_get_topology_addr);
+#endif
 
 	if (!hwloc_bitmap_iszero(pin_processor_bitmap))
 	{
