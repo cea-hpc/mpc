@@ -2818,7 +2818,7 @@ void mpc_lowcomm_libmode_release()
 	mpc_lowcomm_barrier( SCTK_COMM_WORLD );
 }
 
-static void __lowcomm_init()
+static void __lowcomm_init_per_task()
 {
         int task_rank = mpc_common_get_task_rank();
 
@@ -2831,7 +2831,6 @@ static void __lowcomm_init()
 
 
 		mpc_lowcomm_init_per_task( task_rank );
-		sctk_net_init_task_level( task_rank, sctk_thread_get_vp() );
 
 #ifdef MPC_USE_INFINIBAND
 		sctk_ib_prof_init_reference_clock();
@@ -2862,6 +2861,31 @@ static void __lowcomm_release()
 	}
 }
 
+static void __initialize_drivers()
+{
+	if ( mpc_common_get_process_count() > 1 )
+	{
+#ifdef MPC_USE_INFINIBAND
+		if ( !mpc_common_get_flags()->network_driver_name && !sctk_ib_device_found() )
+		{
+			if ( !mpc_common_get_process_rank() )
+			{
+				sctk_info( "Could not locate an IB device, fallback to TCP" );
+			}
+
+			mpc_common_get_flags()->network_driver_name = "tcp";
+		}
+#endif
+		sctk_net_init_driver(mpc_common_get_flags()->network_driver_name);
+	}
+
+	mpc_lowcomm_rdma_window_init_ht();
+
+	mpc_lowcomm_coll_init_hook = *( void ** )( &sctk_runtime_config_get()->modules.inter_thread_comm.collectives_init_hook.value );
+	sctk_communicator_world_init ( mpc_common_get_flags()->task_number );
+	sctk_communicator_self_init ();
+}
+
 
 void mpc_lowcomm_registration() __attribute__((constructor));
 
@@ -2869,9 +2893,11 @@ void mpc_lowcomm_registration()
 {
         MPC_INIT_CALL_ONLY_ONCE
 
+        mpc_common_init_callback_register("Base Runtime Init Done", "LowComm Init", __initialize_drivers, 16);
+
         mpc_common_init_callback_register("After Ending VPs", "Block sigpipe", mpc_common_helper_ignore_sigpipe, 0);
 
-        mpc_common_init_callback_register("VP Thread Start", "MPC Message Passing Init", __lowcomm_init, 0);
+        mpc_common_init_callback_register("VP Thread Start", "MPC Message Passing Init per Task", __lowcomm_init_per_task, 0);
 
         mpc_common_init_callback_register("VP Thread End", "MPC Message Passing Release", __lowcomm_release, 0);
 }

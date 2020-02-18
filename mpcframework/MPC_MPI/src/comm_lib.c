@@ -5039,6 +5039,8 @@ static void __init_basic_checks()
 	sctk_size_checking_eq( SCTK_COMM_SELF, SCTK_COMM_SELF, "SCTK_COMM_SELF",  "SCTK_COMM_SELF", __FILE__, __LINE__ );
 
 	sctk_check_equal_types(mpc_lowcomm_msg_count_t, unsigned int );
+
+	sctk_net_init_task_level ( mpc_common_get_process_rank(), 0 );
 }
 
 static void __init_buffering()

@@ -1454,6 +1454,7 @@ extern "C"
     /** ** **/
     sctk_init_idle_thread_dbg (th_data, __sctk_ethread_idle_task) ;
     /** **/
+
     while (___timer_thread_running)
       {
 	__sctk_grab_zombie (vp);

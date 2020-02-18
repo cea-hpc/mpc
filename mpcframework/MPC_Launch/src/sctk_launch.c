@@ -33,9 +33,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <mpc_runtime_config.h>
-#ifdef MPC_Message_Passing
-#include <sctk_communicator.h>
-#endif
+
 #include <mpc_common_flags.h>
 #include <mpc_common_helper.h>
 
@@ -50,14 +48,6 @@
 #include "sctk_launch.h"
 #include "sctk_debug.h"
 #include "mpc_common_asm.h"
-
-#ifdef MPC_Message_Passing
-	#include "comm.h"
-	#include "sctk_low_level_comm.h"
-	#ifdef MPC_USE_INFINIBAND
-		#include <sctk_ib_cp.h>
-	#endif /* MPC_USE_INFINIBAND */
-#endif /* MPC_Message_Passing */
 
 
 #include "mpc_topology.h"
@@ -204,8 +194,7 @@ static int sctk_processor_nb_val;
 
 
 static char *sctk_launcher_mode;
-/* Name of the inter-process driver to use. NULL means default driver */
-static char *sctk_network_driver_name = NULL;
+
 
 /*   void */
 /* sctk_set_net_val (void (*val) (int *, char ***)) */
@@ -219,6 +208,7 @@ void sctk_use_pthread( void )
 	mpc_common_get_flags()->thread_library_init = sctk_pthread_thread_init;
 }
 
+#if 0
 /* Note that we start with an agressive frequency
  * to speedup the polling during the init phase
  * we relax it after doing driver initialization */
@@ -251,6 +241,7 @@ void *polling_thread( __UNUSED__ void *dummy )
 
 	return NULL;
 }
+#endif
 
 void sctk_print_banner( bool restart )
 {
@@ -408,21 +399,13 @@ static void sctk_perform_initialisation ( void )
 	}
 
 #ifdef MPC_Message_Passing
-	mpc_lowcomm_coll_init_hook = *( void ** )( &sctk_runtime_config_get()->modules.inter_thread_comm.collectives_init_hook.value );
-	sctk_communicator_world_init ( mpc_common_get_flags()->task_number );
-	sctk_communicator_self_init ();
+
 #endif
 #ifdef MPC_Profiler
 	sctk_internal_profiler_init();
 #endif
 
-
-#ifdef SCTK_LIB_MODE
-	/* In LIB mode we create the task context
-	 * at process level (not in an actual task ) */
-	int my_rank = mpc_common_get_process_rank();
-	mpc_lowcomm_init_per_task ( my_rank );
-#endif
+#if 0
 	/* Start auxiliary polling thread */
 	/*
 	   pthread_t progress;
@@ -433,38 +416,17 @@ static void sctk_perform_initialisation ( void )
 	sctk_thread_attr_init ( &attr );
 	sctk_thread_attr_setscope ( &attr, SCTK_THREAD_SCOPE_SYSTEM );
 	sctk_user_thread_create( &progress, &attr, polling_thread, NULL );
-
-
-#ifdef MPC_Message_Passing
-	if ( sctk_process_nb_val > 1 )
-	{
-#ifdef MPC_USE_INFINIBAND
-
-		if ( !sctk_network_driver_name && !sctk_ib_device_found() )
-		{
-			if ( !mpc_common_get_process_rank() )
-			{
-				sctk_info( "Could not locate an IB device, fallback to TCP" );
-			}
-
-			sctk_network_driver_name = "tcp";
-		}
-
 #endif
-		sctk_net_init_driver( sctk_network_driver_name );
-	}
 
-
-        TODO("FIX THIS ASAP");
-	mpc_lowcomm_rdma_window_init_ht();
-#endif
 #ifdef SCTK_LIB_MODE
 	sctk_net_init_task_level ( my_rank, 0 );
 #endif
 	sctk_atomics_cpu_freq_init();
 	sctk_print_banner( 0 /* not in restart mode */ );
+#if 0
 	/* We passed the init phase we can stop the bootstrap polling */
 	__polling_done = 1;
+#endif
 }
 
 //////////////////////////////////
@@ -602,7 +564,7 @@ static void sctk_set_verbosity( char *arg )
 static void
 sctk_use_network ( char *arg )
 {
-	sctk_network_driver_name = arg;
+	mpc_common_get_flags()->network_driver_name = arg;
 }
 
 
@@ -1160,6 +1122,7 @@ static inline void __base_runtime_init()
 
         mpc_common_init_print();
 
+
         mpc_common_init_trigger("Base Runtime Init");
 
         /* WARNING !! NO CONFIG before this point */
@@ -1171,9 +1134,10 @@ static inline void __base_runtime_init()
 
         __create_autokill_thread();
         __set_default_values();
-
-
         __unpack_arguments();
+
+        mpc_common_init_trigger("Base Runtime Init Done");
+
 }
 
 void sctk_init_mpc_runtime()

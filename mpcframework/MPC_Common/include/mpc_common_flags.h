@@ -31,6 +31,8 @@ struct mpc_common_flags
         unsigned int processor_number;          /*< Number of cores passed on the command-line */
         unsigned int task_number;               /*< Number of MPC tasks passed on the CLI */
 
+        char * network_driver_name;             /*< Network configuration to be used by MPC */
+
 };
 
 extern struct mpc_common_flags ___mpc_flags;
