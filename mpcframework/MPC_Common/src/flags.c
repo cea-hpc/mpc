@@ -167,18 +167,18 @@ void mpc_common_init_print()
         for( i = 0 ; i < __mpc_init.list_count ; i++ )
         {
                 struct mpc_common_init_list * list = &__mpc_init.lists[i];
-                fprintf(stderr, "INIT List %s --------\n", list->name);
+                sctk_info("INIT List %s --------", list->name);
 
                 for( j = 0; j < list->entry_count ; j++ )
                 {
                         struct mpc_common_init_entry * entry = &list->entries[j];
-                        fprintf(stderr, "\t(%d/%d) Callback %s (prio %d) (ptr %p)\n", j+1,
+                        sctk_info("\t(%d/%d) Callback %s (prio %d) (ptr %p)", j+1,
                                                                                       list->entry_count,
                                                                                       entry->name,
                                                                                       entry->priority,
                                                                                       entry->callback);
                 }
 
-                fprintf(stderr, "-------------------\n");
+                sctk_info("-------------------");
         }
 }
