@@ -919,6 +919,81 @@ AM_CONDITIONAL([MPC_ARCH_X86_64_MICROTASK], [test "x${MPC_ARCH_MICROTASK_ARCH}" 
 AM_CONDITIONAL([MPC_ARCH_GENERIC_MICROTASK], [test "x${MPC_ARCH_MICROTASK_ARCH}" = "xgeneric"])
 
 #
+# Guess Compiler Family
+#
+
+mpc_compiler_family="notset"
+
+mpc_compiler_is_gcc="no"
+
+AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdlib.h>],[
+#ifndef __GNUC__
+exit(1);
+#endif
+])], [mpc_compiler_is_gcc="yes"])
+
+AC_MSG_CHECKING([if compiler is gcc])
+
+if test "x${mpc_compiler_is_gcc}" = "xyes"; then
+        AC_MSG_RESULT([yes])
+else
+        AC_MSG_RESULT([no])
+fi
+
+mpc_compiler_is_icc="no"
+
+AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdlib.h>],[
+#ifndef __INTEL_COMPILER
+exit(1);
+#endif
+])], [mpc_compiler_is_icc="yes"])
+
+AC_MSG_CHECKING([if compiler is icc])
+
+if test "x${mpc_compiler_is_icc}" = "xyes"; then
+        AC_MSG_RESULT([yes])
+else
+        AC_MSG_RESULT([no])
+fi
+
+mpc_compiler_is_clang="no"
+
+AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdlib.h>],[
+#ifndef __clang__
+exit(1);
+#endif
+])], [mpc_compiler_is_clang="yes"])
+
+AC_MSG_CHECKING([if compiler is clang])
+
+if test "x${mpc_compiler_is_clang}" = "xyes"; then
+        AC_MSG_RESULT([yes])
+else
+        AC_MSG_RESULT([no])
+fi
+
+# Now set the compiler family
+
+AC_MSG_CHECKING([compiler family to be])
+
+if test "x$mpc_compiler_is_icc" = "xyes"; then
+        AC_MSG_RESULT([icc])
+        mpc_compiler_family="icc"
+else
+        if test "x$mpc_compiler_is_clang" = "xyes"; then
+                AC_MSG_RESULT([clang])
+                mpc_compiler_family="clang"
+        else
+                        if test "x$mpc_compiler_is_gcc" = "xyes"; then
+                                AC_MSG_RESULT([gcc])
+                                mpc_compiler_family="gcc"
+                        fi
+        fi
+
+fi
+
+
+#
 # Mpc Optionnal Flags
 #
 
@@ -935,6 +1010,66 @@ fi
 
 AC_SUBST([MPC_ENABLE_SHELL_COLORS])
 
+AC_ARG_ENABLE([cma],
+[AS_HELP_STRING([--enable-cma],
+                [Activate Cross Memory Attach for SHM communications])],
+[mpc_enable_cma=$enableval],
+[mpc_enable_cma=no])
+
+if test "x${mpc_enable_cma}" = "xyes"; then
+        AC_DEFINE([MPC_USE_CMA], [1], [MPC CMA for SHM drive is enabled])
+fi
+
+AC_ARG_ENABLE([opt],
+[AS_HELP_STRING([--enable-opt],
+                [Build MPC with optimization flags])],
+[mpc_enable_opt=$enableval],
+[mpc_enable_opt=yes])
+
+case $mpc_compiler_family in
+        "gcc")
+                MPC_OPT_FLAGS=" -O3  -funroll-loops"
+        ;;
+        "icc")
+                MPC_OPT_FLAGS=" -O3  -opt-prefetch -unroll-aggressive"
+        ;;
+        "clang")
+                MPC_OPT_FLAGS=" -O3 -unroll-count=4"
+        ;;
+        *)
+                MPC_OPT_FLAGS=" -O3"
+        ;;
+esac
+
+if test "x${mpc_enable_opt}" = "xyes"; then
+        CPPFLAGS+=" $MPC_OPT_FLAGS"
+fi
+
+
+AC_ARG_ENABLE([opt-native],
+[AS_HELP_STRING([--enable-opt-native],
+                [Build MPC for current architecture])],
+[mpc_enable_native_opt=$enableval],
+[mpc_enable_native_opt=no])
+
+case $mpc_compiler_family in
+        "gcc")
+                MPC_NATIVE_FLAGS=" -march=native"
+        ;;
+        "icc")
+                MPC_NATIVE_FLAGS=" -xhost"
+        ;;
+        "clang")
+                MPC_NATIVE_FLAGS=" -march=native"
+        ;;
+        *)
+                MPC_NATIVE_FLAGS=""
+        ;;
+esac
+
+if test "x${mpc_enable_native_opt}" = "xyes"; then
+        CPPFLAGS+=" $MPC_NATIVE_FLAGS"
+fi
 
 AC_ARG_ENABLE([debug-messages],
 [AS_HELP_STRING([--enable-debug-messages],
@@ -1171,6 +1306,8 @@ AC_OUTPUT([Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile
 
 echo "========== MPC Configuration =========="
 echo "PREFIX: $prefix"
+echo "Optimized build ($MPC_OPT_FLAGS): $mpc_enable_opt"
+echo "Native build ($MPC_NATIVE_FLAGS): $mpc_enable_native_opt"
 echo ""
 echo "DEBUG : $mpc_debug"
 echo "Debug messages: $mpc_debug_messages"
@@ -1184,6 +1321,7 @@ echo "Privatization support: $mpc_privatization_support"
 echo "Colored output: $mpc_shell_color"
 echo ""
 echo "Enabled networks: $MPC_NETWORK_LIST"
+echo "Cross Memory Attach (CMA): $mpc_enable_cma"
 echo ""
 echo "The following modules will be built:"
 echo ""

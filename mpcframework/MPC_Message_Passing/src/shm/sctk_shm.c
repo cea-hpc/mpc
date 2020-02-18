@@ -1,5 +1,6 @@
 
 #include <sctk_debug.h>
+#include <mpc_config.h>
 #include "sctk_route.h"
 #include "mpc_launch_pmi.h"
 #include "sctk_shm_mapper.h"

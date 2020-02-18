@@ -862,6 +862,9 @@ with_extls
 with_extls_include
 with_extls_libs
 enable_shell_colors
+enable_cma
+enable_opt
+enable_opt_native
 enable_debug_messages
 enable_debug
 enable_threads
@@ -1544,6 +1547,9 @@ Optional Features:
                           speeds up one-time build
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-shell-colors   Activate Color Output in MPC
+  --enable-cma            Activate Cross Memory Attach for SHM communications
+  --enable-opt            Build MPC with optimization flags
+  --enable-opt-native     Build MPC for current architecture
   --enable-debug-messages Output debug messages when running MPC
   --enable-debug          Compile MPC in debug mode
   --enable-threads        Compile MPC with pthread and user-level thread
@@ -24597,6 +24603,163 @@ fi
 
 
 #
+# Guess Compiler Family
+#
+
+mpc_compiler_family="notset"
+
+mpc_compiler_is_gcc="no"
+
+if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <stdlib.h>
+int
+main ()
+{
+
+#ifndef __GNUC__
+exit(1);
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  mpc_compiler_is_gcc="yes"
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiler is gcc" >&5
+$as_echo_n "checking if compiler is gcc... " >&6; }
+
+if test "x${mpc_compiler_is_gcc}" = "xyes"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+mpc_compiler_is_icc="no"
+
+if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <stdlib.h>
+int
+main ()
+{
+
+#ifndef __INTEL_COMPILER
+exit(1);
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  mpc_compiler_is_icc="yes"
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiler is icc" >&5
+$as_echo_n "checking if compiler is icc... " >&6; }
+
+if test "x${mpc_compiler_is_icc}" = "xyes"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+mpc_compiler_is_clang="no"
+
+if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <stdlib.h>
+int
+main ()
+{
+
+#ifndef __clang__
+exit(1);
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  mpc_compiler_is_clang="yes"
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiler is clang" >&5
+$as_echo_n "checking if compiler is clang... " >&6; }
+
+if test "x${mpc_compiler_is_clang}" = "xyes"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+# Now set the compiler family
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking compiler family to be" >&5
+$as_echo_n "checking compiler family to be... " >&6; }
+
+if test "x$mpc_compiler_is_icc" = "xyes"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: icc" >&5
+$as_echo "icc" >&6; }
+        mpc_compiler_family="icc"
+else
+        if test "x$mpc_compiler_is_clang" = "xyes"; then
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: clang" >&5
+$as_echo "clang" >&6; }
+                mpc_compiler_family="clang"
+        else
+                        if test "x$mpc_compiler_is_gcc" = "xyes"; then
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: result: gcc" >&5
+$as_echo "gcc" >&6; }
+                                mpc_compiler_family="gcc"
+                        fi
+        fi
+
+fi
+
+
+#
 # Mpc Optionnal Flags
 #
 
@@ -24617,6 +24780,74 @@ fi
 
 
 
+# Check whether --enable-cma was given.
+if test "${enable_cma+set}" = set; then :
+  enableval=$enable_cma; mpc_enable_cma=$enableval
+else
+  mpc_enable_cma=no
+fi
+
+
+if test "x${mpc_enable_cma}" = "xyes"; then
+
+$as_echo "#define MPC_USE_CMA 1" >>confdefs.h
+
+fi
+
+# Check whether --enable-opt was given.
+if test "${enable_opt+set}" = set; then :
+  enableval=$enable_opt; mpc_enable_opt=$enableval
+else
+  mpc_enable_opt=yes
+fi
+
+
+case $mpc_compiler_family in
+        "gcc")
+                MPC_OPT_FLAGS=" -O3  -funroll-loops"
+        ;;
+        "icc")
+                MPC_OPT_FLAGS=" -O3  -opt-prefetch -unroll-aggressive"
+        ;;
+        "clang")
+                MPC_OPT_FLAGS=" -O3 -unroll-count=4"
+        ;;
+        *)
+                MPC_OPT_FLAGS=" -O3"
+        ;;
+esac
+
+if test "x${mpc_enable_opt}" = "xyes"; then
+        CPPFLAGS+=" $MPC_OPT_FLAGS"
+fi
+
+
+# Check whether --enable-opt-native was given.
+if test "${enable_opt_native+set}" = set; then :
+  enableval=$enable_opt_native; mpc_enable_native_opt=$enableval
+else
+  mpc_enable_native_opt=no
+fi
+
+
+case $mpc_compiler_family in
+        "gcc")
+                MPC_NATIVE_FLAGS=" -march=native"
+        ;;
+        "icc")
+                MPC_NATIVE_FLAGS=" -xhost"
+        ;;
+        "clang")
+                MPC_NATIVE_FLAGS=" -march=native"
+        ;;
+        *)
+                MPC_NATIVE_FLAGS=""
+        ;;
+esac
+
+if test "x${mpc_enable_native_opt}" = "xyes"; then
+        CPPFLAGS+=" $MPC_NATIVE_FLAGS"
+fi
 
 # Check whether --enable-debug-messages was given.
 if test "${enable_debug_messages+set}" = set; then :
@@ -30131,6 +30362,8 @@ fi
 
 echo "========== MPC Configuration =========="
 echo "PREFIX: $prefix"
+echo "Optimized build ($MPC_OPT_FLAGS): $mpc_enable_opt"
+echo "Native build ($MPC_NATIVE_FLAGS): $mpc_enable_native_opt"
 echo ""
 echo "DEBUG : $mpc_debug"
 echo "Debug messages: $mpc_debug_messages"
@@ -30144,6 +30377,7 @@ echo "Privatization support: $mpc_privatization_support"
 echo "Colored output: $mpc_shell_color"
 echo ""
 echo "Enabled networks: $MPC_NETWORK_LIST"
+echo "Cross Memory Attach (CMA): $mpc_enable_cma"
 echo ""
 echo "The following modules will be built:"
 echo ""

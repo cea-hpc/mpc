@@ -1,12 +1,13 @@
-#ifdef MPC_USE_CMA
-
 #define _GNU_SOURCE
 #include <sys/uio.h>
 
+#include <mpc_config.h>
+
+#ifdef MPC_USE_CMA
 
 #include "sctk_net_tools.h"
 #include "sctk_shm_cma.h"
-#define mpc_common_min(a, b)  ((a) < (b) ? (a) : (b))
+
 
 static pid_t sctk_shm_process_sys_id = -1;
 
@@ -129,9 +130,16 @@ sctk_shm_cma_message_free_withcopy(void *tmp)
     sctk_shm_iovec_info_t * shm_iov = NULL;
     shm_iov = (sctk_shm_iovec_info_t *)(( char * ) tmp + sizeof ( mpc_lowcomm_ptp_message_t ));
 
+    int is_message_control = 0;
+
+    if (_mpc_comm_ptp_message_is_for_control(SCTK_MSG_SPECIFIC_CLASS(msg))) {
+        is_message_control = 1;
+    }
+
+
     dest = SCTK_MSG_SRC_PROCESS(msg); 
     while(!cell)
-        cell = sctk_shm_get_cell(dest);
+        cell = sctk_shm_get_cell(dest, is_message_control);
     sctk_network_cma_msg_cmpl_shm_send(shm_iov,cell,dest);
 //    sctk_free(tmp);
 }
@@ -218,7 +226,7 @@ sctk_network_cma_msg_shm_send(mpc_lowcomm_ptp_message_t *msg, sctk_shm_cell_t * 
 
     cell->msg_type = SCTK_SHM_RDMA;
     memcpy( cell->data, (char*) msg, sizeof ( mpc_lowcomm_ptp_message_body_t ));       
-    
+
     shm_iov = (sctk_shm_iovec_info_t *)((char*) cell->data + sizeof(mpc_lowcomm_ptp_message_t));
     shm_iov->msg = msg;
     shm_iov->pid = sctk_shm_process_sys_id;
@@ -240,7 +248,7 @@ sctk_network_cma_shm_interface_init(void *options)
     return 1;
 }
 
-void sctk_network_cma_shm_interface_free()
+void sctk_shm_network_cma_shm_interface_free()
 {
 	sctk_shm_process_sys_id = -1;
 }

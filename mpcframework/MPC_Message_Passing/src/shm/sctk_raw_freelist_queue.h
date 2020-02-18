@@ -2,6 +2,7 @@
 #define __SCTK_RAW_FREELIST_QUEUE_H__
 
 #include "stdlib.h"
+#include <mpc_config.h>
 #include "mpc_common_spinlock.h"
 #include "sctk_shm_raw_queues_archdefs.h"
 
