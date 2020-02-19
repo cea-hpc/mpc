@@ -369,12 +369,12 @@ __mpcomp_init_omp_task_tree( const int num_mvps, int *shape, const int *cpus_ord
 			max_depth = 2;
 			place_depth = 0;
 			tree_shape = shape;
-			fprintf( stderr, "Default Tree w/ places at level %d\n", place_depth );
+			mpc_common_debug_log("Default Tree w/ places at level %d\n", place_depth );
 		}
 		else
 		{
 			place_depth = i;
-			fprintf( stderr, "Topological Tree w/ places at level %d\n", place_depth );
+			mpc_common_debug_log("Topological Tree w/ places at level %d\n", place_depth );
 		}
 
 		place_size = shape[1];
@@ -413,7 +413,7 @@ static inline void __mpcomp_read_env_variables()
 
 	if ( OMP_MICROVP_NUMBER > mpc_topology_get_pu_count() )
 	{
-		fprintf( stderr, "Warning: Number of microVPs should be at most the number "
+		sctk_warning("Number of microVPs should be at most the number "
 		         "of cores per node: %d\n"
 		         "Switching to default value %d\n",
 		         mpc_topology_get_pu_count(), OMP_MICROVP_NUMBER );
@@ -472,7 +472,7 @@ static inline void __mpcomp_read_env_variables()
 
 					if ( chunk_size <= 0 )
 					{
-						fprintf( stderr, "Warning: Incorrect chunk size within OMP_SCHEDULE "
+						sctk_warning("Incorrect chunk size within OMP_SCHEDULE "
 						         "variable: <%s>\n",
 						         env );
 						chunk_size = 0;
@@ -498,7 +498,7 @@ static inline void __mpcomp_read_env_variables()
 		}
 		else
 		{
-			fprintf( stderr, "Warning: Unknown schedule <%s> (must be static, guided, "
+			sctk_warning("Unknown schedule <%s> (must be static, guided, "
 			         "dynamic or auto),"
 			         " fallback to default schedule <%d>\n",
 			         env, OMP_SCHEDULE );
@@ -608,7 +608,7 @@ static inline void __mpcomp_read_env_variables()
 		}
 		else
 		{
-			fprintf( stderr, "Warning: Unknown mode <%s> (must be SIMPLE_MIXED, "
+			sctk_warning("Unknown mode <%s> (must be SIMPLE_MIXED, "
 			         "ALTERNATING, OVERSUBSCRIBED_MIXED or FULLY_MIXED),"
 			         " fallback to default mode <%d>\n",
 			         env, OMP_MODE );
@@ -651,7 +651,7 @@ static inline void __mpcomp_read_env_variables()
 		}
 		else
 		{
-			fprintf( stderr, "Warning: Unknown affinity <%s> (must be COMPACT, "
+			sctk_warning("Unknown affinity <%s> (must be COMPACT, "
 			         "SCATTER or BALANCED),"
 			         " fallback to default affinity <%d>\n",
 			         env, OMP_AFFINITY );
@@ -690,12 +690,19 @@ static inline void __mpcomp_read_env_variables()
 	/***** PRINT SUMMARY (only first MPI rank) ******/
 	if ( getenv( "MPC_DISABLE_BANNER" ) == NULL && mpc_common_get_task_rank() == 0 )
 	{
-		fprintf( stderr,
-		         "MPC OpenMP version %d.%d (Intel and Patched GCC compatibility)\n",
+                mpc_common_debug_log("--------------------------------------------------");
+		mpc_common_debug_log(
+		         "MPC OpenMP version %d.%d (Intel and Patched GCC compatibility)",
 		         SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR );
 #if MPCOMP_TASK
-		fprintf( stderr, "\tOpenMP 3 Tasking on (OMP_NEW_TASKS_DEPTH=%d OMP_TASK_LARCENY_MODE=%d "
-		         "OMP_TASK_NESTING_MAX=%d OMP_TASK_MAX_DELAYED=%d OMP_TASK_USE_LOCKFREE_QUEUE=%d OMP_TASK_STEAL_LAST_STOLEN_LIST=%d OMP_TASK_RESTEAL_TO_LAST_THIEF=%d)\n",
+		mpc_common_debug_log("\tOpenMP 3 Tasking on:\n"
+                "\t\tOMP_NEW_TASKS_DEPTH=%d\n"
+                "\t\tOMP_TASK_LARCENY_MODE=%d\n"
+		"\t\tOMP_TASK_NESTING_MAX=%d\n"
+                "\t\tOMP_TASK_MAX_DELAYED=%d\n"
+                "\t\tOMP_TASK_USE_LOCKFREE_QUEUE=%d\n"
+                "\t\tOMP_TASK_STEAL_LAST_STOLEN_LIST=%d\n"
+                "\t\tOMP_TASK_RESTEAL_TO_LAST_THIEF=%d",
 		         sctk_runtime_config_get()->modules.openmp.omp_new_task_depth,
 		         sctk_runtime_config_get()->modules.openmp.omp_task_larceny_mode,
 		         sctk_runtime_config_get()->modules.openmp.omp_task_nesting_max,
@@ -704,94 +711,90 @@ static inline void __mpcomp_read_env_variables()
 		         sctk_runtime_config_get()->modules.openmp.omp_task_steal_last_stolen_list,
 		         sctk_runtime_config_get()->modules.openmp.omp_task_resteal_to_last_thief );
 #ifdef MPCOMP_USE_TASKDEP
-		fprintf( stderr, "\t\tDependencies ON\n" );
+		mpc_common_debug_log("\t\tDependencies ON" );
 #else
-		fprintf( stderr, "\t\tDependencies OFF\n" );
+		mpc_common_debug_log("\t\tDependencies OFF" );
 #endif /* MPCOMP_USE_TASKDEP */
 #else
-		fprintf( stderr, "\tOpenMP 3 Tasking off\n" );
+		mpc_common_debug_log("\tOpenMP 3 Tasking off");
 #endif
-		fprintf( stderr, "\tOMP_SCHEDULE %d\n", OMP_SCHEDULE );
+		mpc_common_debug_log("\tOMP_SCHEDULE %d", OMP_SCHEDULE );
 
 		if ( OMP_NUM_THREADS == 0 )
 		{
-			fprintf( stderr, "\tDefault #threads (OMP_NUM_THREADS)\n" );
+			mpc_common_debug_log("\tDefault #threads (OMP_NUM_THREADS)" );
 		}
 		else
 		{
-			fprintf( stderr, "\tOMP_NUM_THREADS %d\n", OMP_NUM_THREADS );
+			mpc_common_debug_log("\tOMP_NUM_THREADS %d", OMP_NUM_THREADS );
 		}
 
-		fprintf( stderr, "\tOMP_DYNAMIC %d\n", OMP_DYNAMIC );
-		fprintf( stderr, "\tOMP_NESTED %d\n", OMP_NESTED );
+		mpc_common_debug_log("\tOMP_DYNAMIC %d", OMP_DYNAMIC );
+		mpc_common_debug_log("\tOMP_NESTED %d", OMP_NESTED );
 
 		if ( OMP_MICROVP_NUMBER == 0 )
 		{
-			fprintf( stderr, "\tDefault #microVPs (OMP_MICROVP_NUMBER)\n" );
+			mpc_common_debug_log("\tDefault #microVPs (OMP_MICROVP_NUMBER)" );
 		}
 		else
 		{
-			fprintf( stderr, "\t%d microVPs (OMP_MICROVP_NUMBER)\n",
+			mpc_common_debug_log("\t%d microVPs (OMP_MICROVP_NUMBER)",
 			         OMP_MICROVP_NUMBER );
 		}
-
-		fprintf( stderr, "\tAffinity " );
 
 		switch ( OMP_AFFINITY )
 		{
 			case MPCOMP_AFFINITY_COMPACT:
-				fprintf( stderr, "COMPACT (fill logical cores first)\n" );
+				mpc_common_debug_log("\tAffinity COMPACT (fill logical cores first)" );
 				break;
 
 			case MPCOMP_AFFINITY_SCATTER:
-				fprintf( stderr, "SCATTER (spread over NUMA nodes)\n" );
+				mpc_common_debug_log("\tAffinity SCATTER (spread over NUMA nodes)" );
 				break;
 
 			case MPCOMP_AFFINITY_BALANCED:
-				fprintf( stderr, "BALANCED (fill physical cores first)\n" );
+				mpc_common_debug_log("\tAffinity BALANCED (fill physical cores first)" );
 				break;
 
 			default:
-				fprintf( stderr, "Unknown\n" );
+				mpc_common_debug_log("\tAffinity Unknown" );
 				break;
 		}
 
 		if ( OMP_TREE != NULL )
 		{
 			int i;
-			fprintf( stderr, "\tOMP_TREE w/ depth:%d leaves:%d, arity:[%d",
+			mpc_common_debug_log("\tOMP_TREE w/ depth:%d leaves:%d, arity:[%d",
 			         OMP_TREE_DEPTH, OMP_TREE_NB_LEAVES, OMP_TREE[0] );
 
 			for ( i = 1; i < OMP_TREE_DEPTH; i++ )
 			{
-				fprintf( stderr, ", %d", OMP_TREE[i] );
+				mpc_common_debug_log(", %d", OMP_TREE[i] );
 			}
 
-			fprintf( stderr, "]\n" );
+			mpc_common_debug_log("]" );
 		}
 		else
 		{
-			fprintf( stderr, "\tOMP_TREE default\n" );
+			mpc_common_debug_log("\tOMP_TREE default" );
 		}
-
-		fprintf( stderr, "\tMode for hybrid MPI+OpenMP parallelism " );
 
 		switch ( OMP_MODE )
 		{
 			case MPCOMP_MODE_SIMPLE_MIXED:
-				fprintf( stderr, "SIMPLE_MIXED\n" );
+				mpc_common_debug_log("\tMode for hybrid MPI+OpenMP parallelism SIMPLE_MIXED" );
 				break;
 
 			case MPCOMP_MODE_OVERSUBSCRIBED_MIXED:
-				fprintf( stderr, "OVERSUBSCRIBED_MIXED\n" );
+				mpc_common_debug_log("\tMode for hybrid MPI+OpenMP parallelism OVERSUBSCRIBED_MIXED" );
 				break;
 
 			case MPCOMP_MODE_ALTERNATING:
-				fprintf( stderr, "ALTERNATING\n" );
+				mpc_common_debug_log("\tMode for hybrid MPI+OpenMP parallelism ALTERNATING" );
 				break;
 
 			case MPCOMP_MODE_FULLY_MIXED:
-				fprintf( stderr, "FULLY_MIXED\n" );
+				mpc_common_debug_log("\tMode for hybrid MPI+OpenMP parallelism FULLY_MIXED" );
 				break;
 
 			default:
@@ -800,34 +803,35 @@ static inline void __mpcomp_read_env_variables()
 		}
 
 #if MPCOMP_MALLOC_ON_NODE
-		fprintf( stderr, "\tNUMA allocation for tree nodes\n" );
+		mpc_common_debug_log("\tNUMA allocation for tree nodes" );
 #endif
 #if MPCOMP_COHERENCY_CHECKING
-		fprintf( stderr, "\tCoherency check enabled\n" );
+		mpc_common_debug_log("\tCoherency check enabled" );
 #endif
 #if MPCOMP_ALIGN
-		fprintf( stderr, "\tStructure field alignement\n" );
+		mpc_common_debug_log("\tStructure field alignement" );
 #endif
 
 		if ( OMP_WARN_NESTED )
 		{
-			fprintf( stderr, "\tOMP_WARN_NESTED %d (breakpoint mpcomp_warn_nested)\n",
+			mpc_common_debug_log("\tOMP_WARN_NESTED %d (breakpoint mpcomp_warn_nested)",
 			         OMP_WARN_NESTED );
 		}
 		else
 		{
-			fprintf( stderr, "\tNo warning for nested parallelism\n" );
+			mpc_common_debug_log("\tNo warning for nested parallelism" );
 		}
 
 #if MPCOMP_MIC
-		fprintf( stderr, "\tMIC optimizations on\n" );
+		mpc_common_debug_log("\tMIC optimizations on\n" );
 #endif
 #if OMPT_SUPPORT
-		fprintf( stderr, "\tOMPT Support ON\n" );
+		mpc_common_debug_log("\tOMPT Support ON\n" );
 #else
-		fprintf( stderr, "\tOMPT Support OFF\n" );
+		mpc_common_debug_log("\tOMPT Support OFF\n" );
 #endif
 		TODO( "Add every env vars when printing info on OpenMP" )
+                mpc_common_debug_log("--------------------------------------------------");
 	}
 }
 

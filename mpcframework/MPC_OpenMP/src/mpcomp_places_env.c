@@ -101,7 +101,7 @@ static inline int mpcomp_safe_atoi( char *string, char **next )
 
 	if ( string == *next )
 	{
-		fprintf( stderr, "error: missing numeric value\n" );
+		sctk_error("missing numeric value\n" );
 	}
 
 	return ( int ) retval;
@@ -133,14 +133,14 @@ static inline int mpcomp_places_detect_collision( mpcomp_places_info_t *list )
 				hwloc_bitmap_list_snprintf( string_place3, 255, bitmap_val );
 				string_place[255] = '\0';
 				string_place2[255] = '\0';
-				fprintf( stderr, "warning: colision between place #%d (%s) and place #%d (%s) |%s|\n", place->id, string_place, place2->id, string_place2, string_place3 );
+				sctk_warning("colision between place #%d (%s) and place #%d (%s) |%s|\n", place->id, string_place, place2->id, string_place2, string_place3 );
 			}
 		}
 	}
 
 	if ( colision_count )
 	{
-		fprintf( stderr, "warning: found %d colision(s)\n", colision_count );
+		sctk_warning("found %d colision(s)\n", colision_count );
 	}
 
 	return colision_count;
@@ -251,7 +251,7 @@ mpcomp_places_build_interval_infos( char *string, char **end, const int nb_mvps 
 				if ( num_places <= 0 )
 				{
 					error = 1;
-					fprintf( stderr, "error: num_places in subplace is not positive integer ( %d )\n", num_places );
+					sctk_error("num_places in subplace is not positive integer ( %d )\n", num_places );
 					break;
 				}
 
@@ -368,12 +368,12 @@ mpcomp_places_build_numas_places( const int places_number, int *error )
 
 	if ( numa_found < __places_number )
 	{
-		fprintf( stderr, "Resize number places from %d to %d\n", __places_number, numa_found );
+		sctk_warning("Resize number places from %d to %d\n", __places_number, numa_found );
 	}
 
 	if ( !numa_found )
 	{
-		fprintf( stderr, "error: No numa nodes found on node\n" );
+		sctk_error("No numa nodes found on node\n" );
 		free( places_string );
 		places_string = NULL;
 		assert( error );
@@ -467,12 +467,12 @@ mpcomp_places_build_sockets_places( const int places_number, int *error )
 
 	if ( socket_found < __places_number )
 	{
-		fprintf( stderr, "warning: Resize number places from %d to %d\n", __places_number, socket_found );
+		sctk_warning("Resize number places from %d to %d\n", __places_number, socket_found );
 	}
 
 	if ( !socket_found )
 	{
-		fprintf( stderr, "error: No socket found on node\n" );
+		sctk_error("No socket found on node\n" );
 		free( places_string );
 		places_string = NULL;
 		assert( error );
@@ -537,7 +537,7 @@ mpcomp_places_build_threads_places( const int places_number, int *error )
 
 	if ( pu_found < __places_number )
 	{
-		fprintf( stderr, "Resize number places from %d to %d\n", __places_number, pu_found );
+		sctk_warning("Resize number places from %d to %d\n", __places_number, pu_found );
 	}
 
 	assume( tnwrites + 1 < 4096 );
@@ -595,7 +595,7 @@ mpcomp_places_build_cores_places( const int places_number, int *error )
 
 	if ( core_found < __places_number )
 	{
-		fprintf( stderr, "Resize number places from %d to %d\n", __places_number, core_found );
+		sctk_warning("Resize number places from %d to %d\n", __places_number, core_found );
 	}
 
 	assume( tnwrites + 1 < 4096 );
@@ -634,7 +634,7 @@ static int mpcomp_places_named_extract_num( const char *env, char *string )
 	{
 		if ( num_places <= 0 )
 		{
-			fprintf( stderr, "error: len in place is not positive integer ( %d )\n", num_places );
+			sctk_error("len in place is not positive integer ( %d )\n", num_places );
 		}
 
 		return 0;
@@ -651,7 +651,7 @@ static int mpcomp_places_named_extract_num( const char *env, char *string )
 
 	if ( 0 && *string != '\0' )
 	{
-		fprintf( stderr, "error: offset %ld with \'%c\' end: %s\n", string - env - 1, *string, string );
+		sctk_error("offset %ld with \'%c\' end: %s\n", string - env - 1, *string, string );
 		return 0;
 	}
 
@@ -761,7 +761,7 @@ mpcomp_places_build_place_infos( char *string, char **end, const int nb_mvps )
 
 		if ( !new_place )
 		{
-			fprintf( stderr, "error: can't parse subplace\n" );
+			sctk_error("can't parse subplace\n" );
 			break;
 		}
 
@@ -790,7 +790,7 @@ mpcomp_places_build_place_infos( char *string, char **end, const int nb_mvps )
 
 				if ( len <= 0 )
 				{
-					fprintf( stderr, "error: len in place is not positive integer ( %d )\n", len );
+					sctk_error("len in place is not positive integer ( %d )\n", len );
 					break;
 				}
 
@@ -1013,7 +1013,7 @@ mpcomp_places_detect_heretogeneous_places( mpcomp_places_info_t *list )
 
 	if ( invalid_size_count )
 	{
-		fprintf( stderr, "warning: Can't build regular tree\n" );
+		sctk_warning("Can't build regular tree\n" );
 	}
 
 	return invalid_size_count;
@@ -1033,14 +1033,14 @@ mpcomp_places_env_variable_parsing( const int nb_mvps )
 	mpcomp_places_info_t *list = NULL;
 	/* Get the value of OMP_PLACES (as a string) */
 	tmp = sctk_runtime_config_get()->modules.openmp.places;
-	fprintf( stderr, "OMP_PLACES = <%s>\n", tmp );
+	mpc_common_debug_log("OMP_PLACES = <%s>\n", tmp );
 	const char *prev_env = strdup( tmp );
 	string = ( char * ) prev_env;
 	const char *named_str = mpcomp_places_is_named_places( prev_env, string, &error );
 
 	if ( error )
 	{
-		fprintf( stderr, "error : OMP_PLACES ignored\n" );
+		sctk_error("OMP_PLACES ignored\n" );
 		return NULL;
 	}
 
@@ -1049,7 +1049,7 @@ mpcomp_places_env_variable_parsing( const int nb_mvps )
 
 	if ( !env )
 	{
-		fprintf( stderr, "error: Can't parse named places\n" );
+		sctk_error("Can't parse named places\n" );
 		return NULL;
 	}
 
@@ -1057,19 +1057,19 @@ mpcomp_places_env_variable_parsing( const int nb_mvps )
 
 	if ( *end != '\0' )
 	{
-		fprintf( stderr, "error: offset %ld with \'%c\' end: %s\n", end - env - 1, *end, end );
+		sctk_error("offset %ld with \'%c\' end: %s\n", end - env - 1, *end, end );
 		return NULL;
 	}
 
 	if ( mpcomp_places_detect_collision( list ) )
 	{
-		fprintf( stderr, "MPC doesn't support collision between places\n" );
+		sctk_warning("MPC doesn't support collision between places\n" );
 		return NULL;
 	}
 
 	if ( mpcomp_places_detect_heretogeneous_places( list ) )
 	{
-		fprintf( stderr, "Every place must have the same number of threads\n" );
+		sctk_warning("Every place must have the same number of threads\n" );
 		return NULL;
 	}
 
