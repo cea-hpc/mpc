@@ -2047,7 +2047,7 @@ int _sctk_get_process_rank_from_task_rank( int rank )
 
 	sctk_internal_communicator_t *tmp;
 	int proc_rank;
-#ifdef SCTK_PROCESS_MODE
+#ifdef MPC_IN_PROCESS_MODE
 	return rank;
 #endif
 

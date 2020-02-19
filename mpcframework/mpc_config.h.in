@@ -635,6 +635,9 @@
 /* MPC color output was enabled */
 #undef MPC_ENABLE_SHELL_COLORS
 
+/* MPC compiled in process mode */
+#undef MPC_IN_PROCESS_MODE
+
 /* MPC_MPI module was enabled */
 #undef MPC_MPI
 

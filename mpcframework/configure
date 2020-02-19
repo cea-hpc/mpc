@@ -657,6 +657,7 @@ MPC_ARCH_X86_64_CONTEXT_SWITCH_FALSE
 MPC_ARCH_X86_64_CONTEXT_SWITCH_TRUE
 EXTLS_LIBS
 EXTLS_CFLAGS
+MPC_IN_PROCESS_MODE
 LIBOBJS
 MPC_ARCH_DETECTED_STRING
 MPC_ARCH_DETECTED_FUNCTION
@@ -857,6 +858,7 @@ with_slurm
 with_pmi
 with_pmi_include
 with_pmi_libs
+enable_process_mode
 with_extls
 with_extls_include
 with_extls_libs
@@ -1545,6 +1547,7 @@ Optional Features:
   --disable-dependency-tracking
                           speeds up one-time build
   --disable-libtool-lock  avoid locking (might break parallel builds)
+  --enable-process-mode   Compile MPC in process mode
   --enable-shell-colors   Activate Color Output in MPC
   --enable-cma            Activate Cross Memory Attach for SHM communications
   --enable-opt            Build MPC with optimization flags
@@ -24374,7 +24377,40 @@ done
 # Configure Privatization Support
 #
 
+# Check whether --enable-process-mode was given.
+if test "${enable_process_mode+set}" = set; then :
+  enableval=$enable_process_mode; mpc_in_process_mode=$enableval
+else
+  mpc_in_process_mode=no
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking MPC is in process mode" >&5
+$as_echo_n "checking MPC is in process mode... " >&6; }
+
+if test "x${mpc_in_process_mode}" = "xyes"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define MPC_IN_PROCESS_MODE 1" >>confdefs.h
+
+        MPC_IN_PROCESS_MODE="yes"
+else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
 mpc_privatization_support="no"
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking privatization support is needed" >&5
+$as_echo_n "checking privatization support is needed... " >&6; }
+
+if test "x$mpc_in_process_mode" = "xno"; then
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
 
 
 
@@ -24522,19 +24558,23 @@ $as_echo "$as_me: $libname found using pkg-config" >&6;}
                 mpc_dep_found=$check_or_infer_prefix_result
 
 
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Enabling extended TLS support" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking Enabling extended TLS support" >&5
 $as_echo_n "checking Enabling extended TLS support... " >&6; }
 
-if test "x$mpc_dep_found" = "xyes"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+        if test "x$mpc_dep_found" = "xyes"; then
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
 $as_echo "#define MPC_USE_EXTLS 1" >>confdefs.h
 
 
 
-        mpc_privatization_support="yes"
+                mpc_privatization_support="yes"
+        else
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        fi
+
 else
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -24780,6 +24820,7 @@ $as_echo "#define MPC_ENABLE_SHELL_COLORS 1" >>confdefs.h
 
         MPC_ENABLE_SHELL_COLORS=1
 fi
+
 
 
 
@@ -30367,6 +30408,7 @@ echo "========== MPC $MPC_VERSION_STRING Configuration =========="
 echo "PREFIX: $prefix"
 echo "Optimized build ($MPC_OPT_FLAGS): $mpc_enable_opt"
 echo "Native build ($MPC_NATIVE_FLAGS): $mpc_enable_native_opt"
+echo "Process mode only: $mpc_in_process_mode"
 echo ""
 echo "DEBUG : $mpc_debug"
 echo "Debug messages: $mpc_debug_messages"

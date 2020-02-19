@@ -353,7 +353,7 @@ static __thread struct is_net_previous_answer __sctk_is_net = {-1, 0};
 
 static inline int _mpc_comm_is_remote_rank( int dest )
 {
-#ifdef SCTK_PROCESS_MODE
+#ifdef MPC_IN_PROCESS_MODE
 
 	if ( dest != mpc_common_get_task_rank() )
 	{

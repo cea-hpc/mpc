@@ -40,7 +40,7 @@ extern "C"
 
 static inline int mpc_common_get_task_rank ( void )
 {
-#if defined(SCTK_PROCESS_MODE) || defined(SCTK_LIB_MODE)
+#if defined(MPC_IN_PROCESS_MODE) || defined(SCTK_LIB_MODE)
 	return mpc_common_get_process_rank();
 #endif
 	int can_be_disguised = 0;
@@ -104,7 +104,7 @@ static inline int mpc_common_get_local_task_rank ( void )
 #ifdef SCTK_LIB_MODE
 	return 0;
 #endif
-#ifdef SCTK_PROCESS_MODE
+#ifdef MPC_IN_PROCESS_MODE
 	return 0;
 #endif
 	sctk_thread_data_t *data = sctk_thread_data_get();
@@ -122,7 +122,7 @@ static inline int mpc_common_get_local_task_count ( void )
 #ifdef SCTK_LIB_MODE
 	return 1;
 #endif
-#ifdef SCTK_PROCESS_MODE
+#ifdef MPC_IN_PROCESS_MODE
 	return 1;
 #endif
 	return sctk_thread_get_current_local_tasks_nb();

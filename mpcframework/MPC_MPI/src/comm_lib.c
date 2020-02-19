@@ -493,7 +493,7 @@ int MPCX_Undisguise()
  * MPC PER MPI PROCESS CONTEXT *
  *******************************/
 
-#ifdef SCTK_PROCESS_MODE
+#ifdef MPC_IN_PROCESS_MODE
 	struct mpc_mpi_cl_per_mpi_process_ctx_s *___the_process_specific = NULL;
 #endif
 
@@ -532,7 +532,7 @@ static inline void ___mpc_cl_per_mpi_process_ctx_init( mpc_mpi_cl_per_mpi_proces
 	_mpc_egreq_classes_storage_init( &tmp->grequest_context );
 	/* Clear exit handlers */
 	tmp->exit_handlers = NULL;
-#ifdef SCTK_PROCESS_MODE
+#ifdef MPC_IN_PROCESS_MODE
 	___the_process_specific = tmp;
 #endif
 }
@@ -672,7 +672,7 @@ void mpc_mpi_cl_per_mpi_process_ctx_reinit( struct mpc_mpi_cl_per_mpi_process_ct
 
 static inline struct mpc_mpi_cl_per_mpi_process_ctx_s *_mpc_cl_per_mpi_process_ctx_get()
 {
-#ifdef SCTK_PROCESS_MODE
+#ifdef MPC_IN_PROCESS_MODE
 	return ___the_process_specific;
 #endif
 	struct mpc_mpi_cl_per_mpi_process_ctx_s *ret = NULL;

@@ -869,19 +869,46 @@ AC_CHECK_FUNCS(sched_get_priority_min )
 # Configure Privatization Support
 #
 
+AC_ARG_ENABLE([process-mode],
+[AS_HELP_STRING([--enable-process-mode],
+                [Compile MPC in process mode])],
+[mpc_in_process_mode=$enableval],
+[mpc_in_process_mode=no])
+
+AC_MSG_CHECKING([MPC is in process mode])
+
+if test "x${mpc_in_process_mode}" = "xyes"; then
+        AC_MSG_RESULT([yes])
+        AC_DEFINE([MPC_IN_PROCESS_MODE], [1], [MPC compiled in process mode])
+        MPC_IN_PROCESS_MODE="yes"
+else
+        AC_MSG_RESULT([no])
+fi
+
+AC_SUBST([MPC_IN_PROCESS_MODE])
+
 mpc_privatization_support="no"
 
-MPC_DETECT_DEPENDENCY([extls.h],[extls], [extls_init], [EXTLS])
+AC_MSG_CHECKING([privatization support is needed])
 
+if test "x$mpc_in_process_mode" = "xno"; then
 
-AC_MSG_CHECKING([Enabling extended TLS support])
-
-if test "x$mpc_dep_found" = "xyes"; then
         AC_MSG_RESULT([yes])
-        AC_DEFINE([MPC_USE_EXTLS], [1], [Extls support is enabled])
+
+        MPC_DETECT_DEPENDENCY([extls.h],[extls], [extls_init], [EXTLS])
+
+        AC_MSG_CHECKING([Enabling extended TLS support])
+
+        if test "x$mpc_dep_found" = "xyes"; then
+                AC_MSG_RESULT([yes])
+                AC_DEFINE([MPC_USE_EXTLS], [1], [Extls support is enabled])
 
 
-        mpc_privatization_support="yes"
+                mpc_privatization_support="yes"
+        else
+                AC_MSG_RESULT([no])
+        fi
+
 else
         AC_MSG_RESULT([no])
 fi
@@ -1015,6 +1042,7 @@ if test "x${mpc_shell_color}" = "xyes"; then
 fi
 
 AC_SUBST([MPC_ENABLE_SHELL_COLORS])
+
 
 AC_ARG_ENABLE([cma],
 [AS_HELP_STRING([--enable-cma],
@@ -1314,6 +1342,7 @@ echo "========== MPC $MPC_VERSION_STRING Configuration =========="
 echo "PREFIX: $prefix"
 echo "Optimized build ($MPC_OPT_FLAGS): $mpc_enable_opt"
 echo "Native build ($MPC_NATIVE_FLAGS): $mpc_enable_native_opt"
+echo "Process mode only: $mpc_in_process_mode"
 echo ""
 echo "DEBUG : $mpc_debug"
 echo "Debug messages: $mpc_debug_messages"

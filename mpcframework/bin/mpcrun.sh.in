@@ -22,24 +22,32 @@
 #                                                                      #
 ########################################################################
 
+#
+# Compute All Paths
+#
+
 MPC_INSTALL_PREFIX=@prefix@
 
 MPC_BIN_DIR=${MPC_INSTALL_PREFIX}/bin
 MPC_LIB_DIR=${MPC_INSTALL_PREFIX}/lib
 MPC_SHARE_DIR=${MPC_INSTALL_PREFIX}/share/mpc
 MPC_INCLUDE_DIR=${MPC_INSTALL_PREFIX}/include
-SCTK_NET_LIST="@MPC_NETWORK_LIST@"
 
-SCTK_NET_LIST_EXP=""
-SCTK_JOB_MANAGER="@MPC_LAUNCHER@"
-DEBUGGER_LIST=""
-SCTK_MPC_PROCESS_MODE="0"
 
 #Version of MPC library
 MAJOR="@MPC_VERSION_MAJOR@"
 MINOR="@MPC_VERSION_MINOR@"
 REVISION="@MPC_VERSION_REVISION@"
 PRE_RELEASE="@MPC_VERSION_PRE@"
+
+# Configuration of MPC Networks
+SCTK_NET_LIST="@MPC_NETWORK_LIST@"
+SCTK_NET_LIST_EXP=""
+
+# Configuration of MPC's Launch
+SCTK_JOB_MANAGER="@MPC_LAUNCHER@"
+MPC_IN_PROCESS_MODE="@MPC_IN_PROCESS_MODE@"
+
 
 LAUNCH="mpiexec"
 LAUNCH_MODE="exec"
@@ -418,13 +426,13 @@ for arg in "$@" ; do
     TASK_NB="`echo A$arg | sed -e 's/A-n=//g'`"
     ;;
     --process-nb=*)
-	if test "$SCTK_MPC_PROCESS_MODE" = "1"; then
+	if test "$MPC_IN_PROCESS_MODE" = "yes"; then
 	    echo "MPC is in process mode, process number will be set automatically"
 	fi
     PROCESS_NB="`echo A$arg | sed -e 's/A--process-nb=//g'`"
     ;;
     -p=*)
-	if test "$SCTK_MPC_PROCESS_MODE" = "1"; then
+	if test "$MPC_IN_PROCESS_MODE" = "yes"; then
 	    echo "MPC is in process mode, process number will be set automatically"
 	fi
     PROCESS_NB="`echo A$arg | sed -e 's/A-p=//g'`"
@@ -532,7 +540,7 @@ done
 export SCTK_BINDIR="${MPC_INSTALL_PREFIX}/bin/"
 export PATH="${SCTK_BINDIR}:${PATH}"
 
-if test "$SCTK_MPC_PROCESS_MODE" = "1"; then
+if test "$MPC_IN_PROCESS_MODE" = "yes"; then
     PROCESS_NB="$TASK_NB"
 else
     if test "$PROCESS_NB" = "0" ; then
@@ -710,6 +718,10 @@ fi
 if test "$THREAD_TYPE" = "--use-pthread_ng"; then 
     unset GDB_LIBTHREAD_DB
 fi
+
+
+DEBUGGER_LIST=""
+
 
 if test "${DEBUG}" = "mpc-gdb"; then
     if test "$DEBUGGER_LIST" = "" ; then 

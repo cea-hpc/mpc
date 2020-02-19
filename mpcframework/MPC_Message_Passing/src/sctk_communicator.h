@@ -443,7 +443,7 @@ int _sctk_get_process_rank_from_task_rank ( int rank );
 
 static inline int sctk_get_process_rank_from_task_rank( int rank )
 {
-#ifdef SCTK_PROCESS_MODE
+#ifdef MPC_IN_PROCESS_MODE
 	return rank;
 #endif
 
