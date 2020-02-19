@@ -178,9 +178,7 @@ init_tls_start_routine_arg (void *(*start_routine) (void *), void *arg)
   tmp->arg = arg;
   tmp->start_routine = start_routine;
 #ifdef MPC_USE_EXTLS
-  extls_ctx_t *ctx = sctk_calloc(1, sizeof(extls_ctx_t));
-  extls_ctx_herit(*((extls_ctx_t**)sctk_get_ctx_addr()), ctx, LEVEL_THREAD);
-  tmp->tls = (void*)ctx;
+  tmp->tls = *(void**)sctk_get_ctx_addr();
 #endif
   return tmp;
 }
