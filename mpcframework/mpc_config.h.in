@@ -512,6 +512,9 @@
 /* Define to 1 if you have the `socket' function. */
 #undef HAVE_SOCKET
 
+/* Define to 1 if you have the <stdbool.h> header file. */
+#undef HAVE_STDBOOL_H
+
 /* Define to 1 if you have the <stddef.h> header file. */
 #undef HAVE_STDDEF_H
 
@@ -623,6 +626,12 @@
 /* Define to 1 if the system has the `__builtin_expect' built-in function */
 #undef HAVE___BUILTIN_EXPECT
 
+/* KMP intrisincs enabled */
+#undef KMP_ARCH_X86
+
+/* KMP intrisincs x64 enabled */
+#undef KMP_ARCH_X86_64
+
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
@@ -643,6 +652,9 @@
 
 /* MPC_MESSAGE_PASSING module was enabled */
 #undef MPC_Message_Passing
+
+/* MPC_OpenMP module was enabled */
+#undef MPC_OpenMP
 
 /* Prefix Path for MPC */
 #undef MPC_PREFIX_PATH

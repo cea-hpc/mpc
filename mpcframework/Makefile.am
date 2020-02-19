@@ -11,6 +11,10 @@ if MPC_THREAD_ENABLED
         SUBDIRS += MPC_Threads
 endif
 
+if MPC_OPENMP_ENABLED
+        SUBDIRS += MPC_OpenMP
+endif
+
 if MPC_MESSAGE_PASSING_ENABLED
         SUBDIRS += MPC_Message_Passing
 endif
@@ -37,6 +41,10 @@ ALL_MPC_LIBS=./MPC_Config/src/libmpcconfig.la
 if MPC_THREAD_ENABLED
 ALL_MPC_LIBS+=./MPC_Launch/src/libmpclaunch.la
 ALL_MPC_LIBS+=./MPC_Threads/src/libmpcthread.la
+endif
+
+if MPC_OPENMP_ENABLED
+ALL_MPC_LIBS+=./MPC_OpenMP/src/libmpcomp.la
 endif
 
 if MPC_MESSAGE_PASSING_ENABLED

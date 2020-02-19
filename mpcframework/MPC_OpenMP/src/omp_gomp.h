@@ -1,9 +1,8 @@
 #ifndef OMP_GOMP_H_
 #define OMP_GOMP_H_
 
-#include "mpc_common_types.h"
-
-#include "mpcomp_types.h"
+#include <mpc_common_types.h>
+#include <mpcomp_types.h>
 
 /**********************
  * SYMBOL VERSIONNING *

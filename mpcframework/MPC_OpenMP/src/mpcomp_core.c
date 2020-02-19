@@ -837,7 +837,7 @@ static inline void __mpcomp_read_env_variables()
 void __mpcomp_init( void )
 {
 	static volatile int done = 0;
-	static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+	static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
 	int nb_mvps;
 	int task_rank;
 
@@ -856,7 +856,7 @@ void __mpcomp_init( void )
 	/* Need to initialize the whole runtime (environment variables) This
 	* section is shared by every OpenMP instances among MPI tasks located inside
 	* the same OS process */
-	sctk_thread_mutex_lock( &lock );
+	mpc_common_spinlock_lock( &lock );
 
 	if ( done == 0 )
 	{
@@ -1023,7 +1023,7 @@ void __mpcomp_init( void )
 #if MPCOMP_TASK
 	//    _mpc_task_team_info_init(team_info, instance->tree_depth);
 #endif /* MPCOMP_TASK */
-	sctk_thread_mutex_unlock( &lock );
+	mpc_common_spinlock_unlock( &lock );
 }
 
 void __mpcomp_exit( void )

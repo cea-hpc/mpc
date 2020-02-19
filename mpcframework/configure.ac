@@ -437,6 +437,7 @@ AC_CHECK_HEADERS([signal.h])
 AC_CHECK_HEADERS([stddef.h])
 AC_CHECK_HEADERS([stdlib.h])
 AC_CHECK_HEADERS([stdint.h])
+AC_CHECK_HEADERS([stdbool.h])
 AC_CHECK_HEADERS([string.h])
 AC_CHECK_HEADERS([sys/mman.h])
 AC_CHECK_HEADERS([sys/param.h])
@@ -951,6 +952,19 @@ AM_CONDITIONAL([MPC_ARCH_X86_64_MICROTASK], [test "x${MPC_ARCH_MICROTASK_ARCH}" 
 # Note that by construction the following conditionnals are multually exclusive
 AM_CONDITIONAL([MPC_ARCH_GENERIC_MICROTASK], [test "x${MPC_ARCH_MICROTASK_ARCH}" = "xgeneric"])
 
+
+AC_MSG_CHECKING([KMP optimized asm functions])
+
+if test "x$MPC_ARCH_MICROTASK_ARCH" = "xx86_64"; then
+        AC_DEFINE([KMP_ARCH_X86_64],[1], [KMP intrisincs x64 enabled])
+        AC_MSG_RESULT([x86_64])
+fi
+
+if test "x$MPC_ARCH_MICROTASK_ARCH" = "xx86"; then
+        AC_DEFINE([KMP_ARCH_X86],[1], [KMP intrisincs enabled])
+        AC_MSG_RESULT([x86_64])
+fi
+
 #
 # Guess Compiler Family
 #
@@ -1167,6 +1181,18 @@ fi
 
 AM_CONDITIONAL([MPC_MPI_ENABLED], [test "x${mpc_mpi_enabled}" = "xyes"])
 
+AC_ARG_ENABLE([openmp],
+[AS_HELP_STRING([--enable-openmp],
+                [Compile MPC's OpenMP interface])],
+[mpc_omp_enabled=$enableval],
+[mpc_omp_enabled=yes])
+
+if test "x${mpc_omp_enabled}" = "xyes"; then
+        AC_DEFINE([MPC_OpenMP], [1], [MPC_OpenMP module was enabled])
+fi
+
+AM_CONDITIONAL([MPC_OPENMP_ENABLED], [test "x${mpc_omp_enabled}" = "xyes"])
+
 #
 # Configure MPC's compilers
 #
@@ -1329,14 +1355,22 @@ AC_SUBST([MPC_GENERATION_DATE])
 AC_OUTPUT([MPC_Arch/include/mpc_arch.h])
 
 AC_OUTPUT([Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile
-           MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile
-           MPC_Launch/src/Makefile MPC_Launch/Makefile
-           MPC_Message_Passing/src/Makefile MPC_Message_Passing/Makefile
-           MPC_MPI/src/Makefile MPC_MPI/Makefile
-           MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile
+           MPC_Common/Makefile MPC_Common/src/Makefile
+           MPC_Config/Makefile MPC_Config/src/Makefile
+           MPC_Launch/Makefile MPC_Launch/src/Makefile
+           MPC_Message_Passing/Makefile MPC_Message_Passing/src/Makefile
+           MPC_MPI/Makefile MPC_MPI/src/Makefile
+           MPC_OpenMP/src/Makefile MPC_OpenMP/Makefile
+           MPC_Topology/Makefile MPC_Topology/src/Makefile
            MPC_Threads/Makefile MPC_Threads/src/Makefile
-           bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags
-           bin/mpc_ldflags bin/mpc_cxx.sh bin/mpc_f77.sh  bin/mpcrun.sh])
+           bin/Makefile
+           bin/mpc_compiler_manager.sh
+           bin/mpc_cc.sh
+           bin/mpc_cflags
+           bin/mpc_ldflags
+           bin/mpc_cxx.sh
+           bin/mpc_f77.sh
+           bin/mpcrun.sh])
 
 echo "========== MPC $MPC_VERSION_STRING Configuration =========="
 echo "PREFIX: $prefix"
@@ -1345,6 +1379,8 @@ echo "# Build Configuration"
 echo ""
 echo "Optimized build... $mpc_enable_opt ($MPC_OPT_FLAGS)"
 echo "Native build...... $mpc_enable_native_opt ($MPC_NATIVE_FLAGS)"
+echo "Microtask arch.... $MPC_ARCH_MICROTASK_ARCH"
+echo "Context switch.... $MPC_ARCH_CONTEXT_SWITCH"
 echo ""
 echo "# Debug and logging"
 echo ""

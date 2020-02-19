@@ -25,8 +25,8 @@
 
 #include "mpcomp_task.h"
 
-#include "sctk_debug.h"
-#include "sctk_runtime_config_struct.h"
+#include <sctk_debug.h>
+#include <mpc_runtime_config.h>
 #include <mpc_common_types.h>
 #include <mpc_common_asm.h>
 #include <mpc_common_rank.h>

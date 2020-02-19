@@ -29,7 +29,7 @@
 
 void __kmpc_atomic_4(__UNUSED__ ident_t *id_ref, __UNUSED__ int gtid, void *lhs, void *rhs,
                      void (*f)(void *, void *, void *)) {
-  static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+  static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
   if (
 #if defined __i386 || defined __x86_64
       TRUE /* no alignment problems */
@@ -50,9 +50,9 @@ void __kmpc_atomic_4(__UNUSED__ ident_t *id_ref, __UNUSED__ int gtid, void *lhs,
     }
     return;
   } else {
-    sctk_thread_mutex_lock(&lock);
+    mpc_common_spinlock_lock(&lock);
     (*f)(lhs, lhs, rhs);
-    sctk_thread_mutex_unlock(&lock);
+    mpc_common_spinlock_unlock(&lock);
   }
 }
 

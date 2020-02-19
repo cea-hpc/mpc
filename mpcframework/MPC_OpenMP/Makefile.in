@@ -88,7 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = MPC_Common
+subdir = MPC_OpenMP
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_gcc_builtin.m4 \
 	$(top_srcdir)/m4/ax_reset_header_cache.m4 \
@@ -379,9 +379,7 @@ top_srcdir = @top_srcdir@
 xmllint = @xmllint@
 xsltproc = @xsltproc@
 mpc_headerdir = $(includedir)/mpc/
-
-#mpc_header_HEADERS= $(abs_top_srcdir)/MPC_Common/include/mpc_common_aio.h $(abs_top_srcdir)/MPC_Common/include/mpc_common_asm.h $(abs_top_srcdir)/MPC_Common/include/mpc_common_datastructure.h $(abs_top_srcdir)/MPC_Common/include/mpc_common.h $(abs_top_srcdir)/MPC_Common/include/mpc_common_helper.h $(abs_top_srcdir)/MPC_Common/include/mpc_common_rank.h $(abs_top_srcdir)/MPC_Common/include/mpc_common_spinlock.h  $(abs_top_srcdir)/MPC_Common/include/sctk_alloc.h $(abs_top_srcdir)/MPC_Common/include/sctk_debug.h $(abs_top_srcdir)/MPC_Common/include/sctk_dummy.h $(abs_top_srcdir)/MPC_Common/include/sctk_no_alloc.h $(abs_top_srcdir)/MPC_Common/include/sctk_pm_json.h $(abs_top_srcdir)/MPC_Common/include/utarray.h $(abs_top_srcdir)/MPC_Common/include/uthash.h $(abs_top_srcdir)/MPC_Common/include/utlist.h
-mpc_header_HEADERS = $(abs_top_srcdir)/MPC_Common/include/mpc_common_asm.h $(abs_top_srcdir)/MPC_Common/include/mpc_common_types.h
+mpc_header_HEADERS = ./include/mpcomp_abi.h  ./include/mpcomp.h  ./include/omp_abi.h  ./include/omp.h  ./include/omp_lib.h  ./include/omp_lib_kinds.h  ./include/ompt.h
 SUBDIRS = src
 all: all-recursive
 
@@ -395,9 +393,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu MPC_Common/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu MPC_OpenMP/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu MPC_Common/Makefile
+	  $(AUTOMAKE) --gnu MPC_OpenMP/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \

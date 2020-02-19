@@ -73,7 +73,7 @@ void __mpcomp_atomic_begin( void )
 		{
 			__mpcomp_omp_global_atomic_lock = (mpc_common_spinlock_t*) sctk_malloc(sizeof(mpc_common_spinlock_t));
 			sctk_assert( __mpcomp_omp_global_atomic_lock );
-			mpc_common_spinlock_init( __mpcomp_omp_global_atomic_lock, SCTK_SPINLOCK_INITIALIZER );
+			mpc_common_spinlock_init( __mpcomp_omp_global_atomic_lock, 0 );
 #if OMPT_SUPPORT
 
 			if ( _mpc_omp_ompt_is_enabled() )
@@ -187,7 +187,7 @@ void __mpcomp_anonymous_critical_begin( void )
 			__mpcomp_omp_global_critical_lock = (mpcomp_lock_t *) sctk_malloc( sizeof( mpcomp_lock_t ));
 			sctk_assert( __mpcomp_omp_global_critical_lock );
 			memset( __mpcomp_omp_global_critical_lock, 0, sizeof( mpcomp_lock_t ) );
-			sctk_thread_mutex_init( &( __mpcomp_omp_global_critical_lock->lock ), 0 );
+			mpc_common_spinlock_init( &( __mpcomp_omp_global_critical_lock->lock ), 0 );
 #if OMPT_SUPPORT
 
 			if ( _mpc_omp_ompt_is_enabled() )
@@ -244,7 +244,7 @@ void __mpcomp_anonymous_critical_begin( void )
 	}
 
 #endif //OMPT_SUPPORT
-	sctk_thread_mutex_lock( &( __mpcomp_omp_global_critical_lock->lock ) );
+	mpc_common_spinlock_lock( &( __mpcomp_omp_global_critical_lock->lock ) );
 #if  OMPT_SUPPORT
 
 	if ( _mpc_omp_ompt_is_enabled() )
@@ -268,7 +268,7 @@ void __mpcomp_anonymous_critical_begin( void )
 
 void __mpcomp_anonymous_critical_end( void )
 {
-	sctk_thread_mutex_unlock( &( __mpcomp_omp_global_critical_lock->lock ) );
+	mpc_common_spinlock_unlock( &( __mpcomp_omp_global_critical_lock->lock ) );
 #if OMPT_SUPPORT
 
 	if ( _mpc_omp_ompt_is_enabled() )
@@ -304,7 +304,7 @@ void __mpcomp_named_critical_begin( void **l )
 			named_critical_lock = (mpcomp_lock_t *) sctk_malloc( sizeof( mpcomp_lock_t ));
 			sctk_assert( named_critical_lock );
 			memset( named_critical_lock, 0, sizeof( mpcomp_lock_t ) );
-			sctk_thread_mutex_init( &( named_critical_lock->lock ), 0 );
+			mpc_common_spinlock_init( &( named_critical_lock->lock ), 0 );
 #if OMPT_SUPPORT
 
 			if ( _mpc_omp_ompt_is_enabled() )
@@ -341,7 +341,7 @@ void __mpcomp_named_critical_begin( void **l )
 	}
 
 #endif //OMPT_SUPPORT
-	sctk_thread_mutex_lock( &( named_critical_lock->lock ) );
+	mpc_common_spinlock_lock( &( named_critical_lock->lock ) );
 #if OMPT_SUPPORT
 
 	if ( _mpc_omp_ompt_is_enabled() )
@@ -369,7 +369,7 @@ void __mpcomp_named_critical_end( void **l )
 	sctk_assert( l );
 	sctk_assert( *l );
 	mpcomp_lock_t *named_critical_lock = ( mpcomp_lock_t * )( *l );
-	sctk_thread_mutex_unlock( &( named_critical_lock->lock ) );
+	mpc_common_spinlock_unlock( &( named_critical_lock->lock ) );
 #if OMPT_SUPPORT
 
 	if ( _mpc_omp_ompt_is_enabled() )
@@ -1038,7 +1038,7 @@ static void __sync_lock_init_with_hint( omp_lock_t *lock, omp_lock_hint_t hint )
 	mpcomp_user_lock = ( mpcomp_lock_t * )mpcomp_alloc( sizeof( mpcomp_lock_t ) );
 	sctk_assert( mpcomp_user_lock );
 	memset( mpcomp_user_lock, 0, sizeof( mpcomp_lock_t ) );
-	sctk_thread_mutex_init( &( mpcomp_user_lock->lock ), 0 );
+	mpc_common_spinlock_init( &( mpcomp_user_lock->lock ), 0 );
 #if OMPT_SUPPORT
 
 	if ( _mpc_omp_ompt_is_enabled() )
@@ -1104,7 +1104,6 @@ void omp_destroy_lock( omp_lock_t *lock )
 	}
 
 #endif /* OMPT_SUPPORT */
-	sctk_thread_mutex_destroy( &( mpcomp_user_lock->lock ) );
 	sctk_free( mpcomp_user_lock );
 	*lock = NULL;
 }
@@ -1134,7 +1133,7 @@ void omp_set_lock( omp_lock_t *lock )
 	}
 
 #endif /* OMPT_SUPPORT */
-	sctk_thread_mutex_lock( &( mpcomp_user_lock->lock ) );
+	mpc_common_spinlock_lock( &( mpcomp_user_lock->lock ) );
 #if OMPT_SUPPORT
 
 	if ( _mpc_omp_ompt_is_enabled() )
@@ -1161,7 +1160,7 @@ void omp_unset_lock( omp_lock_t *lock )
 	mpcomp_lock_t *mpcomp_user_lock = NULL;
 	sctk_assert( lock );
 	mpcomp_user_lock = ( mpcomp_lock_t * )*lock;
-	sctk_thread_mutex_unlock( &( mpcomp_user_lock->lock ) );
+	mpc_common_spinlock_unlock( &( mpcomp_user_lock->lock ) );
 #if OMPT_SUPPORT
 
 	if ( _mpc_omp_ompt_is_enabled() )
@@ -1209,7 +1208,7 @@ int omp_test_lock( omp_lock_t *lock )
 	}
 
 #endif /* OMPT_SUPPORT */
-	retval = !sctk_thread_mutex_trylock( &( mpcomp_user_lock->lock ) );
+	retval = !mpc_common_spinlock_trylock( &( mpcomp_user_lock->lock ) );
 #if OMPT_SUPPORT
 
 	if ( retval && _mpc_omp_ompt_is_enabled() )
@@ -1239,7 +1238,7 @@ static void __sync_nest_lock_init_with_hint( omp_nest_lock_t *lock, omp_lock_hin
 	mpcomp_user_nest_lock = ( mpcomp_nest_lock_t * )mpcomp_alloc( sizeof( mpcomp_nest_lock_t ) );
 	sctk_assert( mpcomp_user_nest_lock );
 	memset( mpcomp_user_nest_lock, 0, sizeof( mpcomp_nest_lock_t ) );
-	sctk_thread_mutex_init( &( mpcomp_user_nest_lock->lock ), 0 );
+	mpc_common_spinlock_init( &( mpcomp_user_nest_lock->lock ), 0 );
 #if OMPT_SUPPORT
 
 	if ( _mpc_omp_ompt_is_enabled() )
@@ -1305,7 +1304,6 @@ void omp_destroy_nest_lock( omp_nest_lock_t *lock )
 	}
 
 #endif /* OMPT_SUPPORT */
-	sctk_thread_mutex_destroy( &( mpcomp_user_nest_lock->lock ) );
 	sctk_free( mpcomp_user_nest_lock );
 	*lock = NULL;
 }
@@ -1344,7 +1342,7 @@ void omp_set_nest_lock( omp_nest_lock_t *lock )
 	if ( mpcomp_user_nest_lock->owner_thread != ( void * )thread )
 #endif
 	{
-		sctk_thread_mutex_lock( &( mpcomp_user_nest_lock->lock ) );
+		mpc_common_spinlock_lock( &( mpcomp_user_nest_lock->lock ) );
 		mpcomp_user_nest_lock->owner_thread = thread;
 #if MPCOMP_TASK
 		mpcomp_user_nest_lock->owner_task =
@@ -1438,7 +1436,7 @@ void omp_unset_nest_lock( omp_nest_lock_t *lock )
 		}
 
 #endif /* OMPT_SUPPORT */
-		sctk_thread_mutex_unlock( &( mpcomp_user_nest_lock->lock ) );
+		mpc_common_spinlock_unlock( &( mpcomp_user_nest_lock->lock ) );
 	}
 }
 
@@ -1476,7 +1474,7 @@ int omp_test_nest_lock( omp_nest_lock_t *lock )
 	if ( mpcomp_user_nest_lock->owner_thread != ( void * )thread )
 #endif
 	{
-		if ( sctk_thread_mutex_trylock( &( mpcomp_user_nest_lock->lock ) ) )
+		if ( mpc_common_spinlock_trylock( &( mpcomp_user_nest_lock->lock ) ) )
 		{
 			return 0;
 		}

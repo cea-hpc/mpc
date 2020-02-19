@@ -642,6 +642,8 @@ MPC_FORTRAN_COMPILER_LIST
 MPC_CPP_COMPILER_LIST
 MPC_C_COMPILER_LIST
 MPC_LANGUAGE_LIST
+MPC_OPENMP_ENABLED_FALSE
+MPC_OPENMP_ENABLED_TRUE
 MPC_MPI_ENABLED_FALSE
 MPC_MPI_ENABLED_TRUE
 MPC_MESSAGE_PASSING_ENABLED_FALSE
@@ -871,6 +873,7 @@ enable_debug
 enable_threads
 enable_message_passing
 enable_mpi
+enable_openmp
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1559,6 +1562,7 @@ Optional Features:
   --enable-message-passing
                           Compile MPC with Message Passing Support
   --enable-mpi            Compile MPC's MPI interface
+  --enable-openmp         Compile MPC's OpenMP interface
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -20194,6 +20198,18 @@ fi
 
 done
 
+for ac_header in stdbool.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "stdbool.h" "ac_cv_header_stdbool_h" "$ac_includes_default"
+if test "x$ac_cv_header_stdbool_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STDBOOL_H 1
+_ACEOF
+
+fi
+
+done
+
 for ac_header in string.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "string.h" "ac_cv_header_string_h" "$ac_includes_default"
@@ -24645,6 +24661,26 @@ else
 fi
 
 
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking KMP optimized asm functions" >&5
+$as_echo_n "checking KMP optimized asm functions... " >&6; }
+
+if test "x$MPC_ARCH_MICROTASK_ARCH" = "xx86_64"; then
+
+$as_echo "#define KMP_ARCH_X86_64 1" >>confdefs.h
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: x86_64" >&5
+$as_echo "x86_64" >&6; }
+fi
+
+if test "x$MPC_ARCH_MICROTASK_ARCH" = "xx86"; then
+
+$as_echo "#define KMP_ARCH_X86 1" >>confdefs.h
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: x86_64" >&5
+$as_echo "x86_64" >&6; }
+fi
+
 #
 # Guess Compiler Family
 #
@@ -24991,6 +25027,29 @@ fi
 else
   MPC_MPI_ENABLED_TRUE='#'
   MPC_MPI_ENABLED_FALSE=
+fi
+
+
+# Check whether --enable-openmp was given.
+if test "${enable_openmp+set}" = set; then :
+  enableval=$enable_openmp; mpc_omp_enabled=$enableval
+else
+  mpc_omp_enabled=yes
+fi
+
+
+if test "x${mpc_omp_enabled}" = "xyes"; then
+
+$as_echo "#define MPC_OpenMP 1" >>confdefs.h
+
+fi
+
+ if test "x${mpc_omp_enabled}" = "xyes"; then
+  MPC_OPENMP_ENABLED_TRUE=
+  MPC_OPENMP_ENABLED_FALSE='#'
+else
+  MPC_OPENMP_ENABLED_TRUE='#'
+  MPC_OPENMP_ENABLED_FALSE=
 fi
 
 
@@ -25355,6 +25414,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_MPI_ENABLED_TRUE}" && test -z "${MPC_MPI_ENABLED_FALSE}"; then
   as_fn_error $? "conditional \"MPC_MPI_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPC_OPENMP_ENABLED_TRUE}" && test -z "${MPC_OPENMP_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_OPENMP_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
@@ -27770,7 +27833,7 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
-ac_config_files="$ac_config_files Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Launch/src/Makefile MPC_Launch/Makefile MPC_Message_Passing/src/Makefile MPC_Message_Passing/Makefile MPC_MPI/src/Makefile MPC_MPI/Makefile MPC_Config/src/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags bin/mpc_ldflags bin/mpc_cxx.sh bin/mpc_f77.sh bin/mpcrun.sh"
+ac_config_files="$ac_config_files Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Config/src/Makefile MPC_Launch/Makefile MPC_Launch/src/Makefile MPC_Message_Passing/Makefile MPC_Message_Passing/src/Makefile MPC_MPI/Makefile MPC_MPI/src/Makefile MPC_OpenMP/src/Makefile MPC_OpenMP/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags bin/mpc_ldflags bin/mpc_cxx.sh bin/mpc_f77.sh bin/mpcrun.sh"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -27959,6 +28022,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_MPI_ENABLED_TRUE}" && test -z "${MPC_MPI_ENABLED_FALSE}"; then
   as_fn_error $? "conditional \"MPC_MPI_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPC_OPENMP_ENABLED_TRUE}" && test -z "${MPC_OPENMP_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_OPENMP_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__EXEEXT_TRUE}" && test -z "${am__EXEEXT_FALSE}"; then
@@ -28949,13 +29016,15 @@ do
     "MPC_Common/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Common/Makefile" ;;
     "MPC_Common/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Common/src/Makefile" ;;
     "MPC_Config/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Config/Makefile" ;;
-    "MPC_Launch/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Launch/src/Makefile" ;;
-    "MPC_Launch/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Launch/Makefile" ;;
-    "MPC_Message_Passing/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Message_Passing/src/Makefile" ;;
-    "MPC_Message_Passing/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Message_Passing/Makefile" ;;
-    "MPC_MPI/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_MPI/src/Makefile" ;;
-    "MPC_MPI/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_MPI/Makefile" ;;
     "MPC_Config/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Config/src/Makefile" ;;
+    "MPC_Launch/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Launch/Makefile" ;;
+    "MPC_Launch/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Launch/src/Makefile" ;;
+    "MPC_Message_Passing/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Message_Passing/Makefile" ;;
+    "MPC_Message_Passing/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Message_Passing/src/Makefile" ;;
+    "MPC_MPI/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_MPI/Makefile" ;;
+    "MPC_MPI/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_MPI/src/Makefile" ;;
+    "MPC_OpenMP/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_OpenMP/src/Makefile" ;;
+    "MPC_OpenMP/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_OpenMP/Makefile" ;;
     "MPC_Topology/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Topology/Makefile" ;;
     "MPC_Topology/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Topology/src/Makefile" ;;
     "MPC_Threads/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Threads/Makefile" ;;
@@ -30411,6 +30480,8 @@ echo "# Build Configuration"
 echo ""
 echo "Optimized build... $mpc_enable_opt ($MPC_OPT_FLAGS)"
 echo "Native build...... $mpc_enable_native_opt ($MPC_NATIVE_FLAGS)"
+echo "Microtask arch.... $MPC_ARCH_MICROTASK_ARCH"
+echo "Context switch.... $MPC_ARCH_CONTEXT_SWITCH"
 echo ""
 echo "# Debug and logging"
 echo ""

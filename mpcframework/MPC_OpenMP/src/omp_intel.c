@@ -141,7 +141,7 @@ void __kmpc_fork_call( __UNUSED__ ident_t *loc, kmp_int32 argc, kmpc_micro micro
 	void **args_copy;
 	mpcomp_intel_wrapper_t *w;
 	mpcomp_thread_t *t;
-	static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+	static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
 	sctk_nodebug( "__kmpc_fork_call: entering w/ %d arg(s)...", argc );
 	mpcomp_intel_wrapper_t w_noalloc;
 	w = &w_noalloc;
@@ -151,7 +151,7 @@ void __kmpc_fork_call( __UNUSED__ ident_t *loc, kmp_int32 argc, kmpc_micro micro
 	/* Threadprivate initialisation */
 	if ( !__kmp_init_common )
 	{
-		sctk_thread_mutex_lock( &lock );
+		mpc_common_spinlock_lock( &lock );
 
 		if ( !__kmp_init_common )
 		{
@@ -163,7 +163,7 @@ void __kmpc_fork_call( __UNUSED__ ident_t *loc, kmp_int32 argc, kmpc_micro micro
 			__kmp_init_common = 1;
 		}
 
-		sctk_thread_mutex_unlock( &lock );
+		mpc_common_spinlock_unlock( &lock );
 	}
 
 	/* Grab info on the current thread */
@@ -2492,11 +2492,11 @@ struct private_common *kmp_threadprivate_insert( int gtid, void *pc_addr,
         size_t pc_size )
 {
 	struct private_common *tn, **tt;
-	static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+	static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
 	mpcomp_thread_t *t;
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	/* critical section */
-	sctk_thread_mutex_lock( &lock );
+	mpc_common_spinlock_lock( &lock );
 	tn = ( struct private_common * )sctk_malloc( sizeof( struct private_common ) );
 	memset( tn, 0, sizeof( struct private_common ) );
 	tn->gbl_addr = pc_addr;
@@ -2512,7 +2512,7 @@ struct private_common *kmp_threadprivate_insert( int gtid, void *pc_addr,
 	}
 
 	memcpy( tn->par_addr, pc_addr, pc_size );
-	sctk_thread_mutex_unlock( &lock );
+	mpc_common_spinlock_unlock( &lock );
 	/* end critical section */
 	tt = &( t->th_pri_common->data[KMP_HASH( pc_addr )] );
 	tn->next = *tt;
@@ -2615,12 +2615,12 @@ void __kmpc_copyprivate( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_ti
 void *__kmpc_threadprivate_cached( ident_t *loc, kmp_int32 global_tid,
                                    void *data, size_t size, void ***cache )
 {
-	static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+	static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
 	int __kmp_tp_capacity = __kmp_default_tp_capacity();
 
 	if ( *cache == 0 )
 	{
-		sctk_thread_mutex_lock( &lock );
+		mpc_common_spinlock_lock( &lock );
 
 		if ( *cache == 0 )
 		{
@@ -2639,7 +2639,7 @@ void *__kmpc_threadprivate_cached( ident_t *loc, kmp_int32 global_tid,
 			*cache = my_cache;
 		}
 
-		sctk_thread_mutex_unlock( &lock );
+		mpc_common_spinlock_unlock( &lock );
 	}
 
 	void *ret = NULL;

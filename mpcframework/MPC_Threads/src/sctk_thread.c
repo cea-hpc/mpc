@@ -72,10 +72,6 @@
 
 #include <sctk_futex.h>
 
-#ifdef MPC_OpenMP
-	#include <mpcomp_core.h>
-#endif
-
 #ifdef MPC_Debugger
 	#include <sctk_thread_dbg.h>
 #endif
@@ -1221,8 +1217,9 @@ int sctk_user_thread_create ( sctk_thread_t *restrict __threadp,
 	}
 
 #endif
-#ifdef MPC_OpenMP
-	TODO( "THIS CODE IS UGLY !" );
+	TODO( "THIS CODE IS UGLY ! FIX TO REEENABLE" );
+#if 0
+
 
 	/* option graphic placement */
 	if ( mpc_common_get_flags()->enable_topology_graphic_placement )

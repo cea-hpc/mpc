@@ -668,7 +668,7 @@ static inline void __team_reset( mpcomp_team_t *team )
 	last_array_slot = &( team->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i );
 	OPA_store_int( last_array_slot, MPCOMP_NOWAIT_STOP_SYMBOL );
 	team->id = OPA_fetch_and_incr_int( &nb_teams );
-	mpc_common_spinlock_init( &team->lock, SCTK_SPINLOCK_INITIALIZER );
+	mpc_common_spinlock_init( &team->lock, 0 );
 }
 
 static inline void __mvp_del_saved_ctx( mpcomp_mvp_t *mvp )

@@ -35,7 +35,8 @@ extern "C"
 {
 #endif
 
-#include <stdbool.h>
+#include <mpc_common_types.h>
+
 #include <mpcomp.h>
 
 /* Conditional compilation -> See section 2.2 */

@@ -91,13 +91,15 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @MPC_THREAD_ENABLED_TRUE@am__append_1 = MPC_Launch MPC_Threads
-@MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_2 = MPC_Message_Passing
-@MPC_MPI_ENABLED_TRUE@am__append_3 = MPC_MPI
-@MPC_THREAD_ENABLED_TRUE@am__append_4 =  \
+@MPC_OPENMP_ENABLED_TRUE@am__append_2 = MPC_OpenMP
+@MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_3 = MPC_Message_Passing
+@MPC_MPI_ENABLED_TRUE@am__append_4 = MPC_MPI
+@MPC_THREAD_ENABLED_TRUE@am__append_5 =  \
 @MPC_THREAD_ENABLED_TRUE@	./MPC_Launch/src/libmpclaunch.la \
 @MPC_THREAD_ENABLED_TRUE@	./MPC_Threads/src/libmpcthread.la
-@MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_5 = ./MPC_Message_Passing/src/libmpclowcomm.la
-@MPC_MPI_ENABLED_TRUE@am__append_6 = ./MPC_MPI/src/libmpcmpi.la
+@MPC_OPENMP_ENABLED_TRUE@am__append_6 = ./MPC_OpenMP/src/libmpcomp.la
+@MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_7 = ./MPC_Message_Passing/src/libmpclowcomm.la
+@MPC_MPI_ENABLED_TRUE@am__append_8 = ./MPC_MPI/src/libmpcmpi.la
 bin_PROGRAMS = mpc_print_config$(EXEEXT)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -244,7 +246,7 @@ ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = MPC_Arch MPC_Common MPC_Config MPC_Topology MPC_Launch \
-	MPC_Threads MPC_Message_Passing MPC_MPI bin
+	MPC_Threads MPC_OpenMP MPC_Message_Passing MPC_MPI bin
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mpc_config.h.in \
 	$(top_srcdir)/MPC_Arch/include/mpc_arch.h.in \
 	$(top_srcdir)/build-aux/compile \
@@ -465,9 +467,9 @@ xsltproc = @xsltproc@
 mpc_headerdir = $(includedir)/mpc/
 mpc_header_HEADERS = $(abs_top_builddir)/mpc_config.h $(abs_top_srcdir)/include/mpc.h $(abs_top_srcdir)/include/mpc_main.h
 SUBDIRS = MPC_Arch MPC_Common MPC_Config MPC_Topology $(am__append_1) \
-	$(am__append_2) $(am__append_3) bin
-ALL_MPC_LIBS = ./MPC_Config/src/libmpcconfig.la $(am__append_4) \
-	$(am__append_5) $(am__append_6)
+	$(am__append_2) $(am__append_3) $(am__append_4) bin
+ALL_MPC_LIBS = ./MPC_Config/src/libmpcconfig.la $(am__append_5) \
+	$(am__append_6) $(am__append_7) $(am__append_8)
 
 #
 # Define the MPC Library
