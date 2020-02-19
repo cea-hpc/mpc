@@ -390,7 +390,7 @@ int mpc_Win_ctx_ack_remote(struct mpc_MPI_Win_request_array *ra,
 
   mpc_lowcomm_request_t *request = mpc_MPI_Win_request_array_pick(ra);
 
-  sctk_info("ACK FROM %d to %d", source_rank, remote_rank);
+  mpc_common_debug("ACK FROM %d to %d", source_rank, remote_rank);
 
   assume(0 <= remote_rank);
 
@@ -408,7 +408,7 @@ int mpc_Win_ctx_get_ack_remote(struct mpc_MPI_Win_request_array *ra,
 
   char data = 0;
 
-  sctk_info("GETACK FROM %d to %d", remote_rank, source_rank);
+  mpc_common_debug("GETACK FROM %d to %d", remote_rank, source_rank);
 
   assume(0 <= remote_rank);
 
@@ -816,7 +816,7 @@ int mpc_Win_target_ctx_start_exposure_no_lock(MPI_Win win, mpc_Win_arity arity,
 
     int p;
     for (p = 0; p < remote_count; p++) {
-      sctk_info("Adding remote remote rank %d now has %d remotes PCOUNT %d ",
+      mpc_common_debug("Adding remote remote rank %d now has %d remotes PCOUNT %d ",
                 remotes[p], ctx->remote_count, ctx->passive_exposure_count);
     }
 
@@ -875,7 +875,7 @@ int mpc_Win_target_ctx_start_exposure_no_lock(MPI_Win win, mpc_Win_arity arity,
 
   /* First do we end a previous fence ? */
   if (active_exposure_fence_end) {
-    sctk_info("\t END");
+    mpc_common_debug("\t END");
     if (mpc_Win_target_ctx_end_exposure_no_lock(win, MPC_WIN_TARGET_FENCE,
                                                 -1)) {
       had_error = 1;
@@ -885,7 +885,7 @@ int mpc_Win_target_ctx_start_exposure_no_lock(MPI_Win win, mpc_Win_arity arity,
   /* Do we start a fence ?
    * note that we may end AND start */
   if (active_exposure_fence_start && !had_error) {
-    sctk_info("\t START");
+    mpc_common_debug("\t START");
     /* Set fence state */
     ctx->state = MPC_WIN_TARGET_FENCE;
   }
@@ -929,7 +929,7 @@ int mpc_Win_target_ctx_start_exposure_no_lock(MPI_Win win, mpc_Win_arity arity,
     if (remotes[0] < 0)
       break;
 
-    sctk_info("     >>> SEND %d to %d", desc->comm_rank, remotes[0]);
+    mpc_common_debug("     >>> SEND %d to %d", desc->comm_rank, remotes[0]);
 
     /* Ack the single remote process */
     mpc_Win_ctx_ack_remote(&ctx->requests, desc->comm_rank, remotes[0]);
@@ -1017,7 +1017,7 @@ int mpc_Win_target_ctx_end_exposure_no_lock(MPI_Win win,
   if (state == MPC_WIN_TARGET_PASSIVE_EXCL) {
     /* Make sure that this unlock is for us */
     if (source_rank != ctx->remote_ranks[0]) {
-      sctk_info("Delay exl unlock from %d", source_rank);
+      mpc_common_debug("Delay exl unlock from %d", source_rank);
       /* Delay the unlock */
       mpc_MPI_win_locks_push_delayed(&ctx->locks, source_rank, WIN_LOCK_UNLOCK);
       return 0;
@@ -1028,7 +1028,7 @@ int mpc_Win_target_ctx_end_exposure_no_lock(MPI_Win win,
     int i;
 
     for (i = 0; i < ctx->remote_count; i++) {
-      sctk_info("[%d == %d]", ctx->remote_ranks[i], source_rank);
+      mpc_common_debug("[%d == %d]", ctx->remote_ranks[i], source_rank);
       if (ctx->remote_ranks[i] == source_rank) {
         found_in_current = 1;
         break;
@@ -1036,7 +1036,7 @@ int mpc_Win_target_ctx_end_exposure_no_lock(MPI_Win win,
     }
 
     if (!found_in_current) {
-      sctk_info("Delay Shared unlock from %d", source_rank);
+      mpc_common_debug("Delay Shared unlock from %d", source_rank);
       /* Delay the unlock */
       mpc_MPI_win_locks_push_delayed(&ctx->locks, source_rank, WIN_LOCK_UNLOCK);
       return 0;
@@ -1065,7 +1065,7 @@ int mpc_Win_target_ctx_end_exposure_no_lock(MPI_Win win,
   case MPC_WIN_TARGET_PASSIVE_EXCL:
     assert(ctx->remote_count == 1);
     ctx->passive_exposure_count--;
-    sctk_info("UNLOCK %d pending", ctx->passive_exposure_count);
+    mpc_common_debug("UNLOCK %d pending", ctx->passive_exposure_count);
     if (ctx->passive_exposure_count == 0) {
       mpc_common_spinlock_write_unlock(&ctx->locks.win_lock);
       check_for_pending_locks = 1;
@@ -1078,7 +1078,7 @@ int mpc_Win_target_ctx_end_exposure_no_lock(MPI_Win win,
     check_for_pending_locks = 1;
     ctx->passive_exposure_count--;
     last_rlock = mpc_common_spinlock_read_unlock(&ctx->locks.win_lock);
-    sctk_info("UNLOCK %d pending (unlock from %d)", ctx->passive_exposure_count,
+    mpc_common_debug("UNLOCK %d pending (unlock from %d)", ctx->passive_exposure_count,
               source_rank);
     if ((ctx->passive_exposure_count == 0) && (last_rlock == 0)) {
       clear_remote_ranks = 1;
@@ -1146,7 +1146,7 @@ int mpc_Win_target_ctx_end_exposure_no_lock(MPI_Win win,
 
   if (clear_remote_ranks) {
 
-    sctk_info("CLEAR ranks");
+    mpc_common_debug("CLEAR ranks");
     /* Remote remote */
     sctk_free(ctx->remote_ranks);
     ctx->remote_ranks = NULL;
@@ -1361,7 +1361,7 @@ int mpc_Win_source_ctx_start_access_no_lock(MPI_Win win, mpc_Win_arity arity,
     assume(ctx->remote_count != 0);
 
     if (desc->comm_rank != remotes[0]) {
-      sctk_info("     <<< RECV from %d to %d", remotes[0], desc->comm_rank);
+      mpc_common_debug("     <<< RECV from %d to %d", remotes[0], desc->comm_rank);
 
       mpc_Win_ctx_get_ack_remote(&ctx->requests, desc->comm_rank, remotes[0]);
     }
@@ -1467,7 +1467,7 @@ int mpc_Win_source_ctx_end_access_no_lock(MPI_Win win,
 
   case MPC_WIN_SINGLE_REMOTE:
     if (desc->comm_rank != single_remote_rank) {
-      sctk_info("END access send from %d to %d", desc->comm_rank,
+      mpc_common_debug("END access send from %d to %d", desc->comm_rank,
                 single_remote_rank);
 
       mpc_Win_ctx_ack_remote(&ctx->requests, desc->comm_rank,
@@ -1484,7 +1484,7 @@ int mpc_Win_source_ctx_end_access_no_lock(MPI_Win win,
       if (ctx->remote_ranks[i] == desc->comm_rank)
         continue;
 
-      sctk_info("Imul END access send from %d to %d", desc->comm_rank,
+      mpc_common_debug("Imul END access send from %d to %d", desc->comm_rank,
                 ctx->remote_ranks[i]);
 
       mpc_Win_ctx_ack_remote(&ctx->requests, desc->comm_rank,
@@ -1848,7 +1848,7 @@ int mpc_MPI_Win_lock(int lock_type, int rank, __UNUSED__ int assert, MPI_Win win
 
       return MPI_SUCCESS;
     } else if (lock_type == MPI_LOCK_SHARED) {
-      sctk_info("LOCKSH %d", rank);
+      mpc_common_debug("LOCKSH %d", rank);
       while (mpc_common_spinlock_read_trylock(&rdesc->target.locks.win_lock) != 0) {
         mpc_MPI_Win_request_array_fence(&desc->source.requests);
         mpc_MPI_Win_request_array_test(&desc->target.requests);
@@ -1900,7 +1900,7 @@ int mpc_MPI_Win_lock(int lock_type, int rank, __UNUSED__ int assert, MPI_Win win
 
 static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
                                        int do_unlock_all) {
-  sctk_info("UUUUUUUUUUUUUU to %d", rank);
+  mpc_common_debug("UUUUUUUUUUUUUU to %d", rank);
   if (rank == SCTK_PROC_NULL)
     return MPI_SUCCESS;
 
@@ -1942,7 +1942,7 @@ static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
       goto UNPD;
     } else if (rdesc->target.state == MPC_WIN_TARGET_PASSIVE_SHARED) {
       int rlv = mpc_common_spinlock_read_unlock(&rdesc->target.locks.win_lock);
-      sctk_info("UNLOCK SH %d @ %d", rank, rlv);
+      mpc_common_debug("UNLOCK SH %d @ %d", rank, rlv);
 
       if (rlv == 0) {
         mpc_common_spinlock_lock_yield(&rdesc->target.lock);
@@ -2006,7 +2006,7 @@ UNPD:
     mpc_common_spinlock_unlock(&desc->target.lock);
   }
 
-  sctk_info("DONE UUUUUUUUUUUUUU to %d", rank);
+  mpc_common_debug("DONE UUUUUUUUUUUUUU to %d", rank);
   return MPI_SUCCESS;
 }
 

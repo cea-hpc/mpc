@@ -44,7 +44,7 @@
 		___env = (getenv("MPC_PTL_DEBUG") != NULL);\
 	}\
 	if(___env) \
-    		sctk_debug("%s (%s:%u)", #x, __FILE__, (unsigned int)__LINE__); \
+    		mpc_common_debug("%s (%s:%u)", #x, __FILE__, (unsigned int)__LINE__); \
     switch (__ret = x) { \
 	case PTL_EQ_DROPPED: \
 		sctk_warning("At least one event has been dropped. This is a major concern !"); \

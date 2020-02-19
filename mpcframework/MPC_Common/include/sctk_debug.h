@@ -60,19 +60,16 @@ void sctk_formated_assert_print( FILE *stream, const int line,
 void MPC_printf( const char *fmt, ... );
 void sctk_debug_root( const char *fmt, ... );
 
+void mpc_common_debug_log( const char *fmt, ... );
+void mpc_common_debug_info( const char *fmt, ... );
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
-        void sctk_debug( const char *fmt, ... );
-        void sctk_info( const char *fmt, ... );
+        void mpc_common_debug( const char *fmt, ... );
 #else
         #if defined( __GNUC__ ) || defined( __INTEL_COMPILER )
-                #define sctk_debug( fmt, ... ) (void) ( 0 )
-                #define sctk_info( fmt, ... ) (void) ( 0 )
+                #define mpc_common_debug( fmt, ... ) (void) ( 0 )
         #else
-                static inline void sctk_debug( const char *fmt, ... )
-                {
-                }
-                static inline void sctk_info( const char *fmt, ... )
+                static inline void mpc_common_debug( const char *fmt, ... )
                 {
                 }
         #endif
@@ -92,7 +89,7 @@ void sctk_debug_root( const char *fmt, ... );
 
 
 
-void sctk_log( FILE *file, const char *fmt, ... );
+void mpc_common_debug_log_file( FILE *file, const char *fmt, ... );
 void sctk_warning( const char *fmt, ... );
 
 void sctk_size_checking_eq( size_t a, size_t b, char *ca, char *cb,

@@ -163,7 +163,7 @@ void sctk_ib_prof_qp_init()
 	char dirname[256];
 
 	sprintf ( dirname, QP_PROF_DIR, sctk_get_process_rank() );
-	sctk_debug ( "Creating dirname %s", dirname );
+	mpc_common_debug( "Creating dirname %s", dirname );
 	mkdir ( dirname, S_IRWXU );
 }
 
@@ -175,7 +175,7 @@ void sctk_ib_prof_qp_init_task ( int task_id, int vp )
 	static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
 	struct sctk_ib_prof_qp_s *tmp;
 
-	sctk_debug ( "Task initialization" );
+	mpc_common_debug( "Task initialization" );
 
 	mpc_common_spinlock_lock ( &lock );
 
@@ -239,7 +239,7 @@ void sctk_ib_prof_qp_write ( int proc, size_t size, double ts, char from )
 
 	if ( from == PROF_QP_CREAT )
 	{
-		sctk_debug ( "CREATION FOUND for rank %d on vp %d!!!", proc, mpc_topology_get_pu() );
+		mpc_common_debug( "CREATION FOUND for rank %d on vp %d!!!", proc, mpc_topology_get_pu() );
 	}
 
 	tmp->buff[tmp->head].proc = proc;
@@ -347,7 +347,7 @@ void sctk_ib_prof_mem_init ( sctk_ib_rail_info_t *rail_ib )
 	char dirname[256];
 
 	sprintf ( dirname, MEM_PROF_DIR, sctk_get_process_rank() );
-	sctk_debug ( "Creating dirname %s", dirname );
+	mpc_common_debug( "Creating dirname %s", dirname );
 	mkdir ( dirname, S_IRWXU );
 #endif
 

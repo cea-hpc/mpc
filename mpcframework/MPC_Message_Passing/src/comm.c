@@ -1620,7 +1620,7 @@ void mpc_lowcomm_ptp_message_header_init( mpc_lowcomm_ptp_message_t *msg,
 		SCTK_MSG_DEST_PROCESS_SET( msg, sctk_get_process_rank_from_task_rank( SCTK_MSG_DEST_TASK( msg ) ) );
 
 
-		sctk_debug("[%d -> %d P(%d -> %d)]", source_task, dest_task, source, destination);
+		mpc_common_debug("[%d -> %d P(%d -> %d)]", source_task, dest_task, source, destination);
 
 #if 0
 
@@ -2870,7 +2870,7 @@ static void __initialize_drivers()
 		{
 			if ( !mpc_common_get_process_rank() )
 			{
-				sctk_info( "Could not locate an IB device, fallback to TCP" );
+				mpc_common_debug( "Could not locate an IB device, fallback to TCP" );
 			}
 
 			mpc_common_get_flags()->network_driver_name = "tcp";

@@ -319,7 +319,7 @@ void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 		copy
 
 	);
-	sctk_info("PORTALS: SEND-FETCH-AND-OP (match=%s, loff=%llu, roff=%llu, op=%d, add=%p, sz=%llu)", __sctk_ptl_match_str(sctk_malloc(32), 32, remote_key->pin.ptl.match.raw), local_off, remote_off, op, add_md, size);
+	mpc_common_debug("PORTALS: SEND-FETCH-AND-OP (match=%s, loff=%llu, roff=%llu, op=%d, add=%p, sz=%llu)", __sctk_ptl_match_str(sctk_malloc(32), 32, remote_key->pin.ptl.match.raw), local_off, remote_off, op, add_md, size);
 }
 
 /** boolean to check if Portals support 'compare_and_swap', which it supports */

@@ -214,7 +214,7 @@ unsigned long sctk_checksum_verify ( mpc_lowcomm_ptp_message_t *send, mpc_lowcom
 		}
 		else
 		{
-			sctk_debug ( "Got GOOD checksum (got:%lu, expected:%lu)", adler, send->body.checksum );
+			mpc_common_debug( "Got GOOD checksum (got:%lu, expected:%lu)", adler, send->body.checksum );
 		}
 	}
 

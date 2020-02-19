@@ -51,7 +51,7 @@ __thread int sctk_ft_critical_section = 0;
  */
 static inline void __sctk_ft_post_checkpoint()
 {
-	sctk_debug("Post-Checkpoint");
+	mpc_common_debug("Post-Checkpoint");
 }
 
 /**
@@ -60,7 +60,7 @@ static inline void __sctk_ft_post_checkpoint()
  */
 static inline void __sctk_ft_post_restart()
 {
-	sctk_print_banner(__state == MPC_STATE_RESTART);
+	mpc_launch_print_banner(__state == MPC_STATE_RESTART);
 }
 
 /**
@@ -76,7 +76,7 @@ static inline void __sctk_ft_set_ckptdir()
 
 	dmtcp_set_global_ckpt_dir(path);
 	dmtcp_set_coord_ckpt_dir(path);
-	sctk_debug("DMTCP commented dmtcp_set_tmpdir() func");
+	mpc_common_debug("DMTCP commented dmtcp_set_tmpdir() func");
 	//dmtcp_set_tmpdir(dir);
 #endif
 }

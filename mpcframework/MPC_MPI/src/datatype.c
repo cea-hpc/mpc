@@ -1211,7 +1211,7 @@ void _mpc_dt_storage_release( struct _mpc_dt_storage * da )
 
 		if( to_release && !_mpc_dt_is_common(i) && !_mpc_dt_is_struct(i))
 		{
-                  sctk_debug("Freeing unfreed datatype [%d] did you call "
+                  mpc_common_debug("Freeing unfreed datatype [%d] did you call "
                              "MPI_Type_free on all your MPI_Datatypes ?",
                              i);
                   mpc_lowcomm_datatype_t tmp = i;

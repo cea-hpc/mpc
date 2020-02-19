@@ -48,7 +48,7 @@ static size_t sctk_ptl_am_req_trsh_new = 0;
 void sctk_ptl_am_print_structure( sctk_ptl_am_rail_info_t *srail )
 {
 	sctk_ptl_limits_t l = srail->max_limits;
-	sctk_info(
+	mpc_common_debug(
 		"\n======== PORTALS AM STRUCTURE ========\n"
 		"\n"
 		" PORTALS ENTRIES       : \n"
@@ -983,7 +983,7 @@ int sctk_ptl_am_outgoing_lookup( sctk_ptl_am_rail_info_t *srail )
 				break;
 			}
 			default:
-				sctk_debug( "Not handled MD event: %s", sctk_ptl_am_event_decode( ev ) );
+				mpc_common_debug( "Not handled MD event: %s", sctk_ptl_am_event_decode( ev ) );
 		}
 	}
 	else

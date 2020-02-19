@@ -38,7 +38,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 {
 	int fd = tmp->data.tcp.fd;
 
-	sctk_debug ( "Rail %d from %d launched", tmp->rail->rail_number, tmp->dest );
+	mpc_common_debug( "Rail %d from %d launched", tmp->rail->rail_number, tmp->dest );
 
 	while ( 1 )
 	{
@@ -114,7 +114,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		tmp->rail->send_message_from_network ( msg );
 	}
 	
-	sctk_debug("TCP THREAD LEAVING");
+	mpc_common_debug("TCP THREAD LEAVING");
 
 	pthread_exit( NULL );
 	return NULL;

@@ -115,7 +115,7 @@ ssize_t mpc_common_io_safe_read( int fd, void *buf, size_t count )
 			}
 			else
 			{
-				sctk_debug ( "READ %p %lu/%lu FAIL\n", buf, count );
+				mpc_common_debug( "READ %p %lu/%lu FAIL\n", buf, count );
 				perror( "mpc_common_io_safe_read" );
 				res = -1;
 				break;
@@ -156,7 +156,7 @@ ssize_t mpc_common_io_safe_write( int fd, const void *buf, size_t count )
 			}
 			else
 			{
-				sctk_debug ( "WRITE %p %lu/%lu FAIL\n", buf, count );
+				mpc_common_debug( "WRITE %p %lu/%lu FAIL\n", buf, count );
 				perror( "mpc_common_io_safe_write" );
 				res = -1;
 				break;

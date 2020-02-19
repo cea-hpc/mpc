@@ -149,12 +149,12 @@ void printpayload( __UNUSED__ void * pl , size_t size )
 {
 	size_t i;
 
-	sctk_info("======== %ld ========", size);
+	mpc_common_debug("======== %ld ========", size);
 	for( i = 0 ; i < size; i++ )
 	{
-		sctk_info("%d = [%hu]  ",i,  ((char *)pl)[i] );
+		mpc_common_debug("%d = [%hu]  ",i,  ((char *)pl)[i] );
 	}
-	sctk_info("===================");
+	mpc_common_debug("===================");
 
 }
 
@@ -233,7 +233,7 @@ void sctk_control_messages_send_process(int dest_process, int subtype,
 void sctk_control_messages_send_to_task(int dest_task, mpc_lowcomm_communicator_t comm,
                                         int subtype, char param, void *buffer,
                                         size_t size) {
-  sctk_info("Send task to %d (subtype %d)", dest_task, subtype);
+  mpc_common_debug("Send task to %d (subtype %d)", dest_task, subtype);
   __sctk_control_messages_send(-1, dest_task, MPC_LOWCOMM_CONTROL_MESSAGE_TASK, comm,
                                subtype, param, buffer, size, -1);
 }

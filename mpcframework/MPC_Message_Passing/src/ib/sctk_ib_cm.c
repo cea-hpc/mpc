@@ -592,7 +592,7 @@ int sctk_ib_cm_on_demand_rdma_request ( sctk_rail_info_t *rail, struct sctk_ib_q
 	else
 	{
 		/* Cannot connect to RDMA */
-		sctk_debug ( "[%d] Cannot connect to remote %d", rail->rail_number, remote->rank );
+		mpc_common_debug( "[%d] Cannot connect to remote %d", rail->rail_number, remote->rank );
 		/* We reset the state to deconnected */
 		/* FIXME: state to reset */
 		sctk_ibuf_rdma_set_remote_state_rts ( remote, STATE_DECONNECTED );

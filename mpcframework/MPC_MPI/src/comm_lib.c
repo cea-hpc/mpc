@@ -595,7 +595,7 @@ int mpc_mpi_cl_per_mpi_process_ctx_at_exit_register( void ( *function )( void ) 
 		return 1;
 	}
 
-	sctk_info( "Registering task-level atexit handler (%p)", function );
+	mpc_common_debug( "Registering task-level atexit handler (%p)", function );
 	new_exit->func = function;
 	new_exit->next = tmp->exit_handlers;
 	/* Register the entry */
@@ -624,7 +624,7 @@ static inline void __mpc_cl_per_mpi_process_ctx_at_exit_trigger()
 
 		if ( current->func )
 		{
-			sctk_info( "Calling task-level atexit handler (%p)", current->func );
+			mpc_common_debug( "Calling task-level atexit handler (%p)", current->func );
 			( current->func )();
 		}
 

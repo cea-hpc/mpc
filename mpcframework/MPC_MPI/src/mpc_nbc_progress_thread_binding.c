@@ -90,7 +90,7 @@ int sctk_get_progress_thread_binding_numa_iter(void) {
 
   // if we have a free slot to bind the progress thread
   if (nbVp > 1) {
-    sctk_debug("if nbVp > 1 : return %d", proc_global + 1);
+    mpc_common_debug("if nbVp > 1 : return %d", proc_global + 1);
     return proc_global + 1;
   } else {
 
@@ -105,14 +105,14 @@ int sctk_get_progress_thread_binding_numa_iter(void) {
          global_id_tmp += 1, local_id_tmp += 1) {
       proc_global_tmp = sctk_get_init_vp_and_nbvp(global_id_tmp, &nbVp_tmp);
       if (nbVp_tmp > 1) {
-        sctk_debug("if nbVp_tmp > 1 : return %d", proc_global_tmp + 1);
+        mpc_common_debug("if nbVp_tmp > 1 : return %d", proc_global_tmp + 1);
         return proc_global_tmp + 1;
       }
-      sctk_debug("global_id_tmp : %d", global_id_tmp);
+      mpc_common_debug("global_id_tmp : %d", global_id_tmp);
     }
     // if we dont have a slot to bind the progress threads,
     // we bind the progress thread in self
-    sctk_debug("we bind in self : %d %d", proc_global, task_per_numa_node);
+    mpc_common_debug("we bind in self : %d %d", proc_global, task_per_numa_node);
     cpu_id_to_bind_progress_thread = proc_global;
     return cpu_id_to_bind_progress_thread;
   }

@@ -43,7 +43,7 @@ static OPA_int_t nb_mds = OPA_INT_T_INITIALIZER(0);
 void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
 {
 	sctk_ptl_limits_t l = srail->max_limits;
-	sctk_info(
+	mpc_common_debug(
 	"\n======== PORTALS STRUCTURE ========\n"
 	"\n"
 	" PORTALS ENTRIES       : \n"

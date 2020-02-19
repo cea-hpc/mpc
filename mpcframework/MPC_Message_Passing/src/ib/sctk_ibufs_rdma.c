@@ -1284,7 +1284,7 @@ static int sctk_ibuf_rdma_determine_config ( sctk_ib_rail_info_t *rail_ib,
 			*determined_size = previous_size;
 
 		sctk_nodebug ( "Max pending: %d->%d", remote->rdma.previous_max_pending_data, max_pending_data_before_realign );
-		//sctk_debug("Mean message size to remote %d kB, pending:%d->%dkB, previous max pending:%dkB (size:%d->%d nb:%d->%d)", (int) mean / 1024, max_pending_data_before_realign / 1024, max_pending_data / 1024,
+		//mpc_common_debug("Mean message size to remote %d kB, pending:%d->%dkB, previous max pending:%dkB (size:%d->%d nb:%d->%d)", (int) mean / 1024, max_pending_data_before_realign / 1024, max_pending_data / 1024,
 		// remote->rdma.previous_max_pending_data/1024, previous_size/1024, *determined_size/1024, previous_nb,  *determined_nb);
 
 		if ( previous_size >= *determined_size && previous_nb >= *determined_nb )

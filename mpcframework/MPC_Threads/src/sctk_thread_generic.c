@@ -1710,7 +1710,7 @@ void sctk_thread_generic_check_signals(int select) {
     sctk_thread_generic_treat_signals(current);
 
   if (expect_false(current->attr.cancel_status > 0)) {
-    sctk_debug(
+    mpc_common_debug(
         "%p %d %d", current,
         (current->attr.cancel_state != SCTK_THREAD_CANCEL_DISABLE),
         ((current->attr.cancel_type != SCTK_THREAD_CANCEL_DEFERRED) && select));
@@ -1718,14 +1718,14 @@ void sctk_thread_generic_check_signals(int select) {
     if ((current->attr.cancel_state != SCTK_THREAD_CANCEL_DISABLE) &&
         ((current->attr.cancel_type != SCTK_THREAD_CANCEL_DEFERRED) ||
          !select)) {
-      sctk_debug("Exit Thread %p", current);
+      mpc_common_debug("Exit Thread %p", current);
       current->attr.cancel_status = 0;
       current->attr.return_value = ((void *)SCTK_THREAD_CANCELED);
       sctk_thread_exit_cleanup();
-      sctk_debug("thread %p key liberation", current);
+      mpc_common_debug("thread %p key liberation", current);
       sctk_thread_generic_keys_key_delete_all(&(current->keys));
-      sctk_debug("thread %p key liberation done", current);
-      sctk_debug("thread %p ends", current);
+      mpc_common_debug("thread %p key liberation done", current);
+      mpc_common_debug("thread %p ends", current);
 
       sctk_thread_generic_thread_status(&(current->sched),
                                         sctk_thread_generic_zombie);
@@ -1743,7 +1743,7 @@ sctk_thread_generic_cancel( sctk_thread_generic_t threadp ){
 	*/
 
   sctk_thread_generic_p_t* th = threadp;
-  sctk_debug ("thread to cancel: %p\n", th);
+  mpc_common_debug("thread to cancel: %p\n", th);
 
   if( th == NULL ) return EINVAL;
   if( th->sched.status == sctk_thread_generic_zombie
@@ -1752,7 +1752,7 @@ sctk_thread_generic_cancel( sctk_thread_generic_t threadp ){
 
   if( th->attr.cancel_state == PTHREAD_CANCEL_ENABLE ){
 	th->attr.cancel_status = 1;
-	sctk_debug ("thread %p canceled\n", th);
+	mpc_common_debug("thread %p canceled\n", th);
   }
 
   if( th->sched.status == sctk_thread_generic_blocked )
@@ -2138,7 +2138,7 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
     current = sched->th;
     current->attr = *ptr;
 
-    sctk_debug("%d",current->attr.cancel_status);
+    mpc_common_debug("%d",current->attr.cancel_status);
   }
   sctk_thread_generic_keys_init_thread(&(sctk_thread_generic_self()->keys));
   

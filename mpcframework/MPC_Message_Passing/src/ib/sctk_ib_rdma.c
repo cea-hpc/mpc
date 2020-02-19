@@ -778,7 +778,7 @@ void sctk_ib_rdma_write(  sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg
         IBUF_SET_RDMA_PLSIZE(rdma_header, size);
         IBUF_SET_RDMA_POINTER(rdma_header, msg);
 
-        sctk_info("RDMA Write from %p (%lu) to %p (%lu)", src_addr, size,
+        mpc_common_debug("RDMA Write from %p (%lu) to %p (%lu)", src_addr, size,
                   dest_addr, size);
 
         sctk_ibuf_rdma_write_init(ibuf, src_addr, local_key->pin.ib.mr.lkey,
@@ -813,7 +813,7 @@ void sctk_ib_rdma_read(   sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg
         IBUF_SET_RDMA_PLSIZE(rdma_header, size);
         IBUF_SET_RDMA_POINTER(rdma_header, msg);
 
-        sctk_info("RDMA Read from %p (%lu) to %p (%lu)", src_addr, size,
+        mpc_common_debug("RDMA Read from %p (%lu) to %p (%lu)", src_addr, size,
                   dest_addr, size);
 
         sctk_ibuf_rdma_read_init(ibuf, dest_addr, local_key->pin.ib.mr.rkey,
@@ -855,7 +855,7 @@ void sctk_ib_rdma_fetch_and_op(sctk_rail_info_t *rail,
   IBUF_SET_RDMA_TYPE(rdma_header, SCTK_IB_RDMA_FETCH_AND_ADD);
   IBUF_SET_RDMA_POINTER(rdma_header, msg);
 
-  sctk_info("RDMA Fetch and op from %p to %p add %lld", remote_addr, fetch_addr,
+  mpc_common_debug("RDMA Fetch and op from %p to %p add %lld", remote_addr, fetch_addr,
             add);
 
   uint64_t local_add = 0;
@@ -908,7 +908,7 @@ void sctk_ib_rdma_cas(    sctk_rail_info_t *rail,
         uint64_t local_new = 0;
         memcpy(&local_new, new, sizeof(uint64_t));
 
-        sctk_info("RDMA CASS to %p to comp %lld new %lld", remote_addr,
+        mpc_common_debug("RDMA CASS to %p to comp %lld new %lld", remote_addr,
                   local_comp, local_new);
 
         sctk_ibuf_rdma_CAS_init(ibuf, res_addr, local_key->pin.ib.mr.lkey,
@@ -1004,26 +1004,26 @@ sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 
 		case SCTK_IB_RDMA_WRITE:
 			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
-			sctk_info ( "RDMA Write DONE" );
+			mpc_common_debug( "RDMA Write DONE" );
 			mpc_lowcomm_ptp_message_complete_and_free ( msg );
 			break;
 
 
 		case SCTK_IB_RDMA_READ:
 			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
-			sctk_info ( "RDMA Read DONE" );
+			mpc_common_debug( "RDMA Read DONE" );
 			mpc_lowcomm_ptp_message_complete_and_free ( msg );
 			break;
 
 		case SCTK_IB_RDMA_FETCH_AND_ADD:
 			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
-			sctk_info ( "RDMA Fetch and op DONE" );
+			mpc_common_debug( "RDMA Fetch and op DONE" );
 			mpc_lowcomm_ptp_message_complete_and_free ( msg );
 			break;
 
 		case SCTK_IB_RDMA_CAS:
 			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
-			sctk_info ( "RDMA CAS DONE" );
+			mpc_common_debug( "RDMA CAS DONE" );
 			mpc_lowcomm_ptp_message_complete_and_free ( msg );
 			break;
 

@@ -292,7 +292,7 @@ void sctk_profile_renderer_render( struct sctk_profile_renderer *rd )
 			continue;
 		}
 
-		sctk_info("Rendering %s profile", render_string);
+		mpc_common_debug("Rendering %s profile", render_string);
 
 
 		sctk_profile_renderer_register_output_iface( rd, rd_type);
@@ -482,7 +482,7 @@ void sctk_profile_render_filename( char *output_file, char *ext )
 		sprintf( output_file, "%s.%s", sctk_profile_get_config()->file_prefix, ext);
 	}
 
-	sctk_info("MPC_Profiler : Rendering in %s", output_file);
+	mpc_common_debug("MPC_Profiler : Rendering in %s", output_file);
 }
 
 

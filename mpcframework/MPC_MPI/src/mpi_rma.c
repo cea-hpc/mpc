@@ -157,7 +157,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
         return MPI_ERR_INTERN;
       }
 
-      sctk_info("REMOTE PACK THEN UNPACK (%d to %d)", desc->comm_rank,
+      mpc_common_debug("REMOTE PACK THEN UNPACK (%d to %d)", desc->comm_rank,
                 target_rank);
       /* Emit fractionned Read */
       size_t stsize;

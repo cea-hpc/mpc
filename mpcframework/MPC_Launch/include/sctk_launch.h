@@ -37,7 +37,7 @@ extern "C"
   int sctk_env_exit (void);
   int sctk_launch_main (int argc, char **argv);
   void sctk_launch_contribution (FILE * file);
-  void sctk_print_banner(bool);
+  void mpc_launch_print_banner(bool);
 
 #ifdef HAVE_ENVIRON_VAR
   int mpc_user_main (int, char **, char**);

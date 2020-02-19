@@ -697,7 +697,6 @@ am__fastdepCCAS_TRUE
 CCASDEPMODE
 CCASFLAGS
 CCAS
-MPC_VERSION_PRE
 MPC_VERSION_REVISION
 MPC_VERSION_MINOR
 MPC_VERSION_MAJOR
@@ -16417,8 +16416,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 # Define MPC_VERSION
 MPC_VERSION="4"
-MPC_VERSION_MINOR="0"
-MPC_VERSION_PRE="0"
+MPC_VERSION_MINOR="-1"
+MPC_VERSION_PRE="beta"
 MPC_VERSION_REV="0"
 
 
@@ -16438,10 +16437,7 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-cat >>confdefs.h <<_ACEOF
-#define MPC_VERSION_PRE $MPC_VERSION_PRE
-_ACEOF
-
+$as_echo "#define MPC_VERSION_PRE \"beta\"" >>confdefs.h
 
 
 

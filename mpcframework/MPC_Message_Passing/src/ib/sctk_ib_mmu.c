@@ -178,7 +178,7 @@ void sctk_ib_mmu_entry_relax( sctk_ib_mmu_entry_t * entry )
 	 * this is really an edge case */
 	if( entry->free_on_relax )
 	{
-		sctk_debug("Forced free on relax %p s %ld", entry->addr, entry->size );
+		mpc_common_debug("Forced free on relax %p s %ld", entry->addr, entry->size );
 		sctk_ib_mmu_entry_release( entry );
 	}
 }

@@ -122,7 +122,7 @@ const ompt_data_t ompt_data_none = ( ompt_data_t )
 #pragma weak ompt_start_tool
 ompt_fns_t* ompt_start_tool( __UNUSED__ unsigned int omp_version, __UNUSED__ const char *runtime_version )
 {
-   sctk_info("No ompt_start_tool function from tool");
+   mpc_common_debug("No ompt_start_tool function from tool");
    return NULL;
 }
 

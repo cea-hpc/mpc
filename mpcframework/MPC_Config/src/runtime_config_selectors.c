@@ -51,7 +51,7 @@ bool sctk_runtime_config_xml_selector_env_check(xmlNodePtr selector)
 	const char * current_value = getenv((char *)env_name);
 
 	/* debug */
-	/* sctk_debug("MPC_Config : compare env[%s] : %s == %s\n",env_name,expected_value,current_value); */
+	/* mpc_common_debug("MPC_Config : compare env[%s] : %s == %s\n",env_name,expected_value,current_value); */
 
 	/* check status */
 	res = (xmlStrcmp(BAD_CAST(current_value),expected_value) == 0);

@@ -928,7 +928,7 @@ void __mpcomp_init( void )
 	/* DEBUG */
 	if ( mpc_common_get_local_task_rank() == 0 )
 	{
-		sctk_debug(
+		mpc_common_debug(
 		    "%s: MPI rank=%d, process_rank=%d, local_task_rank=%d => %d mvp(s) "
 		    "out of %d core(s) A",
 		    __func__, task_rank, mpc_common_get_local_process_rank(),
@@ -937,7 +937,7 @@ void __mpcomp_init( void )
 	}
 	else
 	{
-		sctk_debug( "%s: MPI rank=%d, process_rank=%d, local_task_rank=%d => %d "
+		mpc_common_debug( "%s: MPI rank=%d, process_rank=%d, local_task_rank=%d => %d "
 		            "mvp(s) out of %d core(s)",
 		            __func__, task_rank, mpc_common_get_local_process_rank(),
 		            mpc_common_get_local_task_rank(), nb_mvps,

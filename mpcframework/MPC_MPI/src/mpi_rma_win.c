@@ -732,7 +732,7 @@ int mpc_MPI_Win_free(MPI_Win *win) {
 
   mpc_MPI_Win_release(desc);
 
-  sctk_info("FREED win %d", *win);
+  mpc_common_debug("FREED win %d", *win);
 
   mpc_lowcomm_rdma_window_local_release(*win);
 

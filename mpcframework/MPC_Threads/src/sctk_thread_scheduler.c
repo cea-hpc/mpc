@@ -2036,7 +2036,7 @@ quick_swap:
         strcat(hostname2, current_vp);
 
         FILE *fd = fopen(hostname2, "a");
-        sctk_log(fd, "%p[%2d-%2d|%2d,%2d] to %p[%2d-%2d|%2d,%2d] t=[%f "
+        mpc_common_debug_log_file(fd, "%p[%2d-%2d|%2d,%2d] to %p[%2d-%2d|%2d,%2d] t=[%f "
                     "count(%f)]\n",
                 sched, sched->th->attr.kind.mask, sched->status,
                 sched->th->attr.current_priority,

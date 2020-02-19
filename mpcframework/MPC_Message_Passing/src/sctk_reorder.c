@@ -159,7 +159,7 @@ int sctk_send_message_from_network_reorder ( mpc_lowcomm_ptp_message_t *msg )
 	else
 	{
 		dest_process = sctk_get_process_rank_from_task_rank ( dest_task );
-		sctk_debug ( "Recv message from %d to %d (number:%d)",
+		mpc_common_debug( "Recv message from %d to %d (number:%d)",
 			     SCTK_MSG_SRC_TASK ( msg ),
 			     SCTK_MSG_DEST_TASK ( msg ), SCTK_MSG_NUMBER ( msg ) );
 

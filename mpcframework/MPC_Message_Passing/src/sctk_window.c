@@ -82,7 +82,7 @@ void mpc_lowcomm_rdma_window_release_ht() {
 
   struct mpc_lowcomm_rdma_window *win = (struct mpc_lowcomm_rdma_window *)var;
 
-  sctk_info("Unfreed window on comm %d, size %ld, disp_unit %ld", win->comm,
+  mpc_common_debug("Unfreed window on comm %d, size %ld, disp_unit %ld", win->comm,
             win->size, win->disp_unit);
 
   sctk_free(win);

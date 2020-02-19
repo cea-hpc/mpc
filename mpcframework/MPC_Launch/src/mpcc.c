@@ -86,7 +86,7 @@ intern_main ( int argc, char **argv )
 
 	if ( mpi_lib && !strstr( mpi_lib, "libmpc_framework" ) )
 	{
-		sctk_info( "MPC-WI4MPI: Not being the target MPI: Disabling the runtime" );
+		mpc_common_debug( "MPC-WI4MPI: Not being the target MPI: Disabling the runtime" );
 		sctk_use_pthread();
 #ifdef HAVE_ENVIRON_VAR
 		return mpc_user_main__( argc, argv, environ );

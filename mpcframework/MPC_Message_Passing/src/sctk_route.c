@@ -347,7 +347,7 @@ typedef struct
 
 void sctk_route_messages_send ( int myself, int dest, mpc_lowcomm_ptp_message_class_t message_class, int tag, void *buffer, size_t size )
 {
-	sctk_info("ROUTE SEND [ %d -> %d ] ( size %d)", myself, dest, size );
+	mpc_common_debug("ROUTE SEND [ %d -> %d ] ( size %d)", myself, dest, size );
 	
 	mpc_lowcomm_communicator_t communicator = SCTK_COMM_WORLD;
 	sctk_route_messages_t msg;
@@ -364,7 +364,7 @@ void sctk_route_messages_send ( int myself, int dest, mpc_lowcomm_ptp_message_cl
 
 void sctk_route_messages_recv ( int src, int myself, mpc_lowcomm_ptp_message_class_t message_class, int tag, void *buffer, size_t size )
 {
-	sctk_info("ROUTE RECV [ %d -> %d ] ( size %d)", src, myself, size );
+	mpc_common_debug("ROUTE RECV [ %d -> %d ] ( size %d)", src, myself, size );
 	
 	mpc_lowcomm_communicator_t communicator = SCTK_COMM_WORLD;
 	sctk_route_messages_t msg;

@@ -326,7 +326,7 @@ local_pthread_create (pthread_t * restrict thread,
       env = getenv("MPC_ENABLE_PTHREAD_PINNING");
       if ( env != NULL ){
         sctk_thread_data_t * data = (sctk_thread_data_t*) arg;
-        sctk_debug("Bind VP to core %d\n", data->local_task_id % mpc_topology_get_pu_count ());
+        mpc_common_debug("Bind VP to core %d\n", data->local_task_id % mpc_topology_get_pu_count ());
         mpc_topology_bind_to_cpu (data->local_task_id);
       }
 

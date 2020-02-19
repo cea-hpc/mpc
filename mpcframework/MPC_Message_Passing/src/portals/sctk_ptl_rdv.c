@@ -177,7 +177,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 		cur_off += cur_sz;
 	}
 
-	sctk_debug("PORTALS: RECV-RDV to %d (idx=%d, match=%s, ch_nb=%llu, ch_sz=%llu)", SCTK_MSG_SRC_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), chunk_nb, chunk_sz);
+	mpc_common_debug("PORTALS: RECV-RDV to %d (idx=%d, match=%s, ch_nb=%llu, ch_sz=%llu)", SCTK_MSG_SRC_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), chunk_nb, chunk_sz);
 }
 
 /**
@@ -223,7 +223,7 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	/* finish creating an MPC message header */
 	_mpc_comm_ptp_message_clear_request(net_msg);
 
-	sctk_debug("PORTALS: REPLY-RDV from %d (match=%s, rsize=%llu, size=%llu) -> %p", SCTK_MSG_SRC_TASK(net_msg), __sctk_ptl_match_str(malloc(32), 32, ptr->match.raw),ptr->slot.md.length , ev.mlength, ptr->slot.md.start);
+	mpc_common_debug("PORTALS: REPLY-RDV from %d (match=%s, rsize=%llu, size=%llu) -> %p", SCTK_MSG_SRC_TASK(net_msg), __sctk_ptl_match_str(malloc(32), 32, ptr->match.raw),ptr->slot.md.length , ev.mlength, ptr->slot.md.start);
 
 	/* notify ther inter_thread_comm a new message has arrived */
 	rail->send_message_from_network(net_msg);
@@ -245,7 +245,7 @@ static inline void sctk_ptl_rdv_complete_message(sctk_rail_info_t* rail, sctk_pt
 
 	UNUSED(rail);
 
-	sctk_debug("PORTALS: COMPLETE-RDV to %d (idx=%d, match=%s, rsize=%llu, size=%llu) -> %p", SCTK_MSG_SRC_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits),ev.mlength , ev.mlength, ev.start);
+	mpc_common_debug("PORTALS: COMPLETE-RDV to %d (idx=%d, match=%s, rsize=%llu, size=%llu) -> %p", SCTK_MSG_SRC_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits),ev.mlength , ev.mlength, ev.start);
 	if(msg->tail.ptl.copy)
 		sctk_free(ptr->slot.me.start);
 
@@ -349,7 +349,7 @@ void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* 
 	sctk_ptl_emit_put(md_request, sizeof(size_t), remote, pte, match, 0, 0, hdr.raw, md_request); /* empty Put() */
 
 	/* TODO: Need to handle the case where the data is larger than the max ME size */
-	sctk_debug("PORTALS: SEND-RDV to %d (idx=%d, match=%s, chunk_nb=%llu, ch_sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), chunk_nb , chunk_sz);
+	mpc_common_debug("PORTALS: SEND-RDV to %d (idx=%d, match=%s, chunk_nb=%llu, ch_sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), chunk_nb , chunk_sz);
 }
 
 /**
@@ -399,7 +399,7 @@ void sctk_ptl_rdv_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_info
 	/* this should be the last operation, to optimize the triggeredOps use */
 	sctk_ptl_me_register(srail, put_request, pte);
 
-	sctk_debug("PORTALS: NOTIFY-RECV-RDV from %d (idx=%llu, match=%s, ign=%s, msg=%p)", SCTK_MSG_SRC_PROCESS(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), msg);
+	mpc_common_debug("PORTALS: NOTIFY-RECV-RDV from %d (idx=%llu, match=%s, ign=%s, msg=%p)", SCTK_MSG_SRC_PROCESS(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), msg);
 }
 
 /**

@@ -70,7 +70,7 @@ void mpc_MPI_allocmem_adapt( char *exename )
 		_forced_pool_size =
 		    sctk_runtime_config_get()->modules.rma.alloc_mem_pool_per_process_size *
 		    mpc_common_get_local_process_count();
-		sctk_info( "Info : setting MPI_Alloc_mem pool size to %d MB",
+		mpc_common_debug( "Info : setting MPI_Alloc_mem pool size to %d MB",
 		           _forced_pool_size / ( 1024 * 1024 ) );
 	}
 }

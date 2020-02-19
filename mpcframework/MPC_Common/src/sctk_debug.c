@@ -290,17 +290,38 @@ void sctk_debug_root( const char *fmt, ... )
 	va_end( ap );
 }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-void sctk_info( const char *fmt, ... )
+void mpc_common_debug_log( const char *fmt, ... )
 {
-#if defined( MPC_Message_Passing ) || defined( MPC_Threads )
+	if ( mpc_common_get_flags()->verbosity < 1 )
+	{
+		return;
+	}
 
+        va_list ap;
+        char buff[SMALL_BUFFER_SIZE];
+        va_start( ap, fmt );
+
+#ifdef MPC_ENABLE_SHELL_COLORS
+        char info_message[SMALL_BUFFER_SIZE];
+        mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE, ""SCTK_COLOR_GREEN_BOLD( %s )"\n", fmt );
+
+#else
+        mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
+                                        "%s\n",
+                                        fmt );
+#endif
+
+	mpc_common_io_noalloc_vfprintf( stderr, buff, ap );
+	va_end( ap );
+}
+
+void mpc_common_debug_info( const char *fmt, ... )
+{
 	if ( mpc_common_get_flags()->verbosity < 2 )
 	{
 		return;
 	}
 
-#endif
 	va_list ap;
 	char debug_info[SMALL_BUFFER_SIZE];
 	char buff[SMALL_BUFFER_SIZE];
@@ -324,7 +345,9 @@ void sctk_info( const char *fmt, ... )
 	va_end( ap );
 }
 
-void sctk_debug( const char *fmt, ... )
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
+
+void mpc_common_debug( const char *fmt, ... )
 {
 #if defined( MPC_Message_Passing ) || defined( MPC_Threads )
 
@@ -410,7 +433,7 @@ void sctk_formated_assert_print( FILE *stream, const int line, const char *file,
 }
 
 
-void sctk_log( FILE *file, const char *fmt, ... )
+void mpc_common_debug_log_file( FILE *file, const char *fmt, ... )
 {
 	va_list ap;
 	char debug_info[SMALL_BUFFER_SIZE];

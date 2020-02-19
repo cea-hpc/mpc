@@ -2315,7 +2315,7 @@ void _mpc_task_new_coherency_entering_parallel_region()
 		team = t->children_instance->team;
 		sctk_assert( team != NULL );
 		/* Check team tasking cohenrency */
-		sctk_debug( "_mpc_task_new_coherency_entering_parallel_region: "
+		mpc_common_debug( "_mpc_task_new_coherency_entering_parallel_region: "
 		            "Team init %d and tasklist init %d with %d nb_tasks\n",
 		            OPA_load_int( &team->tasking_init_done ),
 		            OPA_load_int( &team->tasklist_init_done ),
@@ -2329,7 +2329,7 @@ void _mpc_task_new_coherency_entering_parallel_region()
 		{
 			lt = &mvp[i]->threads[0];
 			sctk_assert( lt != NULL );
-			sctk_debug( "_mpc_task_new_coherency_entering_parallel_region: "
+			mpc_common_debug( "_mpc_task_new_coherency_entering_parallel_region: "
 			            "Thread in mvp %d init %d in implicit task %p\n",
 			            mvp[i]->rank, lt->tasking_init_done, lt->current_task );
 			sctk_assert( mpcomp_task_property_isset( lt->current_task->property,
@@ -2356,7 +2356,7 @@ void _mpc_task_new_coherency_ending_parallel_region()
 		team = t->children_instance->team;
 		sctk_assert( team != NULL );
 		/* Check team tasking cohenrency */
-		sctk_debug( "_mpc_task_new_coherency_ending_parallel_region: "
+		mpc_common_debug( "_mpc_task_new_coherency_ending_parallel_region: "
 		            "Team init %d and tasklist init %d with %d nb_tasks\n",
 		            OPA_load_int( &team->tasking_init_done ),
 		            OPA_load_int( &team->tasklist_init_done ),
@@ -2369,7 +2369,7 @@ void _mpc_task_new_coherency_ending_parallel_region()
 		for ( i = 0; i < nb_mvps; i++ )
 		{
 			lt = &mvp[i]->threads[0];
-			sctk_debug( "_mpc_task_new_coherency_ending_parallel_region: "
+			mpc_common_debug( "_mpc_task_new_coherency_ending_parallel_region: "
 			            "Thread %d init %d in implicit task %p\n",
 			            lt->rank, lt->tasking_init_done, lt->current_task );
 			sctk_assert( lt->current_task != NULL );
@@ -2406,7 +2406,7 @@ void _mpc_task_new_coherency_barrier()
 	struct mpcomp_task_list_s *list = NULL;
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
-	sctk_debug( "_mpc_task_new_coherency_barrier: "
+	mpc_common_debug( "_mpc_task_new_coherency_barrier: "
 	            "Thread %d exiting barrier in implicit task %p\n",
 	            t->rank, t->current_task );
 	sctk_assert( t->current_task != NULL );

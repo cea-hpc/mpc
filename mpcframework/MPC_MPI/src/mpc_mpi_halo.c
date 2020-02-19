@@ -415,24 +415,24 @@ int sctk_mpi_halo_exchange_action_trigger( struct sctk_mpi_halo_exchange_action_
 			break;
 		case MPI_HALO_EXCHANGE_SEND:
 			/* Send full buffer */
-			sctk_debug( "Send %p (count %d type %d) from %d to %d tag %d", halo->halo_buffer, halo->halo_count, halo->halo_type, rank, action->process, action->tag ); 
+			mpc_common_debug( "Send %p (count %d type %d) from %d to %d tag %d", halo->halo_buffer, halo->halo_count, halo->halo_type, rank, action->process, action->tag ); 
 			PMPI_Isend( halo->halo_buffer, halo->halo_count, halo->halo_type, action->process, action->tag, MPI_COMM_WORLD, &action->request );
 			break;
 		case MPI_HALO_EXCHANGE_SEND_LOCAL:
 			/* Send pointer to buffer */
-			sctk_debug( "Send Local %p (count %d type %d) from %d to %d tag %d", halo->halo_buffer, halo->halo_count, halo->halo_type, rank, action->process, action->tag ); 
+			mpc_common_debug( "Send Local %p (count %d type %d) from %d to %d tag %d", halo->halo_buffer, halo->halo_count, halo->halo_type, rank, action->process, action->tag ); 
 			PMPI_Isend( & halo->halo_buffer, sizeof( void *), MPI_CHAR, action->process, action->tag, MPI_COMM_WORLD, &action->request );
 			break;
 		break;
 
 		case MPI_HALO_EXCHANGE_RECV:
 			PMPI_Irecv( halo->halo_buffer, halo->halo_count, halo->halo_type, action->process, action->tag, MPI_COMM_WORLD, &action->request );
-			sctk_debug( "Recv %p (count %d type %d) from %d to %d tag %d", halo->halo_buffer, halo->halo_count, halo->halo_type, rank, action->process, action->tag ); 
+			mpc_common_debug( "Recv %p (count %d type %d) from %d to %d tag %d", halo->halo_buffer, halo->halo_count, halo->halo_type, rank, action->process, action->tag ); 
 			break;
 
 		case MPI_HALO_EXCHANGE_RECV_LOCAL:
 			PMPI_Irecv( & halo->halo_buffer, sizeof( void *), MPI_CHAR, action->process, action->tag, MPI_COMM_WORLD, &action->request );
-			sctk_debug( "Recv Local %p (count %d type %d) from %d to %d tag %d", halo->halo_buffer, halo->halo_count, halo->halo_type, rank, action->process, action->tag ); 
+			mpc_common_debug( "Recv Local %p (count %d type %d) from %d to %d tag %d", halo->halo_buffer, halo->halo_count, halo->halo_type, rank, action->process, action->tag ); 
 			break;
 		default:
 			not_reachable();

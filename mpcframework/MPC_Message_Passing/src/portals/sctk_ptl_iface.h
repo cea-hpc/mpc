@@ -64,7 +64,7 @@ static char * __sctk_ptl_str_prot[] = {
 		___env = (getenv("MPC_PTL_DEBUG") != NULL);\
 	}\
 	if(___env) \
-    		sctk_debug("%s -> %s (%s:%u)", #x, sctk_ptl_rc_decode(__ret), __FILE__, (unsigned int)__LINE__); \
+    		mpc_common_debug("%s -> %s (%s:%u)", #x, sctk_ptl_rc_decode(__ret), __FILE__, (unsigned int)__LINE__); \
     switch (__ret = x) { \
 	case PTL_EQ_EMPTY: \
 	case PTL_CT_NONE_REACHED: \

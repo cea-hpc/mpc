@@ -111,7 +111,7 @@ void sctk_profile_meta_end_compute(struct sctk_profile_meta *meta)
 
 			if( now - meta->begin_ts < 1e9 )
 			{
-				sctk_info("Calibrating timestamps...");
+				mpc_common_debug("Calibrating timestamps...");
 				sleep(1);
 			}
 
@@ -127,6 +127,6 @@ void sctk_profile_meta_end_compute(struct sctk_profile_meta *meta)
 	MPC_Comm_rank(SCTK_COMM_WORLD, &rank);
 
 	if( rank == 0)
-        sctk_info("Program running at %g ticks per sec", meta->ticks_per_second);
+        mpc_common_debug("Program running at %g ticks per sec", meta->ticks_per_second);
 
 }

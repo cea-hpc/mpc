@@ -542,7 +542,7 @@ int __kmp_determine_reduction_method(
 
 			default:
 				forced_retval = critical_reduce_block;
-				sctk_debug( "Unknown reduction method" );
+				mpc_common_debug( "Unknown reduction method" );
 		}
 
 		retval = forced_retval;

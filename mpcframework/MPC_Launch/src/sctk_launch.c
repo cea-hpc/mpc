@@ -241,7 +241,7 @@ void *polling_thread( __UNUSED__ void *dummy )
 }
 #endif
 
-void sctk_print_banner( bool restart )
+void mpc_launch_print_banner( bool restart )
 {
 	if ( mpc_common_get_process_rank() == 0 )
 	{
@@ -256,27 +256,38 @@ void sctk_print_banner( bool restart )
 		{
 			if ( sctk_checkpoint_mode && restart )
 			{
-				fprintf ( stderr, "+++ Application restarting from checkpoint with the following configuration:\n" );
+				mpc_common_debug_log("+++ Application restarting from checkpoint with the following configuration:");
 			}
 
-			if ( MPC_VERSION_MINOR >= 0 )
-			{
-				fprintf ( stderr,
-				          "MPC version %d.%d.%d%s %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s %s\n",
-				          MPC_VERSION_MAJOR, MPC_VERSION_MINOR, MPC_VERSION_REVISION,
-				          MPC_VERSION_PRE, mpc_lang, mpc_common_get_flags()->task_number,
-				          sctk_process_nb_val, mpc_topology_get_pu_count (), sctk_atomics_get_cpu_freq() / 1000000000.0,
-				          mpc_common_get_flags()->thread_library_kind,
-				          sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_checkpoint_str, sctk_network_mode );
-			}
-			else
-			{
-				fprintf ( stderr,
-				          "MPC experimental version %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s %s\n",
-				          mpc_lang, mpc_common_get_flags()->task_number, sctk_process_nb_val,
-				          mpc_topology_get_pu_count (), sctk_atomics_get_cpu_freq() / 1000000000.0,  mpc_common_get_flags()->thread_library_kind,
-				          sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_checkpoint_str, sctk_network_mode );
-			}
+                        char version_string[64];
+
+                        if(MPC_VERSION_MINOR >= 0)
+                        {
+                                snprintf(version_string, 64, "version %d.%d.%d%s",
+                                                             MPC_VERSION_MAJOR,
+                                                             MPC_VERSION_MINOR,
+                                                             MPC_VERSION_REVISION,
+				                             MPC_VERSION_PRE);
+                        }
+                        else
+                        {
+                                snprintf(version_string, 64, "experimental version");
+                        }
+
+                        mpc_common_debug_log("--------------------------------------------------------");
+                        mpc_common_debug_log("MPC %s in %s", version_string, mpc_lang);
+                        mpc_common_debug_log("%d tasks %d processes %d cpus @ %2.2fGHz",
+                                              mpc_common_get_flags()->task_number,
+                                             sctk_process_nb_val,
+                                             mpc_topology_get_pu_count (),
+                                             sctk_atomics_get_cpu_freq() / 1000000000.0);
+                        mpc_common_debug_log("%s Thread Engine", mpc_common_get_flags()->thread_library_kind);
+                        mpc_common_debug_log("%s %s %s", sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_checkpoint_str);
+                        mpc_common_debug_log("%s", sctk_network_mode);
+                        mpc_common_debug_log("--------------------------------------------------------");
+
+
+
 		}
 	}
 }
@@ -419,8 +430,7 @@ static void sctk_perform_initialisation ( void )
 #ifdef SCTK_LIB_MODE
 	sctk_net_init_task_level ( my_rank, 0 );
 #endif
-	sctk_atomics_cpu_freq_init();
-	sctk_print_banner( 0 /* not in restart mode */ );
+
 #if 0
 	/* We passed the init phase we can stop the bootstrap polling */
 	__polling_done = 1;
@@ -1123,9 +1133,6 @@ static inline void __base_runtime_init()
 
 	sctk_mpc_env_initialized = 1;
 
-        mpc_common_init_print();
-
-
         mpc_common_init_trigger("Base Runtime Init");
 
         /* WARNING !! NO CONFIG before this point */
@@ -1139,8 +1146,12 @@ static inline void __base_runtime_init()
         __set_default_values();
         __unpack_arguments();
 
+	sctk_atomics_cpu_freq_init();
+        mpc_common_init_print();
+
         mpc_common_init_trigger("Base Runtime Init Done");
 
+	mpc_launch_print_banner( 0 /* not in restart mode */ );
 }
 
 void sctk_init_mpc_runtime()

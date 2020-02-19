@@ -119,7 +119,7 @@ int sctk_accl_cuda_init_context() {
   /*sctk_cuCtxCreate() automatically attaches the ctx to the GPU */
   cuda->pushed = 1;
 
-  sctk_info("CUDA: (INIT) PU %d bound to device %d", cuda->cpu_id,
+  mpc_common_debug("CUDA: (INIT) PU %d bound to device %d", cuda->cpu_id,
             nearest_device);
 
   /* Set the current pointer as default one for the current thread */

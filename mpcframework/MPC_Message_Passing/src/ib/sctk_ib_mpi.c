@@ -108,7 +108,7 @@ static void sctk_network_send_message_ib_endpoint ( mpc_lowcomm_ptp_message_t *m
 	        && ( size + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE <= sctk_ibuf_rdma_get_eager_limit ( remote ) ) )
 	        || ( size + IBUF_GET_EAGER_SIZE <= config->eager_limit ) )
 	{
-		sctk_debug ( "Eager" );
+		mpc_common_debug( "Eager" );
 		ibuf = sctk_ib_eager_prepare_msg ( rail_ib, remote, msg, size, _mpc_comm_ptp_message_is_for_process ( SCTK_MSG_SPECIFIC_CLASS( msg ) ) );
 
 		/* Actually, it is possible to get a NULL pointer for ibuf. We falback to buffered */
@@ -130,7 +130,7 @@ buffered:
 	/***** BUFFERED EAGER CHANNEL *****/
 	if ( size <= config->buffered_limit )
 	{
-		sctk_debug ( "Buffered" );
+		mpc_common_debug( "Buffered" );
 		sctk_ib_buffered_prepare_msg ( rail, remote, msg, size );
 		mpc_lowcomm_ptp_message_complete_and_free ( msg );
 		PROF_INC ( rail_ib->rail, ib_buffered_nb );
@@ -142,7 +142,7 @@ buffered:
 	}
 
 	/***** RDMA RENDEZVOUS CHANNEL *****/
-	sctk_debug ( "Size of message: %lu", size );
+	mpc_common_debug( "Size of message: %lu", size );
 	ibuf = sctk_ib_rdma_rendezvous_prepare_req ( rail, remote, msg, size );
 
 	/* Send message */

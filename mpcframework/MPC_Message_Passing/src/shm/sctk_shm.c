@@ -133,7 +133,7 @@ sctk_network_send_message_from_pending_shm_list( void )
                * was back pushed to the pending list */
 
               /* mpc_lowcomm_ptp_message_t *msg = elt->msg;
-              sctk_debug(
+              mpc_common_debug(
                   "!%d!  [ %d -> %d ] [ %d -> %d ] (CLASS "
                   "%s(%d) SPE %d SIZE %d TAG %d)",
                   mpc_common_get_process_rank(), SCTK_MSG_SRC_PROCESS(msg),

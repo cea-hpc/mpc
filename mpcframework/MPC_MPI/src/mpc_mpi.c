@@ -1546,7 +1546,7 @@ static int __INTERNAL__PMPIX_Exchange(void **send_buf , void **recvbuff, int rem
 		if( res != MPI_SUCCESS )
 			return res;
 		
-		sctk_debug("SWAPPING EX!");
+		mpc_common_debug("SWAPPING EX!");
 	}
 	else
 	{
@@ -1556,7 +1556,7 @@ static int __INTERNAL__PMPIX_Exchange(void **send_buf , void **recvbuff, int rem
 						       *recvbuff, size,  MPI_BYTE, remote_rank, 58740,
 						       comm, MPI_STATUS_IGNORE);
 		
-		sctk_debug("COPYING EX!");
+		mpc_common_debug("COPYING EX!");
 		
 		if( res != MPI_SUCCESS )
 			return res;
@@ -1590,7 +1590,7 @@ static int __INTERNAL__PMPIX_Swap(void **sendrecv_buf , int remote_rank, MPI_Cou
 		if( res != MPI_SUCCESS )
 			return res;
 		
-		sctk_debug("SWAPPING ");
+		mpc_common_debug("SWAPPING ");
 		
 		/* Replace by the remote ptr */
 		*sendrecv_buf = tmp_ptr;
@@ -1607,7 +1607,7 @@ static int __INTERNAL__PMPIX_Swap(void **sendrecv_buf , int remote_rank, MPI_Cou
 						       tmp_buff, size,  MPI_BYTE, remote_rank, 58740,
 						       comm, MPI_STATUS_IGNORE);
 		
-		sctk_debug("COPYING !");
+		mpc_common_debug("COPYING !");
 		
 		if( res != MPI_SUCCESS )
 			return res;
@@ -15567,7 +15567,7 @@ static inline int PMPI_Send_p( void *buf, int count, MPI_Datatype datatype,
 							   int dest, int tag, MPI_Comm comm )
 {
 	int res = MPI_ERR_INTERN;
-	sctk_debug( "SEND buf %p type %d tag %d dest %d count %d", buf, datatype, tag, dest, count );
+	mpc_common_debug( "SEND buf %p type %d tag %d dest %d count %d", buf, datatype, tag, dest, count );
 	if ( dest == SCTK_PROC_NULL )
 	{
 		res = MPI_SUCCESS;

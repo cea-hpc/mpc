@@ -4560,7 +4560,7 @@ static inline int __NBC_Progress( NBC_Handle *handle, int depth )
 
 		if ( ( handle->req_count > 0 ) && ( handle->req_array != NULL ) )
 		{
-			sctk_debug( "INSIDE THE PROGRESS THREAD" );
+			mpc_common_debug( "INSIDE THE PROGRESS THREAD" );
 			res = __INTERNAL__PMPI_Waitall( handle->req_count, handle->req_array,
 											/*&flag,*/ MPI_STATUSES_IGNORE );
 			if ( res != MPI_SUCCESS )

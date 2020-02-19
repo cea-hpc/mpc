@@ -296,7 +296,7 @@ int sctk_get_init_vp_and_nbvp_numa_packed( int i, int *nbVp )
 		tat += Tnk;
 	}
 
-	//sctk_debug("sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc);
+	//mpc_common_debug("sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc);
 	sctk_abort();
 	return proc;
 }
@@ -614,25 +614,8 @@ static inline void __init_brk_for_task( void )
 	sctk_leave_no_alloc_land();
 }
 
-static inline void __display_mpc_start_banner( double initialization_time )
-{
-	if ( mpc_common_get_process_rank() == 0 )
-	{
-		if ( sctk_runtime_config_get()->modules.launcher.banner )
-		{
-			fprintf( stderr,
-			         "Initialization time: %.1fs - Memory used: %0.fMB\n",
-			         initialization_time,
-			         mpc_common_helper_memory_in_use() / ( 1024.0 * 1024.0 ) );
-		}
-	}
-}
-
-
 void mpc_thread_spawn_virtual_processors ( void *( *run ) ( void * ), void *arg )
 {
-	double mpc_init_start_timer = sctk_get_time_stamp_gettimeofday();
-
 	__init_thread_cleanup_callback_key();
         __set_thread_cleanup_callback_key();
 	__prepare_free_pages();
@@ -661,10 +644,6 @@ void mpc_thread_spawn_virtual_processors ( void *( *run ) ( void * ), void *arg 
 	}
 
 	start_func_done = 1;
-
-	double mpc_init_end_timer = sctk_get_time_stamp_gettimeofday();
-
-	__display_mpc_start_banner( mpc_init_end_timer - mpc_init_start_timer );
 
 	/* Start Waiting for the end of  all VPs */
 
@@ -1798,7 +1777,7 @@ static inline int __per_mpi_task_atexit( void ( *func )( void ) )
 int sctk_atexit( void ( *function )( void ) )
 {
 	/* We may have a TASK context replacing the proces one */
-	sctk_info( "Calling the MPC atexit function" );
+	mpc_common_debug( "Calling the MPC atexit function" );
 	int ret  = __per_mpi_task_atexit( function );
 
 	if ( ret == 0 )
@@ -1808,7 +1787,7 @@ int sctk_atexit( void ( *function )( void ) )
 	}
 
 	/* It failed we may not be in a task then call libc */
-	sctk_info( "Calling the default atexit function" );
+	mpc_common_debug( "Calling the default atexit function" );
 	/* We have no task level fallback to libc */
 	return atexit( function );
 }

@@ -544,7 +544,7 @@ void __mpcomp_single_coherency_end_barrier( void )
 	for ( i = 0; i < num_threads; i++ )
 	{
 		/* mpcomp_thread_t *target_t = &(t->instance->mvps[i].ptr.mvp->threads[0]);
-		sctk_debug("%s: thread %d single_sections_current:%d "
+		mpc_common_debug("%s: thread %d single_sections_current:%d "
 		             "single_sections_last_current:%d",
 		             __func__, target_t->rank, target_t->single_sections_current,
 		             OPA_load_int(
