@@ -22045,6 +22045,8 @@ main ()
     if (*(data + i) != *(data3 + i))
       return 14;
   close (fd);
+  free (data);
+  free (data3);
   return 0;
 }
 _ACEOF
@@ -24870,7 +24872,37 @@ fi
 
 if test "x${mpc_enable_cma}" = "xyes"; then
 
+        #Check the content of the YAMA file if present
+        if test -f /proc/sys/kernel/yama/ptrace_scope; then
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking YAMA ptrace rights" >&5
+$as_echo_n "checking YAMA ptrace rights... " >&6; }
+                YAMA_VAL=$(cat /proc/sys/kernel/yama/ptrace_scope)
+
+                if test "x$YAMA_VAL" = "x0"; then
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: OK" >&5
+$as_echo "OK" >&6; }
+                else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: FAIL" >&5
+$as_echo "FAIL" >&6; }
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: /proc/sys/kernel/yama/ptrace_scope shoud contain 0 for CMA support in MPC" >&5
+$as_echo "$as_me: /proc/sys/kernel/yama/ptrace_scope shoud contain 0 for CMA support in MPC" >&6;}
+                        mpc_enable_cma="no"
+
+                fi
+        fi
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking enabling CMA" >&5
+$as_echo_n "checking enabling CMA... " >&6; }
+        if test "x$mpc_enable_cma" = "xyes"; then
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
 $as_echo "#define MPC_USE_CMA 1" >>confdefs.h
+
+        else
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        fi
 
 fi
 

@@ -1065,7 +1065,30 @@ AC_ARG_ENABLE([cma],
 [mpc_enable_cma=no])
 
 if test "x${mpc_enable_cma}" = "xyes"; then
-        AC_DEFINE([MPC_USE_CMA], [1], [MPC CMA for SHM drive is enabled])
+
+        #Check the content of the YAMA file if present
+        if test -f /proc/sys/kernel/yama/ptrace_scope; then
+                AC_MSG_CHECKING([YAMA ptrace rights])
+                YAMA_VAL=$(cat /proc/sys/kernel/yama/ptrace_scope)
+
+                if test "x$YAMA_VAL" = "x0"; then
+                        AC_MSG_RESULT([OK])
+                else
+                        AC_MSG_RESULT([FAIL])
+                        AC_MSG_NOTICE([/proc/sys/kernel/yama/ptrace_scope shoud contain 0 for CMA support in MPC])
+                        mpc_enable_cma="no"
+                        
+                fi
+        fi
+
+        AC_MSG_CHECKING([enabling CMA])
+        if test "x$mpc_enable_cma" = "xyes"; then
+                AC_MSG_RESULT([yes])
+                AC_DEFINE([MPC_USE_CMA], [1], [MPC CMA for SHM drive is enabled])
+        else
+                AC_MSG_RESULT([no])
+        fi
+
 fi
 
 AC_ARG_ENABLE([opt],
