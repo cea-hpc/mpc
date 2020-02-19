@@ -15,11 +15,18 @@ LT_INIT
 AC_PROG_CXX
 
 # Define MPC_VERSION
+#
+# Format is [MAJOR].[MINOR].[REV][PRE]
+#
+# MAJOR MINOR AND REV are Integers
+# PRE is a STRING
+#
 MPC_VERSION="4"
 MPC_VERSION_MINOR="0"
-MPC_VERSION_PRE="beta"
 MPC_VERSION_REV="0"
+MPC_VERSION_PRE="beta"
 
+MPC_VERSION_STRING="${MPC_VERSION}.${MPC_VERSION_MINOR}.${MPC_VERSION_REV}${MPC_VERSION_PRE}"
 
 AC_DEFINE_UNQUOTED([MPC_VERSION_MAJOR], [$MPC_VERSION], [MPC Major Version])
 AC_DEFINE_UNQUOTED([MPC_VERSION_MINOR], [$MPC_VERSION_MINOR], [MPC Minor Version])
@@ -1303,7 +1310,7 @@ AC_OUTPUT([Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile
            bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags
            bin/mpc_ldflags bin/mpc_cxx.sh bin/mpc_f77.sh  bin/mpcrun.sh])
 
-echo "========== MPC Configuration =========="
+echo "========== MPC $MPC_VERSION_STRING Configuration =========="
 echo "PREFIX: $prefix"
 echo "Optimized build ($MPC_OPT_FLAGS): $mpc_enable_opt"
 echo "Native build ($MPC_NATIVE_FLAGS): $mpc_enable_native_opt"
@@ -1327,5 +1334,5 @@ echo ""
 echo "MPC_Thread : $mpc_thread_enabled"
 echo "MPC_Message_passing : $mpc_lowcom_enabled"
 echo "MPC_MPI : $mpc_mpi_enabled"
-echo "======================================="
+echo "==========================================================="
 

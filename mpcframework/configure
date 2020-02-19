@@ -16415,11 +16415,18 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 # Define MPC_VERSION
+#
+# Format is [MAJOR].[MINOR].[REV][PRE]
+#
+# MAJOR MINOR AND REV are Integers
+# PRE is a STRING
+#
 MPC_VERSION="4"
-MPC_VERSION_MINOR="-1"
-MPC_VERSION_PRE="beta"
+MPC_VERSION_MINOR="0"
 MPC_VERSION_REV="0"
+MPC_VERSION_PRE="beta"
 
+MPC_VERSION_STRING="${MPC_VERSION}.${MPC_VERSION_MINOR}.${MPC_VERSION_REV}${MPC_VERSION_PRE}"
 
 
 cat >>confdefs.h <<_ACEOF
@@ -30356,7 +30363,7 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
-echo "========== MPC Configuration =========="
+echo "========== MPC $MPC_VERSION_STRING Configuration =========="
 echo "PREFIX: $prefix"
 echo "Optimized build ($MPC_OPT_FLAGS): $mpc_enable_opt"
 echo "Native build ($MPC_NATIVE_FLAGS): $mpc_enable_native_opt"
@@ -30380,5 +30387,5 @@ echo ""
 echo "MPC_Thread : $mpc_thread_enabled"
 echo "MPC_Message_passing : $mpc_lowcom_enabled"
 echo "MPC_MPI : $mpc_mpi_enabled"
-echo "======================================="
+echo "==========================================================="
 

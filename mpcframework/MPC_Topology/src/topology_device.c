@@ -421,7 +421,7 @@ static void __topology_device_init( hwloc_topology_t topology, mpc_topology_devi
 		{
 			if ( dev->name )
 			{
-				sctk_free( dev->name );
+				free( dev->name );
 			}
 
 			dev->name = strdup( os_level_obj->name );
