@@ -45,8 +45,8 @@ __mpcomp_del_mvp_saved_context( mpcomp_mvp_t* mvp )
     mvp->father = prev_mvp_context->father; 
     mvp->prev_node_father = prev_mvp_context->prev;
 
-    /* Free -- TODO: reuse mechanism */
-    free( prev_mvp_context );
+    TODO("reuse mechanism");
+    mpcomp_free( prev_mvp_context );
 } 
 
 static inline void
