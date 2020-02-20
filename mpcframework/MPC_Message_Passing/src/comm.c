@@ -37,6 +37,7 @@
 #include <sctk_control_messages.h>
 #include <sctk_rail.h>
 #include <sctk_launch.h>
+#include <mpc_common_profiler.h>
 
 #ifdef SCTK_LIB_MODE
 	#include "sctk_handle.h"

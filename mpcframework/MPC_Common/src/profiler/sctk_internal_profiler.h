@@ -19,19 +19,36 @@
 /* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@cea.fr               # */
 /* #                                                                      # */
 /* ######################################################################## */
+#ifndef SCTK_INTERNAL_PROFILER
+#define SCTK_INTERNAL_PROFILER
 
-#ifndef SCTK_PROFILER
-#define SCTK_PROFILER
-
-
-
-
-
-
-
+#include <mpc_common_types.h>
+#include "sctk_debug.h"
+#include "sctk_profiler_array.h"
+#include "sctk_profile_meta.h"
+#include "mpc_common_asm.h"
 
 
+struct sctk_profile_meta *sctk_internal_profiler_get_meta();
+
+/* ****************** */
+
+/* ****************** */
+
+/* MPI Init / MPI Finalize */
+static inline void sctk_profiler_set_initialize_time()
+{
+	struct sctk_profiler_array* array = (struct sctk_profiler_array *)mpc_profiler;
+	array->initialize_time = sctk_atomics_get_timestamp();
+	sctk_profiler_internal_enable();
+}
+
+static inline void sctk_profiler_set_finalize_time()
+{
+	struct sctk_profiler_array* array = (struct sctk_profiler_array *)mpc_profiler;
+	sctk_profiler_internal_disable();
+  	array->run_time = ( (double)sctk_atomics_get_timestamp() - (double)array->initialize_time);
+}
 
 
-
-#endif /* SCTK_PROFILER */
+#endif /* SCTK_INTERNAL_PROFILER */

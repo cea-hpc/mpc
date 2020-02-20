@@ -72,7 +72,7 @@
 
 #include <sctk_futex.h>
 
-#ifdef MPC_Debugger
+#ifdef MPC_Thread_db
 	#include <sctk_thread_dbg.h>
 #endif
 

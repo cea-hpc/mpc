@@ -24,6 +24,7 @@
 
 #include <mpc_launch_pmi.h>
 #include <mpc_common_rank.h>
+#include <mpc_common_profiler.h>
 
 /************************************************************************/
 /* None                                                                 */

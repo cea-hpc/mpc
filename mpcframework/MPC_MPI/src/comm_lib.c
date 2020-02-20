@@ -32,6 +32,7 @@
 #include <mpc_lowcomm_msg.h>
 #include <mpc_common_rank.h>
 #include <mpc_common_helper.h>
+#include <mpc_common_profiler.h>
 
 #include "mpi_alloc_mem.h"
 #include "mpi_rma_epoch.h"
@@ -5027,7 +5028,6 @@ int _mpc_cl_info_get_valuelen( MPC_Info info, char *key, int *valuelen, int *fla
 	MPC_ERROR_SUCESS();
 }
 
-
 /*****************************************
  * COMM LIB REGISTATION AND CONSTRUCTORS *
  *****************************************/
@@ -5093,14 +5093,6 @@ void mpc_cl_comm_lib_init()
                                           "Register lowcomm trampoline for MPI",
                                           __set_lowcomm_trampoline, 23);
 
-
-  /* Fill the profiling parent key array */
-#ifdef MPC_Profiler
-        mpc_common_init_callback_register("Before Starting VPs",
-                                          "Init Profiling keys",
-                                          sctk_profiler_array_init_parent_keys, 24);
-#endif
-
         /* Thread START */
 
         mpc_common_init_callback_register("Per Thread Init",
@@ -5137,12 +5129,6 @@ void mpc_cl_comm_lib_init()
                                           __mpc_cl_enter_tmp_directory, 24);
 
         /* Main END */
-
-#ifdef MPC_Profiler
-        mpc_common_init_callback_register("Ending Main",
-                                          "Render Profiler",
-                                          sctk_internal_profiler_render, 21);
-#endif
 
         mpc_common_init_callback_register("Ending Main",
                                           "Per Thread CTX Release",

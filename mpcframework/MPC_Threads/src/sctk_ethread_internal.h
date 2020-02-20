@@ -33,7 +33,7 @@
 #include "sctk_ethread.h"
 #include "sctk_alloc.h"
 #include "sctk_kernel_thread.h"
-#ifdef MPC_Debugger
+#ifdef MPC_Thread_db
 #include "sctk_thread_dbg.h"
 #endif
 #include "sched.h"

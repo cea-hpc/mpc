@@ -60,10 +60,6 @@
 	#include <extls_hls.h>
 #endif
 
-#ifdef MPC_Profiler
-	#include "sctk_profile_render.h"
-#endif
-
 #ifdef MPC_Accelerators
 	#include "sctk_accelerators.h"
 #endif
@@ -102,8 +98,6 @@ char *sctk_network_mode = "none";
 char *sctk_checkpoint_str = "";
 
 bool sctk_share_node_capabilities;
-
-char *sctk_profiling_outputs;
 
 char *get_debug_mode()
 {
@@ -410,9 +404,7 @@ static void sctk_perform_initialisation ( void )
 #ifdef MPC_Message_Passing
 
 #endif
-#ifdef MPC_Profiler
-	sctk_internal_profiler_init();
-#endif
+
 
 #if 0
 	/* Start auxiliary polling thread */
@@ -577,32 +569,13 @@ static void sctk_set_verbosity( char *arg )
 static void
 sctk_use_network ( char *arg )
 {
-	mpc_common_get_flags()->network_driver_name = arg;
+	mpc_common_get_flags()->network_driver_name = strdup(arg);
 }
 
 
-static void sctk_set_profiling( __UNUSED__ char *arg )
+static void sctk_set_profiling( char *arg )
 {
-	/* fprintf(stderr,"BEFORE |%s| |%s|\n",sctk_profiling_outputs,arg); */
-#ifdef MPC_Profiler
-	if ( strcmp( arg, "undef" ) != 0 )
-	{
-		char *val;
-		val = calloc( strlen( arg ) + 10, sizeof( char ) );
-		memcpy( val, arg, strlen( arg ) );
-
-		if ( sctk_profile_renderer_check_render_list( val ) )
-		{
-			sctk_error( "Provided profiling output syntax is not correct: %s", val );
-			abort();
-		}
-
-		/* fprintf(stderr,"SET %s %s %d\n",sctk_profiling_outputs,arg,strcmp(arg,"undef")); */
-		sctk_profiling_outputs = val;
-	}
-
-#endif
-	/* fprintf(stderr,"AFTER %s %s\n",sctk_profiling_outputs,arg); */
+	mpc_common_get_flags()->profiler_outputs = strdup(arg);
 }
 
 static void
@@ -1017,7 +990,7 @@ static void __set_default_values()
 	sctk_processor_nb_val = sctk_runtime_config_get()->modules.launcher.nb_processor;
 	mpc_common_get_flags()->verbosity  = sctk_runtime_config_get()->modules.launcher.verbosity;
 	sctk_launcher_mode = sctk_runtime_config_get()->modules.launcher.launcher;
-	sctk_profiling_outputs = sctk_runtime_config_get()->modules.launcher.profiling;
+	mpc_common_get_flags()->profiler_outputs = sctk_runtime_config_get()->modules.launcher.profiling;
 	mpc_common_get_flags()->enable_smt_capabilities = sctk_runtime_config_get()->modules.launcher.enable_smt;
 	sctk_share_node_capabilities = sctk_runtime_config_get()->modules.launcher.share_node;
 	sctk_checkpoint_mode = sctk_runtime_config_get()->modules.launcher.checkpoint;
@@ -1139,7 +1112,7 @@ static inline void __base_runtime_init()
 
         if( sctk_runtime_config_get()->modules.debugger.mpc_bt_sig )
         {
-                sctk_install_bt_sig_handler();
+                mpc_common_debugger_install_sig_handlers();
         }
 
         __create_autokill_thread();

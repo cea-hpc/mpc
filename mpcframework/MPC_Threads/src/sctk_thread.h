@@ -88,7 +88,7 @@ int sctk_thread_usleep ( unsigned int useconds );
 
 extern volatile int sctk_multithreading_initialised;
 
-#ifndef MPC_Debugger
+#ifndef MPC_Thread_db
 typedef enum
 {
 	sctk_thread_running_status, sctk_thread_blocked_status,

@@ -28,7 +28,7 @@
 
 #include "sctk_performance_tree.h"
 #include "sctk_profile_meta.h"
-#include "mpc_runtime_config.h"
+
 #include "sctk_profiler_array.h"
 
 typedef enum
@@ -44,8 +44,6 @@ typedef enum
 	SCTK_PROFILE_RENDER_HTML,
 	SCTK_PROFILE_RENDER_COUNT
 }sctk_profile_render_type;
-
-
 
 
 
@@ -127,7 +125,17 @@ struct MPC_prof_color
 
 struct MPC_prof_color sctk_profile_renderer_to_rgb( char *hex_col );
 
-const struct sctk_runtime_config_struct_profiler * sctk_profile_get_config();
+struct mpc_common_profiler_config
+{
+	int level_colors_size;
+	int append_date;
+	int color_stdout;
+	char * file_prefix;
+	char* level_colors[];
+};
+
+const struct mpc_common_profiler_config * sctk_profile_get_config();
+
 void sctk_profile_render_filename( char *output_file, char *ext );
 
 char * sctk_profile_render_sanitize_string( char *string );

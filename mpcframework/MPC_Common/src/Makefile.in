@@ -89,6 +89,16 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @MPC_THREAD_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/MPC_Threads/src/ -I$(abs_top_srcdir)/MPC_Threads/include/ -I$(abs_top_srcdir)/MPC_Topology/include/
+@MPC_PROFILER_ENABLED_TRUE@am__append_2 = -I$(abs_top_srcdir)/MPC_MPI/src/profiler/
+@MPC_PROFILER_ENABLED_TRUE@am__append_3 = ./profiler/sctk_internal_profiler.c \
+@MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_performance_tree.c \
+@MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_meta.c \
+@MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profiler_array.c \
+@MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_render.c \
+@MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_render_html.c \
+@MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_render_tex.c \
+@MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_render_text.c \
+@MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_render_xml.c
 subdir = MPC_Common/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_gcc_builtin.m4 \
@@ -107,9 +117,32 @@ CONFIG_CLEAN_VPATH_FILES =
 LTLIBRARIES = $(noinst_LTLIBRARIES)
 libmpccommon_la_DEPENDENCIES =  \
 	$(abs_top_builddir)/MPC_Arch/src/libmpcarch.la
+am__libmpccommon_la_SOURCES_DIST = aio.c bit_array.c fifo.c \
+	hashtable.c io_helper.c rank.c sctk_debug.c sctk_no_alloc.c \
+	sctk_pm_json.c flags.c debugger.c elf_32.c elf_64.c \
+	./profiler/sctk_internal_profiler.c \
+	./profiler/sctk_performance_tree.c \
+	./profiler/sctk_profile_meta.c \
+	./profiler/sctk_profiler_array.c \
+	./profiler/sctk_profile_render.c \
+	./profiler/sctk_profile_render_html.c \
+	./profiler/sctk_profile_render_tex.c \
+	./profiler/sctk_profile_render_text.c \
+	./profiler/sctk_profile_render_xml.c
+am__dirstamp = $(am__leading_dot)dirstamp
+@MPC_PROFILER_ENABLED_TRUE@am__objects_1 = ./profiler/sctk_internal_profiler.lo \
+@MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_performance_tree.lo \
+@MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_meta.lo \
+@MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profiler_array.lo \
+@MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_render.lo \
+@MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_render_html.lo \
+@MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_render_tex.lo \
+@MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_render_text.lo \
+@MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_render_xml.lo
 am_libmpccommon_la_OBJECTS = aio.lo bit_array.lo fifo.lo hashtable.lo \
 	io_helper.lo rank.lo sctk_debug.lo sctk_no_alloc.lo \
-	sctk_pm_json.lo flags.lo
+	sctk_pm_json.lo flags.lo debugger.lo elf_32.lo elf_64.lo \
+	$(am__objects_1)
 libmpccommon_la_OBJECTS = $(am_libmpccommon_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -150,7 +183,7 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libmpccommon_la_SOURCES)
-DIST_SOURCES = $(libmpccommon_la_SOURCES)
+DIST_SOURCES = $(am__libmpccommon_la_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -284,6 +317,8 @@ SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+UNW_CFLAGS = @UNW_CFLAGS@
+UNW_LIBS = @UNW_LIBS@
 VERSION = @VERSION@
 XML2_CFLAGS = @XML2_CFLAGS@
 XML2_LIBS = @XML2_LIBS@
@@ -348,9 +383,11 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/include/ \
 	-I$(abs_top_builddir)/MPC_Arch/include/ \
 	-I$(abs_top_srcdir)/MPC_Arch/include/ $(OPENPA_CFLAGS) \
-	$(am__append_1)
+	$(am__append_1) $(am__append_2)
 noinst_LTLIBRARIES = libmpccommon.la
-libmpccommon_la_SOURCES = aio.c bit_array.c fifo.c hashtable.c io_helper.c rank.c sctk_debug.c sctk_no_alloc.c sctk_pm_json.c flags.c 
+libmpccommon_la_SOURCES = aio.c bit_array.c fifo.c hashtable.c \
+	io_helper.c rank.c sctk_debug.c sctk_no_alloc.c sctk_pm_json.c \
+	flags.c debugger.c elf_32.c elf_64.c $(am__append_3)
 libmpccommon_la_LIBADD = $(abs_top_builddir)/MPC_Arch/src/libmpcarch.la $(OPENPA_LIBS)
 all: all-am
 
@@ -396,18 +433,47 @@ clean-noinstLTLIBRARIES:
 	  echo rm -f $${locs}; \
 	  rm -f $${locs}; \
 	}
+profiler/$(am__dirstamp):
+	@$(MKDIR_P) ./profiler
+	@: > profiler/$(am__dirstamp)
+profiler/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ./profiler/$(DEPDIR)
+	@: > profiler/$(DEPDIR)/$(am__dirstamp)
+./profiler/sctk_internal_profiler.lo: profiler/$(am__dirstamp) \
+	profiler/$(DEPDIR)/$(am__dirstamp)
+./profiler/sctk_performance_tree.lo: profiler/$(am__dirstamp) \
+	profiler/$(DEPDIR)/$(am__dirstamp)
+./profiler/sctk_profile_meta.lo: profiler/$(am__dirstamp) \
+	profiler/$(DEPDIR)/$(am__dirstamp)
+./profiler/sctk_profiler_array.lo: profiler/$(am__dirstamp) \
+	profiler/$(DEPDIR)/$(am__dirstamp)
+./profiler/sctk_profile_render.lo: profiler/$(am__dirstamp) \
+	profiler/$(DEPDIR)/$(am__dirstamp)
+./profiler/sctk_profile_render_html.lo: profiler/$(am__dirstamp) \
+	profiler/$(DEPDIR)/$(am__dirstamp)
+./profiler/sctk_profile_render_tex.lo: profiler/$(am__dirstamp) \
+	profiler/$(DEPDIR)/$(am__dirstamp)
+./profiler/sctk_profile_render_text.lo: profiler/$(am__dirstamp) \
+	profiler/$(DEPDIR)/$(am__dirstamp)
+./profiler/sctk_profile_render_xml.lo: profiler/$(am__dirstamp) \
+	profiler/$(DEPDIR)/$(am__dirstamp)
 
 libmpccommon.la: $(libmpccommon_la_OBJECTS) $(libmpccommon_la_DEPENDENCIES) $(EXTRA_libmpccommon_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK)  $(libmpccommon_la_OBJECTS) $(libmpccommon_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f ./profiler/*.$(OBJEXT)
+	-rm -f ./profiler/*.lo
 
 distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/aio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bit_array.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/debugger.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf_32.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf_64.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fifo.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/flags.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hashtable.Plo@am__quote@
@@ -416,6 +482,15 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_debug.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_no_alloc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_pm_json.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./profiler/$(DEPDIR)/sctk_internal_profiler.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./profiler/$(DEPDIR)/sctk_performance_tree.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./profiler/$(DEPDIR)/sctk_profile_meta.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./profiler/$(DEPDIR)/sctk_profile_render.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./profiler/$(DEPDIR)/sctk_profile_render_html.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./profiler/$(DEPDIR)/sctk_profile_render_tex.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./profiler/$(DEPDIR)/sctk_profile_render_text.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./profiler/$(DEPDIR)/sctk_profile_render_xml.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./profiler/$(DEPDIR)/sctk_profiler_array.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -446,6 +521,7 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf ./profiler/.libs ./profiler/_libs
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -559,6 +635,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f profiler/$(DEPDIR)/$(am__dirstamp)
+	-rm -f profiler/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -569,7 +647,7 @@ clean-am: clean-generic clean-libtool clean-noinstLTLIBRARIES \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./profiler/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -615,7 +693,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./profiler/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -652,6 +730,9 @@ uninstall-am:
 
 .PRECIOUS: Makefile
 
+
+elf_64.c: elf_32.c
+	$(abs_top_srcdir)/MPC_Common/src/gen_elf64
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

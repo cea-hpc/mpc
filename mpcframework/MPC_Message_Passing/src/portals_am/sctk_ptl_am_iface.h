@@ -51,7 +51,7 @@
 	case PTL_EQ_EMPTY: \
 	case PTL_CT_NONE_REACHED: \
     case PTL_OK: break; \
-	default: sctk_error("%s -> %s (%s:%u)", #x, sctk_ptl_am_rc_decode(__ret), __FILE__, (unsigned int)__LINE__); CRASH(); break; \
+	default: sctk_error("%s -> %s (%s:%u)", #x, sctk_ptl_am_rc_decode(__ret), __FILE__, (unsigned int)__LINE__); MPC_CRASH(); break; \
     } } while (0)
 #else
 #define sctk_ptl_chk(x) x

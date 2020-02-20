@@ -22,8 +22,10 @@
 
 #include "sctk_profile_meta.h"
 
+#include <mpc_common_rank.h>
+#include <mpc_common_spinlock.h>
+
 #include "sctk_debug.h"
-#include "mpc_mpi.h"
 #include "mpc_common_asm.h"
 
 
@@ -54,9 +56,10 @@ void sctk_profile_meta_calibrate_end(struct sctk_profile_meta *meta)
 void sctk_profile_meta_init(struct sctk_profile_meta *meta)
 {
 
-	MPC_Comm_size(SCTK_COMM_WORLD, &meta->task_count);
-	MPC_Node_number( &meta->node_count );
-	MPC_Process_number( &meta->process_count );
+#
+	meta->task_count = mpc_common_get_task_count();
+	meta->node_count = mpc_common_get_node_count();
+	meta->process_count = mpc_common_get_process_count();
 
 
 	char *cmd = getenv( "MPC_LAUNCH_COMMAND" );
@@ -70,7 +73,7 @@ void sctk_profile_meta_init(struct sctk_profile_meta *meta)
 		sprintf(meta->command, "Not found");
 	}
 
-	meta->lock = 0;
+	mpc_common_spinlock_init(&meta->lock, 0);
 	meta->status = 0;
 }
 
@@ -124,7 +127,7 @@ void sctk_profile_meta_end_compute(struct sctk_profile_meta *meta)
 	mpc_common_spinlock_unlock( &meta->lock );
 
 	int rank = 0;
-	MPC_Comm_rank(SCTK_COMM_WORLD, &rank);
+	rank = mpc_common_get_task_rank();
 
 	if( rank == 0)
         mpc_common_debug("Program running at %g ticks per sec", meta->ticks_per_second);

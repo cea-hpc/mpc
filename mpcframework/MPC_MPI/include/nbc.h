@@ -347,7 +347,7 @@ typedef struct {
 #define NBC_CHECK_NULL(ptr) \
 { \
 	if(ptr == NULL) { \
-		CRASH();\
+		MPC_CRASH();\
 	} \
 }
 

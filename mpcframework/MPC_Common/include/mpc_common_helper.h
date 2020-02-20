@@ -163,28 +163,6 @@ int mpc_common_io_noalloc_fprintf ( FILE *stream, const char *format, ... );
 int mpc_common_io_noalloc_vfprintf ( FILE *stream, const char *format, va_list ap );
 int mpc_common_io_noalloc_printf ( const char *format, ... );
 
-/*************************
- * MPC INTERNAL PROFILER *
- *************************/
-
-#ifdef MPC_Profiler
-
-	#include "sctk_internal_profiler.h"
-
-#else
-
-	#define SCTK_PROFIL_START(key)	(void)(0)
-	#define SCTK_PROFIL_END(key) (void)(0)
-	#define SCTK_COUNTER_INC(key,val) (void)(0);
-	#define SCTK_COUNTER_DEC(key,val) (void)(0);
-	#define SCTK_PROFIL_END_WITH_VALUE(key, value) (void)(0);
-
-	#define sctk_internal_profiler_init() (void)(0)
-	#define sctk_internal_profiler_render() (void)(0)
-	#define sctk_internal_profiler_release() (void)(0)
-
-#endif /* MPC_Profiler */
-
 /***********
  * SIGNALS *
  ***********/

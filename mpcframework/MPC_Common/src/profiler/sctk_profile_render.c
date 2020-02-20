@@ -157,7 +157,9 @@ static int sctk_profile_renderer_is_authorized_symbol( char c )
 int sctk_profile_renderer_check_render_list( char *render_list )
 {
 	int len = strlen( render_list );
-	
+
+	render_list = strdup(render_list);
+
 	int i = 0;
 	
 	for( i = 0 ; i < len ; i++ )
@@ -172,6 +174,8 @@ int sctk_profile_renderer_check_render_list( char *render_list )
 			return 1;
 		 }
 	}
+
+	free(render_list);
 
 	return 0;
 }
@@ -464,9 +468,17 @@ struct MPC_prof_color sctk_profile_renderer_to_rgb( char *hex_col )
 	return ret;
 }
 
-const struct sctk_runtime_config_struct_profiler * sctk_profile_get_config()
+struct mpc_common_profiler_config __prof_config = {
+	3,
+	1,
+	1,
+	"mpc_profile",
+	{"#FF0000", "#00FF00", "#0000FF"}
+};
+
+const struct mpc_common_profiler_config * sctk_profile_get_config()
 {
-	return (struct sctk_runtime_config_struct_profiler *)&sctk_runtime_config_get()->modules.profiler;
+	return (struct mpc_common_profiler_config *)&__prof_config;
 }
 
 

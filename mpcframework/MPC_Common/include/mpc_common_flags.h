@@ -1,6 +1,8 @@
 #ifndef MPC_COMMON_FLAGS_H_
 #define MPC_COMMON_FLAGS_H_
 
+#include <mpc_config.h>
+
 #include "opa_primitives.h"
 
 /******************
@@ -14,6 +16,9 @@ struct mpc_common_flags
 
         /* Launch command */
         char * exename;
+
+	/* Profiler output to be generated (requires MPC_Profiler) */
+	char * profiler_outputs;
 
         /* Topology Management */
         short enable_smt_capabilities;          /*< Should MPC run on hyperthreads */

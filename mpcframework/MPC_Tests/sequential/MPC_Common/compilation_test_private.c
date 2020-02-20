@@ -69,8 +69,8 @@ main (int argc, char **argv)
   fprintf (stderr, "\t- MPC_Profiler\n");
 #endif
 
-#if defined(MPC_Debugger) || defined(MPC_MODULE_MPC_Debugger)
-  fprintf (stderr, "\t- MPC_Debugger\n");
+#if defined(MPC_Thread_db) || defined(MPC_MODULE_MPC_Thread_db)
+  fprintf (stderr, "\t- MPC_Thread_db\n");
 #endif
 
 
@@ -89,8 +89,8 @@ main (int argc, char **argv)
   malloc (64 * 1024 * 1024);
 #endif
 
-#if defined(MPC_Debugger) || defined(MPC_MODULE_MPC_Debugger)
-  mpc_print_backtrace ("TEST\n");
+#if defined(MPC_Thread_db) || defined(MPC_MODULE_MPC_Thread_db)
+  mpc_common_debuger_print_backtrace ("TEST\n");
 #endif
 
 

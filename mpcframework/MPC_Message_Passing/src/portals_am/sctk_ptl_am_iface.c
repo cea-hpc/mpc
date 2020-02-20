@@ -922,7 +922,7 @@ int sctk_ptl_am_incoming_lookup( sctk_ptl_am_rail_info_t *srail )
 		if ( ev.ni_fail_type != PTL_NI_OK )
 		{
 			sctk_error( "ME: Failed event %s: %d", sctk_ptl_am_event_decode( ev ), ev.ni_fail_type );
-			CRASH();
+			MPC_CRASH();
 		}
 
 		switch ( ev.type )

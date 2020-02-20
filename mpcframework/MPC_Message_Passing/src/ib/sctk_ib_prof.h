@@ -35,12 +35,14 @@
 #include "mpc_common_types.h"
 #include <mpc_common_asm.h>
 
+#include <mpc_common_profiler.h>
+
 /* Rail to profile */
 #define PROF_RAIL_NUMBER 1
 
 /* Uncomment to enable Counters */
 #ifdef MPC_Profiler
-#define SCTK_IB_PROF
+//#define SCTK_IB_PROF
 #endif
 /* Uncomment to enable QP profiling */
 //#define SCTK_IB_QP_PROF
@@ -48,7 +50,7 @@
 //#define SCTK_IB_MEM_PROF
 
 #ifdef SCTK_IB_PROF
-#include <mpc_profiler.h>
+
 #define PROF_DECL(type, name) type name
 
 extern __thread struct sctk_ib_prof_s *sctk_ib_profiler;

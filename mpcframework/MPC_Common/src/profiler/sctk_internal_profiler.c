@@ -21,8 +21,11 @@
 /* ######################################################################## */
 #include "sctk_internal_profiler.h"
 
+#include <mpc_common_flags.h>
+#include <mpc_common_rank.h>
+#include <string.h>
+
 #include "sctk_debug.h"
-#include "mpc_mpi.h"
 #include "sctk_performance_tree.h"
 #include "sctk_profile_render.h"
 
@@ -41,6 +44,18 @@ struct sctk_profile_meta *sctk_internal_profiler_get_meta()
 
 /* Target structure for reduction */
 static struct sctk_profiler_array *reduce_array = NULL;
+
+struct sctk_profiler_array * sctk_profiler_get_reduce_array()
+{
+	int rank = mpc_common_get_task_rank();
+
+	if(!reduce_array && !rank)
+	{
+		reduce_array = sctk_profiler_array_new();
+	}
+
+	return reduce_array;
+}
 
 static void sctk_internal_profiler_check_config()
 {
@@ -76,89 +91,20 @@ void sctk_internal_profiler_init()
 }
 
 
-
-void sctk_internal_profiler_reduce(int rank)
-{
-	if( !reduce_array && rank == 0 )
-	{
-		reduce_array = sctk_profiler_array_new();
-	}
-
-	if( !sctk_internal_profiler_get_tls_array() )
-	{
-		sctk_error("Profiler TLS is not initialized");
-		return;
-	}
-
-	if( sctk_profiler_internal_enabled() )
-	{
-		sctk_error( "This section must be entered with a disabled profiler");
-		abort();
-	}
-
-
-	PMPC_Reduce( sctk_internal_profiler_get_tls_array()->sctk_profile_hits,
-				 reduce_array->sctk_profile_hits,
-		         SCTK_PROFILE_KEY_COUNT,
-		         MPC_LONG_LONG_INT,
-		         MPC_SUM,
-		         0,
-		         SCTK_COMM_WORLD);
-
-  /* Reduce the run time */
-  PMPC_Reduce( &sctk_internal_profiler_get_tls_array()->run_time,
-				 &reduce_array->run_time,
-		         1,
-		         MPC_LONG_LONG_INT,
-		         MPC_SUM,
-		         0,
-		         SCTK_COMM_WORLD);
-
-	PMPC_Reduce( sctk_internal_profiler_get_tls_array()->sctk_profile_value,
-	             reduce_array->sctk_profile_value,
-		         SCTK_PROFILE_KEY_COUNT,
-		         MPC_LONG_LONG_INT,
-		         MPC_SUM,
-		         0,
-		         SCTK_COMM_WORLD);
-
-	PMPC_Reduce( sctk_internal_profiler_get_tls_array()->sctk_profile_max,
-	             reduce_array->sctk_profile_max,
-		         SCTK_PROFILE_KEY_COUNT,
-		         MPC_LONG_LONG_INT,
-		         MPC_MAX,
-		         0,
-		         SCTK_COMM_WORLD);
-
-	PMPC_Reduce( sctk_internal_profiler_get_tls_array()->sctk_profile_min,
-				 reduce_array->sctk_profile_min,
-		         SCTK_PROFILE_KEY_COUNT,
-		         MPC_LONG_LONG_INT,
-		         MPC_MIN,
-		         0,
-		         SCTK_COMM_WORLD);
-
-}
-
-
 /* Defined in sctk_launch.c */
-extern char * sctk_profiling_outputs;
-
 
 void sctk_internal_profiler_render()
 {
-  sctk_profiler_set_finalize_time();
+	int rank = mpc_common_get_task_rank();
 
-	int rank = 0;
-	MPC_Comm_rank( SCTK_COMM_WORLD, &rank );
+  	sctk_profiler_set_finalize_time();
 
-	/* fprintf(stderr,"%s \n",sctk_profiling_outputs); */
+	/* fprintf(stderr,"%s \n",mpc_common_get_flags()->profiler_outputs); */
 
 	/* End Program */
 	sctk_profile_meta_end_compute(&sctk_internal_profiler_meta);
 
-	/* Allocate and reduce to rank 0 */
-	sctk_internal_profiler_reduce( rank );
+	mpc_common_init_trigger("MPC Profile reduce");
 
 	if( rank == 0 )
 	{
@@ -166,7 +112,7 @@ void sctk_internal_profiler_render()
 
 		struct sctk_profile_renderer renderer;
 
-		sctk_profile_renderer_init( &renderer, reduce_array, sctk_profiling_outputs );
+		sctk_profile_renderer_init( &renderer, reduce_array, mpc_common_get_flags()->profiler_outputs );
 
 		sctk_profile_renderer_render( &renderer );
 
@@ -184,7 +130,6 @@ void sctk_internal_profiler_render()
 }
 
 
-
 void sctk_internal_profiler_release()
 {
 	sctk_profiler_internal_disable();
@@ -194,4 +139,41 @@ void sctk_internal_profiler_release()
 
 	if( reduce_array  )
 		sctk_profiler_array_release(reduce_array);
+}
+
+
+
+static inline void __set_profiler_output()
+{
+	char * arg = mpc_common_get_flags()->profiler_outputs;
+
+	if ( strcmp( arg, "undef" ) != 0 )
+	{
+		if ( sctk_profile_renderer_check_render_list( arg ) )
+		{
+			sctk_error( "Provided profiling output syntax is not correct: %s", arg );
+			abort();
+		}
+	}
+}
+
+void mpc_cl_internal_profiler_init() __attribute__((constructor));
+
+void mpc_cl_internal_profiler_init()
+{
+        MPC_INIT_CALL_ONLY_ONCE
+
+	/* Runtime start */
+        mpc_common_init_callback_register("Base Runtime Init Done",
+                                          "Init Profiling keys",
+                                          __set_profiler_output, 24);
+
+        mpc_common_init_callback_register("Base Runtime Init Done",
+                                          "Init Profiling keys",
+                                          sctk_internal_profiler_init, 25);
+
+	/* Main start */
+        mpc_common_init_callback_register("Before Starting VPs",
+                                          "Init Profiling keys",
+                                          sctk_profiler_array_init_parent_keys, 24);
 }

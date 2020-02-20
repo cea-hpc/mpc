@@ -64,8 +64,6 @@ export SCTK_JOB_MANAGER
 MPC_VERBOSE="0"
 MPC_DISABLE="0"
 
-MPC_PROFILING="undef"
-
 show=
 
 #. ${MPC_BIN_DIR}/mpc_modes
@@ -622,7 +620,10 @@ add_arg "--use-accl"
 fi
 
 MPC_VERBOSE="--mpc-verbose=${MPC_VERBOSE}"
-MPC_PROFILING="--profiling=${MPC_PROFILING}"
+
+if test -n "$MPC_PROFILING"; then
+	MPC_PROFILING="--profiling=${MPC_PROFILING}"
+fi
 
 SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $FT_WRAP $MIGRATION $MPC_VERBOSE $MPC_PROFILING"
 

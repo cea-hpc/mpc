@@ -26,6 +26,7 @@
 #include <mpc_common_helper.h>
 #include <sctk_launch.h>
 #include <mpc_common_datastructure.h>
+#include <mpc_common_profiler.h>
 #include "sctk_handle.h"
 #include "mpc_mpi_halo.h"
 
@@ -15250,13 +15251,94 @@ static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
   return res;
 }
 
+
+/*********************************************
+ * INTERNAL PROFILER REDUCE WHEN IN MPI MODE *
+ *********************************************/
+
+#ifdef MPC_Profiler
+void mpc_mp_profiler_do_reduce()
+{
+	int rank = mpc_common_get_task_rank();
+
+	struct sctk_profiler_array *reduce_array = sctk_profiler_get_reduce_array();
+
+	if( !reduce_array && rank == 0 )
+	{
+		reduce_array = sctk_profiler_array_new();
+	}
+
+	if( !sctk_internal_profiler_get_tls_array() )
+	{
+		sctk_error("Profiler TLS is not initialized");
+		return;
+	}
+
+	if( sctk_profiler_internal_enabled() )
+	{
+		sctk_error( "This section must be entered with a disabled profiler");
+		abort();
+	}
+
+
+	PMPI_Reduce( sctk_internal_profiler_get_tls_array()->sctk_profile_hits,
+				 reduce_array->sctk_profile_hits,
+		         SCTK_PROFILE_KEY_COUNT,
+		         MPI_LONG_LONG_INT,
+		         MPI_SUM,
+		         0,
+		         MPI_COMM_WORLD);
+
+	/* Reduce the run time */
+	PMPI_Reduce( &sctk_internal_profiler_get_tls_array()->run_time,
+				 &reduce_array->run_time,
+		         1,
+		         MPI_LONG_LONG_INT,
+		         MPI_SUM,
+		         0,
+		         MPI_COMM_WORLD);
+
+	PMPI_Reduce( sctk_internal_profiler_get_tls_array()->sctk_profile_value,
+	             reduce_array->sctk_profile_value,
+		         SCTK_PROFILE_KEY_COUNT,
+		         MPI_LONG_LONG_INT,
+		         MPI_SUM,
+		         0,
+		         MPI_COMM_WORLD);
+
+	PMPI_Reduce( sctk_internal_profiler_get_tls_array()->sctk_profile_max,
+	             reduce_array->sctk_profile_max,
+		         SCTK_PROFILE_KEY_COUNT,
+		         MPI_LONG_LONG_INT,
+		         MPI_MAX,
+		         0,
+		         MPI_COMM_WORLD);
+
+	PMPI_Reduce( sctk_internal_profiler_get_tls_array()->sctk_profile_min,
+				 reduce_array->sctk_profile_min,
+		         SCTK_PROFILE_KEY_COUNT,
+		         MPI_LONG_LONG_INT,
+		         MPI_MIN,
+		         0,
+		         MPI_COMM_WORLD);
+}
+#endif
+
 static int
 __INTERNAL__PMPI_Finalize (void)
 {
-  int res; 
+  int res;
+
+#ifdef MPC_Profiler
+        mpc_common_init_callback_register("MPC Profile reduce",
+                                          "Reduce profile data before rendering them",
+                                          mpc_mp_profiler_do_reduce, 0);
+	sctk_internal_profiler_render();
+#endif
 
   struct mpc_mpi_cl_per_mpi_process_ctx_s * task_specific;
   task_specific = mpc_cl_per_mpi_process_ctx_get ();
+
   if(task_specific->mpc_mpi_data->nbc_initialized_per_task == 1){
     task_specific->mpc_mpi_data->nbc_initialized_per_task = -1;
     sctk_thread_yield();

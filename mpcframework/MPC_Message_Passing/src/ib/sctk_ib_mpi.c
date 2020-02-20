@@ -228,7 +228,7 @@ int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 
 		default:
 			sctk_error ( "Got wrong protocol: %d %p", IBUF_GET_PROTOCOL ( ibuf->buffer ), &IBUF_GET_PROTOCOL ( ibuf->buffer ) );
-			CRASH();
+			MPC_CRASH();
 			break;
 	}
 
