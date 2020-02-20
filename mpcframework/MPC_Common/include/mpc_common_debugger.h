@@ -23,26 +23,29 @@
 #define __MPC___DEBUG__
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <mpc_config.h>
 
-  typedef struct
-  {
-    char *ptr;			/*instruction pointer (needed) */
-    char *name;			/*function name (out) */
-    char *dir;			/*relative source file directory (out) */
-    char *file;			/*source file (out) */
-    char *absolute;		/*absolute source file directory (out) */
-    unsigned long line;		/*line number (out) */
-  } mpc_addr2line_t;
+typedef struct
+{
+	char *ptr;			/*instruction pointer (needed) */
+	char *name;			/*function name (out) */
+	char *dir;			/*relative source file directory (out) */
+	char *file;			/*source file (out) */
+	char *absolute;		/*absolute source file directory (out) */
+	unsigned long line; /*line number (out) */
+} mpc_addr2line_t;
 
-  extern void mpc_print_backtrace (const char *format, ...);
-  extern void mpc_debug_resolve (mpc_addr2line_t * tab, int size);
+void mpc_common_debuger_print_backtrace( const char *format, ... );
+void mpc_common_debuger_resolve( mpc_addr2line_t *tab, int size );
+void mpc_common_debugger_install_sig_handlers();
+
 #ifdef __cplusplus
-}				/* end of extern "C" */
+} /* end of extern "C" */
 #endif
+
 #endif

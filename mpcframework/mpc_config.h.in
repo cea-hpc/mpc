@@ -24,6 +24,9 @@
 /* Define to 1 if you have the `dup2' function. */
 #undef HAVE_DUP2
 
+/* Define to 1 if you have the <elf.h> header file. */
+#undef HAVE_ELF_H
+
 /* The environ variable is present */
 #undef HAVE_ENVIRON_VAR
 
@@ -644,6 +647,9 @@
 /* MPC color output was enabled */
 #undef MPC_ENABLE_SHELL_COLORS
 
+/* libunwind support is enabled */
+#undef MPC_HAVE_LIBUNWIND
+
 /* MPC compiled in process mode */
 #undef MPC_IN_PROCESS_MODE
 
@@ -658,6 +664,9 @@
 
 /* Prefix Path for MPC */
 #undef MPC_PREFIX_PATH
+
+/* MPC_Profiler module was enabled */
+#undef MPC_Profiler
 
 /* Experimentally defined PTHREAD_KEYS_MAX */
 #undef MPC_THREAD_KEYS_MAX

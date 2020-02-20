@@ -20,4 +20,8 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 # 
 #                                                                      # 
 ######################################################################## 
-cat sctk_elf_32.c | sed s,32,64,g > sctk_elf_64.c
+
+SCRIPT=$(readlink -f "$0")
+SCRIPTPATH=$(dirname "$SCRIPT")
+
+cat ${SCRIPTPATH}/elf_32.c | sed s,32,64,g > elf_64.c

@@ -287,8 +287,25 @@ AC_MSG_CHECKING([MPC target alocator])
 if test "x$mpc_dep_found" = "xyes"; then
         AC_MSG_RESULT([mpcalloc])
         AC_DEFINE([MPC_Allocator], [1], [mpcalloc support is enabled])
-
         mpc_allocator="mpcalloc"
+else
+        AC_MSG_RESULT([Standard allocator])
+fi
+
+#
+# Detect libunwing
+#
+
+mpc_libunwind="no"
+
+MPC_DETECT_DEPENDENCY([libunwind.h], [libunwind], [unw_init_local], [UNW])
+
+AC_MSG_CHECKING([for libunwind])
+
+if test "x$mpc_dep_found" = "xyes"; then
+        AC_MSG_RESULT([yes])
+        AC_DEFINE([MPC_HAVE_LIBUNWIND], [1], [libunwind support is enabled])
+        mpc_libunwind="yes"
 else
         AC_MSG_RESULT([Standard allocator])
 fi
@@ -424,6 +441,7 @@ AC_CHECK_HEADERS([assert.h])
 AC_CHECK_HEADERS([ctype.h])
 AC_CHECK_HEADERS([errno.h])
 AC_CHECK_HEADERS([execinfo.h])
+AC_CHECK_HEADERS([elf.h])
 AC_CHECK_HEADERS([fcntl.h])
 AC_CHECK_HEADERS([getopt.h])
 AC_CHECK_HEADERS([hwloc.h])
@@ -1170,6 +1188,20 @@ if test "x${mpc_debug}" = "xyes"; then
         CFLAGS+=" -g"
 fi
 
+
+AC_ARG_ENABLE([profiler],
+[AS_HELP_STRING([--enable-profiler],
+                [Compile MPC with Internal Profiling Support])],
+[mpc_profiler_enabled=$enableval],
+[mpc_profiler_enabled=no])
+
+if test "x${mpc_profiler_enabled}" = "xyes"; then
+        AC_DEFINE([MPC_Profiler], [1], [MPC_Profiler module was enabled])
+fi
+
+AM_CONDITIONAL([MPC_PROFILER_ENABLED], [test "x${mpc_profiler_enabled}" = "xyes"])
+
+
 #
 # Modular MPC configuration
 #
@@ -1417,6 +1449,7 @@ echo "Context switch.... $MPC_ARCH_CONTEXT_SWITCH"
 echo ""
 echo "# Debug and logging"
 echo ""
+echo "Internal profiler. $mpc_profiler_enabled"
 echo "Debug............. $mpc_debug"
 echo "Debug messages.... $mpc_debug_messages"
 echo "Color............. $mpc_shell_color"
@@ -1435,6 +1468,7 @@ echo ""
 echo "# Optionnal components"
 echo ""
 echo "Allocator....... $mpc_allocator"
+echo "libunwind....... $mpc_libunwind"
 echo ""
 echo "# Network Configuration"
 echo ""

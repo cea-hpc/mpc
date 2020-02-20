@@ -33,6 +33,7 @@ extern "C"
 #include <stdio.h>
 #include <stdarg.h>
 #include <mpc_config.h>
+#include <mpc_common_debugger.h>
 #include <mpc_arch.h>
 #include <assert.h>
 #include <signal.h>
@@ -88,6 +89,41 @@ void mpc_common_debug_info( const char *fmt, ... );
 #endif
 
 
+#define MPC_GDB_INTR()       \
+	do                   \
+	{                    \
+		raise( SIGINT ); \
+	} while ( 0 )
+
+#define MPC_GDB_BREAKPOINT()                                                              \
+	do                                                                                \
+	{                                                                                 \
+		char _hostname[300];                                                          \
+		gethostname( _hostname, 300 );                                                \
+		int _block = 1;                                                               \
+		sctk_error( "Breakpoint set to %s:%d on %s", __FILE__, __LINE__, _hostname ); \
+		sctk_error( "You can trace/unblock this process by running under GDB:" );     \
+		sctk_error( "(gdb) attach %d", getpid() );                                    \
+		sctk_error( "(gdb) p _block = 0" );                                           \
+		sctk_error( "(gdb) continue" );                                               \
+		while ( _block )                                                              \
+			;                                                                         \
+	} while ( 0 )
+
+/* Some Debug Helpers */
+#define MPC_CRASH()                                                                            \
+	do                                                                                     \
+	{                                                                                      \
+		if ( getenv( "MPC_DEBUG_CRASH" ) )                                                 \
+		{                                                                                  \
+			sctk_error( "MPC will now create a \"breakpoint\" where the SIGSEGV occurs" ); \
+			MPC_GDB_BREAKPOINT();                                                              \
+		}                                                                                  \
+		else                                                                               \
+		{                                                                                  \
+			( (void ( * )()) 0x0 )();                                                      \
+		}                                                                                  \
+	} while ( 0 )
 
 void mpc_common_debug_log_file( FILE *file, const char *fmt, ... );
 void sctk_warning( const char *fmt, ... );
@@ -106,24 +142,21 @@ void sctk_debug_print_backtrace( const char *format, ... );
 /* DEBUG FUNCTIONS END */
 
 #ifndef MPC_Debugger
-#define sctk_thread_add( a, b ) (void) ( 0 )
-#define sctk_thread_remove( a ) (void) ( 0 )
+	#define sctk_thread_add( a, b ) (void) ( 0 )
+	#define sctk_thread_remove( a ) (void) ( 0 )
+	#define sctk_enable_lib_thread_db() (void) ( 0 )
 
-/** ** **/
-#define sctk_enable_lib_thread_db() (void) ( 0 )
+	#define sctk_init_thread_debug( a ) (void) ( 0 )
+	#define sctk_refresh_thread_debug( a, b ) (void) ( 0 )
+	#define sctk_refresh_thread_debug_migration( a ) (void) ( 0 )
 
-#define sctk_init_thread_debug( a ) (void) ( 0 )
-#define sctk_refresh_thread_debug( a, b ) (void) ( 0 )
-#define sctk_refresh_thread_debug_migration( a ) (void) ( 0 )
+	#define sctk_init_idle_thread_dbg( a, b ) (void) ( 0 )
+	#define sctk_free_idle_thread_dbg( a ) (void) ( 0 )
 
-#define sctk_init_idle_thread_dbg( a, b ) (void) ( 0 )
-#define sctk_free_idle_thread_dbg( a ) (void) ( 0 )
-
-#define sctk_report_creation( a ) (void) ( 0 )
-#define sctk_report_death( a ) (void) ( 0 )
-/** **/
+	#define sctk_report_creation( a ) (void) ( 0 )
+	#define sctk_report_death( a ) (void) ( 0 )
 #else
-#include "sctk_thread_dbg.h"
+	#include "sctk_thread_dbg.h"
 #endif
 
 #ifdef SCTK_64_BIT_ARCH
@@ -163,41 +196,6 @@ static inline void sctk_nodebug( const char *fmt, ... )
 }
 #endif
 
-#define GDB_INTR()       \
-	do                   \
-	{                    \
-		raise( SIGINT ); \
-	} while ( 0 )
-
-#define GDB_BREAKPOINT()                                                              \
-	do                                                                                \
-	{                                                                                 \
-		char _hostname[300];                                                          \
-		gethostname( _hostname, 300 );                                                \
-		int _block = 1;                                                               \
-		sctk_error( "Breakpoint set to %s:%d on %s", __FILE__, __LINE__, _hostname ); \
-		sctk_error( "You can trace/unblock this process by running under GDB:" );     \
-		sctk_error( "(gdb) attach %d", getpid() );                                    \
-		sctk_error( "(gdb) p _block = 0" );                                           \
-		sctk_error( "(gdb) continue" );                                               \
-		while ( _block )                                                              \
-			;                                                                         \
-	} while ( 0 )
-
-/* Some Debug Helpers */
-#define CRASH()                                                                            \
-	do                                                                                     \
-	{                                                                                      \
-		if ( getenv( "MPC_DEBUG_CRASH" ) )                                                 \
-		{                                                                                  \
-			sctk_error( "MPC will now create a \"breakpoint\" where the SIGSEGV occurs" ); \
-			GDB_BREAKPOINT();                                                              \
-		}                                                                                  \
-		else                                                                               \
-		{                                                                                  \
-			( (void ( * )()) 0x0 )();                                                      \
-		}                                                                                  \
-	} while ( 0 )
 
 //If inline is not supported, disable assertions
 

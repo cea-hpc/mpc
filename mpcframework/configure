@@ -650,6 +650,8 @@ MPC_MESSAGE_PASSING_ENABLED_FALSE
 MPC_MESSAGE_PASSING_ENABLED_TRUE
 MPC_THREAD_ENABLED_FALSE
 MPC_THREAD_ENABLED_TRUE
+MPC_PROFILER_ENABLED_FALSE
+MPC_PROFILER_ENABLED_TRUE
 MPC_ENABLE_SHELL_COLORS
 MPC_ARCH_GENERIC_MICROTASK_FALSE
 MPC_ARCH_GENERIC_MICROTASK_TRUE
@@ -680,6 +682,8 @@ INFINIBAND_DRIVER_ENABLED_FALSE
 INFINIBAND_DRIVER_ENABLED_TRUE
 IBV_LIBS
 IBV_CFLAGS
+UNW_LIBS
+UNW_CFLAGS
 ALLOC_LIBS
 ALLOC_CFLAGS
 OPA_LIBS
@@ -854,6 +858,9 @@ with_openpa_libs
 with_mpcalloc
 with_mpcalloc_include
 with_mpcalloc_libs
+with_libunwind
+with_libunwind_include
+with_libunwind_libs
 with_ibverbs
 with_ibverbs_include
 with_ibverbs_libs
@@ -875,6 +882,7 @@ enable_opt
 enable_opt_native
 enable_debug_messages
 enable_debug
+enable_profiler
 enable_threads
 enable_message_passing
 enable_mpi
@@ -907,6 +915,8 @@ OPA_CFLAGS
 OPA_LIBS
 ALLOC_CFLAGS
 ALLOC_LIBS
+UNW_CFLAGS
+UNW_LIBS
 IBV_CFLAGS
 IBV_LIBS
 PORTALS_CFLAGS
@@ -1562,6 +1572,7 @@ Optional Features:
   --enable-opt-native     Build MPC for current architecture
   --enable-debug-messages Output debug messages when running MPC
   --enable-debug          Compile MPC in debug mode
+  --enable-profiler       Compile MPC with Internal Profiling Support
   --enable-threads        Compile MPC with pthread and user-level thread
                           support
   --enable-message-passing
@@ -1592,6 +1603,9 @@ Optional Packages:
   --with-mpcalloc         Provide prefix for mpcalloc
   --with-mpcalloc-inc     Provide include path for mpcalloc
   --with-mpcalloc-libs    Provide library path for mpcalloc
+  --with-libunwind        Provide prefix for libunwind
+  --with-libunwind-inc    Provide include path for libunwind
+  --with-libunwind-libs   Provide library path for libunwind
   --with-ibverbs          Provide prefix for ibverbs
   --with-ibverbs-inc      Provide include path for ibverbs
   --with-ibverbs-libs     Provide library path for ibverbs
@@ -1639,6 +1653,8 @@ Some influential environment variables:
   ALLOC_CFLAGS
               C compiler flags for ALLOC, overriding pkg-config
   ALLOC_LIBS  linker flags for ALLOC, overriding pkg-config
+  UNW_CFLAGS  C compiler flags for UNW, overriding pkg-config
+  UNW_LIBS    linker flags for UNW, overriding pkg-config
   IBV_CFLAGS  C compiler flags for IBV, overriding pkg-config
   IBV_LIBS    linker flags for IBV, overriding pkg-config
   PORTALS_CFLAGS
@@ -19152,8 +19168,174 @@ $as_echo "mpcalloc" >&6; }
 
 $as_echo "#define MPC_Allocator 1" >>confdefs.h
 
-
         mpc_allocator="mpcalloc"
+else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: Standard allocator" >&5
+$as_echo "Standard allocator" >&6; }
+fi
+
+#
+# Detect libunwing
+#
+
+mpc_libunwind="no"
+
+
+
+
+# Check whether --with-libunwind was given.
+if test "${with_libunwind+set}" = set; then :
+  withval=$with_libunwind; whole_prefix=$withval
+else
+  whole_prefix="/usr/"
+fi
+
+
+                inc_prefix=""
+
+# Check whether --with-libunwind-include was given.
+if test "${with_libunwind_include+set}" = set; then :
+  withval=$with_libunwind_include; inc_prefix=$withval
+fi
+
+                lib_prefix=""
+
+# Check whether --with-libunwind-libs was given.
+if test "${with_libunwind_libs+set}" = set; then :
+  withval=$with_libunwind_libs; lib_prefix=$withval
+fi
+
+
+                check_or_infer_prefix_result="no"
+                header_name=libunwind.h
+                libname=libunwind
+                function_name=unw_init_local
+                var_prefix=UNW
+                version=""
+
+                if test -z "$lib_prefix"
+                then
+                        lib_prefix=$whole_prefix
+                fi
+
+                if test -z "$inc_prefix"
+                then
+                        inc_prefix=$whole_prefix
+                fi
+
+                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+
+                # First try with PKG config
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for UNW" >&5
+$as_echo_n "checking for UNW... " >&6; }
+
+if test -n "$UNW_CFLAGS"; then
+    pkg_cv_UNW_CFLAGS="$UNW_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_UNW_CFLAGS=`$PKG_CONFIG --cflags "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$UNW_LIBS"; then
+    pkg_cv_UNW_LIBS="$UNW_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_UNW_LIBS=`$PKG_CONFIG --libs "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        UNW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$libname $version" 2>&1`
+        else
+	        UNW_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$libname $version" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$UNW_PKG_ERRORS" >&5
+
+	pkg_found=0
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	pkg_found=0
+else
+	UNW_CFLAGS=$pkg_cv_UNW_CFLAGS
+	UNW_LIBS=$pkg_cv_UNW_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	pkg_found=1
+fi
+
+                if test "x$pkg_found" = "x1"
+                then
+                        #Insert flags
+                        CPPFLAGS="${UNW_CFLAGS} $CPPFLAGS"
+                        LDFLAGS="${UNW_LIBS} $LDFLAGS"
+
+
+
+
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                        check_or_infer_prefix_result="yes"
+                else
+                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                        then
+                                check_or_infer_prefix_result="yes"
+                        else
+                                check_or_infer_prefix_result="no"
+                        fi
+                fi
+
+                mpc_dep_found=$check_or_infer_prefix_result
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libunwind" >&5
+$as_echo_n "checking for libunwind... " >&6; }
+
+if test "x$mpc_dep_found" = "xyes"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define MPC_HAVE_LIBUNWIND 1" >>confdefs.h
+
+        mpc_libunwind="yes"
 else
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: Standard allocator" >&5
 $as_echo "Standard allocator" >&6; }
@@ -19997,6 +20179,18 @@ do :
 if test "x$ac_cv_header_execinfo_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_EXECINFO_H 1
+_ACEOF
+
+fi
+
+done
+
+for ac_header in elf.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "elf.h" "ac_cv_header_elf_h" "$ac_includes_default"
+if test "x$ac_cv_header_elf_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_ELF_H 1
 _ACEOF
 
 fi
@@ -25042,6 +25236,31 @@ if test "x${mpc_debug}" = "xyes"; then
         CFLAGS+=" -g"
 fi
 
+
+# Check whether --enable-profiler was given.
+if test "${enable_profiler+set}" = set; then :
+  enableval=$enable_profiler; mpc_profiler_enabled=$enableval
+else
+  mpc_profiler_enabled=no
+fi
+
+
+if test "x${mpc_profiler_enabled}" = "xyes"; then
+
+$as_echo "#define MPC_Profiler 1" >>confdefs.h
+
+fi
+
+ if test "x${mpc_profiler_enabled}" = "xyes"; then
+  MPC_PROFILER_ENABLED_TRUE=
+  MPC_PROFILER_ENABLED_FALSE='#'
+else
+  MPC_PROFILER_ENABLED_TRUE='#'
+  MPC_PROFILER_ENABLED_FALSE=
+fi
+
+
+
 #
 # Modular MPC configuration
 #
@@ -25493,6 +25712,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_ARCH_GENERIC_MICROTASK_TRUE}" && test -z "${MPC_ARCH_GENERIC_MICROTASK_FALSE}"; then
   as_fn_error $? "conditional \"MPC_ARCH_GENERIC_MICROTASK\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPC_PROFILER_ENABLED_TRUE}" && test -z "${MPC_PROFILER_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_PROFILER_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_THREAD_ENABLED_TRUE}" && test -z "${MPC_THREAD_ENABLED_FALSE}"; then
@@ -28107,6 +28330,10 @@ if test -z "${MPC_ARCH_GENERIC_MICROTASK_TRUE}" && test -z "${MPC_ARCH_GENERIC_M
   as_fn_error $? "conditional \"MPC_ARCH_GENERIC_MICROTASK\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${MPC_PROFILER_ENABLED_TRUE}" && test -z "${MPC_PROFILER_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_PROFILER_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${MPC_THREAD_ENABLED_TRUE}" && test -z "${MPC_THREAD_ENABLED_FALSE}"; then
   as_fn_error $? "conditional \"MPC_THREAD_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -30581,6 +30808,7 @@ echo "Context switch.... $MPC_ARCH_CONTEXT_SWITCH"
 echo ""
 echo "# Debug and logging"
 echo ""
+echo "Internal profiler. $mpc_profiler_enabled"
 echo "Debug............. $mpc_debug"
 echo "Debug messages.... $mpc_debug_messages"
 echo "Color............. $mpc_shell_color"
@@ -30599,6 +30827,7 @@ echo ""
 echo "# Optionnal components"
 echo ""
 echo "Allocator....... $mpc_allocator"
+echo "libunwind....... $mpc_libunwind"
 echo ""
 echo "# Network Configuration"
 echo ""
