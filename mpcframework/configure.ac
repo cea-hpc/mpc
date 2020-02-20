@@ -1435,7 +1435,8 @@ AC_OUTPUT([Makefile
            bin/mpc_ldflags
            bin/mpc_cxx.sh
            bin/mpc_f77.sh
-           bin/mpcrun.sh])
+           bin/mpcrun.sh
+	   bin/mpcvars.sh])
 
 echo "========== MPC $MPC_VERSION_STRING Configuration =========="
 echo "PREFIX: $prefix"

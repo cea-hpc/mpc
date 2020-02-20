@@ -1,0 +1,44 @@
+#!/bin/sh
+
+MPC_INSTALL_DIR_PREFIX=@prefix@
+MPC_VERSION=@MPC_VERSION_STRING@
+
+PREFIX_TO_DEL=`echo "$MPC_INSTALL_DIR_PREFIX" | sed -e 's/\//\\\\\//g'`
+PATH=`echo ${PATH} | awk -v RS=: -v ORS=: '/'"$PREFIX_TO_DEL"'/ {next} {print}' | sed 's/:*$//'`
+PYTHONPATH=`echo ${PYTHONPATH} | awk -v RS=: -v ORS=: '/'"$PREFIX_TO_DEL"'/ {next} {print}' | sed 's/:*$//'`
+LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH} | awk -v RS=: -v ORS=: '/'"$PREFIX_TO_DEL"'/ {next} {print}' | sed 's/:*$//'`
+LIBRARY_PATH=`echo ${LIBRARY_PATH} | awk -v RS=: -v ORS=: '/'"$PREFIX_TO_DEL"'/ {next} {print}' | sed 's/:*$//'`
+CPATH=`echo ${CPATH} | awk -v RS=: -v ORS=: '/'"$PREFIX_TO_DEL"'/ {next} {print}' | sed 's/:*$//'`
+MANPATH=`echo ${MANPATH} | awk -v RS=: -v ORS=: '/'"$PREFIX_TO_DEL"'/ {next} {print}' | sed 's/:*$//'`
+
+export MPC_INSTALL_DIR_PREFIX
+
+PATH=${MPC_INSTALL_DIR_PREFIX}/bin:${PATH}
+export PATH
+
+PYTHONPATH="${MPC_INSTALL_DIR_PREFIX}/lib/python:${MPC_INSTALL_DIR_PREFIX}/lib64/python:${PYTHONPATH}"
+export PYTHONPATH
+
+CPATH="${MPC_INSTALL_DIR_PREFIX}/include:${CPATH}"
+export CPATH
+
+MANPATH="${MPC_INSTALL_DIR_PREFIX}/share/man:${MANPATH}:"
+export MANPATH
+
+LIBRARY_PATH="${MPC_INSTALL_DIR_PREFIX}/lib:${LIBRARY_PATH}"
+export LIBRARY_PATH
+
+LD_LIBRARY_PATH="${MPC_INSTALL_DIR_PREFIX}/lib:${LD_LIBRARY_PATH}"
+export LD_LIBRARY_PATH
+
+if test -d "${MPC_INSTALL_DIR_PREFIX}/lib64" ; then
+	LD_LIBRARY_PATH="${MPC_INSTALL_DIR_PREFIX}/lib64:${LD_LIBRARY_PATH}"
+	export LD_LIBRARY_PATH
+fi
+
+if test -d "${MPC_INSTALL_DIR_PREFIX}/libsgcc" ; then
+	LD_LIBRARY_PATH="${MPC_INSTALL_DIR_PREFIX}/libsgcc/lib:${LD_LIBRARY_PATH}"
+	export LD_LIBRARY_PATH
+fi
+
+echo "Loading MPC ${MPC_VERSION} from ${MPC_INSTALL_DIR_PREFIX}"

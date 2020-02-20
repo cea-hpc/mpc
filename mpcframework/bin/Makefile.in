@@ -103,7 +103,7 @@ DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/mpc_config.h
 CONFIG_CLEAN_FILES = mpc_compiler_manager.sh mpc_cc.sh mpc_cflags \
-	mpc_ldflags mpc_cxx.sh mpc_f77.sh mpcrun.sh
+	mpc_ldflags mpc_cxx.sh mpc_f77.sh mpcrun.sh mpcvars.sh
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -179,7 +179,7 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mpc_cc.sh.in \
 	$(srcdir)/mpc_cflags.in $(srcdir)/mpc_compiler_manager.sh.in \
 	$(srcdir)/mpc_cxx.sh.in $(srcdir)/mpc_f77.sh.in \
 	$(srcdir)/mpc_ldflags.in $(srcdir)/mpcrun.sh.in \
-	$(top_srcdir)/build-aux/depcomp
+	$(srcdir)/mpcvars.sh.in $(top_srcdir)/build-aux/depcomp
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 ALLOC_CFLAGS = @ALLOC_CFLAGS@
@@ -396,6 +396,8 @@ mpc_cxx.sh: $(top_builddir)/config.status $(srcdir)/mpc_cxx.sh.in
 mpc_f77.sh: $(top_builddir)/config.status $(srcdir)/mpc_f77.sh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 mpcrun.sh: $(top_builddir)/config.status $(srcdir)/mpcrun.sh.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+mpcvars.sh: $(top_builddir)/config.status $(srcdir)/mpcvars.sh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
@@ -714,6 +716,7 @@ deploy_compilers:
 deploy_mpcrun:
 	cp -r $(abs_top_srcdir)/bin/mpcrun_opt $(pkgdatadir)/
 	install -m 0755 -D $(abs_top_builddir)/bin/mpcrun.sh $(bindir)/mpcrun
+	install -m 0755 -D $(abs_top_builddir)/bin/mpcvars.sh $(bindir)/mpcvars.sh
 
 install-data-local: deploy_compilers deploy_mpcrun
 

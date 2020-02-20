@@ -488,9 +488,7 @@ for arg in "$@" ; do
     echo "run with $SCTK_MIC_NB_TASK task(s) per MIC" >&2
     ;;
     --host-nb-task=*)
-    SCTK_HOST_NB_TASK="`echo A$arg | sed -e 's/A--host-nb-task=//g'`"
-    export SCTK_HOST_NB_TASK
-    echo "run with $SCTK_HOST_NB_TASK task(s) per host" >&2
+    SCTK_HOST_NB_TASK="`echo A$arg | sed -e 's/A--host-nb-task=//g'`"deneb-P-2880.json
     ;;
     --nb-mic=*)
     SCTK_NB_MIC="`echo A$arg | sed -e 's/A--nb-mic=//g'`"
