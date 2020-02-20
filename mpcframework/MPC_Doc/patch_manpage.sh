@@ -1,24 +1,19 @@
 #!/bin/sh
 
-. ../.MPC_version || exit 24
+SCRIPT=$(readlink -f "$0")
+SCRIPTPATH=$(dirname "$SCRIPT")
 
-test -n "$1" || exit 42
+file=$1
+version=$2
+
+test -n "$version" || exit 42
+test -n "$file" || exit 42
+
 manpage="`cat $1`"
-version="$MAJOR.$MINOR.$REVISION"
-test -n "$PRE_RELEASE" && version="$version$PRE_RELEASE"
-
-# Check if we can have an updated version of the man-page...
-# 1. Check if the Markdown file exist for this man-page
-original="`echo "$file" | sed -e "s,^man_static/,man/," -e "s,\.[0-9]in,\.md,"`"
-# 2. if so, build the man-page from the Markdown
-test -f "$original" && updated="`./build_manpage $original`"
-# 3. If succeeded, use the output
-test -n "$updated" && manpage="$updated"
 
 echo "$manpage" | sed -e "s@#PACKAGE_DATE#@`date +%x`@" \
     -e "s@#PACKAGE_VERSION#@$version@" \
     -e "s@#PACKAGE_NAME#@Multi-Processor Computing@"
-
 
 if test -n "`echo "$file" | grep "MPI_.*.3in"`"; then
 cat<<EOF

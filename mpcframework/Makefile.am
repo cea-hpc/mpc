@@ -1,7 +1,7 @@
 mpc_headerdir=$(includedir)/mpc/
 mpc_header_HEADERS=$(abs_top_builddir)/mpc_config.h $(abs_top_srcdir)/include/mpc.h $(abs_top_srcdir)/include/mpc_main.h
 
-SUBDIRS=MPC_Arch MPC_Common MPC_Config MPC_Topology
+SUBDIRS=MPC_Doc MPC_Arch MPC_Common MPC_Config MPC_Topology
 
 if MPC_THREAD_ENABLED
         SUBDIRS += MPC_Launch

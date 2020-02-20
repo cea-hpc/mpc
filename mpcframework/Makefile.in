@@ -245,8 +245,9 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
-DIST_SUBDIRS = MPC_Arch MPC_Common MPC_Config MPC_Topology MPC_Launch \
-	MPC_Threads MPC_OpenMP MPC_Message_Passing MPC_MPI bin
+DIST_SUBDIRS = MPC_Doc MPC_Arch MPC_Common MPC_Config MPC_Topology \
+	MPC_Launch MPC_Threads MPC_OpenMP MPC_Message_Passing MPC_MPI \
+	bin
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mpc_config.h.in \
 	$(top_srcdir)/MPC_Arch/include/mpc_arch.h.in \
 	$(top_srcdir)/build-aux/compile \
@@ -376,7 +377,9 @@ MPC_NETWORK_LIST = @MPC_NETWORK_LIST@
 MPC_TARGET_ARCHITECTURE = @MPC_TARGET_ARCHITECTURE@
 MPC_VERSION_MAJOR = @MPC_VERSION_MAJOR@
 MPC_VERSION_MINOR = @MPC_VERSION_MINOR@
+MPC_VERSION_PRE = @MPC_VERSION_PRE@
 MPC_VERSION_REVISION = @MPC_VERSION_REVISION@
+MPC_VERSION_STRING = @MPC_VERSION_STRING@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
@@ -449,6 +452,7 @@ localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
+pandoc = @pandoc@
 pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
@@ -466,8 +470,9 @@ xmllint = @xmllint@
 xsltproc = @xsltproc@
 mpc_headerdir = $(includedir)/mpc/
 mpc_header_HEADERS = $(abs_top_builddir)/mpc_config.h $(abs_top_srcdir)/include/mpc.h $(abs_top_srcdir)/include/mpc_main.h
-SUBDIRS = MPC_Arch MPC_Common MPC_Config MPC_Topology $(am__append_1) \
-	$(am__append_2) $(am__append_3) $(am__append_4) bin
+SUBDIRS = MPC_Doc MPC_Arch MPC_Common MPC_Config MPC_Topology \
+	$(am__append_1) $(am__append_2) $(am__append_3) \
+	$(am__append_4) bin
 ALL_MPC_LIBS = ./MPC_Config/src/libmpcconfig.la $(am__append_5) \
 	$(am__append_6) $(am__append_7) $(am__append_8)
 

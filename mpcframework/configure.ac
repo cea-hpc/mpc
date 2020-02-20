@@ -36,6 +36,8 @@ AC_DEFINE([MPC_VERSION_PRE], ["beta"], [MPC Pre Version])
 AC_SUBST([MPC_VERSION_MAJOR])
 AC_SUBST([MPC_VERSION_MINOR])
 AC_SUBST([MPC_VERSION_REVISION])
+AC_SUBST([MPC_VERSION_PRE])
+AC_SUBST([MPC_VERSION_STRING])
 
 AC_DEFINE_UNQUOTED([MPC_PREFIX_PATH], ["$prefix"], [Prefix Path for MPC])
 
@@ -66,6 +68,12 @@ AC_CHECK_PROG([xsltproc],[xsltproc],[yes],[no])
 AC_CHECK_PROG([xmllint],[xmllint],[yes],[no])
 
 AM_CONDITIONAL([CAN_GENERATE_CONFIG], [test "x$xsltproc" = xyes -o "x$xmllint" = xyes])
+
+# Optionnal Pandoc Generator
+
+AC_CHECK_PROG([pandoc],[pandoc],[yes],[no])
+
+AM_CONDITIONAL([CAN_USE_PANDOC], [test "x$pandoc" = xyes])
 
 # Checks for libraries.
 
@@ -1377,7 +1385,9 @@ AC_SUBST([MPC_GENERATION_DATE])
 
 AC_OUTPUT([MPC_Arch/include/mpc_arch.h])
 
-AC_OUTPUT([Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile
+AC_OUTPUT([Makefile
+           MPC_Doc/Makefile
+           MPC_Arch/Makefile MPC_Arch/src/Makefile
            MPC_Common/Makefile MPC_Common/src/Makefile
            MPC_Config/Makefile MPC_Config/src/Makefile
            MPC_Launch/Makefile MPC_Launch/src/Makefile
