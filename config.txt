@@ -7,12 +7,10 @@ gcc          ; 7.3.0      ;        ; install ; binutils                         
 priv_plugin  ; 1.1        ;        ; install ; gcc                                                            ; host   ; extern       ; generic.autotools
 openpa       ; 1.0.2      ;        ; dep     ; gcc                                                            ; target ; extern       ; generic.autotools
 libextls     ; 0.5.0      ;        ; install ; gcc hwloc openpa                                               ; target ; extern       ; generic.autotools
-sctk_arch    ;            ;        ; install ; gcc openpa                                                     ; target ; local        ; local.autotools
 hbict        ; 1.0        ;        ; dep     ;                                                                ; target ; extern       ; generic.autotools
 dmtcp        ; 2.5.0      ;        ; install ; gcc                                                            ; target ; extern       ; generic.autotools
 mpcframework ;            ;        ; install ; libxml2 hwloc openpa libextls sctk_arch hydra hydra_simple gcc ; target ; local        ; local.autotools
 hydra        ; 3.1        ;        ; install ; hwloc                                                          ; all    ; extern       ; generic.autotools
-hydra_simple ;            ;        ; install ; hydra                                                          ; all    ; hydra_simple ; local.autotools
 gdb          ; 7.6.2      ;        ; install ; gcc                                                            ; target ; extern       ; generic.autotools
 tbb          ; 2019       ;        ; install ; mpcframework                                                   ; target ; extern       ; generic.make
 mpl          ; 1.0        ;        ; install ; mpcframework priv_plugin                                       ; target ; extern       ; generic.autotools.mpc
