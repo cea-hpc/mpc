@@ -297,7 +297,7 @@ do
 			LIBEXTLS_BUILD_PARAMETERS="${LIBEXTLS_BUILD_PARAMETERS} --enable-color"
 			;;
 		--enable-mpc-debug)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug --enable-debug-messages --enable-MPC_Debugger"
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug --enable-debug-messages"
 			enableParamIfNot 'GDB_PREFIX' "$GDB_PREFIX" 'disabled' 'internal'
 			;;
 		--with-slurm)
@@ -341,7 +341,7 @@ do
 			MPC_PREFIX='disabled'
 			BINUTILS_PREFIX='disabled'
 			SCTK_GETOPT_PREFIX='disabled'
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --mpc-process-mode"
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-process-mode"
 			#special case, when installmpc does not handle any available compiler
 			#by default, GCC compiler will be used, this behavior can be altered through the --compiler= option
 			COMPILER_ARG=yes
@@ -596,15 +596,9 @@ fillMPCBuildParameters()
 	fi
 	#verify if users give path for libxml2
 	if test -z "${LIBXML2_PREFIX}" -o "${LIBXML2_PREFIX}" = "internal"; then
-		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=\$\(PREFIX\)/' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2.0=\$\(PREFIX\)/' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	else
-		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
-	fi
-	#Verify if users give path for hydra
-	if test -z "${HYDRA_PREFIX}" -o "${HYDRA_PREFIX}" = "internal"; then
-		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hydra=\$\(PREFIX\)/' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
-	else
-		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hydra=${HYDRA_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2.0=${LIBXML2_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	fi
 
 	if test "${CUDA_PREFIX}" = "internal"; then
@@ -627,8 +621,6 @@ fillMPCBuildParameters()
 	elif test -n "${OPENCL_PREFIX}"; then
 		MPCFRAMEWORK_BUILD_PARAMETERS="--with-opencl=${OPENCL_PREFIX} ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	fi
-
-	MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libsctk_arch=\$\(PREFIX\)/' ${WRAPPER_CROSS_COMPIL} --arch=${MPC_TARGET} ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 }
 
 ######################################################
