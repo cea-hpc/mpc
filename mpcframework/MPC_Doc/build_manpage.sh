@@ -32,7 +32,7 @@ test -n "$version" || exit 42
 
 which pandoc >/dev/null 2>&1 || error "Failed to find 'pandoc' to build static man-pages"
 
-pandoc_args="-s -f markdown -t man -V header=Multi-Processor-Computing -V date=`date +%x` -V footer=MPC-${version}"
+pandoc_args="-s -f markdown -t man -V header=Multi-Processor-Computing -V date=`date +%Y` -V footer=MPC-${version}"
 
 if test -z "$source_md_file"; then
         for markdown in `find ${SCRIPTPATH}/man/ -name "*.md"`
