@@ -965,7 +965,7 @@ void mpc_thread_module_register()
 	MPC_INIT_CALL_ONLY_ONCE
 	mpc_common_init_callback_register( "Per Thread Init", "Allocator Numa Migrate", sctk_alloc_posix_numa_migrate, 0 );
 
-	mpc_common_init_callback_register( "Base Runtime Init Done", "Thread module init", sctk_thread_init, 0 );
+	//mpc_common_init_callback_register( "Base Runtime Init Done", "Thread module init", sctk_thread_init, 0 );
 
 #ifdef MPC_USE_EXTLS
 	mpc_common_init_callback_register( "Per Thread Init", "Dynamic Initializers", sctk_call_dynamic_initializers, 1 );

@@ -342,6 +342,9 @@ static void sctk_perform_initialisation ( void )
 	sctk_use_pthread();
 #endif
 
+	sctk_thread_init();
+
+
 	if ( mpc_common_get_flags()->thread_library_init != NULL )
 	{
 		mpc_common_get_flags()->thread_library_init ();
