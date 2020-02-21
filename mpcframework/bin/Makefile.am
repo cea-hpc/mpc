@@ -13,7 +13,16 @@ deploy_mpcrun:
 	install -m 0755 -D $(abs_top_builddir)/bin/mpcvars.sh $(bindir)/mpcvars.sh
 	ln -sf $(bindir)/mpcvars.sh $(prefix)/mpcvars.sh
 
-install-data-local: deploy_compilers deploy_mpcrun
+if MPC_CUDA_ENABLED
+deploy_mpc_nvcc:
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_nvcc.sh $(bindir)/mpc_nvcc
+else
+deploy_mpc_nvcc:
+	@echo ""
+endif
+
+
+install-data-local: deploy_compilers deploy_mpcrun deploy_mpc_nvcc
 
 bin_PROGRAMS=mpirun
 mpirun_SOURCES=./mpirun.c

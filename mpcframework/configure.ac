@@ -1571,6 +1571,7 @@ AC_OUTPUT([Makefile
            bin/mpc_cflags
            bin/mpc_ldflags
            bin/mpc_cxx.sh
+	   bin/mpc_nvcc.sh
            bin/mpc_f77.sh
            bin/mpcrun.sh
 	   bin/mpcvars.sh
@@ -1579,4 +1580,3 @@ AC_OUTPUT([Makefile
 
 
 echo -e $MPC_CONFIG_RESULT
-

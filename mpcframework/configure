@@ -28734,7 +28734,7 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
-ac_config_files="$ac_config_files Makefile MPC_Doc/Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Config/src/Makefile MPC_Launch/Makefile MPC_Launch/src/Makefile MPC_Message_Passing/Makefile MPC_Message_Passing/src/Makefile MPC_MPI/Makefile MPC_MPI/src/Makefile MPC_OpenMP/src/Makefile MPC_OpenMP/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags bin/mpc_ldflags bin/mpc_cxx.sh bin/mpc_f77.sh bin/mpcrun.sh bin/mpcvars.sh bin/mpc_status.sh"
+ac_config_files="$ac_config_files Makefile MPC_Doc/Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Config/src/Makefile MPC_Launch/Makefile MPC_Launch/src/Makefile MPC_Message_Passing/Makefile MPC_Message_Passing/src/Makefile MPC_MPI/Makefile MPC_MPI/src/Makefile MPC_OpenMP/src/Makefile MPC_OpenMP/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags bin/mpc_ldflags bin/mpc_cxx.sh bin/mpc_nvcc.sh bin/mpc_f77.sh bin/mpcrun.sh bin/mpcvars.sh bin/mpc_status.sh"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -29949,6 +29949,7 @@ do
     "bin/mpc_cflags") CONFIG_FILES="$CONFIG_FILES bin/mpc_cflags" ;;
     "bin/mpc_ldflags") CONFIG_FILES="$CONFIG_FILES bin/mpc_ldflags" ;;
     "bin/mpc_cxx.sh") CONFIG_FILES="$CONFIG_FILES bin/mpc_cxx.sh" ;;
+    "bin/mpc_nvcc.sh") CONFIG_FILES="$CONFIG_FILES bin/mpc_nvcc.sh" ;;
     "bin/mpc_f77.sh") CONFIG_FILES="$CONFIG_FILES bin/mpc_f77.sh" ;;
     "bin/mpcrun.sh") CONFIG_FILES="$CONFIG_FILES bin/mpcrun.sh" ;;
     "bin/mpcvars.sh") CONFIG_FILES="$CONFIG_FILES bin/mpcvars.sh" ;;
@@ -31392,4 +31393,3 @@ fi
 
 
 echo -e $MPC_CONFIG_RESULT
-
