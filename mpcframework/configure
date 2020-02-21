@@ -636,6 +636,9 @@ ac_header_list=
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+MPC_CONFIG_RESULT
+GIT_DESCRIBE
+git
 MPC_GENERATION_DATE
 MPC_COMPILER_LIST
 MPC_FORTRAN_COMPILER_LIST
@@ -665,7 +668,6 @@ MPC_IN_PROCESS_MODE
 LIBOBJS
 MPC_ARCH_DETECTED_STRING
 MPC_ARCH_DETECTED_FUNCTION
-MPC_TARGET_ARCHITECTURE
 MPC_LAUNCHER
 MPC_MPIEXEC_HYDRA_PATH
 HYDRA_CLIENT_LIB_ENABED_FALSE
@@ -707,6 +709,7 @@ am__fastdepCCAS_TRUE
 CCASDEPMODE
 CCASFLAGS
 CCAS
+MPC_TARGET_ARCHITECTURE
 MPC_VERSION_STRING
 MPC_VERSION_PRE
 MPC_VERSION_REVISION
@@ -16488,8 +16491,38 @@ _ACEOF
 
 
 # General Configuration
+CONFIGURE_SCRIPT_PATH=$(dirname "`readlink -f "$0"`")
 
 MPC_SUPPORTED_ARCHITECTURES_LIST="x86_64 ia64 i686 arm aarch64 powerpc64"
+
+# Resolve Host CPU
+
+
+MPC_TARGET_ARCHITECTURE="$host_cpu"
+
+# Check if architecture is in support list
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Checking if target architecture is supported" >&5
+$as_echo_n "checking Checking if target architecture is supported... " >&6; }
+
+is_in_list()
+{
+    echo "$2" | grep -q "$1"
+    return $?
+}
+
+if is_in_list "$MPC_TARGET_ARCHITECTURE" "$MPC_SUPPORTED_ARCHITECTURES_LIST"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MPC_TARGET_ARCHITECTURE" >&5
+$as_echo "$MPC_TARGET_ARCHITECTURE" >&6; }
+else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: Unsupported" >&5
+$as_echo "Unsupported" >&6; }
+        as_fn_error $? "Your architecture is unsupported" "$LINENO" 5
+fi
+
+
+
+
 
 # Programs Checks
 ac_ext=c
@@ -20810,31 +20843,6 @@ fi
 done
 
 
-# Resolve Host CPU
-
-
-MPC_TARGET_ARCHITECTURE=$host_cpu
-
-
-# Check if architecture is in support list
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Checking if target architecture is supported" >&5
-$as_echo_n "checking Checking if target architecture is supported... " >&6; }
-
-is_in_list()
-{
-    echo "$2" | grep -q "$1"
-    return $?
-}
-
-if is_in_list "$MPC_TARGET_ARCHITECTURE" "$MPC_SUPPORTED_ARCHITECTURES_LIST"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MPC_TARGET_ARCHITECTURE" >&5
-$as_echo "$MPC_TARGET_ARCHITECTURE" >&6; }
-else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: Unsupported" >&5
-$as_echo "Unsupported" >&6; }
-        as_fn_error $? "Your architecture is unsupported" "$LINENO" 5
-fi
 
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -25499,12 +25507,18 @@ MPC_COMPILER_LIST="$MPC_C_COMPILER_LIST $MPC_CPP_COMPILER_LIST $MPC_FORTRAN_COMP
 
 
 
+#
+# Extraction of compilation state
+#
+
 # Generate Compilation timestamp
 
 date +%s 2>&1 > /dev/null
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking build timestamp" >&5
 $as_echo_n "checking build timestamp... " >&6; }
+
+MPC_GENERATION_DATE=""
 
 if test "x$?" = "x0"; then
         # Date was sufficient
@@ -25524,6 +25538,111 @@ $as_echo "$MPC_GENERATION_DATE" >&6; }
 $as_echo "fail assuming '0'" >&6; }
         fi
 fi
+
+
+
+
+# Extract git revision
+# Extract the first word of "git", so it can be a program name with args.
+set dummy git; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_git+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$git"; then
+  ac_cv_prog_git="$git" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_git="yes"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_git" && ac_cv_prog_git="no"
+fi
+fi
+git=$ac_cv_prog_git
+if test -n "$git"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $git" >&5
+$as_echo "$git" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
+GIT_DESCRIBE=""
+GIT_DESCRIBE_RES=""
+
+if test "x$git" = "xyes"; then
+	GIT_DESCRIBE="$(git -C $CONFIGURE_SCRIPT_PATH describe --tags --dirty 2> /dev/null)"
+	test -n "$GIT_DESCRIBE" && GIT_DESCRIBE_RES="Git Revision...... ${GIT_DESCRIBE}\n"
+fi
+
+
+
+# Generate configuration summary
+
+MPC_CONFIG_RESULT="========== MPC $MPC_VERSION_STRING Configuration ==========\n\
+PREFIX............ $prefix\n\
+$GIT_DESCRIBE_RES\
+\n\
+# Build Configuration\n\
+\n\
+Configuring for... $MPC_TARGET_ARCHITECTURE\n\
+Optimized build... $mpc_enable_opt ($MPC_OPT_FLAGS)\n\
+Native build...... $mpc_enable_native_opt ($MPC_NATIVE_FLAGS)\n\
+Microtask arch.... $MPC_ARCH_MICROTASK_ARCH\n\
+Context switch.... $MPC_ARCH_CONTEXT_SWITCH\n\
+\n\
+# Debug and logging\n\
+\n\
+Internal profiler. $mpc_profiler_enabled\n\
+Debug............. $mpc_debug\n\
+Debug messages.... $mpc_debug_messages\n\
+Color............. $mpc_shell_color\n\
+\n\
+# Compilers and privatization\n\
+\n\
+Privatization..... $mpc_privatization_support\n\
+Process only...... $mpc_in_process_mode\n\
+Languages......... $MPC_LANGUAGE_LIST\n\
+Compilers......... $MPC_COMPILER_LIST\n\
+\n\
+# Launcher\n\
+\n\
+Launcher........ $MPC_LAUNCHER\n\
+\n\
+# Optionnal components\n\
+\n\
+Allocator....... $mpc_allocator\n\
+libunwind....... $mpc_libunwind\n\
+\n\
+# Network Configuration\n\
+\n\
+Networks........ $MPC_NETWORK_LIST\n\
+Shm CMA......... $mpc_enable_cma\n\
+\n\
+# Module to be Built\n\
+\n\
+MPC_Thread........... $mpc_thread_enabled\n\
+MPC_Message_passing.. $mpc_lowcom_enabled\n\
+MPC_MPI.............. $mpc_mpi_enabled\n\
+===========================================================\n"
+
+
+
 
 
 
@@ -28147,7 +28266,7 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
-ac_config_files="$ac_config_files Makefile MPC_Doc/Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Config/src/Makefile MPC_Launch/Makefile MPC_Launch/src/Makefile MPC_Message_Passing/Makefile MPC_Message_Passing/src/Makefile MPC_MPI/Makefile MPC_MPI/src/Makefile MPC_OpenMP/src/Makefile MPC_OpenMP/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags bin/mpc_ldflags bin/mpc_cxx.sh bin/mpc_f77.sh bin/mpcrun.sh bin/mpcvars.sh"
+ac_config_files="$ac_config_files Makefile MPC_Doc/Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Config/src/Makefile MPC_Launch/Makefile MPC_Launch/src/Makefile MPC_Message_Passing/Makefile MPC_Message_Passing/src/Makefile MPC_MPI/Makefile MPC_MPI/src/Makefile MPC_OpenMP/src/Makefile MPC_OpenMP/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags bin/mpc_ldflags bin/mpc_cxx.sh bin/mpc_f77.sh bin/mpcrun.sh bin/mpcvars.sh bin/mpc_status.sh"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -29361,6 +29480,7 @@ do
     "bin/mpc_f77.sh") CONFIG_FILES="$CONFIG_FILES bin/mpc_f77.sh" ;;
     "bin/mpcrun.sh") CONFIG_FILES="$CONFIG_FILES bin/mpcrun.sh" ;;
     "bin/mpcvars.sh") CONFIG_FILES="$CONFIG_FILES bin/mpcvars.sh" ;;
+    "bin/mpc_status.sh") CONFIG_FILES="$CONFIG_FILES bin/mpc_status.sh" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -30797,48 +30917,7 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
-echo "========== MPC $MPC_VERSION_STRING Configuration =========="
-echo "PREFIX: $prefix"
-echo ""
-echo "# Build Configuration"
-echo ""
-echo "Optimized build... $mpc_enable_opt ($MPC_OPT_FLAGS)"
-echo "Native build...... $mpc_enable_native_opt ($MPC_NATIVE_FLAGS)"
-echo "Microtask arch.... $MPC_ARCH_MICROTASK_ARCH"
-echo "Context switch.... $MPC_ARCH_CONTEXT_SWITCH"
-echo ""
-echo "# Debug and logging"
-echo ""
-echo "Internal profiler. $mpc_profiler_enabled"
-echo "Debug............. $mpc_debug"
-echo "Debug messages.... $mpc_debug_messages"
-echo "Color............. $mpc_shell_color"
-echo ""
-echo "# Compilers and privatization"
-echo ""
-echo "Privatization..... $mpc_privatization_support"
-echo "Process only...... $mpc_in_process_mode"
-echo "Languages......... $MPC_LANGUAGE_LIST"
-echo "Compilers......... $MPC_COMPILER_LIST"
-echo ""
-echo "# Launcher"
-echo ""
-echo "Launcher........ $MPC_LAUNCHER"
-echo ""
-echo "# Optionnal components"
-echo ""
-echo "Allocator....... $mpc_allocator"
-echo "libunwind....... $mpc_libunwind"
-echo ""
-echo "# Network Configuration"
-echo ""
-echo "Networks........ $MPC_NETWORK_LIST"
-echo "Shm CMA......... $mpc_enable_cma"
-echo ""
-echo "# Module to be Built"
-echo ""
-echo "MPC_Thread........... $mpc_thread_enabled"
-echo "MPC_Message_passing.. $mpc_lowcom_enabled"
-echo "MPC_MPI.............. $mpc_mpi_enabled"
-echo "==========================================================="
+
+
+echo -e $MPC_CONFIG_RESULT
 

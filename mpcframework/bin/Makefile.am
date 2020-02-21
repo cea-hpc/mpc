@@ -9,6 +9,7 @@ deploy_compilers:
 deploy_mpcrun:
 	cp -r $(abs_top_srcdir)/bin/mpcrun_opt $(pkgdatadir)/
 	install -m 0755 -D $(abs_top_builddir)/bin/mpcrun.sh $(bindir)/mpcrun
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_status.sh $(bindir)/mpc_status
 	install -m 0755 -D $(abs_top_builddir)/bin/mpcvars.sh $(bindir)/mpcvars.sh
 	ln -sf $(bindir)/mpcvars.sh $(prefix)/mpcvars.sh
 

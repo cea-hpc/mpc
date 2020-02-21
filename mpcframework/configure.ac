@@ -42,8 +42,35 @@ AC_SUBST([MPC_VERSION_STRING])
 AC_DEFINE_UNQUOTED([MPC_PREFIX_PATH], ["$prefix"], [Prefix Path for MPC])
 
 # General Configuration
+CONFIGURE_SCRIPT_PATH=$(dirname "`readlink -f "$0"`")
 
 MPC_SUPPORTED_ARCHITECTURES_LIST="x86_64 ia64 i686 arm aarch64 powerpc64"
+
+# Resolve Host CPU
+
+AC_CANONICAL_HOST
+MPC_TARGET_ARCHITECTURE="$host_cpu"
+
+# Check if architecture is in support list
+
+AC_MSG_CHECKING([Checking if target architecture is supported])
+
+is_in_list()
+{
+    echo "$2" | grep -q "$1"
+    return $?
+}
+
+if is_in_list "$MPC_TARGET_ARCHITECTURE" "$MPC_SUPPORTED_ARCHITECTURES_LIST"; then
+        AC_MSG_RESULT($MPC_TARGET_ARCHITECTURE)
+else
+        AC_MSG_RESULT(Unsupported)
+        AC_MSG_ERROR(Your architecture is unsupported)
+fi
+
+AC_SUBST([MPC_TARGET_ARCHITECTURE])
+
+
 
 # Programs Checks
 AC_PROG_CC
@@ -496,28 +523,6 @@ AC_CHECK_HEADER_STDBOOL
 AC_CHECK_HEADERS([libunwind.h])
 AC_CHECK_HEADERS([infiniband/verbs.h])
 
-# Resolve Host CPU
-
-AC_CANONICAL_HOST
-MPC_TARGET_ARCHITECTURE=$host_cpu
-AC_SUBST([MPC_TARGET_ARCHITECTURE])
-
-# Check if architecture is in support list
-
-AC_MSG_CHECKING([Checking if target architecture is supported])
-
-is_in_list()
-{
-    echo "$2" | grep -q "$1"
-    return $?
-}
-
-if is_in_list "$MPC_TARGET_ARCHITECTURE" "$MPC_SUPPORTED_ARCHITECTURES_LIST"; then
-        AC_MSG_RESULT($MPC_TARGET_ARCHITECTURE)
-else
-        AC_MSG_RESULT(Unsupported)
-        AC_MSG_ERROR(Your architecture is unsupported)
-fi
 
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -1387,11 +1392,17 @@ MPC_COMPILER_LIST="$MPC_C_COMPILER_LIST $MPC_CPP_COMPILER_LIST $MPC_FORTRAN_COMP
 
 AC_SUBST([MPC_COMPILER_LIST])
 
+#
+# Extraction of compilation state
+#
+
 # Generate Compilation timestamp
 
 date +%s 2>&1 > /dev/null
 
 AC_MSG_CHECKING([build timestamp])
+
+MPC_GENERATION_DATE=""
 
 if test "x$?" = "x0"; then
         # Date was sufficient
@@ -1410,6 +1421,74 @@ else
 fi
 
 AC_SUBST([MPC_GENERATION_DATE])
+
+
+# Extract git revision
+AC_CHECK_PROG([git],[git],[yes],[no])
+
+GIT_DESCRIBE=""
+GIT_DESCRIBE_RES=""
+
+if test "x$git" = "xyes"; then
+	GIT_DESCRIBE="$(git -C $CONFIGURE_SCRIPT_PATH describe --tags --dirty 2> /dev/null)"
+	test -n "$GIT_DESCRIBE" && GIT_DESCRIBE_RES="Git Revision...... ${GIT_DESCRIBE}\n"
+fi
+
+AC_SUBST([GIT_DESCRIBE])
+
+# Generate configuration summary
+
+MPC_CONFIG_RESULT="========== MPC $MPC_VERSION_STRING Configuration ==========\n\
+PREFIX............ $prefix\n\
+$GIT_DESCRIBE_RES\
+\n\
+# Build Configuration\n\
+\n\
+Configuring for... $MPC_TARGET_ARCHITECTURE\n\
+Optimized build... $mpc_enable_opt ($MPC_OPT_FLAGS)\n\
+Native build...... $mpc_enable_native_opt ($MPC_NATIVE_FLAGS)\n\
+Microtask arch.... $MPC_ARCH_MICROTASK_ARCH\n\
+Context switch.... $MPC_ARCH_CONTEXT_SWITCH\n\
+\n\
+# Debug and logging\n\
+\n\
+Internal profiler. $mpc_profiler_enabled\n\
+Debug............. $mpc_debug\n\
+Debug messages.... $mpc_debug_messages\n\
+Color............. $mpc_shell_color\n\
+\n\
+# Compilers and privatization\n\
+\n\
+Privatization..... $mpc_privatization_support\n\
+Process only...... $mpc_in_process_mode\n\
+Languages......... $MPC_LANGUAGE_LIST\n\
+Compilers......... $MPC_COMPILER_LIST\n\
+\n\
+# Launcher\n\
+\n\
+Launcher........ $MPC_LAUNCHER\n\
+\n\
+# Optionnal components\n\
+\n\
+Allocator....... $mpc_allocator\n\
+libunwind....... $mpc_libunwind\n\
+\n\
+# Network Configuration\n\
+\n\
+Networks........ $MPC_NETWORK_LIST\n\
+Shm CMA......... $mpc_enable_cma\n\
+\n\
+# Module to be Built\n\
+\n\
+MPC_Thread........... $mpc_thread_enabled\n\
+MPC_Message_passing.. $mpc_lowcom_enabled\n\
+MPC_MPI.............. $mpc_mpi_enabled\n\
+===========================================================\n"
+
+
+AC_SUBST([MPC_CONFIG_RESULT])
+
+
 
 #
 # Final Output
@@ -1436,50 +1515,10 @@ AC_OUTPUT([Makefile
            bin/mpc_cxx.sh
            bin/mpc_f77.sh
            bin/mpcrun.sh
-	   bin/mpcvars.sh])
+	   bin/mpcvars.sh
+	   bin/mpc_status.sh])
 
-echo "========== MPC $MPC_VERSION_STRING Configuration =========="
-echo "PREFIX: $prefix"
-echo ""
-echo "# Build Configuration"
-echo ""
-echo "Optimized build... $mpc_enable_opt ($MPC_OPT_FLAGS)"
-echo "Native build...... $mpc_enable_native_opt ($MPC_NATIVE_FLAGS)"
-echo "Microtask arch.... $MPC_ARCH_MICROTASK_ARCH"
-echo "Context switch.... $MPC_ARCH_CONTEXT_SWITCH"
-echo ""
-echo "# Debug and logging"
-echo ""
-echo "Internal profiler. $mpc_profiler_enabled"
-echo "Debug............. $mpc_debug"
-echo "Debug messages.... $mpc_debug_messages"
-echo "Color............. $mpc_shell_color"
-echo ""
-echo "# Compilers and privatization"
-echo ""
-echo "Privatization..... $mpc_privatization_support"
-echo "Process only...... $mpc_in_process_mode"
-echo "Languages......... $MPC_LANGUAGE_LIST"
-echo "Compilers......... $MPC_COMPILER_LIST"
-echo ""
-echo "# Launcher"
-echo ""
-echo "Launcher........ $MPC_LAUNCHER"
-echo ""
-echo "# Optionnal components"
-echo ""
-echo "Allocator....... $mpc_allocator"
-echo "libunwind....... $mpc_libunwind"
-echo ""
-echo "# Network Configuration"
-echo ""
-echo "Networks........ $MPC_NETWORK_LIST"
-echo "Shm CMA......... $mpc_enable_cma"
-echo ""
-echo "# Module to be Built"
-echo ""
-echo "MPC_Thread........... $mpc_thread_enabled"
-echo "MPC_Message_passing.. $mpc_lowcom_enabled"
-echo "MPC_MPI.............. $mpc_mpi_enabled"
-echo "==========================================================="
+
+
+echo -e $MPC_CONFIG_RESULT
 
