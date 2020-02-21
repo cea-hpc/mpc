@@ -30,65 +30,6 @@
 #include "runtime_config_mapper.h"
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_accl_cuda(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_accl_cuda * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->enabled = false;
-	obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_accl_openacc(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_accl_openacc * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->enabled = false;
-	obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_accl_opencl(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_accl_opencl * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->enabled = false;
-	obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_accl(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_accl * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->enabled = false;
-	sctk_runtime_config_struct_init_accl_cuda(&obj->cuda);
-	sctk_runtime_config_struct_init_accl_openacc(&obj->openacc);
-	sctk_runtime_config_struct_init_accl_opencl(&obj->opencl);
-	obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
 void sctk_runtime_config_enum_init_net_layer_type()
 {
 	struct enum_type * current_enum = (struct enum_type *) malloc(sizeof(struct enum_type));
@@ -1302,31 +1243,6 @@ void sctk_runtime_config_struct_init_openmp(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_profiler(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_profiler * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->file_prefix = "mpc_profile";
-	obj->append_date = true;
-	obj->color_stdout = true;
-	/* array */
-	obj->level_colors = calloc(6,sizeof(char *));
-	obj->level_colors[0] = "#3A4D85";
-	obj->level_colors[1] = "#82A2FF";
-	obj->level_colors[2] = "#B8BDCB";
-	obj->level_colors[3] = "#5D6782";
-	obj->level_colors[4] = "#838383";
-	obj->level_colors[5] = "#5A5757";
-	obj->level_colors_size = 6;
-	obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_thread(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_thread * obj = struct_ptr;
@@ -1369,11 +1285,69 @@ void sctk_runtime_config_struct_init_scheduler(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_accl_cuda(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_accl_cuda * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->enabled = false;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_accl_openacc(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_accl_openacc * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->enabled = false;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_accl_opencl(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_accl_opencl * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->enabled = false;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_accl(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_accl * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->enabled = false;
+	sctk_runtime_config_struct_init_accl_cuda(&obj->cuda);
+	sctk_runtime_config_struct_init_accl_openacc(&obj->openacc);
+	sctk_runtime_config_struct_init_accl_opencl(&obj->opencl);
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 {
 	memset(config, 0, sizeof(struct sctk_runtime_config));
 	sctk_handler = dlopen(0, RTLD_LAZY | RTLD_GLOBAL);
-	sctk_runtime_config_struct_init_accl(&config->modules.accelerator);
 	sctk_runtime_config_struct_init_arpc_type(&config->modules.arpc);
 	sctk_runtime_config_enum_init_net_layer_type();
 	sctk_runtime_config_struct_init_debugger(&config->modules.debugger);
@@ -1392,9 +1366,9 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_enum_init_rail_topological_polling_level();
 	sctk_runtime_config_struct_init_openmp(&config->modules.openmp);
 	sctk_runtime_config_enum_init_mpcomp_task_larceny_mode_t();
-	sctk_runtime_config_struct_init_profiler(&config->modules.profiler);
 	sctk_runtime_config_struct_init_thread(&config->modules.thread);
 	sctk_runtime_config_struct_init_scheduler(&config->modules.scheduler);
+	sctk_runtime_config_struct_init_accl(&config->modules.accelerator);
 	sctk_runtime_config_struct_init_networks(&config->networks);
 	dlclose(sctk_handler);
 }
@@ -1420,30 +1394,6 @@ void sctk_runtime_config_clean_hash_tables()
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_reset_struct_default_if_needed(const char * structname, void * ptr )
 {
-	if( !strcmp( structname , "sctk_runtime_config_struct_accl_cuda") )
-	{
-		sctk_runtime_config_struct_init_accl_cuda( ptr );
-		return;
-	}
-
-	if( !strcmp( structname , "sctk_runtime_config_struct_accl_openacc") )
-	{
-		sctk_runtime_config_struct_init_accl_openacc( ptr );
-		return;
-	}
-
-	if( !strcmp( structname , "sctk_runtime_config_struct_accl_opencl") )
-	{
-		sctk_runtime_config_struct_init_accl_opencl( ptr );
-		return;
-	}
-
-	if( !strcmp( structname , "sctk_runtime_config_struct_accl") )
-	{
-		sctk_runtime_config_struct_init_accl( ptr );
-		return;
-	}
-
 	if( !strcmp( structname , "sctk_runtime_config_struct_arpc_type") )
 	{
 		sctk_runtime_config_struct_init_arpc_type( ptr );
@@ -1642,12 +1592,6 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 		return;
 	}
 
-	if( !strcmp( structname , "sctk_runtime_config_struct_profiler") )
-	{
-		sctk_runtime_config_struct_init_profiler( ptr );
-		return;
-	}
-
 	if( !strcmp( structname , "sctk_runtime_config_struct_thread") )
 	{
 		sctk_runtime_config_struct_init_thread( ptr );
@@ -1657,6 +1601,30 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 	if( !strcmp( structname , "sctk_runtime_config_struct_scheduler") )
 	{
 		sctk_runtime_config_struct_init_scheduler( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_accl_cuda") )
+	{
+		sctk_runtime_config_struct_init_accl_cuda( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_accl_openacc") )
+	{
+		sctk_runtime_config_struct_init_accl_openacc( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_accl_opencl") )
+	{
+		sctk_runtime_config_struct_init_accl_opencl( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_accl") )
+	{
+		sctk_runtime_config_struct_init_accl( ptr );
 		return;
 	}
 

@@ -24,33 +24,6 @@
 ########################################################################-->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <!-- ********************************************************* -->
-  <xs:complexType name="user_type_accl_cuda">
-    <xs:all>
-      <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
-  <xs:complexType name="user_type_accl_openacc">
-    <xs:all>
-      <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
-  <xs:complexType name="user_type_accl_opencl">
-    <xs:all>
-      <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
-  <xs:complexType name="user_type_accl">
-    <xs:all>
-      <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="cuda" type="user_type_accl_cuda"/>
-      <xs:element minOccurs="0" name="openacc" type="user_type_accl_openacc"/>
-      <xs:element minOccurs="0" name="opencl" type="user_type_accl_opencl"/>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
   <xs:simpleType name="user_type_net_layer_type">
     <xs:restriction base="xs:string">
       <xs:enumeration value="ARPC_MPI"/>
@@ -958,21 +931,6 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
-  <xs:complexType name="user_type_profiler">
-    <xs:all>
-      <xs:element minOccurs="0" name="file_prefix" type="xs:string"/>
-      <xs:element minOccurs="0" name="append_date" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="color_stdout" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="level_colors">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element minOccurs="0" maxOccurs="unbounded" name="level" type="xs:string"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
   <xs:complexType name="user_type_thread">
     <xs:all>
       <xs:element minOccurs="0" name="spin_delay" type="xs:integer"/>
@@ -1010,9 +968,35 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_accl_cuda">
+    <xs:all>
+      <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_accl_openacc">
+    <xs:all>
+      <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_accl_opencl">
+    <xs:all>
+      <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_accl">
+    <xs:all>
+      <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="cuda" type="user_type_accl_cuda"/>
+      <xs:element minOccurs="0" name="openacc" type="user_type_accl_openacc"/>
+      <xs:element minOccurs="0" name="opencl" type="user_type_accl_opencl"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="modules">
     <xs:all>
-      <xs:element minOccurs="0" name="accelerator" type="user_type_accl"/>
       <xs:element minOccurs="0" name="arpc" type="user_type_arpc_type"/>
       <xs:element minOccurs="0" name="debugger" type="user_type_debugger"/>
       <xs:element minOccurs="0" name="ft_system" type="user_type_ft"/>
@@ -1027,9 +1011,9 @@
       <xs:element minOccurs="0" name="inter_thread_comm" type="user_type_inter_thread_comm"/>
       <xs:element minOccurs="0" name="low_level_comm" type="user_type_low_level_comm"/>
       <xs:element minOccurs="0" name="openmp" type="user_type_openmp"/>
-      <xs:element minOccurs="0" name="profiler" type="user_type_profiler"/>
       <xs:element minOccurs="0" name="thread" type="user_type_thread"/>
       <xs:element minOccurs="0" name="scheduler" type="user_type_scheduler"/>
+      <xs:element minOccurs="0" name="accelerator" type="user_type_accl"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

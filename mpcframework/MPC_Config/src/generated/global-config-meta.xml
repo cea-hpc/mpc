@@ -1,28 +1,5 @@
 <?xml version="1.0"?>
 <all>
-<config name="MPC_Accelerators">
-	<usertypes>
-		<struct name="accl_cuda" doc="CUDA-specific configuration">
-			<param name="enabled" type="bool" default="false" doc="Set to true to enable CUDA context-switch" />
-		</struct>
-		<struct name="accl_openacc" doc="OpenACC-specific configuration">
-			<param name="enabled" type="bool" default="false" doc="Set to true to enable OpenACC in MPC" />
-		</struct>
-		<struct name="accl_opencl" doc="OpenCL-specific configuration">
-			<param name="enabled" type="bool" default="false" doc="Set to true to enable OpenCL in MPC" />
-		</struct>
-
-		<struct name="accl" doc="Options for MPC Accelerators module.">
-			<param name="enabled" type="bool" default="false" doc="Set to true to enable Accelerators support" />
-			<param name="cuda" type="accl_cuda" doc="Define CUDA-specific configuration" />
-			<param name="openacc" type="accl_openacc" doc="Define OpenACC-specific configuration" />
-			<param name="opencl" type="accl_opencl" doc="Define OpenCL-specific configuration" />
-		</struct>
-	</usertypes>
-	<modules>
-		<module name="accelerator" type="accl"/>
-	</modules>
-</config>
 <config name="MPC_Active_Message">
 	<usertypes>
 		<enum name="net_layer_type" doc="Values used to select the network layer for Active Message">
@@ -545,32 +522,6 @@
         <module name="openmp" type="openmp"/>
     </modules>
 </config>
-<config name="MPC_Profiler">
-	<usertypes>
-		<struct name="profiler"     doc="Options for the internal MPC Profiler">
-			<param name="file_prefix"   type="string" default="mpc_profile" doc="Prefix of MPC Profiler outputs"/>
-			<param name="append_date"   type="bool" default="true" doc="Add a timestamp to profiles file names"/>
-			<param name="color_stdout"   type="bool" default="true" doc="Profile in color when outputed to stdout"/>
-			
-			<array name="level_colors" entry-name="level" type="string" doc="Color for levels of profiler output">
-				<default>
-					<value>#3A4D85</value>
-					<value>#82A2FF</value>
-					<value>#B8BDCB</value>
-					<value>#5D6782</value>
-					<value>#838383</value>
-					<value>#5A5757</value>
-				</default>
-			</array>
-		</struct>
-	</usertypes>
-	<modules>
-		<module name="profiler" type="profiler"/>
-	</modules>
-	<validators>
-		<handler>sctk_runtime_config_empty_validator_for_test</handler>
-	</validators>
-</config>
 <config name="MPC_Threads">
 	<usertypes>
 		<struct name="thread" doc="Options for MPC threads.">
@@ -595,10 +546,27 @@
             <param name="posix_basic_priority" type="int" default="20" doc="Basic priority of POSIX threads"/>
             <param name="progress_basic_priority" type="int" default="20" doc="Basic priority of POSIX threads"/>
         </struct>
+	<struct name="accl_cuda" doc="CUDA-specific configuration">
+		<param name="enabled" type="bool" default="false" doc="Set to true to enable CUDA context-switch" />
+	</struct>
+	<struct name="accl_openacc" doc="OpenACC-specific configuration">
+		<param name="enabled" type="bool" default="false" doc="Set to true to enable OpenACC in MPC" />
+	</struct>
+	<struct name="accl_opencl" doc="OpenCL-specific configuration">
+		<param name="enabled" type="bool" default="false" doc="Set to true to enable OpenCL in MPC" />
+	</struct>
+
+	<struct name="accl" doc="Options for MPC Accelerators module.">
+		<param name="enabled" type="bool" default="false" doc="Set to true to enable Accelerators support" />
+		<param name="cuda" type="accl_cuda" doc="Define CUDA-specific configuration" />
+		<param name="openacc" type="accl_openacc" doc="Define OpenACC-specific configuration" />
+		<param name="opencl" type="accl_opencl" doc="Define OpenCL-specific configuration" />
+	</struct>
 	</usertypes>
 	<modules>
 		<module name="thread" type="thread"/>
 		<module name="scheduler" type="scheduler"/>
+		<module name="accelerator" type="accl"/>
 	</modules>
 </config>
 <config name="MPC_Topology">

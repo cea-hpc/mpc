@@ -36,44 +36,6 @@ struct sctk_runtime_config_funcptr
 	void (* value)();
 };
 
-/******************************** STRUCTURE *********************************/
-/**CUDA-specific configuration**/
-struct sctk_runtime_config_struct_accl_cuda
-{	int init_done;
-	/**Set to true to enable CUDA context-switch**/
-	int enabled;
-};
-
-/******************************** STRUCTURE *********************************/
-/**OpenACC-specific configuration**/
-struct sctk_runtime_config_struct_accl_openacc
-{	int init_done;
-	/**Set to true to enable OpenACC in MPC**/
-	int enabled;
-};
-
-/******************************** STRUCTURE *********************************/
-/**OpenCL-specific configuration**/
-struct sctk_runtime_config_struct_accl_opencl
-{	int init_done;
-	/**Set to true to enable OpenCL in MPC**/
-	int enabled;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Options for MPC Accelerators module.**/
-struct sctk_runtime_config_struct_accl
-{	int init_done;
-	/**Set to true to enable Accelerators support**/
-	int enabled;
-	/**Define CUDA-specific configuration**/
-	struct sctk_runtime_config_struct_accl_cuda cuda;
-	/**Define OpenACC-specific configuration**/
-	struct sctk_runtime_config_struct_accl_openacc openacc;
-	/**Define OpenCL-specific configuration**/
-	struct sctk_runtime_config_struct_accl_opencl opencl;
-};
-
 /********************************** ENUM ************************************/
 /**Values used to select the network layer for Active Message**/
 enum net_layer_type
@@ -859,22 +821,6 @@ struct sctk_runtime_config_struct_openmp
 };
 
 /******************************** STRUCTURE *********************************/
-/**Options for the internal MPC Profiler**/
-struct sctk_runtime_config_struct_profiler
-{	int init_done;
-	/**Prefix of MPC Profiler outputs**/
-	char * file_prefix;
-	/**Add a timestamp to profiles file names**/
-	int append_date;
-	/**Profile in color when outputed to stdout**/
-	int color_stdout;
-	/**Color for levels of profiler output**/
-	char * * level_colors;
-	/** Number of elements in level_colors array. **/
-	int level_colors_size;
-};
-
-/******************************** STRUCTURE *********************************/
 /**Options for MPC threads.**/
 struct sctk_runtime_config_struct_thread
 {	int init_done;
@@ -917,9 +863,46 @@ struct sctk_runtime_config_struct_scheduler
 };
 
 /******************************** STRUCTURE *********************************/
+/**CUDA-specific configuration**/
+struct sctk_runtime_config_struct_accl_cuda
+{	int init_done;
+	/**Set to true to enable CUDA context-switch**/
+	int enabled;
+};
+
+/******************************** STRUCTURE *********************************/
+/**OpenACC-specific configuration**/
+struct sctk_runtime_config_struct_accl_openacc
+{	int init_done;
+	/**Set to true to enable OpenACC in MPC**/
+	int enabled;
+};
+
+/******************************** STRUCTURE *********************************/
+/**OpenCL-specific configuration**/
+struct sctk_runtime_config_struct_accl_opencl
+{	int init_done;
+	/**Set to true to enable OpenCL in MPC**/
+	int enabled;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Options for MPC Accelerators module.**/
+struct sctk_runtime_config_struct_accl
+{	int init_done;
+	/**Set to true to enable Accelerators support**/
+	int enabled;
+	/**Define CUDA-specific configuration**/
+	struct sctk_runtime_config_struct_accl_cuda cuda;
+	/**Define OpenACC-specific configuration**/
+	struct sctk_runtime_config_struct_accl_openacc openacc;
+	/**Define OpenCL-specific configuration**/
+	struct sctk_runtime_config_struct_accl_opencl opencl;
+};
+
+/******************************** STRUCTURE *********************************/
 struct sctk_runtime_config_modules
 {
-	struct sctk_runtime_config_struct_accl accelerator;
 	struct sctk_runtime_config_struct_arpc_type arpc;
 	struct sctk_runtime_config_struct_debugger debugger;
 	struct sctk_runtime_config_struct_ft ft_system;
@@ -934,9 +917,9 @@ struct sctk_runtime_config_modules
 	struct sctk_runtime_config_struct_inter_thread_comm inter_thread_comm;
 	struct sctk_runtime_config_struct_low_level_comm low_level_comm;
 	struct sctk_runtime_config_struct_openmp openmp;
-	struct sctk_runtime_config_struct_profiler profiler;
 	struct sctk_runtime_config_struct_thread thread;
 	struct sctk_runtime_config_struct_scheduler scheduler;
+	struct sctk_runtime_config_struct_accl accelerator;
 };
 
 /******************************** STRUCTURE *********************************/

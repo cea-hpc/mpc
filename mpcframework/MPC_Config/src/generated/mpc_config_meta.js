@@ -1,20 +1,5 @@
 var meta = new Array();
 meta.types = {
-	accl_cuda : {type: 'struct', name: "accl_cuda", childs: {
-		enabled: {mode: 'param', name: "enabled", type: "bool", doc: "Set to true to enable CUDA context-switch", dflt: "false", },
-	}},
-	accl_openacc : {type: 'struct', name: "accl_openacc", childs: {
-		enabled: {mode: 'param', name: "enabled", type: "bool", doc: "Set to true to enable OpenACC in MPC", dflt: "false", },
-	}},
-	accl_opencl : {type: 'struct', name: "accl_opencl", childs: {
-		enabled: {mode: 'param', name: "enabled", type: "bool", doc: "Set to true to enable OpenCL in MPC", dflt: "false", },
-	}},
-	accl : {type: 'struct', name: "accl", childs: {
-		enabled: {mode: 'param', name: "enabled", type: "bool", doc: "Set to true to enable Accelerators support", dflt: "false", },
-		cuda: {mode: 'param', name: "cuda", type: "accl_cuda", doc: "Define CUDA-specific configuration", dflt: null},
-		openacc: {mode: 'param', name: "openacc", type: "accl_openacc", doc: "Define OpenACC-specific configuration", dflt: null},
-		opencl: {mode: 'param', name: "opencl", type: "accl_opencl", doc: "Define OpenCL-specific configuration", dflt: null},
-	}},
 	arpc_type : {type: 'struct', name: "arpc_type", childs: {
 		net_layer: {mode: 'param', name: "net_layer", type: "net_layer_type", doc: "Net Layer for the run", dflt: "ARPC_MPI", },
 		nb_srv: {mode: 'param', name: "nb_srv", type: "int", doc: "Default number of services to start during ARPC initialization", dflt: "1", },
@@ -335,12 +320,6 @@ meta.types = {
 		omp_task_use_lockfree_queue: {mode: 'param', name: "omp_task_use_lockfree_queue", type: "bool", doc: "Use lockfree_queue or not", dflt: "true", },
 		places: {mode: 'param', name: "places", type: "string", doc: "OpenMP places", dflt: "cores", },
 	}},
-	profiler : {type: 'struct', name: "profiler", childs: {
-		file_prefix: {mode: 'param', name: "file_prefix", type: "string", doc: "Prefix of MPC Profiler outputs", dflt: "mpc_profile", },
-		append_date: {mode: 'param', name: "append_date", type: "bool", doc: "Add a timestamp to profiles file names", dflt: "true", },
-		color_stdout: {mode: 'param', name: "color_stdout", type: "bool", doc: "Profile in color when outputed to stdout", dflt: "true", },
-		level_colors: {mode: 'array', name: "level_colors", type: "string", entryname: "level", dflt: null},
-	}},
 	thread : {type: 'struct', name: "thread", childs: {
 		spin_delay: {mode: 'param', name: "spin_delay", type: "int", doc: "Max number of accesses to the lock before calling thread_yield", dflt: "10", },
 		interval: {mode: 'param', name: "interval", type: "int", doc: "", dflt: "10", },
@@ -360,10 +339,24 @@ meta.types = {
 		posix_basic_priority: {mode: 'param', name: "posix_basic_priority", type: "int", doc: "Basic priority of POSIX threads", dflt: "20", },
 		progress_basic_priority: {mode: 'param', name: "progress_basic_priority", type: "int", doc: "Basic priority of POSIX threads", dflt: "20", },
 	}},
+	accl_cuda : {type: 'struct', name: "accl_cuda", childs: {
+		enabled: {mode: 'param', name: "enabled", type: "bool", doc: "Set to true to enable CUDA context-switch", dflt: "false", },
+	}},
+	accl_openacc : {type: 'struct', name: "accl_openacc", childs: {
+		enabled: {mode: 'param', name: "enabled", type: "bool", doc: "Set to true to enable OpenACC in MPC", dflt: "false", },
+	}},
+	accl_opencl : {type: 'struct', name: "accl_opencl", childs: {
+		enabled: {mode: 'param', name: "enabled", type: "bool", doc: "Set to true to enable OpenCL in MPC", dflt: "false", },
+	}},
+	accl : {type: 'struct', name: "accl", childs: {
+		enabled: {mode: 'param', name: "enabled", type: "bool", doc: "Set to true to enable Accelerators support", dflt: "false", },
+		cuda: {mode: 'param', name: "cuda", type: "accl_cuda", doc: "Define CUDA-specific configuration", dflt: null},
+		openacc: {mode: 'param', name: "openacc", type: "accl_openacc", doc: "Define OpenACC-specific configuration", dflt: null},
+		opencl: {mode: 'param', name: "opencl", type: "accl_opencl", doc: "Define OpenCL-specific configuration", dflt: null},
+	}},
 };
 
 meta.modules = {
-	accelerator: {name: "accelerator", type: "accl"},
 	arpc: {name: "arpc", type: "arpc_type"},
 	debugger: {name: "debugger", type: "debugger"},
 	ft_system: {name: "ft_system", type: "ft"},
@@ -378,9 +371,9 @@ meta.modules = {
 	inter_thread_comm: {name: "inter_thread_comm", type: "inter_thread_comm"},
 	low_level_comm: {name: "low_level_comm", type: "low_level_comm"},
 	openmp: {name: "openmp", type: "openmp"},
-	profiler: {name: "profiler", type: "profiler"},
 	thread: {name: "thread", type: "thread"},
 	scheduler: {name: "scheduler", type: "scheduler"},
+	accelerator: {name: "accelerator", type: "accl"},
 };
 
 meta.networks = {

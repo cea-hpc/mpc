@@ -99,10 +99,6 @@ MPC always use the profile with name "default", others are only enabled with opt
 .Sh AVAILABLE MODULES
 .Pp The <modules> node can contain the following fields :
 .Bl -tag -width Ds
-.It Cm accelerator
-Options for MPC Accelerators module.
-.br
-See type accl.
 .It Cm arpc
 ARPC implementation for MPC
 .br
@@ -159,10 +155,6 @@ See type low_level_comm.
 Options for MPC OpenMP.
 .br
 See type openmp.
-.It Cm profiler
-Options for the internal MPC Profiler
-.br
-See type profiler.
 .It Cm thread
 Options for MPC threads.
 .br
@@ -171,62 +163,10 @@ See type thread.
 Scheduler priority parameters
 .br
 See type scheduler.
-.El
-.Sh ENTRIES OF TYPE accl_cuda
-CUDA-specific configuration
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm enabled
-Type is bool. Default value is false. 
-.Pp enabled
-Set to true to enable CUDA context-switch
-.El
-.Sh ENTRIES OF TYPE accl_openacc
-OpenACC-specific configuration
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm enabled
-Type is bool. Default value is false. 
-.Pp enabled
-Set to true to enable OpenACC in MPC
-.El
-.Sh ENTRIES OF TYPE accl_opencl
-OpenCL-specific configuration
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm enabled
-Type is bool. Default value is false. 
-.Pp enabled
-Set to true to enable OpenCL in MPC
-.El
-.Sh ENTRIES OF TYPE accl
+.It Cm accelerator
 Options for MPC Accelerators module.
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm enabled
-Type is bool. Default value is false. 
-.Pp enabled
-Set to true to enable Accelerators support
-.It Cm cuda
-Type is accl_cuda. 
-.Pp cuda
-Define CUDA-specific configuration
-.It Cm openacc
-Type is accl_openacc. 
-.Pp openacc
-Define OpenACC-specific configuration
-.It Cm opencl
-Type is accl_opencl. 
-.Pp opencl
-Define OpenCL-specific configuration
+.br
+See type accl.
 .El
 .Sh ENTRIES OF TYPE arpc_type
 ARPC implementation for MPC
@@ -1459,29 +1399,6 @@ Type is string. Default value is cores.
 .Pp places
 OpenMP places
 .El
-.Sh ENTRIES OF TYPE profiler
-Options for the internal MPC Profiler
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm file_prefix
-Type is string. Default value is mpc_profile. 
-.Pp file_prefix
-Prefix of MPC Profiler outputs
-.It Cm append_date
-Type is bool. Default value is true. 
-.Pp append_date
-Add a timestamp to profiles file names
-.It Cm color_stdout
-Type is bool. Default value is true. 
-.Pp color_stdout
-Profile in color when outputed to stdout
-.It Cm level_colors
-Type is array of . Default value is {#3A4D85, #82A2FF, #B8BDCB, #5D6782, #838383, #5A5757}.
-.Pp level_colors
-Color for levels of profiler output
-.El
 .Sh ENTRIES OF TYPE thread
 Options for MPC threads.
 .Pp
@@ -1555,4 +1472,60 @@ Basic priority of POSIX threads
 Type is int. Default value is 20. 
 .Pp progress_basic_priority
 Basic priority of POSIX threads
+.El
+.Sh ENTRIES OF TYPE accl_cuda
+CUDA-specific configuration
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm enabled
+Type is bool. Default value is false. 
+.Pp enabled
+Set to true to enable CUDA context-switch
+.El
+.Sh ENTRIES OF TYPE accl_openacc
+OpenACC-specific configuration
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm enabled
+Type is bool. Default value is false. 
+.Pp enabled
+Set to true to enable OpenACC in MPC
+.El
+.Sh ENTRIES OF TYPE accl_opencl
+OpenCL-specific configuration
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm enabled
+Type is bool. Default value is false. 
+.Pp enabled
+Set to true to enable OpenCL in MPC
+.El
+.Sh ENTRIES OF TYPE accl
+Options for MPC Accelerators module.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm enabled
+Type is bool. Default value is false. 
+.Pp enabled
+Set to true to enable Accelerators support
+.It Cm cuda
+Type is accl_cuda. 
+.Pp cuda
+Define CUDA-specific configuration
+.It Cm openacc
+Type is accl_openacc. 
+.Pp openacc
+Define OpenACC-specific configuration
+.It Cm opencl
+Type is accl_opencl. 
+.Pp opencl
+Define OpenCL-specific configuration
 .El
