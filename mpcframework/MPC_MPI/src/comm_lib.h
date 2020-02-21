@@ -401,7 +401,7 @@ double _mpc_cl_wtick( void );
  *
  * \param[out] state The state after the procedure.
  */
-int _mpc_cl_checkpoint( MPC_Checkpoint_state *st );
+int _mpc_cl_checkpoint( mpc_lowcomm_checkpoint_state_t *st );
 
 
 /************************************************************************/

@@ -680,6 +680,9 @@
 /* Cuda support is enabled */
 #undef MPC_USE_CUDA
 
+/* MPC transparent checkpointing is enabled */
+#undef MPC_USE_DMTCP
+
 /* Extls support is enabled */
 #undef MPC_USE_EXTLS
 

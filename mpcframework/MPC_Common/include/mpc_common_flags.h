@@ -26,6 +26,10 @@ struct mpc_common_flags
 	/* Accelerator support */
 	short enable_accelerators;
 
+	/* Checkpoint mode enabled */
+	short checkpoint_enabled;
+	char *checkpoint_model;
+
         /* Topology Display */
         short enable_topology_graphic_placement;/*< Should current pinning be dumped graphically */
         short enable_topology_text_placement;   /*< Should current pinning be dumped in text */
@@ -39,6 +43,8 @@ struct mpc_common_flags
         unsigned int processor_number;          /*< Number of cores passed on the command-line */
         unsigned int task_number;               /*< Number of MPC tasks passed on the CLI */
 
+	/* Network conf */
+	char * sctk_network_description_string;
         char * network_driver_name;             /*< Network configuration to be used by MPC */
 
 };

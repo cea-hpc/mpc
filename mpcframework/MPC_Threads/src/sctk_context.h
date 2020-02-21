@@ -217,7 +217,7 @@ typedef struct sctk_mctx_st
 	void *sctk_openmp_thread_tls ;
 #endif
 
-#if defined MPC_Fault_Tolerance
+#if defined MPC_USE_DMTCP
 	int sctk_ft_critical_section;
 #endif
 } sctk_mctx_t;

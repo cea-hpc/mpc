@@ -46,12 +46,6 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
-  <xs:complexType name="user_type_ft">
-    <xs:all>
-      <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
   <xs:complexType name="user_type_launcher">
     <xs:all>
       <xs:element minOccurs="0" name="verbosity" type="xs:integer"/>
@@ -459,6 +453,12 @@
   <xs:complexType name="user_type_mpc">
     <xs:all>
       <xs:element minOccurs="0" name="disable_message_buffering" type="xs:boolean"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_ft">
+    <xs:all>
+      <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
@@ -999,7 +999,6 @@
     <xs:all>
       <xs:element minOccurs="0" name="arpc" type="user_type_arpc_type"/>
       <xs:element minOccurs="0" name="debugger" type="user_type_debugger"/>
-      <xs:element minOccurs="0" name="ft_system" type="user_type_ft"/>
       <xs:element minOccurs="0" name="launcher" type="user_type_launcher"/>
       <xs:element minOccurs="0" name="collectives_shm_shared" type="user_type_collectives_shm_shared"/>
       <xs:element minOccurs="0" name="collectives_shm" type="user_type_collectives_shm"/>
@@ -1010,6 +1009,7 @@
       <xs:element minOccurs="0" name="rma" type="user_type_mpi_rma"/>
       <xs:element minOccurs="0" name="inter_thread_comm" type="user_type_inter_thread_comm"/>
       <xs:element minOccurs="0" name="low_level_comm" type="user_type_low_level_comm"/>
+      <xs:element minOccurs="0" name="ft_system" type="user_type_ft"/>
       <xs:element minOccurs="0" name="openmp" type="user_type_openmp"/>
       <xs:element minOccurs="0" name="thread" type="user_type_thread"/>
       <xs:element minOccurs="0" name="scheduler" type="user_type_scheduler"/>

@@ -29,10 +29,13 @@
 #include <sctk_communicator.h>
 
 #include <sctk_launch.h>
+#include <mpc_launch_pmi.h>
 #include <mpc_lowcomm_msg.h>
 #include <mpc_common_rank.h>
 #include <mpc_common_helper.h>
 #include <mpc_common_profiler.h>
+
+#include "sctk_low_level_comm.h"
 
 #include "mpi_alloc_mem.h"
 #include "mpi_rma_epoch.h"
@@ -48,7 +51,7 @@
         #include <mpcthread.h>
 #endif
 
-#ifdef MPC_Fault_Tolerance
+#ifdef MPC_USE_DMTCP
 	#include "sctk_ft_iface.h"
 #endif
 
@@ -4454,17 +4457,17 @@ int _mpc_cl_error_init()
 }
 
 
-#ifdef MPC_Fault_Tolerance
-	static volatile MPC_Checkpoint_state global_state = MPC_STATE_ERROR;
+#ifdef MPC_USE_DMTCP
+	static volatile mpc_lowcomm_checkpoint_state_t global_state = MPC_STATE_ERROR;
 #else
-	static volatile MPC_Checkpoint_state global_state = '\0';
+	static volatile mpc_lowcomm_checkpoint_state_t global_state = '\0';
 #endif
 
-int _mpc_cl_checkpoint( MPC_Checkpoint_state *state )
+int _mpc_cl_checkpoint( mpc_lowcomm_checkpoint_state_t *state )
 {
-#ifdef MPC_Fault_Tolerance
+#ifdef MPC_USE_DMTCP
 
-	if ( sctk_checkpoint_mode )
+	if ( mpc_common_get_flags()->checkpoint_enabled )
 	{
 		int total_nbprocs = mpc_common_get_process_count();
 		int local_nbtasks = mpc_common_get_local_task_count();
@@ -4508,7 +4511,7 @@ int _mpc_cl_checkpoint( MPC_Checkpoint_state *state )
 
 			if ( total_nbprocs > 1 )
 			{
-				mpc_common_get_process_rank( &pmi_rank );
+				pmi_rank = mpc_common_get_process_rank();
 				mpc_launch_pmi_barrier();
 			}
 			else
@@ -4550,7 +4553,7 @@ int _mpc_cl_checkpoint( MPC_Checkpoint_state *state )
 
 		/* re-init the network at task level if necessary */
 		sctk_net_init_task_level( task_rank, mpc_topology_get_current_cpu() );
-		mpc_lowcomm_terminaison_barrier( task_rank );
+		mpc_lowcomm_terminaison_barrier();
 
 		/* If I'm the last task to reach here, increment the global generation counter */
 		if ( OPA_fetch_and_incr_int( &gen_release ) == local_nbtasks - 1 )

@@ -54,7 +54,6 @@ struct sctk_runtime_config;
 /* reset functions */
 void sctk_runtime_config_struct_init_arpc_type(void * struct_ptr);
 void sctk_runtime_config_struct_init_debugger(void * struct_ptr);
-void sctk_runtime_config_struct_init_ft(void * struct_ptr);
 void sctk_runtime_config_struct_init_launcher(void * struct_ptr);
 void sctk_runtime_config_struct_init_collectives_shm_shared(void * struct_ptr);
 void sctk_runtime_config_struct_init_collectives_shm(void * struct_ptr);
@@ -63,6 +62,7 @@ void sctk_runtime_config_struct_init_collectives_inter(void * struct_ptr);
 void sctk_runtime_config_struct_init_nbc(void * struct_ptr);
 void sctk_runtime_config_struct_init_mpi_rma(void * struct_ptr);
 void sctk_runtime_config_struct_init_mpc(void * struct_ptr);
+void sctk_runtime_config_struct_init_ft(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_driver_topological(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr);
 void sctk_runtime_config_struct_init_ib_global(void * struct_ptr);

@@ -23,6 +23,8 @@
 #define SCTK_TYPES_H
 /************************** HEADERS **************************/
 #include <stdlib.h>
+#include <mpc_config.h>
+
 /************************** TYPES **************************/
 /** define the communicator number type **/
 typedef int mpc_lowcomm_communicator_t;
@@ -31,7 +33,8 @@ typedef int mpc_lowcomm_datatype_t;
 /** Message count **/
 typedef int mpc_lowcomm_msg_count_t;
 /** A message header to be put in the request **/
-typedef struct{
+typedef struct
+{
 	int source;
 	int destination;
 	int destination_task;
@@ -39,7 +42,7 @@ typedef struct{
 	int message_tag;
 	mpc_lowcomm_communicator_t communicator;
 	mpc_lowcomm_msg_count_t msg_size;
-}sctk_header_t;
+} sctk_header_t;
 /** Status Definition **/
 typedef struct
 {
@@ -55,12 +58,12 @@ typedef struct
 
 
 /** Generalized requests functions **/
-typedef int sctk_Grequest_query_function( void * extra_state, mpc_lowcomm_status_t *status );
-typedef int sctk_Grequest_cancel_function( void * extra_state, int complete );
-typedef int sctk_Grequest_free_function( void * extra_state );
+typedef int sctk_Grequest_query_function( void *extra_state, mpc_lowcomm_status_t *status );
+typedef int sctk_Grequest_cancel_function( void *extra_state, int complete );
+typedef int sctk_Grequest_free_function( void *extra_state );
 /** Extended Generalized requests functions **/
-typedef int sctk_Grequest_poll_fn( void * extra_state , mpc_lowcomm_status_t * status );
-typedef int sctk_Grequest_wait_fn( int count, void ** array_of_states, double timeout, mpc_lowcomm_status_t * status );
+typedef int sctk_Grequest_poll_fn( void *extra_state, mpc_lowcomm_status_t *status );
+typedef int sctk_Grequest_wait_fn( int count, void **array_of_states, double timeout, mpc_lowcomm_status_t *status );
 /** Generalized Request classes **/
 typedef int sctk_Request_class;
 
@@ -70,42 +73,42 @@ struct progressWorkUnit;
 /** Request definition **/
 typedef struct
 {
-  volatile int completion_flag;
-  volatile int request_type;
-  volatile sctk_header_t header;
-  struct mpc_lowcomm_ptp_message_s *msg;
-  mpc_lowcomm_datatype_t source_type; /**< Type in the remote message */
-  mpc_lowcomm_datatype_t dest_type; /**< Type in the local message */
-  int is_null;
-  int truncated;
-  int status_error;
-  /* int ref rank */
-  /* Generalized Request context  */
-  int grequest_rank;
-  void * progress_unit;
-  sctk_Grequest_query_function *query_fn;
-  sctk_Grequest_cancel_function *cancel_fn;
-  sctk_Grequest_free_function *free_fn;
-  void *extra_state;
-  /* Extended Request */
-  sctk_Grequest_poll_fn *poll_fn;
-  sctk_Grequest_wait_fn *wait_fn;
-  /* MPI_Grequest_complete takes a copy of the struct
-   * not a reference however we have to change a value
-   * in the source struct which is being pulled therefore
-   * we have to do this hack by saving a pointer to the
-   * request inside the request */
-  void *pointer_to_source_request;
-  /* This is a pointer to the shadow request */
-  void *pointer_to_shadow_request;
-  /* This is a pointer to the registered memory region
-   * in order to unpin when request completes */
-  void *ptr_to_pin_ctx;
+	volatile int completion_flag;
+	volatile int request_type;
+	volatile sctk_header_t header;
+	struct mpc_lowcomm_ptp_message_s *msg;
+	mpc_lowcomm_datatype_t source_type; /**< Type in the remote message */
+	mpc_lowcomm_datatype_t dest_type; /**< Type in the local message */
+	int is_null;
+	int truncated;
+	int status_error;
+	/* int ref rank */
+	/* Generalized Request context  */
+	int grequest_rank;
+	void *progress_unit;
+	sctk_Grequest_query_function *query_fn;
+	sctk_Grequest_cancel_function *cancel_fn;
+	sctk_Grequest_free_function *free_fn;
+	void *extra_state;
+	/* Extended Request */
+	sctk_Grequest_poll_fn *poll_fn;
+	sctk_Grequest_wait_fn *wait_fn;
+	/* MPI_Grequest_complete takes a copy of the struct
+	 * not a reference however we have to change a value
+	 * in the source struct which is being pulled therefore
+	 * we have to do this hack by saving a pointer to the
+	 * request inside the request */
+	void *pointer_to_source_request;
+	/* This is a pointer to the shadow request */
+	void *pointer_to_shadow_request;
+	/* This is a pointer to the registered memory region
+	 * in order to unpin when request completes */
+	void *ptr_to_pin_ctx;
 } mpc_lowcomm_request_t;
 
 /** Reduction Operations **/
-typedef void (*sctk_Op_f) (const void *, void *, size_t, mpc_lowcomm_datatype_t);
-typedef void (sctk_Op_User_function) (void *, void *, int *, mpc_lowcomm_datatype_t *);
+typedef void ( *sctk_Op_f ) ( const void *, void *, size_t, mpc_lowcomm_datatype_t );
+typedef void ( sctk_Op_User_function ) ( void *, void *, int *, mpc_lowcomm_datatype_t * );
 
 typedef struct
 {
@@ -118,42 +121,59 @@ typedef struct
 /** RDMA windows */
 typedef int mpc_lowcomm_rdma_window_t;
 
-typedef enum {
-  RDMA_SUM,
-  RDMA_INC,
-  RDMA_DEC,
-  RDMA_MIN,
-  RDMA_MAX,
-  RDMA_PROD,
-  RDMA_LAND,
-  RDMA_BAND,
-  RDMA_LOR,
-  RDMA_BOR,
-  RDMA_LXOR,
-  RDMA_BXOR
+typedef enum
+{
+	RDMA_SUM,
+	RDMA_INC,
+	RDMA_DEC,
+	RDMA_MIN,
+	RDMA_MAX,
+	RDMA_PROD,
+	RDMA_LAND,
+	RDMA_BAND,
+	RDMA_LOR,
+	RDMA_BOR,
+	RDMA_LXOR,
+	RDMA_BXOR
 } RDMA_op;
 
-typedef enum {
-  RDMA_TYPE_CHAR,
-  RDMA_TYPE_DOUBLE,
-  RDMA_TYPE_FLOAT,
-  RDMA_TYPE_INT,
-  RDMA_TYPE_LONG,
-  RDMA_TYPE_LONG_DOUBLE,
-  RDMA_TYPE_LONG_LONG,
-  RDMA_TYPE_LONG_LONG_INT,
-  RDMA_TYPE_SHORT,
-  RDMA_TYPE_SIGNED_CHAR,
-  RDMA_TYPE_UNSIGNED,
-  RDMA_TYPE_UNSIGNED_CHAR,
-  RDMA_TYPE_UNSIGNED_LONG,
-  RDMA_TYPE_UNSIGNED_LONG_LONG,
-  RDMA_TYPE_UNSIGNED_SHORT,
-  RDMA_TYPE_WCHAR,
-  RDMA_TYPE_AINT
+typedef enum
+{
+	RDMA_TYPE_CHAR,
+	RDMA_TYPE_DOUBLE,
+	RDMA_TYPE_FLOAT,
+	RDMA_TYPE_INT,
+	RDMA_TYPE_LONG,
+	RDMA_TYPE_LONG_DOUBLE,
+	RDMA_TYPE_LONG_LONG,
+	RDMA_TYPE_LONG_LONG_INT,
+	RDMA_TYPE_SHORT,
+	RDMA_TYPE_SIGNED_CHAR,
+	RDMA_TYPE_UNSIGNED,
+	RDMA_TYPE_UNSIGNED_CHAR,
+	RDMA_TYPE_UNSIGNED_LONG,
+	RDMA_TYPE_UNSIGNED_LONG_LONG,
+	RDMA_TYPE_UNSIGNED_SHORT,
+	RDMA_TYPE_WCHAR,
+	RDMA_TYPE_AINT
 } RDMA_type;
 
 size_t RDMA_type_size( RDMA_type type );
+
+
+/*******************
+ * FAULT TOLERANCE *
+ *******************/
+
+typedef enum sctk_ft_state_e
+{
+	MPC_STATE_NO_SUPPORT = 0,
+	MPC_STATE_ERROR,
+	MPC_STATE_CHECKPOINT,
+	MPC_STATE_RESTART,
+	MPC_STATE_IGNORE,
+	MPC_STATE_COUNT
+} mpc_lowcomm_checkpoint_state_t;
 
 
 /************************** MACROS *************************/

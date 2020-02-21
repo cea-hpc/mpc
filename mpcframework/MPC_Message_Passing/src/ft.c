@@ -24,6 +24,9 @@
 #include <assert.h>
 #include <signal.h>
 #include "sctk_debug.h"
+#include <mpc_launch_pmi.h>
+#include <sctk_launch.h>
+#include <mpc_common_flags.h>
 #include "sctk_ft_types.h"
 #include "sctk_multirail.h"
 
@@ -31,19 +34,25 @@
 #include <dmtcp.h>
 #endif
 
-/** Used to print C/R support in MPC header */
-extern char *sctk_checkpoint_str;
 /** Number of checkpoints done since the application starts */
 static int nb_checkpoints = 0;
 /** Number of restarts done since the application starts */
 static int nb_restarts = 0;
 /** Last C/R state */
-static sctk_ft_state_t __state = MPC_STATE_ERROR;
+static mpc_lowcomm_checkpoint_state_t __state = MPC_STATE_NO_SUPPORT;
 
 /** Lock to create a critical section for C/R */
 static sctk_spin_rwlock_t checkpoint_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 /** Number of threads blocking the C/R to be started */
 __thread int sctk_ft_critical_section = 0;
+
+
+int dmtcp_get_ckpt_signal()
+{
+	sctk_fatal("This function should be called outside of running wrapped by DMTPC")
+	return 2;
+}
+
 
 /**
  * Routine called only when the application is in post-checkpoint state.
@@ -85,21 +94,26 @@ static inline void __sctk_ft_set_ckptdir()
  * Initialize DMTCP and C/R module.
  * \return always 1.
  */
-int sctk_ft_init()
+void sctk_ft_init()
 {
 #ifdef MPC_USE_DMTCP
 	if(dmtcp_is_enabled())
 	{
 		__sctk_ft_set_ckptdir();
-		if(dmtcp_get_ckpt_signal() == SIGUSR2)
+
+		if(dmtcp_get_ckpt_signal() == SIGUSR1)
 		{
-			sctk_error("DMTCP and MPC both set an handler for SIGUSR2");
+			sctk_error("DMTCP and MPC both set an handler for SIGUSR1");
 			sctk_fatal("Signal value: %d", dmtcp_get_ckpt_signal());
 		}
+
+		mpc_common_get_flags()->checkpoint_model = "C/R (DMTCP) ENABLED";
 	}
-	sctk_checkpoint_str = "C/R (DMTCP)";
+	else
+	{
+		mpc_common_get_flags()->checkpoint_model = "C/R (DMTCP) Disabled";
+	}
 #endif
-	return 1;
 }
 
 /**
@@ -254,7 +268,7 @@ void sctk_ft_checkpoint_finalize()
 		}
 #endif
 	}
-	/* recall driver init function & update sctk_network_mode string */
+	/* recall driver init function & update mpc_common_get_flags()->sctk_network_description_string string */
         sctk_rail_commit();
 	
 	mpc_common_spinlock_write_unlock(&checkpoint_lock);
@@ -300,7 +314,7 @@ int sctk_ft_finalize()
  * Called by all involved proceses.
  * \return the enum representing the state (CHECKPOINT,IGNORED,RESTART)
  */
-sctk_ft_state_t sctk_ft_checkpoint_wait()
+mpc_lowcomm_checkpoint_state_t sctk_ft_checkpoint_wait()
 {
 #ifdef MPC_USE_DMTCP
 	int new_nb_checkpoints, new_nb_restarts;
@@ -321,7 +335,7 @@ sctk_ft_state_t sctk_ft_checkpoint_wait()
  * Stringify the C/R state to human-readable format.
  * \return the string to print
  */
-char* sctk_ft_str_status(sctk_ft_state_t s)
+char* sctk_ft_str_status(mpc_lowcomm_checkpoint_state_t s)
 {
 	static  char * state_names[] = {
 		"MPC_STATE_ERROR",
@@ -333,4 +347,20 @@ char* sctk_ft_str_status(sctk_ft_state_t s)
 
 	sctk_assert(s >= 0 && s < MPC_STATE_COUNT);
 	return strdup(state_names[s]);
+}
+
+
+
+
+void mpc_cl_ft_init() __attribute__((constructor));
+
+void mpc_cl_ft_init()
+{
+        MPC_INIT_CALL_ONLY_ONCE
+
+	/* Runtime start */
+        mpc_common_init_callback_register("Base Runtime Init Done",
+                                          "Init Profiling keys",
+                                          sctk_ft_init, 128);
+
 }

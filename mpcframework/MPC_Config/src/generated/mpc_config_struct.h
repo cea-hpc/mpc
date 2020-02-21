@@ -67,14 +67,6 @@ struct sctk_runtime_config_struct_debugger
 };
 
 /******************************** STRUCTURE *********************************/
-/**Options for MPC Fault-Tolerance module.**/
-struct sctk_runtime_config_struct_ft
-{	int init_done;
-	/**Set to true to enable Fault-Tolerance support**/
-	int enabled;
-};
-
-/******************************** STRUCTURE *********************************/
 /**Options for MPC launcher.**/
 struct sctk_runtime_config_struct_launcher
 {	int init_done;
@@ -316,6 +308,14 @@ enum rail_topological_polling_level
 	RAIL_POLL_SOCKET,
 	RAIL_POLL_NUMA,
 	RAIL_POLL_MACHINE
+};
+
+/******************************** STRUCTURE *********************************/
+/**Options for MPC Fault-Tolerance module.**/
+struct sctk_runtime_config_struct_ft
+{	int init_done;
+	/**Set to true to enable Fault-Tolerance support**/
+	int enabled;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -905,7 +905,6 @@ struct sctk_runtime_config_modules
 {
 	struct sctk_runtime_config_struct_arpc_type arpc;
 	struct sctk_runtime_config_struct_debugger debugger;
-	struct sctk_runtime_config_struct_ft ft_system;
 	struct sctk_runtime_config_struct_launcher launcher;
 	struct sctk_runtime_config_struct_collectives_shm_shared collectives_shm_shared;
 	struct sctk_runtime_config_struct_collectives_shm collectives_shm;
@@ -916,6 +915,7 @@ struct sctk_runtime_config_modules
 	struct sctk_runtime_config_struct_mpi_rma rma;
 	struct sctk_runtime_config_struct_inter_thread_comm inter_thread_comm;
 	struct sctk_runtime_config_struct_low_level_comm low_level_comm;
+	struct sctk_runtime_config_struct_ft ft_system;
 	struct sctk_runtime_config_struct_openmp openmp;
 	struct sctk_runtime_config_struct_thread thread;
 	struct sctk_runtime_config_struct_scheduler scheduler;

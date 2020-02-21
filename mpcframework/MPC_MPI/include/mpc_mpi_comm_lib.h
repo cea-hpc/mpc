@@ -27,29 +27,6 @@
 #include <mpc_common_asm.h>
 
 
-/*******************
- * FAULT TOLERANCE *
- *******************/
-
-#if defined( MPC_Fault_Tolerance ) || defined( MPC_MODULE_MPC_Fault_Tolerance )
-
-typedef enum sctk_ft_state_e
-{
-	MPC_STATE_NO_SUPPORT = 0,
-	MPC_STATE_ERROR,
-	MPC_STATE_CHECKPOINT,
-	MPC_STATE_RESTART,
-	MPC_STATE_IGNORE,
-	MPC_STATE_COUNT
-} sctk_ft_state_t;
-
-#else
-
-#define MPC_STATE_NO_SUPPORT 0
-typedef int MPC_Checkpoint_state;
-
-#endif
-
 /************************************************************************/
 /* Per thread context                                                   */
 /************************************************************************/

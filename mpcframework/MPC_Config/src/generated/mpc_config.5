@@ -107,10 +107,6 @@ See type arpc_type.
 Options for MPC Debugger
 .br
 See type debugger.
-.It Cm ft_system
-Options for MPC Fault-Tolerance module.
-.br
-See type ft.
 .It Cm launcher
 Options for MPC launcher.
 .br
@@ -151,6 +147,10 @@ See type inter_thread_comm.
 
 .br
 See type low_level_comm.
+.It Cm ft_system
+Options for MPC Fault-Tolerance module.
+.br
+See type ft.
 .It Cm openmp
 Options for MPC OpenMP.
 .br
@@ -203,17 +203,6 @@ Type is int. Default value is 1024.
 Type is int. Default value is 1. 
 .Pp mpc_bt_sig
 Should MPC capture common signals also connected to the MPC_BT_SIG environment variable which supersedes the config
-.El
-.Sh ENTRIES OF TYPE ft
-Options for MPC Fault-Tolerance module.
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm enabled
-Type is bool. Default value is false. 
-.Pp enabled
-Set to true to enable Fault-Tolerance support
 .El
 .Sh ENTRIES OF TYPE launcher
 Options for MPC launcher.
@@ -622,6 +611,17 @@ It support parameters :
 Type is bool. Default value is false. 
 .Pp disable_message_buffering
 If MPI is allowed to buffer small messages
+.El
+.Sh ENTRIES OF TYPE ft
+Options for MPC Fault-Tolerance module.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm enabled
+Type is bool. Default value is false. 
+.Pp enabled
+Set to true to enable Fault-Tolerance support
 .El
 .Sh ENTRIES OF TYPE net_driver_topological
 Declare a topological driver.

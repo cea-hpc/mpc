@@ -62,7 +62,7 @@ extern "C"
   extern __thread void *sctk_openmp_thread_tls;
 #endif
 
-#if defined (MPC_Fault_Tolerance)
+#if defined (MPC_USE_DMTCP)
   extern __thread int sctk_ft_critical_section;
 #endif
 
@@ -118,7 +118,7 @@ extern __thread int __mpc_task_rank;
     tls_save(sctk_cuda_ctx);
 #endif
 
-#if defined MPC_Fault_Tolerance
+#if defined MPC_USE_DMTCP
     tls_save(sctk_ft_critical_section);
 #endif
 
@@ -160,7 +160,7 @@ extern __thread int __mpc_task_rank;
     tls_restore(__mpc_task_rank);
 #endif
 
-#if defined MPC_Fault_Tolerance
+#if defined MPC_USE_DMTCP
     tls_restore(sctk_ft_critical_section);
 #endif
 
@@ -212,7 +212,7 @@ extern __thread int __mpc_task_rank;
     tls_init(sctk_cuda_ctx);
 #endif
 
-#if defined MPC_Fault_Tolerance
+#if defined MPC_USE_DMTCP
     sctk_ft_critical_section = 0;
 #endif
 

@@ -37,7 +37,7 @@
 
 #include <sctk_route.h>
 #include <sctk_multirail.h>
-#ifdef MPC_Fault_Tolerance
+#ifdef MPC_USE_DMTCP
 #include "sctk_ft_iface.h"
 #endif
 
@@ -167,13 +167,13 @@ static void ( *sctk_network_notify_perform_message_ptr ) ( int, int, int, int ) 
 
 void sctk_network_notify_perform_message ( int remote_process, int remote_task_id, int polling_task_id, int blocking )
 {
-#ifdef MPC_Fault_Tolerance
+#ifdef MPC_USE_DMTCP
 	if(sctk_ft_no_suspend_start())
         {
 #endif
 	sctk_network_notify_perform_message_ptr ( remote_process, remote_task_id, polling_task_id, blocking );
 
-#ifdef MPC_Fault_Tolerance
+#ifdef MPC_USE_DMTCP
 	sctk_ft_no_suspend_end();
        }
 #endif
@@ -196,14 +196,14 @@ static void  ( *sctk_network_notify_probe_message_ptr ) () = sctk_network_notify
 
 void sctk_network_notify_probe_message  (mpc_lowcomm_ptp_message_header_t* hdr, int *status)
 {
-#ifdef MPC_Fault_Tolerance
+#ifdef MPC_USE_DMTCP
 	if(sctk_ft_no_suspend_start())
         {
 #endif
         *status = -1; /* not supported */
 	sctk_network_notify_probe_message_ptr (hdr, status);
 
-#ifdef MPC_Fault_Tolerance
+#ifdef MPC_USE_DMTCP
 	sctk_ft_no_suspend_end();
        }
 #endif
@@ -240,7 +240,7 @@ void sctk_network_notify_idle_message ()
 	/* Fault Tolerance mechanism cannot allow any driver to be modified during a pending checkpoint.
 	 * This is our way to maintain consistency for data to be saved.
 	 */
-#ifdef MPC_Fault_Tolerance
+#ifdef MPC_USE_DMTCP
 	if(sctk_ft_no_suspend_start())
         {
 #endif
@@ -248,7 +248,7 @@ void sctk_network_notify_idle_message ()
 	sctk_network_notify_idle_message_ptr();
 	sctk_control_message_process();
 
-#ifdef MPC_Fault_Tolerance
+#ifdef MPC_USE_DMTCP
 	sctk_ft_no_suspend_end();
        }
 #endif
@@ -276,13 +276,13 @@ static void ( *sctk_network_notify_any_source_message_ptr ) ( int, int ) =  sctk
 void sctk_network_notify_any_source_message ( int polling_task_id, int blocking )
 {
 
-#ifdef MPC_Fault_Tolerance
+#ifdef MPC_USE_DMTCP
 	if(sctk_ft_no_suspend_start())
         {
 #endif
 	sctk_network_notify_any_source_message_ptr ( polling_task_id, blocking );
 
-#ifdef MPC_Fault_Tolerance
+#ifdef MPC_USE_DMTCP
 	sctk_ft_no_suspend_end();
         }
 #endif

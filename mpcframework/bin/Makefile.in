@@ -322,6 +322,7 @@ build_vendor = @build_vendor@
 builddir = @builddir@
 datadir = @datadir@
 datarootdir = @datarootdir@
+dmtcp_launch = @dmtcp_launch@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@

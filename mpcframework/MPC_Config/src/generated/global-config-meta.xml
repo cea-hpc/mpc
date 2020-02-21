@@ -29,16 +29,6 @@
 		<module name="debugger" type="debugger"/>
 	</modules>
 </config>
-<config name="MPC_Fault_Tolerance">
-	<usertypes>
-		<struct name="ft" doc="Options for MPC Fault-Tolerance module.">
-			<param name="enabled" type="bool" default="false" doc="Set to true to enable Fault-Tolerance support" />
-		</struct>
-	</usertypes>
-	<modules>
-		<module name="ft_system" type="ft"/>
-	</modules>
-</config>
 <config name="MPC_Launch">
 	<usertypes>
 		<struct name="launcher" doc="Options for MPC launcher.">
@@ -205,6 +195,12 @@
 <config name="MPC_Message_Passing">
 	<usertypes>
 
+		<!-- DMTCP support -->
+		<struct name="ft" doc="Options for MPC Fault-Tolerance module.">
+			<param name="enabled" type="bool" default="false" doc="Set to true to enable Fault-Tolerance support" />
+		</struct>
+
+
 		<!-- ############################## -->
 		<!-- #           DRIVERS          # -->
 		<!-- ############################## -->
@@ -292,7 +288,7 @@
 		</struct>
 
 		<!-- Structure for Shared Memory driver -->
-        <struct name="net_driver_shm" doc="Inter-Process shared memory communication implementation">
+        	<struct name="net_driver_shm" doc="Inter-Process shared memory communication implementation">
                     <param name="buffered_priority" type="int" doc="Defines priority for the SHM buffered message" default="0" alias="SHM_BUFF_PRIORITY" />
                     <param name="buffered_min_size" type="int" doc="Defines the min size for the SHM buffered message" default="0" alias="SHM_BUFF_MIN_SIZE" />
                     <param name="buffered_max_size" type="int" doc="Defines the min size for the SHM buffered message" default="4096" alias="SHM_BUFF_MAX_SIZE" />
@@ -462,6 +458,7 @@
 	<modules>
 		<module name="inter_thread_comm" type="inter_thread_comm" />
 		<module name="low_level_comm" type="low_level_comm" />
+		<module name="ft_system" type="ft"/>
 	</modules>
 </config>
 <config name="MPC_OpenMP">

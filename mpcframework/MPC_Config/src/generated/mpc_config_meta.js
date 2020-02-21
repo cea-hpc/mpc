@@ -9,9 +9,6 @@ meta.types = {
 		max_filename_size: {mode: 'param', name: "max_filename_size", type: "int", doc: "", dflt: "1024", },
 		mpc_bt_sig: {mode: 'param', name: "mpc_bt_sig", type: "int", doc: "Should MPC capture common signals also connected to the MPC_BT_SIG environment variable which supersedes the config", dflt: "1", },
 	}},
-	ft : {type: 'struct', name: "ft", childs: {
-		enabled: {mode: 'param', name: "enabled", type: "bool", doc: "Set to true to enable Fault-Tolerance support", dflt: "false", },
-	}},
 	launcher : {type: 'struct', name: "launcher", childs: {
 		verbosity: {mode: 'param', name: "verbosity", type: "int", doc: "Default verbosity level from 0 to 3. Can be override by -vv on mpcrun.", dflt: "0", },
 		banner: {mode: 'param', name: "banner", type: "bool", doc: "Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER.", dflt: "true", },
@@ -115,6 +112,9 @@ meta.types = {
 	}},
 	mpc : {type: 'struct', name: "mpc", childs: {
 		disable_message_buffering: {mode: 'param', name: "disable_message_buffering", type: "bool", doc: "If MPI is allowed to buffer small messages", dflt: "false", },
+	}},
+	ft : {type: 'struct', name: "ft", childs: {
+		enabled: {mode: 'param', name: "enabled", type: "bool", doc: "Set to true to enable Fault-Tolerance support", dflt: "false", },
 	}},
 	net_driver_topological : {type: 'struct', name: "net_driver_topological", childs: {
 		dummy: {mode: 'param', name: "dummy", type: "int", doc: "A test Param", dflt: null},
@@ -359,7 +359,6 @@ meta.types = {
 meta.modules = {
 	arpc: {name: "arpc", type: "arpc_type"},
 	debugger: {name: "debugger", type: "debugger"},
-	ft_system: {name: "ft_system", type: "ft"},
 	launcher: {name: "launcher", type: "launcher"},
 	collectives_shm_shared: {name: "collectives_shm_shared", type: "collectives_shm_shared"},
 	collectives_shm: {name: "collectives_shm", type: "collectives_shm"},
@@ -370,6 +369,7 @@ meta.modules = {
 	rma: {name: "rma", type: "mpi_rma"},
 	inter_thread_comm: {name: "inter_thread_comm", type: "inter_thread_comm"},
 	low_level_comm: {name: "low_level_comm", type: "low_level_comm"},
+	ft_system: {name: "ft_system", type: "ft"},
 	openmp: {name: "openmp", type: "openmp"},
 	thread: {name: "thread", type: "thread"},
 	scheduler: {name: "scheduler", type: "scheduler"},

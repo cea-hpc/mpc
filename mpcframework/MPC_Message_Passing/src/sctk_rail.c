@@ -438,7 +438,7 @@ void sctk_rail_commit()
 
 	sz = sctk_rail_print_topology(net_name, sctk_rail_count() * 1024);
 	assert(sz <= (size_t)sctk_rail_count() * 1024);
-	sctk_network_mode = net_name;
+	mpc_common_get_flags()->sctk_network_description_string = net_name;
 }
 
 struct sctk_rail_dump_context

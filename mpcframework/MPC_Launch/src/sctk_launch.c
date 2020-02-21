@@ -60,10 +60,6 @@
 	#include <extls_hls.h>
 #endif
 
-#ifdef MPC_Fault_Tolerance
-	#include "sctk_ft_iface.h"
-#endif
-
 #ifdef MPC_Active_Message
 	#include "arpc_common.h"
 #endif
@@ -83,14 +79,11 @@ static char *sctk_save_argument[SCTK_LAUNCH_MAX_ARG];
 static int sctk_initial_argc = 0;
 static int sctk_start_argc = 0;
 static char **init_argument = NULL;
-bool sctk_checkpoint_mode;
+
 
 #define MAX_TERM_LENGTH 80
 #define MAX_NAME_FORMAT 30
 /* const char *sctk_store_dir = "/dev/null"; */
-
-char *sctk_network_mode = "none";
-char *sctk_checkpoint_str = "";
 
 bool sctk_share_node_capabilities;
 
@@ -243,7 +236,7 @@ void mpc_launch_print_banner( bool restart )
 
 		if ( sctk_runtime_config_get()->modules.launcher.banner )
 		{
-			if ( sctk_checkpoint_mode && restart )
+			if ( mpc_common_get_flags()->checkpoint_enabled && restart )
 			{
 				mpc_common_debug_log("+++ Application restarting from checkpoint with the following configuration:");
 			}
@@ -271,8 +264,8 @@ void mpc_launch_print_banner( bool restart )
                                              mpc_topology_get_pu_count (),
                                              sctk_atomics_get_cpu_freq() / 1000000000.0);
                         mpc_common_debug_log("%s Thread Engine", mpc_common_get_flags()->thread_library_kind);
-                        mpc_common_debug_log("%s %s %s", sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_checkpoint_str);
-                        mpc_common_debug_log("%s", sctk_network_mode);
+                        mpc_common_debug_log("%s %s %s", sctk_alloc_mode (), SCTK_DEBUG_MODE, mpc_common_get_flags()->checkpoint_model);
+                        mpc_common_debug_log("%s", mpc_common_get_flags()->sctk_network_description_string);
                         mpc_common_debug_log("--------------------------------------------------------");
 
 
@@ -524,7 +517,7 @@ sctk_def_share_node ( __UNUSED__ char *arg )
 static void
 sctk_checkpoint ( void )
 {
-	sctk_checkpoint_mode = 1;
+	mpc_common_get_flags()->checkpoint_enabled = 1;
 }
 
 
@@ -934,7 +927,8 @@ static void __create_autokill_thread()
 
 static void __set_default_values()
 {
-
+	mpc_common_get_flags()->sctk_network_description_string = "No networking";
+	mpc_common_get_flags()->checkpoint_model = "No C/R";
 	/* Default values */
 	// this function is called 2 times, one here and one with the function
 	// pointer
@@ -971,7 +965,7 @@ static void __set_default_values()
 	mpc_common_get_flags()->profiler_outputs = sctk_runtime_config_get()->modules.launcher.profiling;
 	mpc_common_get_flags()->enable_smt_capabilities = sctk_runtime_config_get()->modules.launcher.enable_smt;
 	sctk_share_node_capabilities = sctk_runtime_config_get()->modules.launcher.share_node;
-	sctk_checkpoint_mode = sctk_runtime_config_get()->modules.launcher.checkpoint;
+	mpc_common_get_flags()->checkpoint_enabled = sctk_runtime_config_get()->modules.launcher.checkpoint;
 	mpc_common_get_flags()->enable_accelerators =
 	    sctk_runtime_config_get()->modules.accelerator.enabled;
 	/* forece smt on MIC */

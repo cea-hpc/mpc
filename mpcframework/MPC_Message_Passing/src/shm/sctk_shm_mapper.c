@@ -787,7 +787,7 @@ SCTK_STATIC int sctk_shm_mapper_create_shm_file(const char * filename,sctk_size_
 
 	//open
 	fd = shm_open(filename,O_CREAT | O_RDWR | O_EXCL,S_IRUSR | S_IWUSR);
-	assume_perror(fd != -1,filename,"Error while creating file for SHM mapping.");
+	assume_perror(fd != -1,filename,"Error while creating file for SHM mapping %s.", filename);
 
 	//force mapping memory
 	ftruncate(fd,size);

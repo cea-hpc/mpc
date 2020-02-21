@@ -227,6 +227,7 @@ __check_or_infer_prefix_lib()
 # $3 looked up function (ex. hwloc_topology_init)
 # $4 LIBCODE (ex XML, HWLOC, ...)
 # $5 optionnal library version (need pkg-config)
+# $6 optionnal lib_prefix
 #
 AC_DEFUN([MPC_DETECT_DEPENDENCY],
          [
@@ -245,7 +246,7 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                 AC_ARG_WITH([$2-libs],
                 [AS_HELP_STRING([--with-$2-libs],
                                 [Provide library path for $2])],
-                [lib_prefix=$withval],[])
+                [lib_prefix=$withval],[lib_prefix="$6"])
 
                 check_or_infer_prefix_result="no"
                 header_name=$1
@@ -510,7 +511,34 @@ fi
 
 AM_CONDITIONAL([MPC_CUDA_ENABLED], [test "x$cuda_enabled" = "xyes"])
 
+#
+# DMTCP detection
+#
 
+AC_ARG_WITH([dmtcp],
+[AS_HELP_STRING([--with-dmtcp],
+                [Compile MPC with checkpoint restart support])],
+[mpc_dmtcp_enabled=$withval],
+[mpc_dmtcp_enabled=no])
+
+
+
+if test "x$mpc_dmtcp_enabled" = "xyes"; then
+
+
+AC_CHECK_PROG([dmtcp_launch],[dmtcp_launch],[yes],[no])
+
+	AC_MSG_CHECKING([for DMTCP support])
+
+	if test "x${dmtcp_launch}" = "xyes"; then
+		AC_MSG_RESULT([yes])
+		mpc_dmtcp_enabled="yes"
+		AC_DEFINE([MPC_USE_DMTCP], [1], [MPC transparent checkpointing is enabled])
+	else
+		AC_MSG_ERROR([Cannot enable DMTCP as 'dmtcp_launch' was not found in PATH])
+	fi
+
+fi
 
 # Checks for header files.
 
@@ -1162,7 +1190,6 @@ if test "x${mpc_enable_cma}" = "xyes"; then
                         AC_MSG_RESULT([FAIL])
                         AC_MSG_NOTICE([/proc/sys/kernel/yama/ptrace_scope shoud contain 0 for CMA support in MPC])
                         mpc_enable_cma="no"
-                        
                 fi
         fi
 
@@ -1530,6 +1557,7 @@ Launcher........ $MPC_LAUNCHER\n\
 \n\
 Allocator....... $mpc_allocator\n\
 libunwind....... $mpc_libunwind\n\
+DMTPC c/r....... $mpc_dmtcp_enabled\n\
 \n\
 # Network Configuration\n\
 \n\
@@ -1552,9 +1580,8 @@ AC_SUBST([MPC_CONFIG_RESULT])
 # Final Output
 #
 
-AC_OUTPUT([MPC_Arch/include/mpc_arch.h])
-
-AC_OUTPUT([Makefile
+AC_OUTPUT([MPC_Arch/include/mpc_arch.h
+	   Makefile
            MPC_Doc/Makefile
            MPC_Arch/Makefile MPC_Arch/src/Makefile
            MPC_Common/Makefile MPC_Common/src/Makefile

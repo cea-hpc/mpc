@@ -38,13 +38,13 @@ void sctk_ft_checkpoint_prepare();
 
 void sctk_ft_checkpoint();
 
-sctk_ft_state_t sctk_ft_checkpoint_wait();
+mpc_lowcomm_checkpoint_state_t sctk_ft_checkpoint_wait();
 
 void sctk_ft_checkpoint_finalize();
 
 int sctk_ft_finalize();
 
-const char* sctk_ft_str_status(sctk_ft_state_t);
+const char* sctk_ft_str_status(mpc_lowcomm_checkpoint_state_t);
 int sctk_ft_disable();
 int sctk_ft_enable();
 

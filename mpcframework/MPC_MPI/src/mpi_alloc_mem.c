@@ -127,7 +127,7 @@ int mpc_MPI_allocmem_pool_init()
 		PMPI_Comm_size( node_comm, &comm_size );
 
 		/* disabling shm allocator for C/R (temp) */
-		if ( sctk_checkpoint_mode )
+		if ( mpc_common_get_flags()->checkpoint_enabled )
 		{
 			if ( !cw_rank )
 			{

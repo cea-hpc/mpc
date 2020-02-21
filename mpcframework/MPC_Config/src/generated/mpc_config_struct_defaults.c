@@ -83,20 +83,6 @@ void sctk_runtime_config_struct_init_debugger(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_ft(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_ft * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->enabled = false;
-	obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_launcher * obj = struct_ptr;
@@ -442,6 +428,20 @@ void sctk_runtime_config_struct_init_mpc(void * struct_ptr)
                                                                 sizeof(obj->disable_message_buffering ),
                                                                 &obj->disable_message_buffering);
 				obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_ft(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_ft * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->enabled = false;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
@@ -1351,7 +1351,6 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_struct_init_arpc_type(&config->modules.arpc);
 	sctk_runtime_config_enum_init_net_layer_type();
 	sctk_runtime_config_struct_init_debugger(&config->modules.debugger);
-	sctk_runtime_config_struct_init_ft(&config->modules.ft_system);
 	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
 	sctk_runtime_config_struct_init_collectives_shm_shared(&config->modules.collectives_shm_shared);
 	sctk_runtime_config_struct_init_collectives_shm(&config->modules.collectives_shm);
@@ -1362,6 +1361,7 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_struct_init_mpi_rma(&config->modules.rma);
 	sctk_runtime_config_struct_init_inter_thread_comm(&config->modules.inter_thread_comm);
 	sctk_runtime_config_struct_init_low_level_comm(&config->modules.low_level_comm);
+	sctk_runtime_config_struct_init_ft(&config->modules.ft_system);
 	sctk_runtime_config_enum_init_ibv_rdvz_protocol();
 	sctk_runtime_config_enum_init_rail_topological_polling_level();
 	sctk_runtime_config_struct_init_openmp(&config->modules.openmp);
@@ -1403,12 +1403,6 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 	if( !strcmp( structname , "sctk_runtime_config_struct_debugger") )
 	{
 		sctk_runtime_config_struct_init_debugger( ptr );
-		return;
-	}
-
-	if( !strcmp( structname , "sctk_runtime_config_struct_ft") )
-	{
-		sctk_runtime_config_struct_init_ft( ptr );
 		return;
 	}
 
@@ -1457,6 +1451,12 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 	if( !strcmp( structname , "sctk_runtime_config_struct_mpc") )
 	{
 		sctk_runtime_config_struct_init_mpc( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_ft") )
+	{
+		sctk_runtime_config_struct_init_ft( ptr );
 		return;
 	}
 
