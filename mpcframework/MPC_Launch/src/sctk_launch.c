@@ -60,10 +60,6 @@
 	#include <extls_hls.h>
 #endif
 
-#ifdef MPC_Accelerators
-	#include "sctk_accelerators.h"
-#endif
-
 #ifdef MPC_Fault_Tolerance
 	#include "sctk_ft_iface.h"
 #endif
@@ -89,7 +85,6 @@ static int sctk_start_argc = 0;
 static char **init_argument = NULL;
 bool sctk_checkpoint_mode;
 
-bool sctk_accl_support;
 #define MAX_TERM_LENGTH 80
 #define MAX_NAME_FORMAT 30
 /* const char *sctk_store_dir = "/dev/null"; */
@@ -314,13 +309,8 @@ static void sctk_perform_initialisation ( void )
 
         mpc_launch_pmi_init();
 	mpc_topology_init ();
-#if defined (MPC_USE_EXTLS) && !defined(MPC_DISABLE_HLS)
-	extls_hls_topology_construct();
 
-#endif
-#ifdef MPC_Accelerators
-	sctk_accl_init();
-#endif
+
 #ifdef MPC_Fault_Tolerance
 	sctk_ft_init();
 #endif
@@ -341,9 +331,6 @@ static void sctk_perform_initialisation ( void )
 #endif
 #endif
 
-#ifdef HAVE_HWLOC
-	sctk_alloc_posix_mmsrc_numa_init_phase_numa();
-#endif
 	// MALP FIX...
 	char *env = NULL;
 
@@ -352,15 +339,10 @@ static void sctk_perform_initialisation ( void )
 		setenv( "LD_PRELOAD", "", 1 );
 	}
 
-	sctk_locate_dynamic_initializers();
-
 	if ( env )
 	{
 		setenv( "LD_PRELOAD", env, 1 );
 	}
-
-	sctk_thread_init ();
-
 
 #ifdef SCTK_LIB_MODE
 	/* In lib mode we force the pthread MODE */
@@ -400,10 +382,6 @@ static void sctk_perform_initialisation ( void )
 		fprintf ( stderr, "No task number specified!\n" );
 		sctk_abort ();
 	}
-
-#ifdef MPC_Message_Passing
-
-#endif
 
 
 #if 0
@@ -552,7 +530,7 @@ sctk_checkpoint ( void )
 
 static void sctk_def_accl_support( void )
 {
-	sctk_accl_support = 1;
+	mpc_common_get_flags()->enable_accelerators = 1;
 }
 
 static void sctk_set_verbosity( char *arg )
@@ -994,7 +972,7 @@ static void __set_default_values()
 	mpc_common_get_flags()->enable_smt_capabilities = sctk_runtime_config_get()->modules.launcher.enable_smt;
 	sctk_share_node_capabilities = sctk_runtime_config_get()->modules.launcher.share_node;
 	sctk_checkpoint_mode = sctk_runtime_config_get()->modules.launcher.checkpoint;
-	sctk_accl_support =
+	mpc_common_get_flags()->enable_accelerators =
 	    sctk_runtime_config_get()->modules.accelerator.enabled;
 	/* forece smt on MIC */
 #ifdef __MIC__

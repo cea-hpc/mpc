@@ -668,6 +668,12 @@ MPC_IN_PROCESS_MODE
 LIBOBJS
 MPC_ARCH_DETECTED_STRING
 MPC_ARCH_DETECTED_FUNCTION
+MPC_CUDA_ENABLED_FALSE
+MPC_CUDA_ENABLED_TRUE
+CUDART_LIBS
+CUDART_CFLAGS
+CUDA_LIBS
+CUDA_CFLAGS
 MPC_LAUNCHER
 MPC_MPIEXEC_HYDRA_PATH
 HYDRA_CLIENT_LIB_ENABED_FALSE
@@ -875,6 +881,12 @@ with_slurm
 with_pmi
 with_pmi_include
 with_pmi_libs
+with_cuda
+with_cuda_include
+with_cuda_libs
+with_cudart
+with_cudart_include
+with_cudart_libs
 enable_process_mode
 with_extls
 with_extls_include
@@ -926,6 +938,10 @@ PORTALS_CFLAGS
 PORTALS_LIBS
 PMI_CFLAGS
 PMI_LIBS
+CUDA_CFLAGS
+CUDA_LIBS
+CUDART_CFLAGS
+CUDART_LIBS
 EXTLS_CFLAGS
 EXTLS_LIBS'
 
@@ -1621,6 +1637,13 @@ Optional Packages:
   --with-pmi              Provide prefix for pmi
   --with-pmi-inc          Provide include path for pmi
   --with-pmi-libs         Provide library path for pmi
+  --with-cuda             Enable CUDA context switching
+  --with-cuda             Provide prefix for cuda
+  --with-cuda-inc         Provide include path for cuda
+  --with-cuda-libs        Provide library path for cuda
+  --with-cudart           Provide prefix for cudart
+  --with-cudart-inc       Provide include path for cudart
+  --with-cudart-libs      Provide library path for cudart
   --with-extls            Provide prefix for extls
   --with-extls-inc        Provide include path for extls
   --with-extls-libs       Provide library path for extls
@@ -1666,6 +1689,11 @@ Some influential environment variables:
               linker flags for PORTALS, overriding pkg-config
   PMI_CFLAGS  C compiler flags for PMI, overriding pkg-config
   PMI_LIBS    linker flags for PMI, overriding pkg-config
+  CUDA_CFLAGS C compiler flags for CUDA, overriding pkg-config
+  CUDA_LIBS   linker flags for CUDA, overriding pkg-config
+  CUDART_CFLAGS
+              C compiler flags for CUDART, overriding pkg-config
+  CUDART_LIBS linker flags for CUDART, overriding pkg-config
   EXTLS_CFLAGS
               C compiler flags for EXTLS, overriding pkg-config
   EXTLS_LIBS  linker flags for EXTLS, overriding pkg-config
@@ -18285,6 +18313,20 @@ __check_or_infer_prefix_include()
         provided_prefix=$2
         var_prefix=$3
 
+  	as_ac_Header=`$as_echo "ac_cv_header_$looked_up_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$looked_up_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  hfound=yes
+else
+  hfound=no
+fi
+
+
+
+	if test "x$hfound" = "xyes"; then
+		check_or_infer_prefix_include=yes
+		return
+	fi
 
         for pref in $provided_prefix $prefix_candidate_path
         do
@@ -18357,6 +18399,62 @@ __check_or_infer_prefix_lib()
         looked_up_function=$2
         provided_prefix=$3
         var_prefix=$4
+
+	as_ac_Lib=`$as_echo "ac_cv_lib_$looked_up_lib''_$looked_up_function" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $looked_up_function in -l$looked_up_lib" >&5
+$as_echo_n "checking for $looked_up_function in -l$looked_up_lib... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l$looked_up_lib  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char $looked_up_function ();
+int
+main ()
+{
+return $looked_up_function ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  lib_found=1
+else
+  lib_found=0
+fi
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Looking for '$looked_up_lib'" >&5
+$as_echo_n "checking Looking for '$looked_up_lib'... " >&6; }
+
+	if test "x$lib_found" = "x1"
+	then
+		LDFLAGS=" -l$1 $LDFLAGS"
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		check_or_infer_prefix_lib=yes
+		return
+	fi
 
         for pref in $provided_prefix $prefix_candidate_path
         do
@@ -20027,6 +20125,368 @@ else
   HYDRA_CLIENT_LIB_ENABED_FALSE=
 fi
 
+
+
+
+
+#
+# Cuda Detection
+#
+
+
+# Check whether --with-cuda was given.
+if test "${with_cuda+set}" = set; then :
+  withval=$with_cuda; mpc_cuda_ctx_switch=$withval
+else
+  mpc_cuda_ctx_switch=no
+fi
+
+
+cuda_enabled="no"
+
+if test "x$mpc_cuda_ctx_switch" = "xyes"; then
+
+
+
+
+# Check whether --with-cuda was given.
+if test "${with_cuda+set}" = set; then :
+  withval=$with_cuda; whole_prefix=$withval
+else
+  whole_prefix="/usr/"
+fi
+
+
+                inc_prefix=""
+
+# Check whether --with-cuda-include was given.
+if test "${with_cuda_include+set}" = set; then :
+  withval=$with_cuda_include; inc_prefix=$withval
+fi
+
+                lib_prefix=""
+
+# Check whether --with-cuda-libs was given.
+if test "${with_cuda_libs+set}" = set; then :
+  withval=$with_cuda_libs; lib_prefix=$withval
+fi
+
+
+                check_or_infer_prefix_result="no"
+                header_name=cuda.h
+                libname=cuda
+                function_name=cuMemFree
+                var_prefix=CUDA
+                version=""
+
+                if test -z "$lib_prefix"
+                then
+                        lib_prefix=$whole_prefix
+                fi
+
+                if test -z "$inc_prefix"
+                then
+                        inc_prefix=$whole_prefix
+                fi
+
+                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+
+                # First try with PKG config
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for CUDA" >&5
+$as_echo_n "checking for CUDA... " >&6; }
+
+if test -n "$CUDA_CFLAGS"; then
+    pkg_cv_CUDA_CFLAGS="$CUDA_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_CUDA_CFLAGS=`$PKG_CONFIG --cflags "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$CUDA_LIBS"; then
+    pkg_cv_CUDA_LIBS="$CUDA_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_CUDA_LIBS=`$PKG_CONFIG --libs "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        CUDA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$libname $version" 2>&1`
+        else
+	        CUDA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$libname $version" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$CUDA_PKG_ERRORS" >&5
+
+	pkg_found=0
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	pkg_found=0
+else
+	CUDA_CFLAGS=$pkg_cv_CUDA_CFLAGS
+	CUDA_LIBS=$pkg_cv_CUDA_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	pkg_found=1
+fi
+
+                if test "x$pkg_found" = "x1"
+                then
+                        #Insert flags
+                        CPPFLAGS="${CUDA_CFLAGS} $CPPFLAGS"
+                        LDFLAGS="${CUDA_LIBS} $LDFLAGS"
+
+
+
+
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                        check_or_infer_prefix_result="yes"
+                else
+                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                        then
+                                check_or_infer_prefix_result="yes"
+                        else
+                                check_or_infer_prefix_result="no"
+                        fi
+                fi
+
+                mpc_dep_found=$check_or_infer_prefix_result
+
+
+                if test "x$mpc_dep_found" = "xno"
+                then
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-cuda=PREFIX" >&5
+$as_echo "$as_me: consider using --with-cuda=PREFIX" >&6;}
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-cuda-libs=LIBS" >&5
+$as_echo "$as_me: consider using --with-cuda-libs=LIBS" >&6;}
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-cuda-include=INCS" >&5
+$as_echo "$as_me: consider using --with-cuda-include=INCS" >&6;}
+                        as_fn_error $? "Failed to locate required dependency cuda" "$LINENO" 5
+                fi
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Checking for cuda to enable support" >&5
+$as_echo_n "checking Checking for cuda to enable support... " >&6; }
+
+	if test "x$mpc_dep_found" = "xyes"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+
+
+
+# Check whether --with-cudart was given.
+if test "${with_cudart+set}" = set; then :
+  withval=$with_cudart; whole_prefix=$withval
+else
+  whole_prefix="/usr/"
+fi
+
+
+                inc_prefix=""
+
+# Check whether --with-cudart-include was given.
+if test "${with_cudart_include+set}" = set; then :
+  withval=$with_cudart_include; inc_prefix=$withval
+fi
+
+                lib_prefix=""
+
+# Check whether --with-cudart-libs was given.
+if test "${with_cudart_libs+set}" = set; then :
+  withval=$with_cudart_libs; lib_prefix=$withval
+fi
+
+
+                check_or_infer_prefix_result="no"
+                header_name=cuda_runtime.h
+                libname=cudart
+                function_name=cudaDeviceSetLimit
+                var_prefix=CUDART
+                version=""
+
+                if test -z "$lib_prefix"
+                then
+                        lib_prefix=$whole_prefix
+                fi
+
+                if test -z "$inc_prefix"
+                then
+                        inc_prefix=$whole_prefix
+                fi
+
+                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+
+                # First try with PKG config
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for CUDART" >&5
+$as_echo_n "checking for CUDART... " >&6; }
+
+if test -n "$CUDART_CFLAGS"; then
+    pkg_cv_CUDART_CFLAGS="$CUDART_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_CUDART_CFLAGS=`$PKG_CONFIG --cflags "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$CUDART_LIBS"; then
+    pkg_cv_CUDART_LIBS="$CUDART_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_CUDART_LIBS=`$PKG_CONFIG --libs "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        CUDART_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$libname $version" 2>&1`
+        else
+	        CUDART_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$libname $version" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$CUDART_PKG_ERRORS" >&5
+
+	pkg_found=0
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	pkg_found=0
+else
+	CUDART_CFLAGS=$pkg_cv_CUDART_CFLAGS
+	CUDART_LIBS=$pkg_cv_CUDART_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	pkg_found=1
+fi
+
+                if test "x$pkg_found" = "x1"
+                then
+                        #Insert flags
+                        CPPFLAGS="${CUDART_CFLAGS} $CPPFLAGS"
+                        LDFLAGS="${CUDART_LIBS} $LDFLAGS"
+
+
+
+
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                        check_or_infer_prefix_result="yes"
+                else
+                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                        then
+                                check_or_infer_prefix_result="yes"
+                        else
+                                check_or_infer_prefix_result="no"
+                        fi
+                fi
+
+                mpc_dep_found=$check_or_infer_prefix_result
+
+
+                if test "x$mpc_dep_found" = "xno"
+                then
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-cudart=PREFIX" >&5
+$as_echo "$as_me: consider using --with-cudart=PREFIX" >&6;}
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-cudart-libs=LIBS" >&5
+$as_echo "$as_me: consider using --with-cudart-libs=LIBS" >&6;}
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: consider using --with-cudart-include=INCS" >&5
+$as_echo "$as_me: consider using --with-cudart-include=INCS" >&6;}
+                        as_fn_error $? "Failed to locate required dependency cudart" "$LINENO" 5
+                fi
+
+
+
+$as_echo "#define MPC_USE_CUDA 1" >>confdefs.h
+
+		cuda_enabled="yes"
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	fi
+
+fi
+
+ if test "x$cuda_enabled" = "xyes"; then
+  MPC_CUDA_ENABLED_TRUE=
+  MPC_CUDA_ENABLED_FALSE='#'
+else
+  MPC_CUDA_ENABLED_TRUE='#'
+  MPC_CUDA_ENABLED_FALSE=
+fi
 
 
 
@@ -25620,6 +26080,10 @@ Process only...... $mpc_in_process_mode\n\
 Languages......... $MPC_LANGUAGE_LIST\n\
 Compilers......... $MPC_COMPILER_LIST\n\
 \n\
+# Accelerator Support\n\
+\n\
+Cuda.............. $cuda_enabled\n\
+\n\
 # Launcher\n\
 \n\
 Launcher........ $MPC_LAUNCHER\n\
@@ -25819,6 +26283,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HYDRA_CLIENT_LIB_ENABED_TRUE}" && test -z "${HYDRA_CLIENT_LIB_ENABED_FALSE}"; then
   as_fn_error $? "conditional \"HYDRA_CLIENT_LIB_ENABED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPC_CUDA_ENABLED_TRUE}" && test -z "${MPC_CUDA_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_CUDA_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_ARCH_X86_64_CONTEXT_SWITCH_TRUE}" && test -z "${MPC_ARCH_X86_64_CONTEXT_SWITCH_FALSE}"; then
@@ -28435,6 +28903,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HYDRA_CLIENT_LIB_ENABED_TRUE}" && test -z "${HYDRA_CLIENT_LIB_ENABED_FALSE}"; then
   as_fn_error $? "conditional \"HYDRA_CLIENT_LIB_ENABED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPC_CUDA_ENABLED_TRUE}" && test -z "${MPC_CUDA_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_CUDA_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_ARCH_X86_64_CONTEXT_SWITCH_TRUE}" && test -z "${MPC_ARCH_X86_64_CONTEXT_SWITCH_FALSE}"; then

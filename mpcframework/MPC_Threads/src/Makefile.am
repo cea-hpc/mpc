@@ -20,4 +20,18 @@ libmpcthread_la_SOURCES += sctk_kernel_thread.c sctk_posix_ethread.c sctk_posix_
 libmpcthread_la_SOURCES += sctk_pthread.c sctk_thread_barrier.c sctk_thread.c sctk_thread_cond.c sctk_thread_generic.c sctk_thread_generic_kind.c
 libmpcthread_la_SOURCES += sctk_thread_keys.c sctk_thread_mutex.c sctk_thread_rwlock.c sctk_thread_scheduler.c sctk_thread_sem.c sctk_thread_spinlock.c sctk_tls.c
 
+libmpcthread_la_SOURCES += accelerator.c
+
+if MPC_CUDA_ENABLED
+
+libmpcthread_la_SOURCES +=  ./accelerator/cuda.c ./accelerator/cuda_wrap.c
+
+lib_LTLIBRARIES += libmpc_cuda_addon.la
+
+libmpc_cuda_addon_la_SOURCES = ./accelerator/cuda_lib/cuda_lib.c
+libmpc_cuda_addon_la_LIBADD = -lcuda
+
+endif
+
+
 libmpcthread_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la  -lpthread

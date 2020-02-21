@@ -207,7 +207,7 @@ typedef struct sctk_mctx_st
 	int __mpc_task_rank;
 #endif
 
-#if defined(MPC_Accelerators)
+#if defined(MPC_USE_CUDA)
 	/* MPC CUDA context */
 	void *sctk_cuda_ctx;
 #endif

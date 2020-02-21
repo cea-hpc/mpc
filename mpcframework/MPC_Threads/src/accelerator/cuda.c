@@ -20,14 +20,16 @@
 /* #   - ADAM Julien adamj@paratools.com                                  # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include <mpc_config.h>
 
-#if defined(MPC_Accelerators) && defined(MPC_USE_CUDA)
+#if defined(MPC_USE_CUDA)
 #include <mpc_thread_accelerator.h>
 #include <sctk_alloc.h>
 #include <sctk_debug.h>
 #include <mpc_topology_device.h>
 #include <mpc_common_spinlock.h>
 #include <mpc_topology.h>
+#include <mpc_common_flags.h>
 
 extern __thread void *sctk_cuda_ctx;
 
@@ -86,14 +88,15 @@ static int sctk_accl_cuda_get_closest_device(int cpu_id) {
  * 	- 0 if the init succeeded
  * 	- 1 otherwise
  */
-int sctk_accl_cuda_init_context() {
+void sctk_accl_cuda_init_context() {
+  sctk_thread_yield();
   int num_devices = sctk_accl_get_nb_devices(), check_nb;
 
   /* if CUDA support is loaded but the current configuration does not provide a
    * GPU: stop */
   if (num_devices <= 0) {
     sctk_nodebug("CUDA support enabled but no GPU found !");
-    return 1;
+    return;
   }
 
   /* optional: sanity check */
@@ -125,7 +128,7 @@ int sctk_accl_cuda_init_context() {
   /* Set the current pointer as default one for the current thread */
   sctk_cuda_ctx = cuda;
 
-  return 0;
+  return;
 }
 
 /**
@@ -226,18 +229,31 @@ int sctk_accl_cuda_push_context() {
   return 0;
 }
 
-extern bool sctk_accl_support;
 /**
  * Initialize the CUDA interface with MPC
  *
  * @return 0 if succeeded, 1 otherwise
  */
 int sctk_accl_cuda_init() {
-  if (sctk_accl_support) /* && sctk_cuda_support) */
+  if (mpc_common_get_flags()->enable_accelerators) /* && sctk_cuda_support) */
   {
     safe_cudadv(sctk_cuInit(0));
     return 0;
   }
   return 1;
 }
+
+/*********************************
+ * MPC CUDA INIT FUNCTION *
+ *********************************/
+
+void mpc_accelerator_cuda_register_function() __attribute__( ( constructor ) );
+
+void mpc_accelerator_cuda_register_function()
+{
+	MPC_INIT_CALL_ONLY_ONCE
+
+	mpc_common_init_callback_register( "VP Thread Start", "Init per VP Cuda context", sctk_accl_cuda_init_context, 25 );
+}
+
 #endif // MPC_Accelerators && USE_CUDA

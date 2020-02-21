@@ -176,4 +176,8 @@ void mpc_cl_internal_profiler_init()
         mpc_common_init_callback_register("Before Starting VPs",
                                           "Init Profiling keys",
                                           sctk_profiler_array_init_parent_keys, 24);
+
+        mpc_common_init_callback_register("VP Thread Start",
+                                          "Init Profiling keys",
+                                          sctk_internal_profiler_init, 24);
 }

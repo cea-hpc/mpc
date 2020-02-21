@@ -21,60 +21,61 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <mpc_thread_cuda_wrap.h>
-#include <sctk_debug.h>
+#include <mpc_thread_accelerator.h>
+#include <sctk_alloc.h>
+#include <mpc_topology_device.h>
+#include <mpc_common_flags.h>
+
+static size_t nb_devices = 0;
+
+/**
+ * Initialize MPC_Accelerators.
+ *
+ * Should call sub-module init functions
+ * @return 0 if everything succeded, 1 otherwise
+ */
+void sctk_accl_init() {
+
+  if (!mpc_common_get_flags()->enable_accelerators) {
+    nb_devices = 0;
+    return;
+  }
+
+  sctk_warning("Accelerators support ENABLED");
+
+  mpc_topology_device_t **list = mpc_topology_device_get_from_handle_regexp(
+      "cuda-enabled-card*", (int *)&nb_devices);
+  sctk_free(list);
 
 #ifdef MPC_USE_CUDA
-
-/**
- * Weak symbol to let MPC know the cuInit() symbol without linking to it at compile time.
- * The real symbol will be found at run time.
- * @param[in] flag not used in this wrapper
- */
-#pragma weak sctk_cuInit
-CUresult sctk_cuInit(unsigned flag) {
-  sctk_cuFatal();
-  return -1;
-}
-
-/**
- * Weak symbol to let MPC know the cuCtxCreate() symbol without linking to it at compile time.
- * The real symbol will be found at run time.
- * @param[in] flag not used in this wrapper
- */
-#pragma weak sctk_cuCtxCreate
-CUresult sctk_cuCtxCreate(CUcontext *c, unsigned int f, CUdevice d) {
-  sctk_cuFatal();
-  return -1;
-}
-
-/**
- * Weak symbol to let MPC know the cuCtxPopCurrent() symbol without linking to it at compile time.
- * @param[in] flag not used in this wrapper
- */
-#pragma weak sctk_cuCtxPopCurrent
-CUresult sctk_cuCtxPopCurrent(CUcontext *c) {
-  sctk_cuFatal();
-  return -1;
-}
-/**
- * Weak symbol to let MPC know the ctxPushCurrent() symbol without linking to it at compile time.
- * @param[in] flag not used in this wrapper
- */
-
-#pragma weak sctk_cuCtxPushCurrent
-CUresult sctk_cuCtxPushCurrent(CUcontext c) {
-  sctk_cuFatal();
-  return -1;
-}
-/**
- * Weak symbol to let MPC know the cuDeviceGetByPCIBusId() symbol without linking to it at compile time.
- * @param[in] flag not used in this wrapper
- */
-
-#pragma weak sctk_cuDeviceGetByPCIBusId
-CUresult sctk_cuDeviceGetByPCIBusId(CUdevice *d, const char *b) {
-  sctk_cuFatal();
-  return -1;
-}
+  sctk_accl_cuda_init();
 #endif
+
+#ifdef MPC_USE_OPENACC
+#endif
+
+#ifdef MPC_USE_OPENCL
+#endif
+}
+
+/**
+ * Returns the number of GPUs on the current node.
+ *
+ * Especially used to check CUDA can be used without errors.
+ * @return the number of devices
+ */
+size_t sctk_accl_get_nb_devices() { return nb_devices; }
+
+/*********************************
+ * MPC ACCELERATOR INIT FUNCTION *
+ *********************************/
+
+void mpc_accelerator_register_function() __attribute__( ( constructor ) );
+
+void mpc_accelerator_register_function()
+{
+	MPC_INIT_CALL_ONLY_ONCE
+
+
+	mpc_common_init_callback_register( "Base Runtime Init Done", "Init accelerator Module", sctk_accl_init, 25 );
+}

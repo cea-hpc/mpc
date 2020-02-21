@@ -123,6 +123,12 @@ __check_or_infer_prefix_include()
         provided_prefix=$2
         var_prefix=$3
 
+  	AC_CHECK_HEADER([$looked_up_header],[hfound=yes],[hfound=no])
+
+	if test "x$hfound" = "xyes"; then
+		check_or_infer_prefix_include=yes
+		return
+	fi
 
         for pref in $provided_prefix $prefix_candidate_path
         do
@@ -174,6 +180,17 @@ __check_or_infer_prefix_lib()
         looked_up_function=$2
         provided_prefix=$3
         var_prefix=$4
+
+	AC_CHECK_LIB($looked_up_lib, $looked_up_function, [lib_found=1], [lib_found=0])
+	AC_MSG_CHECKING([Looking for '$looked_up_lib'])
+
+	if test "x$lib_found" = "x1"
+	then
+		LDFLAGS=" -l$1 $LDFLAGS"
+		AC_MSG_RESULT([yes])
+		check_or_infer_prefix_lib=yes
+		return
+	fi
 
         for pref in $provided_prefix $prefix_candidate_path
         do
@@ -457,6 +474,43 @@ AM_CONDITIONAL([HYDRA_CLIENT_LIB_ENABED], [test "x$MPC_LAUNCHER" = "xHydra"])
 
 AC_SUBST([MPC_MPIEXEC_HYDRA_PATH])
 AC_SUBST([MPC_LAUNCHER])
+
+#
+# Cuda Detection
+#
+
+AC_ARG_WITH([cuda],
+[AS_HELP_STRING([--with-cuda],
+                [Enable CUDA context switching])],
+[mpc_cuda_ctx_switch=$withval],
+[mpc_cuda_ctx_switch=no])
+
+cuda_enabled="no"
+
+if test "x$mpc_cuda_ctx_switch" = "xyes"; then
+
+	MPC_DETECT_DEPENDENCY([cuda.h], [cuda], [cuMemFree], [CUDA])
+	MPC_REQUIRED_DEPENDENCY([cuda], [$mpc_dep_found])
+
+	AC_MSG_CHECKING([Checking for cuda to enable support])
+
+	if test "x$mpc_dep_found" = "xyes"; then
+		AC_MSG_RESULT([yes])
+
+		MPC_DETECT_DEPENDENCY([cuda_runtime.h], [cudart], [cudaDeviceSetLimit], [CUDART])
+		MPC_REQUIRED_DEPENDENCY([cudart], [$mpc_dep_found])
+
+		AC_DEFINE([MPC_USE_CUDA], [1], [Cuda support is enabled])
+		cuda_enabled="yes"
+	else
+		AC_MSG_RESULT([no])
+	fi
+
+fi
+
+AM_CONDITIONAL([MPC_CUDA_ENABLED], [test "x$cuda_enabled" = "xyes"])
+
+
 
 # Checks for header files.
 
@@ -1463,6 +1517,10 @@ Privatization..... $mpc_privatization_support\n\
 Process only...... $mpc_in_process_mode\n\
 Languages......... $MPC_LANGUAGE_LIST\n\
 Compilers......... $MPC_COMPILER_LIST\n\
+\n\
+# Accelerator Support\n\
+\n\
+Cuda.............. $cuda_enabled\n\
 \n\
 # Launcher\n\
 \n\

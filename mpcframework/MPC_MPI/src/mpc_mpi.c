@@ -38,7 +38,7 @@
 #include "mpit_internal.h"
 
 #if defined(MPC_Accelerators)
-#include <sctk_accelerators.h>
+#include <mpc_thread_accelerator.h>
 #endif
 
 char * sctk_char_fortran_to_c (char *buf, int size, char ** free_ptr)

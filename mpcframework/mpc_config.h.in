@@ -677,6 +677,9 @@
 /* MPC CMA for SHM drive is enabled */
 #undef MPC_USE_CMA
 
+/* Cuda support is enabled */
+#undef MPC_USE_CUDA
+
 /* Extls support is enabled */
 #undef MPC_USE_EXTLS
 

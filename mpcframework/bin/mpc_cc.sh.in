@@ -203,7 +203,7 @@ for arg in "$@" ; do
 		exit 0
 		;;
 	-cuda)
-		EXTRA_ADDON_FLAGS="-L${MPC_INSTALL_PREFIX}/lib/stubs -Wl,-rpath=${MPC_INSTALL_PREFIX}/lib/stubs -lmpc_cuda_addon -Wl,--unresolved-symbols=ignore-in-shared-libs"
+		EXTRA_ADDON_FLAGS="-lmpc_cuda_addon -Wl,--unresolved-symbols=ignore-in-shared-libs"
 		addarg=no
 	;;
     -show)

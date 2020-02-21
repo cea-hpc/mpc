@@ -29,10 +29,7 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <mpc_config.h>
-
-#if defined(MPC_Accelerators)
-#include <sctk_accelerators.h>
-#endif
+#include <mpc_thread_accelerator.h>
 
 #ifdef __cplusplus
 extern "C"

@@ -22,7 +22,7 @@
 /* ######################################################################## */
 
 #ifdef MPC_Accelerators
-#include <sctk_accelerators.h>
+#include <mpc_thread_accelerator.h>
 #include <sctk_alloc.h>
 #include <mpc_topology_device.h>
 

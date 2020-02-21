@@ -21,60 +21,25 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <mpc_thread_cuda_wrap.h>
-#include <sctk_debug.h>
+#ifndef MPC_ACCL_H
+#define MPC_ACCL_H
+
+#include <stdio.h>
+#include <mpc_config.h>
 
 #ifdef MPC_USE_CUDA
+#include <mpc_thread_cuda.h>
+#endif
 
-/**
- * Weak symbol to let MPC know the cuInit() symbol without linking to it at compile time.
- * The real symbol will be found at run time.
- * @param[in] flag not used in this wrapper
- */
-#pragma weak sctk_cuInit
-CUresult sctk_cuInit(unsigned flag) {
-  sctk_cuFatal();
-  return -1;
-}
+#ifdef MPC_USE_OPENACC
+#error "OpenACC support does not exist yet with MPC !"
+#endif
 
-/**
- * Weak symbol to let MPC know the cuCtxCreate() symbol without linking to it at compile time.
- * The real symbol will be found at run time.
- * @param[in] flag not used in this wrapper
- */
-#pragma weak sctk_cuCtxCreate
-CUresult sctk_cuCtxCreate(CUcontext *c, unsigned int f, CUdevice d) {
-  sctk_cuFatal();
-  return -1;
-}
+#ifdef MPC_USE_OPENCL
+#error "OpenCL support does not exist yet with MPC !"
+#endif
 
-/**
- * Weak symbol to let MPC know the cuCtxPopCurrent() symbol without linking to it at compile time.
- * @param[in] flag not used in this wrapper
- */
-#pragma weak sctk_cuCtxPopCurrent
-CUresult sctk_cuCtxPopCurrent(CUcontext *c) {
-  sctk_cuFatal();
-  return -1;
-}
-/**
- * Weak symbol to let MPC know the ctxPushCurrent() symbol without linking to it at compile time.
- * @param[in] flag not used in this wrapper
- */
+void sctk_accl_init();
+size_t sctk_accl_get_nb_devices();
 
-#pragma weak sctk_cuCtxPushCurrent
-CUresult sctk_cuCtxPushCurrent(CUcontext c) {
-  sctk_cuFatal();
-  return -1;
-}
-/**
- * Weak symbol to let MPC know the cuDeviceGetByPCIBusId() symbol without linking to it at compile time.
- * @param[in] flag not used in this wrapper
- */
-
-#pragma weak sctk_cuDeviceGetByPCIBusId
-CUresult sctk_cuDeviceGetByPCIBusId(CUdevice *d, const char *b) {
-  sctk_cuFatal();
-  return -1;
-}
 #endif

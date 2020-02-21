@@ -24,15 +24,15 @@
 #ifdef MPC_Accelerators
 
 #ifdef MPC_USE_CUDA
-#include <sctk_cuda.h>
+#include <mpc_thread_cuda.h>
 #endif
 
 #ifdef MPC_USE_OPENACC
-#include <sctk_openacc.h>
+#include <mpc_thread_openacc.h>
 #endif
 
 #ifdef MPC_USE_OPENCL
-#include <sctk_opencl.h>
+#include <mpc_thread_opencl.h>
 #endif
 
 int sctk_accl_init();

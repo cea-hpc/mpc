@@ -32,9 +32,8 @@
 #include <sys/types.h>
 #include <regex.h>
 
-#if defined( MPC_Accelerators )
-#include <sctk_accelerators.h>
-#endif // MPC_Accelerators
+
+#include <mpc_thread_accelerator.h>
 
 #ifdef MPC_USE_INFINIBAND
 #include <infiniband/verbs.h>
@@ -472,12 +471,12 @@ static inline void __topology_device_enrich_topology()
 {
 	int i;
 #if defined( MPC_USE_CUDA )
-	int num_devices = 0;
+	int cuda_device_to_locate = 0;
 
 	/* init() returns 0 if succeed (maybe not obvious) */
 	if ( !sctk_accl_cuda_init() )
 	{
-		cudaGetDeviceCount( &num_devices );
+		cudaGetDeviceCount( &cuda_device_to_locate );
 	}
 
 #endif
@@ -495,7 +494,7 @@ static inline void __topology_device_enrich_topology()
 
 #if defined( MPC_USE_CUDA )
 
-		if ( num_devices > 0 )
+		if ( cuda_device_to_locate > 0 )
 		{
 			char attrs[128], save_ptr[128], busid_str[32];
 			const char *attr_sep = "#";
@@ -532,7 +531,8 @@ static inline void __topology_device_enrich_topology()
 				assert( check < name_size );
 				device->name = name;
 				device->device_id = (int) dev;
-				sctk_nodebug( "Detected GPU: %s (%s)", device->name, busid_str );
+				mpc_common_debug( "Detected GPU: %s (%s)", device->name, busid_str );
+				cuda_device_to_locate--;
 			}
 			else
 			{

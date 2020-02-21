@@ -21,60 +21,35 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <mpc_thread_cuda_wrap.h>
+#ifndef SCTK_CUDA_WRAP_H
+#define SCTK_CUDA_WRAP_H
 #include <sctk_debug.h>
 
+/** Global FATAL CUDA routines to catch weak symbol call */
+#define sctk_cuFatal()                                                         \
+  do {                                                                         \
+    sctk_error("You reached fake CUDA %s() call inside MPC", __func__);        \
+    sctk_error("Please ensure a valid CUDA driver library is present and you " \
+               "provided --cuda option to mpc_* compilers");                   \
+    sctk_abort();                                                              \
+  } while (0)
+
 #ifdef MPC_USE_CUDA
+/* As cuda.h is not included, create some bridges */
+#define CUDA_SUCCESS 0
+#define CU_CTX_SCHED_YIELD 0x02
+typedef int CUresult;    /** CUDA driver return values*/
+typedef int CUdevice;    /** CUDA device id (int) */
+typedef void *CUcontext; /** CUDA ctx (opaque pointer) */
 
-/**
- * Weak symbol to let MPC know the cuInit() symbol without linking to it at compile time.
- * The real symbol will be found at run time.
- * @param[in] flag not used in this wrapper
+/* all weak symbols.
+ * We should have as many protoptypes as contained in cuda_lib/cuda_lib.c
  */
-#pragma weak sctk_cuInit
-CUresult sctk_cuInit(unsigned flag) {
-  sctk_cuFatal();
-  return -1;
-}
+CUresult sctk_cuInit(unsigned flag);
+CUresult sctk_cuCtxCreate(CUcontext *c, unsigned int f, CUdevice d);
+CUresult sctk_cuCtxPopCurrent(CUcontext *c);
+CUresult sctk_cuCtxPushCurrent(CUcontext c);
+CUresult sctk_cuDeviceGetByPCIBusId(CUdevice *d, const char *b);
+#endif
 
-/**
- * Weak symbol to let MPC know the cuCtxCreate() symbol without linking to it at compile time.
- * The real symbol will be found at run time.
- * @param[in] flag not used in this wrapper
- */
-#pragma weak sctk_cuCtxCreate
-CUresult sctk_cuCtxCreate(CUcontext *c, unsigned int f, CUdevice d) {
-  sctk_cuFatal();
-  return -1;
-}
-
-/**
- * Weak symbol to let MPC know the cuCtxPopCurrent() symbol without linking to it at compile time.
- * @param[in] flag not used in this wrapper
- */
-#pragma weak sctk_cuCtxPopCurrent
-CUresult sctk_cuCtxPopCurrent(CUcontext *c) {
-  sctk_cuFatal();
-  return -1;
-}
-/**
- * Weak symbol to let MPC know the ctxPushCurrent() symbol without linking to it at compile time.
- * @param[in] flag not used in this wrapper
- */
-
-#pragma weak sctk_cuCtxPushCurrent
-CUresult sctk_cuCtxPushCurrent(CUcontext c) {
-  sctk_cuFatal();
-  return -1;
-}
-/**
- * Weak symbol to let MPC know the cuDeviceGetByPCIBusId() symbol without linking to it at compile time.
- * @param[in] flag not used in this wrapper
- */
-
-#pragma weak sctk_cuDeviceGetByPCIBusId
-CUresult sctk_cuDeviceGetByPCIBusId(CUdevice *d, const char *b) {
-  sctk_cuFatal();
-  return -1;
-}
 #endif

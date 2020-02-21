@@ -23,6 +23,9 @@ struct mpc_common_flags
         /* Topology Management */
         short enable_smt_capabilities;          /*< Should MPC run on hyperthreads */
 
+	/* Accelerator support */
+	short enable_accelerators;
+
         /* Topology Display */
         short enable_topology_graphic_placement;/*< Should current pinning be dumped graphically */
         short enable_topology_text_placement;   /*< Should current pinning be dumped in text */

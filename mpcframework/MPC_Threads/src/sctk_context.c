@@ -40,7 +40,7 @@ typedef struct
 
 #if defined( TLS_SUPPORT )
 
-#if defined( MPC_Accelerators )
+#if defined( MPC_USE_CUDA )
 __thread void *sctk_cuda_ctx;
 #endif
 

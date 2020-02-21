@@ -93,6 +93,8 @@ host_triplet = @host@
 @MPC_MPI_ENABLED_TRUE@	-I$(abs_top_srcdir)/MPC_MPI/include/ \
 @MPC_MPI_ENABLED_TRUE@	-I$(abs_top_srcdir)/MPC_MPI/src/ \
 @MPC_MPI_ENABLED_TRUE@	-I$(abs_top_srcdir)/MPC_Message_Passing/include/
+@MPC_CUDA_ENABLED_TRUE@am__append_3 = ./accelerator/cuda.c ./accelerator/cuda_wrap.c
+@MPC_CUDA_ENABLED_TRUE@am__append_4 = libmpc_cuda_addon.la
 subdir = MPC_Threads/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_gcc_builtin.m4 \
@@ -137,7 +139,33 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
+libmpc_cuda_addon_la_DEPENDENCIES =
+am__libmpc_cuda_addon_la_SOURCES_DIST =  \
+	./accelerator/cuda_lib/cuda_lib.c
+am__dirstamp = $(am__leading_dot)dirstamp
+@MPC_CUDA_ENABLED_TRUE@am_libmpc_cuda_addon_la_OBJECTS =  \
+@MPC_CUDA_ENABLED_TRUE@	./accelerator/cuda_lib/cuda_lib.lo
+libmpc_cuda_addon_la_OBJECTS = $(am_libmpc_cuda_addon_la_OBJECTS)
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
+am__v_lt_1 = 
+@MPC_CUDA_ENABLED_TRUE@am_libmpc_cuda_addon_la_rpath = -rpath \
+@MPC_CUDA_ENABLED_TRUE@	$(libdir)
 libmpcthread_la_DEPENDENCIES = ../../MPC_Launch/src/libmpclaunch.la
+am__libmpcthread_la_SOURCES_DIST = sctk_context.c sctk_ethread.c \
+	sctk_ethread_mxn.c sctk_futex.c sctk_gen_thread.c \
+	sctk_kernel_thread.c sctk_posix_ethread.c \
+	sctk_posix_ethread_mxn.c sctk_posix_pthread.c \
+	sctk_posix_thread.c sctk_pthread.c sctk_thread_barrier.c \
+	sctk_thread.c sctk_thread_cond.c sctk_thread_generic.c \
+	sctk_thread_generic_kind.c sctk_thread_keys.c \
+	sctk_thread_mutex.c sctk_thread_rwlock.c \
+	sctk_thread_scheduler.c sctk_thread_sem.c \
+	sctk_thread_spinlock.c sctk_tls.c accelerator.c \
+	./accelerator/cuda.c ./accelerator/cuda_wrap.c
+@MPC_CUDA_ENABLED_TRUE@am__objects_1 = ./accelerator/cuda.lo \
+@MPC_CUDA_ENABLED_TRUE@	./accelerator/cuda_wrap.lo
 am_libmpcthread_la_OBJECTS = sctk_context.lo sctk_ethread.lo \
 	sctk_ethread_mxn.lo sctk_futex.lo sctk_gen_thread.lo \
 	sctk_kernel_thread.lo sctk_posix_ethread.lo \
@@ -147,12 +175,9 @@ am_libmpcthread_la_OBJECTS = sctk_context.lo sctk_ethread.lo \
 	sctk_thread_generic_kind.lo sctk_thread_keys.lo \
 	sctk_thread_mutex.lo sctk_thread_rwlock.lo \
 	sctk_thread_scheduler.lo sctk_thread_sem.lo \
-	sctk_thread_spinlock.lo sctk_tls.lo
+	sctk_thread_spinlock.lo sctk_tls.lo accelerator.lo \
+	$(am__objects_1)
 libmpcthread_la_OBJECTS = $(am_libmpcthread_la_OBJECTS)
-AM_V_lt = $(am__v_lt_@AM_V@)
-am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
-am__v_lt_0 = --silent
-am__v_lt_1 = 
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -187,8 +212,9 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libmpcthread_la_SOURCES)
-DIST_SOURCES = $(libmpcthread_la_SOURCES)
+SOURCES = $(libmpc_cuda_addon_la_SOURCES) $(libmpcthread_la_SOURCES)
+DIST_SOURCES = $(am__libmpc_cuda_addon_la_SOURCES_DIST) \
+	$(am__libmpcthread_la_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -234,6 +260,10 @@ CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CUDART_CFLAGS = @CUDART_CFLAGS@
+CUDART_LIBS = @CUDART_LIBS@
+CUDA_CFLAGS = @CUDA_CFLAGS@
+CUDA_LIBS = @CUDA_LIBS@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
@@ -396,7 +426,7 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/MPC_Config/src/generated/ \
 	-I$(abs_top_srcdir)/MPC_Topology/include/ $(am__append_1) \
 	$(am__append_2)
-lib_LTLIBRARIES = libmpcthread.la
+lib_LTLIBRARIES = libmpcthread.la $(am__append_4)
 libmpcthread_la_SOURCES = sctk_context.c sctk_ethread.c \
 	sctk_ethread_mxn.c sctk_futex.c sctk_gen_thread.c \
 	sctk_kernel_thread.c sctk_posix_ethread.c \
@@ -406,7 +436,10 @@ libmpcthread_la_SOURCES = sctk_context.c sctk_ethread.c \
 	sctk_thread_generic_kind.c sctk_thread_keys.c \
 	sctk_thread_mutex.c sctk_thread_rwlock.c \
 	sctk_thread_scheduler.c sctk_thread_sem.c \
-	sctk_thread_spinlock.c sctk_tls.c
+	sctk_thread_spinlock.c sctk_tls.c accelerator.c \
+	$(am__append_3)
+@MPC_CUDA_ENABLED_TRUE@libmpc_cuda_addon_la_SOURCES = ./accelerator/cuda_lib/cuda_lib.c
+@MPC_CUDA_ENABLED_TRUE@libmpc_cuda_addon_la_LIBADD = -lcuda
 libmpcthread_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la  -lpthread
 all: all-am
 
@@ -476,16 +509,43 @@ clean-libLTLIBRARIES:
 	  echo rm -f $${locs}; \
 	  rm -f $${locs}; \
 	}
+accelerator/cuda_lib/$(am__dirstamp):
+	@$(MKDIR_P) ./accelerator/cuda_lib
+	@: > accelerator/cuda_lib/$(am__dirstamp)
+accelerator/cuda_lib/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ./accelerator/cuda_lib/$(DEPDIR)
+	@: > accelerator/cuda_lib/$(DEPDIR)/$(am__dirstamp)
+./accelerator/cuda_lib/cuda_lib.lo:  \
+	accelerator/cuda_lib/$(am__dirstamp) \
+	accelerator/cuda_lib/$(DEPDIR)/$(am__dirstamp)
+
+libmpc_cuda_addon.la: $(libmpc_cuda_addon_la_OBJECTS) $(libmpc_cuda_addon_la_DEPENDENCIES) $(EXTRA_libmpc_cuda_addon_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(LINK) $(am_libmpc_cuda_addon_la_rpath) $(libmpc_cuda_addon_la_OBJECTS) $(libmpc_cuda_addon_la_LIBADD) $(LIBS)
+accelerator/$(am__dirstamp):
+	@$(MKDIR_P) ./accelerator
+	@: > accelerator/$(am__dirstamp)
+accelerator/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ./accelerator/$(DEPDIR)
+	@: > accelerator/$(DEPDIR)/$(am__dirstamp)
+./accelerator/cuda.lo: accelerator/$(am__dirstamp) \
+	accelerator/$(DEPDIR)/$(am__dirstamp)
+./accelerator/cuda_wrap.lo: accelerator/$(am__dirstamp) \
+	accelerator/$(DEPDIR)/$(am__dirstamp)
 
 libmpcthread.la: $(libmpcthread_la_OBJECTS) $(libmpcthread_la_DEPENDENCIES) $(EXTRA_libmpcthread_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libmpcthread_la_OBJECTS) $(libmpcthread_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f ./accelerator/*.$(OBJEXT)
+	-rm -f ./accelerator/*.lo
+	-rm -f ./accelerator/cuda_lib/*.$(OBJEXT)
+	-rm -f ./accelerator/cuda_lib/*.lo
 
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/accelerator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_context.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_ethread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_ethread_mxn.Plo@am__quote@
@@ -509,6 +569,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread_sem.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread_spinlock.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_tls.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./accelerator/$(DEPDIR)/cuda.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./accelerator/$(DEPDIR)/cuda_wrap.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./accelerator/cuda_lib/$(DEPDIR)/cuda_lib.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -539,6 +602,8 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf ./accelerator/.libs ./accelerator/_libs
+	-rm -rf ./accelerator/cuda_lib/.libs ./accelerator/cuda_lib/_libs
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -655,6 +720,10 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f accelerator/$(DEPDIR)/$(am__dirstamp)
+	-rm -f accelerator/$(am__dirstamp)
+	-rm -f accelerator/cuda_lib/$(DEPDIR)/$(am__dirstamp)
+	-rm -f accelerator/cuda_lib/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -665,7 +734,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./accelerator/$(DEPDIR) ./accelerator/cuda_lib/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -711,7 +780,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./accelerator/$(DEPDIR) ./accelerator/cuda_lib/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

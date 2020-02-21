@@ -661,6 +661,10 @@ void mpc_thread_spawn_virtual_processors ( void *( *run ) ( void * ), void *arg 
 
 void sctk_thread_init ( void )
 {
+#ifdef HAVE_HWLOC
+	sctk_alloc_posix_mmsrc_numa_init_phase_numa();
+#endif
+
 	sctk_thread_tls = sctk_get_current_alloc_chain();
 #ifdef MPC_Allocator
 	assert( sctk_thread_tls != NULL );
@@ -841,10 +845,6 @@ static void * ___vp_thread_start_routine( sctk_thread_data_t *__arg )
 	sctk_thread_data_set( &tmp );
 	sctk_thread_add( &tmp, sctk_thread_self() );
 
-	/* Initialization of the profiler */
-#ifdef MPC_Profiler
-	sctk_internal_profiler_init();
-#endif
 
 #if defined( MPC_USE_EXTLS )
         /* TLS INTIALIZATION */
@@ -856,10 +856,6 @@ static void * ___vp_thread_start_routine( sctk_thread_data_t *__arg )
 
         __scheduler_set_thread_kind_mpi();
 
-#if defined( MPC_USE_CUDA )
-	sctk_thread_yield();
-	sctk_accl_cuda_init_context();
-#endif
 	sctk_tls_dtors_init( &( tmp.dtors_head ) );
 
 	__tbb_init_for_mpc();
@@ -962,14 +958,22 @@ mpc_thread_create_vp_thread ( sctk_thread_t *restrict __threadp,
 
 
 
-void mpc_thread_per_thread_init_function() __attribute__( ( constructor ) );
+void mpc_thread_module_register() __attribute__( ( constructor ) );
 
-void mpc_thread_per_thread_init_function()
+void mpc_thread_module_register()
 {
 	MPC_INIT_CALL_ONLY_ONCE
 	mpc_common_init_callback_register( "Per Thread Init", "Allocator Numa Migrate", sctk_alloc_posix_numa_migrate, 0 );
+
+	mpc_common_init_callback_register( "Base Runtime Init Done", "Thread module init", sctk_thread_init, 0 );
+
 #ifdef MPC_USE_EXTLS
 	mpc_common_init_callback_register( "Per Thread Init", "Dynamic Initializers", sctk_call_dynamic_initializers, 1 );
+
+	mpc_common_init_callback_register( "Base Runtime Init Done", "Locate Dynamic Initializers", sctk_locate_dynamic_initializers, 1 );
+	#if !defined(MPC_DISABLE_HLS)
+		mpc_common_init_callback_register( "Base Runtime Init Done", "Extls Topology Init", extls_hls_topology_construct, 2 );
+	#endif
 #endif
 }
 
