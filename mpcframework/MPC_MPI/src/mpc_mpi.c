@@ -41,6 +41,10 @@
 #include <mpc_thread_accelerator.h>
 #endif
 
+#ifdef MPC_USE_PORTALS
+#include <sctk_ptl_offcoll.h>
+#endif
+
 char * sctk_char_fortran_to_c (char *buf, int size, char ** free_ptr)
 {
 	char *tmp;

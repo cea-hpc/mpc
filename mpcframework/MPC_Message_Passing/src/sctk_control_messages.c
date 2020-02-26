@@ -36,6 +36,7 @@
 #include <sctk_reorder.h>
 #include <sctk_rail.h>
 #include <sctk_alloc.h>
+#include <sctk_window.h>
 #include <mpc_lowcomm_rdma.h>
 #include "sctk_topological_polling.h"
 

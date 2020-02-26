@@ -496,7 +496,7 @@ static inline void __topology_device_enrich_topology()
 
 		if ( cuda_device_to_locate > 0 )
 		{
-			char attrs[128], save_ptr[128], busid_str[32];
+			char attrs[128], *save_ptr, busid_str[32];
 			const char *attr_sep = "#";
 			hwloc_obj_attr_snprintf( attrs, 128, device->obj, "#", 1 );
 			char *cur_attr = NULL;

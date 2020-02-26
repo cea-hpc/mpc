@@ -1102,7 +1102,7 @@ static inline void __base_runtime_init()
 	mpc_launch_print_banner( 0 /* not in restart mode */ );
 }
 
-void sctk_init_mpc_runtime()
+void mpc_launch_init_runtime()
 {
         __base_runtime_init();
 }

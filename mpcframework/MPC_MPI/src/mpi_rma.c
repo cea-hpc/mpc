@@ -27,7 +27,7 @@
 #include "sctk_communicator.h"
 #include "sctk_control_messages.h"
 #include <string.h>
-#include "sctk_window.h"
+#include "mpc_lowcomm_rdma.h"
 #include "mpi_rma_ctrl_msg.h"
 
 /************************************************************************/

@@ -495,4 +495,14 @@ static inline int mpc_lowcomm_status_get_cancelled( mpc_lowcomm_status_t *status
 	return SCTK_SUCCESS;
 }
 
+/************************************************************************/
+/* Thread-safe message probing	                                        */
+/************************************************************************/
+
+void sctk_m_probe_matching_init();
+void sctk_m_probe_matching_set( int value );
+void sctk_m_probe_matching_reset();
+int sctk_m_probe_matching_get();
+
+
 #endif /* MPC_MESSAGE_PASSING_INCLUDE_COMM_H_ */

@@ -286,14 +286,6 @@ static inline int sctk_is_process_specific_message( mpc_lowcomm_ptp_message_head
 	return _mpc_comm_ptp_message_is_for_process( class );
 }
 
-/************************************************************************/
-/* Thread-safe message probing	                                        */
-/************************************************************************/
-
-void sctk_m_probe_matching_init();
-void sctk_m_probe_matching_set( int value );
-void sctk_m_probe_matching_reset();
-int sctk_m_probe_matching_get();
 
 
 

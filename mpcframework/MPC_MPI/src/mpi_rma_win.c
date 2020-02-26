@@ -28,6 +28,7 @@
 #include "mpi_rma_epoch.h"
 #include "sctk_handler_mpi.h"
 #include "sctk_shm_mapper.h"
+#include "mpc_lowcomm_rdma.h"
 
 /************************************************************************/
 /* Window Progress List                                                 */

@@ -73,6 +73,8 @@ extern "C"
 #endif /* SCTK_LIB_MODE */
 
 
+void mpc_launch_init_runtime();
+
 #ifdef __cplusplus
 }
 #endif

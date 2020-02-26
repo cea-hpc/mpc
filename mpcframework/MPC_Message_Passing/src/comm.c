@@ -37,6 +37,7 @@
 #include <sctk_control_messages.h>
 #include <sctk_rail.h>
 #include <sctk_launch.h>
+#include <sctk_window.h>
 #include <mpc_common_profiler.h>
 
 #ifdef SCTK_LIB_MODE
@@ -45,7 +46,7 @@
 
 
 #ifdef MPC_USE_INFINIBAND
-#include <sctk_ib_prof.h>
+#include <sctk_ib_device.h>
 #endif
 
 /********************************************************************/
@@ -2806,11 +2807,11 @@ void mpc_lowcomm_recv( int src, void *buffer, size_t size, int tag, mpc_lowcomm_
  *  Setup & Teardown
  *  ############### */
 
-void sctk_init_mpc_runtime();
+void mpc_launch_init_runtime();
 
 void mpc_lowcomm_libmode_init()
 {
-	sctk_init_mpc_runtime();
+	mpc_launch_init_runtime();
 	mpc_lowcomm_barrier( SCTK_COMM_WORLD );
 }
 
@@ -2830,16 +2831,9 @@ static void __lowcomm_init_per_task()
 
 		mpc_lowcomm_terminaison_barrier();
 
-
 		mpc_lowcomm_init_per_task( task_rank );
 
-#ifdef MPC_USE_INFINIBAND
-		sctk_ib_prof_init_reference_clock();
-#endif
-
 		mpc_lowcomm_terminaison_barrier();
-
-
 	}
 }
 

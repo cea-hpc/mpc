@@ -384,7 +384,7 @@ sctk_pthread_thread_attr_setbinding (__UNUSED__ sctk_thread_attr_t * __attr, __U
     cpu_set_t mask;
     CPU_ZERO(&mask);
     CPU_SET(__binding, &mask);
-    pthread_attr_setaffinity_np(__attr, sizeof(cpu_set_t), &mask);
+    pthread_attr_setaffinity_np((pthread_attr_t*)__attr, sizeof(cpu_set_t), &mask);
 #endif /* HAVE_PTHREAD_ATTR_SETAFFINITY_NP */
     return 0;
 }
