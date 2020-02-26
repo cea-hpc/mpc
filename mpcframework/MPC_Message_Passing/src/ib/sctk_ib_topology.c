@@ -31,7 +31,6 @@
 #include "sctk_ib.h"
 #include "sctk_ib_eager.h"
 #include "sctk_ib_config.h"
-#include "sctk_ib_prof.h"
 #include "sctk_ibufs_rdma.h"
 #include "sctk_ib_topology.h"
 #include "sctk_rail.h"
@@ -283,11 +282,10 @@ sctk_ib_topology_numa_node_t *
 sctk_ib_topology_get_numa_node ( struct sctk_ib_rail_info_s *rail_ib )
 {
 	const int rail_nb = rail_ib->rail_nb;
-	PROF_TIME_START ( rail_ib->rail, ib_get_numa );
 
 	if ( sctk_ib_topology_use_default_node )
 	{
-		PROF_TIME_END ( rail_ib->rail, ib_get_numa );
+
 		return sctk_ib_topology_get_default_numa_node ( rail_ib );
 	}
 
@@ -328,7 +326,6 @@ sctk_ib_topology_get_numa_node ( struct sctk_ib_rail_info_s *rail_ib )
 		assume ( numa_node_task[rail_nb] );
 	}
 
-	PROF_TIME_END ( rail_ib->rail, ib_get_numa );
 
 	return numa_node_task[rail_nb];
 }

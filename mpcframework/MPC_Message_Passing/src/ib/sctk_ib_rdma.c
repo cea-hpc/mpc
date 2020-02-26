@@ -32,7 +32,7 @@
 #include "sctk_ib_mmu.h"
 #include "sctk_net_tools.h"
 #include "sctk_ib_cp.h"
-#include "sctk_ib_prof.h"
+
 
 /* IB debug macros */
 #if defined SCTK_IB_MODULE_NAME
@@ -85,10 +85,8 @@ mpc_lowcomm_ptp_message_t * sctk_ib_rdma_recv_done_remote_imm (__UNUSED__  sctk_
 
 
 
-	SCTK_PROFIL_START ( ib_rdma_idle );
 	mpc_lowcomm_perform_idle ( ( int * ) &rdma->local.ready, 1,
 	                                 ( void ( * ) ( void * ) ) sctk_network_notify_idle_message, NULL );
-	SCTK_PROFIL_END ( ib_rdma_idle );
 
 	send = rdma->copy_ptr->msg_send;
 	recv = rdma->copy_ptr->msg_recv;
@@ -105,7 +103,6 @@ mpc_lowcomm_ptp_message_t * sctk_ib_rdma_recv_done_remote_imm (__UNUSED__  sctk_
           sctk_nodebug("FREE: %p", rdma->local.addr);
           /* If we SCTK_IB_RDMA_RECOPY, we can delete the temp buffer */
           sctk_free(rdma->local.addr);
-          PROF_INC(rail, ib_free_mem);
         }
 
         _mpc_comm_ptp_message_commit_request(send, recv);
@@ -132,11 +129,9 @@ sctk_ib_rdma_recv_done_remote(__UNUSED__  sctk_rail_info_t *rail, sctk_ibuf_t *i
   rdma = &dest_msg_header->tail.ib.rdma;
 
 
-  SCTK_PROFIL_START(ib_rdma_idle);
   mpc_lowcomm_perform_idle(
       (int *)&dest_msg_header->tail.ib.rdma.local.ready, 1,
       (void (*)(void *))sctk_network_notify_idle_message, NULL);
-  SCTK_PROFIL_END(ib_rdma_idle);
 
   send = rdma->copy_ptr->msg_send;
   recv = rdma->copy_ptr->msg_recv;
@@ -157,7 +152,6 @@ sctk_ib_rdma_recv_done_remote(__UNUSED__  sctk_rail_info_t *rail, sctk_ibuf_t *i
     sctk_nodebug("FREE: %p", dest_msg_header->tail.ib.rdma.local.addr);
     /* If we SCTK_IB_RDMA_RECOPY, we can delete the temp buffer */
     sctk_free(dest_msg_header->tail.ib.rdma.local.addr);
-    PROF_INC(rail, ib_free_mem);
   }
 
   _mpc_comm_ptp_message_commit_request(send, recv);
@@ -179,7 +173,6 @@ sctk_ib_rdma_recv_done_local ( mpc_lowcomm_ptp_message_t *msg )
 		/* Unregister MMU and free message */
 		sctk_nodebug ( "FREE PTR: %p", msg->tail.ib.rdma.local.addr );
 		sctk_free ( msg->tail.ib.rdma.local.addr );
-		PROF_INC ( rail, ib_free_mem );
 	}
 
 	sctk_nodebug ( "MSG LOCAL FREE %p", msg );
@@ -206,7 +199,6 @@ void sctk_ib_rdma_net_free_recv ( void *arg )
 	sctk_nodebug ( "REM msg %p with key %d", rdma, rdma->ht_key );
 	mpc_common_spinlock_unlock ( &recv_rdma_headers_lock );
 	sctk_free ( msg );
-	PROF_INC ( rail, ib_free_mem );
 }
 
 
@@ -238,7 +230,6 @@ static void sctk_ib_rdma_prepare_recv_recopy ( mpc_lowcomm_ptp_message_t *msg )
 	/* Allocating memory according to the requested size */
 	posix_memalign ( ( void ** ) &send_header->rdma.local.aligned_addr,
 	                 page_size, send_header->rdma.requested_size );
-	PROF_INC ( rail, ib_alloc_mem );
 
 	send_header->rdma.local.aligned_size  = send_header->rdma.requested_size;
 	send_header->rdma.local.size          = send_header->rdma.requested_size;
@@ -333,11 +324,9 @@ static void sctk_ib_rdma_rendezvous_send_ack ( sctk_rail_info_t *rail, mpc_lowco
 	send_header = &msg->tail.ib;
 	sctk_ib_header_rdma_t *rdma = &send_header->rdma;
 	/* Register MMU */
-	PROF_TIME_START ( rail_ib->rail, recv_mmu_register );
 	send_header->rdma.local.mmu_entry =  sctk_ib_mmu_pin (
 	                                         &rdma->remote_rail->network.ib, send_header->rdma.local.aligned_addr,
 	                                         send_header->rdma.local.aligned_size );
-	PROF_TIME_END ( rail_ib->rail, recv_mmu_register );
 	sctk_nodebug ( "MMU registered for msg %p", send_header );
 
 	ibuf = sctk_ib_rdma_rendezvous_prepare_ack ( rail, msg );
@@ -347,7 +336,7 @@ static void sctk_ib_rdma_rendezvous_send_ack ( sctk_rail_info_t *rail, mpc_lowco
 	sctk_ib_qp_send_ibuf ( &rdma->remote_rail->network.ib, remote, ibuf);
 	sctk_nodebug ( "Send ACK to rail %d for task %d", rdma->remote_rail->rail_number, SCTK_MSG_SRC_TASK ( msg ) );
 
-	send_header->rdma.local.send_ack_timestamp = sctk_ib_prof_get_time_stamp();
+	send_header->rdma.local.send_ack_timestamp = sctk_atomics_get_timestamp();
 }
 
 sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req(sctk_rail_info_t *rail,
@@ -378,7 +367,7 @@ sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req(sctk_rail_info_t *rail,
   rdma->local.ready = 0;
   rdma->rail = rail;
   rdma->remote_peer = remote;
-  rdma->local.req_timestamp = sctk_ib_prof_get_time_stamp();
+  rdma->local.req_timestamp = sctk_atomics_get_timestamp();
 
   rdma->remote_rail = rail;
   rdma_req->remote_rail = rdma->rail->rail_number;
@@ -471,7 +460,6 @@ sctk_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
   sctk_ib_rdma_req_t *rdma_req = IBUF_GET_RDMA_REQ(ibuf->buffer);
 
   msg = sctk_malloc(sizeof(mpc_lowcomm_ptp_message_t));
-  PROF_INC(rail, ib_alloc_mem);
   memcpy(&msg->body, &rdma_req->msg_header,
          sizeof(mpc_lowcomm_ptp_message_body_t));
 
@@ -481,7 +469,7 @@ sctk_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
                      sctk_ib_rdma_rendezvous_net_copy);
   msg->tail.ib.protocol = SCTK_IB_RDMA_PROTOCOL;
   rdma = &msg->tail.ib.rdma;
-  rdma->local.req_timestamp = sctk_ib_prof_get_time_stamp();
+  rdma->local.req_timestamp = sctk_atomics_get_timestamp();
 
   SCTK_MSG_COMPLETION_FLAG_SET(msg, NULL);
   msg->tail.message_type = MPC_LOWCOMM_MESSAGE_NETWORK;
@@ -565,7 +553,6 @@ void sctk_ib_rdma_rendezvous_prepare_send_msg ( mpc_lowcomm_ptp_message_t *msg, 
 		page_size = getpagesize();
 
 		posix_memalign ( ( void ** ) &aligned_addr, page_size, aligned_size );
-		PROF_INC ( rail_ib->rail, ib_alloc_mem );
 		sctk_net_copy_in_buffer ( msg, aligned_addr );
 
 		rdma->local.addr = aligned_addr;
@@ -574,9 +561,7 @@ void sctk_ib_rdma_rendezvous_prepare_send_msg ( mpc_lowcomm_ptp_message_t *msg, 
 	}
 
 	/* Register MMU */
-	PROF_TIME_START ( rail_ib->rail, send_mmu_register );
 	rdma->local.mmu_entry =  sctk_ib_mmu_pin ( &rdma->remote_rail->network.ib, aligned_addr, aligned_size );
-	PROF_TIME_END ( rail_ib->rail, send_mmu_register );
 
 	/* Save addr and size */
 	rdma->local.aligned_addr = aligned_addr;
@@ -604,11 +589,9 @@ sctk_ib_rdma_rendezvous_recv_ack(__UNUSED__ sctk_rail_info_t *rail, sctk_ibuf_t 
 
 
   /* Wait while the message becomes ready */
-  SCTK_PROFIL_START(ib_rdma_idle);
   mpc_lowcomm_perform_idle(
       (int *)&rdma->local.ready, 1,
       (void (*)(void *))sctk_network_notify_idle_message, NULL);
-  SCTK_PROFIL_END(ib_rdma_idle);
 
   sctk_nodebug("Remote addr: %p", rdma_ack->addr);
   rdma->remote.addr = rdma_ack->addr;
@@ -658,7 +641,7 @@ void sctk_ib_rdma_rendezvous_prepare_data_write(
   /*
   #endif
   */
-  rdma->local.send_rdma_timestamp = sctk_ib_prof_get_time_stamp();
+  rdma->local.send_rdma_timestamp = sctk_atomics_get_timestamp();
 }
 
 static inline mpc_lowcomm_ptp_message_t *

@@ -102,7 +102,6 @@ host_triplet = @host@
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_mmu.c \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_mpi.c \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_polling.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_prof.c \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_qp.c \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_rdma.c \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_toolkit.c \
@@ -177,8 +176,8 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
 	./ib/sctk_ib_async.c ./ib/sctk_ib_buffered.c ./ib/sctk_ib.c \
 	./ib/sctk_ib_cm.c ./ib/sctk_ib_config.c ./ib/sctk_ib_cp.c \
 	./ib/sctk_ib_device.c ./ib/sctk_ib_eager.c ./ib/sctk_ib_mmu.c \
-	./ib/sctk_ib_mpi.c ./ib/sctk_ib_polling.c ./ib/sctk_ib_prof.c \
-	./ib/sctk_ib_qp.c ./ib/sctk_ib_rdma.c ./ib/sctk_ib_toolkit.c \
+	./ib/sctk_ib_mpi.c ./ib/sctk_ib_polling.c ./ib/sctk_ib_qp.c \
+	./ib/sctk_ib_rdma.c ./ib/sctk_ib_toolkit.c \
 	./ib/sctk_ib_topology.c ./ib/sctk_ibufs.c \
 	./ib/sctk_ibufs_rdma.c ./portals/sctk_portals.c \
 	./portals/sctk_ptl_cm.c ./portals/sctk_ptl_eager.c \
@@ -197,7 +196,6 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_mmu.lo \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_mpi.lo \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_polling.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_prof.lo \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_qp.lo \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_rdma.lo \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_toolkit.lo \
@@ -624,7 +622,6 @@ ib/$(DEPDIR)/$(am__dirstamp):
 ./ib/sctk_ib_mpi.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
 ./ib/sctk_ib_polling.lo: ib/$(am__dirstamp) \
 	ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_prof.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
 ./ib/sctk_ib_qp.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
 ./ib/sctk_ib_rdma.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
 ./ib/sctk_ib_toolkit.lo: ib/$(am__dirstamp) \
@@ -703,7 +700,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_mmu.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_mpi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_polling.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_prof.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_qp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_rdma.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_toolkit.Plo@am__quote@

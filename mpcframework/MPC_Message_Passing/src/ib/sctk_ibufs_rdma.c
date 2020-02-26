@@ -28,7 +28,6 @@
 //#define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "IBUFR"
 #include "sctk_ib_toolkit.h"
-#include "sctk_ib_prof.h"
 #include "sctk_ibufs_rdma.h"
 #include "sctk_ib.h"
 #include "mpc_common_asm.h"
@@ -140,9 +139,6 @@ sctk_ibuf_rdma_region_resize ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t
 	 * has been made */
 	assume ( region->buffer_addr );
 
-	PROF_DECR_GLOB ( rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, ( region->nb * sizeof ( sctk_ibuf_t ) ) );
-	PROF_DECR_GLOB ( rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, ( region->nb * region->size_ibufs ) );
-
 	/* Check if all ibufs are really free */
 #ifdef IB_DEBUG
 	int busy;
@@ -218,14 +214,12 @@ sctk_ibuf_rdma_region_resize ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t
 	ib_assume ( ptr );
 	/* FIXME: is the memset here really usefull? */
 	/* memset(ptr, 0, nb_ibufs * size_ibufs); */
-	PROF_ADD_GLOB ( rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, nb_ibufs * size_ibufs );
 
 	ib_assume ( region->ibuf );
 	ibuf = realloc ( region->ibuf, nb_ibufs * sizeof ( sctk_ibuf_t ) );
 	ib_assume ( ibuf );
 	/* FIXME: is the memset here really usefull? */
 	/* memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t)); */
-	PROF_ADD_GLOB ( rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, nb_ibufs * sizeof ( sctk_ibuf_t ) );
 
 	ib_assume ( nb_ibufs > 0 );
 	/* save previous values */
@@ -298,8 +292,6 @@ sctk_ibuf_rdma_region_free ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *
 {
 	LOAD_DEVICE ( rail_ib );
 
-	PROF_DECR_GLOB ( rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, ( region->nb * sizeof ( sctk_ibuf_t ) ) );
-	PROF_DECR_GLOB ( rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, ( region->nb * region->size_ibufs ) );
 
 	{
 		/* Free the buffers */
@@ -372,7 +364,6 @@ sctk_ibuf_rdma_region_reinit ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t
 	if ( nb_ibufs == 0 )
 	{
 		sctk_ibuf_rdma_region_free ( rail_ib, remote, region, channel );
-		PROF_INC_GLOB ( rail_ib->rail, SCTK_IB_RDMA_DECONNECTION );
 	}
 	else
 		/* If we need to resize the region */
@@ -380,7 +371,6 @@ sctk_ibuf_rdma_region_reinit ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t
 //    PROF_TIME_START(rail_ib->rail, ib_resize_rdma);
 		sctk_ibuf_rdma_region_resize ( rail_ib, remote, region, channel, nb_ibufs, size_ibufs );
 //    PROF_TIME_END(rail_ib->rail, ib_resize_rdma);
-		PROF_INC_GLOB ( rail_ib->rail, SCTK_IB_RDMA_RESIZING );
 	}
 }
 
@@ -402,13 +392,11 @@ sctk_ibuf_rdma_region_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *
 	sctk_posix_memalign ( ( void ** ) &ptr, getpagesize(), nb_ibufs * size_ibufs );
 	ib_assume ( ptr );
 	memset ( ptr, 0, nb_ibufs * size_ibufs );
-	PROF_ADD_GLOB ( rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, nb_ibufs * size_ibufs );
 
 	/* XXX: replace by memalign_on_node */
 	sctk_posix_memalign ( &ibuf, getpagesize(), nb_ibufs * sizeof ( sctk_ibuf_t ) );
 	ib_assume ( ibuf );
 	memset ( ibuf, 0, nb_ibufs * sizeof ( sctk_ibuf_t ) );
-	PROF_ADD_GLOB ( rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, nb_ibufs * sizeof ( sctk_ibuf_t ) );
 
 	region->size_ibufs_previous = 0;
 	region->nb_previous = 0;
@@ -476,7 +464,6 @@ sctk_ibuf_rdma_region_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *
 		clock_pointer = region;
 
 	CDL_PREPEND ( rdma_region_list, region );
-	PROF_INC_GLOB ( rail_ib->rail, SCTK_IB_RDMA_CONNECTION );
 	mpc_common_spinlock_write_unlock ( &rdma_region_list_lock );
 
 	sctk_nodebug ( "Head=%p(%d) Tail=%p(%d)", region->head, region->head->index,

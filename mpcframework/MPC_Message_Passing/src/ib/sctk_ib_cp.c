@@ -32,7 +32,6 @@
 #include "sctk_ib_mmu.h"
 #include "sctk_net_tools.h"
 #include "sctk_ib_eager.h"
-#include "sctk_ib_prof.h"
 #include "mpc_common_asm.h"
 #include "utlist.h"
 #include "sctk_ib_mpi.h"
@@ -357,30 +356,25 @@ retry:
 				mpc_common_spinlock_unlock ( lock );
 				sctk_ib_cp_decr_nb_pending_msg();
 
-#ifdef SCTK_IB_PROFILER
-				PROF_TIME_START ( rail, cp_time_own );
-#endif
+
 
 				/* Run the polling function according to the type of message */
 				if ( ibuf->cq == SCTK_IB_RECV_CQ )
 				{
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
-					//            (sctk_ib_prof_get_time_stamp() - ibuf->polled_timestamp));
+					//            (sctk_atomics_get_timestamp() - ibuf->polled_timestamp));
 					sctk_network_poll_recv_ibuf ( ( sctk_rail_info_t * ) ibuf->rail, ibuf );
 				}
 				else
 				{
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
-					//            (sctk_ib_prof_get_time_stamp() - ibuf->polled_timestamp));
+					//            (sctk_atomics_get_timestamp() - ibuf->polled_timestamp));
 					sctk_network_poll_send_ibuf ( ( sctk_rail_info_t * ) ibuf->rail, ibuf);
 				}
 
 				POLL_RECV_OWN ( poll );
 
-#ifdef SCTK_IB_PROFILER
-				PROF_TIME_END ( rail, cp_time_own );
-				PROF_INC ( rail, cp_counter_own );
-#endif
+
 				nb_found++;
 				goto retry;
 			}
@@ -463,7 +457,7 @@ int sctk_ib_cp_poll ( struct sctk_ib_polling_s *poll, int task_id )
         return 0;
 }
 
-static inline int __cp_steal ( struct sctk_ib_polling_s *poll, sctk_ibuf_t *volatile *list, mpc_common_spinlock_t *lock, sctk_ib_cp_task_t *task, sctk_ib_cp_task_t *stealing_task )
+static inline int __cp_steal ( struct sctk_ib_polling_s *poll, sctk_ibuf_t *volatile *list, mpc_common_spinlock_t *lock, __UNUSED__ sctk_ib_cp_task_t *task, __UNUSED__ sctk_ib_cp_task_t *stealing_task )
 {
 	sctk_ibuf_t *ibuf = NULL;
 	int nb_found = 0;
@@ -479,17 +473,13 @@ static inline int __cp_steal ( struct sctk_ib_polling_s *poll, sctk_ibuf_t *vola
 				mpc_common_spinlock_unlock ( lock );
 				sctk_ib_cp_decr_nb_pending_msg();
 
-#ifdef SCTK_IB_PROFILER
-				PROF_TIME_START ( rail, cp_time_steal );
-#endif
-
 				/* Run the polling function */
 				if ( ibuf->cq == SCTK_IB_RECV_CQ )
 				{
 					/* Profile the time to handle an ibuf once it has been polled
 					* from the CQ */
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
-					//            (sctk_ib_prof_get_time_stamp() - ibuf->polled_timestamp));
+					//            (sctk_atomics_get_timestamp() - ibuf->polled_timestamp));
 					sctk_network_poll_recv_ibuf ( ibuf->rail, ibuf );
 				}
 				else
@@ -497,27 +487,13 @@ static inline int __cp_steal ( struct sctk_ib_polling_s *poll, sctk_ibuf_t *vola
 					/* Profile the time to handle an ibuf once it has been polled
 					* from the CQ */
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
-					//            (sctk_ib_prof_get_time_stamp() - ibuf->polled_timestamp));
+					//            (sctk_atomics_get_timestamp() - ibuf->polled_timestamp));
 					sctk_network_poll_send_ibuf ( ibuf->rail, ibuf );
 				}
 
 				POLL_RECV_OTHER ( poll );
 
-#ifdef SCTK_IB_PROFILER
-				PROF_TIME_END ( rail, cp_time_steal );
 
-				/* Same node */
-                                if (stealing_task == NULL) {
-                                  PROF_INC(rail, cp_counter_steal_other_node);
-                                } else {
-                                  if (task->node == stealing_task->node) {
-                                    PROF_INC(rail, cp_counter_steal_same_node);
-                                  } else {
-                                    PROF_INC(rail, cp_counter_steal_other_node);
-                                  }
-                                }
-
-#endif
 				nb_found++;
 				goto exit;
 			}

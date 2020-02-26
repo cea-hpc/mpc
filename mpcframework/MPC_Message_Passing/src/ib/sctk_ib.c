@@ -43,7 +43,6 @@
 #include <sctk_ib_toolkit.h>
 #include <sctk_ib_rdma.h>
 #include <sctk_ib_eager.h>
-#include <sctk_ib_prof.h>
 #include <sctk_route.h>
 #include <sctk_ibufs_rdma.h>
 #include <mpc_common_helper.h>

@@ -27,7 +27,7 @@
 #include "sctk_ib_cm.h"
 #include "sctk_ib_polling.h"
 #include "sctk_ib_eager.h"
-#include "sctk_ib_prof.h"
+
 #include "sctk_ibufs_rdma.h"
 #include "sctk_route.h"
 #include "mpc_common_asm.h"
@@ -86,9 +86,7 @@ static void sctk_ib_cm_change_state_connected ( sctk_rail_info_t *rail,  sctk_en
 			else
 				sctk_ib_debug ( "[%d] OD QP connected to process %d", rail->rail_number, remote->rank );
 
-			/* Only reccord dynamically created QPs */
-			sctk_ib_prof_qp_write ( remote->rank, 0,
-			                        sctk_get_time_stamp(), PROF_QP_CREAT );
+
 
 			break;
 
@@ -114,7 +112,7 @@ static void sctk_ib_cm_change_state_to_rtr ( sctk_rail_info_t *rail,
 		state = sctk_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_CONNECTING, STATE_CONNECTED );
 		sprintf ( txt, SCTK_COLOR_GREEN ( RTR CONNECTED ) );
 		assume ( state == STATE_CONNECTING );
-		sctk_ib_prof_qp_write ( remote->rank, 0, sctk_get_time_stamp(), PROF_QP_RDMA_CONNECTED );
+
 	}
 	else
 		if ( type == RESIZING )
@@ -125,14 +123,14 @@ static void sctk_ib_cm_change_state_to_rtr ( sctk_rail_info_t *rail,
 				/* Change the state of the route */
 				state = sctk_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_FLUSHED, STATE_DECONNECTED );
 				sprintf ( txt, SCTK_COLOR_RED ( RTR DECONNECTED ) );
-				sctk_ib_prof_qp_write ( remote->rank, 0, sctk_get_time_stamp(), PROF_QP_RDMA_DISCONNECTED );
+
 			}
 			else
 			{
 				/* We connect */
 				state = sctk_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_FLUSHED, STATE_CONNECTED );
 				sprintf ( txt, SCTK_COLOR_BLUE ( RTR RESIZED ) );
-				sctk_ib_prof_qp_write ( remote->rank, 0, sctk_get_time_stamp(), PROF_QP_RDMA_RESIZING );
+
 			}
 
 			assume ( state == STATE_FLUSHED );
@@ -168,7 +166,7 @@ static void sctk_ib_cm_change_state_to_rts ( sctk_rail_info_t *rail,
 		state = sctk_ibuf_rdma_cas_remote_state_rts ( remote, STATE_CONNECTING, STATE_CONNECTED );
 		sprintf ( txt, SCTK_COLOR_GREEN ( RTS CONNECTED ) );
 		assume ( state == STATE_CONNECTING );
-		sctk_ib_prof_qp_write ( remote->rank, 0, sctk_get_time_stamp(), PROF_QP_RDMA_CONNECTED );
+
 	}
 	else
 		if ( type == RESIZING )
@@ -178,14 +176,14 @@ static void sctk_ib_cm_change_state_to_rts ( sctk_rail_info_t *rail,
 				/* We deconnect */
 				state = sctk_ibuf_rdma_cas_remote_state_rts ( remote, STATE_FLUSHED, STATE_DECONNECTED );
 				sprintf ( txt, SCTK_COLOR_RED ( RTS DISCONNECTED ) );
-				sctk_ib_prof_qp_write ( remote->rank, 0, sctk_get_time_stamp(), PROF_QP_RDMA_DISCONNECTED );
+
 			}
 			else
 			{
 				/* We connect */
 				state = sctk_ibuf_rdma_cas_remote_state_rts ( remote, STATE_FLUSHED, STATE_CONNECTED );
 				sprintf ( txt, SCTK_COLOR_BLUE ( RTS RESIZED ) );
-				sctk_ib_prof_qp_write ( remote->rank, 0, sctk_get_time_stamp(), PROF_QP_RDMA_RESIZING );
+
 			}
 
 			assume ( state == STATE_FLUSHED );
@@ -242,8 +240,6 @@ void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
 		sctk_ib_init_remote ( src_rank, rail, endpoint_src, 0 );
 		route_src = &endpoint_src->data.ib;
 
-		SCTK_COUNTER_INC ( signalization_endpoints, 2 );
-
 		sctk_ib_qp_keys_send ( rail_ib, route_dest->remote );
 	 mpc_launch_pmi_barrier();
 
@@ -273,7 +269,6 @@ void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
 		endpoint_dest = sctk_ib_create_remote();
 		sctk_ib_init_remote ( dest_rank, rail, endpoint_dest, 0 );
 		route_dest = &endpoint_dest->data.ib;
-		SCTK_COUNTER_INC ( signalization_endpoints, 1 );
 
 		sctk_ib_qp_keys_send ( rail_ib, route_dest->remote );
 	 mpc_launch_pmi_barrier();

@@ -28,7 +28,6 @@
 #include "sctk_ibufs.h"
 #include "sctk_ibufs_rdma.h"
 #include "sctk_ib_qp.h"
-#include "sctk_ib_prof.h"
 #include "sctk_ib_polling.h"
 #include "mpc_launch_pmi.h"
 #include "mpc_common_asm.h"
@@ -343,7 +342,7 @@ struct ibv_qp *sctk_ib_qp_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
 	LOAD_DEVICE ( rail_ib );
 
 	remote->qp = ibv_create_qp ( device->pd, attr );
-	PROF_INC ( rail_ib->rail, ib_qp_created );
+
         if (!remote->qp) {
           sctk_warning("IB issue: try to reduce cap.max_send_wr %d -> %d",
                        attr->cap.max_send_wr, attr->cap.max_send_wr / 3);
@@ -790,8 +789,6 @@ static void *wait_send ( void *arg )
 	struct wait_send_s *a = ( struct wait_send_s * ) arg;
 	int rc;
 
-	PROF_TIME_START ( a->rail_ib->rail, ib_post_send );
-
 	mpc_common_spinlock_lock ( &a->remote->lock_send );
 
 	int need_reset = check_signaled ( a->rail_ib, a->remote, a->ibuf );
@@ -802,8 +799,6 @@ static void *wait_send ( void *arg )
 		inc_signaled ( a->rail_ib, a->remote, need_reset );
 
 	mpc_common_spinlock_unlock ( &a->remote->lock_send );
-
-	PROF_TIME_END ( a->rail_ib->rail, ib_post_send );
 
 	if ( rc == 0 )
 	{
@@ -831,17 +826,13 @@ static inline void __send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
 
 	/* We lock here because ibv_post_send uses mutexes which provide really bad performances.
 	* Instead we encapsulate the call between spinlocks */
-	PROF_TIME_START ( rail_ib->rail, ib_post_send_lock );
-	mpc_common_spinlock_lock ( &remote->lock_send );
-	PROF_TIME_END ( rail_ib->rail, ib_post_send_lock );
 
-	PROF_TIME_START ( rail_ib->rail, ib_post_send );
+	mpc_common_spinlock_lock ( &remote->lock_send );
 
 	int need_reset = check_signaled ( rail_ib, remote, ibuf );
 
 	rc = ibv_post_send ( remote->qp, & ( ibuf->desc.wr.send ), & ( ibuf->desc.bad_wr.send ) );
 
-	PROF_TIME_END ( rail_ib->rail, ib_post_send );
 
 	if ( rc == 0 )
 		inc_signaled ( rail_ib, remote, need_reset );

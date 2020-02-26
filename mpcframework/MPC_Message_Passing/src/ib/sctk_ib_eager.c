@@ -29,7 +29,6 @@
 #include "sctk_ibufs.h"
 #include "sctk_net_tools.h"
 #include "sctk_ib_cp.h"
-#include "sctk_ib_prof.h"
 #include "sctk_ib_topology.h"
 #define HOSTNAME 2048
 
@@ -108,7 +107,6 @@ static inline mpc_lowcomm_ptp_message_t *sctk_ib_eager_pick_buffered_ptp_message
 	/* If no more entries are available in the buffered list, we allocate */
 	if ( tmp == NULL )
 	{
-		PROF_INC ( rail, ib_alloc_mem );
 		tmp = sctk_malloc ( sizeof ( mpc_lowcomm_ptp_message_t ) );
 		/* This header must be freed after use */
 		tmp->from_buffered = 0;
@@ -133,7 +131,6 @@ void sctk_ib_eager_release_buffered_ptp_message ( sctk_rail_info_t *rail, mpc_lo
 	else
 	{
 		/* We can simply free the buffer because it was malloc'ed :-) */
-		PROF_INC ( rail, ib_free_mem );
 		sctk_free ( msg );
 	}
 }
@@ -165,12 +162,11 @@ sctk_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,  sctk_ib_
 	IBUF_SET_SRC_TASK ( ibuf->buffer, SCTK_MSG_SRC_TASK ( msg ) );
 	IBUF_SET_POISON ( ibuf->buffer );
 
-	PROF_TIME_START ( rail_ib->rail, ib_ibuf_memcpy );
+
 	/* Copy header */
 	memcpy ( IBUF_GET_EAGER_MSG_HEADER ( ibuf->buffer ), msg, sizeof ( mpc_lowcomm_ptp_message_body_t ) );
 	/* Copy payload */
 	sctk_net_copy_in_buffer ( msg, IBUF_GET_EAGER_MSG_PAYLOAD ( ibuf->buffer ) );
-	PROF_TIME_END ( rail_ib->rail, ib_ibuf_memcpy );
 
 	eager_header = IBUF_GET_EAGER_HEADER ( ibuf->buffer );
 	eager_header->payload_size = size - sizeof ( mpc_lowcomm_ptp_message_body_t );
@@ -240,7 +236,7 @@ static mpc_lowcomm_ptp_message_t *sctk_ib_eager_recv ( sctk_rail_info_t *rail, s
 
 		size = eager_header->payload_size;
 		msg = sctk_malloc ( size + sizeof ( mpc_lowcomm_ptp_message_t ) );
-		PROF_INC ( rail, ib_alloc_mem );
+
 		ib_assume ( msg );
 
 		body = ( char * ) msg + sizeof ( mpc_lowcomm_ptp_message_t );

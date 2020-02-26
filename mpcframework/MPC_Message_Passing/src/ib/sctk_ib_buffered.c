@@ -34,7 +34,6 @@
 #include "sctk_ib_eager.h"
 #include "sctk_ib_cp.h"
 #include "sctk_ibufs_rdma.h"
-#include "sctk_ib_prof.h"
 
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
@@ -121,10 +120,9 @@ int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
 			payload_size = buffer_size;
 		}
 
-		PROF_TIME_START ( rail_ib->rail, ib_buffered_memcpy );
+
 		memcpy ( IBUF_GET_BUFFERED_PAYLOAD ( ibuf->buffer ), ( char * ) payload + msg_copied,
 		         payload_size );
-		PROF_TIME_END ( rail_ib->rail, ib_buffered_memcpy );
 
 		sctk_nodebug ( "Send message %d to %d (msg_copied:%lu pyload_size:%lu header:%lu, buffer_size:%lu number:%lu)",
 		               buffer_index, remote->rank, msg_copied, payload_size, IBUF_GET_BUFFERED_SIZE, buffer_size, SCTK_MSG_NUMBER ( msg ) );
@@ -172,7 +170,6 @@ void sctk_ib_buffered_free_msg ( void *arg )
 		case SCTK_IB_RDMA_RECOPY:
 			sctk_nodebug ( "Free payload %p from entry %p", entry->payload, entry );
 			sctk_free ( entry->payload );
-			PROF_INC ( rail, ib_free_mem );
 			break;
 
 		case SCTK_IB_RDMA_ZEROCOPY:
@@ -227,7 +224,6 @@ void sctk_ib_buffered_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
 				sctk_nodebug ( "Message recopied free from copy %d (%p)", entry->status, entry );
 				sctk_net_message_copy_from_buffer ( entry->payload, tmp, 1 );
 				sctk_free ( entry );
-				PROF_INC ( rail, ib_free_mem );
 			}
 			else
 			{
@@ -268,7 +264,6 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
 		/* Allocate memory for message header */
 		entry = sctk_malloc ( sizeof ( sctk_ib_buffered_entry_t ) );
 		ib_assume ( entry );
-		PROF_INC ( rail, ib_alloc_mem );
 		/* Copy message header */
 		memcpy ( &entry->msg.body, body, sizeof ( mpc_lowcomm_ptp_message_body_t ) );
 		entry->msg.tail.ib.protocol = SCTK_IB_BUFFERED_PROTOCOL;
@@ -304,7 +299,6 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
 			sctk_nodebug ( "We recopy the message" );
 			entry->payload = sctk_malloc ( body->header.msg_size );
 			ib_assume ( entry->payload );
-			PROF_INC ( rail, ib_alloc_mem );
 			entry->status |= SCTK_IB_RDMA_RECOPY;
 		}
 		else
@@ -385,7 +379,6 @@ void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 					sctk_net_message_copy_from_buffer ( entry->payload, entry->copy_ptr, 1 );
 					sctk_nodebug ( "Message recopied free from done" );
 					sctk_free ( entry );
-					PROF_INC ( rail, ib_free_mem );
 				}
 				else
 				{
@@ -406,7 +399,6 @@ void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 					_mpc_comm_ptp_message_commit_request ( entry->copy_ptr->msg_send,
 					                                   entry->copy_ptr->msg_recv );
 					sctk_free ( entry );
-					PROF_INC ( rail, ib_free_mem );
 					sctk_nodebug ( "Message zerocpy free from done" );
 				}
 				else

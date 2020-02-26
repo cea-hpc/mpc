@@ -34,7 +34,7 @@ libmpclowcomm_la_SOURCES += ./shm/sctk_handler_pmi.c  ./shm/sctk_shm_cma.c  ./sh
 if INFINIBAND_DRIVER_ENABLED
 libmpclowcomm_la_SOURCES += ./ib/sctk_ib_async.c ./ib/sctk_ib_buffered.c ./ib/sctk_ib.c ./ib/sctk_ib_cm.c
 libmpclowcomm_la_SOURCES += ./ib/sctk_ib_config.c ./ib/sctk_ib_cp.c ./ib/sctk_ib_device.c ./ib/sctk_ib_eager.c
-libmpclowcomm_la_SOURCES += ./ib/sctk_ib_mmu.c ./ib/sctk_ib_mpi.c ./ib/sctk_ib_polling.c ./ib/sctk_ib_prof.c
+libmpclowcomm_la_SOURCES += ./ib/sctk_ib_mmu.c ./ib/sctk_ib_mpi.c ./ib/sctk_ib_polling.c
 libmpclowcomm_la_SOURCES += ./ib/sctk_ib_qp.c ./ib/sctk_ib_rdma.c ./ib/sctk_ib_toolkit.c ./ib/sctk_ib_topology.c
 libmpclowcomm_la_SOURCES += ./ib/sctk_ibufs.c ./ib/sctk_ibufs_rdma.c
 endif

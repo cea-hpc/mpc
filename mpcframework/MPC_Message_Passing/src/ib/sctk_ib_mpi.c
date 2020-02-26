@@ -40,9 +40,7 @@
 #include "sctk_ib_rdma.h"
 #include "sctk_ib_buffered.h"
 #include "sctk_ib_topology.h"
-#include "sctk_ib_prof.h"
 #include "sctk_ib_cp.h"
-#include "sctk_ib_prof.h"
 #include "mpc_common_asm.h"
 #include "mpc_common_asm.h"
 
@@ -98,7 +96,6 @@ static void sctk_network_send_message_ib_endpoint ( mpc_lowcomm_ptp_message_t *m
 	/* Check if the remote task is in low mem mode */
 	size = SCTK_MSG_SIZE ( msg ) + sizeof ( mpc_lowcomm_ptp_message_body_t );
 
-	sctk_ib_prof_qp_write ( remote->rank, size, sctk_get_time_stamp(), PROF_QP_SEND );
 
 	/* *
 	*
@@ -119,7 +116,6 @@ static void sctk_network_send_message_ib_endpoint ( mpc_lowcomm_ptp_message_t *m
 		/* Send message */
 		sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
 		mpc_lowcomm_ptp_message_complete_and_free ( msg );
-		PROF_INC ( rail_ib->rail, ib_eager_nb );
 
 		/* Remote profiling */
 		sctk_ibuf_rdma_update_remote ( remote, size );
@@ -134,7 +130,6 @@ buffered:
 		mpc_common_debug( "Buffered" );
 		sctk_ib_buffered_prepare_msg ( rail, remote, msg, size );
 		mpc_lowcomm_ptp_message_complete_and_free ( msg );
-		PROF_INC ( rail_ib->rail, ib_buffered_nb );
 
 		/* Remote profiling */
 		sctk_ibuf_rdma_update_remote ( remote, size );
@@ -149,7 +144,6 @@ buffered:
 	/* Send message */
 	sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
 	sctk_ib_rdma_rendezvous_prepare_send_msg ( msg, size );
-	PROF_INC ( rail_ib->rail, ib_rdma_nb );
 exit:
 	{}
 
@@ -257,7 +251,6 @@ int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 
 int sctk_network_poll_recv_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 {
-	PROF_TIME_START ( rail, ib_poll_recv_ibuf );
 	const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL ( ibuf->buffer );
 	int release_ibuf = 1;
 	const struct ibv_wc wc = ibuf->wc;
@@ -332,8 +325,6 @@ int sctk_network_poll_recv_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 		sctk_ibuf_release_from_srq ( &rail->network.ib, ibuf );
 	}
 
-	PROF_TIME_END ( rail, ib_poll_recv_ibuf );
-
 	return 0;
 }
 
@@ -344,16 +335,10 @@ static int sctk_network_poll_recv ( sctk_rail_info_t *rail, struct ibv_wc *wc )
 	ib_assume ( ibuf );
 	int dest_task = -1;
 
-#if 0
-	/* Get the remote associated to the ibuf */
-	const sctk_ib_qp_t const *remote = sctk_ib_qp_ht_find ( rail_ib, wc->qp_num );
-	ib_assume ( remote );
-	sctk_ib_prof_qp_write ( remote->rank, wc->byte_len, sctk_get_time_stamp(), PROF_QP_RECV );
-#endif
 
 	/* Put a timestamp in the buffer. We *MUST* do it
 	* before pushing the message to the list */
-	ibuf->polled_timestamp = sctk_ib_prof_get_time_stamp();
+	ibuf->polled_timestamp = sctk_atomics_get_timestamp();
 	/* We *MUST* recopy some informations to the ibuf */
 	ibuf->wc = *wc;
 	ibuf->cq = SCTK_IB_RECV_CQ;
@@ -430,7 +415,7 @@ static int sctk_network_poll_send ( sctk_rail_info_t *rail, struct ibv_wc *wc )
 
 	/* Put a timestamp in the buffer. We *MUST* do it
 	* before pushing the message to the list */
-	ibuf->polled_timestamp = sctk_ib_prof_get_time_stamp();
+	ibuf->polled_timestamp = sctk_atomics_get_timestamp();
 
 	/* We *MUST* recopy some informations to the ibuf */
 	ibuf->wc = *wc;
@@ -475,14 +460,11 @@ void sctk_network_poll_all_cq ( sctk_rail_info_t *rail, sctk_ib_polling_t *poll 
 	LOAD_CONFIG ( rail_ib );
 
 
-			SCTK_PROFIL_START ( ib_poll_cq );
-
 			/* Poll received messages */
 			sctk_ib_cq_poll ( rail, device->recv_cq, config->wc_in_number, poll, sctk_network_poll_recv );
 
 			/* Poll sent messages */
 			sctk_ib_cq_poll ( rail, device->send_cq, config->wc_out_number, poll, sctk_network_poll_send );
-			SCTK_PROFIL_END ( ib_poll_cq );
 
 #ifdef SCTK_IB_CQ_MUTEX
 #if 1
@@ -592,7 +574,7 @@ static void sctk_network_notify_perform_message_ib (  __UNUSED__ int remote_proc
 		return;
 
 	POLL_INIT ( &poll );
-	SCTK_PROFIL_START ( ib_perform_all );
+
 	sctk_ib_cp_poll ( &poll, polling_task_id );
 
 	/* If nothing to poll, we poll the CQ */
@@ -610,8 +592,6 @@ static void sctk_network_notify_perform_message_ib (  __UNUSED__ int remote_proc
 		}
 	}
 
-
-	SCTK_PROFIL_END ( ib_perform_all );
 }
 
 __thread int idle_poll_all = 0;
@@ -772,7 +752,6 @@ void sctk_network_initialize_task_mpi_ib ( sctk_rail_info_t *rail, int taskid, i
 
 void sctk_network_finalize_task_mpi_ib ( sctk_rail_info_t *rail, int taskid, int vp )
 {
-	sctk_ib_prof_finalize ( &rail->network.ib );
 	sctk_network_finalize_task_collaborative_ib(rail, taskid, vp);
 }
 
@@ -881,7 +860,6 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	rail_ib->rail_nb = rail->rail_number;
 
 	/* Profiler init */
-	sctk_ib_prof_mem_init ( rail_ib );
 	sctk_ib_device_t *device;
 	struct ibv_srq_init_attr srq_attr;
 
