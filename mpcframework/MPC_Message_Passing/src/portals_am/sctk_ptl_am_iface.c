@@ -22,17 +22,20 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#if defined( MPC_USE_PORTALS ) && defined( MPC_Active_Message )
+
 #include <limits.h>
+#include <mpc_lowcomm.h>
 #include "sctk_debug.h"
 #include "sctk_alloc.h"
 #include "mpc_common_helper.h"
-#include "ptl_layer.h"
+//#include "ptl_layer.h"
 #include "sctk_ptl_am_iface.h"
 #include "sctk_ptl_am_types.h"
+
 #include "mpc_common_asm.h"
-#include "sctk_pmi.h"
+#include "mpc_launch_pmi.h"
 #include "sctk_accessor.h"
+
 
 /** threshold for large ARPC request */
 static size_t sctk_ptl_am_req_max_small_size = 0;
@@ -47,7 +50,7 @@ static size_t sctk_ptl_am_req_trsh_new = 0;
  */
 void sctk_ptl_am_print_structure( sctk_ptl_am_rail_info_t *srail )
 {
-	sctk_ptl_limits_t l = srail->max_limits;
+	__UNUSED__ sctk_ptl_limits_t l = srail->max_limits;
 	mpc_common_debug(
 		"\n======== PORTALS AM STRUCTURE ========\n"
 		"\n"
@@ -315,7 +318,7 @@ static void sctk_ptl_am_pte_populate( sctk_ptl_am_rail_info_t *srail, int srv_id
  */
 void sctk_ptl_am_software_init( sctk_ptl_am_rail_info_t *srail, int nb_srv )
 {
-	size_t i = 0;
+	ssize_t i = 0;
 	srail->nb_entries = 0;
 
 	/* create PT table & EQ table (one for each PTE) */
@@ -431,7 +434,7 @@ void sctk_ptl_am_pte_create( sctk_ptl_am_rail_info_t *srail, size_t key )
 	if ( key != pte->idx )
 		sctk_warning( "A Portals entry does not match the computed index !" );
 
-	pte->pte_lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_init(&pte->pte_lock, 0);
 	OPA_store_int( &pte->next_tag, 0 );
 	pte->req_head = NULL;
 	pte->req_tail = NULL;
@@ -463,7 +466,7 @@ void sctk_ptl_am_pte_create( sctk_ptl_am_rail_info_t *srail, size_t key )
  * @param msg An internal msg, to communicate extra info for the current request.
  * @return sctk_ptl_am_msg_t* the real RPC msg associated to the response.
  */
-sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int srv, int rpc, const void *start_in, size_t sz_in, void **start_out, size_t *sz_out, sctk_ptl_am_msg_t *msg )
+sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int srv, int rpc, const void *start_in, size_t sz_in, void **start_out, __UNUSED__ size_t *sz_out, sctk_ptl_am_msg_t *msg )
 {
 	sctk_assert( srail );
 	sctk_assert( srv >= 0 && rpc >= 0 );
@@ -476,7 +479,7 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 	sctk_ptl_am_imm_data_t req_imm;
 	sctk_ptl_am_chunk_t *rep_me = NULL;
 	sctk_ptl_id_t remote = msg->remote;
-	sctk_ptl_am_matchbits_t md_match, md_ign;
+	sctk_ptl_am_matchbits_t md_match;
 
 	sctk_assert( pte );
 
@@ -499,7 +502,7 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 					/* YES and it is the last one for this chunk */
 					if ( req_imm.data.offset == ( SCTK_PTL_AM_CHUNK_SZ - SCTK_PTL_AM_REP_CELL_SZ ) ) /* last cell */
 					{
-						int cas_val = OPA_cas_int( &rep_me->up, 1, 0 );
+						__UNUSED__ int cas_val = OPA_cas_int( &rep_me->up, 1, 0 );
 						sctk_assert( cas_val == 1 );
 						break;
 					}
@@ -573,7 +576,7 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 
 	/* Set flags to match a generic request slot */
 	md_match = SCTK_PTL_MATCH_BUILD( srv, rpc, tag, !dedicated_me, SCTK_PTL_AM_REQ_TYPE, SCTK_PTL_AM_OP_SMALL );
-	md_ign = SCTK_PTL_IGN_FOR_REQ;
+
 
 	sctk_ptl_am_emit_put(
 		&srail->md_slot,		  /* the MD struct */
@@ -602,7 +605,7 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
  * @param remote_id the remote process who originated the RPC
  * @param msg extra info, specific to the response
  */
-void sctk_ptl_am_send_response( sctk_ptl_am_rail_info_t *srail, int srv, int rpc, void *start, size_t sz, int remote_id, sctk_ptl_am_msg_t *msg )
+void sctk_ptl_am_send_response( sctk_ptl_am_rail_info_t *srail, int srv, int rpc, void *start, size_t sz, __UNUSED__ int remote_id, sctk_ptl_am_msg_t *msg )
 {
 	sctk_assert( srail );
 	sctk_assert( srv >= 0 && rpc >= 0 );
@@ -611,7 +614,7 @@ void sctk_ptl_am_send_response( sctk_ptl_am_rail_info_t *srail, int srv, int rpc
 	sctk_ptl_am_pte_t *pte = srail->pte_table[srv];
 	sctk_ptl_id_t remote = msg->remote;
 	sctk_ptl_am_imm_data_t rep_imm;
-	sctk_ptl_am_matchbits_t md_match, md_ign;
+	sctk_ptl_am_matchbits_t md_match;
 	int dedicated_me = 0;
 
 	rep_imm.data.offset = -1; /* not used for response */
@@ -649,7 +652,7 @@ void sctk_ptl_am_send_response( sctk_ptl_am_rail_info_t *srail, int srv, int rpc
 		SCTK_PTL_AM_REP_TYPE,  /* it is a RESPONSE */
 		SCTK_PTL_AM_OP_SMALL   /* This is a small msg */
 	);
-	md_ign = SCTK_PTL_IGN_FOR_REP;
+
 
 	sctk_ptl_am_emit_put(
 		&srail->md_slot,		  /* the MD */
@@ -860,7 +863,9 @@ static inline void __sctk_ptl_am_event_handle_put( sctk_ptl_am_rail_info_t *srai
  * @param ev the polled event
  * @param pte the PTE where the event has been found
  */
-static inline void __sctk_ptl_am_event_handle_unlink( sctk_ptl_am_rail_info_t *srail, sctk_ptl_event_t *ev, sctk_ptl_am_pte_t *pte )
+static inline void __sctk_ptl_am_event_handle_unlink(__UNUSED__ sctk_ptl_am_rail_info_t *srail,
+						     sctk_ptl_event_t *ev,
+						     __UNUSED__ sctk_ptl_am_pte_t *pte )
 {
 	sctk_ptl_am_matchbits_t m;
 	m.raw = ev->match_bits;
@@ -873,7 +878,7 @@ static inline void __sctk_ptl_am_event_handle_unlink( sctk_ptl_am_rail_info_t *s
 					 *  1. type REQUEST = LARGE buffer from sender side -> just free the ptl object (user buffer)
 					 *  2. type RESPONSE = LARGE buffer allocated by us -> free it
 					 */
-		if ( m.data.is_req == SCTK_PTL_AM_REP_TYPE )
+		if ( m.data.is_req /* == SCTK_PTL_AM_REP_TYPE */ )
 			sctk_free( (void *) chunk->slot.me.start );
 
 		sctk_free( (void *) chunk );
@@ -887,7 +892,7 @@ static inline void __sctk_ptl_am_event_handle_unlink( sctk_ptl_am_rail_info_t *s
 		 */
 
 		sctk_assert( m.data.is_req == SCTK_PTL_AM_REQ_TYPE );
-		int cas_res = OPA_cas_int( &chunk->block->up, 1, 0 ); /* currenT ME is unlinked */
+		//int cas_res = OPA_cas_int( &chunk->block->up, 1, 0 ); /* currenT ME is unlinked */
 		int cnt_res = OPA_load_int( &chunk->block->refcnt );
 		/* Are all slots unused at the unlinking time ? */
 		if ( cnt_res == 0 )
@@ -1186,7 +1191,7 @@ void sctk_ptl_am_register_process( sctk_ptl_am_rail_info_t *srail )
  * \param[in] dest the MPC process rank
  * \return the Portals process id
  */
-sctk_ptl_id_t sctk_ptl_am_map_id( sctk_ptl_am_rail_info_t *srail, int dest )
+sctk_ptl_id_t sctk_ptl_am_map_id( __UNUSED__ sctk_ptl_am_rail_info_t *srail, int dest )
 {
 	int tmp_ret;
 	char connection_infos[MPC_COMMON_MAX_STRING_SIZE];
@@ -1209,4 +1214,3 @@ sctk_ptl_id_t sctk_ptl_am_map_id( sctk_ptl_am_rail_info_t *srail, int dest )
 	);
 	return id;
 }
-#endif

@@ -2,7 +2,7 @@ AC_INIT([mpc], [4.0], [france@paratools.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AC_LANG(C)
-AM_INIT_AUTOMAKE([subdir-objects])
+AM_INIT_AUTOMAKE([subdir-objects no-define])
 AC_CONFIG_SRCDIR([MPC_Arch/src/timer.c])
 AC_CONFIG_HEADERS([mpc_config.h])
 AM_SILENT_RULES([yes])
@@ -396,7 +396,7 @@ AC_MSG_CHECKING([Checking for PORTALS4 to enable portals support])
 
 if test "x$mpc_dep_found" = "xyes"; then
         AC_MSG_RESULT([yes])
-        MPC_NETWORK_LIST="$MPC_NETWORK_LIST portals4"
+        MPC_NETWORK_LIST="$MPC_NETWORK_LIST portals4 portals4_am"
         AC_DEFINE([MPC_USE_PORTALS], [1], [Portals support is enabled])
         portals4_enabled="yes"
 else

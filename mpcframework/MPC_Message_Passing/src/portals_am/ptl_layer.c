@@ -22,25 +22,27 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_PORTALS
-#include "ptl_layer.h"
+#include "mpc_lowcomm.h"
 #include "sctk_ptl_am_iface.h"
 #include "mpc_config.h"
 #include "sctk_accessor.h"
+#include "arpc_weak.h"
+
+#include <mpc_common_rank.h>
 
 static sctk_ptl_am_rail_info_t srail;
-volatile static void* cxx_pool;
+static void* cxx_pool;
 
 static size_t nb_process;
 static sctk_ptl_id_t* id_maps = NULL;
 
 int arpc_init_ptl(int nb_srv)
 {
-	int i;
+	unsigned int i;
 	srail = sctk_ptl_am_hardware_init();
 	sctk_ptl_am_software_init(&srail, nb_srv);
 
-	nb_process = sctk_get_process_number();
+	nb_process = mpc_common_get_process_count();
 	id_maps = (sctk_ptl_id_t*)sctk_malloc(sizeof(sctk_ptl_id_t) * nb_process);
 
 	for(i = 0; i < nb_process; i++)
@@ -48,7 +50,7 @@ int arpc_init_ptl(int nb_srv)
 		id_maps[i] = SCTK_PTL_ANY_PROCESS;
 	}
 
-	id_maps[sctk_get_process_rank()] = sctk_ptl_am_self(&srail);
+	id_maps[mpc_common_get_process_rank()] = sctk_ptl_am_self(&srail);
 
 	sctk_ptl_am_register_process(&srail);
 	return 0;
@@ -83,14 +85,14 @@ int arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_s
 	return 0;
 }
 
-int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size, sctk_ptl_am_msg_t* msg)
+int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size, struct sctk_ptl_am_msg_s* msg)
 {
 	*response = NULL;
 	*resp_size = 0;
 
 	ctx->cxx_pool = cxx_pool;
 
-	arpc_c_to_cxx_converter(ctx, input, req_size, response, resp_size);	
+	arpc_c_to_cxx_converter(ctx, input, req_size, response, resp_size);
 	if(response != NULL) /* there is something to return */
 	{
 		sctk_ptl_am_send_response(&srail, ctx->srvcode, ctx->rpcode, *response, *resp_size, ctx->dest, msg);
@@ -98,7 +100,7 @@ int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_s
 	return 0;
 }
 
-int arpc_polling_request_ptl(sctk_arpc_context_t* ctx)
+int arpc_polling_request_ptl(__UNUSED__ sctk_arpc_context_t* ctx)
 {
 	int ret = sctk_ptl_am_incoming_lookup(&srail);
 	if(!ret)
@@ -120,5 +122,3 @@ int arpc_free_response_ptl(void* resp_addr)
 	sctk_ptl_am_free_response(resp_addr);
 	return 0;
 }
-
-#endif

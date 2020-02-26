@@ -23,7 +23,6 @@
 #define SCTK_TYPES_H
 /************************** HEADERS **************************/
 #include <stdlib.h>
-#include <mpc_config.h>
 
 /************************** TYPES **************************/
 /** define the communicator number type **/
@@ -174,7 +173,6 @@ typedef enum sctk_ft_state_e
 	MPC_STATE_IGNORE,
 	MPC_STATE_COUNT
 } mpc_lowcomm_checkpoint_state_t;
-
 
 /************************** MACROS *************************/
 /** define the MPI_COMM_WORLD internal communicator number **/

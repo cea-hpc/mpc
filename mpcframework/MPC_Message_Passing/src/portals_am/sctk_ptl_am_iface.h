@@ -22,7 +22,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#if defined(MPC_USE_PORTALS) && defined(MPC_Active_Message)
 #ifndef SCTK_PTL_AM_IFACE_H_
 #define SCTK_PTL_AM_IFACE_H_
 
@@ -199,9 +198,9 @@ static inline const char const * sctk_ptl_am_event_decode(sctk_ptl_event_t ev)
  * \param[in] outvallen size of the final struct
  * \return Size of the string if serialization succeeded, -1 otherwise
  */
-static inline int sctk_ptl_am_data_deserialize ( const char *inval, void *outval, int outvallen )
+static inline int sctk_ptl_am_data_deserialize ( const char *inval, void *outval, unsigned int outvallen )
 {
-    int i;
+    unsigned int i;
     char *ret = ( char * ) outval;
 
     if ( outvallen != strlen ( inval ) / 2 )
@@ -358,5 +357,4 @@ static inline const char const* __sctk_ptl_am_ign_str(char*buf, size_t s, ptl_ma
 }
 
 
-#endif
 #endif

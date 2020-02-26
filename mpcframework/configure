@@ -3500,15 +3500,6 @@ fi
  VERSION='4.0'
 
 
-cat >>confdefs.h <<_ACEOF
-#define PACKAGE "$PACKAGE"
-_ACEOF
-
-
-cat >>confdefs.h <<_ACEOF
-#define VERSION "$VERSION"
-_ACEOF
-
 # Some tools Automake needs.
 
 ACLOCAL=${ACLOCAL-"${am_missing_run}aclocal-${am__api_version}"}
@@ -19833,7 +19824,7 @@ $as_echo_n "checking Checking for PORTALS4 to enable portals support... " >&6; }
 if test "x$mpc_dep_found" = "xyes"; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-        MPC_NETWORK_LIST="$MPC_NETWORK_LIST portals4"
+        MPC_NETWORK_LIST="$MPC_NETWORK_LIST portals4 portals4_am"
 
 $as_echo "#define MPC_USE_PORTALS 1" >>confdefs.h
 

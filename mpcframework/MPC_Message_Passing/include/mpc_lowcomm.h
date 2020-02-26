@@ -21,7 +21,8 @@
 /* ######################################################################## */
 #ifndef SCTK_COMM_H
 #define SCTK_COMM_H
-#include "mpc_lowcomm_types.h"
+
+#include <mpc_lowcomm_types.h>
 
 /** This file define the low-level communication layer for MPC
  * it also documents the libmode to bootstrap the communication layer
@@ -329,5 +330,18 @@ void mpc_lowcomm_rdma_MPC_MPI_notify_dest_ctx_set_trampoline( void (*trampoline)
   */
  void mpc_lowcomm_libmode_release();
  
+struct sctk_arpc_context;
+typedef struct sctk_arpc_context sctk_arpc_context_t;
+struct sctk_ptl_am_msg_s;
+
+int arpc_init_ptl(int);
+int arpc_register_service_ptl(void* pool, int srvcode);
+
+int arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size);
+int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size, struct sctk_ptl_am_msg_s*);
+
+int arpc_polling_request_ptl(sctk_arpc_context_t* ctx);
+int arpc_free_response_ptl(void* resp_addr);
+
 
 #endif /* SCTK_COMM_H */

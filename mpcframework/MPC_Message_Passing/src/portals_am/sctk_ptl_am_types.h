@@ -22,11 +22,11 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#if defined(MPC_USE_PORTALS) && defined(MPC_Active_Message)
 #ifndef SCTK_PTL_AM_TYPES_H_
 #define SCTK_PTL_AM_TYPES_H_
 
 #include <portals4.h>
+#include "sctk_ptl_types.h"
 #include "mpc_common_spinlock.h"
 #include "mpc_common_helper.h"
 #include "mpc_common_asm.h"
@@ -158,6 +158,18 @@
 #define SCTK_PTL_AM_EQ_PTE_SIZE 10240
 #define SCTK_PTL_AM_PMI_TAG 42
 
+/******************
+ * ACTIVE MESSAGE *
+ ******************/
+
+
+struct sctk_arpc_context
+{
+	int dest;
+	int rpcode;
+	int srvcode;
+	void* cxx_pool;
+};
 
 /*********************************/
 /**** OTHER USEFUL CONSTANTS  ****/
@@ -170,6 +182,7 @@
 #define SCTK_PTL_AM_REP_TYPE 1
 #define SCTK_PTL_AM_OP_SMALL 0
 #define SCTK_PTL_AM_OP_LARGE 1
+
 struct sctk_ptl_am_bits_content_s
 {
 	uint32_t   tag;        /**< Identify an operation                       */
@@ -303,5 +316,4 @@ typedef struct sctk_ptl_am_rail_info_s
 	char connection_infos[MPC_COMMON_MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
 	size_t connection_infos_size;           /**< Size of the above string */
 } sctk_ptl_am_rail_info_t;
-#endif
 #endif
