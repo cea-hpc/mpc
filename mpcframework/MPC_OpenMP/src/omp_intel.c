@@ -83,7 +83,7 @@ void __kmpc_flush( __UNUSED__ ident_t *loc, ... )
 
 void __kmpc_barrier( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t );
 	sctk_nodebug( "[%d] %s: entering...", t->rank, __func__ );
 	__mpcomp_barrier();
@@ -114,7 +114,7 @@ kmp_int32 __kmpc_barrier_master_nowait( __UNUSED__ ident_t *loc, __UNUSED__ kmp_
 void __intel_wrapper_func( void *arg )
 {
 	mpcomp_intel_wrapper_t *w = ( mpcomp_intel_wrapper_t * )arg;
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t );
 	sctk_assert( w );
 	sctk_nodebug( "%s: f: %p, argc: %d, args: %p", __func__, w->f, w->argc,
@@ -140,7 +140,7 @@ void __kmpc_fork_call( __UNUSED__ ident_t *loc, kmp_int32 argc, kmpc_micro micro
 	int i;
 	void **args_copy;
 	mpcomp_intel_wrapper_t *w;
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
 	sctk_nodebug( "__kmpc_fork_call: entering w/ %d arg(s)...", argc );
 	mpcomp_intel_wrapper_t w_noalloc;
@@ -206,7 +206,7 @@ void __kmpc_fork_call( __UNUSED__ ident_t *loc, kmp_int32 argc, kmpc_micro micro
 
 void __kmpc_serialized_parallel( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	mpcomp_parallel_region_t *info;
 #ifdef MPCOMP_FORCE_PARALLEL_REGION_ALLOC
 	info = sctk_malloc( sizeof( mpcomp_parallel_region_t ) );
@@ -235,7 +235,7 @@ void __kmpc_serialized_parallel( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 g
 
 void __kmpc_end_serialized_parallel( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	sctk_nodebug( "%s: entering (%d)...", __func__, global_tid );
 	/* Grab the thread info */
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
@@ -249,7 +249,7 @@ void __kmpc_end_serialized_parallel( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int
 void __kmpc_push_num_threads( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 global_tid,
                               kmp_int32 num_threads )
 {
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	sctk_warning( "%s: pushing %d thread(s)", __func__, num_threads );
 	/* Handle orphaned directive (initialize OpenMP environment) */
 	__mpcomp_init();
@@ -279,7 +279,7 @@ void __kmpc_fork_teams( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 argc, __UN
 
 kmp_int32 __kmpc_master( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
 	sctk_nodebug( "[%d] %s: entering", t->rank, __func__ );
 	return ( t->rank == 0 ) ? ( kmp_int32 )1 : ( kmp_int32 )0;
@@ -340,7 +340,7 @@ void __kmpc_init_lock( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 gtid, void
 {
 	omp_lock_t *user_mpcomp_lock = NULL;
 	iomp_lock_t *user_iomp_lock = ( iomp_lock_t * )user_lock;
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t );
 	sctk_assert( user_iomp_lock );
 	user_mpcomp_lock = ( omp_lock_t * )( &( user_iomp_lock->lk ) );
@@ -353,7 +353,7 @@ void __kmpc_init_nest_lock( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 gtid,
 {
 	omp_nest_lock_t *user_mpcomp_nest_lock = NULL;
 	iomp_lock_t *user_iomp_lock = ( iomp_lock_t * )user_lock;
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t );
 	sctk_assert( user_iomp_lock );
 	user_mpcomp_nest_lock = ( omp_nest_lock_t * )( &( user_iomp_lock->lk ) );
@@ -366,7 +366,7 @@ void __kmpc_destroy_lock( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid, vo
 {
 	omp_lock_t *user_mpcomp_lock = NULL;
 	iomp_lock_t *user_iomp_lock = ( iomp_lock_t * )user_lock;
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t );
 	sctk_assert( user_iomp_lock );
 	user_mpcomp_lock = ( omp_lock_t * )( &( user_iomp_lock->lk ) );
@@ -379,7 +379,7 @@ void __kmpc_destroy_nest_lock( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gti
 {
 	omp_nest_lock_t *user_mpcomp_nest_lock = NULL;
 	iomp_lock_t *user_iomp_lock = ( iomp_lock_t * )user_lock;
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t );
 	sctk_assert( user_iomp_lock );
 	user_mpcomp_nest_lock = ( omp_nest_lock_t * )( &( user_iomp_lock->lk ) );
@@ -392,7 +392,7 @@ void __kmpc_set_lock( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 gtid, void 
 {
 	omp_lock_t *user_mpcomp_lock = NULL;
 	iomp_lock_t *user_iomp_lock = ( iomp_lock_t * )user_lock;
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t );
 	sctk_assert( user_iomp_lock );
 	user_mpcomp_lock = ( omp_lock_t * )( &( user_iomp_lock->lk ) );
@@ -405,7 +405,7 @@ void __kmpc_set_nest_lock( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid, v
 {
 	omp_nest_lock_t *user_mpcomp_nest_lock = NULL;
 	iomp_lock_t *user_iomp_lock = ( iomp_lock_t * )user_lock;
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t );
 	sctk_assert( user_iomp_lock );
 	user_mpcomp_nest_lock = ( omp_nest_lock_t * )( &( user_iomp_lock->lk ) );
@@ -418,7 +418,7 @@ void __kmpc_unset_lock( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid, void
 {
 	omp_lock_t *user_mpcomp_lock = NULL;
 	iomp_lock_t *user_iomp_lock = ( iomp_lock_t * )user_lock;
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t );
 	sctk_assert( user_iomp_lock );
 	user_mpcomp_lock = ( omp_lock_t * )( &( user_iomp_lock->lk ) );
@@ -431,7 +431,7 @@ void __kmpc_unset_nest_lock( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid,
 {
 	omp_nest_lock_t *user_mpcomp_nest_lock = NULL;
 	iomp_lock_t *user_iomp_lock = ( iomp_lock_t * )user_lock;
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t );
 	sctk_assert( user_iomp_lock );
 	user_mpcomp_nest_lock = ( omp_nest_lock_t * )( &( user_iomp_lock->lk ) );
@@ -444,7 +444,7 @@ int __kmpc_test_lock( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid, void *
 {
 	omp_lock_t *user_mpcomp_lock = NULL;
 	iomp_lock_t *user_iomp_lock = ( iomp_lock_t * )user_lock;
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t );
 	sctk_assert( user_iomp_lock );
 	user_mpcomp_lock = ( omp_lock_t * )( &( user_iomp_lock->lk ) );
@@ -458,7 +458,7 @@ int __kmpc_test_nest_lock( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 gtid, 
 {
 	omp_nest_lock_t *user_mpcomp_nest_lock = NULL;
 	iomp_lock_t *user_iomp_lock = ( iomp_lock_t * )user_lock;
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t );
 	sctk_assert( user_iomp_lock );
 	user_mpcomp_nest_lock = ( omp_nest_lock_t * )( &( user_iomp_lock->lk ) );
@@ -475,7 +475,7 @@ int __kmpc_test_nest_lock( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 gtid, 
 int __kmp_determine_reduction_method(
     ident_t *loc, __UNUSED__ kmp_int32 global_tid, __UNUSED__ kmp_int32 num_vars, __UNUSED__ size_t reduce_size,
     void *reduce_data, void ( *reduce_func )( void *lhs_data, void *rhs_data ),
-    kmp_critical_name *lck, mpcomp_thread_t *t )
+    __UNUSED__ kmp_critical_name *lck, mpcomp_thread_t __UNUSED__ *t )
 {
 	int retval = critical_reduce_block;
 	int team_size;
@@ -515,7 +515,7 @@ int __kmp_determine_reduction_method(
 	if ( __kmp_force_reduction_method != reduction_method_not_defined )
 	{
 		int forced_retval;
-		int atomic_available, tree_available;
+		int __UNUSED__ atomic_available, __UNUSED__ tree_available;
 
 		switch ( ( forced_retval = __kmp_force_reduction_method ) )
 		{
@@ -551,7 +551,7 @@ int __kmp_determine_reduction_method(
 	return retval;
 }
 
-static inline int __intel_tree_reduce_nowait( void *reduce_data, void ( *reduce_func )( void *lhs_data, void *rhs_data ), mpcomp_thread_t *t )
+static inline int __intel_tree_reduce_nowait( void *reduce_data, void ( *reduce_func )( void *lhs_data, void *rhs_data ), mpcomp_thread_t __UNUSED__ *t )
 {
 	mpcomp_node_t *c, *new_root;
 	mpcomp_mvp_t *mvp = t->mvp;
@@ -655,7 +655,7 @@ static inline int __intel_tree_reduce_nowait( void *reduce_data, void ( *reduce_
 	}
 }
 
-static inline int __intel_tree_reduce( void *reduce_data, void ( *reduce_func )( void *lhs_data, void *rhs_data ), mpcomp_thread_t *t )
+static inline int __intel_tree_reduce( void *reduce_data, void ( *reduce_func )( void *lhs_data, void *rhs_data ), mpcomp_thread_t __UNUSED__ *t )
 {
 	mpcomp_node_t *c, *new_root;
 	mpcomp_mvp_t *mvp = t->mvp;
@@ -782,7 +782,7 @@ kmp_int32 __kmpc_reduce_nowait( ident_t *loc, kmp_int32 global_tid, kmp_int32 nu
 {
 	int retval = 0;
 	int packed_reduction_method;
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
 	/* get reduction method */
@@ -823,7 +823,7 @@ void __kmpc_end_reduce_nowait( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 glo
 {
 	int packed_reduction_method;
 	/* get reduction method */
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
 	packed_reduction_method = t->reduction_method;
@@ -857,7 +857,7 @@ kmp_int32 __kmpc_reduce( ident_t *loc, kmp_int32 global_tid, kmp_int32 num_vars,
 {
 	int retval = 0;
 	int packed_reduction_method;
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
 	/* get reduction method */
@@ -898,7 +898,7 @@ void __kmpc_end_reduce( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid
 {
 	int packed_reduction_method;
 	/* get reduction method */
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
 	packed_reduction_method = t->reduction_method;
@@ -939,7 +939,7 @@ void __kmpc_for_static_init_4( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gti
                                kmp_int32 *pupper, kmp_int32 *pstride,
                                kmp_int32 incr, kmp_int32 chunk )
 {
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
 	int rank = t->rank;
@@ -1070,7 +1070,7 @@ void __kmpc_for_static_init_4u( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gt
                                 kmp_int32 *pstride, kmp_int32 incr,
                                 kmp_int32 chunk )
 {
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	mpcomp_loop_gen_info_t *loop_infos;
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
@@ -1211,7 +1211,7 @@ void __kmpc_for_static_init_8( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gti
                                kmp_int64 *pupper, kmp_int64 *pstride,
                                kmp_int64 incr, kmp_int64 chunk )
 {
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
 	int rank = t->rank;
@@ -1348,7 +1348,7 @@ void __kmpc_for_static_init_8u( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gt
                                 kmp_int64 chunk )
 {
 	/* TODO: the same as unsigned long long in GCC... */
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
 	unsigned long  rank = t->rank;
@@ -1492,7 +1492,7 @@ void __kmpc_for_static_fini( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 globa
  * DISPATCH *
  ************/
 
-static inline void __intel_dispatch_init_long( mpcomp_thread_t *t, long lb,
+static inline void __intel_dispatch_init_long( mpcomp_thread_t __UNUSED__ *t, long lb,
         long b, long incr,
         long chunk )
 {
@@ -1550,7 +1550,7 @@ static inline void __intel_dispatch_init_long( mpcomp_thread_t *t, long lb,
 	}
 }
 
-static inline void __intel_dispatch_init_ull( mpcomp_thread_t *t, bool up,
+static inline void __intel_dispatch_init_ull( mpcomp_thread_t __UNUSED__ *t, bool up,
         unsigned long long lb,
         unsigned long long b,
         unsigned long long incr,
@@ -1611,7 +1611,7 @@ static inline void __intel_dispatch_init_ull( mpcomp_thread_t *t, bool up,
 	}
 }
 
-static inline int __intel_dispatch_next_long( mpcomp_thread_t *t,
+static inline int __intel_dispatch_next_long( mpcomp_thread_t __UNUSED__ *t,
         long *from, long *to )
 {
 	int ret;
@@ -1668,7 +1668,7 @@ static inline int __intel_dispatch_next_long( mpcomp_thread_t *t,
 	return ret;
 }
 static inline int __intel_dispatch_next_ull(
-    mpcomp_thread_t *t, unsigned long long *from, unsigned long long *to )
+    mpcomp_thread_t __UNUSED__ *t, unsigned long long *from, unsigned long long *to )
 {
 	int ret;
 
@@ -1725,7 +1725,7 @@ static inline int __intel_dispatch_next_ull(
 static inline void __intel_dispatch_fini_gen( __UNUSED__ ident_t *loc,
         __UNUSED__ kmp_int32 gtid )
 {
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
 
@@ -1780,7 +1780,7 @@ void __kmpc_dispatch_init_4( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid,
                              enum sched_type schedule, kmp_int32 lb,
                              kmp_int32 ub, kmp_int32 st, kmp_int32 chunk )
 {
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t );
 	sctk_nodebug( "[%d] %s: enter %d -> %d incl, %d excl [%d] ck:%d sch:%d",
 	              t->rank, __func__, lb, ub, ub + st, st, chunk, schedule );
@@ -1796,7 +1796,7 @@ void __kmpc_dispatch_init_4u( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 gti
                               enum sched_type schedule, kmp_uint32 lb,
                               kmp_uint32 ub, kmp_int32 st, kmp_int32 chunk )
 {
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t );
 	sctk_nodebug(
 	    "[%d] %s: enter %llu -> %llud incl, %llu excl [%llu] ck:%llud sch:%d",
@@ -1816,7 +1816,7 @@ void __kmpc_dispatch_init_8( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid,
                              enum sched_type schedule, kmp_int64 lb,
                              kmp_int64 ub, kmp_int64 st, kmp_int64 chunk )
 {
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t );
 	sctk_nodebug( "[%d] %s: enter %d -> %d incl, %d excl [%d] ck:%d sch:%d",
 	              t->rank, __func__, lb, ub, ub + st, st, chunk, schedule );
@@ -1832,7 +1832,7 @@ void __kmpc_dispatch_init_8u( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 gti
                               enum sched_type schedule, kmp_uint64 lb,
                               kmp_uint64 ub, kmp_int64 st, kmp_int64 chunk )
 {
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t );
 	sctk_nodebug(
 	    "[%d] %s: enter %llu -> %llud incl, %llu excl [%llu] ck:%llud sch:%d",
@@ -1852,7 +1852,7 @@ int __kmpc_dispatch_next_4( ident_t *loc, kmp_int32 gtid, __UNUSED__ kmp_int32 *
                             kmp_int32 *p_lb, kmp_int32 *p_ub, __UNUSED__  kmp_int32 *p_st )
 {
 	long from, to;
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
 	sctk_assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_LONG );
 	const long incr = t->info.loop_infos.loop.mpcomp_long.incr;
@@ -1876,7 +1876,7 @@ int __kmpc_dispatch_next_4u( ident_t *loc, kmp_int32 gtid, __UNUSED__ kmp_int32 
                              kmp_uint32 *p_lb, kmp_uint32 *p_ub,
                              __UNUSED__ kmp_int32 *p_st )
 {
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	unsigned long long from, to;
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
@@ -1902,7 +1902,7 @@ int __kmpc_dispatch_next_8( ident_t *loc, kmp_int32 gtid, __UNUSED__ kmp_int32 *
                             kmp_int64 *p_lb, kmp_int64 *p_ub, __UNUSED__ kmp_int64 *p_st )
 {
 	long from, to;
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
 	sctk_assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_LONG );
@@ -1927,7 +1927,7 @@ int __kmpc_dispatch_next_8u( ident_t *loc, kmp_int32 gtid, __UNUSED__ kmp_int32 
                              kmp_uint64 *p_lb, kmp_uint64 *p_ub,
                              __UNUSED__ kmp_int64 *p_st )
 {
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	unsigned long long from, to;
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
@@ -2055,7 +2055,7 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
                                    kmp_routine_entry_t task_entry )
 {
 	sctk_assert( sctk_openmp_thread_tls );
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	__mpcomp_init();
 	/* default pading */
 	const long align_size = sizeof( void * );
@@ -2151,7 +2151,7 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
 void __kmpc_omp_task_begin_if0( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid,
                                 kmp_task_t *task )
 {
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	struct mpcomp_task_s *mpcomp_task = ( struct mpcomp_task_s * ) (
 	                                        ( char * )task - sizeof( struct mpcomp_task_s ) );
 	sctk_assert( t );
@@ -2165,7 +2165,7 @@ void __kmpc_omp_task_begin_if0( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int3
 void __kmpc_omp_task_complete_if0( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_int32 gtid,
                                    kmp_task_t *task )
 {
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	struct mpcomp_task_s *mpcomp_task = ( struct mpcomp_task_s * )
 	                                    ( ( char * )task - sizeof( struct mpcomp_task_s ) );
 	sctk_assert( t );
@@ -2287,7 +2287,7 @@ void __kmpc_omp_wait_deps( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gti
                            kmp_depend_info_t *dep_list, kmp_int32 ndeps_noalias,
                            kmp_depend_info_t *noalias_dep_list )
 {
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	mpcomp_task_t *current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( t );
 	mpcomp_task_t *task = current_task->last_task_alloc;
 	long arg_size = 0;
@@ -2313,7 +2313,7 @@ void __kmpc_taskloop( ident_t *loc, int gtid, kmp_task_t *task, __UNUSED__ int i
                       kmp_uint64 *lb, kmp_uint64 *ub, kmp_int64 st,
                       int nogroup, int sched, kmp_uint64 grainsize, void *task_dup )
 {
-	mpcomp_thread_t *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	mpcomp_thread_t __UNUSED__ *t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	unsigned long i, trip_count, num_tasks = 0, extras = 0, lower = *lb, upper = *ub;
 	kmp_task_t *next_task;
 	int lastpriv;
@@ -2493,7 +2493,7 @@ struct private_common *kmp_threadprivate_insert( int gtid, void *pc_addr,
 {
 	struct private_common *tn, **tt;
 	static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	/* critical section */
 	mpc_common_spinlock_lock( &lock );
@@ -2527,7 +2527,7 @@ void *__kmpc_threadprivate( __UNUSED__ ident_t *loc, kmp_int32 global_tid, void 
 {
 	void *ret = NULL;
 	struct private_common *tn;
-	mpcomp_thread_t *t;
+	mpcomp_thread_t __UNUSED__ *t;
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
 	tn = __kmp_threadprivate_find_task_common( t->th_pri_common, global_tid, data );
 
@@ -2585,7 +2585,7 @@ void __kmpc_copyprivate( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_ti
                          void *cpy_data, void ( *cpy_func )( void *, void * ),
                          kmp_int32 didit )
 {
-	mpcomp_thread_t *t; /* Info on the current thread */
+	mpcomp_thread_t __UNUSED__ *t; /* Info on the current thread */
 	void **data_ptr;
 	/* Grab the thread info */
 	t = ( mpcomp_thread_t * )sctk_openmp_thread_tls;

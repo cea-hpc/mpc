@@ -399,6 +399,7 @@ int PMI_KVS_Put( const char kvsname[], const char key[], const char value[] )
 
 int PMI_KVS_Commit(const char kvsname[]) {
   /* no-op in this implementation */
+  kvsname++;
   return (0);
 }
 

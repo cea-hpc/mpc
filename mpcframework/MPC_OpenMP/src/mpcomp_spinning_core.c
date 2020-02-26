@@ -494,7 +494,7 @@ static inline mpcomp_mvp_t *__scatter_wakeup_final_mvp( mpcomp_node_t *node )
 	sctk_assert( node->child_type == MPCOMP_CHILDREN_LEAF );
 	sctk_assert( node->instance->root->depth <= node->depth );
 	const int node_vdepth = node->depth - node->instance->root->depth + 1;
-	const int num_vchildren = node->instance->tree_base[node_vdepth];
+	const int  __UNUSED__ num_vchildren = node->instance->tree_base[node_vdepth];
 	sctk_assert( node->num_threads <= num_vchildren );
 	const int nthreads = node->num_threads;
 	const int num_children = node->nb_children;

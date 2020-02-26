@@ -74,7 +74,7 @@ void _mpc_topology_map_and_restrict_by_cpuset(hwloc_topology_t target_topology,
 	}
 	else
 	{
-		int sum = hwloc_get_nbobjs_inside_cpuset_by_type( target_topology,
+		unsigned int sum = hwloc_get_nbobjs_inside_cpuset_by_type( target_topology,
 														  pinning_constraints,
 														  HWLOC_OBJ_PU );
 

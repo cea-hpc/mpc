@@ -38,8 +38,9 @@
 #if !defined(NDEBUG)
 #define SCTK_PTL_STR_PROT(i) __sctk_ptl_str_prot[i]
 #define SCTK_PTL_STR_TYPE(i) __sctk_ptl_str_type[i]
+
 /** global static array to stringify type ID (through SCTK_PTL_STR_TYPE macro) */
-static char * __sctk_ptl_str_type[] = {
+static __UNUSED__ char * __sctk_ptl_str_type[] = {
 	"SCTK_PTL_TYPE_RECOVERY", 
 	"SCTK_PTL_TYPE_CM",
 	"SCTK_PTL_TYPE_RDMA",
@@ -50,7 +51,7 @@ static char * __sctk_ptl_str_type[] = {
 };
 
 /** global static array to stringify protocol ID (through SCTK_PTL_STR_PROT macro) */
-static char * __sctk_ptl_str_prot[] = {
+static __UNUSED__ char * __sctk_ptl_str_prot[] = {
 
 	"SCTK_PTL_PROT_EAGER",
 	"SCTK_PTL_PROT_RDV",

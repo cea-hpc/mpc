@@ -32,12 +32,16 @@
 
 #ifdef MPC_USE_DMTCP
 #include <dmtcp.h>
-#endif
+
 
 /** Number of checkpoints done since the application starts */
 static int nb_checkpoints = 0;
 /** Number of restarts done since the application starts */
 static int nb_restarts = 0;
+
+
+#endif
+
 /** Last C/R state */
 static mpc_lowcomm_checkpoint_state_t __state = MPC_STATE_NO_SUPPORT;
 
@@ -124,6 +128,8 @@ int sctk_ft_enabled()
 {
 #ifdef MPC_USE_DMTCP
 	return dmtcp_is_enabled();
+#else
+	return 0;
 #endif
 }
 
@@ -256,7 +262,7 @@ void sctk_ft_checkpoint_finalize()
 	}
 #endif
 	
-	int i;
+	unsigned int i;
 	size_t nb = sctk_rail_count();
 	for (i = 0; i < nb; ++i) {
 		sctk_rail_info_t* rail = sctk_rail_get_by_id(i);
@@ -283,6 +289,8 @@ int sctk_ft_disable()
 {
 #ifdef MPC_USE_DMTCP
 	return dmtcp_disable_ckpt();
+#else
+	return 0;
 #endif
 }
 
@@ -295,6 +303,8 @@ int sctk_ft_enable()
 {
 #ifdef MPC_USE_DMTCP
 	return dmtcp_enable_ckpt();
+#else
+	return 0;
 #endif
 }
 

@@ -45,7 +45,7 @@ mpc_no_exec (const void * restrict in, void * restrict inout, size_t size,
 }
 
 static inline void
-mpc_redution_check_type (mpc_lowcomm_datatype_t a, mpc_lowcomm_datatype_t b)
+mpc_redution_check_type (__UNUSED__ mpc_lowcomm_datatype_t a, __UNUSED__ mpc_lowcomm_datatype_t b)
 {
   sctk_assert (a == b);
   sctk_nodebug("%d == %d",a,b);

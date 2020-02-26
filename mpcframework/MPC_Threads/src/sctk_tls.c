@@ -163,7 +163,7 @@ void sctk_tls_dtors_add(struct sctk_tls_dtors_s ** head, void * obj, void (*func
 void sctk_tls_dtors_free(struct sctk_tls_dtors_s ** head)
 {
 	struct sctk_tls_dtors_s* elt = NULL, *tmp = NULL;
-	int count = 0;
+
 	LL_FOREACH_SAFE(*head, elt, tmp)
 	{
 		elt->dtor(elt->obj);

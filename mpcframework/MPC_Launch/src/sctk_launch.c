@@ -169,7 +169,7 @@ __sctk_add_arg_eq ( char *arg,
 
 #define sctk_add_arg_eq(arg,action) if(__sctk_add_arg_eq(arg,action,word) == 0) return 0
 
-static int sctk_process_nb_val;
+static unsigned int sctk_process_nb_val;
 static int sctk_processor_nb_val;
 
 
@@ -451,7 +451,7 @@ static void sctk_def_directory( __UNUSED__ char *arg ) /*   sctk_store_dir = arg
 {
 }
 
-static void ignored_argument ( char *arg )
+static void ignored_argument ( __UNUSED__ char *arg )
 {
 
 }
@@ -764,8 +764,7 @@ static inline startup_arg_t * __startup_arg_extract_and_duplicate(startup_arg_t 
         ret->argv = (char**)sctk_malloc(ret->argc * sizeof(char*));
         assume(ret->argv);
 
-        int argc = 0;
-
+ 
 	for ( i = 0; i < ret->argc; i++ )
 	{
 		int j;
@@ -884,7 +883,7 @@ sctk_disable_addr_randomize ( int argc, char **argv )
 }
 #else
 static inline void
-sctk_disable_addr_randomize ( int argc, char **argv )
+sctk_disable_addr_randomize (  __UNUSED__ int argc,  __UNUSED__ char **argv )
 {
 }
 #endif
@@ -984,7 +983,7 @@ static void __unpack_arguments()
 	char **argv;
 	void **tofree = NULL;
 	int tofree_nb = 0;
-	static int auto_kill;
+
 	char *argv_tmp[1];
 	argv = argv_tmp;
 	argv[0] = "main";

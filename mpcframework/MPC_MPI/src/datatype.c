@@ -980,7 +980,7 @@ int _mpc_dt_derived_release( _mpc_dt_derived_t *type )
 
 void _mpc_dt_derived_true_extend( _mpc_dt_derived_t *type, long *true_lb, long *true_ub )
 {
-	long min_index, max_index;
+	long min_index = 0, max_index = 0;
 	int min_set = 0, max_set = 0;
 
 	unsigned int i;

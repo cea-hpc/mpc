@@ -7955,7 +7955,7 @@ int __INTERNAL__PMPI_Allgather_inter(void *sendbuf, int sendcount,
   int size, rank, remote_size, res = MPI_ERR_INTERN;
   int root = 0;
   MPI_Aint slb, sextent;
-  void *tmp_buf;
+  void *tmp_buf = NULL;
 
   res = __INTERNAL__PMPI_Comm_rank(comm, &rank);
   if (res != MPI_SUCCESS) {

@@ -49,7 +49,7 @@
 /** array of VPS, for remembering __thread vars to reset when rail is re-enabled */
 volatile char *vps_reset = NULL;
 
-
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
 static char *sctk_ib_protocol_print ( sctk_ib_protocol_t prot )
 {
 	switch ( prot )
@@ -75,6 +75,7 @@ static char *sctk_ib_protocol_print ( sctk_ib_protocol_t prot )
 			break;
 	}
 }
+#endif
 
 
 

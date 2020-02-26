@@ -24,6 +24,7 @@
 #include <mpc_thread_cuda_wrap.h>
 #include <sctk_debug.h>
 
+
 #ifdef MPC_USE_CUDA
 
 /**
@@ -32,7 +33,7 @@
  * @param[in] flag not used in this wrapper
  */
 #pragma weak sctk_cuInit
-CUresult sctk_cuInit(unsigned flag) {
+CUresult sctk_cuInit(__UNUSED__ unsigned flag) {
   sctk_cuFatal();
   return -1;
 }
@@ -43,7 +44,7 @@ CUresult sctk_cuInit(unsigned flag) {
  * @param[in] flag not used in this wrapper
  */
 #pragma weak sctk_cuCtxCreate
-CUresult sctk_cuCtxCreate(CUcontext *c, unsigned int f, CUdevice d) {
+CUresult sctk_cuCtxCreate(__UNUSED__ CUcontext *c, __UNUSED__ unsigned int f,__UNUSED__  CUdevice d) {
   sctk_cuFatal();
   return -1;
 }
@@ -53,7 +54,7 @@ CUresult sctk_cuCtxCreate(CUcontext *c, unsigned int f, CUdevice d) {
  * @param[in] flag not used in this wrapper
  */
 #pragma weak sctk_cuCtxPopCurrent
-CUresult sctk_cuCtxPopCurrent(CUcontext *c) {
+CUresult sctk_cuCtxPopCurrent(__UNUSED__ CUcontext *c) {
   sctk_cuFatal();
   return -1;
 }
@@ -63,7 +64,7 @@ CUresult sctk_cuCtxPopCurrent(CUcontext *c) {
  */
 
 #pragma weak sctk_cuCtxPushCurrent
-CUresult sctk_cuCtxPushCurrent(CUcontext c) {
+CUresult sctk_cuCtxPushCurrent(__UNUSED__ CUcontext c) {
   sctk_cuFatal();
   return -1;
 }
@@ -73,7 +74,7 @@ CUresult sctk_cuCtxPushCurrent(CUcontext c) {
  */
 
 #pragma weak sctk_cuDeviceGetByPCIBusId
-CUresult sctk_cuDeviceGetByPCIBusId(CUdevice *d, const char *b) {
+CUresult sctk_cuDeviceGetByPCIBusId(__UNUSED__ CUdevice *d, __UNUSED__ const char *b) {
   sctk_cuFatal();
   return -1;
 }

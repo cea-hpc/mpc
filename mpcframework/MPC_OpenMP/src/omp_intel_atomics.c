@@ -58,7 +58,7 @@ void __kmpc_atomic_4(__UNUSED__ ident_t *id_ref, __UNUSED__ int gtid, void *lhs,
 
 void __kmpc_atomic_fixed4_wr(__UNUSED__ ident_t *id_ref, __UNUSED__ int gtid, kmp_int32 *lhs,
                              kmp_int32 rhs) {
-  mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  __UNUSED__ mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t);
 
   sctk_nodebug("[%d] %s: Write %d", t->rank, __func__, rhs);
@@ -77,7 +77,7 @@ void __kmpc_atomic_fixed4_wr(__UNUSED__ ident_t *id_ref, __UNUSED__ int gtid, km
 
 void __kmpc_atomic_float8_add(__UNUSED__ ident_t *id_ref,__UNUSED__  int gtid, kmp_real64 *lhs,
                               kmp_real64 rhs) {
-  mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  __UNUSED__ mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t);
 
   sctk_nodebug("[%d] (ASM) %s: Add %g", t->rank, rhs);

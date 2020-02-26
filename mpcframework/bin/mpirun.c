@@ -15,12 +15,10 @@ void display_help() {
 }
 
 static int verbose_flag = 0;
-static int nb_process = -1;
-static int nb_cores = -1;
 
 int main(int argc, char **argv) {
   int nb_process = 0;
-  int nb_core = 0;
+  int nb_cores = 0;
   int c;
   int done = 0;
 

@@ -418,7 +418,7 @@ static int ompt_get_task_info( 	int ancestor_level,
 }
 
 
-
+#if OMPT_SUPPORT
 static ompt_interface_fn_t ompt_fn_lookup(const char* name)
 {
 #define ompt_interface_fn(fn) 												\
@@ -427,6 +427,7 @@ static ompt_interface_fn_t ompt_fn_lookup(const char* name)
 #undef ompt_interface_fn
 	return (ompt_interface_fn_t) 0;
 }
+#endif
 
 static ompt_interface_fn_t __ompt_fn_lookup( const char *name )
 {
@@ -496,7 +497,7 @@ ompt_frame_t *ompt_get_task_frame( int ancestor_level )
 {
 	int i;
 	mpcomp_thread_t *t;
-	mpcomp_mvp_t *mvp;
+	mpcomp_mvp_t * __UNUSED__  mvp;
 	//mpc_ompt_team_t *team;
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
@@ -514,7 +515,7 @@ ompt_frame_t *ompt_get_task_frame( int ancestor_level )
 }
 
 
-static inline void __mpcomp_ompt_task_create( mpcomp_task_t* new_task, ompt_task_flag_t type, bool has_dependence)
+static inline void __mpcomp_ompt_task_create( __UNUSED__  mpcomp_task_t* new_task, __UNUSED__  ompt_task_flag_t type, __UNUSED__  bool has_dependence)
 {
 #if OMPT_SUPPORT
 	ompt_frame_t* parent_frame;
@@ -535,7 +536,7 @@ static inline void __mpcomp_ompt_task_create( mpcomp_task_t* new_task, ompt_task
 #endif /* OMPT_SUPPORT */ 
 }
 
-static inline void __mpcomp_ompt_task_schedule( mpcomp_task_t* prior_task, mpcomp_task_t* next_task, bool prior_completed )
+static inline void __mpcomp_ompt_task_schedule(__UNUSED__  mpcomp_task_t* prior_task, __UNUSED__ mpcomp_task_t* next_task, __UNUSED__ bool prior_completed )
 {
 #if OMPT_SUPPORT
 	ompt_data_t* prior_task_data, *next_task_data;
@@ -553,7 +554,7 @@ static inline void __mpcomp_ompt_task_schedule( mpcomp_task_t* prior_task, mpcom
 #endif /* OMPT_SUPPORT */ 
 }
 
-static inline void __mpcomp_ompt_task_implicite_begin( uint32_t thread_num, mpcomp_task_t* task )
+static inline void __mpcomp_ompt_task_implicite_begin(__UNUSED__  uint32_t thread_num,__UNUSED__  mpcomp_task_t* task )
 {
 #if OMPT_SUPPORT
 	mpcomp_thread_t* thread;
@@ -574,7 +575,7 @@ static inline void __mpcomp_ompt_task_implicite_begin( uint32_t thread_num, mpco
 #endif /* OMPT_SUPPORT */ 
 }
 
-static inline void __mpcomp_ompt_task_implicite_end( uint32_t thread_num, mpcomp_task_t* task )
+static inline void __mpcomp_ompt_task_implicite_end( __UNUSED__ uint32_t thread_num, __UNUSED__ mpcomp_task_t* task )
 {
 #if OMPT_SUPPORT
 	mpcomp_thread_t* thread;

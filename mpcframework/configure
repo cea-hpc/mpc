@@ -22960,7 +22960,7 @@ _ACEOF
 fi
 done
 
-for ac_func in strcasecmp strchr strdup strerror strstr strtol snprintf
+for ac_func in strcasecmp strchr strdup strerror strstr strtol snprintf vsnprintf
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -25797,7 +25797,7 @@ fi
 
 
 if test "x${mpc_debug}" = "xyes"; then
-        CFLAGS+=" -g"
+        CFLAGS+=" -g -Wall -Wextra"
 fi
 
 

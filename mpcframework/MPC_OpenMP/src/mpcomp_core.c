@@ -251,8 +251,9 @@ int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t *restrictedTopology,
 
 	const int taskRank = mpc_common_get_task_rank();
 	const int taskVp = sctk_get_init_vp_and_nbvp( taskRank, &num_mvps );
-	const int npus = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_PU );
-	const int ncores = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_CORE );
+
+	const int __UNUSED__ npus = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_PU );
+	const int __UNUSED__ ncores = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_CORE );
 	// Every core must have the same number of PU
 	sctk_assert( npus % ncores == 0 );
 
@@ -342,7 +343,7 @@ __mpcomp_prepare_omp_task_tree_init( const int num_mvps, const int *cpus_order )
 static void
 __mpcomp_init_omp_task_tree( const int num_mvps, int *shape, const int *cpus_order, const mpcomp_local_icv_t icvs )
 {
-	int i, max_depth, place_depth, place_size;
+	int i, max_depth, place_depth = 0, place_size;
 	int *tree_shape;
 	hwloc_topology_t omp_task_topo;
 	omp_task_topo = __mpcomp_prepare_omp_task_tree_init( num_mvps, cpus_order );

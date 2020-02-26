@@ -79,19 +79,9 @@ static inline char *__debug_print_info( char *buffer )
 #endif
 void sctk_abort( void )
 {
-	static volatile int done = 0;
 	mpc_common_debuger_print_backtrace( "sctk_abort" );
-
-#ifdef MPC_Launch
-	if ( done == 0 )
-	{
-		done = 1;
-		mpc_launch_pmi_abort();
-	}
-#endif
 	abort();
 }
-
 
 
 /**********************************************************************/
@@ -166,7 +156,6 @@ void mpc_common_debug_log( const char *fmt, ... )
         va_start( ap, fmt );
 
 #ifdef MPC_ENABLE_SHELL_COLORS
-        char info_message[SMALL_BUFFER_SIZE];
         mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE, ""SCTK_COLOR_GREEN_BOLD( %s )"\n", fmt );
 
 #else

@@ -130,15 +130,16 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
 	return ;
 }
 
-void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance) 
+void __mpcomp_internal_end_parallel_region( __UNUSED__ mpcomp_instance_t *instance) 
 {
+#if 0
     /* Grab the thread info */
     mpcomp_thread_t *t;
     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
     sctk_assert(t != NULL);
 
     if( instance->team->info.num_threads > 1 ) {
-#if 0
+
       mpcomp_node_t *root;
       mpcomp_thread_t *master;
 //    mpcomp_thread_t *prev = sctk_openmp_thread_tls;
@@ -162,8 +163,9 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance)
     OPA_store_int(&(root->barrier), 0);
 
     sctk_nodebug("%s: final barrier done...", __func__);
-#endif
+
   }
+  #endif
 
   /* Update team info for last values */
 //  __mpcomp_save_team_info(instance->team, master);

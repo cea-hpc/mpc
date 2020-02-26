@@ -477,7 +477,7 @@ void mpc_common_debuger_resolve( mpc_addr2line_t *tab, int size )
 /* Backtrace on Signal                                                */
 /**********************************************************************/
 
-void mpc_common_debugger_sig_handler( int sig, siginfo_t *info, void *arg )
+void mpc_common_debugger_sig_handler( int sig, siginfo_t *info, __UNUSED__ void *arg )
 {
 	char *ssig = strsignal( sig );
 

@@ -11,8 +11,8 @@
 
 static pid_t sctk_shm_process_sys_id = -1;
 
-static void 
-sctk_shm_cma_driver_iovec(struct iovec* liovec, int liovlen, mpc_lowcomm_ptp_message_t* send, int type)
+#if 0
+static void  sctk_shm_cma_driver_iovec(struct iovec* liovec, int liovlen, mpc_lowcomm_ptp_message_t* send, int type)
 {
    int nread, riovlen, pid;
    struct iovec *riovec;
@@ -28,23 +28,22 @@ sctk_shm_cma_driver_iovec(struct iovec* liovec, int liovlen, mpc_lowcomm_ptp_mes
    nread = process_vm_readv(pid, liovec, liovlen, riovec, riovlen, 0); 
    assume_m( nread > 0, "Failed process_vm_readv call use MPC_Config - cma_enable = false");
 }
+#endif
 
 static void 
 sctk_shm_cma_message_copy_generic(mpc_lowcomm_ptp_message_content_to_copy_t * tmp)
 {
-   sctk_shm_cell_t * cell = NULL;
+
    mpc_lowcomm_ptp_message_t *send;
    mpc_lowcomm_ptp_message_t *recv;
-   char *body;
    struct iovec * recv_iov, * send_iov;
    sctk_shm_iovec_info_t * shm_send_iov;
    int nread;
-   void *msg_tmp_buffer;
 
    send = tmp->msg_send;
    recv = tmp->msg_recv;
 
-    body = ( char * ) send + sizeof ( mpc_lowcomm_ptp_message_t );
+
     SCTK_MSG_COMPLETION_FLAG_SET ( send , NULL );
 
     switch ( recv->tail.message_type )
@@ -76,7 +75,7 @@ sctk_shm_cma_message_copy_generic(mpc_lowcomm_ptp_message_content_to_copy_t * tm
 }
 
 static void
-sctk_network_cma_msg_cmpl_shm_send(sctk_shm_iovec_info_t *shm_send_iov,sctk_shm_cell_t * cell, int dest)
+sctk_network_cma_msg_cmpl_shm_send(sctk_shm_iovec_info_t *shm_send_iov,sctk_shm_cell_t * cell, __UNUSED__ int dest)
 {
 	cell->msg_type = SCTK_SHM_CMPL;
 	memcpy(cell->data, shm_send_iov, sizeof(sctk_shm_iovec_info_t));
@@ -101,7 +100,7 @@ sctk_shm_cma_message_free_nocopy(void *tmp)
     int dest;
     sctk_shm_cell_t * cell = NULL;
     sctk_shm_iovec_info_t *shm_iov = NULL; 
-    mpc_lowcomm_ptp_message_t *msg;
+    mpc_lowcomm_ptp_message_t *msg = (mpc_lowcomm_ptp_message_t *)tmp;
 
     dest = SCTK_MSG_SRC_PROCESS(msg); 
     shm_iov = (sctk_shm_iovec_info_t *) ((char*) tmp + sizeof(mpc_lowcomm_ptp_message_t));
@@ -155,7 +154,7 @@ sctk_network_preform_cma_msg_shm_withcopy( sctk_shm_cell_t * cell)
 {
     sctk_shm_iovec_info_t *shm_iov = NULL;
     mpc_lowcomm_ptp_message_t * msg = NULL;
-    struct iovec *tmp = NULL;
+
     char *buffer_in, *buffer_out;
 
     msg = sctk_malloc(sizeof(mpc_lowcomm_ptp_message_t)+sizeof(sctk_shm_iovec_info_t)  + sizeof(struct iovec));
@@ -215,7 +214,7 @@ sctk_network_cma_msg_shm_send(mpc_lowcomm_ptp_message_t *msg, sctk_shm_cell_t * 
     struct iovec * tmp;
     char * ptr;
     sctk_shm_iovec_info_t * shm_iov;
-    void * msg_buffer_tmp;
+
 
     if( msg->tail.message_type != MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
 	return 0;
@@ -241,7 +240,7 @@ sctk_network_cma_msg_shm_send(mpc_lowcomm_ptp_message_t *msg, sctk_shm_cell_t * 
 }
 
 int  
-sctk_network_cma_shm_interface_init(void *options)
+sctk_network_cma_shm_interface_init(__UNUSED__ void *options)
 {
     sctk_shm_process_sys_id = getpid();
     //sctk_shm_cma_zerocopy_enabled = rail->runtime_config_driver_config->driver.value.shm.cells_num 

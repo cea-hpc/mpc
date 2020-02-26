@@ -55,7 +55,7 @@ static inline int *__tree_array_ancestor_path( mpcomp_instance_t *instance, cons
  * tree_array */
 int mpc_omp_tree_array_get_neighbor( const int globalRank, const int index )
 {
-	int i, currentDepth;
+	int i, currentDepth = 0;
 	int *path, *treeShape, *treeNumNodePerDepth;
 	mpcomp_thread_t *thread;
 	mpcomp_instance_t *instance;
@@ -119,7 +119,7 @@ int mpc_omp_tree_array_get_neighbor( const int globalRank, const int index )
 /* Return the ancestor of element at rank 'globalRank' at depth 'depth' */
 int mpc_omp_tree_array_ancestor_get( const int globalRank, const int depth )
 {
-	int i, currentDepth;
+	int i, currentDepth = 0;
 	int *path, *treeShape, *treeNumNodePerDepth;
 	mpcomp_thread_t *thread;
 	mpcomp_instance_t *instance;
@@ -166,7 +166,7 @@ int mpc_omp_tree_array_ancestor_get( const int globalRank, const int depth )
 static void ___tree_task_check_neigborhood( mpcomp_node_t *node )
 {
 	int i;
-	mpcomp_thread_t *thread;
+	mpcomp_thread_t  __UNUSED__ *thread = NULL;
 	sctk_assert( node );
 	/* Retrieve the current thread information */
 	sctk_assert( sctk_openmp_thread_tls );
@@ -191,7 +191,7 @@ static void ___tree_task_check_neigborhood( mpcomp_node_t *node )
 			/* All the children are leafs */
 			for ( i = 0; i < node->nb_children; i++ )
 			{
-				mpcomp_mvp_t *mvp = node->children.leaf[i];
+				mpcomp_mvp_t *  __UNUSED__ mvp = node->children.leaf[i];
 				sctk_assert( mvp && mvp->threads );
 			}
 
@@ -1181,7 +1181,7 @@ static inline void *__tree_mvp_init( void *args )
 }
 
 
-static inline void __tree_master_thread_init( mpcomp_node_t *root, mpcomp_meta_tree_node_t *tree_array, const mpcomp_local_icv_t *icvs )
+static inline void __tree_master_thread_init( mpcomp_node_t *root, __UNUSED__ mpcomp_meta_tree_node_t *tree_array, const mpcomp_local_icv_t *icvs )
 {
 	int *singleton;
 	mpcomp_thread_t *master;
@@ -1228,7 +1228,7 @@ static inline void __tree_master_thread_init( mpcomp_node_t *root, mpcomp_meta_t
 
 void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, const int place_depth, const int place_size, const mpcomp_local_icv_t *icvs )
 {
-	int i, n_num, ret, place_id;
+	int i, n_num, place_id;
 	sctk_thread_t *threads;
 	mpcomp_mvp_thread_args_t *args;
 	mpcomp_meta_tree_node_t *tree_array;
@@ -1280,7 +1280,7 @@ void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, cons
 		sctk_thread_attr_init( &__attr );
 		sctk_thread_attr_setbinding( &__attr, pu_id );
 		sctk_thread_attr_setstacksize( &__attr, mpcomp_global_icvs.stacksize_var );
-		ret = sctk_user_thread_create( &( threads[i - 1] ), &__attr, __tree_mvp_init, &( args[i] ) );
+		int  __UNUSED__  ret = sctk_user_thread_create( &( threads[i - 1] ), &__attr, __tree_mvp_init, &( args[i] ) );
 		sctk_assert( !ret );
 		sctk_thread_attr_destroy( &__attr );
 	}

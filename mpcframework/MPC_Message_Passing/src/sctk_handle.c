@@ -188,6 +188,8 @@ sctk_handle sctk_handle_new_from_id(int previous_id, sctk_handle_type type) {
 
   mpc_common_spinlock_lock_yield(&handle_mod_lock);
 
+  new_handle_id = -1;
+
   if (sctk_handle_context_no_lock(previous_id, type) == NULL) {
     /* Create an unique id */
     new_handle_id = previous_id;

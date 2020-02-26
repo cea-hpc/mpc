@@ -2630,7 +2630,7 @@ static inline int red_sched_binomial(int rank, int p, int root, void *sendbuf, v
 
 
 /* chain send ... */ 
-static __inline__ int red_sched_chain(int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int ext, int size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize) {
+static __inline__ int red_sched_chain(int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int ext, int size, NBC_Schedule *schedule, __UNUSED__ NBC_Handle *handle, int fragsize) {
   int res, vrank, rpeer, speer, numfrag, fragnum, fragcount, thiscount;
   long offset;
 
@@ -3365,7 +3365,7 @@ static int NBC_Ialltoallw(void* sendbuf, int *sendcounts, int *sdispls,
 		MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle* handle) {
 	
 	int rank, p, res, i;
-	MPI_Aint sndext, rcvext;
+
 	NBC_Schedule *schedule;
 	char *rbuf, *sbuf, inplace;
 	
@@ -3824,6 +3824,7 @@ static int NBC_Iexscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
                 return MPI_SUCCESS;
 }
 
+#if 0
 static int JJ_NBC_Iexscan(void *sendbuf, void *recvbuf, int count,
                           MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,
                           NBC_Handle *handle) {
@@ -3971,6 +3972,7 @@ static int JJ_NBC_Iexscan(void *sendbuf, void *recvbuf, int count,
   /* tmpbuf is freed with the handle */
   return NBC_OK;
 }
+#endif
 
 /********************************************************************* *
  * The previous code was a modified version of three functions from		*
@@ -4003,7 +4005,7 @@ static int JJ_NBC_Iexscan(void *sendbuf, void *recvbuf, int count,
 
 int __mpc_cl_egreq_progress_poll_id(int id);
 
-void *NBC_Pthread_func( void *ptr ) {
+void *NBC_Pthread_func( __UNUSED__ void *ptr ) {
 
   MPI_Request req=MPI_REQUEST_NULL;
   int tmp_recv;
@@ -4172,7 +4174,7 @@ static inline int NBC_Sched_send(void* buf, char tmpbuf, int count, MPI_Datatype
 }
 
 static inline int NBC_Sched_send_pos(int pos, void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule) {
-  int size;
+
   NBC_Args* send_args;
  
   /* adjust the function type */
@@ -4221,7 +4223,7 @@ static inline int NBC_Sched_recv(void* buf, char tmpbuf, int count, MPI_Datatype
 }
 
 static inline int NBC_Sched_recv_pos(int pos, void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule) {
-  int size;
+
   NBC_Args* recv_args;
  
   
@@ -4276,7 +4278,7 @@ static inline int NBC_Sched_op(void *buf3, char tmpbuf3, void* buf1, char tmpbuf
 }
 
 static inline int NBC_Sched_op_pos(int pos, void *buf3, char tmpbuf3, void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule) {
-  int size;
+
   NBC_Args* op_args;
   
   /* adjust the function type */
@@ -4339,7 +4341,7 @@ static inline int NBC_Sched_copy_pos(int pos, void *src, char tmpsrc,
                                      void *tgt, char tmptgt, int tgtcount,
                                      MPI_Datatype tgttype,
                                      NBC_Schedule *schedule) {
-  int size;
+
   NBC_Args *copy_args;
 
   /* adjust the function type */
@@ -4550,7 +4552,7 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth );
  * to be called *only* from the progress thread !!! */
 static inline int __NBC_Progress( NBC_Handle *handle, int depth )
 {
-	int flag, res, ret = NBC_CONTINUE;
+	int res, ret = NBC_CONTINUE;
 	long size;
 	char *delim;
 
@@ -4983,7 +4985,7 @@ static inline int NBC_Start( NBC_Handle *handle, NBC_Schedule *schedule )
    * on !!! */
 
     struct mpc_mpi_cl_per_mpi_process_ctx_s * task_specific;
-		struct sctk_list_elem *list_handles;
+
 		sctk_thread_mutex_t *lock;
     task_specific = mpc_cl_per_mpi_process_ctx_get ();
 
@@ -5001,7 +5003,7 @@ static inline int NBC_Start( NBC_Handle *handle, NBC_Schedule *schedule )
     _mpc_cl_send(&tmp_send, 1, MPI_INT, 0, 0, MPI_COMM_SELF);
 
 		sctk_thread_mutex_lock( lock );
-		list_handles = task_specific->mpc_mpi_data->NBC_Pthread_handles;
+
 		DL_APPEND( task_specific->mpc_mpi_data->NBC_Pthread_handles, elem_tmp );
 		task_specific->mpc_mpi_data->NBC_Pthread_nb++;
 		sctk_thread_mutex_unlock( lock );
@@ -5098,7 +5100,7 @@ int NBC_Wait(NBC_Handle *handle, MPI_Status *status) {
         return MPI_SUCCESS;
 }
 
-int NBC_Test(NBC_Handle *handle, int *flag, MPI_Status *status) {
+int NBC_Test(NBC_Handle *handle, int *flag, __UNUSED__ MPI_Status *status) {
   int use_progress_thread = 0;
   use_progress_thread =
       sctk_runtime_config_get()->modules.nbc.use_progress_thread;
@@ -5703,7 +5705,7 @@ int NBC_Operation(void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype ty
  * *********************************************************************/
 
 
-int NBC_Finalize(sctk_thread_t * NBC_thread)
+int NBC_Finalize(__UNUSED__ sctk_thread_t * NBC_thread)
 {
   if(sctk_runtime_config_get()->modules.nbc.use_progress_thread == 1)
   {

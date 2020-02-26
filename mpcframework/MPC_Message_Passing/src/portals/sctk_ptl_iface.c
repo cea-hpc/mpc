@@ -33,16 +33,17 @@
 #include "sctk_ptl_offcoll.h"
 #include "sctk_low_level_comm.h"
 
-static OPA_int_t nb_mes = OPA_INT_T_INITIALIZER(0);
 static OPA_int_t nb_mds = OPA_INT_T_INITIALIZER(0);
 
 /**
  * Will print the Portals structure.
  * \param[in] srail the Portals rail to dump
  */
-void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
+void sctk_ptl_print_structure(__UNUSED__ sctk_ptl_rail_info_t* srail)
 {
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
 	sctk_ptl_limits_t l = srail->max_limits;
+#endif
 	mpc_common_debug(
 	"\n======== PORTALS STRUCTURE ========\n"
 	"\n"

@@ -1516,7 +1516,7 @@ static inline int __task_get_victim_hierarchical_random( const int globalRank, c
 	mpcomp_instance_t *instance;
 	mpcomp_node_t *node;
 	struct mpcomp_mvp_s *mvp;
-	struct drand48_data *randBuffer;
+	struct drand48_data *randBuffer = NULL;
 	mpcomp_generic_node_t *gen_node;
 	/* Retrieve the information (microthread structure and current region) */
 	thread = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
@@ -2065,7 +2065,7 @@ static struct mpcomp_task_s *_mpc_task_new_larceny( void )
  * \param team
  */
 
-static void ___task_schedule( mpcomp_thread_t *thread, mpcomp_mvp_t *mvp, mpcomp_team_t *team )
+static void ___task_schedule( mpcomp_thread_t *thread, mpcomp_mvp_t *mvp,  __UNUSED__ mpcomp_team_t *team )
 {
 	int type;
 	mpcomp_task_t *task;

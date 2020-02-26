@@ -81,7 +81,7 @@ void sctk_ptl_offcoll_init(sctk_ptl_rail_info_t* srail)
         grail = srail;
 }
 
-void sctk_ptl_offcoll_fini(sctk_ptl_rail_info_t* srail)
+void sctk_ptl_offcoll_fini(__UNUSED__ sctk_ptl_rail_info_t* srail)
 {
 	sctk_assert(__sctk_ptl_offcoll_enabled(srail));
 	sctk_ptl_md_release(md_up);   md_up = NULL;
@@ -164,7 +164,7 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 /**
  * Free offcoll-specific Portals resource for a given Portals entry to free
  */
-void sctk_ptl_offcoll_pte_fini(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
+void sctk_ptl_offcoll_pte_fini(__UNUSED__ sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 {
 	sctk_assert(__sctk_ptl_offcoll_enabled(srail));
 	int i = 0;
@@ -291,7 +291,7 @@ static inline void __sctk_ptl_offcoll_build_tree(sctk_ptl_rail_info_t* srail, sc
  * the UP one. This way, it should not be possible to overwrite the same counter (and only two ME
  * could be used per communicator to handle all the barrier collectives)
  */
-static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
+static inline void __sctk_ptl_offcoll_barrier_run(__UNUSED__ sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 {
         sctk_assert(srail);
         sctk_assert(__sctk_ptl_offcoll_enabled(srail));

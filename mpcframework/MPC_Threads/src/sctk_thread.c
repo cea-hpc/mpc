@@ -107,14 +107,14 @@ struct sctk_alloc_chain *sctk_thread_tls = NULL;
 volatile int sctk_current_local_tasks_nb = 0;
 sctk_thread_mutex_t sctk_current_local_tasks_lock = SCTK_THREAD_MUTEX_INITIALIZER;
 
-void sctk_unregister_task( const int i )
+void sctk_unregister_task( __UNUSED__ const int i )
 {
 	sctk_thread_mutex_lock ( &sctk_current_local_tasks_lock );
 	sctk_current_local_tasks_nb--;
 	sctk_thread_mutex_unlock ( &sctk_current_local_tasks_lock );
 }
 
-void sctk_register_task( const int i )
+void sctk_register_task(__UNUSED__ const int i )
 {
 	sctk_thread_mutex_lock ( &sctk_current_local_tasks_lock );
 	sctk_current_local_tasks_nb++;
@@ -227,18 +227,14 @@ int sctk_get_init_vp_and_nbvp_numa_packed( int i, int *nbVp )
 {
 	/*   int rank_in_node; */
 	// declaration
-	int slot_size;
-	int task_nb;
+
+
 	int proc;
-	int first;
-	int last;
+
 	int cpu_nb;
-	int total_tasks_number;
-	int cpu_per_task;
-	int j;
+
 	int nb_numa_node_per_node;
-	int nb_cpu_per_numa_node;
-	int nb_task_per_numa_node;
+
 	// initialization
 	cpu_nb = mpc_topology_get_pu_count(); // number of cpu per process
 	nb_numa_node_per_node =
@@ -306,8 +302,7 @@ int sctk_get_init_vp_and_nbvp_numa( int i, int *nbVp )
 	int global_id = i;
 	int numa_node_id = ( global_id * numa_node_per_node_nb ) / task_nb;
 	int local_id = mpc_common_get_local_task_rank();
-	global_id - ( ( ( numa_node_id * task_nb ) + numa_node_per_node_nb - 1 ) /
-	              numa_node_per_node_nb );
+
 	int task_per_numa_node =
 	    ( ( ( numa_node_id + 1 ) * task_nb + numa_node_per_node_nb - 1 ) /
 	      numa_node_per_node_nb ) -
@@ -1122,8 +1117,9 @@ static inline struct mpc_mpi_cl_per_mpi_process_ctx_s *__get_mpi_process_ctx()
 
 
 
-
+#if 0
 static hwloc_topology_t topology_option_text;
+#endif
 
 int sctk_user_thread_create ( sctk_thread_t *restrict __threadp,
                               const sctk_thread_attr_t *restrict __attr,
@@ -1136,7 +1132,6 @@ int sctk_user_thread_create ( sctk_thread_t *restrict __threadp,
 	struct sctk_alloc_chain *tls;
 	static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
 	int user_thread;
-	int scope_init;
 	mpc_common_spinlock_lock ( &lock );
 	sctk_nb_user_threads++;
 	user_thread = sctk_nb_user_threads;
@@ -1161,6 +1156,7 @@ int sctk_user_thread_create ( sctk_thread_t *restrict __threadp,
 
 	sctk_nodebug( "Create Thread with MPI rank %d", tmp->task_id );
 #if 0
+	int scope_init;
 
 	/* Must be disabled because it unbind midcro VPs */
 	if ( __attr != NULL )
@@ -2119,8 +2115,8 @@ sctk_thread_mutex_unlock ( sctk_thread_mutex_t *__mutex )
 }
 
 int
-sctk_thread_mutex_getprioceiling ( const sctk_thread_mutex_t *restrict mutex,
-                                   int *restrict prioceiling )
+sctk_thread_mutex_getprioceiling (__UNUSED__ const sctk_thread_mutex_t *restrict mutex,
+                                  __UNUSED__ int *restrict prioceiling )
 {
 	int res = 0;
 	not_implemented ();
@@ -2128,8 +2124,8 @@ sctk_thread_mutex_getprioceiling ( const sctk_thread_mutex_t *restrict mutex,
 }
 
 int
-sctk_thread_mutex_setprioceiling ( sctk_thread_mutex_t *restrict mutex,
-                                   int prioceiling, int *restrict old_ceiling )
+sctk_thread_mutex_setprioceiling ( __UNUSED__ sctk_thread_mutex_t *restrict mutex,
+                                   __UNUSED__ int prioceiling, __UNUSED__ int *restrict old_ceiling )
 {
 	int res = 0;
 	not_implemented ();
@@ -2746,7 +2742,7 @@ sctk_thread_atomic_add ( volatile unsigned long *ptr, unsigned long val )
 }
 
 /* Used by GCC to bypass TLS destructor calls */
-int __cxa_thread_mpc_atexit( void( *dfunc )( void * ), void *obj, void *dso_symbol )
+int __cxa_thread_mpc_atexit( void( *dfunc )( void * ), void *obj, __UNUSED__ void *dso_symbol )
 {
 	sctk_thread_data_t *th;
 	th = sctk_thread_data_get();

@@ -861,7 +861,7 @@ static int __sync_section_next(mpcomp_thread_t *t,
 
 
 void __mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) {
-  long num_threads ;
+  long  __UNUSED__ num_threads ;
 
   /* Number of threads in the current team */
   num_threads = t->info.num_threads;

@@ -408,8 +408,8 @@ int pthread_futex(void *addr1, int op, int val1,
 	return syscall( SYS_futex, addr1, op, val1, timeout, addr2, val3 );
 }
 #else
-int pthread_futex(void *addr1, int op, int val1, 
-					 struct timespec *timeout, void *addr2, int val3)
+int pthread_futex(__UNUSED__ void *addr1, __UNUSED__ int op, __UNUSED__ int val1, 
+					 __UNUSED__ struct timespec *timeout, __UNUSED__ void *addr2, __UNUSED__ int val3)
 {
 	not_implemented();
 }

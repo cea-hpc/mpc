@@ -411,7 +411,6 @@ void sctk_ptl_rdv_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_info
 void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
-	mpc_lowcomm_ptp_message_t* msg = (mpc_lowcomm_ptp_message_t*)ptr->msg;
 	int cur = 0;
 
 	switch(ev.type)
@@ -472,7 +471,7 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
-	mpc_lowcomm_ptp_message_t* msg = (mpc_lowcomm_ptp_message_t*)ptr->msg;
+
 	int cur = 0;
 	switch(ev.type)
 	{

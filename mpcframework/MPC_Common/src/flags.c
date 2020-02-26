@@ -48,7 +48,7 @@ struct mpc_common_init_list
 
 static inline  void __list_trigger(struct mpc_common_init_list * list)
 {
-        int i;
+        unsigned int i;
 
         for( i = 0 ; i < list->entry_count; i++)
         {
@@ -92,7 +92,7 @@ static struct mpc_common_init __mpc_init = { 0 };
 
 static inline struct mpc_common_init_list * _init_get_list(char * level_name)
 {
-        int i;
+        unsigned int i;
 
         struct mpc_common_init_list *ret = NULL;
 
@@ -162,7 +162,7 @@ void mpc_common_init_callback_register(char * list_name, char * callback_name, v
 
 void mpc_common_init_print()
 {
-        int i, j;
+        unsigned int i, j;
 
         for( i = 0 ; i < __mpc_init.list_count ; i++ )
         {

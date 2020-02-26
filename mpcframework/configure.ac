@@ -732,7 +732,7 @@ AC_FUNC_MALLOC
 AC_FUNC_MMAP
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memcpy memmove memset])
-AC_CHECK_FUNCS([strcasecmp strchr strdup strerror strstr strtol snprintf])
+AC_CHECK_FUNCS([strcasecmp strchr strdup strerror strstr strtol snprintf vsnprintf])
 AC_CHECK_FUNCS([gethostbyname gethostname])
 AC_CHECK_FUNCS([gettimeofday])
 AC_CHECK_FUNCS([munmap])
@@ -1271,7 +1271,7 @@ AC_ARG_ENABLE([debug],
 [mpc_debug=no])
 
 if test "x${mpc_debug}" = "xyes"; then
-        CFLAGS+=" -g"
+        CFLAGS+=" -g -Wall -Wextra"
 fi
 
 

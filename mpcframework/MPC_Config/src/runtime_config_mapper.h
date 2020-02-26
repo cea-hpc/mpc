@@ -79,8 +79,6 @@ struct sctk_runtime_config_entry_meta {
 	 * For struct, store the init handler.
 	**/
 	void * extra;
-    /** Char value to define the MPI_T alias to a CVAR */
-    char *mpi_t_cvar;
 };
 
 /********************************* MACROS ***********************************/
