@@ -135,3 +135,7 @@ for i in cc cxx f77 f90 f08; do
 	printf_mpi_compiler ${BIN_PREFIX}/mpi$i ${BIN_PREFIX}/mpc_$i
         chmod +x ${BIN_PREFIX}/mpi$i
 done
+
+# Point C++ to CXX
+printf_mpi_compiler ${BIN_PREFIX}/mpic++ ${BIN_PREFIX}/mpc_cxx
+chmod +x ${BIN_PREFIX}/mpic++
