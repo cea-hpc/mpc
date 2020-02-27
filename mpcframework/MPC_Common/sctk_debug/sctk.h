@@ -58,8 +58,3 @@ extern bool sctk_migration_mode;
 #endif
 
 int sctk_user_main (int, char **);
-
-#if 0
-#undef main
-#define main sctk_user_main
-#endif

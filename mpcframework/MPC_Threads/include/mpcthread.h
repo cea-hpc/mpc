@@ -35,9 +35,9 @@
 		#undef main
 		
 		#ifdef __cplusplus
-			#define main long mpc_user_main_dummy__ (); extern "C" int mpc_user_main__
+			#define main(...) long mpc_user_main_dummy__ (); extern "C" int mpc_user_main__(__VA_ARGS__)
 		#else
-			#define main mpc_user_main__
+			#define main(...) mpc_user_main__(__VA_ARGS__)
 		#endif
 	#endif /* MPC_NO_AUTO_MAIN_REDEF */
 #endif /* SCTK_LIB_MODE */
