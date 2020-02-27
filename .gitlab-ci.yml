@@ -122,7 +122,7 @@ OpenMP:
   stage: Regular Testing
   script:
     - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=OpenMP/BOTS --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/omp
+    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=OpenMP/BOTS,OpenMP/Simple,OpenMP/EPCC --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/omp
 
 Fortran 90:
   <<: *run_by_main
