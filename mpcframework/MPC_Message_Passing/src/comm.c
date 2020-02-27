@@ -2849,6 +2849,7 @@ static void __lowcomm_release()
 		sctk_nodebug( "mpc_lowcomm_terminaison_barrier done" );
 		sctk_net_finalize_task_level( task_rank, sctk_thread_get_vp() );
 		sctk_net_send_task_end( task_rank, mpc_common_get_process_rank() );
+		mpc_lowcomm_rdma_window_release_ht();
 	}
 	else
 	{

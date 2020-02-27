@@ -32,30 +32,31 @@
 #ifndef SCTK_LIB_MODE
 
 /*#pragma weak main*/
-int main(int argc, char **argv) {
+int main( int argc, char **argv )
+{
+	if ( getenv( "MPC_CALL_ORIGINAL_MAIN" ) )
+	{
+		return mpc_user_main__( argc, argv, NULL );
+	}
 
-  if( getenv("MPC_CALL_ORIGINAL_MAIN"))
-  {
-	  return mpc_user_main__(argc, argv, NULL);
-  }
-  int tmp;
-  tmp = main_c (argc, argv);
-  return tmp;
+	int tmp;
+	tmp = main_c ( argc, argv );
+	return tmp;
 }
 #endif /* SCTK_LIB_MODE */
 
 #else
-	#ifdef HAVE_ENVIRON_VAR
-	  int mpc_user_main (int argc , char **argv, char**envp)
-	  {
-		  not_available ();
-		  return 0;
-	  }
-	#else
-	  int mpc_user_main (int argc, char ** argv)
-	  {
-		  not_available ();
-		  return 0;
-	  }
-	#endif
+#ifdef HAVE_ENVIRON_VAR
+int mpc_user_main ( int argc, char **argv, char **envp )
+{
+	not_available ();
+	return 0;
+}
+#else
+int mpc_user_main ( int argc, char **argv )
+{
+	not_available ();
+	return 0;
+}
+#endif
 #endif

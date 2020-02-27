@@ -184,7 +184,7 @@ post_add_fortran()
 	CC="`lookup_compiler c 1 | cut -f3 -d":"` $FLAGS  -lmpcframework"
 	FC="$1 $FLAGS"
 	mkdir -p $COMPILER_FILEPATH/$3/npriv
-	MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=1 sh $FORTRAN_GEN_PATH/fortran_gen/fortran_build.sh "$CC" "$FC" "$FORTRAN_GEN_PATH/fortran_gen/mpc_mpi.h" "$COMPILER_FILEPATH/$3/npriv"
+	MPC_CALL_ORIGINAL_MAIN=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=1 sh $FORTRAN_GEN_PATH/fortran_gen/fortran_build.sh "$CC" "$FC" "$FORTRAN_GEN_PATH/fortran_gen/mpc_mpi.h" "$COMPILER_FILEPATH/$3/npriv"
 
 
 	test "x$?" != "x0" && die "Error(s) during Fortran module building for $1"
@@ -194,7 +194,7 @@ post_add_fortran()
 		CC="$CC $2"
 		FC="$FC $2"
 		mkdir -p $COMPILER_FILEPATH/$3/priv
-		MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=1 sh $FORTRAN_GEN_PATH/fortran_gen/fortran_build.sh "$CC" "$FC" "$FORTRAN_GEN_PATH/fortran_gen/mpc_mpi.h" "$COMPILER_FILEPATH/$3/priv"
+		MPC_CALL_ORIGINAL_MAIN=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=1 sh $FORTRAN_GEN_PATH/fortran_gen/fortran_build.sh "$CC" "$FC" "$FORTRAN_GEN_PATH/fortran_gen/mpc_mpi.h" "$COMPILER_FILEPATH/$3/priv"
 		test "x$?" != "x0" && die "Error(s) during Fortran module building for $1 w/ privatization support"
 	fi
 

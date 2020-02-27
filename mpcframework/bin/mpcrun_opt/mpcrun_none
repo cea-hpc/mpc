@@ -20,4 +20,4 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 # 
 #                                                                      # 
 ######################################################################## 
-LAUNCH_COMMAND="$BINARY $USER_ARGS $SCTK_ARGS"
+LAUNCH_COMMAND="$LAUNCHER_OPTION_WRAPPER $BINARY $USER_ARGS $SCTK_ARGS"

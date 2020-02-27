@@ -30,7 +30,7 @@ if [ "$SCTK_JOB_MANAGER" = "SLURM" ]; then
                 fi
     fi
 
-  LAUNCH_COMMAND="srun $LAUNCH_OPTIONS --ntasks=$PROCESS_NB --nodes=$NODE_NB --cpus-per-task=$CPU_NB /bin/env DISPLAY=$DISPLAY xterm -e $DEBUG $MPC_GDB_DEBUG_ARGS  --args  $BINARY $USER_ARGS $SCTK_ARGS"
+  LAUNCH_COMMAND="srun $LAUNCH_OPTIONS --ntasks=$PROCESS_NB --nodes=$NODE_NB --cpus-per-task=$CPU_NB /bin/env DISPLAY=$DISPLAY xterm -e $DEBUG $MPC_GDB_DEBUG_ARGS  --args  $LAUNCHER_OPTION_WRAPPER $BINARY $USER_ARGS $SCTK_ARGS"
 else
   LAUNCH_COMMAND="${MPC_MPIEXEC_HYDRA_PATH} $LAUNCH_OPTIONS -n $PROCESS_NB -enable-x xterm -e $DEBUG $MPC_GDB_DEBUG_ARGS --args $BINARY  $USER_ARGS $SCTK_ARGS"
 fi

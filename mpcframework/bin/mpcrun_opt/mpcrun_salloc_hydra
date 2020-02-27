@@ -34,7 +34,7 @@ if [ "$SCTK_JOB_MANAGER" = "HYDRA" ]; then
 		opt_core="-c ${CPU_NB}"
 	fi  
 
-	LAUNCH_COMMAND="salloc $LAUNCH_OPTIONS -n $PROCESS_NB -N $NODE_NB ${opt_core} ${autokill_opt} ${MPC_MPIEXEC_HYDRA_PATH} -n $PROCESS_NB $BINARY $USER_ARGS $SCTK_ARGS"
+	LAUNCH_COMMAND="salloc $LAUNCH_OPTIONS -n $PROCESS_NB -N $NODE_NB ${opt_core} ${autokill_opt} ${MPC_MPIEXEC_HYDRA_PATH} -n $PROCESS_NB $LAUNCHER_OPTION_WRAPPER $BINARY $USER_ARGS $SCTK_ARGS"
 else
 	echo  "ERROR mpc is compiled without Hydra support" 1>&2
 	exit 1
