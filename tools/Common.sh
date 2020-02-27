@@ -120,9 +120,10 @@ check_dependencies()
 	fi
 }
 
+
 ######################################################
 # Check if the install is already there
-checkIfInstallAlreadyExists()
+testExistingInstall()
 {
 	host="${MPC_HOST}"
 	target="${MPC_TARGET}"
@@ -134,8 +135,30 @@ checkIfInstallAlreadyExists()
 	
 	#Check the list of installs
 	is_there="`cat ${installs_file} | grep \"${host}:${target}\"`"
+	echo "$is_there"
 	if test "${is_there}" = "${host}:${target}" ; 
 	then
+		return 0
+	else
+		return 1
+	fi
+}
+
+cleanExistingInstall()
+{
+	if test "`testExistingInstall`"; then
+		test -n "$PREFIX" || fatal "Issue with prefix given ! '$PREFIX'"
+		rm -rf ${PREFIX}/${MPC_HOST}/${MPC_TARGET}
+		# This is ugly as it will break compiler management with cross-compilation
+		rm -f ${PREFIX}/.*_compilers.cfg
+		#remote the installation from installs.cfg list
+		sed -i -e "/${MPC_HOST}:${MPC_TARGET}/d" ${PREFIX}/.installs.cfg
+	fi
+}
+
+checkIfInstallAlreadyExists()
+{
+	if test "`testExistingInstall`"; then
 		#patch version already there
 		echo "#################################################################################"
 		echo "# Install for host:${host} and target:${target} already exists on that prefix "      

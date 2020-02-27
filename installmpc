@@ -504,6 +504,8 @@ fi
 
 if test "${CHECK_INSTALL}" = "true"; then
 	checkIfInstallAlreadyExists
+else
+	cleanExistingInstall
 fi
 
 ######################################################
