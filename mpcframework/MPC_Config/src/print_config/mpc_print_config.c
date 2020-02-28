@@ -100,6 +100,47 @@ You can also influence the loaded files with environment variables :\n\
 void display_launcher(const struct sctk_runtime_config * config)
 {
 	display_tree_sh(sctk_runtime_config_db, "config_launcher","sctk_runtime_config_struct_launcher", (void*)&config->modules.launcher);
+
+	/* Now Generate list of CLI configurations */
+	char localbuff[500];
+	char list_of_cli_options[4096];
+	list_of_cli_options[0] = '\0';
+
+	int i;
+
+	for(i = 0 ; i < config->networks.cli_options_size; i++)
+	{
+
+		snprintf(localbuff, 500, "%s%s", config->networks.cli_options[i].name, (i!=config->networks.cli_options_size-1)?" ":"");
+		strncat(list_of_cli_options, localbuff, 4096);
+	}
+
+	printf("NETWORKING_CLI_OPTION_LIST=\"%s\"\n", list_of_cli_options);
+
+	/* Now generate for each rail the list of internal configurations */
+
+
+	for(i = 0 ; i < config->networks.cli_options_size; i++)
+	{
+		struct sctk_runtime_config_struct_net_cli_option * cli = &config->networks.cli_options[i];
+		char varname[500];
+		snprintf(varname, 500, "NETWORKING_CLI_%s_RAILS", cli->name);
+
+		char rail_list_tmp[1024];
+		rail_list_tmp[0] = '\0';
+
+		int j;
+
+		for(j=0; j < cli->rails_size; j++)
+		{
+			snprintf(localbuff, 500, "%s%s", cli->rails[j], (j != cli->rails_size-1)?" ":"");
+			strncat(rail_list_tmp, localbuff, 1024);
+		}
+
+		printf("%s=\"%s\"\n", varname, rail_list_tmp);
+	}
+
+
 }
 
 

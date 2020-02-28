@@ -280,6 +280,34 @@ fi
 # Display MPC's Help #
 ######################
 
+
+expand_net_rail_list()
+{
+	eval echo \$NETWORKING_CLI_`eval echo $1`_RAILS
+}
+
+print_network_list()
+{
+	if test -z "${NETWORKING_CLI_OPTION_LIST}"; then
+		return
+	fi
+
+	echo ""
+	echo "	Configured CLI switches for network configurations:"
+	echo ""
+	for net in $NETWORKING_CLI_OPTION_LIST
+	do
+		echo "		- $net:"
+		CNT=0
+		for rail in `expand_net_rail_list $net`
+		do
+			echo "			* Rail $CNT: $rail"
+			CNT=$(($CNT + 1))
+		done
+	done
+	echo ""
+}
+
 print_help(){
 cat << EOF
 Usage mpcrun [option] [--] binary [user args]
@@ -290,7 +318,7 @@ Launch Configuration:
 	-n=n, --task-nb=n               Total number of tasks
 	-c=n, --cpu-nb=n                Number of cpus per UNIX process
 	--cpu-nb-mpc=n                  Number of cpus per process for the MPC process
-	--enable-smt Enable SMT capabilities (disabled by default, except for MIC)
+	--enable-smt                    Enable SMT capabilities (disabled by default)
 
 Multithreading:
 	-m=n, --multithreading=n        Define multithreading mode
@@ -298,7 +326,11 @@ Multithreading:
 
 Network:
 	-net=n, --net=, --network=n     Define Network mode (TCP + SHM by default)
+EOF
 
+print_network_list
+
+cat << EOF
 Launcher:
 	-l=n, --launcher=n              Define launcher
 	--opt=<options>                 Launcher specific options
@@ -418,6 +450,9 @@ for arg in "$@" ; do
 			--launch_list|-l=help|--launcher=help)
 				list_available_mpc_launchers
 				;;
+			--disable-smt)
+				CONFIG_ENABLE_SMT="0"
+				;;
 			--enable-smt)
 				CONFIG_ENABLE_SMT="1"
 				;;
@@ -533,7 +568,6 @@ for arg in "$@" ; do
 			--host-nb-task=*|\
 			--nb-host=*|\
 			--nb-mic=*|\
-			--disable-smt|\
 			--report|\
 			--migration|\
 			--noreport|\
