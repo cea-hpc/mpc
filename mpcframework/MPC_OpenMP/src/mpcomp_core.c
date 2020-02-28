@@ -843,36 +843,13 @@ void __mpcomp_init(void) {
   	 mpcomp_ompt_post_init();
 #endif /* OMPT_SUPPORT */
 
-    /* Allocate information for the sequential region */
-    t = (mpcomp_thread_t *)mpcomp_alloc(sizeof(mpcomp_thread_t));
-    sctk_assert(t != NULL);
-
-    /* Current thread information is 't' */
-    sctk_openmp_thread_tls = t;
-	  	
-#if OMPT_SUPPORT
-	if( mpcomp_ompt_is_enabled() )
-	{
-   	if( OMPT_Callbacks )
-   	{
-			ompt_callback_thread_begin_t callback; 
-			callback = (ompt_callback_thread_begin_t) OMPT_Callbacks[ompt_callback_thread_begin];
-			if( callback )
-			{
-				t->ompt_thread_data = ompt_data_none;
-				callback( ompt_thread_initial, &( t->ompt_thread_data ) );
-			}
-		}
-	}
-#endif /* OMPT_SUPPORT */
-	
     int places_nb_mvps;
     int *shape, *cpus_order;
-     
+
     OMP_PLACES_LIST = mpcomp_places_env_variable_parsing( nb_mvps );
     if( OMP_PLACES_LIST )
     {
-       places_nb_mvps = mpcomp_places_get_topo_info( OMP_PLACES_LIST, &shape, &cpus_order );    
+       places_nb_mvps = mpcomp_places_get_topo_info( OMP_PLACES_LIST, &shape, &cpus_order );
        assert( places_nb_mvps <= nb_mvps );
        nb_mvps = places_nb_mvps;
     }
@@ -880,9 +857,9 @@ void __mpcomp_init(void) {
     {
         shape = NULL; cpus_order = NULL;
     }
-  
+
     __mpcomp_init_omp_task_tree( nb_mvps, shape, cpus_order, icvs );
-	
+
 #if MPCOMP_TASK
 //    mpcomp_task_team_infos_init(team_info, instance->tree_depth);
 #endif /* MPCOMP_TASK */

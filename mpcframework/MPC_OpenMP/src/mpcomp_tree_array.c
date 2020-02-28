@@ -836,6 +836,25 @@ __mpcomp_alloc_openmp_tree_struct( int* shape, int max_depth, const int* cpus_or
     __mpcomp_init_thread_master( root, tree_array, icvs );
     sctk_openmp_thread_tls = ( void* ) root->mvp->threads; 
 
+#if OMPT_SUPPORT
+    mpcomp_thread_t *t = (mpcomp_thread_t*) sctk_thread_tls;
+    sctk_assert(t != NULL);
+
+    if( mpcomp_ompt_is_enabled() )
+    {
+      if( OMPT_Callbacks )
+      {
+        ompt_callback_thread_begin_t callback;
+        callback = (ompt_callback_thread_begin_t) OMPT_Callbacks[ompt_callback_thread_begin];
+        if( callback )
+        {
+          t->ompt_thread_data = ompt_data_none;
+          callback( ompt_thread_initial, &( t->ompt_thread_data ) );
+        }
+      }
+    }
+#endif /* OMPT_SUPPORT */
+
     /* Free is thread-safety due to half barrier perform by tree build */
     mpcomp_free( args );
 }
