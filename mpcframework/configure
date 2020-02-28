@@ -653,6 +653,7 @@ MPC_MESSAGE_PASSING_ENABLED_FALSE
 MPC_MESSAGE_PASSING_ENABLED_TRUE
 MPC_THREAD_ENABLED_FALSE
 MPC_THREAD_ENABLED_TRUE
+MPC_HAVE_PROFILER
 MPC_PROFILER_ENABLED_FALSE
 MPC_PROFILER_ENABLED_TRUE
 MPC_ENABLE_SHELL_COLORS
@@ -668,6 +669,7 @@ MPC_IN_PROCESS_MODE
 LIBOBJS
 MPC_ARCH_DETECTED_STRING
 MPC_ARCH_DETECTED_FUNCTION
+MPC_HAVE_DMTCP
 dmtcp_launch
 MPC_CUDA_ENABLED_FALSE
 MPC_CUDA_ENABLED_TRUE
@@ -20511,15 +20513,15 @@ fi
 
 # Check whether --with-dmtcp was given.
 if test "${with_dmtcp+set}" = set; then :
-  withval=$with_dmtcp; mpc_dmtcp_enabled=$withval
+  withval=$with_dmtcp; MPC_HAVE_DMTCP=$withval
 else
-  mpc_dmtcp_enabled=no
+  MPC_HAVE_DMTCP=no
 fi
 
 
 
 
-if test "x$mpc_dmtcp_enabled" = "xyes"; then
+if test "x$MPC_HAVE_DMTCP" = "xyes"; then
 
 
 # Extract the first word of "dmtcp_launch", so it can be a program name with args.
@@ -20567,15 +20569,16 @@ $as_echo_n "checking for DMTCP support... " >&6; }
 	if test "x${dmtcp_launch}" = "xyes"; then
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		mpc_dmtcp_enabled="yes"
+		MPC_HAVE_DMTCP="yes"
 
 $as_echo "#define MPC_USE_DMTCP 1" >>confdefs.h
 
 	else
 		as_fn_error $? "Cannot enable DMTCP as 'dmtcp_launch' was not found in PATH" "$LINENO" 5
 	fi
-
 fi
+
+
 
 # Checks for header files.
 
@@ -25794,25 +25797,26 @@ fi
 
 # Check whether --enable-profiler was given.
 if test "${enable_profiler+set}" = set; then :
-  enableval=$enable_profiler; mpc_profiler_enabled=$enableval
+  enableval=$enable_profiler; MPC_HAVE_PROFILER=$enableval
 else
-  mpc_profiler_enabled=no
+  MPC_HAVE_PROFILER=no
 fi
 
 
-if test "x${mpc_profiler_enabled}" = "xyes"; then
+if test "x${MPC_HAVE_PROFILER}" = "xyes"; then
 
 $as_echo "#define MPC_Profiler 1" >>confdefs.h
 
 fi
 
- if test "x${mpc_profiler_enabled}" = "xyes"; then
+ if test "x${MPC_HAVE_PROFILER}" = "xyes"; then
   MPC_PROFILER_ENABLED_TRUE=
   MPC_PROFILER_ENABLED_FALSE='#'
 else
   MPC_PROFILER_ENABLED_TRUE='#'
   MPC_PROFILER_ENABLED_FALSE=
 fi
+
 
 
 
@@ -26155,7 +26159,7 @@ Context switch.... $MPC_ARCH_CONTEXT_SWITCH\n\
 \n\
 # Debug and logging\n\
 \n\
-Internal profiler. $mpc_profiler_enabled\n\
+Internal profiler. $MPC_HAVE_PROFILER\n\
 Debug............. $mpc_debug\n\
 Debug messages.... $mpc_debug_messages\n\
 Color............. $mpc_shell_color\n\
@@ -26179,7 +26183,7 @@ Launcher........ $MPC_LAUNCHER\n\
 \n\
 Allocator....... $mpc_allocator\n\
 libunwind....... $mpc_libunwind\n\
-DMTPC c/r....... $mpc_dmtcp_enabled\n\
+DMTPC c/r....... $MPC_HAVE_DMTCP\n\
 \n\
 # Network Configuration\n\
 \n\

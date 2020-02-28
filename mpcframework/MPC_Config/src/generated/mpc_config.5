@@ -99,10 +99,6 @@ MPC always use the profile with name "default", others are only enabled with opt
 .Sh AVAILABLE MODULES
 .Pp The <modules> node can contain the following fields :
 .Bl -tag -width Ds
-.It Cm arpc
-ARPC implementation for MPC
-.br
-See type arpc_type.
 .It Cm debugger
 Options for MPC Debugger
 .br
@@ -168,23 +164,6 @@ Options for MPC Accelerators module.
 .br
 See type accl.
 .El
-.Sh ENTRIES OF TYPE arpc_type
-ARPC implementation for MPC
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm net_layer
-Type is enum net_layer_type. Possible values are : ARPC_MPI, ARPC_PTL.
-
-Default value is ARPC_MPI. 
-.Pp net_layer
-Net Layer for the run
-.It Cm nb_srv
-Type is int. Default value is 1. 
-.Pp nb_srv
-Default number of services to start during ARPC initialization
-.El
 .Sh ENTRIES OF TYPE debugger
 Options for MPC Debugger
 .Pp
@@ -223,21 +202,13 @@ Type is int. Default value is 0.
 .Pp autokill
 Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT.
 .It Cm user_launchers
-Type is string. Default value is default. 
+Type is string. Default value is ~/.mpc/. 
 .Pp user_launchers
 Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS.
-.It Cm keep_rand_addr
-Type is bool. Default value is true. 
-.Pp keep_rand_addr
-Activate randomization of base addresses
 .It Cm disable_rand_addr
-Type is bool. Default value is false. 
+Type is bool. Default value is true. 
 .Pp disable_rand_addr
 Deactivate randomization of base addresses
-.It Cm disable_mpc
-Type is bool. Default value is false. 
-.Pp disable_mpc
-Do not use mpc for execution (deprecated?)
 .It Cm thread_init
 Type is function pointer. Default value is sctk_use_ethread_mxn. 
 .Pp thread_init
@@ -262,10 +233,6 @@ Define the number of compute nodes
 Type is string. Default value is none. 
 .Pp launcher
 Define which launcher to use
-.It Cm max_try
-Type is int. Default value is 10. 
-.Pp max_try
-Define the max number of tries to access the topology file before failing
 .It Cm profiling
 Type is string. Default value is stdout. 
 .Pp profiling
@@ -274,10 +241,6 @@ Select the type of outputs for the profiling
 Type is bool. Default value is false. 
 .Pp enable_smt
 Enable usage of hyperthreaded cores if available on current architecture.
-.It Cm share_node
-Type is bool. Default value is false. 
-.Pp share_node
-Enable the restriction on CPU number to share node
 .It Cm restart
 Type is bool. Default value is false. 
 .Pp restart
@@ -286,10 +249,6 @@ Restart MPC from a previous checkpoint
 Type is bool. Default value is false. 
 .Pp checkpoint
 Enable MPC checkpointing
-.It Cm report
-Type is bool. Default value is false. 
-.Pp report
-Enable reporting.
 .El
 .Sh ENTRIES OF TYPE collectives_shm_shared
 Shared Memory Collectives for MPC

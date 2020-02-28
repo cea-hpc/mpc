@@ -21,8 +21,8 @@
 #                                                                      # 
 ######################################################################## 
 cat <<EOF > $debug_file
-set args $USER_ARGS $SCTK_ARGS
+set args $LAUNCHER_OPTION_BINARY_ARGS $SCTK_ARGS
 handle SIGUSR1 pass nostop
 EOF
 
-LAUNCH_COMMAND="$DEBUG -x $debug_file $BINARY"
+LAUNCH_COMMAND="$DEBUG -x $debug_file $LAUNCHER_OPTION_BINARY"

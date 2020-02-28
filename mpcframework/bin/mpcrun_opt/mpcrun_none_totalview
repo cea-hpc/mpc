@@ -20,5 +20,5 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 # 
 #                                                                      # 
 ######################################################################## 
-LAUNCH_COMMAND="totalview $BINARY -a $USER_ARGS $SCTK_ARGS"
+LAUNCH_COMMAND="totalview $LAUNCHER_OPTION_BINARY -a $LAUNCHER_OPTION_BINARY_ARGS $SCTK_ARGS"
 

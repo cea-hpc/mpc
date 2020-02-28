@@ -24,20 +24,6 @@
 ########################################################################-->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <!-- ********************************************************* -->
-  <xs:simpleType name="user_type_net_layer_type">
-    <xs:restriction base="xs:string">
-      <xs:enumeration value="ARPC_MPI"/>
-      <xs:enumeration value="ARPC_PTL"/>
-    </xs:restriction>
-  </xs:simpleType>
-  <!-- ********************************************************* -->
-  <xs:complexType name="user_type_arpc_type">
-    <xs:all>
-      <xs:element minOccurs="0" name="net_layer" type="user_type_net_layer_type"/>
-      <xs:element minOccurs="0" name="nb_srv" type="xs:integer"/>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
   <xs:complexType name="user_type_debugger">
     <xs:all>
       <xs:element minOccurs="0" name="colors" type="xs:boolean"/>
@@ -52,9 +38,7 @@
       <xs:element minOccurs="0" name="banner" type="xs:boolean"/>
       <xs:element minOccurs="0" name="autokill" type="xs:integer"/>
       <xs:element minOccurs="0" name="user_launchers" type="xs:string"/>
-      <xs:element minOccurs="0" name="keep_rand_addr" type="xs:boolean"/>
       <xs:element minOccurs="0" name="disable_rand_addr" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="disable_mpc" type="xs:boolean"/>
       <xs:element minOccurs="0" name="thread_init">
         <xs:simpleType>
           <xs:restriction base="xs:string">
@@ -67,13 +51,10 @@
       <xs:element minOccurs="0" name="nb_processor" type="xs:integer"/>
       <xs:element minOccurs="0" name="nb_node" type="xs:integer"/>
       <xs:element minOccurs="0" name="launcher" type="xs:string"/>
-      <xs:element minOccurs="0" name="max_try" type="xs:integer"/>
       <xs:element minOccurs="0" name="profiling" type="xs:string"/>
       <xs:element minOccurs="0" name="enable_smt" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="share_node" type="xs:boolean"/>
       <xs:element minOccurs="0" name="restart" type="xs:boolean"/>
       <xs:element minOccurs="0" name="checkpoint" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="report" type="xs:boolean"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
@@ -997,7 +978,6 @@
   <!-- ********************************************************* -->
   <xs:complexType name="modules">
     <xs:all>
-      <xs:element minOccurs="0" name="arpc" type="user_type_arpc_type"/>
       <xs:element minOccurs="0" name="debugger" type="user_type_debugger"/>
       <xs:element minOccurs="0" name="launcher" type="user_type_launcher"/>
       <xs:element minOccurs="0" name="collectives_shm_shared" type="user_type_collectives_shm_shared"/>

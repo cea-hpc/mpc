@@ -20,7 +20,7 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 #
 #                                                                      #
 ########################################################################
-if [ "$SCTK_JOB_MANAGER" = "HYDRA" ]; then
+if [ "$LAUNCHER_CONFIG_JOB_MANAGER" = "HYDRA" ]; then
 	if test "$MPC_AUTO_KILL_TIMEOUT" = "0"  || test  -z "$MPC_AUTO_KILL_TIMEOUT"; then
 		autokill_opt=""
 	else
@@ -28,13 +28,13 @@ if [ "$SCTK_JOB_MANAGER" = "HYDRA" ]; then
 		autokill_opt="-t ${MPC_AUTO_KILL_TIMEOUT}"
 	fi
 	
-	if [ "${CPU_NB}" = "" ] || [ "${CPU_NB}" = "0" ]; then
+	if [ "${LAUNCHER_OPTION_CPU_NB}" = "" ] || [ "${LAUNCHER_OPTION_CPU_NB}" = "0" ]; then
 		opt_core=""
 	else
-		opt_core="-c ${CPU_NB}"
+		opt_core="-c ${LAUNCHER_OPTION_CPU_NB}"
 	fi  
 
-	LAUNCH_COMMAND="salloc $LAUNCH_OPTIONS -n $PROCESS_NB -N $NODE_NB ${opt_core} ${autokill_opt} ${MPC_MPIEXEC_HYDRA_PATH} -n $PROCESS_NB $LAUNCHER_OPTION_WRAPPER $BINARY $USER_ARGS $SCTK_ARGS"
+	LAUNCH_COMMAND="salloc $LAUNCH_OPTIONS -n $LAUNCHER_OPTION_PROCESS_NB -N $LAUNCHER_OPTION_NODE_NB ${opt_core} ${autokill_opt} ${LAUNCHER_CONFIG_MPIEXEC_HYDRA_PATH} -n $LAUNCHER_OPTION_PROCESS_NB $LAUNCHER_OPTION_WRAPPER $LAUNCHER_OPTION_BINARY $LAUNCHER_OPTION_BINARY_ARGS $SCTK_ARGS"
 else
 	echo  "ERROR mpc is compiled without Hydra support" 1>&2
 	exit 1

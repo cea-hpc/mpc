@@ -33,7 +33,7 @@ fi
 
 decho "Binary $1"
 decho "MPC_ARGS $2"
-decho "USER_ARGS $3"
+decho "LAUNCHER_OPTION_BINARY_ARGS $3"
 
 MPC_STARTUP_ARGS="$2"
 export MPC_STARTUP_ARGS

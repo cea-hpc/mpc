@@ -518,12 +518,12 @@ AM_CONDITIONAL([MPC_CUDA_ENABLED], [test "x$cuda_enabled" = "xyes"])
 AC_ARG_WITH([dmtcp],
 [AS_HELP_STRING([--with-dmtcp],
                 [Compile MPC with checkpoint restart support])],
-[mpc_dmtcp_enabled=$withval],
-[mpc_dmtcp_enabled=no])
+[MPC_HAVE_DMTCP=$withval],
+[MPC_HAVE_DMTCP=no])
 
 
 
-if test "x$mpc_dmtcp_enabled" = "xyes"; then
+if test "x$MPC_HAVE_DMTCP" = "xyes"; then
 
 
 AC_CHECK_PROG([dmtcp_launch],[dmtcp_launch],[yes],[no])
@@ -532,13 +532,14 @@ AC_CHECK_PROG([dmtcp_launch],[dmtcp_launch],[yes],[no])
 
 	if test "x${dmtcp_launch}" = "xyes"; then
 		AC_MSG_RESULT([yes])
-		mpc_dmtcp_enabled="yes"
+		MPC_HAVE_DMTCP="yes"
 		AC_DEFINE([MPC_USE_DMTCP], [1], [MPC transparent checkpointing is enabled])
 	else
 		AC_MSG_ERROR([Cannot enable DMTCP as 'dmtcp_launch' was not found in PATH])
 	fi
-
 fi
+
+AC_SUBST([MPC_HAVE_DMTCP])
 
 # Checks for header files.
 
@@ -1278,15 +1279,16 @@ fi
 AC_ARG_ENABLE([profiler],
 [AS_HELP_STRING([--enable-profiler],
                 [Compile MPC with Internal Profiling Support])],
-[mpc_profiler_enabled=$enableval],
-[mpc_profiler_enabled=no])
+[MPC_HAVE_PROFILER=$enableval],
+[MPC_HAVE_PROFILER=no])
 
-if test "x${mpc_profiler_enabled}" = "xyes"; then
+if test "x${MPC_HAVE_PROFILER}" = "xyes"; then
         AC_DEFINE([MPC_Profiler], [1], [MPC_Profiler module was enabled])
 fi
 
-AM_CONDITIONAL([MPC_PROFILER_ENABLED], [test "x${mpc_profiler_enabled}" = "xyes"])
+AM_CONDITIONAL([MPC_PROFILER_ENABLED], [test "x${MPC_HAVE_PROFILER}" = "xyes"])
 
+AC_SUBST([MPC_HAVE_PROFILER])
 
 #
 # Modular MPC configuration
@@ -1533,7 +1535,7 @@ Context switch.... $MPC_ARCH_CONTEXT_SWITCH\n\
 \n\
 # Debug and logging\n\
 \n\
-Internal profiler. $mpc_profiler_enabled\n\
+Internal profiler. $MPC_HAVE_PROFILER\n\
 Debug............. $mpc_debug\n\
 Debug messages.... $mpc_debug_messages\n\
 Color............. $mpc_shell_color\n\
@@ -1557,7 +1559,7 @@ Launcher........ $MPC_LAUNCHER\n\
 \n\
 Allocator....... $mpc_allocator\n\
 libunwind....... $mpc_libunwind\n\
-DMTPC c/r....... $mpc_dmtcp_enabled\n\
+DMTPC c/r....... $MPC_HAVE_DMTCP\n\
 \n\
 # Network Configuration\n\
 \n\

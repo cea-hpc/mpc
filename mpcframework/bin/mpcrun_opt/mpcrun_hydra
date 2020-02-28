@@ -20,11 +20,11 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 #
 #                                                                      #
 ########################################################################
-if [ "$SCTK_JOB_MANAGER" = "HYDRA" ]; then
-	if test "$LAUNCH_MODE" = "exec"; then
-		LAUNCH_COMMAND="${MPC_MPIEXEC_HYDRA_PATH} $LAUNCH_OPTIONS -n $PROCESS_NB $LAUNCHER_OPTION_WRAPPER $BINARY $USER_ARGS $SCTK_ARGS"
+if [ "$LAUNCHER_CONFIG_JOB_MANAGER" = "HYDRA" ]; then
+	if test "$LAUNCHER_CONFIG_LAUNCH_MODE" = "exec"; then
+		LAUNCH_COMMAND="${LAUNCHER_CONFIG_MPIEXEC_HYDRA_PATH} $LAUNCH_OPTIONS -n $LAUNCHER_OPTION_PROCESS_NB $LAUNCHER_OPTION_WRAPPER $LAUNCHER_OPTION_BINARY $LAUNCHER_OPTION_BINARY_ARGS $SCTK_ARGS"
 	else
-		LAUNCH_COMMAND="$LAUNCHER_OPTION_WRAPPER $BINARY $USER_ARGS $SCTK_ARGS"
+		LAUNCH_COMMAND="$LAUNCHER_OPTION_WRAPPER $LAUNCHER_OPTION_BINARY $LAUNCHER_OPTION_BINARY_ARGS $SCTK_ARGS"
 	fi
 else
 	echo  "ERROR mpc is compiled without Hydra support" 1>&2

@@ -52,7 +52,6 @@ struct sctk_runtime_config;
 
 /********************************* FUNCTION *********************************/
 /* reset functions */
-void sctk_runtime_config_struct_init_arpc_type(void * struct_ptr);
 void sctk_runtime_config_struct_init_debugger(void * struct_ptr);
 void sctk_runtime_config_struct_init_launcher(void * struct_ptr);
 void sctk_runtime_config_struct_init_collectives_shm_shared(void * struct_ptr);

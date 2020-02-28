@@ -51,9 +51,6 @@ extern "C"
 
   void sctk_set_net_val (void (*val) (int *, char ***));
 
-  extern bool sctk_share_node_capabilities;
-
-
   void mpc_start_ (void);
   void mpc_start__ (void);
 

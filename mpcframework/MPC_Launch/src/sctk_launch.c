@@ -91,7 +91,6 @@ static char **init_argument = NULL;
 #define MAX_NAME_FORMAT 30
 /* const char *sctk_store_dir = "/dev/null"; */
 
-bool sctk_share_node_capabilities;
 
 char *get_debug_mode()
 {
@@ -282,12 +281,11 @@ void mpc_lowcomm_rdma_window_release_ht();
 
 static void sctk_perform_initialisation ( void )
 {
-	/*   mkdir (sctk_store_dir, 0777); */
 	if ( sctk_process_nb_val && mpc_common_get_flags()->task_number )
 	{
 		if ( mpc_common_get_flags()->task_number < sctk_process_nb_val )
 		{
-			sctk_error( "\n--process-nb=%d\n--nb-task=%d\n Nb tasks must be greater than nb processes\n Run your program with option --nb-task=(>=%d) or --nb-process=(<=%d)", sctk_process_nb_val, mpc_common_get_flags()->task_number, sctk_process_nb_val, mpc_common_get_flags()->task_number );
+			sctk_error( "\n--process-nb=%d\n--task-number=%d\n Nb tasks must be greater than nb processes\n Run your program with option --task-number=(>=%d) or --nb-process=(<=%d)", sctk_process_nb_val, mpc_common_get_flags()->task_number, sctk_process_nb_val, mpc_common_get_flags()->task_number );
 			abort();
 		}
 	}
@@ -440,9 +438,6 @@ void sctk_use_pthread_ng( void )
 }
 /*********  END NG ************/
 
-static void sctk_def_directory( __UNUSED__ char *arg ) /*   sctk_store_dir = arg; */
-{
-}
 
 static void ignored_argument ( __UNUSED__ char *arg )
 {
@@ -503,11 +498,6 @@ sctk_def_graphic_placement( __UNUSED__ char *arg )
 	mpc_common_get_flags()->enable_topology_graphic_placement = 1;
 }
 
-static void
-sctk_def_share_node ( __UNUSED__ char *arg )
-{
-	sctk_share_node_capabilities = 1;
-}
 
 static void
 sctk_checkpoint ( void )
@@ -563,7 +553,6 @@ sctk_proceed_arg ( char *word )
 	sctk_add_arg_eq ( "--graphic-placement", sctk_def_graphic_placement );
 	sctk_add_arg_eq ( "--text-placement", sctk_def_text_placement );
 	sctk_add_arg_eq ( "--disable-smt", sctk_def_disable_smt );
-	sctk_add_arg_eq ( "--directory", sctk_def_directory );
 	sctk_add_arg_eq ( "--mpc-verbose", sctk_set_verbosity );
 	sctk_add_arg ( "--use-pthread_ng", sctk_use_pthread_ng );
 	sctk_add_arg ( "--use-pthread", sctk_use_pthread );
@@ -579,7 +568,6 @@ sctk_proceed_arg ( char *word )
 	sctk_add_arg_eq ( "--process-number", sctk_def_process_nb );
 	/* Node NB is always coming from PMI */
 	sctk_add_arg_eq ( "--node-number", ignored_argument );
-	sctk_add_arg_eq ( "--share-node", sctk_def_share_node );
 	sctk_add_arg_eq ( "--processor-number", sctk_def_processor_nb );
 	sctk_add_arg_eq ( "--profiling", sctk_set_profiling );
 	sctk_add_arg_eq ( "--launcher", sctk_def_launcher_mode );
@@ -902,7 +890,6 @@ static void __set_default_values()
 	sctk_launcher_mode = sctk_runtime_config_get()->modules.launcher.launcher;
 	mpc_common_get_flags()->profiler_outputs = sctk_runtime_config_get()->modules.launcher.profiling;
 	mpc_common_get_flags()->enable_smt_capabilities = sctk_runtime_config_get()->modules.launcher.enable_smt;
-	sctk_share_node_capabilities = sctk_runtime_config_get()->modules.launcher.share_node;
 	mpc_common_get_flags()->checkpoint_enabled = sctk_runtime_config_get()->modules.launcher.checkpoint;
 	mpc_common_get_flags()->enable_accelerators =
 	    sctk_runtime_config_get()->modules.accelerator.enabled;

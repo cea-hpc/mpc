@@ -22,94 +22,6 @@
 #                                                                      #
 ########################################################################
 
-#
-# Compute All Paths
-#
-
-MPC_INSTALL_PREFIX=@prefix@
-MPC_BIN_DIR="${MPC_INSTALL_PREFIX}/bin"
-MPC_LIB_DIR="${MPC_INSTALL_PREFIX}/lib"
-MPC_SHARE_DIR="${MPC_INSTALL_PREFIX}/share/mpc"
-MPC_INCLUDE_DIR="${MPC_INSTALL_PREFIX}/include"
-
-#Version of MPC library
-
-MAJOR="@MPC_VERSION_MAJOR@"
-MINOR="@MPC_VERSION_MINOR@"
-REVISION="@MPC_VERSION_REVISION@"
-PRE_RELEASE="@MPC_VERSION_PRE@"
-
-# Configuration of MPC Networks
-SCTK_NET_LIST="@MPC_NETWORK_LIST@"
-
-# Configuration of MPC's Launch
-SCTK_JOB_MANAGER="@MPC_LAUNCHER@"
-MPC_IN_PROCESS_MODE="@MPC_IN_PROCESS_MODE@"
-
-
-LAUNCH="mpiexec"
-LAUNCH_MODE="exec"
-BINS_HOME="${MPC_INSTALL_PREFIX}/share/mpc/mpcrun_opt/mpcrun"
-
-MPC_MPIEXEC_HYDRA_PATH="@MPC_MPIEXEC_HYDRA_PATH@"
-
-
-GDB_LIBTHREAD_DB="${MPC_LIB_DIR}/libmpc_thread_db.so"
-export GDB_LIBTHREAD_DB
-# Export job manager type: slurm or hydra
-export SCTK_JOB_MANAGER
-
-MPC_VERBOSE="0"
-MPC_DISABLE="0"
-
-show=
-
-#. ${MPC_BIN_DIR}/mpc_modes
-SCTK_USE_PTHREAD=1
-SCTK_USE_MADELEINE=0
-SCTK_USE_MPI=1
-SCTK_USE_MPI2=0
-SHARE_NODE='1'
-ENABLE_SMT="0"
-GRAPHIC_PLACEMENT="0"
-TEXT_PLACEMENT="0"
-DISABLE_SMT="0"
-ACCL_SUPPORT="0"
-FT_WRAP=
-FT_SCRIPTPATH=
-
-if test "$MPC_AUTO_KILL_TIMEOUT" = "" ; then
-	MPC_AUTO_KILL_TIMEOUT="0"
-	export MPC_AUTO_KILL_TIMEOUT
-fi
-
-MPC_VERSION="${MAJOR}.${MINOR}"
-if test "${MINOR}" = "-1" ; then
-	MPC_VERSION="Experimental"
-fi
-
-MODES_MULTITHREAD="ethread ethread_ng"
-MODES_NET="$SCTK_NET_LIST"
-if test "$SCTK_USE_PTHREAD" = "1" ; then
-	MODES_MULTITHREAD="pthread ethread_mxn pthread_ng ethread_mxn_ng $MODES_MULTITHREAD"
-fi
-
-check_net(){
-	if test "$1" != "none" ; then
-		NET_TYPE="--sctk_use_network=$1"
-	fi
-}
-
-check_thread(){
-	if test "$1" != "none" ; then
-		for mode in $MODES_MULTITHREAD ; do
-			if test "$1" = "$mode" ; then
-				THREAD_TYPE="--use-$1"
-			fi
-		done
-	fi
-}
-
 mpcrun_error(){
 	echo "================ ERROR ================"
 	echo "$1"
@@ -117,127 +29,206 @@ mpcrun_error(){
 	exit 1
 }
 
-print_help(){
-	cat << EOF
-Usage mpcrun [option] [--] binary [user args]
 
-Informations:
---help,-h Display this help
---show, Display command line
---version-details, Print version of each module used
---report, Print report
---verbose=n,-v,-vv,-vvv Verbose mode (level 1 to 3)
---verbose Verbose level 1
+#########################
+# General Configuration #
+#########################
 
-Topology:
---task-nb=n,-n=n Total number of tasks
---process-nb=n,-p=n Total number of processes
---cpu-nb=n,-c=n Number of cpus per process
---cpu-nb-mpc=n Number of cpus per process for the MPC process
---node-nb=n,-N=n Total number of nodes
---enable-smt Enable SMT capabilities (disabled by default, except for MIC)
---graphic-placement Output a xml file to visualize thread placement and topology for each compute node
---text-placement Output a txt file to visualize thread placement and their infos on the topology for each compute node
---disable-smt Disable SMT capabilities
---disable-share-node Do not restrict on CPU number to share node
+# Compute All Paths
 
-Multithreading:
---multithreading=n,-m=n Define multithreading mode
-modes: $MODES_MULTITHREAD
+MPC_INSTALL_PREFIX=@prefix@
+MPC_BIN_DIR="${MPC_INSTALL_PREFIX}/bin"
+MPC_LIB_DIR="${MPC_INSTALL_PREFIX}/lib"
+MPC_SHARE_DIR="${MPC_INSTALL_PREFIX}/share/mpc"
+MPC_INCLUDE_DIR="${MPC_INSTALL_PREFIX}/include"
 
-Network:
---network=n,-net=n Define Network mode (TCP + SHM by default)
-modes: $MODES_NET
+# Version of MPC library
 
-Checkpoint/Restart and Migration:
---checkpoint Enable checkpoint
---migration Enable migration
---restart Enable restart
+MAJOR="@MPC_VERSION_MAJOR@"
+MINOR="@MPC_VERSION_MINOR@"
+REVISION="@MPC_VERSION_REVISION@"
+PRE_RELEASE="@MPC_VERSION_PRE@"
 
-Launcher:
---launcher=n,-l=n Define launcher
---opt=<options> launcher specific options
---launch_list print available launch methods
---config=<file> Configuration file to load.
---profiles=<p1,p2> List of profiles to enable in config.
---tempdir Run MPC job in a temporary directory (created in current dir)
+# Optionnal modules
 
-Debugger:
---dbg=<debugger_name> to use a debugger
+MPC_HAVE_DMTCP=@MPC_HAVE_DMTCP@
+MPC_HAVE_PROFILER=@MPC_HAVE_PROFILER@
+##########################
+# Inject MPC in the PATH #
+##########################
 
-Fault-tolerance (if compiled with --enable-ft):
---checkpoint Enabling Fault-tolerance support
---restart[=<path>] Restart from previous checkpoint (path to restart script)
+# Here we prepend the PATH which is normally postpended
+# we do this as we can't override the whole prefix with
+# mpc binaries as it can cause version mismatches
+export PATH="${MPC_BIN_DIR}:${PATH}"
 
-Profiling (if compiled with --enable-MPC_Profiler) :
---profiling=AA,BB,...
+##########################
+# Launcher Configuration #
+##########################
 
-example : --profiling=stdout,html,latex
+MPC_IN_PROCESS_MODE="@MPC_IN_PROCESS_MODE@"
 
-With the following output modules :
-* file : Outputs to file indented profile with time in standard units
-* file-raw : Outputs to file unindented profile in ticks (gnuplot compliant)
-* file-noindent : Same as "text" with no indentation
-* stdout : "text" to stdout
-* stdout-raw : "text_raw" to stdout
-* stdout-noindent : "text_noindent" to stdout
-* latex : Outputs profile to a latex source file
-* html : Outputs profile to an html file
-EOF
-}
+LAUNCHER_CONFIG_JOB_MANAGER="@MPC_LAUNCHER@"
+LAUNCHER_CONFIG_MPIEXEC_HYDRA_PATH="@MPC_MPIEXEC_HYDRA_PATH@"
 
-##########################################
-# Check for disabling ASLR using Setarch #
-##########################################
+# Default Launcher and launch mode
+
+LAUNCHER_SHOW_CMD=""
+
+LAUNCHER_PLUGIN="mpiexec"
+LAUNCHER_CONFIG_LAUNCH_MODE="exec"
+
+# Where to find the specialized launchers
+LAUNCHER_CONFIG_BINS_HOME="${MPC_INSTALL_PREFIX}/share/mpc/mpcrun_opt/mpcrun"
+
+##################################
+# Options Passed to the Launcher #
+##################################
 
 LAUNCHER_OPTION_WRAPPER=""
+LAUNCHER_OPTION_BINARY=""
+LAUNCHER_OPTION_BINARY_ARGS=""
 
-# First check for uname
-uname -m 2> /dev/null
+LAUNCHER_OPTION_CPU_NB=""
+LAUNCHER_OPTION_PROCESS_NB="1"
+LAUNCHER_OPTION_NODE_NB=""
 
-if test "x$?" = "x0"; then
-	# Now pass to setarch
-	setarch `uname -m` -R true 2> /dev/null
+############################
+# Default Parameter Values #
+############################
 
-	if test "x$?" = "x0"; then
-		# Here we have setarch -R
-		LAUNCHER_OPTION_WRAPPER="setarch `uname -m` -R"
+CONFIG_MPC_VERBOSE="0"
+CONFIG_ENABLE_SMT="0"
+CONFIG_USER_LAUNCHERS=""
+CONFIG_AUTOKILL="0"
+CONFIG_DISABLE_ASLR="0"
+CONFIG_THREAD_MODEL="ethread_mxn"
+CONFIG_PROFILING="stdout"
+CONFIG_ACCELERATOR_SUPPORT="0"
+CONFIG_TOPOLOGY_DUMP_GRAPHIC="0"
+CONFIG_TOPOLOGY_DUMP_TEXT="0"
+
+
+
+MPC_ARG_FAULT_TOLERANCE=""
+MPC_ARG_FT_SCRIPT_PATH=""
+
+MPC_ARG_TASK_NB=""
+MPC_ARG_NETWORKING=""
+MPC_ARG_THREAD_TYPE=""
+MPC_ARG_FORCE_CPU_NB=""
+
+###################
+# Supported Modes #
+###################
+
+# Configuration of MPC Networks
+MODES_NETWORKING="@MPC_NETWORK_LIST@"
+
+check_net(){
+	if test "$1" != "none" ; then
+		MPC_ARG_NETWORKING="--sctk_use_network=$1"
 	fi
-fi
+
+}
 
 
-BINARY=""
+# Supported thread engines
+MODES_MULTITHREAD="pthread ethread_mxn pthread_ng ethread_mxn_ng ethread ethread_ng"
 
 
-mpi_only=no
-USER_ARGS=""
-SHOW_COM=""
-MIGRATION=""
-DEBUG=""
-NET_TYPE=""
-PROCESS_NB=""
-NODE_NB=""
-TASK_NB=""
-CPU_NB=""
-CPU_NB_MPC=""
+check_thread(){
+	if test "$1" != "none" ; then
+		for mode in $MODES_MULTITHREAD ; do
+			if test "$1" = "$mode" ; then
+				MPC_ARG_THREAD_TYPE="--use-$1"
+				return
+			fi
+		done
+	fi
+	mpcrun_error "No such threading type $1 avalaible ones are $MODES_MULTITHREAD"
+}
 
-if test "$REPORT" = "yes" ; then
-	REPORT="--report"
-else
-	REPORT=""
-fi
 
-TMP_DIR_D=""
-TMP_DIR=""
-READ_MPC_ARG="true"
+check_process_nb()
+{
+	if test "$MPC_IN_PROCESS_MODE" = "yes"; then
+		echo "MPC is in process mode, process number will be set automatically"
+	fi
+	LAUNCHER_OPTION_PROCESS_NB="$1"
+}
 
-TMP_DIR_D="TEMP_MPC_$$/"
-TMP_DIR="--directory=${TMP_DIR_D}"
-TMP_DIR="/dev/null"
-LAUNCH_OPTIONS=""
-MPC_CLEAN_TMP_DIR="0"
+assert_have_dmtcp()
+{
+	if test "x$MPC_HAVE_DMTCP" = "xno"; then
+		mpcrun_error "Option $1 is not availble without DMTCP support"
+	fi
+}
 
-# Pre-parsing to extrac --config and --profiles, it must be done before parsing all options
+
+##################################
+# Load MPC's Configuration Files #
+##################################
+
+load_mpc_configuration()
+{
+	# Load config files options
+	CONFIG_FILES_VALID=false
+	preload_tmp="$LD_PRELOAD"
+	LD_PRELOAD=""
+	config_files_vars="`${MPC_BIN_DIR}/mpc_print_config --launcher 2>/dev/null`"
+	LD_PRELOAD="$preload_tmp"
+
+	# Load configuration variables
+	test "x$?" = "x0" && eval "${config_files_vars}"
+
+	if [ "${CONFIG_FILES_VALID}" = "true" ]; then
+		# Default value related to --enable-smt
+		CONFIG_ENABLE_SMT="${CONFIG_LAUNCHER_ENABLE_SMT}"
+		# Default value related to -v/-vv/-vvv
+		CONFIG_MPC_VERBOSE="${CONFIG_LAUNCHER_VERBOSITY}"
+		# User launchers
+		CONFIG_USER_LAUNCHERS="${CONFIG_LAUNCHER_USER_LAUNCHERS}"
+		# Autokill parameter
+		CONFIG_AUTOKILL="${CONFIG_LAUNCHER_AUTOKILL}"
+		# Configure if ASLR is to be disabled
+		CONFIG_DISABLE_ASLR="${CONFIG_LAUNCHER_DISABLE_RAND_ADDR}"
+		# Enable checkpoint
+		if [ "${CONFIG_LAUNCHER_CHECKPOINT}" = "true" ]; then
+			MPC_ARG_FAULT_TOLERANCE="--checkpoint"
+		fi
+		# Enable restart mode
+		if [ "${CONFIG_LAUNCHER_RESTART}" = "true" ]; then
+			MPC_ARG_FAULT_TOLERANCE="--restart"
+		fi
+		# Number of process
+		LAUNCHER_OPTION_PROCESS_NB="${CONFIG_LAUNCHER_NB_PROCESS}"
+		# Number of node
+		LAUNCHER_OPTION_NODE_NB="${CONFIG_LAUNCHER_NB_NODE}"
+		# Number of task
+		MPC_ARG_TASK_NB="${CONFIG_LAUNCHER_NB_TASK}"
+		# Number of core
+		LAUNCHER_OPTION_CPU_NB="${CONFIG_LAUNCHER_NB_PROCESSOR}"
+		# Define the launcher to use
+		LAUNCHER_PLUGIN="${CONFIG_LAUNCHER_LAUNCHER}"
+
+		if test "$LAUNCHER_PLUGIN" = 'none'; then
+			LAUNCHER_PLUGIN='mpiexec'
+		fi
+
+		CONFIG_PROFILING="${CONFIG_LAUNCHER_PROFILING}"
+	else
+		# Call again to display the error (usually link error)
+		mpc_print_config --launcher
+		mpcrun_error "Error while loading MPC configuration files."
+	fi
+
+	# Make config loading silent in case of error in all MPC processes and avoid to revalidate XML files
+	# with mpc-config.xsd as it's already done. By this way it avoid to open mpc-config.xsd on each nodes.
+	export MPC_CONFIG_SILENT=1
+}
+
+# Pre-parsing to extract --config and --profiles, it must be done before parsing all options
 # as config file must feed default value and can be erased by mpcrun arguments.
 for arg in "$@" ; do
 	case $arg in
@@ -259,165 +250,185 @@ if [ ! -z "${MPC_USER_CONFIG}" ] && [ ! -e "${MPC_USER_CONFIG}" ]; then
 	exit 1
 fi
 
-# Load config files options
-CONFIG_FILES_VALID=false
-preload_tmp="$LD_PRELOAD"
-LD_PRELOAD=""
-config_files_vars="`${MPC_BIN_DIR}/mpc_print_config --launcher 2>/dev/null`"
-LD_PRELOAD="$preload_tmp"
-if [ $? -eq 0 ]; then eval "${config_files_vars}"; fi
-if [ "${CONFIG_FILES_VALID}" = "true" ]; then
-	# Default value related to --enable-smt
-	ENABLE_SMT="${CONFIG_LAUNCHER_SMT}"
-	# Default value related to --graphic-placement
-	GRAPHIC_PLACEMENT="${CONFIG_LAUNCHER_GRAPHIC_PLACEMENT}"
-	# Default value related to --text-placement
-	TEXT_PLACEMENT="${CONFIG_LAUNCHER_TEXT_PLACEMENT}"
-	# Default value related to -v/-vv/-vvv
-	MPC_VERBOSE="${CONFIG_LAUNCHER_VERBOSITY}"
-	# User launchers
-	MPC_USER_LAUNCHERS="${CONFIG_LAUNCHER_USER_LAUNCHERS}"
-	# Print version details
-	if [ "${CONFIG_LAUNCHER_VERS_DETAILS}" = "true" ]; then
-		VERSION_DETAILS="--version-details"
+
+load_mpc_configuration
+
+
+##########################################
+# Check for disabling ASLR using Setarch #
+##########################################
+
+if test "x${CONFIG_DISABLE_ASLR}" = "x1"; then
+
+	# First check for uname
+	uname -m > /dev/null 2>&1
+
+	if test "x$?" = "x0"; then
+		# Now pass to setarch
+		setarch `uname -m` -R true > /dev/null 2>&1
+
+		if test "x$?" = "x0"; then
+			# Here we have setarch -R
+			LAUNCHER_OPTION_WRAPPER="setarch `uname -m` -R"
+		fi
 	fi
-	# Enable checkpoint
-	if [ "${CONFIG_LAUNCHER_CHECKPOINT}" = "true" ]; then
-		FT_WRAP="--checkpoint"
-	fi
-	# Enable migration
-	if [ "${CONFIG_LAUNCHER_MIGRATION}" = "true" ]; then
-		MIGRATION="--migration"
-	fi
-	# Enable reporting
-	if [ "${CONFIG_LAUNCHER_REPORT}" = "true" ]; then
-		REPORT="--report"
-	fi
-	# Enable restart mode
-	if [ "${CONFIG_LAUNCHER_RESTART}" = "true" ]; then
-		FT_WRAP="--restart"
-	fi
-	# Number of process
-	PROCESS_NB="${CONFIG_LAUNCHER_NB_PROCESS}"
-	# Number of node
-	NODE_NB="${CONFIG_LAUNCHER_NB_NODE}"
-	# Number of task
-	TASK_NB="${CONFIG_LAUNCHER_NB_TASK}"
-	# Number of core
-	CPU_NB="${CONFIG_LAUNCHER_NB_PROCESSOR}"
-	# Define the launcher to use
-	LAUNCH="${CONFIG_LAUNCHER_LAUNCHER}"
-	# On 2.3.1 LAUNCH can be set to 'none', but on 2.4.0 it
-	# made all tasks running on interactive mode, so override 'none' values here
-	if test "$LAUNCH" = 'none'; then
-		LAUNCH='mpiexec'
-	fi
-else
-	mpcrun_error "Error while loading MPC configuration files."
+
 fi
 
-# Make config loading silent in case of error in all MPC processes and avoid to revalidate XML files
-# with mpc-config.xsd as it's already done. By this way it avoid to open mpc-config.xsd on each nodes.
-export MPC_CONFIG_SILENT=1
+
+######################
+# Display MPC's Help #
+######################
+
+print_help(){
+cat << EOF
+Usage mpcrun [option] [--] binary [user args]
+
+Launch Configuration:
+	-N=n,--node-nb=n                Total number of nodes
+	-p=n, --process-nb=n            Total number of UNIX processes
+	-n=n, --task-nb=n               Total number of tasks
+	-c=n, --cpu-nb=n                Number of cpus per UNIX process
+	--cpu-nb-mpc=n                  Number of cpus per process for the MPC process
+	--enable-smt Enable SMT capabilities (disabled by default, except for MIC)
+
+Multithreading:
+	-m=n, --multithreading=n        Define multithreading mode
+                                        modes: $MODES_MULTITHREAD
+
+Network:
+	-net=n, --net=, --network=n     Define Network mode (TCP + SHM by default)
+
+Launcher:
+	-l=n, --launcher=n              Define launcher
+	--opt=<options>                 Launcher specific options
+	--launch_list                   Print available launch methods
+	--config=<file>                 Configuration file to load.
+	--profiles=<p1,p2>              List of profiles to enable in config.
+
+
+Informations:
+	-h, --help                      Display this help
+	--show                          Display command line
+
+	-v,-vv,-vvv,--verbose=n         Verbose mode (level 1 to 3)
+	--verbose                       Verbose level 1
+	--graphic-placement             Output a xml file to visualize thread
+	                                placement and topology for each compute node
+	--text-placement                Output a txt file to visualize thread placement and
+	                                their infos on the topology for each compute node
+
+Debugger:
+	--dbg=<debugger_name> to use a debugger
+EOF
+
+if test "x$MPC_HAVE_DMTCP" = "xyes"; then
+
+cat << EOF
+Fault-tolerance (if compiled with --enable-ft):
+	--checkpoint                    Enabling Fault-tolerance support
+	--restart[=<path>]              Restart from previous checkpoint (path to restart script)
+EOF
+
+fi
+
+if test "x$MPC_HAVE_PROFILER" = "xyes"; then
+
+cat << EOF
+Profiling (if compiled with --enable-MPC_Profiler) :
+	--profiling=AA,BB,...
+
+	example : --profiling=stdout,html,latex
+
+	With the following output modules :
+		* file : Outputs to file indented profile with time in standard units
+		* file-raw : Outputs to file unindented profile in ticks (gnuplot compliant)
+		* file-noindent : Same as "text" with no indentation
+		* stdout : "text" to stdout
+		* stdout-raw : "text_raw" to stdout
+		* stdout-noindent : "text_noindent" to stdout
+		* latex : Outputs profile to a latex source file
+		* html : Outputs profile to an html file
+EOF
+
+fi
+
+}
+
+#####################
+# Common Operations #
+#####################
+
+list_available_mpc_launchers()
+{
+	echo "Available launch method"
+	for i in ${MPC_INSTALL_PREFIX}/share/mpc/mpcrun_opt/* ; do echo "    - `basename $i`" | sed s#mpcrun_##g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
+	if [ ! -z "${CONFIG_USER_LAUNCHERS}" ] && [ -e "${CONFIG_USER_LAUNCHERS}" ]; then
+		for i in ${CONFIG_USER_LAUNCHERS}/mpcrun_* ; do echo "    - `basename $i`" | sed s#mpcrun_##g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
+	fi
+	exit 0
+}
+
+print_version()
+{
+	echo "mpcrun ${MPC_VERSION}.${REVISION}"
+	exit 0
+}
+
+
+DEBUG=""
+
+#########################
+# Argument Parsing Loop #
+#########################
+
+ARG_PARSING_ENABLED="true"
+LAUNCHER_CPU_NB_WAS_SET="0"
+LAUNCH_OPTIONS=""
 
 # Parse command options
-DEFAULT_CPU_NB=""
 for arg in "$@" ; do
-	if test "$READ_MPC_ARG" = "true" ; then
+	if test "$ARG_PARSING_ENABLED" = "true" ; then
 		case $arg in
 			-h|--help)
 				print_help;
 				exit 0;
 				;;
 			-v|--verbose)
-				MPC_VERBOSE="1"
+				CONFIG_MPC_VERBOSE="1"
 				;;
 			-vv)
-				MPC_VERBOSE="2"
+				CONFIG_MPC_VERBOSE="2"
 				;;
 			-vvv)
-				MPC_VERBOSE="3"
+				CONFIG_MPC_VERBOSE="3"
 				;;
 			--verbose=*)
-				MPC_VERBOSE="`echo A$arg | sed -e 's/A--verbose=//g'`"
+				CONFIG_MPC_VERBOSE="`echo A$arg | sed -e 's/A--verbose=//g'`"
 				;;
 			--profiling=*)
-				MPC_PROFILING="`echo A$arg | sed -e 's/A--profiling=//g'`"
-				;;
-			--config=*)
-				# We do nothing, we just skip the argument and do not add it to the command line
+				CONFIG_PROFILING="`echo A$arg | sed -e 's/A--profiling=//g'`"
 				;;
 			--show)
-				show=echo
+				LAUNCHER_SHOW_CMD=echo
 				;;
-			--noversion-details)
-				VERSION_DETAILS=""
-				;;
-			--version-details)
-				VERSION_DETAILS="--version-details"
-				;;
-			--version)
-				echo "mpcrun $MPC_VERSION"
-				exit 0
-				;;
-				#could be merged with the previous (careful w/ retro-compatibiliy)
-				-V)
-				printf "mpcrun ${MPC_VERSION}.${REVISION}"
-				if test -f "${MPC_BIN_DIR}/../../../.git_build"; then
-					printf  " (Built from Git revision: `cat ${MPC_BIN_DIR}/../../../.git_build`)"
-				fi
-				printf "\n"
-				exit 0
-				;;
-			--clean)
-				MPC_CLEAN_TMP_DIR="1"
+			--version|-V)
+				print_version
 				;;
 			--launch_list|-l=help|--launcher=help)
-				echo "Available launch method"
-				for i in ${MPC_INSTALL_PREFIX}/share/mpc/mpcrun_opt/* ; do echo "    - `basename $i`" | sed s#mpcrun_##g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
-				if [ ! -z "${MPC_USER_LAUNCHERS}" ] && [ -e "${MPC_USER_LAUNCHERS}" ]; then
-					for i in ${MPC_USER_LAUNCHERS}/mpcrun_* ; do echo "    - `basename $i`" | sed s#mpcrun_##g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
-				fi
-				exit 0
-				;;
-			--checkpoint|--ckpt)
-				FT_WRAP="--checkpoint"
-				;;
-			--restart*|--rstr*)
-				FT_WRAP="--restart"
-				FT_SCRIPTPATH="`echo "A$arg" | sed -re 's/A--re?sta?rt?=?//g'`"
-				#if the optioanl argument is a relative path -> expand it
-				test -n "$FT_SCRIPTPATH" && test -z "`echo "$FT_SCRIPTPATH" | egrep "^/"`" && FT_SCRIPTPATH="$PWD/$FT_SCRIPTPATH"
-				;;
-			--migration)
-				MIGRATION="--migration"
-				;;
-			--noreport)
-				MPC_PROFILING=""
-				;;
-			--report)
-				MPC_PROFILING="stdout"
+				list_available_mpc_launchers
 				;;
 			--enable-smt)
-				ENABLE_SMT="1"
+				CONFIG_ENABLE_SMT="1"
 				;;
 			--graphic-placement)
-				GRAPHIC_PLACEMENT="1"
+				CONFIG_TOPOLOGY_DUMP_GRAPHIC="1"
 				;;
 			--text-placement)
-				TEXT_PLACEMENT="1"
-				;;
-			--disable-smt)
-				DISABLE_SMT="1"
-				;;
-			--disable-share-node)
-				SHARE_NODE="0"
-				;;
-			--share-node)
-				SHARE_NODE="1"
+				CONFIG_TOPOLOGY_DUMP_TEXT="1"
 				;;
 			--use-accl|--accl|-accl)
-				ACCL_SUPPORT="1"
+				CONFIG_ACCELERATOR_SUPPORT="1"
 				;;
 			--dbg=*)
 				DEBUG="`echo A$arg | sed -e 's/A--dbg=//g'`"
@@ -426,49 +437,40 @@ for arg in "$@" ; do
 				MPC_GDB_DEBUG_ARGS="`echo A$arg | sed -e 's/A--dbg_opt=//g'`"
 				;;
 			--autokill=*)
-				MPC_AUTO_KILL_TIMEOUT="`echo A$arg | sed -e 's/A--autokill=//g'`"
+				CONFIG_AUTOKILL="`echo A$arg | sed -e 's/A--autokill=//g'`"
 				;;
 			--opt=*)
 				LAUNCH_OPTIONS="$LAUNCH_OPTIONS `echo A$arg | sed -e 's/A--opt=//g'`"
 				;;
-			--tmp_dir=*)
-				TMP_DIR_D="`echo A$arg | sed -e 's/A--tmp_dir=//g'`/"
-				TMP_DIR="--directory=${TMP_DIR_D}"
-				;;
+
 			--task-nb=*)
-				TASK_NB="`echo A$arg | sed -e 's/A--task-nb=//g'`"
+				MPC_ARG_TASK_NB="`echo A$arg | sed -e 's/A--task-nb=//g'`"
 				;;
 			-n=*)
-				TASK_NB="`echo A$arg | sed -e 's/A-n=//g'`"
+				MPC_ARG_TASK_NB="`echo A$arg | sed -e 's/A-n=//g'`"
 				;;
 			--process-nb=*)
-				if test "$MPC_IN_PROCESS_MODE" = "yes"; then
-					echo "MPC is in process mode, process number will be set automatically"
-				fi
-				PROCESS_NB="`echo A$arg | sed -e 's/A--process-nb=//g'`"
+				check_process_nb "`echo A$arg | sed -e 's/A--process-nb=//g'`"
 				;;
 			-p=*)
-				if test "$MPC_IN_PROCESS_MODE" = "yes"; then
-					echo "MPC is in process mode, process number will be set automatically"
-				fi
-				PROCESS_NB="`echo A$arg | sed -e 's/A-p=//g'`"
+				check_process_nb "`echo A$arg | sed -e 's/A-p=//g'`"
 				;;
 			--cpu-nb=*)
-				CPU_NB="`echo A$arg | sed -e 's/A--cpu-nb=//g'`"
-				DEFAULT_CPU_NB="1"
+				LAUNCHER_OPTION_CPU_NB="`echo A$arg | sed -e 's/A--cpu-nb=//g'`"
+				LAUNCHER_CPU_NB_WAS_SET="1"
 				;;
 			--cpu-nb-mpc=*)
-				CPU_NB_MPC="`echo A$arg | sed -e 's/A--cpu-nb-mpc=//g'`"
+				MPC_ARG_FORCE_CPU_NB="`echo A$arg | sed -e 's/A--cpu-nb-mpc=//g'`"
 				;;
 			-c=*)
-				CPU_NB="`echo A$arg | sed -e 's/A-c=//g'`"
-				DEFAULT_CPU_NB="1"
+				LAUNCHER_OPTION_CPU_NB="`echo A$arg | sed -e 's/A-c=//g'`"
+				LAUNCHER_CPU_NB_WAS_SET="1"
 				;;
 			--node-nb=*)
-				NODE_NB="`echo A$arg | sed -e 's/A--node-nb=//g'`"
+				LAUNCHER_OPTION_NODE_NB="`echo A$arg | sed -e 's/A--node-nb=//g'`"
 				;;
 			-N=*)
-				NODE_NB="`echo A$arg | sed -e 's/A-N=//g'`"
+				LAUNCHER_OPTION_NODE_NB="`echo A$arg | sed -e 's/A-N=//g'`"
 				;;
 			--multithreading=*)
 				check_thread "`echo A$arg | sed -e 's/A--multithreading=//g'`"
@@ -482,14 +484,14 @@ for arg in "$@" ; do
 			-net=*)
 				check_net "`echo A$arg | sed -e 's/A-net=//g'`"
 				;;
+			--net=*)
+				check_net "`echo A$arg | sed -e 's/A--net=//g'`"
+				;;
 			-l=*)
-				LAUNCH="`echo A$arg | sed -e 's/A-l=//g'`"
+				LAUNCHER_PLUGIN="`echo A$arg | sed -e 's/A-l=//g'`"
 				;;
 			--launcher=*)
-				LAUNCH="`echo A$arg | sed -e 's/A--launcher=//g'`"
-				;;
-			-mpi-only|-mpi_only)
-				mpi_only=yes
+				LAUNCHER_PLUGIN="`echo A$arg | sed -e 's/A--launcher=//g'`"
 				;;
 			--config=* | --profiles=*)
 				#Already processed in a previous loop on arguments, but need to capture them otherwise
@@ -500,176 +502,73 @@ for arg in "$@" ; do
 				export SCTK_ARCH_LIBRARY_PATH
 				echo "Arch library path updated : $SCTK_ARCH_LIBRARY_PATH" >&2
 				;;
-			--mic-nb-task=*)
-				SCTK_MIC_NB_TASK="`echo A$arg | sed -e 's/A--mic-nb-task=//g'`"
-				export SCTK_MIC_NB_TASK
-				echo "run with $SCTK_MIC_NB_TASK task(s) per MIC" >&2
-				;;
-			--host-nb-task=*)
-				SCTK_HOST_NB_TASK="`echo A$arg | sed -e 's/A--host-nb-task=//g'`"deneb-P-2880.json
-				;;
-			--nb-mic=*)
-				SCTK_NB_MIC="`echo A$arg | sed -e 's/A--nb-mic=//g'`"
-				export SCTK_NB_MIC
-				echo "run with $SCTK_NB_MIC MIC(s)" >&2
-				;;
-			--nb-host=*)
-				SCTK_NB_HOST="`echo A$arg | sed -e 's/A--nb-host=//g'`"
-				export SCTK_NB_HOST
-				echo "run with $SCTK_NB_HOST host(s)" >&2
-				;;
 			--tempdir)
 				export MPC_MOVE_TO_TEMP="1"
 				;;
-			--mic-config=*)
-				MPCRUN_CONFIG_FILE="`echo A$arg | sed -e 's/A--mic-config=//g'`"
+			--checkpoint|--ckpt)
+				assert_have_dmtcp $arg
+				MPC_ARG_FAULT_TOLERANCE="--checkpoint"
+				;;
+			--restart*|--rstr*)
+				assert_have_dmtcp $arg
+				MPC_ARG_FAULT_TOLERANCE="--restart"
+				MPC_ARG_FT_SCRIPT_PATH="`echo "A$arg" | sed -re 's/A--re?sta?rt?=?//g'`"
+				#if the optioanl argument is a relative path -> expand it
+				test -n "$MPC_ARG_FT_SCRIPT_PATH" && test -z "`echo "$MPC_ARG_FT_SCRIPT_PATH" | egrep "^/"`" && MPC_ARG_FT_SCRIPT_PATH="$PWD/$MPC_ARG_FT_SCRIPT_PATH"
 				;;
 			--ft-host=*)
-				FT_HOST="`echo A$arg | sed -e 's/A--ft-host=//g'`"
+				assert_have_dmtcp $arg
+				DMTCP_ARG_FT_HOST="`echo A$arg | sed -e 's/A--ft-host=//g'`"
 				;;
 			--ft-port=*)
-				FT_PORT="`echo A$arg | sed -e 's/A--ft-port=//g'`"
+				assert_have_dmtcp $arg
+				DMTCP_ARG_FT_PORT="`echo A$arg | sed -e 's/A--ft-port=//g'`"
 				;;
+			--noversion-details|\
+			--disable-smt|\
+			--version-details|\
+			--clean|\
+			--tmp_dir=*|\
+			--mic-nb-task=*|\
+			--host-nb-task=*|\
+			--nb-host=*|\
+			--nb-mic=*|\
+			--disable-smt|\
+			--report|\
+			--migration|\
+			--noreport|\
+			--disable-share-node|\
+			--share-node|\
+			-mpi-only)
+				echo "INFO: $arg option is deprectated"
+			;;
 			--)
-				READ_MPC_ARG="false"
+				ARG_PARSING_ENABLED="false"
 				;;
 			*)
-				BINARY="$BINARY $arg"
-				READ_MPC_ARG="false"
+				LAUNCHER_OPTION_BINARY="$LAUNCHER_OPTION_BINARY $arg"
+				ARG_PARSING_ENABLED="false"
 				;;
 		esac
 	else
-		if test "$BINARY" = "" ; then
-			BINARY="$arg"
+		if test "$LAUNCHER_OPTION_BINARY" = "" ; then
+			LAUNCHER_OPTION_BINARY="$arg"
 		else
 			arg="`echo A$arg | sed s#\"A$arg\"#\"$arg\"#g | sed s#' '#@MPC_LINK_ARGS@#g`"
-			USER_ARGS="$USER_ARGS $arg"
+			LAUNCHER_OPTION_BINARY_ARGS="$LAUNCHER_OPTION_BINARY_ARGS $arg"
 		fi
 	fi
 done
 
-# Here we prepend the PATH which is normally postpended
-# we do this as we can't override the whole prefix with
-# mpc binaries as it can cause version mismatches
-export SCTK_BINDIR="${MPC_INSTALL_PREFIX}/bin/"
-export PATH="${SCTK_BINDIR}:${PATH}"
+############################
+# Fault Tollerance Support #
+############################
 
-if test "$MPC_IN_PROCESS_MODE" = "yes"; then
-	PROCESS_NB="$TASK_NB"
-else
-	if test "$PROCESS_NB" = "0" ; then
-		PROCESS_NB="1"
-	fi
-fi
+DMTCP_ARG_FT_PORT=""
+DMTCP_ARG_FT_HOST=""
 
-if test "$NODE_NB" = "0" ; then
-	NODE_NB="1"
-fi
-
-
-
-SCTK_ARGS="--sctk-args--"
-SCTK_LINUX_DISABLE_ADDR_RANDOMIZE="1"
-export SCTK_LINUX_DISABLE_ADDR_RANDOMIZE
-
-LAUNCHED_WITH_MPCRUN="1"
-export LAUNCHED_WITH_MPCRUN
-
-add_arg(){
-	SCTK_ARGS="$SCTK_ARGS $@"
-}
-
-add_arg "--task-number=$TASK_NB"
-
-if test "$DEFAULT_CPU_NB" = "1" ; then
-	if test "$CPU_NB_MPC" != ""  ; then
-		add_arg "--processor-number=$CPU_NB_MPC "
-	else
-		if test "$CPU_NB" != ""  ; then
-			add_arg "--processor-number=$CPU_NB "
-		fi
-	fi
-fi
-
-if test "$PROCESS_NB" != ""  ; then
-	add_arg "--process-number=$PROCESS_NB"
-fi
-
-if test "$ENABLE_SMT" = "1"  ; then
-	add_arg "--enable-smt"
-fi
-
-if test "$GRAPHIC_PLACEMENT" = "1"  ; then
-	add_arg "--graphic-placement"
-fi
-
-if test "$TEXT_PLACEMENT" = "1"  ; then
-	add_arg "--text-placement"
-fi
-
-if test "$DISABLE_SMT" = "1"  ; then
-	add_arg "--disable-smt"
-fi
-
-if test "$SHARE_NODE" = "1"  ; then
-	add_arg "--share-node"
-fi
-
-if test "$NODE_NB" != ""  ; then
-	add_arg "--node-number=$NODE_NB"
-fi
-
-if test "$THREAD_TYPE" != ""  ; then
-	add_arg "$THREAD_TYPE"
-fi
-
-if test "$LAUNCH" != ""  ; then
-	add_arg "--launcher=$LAUNCH"
-fi
-
-if test "$NET_TYPE" != ""  ; then
-	add_arg "$NET_TYPE"
-fi
-
-if test "$ACCL_SUPPORT" = "1"  ; then
-	add_arg "--use-accl"
-fi
-
-MPC_VERBOSE="--mpc-verbose=${MPC_VERBOSE}"
-
-if test -n "$MPC_PROFILING"; then
-	MPC_PROFILING="--profiling=${MPC_PROFILING}"
-fi
-
-SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $FT_WRAP $MIGRATION $MPC_VERBOSE $MPC_PROFILING"
-
-SCTK_ARGS="$SCTK_ARGS --sctk_use_port_number=0 --sctk_use_host=0 --sctk-args-end--"
-
-if test "$mpi_only" = "yes" ; then
-	SCTK_ARGS=""
-	MPC_DISABLE="1"
-	PROCESS_NB="$TASK_NB"
-	NET_TYPE="--use-mpi"
-fi
-
-
-export PROCESS_NB
-
-if test "$show" = "eval" ; then
-	if test "@GNU_COMPATIBLE_WHICH@" = "1" ; then
-		which -- $BINARY > /dev/null 2>&1
-		if test "$?" != "0" ; then
-			mpcrun_error "Binary $BINARY not found"
-		fi
-	else
-		which $BINARY > /dev/null 2>&1
-		if test "$?" != "0" ; then
-			mpcrun_error "Binary $BINARY not found"
-		fi
-	fi
-fi
-
-if test -n "$FT_WRAP" ; then
+dmtcp_fault_tolerance_deploy()
+{
 	SLURM_PMI_KVS_DUP_KEYS=1
 	export SLURM_PMI_KVS_DUP_KEYS
 
@@ -679,19 +578,19 @@ if test -n "$FT_WRAP" ; then
 	fi
 
 	#if the coordinator has to be embedded
-	if test -z "$FT_HOST" -a -z "$FT_PORT"; then
+	if test -z "$DMTCP_ARG_FT_HOST" -a -z "$DMTCP_ARG_FT_PORT"; then
 		port_file="`mktemp`"
-		FT_PORT=""
-		FT_HOST="`hostname`"
+		DMTCP_ARG_FT_PORT=""
+		DMTCP_ARG_FT_HOST="`hostname`"
 
-		$show dmtcp_coordinator -q --daemon --exit-on-last -p 0 --port-file $port_file
+		$LAUNCHER_SHOW_CMD dmtcp_coordinator -q --daemon --exit-on-last -p 0 --port-file $port_file
 
 		#wait for coordinator booting... (copied from DMTCP's examples)
-		if test -z "$show"; then
+		if test -z "$LAUNCHER_SHOW_CMD"; then
 			while true; do
 				if [ -f "$port_file" ]; then
-					FT_PORT=`cat $port_file`
-					if [ -n "$FT_PORT" ]; then
+					DMTCP_ARG_FT_PORT=`cat $port_file`
+					if [ -n "$DMTCP_ARG_FT_PORT" ]; then
 						break
 					fi
 				fi
@@ -699,46 +598,136 @@ if test -n "$FT_WRAP" ; then
 		fi
 		rm $port_file
 	else
-		test -z "$FT_PORT" && FT_PORT="7779"
-		test -z "$FT_HOST" && FT_HOST="localhost"
+		test -z "$DMTCP_ARG_FT_PORT" && DMTCP_ARG_FT_PORT="7779"
+		test -z "$DMTCP_ARG_FT_HOST" && DMTCP_ARG_FT_HOST="localhost"
 	fi
 
-	if test "x$FT_WRAP" = "x--checkpoint"; then
+	if test "x$MPC_ARG_FAULT_TOLERANCE" = "x--checkpoint"; then
 		#this disallows the 'option forwarding capability'
-		BINARY="dmtcp_launch -h $FT_HOST -p $FT_PORT --rm --ckpt-signal 30 ${BINARY}"
+		LAUNCHER_OPTION_BINARY="dmtcp_launch -h $DMTCP_ARG_FT_HOST -p $DMTCP_ARG_FT_PORT --rm --ckpt-signal 30 ${LAUNCHER_OPTION_BINARY}"
 
-	elif test "x$FT_WRAP" = "x--restart"; then
-		test -z "$FT_SCRIPTPATH" && FT_SCRIPTPATH="$PWD/dmtcp_restart_script.sh"
-		BINARY="$FT_SCRIPTPATH -h $FT_HOST -p $FT_PORT"
-		LAUNCH_MODE="alloc"
+	elif test "x$MPC_ARG_FAULT_TOLERANCE" = "x--restart"; then
+		test -z "$MPC_ARG_FT_SCRIPT_PATH" && MPC_ARG_FT_SCRIPT_PATH="$PWD/dmtcp_restart_script.sh"
+		LAUNCHER_OPTION_BINARY="$MPC_ARG_FT_SCRIPT_PATH -h $DMTCP_ARG_FT_HOST -p $DMTCP_ARG_FT_PORT"
+		LAUNCHER_CONFIG_LAUNCH_MODE="alloc"
 		echo "Application Restarting. Please wait..."
 	fi
+}
 
+
+# Trigger FT if needed
+
+if test -n "$MPC_ARG_FAULT_TOLERANCE" ; then
+	dmtcp_fault_tolerance_deploy
 fi
 
+#######################
+# Handle Process Mode #
+#######################
 
-TMP_SCTK_ARG="$SCTK_ARGS"
-SCTK_ARGS=""
-for arg in $TMP_SCTK_ARG; do
-	SCTK_ARGS="$SCTK_ARGS $arg"
-done
-
-MPC_STARTUP_ARGS="$SCTK_ARGS"
-export MPC_STARTUP_ARGS
-SCTK_ARGS=""
-
-export MPC_DISABLE
-
-if test "$THREAD_TYPE" = "--use-pthread"; then 
-	unset GDB_LIBTHREAD_DB
-fi
-if test "$THREAD_TYPE" = "--use-pthread_ng"; then 
-	unset GDB_LIBTHREAD_DB
+if test "$MPC_IN_PROCESS_MODE" = "yes"; then
+	# In process mode process NB is Task NB
+	LAUNCHER_OPTION_PROCESS_NB="$MPC_ARG_TASK_NB"
 fi
 
+#################
+# Sanity Checks #
+#################
+
+# You need at least one node
+if test "$LAUNCHER_OPTION_NODE_NB" = "0" ; then
+	LAUNCHER_OPTION_NODE_NB="1"
+fi
+
+# You need at least one process
+if test "$LAUNCHER_OPTION_PROCESS_NB" = "0" ; then
+	LAUNCHER_OPTION_PROCESS_NB="1"
+fi
+
+######################
+# Expand to MPC_ARGS #
+######################
+
+MPC_STARTUP_ARGS="--sctk-args--"
+
+#
+# Argument expansion helpers
+#
+
+add_flag(){
+	if test "x$2" = "x1"; then
+		MPC_STARTUP_ARGS="$MPC_STARTUP_ARGS ${1}"
+	fi
+}
+
+append_arg()
+{
+	if test -n "$1"; then
+		if test "x$2" = "x1"; then
+			MPC_STARTUP_ARGS="$MPC_STARTUP_ARGS ${1}"
+		fi
+	fi
+}
+
+add_arg(){
+	if test -n "$2"; then
+		MPC_STARTUP_ARGS="$MPC_STARTUP_ARGS ${1}=${2}"
+	fi
+}
+
+#
+# Argument Expansion
+#
+
+if test "$LAUNCHER_CPU_NB_WAS_SET" = "1" ; then
+	if test "$MPC_ARG_FORCE_CPU_NB" != ""  ; then
+		add_arg "--processor-number" "$MPC_ARG_FORCE_CPU_NB"
+	else
+		add_arg "--processor-number" "$LAUNCHER_OPTION_CPU_NB"
+	fi
+fi
+
+add_flag "--enable-smt" "$CONFIG_ENABLE_SMT"
+add_flag "--graphic-placement" "$CONFIG_TOPOLOGY_DUMP_GRAPHIC"
+add_flag "--text-placement" "$CONFIG_TOPOLOGY_DUMP_TEXT"
+
+append_arg "$MPC_ARG_THREAD_TYPE" "1"
+append_arg "$MPC_ARG_NETWORKING" "1"
+append_arg "--use-accl" "$CONFIG_ACCELERATOR_SUPPORT"
+append_arg "$MPC_ARG_FAULT_TOLERANCE" "1"
+
+add_arg "--task-number" "$MPC_ARG_TASK_NB"
+add_arg "--process-number" "$LAUNCHER_OPTION_PROCESS_NB"
+add_arg "--node-number" "$LAUNCHER_OPTION_NODE_NB"
+add_arg "--node-number" "$LAUNCHER_OPTION_NODE_NB"
+add_arg "--launcher" "$LAUNCHER_PLUGIN"
+add_arg "--mpc-verbose" "$CONFIG_MPC_VERBOSE"
+add_arg "--profiling" "$CONFIG_PROFILING"
+
+
+add_flag "--sctk-args-end--" "1"
+
+#TMP_SCTK_ARG="$MPC_STARTUP_ARGS"
+#MPC_STARTUP_ARGS=""
+#for arg in $TMP_SCTK_ARG; do
+#	MPC_STARTUP_ARGS="$MPC_STARTUP_ARGS $arg"
+#done
+
+##############################
+# Configure Debugger Support #
+##############################
+
+# Activave custom MPC_THREAD_DB only for user-level threads
+
+echo "$MPC_ARG_THREAD_TYPE" | grep "pthread" > /dev/null 2>&1
+
+if test "x$?" = "x0"; then
+	GDB_LIBTHREAD_DB=""
+else
+	GDB_LIBTHREAD_DB="${MPC_LIB_DIR}/libmpc_thread_db.so"
+fi
 
 DEBUGGER_LIST=""
-
 
 if test "${DEBUG}" = "mpc-gdb"; then
 	if test "$DEBUGGER_LIST" = "" ; then 
@@ -746,68 +735,53 @@ if test "${DEBUG}" = "mpc-gdb"; then
 	else
 		DEBUG="${MPC_BIN_DIR}/../mpc-gdb-${DEBUGGER_LIST}/bin/mpc-gdb"
 	fi
-	#    if test "$THREAD_TYPE" = "--use-pthread"; then 
-	#	DEBUG=gdb
-	#    fi
-	#    if test "$THREAD_TYPE" = "--use-pthread_ng"; then 
-	#	DEBUG=gdb
-	#    fi
 fi
 
-if test "$show" != "echo" ; then
-
-	if test "$MPC_VERBOSE" != "--mpc-verbose=0" ; then
-		if test "${DEBUG}" = "" ; then
-			echo "Using $LAUNCH" >&2
-		else
-			echo "Using $LAUNCH with `basename ${DEBUG}`" >&2
-		fi
-	fi
-
-fi
-
-debug_file="${TMP_DIR_D}debug_file"
 
 #compute suffix
 if test "$DEBUG" = "" ; then
-	LAUNCH_SUFFIX="$LAUNCH"
+	LAUNCH_SUFFIX="$LAUNCHER_PLUGIN"
 else
 	echo "Using $DEBUG as debugger"
-	LAUNCH_SUFFIX="${LAUNCH}_`basename ${DEBUG}`"
+	LAUNCH_SUFFIX="${LAUNCHER_PLUGIN}_`basename ${DEBUG}`"
 fi
 
-#load launcher
-if [ ! -z "${MPC_USER_LAUNCHERS}" ] && [ -e "${MPC_USER_LAUNCHERS}/mpcrun_${LAUNCH_SUFFIX}" ]; then
-	. "${MPC_USER_LAUNCHERS}/mpcrun_${LAUNCH_SUFFIX}"
-elif [ -e "${BINS_HOME}_${LAUNCH_SUFFIX}" ]; then
-	. "${BINS_HOME}_${LAUNCH_SUFFIX}"
+###########################################
+# Now Proceed to load the Launcher Plugin #
+###########################################
+
+if test -n "${CONFIG_USER_LAUNCHERS}" -a -f "${CONFIG_USER_LAUNCHERS}/mpcrun_${LAUNCH_SUFFIX}"; then
+	. "${CONFIG_USER_LAUNCHERS}/mpcrun_${LAUNCH_SUFFIX}"
+elif test -f "${LAUNCHER_CONFIG_BINS_HOME}_${LAUNCH_SUFFIX}"; then
+	. "${LAUNCHER_CONFIG_BINS_HOME}_${LAUNCH_SUFFIX}"
 else
 	echo "Invalid launcher : ${LAUNCH_SUFFIX}" 1>&2
 	exit 1
 fi
 
+#####################
+# Export All Values #
+#####################
+
+export MPC_AUTO_KILL_TIMEOUT=$CONFIG_AUTOKILL
 export MPC_SYMBOL_REGEX="MPI_Init"
 export MPC_LAUNCH_COMMAND="${LAUNCH_COMMAND}"
+export MPC_STARTUP_ARGS
+export LAUNCHER_OPTION_PROCESS_NB
+export LAUNCHED_WITH_MPCRUN=1
+export LAUNCHER_CONFIG_JOB_MANAGER
+test -n "$GDB_LIBTHREAD_DB" && export GDB_LIBTHREAD_DB
+
+#########################################
+# Trap SIGINT to kill all process Group #
+#########################################
 
 trap "kill -s 2 0" INT
-#echo "LAUNCH_COMMAND $LAUNCH_COMMAND"
-$show $LAUNCH_COMMAND
-rc=$?
-#echo $rc
 
-rm -f $debug_file > /dev/null 2>&1
+##################################################
+# Run the actuall command as generated by Plugin #
+##################################################
 
-#if test "$mpi_only" = "yes" ; then
+$LAUNCHER_SHOW_CMD $LAUNCH_COMMAND
 
-if test "$rc" = "0" ; then
-	rm -f ${TMP_DIR_D}mpcrun_args > /dev/null 2>&1
-	rmdir ${TMP_DIR_D} > /dev/null 2>&1
-	rm -rf ${TMP_DIR_D} > /dev/null 2>&1
-fi
-
-if test "$MPC_CLEAN_TMP_DIR" = "1" ;then
-	rm -rf ${TMP_DIR_D} > /dev/null 2>&1
-fi
-
-exit $rc
-
+exit $?

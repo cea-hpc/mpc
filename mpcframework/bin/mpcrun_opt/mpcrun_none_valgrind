@@ -20,4 +20,4 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 # 
 #                                                                      # 
 ######################################################################## 
-LAUNCH_COMMAND="valgrind  --tool=memcheck --error-exitcode=1 $BINARY"
+LAUNCH_COMMAND="valgrind  --tool=memcheck --error-exitcode=1 $LAUNCHER_OPTION_BINARY"

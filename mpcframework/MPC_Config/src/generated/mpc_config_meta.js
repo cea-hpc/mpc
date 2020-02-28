@@ -1,9 +1,5 @@
 var meta = new Array();
 meta.types = {
-	arpc_type : {type: 'struct', name: "arpc_type", childs: {
-		net_layer: {mode: 'param', name: "net_layer", type: "net_layer_type", doc: "Net Layer for the run", dflt: "ARPC_MPI", },
-		nb_srv: {mode: 'param', name: "nb_srv", type: "int", doc: "Default number of services to start during ARPC initialization", dflt: "1", },
-	}},
 	debugger : {type: 'struct', name: "debugger", childs: {
 		colors: {mode: 'param', name: "colors", type: "bool", doc: "Print colored text in terminal", dflt: "true", },
 		max_filename_size: {mode: 'param', name: "max_filename_size", type: "int", doc: "", dflt: "1024", },
@@ -13,23 +9,18 @@ meta.types = {
 		verbosity: {mode: 'param', name: "verbosity", type: "int", doc: "Default verbosity level from 0 to 3. Can be override by -vv on mpcrun.", dflt: "0", },
 		banner: {mode: 'param', name: "banner", type: "bool", doc: "Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER.", dflt: "true", },
 		autokill: {mode: 'param', name: "autokill", type: "int", doc: "Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT.", dflt: "0", },
-		user_launchers: {mode: 'param', name: "user_launchers", type: "string", doc: "Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS.", dflt: "default", },
-		keep_rand_addr: {mode: 'param', name: "keep_rand_addr", type: "bool", doc: "Activate randomization of base addresses", dflt: "true", },
-		disable_rand_addr: {mode: 'param', name: "disable_rand_addr", type: "bool", doc: "Deactivate randomization of base addresses", dflt: "false", },
-		disable_mpc: {mode: 'param', name: "disable_mpc", type: "bool", doc: "Do not use mpc for execution (deprecated?)", dflt: "false", },
+		user_launchers: {mode: 'param', name: "user_launchers", type: "string", doc: "Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS.", dflt: "~/.mpc/", },
+		disable_rand_addr: {mode: 'param', name: "disable_rand_addr", type: "bool", doc: "Deactivate randomization of base addresses", dflt: "true", },
 		thread_init: {mode: 'param', name: "thread_init", type: "funcptr", doc: "Initialize multithreading mode", dflt: "sctk_use_ethread_mxn", },
 		nb_task: {mode: 'param', name: "nb_task", type: "int", doc: "Define the number of MPI tasks", dflt: "1", },
 		nb_process: {mode: 'param', name: "nb_process", type: "int", doc: "Define the number of MPC processes", dflt: "1", },
 		nb_processor: {mode: 'param', name: "nb_processor", type: "int", doc: "Define the number of virtual processors", dflt: "0", },
 		nb_node: {mode: 'param', name: "nb_node", type: "int", doc: "Define the number of compute nodes", dflt: "1", },
 		launcher: {mode: 'param', name: "launcher", type: "string", doc: "Define which launcher to use", dflt: "none", },
-		max_try: {mode: 'param', name: "max_try", type: "int", doc: "Define the max number of tries to access the topology file before failing", dflt: "10", },
 		profiling: {mode: 'param', name: "profiling", type: "string", doc: "Select the type of outputs for the profiling", dflt: "stdout", },
 		enable_smt: {mode: 'param', name: "enable_smt", type: "bool", doc: "Enable usage of hyperthreaded cores if available on current architecture.", dflt: "false", },
-		share_node: {mode: 'param', name: "share_node", type: "bool", doc: "Enable the restriction on CPU number to share node", dflt: "false", },
 		restart: {mode: 'param', name: "restart", type: "bool", doc: "Restart MPC from a previous checkpoint", dflt: "false", },
 		checkpoint: {mode: 'param', name: "checkpoint", type: "bool", doc: "Enable MPC checkpointing", dflt: "false", },
-		report: {mode: 'param', name: "report", type: "bool", doc: "Enable reporting.", dflt: "false", },
 	}},
 	collectives_shm_shared : {type: 'struct', name: "collectives_shm_shared", childs: {
 		barrier_intra_shared_node: {mode: 'param', name: "barrier_intra_shared_node", type: "funcptr", doc: "MPI_Barrier intracom algorithm on shared-node comms", dflt: "__INTERNAL__PMPI_Barrier_intra_shared_node", },
@@ -357,7 +348,6 @@ meta.types = {
 };
 
 meta.modules = {
-	arpc: {name: "arpc", type: "arpc_type"},
 	debugger: {name: "debugger", type: "debugger"},
 	launcher: {name: "launcher", type: "launcher"},
 	collectives_shm_shared: {name: "collectives_shm_shared", type: "collectives_shm_shared"},
@@ -381,10 +371,6 @@ meta.networks = {
 };
 
 meta.enum = {
-	net_layer_type : {type: 'enum', name: "net_layer_type", doc: "Values used to select the network layer for Active Message", values: {
-		ARPC_MPI: "ARPC_MPI",
-		ARPC_PTL: "ARPC_PTL",
-	}},
 	ibv_rdvz_protocol : {type: 'enum', name: "ibv_rdvz_protocol", doc: "", values: {
 		IBV_RDVZ_WRITE_PROTOCOL: "IBV_RDVZ_WRITE_PROTOCOL",
 		IBV_RDVZ_READ_PROTOCOL: "IBV_RDVZ_READ_PROTOCOL",

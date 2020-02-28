@@ -84,12 +84,6 @@ void sctk_runtime_config_override_by_getenv(struct sctk_runtime_config * config)
 	/* User directory where to search extra launchers for mpcrun -l=... */
 	if ((tmp = getenv("MPC_USER_LAUNCHERS")) != NULL)
 		config->modules.launcher.user_launchers = tmp;
-	/* came from sctk_launch.c for mpc disabling */
-	if ((tmp = getenv("MPC_DISABLE")) != NULL)
-		config->modules.launcher.disable_mpc = atoi(tmp);
-	/* came from sctk_launch.c for keeping randomize addressing */
-	if ((tmp = getenv("SCTK_LINUX_KEEP_ADDR_RANDOMIZE")) != NULL)
-		config->modules.launcher.keep_rand_addr = atoi(tmp);
 	/* came from sctk_launch.c for randomize addressing disabling */
 	if ((tmp = getenv("SCTK_LINUX_DISABLE_ADDR_RANDOMIZE")) != NULL)
 		config->modules.launcher.disable_rand_addr = atoi(tmp);

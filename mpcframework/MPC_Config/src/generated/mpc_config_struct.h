@@ -36,24 +36,6 @@ struct sctk_runtime_config_funcptr
 	void (* value)();
 };
 
-/********************************** ENUM ************************************/
-/**Values used to select the network layer for Active Message**/
-enum net_layer_type
-{
-	ARPC_MPI,
-	ARPC_PTL
-};
-
-/******************************** STRUCTURE *********************************/
-/**ARPC implementation for MPC**/
-struct sctk_runtime_config_struct_arpc_type
-{	int init_done;
-	/**Net Layer for the run**/
-	enum net_layer_type net_layer;
-	/**Default number of services to start during ARPC initialization**/
-	int nb_srv;
-};
-
 /******************************** STRUCTURE *********************************/
 /**Options for MPC Debugger**/
 struct sctk_runtime_config_struct_debugger
@@ -78,12 +60,8 @@ struct sctk_runtime_config_struct_launcher
 	int autokill;
 	/**Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS.**/
 	char * user_launchers;
-	/**Activate randomization of base addresses**/
-	int keep_rand_addr;
 	/**Deactivate randomization of base addresses**/
 	int disable_rand_addr;
-	/**Do not use mpc for execution (deprecated?)**/
-	int disable_mpc;
 	/**Initialize multithreading mode**/
 	struct sctk_runtime_config_funcptr thread_init;
 	/**Define the number of MPI tasks**/
@@ -96,20 +74,14 @@ struct sctk_runtime_config_struct_launcher
 	int nb_node;
 	/**Define which launcher to use**/
 	char * launcher;
-	/**Define the max number of tries to access the topology file before failing**/
-	int max_try;
 	/**Select the type of outputs for the profiling**/
 	char * profiling;
 	/**Enable usage of hyperthreaded cores if available on current architecture.**/
 	int enable_smt;
-	/**Enable the restriction on CPU number to share node**/
-	int share_node;
 	/**Restart MPC from a previous checkpoint**/
 	int restart;
 	/**Enable MPC checkpointing**/
 	int checkpoint;
-	/**Enable reporting.**/
-	int report;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -903,7 +875,6 @@ struct sctk_runtime_config_struct_accl
 /******************************** STRUCTURE *********************************/
 struct sctk_runtime_config_modules
 {
-	struct sctk_runtime_config_struct_arpc_type arpc;
 	struct sctk_runtime_config_struct_debugger debugger;
 	struct sctk_runtime_config_struct_launcher launcher;
 	struct sctk_runtime_config_struct_collectives_shm_shared collectives_shm_shared;

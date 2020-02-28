@@ -30,43 +30,6 @@
 #include "runtime_config_mapper.h"
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_enum_init_net_layer_type()
-{
-	struct enum_type * current_enum = (struct enum_type *) malloc(sizeof(struct enum_type));
-	struct enum_value * current_value, * values = NULL;
-
-	strncpy(current_enum->name, "enum net_layer_type", 50);
-
-	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
-	strncpy(current_value->name, "ARPC_MPI", 50);
-	current_value->value = ARPC_MPI;
-	HASH_ADD_STR(values, name, current_value);
-
-	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
-	strncpy(current_value->name, "ARPC_PTL", 50);
-	current_value->value = ARPC_PTL;
-	HASH_ADD_STR(values, name, current_value);
-
-	current_enum->values = values;
-	HASH_ADD_STR(enums_types, name, current_enum);
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_arpc_type(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_arpc_type * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->net_layer = ARPC_MPI;
-	obj->nb_srv = 1;
-	obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_debugger(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_debugger * obj = struct_ptr;
@@ -107,18 +70,12 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
                         sctk_runtime_config_mpit_bind_variable( "LN_AUTOKILL",
                                                                 sizeof(obj->autokill ),
                                                                 &obj->autokill);
-				obj->user_launchers = "default";
-	obj->keep_rand_addr = true;
-	obj->disable_rand_addr = false;
+				obj->user_launchers = "~/.mpc/";
+	obj->disable_rand_addr = true;
 
                         sctk_runtime_config_mpit_bind_variable( "LN_ADDR_RAND_DISABLE",
                                                                 sizeof(obj->disable_rand_addr ),
                                                                 &obj->disable_rand_addr);
-				obj->disable_mpc = false;
-
-                        sctk_runtime_config_mpit_bind_variable( "LN_DISABLE_MPC",
-                                                                sizeof(obj->disable_mpc ),
-                                                                &obj->disable_mpc);
 				obj->thread_init.name = "sctk_use_ethread_mxn";
 	*(void **) &(obj->thread_init.value) = sctk_runtime_config_get_symbol("sctk_use_ethread_mxn");
 	obj->nb_task = 1;
@@ -142,22 +99,12 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
                                                                 sizeof(obj->nb_node ),
                                                                 &obj->nb_node);
 				obj->launcher = "none";
-	obj->max_try = 10;
-
-                        sctk_runtime_config_mpit_bind_variable( "LN_MAX_TOPO_TRY",
-                                                                sizeof(obj->max_try ),
-                                                                &obj->max_try);
-				obj->profiling = "stdout";
+	obj->profiling = "stdout";
 	obj->enable_smt = false;
 
                         sctk_runtime_config_mpit_bind_variable( "LN_ENABLE_SMT",
                                                                 sizeof(obj->enable_smt ),
                                                                 &obj->enable_smt);
-				obj->share_node = false;
-
-                        sctk_runtime_config_mpit_bind_variable( "LN_SHARE_NODE",
-                                                                sizeof(obj->share_node ),
-                                                                &obj->share_node);
 				obj->restart = false;
 
                         sctk_runtime_config_mpit_bind_variable( "LN_RESTART",
@@ -168,11 +115,6 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
                         sctk_runtime_config_mpit_bind_variable( "LN_CHECKPOINT",
                                                                 sizeof(obj->checkpoint ),
                                                                 &obj->checkpoint);
-				obj->report = false;
-
-                        sctk_runtime_config_mpit_bind_variable( "LN_REPORT",
-                                                                sizeof(obj->report ),
-                                                                &obj->report);
 				obj->init_done = 1;
 }
 
@@ -1348,8 +1290,6 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 {
 	memset(config, 0, sizeof(struct sctk_runtime_config));
 	sctk_handler = dlopen(0, RTLD_LAZY | RTLD_GLOBAL);
-	sctk_runtime_config_struct_init_arpc_type(&config->modules.arpc);
-	sctk_runtime_config_enum_init_net_layer_type();
 	sctk_runtime_config_struct_init_debugger(&config->modules.debugger);
 	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
 	sctk_runtime_config_struct_init_collectives_shm_shared(&config->modules.collectives_shm_shared);
@@ -1394,12 +1334,6 @@ void sctk_runtime_config_clean_hash_tables()
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_reset_struct_default_if_needed(const char * structname, void * ptr )
 {
-	if( !strcmp( structname , "sctk_runtime_config_struct_arpc_type") )
-	{
-		sctk_runtime_config_struct_init_arpc_type( ptr );
-		return;
-	}
-
 	if( !strcmp( structname , "sctk_runtime_config_struct_debugger") )
 	{
 		sctk_runtime_config_struct_init_debugger( ptr );

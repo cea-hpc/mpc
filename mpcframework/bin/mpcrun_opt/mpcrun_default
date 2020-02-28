@@ -32,12 +32,6 @@ cat <<EOF > $MPC_USE_MPCRC_FILE
 #Define default network type (none/mpi)
 #NET_TYPE="none"
 
-#Define show version details (yes/no)
-#VERSION_DETAILS="no"
-
-#Define show report details (yes/no)
-#REPORT="no"
-
 #Define enable checkpoint mode (yes/no)
 #CHECKPOINT="no"
 
@@ -48,13 +42,13 @@ cat <<EOF > $MPC_USE_MPCRC_FILE
 #TASK_NB="1"
 
 #Define default CPU number
-#CPU_NB="1"
+#LAUNCHER_OPTION_CPU_NB="1"
 
 #Define default process number
-#PROCESS_NB="1"
+#LAUNCHER_OPTION_PROCESS_NB="1"
 
 #Define default node number
-#NODE_NB="1"
+#LAUNCHER_OPTION_NODE_NB="1"
 
 #Define default launcher
 #LAUNCH="mpiexec"
