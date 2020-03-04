@@ -25,24 +25,24 @@
 
 #ifdef MPC_MODULE_MPC_Threads
 	/* Include is needed for cstdlib
-	   it needs to *know* atexit  */
+	it needs to *know* atexit  */
 	#include <stdlib.h>
 	/* atexit wrapping */
 	#define atexit mpc_atexit
 #endif
 
-
 #ifndef MPC_NO_AUTO_MAIN_REDEF
-#undef main
-#ifdef __cplusplus
-#define main long mpc_user_main_dummy__ (); extern "C" int mpc_user_main__
-#else
-#define main mpc_user_main__
-#if defined(MPC_TLS_DLWRAP) && defined(MPC_USE_EXTLS)
-#define dlopen extls_dlopen
-#define dlsym extls_dlsym
-#define dlclose extls_dlclose
+	#undef main
+	#ifdef __cplusplus
+		#define main(...) long mpc_user_main_dummy__ (); extern "C" int mpc_user_main__(__VA_ARGS__)
+	#else
+		#define main(...) mpc_user_main__(__VA_ARGS__)
+		#if defined(MPC_TLS_DLWRAP) && defined(MPC_USE_EXTLS)
+			#define dlopen extls_dlopen
+			#define dlsym extls_dlsym
+			#define dlclose extls_dlclose
+		#endif
+	#endif
 #endif
-#endif
-#endif
+
 #endif
