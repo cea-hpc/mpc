@@ -147,7 +147,6 @@ void sctk_runtime_config_display_handler(enum sctk_runtime_config_walk_type type
         int level,
         void * opt)
 {
-	printf("%s == %s\n", name, type_name);
 	/* get the current state */
 	struct sctk_runtime_config_display_state * state = opt;
 
