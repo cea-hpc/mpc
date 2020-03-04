@@ -518,7 +518,7 @@ test -n "\$arg" && lang="\$arg"
 arg="\`echo "\$ARGS" | cut -s -d" " -f3\`"
 test -n "\$arg" && path="\`format_path "\$arg"\`"
 arg="\`echo "\$ARGS" | cut -s -d" " -f4\`"
-test -n "\$4" && family="\$arg"
+test -n "\$arg" && family="\$arg"
 
 is_valid_language "\$lang"
 
