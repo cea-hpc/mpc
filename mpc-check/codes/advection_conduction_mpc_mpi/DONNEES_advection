@@ -1,8 +1,0 @@
-xcells=1000
-ycells=1000
-tfinal=25
-cyclmax=5
-mpctype=mpi
-xsubdom=4
-ysubdom=1
-nb_proc=4   

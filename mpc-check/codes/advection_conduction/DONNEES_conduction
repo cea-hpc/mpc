@@ -1,7 +1,0 @@
-xcells=500
-ycells=500
-tfinal=25
-cyclmax=5
-mpctype=mpc
-xsubdom=2
-ysubdom=2

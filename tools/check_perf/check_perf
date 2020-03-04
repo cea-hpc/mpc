@@ -1,7 +1,0 @@
-#!/bin/sh
-
-dir="`dirname $0`"
-
-echo "$dir"
-
-gcc -o $dir/check_perf_bin $dir/check_perf.c && xsltproc $dir/parser.xslt *.xml | sort | $dir/check_perf_bin
