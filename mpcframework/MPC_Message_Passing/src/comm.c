@@ -2849,7 +2849,6 @@ static void __lowcomm_release()
 		sctk_nodebug( "mpc_lowcomm_terminaison_barrier done" );
 		sctk_net_finalize_task_level( task_rank, sctk_thread_get_vp() );
 		sctk_net_send_task_end( task_rank, mpc_common_get_process_rank() );
-		mpc_lowcomm_rdma_window_release_ht();
 	}
 	else
 	{
@@ -2882,6 +2881,11 @@ static void __initialize_drivers()
 	sctk_communicator_self_init ();
 }
 
+static void __finalize_driver()
+{
+	mpc_lowcomm_rdma_window_release_ht();
+}
+
 
 void mpc_lowcomm_registration() __attribute__((constructor));
 
@@ -2890,6 +2894,8 @@ void mpc_lowcomm_registration()
         MPC_INIT_CALL_ONLY_ONCE
 
         mpc_common_init_callback_register("Base Runtime Init Done", "LowComm Init", __initialize_drivers, 16);
+
+        mpc_common_init_callback_register("Base Runtime Finalize", "Release LowComm", __finalize_driver, 16);
 
         mpc_common_init_callback_register("After Ending VPs", "Block sigpipe", mpc_common_helper_ignore_sigpipe, 0);
 

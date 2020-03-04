@@ -52,7 +52,7 @@ static inline  void __list_trigger(struct mpc_common_init_list * list)
 
         for( i = 0 ; i < list->entry_count; i++)
         {
-                mpc_common_debug("INIT : Triggering %s - %s (%d)", list->name, list->entries[i].name, list->entries[i].priority);
+                mpc_common_debug_info("INIT : Triggering %s - %s (%d)", list->name, list->entries[i].name, list->entries[i].priority);
                 if(list->entries[i].callback)
                 {
                         (list->entries[i].callback)();
