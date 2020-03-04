@@ -113,7 +113,7 @@ help()
 	printf "\n"
 	printf "LANGUAGE belongs to {c,cxx,fortran} (default: c)\n"
 	printf "PATH is the compiler path (default '1')\n"
-	printf "FAMILY is the compiler type: INTEL, GNU, LLVM, PGI... (default: GNU)\n"
+	printf "FAMILY is the compiler type: INTEL, GNU, LLVM, PGI, AUTOPRIV... (default: GNU)\n"
 	printf "OPERATION is one of the following:\n"
 	printf "   ${BLU}list:${DEF} shows, for each known compiler, the priv. support\n"
 	printf "   ${BLU}stat:${DEF} shows a summary for each language (number of compilers + priv. support)\n"
@@ -225,6 +225,16 @@ infer_compiler_family()
                 return
         fi
 
+	# Autopriv Family
+	for comp in apcc ap++ apfortran
+	do
+                contains $1 $comp
+                if test "x$do_contain" = "xyes"; then
+                        compiler_family="AUTOPRIV"
+                        return
+                fi
+	done
+
         # ICC family
         for comp in ifort icpc icc
         do
@@ -295,7 +305,7 @@ add_compiler()
 
 
 	case $compiler_family in
-		GNU)
+		GNU|AUTOPRIV)
 			PRIV_FLAG="-fmpc-privatize"
 			;;
 		INTEL)
@@ -493,7 +503,7 @@ test -n "$arg" && lang="$arg"
 arg="`echo "$ARGS" | cut -s -d" " -f3`"
 test -n "$arg" && path="`format_path "$arg"`"
 arg="`echo "$ARGS" | cut -s -d" " -f4`"
-test -n "$4" && family="$arg"
+test -n "$arg" && family="$arg"
 
 is_valid_language "$lang"
 
