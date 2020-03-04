@@ -20105,7 +20105,7 @@ fi
         MPC_MPIEXEC_HYDRA_PATH=$(which mpiexec.hydra)
 
         # Here we look for hydra only if hydra has not been disabled
-        MPC_LAUNCHER="Hydra"
+        MPC_LAUNCHER="HYDRA"
 
         for ac_func in socket setsockopt gethostbyname
 do :
@@ -20135,7 +20135,7 @@ $as_echo "#define MPC_USE_HYDRA 1" >>confdefs.h
 
 fi
 
- if test "x$MPC_LAUNCHER" = "xHydra"; then
+ if test "x$MPC_LAUNCHER" = "xHYDRA"; then
   HYDRA_CLIENT_LIB_ENABED_TRUE=
   HYDRA_CLIENT_LIB_ENABED_FALSE='#'
 else

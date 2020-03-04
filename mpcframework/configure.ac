@@ -458,7 +458,7 @@ else
         MPC_MPIEXEC_HYDRA_PATH=$(which mpiexec.hydra)
 
         # Here we look for hydra only if hydra has not been disabled
-        MPC_LAUNCHER="Hydra"
+        MPC_LAUNCHER="HYDRA"
 
         AC_CHECK_FUNCS([socket setsockopt gethostbyname],[can_access_hydra_pmi_socket=no], [can_access_hydra_pmi_socket=yes])
 
@@ -471,7 +471,7 @@ else
         AC_DEFINE([MPC_USE_HYDRA], [1], [Hydra will be used to launch parallel programs])
 fi
 
-AM_CONDITIONAL([HYDRA_CLIENT_LIB_ENABED], [test "x$MPC_LAUNCHER" = "xHydra"])
+AM_CONDITIONAL([HYDRA_CLIENT_LIB_ENABED], [test "x$MPC_LAUNCHER" = "xHYDRA"])
 
 AC_SUBST([MPC_MPIEXEC_HYDRA_PATH])
 AC_SUBST([MPC_LAUNCHER])
