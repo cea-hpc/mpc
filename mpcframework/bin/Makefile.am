@@ -1,10 +1,26 @@
+#
+# Compiler Setup
+#
+
 MPC_C_COMPILER_LIST=@MPC_C_COMPILER_LIST@
 MPC_CPP_COMPILER_LIST=@MPC_CPP_COMPILER_LIST@
 MPC_FORTRAN_COMPILER_LIST=@MPC_FORTRAN_COMPILER_LIST@
 
-deploy_compilers:
+install_compilers:
 	$(abs_top_srcdir)/bin/deploy_compilers.sh "$(prefix)" "$(abs_top_builddir)" "$(MPC_C_COMPILER_LIST)" "$(MPC_CPP_COMPILER_LIST)" "$(MPC_FORTRAN_COMPILER_LIST)"
 
+if MPC_HAVE_AUTOPRIV
+deploy_compilers: install_compilers
+	$(prefix)/bin/mpc_compiler_manager --global set_default c apcc
+	$(prefix)/bin/mpc_compiler_manager --global set_default cxx ap++
+	$(prefix)/bin/mpc_compiler_manager --global set_default fortran apfortran
+else
+deploy_compilers: install_compilers
+endif
+
+#
+# mpcrun setup
+#
 
 deploy_mpcrun:
 	cp -r $(abs_top_srcdir)/bin/mpcrun_opt $(pkgdatadir)/
@@ -12,6 +28,17 @@ deploy_mpcrun:
 	install -m 0755 -D $(abs_top_builddir)/bin/mpc_status.sh $(bindir)/mpc_status
 	install -m 0755 -D $(abs_top_builddir)/bin/mpcvars.sh $(bindir)/mpcvars.sh
 	ln -sf $(bindir)/mpcvars.sh $(prefix)/mpcvars.sh
+
+#
+# mpirun
+#
+
+bin_PROGRAMS=mpirun
+mpirun_SOURCES=./mpirun.c
+
+#
+# Cuda support
+#
 
 if MPC_CUDA_ENABLED
 deploy_mpc_nvcc:
@@ -21,8 +48,8 @@ deploy_mpc_nvcc:
 	@echo ""
 endif
 
+#
+# All install time targets
+#
 
 install-data-local: deploy_compilers deploy_mpcrun deploy_mpc_nvcc
-
-bin_PROGRAMS=mpirun
-mpirun_SOURCES=./mpirun.c

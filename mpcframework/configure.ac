@@ -1476,6 +1476,31 @@ MPC_COMPILER_LIST="$MPC_C_COMPILER_LIST $MPC_CPP_COMPILER_LIST $MPC_FORTRAN_COMP
 AC_SUBST([MPC_COMPILER_LIST])
 
 #
+# Set autopriv as default compiler if privatization is enabled and autpriv present
+#
+
+mpc_have_autopriv="no"
+
+AC_CHECK_PROG([apcc],[apcc],[yes],[no])
+AC_CHECK_PROG([apcpp],[ap++],[yes],[no])
+AC_CHECK_PROG([apfortran],[apfortran],[yes],[no])
+
+AC_MSG_CHECKING([for autopriv])
+
+if test "x${apcc}" = "xyes" -a "x${apcpp}" = "xyes" -a "x${apfortran}" = "xyes";
+then
+	AC_MSG_RESULT([yes])
+	mpc_have_autopriv=yes
+else
+	AC_MSG_RESULT([no])
+fi
+
+AM_CONDITIONAL([MPC_HAVE_AUTOPRIV], [test "x${mpc_have_autopriv}" = "xyes"])
+
+
+
+
+#
 # Extraction of compilation state
 #
 

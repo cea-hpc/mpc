@@ -359,11 +359,6 @@ void _mpc_topology_print( hwloc_topology_t target_topology, FILE *fd )
 	return;
 }
 
-hwloc_topology_t* sctk_get_topology_addr(void)
-{
-	return &topology;
-}
-
 int _mpc_topology_convert_os_pu_to_logical(hwloc_topology_t target_topo, int pu_os_id)
 {
 	hwloc_cpuset_t this_pu_cpuset = hwloc_bitmap_alloc();
@@ -680,10 +675,6 @@ int _mpc_topology_get_pu_per_core_count(hwloc_topology_t target_topo, int cpuid)
 {
 	int pu_per_core;
 
-#ifdef MPC_USE_EXTLS && !defined(MPC_DISABLE_HLS)
-	extls_set_topology_addr((void*(*)(void))sctk_get_topology_addr);
-#endif
-
 	hwloc_obj_t core = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_CORE, cpuid);
 	sctk_assert( core );
 
@@ -892,8 +883,7 @@ hwloc_topology_t mpc_topology_get()
 	return __mpc_module_topology;
 }
 
-typedef hwloc_topology_t extls_topo_t;
-extls_topo_t *extls_get_topology_addr()
+static hwloc_topology_t* __extls_get_topology_addr(void)
 {
 	return &__mpc_module_topology;
 }
@@ -920,6 +910,10 @@ void mpc_topology_init()
 
 	/*  load devices */
 	_mpc_topology_device_init( __mpc_module_topology );
+
+#ifdef MPC_USE_EXTLS && !defined(MPC_DISABLE_HLS)
+	extls_set_topology_addr((void*(*)(void))__extls_get_topology_addr);
+#endif
 }
 
 void mpc_topology_destroy( void )

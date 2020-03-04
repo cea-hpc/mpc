@@ -78,6 +78,7 @@
 
 #ifdef MPC_USE_EXTLS
 	#include <extls.h>
+	#include <extls_hls.h>
 #endif
 
 /***************
@@ -917,7 +918,7 @@ mpc_thread_create_vp_thread ( sctk_thread_t *restrict __threadp,
 
 #ifdef MPC_USE_EXTLS
 	extls_ctx_t *old_ctx = sctk_extls_storage;
-  extls_ctx_t** cur_tx = ((extls_ctx_t**)sctk_get_ctx_addr());
+	extls_ctx_t** cur_tx = ((extls_ctx_t**)sctk_get_ctx_addr());
 	*cur_tx = malloc( sizeof( extls_ctx_t ) );
 	extls_ctx_herit( old_ctx, *cur_tx, LEVEL_TASK );
 	extls_ctx_restore( *cur_tx );
@@ -951,6 +952,17 @@ mpc_thread_create_vp_thread ( sctk_thread_t *restrict __threadp,
 }
 
 
+#ifdef MPC_USE_EXTLS
+void static __extls_thread_init(void)
+{
+	extls_init();
+	extls_set_context_storage_addr((void*(*)(void))sctk_get_ctx_addr);
+}
+
+
+
+#endif
+
 
 
 void mpc_thread_module_register() __attribute__( ( constructor ) );
@@ -961,7 +973,7 @@ void mpc_thread_module_register()
 	mpc_common_init_callback_register( "Per Thread Init", "Allocator Numa Migrate", sctk_alloc_posix_numa_migrate, 0 );
 
 #ifdef MPC_USE_EXTLS
-	mpc_common_init_callback_register( "Base Runtime Init", "Initialize EXTLS", extls_init, 0 );
+	mpc_common_init_callback_register( "Base Runtime Init", "Initialize EXTLS", __extls_thread_init, 0 );
 	mpc_common_init_callback_register( "Base Runtime Finalize", "Finalize EXTLS", extls_fini, 99 );
 	mpc_common_init_callback_register( "Per Thread Init", "Dynamic Initializers", sctk_call_dynamic_initializers, 1 );
 
@@ -1155,8 +1167,9 @@ int sctk_user_thread_create ( sctk_thread_t *restrict __threadp,
 	}
 
 	sctk_nodebug( "Create Thread with MPI rank %d", tmp->task_id );
-#if 0
 	int scope_init;
+#if 0
+
 
 	/* Must be disabled because it unbind midcro VPs */
 	if ( __attr != NULL )

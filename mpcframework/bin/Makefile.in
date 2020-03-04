@@ -14,6 +14,10 @@
 
 @SET_MAKE@
 
+#
+# Compiler Setup
+#
+
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -315,6 +319,9 @@ am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
+apcc = @apcc@
+apcpp = @apcpp@
+apfortran = @apfortran@
 bindir = @bindir@
 build = @build@
 build_alias = @build_alias@
@@ -726,8 +733,18 @@ uninstall-am: uninstall-binPROGRAMS
 .PRECIOUS: Makefile
 
 
-deploy_compilers:
+install_compilers:
 	$(abs_top_srcdir)/bin/deploy_compilers.sh "$(prefix)" "$(abs_top_builddir)" "$(MPC_C_COMPILER_LIST)" "$(MPC_CPP_COMPILER_LIST)" "$(MPC_FORTRAN_COMPILER_LIST)"
+
+@MPC_HAVE_AUTOPRIV_TRUE@deploy_compilers: install_compilers
+@MPC_HAVE_AUTOPRIV_TRUE@	$(prefix)/bin/mpc_compiler_manager --global set_default c apcc
+@MPC_HAVE_AUTOPRIV_TRUE@	$(prefix)/bin/mpc_compiler_manager --global set_default cxx ap++
+@MPC_HAVE_AUTOPRIV_TRUE@	$(prefix)/bin/mpc_compiler_manager --global set_default fortran apfortran
+@MPC_HAVE_AUTOPRIV_FALSE@deploy_compilers: install_compilers
+
+#
+# mpcrun setup
+#
 
 deploy_mpcrun:
 	cp -r $(abs_top_srcdir)/bin/mpcrun_opt $(pkgdatadir)/
@@ -736,10 +753,18 @@ deploy_mpcrun:
 	install -m 0755 -D $(abs_top_builddir)/bin/mpcvars.sh $(bindir)/mpcvars.sh
 	ln -sf $(bindir)/mpcvars.sh $(prefix)/mpcvars.sh
 
+#
+# Cuda support
+#
+
 @MPC_CUDA_ENABLED_TRUE@deploy_mpc_nvcc:
 @MPC_CUDA_ENABLED_TRUE@	install -m 0755 -D $(abs_top_builddir)/bin/mpc_nvcc.sh $(bindir)/mpc_nvcc
 @MPC_CUDA_ENABLED_FALSE@deploy_mpc_nvcc:
 @MPC_CUDA_ENABLED_FALSE@	@echo ""
+
+#
+# All install time targets
+#
 
 install-data-local: deploy_compilers deploy_mpcrun deploy_mpc_nvcc
 

@@ -640,6 +640,11 @@ MPC_CONFIG_RESULT
 GIT_DESCRIBE
 git
 MPC_GENERATION_DATE
+MPC_HAVE_AUTOPRIV_FALSE
+MPC_HAVE_AUTOPRIV_TRUE
+apfortran
+apcpp
+apcc
 MPC_COMPILER_LIST
 MPC_FORTRAN_COMPILER_LIST
 MPC_CPP_COMPILER_LIST
@@ -26059,6 +26064,152 @@ MPC_COMPILER_LIST="$MPC_C_COMPILER_LIST $MPC_CPP_COMPILER_LIST $MPC_FORTRAN_COMP
 
 
 #
+# Set autopriv as default compiler if privatization is enabled and autpriv present
+#
+
+mpc_have_autopriv="no"
+
+# Extract the first word of "apcc", so it can be a program name with args.
+set dummy apcc; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_apcc+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$apcc"; then
+  ac_cv_prog_apcc="$apcc" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_apcc="yes"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_apcc" && ac_cv_prog_apcc="no"
+fi
+fi
+apcc=$ac_cv_prog_apcc
+if test -n "$apcc"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $apcc" >&5
+$as_echo "$apcc" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+# Extract the first word of "ap++", so it can be a program name with args.
+set dummy ap++; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_apcpp+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$apcpp"; then
+  ac_cv_prog_apcpp="$apcpp" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_apcpp="yes"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_apcpp" && ac_cv_prog_apcpp="no"
+fi
+fi
+apcpp=$ac_cv_prog_apcpp
+if test -n "$apcpp"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $apcpp" >&5
+$as_echo "$apcpp" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+# Extract the first word of "apfortran", so it can be a program name with args.
+set dummy apfortran; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_apfortran+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$apfortran"; then
+  ac_cv_prog_apfortran="$apfortran" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_apfortran="yes"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_apfortran" && ac_cv_prog_apfortran="no"
+fi
+fi
+apfortran=$ac_cv_prog_apfortran
+if test -n "$apfortran"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $apfortran" >&5
+$as_echo "$apfortran" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for autopriv" >&5
+$as_echo_n "checking for autopriv... " >&6; }
+
+if test "x${apcc}" = "xyes" -a "x${apcpp}" = "xyes" -a "x${apfortran}" = "xyes";
+then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	mpc_have_autopriv=yes
+else
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+ if test "x${mpc_have_autopriv}" = "xyes"; then
+  MPC_HAVE_AUTOPRIV_TRUE=
+  MPC_HAVE_AUTOPRIV_FALSE='#'
+else
+  MPC_HAVE_AUTOPRIV_TRUE='#'
+  MPC_HAVE_AUTOPRIV_FALSE=
+fi
+
+
+
+
+
+#
 # Extraction of compilation state
 #
 
@@ -26411,6 +26562,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_OPENMP_ENABLED_TRUE}" && test -z "${MPC_OPENMP_ENABLED_FALSE}"; then
   as_fn_error $? "conditional \"MPC_OPENMP_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPC_HAVE_AUTOPRIV_TRUE}" && test -z "${MPC_HAVE_AUTOPRIV_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_HAVE_AUTOPRIV\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

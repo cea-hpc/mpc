@@ -1035,7 +1035,6 @@ void mpc_launch_init_runtime()
 int sctk_launch_main ( int argc, char **argv )
 {
 	startup_arg_t arg;
-	extls_set_context_storage_addr((void*(*)(void))sctk_get_ctx_addr);
 
 	mpc_launch_init_runtime();
 
