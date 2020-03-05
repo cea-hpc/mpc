@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 INSTALL_PREFIX="$1"
 SHARE_PREFIX="$1/share/mpc/"
 BIN_PREFIX="$1/bin/"
@@ -12,6 +15,8 @@ FC_COMPILER_LIST="$5"
 if test "x$#" != "x4"; then
         echo "$0 [PREFIX] [BUILD PREFIX] [C COMP] [CXX COMP] [FC COMP]"
 fi
+
+. $BUILD_BIN_PREFIX/mpc_build_env.sh
 
 SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "$SCRIPT")
@@ -93,6 +98,8 @@ do
         fi
 done
 
+if false; then
+
 for c in $FC_COMPILER_LIST
 do
 	echo "REG $c FC compiler";
@@ -104,6 +111,8 @@ do
                 chmod +x ${BIN_PREFIX}/mpc_$c
         fi
 done
+
+fi
 
 # Generating MPI standard compilers
 

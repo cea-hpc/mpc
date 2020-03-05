@@ -640,6 +640,11 @@ MPC_CONFIG_RESULT
 GIT_DESCRIBE
 git
 MPC_GENERATION_DATE
+CONFIGURE_LIBRARY_PATH
+CONFIGURE_CPATH
+CONFIGURE_PKG_CONFIG_PATH
+CONFIGURE_LD_LIBRARY_PATH
+CONFIGURE_PATH
 MPC_HAVE_AUTOPRIV_FALSE
 MPC_HAVE_AUTOPRIV_TRUE
 apfortran
@@ -26213,6 +26218,17 @@ fi
 # Extraction of compilation state
 #
 
+CONFIGURE_PATH="$PATH"
+
+CONFIGURE_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
+
+CONFIGURE_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"
+
+CONFIGURE_CPATH="$CPATH"
+
+CONFIGURE_LIBRARY_PATH="$LIBRARY_PATH"
+
+
 # Generate Compilation timestamp
 
 date +%s 2>&1 > /dev/null
@@ -26357,7 +26373,7 @@ MPC_MPI.............. $mpc_mpi_enabled\n\
 # Final Output
 #
 
-ac_config_files="$ac_config_files MPC_Arch/include/mpc_arch.h Makefile MPC_Doc/Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Config/src/Makefile MPC_Launch/Makefile MPC_Launch/src/Makefile MPC_Message_Passing/Makefile MPC_Message_Passing/src/Makefile MPC_MPI/Makefile MPC_MPI/src/Makefile MPC_OpenMP/src/Makefile MPC_OpenMP/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile bin/Makefile bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags bin/mpc_ldflags bin/mpc_cxx.sh bin/mpc_nvcc.sh bin/mpc_f77.sh bin/mpcrun.sh bin/mpcvars.sh bin/mpc_status.sh"
+ac_config_files="$ac_config_files MPC_Arch/include/mpc_arch.h Makefile MPC_Doc/Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Config/src/Makefile MPC_Launch/Makefile MPC_Launch/src/Makefile MPC_Message_Passing/Makefile MPC_Message_Passing/src/Makefile MPC_MPI/Makefile MPC_MPI/src/Makefile MPC_OpenMP/src/Makefile MPC_OpenMP/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile bin/Makefile bin/mpc_build_env.sh bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags bin/mpc_ldflags bin/mpc_cxx.sh bin/mpc_nvcc.sh bin/mpc_f77.sh bin/mpcrun.sh bin/mpcvars.sh bin/mpc_status.sh"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -27566,6 +27582,7 @@ do
     "MPC_Threads/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Threads/Makefile" ;;
     "MPC_Threads/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Threads/src/Makefile" ;;
     "bin/Makefile") CONFIG_FILES="$CONFIG_FILES bin/Makefile" ;;
+    "bin/mpc_build_env.sh") CONFIG_FILES="$CONFIG_FILES bin/mpc_build_env.sh" ;;
     "bin/mpc_compiler_manager.sh") CONFIG_FILES="$CONFIG_FILES bin/mpc_compiler_manager.sh" ;;
     "bin/mpc_cc.sh") CONFIG_FILES="$CONFIG_FILES bin/mpc_cc.sh" ;;
     "bin/mpc_cflags") CONFIG_FILES="$CONFIG_FILES bin/mpc_cflags" ;;

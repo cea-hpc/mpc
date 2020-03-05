@@ -323,6 +323,9 @@ else
 	CC_HASH="$CC_HASH/npriv"
 fi
 
+# Here we restore MPC's build environment
+. $MPC_INSTALL_PREFIX/bin/mpc_build_env.sh
+
 #Here we prepend the path which is normally postpended in order
 #to override binutils during the compilation
 export PATH=${MPC_INSTALL_PREFIX}/bin/:${PATH}

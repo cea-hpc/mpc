@@ -106,9 +106,9 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/mpc_config.h
-CONFIG_CLEAN_FILES = mpc_compiler_manager.sh mpc_cc.sh mpc_cflags \
-	mpc_ldflags mpc_cxx.sh mpc_nvcc.sh mpc_f77.sh mpcrun.sh \
-	mpcvars.sh mpc_status.sh
+CONFIG_CLEAN_FILES = mpc_build_env.sh mpc_compiler_manager.sh \
+	mpc_cc.sh mpc_cflags mpc_ldflags mpc_cxx.sh mpc_nvcc.sh \
+	mpc_f77.sh mpcrun.sh mpcvars.sh mpc_status.sh
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -180,12 +180,13 @@ am__define_uniq_tagged_files = \
   done | $(am__uniquify_input)`
 ETAGS = etags
 CTAGS = ctags
-am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mpc_cc.sh.in \
-	$(srcdir)/mpc_cflags.in $(srcdir)/mpc_compiler_manager.sh.in \
-	$(srcdir)/mpc_cxx.sh.in $(srcdir)/mpc_f77.sh.in \
-	$(srcdir)/mpc_ldflags.in $(srcdir)/mpc_nvcc.sh.in \
-	$(srcdir)/mpc_status.sh.in $(srcdir)/mpcrun.sh.in \
-	$(srcdir)/mpcvars.sh.in $(top_srcdir)/build-aux/depcomp
+am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mpc_build_env.sh.in \
+	$(srcdir)/mpc_cc.sh.in $(srcdir)/mpc_cflags.in \
+	$(srcdir)/mpc_compiler_manager.sh.in $(srcdir)/mpc_cxx.sh.in \
+	$(srcdir)/mpc_f77.sh.in $(srcdir)/mpc_ldflags.in \
+	$(srcdir)/mpc_nvcc.sh.in $(srcdir)/mpc_status.sh.in \
+	$(srcdir)/mpcrun.sh.in $(srcdir)/mpcvars.sh.in \
+	$(top_srcdir)/build-aux/depcomp
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 ALLOC_CFLAGS = @ALLOC_CFLAGS@
@@ -203,6 +204,11 @@ CCASDEPMODE = @CCASDEPMODE@
 CCASFLAGS = @CCASFLAGS@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+CONFIGURE_CPATH = @CONFIGURE_CPATH@
+CONFIGURE_LD_LIBRARY_PATH = @CONFIGURE_LD_LIBRARY_PATH@
+CONFIGURE_LIBRARY_PATH = @CONFIGURE_LIBRARY_PATH@
+CONFIGURE_PATH = @CONFIGURE_PATH@
+CONFIGURE_PKG_CONFIG_PATH = @CONFIGURE_PKG_CONFIG_PATH@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CUDART_CFLAGS = @CUDART_CFLAGS@
@@ -402,6 +408,8 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
+mpc_build_env.sh: $(top_builddir)/config.status $(srcdir)/mpc_build_env.sh.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 mpc_compiler_manager.sh: $(top_builddir)/config.status $(srcdir)/mpc_compiler_manager.sh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 mpc_cc.sh: $(top_builddir)/config.status $(srcdir)/mpc_cc.sh.in
@@ -733,7 +741,10 @@ uninstall-am: uninstall-binPROGRAMS
 .PRECIOUS: Makefile
 
 
-install_compilers:
+install_build_env:
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_build_env.sh $(bindir)/mpc_build_env.sh
+
+install_compilers: install_build_env
 	$(abs_top_srcdir)/bin/deploy_compilers.sh "$(prefix)" "$(abs_top_builddir)" "$(MPC_C_COMPILER_LIST)" "$(MPC_CPP_COMPILER_LIST)" "$(MPC_FORTRAN_COMPILER_LIST)"
 
 @MPC_HAVE_AUTOPRIV_TRUE@deploy_compilers: install_compilers
@@ -766,7 +777,7 @@ deploy_mpcrun:
 # All install time targets
 #
 
-install-data-local: deploy_compilers deploy_mpcrun deploy_mpc_nvcc
+install-data-local: install_build_env deploy_compilers deploy_mpcrun deploy_mpc_nvcc
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

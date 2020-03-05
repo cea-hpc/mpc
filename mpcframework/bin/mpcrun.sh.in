@@ -57,6 +57,9 @@ MPC_HAVE_PROFILER=@MPC_HAVE_PROFILER@
 # Inject MPC in the PATH #
 ##########################
 
+# Here we restore MPC's build environment
+. $MPC_INSTALL_PREFIX/bin/mpc_build_env.sh
+
 # Here we prepend the PATH which is normally postpended
 # we do this as we can't override the whole prefix with
 # mpc binaries as it can cause version mismatches

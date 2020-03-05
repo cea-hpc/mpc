@@ -1504,6 +1504,17 @@ AM_CONDITIONAL([MPC_HAVE_AUTOPRIV], [test "x${mpc_have_autopriv}" = "xyes"])
 # Extraction of compilation state
 #
 
+CONFIGURE_PATH="$PATH"
+AC_SUBST([CONFIGURE_PATH])
+CONFIGURE_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
+AC_SUBST([CONFIGURE_LD_LIBRARY_PATH])
+CONFIGURE_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"
+AC_SUBST([CONFIGURE_PKG_CONFIG_PATH])
+CONFIGURE_CPATH="$CPATH"
+AC_SUBST([CONFIGURE_CPATH])
+CONFIGURE_LIBRARY_PATH="$LIBRARY_PATH"
+AC_SUBST([CONFIGURE_LIBRARY_PATH])
+
 # Generate Compilation timestamp
 
 date +%s 2>&1 > /dev/null
@@ -1620,6 +1631,7 @@ AC_OUTPUT([MPC_Arch/include/mpc_arch.h
            MPC_Topology/Makefile MPC_Topology/src/Makefile
            MPC_Threads/Makefile MPC_Threads/src/Makefile
            bin/Makefile
+	   bin/mpc_build_env.sh
            bin/mpc_compiler_manager.sh
            bin/mpc_cc.sh
            bin/mpc_cflags

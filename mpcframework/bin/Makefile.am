@@ -6,7 +6,11 @@ MPC_C_COMPILER_LIST=@MPC_C_COMPILER_LIST@
 MPC_CPP_COMPILER_LIST=@MPC_CPP_COMPILER_LIST@
 MPC_FORTRAN_COMPILER_LIST=@MPC_FORTRAN_COMPILER_LIST@
 
-install_compilers:
+install_build_env:
+	install -m 0755 -D $(abs_top_builddir)/bin/mpc_build_env.sh $(bindir)/mpc_build_env.sh
+
+
+install_compilers: install_build_env
 	$(abs_top_srcdir)/bin/deploy_compilers.sh "$(prefix)" "$(abs_top_builddir)" "$(MPC_C_COMPILER_LIST)" "$(MPC_CPP_COMPILER_LIST)" "$(MPC_FORTRAN_COMPILER_LIST)"
 
 if MPC_HAVE_AUTOPRIV
@@ -52,4 +56,4 @@ endif
 # All install time targets
 #
 
-install-data-local: deploy_compilers deploy_mpcrun deploy_mpc_nvcc
+install-data-local: install_build_env deploy_compilers deploy_mpcrun deploy_mpc_nvcc

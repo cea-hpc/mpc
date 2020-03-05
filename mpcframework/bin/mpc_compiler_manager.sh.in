@@ -7,6 +7,9 @@ CREATION_TIMESTAMP=@MPC_GENERATION_DATE@
 MPC_INSTALL_PREFIX=@prefix@
 MANAGER_COLOR=@MPC_ENABLE_SHELL_COLORS@
 
+# Here we restore MPC's build environment
+. $MPC_INSTALL_PREFIX/bin/mpc_build_env.sh
+
 die()
 {
 	printf "${RED}Error: $@\n${DEF}" 1>&2
