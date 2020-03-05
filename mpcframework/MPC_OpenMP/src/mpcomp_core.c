@@ -985,29 +985,7 @@ void __mpcomp_init( void )
 #if OMPT_SUPPORT
 	_mpc_ompt_post_init();
 #endif /* OMPT_SUPPORT */
-	/* Allocate information for the sequential region */
-	t = ( mpcomp_thread_t * ) mpcomp_alloc( sizeof( mpcomp_thread_t ) );
-	sctk_assert( t != NULL );
-	/* Current thread information is 't' */
-	sctk_openmp_thread_tls = t;
-#if OMPT_SUPPORT
 
-	if ( _mpc_omp_ompt_is_enabled() )
-	{
-		if ( OMPT_Callbacks )
-		{
-			ompt_callback_thread_begin_t callback;
-			callback = ( ompt_callback_thread_begin_t ) OMPT_Callbacks[ompt_callback_thread_begin];
-
-			if ( callback )
-			{
-				t->ompt_thread_data = ompt_data_none;
-				callback( ompt_thread_initial, &( t->ompt_thread_data ) );
-			}
-		}
-	}
-
-#endif /* OMPT_SUPPORT */
 	int places_nb_mvps;
 	int *shape, *cpus_order;
 	OMP_PLACES_LIST = mpcomp_places_env_variable_parsing( nb_mvps );
