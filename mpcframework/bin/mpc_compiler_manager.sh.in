@@ -65,7 +65,7 @@ format_path()
 
 is_valid_language()
 {
-	\echo "$list_languages" | egrep -q " $1 " || die "Language ${1} not known !"
+	echo "$list_languages" | egrep -q " $1 " || die "Language ${1} not known !"
 }
 
 create_home()

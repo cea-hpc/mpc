@@ -9,6 +9,20 @@ AM_SILENT_RULES([yes])
 LT_PREREQ([2.4.6])
 
 
+#
+# Reload first configure environment if present
+# this is needed as we want all the variables
+# set by the root configure script (or first configure)
+# to be present as we rerun this configure
+#
+MPC_CONFIG_RELOADED="no"
+
+if test -f ${PWD}/bin/mpc_build_env.sh; then
+	MPC_CONFIG_RELOADED="yes"
+	. ${PWD}/bin/mpc_build_env.sh
+fi
+
+
 LT_INIT([disable-static])
 LT_LANG([C])
 LT_INIT
@@ -1504,15 +1518,32 @@ AM_CONDITIONAL([MPC_HAVE_AUTOPRIV], [test "x${mpc_have_autopriv}" = "xyes"])
 # Extraction of compilation state
 #
 
-CONFIGURE_PATH="$PATH"
+clean_env_path_var()
+{
+	var_data=$1
+
+	new_data_list=`echo $var_data | sed "s/\\:/\\n/g" | sort | uniq | xargs echo`
+
+	ret=""
+	for entry in $new_data_list
+	do
+		ret="${ret}:${entry}"
+	done
+
+	echo $ret
+}
+
+
+
+CONFIGURE_PATH="`clean_env_path_var $PATH`"
 AC_SUBST([CONFIGURE_PATH])
-CONFIGURE_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
+CONFIGURE_LD_LIBRARY_PATH="`clean_env_path_var $LD_LIBRARY_PATH`"
 AC_SUBST([CONFIGURE_LD_LIBRARY_PATH])
-CONFIGURE_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"
+CONFIGURE_PKG_CONFIG_PATH="`clean_env_path_var $PKG_CONFIG_PATH`"
 AC_SUBST([CONFIGURE_PKG_CONFIG_PATH])
-CONFIGURE_CPATH="$CPATH"
+CONFIGURE_CPATH="`clean_env_path_var $CPATH`"
 AC_SUBST([CONFIGURE_CPATH])
-CONFIGURE_LIBRARY_PATH="$LIBRARY_PATH"
+CONFIGURE_LIBRARY_PATH="`clean_env_path_var $LIBRARY_PATH`"
 AC_SUBST([CONFIGURE_LIBRARY_PATH])
 
 # Generate Compilation timestamp
@@ -1646,3 +1677,15 @@ AC_OUTPUT([MPC_Arch/include/mpc_arch.h
 
 
 echo -e $MPC_CONFIG_RESULT
+
+if test "x${MPC_CONFIG_RELOADED}" = "xyes"; then
+
+
+echo "************ IMPORTANT NOTICE ****************"
+echo "MPCs configure realized that you already ran"
+echo "a configure in this directory and restored the"
+echo "previous build environment. If it is not what"
+echo "you wanted please manually reconfigure MPC"
+echo "***********************************************"
+
+fi

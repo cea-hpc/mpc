@@ -750,7 +750,7 @@ install_compilers: install_build_env
 @MPC_HAVE_AUTOPRIV_TRUE@deploy_compilers: install_compilers
 @MPC_HAVE_AUTOPRIV_TRUE@	$(prefix)/bin/mpc_compiler_manager --global set_default c apcc
 @MPC_HAVE_AUTOPRIV_TRUE@	$(prefix)/bin/mpc_compiler_manager --global set_default cxx ap++
-@MPC_HAVE_AUTOPRIV_TRUE@	$(prefix)/bin/mpc_compiler_manager --global set_default fortran apfortran
+#$(prefix)/bin/mpc_compiler_manager --global set_default fortran apfortran
 @MPC_HAVE_AUTOPRIV_FALSE@deploy_compilers: install_compilers
 
 #

@@ -3638,6 +3638,20 @@ AM_BACKSLASH='\'
 
 
 
+#
+# Reload first configure environment if present
+# this is needed as we want all the variables
+# set by the root configure script (or first configure)
+# to be present as we rerun this configure
+#
+MPC_CONFIG_RELOADED="no"
+
+if test -f ${PWD}/bin/mpc_build_env.sh; then
+	MPC_CONFIG_RELOADED="yes"
+	. ${PWD}/bin/mpc_build_env.sh
+fi
+
+
 case `pwd` in
   *\ * | *\	*)
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Libtool does not cope well with whitespace in \`pwd\`" >&5
@@ -26218,15 +26232,32 @@ fi
 # Extraction of compilation state
 #
 
-CONFIGURE_PATH="$PATH"
+clean_env_path_var()
+{
+	var_data=$1
 
-CONFIGURE_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
+	new_data_list=`echo $var_data | sed "s/\\:/\\n/g" | sort | uniq | xargs echo`
 
-CONFIGURE_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"
+	ret=""
+	for entry in $new_data_list
+	do
+		ret="${ret}:${entry}"
+	done
 
-CONFIGURE_CPATH="$CPATH"
+	echo $ret
+}
 
-CONFIGURE_LIBRARY_PATH="$LIBRARY_PATH"
+
+
+CONFIGURE_PATH="`clean_env_path_var $PATH`"
+
+CONFIGURE_LD_LIBRARY_PATH="`clean_env_path_var $LD_LIBRARY_PATH`"
+
+CONFIGURE_PKG_CONFIG_PATH="`clean_env_path_var $PKG_CONFIG_PATH`"
+
+CONFIGURE_CPATH="`clean_env_path_var $CPATH`"
+
+CONFIGURE_LIBRARY_PATH="`clean_env_path_var $LIBRARY_PATH`"
 
 
 # Generate Compilation timestamp
@@ -29032,3 +29063,15 @@ fi
 
 
 echo -e $MPC_CONFIG_RESULT
+
+if test "x${MPC_CONFIG_RELOADED}" = "xyes"; then
+
+
+echo "************ IMPORTANT NOTICE ****************"
+echo "MPCs configure realized that you already ran"
+echo "a configure in this directory and restored the"
+echo "previous build environment. If it is not what"
+echo "you wanted please manually reconfigure MPC"
+echo "***********************************************"
+
+fi

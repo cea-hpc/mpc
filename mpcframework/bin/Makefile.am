@@ -17,7 +17,7 @@ if MPC_HAVE_AUTOPRIV
 deploy_compilers: install_compilers
 	$(prefix)/bin/mpc_compiler_manager --global set_default c apcc
 	$(prefix)/bin/mpc_compiler_manager --global set_default cxx ap++
-	$(prefix)/bin/mpc_compiler_manager --global set_default fortran apfortran
+#$(prefix)/bin/mpc_compiler_manager --global set_default fortran apfortran
 else
 deploy_compilers: install_compilers
 endif

@@ -7,6 +7,22 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 # Where MPC is currently being BUILT
 PROJECT_BUILD_DIR=$(readlink -f $PWD)
 
+USE_COLOR="yes"
+
+####################
+# BUILD PARAMETERS #
+####################
+
+# NOTE: these are only meaningfull when not using spack
+
+OPENPA_BUILD_PARAMETERS=""
+LIBXML2_BUILD_PARAMETERS="--without-zlib --without-python"
+HWLOC_BUILD_PARAMETERS="--disable-werror --enable-static"
+HYDRA_BUILD_PARAMETERS=""
+DMTCP_BUILD_PARAMETERS="--enable-pthread-mutex-wrappers"
+
+
+
 # Stop on error
 set -e
 
@@ -26,6 +42,23 @@ extractParamValue()
 	arg="$3"
 
 	value=`echo "$arg" | sed -e "s/^--${name}=//g"`
+	eval "${outputvar}=\"${value}\""
+}
+
+######################################################
+#Extract parameter value and put in given variable
+#Args :
+# -$1 : Output variable name
+# -$2 : parameter name (without -, eg. -XXX)
+# -$3 : User value (-XXX=value)
+extractParamValueAlt()
+{
+	#extract in local vars
+	outputvar="$1"
+	name="$2"
+	arg="$3"
+
+	value=`echo "$arg" | sed -e "s/^-${name}//g"`
 	eval "${outputvar}=\"${value}\""
 }
 
@@ -77,26 +110,71 @@ die(){
 #
 # Output helpers
 #
+if test "x$USE_COLOR" = "xyes"; then
+colRESET="\e[0m"
+colGRAY="\e[90m"
+colRED="\e[31m"
+colGREEN="\e[32m"
+colMAGENTA="\e[35m"
+fi
 
 info()
 {
-	echo "INFO: $1"
+	echo "${colGRAY}## INFO: $1${colRESET}"
 }
 
 checking()
 {
-	echo "## Trying to $1 ..."
+	echo -n "${colMAGENTA}## Trying to $1... ${colRESET}"
 }
 
 ok()
 {
-	echo "## SUCCESS"
+	echo "${colGREEN}SUCCESS${colRESET}"
 }
 
 nok()
 {
-	echo "## FAIL"
+	echo "${colRED}FAIL${colRESET}"
 }
+
+
+
+STEP_WRAPPER_VERBOSE=0
+
+wrap_output()
+{
+	outfile=`tempfile`
+
+	set +e
+
+	if test $STEP_WRAPPER_VERBOSE -gt 0; then
+		echo "$ $@"
+	fi
+
+	if test $STEP_WRAPPER_VERBOSE -gt 2; then
+		$@
+	else
+		$@ > $outfile 2>&1
+	fi
+
+	if test "x$?" = "x0"; then
+		rm $outfile
+	else
+		die "See $outfile an error occured when running $@"
+	fi
+
+	set -e
+}
+
+
+
+
+
+#
+# Helper to export build environment
+#
+
 
 propagate_build_env()
 {
@@ -213,26 +291,135 @@ install_dep_with_spack()
 }
 
 
+#
+# Remove duplicates from an env type var (outputs on stdout)
+# Args:
+#   - $1: variable to clean
+#
+clean_env_path_var()
+{
+	var_data=$1
+
+	new_data_list=`echo $var_data | sed "s/\\:/\\n/g" | sort | uniq | xargs echo`
+
+	ret=""
+	for entry in $new_data_list
+	do
+		ret="${ret}:${entry}"
+	done
+
+	echo $ret
+}
+
+#
+# Load a prefix by appending a given directory
+# Args:
+# - $1: prefix to insert
+#
 load_prefix()
 {
-	test -d $1/bin && PATH=$1/bin:$PATH
-	test -d $1/lib && LD_LIBRARY_PATH=$1/lib:$LD_LIBRARY_PATH
-	test -d $1/lib64 && LD_LIBRARY_PATH=$1/lib64:$LD_LIBRARY_PATH
-	test -d $1/include && CPATH=$1/include:$CPATH
-	test -d $1/lib/pkgconfig/ && PKG_CONFIG_PATH=$1/lib/pkgconfig/:$PKG_CONFIG_PATH
-	test -d $1/lib64/pkgconfig/ && PKG_CONFIG_PATH=$1/lib64/pkgconfig/:$PKG_CONFIG_PATH
-	test -d $1/share/man/ && MANPATH=$1/share/man/:$MANPATH
+	if test ! -d $1; then
+		nok
+		die "Could not locate prefix directory $1"
+	fi
+
+	test -d $1/bin && PATH=`clean_env_path_var $1/bin:$PATH`
+	test -d $1/lib && LD_LIBRARY_PATH=`clean_env_path_var $1/lib:$LD_LIBRARY_PATH`
+	test -d $1/lib64 && LD_LIBRARY_PATH=`clean_env_path_var $1/lib64:$LD_LIBRARY_PATH`
+	test -d $1/include && CPATH=`clean_env_path_var $1/include:$CPATH`
+	test -d $1/lib/pkgconfig/ && PKG_CONFIG_PATH=`clean_env_path_var $1/lib/pkgconfig/:$PKG_CONFIG_PATH`
+	test -d $1/lib64/pkgconfig/ && PKG_CONFIG_PATH=`clean_env_path_var $1/lib64/pkgconfig/:$PKG_CONFIG_PATH`
+	test -d $1/share/man/ && MANPATH=`clean_env_path_var $1/share/man/:$MANPATH`
 
 	propagate_build_env
 }
+
+
+#
+# Build a configure based package
+#
+# Args:
+#  - $1: package name
+#  - $2: package version
+#  - $3: extra arguments for configure
+#
+build_configure_based_package()
+{
+	package="$1"
+	version="$2"
+	extra_config_args=$3
+
+	pkg_dir="$SCRIPTPATH/deps/$package/"
+
+	# Where the tarball is extracted (depends on inner tarball dir name)
+	ORIG_PKG_SOURCE_DIR=${PROJECT_BUILD_DIR}/${package}-${version}/
+	# Where we move it in MPC to simplify deletion thanks to dep-* prefix
+	PKG_SOURCE_DIR=${PROJECT_BUILD_DIR}/dep-${package}-${version}/
+
+	# If already deployed no need to redo
+	if test -f ${PKG_SOURCE_DIR}/.installed; then
+		info "$package-$version already deployed in $PREFIX"
+		load_prefix "$PREFIX"
+		return
+	fi
+
+
+	if test ! -d $pkg_dir; then
+		die "Could not locate a directory $pkg_dir for $package $version"
+	fi
+
+	# Now attempt to locate archive
+	tarball="$package-$version"
+	candidate_tarball=`ls $pkg_dir | grep $tarball | grep ".tar"`
+	tarball_path=$pkg_dir/$candidate_tarball
+
+	if test -f $tarball_path; then
+		info "Installing $package-$version from $tarball_path"
+	else
+		die "Could not locate a tarball for $package-$version in $pkg_dir"
+	fi
+
+	checking "extract $package-$version tarball"
+
+	tar xf $tarball_path && ok || nok
+
+	if test ! -d $ORIG_PKG_SOURCE_DIR; then
+		die "Could not locate sources in $PKG_SOURCE_DIR after extracting $tarball_path"
+	else
+		# Rename to $PKG_SOURCE_DIR
+		mv $ORIG_PKG_SOURCE_DIR $PKG_SOURCE_DIR
+	fi
+
+	if test ! -d ${PKG_SOURCE_DIR}/BUILD; then
+		mkdir ${PKG_SOURCE_DIR}/BUILD
+	fi
+
+	cd ${PKG_SOURCE_DIR}/BUILD
+
+	checking "install $package-$version"
+
+	wrap_output ${PKG_SOURCE_DIR}/configure --prefix=${PREFIX} $extra_config_args
+	wrap_output make -j $MAKE_J
+	wrap_output make install
+
+	ok
+
+	cd ${PROJECT_BUILD_DIR}
+
+	load_prefix "$PREFIX"
+
+	# if we are here flag all success
+	touch ${PKG_SOURCE_DIR}/.installed
+}
+
+
 
 # Deploy an MPC dependency using various methods (spack or not)
 # Args:
 # - $1: package name
 # - $2: package version
 # - $3: can build
-# - $4: fail if not found
-# - $5: candidate prefix can be:
+# - $4: candidate prefix can be:
 #	* "PATH" to a prefix which is then used
 #	* "nobuild" meaning that we only try with spack load
 #       * "spackonly" meaning that we only wish to install through spack if present
@@ -242,15 +429,16 @@ load_prefix()
 SPACK_LOCATE_DEPENDENCY="yes"
 SPACK_INSTALL_DEPENDENCY="no"
 
-deploy_dependency_internal()
+find_in_prefix_or_use_spack_internal()
 {
 	package="$1"
 	version="$2"
 	can_build="$3"
-	can_fail="$4"
-	candidate_prefix="$5"
+	candidate_prefix="$4"
 
 	if test "x${candidate_prefix}" = "xdisabled"; then
+		#Not an error (disable legacy build also)
+		DEP_FOUND="yes"
 		info "$package is disabled"
 		return
 	fi
@@ -263,8 +451,6 @@ deploy_dependency_internal()
 		# Assume dep found
 		DEP_FOUND="yes"
 	fi
-
-
 
 	check_for_spack
 
@@ -293,12 +479,6 @@ deploy_dependency_internal()
 	# Do a source level build only when required to
 	if test "x${can_build}" = "xspackonly"; then
 		info "$package is configured to be installed using spack"
-	else
-		echo "BUILD"
-	fi
-
-	if test "x${can_fail}" = "xyes" -n "x${DEP_FOUND}" = "xno"; then
-		die "Failed to install ${package}"
 	fi
 }
 
@@ -309,9 +489,9 @@ deploy_dependency_internal()
 # - $2: package version
 # - $3: candidate_prefix
 
-deploy_dependency()
+find_in_prefix_or_use_spack()
 {
-	deploy_dependency_internal "$1" "$2" "yes" "build" "$3"
+	find_in_prefix_or_use_spack_internal "$1" "$2" "yes" "$3"
 }
 
 # Deploy an MPC dependency using various methods (spack or not)
@@ -320,14 +500,12 @@ deploy_dependency()
 # - $2: package version
 # - $3: candidate_prefix
 
-deploy_dependency_optionnal()
+find_in_prefix_or_use_spack_optionnal()
 {
 	required="no"
-
 	candidate_prefix="$3"
 
-
-	deploy_dependency_internal "$1" "$2" "$required" "no" "$candidate_prefix"
+	find_in_prefix_or_use_spack_internal "$1" "$2" "$required" "$candidate_prefix"
 }
 
 
@@ -351,16 +529,12 @@ Defaults for the options are specified in brackets.
   --disable-check-install                 : Override installation if it already exists in the prefix
   --{enable,disable}-check-deps           : Enable/Disable dependency checking
   --compiler                              : Default compiler
-  --download-missing-deps                 : Download dependencies
-  --mirror={1|2|3|4}                      : Choose a mirror for downloading dependencies
-  clean                                   : Delete directories inside build directory
-  distclean                               : Delete directories and makefiles inside build directory
 
 # Features
   --lib-mode                              : Build MPC as a communication library
   --mpc-process-mode                      : Build MPC in process-mode (1 MPI process = 1 UNIX process)
   --{enable,disable}-mpc-ft               : Activate/Deactivate checkpoint/restart support
-  --disable-color                         : Disable colors in display
+  --{enable,disable}-color                         : Disable colors in display
   --enable-mpc-debug                      : Enable every debug levels (symbols, messages)
   --verbose=1|2|3                         : Level of verbosity
   -v|-vv|-vvv                             : Level of verbosity
@@ -427,6 +601,7 @@ fi
 MPCALLOC_PREFIX="nobuild"
 
 DMTCP_PREFIX="disabled"
+HBICT_PREFIX="disabled"
 GDB_PREFIX='disabled'
 TBB_PREFIX="disabled"
 SCTK_GETOPT_PREFIX='disabled'
@@ -441,7 +616,7 @@ for arg in "$@"
 do
 	case "$arg" in
 		############### BUILD SPECIFIC ###############
-		--download-missing-deps|--mirror=*|clean|distclean|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--mpc-*|--enable-check-deps|--disable-check-deps|--disable-check-install|--enable-all-internals|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*|--version)
+		--download-missing-deps|--mirror=*|clean|distclean|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--with-hbict=*|--hbict-*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--mpc-*|--enable-check-deps|--disable-check-deps|--disable-check-install|--enable-all-internals|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*|--version)
 			echo "INFO: $arg is deprecated"
 			;;
 
@@ -534,13 +709,6 @@ do
 		--disable-mpc-allocator)
 			MPCALLOC_PREFIX="disabled"
 			;;
-		################### HBICT ###################
-		--with-hbict=*)
-			extractParamValue 'HBICT_PREFIX' 'with-hbict' "$arg"
-			;;
-		--hbict-*)
-			extractAndAddPackageOption 'HBICT_BUILD_PARAMETERS' 'hbict' "$arg"
-			;;
 		################### DMTCP ###################
 		--with-dmtcp=*)
 			extractParamValue 'DMTCP_PREFIX' 'with-dmtcp' "$arg"
@@ -567,7 +735,11 @@ do
 			;;
 		--enable-color)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-shell-colors"
-			LIBEXTLS_BUILD_PARAMETERS="${LIBEXTLS_BUILD_PARAMETERS} --enable-color"
+			USE_COLOR="yes"
+			;;
+		--disable-color)
+			MPCFRAMEWORK_BUILD_PARAMETERS=`echo $MPCFRAMEWORK_BUILD_PARAMETERS | sed "s/--enable-shell-colors//"`
+			USE_COLOR="no"
 			;;
 		--enable-mpc-debug)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug --enable-debug-messages"
@@ -660,22 +832,54 @@ do
 done
 
 
+
 # Basic dependencies
-deploy_dependency "openpa" "" ""
-deploy_dependency "libxml2" "" ""
-deploy_dependency "hwloc" "1." ""
+find_in_prefix_or_use_spack "openpa" "" ""
+
+if test "x${DEP_FOUND}" = "xno"; then
+	# Could not use spack now installing manually
+	build_configure_based_package "openpa" "1.0.4" "$OPENPA_BUILD_PARAMETERS"
+fi
+
+find_in_prefix_or_use_spack "libxml2" "" ""
+
+if test "x${DEP_FOUND}" = "xno"; then
+	# Could not use spack now installing manually
+	build_configure_based_package "libxml2" "2.9.3" "$LIBXML2_BUILD_PARAMETERS"
+fi
+
+find_in_prefix_or_use_spack "hwloc" "1." ""
+
+if test "x${DEP_FOUND}" = "xno"; then
+	# Could not use spack now installing manually
+	build_configure_based_package "hwloc" "1.11.13" "$HWLOC_BUILD_PARAMETERS"
+fi
+
 
 # Basic optionnal dependencies
-deploy_dependency_optionnal "libunwind" "" "spackonly" ""
+find_in_prefix_or_use_spack_optionnal "libunwind" "" "spackonly" ""
 
 # Dependencies which can be deactivated
-deploy_dependency "autopriv" "" "${AUTOPRIV_PREFIX}"
-deploy_dependency "hydra" "" "${HYDRA_PREFIX}"
-deploy_dependency "dmtcp" "" "${DMTCP_PREFIX}"
+find_in_prefix_or_use_spack "autopriv" "" "${AUTOPRIV_PREFIX}"
 
 
+find_in_prefix_or_use_spack "hydra" "" "${HYDRA_PREFIX}"
 
-deploy_dependency "mpcalloc" "" "$MPCALLOC_PREFIX"
+if test "x${DEP_FOUND}" = "xno"; then
+	# Could not use spack now installing manually
+	build_configure_based_package "hydra" "3.2" "$HYDRA_BUILD_PARAMETERS"
+fi
+
+
+find_in_prefix_or_use_spack "dmtcp" "" "${DMTCP_PREFIX}"
+
+if test "x${DEP_FOUND}" = "xno"; then
+	# Could not use spack now installing manually
+	build_configure_based_package "dmtcp" "2.5.0" "$HYDRA_BUILD_PARAMETERS"
+fi
+
+
+find_in_prefix_or_use_spack "mpcalloc" "" "$MPCALLOC_PREFIX"
 
 
 # It is now time to configure MPC
@@ -683,5 +887,11 @@ deploy_dependency "mpcalloc" "" "$MPCALLOC_PREFIX"
 test -z "$PREFIX" && die "Please provide a prefix where to install MPC"
 
 propagate_build_env
+
+if test -f bin/mpc_build_env.sh; then
+	checking "remove previous MPC configuration state"
+	rm -fr bin/mpc_build_env.sh
+	ok
+fi
 
 $SCRIPTPATH/mpcframework/configure --prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS
