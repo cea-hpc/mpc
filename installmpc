@@ -117,16 +117,26 @@ colGRAY="\e[90m"
 colRED="\e[31m"
 colGREEN="\e[32m"
 colMAGENTA="\e[35m"
+colYELLOW="\e[33m"
+
+colbgGRAY="\e[100m"
+colbgMAGENTA="\e[45m"
+colbgYELLOW="\e[43m"
+colbgRED="\e[41m"
+colbgGREEN="\e[42m"
+
+BLINK="\e[5m"
+UNDERLINE="\e[4m"
 fi
 
 info()
 {
-	echo "${colGRAY}## INFO: $1${colRESET}"
+	echo "${colbgGRAY}==>${colRESET}${colGRAY} $1${colRESET}"
 }
 
 checking()
 {
-	echo -n "${colMAGENTA}## Trying to $1... ${colRESET}"
+	echo -n "${colbgMAGENTA}==>${colRESET}${colMAGENTA} $1... ${colRESET}"
 }
 
 ok()
@@ -136,7 +146,12 @@ ok()
 
 nok()
 {
-	echo "${colRED}FAIL${colRESET}"
+	echo "${UNDERLINE}${colBLINK}${colRED}FAIL${colRESET}"
+}
+
+skip()
+{
+	echo "${UNDERLINE}${colBLINK}${colYELLOW}SKIPPED${colRESET}"
 }
 
 
@@ -388,6 +403,7 @@ load_prefix()
 #  - $2: package version
 #  - $3: extra arguments for configure
 #
+
 build_configure_based_package()
 {
 	package="$1"
@@ -396,25 +412,45 @@ build_configure_based_package()
 
 	pkg_dir="$SCRIPTPATH/deps/$package/"
 
-	# Where the tarball is extracted (depends on inner tarball dir name)
-	ORIG_PKG_SOURCE_DIR=${PROJECT_BUILD_DIR}/${package}-${version}/
-	# Where we move it in MPC to simplify deletion thanks to dep-* prefix
-	PKG_SOURCE_DIR=${PROJECT_BUILD_DIR}/dep-${package}-${version}/
+
+	#
+	# INSTALL FLAG MANAGEMENT
+	#
+
 
 	# Check if another version of the dependency is not already installed
+	installed_vers=`ls -a ${PREFIX} | grep .mpc-installed-${package}-* || true`
 
-
+	if test -n "$installed_vers"; then
+		# There is already a version
+		installed_version=`echo $installed_vers | cut -d "-" -f 4`
+		if test "x${installed_version}" != "x${version}"; then
+			info "there is $package $installed_version in $PREFIX and MPC provides $version"
+			die "MPC does not support installing mismatching $package versions in the same prefix"
+		fi
+	fi
 
 	# The flag to determine if a dependency is already in prefix
 	DEP_FLAG=${PREFIX}/.mpc-installed-$package-$version
 
 	# If already deployed no need to redo
 	if test -f $DEP_FLAG; then
-		info "$package-$version already deployed in $PREFIX"
+		checking "Installing $package-$version"
+		skip
 		load_prefix "$PREFIX"
 		return
 	fi
 
+	#
+	# Tarball Extraction
+	#
+
+	# Where the tarball is extracted (depends on inner tarball dir name)
+	ORIG_PKG_SOURCE_DIR=${PROJECT_BUILD_DIR}/${package}-${version}/
+	# Where we move it in MPC to simplify deletion thanks to dep-* prefix
+	PKG_SOURCE_DIR=${PROJECT_BUILD_DIR}/dep-${package}-${version}/
+
+	checking "Extracting $package $version"
 
 	if test ! -d $PKG_SOURCE_DIR; then
 		# Extract the source tarball only if not already present
@@ -427,23 +463,36 @@ build_configure_based_package()
 		candidate_tarball=`ls $pkg_dir | grep $tarball | grep ".tar"`
 		tarball_path=$pkg_dir/$candidate_tarball
 
-		if test -f $tarball_path; then
-			info "Installing $package-$version from $tarball_path"
-		else
+		if test ! -f $tarball_path; then
+			fail
 			die "Could not locate a tarball for $package-$version in $pkg_dir"
 		fi
 
-		checking "extract $package-$version tarball"
-
-		tar xf $tarball_path && ok || nok
+		tar xf $tarball_path || true
 
 		if test ! -d $ORIG_PKG_SOURCE_DIR; then
+			fail
 			die "Could not locate sources in $PKG_SOURCE_DIR after extracting $tarball_path"
 		else
 			# Rename to $PKG_SOURCE_DIR
 			mv $ORIG_PKG_SOURCE_DIR $PKG_SOURCE_DIR
+			ok
 		fi
+	else
+		skip
 	fi
+
+
+	#
+	# Patching (when needed)
+	#
+	
+
+
+	#
+	# Actual BUILD
+	#
+
 
 	if test ! -d ${PKG_SOURCE_DIR}/BUILD; then
 		mkdir ${PKG_SOURCE_DIR}/BUILD
@@ -451,7 +500,7 @@ build_configure_based_package()
 
 	cd ${PKG_SOURCE_DIR}/BUILD
 
-	checking "install $package-$version"
+	checking "Installing $package-$version"
 
 	wrap_output ${PKG_SOURCE_DIR}/configure --prefix=${PREFIX} $extra_config_args
 	wrap_output make -j $MAKE_J
@@ -461,7 +510,16 @@ build_configure_based_package()
 
 	cd ${PROJECT_BUILD_DIR}
 
+	#
+	# Prefix loading
+	#
+
 	load_prefix "$PREFIX"
+
+
+	#
+	# Flag as installed
+	#
 
 	# if we are here flag all success
 	touch ${DEP_FLAG}
@@ -524,8 +582,6 @@ find_in_prefix_or_use_spack_internal()
 
 	if test "x${SPACK_INSTALL_DEPENDENCY}" = "xyes"; then
 		install_dep_with_spack "$package" "$version"
-	else
-		info "Not building using spack as --enable-spack-build not passed"
 	fi
 
 	# Did we install with spack ?
@@ -898,6 +954,10 @@ do
 	esac
 done
 
+# Display warning if not building with spack
+if test "x${SPACK_INSTALL_DEPENDENCY}" = "xno"; then
+	info "Not building using spack as --enable-spack-build not passed"
+fi
 
 
 # Basic dependencies
