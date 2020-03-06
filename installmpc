@@ -1,14 +1,971 @@
 #!/bin/sh
 
+# Path to the configure script
+SCRIPT=$(readlink -f "$0")
+# Directory containing configure
+SCRIPTPATH=$(dirname "$SCRIPT")
+# Where MPC is currently being BUILT
+PROJECT_BUILD_DIR=$(readlink -f $PWD)
+
+USE_COLOR="yes"
+
+####################
+# BUILD PARAMETERS #
+####################
+
+# NOTE: these are only meaningfull when not using spack
+
+OPENPA_BUILD_PARAMETERS=""
+MPCALLOC_BUILD_PARAMETERS=""
+LIBXML2_BUILD_PARAMETERS="--without-zlib --without-python"
+HWLOC_BUILD_PARAMETERS="--disable-werror --enable-static"
+HYDRA_BUILD_PARAMETERS=""
+DMTCP_BUILD_PARAMETERS="--enable-pthread-mutex-wrappers"
+
+
+
+# Stop on error
 set -e
 
-# Path to the installmpc script
-SCRIPT=$(readlink -f "$0")
-# Directory containing installmpc
-SCRIPTPATH=$(dirname "$SCRIPT")
+#
+# Utilities
+#
+#Extract parameter value and put in given variable
+#Args :
+# -$1 : Output variable name
+# -$2 : parameter name (without --, eg. --with-XXX => 'with-XXX')
+# -$3 : User value (--with-XXX=blablable)
+extractParamValue()
+{
+	#extract in local vars
+	outputvar="$1"
+	name="$2"
+	arg="$3"
 
-${SCRIPTPATH}/configure "$@"
+	value=`echo "$arg" | sed -e "s/^--${name}=//g"`
+	eval "${outputvar}=\"${value}\""
+}
 
-make
+######################################################
+#Extract parameter value and put in given variable
+#Args :
+# -$1 : Output variable name
+# -$2 : parameter name (without -, eg. -XXX)
+# -$3 : User value (-XXX=value)
+extractParamValueAlt()
+{
+	#extract in local vars
+	outputvar="$1"
+	name="$2"
+	arg="$3"
 
-make install
+	value=`echo "$arg" | sed -e "s/^-${name}//g"`
+	eval "${outputvar}=\"${value}\""
+}
+
+# Set a var to a value if not already set
+#args :
+# -$1 : output variable name
+# -$2 : value triggering a set
+# -$3 : value to set
+enableParamIfNot()
+{
+	#extract in local vars
+	outputvar="$1"
+	output="$2"
+	trigger="$3"
+	value="$4"
+
+	if [ "${output}" = "${trigger}" ]
+	then
+		eval "${outputvar}=\"${value}\""
+	fi
+}
+
+#Extract parameter value and put in given variable
+#Args :
+# -$1 : Output variable name
+# -$2 : parameter prefix (eg --libxml2-XXXX to add --XXX to libxml2 params)
+# -$3 : User value (--libxml2-XXXX)
+extractAndAddPackageOption()
+{
+	#extract in local vars
+	outputvar="$1"
+	name="$2"
+	arg="$3"
+
+	value=`echo "$arg" | sed -e "s/^--${name}//g"`
+	eval "${outputvar}=\"\$${outputvar} ${value}\""
+}
+
+# Print an error message and exit
+# Args:
+# -$1 : Message to print
+die(){
+	echo "================ ERROR ================"
+	echo "$1"
+	echo "======================================="
+	exit 1
+}
+
+#
+# Output helpers
+#
+if test "x$USE_COLOR" = "xyes"; then
+colRESET="\e[0m"
+colGRAY="\e[90m"
+colRED="\e[31m"
+colGREEN="\e[32m"
+colMAGENTA="\e[35m"
+fi
+
+info()
+{
+	echo "${colGRAY}## INFO: $1${colRESET}"
+}
+
+checking()
+{
+	echo -n "${colMAGENTA}## Trying to $1... ${colRESET}"
+}
+
+ok()
+{
+	echo "${colGREEN}SUCCESS${colRESET}"
+}
+
+nok()
+{
+	echo "${colRED}FAIL${colRESET}"
+}
+
+
+
+STEP_WRAPPER_VERBOSE=0
+
+wrap_output()
+{
+	outfile=`tempfile`
+
+	set +e
+
+	if test $STEP_WRAPPER_VERBOSE -gt 0; then
+		echo "$ $@"
+	fi
+
+	if test $STEP_WRAPPER_VERBOSE -gt 2; then
+		$@
+	else
+		$@ > $outfile 2>&1
+	fi
+
+	if test "x$?" = "x0"; then
+		rm $outfile
+	else
+		die "See $outfile an error occured when running $@"
+	fi
+
+	set -e
+}
+
+
+
+
+
+#
+# Helper to export build environment
+#
+
+
+propagate_build_env()
+{
+	export PATH
+	export PKG_CONFIG_PATH
+	export CPATH
+	export CMAKE_PREFIX_PATH
+	export SPACK_LOADED_HASHES
+	export ACLOCAL_PATH
+	export MANPATH
+	export LD_LIBRARY_PATH
+}
+
+#
+# Check for CMAKE
+#
+HAVE_CMAKE=""
+
+check_for_cmake()
+{
+	test -n "$HAVE_CMAKE" && return
+
+	checking "locate 'cmake' command in PATH"
+
+	set +e
+
+	which cmake > /dev/null 2>&1
+
+	if test "x$?" = "x0"; then
+		ok
+		HAVE_CMAKE="yes"
+	else
+		nok
+		HAVE_CMAKE="no"
+	fi
+
+	set -e
+}
+
+#
+# Assert spack is present
+#
+assert_cmake()
+{
+	check_for_cmake
+
+	if test "x${HAVE_CMAKE}" = "xno"; then
+		die "Cmake was not found on the system and cannot be used"
+	fi
+}
+
+#
+# Check for spack
+#
+HAVE_SPACK=""
+check_for_spack()
+{
+	test -n "$HAVE_SPACK" && return
+
+	checking "locate 'spack' command in PATH"
+
+	which spack > /dev/null 2>&1
+
+	if test "x$?" = "x0"; then
+		ok
+		HAVE_SPACK="yes"
+	else
+		nok
+		HAVE_SPACK="no"
+	fi
+}
+
+#
+# Assert spack is present
+#
+assert_spack()
+{
+	check_for_spack
+
+	if test "x${HAVE_SPACK}" = "xno"; then
+		die "Spack was not found on the system and cannot be used"
+	fi
+}
+
+# Build spack package name
+# Args:
+# -$1 : package
+# -$2 : version
+#
+build_package_name()
+{
+	if test -n "$2"; then
+		echo "$1@$2"
+	else
+		echo "$1"
+	fi
+}
+
+
+# Try to find a dep using spack
+# Args:
+# -$1 : package
+# -$2 : version
+#
+DEP_FOUND="no"
+find_dep_with_spack()
+{
+	check_for_spack
+
+	DEP_FOUND="no"
+
+	if test "x${HAVE_SPACK}" = "xno"; then
+		return
+	fi
+
+	PKG_NAME="`build_package_name "$1" "$2"`"
+
+	checking "load $PKG_NAME using spack"
+
+	propagate_build_env
+
+	eval `spack load --sh $PKG_NAME`
+
+	propagate_build_env
+
+	spack load --sh $PKG_NAME > /dev/null 2>&1
+
+	if test "x$?" = "x0"; then
+		eval `spack load --sh $PKG_NAME`
+		DEP_FOUND="yes"
+		ok
+	else
+		nok
+	fi
+
+	propagate_build_env
+}
+
+# Try to install a package using spack
+#
+#
+install_dep_with_spack()
+{
+	assert_spack
+
+	checking "install $PKG_NAME using spack"
+
+	spack install `build_package_name "$1" "$2"`
+
+	if test "x$?" != "x0"; then
+		nok
+		die "Failled to install $1@$2 using spack"
+	else
+		ok
+	fi
+
+	find_dep_with_spack "$1" "$2"
+}
+
+
+#
+# Remove duplicates from an env type var (outputs on stdout)
+# Args:
+#   - $1: variable to clean
+#
+clean_env_path_var()
+{
+	var_data=$1
+
+	new_data_list=`echo $var_data | sed "s/\\:/\\n/g" | sort | uniq | xargs echo`
+
+	ret=""
+	for entry in $new_data_list
+	do
+		ret="${ret}:${entry}"
+	done
+
+	echo $ret
+}
+
+#
+# Load a prefix by appending a given directory
+# Args:
+# - $1: prefix to insert
+#
+load_prefix()
+{
+	if test ! -d $1; then
+		nok
+		die "Could not locate prefix directory $1"
+	fi
+
+	test -d $1/bin && PATH=`clean_env_path_var $1/bin:$PATH`
+	test -d $1/lib && LD_LIBRARY_PATH=`clean_env_path_var $1/lib:$LD_LIBRARY_PATH`
+	test -d $1/lib64 && LD_LIBRARY_PATH=`clean_env_path_var $1/lib64:$LD_LIBRARY_PATH`
+	test -d $1/include && CPATH=`clean_env_path_var $1/include:$CPATH`
+	test -d $1/lib/pkgconfig/ && PKG_CONFIG_PATH=`clean_env_path_var $1/lib/pkgconfig/:$PKG_CONFIG_PATH`
+	test -d $1/lib64/pkgconfig/ && PKG_CONFIG_PATH=`clean_env_path_var $1/lib64/pkgconfig/:$PKG_CONFIG_PATH`
+	test -d $1/share/man/ && MANPATH=`clean_env_path_var $1/share/man/:$MANPATH`
+
+	propagate_build_env
+}
+
+
+#
+# Build a configure based package
+#
+# Args:
+#  - $1: package name
+#  - $2: package version
+#  - $3: extra arguments for configure
+#
+build_configure_based_package()
+{
+	package="$1"
+	version="$2"
+	extra_config_args=$3
+
+	pkg_dir="$SCRIPTPATH/deps/$package/"
+
+	# Where the tarball is extracted (depends on inner tarball dir name)
+	ORIG_PKG_SOURCE_DIR=${PROJECT_BUILD_DIR}/${package}-${version}/
+	# Where we move it in MPC to simplify deletion thanks to dep-* prefix
+	PKG_SOURCE_DIR=${PROJECT_BUILD_DIR}/dep-${package}-${version}/
+
+	# Check if another version of the dependency is not already installed
+
+
+
+	# The flag to determine if a dependency is already in prefix
+	DEP_FLAG=${PREFIX}/.mpc-installed-$package-$version
+
+	# If already deployed no need to redo
+	if test -f $DEP_FLAG; then
+		info "$package-$version already deployed in $PREFIX"
+		load_prefix "$PREFIX"
+		return
+	fi
+
+
+	if test ! -d $PKG_SOURCE_DIR; then
+		# Extract the source tarball only if not already present
+		if test ! -d $pkg_dir; then
+			die "Could not locate a directory $pkg_dir for $package $version"
+		fi
+
+		# Now attempt to locate archive
+		tarball="$package-$version"
+		candidate_tarball=`ls $pkg_dir | grep $tarball | grep ".tar"`
+		tarball_path=$pkg_dir/$candidate_tarball
+
+		if test -f $tarball_path; then
+			info "Installing $package-$version from $tarball_path"
+		else
+			die "Could not locate a tarball for $package-$version in $pkg_dir"
+		fi
+
+		checking "extract $package-$version tarball"
+
+		tar xf $tarball_path && ok || nok
+
+		if test ! -d $ORIG_PKG_SOURCE_DIR; then
+			die "Could not locate sources in $PKG_SOURCE_DIR after extracting $tarball_path"
+		else
+			# Rename to $PKG_SOURCE_DIR
+			mv $ORIG_PKG_SOURCE_DIR $PKG_SOURCE_DIR
+		fi
+	fi
+
+	if test ! -d ${PKG_SOURCE_DIR}/BUILD; then
+		mkdir ${PKG_SOURCE_DIR}/BUILD
+	fi
+
+	cd ${PKG_SOURCE_DIR}/BUILD
+
+	checking "install $package-$version"
+
+	wrap_output ${PKG_SOURCE_DIR}/configure --prefix=${PREFIX} $extra_config_args
+	wrap_output make -j $MAKE_J
+	wrap_output make install
+
+	ok
+
+	cd ${PROJECT_BUILD_DIR}
+
+	load_prefix "$PREFIX"
+
+	# if we are here flag all success
+	touch ${DEP_FLAG}
+}
+
+
+
+# Deploy an MPC dependency using various methods (spack or not)
+# Args:
+# - $1: package name
+# - $2: package version
+# - $3: can build
+# - $4: candidate prefix can be:
+#	* "PATH" to a prefix which is then used
+#	* "nobuild" meaning that we only try with spack load
+#       * "spackonly" meaning that we only wish to install through spack if present
+#       * "" meaning that we also try to build from sources (using local deps)
+
+
+SPACK_LOCATE_DEPENDENCY="yes"
+SPACK_INSTALL_DEPENDENCY="no"
+
+find_in_prefix_or_use_spack_internal()
+{
+	package="$1"
+	version="$2"
+	can_build="$3"
+	candidate_prefix="$4"
+
+	if test "x${candidate_prefix}" = "xdisabled"; then
+		#Not an error (disable legacy build also)
+		DEP_FOUND="yes"
+		info "$package is disabled"
+		return
+	fi
+
+
+	DEP_FOUND="no"
+
+	if test -d "$candidate_prefix"; then
+		load_prefix "$candidate_prefix"
+		# Assume dep found
+		DEP_FOUND="yes"
+	fi
+
+	check_for_spack
+
+	# First use spack to locate in existing packages
+	if test "x${SPACK_LOCATE_DEPENDENCY}" = "xyes"; then
+		find_dep_with_spack "$package" "$version"
+	fi
+
+	# If dep is found we are done
+	test "x${DEP_FOUND}" = "xyes" && return
+
+
+	# We stop here if we are not alowed to build
+	test "x${can_build}" = "xnobuild" && return
+
+
+	if test "x${SPACK_INSTALL_DEPENDENCY}" = "xyes"; then
+		install_dep_with_spack "$package" "$version"
+	else
+		info "Not building using spack as --enable-spack-build not passed"
+	fi
+
+	# Did we install with spack ?
+	test "x${DEP_FOUND}" = "xyes" && return
+
+	# Do a source level build only when required to
+	if test "x${can_build}" = "xspackonly"; then
+		info "$package is configured to be installed using spack"
+	fi
+}
+
+
+# Deploy an MPC dependency using various methods (spack or not)
+# Args:
+# - $1: package name
+# - $2: package version
+# - $3: candidate_prefix
+
+find_in_prefix_or_use_spack()
+{
+	find_in_prefix_or_use_spack_internal "$1" "$2" "yes" "$3"
+}
+
+# Deploy an MPC dependency using various methods (spack or not)
+# Args:
+# - $1: package name
+# - $2: package version
+# - $3: candidate_prefix
+
+find_in_prefix_or_use_spack_optionnal()
+{
+	required="no"
+	candidate_prefix="$3"
+
+	find_in_prefix_or_use_spack_internal "$1" "$2" "$required" "$candidate_prefix"
+}
+
+
+# Print usage for configure
+showHelp()
+{
+cat << EOF
+
+MPC Meta-Build script
+
+Usage: ./configure [OPTION]... [VAR=VALUE]...
+
+Defaults for the options are specified in brackets.
+
+# Information
+  --help|-h|-?                            : Display this help and exit
+  --version                               : Report version number and exit
+
+# Build & Installation
+  --prefix=PREFIX                         : Install architecture-independent files in PREFIX [/usr/local]
+  --disable-check-install                 : Override installation if it already exists in the prefix
+  --{enable,disable}-check-deps           : Enable/Disable dependency checking
+  --compiler                              : Default compiler
+
+# Features
+  --lib-mode                              : Build MPC as a communication library
+  --mpc-process-mode                      : Build MPC in process-mode (1 MPI process = 1 UNIX process)
+  --{enable,disable}-mpc-ft               : Activate/Deactivate checkpoint/restart support
+  --{enable,disable}-color                         : Disable colors in display
+  --enable-mpc-debug                      : Enable every debug levels (symbols, messages)
+  --verbose=1|2|3                         : Level of verbosity
+  -v|-vv|-vvv                             : Level of verbosity
+  -jN                                     : Allow N jobs at once (parallel install)
+
+# Disable sub packages
+  --disable-mpc-autopriv                  : Disable privatizing compiler support
+  --disable-mpc-gcc                       : Equivalent of disable-mpc-autopriv
+  --disable-mpc-fortran                   : Disable fortran
+  --disable-mpc-hydra                     : Disable Hydra
+  --disable-romio                         : Disable ROMIO MPI-IO support
+  --{enable,disable}-mpc-gdb              : Enable/Disable gdb
+  --{enable,disable}-tbb                  : Enable/Disable TBB
+
+# Specify system subpackages
+  --with-autopriv=*                       : Specify autopriv prefix on the system
+  --with-openpa=*                         : Specify openpa prefix on the system
+  --with-hwloc=*                          : Specify hwloc prefix on the system
+  --with-libxml2=*                        : Specify libxml2 prefix on the system
+  --with-cuda=*                           : Specify Cuda prefix on the system
+  --with-openacc=*                        : Specify OpenACC prefix on the system (NIMPL)
+  --with-opencl=*                         : Specify OpenCL prefix on the system (NIMPL)
+  --with-hydra=*                          : Specify Hydra prefix on the system
+  --with-tbb=*                            : Specify TBB prefix on the system
+  --with-{dmtcp,hbict}=*                  : Specify DMTCP/HBICT prefix on the system
+
+# Options to transmit to subpackages
+  --autopriv-*                            : Add options to autopriv configure
+  --mpc-gdb-*                             : Add options to gdb configure
+  --openpa-*                              : Add options to openpa configure
+  --libxml2-*                             : Add options to libxml2 configure
+  --hydra-*                               : Add options to Hydra configure
+  --hwloc-*                               : Add options to hwloc configure
+  --tbb-*                                 : Add options to TBB configure
+  --{dmtcp,hbict}-*                       : Add options to DMTCP/HBICT configure
+  --mpc-option=*                          : Add options to mpc framework configure
+
+EOF
+}
+
+####################################################
+#                                                  #
+# MPC WRAPPER FOR BUILD                            #
+#                                                  #
+####################################################
+
+
+MAKE_J=1
+
+#
+# Build directory check
+#
+
+# Make sure we do not install inside the source directory
+
+if test "x${SCRIPTPATH}" = "x${PROJECT_BUILD_DIR}"; then
+	die "MPC cannot be configured inside the source directory"
+fi
+
+#
+# Disable all optionnal dependencies by default
+#
+
+# Possible values are:
+#	* "PATH" to a prefix which is then used
+#	* "nobuild" meaning that we only try with spack load
+#       * "spackonly" meaning that we only wish to install through spack if present
+#       * "" meaning that we also try to build from sources (using local deps)
+
+OPENPA_PREFIX=""
+LIBXML2_PREFIX=""
+
+MPCALLOC_PREFIX=""
+
+DMTCP_PREFIX="disabled"
+HBICT_PREFIX="disabled"
+GDB_PREFIX='disabled'
+TBB_PREFIX="disabled"
+SCTK_GETOPT_PREFIX='disabled'
+MPC_MPIT_PREFIX='disabled'
+MPL_PREFIX='disabled'
+
+#
+# Argument parsing
+#
+
+for arg in "$@"
+do
+	case "$arg" in
+		############### BUILD SPECIFIC ###############
+		--download-missing-deps|--mirror=*|clean|distclean|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--with-hbict=*|--hbict-*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--mpc-*|--enable-check-deps|--disable-check-deps|--disable-check-install|--enable-all-internals|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*|--version)
+			echo "INFO: $arg is deprecated"
+			;;
+
+		################# HYDRA #################
+		--with-hydra=*)
+			extractParamValue 'HYDRA_PREFIX' 'with-hydra' "$arg"
+			;;
+		--hydra-*)
+			extractAndAddPackageOption 'HYDRA_BUILD_PARAMETERS' 'hydra' "$arg"
+			;;
+		--disable-mpc-hydra)
+			HYDRA_PREFIX='disabled'
+			;;
+		#################### OPENPA #################
+		--with-openpa=*)
+			extractParamValue 'OPENPA_PREFIX' 'with-openpa' "$arg"
+			;;
+		--openpa-*)
+			extractAndAddPackageOption 'OPENPA_BUILD_PARAMETERS' 'openpa' "$arg"
+			;;
+		################### MPC GDB #################
+		--with-mpc-gdb=*)
+			extractParamValue 'GDB_PREFIX' 'with-mpc-gdb' "$arg"
+			;;
+		--mpc-gdb-*)
+			extractAndAddPackageOption 'GDB_BUILD_PARAMETERS' 'mpc-gdb' "$arg"
+			;;
+		--disable-mpc-gdb)
+			GDB_PREFIX='disabled'
+			;;
+		--enable-mpc-gdb)
+			enableParamIfNot 'GDB_PREFIX' "$GDB_PREFIX" 'disabled' 'internal'
+			;;
+		################### MPC GCC #################
+		--with-autopriv=*)
+			extractParamValue 'AUTOPRIV_PREFIX' 'with-mpc-gcc' "$arg"
+			;;
+		--mpc-autopriv-*)
+			extractAndAddPackageOption 'AUTOPRIV_BUILD_PARAMETERS' 'mpc-autopriv' "$arg"
+			;;
+		--disable-mpc-gcc|--disable-autopriv)
+			AUTOPRIV_PREFIX='disabled'
+			;;
+		################# FORTRAN GCC ###############
+		--disable-mpc-fortran)
+			FORTRAN_PREFIX='disabled'
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-fortran"
+			;;
+		################## LIBXML2 ##################
+		--with-libxml2=*)
+			extractParamValue 'LIBXML2_PREFIX' 'with-libxml2' "$arg"
+			;;
+		--libxml2-*)
+			extractAndAddPackageOption 'LIBXML2_BUILD_PARAMETERS' 'libxml2' "$arg"
+			;;
+		################### HWLOC ###################
+		--with-hwloc=*)
+			extractParamValue 'HWLOC_PREFIX' 'with-hwloc' "$arg"
+			;;
+		--hwloc-*)
+			extractAndAddPackageOption 'HWLOC_BUILD_PARAMETERS' 'hwloc' "$arg"
+			;;
+		################### CUDA ###################
+		--with-cuda=*)
+			extractParamValue 'CUDA_PREFIX' 'with-cuda' "$arg"
+			;;
+		--with-openacc=*)
+			extractParamValue 'OPENACC_PREFIX' 'with-openacc' "$arg"
+			;;
+		--with-opencl=*)
+			extractParamValue 'OPENCL_PREFIX' 'with-opencl' "$arg"
+			;;
+		################### TBB ###################
+		--with-tbb=*)
+			extractParamValue 'TBB_PREFIX' 'with-tbb' "$arg"
+			;;
+		--tbb-*)
+			extractAndAddPackageOption 'TBB_BUILD_PARAMETERS' 'tbb' "$arg"
+			;;
+		--enable-mpc-tbb)
+			enableParamIfNot 'TBB_PREFIX' "$TBB_PREFIX" 'disabled' 'internal'
+			;;
+		--disable-mpc-tbb)
+			TBB_PREFIX="disabled"
+			;;
+		#### MPC Allocator ##########
+		--enable-mpc-allocator)
+			MPCALLOC_PREFIX=""
+			;;
+		--disable-mpc-allocator)
+			MPCALLOC_PREFIX="disabled"
+			;;
+		--mpcalloc-*)
+			extractAndAddPackageOption 'MPCALLOC_BUILD_PARAMETERS' 'mpcalloc' "$arg"
+			;;
+		################### DMTCP ###################
+		--with-dmtcp=*)
+			extractParamValue 'DMTCP_PREFIX' 'with-dmtcp' "$arg"
+			;;
+		--dmtcp-*)
+			extractAndAddPackageOption 'DMTCP_BUILD_PARAMETERS' 'dmtcp' "$arg"
+			;;
+		################### GENERIC FT ###################
+		--enable-mpc-ft)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-dmtcp"
+			enableParamIfNot 'DMTCP_PREFIX' "$DMTCP_PREFIX" 'disabled' 'internal'
+			;;
+		--disable-mpc-ft)
+			DMTCP_PREFIX="disabled"
+			;;
+		################# COMPILER ##################
+		--compiler=*)
+			extractParamValue 'MPC_COMPILER' 'compiler' "$arg"
+			COMPILER_ARG=yes
+			;;
+		############### MPCFRAMEWORK ################
+		--mpc-option=*)
+			extractAndAddPackageOption 'MPCFRAMEWORK_BUILD_PARAMETERS' 'mpc-option=' "$arg"
+			;;
+		--enable-color)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-shell-colors"
+			USE_COLOR="yes"
+			;;
+		--disable-color)
+			MPCFRAMEWORK_BUILD_PARAMETERS=`echo $MPCFRAMEWORK_BUILD_PARAMETERS | sed "s/--enable-shell-colors//"`
+			USE_COLOR="no"
+			;;
+		--enable-mpc-debug)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug --enable-debug-messages"
+			enableParamIfNot 'GDB_PREFIX' "$GDB_PREFIX" 'disabled' 'internal'
+			;;
+		--with-slurm)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-slurm"
+			;;
+		--disable-MPC_MPI)
+			ROMIO_PREFIX='disabled'
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-MPC_MPI"
+			;;
+		--disable-ROMIO|--disable-romio)
+			ROMIO_PREFIX='disabled'
+			;;
+		--lib-mode)
+			ROMIO_PREFIX='disabled'
+			TBB_PREFIX='disabled'
+			GDB_PREFIX='disabled'
+			AUTOPRIV_PREFIX='disabled'
+			HYDRA_PREFIX='disabled'
+			SCTK_GETOPT_PREFIX='disabled'
+			MPC_MPIT_PREFIX='disabled'
+			MPL_PREFIX='disabled'
+			MPCINSTALL_LIB_MODE='yes'
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-MPC_MPI --disable-MPC_Allocator --enable-lib-mode"
+			#special case, when configure does not handle any available compiler
+			#by default, GCC compiler will be used, this behavior can be altered through the --compiler= option
+			COMPILER_ARG=yes
+			;;
+		--mpc-process-mode)
+			AUTOPRIV_PREFIX='disabled'
+			SCTK_GETOPT_PREFIX='disabled'
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-process-mode"
+			#special case, when configure does not handle any available compiler
+			#by default, GCC compiler will be used, this behavior can be altered through the --compiler= option
+			COMPILER_ARG=yes
+			;;
+
+		################## COMMON ###################
+
+		--disable-color)
+			ENABLE_COLOR='false'
+			;;
+
+		-v | --verbose | --verbose=1)
+			STEP_WRAPPER_VERBOSE=1
+			export STEP_WRAPPER_VERBOSE
+			;;
+		-vv | --verbose=2)
+			STEP_WRAPPER_VERBOSE=2
+			export STEP_WRAPPER_VERBOSE
+			;;
+		-vvv | --verbose=3)
+			STEP_WRAPPER_VERBOSE=3
+			export STEP_WRAPPER_VERBOSE
+			;;
+		-j*)
+			extractParamValueAlt 'MAKE_J' 'j' "$arg"
+			;;
+		--prefix=*)
+			extractParamValue 'PREFIX' 'prefix' "$arg"
+			if [ ! -d "${PREFIX}" ]; then
+				mkdir -p ${PREFIX}
+			fi
+			;;
+		--help|-h|-?)
+			showHelp
+			;;
+		--spack|--enable-spack)
+			assert_spack
+			SPACK_LOCATE_DEPENDENCY="yes"
+			;;
+		--disable-spack)
+			SPACK_LOCATE_DEPENDENCY="no"
+			SPACK_INSTALL_DEPENDENCY="no"
+			;;
+		--spack-build|--enable-spack-build)
+			assert_spack
+			SPACK_LOCATE_DEPENDENCY="yes"
+			SPACK_INSTALL_DEPENDENCY="yes"
+			;;
+		--disable-spack-build)
+			SPACK_INSTALL_DEPENDENCY="no"
+			;;
+		*)
+			echo "Invalid argument '$arg', please check your command line or get help with --help." 1>&2
+			exit 1
+	esac
+done
+
+
+
+# Basic dependencies
+find_in_prefix_or_use_spack "openpa" "" "${OPENPA_PREFIX}"
+
+if test "x${DEP_FOUND}" = "xno"; then
+	# Could not use spack now installing manually
+	build_configure_based_package "openpa" "1.0.4" "$OPENPA_BUILD_PARAMETERS"
+fi
+
+find_in_prefix_or_use_spack "libxml2" "" "${LIBXML2_PREFIX}"
+
+if test "x${DEP_FOUND}" = "xno"; then
+	# Could not use spack now installing manually
+	build_configure_based_package "libxml2" "2.9.3" "$LIBXML2_BUILD_PARAMETERS"
+fi
+
+find_in_prefix_or_use_spack "hwloc" "1." "${HWLOC_PREFIX}"
+
+if test "x${DEP_FOUND}" = "xno"; then
+	# Could not use spack now installing manually
+	build_configure_based_package "hwloc" "1.11.13" "$HWLOC_BUILD_PARAMETERS"
+fi
+
+
+# Basic optionnal dependencies
+find_in_prefix_or_use_spack_optionnal "libunwind" "" "spackonly" "${LIBUNWIND_PREFIX}"
+
+# Dependencies which can be deactivated
+find_in_prefix_or_use_spack "autopriv" "" "${AUTOPRIV_PREFIX}"
+
+
+find_in_prefix_or_use_spack "hydra" "" "${HYDRA_PREFIX}"
+
+if test "x${DEP_FOUND}" = "xno"; then
+	# Could not use spack now installing manually
+	build_configure_based_package "hydra" "3.2" "$HYDRA_BUILD_PARAMETERS"
+fi
+
+
+find_in_prefix_or_use_spack "dmtcp" "" "${DMTCP_PREFIX}"
+
+if test "x${DEP_FOUND}" = "xno"; then
+	# Could not use spack now installing manually
+	build_configure_based_package "dmtcp" "2.5.0" "$HYDRA_BUILD_PARAMETERS"
+fi
+
+
+find_in_prefix_or_use_spack "mpcalloc" "0.1" "$MPCALLOC_PREFIX"
+
+if test "x${DEP_FOUND}" = "xno"; then
+	info "mpcalloc dependency needs cmake to build"
+	assert_cmake
+	# Could not use spack now installing manually
+	build_configure_based_package "mpcalloc" "0.1" "$MPCALLOC_BUILD_PARAMETERS"
+fi
+
+
+# It is now time to configure MPC
+
+test -z "$PREFIX" && die "Please provide a prefix where to install MPC"
+
+propagate_build_env
+
+if test -f bin/mpc_build_env.sh; then
+	checking "remove previous MPC configuration state"
+	rm -fr bin/mpc_build_env.sh
+	ok
+fi
+
+$SCRIPTPATH/mpcframework/configure --prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS
