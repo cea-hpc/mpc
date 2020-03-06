@@ -15,13 +15,14 @@ USE_COLOR="yes"
 
 # NOTE: these are only meaningfull when not using spack
 
+AUTOPRIV_BUILD_PARAMETERS=""
 OPENPA_BUILD_PARAMETERS=""
 MPCALLOC_BUILD_PARAMETERS=""
 LIBXML2_BUILD_PARAMETERS="--without-zlib --without-python"
 HWLOC_BUILD_PARAMETERS="--disable-werror --enable-static"
 HYDRA_BUILD_PARAMETERS=""
-DMTCP_BUILD_PARAMETERS="--enable-pthread-mutex-wrappers"
-
+MPC_DMTCP_BUILD_PARAMETERS="--enable-pthread-mutex-wrappers"
+MPC_GDB_BUILD_PARAMETERS="--without-zlib --disable-werror"
 
 
 # Stop on error
@@ -134,24 +135,36 @@ info()
 	echo "${colbgGRAY}==>${colRESET}${colGRAY} $1${colRESET}"
 }
 
+LAST_RESULT=""
+
 checking()
 {
+	LAST_RESULT=""
 	echo -n "${colbgMAGENTA}==>${colRESET}${colMAGENTA} $1... ${colRESET}"
 }
 
 ok()
 {
+	LAST_RESULT="ok"
 	echo "${colGREEN}SUCCESS${colRESET}"
 }
 
 nok()
 {
+	LAST_RESULT="nok"
 	echo "${UNDERLINE}${colBLINK}${colRED}FAIL${colRESET}"
 }
 
 skip()
 {
+	LAST_RESULT="skip"
 	echo "${UNDERLINE}${colBLINK}${colYELLOW}SKIPPED${colRESET}"
+}
+
+notapplicable()
+{
+	LAST_RESULT="na"
+	echo "${colbgGRAY}NA${colRESET}"
 }
 
 
@@ -165,6 +178,7 @@ wrap_output()
 	set +e
 
 	if test $STEP_WRAPPER_VERBOSE -gt 0; then
+		echo ""
 		echo "$ $@"
 	fi
 
@@ -177,14 +191,17 @@ wrap_output()
 	if test "x$?" = "x0"; then
 		rm $outfile
 	else
+		nok
+
+		if test $STEP_WRAPPER_VERBOSE -gt 0; then
+			cat $outfile
+		fi
+
 		die "See $outfile an error occured when running $@"
 	fi
 
 	set -e
 }
-
-
-
 
 
 #
@@ -205,75 +222,61 @@ propagate_build_env()
 }
 
 #
-# Check for CMAKE
+# Check for common commands
 #
-HAVE_CMAKE=""
 
-check_for_cmake()
+LIST_OF_FOUND_CMD=""
+COMMON_CMD="cmake spack patch cut ls pwd grep rm rev basename dirname"
+check_for_commands()
 {
-	test -n "$HAVE_CMAKE" && return
+	# Check already done
+	test -n "$LIST_OF_FOUND_CMD" && return
 
-	checking "locate 'cmake' command in PATH"
+	for c in $COMMON_CMD; do
+		set +e
 
+		which $c > /dev/null 2>&1
+
+		if test "x$?" = "x0"; then
+			LIST_OF_FOUND_CMD="$LIST_OF_FOUND_CMD $c"
+		else
+			checking "locate '$c' command in PATH"
+			nok
+		fi
+
+		set -e
+	done
+}
+
+have_cmd()
+{
 	set +e
 
-	which cmake > /dev/null 2>&1
+	echo "$LIST_OF_FOUND_CMD" | grep $1 > /dev/null 2>&1
 
 	if test "x$?" = "x0"; then
-		ok
-		HAVE_CMAKE="yes"
+		HAVE_CMD="yes"
 	else
-		nok
-		HAVE_CMAKE="no"
+		HAVE_CMD="no"
 	fi
 
 	set -e
 }
 
-#
-# Assert spack is present
-#
-assert_cmake()
+assert_cmd()
 {
-	check_for_cmake
+	check_for_commands
 
-	if test "x${HAVE_CMAKE}" = "xno"; then
-		die "Cmake was not found on the system and cannot be used"
-	fi
-}
+	have_cmd "$1"
 
-#
-# Check for spack
-#
-HAVE_SPACK=""
-check_for_spack()
-{
-	test -n "$HAVE_SPACK" && return
-
-	checking "locate 'spack' command in PATH"
-
-	which spack > /dev/null 2>&1
-
-	if test "x$?" = "x0"; then
-		ok
-		HAVE_SPACK="yes"
-	else
+	if test "x${HAVE_CMD}" = "xno"; then
+		checking "cmake is in path"
 		nok
-		HAVE_SPACK="no"
+		die "$1 could not be found in path"
 	fi
+
 }
 
-#
-# Assert spack is present
-#
-assert_spack()
-{
-	check_for_spack
-
-	if test "x${HAVE_SPACK}" = "xno"; then
-		die "Spack was not found on the system and cannot be used"
-	fi
-}
 
 # Build spack package name
 # Args:
@@ -298,11 +301,11 @@ build_package_name()
 DEP_FOUND="no"
 find_dep_with_spack()
 {
-	check_for_spack
-
 	DEP_FOUND="no"
 
-	if test "x${HAVE_SPACK}" = "xno"; then
+	have_cmd "spack"
+
+	if test "x${HAVE_CMD}" = "xno"; then
 		return
 	fi
 
@@ -310,20 +313,17 @@ find_dep_with_spack()
 
 	checking "load $PKG_NAME using spack"
 
-	propagate_build_env
+	spack info  $PKG_NAME > /dev/null 2>&1 || notapplicable
 
-	eval `spack load --sh $PKG_NAME`
+	if test "x${LAST_RESULT}" = "xna"; then
+		return
+	fi
 
-	propagate_build_env
+	spack load --sh $PKG_NAME > /dev/null 2>&1 && ok || nok
 
-	spack load --sh $PKG_NAME > /dev/null 2>&1
-
-	if test "x$?" = "x0"; then
+	if test "x${LAST_RESULT}" = "xok"; then
 		eval `spack load --sh $PKG_NAME`
 		DEP_FOUND="yes"
-		ok
-	else
-		nok
 	fi
 
 	propagate_build_env
@@ -334,20 +334,23 @@ find_dep_with_spack()
 #
 install_dep_with_spack()
 {
-	assert_spack
+	assert_cmd "spack"
+
+	PKG_NAME="`build_package_name "$1" "$2"`"
 
 	checking "install $PKG_NAME using spack"
 
-	spack install `build_package_name "$1" "$2"`
+	spack info  $PKG_NAME > /dev/null 2>&1 || notapplicable
 
-	if test "x$?" != "x0"; then
-		nok
-		die "Failled to install $1@$2 using spack"
-	else
-		ok
+	if test "x${LAST_RESULT}" = "xna"; then
+		return
 	fi
 
-	find_dep_with_spack "$1" "$2"
+	spack install $PKG_NAME && ok || nok
+
+	if test "x${LAST_RESULT}" = "xok"; then
+		find_dep_with_spack "$1" "$2"
+	fi
 }
 
 
@@ -417,13 +420,16 @@ build_configure_based_package()
 	# INSTALL FLAG MANAGEMENT
 	#
 
+	assert_cmd "cut"
+	assert_cmd "rev"
+	assert_cmd "grep"
 
 	# Check if another version of the dependency is not already installed
 	installed_vers=`ls -a ${PREFIX} | grep .mpc-installed-${package}-* || true`
 
 	if test -n "$installed_vers"; then
 		# There is already a version
-		installed_version=`echo $installed_vers | cut -d "-" -f 4`
+		installed_version=`echo $installed_vers | rev | cut -d "-" -f 1 | rev`
 		if test "x${installed_version}" != "x${version}"; then
 			info "there is $package $installed_version in $PREFIX and MPC provides $version"
 			die "MPC does not support installing mismatching $package versions in the same prefix"
@@ -464,30 +470,43 @@ build_configure_based_package()
 		tarball_path=$pkg_dir/$candidate_tarball
 
 		if test ! -f $tarball_path; then
-			fail
+			nok
 			die "Could not locate a tarball for $package-$version in $pkg_dir"
 		fi
 
 		tar xf $tarball_path || true
 
 		if test ! -d $ORIG_PKG_SOURCE_DIR; then
-			fail
+			nok
 			die "Could not locate sources in $PKG_SOURCE_DIR after extracting $tarball_path"
 		else
 			# Rename to $PKG_SOURCE_DIR
 			mv $ORIG_PKG_SOURCE_DIR $PKG_SOURCE_DIR
 			ok
 		fi
+
+		#
+		# Patching (when needed)
+		#
+
+		PACKAGE_PATCH=$pkg_dir/${package}-${version}.patch
+
+		if test -f $PACKAGE_PATCH ; then
+			checking "Patching $package $version"
+
+			assert_cmd "patch"
+
+			cd $PKG_SOURCE_DIR
+
+			patch -p 1 < $PACKAGE_PATCH > /dev/null && ok || (nok; die "Failed to patch $package $version")
+
+			cd ${PROJECT_BUILD_DIR}
+		fi
+
+
 	else
 		skip
 	fi
-
-
-	#
-	# Patching (when needed)
-	#
-	
-
 
 	#
 	# Actual BUILD
@@ -500,13 +519,28 @@ build_configure_based_package()
 
 	cd ${PKG_SOURCE_DIR}/BUILD
 
-	checking "Installing $package-$version"
 
-	wrap_output ${PKG_SOURCE_DIR}/configure --prefix=${PREFIX} $extra_config_args
-	wrap_output make -j $MAKE_J
-	wrap_output make install
+	if test -f ${PKG_SOURCE_DIR}/autopriv_deploy.sh; then
+		# Handle the special case of the autopriv deploy script
+		checking "Deploying $package-$version"
+		wrap_output ${PKG_SOURCE_DIR}/autopriv_deploy.sh -b ${PWD} -i ${PREFIX} -j ${MAKE_J} -o "\"${extra_config_args}\""
+		ok
+	elif test -f ${PKG_SOURCE_DIR}/configure; then
+		# Regular configure / make / make install
+		checking "Configuring $package-$version"
+		wrap_output ${PKG_SOURCE_DIR}/configure --prefix=${PREFIX} $extra_config_args
+		ok
 
-	ok
+		checking "Building $package-$version"
+		wrap_output make -j${MAKE_J}
+		ok
+
+		checking "Installing $package-$version"
+		wrap_output make install
+		ok
+	else
+		die "Could not locate ./configure or autopriv_deploy.sh in ${PKG_SOURCE_DIR}"
+	fi
 
 	cd ${PROJECT_BUILD_DIR}
 
@@ -564,8 +598,6 @@ find_in_prefix_or_use_spack_internal()
 		# Assume dep found
 		DEP_FOUND="yes"
 	fi
-
-	check_for_spack
 
 	# First use spack to locate in existing packages
 	if test "x${SPACK_LOCATE_DEPENDENCY}" = "xyes"; then
@@ -720,9 +752,9 @@ LIBXML2_PREFIX=""
 
 MPCALLOC_PREFIX=""
 
-DMTCP_PREFIX="disabled"
+MPC_DMTCP_PREFIX="disabled"
 HBICT_PREFIX="disabled"
-GDB_PREFIX='disabled'
+MPC_GDB_PREFIX='disabled'
 TBB_PREFIX="disabled"
 SCTK_GETOPT_PREFIX='disabled'
 MPC_MPIT_PREFIX='disabled'
@@ -759,16 +791,16 @@ do
 			;;
 		################### MPC GDB #################
 		--with-mpc-gdb=*)
-			extractParamValue 'GDB_PREFIX' 'with-mpc-gdb' "$arg"
+			extractParamValue 'MPC_GDB_PREFIX' 'with-mpc-gdb' "$arg"
 			;;
 		--mpc-gdb-*)
-			extractAndAddPackageOption 'GDB_BUILD_PARAMETERS' 'mpc-gdb' "$arg"
+			extractAndAddPackageOption 'MPC_GDB_BUILD_PARAMETERS' 'mpc-gdb' "$arg"
 			;;
 		--disable-mpc-gdb)
-			GDB_PREFIX='disabled'
+			MPC_GDB_PREFIX='disabled'
 			;;
 		--enable-mpc-gdb)
-			enableParamIfNot 'GDB_PREFIX' "$GDB_PREFIX" 'disabled' 'internal'
+			enableParamIfNot 'MPC_GDB_PREFIX' "$MPC_GDB_PREFIX" 'disabled' 'internal'
 			;;
 		################### MPC GCC #################
 		--with-autopriv=*)
@@ -834,18 +866,18 @@ do
 			;;
 		################### DMTCP ###################
 		--with-dmtcp=*)
-			extractParamValue 'DMTCP_PREFIX' 'with-dmtcp' "$arg"
+			extractParamValue 'MPC_DMTCP_PREFIX' 'with-dmtcp' "$arg"
 			;;
 		--dmtcp-*)
-			extractAndAddPackageOption 'DMTCP_BUILD_PARAMETERS' 'dmtcp' "$arg"
+			extractAndAddPackageOption 'MPC_DMTCP_BUILD_PARAMETERS' 'dmtcp' "$arg"
 			;;
 		################### GENERIC FT ###################
 		--enable-mpc-ft)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-dmtcp"
-			enableParamIfNot 'DMTCP_PREFIX' "$DMTCP_PREFIX" 'disabled' 'internal'
+			enableParamIfNot 'MPC_DMTCP_PREFIX' "$MPC_DMTCP_PREFIX" 'disabled' 'internal'
 			;;
 		--disable-mpc-ft)
-			DMTCP_PREFIX="disabled"
+			MPC_DMTCP_PREFIX="disabled"
 			;;
 		################# COMPILER ##################
 		--compiler=*)
@@ -866,7 +898,7 @@ do
 			;;
 		--enable-mpc-debug)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug --enable-debug-messages"
-			enableParamIfNot 'GDB_PREFIX' "$GDB_PREFIX" 'disabled' 'internal'
+			enableParamIfNot 'MPC_GDB_PREFIX' "$MPC_GDB_PREFIX" 'disabled' 'internal'
 			;;
 		--with-slurm)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-slurm"
@@ -881,7 +913,7 @@ do
 		--lib-mode)
 			ROMIO_PREFIX='disabled'
 			TBB_PREFIX='disabled'
-			GDB_PREFIX='disabled'
+			MPC_GDB_PREFIX='disabled'
 			AUTOPRIV_PREFIX='disabled'
 			HYDRA_PREFIX='disabled'
 			SCTK_GETOPT_PREFIX='disabled'
@@ -933,7 +965,7 @@ do
 			showHelp
 			;;
 		--spack|--enable-spack)
-			assert_spack
+			assert_cmd "spack"
 			SPACK_LOCATE_DEPENDENCY="yes"
 			;;
 		--disable-spack)
@@ -941,7 +973,7 @@ do
 			SPACK_INSTALL_DEPENDENCY="no"
 			;;
 		--spack-build|--enable-spack-build)
-			assert_spack
+			assert_cmd "spack"
 			SPACK_LOCATE_DEPENDENCY="yes"
 			SPACK_INSTALL_DEPENDENCY="yes"
 			;;
@@ -954,9 +986,23 @@ do
 	esac
 done
 
-# Display warning if not building with spack
-if test "x${SPACK_INSTALL_DEPENDENCY}" = "xno"; then
-	info "Not building using spack as --enable-spack-build not passed"
+# Make sure we have a prefix
+test -z "$PREFIX" && die "Please provide a prefix where to install MPC"
+
+
+#
+# Locate common tools ahead of time
+#
+check_for_commands
+
+if test "x${SPACK_LOCATE_DEPENDENCY}" = "xno"; then
+	info "Not locating packages with spack as --disable-spack was passed"
+else
+	# Display warning if not building with spack
+	if test "x${SPACK_INSTALL_DEPENDENCY}" = "xno"; then
+		info "Not building using spack as --enable-spack-build not passed"
+	fi
+
 fi
 
 
@@ -989,6 +1035,11 @@ find_in_prefix_or_use_spack_optionnal "libunwind" "" "spackonly" "${LIBUNWIND_PR
 # Dependencies which can be deactivated
 find_in_prefix_or_use_spack "autopriv" "" "${AUTOPRIV_PREFIX}"
 
+if test "x${DEP_FOUND}" = "xno"; then
+	# Could not use spack now installing manually
+	build_configure_based_package "autopriv" "0.5.0" "$AUTOPRIV_BUILD_PARAMETERS"
+fi
+
 
 find_in_prefix_or_use_spack "hydra" "" "${HYDRA_PREFIX}"
 
@@ -998,19 +1049,27 @@ if test "x${DEP_FOUND}" = "xno"; then
 fi
 
 
-find_in_prefix_or_use_spack "dmtcp" "" "${DMTCP_PREFIX}"
+find_in_prefix_or_use_spack "mpc-gdb" "" "${MPC_DMTCP_PREFIX}"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
-	build_configure_based_package "dmtcp" "2.5.0" "$HYDRA_BUILD_PARAMETERS"
+	build_configure_based_package "mpc-gdb" "7.7" "$MPC_GDB_BUILD_PARAMETERS"
 fi
 
 
-find_in_prefix_or_use_spack "mpcalloc" "0.1" "$MPCALLOC_PREFIX"
+find_in_prefix_or_use_spack "mpc-dmtcp" "" "${MPC_DMTCP_PREFIX}"
+
+if test "x${DEP_FOUND}" = "xno"; then
+	# Could not use spack now installing manually
+	build_configure_based_package "mpc-dmtcp" "2.5.0" "$MPC_DMTCP_BUILD_PARAMETERS"
+fi
+
+
+find_in_prefix_or_use_spack "mpcalloc" "" "$MPCALLOC_PREFIX"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	info "mpcalloc dependency needs cmake to build"
-	assert_cmake
+	assert_cmd "cmake"
 	# Could not use spack now installing manually
 	build_configure_based_package "mpcalloc" "0.1" "$MPCALLOC_BUILD_PARAMETERS"
 fi
@@ -1018,7 +1077,6 @@ fi
 
 # It is now time to configure MPC
 
-test -z "$PREFIX" && die "Please provide a prefix where to install MPC"
 
 propagate_build_env
 
