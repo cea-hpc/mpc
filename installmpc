@@ -28,9 +28,150 @@ MPC_GDB_BUILD_PARAMETERS="--without-zlib --disable-werror"
 # Stop on error
 set -e
 
+
+
 #
 # Utilities
 #
+
+#
+# Output MGT
+#
+
+
+# Print an error message and exit
+# Args:
+# -$1 : Message to print
+die(){
+	echo "================ ERROR ================"
+	echo "$1"
+	echo "======================================="
+	exit 1
+}
+
+#
+# Output helpers
+#
+if test "x$USE_COLOR" = "xyes"; then
+colRESET="\e[0m"
+colGRAY="\e[90m"
+colRED="\e[31m"
+colGREEN="\e[32m"
+colMAGENTA="\e[35m"
+colYELLOW="\e[33m"
+
+colbgGRAY="\e[100m"
+colbgMAGENTA="\e[45m"
+colbgYELLOW="\e[43m"
+colbgRED="\e[41m"
+colbgGREEN="\e[42m"
+
+BLINK="\e[5m"
+UNDERLINE="\e[4m"
+fi
+
+info()
+{
+	printf "${colbgGRAY}==>${colRESET}${colGRAY} $1${colRESET}\n"
+}
+
+LAST_RESULT=""
+
+checking()
+{
+	LAST_RESULT=""
+	printf "${colbgMAGENTA}==>${colRESET}${colMAGENTA} $1... ${colRESET}"
+}
+
+ok()
+{
+	LAST_RESULT="ok"
+	printf "${colGREEN}SUCCESS${colRESET}\n"
+}
+
+nok()
+{
+	LAST_RESULT="nok"
+	printf "${UNDERLINE}${colBLINK}${colRED}FAIL${colRESET}\n"
+}
+
+skip()
+{
+	LAST_RESULT="skip"
+	printf "${UNDERLINE}${colBLINK}${colYELLOW}SKIPPED${colRESET}\n"
+}
+
+notapplicable()
+{
+	LAST_RESULT="na"
+	printf "${colbgGRAY}NA${colRESET}\n"
+}
+
+#
+# Check for common commands
+#
+
+LIST_OF_FOUND_CMD=""
+COMMON_CMD="cmake spack patch cut ls pwd grep rm rev basename dirname make bzip2 gcc g++ ldd pkg-config mktemp"
+check_for_commands()
+{
+	# Check already done
+	test -n "$LIST_OF_FOUND_CMD" && return
+
+
+	checking "locate 'which' command in PATH"
+	# First check for which
+	type which > /dev/null 2>&1 || (nok; die "MPC cannot compile without the 'which' command")
+	ok
+
+	set +e
+
+	for c in $COMMON_CMD; do
+
+
+		which $c > /dev/null 2>&1
+
+		if test "x$?" = "x0"; then
+			LIST_OF_FOUND_CMD="$LIST_OF_FOUND_CMD $c"
+		else
+			checking "locate '$c' command in PATH"
+			nok
+		fi
+
+
+	done
+	set -e
+}
+
+have_cmd()
+{
+	set +e
+
+	echo "$LIST_OF_FOUND_CMD" | grep $1 > /dev/null 2>&1
+
+	if test "x$?" = "x0"; then
+		HAVE_CMD="yes"
+	else
+		HAVE_CMD="no"
+	fi
+
+	set -e
+}
+
+assert_cmd()
+{
+	check_for_commands
+
+	have_cmd "$1"
+
+	if test "x${HAVE_CMD}" = "xno"; then
+		checking "cmake is in path"
+		nok
+		die "$1 could not be found in path"
+	fi
+
+}
+
 #Extract parameter value and put in given variable
 #Args :
 # -$1 : Output variable name
@@ -99,81 +240,14 @@ extractAndAddPackageOption()
 	eval "${outputvar}=\"\$${outputvar} ${value}\""
 }
 
-# Print an error message and exit
-# Args:
-# -$1 : Message to print
-die(){
-	echo "================ ERROR ================"
-	echo "$1"
-	echo "======================================="
-	exit 1
-}
-
-#
-# Output helpers
-#
-if test "x$USE_COLOR" = "xyes"; then
-colRESET="\e[0m"
-colGRAY="\e[90m"
-colRED="\e[31m"
-colGREEN="\e[32m"
-colMAGENTA="\e[35m"
-colYELLOW="\e[33m"
-
-colbgGRAY="\e[100m"
-colbgMAGENTA="\e[45m"
-colbgYELLOW="\e[43m"
-colbgRED="\e[41m"
-colbgGREEN="\e[42m"
-
-BLINK="\e[5m"
-UNDERLINE="\e[4m"
-fi
-
-info()
-{
-	echo "${colbgGRAY}==>${colRESET}${colGRAY} $1${colRESET}"
-}
-
-LAST_RESULT=""
-
-checking()
-{
-	LAST_RESULT=""
-	echo -n "${colbgMAGENTA}==>${colRESET}${colMAGENTA} $1... ${colRESET}"
-}
-
-ok()
-{
-	LAST_RESULT="ok"
-	echo "${colGREEN}SUCCESS${colRESET}"
-}
-
-nok()
-{
-	LAST_RESULT="nok"
-	echo "${UNDERLINE}${colBLINK}${colRED}FAIL${colRESET}"
-}
-
-skip()
-{
-	LAST_RESULT="skip"
-	echo "${UNDERLINE}${colBLINK}${colYELLOW}SKIPPED${colRESET}"
-}
-
-notapplicable()
-{
-	LAST_RESULT="na"
-	echo "${colbgGRAY}NA${colRESET}"
-}
-
-
 
 STEP_WRAPPER_VERBOSE=0
 
 wrap_output()
 {
-	outfile=`tempfile`
+	assert_cmd "mktemp"
+
+	outfile=`mktemp`
 
 	set +e
 
@@ -221,61 +295,21 @@ propagate_build_env()
 	export LD_LIBRARY_PATH
 }
 
+
+
 #
-# Check for common commands
+# Check for avoiding GLIBC 2.28
 #
-
-LIST_OF_FOUND_CMD=""
-COMMON_CMD="cmake spack patch cut ls pwd grep rm rev basename dirname make bzip2 gcc g++"
-check_for_commands()
+check_glibc_is_compatible_with_priv()
 {
-	# Check already done
-	test -n "$LIST_OF_FOUND_CMD" && return
+	have_cmd "ldd"
 
-	for c in $COMMON_CMD; do
-		set +e
-
-		which $c > /dev/null 2>&1
-
-		if test "x$?" = "x0"; then
-			LIST_OF_FOUND_CMD="$LIST_OF_FOUND_CMD $c"
-		else
-			checking "locate '$c' command in PATH"
-			nok
-		fi
-
-		set -e
-	done
-}
-
-have_cmd()
-{
-	set +e
-
-	echo "$LIST_OF_FOUND_CMD" | grep $1 > /dev/null 2>&1
-
-	if test "x$?" = "x0"; then
-		HAVE_CMD="yes"
-	else
-		HAVE_CMD="no"
+	if test "x${HAVE_CMD}" = "xyes"; then
+		GLIBC=`ldd --version | head -n 1 | rev | cut -d " " -f 1 | rev`
+		(echo ${GLIBC} | grep "2.28") > /dev/null && die "GLIBC 2.28 is not compatible with privarization yet" || true
 	fi
-
-	set -e
 }
 
-assert_cmd()
-{
-	check_for_commands
-
-	have_cmd "$1"
-
-	if test "x${HAVE_CMD}" = "xno"; then
-		checking "cmake is in path"
-		nok
-		die "$1 could not be found in path"
-	fi
-
-}
 
 
 # Build spack package name
@@ -762,6 +796,12 @@ MPL_PREFIX='disabled'
 # Argument parsing
 #
 
+add_process_mode_flag_to_mpc()
+{
+	MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-process-mode"
+}
+
+
 for arg in "$@"
 do
 	case "$arg" in
@@ -809,6 +849,7 @@ do
 			;;
 		--disable-mpc-gcc|--disable-autopriv)
 			AUTOPRIV_PREFIX='disabled'
+			add_process_mode_flag_to_mpc
 			;;
 		################# FORTRAN GCC ###############
 		--disable-mpc-fortran)
@@ -853,10 +894,10 @@ do
 			TBB_PREFIX="disabled"
 			;;
 		#### MPC Allocator ##########
-		--enable-mpc-allocator)
+		--enable-mpc-allocator|--enable-mpcalloc)
 			MPCALLOC_PREFIX=""
 			;;
-		--disable-mpc-allocator)
+		--disable-mpc-allocator|--disable-mpcalloc)
 			MPCALLOC_PREFIX="disabled"
 			;;
 		--mpcalloc-*)
@@ -926,7 +967,7 @@ do
 		--mpc-process-mode)
 			AUTOPRIV_PREFIX='disabled'
 			SCTK_GETOPT_PREFIX='disabled'
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-process-mode"
+			add_process_mode_flag_to_mpc
 			#special case, when configure does not handle any available compiler
 			#by default, GCC compiler will be used, this behavior can be altered through the --compiler= option
 			COMPILER_ARG=yes
@@ -1022,6 +1063,7 @@ fi
 assert_cmd "make"
 assert_cmd "patch"
 assert_cmd "bzip2"
+assert_cmd "pkg-config"
 
 # Basic dependencies
 find_in_prefix_or_use_spack "openpa" "" "${OPENPA_PREFIX}"
@@ -1056,6 +1098,7 @@ if test "x${DEP_FOUND}" = "xno"; then
 	info "Building autopriv requires both a working ggc and g++ compiler"
 	assert_cmd "gcc"
 	assert_cmd "g++"
+	check_glibc_is_compatible_with_priv
 	# Could not use spack now installing manually
 	build_configure_based_package "autopriv" "0.5.0" "$AUTOPRIV_BUILD_PARAMETERS"
 fi
