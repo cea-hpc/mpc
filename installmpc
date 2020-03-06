@@ -805,11 +805,6 @@ add_process_mode_flag_to_mpc()
 for arg in "$@"
 do
 	case "$arg" in
-		############### BUILD SPECIFIC ###############
-		--download-missing-deps|--mirror=*|clean|distclean|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--with-hbict=*|--hbict-*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--mpc-*|--enable-check-deps|--disable-check-deps|--disable-check-install|--enable-all-internals|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*|--version)
-			echo "INFO: $arg is deprecated"
-			;;
-
 		################# HYDRA #################
 		--with-hydra=*)
 			extractParamValue 'HYDRA_PREFIX' 'with-hydra' "$arg"
@@ -1018,6 +1013,10 @@ do
 			;;
 		--disable-spack-build)
 			SPACK_INSTALL_DEPENDENCY="no"
+			;;
+		# Deprecated options
+		--download-missing-deps|--mirror=*|clean|distclean|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--with-hbict=*|--hbict-*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--mpc-*|--enable-check-deps|--disable-check-deps|--disable-check-install|--enable-all-internals|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*|--version)
+			info "$arg is deprecated"
 			;;
 		*)
 			echo "Invalid argument '$arg', please check your command line or get help with --help." 1>&2
