@@ -22,7 +22,7 @@
 ########################################################################
 
 if [ "$LAUNCHER_CONFIG_JOB_MANAGER" = "SLURM" ]; then
-    if test "$LAUNCHER_OPTION_LAUNCHER_OPTION_CPU_NB" = "0" ; then
+    if test "$LAUNCHER_OPTION_CPU_NB" = "0" ; then
                 if test "$SLURM_CPUS_PER_TASK" != "" ; then
                     LAUNCHER_OPTION_CPU_NB="$SLURM_CPUS_PER_TASK"
                 else
@@ -36,7 +36,7 @@ if [ "$LAUNCHER_CONFIG_JOB_MANAGER" = "SLURM" ]; then
 	  LAUNCHER_OPTION_PROCESS_NB=$LAUNCHER_OPTION_NODE_NB
 	  local_launch=salloc
   fi
-  LAUNCH_COMMAND="$local_launch $LAUNCH_OPTIONS --ntasks=$LAUNCHER_OPTION_PROCESS_NB --nodes=$LAUNCHER_OPTION_NODE_NB --cpus-per-task=$LAUNCHER_OPTION_LAUNCHER_OPTION_CPU_NB $LAUNCHER_OPTION_WRAPPER $LAUNCHER_OPTION_BINARY $LAUNCHER_OPTION_BINARY_ARGS $SCTK_ARGS"
+  LAUNCH_COMMAND="$local_launch $LAUNCH_OPTIONS --ntasks=$LAUNCHER_OPTION_PROCESS_NB --nodes=$LAUNCHER_OPTION_NODE_NB --cpus-per-task=$LAUNCHER_OPTION_CPU_NB $LAUNCHER_OPTION_WRAPPER $LAUNCHER_OPTION_BINARY $LAUNCHER_OPTION_BINARY_ARGS $SCTK_ARGS"
 else
   
   if test "$LAUNCHER_CONFIG_LAUNCH_MODE" = "alloc"; then
