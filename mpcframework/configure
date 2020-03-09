@@ -655,12 +655,16 @@ MPC_FORTRAN_COMPILER_LIST
 MPC_CPP_COMPILER_LIST
 MPC_C_COMPILER_LIST
 MPC_LANGUAGE_LIST
+MPC_OPENMP_ENABLED
 MPC_OPENMP_ENABLED_FALSE
 MPC_OPENMP_ENABLED_TRUE
+MPC_MPI_ENABLED
 MPC_MPI_ENABLED_FALSE
 MPC_MPI_ENABLED_TRUE
+MPC_MESSAGE_PASSING_ENABLED
 MPC_MESSAGE_PASSING_ENABLED_FALSE
 MPC_MESSAGE_PASSING_ENABLED_TRUE
+MPC_THREAD_ENABLED
 MPC_THREAD_ENABLED_FALSE
 MPC_THREAD_ENABLED_TRUE
 MPC_HAVE_PROFILER
@@ -711,11 +715,11 @@ OPA_LIBS
 OPA_CFLAGS
 HWLOC_LIBS
 HWLOC_CFLAGS
-XML2_LIBS
-XML2_CFLAGS
 PKG_CONFIG_LIBDIR
 PKG_CONFIG_PATH
 PKG_CONFIG
+XML2_LIBS
+XML2_CFLAGS
 CAN_USE_PANDOC_FALSE
 CAN_USE_PANDOC_TRUE
 pandoc
@@ -18729,6 +18733,9 @@ fi
                         inc_prefix=$whole_prefix
                 fi
 
+
+
+
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
@@ -18889,6 +18896,9 @@ fi
                         inc_prefix=$whole_prefix
                 fi
 
+
+
+
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
@@ -19048,6 +19058,9 @@ fi
                 then
                         inc_prefix=$whole_prefix
                 fi
+
+
+
 
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
@@ -19215,6 +19228,9 @@ fi
                 then
                         inc_prefix=$whole_prefix
                 fi
+
+
+
 
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
@@ -19384,6 +19400,9 @@ fi
                 then
                         inc_prefix=$whole_prefix
                 fi
+
+
+
 
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
@@ -19561,6 +19580,9 @@ fi
                 then
                         inc_prefix=$whole_prefix
                 fi
+
+
+
 
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
@@ -19740,6 +19762,9 @@ fi
                 then
                         inc_prefix=$whole_prefix
                 fi
+
+
+
 
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
@@ -19957,6 +19982,9 @@ fi
                 then
                         inc_prefix=$whole_prefix
                 fi
+
+
+
 
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
@@ -20228,6 +20256,9 @@ fi
                         inc_prefix=$whole_prefix
                 fi
 
+
+
+
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
@@ -20394,6 +20425,9 @@ fi
                 then
                         inc_prefix=$whole_prefix
                 fi
+
+
+
 
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
@@ -25305,6 +25339,9 @@ fi
                         inc_prefix=$whole_prefix
                 fi
 
+
+
+
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
@@ -25850,19 +25887,19 @@ fi
 
 # Check whether --enable-threads was given.
 if test "${enable_threads+set}" = set; then :
-  enableval=$enable_threads; mpc_thread_enabled=$enableval
+  enableval=$enable_threads; MPC_THREAD_ENABLED=$enableval
 else
-  mpc_thread_enabled=yes
+  MPC_THREAD_ENABLED=yes
 fi
 
 
-if test "x${mpc_thread_enabled}" = "xyes"; then
+if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
 
 $as_echo "#define MPC_Threads 1" >>confdefs.h
 
 fi
 
- if test "x${mpc_thread_enabled}" = "xyes"; then
+ if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
   MPC_THREAD_ENABLED_TRUE=
   MPC_THREAD_ENABLED_FALSE='#'
 else
@@ -25872,21 +25909,22 @@ fi
 
 
 
+
 # Check whether --enable-message-passing was given.
 if test "${enable_message_passing+set}" = set; then :
-  enableval=$enable_message_passing; mpc_lowcom_enabled=$enableval
+  enableval=$enable_message_passing; MPC_MESSAGE_PASSING_ENABLED=$enableval
 else
-  mpc_lowcom_enabled=yes
+  MPC_MESSAGE_PASSING_ENABLED=yes
 fi
 
 
-if test "x${mpc_lowcom_enabled}" = "xyes"; then
+if test "x${MPC_MESSAGE_PASSING_ENABLED}" = "xyes"; then
 
 $as_echo "#define MPC_Message_Passing 1" >>confdefs.h
 
 fi
 
- if test "x${mpc_lowcom_enabled}" = "xyes"; then
+ if test "x${MPC_MESSAGE_PASSING_ENABLED}" = "xyes"; then
   MPC_MESSAGE_PASSING_ENABLED_TRUE=
   MPC_MESSAGE_PASSING_ENABLED_FALSE='#'
 else
@@ -25896,21 +25934,22 @@ fi
 
 
 
+
 # Check whether --enable-mpi was given.
 if test "${enable_mpi+set}" = set; then :
-  enableval=$enable_mpi; mpc_mpi_enabled=$enableval
+  enableval=$enable_mpi; MPC_MPI_ENABLED=$enableval
 else
-  mpc_mpi_enabled=yes
+  MPC_MPI_ENABLED=yes
 fi
 
 
-if test "x${mpc_mpi_enabled}" = "xyes"; then
+if test "x${MPC_MPI_ENABLED}" = "xyes"; then
 
 $as_echo "#define MPC_MPI 1" >>confdefs.h
 
 fi
 
- if test "x${mpc_mpi_enabled}" = "xyes"; then
+ if test "x${MPC_MPI_ENABLED}" = "xyes"; then
   MPC_MPI_ENABLED_TRUE=
   MPC_MPI_ENABLED_FALSE='#'
 else
@@ -25919,27 +25958,30 @@ else
 fi
 
 
+
+
 # Check whether --enable-openmp was given.
 if test "${enable_openmp+set}" = set; then :
-  enableval=$enable_openmp; mpc_omp_enabled=$enableval
+  enableval=$enable_openmp; MPC_OPENMP_ENABLED=$enableval
 else
-  mpc_omp_enabled=yes
+  MPC_OPENMP_ENABLED=yes
 fi
 
 
-if test "x${mpc_omp_enabled}" = "xyes"; then
+if test "x${MPC_OPENMP_ENABLED}" = "xyes"; then
 
 $as_echo "#define MPC_OpenMP 1" >>confdefs.h
 
 fi
 
- if test "x${mpc_omp_enabled}" = "xyes"; then
+ if test "x${MPC_OPENMP_ENABLED}" = "xyes"; then
   MPC_OPENMP_ENABLED_TRUE=
   MPC_OPENMP_ENABLED_FALSE='#'
 else
   MPC_OPENMP_ENABLED_TRUE='#'
   MPC_OPENMP_ENABLED_FALSE=
 fi
+
 
 
 #
@@ -26390,9 +26432,9 @@ Shm CMA......... $mpc_enable_cma\n\
 \n\
 # Module to be Built\n\
 \n\
-MPC_Thread........... $mpc_thread_enabled\n\
-MPC_Message_passing.. $mpc_lowcom_enabled\n\
-MPC_MPI.............. $mpc_mpi_enabled\n\
+MPC_Thread........... $MPC_THREAD_ENABLED\n\
+MPC_Message_passing.. $MPC_MESSAGE_PASSING_ENABLED\n\
+MPC_MPI.............. $MPC_MPI_ENABLED\n\
 ===========================================================\n"
 
 

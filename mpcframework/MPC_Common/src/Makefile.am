@@ -23,4 +23,4 @@ libmpccommon_la_SOURCES += ./profiler/sctk_profile_render_tex.c ./profiler/sctk_
 libmpccommon_la_SOURCES += ./profiler/sctk_profile_render_xml.c
 endif
 
-libmpccommon_la_LIBADD = $(abs_top_builddir)/MPC_Arch/src/libmpcarch.la $(OPENPA_LIBS)
+libmpccommon_la_LIBADD = $(abs_top_builddir)/MPC_Arch/src/libmpcarch.la $(OPENPA_LIBS) $(ALLOC_LIBS)

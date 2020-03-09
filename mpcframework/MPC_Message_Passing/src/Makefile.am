@@ -48,4 +48,4 @@ libmpclowcomm_la_SOURCES += ./portals_am/sctk_ptl_am_iface.c  ./portals_am/sctk_
 endif
 
 
-libmpclowcomm_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la  -lpthread -lrt
+libmpclowcomm_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la

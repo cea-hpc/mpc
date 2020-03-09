@@ -70,6 +70,18 @@ BLINK="\e[5m"
 UNDERLINE="\e[4m"
 fi
 
+PENDING_LB=""
+STEP_WRAPPER_VERBOSE=0
+
+show_run_cmd()
+{
+	if test $STEP_WRAPPER_VERBOSE -gt 0; then
+		test -n "${PENDING_LB}" && echo ""
+		PENDING_LB=""
+		echo "$ $@"
+	fi
+}
+
 info()
 {
 	printf "${colbgGRAY}==>${colRESET}${colGRAY} $1${colRESET}\n"
@@ -80,29 +92,36 @@ LAST_RESULT=""
 checking()
 {
 	LAST_RESULT=""
+	PENDING_LB="yes"
 	printf "${colbgMAGENTA}==>${colRESET}${colMAGENTA} $1... ${colRESET}"
 }
 
 ok()
 {
+	PENDING_LB=""
 	LAST_RESULT="ok"
-	printf "${colGREEN}SUCCESS${colRESET}\n"
+	if test $STEP_WRAPPER_VERBOSE -eq 0; then
+		printf "${colGREEN}SUCCESS${colRESET}\n"
+	fi
 }
 
 nok()
 {
+	PENDING_LB=""
 	LAST_RESULT="nok"
 	printf "${UNDERLINE}${colBLINK}${colRED}FAIL${colRESET}\n"
 }
 
 skip()
 {
+	PENDING_LB=""
 	LAST_RESULT="skip"
 	printf "${UNDERLINE}${colBLINK}${colYELLOW}SKIPPED${colRESET}\n"
 }
 
 notapplicable()
 {
+	PENDING_LB=""
 	LAST_RESULT="na"
 	printf "${colbgGRAY}NA${colRESET}\n"
 }
@@ -118,17 +137,15 @@ check_for_commands()
 	# Check already done
 	test -n "$LIST_OF_FOUND_CMD" && return
 
-
-	checking "locate 'which' command in PATH"
+	show_run_cmd "type which"
 	# First check for which
-	type which > /dev/null 2>&1 || (nok; die "MPC cannot compile without the 'which' command")
-	ok
+	type which > /dev/null 2>&1 || die "MPC cannot compile without the 'which' command"
 
 	set +e
 
 	for c in $COMMON_CMD; do
 
-
+		show_run_cmd "which $c"
 		which $c > /dev/null 2>&1
 
 		if test "x$?" = "x0"; then
@@ -241,7 +258,6 @@ extractAndAddPackageOption()
 }
 
 
-STEP_WRAPPER_VERBOSE=0
 
 wrap_output()
 {
@@ -251,12 +267,9 @@ wrap_output()
 
 	set +e
 
-	if test $STEP_WRAPPER_VERBOSE -gt 0; then
-		echo ""
-		echo "$ $@"
-	fi
+	show_run_cmd "$@"
 
-	if test $STEP_WRAPPER_VERBOSE -gt 2; then
+	if test $STEP_WRAPPER_VERBOSE -eq 3; then
 		$@
 	else
 		$@ > $outfile 2>&1
@@ -347,12 +360,14 @@ find_dep_with_spack()
 
 	checking "load $PKG_NAME using spack"
 
+	show_run_cmd "spack info  $PKG_NAME"
 	spack info  $PKG_NAME > /dev/null 2>&1 || notapplicable
 
 	if test "x${LAST_RESULT}" = "xna"; then
 		return
 	fi
 
+	show_run_cmd "spack load --sh $PKG_NAME"
 	spack load --sh $PKG_NAME > /dev/null 2>&1 && ok || nok
 
 	if test "x${LAST_RESULT}" = "xok"; then
@@ -374,12 +389,14 @@ install_dep_with_spack()
 
 	checking "install $PKG_NAME using spack"
 
+	show_run_cmd "spack info  $PKG_NAME"
 	spack info  $PKG_NAME > /dev/null 2>&1 || notapplicable
 
 	if test "x${LAST_RESULT}" = "xna"; then
 		return
 	fi
 
+	show_run_cmd "spack install $PKG_NAME"
 	spack install $PKG_NAME && ok || nok
 
 	if test "x${LAST_RESULT}" = "xok"; then
@@ -490,7 +507,7 @@ build_configure_based_package()
 	# Where we move it in MPC to simplify deletion thanks to dep-* prefix
 	PKG_SOURCE_DIR=${PROJECT_BUILD_DIR}/dep-${package}-${version}/
 
-	checking "Extracting $package $version"
+	checking "Extracting $package-$version"
 
 	if test ! -d $PKG_SOURCE_DIR; then
 		# Extract the source tarball only if not already present
@@ -508,12 +525,14 @@ build_configure_based_package()
 			die "Could not locate a tarball for $package-$version in $pkg_dir"
 		fi
 
+		show_run_cmd "tar xf $tarball_path"
 		tar xf $tarball_path || true
 
 		if test ! -d $ORIG_PKG_SOURCE_DIR; then
 			nok
 			die "Could not locate sources in $PKG_SOURCE_DIR after extracting $tarball_path"
 		else
+			show_run_cmd "mv $ORIG_PKG_SOURCE_DIR $PKG_SOURCE_DIR"
 			# Rename to $PKG_SOURCE_DIR
 			mv $ORIG_PKG_SOURCE_DIR $PKG_SOURCE_DIR
 			ok
@@ -528,10 +547,13 @@ build_configure_based_package()
 		if test -f $PACKAGE_PATCH ; then
 			checking "Patching $package $version"
 
+			show_run_cmd "cd $PKG_SOURCE_DIR"
 			cd $PKG_SOURCE_DIR
 
+			show_run_cmd "patch -p 1 < $PACKAGE_PATCH"
 			patch -p 1 < $PACKAGE_PATCH > /dev/null && ok || (nok; die "Failed to patch $package $version")
 
+			show_run_cmd "cd $PROJECT_BUILD_DIR"
 			cd ${PROJECT_BUILD_DIR}
 		fi
 
@@ -546,9 +568,11 @@ build_configure_based_package()
 
 
 	if test ! -d ${PKG_SOURCE_DIR}/BUILD; then
+		show_run_cmd "mkdir ${PKG_SOURCE_DIR}/BUILD"
 		mkdir ${PKG_SOURCE_DIR}/BUILD
 	fi
 
+	show_run_cmd "cd ${PKG_SOURCE_DIR}/BUILD"
 	cd ${PKG_SOURCE_DIR}/BUILD
 
 
@@ -574,6 +598,7 @@ build_configure_based_package()
 		die "Could not locate ./configure or autopriv_deploy.sh in ${PKG_SOURCE_DIR}"
 	fi
 
+	show_run_cmd "cd ${PROJECT_BUILD_DIR}"
 	cd ${PROJECT_BUILD_DIR}
 
 	#
@@ -588,6 +613,7 @@ build_configure_based_package()
 	#
 
 	# if we are here flag all success
+	show_run_cmd "touch ${DEP_FLAG}"
 	touch ${DEP_FLAG}
 }
 
@@ -1144,12 +1170,30 @@ propagate_build_env
 
 if test -f bin/mpc_build_env.sh; then
 	checking "remove previous MPC configuration state"
+	show_run_cmd "rm -fr bin/mpc_build_env.sh"
 	rm -fr bin/mpc_build_env.sh
 	ok
 fi
 
-$SCRIPTPATH/mpcframework/configure --prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS
+checking "Configuring MPC"
+wrap_output $SCRIPTPATH/mpcframework/configure --prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS
+ok
 
-make -j ${MAKE_J}
+#
+# Display MPC status if present (and not already displayed)
+#
 
-make install -j ${MAKE_J}
+if test $STEP_WRAPPER_VERBOSE -gt 0; then
+	if test -f ./bin/mpc_status.sh; then
+		show_run_cmd "sh ./bin/mpc_status.sh"
+		sh ./bin/mpc_status.sh
+	fi
+fi
+
+checking "Building MPC"
+wrap_output make -j ${MAKE_J}
+ok
+
+checking "Installing MPC"
+wrap_output make install -j ${MAKE_J}
+ok

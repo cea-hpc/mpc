@@ -279,6 +279,9 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                         inc_prefix=$whole_prefix
                 fi
 
+                AC_SUBST([$4_CFLAGS])
+                AC_SUBST([$4_LIBS])
+
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
@@ -1311,52 +1314,57 @@ AC_SUBST([MPC_HAVE_PROFILER])
 AC_ARG_ENABLE([threads],
 [AS_HELP_STRING([--enable-threads],
                 [Compile MPC with pthread and user-level thread support])],
-[mpc_thread_enabled=$enableval],
-[mpc_thread_enabled=yes])
+[MPC_THREAD_ENABLED=$enableval],
+[MPC_THREAD_ENABLED=yes])
 
-if test "x${mpc_thread_enabled}" = "xyes"; then
+if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
         AC_DEFINE([MPC_Threads], [1], [MPC_THREAD module was enabled])
 fi
 
-AM_CONDITIONAL([MPC_THREAD_ENABLED], [test "x${mpc_thread_enabled}" = "xyes"])
+AM_CONDITIONAL([MPC_THREAD_ENABLED], [test "x${MPC_THREAD_ENABLED}" = "xyes"])
+AC_SUBST([MPC_THREAD_ENABLED])
 
 
 AC_ARG_ENABLE([message-passing],
 [AS_HELP_STRING([--enable-message-passing],
                 [Compile MPC with Message Passing Support])],
-[mpc_lowcom_enabled=$enableval],
-[mpc_lowcom_enabled=yes])
+[MPC_MESSAGE_PASSING_ENABLED=$enableval],
+[MPC_MESSAGE_PASSING_ENABLED=yes])
 
-if test "x${mpc_lowcom_enabled}" = "xyes"; then
+if test "x${MPC_MESSAGE_PASSING_ENABLED}" = "xyes"; then
         AC_DEFINE([MPC_Message_Passing], [1], [MPC_MESSAGE_PASSING module was enabled])
 fi
 
-AM_CONDITIONAL([MPC_MESSAGE_PASSING_ENABLED], [test "x${mpc_lowcom_enabled}" = "xyes"])
+AM_CONDITIONAL([MPC_MESSAGE_PASSING_ENABLED], [test "x${MPC_MESSAGE_PASSING_ENABLED}" = "xyes"])
+AC_SUBST([MPC_MESSAGE_PASSING_ENABLED])
 
 
 AC_ARG_ENABLE([mpi],
 [AS_HELP_STRING([--enable-mpi],
                 [Compile MPC's MPI interface])],
-[mpc_mpi_enabled=$enableval],
-[mpc_mpi_enabled=yes])
+[MPC_MPI_ENABLED=$enableval],
+[MPC_MPI_ENABLED=yes])
 
-if test "x${mpc_mpi_enabled}" = "xyes"; then
+if test "x${MPC_MPI_ENABLED}" = "xyes"; then
         AC_DEFINE([MPC_MPI], [1], [MPC_MPI module was enabled])
 fi
 
-AM_CONDITIONAL([MPC_MPI_ENABLED], [test "x${mpc_mpi_enabled}" = "xyes"])
+AM_CONDITIONAL([MPC_MPI_ENABLED], [test "x${MPC_MPI_ENABLED}" = "xyes"])
+AC_SUBST([MPC_MPI_ENABLED])
+
 
 AC_ARG_ENABLE([openmp],
 [AS_HELP_STRING([--enable-openmp],
                 [Compile MPC's OpenMP interface])],
-[mpc_omp_enabled=$enableval],
-[mpc_omp_enabled=yes])
+[MPC_OPENMP_ENABLED=$enableval],
+[MPC_OPENMP_ENABLED=yes])
 
-if test "x${mpc_omp_enabled}" = "xyes"; then
+if test "x${MPC_OPENMP_ENABLED}" = "xyes"; then
         AC_DEFINE([MPC_OpenMP], [1], [MPC_OpenMP module was enabled])
 fi
 
-AM_CONDITIONAL([MPC_OPENMP_ENABLED], [test "x${mpc_omp_enabled}" = "xyes"])
+AM_CONDITIONAL([MPC_OPENMP_ENABLED], [test "x${MPC_OPENMP_ENABLED}" = "xyes"])
+AC_SUBST([MPC_OPENMP_ENABLED])
 
 #
 # Configure MPC's compilers
@@ -1635,9 +1643,9 @@ Shm CMA......... $mpc_enable_cma\n\
 \n\
 # Module to be Built\n\
 \n\
-MPC_Thread........... $mpc_thread_enabled\n\
-MPC_Message_passing.. $mpc_lowcom_enabled\n\
-MPC_MPI.............. $mpc_mpi_enabled\n\
+MPC_Thread........... $MPC_THREAD_ENABLED\n\
+MPC_Message_passing.. $MPC_MESSAGE_PASSING_ENABLED\n\
+MPC_MPI.............. $MPC_MPI_ENABLED\n\
 ===========================================================\n"
 
 
