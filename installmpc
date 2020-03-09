@@ -1029,7 +1029,7 @@ do
 		--help|-h|-?)
 			showHelp
 			;;
-		--spack|--enable-spack)
+		--spack|--enable-spack|--download-missing-deps)
 			assert_cmd "spack"
 			SPACK_LOCATE_DEPENDENCY="yes"
 			;;
@@ -1047,8 +1047,9 @@ do
 			;;
 		--disable-build)
 			BUILD_IS_DISABLED="yes"
+			;;
 		# Deprecated options
-		--download-missing-deps|--mirror=*|clean|distclean|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--with-hbict=*|--hbict-*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--mpc-*|--enable-check-deps|--disable-check-deps|--disable-check-install|--enable-all-internals|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*|--version)
+		--mirror=*|clean|distclean|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--with-hbict=*|--hbict-*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--mpc-*|--enable-check-deps|--disable-check-deps|--disable-check-install|--enable-all-internals|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*|--version)
 			info "$arg is deprecated"
 			;;
 		*)
