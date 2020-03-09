@@ -1367,6 +1367,32 @@ AM_CONDITIONAL([MPC_OPENMP_ENABLED], [test "x${MPC_OPENMP_ENABLED}" = "xyes"])
 AC_SUBST([MPC_OPENMP_ENABLED])
 
 #
+# Compute the all MPC libs variable
+#
+
+ALL_MPC_LIBS="${ac_pwd}/MPC_Config/src/libmpcconfig.la"
+
+if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/MPC_Launch/src/libmpclaunch.la"
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/MPC_Threads/src/libmpcthread.la"
+fi
+
+if test "x${MPC_OPENMP_ENABLED}" = "xyes"; then
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/MPC_OpenMP/src/libmpcomp.la"
+fi
+
+if test "x${MPC_MPI_ENABLED}" = "xyes"; then
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/MPC_Message_Passing/src/libmpclowcomm.la"
+fi
+
+if test "x${MPC_MPI_ENABLED}" = "xyes"; then
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/MPC_MPI/src/libmpcmpi.la"
+fi
+
+AC_SUBST([ALL_MPC_LIBS])
+
+
+#
 # Configure MPC's compilers
 #
 
@@ -1659,6 +1685,7 @@ AC_SUBST([MPC_CONFIG_RESULT])
 
 AC_OUTPUT([MPC_Arch/include/mpc_arch.h
 	   Makefile
+	   lib/Makefile
            MPC_Doc/Makefile
            MPC_Arch/Makefile MPC_Arch/src/Makefile
            MPC_Common/Makefile MPC_Common/src/Makefile

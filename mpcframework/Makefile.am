@@ -1,6 +1,3 @@
-mpc_headerdir=$(includedir)/mpc/
-mpc_header_HEADERS=$(abs_top_builddir)/mpc_config.h $(abs_top_srcdir)/include/mpc.h $(abs_top_srcdir)/include/mpc_main.h
-
 SUBDIRS=MPC_Doc MPC_Arch MPC_Common MPC_Config MPC_Topology
 
 if MPC_THREAD_ENABLED
@@ -23,7 +20,13 @@ if MPC_MPI_ENABLED
         SUBDIRS += MPC_MPI
 endif
 
-SUBDIRS += bin
+# Bin must be the last as it depends on libmpcframework.so being
+# installed for Fortran generation
+SUBDIRS += lib bin
+
+#
+# Config generation helper
+#
 
 if CAN_GENERATE_CONFIG
 # Generate and copy back to sources to ensure transparent update on success
@@ -34,37 +37,6 @@ config:
 	@echo "ERROR: Both 'xsltproc' and 'xmllint' are needed to generate the configuration"
 	@echo "ERROR: Install them and reconfigure the project"
 endif
-
-
-ALL_MPC_LIBS=./MPC_Config/src/libmpcconfig.la
-
-if MPC_THREAD_ENABLED
-ALL_MPC_LIBS+=./MPC_Launch/src/libmpclaunch.la
-ALL_MPC_LIBS+=./MPC_Threads/src/libmpcthread.la
-endif
-
-if MPC_OPENMP_ENABLED
-ALL_MPC_LIBS+=./MPC_OpenMP/src/libmpcomp.la
-endif
-
-if MPC_MESSAGE_PASSING_ENABLED
-ALL_MPC_LIBS+=./MPC_Message_Passing/src/libmpclowcomm.la
-endif
-
-if MPC_MPI_ENABLED
-ALL_MPC_LIBS+=./MPC_MPI/src/libmpcmpi.la
-endif
-
-#
-# Define the MPC Library
-#
-
-lib_LTLIBRARIES = libmpcframework.la
-
-libmpcframework_la_LIBADD = $(ALL_MPC_LIBS)
-
-libmpcframework_la_SOURCES=
-
 
 #
 # Print Config Program
@@ -82,4 +54,4 @@ mpc_print_config_SOURCES += ./MPC_Config/src/print_config/mpc_print_config_xml.c
 
 mpc_print_config_LDADD = $(XML2_LIBS)
 
-mpc_print_config_LDADD += $(ALL_MPC_LIBS)
+mpc_print_config_LDADD += @ALL_MPC_LIBS@

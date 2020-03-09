@@ -76,9 +76,17 @@ if test "x${MPC_MPI_ENABLED}" = "xyes"; then
 fi
 
 
+# Handle how the fortran specific module is passed in
+# we need lib for .mod
+if test -n "$2"; then
+
+	FLAGS="${FLAGS} -L$2/lib -Wl,-rpath=$2/lib"
+fi
+
 if test "$1" != "fortran" ; then
 	# Not FORTRAN
         echo "$FLAGS"
 else
-        echo "-L${MPC_INSTALL_PREFIX}/lib -lmpcframework ${SCTK_MPCMPISIZEOF} $FLAGS"
+        echo "$FLAGS -lmpcfwrapper"
 fi
+

@@ -55,8 +55,8 @@ except IOError:
 def MPIFunctionsisPresentinMPC( fname ):
     #Note that we implement all MPI_File functions which are in ROMIO
     #We have to do this as the ROMIO header is only compiled later on
-    if fname.find("MPI_File") != -1:
-        return 1
+    #if fname.find("MPI_File") != -1:
+    #    return 1
     index = parsed_mpih.find( fname );
     if index < 0:
 	return 0;

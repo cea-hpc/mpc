@@ -36,16 +36,19 @@ MPC_MESSAGE_PASSING_ENABLED="@MPC_MESSAGE_PASSING_ENABLED@"
 MPC_MPI_ENABLED="@MPC_MPI_ENABLED@"
 MPC_OPENMP_ENABLED="@MPC_OPENMP_ENABLED@"
 
-#adding custom path to include for the given compiler (if provided)
-if test -n "$2"; then
-	echo " -I$2/include "
-fi
-
 FLAGS="-I${MPC_INSTALL_PREFIX}/include/mpc"
 
 FLAGS="$FLAGS ${OPA_CFLAGS}"
 FLAGS="$FLAGS ${HWLOC_CFLAGS}"
 FLAGS="$FLAGS ${EXTLS_CFLAGS}"
 FLAGS="$FLAGS ${MPCALLOC_CFLAGS}"
+
+
+# Handle how the fortran specific module is passed in
+# we need lib for .mod
+if test -n "$2"; then
+	FLAGS="${FLAGS} -I$2/include -I$2/lib"
+fi
+
 
 echo "${FLAGS}"

@@ -4,8 +4,8 @@
 # - mpi.mod
 
 #EXTRACT SCRIPT ENV
-SCRIPT="$0"
-SCRIPTPATH=`dirname $SCRIPT`
+SCRIPT=$(readlink -f "$0")
+SCRIPTPATH=$(dirname "$SCRIPT")
 
 #PREPARE BUILDING CONTEXT
 
@@ -187,6 +187,7 @@ EOF
 genfortranfiles()
 {
 	TEMP=`mktemp`
+	echo "$ $MPCCC ${SCRIPTPATH}/gen_iface.c -o ${TEMP}"
 	$MPCCC ${SCRIPTPATH}/gen_iface.c -o ${TEMP} 2>> ./fortrangen.log
 	${TEMP} > constants.json 2>> ./fortrangen.log
 
@@ -366,6 +367,7 @@ INSTALL="$4"
 
 test ! -f "${MPIHFILE}" && die "Could not locate the mpi.h file in ${MPIHFILE}"
 
+
 BUILDIR=`mktemp -d`
 OLDIR=${PWD}
 #move in temporary dir, because this script creates a lot of artefacts
@@ -377,6 +379,6 @@ echo "" > fortrangen.log
 proceedwithfortranfilegeneration
 
 cd $OLDIR
-rm -rf $BUILDIR
+#rm -rf $BUILDIR
 
 

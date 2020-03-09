@@ -655,6 +655,7 @@ MPC_FORTRAN_COMPILER_LIST
 MPC_CPP_COMPILER_LIST
 MPC_C_COMPILER_LIST
 MPC_LANGUAGE_LIST
+ALL_MPC_LIBS
 MPC_OPENMP_ENABLED
 MPC_OPENMP_ENABLED_FALSE
 MPC_OPENMP_ENABLED_TRUE
@@ -25985,6 +25986,32 @@ fi
 
 
 #
+# Compute the all MPC libs variable
+#
+
+ALL_MPC_LIBS="${ac_pwd}/MPC_Config/src/libmpcconfig.la"
+
+if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/MPC_Launch/src/libmpclaunch.la"
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/MPC_Threads/src/libmpcthread.la"
+fi
+
+if test "x${MPC_OPENMP_ENABLED}" = "xyes"; then
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/MPC_OpenMP/src/libmpcomp.la"
+fi
+
+if test "x${MPC_MPI_ENABLED}" = "xyes"; then
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/MPC_Message_Passing/src/libmpclowcomm.la"
+fi
+
+if test "x${MPC_MPI_ENABLED}" = "xyes"; then
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/MPC_MPI/src/libmpcmpi.la"
+fi
+
+
+
+
+#
 # Configure MPC's compilers
 #
 
@@ -26446,7 +26473,7 @@ MPC_MPI.............. $MPC_MPI_ENABLED\n\
 # Final Output
 #
 
-ac_config_files="$ac_config_files MPC_Arch/include/mpc_arch.h Makefile MPC_Doc/Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Config/src/Makefile MPC_Launch/Makefile MPC_Launch/src/Makefile MPC_Message_Passing/Makefile MPC_Message_Passing/src/Makefile MPC_MPI/Makefile MPC_MPI/src/Makefile MPC_OpenMP/src/Makefile MPC_OpenMP/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile bin/Makefile bin/mpc_build_env.sh bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags bin/mpc_ldflags bin/mpc_cxx.sh bin/mpc_nvcc.sh bin/mpc_f77.sh bin/mpcrun.sh bin/mpcvars.sh bin/mpc_status.sh"
+ac_config_files="$ac_config_files MPC_Arch/include/mpc_arch.h Makefile lib/Makefile MPC_Doc/Makefile MPC_Arch/Makefile MPC_Arch/src/Makefile MPC_Common/Makefile MPC_Common/src/Makefile MPC_Config/Makefile MPC_Config/src/Makefile MPC_Launch/Makefile MPC_Launch/src/Makefile MPC_Message_Passing/Makefile MPC_Message_Passing/src/Makefile MPC_MPI/Makefile MPC_MPI/src/Makefile MPC_OpenMP/src/Makefile MPC_OpenMP/Makefile MPC_Topology/Makefile MPC_Topology/src/Makefile MPC_Threads/Makefile MPC_Threads/src/Makefile bin/Makefile bin/mpc_build_env.sh bin/mpc_compiler_manager.sh bin/mpc_cc.sh bin/mpc_cflags bin/mpc_ldflags bin/mpc_cxx.sh bin/mpc_nvcc.sh bin/mpc_f77.sh bin/mpcrun.sh bin/mpcvars.sh bin/mpc_status.sh"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -27635,6 +27662,7 @@ do
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "MPC_Arch/include/mpc_arch.h") CONFIG_FILES="$CONFIG_FILES MPC_Arch/include/mpc_arch.h" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+    "lib/Makefile") CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
     "MPC_Doc/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Doc/Makefile" ;;
     "MPC_Arch/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Arch/Makefile" ;;
     "MPC_Arch/src/Makefile") CONFIG_FILES="$CONFIG_FILES MPC_Arch/src/Makefile" ;;

@@ -14,8 +14,6 @@
 
 @SET_MAKE@
 
-
-
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -94,12 +92,6 @@ host_triplet = @host@
 @MPC_OPENMP_ENABLED_TRUE@am__append_2 = MPC_OpenMP
 @MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_3 = MPC_Message_Passing
 @MPC_MPI_ENABLED_TRUE@am__append_4 = MPC_MPI
-@MPC_THREAD_ENABLED_TRUE@am__append_5 =  \
-@MPC_THREAD_ENABLED_TRUE@	./MPC_Launch/src/libmpclaunch.la \
-@MPC_THREAD_ENABLED_TRUE@	./MPC_Threads/src/libmpcthread.la
-@MPC_OPENMP_ENABLED_TRUE@am__append_6 = ./MPC_OpenMP/src/libmpcomp.la
-@MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_7 = ./MPC_Message_Passing/src/libmpclowcomm.la
-@MPC_MPI_ENABLED_TRUE@am__append_8 = ./MPC_MPI/src/libmpcmpi.la
 bin_PROGRAMS = mpc_print_config$(EXEEXT)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -112,50 +104,14 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_gcc_builtin.m4 \
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
-	$(am__configure_deps) $(mpc_header_HEADERS) $(am__DIST_COMMON)
+	$(am__configure_deps) $(am__DIST_COMMON)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = mpc_config.h
 CONFIG_CLEAN_FILES = MPC_Arch/include/mpc_arch.h
 CONFIG_CLEAN_VPATH_FILES =
-am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
-am__vpath_adj = case $$p in \
-    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-    *) f=$$p;; \
-  esac;
-am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
-am__install_max = 40
-am__nobase_strip_setup = \
-  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
-am__nobase_strip = \
-  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
-am__nobase_list = $(am__nobase_strip_setup); \
-  for p in $$list; do echo "$$p $$p"; done | \
-  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
-  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
-    if (++n[$$2] == $(am__install_max)) \
-      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
-    END { for (dir in files) print dir, files[dir] }'
-am__base_list = \
-  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
-  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__uninstall_files_from_dir = { \
-  test -z "$$files" \
-    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
-    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
-         $(am__cd) "$$dir" && rm -f $$files; }; \
-  }
-am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
-	"$(DESTDIR)$(mpc_headerdir)"
-LTLIBRARIES = $(lib_LTLIBRARIES)
-libmpcframework_la_DEPENDENCIES = $(ALL_MPC_LIBS)
-am_libmpcframework_la_OBJECTS =
-libmpcframework_la_OBJECTS = $(am_libmpcframework_la_OBJECTS)
-AM_V_lt = $(am__v_lt_@AM_V@)
-am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
-am__v_lt_0 = --silent
-am__v_lt_1 = 
+am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
 am_mpc_print_config_OBJECTS =  \
@@ -164,7 +120,11 @@ am_mpc_print_config_OBJECTS =  \
 	./MPC_Config/src/print_config/mpc_print_config_xml.$(OBJEXT)
 mpc_print_config_OBJECTS = $(am_mpc_print_config_OBJECTS)
 am__DEPENDENCIES_1 =
-mpc_print_config_DEPENDENCIES = $(am__DEPENDENCIES_1) $(ALL_MPC_LIBS)
+mpc_print_config_DEPENDENCIES = $(am__DEPENDENCIES_1)
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
+am__v_lt_1 = 
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -199,9 +159,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libmpcframework_la_SOURCES) $(mpc_print_config_SOURCES)
-DIST_SOURCES = $(libmpcframework_la_SOURCES) \
-	$(mpc_print_config_SOURCES)
+SOURCES = $(mpc_print_config_SOURCES)
+DIST_SOURCES = $(mpc_print_config_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -215,7 +174,6 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-HEADERS = $(mpc_header_HEADERS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 am__recursive_targets = \
@@ -247,7 +205,7 @@ CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = MPC_Doc MPC_Arch MPC_Common MPC_Config MPC_Topology \
 	MPC_Launch MPC_Threads MPC_OpenMP MPC_Message_Passing MPC_MPI \
-	bin
+	lib bin
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mpc_config.h.in \
 	$(top_srcdir)/MPC_Arch/include/mpc_arch.h.in \
 	$(top_srcdir)/build-aux/compile \
@@ -305,6 +263,7 @@ distcleancheck_listfiles = find . -type f -print
 ACLOCAL = @ACLOCAL@
 ALLOC_CFLAGS = @ALLOC_CFLAGS@
 ALLOC_LIBS = @ALLOC_LIBS@
+ALL_MPC_LIBS = @ALL_MPC_LIBS@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
@@ -492,20 +451,12 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 xmllint = @xmllint@
 xsltproc = @xsltproc@
-mpc_headerdir = $(includedir)/mpc/
-mpc_header_HEADERS = $(abs_top_builddir)/mpc_config.h $(abs_top_srcdir)/include/mpc.h $(abs_top_srcdir)/include/mpc_main.h
+
+# Bin must be the last as it depends on libmpcframework.so being
+# installed for Fortran generation
 SUBDIRS = MPC_Doc MPC_Arch MPC_Common MPC_Config MPC_Topology \
 	$(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) bin
-ALL_MPC_LIBS = ./MPC_Config/src/libmpcconfig.la $(am__append_5) \
-	$(am__append_6) $(am__append_7) $(am__append_8)
-
-#
-# Define the MPC Library
-#
-lib_LTLIBRARIES = libmpcframework.la
-libmpcframework_la_LIBADD = $(ALL_MPC_LIBS)
-libmpcframework_la_SOURCES = 
+	$(am__append_4) lib bin
 
 #
 # Print Config Program
@@ -524,7 +475,7 @@ mpc_print_config_SOURCES =  \
 	./MPC_Config/src/print_config/mpc_print_config_sh.h \
 	./MPC_Config/src/print_config/mpc_print_config_xml.c \
 	./MPC_Config/src/print_config/mpc_print_config_xml.h
-mpc_print_config_LDADD = $(XML2_LIBS) $(ALL_MPC_LIBS)
+mpc_print_config_LDADD = $(XML2_LIBS) @ALL_MPC_LIBS@
 all: mpc_config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -580,44 +531,6 @@ distclean-hdr:
 	-rm -f mpc_config.h stamp-h1
 MPC_Arch/include/mpc_arch.h: $(top_builddir)/config.status $(top_srcdir)/MPC_Arch/include/mpc_arch.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
-
-install-libLTLIBRARIES: $(lib_LTLIBRARIES)
-	@$(NORMAL_INSTALL)
-	@list='$(lib_LTLIBRARIES)'; test -n "$(libdir)" || list=; \
-	list2=; for p in $$list; do \
-	  if test -f $$p; then \
-	    list2="$$list2 $$p"; \
-	  else :; fi; \
-	done; \
-	test -z "$$list2" || { \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(libdir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(libdir)" || exit 1; \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(libdir)'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(libdir)"; \
-	}
-
-uninstall-libLTLIBRARIES:
-	@$(NORMAL_UNINSTALL)
-	@list='$(lib_LTLIBRARIES)'; test -n "$(libdir)" || list=; \
-	for p in $$list; do \
-	  $(am__strip_dir) \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(libdir)/$$f'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$f"; \
-	done
-
-clean-libLTLIBRARIES:
-	-test -z "$(lib_LTLIBRARIES)" || rm -f $(lib_LTLIBRARIES)
-	@list='$(lib_LTLIBRARIES)'; \
-	locs=`for p in $$list; do echo $$p; done | \
-	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
-	      sort -u`; \
-	test -z "$$locs" || { \
-	  echo rm -f $${locs}; \
-	  rm -f $${locs}; \
-	}
-
-libmpcframework.la: $(libmpcframework_la_OBJECTS) $(libmpcframework_la_DEPENDENCIES) $(EXTRA_libmpcframework_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libmpcframework_la_OBJECTS) $(libmpcframework_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
@@ -730,27 +643,6 @@ clean-libtool:
 
 distclean-libtool:
 	-rm -f libtool config.lt
-install-mpc_headerHEADERS: $(mpc_header_HEADERS)
-	@$(NORMAL_INSTALL)
-	@list='$(mpc_header_HEADERS)'; test -n "$(mpc_headerdir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(mpc_headerdir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(mpc_headerdir)" || exit 1; \
-	fi; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(mpc_headerdir)'"; \
-	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(mpc_headerdir)" || exit $$?; \
-	done
-
-uninstall-mpc_headerHEADERS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(mpc_header_HEADERS)'; test -n "$(mpc_headerdir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	dir='$(DESTDIR)$(mpc_headerdir)'; $(am__uninstall_files_from_dir)
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run 'make' without going through this Makefile.
@@ -1048,12 +940,10 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(HEADERS) mpc_config.h
-install-binPROGRAMS: install-libLTLIBRARIES
-
+all-am: Makefile $(PROGRAMS) mpc_config.h
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(mpc_headerdir)"; do \
+	for dir in "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-recursive
@@ -1090,8 +980,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-recursive
 
-clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
-	clean-libtool mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -1112,13 +1001,13 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-mpc_headerHEADERS
+install-data-am:
 
 install-dvi: install-dvi-recursive
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS install-libLTLIBRARIES
+install-exec-am: install-binPROGRAMS
 
 install-html: install-html-recursive
 
@@ -1160,33 +1049,34 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-libLTLIBRARIES \
-	uninstall-mpc_headerHEADERS
+uninstall-am: uninstall-binPROGRAMS
 
 .MAKE: $(am__recursive_targets) all install-am install-strip
 
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
 	am--refresh check check-am clean clean-binPROGRAMS \
-	clean-cscope clean-generic clean-libLTLIBRARIES clean-libtool \
-	cscope cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
-	dist-gzip dist-lzip dist-shar dist-tarZ dist-xz dist-zip \
-	distcheck distclean distclean-compile distclean-generic \
-	distclean-hdr distclean-libtool distclean-tags distcleancheck \
-	distdir distuninstallcheck dvi dvi-am html html-am info \
-	info-am install install-am install-binPROGRAMS install-data \
+	clean-cscope clean-generic clean-libtool cscope cscopelist-am \
+	ctags ctags-am dist dist-all dist-bzip2 dist-gzip dist-lzip \
+	dist-shar dist-tarZ dist-xz dist-zip distcheck distclean \
+	distclean-compile distclean-generic distclean-hdr \
+	distclean-libtool distclean-tags distcleancheck distdir \
+	distuninstallcheck dvi dvi-am html html-am info info-am \
+	install install-am install-binPROGRAMS install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
 	install-exec-am install-html install-html-am install-info \
-	install-info-am install-libLTLIBRARIES install-man \
-	install-mpc_headerHEADERS install-pdf install-pdf-am \
+	install-info-am install-man install-pdf install-pdf-am \
 	install-ps install-ps-am install-strip installcheck \
 	installcheck-am installdirs installdirs-am maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-libLTLIBRARIES uninstall-mpc_headerHEADERS
+	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS
 
 .PRECIOUS: Makefile
 
+
+#
+# Config generation helper
+#
 
 # Generate and copy back to sources to ensure transparent update on success
 @CAN_GENERATE_CONFIG_TRUE@config:

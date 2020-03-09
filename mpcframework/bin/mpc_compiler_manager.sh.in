@@ -6,6 +6,7 @@ CHECKSUM_TOOL=sha1sum
 CREATION_TIMESTAMP=@MPC_GENERATION_DATE@
 MPC_INSTALL_PREFIX=@prefix@
 MANAGER_COLOR=@MPC_ENABLE_SHELL_COLORS@
+OPA_CFLAGS="@OPA_CFLAGS@"
 
 # Here we restore MPC's build environment
 . $MPC_INSTALL_PREFIX/bin/mpc_build_env.sh
@@ -183,7 +184,7 @@ post_add_fortran()
 	#we have to build twice if compiler is privatizing => give *.mod for privatized or unprivatized usage.
 
 	#build unprivatized usage
-	FLAGS="-I@prefix@/include/mpc/ -L@prefix@/lib/ -I@abs_top_srcdir@/include/ -I@abs_top_builddir@"
+	FLAGS="-I${MPC_INSTALL_PREFIX}/include/mpc/ -L${MPC_INSTALL_PREFIX}/lib/ -Wl,-rpath=${MPC_INSTALL_PREFIX}/lib/"
 	CC="`lookup_compiler c 1 | cut -f3 -d":"` $FLAGS  -lmpcframework"
 	FC="$1 $FLAGS"
 	mkdir -p $COMPILER_FILEPATH/$3/npriv
@@ -352,7 +353,7 @@ set_default_compiler()
 	# -r: extended regexes
 	# -e: run script
 	# -n: does output (only matching w/ /p)
-	exists="`get_compilers_in "$1" | sed -n -e "\,^$3:.*:${2}:.*$,p"`"
+	exists="`get_compilers_in "$1" | sed -n -e "\,^.*:${2}:.*$,p"`"
 
 	#add it if not already done (add_compiler() does some extra stuff).
 	if test -z "$exists"; then
@@ -361,8 +362,8 @@ set_default_compiler()
 	fi
 
 	#set the compiler as the first one
-	sed -ie "\@${exists}@d" ${COMPILER_FILEPATH}/.${1}_compilers.cfg
-	sed -i "1i ${exists}" ${COMPILER_FILEPATH}/.${1}_compilers.cfg
+	CURRENT="`cat ${COMPILER_FILEPATH}/.${1}_compilers.cfg | grep -v $2`"
+	echo "${exists}\n${CURRENT}" > ${COMPILER_FILEPATH}/.${1}_compilers.cfg
 }
 
 stat_compilers()
