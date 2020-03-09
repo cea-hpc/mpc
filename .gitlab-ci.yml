@@ -30,7 +30,7 @@ Env Sanitize:
   <<: *run_by_main
   stage: Initialization
   script:
-    - mkdir -p $HOME/GL_$CI_PIPELINE_ID/{build,install,test}
+    - mkdir -p $HOME/GL_$CI_PIPELINE_ID/{build,buildspack,install,test}
     - echo "Environment Cleaned !"
 
 # post-actions to cleanup the machine after the run
@@ -45,6 +45,7 @@ Artifact Deletion:
   script:
     - $HOME/clean_old_pipelines.sh
     - rm -rf $HOME/$CI_PIPELINE_ID/
+    - spack env rm -y env_$CI_PIPELINE_ID || true
 
 Resource Relinquishing:
   <<: *run_by_main
@@ -68,7 +69,16 @@ MPC Compilation:
   stage: Builds
   script:
   - cd $HOME/GL_$CI_PIPELINE_ID/build
-  - srun -J GL-build_$CI_PIPELINE_ID -N 1 -c 8 ${CI_PROJECT_DIR}/installmpc --prefix=$HOME/GL_$CI_PIPELINE_ID/install -j8 --mpc-option='--with-slurm --enable-debug'
+  - srun -J GL-build_$CI_PIPELINE_ID -N 1 -c 8 ${CI_PROJECT_DIR}/installmpc -vvv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install -j8 --mpc-option='--with-slurm --enable-debug'
+
+MPC Compilation Spack:
+  <<: *run_by_main
+  stage: Builds
+  script:
+  - cd $HOME/GL_$CI_PIPELINE_ID/buildspack
+  - spack env create env_$CI_PIPELINE_ID
+  - spack env activate env_$CI_PIPELINE_ID
+  - srun -J GL-build_$CI_PIPELINE_ID -N 1 -c 8 ${CI_PROJECT_DIR}/installmpc -vvv --enable-spack-build --prefix=$HOME/GL_$CI_PIPELINE_ID/install_spack -j8 --mpc-option='--with-slurm --enable-debug'
 
 ############################
 ####### TEST STAGE ########
