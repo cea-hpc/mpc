@@ -22,37 +22,30 @@
 #                                                                      #
 ########################################################################
 MPC_INSTALL_PREFIX=@prefix@
-OPA_CFLAGS=@OPA_CFLAGS@
 
+MPC_INSTALL_PREFIX="@prefix@"
 
-ROMIO=""
+OPA_CFLAGS="@OPA_CFLAGS@"
+HWLOC_CFLAGS="@HWLOC_CFLAGS@"
+EXTLS_CFLAGS="@EXTLS_CFLAGS@"
+MPCALLOC_CFLAGS="@ALLOC_CFLAGS@"
 
-#Only use romio if it is intalled
-#because we use the same compiler
-#to build romio itself
-if test -e "${MPC_INSTALL_PREFIX}/lib/libromio.a"; then
-	if test "x${MPC_BOOTSTRAP}" != "xyes"; then
-		ROMIO="-DMPC_ROMIO_ENABLED"
-	fi
-fi
-SCTK_GETOPT=""
-
-if test -e "${MPC_INSTALL_PREFIX}/lib/libmpcgetopt.a"; then
-	if test "x${MPC_BOOTSTRAP}" != "xyes"; then
-		SCTK_GETOPT="-DMPC_GETOPT_ENABLED"
-	fi
-fi
+# Module FLAGS
+MPC_THREAD_ENABLED="@MPC_THREAD_ENABLED@"
+MPC_MESSAGE_PASSING_ENABLED="@MPC_MESSAGE_PASSING_ENABLED@"
+MPC_MPI_ENABLED="@MPC_MPI_ENABLED@"
+MPC_OPENMP_ENABLED="@MPC_OPENMP_ENABLED@"
 
 #adding custom path to include for the given compiler (if provided)
 if test -n "$2"; then
 	echo " -I$2/include "
 fi
 
-if test "$1" = "fortran" ; then
-        #special cases for Fortran, where *.mod, stored in /lib has to be included too
-        if test -n "$2"; then
-                echo " -I$2/lib "
-        fi
-fi
+FLAGS="-I${MPC_INSTALL_PREFIX}/include/mpc"
 
-echo "-I${MPC_INSTALL_PREFIX}/include/mpc $ROMIO ${SCTK_GETOPT} ${OPA_CFLAGS}"
+FLAGS="$FLAGS ${OPA_CFLAGS}"
+FLAGS="$FLAGS ${HWLOC_CFLAGS}"
+FLAGS="$FLAGS ${EXTLS_CFLAGS}"
+FLAGS="$FLAGS ${MPCALLOC_CFLAGS}"
+
+echo "${FLAGS}"
