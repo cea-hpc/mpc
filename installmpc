@@ -457,6 +457,7 @@ load_prefix()
 #  - $2: package version
 #  - $3: extra arguments for configure
 #
+BUILD_IS_DISABLED="no"
 
 build_configure_based_package()
 {
@@ -465,6 +466,10 @@ build_configure_based_package()
 	extra_config_args=$3
 
 	pkg_dir="$SCRIPTPATH/deps/$package/"
+
+	if test "x${BUILD_IS_DISABLED}" = "xyes"; then
+		die "--disable-build was passed and a package was not provided through spack"
+	fi
 
 
 	#
@@ -1040,6 +1045,8 @@ do
 		--disable-spack-build)
 			SPACK_INSTALL_DEPENDENCY="no"
 			;;
+		--disable-build)
+			BUILD_IS_DISABLED="yes"
 		# Deprecated options
 		--download-missing-deps|--mirror=*|clean|distclean|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--with-hbict=*|--hbict-*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--mpc-*|--enable-check-deps|--disable-check-deps|--disable-check-install|--enable-all-internals|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*|--version)
 			info "$arg is deprecated"
