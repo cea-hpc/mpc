@@ -137,7 +137,6 @@ check_for_commands()
 	# Check already done
 	test -n "$LIST_OF_FOUND_CMD" && return
 
-	show_run_cmd "type which"
 	# First check for which
 	type which > /dev/null 2>&1 || die "MPC cannot compile without the 'which' command"
 
@@ -145,7 +144,6 @@ check_for_commands()
 
 	for c in $COMMON_CMD; do
 
-		show_run_cmd "which $c"
 		which $c > /dev/null 2>&1
 
 		if test "x$?" = "x0"; then
