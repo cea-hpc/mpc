@@ -1113,7 +1113,7 @@ if test "x${DEP_FOUND}" = "xno"; then
 	build_configure_based_package "libxml2" "2.9.3" "$LIBXML2_BUILD_PARAMETERS"
 fi
 
-find_in_prefix_or_use_spack "hwloc" "1." "${HWLOC_PREFIX}"
+find_in_prefix_or_use_spack "hwloc" "1.11.11" "${HWLOC_PREFIX}"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
