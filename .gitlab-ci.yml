@@ -77,6 +77,7 @@ MPC Compilation Spack:
   allow_failure: true
   script:
   - cd $HOME/GL_$CI_PIPELINE_ID/buildspack
+  - spack env rm -y env_$CI_PIPELINE_ID || true
   - spack env create env_$CI_PIPELINE_ID
   - spack env activate env_$CI_PIPELINE_ID
   - srun --pty -J GL-build_$CI_PIPELINE_ID -N 1 -c 8 ${CI_PROJECT_DIR}/installmpc -vv --enable-spack-build --disable-build --prefix=$HOME/GL_$CI_PIPELINE_ID/install_spack -j8 --mpc-option='--with-slurm --enable-debug'
