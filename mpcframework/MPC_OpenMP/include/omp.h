@@ -29,6 +29,7 @@ extern "C"
 #endif
 
 #include <mpc.h>
+#include <mpcomp.h>
 
   /* Dummy file.
      See mpcomp.h for OpenMP header (API + Compiler API)

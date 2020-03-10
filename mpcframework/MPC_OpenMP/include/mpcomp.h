@@ -67,7 +67,7 @@ typedef struct mpcomp_lock_s
 #endif /* OMPT_SUPPORT */
 } mpcomp_lock_t;
 
-typedef mpcomp_lock_t *omp_lock_t;
+typedef mpcomp_lock_t* omp_lock_t;
 
 typedef struct mpcomp_nest_lock_s
 {
