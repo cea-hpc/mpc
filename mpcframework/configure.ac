@@ -235,6 +235,53 @@ __check_or_infer_prefix_lib()
         done
 }
 
+
+# Get the value from a define
+# $1 Header to inspect
+# $2 Define to extract
+# $3 can fail
+#
+extract_integer_define_value()
+{
+	can_fail="$3"
+
+	if test -z "$can_fail"; then
+		can_fail="yes"
+	fi
+
+	AC_MSG_CHECKING([value of $2 in $1])
+
+	MACRO_VALUE=""
+	AC_RUN_IFELSE(
+	[AC_LANG_PROGRAM([#include <$1>
+			#include <stdio.h>],
+			[
+				long long int val = $2;
+				FILE *out = fopen("./conftest.out", "w");
+
+				if(!out)
+					return 1;
+
+				fprintf(out, "%lld\n", val);
+
+				fclose(out);
+			])],
+	[MACRO_VALUE="`cat conftest.out`"],
+	[MACRO_VALUE=""])
+
+	if test -z "$MACRO_VALUE"; then
+		if test "x$can_fail" = "xyes"; then
+			AC_MSG_FAILURE([Failed to lookup for $2 in $1])
+		else
+			AC_MSG_RESULT([not found])
+		fi
+
+	else
+		AC_MSG_RESULT([$MACRO_VALUE])
+	fi
+}
+
+
 #
 # $1 header_name (ex. hwloc.h)
 # $2 libname     (ex. hwloc)
@@ -769,6 +816,125 @@ AC_CHECK_LIB(pthread,pthread_create,LIBS="$LIBS -lpthread")
 AC_CHECK_SIZEOF(pthread_t,,[#include <pthread.h>])
 AC_CHECK_SIZEOF(sigset_t,,[#include <signal.h>])
 
+extract_integer_define_value "signal.h" "NSIG" "no"
+
+if test -z "$MACRO_VALUE"; then
+	extract_integer_define_value "signal.h" "_NSIG" "no"
+	if test -z "$MACRO_VALUE"; then
+		MACRO_VALUE="32"
+	fi
+fi
+
+AC_DEFINE_UNQUOTED([MPC_CONFIG_NSIG], [$MACRO_VALUE], [Value of NSIG from signal.h])
+
+# All that is in pthread.h
+
+#PTHREAD_MUTEX_NORMAL
+
+extract_integer_define_value "pthread.h" "PTHREAD_MUTEX_NORMAL"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_MUTEX_NORMAL], [$MACRO_VALUE], [Value for PTHREAD_MUTEX_NORMAL from pthread.h])
+
+#PTHREAD_MUTEX_RECURSIVE
+
+extract_integer_define_value "pthread.h" "PTHREAD_MUTEX_RECURSIVE"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_MUTEX_RECURSIVE], [$MACRO_VALUE], [Value for PTHREAD_MUTEX_RECURSIVE from pthread.h])
+
+#PTHREAD_MUTEX_ERRORCHECK
+
+extract_integer_define_value "pthread.h" "PTHREAD_MUTEX_ERRORCHECK"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_MUTEX_ERRORCHECK], [$MACRO_VALUE], [Value for PTHREAD_MUTEX_ERRORCHECK from pthread.h])
+
+#PTHREAD_MUTEX_DEFAULT
+
+extract_integer_define_value "pthread.h" "PTHREAD_MUTEX_DEFAULT"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_MUTEX_DEFAULT], [$MACRO_VALUE], [Value for PTHREAD_MUTEX_DEFAULT from pthread.h])
+
+#PTHREAD_CREATE_JOINABLE
+
+extract_integer_define_value "pthread.h" "PTHREAD_CREATE_JOINABLE"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_CREATE_JOINABLE], [$MACRO_VALUE], [Value for PTHREAD_CREATE_JOINABLE from pthread.h])
+
+#PTHREAD_CREATE_DETACHED
+
+extract_integer_define_value "pthread.h" "PTHREAD_CREATE_DETACHED"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_CREATE_DETACHED], [$MACRO_VALUE], [Value for PTHREAD_CREATE_DETACHED from pthread.h])
+
+#PTHREAD_INHERIT_SCHED
+
+extract_integer_define_value "pthread.h" "PTHREAD_INHERIT_SCHED"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_INHERIT_SCHED], [$MACRO_VALUE], [Value for PTHREAD_INHERIT_SCHED from pthread.h])
+
+#PTHREAD_EXPLICIT_SCHED
+
+extract_integer_define_value "pthread.h" "PTHREAD_EXPLICIT_SCHED"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_EXPLICIT_SCHED], [$MACRO_VALUE], [Value for PTHREAD_EXPLICIT_SCHED from pthread.h])
+
+#PTHREAD_SCOPE_SYSTEM
+
+extract_integer_define_value "pthread.h" "PTHREAD_SCOPE_SYSTEM"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_SCOPE_SYSTEM], [$MACRO_VALUE], [Value for PTHREAD_SCOPE_SYSTEM from pthread.h])
+
+#PTHREAD_SCOPE_PROCESS
+
+extract_integer_define_value "pthread.h" "PTHREAD_SCOPE_PROCESS"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_SCOPE_PROCESS], [$MACRO_VALUE], [Value for PTHREAD_SCOPE_PROCESS from pthread.h])
+
+#PTHREAD_PROCESS_PRIVATE
+
+extract_integer_define_value "pthread.h" "PTHREAD_PROCESS_PRIVATE"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_PROCESS_PRIVATE], [$MACRO_VALUE], [Value for PTHREAD_PROCESS_PRIVATE from pthread.h])
+
+#PTHREAD_PROCESS_SHARED
+
+extract_integer_define_value "pthread.h" "PTHREAD_PROCESS_SHARED"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_PROCESS_SHARED], [$MACRO_VALUE], [Value for PTHREAD_PROCESS_SHARED from pthread.h])
+
+#PTHREAD_CANCEL_ENABLE
+
+extract_integer_define_value "pthread.h" "PTHREAD_CANCEL_ENABLE"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_CANCEL_ENABLE], [$MACRO_VALUE], [Value for PTHREAD_CANCEL_ENABLE from pthread.h])
+
+#PTHREAD_CANCEL_DISABLE
+
+extract_integer_define_value "pthread.h" "PTHREAD_CANCEL_DISABLE"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_CANCEL_DISABLE], [$MACRO_VALUE], [Value for PTHREAD_CANCEL_DISABLE from pthread.h])
+
+#PTHREAD_CANCEL_DEFERRED
+
+extract_integer_define_value "pthread.h" "PTHREAD_CANCEL_DEFERRED"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_CANCEL_DEFERRED], [$MACRO_VALUE], [Value for PTHREAD_CANCEL_DEFERRED from pthread.h])
+
+#PTHREAD_CANCEL_ASYNCHRONOUS
+
+extract_integer_define_value "pthread.h" "PTHREAD_CANCEL_ASYNCHRONOUS"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_CANCEL_ASYNCHRONOUS], [$MACRO_VALUE], [Value for PTHREAD_CANCEL_ASYNCHRONOUS from pthread.h])
+
+#PTHREAD_CANCELED
+
+extract_integer_define_value "pthread.h" "PTHREAD_CANCELED"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_CANCELED], [$MACRO_VALUE], [Value for PTHREAD_CANCELED from pthread.h])
+# Handle PTHREAD_CANCELED which can be in limits.h
+
+extract_integer_define_value "pthread.h" "PTHREAD_STACK_MIN" "no"
+
+if test -z "$MACRO_VALUE"; then
+	extract_integer_define_value "limits.h" "PTHREAD_STACK_MIN"
+fi
+
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_CANCELED], [$MACRO_VALUE], [Value of PTHREAD_STACK_MIN from limits.h])
+
+# For sched.h
+
+extract_integer_define_value "sched.h" "SCHED_OTHER"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_SCHED_OTHER], [$MACRO_VALUE], [Value of SCHED_OTHER from sched.h])
+
+extract_integer_define_value "sched.h" "SCHED_RR"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_SCHED_RR], [$MACRO_VALUE], [Value of SCHED_RR from sched.h])
+
+extract_integer_define_value "sched.h" "SCHED_FIFO"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_SCHED_FIFO], [$MACRO_VALUE], [Value of SCHED_FIFO from sched.h])
+
+
 AC_CHECK_FUNCS(pthread_yield)
 AC_CHECK_FUNCS(pthread_atfork )
 AC_CHECK_FUNCS(pthread_cancel )
@@ -976,6 +1142,7 @@ fi
 AC_CHECK_FUNCS(pthread_testcancel )
 
 AC_CHECK_HEADER([semaphore.h])
+
 AC_CHECK_TYPE(sem_t,is_semaphore=yes,is_semaphore=no,[#include <semaphore.h>])
 
 if test "$is_semaphore" = "yes" ; then 
@@ -990,6 +1157,18 @@ if test "$is_semaphore" = "yes" ; then
         AC_CHECK_FUNCS(sem_close )
         AC_CHECK_FUNCS(sem_unlink )
         AC_CHECK_FUNCS(sem_timedwait )
+
+	extract_integer_define_value "semaphore.h" "SEM_VALUE_MAX" "no"
+
+	if test -z "$MACRO_VALUE"; then
+		MACRO_VALUE="2147483647"
+	fi
+
+	AC_DEFINE_UNQUOTED([MPC_CONFIG_SEM_VALUE_MAX], [$MACRO_VALUE], [Value of SEM_VALUE_MAX from semaphore.h])
+
+	extract_integer_define_value "semaphore.h" "SEM_FAILED"
+	AC_DEFINE_UNQUOTED([MPC_CONFIG_SEM_FAILED], [$MACRO_VALUE], [Value of SEM_FAILED from semaphore.h])
+
 fi
 
 AC_CHECK_FUNCS(pthread_sigmask )

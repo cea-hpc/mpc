@@ -407,7 +407,7 @@ top_srcdir = @top_srcdir@
 xmllint = @xmllint@
 xsltproc = @xsltproc@
 mpc_headerdir = $(includedir)/mpc/
-mpc_header_HEADERS = ./include/mpcthread.h ./include/mpcthread_config.h ./include/sctk_posix_thread.h ./include/sctk_thread_api.h ./src/sctk_futex_def.h
+mpc_header_HEADERS = ./include/mpcthread.h ./include/sctk_posix_thread.h ./include/mpcthread_config.h ./include/sctk_thread_api.h ./src/sctk_futex_def.h
 SUBDIRS = src
 all: all-recursive
 
@@ -746,6 +746,9 @@ uninstall-am: uninstall-mpc_headerHEADERS
 
 .PRECIOUS: Makefile
 
+
+./include/mpcthread_config.h:
+	echo "lo"
 
 # Install the pthread.h interceptions header
 install-data-local:

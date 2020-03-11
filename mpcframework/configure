@@ -18556,6 +18556,80 @@ $as_echo "no" >&6; }
         done
 }
 
+
+# Get the value from a define
+# $1 Header to inspect
+# $2 Define to extract
+# $3 can fail
+#
+extract_integer_define_value()
+{
+	can_fail="$3"
+
+	if test -z "$can_fail"; then
+		can_fail="yes"
+	fi
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking value of $2 in $1" >&5
+$as_echo_n "checking value of $2 in $1... " >&6; }
+
+	MACRO_VALUE=""
+	if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <$1>
+			#include <stdio.h>
+int
+main ()
+{
+
+				long long int val = $2;
+				FILE *out = fopen("./conftest.out", "w");
+
+				if(!out)
+					return 1;
+
+				fprintf(out, "%lld\n", val);
+
+				fclose(out);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  MACRO_VALUE="`cat conftest.out`"
+else
+  MACRO_VALUE=""
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+	if test -z "$MACRO_VALUE"; then
+		if test "x$can_fail" = "xyes"; then
+			{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "Failed to lookup for $2 in $1
+See \`config.log' for more details" "$LINENO" 5; }
+		else
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+		fi
+
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $MACRO_VALUE" >&5
+$as_echo "$MACRO_VALUE" >&6; }
+	fi
+}
+
+
 #
 # $1 header_name (ex. hwloc.h)
 # $2 libname     (ex. hwloc)
@@ -23249,6 +23323,213 @@ _ACEOF
 
 
 
+extract_integer_define_value "signal.h" "NSIG" "no"
+
+if test -z "$MACRO_VALUE"; then
+	extract_integer_define_value "signal.h" "_NSIG" "no"
+	if test -z "$MACRO_VALUE"; then
+		MACRO_VALUE="32"
+	fi
+fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_NSIG $MACRO_VALUE
+_ACEOF
+
+
+# All that is in pthread.h
+
+#PTHREAD_MUTEX_NORMAL
+
+extract_integer_define_value "pthread.h" "PTHREAD_MUTEX_NORMAL"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_MUTEX_NORMAL $MACRO_VALUE
+_ACEOF
+
+
+#PTHREAD_MUTEX_RECURSIVE
+
+extract_integer_define_value "pthread.h" "PTHREAD_MUTEX_RECURSIVE"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_MUTEX_RECURSIVE $MACRO_VALUE
+_ACEOF
+
+
+#PTHREAD_MUTEX_ERRORCHECK
+
+extract_integer_define_value "pthread.h" "PTHREAD_MUTEX_ERRORCHECK"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_MUTEX_ERRORCHECK $MACRO_VALUE
+_ACEOF
+
+
+#PTHREAD_MUTEX_DEFAULT
+
+extract_integer_define_value "pthread.h" "PTHREAD_MUTEX_DEFAULT"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_MUTEX_DEFAULT $MACRO_VALUE
+_ACEOF
+
+
+#PTHREAD_CREATE_JOINABLE
+
+extract_integer_define_value "pthread.h" "PTHREAD_CREATE_JOINABLE"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_CREATE_JOINABLE $MACRO_VALUE
+_ACEOF
+
+
+#PTHREAD_CREATE_DETACHED
+
+extract_integer_define_value "pthread.h" "PTHREAD_CREATE_DETACHED"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_CREATE_DETACHED $MACRO_VALUE
+_ACEOF
+
+
+#PTHREAD_INHERIT_SCHED
+
+extract_integer_define_value "pthread.h" "PTHREAD_INHERIT_SCHED"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_INHERIT_SCHED $MACRO_VALUE
+_ACEOF
+
+
+#PTHREAD_EXPLICIT_SCHED
+
+extract_integer_define_value "pthread.h" "PTHREAD_EXPLICIT_SCHED"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_EXPLICIT_SCHED $MACRO_VALUE
+_ACEOF
+
+
+#PTHREAD_SCOPE_SYSTEM
+
+extract_integer_define_value "pthread.h" "PTHREAD_SCOPE_SYSTEM"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_SCOPE_SYSTEM $MACRO_VALUE
+_ACEOF
+
+
+#PTHREAD_SCOPE_PROCESS
+
+extract_integer_define_value "pthread.h" "PTHREAD_SCOPE_PROCESS"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_SCOPE_PROCESS $MACRO_VALUE
+_ACEOF
+
+
+#PTHREAD_PROCESS_PRIVATE
+
+extract_integer_define_value "pthread.h" "PTHREAD_PROCESS_PRIVATE"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_PROCESS_PRIVATE $MACRO_VALUE
+_ACEOF
+
+
+#PTHREAD_PROCESS_SHARED
+
+extract_integer_define_value "pthread.h" "PTHREAD_PROCESS_SHARED"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_PROCESS_SHARED $MACRO_VALUE
+_ACEOF
+
+
+#PTHREAD_CANCEL_ENABLE
+
+extract_integer_define_value "pthread.h" "PTHREAD_CANCEL_ENABLE"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_CANCEL_ENABLE $MACRO_VALUE
+_ACEOF
+
+
+#PTHREAD_CANCEL_DISABLE
+
+extract_integer_define_value "pthread.h" "PTHREAD_CANCEL_DISABLE"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_CANCEL_DISABLE $MACRO_VALUE
+_ACEOF
+
+
+#PTHREAD_CANCEL_DEFERRED
+
+extract_integer_define_value "pthread.h" "PTHREAD_CANCEL_DEFERRED"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_CANCEL_DEFERRED $MACRO_VALUE
+_ACEOF
+
+
+#PTHREAD_CANCEL_ASYNCHRONOUS
+
+extract_integer_define_value "pthread.h" "PTHREAD_CANCEL_ASYNCHRONOUS"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_CANCEL_ASYNCHRONOUS $MACRO_VALUE
+_ACEOF
+
+
+#PTHREAD_CANCELED
+
+extract_integer_define_value "pthread.h" "PTHREAD_CANCELED"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_CANCELED $MACRO_VALUE
+_ACEOF
+
+# Handle PTHREAD_CANCELED which can be in limits.h
+
+extract_integer_define_value "pthread.h" "PTHREAD_STACK_MIN" "no"
+
+if test -z "$MACRO_VALUE"; then
+	extract_integer_define_value "limits.h" "PTHREAD_STACK_MIN"
+fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_CANCELED $MACRO_VALUE
+_ACEOF
+
+
+# For sched.h
+
+extract_integer_define_value "sched.h" "SCHED_OTHER"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_SCHED_OTHER $MACRO_VALUE
+_ACEOF
+
+
+extract_integer_define_value "sched.h" "SCHED_RR"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_SCHED_RR $MACRO_VALUE
+_ACEOF
+
+
+extract_integer_define_value "sched.h" "SCHED_FIFO"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_SCHED_FIFO $MACRO_VALUE
+_ACEOF
+
+
+
 for ac_func in pthread_yield
 do :
   ac_fn_c_check_func "$LINENO" "pthread_yield" "ac_cv_func_pthread_yield"
@@ -25041,6 +25322,7 @@ if test "x$ac_cv_header_semaphore_h" = xyes; then :
 fi
 
 
+
 ac_fn_c_check_type "$LINENO" "sem_t" "ac_cv_type_sem_t" "#include <semaphore.h>
 "
 if test "x$ac_cv_type_sem_t" = xyes; then :
@@ -25204,6 +25486,26 @@ _ACEOF
 
 fi
 done
+
+
+	extract_integer_define_value "semaphore.h" "SEM_VALUE_MAX" "no"
+
+	if test -z "$MACRO_VALUE"; then
+		MACRO_VALUE="2147483647"
+	fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_SEM_VALUE_MAX $MACRO_VALUE
+_ACEOF
+
+
+	extract_integer_define_value "semaphore.h" "SEM_FAILED"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_SEM_FAILED $MACRO_VALUE
+_ACEOF
+
 
 fi
 

@@ -24,6 +24,7 @@
 #include "sctk_futex.h"
 #include "sctk_thread.h"
 
+#include <fcntl.h>
 
 /* pthread_atfork */
 int mpc_thread_atfork (void (*a) (void), void (*b) (void),

@@ -644,6 +644,75 @@
 /* mpcalloc support is enabled */
 #undef MPC_Allocator
 
+/* Value of NSIG from signal.h */
+#undef MPC_CONFIG_NSIG
+
+/* Value of PTHREAD_STACK_MIN from limits.h */
+#undef MPC_CONFIG_PTHREAD_CANCELED
+
+/* Value for PTHREAD_CANCEL_ASYNCHRONOUS from pthread.h */
+#undef MPC_CONFIG_PTHREAD_CANCEL_ASYNCHRONOUS
+
+/* Value for PTHREAD_CANCEL_DEFERRED from pthread.h */
+#undef MPC_CONFIG_PTHREAD_CANCEL_DEFERRED
+
+/* Value for PTHREAD_CANCEL_DISABLE from pthread.h */
+#undef MPC_CONFIG_PTHREAD_CANCEL_DISABLE
+
+/* Value for PTHREAD_CANCEL_ENABLE from pthread.h */
+#undef MPC_CONFIG_PTHREAD_CANCEL_ENABLE
+
+/* Value for PTHREAD_CREATE_DETACHED from pthread.h */
+#undef MPC_CONFIG_PTHREAD_CREATE_DETACHED
+
+/* Value for PTHREAD_CREATE_JOINABLE from pthread.h */
+#undef MPC_CONFIG_PTHREAD_CREATE_JOINABLE
+
+/* Value for PTHREAD_EXPLICIT_SCHED from pthread.h */
+#undef MPC_CONFIG_PTHREAD_EXPLICIT_SCHED
+
+/* Value for PTHREAD_INHERIT_SCHED from pthread.h */
+#undef MPC_CONFIG_PTHREAD_INHERIT_SCHED
+
+/* Value for PTHREAD_MUTEX_DEFAULT from pthread.h */
+#undef MPC_CONFIG_PTHREAD_MUTEX_DEFAULT
+
+/* Value for PTHREAD_MUTEX_ERRORCHECK from pthread.h */
+#undef MPC_CONFIG_PTHREAD_MUTEX_ERRORCHECK
+
+/* Value for PTHREAD_MUTEX_NORMAL from pthread.h */
+#undef MPC_CONFIG_PTHREAD_MUTEX_NORMAL
+
+/* Value for PTHREAD_MUTEX_RECURSIVE from pthread.h */
+#undef MPC_CONFIG_PTHREAD_MUTEX_RECURSIVE
+
+/* Value for PTHREAD_PROCESS_PRIVATE from pthread.h */
+#undef MPC_CONFIG_PTHREAD_PROCESS_PRIVATE
+
+/* Value for PTHREAD_PROCESS_SHARED from pthread.h */
+#undef MPC_CONFIG_PTHREAD_PROCESS_SHARED
+
+/* Value for PTHREAD_SCOPE_PROCESS from pthread.h */
+#undef MPC_CONFIG_PTHREAD_SCOPE_PROCESS
+
+/* Value for PTHREAD_SCOPE_SYSTEM from pthread.h */
+#undef MPC_CONFIG_PTHREAD_SCOPE_SYSTEM
+
+/* Value of SCHED_FIFO from sched.h */
+#undef MPC_CONFIG_SCHED_FIFO
+
+/* Value of SCHED_OTHER from sched.h */
+#undef MPC_CONFIG_SCHED_OTHER
+
+/* Value of SCHED_RR from sched.h */
+#undef MPC_CONFIG_SCHED_RR
+
+/* Value of SEM_FAILED from semaphore.h */
+#undef MPC_CONFIG_SEM_FAILED
+
+/* Value of SEM_VALUE_MAX from semaphore.h */
+#undef MPC_CONFIG_SEM_VALUE_MAX
+
 /* MPC debug messages output was enabled */
 #undef MPC_ENABLE_DEBUG_MESSAGES
 

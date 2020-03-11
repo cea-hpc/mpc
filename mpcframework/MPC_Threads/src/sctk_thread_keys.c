@@ -29,6 +29,8 @@
 #include "sctk_thread_keys.h"
 #include "mpc_common_spinlock.h"
 
+#include <errno.h>
+
 typedef void (*__destr_function_key_t) (void *) ;
 
 static mpc_common_spinlock_t key_lock = SCTK_SPINLOCK_INITIALIZER;

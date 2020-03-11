@@ -25,6 +25,8 @@
 #include "sctk_internal_thread.h"
 #include "sctk_futex.h"
 
+#include <fcntl.h>
+
 static inline void
 sctk_touch_ptr (const void *ptr)
 {
