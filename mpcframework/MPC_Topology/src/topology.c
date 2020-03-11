@@ -911,7 +911,7 @@ void mpc_topology_init()
 	/*  load devices */
 	_mpc_topology_device_init( __mpc_module_topology );
 
-#ifdef MPC_USE_EXTLS && !defined(MPC_DISABLE_HLS)
+#if defined(MPC_USE_EXTLS) && !defined(MPC_DISABLE_HLS)
 	extls_set_topology_addr((void*(*)(void))__extls_get_topology_addr);
 #endif
 }

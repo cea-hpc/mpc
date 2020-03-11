@@ -36,11 +36,11 @@ MPC_OPENMP_ENABLED="@MPC_OPENMP_ENABLED@"
 FLAGS=""
 
 if test -d ${MPC_INSTALL_PREFIX}/lib/; then
-	FLAGS=" -Wl,-rpath,${MPC_INSTALL_PREFIX}/lib"
+	FLAGS="$FLAGS -Wl,-rpath,${MPC_INSTALL_PREFIX}/lib"
 fi
 
 if test -d ${MPC_INSTALL_PREFIX}/lib64/; then
-	FLAGS+=" -Wl,-rpath,${MPC_INSTALL_PREFIX}/lib64/"
+	FLAGS="$FLAGS -Wl,-rpath,${MPC_INSTALL_PREFIX}/lib64/"
 fi
 
 FLAGS="$FLAGS  -L${MPC_INSTALL_PREFIX}/lib"
