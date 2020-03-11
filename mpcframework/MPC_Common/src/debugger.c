@@ -237,9 +237,15 @@ static mpc_common_spinlock_t big_lock = SCTK_SPINLOCK_INITIALIZER;
 
 void sctk_vprint_backtrace( const char *format, va_list ap )
 {
-	mpc_common_spinlock_lock( &big_lock );
+	if( mpc_common_spinlock_trylock( &big_lock ) == 1 )
+	{
+		/* Already locked do not backtrace again */
+		return;
+	}
+
 	mpc_common_io_noalloc_fprintf( stderr, "---------- EVENT TRACE START ----------\n" );
 	mpc_common_io_noalloc_vfprintf( stderr, format, ap );
+
 #ifdef MPC_HAVE_LIBUNWIND
 	unw_cursor_t cursor;
 	unw_context_t uc;
@@ -335,90 +341,15 @@ void sctk_vprint_backtrace( const char *format, va_list ap )
 
 #elif defined HAVE_EXECINFO_H
 	void *array[20];
-	size_t size;
-	mpc_common_spinlock_lock( &big_lock );
-	read_map();
-	size = 20;
-#if 0
-	{
-		int i;
-		backtrace_symbols ( array, size );
-
-		for ( i = 0; i < size; i++ )
-		{
-			mpc_addr2line_t ptr;
-			int j;
-			char func_name_buf[10000];
-			void *ip;
-			sctk_nodebug ( "%p", array[i] );
-			memset ( &ptr, 0, sizeof ( mpc_addr2line_t ) );
-			ip = array[i];
-			ptr.ptr = ip;
-
-			for ( j = 0; j < nb_lines; j++ )
-			{
-				if ( ( ( unsigned long ) ip >= ( unsigned long ) map[j].start ) &&
-				     ( ( unsigned long ) ip < ( unsigned long ) map[j].end ) )
-				{
-					break;
-				}
-			}
-
-			if ( map[j].c.is_lib )
-			{
-				ptr.ptr =
-				    ( char * ) ( ( unsigned long ) ptr.ptr -
-				                 ( unsigned long ) map[j].start );
-			}
-
-			if ( map[j].c.read_elf_sym != NULL )
-			{
-				map[j].c.read_elf_sym ( &map[j].c, &ptr, 1 );
-			}
-			else
-			{
-				ptr.line = -1;
-			}
-
-			sprintf ( func_name_buf, ptr.name );
-
-			if ( ptr.line != -1 )
-			{
-				mpc_common_io_noalloc_fprintf ( stderr, "%16llx %-50s %s/%s/%s:%d (%s)\n",
-				                                ( uintptr_t ) ip,
-				                                /*ptr.name, */ func_name_buf,
-				                                ptr.absolute,
-				                                ptr.dir, ptr.file, ptr.line, map[i].file );
-			}
-			else
-			{
-				mpc_common_io_noalloc_fprintf ( stderr, "%16llx %-50s (%s)\n",
-				                                ( uintptr_t ) ip,
-				                                /*ptr.name, */ func_name_buf,
-				                                map[i].file );
-			}
-
-			if ( strcmp ( func_name_buf, "sctk_thread_create_tmp_start_routine" ) ==
-			     0 )
-			{
-				break;
-			}
-		}
-	}
-#endif
+	size_t size = 20;
 	backtrace_symbols_fd( array, size, 2 );
 #else
-	void *array[20];
-	size_t size;
-	int i;
-	mpc_common_spinlock_lock( &big_lock );
-	read_map();
 	mpc_common_io_noalloc_fprintf( stderr, "---------- EVENT TRACE START ----------\n" );
 	mpc_common_io_noalloc_vfprintf( stderr, format, ap );
 	mpc_common_io_noalloc_fprintf( stderr, "UNABLE TO BACKTRACE\n" );
 #endif
-mpc_common_io_noalloc_fprintf( stderr, "----------- EVENT TRACE END -----------\n" );
-mpc_common_spinlock_unlock( &big_lock );
+	mpc_common_io_noalloc_fprintf( stderr, "----------- EVENT TRACE END -----------\n" );
+	mpc_common_spinlock_unlock( &big_lock );
 }
 
 void mpc_common_debuger_print_backtrace( const char *format, ... )
@@ -433,7 +364,13 @@ void mpc_common_debuger_resolve( mpc_addr2line_t *tab, int size )
 {
 	int j;
 	int i;
-	mpc_common_spinlock_lock( &big_lock );
+	if( mpc_common_spinlock_trylock( &big_lock ) == 1 )
+	{
+		memset( tab, 0, sizeof( mpc_addr2line_t ) );
+		/* Already locked do not backtrace again */
+		return;
+	}
+
 	read_map();
 
 	for ( j = 0; j < size; j++ )

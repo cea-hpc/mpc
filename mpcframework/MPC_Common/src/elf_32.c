@@ -1062,6 +1062,13 @@ void sctk_read_elf_symbols_32( elf_class_t *c )
 	int i;
 	Elf32_Sym *sym;
 	i = c->symtab_idx;
+
+	if((i > c->header.h32.e_shnum) || (i < 0) )
+	{
+		/* Do not crash if we read garbage */
+		return;
+	}
+
 	sec = c->sections[i].h32;
 	sctk_free( c->symbols );
 	c->symbols = sctk_malloc( sec.sh_size );
