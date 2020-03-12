@@ -953,12 +953,30 @@ mpc_thread_create_vp_thread ( sctk_thread_t *restrict __threadp,
 
 
 #ifdef MPC_USE_EXTLS
-void static __extls_thread_init(void)
+static void __extls_thread_init(void)
 {
 	extls_init();
 	extls_set_context_storage_addr((void*(*)(void))sctk_get_ctx_addr);
 }
 
+static void __extls_thread_start(void)
+{
+	sctk_call_dynamic_initializers();
+}
+
+static void __extls_runtime_start(void)
+{
+	sctk_locate_dynamic_initializers();
+#if !defined(MPC_DISABLE_HLS)
+	extls_hls_topology_construct();
+#endif
+}
+
+
+static void __extls_runtime_end(void)
+{
+	extls_fini();
+}
 
 
 #endif
@@ -974,13 +992,10 @@ void mpc_thread_module_register()
 
 #ifdef MPC_USE_EXTLS
 	mpc_common_init_callback_register( "Base Runtime Init", "Initialize EXTLS", __extls_thread_init, 0 );
-	mpc_common_init_callback_register( "Base Runtime Finalize", "Finalize EXTLS", extls_fini, 99 );
-	mpc_common_init_callback_register( "Per Thread Init", "Dynamic Initializers", sctk_call_dynamic_initializers, 1 );
+	mpc_common_init_callback_register( "Base Runtime Finalize", "Finalize EXTLS", __extls_runtime_end, 99 );
+	mpc_common_init_callback_register( "Per Thread Init", "Dynamic Initializers", __extls_thread_start, 1 );
 
-	mpc_common_init_callback_register( "Base Runtime Init Done", "Locate Dynamic Initializers", sctk_locate_dynamic_initializers, 1 );
-	#if !defined(MPC_DISABLE_HLS)
-		mpc_common_init_callback_register( "Base Runtime Init Done", "Extls Topology Init", extls_hls_topology_construct, 2 );
-	#endif
+	mpc_common_init_callback_register( "Base Runtime Init Done", "Extls Runtime Init", __extls_runtime_start, 1 );
 #endif
 }
 

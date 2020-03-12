@@ -45,6 +45,7 @@
 
 #if MPC_USE_EXTLS
 #include <extls.h>
+#include <extls_dynamic.h>
 #endif
 
 /** storage slot used by libextls to store its own data.

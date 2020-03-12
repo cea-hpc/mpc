@@ -26,6 +26,8 @@
 #include <mpc_topology_device.h>
 #include <mpc_common_flags.h>
 
+#include <sctk_debug.h>
+
 static size_t nb_devices = 0;
 
 /**

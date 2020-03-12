@@ -831,8 +831,7 @@ static void *___auto_kill_func ( void *arg )
 			mpc_common_io_noalloc_fprintf ( stderr, "TIMEOUT reached\n" );
 		}
 
-		abort ();
-		exit ( -1 );
+		abort();
 	}
 
 	return NULL;
