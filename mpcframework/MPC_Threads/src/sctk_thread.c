@@ -655,22 +655,6 @@ void mpc_thread_spawn_virtual_processors ( void *( *run ) ( void * ), void *arg 
  * INITIALIZATION *
  ******************/
 
-void sctk_thread_init ( void )
-{
-#ifdef HAVE_HWLOC
-	sctk_alloc_posix_mmsrc_numa_init_phase_numa();
-#endif
-
-	sctk_thread_tls = sctk_get_current_alloc_chain();
-#ifdef MPC_Allocator
-	assert( sctk_thread_tls != NULL );
-#endif
-#ifdef SCTK_CHECK_CODE_RETURN
-	fprintf ( stderr, "Thread librarie return code check enable!!\n" );
-#endif
-	sctk_futex_context_init();
-	/*Check all types */
-}
 
 static void _sctk_thread_cleanup_end ( struct _sctk_thread_cleanup_buffer **__buffer )
 {
@@ -952,6 +936,37 @@ mpc_thread_create_vp_thread ( sctk_thread_t *restrict __threadp,
 }
 
 
+static inline void __thread_base_init ( void )
+{
+#ifdef HAVE_HWLOC
+	sctk_alloc_posix_mmsrc_numa_init_phase_numa();
+#endif
+
+	sctk_thread_tls = sctk_get_current_alloc_chain();
+#ifdef MPC_Allocator
+	assert( sctk_thread_tls != NULL );
+#endif
+#ifdef SCTK_CHECK_CODE_RETURN
+	fprintf ( stderr, "Thread librarie return code check enable!!\n" );
+#endif
+	sctk_futex_context_init();
+	/*Check all types */
+}
+
+static inline void __thread_engine_init( void )
+{
+	if ( mpc_common_get_flags()->thread_library_init != NULL )
+	{
+		mpc_common_get_flags()->thread_library_init();
+	}
+	else
+	{
+		fprintf( stderr, "No multithreading mode specified!\n" );
+		abort();
+	}
+}
+
+
 #ifdef MPC_USE_EXTLS
 static void __extls_thread_init(void)
 {
@@ -978,7 +993,6 @@ static void __extls_runtime_end(void)
 	extls_fini();
 }
 
-
 #endif
 
 
@@ -989,6 +1003,9 @@ void mpc_thread_module_register()
 {
 	MPC_INIT_CALL_ONLY_ONCE
 	mpc_common_init_callback_register( "Per Thread Init", "Allocator Numa Migrate", sctk_alloc_posix_numa_migrate, 0 );
+
+	mpc_common_init_callback_register("Base Runtime Init with Config", "Base init thread", __thread_base_init, 0);
+	mpc_common_init_callback_register("Base Runtime Init with Config", "Thread engine init", __thread_engine_init, 1);
 
 #ifdef MPC_USE_EXTLS
 	mpc_common_init_callback_register( "Base Runtime Init", "Initialize EXTLS", __extls_thread_init, 0 );

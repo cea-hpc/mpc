@@ -20885,10 +20885,10 @@ int PMPI_Comm_create_group(__UNUSED__  MPI_Comm comm, __UNUSED__ MPI_Group group
 int PMPI_Get_library_version( char *version, __UNUSED__  int  *resultlen )
 {
 	snprintf( version, MPI_MAX_LIBRARY_VERSION_STRING - 1,
-			  "MPC version %d.%d.%d%s %s %s",
+			  "MPC version %d.%d.%d%s %s",
 			  MPC_VERSION_MAJOR, MPC_VERSION_MINOR, MPC_VERSION_REVISION,
 			  MPC_VERSION_PRE,
-			  sctk_alloc_mode(), get_debug_mode() );
+			  sctk_alloc_mode());
 	*resultlen = strlen( version );
 	return MPI_SUCCESS;
 }

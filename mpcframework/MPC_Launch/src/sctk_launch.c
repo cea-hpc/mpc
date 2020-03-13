@@ -31,11 +31,9 @@
 #include <signal.h>
 
 #include <mpc_runtime_config.h>
-
 #include <mpc_common_flags.h>
 #include <mpc_common_helper.h>
 
-#include "sctk_thread.h"
 #include "sctk_launch.h"
 #include "sctk_debug.h"
 #include "mpc_common_asm.h"
@@ -44,8 +42,6 @@
 #include "mpc_topology.h"
 #include <mpc_launch_pmi.h>
 
-/* #include "sctk_daemons.h" */
-/* #include "sctk_io.h" */
 #include "mpc_runtime_config.h"
 #include "mpc_common_types.h"
 
@@ -71,105 +67,6 @@ extern char **environ;
 #define SCTK_DEBUG_MODE ""
 #endif
 
-#define SCTK_LAUNCH_MAX_ARG 4096
-
-#define MAX_TERM_LENGTH 80
-#define MAX_NAME_FORMAT 30
-/* const char *sctk_store_dir = "/dev/null"; */
-
-char *get_debug_mode()
-{
-	return SCTK_DEBUG_MODE;
-}
-
-void format_output( char *name, char *def )
-{
-	char n[MAX_NAME_FORMAT];
-	char *tmp;
-	char *tmp_tab;
-	char *old_tmp;
-	int i;
-
-	for ( i = 0; i < MAX_NAME_FORMAT; i++ )
-	{
-		n[i] = ' ';
-	}
-
-	n[MAX_NAME_FORMAT - 1] = '\0';
-	sprintf( n, "%s", name );
-	n[strlen( name )] = ' ';
-	fprintf( stderr, "  %s", n );
-
-	for ( i = 0; i < MAX_NAME_FORMAT; i++ )
-	{
-		n[i] = ' ';
-	}
-
-	n[MAX_NAME_FORMAT - 1] = '\0';
-	tmp_tab = (char *) sctk_malloc( ( 1 + strlen( def ) ) * sizeof( char ) );
-	memcpy( tmp_tab, def, ( 1 + strlen( def ) ) * sizeof( char ) );
-	tmp = tmp_tab;
-
-	while ( strlen( tmp ) > ( MAX_TERM_LENGTH - MAX_NAME_FORMAT ) )
-	{
-		old_tmp = tmp;
-		tmp = &( tmp[MAX_TERM_LENGTH - MAX_NAME_FORMAT] );
-
-		while ( ( tmp > old_tmp ) && ( tmp[0] != ' ' ) )
-		{
-			tmp--;
-		}
-
-		assume( tmp != old_tmp );
-		tmp[0] = '\0';
-		fprintf( stderr, "%s\n  %s", old_tmp, n );
-		tmp++;
-	}
-
-	fprintf( stderr, "%s", tmp );
-	fprintf( stderr, "\n" );
-}
-
-void sctk_use_pthread( void )
-{
-	mpc_common_get_flags()->thread_library_kind = "pthread";
-	mpc_common_get_flags()->thread_library_init = sctk_pthread_thread_init;
-}
-
-#if 0
-/* Note that we start with an agressive frequency
- * to speedup the polling during the init phase
- * we relax it after doing driver initialization */
-int __polling_done = 0;
-
-void *polling_thread( __UNUSED__ void *dummy )
-{
-	/* The role of this thread is to poll
-	 * idle in a gentle manner in order
-	 * to avoid starvation particularly
-	 * during init phases (where tasks
-	 * are not waiting but for example
-	 * might be in a PMI barrier.
-	 *
-	 * Note that as polling is hierarchical
-	 * the contention is limited */
-	mpc_topology_bind_to_cpu( -1 );
-
-	while ( 1 )
-	{
-#ifdef MPC_Message_Passing
-		sctk_network_notify_idle_message();
-#endif
-
-		if ( __polling_done )
-		{
-			break;
-		}
-	}
-
-	return NULL;
-}
-#endif
 
 void mpc_launch_print_banner( bool restart )
 {
@@ -206,11 +103,10 @@ void mpc_launch_print_banner( bool restart )
 
 			mpc_common_debug_log( "--------------------------------------------------------" );
 			mpc_common_debug_log( "MPC %s in %s", version_string, mpc_lang );
-			mpc_common_debug_log( "%d tasks %d processes %d cpus @ %2.2fGHz",
+			mpc_common_debug_log( "%d tasks %d processes %d cpus",
 								  mpc_common_get_flags()->task_number,
 								  mpc_common_get_flags()->process_number,
-								  mpc_topology_get_pu_count(),
-								  sctk_atomics_get_cpu_freq() / 1000000000.0 );
+								  mpc_topology_get_pu_count() );
 			mpc_common_debug_log( "%s Thread Engine", mpc_common_get_flags()->thread_library_kind );
 			mpc_common_debug_log( "%s %s %s", sctk_alloc_mode(), SCTK_DEBUG_MODE, mpc_common_get_flags()->checkpoint_model );
 			mpc_common_debug_log( "%s", mpc_common_get_flags()->sctk_network_description_string );
@@ -222,6 +118,12 @@ void mpc_launch_print_banner( bool restart )
 /********************
  * ARGUMENT SETTERS *
  ********************/
+
+void sctk_use_pthread( void )
+{
+	mpc_common_get_flags()->thread_library_kind = "pthread";
+	mpc_common_get_flags()->thread_library_init = sctk_pthread_thread_init;
+}
 
 static void sctk_use_ethread( void )
 {
@@ -648,6 +550,11 @@ static void __unpack_arguments()
 
 static void __set_mpc_common_process_number(void)
 {
+	if ( !mpc_common_get_flags()->task_number )
+	{
+		fprintf( stderr, "No task number specified!\n" );
+		sctk_abort();
+	}
 
 	if ( mpc_common_get_flags()->process_number && mpc_common_get_flags()->task_number )
 	{
@@ -661,6 +568,27 @@ static void __set_mpc_common_process_number(void)
 	if ( mpc_common_get_flags()->process_number > 1 )
 	{
 		mpc_common_set_process_count( mpc_common_get_flags()->process_number );
+	}
+}
+
+
+static void __topology_init()
+{
+	mpc_topology_init();
+
+	if ( mpc_common_get_flags()->processor_number > 1 )
+	{
+		if ( mpc_common_get_flags()->process_number > 1 )
+		{
+			int cpu_detected = mpc_topology_get_pu_count();
+
+			if ( cpu_detected < mpc_common_get_flags()->processor_number )
+			{
+				fprintf( stderr,
+						 "Processor number doesn't match number detected %d <> %d!\n",
+						 cpu_detected, mpc_common_get_flags()->processor_number );
+			}
+		}
 	}
 }
 
@@ -683,56 +611,14 @@ void mpc_launch_init_runtime()
 
 	/* As a first step initialize the PMI */
 	mpc_launch_pmi_init();
-	mpc_topology_init();
 
-#ifdef MPC_Fault_Tolerance
-	sctk_ft_init();
-#endif
-#ifdef MPC_Active_Message
-	arpc_init();
-#endif
+	__topology_init();
 
-
-	sctk_thread_init();
-
-	if ( mpc_common_get_flags()->thread_library_init != NULL )
-	{
-		mpc_common_get_flags()->thread_library_init();
-	}
-	else
-	{
-		fprintf( stderr, "No multithreading mode specified!\n" );
-		abort();
-	}
 
 	sctk_init_alloc();
 
-	if ( mpc_common_get_flags()->processor_number > 1 )
-	{
-		if ( mpc_common_get_flags()->process_number > 1 )
-		{
-			int cpu_detected;
-			cpu_detected = mpc_topology_get_pu_count();
+	mpc_common_init_trigger( "Base Runtime Init with Config" );
 
-			if ( cpu_detected < mpc_common_get_flags()->processor_number )
-			{
-				fprintf( stderr,
-						 "Processor number doesn't match number detected %d <> %d!\n",
-						 cpu_detected, mpc_common_get_flags()->processor_number );
-			}
-		}
-	}
-
-	if ( !mpc_common_get_flags()->task_number )
-	{
-		fprintf( stderr, "No task number specified!\n" );
-		sctk_abort();
-	}
-
-#ifdef SCTK_LIB_MODE
-	sctk_net_init_task_level( my_rank, 0 );
-#endif
-	sctk_atomics_cpu_freq_init();
 	mpc_common_init_print();
 	mpc_common_init_trigger( "Base Runtime Init Done" );
 	mpc_launch_print_banner( 0 /* not in restart mode */ );

@@ -2879,12 +2879,24 @@ static void __initialize_drivers()
 	mpc_lowcomm_coll_init_hook = *( void ** )( &sctk_runtime_config_get()->modules.inter_thread_comm.collectives_init_hook.value );
 	sctk_communicator_world_init ( mpc_common_get_flags()->task_number );
 	sctk_communicator_self_init ();
+
+
+#ifdef SCTK_LIB_MODE
+	sctk_net_init_task_level( my_rank, 0 );
+#endif
 }
 
 static void __finalize_driver()
 {
 	mpc_lowcomm_rdma_window_release_ht();
 }
+
+#ifdef MPC_USE_DMTCP
+static void __initialize_ft(void)
+{
+	sctk_ft_init();
+}
+#endif
 
 
 void mpc_lowcomm_registration() __attribute__((constructor));
@@ -2902,4 +2914,9 @@ void mpc_lowcomm_registration()
         mpc_common_init_callback_register("VP Thread Start", "MPC Message Passing Init per Task", __lowcomm_init_per_task, 0);
 
         mpc_common_init_callback_register("VP Thread End", "MPC Message Passing Release", __lowcomm_release, 0);
+
+#ifdef MPC_USE_DMTCP
+        mpc_common_init_callback_register("Base Runtime Init with Config", "Initialize Fault-Tolerance", __initialize_ft, 77);
+#endif
+
 }
