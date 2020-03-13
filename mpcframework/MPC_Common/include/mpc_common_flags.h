@@ -17,6 +17,9 @@ struct mpc_common_flags
         /* Launch command */
         char * exename;
 
+	/* Launcher used for MPC */
+	char * launcher;
+
 	/* Profiler output to be generated (requires MPC_Profiler) */
 	char * profiler_outputs;
 
@@ -40,6 +43,8 @@ struct mpc_common_flags
         short new_scheduler_engine_enabled;     /*< If the new thread engine has been enabled */
 
         /* Launch configuration */
+	unsigned int node_number;		/*< Number of MPC nodes passed on the CLI */
+	unsigned int process_number;		/*< Number of MPC processes passed on the CLI */
         unsigned int processor_number;          /*< Number of cores passed on the command-line */
         unsigned int task_number;               /*< Number of MPC tasks passed on the CLI */
 

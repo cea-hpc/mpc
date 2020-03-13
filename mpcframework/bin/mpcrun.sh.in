@@ -685,7 +685,7 @@ fi
 # Expand to MPC_ARGS #
 ######################
 
-MPC_STARTUP_ARGS="--sctk-args--"
+MPC_STARTUP_ARGS=""
 
 #
 # Argument expansion helpers
@@ -724,31 +724,26 @@ if test "$LAUNCHER_CPU_NB_WAS_SET" = "1" ; then
 	fi
 fi
 
+add_arg "--mpc-verbose" "$CONFIG_MPC_VERBOSE"
+
 add_flag "--enable-smt" "$CONFIG_ENABLE_SMT"
-add_flag "--graphic-placement" "$CONFIG_TOPOLOGY_DUMP_GRAPHIC"
-add_flag "--text-placement" "$CONFIG_TOPOLOGY_DUMP_TEXT"
+add_flag "--enable-graphic-placement" "$CONFIG_TOPOLOGY_DUMP_GRAPHIC"
+add_flag "--enable-text-placement" "$CONFIG_TOPOLOGY_DUMP_TEXT"
+append_arg "--enable-accl" "$CONFIG_ACCELERATOR_SUPPORT"
 
 append_arg "$MPC_ARG_THREAD_TYPE" "1"
 append_arg "$MPC_ARG_NETWORKING" "1"
-append_arg "--use-accl" "$CONFIG_ACCELERATOR_SUPPORT"
+
 append_arg "$MPC_ARG_FAULT_TOLERANCE" "1"
 
 add_arg "--task-number" "$MPC_ARG_TASK_NB"
 add_arg "--process-number" "$LAUNCHER_OPTION_PROCESS_NB"
 add_arg "--node-number" "$LAUNCHER_OPTION_NODE_NB"
 add_arg "--node-number" "$LAUNCHER_OPTION_NODE_NB"
+
 add_arg "--launcher" "$LAUNCHER_PLUGIN"
-add_arg "--mpc-verbose" "$CONFIG_MPC_VERBOSE"
 add_arg "--profiling" "$CONFIG_PROFILING"
 
-
-add_flag "--sctk-args-end--" "1"
-
-#TMP_SCTK_ARG="$MPC_STARTUP_ARGS"
-#MPC_STARTUP_ARGS=""
-#for arg in $TMP_SCTK_ARG; do
-#	MPC_STARTUP_ARGS="$MPC_STARTUP_ARGS $arg"
-#done
 
 ##############################
 # Configure Debugger Support #

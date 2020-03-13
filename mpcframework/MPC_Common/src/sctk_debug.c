@@ -376,16 +376,3 @@ void sctk_size_checking_eq( size_t a, size_t b, char *ca, char *cb, char *file,
 		abort();
 	}
 }
-
-/**********************************************************************/
-/*Other                                                               */
-/**********************************************************************/
-
-void sctk_init( void )
-{
-
-}
-
-void sctk_leave( void )
-{
-}

@@ -36,7 +36,6 @@ extern "C"
   int sctk_initialisation (char *args, int *argc, char ***argv);
   int sctk_env_exit (void);
   int sctk_launch_main (int argc, char **argv);
-  void sctk_launch_contribution (FILE * file);
   void mpc_launch_print_banner(bool);
 
 #ifdef HAVE_ENVIRON_VAR
@@ -45,7 +44,6 @@ extern "C"
   int mpc_user_main (int, char **);
 #endif
 
-  char* sctk_get_launcher_mode(void);
   char *get_debug_mode();
   int sctk_get_node_nb();
 
