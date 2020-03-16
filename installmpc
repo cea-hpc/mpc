@@ -1182,7 +1182,7 @@ if test -f bin/mpc_build_env.sh; then
 fi
 
 checking "Configuring MPC"
-wrap_output $SCRIPTPATH/mpcframework/configure --prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS
+wrap_output $SCRIPTPATH/configure --prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS
 ok
 
 #
