@@ -34,7 +34,7 @@
 #include <mpc_common_flags.h>
 #include <mpc_common_helper.h>
 
-#include "sctk_launch.h"
+#include "mpc_launch.h"
 #include "sctk_debug.h"
 #include "mpc_common_asm.h"
 #include "opa_primitives.h"

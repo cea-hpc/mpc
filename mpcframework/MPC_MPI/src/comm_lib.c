@@ -28,7 +28,7 @@
 #include <mpc_config.h>
 #include <sctk_communicator.h>
 
-#include <sctk_launch.h>
+#include <mpc_launch.h>
 #include <mpc_launch_pmi.h>
 #include <mpc_lowcomm_msg.h>
 #include <mpc_common_rank.h>

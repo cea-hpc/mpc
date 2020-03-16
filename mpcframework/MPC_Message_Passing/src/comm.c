@@ -36,7 +36,7 @@
 #include <sctk_reorder.h>
 #include <sctk_control_messages.h>
 #include <sctk_rail.h>
-#include <sctk_launch.h>
+#include <mpc_launch.h>
 #include <sctk_window.h>
 #include <mpc_common_profiler.h>
 

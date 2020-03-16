@@ -31,7 +31,7 @@
 #include <sys/time.h>
 #include <ctype.h>
 
-#include "sctk_launch.h"
+#include "mpc_launch.h"
 
 #include "mpcomp_task.h"
 #include "mpcomp_sync.h"

@@ -29,7 +29,7 @@
 #include "sctk_alloc.h"
 #include "sctk_debug.h"
 
-#include "sctk_launch.h"
+#include "mpc_launch.h"
 
 #ifndef SCTK_LIB_MODE
 	#include <pmi.h>

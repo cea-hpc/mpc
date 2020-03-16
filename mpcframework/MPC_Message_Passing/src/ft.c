@@ -25,7 +25,7 @@
 #include <signal.h>
 #include "sctk_debug.h"
 #include <mpc_launch_pmi.h>
-#include <sctk_launch.h>
+#include <mpc_launch.h>
 #include <mpc_common_flags.h>
 #include "sctk_ft_types.h"
 #include "sctk_multirail.h"

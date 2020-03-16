@@ -19,7 +19,7 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk_launch.h"
+#include "mpc_launch.h"
 #include "mpc_config.h"
 #include "sctk_debug.h"
 

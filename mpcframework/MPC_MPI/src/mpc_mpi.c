@@ -24,7 +24,7 @@
 #include <string.h>
 #include <mpc_mpi_internal.h>
 #include <mpc_common_helper.h>
-#include <sctk_launch.h>
+#include <mpc_launch.h>
 #include <mpc_common_datastructure.h>
 #include <mpc_common_profiler.h>
 #include "sctk_handle.h"

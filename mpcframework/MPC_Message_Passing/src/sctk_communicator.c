@@ -31,7 +31,7 @@
 #include "sctk_handle.h"
 #include "sctk_low_level_comm.h"
 
-#include <sctk_launch.h>
+#include <mpc_launch.h>
 
 #ifdef MPC_THREAD
 	#include "sctk_thread.h"

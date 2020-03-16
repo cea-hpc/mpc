@@ -26,7 +26,7 @@
 #include "sctk_checksum.h"
 #include "mpc_runtime_config.h"
 #include "sctk_control_messages.h"
-#include <sctk_launch.h>
+#include <mpc_launch.h>
 
 #include <mpc_common_rank.h>
 
