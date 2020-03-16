@@ -366,7 +366,7 @@ set_default_compiler()
 	# -r: extended regexes
 	# -e: run script
 	# -n: does output (only matching w/ /p)
-	exists="`get_compilers_in "$1" | sed -n -e "\,^.*:${2}:.*$,p"`"
+	exists="\`get_compilers_in "\$1" | sed -n -e "\\,^.*:\${2}:.*\$,p"\`"
 
 	#add it if not already done (add_compiler() does some extra stuff).
 	if test -z "\$exists"; then
@@ -375,7 +375,7 @@ set_default_compiler()
 	fi
 
 	#set the compiler as the first one
-	CURRENT="`cat ${COMPILER_FILEPATH}/.${1}_compilers.cfg | grep -v $2`"
+	CURRENT="\`cat \${COMPILER_FILEPATH}/.\${1}_compilers.cfg | grep -v \$2\`"
 	echo "${exists}\n${CURRENT}" > ${COMPILER_FILEPATH}/.${1}_compilers.cfg
 }
 
