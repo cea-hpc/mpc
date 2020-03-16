@@ -45,20 +45,8 @@
 #include "mpc_runtime_config.h"
 #include "mpc_common_types.h"
 
-#ifdef MPC_USE_EXTLS
-#include <extls_hls.h>
-#endif
-
-#ifdef MPC_Active_Message
-#include "arpc_common.h"
-#endif
-
 #ifdef HAVE_ENVIRON_VAR
 extern char **environ;
-#endif
-
-#ifdef MPC_AIO_ENABLED
-#include "sctk_aio.h"
 #endif
 
 #if defined( MPC_ENABLE_DEBUG_MESSAGES )
@@ -627,9 +615,7 @@ void mpc_launch_init_runtime()
 int mpc_launch_release_runtime()
 {
 	mpc_topology_destroy();
-#ifdef MPC_AIO_ENABLED
-	mpc_common_aio_threads_release();
-#endif
+
 	return 0;
 }
 

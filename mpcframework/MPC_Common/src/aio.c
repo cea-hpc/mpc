@@ -34,7 +34,7 @@
 #include <time.h>
 
 #include "sctk_debug.h"
-
+#include <mpc_common_flags.h>
 #include "pthread.h"
 
 
@@ -1055,3 +1055,22 @@ int mpc_common_aio_lio_listio( int mode, struct aiocb *const aiocb_list[], int n
 
 	return 0;
 }
+
+#ifdef MPC_AIO_ENABLED
+static void __release_AIO_threads(void)
+{
+	mpc_common_aio_threads_release();
+}
+
+
+
+void mpc_lowcomm_registration() __attribute__((constructor));
+
+void mpc_common_AIO_registration()
+{
+        MPC_INIT_CALL_ONLY_ONCE
+
+        mpc_common_init_callback_register("Base Runtime Finalize", "Release AIO threads", __release_AIO_threads, 77);
+}
+
+#endif
