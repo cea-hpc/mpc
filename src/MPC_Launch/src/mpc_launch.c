@@ -378,8 +378,10 @@ static inline void __startup_arg_free( startup_arg_t *arg )
 static OPA_int_t __mpc_main_return_code;
 #define MPC_INCOHERENT_RETCODE 42
 
-static void *mpc_launch_vp_start_function( startup_arg_t *arg )
+static void *__mpc_mpi_task_start_function( void *parg )
 {
+    startup_arg_t *arg = (startup_arg_t *)parg;
+
     int retcode;
     startup_arg_t *duplicate_args = __startup_arg_extract_and_duplicate( arg );
     /* In libmode there is no main */
@@ -578,7 +580,15 @@ static void __topology_init()
 
 void mpc_launch_init_runtime()
 {
-    sctk_only_once();
+    static int __init_already_done = 0;
+
+    if(__init_already_done)
+    {
+        return;
+    }
+
+    __init_already_done = 1;
+
     mpc_common_init_trigger( "Base Runtime Init" );
 
     /* WARNING !! NO CONFIG before this point */
@@ -610,8 +620,8 @@ void mpc_launch_init_runtime()
 
 int mpc_launch_release_runtime()
 {
+    mpc_common_init_trigger( "Base Runtime Finalize" );
     mpc_topology_destroy();
-
     return 0;
 }
 
@@ -621,14 +631,19 @@ int mpc_launch_main( int argc, char **argv )
 {
     /* Initialize return code to -1 (as not set) */
     OPA_store_int( &__mpc_main_return_code, -1 );
+  
     mpc_launch_init_runtime();
+  
     mpc_common_get_flags()->exename = argv[0];
+  
     startup_arg_t arg;
     arg.argc = argc;
     arg.argv = argv;
-    mpc_thread_spawn_virtual_processors( (void *(*) (void *) ) mpc_launch_vp_start_function, &arg );
+ 
+    mpc_thread_spawn_mpi_tasks( __mpc_mpi_task_start_function, &arg );
+ 
     mpc_launch_release_runtime();
-    mpc_common_init_trigger( "Base Runtime Finalize" );
+
     return OPA_load_int( &__mpc_main_return_code );
 }
 

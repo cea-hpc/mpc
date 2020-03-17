@@ -143,7 +143,7 @@ sctk_thread_data_t *sctk_thread_data_get ( void );
 sctk_thread_data_t *__sctk_thread_data_get ( int no_disguise );
 
 int sctk_thread_get_current_local_tasks_nb();
-void mpc_thread_spawn_virtual_processors ( void *( *run ) ( void * ), void *arg );
+void mpc_thread_spawn_mpi_tasks ( void *( *run ) ( void * ), void *arg );
 
 int sctk_thread_get_vp ( void );
 int sctk_get_init_vp_and_nbvp ( int i, int *nbVp );

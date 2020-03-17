@@ -71,7 +71,7 @@ const _mpc_cl_group_t mpc_group_null = {-1, NULL};
 mpc_lowcomm_request_t mpc_request_null;
 
 /** \brief Intitializes thread context keys
- * This function is called by mpc_thread_spawn_virtual_processors
+ * This function is called by mpc_thread_spawn_mpi_tasks
  */
 void mpc_cl_init_thread_keys()
 {

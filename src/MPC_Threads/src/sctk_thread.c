@@ -606,10 +606,10 @@ static inline void __init_brk_for_task( void )
 	sctk_leave_no_alloc_land();
 }
 
-void mpc_thread_spawn_virtual_processors ( void *( *run ) ( void * ), void *arg )
+void mpc_thread_spawn_mpi_tasks ( void *( *mpi_task_start_func ) ( void * ), void *arg )
 {
 	__init_thread_cleanup_callback_key();
-        __set_thread_cleanup_callback_key();
+    __set_thread_cleanup_callback_key();
 	__prepare_free_pages();
 	__init_brk_for_task();
 	__timer_thread_start();
@@ -631,7 +631,7 @@ void mpc_thread_spawn_virtual_processors ( void *( *run ) ( void * ), void *arg 
 	for ( i = start_thread; i < start_thread + local_threads; i++ )
 	{
 		sctk_register_task( local_task_id_counter );
-		mpc_thread_create_vp_thread( &( threads[local_task_id_counter] ), NULL, run, arg, ( long ) i, local_task_id_counter );
+		mpc_thread_create_vp_thread( &( threads[local_task_id_counter] ), NULL, mpi_task_start_func, arg, ( long ) i, local_task_id_counter );
 		local_task_id_counter++;
 	}
 
