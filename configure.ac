@@ -1549,23 +1549,23 @@ AC_SUBST([MPC_OPENMP_ENABLED])
 # Compute the all MPC libs variable
 #
 
-ALL_MPC_LIBS="${ac_pwd}/MPC_Config/src/libmpcconfig.la"
+ALL_MPC_LIBS="${ac_pwd}/src/MPC_Config/src/libmpcconfig.la"
 
 if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
-	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/MPC_Launch/src/libmpclaunch.la"
-	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/MPC_Threads/src/libmpcthread.la"
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Launch/src/libmpclaunch.la"
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Threads/src/libmpcthread.la"
 fi
 
 if test "x${MPC_OPENMP_ENABLED}" = "xyes"; then
-	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/MPC_OpenMP/src/libmpcomp.la"
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_OpenMP/src/libmpcomp.la"
 fi
 
 if test "x${MPC_MPI_ENABLED}" = "xyes"; then
-	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/MPC_Message_Passing/src/libmpclowcomm.la"
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Message_Passing/src/libmpclowcomm.la"
 fi
 
 if test "x${MPC_MPI_ENABLED}" = "xyes"; then
-	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/MPC_MPI/src/libmpcmpi.la"
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_MPI/src/libmpcmpi.la"
 fi
 
 AC_SUBST([ALL_MPC_LIBS])

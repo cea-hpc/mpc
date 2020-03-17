@@ -16,7 +16,7 @@ mpc_headerdir=$(includedir)/mpc/
 
 noinst_LTLIBRARIES = libmpclaunch.la
 
-libmpclaunch_la_SOURCES = main.c  mpcc.c  mpc_libc_main.c  sctk_launch.c pmi.c
+libmpclaunch_la_SOURCES = main.c  mpcc.c  mpc_libc_main.c  mpc_launch.c pmi.c
 
 if HYDRA_CLIENT_LIB_ENABED
         libmpclaunch_la_SOURCES += ./hydra_client/safestr2.c  ./hydra_client/simple_pmi.c  ./hydra_client/simple_pmiutil.c
