@@ -1,3 +1,4 @@
 .gitlab-ci.yml
 **/.vscode/**
 BUILD/*
+autom4te.cache/*
