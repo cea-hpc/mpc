@@ -24,9 +24,9 @@
 #include <mpcthread.h>
 
 #include <mpcmicrothread.h>
-
-
 #include <mpc_common_helper.h>
+#include <mpc_common_flags.h>
+
 #include "mpcmicrothread_internal.h"
 #include "sctk_alloc.h"
 #include "sctk_context.h"
@@ -276,7 +276,7 @@ sctk_microthread_init (long nb_vp, sctk_microthread_t * self)
 
       sctk_thread_attr_setbinding (& __attr, target_vp ) ;
 
-      if (sctk_is_in_fortran == 1)
+      if (mpc_common_get_flags()->is_fortran == 1)
 	stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
       else
 	stack_size = SCTK_ETHREAD_STACK_SIZE;

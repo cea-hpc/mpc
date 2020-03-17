@@ -41,11 +41,6 @@ extern "C"
 #include "mpc_common_types.h"
 #include "mpc_keywords.h"
 
-/*   extern const char *sctk_store_dir; */
-extern int sctk_is_in_fortran;
-
-void sctk_init( void );
-void sctk_leave( void );
 
 /* DEBUG FUNCTIONS START */
 void sctk_abort( void ) __attribute__( ( __noreturn__ ) );

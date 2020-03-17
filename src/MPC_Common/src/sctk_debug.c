@@ -44,8 +44,6 @@
 #define SMALL_BUFFER_SIZE ( 4 * 1024 )
 #define DEBUG_INFO_SIZE ( 64 )
 
-int sctk_is_in_fortran = 0;
-
 
 /**********************************************************************/
 /*Threads support                                                     */
@@ -182,7 +180,7 @@ void mpc_common_debug_info( const char *fmt, ... )
 
 #ifdef MPC_ENABLE_SHELL_COLORS
 		char info_message[SMALL_BUFFER_SIZE];
-		mpc_common_io_noalloc_snprintf( info_message, SMALL_BUFFER_SIZE, SCTK_COLOR_GRAY_BOLD( "%s" ), fmt );
+		mpc_common_io_noalloc_snprintf( info_message, SMALL_BUFFER_SIZE, SCTK_COLOR_VIOLET_BOLD( "%s" ), fmt );
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s INFO %s\n",
 		                                __debug_print_info( debug_info ),

@@ -1494,7 +1494,7 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
     
     if (stack == NULL)
       {
-	if (sctk_is_in_fortran == 1 && stack_size <= 0)
+	if (mpc_common_get_flags()->is_fortran == 1 && stack_size <= 0)
 	  stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
 	else if (stack_size <= 0){
 	  stack_size = SCTK_ETHREAD_STACK_SIZE;

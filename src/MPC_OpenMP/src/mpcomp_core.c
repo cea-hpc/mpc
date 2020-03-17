@@ -25,6 +25,7 @@
 #include "sctk_thread_generic_kind.h"
 
 #include <mpc_common_rank.h>
+#include <mpc_common_flags.h>
 #include "sctk_debug.h"
 #include "mpc_topology.h"
 #include "mpc_runtime_config.h"
@@ -534,7 +535,7 @@ static inline void __mpcomp_read_env_variables()
 
 	if ( OMP_STACKSIZE == 0 )
 	{
-		if ( sctk_is_in_fortran == 1 )
+		if ( mpc_common_get_flags()->is_fortran == 1 )
 		{
 			OMP_STACKSIZE = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
 		}

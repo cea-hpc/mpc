@@ -37,10 +37,10 @@
 #include "sctk_thread_dbg.h"
 #endif
 #include "sched.h"
-#include "mpc_common_asm.h"
-#include "mpc_common_helper.h"
-
-#include "mpc_runtime_config.h"
+#include <mpc_common_asm.h>
+#include <mpc_common_helper.h>
+#include <mpc_common_flags.h>
+#include <mpc_runtime_config.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -1682,7 +1682,7 @@ extern "C"
 
     if (stack == NULL)
       {
-	if (sctk_is_in_fortran == 1 && stack_size <= 0)
+	if (mpc_common_get_flags()->is_fortran == 1 && stack_size <= 0)
 	  stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
 	else if (stack_size <= 0)
 	  stack_size = SCTK_ETHREAD_STACK_SIZE;

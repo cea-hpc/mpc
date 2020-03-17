@@ -20,6 +20,9 @@ struct mpc_common_flags
 	/* Launcher used for MPC */
 	char * launcher;
 
+        /* MPC was launched in Fortran */
+        short is_fortran;
+
 	/* Profiler output to be generated (requires MPC_Profiler) */
 	char * profiler_outputs;
 

@@ -41,8 +41,8 @@
 #include "sctk_kernel_thread.h"
 #include <semaphore.h>
 
-
-#include "mpc_common_asm.h"
+#include <mpc_common_flags.h>
+#include <mpc_common_asm.h>
 
 #include <mpc_topology.h>
 
@@ -205,7 +205,7 @@ pthread_user_create (pthread_t * thread, pthread_attr_t * attr,
   sem_wait (&sctk_pthread_user_create_sem);
   sctk_pthread_user_create_start_routine = start_routine;
 
-  if (sctk_is_in_fortran == 1)
+  if (mpc_common_get_flags()->is_fortran == 1)
     size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
   else
     size = SCTK_ETHREAD_STACK_SIZE;
@@ -213,7 +213,7 @@ pthread_user_create (pthread_t * thread, pthread_attr_t * attr,
   size += sctk_extls_size();
 
 
-  if ((attr == NULL) && (sctk_is_in_fortran != 1))
+  if ((attr == NULL) && (mpc_common_get_flags()->is_fortran != 1))
     {
       pthread_attr_t tmp_attr;
       int res;
@@ -330,7 +330,7 @@ local_pthread_create (pthread_t * restrict thread,
         mpc_topology_bind_to_cpu (data->local_task_id);
       }
 
-      if (sctk_is_in_fortran == 1)
+      if (mpc_common_get_flags()->is_fortran == 1)
 	size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
       else
 	size = SCTK_ETHREAD_STACK_SIZE;

@@ -41,7 +41,6 @@ extern "C"
 #define SCTK_KO * 1024
 #define SCTK_MO * 1024 * 1024
 
-extern int sctk_is_in_fortran;
 #define SCTK_ETHREAD_STACK_SIZE 10 SCTK_MO
 #define SCTK_ETHREAD_THREAD_STACK_SIZE 4 SCTK_MO // UPDATE FOR UTS BENCHMARK
 

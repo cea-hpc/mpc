@@ -23,47 +23,48 @@
 #ifndef __SCTK_LAUNCH_H_
 #define __SCTK_LAUNCH_H_
 
-#include "mpc_config.h"
-#include "mpc_common_types.h"
 #include <stdio.h>
+
+#include <mpc_config.h>
+#include <mpc_common_types.h>
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-  void sctk_init_mpc_runtime();
 
-  int sctk_env_init (int *argc, char ***argv);
-  int sctk_initialisation (char *args, int *argc, char ***argv);
-  int sctk_env_exit (void);
-  int sctk_launch_main (int argc, char **argv);
-  void mpc_launch_print_banner(bool);
+
+void mpc_launch_init_runtime();
+
+
+int mpc_launch_main (int argc, char **argv);
+
+
+void mpc_launch_print_banner(bool);
 
 #ifdef HAVE_ENVIRON_VAR
-  int mpc_user_main (int, char **, char**);
+int mpc_user_main (int, char **, char**);
 #else
-  int mpc_user_main (int, char **);
+int mpc_user_main (int, char **);
 #endif
 
-  char *get_debug_mode();
-  int sctk_get_node_nb();
 
-  void sctk_set_net_val (void (*val) (int *, char ***));
-
-  void mpc_start_ (void);
-  void mpc_start__ (void);
+void mpc_start_ (void);
+void mpc_start__ (void);
 
 #ifndef SCTK_LIB_MODE
 
-	#ifdef HAVE_ENVIRON_VAR
-	  extern int mpc_user_main__ (int, char **,char**);
-	#else
-	  extern int mpc_user_main__ (int, char **);
-	#endif
+#ifdef HAVE_ENVIRON_VAR
+extern int mpc_user_main__ (int, char **,char**);
+#else
+extern int mpc_user_main__ (int, char **);
+#endif
 
-	#if defined(MPC_Message_Passing) || defined(MPC_Threads)
-	int main_c (int argc, char **argv);
-	int main_fortran (int argc, char **argv);
-	#endif
+#if defined(MPC_Message_Passing) || defined(MPC_Threads)
+int main_c (int argc, char **argv);
+int main_fortran (int argc, char **argv);
+
+#endif
 
 #endif /* SCTK_LIB_MODE */
 
