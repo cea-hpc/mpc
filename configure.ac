@@ -808,6 +808,9 @@ AC_CHECK_FUNCS([socket connect accept])
 AC_CHECK_FUNCS([dup2 fdatasync])
 AC_CHECK_FUNCS([makecontext setcontext getcontext swapcontext])
 
+# Check for libmath
+AC_CHECK_LIB([m],[log])
+
 # Check for pThread
 
 AC_MSG_NOTICE(Check Pthreads functions)

@@ -520,7 +520,7 @@ libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	./shm/sctk_shm_frag.c ./shm/sctk_shm_qemu.c \
 	./shm/sctk_shm_raw_queues_internals.c $(am__append_4) \
 	$(am__append_5)
-libmpclowcomm_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la
+libmpclowcomm_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la -lm
 all: all-am
 
 .SUFFIXES:

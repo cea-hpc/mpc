@@ -54,7 +54,6 @@ FLAGS="$FLAGS ${HWLOC_LDFLAGS}"
 # MPC_Launch
 FLAGS="$FLAGS -ldl"
 
-
 if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
 	# MPC_Thread
 	FLAGS="$FLAGS  -lmpcthread -lpthread ${EXTLS_LDFLAGS}"
@@ -67,7 +66,7 @@ fi
 
 if test "x${MPC_MESSAGE_PASSING_ENABLED}" = "xyes"; then
 	# MPC_Message_Passing
-	FLAGS="$FLAGS  -lmpclowcomm"
+	FLAGS="$FLAGS  -lmpclowcomm -lm"
 fi
 
 if test "x${MPC_MPI_ENABLED}" = "xyes"; then
