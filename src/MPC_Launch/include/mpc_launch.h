@@ -20,58 +20,41 @@
 /* #   - BOUHROUR Stephane stephane.bouhrour@exascale-computing.eu        # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK_LAUNCH_H_
-#define __SCTK_LAUNCH_H_
-
-#include <stdio.h>
+#ifndef MPC_LAUNCH_H
+#define MPC_LAUNCH_H
 
 #include <mpc_config.h>
-#include <mpc_common_types.h>
+
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
+/**
+* @brief Print MPC's Banner Only visible with -v
+*
+* @param restarting true if from checkpoint
+*/
+void mpc_launch_print_banner( bool restarting );
 
+/**
+* @brief This is the main entry point to initialize MPC
+*
+*/
 void mpc_launch_init_runtime();
 
-
-int mpc_launch_main (int argc, char **argv);
-
-
-void mpc_launch_print_banner(bool);
-
-#ifdef HAVE_ENVIRON_VAR
-int mpc_user_main (int, char **, char**);
-#else
-int mpc_user_main (int, char **);
-#endif
-
-
-void mpc_start_ (void);
-void mpc_start__ (void);
-
-#ifndef SCTK_LIB_MODE
-
-#ifdef HAVE_ENVIRON_VAR
-extern int mpc_user_main__ (int, char **,char**);
-#else
-extern int mpc_user_main__ (int, char **);
-#endif
-
-#if defined(MPC_Message_Passing) || defined(MPC_Threads)
-int main_c (int argc, char **argv);
-int main_fortran (int argc, char **argv);
-
-#endif
-
-#endif /* SCTK_LIB_MODE */
-
-
-void mpc_launch_init_runtime();
+/**
+* @brief Main wrapper for MPC launch (calling INIT/RELEASE)
+*
+* @param argc number of arguments
+* @param argv Arguments
+* @return int return value
+*/
+int mpc_launch_main( int argc, char **argv );
 
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif /* MPC_LAUNCH_H */
