@@ -235,18 +235,32 @@ static void read_map()
 
 static mpc_common_spinlock_t big_lock = SCTK_SPINLOCK_INITIALIZER;
 
-void sctk_vprint_backtrace( const char *format, va_list ap )
+static inline void __no_backtrace( void )
 {
-	if( mpc_common_spinlock_trylock( &big_lock ) == 1 )
+	mpc_common_io_noalloc_fprintf( stderr, "UNABLE TO BACKTRACE\n" );
+}
+
+
+static inline void __execinfo_backtrace( void )
+{
+#if HAVE_EXECINFO_H
+	void *array[50];
+	size_t size = 50;
+	if(0 < (size =  backtrace(array, size)))
 	{
-		/* Already locked do not backtrace again */
-		return;
+		backtrace_symbols_fd( array, size, 2 );
 	}
+	else
+	{
+		__no_backtrace();
+	}
+#else
+	__no_backtrace();
+#endif
+}
 
-	mpc_common_io_noalloc_fprintf( stderr, "---------- EVENT TRACE START ----------\n" );
-	mpc_common_io_noalloc_vfprintf( stderr, format, ap );
-
-#ifdef MPC_HAVE_LIBUNWIND
+static inline __libunwind_backtrace( void )
+{
 	unw_cursor_t cursor;
 	unw_context_t uc;
 	unw_word_t ip, sp;
@@ -338,15 +352,29 @@ void sctk_vprint_backtrace( const char *format, va_list ap )
 	}
 
 	mpc_common_io_noalloc_fprintf( stderr, "\n"SCTK_COLOR_VIOLET_BOLD(})"\n" );
+}
 
-#elif defined HAVE_EXECINFO_H
-	void *array[20];
-	size_t size = 20;
-	backtrace_symbols_fd( array, size, 2 );
-#else
+
+
+void sctk_vprint_backtrace( const char *format, va_list ap )
+{
+	if( mpc_common_spinlock_trylock( &big_lock ) == 1 )
+	{
+		/* Already locked do not backtrace again 
+		   we may have crashed backtracing use execinfo*/
+		/* As it may be another thread backtracing just sleep a few
+		   seconds before ending abruptly*/
+		   sleep(2);
+		return;
+	}
+
 	mpc_common_io_noalloc_fprintf( stderr, "---------- EVENT TRACE START ----------\n" );
 	mpc_common_io_noalloc_vfprintf( stderr, format, ap );
-	mpc_common_io_noalloc_fprintf( stderr, "UNABLE TO BACKTRACE\n" );
+
+#ifdef MPC_HAVE_LIBUNWIND
+	__libunwind_backtrace();
+#else
+	__execinfo_backtrace();
 #endif
 	mpc_common_io_noalloc_fprintf( stderr, "----------- EVENT TRACE END -----------\n" );
 	mpc_common_spinlock_unlock( &big_lock );
@@ -449,7 +477,21 @@ void mpc_common_debugger_sig_handler( int sig, siginfo_t *info, __UNUSED__ void 
 	sctk_error( "                                                          " );
 	sctk_error( "!!! MPC will now segfault indiferently from the signal !!!" );
 	sctk_error( "==========================================================" );
-	mpc_common_debuger_print_backtrace( "" );
+	
+	static __thread int already_in_sighandler = 0;
+
+	if(!already_in_sighandler)
+	{
+		already_in_sighandler = 1;
+		mpc_common_debuger_print_backtrace( "" );
+	}
+	else
+	{
+		/* Something went wrong when backtracing 
+		   use fallback method*/
+		__execinfo_backtrace();
+	}
+
 	fprintf( stderr, "\n" );
 	fprintf( stderr, "*************************************************\n" );
 	fprintf( stderr, "* MPC has tried to backtrace but note that      *\n" );

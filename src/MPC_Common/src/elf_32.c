@@ -848,6 +848,9 @@ read_dwarf_abbrev_32( elf_class_t *c, char *abbrev,
 
 		do
 		{
+			if(!ptr)
+				break;
+
 			unsigned long form;
 			char *dir;
 
