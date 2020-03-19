@@ -2713,14 +2713,26 @@ int _mpc_cl_sendrecv( void *sendbuf, mpc_lowcomm_msg_count_t sendcount, mpc_lowc
                       mpc_lowcomm_datatype_t recvtype, int source, int recvtag, mpc_lowcomm_communicator_t comm,
                       mpc_lowcomm_status_t *status )
 {
-	mpc_lowcomm_request_t sendreq;
-	mpc_lowcomm_request_t recvreq;
-	sendreq = MPC_REQUEST_NULL;
-	recvreq = MPC_REQUEST_NULL;
-	_mpc_cl_irecv( recvbuf, recvcount, recvtype, source, recvtag, comm, &recvreq );
-	_mpc_cl_isend( sendbuf, sendcount, sendtype, dest, sendtag, comm, &sendreq );
-	_mpc_cl_wait( &sendreq, status );
-	_mpc_cl_wait( &recvreq, status );
+
+	mpc_lowcomm_request_t reqs[2];
+	reqs[0] = MPC_REQUEST_NULL;
+	reqs[1] = MPC_REQUEST_NULL;
+ 
+	//sctk_error("SEND %p CNT %d DEST %d TAG %d", sendbuf, sendcount, dest, sendtag);
+	//sctk_error("RECV %p CNT %d SRC %d TAG %d", recvbuf, recvcount, source, recvtag);
+
+	_mpc_cl_irecv( recvbuf, recvcount, recvtype, source, recvtag, comm, &reqs[0] );
+	_mpc_cl_isend( sendbuf, sendcount, sendtype, dest, sendtag, comm, &reqs[1] );
+
+	MPI_Status st[2];
+
+	_mpc_cl_waitall(2, reqs, st);
+
+	if(status != SCTK_STATUS_NULL)
+	{
+		memcpy(status, &st[0], sizeof(MPI_Status));
+	}
+
 	MPC_ERROR_SUCESS();
 }
 
@@ -2729,6 +2741,7 @@ int _mpc_cl_sendrecv( void *sendbuf, mpc_lowcomm_msg_count_t sendcount, mpc_lowc
 /****************
  * MESSAGE WAIT *
  ****************/
+
 
 int _mpc_cl_wait( mpc_lowcomm_request_t *request, mpc_lowcomm_status_t *status )
 {
@@ -4052,29 +4065,28 @@ static inline int *__mpc_cl_comm_task_list( mpc_lowcomm_communicator_t comm, int
 }
 
 int _mpc_cl_intercomm_create( mpc_lowcomm_communicator_t local_comm, int local_leader,
-                              mpc_lowcomm_communicator_t peer_comm, int remote_leader,
-                              int tag, mpc_lowcomm_communicator_t *newintercomm )
+							  mpc_lowcomm_communicator_t peer_comm, int remote_leader,
+							  int tag, mpc_lowcomm_communicator_t *newintercomm )
 {
-	int rank, grank;
-	int i;
-	int present = 0;
-	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific;
-	task_specific = _mpc_cl_per_mpi_process_ctx_get();
-	int *task_list;
-	int size;
-	int other_leader;
-	int first = 0;
+
+	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
+
 	mpc_lowcomm_status_t status;
-	rank = mpc_lowcomm_communicator_rank( SCTK_COMM_WORLD, task_specific->task_id );
-	grank = mpc_lowcomm_communicator_rank( local_comm, task_specific->task_id );
-	size = mpc_lowcomm_communicator_size( local_comm );
+
 	sctk_assert( local_comm != SCTK_COMM_NULL );
-	task_list = __mpc_cl_comm_task_list( local_comm, size );
+
+	int rank = mpc_common_get_task_rank();
+	int grank = mpc_lowcomm_communicator_rank( local_comm, rank );
+	int size = mpc_lowcomm_communicator_size( local_comm );
+
+	int * task_list = __mpc_cl_comm_task_list( local_comm, size );
+
+	int other_leader, first;
 
 	if ( grank == local_leader )
 	{
 		_mpc_cl_sendrecv( &remote_leader, 1, MPC_INT, remote_leader, tag, &other_leader,
-		                  1, MPC_INT, remote_leader, tag, peer_comm, &status );
+						  1, MPC_INT, remote_leader, tag, peer_comm, &status );
 
 		if ( other_leader < remote_leader )
 		{
@@ -4087,10 +4099,13 @@ int _mpc_cl_intercomm_create( mpc_lowcomm_communicator_t local_comm, int local_l
 	}
 
 	_mpc_cl_bcast( &first, 1, MPC_INT, local_leader, local_comm );
-	( *newintercomm ) = sctk_create_intercommunicator(
-	                        local_comm, local_leader, peer_comm, remote_leader, tag, first );
+
+	*newintercomm = sctk_create_intercommunicator(local_comm, local_leader, peer_comm, remote_leader, tag, first);
+
 	sctk_nodebug( "new intercomm %d", *newintercomm );
-	_mpc_cl_barrier( local_comm );
+
+	int present = 0;
+	int i;
 
 	for ( i = 0; i < size; i++ )
 	{
@@ -4101,16 +4116,23 @@ int _mpc_cl_intercomm_create( mpc_lowcomm_communicator_t local_comm, int local_l
 		}
 	}
 
+	sctk_free(task_list);
+
 	if ( present )
 	{
-		__mpc_cl_per_communicator_alloc_from_existing(
-		    task_specific, *newintercomm, local_comm );
-		_mpc_cl_barrier( local_comm );
+		__mpc_cl_per_communicator_alloc_from_existing(task_specific, *newintercomm, local_comm );
+
 	}
+
+	if ( grank == local_leader )
+	{
+		_mpc_cl_sendrecv( &remote_leader, 1, MPC_INT, remote_leader, tag, &other_leader,
+							1, MPC_INT, remote_leader, tag, peer_comm, &status );
+	}
+	_mpc_cl_barrier( local_comm );
 
 	MPC_ERROR_SUCESS();
 }
-
 
 int _mpc_cl_comm_free( mpc_lowcomm_communicator_t *comm )
 {

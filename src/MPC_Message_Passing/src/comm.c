@@ -1847,7 +1847,8 @@ static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matchin
 		}
 
 		/* Match the communicator, the tag, the source and the specific message tag */
-
+		//sctk_error("Looking for C %d S %d SS %d T %d HAVE C %d S %d SS %d T %d", header->communicator, header->source_task, header->source, header->message_tag,
+		//													header_found->communicator, header_found->source_task, header_found->source, header_found->message_tag);
 		if ( /* Match Communicator */
 		    ( header->communicator == header_found->communicator ) &&
 		    /* Match message type */
@@ -2284,7 +2285,7 @@ static inline void __mpc_comm_ptp_msg_wait( struct mpc_lowcomm_ptp_msg_progress_
 
                 if (  request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE )
                 {
-		        sctk_network_notify_idle_message();
+		        	sctk_network_notify_idle_message();
                 }
 	}
 	else
