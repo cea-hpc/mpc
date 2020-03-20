@@ -1212,15 +1212,23 @@ fi
 
 propagate_build_env
 
-if test -f bin/mpc_build_env.sh; then
+BUILD_CONF_PATH=${PROJECT_BUILD_DIR}/src/bin/mpc_build_env.sh
+
+if test -f "${BUILD_CONF_PATH}" ; then
 	checking "remove previous MPC configuration state"
-	show_run_cmd "rm -fr bin/mpc_build_env.sh"
-	rm -fr bin/mpc_build_env.sh
+	show_run_cmd "rm -fr $BUILD_CONF_PATH"
+	rm -fr "${BUILD_CONF_PATH}"
 	ok
 fi
 
+MPC_CONFIGURE_OPTS="--prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS"
+
+#
+# Configure MPC
+#
+
 checking "Configuring MPC"
-wrap_output "$SCRIPTPATH/configure" "--prefix=${PREFIX}" $MPCFRAMEWORK_BUILD_PARAMETERS
+wrap_output "$SCRIPTPATH/configure" $MPC_CONFIGURE_OPTS
 ok
 
 #

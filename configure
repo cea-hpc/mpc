@@ -3642,7 +3642,6 @@ AM_BACKSLASH='\'
 
 
 
-
 #
 # Reload first configure environment if present
 # this is needed as we want all the variables
@@ -26759,6 +26758,27 @@ if test "x$git" = "xyes"; then
 	test -n "$GIT_DESCRIBE" && GIT_DESCRIBE_RES="Git Revision...... ${GIT_DESCRIBE}\n"
 fi
 
+
+
+#
+# Generate Reconfigure
+#
+
+#
+# Generate the Reconfigure Script
+#
+cat << EOF > ./reconfigure
+#!/bin/sh
+
+if test -f "${PWD}/src/bin/mpc_build_env.sh"; then
+        . ${PWD}/src/bin/mpc_build_env.sh
+fi
+
+${ac_abs_confdir}/configure $ac_configure_args "\$@"
+
+EOF
+
+chmod +x ./reconfigure
 
 
 # Generate configuration summary

@@ -8,7 +8,6 @@ AC_CONFIG_HEADERS([mpc_config.h])
 AM_SILENT_RULES([yes])
 LT_PREREQ([2.4.6])
 
-
 #
 # Reload first configure environment if present
 # this is needed as we want all the variables
@@ -1801,6 +1800,27 @@ if test "x$git" = "xyes"; then
 fi
 
 AC_SUBST([GIT_DESCRIBE])
+
+#
+# Generate Reconfigure
+#
+
+#
+# Generate the Reconfigure Script
+#
+cat << EOF > ./reconfigure
+#!/bin/sh
+
+if test -f "${PWD}/src/bin/mpc_build_env.sh"; then
+        . ${PWD}/src/bin/mpc_build_env.sh
+fi
+
+${ac_abs_confdir}/configure $ac_configure_args "\$@"
+
+EOF
+
+chmod +x ./reconfigure
+
 
 # Generate configuration summary
 
