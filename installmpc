@@ -5,7 +5,7 @@ SCRIPT=$(readlink -f "$0")
 # Directory containing configure
 SCRIPTPATH=$(dirname "$SCRIPT")
 # Where MPC is currently being BUILT
-PROJECT_BUILD_DIR=$(readlink -f $PWD)
+PROJECT_BUILD_DIR=$(readlink -f "$PWD")
 
 USE_COLOR="yes"
 
@@ -14,7 +14,7 @@ USE_COLOR="yes"
 ####################
 
 # NOTE: these are only meaningfull when not using spack
-
+MAKE_J=""
 AUTOPRIV_BUILD_PARAMETERS=""
 OPENPA_BUILD_PARAMETERS=""
 MPCALLOC_BUILD_PARAMETERS=""
@@ -38,7 +38,6 @@ set -e
 # Output MGT
 #
 
-
 # Print an error message and exit
 # Args:
 # -$1 : Message to print
@@ -47,6 +46,23 @@ die(){
 	echo "$1"
 	echo "======================================="
 	exit 1
+}
+
+#
+# Check call return code
+# Args:
+# - $1: retcode to check
+# - $2: error if NOK (no error if not given)
+check_retcode()
+{
+	if test "x$1" = "x0"; then
+		ok
+	else
+		nok
+		if test -n "$2"; then
+			die "$2"
+		fi
+	fi
 }
 
 #
@@ -59,14 +75,9 @@ colRED="\e[31m"
 colGREEN="\e[32m"
 colMAGENTA="\e[35m"
 colYELLOW="\e[33m"
-
 colbgGRAY="\e[100m"
 colbgMAGENTA="\e[45m"
-colbgYELLOW="\e[43m"
-colbgRED="\e[41m"
-colbgGREEN="\e[42m"
-
-BLINK="\e[5m"
+colBLINK="\e[5m"
 UNDERLINE="\e[4m"
 fi
 
@@ -78,7 +89,7 @@ show_run_cmd()
 	if test $STEP_WRAPPER_VERBOSE -gt 0; then
 		test -n "${PENDING_LB}" && echo ""
 		PENDING_LB=""
-		echo "$ $@"
+		echo "$ $*"
 	fi
 }
 
@@ -131,20 +142,17 @@ notapplicable()
 #
 
 LIST_OF_FOUND_CMD=""
-COMMON_CMD="cmake spack patch cut ls pwd grep rm rev basename dirname make bzip2 gcc g++ ldd pkg-config mktemp"
+COMMON_CMD="cmake spack patch cut ls pwd grep rm rev basename dirname make bzip2 gcc g++ ldd pkg-config mktemp getconf nproc lscpu"
 check_for_commands()
 {
 	# Check already done
 	test -n "$LIST_OF_FOUND_CMD" && return
 
-	# First check for which
-	type which > /dev/null 2>&1 || die "MPC cannot compile without the 'which' command"
-
 	set +e
 
 	for c in $COMMON_CMD; do
 
-		which $c > /dev/null 2>&1
+		command -v "$c" > /dev/null 2>&1
 
 		if test "x$?" = "x0"; then
 			LIST_OF_FOUND_CMD="$LIST_OF_FOUND_CMD $c"
@@ -155,6 +163,7 @@ check_for_commands()
 
 
 	done
+
 	set -e
 }
 
@@ -162,7 +171,7 @@ have_cmd()
 {
 	set +e
 
-	echo "$LIST_OF_FOUND_CMD" | grep $1 > /dev/null 2>&1
+	echo "$LIST_OF_FOUND_CMD" | grep "$1" > /dev/null 2>&1
 
 	if test "x$?" = "x0"; then
 		HAVE_CMD="yes"
@@ -187,6 +196,38 @@ assert_cmd()
 
 }
 
+guess_cpu_count()
+{
+	checking "Looking for number of CPUs"
+
+	if test -f "/proc/cpuinfo"; then
+		TMP=$(cat "/proc/cpuinfo" | grep "processor" | wc -l 2>/dev/null)
+
+		if test "x${TMP}" != "x0"; then
+			ok
+			NCPU="$TMP"
+			return
+		fi
+	fi	
+
+	have_cmd "nproc"
+
+	if test "x${HAVE_CMD}" = "xyes"; then
+		TMP=$(nproc 2> /dev/null || true)
+		
+		if test "x${?}" = "x0"; then
+			ok
+			NCPU="$TMP"
+			return
+		fi
+	fi
+
+	# Could not guess stay serial 
+	nok
+	NCPU="1"
+	info "Failed at guessing number of cores use -jX for parallel build"
+}
+
 #Extract parameter value and put in given variable
 #Args :
 # -$1 : Output variable name
@@ -199,7 +240,7 @@ extractParamValue()
 	name="$2"
 	arg="$3"
 
-	value=`echo "$arg" | sed -e "s/^--${name}=//g"`
+	value=$(echo "$arg" | sed -e "s/^--${name}=//g")
 	eval "${outputvar}=\"${value}\""
 }
 
@@ -216,7 +257,7 @@ extractParamValueAlt()
 	name="$2"
 	arg="$3"
 
-	value=`echo "$arg" | sed -e "s/^-${name}//g"`
+	value=$(echo "$arg" | sed -e "s/^-${name}//g")
 	eval "${outputvar}=\"${value}\""
 }
 
@@ -251,7 +292,7 @@ extractAndAddPackageOption()
 	name="$2"
 	arg="$3"
 
-	value=`echo "$arg" | sed -e "s/^--${name}//g"`
+	value=$(echo "$arg" | sed -e "s/^--${name}//g")
 	eval "${outputvar}=\"\$${outputvar} ${value}\""
 }
 
@@ -261,28 +302,28 @@ wrap_output()
 {
 	assert_cmd "mktemp"
 
-	outfile=`mktemp`
+	outfile=$(mktemp)
 
 	set +e
 
 	show_run_cmd "$@"
 
 	if test $STEP_WRAPPER_VERBOSE -eq 3; then
-		$@
+		"$@"
 	else
-		$@ > $outfile 2>&1
+		"$@" > "$outfile" 2>&1
 	fi
 
 	if test "x$?" = "x0"; then
-		rm $outfile
+		rm "$outfile"
 	else
 		nok
 
 		if test $STEP_WRAPPER_VERBOSE -gt 0; then
-			cat $outfile
+			cat "$outfile"
 		fi
 
-		die "See $outfile an error occured when running $@"
+		die "See $outfile an error occured when running $*"
 	fi
 
 	set -e
@@ -316,8 +357,11 @@ check_glibc_is_compatible_with_priv()
 	have_cmd "ldd"
 
 	if test "x${HAVE_CMD}" = "xyes"; then
-		GLIBC=`ldd --version | head -n 1 | rev | cut -d " " -f 1 | rev`
-		(echo ${GLIBC} | grep "2.28") > /dev/null && die "GLIBC 2.28 is not compatible with privarization yet" || true
+		GLIBC=$(ldd --version | head -n 1 | rev | cut -d " " -f 1 | rev)
+		(echo "${GLIBC}" | grep "2.28") > /dev/null
+		if test "x$?" != "x0"; then
+			die "GLIBC 2.28 is not compatible with privarization yet" || true
+		fi
 	fi
 }
 
@@ -354,22 +398,28 @@ find_dep_with_spack()
 		return
 	fi
 
-	PKG_NAME="`build_package_name "$1" "$2"`"
+	PKG_NAME="$(build_package_name "$1" "$2")"
 
 	checking "load $PKG_NAME using spack"
 
 	show_run_cmd "spack info  $PKG_NAME"
-	spack info  $PKG_NAME > /dev/null 2>&1 || notapplicable
+	spack info "$PKG_NAME" > /dev/null 2>&1 || notapplicable
 
 	if test "x${LAST_RESULT}" = "xna"; then
 		return
 	fi
 
 	show_run_cmd "spack load --sh $PKG_NAME"
-	spack load --sh $PKG_NAME > /dev/null 2>&1 && ok || nok
+
+	set +e
+
+	LOAD_CMD=$(spack load --sh "$PKG_NAME" 2> /dev/null)
+	check_retcode "$?"
+
+	set -e
 
 	if test "x${LAST_RESULT}" = "xok"; then
-		eval `spack load --sh $PKG_NAME`
+		eval "$LOAD_CMD"
 		DEP_FOUND="yes"
 	fi
 
@@ -383,19 +433,20 @@ install_dep_with_spack()
 {
 	assert_cmd "spack"
 
-	PKG_NAME="`build_package_name "$1" "$2"`"
+	PKG_NAME="$(build_package_name "$1" "$2")"
 
 	checking "install $PKG_NAME using spack"
 
 	show_run_cmd "spack info  $PKG_NAME"
-	spack info  $PKG_NAME > /dev/null 2>&1 || notapplicable
+	spack info  "$PKG_NAME" > /dev/null 2>&1 || notapplicable
 
 	if test "x${LAST_RESULT}" = "xna"; then
 		return
 	fi
 
-	show_run_cmd "spack install $PKG_NAME"
-	spack install $PKG_NAME && ok || nok
+	show_run_cmd "spack install -j ${MAKE_J} $PKG_NAME"
+	wrap_output spack install -j "${MAKE_J}" "$PKG_NAME"
+	check_retcode "$?"
 
 	if test "x${LAST_RESULT}" = "xok"; then
 		find_dep_with_spack "$1" "$2"
@@ -479,11 +530,11 @@ build_configure_based_package()
 	assert_cmd "grep"
 
 	# Check if another version of the dependency is not already installed
-	installed_vers=`ls -a ${PREFIX} | grep .mpc-installed-${package}-* || true`
+	installed_vers=$(ls "${PREFIX}/.mpc-installed-${package}-*" || true)
 
 	if test -n "$installed_vers"; then
 		# There is already a version
-		installed_version=`echo $installed_vers | rev | cut -d "-" -f 1 | rev`
+		installed_version=$(echo "$installed_vers" | rev | cut -d "-" -f 1 | rev)
 		if test "x${installed_version}" != "x${version}"; then
 			info "there is $package $installed_version in $PREFIX and MPC provides $version"
 			die "MPC does not support installing mismatching $package versions in the same prefix"
@@ -494,7 +545,7 @@ build_configure_based_package()
 	DEP_FLAG=${PREFIX}/.mpc-installed-$package-$version
 
 	# If already deployed no need to redo
-	if test -f $DEP_FLAG; then
+	if test -f "$DEP_FLAG"; then
 		checking "Installing $package-$version"
 		skip
 		load_prefix "$PREFIX"
@@ -512,32 +563,32 @@ build_configure_based_package()
 
 	checking "Extracting $package-$version"
 
-	if test ! -d $PKG_SOURCE_DIR; then
+	if test ! -d "$PKG_SOURCE_DIR"; then
 		# Extract the source tarball only if not already present
-		if test ! -d $pkg_dir; then
+		if test ! -d "$pkg_dir"; then
 			die "Could not locate a directory $pkg_dir for $package $version"
 		fi
 
 		# Now attempt to locate archive
 		tarball="$package-$version"
-		candidate_tarball=`ls $pkg_dir | grep $tarball | grep ".tar"`
+		candidate_tarball=$(ls "${pkg_dir}/${tarball}*.tar")
 		tarball_path=$pkg_dir/$candidate_tarball
 
-		if test ! -f $tarball_path; then
+		if test ! -f "$tarball_path"; then
 			nok
 			die "Could not locate a tarball for $package-$version in $pkg_dir"
 		fi
 
 		show_run_cmd "tar xf $tarball_path"
-		tar xf $tarball_path || true
+		tar xf "$tarball_path" || true
 
-		if test ! -d $ORIG_PKG_SOURCE_DIR; then
+		if test ! -d "$ORIG_PKG_SOURCE_DIR"; then
 			nok
 			die "Could not locate sources in $PKG_SOURCE_DIR after extracting $tarball_path"
 		else
 			show_run_cmd "mv $ORIG_PKG_SOURCE_DIR $PKG_SOURCE_DIR"
 			# Rename to $PKG_SOURCE_DIR
-			mv $ORIG_PKG_SOURCE_DIR $PKG_SOURCE_DIR
+			mv "$ORIG_PKG_SOURCE_DIR" "$PKG_SOURCE_DIR"
 			ok
 		fi
 
@@ -547,20 +598,19 @@ build_configure_based_package()
 
 		PACKAGE_PATCH=$pkg_dir/${package}-${version}.patch
 
-		if test -f $PACKAGE_PATCH ; then
+		if test -f "$PACKAGE_PATCH"; then
 			checking "Patching $package $version"
 
 			show_run_cmd "cd $PKG_SOURCE_DIR"
-			cd $PKG_SOURCE_DIR
+			cd "$PKG_SOURCE_DIR"
 
 			show_run_cmd "patch -p 1 < $PACKAGE_PATCH"
-			patch -p 1 < $PACKAGE_PATCH > /dev/null && ok || (nok; die "Failed to patch $package $version")
+			patch -p 1 < "$PACKAGE_PATCH" > /dev/null
+			check_retcode "$?" "Failed to patch $package $version"
 
 			show_run_cmd "cd $PROJECT_BUILD_DIR"
-			cd ${PROJECT_BUILD_DIR}
+			cd "${PROJECT_BUILD_DIR}"
 		fi
-
-
 	else
 		skip
 	fi
@@ -570,28 +620,28 @@ build_configure_based_package()
 	#
 
 
-	if test ! -d ${PKG_SOURCE_DIR}/BUILD; then
+	if test ! -d "${PKG_SOURCE_DIR}/BUILD"; then
 		show_run_cmd "mkdir ${PKG_SOURCE_DIR}/BUILD"
-		mkdir ${PKG_SOURCE_DIR}/BUILD
+		mkdir "${PKG_SOURCE_DIR}/BUILD"
 	fi
 
 	show_run_cmd "cd ${PKG_SOURCE_DIR}/BUILD"
-	cd ${PKG_SOURCE_DIR}/BUILD
+	cd "${PKG_SOURCE_DIR}/BUILD"
 
 
-	if test -f ${PKG_SOURCE_DIR}/autopriv_deploy.sh; then
+	if test -f "${PKG_SOURCE_DIR}/autopriv_deploy.sh"; then
 		# Handle the special case of the autopriv deploy script
 		checking "Deploying $package-$version"
-		wrap_output ${PKG_SOURCE_DIR}/autopriv_deploy.sh -b ${PWD} -i ${PREFIX} -j ${MAKE_J} -o "\"${extra_config_args}\""
+		wrap_output "${PKG_SOURCE_DIR}/autopriv_deploy.sh" -b "${PWD}" -i "${PREFIX}" -j "${MAKE_J}" -o "\"${extra_config_args}\""
 		ok
-	elif test -f ${PKG_SOURCE_DIR}/configure; then
+	elif test -f "${PKG_SOURCE_DIR}/configure"; then
 		# Regular configure / make / make install
 		checking "Configuring $package-$version"
-		wrap_output ${PKG_SOURCE_DIR}/configure --prefix=${PREFIX} $extra_config_args
+		wrap_output "${PKG_SOURCE_DIR}/configure" "--prefix=${PREFIX}" "$extra_config_args"
 		ok
 
 		checking "Building $package-$version"
-		wrap_output make -j${MAKE_J}
+		wrap_output make "-j${MAKE_J}"
 		ok
 
 		checking "Installing $package-$version"
@@ -602,7 +652,7 @@ build_configure_based_package()
 	fi
 
 	show_run_cmd "cd ${PROJECT_BUILD_DIR}"
-	cd ${PROJECT_BUILD_DIR}
+	cd "${PROJECT_BUILD_DIR}"
 
 	#
 	# Prefix loading
@@ -617,7 +667,7 @@ build_configure_based_package()
 
 	# if we are here flag all success
 	show_run_cmd "touch ${DEP_FLAG}"
-	touch ${DEP_FLAG}
+	touch "${DEP_FLAG}"
 }
 
 
@@ -786,9 +836,6 @@ EOF
 ####################################################
 
 
-MAKE_J=1
-
-#
 # Build directory check
 #
 
@@ -814,12 +861,8 @@ LIBXML2_PREFIX=""
 MPCALLOC_PREFIX=""
 
 MPC_DMTCP_PREFIX="disabled"
-HBICT_PREFIX="disabled"
 MPC_GDB_PREFIX='disabled'
 TBB_PREFIX="disabled"
-SCTK_GETOPT_PREFIX='disabled'
-MPC_MPIT_PREFIX='disabled'
-MPL_PREFIX='disabled'
 
 #
 # Argument parsing
@@ -877,7 +920,6 @@ do
 			;;
 		################# FORTRAN GCC ###############
 		--disable-mpc-fortran)
-			FORTRAN_PREFIX='disabled'
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-fortran"
 			;;
 		################## LIBXML2 ##################
@@ -945,7 +987,6 @@ do
 		################# COMPILER ##################
 		--compiler=*)
 			extractParamValue 'MPC_COMPILER' 'compiler' "$arg"
-			COMPILER_ARG=yes
 			;;
 		############### MPCFRAMEWORK ################
 		--mpc-option=*)
@@ -956,7 +997,7 @@ do
 			USE_COLOR="yes"
 			;;
 		--disable-color)
-			MPCFRAMEWORK_BUILD_PARAMETERS=`echo $MPCFRAMEWORK_BUILD_PARAMETERS | sed "s/--enable-shell-colors//"`
+			MPCFRAMEWORK_BUILD_PARAMETERS=$(echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | sed "s/--enable-shell-colors//")
 			USE_COLOR="no"
 			;;
 		--enable-mpc-debug)
@@ -967,42 +1008,21 @@ do
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-slurm"
 			;;
 		--disable-MPC_MPI)
-			ROMIO_PREFIX='disabled'
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-MPC_MPI"
 			;;
-		--disable-ROMIO|--disable-romio)
-			ROMIO_PREFIX='disabled'
-			;;
 		--lib-mode)
-			ROMIO_PREFIX='disabled'
 			TBB_PREFIX='disabled'
 			MPC_GDB_PREFIX='disabled'
 			AUTOPRIV_PREFIX='disabled'
 			HYDRA_PREFIX='disabled'
-			SCTK_GETOPT_PREFIX='disabled'
-			MPC_MPIT_PREFIX='disabled'
-			MPL_PREFIX='disabled'
-			MPCINSTALL_LIB_MODE='yes'
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-MPC_MPI --disable-MPC_Allocator --enable-lib-mode"
-			#special case, when configure does not handle any available compiler
-			#by default, GCC compiler will be used, this behavior can be altered through the --compiler= option
-			COMPILER_ARG=yes
 			;;
 		--mpc-process-mode)
 			AUTOPRIV_PREFIX='disabled'
-			SCTK_GETOPT_PREFIX='disabled'
 			add_process_mode_flag_to_mpc
-			#special case, when configure does not handle any available compiler
-			#by default, GCC compiler will be used, this behavior can be altered through the --compiler= option
-			COMPILER_ARG=yes
 			;;
 
 		################## COMMON ###################
-
-		--disable-color)
-			ENABLE_COLOR='false'
-			;;
-
 		-v | --verbose | --verbose=1)
 			STEP_WRAPPER_VERBOSE=1
 			export STEP_WRAPPER_VERBOSE
@@ -1021,7 +1041,7 @@ do
 		--prefix=*)
 			extractParamValue 'PREFIX' 'prefix' "$arg"
 			if [ ! -d "${PREFIX}" ]; then
-				mkdir -p ${PREFIX}
+				mkdir -p "${PREFIX}"
 			fi
 			;;
 		--help|-h|-?)
@@ -1058,6 +1078,24 @@ done
 
 # Make sure we have a prefix
 test -z "$PREFIX" && die "Please provide a prefix where to install MPC"
+
+PREFIX=$(readlink -f "$PREFIX")
+
+if test "x${PREFIX}" = "x${PROJECT_BUILD_DIR}"; then
+	die "You cannot install MPC in its build directory"
+fi
+
+# Ensure cores used to build is configured
+
+if test -z "$MAKE_J"; then
+	guess_cpu_count
+
+	info "Building with ${NCPU} cores use -jX to change"
+	MAKE_J="$NCPU"
+else
+	info "Building with ${MAKE_J} cores"
+fi
+
 
 
 #
@@ -1182,7 +1220,7 @@ if test -f bin/mpc_build_env.sh; then
 fi
 
 checking "Configuring MPC"
-wrap_output $SCRIPTPATH/configure --prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS
+wrap_output "$SCRIPTPATH/configure" "--prefix=${PREFIX}" $MPCFRAMEWORK_BUILD_PARAMETERS
 ok
 
 #
