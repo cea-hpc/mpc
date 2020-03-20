@@ -22,6 +22,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+
 #include "mpcthread_config.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"

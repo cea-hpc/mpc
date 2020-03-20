@@ -21,6 +21,7 @@
 /* ######################################################################## */
 
 #include <sctk_thread_spinlock.h>
+#include <errno.h>
 
 void
 sctk_thread_generic_spinlocks_init(){

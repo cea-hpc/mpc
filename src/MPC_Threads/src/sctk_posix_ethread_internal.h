@@ -25,6 +25,10 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include "mpcthread_config.h"
 #include "sctk_debug.h"
 #include "sctk_ethread_internal.h"

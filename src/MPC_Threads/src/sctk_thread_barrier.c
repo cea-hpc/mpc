@@ -23,6 +23,8 @@
 #include "sctk_thread_barrier.h"
 #include <sctk_thread_generic.h>
 
+#include <errno.h>
+
 int
 sctk_thread_generic_barriers_barrierattr_destroy( sctk_thread_generic_barrierattr_t* attr ){
 

@@ -22,6 +22,7 @@
 
 #include "sctk_thread_mutex.h"
 #include <sctk_thread_generic.h>
+#include <errno.h>
 
 int
 sctk_thread_generic_mutexes_mutexattr_destroy( sctk_thread_generic_mutexattr_t* attr ){

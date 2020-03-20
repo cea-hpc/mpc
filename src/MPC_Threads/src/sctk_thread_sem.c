@@ -22,8 +22,12 @@
 
 #include "sctk_thread_sem.h"
 #include <sctk_thread_generic.h>
+
 #include <limits.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 extern int errno;
 static mpc_common_spinlock_t sem_named_lock = SCTK_SPINLOCK_INITIALIZER;

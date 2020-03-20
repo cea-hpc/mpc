@@ -24,6 +24,7 @@
 #include "sctk_pthread_compatible_structures.h"
 #include "sctk_thread_generic.h"
 
+#include <errno.h>
 
 void sctk_thread_generic_rwlocks_init(){ 
   sctk_thread_generic_check_size (sctk_thread_generic_rwlock_t, sctk_thread_rwlock_t);
