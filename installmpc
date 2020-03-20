@@ -463,7 +463,7 @@ clean_env_path_var()
 {
 	var_data=$1
 
-	new_data_list=`echo $var_data | sed "s/\\:/\\n/g" | sort | uniq | xargs echo`
+	new_data_list=$(echo "$var_data" | sed "s/\\:/\\n/g" | sort | uniq | xargs echo)
 
 	ret=""
 	for entry in $new_data_list
@@ -471,7 +471,7 @@ clean_env_path_var()
 		ret="${ret}:${entry}"
 	done
 
-	echo $ret
+	echo "$ret"
 }
 
 #
@@ -481,18 +481,18 @@ clean_env_path_var()
 #
 load_prefix()
 {
-	if test ! -d $1; then
+	if test ! -d "$1"; then
 		nok
 		die "Could not locate prefix directory $1"
 	fi
 
-	test -d $1/bin && PATH=`clean_env_path_var $1/bin:$PATH`
-	test -d $1/lib && LD_LIBRARY_PATH=`clean_env_path_var $1/lib:$LD_LIBRARY_PATH`
-	test -d $1/lib64 && LD_LIBRARY_PATH=`clean_env_path_var $1/lib64:$LD_LIBRARY_PATH`
-	test -d $1/include && CPATH=`clean_env_path_var $1/include:$CPATH`
-	test -d $1/lib/pkgconfig/ && PKG_CONFIG_PATH=`clean_env_path_var $1/lib/pkgconfig/:$PKG_CONFIG_PATH`
-	test -d $1/lib64/pkgconfig/ && PKG_CONFIG_PATH=`clean_env_path_var $1/lib64/pkgconfig/:$PKG_CONFIG_PATH`
-	test -d $1/share/man/ && MANPATH=`clean_env_path_var $1/share/man/:$MANPATH`
+	test -d "$1/bin" && PATH=$(clean_env_path_var "$1/bin:$PATH")
+	test -d "$1/lib" && LD_LIBRARY_PATH=$(clean_env_path_var "$1/lib:$LD_LIBRARY_PATH")
+	test -d "$1/lib64" && LD_LIBRARY_PATH=$(clean_env_path_var "$1/lib64:$LD_LIBRARY_PATH")
+	test -d "$1/include" && CPATH=$(clean_env_path_var "$1/include:$CPATH")
+	test -d "$1/lib/pkgconfig/" && PKG_CONFIG_PATH=$(clean_env_path_var "$1/lib/pkgconfig/:$PKG_CONFIG_PATH")
+	test -d "$1/lib64/pkgconfig/" && PKG_CONFIG_PATH=$(clean_env_path_var "$1/lib64/pkgconfig/:$PKG_CONFIG_PATH")
+	test -d "$1/share/man/" && MANPATH=$(clean_env_path_var "$1/share/man/:$MANPATH")
 
 	propagate_build_env
 }
