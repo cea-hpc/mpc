@@ -69,7 +69,7 @@ MPC Compilation:
   stage: Builds
   script:
   - cd $HOME/GL_$CI_PIPELINE_ID/build
-  - srun -J GL-build_$CI_PIPELINE_ID -N 1 -c 8 ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install -j8 --mpc-option='--with-slurm --enable-debug'
+  - srun -J GL-build_$CI_PIPELINE_ID -N 1 -c 8 ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install --mpc-option='--with-slurm --enable-debug'
 
 MPC Compilation Spack:
   <<: *run_by_main
@@ -80,7 +80,7 @@ MPC Compilation Spack:
   - spack env rm -y env_$CI_PIPELINE_ID || true
   - spack env create env_$CI_PIPELINE_ID
   - spack env activate env_$CI_PIPELINE_ID
-  - srun -J GL-build_$CI_PIPELINE_ID -N 1 -c 8 ${CI_PROJECT_DIR}/installmpc -vv --enable-spack-build --disable-build --prefix=$HOME/GL_$CI_PIPELINE_ID/install_spack -j8 --mpc-option='--with-slurm --enable-debug'
+  - srun -J GL-build_$CI_PIPELINE_ID -N 1 -c 8 ${CI_PROJECT_DIR}/installmpc -vv --enable-spack-build --disable-build --prefix=$HOME/GL_$CI_PIPELINE_ID/install_spack --mpc-option='--with-slurm --enable-debug'
 
 
 ############################
