@@ -28,8 +28,6 @@ MPC_GDB_BUILD_PARAMETERS="--without-zlib --disable-werror"
 # Stop on error
 set -e
 
-
-
 #
 # Utilities
 #
@@ -201,7 +199,8 @@ guess_cpu_count()
 	checking "Looking for number of CPUs"
 
 	if test -f "/proc/cpuinfo"; then
-		TMP=$(cat "/proc/cpuinfo" | grep "processor" | wc -l 2>/dev/null)
+		show_run_cmd "grep -c processor < /proc/cpuinfo"
+		TMP=$(grep -c "processor" < "/proc/cpuinfo" 2>/dev/null)
 
 		if test "x${TMP}" != "x0"; then
 			ok
@@ -213,6 +212,7 @@ guess_cpu_count()
 	have_cmd "nproc"
 
 	if test "x${HAVE_CMD}" = "xyes"; then
+		show_run_cmd "nproc"
 		TMP=$(nproc 2> /dev/null || true)
 		
 		if test "x${?}" = "x0"; then
@@ -358,7 +358,7 @@ check_glibc_is_compatible_with_priv()
 
 	if test "x${HAVE_CMD}" = "xyes"; then
 		GLIBC=$(ldd --version | head -n 1 | rev | cut -d " " -f 1 | rev)
-		(echo "${GLIBC}" | grep "2.28") > /dev/null
+		(echo "${GLIBC}" | grep "2.28" || true) > /dev/null
 		if test "x$?" != "x0"; then
 			die "GLIBC 2.28 is not compatible with privarization yet" || true
 		fi
@@ -530,7 +530,7 @@ build_configure_based_package()
 	assert_cmd "grep"
 
 	# Check if another version of the dependency is not already installed
-	installed_vers=$(ls "${PREFIX}/.mpc-installed-${package}-*" || true)
+	installed_vers=$(ls "${PREFIX}/.mpc-installed-${package}-*" 2> /dev/null || true)
 
 	if test -n "$installed_vers"; then
 		# There is already a version
@@ -571,8 +571,7 @@ build_configure_based_package()
 
 		# Now attempt to locate archive
 		tarball="$package-$version"
-		candidate_tarball=$(ls "${pkg_dir}/${tarball}*.tar")
-		tarball_path=$pkg_dir/$candidate_tarball
+		tarball_path=$(ls "${pkg_dir}/${tarball}"*tar*)
 
 		if test ! -f "$tarball_path"; then
 			nok
@@ -637,7 +636,7 @@ build_configure_based_package()
 	elif test -f "${PKG_SOURCE_DIR}/configure"; then
 		# Regular configure / make / make install
 		checking "Configuring $package-$version"
-		wrap_output "${PKG_SOURCE_DIR}/configure" "--prefix=${PREFIX}" "$extra_config_args"
+		wrap_output "${PKG_SOURCE_DIR}/configure" "--prefix=${PREFIX}" $extra_config_args
 		ok
 
 		checking "Building $package-$version"
