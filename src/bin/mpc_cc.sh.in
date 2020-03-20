@@ -331,8 +331,8 @@ fi
 export PATH=${MPC_INSTALL_PREFIX}/bin/:${PATH}
 
 #Used to avoid header global variable privatization when libraries are not privatized
-#mpcmp.h and mpcmicrothread.h have been recopied from GCC patch
-MPC_UNPRIVATIZED_FILES="${MPC_UNPRIVATIZED_FILES}:mpcmp.h:mpcmicrothread.h:ompt.h:"
+#mpc_mpi_comm_lib.h and mpcmicrothread.h have been recopied from GCC patch
+MPC_UNPRIVATIZED_FILES="${MPC_UNPRIVATIZED_FILES}:mpc_mpi_comm_lib.h:mpcmicrothread.h:ompt.h:"
 MPC_UNPRIVATIZED_VARS="${MPC_UNPRIVATIZED_VARS}:`preprocess_main`"
 
 custompath=""
