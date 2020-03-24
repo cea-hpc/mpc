@@ -22,20 +22,16 @@
 #ifndef __SCTK_THREAD_GENERIC_H_
 #define __SCTK_THREAD_GENERIC_H_
 
-#include "mpcthread_config.h"
+#include <mpcthread_config.h>
+
 
 #include <mpc_threads_generic.h>
 
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 
-#include "threads_generic_kind.h"
-
 
 #include <sctk_thread_scheduler.h>
-
-#include <sctk_thread_rwlock.h>
-
 #include <sctk_thread_barrier.h>
 #include <sctk_thread_spinlock.h>
 
@@ -164,8 +160,6 @@ typedef struct sctk_thread_generic_condattr_s
 
 #define SCTK_THREAD_GENERIC_CONDATTR_INIT    { 0 }
 
-
-
 /***************************************/
 /* SEMAPHORES                          */
 /***************************************/
@@ -189,6 +183,63 @@ typedef struct sctk_thread_generic_sem_named_list_s
 	sctk_thread_generic_sem_t *                  sem;
 	struct sctk_thread_generic_sem_named_list_s *prev, *next;
 }sctk_thread_generic_sem_named_list_t;
+
+/***************************************/
+/* READ/WRITE LOCKS                    */
+/***************************************/
+
+#define SCTK_RWLOCK_READ             1
+#define SCTK_RWLOCK_WRITE            2
+#define SCTK_RWLOCK_TRYREAD          3
+#define SCTK_RWLOCK_TRYWRITE         4
+#define SCTK_RWLOCK_ALONE            0
+#define SCTK_RWLOCK_NO_WR_WAITING    0
+#define SCTK_RWLOCK_WR_WAITING       1
+
+typedef enum
+{
+	SCTK_UNINITIALIZED, SCTK_INITIALIZED, SCTK_DESTROYED
+}sctk_rwlock_status_t;
+
+typedef struct sctk_thread_generic_rwlock_cell_s
+{
+	sctk_thread_generic_scheduler_t *         sched;
+	volatile unsigned int                     type;
+	struct sctk_thread_generic_rwlock_cell_s *prev, *next;
+}sctk_thread_generic_rwlock_cell_t;
+
+typedef struct sctk_thread_generic_rwlockattr_s
+{
+	volatile int pshared;
+}sctk_thread_generic_rwlockattr_t;
+
+#define SCTK_THREAD_GENERIC_RWLOCKATTR_INIT    { SCTK_THREAD_PROCESS_PRIVATE }
+
+typedef struct sctk_thread_generic_rwlock_s
+{
+	mpc_common_spinlock_t                       lock;
+	volatile sctk_rwlock_status_t               status;
+	volatile unsigned int                       count;
+	volatile unsigned int                       reads_count;
+	volatile unsigned int                       current;
+	volatile unsigned int                       wait;
+	volatile sctk_thread_generic_scheduler_t *  writer;
+	volatile sctk_thread_generic_rwlock_cell_t *readers;
+	sctk_thread_generic_rwlock_cell_t *         waiting;
+}sctk_thread_generic_rwlock_t;
+
+#define SCTK_THREAD_GENERIC_RWLOCK_INIT    { SCTK_SPINLOCK_INITIALIZER, SCTK_UNINITIALIZED, 0, 0, SCTK_RWLOCK_ALONE, SCTK_RWLOCK_NO_WR_WAITING, NULL, NULL, NULL }
+
+typedef struct
+{
+	sctk_thread_generic_rwlock_t *rwlock;
+	UT_hash_handle                hh;
+}sctk_thread_rwlock_in_use_t;
+
+
+
+
+
 
 
 

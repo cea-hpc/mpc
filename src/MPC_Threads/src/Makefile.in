@@ -158,9 +158,8 @@ am__libmpcthread_la_SOURCES_DIST = sctk_context.c sctk_ethread.c \
 	sctk_posix_ethread_mxn.c sctk_posix_pthread.c \
 	sctk_posix_thread.c sctk_pthread.c sctk_thread_barrier.c \
 	sctk_thread.c sctk_thread_generic.c threads_generic_kind.c \
-	sctk_thread_rwlock.c sctk_thread_scheduler.c \
-	sctk_thread_spinlock.c sctk_tls.c accelerator.c \
-	./accelerator/cuda.c ./accelerator/cuda_wrap.c
+	sctk_thread_scheduler.c sctk_thread_spinlock.c sctk_tls.c \
+	accelerator.c ./accelerator/cuda.c ./accelerator/cuda_wrap.c
 @MPC_CUDA_ENABLED_TRUE@am__objects_1 = ./accelerator/cuda.lo \
 @MPC_CUDA_ENABLED_TRUE@	./accelerator/cuda_wrap.lo
 am_libmpcthread_la_OBJECTS = sctk_context.lo sctk_ethread.lo \
@@ -169,9 +168,8 @@ am_libmpcthread_la_OBJECTS = sctk_context.lo sctk_ethread.lo \
 	sctk_posix_ethread_mxn.lo sctk_posix_pthread.lo \
 	sctk_posix_thread.lo sctk_pthread.lo sctk_thread_barrier.lo \
 	sctk_thread.lo sctk_thread_generic.lo threads_generic_kind.lo \
-	sctk_thread_rwlock.lo sctk_thread_scheduler.lo \
-	sctk_thread_spinlock.lo sctk_tls.lo accelerator.lo \
-	$(am__objects_1)
+	sctk_thread_scheduler.lo sctk_thread_spinlock.lo sctk_tls.lo \
+	accelerator.lo $(am__objects_1)
 libmpcthread_la_OBJECTS = $(am_libmpcthread_la_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -446,9 +444,8 @@ libmpcthread_la_SOURCES = sctk_context.c sctk_ethread.c \
 	sctk_posix_ethread_mxn.c sctk_posix_pthread.c \
 	sctk_posix_thread.c sctk_pthread.c sctk_thread_barrier.c \
 	sctk_thread.c sctk_thread_generic.c threads_generic_kind.c \
-	sctk_thread_rwlock.c sctk_thread_scheduler.c \
-	sctk_thread_spinlock.c sctk_tls.c accelerator.c \
-	$(am__append_3)
+	sctk_thread_scheduler.c sctk_thread_spinlock.c sctk_tls.c \
+	accelerator.c $(am__append_3)
 @MPC_CUDA_ENABLED_TRUE@libmpc_cuda_addon_la_SOURCES = ./accelerator/cuda_lib/cuda_lib.c
 @MPC_CUDA_ENABLED_TRUE@libmpc_cuda_addon_la_LIBADD = -lcuda
 libmpcthread_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la  -lpthread
@@ -571,7 +568,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread_barrier.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread_generic.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread_rwlock.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread_scheduler.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread_spinlock.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_tls.Plo@am__quote@
