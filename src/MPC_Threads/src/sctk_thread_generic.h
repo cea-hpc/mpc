@@ -35,7 +35,7 @@
 #include <sctk_thread_scheduler.h>
 
 #include <sctk_thread_rwlock.h>
-#include <sctk_thread_sem.h>
+
 #include <sctk_thread_barrier.h>
 #include <sctk_thread_spinlock.h>
 
@@ -189,48 +189,6 @@ typedef struct sctk_thread_generic_sem_named_list_s
 	sctk_thread_generic_sem_t *                  sem;
 	struct sctk_thread_generic_sem_named_list_s *prev, *next;
 }sctk_thread_generic_sem_named_list_t;
-
-void sctk_thread_generic_sems_init();
-
-int
-sctk_thread_generic_sems_sem_init(sctk_thread_generic_sem_t *sem,
-                                  int pshared, unsigned int value);
-
-int
-sctk_thread_generic_sems_sem_wait(sctk_thread_generic_sem_t *sem,
-                                  sctk_thread_generic_scheduler_t *sched);
-
-int
-sctk_thread_generic_sems_sem_trywait(sctk_thread_generic_sem_t *sem,
-                                     sctk_thread_generic_scheduler_t *sched);
-
-int
-sctk_thread_generic_sems_sem_timedwait(sctk_thread_generic_sem_t *sem,
-                                       const struct timespec *time,
-                                       sctk_thread_generic_scheduler_t *sched);
-
-int
-sctk_thread_generic_sems_sem_post(sctk_thread_generic_sem_t *sem,
-                                  sctk_thread_generic_scheduler_t *sched);
-
-int
-sctk_thread_generic_sems_sem_getvalue(sctk_thread_generic_sem_t *sem,
-                                      int *sval);
-
-int
-sctk_thread_generic_sems_sem_destroy(sctk_thread_generic_sem_t *sem);
-
-sctk_thread_generic_sem_t *
-sctk_thread_generic_sems_sem_open(const char *name, int oflag, ...);
-
-int
-sctk_thread_generic_sems_sem_close(sctk_thread_generic_sem_t *sem);
-
-int
-sctk_thread_generic_sems_sem_unlink(const char *name);
-
-
-
 
 
 
