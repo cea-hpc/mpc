@@ -14,7 +14,7 @@ endif
 
 mpc_headerdir=$(includedir)/mpc/
 
-noinst_LTLIBRARIES = libmpclaunch.la
+lib_LTLIBRARIES = libmpclaunch.la
 
 libmpclaunch_la_SOURCES = main.c  libc_main.c  mpc_launch.c pmi.c
 
