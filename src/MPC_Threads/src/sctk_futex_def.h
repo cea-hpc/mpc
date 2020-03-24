@@ -27,45 +27,45 @@
 /************************************************************************/
 
 
-#define SCTK_FUTEX_WAIT 21210
-#define SCTK_FUTEX_WAKE 21211
-#define SCTK_FUTEX_REQUEUE 21212
-#define SCTK_FUTEX_CMP_REQUEUE 21213
-#define SCTK_FUTEX_WAKE_OP 21214
-#define SCTK_FUTEX_WAIT_BITSET 21215
-#define SCTK_FUTEX_WAKE_BITSET 21216
-#define SCTK_FUTEX_LOCK_PI 21217
-#define SCTK_FUTEX_TRYLOCK_PI 21218
-#define SCTK_FUTEX_UNLOCK_PI 21219
-#define SCTK_FUTEX_CMP_REQUEUE_PI 21220
-#define SCTK_FUTEX_WAIT_REQUEUE_PI 21221
+#define SCTK_FUTEX_WAIT               21210
+#define SCTK_FUTEX_WAKE               21211
+#define SCTK_FUTEX_REQUEUE            21212
+#define SCTK_FUTEX_CMP_REQUEUE        21213
+#define SCTK_FUTEX_WAKE_OP            21214
+#define SCTK_FUTEX_WAIT_BITSET        21215
+#define SCTK_FUTEX_WAKE_BITSET        21216
+#define SCTK_FUTEX_LOCK_PI            21217
+#define SCTK_FUTEX_TRYLOCK_PI         21218
+#define SCTK_FUTEX_UNLOCK_PI          21219
+#define SCTK_FUTEX_CMP_REQUEUE_PI     21220
+#define SCTK_FUTEX_WAIT_REQUEUE_PI    21221
 
 /* WAITERS */
-#define SCTK_FUTEX_WAITERS (1 << 31)
+#define SCTK_FUTEX_WAITERS            (1 << 31)
 
 /* OPS */
 
-#define SCTK_FUTEX_OP_SET 0
-#define SCTK_FUTEX_OP_ADD 1 
-#define SCTK_FUTEX_OP_OR 2 
-#define SCTK_FUTEX_OP_ANDN 3
-#define SCTK_FUTEX_OP_XOR 4  
-#define SCTK_FUTEX_OP_ARG_SHIFT 8
+#define SCTK_FUTEX_OP_SET          0
+#define SCTK_FUTEX_OP_ADD          1
+#define SCTK_FUTEX_OP_OR           2
+#define SCTK_FUTEX_OP_ANDN         3
+#define SCTK_FUTEX_OP_XOR          4
+#define SCTK_FUTEX_OP_ARG_SHIFT    8
 
 /* CMP */
 
-#define SCTK_FUTEX_OP_CMP_EQ 0
-#define SCTK_FUTEX_OP_CMP_NE 1
-#define SCTK_FUTEX_OP_CMP_LT 2
-#define SCTK_FUTEX_OP_CMP_LE 3
-#define SCTK_FUTEX_OP_CMP_GT 4
-#define SCTK_FUTEX_OP_CMP_GE 5
+#define SCTK_FUTEX_OP_CMP_EQ    0
+#define SCTK_FUTEX_OP_CMP_NE    1
+#define SCTK_FUTEX_OP_CMP_LT    2
+#define SCTK_FUTEX_OP_CMP_LE    3
+#define SCTK_FUTEX_OP_CMP_GT    4
+#define SCTK_FUTEX_OP_CMP_GE    5
 
 /************************************************************************/
-/* Futex Ops                                               	            */
+/* Futex Ops                                                                */
 /************************************************************************/
 
-int sctk_futex(void *addr1, int op, int val1, 
+int sctk_futex(void *addr1, int op, int val1,
                struct timespec *timeout, void *addr2, int val3);
 
 #endif /* SCTK_FUTEX_DEF_H */

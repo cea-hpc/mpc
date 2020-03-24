@@ -29,7 +29,7 @@
 extern "C"
 {
 #endif
-  void sctk_posix_ethread (void);
+void sctk_posix_ethread(void);
 
 #ifdef __cplusplus
 }

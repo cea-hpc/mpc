@@ -29,25 +29,24 @@
 #include "sctk_thread.h"
 #include "sctk_internal_thread.h"
 
-typedef struct {
-  const void *keys[SCTK_THREAD_KEYS_MAX + 1];
+typedef struct
+{
+	const void *keys[SCTK_THREAD_KEYS_MAX + 1];
 }sctk_thread_generic_keys_t;
 
-void sctk_thread_generic_keys_init(); 
-void sctk_thread_generic_keys_init_thread(sctk_thread_generic_keys_t* keys);
+void sctk_thread_generic_keys_init();
+void sctk_thread_generic_keys_init_thread(sctk_thread_generic_keys_t *keys);
 int
-sctk_thread_generic_keys_setspecific (sctk_thread_key_t __key, const void *__pointer,sctk_thread_generic_keys_t* keys);
+sctk_thread_generic_keys_setspecific(sctk_thread_key_t __key, const void *__pointer, sctk_thread_generic_keys_t *keys);
 void *
-sctk_thread_generic_keys_getspecific (sctk_thread_key_t __key,sctk_thread_generic_keys_t* keys);
+sctk_thread_generic_keys_getspecific(sctk_thread_key_t __key, sctk_thread_generic_keys_t *keys);
 int
-sctk_thread_generic_keys_key_create (sctk_thread_key_t * __key,
-				void (*__destr_function) (void *),sctk_thread_generic_keys_t* keys);
+sctk_thread_generic_keys_key_create(sctk_thread_key_t *__key,
+                                    void (*__destr_function)(void *), sctk_thread_generic_keys_t *keys);
 int
-sctk_thread_generic_keys_key_delete (sctk_thread_key_t __key,sctk_thread_generic_keys_t* keys);
+sctk_thread_generic_keys_key_delete(sctk_thread_key_t __key, sctk_thread_generic_keys_t *keys);
 
 extern void
 sctk_thread_generic_keys_key_delete_all(sctk_thread_generic_keys_t *keys);
 
 #endif
-
-

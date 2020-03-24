@@ -35,10 +35,10 @@
 extern "C"
 {
 #endif
-  void sctk_posix_pthread (void);
+void sctk_posix_pthread(void);
 
 #ifdef HAVE_PTHREAD_GETATTR_NP
-  extern int pthread_getattr_np (pthread_t __th, pthread_attr_t * __attr);
+extern int pthread_getattr_np(pthread_t __th, pthread_attr_t *__attr);
 #endif
 
 

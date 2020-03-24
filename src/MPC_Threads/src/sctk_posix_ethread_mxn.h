@@ -30,7 +30,8 @@ extern "C"
 {
 #endif
 
-  void sctk_posix_ethread_mxn (void);
+void sctk_posix_ethread_mxn(void);
+
 #ifdef __cplusplus
 }
 #endif

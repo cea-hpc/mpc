@@ -26,30 +26,29 @@ extern "C"
 {
 #endif
 
-  struct _sctk_thread_cleanup_buffer
-  {
-    void (*__routine) (void *);	/* Function to call.  */
-    void *__arg;		/* Its argument.  */
-    struct _sctk_thread_cleanup_buffer *next;	/* Chaining of cleanup functions.  */
-  };
+struct _sctk_thread_cleanup_buffer
+{
+	void                                (*__routine) (void *); /* Function to call.  */
+	void *                              __arg;                 /* Its argument.  */
+	struct _sctk_thread_cleanup_buffer *next;                  /* Chaining of cleanup functions.  */
+};
 
 
-void _sctk_thread_cleanup_push (struct _sctk_thread_cleanup_buffer *__buffer,
-					 void (*__routine) (void *),
-					 void *__arg);
+void _sctk_thread_cleanup_push(struct _sctk_thread_cleanup_buffer *__buffer,
+                               void (*__routine)(void *),
+                               void *__arg);
 
 
-#define sctk_thread_cleanup_push(routine,arg) \
-  { struct _sctk_thread_cleanup_buffer _buffer;				      \
-    _sctk_thread_cleanup_push (&_buffer, (routine), (arg));
+#define sctk_thread_cleanup_push(routine, arg)        \
+	{ struct _sctk_thread_cleanup_buffer _buffer; \
+	  _sctk_thread_cleanup_push(&_buffer, (routine), (arg) );
 
-void _sctk_thread_cleanup_pop (struct _sctk_thread_cleanup_buffer *__buffer, int __execute);
+void _sctk_thread_cleanup_pop(struct _sctk_thread_cleanup_buffer *__buffer, int __execute);
 
 
 
 #define sctk_thread_cleanup_pop(execute) \
-    _sctk_thread_cleanup_pop (&_buffer, (execute)); }
-
+	_sctk_thread_cleanup_pop(&_buffer, (execute) ); }
 
 
 

@@ -38,7 +38,7 @@ extern "C"
 {
 #endif
 
-static inline int mpc_common_get_task_rank ( void )
+static inline int mpc_common_get_task_rank(void)
 {
 #if defined(MPC_IN_PROCESS_MODE) || defined(SCTK_LIB_MODE)
 	return mpc_common_get_process_rank();
@@ -49,7 +49,7 @@ static inline int mpc_common_get_task_rank ( void )
 #endif
 	int ret = -1;
 
-	if ( can_be_disguised == 0 )
+	if(can_be_disguised == 0)
 	{
 		/* __mpc_task_rank is a manually switched
 		 * TLS entry. It is initialized at -2,
@@ -60,46 +60,44 @@ static inline int mpc_common_get_task_rank ( void )
 		ret = __mpc_task_rank;
 
 		/* Was it initialized ? Yes then we are done */
-		if ( ret != -2 )
+		if(ret != -2)
 		{
 			return ret;
 		}
 
 		sctk_thread_data_t *data = sctk_thread_data_get();
 
-		if ( !data )
+		if(!data)
 		{
 			return -1;
 		}
 
-		ret = ( int )( data->task_id );
+		ret = ( int )(data->task_id);
 
-                /* Save for next call */
-                __mpc_task_rank = ret;
-
+		/* Save for next call */
+		__mpc_task_rank = ret;
 	}
 	else
 	{
 		sctk_thread_data_t *data = sctk_thread_data_get();
 
-		if ( !data )
+		if(!data)
 		{
 			return -1;
 		}
 
-		ret = ( int )( data->task_id );
+		ret = ( int )(data->task_id);
 	}
 
 	return ret;
 }
 
-
-static inline int mpc_common_get_task_count( void )
+static inline int mpc_common_get_task_count(void)
 {
 	return mpc_common_get_flags()->task_number;
 }
 
-static inline int mpc_common_get_local_task_rank ( void )
+static inline int mpc_common_get_local_task_rank(void)
 {
 #ifdef SCTK_LIB_MODE
 	return 0;
@@ -109,15 +107,15 @@ static inline int mpc_common_get_local_task_rank ( void )
 #endif
 	sctk_thread_data_t *data = sctk_thread_data_get();
 
-	if ( !data )
+	if(!data)
 	{
 		return -1;
 	}
 
-	return ( int ) ( data->local_task_id );
+	return ( int )(data->local_task_id);
 }
 
-static inline int mpc_common_get_local_task_count ( void )
+static inline int mpc_common_get_local_task_count(void)
 {
 #ifdef SCTK_LIB_MODE
 	return 1;
@@ -128,11 +126,11 @@ static inline int mpc_common_get_local_task_count ( void )
 	return sctk_thread_get_current_local_tasks_nb();
 }
 
-static inline int mpc_thread_get_pu ( void )
+static inline int mpc_thread_get_pu(void)
 {
 	sctk_thread_data_t *data = sctk_thread_data_get();
 
-	if ( !data )
+	if(!data)
 	{
 		return -1;
 	}
@@ -140,18 +138,17 @@ static inline int mpc_thread_get_pu ( void )
 	return data->virtual_processor;
 }
 
-static inline int mpc_common_get_thread_id( void )
+static inline int mpc_common_get_thread_id(void)
 {
 	sctk_thread_data_t *data = sctk_thread_data_get();
 
-	if ( !data )
+	if(!data)
 	{
 		return -1;
 	}
 
 	return data->user_thread;
 }
-
 
 #ifdef __cplusplus
 }

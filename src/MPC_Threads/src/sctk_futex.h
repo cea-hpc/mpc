@@ -34,16 +34,16 @@
 
 struct futex_cell
 {
-	int * do_wait;
-	int freed;
-	int bitmask;
-	int skip;
-	int orig_op;
+	int *do_wait;
+	int  freed;
+	int  bitmask;
+	int  skip;
+	int  orig_op;
 };
 
-struct futex_cell *  futex_cell_new( int bitmask, int orig_op );
-int  futex_cell_match( struct futex_cell * cell  , int bitmask );
-void futex_cell_detach( struct futex_cell * cell );
+struct futex_cell *futex_cell_new(int bitmask, int orig_op);
+int  futex_cell_match(struct futex_cell *cell, int bitmask);
+void futex_cell_detach(struct futex_cell *cell);
 
 
 struct futex_bitset_iterator_desc
@@ -53,8 +53,8 @@ struct futex_bitset_iterator_desc
 };
 
 
-int futex_cell_apply_bitmask( void * elem /* struct futex_cell */,
-						       void * arg /* struct futex_bitset_iterator_desc */ );
+int futex_cell_apply_bitmask(void *elem /* struct futex_cell */,
+                             void *arg /* struct futex_bitset_iterator_desc */);
 
 /************************************************************************/
 /* Futex Queues                                                         */
@@ -63,15 +63,15 @@ int futex_cell_apply_bitmask( void * elem /* struct futex_cell */,
 
 struct futex_queue
 {
-	mpc_common_spinlock_t queue_is_wake_tainted;
+	mpc_common_spinlock_t  queue_is_wake_tainted;
 	struct mpc_common_fifo wait_list;
-	int * futex_key;
+	int *                  futex_key;
 };
 
-struct futex_queue * futex_queue_new( int * futex_key );
-int futex_queue_release( struct futex_queue * fq );
-int * futex_queue_push( struct futex_queue * fq  , int bitmask , int orig_op );
-int futex_queue_wake( struct futex_queue * fq , int bitmask , int use_mask, int count, int op );
+struct futex_queue *futex_queue_new(int *futex_key);
+int futex_queue_release(struct futex_queue *fq);
+int *futex_queue_push(struct futex_queue *fq, int bitmask, int orig_op);
+int futex_queue_wake(struct futex_queue *fq, int bitmask, int use_mask, int count, int op);
 
 /************************************************************************/
 /* Futex HT                                                             */
@@ -79,17 +79,17 @@ int futex_queue_wake( struct futex_queue * fq , int bitmask , int use_mask, int 
 
 struct futex_queue_HT
 {
-	OPA_int_t queue_table_is_being_manipulated;
-	
+	OPA_int_t                   queue_table_is_being_manipulated;
+
 	struct mpc_common_hashtable queue_hash_table;
-	unsigned int queue_count;
-	unsigned int queue_cleanup_ratio;
+	unsigned int                queue_count;
+	unsigned int                queue_cleanup_ratio;
 };
 
-int futex_queue_HT_init( struct futex_queue_HT * ht );
-int futex_queue_HT_release( struct futex_queue_HT * ht );
-int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_key  , int bitmask , int orig_op );
-int futex_queue_HT_wake_threads( struct futex_queue_HT * ht , int * futex_key , int bitmask , int use_mask, int count , int op);
+int futex_queue_HT_init(struct futex_queue_HT *ht);
+int futex_queue_HT_release(struct futex_queue_HT *ht);
+int *futex_queue_HT_register_thread(struct futex_queue_HT *ht, int *futex_key, int bitmask, int orig_op);
+int futex_queue_HT_wake_threads(struct futex_queue_HT *ht, int *futex_key, int bitmask, int use_mask, int count, int op);
 
 
 /************************************************************************/

@@ -35,60 +35,62 @@
 #include <utlist.h>
 #include <time.h>
 
-typedef struct sctk_thread_generic_sem_s{
-  volatile unsigned int lock;
-  mpc_common_spinlock_t spinlock;
-  sctk_thread_generic_mutex_cell_t* list;
+typedef struct sctk_thread_generic_sem_s
+{
+	volatile unsigned int             lock;
+	mpc_common_spinlock_t             spinlock;
+	sctk_thread_generic_mutex_cell_t *list;
 }sctk_thread_generic_sem_t;
 
-#define SCTK_THREAD_GENERIC_SEM_INIT {0,SCTK_SPINLOCK_INITIALIZER,NULL}
+#define SCTK_THREAD_GENERIC_SEM_INIT    { 0, SCTK_SPINLOCK_INITIALIZER, NULL }
 
-typedef struct sctk_thread_generic_sem_named_list_s{
-  char* name;
-  volatile int nb;
-  volatile int unlink;
-  volatile mode_t mode;
-  sctk_thread_generic_sem_t* sem;
-  struct sctk_thread_generic_sem_named_list_s *prev, *next;
+typedef struct sctk_thread_generic_sem_named_list_s
+{
+	char *                                       name;
+	volatile int                                 nb;
+	volatile int                                 unlink;
+	volatile mode_t                              mode;
+	sctk_thread_generic_sem_t *                  sem;
+	struct sctk_thread_generic_sem_named_list_s *prev, *next;
 }sctk_thread_generic_sem_named_list_t;
 
 void sctk_thread_generic_sems_init();
 
 int
-sctk_thread_generic_sems_sem_init( sctk_thread_generic_sem_t* sem, 
-						int pshared, unsigned int value );
+sctk_thread_generic_sems_sem_init(sctk_thread_generic_sem_t *sem,
+                                  int pshared, unsigned int value);
 
 int
-sctk_thread_generic_sems_sem_wait( sctk_thread_generic_sem_t* sem, 
-						sctk_thread_generic_scheduler_t* sched );
+sctk_thread_generic_sems_sem_wait(sctk_thread_generic_sem_t *sem,
+                                  sctk_thread_generic_scheduler_t *sched);
 
 int
-sctk_thread_generic_sems_sem_trywait( sctk_thread_generic_sem_t* sem,
-						sctk_thread_generic_scheduler_t* sched );
+sctk_thread_generic_sems_sem_trywait(sctk_thread_generic_sem_t *sem,
+                                     sctk_thread_generic_scheduler_t *sched);
 
 int
-sctk_thread_generic_sems_sem_timedwait( sctk_thread_generic_sem_t* sem,
-						const struct timespec* time,
-						sctk_thread_generic_scheduler_t* sched );
+sctk_thread_generic_sems_sem_timedwait(sctk_thread_generic_sem_t *sem,
+                                       const struct timespec *time,
+                                       sctk_thread_generic_scheduler_t *sched);
 
 int
-sctk_thread_generic_sems_sem_post( sctk_thread_generic_sem_t* sem,
-						sctk_thread_generic_scheduler_t* sched );
+sctk_thread_generic_sems_sem_post(sctk_thread_generic_sem_t *sem,
+                                  sctk_thread_generic_scheduler_t *sched);
 
 int
-sctk_thread_generic_sems_sem_getvalue( sctk_thread_generic_sem_t* sem,
-						int* sval );
+sctk_thread_generic_sems_sem_getvalue(sctk_thread_generic_sem_t *sem,
+                                      int *sval);
 
 int
-sctk_thread_generic_sems_sem_destroy( sctk_thread_generic_sem_t* sem );
+sctk_thread_generic_sems_sem_destroy(sctk_thread_generic_sem_t *sem);
 
-sctk_thread_generic_sem_t*
-sctk_thread_generic_sems_sem_open( const char* name, int oflag, ...);
-
-int
-sctk_thread_generic_sems_sem_close( sctk_thread_generic_sem_t* sem );
+sctk_thread_generic_sem_t *
+sctk_thread_generic_sems_sem_open(const char *name, int oflag, ...);
 
 int
-sctk_thread_generic_sems_sem_unlink( const char* name );
+sctk_thread_generic_sems_sem_close(sctk_thread_generic_sem_t *sem);
+
+int
+sctk_thread_generic_sems_sem_unlink(const char *name);
 
 #endif

@@ -31,44 +31,44 @@
 #include "sctk_thread_scheduler.h"
 #include "mpc_common_spinlock.h"
 
-typedef enum{
-  sctk_spin_unitialized,
-  sctk_spin_initialized,
-  sctk_spin_destroyed
+typedef enum
+{
+	sctk_spin_unitialized,
+	sctk_spin_initialized,
+	sctk_spin_destroyed
 } sctk_spin_state;
 
-typedef struct sctk_thread_generic_spinlock_s{
-	mpc_common_spinlock_t lock;
-	sctk_spin_state state;
-	sctk_thread_generic_scheduler_t* owner;
+typedef struct sctk_thread_generic_spinlock_s
+{
+	mpc_common_spinlock_t            lock;
+	sctk_spin_state                  state;
+	sctk_thread_generic_scheduler_t *owner;
 }sctk_thread_generic_spinlock_t;
 
-#define SCTK_THREAD_GENERIC_SPINLOCK_INIT {SCTK_SPINLOCK_INITIALIZER,sctk_spin_unitialized,NULL}
+#define SCTK_THREAD_GENERIC_SPINLOCK_INIT    { SCTK_SPINLOCK_INITIALIZER, sctk_spin_unitialized, NULL }
 
-#define SCTK_SPIN_DELAY 10
-
-int
-sctk_thread_generic_spinlocks_spin_destroy( sctk_thread_generic_spinlock_t* spinlock );
+#define SCTK_SPIN_DELAY                      10
 
 int
-sctk_thread_generic_spinlocks_spin_init( sctk_thread_generic_spinlock_t* spinlock,
-					int pshared );
+sctk_thread_generic_spinlocks_spin_destroy(sctk_thread_generic_spinlock_t *spinlock);
 
 int
-sctk_thread_generic_spinlocks_spin_lock( sctk_thread_generic_spinlock_t* spinlock,
-					sctk_thread_generic_scheduler_t* sched );
+sctk_thread_generic_spinlocks_spin_init(sctk_thread_generic_spinlock_t *spinlock,
+                                        int pshared);
 
 int
-sctk_thread_generic_spinlocks_spin_trylock( sctk_thread_generic_spinlock_t* spinlock,
-					sctk_thread_generic_scheduler_t* sched );
+sctk_thread_generic_spinlocks_spin_lock(sctk_thread_generic_spinlock_t *spinlock,
+                                        sctk_thread_generic_scheduler_t *sched);
 
 int
-sctk_thread_generic_spinlocks_spin_unlock( sctk_thread_generic_spinlock_t* spinlock,
-					sctk_thread_generic_scheduler_t* sched );
+sctk_thread_generic_spinlocks_spin_trylock(sctk_thread_generic_spinlock_t *spinlock,
+                                           sctk_thread_generic_scheduler_t *sched);
+
+int
+sctk_thread_generic_spinlocks_spin_unlock(sctk_thread_generic_spinlock_t *spinlock,
+                                          sctk_thread_generic_scheduler_t *sched);
 
 void
 sctk_thread_generic_spinlocks_init();
 
 #endif
-
-

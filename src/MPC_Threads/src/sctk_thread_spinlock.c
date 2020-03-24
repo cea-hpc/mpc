@@ -24,131 +24,168 @@
 #include <errno.h>
 
 void
-sctk_thread_generic_spinlocks_init(){
-  sctk_thread_generic_check_size( sctk_thread_spinlock_t, sctk_thread_generic_spinlock_t );
+sctk_thread_generic_spinlocks_init()
+{
+	sctk_thread_generic_check_size(sctk_thread_spinlock_t, sctk_thread_generic_spinlock_t);
 
-  //printf("TOTO %d - %d \n", sizeof(sctk_thread_spinlock_t), sizeof(sctk_thread_spinlock_t));
-  /*static sctk_thread_spinlock_t loc = */
+	//printf("TOTO %d - %d \n", sizeof(sctk_thread_spinlock_t), sizeof(sctk_thread_spinlock_t));
+	/*static sctk_thread_spinlock_t loc = */
 }
 
 int
-sctk_thread_generic_spinlocks_spin_destroy( sctk_thread_generic_spinlock_t* spinlock ){
-  
-  /*
-	  ERRORS:
-	  EBUSY  The implementation has detected an attempt to destroy a spin lock while 
-	  		 it is in use
-	  EINVAL The value of the spinlock argument is invalid
-	*/
+sctk_thread_generic_spinlocks_spin_destroy(sctk_thread_generic_spinlock_t *spinlock)
+{
+	/*
+	 *      ERRORS:
+	 *      EBUSY  The implementation has detected an attempt to destroy a spin lock while
+	 *                     it is in use
+	 *      EINVAL The value of the spinlock argument is invalid
+	 */
 
-	printf("%d %d\n",sctk_spin_destroyed,spinlock->state);
-  if( spinlock == NULL || spinlock->state != sctk_spin_initialized ) return EINVAL;
-  mpc_common_spinlock_t* p_lock = &(spinlock->lock);
-  if( OPA_load_int(p_lock) != 0 ) return EBUSY;
-
-  spinlock->state = sctk_spin_destroyed;
-  return 0;
-}
-
-int
-sctk_thread_generic_spinlocks_spin_init( sctk_thread_generic_spinlock_t* spinlock,
-					int pshared ){
-
-  /*
-	  ERRORS:
-	  EBUSY  The implementation has detected an attempt to initialize a spin lock while 
-	  		 it is in use
-	  EINVAL The value of the spinlock argument is invalid
-	  EAGAIN |>NOT IMPLEMENTED<| The system lacks the necessary resources to initialize 
-	  		 another spin lock
-	  ENOMEM |>NOT IMPLEMENTED<| Insufficient memory exists to initialize the lock
-	*/
-
-  if( spinlock == NULL ) return EINVAL;
-  mpc_common_spinlock_t* p_lock = &(spinlock->lock);
-  if( ( spinlock->state == sctk_spin_initialized || spinlock->state == sctk_spin_destroyed ) 
-		  && ( OPA_load_int(p_lock) != 0 )) return EBUSY;
-  if( pshared == SCTK_THREAD_PROCESS_SHARED ){
-	fprintf (stderr, "Invalid pshared value in attr, MPC doesn't handle process shared spinlocks\n");
-	return ENOTSUP;
-  }
-
-  sctk_thread_generic_spinlock_t local = SCTK_THREAD_GENERIC_SPINLOCK_INIT;
-  sctk_thread_generic_spinlock_t* p_local = &local;
-  p_local->state = sctk_spin_initialized;
-  (*spinlock) = local;
-  printf("init:%d\n",spinlock->state);
-
-  return 0;
-}
-
-int
-sctk_thread_generic_spinlocks_spin_lock( sctk_thread_generic_spinlock_t* spinlock,
-					sctk_thread_generic_scheduler_t* sched ){
-
-  /*
-	  ERRORS:
-	  EINVAL  The value of the spinlock argument is invalid
-	  EDEADLK The calling thread already holds the lock
-	*/
-
-  if( spinlock == NULL ) return EINVAL;
-  if( spinlock->owner == sched ) return EDEADLK;
-
-  long i = SCTK_SPIN_DELAY;
-  mpc_common_spinlock_t* p_lock = &(spinlock->lock);
-  while( mpc_common_spinlock_trylock( &(spinlock->lock) )){
-	while( expect_true( OPA_load_int(p_lock) != 0 ) ){
-	  i--;
-	  if( expect_false( i <= 0 ) ){
-		sctk_thread_generic_sched_yield( sched );
-		i = SCTK_SPIN_DELAY;
-	  }
+	printf("%d %d\n", sctk_spin_destroyed, spinlock->state);
+	if(spinlock == NULL || spinlock->state != sctk_spin_initialized)
+	{
+		return EINVAL;
 	}
-  }
-  spinlock->owner = sched;
-  printf("in lock:%d\n", spinlock->state);
-  return 0;
-}
+	mpc_common_spinlock_t *p_lock = &(spinlock->lock);
+	if(OPA_load_int(p_lock) != 0)
+	{
+		return EBUSY;
+	}
 
-int
-sctk_thread_generic_spinlocks_spin_trylock( sctk_thread_generic_spinlock_t* spinlock,
-					sctk_thread_generic_scheduler_t* sched ){
-
-  /*
-	  ERRORS:
-	  EINVAL  The value of the spinlock argument is invalid
-	  EDEADLK The calling thread already holds the lock
-	  EBUSY   Another thread currently holds the lock
-	*/
-
-  if( spinlock == NULL ) return EINVAL;
-  if( spinlock->owner == sched ) return EDEADLK;
-
-  if( mpc_common_spinlock_trylock( &(spinlock->lock) ) != 0 )
-	return EBUSY;
-  else{
-	spinlock->owner = sched;
+	spinlock->state = sctk_spin_destroyed;
 	return 0;
-  }
 }
 
 int
-sctk_thread_generic_spinlocks_spin_unlock( sctk_thread_generic_spinlock_t* spinlock,
-					sctk_thread_generic_scheduler_t* sched ){
- 
-  /*
-	  ERRORS:
-	  EINVAL The value of the spinlock argument is invalid
-	  EPERM  The calling thread does not hold the lock
-	*/
+sctk_thread_generic_spinlocks_spin_init(sctk_thread_generic_spinlock_t *spinlock,
+                                        int pshared)
+{
+	/*
+	 *      ERRORS:
+	 *      EBUSY  The implementation has detected an attempt to initialize a spin lock while
+	 *                     it is in use
+	 *      EINVAL The value of the spinlock argument is invalid
+	 *      EAGAIN |>NOT IMPLEMENTED<| The system lacks the necessary resources to initialize
+	 *                     another spin lock
+	 *      ENOMEM |>NOT IMPLEMENTED<| Insufficient memory exists to initialize the lock
+	 */
 
-  if( spinlock == NULL ) return EINVAL;
-  if( spinlock->owner != sched ) return EPERM;
+	if(spinlock == NULL)
+	{
+		return EINVAL;
+	}
+	mpc_common_spinlock_t *p_lock = &(spinlock->lock);
+	if( (spinlock->state == sctk_spin_initialized || spinlock->state == sctk_spin_destroyed) &&
+	    (OPA_load_int(p_lock) != 0) )
+	{
+		return EBUSY;
+	}
+	if(pshared == SCTK_THREAD_PROCESS_SHARED)
+	{
+		fprintf(stderr, "Invalid pshared value in attr, MPC doesn't handle process shared spinlocks\n");
+		return ENOTSUP;
+	}
 
-  spinlock->owner = NULL;
-  mpc_common_spinlock_unlock( &(spinlock->lock) );
-  printf("in unlock:%d\n", spinlock->state);
-  return 0;
+	sctk_thread_generic_spinlock_t  local   = SCTK_THREAD_GENERIC_SPINLOCK_INIT;
+	sctk_thread_generic_spinlock_t *p_local = &local;
+	p_local->state = sctk_spin_initialized;
+	(*spinlock)    = local;
+	printf("init:%d\n", spinlock->state);
+
+	return 0;
 }
 
+int
+sctk_thread_generic_spinlocks_spin_lock(sctk_thread_generic_spinlock_t *spinlock,
+                                        sctk_thread_generic_scheduler_t *sched)
+{
+	/*
+	 *      ERRORS:
+	 *      EINVAL  The value of the spinlock argument is invalid
+	 *      EDEADLK The calling thread already holds the lock
+	 */
+
+	if(spinlock == NULL)
+	{
+		return EINVAL;
+	}
+	if(spinlock->owner == sched)
+	{
+		return EDEADLK;
+	}
+
+	long i = SCTK_SPIN_DELAY;
+	mpc_common_spinlock_t *p_lock = &(spinlock->lock);
+	while(mpc_common_spinlock_trylock(&(spinlock->lock) ) )
+	{
+		while(expect_true(OPA_load_int(p_lock) != 0) )
+		{
+			i--;
+			if(expect_false(i <= 0) )
+			{
+				sctk_thread_generic_sched_yield(sched);
+				i = SCTK_SPIN_DELAY;
+			}
+		}
+	}
+	spinlock->owner = sched;
+	printf("in lock:%d\n", spinlock->state);
+	return 0;
+}
+
+int
+sctk_thread_generic_spinlocks_spin_trylock(sctk_thread_generic_spinlock_t *spinlock,
+                                           sctk_thread_generic_scheduler_t *sched)
+{
+	/*
+	 *      ERRORS:
+	 *      EINVAL  The value of the spinlock argument is invalid
+	 *      EDEADLK The calling thread already holds the lock
+	 *      EBUSY   Another thread currently holds the lock
+	 */
+
+	if(spinlock == NULL)
+	{
+		return EINVAL;
+	}
+	if(spinlock->owner == sched)
+	{
+		return EDEADLK;
+	}
+
+	if(mpc_common_spinlock_trylock(&(spinlock->lock) ) != 0)
+	{
+		return EBUSY;
+	}
+	else
+	{
+		spinlock->owner = sched;
+		return 0;
+	}
+}
+
+int
+sctk_thread_generic_spinlocks_spin_unlock(sctk_thread_generic_spinlock_t *spinlock,
+                                          sctk_thread_generic_scheduler_t *sched)
+{
+	/*
+	 *      ERRORS:
+	 *      EINVAL The value of the spinlock argument is invalid
+	 *      EPERM  The calling thread does not hold the lock
+	 */
+
+	if(spinlock == NULL)
+	{
+		return EINVAL;
+	}
+	if(spinlock->owner != sched)
+	{
+		return EPERM;
+	}
+
+	spinlock->owner = NULL;
+	mpc_common_spinlock_unlock(&(spinlock->lock) );
+	printf("in unlock:%d\n", spinlock->state);
+	return 0;
+}

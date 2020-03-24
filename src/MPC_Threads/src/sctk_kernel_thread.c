@@ -19,7 +19,7 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#define _GNU_SOURCE        
+#define _GNU_SOURCE
 #include <dlfcn.h>
 
 #include "mpc_common_asm.h"
@@ -36,289 +36,314 @@
 #ifndef SCTK_KERNEL_THREAD_USE_TLS
 
 int
-kthread_key_create (kthread_key_t * key, void (*destr_function) (void *))
+kthread_key_create(kthread_key_t *key, void (*destr_function)(void *) )
 {
-  return pthread_key_create ((pthread_key_t *) key, destr_function);
+	return pthread_key_create( (pthread_key_t *)key, destr_function);
 }
 
 int
-kthread_key_delete (kthread_key_t key)
+kthread_key_delete(kthread_key_t key)
 {
-  pthread_key_t keya;
-  pthread_key_t *keyp;
-  keyp = (pthread_key_t *) & key;
-  keya = *keyp;
-  return pthread_key_delete (keya);
+	pthread_key_t  keya;
+	pthread_key_t *keyp;
+
+	keyp = (pthread_key_t *)&key;
+	keya = *keyp;
+	return pthread_key_delete(keya);
 }
 
 int
-kthread_setspecific (kthread_key_t key, const void *pointer)
+kthread_setspecific(kthread_key_t key, const void *pointer)
 {
-  pthread_key_t keya;
-  pthread_key_t *keyp;
-  keyp = (pthread_key_t *) & key;
-  keya = *keyp;
-  return pthread_setspecific (keya, pointer);
+	pthread_key_t  keya;
+	pthread_key_t *keyp;
+
+	keyp = (pthread_key_t *)&key;
+	keya = *keyp;
+	return pthread_setspecific(keya, pointer);
 }
 
 void *
-kthread_getspecific (kthread_key_t key)
+kthread_getspecific(kthread_key_t key)
 {
-  pthread_key_t keya;
-  pthread_key_t *keyp;
-  keyp = (pthread_key_t *) & key;
-  keya = *keyp;
-  return pthread_getspecific (keya);
-}
+	pthread_key_t  keya;
+	pthread_key_t *keyp;
 
+	keyp = (pthread_key_t *)&key;
+	keya = *keyp;
+	return pthread_getspecific(keya);
+}
 #endif /* SCTK_KERNEL_THREAD_USE_TLS */
 
 TODO("Move kthread_stack_size_default to the configuration")
-#define kthread_stack_size_default (10*1024*1024)
+#define kthread_stack_size_default    (10 * 1024 * 1024)
 
-typedef void *(*start_routine_t) (void *) ;
+typedef void *(*start_routine_t) (void *);
 
 typedef struct kthread_create_start_s
 {
-  volatile start_routine_t start_routine;
-  volatile void *arg;
-  volatile int started;
-  volatile int used;
-  volatile struct kthread_create_start_s* next;
-  sem_t sem;
+	volatile start_routine_t                start_routine;
+	volatile void *                         arg;
+	volatile int                            started;
+	volatile int                            used;
+	volatile struct kthread_create_start_s *next;
+	sem_t                                   sem;
 } kthread_create_start_t;
 
-static mpc_common_spinlock_t lock = { 0 };
-static volatile kthread_create_start_t* list = NULL;
+static mpc_common_spinlock_t            lock = { 0 };
+static volatile kthread_create_start_t *list = NULL;
 
 static void *
-kthread_create_start_routine (void *t_arg)
+kthread_create_start_routine(void *t_arg)
 {
-  kthread_create_start_t slot;
+	kthread_create_start_t slot;
 
-  mpc_topology_clear_cpu_pinning_cache();
+	mpc_topology_clear_cpu_pinning_cache();
 
-  memcpy(&slot,t_arg,sizeof(kthread_create_start_t));
-  ((kthread_create_start_t*)t_arg)->started = 1;
+	memcpy(&slot, t_arg, sizeof(kthread_create_start_t) );
+	( (kthread_create_start_t *)t_arg)->started = 1;
 
-  //avoir to create an allocation chain
-  sctk_alloc_posix_plug_on_egg_allocator();
+	//avoir to create an allocation chain
+	sctk_alloc_posix_plug_on_egg_allocator();
 
-  sem_init(&(slot.sem), 0,0);
+	sem_init(&(slot.sem), 0, 0);
 
-  mpc_common_spinlock_lock(&lock);
+	mpc_common_spinlock_lock(&lock);
 
-  if( list !=  &slot )
-    slot.next = list;
-  else
-    slot.next = NULL;
+	if(list != &slot)
+	{
+		slot.next = list;
+	}
+	else
+	{
+		slot.next = NULL;
+	}
 
-  list = &slot;
-  mpc_common_spinlock_unlock(&lock);
+	list = &slot;
+	mpc_common_spinlock_unlock(&lock);
 
-  while(1){
-    void *(*start_routine) (void *);
-    void *arg;
+	while(1)
+	{
+		void *(*start_routine) (void *);
+		void *arg;
 
-    start_routine = (void *(*) (void *))slot.start_routine;
-    arg = (void*)slot.arg;
+		start_routine = (void *(*)(void *) )slot.start_routine;
+		arg           = (void *)slot.arg;
 
-    start_routine (arg);
+		start_routine(arg);
 
-    slot.used = 0;
+		slot.used = 0;
 
-    sctk_nodebug("Kernel thread done");
+		sctk_nodebug("Kernel thread done");
 
-    sem_wait(&(slot.sem));
+		sem_wait(&(slot.sem) );
 
-    while(slot.used != 1){
-      sched_yield();
-    }
+		while(slot.used != 1)
+		{
+			sched_yield();
+		}
 
-    sctk_nodebug("Kernel thread reuse");
-  }
-  return NULL;
+		sctk_nodebug("Kernel thread reuse");
+	}
+	return NULL;
 }
 
 int
-kthread_create (kthread_t * thread, void *(*start_routine) (void *),
-		void *arg)
+kthread_create(kthread_t *thread, void *(*start_routine)(void *),
+               void *arg)
 {
-  kthread_create_start_t* found = NULL;
-  kthread_create_start_t* cursor;
-  size_t kthread_stack_size = sctk_runtime_config_get()->modules.thread.kthread_stack_size;
+	kthread_create_start_t *found = NULL;
+	kthread_create_start_t *cursor;
+	size_t kthread_stack_size = sctk_runtime_config_get()->modules.thread.kthread_stack_size;
 
-  sctk_nodebug("Scan already started kthreads");
-  mpc_common_spinlock_lock(&lock);
-  cursor = (kthread_create_start_t*)list;
-  while(cursor != NULL){
-    if(cursor->used == 0){
-      found = (kthread_create_start_t*)cursor;
-      found->used = 1;
-      break;
-    }
-    cursor = (kthread_create_start_t*)cursor->next;
-  }
-  mpc_common_spinlock_unlock(&lock);
-  sctk_nodebug("Scan already started kthreads done found %p",found);
+	sctk_nodebug("Scan already started kthreads");
+	mpc_common_spinlock_lock(&lock);
+	cursor = (kthread_create_start_t *)list;
+	while(cursor != NULL)
+	{
+		if(cursor->used == 0)
+		{
+			found       = (kthread_create_start_t *)cursor;
+			found->used = 1;
+			break;
+		}
+		cursor = (kthread_create_start_t *)cursor->next;
+	}
+	mpc_common_spinlock_unlock(&lock);
+	sctk_nodebug("Scan already started kthreads done found %p", found);
 
-  if(found){
-    sctk_nodebug("Reuse old thread %p",found);
-    found->arg = arg;
-    found->start_routine = start_routine;
-    found->started = 0;
-    sem_post(&(found->sem));
-    return 0;
-  } else {
-    pthread_attr_t attr;
-    int res;
-    kthread_create_start_t tmp;
-    sctk_nodebug("Create new kernel thread");
+	if(found)
+	{
+		sctk_nodebug("Reuse old thread %p", found);
+		found->arg           = arg;
+		found->start_routine = start_routine;
+		found->started       = 0;
+		sem_post(&(found->sem) );
+		return 0;
+	}
+	else
+	{
+		pthread_attr_t         attr;
+		int                    res;
+		kthread_create_start_t tmp;
+		sctk_nodebug("Create new kernel thread");
 
-    res = pthread_attr_init (&attr);
+		res = pthread_attr_init(&attr);
 
-    sctk_nodebug( "kthread_create: value returned by attr_init %d", res ) ;
+		sctk_nodebug("kthread_create: value returned by attr_init %d", res);
 
-    res = pthread_attr_setscope (&attr, PTHREAD_SCOPE_SYSTEM);
+		res = pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
 
-    sctk_nodebug( "kthread_create: value returned by attr_setscope %d", res ) ;
+		sctk_nodebug("kthread_create: value returned by attr_setscope %d", res);
 
 //#warning "Move it to the XML configuration file"
-    char *env;
-    if ( (env = getenv("MPC_KTHREAD_STACK_SIZE")) != NULL) {
-      kthread_stack_size = atoll(env) /* + sctk_extls_size() */;
-    } else {
-      kthread_stack_size = kthread_stack_size_default /* + sctk_extls_size() */;
-    }
+		char *env;
+		if( (env = getenv("MPC_KTHREAD_STACK_SIZE") ) != NULL)
+		{
+			kthread_stack_size = atoll(env) /* + sctk_extls_size() */;
+		}
+		else
+		{
+			kthread_stack_size = kthread_stack_size_default /* + sctk_extls_size() */;
+		}
 
 #ifdef PTHREAD_STACK_MIN
-    if (PTHREAD_STACK_MIN > kthread_stack_size)
-      {
-	res = pthread_attr_setstacksize (&attr, PTHREAD_STACK_MIN);
+		if(PTHREAD_STACK_MIN > kthread_stack_size)
+		{
+			res = pthread_attr_setstacksize(&attr, PTHREAD_STACK_MIN);
 
-	sctk_nodebug( "kthread_create: value returned by attr_setstacksize(PTHREAD %d) %d",
-		      PTHREAD_STACK_MIN, res ) ;
-      }
-    else
-      {
-	res = pthread_attr_setstacksize (&attr, kthread_stack_size);
+			sctk_nodebug("kthread_create: value returned by attr_setstacksize(PTHREAD %d) %d",
+			             PTHREAD_STACK_MIN, res);
+		}
+		else
+		{
+			res = pthread_attr_setstacksize(&attr, kthread_stack_size);
 
-	sctk_nodebug( "kthread_create: value returned by attr_setstacksize(KTHREAD %d) %d",
-		      kthread_stack_size, res ) ;
-
-      }
+			sctk_nodebug("kthread_create: value returned by attr_setstacksize(KTHREAD %d) %d",
+			             kthread_stack_size, res);
+		}
 #else
-    res = pthread_attr_setstacksize (&attr, kthread_stack_size);
+		res = pthread_attr_setstacksize(&attr, kthread_stack_size);
 
-    sctk_nodebug( "kthread_create: value returned by attr_setstacksize(KTHREAD_NO_PTHREAD %d) %d",
-		  kthread_stack_size, res ) ;
-
+		sctk_nodebug("kthread_create: value returned by attr_setstacksize(KTHREAD_NO_PTHREAD %d) %d",
+		             kthread_stack_size, res);
 #endif
-    assume (sizeof (kthread_t) == sizeof (pthread_t));
+		assume(sizeof(kthread_t) == sizeof(pthread_t) );
 
-    tmp.started = 0;
-    tmp.arg = arg;
-    tmp.start_routine = start_routine;
-    tmp.used = 1;
+		tmp.started       = 0;
+		tmp.arg           = arg;
+		tmp.start_routine = start_routine;
+		tmp.used          = 1;
 
-    sctk_nodebug( "kthread_create: before pthread_create") ;
+		sctk_nodebug("kthread_create: before pthread_create");
 
-    res =
-      pthread_create ((pthread_t *) thread, &attr, kthread_create_start_routine,
-		      &tmp);
+		res =
+		        pthread_create( (pthread_t *)thread, &attr, kthread_create_start_routine,
+		                        &tmp);
 
-    if(res != 0){
-      res = pthread_attr_destroy (&attr);
-      res = pthread_attr_init (&attr);
-      res = pthread_attr_setscope (&attr, PTHREAD_SCOPE_SYSTEM);
-      res =
-	pthread_create ((pthread_t *) thread,  &attr, kthread_create_start_routine,
-			&tmp);
-    }
-    assume(res == 0);
+		if(res != 0)
+		{
+			res = pthread_attr_destroy(&attr);
+			res = pthread_attr_init(&attr);
+			res = pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+			res =
+			        pthread_create( (pthread_t *)thread, &attr, kthread_create_start_routine,
+			                        &tmp);
+		}
+		assume(res == 0);
 
-    sctk_nodebug( "kthread_create: after pthread_create with res = %d", res) ;
+		sctk_nodebug("kthread_create: after pthread_create with res = %d", res);
 
-    pthread_attr_destroy (&attr);
+		pthread_attr_destroy(&attr);
 
-    if ( res != 0 ) {
-      sctk_nodebug( "Warning: Creating kernel threads with no attribute" ) ;
-      res = pthread_create ((pthread_t *) thread, NULL, kthread_create_start_routine, &tmp);
+		if(res != 0)
+		{
+			sctk_nodebug("Warning: Creating kernel threads with no attribute");
+			res = pthread_create( (pthread_t *)thread, NULL, kthread_create_start_routine, &tmp);
 
-      assume( res == 0 ) ;
+			assume(res == 0);
+		}
 
-    }
-
-    while (tmp.started != 1)
-    {
-      sched_yield ();
-    }
-    return res;
-  }
+		while(tmp.started != 1)
+		{
+			sched_yield();
+		}
+		return res;
+	}
 }
 
 int (*real_pthread_create)(pthread_t *, const pthread_attr_t *,
-			   void *(*) (void *), void *) = NULL;
+                           void *(*)(void *), void *) = NULL;
 
 int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
-		   void *(*start_routine) (void *), void *arg){
-  pthread_attr_t local_attr;
-  pthread_attr_t* r_attr;
-  size_t kthread_stack_size;
-  int res;
-  
-  if(real_pthread_create == NULL){
-    real_pthread_create = dlsym(RTLD_NEXT,"pthread_create");
-  }
+                   void *(*start_routine)(void *), void *arg)
+{
+	pthread_attr_t  local_attr;
+	pthread_attr_t *r_attr;
+	size_t          kthread_stack_size;
+	int             res;
 
-  r_attr = (pthread_attr_t*)attr;
+	if(real_pthread_create == NULL)
+	{
+		real_pthread_create = dlsym(RTLD_NEXT, "pthread_create");
+	}
 
-  if(r_attr == NULL){
-    r_attr = &local_attr;
-    res = pthread_attr_init (r_attr);
-    if(res != 0) return res;
-  }
+	r_attr = (pthread_attr_t *)attr;
 
-  res = pthread_attr_getstacksize (r_attr, &kthread_stack_size);
-  if(res != 0) return res;
+	if(r_attr == NULL)
+	{
+		r_attr = &local_attr;
+		res    = pthread_attr_init(r_attr);
+		if(res != 0)
+		{
+			return res;
+		}
+	}
 
-  kthread_stack_size += sctk_extls_size();
-   
-  res = pthread_attr_setstacksize (r_attr, kthread_stack_size);
-  if(res != 0) return res;
-  
-  res = real_pthread_create(thread,r_attr,start_routine,arg);
-  return res;
+	res = pthread_attr_getstacksize(r_attr, &kthread_stack_size);
+	if(res != 0)
+	{
+		return res;
+	}
+
+	kthread_stack_size += sctk_extls_size();
+
+	res = pthread_attr_setstacksize(r_attr, kthread_stack_size);
+	if(res != 0)
+	{
+		return res;
+	}
+
+	res = real_pthread_create(thread, r_attr, start_routine, arg);
+	return res;
 }
 
 int
-kthread_join (kthread_t th, void **thread_return)
+kthread_join(kthread_t th, void **thread_return)
 {
-  return pthread_join ((pthread_t) th, thread_return);
+	return pthread_join( (pthread_t)th, thread_return);
 }
-
 
 int
-kthread_kill (kthread_t th, int val)
+kthread_kill(kthread_t th, int val)
 {
-  return pthread_kill ((pthread_t) th, val);
+	return pthread_kill( (pthread_t)th, val);
 }
-
 
 kthread_t
-kthread_self ()
+kthread_self()
 {
-  return (kthread_t) pthread_self ();
+	return (kthread_t)pthread_self();
 }
 
 int
-kthread_sigmask (int how, const sigset_t * newmask, sigset_t * oldmask)
+kthread_sigmask(int how, const sigset_t *newmask, sigset_t *oldmask)
 {
-  return pthread_sigmask (how, newmask, oldmask);
+	return pthread_sigmask(how, newmask, oldmask);
 }
 
 void
-kthread_exit (void *retval)
+kthread_exit(void *retval)
 {
-  pthread_exit (retval);
+	pthread_exit(retval);
 }

@@ -33,107 +33,113 @@
 #include <utlist.h>
 
 /* Values of Protocol attribute */
-#define SCTK_THREAD_PRIO_NONE PTHREAD_PRIO_NONE
-#define SCTK_THREAD_PRIO_INHERIT PTHREAD_PRIO_INHERIT
-#define SCTK_THREAD_PRIO_PROTECT PTHREAD_PRIO_PROTECT
+#define SCTK_THREAD_PRIO_NONE       PTHREAD_PRIO_NONE
+#define SCTK_THREAD_PRIO_INHERIT    PTHREAD_PRIO_INHERIT
+#define SCTK_THREAD_PRIO_PROTECT    PTHREAD_PRIO_PROTECT
 
 /* Values of kind attribute */
+
 /*#define SCTK_THREAD_MUTEX_NORMAL PTHREAD_MUTEX_NORMAL
-#define SCTK_THREAD_MUTEX_ERRORCHECK PTHREAD_MUTEX_ERRORCHECK
-#define SCTK_THREAD_MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE
-#define SCTK_THREAD_MUTEX_DEFAULT PTHREAD_MUTEX_DEFAULT*/ 
+ * #define SCTK_THREAD_MUTEX_ERRORCHECK PTHREAD_MUTEX_ERRORCHECK
+ * #define SCTK_THREAD_MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE
+ #define SCTK_THREAD_MUTEX_DEFAULT PTHREAD_MUTEX_DEFAULT*/
 
 /*schedpolicy*/
-/*#define SCTK_ETHREAD_SCHED_OTHER 0
-#define SCTK_ETHREAD_SCHED_RR 1
-#define SCTK_ETHREAD_SCHED_FIFO 2*/
 
-typedef struct sctk_thread_generic_mutex_cell_s{ 
-  sctk_thread_generic_scheduler_t* sched;
-  struct sctk_thread_generic_mutex_cell_s *prev, *next;
+/*#define SCTK_ETHREAD_SCHED_OTHER 0
+ * #define SCTK_ETHREAD_SCHED_RR 1
+ #define SCTK_ETHREAD_SCHED_FIFO 2*/
+
+typedef struct sctk_thread_generic_mutex_cell_s
+{
+	sctk_thread_generic_scheduler_t *        sched;
+	struct sctk_thread_generic_mutex_cell_s *prev, *next;
 }sctk_thread_generic_mutex_cell_t;
 
-typedef struct sctk_thread_generic_mutex_s{  
-  volatile sctk_thread_generic_scheduler_t* owner;
-  mpc_common_spinlock_t lock;
-  int type;
-  int nb_call;
-  sctk_thread_generic_mutex_cell_t* blocked;
+typedef struct sctk_thread_generic_mutex_s
+{
+	volatile sctk_thread_generic_scheduler_t *owner;
+	mpc_common_spinlock_t                     lock;
+	int                                       type;
+	int                                       nb_call;
+	sctk_thread_generic_mutex_cell_t *        blocked;
 }sctk_thread_generic_mutex_t;
-#define SCTK_THREAD_GENERIC_MUTEX_INIT {NULL,SCTK_SPINLOCK_INITIALIZER,0,0,NULL}
+#define SCTK_THREAD_GENERIC_MUTEX_INIT    { NULL, SCTK_SPINLOCK_INITIALIZER, 0, 0, NULL }
 
 
-typedef struct sctk_thread_generic_mutexattr_s{
-  volatile int attrs;
+typedef struct sctk_thread_generic_mutexattr_s
+{
+	volatile int attrs;
 }sctk_thread_generic_mutexattr_t;
-#define SCTK_THREAD_GENERIC_MUTEXATTR_INIT {0}
+#define SCTK_THREAD_GENERIC_MUTEXATTR_INIT    { 0 }
 
 int
-sctk_thread_generic_mutexes_mutexattr_destroy( sctk_thread_generic_mutexattr_t* attr );
+sctk_thread_generic_mutexes_mutexattr_destroy(sctk_thread_generic_mutexattr_t *attr);
 
 int
-sctk_thread_generic_mutexes_mutexattr_getpshared( sctk_thread_generic_mutexattr_t* attr,
-					int* pshared );
+sctk_thread_generic_mutexes_mutexattr_getpshared(sctk_thread_generic_mutexattr_t *attr,
+                                                 int *pshared);
 
 /*int
-sctk_thread_generic_mutexes_mutexattr_getprioceiling(sctk_thread_generic_mutexattr_t* attr,
-					int* prioceiling );
+ * sctk_thread_generic_mutexes_mutexattr_getprioceiling(sctk_thread_generic_mutexattr_t* attr,
+ *                                      int* prioceiling );
+ *
+ * int
+ * sctk_thread_generic_mutexes_mutexattr_setprioceiling(sctk_thread_generic_mutexattr_t* attr,
+ *                                      int prioceiling );
+ *
+ * int
+ * sctk_thread_generic_mutexes_mutexattr_getprotocol(sctk_thread_generic_mutexattr_t* attr,
+ *                                      int* protocol );
+ *
+ * int
+ * sctk_thread_generic_mutexes_mutexattr_setprotocol(sctk_thread_generic_mutexattr_t* attr,
+ *                                      int protocol );
+ */
+int
+sctk_thread_generic_mutexes_mutexattr_gettype(sctk_thread_generic_mutexattr_t *attr,
+                                              int *pshared);
 
 int
-sctk_thread_generic_mutexes_mutexattr_setprioceiling(sctk_thread_generic_mutexattr_t* attr,
-					int prioceiling );
+sctk_thread_generic_mutexes_mutexattr_init(sctk_thread_generic_mutexattr_t *attr);
 
 int
-sctk_thread_generic_mutexes_mutexattr_getprotocol(sctk_thread_generic_mutexattr_t* attr,
-					int* protocol );
+sctk_thread_generic_mutexes_mutexattr_setpshared(sctk_thread_generic_mutexattr_t *attr,
+                                                 int pshared);
 
 int
-sctk_thread_generic_mutexes_mutexattr_setprotocol(sctk_thread_generic_mutexattr_t* attr,
-					int protocol );
-*/
-int
-sctk_thread_generic_mutexes_mutexattr_gettype( sctk_thread_generic_mutexattr_t* attr,
-					int* pshared );
+sctk_thread_generic_mutexes_mutexattr_settype(sctk_thread_generic_mutexattr_t *attr,
+                                              int kind);
 
 int
-sctk_thread_generic_mutexes_mutexattr_init( sctk_thread_generic_mutexattr_t* attr );
+sctk_thread_generic_mutexes_mutex_destroy(sctk_thread_generic_mutex_t *lock);
 
 int
-sctk_thread_generic_mutexes_mutexattr_setpshared( sctk_thread_generic_mutexattr_t* attr,
-					int pshared );
+sctk_thread_generic_mutexes_mutex_init(sctk_thread_generic_mutex_t *lock,
+                                       const sctk_thread_generic_mutexattr_t *attr,
+                                       sctk_thread_generic_scheduler_t *sched);
 
 int
-sctk_thread_generic_mutexes_mutexattr_settype( sctk_thread_generic_mutexattr_t* attr,
-					int kind );
+sctk_thread_generic_mutexes_mutex_lock(sctk_thread_generic_mutex_t *lock,
+                                       sctk_thread_generic_scheduler_t *sched);
 
 int
-sctk_thread_generic_mutexes_mutex_destroy( sctk_thread_generic_mutex_t* lock );
+sctk_thread_generic_mutexes_mutex_trylock(sctk_thread_generic_mutex_t *lock,
+                                          sctk_thread_generic_scheduler_t *sched);
 
 int
-sctk_thread_generic_mutexes_mutex_init (sctk_thread_generic_mutex_t * lock,
-					const  sctk_thread_generic_mutexattr_t* attr,
-					sctk_thread_generic_scheduler_t* sched);
+sctk_thread_generic_mutexes_mutex_timedlock(sctk_thread_generic_mutex_t *lock,
+                                            const struct timespec *restrict time,
+                                            sctk_thread_generic_scheduler_t *sched);
 
 int
-sctk_thread_generic_mutexes_mutex_lock (sctk_thread_generic_mutex_t * lock,
-					sctk_thread_generic_scheduler_t* sched);
+sctk_thread_generic_mutexes_mutex_spinlock(sctk_thread_generic_mutex_t *lock,
+                                           sctk_thread_generic_scheduler_t *sched);
 
 int
-sctk_thread_generic_mutexes_mutex_trylock (sctk_thread_generic_mutex_t * lock,
-					sctk_thread_generic_scheduler_t* sched);
+sctk_thread_generic_mutexes_mutex_unlock(sctk_thread_generic_mutex_t *lock,
+                                         sctk_thread_generic_scheduler_t *sched);
 
-int
-sctk_thread_generic_mutexes_mutex_timedlock (sctk_thread_generic_mutex_t* lock,
-					const struct timespec* restrict time,
-					sctk_thread_generic_scheduler_t* sched);
+void sctk_thread_generic_mutexes_init();
 
-int
-sctk_thread_generic_mutexes_mutex_spinlock (sctk_thread_generic_mutex_t * lock,
-					sctk_thread_generic_scheduler_t* sched);
-
-int
-sctk_thread_generic_mutexes_mutex_unlock (sctk_thread_generic_mutex_t * lock,
-					sctk_thread_generic_scheduler_t* sched);
-
-void sctk_thread_generic_mutexes_init(); 
 #endif

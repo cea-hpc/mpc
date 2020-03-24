@@ -36,85 +36,89 @@
 #include <sctk_thread_barrier.h>
 #include <sctk_thread_spinlock.h>
 
-typedef struct sctk_thread_generic_intern_attr_s{
-  int scope;
-  int detachstate;
-  int schedpolicy; // can I use this field ?
-  int inheritsched;
-  int nb_wait_for_join;
-  volatile int cancel_state;
-  volatile int cancel_type;
-  volatile int cancel_status;
-  char* user_stack;
-  char* stack;
-  size_t stack_size;
-  size_t stack_guardsize;
-  void *(*start_routine) (void *);
-  void *arg;
-  void* return_value;
-  int bind_to;
-  int polling;                                             /* ----------------------------------------- */
-  void* sctk_thread_generic_pthread_blocking_lock_table;   /* |BARRIER|COND|MUTEX|RWLOCK|SEM|TASK LOCK| */ 
-  sctk_thread_rwlock_in_use_t* rwlocks_owned;              /* ----------------------------------------- */
-  mpc_common_spinlock_t spinlock;
-  volatile int nb_sig_pending;
-  volatile int nb_sig_treated;
+typedef struct sctk_thread_generic_intern_attr_s
+{
+	int                          scope;
+	int                          detachstate;
+	int                          schedpolicy; // can I use this field ?
+	int                          inheritsched;
+	int                          nb_wait_for_join;
+	volatile int                 cancel_state;
+	volatile int                 cancel_type;
+	volatile int                 cancel_status;
+	char *                       user_stack;
+	char *                       stack;
+	size_t                       stack_size;
+	size_t                       stack_guardsize;
+	void *(*start_routine)(void *);
+	void *                       arg;
+	void *                       return_value;
+	int                          bind_to;
+	int                          polling;                                         /* ----------------------------------------- */
+	void *                       sctk_thread_generic_pthread_blocking_lock_table; /* |BARRIER|COND|MUTEX|RWLOCK|SEM|TASK LOCK| */
+	sctk_thread_rwlock_in_use_t *rwlocks_owned;                                   /* ----------------------------------------- */
+	mpc_common_spinlock_t        spinlock;
+	volatile int                 nb_sig_pending;
+	volatile int                 nb_sig_treated;
 
-  sctk_thread_generic_kind_t kind;
-  int basic_priority;
-  int current_priority;
+	sctk_thread_generic_kind_t   kind;
+	int                          basic_priority;
+	int                          current_priority;
 
-  // timers to have the time of the threads
-  double timestamp_threshold;
-  double timestamp_base;
-  double timestamp_count;
-  double timestamp_begin;
-  double timestamp_end;
-  // end of init macro
+	// timers to have the time of the threads
+	double                       timestamp_threshold;
+	double                       timestamp_base;
+	double                       timestamp_count;
+	double                       timestamp_begin;
+	double                       timestamp_end;
+	// end of init macro
 
-  volatile sigset_t old_thread_sigset;
-  volatile sigset_t thread_sigset;
-  volatile sigset_t sa_sigset_mask;
-  volatile int thread_sigpending[SCTK_NSIG];
+	volatile sigset_t            old_thread_sigset;
+	volatile sigset_t            thread_sigset;
+	volatile sigset_t            sa_sigset_mask;
+	volatile int                 thread_sigpending[SCTK_NSIG];
 }sctk_thread_generic_intern_attr_t;
 
-typedef struct{
-  sctk_thread_generic_intern_attr_t* ptr;
+typedef struct
+{
+	sctk_thread_generic_intern_attr_t *ptr;
 } sctk_thread_generic_attr_t;
 
-typedef struct sctk_thread_generic_p_s{
-  sctk_thread_generic_scheduler_t sched;
-  sctk_thread_generic_keys_t keys;
-  sctk_thread_generic_intern_attr_t attr;
+typedef struct sctk_thread_generic_p_s
+{
+	sctk_thread_generic_scheduler_t   sched;
+	sctk_thread_generic_keys_t        keys;
+	sctk_thread_generic_intern_attr_t attr;
 } sctk_thread_generic_p_t;
 
-typedef sctk_thread_generic_p_t* sctk_thread_generic_t;
+typedef sctk_thread_generic_p_t * sctk_thread_generic_t;
 void sctk_thread_generic_set_self(sctk_thread_generic_t th);
 sctk_thread_generic_t sctk_thread_generic_self();
 int
-sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
-				 sctk_thread_generic_attr_t * attr,
-				 void *(*start_routine) (void *), void *arg);
+sctk_thread_generic_user_create(sctk_thread_generic_t *threadp,
+                                sctk_thread_generic_attr_t *attr,
+                                void *(*start_routine)(void *), void *arg);
 int
-sctk_thread_generic_attr_init (sctk_thread_generic_attr_t * attr);
+sctk_thread_generic_attr_init(sctk_thread_generic_attr_t *attr);
 
 extern void sctk_thread_generic_check_signals(int select);
 void sctk_thread_generic_handle_zombies(
-    sctk_thread_generic_scheduler_generic_t *th);
+        sctk_thread_generic_scheduler_generic_t *th);
 void sctk_thread_generic_check_signals(int select);
 void sctk_thread_generic_handle_zombies(
-    sctk_thread_generic_scheduler_generic_t *th);
+        sctk_thread_generic_scheduler_generic_t *th);
 void sctk_thread_generic_alloc_pthread_blocking_lock_table(
-    const sctk_thread_generic_attr_t *attr);
-int sctk_thread_generic_attr_destroy (sctk_thread_generic_attr_t * attr);
+        const sctk_thread_generic_attr_t *attr);
+int sctk_thread_generic_attr_destroy(sctk_thread_generic_attr_t *attr);
 
-typedef enum{
-  sctk_thread_generic_barrier,
-  sctk_thread_generic_cond,
-  sctk_thread_generic_mutex,
-  sctk_thread_generic_rwlock,
-  sctk_thread_generic_sem,
-  sctk_thread_generic_task_lock
+typedef enum
+{
+	sctk_thread_generic_barrier,
+	sctk_thread_generic_cond,
+	sctk_thread_generic_mutex,
+	sctk_thread_generic_rwlock,
+	sctk_thread_generic_sem,
+	sctk_thread_generic_task_lock
 }sctk_thread_generic_lock_list_t;
 
 #endif

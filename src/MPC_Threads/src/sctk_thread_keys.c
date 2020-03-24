@@ -31,100 +31,118 @@
 
 #include <errno.h>
 
-typedef void (*__destr_function_key_t) (void *) ;
+typedef void (*__destr_function_key_t) (void *);
 
 static mpc_common_spinlock_t key_lock = SCTK_SPINLOCK_INITIALIZER;
 static char sctk_key_used[SCTK_THREAD_KEYS_MAX + 1];
 static __destr_function_key_t __destr_function_key[SCTK_THREAD_KEYS_MAX + 1];
 
 int
-sctk_thread_generic_keys_setspecific (sctk_thread_key_t __key, const void *__pointer,
-				      sctk_thread_generic_keys_t* keys)
+sctk_thread_generic_keys_setspecific(sctk_thread_key_t __key, const void *__pointer,
+                                     sctk_thread_generic_keys_t *keys)
 {
-  if(sctk_key_used[__key] == 1){
-    keys->keys[__key] = __pointer;
-    return 0;
-  } else {
-    return EINVAL;
-  }
+	if(sctk_key_used[__key] == 1)
+	{
+		keys->keys[__key] = __pointer;
+		return 0;
+	}
+	else
+	{
+		return EINVAL;
+	}
 }
 
 void *
-sctk_thread_generic_keys_getspecific (sctk_thread_key_t __key,
-				      sctk_thread_generic_keys_t* keys)
+sctk_thread_generic_keys_getspecific(sctk_thread_key_t __key,
+                                     sctk_thread_generic_keys_t *keys)
 {
-  if(sctk_key_used[__key] == 1){
-    return (void *)keys->keys[__key];
-  } else {
-    return NULL;
-  }
-}
-
-int
-sctk_thread_generic_keys_key_create (sctk_thread_key_t * __key,
-				void (*__destr_function) (void *), __UNUSED__ sctk_thread_generic_keys_t* keys)
-{
-  int i;
-  mpc_common_spinlock_lock(&key_lock);
-  for (i = 1; i < SCTK_THREAD_KEYS_MAX + 1; i++) {
-    if(sctk_key_used[i] == 0){
-      sctk_key_used[i] = 1;
-      __destr_function_key[i] = __destr_function;
-      *__key = i;
-      break;
-    }
-  }
-  mpc_common_spinlock_unlock(&key_lock);
-  if(i == SCTK_THREAD_KEYS_MAX){
-    return EAGAIN;
-  }
-  
-  return 0;
-}
-
-int
-sctk_thread_generic_keys_key_delete (sctk_thread_key_t __key,sctk_thread_generic_keys_t* keys)
-{
-  if( sctk_key_used[__key] == 1){
-	if( __destr_function_key[__key] != NULL ){
-	  __destr_function_key[__key] (&keys->keys[__key]);
-	  keys->keys[__key] = NULL;
+	if(sctk_key_used[__key] == 1)
+	{
+		return (void *)keys->keys[__key];
 	}
-  }
-  return 0;
+	else
+	{
+		return NULL;
+	}
 }
 
-void sctk_thread_generic_keys_init(){  
-  int i; 
-  sctk_thread_generic_check_size (int, sctk_thread_key_t);
-  for(i = 0; i < SCTK_THREAD_KEYS_MAX; i++)
-    {
-      sctk_key_used[i] = 0;
-      __destr_function_key[i] = NULL;
-    } 
+int
+sctk_thread_generic_keys_key_create(sctk_thread_key_t *__key,
+                                    void (*__destr_function)(void *), __UNUSED__ sctk_thread_generic_keys_t *keys)
+{
+	int i;
+
+	mpc_common_spinlock_lock(&key_lock);
+	for(i = 1; i < SCTK_THREAD_KEYS_MAX + 1; i++)
+	{
+		if(sctk_key_used[i] == 0)
+		{
+			sctk_key_used[i]        = 1;
+			__destr_function_key[i] = __destr_function;
+			*__key = i;
+			break;
+		}
+	}
+	mpc_common_spinlock_unlock(&key_lock);
+	if(i == SCTK_THREAD_KEYS_MAX)
+	{
+		return EAGAIN;
+	}
+
+	return 0;
 }
 
-void sctk_thread_generic_keys_init_thread(sctk_thread_generic_keys_t* keys){ 
-  int i; 
-  
-  for (i = 0; i < SCTK_THREAD_KEYS_MAX; i++)
-    {
-	  //sctk_key_used[i] = 0;
-      keys->keys[i] = NULL;
-    } 
+int
+sctk_thread_generic_keys_key_delete(sctk_thread_key_t __key, sctk_thread_generic_keys_t *keys)
+{
+	if(sctk_key_used[__key] == 1)
+	{
+		if(__destr_function_key[__key] != NULL)
+		{
+			__destr_function_key[__key] (&keys->keys[__key]);
+			keys->keys[__key] = NULL;
+		}
+	}
+	return 0;
+}
+
+void sctk_thread_generic_keys_init()
+{
+	int i;
+
+	sctk_thread_generic_check_size(int, sctk_thread_key_t);
+	for(i = 0; i < SCTK_THREAD_KEYS_MAX; i++)
+	{
+		sctk_key_used[i]        = 0;
+		__destr_function_key[i] = NULL;
+	}
+}
+
+void sctk_thread_generic_keys_init_thread(sctk_thread_generic_keys_t *keys)
+{
+	int i;
+
+	for(i = 0; i < SCTK_THREAD_KEYS_MAX; i++)
+	{
+		//sctk_key_used[i] = 0;
+		keys->keys[i] = NULL;
+	}
 }
 
 inline void
-sctk_thread_generic_keys_key_delete_all ( sctk_thread_generic_keys_t* keys ){
-  int i;
+sctk_thread_generic_keys_key_delete_all(sctk_thread_generic_keys_t *keys)
+{
+	int i;
 
-  for( i=0; i<SCTK_THREAD_KEYS_MAX; i++ ){
-	if( sctk_key_used[i] == 1 ){
-	  if( __destr_function_key[i] != NULL ){
-		__destr_function_key[i] (&keys->keys[i]);
-		keys->keys[i] = NULL;
-	  }
+	for(i = 0; i < SCTK_THREAD_KEYS_MAX; i++)
+	{
+		if(sctk_key_used[i] == 1)
+		{
+			if(__destr_function_key[i] != NULL)
+			{
+				__destr_function_key[i] (&keys->keys[i]);
+				keys->keys[i] = NULL;
+			}
+		}
 	}
-  }
 }
-

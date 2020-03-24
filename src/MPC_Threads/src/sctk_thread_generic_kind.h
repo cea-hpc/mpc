@@ -23,29 +23,30 @@
 #define __SCTK_THREAD_GENERIC_KIND_H_
 
 // KIND_MASK should be a power of 2 (1,2,4,8,16,...)
-#define KIND_MASK_MPI (1 << 0)
-#define KIND_MASK_OMP (1 << 1)
-#define KIND_MASK_PTHREAD (1 << 2)
-#define KIND_MASK_PROGRESS_THREAD (1 << 3)
-#define KIND_MASK_MPC_POLLING_THREAD (1 << 4)
+#define KIND_MASK_MPI                   (1 << 0)
+#define KIND_MASK_OMP                   (1 << 1)
+#define KIND_MASK_PTHREAD               (1 << 2)
+#define KIND_MASK_PROGRESS_THREAD       (1 << 3)
+#define KIND_MASK_MPC_POLLING_THREAD    (1 << 4)
 // TODO add all kinds
 
-#define KIND_MASK_MPI_OMP (KIND_MASK_MPI | KIND_MASK_OMP)
-#define KIND_MASK_MPI_PTHREAD (KIND_MASK_MPI | KIND_MASK_PTHREAD)
+#define KIND_MASK_MPI_OMP               (KIND_MASK_MPI | KIND_MASK_OMP)
+#define KIND_MASK_MPI_PTHREAD           (KIND_MASK_MPI | KIND_MASK_PTHREAD)
 
-#define KIND_MASK_MPI_OMP_PTHREAD                                              \
-  (KIND_MASK_MPI | KIND_MASK_OMP | KIND_MASK_PTHREAD)
+#define KIND_MASK_MPI_OMP_PTHREAD \
+	(KIND_MASK_MPI | KIND_MASK_OMP | KIND_MASK_PTHREAD)
 
 /**
  * @brief  the member mask is a mask of bits
  *
  */
-typedef struct sctk_thread_generic_kind_s {
-  unsigned int mask;
-  int priority;
+typedef struct sctk_thread_generic_kind_s
+{
+	unsigned int mask;
+	int          priority;
 } sctk_thread_generic_kind_t;
-#define sctk_thread_generic_kind_init                                          \
-  { 0, -1 }
+#define sctk_thread_generic_kind_init \
+	{ 0, -1 }
 
 ///////////////////////////////////
 // setter

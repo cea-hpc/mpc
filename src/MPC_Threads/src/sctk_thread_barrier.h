@@ -33,51 +33,53 @@
 #include "mpc_common_spinlock.h"
 #include <utlist.h>
 
-typedef struct sctk_thread_generic_barrier_cell_s{ 
-  sctk_thread_generic_scheduler_t* sched;
-  struct sctk_thread_generic_barrier_cell_s *prev, *next;
+typedef struct sctk_thread_generic_barrier_cell_s
+{
+	sctk_thread_generic_scheduler_t *          sched;
+	struct sctk_thread_generic_barrier_cell_s *prev, *next;
 }sctk_thread_generic_barrier_cell_t;
 
-typedef struct sctk_thread_generic_barrier_s{
-  mpc_common_spinlock_t lock;
-  volatile int nb_max;
-  volatile int nb_current;
-  sctk_thread_generic_barrier_cell_t* blocked;
+typedef struct sctk_thread_generic_barrier_s
+{
+	mpc_common_spinlock_t               lock;
+	volatile int                        nb_max;
+	volatile int                        nb_current;
+	sctk_thread_generic_barrier_cell_t *blocked;
 }sctk_thread_generic_barrier_t;
-#define SCTK_THREAD_GENERIC_BARRIER_INIT {SCTK_SPINLOCK_INITIALIZER,0,0,NULL}
+#define SCTK_THREAD_GENERIC_BARRIER_INIT    { SCTK_SPINLOCK_INITIALIZER, 0, 0, NULL }
 
-typedef struct sctk_thread_generic_barrierattr_s{
-  volatile int pshared;
+typedef struct sctk_thread_generic_barrierattr_s
+{
+	volatile int pshared;
 }sctk_thread_generic_barrierattr_t;
-#define SCTK_THREAD_GENERIC_BARRIERATTR_INIT {SCTK_THREAD_PROCESS_PRIVATE}
+#define SCTK_THREAD_GENERIC_BARRIERATTR_INIT    { SCTK_THREAD_PROCESS_PRIVATE }
 
 int
-sctk_thread_generic_barriers_barrierattr_destroy( sctk_thread_generic_barrierattr_t* attr );
+sctk_thread_generic_barriers_barrierattr_destroy(sctk_thread_generic_barrierattr_t *attr);
 
 int
-sctk_thread_generic_barriers_barrierattr_init( sctk_thread_generic_barrierattr_t* attr );
+sctk_thread_generic_barriers_barrierattr_init(sctk_thread_generic_barrierattr_t *attr);
 
 int
-sctk_thread_generic_barriers_barrierattr_getpshared( const sctk_thread_generic_barrierattr_t* 
-			restrict attr, int* restrict pshared );
+sctk_thread_generic_barriers_barrierattr_getpshared(const sctk_thread_generic_barrierattr_t *
+                                                    restrict attr, int *restrict pshared);
 
 int
-sctk_thread_generic_barriers_barrierattr_setpshared( sctk_thread_generic_barrierattr_t* attr,
-			int pshared );
+sctk_thread_generic_barriers_barrierattr_setpshared(sctk_thread_generic_barrierattr_t *attr,
+                                                    int pshared);
 
 int
-sctk_thread_generic_barriers_barrier_destroy( sctk_thread_generic_barrier_t* barrier );
+sctk_thread_generic_barriers_barrier_destroy(sctk_thread_generic_barrier_t *barrier);
 
 int
-sctk_thread_generic_barriers_barrier_init( sctk_thread_generic_barrier_t* restrict barrier,
-			const sctk_thread_generic_barrierattr_t* restrict attr, unsigned count );
+sctk_thread_generic_barriers_barrier_init(sctk_thread_generic_barrier_t *restrict barrier,
+                                          const sctk_thread_generic_barrierattr_t *restrict attr, unsigned count);
 
 int
-sctk_thread_generic_barriers_barrier_wait( sctk_thread_generic_barrier_t* barrier,
-			sctk_thread_generic_scheduler_t* sched );
+sctk_thread_generic_barriers_barrier_wait(sctk_thread_generic_barrier_t *barrier,
+                                          sctk_thread_generic_scheduler_t *sched);
 
 void
 sctk_thread_generic_barriers_init();
 
 #endif
-

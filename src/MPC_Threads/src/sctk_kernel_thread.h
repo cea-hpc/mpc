@@ -39,42 +39,43 @@ extern "C"
 
 #ifdef SCTK_KERNEL_THREAD_USE_TLS
 
-#define kthread_key_create(key,destr_function) (*(key)) = NULL
-#define kthread_key_delete(key) (void)(0)
+#define kthread_key_create(key, destr_function)    (*(key) ) = NULL
+#define kthread_key_delete(key)                    (void)(0)
 
-#define kthread_setspecific(key,pointer) ((key) = (pointer))
-#define kthread_getspecific(key) (key)
+#define kthread_setspecific(key, pointer)          ( (key) = (pointer) )
+#define kthread_getspecific(key)                   (key)
 
 #else
-  typedef sctk_thread_key_t kthread_key_t;
+typedef sctk_thread_key_t   kthread_key_t;
 
-  int kthread_key_create (kthread_key_t * key,
-			  void (*destr_function) (void *));
-  int kthread_key_delete (kthread_key_t key);
-  int kthread_setspecific (kthread_key_t key, const void *pointer);
-  void *kthread_getspecific (kthread_key_t key);
+int kthread_key_create(kthread_key_t *key,
+                       void (*destr_function)(void *) );
+int kthread_key_delete(kthread_key_t key);
+int kthread_setspecific(kthread_key_t key, const void *pointer);
+void *kthread_getspecific(kthread_key_t key);
 #endif
 
-  typedef sctk_thread_t kthread_t;
+typedef sctk_thread_t   kthread_t;
 
-  int kthread_create (kthread_t * thread, void *(*start_routine) (void *),
-		      void *arg);
-  int kthread_join (kthread_t th, void **thread_return);
-  int kthread_kill (kthread_t th, int val);
-  kthread_t kthread_self (void);
-  void kthread_exit (void *retval);
+int kthread_create(kthread_t *thread, void *(*start_routine)(void *),
+                   void *arg);
+int kthread_join(kthread_t th, void **thread_return);
+int kthread_kill(kthread_t th, int val);
+kthread_t kthread_self(void);
+void kthread_exit(void *retval);
 
 
-  int kthread_sigmask (int how, const sigset_t * newmask, sigset_t * oldmask);
+int kthread_sigmask(int how, const sigset_t *newmask, sigset_t *oldmask);
 
-  static inline void kthread_usleep (unsigned long usec)
-  {
+static inline void kthread_usleep(unsigned long usec)
+{
 #ifndef WINDOWS_SYS
-    usleep (usec);
+	usleep(usec);
 #else
-    Sleep (usec);
+	Sleep(usec);
 #endif
-  }
+}
+
 #ifdef __cplusplus
 }
 #endif

@@ -37,53 +37,53 @@ extern "C"
 {
 #endif
 
-#define SCTK_O * 1
-#define SCTK_KO * 1024
-#define SCTK_MO * 1024 * 1024
+#define SCTK_O                             *1
+#define SCTK_KO                            *1024
+#define SCTK_MO                            *1024 * 1024
 
-#define SCTK_ETHREAD_STACK_SIZE 10 SCTK_MO
-#define SCTK_ETHREAD_THREAD_STACK_SIZE 4 SCTK_MO // UPDATE FOR UTS BENCHMARK
+#define SCTK_ETHREAD_STACK_SIZE            10 SCTK_MO
+#define SCTK_ETHREAD_THREAD_STACK_SIZE     4 SCTK_MO // UPDATE FOR UTS BENCHMARK
 
 #ifdef USER_FORTRAN_STACK_SIZE
-#define SCTK_ETHREAD_STACK_SIZE_FORTRAN USER_FORTRAN_STACK_SIZE SCTK_MO
+#define SCTK_ETHREAD_STACK_SIZE_FORTRAN    USER_FORTRAN_STACK_SIZE SCTK_MO
 #else
 #ifdef SCTK_32_BIT_ARCH
-#define SCTK_ETHREAD_STACK_SIZE_FORTRAN 12 SCTK_MO
+#define SCTK_ETHREAD_STACK_SIZE_FORTRAN    12 SCTK_MO
 #else
-#define SCTK_ETHREAD_STACK_SIZE_FORTRAN 1024 SCTK_MO
+#define SCTK_ETHREAD_STACK_SIZE_FORTRAN    1024 SCTK_MO
 #endif
 #endif
 
-int sctk_thread_dump ( char *file );
-int sctk_thread_dump_clean ( void );
-int sctk_thread_migrate ( void );
-int sctk_thread_restore ( sctk_thread_t thread, char *type, int vp );
-double sctk_thread_get_activity ( int i );
+int sctk_thread_dump(char *file);
+int sctk_thread_dump_clean(void);
+int sctk_thread_migrate(void);
+int sctk_thread_restore(sctk_thread_t thread, char *type, int vp);
+double sctk_thread_get_activity(int i);
 
 
-void sctk_gen_thread_init ( void );
-void sctk_pthread_thread_init ( void );
-void sctk_ethread_thread_init ( void );
-void sctk_ethread_mxn_thread_init ( void );
-void sctk_ethread_ng_thread_init ( void );
-void sctk_ethread_mxn_ng_thread_init ( void );
-void sctk_pthread_ng_thread_init ( void );
+void sctk_gen_thread_init(void);
+void sctk_pthread_thread_init(void);
+void sctk_ethread_thread_init(void);
+void sctk_ethread_mxn_thread_init(void);
+void sctk_ethread_ng_thread_init(void);
+void sctk_ethread_mxn_ng_thread_init(void);
+void sctk_pthread_ng_thread_init(void);
 
-void sctk_thread_wait_for_value ( volatile int *data, int value );
-int sctk_thread_timed_wait_for_value ( volatile int *data, int value, unsigned int max_time_in_usec );
-void sctk_thread_wait_for_value_and_poll ( volatile int *data, int value,
-        void ( *func ) ( void * ), void *arg );
+void sctk_thread_wait_for_value(volatile int *data, int value);
+int sctk_thread_timed_wait_for_value(volatile int *data, int value, unsigned int max_time_in_usec);
+void sctk_thread_wait_for_value_and_poll(volatile int *data, int value,
+                                         void (*func)(void *), void *arg);
 void
-sctk_kthread_wait_for_value_and_poll ( int *data, int value,
-                                       void ( *func ) ( void * ), void *arg );
+sctk_kthread_wait_for_value_and_poll(int *data, int value,
+                                     void (*func)(void *), void *arg);
 
-void sctk_thread_freeze_thread_on_vp ( sctk_thread_mutex_t *lock,
-                                       void **list );
-void sctk_thread_wake_thread_on_vp ( void **list );
-void sctk_thread_init ( void );
+void sctk_thread_freeze_thread_on_vp(sctk_thread_mutex_t *lock,
+                                     void **list);
+void sctk_thread_wake_thread_on_vp(void **list);
+void sctk_thread_init(void);
 
-int sctk_thread_getattr_np ( sctk_thread_t th, sctk_thread_attr_t *attr );
-int sctk_thread_usleep ( unsigned int useconds );
+int sctk_thread_getattr_np(sctk_thread_t th, sctk_thread_attr_t *attr);
+int sctk_thread_usleep(unsigned int useconds);
 
 extern volatile int sctk_multithreading_initialised;
 
@@ -96,12 +96,12 @@ typedef enum
 } sctk_thread_status_t;
 #else
 #include <tdb_remote.h>
-typedef td_thr_state_e sctk_thread_status_t;
-#define sctk_thread_running_status TD_THR_ACTIVE
-#define sctk_thread_blocked_status TD_THR_RUN
-#define sctk_thread_sleep_status TD_THR_RUN
-#define sctk_thread_undef_status TD_THR_ZOMBIE
-#define sctk_thread_check_status TD_THR_ACTIVE
+typedef td_thr_state_e   sctk_thread_status_t;
+#define sctk_thread_running_status    TD_THR_ACTIVE
+#define sctk_thread_blocked_status    TD_THR_RUN
+#define sctk_thread_sleep_status      TD_THR_RUN
+#define sctk_thread_undef_status      TD_THR_ZOMBIE
+#define sctk_thread_check_status      TD_THR_ACTIVE
 #endif
 
 struct mpc_mpi_cl_per_mpi_process_ctx_s;
@@ -109,45 +109,45 @@ struct sctk_tls_dtors_s;
 
 typedef struct sctk_thread_data_s
 {
-	struct sctk_alloc_chain *tls;
-	void *__arg;
-	void *( *__start_routine ) ( void * );
-	int task_id;
-	int local_task_id;
-	int virtual_processor;
-	int user_thread;
+	struct sctk_alloc_chain *                tls;
+	void *                                   __arg;
+	void *(*__start_routine)(void *);
+	int                                      task_id;
+	int                                      local_task_id;
+	int                                      virtual_processor;
+	int                                      user_thread;
 
-	volatile struct sctk_thread_data_s *prev;
-	volatile struct sctk_thread_data_s *next;
-	unsigned long thread_number;
-	sctk_thread_t tid;
-	volatile sctk_thread_status_t status;
+	volatile struct sctk_thread_data_s *     prev;
+	volatile struct sctk_thread_data_s *     next;
+	unsigned long                            thread_number;
+	sctk_thread_t                            tid;
+	volatile sctk_thread_status_t            status;
 	struct mpc_mpi_cl_per_mpi_process_ctx_s *father_data;
-	struct sctk_tls_dtors_s *dtors_head;
+	struct sctk_tls_dtors_s *                dtors_head;
 	/* Where the thread must be bound */
-	unsigned int bind_to;
+	unsigned int                             bind_to;
 	/* This is the MPI interface per th ctx */
-	void *mpi_per_thread;
+	void *                                   mpi_per_thread;
 	/* The thread disguisement if present */
-	struct sctk_thread_data_s *my_disguisement;
-	void *ctx_disguisement;
+	struct sctk_thread_data_s *              my_disguisement;
+	void *                                   ctx_disguisement;
 } sctk_thread_data_t;
 
-#define SCTK_THREAD_DATA_INIT { NULL, NULL, NULL, -1, -1, -1, -1, NULL,\
-		NULL, -1, (void*)NULL, sctk_thread_undef_status,\
-		NULL, NULL, -1, NULL, NULL, NULL}
+#define SCTK_THREAD_DATA_INIT    { NULL, NULL, NULL, -1, -1, -1, -1, NULL,           \
+		                   NULL, -1, (void *)NULL, sctk_thread_undef_status, \
+		                   NULL, NULL, -1, NULL, NULL, NULL }
 
-void sctk_thread_data_init ( void );
-void sctk_thread_data_set ( sctk_thread_data_t *task_id );
-sctk_thread_data_t *sctk_thread_data_get ( void );
-sctk_thread_data_t *__sctk_thread_data_get ( int no_disguise );
+void sctk_thread_data_init(void);
+void sctk_thread_data_set(sctk_thread_data_t *task_id);
+sctk_thread_data_t *sctk_thread_data_get(void);
+sctk_thread_data_t *__sctk_thread_data_get(int no_disguise);
 
 int sctk_thread_get_current_local_tasks_nb();
-void mpc_thread_spawn_mpi_tasks ( void *( *run ) ( void * ), void *arg );
+void mpc_thread_spawn_mpi_tasks(void *(*run)(void *), void *arg);
 
-int sctk_thread_get_vp ( void );
-int sctk_get_init_vp_and_nbvp ( int i, int *nbVp );
-int sctk_get_init_vp ( int i );
+int sctk_thread_get_vp(void);
+int sctk_get_init_vp_and_nbvp(int i, int *nbVp);
+int sctk_get_init_vp(int i);
 
 
 extern volatile unsigned sctk_long_long ___timer_thread_ticks;
@@ -155,30 +155,31 @@ extern volatile int ___timer_thread_running;
 
 extern struct sctk_alloc_chain *sctk_thread_tls;
 
-#define sctk_time_interval 10	/*millisecondes */
+#define sctk_time_interval    10 /*millisecondes */
 
 
-int sctk_thread_proc_migration ( const int cpu );
+int sctk_thread_proc_migration(const int cpu);
 
-void sctk_thread_init_no_mpc ( void );
+void sctk_thread_init_no_mpc(void);
 
-void mpc_cl_init_thread_keys ( void );
-void sctk_thread_exit_cleanup ( void );
-void sctk_ethread_mxn_init_kethread ( void );
+void mpc_cl_init_thread_keys(void);
+void sctk_thread_exit_cleanup(void);
+void sctk_ethread_mxn_init_kethread(void);
 
-int sctk_real_pthread_create ( pthread_t  *thread,
-                               __const pthread_attr_t *attr, void *( *start_routine )( void * ), void *arg );
+int sctk_real_pthread_create(pthread_t *thread,
+                             __const pthread_attr_t *attr, void *(*start_routine)(void *), void *arg);
 
 /* At exit */
-int sctk_atexit( void ( *function )( void ) );
+int sctk_atexit(void (*function)(void) );
 
 /* Futex */
-int  sctk_thread_futex( void *addr1, int op, int val1,
-                        struct timespec *timeout, void *addr2, int val3 );
+int  sctk_thread_futex(void *addr1, int op, int val1,
+                       struct timespec *timeout, void *addr2, int val3);
 
 /* profiling (exec time & dataused) */
 double sctk_profiling_get_init_time();
 double sctk_profiling_get_dataused();
+
 #ifdef __cplusplus
 }
 #endif
