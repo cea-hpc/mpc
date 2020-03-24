@@ -36,67 +36,183 @@
 /***************************************/
 /* THREADS                             */
 /***************************************/
-static __thread sctk_thread_generic_p_t *sctk_thread_generic_self_data;
 
-sctk_thread_generic_t sctk_thread_generic_self()
+static __thread sctk_thread_generic_p_t *_mpc_threads_generic_self_data;
+
+sctk_thread_generic_t _mpc_threads_generic_self()
 {
-	// if (sctk_thread_generic_self_data ==NULL) sctk_abort();
-	return sctk_thread_generic_self_data;
+	return _mpc_threads_generic_self_data;
 }
 
-void sctk_thread_generic_set_self(sctk_thread_generic_t th)
+void _mpc_threads_generic_self_set(sctk_thread_generic_t th)
 {
-	sctk_thread_generic_self_data = th;
-}
-
-sctk_thread_generic_t sctk_thread_generic_self_check()
-{
-	not_implemented();
-	return NULL;
+	_mpc_threads_generic_self_data = th;
 }
 
 /***************************************/
 /* KEYS                                */
 /***************************************/
-static int
-sctk_thread_generic_setspecific(sctk_thread_key_t __key, const void *__pointer)
+
+/* Globals */
+
+static mpc_common_spinlock_t __keys_lock = SCTK_SPINLOCK_INITIALIZER;
+static char __keys_in_use[SCTK_THREAD_KEYS_MAX + 1];
+
+
+typedef void (*__keys_destructors_t) (void *);
+
+static __keys_destructors_t __keys_destructors[SCTK_THREAD_KEYS_MAX + 1];
+
+/* Interface */
+
+static int _mpc_threads_generic_setspecific(sctk_thread_key_t __key, const void *__pointer)
 {
-	return sctk_thread_generic_keys_setspecific(__key, __pointer, &(sctk_thread_generic_self()->keys) );
+
+	if(__keys_in_use[__key] == 1)
+	{
+		const void **keys = _mpc_threads_generic_self()->keys.keys;
+		keys[__key] = __pointer;
+		return 0;
+	}
+	else
+	{
+		return EINVAL;
+	}
 }
 
-static void *
-sctk_thread_generic_getspecific(sctk_thread_key_t __key)
+static void * _mpc_threads_generic_getspecific(sctk_thread_key_t __key)
 {
-	return sctk_thread_generic_keys_getspecific(__key, &(sctk_thread_generic_self()->keys) );
+	if(__keys_in_use[__key] == 1)
+	{
+		const void **keys = _mpc_threads_generic_self()->keys.keys;
+		return (void *)keys[__key];
+	}
+	else
+	{
+		return NULL;
+	}
 }
 
-static int
-sctk_thread_generic_key_create(sctk_thread_key_t *__key,
-                               void (*__destr_function)(void *) )
+static int _mpc_threads_generic_key_create(sctk_thread_key_t *__key,
+                                    void (*__destr_function)(void *) )
 {
-	return sctk_thread_generic_keys_key_create(__key, __destr_function, &(sctk_thread_generic_self()->keys) );
+	int i;
+
+	mpc_common_spinlock_lock(&__keys_lock);
+	for(i = 1; i < SCTK_THREAD_KEYS_MAX + 1; i++)
+	{
+		if(__keys_in_use[i] == 0)
+		{
+			__keys_in_use[i]        = 1;
+			__keys_destructors[i] = __destr_function;
+			*__key = i;
+			break;
+		}
+	}
+	mpc_common_spinlock_unlock(&__keys_lock);
+	if(i == SCTK_THREAD_KEYS_MAX)
+	{
+		return EAGAIN;
+	}
+
+	return 0;
 }
 
-static int
-sctk_thread_generic_key_delete(sctk_thread_key_t __key)
+static int _mpc_threads_generic_key_delete(sctk_thread_key_t __key)
 {
-	return sctk_thread_generic_keys_key_delete(__key, &(sctk_thread_generic_self()->keys) );
+	if(__keys_in_use[__key] == 1)
+	{
+		if(__keys_destructors[__key] != NULL)
+		{
+			const void **keys = _mpc_threads_generic_self()->keys.keys;
+			__keys_destructors[__key] (&keys[__key]);
+			keys[__key] = NULL;
+		}
+	}
+
+	return 0;
 }
+
+void _mpc_threads_generic_key_init_thread(sctk_thread_generic_keys_t *keys)
+{
+	int i;
+
+	for(i = 0; i < SCTK_THREAD_KEYS_MAX; i++)
+	{
+		keys->keys[i] = NULL;
+	}
+}
+
+
+/* Init and release */
+
+static inline void __keys_init()
+{
+	int i;
+
+	sctk_thread_generic_check_size(int, sctk_thread_key_t);
+	for(i = 0; i < SCTK_THREAD_KEYS_MAX; i++)
+	{
+		__keys_in_use[i]        = 0;
+		__keys_destructors[i] = NULL;
+	}
+}
+
+static inline void __keys_delete_all(sctk_thread_generic_keys_t *keys)
+{
+	int i;
+
+	for(i = 0; i < SCTK_THREAD_KEYS_MAX; i++)
+	{
+		if(__keys_in_use[i] == 1)
+		{
+			if(__keys_destructors[i] != NULL)
+			{
+				__keys_destructors[i] (&keys->keys[i]);
+				keys->keys[i] = NULL;
+			}
+		}
+	}
+}
+
 
 /***************************************/
 /* MUTEX                               */
 /***************************************/
-static int
-sctk_thread_generic_mutexattr_destroy(sctk_thread_mutexattr_t *attr)
+
+/* Interface */
+
+static int _mpc_threads_generic_mutexattr_destroy(sctk_thread_mutexattr_t *attr)
 {
-	return sctk_thread_generic_mutexes_mutexattr_destroy( (sctk_thread_generic_mutexattr_t *)attr);
+	/*
+	 *    ERRORS:
+	 *    EINVAL The value specified for the argument is not correct
+	 */
+
+	if(attr == NULL)
+	{
+		return EINVAL;
+	}
+
+	return 0;
 }
 
-static int
-sctk_thread_generic_mutexattr_getpshared(sctk_thread_mutexattr_t *attr, int *pshared)
+static int _mpc_threads_generic_mutexattr_getpshared(sctk_thread_mutexattr_t *pattr, int *pshared)
 {
-	return sctk_thread_generic_mutexes_mutexattr_getpshared( (sctk_thread_generic_mutexattr_t *)attr,
-	                                                         pshared);
+	/*
+	 *     ERRORS:
+	 * EINVAL The value specified for the argument is not correct
+	 */
+	sctk_thread_generic_mutexattr_t *attr = (sctk_thread_generic_mutexattr_t*)pattr;
+
+	if(attr == NULL || pshared == NULL)
+	{
+		return EINVAL;
+	}
+
+	(*pshared) = ( (attr->attrs >> 2) & 1);
+
+	return 0;
 }
 
 /*
@@ -128,287 +244,1017 @@ sctk_thread_generic_mutexattr_getpshared(sctk_thread_mutexattr_t *attr, int *psh
  *                                              protocol );
  * }
  */
-static int
-sctk_thread_generic_mutexattr_gettype(sctk_thread_mutexattr_t *attr, int *kind)
+
+static int _mpc_threads_generic_mutexattr_gettype(sctk_thread_mutexattr_t *pattr, int *kind)
 {
-	return sctk_thread_generic_mutexes_mutexattr_gettype( (sctk_thread_generic_mutexattr_t *)attr,
-	                                                      kind);
+	/*
+	 *     ERRORS:
+	 * EINVAL The value specified for the argument is not correct
+	 */
+	sctk_thread_generic_mutexattr_t *attr = (sctk_thread_generic_mutexattr_t*)pattr;
+
+
+	if(attr == NULL || kind == NULL)
+	{
+		return EINVAL;
+	}
+
+	(*kind) = (attr->attrs & 3);
+
+	return 0;
 }
 
-static int
-sctk_thread_generic_mutexattr_init(sctk_thread_mutexattr_t *attr)
+static int _mpc_threads_generic_mutexattr_init(sctk_thread_mutexattr_t *pattr)
 {
-	return sctk_thread_generic_mutexes_mutexattr_init( (sctk_thread_generic_mutexattr_t *)attr);
+	/*
+	 *    ERRORS:
+	 * EINVAL The value specified for the argument is not correct
+	 * ENOMEM |> NOT IMPLEMENTED <| Insufficient memory exists to initialize
+	 *       the read-write lock attributes object
+	 */
+	sctk_thread_generic_mutexattr_t *attr = (sctk_thread_generic_mutexattr_t*)pattr;
+
+
+	if(attr == NULL)
+	{
+		return EINVAL;
+	}
+
+	attr->attrs  = ( (attr->attrs & ~3) | (0 & 3) );
+	attr->attrs &= ~(1 << 2);
+
+	return 0;}
+
+static int _mpc_threads_generic_mutexattr_setpshared(sctk_thread_mutexattr_t *pattr, int pshared)
+{
+	/*
+	 *    ERRORS:
+	 *    EINVAL The value specified for the argument is not correct
+	 */
+	sctk_thread_generic_mutexattr_t *attr = (sctk_thread_generic_mutexattr_t*)pattr;
+
+
+	if(attr == NULL)
+	{
+		return EINVAL;
+	}
+	if(pshared != SCTK_THREAD_PROCESS_PRIVATE && pshared != SCTK_THREAD_PROCESS_SHARED)
+	{
+		return EINVAL;
+	}
+
+	int ret = 0;
+	if(pshared == SCTK_THREAD_PROCESS_SHARED)
+	{
+		attr->attrs |= (1 << 2);
+		fprintf(stderr, "Invalid pshared value in attr, MPC doesn't handle process shared mutexes\n");
+		ret = ENOTSUP;
+	}
+	else
+	{
+		attr->attrs &= ~(1 << 2);
+	}
+
+	return ret;
 }
 
-static int
-sctk_thread_generic_mutexattr_setpshared(sctk_thread_mutexattr_t *attr, int pshared)
+static int _mpc_threads_generic_mutexattr_settype(sctk_thread_mutexattr_t *pattr, int kind)
 {
-	return sctk_thread_generic_mutexes_mutexattr_setpshared( (sctk_thread_generic_mutexattr_t *)attr,
-	                                                         pshared);
+	/*
+	 *    ERRORS:
+	 *    EINVAL The value specified for the argument is not correct
+	 */
+
+	sctk_thread_generic_mutexattr_t *attr = (sctk_thread_generic_mutexattr_t*)pattr;
+
+	if(attr == NULL)
+	{
+		return EINVAL;
+	}
+	if(kind != PTHREAD_MUTEX_NORMAL && kind != PTHREAD_MUTEX_ERRORCHECK &&
+	   kind != PTHREAD_MUTEX_RECURSIVE && kind != PTHREAD_MUTEX_DEFAULT)
+	{
+		return EINVAL;
+	}
+
+	attr->attrs = (attr->attrs & ~3) | (kind & 3);
+
+	return 0;
 }
 
-static int
-sctk_thread_generic_mutexattr_settype(sctk_thread_mutexattr_t *attr, int kind)
+static int _mpc_threads_generic_mutex_destroy(sctk_thread_mutex_t *plock)
 {
-	return sctk_thread_generic_mutexes_mutexattr_settype( (sctk_thread_generic_mutexattr_t *)attr,
-	                                                      kind);
+	/*
+	 *    ERRORS:
+	 *    EINVAL The value specified for the argument is not correct
+	 *    EBUSY  The specified lock is currently owned by a thread or
+	 *               another thread is currently using the mutex in a cond
+	 */
+	sctk_thread_generic_mutex_t *lock = (sctk_thread_generic_mutex_t*)plock;
+
+
+	if(lock == NULL)
+	{
+		return EINVAL;
+	}
+	if(lock->owner != NULL)
+	{
+		return EBUSY;
+	}
+
+	return 0;}
+
+static int _mpc_threads_generic_mutex_init(sctk_thread_mutex_t *lock,
+                               		  const sctk_thread_mutexattr_t *pattr)
+{
+	/*
+	 *    ERRORS:
+	 *    EINVAL The value specified for the argument is not correct
+	 * EBUSY  |>NOT IMPLEMENTED<| The specified lock has already been
+	 *               initialized
+	 *    EAGAIN |>NOT IMPLEMENTED<| The system lacked the necessary
+	 *               resources (other than memory) to initialize another mutex
+	 *    ENOMEM |>NOT IMPLEMENTED<| Insufficient memory exists to
+	 *               initialize the mutex
+	 *    EPERM  |>NOT IMPLEMENTED<| The caller does not have the
+	 *               privilege to perform the operation
+	 */
+
+	sctk_thread_generic_mutexattr_t *attr = (sctk_thread_generic_mutexattr_t*)pattr;
+
+	if(lock == NULL)
+	{
+		return EINVAL;
+	}
+
+	int ret = 0;
+	sctk_thread_generic_mutex_t  local_lock = SCTK_THREAD_GENERIC_MUTEX_INIT;
+	sctk_thread_generic_mutex_t *local_ptr  = &local_lock;
+
+	if(attr != NULL)
+	{
+		if( ( (attr->attrs >> 2) & 1) == SCTK_THREAD_PROCESS_SHARED)
+		{
+			fprintf(stderr, "Invalid pshared value in attr, MPC doesn't handle process shared mutexes\n");
+			ret = ENOTSUP;
+		}
+		local_ptr->type = (attr->attrs & 3);
+	}
+
+	memcpy(lock, &local_lock, sizeof(sctk_thread_generic_mutex_t));
+
+	return ret;
 }
 
-static int
-sctk_thread_generic_mutex_destroy(sctk_thread_mutex_t *lock)
+static int _mpc_threads_generic_mutex_lock(sctk_thread_mutex_t *plock)
 {
-	return sctk_thread_generic_mutexes_mutex_destroy( (sctk_thread_generic_mutex_t *)lock);
+	/*
+	 *    ERRORS:
+	 *    EINVAL  The value specified for the argument is not correct
+	 *    EAGAIN  |>NOT IMPLEMENTED<| The mutex could not be acquired because the maximum
+	 *                number of recursive locks for mutex has been exceeded
+	 *    EDEADLK The current thread already owns the mutex
+	 */
+
+	sctk_thread_generic_scheduler_t *sched = &(_mpc_threads_generic_self()->sched);
+	sctk_thread_generic_mutex_t *lock = (sctk_thread_generic_mutex_t*)plock;
+
+
+	if(lock == NULL)
+	{
+		return EINVAL;
+	}
+
+	int ret = 0;
+	sctk_thread_generic_mutex_cell_t cell;
+	void **tmp = (void **)sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
+	mpc_common_spinlock_lock(&(lock->lock) );
+	if(lock->owner == NULL)
+	{
+		lock->owner = sched;
+		if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
+		{
+			lock->nb_call++;
+		}
+		mpc_common_spinlock_unlock(&(lock->lock) );
+		// We can force sched_yield here to increase calls to the priority scheduler
+		// sctk_thread_generic_sched_yield(sched);
+		return ret;
+	}
+	else
+	{
+		if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE &&
+		   lock->owner == sched)
+		{
+			lock->nb_call++;
+			mpc_common_spinlock_unlock(&(lock->lock) );
+			// We can force sched_yield here to increase calls to the priority
+			// scheduler
+			// sctk_thread_generic_sched_yield(sched);
+			return ret;
+		}
+		if(lock->type == SCTK_THREAD_MUTEX_ERRORCHECK &&
+		   lock->owner == sched)
+		{
+			ret = EDEADLK;
+			mpc_common_spinlock_unlock(&(lock->lock) );
+			return ret;
+		}
+
+		cell.sched = sched;
+		DL_APPEND(lock->blocked, &cell);
+		tmp[sctk_thread_generic_mutex] = (void *)lock;
+
+		sctk_thread_generic_thread_status(sched, sctk_thread_generic_blocked);
+		sctk_nodebug("WAIT MUTEX LOCK sleep %p", sched);
+		sctk_thread_generic_register_spinlock_unlock(sched, &(lock->lock) );
+		sctk_thread_generic_sched_yield(sched);
+		tmp[sctk_thread_generic_mutex] = NULL;
+	}
+	return ret;
 }
 
-static int
-sctk_thread_generic_mutex_init(sctk_thread_mutex_t *lock,
-                               const sctk_thread_mutexattr_t *attr)
+static int _mpc_threads_generic_mutex_trylock(sctk_thread_mutex_t *plock)
 {
-	return sctk_thread_generic_mutexes_mutex_init( (sctk_thread_generic_mutex_t *)lock,
-	                                               (sctk_thread_generic_mutexattr_t *)attr,
-	                                               &(sctk_thread_generic_self()->sched) );
+	sctk_thread_generic_scheduler_t *sched = &(_mpc_threads_generic_self()->sched);
+	sctk_thread_generic_mutex_t *lock = (sctk_thread_generic_mutex_t*)plock;
+
+	/*
+	 *    ERRORS:
+	 *    EINVAL  The value specified for the argument is not correct
+	 *    EAGAIN  |>NOT IMPLEMENTED<| The mutex could not be acquired because the maximum
+	 *                number of recursive locks for mutex has been exceeded
+	 *    EBUSY   the mutex is already owned by another thread or the calling thread
+	 */
+
+	if(lock == NULL)
+	{
+		return EINVAL;
+	}
+
+	int ret = 0;
+	if(/*mpc_common_spinlock_trylock(&(lock->lock)) == 0 */ 1)
+	{
+		mpc_common_spinlock_lock(&(lock->lock) );
+		if(lock->owner == NULL)
+		{
+			lock->owner = sched;
+			if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
+			{
+				lock->nb_call++;
+			}
+			mpc_common_spinlock_unlock(&(lock->lock) );
+			return ret;
+		}
+		else
+		{
+			if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE &&
+			   lock->owner == sched)
+			{
+				lock->nb_call++;
+				mpc_common_spinlock_unlock(&(lock->lock) );
+				return ret;
+			}
+			ret = EBUSY;
+			mpc_common_spinlock_unlock(&(lock->lock) );
+		}
+	}
+	else
+	{
+		ret = EBUSY;
+	}
+
+	return ret;
 }
 
-static int
-sctk_thread_generic_mutex_lock(sctk_thread_mutex_t *lock)
+static int _mpc_threads_generic_mutex_timedlock(sctk_thread_mutex_t *plock,
+                                    	       const struct timespec *restrict time)
 {
-	return sctk_thread_generic_mutexes_mutex_lock( (sctk_thread_generic_mutex_t *)lock,
-	                                               &(sctk_thread_generic_self()->sched) );
+	sctk_thread_generic_scheduler_t *sched = &(_mpc_threads_generic_self()->sched);
+	sctk_thread_generic_mutex_t *lock = (sctk_thread_generic_mutex_t*)plock;
+
+	/*
+	 *    ERRORS:
+	 *    EINVAL    The value specified by argument lock does not refer to an initialized
+	 *                      mutex object, or the abs_timeout nanosecond value is less than zero or
+	 *                      greater than or equal to 1000 million
+	 *    ETIMEDOUT The lock could not be acquired in specified time
+	 *    EAGAIN    |> NOT IMPLEMENTED <| The read lock could not be acquired because the
+	 *                      maximum number of recursive locks for mutex has been exceeded
+	 */
+
+	if(lock == NULL || time == NULL)
+	{
+		return EINVAL;
+	}
+	if(time->tv_nsec < 0 || time->tv_nsec >= 1000000000)
+	{
+		return EINVAL;
+	}
+
+	int             ret = 0;
+	struct timespec t_current;
+
+	do
+	{
+		if(mpc_common_spinlock_trylock(&(lock->lock) ) == 0)
+		{
+			if(lock->owner == NULL)
+			{
+				lock->owner = sched;
+				if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
+				{
+					lock->nb_call++;
+				}
+			}
+			else
+			{
+				if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE &&
+				   lock->owner == sched)
+				{
+					lock->nb_call++;
+				}
+				ret = EBUSY;
+			}
+		}
+		else
+		{
+			ret = EBUSY;
+		}
+		mpc_common_spinlock_unlock(&(lock->lock) );
+		clock_gettime(CLOCK_REALTIME, &t_current);
+	} while(ret != 0 && (t_current.tv_sec < time->tv_sec ||
+	                     (t_current.tv_sec == time->tv_sec && t_current.tv_nsec < time->tv_nsec) ) );
+
+	if(ret != 0)
+	{
+		return ETIMEDOUT;
+	}
+
+	return ret;
 }
 
-static int
-sctk_thread_generic_mutex_trylock(sctk_thread_mutex_t *lock)
+static int _mpc_threads_generic_mutex_spinlock(sctk_thread_mutex_t *plock)
 {
-	return sctk_thread_generic_mutexes_mutex_trylock( (sctk_thread_generic_mutex_t *)lock,
-	                                                  &(sctk_thread_generic_self()->sched) );
+	sctk_thread_generic_scheduler_t *sched = &(_mpc_threads_generic_self()->sched);
+	sctk_thread_generic_mutex_t *lock = (sctk_thread_generic_mutex_t*)plock;
+
+	/*
+	 *    ERRORS:
+	 *    EINVAL  The value specified for the argument is not correct
+	 *    EAGAIN  |>NOT IMPLEMENTED<| The mutex could not be acquired because the maximum
+	 *                number of recursive locks for mutex has been exceeded
+	 *    EDEADLK The current thread already owns the mutex
+	 */
+
+	/* TODO: FIX BUG when called by "sctk_thread_lock_lock" (same issue with mutex
+	 * unlock when called by "sctk_thread_lock_unlock") with sched null beacause calling
+	 * functions only have one argument instead of two*/
+	if(lock == NULL /*|| (lock->m_attrs & 1) != 1*/)
+	{
+		return EINVAL;
+	}
+
+	int ret = 0;
+	sctk_thread_generic_mutex_cell_t cell;
+
+	mpc_common_spinlock_lock(&(lock->lock) );
+	if(lock->owner == NULL)
+	{
+		lock->owner   = sched;
+		lock->nb_call = 1;
+		mpc_common_spinlock_unlock(&(lock->lock) );
+		return ret;
+	}
+	else
+	{
+		if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
+		{
+			lock->nb_call++;
+			mpc_common_spinlock_unlock(&(lock->lock) );
+			return ret;
+		}
+		if(lock->type == SCTK_THREAD_MUTEX_ERRORCHECK)
+		{
+			if(lock->owner == sched)
+			{
+				ret = EDEADLK;
+				mpc_common_spinlock_unlock(&(lock->lock) );
+				return ret;
+			}
+		}
+
+		cell.sched = sched;
+		DL_APPEND(lock->blocked, &cell);
+
+		mpc_common_spinlock_unlock(&(lock->lock) );
+		do
+		{
+			sctk_thread_generic_sched_yield(sched);
+		} while(lock->owner != sched);
+	}
+	return ret;
 }
 
-static int
-sctk_thread_generic_mutex_timedlock(sctk_thread_mutex_t *lock,
-                                    const struct timespec *restrict time)
+static int _mpc_threads_generic_mutex_unlock(sctk_thread_mutex_t *plock)
 {
-	return sctk_thread_generic_mutexes_mutex_timedlock( (sctk_thread_generic_mutex_t *)lock,
-	                                                    time, &(sctk_thread_generic_self()->sched) );
+	sctk_thread_generic_scheduler_t *sched = &(_mpc_threads_generic_self()->sched);
+	sctk_thread_generic_mutex_t *lock = (sctk_thread_generic_mutex_t*)plock;
+
+	/*
+	 *    ERRORS:
+	 *    EINVAL The value specified by argument lock does not refer to an initialized mutex
+	 *    EAGAIN |> NOT IMPLEMENTED <| The read lock could not be acquired because the
+	 *                maximum number of recursive locks for mutex has been exceeded
+	 *    EPERM  The current thread does not own the mutex
+	 */
+
+	if(lock == NULL)
+	{
+		return EINVAL;
+	}
+
+	if(lock->owner != sched)
+	{
+		return EPERM;
+	}
+	if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
+	{
+		if(lock->nb_call > 1)
+		{
+			lock->nb_call--;
+			return 0;
+		}
+	}
+
+	mpc_common_spinlock_lock(&(lock->lock) );
+	{
+		sctk_thread_generic_mutex_cell_t *head;
+		head = lock->blocked;
+		if(head == NULL)
+		{
+			lock->owner   = NULL;
+			lock->nb_call = 0;
+		}
+		else
+		{
+			lock->owner   = head->sched;
+			lock->nb_call = 1;
+			DL_DELETE(lock->blocked, head);
+			if(head->sched->status != sctk_thread_generic_running)
+			{
+				sctk_nodebug("ADD MUTEX UNLOCK wake %p", head->sched);
+				sctk_thread_generic_wake(head->sched);
+			}
+		}
+	}
+	mpc_common_spinlock_unlock(&(lock->lock) );
+	return 0;
 }
 
-static int
-sctk_thread_generic_mutex_spinlock(sctk_thread_mutex_t *lock)
+/* Init */
+
+void __mutex_init()
 {
-	return sctk_thread_generic_mutexes_mutex_spinlock( (sctk_thread_generic_mutex_t *)lock,
-	                                                   &(sctk_thread_generic_self()->sched) );
+	sctk_thread_generic_check_size(sctk_thread_generic_mutex_t, sctk_thread_mutex_t);
+	sctk_thread_generic_check_size(sctk_thread_generic_mutexattr_t, sctk_thread_mutexattr_t);
+
+	{
+		static sctk_thread_generic_mutex_t loc  = SCTK_THREAD_GENERIC_MUTEX_INIT;
+		static sctk_thread_mutex_t         glob = SCTK_THREAD_MUTEX_INITIALIZER;
+		assume(memcmp(&loc, &glob, sizeof(sctk_thread_generic_mutex_t) ) == 0);
+	}
 }
 
-static int
-sctk_thread_generic_mutex_unlock(sctk_thread_mutex_t *lock)
-{
-	return sctk_thread_generic_mutexes_mutex_unlock( (sctk_thread_generic_mutex_t *)lock,
-	                                                 &(sctk_thread_generic_self()->sched) );
-}
 
 /***************************************/
 /* CONDITIONS                          */
 /***************************************/
 
-static int
-sctk_thread_generic_condattr_destroy(sctk_thread_condattr_t *attr)
+static int _mpc_threads_generic_condattr_destroy(sctk_thread_condattr_t *pattr)
 {
-	return sctk_thread_generic_conds_condattr_destroy( (sctk_thread_generic_condattr_t *)attr);
+	sctk_thread_generic_condattr_t *attr = (sctk_thread_generic_condattr_t *)pattr;
+	/*
+	 *    ERRORS:
+	 * EINVAL The value specified for the argument is not correct
+	 */
+
+	if(attr == NULL)
+	{
+		return EINVAL;
+	}
+
+	return 0;}
+
+static int _mpc_threads_generic_condattr_getpshared(sctk_thread_condattr_t *pattr,
+                                        	    int *pshared)
+{
+	sctk_thread_generic_condattr_t *attr = (sctk_thread_generic_condattr_t *)pattr;
+
+	/*
+	 *    ERRORS:
+	 * EINVAL The value specified for the argument is not correct
+	 */
+
+	if(attr == NULL || pshared == NULL)
+	{
+		return EINVAL;
+	}
+
+	(*pshared) = ( (attr->attrs >> 2) & 1);
+
+	return 0;
 }
 
-static int
-sctk_thread_generic_condattr_getpshared(sctk_thread_condattr_t *attr,
-                                        int *pshared)
+static int _mpc_threads_generic_condattr_init(sctk_thread_condattr_t *pattr)
 {
-	return sctk_thread_generic_conds_condattr_getpshared( (sctk_thread_generic_condattr_t *)attr,
-	                                                      pshared);
+	sctk_thread_generic_condattr_t *attr = (sctk_thread_generic_condattr_t *)pattr;
+
+	/*
+	 *    ERRORS:
+	 * EINVAL The value specified for the argument is not correct
+	 *    ENOMEM |>NOT IMPLEMENTED<| Insufficient memory exists to initialize the condition
+	 *               variable attributes object
+	 */
+
+	if(attr == NULL)
+	{
+		return EINVAL;
+	}
+
+	attr->attrs &= ~(1 << 2);
+	attr->attrs  = ( (attr->attrs & ~3) | (0 & 3) );
+
+	return 0;}
+
+static int _mpc_threads_generic_condattr_setpshared(sctk_thread_condattr_t *pattr,
+                                       		   int pshared)
+{
+	sctk_thread_generic_condattr_t *attr = (sctk_thread_generic_condattr_t *)pattr;
+
+	/*
+	 *    ERRORS:
+	 * EINVAL The value specified for the argument is not correct
+	 */
+
+	if(attr == NULL)
+	{
+		return EINVAL;
+	}
+	if(pshared != SCTK_THREAD_PROCESS_PRIVATE && pshared != SCTK_THREAD_PROCESS_SHARED)
+	{
+		return EINVAL;
+	}
+
+	int ret = 0;
+	if(pshared == SCTK_THREAD_PROCESS_SHARED)
+	{
+		attr->attrs |= (1 << 2);
+		fprintf(stderr, "Invalid pshared value in attr, MPC doesn't handle process shared conds\n");
+		ret = ENOTSUP;
+	}
+	else
+	{
+		attr->attrs &= ~(1 << 2);
+	}
+
+	return ret;
 }
 
-static int
-sctk_thread_generic_condattr_init(sctk_thread_condattr_t *attr)
+static int _mpc_threads_generic_condattr_setclock(sctk_thread_condattr_t *pattr,
+                                      		 clockid_t clock_id)
 {
-	return sctk_thread_generic_conds_condattr_init( (sctk_thread_generic_condattr_t *)attr);
+	sctk_thread_generic_condattr_t *attr = (sctk_thread_generic_condattr_t *)pattr;
+
+	/*
+	 *    ERRORS:
+	 * EINVAL The value specified for the argument is not correct
+	 */
+
+	if(attr == NULL)
+	{
+		return EINVAL;
+	}
+	if(clock_id != CLOCK_REALTIME && clock_id != CLOCK_MONOTONIC &&
+	   clock_id != CLOCK_PROCESS_CPUTIME_ID && clock_id != CLOCK_THREAD_CPUTIME_ID)
+	{
+		return EINVAL;
+	}
+	if(clock_id == CLOCK_PROCESS_CPUTIME_ID || clock_id == CLOCK_THREAD_CPUTIME_ID)
+	{
+		return EINVAL;
+	}
+
+	attr->attrs = ( (attr->attrs & ~3) | (clock_id & 3) );
+
+	return 0;
 }
 
-static int
-sctk_thread_generic_condattr_setpshared(sctk_thread_condattr_t *attr,
-                                        int pshared)
+static int _mpc_threads_generic_condattr_getclock(sctk_thread_condattr_t *pattr,
+                                      		 clockid_t *clock_id)
 {
-	return sctk_thread_generic_conds_condattr_setpshared( (sctk_thread_generic_condattr_t *)attr,
-	                                                      pshared);
+	sctk_thread_generic_condattr_t *attr = (sctk_thread_generic_condattr_t *)pattr;
+
+	/*
+	 *    ERRORS:
+	 * EINVAL The value specified for the argument is not correct
+	 */
+
+	if(attr == NULL || clock_id == NULL)
+	{
+		return EINVAL;
+	}
+
+	(*clock_id) = (attr->attrs & 3);
+
+	return 0;
 }
 
-static int
-sctk_thread_generic_condattr_setclock(sctk_thread_condattr_t *attr,
-                                      clockid_t clock_id)
+static int _mpc_threads_generic_cond_destroy(sctk_thread_cond_t *plock)
 {
-	return sctk_thread_generic_conds_condattr_setclock( (sctk_thread_generic_condattr_t *)attr,
-	                                                    clock_id);
+	sctk_thread_generic_cond_t * lock = (sctk_thread_generic_cond_t*)plock;
+
+	/*
+	 *    ERRORS:
+	 * EINVAL The value specified for the argument is not correct
+	 *    EBUSY  The lock argument is currently used
+	 */
+
+	if(lock == NULL)
+	{
+		return EINVAL;
+	}
+	if(lock->blocked != NULL)
+	{
+		return EBUSY;
+	}
+
+	lock->clock_id = -1;
+
+	return 0;
 }
 
-static int
-sctk_thread_generic_condattr_getclock(sctk_thread_condattr_t *attr,
-                                      clockid_t *clock_id)
+static int _mpc_threads_generic_cond_init(sctk_thread_cond_t *plock,
+                              		  const sctk_thread_condattr_t *pattr)
 {
-	return sctk_thread_generic_conds_condattr_getclock( (sctk_thread_generic_condattr_t *)attr,
-	                                                    clock_id);
+	sctk_thread_generic_cond_t * lock = (sctk_thread_generic_cond_t*)plock;
+	sctk_thread_generic_condattr_t *attr = (sctk_thread_generic_condattr_t *)pattr;
+	sctk_thread_generic_scheduler_t *sched = &(_mpc_threads_generic_self()->sched);
+
+	/*
+	 *    ERRORS:
+	 *    EAGAIN |>NOT IMPLEMENTED<| The system lacked the necessary resources
+	 *               (other than memory) to initialize another condition variable
+	 *    ENOMEM |>NOT IMPLEMENTED<| Insufficient memory exists to initialize
+	 *               the condition variable
+	 *    EBUSY  |>NOT IMPLEMENTED<| The argument lock is already initialize
+	 *               and must be destroy before reinitializing it
+	 *    EINVAL The value specified for the argument is not correct
+	 */
+
+	if(lock == NULL)
+	{
+		return EINVAL;
+	}
+
+	int ret = 0;
+	sctk_thread_generic_cond_t  local = SCTK_THREAD_GENERIC_COND_INIT;
+	sctk_thread_generic_cond_t *ptrl  = &local;
+
+	if(attr != NULL)
+	{
+		if( ( (attr->attrs >> 2) & 1) == SCTK_THREAD_PROCESS_SHARED)
+		{
+			fprintf(stderr, "Invalid pshared value in attr, MPC doesn't handle process shared conds\n");
+			ret = ENOTSUP;
+		}
+		ptrl->clock_id = (attr->attrs & 3);
+	}
+
+	(*lock) = local;
+
+	return ret;
 }
 
-static int
-sctk_thread_generic_cond_destroy(sctk_thread_cond_t *lock)
+static int _mpc_threads_generic_cond_wait(sctk_thread_cond_t *pcond,
+                              		  sctk_thread_mutex_t *pmutex)
 {
-	return sctk_thread_generic_conds_cond_destroy( (sctk_thread_generic_cond_t *)lock);
+	sctk_thread_generic_cond_t * cond = (sctk_thread_generic_cond_t*)pcond;
+	sctk_thread_generic_mutex_t * mutex = (sctk_thread_generic_mutex_t*)pmutex;
+	sctk_thread_generic_scheduler_t *sched = &(_mpc_threads_generic_self()->sched);
+
+	/*
+	 *    ERRORS:
+	 *    EINVAL    The value specified by argument cond, mutex, or time is invalid
+	 *                      or different mutexes were supplied for concurrent pthread_cond_wait()
+	 *                      operations on the same condition variable
+	 *    EPERM     The mutex was not owned by the current thread
+	 */
+
+	if(cond == NULL || mutex == NULL)
+	{
+		return EINVAL;
+	}
+
+	/* test cancel */
+	sctk_thread_generic_check_signals(0);
+
+	int ret = 0;
+	sctk_thread_generic_cond_cell_t cell;
+	void **tmp = (void **)sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
+	mpc_common_spinlock_lock(&(cond->lock) );
+	if(cond->blocked == NULL)
+	{
+		if(sched != mutex->owner)
+		{
+			return EPERM;
+		}
+		cell.binded = mutex;
+	}
+	else
+	{
+		if(cond->blocked->binded != mutex)
+		{
+			return EINVAL;
+		}
+		if(sched != mutex->owner)
+		{
+			return EPERM;
+		}
+		cell.binded = mutex;
+	}
+	_mpc_threads_generic_mutex_unlock((sctk_thread_mutex_t*)mutex);
+	cell.sched = sched;
+	DL_APPEND(cond->blocked, &cell);
+	tmp[sctk_thread_generic_cond] = (void *)cond;
+
+	sctk_nodebug("WAIT on %p", sched);
+
+	sctk_thread_generic_thread_status(sched, sctk_thread_generic_blocked);
+	sctk_thread_generic_register_spinlock_unlock(sched, &(cond->lock) );
+	sctk_thread_generic_sched_yield(sched);
+
+	tmp[sctk_thread_generic_cond] = NULL;
+	_mpc_threads_generic_mutex_lock((sctk_thread_mutex_t*)mutex);
+
+	/* test cancel */
+	sctk_thread_generic_check_signals(0);
+	return ret;
 }
 
-static int
-sctk_thread_generic_cond_init(sctk_thread_cond_t *lock,
-                              const sctk_thread_condattr_t *attr)
+static int _mpc_threads_generic_cond_signal(sctk_thread_cond_t *pcond)
 {
-	return sctk_thread_generic_conds_cond_init( (sctk_thread_generic_cond_t *)lock,
-	                                            (sctk_thread_generic_condattr_t *)attr,
-	                                            &(sctk_thread_generic_self()->sched) );
+	sctk_thread_generic_cond_t * cond = (sctk_thread_generic_cond_t*)pcond;
+	/*
+	 *    ERRORS:
+	 *    EINVAL The value specified for the argument is not correct
+	 */
+
+	if(cond == NULL)
+	{
+		return EINVAL;
+	}
+
+	sctk_thread_generic_cond_cell_t *task;
+	mpc_common_spinlock_lock(&(cond->lock) );
+	task = cond->blocked;
+	if(task != NULL)
+	{
+		DL_DELETE(cond->blocked, task);
+		sctk_thread_generic_wake(task->sched);
+	}
+	mpc_common_spinlock_unlock(&(cond->lock) );
+	return 0;
 }
 
-static int
-sctk_thread_generic_cond_wait(sctk_thread_cond_t *cond,
-                              sctk_thread_mutex_t *mutex)
+struct __timedwait_arg_s
 {
-	return sctk_thread_generic_conds_cond_wait( (sctk_thread_generic_cond_t *)cond,
-	                                            (sctk_thread_generic_mutex_t *)mutex,
-	                                            &(sctk_thread_generic_self()->sched) );
+	const struct timespec *restrict      timedout;
+	int *                                timeout;
+	sctk_thread_generic_scheduler_t *    sched;
+	sctk_thread_generic_cond_t *restrict cond;
+};
+
+void __timedwait_arg_init(
+        struct __timedwait_arg_s *arg,
+        const struct timespec *restrict timedout, int *timeout,
+        sctk_thread_generic_scheduler_t *sched,
+        sctk_thread_generic_cond_t *restrict cond)
+{
+	arg->timedout = timedout;
+	arg->timeout  = timeout;
+	arg->sched    = sched;
+	arg->cond     = cond;
 }
 
-static int
-sctk_thread_generic_cond_signal(sctk_thread_cond_t *lock)
+void __timedwait_task_init(sctk_thread_generic_task_t *task,
+                                           volatile int *data, int value,
+                                           void (*func)(void *), void *arg)
 {
-	return sctk_thread_generic_conds_cond_signal( (sctk_thread_generic_cond_t *)lock,
-	                                              &(sctk_thread_generic_self()->sched) );
+	task->is_blocking = 0;
+	task->data        = data;
+	task->value       = value;
+	task->func        = func;
+	task->arg         = arg;
+	task->sched       = NULL;
+	task->free_func   = sctk_free;
+	task->prev        = NULL;
+	task->next        = NULL;
 }
 
-static int
-sctk_thread_generic_cond_timedwait(sctk_thread_cond_t *cond,
-                                   sctk_thread_mutex_t *mutex,
-                                   const struct timespec *restrict time)
+static void __timedwait_test_timeout(void *args)
 {
-	return sctk_thread_generic_conds_cond_timedwait( (sctk_thread_generic_cond_t *)cond,
-	                                                 (sctk_thread_generic_mutex_t *)mutex, time,
-	                                                 &(sctk_thread_generic_self()->sched) );
+	struct __timedwait_arg_s *arg       = (struct __timedwait_arg_s *)args;
+	sctk_thread_generic_cond_cell_t *  lcell     = NULL;
+	sctk_thread_generic_cond_cell_t *  lcell_tmp = NULL;
+	struct timespec t_current;
+
+	if(mpc_common_spinlock_trylock(&(arg->cond->lock) ) == 0)
+	{
+		clock_gettime(arg->cond->clock_id, &t_current);
+
+		if(t_current.tv_sec > arg->timedout->tv_sec ||
+		   (t_current.tv_sec == arg->timedout->tv_sec && t_current.tv_nsec > arg->timedout->tv_nsec) )
+		{
+			DL_FOREACH_SAFE(arg->cond->blocked, lcell, lcell_tmp)
+			{
+				if(lcell->sched == arg->sched)
+				{
+					*(arg->timeout) = 1;
+					DL_DELETE(arg->cond->blocked, lcell);
+					lcell->next = NULL;
+					sctk_thread_generic_wake(lcell->sched);
+				}
+			}
+		}
+		mpc_common_spinlock_unlock(&(arg->cond->lock) );
+	}
 }
 
-static int
-sctk_thread_generic_cond_broadcast(sctk_thread_cond_t *lock)
+static int _mpc_threads_generic_cond_timedwait(sctk_thread_cond_t *pcond,
+                                               sctk_thread_mutex_t *pmutex,
+                                               const struct timespec *restrict time)
 {
-	return sctk_thread_generic_conds_cond_broadcast( (sctk_thread_generic_cond_t *)lock,
-	                                                 &(sctk_thread_generic_self()->sched) );
+	sctk_thread_generic_cond_t * cond = (sctk_thread_generic_cond_t*)pcond;
+	sctk_thread_generic_mutex_t * mutex = (sctk_thread_generic_mutex_t*)pmutex;
+	sctk_thread_generic_scheduler_t *sched = &(_mpc_threads_generic_self()->sched);
+
+	/*
+	 *    ERRORS:
+	 *    EINVAL    The value specified by argument cond, mutex, or time is invalid
+	 *                  or different mutexes were supplied for concurrent pthread_cond_timedwait() or
+	 *                      pthread_cond_wait() operations on the same condition variable
+	 *    EPERM     The mutex was not owned by the current thread
+	 *    ETIMEDOUT The time specified by time has passed
+	 *    ENOMEM    Lack of memory
+	 */
+
+	if(cond == NULL || mutex == NULL || time == NULL)
+	{
+		return EINVAL;
+	}
+	if(time->tv_nsec < 0 || time->tv_nsec >= 1000000000)
+	{
+		return EINVAL;
+	}
+	if(sched != mutex->owner)
+	{
+		return EPERM;
+	}
+
+	/* test cancel */
+	sctk_thread_generic_check_signals(0);
+
+	int             timeout = 0;
+	struct timespec t_current;
+	sctk_thread_generic_thread_status_t *status;
+	sctk_thread_generic_cond_cell_t      cell;
+	sctk_thread_generic_task_t *         cond_timedwait_task;
+	struct __timedwait_arg_s *  args;
+	void **tmp = (void **)sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
+
+	cond_timedwait_task = (sctk_thread_generic_task_t *)sctk_malloc(sizeof(sctk_thread_generic_task_t) );
+	if(cond_timedwait_task == NULL)
+	{
+		return ENOMEM;
+	}
+	args = (struct __timedwait_arg_s *)sctk_malloc(sizeof(struct __timedwait_arg_s) );
+	if(args == NULL)
+	{
+		return ENOMEM;
+	}
+
+	mpc_common_spinlock_lock(&(cond->lock) );
+	if(cond->blocked == NULL)
+	{
+		if(sched != mutex->owner)
+		{
+			return EPERM;
+		}
+		cell.binded = mutex;
+	}
+	else
+	{
+		if(cond->blocked->binded != mutex)
+		{
+			return EINVAL;
+		}
+		if(sched != mutex->owner)
+		{
+			return EPERM;
+		}
+		cell.binded = mutex;
+	}
+	_mpc_threads_generic_mutex_unlock((sctk_thread_mutex_t*)mutex);
+	cell.sched = sched;
+	DL_APPEND(cond->blocked, &cell);
+	tmp[sctk_thread_generic_cond] = (void *)cond;
+
+	sctk_nodebug("WAIT on %p", sched);
+
+	status = (sctk_thread_generic_thread_status_t *)&(sched->status);
+
+	__timedwait_arg_init(args,
+	                                      time, &timeout, sched, cond);
+
+	__timedwait_task_init(cond_timedwait_task,
+				(volatile int *)status,
+				sctk_thread_generic_running,
+				__timedwait_test_timeout,
+				(void *)args);
+
+	clock_gettime(cond->clock_id, &t_current);
+	if(t_current.tv_sec > time->tv_sec ||
+	   (t_current.tv_sec == time->tv_sec && t_current.tv_nsec > time->tv_nsec) )
+	{
+		sctk_free(args);
+		sctk_free(cond_timedwait_task);
+		DL_DELETE(cond->blocked, &cell);
+		tmp[sctk_thread_generic_cond] = NULL;
+		_mpc_threads_generic_mutex_lock((sctk_thread_mutex_t*)mutex);
+		mpc_common_spinlock_unlock(&(cond->lock) );
+		return ETIMEDOUT;
+	}
+
+	sctk_thread_generic_thread_status(sched, sctk_thread_generic_blocked);
+	sctk_thread_generic_register_spinlock_unlock(sched, &(cond->lock) );
+	sctk_thread_generic_add_task(cond_timedwait_task);
+	sctk_thread_generic_sched_yield(sched);
+
+	tmp[sctk_thread_generic_cond] = NULL;
+	_mpc_threads_generic_mutex_lock((sctk_thread_mutex_t*)mutex);
+
+	/* test cancel */
+	sctk_thread_generic_check_signals(0);
+	if(timeout)
+	{
+		return ETIMEDOUT;
+	}
+
+	return 0;
 }
 
-/***************************************/
-/* READ/WRITE LOCKS                    */
-/***************************************/
-
-static int
-sctk_thread_generic_rwlockattr_destroy(sctk_thread_rwlockattr_t *attr)
+static int _mpc_threads_generic_cond_broadcast(sctk_thread_cond_t *pcond)
 {
-	return sctk_thread_generic_rwlocks_rwlockattr_destroy( (sctk_thread_generic_rwlockattr_t *)attr);
+	sctk_thread_generic_cond_t * cond = (sctk_thread_generic_cond_t*)pcond;
+	/*
+	 *    ERRORS:
+	 *    EINVAL The value specified for the argument is not correct
+	 */
+
+	if(cond == NULL)
+	{
+		return EINVAL;
+	}
+
+	sctk_thread_generic_cond_cell_t *task;
+	sctk_thread_generic_cond_cell_t *task_tmp;
+	mpc_common_spinlock_lock(&(cond->lock) );
+	DL_FOREACH_SAFE(cond->blocked, task, task_tmp)
+	{
+		DL_DELETE(cond->blocked, task);
+		sctk_nodebug("ADD BCAST cond wake %p from %p", task->sched, sched);
+		sctk_thread_generic_wake(task->sched);
+	}
+	mpc_common_spinlock_unlock(&(cond->lock) );
+	return 0;
 }
 
-static int
-sctk_thread_generic_rwlockattr_getpshared(const sctk_thread_rwlockattr_t *attr, int *val)
+/* Init */
+
+
+static inline void __cond_init()
 {
-	return sctk_thread_generic_rwlocks_rwlockattr_getpshared( (sctk_thread_generic_rwlockattr_t *)attr,
-	                                                          val);
+	sctk_thread_generic_check_size(sctk_thread_generic_cond_t, sctk_thread_cond_t);
+	sctk_thread_generic_check_size(sctk_thread_generic_condattr_t, sctk_thread_condattr_t);
+
+	{
+		static sctk_thread_generic_cond_t loc  = SCTK_THREAD_GENERIC_COND_INIT;
+		static sctk_thread_cond_t         glob = SCTK_THREAD_COND_INITIALIZER;
+		assume(memcmp(&loc, &glob, sizeof(sctk_thread_generic_cond_t) ) == 0);
+	}
 }
 
-static int
-sctk_thread_generic_rwlockattr_init(sctk_thread_rwlockattr_t *attr)
-{
-	return sctk_thread_generic_rwlocks_rwlockattr_init( (sctk_thread_generic_rwlockattr_t *)attr);
-}
-
-static int
-sctk_thread_generic_rwlockattr_setpshared(sctk_thread_rwlockattr_t *attr, int val)
-{
-	return sctk_thread_generic_rwlocks_rwlockattr_setpshared( (sctk_thread_generic_rwlockattr_t *)attr,
-	                                                          val);
-}
-
-static int
-sctk_thread_generic_rwlock_destroy(sctk_thread_rwlock_t *lock)
-{
-	return sctk_thread_generic_rwlocks_rwlock_destroy( (sctk_thread_generic_rwlock_t *)lock);
-}
-
-static int
-sctk_thread_generic_rwlock_init(sctk_thread_rwlock_t *lock, sctk_thread_rwlockattr_t *attr)
-{
-	return sctk_thread_generic_rwlocks_rwlock_init( (sctk_thread_generic_rwlock_t *)lock,
-	                                                (sctk_thread_generic_rwlockattr_t *)attr, &(sctk_thread_generic_self()->sched) );
-}
-
-static int
-sctk_thread_generic_rwlock_rdlock(sctk_thread_rwlock_t *lock)
-{
-	return sctk_thread_generic_rwlocks_rwlock_rdlock( (sctk_thread_generic_rwlock_t *)lock,
-	                                                  &(sctk_thread_generic_self()->sched) );
-}
-
-static int
-sctk_thread_generic_rwlock_wrlock(sctk_thread_rwlock_t *lock)
-{
-	return sctk_thread_generic_rwlocks_rwlock_wrlock( (sctk_thread_generic_rwlock_t *)lock,
-	                                                  &(sctk_thread_generic_self()->sched) );
-}
-
-static int
-sctk_thread_generic_rwlock_tryrdlock(sctk_thread_rwlock_t *lock)
-{
-	return sctk_thread_generic_rwlocks_rwlock_tryrdlock( (sctk_thread_generic_rwlock_t *)lock,
-	                                                     &(sctk_thread_generic_self()->sched) );
-}
-
-static int
-sctk_thread_generic_rwlock_trywrlock(sctk_thread_rwlock_t *lock)
-{
-	return sctk_thread_generic_rwlocks_rwlock_trywrlock( (sctk_thread_generic_rwlock_t *)lock,
-	                                                     &(sctk_thread_generic_self()->sched) );
-}
-
-static int
-sctk_thread_generic_rwlock_unlock(sctk_thread_rwlock_t *lock)
-{
-	return sctk_thread_generic_rwlocks_rwlock_unlock( (sctk_thread_generic_rwlock_t *)lock,
-	                                                  &(sctk_thread_generic_self()->sched) );
-}
-
-static int
-sctk_thread_generic_rwlock_timedrdlock(sctk_thread_rwlock_t *lock, const struct timespec *restrict time)
-{
-	return sctk_thread_generic_rwlocks_rwlock_timedrdlock( (sctk_thread_generic_rwlock_t *)lock,
-	                                                       time, &(sctk_thread_generic_self()->sched) );
-}
-
-static int
-sctk_thread_generic_rwlock_timedwrlock(sctk_thread_rwlock_t *lock, const struct timespec *restrict time)
-{
-	return sctk_thread_generic_rwlocks_rwlock_timedwrlock( (sctk_thread_generic_rwlock_t *)lock,
-	                                                       time, &(sctk_thread_generic_self()->sched) );
-}
-
-/*
- * Defined but not used
- *
- * static int
- * sctk_thread_generic_rwlockattr_setkind_np( sctk_thread_rwlockattr_t* attr, int pref ){
- * return sctk_thread_generic_rwlocks_rwlockattr_setkind_np( (sctk_thread_generic_rwlockattr_t*) attr,
- *                                              pref );
- * }
- *
- * static int
- * sctk_thread_generic_rwlockattr_getkind_np( sctk_thread_rwlockattr_t* attr, int* pref ){
- * return sctk_thread_generic_rwlocks_rwlockattr_getkind_np( (sctk_thread_generic_rwlockattr_t*) attr,
- *                                              pref );
- * }
- */
 
 /***************************************/
 /* SEMAPHORES                          */
@@ -425,14 +1271,14 @@ static int
 sctk_thread_generic_sem_wait(sctk_thread_sem_t *sem)
 {
 	return sctk_thread_generic_sems_sem_wait( (sctk_thread_generic_sem_t *)sem,
-	                                          &(sctk_thread_generic_self()->sched) );
+	                                          &(_mpc_threads_generic_self()->sched) );
 }
 
 static int
 sctk_thread_generic_sem_trywait(sctk_thread_sem_t *sem)
 {
 	return sctk_thread_generic_sems_sem_trywait( (sctk_thread_generic_sem_t *)sem,
-	                                             &(sctk_thread_generic_self()->sched) );
+	                                             &(_mpc_threads_generic_self()->sched) );
 }
 
 static int
@@ -441,14 +1287,14 @@ sctk_thread_generic_sem_timedwait(sctk_thread_sem_t *sem,
 {
 	return sctk_thread_generic_sems_sem_timedwait( (sctk_thread_generic_sem_t *)sem,
 	                                               time,
-	                                               &(sctk_thread_generic_self()->sched) );
+	                                               &(_mpc_threads_generic_self()->sched) );
 }
 
 static int
 sctk_thread_generic_sem_post(sctk_thread_sem_t *sem)
 {
 	return sctk_thread_generic_sems_sem_post( (sctk_thread_generic_sem_t *)sem,
-	                                          &(sctk_thread_generic_self()->sched) );
+	                                          &(_mpc_threads_generic_self()->sched) );
 }
 
 static int
@@ -493,6 +1339,115 @@ sctk_thread_generic_sem_unlink(const char *name)
 {
 	return sctk_thread_generic_sems_sem_unlink(name);
 }
+
+
+/***************************************/
+/* READ/WRITE LOCKS                    */
+/***************************************/
+
+static int
+sctk_thread_generic_rwlockattr_destroy(sctk_thread_rwlockattr_t *attr)
+{
+	return sctk_thread_generic_rwlocks_rwlockattr_destroy( (sctk_thread_generic_rwlockattr_t *)attr);
+}
+
+static int
+sctk_thread_generic_rwlockattr_getpshared(const sctk_thread_rwlockattr_t *attr, int *val)
+{
+	return sctk_thread_generic_rwlocks_rwlockattr_getpshared( (sctk_thread_generic_rwlockattr_t *)attr,
+	                                                          val);
+}
+
+static int
+sctk_thread_generic_rwlockattr_init(sctk_thread_rwlockattr_t *attr)
+{
+	return sctk_thread_generic_rwlocks_rwlockattr_init( (sctk_thread_generic_rwlockattr_t *)attr);
+}
+
+static int
+sctk_thread_generic_rwlockattr_setpshared(sctk_thread_rwlockattr_t *attr, int val)
+{
+	return sctk_thread_generic_rwlocks_rwlockattr_setpshared( (sctk_thread_generic_rwlockattr_t *)attr,
+	                                                          val);
+}
+
+static int
+sctk_thread_generic_rwlock_destroy(sctk_thread_rwlock_t *lock)
+{
+	return sctk_thread_generic_rwlocks_rwlock_destroy( (sctk_thread_generic_rwlock_t *)lock);
+}
+
+static int
+sctk_thread_generic_rwlock_init(sctk_thread_rwlock_t *lock, sctk_thread_rwlockattr_t *attr)
+{
+	return sctk_thread_generic_rwlocks_rwlock_init( (sctk_thread_generic_rwlock_t *)lock,
+	                                                (sctk_thread_generic_rwlockattr_t *)attr, &(_mpc_threads_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlock_rdlock(sctk_thread_rwlock_t *lock)
+{
+	return sctk_thread_generic_rwlocks_rwlock_rdlock( (sctk_thread_generic_rwlock_t *)lock,
+	                                                  &(_mpc_threads_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlock_wrlock(sctk_thread_rwlock_t *lock)
+{
+	return sctk_thread_generic_rwlocks_rwlock_wrlock( (sctk_thread_generic_rwlock_t *)lock,
+	                                                  &(_mpc_threads_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlock_tryrdlock(sctk_thread_rwlock_t *lock)
+{
+	return sctk_thread_generic_rwlocks_rwlock_tryrdlock( (sctk_thread_generic_rwlock_t *)lock,
+	                                                     &(_mpc_threads_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlock_trywrlock(sctk_thread_rwlock_t *lock)
+{
+	return sctk_thread_generic_rwlocks_rwlock_trywrlock( (sctk_thread_generic_rwlock_t *)lock,
+	                                                     &(_mpc_threads_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlock_unlock(sctk_thread_rwlock_t *lock)
+{
+	return sctk_thread_generic_rwlocks_rwlock_unlock( (sctk_thread_generic_rwlock_t *)lock,
+	                                                  &(_mpc_threads_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlock_timedrdlock(sctk_thread_rwlock_t *lock, const struct timespec *restrict time)
+{
+	return sctk_thread_generic_rwlocks_rwlock_timedrdlock( (sctk_thread_generic_rwlock_t *)lock,
+	                                                       time, &(_mpc_threads_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlock_timedwrlock(sctk_thread_rwlock_t *lock, const struct timespec *restrict time)
+{
+	return sctk_thread_generic_rwlocks_rwlock_timedwrlock( (sctk_thread_generic_rwlock_t *)lock,
+	                                                       time, &(_mpc_threads_generic_self()->sched) );
+}
+
+/*
+ * Defined but not used
+ *
+ * static int
+ * sctk_thread_generic_rwlockattr_setkind_np( sctk_thread_rwlockattr_t* attr, int pref ){
+ * return sctk_thread_generic_rwlocks_rwlockattr_setkind_np( (sctk_thread_generic_rwlockattr_t*) attr,
+ *                                              pref );
+ * }
+ *
+ * static int
+ * sctk_thread_generic_rwlockattr_getkind_np( sctk_thread_rwlockattr_t* attr, int* pref ){
+ * return sctk_thread_generic_rwlocks_rwlockattr_getkind_np( (sctk_thread_generic_rwlockattr_t*) attr,
+ *                                              pref );
+ * }
+ */
 
 /***************************************/
 /* THREAD BARRIER                      */
@@ -544,7 +1499,7 @@ static int
 sctk_thread_generic_barrier_wait(sctk_thread_barrier_t *barrier)
 {
 	return sctk_thread_generic_barriers_barrier_wait( (sctk_thread_generic_barrier_t *)barrier,
-	                                                  &(sctk_thread_generic_self()->sched) );
+	                                                  &(_mpc_threads_generic_self()->sched) );
 }
 
 /***************************************/
@@ -568,21 +1523,21 @@ static int
 sctk_thread_generic_spin_lock(sctk_thread_spinlock_t *spinlock)
 {
 	return sctk_thread_generic_spinlocks_spin_lock( (sctk_thread_generic_spinlock_t *)spinlock,
-	                                                &(sctk_thread_generic_self()->sched) );
+	                                                &(_mpc_threads_generic_self()->sched) );
 }
 
 static int
 sctk_thread_generic_spin_trylock(sctk_thread_spinlock_t *spinlock)
 {
 	return sctk_thread_generic_spinlocks_spin_trylock( (sctk_thread_generic_spinlock_t *)spinlock,
-	                                                   &(sctk_thread_generic_self()->sched) );
+	                                                   &(_mpc_threads_generic_self()->sched) );
 }
 
 static int
 sctk_thread_generic_spin_unlock(sctk_thread_spinlock_t *spinlock)
 {
 	return sctk_thread_generic_spinlocks_spin_unlock( (sctk_thread_generic_spinlock_t *)spinlock,
-	                                                  &(sctk_thread_generic_self()->sched) );
+	                                                  &(_mpc_threads_generic_self()->sched) );
 }
 
 /***************************************/
@@ -607,7 +1562,7 @@ static void sctk_thread_generic_init_default_sigset()
 	}
 	else
 	{
-		kthread_sigmask(SIG_SETMASK, (sigset_t *)&(sctk_thread_generic_self()->attr.thread_sigset), &set);
+		kthread_sigmask(SIG_SETMASK, (sigset_t *)&(_mpc_threads_generic_self()->attr.thread_sigset), &set);
 		kthread_sigmask(SIG_SETMASK, &set, &sctk_thread_default_set);
 	}
 #endif
@@ -649,7 +1604,7 @@ static void sctk_thread_generic_treat_signals(sctk_thread_generic_t threadp)
 		kthread_sigmask(SIG_SETMASK, &current_set, (sigset_t *)&(th->attr.thread_sigset) );
 	}
 
-	if(&(th->attr.spinlock) != &(sctk_thread_generic_self()->attr.spinlock) )
+	if(&(th->attr.spinlock) != &(_mpc_threads_generic_self()->attr.spinlock) )
 	{
 		mpc_common_spinlock_lock(&(th->attr.spinlock) );
 
@@ -740,7 +1695,7 @@ sctk_thread_generic_sigpending(sigset_t *set)
 	 */
 
 #ifndef WINDOWS_SYS
-	sctk_thread_generic_p_t *th = sctk_thread_generic_self();
+	sctk_thread_generic_p_t *th = _mpc_threads_generic_self();
 	return __sctk_thread_generic_sigpending(th, set);
 #endif
 	return 0;
@@ -777,7 +1732,7 @@ sctk_thread_generic_sigmask(int how, const sigset_t *newmask, sigset_t *oldmask)
 	int res = -1;
 
 #ifndef WINDOWS_SYS
-	sctk_thread_generic_p_t *th = sctk_thread_generic_self();
+	sctk_thread_generic_p_t *th = _mpc_threads_generic_self();
 	res = __sctk_thread_generic_sigmask(th, how, newmask, oldmask);
 #endif
 	return res;
@@ -826,7 +1781,7 @@ sctk_thread_generic_sigsuspend(const sigset_t *mask)
 	 */
 
 #ifndef WINDOWS_SYS
-	sctk_thread_generic_p_t *th = sctk_thread_generic_self();
+	sctk_thread_generic_p_t *th = _mpc_threads_generic_self();
 	return __sctk_thread_generic_sigsuspend(th, mask);
 #endif
 	return -1;
@@ -857,7 +1812,7 @@ sctk_thread_generic_wake_on_barrier(sctk_thread_generic_scheduler_t *sched,
 		barrier->nb_current -= 1;
 		if(list->sched->th->attr.cancel_type != PTHREAD_CANCEL_DEFERRED)
 		{
-			sctk_thread_generic_register_spinlock_unlock(&(sctk_thread_generic_self()->sched),
+			sctk_thread_generic_register_spinlock_unlock(&(_mpc_threads_generic_self()->sched),
 			                                             &(barrier->lock) );
 			sctk_generic_swap_to_sched(sched);
 		}
@@ -928,7 +1883,7 @@ sctk_thread_generic_wake_on_mutex(sctk_thread_generic_scheduler_t *sched,
 		DL_DELETE(mu->blocked, list);
 		if(list->sched->th->attr.cancel_type != PTHREAD_CANCEL_DEFERRED)
 		{
-			sctk_thread_generic_register_spinlock_unlock(&(sctk_thread_generic_self()->sched),
+			sctk_thread_generic_register_spinlock_unlock(&(_mpc_threads_generic_self()->sched),
 			                                             &(mu->lock) );
 			sctk_generic_swap_to_sched(sched);
 		}
@@ -969,7 +1924,7 @@ sctk_thread_generic_wake_on_rwlock(sctk_thread_generic_scheduler_t *sched,
 		rw->count--;
 		if(list->sched->th->attr.cancel_type != PTHREAD_CANCEL_DEFERRED)
 		{
-			sctk_thread_generic_register_spinlock_unlock(&(sctk_thread_generic_self()->sched),
+			sctk_thread_generic_register_spinlock_unlock(&(_mpc_threads_generic_self()->sched),
 			                                             &(rw->lock) );
 			sctk_generic_swap_to_sched(sched);
 			/* Maybe need to remove the lock from taken thread s rwlocks list*/
@@ -1098,7 +2053,7 @@ sctk_thread_generic_kill(sctk_thread_generic_t threadp, int val)
 		return EINVAL;
 	}
 
-	if( (&(th->attr.spinlock) ) != (&(sctk_thread_generic_self()->attr.spinlock) ) )
+	if( (&(th->attr.spinlock) ) != (&(_mpc_threads_generic_self()->attr.spinlock) ) )
 	{
 		mpc_common_spinlock_lock(&(th->attr.spinlock) );
 		if(th->attr.thread_sigpending[val] == 0)
@@ -1273,7 +2228,7 @@ static void __sctk_start_routine(void *arg)
 
 	sctk_nodebug("Before yield %p", &(thread->sched) );
 	/*It is mandatory to have two yields for pthread mode*/
-	sctk_thread_generic_set_self(thread);
+	_mpc_threads_generic_self_set(thread);
 	sctk_thread_generic_sched_yield(&(thread->sched) );
 	sctk_thread_generic_sched_yield(&(thread->sched) );
 
@@ -1728,7 +2683,7 @@ sctk_thread_generic_user_create(sctk_thread_generic_t *threadp,
 		thread_id->attr = *ptr;
 
 		sctk_thread_generic_scheduler_init_thread(&(thread_id->sched), thread_id);
-		sctk_thread_generic_keys_init_thread(&(thread_id->keys) );
+		_mpc_threads_generic_key_init_thread(&(thread_id->keys) );
 	}
 
 	/*Allocate stack*/
@@ -1976,7 +2931,7 @@ void sctk_thread_generic_check_signals(int select)
 	sctk_thread_generic_p_t *        current;
 
 	/* Get the current thread */
-	sched = &(sctk_thread_generic_self()->sched);
+	sched = &(_mpc_threads_generic_self()->sched);
 	sctk_nodebug("sctk_thread_generic_check_signals %p", sched);
 	current = sched->th;
 	sctk_assert(&current->sched == sched);
@@ -2002,7 +2957,7 @@ void sctk_thread_generic_check_signals(int select)
 			current->attr.return_value  = ( (void *)SCTK_THREAD_CANCELED);
 			sctk_thread_exit_cleanup();
 			mpc_common_debug("thread %p key liberation", current);
-			sctk_thread_generic_keys_key_delete_all(&(current->keys) );
+			__keys_delete_all(&(current->keys) );
 			mpc_common_debug("thread %p key liberation done", current);
 			mpc_common_debug("thread %p ends", current);
 
@@ -2059,7 +3014,7 @@ sctk_thread_generic_setcancelstate(int state, int *oldstate)
 
 	sctk_thread_generic_attr_t attr;
 
-	attr.ptr = &(sctk_thread_generic_self()->attr);
+	attr.ptr = &(_mpc_threads_generic_self()->attr);
 
 	if(oldstate != NULL)
 	{
@@ -2086,7 +3041,7 @@ sctk_thread_generic_setcanceltype(int type, int *oldtype)
 
 	sctk_thread_generic_attr_t attr;
 
-	attr.ptr = &(sctk_thread_generic_self()->attr);
+	attr.ptr = &(_mpc_threads_generic_self()->attr);
 
 	if(oldtype != NULL)
 	{
@@ -2157,7 +3112,7 @@ sctk_thread_generic_wait_for_value_and_poll(volatile int *data, int value,
 		return;
 	}
 
-	task.sched       = &(sctk_thread_generic_self()->sched);
+	task.sched       = &(_mpc_threads_generic_self()->sched);
 	task.func        = func;
 	task.value       = value;
 	task.arg         = arg;
@@ -2191,7 +3146,7 @@ sctk_thread_generic_join(sctk_thread_generic_t threadp, void **val)
 	sctk_thread_generic_thread_status_t *status;
 
 	/* Get the current thread */
-	sched   = &(sctk_thread_generic_self()->sched);
+	sched   = &(_mpc_threads_generic_self()->sched);
 	current = sched->th;
 	sctk_assert(&current->sched == sched);
 
@@ -2258,7 +3213,7 @@ sctk_thread_generic_exit(void *retval)
 	sctk_thread_generic_check_signals(0);
 
 	/* Get the current thread */
-	sched   = &(sctk_thread_generic_self()->sched);
+	sched   = &(_mpc_threads_generic_self()->sched);
 	current = sched->th;
 	sctk_assert(&current->sched == sched);
 
@@ -2266,7 +3221,7 @@ sctk_thread_generic_exit(void *retval)
 
 	sctk_nodebug("thread %p key liberation", current);
 	/*key liberation */
-	sctk_thread_generic_keys_key_delete_all(&(current->keys) );
+	__keys_delete_all(&(current->keys) );
 
 	sctk_nodebug("thread %p key liberation done", current);
 
@@ -2448,7 +3403,7 @@ sctk_thread_generic_once(sctk_thread_once_t *once_control,
 static int
 sctk_thread_generic_thread_sched_yield()
 {
-	sctk_thread_generic_sched_yield(&(sctk_thread_generic_self()->sched) );
+	sctk_thread_generic_sched_yield(&(_mpc_threads_generic_self()->sched) );
 	return 0;
 }
 
@@ -2459,10 +3414,10 @@ static void
 sctk_thread_generic_thread_init(char *thread_type, char *scheduler_type, int vp_number)
 {
 	sctk_only_once();
-	sctk_thread_generic_self_data = sctk_malloc(sizeof(sctk_thread_generic_p_t) );
+	_mpc_threads_generic_self_data = sctk_malloc(sizeof(sctk_thread_generic_p_t) );
 
 	sctk_thread_generic_check_size(sctk_thread_generic_t, sctk_thread_t);
-	sctk_add_func_type(sctk_thread_generic, self, sctk_thread_t (*)(void) );
+	sctk_add_func_type(_mpc_threads_generic, self, sctk_thread_t (*)(void) );
 
 	/****** SIGNALS ******/
 	sctk_thread_generic_init_default_sigset();
@@ -2470,8 +3425,8 @@ sctk_thread_generic_thread_init(char *thread_type, char *scheduler_type, int vp_
 
 	/****** SCHEDULER ******/
 	sctk_thread_generic_scheduler_init(thread_type, scheduler_type, vp_number);
-	sctk_thread_generic_scheduler_init_thread(&(sctk_thread_generic_self()->sched),
-	                                          sctk_thread_generic_self() );
+	sctk_thread_generic_scheduler_init_thread(&(_mpc_threads_generic_self()->sched),
+	                                          _mpc_threads_generic_self() );
 	{
 		sctk_thread_generic_attr_t         lattr;
 		sctk_thread_generic_intern_attr_t *ptr;
@@ -2484,13 +3439,13 @@ sctk_thread_generic_thread_init(char *thread_type, char *scheduler_type, int vp_
 		lattr.ptr = ptr;
 		sctk_thread_generic_attr_init_sigs(&lattr);
 		sctk_thread_generic_alloc_pthread_blocking_lock_table(&lattr);
-		sched         = &(sctk_thread_generic_self()->sched);
+		sched         = &(_mpc_threads_generic_self()->sched);
 		current       = sched->th;
 		current->attr = *ptr;
 
 		mpc_common_debug("%d", current->attr.cancel_status);
 	}
-	sctk_thread_generic_keys_init_thread(&(sctk_thread_generic_self()->keys) );
+
 
 
 	/****** JOIN ******/
@@ -2520,69 +3475,71 @@ sctk_thread_generic_thread_init(char *thread_type, char *scheduler_type, int vp_
 	                   int (*)(sctk_thread_t, clockid_t *) );
 
 	/****** KEYS ******/
-	sctk_thread_generic_keys_init();
-	sctk_add_func_type(sctk_thread_generic, key_create,
+	__keys_init();
+	sctk_add_func_type(_mpc_threads_generic, key_create,
 	                   int (*)(sctk_thread_key_t *, void (*)(void *) ) );
-	sctk_add_func_type(sctk_thread_generic, key_delete,
+	sctk_add_func_type(_mpc_threads_generic, key_delete,
 	                   int (*)(sctk_thread_key_t) );
-	sctk_add_func_type(sctk_thread_generic, setspecific,
+	sctk_add_func_type(_mpc_threads_generic, setspecific,
 	                   int (*)(sctk_thread_key_t, const void *) );
-	sctk_add_func_type(sctk_thread_generic, getspecific,
+	sctk_add_func_type(_mpc_threads_generic, getspecific,
 	                   void *(*)(sctk_thread_key_t) );
-	sctk_thread_generic_keys_init_thread(&(sctk_thread_generic_self()->keys) );
+	_mpc_threads_generic_key_init_thread(&(_mpc_threads_generic_self()->keys) );
 
 	/****** MUTEX ******/
-	sctk_thread_generic_mutexes_init();
-	sctk_add_func_type(sctk_thread_generic, mutexattr_destroy,
+	__mutex_init();
+	sctk_add_func_type(_mpc_threads_generic, mutexattr_destroy,
 	                   int (*)(sctk_thread_mutexattr_t *) );
-	sctk_add_func_type(sctk_thread_generic, mutexattr_setpshared,
+	sctk_add_func_type(_mpc_threads_generic, mutexattr_setpshared,
 	                   int (*)(sctk_thread_mutexattr_t *, int) );
-	sctk_add_func_type(sctk_thread_generic, mutexattr_getpshared,
+	sctk_add_func_type(_mpc_threads_generic, mutexattr_getpshared,
 	                   int (*)(const sctk_thread_mutexattr_t *, int *) );
-	sctk_add_func_type(sctk_thread_generic, mutexattr_settype,
+	sctk_add_func_type(_mpc_threads_generic, mutexattr_settype,
 	                   int (*)(sctk_thread_mutexattr_t *, int) );
-	sctk_add_func_type(sctk_thread_generic, mutexattr_gettype,
+	sctk_add_func_type(_mpc_threads_generic, mutexattr_gettype,
 	                   int (*)(const sctk_thread_mutexattr_t *, int *) );
-	sctk_add_func_type(sctk_thread_generic, mutexattr_init,
+	sctk_add_func_type(_mpc_threads_generic, mutexattr_init,
 	                   int (*)(sctk_thread_mutexattr_t *) );
-	sctk_add_func_type(sctk_thread_generic, mutex_lock,
+	sctk_add_func_type(_mpc_threads_generic, mutex_lock,
 	                   int (*)(sctk_thread_mutex_t *) );
-	sctk_add_func_type(sctk_thread_generic, mutex_spinlock,
+	sctk_add_func_type(_mpc_threads_generic, mutex_spinlock,
 	                   int (*)(sctk_thread_mutex_t *) );
-	sctk_add_func_type(sctk_thread_generic, mutex_trylock,
+	sctk_add_func_type(_mpc_threads_generic, mutex_trylock,
 	                   int (*)(sctk_thread_mutex_t *) );
-	sctk_add_func_type(sctk_thread_generic, mutex_timedlock,
+	sctk_add_func_type(_mpc_threads_generic, mutex_timedlock,
 	                   int (*)(sctk_thread_mutex_t *, const struct timespec *) );
-	sctk_add_func_type(sctk_thread_generic, mutex_unlock,
+	sctk_add_func_type(_mpc_threads_generic, mutex_unlock,
 	                   int (*)(sctk_thread_mutex_t *) );
-	sctk_add_func_type(sctk_thread_generic, mutex_destroy,
+	sctk_add_func_type(_mpc_threads_generic, mutex_destroy,
 	                   int (*)(sctk_thread_mutex_t *) );
-	__sctk_ptr_thread_mutex_init = sctk_thread_generic_mutex_init;
+	sctk_add_func_type(_mpc_threads_generic, mutex_init,
+	                   int (*)(sctk_thread_mutex_t *, const sctk_thread_mutexattr_t * ));
 
 	/****** COND ******/
-	sctk_thread_generic_conds_init();
-	__sctk_ptr_thread_cond_init = sctk_thread_generic_cond_init;
-	sctk_add_func_type(sctk_thread_generic, condattr_destroy,
+	__cond_init();
+	sctk_add_func_type(_mpc_threads_generic, cond_init,
+			    int (*)(sctk_thread_cond_t *, const sctk_thread_condattr_t *) );
+	sctk_add_func_type(_mpc_threads_generic, condattr_destroy,
 	                   int (*)(sctk_thread_condattr_t *) );
-	sctk_add_func_type(sctk_thread_generic, condattr_getpshared,
+	sctk_add_func_type(_mpc_threads_generic, condattr_getpshared,
 	                   int (*)(const sctk_thread_condattr_t *, int *) );
-	sctk_add_func_type(sctk_thread_generic, condattr_init,
+	sctk_add_func_type(_mpc_threads_generic, condattr_init,
 	                   int (*)(sctk_thread_condattr_t *) );
-	sctk_add_func_type(sctk_thread_generic, condattr_setpshared,
+	sctk_add_func_type(_mpc_threads_generic, condattr_setpshared,
 	                   int (*)(sctk_thread_condattr_t *, int) );
-	sctk_add_func_type(sctk_thread_generic, condattr_setclock,
+	sctk_add_func_type(_mpc_threads_generic, condattr_setclock,
 	                   int (*)(sctk_thread_condattr_t *, int) );
-	sctk_add_func_type(sctk_thread_generic, condattr_getclock,
+	sctk_add_func_type(_mpc_threads_generic, condattr_getclock,
 	                   int (*)(sctk_thread_condattr_t *, int *) );
-	sctk_add_func_type(sctk_thread_generic, cond_destroy,
+	sctk_add_func_type(_mpc_threads_generic, cond_destroy,
 	                   int (*)(sctk_thread_cond_t *) );
-	sctk_add_func_type(sctk_thread_generic, cond_wait,
+	sctk_add_func_type(_mpc_threads_generic, cond_wait,
 	                   int (*)(sctk_thread_cond_t *, sctk_thread_mutex_t *) );
-	sctk_add_func_type(sctk_thread_generic, cond_signal,
+	sctk_add_func_type(_mpc_threads_generic, cond_signal,
 	                   int (*)(sctk_thread_cond_t *) );
-	sctk_add_func_type(sctk_thread_generic, cond_timedwait,
+	sctk_add_func_type(_mpc_threads_generic, cond_timedwait,
 	                   int (*)(sctk_thread_cond_t *, sctk_thread_mutex_t *, const struct timespec *) );
-	sctk_add_func_type(sctk_thread_generic, cond_broadcast,
+	sctk_add_func_type(_mpc_threads_generic, cond_broadcast,
 	                   int (*)(sctk_thread_cond_t *) );
 
 	/****** RWLOCK ******/

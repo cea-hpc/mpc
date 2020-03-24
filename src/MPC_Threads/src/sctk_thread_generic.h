@@ -31,10 +31,9 @@
 
 #include "threads_generic_kind.h"
 
-#include <sctk_thread_keys.h>
-#include <sctk_thread_mutex.h>
+
 #include <sctk_thread_scheduler.h>
-#include <sctk_thread_cond.h>
+
 #include <sctk_thread_rwlock.h>
 #include <sctk_thread_sem.h>
 #include <sctk_thread_barrier.h>
@@ -76,6 +75,164 @@ void _mpc_threads_generic_kind_set_self(sctk_thread_generic_kind_t kind);
  * @return a copy of the current thread's kind
  */
 sctk_thread_generic_kind_t _mpc_threads_generic_kind_get();
+
+
+/****************
+ * KEYS SUPPORT *
+ ****************/
+
+typedef struct
+{
+	const void *keys[SCTK_THREAD_KEYS_MAX + 1];
+}sctk_thread_generic_keys_t;
+
+/* Used in scheduler */
+void _mpc_threads_generic_key_init_thread(sctk_thread_generic_keys_t *keys);
+
+/***************************************/
+/* MUTEX                               */
+/***************************************/
+
+
+/* Values of Protocol attribute */
+#define SCTK_THREAD_PRIO_NONE       PTHREAD_PRIO_NONE
+#define SCTK_THREAD_PRIO_INHERIT    PTHREAD_PRIO_INHERIT
+#define SCTK_THREAD_PRIO_PROTECT    PTHREAD_PRIO_PROTECT
+
+/* Values of kind attribute */
+
+/*#define SCTK_THREAD_MUTEX_NORMAL PTHREAD_MUTEX_NORMAL
+ * #define SCTK_THREAD_MUTEX_ERRORCHECK PTHREAD_MUTEX_ERRORCHECK
+ * #define SCTK_THREAD_MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE
+ #define SCTK_THREAD_MUTEX_DEFAULT PTHREAD_MUTEX_DEFAULT*/
+
+/*schedpolicy*/
+
+/*#define SCTK_ETHREAD_SCHED_OTHER 0
+ * #define SCTK_ETHREAD_SCHED_RR 1
+ #define SCTK_ETHREAD_SCHED_FIFO 2*/
+
+typedef struct sctk_thread_generic_mutex_cell_s
+{
+	sctk_thread_generic_scheduler_t *        sched;
+	struct sctk_thread_generic_mutex_cell_s *prev, *next;
+}sctk_thread_generic_mutex_cell_t;
+
+typedef struct sctk_thread_generic_mutex_s
+{
+	volatile sctk_thread_generic_scheduler_t *owner;
+	mpc_common_spinlock_t                     lock;
+	int                                       type;
+	int                                       nb_call;
+	sctk_thread_generic_mutex_cell_t *        blocked;
+}sctk_thread_generic_mutex_t;
+
+#define SCTK_THREAD_GENERIC_MUTEX_INIT    { NULL, SCTK_SPINLOCK_INITIALIZER, 0, 0, NULL }
+
+
+typedef struct sctk_thread_generic_mutexattr_s
+{
+	volatile int attrs;
+}sctk_thread_generic_mutexattr_t;
+
+#define SCTK_THREAD_GENERIC_MUTEXATTR_INIT    { 0 }
+
+/***************************************/
+/* CONDITIONS                          */
+/***************************************/
+
+typedef struct sctk_thread_generic_cond_cell_s
+{
+	sctk_thread_generic_scheduler_t *       sched;
+	sctk_thread_generic_mutex_t *           binded;
+	struct sctk_thread_generic_cond_cell_s *prev, *next;
+}sctk_thread_generic_cond_cell_t;
+
+typedef struct
+{
+	mpc_common_spinlock_t            lock;
+	sctk_thread_generic_cond_cell_t *blocked;
+	clockid_t                        clock_id;
+}sctk_thread_generic_cond_t;
+
+#define SCTK_THREAD_GENERIC_COND_INIT    { SCTK_SPINLOCK_INITIALIZER, NULL, 0 }
+
+typedef struct sctk_thread_generic_condattr_s
+{
+	int attrs;
+}sctk_thread_generic_condattr_t;
+
+#define SCTK_THREAD_GENERIC_CONDATTR_INIT    { 0 }
+
+
+
+/***************************************/
+/* SEMAPHORES                          */
+/***************************************/
+
+
+typedef struct sctk_thread_generic_sem_s
+{
+	volatile unsigned int             lock;
+	mpc_common_spinlock_t             spinlock;
+	sctk_thread_generic_mutex_cell_t *list;
+}sctk_thread_generic_sem_t;
+
+#define SCTK_THREAD_GENERIC_SEM_INIT    { 0, SCTK_SPINLOCK_INITIALIZER, NULL }
+
+typedef struct sctk_thread_generic_sem_named_list_s
+{
+	char *                                       name;
+	volatile int                                 nb;
+	volatile int                                 unlink;
+	volatile mode_t                              mode;
+	sctk_thread_generic_sem_t *                  sem;
+	struct sctk_thread_generic_sem_named_list_s *prev, *next;
+}sctk_thread_generic_sem_named_list_t;
+
+void sctk_thread_generic_sems_init();
+
+int
+sctk_thread_generic_sems_sem_init(sctk_thread_generic_sem_t *sem,
+                                  int pshared, unsigned int value);
+
+int
+sctk_thread_generic_sems_sem_wait(sctk_thread_generic_sem_t *sem,
+                                  sctk_thread_generic_scheduler_t *sched);
+
+int
+sctk_thread_generic_sems_sem_trywait(sctk_thread_generic_sem_t *sem,
+                                     sctk_thread_generic_scheduler_t *sched);
+
+int
+sctk_thread_generic_sems_sem_timedwait(sctk_thread_generic_sem_t *sem,
+                                       const struct timespec *time,
+                                       sctk_thread_generic_scheduler_t *sched);
+
+int
+sctk_thread_generic_sems_sem_post(sctk_thread_generic_sem_t *sem,
+                                  sctk_thread_generic_scheduler_t *sched);
+
+int
+sctk_thread_generic_sems_sem_getvalue(sctk_thread_generic_sem_t *sem,
+                                      int *sval);
+
+int
+sctk_thread_generic_sems_sem_destroy(sctk_thread_generic_sem_t *sem);
+
+sctk_thread_generic_sem_t *
+sctk_thread_generic_sems_sem_open(const char *name, int oflag, ...);
+
+int
+sctk_thread_generic_sems_sem_close(sctk_thread_generic_sem_t *sem);
+
+int
+sctk_thread_generic_sems_sem_unlink(const char *name);
+
+
+
+
+
 
 
 
@@ -135,8 +292,8 @@ typedef struct sctk_thread_generic_p_s
 } sctk_thread_generic_p_t;
 
 typedef sctk_thread_generic_p_t * sctk_thread_generic_t;
-void sctk_thread_generic_set_self(sctk_thread_generic_t th);
-sctk_thread_generic_t sctk_thread_generic_self();
+void _mpc_threads_generic_self_set(sctk_thread_generic_t th);
+sctk_thread_generic_t _mpc_threads_generic_self();
 int
 sctk_thread_generic_user_create(sctk_thread_generic_t *threadp,
                                 sctk_thread_generic_attr_t *attr,

@@ -92,9 +92,9 @@ static void *sctk_thread_generic_scheduler_idle_task(sctk_thread_generic_schedul
 	p_th.attr = (*(attr.ptr) );
 	th        = &p_th;
 
-	sctk_thread_generic_set_self(th);
-	sctk_thread_generic_scheduler_init_thread(&(sctk_thread_generic_self()->sched), th);
-	sctk_thread_generic_keys_init_thread(&(sctk_thread_generic_self()->keys) );
+	_mpc_threads_generic_self_set(th);
+	sctk_thread_generic_scheduler_init_thread(&(_mpc_threads_generic_self()->sched), th);
+	_mpc_threads_generic_key_init_thread(&(_mpc_threads_generic_self()->keys) );
 
 	/* Start Idle*/
 	sctk_thread_generic_sched_idle_start();
@@ -120,7 +120,7 @@ static void *sctk_thread_generic_scheduler_bootstrap_task(sctk_thread_generic_sc
 	sctk_free(arg);
 	arg = NULL;
 
-	sctk_thread_generic_set_self(thread);
+	_mpc_threads_generic_self_set(thread);
 	sctk_swapcontext(&(thread->sched.ctx_bootstrap), &(thread->sched.ctx) );
 
 	sctk_nodebug("End vp");
@@ -160,7 +160,7 @@ void sctk_thread_generic_scheduler_create_vp(sctk_thread_generic_p_t *thread, in
 void sctk_thread_generic_scheduler_swapcontext(sctk_thread_generic_scheduler_t *old_th,
                                                sctk_thread_generic_scheduler_t *new_th)
 {
-	sctk_thread_generic_set_self(new_th->th);
+	_mpc_threads_generic_self_set(new_th->th);
 	sctk_nodebug("SWAP %p %p -> %p", pthread_self(), &(old_th->ctx), &(new_th->ctx) );
 	mpc_common_spinlock_unlock(&(old_th->debug_lock) );
 	assume(mpc_common_spinlock_trylock(&(new_th->debug_lock) ) == 0);
@@ -169,7 +169,7 @@ void sctk_thread_generic_scheduler_swapcontext(sctk_thread_generic_scheduler_t *
 
 void sctk_thread_generic_scheduler_setcontext(sctk_thread_generic_scheduler_t *new_th)
 {
-	sctk_thread_generic_set_self(new_th->th);
+	_mpc_threads_generic_self_set(new_th->th);
 	sctk_nodebug("SET %p", &(new_th->ctx) );
 	sctk_setcontext(&(new_th->ctx) );
 	assume(mpc_common_spinlock_trylock(&(new_th->debug_lock) ) == 0);
@@ -602,7 +602,7 @@ sctk_multiple_queues_with_priority_dynamic_get_from_list()
 	assert(core >= 0);
 
 	sctk_thread_generic_scheduler_t *sched;
-	sched = &(sctk_thread_generic_self()->sched);
+	sched = &(_mpc_threads_generic_self()->sched);
 
 #ifdef SCTK_DEBUG_SCHEDULER
 	{
@@ -1106,7 +1106,7 @@ void sctk_multiple_queues_with_priority_dyn_sorted_list_sched_NBC_Pthread_sched_
 {
 	sctk_thread_generic_scheduler_t *sched;
 
-	sched = &(sctk_thread_generic_self()->sched);
+	sched = &(_mpc_threads_generic_self()->sched);
 	sctk_multiple_queues_sched_lists[sched->th->attr.bind_to]
 	.sctk_multiple_queues_sched_NBC_Pthread_sched = sched;
 }
@@ -1116,7 +1116,7 @@ void sctk_multiple_queues_priority_dyn_sorted_list_sched_NBC_Pthread_sched_incre
 {
 	sctk_thread_generic_scheduler_t *sched;
 
-	sched = &(sctk_thread_generic_self()->sched);
+	sched = &(_mpc_threads_generic_self()->sched);
 	assert(sched->th->attr.bind_to >= 0);
 
 	sctk_multiple_queues_sched_lists[sched->th->attr.bind_to]
@@ -1147,7 +1147,7 @@ void sctk_multiple_queues_with_priority_dyn_sorted_list_sched_NBC_Pthread_sched_
 {
 	sctk_thread_generic_scheduler_t *sched;
 
-	sched = &(sctk_thread_generic_self()->sched);
+	sched = &(_mpc_threads_generic_self()->sched);
 	assert(sched->th->attr.bind_to >= 0);
 	sctk_multiple_queues_sched_lists[sched->th->attr.bind_to]
 	.sctk_multiple_queues_sched_NBC_Pthread_sched->th->attr
@@ -1190,7 +1190,7 @@ void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_inc
 #ifdef SCTK_DEBUG_SCHEDULER
 		{
 			sctk_thread_generic_scheduler_t *sched;
-			sched = &(sctk_thread_generic_self()->sched);
+			sched = &(_mpc_threads_generic_self()->sched);
 			char hostname[128];
 			char hostname2[128];
 			char current_vp[5];
@@ -1240,7 +1240,7 @@ void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_dec
 #ifdef SCTK_DEBUG_SCHEDULER
 		{
 			sctk_thread_generic_scheduler_t *sched;
-			sched = &(sctk_thread_generic_self()->sched);
+			sched = &(_mpc_threads_generic_self()->sched);
 			char hostname[128];
 			char hostname2[128];
 			char current_vp[5];
@@ -1358,7 +1358,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list()
 	assert(core >= 0);
 
 	sctk_thread_generic_scheduler_t *sched;
-	sched = &(sctk_thread_generic_self()->sched);
+	sched = &(_mpc_threads_generic_self()->sched);
 
 #ifdef SCTK_DEBUG_SCHEDULER
 	{
@@ -1472,7 +1472,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old()
 #ifdef SCTK_DEBUG_SCHEDULER
 	{
 		sctk_thread_generic_scheduler_t *sched;
-		sched = &(sctk_thread_generic_self()->sched);
+		sched = &(_mpc_threads_generic_self()->sched);
 		char hostname[128];
 		char hostname2[128];
 		char current_vp[5];
@@ -1771,7 +1771,7 @@ static void sctk_multiple_queues_add_task_to_proceed(sctk_thread_generic_task_t 
 	// //we increment the polling thread priority when we add a task on the list
 
 	// sctk_thread_generic_scheduler_t* sched;
-	// sched = &(sctk_thread_generic_self()->sched);
+	// sched = &(_mpc_threads_generic_self()->sched);
 
 	// #ifdef SCTK_DEBUG_SCHEDULER
 	// {
@@ -2572,7 +2572,7 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t *sched)
 
 void sctk_generic_swap_to_sched(sctk_thread_generic_scheduler_t *sched)
 {
-	sctk_thread_generic_scheduler_t *old_sched = &(sctk_thread_generic_self()->sched);
+	sctk_thread_generic_scheduler_t *old_sched = &(_mpc_threads_generic_self()->sched);
 
 	vp_data.swap_to_sched = old_sched;
 
@@ -2635,7 +2635,7 @@ sctk_generic_freeze_thread_on_vp(sctk_thread_mutex_t *lock, void **list)
 	sctk_thread_generic_scheduler_t *        sched;
 	sctk_thread_generic_scheduler_generic_t *s_list;
 
-	sched = &(sctk_thread_generic_self()->sched);
+	sched = &(_mpc_threads_generic_self()->sched);
 
 	s_list = *list;
 	DL_APPEND(s_list, &(sched->generic) );
@@ -2654,7 +2654,7 @@ sctk_generic_wake_thread_on_vp(void **list)
 		sctk_thread_generic_scheduler_generic_t *s_list;
 		sctk_thread_generic_scheduler_t *        sched;
 		s_list = *list;
-		sched  = &(sctk_thread_generic_self()->sched);
+		sched  = &(_mpc_threads_generic_self()->sched);
 		sctk_generic_concat_to_list(sched, s_list);
 		*list = NULL;
 	}
@@ -2706,7 +2706,7 @@ static void *sctk_generic_polling_func(void *arg)
 
 	assume(arg == NULL);
 
-	sched = &(sctk_thread_generic_self()->sched);
+	sched = &(_mpc_threads_generic_self()->sched);
 
 	// set a hook on sctk_multiple_queues_task_lists[sched->th->attr.bind_to]
 	// allowing accesibility to the polling thread from all threads

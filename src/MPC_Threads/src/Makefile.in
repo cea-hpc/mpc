@@ -96,7 +96,12 @@ host_triplet = @host@
 @MPC_CUDA_ENABLED_TRUE@am__append_4 = libmpc_cuda_addon.la
 subdir = src/MPC_Threads/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_gcc_builtin.m4 \
+	$(top_srcdir)/m4/ax_reset_header_cache.m4 \
+	$(top_srcdir)/m4/ax_tls.m4 $(top_srcdir)/m4/libtool.m4 \
+	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
+	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
@@ -152,8 +157,7 @@ am__libmpcthread_la_SOURCES_DIST = sctk_context.c sctk_ethread.c \
 	sctk_kernel_thread.c sctk_posix_ethread.c \
 	sctk_posix_ethread_mxn.c sctk_posix_pthread.c \
 	sctk_posix_thread.c sctk_pthread.c sctk_thread_barrier.c \
-	sctk_thread.c sctk_thread_cond.c sctk_thread_generic.c \
-	threads_generic_kind.c sctk_thread_keys.c sctk_thread_mutex.c \
+	sctk_thread.c sctk_thread_generic.c threads_generic_kind.c \
 	sctk_thread_rwlock.c sctk_thread_scheduler.c sctk_thread_sem.c \
 	sctk_thread_spinlock.c sctk_tls.c accelerator.c \
 	./accelerator/cuda.c ./accelerator/cuda_wrap.c
@@ -164,12 +168,10 @@ am_libmpcthread_la_OBJECTS = sctk_context.lo sctk_ethread.lo \
 	sctk_kernel_thread.lo sctk_posix_ethread.lo \
 	sctk_posix_ethread_mxn.lo sctk_posix_pthread.lo \
 	sctk_posix_thread.lo sctk_pthread.lo sctk_thread_barrier.lo \
-	sctk_thread.lo sctk_thread_cond.lo sctk_thread_generic.lo \
-	threads_generic_kind.lo sctk_thread_keys.lo \
-	sctk_thread_mutex.lo sctk_thread_rwlock.lo \
-	sctk_thread_scheduler.lo sctk_thread_sem.lo \
-	sctk_thread_spinlock.lo sctk_tls.lo accelerator.lo \
-	$(am__objects_1)
+	sctk_thread.lo sctk_thread_generic.lo threads_generic_kind.lo \
+	sctk_thread_rwlock.lo sctk_thread_scheduler.lo \
+	sctk_thread_sem.lo sctk_thread_spinlock.lo sctk_tls.lo \
+	accelerator.lo $(am__objects_1)
 libmpcthread_la_OBJECTS = $(am_libmpcthread_la_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -443,8 +445,7 @@ libmpcthread_la_SOURCES = sctk_context.c sctk_ethread.c \
 	sctk_kernel_thread.c sctk_posix_ethread.c \
 	sctk_posix_ethread_mxn.c sctk_posix_pthread.c \
 	sctk_posix_thread.c sctk_pthread.c sctk_thread_barrier.c \
-	sctk_thread.c sctk_thread_cond.c sctk_thread_generic.c \
-	threads_generic_kind.c sctk_thread_keys.c sctk_thread_mutex.c \
+	sctk_thread.c sctk_thread_generic.c threads_generic_kind.c \
 	sctk_thread_rwlock.c sctk_thread_scheduler.c sctk_thread_sem.c \
 	sctk_thread_spinlock.c sctk_tls.c accelerator.c \
 	$(am__append_3)
@@ -569,10 +570,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_pthread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread_barrier.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread_cond.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread_generic.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread_keys.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread_mutex.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread_rwlock.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread_scheduler.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread_sem.Plo@am__quote@
