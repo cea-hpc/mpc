@@ -8,6 +8,12 @@ AC_CONFIG_HEADERS([mpc_config.h])
 AM_SILENT_RULES([yes])
 LT_PREREQ([2.4.6])
 
+# DO NOT REBUILD Makefile.in & CO
+# IT MEANS YOU NEED TO REBUILD MANUALLY
+# EACH TIME YOU EDIT THE BUILD SYSTEM !
+# USE ./autogen.sh to do so
+AM_MAINTAINER_MODE
+
 #
 # Reload first configure environment if present
 # this is needed as we want all the variables
