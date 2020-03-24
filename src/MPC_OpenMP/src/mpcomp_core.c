@@ -22,8 +22,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_thread_generic_kind.h"
-
 #include <mpc_common_rank.h>
 #include <mpc_common_flags.h>
 #include "sctk_debug.h"

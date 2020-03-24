@@ -4041,10 +4041,10 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr ) {
 #endif
 
     // kinds are set when we create the thread in the attr
-    // sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
-    // sctk_thread_generic_set_basic_priority_self(10);
-    // sctk_thread_generic_setkind_priority_self(10);
-    // sctk_thread_generic_set_current_priority_self(10);
+    // mpc_threads_generic_kind_mask_add(KIND_MASK_PROGRESS_THREAD);
+    // mpc_threads_generic_kind_basic_priority(10);
+    // mpc_threads_generic_kind_priority(10);
+    // mpc_threads_generic_kind_current_priority(10);
   }
 
   while(1) {

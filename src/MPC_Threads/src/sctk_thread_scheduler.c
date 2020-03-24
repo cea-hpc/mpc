@@ -910,7 +910,7 @@ sctk_multiple_queues_with_priority_omp_get_from_list()
 				if(res->sched->th->attr.kind.mask & KIND_MASK_OMP)
 				{
 					printf("canard %d %d %d\n", res->sched->th->attr.kind.mask,
-					       sctk_thread_generic_getkind_mask_self(), mpc_topology_get_current_cpu() );
+					       mpc_threads_generic_kind_mask_get(), mpc_topology_get_current_cpu() );
 					fflush(stdout);
 					// remove the omp thread from the list
 					DL_DELETE(sctk_multiple_queues_sched_lists[core]

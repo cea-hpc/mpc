@@ -23,9 +23,13 @@
 #define __SCTK_THREAD_GENERIC_H_
 
 #include "mpcthread_config.h"
+
+#include <mpc_threads_generic.h>
+
 #include "sctk_debug.h"
 #include "sctk_thread.h"
-#include "sctk_thread_generic_kind.h"
+
+#include "threads_generic_kind.h"
 
 #include <sctk_thread_keys.h>
 #include <sctk_thread_mutex.h>
@@ -35,6 +39,45 @@
 #include <sctk_thread_sem.h>
 #include <sctk_thread_barrier.h>
 #include <sctk_thread_spinlock.h>
+
+/***********************
+ * THREAD KIND SUPPORT *
+ ***********************/
+
+/**
+ * @brief  the member mask is a mask of bits
+ *
+ */
+typedef struct sctk_thread_generic_kind_s
+{
+	unsigned int mask;
+	int          priority;
+} sctk_thread_generic_kind_t;
+
+#define sctk_thread_generic_kind_init \
+	{ 0, -1 }
+
+
+/* THREAD KIND SETTERS */
+
+/**
+ * @brief set kind to the current thread
+ *
+ * @param kind type of the thread
+ */
+void _mpc_threads_generic_kind_set_self(sctk_thread_generic_kind_t kind);
+
+
+/* THREAD KIND GETTERS */
+
+/**
+ * @brief get kind
+ *
+ * @return a copy of the current thread's kind
+ */
+sctk_thread_generic_kind_t _mpc_threads_generic_kind_get();
+
+
 
 typedef struct sctk_thread_generic_intern_attr_s
 {

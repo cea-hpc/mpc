@@ -1,12 +1,12 @@
-#include "sctk_thread_generic_kind.h"
+#include "threads_generic_kind.h"
 #include "sctk_thread_generic.h"
 #include <mpc_common_flags.h>
 
-///////////////////////////////////
-// setters
-//
+/***********************
+ * THREAD KIND SETTERS *
+ ***********************/
 
-void sctk_thread_generic_setkind_self(sctk_thread_generic_kind_t kind)
+void _mpc_threads_generic_kind_set_self(sctk_thread_generic_kind_t kind)
 {
 	sctk_thread_generic_scheduler_t *sched;
 
@@ -14,7 +14,7 @@ void sctk_thread_generic_setkind_self(sctk_thread_generic_kind_t kind)
 	sched->th->attr.kind = kind;
 }
 
-void sctk_thread_generic_setkind_mask_self(unsigned int kind_mask)
+void mpc_threads_generic_kind_mask_self(unsigned int kind_mask)
 {
 	sctk_thread_generic_scheduler_t *sched;
 
@@ -22,7 +22,7 @@ void sctk_thread_generic_setkind_mask_self(unsigned int kind_mask)
 	sched->th->attr.kind.mask = kind_mask;
 }
 
-void sctk_thread_generic_setkind_priority_self(int priority)
+void mpc_threads_generic_kind_priority(int priority)
 {
 	if(mpc_common_get_flags()->new_scheduler_engine_enabled)
 	{
@@ -32,7 +32,7 @@ void sctk_thread_generic_setkind_priority_self(int priority)
 	}
 }
 
-void sctk_thread_generic_set_basic_priority_self(int basic_priority)
+void mpc_threads_generic_kind_basic_priority(int basic_priority)
 {
 	if(mpc_common_get_flags()->new_scheduler_engine_enabled)
 	{
@@ -42,7 +42,7 @@ void sctk_thread_generic_set_basic_priority_self(int basic_priority)
 	}
 }
 
-void sctk_thread_generic_set_current_priority_self(int current_priority)
+void mpc_threads_generic_kind_current_priority(int current_priority)
 {
 	if(mpc_common_get_flags()->new_scheduler_engine_enabled)
 	{
@@ -52,11 +52,11 @@ void sctk_thread_generic_set_current_priority_self(int current_priority)
 	}
 }
 
-///////////////////////////////////
-// getters
-//
+/***********************
+ * THREAD KIND GETTERS *
+ ***********************/
 
-sctk_thread_generic_kind_t sctk_thread_generic_getkind_self()
+sctk_thread_generic_kind_t _mpc_threads_generic_kind_get()
 {
 	sctk_thread_generic_kind_t       kind;
 	sctk_thread_generic_scheduler_t *sched;
@@ -66,7 +66,7 @@ sctk_thread_generic_kind_t sctk_thread_generic_getkind_self()
 	return kind;
 }
 
-unsigned int sctk_thread_generic_getkind_mask_self()
+unsigned int mpc_threads_generic_kind_mask_get()
 {
 	unsigned int kind_mask;
 	sctk_thread_generic_scheduler_t *sched;
@@ -76,7 +76,17 @@ unsigned int sctk_thread_generic_getkind_mask_self()
 	return kind_mask;
 }
 
-int sctk_thread_generic_getkind_priority_self()
+int mpc_threads_generic_kind_basic_priority_get()
+{
+	int priority;
+	sctk_thread_generic_scheduler_t *sched;
+
+	sched    = &(sctk_thread_generic_self()->sched);
+	priority = sched->th->attr.basic_priority;
+	return priority;
+}
+
+int mpc_threads_generic_kind_current_priority_get()
 {
 	int priority;
 	sctk_thread_generic_scheduler_t *sched;
@@ -86,10 +96,18 @@ int sctk_thread_generic_getkind_priority_self()
 	return priority;
 }
 
-///////////////////////////////////
-// functions
-//
-void sctk_thread_generic_addkind_mask_self(unsigned int kind_mask)
+
+int mpc_threads_generic_kind_priority_get()
+{
+	int priority;
+	sctk_thread_generic_scheduler_t *sched;
+
+	sched    = &(sctk_thread_generic_self()->sched);
+	priority = sched->th->attr.kind.priority;
+	return priority;
+}
+
+void mpc_threads_generic_kind_mask_add(unsigned int kind_mask)
 {
 	if(mpc_common_get_flags()->new_scheduler_engine_enabled)
 	{
@@ -99,7 +117,7 @@ void sctk_thread_generic_addkind_mask_self(unsigned int kind_mask)
 	}
 }
 
-void sctk_thread_generic_removekind_mask_self(unsigned int kind_mask)
+void mpc_threads_generic_kind_mask_remove(unsigned int kind_mask)
 {
 	sctk_thread_generic_scheduler_t *sched;
 

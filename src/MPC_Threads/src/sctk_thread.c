@@ -791,12 +791,12 @@ static inline void __scheduler_set_thread_kind_mpi(void)
 	// thread priority
 	if(mpc_common_get_flags()->new_scheduler_engine_enabled)
 	{
-		sctk_thread_generic_addkind_mask_self(KIND_MASK_MPI);
-		sctk_thread_generic_set_basic_priority_self(
+		mpc_threads_generic_kind_mask_add(KIND_MASK_MPI);
+		mpc_threads_generic_kind_basic_priority(
 		        sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
-		sctk_thread_generic_setkind_priority_self(
+		mpc_threads_generic_kind_priority(
 		        sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
-		sctk_thread_generic_set_current_priority_self(
+		mpc_threads_generic_kind_current_priority(
 		        sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
 	}
 }
@@ -1054,12 +1054,12 @@ sctk_thread_create_tmp_start_routine_user(sctk_thread_data_t *__arg)
 
 	if(mpc_common_get_flags()->new_scheduler_engine_enabled)
 	{
-		sctk_thread_generic_addkind_mask_self(KIND_MASK_PTHREAD);
-		sctk_thread_generic_set_basic_priority_self(
+		mpc_threads_generic_kind_mask_add(KIND_MASK_PTHREAD);
+		mpc_threads_generic_kind_basic_priority(
 		        sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
-		sctk_thread_generic_setkind_priority_self(
+		mpc_threads_generic_kind_priority(
 		        sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
-		sctk_thread_generic_set_current_priority_self(
+		mpc_threads_generic_kind_current_priority(
 		        sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
 	}
 
