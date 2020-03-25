@@ -7,6 +7,7 @@ stages:
   - Regular Testing
   - Benchmarks
   - Applications
+  - Breaking tests
   - Finalization
 
 .run_by_main: &run_by_main
@@ -15,6 +16,9 @@ stages:
   - pt_devel
   - merge_requests
   - web
+
+.breaking_tests: &breaking_tests
+  allow_failure: true
 
 ############################
 ##### EXTRA ACTIONS ########
@@ -183,6 +187,18 @@ MiniFE:
   script:
     - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
     - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=applications/miniFe --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/minife
+
+################################
+# TEsts not supported by MPC ###
+# ##############################
+#
+tofix-OpenMP:
+  <<: *run_by_main
+  <<: *breaking_tests
+  stage: Breaking tests
+  script:
+    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=unsupported/OpenMP --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/tofix-omp
 
 ###################################
 ####### MANUALLY TRIGGERED ########
