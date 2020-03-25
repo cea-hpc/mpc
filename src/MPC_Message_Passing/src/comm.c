@@ -50,7 +50,7 @@
 #endif
 
 /********************************************************************/
-/*Structres                                                         */
+/*Structures                                                        */
 /********************************************************************/
 
 typedef struct
@@ -2735,6 +2735,16 @@ int mpc_lowcomm_get_rank()
 int mpc_lowcomm_get_comm_rank( const mpc_lowcomm_communicator_t communicator )
 {
 	return mpc_lowcomm_communicator_rank ( communicator, mpc_lowcomm_get_rank() );
+}
+
+int mpc_lowcomm_get_process_count()
+{
+	return mpc_common_get_process_count();
+}
+
+int mpc_lowcomm_get_process_rank()
+{
+	return mpc_common_get_process_rank();
 }
 
 /*  ###############

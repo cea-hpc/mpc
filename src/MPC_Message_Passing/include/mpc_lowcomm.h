@@ -47,6 +47,19 @@ int mpc_lowcomm_get_rank();
  */
 int mpc_lowcomm_get_comm_rank( const mpc_lowcomm_communicator_t communicator );
 
+/**
+ * @brief Return the total number of UNIX processes
+ * @return number of UNIX processes
+ */ 
+int mpc_lowcomm_get_process_count();
+
+/**
+ * @brief Return the UNIX process rank
+ * 
+ * @return int UNIX process rank
+ */
+int mpc_lowcomm_get_process_rank();
+
 /************************************************************************/
 /* Communicators                                                        */
 /************************************************************************/

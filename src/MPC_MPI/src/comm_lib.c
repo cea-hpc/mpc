@@ -883,7 +883,6 @@ static void __mpc_cl_disable_buffering()
 	__mpc_cl_buffering_enabled = 0;
 }
 
-
 /***************************************
  * GENERALIZED REQUEST PROGRESS ENGINE *
  ***************************************/
@@ -5051,6 +5050,29 @@ int _mpc_cl_info_get_valuelen( MPC_Info info, char *key, int *valuelen, int *fla
 	}
 
 	MPC_ERROR_SUCESS();
+}
+
+
+/********************
+ * THREAD MIGRATION *
+ ********************/
+
+int mpc_cl_move_to( int process, int cpuid )
+{
+#ifdef MPC_Threads
+	int proc = mpc_common_get_process_rank();
+	if ( process == proc )
+	{
+		if ( proc != cpuid )
+		{
+			sctk_thread_proc_migration( cpuid );
+		}
+		MPC_ERROR_SUCESS();
+	}
+#endif
+
+	sctk_warning( "Inter process migration Disabled" );
+	return MPC_ERR_UNSUPPORTED_OPERATION;
 }
 
 /*****************************************

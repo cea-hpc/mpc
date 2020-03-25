@@ -422,4 +422,10 @@ typedef int( MPC_Type_delete_attr_function )( mpc_lowcomm_datatype_t datatype,
         void *attribute_val,
         void *extra_state );
 
+/********************
+ * THREAD MIGRATION *
+ ********************/
+
+int mpc_cl_move_to( int process, int cpuid );
+
 #endif /* MPC_COMM_LIB_H_ */
