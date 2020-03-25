@@ -17,8 +17,8 @@ lib_LTLIBRARIES = libmpcthread.la
 
 libmpcthread_la_SOURCES = sctk_context.c sctk_ethread.c sctk_ethread_mxn.c sctk_futex.c sctk_gen_thread.c
 libmpcthread_la_SOURCES += sctk_kernel_thread.c sctk_posix_ethread.c sctk_posix_ethread_mxn.c sctk_posix_pthread.c sctk_posix_thread.c
-libmpcthread_la_SOURCES += sctk_pthread.c sctk_thread.c  sctk_thread_generic.c threads_generic_kind.c
-libmpcthread_la_SOURCES += sctk_thread_scheduler.c sctk_thread_spinlock.c sctk_tls.c
+libmpcthread_la_SOURCES += sctk_pthread.c sctk_thread.c  sctk_thread_generic.c 
+libmpcthread_la_SOURCES += sctk_thread_scheduler.c sctk_tls.c
 
 libmpcthread_la_SOURCES += accelerator.c
 

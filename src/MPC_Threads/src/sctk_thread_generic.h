@@ -33,11 +33,11 @@
 
 #include <sctk_thread_scheduler.h>
 
-#include <sctk_thread_spinlock.h>
+
 
 /***********************
- * THREAD KIND SUPPORT *
- ***********************/
+* THREAD KIND SUPPORT *
+***********************/
 
 /**
  * @brief  the member mask is a mask of bits
@@ -74,8 +74,8 @@ sctk_thread_generic_kind_t _mpc_threads_generic_kind_get();
 
 
 /****************
- * KEYS SUPPORT *
- ****************/
+* KEYS SUPPORT *
+****************/
 
 typedef struct
 {
@@ -263,11 +263,27 @@ typedef struct sctk_thread_generic_barrierattr_s
 
 #define SCTK_THREAD_GENERIC_BARRIERATTR_INIT    { SCTK_THREAD_PROCESS_PRIVATE }
 
+/***************************************/
+/* THREAD SPINLOCK                     */
+/***************************************/
 
+typedef enum
+{
+	sctk_spin_unitialized,
+	sctk_spin_initialized,
+	sctk_spin_destroyed
+} sctk_spin_state;
 
+typedef struct sctk_thread_generic_spinlock_s
+{
+	mpc_common_spinlock_t            lock;
+	sctk_spin_state                  state;
+	sctk_thread_generic_scheduler_t *owner;
+}sctk_thread_generic_spinlock_t;
 
+#define SCTK_THREAD_GENERIC_SPINLOCK_INIT    { SCTK_SPINLOCK_INITIALIZER, sctk_spin_unitialized, NULL }
 
-
+#define SCTK_SPIN_DELAY                      10
 
 
 
