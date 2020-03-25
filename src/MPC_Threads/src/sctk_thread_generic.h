@@ -32,7 +32,7 @@
 
 
 #include <sctk_thread_scheduler.h>
-#include <sctk_thread_barrier.h>
+
 #include <sctk_thread_spinlock.h>
 
 /***********************
@@ -236,6 +236,32 @@ typedef struct
 	UT_hash_handle                hh;
 }sctk_thread_rwlock_in_use_t;
 
+/***************************************/
+/* THREAD BARRIER                      */
+/***************************************/
+
+typedef struct sctk_thread_generic_barrier_cell_s
+{
+	sctk_thread_generic_scheduler_t *          sched;
+	struct sctk_thread_generic_barrier_cell_s *prev, *next;
+}sctk_thread_generic_barrier_cell_t;
+
+typedef struct sctk_thread_generic_barrier_s
+{
+	mpc_common_spinlock_t               lock;
+	volatile int                        nb_max;
+	volatile int                        nb_current;
+	sctk_thread_generic_barrier_cell_t *blocked;
+}sctk_thread_generic_barrier_t;
+
+#define SCTK_THREAD_GENERIC_BARRIER_INIT    { SCTK_SPINLOCK_INITIALIZER, 0, 0, NULL }
+
+typedef struct sctk_thread_generic_barrierattr_s
+{
+	volatile int pshared;
+}sctk_thread_generic_barrierattr_t;
+
+#define SCTK_THREAD_GENERIC_BARRIERATTR_INIT    { SCTK_THREAD_PROCESS_PRIVATE }
 
 
 
