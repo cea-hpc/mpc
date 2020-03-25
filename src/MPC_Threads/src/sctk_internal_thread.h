@@ -393,7 +393,7 @@ extern int (*__sctk_ptr_thread_futex)(void *addr1, int op, int val1,
 #define sctk_add_func_type(newlib, func, t)     __sctk_ptr_thread_ ## func = (t)newlib ## _ ## func
 #define sctk_remove_func(func)                  __sctk_ptr_thread_ ## func = sctk_gen_thread_ ## func
 
-#define sctk_thread_generic_check_size(a, b)    sctk_size_checking(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
+#define _mpc_threads_ng_check_size(a, b)    sctk_size_checking(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
 
 #ifdef __cplusplus
 }

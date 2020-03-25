@@ -41,48 +41,48 @@
 
 //#define SCTK_DEBUG_SCHEDULER
 
-static void (*sctk_thread_generic_sched_idle_start)(void);
+static void (*_mpc_threads_ng_sched_idle_start)(void);
 
-void (*sctk_thread_generic_sched_yield)(sctk_thread_generic_scheduler_t *) = NULL;
-void (*sctk_thread_generic_thread_status)(sctk_thread_generic_scheduler_t *,
-                                          sctk_thread_generic_thread_status_t) = NULL;
-void (*sctk_thread_generic_register_spinlock_unlock)(sctk_thread_generic_scheduler_t *,
+void (*_mpc_threads_ng_sched_yield)(_mpc_threads_ng_scheduler_t *) = NULL;
+void (*_mpc_threads_ng_thread_status)(_mpc_threads_ng_scheduler_t *,
+                                          _mpc_threads_ng_thread_status_t) = NULL;
+void (*_mpc_threads_ng_register_spinlock_unlock)(_mpc_threads_ng_scheduler_t *,
                                                      mpc_common_spinlock_t *) = NULL;
-void (*sctk_thread_generic_wake)(sctk_thread_generic_scheduler_t *) = NULL;
+void (*_mpc_threads_ng_wake)(_mpc_threads_ng_scheduler_t *) = NULL;
 
-void (*sctk_thread_generic_scheduler_init_thread_p)(sctk_thread_generic_scheduler_t *) = NULL;
+void (*_mpc_threads_ng_scheduler_init_thread_p)(_mpc_threads_ng_scheduler_t *) = NULL;
 
-void          (*sctk_thread_generic_sched_create)(sctk_thread_generic_p_t *) = NULL;
-void          (*sctk_thread_generic_add_task)(sctk_thread_generic_task_t *) = NULL;
-static void * (*sctk_thread_generic_polling_func)(void *) = NULL;
+void          (*_mpc_threads_ng_sched_create)(_mpc_threads_ng_p_t *) = NULL;
+void          (*_mpc_threads_ng_add_task)(_mpc_threads_ng_task_t *) = NULL;
+static void * (*_mpc_threads_ng_polling_func)(void *) = NULL;
 /***************************************/
 /* VP MANAGEMENT                       */
 /***************************************/
 typedef struct
 {
-	sctk_thread_generic_p_t *thread;
+	_mpc_threads_ng_p_t *thread;
 	int                      core;
-} sctk_thread_generic_scheduler_task_t;
+} _mpc_threads_ng_scheduler_task_t;
 static __thread int core_id = -1;
-static int          sctk_thread_generic_scheduler_use_binding = 1;
+static int          _mpc_threads_ng_scheduler_use_binding = 1;
 
-static void sctk_thread_generic_scheduler_bind_to_cpu(int core)
+static void _mpc_threads_ng_scheduler_bind_to_cpu(int core)
 {
-	if(sctk_thread_generic_scheduler_use_binding == 1)
+	if(_mpc_threads_ng_scheduler_use_binding == 1)
 	{
 		mpc_topology_bind_to_cpu(core);
 	}
 }
 
-static void *sctk_thread_generic_scheduler_idle_task(sctk_thread_generic_scheduler_task_t *arg)
+static void *_mpc_threads_ng_scheduler_idle_task(_mpc_threads_ng_scheduler_task_t *arg)
 {
-	sctk_thread_generic_p_t    p_th;
-	sctk_thread_generic_t      th;
-	sctk_thread_generic_attr_t attr;
+	_mpc_threads_ng_p_t    p_th;
+	_mpc_threads_ng_t      th;
+	_mpc_threads_ng_attr_t attr;
 
 	if(arg->core >= 0)
 	{
-		sctk_thread_generic_scheduler_bind_to_cpu(arg->core);
+		_mpc_threads_ng_scheduler_bind_to_cpu(arg->core);
 	}
 	core_id = arg->core;
 	sctk_free(arg);
@@ -93,11 +93,11 @@ static void *sctk_thread_generic_scheduler_idle_task(sctk_thread_generic_schedul
 	th        = &p_th;
 
 	_mpc_threads_generic_self_set(th);
-	sctk_thread_generic_scheduler_init_thread(&(_mpc_threads_generic_self()->sched), th);
+	_mpc_threads_ng_scheduler_init_thread(&(_mpc_threads_generic_self()->sched), th);
 	_mpc_threads_generic_key_init_thread(&(_mpc_threads_generic_self()->keys) );
 
 	/* Start Idle*/
-	sctk_thread_generic_sched_idle_start();
+	_mpc_threads_ng_sched_idle_start();
 
 	sctk_nodebug("End vp");
 
@@ -106,13 +106,13 @@ static void *sctk_thread_generic_scheduler_idle_task(sctk_thread_generic_schedul
 	return NULL;
 }
 
-static void *sctk_thread_generic_scheduler_bootstrap_task(sctk_thread_generic_scheduler_task_t *arg)
+static void *_mpc_threads_ng_scheduler_bootstrap_task(_mpc_threads_ng_scheduler_task_t *arg)
 {
-	sctk_thread_generic_p_t *thread;
+	_mpc_threads_ng_p_t *thread;
 
 	if(arg->core >= 0)
 	{
-		sctk_thread_generic_scheduler_bind_to_cpu(arg->core);
+		_mpc_threads_ng_scheduler_bind_to_cpu(arg->core);
 	}
 	core_id = arg->core;
 	thread  = arg->thread;
@@ -130,22 +130,22 @@ static void *sctk_thread_generic_scheduler_bootstrap_task(sctk_thread_generic_sc
 	return NULL;
 }
 
-void sctk_thread_generic_scheduler_create_vp(sctk_thread_generic_p_t *thread, int core)
+void _mpc_threads_ng_scheduler_create_vp(_mpc_threads_ng_p_t *thread, int core)
 {
 	void *(*start_routine) (void *);
-	sctk_thread_generic_scheduler_task_t *arg;
+	_mpc_threads_ng_scheduler_task_t *arg;
 	kthread_t kthread;
 
 	if(thread == NULL)
 	{
-		start_routine = (void *(*)(void *) )sctk_thread_generic_scheduler_idle_task;
+		start_routine = (void *(*)(void *) )_mpc_threads_ng_scheduler_idle_task;
 	}
 	else
 	{
-		start_routine = (void *(*)(void *) )sctk_thread_generic_scheduler_bootstrap_task;
+		start_routine = (void *(*)(void *) )_mpc_threads_ng_scheduler_bootstrap_task;
 	}
 
-	arg         = sctk_malloc(sizeof(sctk_thread_generic_scheduler_task_t) );
+	arg         = sctk_malloc(sizeof(_mpc_threads_ng_scheduler_task_t) );
 	arg->thread = thread;
 	arg->core   = core;
 
@@ -157,8 +157,8 @@ void sctk_thread_generic_scheduler_create_vp(sctk_thread_generic_p_t *thread, in
 /* CONTEXT MANAGEMENT                  */
 /***************************************/
 #include <pthread.h>
-void sctk_thread_generic_scheduler_swapcontext(sctk_thread_generic_scheduler_t *old_th,
-                                               sctk_thread_generic_scheduler_t *new_th)
+void _mpc_threads_ng_scheduler_swapcontext(_mpc_threads_ng_scheduler_t *old_th,
+                                               _mpc_threads_ng_scheduler_t *new_th)
 {
 	_mpc_threads_generic_self_set(new_th->th);
 	sctk_nodebug("SWAP %p %p -> %p", pthread_self(), &(old_th->ctx), &(new_th->ctx) );
@@ -167,7 +167,7 @@ void sctk_thread_generic_scheduler_swapcontext(sctk_thread_generic_scheduler_t *
 	sctk_swapcontext(&(old_th->ctx), &(new_th->ctx) );
 }
 
-void sctk_thread_generic_scheduler_setcontext(sctk_thread_generic_scheduler_t *new_th)
+void _mpc_threads_ng_scheduler_setcontext(_mpc_threads_ng_scheduler_t *new_th)
 {
 	_mpc_threads_generic_self_set(new_th->th);
 	sctk_nodebug("SET %p", &(new_th->ctx) );
@@ -179,7 +179,7 @@ void sctk_thread_generic_scheduler_setcontext(sctk_thread_generic_scheduler_t *n
 /* TASKS MANAGEMENT                    */
 /***************************************/
 static int
-sctk_thread_generic_scheduler_check_task(sctk_thread_generic_task_t *task)
+_mpc_threads_ng_scheduler_check_task(_mpc_threads_ng_task_t *task)
 {
 	if(*(task->data) == task->value)
 	{
@@ -200,12 +200,12 @@ sctk_thread_generic_scheduler_check_task(sctk_thread_generic_task_t *task)
 /* CENTRALIZED SCHEDULER               */
 /***************************************/
 static mpc_common_spinlock_t sctk_centralized_sched_list_lock = SCTK_SPINLOCK_INITIALIZER;
-static sctk_thread_generic_scheduler_generic_t *sctk_centralized_sched_list = NULL;
+static _mpc_threads_ng_scheduler_generic_t *sctk_centralized_sched_list = NULL;
 
-static sctk_thread_generic_task_t *sctk_centralized_task_list      = NULL;
+static _mpc_threads_ng_task_t *sctk_centralized_task_list      = NULL;
 static mpc_common_spinlock_t       sctk_centralized_task_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
-static void sctk_centralized_add_to_list(sctk_thread_generic_scheduler_t *sched)
+static void sctk_centralized_add_to_list(_mpc_threads_ng_scheduler_t *sched)
 {
 	assume(sched->generic.sched == sched);
 	mpc_common_spinlock_lock(&sctk_centralized_sched_list_lock);
@@ -215,19 +215,19 @@ static void sctk_centralized_add_to_list(sctk_thread_generic_scheduler_t *sched)
 }
 
 static
-void sctk_centralized_concat_to_list(__UNUSED__ sctk_thread_generic_scheduler_t *sched,
-                                     sctk_thread_generic_scheduler_generic_t *s_list)
+void sctk_centralized_concat_to_list(__UNUSED__ _mpc_threads_ng_scheduler_t *sched,
+                                     _mpc_threads_ng_scheduler_generic_t *s_list)
 {
 	mpc_common_spinlock_lock(&sctk_centralized_sched_list_lock);
 	DL_CONCAT(sctk_centralized_sched_list, s_list);
 	mpc_common_spinlock_unlock(&sctk_centralized_sched_list_lock);
 }
 
-static sctk_thread_generic_scheduler_t *sctk_centralized_get_from_list()
+static _mpc_threads_ng_scheduler_t *sctk_centralized_get_from_list()
 {
 	if(sctk_centralized_sched_list != NULL)
 	{
-		sctk_thread_generic_scheduler_generic_t *res;
+		_mpc_threads_ng_scheduler_generic_t *res;
 		mpc_common_spinlock_lock(&sctk_centralized_sched_list_lock);
 		res = sctk_centralized_sched_list;
 		if(res != NULL)
@@ -251,12 +251,12 @@ static sctk_thread_generic_scheduler_t *sctk_centralized_get_from_list()
 	}
 }
 
-static sctk_thread_generic_scheduler_t *sctk_centralized_get_from_list_pthread_init()
+static _mpc_threads_ng_scheduler_t *sctk_centralized_get_from_list_pthread_init()
 {
 	if(sctk_centralized_sched_list != NULL)
 	{
-		sctk_thread_generic_scheduler_generic_t *res_tmp;
-		sctk_thread_generic_scheduler_generic_t *res;
+		_mpc_threads_ng_scheduler_generic_t *res_tmp;
+		_mpc_threads_ng_scheduler_generic_t *res;
 		mpc_common_spinlock_lock(&sctk_centralized_sched_list_lock);
 		DL_FOREACH_SAFE(sctk_centralized_sched_list, res, res_tmp)
 		{
@@ -283,9 +283,9 @@ static sctk_thread_generic_scheduler_t *sctk_centralized_get_from_list_pthread_i
 	}
 }
 
-static sctk_thread_generic_task_t *sctk_centralized_get_task()
+static _mpc_threads_ng_task_t *sctk_centralized_get_task()
 {
-	sctk_thread_generic_task_t *task = NULL;
+	_mpc_threads_ng_task_t *task = NULL;
 
 	if(sctk_centralized_task_list != NULL)
 	{
@@ -300,7 +300,7 @@ static sctk_thread_generic_task_t *sctk_centralized_get_task()
 	return task;
 }
 
-static void sctk_centralized_add_task_to_proceed(sctk_thread_generic_task_t *task)
+static void sctk_centralized_add_task_to_proceed(_mpc_threads_ng_task_t *task)
 {
 	mpc_common_spinlock_lock(&sctk_centralized_task_list_lock);
 	DL_APPEND(sctk_centralized_task_list, task);
@@ -308,18 +308,18 @@ static void sctk_centralized_add_task_to_proceed(sctk_thread_generic_task_t *tas
 }
 
 static
-void sctk_centralized_poll_tasks(sctk_thread_generic_scheduler_t *sched)
+void sctk_centralized_poll_tasks(_mpc_threads_ng_scheduler_t *sched)
 {
-	sctk_thread_generic_task_t *     task;
-	sctk_thread_generic_task_t *     task_tmp;
-	sctk_thread_generic_scheduler_t *lsched = NULL;
+	_mpc_threads_ng_task_t *     task;
+	_mpc_threads_ng_task_t *     task_tmp;
+	_mpc_threads_ng_scheduler_t *lsched = NULL;
 
 	if(mpc_common_spinlock_trylock(&sctk_centralized_task_list_lock) == 0)
 	{
 		/* Exec polling */
 		DL_FOREACH_SAFE(sctk_centralized_task_list, task, task_tmp)
 		{
-			if(sctk_thread_generic_scheduler_check_task(task) == 1)
+			if(_mpc_threads_ng_scheduler_check_task(task) == 1)
 			{
 				DL_DELETE(sctk_centralized_task_list, task);
 				sctk_nodebug("WAKE task %p", task);
@@ -336,13 +336,13 @@ void sctk_centralized_poll_tasks(sctk_thread_generic_scheduler_t *sched)
 					void **tmp = NULL;
 					if(task->sched && task->sched->th && &(task->sched->th->attr) )
 					{
-						tmp = (void **)task->sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
+						tmp = (void **)task->sched->th->attr._mpc_threads_ng_pthread_blocking_lock_table;
 					}
 					if(tmp)
 					{
-						tmp[sctk_thread_generic_task_lock] = NULL;
+						tmp[_mpc_threads_ng_task_lock] = NULL;
 					}
-					sctk_thread_generic_wake(lsched);
+					_mpc_threads_ng_wake(lsched);
 				}
 				mpc_common_spinlock_unlock(&(sched->generic.lock) );
 			}
@@ -352,10 +352,10 @@ void sctk_centralized_poll_tasks(sctk_thread_generic_scheduler_t *sched)
 }
 
 void
-sctk_centralized_thread_generic_wake_on_task_lock(sctk_thread_generic_scheduler_t *sched,
+sctk_centralized_thread_generic_wake_on_task_lock(_mpc_threads_ng_scheduler_t *sched,
                                                   int remove_from_lock_list)
 {
-	sctk_thread_generic_task_t *task_tmp;
+	_mpc_threads_ng_task_t *task_tmp;
 
 	mpc_common_spinlock_lock(&sctk_centralized_task_list_lock);
 	DL_FOREACH(sctk_centralized_task_list, task_tmp)
@@ -388,8 +388,8 @@ typedef struct
 {
 	mpc_common_spinlock_t                    sctk_multiple_queues_sched_list_lock;
 	/*Mettre un pointeur directement sur le thread de progression des NBC */
-	sctk_thread_generic_scheduler_t *        sctk_multiple_queues_sched_NBC_Pthread_sched;
-	sctk_thread_generic_scheduler_generic_t *sctk_multiple_queues_sched_list;
+	_mpc_threads_ng_scheduler_t *        sctk_multiple_queues_sched_NBC_Pthread_sched;
+	_mpc_threads_ng_scheduler_generic_t *sctk_multiple_queues_sched_list;
 /* TODO Optimize to have data locality*/
 	char                                     pad[4096];
 } sctk_multiple_queues_sched_list_t;
@@ -401,11 +401,11 @@ static sctk_multiple_queues_sched_list_t *sctk_multiple_queues_sched_lists = NUL
 typedef struct
 {
 	// list of task which are able to be poll by the polling mpc thread
-	sctk_thread_generic_task_t *sctk_multiple_queues_task_list;
+	_mpc_threads_ng_task_t *sctk_multiple_queues_task_list;
 	mpc_common_spinlock_t       sctk_multiple_queues_task_list_lock;
 	int                         task_nb; // number of task in sctk_multiple_queues_task_list
 	/*Mettre un pointeur directement sur le thread de polling mpc*/
-	sctk_thread_generic_scheduler_t
+	_mpc_threads_ng_scheduler_t
 	*                           sctk_multiple_queues_task_polling_thread_sched;
 	char                        pad[4096];
 }sctk_multiple_queues_task_list_t;
@@ -422,7 +422,7 @@ static sctk_multiple_queues_task_list_t *sctk_multiple_queues_task_lists = NULL;
 //
 
 // add_to_list
-static void sctk_multiple_queues_add_to_list(sctk_thread_generic_scheduler_t *sched)
+static void sctk_multiple_queues_add_to_list(_mpc_threads_ng_scheduler_t *sched)
 {
 	int core;
 
@@ -443,8 +443,8 @@ static void sctk_multiple_queues_add_to_list(sctk_thread_generic_scheduler_t *sc
 
 // concat_to_list
 static
-void sctk_multiple_queues_concat_to_list(sctk_thread_generic_scheduler_t *sched,
-                                         sctk_thread_generic_scheduler_generic_t *s_list)
+void sctk_multiple_queues_concat_to_list(_mpc_threads_ng_scheduler_t *sched,
+                                         _mpc_threads_ng_scheduler_generic_t *s_list)
 {
 	int core;
 
@@ -461,7 +461,7 @@ void sctk_multiple_queues_concat_to_list(sctk_thread_generic_scheduler_t *sched,
 
 // get_from_list
 mpc_common_spinlock_t debug_lock = SCTK_SPINLOCK_INITIALIZER;
-static sctk_thread_generic_scheduler_t *sctk_multiple_queues_get_from_list()
+static _mpc_threads_ng_scheduler_t *sctk_multiple_queues_get_from_list()
 {
 	int core;
 
@@ -475,8 +475,8 @@ static sctk_thread_generic_scheduler_t *sctk_multiple_queues_get_from_list()
 
 	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL)
 	{
-		sctk_thread_generic_scheduler_generic_t *res;
-		sctk_thread_generic_scheduler_generic_t *res_tmp;
+		_mpc_threads_ng_scheduler_generic_t *res;
+		_mpc_threads_ng_scheduler_generic_t *res_tmp;
 
 		mpc_common_spinlock_lock(&(sctk_multiple_queues_sched_lists[core]
 		                           .sctk_multiple_queues_sched_list_lock) );
@@ -509,7 +509,7 @@ static sctk_thread_generic_scheduler_t *sctk_multiple_queues_get_from_list()
 	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
 	   NULL)
 	{
-		sctk_thread_generic_scheduler_generic_t *res;
+		_mpc_threads_ng_scheduler_generic_t *res;
 		mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
 		                         .sctk_multiple_queues_sched_list_lock);
 		res =
@@ -548,7 +548,7 @@ static sctk_thread_generic_scheduler_t *sctk_multiple_queues_get_from_list()
 #if 0
 // add_to_list
 static void sctk_multiple_queues_with_priority_dynamic_add_to_list(
-        sctk_thread_generic_scheduler_t *sched)
+        _mpc_threads_ng_scheduler_t *sched)
 {
 	int core;
 
@@ -571,8 +571,8 @@ static void sctk_multiple_queues_with_priority_dynamic_add_to_list(
 
 // concat_to_list
 static void sctk_multiple_queues_with_priority_dynamic_concat_to_list(
-        sctk_thread_generic_scheduler_t *sched,
-        sctk_thread_generic_scheduler_generic_t *s_list)
+        _mpc_threads_ng_scheduler_t *sched,
+        _mpc_threads_ng_scheduler_generic_t *s_list)
 {
 	int core;
 
@@ -593,7 +593,7 @@ static void sctk_multiple_queues_with_priority_dynamic_concat_to_list(
 }
 
 // get_from_list with priority_dyn_sorted_list
-static sctk_thread_generic_scheduler_t *
+static _mpc_threads_ng_scheduler_t *
 sctk_multiple_queues_with_priority_dynamic_get_from_list()
 {
 	int core;
@@ -601,7 +601,7 @@ sctk_multiple_queues_with_priority_dynamic_get_from_list()
 	core = core_id;
 	assert(core >= 0);
 
-	sctk_thread_generic_scheduler_t *sched;
+	_mpc_threads_ng_scheduler_t *sched;
 	sched = &(_mpc_threads_generic_self()->sched);
 
 #ifdef SCTK_DEBUG_SCHEDULER
@@ -625,7 +625,7 @@ sctk_multiple_queues_with_priority_dynamic_get_from_list()
 		if(sctk_multiple_queues_sched_lists[core]
 		   .sctk_multiple_queues_sched_list != NULL)
 		{
-			sctk_thread_generic_scheduler_generic_t *res;
+			_mpc_threads_ng_scheduler_generic_t *res;
 			res = sctk_multiple_queues_sched_lists[core]
 			      .sctk_multiple_queues_sched_list;
 			DL_FOREACH(sctk_multiple_queues_sched_lists[core]
@@ -657,7 +657,7 @@ sctk_multiple_queues_with_priority_dynamic_get_from_list()
 	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
 	   NULL)
 	{
-		sctk_thread_generic_scheduler_generic_t *res;
+		_mpc_threads_ng_scheduler_generic_t *res;
 		mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
 		                         .sctk_multiple_queues_sched_list_lock);
 		res =
@@ -696,7 +696,7 @@ sctk_multiple_queues_with_priority_dynamic_get_from_list()
 
 // add_to_list with priority
 static void sctk_multiple_queues_with_priority_default_add_to_list(
-        sctk_thread_generic_scheduler_t *sched)
+        _mpc_threads_ng_scheduler_t *sched)
 {
 	int core;
 
@@ -720,8 +720,8 @@ static void sctk_multiple_queues_with_priority_default_add_to_list(
 
 // concat_to_list with priority
 static void sctk_multiple_queues_with_priority_default_concat_to_list(
-        sctk_thread_generic_scheduler_t *sched,
-        sctk_thread_generic_scheduler_generic_t *s_list)
+        _mpc_threads_ng_scheduler_t *sched,
+        _mpc_threads_ng_scheduler_generic_t *s_list)
 {
 	int core;
 
@@ -741,7 +741,7 @@ static void sctk_multiple_queues_with_priority_default_concat_to_list(
 }
 
 // get_from_list with priority
-static sctk_thread_generic_scheduler_t *
+static _mpc_threads_ng_scheduler_t *
 sctk_multiple_queues_with_priority_default_get_from_list()
 {
 	int core;
@@ -758,8 +758,8 @@ sctk_multiple_queues_with_priority_default_get_from_list()
 
 	// if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list
 	// != NULL){
-	//     sctk_thread_generic_scheduler_generic_t* res;
-	//     sctk_thread_generic_scheduler_generic_t* res_tmp;
+	//     _mpc_threads_ng_scheduler_generic_t* res;
+	//     _mpc_threads_ng_scheduler_generic_t* res_tmp;
 
 	//     mpc_common_spinlock_lock(
 	//     &(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
@@ -796,7 +796,7 @@ sctk_multiple_queues_with_priority_default_get_from_list()
 	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
 	   NULL)
 	{
-		sctk_thread_generic_scheduler_generic_t *res;
+		_mpc_threads_ng_scheduler_generic_t *res;
 		mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
 		                         .sctk_multiple_queues_sched_list_lock);
 		res =
@@ -835,7 +835,7 @@ sctk_multiple_queues_with_priority_default_get_from_list()
 
 // add_to_list with priority_omp
 static void sctk_multiple_queues_with_priority_omp_add_to_list(
-        sctk_thread_generic_scheduler_t *sched)
+        _mpc_threads_ng_scheduler_t *sched)
 {
 	int core;
 
@@ -859,8 +859,8 @@ static void sctk_multiple_queues_with_priority_omp_add_to_list(
 
 // concat_to_list with priority_omp
 static void sctk_multiple_queues_with_priority_omp_concat_to_list(
-        sctk_thread_generic_scheduler_t *sched,
-        sctk_thread_generic_scheduler_generic_t *s_list)
+        _mpc_threads_ng_scheduler_t *sched,
+        _mpc_threads_ng_scheduler_generic_t *s_list)
 {
 	int core;
 
@@ -880,7 +880,7 @@ static void sctk_multiple_queues_with_priority_omp_concat_to_list(
 }
 
 // get_from_list with priority_omp
-static sctk_thread_generic_scheduler_t *
+static _mpc_threads_ng_scheduler_t *
 sctk_multiple_queues_with_priority_omp_get_from_list()
 {
 	int core;
@@ -892,8 +892,8 @@ sctk_multiple_queues_with_priority_omp_get_from_list()
 	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
 	   NULL)
 	{
-		sctk_thread_generic_scheduler_generic_t *res;
-		sctk_thread_generic_scheduler_generic_t *res_tmp;
+		_mpc_threads_ng_scheduler_generic_t *res;
+		_mpc_threads_ng_scheduler_generic_t *res_tmp;
 		mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
 		                         .sctk_multiple_queues_sched_list_lock);
 
@@ -961,7 +961,7 @@ sctk_multiple_queues_with_priority_omp_get_from_list()
 
 // add_to_list with priority_nofamine
 static void sctk_multiple_queues_with_priority_nofamine_add_to_list(
-        sctk_thread_generic_scheduler_t *sched)
+        _mpc_threads_ng_scheduler_t *sched)
 {
 	int core;
 
@@ -985,8 +985,8 @@ static void sctk_multiple_queues_with_priority_nofamine_add_to_list(
 
 // concat_to_list with priority_nofamine
 static void sctk_multiple_queues_with_priority_nofamine_concat_to_list(
-        sctk_thread_generic_scheduler_t *sched,
-        sctk_thread_generic_scheduler_generic_t *s_list)
+        _mpc_threads_ng_scheduler_t *sched,
+        _mpc_threads_ng_scheduler_generic_t *s_list)
 {
 	int core;
 
@@ -1006,7 +1006,7 @@ static void sctk_multiple_queues_with_priority_nofamine_concat_to_list(
 }
 
 // get_from_list with priority_nofamine
-static sctk_thread_generic_scheduler_t *
+static _mpc_threads_ng_scheduler_t *
 sctk_multiple_queues_with_priority_nofamine_get_from_list()
 {
 	int core;
@@ -1018,9 +1018,9 @@ sctk_multiple_queues_with_priority_nofamine_get_from_list()
 	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
 	   NULL)
 	{
-		sctk_thread_generic_scheduler_generic_t *res;
-		sctk_thread_generic_scheduler_generic_t *res_tmp;
-		sctk_thread_generic_scheduler_generic_t *ret;
+		_mpc_threads_ng_scheduler_generic_t *res;
+		_mpc_threads_ng_scheduler_generic_t *res_tmp;
+		_mpc_threads_ng_scheduler_generic_t *ret;
 		mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
 		                         .sctk_multiple_queues_sched_list_lock);
 		// look for omp threads to schedule them in priority
@@ -1080,10 +1080,10 @@ sctk_multiple_queues_with_priority_nofamine_get_from_list()
 // using the current_priority of each thread in the list
 int sctk_multiple_queues_sched_list_sort(void *cmp1, void *cmp2)
 {
-	sctk_thread_generic_scheduler_generic_t *elm1 =
-	        (sctk_thread_generic_scheduler_generic_t *)cmp1;
-	sctk_thread_generic_scheduler_generic_t *elm2 =
-	        (sctk_thread_generic_scheduler_generic_t *)cmp2;
+	_mpc_threads_ng_scheduler_generic_t *elm1 =
+	        (_mpc_threads_ng_scheduler_generic_t *)cmp1;
+	_mpc_threads_ng_scheduler_generic_t *elm2 =
+	        (_mpc_threads_ng_scheduler_generic_t *)cmp2;
 
 	if(elm1->sched->th->attr.current_priority ==
 	   elm2->sched->th->attr.current_priority)
@@ -1104,7 +1104,7 @@ int sctk_multiple_queues_sched_list_sort(void *cmp1, void *cmp2)
 // init NBC hook
 void sctk_multiple_queues_with_priority_dyn_sorted_list_sched_NBC_Pthread_sched_init()
 {
-	sctk_thread_generic_scheduler_t *sched;
+	_mpc_threads_ng_scheduler_t *sched;
 
 	sched = &(_mpc_threads_generic_self()->sched);
 	sctk_multiple_queues_sched_lists[sched->th->attr.bind_to]
@@ -1114,7 +1114,7 @@ void sctk_multiple_queues_with_priority_dyn_sorted_list_sched_NBC_Pthread_sched_
 // increase priority of the NBC polling threads
 void sctk_multiple_queues_priority_dyn_sorted_list_sched_NBC_Pthread_sched_increase_priority()
 {
-	sctk_thread_generic_scheduler_t *sched;
+	_mpc_threads_ng_scheduler_t *sched;
 
 	sched = &(_mpc_threads_generic_self()->sched);
 	assert(sched->th->attr.bind_to >= 0);
@@ -1145,7 +1145,7 @@ void sctk_multiple_queues_priority_dyn_sorted_list_sched_NBC_Pthread_sched_incre
 // because we are running and we sort the list when we add element on the list
 void sctk_multiple_queues_with_priority_dyn_sorted_list_sched_NBC_Pthread_sched_decrease_priority()
 {
-	sctk_thread_generic_scheduler_t *sched;
+	_mpc_threads_ng_scheduler_t *sched;
 
 	sched = &(_mpc_threads_generic_self()->sched);
 	assert(sched->th->attr.bind_to >= 0);
@@ -1189,7 +1189,7 @@ void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_inc
 
 #ifdef SCTK_DEBUG_SCHEDULER
 		{
-			sctk_thread_generic_scheduler_t *sched;
+			_mpc_threads_ng_scheduler_t *sched;
 			sched = &(_mpc_threads_generic_self()->sched);
 			char hostname[128];
 			char hostname2[128];
@@ -1239,7 +1239,7 @@ void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_dec
 
 #ifdef SCTK_DEBUG_SCHEDULER
 		{
-			sctk_thread_generic_scheduler_t *sched;
+			_mpc_threads_ng_scheduler_t *sched;
 			sched = &(_mpc_threads_generic_self()->sched);
 			char hostname[128];
 			char hostname2[128];
@@ -1264,7 +1264,7 @@ void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_dec
 
 // add_to_list with priority_dyn_sorted_list
 static void sctk_multiple_queues_with_priority_dyn_sorted_list_add_to_list(
-        sctk_thread_generic_scheduler_t *sched)
+        _mpc_threads_ng_scheduler_t *sched)
 {
 	int core;
 
@@ -1275,7 +1275,7 @@ static void sctk_multiple_queues_with_priority_dyn_sorted_list_add_to_list(
 	}
 	assume(sched->generic.sched == sched);
 
-	sctk_thread_generic_scheduler_generic_t *res;
+	_mpc_threads_ng_scheduler_generic_t *res;
 	mpc_common_spinlock_lock(&(sctk_multiple_queues_sched_lists[core]
 	                           .sctk_multiple_queues_sched_list_lock) );
 	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
@@ -1327,8 +1327,8 @@ unlock:
 
 // concat_to_list with priority_dyn_sorted_list
 static void sctk_multiple_queues_with_priority_dyn_sorted_list_concat_to_list(
-        sctk_thread_generic_scheduler_t *sched,
-        sctk_thread_generic_scheduler_generic_t *s_list)
+        _mpc_threads_ng_scheduler_t *sched,
+        _mpc_threads_ng_scheduler_generic_t *s_list)
 {
 	int core;
 
@@ -1349,7 +1349,7 @@ static void sctk_multiple_queues_with_priority_dyn_sorted_list_concat_to_list(
 
 #if 0
 // get_from_list with priority_dyn_sorted_list
-static sctk_thread_generic_scheduler_t *
+static _mpc_threads_ng_scheduler_t *
 sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list()
 {
 	int core;
@@ -1357,7 +1357,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list()
 	core = core_id;
 	assert(core >= 0);
 
-	sctk_thread_generic_scheduler_t *sched;
+	_mpc_threads_ng_scheduler_t *sched;
 	sched = &(_mpc_threads_generic_self()->sched);
 
 #ifdef SCTK_DEBUG_SCHEDULER
@@ -1381,7 +1381,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list()
 		if(sctk_multiple_queues_sched_lists[core]
 		   .sctk_multiple_queues_sched_list != NULL)
 		{
-			sctk_thread_generic_scheduler_generic_t *res;
+			_mpc_threads_ng_scheduler_generic_t *res;
 			res = sctk_multiple_queues_sched_lists[core]
 			      .sctk_multiple_queues_sched_list;
 			DL_FOREACH(sctk_multiple_queues_sched_lists[core]
@@ -1413,7 +1413,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list()
 	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
 	   NULL)
 	{
-		sctk_thread_generic_scheduler_generic_t *res;
+		_mpc_threads_ng_scheduler_generic_t *res;
 		mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
 		                         .sctk_multiple_queues_sched_list_lock);
 		res =
@@ -1459,7 +1459,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list()
 #endif
 
 // get_from_list with priority_dyn_sorted_list old
-static sctk_thread_generic_scheduler_t *
+static _mpc_threads_ng_scheduler_t *
 sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old()
 {
 	int core;
@@ -1471,7 +1471,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old()
 
 #ifdef SCTK_DEBUG_SCHEDULER
 	{
-		sctk_thread_generic_scheduler_t *sched;
+		_mpc_threads_ng_scheduler_t *sched;
 		sched = &(_mpc_threads_generic_self()->sched);
 		char hostname[128];
 		char hostname2[128];
@@ -1492,7 +1492,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old()
 		if(sctk_multiple_queues_sched_lists[core]
 		   .sctk_multiple_queues_sched_list != NULL)
 		{
-			sctk_thread_generic_scheduler_generic_t *res;
+			_mpc_threads_ng_scheduler_generic_t *res;
 			res = sctk_multiple_queues_sched_lists[core]
 			      .sctk_multiple_queues_sched_list;
 			DL_FOREACH(sctk_multiple_queues_sched_lists[core]
@@ -1524,7 +1524,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old()
 	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
 	   NULL)
 	{
-		sctk_thread_generic_scheduler_generic_t *res;
+		_mpc_threads_ng_scheduler_generic_t *res;
 		mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
 		                         .sctk_multiple_queues_sched_list_lock);
 		res =
@@ -1573,15 +1573,15 @@ void (*sctk_multiple_queues_task_polling_thread_sched_decrease_priority)(
         int core) = NULL;
 // add_to_list
 static void (*sctk_multiple_queues_with_priority_add_to_list)(
-        sctk_thread_generic_scheduler_t *sched) =
+        _mpc_threads_ng_scheduler_t *sched) =
         sctk_multiple_queues_with_priority_dynamic_add_to_list;
 // concat_to_list
 static void (*sctk_multiple_queues_with_priority_concat_to_list)(
-        sctk_thread_generic_scheduler_t *sched,
-        sctk_thread_generic_scheduler_generic_t *s_list) =
+        _mpc_threads_ng_scheduler_t *sched,
+        _mpc_threads_ng_scheduler_generic_t *s_list) =
         sctk_multiple_queues_with_priority_dynamic_concat_to_list;
 // get_from_list
-static sctk_thread_generic_scheduler_t *(
+static _mpc_threads_ng_scheduler_t *(
 *sctk_multiple_queues_with_priority_get_from_list)() =
         sctk_multiple_queues_with_priority_dynamic_get_from_list;
 #endif
@@ -1594,15 +1594,15 @@ void (*sctk_multiple_queues_task_polling_thread_sched_decrease_priority)(
         int core) = NULL;
 // add_to_list
 static void (*sctk_multiple_queues_with_priority_add_to_list)(
-        sctk_thread_generic_scheduler_t *sched) =
+        _mpc_threads_ng_scheduler_t *sched) =
         sctk_multiple_queues_with_priority_default_add_to_list;
 // concat_to_list
 static void (*sctk_multiple_queues_with_priority_concat_to_list)(
-        sctk_thread_generic_scheduler_t *sched,
-        sctk_thread_generic_scheduler_generic_t *s_list) =
+        _mpc_threads_ng_scheduler_t *sched,
+        _mpc_threads_ng_scheduler_generic_t *s_list) =
         sctk_multiple_queues_with_priority_default_concat_to_list;
 // get_from_list
-static sctk_thread_generic_scheduler_t *(
+static _mpc_threads_ng_scheduler_t *(
 *sctk_multiple_queues_with_priority_get_from_list)() =
         sctk_multiple_queues_with_priority_default_get_from_list;
 #endif
@@ -1615,15 +1615,15 @@ void (*sctk_multiple_queues_task_polling_thread_sched_decrease_priority)(
         int core) = NULL;
 // add_to_list
 static void (*sctk_multiple_queues_with_priority_add_to_list)(
-        sctk_thread_generic_scheduler_t *sched) =
+        _mpc_threads_ng_scheduler_t *sched) =
         sctk_multiple_queues_with_priority_omp_add_to_list;
 // concat_to_list
 static void (*sctk_multiple_queues_with_priority_concat_to_list)(
-        sctk_thread_generic_scheduler_t *sched,
-        sctk_thread_generic_scheduler_generic_t *s_list) =
+        _mpc_threads_ng_scheduler_t *sched,
+        _mpc_threads_ng_scheduler_generic_t *s_list) =
         sctk_multiple_queues_with_priority_omp_concat_to_list;
 // get_from_list
-static sctk_thread_generic_scheduler_t *(
+static _mpc_threads_ng_scheduler_t *(
 *sctk_multiple_queues_with_priority_get_from_list)() =
         sctk_multiple_queues_with_priority_omp_get_from_list;
 #endif
@@ -1640,15 +1640,15 @@ void (*sctk_multiple_queues_task_polling_thread_sched_increase_priority)(
 
 // add_to_list
 static void (*sctk_multiple_queues_with_priority_add_to_list)(
-        sctk_thread_generic_scheduler_t *sched) =
+        _mpc_threads_ng_scheduler_t *sched) =
         sctk_multiple_queues_with_priority_nofamine_add_to_list;
 // concat_to_list
 static void (*sctk_multiple_queues_with_priority_concat_to_list)(
-        sctk_thread_generic_scheduler_t *sched,
-        sctk_thread_generic_scheduler_generic_t *s_list) =
+        _mpc_threads_ng_scheduler_t *sched,
+        _mpc_threads_ng_scheduler_generic_t *s_list) =
         sctk_multiple_queues_with_priority_nofamine_concat_to_list;
 // get_from_list
-static sctk_thread_generic_scheduler_t *(
+static _mpc_threads_ng_scheduler_t *(
 *sctk_multiple_queues_with_priority_get_from_list)() =
         sctk_multiple_queues_with_priority_nofamine_get_from_list;
 #endif
@@ -1673,15 +1673,15 @@ void (*sctk_multiple_queues_task_polling_thread_sched_increase_priority)(
 
 // add_to_list
 static void (*sctk_multiple_queues_with_priority_add_to_list)(
-        sctk_thread_generic_scheduler_t *sched) =
+        _mpc_threads_ng_scheduler_t *sched) =
         sctk_multiple_queues_with_priority_dyn_sorted_list_add_to_list;
 // concat_to_list
 static void (*sctk_multiple_queues_with_priority_concat_to_list)(
-        sctk_thread_generic_scheduler_t *sched,
-        sctk_thread_generic_scheduler_generic_t *s_list) =
+        _mpc_threads_ng_scheduler_t *sched,
+        _mpc_threads_ng_scheduler_generic_t *s_list) =
         sctk_multiple_queues_with_priority_dyn_sorted_list_concat_to_list;
 // get_from_list
-static sctk_thread_generic_scheduler_t *(
+static _mpc_threads_ng_scheduler_t *(
 *sctk_multiple_queues_with_priority_get_from_list)() =
         // sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list;
         sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old;
@@ -1690,7 +1690,7 @@ static sctk_thread_generic_scheduler_t *(
 // END
 //
 
-static sctk_thread_generic_scheduler_t *sctk_multiple_queues_get_from_list_pthread_init()
+static _mpc_threads_ng_scheduler_t *sctk_multiple_queues_get_from_list_pthread_init()
 {
 	int core;
 
@@ -1700,8 +1700,8 @@ static sctk_thread_generic_scheduler_t *sctk_multiple_queues_get_from_list_pthre
 
 	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL)
 	{
-		sctk_thread_generic_scheduler_generic_t *res_tmp;
-		sctk_thread_generic_scheduler_generic_t *res;
+		_mpc_threads_ng_scheduler_generic_t *res_tmp;
+		_mpc_threads_ng_scheduler_generic_t *res;
 		mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
 		DL_FOREACH_SAFE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list, res, res_tmp)
 		{
@@ -1728,10 +1728,10 @@ static sctk_thread_generic_scheduler_t *sctk_multiple_queues_get_from_list_pthre
 	}
 }
 
-static sctk_thread_generic_task_t *sctk_multiple_queues_get_task()
+static _mpc_threads_ng_task_t *sctk_multiple_queues_get_task()
 {
 	int core;
-	sctk_thread_generic_task_t *task = NULL;
+	_mpc_threads_ng_task_t *task = NULL;
 
 	core = core_id;
 
@@ -1749,7 +1749,7 @@ static sctk_thread_generic_task_t *sctk_multiple_queues_get_task()
 	return task;
 }
 
-static void sctk_multiple_queues_add_task_to_proceed(sctk_thread_generic_task_t *task)
+static void sctk_multiple_queues_add_task_to_proceed(_mpc_threads_ng_task_t *task)
 {
 	int core;
 
@@ -1770,7 +1770,7 @@ static void sctk_multiple_queues_add_task_to_proceed(sctk_thread_generic_task_t 
 	// vp_data.delegated_task_nb=0;
 	// //we increment the polling thread priority when we add a task on the list
 
-	// sctk_thread_generic_scheduler_t* sched;
+	// _mpc_threads_ng_scheduler_t* sched;
 	// sched = &(_mpc_threads_generic_self()->sched);
 
 	// #ifdef SCTK_DEBUG_SCHEDULER
@@ -1799,11 +1799,11 @@ static void sctk_multiple_queues_add_task_to_proceed(sctk_thread_generic_task_t 
 }
 
 static
-void sctk_multiple_queues_poll_tasks(sctk_thread_generic_scheduler_t *sched)
+void sctk_multiple_queues_poll_tasks(_mpc_threads_ng_scheduler_t *sched)
 {
-	sctk_thread_generic_task_t *     task;
-	sctk_thread_generic_task_t *     task_tmp;
-	sctk_thread_generic_scheduler_t *lsched = NULL;
+	_mpc_threads_ng_task_t *     task;
+	_mpc_threads_ng_task_t *     task_tmp;
+	_mpc_threads_ng_scheduler_t *lsched = NULL;
 	int core;
 
 	core = core_id;
@@ -1815,7 +1815,7 @@ void sctk_multiple_queues_poll_tasks(sctk_thread_generic_scheduler_t *sched)
 		        sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list,
 		        task, task_tmp)
 		{
-			if(sctk_thread_generic_scheduler_check_task(task) == 1)
+			if(_mpc_threads_ng_scheduler_check_task(task) == 1)
 			{
 				DL_DELETE(sctk_multiple_queues_task_lists[core]
 				          .sctk_multiple_queues_task_list,
@@ -1848,13 +1848,13 @@ void sctk_multiple_queues_poll_tasks(sctk_thread_generic_scheduler_t *sched)
 					if(task->sched && task->sched->th && &(task->sched->th->attr) )
 					{
 						tmp = (void **)task->sched->th->attr
-						      .sctk_thread_generic_pthread_blocking_lock_table;
+						      ._mpc_threads_ng_pthread_blocking_lock_table;
 					}
 					if(tmp)
 					{
-						tmp[sctk_thread_generic_task_lock] = NULL;
+						tmp[_mpc_threads_ng_task_lock] = NULL;
 					}
-					sctk_thread_generic_wake(lsched);
+					_mpc_threads_ng_wake(lsched);
 				}
 				mpc_common_spinlock_unlock(&(sched->generic.lock) );
 			}
@@ -1864,10 +1864,10 @@ void sctk_multiple_queues_poll_tasks(sctk_thread_generic_scheduler_t *sched)
 }
 
 void
-sctk_multiple_queues_thread_generic_wake_on_task_lock(sctk_thread_generic_scheduler_t *sched,
+sctk_multiple_queues_thread_generic_wake_on_task_lock(_mpc_threads_ng_scheduler_t *sched,
                                                       int remove_from_lock_list)
 {
-	sctk_thread_generic_task_t *task_tmp;
+	_mpc_threads_ng_task_t *task_tmp;
 	int core;
 
 	core = core_id;
@@ -1898,35 +1898,35 @@ sctk_multiple_queues_thread_generic_wake_on_task_lock(sctk_thread_generic_schedu
 /***************************************/
 /* GENERIC SCHEDULER                   */
 /***************************************/
-static void (*sctk_generic_add_to_list_intern)(sctk_thread_generic_scheduler_t *) = NULL;
-static sctk_thread_generic_scheduler_t * (*sctk_generic_get_from_list)(void) = NULL;
-static sctk_thread_generic_scheduler_t * (*sctk_generic_get_from_list_pthread_init)(void) = NULL;
-static sctk_thread_generic_task_t *      (*sctk_generic_get_task)(void) = NULL;
-static void (*sctk_generic_add_task_to_proceed)(sctk_thread_generic_task_t *) = NULL;
-static void (*sctk_generic_concat_to_list)(sctk_thread_generic_scheduler_t *,
-                                           sctk_thread_generic_scheduler_generic_t *) = NULL;
-static void (*sctk_generic_poll_tasks)(sctk_thread_generic_scheduler_t *) = NULL;
+static void (*sctk_generic_add_to_list_intern)(_mpc_threads_ng_scheduler_t *) = NULL;
+static _mpc_threads_ng_scheduler_t * (*sctk_generic_get_from_list)(void) = NULL;
+static _mpc_threads_ng_scheduler_t * (*sctk_generic_get_from_list_pthread_init)(void) = NULL;
+static _mpc_threads_ng_task_t *      (*sctk_generic_get_task)(void) = NULL;
+static void (*sctk_generic_add_task_to_proceed)(_mpc_threads_ng_task_t *) = NULL;
+static void (*sctk_generic_concat_to_list)(_mpc_threads_ng_scheduler_t *,
+                                           _mpc_threads_ng_scheduler_generic_t *) = NULL;
+static void (*sctk_generic_poll_tasks)(_mpc_threads_ng_scheduler_t *) = NULL;
 
 
-static void (*sctk_thread_generic_wake_on_task_lock_p)(sctk_thread_generic_scheduler_t *sched,
+static void (*_mpc_threads_ng_wake_on_task_lock_p)(_mpc_threads_ng_scheduler_t *sched,
                                                        int remove_from_lock_list) = NULL;
 
-void sctk_thread_generic_wake_on_task_lock(
-        sctk_thread_generic_scheduler_t *sched, int remove_from_lock_list)
+void _mpc_threads_ng_wake_on_task_lock(
+        _mpc_threads_ng_scheduler_t *sched, int remove_from_lock_list)
 {
-	sctk_thread_generic_wake_on_task_lock_p(sched, remove_from_lock_list);
+	_mpc_threads_ng_wake_on_task_lock_p(sched, remove_from_lock_list);
 }
 
 typedef struct sctk_per_vp_data_s
 {
-	sctk_thread_generic_task_t *             sctk_generic_delegated_task_list;
+	_mpc_threads_ng_task_t *             sctk_generic_delegated_task_list;
 	// int delegated_task_nb;
-	sctk_thread_generic_scheduler_generic_t *sctk_generic_delegated_zombie_detach_thread;
-	sctk_thread_generic_scheduler_t *        sctk_generic_delegated_add;
+	_mpc_threads_ng_scheduler_generic_t *sctk_generic_delegated_zombie_detach_thread;
+	_mpc_threads_ng_scheduler_t *        sctk_generic_delegated_add;
 	mpc_common_spinlock_t *                  sctk_generic_delegated_spinlock;
-	sctk_thread_generic_scheduler_t *        sched_idle;
+	_mpc_threads_ng_scheduler_t *        sched_idle;
 	mpc_common_spinlock_t *                  registered_spin_unlock;
-	sctk_thread_generic_scheduler_t *        swap_to_sched;
+	_mpc_threads_ng_scheduler_t *        swap_to_sched;
 } sctk_per_vp_data_t;
 
 //#define SCTK_PER_VP_DATA_INIT {NULL,0,NULL,NULL,NULL,NULL,NULL,NULL}
@@ -1952,13 +1952,13 @@ static int sctk_sem_wait(sem_t *sem)
 	return res;
 }
 
-void sctk_thread_generic_scheduler_swapcontext_pthread(sctk_thread_generic_scheduler_t *old_th,
-                                                       sctk_thread_generic_scheduler_t *new_th,
+void _mpc_threads_ng_scheduler_swapcontext_pthread(_mpc_threads_ng_scheduler_t *old_th,
+                                                       _mpc_threads_ng_scheduler_t *new_th,
                                                        sctk_per_vp_data_t *vp)
 {
 	int val;
 
-	assume(new_th->status == sctk_thread_generic_running);
+	assume(new_th->status == _mpc_threads_ng_running);
 	assume(sem_getvalue(&(old_th->generic.sem), &val) == 0);
 	sctk_nodebug("SLEEP %p (%d) WAKE %p %d (%d)", old_th, old_th->status, new_th, val, new_th->status);
 	sctk_nodebug("Register spinunlock %p execute SWAP", vp->sctk_generic_delegated_spinlock);
@@ -1976,7 +1976,7 @@ void sctk_thread_generic_scheduler_swapcontext_pthread(sctk_thread_generic_sched
 	assume(sem_getvalue(&(old_th->generic.sem), &val) == 0);
 	assume(val == 0);
 
-	assume(old_th->status == sctk_thread_generic_running);
+	assume(old_th->status == _mpc_threads_ng_running);
 	assume(old_th->generic.vp != NULL);
 	memcpy(&vp_data, old_th->generic.vp, sizeof(sctk_per_vp_data_t) );
 	sctk_nodebug("Register spinunlock %p execute SWAP NEW", old_th->generic.vp->sctk_generic_delegated_spinlock);
@@ -1984,30 +1984,30 @@ void sctk_thread_generic_scheduler_swapcontext_pthread(sctk_thread_generic_sched
 	sctk_nodebug("RESTART %p", old_th);
 }
 
-void sctk_thread_generic_scheduler_swapcontext_ethread(sctk_thread_generic_scheduler_t *old_th,
-                                                       sctk_thread_generic_scheduler_t *new_th,
+void _mpc_threads_ng_scheduler_swapcontext_ethread(_mpc_threads_ng_scheduler_t *old_th,
+                                                       _mpc_threads_ng_scheduler_t *new_th,
                                                        sctk_per_vp_data_t *vp)
 {
 	new_th->generic.vp = vp;
-	sctk_thread_generic_scheduler_swapcontext(old_th, new_th);
+	_mpc_threads_ng_scheduler_swapcontext(old_th, new_th);
 }
 
-void sctk_thread_generic_scheduler_swapcontext_nothing(__UNUSED__ sctk_thread_generic_scheduler_t *old_th,
-                                                       __UNUSED__ sctk_thread_generic_scheduler_t *new_th,
+void _mpc_threads_ng_scheduler_swapcontext_nothing(__UNUSED__ _mpc_threads_ng_scheduler_t *old_th,
+                                                       __UNUSED__ _mpc_threads_ng_scheduler_t *new_th,
                                                        __UNUSED__ sctk_per_vp_data_t *vp)
 {
 }
 
-void sctk_thread_generic_scheduler_swapcontext_none(__UNUSED__ sctk_thread_generic_scheduler_t *old_th,
-                                                    __UNUSED__ sctk_thread_generic_scheduler_t *new_th,
+void _mpc_threads_ng_scheduler_swapcontext_none(__UNUSED__ _mpc_threads_ng_scheduler_t *old_th,
+                                                    __UNUSED__ _mpc_threads_ng_scheduler_t *new_th,
                                                     __UNUSED__ sctk_per_vp_data_t *vp)
 {
 	not_reachable();
 }
 
-static void sctk_generic_add_to_list(sctk_thread_generic_scheduler_t *sched, int is_idle_mode)
+static void sctk_generic_add_to_list(_mpc_threads_ng_scheduler_t *sched, int is_idle_mode)
 {
-	assume(sched->status == sctk_thread_generic_running);
+	assume(sched->status == _mpc_threads_ng_running);
 	sctk_nodebug("ADD TASK %p idle mode %d", sched, is_idle_mode);
 	if(is_idle_mode == 0)
 	{
@@ -2015,23 +2015,23 @@ static void sctk_generic_add_to_list(sctk_thread_generic_scheduler_t *sched, int
 	}
 }
 
-static void sctk_generic_add_task(sctk_thread_generic_task_t *task)
+static void sctk_generic_add_task(_mpc_threads_ng_task_t *task)
 {
 	void **tmp = NULL;
 
 	if(task->sched && task->sched->th && &(task->sched->th->attr) )
 	{
 		tmp = (void **)task->sched->th->attr
-		      .sctk_thread_generic_pthread_blocking_lock_table;
+		      ._mpc_threads_ng_pthread_blocking_lock_table;
 	}
 	if(tmp)
 	{
-		tmp[sctk_thread_generic_task_lock] = (void *)1;
+		tmp[_mpc_threads_ng_task_lock] = (void *)1;
 	}
 	sctk_nodebug("ADD task %p FROM %p", task, task->sched);
 	if(task->is_blocking)
 	{
-		sctk_thread_generic_thread_status(task->sched, sctk_thread_generic_blocked);
+		_mpc_threads_ng_thread_status(task->sched, _mpc_threads_ng_blocked);
 		assume(vp_data.sctk_generic_delegated_task_list == NULL);
 		DL_APPEND(vp_data.sctk_generic_delegated_task_list, task);
 		// hmt
@@ -2039,9 +2039,9 @@ static void sctk_generic_add_task(sctk_thread_generic_task_t *task)
 		delegated_task_nb++;
 		// endhmt
 		mpc_common_spinlock_lock(&(task->sched->generic.lock) );
-		sctk_thread_generic_register_spinlock_unlock(task->sched,
+		_mpc_threads_ng_register_spinlock_unlock(task->sched,
 		                                             &(task->sched->generic.lock) );
-		sctk_thread_generic_sched_yield(task->sched);
+		_mpc_threads_ng_sched_yield(task->sched);
 	}
 	else
 	{
@@ -2063,11 +2063,11 @@ static void sctk_generic_add_task(sctk_thread_generic_task_t *task)
 	sctk_nodebug("ADD task %p FROM %p DONE", task, task->sched);
 }
 
-static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t *sched);
+static void sctk_generic_sched_yield(_mpc_threads_ng_scheduler_t *sched);
 
 static void sctk_generic_sched_idle_start()
 {
-	sctk_thread_generic_scheduler_t *next;
+	_mpc_threads_ng_scheduler_t *next;
 
 	do
 	{
@@ -2081,7 +2081,7 @@ static void sctk_generic_sched_idle_start()
 
 static void sctk_generic_sched_idle_start_pthread()
 {
-	sctk_thread_generic_scheduler_t *next;
+	_mpc_threads_ng_scheduler_t *next;
 
 	vp_data.sctk_generic_delegated_task_list            = NULL;
 	vp_data.sctk_generic_delegated_zombie_detach_thread = NULL;
@@ -2097,17 +2097,17 @@ static void sctk_generic_sched_idle_start_pthread()
 	not_reachable();
 }
 
-static sctk_thread_generic_scheduler_t *sctk_generic_get_from_list_none()
+static _mpc_threads_ng_scheduler_t *sctk_generic_get_from_list_none()
 {
 	return NULL;
 }
 
 static void sctk_generic_sched_yield_intern(
-        sctk_thread_generic_scheduler_t *sched,
-        void (*swap)(sctk_thread_generic_scheduler_t *old_th,
-                     sctk_thread_generic_scheduler_t *new_th,
+        _mpc_threads_ng_scheduler_t *sched,
+        void (*swap)(_mpc_threads_ng_scheduler_t *old_th,
+                     _mpc_threads_ng_scheduler_t *new_th,
                      sctk_per_vp_data_t *vp),
-        sctk_thread_generic_scheduler_t *(*get_from_list)() )
+        _mpc_threads_ng_scheduler_t *(*get_from_list)() )
 {
 #ifdef SCTK_DEBUG_SCHEDULER
 	{
@@ -2141,7 +2141,7 @@ static void sctk_generic_sched_yield_intern(
 #endif
 
 	// next thread to schedule
-	sctk_thread_generic_scheduler_t *next;
+	_mpc_threads_ng_scheduler_t *next;
 
 
 	// bypass get_from_list ?
@@ -2157,7 +2157,7 @@ static void sctk_generic_sched_yield_intern(
 	// != NULL){
 	//    sched->th->attr.current_priority = 10;
 
-	//    sctk_thread_generic_scheduler_generic_t* res;
+	//    _mpc_threads_ng_scheduler_generic_t* res;
 	//    res =
 	//    sctk_multiple_queues_sched_lists[sched->th->attr.bind_to].sctk_multiple_queues_sched_list;
 	//    res->sched->th->attr.current_priority = 10;
@@ -2193,7 +2193,7 @@ static void sctk_generic_sched_yield_intern(
 		vp_data.sctk_generic_delegated_add = NULL;
 	}
 
-	if(sched->status == sctk_thread_generic_running)
+	if(sched->status == _mpc_threads_ng_running)
 	{
 		assume(vp_data.sctk_generic_delegated_add == NULL);
 		vp_data.sctk_generic_delegated_add = sched;
@@ -2221,10 +2221,10 @@ static void sctk_generic_sched_yield_intern(
 	else
 	{
 		sctk_nodebug("TASK %p status %d type %d %d %d", sched, sched->status,
-		             sched->generic.vp_type, sctk_thread_generic_zombie,
+		             sched->generic.vp_type, _mpc_threads_ng_zombie,
 		             sched->th->attr.cancel_status);
 		// Register the current thread for a futur destruction (zombie state)
-		if(sched->status == sctk_thread_generic_zombie &&
+		if(sched->status == _mpc_threads_ng_zombie &&
 		   sched->th->attr.detachstate == SCTK_THREAD_CREATE_DETACHED)
 		{
 			assume(vp_data.sctk_generic_delegated_zombie_detach_thread == NULL);
@@ -2232,7 +2232,7 @@ static void sctk_generic_sched_yield_intern(
 			sctk_nodebug("Detached Zombie %p", sched);
 		}
 
-		if(sched->status == sctk_thread_generic_zombie)
+		if(sched->status == _mpc_threads_ng_zombie)
 		{
 			sctk_nodebug("Attached Zombie %p", sched);
 		}
@@ -2243,7 +2243,7 @@ static void sctk_generic_sched_yield_intern(
 retry:
 	next = get_from_list();
 
-	if( (next == NULL) && (sched->status == sctk_thread_generic_running) )
+	if( (next == NULL) && (sched->status == _mpc_threads_ng_running) )
 	{
 #ifdef SCTK_DEBUG_SCHEDULER
 		{
@@ -2257,7 +2257,7 @@ retry:
 
 			FILE *fd = fopen(hostname2, "a");
 			fprintf(fd, "if((next == NULL) && (sched->status == "
-			            "sctk_thread_generic_running)) %p\n\n",
+			            "_mpc_threads_ng_running)) %p\n\n",
 			        sched);
 			fflush(fd);
 			fclose(fd);
@@ -2292,7 +2292,7 @@ quick_swap:
 			sctk_nodebug("SWAP from %p to %p", sched, next);
 			sctk_nodebug("SLEEP TASK %p status %d type %d %d cancel status %d", sched,
 			             sched->status, sched->generic.vp_type,
-			             sctk_thread_generic_zombie, sched->th->attr.cancel_status);
+			             _mpc_threads_ng_zombie, sched->th->attr.cancel_status);
 
 			// timers
 			if(sched->th->attr.timestamp_base != -1)
@@ -2353,7 +2353,7 @@ quick_swap:
 			sctk_nodebug("Enter %p", sched);
 			sctk_nodebug("WAKE TASK %p status %d type %d %d cancel status %d", sched,
 			             sched->status, sched->generic.vp_type,
-			             sctk_thread_generic_zombie, sched->th->attr.cancel_status);
+			             _mpc_threads_ng_zombie, sched->th->attr.cancel_status);
 		}
 		else
 		{
@@ -2431,14 +2431,14 @@ quick_swap:
 			{
 				mpc_common_spinlock_lock(vp_data.registered_spin_unlock);
 				vp_data.sched_idle->generic.is_idle_mode = 0;
-				if(vp_data.sched_idle->status == sctk_thread_generic_running)
+				if(vp_data.sched_idle->status == _mpc_threads_ng_running)
 				{
 					sctk_nodebug("ADD FROM delegated spinlock %p", vp_data.sched_idle);
 
 #ifdef SCTK_DEBUG_SCHEDULER
 					// hmt
 					printf("if(vp_data.sched_idle->status == "
-					       "sctk_thread_generic_running) add_to_list\n");
+					       "_mpc_threads_ng_running) add_to_list\n");
 					fflush(stdout);
 // endhmt
 #endif
@@ -2487,7 +2487,7 @@ quick_swap:
 	/* Deal with zombie threads */
 	if(vp_data.sctk_generic_delegated_zombie_detach_thread != NULL)
 	{
-		// sctk_thread_generic_handle_zombies(
+		// _mpc_threads_ng_handle_zombies(
 		// vp_data.sctk_generic_delegated_zombie_detach_thread );
 		//#warning "Handel Zombies"
 		vp_data.sctk_generic_delegated_zombie_detach_thread = NULL;
@@ -2539,18 +2539,18 @@ quick_swap:
 	}
 }
 
-static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t *sched)
+static void sctk_generic_sched_yield(_mpc_threads_ng_scheduler_t *sched)
 {
 	if(sched->generic.vp_type == 0)
 	{
-		sctk_generic_sched_yield_intern(sched, sctk_thread_generic_scheduler_swapcontext_ethread,
+		sctk_generic_sched_yield_intern(sched, _mpc_threads_ng_scheduler_swapcontext_ethread,
 		                                sctk_generic_get_from_list);
 	}
 	else
 	{
 		if(sched->generic.vp_type == 1)
 		{
-			sctk_generic_sched_yield_intern(sched, sctk_thread_generic_scheduler_swapcontext_none,
+			sctk_generic_sched_yield_intern(sched, _mpc_threads_ng_scheduler_swapcontext_none,
 			                                sctk_generic_get_from_list_none);
 		}
 		else
@@ -2564,45 +2564,45 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t *sched)
 				sctk_nodebug("Register spinunlock %p execute SWAP NEW FIRST", sched->generic.vp->sctk_generic_delegated_spinlock);
 				return;
 			}
-			sctk_generic_sched_yield_intern(sched, sctk_thread_generic_scheduler_swapcontext_pthread,
+			sctk_generic_sched_yield_intern(sched, _mpc_threads_ng_scheduler_swapcontext_pthread,
 			                                sctk_generic_get_from_list);
 		}
 	}
 }
 
-void sctk_generic_swap_to_sched(sctk_thread_generic_scheduler_t *sched)
+void sctk_generic_swap_to_sched(_mpc_threads_ng_scheduler_t *sched)
 {
-	sctk_thread_generic_scheduler_t *old_sched = &(_mpc_threads_generic_self()->sched);
+	_mpc_threads_ng_scheduler_t *old_sched = &(_mpc_threads_generic_self()->sched);
 
 	vp_data.swap_to_sched = old_sched;
 
 	if(sched->generic.vp_type == 0)
 	{
-		sctk_thread_generic_scheduler_swapcontext_ethread(old_sched,
+		_mpc_threads_ng_scheduler_swapcontext_ethread(old_sched,
 		                                                  sched, &vp_data);
 	}
 	else
 	{
-		sctk_thread_generic_scheduler_swapcontext_pthread(old_sched,
+		_mpc_threads_ng_scheduler_swapcontext_pthread(old_sched,
 		                                                  sched, &vp_data);
 	}
 }
 
 static
-void sctk_generic_thread_status(sctk_thread_generic_scheduler_t *sched,
-                                sctk_thread_generic_thread_status_t status)
+void sctk_generic_thread_status(_mpc_threads_ng_scheduler_t *sched,
+                                _mpc_threads_ng_thread_status_t status)
 {
 	sched->status = status;
 }
 
-static void sctk_generic_register_spinlock_unlock(__UNUSED__ sctk_thread_generic_scheduler_t *sched,
+static void sctk_generic_register_spinlock_unlock(__UNUSED__ _mpc_threads_ng_scheduler_t *sched,
                                                   mpc_common_spinlock_t *lock)
 {
 	sctk_nodebug("Register spinunlock %p", lock);
 	vp_data.sctk_generic_delegated_spinlock = lock;
 }
 
-static void sctk_generic_wake(sctk_thread_generic_scheduler_t *sched)
+static void sctk_generic_wake(_mpc_threads_ng_scheduler_t *sched)
 {
 	int is_idle_mode;
 
@@ -2612,12 +2612,12 @@ static void sctk_generic_wake(sctk_thread_generic_scheduler_t *sched)
 
 	if(sched->generic.vp_type == 0)
 	{
-		sched->status = sctk_thread_generic_running;
+		sched->status = _mpc_threads_ng_running;
 		sctk_generic_add_to_list(sched, is_idle_mode);
 	}
 	else
 	{
-		sched->status = sctk_thread_generic_running;
+		sched->status = _mpc_threads_ng_running;
 		if(sched->generic.vp_type == 1)
 		{
 			sem_post(&(sched->generic.sem) );
@@ -2632,8 +2632,8 @@ static void sctk_generic_wake(sctk_thread_generic_scheduler_t *sched)
 static void
 sctk_generic_freeze_thread_on_vp(sctk_thread_mutex_t *lock, void **list)
 {
-	sctk_thread_generic_scheduler_t *        sched;
-	sctk_thread_generic_scheduler_generic_t *s_list;
+	_mpc_threads_ng_scheduler_t *        sched;
+	_mpc_threads_ng_scheduler_generic_t *s_list;
 
 	sched = &(_mpc_threads_generic_self()->sched);
 
@@ -2642,7 +2642,7 @@ sctk_generic_freeze_thread_on_vp(sctk_thread_mutex_t *lock, void **list)
 	*list = s_list;
 
 	sctk_thread_mutex_unlock(lock);
-	sctk_generic_thread_status(sched, sctk_thread_generic_blocked);
+	sctk_generic_thread_status(sched, _mpc_threads_ng_blocked);
 	sctk_generic_sched_yield(sched);
 }
 
@@ -2651,8 +2651,8 @@ sctk_generic_wake_thread_on_vp(void **list)
 {
 	if(*list != NULL)
 	{
-		sctk_thread_generic_scheduler_generic_t *s_list;
-		sctk_thread_generic_scheduler_t *        sched;
+		_mpc_threads_ng_scheduler_generic_t *s_list;
+		_mpc_threads_ng_scheduler_t *        sched;
 		s_list = *list;
 		sched  = &(_mpc_threads_generic_self()->sched);
 		sctk_generic_concat_to_list(sched, s_list);
@@ -2660,7 +2660,7 @@ sctk_generic_wake_thread_on_vp(void **list)
 	}
 }
 
-static void sctk_generic_create_common(sctk_thread_generic_p_t *thread)
+static void sctk_generic_create_common(_mpc_threads_ng_p_t *thread)
 {
 	if(thread->attr.scope == SCTK_THREAD_SCOPE_SYSTEM)
 	{
@@ -2668,7 +2668,7 @@ static void sctk_generic_create_common(sctk_thread_generic_p_t *thread)
 
 		sctk_nodebug("Create thread scope %d (%d SYSTEM) vp _type %d",
 		             thread->attr.scope, SCTK_THREAD_SCOPE_SYSTEM, thread->sched.generic.vp_type);
-		sctk_thread_generic_scheduler_create_vp(thread, thread->attr.bind_to);
+		_mpc_threads_ng_scheduler_create_vp(thread, thread->attr.bind_to);
 	}
 	else
 	{
@@ -2678,20 +2678,20 @@ static void sctk_generic_create_common(sctk_thread_generic_p_t *thread)
 	}
 }
 
-static void sctk_generic_create(sctk_thread_generic_p_t *thread)
+static void sctk_generic_create(_mpc_threads_ng_p_t *thread)
 {
-	sctk_thread_generic_scheduler_init_thread(&(thread->sched), thread);
+	_mpc_threads_ng_scheduler_init_thread(&(thread->sched), thread);
 	sctk_generic_create_common(thread);
 }
 
-static void sctk_generic_create_pthread(sctk_thread_generic_p_t *thread)
+static void sctk_generic_create_pthread(_mpc_threads_ng_p_t *thread)
 {
-	sctk_thread_generic_scheduler_init_thread(&(thread->sched), thread);
+	_mpc_threads_ng_scheduler_init_thread(&(thread->sched), thread);
 	thread->sched.generic.vp_type = 4;
 
 	if(thread->attr.scope != SCTK_THREAD_SCOPE_SYSTEM)
 	{
-		sctk_thread_generic_scheduler_create_vp(thread, thread->attr.bind_to);
+		_mpc_threads_ng_scheduler_create_vp(thread, thread->attr.bind_to);
 		sctk_generic_add_to_list(&(thread->sched), (&(thread->sched) )->generic.is_idle_mode);
 	}
 	else
@@ -2702,7 +2702,7 @@ static void sctk_generic_create_pthread(sctk_thread_generic_p_t *thread)
 
 static void *sctk_generic_polling_func(void *arg)
 {
-	sctk_thread_generic_scheduler_t *sched;
+	_mpc_threads_ng_scheduler_t *sched;
 
 	assume(arg == NULL);
 
@@ -2724,7 +2724,7 @@ static void *sctk_generic_polling_func(void *arg)
 	return (void *)0;
 }
 
-static void sctk_generic_scheduler_init_thread_common(sctk_thread_generic_scheduler_t *sched)
+static void sctk_generic_scheduler_init_thread_common(_mpc_threads_ng_scheduler_t *sched)
 {
 	sched->generic.sched        = sched;
 	sched->generic.next         = NULL;
@@ -2733,17 +2733,17 @@ static void sctk_generic_scheduler_init_thread_common(sctk_thread_generic_schedu
 	mpc_common_spinlock_init(&sched->generic.lock, 0);
 
 	assume(sem_init(&(sched->generic.sem), 0, 0) == 0);
-	sctk_nodebug("INIT DONE FOR TASK %p status %d type %d %d cancel status %d %p", sched, sched->status, sched->generic.vp_type, sctk_thread_generic_zombie, sched->th->attr.cancel_status, sched->th);
+	sctk_nodebug("INIT DONE FOR TASK %p status %d type %d %d cancel status %d %p", sched, sched->status, sched->generic.vp_type, _mpc_threads_ng_zombie, sched->th->attr.cancel_status, sched->th);
 	/* assume(sched->th->attr.cancel_status == 0); */
 }
 
-static void sctk_generic_scheduler_init_thread(sctk_thread_generic_scheduler_t *sched)
+static void sctk_generic_scheduler_init_thread(_mpc_threads_ng_scheduler_t *sched)
 {
 	sched->generic.vp_type = 0;
 	sctk_generic_scheduler_init_thread_common(sched);
 }
 
-static void sctk_generic_scheduler_init_pthread(sctk_thread_generic_scheduler_t *sched)
+static void sctk_generic_scheduler_init_pthread(_mpc_threads_ng_scheduler_t *sched)
 {
 	sched->generic.vp_type = 3;
 	sctk_generic_scheduler_init_thread_common(sched);
@@ -2754,34 +2754,34 @@ static void sctk_generic_scheduler_init_pthread(sctk_thread_generic_scheduler_t 
 /***************************************/
 
 static int
-sctk_thread_generic_scheduler_get_vp()
+_mpc_threads_ng_scheduler_get_vp()
 {
 	return core_id;
 }
 
-static void *sctk_thread_generic_polling_func_bootstrap(void *attr)
+static void *_mpc_threads_ng_polling_func_bootstrap(void *attr)
 {
-	return sctk_thread_generic_polling_func(attr);
+	return _mpc_threads_ng_polling_func(attr);
 }
 
 // Initialization of function pointers which are used for the scheduling on
 // yield funtion
 static char sched_type[4096];
-void sctk_thread_generic_scheduler_init(char *thread_type, char *scheduler_type,
+void _mpc_threads_ng_scheduler_init(char *thread_type, char *scheduler_type,
                                         int vp_number)
 {
 	int i;
 
 	if(vp_number > mpc_topology_get_pu_count() )
 	{
-		sctk_thread_generic_scheduler_use_binding = 0;
+		_mpc_threads_ng_scheduler_use_binding = 0;
 	}
 
-	__sctk_ptr_thread_get_vp = sctk_thread_generic_scheduler_get_vp;
+	__sctk_ptr_thread_get_vp = _mpc_threads_ng_scheduler_get_vp;
 
 	sprintf(sched_type, "%s", scheduler_type);
 	core_id = 0;
-	sctk_thread_generic_scheduler_bind_to_cpu(0);
+	_mpc_threads_ng_scheduler_bind_to_cpu(0);
 
 	///////////////////////////
 	// update function pointers
@@ -2798,26 +2798,26 @@ void sctk_thread_generic_scheduler_init(char *thread_type, char *scheduler_type,
 		sctk_generic_concat_to_list      =
 		        sctk_centralized_concat_to_list; // concat to list
 		sctk_generic_poll_tasks = sctk_centralized_poll_tasks;
-		sctk_thread_generic_wake_on_task_lock_p = sctk_centralized_thread_generic_wake_on_task_lock;
+		_mpc_threads_ng_wake_on_task_lock_p = sctk_centralized_thread_generic_wake_on_task_lock;
 
-		sctk_thread_generic_sched_idle_start         = sctk_generic_sched_idle_start;
-		sctk_thread_generic_sched_yield              = sctk_generic_sched_yield;
-		sctk_thread_generic_thread_status            = sctk_generic_thread_status;
-		sctk_thread_generic_register_spinlock_unlock = sctk_generic_register_spinlock_unlock;
-		sctk_thread_generic_wake = sctk_generic_wake;
-		sctk_thread_generic_scheduler_init_thread_p = sctk_generic_scheduler_init_thread;
-		sctk_thread_generic_sched_create            = sctk_generic_create;
-		sctk_thread_generic_add_task = sctk_generic_add_task;
+		_mpc_threads_ng_sched_idle_start         = sctk_generic_sched_idle_start;
+		_mpc_threads_ng_sched_yield              = sctk_generic_sched_yield;
+		_mpc_threads_ng_thread_status            = sctk_generic_thread_status;
+		_mpc_threads_ng_register_spinlock_unlock = sctk_generic_register_spinlock_unlock;
+		_mpc_threads_ng_wake = sctk_generic_wake;
+		_mpc_threads_ng_scheduler_init_thread_p = sctk_generic_scheduler_init_thread;
+		_mpc_threads_ng_sched_create            = sctk_generic_create;
+		_mpc_threads_ng_add_task = sctk_generic_add_task;
 		sctk_add_func_type(sctk_generic, freeze_thread_on_vp,
 		                   void (*)(sctk_thread_mutex_t *, void **) );
 		sctk_add_func(sctk_generic, wake_thread_on_vp);
-		sctk_thread_generic_polling_func = sctk_generic_polling_func;
+		_mpc_threads_ng_polling_func = sctk_generic_polling_func;
 		if(strcmp("pthread", thread_type) == 0)
 		{
-			sctk_thread_generic_sched_create            = sctk_generic_create_pthread;
-			sctk_thread_generic_scheduler_init_thread_p = sctk_generic_scheduler_init_pthread;
+			_mpc_threads_ng_sched_create            = sctk_generic_create_pthread;
+			_mpc_threads_ng_scheduler_init_thread_p = sctk_generic_scheduler_init_pthread;
 			sctk_generic_get_from_list_pthread_init     = sctk_centralized_get_from_list_pthread_init;
-			sctk_thread_generic_sched_idle_start        = sctk_generic_sched_idle_start_pthread;
+			_mpc_threads_ng_sched_idle_start        = sctk_generic_sched_idle_start_pthread;
 		}
 		// generic/multiple_queues scheduler
 	}
@@ -2833,31 +2833,31 @@ void sctk_thread_generic_scheduler_init(char *thread_type, char *scheduler_type,
 		sctk_generic_concat_to_list      =
 		        sctk_multiple_queues_concat_to_list; // concat to list
 		sctk_generic_poll_tasks = sctk_multiple_queues_poll_tasks;
-		sctk_thread_generic_wake_on_task_lock_p =
+		_mpc_threads_ng_wake_on_task_lock_p =
 		        sctk_multiple_queues_thread_generic_wake_on_task_lock;
 
-		sctk_thread_generic_sched_idle_start         = sctk_generic_sched_idle_start;
-		sctk_thread_generic_sched_yield              = sctk_generic_sched_yield;
-		sctk_thread_generic_thread_status            = sctk_generic_thread_status;
-		sctk_thread_generic_register_spinlock_unlock =
+		_mpc_threads_ng_sched_idle_start         = sctk_generic_sched_idle_start;
+		_mpc_threads_ng_sched_yield              = sctk_generic_sched_yield;
+		_mpc_threads_ng_thread_status            = sctk_generic_thread_status;
+		_mpc_threads_ng_register_spinlock_unlock =
 		        sctk_generic_register_spinlock_unlock;
-		sctk_thread_generic_wake = sctk_generic_wake;
-		sctk_thread_generic_scheduler_init_thread_p =
+		_mpc_threads_ng_wake = sctk_generic_wake;
+		_mpc_threads_ng_scheduler_init_thread_p =
 		        sctk_generic_scheduler_init_thread;
-		sctk_thread_generic_sched_create = sctk_generic_create;
-		sctk_thread_generic_add_task     = sctk_generic_add_task;
+		_mpc_threads_ng_sched_create = sctk_generic_create;
+		_mpc_threads_ng_add_task     = sctk_generic_add_task;
 		sctk_add_func_type(sctk_generic, freeze_thread_on_vp,
 		                   void (*)(sctk_thread_mutex_t *, void **) );
 		sctk_add_func(sctk_generic, wake_thread_on_vp);
-		sctk_thread_generic_polling_func = sctk_generic_polling_func;
+		_mpc_threads_ng_polling_func = sctk_generic_polling_func;
 		if(strcmp("pthread", thread_type) == 0)
 		{
-			sctk_thread_generic_sched_create            = sctk_generic_create_pthread;
-			sctk_thread_generic_scheduler_init_thread_p =
+			_mpc_threads_ng_sched_create            = sctk_generic_create_pthread;
+			_mpc_threads_ng_scheduler_init_thread_p =
 			        sctk_generic_scheduler_init_pthread;
 			sctk_generic_get_from_list_pthread_init =
 			        sctk_multiple_queues_get_from_list_pthread_init;
-			sctk_thread_generic_sched_idle_start =
+			_mpc_threads_ng_sched_idle_start =
 			        sctk_generic_sched_idle_start_pthread;
 		}
 
@@ -2894,26 +2894,26 @@ void sctk_thread_generic_scheduler_init(char *thread_type, char *scheduler_type,
 		sctk_generic_concat_to_list      =
 		        sctk_multiple_queues_with_priority_concat_to_list; // concat to list
 		sctk_generic_poll_tasks = sctk_multiple_queues_poll_tasks;
-		sctk_thread_generic_wake_on_task_lock_p = sctk_multiple_queues_thread_generic_wake_on_task_lock;
+		_mpc_threads_ng_wake_on_task_lock_p = sctk_multiple_queues_thread_generic_wake_on_task_lock;
 
-		sctk_thread_generic_sched_idle_start         = sctk_generic_sched_idle_start;
-		sctk_thread_generic_sched_yield              = sctk_generic_sched_yield;
-		sctk_thread_generic_thread_status            = sctk_generic_thread_status;
-		sctk_thread_generic_register_spinlock_unlock = sctk_generic_register_spinlock_unlock;
-		sctk_thread_generic_wake = sctk_generic_wake;
-		sctk_thread_generic_scheduler_init_thread_p = sctk_generic_scheduler_init_thread;
-		sctk_thread_generic_sched_create            = sctk_generic_create;
-		sctk_thread_generic_add_task = sctk_generic_add_task;
+		_mpc_threads_ng_sched_idle_start         = sctk_generic_sched_idle_start;
+		_mpc_threads_ng_sched_yield              = sctk_generic_sched_yield;
+		_mpc_threads_ng_thread_status            = sctk_generic_thread_status;
+		_mpc_threads_ng_register_spinlock_unlock = sctk_generic_register_spinlock_unlock;
+		_mpc_threads_ng_wake = sctk_generic_wake;
+		_mpc_threads_ng_scheduler_init_thread_p = sctk_generic_scheduler_init_thread;
+		_mpc_threads_ng_sched_create            = sctk_generic_create;
+		_mpc_threads_ng_add_task = sctk_generic_add_task;
 		sctk_add_func_type(sctk_generic, freeze_thread_on_vp,
 		                   void (*)(sctk_thread_mutex_t *, void **) );
 		sctk_add_func(sctk_generic, wake_thread_on_vp);
-		sctk_thread_generic_polling_func = sctk_generic_polling_func;
+		_mpc_threads_ng_polling_func = sctk_generic_polling_func;
 		if(strcmp("pthread", thread_type) == 0)
 		{
-			sctk_thread_generic_sched_create            = sctk_generic_create_pthread;
-			sctk_thread_generic_scheduler_init_thread_p = sctk_generic_scheduler_init_pthread;
+			_mpc_threads_ng_sched_create            = sctk_generic_create_pthread;
+			_mpc_threads_ng_scheduler_init_thread_p = sctk_generic_scheduler_init_pthread;
 			sctk_generic_get_from_list_pthread_init     = sctk_multiple_queues_get_from_list_pthread_init;
-			sctk_thread_generic_sched_idle_start        = sctk_generic_sched_idle_start_pthread;
+			_mpc_threads_ng_sched_idle_start        = sctk_generic_sched_idle_start_pthread;
 		}
 
 		sctk_multiple_queues_sched_lists = malloc(vp_number * sizeof(sctk_multiple_queues_sched_list_t) );
@@ -2942,14 +2942,14 @@ void sctk_thread_generic_scheduler_init(char *thread_type, char *scheduler_type,
 	{
 		for(i = 1; i < vp_number; i++)
 		{
-			sctk_thread_generic_scheduler_create_vp(NULL, i);
+			_mpc_threads_ng_scheduler_create_vp(NULL, i);
 		}
 	}
 
 	mpc_topology_set_pu_count(vp_number);
 }
 
-void sctk_thread_generic_polling_init(int vp_number)
+void _mpc_threads_ng_polling_init(int vp_number)
 {
 	int i;
 	sctk_thread_attr_t attr;
@@ -2957,8 +2957,8 @@ void sctk_thread_generic_polling_init(int vp_number)
 
 	sctk_thread_attr_init(&attr);
 
-	sctk_thread_generic_attr_t *attr_intern;
-	attr_intern = (sctk_thread_generic_attr_t *)&attr;
+	_mpc_threads_ng_attr_t *attr_intern;
+	attr_intern = (_mpc_threads_ng_attr_t *)&attr;
 	attr_intern->ptr->polling    = 1;
 	attr_intern->ptr->stack_size = 8 * 1024;
 
@@ -2980,21 +2980,21 @@ void sctk_thread_generic_polling_init(int vp_number)
 	for(i = 0; i < vp_number; i++)
 	{
 		attr_intern->ptr->bind_to = i;
-		sctk_user_thread_create(&threadp, &attr, sctk_thread_generic_polling_func_bootstrap, NULL);
+		sctk_user_thread_create(&threadp, &attr, _mpc_threads_ng_polling_func_bootstrap, NULL);
 	}
 	sctk_thread_attr_destroy(&attr);
 }
 
-void sctk_thread_generic_scheduler_init_thread(sctk_thread_generic_scheduler_t *sched,
-                                               struct sctk_thread_generic_p_s *th)
+void _mpc_threads_ng_scheduler_init_thread(_mpc_threads_ng_scheduler_t *sched,
+                                               struct _mpc_threads_ng_p_s *th)
 {
 	sched->th     = th;
-	sched->status = sctk_thread_generic_running;
+	sched->status = _mpc_threads_ng_running;
 	mpc_common_spinlock_init(&sched->debug_lock, 0);
-	sctk_thread_generic_scheduler_init_thread_p(sched);
+	_mpc_threads_ng_scheduler_init_thread_p(sched);
 }
 
-char *sctk_thread_generic_scheduler_get_name()
+char *_mpc_threads_ng_scheduler_get_name()
 {
 	return sched_type;
 }

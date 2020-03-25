@@ -4860,7 +4860,7 @@ static inline int NBC_Initialize() {
   struct mpc_mpi_cl_per_mpi_process_ctx_s * task_specific;
   task_specific = mpc_cl_per_mpi_process_ctx_get ();
 
-  // sctk_thread_generic_attr_t attr;
+  // _mpc_threads_ng_attr_t attr;
   // _mpc_threads_generic_attr_init(&attr);
 
   sctk_thread_attr_t attr;
@@ -4877,8 +4877,8 @@ static inline int NBC_Initialize() {
                               cpu_id_to_bind_progress_thread);
 
   if (mpc_common_get_flags()->new_scheduler_engine_enabled) {
-    sctk_thread_generic_attr_t *attr_intern;
-    attr_intern = (sctk_thread_generic_attr_t *)&attr;
+    _mpc_threads_ng_attr_t *attr_intern;
+    attr_intern = (_mpc_threads_ng_attr_t *)&attr;
 
     attr_intern->ptr->kind.mask = KIND_MASK_PROGRESS_THREAD;
     attr_intern->ptr->basic_priority =
@@ -4913,7 +4913,7 @@ static inline int NBC_Initialize() {
                                     NBC_Pthread_func, NULL);
   if(0 != ret) { printf("Error in sctk_user_thread_create() (%i)\n", ret); return NBC_OOR; }
 
-  // sctk_thread_generic_attr_destroy(&attr);
+  // _mpc_threads_ng_attr_destroy(&attr);
   sctk_thread_attr_destroy(&attr);
 
   // task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;
