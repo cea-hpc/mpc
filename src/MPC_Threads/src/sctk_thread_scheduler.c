@@ -88,7 +88,7 @@ static void *sctk_thread_generic_scheduler_idle_task(sctk_thread_generic_schedul
 	sctk_free(arg);
 	arg = NULL;
 
-	sctk_thread_generic_attr_init(&attr);
+	_mpc_threads_generic_attr_init(&attr);
 	p_th.attr = (*(attr.ptr) );
 	th        = &p_th;
 
@@ -2460,12 +2460,12 @@ quick_swap:
 		vp_data.sctk_generic_delegated_spinlock = NULL;
 	}
 
-	sctk_nodebug("TASK %p status %d type %d sctk_thread_generic_check_signals",
+	sctk_nodebug("TASK %p status %d type %d _mpc_threads_generic_check_signals",
 	             sched, sched->status, sched->generic.vp_type);
-	sctk_thread_generic_check_signals(1);
+	_mpc_threads_generic_check_signals(1);
 
 	sctk_nodebug(
-	        "TASK %p status %d type %d sctk_thread_generic_check_signals done %p ",
+	        "TASK %p status %d type %d _mpc_threads_generic_check_signals done %p ",
 	        sched, sched->status, sched->generic.vp_type, vp_data.swap_to_sched);
 
 	/* To ensure that blocked threads in synchronizaton locks are still able to

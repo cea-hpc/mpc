@@ -913,6 +913,7 @@ void mpc_topology_init()
 
 #if defined(MPC_USE_EXTLS) && !defined(MPC_DISABLE_HLS)
 	extls_set_topology_addr((void*(*)(void))__extls_get_topology_addr);
+	extls_hls_topology_construct();
 #endif
 }
 

@@ -983,9 +983,6 @@ static void __extls_thread_start(void)
 static void __extls_runtime_start(void)
 {
 	sctk_locate_dynamic_initializers();
-#if !defined(MPC_DISABLE_HLS)
-	extls_hls_topology_construct();
-#endif
 }
 
 static void __extls_runtime_end(void)

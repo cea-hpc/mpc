@@ -4861,7 +4861,7 @@ static inline int NBC_Initialize() {
   task_specific = mpc_cl_per_mpi_process_ctx_get ();
 
   // sctk_thread_generic_attr_t attr;
-  // sctk_thread_generic_attr_init(&attr);
+  // _mpc_threads_generic_attr_init(&attr);
 
   sctk_thread_attr_t attr;
   sctk_thread_attr_init(&attr);
