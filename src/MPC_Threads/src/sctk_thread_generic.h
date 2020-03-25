@@ -60,7 +60,7 @@ typedef struct _mpc_threads_ng_kind_s
  *
  * @param kind type of the thread
  */
-void _mpc_threads_generic_kind_set_self(_mpc_threads_ng_kind_t kind);
+void _mpc_threads_ng_kind_set_self(_mpc_threads_ng_kind_t kind);
 
 
 /* THREAD KIND GETTERS */
@@ -70,7 +70,7 @@ void _mpc_threads_generic_kind_set_self(_mpc_threads_ng_kind_t kind);
  *
  * @return a copy of the current thread's kind
  */
-_mpc_threads_ng_kind_t _mpc_threads_generic_kind_get();
+_mpc_threads_ng_kind_t _mpc_threads_ng_kind_get();
 
 
 /****************
@@ -83,7 +83,7 @@ typedef struct
 }_mpc_threads_ng_keys_t;
 
 /* Used in scheduler */
-void _mpc_threads_generic_key_init_thread(_mpc_threads_ng_keys_t *keys);
+void _mpc_threads_ng_key_init_thread(_mpc_threads_ng_keys_t *keys);
 
 /***************************************/
 /* MUTEX                               */
@@ -343,16 +343,16 @@ typedef struct _mpc_threads_ng_p_s
 } _mpc_threads_ng_p_t;
 
 typedef _mpc_threads_ng_p_t * _mpc_threads_ng_t;
-void _mpc_threads_generic_self_set(_mpc_threads_ng_t th);
-_mpc_threads_ng_t _mpc_threads_generic_self();
+void _mpc_threads_ng_self_set(_mpc_threads_ng_t th);
+_mpc_threads_ng_t _mpc_threads_ng_self();
 int
 _mpc_threads_ng_user_create(_mpc_threads_ng_t *threadp,
                                 _mpc_threads_ng_attr_t *attr,
                                 void *(*start_routine)(void *), void *arg);
 int
-_mpc_threads_generic_attr_init(_mpc_threads_ng_attr_t *attr);
+_mpc_threads_ng_attr_init(_mpc_threads_ng_attr_t *attr);
 
-void _mpc_threads_generic_check_signals(int select);
+void _mpc_threads_ng_check_signals(int select);
 
 void _mpc_threads_ng_handle_zombies(
         _mpc_threads_ng_scheduler_generic_t *th);
