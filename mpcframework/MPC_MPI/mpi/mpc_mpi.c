@@ -684,6 +684,12 @@ static inline void PMPC_Set_op(struct sctk_mpi_ops_s *ops){
 
 static volatile int __do_yield = 0;
 
+void sctk_yield_is_needed()
+{
+  __do_yield |= 1;
+}
+
+
 /** Do we need to yield in this process for collectives (overloaded)
  */
 static inline void sctk_init_yield_as_overloaded() {

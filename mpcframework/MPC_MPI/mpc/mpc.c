@@ -3311,75 +3311,33 @@ int PMPC_Get_activity(int nb_item, MPC_Activity_t *tab, double *process_act) {
   MPC_ERROR_SUCESS();
 }
 
+void sctk_yield_is_needed();
+
 int PMPC_Move_to(int process, int cpuid) {
-  int proc;
-  proc = sctk_get_processor_rank();
-  sctk_nodebug("move to %d %d(old %d)", process, cpuid, proc);
-  if (process == sctk_process_rank) {
-    if (proc != cpuid) {
-      sctk_thread_proc_migration(cpuid);
-    }
-  } else {
-    if (sctk_is_net_migration_available() && sctk_migration_mode) {
-#if 0
-	  FILE *file;
-	  char name[SCTK_MAX_FILENAME_SIZE];
-	  sctk_thread_t self;
-	  void *self_p = NULL;
-	  int rank;
-	  int vp;
-	  sctk_task_specific_t *task_specific;
-	  task_specific = __MPC_get_task_specific ();
-	  __MPC_Comm_rank (MPC_COMM_WORLD, &rank, task_specific);
 
-	  self = sctk_thread_self ();
-	  self_p = self;
+#ifdef MPC_Threads
+	int proc = sctk_get_processor_rank();
 
-	  vp = cpuid;
+	if ( process == sctk_process_rank )
+	{
+		if ( proc != cpuid )
+		{
+      sctk_yield_is_needed();
+			int ret = sctk_thread_proc_migration( cpuid );
 
-	  sprintf (name, "%s/Task_%d", sctk_store_dir, rank);
-	  file = fopen (name, "w+");
-	  assume (file != NULL);
-	  fprintf (file, "Restart 0\n");
-	  fprintf (file, "Process %d\n", sctk_process_rank);
-	  fprintf (file, "Thread %p\n", self_p);
-	  fprintf (file, "Virtual processor %d\n", vp);
-	  fclose (file);
-
-	  memcpy (&self_p, &self, sizeof (long));
-
-	  PMPC_Wait_pending_all_comm ();
-
-	  sctk_unregister_thread (rank);
-
-	  sctk_net_migration (rank, process);
-
-	  PMPC_Processor_rank (&vp);
-
-	  sprintf (name, "%s/Task_%d", sctk_store_dir, rank);
-	  file = fopen (name, "w+");
-	  assume (file != NULL);
-	  fprintf (file, "Restart 0\n");
-	  fprintf (file, "Process %d\n", sctk_process_rank);
-	  fprintf (file, "Thread %p\n", self_p);
-	  fprintf (file, "Virtual processor %d\n", vp);
-	  fclose (file);
-
-	  sctk_register_thread (rank);
-	  proc = sctk_get_processor_rank ();
-	  if (proc != cpuid)
-	    {
-	      sctk_thread_proc_migration (cpuid);
+			if( 0 <= ret )
+			{
+				MPC_ERROR_SUCESS();
+			}else {
+			  return MPC_ERR_ARG;
 	    }
-#else
-      not_implemented();
+		}
+		
+	}
 #endif
-    } else {
-      sctk_warning("Inter process migration Disabled");
-    }
-  }
-  sctk_nodebug("move to %d %d done", process, cpuid);
-  MPC_ERROR_SUCESS();
+
+	sctk_warning( "Inter process migration Disabled" );
+	return MPC_ERR_UNSUPPORTED_OPERATION;
 }
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS

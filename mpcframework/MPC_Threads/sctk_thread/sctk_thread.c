@@ -3043,7 +3043,10 @@ sctk_thread_proc_migration (const int cpu)
   tmp_data = sctk_thread_data_get ();
 /*   sctk_assert(tmp_data != NULL); */
   tmp = __sctk_ptr_thread_proc_migration (cpu);
-  tmp_data->virtual_processor = sctk_thread_get_vp ();
+  if( 0 <= tmp )
+  {
+    tmp_data->virtual_processor = sctk_thread_get_vp ();
+  }
   return tmp;
 }
 
