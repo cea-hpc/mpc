@@ -808,8 +808,7 @@ sctk_ethread_mxn_thread_attr_getbinding(sctk_thread_attr_t *__attr, int *__bindi
 	return 0;
 }
 
-static int
-sctk_ethread_mxn_thread_proc_migration(const int cpu)
+static int sctk_ethread_mxn_thread_proc_migration(const int cpu)
 {
 	int last;
 	sctk_ethread_per_thread_t *       current;

@@ -5064,13 +5064,20 @@ int mpc_cl_move_to( int process, int cpuid )
 
 	if ( process == mpc_common_get_process_rank() )
 	{
-		sctk_error("A %d %d", proc, cpuid);
+		
 		if ( proc != cpuid )
 		{
 			mpc_common_init_trigger("MPC_MPI Force Yield");
-			sctk_thread_proc_migration( cpuid );
+			int ret = sctk_thread_proc_migration( cpuid );
+
+			if( 0 <= ret )
+			{
+				MPC_ERROR_SUCESS();
+			}
+		} else {
+			return MPI_ERR_ARG;
 		}
-		MPC_ERROR_SUCESS();
+		
 	}
 #endif
 

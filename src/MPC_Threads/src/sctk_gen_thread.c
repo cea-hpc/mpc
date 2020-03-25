@@ -1127,8 +1127,7 @@ sctk_gen_thread_dump_clean(void)
 	return __sctk_ptr_thread_dump_clean();
 }
 
-static int
-sctk_gen_thread_migrate(void)
+static int sctk_gen_thread_migrate(void)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_migrate != __sctk_ptr_thread_migrate);
@@ -1191,12 +1190,10 @@ sctk_gen_thread_get_vp()
 	return 0;
 }
 
-static int
-sctk_gen_thread_proc_migration(const int cpu)
+static int sctk_gen_thread_proc_migration(const int cpu)
 {
-	__base_mpc_init();
-	assume(sctk_gen_thread_proc_migration != __sctk_ptr_thread_proc_migration);
-	return __sctk_ptr_thread_proc_migration(cpu);
+	/* Not implemented */
+	return -1;
 }
 
 static int
