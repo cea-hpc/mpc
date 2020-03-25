@@ -5060,11 +5060,14 @@ int _mpc_cl_info_get_valuelen( MPC_Info info, char *key, int *valuelen, int *fla
 int mpc_cl_move_to( int process, int cpuid )
 {
 #ifdef MPC_Threads
-	int proc = mpc_common_get_process_rank();
-	if ( process == proc )
+	int proc = mpc_topology_get_current_cpu();
+
+	if ( process == mpc_common_get_process_rank() )
 	{
+		sctk_error("A %d %d", proc, cpuid);
 		if ( proc != cpuid )
 		{
+			mpc_common_init_trigger("MPC_MPI Force Yield");
 			sctk_thread_proc_migration( cpuid );
 		}
 		MPC_ERROR_SUCESS();

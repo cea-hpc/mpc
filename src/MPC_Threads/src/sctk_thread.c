@@ -856,10 +856,6 @@ static void *___vp_thread_start_routine(sctk_thread_data_t *__arg)
 
 	mpc_common_init_trigger("VP Thread End");
 
-
-	assume_m(mpc_topology_get_current_cpu() == ( int )tmp.bind_to, "___vp_thread_start_routine Bad Pinning");
-
-
 	sctk_report_death(sctk_thread_self() );
 
 	__tbb_finalize_for_mpc();

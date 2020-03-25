@@ -746,6 +746,11 @@ static inline void PMPC_Set_op(struct sctk_mpi_ops_s *ops)
 
 static volatile int __do_yield = 0;
 
+static inline void __force_yield()
+{
+	__do_yield |= 1;
+}
+
 /** Do we need to yield in this process for collectives (overloaded)
  */
 static inline void sctk_init_yield_as_overloaded()
@@ -23030,3 +23035,20 @@ int PMPIX_Comm_shrink(__UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Comm *newcomm)
 /************************************************************************/
 /* END NOT IMPLEMENTED                                                     */
 /************************************************************************/
+
+/******************
+ * INIT CALLBACKS *
+ ******************/
+
+
+void mpc_mpi_init() __attribute__((constructor));
+
+void mpc_mpi_init()
+{
+	MPC_INIT_CALL_ONLY_ONCE
+
+	/* Used to notify migration avoiding no yield barriers in this case */
+	mpc_common_init_callback_register("MPC_MPI Force Yield",
+					  "Force Yield as condition was met",
+					  __force_yield, 0);
+}

@@ -14,14 +14,14 @@ OPA_int_t __mpc_p_disguise_flag;
 
 struct mpc_common_init_entry
 {
-        char name[32];
+        char name[64];
         int priority;
         void (*callback)();
 };
 
 static inline void __entry_init(struct mpc_common_init_entry * entry, char * callback_name, void (*callback)(), int priority )
 {
-        snprintf(entry->name, 32, "%s", callback_name);
+        snprintf(entry->name, 64, "%s", callback_name);
         entry->priority = priority;
         entry->callback = callback;
 }
