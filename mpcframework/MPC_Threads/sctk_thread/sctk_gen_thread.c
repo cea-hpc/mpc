@@ -1158,7 +1158,9 @@ sctk_gen_thread_get_vp ()
 static int
 sctk_gen_thread_proc_migration (const int cpu)
 {
-  return -1;
+	sctk_init_mpc_runtime();
+	assume(sctk_gen_thread_proc_migration != __sctk_ptr_thread_proc_migration);
+	return __sctk_ptr_thread_proc_migration(cpu);
 }
 
 static int

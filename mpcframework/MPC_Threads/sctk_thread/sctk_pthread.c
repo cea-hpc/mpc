@@ -400,6 +400,13 @@ sctk_pthread_thread_attr_getbinding (__UNUSED__ sctk_thread_attr_t * __attr, __U
   return 0;
 }
 
+
+int sctk_pthread_proc_migration(const int cpu)
+{
+	return -1;
+}
+
+
 #if SCTK_FUTEX_SUPPORTED
 
 #include <linux/futex.h>
@@ -486,6 +493,8 @@ sctk_pthread_thread_init (void)
   sctk_add_func_type (pthread, key_create, int (*)(sctk_thread_key_t *,
 						   void (*)(void *)));
   sctk_add_func_type (pthread, key_delete, int (*)(sctk_thread_key_t));
+
+	sctk_add_func(sctk_pthread, proc_migration);
 
   sctk_add_func (pthread, wait_for_value_and_poll);
   sctk_add_func (pthread, freeze_thread_on_vp);
