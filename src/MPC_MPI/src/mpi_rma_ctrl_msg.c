@@ -90,7 +90,7 @@ void mpc_MPI_Win_handle_win_flush(void *data ) {
   while (incoming_rma != outgoing_rma) {
 
     // sctk_error("%d == %d", outgoing_rma , incoming_rma );
-    mpc_thread_yield();
+    sctk_thread_yield();
 
     if (10 < cnt) {
       mpc_MPI_Win_request_array_test(&desc->source.requests);

@@ -2562,7 +2562,7 @@ static int __INTERNAL__PMPI_Test(MPI_Request *request, int *flag, MPI_Status *st
 	}
 	else
 	{
-		mpc_thread_yield();
+		sctk_thread_yield();
 	}
 
 	return res;

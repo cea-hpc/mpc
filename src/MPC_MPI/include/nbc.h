@@ -21,7 +21,7 @@
 /* correct fortran bindings */
 
 #include "mpc_mpi.h"
-#include "mpcthread.h"
+#include "sctk_thread.h"
 #include "sctk_debug.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -29,6 +29,7 @@
 #include <assert.h>
 #include <math.h>
 #include <string.h>
+
 
 #define USE_MPI /* set by the buildsystem! */
 

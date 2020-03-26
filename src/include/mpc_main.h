@@ -28,7 +28,7 @@
 	it needs to *know* atexit  */
 	#include <stdlib.h>
 	/* atexit wrapping */
-	#define atexit mpc_atexit
+	#define atexit sctk_atexit
 #endif
 
 #ifndef MPC_NO_AUTO_MAIN_REDEF

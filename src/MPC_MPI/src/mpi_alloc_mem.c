@@ -278,7 +278,7 @@ static inline void mpc_MPI_allocmem_pool_lock()
 
 	while ( OPA_cas_int( ____mpc_sctk_mpi_alloc_mem_pool.lock, 0, 1 ) )
 	{
-		mpc_thread_yield();
+		sctk_thread_yield();
 	}
 }
 

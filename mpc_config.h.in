@@ -692,6 +692,15 @@
 /* Value for PTHREAD_MUTEX_RECURSIVE from pthread.h */
 #undef MPC_CONFIG_PTHREAD_MUTEX_RECURSIVE
 
+/* Value for PTHREAD_PRIO_INHERIT from pthread.h */
+#undef MPC_CONFIG_PTHREAD_PRIO_INHERIT
+
+/* Value for PTHREAD_PRIO_NONE from pthread.h */
+#undef MPC_CONFIG_PTHREAD_PRIO_NONE
+
+/* Value for PTHREAD_PRIO_PROTECT from pthread.h */
+#undef MPC_CONFIG_PTHREAD_PRIO_PROTECT
+
 /* Value for PTHREAD_PROCESS_PRIVATE from pthread.h */
 #undef MPC_CONFIG_PTHREAD_PROCESS_PRIVATE
 

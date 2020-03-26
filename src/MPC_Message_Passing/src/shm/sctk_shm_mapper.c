@@ -340,7 +340,7 @@ SCTK_STATIC void * sctk_shm_mapper_slave(sctk_size_t size,int participants,sctk_
         // wait final decision of master
         while (OPA_load_ptr(&sync_header->final_address) == NULL) {
 	#ifdef MPC_THREAD
-          mpc_thread_yield();
+          sctk_thread_yield();
 	#endif
         }
 

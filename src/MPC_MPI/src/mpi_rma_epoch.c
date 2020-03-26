@@ -218,7 +218,7 @@ int mpc_MPI_Win_request_array_fence_no_ops(
     mpc_MPI_Win_request_array_test(ra);
 
     sctk_network_notify_idle_message();
-    mpc_thread_yield();
+    sctk_thread_yield();
   }
 
   return 0;
@@ -249,7 +249,7 @@ int mpc_MPI_Win_request_array_fence_no_ops_dual(
     req1 = OPA_load_int(&ra1->available_req);
     req2 = OPA_load_int(&ra2->available_req);
 
-    mpc_thread_yield();
+    sctk_thread_yield();
   }
 
   return 0;
@@ -329,7 +329,7 @@ mpc_MPI_Win_request_array_pick(struct mpc_MPI_Win_request_array *ra) {
 
     mpc_common_spinlock_unlock(&ra->lock);
 
-    mpc_thread_yield();
+    sctk_thread_yield();
   }
 }
 
@@ -1742,7 +1742,7 @@ int mpc_Win_contexes_fence_control(MPI_Win win) {
       sctk_control_message_process_all();
       sctk_control_message_process_local(mpc_common_get_task_rank());
       sctk_network_notify_idle_message();
-      mpc_thread_yield();
+      sctk_thread_yield();
     }
 
     int target = OPA_load_int(&tctx->ctrl_message_counter);

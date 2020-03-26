@@ -88,12 +88,6 @@ void _mpc_threads_generic_key_init_thread(_mpc_threads_generic_keys_t *keys);
 /* MUTEX                               */
 /***************************************/
 
-
-/* Values of Protocol attribute */
-#define SCTK_THREAD_PRIO_NONE       PTHREAD_PRIO_NONE
-#define SCTK_THREAD_PRIO_INHERIT    PTHREAD_PRIO_INHERIT
-#define SCTK_THREAD_PRIO_PROTECT    PTHREAD_PRIO_PROTECT
-
 /* Values of kind attribute */
 
 /*#define SCTK_THREAD_MUTEX_NORMAL PTHREAD_MUTEX_NORMAL
