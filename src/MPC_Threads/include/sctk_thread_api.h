@@ -31,6 +31,8 @@
 #include <time.h>
 #include <mpc_config.h>
 
+#include "mpc_threads_config.h"
+
 #if defined(SunOS_SYS) || defined(AIX_SYS) || defined(HP_UX_SYS)
 /* typedef clockid_t __clockid_t; */
 struct timespec;

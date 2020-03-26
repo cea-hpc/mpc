@@ -681,9 +681,51 @@ MPC_ARCH_X86_64_CONTEXT_SWITCH_TRUE
 EXTLS_LIBS
 EXTLS_CFLAGS
 MPC_IN_PROCESS_MODE
+MPC_CONFIG_SEM_FAILED
+MPC_CONFIG_SEM_VALUE_MAX
+SIZEOF_SEM_T
+SIZEOF_PTHREAD_SPINLOCK_T
+SIZEOF_PTHREAD_RWLOCKATTR_T
+SIZEOF_PTHREAD_RWLOCK_T
+SIZEOF_PTHREAD_MUTEXATTR_T
+SIZEOF_PTHREAD_MUTEX_T
+SIZEOF_PTHREAD_CONDATTR_T
+SIZEOF_PTHREAD_COND_T
+SIZEOF_PTHREAD_ONCE_T
+SIZEOF_PTHREAD_BARRIERATTR_T
+SIZEOF_PTHREAD_BARRIER_T
+SIZEOF_PTHREAD_ATTR_T
+MPC_THREAD_KEYS_MAX
+MPC_CONFIG_PTHREAD_STACK_MIN
+SIZEOF_PTHREAD_KEY_T
+MPC_CONFIG_SCHED_FIFO
+MPC_CONFIG_SCHED_RR
+MPC_CONFIG_SCHED_OTHER
+MPC_CONFIG_PTHREAD_CANCELED
+MPC_CONFIG_PTHREAD_CANCEL_ASYNCHRONOUS
+MPC_CONFIG_PTHREAD_BARRIER_SERIAL_THREAD
+MPC_CONFIG_PTHREAD_CANCEL_DEFERRED
+MPC_CONFIG_PTHREAD_CANCEL_DISABLE
+MPC_CONFIG_PTHREAD_CANCEL_ENABLE
+MPC_CONFIG_PTHREAD_PROCESS_SHARED
+MPC_CONFIG_PTHREAD_PROCESS_PRIVATE
+MPC_CONFIG_PTHREAD_SCOPE_PROCESS
+MPC_CONFIG_PTHREAD_SCOPE_SYSTEM
+MPC_CONFIG_PTHREAD_EXPLICIT_SCHED
+MPC_CONFIG_PTHREAD_INHERIT_SCHED
+MPC_CONFIG_PTHREAD_CREATE_DETACHED
+MPC_CONFIG_PTHREAD_CREATE_JOINABLE
+MPC_CONFIG_PTHREAD_MUTEX_DEFAULT
+MPC_CONFIG_PTHREAD_MUTEX_ERRORCHECK
+MPC_CONFIG_PTHREAD_MUTEX_RECURSIVE
+MPC_CONFIG_PTHREAD_MUTEX_NORMAL
+MPC_CONFIG_NSIG
 LIBOBJS
+SIZEOF_LONG
 MPC_ARCH_DETECTED_STRING
 MPC_ARCH_DETECTED_FUNCTION
+HAVE_PTHREAD_H
+HAVE_SEMAPHORE_H
 MPC_HAVE_DMTCP
 dmtcp_launch
 MPC_CUDA_ENABLED_FALSE
@@ -21090,18 +21132,6 @@ fi
 
 done
 
-for ac_header in pthread.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "pthread.h" "ac_cv_header_pthread_h" "$ac_includes_default"
-if test "x$ac_cv_header_pthread_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_PTHREAD_H 1
-_ACEOF
-
-fi
-
-done
-
 for ac_header in regex.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "regex.h" "ac_cv_header_regex_h" "$ac_includes_default"
@@ -21120,18 +21150,6 @@ do :
 if test "x$ac_cv_header_sched_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_SCHED_H 1
-_ACEOF
-
-fi
-
-done
-
-for ac_header in semaphore.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "semaphore.h" "ac_cv_header_semaphore_h" "$ac_includes_default"
-if test "x$ac_cv_header_semaphore_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_SEMAPHORE_H 1
 _ACEOF
 
 fi
@@ -21558,6 +21576,37 @@ fi
 
 done
 
+
+
+for ac_header in semaphore.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "semaphore.h" "ac_cv_header_semaphore_h" "$ac_includes_default"
+if test "x$ac_cv_header_semaphore_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SEMAPHORE_H 1
+_ACEOF
+ HAVE_SEMAPHORE_H=1
+else
+  HAVE_SEMAPHORE_H=0
+fi
+
+done
+
+
+
+for ac_header in pthread.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "pthread.h" "ac_cv_header_pthread_h" "$ac_includes_default"
+if test "x$ac_cv_header_pthread_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_PTHREAD_H 1
+_ACEOF
+ HAVE_PTHREAD_H=1
+else
+  HAVE_PTHREAD_H=0
+fi
+
+done
 
 
 
@@ -22382,6 +22431,7 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+
 # The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
 # declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
@@ -22413,6 +22463,9 @@ $as_echo "$ac_cv_sizeof_long" >&6; }
 cat >>confdefs.h <<_ACEOF
 #define SIZEOF_LONG $ac_cv_sizeof_long
 _ACEOF
+
+
+SIZEOF_LONG=$ac_cv_sizeof_long
 
 
 # The cast to long int works around a bug in the HP C Compiler
@@ -23420,6 +23473,8 @@ cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_NSIG $MACRO_VALUE
 _ACEOF
 
+MPC_CONFIG_NSIG=$MACRO_VALUE
+
 
 # All that is in pthread.h
 
@@ -23431,6 +23486,8 @@ cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_MUTEX_NORMAL $MACRO_VALUE
 _ACEOF
 
+MPC_CONFIG_PTHREAD_MUTEX_NORMAL=$MACRO_VALUE
+
 
 #PTHREAD_MUTEX_RECURSIVE
 
@@ -23439,6 +23496,8 @@ extract_integer_define_value "pthread.h" "PTHREAD_MUTEX_RECURSIVE"
 cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_MUTEX_RECURSIVE $MACRO_VALUE
 _ACEOF
+
+MPC_CONFIG_PTHREAD_MUTEX_RECURSIVE=$MACRO_VALUE
 
 
 #PTHREAD_MUTEX_ERRORCHECK
@@ -23449,6 +23508,8 @@ cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_MUTEX_ERRORCHECK $MACRO_VALUE
 _ACEOF
 
+MPC_CONFIG_PTHREAD_MUTEX_ERRORCHECK=$MACRO_VALUE
+
 
 #PTHREAD_MUTEX_DEFAULT
 
@@ -23457,6 +23518,8 @@ extract_integer_define_value "pthread.h" "PTHREAD_MUTEX_DEFAULT"
 cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_MUTEX_DEFAULT $MACRO_VALUE
 _ACEOF
+
+MPC_CONFIG_PTHREAD_MUTEX_DEFAULT=$MACRO_VALUE
 
 
 #PTHREAD_CREATE_JOINABLE
@@ -23467,6 +23530,8 @@ cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_CREATE_JOINABLE $MACRO_VALUE
 _ACEOF
 
+MPC_CONFIG_PTHREAD_CREATE_JOINABLE=$MACRO_VALUE
+
 
 #PTHREAD_CREATE_DETACHED
 
@@ -23475,6 +23540,8 @@ extract_integer_define_value "pthread.h" "PTHREAD_CREATE_DETACHED"
 cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_CREATE_DETACHED $MACRO_VALUE
 _ACEOF
+
+MPC_CONFIG_PTHREAD_CREATE_DETACHED=$MACRO_VALUE
 
 
 #PTHREAD_INHERIT_SCHED
@@ -23485,6 +23552,8 @@ cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_INHERIT_SCHED $MACRO_VALUE
 _ACEOF
 
+MPC_CONFIG_PTHREAD_INHERIT_SCHED=$MACRO_VALUE
+
 
 #PTHREAD_EXPLICIT_SCHED
 
@@ -23493,6 +23562,8 @@ extract_integer_define_value "pthread.h" "PTHREAD_EXPLICIT_SCHED"
 cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_EXPLICIT_SCHED $MACRO_VALUE
 _ACEOF
+
+MPC_CONFIG_PTHREAD_EXPLICIT_SCHED=$MACRO_VALUE
 
 
 #PTHREAD_SCOPE_SYSTEM
@@ -23503,6 +23574,8 @@ cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_SCOPE_SYSTEM $MACRO_VALUE
 _ACEOF
 
+MPC_CONFIG_PTHREAD_SCOPE_SYSTEM=$MACRO_VALUE
+
 
 #PTHREAD_SCOPE_PROCESS
 
@@ -23511,6 +23584,8 @@ extract_integer_define_value "pthread.h" "PTHREAD_SCOPE_PROCESS"
 cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_SCOPE_PROCESS $MACRO_VALUE
 _ACEOF
+
+MPC_CONFIG_PTHREAD_SCOPE_PROCESS=$MACRO_VALUE
 
 
 #PTHREAD_PROCESS_PRIVATE
@@ -23521,6 +23596,8 @@ cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_PROCESS_PRIVATE $MACRO_VALUE
 _ACEOF
 
+MPC_CONFIG_PTHREAD_PROCESS_PRIVATE=$MACRO_VALUE
+
 
 #PTHREAD_PROCESS_SHARED
 
@@ -23529,6 +23606,8 @@ extract_integer_define_value "pthread.h" "PTHREAD_PROCESS_SHARED"
 cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_PROCESS_SHARED $MACRO_VALUE
 _ACEOF
+
+MPC_CONFIG_PTHREAD_PROCESS_SHARED=$MACRO_VALUE
 
 
 #PTHREAD_CANCEL_ENABLE
@@ -23539,6 +23618,8 @@ cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_CANCEL_ENABLE $MACRO_VALUE
 _ACEOF
 
+MPC_CONFIG_PTHREAD_CANCEL_ENABLE=$MACRO_VALUE
+
 
 #PTHREAD_CANCEL_DISABLE
 
@@ -23547,6 +23628,8 @@ extract_integer_define_value "pthread.h" "PTHREAD_CANCEL_DISABLE"
 cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_CANCEL_DISABLE $MACRO_VALUE
 _ACEOF
+
+MPC_CONFIG_PTHREAD_CANCEL_DISABLE=$MACRO_VALUE
 
 
 #PTHREAD_CANCEL_DEFERRED
@@ -23557,6 +23640,19 @@ cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_CANCEL_DEFERRED $MACRO_VALUE
 _ACEOF
 
+MPC_CONFIG_PTHREAD_CANCEL_DEFERRED=$MACRO_VALUE
+
+
+#PTHREAD_BARRIER_SERIAL_THREAD
+
+extract_integer_define_value "pthread.h" "PTHREAD_BARRIER_SERIAL_THREAD"
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_CONFIG_PTHREAD_BARRIER_SERIAL_THREAD $MACRO_VALUE
+_ACEOF
+
+MPC_CONFIG_PTHREAD_BARRIER_SERIAL_THREAD=$MACRO_VALUE
+
 
 #PTHREAD_CANCEL_ASYNCHRONOUS
 
@@ -23565,6 +23661,8 @@ extract_integer_define_value "pthread.h" "PTHREAD_CANCEL_ASYNCHRONOUS"
 cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_CANCEL_ASYNCHRONOUS $MACRO_VALUE
 _ACEOF
+
+MPC_CONFIG_PTHREAD_CANCEL_ASYNCHRONOUS=$MACRO_VALUE
 
 
 #PTHREAD_CANCELED
@@ -23575,18 +23673,7 @@ cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_PTHREAD_CANCELED $MACRO_VALUE
 _ACEOF
 
-# Handle PTHREAD_CANCELED which can be in limits.h
-
-extract_integer_define_value "pthread.h" "PTHREAD_STACK_MIN" "no"
-
-if test -z "$MACRO_VALUE"; then
-	extract_integer_define_value "limits.h" "PTHREAD_STACK_MIN"
-fi
-
-
-cat >>confdefs.h <<_ACEOF
-#define MPC_CONFIG_PTHREAD_CANCELED $MACRO_VALUE
-_ACEOF
+MPC_CONFIG_PTHREAD_CANCELED=$MACRO_VALUE
 
 
 # For sched.h
@@ -23597,12 +23684,16 @@ cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_SCHED_OTHER $MACRO_VALUE
 _ACEOF
 
+MPC_CONFIG_SCHED_OTHER=$MACRO_VALUE
+
 
 extract_integer_define_value "sched.h" "SCHED_RR"
 
 cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_SCHED_RR $MACRO_VALUE
 _ACEOF
+
+MPC_CONFIG_SCHED_RR=$MACRO_VALUE
 
 
 extract_integer_define_value "sched.h" "SCHED_FIFO"
@@ -23611,6 +23702,7 @@ cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_SCHED_FIFO $MACRO_VALUE
 _ACEOF
 
+MPC_CONFIG_SCHED_FIFO=$MACRO_VALUE
 
 
 for ac_func in pthread_yield
@@ -23792,6 +23884,7 @@ _ACEOF
 fi
 done
 
+
 # The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
 # declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
@@ -23825,6 +23918,73 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+SIZEOF_PTHREAD_KEY_T=$ac_cv_sizeof_pthread_key_t
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Checking if PTHREAD_STACK_MIN is defined" >&5
+$as_echo_n "checking Checking if PTHREAD_STACK_MIN is defined... " >&6; }
+
+#
+# PTHREAD STACK MIN
+#
+
+have_pthread_stack_min=no
+if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+                                #include <pthread.h>
+                                #include <limits.h>
+
+int
+main ()
+{
+
+                                #ifndef PTHREAD_STACK_MIN
+                                exit(1);
+                                #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  have_pthread_stack_min=yes
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_pthread_stack_min" >&5
+$as_echo "$have_pthread_stack_min" >&6; }
+
+if test "x$have_pthread_keys_max" = "x1"; then
+        extract_integer_define_value "pthread.h" "PTHREAD_STACK_MIN" "no"
+
+        if test -z "$MACRO_VALUE"; then
+                extract_integer_define_value "limits.h" "PTHREAD_STACK_MIN" "no"
+                if test -z "$MACRO_VALUE"; then
+                        MACRO_VALUE="8192"
+                fi
+        fi
+else
+        MACRO_VALUE="8192"
+fi
+
+
+MPC_CONFIG_PTHREAD_STACK_MIN=$MACRO_VALUE
+
+
+#
+# Pthread keys MAX
+#
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking Checking if PTHREAD_KEYS_MAX is defined" >&5
 $as_echo_n "checking Checking if PTHREAD_KEYS_MAX is defined... " >&6; }
@@ -23868,6 +24028,9 @@ $as_echo "$have_pthread_keys_max" >&6; }
 if test "x$have_pthread_keys_max" = "x1"; then
 
 $as_echo "#define MPC_THREAD_KEYS_MAX PTHREAD_KEYS_MAX" >>confdefs.h
+
+        extract_integer_define_value "pthread.h" "MPC_THREAD_KEYS_MAX"
+        MPC_THREAD_KEYS_MAX=$MACRO_VALUE
 
 else
         for key_count in `seq 0 128 65536`
@@ -23938,6 +24101,8 @@ cat >>confdefs.h <<_ACEOF
 #define MPC_THREAD_KEYS_MAX $key_count
 _ACEOF
 
+        MPC_THREAD_KEYS_MAX=$key_count
+
 
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $key_count" >&5
 $as_echo "$key_count" >&6; }
@@ -23987,6 +24152,9 @@ $as_echo "$ac_cv_sizeof_pthread_attr_t" >&6; }
 cat >>confdefs.h <<_ACEOF
 #define SIZEOF_PTHREAD_ATTR_T $ac_cv_sizeof_pthread_attr_t
 _ACEOF
+
+
+        SIZEOF_PTHREAD_ATTR_T=$ac_cv_sizeof_pthread_attr_t
 
 
         for ac_func in pthread_attr_destroy
@@ -24287,6 +24455,9 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+        SIZEOF_PTHREAD_BARRIER_T=$ac_cv_sizeof_pthread_barrier_t
+
+
         # The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
 # declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
@@ -24319,6 +24490,9 @@ $as_echo "$ac_cv_sizeof_pthread_barrierattr_t" >&6; }
 cat >>confdefs.h <<_ACEOF
 #define SIZEOF_PTHREAD_BARRIERATTR_T $ac_cv_sizeof_pthread_barrierattr_t
 _ACEOF
+
+
+        SIZEOF_PTHREAD_BARRIERATTR_T=$ac_cv_sizeof_pthread_barrierattr_t
 
 
         for ac_func in pthread_barrier_destroy
@@ -24407,6 +24581,43 @@ done
 
 fi
 
+# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of pthread_once_t" >&5
+$as_echo_n "checking size of pthread_once_t... " >&6; }
+if ${ac_cv_sizeof_pthread_once_t+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (pthread_once_t))" "ac_cv_sizeof_pthread_once_t"        "#include <pthread.h>
+"; then :
+
+else
+  if test "$ac_cv_type_pthread_once_t" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (pthread_once_t)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_pthread_once_t=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_pthread_once_t" >&5
+$as_echo "$ac_cv_sizeof_pthread_once_t" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_PTHREAD_ONCE_T $ac_cv_sizeof_pthread_once_t
+_ACEOF
+
+
+SIZEOF_PTHREAD_ONCE_T=$ac_cv_sizeof_pthread_once_t
+
+
 ac_fn_c_check_type "$LINENO" "pthread_cond_t" "ac_cv_type_pthread_cond_t" "#include <pthread.h>
 "
 if test "x$ac_cv_type_pthread_cond_t" = xyes; then :
@@ -24450,6 +24661,9 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+        SIZEOF_PTHREAD_COND_T=$ac_cv_sizeof_pthread_cond_t
+
+
         # The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
 # declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
@@ -24484,38 +24698,7 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-        # The cast to long int works around a bug in the HP C Compiler
-# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
-# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
-# This bug is HP SR number 8606223364.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of pthread_once_t" >&5
-$as_echo_n "checking size of pthread_once_t... " >&6; }
-if ${ac_cv_sizeof_pthread_once_t+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (pthread_once_t))" "ac_cv_sizeof_pthread_once_t"        "#include <pthread.h>
-"; then :
-
-else
-  if test "$ac_cv_type_pthread_once_t" = yes; then
-     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error 77 "cannot compute sizeof (pthread_once_t)
-See \`config.log' for more details" "$LINENO" 5; }
-   else
-     ac_cv_sizeof_pthread_once_t=0
-   fi
-fi
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_pthread_once_t" >&5
-$as_echo "$ac_cv_sizeof_pthread_once_t" >&6; }
-
-
-
-cat >>confdefs.h <<_ACEOF
-#define SIZEOF_PTHREAD_ONCE_T $ac_cv_sizeof_pthread_once_t
-_ACEOF
+        SIZEOF_PTHREAD_CONDATTR_T=$ac_cv_sizeof_pthread_condattr_t
 
 
         for ac_func in pthread_cond_broadcast
@@ -24708,6 +24891,9 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+        SIZEOF_PTHREAD_MUTEX_T=$ac_cv_sizeof_pthread_mutex_t
+
+
         # The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
 # declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
@@ -24740,6 +24926,9 @@ $as_echo "$ac_cv_sizeof_pthread_mutexattr_t" >&6; }
 cat >>confdefs.h <<_ACEOF
 #define SIZEOF_PTHREAD_MUTEXATTR_T $ac_cv_sizeof_pthread_mutexattr_t
 _ACEOF
+
+
+        SIZEOF_PTHREAD_MUTEXATTR_T=$ac_cv_sizeof_pthread_mutexattr_t
 
 
         for ac_func in pthread_mutex_destroy
@@ -25004,6 +25193,9 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+        SIZEOF_PTHREAD_RWLOCK_T=$ac_cv_sizeof_pthread_rwlock_t
+
+
         # The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
 # declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
@@ -25036,6 +25228,9 @@ $as_echo "$ac_cv_sizeof_pthread_rwlockattr_t" >&6; }
 cat >>confdefs.h <<_ACEOF
 #define SIZEOF_PTHREAD_RWLOCKATTR_T $ac_cv_sizeof_pthread_rwlockattr_t
 _ACEOF
+
+
+        SIZEOF_PTHREAD_RWLOCKATTR_T=$ac_cv_sizeof_pthread_rwlockattr_t
 
 
         for ac_func in pthread_rwlock_destroy
@@ -25324,6 +25519,9 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+        SIZEOF_PTHREAD_SPINLOCK_T=$ac_cv_sizeof_pthread_spinlock_t
+
+
         for ac_func in pthread_spin_destroy
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
@@ -25449,6 +25647,8 @@ cat >>confdefs.h <<_ACEOF
 #define SIZEOF_SEM_T $ac_cv_sizeof_sem_t
 _ACEOF
 
+
+        SIZEOF_SEM_T=$ac_cv_sizeof_sem_t
 
         for ac_func in sem_init
 do :
@@ -25582,12 +25782,16 @@ cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_SEM_VALUE_MAX $MACRO_VALUE
 _ACEOF
 
+        MPC_CONFIG_SEM_VALUE_MAX=$MACRO_VALUE
+
 
 	extract_integer_define_value "semaphore.h" "SEM_FAILED"
 
 cat >>confdefs.h <<_ACEOF
 #define MPC_CONFIG_SEM_FAILED $MACRO_VALUE
 _ACEOF
+
+        MPC_CONFIG_SEM_FAILED=$MACRO_VALUE
 
 
 fi
@@ -26879,7 +27083,7 @@ MPC_MPI.............. $MPC_MPI_ENABLED\n\
 # Final Output
 #
 
-ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Message_Passing/Makefile src/MPC_Message_Passing/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_compiler_manager.sh src/bin/mpc_cc.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpc_cxx.sh src/bin/mpc_nvcc.sh src/bin/mpc_f77.sh src/bin/mpcrun.sh src/bin/mpcvars.sh src/bin/mpc_status.sh"
+ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Message_Passing/Makefile src/MPC_Message_Passing/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/include/mpc_threads_config.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_compiler_manager.sh src/bin/mpc_cc.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpc_cxx.sh src/bin/mpc_nvcc.sh src/bin/mpc_f77.sh src/bin/mpcrun.sh src/bin/mpcvars.sh src/bin/mpc_status.sh"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -28093,6 +28297,7 @@ do
     "src/MPC_Topology/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Topology/src/Makefile" ;;
     "src/MPC_Threads/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Threads/Makefile" ;;
     "src/MPC_Threads/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Threads/src/Makefile" ;;
+    "src/include/mpc_threads_config.h") CONFIG_FILES="$CONFIG_FILES src/include/mpc_threads_config.h" ;;
     "src/bin/Makefile") CONFIG_FILES="$CONFIG_FILES src/bin/Makefile" ;;
     "src/bin/mpc_build_env.sh") CONFIG_FILES="$CONFIG_FILES src/bin/mpc_build_env.sh" ;;
     "src/bin/mpc_compiler_manager.sh") CONFIG_FILES="$CONFIG_FILES src/bin/mpc_compiler_manager.sh" ;;

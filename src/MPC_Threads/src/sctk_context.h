@@ -30,7 +30,7 @@
 #endif
 
 #include <mpc_config.h>
-#include "mpcthread_config.h"
+#include "mpc_threads_config.h"
 
 #ifdef __cplusplus
 extern "C"

@@ -22,11 +22,11 @@
 #ifndef __SCTK_POSIX_PTHREAD_H_
 #define __SCTK_POSIX_PTHREAD_H_
 #include <stdio.h>
-#include "mpcthread_config.h"
+
 #include "sctk_debug.h"
 #include <pthread.h>
 #include <semaphore.h>
-#include "mpcthread_config.h"
+
 #include "sctk_posix_pthread.h"
 #include "sctk_internal_thread.h"
 #include "sctk_posix_ethread_np.h"

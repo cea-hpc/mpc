@@ -22,7 +22,6 @@
 #ifndef __SCTK_THREAD_GENERIC_H_
 #define __SCTK_THREAD_GENERIC_H_
 
-#include <mpcthread_config.h>
 
 
 #include <mpc_threads_generic.h>

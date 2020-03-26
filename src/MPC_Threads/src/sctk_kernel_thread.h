@@ -22,7 +22,7 @@
 #ifndef __SCTK_KTHREAD_H_
 #define __SCTK_KTHREAD_H_
 
-#include "mpcthread_config.h"
+#include "mpc_threads_config.h"
 #include "sctk_debug.h"
 
 #include <unistd.h>

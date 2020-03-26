@@ -29,7 +29,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "mpcthread_config.h"
+
 #include "sctk_debug.h"
 #include "sctk_ethread_internal.h"
 #include "mpc_common_spinlock.h"

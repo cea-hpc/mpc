@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <stdio.h>
-#include <mpcthread_config.h>
+
 #include <sctk_thread.h>
 #include <threads_generic.h>
 #include <stdlib.h>

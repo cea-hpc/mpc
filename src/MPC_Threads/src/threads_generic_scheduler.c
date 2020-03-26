@@ -22,8 +22,6 @@
 
 #include "sctk_thread.h"
 
-#include "mpcthread_config.h"
-
 #include <mpc_arch.h>
 
 #include "sctk_debug.h"

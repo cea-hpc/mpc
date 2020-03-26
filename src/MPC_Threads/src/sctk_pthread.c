@@ -21,7 +21,7 @@
 /* ######################################################################## */
 #define _GNU_SOURCE
 
-#include "mpcthread_config.h"
+
 
 #if HAVE_PTHREAD_ATTR_SETAFFINITY_NP
 

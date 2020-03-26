@@ -27,7 +27,7 @@
 #include <sched.h>
 #include <stdarg.h>
 
-#include <mpcthread_config.h>
+#include <mpc_threads_config.h>
 
 #include <sctk_posix_thread.h>
 #include <sctk_thread_api.h>

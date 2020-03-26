@@ -26,7 +26,7 @@
 
 #include <mpc_topology.h>
 #include <mpc_common_flags.h>
-#include "mpcthread_config.h"
+
 #include "mpc_common_rank.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"

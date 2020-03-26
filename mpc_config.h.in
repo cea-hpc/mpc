@@ -650,7 +650,10 @@
 /* Value of NSIG from signal.h */
 #undef MPC_CONFIG_NSIG
 
-/* Value of PTHREAD_STACK_MIN from limits.h */
+/* Value for PTHREAD_BARRIER_SERIAL_THREAD from pthread.h */
+#undef MPC_CONFIG_PTHREAD_BARRIER_SERIAL_THREAD
+
+/* Value for PTHREAD_CANCELED from pthread.h */
 #undef MPC_CONFIG_PTHREAD_CANCELED
 
 /* Value for PTHREAD_CANCEL_ASYNCHRONOUS from pthread.h */

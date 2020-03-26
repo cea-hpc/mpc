@@ -22,11 +22,9 @@
 /* Needed to activate the whole interface */
 #include "sctk_default_pthread_flags.h"
 
-#include "mpcthread_config.h"
-
 #include <pthread.h>
 #include <semaphore.h>
-#include "mpcthread_config.h"
+
 #include "sctk_posix_pthread.h"
 #include "sctk_internal_thread.h"
 #include "sctk_posix_ethread_np.h"

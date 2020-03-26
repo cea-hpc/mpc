@@ -27,7 +27,7 @@
 /* ######################################################################## */
 
 #define _GNU_SOURCE
-#include "mpcthread_config.h"
+
 #include "sctk_alloc.h"
 #include "mpc_topology.h"
 #include "sctk_accessor.h"

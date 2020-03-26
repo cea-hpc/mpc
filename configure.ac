@@ -633,10 +633,8 @@ AC_CHECK_HEADERS([linux/personality.h])
 AC_CHECK_HEADERS([netdb.h])
 AC_CHECK_HEADERS([netinet/in.h])
 AC_CHECK_HEADERS([netinet/tcp.h])
-AC_CHECK_HEADERS([pthread.h])
 AC_CHECK_HEADERS([regex.h])
 AC_CHECK_HEADERS([sched.h])
-AC_CHECK_HEADERS([semaphore.h])
 AC_CHECK_HEADERS([setjmp.h])
 AC_CHECK_HEADERS([signal.h])
 AC_CHECK_HEADERS([stddef.h])
@@ -676,6 +674,11 @@ AC_CHECK_HEADERS([libunwind.h])
 AC_CHECK_HEADERS([infiniband/verbs.h])
 
 
+AC_CHECK_HEADERS([semaphore.h],[HAVE_SEMAPHORE_H=1],[HAVE_SEMAPHORE_H=0])
+AC_SUBST([HAVE_SEMAPHORE_H])
+
+AC_CHECK_HEADERS([pthread.h], [HAVE_PTHREAD_H=1], [HAVE_PTHREAD_H=0])
+AC_SUBST([HAVE_PTHREAD_H])
 
 # Checks for typedefs, structures, and compiler characteristics.
 
@@ -789,7 +792,10 @@ AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(float)
+
 AC_CHECK_SIZEOF(long)
+AC_SUBST([SIZEOF_LONG], [$ac_cv_sizeof_long])
+
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(size_t)
 AC_CHECK_SIZEOF(void*)
@@ -834,6 +840,7 @@ if test -z "$MACRO_VALUE"; then
 fi
 
 AC_DEFINE_UNQUOTED([MPC_CONFIG_NSIG], [$MACRO_VALUE], [Value of NSIG from signal.h])
+AC_SUBST([MPC_CONFIG_NSIG], [$MACRO_VALUE])
 
 # All that is in pthread.h
 
@@ -841,107 +848,123 @@ AC_DEFINE_UNQUOTED([MPC_CONFIG_NSIG], [$MACRO_VALUE], [Value of NSIG from signal
 
 extract_integer_define_value "pthread.h" "PTHREAD_MUTEX_NORMAL"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_MUTEX_NORMAL], [$MACRO_VALUE], [Value for PTHREAD_MUTEX_NORMAL from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_MUTEX_NORMAL], [$MACRO_VALUE])
 
 #PTHREAD_MUTEX_RECURSIVE
 
 extract_integer_define_value "pthread.h" "PTHREAD_MUTEX_RECURSIVE"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_MUTEX_RECURSIVE], [$MACRO_VALUE], [Value for PTHREAD_MUTEX_RECURSIVE from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_MUTEX_RECURSIVE], [$MACRO_VALUE])
 
 #PTHREAD_MUTEX_ERRORCHECK
 
 extract_integer_define_value "pthread.h" "PTHREAD_MUTEX_ERRORCHECK"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_MUTEX_ERRORCHECK], [$MACRO_VALUE], [Value for PTHREAD_MUTEX_ERRORCHECK from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_MUTEX_ERRORCHECK], [$MACRO_VALUE])
 
 #PTHREAD_MUTEX_DEFAULT
 
 extract_integer_define_value "pthread.h" "PTHREAD_MUTEX_DEFAULT"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_MUTEX_DEFAULT], [$MACRO_VALUE], [Value for PTHREAD_MUTEX_DEFAULT from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_MUTEX_DEFAULT], [$MACRO_VALUE])
 
 #PTHREAD_CREATE_JOINABLE
 
 extract_integer_define_value "pthread.h" "PTHREAD_CREATE_JOINABLE"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_CREATE_JOINABLE], [$MACRO_VALUE], [Value for PTHREAD_CREATE_JOINABLE from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_CREATE_JOINABLE], [$MACRO_VALUE])
 
 #PTHREAD_CREATE_DETACHED
 
 extract_integer_define_value "pthread.h" "PTHREAD_CREATE_DETACHED"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_CREATE_DETACHED], [$MACRO_VALUE], [Value for PTHREAD_CREATE_DETACHED from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_CREATE_DETACHED], [$MACRO_VALUE])
 
 #PTHREAD_INHERIT_SCHED
 
 extract_integer_define_value "pthread.h" "PTHREAD_INHERIT_SCHED"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_INHERIT_SCHED], [$MACRO_VALUE], [Value for PTHREAD_INHERIT_SCHED from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_INHERIT_SCHED], [$MACRO_VALUE])
 
 #PTHREAD_EXPLICIT_SCHED
 
 extract_integer_define_value "pthread.h" "PTHREAD_EXPLICIT_SCHED"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_EXPLICIT_SCHED], [$MACRO_VALUE], [Value for PTHREAD_EXPLICIT_SCHED from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_EXPLICIT_SCHED], [$MACRO_VALUE])
 
 #PTHREAD_SCOPE_SYSTEM
 
 extract_integer_define_value "pthread.h" "PTHREAD_SCOPE_SYSTEM"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_SCOPE_SYSTEM], [$MACRO_VALUE], [Value for PTHREAD_SCOPE_SYSTEM from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_SCOPE_SYSTEM], [$MACRO_VALUE])
 
 #PTHREAD_SCOPE_PROCESS
 
 extract_integer_define_value "pthread.h" "PTHREAD_SCOPE_PROCESS"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_SCOPE_PROCESS], [$MACRO_VALUE], [Value for PTHREAD_SCOPE_PROCESS from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_SCOPE_PROCESS], [$MACRO_VALUE])
 
 #PTHREAD_PROCESS_PRIVATE
 
 extract_integer_define_value "pthread.h" "PTHREAD_PROCESS_PRIVATE"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_PROCESS_PRIVATE], [$MACRO_VALUE], [Value for PTHREAD_PROCESS_PRIVATE from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_PROCESS_PRIVATE], [$MACRO_VALUE])
 
 #PTHREAD_PROCESS_SHARED
 
 extract_integer_define_value "pthread.h" "PTHREAD_PROCESS_SHARED"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_PROCESS_SHARED], [$MACRO_VALUE], [Value for PTHREAD_PROCESS_SHARED from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_PROCESS_SHARED], [$MACRO_VALUE])
 
 #PTHREAD_CANCEL_ENABLE
 
 extract_integer_define_value "pthread.h" "PTHREAD_CANCEL_ENABLE"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_CANCEL_ENABLE], [$MACRO_VALUE], [Value for PTHREAD_CANCEL_ENABLE from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_CANCEL_ENABLE], [$MACRO_VALUE])
 
 #PTHREAD_CANCEL_DISABLE
 
 extract_integer_define_value "pthread.h" "PTHREAD_CANCEL_DISABLE"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_CANCEL_DISABLE], [$MACRO_VALUE], [Value for PTHREAD_CANCEL_DISABLE from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_CANCEL_DISABLE], [$MACRO_VALUE])
 
 #PTHREAD_CANCEL_DEFERRED
 
 extract_integer_define_value "pthread.h" "PTHREAD_CANCEL_DEFERRED"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_CANCEL_DEFERRED], [$MACRO_VALUE], [Value for PTHREAD_CANCEL_DEFERRED from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_CANCEL_DEFERRED], [$MACRO_VALUE])
+
+#PTHREAD_BARRIER_SERIAL_THREAD
+
+extract_integer_define_value "pthread.h" "PTHREAD_BARRIER_SERIAL_THREAD"
+AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_BARRIER_SERIAL_THREAD], [$MACRO_VALUE], [Value for PTHREAD_BARRIER_SERIAL_THREAD from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_BARRIER_SERIAL_THREAD], [$MACRO_VALUE])
 
 #PTHREAD_CANCEL_ASYNCHRONOUS
 
 extract_integer_define_value "pthread.h" "PTHREAD_CANCEL_ASYNCHRONOUS"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_CANCEL_ASYNCHRONOUS], [$MACRO_VALUE], [Value for PTHREAD_CANCEL_ASYNCHRONOUS from pthread.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_CANCEL_ASYNCHRONOUS], [$MACRO_VALUE])
 
 #PTHREAD_CANCELED
 
 extract_integer_define_value "pthread.h" "PTHREAD_CANCELED"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_CANCELED], [$MACRO_VALUE], [Value for PTHREAD_CANCELED from pthread.h])
-# Handle PTHREAD_CANCELED which can be in limits.h
-
-extract_integer_define_value "pthread.h" "PTHREAD_STACK_MIN" "no"
-
-if test -z "$MACRO_VALUE"; then
-	extract_integer_define_value "limits.h" "PTHREAD_STACK_MIN"
-fi
-
-AC_DEFINE_UNQUOTED([MPC_CONFIG_PTHREAD_CANCELED], [$MACRO_VALUE], [Value of PTHREAD_STACK_MIN from limits.h])
+AC_SUBST([MPC_CONFIG_PTHREAD_CANCELED], [$MACRO_VALUE])
 
 # For sched.h
 
 extract_integer_define_value "sched.h" "SCHED_OTHER"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_SCHED_OTHER], [$MACRO_VALUE], [Value of SCHED_OTHER from sched.h])
+AC_SUBST([MPC_CONFIG_SCHED_OTHER], [$MACRO_VALUE])
 
 extract_integer_define_value "sched.h" "SCHED_RR"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_SCHED_RR], [$MACRO_VALUE], [Value of SCHED_RR from sched.h])
+AC_SUBST([MPC_CONFIG_SCHED_RR], [$MACRO_VALUE])
 
 extract_integer_define_value "sched.h" "SCHED_FIFO"
 AC_DEFINE_UNQUOTED([MPC_CONFIG_SCHED_FIFO], [$MACRO_VALUE], [Value of SCHED_FIFO from sched.h])
-
+AC_SUBST([MPC_CONFIG_SCHED_FIFO], [$MACRO_VALUE])
 
 AC_CHECK_FUNCS(pthread_yield)
 AC_CHECK_FUNCS(pthread_atfork )
@@ -958,7 +981,48 @@ AC_CHECK_FUNCS(pthread_join )
 AC_CHECK_FUNCS(pthread_key_create )
 AC_CHECK_FUNCS(pthread_key_delete )
 AC_CHECK_FUNCS(pthread_once )
+
 AC_CHECK_SIZEOF(pthread_key_t)
+AC_SUBST([SIZEOF_PTHREAD_KEY_T],[$ac_cv_sizeof_pthread_key_t])
+
+
+AC_MSG_CHECKING([Checking if PTHREAD_STACK_MIN is defined])
+
+#
+# PTHREAD STACK MIN
+#
+
+have_pthread_stack_min=no
+AC_RUN_IFELSE([AC_LANG_PROGRAM([
+                                #include <pthread.h>
+                                #include <limits.h>
+                                ],[
+                                #ifndef PTHREAD_STACK_MIN
+                                exit(1);
+                                #endif
+                                ])], [have_pthread_stack_min=yes])
+
+AC_MSG_RESULT([$have_pthread_stack_min])
+
+if test "x$have_pthread_keys_max" = "x1"; then
+        extract_integer_define_value "pthread.h" "PTHREAD_STACK_MIN" "no"
+
+        if test -z "$MACRO_VALUE"; then
+                extract_integer_define_value "limits.h" "PTHREAD_STACK_MIN" "no"
+                if test -z "$MACRO_VALUE"; then
+                        MACRO_VALUE="8192"
+                fi
+        fi
+else
+        MACRO_VALUE="8192"
+fi
+
+
+AC_SUBST([MPC_CONFIG_PTHREAD_STACK_MIN], [$MACRO_VALUE])
+
+#
+# Pthread keys MAX
+#
 
 AC_MSG_CHECKING([Checking if PTHREAD_KEYS_MAX is defined])
 
@@ -976,6 +1040,8 @@ AC_MSG_RESULT([$have_pthread_keys_max])
 
 if test "x$have_pthread_keys_max" = "x1"; then
         AC_DEFINE([MPC_THREAD_KEYS_MAX], [PTHREAD_KEYS_MAX], [PTHREAD_KEYS_MAX from header (requires pthread.h)])
+        extract_integer_define_value "pthread.h" "MPC_THREAD_KEYS_MAX"
+        AC_SUBST([MPC_THREAD_KEYS_MAX], [$MACRO_VALUE])
 else
         for key_count in `seq 0 128 65536`
         do
@@ -1017,6 +1083,7 @@ else
         AC_MSG_CHECKING([Experimentally determined PTHREAD_KEYS_MAX to be])
 
         AC_DEFINE_UNQUOTED([MPC_THREAD_KEYS_MAX], [$key_count], [Experimentally defined PTHREAD_KEYS_MAX])
+        AC_SUBST([MPC_THREAD_KEYS_MAX], [$key_count])
 
         AC_MSG_RESULT([$key_count])
 
@@ -1027,6 +1094,8 @@ AC_CHECK_TYPE(pthread_attr_t,is_thread=yes,is_thread=no,[#include <pthread.h>])
 
 if test "$is_thread" = "yes" ; then
         AC_CHECK_SIZEOF(pthread_attr_t,,[#include <pthread.h>])
+        AC_SUBST([SIZEOF_PTHREAD_ATTR_T],[$ac_cv_sizeof_pthread_attr_t])
+
         AC_CHECK_FUNCS(pthread_attr_destroy )
         AC_CHECK_FUNCS(pthread_attr_getdetachstate )
         AC_CHECK_FUNCS(pthread_attr_getguardsize )
@@ -1054,7 +1123,11 @@ AC_CHECK_TYPE(pthread_barrier_t,is_barrier=yes,is_barrier=no,[#include <pthread.
 
 if test "$is_barrier" = "yes" ; then
         AC_CHECK_SIZEOF(pthread_barrier_t,,[#include <pthread.h>])
+        AC_SUBST([SIZEOF_PTHREAD_BARRIER_T],[$ac_cv_sizeof_pthread_barrier_t])
+
         AC_CHECK_SIZEOF(pthread_barrierattr_t,,[#include <pthread.h>])
+        AC_SUBST([SIZEOF_PTHREAD_BARRIERATTR_T],[$ac_cv_sizeof_pthread_barrierattr_t])
+
         AC_CHECK_FUNCS(pthread_barrier_destroy )
         AC_CHECK_FUNCS(pthread_barrier_init )
         AC_CHECK_FUNCS(pthread_barrier_wait )
@@ -1064,11 +1137,17 @@ if test "$is_barrier" = "yes" ; then
         AC_CHECK_FUNCS(pthread_barrierattr_setpshared )
 fi
 
+AC_CHECK_SIZEOF(pthread_once_t,,[#include <pthread.h>])
+AC_SUBST([SIZEOF_PTHREAD_ONCE_T],[$ac_cv_sizeof_pthread_once_t])
+
 AC_CHECK_TYPE(pthread_cond_t,is_cond=yes,is_cond=no,[#include <pthread.h>])
 if test "$is_cond" = "yes" ; then
         AC_CHECK_SIZEOF(pthread_cond_t,,[#include <pthread.h>])
+        AC_SUBST([SIZEOF_PTHREAD_COND_T],[$ac_cv_sizeof_pthread_cond_t])
+
         AC_CHECK_SIZEOF(pthread_condattr_t,,[#include <pthread.h>])
-        AC_CHECK_SIZEOF(pthread_once_t,,[#include <pthread.h>])
+        AC_SUBST([SIZEOF_PTHREAD_CONDATTR_T],[$ac_cv_sizeof_pthread_condattr_t])
+
         AC_CHECK_FUNCS(pthread_cond_broadcast )
         AC_CHECK_FUNCS(pthread_cond_destroy )
         AC_CHECK_FUNCS(pthread_cond_init )
@@ -1087,7 +1166,11 @@ AC_CHECK_TYPE(pthread_mutex_t,is_mutex=yes,is_mutex=no,[#include <pthread.h>])
 
 if test "$is_mutex" = "yes" ; then 
         AC_CHECK_SIZEOF(pthread_mutex_t,,[#include <pthread.h>])
+        AC_SUBST([SIZEOF_PTHREAD_MUTEX_T],[$ac_cv_sizeof_pthread_mutex_t])
+
         AC_CHECK_SIZEOF(pthread_mutexattr_t,,[#include <pthread.h>])
+        AC_SUBST([SIZEOF_PTHREAD_MUTEXATTR_T],[$ac_cv_sizeof_pthread_mutexattr_t])
+
         AC_CHECK_FUNCS(pthread_mutex_destroy )
         AC_CHECK_FUNCS(pthread_mutex_getprioceiling )
         AC_CHECK_FUNCS(pthread_mutex_init )
@@ -1112,7 +1195,11 @@ AC_CHECK_TYPE(pthread_rwlock_t,is_rwlock=yes,is_rwlock=no,[#include <pthread.h>]
 
 if test "$is_rwlock" = "yes" ; then 
         AC_CHECK_SIZEOF(pthread_rwlock_t,,[#include <pthread.h>])
+        AC_SUBST([SIZEOF_PTHREAD_RWLOCK_T],[$ac_cv_sizeof_pthread_rwlock_t])
+
         AC_CHECK_SIZEOF(pthread_rwlockattr_t,,[#include <pthread.h>])
+        AC_SUBST([SIZEOF_PTHREAD_RWLOCKATTR_T],[$ac_cv_sizeof_pthread_rwlockattr_t])
+
         AC_CHECK_FUNCS(pthread_rwlock_destroy )
         AC_CHECK_FUNCS(pthread_rwlock_init )
         AC_CHECK_FUNCS(pthread_rwlock_rdlock )
@@ -1140,6 +1227,8 @@ AC_CHECK_TYPE(pthread_spinlock_t,is_spinlock=yes,is_spinlock=no,[#include <pthre
 
 if test "$is_spinlock" = "yes" ; then
         AC_CHECK_SIZEOF(pthread_spinlock_t)
+        AC_SUBST([SIZEOF_PTHREAD_SPINLOCK_T],[$ac_cv_sizeof_pthread_spinlock_t])
+
         AC_CHECK_FUNCS(pthread_spin_destroy )
         AC_CHECK_FUNCS(pthread_spin_init )
         AC_CHECK_FUNCS(pthread_spin_lock )
@@ -1155,6 +1244,7 @@ AC_CHECK_TYPE(sem_t,is_semaphore=yes,is_semaphore=no,[#include <semaphore.h>])
 
 if test "$is_semaphore" = "yes" ; then 
         AC_CHECK_SIZEOF(sem_t,,[#include <semaphore.h>])
+        AC_SUBST([SIZEOF_SEM_T],[$ac_cv_sizeof_sem_t])
         AC_CHECK_FUNCS(sem_init )
         AC_CHECK_FUNCS(sem_wait )
         AC_CHECK_FUNCS(sem_trywait )
@@ -1173,9 +1263,11 @@ if test "$is_semaphore" = "yes" ; then
 	fi
 
 	AC_DEFINE_UNQUOTED([MPC_CONFIG_SEM_VALUE_MAX], [$MACRO_VALUE], [Value of SEM_VALUE_MAX from semaphore.h])
+        AC_SUBST([MPC_CONFIG_SEM_VALUE_MAX],[$MACRO_VALUE])
 
 	extract_integer_define_value "semaphore.h" "SEM_FAILED"
 	AC_DEFINE_UNQUOTED([MPC_CONFIG_SEM_FAILED], [$MACRO_VALUE], [Value of SEM_FAILED from semaphore.h])
+        AC_SUBST([MPC_CONFIG_SEM_FAILED],[$MACRO_VALUE])
 
 fi
 
@@ -1914,6 +2006,7 @@ AC_OUTPUT([Makefile
 	   src/MPC_Topology/src/Makefile
            src/MPC_Threads/Makefile
 	   src/MPC_Threads/src/Makefile
+           src/include/mpc_threads_config.h
            src/bin/Makefile
 	   src/bin/mpc_build_env.sh
            src/bin/mpc_compiler_manager.sh

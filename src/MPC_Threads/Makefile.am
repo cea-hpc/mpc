@@ -1,6 +1,6 @@
 
 mpc_headerdir=$(includedir)/mpc/
-mpc_header_HEADERS= ./include/mpcthread.h ./include/sctk_posix_thread.h ./include/mpcthread_config.h ./include/sctk_thread_api.h ./src/sctk_futex_def.h
+mpc_header_HEADERS= ./include/mpcthread.h ./include/sctk_posix_thread.h ./include/sctk_thread_api.h ./src/sctk_futex_def.h
 
 
 # Install the pthread.h interceptions header

@@ -46,7 +46,6 @@
 ***********/
 
 #include <mpc_config.h>
-#include <mpcthread_config.h>
 #include <mpc_runtime_config.h>
 #include <mpc_common_helper.h>
 

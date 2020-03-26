@@ -24,7 +24,7 @@
 
 #include <signal.h>
 #include <stdio.h>
-#include "mpcthread_config.h"
+
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_ethread.h"
