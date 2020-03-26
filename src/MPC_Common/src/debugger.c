@@ -52,26 +52,29 @@ static void determine_elf_class( char *name, elf_class_t *c )
 
 	if ( c->fd != NULL )
 	{
-		fread( &header, sizeof( Elf32_Ehdr ), 1, c->fd );
+		int ret = fread( &header, sizeof( Elf32_Ehdr ), 1, c->fd );
 
-		if ( header.e_ident[EI_CLASS] == ELFCLASS32 )
+		if( ret == 1 )
 		{
-			c->read_elf_header = sctk_read_elf_header_32;
-			c->read_elf_sections = sctk_read_elf_section_32;
-			c->read_elf_symbols = sctk_read_elf_symbols_32;
-			c->read_elf_sym = sctk_read_elf_sym_32;
-		}
-		else if ( header.e_ident[EI_CLASS] == ELFCLASS64 )
-		{
-			c->read_elf_header = sctk_read_elf_header_64;
-			c->read_elf_sections = sctk_read_elf_section_64;
-			c->read_elf_symbols = sctk_read_elf_symbols_64;
-			c->read_elf_sym = sctk_read_elf_sym_64;
-		}
-		else
-		{
-			fclose( c->fd );
-			c->fd = NULL;
+			if ( header.e_ident[EI_CLASS] == ELFCLASS32 )
+			{
+				c->read_elf_header = sctk_read_elf_header_32;
+				c->read_elf_sections = sctk_read_elf_section_32;
+				c->read_elf_symbols = sctk_read_elf_symbols_32;
+				c->read_elf_sym = sctk_read_elf_sym_32;
+			}
+			else if ( header.e_ident[EI_CLASS] == ELFCLASS64 )
+			{
+				c->read_elf_header = sctk_read_elf_header_64;
+				c->read_elf_sections = sctk_read_elf_section_64;
+				c->read_elf_symbols = sctk_read_elf_symbols_64;
+				c->read_elf_sym = sctk_read_elf_sym_64;
+			}
+			else
+			{
+				fclose( c->fd );
+				c->fd = NULL;
+			}
 		}
 
 		if ( c->fd )
@@ -259,7 +262,7 @@ static inline void __execinfo_backtrace( void )
 #endif
 }
 
-static inline __libunwind_backtrace( void )
+static inline void __libunwind_backtrace( void )
 {
 	unw_cursor_t cursor;
 	unw_context_t uc;
@@ -316,7 +319,7 @@ static inline __libunwind_backtrace( void )
 
 		if ( strcmp( func_name_buf, "" ) == 0 )
 		{
-			sprintf( func_name_buf, ptr.name );
+			sprintf( func_name_buf, "%s", ptr.name );
 		}
 
 

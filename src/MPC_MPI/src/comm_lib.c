@@ -2406,9 +2406,11 @@ static inline void __mpc_cl_enter_tmp_directory()
 		return;
 	}
 
+	int ret;
+	char * cret = NULL;
+
 	/* Retrieve task rank */
-	int rank;
-	_mpc_cl_comm_rank( SCTK_COMM_WORLD, &rank );
+	int rank = mpc_common_get_task_rank();
 	char tmpdir[1000];
 
 	/* If root rank create the temp dir */
@@ -2416,10 +2418,21 @@ static inline void __mpc_cl_enter_tmp_directory()
 	{
 		char currentdir[800];
 		// First enter a sandbox DIR
-		getcwd( currentdir, 800 );
-		snprintf( tmpdir, 1000, "%s/XXXXXX", currentdir );
-		mkdtemp( tmpdir );
-		sctk_warning( "Creating temp directory %s", tmpdir );
+		cret = getcwd( currentdir, 800 );
+		if(cret)
+		{
+			snprintf( tmpdir, 1000, "%s/XXXXXX", currentdir );
+			cret = mkdtemp( tmpdir );
+			if(cret)
+			{
+				sctk_warning( "Creating temp directory %s", tmpdir );
+			}
+			else
+			{
+				sctk_error("Failed to create a tmd directory");
+			}
+			
+		}
 	}
 
 	/* Broadcast the path to all tasks */
@@ -2428,7 +2441,12 @@ static inline void __mpc_cl_enter_tmp_directory()
 	/* Only the root of each process does the chdir */
 	if ( mpc_common_get_local_task_rank() == 0 )
 	{
-		chdir( tmpdir );
+		int ret = chdir( tmpdir );
+
+		if( ret < 0)
+		{
+			sctk_warning("Failed entering temporary directory");
+		}
 	}
 }
 

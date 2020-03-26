@@ -559,8 +559,8 @@ int sctk_mpi_halo_exchange_request_init( struct sctk_mpi_halo_exchange_request *
 	PMPI_Comm_rank( MPI_COMM_WORLD, &req->source_process );
 	req->dest_process = halo->halo_remote;
 	req->tag = halo->halo_tag;
-	snprintf( req->source_label, 512, halo->label );
-	snprintf( req->remote_label, 512, halo->remote_label );
+	snprintf( req->source_label, 512, "%s", halo->label );
+	snprintf( req->remote_label, 512, "%s", halo->remote_label );
 
 	req->extent = halo->halo_extent;
 	

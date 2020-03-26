@@ -507,10 +507,14 @@ print_header_32( FILE *output, Elf32_Ehdr *header )
 void sctk_read_elf_header_32( elf_class_t *c )
 {
 
-	fread( &( c->header.h32 ), sizeof( Elf32_Ehdr ), 1, c->fd );
-	if ( c->header.h32.e_type != ET_EXEC )
+	int ret = fread( &( c->header.h32 ), sizeof( Elf32_Ehdr ), 1, c->fd );
+
+	if( ret == 1)
 	{
-		c->is_lib = 1;
+		if ( c->header.h32.e_type != ET_EXEC )
+		{
+			c->is_lib = 1;
+		}
 	}
 	/*   print_header_32(stderr,&(c->header.h32)); */
 }
@@ -948,19 +952,26 @@ void sctk_read_elf_section_32( elf_class_t *c )
 	sctk_free( c->sections );
 	c->sections = sctk_malloc( c->header.h32.e_shnum * sizeof( Elf_Shdr ) );
 
+	int ret = 0;
+
 	fseek( c->fd, c->header.h32.e_shoff, SEEK_SET );
 	for ( i = 0; i < c->header.h32.e_shnum; i++ )
 	{
-		fread( &( c->sections[i].h32 ), sizeof( Elf32_Shdr ), 1, c->fd );
-		if ( ( c->sections[i].h32.sh_type == SHT_STRTAB ) && ( i == c->header.h32.e_shstrndx ) )
+		ret = fread( &( c->sections[i].h32 ), sizeof( Elf32_Shdr ), 1, c->fd );
+		if( ret == 1 )
 		{
-			long off;
-			sctk_free( c->string_table );
-			c->string_table = sctk_malloc( c->sections[i].h32.sh_size );
-			off = ftell( c->fd );
-			fseek( c->fd, c->sections[i].h32.sh_offset, SEEK_SET );
-			fread( c->string_table, 1, c->sections[i].h32.sh_size, c->fd );
-			fseek( c->fd, off, SEEK_SET );
+			if ( ( c->sections[i].h32.sh_type == SHT_STRTAB ) && ( i == c->header.h32.e_shstrndx ) )
+			{
+				long off;
+				sctk_free( c->string_table );
+				c->string_table = sctk_malloc( c->sections[i].h32.sh_size );
+				off = ftell( c->fd );
+				fseek( c->fd, c->sections[i].h32.sh_offset, SEEK_SET );
+				ret = fread( c->string_table, 1, c->sections[i].h32.sh_size, c->fd );
+				if( ret != c->sections[i].h32.sh_size)
+					return;
+				fseek( c->fd, off, SEEK_SET );
+			}
 		}
 	}
 	for ( i = 0; i < c->header.h32.e_shnum; i++ )
@@ -974,7 +985,9 @@ void sctk_read_elf_section_32( elf_class_t *c )
 			sctk_free( c->sym_table );
 			c->sym_table = sctk_malloc( c->sections[i].h32.sh_size );
 			fseek( c->fd, c->sections[i].h32.sh_offset, SEEK_SET );
-			fread( c->sym_table, 1, c->sections[i].h32.sh_size, c->fd );
+			ret = fread( c->sym_table, 1, c->sections[i].h32.sh_size, c->fd );
+			if( ret != c->sections[i].h32.sh_size)
+				return;
 		}
 		if ( strcmp( &( c->string_table[c->sections[i].h32.sh_name] ), ".dynsym" ) == 0 )
 		{
@@ -985,7 +998,9 @@ void sctk_read_elf_section_32( elf_class_t *c )
 			sctk_free( c->dynsym_table );
 			c->dynsym_table = sctk_malloc( c->sections[i].h32.sh_size );
 			fseek( c->fd, c->sections[i].h32.sh_offset, SEEK_SET );
-			fread( c->dynsym_table, 1, c->sections[i].h32.sh_size, c->fd );
+			ret = fread( c->dynsym_table, 1, c->sections[i].h32.sh_size, c->fd );
+			if( ret != c->sections[i].h32.sh_size)
+				return;
 		}
 		if ( strcmp( &( c->string_table[c->sections[i].h32.sh_name] ),
 					 ".debug_line" ) == 0 )
@@ -994,7 +1009,9 @@ void sctk_read_elf_section_32( elf_class_t *c )
 			sctk_free( c->debug_line );
 			c->debug_line = sctk_malloc( c->sections[i].h32.sh_size );
 			fseek( c->fd, c->sections[i].h32.sh_offset, SEEK_SET );
-			fread( c->debug_line, 1, c->sections[i].h32.sh_size, c->fd );
+			ret = fread( c->debug_line, 1, c->sections[i].h32.sh_size, c->fd );
+			if( ret != c->sections[i].h32.sh_size)
+				return;
 		}
 		if ( strcmp( &( c->string_table[c->sections[i].h32.sh_name] ),
 					 ".debug_info" ) == 0 )
@@ -1003,7 +1020,9 @@ void sctk_read_elf_section_32( elf_class_t *c )
 			sctk_free( c->debug_info );
 			c->debug_info = sctk_malloc( c->sections[i].h32.sh_size );
 			fseek( c->fd, c->sections[i].h32.sh_offset, SEEK_SET );
-			fread( c->debug_info, 1, c->sections[i].h32.sh_size, c->fd );
+			ret = fread( c->debug_info, 1, c->sections[i].h32.sh_size, c->fd );
+			if( ret != c->sections[i].h32.sh_size)
+				return;
 		}
 		if ( strcmp( &( c->string_table[c->sections[i].h32.sh_name] ),
 					 ".debug_aranges" ) == 0 )
@@ -1011,7 +1030,9 @@ void sctk_read_elf_section_32( elf_class_t *c )
 			sctk_free( c->debug_aranges );
 			c->debug_aranges = sctk_malloc( c->sections[i].h32.sh_size );
 			fseek( c->fd, c->sections[i].h32.sh_offset, SEEK_SET );
-			fread( c->debug_aranges, 1, c->sections[i].h32.sh_size, c->fd );
+			ret = fread( c->debug_aranges, 1, c->sections[i].h32.sh_size, c->fd );
+			if( ret != c->sections[i].h32.sh_size)
+				return;
 		}
 		if ( strcmp( &( c->string_table[c->sections[i].h32.sh_name] ), ".debug_str" ) == 0 )
 		{
@@ -1019,7 +1040,9 @@ void sctk_read_elf_section_32( elf_class_t *c )
 			sctk_free( c->debug_str );
 			c->debug_str = sctk_malloc( c->sections[i].h32.sh_size );
 			fseek( c->fd, c->sections[i].h32.sh_offset, SEEK_SET );
-			fread( c->debug_str, 1, c->sections[i].h32.sh_size, c->fd );
+			ret = fread( c->debug_str, 1, c->sections[i].h32.sh_size, c->fd );
+			if( ret != c->sections[i].h32.sh_size)
+				return;
 		}
 		if ( strcmp( &( c->string_table[c->sections[i].h32.sh_name] ),
 					 ".debug_abbrev" ) == 0 )
@@ -1027,7 +1050,9 @@ void sctk_read_elf_section_32( elf_class_t *c )
 			abbrev_size = c->sections[i].h32.sh_size;
 			abbrev = sctk_malloc( c->sections[i].h32.sh_size );
 			fseek( c->fd, c->sections[i].h32.sh_offset, SEEK_SET );
-			fread( abbrev, 1, c->sections[i].h32.sh_size, c->fd );
+			ret = fread( abbrev, 1, c->sections[i].h32.sh_size, c->fd );
+			if( ret != c->sections[i].h32.sh_size)
+				return;
 		}
 	}
 	/*   print_section_32(stderr,c); */
@@ -1077,7 +1102,13 @@ void sctk_read_elf_symbols_32( elf_class_t *c )
 	c->symbols = sctk_malloc( sec.sh_size );
 	sym = (Elf32_Sym *) c->symbols;
 	fseek( c->fd, sec.sh_offset, SEEK_SET );
-	fread( sym, 1, sec.sh_size, c->fd );
+	int ret = fread( sym, 1, sec.sh_size, c->fd );
+
+	if(ret != sec.sh_size)
+	{
+		/* Something bad happened */
+		return;
+	}
 
 	/*   read_dwarf_symbols_32(c); */
 

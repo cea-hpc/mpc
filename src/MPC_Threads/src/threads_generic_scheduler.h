@@ -42,13 +42,13 @@
 // Thread status
 typedef enum
 {
-	_mpc_threads_ng_blocked,
-	_mpc_threads_ng_running,
-	_mpc_threads_ng_zombie,
-	_mpc_threads_ng_joined
-}_mpc_threads_ng_thread_status_t;
+	_mpc_threads_generic_blocked,
+	_mpc_threads_generic_running,
+	_mpc_threads_generic_zombie,
+	_mpc_threads_generic_joined
+}_mpc_threads_generic_thread_status_t;
 
-struct _mpc_threads_ng_scheduler_s;
+struct _mpc_threads_generic_scheduler_s;
 struct sctk_per_vp_data_s;
 
 // structure which contain data for centralized scheduler
@@ -64,13 +64,13 @@ typedef struct
 }sctk_multiple_queues_scheduler_t;
 
 // structure which contain data for both scheduler
-typedef struct _mpc_threads_ng_scheduler_generic_s
+typedef struct _mpc_threads_generic_scheduler_generic_s
 {
 	int                                             vp_type;
 	volatile int                                    is_idle_mode;
 	mpc_common_spinlock_t                           lock;
-	struct _mpc_threads_ng_scheduler_s *        sched;
-	struct _mpc_threads_ng_scheduler_generic_s *prev, *next;
+	struct _mpc_threads_generic_scheduler_s *        sched;
+	struct _mpc_threads_generic_scheduler_generic_s *prev, *next;
 	sem_t                                           sem;
 	struct sctk_per_vp_data_s *                     vp;
 	union
@@ -78,68 +78,68 @@ typedef struct _mpc_threads_ng_scheduler_generic_s
 		sctk_centralized_scheduler_t     centralized;
 		sctk_multiple_queues_scheduler_t multiple_queues;
 	};
-} _mpc_threads_ng_scheduler_generic_t;
+} _mpc_threads_generic_scheduler_generic_t;
 
 // scheduler
-typedef struct _mpc_threads_ng_scheduler_s
+typedef struct _mpc_threads_generic_scheduler_s
 {
 	sctk_mctx_t                                  ctx;
 	sctk_mctx_t                                  ctx_bootstrap;
-	volatile _mpc_threads_ng_thread_status_t status;
+	volatile _mpc_threads_generic_thread_status_t status;
 	mpc_common_spinlock_t                        debug_lock;
-	struct _mpc_threads_ng_p_s *             th;
+	struct _mpc_threads_generic_p_s *             th;
 	union
 	{
-		_mpc_threads_ng_scheduler_generic_t generic;
+		_mpc_threads_generic_scheduler_generic_t generic;
 	};
-} _mpc_threads_ng_scheduler_t;
+} _mpc_threads_generic_scheduler_t;
 
 // NBC_hook functions
-void (*sctk_multiple_queues_sched_NBC_Pthread_sched_increase_priority)();
-void (*sctk_multiple_queues_sched_NBC_Pthread_sched_decrease_priority)();
-void (*sctk_multiple_queues_sched_NBC_Pthread_sched_init)();
+void (*_mpc_threads_generic_scheduler_increase_prio_ptr)();
+void (*_mpc_threads_generic_scheduler_decrease_prio_ptr)();
+void (*_mpc_threads_generic_scheduler_sched_init)();
 
 // polling mpc
-void (*sctk_multiple_queues_task_polling_thread_sched_decrease_priority)(
+void (*_mpc_threads_generic_scheduler_task_decrease_prio_ptr)(
         int core);
-void (*sctk_multiple_queues_task_polling_thread_sched_increase_priority)(
+void (*_mpc_threads_generic_scheduler_task_increase_prio_ptr)(
         int bind_to);
 
-extern void (*_mpc_threads_ng_sched_yield)(_mpc_threads_ng_scheduler_t *);
-extern void (*_mpc_threads_ng_thread_status)(_mpc_threads_ng_scheduler_t *,
-                                                 _mpc_threads_ng_thread_status_t);
-extern void (*_mpc_threads_ng_register_spinlock_unlock)(_mpc_threads_ng_scheduler_t *,
+extern void (*_mpc_threads_generic_sched_yield)(_mpc_threads_generic_scheduler_t *);
+extern void (*_mpc_threads_generic_thread_status)(_mpc_threads_generic_scheduler_t *,
+                                                 _mpc_threads_generic_thread_status_t);
+extern void (*_mpc_threads_generic_register_spinlock_unlock)(_mpc_threads_generic_scheduler_t *,
                                                             mpc_common_spinlock_t *);
-extern void (*_mpc_threads_ng_wake)(_mpc_threads_ng_scheduler_t *);
+extern void (*_mpc_threads_generic_wake)(_mpc_threads_generic_scheduler_t *);
 
-struct _mpc_threads_ng_p_s;
-extern void (*_mpc_threads_ng_sched_create)(struct _mpc_threads_ng_p_s *);
+struct _mpc_threads_generic_p_s;
+extern void (*_mpc_threads_generic_sched_create)(struct _mpc_threads_generic_p_s *);
 
-void _mpc_threads_ng_scheduler_init(char *thread_type, char *scheduler_type, int vp_number);
-void _mpc_threads_ng_polling_init(int vp_number);
-void _mpc_threads_ng_scheduler_init_thread(_mpc_threads_ng_scheduler_t *sched,
-                                               struct _mpc_threads_ng_p_s *th);
-char *_mpc_threads_ng_scheduler_get_name();
+void _mpc_threads_generic_scheduler_init(char *thread_type, char *scheduler_type, int vp_number);
+void _mpc_threads_generic_polling_init(int vp_number);
+void _mpc_threads_generic_scheduler_init_thread(_mpc_threads_generic_scheduler_t *sched,
+                                               struct _mpc_threads_generic_p_s *th);
+char *_mpc_threads_generic_scheduler_get_name();
 
-extern void sctk_generic_swap_to_sched(_mpc_threads_ng_scheduler_t *sched);
+extern void sctk_generic_swap_to_sched(_mpc_threads_generic_scheduler_t *sched);
 extern void
-_mpc_threads_ng_wake_on_task_lock(_mpc_threads_ng_scheduler_t *sched,
+_mpc_threads_generic_wake_on_task_lock(_mpc_threads_generic_scheduler_t *sched,
                                       int remove_from_task_list);
 
 /***************************************/
 /* TASK SCHEDULING                     */
 /***************************************/
-typedef struct _mpc_threads_ng_task_s
+typedef struct _mpc_threads_generic_task_s
 {
 	volatile int *                     data;
 	void (*func)(void *);
 	void *                             arg;
-	_mpc_threads_ng_scheduler_t *  sched;
-	struct _mpc_threads_ng_task_s *prev, *next;
+	_mpc_threads_generic_scheduler_t *  sched;
+	struct _mpc_threads_generic_task_s *prev, *next;
 	int                                value;
 	int                                is_blocking;
 	void (*free_func)(void *);
-}_mpc_threads_ng_task_t;
+}_mpc_threads_generic_task_t;
 
-extern void (*_mpc_threads_ng_add_task)(_mpc_threads_ng_task_t *);
+extern void (*_mpc_threads_generic_add_task)(_mpc_threads_generic_task_t *);
 #endif

@@ -70,7 +70,7 @@
 #include <sctk_posix_thread.h>
 #include <sctk_internal_thread.h>
 #include <sctk_kernel_thread.h>
-#include <sctk_thread_generic.h>
+#include <threads_generic.h>
 
 #include <sctk_tls.h>
 

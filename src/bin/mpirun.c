@@ -114,9 +114,9 @@ int main(int argc, char **argv) {
     strcat(command, argv[i]);
   }
 
-  system(command);
+  int ret = system(command);
 
   free(command);
 
-  return 0;
+  return ret;
 }

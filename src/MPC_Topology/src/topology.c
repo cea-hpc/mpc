@@ -39,6 +39,7 @@
 
 #ifdef MPC_USE_EXTLS
 #include <extls.h>
+#include <extls_hls.h>
 #endif
 
 
