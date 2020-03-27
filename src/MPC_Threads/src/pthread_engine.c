@@ -19,19 +19,502 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-/* Needed to activate the whole interface */
-#include "sctk_default_pthread_flags.h"
+#define _GNU_SOURCE
 
-#include <pthread.h>
-#include <semaphore.h>
 
-#include "sctk_posix_pthread.h"
+
+#if HAVE_PTHREAD_ATTR_SETAFFINITY_NP
+#include <sched.h>
+#endif /* HAVE_PTHREAD_ATTR_SETAFFINITY_NP */
+
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <signal.h>
+
+#include "pthread_engine.h"
+
+#include "sctk_debug.h"
+#include "mpc_thread.h"
+#include "sctk_tls.h"
 #include "thread_ptr.h"
-#include "sctk_posix_ethread_np.h"
 
-void
-sctk_posix_pthread()
+#include "sctk_kernel_thread.h"
+
+#include <semaphore.h>
+#include <mpc_common_flags.h>
+#include <mpc_common_asm.h>
+
+#include <mpc_topology.h>
+
+
+#if !defined(HAVE_PTHREAD_CREATE)
+#error "Bad pthread detection"
+#endif
+
+static void _mpc_thread_pthread_engine_wait_for_value_and_poll(volatile int *data, int value,
+                                                               void (*func)(void *), void *arg)
 {
+	int i = 0;
+
+	while( (*data) != value)
+	{
+		if(func != NULL)
+		{
+			func(arg);
+		}
+
+		if( (*data) != value)
+		{
+			if(i >= 100)
+			{
+				kthread_usleep(5);
+				i = 0;
+			}
+			else
+			{
+				sctk_cpu_relax();
+			}
+
+			i++;
+		}
+	}
+}
+
+typedef struct sctk_cell_s
+{
+	int                 val;
+	struct sctk_cell_s *next;
+} sctk_cell_t;
+
+static void _mpc_thread_pthread_engine_freeze_thread_on_vp(mpc_thread_mutex_t *lock, void **list)
+{
+	sctk_cell_t cell;
+
+	cell.val  = 0;
+	cell.next = (sctk_cell_t *)*list;
+	*list     = &cell;
+	mpc_thread_mutex_unlock(lock);
+	mpc_thread_wait_for_value(&(cell.val), 1);
+}
+
+static void _mpc_thread_pthread_engine_wake_thread_on_vp(void **list)
+{
+	sctk_cell_t *tmp;
+	sctk_cell_t *cur;
+
+	cur = (sctk_cell_t *)*list;
+	while(cur != NULL)
+	{
+		tmp      = cur->next;
+		cur->val = 1;
+		cur      = tmp;
+	}
+	*list = NULL;
+}
+
+static int _mpc_thread_pthread_engine_mutex_init(mpc_thread_mutex_t *mutex, const mpc_thread_mutexattr_t *mutex_attr)
+{
+	int res;
+
+	res =
+	        pthread_mutex_init( (pthread_mutex_t *)mutex,
+	                            (pthread_mutexattr_t *)mutex_attr);
+	return res;
+}
+
+static sem_t _mpc_thread_pthread_engine_user_create_sem;
+static void *(*_mpc_thread_pthread_engine_user_create_start_routine) (void *);
+
+static void _mpc_thread_exit_cleanup_def(void *arg)
+{
+	_mpc_thread_exit_cleanup();
+	assume(arg == NULL);
+}
+
+typedef struct
+{
+	void *arg;
+	void *(*start_routine)(void *);
+	void *tls;
+} tls_start_routine_arg_t;
+
+
+static void *tls_start_routine(void *arg)
+{
+	tls_start_routine_arg_t *tmp;
+	void *res;
+
+	tmp = arg;
+#if defined(MPC_USE_EXTLS)
+	extls_ctx_restore( (extls_ctx_t *)tmp->tls);
+#endif
+
+	res = tmp->start_routine(tmp->arg);
+
+	sctk_free(tmp);
+	return res;
+}
+
+static void *init_tls_start_routine_arg(void *(*start_routine)(void *), void *arg)
+{
+	tls_start_routine_arg_t *tmp;
+
+	tmp = sctk_malloc(sizeof(tls_start_routine_arg_t) );
+
+	tmp->arg           = arg;
+	tmp->start_routine = start_routine;
+#ifdef MPC_USE_EXTLS
+	tmp->tls = *(void **)sctk_get_ctx_addr();
+#endif
+	return tmp;
+}
+
+static void *def_start_routine(void *arg)
+{
+	void *tmp;
+	void *(*_mpc_thread_pthread_engine_user_create_start_routine_local) (void *);
+
+	_mpc_thread_pthread_engine_user_create_start_routine_local =
+	        _mpc_thread_pthread_engine_user_create_start_routine;
+	sem_post(&_mpc_thread_pthread_engine_user_create_sem);
+
+	pthread_cleanup_push(_mpc_thread_exit_cleanup_def, NULL);
+	tmp = _mpc_thread_pthread_engine_user_create_start_routine_local(arg);
+	pthread_cleanup_pop(0);
+
+
+	return tmp;
+}
+
+static int _mpc_thread_pthread_engine_user_create(pthread_t *thread, pthread_attr_t *attr,
+                                                  void *(*start_routine)(void *), void *arg)
+{
+	size_t size;
+
+	sem_wait(&_mpc_thread_pthread_engine_user_create_sem);
+	_mpc_thread_pthread_engine_user_create_start_routine = start_routine;
+
+	if(mpc_common_get_flags()->is_fortran == 1)
+	{
+		size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
+	}
+	else
+	{
+		size = SCTK_ETHREAD_STACK_SIZE;
+	}
+
+	size += sctk_extls_size();
+
+
+	if( (attr == NULL) && (mpc_common_get_flags()->is_fortran != 1) )
+	{
+		pthread_attr_t tmp_attr;
+		int            res;
+		pthread_attr_init(&tmp_attr);
+
+#ifdef PTHREAD_STACK_MIN
+		if(PTHREAD_STACK_MIN > size)
+		{
+			res = pthread_attr_setstacksize(&tmp_attr, PTHREAD_STACK_MIN);
+		}
+		else
+		{
+			res = pthread_attr_setstacksize(&tmp_attr, size);
+		}
+#else
+		res = pthread_attr_setstacksize(&tmp_attr, size);
+#endif
+
+		if(res != 0)
+		{
+			perror("pthread_attr_setstacksize: ");
+			assume(res == 0);
+		}
+
+		res =
+		        pthread_create(thread, &tmp_attr, tls_start_routine,
+		                       init_tls_start_routine_arg(def_start_routine, arg) );
+		if(res != 0)
+		{
+			perror("pthread_create: ");
+			assume(res == 0);
+		}
+		pthread_attr_destroy(&tmp_attr);
+		return res;
+	}
+	else
+	{
+		int res;
+
+		if(attr == NULL)
+		{
+			pthread_attr_t tmp_attr;
+			pthread_attr_init(&tmp_attr);
+			attr = &tmp_attr;
+		}
+
+
+#ifdef PTHREAD_STACK_MIN
+		if(PTHREAD_STACK_MIN > size)
+		{
+			res = pthread_attr_setstacksize(attr, PTHREAD_STACK_MIN);
+		}
+		else
+		{
+			res = pthread_attr_setstacksize(attr, size);
+		}
+#else
+		res = pthread_attr_setstacksize(attr, size);
+#endif
+
+		if(res != 0)
+		{
+			perror("pthread_attr_setstacksize: ");
+			assume(res == 0);
+		}
+
+		res = pthread_create(thread, attr, tls_start_routine,
+		                     init_tls_start_routine_arg(def_start_routine,
+		                                                arg) );
+
+		/* Sylvain: see file sctk_thread.c for more details about
+		 * the following commented block */
+#if 0
+		res = sctk_real_pthread_create(thread, attr, tls_start_routine,
+		                               init_tls_start_routine_arg(def_start_routine,
+		                                                          arg) );
+#endif
+		if(res != 0)
+		{
+			perror("pthread_create: ");
+			assume(res == 0);
+		}
+		return res;
+	}
+}
+
+#define pthread_check_size(a, b)       sctk_size_checking(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
+#define pthread_check_size_eq(a, b)    sctk_size_checking_eq(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
+
+static int _mpc_thread_pthread_mutex_spinlock(pthread_mutex_t *lock)
+{
+	return pthread_mutex_lock(lock);
+}
+
+static int _mpc_thread_pthread_engine_create(pthread_t *restrict thread,
+                                             const pthread_attr_t *restrict attr,
+                                             void *(*start_routine)(void *), void *restrict arg)
+{
+	if(attr == NULL)
+	{
+		pthread_attr_t tmp_attr;
+		int            res;
+		size_t         size;
+		char *         env;
+		pthread_attr_init(&tmp_attr);
+
+		/* We bind the MPI tasks in a round robin manner */
+		env = getenv("MPC_ENABLE_PTHREAD_PINNING");
+		if(env != NULL)
+		{
+			sctk_thread_data_t *data = (sctk_thread_data_t *)arg;
+			mpc_common_debug("Bind VP to core %d\n", data->local_task_id % mpc_topology_get_pu_count() );
+			mpc_topology_bind_to_cpu(data->local_task_id);
+		}
+
+		if(mpc_common_get_flags()->is_fortran == 1)
+		{
+			size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
+		}
+		else
+		{
+			size = SCTK_ETHREAD_STACK_SIZE;
+		}
+
+		size += sctk_extls_size();
+
+#ifdef PTHREAD_STACK_MIN
+		if(PTHREAD_STACK_MIN > size)
+		{
+			res = pthread_attr_setstacksize(&tmp_attr, PTHREAD_STACK_MIN);
+		}
+		else
+		{
+			res = pthread_attr_setstacksize(&tmp_attr, size);
+		}
+#else
+		res = pthread_attr_setstacksize(&tmp_attr, size);
+#endif
+		if(res != 0)
+		{
+			perror("pthread_attr_setstacksize: ");
+			assume(res == 0);
+		}
+
+		res =
+		        pthread_create(thread, &tmp_attr, tls_start_routine,
+		                       init_tls_start_routine_arg(start_routine, arg) );
+		if(res != 0)
+		{
+			perror("pthread_create: ");
+			assume(res == 0);
+		}
+		pthread_attr_destroy(&tmp_attr);
+		return res;
+	}
+	else
+	{
+		int res;
+		res = pthread_create(thread, attr, start_routine, arg);
+
+		if(res != 0)
+		{
+			perror("pthread_create: ");
+			assume(res == 0);
+		}
+		return res;
+	}
+}
+
+static int _mpc_thread_pthread_engine_thread_attr_setbinding(__UNUSED__ mpc_thread_attr_t *__attr, __UNUSED__ int __binding)
+{
+#if HAVE_PTHREAD_ATTR_SETAFFINITY_NP
+	cpu_set_t mask;
+	CPU_ZERO(&mask);
+	CPU_SET(__binding, &mask);
+	pthread_attr_setaffinity_np( (pthread_attr_t *)__attr, sizeof(cpu_set_t), &mask);
+#endif  /* HAVE_PTHREAD_ATTR_SETAFFINITY_NP */
+	return 0;
+}
+
+static int _mpc_thread_pthread_engine_thread_attr_getbinding(__UNUSED__ mpc_thread_attr_t *__attr, __UNUSED__ int *__binding)
+{
+	return 0;
+}
+
+#if SCTK_FUTEX_SUPPORTED
+
+#include <linux/futex.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+
+int _mpc_thread_pthread_futex(void *addr1, int op, int val1,
+                              struct timespec *timeout, void *addr2, int val3)
+{
+	/* Here we call the actual futex implementation */
+	return syscall(SYS_futex, addr1, op, val1, timeout, addr2, val3);
+}
+
+#else
+int _mpc_thread_pthread_futex(__UNUSED__ void *addr1, __UNUSED__ int op, __UNUSED__ int val1,
+                              __UNUSED__ struct timespec *timeout, __UNUSED__ void *addr2, __UNUSED__ int val3)
+{
+	not_implemented();
+}
+#endif
+
+static void _mpc_thread_pthread_engine_at_fork_child()
+{
+	sem_post(&_mpc_thread_pthread_engine_user_create_sem);
+}
+
+static void _mpc_thread_pthread_engine_at_fork_parent()
+{
+	sem_post(&_mpc_thread_pthread_engine_user_create_sem);
+}
+
+static void _mpc_thread_pthread_engine_at_fork_prepare()
+{
+	sem_wait(&_mpc_thread_pthread_engine_user_create_sem);
+}
+
+void _mpc_thread_pthread_engine_thread_init(void)
+
+{
+/*   pthread_mutex_t loc = PTHREAD_MUTEX_INITIALIZER; */
+/*   mpc_thread_mutex_t glob = SCTK_THREAD_MUTEX_INITIALIZER; */
+	sctk_only_once();
+
+	sem_init(&_mpc_thread_pthread_engine_user_create_sem, 0, 1);
+
+	pthread_atfork(_mpc_thread_pthread_engine_at_fork_prepare, _mpc_thread_pthread_engine_at_fork_parent,
+	               _mpc_thread_pthread_engine_at_fork_child);
+
+	pthread_check_size(pthread_mutex_t, mpc_thread_mutex_t);
+	pthread_check_size(pthread_mutexattr_t, mpc_thread_mutexattr_t);
+
+	_funcptr_mpc_thread_attr_setbinding = _mpc_thread_pthread_engine_thread_attr_setbinding;
+	_funcptr_mpc_thread_attr_getbinding = _mpc_thread_pthread_engine_thread_attr_getbinding;
+
+	sctk_add_func_type(_mpc_thread_pthread, mutex_spinlock,
+	                   int (*)(mpc_thread_mutex_t *) );
+
+
+	_funcptr_mpc_thread_mutex_init = _mpc_thread_pthread_engine_mutex_init;
+
+	sctk_add_func(_mpc_thread_pthread_engine, wait_for_value_and_poll);
+	sctk_add_func(_mpc_thread_pthread_engine, freeze_thread_on_vp);
+	sctk_add_func(_mpc_thread_pthread_engine, wake_thread_on_vp);
+
+	sctk_add_func_type(_mpc_thread_pthread_engine, create, int (*)(mpc_thread_t *,
+	                                                               const mpc_thread_attr_t
+	                                                               *, void *(*)(void *),
+	                                                               void *) );
+
+	sctk_add_func_type(_mpc_thread_pthread_engine, user_create,
+	                   int (*)(mpc_thread_t *, const mpc_thread_attr_t *,
+	                           void *(*)(void *), void *) );
+
+/*   assume (memcmp (&loc, &glob, sizeof (pthread_mutex_t)) == 0); */
+
+/*   sctk_add_func (pthread, yield); */
+	_funcptr_mpc_thread_yield = sched_yield;
+
+
+	sctk_add_func_type(pthread, join, int (*)(mpc_thread_t, void **) );
+	sctk_add_func_type(pthread, attr_init, int (*)(mpc_thread_attr_t *) );
+	sctk_add_func_type(pthread, attr_destroy, int (*)(mpc_thread_attr_t *) );
+	sctk_add_func_type(pthread, attr_setscope,
+	                   int (*)(mpc_thread_attr_t *, int) );
+	sctk_add_func_type(pthread, self, mpc_thread_t (*)(void) );
+	sctk_add_func_type(pthread, mutex_lock, int (*)(mpc_thread_mutex_t *) );
+
+	sctk_add_func_type(pthread, mutex_trylock, int (*)(mpc_thread_mutex_t *) );
+	sctk_add_func_type(pthread, mutex_unlock, int (*)(mpc_thread_mutex_t *) );
+
+
+	sctk_add_func_type(pthread, equal, int (*)(mpc_thread_t, mpc_thread_t) );
+	sctk_add_func_type(pthread, exit, void (*)(void *) );
+
+	sctk_add_func_type(_mpc_thread_pthread, futex, int (*)(void *, int, int, struct timespec *, void *, int) );
+
+
+	/* Regular Pthread iface */
+
+	sctk_add_func_type(pthread, setspecific, int (*)(mpc_thread_keys_t,
+	                                                 const void *) );
+	sctk_add_func_type(pthread, getspecific, void *(*)(mpc_thread_keys_t) );
+
+	sctk_add_func_type(pthread, key_create, int (*)(mpc_thread_keys_t *,
+	                                                void (*)(void *) ) );
+	sctk_add_func_type(pthread, key_delete, int (*)(mpc_thread_keys_t) );
+
+
+#ifdef HAVE_PTHREAD_KILL
+	sctk_add_func_type(pthread, kill, int (*)(mpc_thread_t, int) );
+#endif
+
+#ifndef WINDOWS_SYS
+	_funcptr_mpc_thread_sigpending = (int (*)(sigset_t *) )sigpending;
+	_funcptr_mpc_thread_sigsuspend = (int (*)(sigset_t *) )sigsuspend;
+#endif
+
+#ifdef HAVE_PTHREAD_SIGMASK
+	sctk_add_func_type(pthread, sigmask,
+	                   int (*)(int, const sigset_t *, sigset_t *) );
+#endif
+
 	/*le pthread once */
 #ifdef HAVE_PTHREAD_ONCE
 	sctk_add_func_type(pthread, once,
@@ -147,7 +630,7 @@ sctk_posix_pthread()
 	/*les s�maphores  */
 #ifdef HAVE_SEM_INIT
 	_funcptr_mpc_thread_sem_init = (int (*)(mpc_thread_sem_t *,
-	                                      int, unsigned int) )sem_init;
+	                                        int, unsigned int) )sem_init;
 #endif
 #ifdef HAVE_SEM_WAIT
 	_funcptr_mpc_thread_sem_wait = (int (*)(mpc_thread_sem_t *) )sem_wait;
@@ -405,5 +888,15 @@ sctk_posix_pthread()
 /*
  * sctk_add_func_type (pthread,setschedprio,int (*)(mpc_thread_t , int ));
  */
+#endif
+
+	sctk_multithreading_initialised = 1;
+
+	_mpc_thread_data_init();
+
+	sctk_free(sctk_malloc(5) );
+
+#ifdef MPC_Message_Passing
+	sctk_set_net_migration_available(0);
 #endif
 }

@@ -5158,7 +5158,7 @@ void sctk_ethread_ng_thread_init(void)
 }
 
 /********* PTHREAD ************/
-void sctk_pthread_ng_thread_init(void)
+void _mpc_thread_pthread_engine_ng_thread_init(void)
 {
 	mpc_common_get_flags()->new_scheduler_engine_enabled = 1;
 	_mpc_threads_generic_init("pthread", "generic/multiple_queues", __get_cpu_count() );

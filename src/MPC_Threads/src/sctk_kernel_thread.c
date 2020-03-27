@@ -23,7 +23,7 @@
 #include <dlfcn.h>
 
 #include "mpc_common_asm.h"
-#include "sctk_pthread.h"
+#include "pthread_engine.h"
 #include "sctk_kernel_thread.h"
 #include "mpc_common_spinlock.h"
 #include "mpc_topology.h"

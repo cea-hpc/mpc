@@ -109,7 +109,7 @@ void mpc_launch_print_banner( bool restart )
 void sctk_use_pthread( void )
 {
     mpc_common_get_flags()->thread_library_kind = "pthread";
-    mpc_common_get_flags()->thread_library_init = sctk_pthread_thread_init;
+    mpc_common_get_flags()->thread_library_init = _mpc_thread_pthread_engine_thread_init;
 }
 
 static void sctk_use_ethread( void )
@@ -139,7 +139,7 @@ void sctk_use_ethread_ng( void )
 void sctk_use_pthread_ng( void )
 {
     mpc_common_get_flags()->thread_library_kind = "pthread_ng";
-    mpc_common_get_flags()->thread_library_init = sctk_pthread_ng_thread_init;
+    mpc_common_get_flags()->thread_library_init = _mpc_thread_pthread_engine_ng_thread_init;
 }
 
 static void __arg_set_verbosity( char *arg )

@@ -773,7 +773,7 @@ static void *___vp_thread_start_routine(sctk_thread_data_t *__arg)
 	assume_m(mpc_topology_get_current_cpu() == ( int )tmp.bind_to, "___vp_thread_start_routine Bad Pinning");
 
 	/* Bind the thread to the right core if we are using pthreads */
-	if(mpc_common_get_flags()->thread_library_init == sctk_pthread_thread_init)
+	if(mpc_common_get_flags()->thread_library_init == _mpc_thread_pthread_engine_thread_init)
 	{
 		mpc_topology_bind_to_cpu(tmp.bind_to);
 	}
