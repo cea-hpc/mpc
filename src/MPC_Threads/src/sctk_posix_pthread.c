@@ -146,40 +146,40 @@ sctk_posix_pthread()
 #endif
 	/*les s�maphores  */
 #ifdef HAVE_SEM_INIT
-	__sctk_ptr_thread_sem_init = (int (*)(mpc_thread_sem_t *,
+	_funcptr_mpc_thread_sem_init = (int (*)(mpc_thread_sem_t *,
 	                                      int, unsigned int) )sem_init;
 #endif
 #ifdef HAVE_SEM_WAIT
-	__sctk_ptr_thread_sem_wait = (int (*)(mpc_thread_sem_t *) )sem_wait;
+	_funcptr_mpc_thread_sem_wait = (int (*)(mpc_thread_sem_t *) )sem_wait;
 #endif
 #ifdef HAVE_SEM_TRYWAIT
-	__sctk_ptr_thread_sem_trywait = (int (*)(mpc_thread_sem_t *) )sem_trywait;
+	_funcptr_mpc_thread_sem_trywait = (int (*)(mpc_thread_sem_t *) )sem_trywait;
 #endif
 #ifdef HAVE_SEM_POST
-	__sctk_ptr_thread_sem_post = (int (*)(mpc_thread_sem_t *) )sem_post;
+	_funcptr_mpc_thread_sem_post = (int (*)(mpc_thread_sem_t *) )sem_post;
 #endif
 #ifdef HAVE_SEM_GETVALUE
-	__sctk_ptr_thread_sem_getvalue =
+	_funcptr_mpc_thread_sem_getvalue =
 	        (int (*)(mpc_thread_sem_t *, int *) )sem_getvalue;
 #endif
 #ifdef HAVE_SEM_DESTROY
-	__sctk_ptr_thread_sem_destroy = (int (*)(mpc_thread_sem_t *) )sem_destroy;
+	_funcptr_mpc_thread_sem_destroy = (int (*)(mpc_thread_sem_t *) )sem_destroy;
 #endif
 #ifdef HAVE_SEM_OPEN
-	__sctk_ptr_thread_sem_open =
+	_funcptr_mpc_thread_sem_open =
 	        (mpc_thread_sem_t * (*)(const char *, int, ...) )sem_open;
 #endif
 #ifdef HAVE_SEM_CLOSE
-	__sctk_ptr_thread_sem_close = (int (*)(mpc_thread_sem_t *) )sem_close;
+	_funcptr_mpc_thread_sem_close = (int (*)(mpc_thread_sem_t *) )sem_close;
 #endif
 #ifdef HAVE_SEM_UNLINK
-	__sctk_ptr_thread_sem_unlink = (int (*)(const char *) )sem_unlink;
+	_funcptr_mpc_thread_sem_unlink = (int (*)(const char *) )sem_unlink;
 #endif
 
 /*sched priority*/
-	__sctk_ptr_thread_sched_get_priority_max =
+	_funcptr_mpc_thread_sched_get_priority_max =
 	        (int (*)(int) )sched_get_priority_max;
-	__sctk_ptr_thread_sched_get_priority_min =
+	_funcptr_mpc_thread_sched_get_priority_min =
 	        (int (*)(int) )sched_get_priority_min;
 
 
@@ -392,7 +392,7 @@ sctk_posix_pthread()
 	                           const struct timespec *) );
 #endif
 
-#define sctk_add_func_type(newlib, func, t)    __sctk_ptr_thread_ ## func = (t)newlib ## _ ## func
+#define sctk_add_func_type(newlib, func, t)    _funcptr_mpc_thread_ ## func = (t)newlib ## _ ## func
 
 #ifdef HAVE_PTHREAD_GETCONCURRENCY
 	sctk_add_func_type(pthread, getconcurrency, int (*)(void) );

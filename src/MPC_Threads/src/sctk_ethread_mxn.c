@@ -912,16 +912,16 @@ sctk_ethread_mxn_thread_init(void)
 		sctk_ethread_destr_func_tab[i] = NULL;
 	}
 
-	__sctk_ptr_thread_yield      = sctk_ethread_mxn_sched_yield;
-	__sctk_ptr_thread_dump       = sctk_ethread_mxn_sched_dump;
-	__sctk_ptr_thread_migrate    = sctk_ethread_mxn_sched_migrate;
-	__sctk_ptr_thread_restore    = sctk_ethread_mxn_sched_restore;
-	__sctk_ptr_thread_dump_clean = sctk_ethread_mxn_sched_dump_clean;
+	_funcptr_mpc_thread_yield      = sctk_ethread_mxn_sched_yield;
+	_funcptr_mpc_thread_dump       = sctk_ethread_mxn_sched_dump;
+	_funcptr_mpc_thread_migrate    = sctk_ethread_mxn_sched_migrate;
+	_funcptr_mpc_thread_restore    = sctk_ethread_mxn_sched_restore;
+	_funcptr_mpc_thread_dump_clean = sctk_ethread_mxn_sched_dump_clean;
 
-	__sctk_ptr_thread_attr_setbinding = sctk_ethread_mxn_thread_attr_setbinding;
-	__sctk_ptr_thread_attr_getbinding = sctk_ethread_mxn_thread_attr_getbinding;
+	_funcptr_mpc_thread_attr_setbinding = sctk_ethread_mxn_thread_attr_setbinding;
+	_funcptr_mpc_thread_attr_getbinding = sctk_ethread_mxn_thread_attr_getbinding;
 
-	__sctk_ptr_thread_proc_migration = sctk_ethread_mxn_thread_proc_migration;
+	_funcptr_mpc_thread_proc_migration = sctk_ethread_mxn_thread_proc_migration;
 
 	sctk_add_func_type(sctk_ethread_mxn, create, int (*)(mpc_thread_t *,
 	                                                     const
@@ -959,7 +959,7 @@ sctk_ethread_mxn_thread_init(void)
 	                   int (*)(mpc_thread_mutex_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, mutex_unlock,
 	                   int (*)(mpc_thread_mutex_t *) );
-	__sctk_ptr_thread_mutex_init = sctk_ethread_mxn_mutex_init;
+	_funcptr_mpc_thread_mutex_init = sctk_ethread_mxn_mutex_init;
 
 
 	sctk_ethread_check_size(int, mpc_thread_keys_t);

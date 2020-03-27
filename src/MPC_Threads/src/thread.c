@@ -880,8 +880,8 @@ int _mpc_thread_create_vp(mpc_thread_t *restrict __threadp,
 #endif
 
 	// create user thread
-	assert(__sctk_ptr_thread_create != NULL);
-	res = __sctk_ptr_thread_create(__threadp, __attr, (void *(*)(void *) )
+	assert(_funcptr_mpc_thread_create != NULL);
+	res = _funcptr_mpc_thread_create(__threadp, __attr, (void *(*)(void *) )
 	                               ___vp_thread_start_routine,
 	                               ( void * )tmp);
 
@@ -1105,8 +1105,8 @@ int mpc_thread_core_thread_create(mpc_thread_t *restrict __threadp,
 	}
 #endif
 #endif
-	assert(__sctk_ptr_thread_user_create != NULL);
-	res = __sctk_ptr_thread_user_create(__threadp, __attr,
+	assert(_funcptr_mpc_thread_user_create != NULL);
+	res = _funcptr_mpc_thread_user_create(__threadp, __attr,
 	                                    (void *(*)(void *) )
 	                                    ___nonvp_thread_start_routine,
 	                                    ( void * )tmp);
@@ -1231,8 +1231,8 @@ double mpc_thread_get_activity(int i)
 	__check_mpc_initialized();
 	double tmp;
 
-	assert(__sctk_ptr_thread_get_activity != NULL);
-	tmp = __sctk_ptr_thread_get_activity(i);
+	assert(_funcptr_mpc_thread_get_activity != NULL);
+	tmp = _funcptr_mpc_thread_get_activity(i);
 	sctk_nodebug("mpc_thread_get_activity %d %f", i, tmp);
 	return tmp;
 }
@@ -1339,8 +1339,8 @@ void mpc_thread_exit(void *__retval)
 {
 	__check_mpc_initialized();
 	_mpc_thread_exit_cleanup();
-	assert(__sctk_ptr_thread_exit != NULL);
-	__sctk_ptr_thread_exit(__retval);
+	assert(_funcptr_mpc_thread_exit != NULL);
+	_funcptr_mpc_thread_exit(__retval);
 }
 
 /**********
@@ -1352,8 +1352,8 @@ int mpc_thread_detach(mpc_thread_t __th)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_detach != NULL);
-	res = __sctk_ptr_thread_detach(__th);
+	assert(_funcptr_mpc_thread_detach != NULL);
+	res = _funcptr_mpc_thread_detach(__th);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1367,8 +1367,8 @@ int mpc_thread_equal(mpc_thread_t __thread1, mpc_thread_t __thread2)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_equal != NULL);
-	res = __sctk_ptr_thread_equal(__thread1, __thread2);
+	assert(_funcptr_mpc_thread_equal != NULL);
+	res = _funcptr_mpc_thread_equal(__thread1, __thread2);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1383,8 +1383,8 @@ int mpc_thread_once(mpc_thread_once_t *__once_control,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_once != NULL);
-	res = __sctk_ptr_thread_once(__once_control, __init_routine);
+	assert(_funcptr_mpc_thread_once != NULL);
+	res = _funcptr_mpc_thread_once(__once_control, __init_routine);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1399,8 +1399,8 @@ int mpc_thread_atfork(void (*__prepare)(void), void (*__parent)(void),
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_atfork != NULL);
-	res = __sctk_ptr_thread_atfork(__prepare, __parent, __child);
+	assert(_funcptr_mpc_thread_atfork != NULL);
+	res = _funcptr_mpc_thread_atfork(__prepare, __parent, __child);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1414,8 +1414,8 @@ int mpc_thread_cancel(mpc_thread_t __cancelthread)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_cancel != NULL);
-	res = __sctk_ptr_thread_cancel(__cancelthread);
+	assert(_funcptr_mpc_thread_cancel != NULL);
+	res = _funcptr_mpc_thread_cancel(__cancelthread);
 	sctk_check(res, 0);
 	mpc_thread_yield();
 	return res;
@@ -1424,8 +1424,8 @@ int mpc_thread_cancel(mpc_thread_t __cancelthread)
 void mpc_thread_testcancel(void)
 {
 	__check_mpc_initialized();
-	assert(__sctk_ptr_thread_testcancel != NULL);
-	__sctk_ptr_thread_testcancel();
+	assert(_funcptr_mpc_thread_testcancel != NULL);
+	_funcptr_mpc_thread_testcancel();
 }
 
 /*********
@@ -1435,8 +1435,8 @@ void mpc_thread_testcancel(void)
 int mpc_thread_yield(void)
 {
 	__check_mpc_initialized();
-	assert(__sctk_ptr_thread_yield != NULL);
-	return __sctk_ptr_thread_yield();
+	assert(_funcptr_mpc_thread_yield != NULL);
+	return _funcptr_mpc_thread_yield();
 }
 
 /********
@@ -1448,8 +1448,8 @@ int mpc_thread_join(mpc_thread_t __th, void **__thread_return)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_join != NULL);
-	res = __sctk_ptr_thread_join(__th, __thread_return);
+	assert(_funcptr_mpc_thread_join != NULL);
+	res = _funcptr_mpc_thread_join(__th, __thread_return);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1461,8 +1461,8 @@ int mpc_thread_join(mpc_thread_t __th, void **__thread_return)
 mpc_thread_t mpc_thread_self(void)
 {
 	__check_mpc_initialized();
-	assert(__sctk_ptr_thread_self != NULL);
-	return __sctk_ptr_thread_self();
+	assert(_funcptr_mpc_thread_self != NULL);
+	return _funcptr_mpc_thread_self();
 }
 
 /*********************
@@ -1472,8 +1472,8 @@ mpc_thread_t mpc_thread_self(void)
 int mpc_thread_getattr_np(mpc_thread_t th, mpc_thread_attr_t *attr)
 {
 	__check_mpc_initialized();
-	assert(__sctk_ptr_thread_getattr_np != NULL);
-	return __sctk_ptr_thread_getattr_np(th, attr);
+	assert(_funcptr_mpc_thread_getattr_np != NULL);
+	return _funcptr_mpc_thread_getattr_np(th, attr);
 }
 
 int mpc_thread_attr_destroy(mpc_thread_attr_t *__attr)
@@ -1481,8 +1481,8 @@ int mpc_thread_attr_destroy(mpc_thread_attr_t *__attr)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_destroy != NULL);
-	res = __sctk_ptr_thread_attr_destroy(__attr);
+	assert(_funcptr_mpc_thread_attr_destroy != NULL);
+	res = _funcptr_mpc_thread_attr_destroy(__attr);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1493,8 +1493,8 @@ int mpc_thread_attr_getdetachstate(const mpc_thread_attr_t *__attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_getdetachstate != NULL);
-	res = __sctk_ptr_thread_attr_getdetachstate(__attr, __detachstate);
+	assert(_funcptr_mpc_thread_attr_getdetachstate != NULL);
+	res = _funcptr_mpc_thread_attr_getdetachstate(__attr, __detachstate);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1505,8 +1505,8 @@ int mpc_thread_attr_getguardsize(const mpc_thread_attr_t *restrict __attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_getguardsize != NULL);
-	res = __sctk_ptr_thread_attr_getguardsize(__attr, __guardsize);
+	assert(_funcptr_mpc_thread_attr_getguardsize != NULL);
+	res = _funcptr_mpc_thread_attr_getguardsize(__attr, __guardsize);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1517,8 +1517,8 @@ int mpc_thread_attr_getinheritsched(const mpc_thread_attr_t *
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_getinheritsched != NULL);
-	res = __sctk_ptr_thread_attr_getinheritsched(__attr, __inherit);
+	assert(_funcptr_mpc_thread_attr_getinheritsched != NULL);
+	res = _funcptr_mpc_thread_attr_getinheritsched(__attr, __inherit);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1529,8 +1529,8 @@ int mpc_thread_attr_getschedparam(const mpc_thread_attr_t *restrict __attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_getschedparam != NULL);
-	res = __sctk_ptr_thread_attr_getschedparam(__attr, __param);
+	assert(_funcptr_mpc_thread_attr_getschedparam != NULL);
+	res = _funcptr_mpc_thread_attr_getschedparam(__attr, __param);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1541,8 +1541,8 @@ int mpc_thread_attr_getschedpolicy(const mpc_thread_attr_t *restrict __attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_getschedpolicy != NULL);
-	res = __sctk_ptr_thread_attr_getschedpolicy(__attr, __policy);
+	assert(_funcptr_mpc_thread_attr_getschedpolicy != NULL);
+	res = _funcptr_mpc_thread_attr_getschedpolicy(__attr, __policy);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1553,8 +1553,8 @@ int mpc_thread_attr_getscope(const mpc_thread_attr_t *restrict __attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_getscope != NULL);
-	res = __sctk_ptr_thread_attr_getscope(__attr, __scope);
+	assert(_funcptr_mpc_thread_attr_getscope != NULL);
+	res = _funcptr_mpc_thread_attr_getscope(__attr, __scope);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1565,8 +1565,8 @@ int mpc_thread_attr_getstackaddr(const mpc_thread_attr_t *restrict __attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_getstackaddr != NULL);
-	res = __sctk_ptr_thread_attr_getstackaddr(__attr, __stackaddr);
+	assert(_funcptr_mpc_thread_attr_getstackaddr != NULL);
+	res = _funcptr_mpc_thread_attr_getstackaddr(__attr, __stackaddr);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1578,8 +1578,8 @@ int mpc_thread_attr_getstack(const mpc_thread_attr_t *restrict __attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_getstack != NULL);
-	res = __sctk_ptr_thread_attr_getstack(__attr, __stackaddr, __stacksize);
+	assert(_funcptr_mpc_thread_attr_getstack != NULL);
+	res = _funcptr_mpc_thread_attr_getstack(__attr, __stackaddr, __stacksize);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1590,8 +1590,8 @@ int mpc_thread_attr_getstacksize(const mpc_thread_attr_t *restrict __attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_getstacksize != NULL);
-	res = __sctk_ptr_thread_attr_getstacksize(__attr, __stacksize);
+	assert(_funcptr_mpc_thread_attr_getstacksize != NULL);
+	res = _funcptr_mpc_thread_attr_getstacksize(__attr, __stacksize);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1601,8 +1601,8 @@ int mpc_thread_attr_init(mpc_thread_attr_t *__attr)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_init != NULL);
-	res = __sctk_ptr_thread_attr_init(__attr);
+	assert(_funcptr_mpc_thread_attr_init != NULL);
+	res = _funcptr_mpc_thread_attr_init(__attr);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1613,8 +1613,8 @@ int mpc_thread_attr_setdetachstate(mpc_thread_attr_t *__attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_setdetachstate != NULL);
-	res = __sctk_ptr_thread_attr_setdetachstate(__attr, __detachstate);
+	assert(_funcptr_mpc_thread_attr_setdetachstate != NULL);
+	res = _funcptr_mpc_thread_attr_setdetachstate(__attr, __detachstate);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1625,8 +1625,8 @@ int mpc_thread_attr_setguardsize(mpc_thread_attr_t *__attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_setguardsize != NULL);
-	res = __sctk_ptr_thread_attr_setguardsize(__attr, __guardsize);
+	assert(_funcptr_mpc_thread_attr_setguardsize != NULL);
+	res = _funcptr_mpc_thread_attr_setguardsize(__attr, __guardsize);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1636,8 +1636,8 @@ int mpc_thread_attr_setinheritsched(mpc_thread_attr_t *__attr, int __inherit)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_setinheritsched != NULL);
-	res = __sctk_ptr_thread_attr_setinheritsched(__attr, __inherit);
+	assert(_funcptr_mpc_thread_attr_setinheritsched != NULL);
+	res = _funcptr_mpc_thread_attr_setinheritsched(__attr, __inherit);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1648,8 +1648,8 @@ int mpc_thread_attr_setschedparam(mpc_thread_attr_t *restrict __attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_setschedparam != NULL);
-	res = __sctk_ptr_thread_attr_setschedparam(__attr, __param);
+	assert(_funcptr_mpc_thread_attr_setschedparam != NULL);
+	res = _funcptr_mpc_thread_attr_setschedparam(__attr, __param);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1659,8 +1659,8 @@ int mpc_thread_attr_setschedpolicy(mpc_thread_attr_t *__attr, int __policy)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_setschedpolicy != NULL);
-	res = __sctk_ptr_thread_attr_setschedpolicy(__attr, __policy);
+	assert(_funcptr_mpc_thread_attr_setschedpolicy != NULL);
+	res = _funcptr_mpc_thread_attr_setschedpolicy(__attr, __policy);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1672,8 +1672,8 @@ int mpc_thread_attr_setscope(mpc_thread_attr_t *__attr, int __scope)
 
 	sctk_nodebug("thread attr_setscope %d == %d || %d", __scope,
 	             SCTK_THREAD_SCOPE_PROCESS, SCTK_THREAD_SCOPE_SYSTEM);
-	assert(__sctk_ptr_thread_attr_setscope != NULL);
-	res = __sctk_ptr_thread_attr_setscope(__attr, __scope);
+	assert(_funcptr_mpc_thread_attr_setscope != NULL);
+	res = _funcptr_mpc_thread_attr_setscope(__attr, __scope);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1683,8 +1683,8 @@ int mpc_thread_attr_setstackaddr(mpc_thread_attr_t *__attr, void *__stackaddr)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_setstackaddr != NULL);
-	res = __sctk_ptr_thread_attr_setstackaddr(__attr, __stackaddr);
+	assert(_funcptr_mpc_thread_attr_setstackaddr != NULL);
+	res = _funcptr_mpc_thread_attr_setstackaddr(__attr, __stackaddr);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1695,8 +1695,8 @@ int mpc_thread_attr_setstack(mpc_thread_attr_t *__attr, void *__stackaddr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_setstack != NULL);
-	res = __sctk_ptr_thread_attr_setstack(__attr, __stackaddr, __stacksize);
+	assert(_funcptr_mpc_thread_attr_setstack != NULL);
+	res = _funcptr_mpc_thread_attr_setstack(__attr, __stackaddr, __stacksize);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1707,8 +1707,8 @@ int mpc_thread_attr_setstacksize(mpc_thread_attr_t *__attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_setstacksize != NULL);
-	res = __sctk_ptr_thread_attr_setstacksize(__attr, __stacksize);
+	assert(_funcptr_mpc_thread_attr_setstacksize != NULL);
+	res = _funcptr_mpc_thread_attr_setstacksize(__attr, __stacksize);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1718,8 +1718,8 @@ int mpc_thread_attr_setbinding(mpc_thread_attr_t *__attr, int __binding)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_setbinding != NULL);
-	res = __sctk_ptr_thread_attr_setbinding(__attr, __binding);
+	assert(_funcptr_mpc_thread_attr_setbinding != NULL);
+	res = _funcptr_mpc_thread_attr_setbinding(__attr, __binding);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1729,8 +1729,8 @@ int mpc_thread_attr_getbinding(mpc_thread_attr_t *__attr, int *__binding)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_attr_getbinding != NULL);
-	res = __sctk_ptr_thread_attr_getbinding(__attr, __binding);
+	assert(_funcptr_mpc_thread_attr_getbinding != NULL);
+	res = _funcptr_mpc_thread_attr_getbinding(__attr, __binding);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1744,8 +1744,8 @@ int mpc_thread_barrierattr_destroy(mpc_thread_barrierattr_t *__attr)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_barrierattr_destroy != NULL);
-	res = __sctk_ptr_thread_barrierattr_destroy(__attr);
+	assert(_funcptr_mpc_thread_barrierattr_destroy != NULL);
+	res = _funcptr_mpc_thread_barrierattr_destroy(__attr);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1755,8 +1755,8 @@ int mpc_thread_barrierattr_init(mpc_thread_barrierattr_t *__attr)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_barrierattr_init != NULL);
-	res = __sctk_ptr_thread_barrierattr_init(__attr);
+	assert(_funcptr_mpc_thread_barrierattr_init != NULL);
+	res = _funcptr_mpc_thread_barrierattr_init(__attr);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1767,8 +1767,8 @@ int mpc_thread_barrierattr_setpshared(mpc_thread_barrierattr_t *__attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_barrierattr_setpshared != NULL);
-	res = __sctk_ptr_thread_barrierattr_setpshared(__attr, __pshared);
+	assert(_funcptr_mpc_thread_barrierattr_setpshared != NULL);
+	res = _funcptr_mpc_thread_barrierattr_setpshared(__attr, __pshared);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1779,8 +1779,8 @@ int mpc_thread_barrierattr_getpshared(const mpc_thread_barrierattr_t *
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_barrierattr_getpshared != NULL);
-	res = __sctk_ptr_thread_barrierattr_getpshared(__attr, __pshared);
+	assert(_funcptr_mpc_thread_barrierattr_getpshared != NULL);
+	res = _funcptr_mpc_thread_barrierattr_getpshared(__attr, __pshared);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1794,8 +1794,8 @@ int mpc_thread_core_barrier_destroy(mpc_thread_barrier_t *__barrier)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_barrier_destroy != NULL);
-	res = __sctk_ptr_thread_barrier_destroy(__barrier);
+	assert(_funcptr_mpc_thread_barrier_destroy != NULL);
+	res = _funcptr_mpc_thread_barrier_destroy(__barrier);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1807,8 +1807,8 @@ int mpc_thread_core_barrier_init(mpc_thread_barrier_t *restrict __barrier,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_barrier_init != NULL);
-	res = __sctk_ptr_thread_barrier_init(__barrier, __attr, __count);
+	assert(_funcptr_mpc_thread_barrier_init != NULL);
+	res = _funcptr_mpc_thread_barrier_init(__barrier, __attr, __count);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1818,8 +1818,8 @@ int mpc_thread_core_barrier_wait(mpc_thread_barrier_t *__barrier)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_barrier_wait != NULL);
-	res = __sctk_ptr_thread_barrier_wait(__barrier);
+	assert(_funcptr_mpc_thread_barrier_wait != NULL);
+	res = _funcptr_mpc_thread_barrier_wait(__barrier);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1833,8 +1833,8 @@ int mpc_thread_condattr_destroy(mpc_thread_condattr_t *__attr)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_condattr_destroy != NULL);
-	res = __sctk_ptr_thread_condattr_destroy(__attr);
+	assert(_funcptr_mpc_thread_condattr_destroy != NULL);
+	res = _funcptr_mpc_thread_condattr_destroy(__attr);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1845,8 +1845,8 @@ int mpc_thread_condattr_getpshared(const mpc_thread_condattr_t *
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_condattr_getpshared != NULL);
-	res = __sctk_ptr_thread_condattr_getpshared(__attr, __pshared);
+	assert(_funcptr_mpc_thread_condattr_getpshared != NULL);
+	res = _funcptr_mpc_thread_condattr_getpshared(__attr, __pshared);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1856,8 +1856,8 @@ int mpc_thread_condattr_init(mpc_thread_condattr_t *__attr)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_condattr_init != NULL);
-	res = __sctk_ptr_thread_condattr_init(__attr);
+	assert(_funcptr_mpc_thread_condattr_init != NULL);
+	res = _funcptr_mpc_thread_condattr_init(__attr);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1868,8 +1868,8 @@ int mpc_thread_condattr_setpshared(mpc_thread_condattr_t *__attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_condattr_setpshared != NULL);
-	res = __sctk_ptr_thread_condattr_setpshared(__attr, __pshared);
+	assert(_funcptr_mpc_thread_condattr_setpshared != NULL);
+	res = _funcptr_mpc_thread_condattr_setpshared(__attr, __pshared);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1880,8 +1880,8 @@ int mpc_thread_condattr_setclock(mpc_thread_condattr_t *__attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_condattr_setclock != NULL);
-	res = __sctk_ptr_thread_condattr_setclock(__attr, __clockid);
+	assert(_funcptr_mpc_thread_condattr_setclock != NULL);
+	res = _funcptr_mpc_thread_condattr_setclock(__attr, __clockid);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1892,8 +1892,8 @@ int mpc_thread_condattr_getclock(mpc_thread_condattr_t *__attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_condattr_getclock != NULL);
-	res = __sctk_ptr_thread_condattr_getclock(__attr, __clockid);
+	assert(_funcptr_mpc_thread_condattr_getclock != NULL);
+	res = _funcptr_mpc_thread_condattr_getclock(__attr, __clockid);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1907,8 +1907,8 @@ int mpc_thread_cond_broadcast(mpc_thread_cond_t *__cond)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_cond_broadcast != NULL);
-	res = __sctk_ptr_thread_cond_broadcast(__cond);
+	assert(_funcptr_mpc_thread_cond_broadcast != NULL);
+	res = _funcptr_mpc_thread_cond_broadcast(__cond);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1918,8 +1918,8 @@ int mpc_thread_cond_destroy(mpc_thread_cond_t *__cond)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_cond_destroy != NULL);
-	res = __sctk_ptr_thread_cond_destroy(__cond);
+	assert(_funcptr_mpc_thread_cond_destroy != NULL);
+	res = _funcptr_mpc_thread_cond_destroy(__cond);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1930,8 +1930,8 @@ int mpc_thread_cond_init(mpc_thread_cond_t *restrict __cond,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_cond_init != NULL);
-	res = __sctk_ptr_thread_cond_init(__cond, __cond_attr);
+	assert(_funcptr_mpc_thread_cond_init != NULL);
+	res = _funcptr_mpc_thread_cond_init(__cond, __cond_attr);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1941,8 +1941,8 @@ int mpc_thread_cond_signal(mpc_thread_cond_t *__cond)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_cond_signal != NULL);
-	res = __sctk_ptr_thread_cond_signal(__cond);
+	assert(_funcptr_mpc_thread_cond_signal != NULL);
+	res = _funcptr_mpc_thread_cond_signal(__cond);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1954,8 +1954,8 @@ int mpc_thread_cond_timedwait(mpc_thread_cond_t *restrict __cond,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_cond_timedwait != NULL);
-	res = __sctk_ptr_thread_cond_timedwait(__cond, __mutex, __abstime);
+	assert(_funcptr_mpc_thread_cond_timedwait != NULL);
+	res = _funcptr_mpc_thread_cond_timedwait(__cond, __mutex, __abstime);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1966,8 +1966,8 @@ int mpc_thread_cond_wait(mpc_thread_cond_t *restrict __cond,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_cond_wait != NULL);
-	res = __sctk_ptr_thread_cond_wait(__cond, __mutex);
+	assert(_funcptr_mpc_thread_cond_wait != NULL);
+	res = _funcptr_mpc_thread_cond_wait(__cond, __mutex);
 	sctk_check(res, 0);
 	return res;
 }
@@ -1982,8 +1982,8 @@ mpc_thread_getconcurrency(void)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_getconcurrency != NULL);
-	res = __sctk_ptr_thread_getconcurrency();
+	assert(_funcptr_mpc_thread_getconcurrency != NULL);
+	res = _funcptr_mpc_thread_getconcurrency();
 	sctk_check(res, 0);
 	return res;
 }
@@ -1994,8 +1994,8 @@ mpc_thread_getcpuclockid(mpc_thread_t __thread_id, clockid_t *__clock_id)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_getcpuclockid != NULL);
-	res = __sctk_ptr_thread_getcpuclockid(__thread_id, __clock_id);
+	assert(_funcptr_mpc_thread_getcpuclockid != NULL);
+	res = _funcptr_mpc_thread_getcpuclockid(__thread_id, __clock_id);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2005,8 +2005,8 @@ int mpc_thread_getpriority_max(int policy)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_sched_get_priority_max != NULL);
-	res = __sctk_ptr_thread_sched_get_priority_max(policy);
+	assert(_funcptr_mpc_thread_sched_get_priority_max != NULL);
+	res = _funcptr_mpc_thread_sched_get_priority_max(policy);
 	return res;
 }
 
@@ -2015,8 +2015,8 @@ int mpc_thread_getpriority_min(int policy)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_sched_get_priority_min != NULL);
-	res = __sctk_ptr_thread_sched_get_priority_min(policy);
+	assert(_funcptr_mpc_thread_sched_get_priority_min != NULL);
+	res = _funcptr_mpc_thread_sched_get_priority_min(policy);
 	return res;
 }
 
@@ -2027,8 +2027,8 @@ int mpc_thread_getschedparam(mpc_thread_t __target_thread,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_getschedparam != NULL);
-	res = __sctk_ptr_thread_getschedparam(__target_thread, __policy, __param);
+	assert(_funcptr_mpc_thread_getschedparam != NULL);
+	res = _funcptr_mpc_thread_getschedparam(__target_thread, __policy, __param);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2042,8 +2042,8 @@ int mpc_thread_kill(mpc_thread_t thread, int signo)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_kill != NULL);
-	res = __sctk_ptr_thread_kill(thread, signo);
+	assert(_funcptr_mpc_thread_kill != NULL);
+	res = _funcptr_mpc_thread_kill(thread, signo);
 	sctk_check(res, 0);
 	mpc_thread_yield();
 	return res;
@@ -2074,8 +2074,8 @@ int mpc_thread_sigmask(int how, const sigset_t *newmask, sigset_t *oldmask)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_sigmask != NULL);
-	res = __sctk_ptr_thread_sigmask(how, newmask, oldmask);
+	assert(_funcptr_mpc_thread_sigmask != NULL);
+	res = _funcptr_mpc_thread_sigmask(how, newmask, oldmask);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2094,8 +2094,8 @@ int mpc_thread_sigpending(sigset_t *set)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_sigpending != NULL);
-	res = __sctk_ptr_thread_sigpending(set);
+	assert(_funcptr_mpc_thread_sigpending != NULL);
+	res = _funcptr_mpc_thread_sigpending(set);
 	sctk_check(res, 0);
 	mpc_thread_yield();
 	return res;
@@ -2106,8 +2106,8 @@ int mpc_thread_sigsuspend(sigset_t *set)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_sigsuspend != NULL);
-	res = __sctk_ptr_thread_sigsuspend(set);
+	assert(_funcptr_mpc_thread_sigsuspend != NULL);
+	res = _funcptr_mpc_thread_sigsuspend(set);
 	sctk_check(res, 0);
 	mpc_thread_yield();
 	return res;
@@ -2117,8 +2117,8 @@ int mpc_thread_sigsuspend(sigset_t *set)
 * sctk_thread_sigaction( int signum, const struct sigaction* act,
 *              struct sigaction* oldact ){
 * int res;
-*  assert(__sctk_ptr_thread_sigaction != NULL);
-* res = __sctk_ptr_thread_sigaction( signum, act, oldact );
+*  assert(_funcptr_mpc_thread_sigaction != NULL);
+* res = _funcptr_mpc_thread_sigaction( signum, act, oldact );
 * return res;
 * }*/
 
@@ -2132,8 +2132,8 @@ int mpc_thread_keys_create(mpc_thread_keys_t *__key,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_key_create != NULL);
-	res = __sctk_ptr_thread_key_create(__key, __destr_function);
+	assert(_funcptr_mpc_thread_key_create != NULL);
+	res = _funcptr_mpc_thread_key_create(__key, __destr_function);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2143,8 +2143,8 @@ int mpc_thread_keys_delete(mpc_thread_keys_t __key)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_key_delete != NULL);
-	res = __sctk_ptr_thread_key_delete(__key);
+	assert(_funcptr_mpc_thread_key_delete != NULL);
+	res = _funcptr_mpc_thread_key_delete(__key);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2152,8 +2152,8 @@ int mpc_thread_keys_delete(mpc_thread_keys_t __key)
 void *mpc_thread_getspecific(mpc_thread_keys_t __key)
 {
 	__check_mpc_initialized();
-	assert(__sctk_ptr_thread_getspecific != NULL);
-	return __sctk_ptr_thread_getspecific(__key);
+	assert(_funcptr_mpc_thread_getspecific != NULL);
+	return _funcptr_mpc_thread_getspecific(__key);
 }
 
 /********************
@@ -2165,8 +2165,8 @@ int mpc_thread_mutexattr_destroy(mpc_thread_mutexattr_t *__attr)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutexattr_destroy != NULL);
-	res = __sctk_ptr_thread_mutexattr_destroy(__attr);
+	assert(_funcptr_mpc_thread_mutexattr_destroy != NULL);
+	res = _funcptr_mpc_thread_mutexattr_destroy(__attr);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2177,8 +2177,8 @@ int mpc_thread_mutexattr_getpshared(const mpc_thread_mutexattr_t *
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutexattr_getpshared != NULL);
-	res = __sctk_ptr_thread_mutexattr_getpshared(__attr, __pshared);
+	assert(_funcptr_mpc_thread_mutexattr_getpshared != NULL);
+	res = _funcptr_mpc_thread_mutexattr_getpshared(__attr, __pshared);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2189,8 +2189,8 @@ int mpc_thread_mutexattr_getprioceiling(const mpc_thread_mutexattr_t *
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutexattr_getprioceiling != NULL);
-	res = __sctk_ptr_thread_mutexattr_getprioceiling(attr, prioceiling);
+	assert(_funcptr_mpc_thread_mutexattr_getprioceiling != NULL);
+	res = _funcptr_mpc_thread_mutexattr_getprioceiling(attr, prioceiling);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2201,8 +2201,8 @@ int mpc_thread_mutexattr_setprioceiling(mpc_thread_mutexattr_t *attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutexattr_setprioceiling != NULL);
-	res = __sctk_ptr_thread_mutexattr_setprioceiling(attr, prioceiling);
+	assert(_funcptr_mpc_thread_mutexattr_setprioceiling != NULL);
+	res = _funcptr_mpc_thread_mutexattr_setprioceiling(attr, prioceiling);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2213,8 +2213,8 @@ int mpc_thread_mutexattr_getprotocol(const mpc_thread_mutexattr_t *
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutexattr_getprotocol != NULL);
-	res = __sctk_ptr_thread_mutexattr_getprotocol(attr, protocol);
+	assert(_funcptr_mpc_thread_mutexattr_getprotocol != NULL);
+	res = _funcptr_mpc_thread_mutexattr_getprotocol(attr, protocol);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2225,8 +2225,8 @@ int mpc_thread_mutexattr_setprotocol(mpc_thread_mutexattr_t *attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutexattr_setprotocol != NULL);
-	res = __sctk_ptr_thread_mutexattr_setprotocol(attr, protocol);
+	assert(_funcptr_mpc_thread_mutexattr_setprotocol != NULL);
+	res = _funcptr_mpc_thread_mutexattr_setprotocol(attr, protocol);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2237,8 +2237,8 @@ int mpc_thread_mutexattr_gettype(const mpc_thread_mutexattr_t *
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutexattr_gettype != NULL);
-	res = __sctk_ptr_thread_mutexattr_gettype(__attr, __kind);
+	assert(_funcptr_mpc_thread_mutexattr_gettype != NULL);
+	res = _funcptr_mpc_thread_mutexattr_gettype(__attr, __kind);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2248,8 +2248,8 @@ int mpc_thread_mutexattr_init(mpc_thread_mutexattr_t *__attr)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutexattr_init != NULL);
-	res = __sctk_ptr_thread_mutexattr_init(__attr);
+	assert(_funcptr_mpc_thread_mutexattr_init != NULL);
+	res = _funcptr_mpc_thread_mutexattr_init(__attr);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2260,8 +2260,8 @@ int mpc_thread_mutexattr_setpshared(mpc_thread_mutexattr_t *__attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutexattr_setpshared != NULL);
-	res = __sctk_ptr_thread_mutexattr_setpshared(__attr, __pshared);
+	assert(_funcptr_mpc_thread_mutexattr_setpshared != NULL);
+	res = _funcptr_mpc_thread_mutexattr_setpshared(__attr, __pshared);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2271,8 +2271,8 @@ int mpc_thread_mutexattr_settype(mpc_thread_mutexattr_t *__attr, int __kind)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutexattr_settype != NULL);
-	res = __sctk_ptr_thread_mutexattr_settype(__attr, __kind);
+	assert(_funcptr_mpc_thread_mutexattr_settype != NULL);
+	res = _funcptr_mpc_thread_mutexattr_settype(__attr, __kind);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2286,8 +2286,8 @@ int mpc_thread_mutex_destroy(mpc_thread_mutex_t *__mutex)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutex_destroy != NULL);
-	res = __sctk_ptr_thread_mutex_destroy(__mutex);
+	assert(_funcptr_mpc_thread_mutex_destroy != NULL);
+	res = _funcptr_mpc_thread_mutex_destroy(__mutex);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2298,8 +2298,8 @@ int mpc_thread_mutex_init(mpc_thread_mutex_t *restrict __mutex,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutex_init != NULL);
-	res = __sctk_ptr_thread_mutex_init(__mutex, __mutex_attr);
+	assert(_funcptr_mpc_thread_mutex_init != NULL);
+	res = _funcptr_mpc_thread_mutex_init(__mutex, __mutex_attr);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2310,8 +2310,8 @@ int mpc_thread_mutex_lock(mpc_thread_mutex_t *__mutex)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutex_lock != NULL);
-	res = __sctk_ptr_thread_mutex_lock(__mutex);
+	assert(_funcptr_mpc_thread_mutex_lock != NULL);
+	res = _funcptr_mpc_thread_mutex_lock(__mutex);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2321,8 +2321,8 @@ int mpc_thread_mutex_spinlock(mpc_thread_mutex_t *__mutex)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutex_spinlock != NULL);
-	res = __sctk_ptr_thread_mutex_spinlock(__mutex);
+	assert(_funcptr_mpc_thread_mutex_spinlock != NULL);
+	res = _funcptr_mpc_thread_mutex_spinlock(__mutex);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2333,8 +2333,8 @@ int mpc_thread_mutex_timedlock(mpc_thread_mutex_t *restrict __mutex,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutex_timedlock != NULL);
-	res = __sctk_ptr_thread_mutex_timedlock(__mutex, __abstime);
+	assert(_funcptr_mpc_thread_mutex_timedlock != NULL);
+	res = _funcptr_mpc_thread_mutex_timedlock(__mutex, __abstime);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2344,8 +2344,8 @@ int mpc_thread_mutex_trylock(mpc_thread_mutex_t *__mutex)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutex_trylock != NULL);
-	res = __sctk_ptr_thread_mutex_trylock(__mutex);
+	assert(_funcptr_mpc_thread_mutex_trylock != NULL);
+	res = _funcptr_mpc_thread_mutex_trylock(__mutex);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2356,8 +2356,8 @@ int mpc_thread_mutex_unlock(mpc_thread_mutex_t *__mutex)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_mutex_unlock != NULL);
-	res = __sctk_ptr_thread_mutex_unlock(__mutex);
+	assert(_funcptr_mpc_thread_mutex_unlock != NULL);
+	res = _funcptr_mpc_thread_mutex_unlock(__mutex);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2391,8 +2391,8 @@ int mpc_thread_sem_init(mpc_thread_sem_t *sem, int pshared,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_sem_init != NULL);
-	res = __sctk_ptr_thread_sem_init(sem, pshared, value);
+	assert(_funcptr_mpc_thread_sem_init != NULL);
+	res = _funcptr_mpc_thread_sem_init(sem, pshared, value);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2402,8 +2402,8 @@ int mpc_thread_sem_wait(mpc_thread_sem_t *sem)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_sem_wait != NULL);
-	res = __sctk_ptr_thread_sem_wait(sem);
+	assert(_funcptr_mpc_thread_sem_wait != NULL);
+	res = _funcptr_mpc_thread_sem_wait(sem);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2413,8 +2413,8 @@ int mpc_thread_sem_trywait(mpc_thread_sem_t *sem)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_sem_trywait != NULL);
-	res = __sctk_ptr_thread_sem_trywait(sem);
+	assert(_funcptr_mpc_thread_sem_trywait != NULL);
+	res = _funcptr_mpc_thread_sem_trywait(sem);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2424,8 +2424,8 @@ int mpc_thread_sem_post(mpc_thread_sem_t *sem)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_sem_post != NULL);
-	res = __sctk_ptr_thread_sem_post(sem);
+	assert(_funcptr_mpc_thread_sem_post != NULL);
+	res = _funcptr_mpc_thread_sem_post(sem);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2435,8 +2435,8 @@ int mpc_thread_sem_getvalue(mpc_thread_sem_t *sem, int *sval)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_sem_getvalue != NULL);
-	res = __sctk_ptr_thread_sem_getvalue(sem, sval);
+	assert(_funcptr_mpc_thread_sem_getvalue != NULL);
+	res = _funcptr_mpc_thread_sem_getvalue(sem, sval);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2446,8 +2446,8 @@ int mpc_thread_sem_destroy(mpc_thread_sem_t *sem)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_sem_destroy != NULL);
-	res = __sctk_ptr_thread_sem_destroy(sem);
+	assert(_funcptr_mpc_thread_sem_destroy != NULL);
+	res = _funcptr_mpc_thread_sem_destroy(sem);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2466,13 +2466,13 @@ mpc_thread_sem_t *mpc_thread_sem_open(const char *__name, int __oflag, ...)
 		mode  = va_arg(ap, mode_t);
 		value = va_arg(ap, int);
 		va_end(ap);
-		assert(__sctk_ptr_thread_sem_open != NULL);
-		tmp = __sctk_ptr_thread_sem_open(__name, __oflag, mode, value);
+		assert(_funcptr_mpc_thread_sem_open != NULL);
+		tmp = _funcptr_mpc_thread_sem_open(__name, __oflag, mode, value);
 	}
 	else
 	{
-		assert(__sctk_ptr_thread_sem_open != NULL);
-		tmp = __sctk_ptr_thread_sem_open(__name, __oflag);
+		assert(_funcptr_mpc_thread_sem_open != NULL);
+		tmp = _funcptr_mpc_thread_sem_open(__name, __oflag);
 	}
 
 	return tmp;
@@ -2483,8 +2483,8 @@ int mpc_thread_sem_close(mpc_thread_sem_t *__sem)
 	__check_mpc_initialized();
 	int res = 0;
 
-	assert(__sctk_ptr_thread_sem_close != NULL);
-	res = __sctk_ptr_thread_sem_close(__sem);
+	assert(_funcptr_mpc_thread_sem_close != NULL);
+	res = _funcptr_mpc_thread_sem_close(__sem);
 	return res;
 }
 
@@ -2493,8 +2493,8 @@ int mpc_thread_sem_unlink(const char *__name)
 	__check_mpc_initialized();
 	int res = 0;
 
-	assert(__sctk_ptr_thread_sem_unlink != NULL);
-	res = __sctk_ptr_thread_sem_unlink(__name);
+	assert(_funcptr_mpc_thread_sem_unlink != NULL);
+	res = _funcptr_mpc_thread_sem_unlink(__name);
 	return res;
 }
 
@@ -2504,8 +2504,8 @@ int mpc_thread_sem_timedwait(mpc_thread_sem_t *__sem,
 	__check_mpc_initialized();
 	int res = 0;
 
-	assert(__sctk_ptr_thread_sem_timedwait != NULL);
-	res = __sctk_ptr_thread_sem_timedwait(__sem, __abstime);
+	assert(_funcptr_mpc_thread_sem_timedwait != NULL);
+	res = _funcptr_mpc_thread_sem_timedwait(__sem, __abstime);
 	return res;
 }
 
@@ -2518,8 +2518,8 @@ int mpc_thread_rwlockattr_init(mpc_thread_rwlockattr_t *__attr)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_rwlockattr_init != NULL);
-	res = __sctk_ptr_thread_rwlockattr_init(__attr);
+	assert(_funcptr_mpc_thread_rwlockattr_init != NULL);
+	res = _funcptr_mpc_thread_rwlockattr_init(__attr);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2529,8 +2529,8 @@ int mpc_thread_rwlockattr_destroy(mpc_thread_rwlockattr_t *__attr)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_rwlockattr_destroy != NULL);
-	res = __sctk_ptr_thread_rwlockattr_destroy(__attr);
+	assert(_funcptr_mpc_thread_rwlockattr_destroy != NULL);
+	res = _funcptr_mpc_thread_rwlockattr_destroy(__attr);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2541,8 +2541,8 @@ int mpc_thread_rwlockattr_getpshared(const mpc_thread_rwlockattr_t *
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_rwlockattr_getpshared != NULL);
-	res = __sctk_ptr_thread_rwlockattr_getpshared(__attr, __pshared);
+	assert(_funcptr_mpc_thread_rwlockattr_getpshared != NULL);
+	res = _funcptr_mpc_thread_rwlockattr_getpshared(__attr, __pshared);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2553,8 +2553,8 @@ int mpc_thread_rwlockattr_setpshared(mpc_thread_rwlockattr_t *__attr,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_rwlockattr_setpshared != NULL);
-	res = __sctk_ptr_thread_rwlockattr_setpshared(__attr, __pshared);
+	assert(_funcptr_mpc_thread_rwlockattr_setpshared != NULL);
+	res = _funcptr_mpc_thread_rwlockattr_setpshared(__attr, __pshared);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2568,8 +2568,8 @@ int mpc_thread_rwlock_destroy(mpc_thread_rwlock_t *__rwlock)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_rwlock_destroy != NULL);
-	res = __sctk_ptr_thread_rwlock_destroy(__rwlock);
+	assert(_funcptr_mpc_thread_rwlock_destroy != NULL);
+	res = _funcptr_mpc_thread_rwlock_destroy(__rwlock);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2580,8 +2580,8 @@ int mpc_thread_rwlock_init(mpc_thread_rwlock_t *restrict __rwlock,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_rwlock_init != NULL);
-	res = __sctk_ptr_thread_rwlock_init(__rwlock, __attr);
+	assert(_funcptr_mpc_thread_rwlock_init != NULL);
+	res = _funcptr_mpc_thread_rwlock_init(__rwlock, __attr);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2591,8 +2591,8 @@ int mpc_thread_rwlock_rdlock(mpc_thread_rwlock_t *__rwlock)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_rwlock_rdlock != NULL);
-	res = __sctk_ptr_thread_rwlock_rdlock(__rwlock);
+	assert(_funcptr_mpc_thread_rwlock_rdlock != NULL);
+	res = _funcptr_mpc_thread_rwlock_rdlock(__rwlock);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2603,8 +2603,8 @@ int mpc_thread_rwlock_timedrdlock(mpc_thread_rwlock_t *restrict __rwlock,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_rwlock_timedrdlock != NULL);
-	res = __sctk_ptr_thread_rwlock_timedrdlock(__rwlock, __abstime);
+	assert(_funcptr_mpc_thread_rwlock_timedrdlock != NULL);
+	res = _funcptr_mpc_thread_rwlock_timedrdlock(__rwlock, __abstime);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2615,8 +2615,8 @@ int mpc_thread_rwlock_timedwrlock(mpc_thread_rwlock_t *restrict __rwlock,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_rwlock_timedwrlock != NULL);
-	res = __sctk_ptr_thread_rwlock_timedwrlock(__rwlock, __abstime);
+	assert(_funcptr_mpc_thread_rwlock_timedwrlock != NULL);
+	res = _funcptr_mpc_thread_rwlock_timedwrlock(__rwlock, __abstime);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2626,8 +2626,8 @@ int mpc_thread_rwlock_tryrdlock(mpc_thread_rwlock_t *__rwlock)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_rwlock_tryrdlock != NULL);
-	res = __sctk_ptr_thread_rwlock_tryrdlock(__rwlock);
+	assert(_funcptr_mpc_thread_rwlock_tryrdlock != NULL);
+	res = _funcptr_mpc_thread_rwlock_tryrdlock(__rwlock);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2637,8 +2637,8 @@ int mpc_thread_rwlock_trywrlock(mpc_thread_rwlock_t *__rwlock)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_rwlock_trywrlock != NULL);
-	res = __sctk_ptr_thread_rwlock_trywrlock(__rwlock);
+	assert(_funcptr_mpc_thread_rwlock_trywrlock != NULL);
+	res = _funcptr_mpc_thread_rwlock_trywrlock(__rwlock);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2648,8 +2648,8 @@ int mpc_thread_rwlock_unlock(mpc_thread_rwlock_t *__rwlock)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_rwlock_unlock != NULL);
-	res = __sctk_ptr_thread_rwlock_unlock(__rwlock);
+	assert(_funcptr_mpc_thread_rwlock_unlock != NULL);
+	res = _funcptr_mpc_thread_rwlock_unlock(__rwlock);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2659,8 +2659,8 @@ int mpc_thread_rwlock_wrlock(mpc_thread_rwlock_t *__rwlock)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_rwlock_wrlock != NULL);
-	res = __sctk_ptr_thread_rwlock_wrlock(__rwlock);
+	assert(_funcptr_mpc_thread_rwlock_wrlock != NULL);
+	res = _funcptr_mpc_thread_rwlock_wrlock(__rwlock);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2674,8 +2674,8 @@ int mpc_thread_setcancelstate(int __state, int *__oldstate)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_setcancelstate != NULL);
-	res = __sctk_ptr_thread_setcancelstate(__state, __oldstate);
+	assert(_funcptr_mpc_thread_setcancelstate != NULL);
+	res = _funcptr_mpc_thread_setcancelstate(__state, __oldstate);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2685,8 +2685,8 @@ int mpc_thread_setcanceltype(int __type, int *__oldtype)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_setcanceltype != NULL);
-	res = __sctk_ptr_thread_setcanceltype(__type, __oldtype);
+	assert(_funcptr_mpc_thread_setcanceltype != NULL);
+	res = _funcptr_mpc_thread_setcanceltype(__type, __oldtype);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2696,8 +2696,8 @@ int mpc_thread_setconcurrency(int __level)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_setconcurrency != NULL);
-	res = __sctk_ptr_thread_setconcurrency(__level);
+	assert(_funcptr_mpc_thread_setconcurrency != NULL);
+	res = _funcptr_mpc_thread_setconcurrency(__level);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2707,8 +2707,8 @@ int mpc_thread_setschedprio(mpc_thread_t __p, int __i)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_setschedprio != NULL);
-	res = __sctk_ptr_thread_setschedprio(__p, __i);
+	assert(_funcptr_mpc_thread_setschedprio != NULL);
+	res = _funcptr_mpc_thread_setschedprio(__p, __i);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2719,8 +2719,8 @@ int mpc_thread_setschedparam(mpc_thread_t __target_thread, int __policy,
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_setschedparam != NULL);
-	res = __sctk_ptr_thread_setschedparam(__target_thread, __policy, __param);
+	assert(_funcptr_mpc_thread_setschedparam != NULL);
+	res = _funcptr_mpc_thread_setschedparam(__target_thread, __policy, __param);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2730,8 +2730,8 @@ int mpc_thread_setspecific(mpc_thread_keys_t __key, const void *__pointer)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_setspecific != NULL);
-	res = __sctk_ptr_thread_setspecific(__key, __pointer);
+	assert(_funcptr_mpc_thread_setspecific != NULL);
+	res = _funcptr_mpc_thread_setspecific(__key, __pointer);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2745,8 +2745,8 @@ int mpc_thread_spin_destroy(mpc_thread_spinlock_t *__lock)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_spin_destroy != NULL);
-	res = __sctk_ptr_thread_spin_destroy(__lock);
+	assert(_funcptr_mpc_thread_spin_destroy != NULL);
+	res = _funcptr_mpc_thread_spin_destroy(__lock);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2756,8 +2756,8 @@ int mpc_thread_spin_init(mpc_thread_spinlock_t *__lock, int __pshared)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_spin_init != NULL);
-	res = __sctk_ptr_thread_spin_init(__lock, __pshared);
+	assert(_funcptr_mpc_thread_spin_init != NULL);
+	res = _funcptr_mpc_thread_spin_init(__lock, __pshared);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2767,8 +2767,8 @@ int mpc_thread_spin_lock(mpc_thread_spinlock_t *__lock)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_spin_lock != NULL);
-	res = __sctk_ptr_thread_spin_lock(__lock);
+	assert(_funcptr_mpc_thread_spin_lock != NULL);
+	res = _funcptr_mpc_thread_spin_lock(__lock);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2778,8 +2778,8 @@ int mpc_thread_spin_trylock(mpc_thread_spinlock_t *__lock)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_spin_trylock != NULL);
-	res = __sctk_ptr_thread_spin_trylock(__lock);
+	assert(_funcptr_mpc_thread_spin_trylock != NULL);
+	res = _funcptr_mpc_thread_spin_trylock(__lock);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2789,8 +2789,8 @@ int mpc_thread_spin_unlock(mpc_thread_spinlock_t *__lock)
 	__check_mpc_initialized();
 	int res;
 
-	assert(__sctk_ptr_thread_spin_unlock != NULL);
-	res = __sctk_ptr_thread_spin_unlock(__lock);
+	assert(_funcptr_mpc_thread_spin_unlock != NULL);
+	res = _funcptr_mpc_thread_spin_unlock(__lock);
 	sctk_check(res, 0);
 	return res;
 }
@@ -2816,44 +2816,44 @@ static void __sleep_pool_poll(_mpc_thread_core_sleep_pool_t *wake_time)
 unsigned int mpc_thread_sleep(unsigned int seconds)
 {
 	__check_mpc_initialized();
-	assert(__sctk_ptr_thread_testcancel != NULL);
-	__sctk_ptr_thread_testcancel();
+	assert(_funcptr_mpc_thread_testcancel != NULL);
+	_funcptr_mpc_thread_testcancel();
 	_mpc_thread_core_sleep_pool_t wake_time;
 	wake_time.done      = 1;
 	wake_time.wake_time =
 	        ( ( ( sctk_timer_t )seconds * ( sctk_timer_t )1000) /
 	          ( sctk_timer_t )sctk_time_interval) + ___timer_thread_ticks + 1;
 	mpc_thread_yield();
-	assert(__sctk_ptr_thread_testcancel != NULL);
-	__sctk_ptr_thread_testcancel();
+	assert(_funcptr_mpc_thread_testcancel != NULL);
+	_funcptr_mpc_thread_testcancel();
 	mpc_thread_wait_for_value_and_poll(&(wake_time.done), 0,
 	                                   (void (*)(void *) )
 	                                   __sleep_pool_poll,
 	                                   ( void * )&wake_time);
-	assert(__sctk_ptr_thread_testcancel != NULL);
-	__sctk_ptr_thread_testcancel();
+	assert(_funcptr_mpc_thread_testcancel != NULL);
+	_funcptr_mpc_thread_testcancel();
 	return 0;
 }
 
 int mpc_thread_usleep(unsigned int useconds)
 {
 	__check_mpc_initialized();
-	assert(__sctk_ptr_thread_testcancel != NULL);
-	__sctk_ptr_thread_testcancel();
+	assert(_funcptr_mpc_thread_testcancel != NULL);
+	_funcptr_mpc_thread_testcancel();
 	_mpc_thread_core_sleep_pool_t wake_time;
 	wake_time.done      = 1;
 	wake_time.wake_time =
 	        ( ( ( sctk_timer_t )useconds / ( sctk_timer_t )1000) /
 	          ( sctk_timer_t )sctk_time_interval) + ___timer_thread_ticks + 1;
 	mpc_thread_yield();
-	assert(__sctk_ptr_thread_testcancel != NULL);
-	__sctk_ptr_thread_testcancel();
+	assert(_funcptr_mpc_thread_testcancel != NULL);
+	_funcptr_mpc_thread_testcancel();
 	mpc_thread_wait_for_value_and_poll(&(wake_time.done), 0,
 	                                   (void (*)(void *) )
 	                                   __sleep_pool_poll,
 	                                   ( void * )&wake_time);
-	assert(__sctk_ptr_thread_testcancel != NULL);
-	__sctk_ptr_thread_testcancel();
+	assert(_funcptr_mpc_thread_testcancel != NULL);
+	_funcptr_mpc_thread_testcancel();
 	return 0;
 }
 
@@ -2893,8 +2893,8 @@ int mpc_thread_nanosleep(const struct timespec *req, struct timespec *rem)
 int mpc_thread_migrate(void)
 {
 	__check_mpc_initialized();
-	assert(__sctk_ptr_thread_migrate != NULL);
-	return __sctk_ptr_thread_migrate();
+	assert(_funcptr_mpc_thread_migrate != NULL);
+	return _funcptr_mpc_thread_migrate();
 }
 
 int mpc_thread_migrate_to_core(const int cpu)
@@ -2905,8 +2905,8 @@ int mpc_thread_migrate_to_core(const int cpu)
 
 	tmp_data = mpc_thread_data_get();
 	/*   sctk_assert(tmp_data != NULL); */
-	assert(__sctk_ptr_thread_proc_migration != NULL);
-	tmp = __sctk_ptr_thread_proc_migration(cpu);
+	assert(_funcptr_mpc_thread_proc_migration != NULL);
+	tmp = _funcptr_mpc_thread_proc_migration(cpu);
 
 	if(0 <= tmp)
 	{
@@ -2923,22 +2923,22 @@ int mpc_thread_migrate_to_core(const int cpu)
 int mpc_thread_dump(char *file)
 {
 	__check_mpc_initialized();
-	assert(__sctk_ptr_thread_dump != NULL);
-	return __sctk_ptr_thread_dump(file);
+	assert(_funcptr_mpc_thread_dump != NULL);
+	return _funcptr_mpc_thread_dump(file);
 }
 
 int mpc_thread_dump_restore(mpc_thread_t thread, char *type, int vp)
 {
 	__check_mpc_initialized();
-	assert(__sctk_ptr_thread_restore != NULL);
-	return __sctk_ptr_thread_restore(thread, type, vp);
+	assert(_funcptr_mpc_thread_restore != NULL);
+	return _funcptr_mpc_thread_restore(thread, type, vp);
 }
 
 int mpc_thread_dump_clean(void)
 {
 	__check_mpc_initialized();
-	assert(__sctk_ptr_thread_dump_clean != NULL);
-	return __sctk_ptr_thread_dump_clean();
+	assert(_funcptr_mpc_thread_dump_clean != NULL);
+	return _funcptr_mpc_thread_dump_clean();
 }
 
 /********************
@@ -2948,15 +2948,15 @@ int mpc_thread_dump_clean(void)
 void mpc_thread_freeze(mpc_thread_mutex_t *lock, void **list)
 {
 	__check_mpc_initialized();
-	assert(__sctk_ptr_thread_freeze_thread_on_vp != NULL);
-	__sctk_ptr_thread_freeze_thread_on_vp(lock, list);
+	assert(_funcptr_mpc_thread_freeze_thread_on_vp != NULL);
+	_funcptr_mpc_thread_freeze_thread_on_vp(lock, list);
 }
 
 void mpc_thread_wake(void **list)
 {
 	__check_mpc_initialized();
-	assert(__sctk_ptr_thread_wake_thread_on_vp != NULL);
-	__sctk_ptr_thread_wake_thread_on_vp(list);
+	assert(_funcptr_mpc_thread_wake_thread_on_vp != NULL);
+	_funcptr_mpc_thread_wake_thread_on_vp(list);
 }
 
 /***************************
@@ -2967,8 +2967,8 @@ void mpc_thread_wait_for_value_and_poll(volatile int *data, int value,
                                         void (*func)(void *), void *arg)
 {
 	__check_mpc_initialized();
-	assert(__sctk_ptr_thread_wait_for_value_and_poll != NULL);
-	__sctk_ptr_thread_wait_for_value_and_poll(data, value, func, arg);
+	assert(_funcptr_mpc_thread_wait_for_value_and_poll != NULL);
+	_funcptr_mpc_thread_wait_for_value_and_poll(data, value, func, arg);
 }
 
 int mpc_thread_timed_wait_for_value(volatile int *data, int value, unsigned int max_time_in_usec)
@@ -3006,8 +3006,8 @@ int mpc_thread_timed_wait_for_value(volatile int *data, int value, unsigned int 
 void mpc_thread_wait_for_value(volatile int *data, int value)
 {
 	__check_mpc_initialized();
-	assert(__sctk_ptr_thread_wait_for_value_and_poll != NULL);
-	__sctk_ptr_thread_wait_for_value_and_poll(data, value, NULL, NULL);
+	assert(_funcptr_mpc_thread_wait_for_value_and_poll != NULL);
+	_funcptr_mpc_thread_wait_for_value_and_poll(data, value, NULL, NULL);
 }
 
 void mpc_thread_kernel_wait_for_value_and_poll(int *data, int value,
@@ -3034,8 +3034,8 @@ long  mpc_thread_futex(__UNUSED__ int sysop, void *addr1, int op, int val1,
 {
 	__check_mpc_initialized();
 	sctk_futex_context_init();
-	assert(__sctk_ptr_thread_futex != NULL);
-	return __sctk_ptr_thread_futex(addr1, op, val1, timeout, addr2, val2);
+	assert(_funcptr_mpc_thread_futex != NULL);
+	return _funcptr_mpc_thread_futex(addr1, op, val1, timeout, addr2, val2);
 }
 
 long mpc_thread_futex_with_vaargs(int sysop, ...)

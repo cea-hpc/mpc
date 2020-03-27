@@ -458,13 +458,13 @@ sctk_pthread_thread_init(void)
 	pthread_check_size(pthread_mutex_t, mpc_thread_mutex_t);
 	pthread_check_size(pthread_mutexattr_t, mpc_thread_mutexattr_t);
 
-	__sctk_ptr_thread_attr_setbinding = sctk_pthread_thread_attr_setbinding;
-	__sctk_ptr_thread_attr_getbinding = sctk_pthread_thread_attr_getbinding;
+	_funcptr_mpc_thread_attr_setbinding = sctk_pthread_thread_attr_setbinding;
+	_funcptr_mpc_thread_attr_getbinding = sctk_pthread_thread_attr_getbinding;
 
 /*   assume (memcmp (&loc, &glob, sizeof (pthread_mutex_t)) == 0); */
 
 /*   sctk_add_func (pthread, yield); */
-	__sctk_ptr_thread_yield = sched_yield;
+	_funcptr_mpc_thread_yield = sched_yield;
 	sctk_add_func_type(local_pthread, create, int (*)(mpc_thread_t *,
 	                                                  const mpc_thread_attr_t
 	                                                  *, void *(*)(void *),
@@ -484,7 +484,7 @@ sctk_pthread_thread_init(void)
 	sctk_add_func_type(pthread, mutex_trylock, int (*)(mpc_thread_mutex_t *) );
 	sctk_add_func_type(pthread, mutex_unlock, int (*)(mpc_thread_mutex_t *) );
 
-	__sctk_ptr_thread_mutex_init = sctk_pthread_mutex_init;
+	_funcptr_mpc_thread_mutex_init = sctk_pthread_mutex_init;
 
 	sctk_add_func_type(pthread, setspecific, int (*)(mpc_thread_keys_t,
 	                                                 const void *) );
@@ -507,8 +507,8 @@ sctk_pthread_thread_init(void)
 #endif
 
 #ifndef WINDOWS_SYS
-	__sctk_ptr_thread_sigpending = (int (*)(sigset_t *) )sigpending;
-	__sctk_ptr_thread_sigsuspend = (int (*)(sigset_t *) )sigsuspend;
+	_funcptr_mpc_thread_sigpending = (int (*)(sigset_t *) )sigpending;
+	_funcptr_mpc_thread_sigsuspend = (int (*)(sigset_t *) )sigsuspend;
 #endif
 
 #ifdef HAVE_PTHREAD_SIGMASK
