@@ -43,7 +43,7 @@
 #include "mpcomp_loop.h"
 #include "mpcomp_tree.h"
 
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 
 #include "ompt.h"
 /* parsing OMP_PLACES */

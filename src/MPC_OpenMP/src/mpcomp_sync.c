@@ -36,7 +36,7 @@
 #include "omp_ompt.h"
 #include "sched.h"
 #include "mpc_common_asm.h"
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 
 /***********
  * ATOMICS *

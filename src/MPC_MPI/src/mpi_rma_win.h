@@ -33,7 +33,7 @@
 #include "mpc_common_spinlock.h"
 #include "mpc_common_types.h"
 #include "mpc_common_types.h"
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 #include "sctk_window.h"
 
 /************************************************************************/

@@ -156,7 +156,7 @@ am__libmpcthread_la_SOURCES_DIST = sctk_context.c sctk_ethread.c \
 	sctk_ethread_mxn.c sctk_futex.c sctk_gen_thread.c \
 	sctk_kernel_thread.c sctk_posix_ethread.c \
 	sctk_posix_ethread_mxn.c sctk_posix_pthread.c sctk_pthread.c \
-	sctk_thread.c threads_generic.c threads_generic_scheduler.c \
+	thread.c threads_generic.c threads_generic_scheduler.c \
 	sctk_tls.c accelerator.c ./accelerator/cuda.c \
 	./accelerator/cuda_wrap.c
 @MPC_CUDA_ENABLED_TRUE@am__objects_1 = ./accelerator/cuda.lo \
@@ -165,7 +165,7 @@ am_libmpcthread_la_OBJECTS = sctk_context.lo sctk_ethread.lo \
 	sctk_ethread_mxn.lo sctk_futex.lo sctk_gen_thread.lo \
 	sctk_kernel_thread.lo sctk_posix_ethread.lo \
 	sctk_posix_ethread_mxn.lo sctk_posix_pthread.lo \
-	sctk_pthread.lo sctk_thread.lo threads_generic.lo \
+	sctk_pthread.lo thread.lo threads_generic.lo \
 	threads_generic_scheduler.lo sctk_tls.lo accelerator.lo \
 	$(am__objects_1)
 libmpcthread_la_OBJECTS = $(am_libmpcthread_la_OBJECTS)
@@ -485,7 +485,7 @@ libmpcthread_la_SOURCES = sctk_context.c sctk_ethread.c \
 	sctk_ethread_mxn.c sctk_futex.c sctk_gen_thread.c \
 	sctk_kernel_thread.c sctk_posix_ethread.c \
 	sctk_posix_ethread_mxn.c sctk_posix_pthread.c sctk_pthread.c \
-	sctk_thread.c threads_generic.c threads_generic_scheduler.c \
+	thread.c threads_generic.c threads_generic_scheduler.c \
 	sctk_tls.c accelerator.c $(am__append_3)
 @MPC_CUDA_ENABLED_TRUE@libmpc_cuda_addon_la_SOURCES = ./accelerator/cuda_lib/cuda_lib.c
 @MPC_CUDA_ENABLED_TRUE@libmpc_cuda_addon_la_LIBADD = -lcuda
@@ -605,8 +605,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_posix_ethread_mxn.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_posix_pthread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_pthread.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_tls.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/threads_generic.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/threads_generic_scheduler.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./accelerator/$(DEPDIR)/cuda.Plo@am__quote@

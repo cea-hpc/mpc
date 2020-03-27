@@ -22,6 +22,9 @@
 /* ######################################################################## */
 #include "datatype.h"
 
+#include <string.h>
+#include <sctk_debug.h>
+
 #include "mpc_reduction.h"
 #include "comm_lib.h"
 #include "sctk_handle.h"
@@ -29,7 +32,6 @@
 #include "mpc_common_types.h"
 #include "uthash.h"
 #include "sctk_handle.h"
-#include <string.h>
 
 /************************************************************************/
 /* GLOBALS                                                              */

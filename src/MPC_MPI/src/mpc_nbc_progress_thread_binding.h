@@ -23,7 +23,7 @@
 #define __MPC_NBC_PROGRESS_THREAD_BINDING_H__
 #include <sctk_accessor.h>
 #include <sctk_debug.h>
-#include <sctk_thread.h>
+#include <mpc_thread.h>
 #include <mpc_topology.h>
 #include <stdio.h>
 #include <stdlib.h>

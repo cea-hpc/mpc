@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "sctk_debug.h"
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 #include "sctk_ethread.h"
 #include "sctk_ethread_internal.h"
 #include "sctk_alloc.h"

@@ -7,7 +7,7 @@
 #include "mpc_mpi.h"
 #include "mpc_launch_pmi.h"
 #include "sctk_debug.h"
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 #include "uthash.h"
 #include <string.h>
 

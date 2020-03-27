@@ -4,7 +4,7 @@
 
 #include "mpcomp_sync.h"
 
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 
 #if defined( MPCOMP_OPENMP_3_0 )
 	#include "mpcomp_task.h"

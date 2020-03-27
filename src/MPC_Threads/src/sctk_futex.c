@@ -21,12 +21,14 @@
 /* ######################################################################## */
 #include "sctk_futex.h"
 #include "sctk_debug.h"
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 
 #include <stdio.h>
 #include <sys/time.h>
 #include <errno.h>
 #include <stdlib.h>
+
+#include "thread.h"
 
 #if SCTK_FUTEX_SUPPORTED
 

@@ -23,7 +23,7 @@
 #include "mpit_internal.h"
 
 #include "comm_lib.h"
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 #include "sctk_debug.h"
 
 #include <mpc_common_flags.h>

@@ -21,7 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "sctk_debug.h"
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 #include "sctk_internal_thread.h"
 #include "sctk_futex.h"
 

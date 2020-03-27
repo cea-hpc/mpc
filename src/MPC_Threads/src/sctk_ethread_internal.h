@@ -29,6 +29,7 @@
 #endif
 
 #include <errno.h>
+#include "thread.h"
 #include "sctk_debug.h"
 #include "sctk_ethread.h"
 #include "sctk_alloc.h"

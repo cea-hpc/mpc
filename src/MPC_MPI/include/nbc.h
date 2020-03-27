@@ -21,7 +21,7 @@
 /* correct fortran bindings */
 
 #include "mpc_mpi.h"
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 #include "sctk_debug.h"
 #include <stdlib.h>
 #include <stdio.h>

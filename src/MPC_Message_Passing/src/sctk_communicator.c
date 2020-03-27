@@ -34,7 +34,7 @@
 #include <mpc_launch.h>
 
 #ifdef MPC_THREAD
-	#include "sctk_thread.h"
+	#include "mpc_thread.h"
 #endif
 
 typedef struct sctk_process_ht_s

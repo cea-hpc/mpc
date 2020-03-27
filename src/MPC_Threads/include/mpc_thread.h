@@ -279,7 +279,17 @@ void mpc_thread_mpi_task_atexit(int (*trampoline)(void (*func)(void) ) );
 struct mpc_mpi_cl_per_mpi_process_ctx_s;
 void mpc_thread_mpi_ctx_set(struct mpc_mpi_cl_per_mpi_process_ctx_s * (*trampoline)(void) );
 
+void mpc_thread_wait_for_value(volatile int *data, int value);
+int mpc_thread_timed_wait_for_value(volatile int *data, int value, unsigned int max_time_in_usec);
+void mpc_thread_wait_for_value_and_poll(volatile int *data, int value,
+                                        void (*func)(void *), void *arg);
+void
+mpc_thread_kernel_wait_for_value_and_poll(int *data, int value,
+                                          void (*func)(void *), void *arg);
 
+void mpc_thread_freeze(mpc_thread_mutex_t *lock,
+                       void **list);
+void mpc_thread_wake(void **list);
 
 #ifdef __cplusplus
 }

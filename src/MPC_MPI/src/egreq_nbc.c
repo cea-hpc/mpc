@@ -4,7 +4,7 @@
 #include <mpi.h>
 
 #include "sctk_debug.h"
-#include <sctk_thread.h>
+#include <mpc_thread.h>
 #include "sctk_alloc.h"
 #include "mpc_lowcomm_msg.h"
 #include "egreq_nbc.h"

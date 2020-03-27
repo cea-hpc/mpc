@@ -23,16 +23,18 @@
 #ifndef MPC_DATATYPES_H
 #define MPC_DATATYPES_H
 
+#include <uthash.h>
+#include <stdlib.h>
+
+
 #include <mpc_mpi_comm_lib.h>
 #include <mpc_common_asm.h>
+#include <sctk_debug.h>
 
 #include "mpc_lowcomm.h" /* mpc_lowcomm_datatype_t */
 #include "mpc_common_datastructure.h"
 #include "mpc_common_spinlock.h"
-#include "sctk_thread.h"
-
-#include <uthash.h>
-#include <stdlib.h>
+#include "mpc_thread.h"
 
 /************************************************************************/
 /* Datatype Init and Release                                            */

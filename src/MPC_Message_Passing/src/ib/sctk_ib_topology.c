@@ -35,7 +35,7 @@
 #include "sctk_ib_topology.h"
 #include "sctk_rail.h"
 
-#include <sctk_thread.h>
+#include <mpc_thread.h>
 #include <mpc_topology.h>
 
 /* used to remember __thread var init for IB re-enabling */

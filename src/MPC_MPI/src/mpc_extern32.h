@@ -24,6 +24,8 @@
 #define MPC_EXTERN32_H
 
 #include <string.h>
+#include <sctk_debug.h>
+
 #include "comm_lib.h"
 #include "mpc_common_types.h"
 #include "datatype.h"

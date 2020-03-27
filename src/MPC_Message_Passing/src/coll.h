@@ -23,7 +23,7 @@
 #define __SCTK_COLLECTIVE_COMMUNICATIONS_H_
 
 #include <mpc_lowcomm.h>
-#include <sctk_thread.h>
+#include <mpc_thread.h>
 
 #include "comm.h"
 

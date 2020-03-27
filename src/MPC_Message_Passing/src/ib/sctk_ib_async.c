@@ -26,7 +26,7 @@
 #include "sctk_ib_config.h"
 #include <sctk_route.h>
 #include <mpc_topology.h>
-#include <sctk_thread.h>
+#include <mpc_thread.h>
 
 /* IB debug macros */
 #if defined SCTK_IB_MODULE_NAME

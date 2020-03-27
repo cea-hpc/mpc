@@ -29,7 +29,8 @@
 #include "sctk_debug.h"
 #include "mpc_common_spinlock.h"
 #include "sctk_alloc.h"
-#include "sctk_thread_api.h"
+#include "mpc_thread.h"
+
 #include "sctk_dummy.h"
 
 #ifdef __cplusplus
@@ -69,17 +70,7 @@ void sctk_ethread_ng_thread_init(void);
 void sctk_ethread_mxn_ng_thread_init(void);
 void sctk_pthread_ng_thread_init(void);
 
-void mpc_thread_wait_for_value(volatile int *data, int value);
-int mpc_thread_timed_wait_for_value(volatile int *data, int value, unsigned int max_time_in_usec);
-void mpc_thread_wait_for_value_and_poll(volatile int *data, int value,
-                                         void (*func)(void *), void *arg);
-void
-mpc_thread_kernel_wait_for_value_and_poll(int *data, int value,
-                                     void (*func)(void *), void *arg);
 
-void mpc_thread_freeze(mpc_thread_mutex_t *lock,
-                                     void **list);
-void mpc_thread_wake(void **list);
 void sctk_thread_init(void);
 
 int mpc_thread_getattr_np(mpc_thread_t th, mpc_thread_attr_t *attr);
@@ -99,7 +90,7 @@ typedef enum
 typedef td_thr_state_e   sctk_thread_status_t;
 #define sctk_thread_running_status    TD_THR_ACTIVE
 #define sctk_thread_blocked_status    TD_THR_RUN
-#define mpc_thread_sleep_status      TD_THR_RUN
+#define mpc_thread_sleep_status       TD_THR_RUN
 #define sctk_thread_undef_status      TD_THR_ZOMBIE
 #define sctk_thread_check_status      TD_THR_ACTIVE
 #endif
@@ -120,7 +111,7 @@ typedef struct sctk_thread_data_s
 	volatile struct sctk_thread_data_s *     prev;
 	volatile struct sctk_thread_data_s *     next;
 	unsigned long                            thread_number;
-	mpc_thread_t                            tid;
+	mpc_thread_t                             tid;
 	volatile sctk_thread_status_t            status;
 	struct mpc_mpi_cl_per_mpi_process_ctx_s *father_data;
 	struct sctk_tls_dtors_s *                dtors_head;
@@ -160,9 +151,6 @@ extern struct sctk_alloc_chain *mpc_thread_tls;
 
 int mpc_thread_migrate_to_core(const int cpu);
 
-void sctk_thread_init_no_mpc(void);
-
-void mpc_cl_init_thread_keys(void);
 void _mpc_thread_exit_cleanup(void);
 void sctk_ethread_mxn_init_kethread(void);
 

@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "sctk_debug.h"
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 #include "mpc_common_spinlock.h"
 #include "sctk_internal_thread.h"
 #include "sctk_context.h"

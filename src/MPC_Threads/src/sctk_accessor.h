@@ -29,7 +29,7 @@
 
 #include "mpc_common_rank.h"
 #include "sctk_debug.h"
-#include "sctk_thread.h"
+#include "thread.h"
 
 #include "sctk_tls.h"
 

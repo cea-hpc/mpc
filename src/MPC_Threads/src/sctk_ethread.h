@@ -26,7 +26,9 @@
 #include <stdio.h>
 
 #include "sctk_debug.h"
-#include "sctk_thread.h"
+
+#include "thread.h"
+
 #include "sctk_ethread.h"
 #include "sctk_kernel_thread.h"
 #include "sctk_internal_thread.h"

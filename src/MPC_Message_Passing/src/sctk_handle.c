@@ -25,7 +25,7 @@
 #include "sctk_debug.h"
 #include "mpc_common_datastructure.h"
 #include "mpc_common_spinlock.h"
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 #include <comm.h>
 
 /************************************************************************/

@@ -25,12 +25,12 @@
 #include "mpc_lowcomm.h"
 #include <mpc_common_helper.h>
 #include "mpc_mpi.h"
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 #include "sctk_accessor.h"
 #include "sctk_handler_mpi.h"
 #include "mpc_runtime_config.h"
 #include "sctk_shm_mapper.h"
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 #include "string.h"
 
 struct mpc_MPI_allocmem_pool ____mpc_sctk_mpi_alloc_mem_pool;

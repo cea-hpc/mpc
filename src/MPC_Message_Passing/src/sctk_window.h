@@ -30,7 +30,7 @@
 #include "sctk_rail.h"
 #include "sctk_window.h"
 
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 #include "mpc_lowcomm_types.h"
 
 /************************************************************************/

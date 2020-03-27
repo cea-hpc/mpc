@@ -21,7 +21,7 @@
 /* ######################################################################## */
 #include <stdio.h>
 
-#include <sctk_thread.h>
+#include <mpc_thread.h>
 #include <threads_generic.h>
 #include <stdlib.h>
 #include <fcntl.h>

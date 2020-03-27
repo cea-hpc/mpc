@@ -30,7 +30,7 @@
 #include "mpcmicrothread_internal.h"
 #include "sctk_alloc.h"
 #include "sctk_context.h"
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 #include "mpc_topology.h"
 #include "sctk_debug.h"
 

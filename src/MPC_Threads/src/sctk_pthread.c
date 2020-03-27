@@ -34,7 +34,7 @@
 #include <signal.h>
 #include "sctk_pthread.h"
 #include "sctk_debug.h"
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 #include "sctk_tls.h"
 #include "sctk_internal_thread.h"
 #include "sctk_posix_pthread.h"

@@ -31,7 +31,7 @@ extern "C"
 #include <mpc.h>
 #include <mpc_main.h>
 #include <mpc_threads_config.h>
-#include <sctk_thread_api.h>
+#include <mpc_thread.h>
 
 
 #define sem_t                                  mpc_thread_sem_t

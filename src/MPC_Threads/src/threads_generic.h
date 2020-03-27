@@ -27,7 +27,7 @@
 #include <mpc_threads_generic.h>
 
 #include "sctk_debug.h"
-#include "sctk_thread.h"
+#include "mpc_thread.h"
 
 
 #include <threads_generic_scheduler.h>
