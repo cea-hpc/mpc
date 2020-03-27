@@ -48,7 +48,7 @@
 #include "egreq_progress.h"
 
 #ifdef MPC_Threads
-        #include <mpcthread.h>
+        #include <sctk_thread.h>
 #endif
 
 #ifdef MPC_USE_DMTCP

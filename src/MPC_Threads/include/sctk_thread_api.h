@@ -29,7 +29,6 @@
 #include <sys/types.h>
 #include <signal.h>
 #include <time.h>
-#include <mpc_config.h>
 
 #include "mpc_threads_config.h"
 
@@ -257,6 +256,30 @@ unsigned long sctk_thread_atomic_add(volatile unsigned long *ptr,
                                      unsigned long val);
 unsigned long sctk_tls_entry_add(unsigned long size, void (*func)(void *) );
 void sctk_tls_init_key(unsigned long key, void (*func)(void *) );
+
+/* Futexes */
+
+long  sctk_thread_futex(int sysop, void *addr1, int op, int val1,
+                       struct timespec *timeout, void *addr2, int val3);
+long  sctk_thread_futex_with_vaargs(int sysop, ...);
+
+/* PUSH & POP */
+
+void sctk_thread_cleanup_push(struct _sctk_thread_cleanup_buffer *__buffer,
+                               void (*__routine)(void *),
+                               void *__arg);
+
+
+void sctk_thread_cleanup_pop(struct _sctk_thread_cleanup_buffer *__buffer, int __execute);
+
+/* MPC_MPI Trampolines */
+
+void mpc_thread_per_mpi_task_atexit_set_trampoline(int (*trampoline)(void (*func)(void) ) );
+
+struct mpc_mpi_cl_per_mpi_process_ctx_s;
+void mpc_thread_get_mpi_process_ctx_set_trampoline(struct mpc_mpi_cl_per_mpi_process_ctx_s * (*trampoline)(void) );
+
+
 
 #ifdef __cplusplus
 }

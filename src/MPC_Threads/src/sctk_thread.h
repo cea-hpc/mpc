@@ -172,10 +172,6 @@ int sctk_real_pthread_create(pthread_t *thread,
 /* At exit */
 int sctk_atexit(void (*function)(void) );
 
-/* Futex */
-int  sctk_thread_futex(void *addr1, int op, int val1,
-                       struct timespec *timeout, void *addr2, int val3);
-
 /* profiling (exec time & dataused) */
 double sctk_profiling_get_init_time();
 double sctk_profiling_get_dataused();

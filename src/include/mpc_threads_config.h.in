@@ -172,6 +172,17 @@ TYPEDEF_STRUCT(@SIZEOF_PTHREAD_RWLOCK_T@, sctk_thread_rwlock_t);
 #define SCTK_THREAD_STACK_MIN              @MPC_CONFIG_PTHREAD_STACK_MIN@
 #endif
 
+/****************************************
+* PTHREAD PUSH AND POP INTERNAL STRUCT *
+****************************************/
+
+struct _sctk_thread_cleanup_buffer
+{
+	void                                (*__routine) (void *); /* Function to call.  */
+	void *                              __arg;                 /* Its argument.  */
+	struct _sctk_thread_cleanup_buffer *next;                  /* Chaining of cleanup functions.  */
+};
+
 /*********************
 * NUMBER OF SIGNALS *
 *********************/

@@ -8,7 +8,6 @@
 
 #include <mpc_topology.h>
 #include "mpcomp_core.h"
-#include "mpcthread.h"
 #include "mpc_common_asm.h"
 #include "mpcomp_types.h"
 #include "mpcomp_spinning_core.h"

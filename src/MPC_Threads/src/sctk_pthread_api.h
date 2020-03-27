@@ -31,9 +31,7 @@ extern "C"
 #include <mpc.h>
 #include <mpc_main.h>
 #include <mpc_threads_config.h>
-#include <sctk_posix_thread.h>
 #include <sctk_thread_api.h>
-
 
 
 #define sem_t                                  sctk_thread_sem_t
@@ -110,22 +108,22 @@ extern "C"
 #define pthread_attr_getschedparam             sctk_thread_attr_getschedparam
 
 /* pthread_attr_getschedpolicy */
-#define pthread_attr_getschedpolicy    sctk_thread_attr_getschedpolicy
+#define pthread_attr_getschedpolicy            sctk_thread_attr_getschedpolicy
 
 /* pthread_attr_getscope */
-#define pthread_attr_getscope          sctk_thread_attr_getscope
+#define pthread_attr_getscope                  sctk_thread_attr_getscope
 
 /* pthread_attr_getstack */
-#define pthread_attr_getstack          sctk_thread_attr_getstack
+#define pthread_attr_getstack                  sctk_thread_attr_getstack
 
 /* pthread_attr_getstackaddr */
-#define pthread_attr_getstackaddr      sctk_thread_attr_getstackaddr
+#define pthread_attr_getstackaddr              sctk_thread_attr_getstackaddr
 
 /* pthread_attr_getstacksize */
-#define pthread_attr_getstacksize      sctk_thread_attr_getstacksize
+#define pthread_attr_getstacksize              sctk_thread_attr_getstacksize
 
 /* pthread_attr_init */
-#define pthread_attr_init              sctk_thread_attr_init
+#define pthread_attr_init                      sctk_thread_attr_init
 
 
 /* pthread_attr_setdetachstate */
@@ -192,13 +190,14 @@ extern "C"
 
 /* pthread_cleanup_push */
 #undef pthread_cleanup_push
-#define pthread_cleanup_push    sctk_thread_cleanup_push
-
+#define pthread_cleanup_push(routine, arg)            \
+	{ struct _sctk_thread_cleanup_buffer _buffer; \
+	  sctk_thread_cleanup_push(&_buffer, (routine), (arg) );
 
 /* pthread_cleanup_pop */
 #undef pthread_cleanup_pop
-#define pthread_cleanup_pop    sctk_thread_cleanup_pop
-
+#define pthread_cleanup_pop(execute) \
+	sctk_thread_cleanup_pop(&_buffer, (execute) ); }
 
 /* pthread_cond_broadcast */
 #define pthread_cond_broadcast    sctk_thread_cond_broadcast
@@ -510,10 +509,10 @@ extern "C"
 
 
 /**********************************
- * OTHER THREAD RELATED REDIRECTS *
- **********************************/
+* OTHER THREAD RELATED REDIRECTS *
+**********************************/
 
-#define sched_yield              sctk_thread_yield
+#define sched_yield    sctk_thread_yield
 #define raise(a)    sctk_thread_kill(sctk_thread_self(), a)
 
 #ifndef SCTK_DONOT_REDEFINE_KILL

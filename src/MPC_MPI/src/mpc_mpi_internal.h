@@ -22,7 +22,7 @@
 /* ######################################################################## */
 //#include "sctk_alloc.h"
 #include "mpc_reduction.h"
-#include "mpcthread.h"
+
 #include "mpi_alloc_mem.h"
 #include "nbc.h"
 #include "sctk_alloc.h"
@@ -34,7 +34,7 @@
 #include <mpc_lowcomm_msg.h>
 #include "mpc_runtime_config.h"
 #include "mpc_common_spinlock.h"
-#include "sctk_thread.h"
+
 #include "mpc_topology.h"
 #include <mpc.h>
 #include <mpc_extern32.h>

@@ -66,7 +66,7 @@
 
 
 #include <sctk_thread.h>
-#include <sctk_posix_thread.h>
+
 #include <sctk_internal_thread.h>
 #include <sctk_kernel_thread.h>
 #include <threads_generic.h>
@@ -508,7 +508,7 @@ void __timer_thread_end(void)
 static sctk_thread_key_t ___thread_cleanup_callback_list_key;
 
 
-void _sctk_thread_cleanup_push(struct _sctk_thread_cleanup_buffer *__buffer,
+void sctk_thread_cleanup_push(struct _sctk_thread_cleanup_buffer *__buffer,
                                void (*__routine)(void *), void *__arg)
 {
 	struct _sctk_thread_cleanup_buffer **__head;
@@ -522,7 +522,7 @@ void _sctk_thread_cleanup_push(struct _sctk_thread_cleanup_buffer *__buffer,
 	sctk_nodebug("%p %p %p", __buffer, __head, *__head);
 }
 
-void _sctk_thread_cleanup_pop(struct _sctk_thread_cleanup_buffer *__buffer,
+void sctk_thread_cleanup_pop(struct _sctk_thread_cleanup_buffer *__buffer,
                               int __execute)
 {
 	struct _sctk_thread_cleanup_buffer **__head;
@@ -1792,13 +1792,36 @@ int sctk_atexit(void (*function)(void) )
 	return atexit(function);
 }
 
-/* Futex Generic Trampoline */
+/* Futexes */
 
-int  sctk_thread_futex(void *addr1, int op, int val1,
-                       struct timespec *timeout, void *addr2, int val3)
+long  sctk_thread_futex(__UNUSED__ int sysop, void *addr1, int op, int val1,
+                       struct timespec *timeout, void *addr2, int val2)
 {
-	return __sctk_ptr_thread_futex(addr1, op, val1, timeout, addr2, val3);
+	sctk_futex_context_init();
+	return __sctk_ptr_thread_futex(addr1, op, val1, timeout, addr2, val2);
 }
+
+long sctk_thread_futex_with_vaargs(int sysop, ...)
+{
+	va_list          ap;
+	void *           addr1, *addr2;
+	int              op, val1, val2;
+	struct timespec *timeout;
+
+	va_start(ap, sysop);
+	addr1   = va_arg(ap, void *);
+	op      = va_arg(ap, int);
+	val1    = va_arg(ap, int);
+	timeout = va_arg(ap, struct timespec *);
+	addr2   = va_arg(ap, void *);
+	val2    = va_arg(ap, int);
+	va_end(ap);
+
+	return sctk_thread_futex(sysop, addr1, op, val1, timeout, addr2, val2);
+}
+
+
+
 
 int
 sctk_thread_getconcurrency(void)
