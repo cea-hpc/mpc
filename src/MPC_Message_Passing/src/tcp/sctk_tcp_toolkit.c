@@ -344,13 +344,13 @@ static void sctk_tcp_add_route ( int dest, int fd, sctk_rail_info_t *rail,
 	/* set the route as connected */
 	sctk_endpoint_set_state ( new_route, STATE_CONNECTED );
 
-	sctk_thread_t pidt;
-	sctk_thread_attr_t attr;
+	mpc_thread_t pidt;
+	mpc_thread_attr_t attr;
 
 	/* Launch the polling thread */
-	sctk_thread_attr_init ( &attr );
-	sctk_thread_attr_setscope ( &attr, SCTK_THREAD_SCOPE_SYSTEM );
-	sctk_user_thread_create ( &pidt, &attr, ( void * ( * ) ( void * ) ) tcp_thread , new_route );
+	mpc_thread_attr_init ( &attr );
+	mpc_thread_attr_setscope ( &attr, SCTK_THREAD_SCOPE_SYSTEM );
+	mpc_thread_core_thread_create ( &pidt, &attr, ( void * ( * ) ( void * ) ) tcp_thread , new_route );
 }
 
 /********************************************************************/

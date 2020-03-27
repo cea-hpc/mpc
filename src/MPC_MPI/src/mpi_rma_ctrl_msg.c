@@ -90,7 +90,7 @@ void mpc_MPI_Win_handle_win_flush(void *data ) {
   while (incoming_rma != outgoing_rma) {
 
     // sctk_error("%d == %d", outgoing_rma , incoming_rma );
-    sctk_thread_yield();
+    mpc_thread_yield();
 
     if (10 < cnt) {
       mpc_MPI_Win_request_array_test(&desc->source.requests);
@@ -451,7 +451,7 @@ void mpc_MPI_Win_control_message_send(MPI_Win win, int rank,
     // mpc_MPI_Win_ctrl_message));
   }
 
-  sctk_thread_yield();
+  mpc_thread_yield();
 }
 
 void mpc_MPI_Win_control_message_send_piggybacked(
@@ -467,7 +467,7 @@ void mpc_MPI_Win_control_message_send_piggybacked(
                                desc->comm, MPC_LOWCOMM_P2P_MESSAGE, &req);
   mpc_lowcomm_request_wait(&req);
 
-  sctk_thread_yield();
+  mpc_thread_yield();
 }
 
 int __mpc_MPI_Win_init_message(MPI_Win win,

@@ -52,7 +52,7 @@ sctk_touch_func_n(void (*ptr)(void *) )
 }
 
 static inline void
-sctk_touch_thread(const sctk_thread_t ptr)
+sctk_touch_thread(const mpc_thread_t ptr)
 {
 	assume(ptr == NULL);
 }
@@ -99,7 +99,7 @@ sctk_gen_thread_atfork(void (*__prepare)(void), void (*__parent)(void),
 }
 
 static int
-sctk_gen_thread_attr_destroy(sctk_thread_attr_t *__attr)
+sctk_gen_thread_attr_destroy(mpc_thread_attr_t *__attr)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_attr_destroy != __sctk_ptr_thread_attr_destroy);
@@ -107,7 +107,7 @@ sctk_gen_thread_attr_destroy(sctk_thread_attr_t *__attr)
 }
 
 static int
-sctk_gen_thread_attr_getdetachstate(const sctk_thread_attr_t *__attr,
+sctk_gen_thread_attr_getdetachstate(const mpc_thread_attr_t *__attr,
                                     int *__detachstate)
 {
 	__base_mpc_init();
@@ -116,7 +116,7 @@ sctk_gen_thread_attr_getdetachstate(const sctk_thread_attr_t *__attr,
 }
 
 static int
-sctk_gen_thread_attr_getguardsize(const sctk_thread_attr_t *
+sctk_gen_thread_attr_getguardsize(const mpc_thread_attr_t *
                                   restrict __attr,
                                   size_t *restrict __guardsize)
 {
@@ -126,7 +126,7 @@ sctk_gen_thread_attr_getguardsize(const sctk_thread_attr_t *
 }
 
 static int
-sctk_gen_thread_attr_getinheritsched(const sctk_thread_attr_t *
+sctk_gen_thread_attr_getinheritsched(const mpc_thread_attr_t *
                                      restrict __attr,
                                      int *restrict __inherit)
 {
@@ -136,7 +136,7 @@ sctk_gen_thread_attr_getinheritsched(const sctk_thread_attr_t *
 }
 
 static int
-sctk_gen_thread_attr_getschedparam(const sctk_thread_attr_t *
+sctk_gen_thread_attr_getschedparam(const mpc_thread_attr_t *
                                    restrict __attr,
                                    struct sched_param *restrict __param)
 {
@@ -146,7 +146,7 @@ sctk_gen_thread_attr_getschedparam(const sctk_thread_attr_t *
 }
 
 static int
-sctk_gen_thread_attr_getschedpolicy(const sctk_thread_attr_t *
+sctk_gen_thread_attr_getschedpolicy(const mpc_thread_attr_t *
                                     restrict __attr, int *restrict __policy)
 {
 	__base_mpc_init();
@@ -155,7 +155,7 @@ sctk_gen_thread_attr_getschedpolicy(const sctk_thread_attr_t *
 }
 
 static int
-sctk_gen_thread_attr_getscope(const sctk_thread_attr_t *restrict __attr,
+sctk_gen_thread_attr_getscope(const mpc_thread_attr_t *restrict __attr,
                               int *restrict __scope)
 {
 	__base_mpc_init();
@@ -164,7 +164,7 @@ sctk_gen_thread_attr_getscope(const sctk_thread_attr_t *restrict __attr,
 }
 
 static int
-sctk_gen_thread_attr_getstackaddr(const sctk_thread_attr_t *
+sctk_gen_thread_attr_getstackaddr(const mpc_thread_attr_t *
                                   restrict __attr,
                                   void **restrict __stackaddr)
 {
@@ -174,7 +174,7 @@ sctk_gen_thread_attr_getstackaddr(const sctk_thread_attr_t *
 }
 
 static int
-sctk_gen_thread_attr_getstack(const sctk_thread_attr_t *restrict __attr,
+sctk_gen_thread_attr_getstack(const mpc_thread_attr_t *restrict __attr,
                               void **restrict __stackaddr,
                               size_t *restrict __stacksize)
 {
@@ -184,7 +184,7 @@ sctk_gen_thread_attr_getstack(const sctk_thread_attr_t *restrict __attr,
 }
 
 static int
-sctk_gen_thread_attr_getstacksize(const sctk_thread_attr_t *
+sctk_gen_thread_attr_getstacksize(const mpc_thread_attr_t *
                                   restrict __attr,
                                   size_t *restrict __stacksize)
 {
@@ -194,7 +194,7 @@ sctk_gen_thread_attr_getstacksize(const sctk_thread_attr_t *
 }
 
 static int
-sctk_gen_thread_attr_setbinding(sctk_thread_attr_t *__attr, int __binding)
+sctk_gen_thread_attr_setbinding(mpc_thread_attr_t *__attr, int __binding)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_attr_setbinding != __sctk_ptr_thread_attr_setbinding);
@@ -202,7 +202,7 @@ sctk_gen_thread_attr_setbinding(sctk_thread_attr_t *__attr, int __binding)
 }
 
 static int
-sctk_gen_thread_attr_getbinding(sctk_thread_attr_t *__attr, int *__binding)
+sctk_gen_thread_attr_getbinding(mpc_thread_attr_t *__attr, int *__binding)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_attr_getbinding != __sctk_ptr_thread_attr_getbinding);
@@ -210,7 +210,7 @@ sctk_gen_thread_attr_getbinding(sctk_thread_attr_t *__attr, int *__binding)
 }
 
 static int
-sctk_gen_thread_attr_init(sctk_thread_attr_t *__attr)
+sctk_gen_thread_attr_init(mpc_thread_attr_t *__attr)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_attr_init != __sctk_ptr_thread_attr_init);
@@ -218,7 +218,7 @@ sctk_gen_thread_attr_init(sctk_thread_attr_t *__attr)
 }
 
 static int
-sctk_gen_thread_attr_setdetachstate(sctk_thread_attr_t *__attr,
+sctk_gen_thread_attr_setdetachstate(mpc_thread_attr_t *__attr,
                                     int __detachstate)
 {
 	__base_mpc_init();
@@ -227,7 +227,7 @@ sctk_gen_thread_attr_setdetachstate(sctk_thread_attr_t *__attr,
 }
 
 static int
-sctk_gen_thread_attr_setguardsize(sctk_thread_attr_t *__attr,
+sctk_gen_thread_attr_setguardsize(mpc_thread_attr_t *__attr,
                                   size_t __guardsize)
 {
 	__base_mpc_init();
@@ -236,7 +236,7 @@ sctk_gen_thread_attr_setguardsize(sctk_thread_attr_t *__attr,
 }
 
 static int
-sctk_gen_thread_attr_setinheritsched(sctk_thread_attr_t *__attr,
+sctk_gen_thread_attr_setinheritsched(mpc_thread_attr_t *__attr,
                                      int __inherit)
 {
 	__base_mpc_init();
@@ -245,7 +245,7 @@ sctk_gen_thread_attr_setinheritsched(sctk_thread_attr_t *__attr,
 }
 
 static int
-sctk_gen_thread_attr_setschedparam(sctk_thread_attr_t *restrict __attr,
+sctk_gen_thread_attr_setschedparam(mpc_thread_attr_t *restrict __attr,
                                    const struct sched_param *restrict
                                    __param)
 {
@@ -271,7 +271,7 @@ sctk_gen_thread_sched_get_priority_min(int policy)
 }
 
 static int
-sctk_gen_thread_attr_setschedpolicy(sctk_thread_attr_t *__attr,
+sctk_gen_thread_attr_setschedpolicy(mpc_thread_attr_t *__attr,
                                     int __policy)
 {
 	__base_mpc_init();
@@ -280,7 +280,7 @@ sctk_gen_thread_attr_setschedpolicy(sctk_thread_attr_t *__attr,
 }
 
 static int
-sctk_gen_thread_attr_setscope(sctk_thread_attr_t *__attr, int __scope)
+sctk_gen_thread_attr_setscope(mpc_thread_attr_t *__attr, int __scope)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_attr_setscope != __sctk_ptr_thread_attr_setscope);
@@ -288,7 +288,7 @@ sctk_gen_thread_attr_setscope(sctk_thread_attr_t *__attr, int __scope)
 }
 
 static int
-sctk_gen_thread_attr_setstackaddr(sctk_thread_attr_t *__attr,
+sctk_gen_thread_attr_setstackaddr(mpc_thread_attr_t *__attr,
                                   void *__stackaddr)
 {
 	__base_mpc_init();
@@ -297,7 +297,7 @@ sctk_gen_thread_attr_setstackaddr(sctk_thread_attr_t *__attr,
 }
 
 static int
-sctk_gen_thread_attr_setstack(sctk_thread_attr_t *__attr,
+sctk_gen_thread_attr_setstack(mpc_thread_attr_t *__attr,
                               void *__stackaddr, size_t __stacksize)
 {
 	__base_mpc_init();
@@ -306,7 +306,7 @@ sctk_gen_thread_attr_setstack(sctk_thread_attr_t *__attr,
 }
 
 static int
-sctk_gen_thread_attr_setstacksize(sctk_thread_attr_t *__attr,
+sctk_gen_thread_attr_setstacksize(mpc_thread_attr_t *__attr,
                                   size_t __stacksize)
 {
 	__base_mpc_init();
@@ -315,7 +315,7 @@ sctk_gen_thread_attr_setstacksize(sctk_thread_attr_t *__attr,
 }
 
 static int
-sctk_gen_thread_barrierattr_destroy(sctk_thread_barrierattr_t *__attr)
+sctk_gen_thread_barrierattr_destroy(mpc_thread_barrierattr_t *__attr)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_barrierattr_destroy != __sctk_ptr_thread_barrierattr_destroy);
@@ -323,7 +323,7 @@ sctk_gen_thread_barrierattr_destroy(sctk_thread_barrierattr_t *__attr)
 }
 
 static int
-sctk_gen_thread_barrierattr_init(sctk_thread_barrierattr_t *__attr)
+sctk_gen_thread_barrierattr_init(mpc_thread_barrierattr_t *__attr)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_barrierattr_init != __sctk_ptr_thread_barrierattr_init);
@@ -331,7 +331,7 @@ sctk_gen_thread_barrierattr_init(sctk_thread_barrierattr_t *__attr)
 }
 
 static int
-sctk_gen_thread_barrierattr_setpshared(sctk_thread_barrierattr_t *__attr,
+sctk_gen_thread_barrierattr_setpshared(mpc_thread_barrierattr_t *__attr,
                                        int __pshared)
 {
 	__base_mpc_init();
@@ -340,7 +340,7 @@ sctk_gen_thread_barrierattr_setpshared(sctk_thread_barrierattr_t *__attr,
 }
 
 static int
-sctk_gen_thread_barrierattr_getpshared(const sctk_thread_barrierattr_t *
+sctk_gen_thread_barrierattr_getpshared(const mpc_thread_barrierattr_t *
                                        __attr, int *__pshared)
 {
 	__base_mpc_init();
@@ -349,7 +349,7 @@ sctk_gen_thread_barrierattr_getpshared(const sctk_thread_barrierattr_t *
 }
 
 static int
-sctk_gen_thread_barrier_destroy(sctk_thread_barrier_t *__barrier)
+sctk_gen_thread_barrier_destroy(mpc_thread_barrier_t *__barrier)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_barrier_destroy != __sctk_ptr_thread_barrier_destroy);
@@ -357,8 +357,8 @@ sctk_gen_thread_barrier_destroy(sctk_thread_barrier_t *__barrier)
 }
 
 static int
-sctk_gen_thread_barrier_init(sctk_thread_barrier_t *restrict __barrier,
-                             const sctk_thread_barrierattr_t *
+sctk_gen_thread_barrier_init(mpc_thread_barrier_t *restrict __barrier,
+                             const mpc_thread_barrierattr_t *
                              restrict __attr, unsigned int __count)
 {
 	__base_mpc_init();
@@ -367,7 +367,7 @@ sctk_gen_thread_barrier_init(sctk_thread_barrier_t *restrict __barrier,
 }
 
 static int
-sctk_gen_thread_barrier_wait(sctk_thread_barrier_t *__barrier)
+sctk_gen_thread_barrier_wait(mpc_thread_barrier_t *__barrier)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_barrier_wait != __sctk_ptr_thread_barrier_wait);
@@ -375,7 +375,7 @@ sctk_gen_thread_barrier_wait(sctk_thread_barrier_t *__barrier)
 }
 
 static int
-sctk_gen_thread_cancel(sctk_thread_t __cancelthread)
+sctk_gen_thread_cancel(mpc_thread_t __cancelthread)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_cancel != __sctk_ptr_thread_cancel);
@@ -383,7 +383,7 @@ sctk_gen_thread_cancel(sctk_thread_t __cancelthread)
 }
 
 static int
-sctk_gen_thread_condattr_destroy(sctk_thread_condattr_t *__attr)
+sctk_gen_thread_condattr_destroy(mpc_thread_condattr_t *__attr)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_condattr_destroy != __sctk_ptr_thread_condattr_destroy);
@@ -391,7 +391,7 @@ sctk_gen_thread_condattr_destroy(sctk_thread_condattr_t *__attr)
 }
 
 static int
-sctk_gen_thread_condattr_getpshared(const sctk_thread_condattr_t *
+sctk_gen_thread_condattr_getpshared(const mpc_thread_condattr_t *
                                     restrict __attr, int *restrict __pshared)
 {
 	__base_mpc_init();
@@ -400,7 +400,7 @@ sctk_gen_thread_condattr_getpshared(const sctk_thread_condattr_t *
 }
 
 static int
-sctk_gen_thread_condattr_init(sctk_thread_condattr_t *__attr)
+sctk_gen_thread_condattr_init(mpc_thread_condattr_t *__attr)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_condattr_init != __sctk_ptr_thread_condattr_init);
@@ -408,7 +408,7 @@ sctk_gen_thread_condattr_init(sctk_thread_condattr_t *__attr)
 }
 
 static int
-sctk_gen_thread_condattr_setpshared(sctk_thread_condattr_t *__attr,
+sctk_gen_thread_condattr_setpshared(mpc_thread_condattr_t *__attr,
                                     int __pshared)
 {
 	__base_mpc_init();
@@ -417,7 +417,7 @@ sctk_gen_thread_condattr_setpshared(sctk_thread_condattr_t *__attr,
 }
 
 static int
-sctk_gen_thread_cond_broadcast(sctk_thread_cond_t *__cond)
+sctk_gen_thread_cond_broadcast(mpc_thread_cond_t *__cond)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_cond_broadcast != __sctk_ptr_thread_cond_broadcast);
@@ -425,7 +425,7 @@ sctk_gen_thread_cond_broadcast(sctk_thread_cond_t *__cond)
 }
 
 static int
-sctk_gen_thread_cond_destroy(sctk_thread_cond_t *__cond)
+sctk_gen_thread_cond_destroy(mpc_thread_cond_t *__cond)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_cond_destroy != __sctk_ptr_thread_cond_destroy);
@@ -433,7 +433,7 @@ sctk_gen_thread_cond_destroy(sctk_thread_cond_t *__cond)
 }
 
 static int
-sctk_gen_thread_condattr_setclock(sctk_thread_condattr_t *
+sctk_gen_thread_condattr_setclock(mpc_thread_condattr_t *
                                   attr, clockid_t clock_id)
 {
 	__base_mpc_init();
@@ -442,7 +442,7 @@ sctk_gen_thread_condattr_setclock(sctk_thread_condattr_t *
 }
 
 static int
-sctk_gen_thread_condattr_getclock(sctk_thread_condattr_t *
+sctk_gen_thread_condattr_getclock(mpc_thread_condattr_t *
                                   attr, clockid_t *clock_id)
 {
 	__base_mpc_init();
@@ -451,8 +451,8 @@ sctk_gen_thread_condattr_getclock(sctk_thread_condattr_t *
 }
 
 static int
-sctk_gen_thread_cond_init(sctk_thread_cond_t *restrict __cond,
-                          const sctk_thread_condattr_t *
+sctk_gen_thread_cond_init(mpc_thread_cond_t *restrict __cond,
+                          const mpc_thread_condattr_t *
                           restrict __cond_attr)
 {
 	__base_mpc_init();
@@ -461,7 +461,7 @@ sctk_gen_thread_cond_init(sctk_thread_cond_t *restrict __cond,
 }
 
 static int
-sctk_gen_thread_cond_signal(sctk_thread_cond_t *__cond)
+sctk_gen_thread_cond_signal(mpc_thread_cond_t *__cond)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_cond_signal != __sctk_ptr_thread_cond_signal);
@@ -469,8 +469,8 @@ sctk_gen_thread_cond_signal(sctk_thread_cond_t *__cond)
 }
 
 static int
-sctk_gen_thread_cond_timedwait(sctk_thread_cond_t *restrict __cond,
-                               sctk_thread_mutex_t *restrict __mutex,
+sctk_gen_thread_cond_timedwait(mpc_thread_cond_t *restrict __cond,
+                               mpc_thread_mutex_t *restrict __mutex,
                                const struct timespec *restrict __abstime)
 {
 	__base_mpc_init();
@@ -479,8 +479,8 @@ sctk_gen_thread_cond_timedwait(sctk_thread_cond_t *restrict __cond,
 }
 
 static int
-sctk_gen_thread_cond_wait(sctk_thread_cond_t *restrict __cond,
-                          sctk_thread_mutex_t *restrict __mutex)
+sctk_gen_thread_cond_wait(mpc_thread_cond_t *restrict __cond,
+                          mpc_thread_mutex_t *restrict __mutex)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_cond_wait != __sctk_ptr_thread_cond_wait);
@@ -488,8 +488,8 @@ sctk_gen_thread_cond_wait(sctk_thread_cond_t *restrict __cond,
 }
 
 static int
-sctk_gen_thread_create(sctk_thread_t *restrict __threadp,
-                       const sctk_thread_attr_t *restrict __attr,
+sctk_gen_thread_create(mpc_thread_t *restrict __threadp,
+                       const mpc_thread_attr_t *restrict __attr,
                        void *(*__start_routine)(void *),
                        void *restrict __arg)
 {
@@ -499,8 +499,8 @@ sctk_gen_thread_create(sctk_thread_t *restrict __threadp,
 }
 
 static int
-sctk_gen_thread_user_create(sctk_thread_t *restrict __threadp,
-                            const sctk_thread_attr_t *restrict __attr,
+sctk_gen_thread_user_create(mpc_thread_t *restrict __threadp,
+                            const mpc_thread_attr_t *restrict __attr,
                             void *(*__start_routine)(void *),
                             void *restrict __arg)
 {
@@ -510,7 +510,7 @@ sctk_gen_thread_user_create(sctk_thread_t *restrict __threadp,
 }
 
 static int
-sctk_gen_thread_detach(sctk_thread_t __th)
+sctk_gen_thread_detach(mpc_thread_t __th)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_detach != __sctk_ptr_thread_detach);
@@ -518,7 +518,7 @@ sctk_gen_thread_detach(sctk_thread_t __th)
 }
 
 static int
-sctk_gen_thread_equal(sctk_thread_t __thread1, sctk_thread_t __thread2)
+sctk_gen_thread_equal(mpc_thread_t __thread1, mpc_thread_t __thread2)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_equal != __sctk_ptr_thread_equal);
@@ -542,7 +542,7 @@ sctk_gen_thread_getconcurrency(void)
 }
 
 static int
-sctk_gen_thread_getcpuclockid(sctk_thread_t __thread_id,
+sctk_gen_thread_getcpuclockid(mpc_thread_t __thread_id,
                               clockid_t *__clock_id)
 {
 	__base_mpc_init();
@@ -551,7 +551,7 @@ sctk_gen_thread_getcpuclockid(sctk_thread_t __thread_id,
 }
 
 static int
-sctk_gen_thread_getschedparam(sctk_thread_t __target_thread,
+sctk_gen_thread_getschedparam(mpc_thread_t __target_thread,
                               int *restrict __policy,
                               struct sched_param *restrict __param)
 {
@@ -561,7 +561,7 @@ sctk_gen_thread_getschedparam(sctk_thread_t __target_thread,
 }
 
 static void *
-sctk_gen_thread_getspecific(sctk_thread_key_t __key)
+sctk_gen_thread_getspecific(mpc_thread_keys_t __key)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_getspecific != __sctk_ptr_thread_getspecific);
@@ -569,7 +569,7 @@ sctk_gen_thread_getspecific(sctk_thread_key_t __key)
 }
 
 static int
-sctk_gen_thread_join(sctk_thread_t __th, void **__thread_return)
+sctk_gen_thread_join(mpc_thread_t __th, void **__thread_return)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_join != __sctk_ptr_thread_join);
@@ -577,7 +577,7 @@ sctk_gen_thread_join(sctk_thread_t __th, void **__thread_return)
 }
 
 static int
-sctk_gen_thread_kill(sctk_thread_t thread, int signo)
+sctk_gen_thread_kill(mpc_thread_t thread, int signo)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_kill != __sctk_ptr_thread_kill);
@@ -610,7 +610,7 @@ sctk_gen_thread_sigmask(int how, const sigset_t *newmask,
 }
 
 static int
-sctk_gen_thread_key_create(sctk_thread_key_t *__key,
+sctk_gen_thread_key_create(mpc_thread_keys_t *__key,
                            void (*__destr_function)(void *) )
 {
 	__base_mpc_init();
@@ -619,7 +619,7 @@ sctk_gen_thread_key_create(sctk_thread_key_t *__key,
 }
 
 static int
-sctk_gen_thread_key_delete(sctk_thread_key_t __key)
+sctk_gen_thread_key_delete(mpc_thread_keys_t __key)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_key_delete != __sctk_ptr_thread_key_delete);
@@ -627,7 +627,7 @@ sctk_gen_thread_key_delete(sctk_thread_key_t __key)
 }
 
 static int
-sctk_gen_thread_mutexattr_destroy(sctk_thread_mutexattr_t *__attr)
+sctk_gen_thread_mutexattr_destroy(mpc_thread_mutexattr_t *__attr)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_mutexattr_destroy != __sctk_ptr_thread_mutexattr_destroy);
@@ -635,7 +635,7 @@ sctk_gen_thread_mutexattr_destroy(sctk_thread_mutexattr_t *__attr)
 }
 
 static int
-sctk_gen_thread_mutexattr_getpshared(const sctk_thread_mutexattr_t *
+sctk_gen_thread_mutexattr_getpshared(const mpc_thread_mutexattr_t *
                                      restrict __attr,
                                      int *restrict __pshared)
 {
@@ -645,7 +645,7 @@ sctk_gen_thread_mutexattr_getpshared(const sctk_thread_mutexattr_t *
 }
 
 static int
-sctk_gen_thread_mutexattr_getprioceiling(const sctk_thread_mutexattr_t *
+sctk_gen_thread_mutexattr_getprioceiling(const mpc_thread_mutexattr_t *
                                          __attr, int *__prioceiling)
 {
 	__base_mpc_init();
@@ -654,7 +654,7 @@ sctk_gen_thread_mutexattr_getprioceiling(const sctk_thread_mutexattr_t *
 }
 
 static int
-sctk_gen_thread_mutexattr_setprioceiling(sctk_thread_mutexattr_t *
+sctk_gen_thread_mutexattr_setprioceiling(mpc_thread_mutexattr_t *
                                          __attr, int __prioceiling)
 {
 	__base_mpc_init();
@@ -663,7 +663,7 @@ sctk_gen_thread_mutexattr_setprioceiling(sctk_thread_mutexattr_t *
 }
 
 static int
-sctk_gen_thread_mutexattr_getprotocol(const sctk_thread_mutexattr_t *
+sctk_gen_thread_mutexattr_getprotocol(const mpc_thread_mutexattr_t *
                                       __attr, int *__protocol)
 {
 	__base_mpc_init();
@@ -672,7 +672,7 @@ sctk_gen_thread_mutexattr_getprotocol(const sctk_thread_mutexattr_t *
 }
 
 static int
-sctk_gen_thread_mutexattr_setprotocol(sctk_thread_mutexattr_t *
+sctk_gen_thread_mutexattr_setprotocol(mpc_thread_mutexattr_t *
                                       __attr, int __protocol)
 {
 	__base_mpc_init();
@@ -681,7 +681,7 @@ sctk_gen_thread_mutexattr_setprotocol(sctk_thread_mutexattr_t *
 }
 
 static int
-sctk_gen_thread_mutexattr_gettype(const sctk_thread_mutexattr_t *
+sctk_gen_thread_mutexattr_gettype(const mpc_thread_mutexattr_t *
                                   restrict __attr, int *restrict __kind)
 {
 	__base_mpc_init();
@@ -690,7 +690,7 @@ sctk_gen_thread_mutexattr_gettype(const sctk_thread_mutexattr_t *
 }
 
 static int
-sctk_gen_thread_mutexattr_init(sctk_thread_mutexattr_t *__attr)
+sctk_gen_thread_mutexattr_init(mpc_thread_mutexattr_t *__attr)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_mutexattr_init != __sctk_ptr_thread_mutexattr_init);
@@ -698,7 +698,7 @@ sctk_gen_thread_mutexattr_init(sctk_thread_mutexattr_t *__attr)
 }
 
 static int
-sctk_gen_thread_mutexattr_setpshared(sctk_thread_mutexattr_t *__attr,
+sctk_gen_thread_mutexattr_setpshared(mpc_thread_mutexattr_t *__attr,
                                      int __pshared)
 {
 	__base_mpc_init();
@@ -707,7 +707,7 @@ sctk_gen_thread_mutexattr_setpshared(sctk_thread_mutexattr_t *__attr,
 }
 
 static int
-sctk_gen_thread_mutexattr_settype(sctk_thread_mutexattr_t *__attr,
+sctk_gen_thread_mutexattr_settype(mpc_thread_mutexattr_t *__attr,
                                   int __kind)
 {
 	__base_mpc_init();
@@ -716,7 +716,7 @@ sctk_gen_thread_mutexattr_settype(sctk_thread_mutexattr_t *__attr,
 }
 
 static int
-sctk_gen_thread_mutex_destroy(sctk_thread_mutex_t *__mutex)
+sctk_gen_thread_mutex_destroy(mpc_thread_mutex_t *__mutex)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_mutex_destroy != __sctk_ptr_thread_mutex_destroy);
@@ -724,8 +724,8 @@ sctk_gen_thread_mutex_destroy(sctk_thread_mutex_t *__mutex)
 }
 
 static int
-sctk_gen_thread_mutex_init(sctk_thread_mutex_t *restrict __mutex,
-                           const sctk_thread_mutexattr_t *
+sctk_gen_thread_mutex_init(mpc_thread_mutex_t *restrict __mutex,
+                           const mpc_thread_mutexattr_t *
                            restrict __mutex_attr)
 {
 	__base_mpc_init();
@@ -734,7 +734,7 @@ sctk_gen_thread_mutex_init(sctk_thread_mutex_t *restrict __mutex,
 }
 
 static int
-sctk_gen_thread_mutex_lock(sctk_thread_mutex_t *__mutex)
+sctk_gen_thread_mutex_lock(mpc_thread_mutex_t *__mutex)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_mutex_lock != __sctk_ptr_thread_mutex_lock);
@@ -742,7 +742,7 @@ sctk_gen_thread_mutex_lock(sctk_thread_mutex_t *__mutex)
 }
 
 static int
-sctk_gen_thread_mutex_spinlock(sctk_thread_mutex_t *__mutex)
+sctk_gen_thread_mutex_spinlock(mpc_thread_mutex_t *__mutex)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_mutex_spinlock != __sctk_ptr_thread_mutex_spinlock);
@@ -750,7 +750,7 @@ sctk_gen_thread_mutex_spinlock(sctk_thread_mutex_t *__mutex)
 }
 
 static int
-sctk_gen_thread_mutex_timedlock(sctk_thread_mutex_t *restrict __mutex,
+sctk_gen_thread_mutex_timedlock(mpc_thread_mutex_t *restrict __mutex,
                                 const struct timespec *restrict __abstime)
 {
 	__base_mpc_init();
@@ -759,7 +759,7 @@ sctk_gen_thread_mutex_timedlock(sctk_thread_mutex_t *restrict __mutex,
 }
 
 static int
-sctk_gen_thread_mutex_trylock(sctk_thread_mutex_t *__mutex)
+sctk_gen_thread_mutex_trylock(mpc_thread_mutex_t *__mutex)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_mutex_trylock != __sctk_ptr_thread_mutex_trylock);
@@ -767,7 +767,7 @@ sctk_gen_thread_mutex_trylock(sctk_thread_mutex_t *__mutex)
 }
 
 static int
-sctk_gen_thread_mutex_unlock(sctk_thread_mutex_t *__mutex)
+sctk_gen_thread_mutex_unlock(mpc_thread_mutex_t *__mutex)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_mutex_unlock != __sctk_ptr_thread_mutex_unlock);
@@ -775,7 +775,7 @@ sctk_gen_thread_mutex_unlock(sctk_thread_mutex_t *__mutex)
 }
 
 static int
-sctk_gen_thread_sem_init(sctk_thread_sem_t *sem, int pshared,
+sctk_gen_thread_sem_init(mpc_thread_sem_t *sem, int pshared,
                          unsigned int value)
 {
 	__base_mpc_init();
@@ -784,7 +784,7 @@ sctk_gen_thread_sem_init(sctk_thread_sem_t *sem, int pshared,
 }
 
 static int
-sctk_gen_thread_sem_wait(sctk_thread_sem_t *sem)
+sctk_gen_thread_sem_wait(mpc_thread_sem_t *sem)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_sem_wait != __sctk_ptr_thread_sem_wait);
@@ -792,7 +792,7 @@ sctk_gen_thread_sem_wait(sctk_thread_sem_t *sem)
 }
 
 static int
-sctk_gen_thread_sem_trywait(sctk_thread_sem_t *sem)
+sctk_gen_thread_sem_trywait(mpc_thread_sem_t *sem)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_sem_trywait != __sctk_ptr_thread_sem_trywait);
@@ -800,7 +800,7 @@ sctk_gen_thread_sem_trywait(sctk_thread_sem_t *sem)
 }
 
 static int
-sctk_gen_thread_sem_timedwait(sctk_thread_sem_t *sem,
+sctk_gen_thread_sem_timedwait(mpc_thread_sem_t *sem,
                               const struct timespec *__abstime)
 {
 	__base_mpc_init();
@@ -809,7 +809,7 @@ sctk_gen_thread_sem_timedwait(sctk_thread_sem_t *sem,
 }
 
 static int
-sctk_gen_thread_sem_post(sctk_thread_sem_t *sem)
+sctk_gen_thread_sem_post(mpc_thread_sem_t *sem)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_sem_post != __sctk_ptr_thread_sem_post);
@@ -817,7 +817,7 @@ sctk_gen_thread_sem_post(sctk_thread_sem_t *sem)
 }
 
 static int
-sctk_gen_thread_sem_getvalue(sctk_thread_sem_t *sem, int *sval)
+sctk_gen_thread_sem_getvalue(mpc_thread_sem_t *sem, int *sval)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_sem_getvalue != __sctk_ptr_thread_sem_getvalue);
@@ -825,14 +825,14 @@ sctk_gen_thread_sem_getvalue(sctk_thread_sem_t *sem, int *sval)
 }
 
 static int
-sctk_gen_thread_sem_destroy(sctk_thread_sem_t *sem)
+sctk_gen_thread_sem_destroy(mpc_thread_sem_t *sem)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_sem_destroy != __sctk_ptr_thread_sem_destroy);
 	return __sctk_ptr_thread_sem_destroy(sem);
 }
 
-static sctk_thread_sem_t *
+static mpc_thread_sem_t *
 sctk_gen_thread_sem_open(const char *name, int oflag, ...)
 {
 	__base_mpc_init();
@@ -854,7 +854,7 @@ sctk_gen_thread_sem_open(const char *name, int oflag, ...)
 }
 
 static int
-sctk_gen_thread_sem_close(sctk_thread_sem_t *sem)
+sctk_gen_thread_sem_close(mpc_thread_sem_t *sem)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_sem_close != __sctk_ptr_thread_sem_close);
@@ -870,7 +870,7 @@ sctk_gen_thread_sem_unlink(const char *name)
 }
 
 static int
-sctk_gen_thread_once(sctk_thread_once_t *__once_control,
+sctk_gen_thread_once(mpc_thread_once_t *__once_control,
                      void (*__init_routine)(void) )
 {
 	__base_mpc_init();
@@ -879,7 +879,7 @@ sctk_gen_thread_once(sctk_thread_once_t *__once_control,
 }
 
 static int
-sctk_gen_thread_rwlockattr_destroy(sctk_thread_rwlockattr_t *__attr)
+sctk_gen_thread_rwlockattr_destroy(mpc_thread_rwlockattr_t *__attr)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_rwlockattr_destroy != __sctk_ptr_thread_rwlockattr_destroy);
@@ -887,7 +887,7 @@ sctk_gen_thread_rwlockattr_destroy(sctk_thread_rwlockattr_t *__attr)
 }
 
 static int
-sctk_gen_thread_rwlockattr_getpshared(const sctk_thread_rwlockattr_t *
+sctk_gen_thread_rwlockattr_getpshared(const mpc_thread_rwlockattr_t *
                                       restrict __attr,
                                       int *restrict __pshared)
 {
@@ -897,7 +897,7 @@ sctk_gen_thread_rwlockattr_getpshared(const sctk_thread_rwlockattr_t *
 }
 
 static int
-sctk_gen_thread_rwlockattr_init(sctk_thread_rwlockattr_t *__attr)
+sctk_gen_thread_rwlockattr_init(mpc_thread_rwlockattr_t *__attr)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_rwlockattr_init != __sctk_ptr_thread_rwlockattr_init);
@@ -905,7 +905,7 @@ sctk_gen_thread_rwlockattr_init(sctk_thread_rwlockattr_t *__attr)
 }
 
 static int
-sctk_gen_thread_rwlockattr_setpshared(sctk_thread_rwlockattr_t *__attr,
+sctk_gen_thread_rwlockattr_setpshared(mpc_thread_rwlockattr_t *__attr,
                                       int __pshared)
 {
 	__base_mpc_init();
@@ -914,7 +914,7 @@ sctk_gen_thread_rwlockattr_setpshared(sctk_thread_rwlockattr_t *__attr,
 }
 
 static int
-sctk_gen_thread_rwlock_destroy(sctk_thread_rwlock_t *__rwlock)
+sctk_gen_thread_rwlock_destroy(mpc_thread_rwlock_t *__rwlock)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_rwlock_destroy != __sctk_ptr_thread_rwlock_destroy);
@@ -922,8 +922,8 @@ sctk_gen_thread_rwlock_destroy(sctk_thread_rwlock_t *__rwlock)
 }
 
 static int
-sctk_gen_thread_rwlock_init(sctk_thread_rwlock_t *restrict __rwlock,
-                            const sctk_thread_rwlockattr_t *restrict __attr)
+sctk_gen_thread_rwlock_init(mpc_thread_rwlock_t *restrict __rwlock,
+                            const mpc_thread_rwlockattr_t *restrict __attr)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_rwlock_init != __sctk_ptr_thread_rwlock_init);
@@ -931,7 +931,7 @@ sctk_gen_thread_rwlock_init(sctk_thread_rwlock_t *restrict __rwlock,
 }
 
 static int
-sctk_gen_thread_rwlock_rdlock(sctk_thread_rwlock_t *__rwlock)
+sctk_gen_thread_rwlock_rdlock(mpc_thread_rwlock_t *__rwlock)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_rwlock_rdlock != __sctk_ptr_thread_rwlock_rdlock);
@@ -939,7 +939,7 @@ sctk_gen_thread_rwlock_rdlock(sctk_thread_rwlock_t *__rwlock)
 }
 
 static int
-sctk_gen_thread_rwlock_timedrdlock(sctk_thread_rwlock_t *
+sctk_gen_thread_rwlock_timedrdlock(mpc_thread_rwlock_t *
                                    restrict __rwlock,
                                    const struct timespec *restrict __abstime)
 {
@@ -949,7 +949,7 @@ sctk_gen_thread_rwlock_timedrdlock(sctk_thread_rwlock_t *
 }
 
 static int
-sctk_gen_thread_rwlock_timedwrlock(sctk_thread_rwlock_t *
+sctk_gen_thread_rwlock_timedwrlock(mpc_thread_rwlock_t *
                                    restrict __rwlock,
                                    const struct timespec *restrict __abstime)
 {
@@ -959,7 +959,7 @@ sctk_gen_thread_rwlock_timedwrlock(sctk_thread_rwlock_t *
 }
 
 static int
-sctk_gen_thread_rwlock_tryrdlock(sctk_thread_rwlock_t *__rwlock)
+sctk_gen_thread_rwlock_tryrdlock(mpc_thread_rwlock_t *__rwlock)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_rwlock_tryrdlock != __sctk_ptr_thread_rwlock_tryrdlock);
@@ -967,7 +967,7 @@ sctk_gen_thread_rwlock_tryrdlock(sctk_thread_rwlock_t *__rwlock)
 }
 
 static int
-sctk_gen_thread_rwlock_trywrlock(sctk_thread_rwlock_t *__rwlock)
+sctk_gen_thread_rwlock_trywrlock(mpc_thread_rwlock_t *__rwlock)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_rwlock_trywrlock != __sctk_ptr_thread_rwlock_trywrlock);
@@ -975,7 +975,7 @@ sctk_gen_thread_rwlock_trywrlock(sctk_thread_rwlock_t *__rwlock)
 }
 
 static int
-sctk_gen_thread_rwlock_unlock(sctk_thread_rwlock_t *__rwlock)
+sctk_gen_thread_rwlock_unlock(mpc_thread_rwlock_t *__rwlock)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_rwlock_unlock != __sctk_ptr_thread_rwlock_unlock);
@@ -983,14 +983,14 @@ sctk_gen_thread_rwlock_unlock(sctk_thread_rwlock_t *__rwlock)
 }
 
 static int
-sctk_gen_thread_rwlock_wrlock(sctk_thread_rwlock_t *__rwlock)
+sctk_gen_thread_rwlock_wrlock(mpc_thread_rwlock_t *__rwlock)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_rwlock_wrlock != __sctk_ptr_thread_rwlock_wrlock);
 	return __sctk_ptr_thread_rwlock_wrlock(__rwlock);
 }
 
-static sctk_thread_t
+static mpc_thread_t
 sctk_gen_thread_self(void)
 {
 	__base_mpc_init();
@@ -998,13 +998,6 @@ sctk_gen_thread_self(void)
 	return __sctk_ptr_thread_self();
 }
 
-static sctk_thread_t
-sctk_gen_thread_self_check(void)
-{
-	__base_mpc_init();
-	assume(sctk_gen_thread_self_check != __sctk_ptr_thread_self_check);
-	return __sctk_ptr_thread_self_check();
-}
 
 static int
 sctk_gen_thread_setcancelstate(int __state, int *__oldstate)
@@ -1031,7 +1024,7 @@ sctk_gen_thread_setconcurrency(int __level)
 }
 
 static int
-sctk_gen_thread_setschedprio(sctk_thread_t __p, int __i)
+sctk_gen_thread_setschedprio(mpc_thread_t __p, int __i)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_setschedprio != __sctk_ptr_thread_setschedprio);
@@ -1039,7 +1032,7 @@ sctk_gen_thread_setschedprio(sctk_thread_t __p, int __i)
 }
 
 static int
-sctk_gen_thread_setschedparam(sctk_thread_t __target_thread, int __policy,
+sctk_gen_thread_setschedparam(mpc_thread_t __target_thread, int __policy,
                               const struct sched_param *__param)
 {
 	__base_mpc_init();
@@ -1048,7 +1041,7 @@ sctk_gen_thread_setschedparam(sctk_thread_t __target_thread, int __policy,
 }
 
 static int
-sctk_gen_thread_setspecific(sctk_thread_key_t __key, const void *__pointer)
+sctk_gen_thread_setspecific(mpc_thread_keys_t __key, const void *__pointer)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_setspecific != __sctk_ptr_thread_setspecific);
@@ -1056,7 +1049,7 @@ sctk_gen_thread_setspecific(sctk_thread_key_t __key, const void *__pointer)
 }
 
 static int
-sctk_gen_thread_spin_destroy(sctk_thread_spinlock_t *__lock)
+sctk_gen_thread_spin_destroy(mpc_thread_spinlock_t *__lock)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_spin_destroy != __sctk_ptr_thread_spin_destroy);
@@ -1064,7 +1057,7 @@ sctk_gen_thread_spin_destroy(sctk_thread_spinlock_t *__lock)
 }
 
 static int
-sctk_gen_thread_spin_init(sctk_thread_spinlock_t *__lock, int __pshared)
+sctk_gen_thread_spin_init(mpc_thread_spinlock_t *__lock, int __pshared)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_spin_init != __sctk_ptr_thread_spin_init);
@@ -1072,7 +1065,7 @@ sctk_gen_thread_spin_init(sctk_thread_spinlock_t *__lock, int __pshared)
 }
 
 static int
-sctk_gen_thread_spin_lock(sctk_thread_spinlock_t *__lock)
+sctk_gen_thread_spin_lock(mpc_thread_spinlock_t *__lock)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_spin_lock != __sctk_ptr_thread_spin_lock);
@@ -1080,7 +1073,7 @@ sctk_gen_thread_spin_lock(sctk_thread_spinlock_t *__lock)
 }
 
 static int
-sctk_gen_thread_spin_trylock(sctk_thread_spinlock_t *__lock)
+sctk_gen_thread_spin_trylock(mpc_thread_spinlock_t *__lock)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_spin_trylock != __sctk_ptr_thread_spin_trylock);
@@ -1088,7 +1081,7 @@ sctk_gen_thread_spin_trylock(sctk_thread_spinlock_t *__lock)
 }
 
 static int
-sctk_gen_thread_spin_unlock(sctk_thread_spinlock_t *__lock)
+sctk_gen_thread_spin_unlock(mpc_thread_spinlock_t *__lock)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_spin_unlock != __sctk_ptr_thread_spin_unlock);
@@ -1135,7 +1128,7 @@ static int sctk_gen_thread_migrate(void)
 }
 
 static int
-sctk_gen_thread_restore(sctk_thread_t thread, char *type, int vp)
+sctk_gen_thread_restore(mpc_thread_t thread, char *type, int vp)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_restore != __sctk_ptr_thread_restore);
@@ -1160,7 +1153,7 @@ sctk_gen_thread_wait_for_value_and_poll(volatile int *data, int value,
 }
 
 static void
-sctk_gen_thread_freeze_thread_on_vp(sctk_thread_mutex_t *lock, void **list)
+sctk_gen_thread_freeze_thread_on_vp(mpc_thread_mutex_t *lock, void **list)
 {
 	__base_mpc_init();
 	assume(sctk_gen_thread_freeze_thread_on_vp != __sctk_ptr_thread_freeze_thread_on_vp);
@@ -1175,20 +1168,6 @@ sctk_gen_thread_wake_thread_on_vp(void **list)
 	__sctk_ptr_thread_wake_thread_on_vp(list);
 }
 
-static int
-sctk_gen_thread_get_vp()
-{
-	//TODO("Temporary fix to cleanup, need more investigation.")
-
-	/* Commented to avoid infinit loop with mpcrun -p=4 -c=4 -N=2 (ticket 254)
-	 * Maybe need better fix. */
-
-	/*__base_mpc_init();
-	 * assume(sctk_gen_thread_get_vp != __sctk_ptr_thread_get_vp);
-	 * return __sctk_ptr_thread_get_vp();
-	 */
-	return 0;
-}
 
 static int sctk_gen_thread_proc_migration(const int cpu)
 {
@@ -1197,7 +1176,7 @@ static int sctk_gen_thread_proc_migration(const int cpu)
 }
 
 static int
-sctk_gen_thread_getattr_np(sctk_thread_t th, sctk_thread_attr_t *attr)
+sctk_gen_thread_getattr_np(mpc_thread_t th, mpc_thread_attr_t *attr)
 {
 	__base_mpc_init();
 	/*assume(sctk_gen_thread_getattr_np != __sctk_ptr_thread_getattr_np);*/
@@ -1206,7 +1185,7 @@ sctk_gen_thread_getattr_np(sctk_thread_t th, sctk_thread_attr_t *attr)
 }
 
 static int
-sctk_gen_thread_rwlockattr_getkind_np(sctk_thread_rwlockattr_t *attr,
+sctk_gen_thread_rwlockattr_getkind_np(mpc_thread_rwlockattr_t *attr,
                                       int *pref)
 {
 	__base_mpc_init();
@@ -1215,7 +1194,7 @@ sctk_gen_thread_rwlockattr_getkind_np(sctk_thread_rwlockattr_t *attr,
 }
 
 static int
-sctk_gen_thread_rwlockattr_setkind_np(sctk_thread_rwlockattr_t *attr,
+sctk_gen_thread_rwlockattr_setkind_np(mpc_thread_rwlockattr_t *attr,
                                       int pref)
 {
 	__base_mpc_init();
@@ -1243,169 +1222,167 @@ double (*__sctk_ptr_thread_get_activity) (int i) =
 int (*__sctk_ptr_thread_proc_migration) (const int cpu) =
         sctk_gen_thread_proc_migration;
 
-int (*__sctk_ptr_thread_get_vp) (void) = sctk_gen_thread_get_vp;
-
 int (*__sctk_ptr_thread_atfork) (void (*__prepare)(void),
                                  void (*__parent)(void),
                                  void (*__child)(void) ) =
         sctk_gen_thread_atfork;
 
-int (*__sctk_ptr_thread_attr_destroy) (sctk_thread_attr_t *__attr) =
+int (*__sctk_ptr_thread_attr_destroy) (mpc_thread_attr_t *__attr) =
         sctk_gen_thread_attr_destroy;
-int (*__sctk_ptr_thread_attr_getdetachstate) (const sctk_thread_attr_t *
+int (*__sctk_ptr_thread_attr_getdetachstate) (const mpc_thread_attr_t *
                                               __attr, int *__detachstate) =
         sctk_gen_thread_attr_getdetachstate;
-int (*__sctk_ptr_thread_attr_getguardsize) (const sctk_thread_attr_t *
+int (*__sctk_ptr_thread_attr_getguardsize) (const mpc_thread_attr_t *
                                             __attr, size_t *__guardsize) =
         sctk_gen_thread_attr_getguardsize;
-int (*__sctk_ptr_thread_attr_getinheritsched) (const sctk_thread_attr_t *
+int (*__sctk_ptr_thread_attr_getinheritsched) (const mpc_thread_attr_t *
                                                __attr, int *__inherit) =
         sctk_gen_thread_attr_getinheritsched;
-int (*__sctk_ptr_thread_attr_getschedparam) (const sctk_thread_attr_t *
+int (*__sctk_ptr_thread_attr_getschedparam) (const mpc_thread_attr_t *
                                              __attr,
                                              struct sched_param *
                                              __param) =
         sctk_gen_thread_attr_getschedparam;
-int (*__sctk_ptr_thread_attr_getschedpolicy) (const sctk_thread_attr_t *
+int (*__sctk_ptr_thread_attr_getschedpolicy) (const mpc_thread_attr_t *
                                               __attr, int *__policy) =
         sctk_gen_thread_attr_getschedpolicy;
-int (*__sctk_ptr_thread_attr_getscope) (const sctk_thread_attr_t *__attr,
+int (*__sctk_ptr_thread_attr_getscope) (const mpc_thread_attr_t *__attr,
                                         int *__scope) =
         sctk_gen_thread_attr_getscope;
-int (*__sctk_ptr_thread_attr_getstackaddr) (const sctk_thread_attr_t *
+int (*__sctk_ptr_thread_attr_getstackaddr) (const mpc_thread_attr_t *
                                             __attr, void **__stackaddr) =
         sctk_gen_thread_attr_getstackaddr;
-int (*__sctk_ptr_thread_attr_getstack) (const sctk_thread_attr_t *__attr,
+int (*__sctk_ptr_thread_attr_getstack) (const mpc_thread_attr_t *__attr,
                                         void **__stackaddr,
                                         size_t *__stacksize) =
         sctk_gen_thread_attr_getstack;
-int (*__sctk_ptr_thread_attr_getstacksize) (const sctk_thread_attr_t *
+int (*__sctk_ptr_thread_attr_getstacksize) (const mpc_thread_attr_t *
                                             __attr, size_t *__stacksize) =
         sctk_gen_thread_attr_getstacksize;
-int (*__sctk_ptr_thread_attr_init) (sctk_thread_attr_t *__attr) =
+int (*__sctk_ptr_thread_attr_init) (mpc_thread_attr_t *__attr) =
         sctk_gen_thread_attr_init;
-int (*__sctk_ptr_thread_attr_setdetachstate) (sctk_thread_attr_t *__attr,
+int (*__sctk_ptr_thread_attr_setdetachstate) (mpc_thread_attr_t *__attr,
                                               int __detachstate) =
         sctk_gen_thread_attr_setdetachstate;
-int (*__sctk_ptr_thread_attr_setguardsize) (sctk_thread_attr_t *__attr,
+int (*__sctk_ptr_thread_attr_setguardsize) (mpc_thread_attr_t *__attr,
                                             size_t __guardsize) =
         sctk_gen_thread_attr_setguardsize;
-int (*__sctk_ptr_thread_attr_setinheritsched) (sctk_thread_attr_t *__attr,
+int (*__sctk_ptr_thread_attr_setinheritsched) (mpc_thread_attr_t *__attr,
                                                int __inherit) =
         sctk_gen_thread_attr_setinheritsched;
-int (*__sctk_ptr_thread_attr_setschedparam) (sctk_thread_attr_t *__attr,
+int (*__sctk_ptr_thread_attr_setschedparam) (mpc_thread_attr_t *__attr,
                                              const struct sched_param *
                                              __param) =
         sctk_gen_thread_attr_setschedparam;
-int (*__sctk_ptr_thread_attr_setschedpolicy) (sctk_thread_attr_t *__attr,
+int (*__sctk_ptr_thread_attr_setschedpolicy) (mpc_thread_attr_t *__attr,
                                               int __policy) =
         sctk_gen_thread_attr_setschedpolicy;
-int (*__sctk_ptr_thread_attr_setscope) (sctk_thread_attr_t *__attr,
+int (*__sctk_ptr_thread_attr_setscope) (mpc_thread_attr_t *__attr,
                                         int __scope) =
         sctk_gen_thread_attr_setscope;
-int (*__sctk_ptr_thread_attr_setstackaddr) (sctk_thread_attr_t *__attr,
+int (*__sctk_ptr_thread_attr_setstackaddr) (mpc_thread_attr_t *__attr,
                                             void *__stackaddr) =
         sctk_gen_thread_attr_setstackaddr;
-int (*__sctk_ptr_thread_attr_setstack) (sctk_thread_attr_t *__attr,
+int (*__sctk_ptr_thread_attr_setstack) (mpc_thread_attr_t *__attr,
                                         void *__stackaddr,
                                         size_t __stacksize) =
         sctk_gen_thread_attr_setstack;
-int (*__sctk_ptr_thread_attr_setstacksize) (sctk_thread_attr_t *__attr,
+int (*__sctk_ptr_thread_attr_setstacksize) (mpc_thread_attr_t *__attr,
                                             size_t __stacksize) =
         sctk_gen_thread_attr_setstacksize;
 
 
 int
-(*__sctk_ptr_thread_attr_setbinding) (sctk_thread_attr_t *__attr,
+(*__sctk_ptr_thread_attr_setbinding) (mpc_thread_attr_t *__attr,
                                       int __binding) =
         sctk_gen_thread_attr_setbinding;
-int (*__sctk_ptr_thread_attr_getbinding) (sctk_thread_attr_t *__attr,
+int (*__sctk_ptr_thread_attr_getbinding) (mpc_thread_attr_t *__attr,
                                           int *__binding) =
         sctk_gen_thread_attr_getbinding;
 
 
-int (*__sctk_ptr_thread_barrierattr_destroy) (sctk_thread_barrierattr_t *
+int (*__sctk_ptr_thread_barrierattr_destroy) (mpc_thread_barrierattr_t *
                                               __attr) =
         sctk_gen_thread_barrierattr_destroy;
-int (*__sctk_ptr_thread_barrierattr_init) (sctk_thread_barrierattr_t *
+int (*__sctk_ptr_thread_barrierattr_init) (mpc_thread_barrierattr_t *
                                            __attr) =
         sctk_gen_thread_barrierattr_init;
-int (*__sctk_ptr_thread_barrierattr_setpshared) (sctk_thread_barrierattr_t
+int (*__sctk_ptr_thread_barrierattr_setpshared) (mpc_thread_barrierattr_t
                                                  *__attr, int __pshared) =
         sctk_gen_thread_barrierattr_setpshared;
 int (*__sctk_ptr_thread_barrierattr_getpshared) (const
-                                                 sctk_thread_barrierattr_t
+                                                 mpc_thread_barrierattr_t
                                                  *__attr,
                                                  int *__pshared) =
         sctk_gen_thread_barrierattr_getpshared;
-int (*__sctk_ptr_thread_barrier_destroy) (sctk_thread_barrier_t *
+int (*__sctk_ptr_thread_barrier_destroy) (mpc_thread_barrier_t *
                                           __barrier) =
         sctk_gen_thread_barrier_destroy;
-int (*__sctk_ptr_thread_barrier_init) (sctk_thread_barrier_t *
+int (*__sctk_ptr_thread_barrier_init) (mpc_thread_barrier_t *
                                        restrict __barrier,
-                                       const sctk_thread_barrierattr_t *
+                                       const mpc_thread_barrierattr_t *
                                        restrict __attr,
                                        unsigned int __count) =
         sctk_gen_thread_barrier_init;
-int (*__sctk_ptr_thread_barrier_wait) (sctk_thread_barrier_t *__barrier) =
+int (*__sctk_ptr_thread_barrier_wait) (mpc_thread_barrier_t *__barrier) =
         sctk_gen_thread_barrier_wait;
 
-int (*__sctk_ptr_thread_cancel) (sctk_thread_t __cancelthread) =
+int (*__sctk_ptr_thread_cancel) (mpc_thread_t __cancelthread) =
         sctk_gen_thread_cancel;
-int (*__sctk_ptr_thread_condattr_destroy) (sctk_thread_condattr_t *
+int (*__sctk_ptr_thread_condattr_destroy) (mpc_thread_condattr_t *
                                            __attr) =
         sctk_gen_thread_condattr_destroy;
-int (*__sctk_ptr_thread_condattr_getpshared) (const sctk_thread_condattr_t
+int (*__sctk_ptr_thread_condattr_getpshared) (const mpc_thread_condattr_t
                                               *__attr, int *__pshared) =
         sctk_gen_thread_condattr_getpshared;
-int (*__sctk_ptr_thread_condattr_init) (sctk_thread_condattr_t *__attr) =
+int (*__sctk_ptr_thread_condattr_init) (mpc_thread_condattr_t *__attr) =
         sctk_gen_thread_condattr_init;
-int (*__sctk_ptr_thread_condattr_setpshared) (sctk_thread_condattr_t *
+int (*__sctk_ptr_thread_condattr_setpshared) (mpc_thread_condattr_t *
                                               __attr, int __pshared) =
         sctk_gen_thread_condattr_setpshared;
-int (*__sctk_ptr_thread_condattr_setclock) (sctk_thread_condattr_t *attr,
+int (*__sctk_ptr_thread_condattr_setclock) (mpc_thread_condattr_t *attr,
                                             clockid_t clock_id) =
         sctk_gen_thread_condattr_setclock;
-int (*__sctk_ptr_thread_condattr_getclock) (sctk_thread_condattr_t *attr,
+int (*__sctk_ptr_thread_condattr_getclock) (mpc_thread_condattr_t *attr,
                                             clockid_t *clock_id) =
         sctk_gen_thread_condattr_getclock;
-int (*__sctk_ptr_thread_cond_broadcast) (sctk_thread_cond_t *__cond) =
+int (*__sctk_ptr_thread_cond_broadcast) (mpc_thread_cond_t *__cond) =
         sctk_gen_thread_cond_broadcast;
-int (*__sctk_ptr_thread_cond_destroy) (sctk_thread_cond_t *__cond) =
+int (*__sctk_ptr_thread_cond_destroy) (mpc_thread_cond_t *__cond) =
         sctk_gen_thread_cond_destroy;
-int (*__sctk_ptr_thread_cond_init) (sctk_thread_cond_t *__cond,
-                                    const sctk_thread_condattr_t *
+int (*__sctk_ptr_thread_cond_init) (mpc_thread_cond_t *__cond,
+                                    const mpc_thread_condattr_t *
                                     __cond_attr) = sctk_gen_thread_cond_init;
-int (*__sctk_ptr_thread_cond_signal) (sctk_thread_cond_t *__cond) =
+int (*__sctk_ptr_thread_cond_signal) (mpc_thread_cond_t *__cond) =
         sctk_gen_thread_cond_signal;
-int (*__sctk_ptr_thread_cond_timedwait) (sctk_thread_cond_t *__cond,
-                                         sctk_thread_mutex_t *__mutex,
+int (*__sctk_ptr_thread_cond_timedwait) (mpc_thread_cond_t *__cond,
+                                         mpc_thread_mutex_t *__mutex,
                                          const struct timespec *
                                          __abstime) =
         sctk_gen_thread_cond_timedwait;
-int (*__sctk_ptr_thread_cond_wait) (sctk_thread_cond_t *__cond,
-                                    sctk_thread_mutex_t *__mutex) =
+int (*__sctk_ptr_thread_cond_wait) (mpc_thread_cond_t *__cond,
+                                    mpc_thread_mutex_t *__mutex) =
         sctk_gen_thread_cond_wait;
-int (*__sctk_ptr_thread_create) (sctk_thread_t *__threadp,
-                                 const sctk_thread_attr_t *__attr,
+int (*__sctk_ptr_thread_create) (mpc_thread_t *__threadp,
+                                 const mpc_thread_attr_t *__attr,
                                  void *(*__start_routine)(void *),
                                  void *__arg) = sctk_gen_thread_create;
-int (*__sctk_ptr_thread_user_create) (sctk_thread_t *__threadp,
-                                      const sctk_thread_attr_t *__attr,
+int (*__sctk_ptr_thread_user_create) (mpc_thread_t *__threadp,
+                                      const mpc_thread_attr_t *__attr,
                                       void *(*__start_routine)(void *),
                                       void *__arg) =
         sctk_gen_thread_user_create;
-int (*__sctk_ptr_thread_detach) (sctk_thread_t __th) = sctk_gen_thread_detach;
-int (*__sctk_ptr_thread_equal) (sctk_thread_t __thread1,
-                                sctk_thread_t __thread2) =
+int (*__sctk_ptr_thread_detach) (mpc_thread_t __th) = sctk_gen_thread_detach;
+int (*__sctk_ptr_thread_equal) (mpc_thread_t __thread1,
+                                mpc_thread_t __thread2) =
         sctk_gen_thread_equal;
 void (*__sctk_ptr_thread_exit) (void *__retval) = sctk_gen_thread_exit;
 int  (*__sctk_ptr_thread_getconcurrency) (void) =
         sctk_gen_thread_getconcurrency;
-int (*__sctk_ptr_thread_getcpuclockid) (sctk_thread_t __thread_id,
+int (*__sctk_ptr_thread_getcpuclockid) (mpc_thread_t __thread_id,
                                         clockid_t *__clock_id) =
         sctk_gen_thread_getcpuclockid;
-int (*__sctk_ptr_thread_getschedparam) (sctk_thread_t __target_thread,
+int (*__sctk_ptr_thread_getschedparam) (mpc_thread_t __target_thread,
                                         int *__policy,
                                         struct sched_param *__param) =
         sctk_gen_thread_getschedparam;
@@ -1414,11 +1391,11 @@ int (*__sctk_ptr_thread_sched_get_priority_max) (int policy) =
 int (*__sctk_ptr_thread_sched_get_priority_min) (int policy) =
         sctk_gen_thread_sched_get_priority_min;
 
-void *(*__sctk_ptr_thread_getspecific) (sctk_thread_key_t __key) =
+void *(*__sctk_ptr_thread_getspecific) (mpc_thread_keys_t __key) =
         sctk_gen_thread_getspecific;
-int (*__sctk_ptr_thread_join) (sctk_thread_t __th,
+int (*__sctk_ptr_thread_join) (mpc_thread_t __th,
                                void **__thread_return) = sctk_gen_thread_join;
-int (*__sctk_ptr_thread_kill) (sctk_thread_t thread, int signo) =
+int (*__sctk_ptr_thread_kill) (mpc_thread_t thread, int signo) =
         sctk_gen_thread_kill;
 int (*__sctk_ptr_thread_sigsuspend) (sigset_t *set) =
         sctk_gen_thread_sigsuspend;
@@ -1427,180 +1404,179 @@ int (*__sctk_ptr_thread_sigpending) (sigset_t *set) =
 int (*__sctk_ptr_thread_sigmask) (int how, const sigset_t *newmask,
                                   sigset_t *oldmask) =
         sctk_gen_thread_sigmask;
-int (*__sctk_ptr_thread_key_create) (sctk_thread_key_t *__key,
+int (*__sctk_ptr_thread_key_create) (mpc_thread_keys_t *__key,
                                      void (*__destr_function)(void *) ) =
         sctk_gen_thread_key_create;
-int (*__sctk_ptr_thread_key_delete) (sctk_thread_key_t __key) =
+int (*__sctk_ptr_thread_key_delete) (mpc_thread_keys_t __key) =
         sctk_gen_thread_key_delete;
-int (*__sctk_ptr_thread_mutexattr_destroy) (sctk_thread_mutexattr_t *
+int (*__sctk_ptr_thread_mutexattr_destroy) (mpc_thread_mutexattr_t *
                                             __attr) =
         sctk_gen_thread_mutexattr_destroy;
 
 int (*__sctk_ptr_thread_mutexattr_getprioceiling) (const
-                                                   sctk_thread_mutexattr_t
+                                                   mpc_thread_mutexattr_t
                                                    *__attr,
                                                    int *__prioceiling) =
         sctk_gen_thread_mutexattr_getprioceiling;
-int (*__sctk_ptr_thread_mutexattr_setprioceiling) (sctk_thread_mutexattr_t
+int (*__sctk_ptr_thread_mutexattr_setprioceiling) (mpc_thread_mutexattr_t
                                                    *__attr,
                                                    int __prioceiling) =
         sctk_gen_thread_mutexattr_setprioceiling;
 int (*__sctk_ptr_thread_mutexattr_getprotocol) (const
-                                                sctk_thread_mutexattr_t *
+                                                mpc_thread_mutexattr_t *
                                                 __attr, int *__protocol) =
         sctk_gen_thread_mutexattr_getprotocol;
-int (*__sctk_ptr_thread_mutexattr_setprotocol) (sctk_thread_mutexattr_t *
+int (*__sctk_ptr_thread_mutexattr_setprotocol) (mpc_thread_mutexattr_t *
                                                 __attr, int __protocol) =
         sctk_gen_thread_mutexattr_setprotocol;
 
 int (*__sctk_ptr_thread_mutexattr_getpshared) (const
-                                               sctk_thread_mutexattr_t *
+                                               mpc_thread_mutexattr_t *
                                                __attr, int *__pshared) =
         sctk_gen_thread_mutexattr_getpshared;
-int (*__sctk_ptr_thread_mutexattr_gettype) (const sctk_thread_mutexattr_t *
+int (*__sctk_ptr_thread_mutexattr_gettype) (const mpc_thread_mutexattr_t *
                                             __attr, int *__kind) =
         sctk_gen_thread_mutexattr_gettype;
-int (*__sctk_ptr_thread_mutexattr_init) (sctk_thread_mutexattr_t *
+int (*__sctk_ptr_thread_mutexattr_init) (mpc_thread_mutexattr_t *
                                          __attr) =
         sctk_gen_thread_mutexattr_init;
-int (*__sctk_ptr_thread_mutexattr_setpshared) (sctk_thread_mutexattr_t *
+int (*__sctk_ptr_thread_mutexattr_setpshared) (mpc_thread_mutexattr_t *
                                                __attr, int __pshared) =
         sctk_gen_thread_mutexattr_setpshared;
-int (*__sctk_ptr_thread_mutexattr_settype) (sctk_thread_mutexattr_t *
+int (*__sctk_ptr_thread_mutexattr_settype) (mpc_thread_mutexattr_t *
                                             __attr, int __kind) =
         sctk_gen_thread_mutexattr_settype;
-int (*__sctk_ptr_thread_mutex_destroy) (sctk_thread_mutex_t *__mutex) =
+int (*__sctk_ptr_thread_mutex_destroy) (mpc_thread_mutex_t *__mutex) =
         sctk_gen_thread_mutex_destroy;
-int (*__sctk_ptr_thread_mutex_init) (sctk_thread_mutex_t *__mutex,
-                                     const sctk_thread_mutexattr_t *
+int (*__sctk_ptr_thread_mutex_init) (mpc_thread_mutex_t *__mutex,
+                                     const mpc_thread_mutexattr_t *
                                      __mutex_attr) =
         sctk_gen_thread_mutex_init;
-int (*__sctk_ptr_thread_mutex_lock) (sctk_thread_mutex_t *__mutex) =
+int (*__sctk_ptr_thread_mutex_lock) (mpc_thread_mutex_t *__mutex) =
         sctk_gen_thread_mutex_lock;
-int (*__sctk_ptr_thread_mutex_spinlock) (sctk_thread_mutex_t *__mutex) =
+int (*__sctk_ptr_thread_mutex_spinlock) (mpc_thread_mutex_t *__mutex) =
         sctk_gen_thread_mutex_spinlock;
-int (*__sctk_ptr_thread_mutex_timedlock) (sctk_thread_mutex_t *__mutex,
+int (*__sctk_ptr_thread_mutex_timedlock) (mpc_thread_mutex_t *__mutex,
                                           const struct timespec *
                                           __abstime) =
         sctk_gen_thread_mutex_timedlock;
-int (*__sctk_ptr_thread_mutex_trylock) (sctk_thread_mutex_t *__mutex) =
+int (*__sctk_ptr_thread_mutex_trylock) (mpc_thread_mutex_t *__mutex) =
         sctk_gen_thread_mutex_trylock;
-int (*__sctk_ptr_thread_mutex_unlock) (sctk_thread_mutex_t *__mutex) =
+int (*__sctk_ptr_thread_mutex_unlock) (mpc_thread_mutex_t *__mutex) =
         sctk_gen_thread_mutex_unlock;
 
-int (*__sctk_ptr_thread_sem_init) (sctk_thread_sem_t *sem, int pshared,
+int (*__sctk_ptr_thread_sem_init) (mpc_thread_sem_t *sem, int pshared,
                                    unsigned int value) =
         sctk_gen_thread_sem_init;
-int (*__sctk_ptr_thread_sem_wait) (sctk_thread_sem_t *sem) =
+int (*__sctk_ptr_thread_sem_wait) (mpc_thread_sem_t *sem) =
         sctk_gen_thread_sem_wait;
-int (*__sctk_ptr_thread_sem_trywait) (sctk_thread_sem_t *sem) =
+int (*__sctk_ptr_thread_sem_trywait) (mpc_thread_sem_t *sem) =
         sctk_gen_thread_sem_trywait;
-int (*__sctk_ptr_thread_sem_timedwait) (sctk_thread_sem_t *sem,
+int (*__sctk_ptr_thread_sem_timedwait) (mpc_thread_sem_t *sem,
                                         const struct timespec *__abstime) =
         sctk_gen_thread_sem_timedwait;
-int (*__sctk_ptr_thread_sem_post) (sctk_thread_sem_t *sem) =
+int (*__sctk_ptr_thread_sem_post) (mpc_thread_sem_t *sem) =
         sctk_gen_thread_sem_post;
-int (*__sctk_ptr_thread_sem_getvalue) (sctk_thread_sem_t *sem,
+int (*__sctk_ptr_thread_sem_getvalue) (mpc_thread_sem_t *sem,
                                        int *sval) =
         sctk_gen_thread_sem_getvalue;
-int (*__sctk_ptr_thread_sem_destroy) (sctk_thread_sem_t *sem) =
+int (*__sctk_ptr_thread_sem_destroy) (mpc_thread_sem_t *sem) =
         sctk_gen_thread_sem_destroy;
 
-sctk_thread_sem_t *(*__sctk_ptr_thread_sem_open) (const char *name,
+mpc_thread_sem_t *(*__sctk_ptr_thread_sem_open) (const char *name,
                                                   int oflag, ...) =
         sctk_gen_thread_sem_open;
-int (*__sctk_ptr_thread_sem_close) (sctk_thread_sem_t *sem) =
+int (*__sctk_ptr_thread_sem_close) (mpc_thread_sem_t *sem) =
         sctk_gen_thread_sem_close;
 int (*__sctk_ptr_thread_sem_unlink) (const char *name) =
         sctk_gen_thread_sem_unlink;
 
-int (*__sctk_ptr_thread_once) (sctk_thread_once_t *__once_control,
+int (*__sctk_ptr_thread_once) (mpc_thread_once_t *__once_control,
                                void (*__init_routine)(void) ) =
         sctk_gen_thread_once;
 
-int (*__sctk_ptr_thread_rwlockattr_destroy) (sctk_thread_rwlockattr_t *
+int (*__sctk_ptr_thread_rwlockattr_destroy) (mpc_thread_rwlockattr_t *
                                              __attr) =
         sctk_gen_thread_rwlockattr_destroy;
 int (*__sctk_ptr_thread_rwlockattr_getpshared) (const
-                                                sctk_thread_rwlockattr_t *
+                                                mpc_thread_rwlockattr_t *
                                                 restrict __attr,
                                                 int *restrict __pshared) =
         sctk_gen_thread_rwlockattr_getpshared;
-int (*__sctk_ptr_thread_rwlockattr_init) (sctk_thread_rwlockattr_t *
+int (*__sctk_ptr_thread_rwlockattr_init) (mpc_thread_rwlockattr_t *
                                           __attr) =
         sctk_gen_thread_rwlockattr_init;
-int (*__sctk_ptr_thread_rwlockattr_setpshared) (sctk_thread_rwlockattr_t *
+int (*__sctk_ptr_thread_rwlockattr_setpshared) (mpc_thread_rwlockattr_t *
                                                 __attr, int __pshared) =
         sctk_gen_thread_rwlockattr_setpshared;
-int (*__sctk_ptr_thread_rwlock_destroy) (sctk_thread_rwlock_t *__rwlock) =
+int (*__sctk_ptr_thread_rwlock_destroy) (mpc_thread_rwlock_t *__rwlock) =
         sctk_gen_thread_rwlock_destroy;
-int (*__sctk_ptr_thread_rwlock_init) (sctk_thread_rwlock_t *
+int (*__sctk_ptr_thread_rwlock_init) (mpc_thread_rwlock_t *
                                       restrict __rwlock,
-                                      const sctk_thread_rwlockattr_t *
+                                      const mpc_thread_rwlockattr_t *
                                       restrict __attr) =
         sctk_gen_thread_rwlock_init;
-int (*__sctk_ptr_thread_rwlock_rdlock) (sctk_thread_rwlock_t *__rwlock) =
+int (*__sctk_ptr_thread_rwlock_rdlock) (mpc_thread_rwlock_t *__rwlock) =
         sctk_gen_thread_rwlock_rdlock;
 
-int (*__sctk_ptr_thread_rwlock_timedrdlock) (sctk_thread_rwlock_t *
+int (*__sctk_ptr_thread_rwlock_timedrdlock) (mpc_thread_rwlock_t *
                                              __rwlock,
                                              const struct timespec *
                                              __abstime) =
         sctk_gen_thread_rwlock_timedrdlock;
-int (*__sctk_ptr_thread_rwlock_timedwrlock) (sctk_thread_rwlock_t *
+int (*__sctk_ptr_thread_rwlock_timedwrlock) (mpc_thread_rwlock_t *
                                              __rwlock,
                                              const struct timespec *
                                              __abstime) =
         sctk_gen_thread_rwlock_timedwrlock;
 
-int (*__sctk_ptr_thread_rwlock_tryrdlock) (sctk_thread_rwlock_t *
+int (*__sctk_ptr_thread_rwlock_tryrdlock) (mpc_thread_rwlock_t *
                                            __rwlock) =
         sctk_gen_thread_rwlock_tryrdlock;
-int (*__sctk_ptr_thread_rwlock_trywrlock) (sctk_thread_rwlock_t *
+int (*__sctk_ptr_thread_rwlock_trywrlock) (mpc_thread_rwlock_t *
                                            __rwlock) =
         sctk_gen_thread_rwlock_trywrlock;
-int (*__sctk_ptr_thread_rwlock_unlock) (sctk_thread_rwlock_t *__rwlock) =
+int (*__sctk_ptr_thread_rwlock_unlock) (mpc_thread_rwlock_t *__rwlock) =
         sctk_gen_thread_rwlock_unlock;
-int (*__sctk_ptr_thread_rwlock_wrlock) (sctk_thread_rwlock_t *__rwlock) =
+int (*__sctk_ptr_thread_rwlock_wrlock) (mpc_thread_rwlock_t *__rwlock) =
         sctk_gen_thread_rwlock_wrlock;
 
-sctk_thread_t (*__sctk_ptr_thread_self) (void) = sctk_gen_thread_self;
-sctk_thread_t (*__sctk_ptr_thread_self_check) (void) =
-        sctk_gen_thread_self_check;
+mpc_thread_t (*__sctk_ptr_thread_self) (void) = sctk_gen_thread_self;
+
 int (*__sctk_ptr_thread_setcancelstate) (int __state, int *__oldstate) =
         sctk_gen_thread_setcancelstate;
 int (*__sctk_ptr_thread_setcanceltype) (int __type, int *__oldtype) =
         sctk_gen_thread_setcanceltype;
 int (*__sctk_ptr_thread_setconcurrency) (int __level) =
         sctk_gen_thread_setconcurrency;
-int (*__sctk_ptr_thread_setschedprio) (sctk_thread_t __p, int __i) =
+int (*__sctk_ptr_thread_setschedprio) (mpc_thread_t __p, int __i) =
         sctk_gen_thread_setschedprio;
-int (*__sctk_ptr_thread_setschedparam) (sctk_thread_t __target_thread,
+int (*__sctk_ptr_thread_setschedparam) (mpc_thread_t __target_thread,
                                         int __policy,
                                         const struct sched_param *
                                         __param) =
         sctk_gen_thread_setschedparam;
-int (*__sctk_ptr_thread_setspecific) (sctk_thread_key_t __key,
+int (*__sctk_ptr_thread_setspecific) (mpc_thread_keys_t __key,
                                       const void *__pointer) =
         sctk_gen_thread_setspecific;
 
-int (*__sctk_ptr_thread_spin_destroy) (sctk_thread_spinlock_t *__lock) =
+int (*__sctk_ptr_thread_spin_destroy) (mpc_thread_spinlock_t *__lock) =
         sctk_gen_thread_spin_destroy;
-int (*__sctk_ptr_thread_spin_init) (sctk_thread_spinlock_t *__lock,
+int (*__sctk_ptr_thread_spin_init) (mpc_thread_spinlock_t *__lock,
                                     int __pshared) =
         sctk_gen_thread_spin_init;
-int (*__sctk_ptr_thread_spin_lock) (sctk_thread_spinlock_t *__lock) =
+int (*__sctk_ptr_thread_spin_lock) (mpc_thread_spinlock_t *__lock) =
         sctk_gen_thread_spin_lock;
-int (*__sctk_ptr_thread_spin_trylock) (sctk_thread_spinlock_t *__lock) =
+int (*__sctk_ptr_thread_spin_trylock) (mpc_thread_spinlock_t *__lock) =
         sctk_gen_thread_spin_trylock;
-int (*__sctk_ptr_thread_spin_unlock) (sctk_thread_spinlock_t *__lock) =
+int (*__sctk_ptr_thread_spin_unlock) (mpc_thread_spinlock_t *__lock) =
         sctk_gen_thread_spin_unlock;
 
 void (*__sctk_ptr_thread_testcancel) (void) = sctk_gen_thread_testcancel;
 int  (*__sctk_ptr_thread_yield) (void) = sctk_gen_thread_yield;
 int  (*__sctk_ptr_thread_dump) (char *file) = sctk_gen_thread_dump;
 int  (*__sctk_ptr_thread_migrate) (void) = sctk_gen_thread_migrate;
-int  (*__sctk_ptr_thread_restore) (sctk_thread_t thread, char *type,
+int  (*__sctk_ptr_thread_restore) (mpc_thread_t thread, char *type,
                                    int vp) = sctk_gen_thread_restore;
 int (*__sctk_ptr_thread_dump_clean) (void) = sctk_gen_thread_dump_clean;
 
@@ -1611,20 +1587,20 @@ void (*__sctk_ptr_thread_wait_for_value_and_poll) (volatile int *data, int value
                                                    void *arg) =
         sctk_gen_thread_wait_for_value_and_poll;
 
-void (*__sctk_ptr_thread_freeze_thread_on_vp) (sctk_thread_mutex_t *lock,
+void (*__sctk_ptr_thread_freeze_thread_on_vp) (mpc_thread_mutex_t *lock,
                                                void **list) =
         sctk_gen_thread_freeze_thread_on_vp;
 void (*__sctk_ptr_thread_wake_thread_on_vp) (void **list) =
         sctk_gen_thread_wake_thread_on_vp;
 
 
-int (*__sctk_ptr_thread_getattr_np) (sctk_thread_t th,
-                                     sctk_thread_attr_t *attr) =
+int (*__sctk_ptr_thread_getattr_np) (mpc_thread_t th,
+                                     mpc_thread_attr_t *attr) =
         sctk_gen_thread_getattr_np;
-int (*__sctk_ptr_thread_rwlockattr_getkind_np) (sctk_thread_rwlockattr_t *
+int (*__sctk_ptr_thread_rwlockattr_getkind_np) (mpc_thread_rwlockattr_t *
                                                 attr, int *ret) =
         sctk_gen_thread_rwlockattr_getkind_np;
-int (*__sctk_ptr_thread_rwlockattr_setkind_np) (sctk_thread_rwlockattr_t *
+int (*__sctk_ptr_thread_rwlockattr_setkind_np) (mpc_thread_rwlockattr_t *
                                                 attr, int pref) =
         sctk_gen_thread_rwlockattr_setkind_np;
 
@@ -1750,7 +1726,6 @@ sctk_gen_thread_init()
 	__sctk_ptr_thread_rwlock_wrlock    = sctk_gen_thread_rwlock_wrlock;
 
 	__sctk_ptr_thread_self           = sctk_gen_thread_self;
-	__sctk_ptr_thread_self_check     = sctk_gen_thread_self_check;
 	__sctk_ptr_thread_setcancelstate = sctk_gen_thread_setcancelstate;
 	__sctk_ptr_thread_setcanceltype  = sctk_gen_thread_setcanceltype;
 	__sctk_ptr_thread_setconcurrency = sctk_gen_thread_setconcurrency;

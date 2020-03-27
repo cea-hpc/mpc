@@ -600,7 +600,7 @@ void sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* us
 		if((i++)%20000 == 0)
 			sctk_network_notify_idle_message();
 		else
-			sctk_thread_yield();
+			mpc_thread_yield();
 	}
 
 	sctk_ptl_chk(PtlMDBind(

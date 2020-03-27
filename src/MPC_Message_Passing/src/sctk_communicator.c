@@ -69,7 +69,7 @@ static inline sctk_internal_communicator_t *sctk_check_internal_communicator_no_
 		    mpc_common_spinlock_read_trylock( &sctk_communicator_local_table_lock ) )
 		{
 #ifdef MPC_THREAD
-			sctk_thread_yield();
+			mpc_thread_yield();
 #endif
 		}
 

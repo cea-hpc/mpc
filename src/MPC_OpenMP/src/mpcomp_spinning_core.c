@@ -883,7 +883,7 @@ void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp )
 
 		while ( mvp->enable )
 		{
-			sctk_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
+			mpc_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
 #if MPCOMP_TRANSFER_INFO_ON_NODES
 			spin_node->info = spin_node->father->info;
 #endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
@@ -897,7 +897,7 @@ void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp )
 
 		while ( mvp->enable )
 		{
-			sctk_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
+			mpc_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
 			__mpcomp_start_openmp_thread( mvp );
 		}
 	}

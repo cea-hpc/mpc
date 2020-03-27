@@ -227,7 +227,7 @@ typedef struct
 {
 	_mpc_threads_generic_rwlock_t *rwlock;
 	UT_hash_handle                hh;
-}sctk_thread_rwlock_in_use_t;
+}mpc_thread_rwlock_in_use_t;
 
 /***************************************/
 /* THREAD BARRIER                      */
@@ -300,7 +300,7 @@ typedef struct _mpc_threads_generic_intern_attr_s
 	int                          bind_to;
 	int                          polling;                                         /* ----------------------------------------- */
 	void *                       _mpc_threads_generic_pthread_blocking_lock_table; /* |BARRIER|COND|MUTEX|RWLOCK|SEM|TASK LOCK| */
-	sctk_thread_rwlock_in_use_t *rwlocks_owned;                                   /* ----------------------------------------- */
+	mpc_thread_rwlock_in_use_t *rwlocks_owned;                                   /* ----------------------------------------- */
 	mpc_common_spinlock_t        spinlock;
 	volatile int                 nb_sig_pending;
 	volatile int                 nb_sig_treated;

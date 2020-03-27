@@ -1070,7 +1070,7 @@ static inline int __tree_node_init( mpcomp_meta_tree_node_t *root, const int *tr
 	/* Wait our children */
 	while ( OPA_load_int( &( me->children_ready ) ) != num_children )
 	{
-		sctk_thread_yield();
+		mpc_thread_yield();
 	}
 
 	//(void) __tree_array_compute_parents( root_node, new_node );
@@ -1124,7 +1124,7 @@ static inline void *__tree_mvp_init( void *args )
 	memset( new_mvp, 0, sizeof( mpcomp_mvp_t ) );
 	/* Initialize the corresponding microVP (all but tree-related variables) */
 	new_mvp->root = root_node;
-	new_mvp->thread_self = sctk_thread_self();
+	new_mvp->thread_self = mpc_thread_self();
 	/* MVP ranking */
 	new_mvp->global_rank = rank;
 	new_mvp->stage_rank = __tree_array_global_to_stage( tree_shape, max_depth, rank );
@@ -1228,7 +1228,7 @@ static inline void __tree_master_thread_init( mpcomp_node_t *root, __UNUSED__ mp
 void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, const int place_depth, const int place_size, const mpcomp_local_icv_t *icvs )
 {
 	int i, n_num, place_id;
-	sctk_thread_t *threads;
+	mpc_thread_t *threads;
 	mpcomp_mvp_thread_args_t *args;
 	mpcomp_meta_tree_node_t *tree_array;
 	mpcomp_node_t *root = ( mpcomp_node_t * ) mpcomp_alloc( sizeof( mpcomp_node_t ) );
@@ -1253,9 +1253,9 @@ void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, cons
 	memset( tree_array, 0,  n_num * sizeof( mpcomp_meta_tree_node_t ) );
 	root->tree_array = tree_array;
 	tree_array[0].user_pointer = root;
-	threads = ( sctk_thread_t * ) mpcomp_alloc( ( leaf_n_num - 1 ) * sizeof( sctk_thread_t ) );
+	threads = ( mpc_thread_t * ) mpcomp_alloc( ( leaf_n_num - 1 ) * sizeof( mpc_thread_t ) );
 	sctk_assert( threads );
-	memset( threads, 0, ( leaf_n_num - 1 ) * sizeof( sctk_thread_t ) );
+	memset( threads, 0, ( leaf_n_num - 1 ) * sizeof( mpc_thread_t ) );
 	args = ( mpcomp_mvp_thread_args_t * ) mpcomp_alloc( sizeof( mpcomp_mvp_thread_args_t ) * leaf_n_num );
 	sctk_assert( args );
 
@@ -1275,13 +1275,13 @@ void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, cons
 		const int pu_id = ( mpc_topology_get_pu() + target_vp ) % mpc_topology_get_pu_count();
 		place_id += ( !( i % place_size ) ) ? 1 : 0;
 		args[i].target_vp = target_vp;
-		sctk_thread_attr_t __attr;
-		sctk_thread_attr_init( &__attr );
-		sctk_thread_attr_setbinding( &__attr, pu_id );
-		sctk_thread_attr_setstacksize( &__attr, mpcomp_global_icvs.stacksize_var );
-		int  __UNUSED__  ret = sctk_user_thread_create( &( threads[i - 1] ), &__attr, __tree_mvp_init, &( args[i] ) );
+		mpc_thread_attr_t __attr;
+		mpc_thread_attr_init( &__attr );
+		mpc_thread_attr_setbinding( &__attr, pu_id );
+		mpc_thread_attr_setstacksize( &__attr, mpcomp_global_icvs.stacksize_var );
+		int  __UNUSED__  ret = mpc_thread_core_thread_create( &( threads[i - 1] ), &__attr, __tree_mvp_init, &( args[i] ) );
 		sctk_assert( !ret );
-		sctk_thread_attr_destroy( &__attr );
+		mpc_thread_attr_destroy( &__attr );
 	}
 
 	/* Root initialisation */
@@ -1290,7 +1290,7 @@ void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, cons
 	sctk_openmp_thread_tls = ( void * ) root->mvp->threads;
 
 #if OMPT_SUPPORT
-	mpcomp_thread_t *t = (mpcomp_thread_t*) sctk_thread_tls;
+	mpcomp_thread_t *t = (mpcomp_thread_t*) mpc_thread_tls;
 	sctk_assert(t != NULL);
 
 	if ( _mpc_omp_ompt_is_enabled() )

@@ -249,7 +249,7 @@ int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t *restrictedTopology,
 	topology = mpc_topology_get();
 
 	const int taskRank = mpc_common_get_task_rank();
-	const int taskVp = sctk_get_init_vp_and_nbvp( taskRank, &num_mvps );
+	const int taskVp = mpc_thread_get_task_placement_and_count( taskRank, &num_mvps );
 
 	const int __UNUSED__ npus = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_PU );
 	const int __UNUSED__ ncores = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_CORE );
@@ -892,7 +892,7 @@ void __mpcomp_init( void )
 		{
 			case MPCOMP_MODE_SIMPLE_MIXED:
 				/* Compute the number of cores for this task */
-				sctk_get_init_vp_and_nbvp( task_rank, &nb_mvps );
+				mpc_thread_get_task_placement_and_count( task_rank, &nb_mvps );
 				sctk_nodebug( "[%d] %s: SIMPLE_MIXED -> #mvps = %d", task_rank, __func__,
 				              nb_mvps );
 

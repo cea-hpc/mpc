@@ -43,12 +43,12 @@ extern "C" {
 
 #if defined( MPC_Threads )
 
-extern int sctk_thread_yield( void );
+extern int mpc_thread_yield( void );
 
 #else
 
 #include <pthread.h>
-#define sctk_thread_yield pthread_yield
+#define mpc_thread_yield pthread_yield
 
 #endif
 
@@ -81,7 +81,7 @@ static inline int mpc_common_spinlock_lock_yield( mpc_common_spinlock_t *lock )
 		{
 			int i;
 #ifdef MPC_Threads
-			sctk_thread_yield();
+			mpc_thread_yield();
 #else
 			sched_yield();
 #endif
@@ -206,7 +206,7 @@ static inline int mpc_common_spinlock_write_lock_yield( sctk_spin_rwlock_t *lock
 		if ( !( ++cnt % 1000 ) )
 		{
 #ifdef MPC_Threads
-			sctk_thread_yield();
+			mpc_thread_yield();
 #else
 			sched_yield();
 #endif

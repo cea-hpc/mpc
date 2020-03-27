@@ -1792,7 +1792,7 @@ void sctk_m_probe_matching_set( int value )
 	while ( OPA_cas_int( &m_probe_id, 0, value ) != 0 )
 	{
 		sctk_nodebug( "CAS %d", OPA_load_int( &m_probe_id ) );
-		sctk_thread_yield();
+		mpc_thread_yield();
 	}
 
 	int thread_id = mpc_common_get_thread_id();
@@ -2130,7 +2130,7 @@ void mpc_lowcomm_perform_idle( volatile int *data, int value,
 		return;
 	}
 
-	sctk_thread_wait_for_value_and_poll( data, value, func, arg );
+	mpc_thread_wait_for_value_and_poll( data, value, func, arg );
 }
 
 
@@ -2328,7 +2328,7 @@ void mpc_lowcomm_request_wait_all_msgs( const int task, const mpc_lowcomm_commun
 
 			if ( i != 0 )
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		}
 	}
@@ -2858,7 +2858,7 @@ static void __lowcomm_release()
 		mpc_lowcomm_terminaison_barrier();
 		mpc_lowcomm_terminaison_barrier();
 		sctk_nodebug( "mpc_lowcomm_terminaison_barrier done" );
-		sctk_net_finalize_task_level( task_rank, sctk_thread_get_vp() );
+		sctk_net_finalize_task_level( task_rank, mpc_topology_get_current_cpu() );
 		sctk_net_send_task_end( task_rank, mpc_common_get_process_rank() );
 	}
 	else

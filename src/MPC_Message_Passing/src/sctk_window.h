@@ -58,7 +58,7 @@ struct mpc_lowcomm_rdma_window
         mpc_common_spinlock_t lock;
         unsigned int refcounter;
         void *payload;
-        sctk_thread_t th;
+        mpc_thread_t th;
         int poll;
         mpc_lowcomm_rdma_window_access_mode_t access_mode;
         OPA_int_t outgoing_emulated_rma;

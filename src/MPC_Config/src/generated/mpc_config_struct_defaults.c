@@ -1197,8 +1197,8 @@ void sctk_runtime_config_struct_init_thread(void * struct_ptr)
 	obj->spin_delay = 10;
 	obj->interval = 10;
 	obj->kthread_stack_size = sctk_runtime_config_map_entry_parse_size("10MB");
-	obj->placement_policy.name = "sctk_get_init_vp_and_nbvp_default";
-	*(void **) &(obj->placement_policy.value) = sctk_runtime_config_get_symbol("sctk_get_init_vp_and_nbvp_default");
+	obj->placement_policy.name = "mpc_thread_get_task_placement_and_count_default";
+	*(void **) &(obj->placement_policy.value) = sctk_runtime_config_get_symbol("mpc_thread_get_task_placement_and_count_default");
 	obj->init_done = 1;
 }
 

@@ -626,7 +626,7 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
 
     /* Wait for c->barrier == c->barrier_num_threads */
     while (b_done == c->barrier_done) {
-      sctk_thread_yield();
+      mpc_thread_yield();
 #if MPCOMP_TASK
 			_mpc_task_schedule( 1 );
 #endif /* MPCOMP_TASK */
@@ -716,7 +716,7 @@ void __mpcomp_internal_half_barrier_end( mpcomp_mvp_t *mvp )
 
 	while ( OPA_load_int( &( root->barrier ) ) != expected_num_threads )
 	{
-		sctk_thread_yield();
+		mpc_thread_yield();
 	}
 
 	OPA_store_int( &( root->barrier ), 0 );

@@ -786,7 +786,7 @@ int sctk_futex_WAIT_no_timer(void *addr1, int op, int val3)
 		return -1;
 	}
 
-	sctk_thread_wait_for_value(wait_ticket, 0);
+	mpc_thread_wait_for_value(wait_ticket, 0);
 
 	/* If we are here we are done waiting */
 	free(wait_ticket);
@@ -826,7 +826,7 @@ int sctk_futex_WAIT(void *addr1, int op, int val1, struct timespec *timeout, int
 
 	unsigned int time_to_wait = timeout->tv_sec * 1e6 + timeout->tv_nsec;
 
-	if(sctk_thread_timed_wait_for_value(wait_ticket, 0, time_to_wait) )
+	if(mpc_thread_timed_wait_for_value(wait_ticket, 0, time_to_wait) )
 	{
 		/* We timed out */
 		errno        = ETIMEDOUT;
@@ -1060,7 +1060,7 @@ int sctk_futex_LOCKPI(int *volatile futex, struct timespec *timeout)
 	{
 		unsigned int time_to_wait = timeout->tv_sec * 1e6 + timeout->tv_nsec;
 
-		if(sctk_thread_timed_wait_for_value(futex, 0, time_to_wait) )
+		if(mpc_thread_timed_wait_for_value(futex, 0, time_to_wait) )
 		{
 			/* We timed out */
 			errno = ETIMEDOUT;

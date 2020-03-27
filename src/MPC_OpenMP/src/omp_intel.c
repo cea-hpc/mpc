@@ -591,8 +591,8 @@ static inline int __intel_tree_reduce_nowait( void *reduce_data, void ( *reduce_
 					while ( c->isArrived[local_rank * cache_size] != 0 )
 					{
 						/* need to wait for the pair thread doing the reduction operation before exiting function because compiler will delete reduce_data after */
-						sctk_thread_yield();
-						//sctk_thread_yield_wait_for_value( &( c->isArrived[local_rank * cache_size] ), 0 );
+						mpc_thread_yield();
+						//mpc_thread_yield_wait_for_value( &( c->isArrived[local_rank * cache_size] ), 0 );
 					}
 
 					return 0;
@@ -602,8 +602,8 @@ static inline int __intel_tree_reduce_nowait( void *reduce_data, void ( *reduce_
 					while ( c->isArrived[( local_rank + remaining_threads ) * cache_size] != 1 )
 					{
 						/* waiting for pair thread to arrive */
-						sctk_thread_yield();
-						//sctk_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cache_size] ), 1 );
+						mpc_thread_yield();
+						//mpc_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cache_size] ), 1 );
 					}
 
 					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cache_size] ); // result on reduce_data
@@ -622,8 +622,8 @@ static inline int __intel_tree_reduce_nowait( void *reduce_data, void ( *reduce_
 					while ( c->isArrived[local_rank * cache_size] != 0 )
 					{
 						/* need to wait for the thread doing the reduction operation before exiting function because compiler will delete reduce_data after */
-						sctk_thread_yield();
-						//sctk_thread_yield_wait_for_value( &( c->isArrived[local_rank * cache_size] ), 0 );
+						mpc_thread_yield();
+						//mpc_thread_yield_wait_for_value( &( c->isArrived[local_rank * cache_size] ), 0 );
 					}
 
 					return 0;
@@ -633,8 +633,8 @@ static inline int __intel_tree_reduce_nowait( void *reduce_data, void ( *reduce_
 					while ( c->isArrived[( local_rank + remaining_threads ) * cache_size] != 1 )
 					{
 						/* waiting for pair thread to arrive */
-						sctk_thread_yield();
-						//sctk_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cache_size] ), 1 );
+						mpc_thread_yield();
+						//mpc_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cache_size] ), 1 );
 					}
 
 					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cache_size] ); // result on reduce_data
@@ -698,8 +698,8 @@ static inline int __intel_tree_reduce( void *reduce_data, void ( *reduce_func )(
 					while ( b_done == c->barrier_done )
 						/* wait for master thread to end and share the result, this is done when it enters in __kmpc_end_reduce function */
 					{
-						sctk_thread_yield();
-						//sctk_thread_yield_wait_for_value( &( c->barrier_done ), b_done + 1);
+						mpc_thread_yield();
+						//mpc_thread_yield_wait_for_value( &( c->barrier_done ), b_done + 1);
 					}
 
 					while ( c->child_type != MPCOMP_CHILDREN_LEAF )   /* Go down */
@@ -715,8 +715,8 @@ static inline int __intel_tree_reduce( void *reduce_data, void ( *reduce_func )(
 					while ( c->isArrived[( local_rank + remaining_threads ) * cache_size] != 1 )
 					{
 						/* waiting for pair thread to arrive */
-						sctk_thread_yield();
-						//sctk_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cache_size] ), 1 );
+						mpc_thread_yield();
+						//mpc_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cache_size] ), 1 );
 					}
 
 					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cache_size] ); // result on reduce_data
@@ -736,8 +736,8 @@ static inline int __intel_tree_reduce( void *reduce_data, void ( *reduce_func )(
 					while ( b_done == c->barrier_done )
 						/* wait for master thread to end and share the result, this is done when it enters in __kmpc_end_reduce function */
 					{
-						sctk_thread_yield();
-						//sctk_thread_yield_wait_for_value( &( c->barrier_done ), b_done + 1);
+						mpc_thread_yield();
+						//mpc_thread_yield_wait_for_value( &( c->barrier_done ), b_done + 1);
 					}
 
 					while ( c->child_type != MPCOMP_CHILDREN_LEAF )   /* Go down */
@@ -753,8 +753,8 @@ static inline int __intel_tree_reduce( void *reduce_data, void ( *reduce_func )(
 					while ( c->isArrived[( local_rank + remaining_threads ) * cache_size] != 1 )
 					{
 						/* waiting for pair thread to arrive */
-						sctk_thread_yield();
-						//sctk_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cache_size] ), 1 );
+						mpc_thread_yield();
+						//mpc_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cache_size] ), 1 );
 					}
 
 					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cache_size] ); // result on reduce_data

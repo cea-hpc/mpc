@@ -140,7 +140,7 @@ void sctk_ft_checkpoint_init()
 {
         /* IMPORTANT: After this function, the calling thread
          * should never call a function leading to a critical section.
-         * In this case, sctk_thread_yield (for ethread_mxn) should not
+         * In this case, mpc_thread_yield (for ethread_mxn) should not
          * be called for waiting. This thread should not be preempted
          * (leading to deadlock to acquire read after write).
          */

@@ -58,20 +58,6 @@ sctk_ethread_self()
 	return task;
 }
 
-sctk_ethread_t
-sctk_ethread_self_check()
-{
-	sctk_ethread_virtual_processor_t *vp;
-	sctk_ethread_per_thread_t *       task;
-
-	vp = kthread_getspecific(sctk_ethread_key);
-	if(vp == NULL)
-	{
-		return NULL;
-	}
-	task = (sctk_ethread_t)vp->current;
-	return task;
-}
 
 static inline void
 sctk_ethread_self_all(sctk_ethread_virtual_processor_t **vp,
@@ -161,7 +147,7 @@ sctk_ethread_sched_migrate()
 }
 
 static int
-sctk_ethread_sched_restore(sctk_thread_t thread, char *type, int vp)
+sctk_ethread_sched_restore(mpc_thread_t thread, char *type, int vp)
 {
 	struct sctk_alloc_chain *tls;
 
@@ -233,8 +219,8 @@ sctk_ethread_exit(void *retval)
 
 /*Mutex management*/
 static int
-sctk_ethread_mutex_init(sctk_thread_mutex_t *lock,
-                        const sctk_thread_mutexattr_t *attr)
+sctk_ethread_mutex_init(mpc_thread_mutex_t *lock,
+                        const mpc_thread_mutexattr_t *attr)
 {
 	return __sctk_ethread_mutex_init( (sctk_ethread_mutex_t *)lock,
 	                                  (sctk_ethread_mutexattr_t *)attr);
@@ -392,14 +378,9 @@ sctk_ethread_wake_thread_on_vp(void **list_tmp)
 	__sctk_ethread_wake_thread_on_vp(current_vp, list_tmp);
 }
 
-static int
-sctk_ethread_get_vp()
-{
-	return 0;
-}
 
 static int
-sctk_ethread_equal(sctk_thread_t a, sctk_thread_t b)
+sctk_ethread_equal(mpc_thread_t a, mpc_thread_t b)
 {
 	return a == b;
 }
@@ -442,13 +423,13 @@ sctk_ethread_sigsuspend(sigset_t *set)
 }
 
 static int
-sctk_ethread_thread_attr_setbinding(__UNUSED__ sctk_thread_attr_t *__attr, __UNUSED__ int __binding)
+sctk_ethread_thread_attr_setbinding(__UNUSED__ mpc_thread_attr_t *__attr, __UNUSED__ int __binding)
 {
 	return 0;
 }
 
 static int
-sctk_ethread_thread_attr_getbinding(__UNUSED__ sctk_thread_attr_t *__attr, __UNUSED__ int *__binding)
+sctk_ethread_thread_attr_getbinding(__UNUSED__ mpc_thread_attr_t *__attr, __UNUSED__ int *__binding)
 {
 	return 0;
 }
@@ -470,12 +451,12 @@ sctk_ethread_thread_init(void)
 
 	sctk_ethread_check_size_eq(int, sctk_ethread_status_t);
 
-	sctk_ethread_check_size(sctk_ethread_mutex_t, sctk_thread_mutex_t);
-	sctk_ethread_check_size(sctk_ethread_mutexattr_t, sctk_thread_mutexattr_t);
+	sctk_ethread_check_size(sctk_ethread_mutex_t, mpc_thread_mutex_t);
+	sctk_ethread_check_size(sctk_ethread_mutexattr_t, mpc_thread_mutexattr_t);
 
 	{
 		static sctk_ethread_mutex_t loc  = SCTK_ETHREAD_MUTEX_INIT;
-		static sctk_thread_mutex_t  glob = SCTK_THREAD_MUTEX_INITIALIZER;
+		static mpc_thread_mutex_t  glob = SCTK_THREAD_MUTEX_INITIALIZER;
 		assume(memcmp(&loc, &glob, sizeof(sctk_ethread_mutex_t) ) == 0);
 	}
 
@@ -493,61 +474,59 @@ sctk_ethread_thread_init(void)
 	__sctk_ptr_thread_attr_setbinding = sctk_ethread_thread_attr_setbinding;
 	__sctk_ptr_thread_attr_getbinding = sctk_ethread_thread_attr_getbinding;
 
-	sctk_add_func_type(sctk_ethread, create, int (*)(sctk_thread_t *,
+	sctk_add_func_type(sctk_ethread, create, int (*)(mpc_thread_t *,
 	                                                 const
-	                                                 sctk_thread_attr_t *,
+	                                                 mpc_thread_attr_t *,
 	                                                 void *(*)(void *),
 	                                                 void *) );
 	sctk_add_func_type(sctk_ethread, user_create,
-	                   int (*)(sctk_thread_t *, const sctk_thread_attr_t *,
+	                   int (*)(mpc_thread_t *, const mpc_thread_attr_t *,
 	                           void *(*)(void *), void *) );
 
 
-	sctk_ethread_check_size(sctk_ethread_attr_t, sctk_thread_attr_t);
-	sctk_add_func_type(sctk_ethread, attr_init, int (*)(sctk_thread_attr_t *) );
+	sctk_ethread_check_size(sctk_ethread_attr_t, mpc_thread_attr_t);
+	sctk_add_func_type(sctk_ethread, attr_init, int (*)(mpc_thread_attr_t *) );
 	sctk_add_func_type(sctk_ethread, attr_destroy,
-	                   int (*)(sctk_thread_attr_t *) );
+	                   int (*)(mpc_thread_attr_t *) );
 
-	sctk_ethread_check_size(sctk_ethread_t, sctk_thread_t);
-	sctk_add_func_type(sctk_ethread, self, sctk_thread_t (*)(void) );
-	sctk_add_func_type(sctk_ethread, self_check, sctk_thread_t (*)(void) );
+	sctk_ethread_check_size(sctk_ethread_t, mpc_thread_t);
+	sctk_add_func_type(sctk_ethread, self, mpc_thread_t (*)(void) );
 	sctk_add_func_type(sctk_ethread, equal,
-	                   int (*)(sctk_thread_t, sctk_thread_t) );
-	sctk_add_func_type(sctk_ethread, join, int (*)(sctk_thread_t, void **) );
+	                   int (*)(mpc_thread_t, mpc_thread_t) );
+	sctk_add_func_type(sctk_ethread, join, int (*)(mpc_thread_t, void **) );
 	sctk_add_func_type(sctk_ethread, exit, void (*)(void *) );
 
 
 	sctk_add_func_type(sctk_ethread, mutex_lock,
-	                   int (*)(sctk_thread_mutex_t *) );
+	                   int (*)(mpc_thread_mutex_t *) );
 	sctk_add_func_type(sctk_ethread, mutex_spinlock,
-	                   int (*)(sctk_thread_mutex_t *) );
+	                   int (*)(mpc_thread_mutex_t *) );
 	sctk_add_func_type(sctk_ethread, mutex_trylock,
-	                   int (*)(sctk_thread_mutex_t *) );
+	                   int (*)(mpc_thread_mutex_t *) );
 	sctk_add_func_type(sctk_ethread, mutex_unlock,
-	                   int (*)(sctk_thread_mutex_t *) );
+	                   int (*)(mpc_thread_mutex_t *) );
 	__sctk_ptr_thread_mutex_init = sctk_ethread_mutex_init;
 
 
-	sctk_ethread_check_size(int, sctk_thread_key_t);
+	sctk_ethread_check_size(int, mpc_thread_keys_t);
 	sctk_ethread_check_size(stck_ethread_key_destr_function_t,
 	                        void (*)(void *) );
 	sctk_add_func_type(sctk_ethread, key_create,
-	                   int (*)(sctk_thread_key_t *, void (*)(void *) ) );
-	sctk_add_func_type(sctk_ethread, key_delete, int (*)(sctk_thread_key_t) );
+	                   int (*)(mpc_thread_keys_t *, void (*)(void *) ) );
+	sctk_add_func_type(sctk_ethread, key_delete, int (*)(mpc_thread_keys_t) );
 	sctk_add_func_type(sctk_ethread, setspecific,
-	                   int (*)(sctk_thread_key_t, const void *) );
+	                   int (*)(mpc_thread_keys_t, const void *) );
 	sctk_add_func_type(sctk_ethread, getspecific,
-	                   void *(*)(sctk_thread_key_t) );
-	sctk_add_func_type(sctk_ethread, kill, int (*)(sctk_thread_t, int) );
+	                   void *(*)(mpc_thread_keys_t) );
+	sctk_add_func_type(sctk_ethread, kill, int (*)(mpc_thread_t, int) );
 	sctk_add_func_type(sctk_ethread, sigpending, int (*)(sigset_t *) );
 	sctk_add_func_type(sctk_ethread, sigsuspend, int (*)(sigset_t *) );
 
 
 	sctk_add_func(sctk_ethread, wait_for_value_and_poll);
 	sctk_add_func_type(sctk_ethread, freeze_thread_on_vp,
-	                   void (*)(sctk_thread_mutex_t *, void **) );
-	sctk_add_func(sctk_ethread, wake_thread_on_vp);
-	sctk_add_func(sctk_ethread, get_vp);
+	                   void (*)(mpc_thread_mutex_t *, void **) );
+
 	sctk_add_func_type(sctk_ethread, get_activity, double (*)(int) );
 
 	sctk_add_func_type(sctk_ethread, sigmask,
@@ -579,6 +558,6 @@ sctk_ethread_thread_init(void)
 	sctk_multithreading_initialised = 1;
 	sctk_free(sctk_malloc(5) );
 
-	sctk_thread_data_init();
+	_mpc_thread_data_init();
 	mpc_topology_set_pu_count(1);
 }

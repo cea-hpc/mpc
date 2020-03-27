@@ -2928,22 +2928,22 @@ PROBE(sctk_free_big,MPC_ALLOC,sctk_free_big)
 
 PROBE(THREAD,NO_PARENT,MPI Thread)
 
-PROBE(sctk_thread_mutex_lock,THREAD,sctk_thread_mutex_lock)
+PROBE(mpc_thread_mutex_lock,THREAD,mpc_thread_mutex_lock)
 
 
-PROBE(sctk_thread_mutex_unlock,THREAD,sctk_thread_mutex_unlock)
+PROBE(mpc_thread_mutex_unlock,THREAD,mpc_thread_mutex_unlock)
 
 
-PROBE(sctk_thread_mutex_spinlock,THREAD,sctk_thread_mutex_spinlock)
+PROBE(mpc_thread_mutex_spinlock,THREAD,mpc_thread_mutex_spinlock)
 
 
-PROBE(sctk_thread_wait_for_value_and_poll,THREAD,sctk_thread_wait_for_value_and_poll)
+PROBE(mpc_thread_wait_for_value_and_poll,THREAD,mpc_thread_wait_for_value_and_poll)
 
 
 
 
 
-PROBE(sctk_thread_wait_for_value,THREAD,sctk_thread_wait_for_value)
+PROBE(mpc_thread_wait_for_value,THREAD,mpc_thread_wait_for_value)
 
 
 PROBE(MESSAGE_PASSING_INT,NO_PARENT,MPC Message passing internals)

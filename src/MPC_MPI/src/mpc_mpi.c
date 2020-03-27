@@ -1089,7 +1089,7 @@ static inline MPI_per_thread_ctx_t *MPI_per_thread_ctx_new()
 
 static inline MPI_per_thread_ctx_t *MPI_per_thread_ctx_get()
 {
-	sctk_thread_data_t *th = sctk_thread_data_get();
+	sctk_thread_data_t *th = mpc_thread_data_get();
 
 	if(!th->mpi_per_thread)
 	{
@@ -1110,14 +1110,14 @@ MPI_request_struct_t *__sctk_internal_get_MPC_requests()
 /** \brief Initialize MPI interface request handling */
 void __sctk_init_mpc_request()
 {
-	static sctk_thread_mutex_t sctk_request_lock = SCTK_THREAD_MUTEX_INITIALIZER;
+	static mpc_thread_mutex_t sctk_request_lock = SCTK_THREAD_MUTEX_INITIALIZER;
 	MPI_request_struct_t *     requests;
 
 	/* Check wether requests are already initalized */
 	PMPC_Get_requests( (void *)&requests);
 	assume(requests == NULL);
 
-	sctk_thread_mutex_lock(&sctk_request_lock);
+	mpc_thread_mutex_lock(&sctk_request_lock);
 
 	/* Allocate the request structure */
 	requests = sctk_malloc(sizeof(MPI_request_struct_t) );
@@ -1134,7 +1134,7 @@ void __sctk_init_mpc_request()
 	/* Register the new array in the task specific data-structure */
 	PMPC_Set_requests(requests);
 
-	sctk_thread_mutex_unlock(&sctk_request_lock);
+	mpc_thread_mutex_unlock(&sctk_request_lock);
 }
 
 #ifdef MPC_MPI_USE_REQUEST_CACHE
@@ -2070,7 +2070,7 @@ __INTERNAL__PMPI_Buffer_detach(void *bufferptr, int *size)
 			}
 			if(pending != 0)
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		} while(pending != 0);
 	}
@@ -2562,7 +2562,7 @@ static int __INTERNAL__PMPI_Test(MPI_Request *request, int *flag, MPI_Status *st
 	}
 	else
 	{
-		sctk_thread_yield();
+		mpc_thread_yield();
 	}
 
 	return res;
@@ -2881,7 +2881,7 @@ static int __INTERNAL__PMPI_Testall(int count, MPI_Request array_of_requests[], 
 	*flag = (done == count);
 	if(*flag == 0)
 	{
-		sctk_thread_yield();
+		mpc_thread_yield();
 	}
 	return MPI_SUCCESS;
 }
@@ -2921,7 +2921,7 @@ static int __INTERNAL__PMPI_Waitsome(int incount, MPI_Request *array_of_requests
 
 	do
 	{
-		//      sctk_thread_yield ();
+		//      mpc_thread_yield ();
 		res = __INTERNAL__PMPI_Testsome(incount, array_of_requests, outcount,
 		                                array_of_indices, array_of_statuses);
 	} while( (res == MPI_SUCCESS) &&
@@ -2979,11 +2979,11 @@ static int __INTERNAL__PMPI_Testsome(int incount, MPI_Request *array_of_requests
 	if(no_active_done == incount)
 	{
 		*outcount = MPI_UNDEFINED;
-		sctk_thread_yield();
+		mpc_thread_yield();
 	}
 	else
 	{
-		sctk_thread_yield();
+		mpc_thread_yield();
 	}
 	return MPI_SUCCESS;
 }
@@ -2997,7 +2997,7 @@ __INTERNAL__PMPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag,
 	res = _mpc_cl_iprobe(source, tag, comm, flag, status);
 	if(!(*flag) )
 	{
-		sctk_thread_yield();
+		mpc_thread_yield();
 	}
 	return res;
 }
@@ -5853,7 +5853,7 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm)
 	{
 		while(*toll != OPA_load_int(&barrier_ctx->fare) )
 		{
-			sctk_thread_yield();
+			mpc_thread_yield();
 			if( (cnt++ & 0xFF) == 0)
 			{
 				mpc_mpi_cl_egreq_progress_poll();
@@ -5904,7 +5904,7 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm)
 		{
 			while(the_signal == 0)
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 				if( (cnt++ & 0xFF) == 0)
 				{
 					mpc_mpi_cl_egreq_progress_poll();
@@ -5946,7 +5946,7 @@ int __INTERNAL__PMPI_Barrier_intra_shm_on_ctx(struct shared_mem_barrier *barrier
 				{
 					if(__do_yield)
 					{
-						sctk_thread_yield();
+						mpc_thread_yield();
 					}
 					else
 					{
@@ -6501,7 +6501,7 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
 		while(bcast_ctx->tollgate[rank] !=
 		      OPA_load_int(&bcast_ctx->fare) )
 		{
-			sctk_thread_yield();
+			mpc_thread_yield();
 		}
 	}
 	else
@@ -6535,7 +6535,7 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
 		{
 			while(OPA_cas_int(&bcast_ctx->owner, -1, -2) != -1)
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		}
 		else
@@ -6597,7 +6597,7 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
 		{
 			while(OPA_load_int(&bcast_ctx->owner) != root)
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		}
 		else
@@ -6663,7 +6663,7 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
 			{
 				while(OPA_load_int(&bcast_ctx->left_to_pop) != 0)
 				{
-					sctk_thread_yield();
+					mpc_thread_yield();
 				}
 			}
 			else
@@ -7369,7 +7369,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(void *sendbuf, int sendcnt,
 	{
 		while(gv_ctx->tollgate[rank] != OPA_load_int(&gv_ctx->fare) )
 		{
-			sctk_thread_yield();
+			mpc_thread_yield();
 		}
 	}
 	else
@@ -7423,7 +7423,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(void *sendbuf, int sendcnt,
 		{
 			while(OPA_cas_int(&gv_ctx->owner, -1, -2) != -1)
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		}
 		else
@@ -7462,7 +7462,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(void *sendbuf, int sendcnt,
 		{
 			while(OPA_load_int(&gv_ctx->owner) != root)
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		}
 		else
@@ -7539,7 +7539,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(void *sendbuf, int sendcnt,
 		{
 			while(OPA_load_int(&gv_ctx->left_to_push) != 0)
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		}
 		else
@@ -8187,7 +8187,7 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 	{
 		while(sv_ctx->tollgate[rank] != OPA_load_int(&sv_ctx->fare) )
 		{
-			sctk_thread_yield();
+			mpc_thread_yield();
 		}
 	}
 	else
@@ -8230,7 +8230,7 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 		{
 			while(OPA_cas_int(&sv_ctx->owner, -1, -2) != -1)
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		}
 		else
@@ -8314,7 +8314,7 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 		{
 			while(OPA_load_int(&sv_ctx->owner) != root)
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		}
 		else
@@ -8416,7 +8416,7 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 		{
 			while(OPA_load_int(&sv_ctx->left_to_pop) != 0)
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		}
 		else
@@ -10820,7 +10820,7 @@ static sctk_op_t defined_op[MAX_MPI_DEFINED_OP];
 void __sctk_init_mpi_op()
 {
 	sctk_mpi_ops_t *ops;
-	static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+	static mpc_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
 	static volatile int done        = 0;
 	int i;
 
@@ -10829,7 +10829,7 @@ void __sctk_init_mpi_op()
 	ops->ops  = NULL;
 	mpc_common_spinlock_init(&ops->lock, 0);
 
-	sctk_thread_mutex_lock(&lock);
+	mpc_thread_mutex_lock(&lock);
 	if(done == 0)
 	{
 		for(i = 0; i < MAX_MPI_DEFINED_OP; i++)
@@ -10851,7 +10851,7 @@ void __sctk_init_mpi_op()
 		sctk_add_op(MAXLOC);
 		done = 1;
 	}
-	sctk_thread_mutex_unlock(&lock);
+	mpc_thread_mutex_unlock(&lock);
 	PMPC_Set_op(ops);
 }
 
@@ -11771,7 +11771,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 		while(reduce_ctx->tollgate[rank] !=
 		      OPA_load_int(&reduce_ctx->fare) )
 		{
-			sctk_thread_yield();
+			mpc_thread_yield();
 		}
 	}
 	else
@@ -11829,7 +11829,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 		{
 			while(OPA_cas_int(&reduce_ctx->owner, -1, -2) != -1)
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		}
 		else
@@ -11861,7 +11861,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 		{
 			while(OPA_load_int(&reduce_ctx->owner) != root)
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		}
 		else
@@ -11982,7 +11982,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 				{
 					while(OPA_load_int(&reduce_ctx->left_to_push) != 1)
 					{
-						sctk_thread_yield();
+						mpc_thread_yield();
 					}
 				}
 				else
@@ -12002,7 +12002,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 			{
 				while(OPA_load_int(&reduce_ctx->left_to_push) != (rank + 1) )
 				{
-					sctk_thread_yield();
+					mpc_thread_yield();
 				}
 			}
 			else
@@ -12131,7 +12131,7 @@ SHM_REDUCE_DONE:
 		{
 			while(OPA_load_int(&reduce_ctx->left_to_push) != 0)
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		}
 		else
@@ -16899,10 +16899,10 @@ static int __INTERNAL__PMPI_Init(int *argc, char ***argv)
 		   ->modules.nbc.use_progress_thread == 1)
 		{
 			task_specific->mpc_mpi_data->NBC_Pthread_handles = NULL;
-			sctk_thread_mutex_init(&(task_specific->mpc_mpi_data->list_handles_lock),
+			mpc_thread_mutex_init(&(task_specific->mpc_mpi_data->list_handles_lock),
 			                       NULL);
 			task_specific->mpc_mpi_data->nbc_initialized_per_task = 0;
-			sctk_thread_mutex_init(
+			mpc_thread_mutex_init(
 			        &(task_specific->mpc_mpi_data->nbc_initializer_lock), NULL);
 		}
 		__sctk_init_mpc_request();
@@ -17038,7 +17038,7 @@ __INTERNAL__PMPI_Finalize(void)
 	if(task_specific->mpc_mpi_data->nbc_initialized_per_task == 1)
 	{
 		task_specific->mpc_mpi_data->nbc_initialized_per_task = -1;
-		sctk_thread_yield();
+		mpc_thread_yield();
 		NBC_Finalize(&(task_specific->mpc_mpi_data->NBC_Pthread) );
 	}
 

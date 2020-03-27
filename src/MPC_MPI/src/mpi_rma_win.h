@@ -137,7 +137,7 @@ struct mpc_MPI_Win {
   struct mpc_Win_target_ctx target; /*<< Source context for this set of wins */
   struct mpc_Win_source_ctx source; /*<< Target context for this set of wins */
 
-  sctk_thread_t
+  mpc_thread_t
       progress_thread; /*<< The progress thread can come from a pool */
   volatile int
       progress_thread_running; /*<< Whereas this thread is held by the struct

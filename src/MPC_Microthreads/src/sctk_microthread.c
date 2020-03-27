@@ -37,7 +37,7 @@
 static mpc_thread_once_t sctk_microthread_key_is_initialized =
   MPC_THREAD_ONCE_INIT;
   /* Key corresponding to the main micro-thread instance structure */
-sctk_thread_key_t sctk_microthread_key;
+mpc_thread_keys_t sctk_microthread_key;
 
 
   /* Function initializing a 'microthread_vp' structure */
@@ -104,7 +104,7 @@ sctk_microthread_slave_vp (void *arg)
   /* While this VP is available */
   while (self->enable)
     {
-      sctk_thread_wait_for_value_and_poll( (int*)&(self->to_run), 1, NULL, NULL ) ;
+      mpc_thread_wait_for_value_and_poll( (int*)&(self->to_run), 1, NULL, NULL ) ;
       self->to_run = 0 ;
       sctk_microthread_scheduler( self ) ;
 #if 0
@@ -120,7 +120,7 @@ sctk_microthread_slave_vp (void *arg)
       else
 	{
 	  /* Fall back to the main scheduler */
-	  sctk_thread_yield ();
+	  mpc_thread_yield ();
 	}
 #endif
     }
@@ -185,7 +185,7 @@ sctk_microthread_first_task (void *arg)
 
   sctk_assert (self != NULL);
 
-  assume (sctk_thread_setspecific (sctk_microthread_key, self) == 0);
+  assume (mpc_thread_setspecific (sctk_microthread_key, self) == 0);
 
   return NULL;
 }
@@ -194,7 +194,7 @@ sctk_microthread_first_task (void *arg)
 void
 sctk_microthread_key_init ()
 {
-  sctk_thread_key_create (&sctk_microthread_key, NULL);
+  mpc_thread_keys_create (&sctk_microthread_key, NULL);
 }
 
 
@@ -206,7 +206,7 @@ sctk_microthread_init (long nb_vp, sctk_microthread_t * self)
   long i;
   int res;
   int current_mpc_vp;
-  sctk_thread_attr_t __attr ;
+  mpc_thread_attr_t __attr ;
   int * order ;
 
   /* Initialization of the sctk_microthread key (only once) */
@@ -228,7 +228,7 @@ sctk_microthread_init (long nb_vp, sctk_microthread_t * self)
   self->__nb_vp = nb_vp;
 
   /* Grab the current VP this thread is already binded to */
-  current_mpc_vp = sctk_thread_get_vp ();
+  current_mpc_vp = mpc_topology_get_current_cpu ();
 
   order = sctk_malloc( mpc_topology_get_pu_count () * sizeof( int ) ) ;
   sctk_assert( order != NULL ) ;
@@ -264,7 +264,7 @@ sctk_microthread_init (long nb_vp, sctk_microthread_t * self)
 
       sctk_nodebug ("sctk_microthread_init: Before attr init (microVP #%d)...", i);
 
-      sctk_thread_attr_init(&__attr);
+      mpc_thread_attr_init(&__attr);
 
       sctk_nodebug( "sctk_microthread_init: Before computing target vp" ) ;
 
@@ -274,22 +274,22 @@ sctk_microthread_init (long nb_vp, sctk_microthread_t * self)
 
       sctk_nodebug( "Putting microVP %d on VP %d", i, target_vp ) ;
 
-      sctk_thread_attr_setbinding (& __attr, target_vp ) ;
+      mpc_thread_attr_setbinding (& __attr, target_vp ) ;
 
       if (mpc_common_get_flags()->is_fortran == 1)
 	stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
       else
 	stack_size = SCTK_ETHREAD_STACK_SIZE;
 
-      sctk_thread_attr_setstacksize (&__attr, stack_size);
+      mpc_thread_attr_setstacksize (&__attr, stack_size);
 
       res =
-	sctk_user_thread_create (&(self->__list[i].pid), &__attr,
+	mpc_thread_core_thread_create (&(self->__list[i].pid), &__attr,
 				 sctk_microthread_slave_vp,
 				 &(self->__list[i]));
       sctk_assert (res == 0);
 
-      sctk_thread_attr_destroy(&__attr);
+      mpc_thread_attr_destroy(&__attr);
 
       sctk_nodebug ("sctk_microthread_init: After user thread create...");
 
@@ -298,7 +298,7 @@ sctk_microthread_init (long nb_vp, sctk_microthread_t * self)
   sctk_free( order ) ;
 
   /* Update the PID for the master VP */
-  self->__list[0].pid = sctk_thread_self ();
+  self->__list[0].pid = mpc_thread_self ();
 
   sctk_nodebug ("sctk_microthread_init: Ready to enter loop3...");
 
@@ -335,9 +335,9 @@ sctk_microthread_parallel_exec (sctk_microthread_t * task, int val)
   sctk_microthread_vp_t *__list;
 
   /* Store the old microthread context in case of nested microthreading */
-  old = (sctk_microthread_t *) sctk_thread_getspecific (sctk_microthread_key);
+  old = (sctk_microthread_t *) mpc_thread_getspecific (sctk_microthread_key);
 
-  sctk_thread_setspecific (sctk_microthread_key, task);
+  mpc_thread_setspecific (sctk_microthread_key, task);
 
   self = &(task->__list[0]);
   __nb_vp = task->__nb_vp;
@@ -382,14 +382,14 @@ sctk_microthread_parallel_exec (sctk_microthread_t * task, int val)
       /* When someone is still working, a context switch is forced */
       if (running)
 	{
-	  sctk_thread_yield ();
+	  mpc_thread_yield ();
 	}
     }
 
   SCTK_PROFIL_END (__sctk_microthread_parallel_exec__last_barrier) ;
 
   /* Restore the previous microthread context in case of nested microthreading */
-  sctk_thread_setspecific (sctk_microthread_key, old);
+  mpc_thread_setspecific (sctk_microthread_key, old);
 
   return 0;
 }

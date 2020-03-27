@@ -104,7 +104,7 @@ int arpc_polling_request_ptl(__UNUSED__ sctk_arpc_context_t* ctx)
 {
 	int ret = sctk_ptl_am_incoming_lookup(&srail);
 	if(!ret)
-		sctk_thread_yield();
+		mpc_thread_yield();
 	return ret;
 }
 

@@ -42,8 +42,8 @@ struct mpc_lowcomm_coll_s;
 typedef struct
 {
 	volatile int done /* = 0 */;
-	sctk_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
-	sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
+	mpc_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
+	mpc_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
 } _mpc_coll_barrier_simple_t;
 
 void _mpc_coll_barrier_simple_init ( struct mpc_lowcomm_coll_s *tmp, mpc_lowcomm_communicator_t id );
@@ -53,8 +53,8 @@ void _mpc_coll_barrier_simple_init ( struct mpc_lowcomm_coll_s *tmp, mpc_lowcomm
 typedef struct
 {
 	volatile int done /* = 0 */;
-	sctk_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
-	sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
+	mpc_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
+	mpc_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
 	void *buffer;
 	size_t size;
 } _mpc_coll_bcast_simple_t;
@@ -66,8 +66,8 @@ void _mpc_coll_bcast_simple_init ( struct mpc_lowcomm_coll_s *tmp, mpc_lowcomm_c
 typedef struct
 {
 	volatile int done /* = 0 */;
-	sctk_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
-	sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
+	mpc_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
+	mpc_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
 	void *buffer;
 	size_t size;
 } _mpc_coll_allreduce_simple_t;

@@ -55,21 +55,21 @@ static void _mpc_coll_barrier_simple( const mpc_lowcomm_communicator_t communica
 {
 	int local;
 	local = sctk_get_nb_task_local( communicator );
-	sctk_thread_mutex_lock( &tmp->barrier.barrier_simple.lock );
+	mpc_thread_mutex_lock( &tmp->barrier.barrier_simple.lock );
 	tmp->barrier.barrier_simple.done++;
 
 	if ( tmp->barrier.barrier_simple.done == local )
 	{
 		tmp->barrier.barrier_simple.done = 0;
-		sctk_thread_cond_broadcast( &tmp->barrier.barrier_simple.cond );
+		mpc_thread_cond_broadcast( &tmp->barrier.barrier_simple.cond );
 	}
 	else
 	{
-		sctk_thread_cond_wait( &tmp->barrier.barrier_simple.cond,
+		mpc_thread_cond_wait( &tmp->barrier.barrier_simple.cond,
 		                       &tmp->barrier.barrier_simple.lock );
 	}
 
-	sctk_thread_mutex_unlock( &tmp->barrier.barrier_simple.lock );
+	mpc_thread_mutex_unlock( &tmp->barrier.barrier_simple.lock );
 }
 
 void _mpc_coll_barrier_simple_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
@@ -77,8 +77,8 @@ void _mpc_coll_barrier_simple_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ m
 	if ( mpc_common_get_process_count() == 1 )
 	{
 		tmp->barrier.barrier_simple.done = 0;
-		sctk_thread_mutex_init( &( tmp->barrier.barrier_simple.lock ), NULL );
-		sctk_thread_cond_init( &( tmp->barrier.barrier_simple.cond ), NULL );
+		mpc_thread_mutex_init( &( tmp->barrier.barrier_simple.lock ), NULL );
+		mpc_thread_cond_init( &( tmp->barrier.barrier_simple.cond ), NULL );
 		tmp->barrier_func = _mpc_coll_barrier_simple;
 	}
 	else
@@ -97,7 +97,7 @@ void _mpc_coll_bcast_simple( void *buffer, const size_t size,
 	int id;
 	local = sctk_get_nb_task_local( com_id );
 	id = mpc_lowcomm_communicator_rank( com_id, mpc_common_get_task_rank() );
-	sctk_thread_mutex_lock( &tmp->broadcast.broadcast_simple.lock );
+	mpc_thread_mutex_lock( &tmp->broadcast.broadcast_simple.lock );
 	{
 		if ( size > tmp->broadcast.broadcast_simple.size )
 		{
@@ -116,11 +116,11 @@ void _mpc_coll_bcast_simple( void *buffer, const size_t size,
 		if ( tmp->broadcast.broadcast_simple.done == local )
 		{
 			tmp->broadcast.broadcast_simple.done = 0;
-			sctk_thread_cond_broadcast( &tmp->broadcast.broadcast_simple.cond );
+			mpc_thread_cond_broadcast( &tmp->broadcast.broadcast_simple.cond );
 		}
 		else
 		{
-			sctk_thread_cond_wait( &tmp->broadcast.broadcast_simple.cond,
+			mpc_thread_cond_wait( &tmp->broadcast.broadcast_simple.cond,
 			                       &tmp->broadcast.broadcast_simple.lock );
 		}
 
@@ -129,7 +129,7 @@ void _mpc_coll_bcast_simple( void *buffer, const size_t size,
 			memcpy( buffer, tmp->broadcast.broadcast_simple.buffer, size );
 		}
 	}
-	sctk_thread_mutex_unlock( &tmp->broadcast.broadcast_simple.lock );
+	mpc_thread_mutex_unlock( &tmp->broadcast.broadcast_simple.lock );
 	_mpc_coll_barrier_simple( com_id, tmp );
 }
 
@@ -140,8 +140,8 @@ void _mpc_coll_bcast_simple_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc
 		tmp->broadcast.broadcast_simple.buffer = NULL;
 		tmp->broadcast.broadcast_simple.size = 0;
 		tmp->broadcast.broadcast_simple.done = 0;
-		sctk_thread_mutex_init( &( tmp->broadcast.broadcast_simple.lock ), NULL );
-		sctk_thread_cond_init( &( tmp->broadcast.broadcast_simple.cond ), NULL );
+		mpc_thread_mutex_init( &( tmp->broadcast.broadcast_simple.lock ), NULL );
+		mpc_thread_cond_init( &( tmp->broadcast.broadcast_simple.cond ), NULL );
 		tmp->broadcast_func = _mpc_coll_bcast_simple;
 	}
 	else
@@ -165,7 +165,7 @@ static void _mpc_coll_allreduce_simple( const void *buffer_in, void *buffer_out,
 	size_t size;
 	size = elem_size * elem_number;
 	local = sctk_get_nb_task_local( com_id );
-	sctk_thread_mutex_lock( &tmp->allreduce.allreduce_simple.lock );
+	mpc_thread_mutex_lock( &tmp->allreduce.allreduce_simple.lock );
 	{
 		if ( size > tmp->allreduce.allreduce_simple.size )
 		{
@@ -195,17 +195,17 @@ static void _mpc_coll_allreduce_simple( const void *buffer_in, void *buffer_out,
 		if ( tmp->allreduce.allreduce_simple.done == local )
 		{
 			tmp->allreduce.allreduce_simple.done = 0;
-			sctk_thread_cond_broadcast( &tmp->allreduce.allreduce_simple.cond );
+			mpc_thread_cond_broadcast( &tmp->allreduce.allreduce_simple.cond );
 		}
 		else
 		{
-			sctk_thread_cond_wait( &tmp->allreduce.allreduce_simple.cond,
+			mpc_thread_cond_wait( &tmp->allreduce.allreduce_simple.cond,
 			                       &tmp->allreduce.allreduce_simple.lock );
 		}
 
 		memcpy( buffer_out, tmp->allreduce.allreduce_simple.buffer, size );
 	}
-	sctk_thread_mutex_unlock( &tmp->allreduce.allreduce_simple.lock );
+	mpc_thread_mutex_unlock( &tmp->allreduce.allreduce_simple.lock );
 	_mpc_coll_barrier_simple( com_id, tmp );
 }
 
@@ -216,8 +216,8 @@ void _mpc_coll_allreduce_simple_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__
 		tmp->allreduce.allreduce_simple.buffer = NULL;
 		tmp->allreduce.allreduce_simple.size = 0;
 		tmp->allreduce.allreduce_simple.done = 0;
-		sctk_thread_mutex_init( &( tmp->allreduce.allreduce_simple.lock ), NULL );
-		sctk_thread_cond_init( &( tmp->allreduce.allreduce_simple.cond ), NULL );
+		mpc_thread_mutex_init( &( tmp->allreduce.allreduce_simple.lock ), NULL );
+		mpc_thread_cond_init( &( tmp->allreduce.allreduce_simple.cond ), NULL );
 		tmp->allreduce_func = _mpc_coll_allreduce_simple;
 	}
 	else
@@ -924,7 +924,7 @@ static void _mpc_coll_hetero_barrier( const mpc_lowcomm_communicator_t communica
 	{
 		while ( barrier->generation < generation + 1 )
 		{
-			sctk_thread_yield();
+			mpc_thread_yield();
 		}
 	}
 }
@@ -1092,7 +1092,7 @@ void _mpc_coll_hetero_bcast( void *buffer, const size_t size,
 
 		while ( OPA_load_int( &bcast->tasks_exited_in_node ) != nb_tasks_in_node - 1 )
 		{
-			sctk_thread_yield();
+			mpc_thread_yield();
 		}
 
 		/* Reinit all vars */
@@ -1109,7 +1109,7 @@ void _mpc_coll_hetero_bcast( void *buffer, const size_t size,
 		/* Wait until the buffer is ready */
 		while ( ( buff_root = OPA_load_ptr( &bcast->buff_root ) ) == NULL )
 		{
-			sctk_thread_yield();
+			mpc_thread_yield();
 		}
 
 		memcpy( buffer, buff_root, size );
@@ -1117,7 +1117,7 @@ void _mpc_coll_hetero_bcast( void *buffer, const size_t size,
 
 		while ( bcast->generation < generation + 1 )
 		{
-			sctk_thread_yield();
+			mpc_thread_yield();
 		}
 	}
 }
@@ -1348,7 +1348,7 @@ static void _mpc_coll_hetero_allreduce_hetero_intern( const void *buffer_in, voi
 			{
 				while ( buff_in[i] == NULL )
 				{
-					sctk_thread_yield();
+					mpc_thread_yield();
 				}
 
 				sctk_nodebug( "Add content %d to buffer", *( ( int * ) buff_in[i] ) );
@@ -1367,7 +1367,7 @@ static void _mpc_coll_hetero_allreduce_hetero_intern( const void *buffer_in, voi
 
 			while ( OPA_load_int( &allreduce->tasks_entered_in_node ) != 1 )
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 
 			buff_in[task_id_in_node] = NULL;
@@ -1379,7 +1379,7 @@ static void _mpc_coll_hetero_allreduce_hetero_intern( const void *buffer_in, voi
 		{
 			while ( allreduce->generation < generation + 1 )
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 
 			memcpy( ( void * ) buffer_out,
@@ -1390,7 +1390,7 @@ static void _mpc_coll_hetero_allreduce_hetero_intern( const void *buffer_in, voi
 
 			while ( allreduce->generation < generation + 2 )
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		}
 
@@ -1977,10 +1977,10 @@ void mpc_lowcomm_terminaison_barrier( void )
 {
 	int local;
 	static volatile int done = 0;
-	static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
-	static sctk_thread_cond_t cond = SCTK_THREAD_COND_INITIALIZER;
+	static mpc_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+	static mpc_thread_cond_t cond = SCTK_THREAD_COND_INITIALIZER;
 	local = sctk_get_nb_task_local( SCTK_COMM_WORLD );
-	sctk_thread_mutex_lock( &lock );
+	mpc_thread_mutex_lock( &lock );
 	done++;
 	sctk_nodebug( "mpc_lowcomm_terminaison_barrier %d %d", done, local );
 
@@ -2000,15 +2000,15 @@ void mpc_lowcomm_terminaison_barrier( void )
 
 #endif
 		sctk_nodebug( "WAKE ALL in mpc_lowcomm_terminaison_barrier" );
-		sctk_thread_cond_broadcast( &cond );
+		mpc_thread_cond_broadcast( &cond );
 	}
 	else
 	{
 		sctk_nodebug( "WAIT in mpc_lowcomm_terminaison_barrier" );
-		sctk_thread_cond_wait( &cond, &lock );
+		mpc_thread_cond_wait( &cond, &lock );
 	}
 
-	sctk_thread_mutex_unlock( &lock );
+	mpc_thread_mutex_unlock( &lock );
 	sctk_nodebug( "mpc_lowcomm_terminaison_barrier %d %d DONE", done, local );
 }
 

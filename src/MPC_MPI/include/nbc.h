@@ -78,8 +78,8 @@ typedef struct {
 	long row_offset;
 	int tag;
 	volatile int req_count;
-	sctk_thread_mutex_t lock;
-	sctk_thread_sem_t semid;
+	mpc_thread_mutex_t lock;
+	mpc_thread_sem_t semid;
 	volatile int actual_req_count;
 	MPI_Request *req_array;
 	NBC_Comminfo *comminfo;

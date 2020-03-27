@@ -171,7 +171,7 @@ sctk_endpoint_t * sctk_on_demand_connection_ib( struct sctk_rail_info_s * rail ,
 			&& state != STATE_RECONNECTING )
 			{
 				sctk_network_notify_idle_message();
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		}
 		while ( state != STATE_DECONNECTED && state != STATE_CONNECTED && state != STATE_RECONNECTING );
@@ -191,7 +191,7 @@ sctk_endpoint_t * sctk_on_demand_connection_ib( struct sctk_rail_info_s * rail ,
 
 		if ( sctk_endpoint_get_state ( tmp ) != STATE_CONNECTED )
 		{
-			sctk_thread_yield();
+			mpc_thread_yield();
 		}
 	}
 

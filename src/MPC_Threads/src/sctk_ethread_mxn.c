@@ -63,20 +63,6 @@ sctk_ethread_mxn_self()
 	return task;
 }
 
-sctk_ethread_t
-sctk_ethread_mxn_self_check()
-{
-	sctk_ethread_virtual_processor_t *vp;
-	sctk_ethread_per_thread_t *       task;
-
-	vp = kthread_getspecific(sctk_ethread_key);
-	if(vp == NULL)
-	{
-		return NULL;
-	}
-	task = (sctk_ethread_t)vp->current;
-	return task;
-}
 
 static inline void
 sctk_ethread_mxn_self_all(sctk_ethread_virtual_processor_t **vp,
@@ -201,7 +187,7 @@ sctk_ethread_mxn_sched_migrate()
 }
 
 static int
-sctk_ethread_mxn_sched_restore(sctk_thread_t thread, char *type, int vp)
+sctk_ethread_mxn_sched_restore(mpc_thread_t thread, char *type, int vp)
 {
 	struct sctk_alloc_chain *         tls;
 	sctk_ethread_virtual_processor_t *cpu;
@@ -292,8 +278,8 @@ sctk_ethread_mxn_exit(void *retval)
 
 /*Mutex management*/
 static int
-sctk_ethread_mxn_mutex_init(sctk_thread_mutex_t *lock,
-                            const sctk_thread_mutexattr_t *attr)
+sctk_ethread_mxn_mutex_init(mpc_thread_mutex_t *lock,
+                            const mpc_thread_mutexattr_t *attr)
 {
 	return __sctk_ethread_mutex_init( (sctk_ethread_mutex_t *)lock,
 	                                  (sctk_ethread_mutexattr_t *)attr);
@@ -470,7 +456,7 @@ sctk_ethread_mxn_user_create(sctk_ethread_t *threadp,
 //}
 // hmt
 
-// sctk_thread_mutex_t hmtlock = SCTK_THREAD_MUTEX_INITIALIZER;
+// mpc_thread_mutex_t hmtlock = SCTK_THREAD_MUTEX_INITIALIZER;
 
 static int
 sctk_ethread_mxn_create(sctk_ethread_t *threadp,
@@ -488,9 +474,9 @@ sctk_ethread_mxn_create(sctk_ethread_t *threadp,
 
 	current = sctk_ethread_mxn_self();
 
-	// new_binding= sctk_get_init_vp(pos); //bind de mpc par defaut
+	// new_binding= mpc_thread_get_task_placement(pos); //bind de mpc par defaut
 
-	// PATCH : we dont need rerun sctk_get_init_vp because you have the result in
+	// PATCH : we dont need rerun mpc_thread_get_task_placement because you have the result in
 	// the arg structure
 	sctk_thread_data_t *tmp = (sctk_thread_data_t *)arg;
 	new_binding = tmp->bind_to;
@@ -570,7 +556,7 @@ sctk_ethread_mxn_func_kernel_thread(void *arg)
 	tmp.__start_routine   = sctk_ethread_mxn_func_kernel_thread;
 	tmp.virtual_processor = vp->rank;
 
-	sctk_thread_data_set(&tmp);
+	_mpc_thread_data_set(&tmp);
 	sctk_set_tls(NULL);
 
 	//avoid to create an allocation chain
@@ -614,7 +600,7 @@ sctk_ethread_gen_func_kernel_thread(void *arg)
 	tmp.__start_routine   = sctk_ethread_gen_func_kernel_thread;
 	tmp.virtual_processor = vp->rank;
 
-	sctk_thread_data_set(&tmp);
+	_mpc_thread_data_set(&tmp);
 	sctk_set_tls(NULL);
 
 	sctk_nodebug("Entering in kernel idle");
@@ -636,7 +622,7 @@ sctk_ethread_mxn_start_kernel_thread(int pos)
 	{
 		tmp = (sctk_ethread_virtual_processor_t *)
 		      __sctk_malloc_new(sizeof(sctk_ethread_virtual_processor_t),
-		                        sctk_thread_tls);
+		                        mpc_thread_tls);
 		*tmp      = tmp_init;
 		tmp->rank = pos;
 		sctk_ethread_mxn_vp_list[pos] = tmp;
@@ -656,22 +642,22 @@ sctk_ethread_start_kernel_thread()
 	kthread_t pid;
 	sctk_ethread_virtual_processor_t  tmp_init = SCTK_ETHREAD_VP_INIT;
 	sctk_ethread_virtual_processor_t *tmp;
-	static sctk_thread_mutex_t        lock = SCTK_THREAD_MUTEX_INITIALIZER;
+	static mpc_thread_mutex_t        lock = SCTK_THREAD_MUTEX_INITIALIZER;
 
 	sctk_nodebug("Create Kthread");
 
-	sctk_thread_mutex_lock(&lock);
+	mpc_thread_mutex_lock(&lock);
 
 	tmp = (sctk_ethread_virtual_processor_t *)
 	      __sctk_malloc_new(sizeof(sctk_ethread_virtual_processor_t),
-	                        sctk_thread_tls);
+	                        mpc_thread_tls);
 	*tmp      = tmp_init;
 	tmp->rank = -1;
 
 	kthread_create(&pid, sctk_ethread_gen_func_kernel_thread, tmp);
 	sctk_nodebug("Create Kthread done");
 
-	sctk_thread_mutex_unlock(&lock);
+	mpc_thread_mutex_unlock(&lock);
 	return tmp;
 }
 
@@ -724,7 +710,7 @@ sctk_ethread_mxn_init_virtual_processors()
 	sctk_ethread_mxn_vp_list = (sctk_ethread_virtual_processor_t **)
 	                           __sctk_malloc(cpu_number *
 	                                         sizeof(sctk_ethread_virtual_processor_t *),
-	                                         sctk_thread_tls);
+	                                         mpc_thread_tls);
 	sctk_ethread_mxn_vp_list[0] = &virtual_processor;
 
 	for(i = 1; i < cpu_number; i++)
@@ -746,29 +732,9 @@ sctk_ethread_mxn_init_virtual_processors()
 	}
 }
 
-static int
-sctk_ethread_mxn_get_vp()
-{
-	/* Be careful the polling thread might
-	 * end up here we need to tell him that mxn
-	 * does not know where he is (-1) */
-	sctk_ethread_per_thread_t *cur = sctk_ethread_mxn_self();
-
-	if(!cur)
-	{
-		return -1;
-	}
-
-	if(!cur->vp)
-	{
-		return -1;
-	}
-
-	return cur->vp->rank;
-}
 
 static int
-sctk_ethread_mxn_thread_attr_setbinding(sctk_thread_attr_t *__attr, int __binding)
+sctk_ethread_mxn_thread_attr_setbinding(mpc_thread_attr_t *__attr, int __binding)
 {
 	sctk_ethread_attr_t *attr;
 
@@ -788,7 +754,7 @@ sctk_ethread_mxn_thread_attr_setbinding(sctk_thread_attr_t *__attr, int __bindin
 }
 
 static int
-sctk_ethread_mxn_thread_attr_getbinding(sctk_thread_attr_t *__attr, int *__binding)
+sctk_ethread_mxn_thread_attr_getbinding(mpc_thread_attr_t *__attr, int *__binding)
 {
 	sctk_ethread_attr_t *attr;
 
@@ -818,7 +784,7 @@ static int sctk_ethread_mxn_thread_proc_migration(const int cpu)
 	last = current_vp->rank;
 
 	sctk_assert(current->vp == current_vp);
-	sctk_assert(last == sctk_thread_get_vp() );
+	sctk_assert(last == mpc_topology_get_current_cpu() );
 	assume(cpu >= 0);
 	assume(cpu < mpc_topology_get_pu_count() );
 	assume(last >= 0);
@@ -858,7 +824,7 @@ sctk_ethread_mxn_get_activity(int i)
 }
 
 static int
-sctk_ethread_mxn_equal(sctk_thread_t a, sctk_thread_t b)
+sctk_ethread_mxn_equal(mpc_thread_t a, mpc_thread_t b)
 {
 	return a == b;
 }
@@ -932,12 +898,12 @@ sctk_ethread_mxn_thread_init(void)
 
 	sctk_ethread_check_size_eq(int, sctk_ethread_status_t);
 
-	sctk_ethread_check_size(sctk_ethread_mutex_t, sctk_thread_mutex_t);
-	sctk_ethread_check_size(sctk_ethread_mutexattr_t, sctk_thread_mutexattr_t);
+	sctk_ethread_check_size(sctk_ethread_mutex_t, mpc_thread_mutex_t);
+	sctk_ethread_check_size(sctk_ethread_mutexattr_t, mpc_thread_mutexattr_t);
 
 	{
 		static sctk_ethread_mutex_t loc  = SCTK_ETHREAD_MUTEX_INIT;
-		static sctk_thread_mutex_t  glob = SCTK_THREAD_MUTEX_INITIALIZER;
+		static mpc_thread_mutex_t  glob = SCTK_THREAD_MUTEX_INITIALIZER;
 		assume(memcmp(&loc, &glob, sizeof(sctk_ethread_mutex_t) ) == 0);
 	}
 
@@ -957,65 +923,63 @@ sctk_ethread_mxn_thread_init(void)
 
 	__sctk_ptr_thread_proc_migration = sctk_ethread_mxn_thread_proc_migration;
 
-	sctk_add_func_type(sctk_ethread_mxn, create, int (*)(sctk_thread_t *,
+	sctk_add_func_type(sctk_ethread_mxn, create, int (*)(mpc_thread_t *,
 	                                                     const
-	                                                     sctk_thread_attr_t
+	                                                     mpc_thread_attr_t
 	                                                     *,
 	                                                     void *(*)(void *),
 	                                                     void *) );
 	sctk_add_func_type(sctk_ethread_mxn, user_create,
-	                   int (*)(sctk_thread_t *, const sctk_thread_attr_t *,
+	                   int (*)(mpc_thread_t *, const mpc_thread_attr_t *,
 	                           void *(*)(void *), void *) );
 
-	sctk_ethread_check_size(sctk_ethread_attr_t, sctk_thread_attr_t);
+	sctk_ethread_check_size(sctk_ethread_attr_t, mpc_thread_attr_t);
 	sctk_add_func_type(sctk_ethread_mxn, attr_init,
-	                   int (*)(sctk_thread_attr_t *) );
+	                   int (*)(mpc_thread_attr_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, attr_destroy,
-	                   int (*)(sctk_thread_attr_t *) );
+	                   int (*)(mpc_thread_attr_t *) );
 
-	sctk_ethread_check_size(sctk_ethread_t, sctk_thread_t);
-	sctk_add_func_type(sctk_ethread_mxn, self, sctk_thread_t (*)(void) );
-	sctk_add_func_type(sctk_ethread_mxn, self_check, sctk_thread_t (*)(void) );
+	sctk_ethread_check_size(sctk_ethread_t, mpc_thread_t);
+	sctk_add_func_type(sctk_ethread_mxn, self, mpc_thread_t (*)(void) );
 	sctk_add_func_type(sctk_ethread_mxn, equal,
-	                   int (*)(sctk_thread_t, sctk_thread_t) );
+	                   int (*)(mpc_thread_t, mpc_thread_t) );
 	sctk_add_func_type(sctk_ethread_mxn, join,
-	                   int (*)(sctk_thread_t, void **) );
+	                   int (*)(mpc_thread_t, void **) );
 	sctk_add_func_type(sctk_ethread_mxn, exit, void (*)(void *) );
-	sctk_add_func_type(sctk_ethread_mxn, kill, int (*)(sctk_thread_t, int) );
+	sctk_add_func_type(sctk_ethread_mxn, kill, int (*)(mpc_thread_t, int) );
 	sctk_add_func_type(sctk_ethread_mxn, sigpending, int (*)(sigset_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, sigsuspend, int (*)(sigset_t *) );
 
 
 	sctk_add_func_type(sctk_ethread_mxn, mutex_lock,
-	                   int (*)(sctk_thread_mutex_t *) );
+	                   int (*)(mpc_thread_mutex_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, mutex_spinlock,
-	                   int (*)(sctk_thread_mutex_t *) );
+	                   int (*)(mpc_thread_mutex_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, mutex_trylock,
-	                   int (*)(sctk_thread_mutex_t *) );
+	                   int (*)(mpc_thread_mutex_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, mutex_unlock,
-	                   int (*)(sctk_thread_mutex_t *) );
+	                   int (*)(mpc_thread_mutex_t *) );
 	__sctk_ptr_thread_mutex_init = sctk_ethread_mxn_mutex_init;
 
 
-	sctk_ethread_check_size(int, sctk_thread_key_t);
+	sctk_ethread_check_size(int, mpc_thread_keys_t);
 	sctk_ethread_check_size(stck_ethread_key_destr_function_t,
 	                        void (*)(void *) );
 	sctk_add_func_type(sctk_ethread_mxn, key_create,
-	                   int (*)(sctk_thread_key_t *, void (*)(void *) ) );
+	                   int (*)(mpc_thread_keys_t *, void (*)(void *) ) );
 	sctk_add_func_type(sctk_ethread_mxn, key_delete,
-	                   int (*)(sctk_thread_key_t) );
+	                   int (*)(mpc_thread_keys_t) );
 	sctk_add_func_type(sctk_ethread_mxn, setspecific,
-	                   int (*)(sctk_thread_key_t, const void *) );
+	                   int (*)(mpc_thread_keys_t, const void *) );
 	sctk_add_func_type(sctk_ethread_mxn, getspecific,
-	                   void *(*)(sctk_thread_key_t) );
+	                   void *(*)(mpc_thread_keys_t) );
 
 	sctk_add_func_type(sctk_ethread_mxn, get_activity, double (*)(int) );
 
 	sctk_add_func(sctk_ethread_mxn, wait_for_value_and_poll);
 	sctk_add_func_type(sctk_ethread_mxn, freeze_thread_on_vp,
-	                   void (*)(sctk_thread_mutex_t *, void **) );
+	                   void (*)(mpc_thread_mutex_t *, void **) );
 	sctk_add_func(sctk_ethread_mxn, wake_thread_on_vp);
-	sctk_add_func(sctk_ethread_mxn, get_vp);
 
 	sctk_add_func_type(sctk_ethread_mxn, sigmask,
 	                   int (*)(int, const sigset_t *, sigset_t *) );
@@ -1031,7 +995,7 @@ sctk_ethread_mxn_thread_init(void)
 	sctk_nodebug("FORCE allocation");
 	sctk_free(sctk_malloc(5) );
 
-	sctk_thread_data_init();
+	_mpc_thread_data_init();
 
 
 	TODO("UNDERSTAND WHY THIS YIELD TERMINATED US");

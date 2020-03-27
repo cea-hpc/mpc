@@ -850,7 +850,7 @@ static inline void __send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
 		//#warning "We should remove these sctk_error and use a counter instead"
 		sctk_warning ( "[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d)", rail_ib->rail->rail_number,
 		               remote->rank, sctk_ib_qp_get_pending_data ( remote ) );
-		sctk_thread_wait_for_value_and_poll ( &wait_send_arg.flag, 1,
+		mpc_thread_wait_for_value_and_poll ( &wait_send_arg.flag, 1,
 		                                      ( void ( * ) ( void * ) ) wait_send, &wait_send_arg );
 
 		sctk_warning ( "[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d) DONE", rail_ib->rail->rail_number,

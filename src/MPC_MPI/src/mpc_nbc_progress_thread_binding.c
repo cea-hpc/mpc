@@ -50,7 +50,7 @@ int sctk_get_progress_thread_binding_numa_iter(void) {
 
   int nbVp;
   int global_id = mpc_common_get_local_task_rank();
-  int proc_global = sctk_get_init_vp_and_nbvp(global_id, &nbVp);
+  int proc_global = mpc_thread_get_task_placement_and_count(global_id, &nbVp);
 
   int numa_node_id = (global_id * numa_node_per_node_nb) / task_nb;
   int task_per_numa_node =
@@ -103,7 +103,7 @@ int sctk_get_progress_thread_binding_numa_iter(void) {
     for (global_id_tmp = global_id + 1, local_id_tmp = local_id + 1;
          local_id_tmp < task_per_numa_node;
          global_id_tmp += 1, local_id_tmp += 1) {
-      proc_global_tmp = sctk_get_init_vp_and_nbvp(global_id_tmp, &nbVp_tmp);
+      proc_global_tmp = mpc_thread_get_task_placement_and_count(global_id_tmp, &nbVp_tmp);
       if (nbVp_tmp > 1) {
         mpc_common_debug("if nbVp_tmp > 1 : return %d", proc_global_tmp + 1);
         return proc_global_tmp + 1;
@@ -138,7 +138,7 @@ int sctk_get_progress_thread_binding_numa(void) {
 
   int global_id = mpc_common_get_local_task_rank();
 
-  int proc_global = sctk_get_init_vp_and_nbvp(global_id, &nbVp);
+  int proc_global = mpc_thread_get_task_placement_and_count(global_id, &nbVp);
 
   int numa_node_id = (global_id * numa_node_per_node_nb) / task_nb;
 

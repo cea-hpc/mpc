@@ -4023,7 +4023,7 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr ) {
   struct mpc_mpi_cl_per_mpi_process_ctx_s * task_specific;
 
   struct sctk_list_elem * list_handles;
-  sctk_thread_mutex_t * lock;
+  mpc_thread_mutex_t * lock;
   task_specific = mpc_cl_per_mpi_process_ctx_get ();
 
   task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;
@@ -4055,7 +4055,7 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr ) {
 
       NBC_Handle *tmp_handle;
 
-      sctk_thread_mutex_lock(lock);
+      mpc_thread_mutex_lock(lock);
       list_handles = task_specific->mpc_mpi_data->NBC_Pthread_handles;
 
       DL_FOREACH_SAFE(list_handles, iter, elem_tmp)
@@ -4086,7 +4086,7 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr ) {
         }
       }
 
-      sctk_thread_mutex_unlock(lock);
+      mpc_thread_mutex_unlock(lock);
 
 
     int retidx = 0;
@@ -4107,9 +4107,9 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr ) {
 	sctk_free(requests_locations);
 	sctk_free(requests_handles);
 	if(task_specific->mpc_mpi_data->nbc_initialized_per_task == -1){
-		sctk_thread_exit(0);
+		mpc_thread_exit(0);
 	}
-        sctk_thread_yield();
+        mpc_thread_yield();
   }
 }
 
@@ -4447,14 +4447,14 @@ static inline int NBC_Free(NBC_Handle* handle) {
 
     struct mpc_mpi_cl_per_mpi_process_ctx_s *task_specific;
     struct sctk_list_elem *list_handles;
-    sctk_thread_mutex_t *lock;
+    mpc_thread_mutex_t *lock;
     task_specific = mpc_cl_per_mpi_process_ctx_get();
 
     lock = &(task_specific->mpc_mpi_data->list_handles_lock);
 
     struct sctk_list_elem *elem_tmp;
 
-    sctk_thread_mutex_lock(lock);
+    mpc_thread_mutex_lock(lock);
     list_handles = task_specific->mpc_mpi_data->NBC_Pthread_handles;
 
     DL_SEARCH_SCALAR(list_handles, elem_tmp, elem, handle);
@@ -4484,9 +4484,9 @@ static inline int NBC_Free(NBC_Handle* handle) {
       mpc_threads_generic_scheduler_decrease_prio();
     }
 
-    sctk_thread_mutex_unlock(lock);
+    mpc_thread_mutex_unlock(lock);
 
-    sctk_thread_mutex_lock(&handle->lock);
+    mpc_thread_mutex_lock(&handle->lock);
   }
   if (handle->schedule != NULL) {
 
@@ -4507,7 +4507,7 @@ static inline int NBC_Free(NBC_Handle* handle) {
   }
   if(use_progress_thread == 1)
   {
-    sctk_thread_mutex_unlock(&handle->lock);
+    mpc_thread_mutex_unlock(&handle->lock);
   }
 
   if(NULL != handle->tmpbuf) {
@@ -4517,8 +4517,8 @@ static inline int NBC_Free(NBC_Handle* handle) {
 
   if(use_progress_thread == 1)
   {
-    if (sctk_thread_sem_post(&handle->semid) != 0) {
-      perror("sctk_thread_sem_post()");
+    if (mpc_thread_sem_post(&handle->semid) != 0) {
+      perror("mpc_thread_sem_post()");
     }
   }
 
@@ -4843,8 +4843,8 @@ static inline int NBC_Initialize() {
   // _mpc_threads_generic_attr_t attr;
   // _mpc_threads_generic_attr_init(&attr);
 
-  sctk_thread_attr_t attr;
-  sctk_thread_attr_init(&attr);
+  mpc_thread_attr_t attr;
+  mpc_thread_attr_init(&attr);
 
   int (*sctk_get_progress_thread_binding)(void);
   sctk_get_progress_thread_binding =
@@ -4853,7 +4853,7 @@ static inline int NBC_Initialize() {
 
   int cpu_id_to_bind_progress_thread = sctk_get_progress_thread_binding();
 
-  sctk_thread_attr_setbinding((sctk_thread_attr_t *)&attr,
+  mpc_thread_attr_setbinding((mpc_thread_attr_t *)&attr,
                               cpu_id_to_bind_progress_thread);
 
 
@@ -4873,13 +4873,13 @@ static inline int NBC_Initialize() {
   // fclose(hostname_fd);
   ////DEBUG
 
-  int ret = sctk_user_thread_create(&(task_specific->mpc_mpi_data->NBC_Pthread),
-                                    (sctk_thread_attr_t *)&attr,
+  int ret = mpc_thread_core_thread_create(&(task_specific->mpc_mpi_data->NBC_Pthread),
+                                    (mpc_thread_attr_t *)&attr,
                                     NBC_Pthread_func, NULL);
-  if(0 != ret) { printf("Error in sctk_user_thread_create() (%i)\n", ret); return NBC_OOR; }
+  if(0 != ret) { printf("Error in mpc_thread_core_thread_create() (%i)\n", ret); return NBC_OOR; }
 
   // _mpc_threads_generic_attr_destroy(&attr);
-  sctk_thread_attr_destroy(&attr);
+  mpc_thread_attr_destroy(&attr);
 
   // task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;
   }
@@ -4899,25 +4899,25 @@ static inline int NBC_Init_handle( NBC_Handle *handle, MPI_Comm comm, int tag )
   struct mpc_mpi_cl_per_mpi_process_ctx_s * task_specific;
   task_specific = mpc_cl_per_mpi_process_ctx_get ();
 
-		sctk_thread_mutex_t *lock = &( task_specific->mpc_mpi_data->nbc_initializer_lock );
-		sctk_thread_mutex_lock( lock );
+		mpc_thread_mutex_t *lock = &( task_specific->mpc_mpi_data->nbc_initializer_lock );
+		mpc_thread_mutex_lock( lock );
 		if ( task_specific->mpc_mpi_data->nbc_initialized_per_task == 0 )
 		{
 			res = NBC_Initialize();
 			if ( res != NBC_OK )
 			{
-				sctk_thread_mutex_unlock( lock );
+				mpc_thread_mutex_unlock( lock );
 				return res;
 			}
 		}
-		sctk_thread_mutex_unlock( lock );
+		mpc_thread_mutex_unlock( lock );
 
 		/* init locks */
-		sctk_thread_mutex_init( &handle->lock, NULL );
+		mpc_thread_mutex_init( &handle->lock, NULL );
 		/* init semaphore */
-		if ( sctk_thread_sem_init( &handle->semid, 0, 0 ) != 0 )
+		if ( mpc_thread_sem_init( &handle->semid, 0, 0 ) != 0 )
 		{
-			perror( "sctk_thread_sem_init()" );
+			perror( "mpc_thread_sem_init()" );
 		}
 	}
 
@@ -4951,7 +4951,7 @@ static inline int NBC_Start( NBC_Handle *handle, NBC_Schedule *schedule )
 
     struct mpc_mpi_cl_per_mpi_process_ctx_s * task_specific;
 
-		sctk_thread_mutex_t *lock;
+		mpc_thread_mutex_t *lock;
     task_specific = mpc_cl_per_mpi_process_ctx_get ();
 
 		lock = &( task_specific->mpc_mpi_data->list_handles_lock );
@@ -4961,21 +4961,21 @@ static inline int NBC_Start( NBC_Handle *handle, NBC_Schedule *schedule )
 		elem_tmp = (struct sctk_list_elem*)sctk_malloc( sizeof( struct sctk_list_elem ) );
 		elem_tmp->elem = handle;
 
-		sctk_thread_wait_for_value_and_poll(
+		mpc_thread_wait_for_value_and_poll(
 			&( task_specific->mpc_mpi_data->nbc_initialized_per_task ), 1, NULL,
 			NULL );
 		/* wake progress thread up */
     _mpc_cl_send(&tmp_send, 1, MPI_INT, 0, 0, MPI_COMM_SELF);
 
-		sctk_thread_mutex_lock( lock );
+		mpc_thread_mutex_lock( lock );
 
 		DL_APPEND( task_specific->mpc_mpi_data->NBC_Pthread_handles, elem_tmp );
 		task_specific->mpc_mpi_data->NBC_Pthread_nb++;
-		sctk_thread_mutex_unlock( lock );
+		mpc_thread_mutex_unlock( lock );
 
 		mpc_threads_generic_scheduler_increase_prio();
 
-			// sctk_thread_wait_for_value_and_poll(&(task_specific->mpc_mpi_data->nbc_initialized_per_task),
+			// mpc_thread_wait_for_value_and_poll(&(task_specific->mpc_mpi_data->nbc_initialized_per_task),
 			// 1, NULL, NULL);
 			///* wake progress thread up */
 // _mpc_cl_send(&tmp_send, 1, MPI_INT, 0, 0, MPI_COMM_SELF);
@@ -5029,25 +5029,25 @@ int NBC_Wait(NBC_Handle *handle, MPI_Status *status) {
 
 	if(use_progress_thread == 1)
 	{ 
-		sctk_thread_mutex_lock(&handle->lock);
+		mpc_thread_mutex_lock(&handle->lock);
 	}
 	if(handle->schedule == NULL) {
 		if(use_progress_thread == 1)
 		{
-			sctk_thread_mutex_unlock(&handle->lock);
+			mpc_thread_mutex_unlock(&handle->lock);
 		}
 		return NBC_OK;
 	}
 	if(use_progress_thread == 1)
 	{
-		sctk_thread_mutex_unlock(&handle->lock);
+		mpc_thread_mutex_unlock(&handle->lock);
 
 		/* wait on semaphore */
 		int szcomm;
 		MPI_Comm_size(handle->mycomm, &szcomm);
-		if(szcomm == 1) sctk_thread_sem_post(&handle->semid);
-		if(sctk_thread_sem_wait(&handle->semid) != 0) { perror("sctk_thread_sem_wait()"); }
-		if(sctk_thread_sem_destroy(&handle->semid) != 0) { perror("sctk_thread_sem_destroy()"); }
+		if(szcomm == 1) mpc_thread_sem_post(&handle->semid);
+		if(mpc_thread_sem_wait(&handle->semid) != 0) { perror("mpc_thread_sem_wait()"); }
+		if(mpc_thread_sem_destroy(&handle->semid) != 0) { perror("mpc_thread_sem_destroy()"); }
 	} 
 	else 
 	{
@@ -5066,11 +5066,11 @@ int NBC_Test(NBC_Handle *handle, int *flag, __UNUSED__ MPI_Status *status) {
 
   if (use_progress_thread == 1) {
     ret = NBC_CONTINUE;
-    sctk_thread_mutex_lock(&handle->lock);
+    mpc_thread_mutex_lock(&handle->lock);
     if (handle->schedule == NULL) {
       ret = NBC_OK;
     }
-    sctk_thread_mutex_unlock(&handle->lock);
+    mpc_thread_mutex_unlock(&handle->lock);
     //        printf("ProgressThread : ret = %d ------ NBC_OK: %d, NBC_CONTINUE:
     //        %d\n", ret, NBC_OK, NBC_CONTINUE); fflush(stdout);
   } else {
@@ -5663,13 +5663,13 @@ int NBC_Operation(void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype ty
  * *********************************************************************/
 
 
-int NBC_Finalize(__UNUSED__ sctk_thread_t * NBC_thread)
+int NBC_Finalize(__UNUSED__ mpc_thread_t * NBC_thread)
 {
   if(sctk_runtime_config_get()->modules.nbc.use_progress_thread == 1)
   {
   int ret = 0;
-//  ret = sctk_thread_join( *NBC_thread, NULL);
-  if(0 != ret) { printf("Error in sctk_thread_join() (%i)\n", ret); return NBC_OOR; }
+//  ret = mpc_thread_join( *NBC_thread, NULL);
+  if(0 != ret) { printf("Error in mpc_thread_join() (%i)\n", ret); return NBC_OOR; }
   }
   return NBC_OK;		
 }

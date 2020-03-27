@@ -28,7 +28,7 @@
 static sctk_ethread_sem_head_list __sctk_head_sem = SCTK_SEM_HEAD_INITIALIZER;
 
 static int
-sctk_ethread_mxn_once(sctk_thread_once_t *once_control,
+sctk_ethread_mxn_once(mpc_thread_once_t *once_control,
                       void (*init_routine)(void) )
 {
 	return __sctk_ethread_once(once_control, init_routine);
@@ -589,200 +589,200 @@ sctk_ethread_mxn_getattr_np(sctk_ethread_t th, sctk_ethread_attr_t *attr)
 void
 sctk_posix_ethread_mxn()
 {
-	sctk_ethread_check_size(sctk_ethread_t, sctk_thread_t);
-	sctk_ethread_check_size(sctk_thread_once_t, sctk_thread_once_t);
-	sctk_ethread_check_size(sctk_ethread_attr_t, sctk_thread_attr_t);
-	sctk_ethread_check_size(sctk_ethread_t, sctk_thread_t);
-	sctk_ethread_check_size(sctk_ethread_sem_t, sctk_thread_sem_t);
-	sctk_ethread_check_size(sctk_ethread_condattr_t, sctk_thread_condattr_t);
-	sctk_ethread_check_size(sctk_ethread_spinlock_t, sctk_thread_spinlock_t);
-	sctk_ethread_check_size(sctk_ethread_rwlock_t, sctk_thread_rwlock_t);
+	sctk_ethread_check_size(sctk_ethread_t, mpc_thread_t);
+	sctk_ethread_check_size(mpc_thread_once_t, mpc_thread_once_t);
+	sctk_ethread_check_size(sctk_ethread_attr_t, mpc_thread_attr_t);
+	sctk_ethread_check_size(sctk_ethread_t, mpc_thread_t);
+	sctk_ethread_check_size(sctk_ethread_sem_t, mpc_thread_sem_t);
+	sctk_ethread_check_size(sctk_ethread_condattr_t, mpc_thread_condattr_t);
+	sctk_ethread_check_size(sctk_ethread_spinlock_t, mpc_thread_spinlock_t);
+	sctk_ethread_check_size(sctk_ethread_rwlock_t, mpc_thread_rwlock_t);
 	sctk_ethread_check_size(sctk_ethread_rwlockattr_t,
-	                        sctk_thread_rwlockattr_t);
-	sctk_ethread_check_size(sctk_ethread_barrier_t, sctk_thread_barrier_t);
+	                        mpc_thread_rwlockattr_t);
+	sctk_ethread_check_size(sctk_ethread_barrier_t, mpc_thread_barrier_t);
 	sctk_ethread_check_size(sctk_ethread_barrierattr_t,
-	                        sctk_thread_barrierattr_t);
+	                        mpc_thread_barrierattr_t);
 	/*le pthread_once */
 	sctk_add_func_type(sctk_ethread_mxn, once,
-	                   int (*)(sctk_thread_once_t *, void (*)(void) ) );
+	                   int (*)(mpc_thread_once_t *, void (*)(void) ) );
 
 	/*les attributs des threads */
 	sctk_add_func_type(sctk_ethread_mxn, attr_setdetachstate,
-	                   int (*)(sctk_thread_attr_t *, int) );
+	                   int (*)(mpc_thread_attr_t *, int) );
 	sctk_add_func_type(sctk_ethread_mxn, attr_getdetachstate,
-	                   int (*)(const sctk_thread_attr_t *, int *) );
+	                   int (*)(const mpc_thread_attr_t *, int *) );
 	sctk_add_func_type(sctk_ethread_mxn, attr_setschedpolicy,
-	                   int (*)(sctk_thread_attr_t *, int) );
+	                   int (*)(mpc_thread_attr_t *, int) );
 	sctk_add_func_type(sctk_ethread_mxn, attr_getschedpolicy,
-	                   int (*)(const sctk_thread_attr_t *, int *) );
+	                   int (*)(const mpc_thread_attr_t *, int *) );
 	sctk_add_func_type(sctk_ethread_mxn, attr_setinheritsched,
-	                   int (*)(sctk_thread_attr_t *, int) );
+	                   int (*)(mpc_thread_attr_t *, int) );
 	sctk_add_func_type(sctk_ethread_mxn, attr_getinheritsched,
-	                   int (*)(const sctk_thread_attr_t *, int *) );
+	                   int (*)(const mpc_thread_attr_t *, int *) );
 	sctk_add_func_type(sctk_ethread_mxn, attr_getscope,
-	                   int (*)(const sctk_thread_attr_t *, int *) );
+	                   int (*)(const mpc_thread_attr_t *, int *) );
 	sctk_add_func_type(sctk_ethread_mxn, attr_setscope,
-	                   int (*)(sctk_thread_attr_t *, int) );
+	                   int (*)(mpc_thread_attr_t *, int) );
 	sctk_add_func_type(sctk_ethread_mxn, attr_getstackaddr,
-	                   int (*)(const sctk_thread_attr_t *, void **) );
+	                   int (*)(const mpc_thread_attr_t *, void **) );
 	sctk_add_func_type(sctk_ethread_mxn, attr_setstackaddr,
-	                   int (*)(sctk_thread_attr_t *, void *) );
+	                   int (*)(mpc_thread_attr_t *, void *) );
 	sctk_add_func_type(sctk_ethread_mxn, attr_getstacksize,
-	                   int (*)(const sctk_thread_attr_t *, size_t *) );
+	                   int (*)(const mpc_thread_attr_t *, size_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, attr_setstacksize,
-	                   int (*)(sctk_thread_attr_t *, size_t) );
+	                   int (*)(mpc_thread_attr_t *, size_t) );
 
 	sctk_add_func_type(sctk_ethread_mxn, attr_getstack,
-	                   int (*)(const sctk_thread_attr_t *, void **, size_t *) );
+	                   int (*)(const mpc_thread_attr_t *, void **, size_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, attr_setstack,
-	                   int (*)(sctk_thread_attr_t *, void *, size_t) );
+	                   int (*)(mpc_thread_attr_t *, void *, size_t) );
 
 	sctk_add_func_type(sctk_ethread_mxn, attr_setguardsize,
-	                   int (*)(sctk_thread_attr_t *, size_t) );
+	                   int (*)(mpc_thread_attr_t *, size_t) );
 	sctk_add_func_type(sctk_ethread_mxn, attr_getguardsize,
-	                   int (*)(const sctk_thread_attr_t *, size_t *) );
+	                   int (*)(const mpc_thread_attr_t *, size_t *) );
 
 	/*gestion du cancel */
 	sctk_add_func_type(sctk_ethread_mxn, testcancel, void (*)(void) );
-	sctk_add_func_type(sctk_ethread_mxn, cancel, int (*)(sctk_thread_t) );
+	sctk_add_func_type(sctk_ethread_mxn, cancel, int (*)(mpc_thread_t) );
 	sctk_add_func_type(sctk_ethread_mxn, setcancelstate, int (*)(int, int *) );
 	sctk_add_func_type(sctk_ethread_mxn, setcanceltype, int (*)(int, int *) );
 
 	/*pthread_detach */
-	sctk_add_func_type(sctk_ethread_mxn, detach, int (*)(sctk_thread_t) );
+	sctk_add_func_type(sctk_ethread_mxn, detach, int (*)(mpc_thread_t) );
 	/*les sémaphores */
 	sctk_add_func_type(sctk_ethread_mxn, sem_init,
-	                   int (*)(sctk_thread_sem_t *lock,
+	                   int (*)(mpc_thread_sem_t *lock,
 	                           int pshared, unsigned int value) );
 	sctk_add_func_type(sctk_ethread_mxn, sem_wait,
-	                   int (*)(sctk_thread_sem_t *) );
+	                   int (*)(mpc_thread_sem_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, sem_trywait,
-	                   int (*)(sctk_thread_sem_t *) );
+	                   int (*)(mpc_thread_sem_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, sem_post,
-	                   int (*)(sctk_thread_sem_t *) );
+	                   int (*)(mpc_thread_sem_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, sem_getvalue,
-	                   int (*)(sctk_thread_sem_t *, int *) );
+	                   int (*)(mpc_thread_sem_t *, int *) );
 	sctk_add_func_type(sctk_ethread_mxn, sem_destroy,
-	                   int (*)(sctk_thread_sem_t *) );
+	                   int (*)(mpc_thread_sem_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, sem_open,
-	                   sctk_thread_sem_t * (*)(const char *, int, ...) );
+	                   mpc_thread_sem_t * (*)(const char *, int, ...) );
 	sctk_add_func_type(sctk_ethread_mxn, sem_close,
-	                   int (*)(sctk_thread_sem_t *) );
+	                   int (*)(mpc_thread_sem_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, sem_unlink, int (*)(const char *) );
 
 	/*sched prio */
 	sctk_add_func_type(sctk_ethread_mxn, sched_get_priority_min, int (*)(int) );
 	sctk_add_func_type(sctk_ethread_mxn, sched_get_priority_max, int (*)(int) );
 	sctk_add_func_type(sctk_ethread_mxn, attr_setschedparam,
-	                   int (*)(sctk_thread_attr_t *restrict,
+	                   int (*)(mpc_thread_attr_t *restrict,
 	                           const struct sched_param *restrict) );
 
 
 	/*mutex attr */
 	sctk_add_func_type(sctk_ethread_mxn, mutexattr_init,
-	                   int (*)(sctk_thread_mutexattr_t *) );
+	                   int (*)(mpc_thread_mutexattr_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, mutexattr_destroy,
-	                   int (*)(sctk_thread_mutexattr_t *) );
+	                   int (*)(mpc_thread_mutexattr_t *) );
 
 	sctk_add_func_type(sctk_ethread_mxn, mutexattr_settype,
-	                   int (*)(sctk_thread_mutexattr_t *, int) );
+	                   int (*)(mpc_thread_mutexattr_t *, int) );
 	sctk_add_func_type(sctk_ethread_mxn, mutexattr_gettype,
-	                   int (*)(const sctk_thread_mutexattr_t *, int *) );
+	                   int (*)(const mpc_thread_mutexattr_t *, int *) );
 	sctk_add_func_type(sctk_ethread_mxn, mutexattr_setpshared,
-	                   int (*)(sctk_thread_mutexattr_t *, int) );
+	                   int (*)(mpc_thread_mutexattr_t *, int) );
 	sctk_add_func_type(sctk_ethread_mxn, mutexattr_getpshared,
-	                   int (*)(const sctk_thread_mutexattr_t *, int *) );
+	                   int (*)(const mpc_thread_mutexattr_t *, int *) );
 	sctk_add_func_type(sctk_ethread_mxn, mutex_destroy,
-	                   int (*)(sctk_thread_mutex_t *) );
+	                   int (*)(mpc_thread_mutex_t *) );
 
 	/*conditions */
 	sctk_add_func_type(sctk_ethread_mxn, cond_init,
-	                   int (*)(sctk_thread_cond_t *,
-	                           const sctk_thread_condattr_t *) );
+	                   int (*)(mpc_thread_cond_t *,
+	                           const mpc_thread_condattr_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, cond_destroy,
-	                   int (*)(sctk_thread_cond_t *) );
+	                   int (*)(mpc_thread_cond_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, cond_wait,
-	                   int (*)(sctk_thread_cond_t *, sctk_thread_mutex_t *) );
+	                   int (*)(mpc_thread_cond_t *, mpc_thread_mutex_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, cond_timedwait,
-	                   int (*)(sctk_thread_cond_t *, sctk_thread_mutex_t *,
+	                   int (*)(mpc_thread_cond_t *, mpc_thread_mutex_t *,
 	                           const struct timespec *) );
 	sctk_add_func_type(sctk_ethread_mxn, cond_broadcast,
-	                   int (*)(sctk_thread_cond_t *) );
+	                   int (*)(mpc_thread_cond_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, cond_signal,
-	                   int (*)(sctk_thread_cond_t *) );
+	                   int (*)(mpc_thread_cond_t *) );
 
 	/*attributs des conditions */
 	sctk_add_func_type(sctk_ethread_mxn, condattr_init,
-	                   int (*)(sctk_thread_condattr_t *) );
+	                   int (*)(mpc_thread_condattr_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, condattr_destroy,
-	                   int (*)(sctk_thread_condattr_t *) );
+	                   int (*)(mpc_thread_condattr_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, condattr_getpshared,
-	                   int (*)(const sctk_thread_condattr_t *, int *) );
+	                   int (*)(const mpc_thread_condattr_t *, int *) );
 	sctk_add_func_type(sctk_ethread_mxn, condattr_setpshared,
-	                   int (*)(sctk_thread_condattr_t *, int) );
+	                   int (*)(mpc_thread_condattr_t *, int) );
 	sctk_add_func_type(sctk_ethread_mxn, attr_destroy,
-	                   int (*)(sctk_thread_attr_t *) );
+	                   int (*)(mpc_thread_attr_t *) );
 
 
 
 	/*spinlock */
 	sctk_add_func_type(sctk_ethread_mxn, spin_init,
-	                   int (*)(sctk_thread_spinlock_t *, int) );
+	                   int (*)(mpc_thread_spinlock_t *, int) );
 	sctk_add_func_type(sctk_ethread_mxn, spin_destroy,
-	                   int (*)(sctk_thread_spinlock_t *) );
+	                   int (*)(mpc_thread_spinlock_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, spin_lock,
-	                   int (*)(sctk_thread_spinlock_t *) );
+	                   int (*)(mpc_thread_spinlock_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, spin_trylock,
-	                   int (*)(sctk_thread_spinlock_t *) );
+	                   int (*)(mpc_thread_spinlock_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, spin_unlock,
-	                   int (*)(sctk_thread_spinlock_t *) );
+	                   int (*)(mpc_thread_spinlock_t *) );
 
 
 
 	/*rwlock */
 	sctk_add_func_type(sctk_ethread_mxn, rwlock_init,
-	                   int (*)(sctk_thread_rwlock_t *,
-	                           const sctk_thread_rwlockattr_t *) );
+	                   int (*)(mpc_thread_rwlock_t *,
+	                           const mpc_thread_rwlockattr_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, rwlock_rdlock,
-	                   int (*)(sctk_thread_rwlock_t *) );
+	                   int (*)(mpc_thread_rwlock_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, rwlock_tryrdlock,
-	                   int (*)(sctk_thread_rwlock_t *) );
+	                   int (*)(mpc_thread_rwlock_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, rwlock_wrlock,
-	                   int (*)(sctk_thread_rwlock_t *) );
+	                   int (*)(mpc_thread_rwlock_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, rwlock_trywrlock,
-	                   int (*)(sctk_thread_rwlock_t *) );
+	                   int (*)(mpc_thread_rwlock_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, rwlock_unlock,
-	                   int (*)(sctk_thread_rwlock_t *) );
+	                   int (*)(mpc_thread_rwlock_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, rwlock_destroy,
-	                   int (*)(sctk_thread_rwlock_t *) );
+	                   int (*)(mpc_thread_rwlock_t *) );
 
 	/*rwlock attr */
 	sctk_add_func_type(sctk_ethread_mxn, rwlockattr_init,
-	                   int (*)(sctk_thread_rwlockattr_t *) );
+	                   int (*)(mpc_thread_rwlockattr_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, rwlockattr_destroy,
-	                   int (*)(sctk_thread_rwlockattr_t *) );
+	                   int (*)(mpc_thread_rwlockattr_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, rwlockattr_getpshared,
-	                   int (*)(const sctk_thread_rwlockattr_t *, int *) );
+	                   int (*)(const mpc_thread_rwlockattr_t *, int *) );
 	sctk_add_func_type(sctk_ethread_mxn, rwlockattr_setpshared,
-	                   int (*)(sctk_thread_rwlockattr_t *, int) );
+	                   int (*)(mpc_thread_rwlockattr_t *, int) );
 /*barrier*/
 	sctk_add_func_type(sctk_ethread_mxn, barrier_init,
-	                   int (*)(sctk_thread_barrier_t *,
-	                           const sctk_thread_barrierattr_t *, unsigned) );
+	                   int (*)(mpc_thread_barrier_t *,
+	                           const mpc_thread_barrierattr_t *, unsigned) );
 	sctk_add_func_type(sctk_ethread_mxn, barrier_wait,
-	                   int (*)(sctk_thread_barrier_t *) );
+	                   int (*)(mpc_thread_barrier_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, barrier_destroy,
-	                   int (*)(sctk_thread_barrier_t *) );
+	                   int (*)(mpc_thread_barrier_t *) );
 	/*barrier attr */
 	sctk_add_func_type(sctk_ethread_mxn, barrierattr_init,
-	                   int (*)(sctk_thread_barrierattr_t *) );
+	                   int (*)(mpc_thread_barrierattr_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, barrierattr_destroy,
-	                   int (*)(sctk_thread_barrierattr_t *) );
+	                   int (*)(mpc_thread_barrierattr_t *) );
 	sctk_add_func_type(sctk_ethread_mxn, barrierattr_getpshared,
-	                   int (*)(const sctk_thread_barrierattr_t *, int *) );
+	                   int (*)(const mpc_thread_barrierattr_t *, int *) );
 	sctk_add_func_type(sctk_ethread_mxn, barrierattr_setpshared,
-	                   int (*)(sctk_thread_barrierattr_t *, int) );
+	                   int (*)(mpc_thread_barrierattr_t *, int) );
 	/*non portable */
 	sctk_add_func_type(sctk_ethread_mxn, getattr_np,
-	                   int (*)(sctk_thread_t, sctk_thread_attr_t *) );
+	                   int (*)(mpc_thread_t, mpc_thread_attr_t *) );
 }

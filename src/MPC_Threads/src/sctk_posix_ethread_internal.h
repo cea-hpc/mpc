@@ -362,39 +362,39 @@ int __sctk_ethread_setcanceltype(sctk_ethread_per_thread_t *owner,
 
 /**pthread_once**/
 
-static inline int __sctk_ethread_once_initialized(sctk_thread_once_t *
+static inline int __sctk_ethread_once_initialized(mpc_thread_once_t *
                                                   once_control)
 {
-#ifdef sctk_thread_once_t_is_contiguous_int
-	return *( (sctk_thread_once_t *)once_control) == SCTK_THREAD_ONCE_INIT;
+#ifdef mpc_thread_once_t_is_contiguous_int
+	return *( (mpc_thread_once_t *)once_control) == SCTK_THREAD_ONCE_INIT;
 
 #else
-	sctk_thread_once_t once_init = SCTK_THREAD_ONCE_INIT;
+	mpc_thread_once_t once_init = SCTK_THREAD_ONCE_INIT;
 	return memcpy
 	               ( (void *)&once_init, (void *)once_control,
-	               sizeof(sctk_thread_once_t) ) == 0;
+	               sizeof(mpc_thread_once_t) ) == 0;
 #endif
 }
 
 static inline
-int __sctk_ethread_once(sctk_thread_once_t *once_control,
+int __sctk_ethread_once(mpc_thread_once_t *once_control,
                         void (*init_routine)(void) )
 {
-	static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+	static mpc_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
 
 	if(__sctk_ethread_once_initialized(once_control) )
 	{
-		sctk_thread_mutex_lock(&lock);
+		mpc_thread_mutex_lock(&lock);
 		if(__sctk_ethread_once_initialized(once_control) )
 		{
 			init_routine();
-#ifdef sctk_thread_once_t_is_contiguous_int
+#ifdef mpc_thread_once_t_is_contiguous_int
 			*once_control = !SCTK_THREAD_ONCE_INIT;
 #else
 			once_control[0] = SCTK_THREAD_ONCE_INIT;
 #endif
 		}
-		sctk_thread_mutex_unlock(&lock);
+		mpc_thread_mutex_unlock(&lock);
 	}
 	return 0;
 }
@@ -1379,7 +1379,7 @@ int __sctk_ethread_spin_destroy(sctk_ethread_spinlock_t *lock)
 /*on ne supporte pas le EDEADLOCK
  * La norme n'est pas precise a ce sujet
  */
-int sctk_thread_yield(void);
+int mpc_thread_yield(void);
 
 #define SCTK_SPIN_DELAY    10
 static inline int __sctk_ethread_spin_lock(sctk_ethread_spinlock_t *lock)
@@ -1394,7 +1394,7 @@ static inline int __sctk_ethread_spin_lock(sctk_ethread_spinlock_t *lock)
 			i--;
 			if(expect_false(i <= 0) )
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 				i = SCTK_SPIN_DELAY;
 			}
 		}

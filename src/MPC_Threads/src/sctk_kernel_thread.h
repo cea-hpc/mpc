@@ -46,7 +46,7 @@ extern "C"
 #define kthread_getspecific(key)                   (key)
 
 #else
-typedef sctk_thread_key_t   kthread_key_t;
+typedef mpc_thread_keys_t   kthread_key_t;
 
 int kthread_key_create(kthread_key_t *key,
                        void (*destr_function)(void *) );
@@ -55,7 +55,7 @@ int kthread_setspecific(kthread_key_t key, const void *pointer);
 void *kthread_getspecific(kthread_key_t key);
 #endif
 
-typedef sctk_thread_t   kthread_t;
+typedef mpc_thread_t   kthread_t;
 
 int kthread_create(kthread_t *thread, void *(*start_routine)(void *),
                    void *arg);

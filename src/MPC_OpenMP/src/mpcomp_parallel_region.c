@@ -154,7 +154,7 @@ void __mpcomp_internal_end_parallel_region( __UNUSED__ mpcomp_instance_t *instan
     /* Finish the half barrier by spinning on the root value */
     while (OPA_load_int(&(root->barrier)) !=
            root->barrier_num_threads) {
-      sctk_thread_yield();
+      mpc_thread_yield();
 #ifdef MPCOMP_TASK
 //      _mpc_task_schedule();
 #endif /* MPCOMP_TASK */

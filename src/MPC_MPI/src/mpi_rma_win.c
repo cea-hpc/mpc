@@ -95,7 +95,7 @@ struct mpc_MPI_Win *mpc_MPI_Win_progress_pool_wait() {
 
   while (1) {
     if (mpc_common_spinlock_trylock(&__pool_submit_lock)) {
-      sctk_thread_yield();
+      mpc_thread_yield();
       continue;
     }
 
@@ -115,7 +115,7 @@ struct mpc_MPI_Win *mpc_MPI_Win_progress_pool_wait() {
     if (ret)
       break;
 
-    sctk_thread_yield();
+    mpc_thread_yield();
   }
 
   return ret;
@@ -142,7 +142,7 @@ void *mpc_MPI_Win_progress_thread(void *pdesc) {
       }
 
       if (!did_work) {
-        sctk_thread_yield();
+        mpc_thread_yield();
       }
     }
 
@@ -246,13 +246,13 @@ struct mpc_MPI_Win *mpc_MPI_Win_init(int flavor, int model, MPI_Comm comm,
     if (used_pool_thread)
       break;
     else
-      sctk_thread_yield();
+      mpc_thread_yield();
   }
 
-  sctk_thread_yield();
+  mpc_thread_yield();
 
   if (!used_pool_thread) {
-    sctk_user_thread_create(&ret->progress_thread, NULL,
+    mpc_thread_core_thread_create(&ret->progress_thread, NULL,
                             mpc_MPI_Win_progress_thread, ret);
   }
 
@@ -663,7 +663,7 @@ int mpc_MPI_Win_free(MPI_Win *win) {
   desc->progress_thread_running = 0;
 
   while (desc->progress_thread_running != 99) {
-    sctk_thread_yield();
+    mpc_thread_yield();
   }
 #else
   PMPI_Barrier(desc->comm);

@@ -36,7 +36,7 @@ extern "C"
 /* Definition of a function for microthread */
 #define MPC_MICROTHREAD_FUNC_T (volatile void *(*) (void *))
 
-  extern sctk_thread_key_t sctk_microthread_key;
+  extern mpc_thread_keys_t sctk_microthread_key;
 
   typedef struct sctk_microthread_vp_s sctk_microthread_vp_t;
 

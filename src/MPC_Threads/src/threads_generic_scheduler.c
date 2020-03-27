@@ -609,7 +609,7 @@ sctk_multiple_queues_with_priority_dynamic_get_from_list()
 		char current_vp[5];
 		gethostname(hostname, 128);
 		strncpy(hostname2, hostname, 128);
-		sprintf(current_vp, "_%03d", sctk_thread_get_vp() );
+		sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
 		strcat(hostname2, current_vp);
 
 		FILE *fd = fopen(hostname2, "a");
@@ -1194,7 +1194,7 @@ void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_inc
 			char current_vp[5];
 			gethostname(hostname, 128);
 			strncpy(hostname2, hostname, 128);
-			sprintf(current_vp, "_%03d", sctk_thread_get_vp() );
+			sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
 			strcat(hostname2, current_vp);
 
 			FILE *fd = fopen(hostname2, "a");
@@ -1244,7 +1244,7 @@ void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_dec
 			char current_vp[5];
 			gethostname(hostname, 128);
 			strncpy(hostname2, hostname, 128);
-			sprintf(current_vp, "_%03d", sctk_thread_get_vp() );
+			sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
 			strcat(hostname2, current_vp);
 
 			FILE *fd = fopen(hostname2, "a");
@@ -1365,7 +1365,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list()
 		char current_vp[5];
 		gethostname(hostname, 128);
 		strncpy(hostname2, hostname, 128);
-		sprintf(current_vp, "_%03d", sctk_thread_get_vp() );
+		sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
 		strcat(hostname2, current_vp);
 
 		FILE *fd = fopen(hostname2, "a");
@@ -1476,7 +1476,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old()
 		char current_vp[5];
 		gethostname(hostname, 128);
 		strncpy(hostname2, hostname, 128);
-		sprintf(current_vp, "_%03d", sctk_thread_get_vp() );
+		sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
 		strcat(hostname2, current_vp);
 
 		FILE *fd = fopen(hostname2, "a");
@@ -1778,7 +1778,7 @@ static void sctk_multiple_queues_add_task_to_proceed(_mpc_threads_generic_task_t
 	//     char current_vp[5];
 	//     gethostname(hostname,128);
 	//     strncpy(hostname2,hostname,128);
-	//     sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+	//     sprintf(current_vp,"_%03d",mpc_topology_get_current_cpu ());
 	//     strcat(hostname2,current_vp);
 
 	//     FILE* fd=fopen(hostname2,"a");
@@ -2114,7 +2114,7 @@ static void sctk_generic_sched_yield_intern(
 		char current_vp[5];
 		gethostname(hostname, 128);
 		strncpy(hostname2, hostname, 128);
-		sprintf(current_vp, "_%03d", sctk_thread_get_vp() );
+		sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
 		strcat(hostname2, current_vp);
 
 		FILE *fd = fopen(hostname2, "a");
@@ -2173,7 +2173,7 @@ static void sctk_generic_sched_yield_intern(
 			char current_vp[5];
 			gethostname(hostname, 128);
 			strncpy(hostname2, hostname, 128);
-			sprintf(current_vp, "_%03d", sctk_thread_get_vp() );
+			sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
 			strcat(hostname2, current_vp);
 
 			FILE *fd = fopen(hostname2, "a");
@@ -2250,7 +2250,7 @@ retry:
 			char current_vp[5];
 			gethostname(hostname, 128);
 			strncpy(hostname2, hostname, 128);
-			sprintf(current_vp, "_%03d", sctk_thread_get_vp() );
+			sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
 			strcat(hostname2, current_vp);
 
 			FILE *fd = fopen(hostname2, "a");
@@ -2274,7 +2274,7 @@ quick_swap:
 	//    char current_vp[5];
 	//    gethostname(hostname,128);
 	//    strncpy(hostname2,hostname,128);
-	//    sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+	//    sprintf(current_vp,"_%03d",mpc_topology_get_current_cpu ());
 	//    strcat(hostname2,current_vp);
 
 	//    FILE* fd=fopen(hostname2,"a");
@@ -2305,7 +2305,7 @@ quick_swap:
 				char current_vp[5];
 				gethostname(hostname, 128);
 				strncpy(hostname2, hostname, 128);
-				sprintf(current_vp, "_%03d", sctk_thread_get_vp() );
+				sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
 				strcat(hostname2, current_vp);
 
 				FILE *fd = fopen(hostname2, "a");
@@ -2405,7 +2405,7 @@ quick_swap:
 			//    char current_vp[5];
 			//    gethostname(hostname,128);
 			//    strncpy(hostname2,hostname,128);
-			//    sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+			//    sprintf(current_vp,"_%03d",mpc_topology_get_current_cpu ());
 			//    strcat(hostname2,current_vp);
 
 			//    FILE* fd=fopen(hostname2,"a");
@@ -2518,7 +2518,7 @@ quick_swap:
 			char current_vp[5];
 			gethostname(hostname, 128);
 			strncpy(hostname2, hostname, 128);
-			sprintf(current_vp, "_%03d", sctk_thread_get_vp() );
+			sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
 			strcat(hostname2, current_vp);
 
 			FILE *fd = fopen(hostname2, "a");
@@ -2628,7 +2628,7 @@ static void sctk_generic_wake(_mpc_threads_generic_scheduler_t *sched)
 }
 
 static void
-sctk_generic_freeze_thread_on_vp(sctk_thread_mutex_t *lock, void **list)
+sctk_generic_freeze_thread_on_vp(mpc_thread_mutex_t *lock, void **list)
 {
 	_mpc_threads_generic_scheduler_t *        sched;
 	_mpc_threads_generic_scheduler_generic_t *s_list;
@@ -2639,7 +2639,7 @@ sctk_generic_freeze_thread_on_vp(sctk_thread_mutex_t *lock, void **list)
 	DL_APPEND(s_list, &(sched->generic) );
 	*list = s_list;
 
-	sctk_thread_mutex_unlock(lock);
+	mpc_thread_mutex_unlock(lock);
 	sctk_generic_thread_status(sched, _mpc_threads_generic_blocked);
 	sctk_generic_sched_yield(sched);
 }
@@ -2751,12 +2751,6 @@ static void sctk_generic_scheduler_init_pthread(_mpc_threads_generic_scheduler_t
 /* INIT                                */
 /***************************************/
 
-static int
-_mpc_threads_generic_scheduler_get_vp()
-{
-	return core_id;
-}
-
 static void *_mpc_threads_generic_polling_func_bootstrap(void *attr)
 {
 	return _mpc_threads_generic_polling_func(attr);
@@ -2773,8 +2767,6 @@ void _mpc_threads_generic_scheduler_init(char *thread_type, char *scheduler_type
 	{
 		_mpc_threads_generic_scheduler_use_binding = 0;
 	}
-
-	__sctk_ptr_thread_get_vp = _mpc_threads_generic_scheduler_get_vp;
 
 	sprintf(sched_type, "%s", scheduler_type);
 	core_id = 0;
@@ -2806,7 +2798,7 @@ void _mpc_threads_generic_scheduler_init(char *thread_type, char *scheduler_type
 		_mpc_threads_generic_sched_create            = sctk_generic_create;
 		_mpc_threads_generic_add_task = sctk_generic_add_task;
 		sctk_add_func_type(sctk_generic, freeze_thread_on_vp,
-		                   void (*)(sctk_thread_mutex_t *, void **) );
+		                   void (*)(mpc_thread_mutex_t *, void **) );
 		sctk_add_func(sctk_generic, wake_thread_on_vp);
 		_mpc_threads_generic_polling_func = sctk_generic_polling_func;
 		if(strcmp("pthread", thread_type) == 0)
@@ -2844,7 +2836,7 @@ void _mpc_threads_generic_scheduler_init(char *thread_type, char *scheduler_type
 		_mpc_threads_generic_sched_create = sctk_generic_create;
 		_mpc_threads_generic_add_task     = sctk_generic_add_task;
 		sctk_add_func_type(sctk_generic, freeze_thread_on_vp,
-		                   void (*)(sctk_thread_mutex_t *, void **) );
+		                   void (*)(mpc_thread_mutex_t *, void **) );
 		sctk_add_func(sctk_generic, wake_thread_on_vp);
 		_mpc_threads_generic_polling_func = sctk_generic_polling_func;
 		if(strcmp("pthread", thread_type) == 0)
@@ -2902,7 +2894,7 @@ void _mpc_threads_generic_scheduler_init(char *thread_type, char *scheduler_type
 		_mpc_threads_generic_sched_create            = sctk_generic_create;
 		_mpc_threads_generic_add_task = sctk_generic_add_task;
 		sctk_add_func_type(sctk_generic, freeze_thread_on_vp,
-		                   void (*)(sctk_thread_mutex_t *, void **) );
+		                   void (*)(mpc_thread_mutex_t *, void **) );
 		sctk_add_func(sctk_generic, wake_thread_on_vp);
 		_mpc_threads_generic_polling_func = sctk_generic_polling_func;
 		if(strcmp("pthread", thread_type) == 0)
@@ -2949,10 +2941,10 @@ void _mpc_threads_generic_scheduler_init(char *thread_type, char *scheduler_type
 void _mpc_threads_generic_polling_init(int vp_number)
 {
 	int i;
-	sctk_thread_attr_t attr;
-	sctk_thread_t      threadp;
+	mpc_thread_attr_t attr;
+	mpc_thread_t      threadp;
 
-	sctk_thread_attr_init(&attr);
+	mpc_thread_attr_init(&attr);
 
 	_mpc_threads_generic_attr_t *attr_intern;
 	attr_intern = (_mpc_threads_generic_attr_t *)&attr;
@@ -2977,9 +2969,9 @@ void _mpc_threads_generic_polling_init(int vp_number)
 	for(i = 0; i < vp_number; i++)
 	{
 		attr_intern->ptr->bind_to = i;
-		sctk_user_thread_create(&threadp, &attr, _mpc_threads_generic_polling_func_bootstrap, NULL);
+		mpc_thread_core_thread_create(&threadp, &attr, _mpc_threads_generic_polling_func_bootstrap, NULL);
 	}
-	sctk_thread_attr_destroy(&attr);
+	mpc_thread_attr_destroy(&attr);
 }
 
 void _mpc_threads_generic_scheduler_init_thread(_mpc_threads_generic_scheduler_t *sched,

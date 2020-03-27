@@ -65,7 +65,7 @@ static inline int mpc_common_get_task_rank(void)
 			return ret;
 		}
 
-		sctk_thread_data_t *data = sctk_thread_data_get();
+		sctk_thread_data_t *data = mpc_thread_data_get();
 
 		if(!data)
 		{
@@ -79,7 +79,7 @@ static inline int mpc_common_get_task_rank(void)
 	}
 	else
 	{
-		sctk_thread_data_t *data = sctk_thread_data_get();
+		sctk_thread_data_t *data = mpc_thread_data_get();
 
 		if(!data)
 		{
@@ -105,7 +105,7 @@ static inline int mpc_common_get_local_task_rank(void)
 #ifdef MPC_IN_PROCESS_MODE
 	return 0;
 #endif
-	sctk_thread_data_t *data = sctk_thread_data_get();
+	sctk_thread_data_t *data = mpc_thread_data_get();
 
 	if(!data)
 	{
@@ -123,12 +123,12 @@ static inline int mpc_common_get_local_task_count(void)
 #ifdef MPC_IN_PROCESS_MODE
 	return 1;
 #endif
-	return sctk_thread_get_current_local_tasks_nb();
+	return mpc_thread_get_current_local_tasks_nb();
 }
 
 static inline int mpc_thread_get_pu(void)
 {
-	sctk_thread_data_t *data = sctk_thread_data_get();
+	sctk_thread_data_t *data = mpc_thread_data_get();
 
 	if(!data)
 	{
@@ -140,7 +140,7 @@ static inline int mpc_thread_get_pu(void)
 
 static inline int mpc_common_get_thread_id(void)
 {
-	sctk_thread_data_t *data = sctk_thread_data_get();
+	sctk_thread_data_t *data = mpc_thread_data_get();
 
 	if(!data)
 	{

@@ -253,7 +253,7 @@ int MPIR_Get_node_id(MPI_Comm comm, int rank, int *id) {
 /** \brief MPICH says check wether the progress engine is blocked assuming
  * "YIELD"
  */
-void MPIR_Ext_cs_yield(void) { sctk_thread_yield(); }
+void MPIR_Ext_cs_yield(void) { mpc_thread_yield(); }
 
 /************************************************************************/
 /* Locks                                                                */

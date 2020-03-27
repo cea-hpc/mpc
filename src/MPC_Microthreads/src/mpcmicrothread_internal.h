@@ -62,7 +62,7 @@ extern "C"
     /* Queue of microthreads on this VP */
     sctk_microthread_op_t op_list[MAX_OP_LIST];
     /* Thread ID */
-    sctk_thread_t pid;
+    mpc_thread_t pid;
     /* Padding to force a right alignment (32B) on ia64 */
     char foo2[8];
 

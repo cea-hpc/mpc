@@ -62,8 +62,8 @@ sctk_Op_f sctk_get_common_function( mpc_lowcomm_datatype_t datatype, sctk_Op op 
 /*GLOBAL VARIABLES                                                      */
 /************************************************************************/
 
-sctk_thread_key_t mpc_mpi_cl_per_mpi_process_ctx;
-static sctk_thread_key_t sctk_func_key;
+mpc_thread_keys_t mpc_mpi_cl_per_mpi_process_ctx;
+static mpc_thread_keys_t sctk_func_key;
 static int __mpc_cl_buffering_enabled = 1;
 
 const _mpc_cl_group_t mpc_group_empty = {0, NULL};
@@ -75,8 +75,8 @@ mpc_lowcomm_request_t mpc_request_null;
  */
 void mpc_cl_init_thread_keys()
 {
-	sctk_thread_key_create( &sctk_func_key, NULL );
-	sctk_thread_key_create( &mpc_mpi_cl_per_mpi_process_ctx, NULL );
+	mpc_thread_keys_create( &sctk_func_key, NULL );
+	mpc_thread_keys_create( &mpc_mpi_cl_per_mpi_process_ctx, NULL );
 }
 
 /****************************
@@ -451,7 +451,7 @@ int __mpc_p_disguise_init( struct mpc_mpi_cl_per_mpi_process_ctx_s *my_specific 
 
 int MPCX_Disguise( mpc_lowcomm_communicator_t comm, int target_rank )
 {
-	sctk_thread_data_t *th = __sctk_thread_data_get( 1 );
+	sctk_thread_data_t *th = mpc_thread_data_get_disg( 1 );
 
 	if ( th->my_disguisement )
 	{
@@ -480,7 +480,7 @@ int MPCX_Disguise( mpc_lowcomm_communicator_t comm, int target_rank )
 
 int MPCX_Undisguise()
 {
-	sctk_thread_data_t *th = __sctk_thread_data_get( 1 );
+	sctk_thread_data_t *th = mpc_thread_data_get_disg( 1 );
 
 	if ( th->my_disguisement == NULL )
 	{
@@ -509,7 +509,7 @@ static inline void ___mpc_cl_per_mpi_process_ctx_init( mpc_mpi_cl_per_mpi_proces
 {
 	/* First empty the whole mpc_mpi_cl_per_mpi_process_ctx_t */
 	memset( tmp, 0, sizeof( mpc_mpi_cl_per_mpi_process_ctx_t ) );
-	tmp->thread_data = sctk_thread_data_get();
+	tmp->thread_data = mpc_thread_data_get();
 	tmp->progress_list = NULL;
 	/* Set task id */
 	tmp->task_id = mpc_common_get_task_rank();
@@ -561,7 +561,7 @@ static inline void __mpc_cl_per_mpi_process_ctx_init()
 {
 	/* Retrieve the task ctx pointer */
 	mpc_mpi_cl_per_mpi_process_ctx_t *tmp;
-	tmp = ( mpc_mpi_cl_per_mpi_process_ctx_t * ) sctk_thread_getspecific( mpc_mpi_cl_per_mpi_process_ctx );
+	tmp = ( mpc_mpi_cl_per_mpi_process_ctx_t * ) mpc_thread_getspecific( mpc_mpi_cl_per_mpi_process_ctx );
 	/* Make sure that it is not already present */
 	sctk_assert( tmp == NULL );
 	/* If not allocate a new mpc_mpi_cl_per_mpi_process_ctx_t */
@@ -569,7 +569,7 @@ static inline void __mpc_cl_per_mpi_process_ctx_init()
 	/* And initalize it */
 	___mpc_cl_per_mpi_process_ctx_init( tmp );
 	/* Set the mpc_mpi_cl_per_mpi_process_ctx key in thread CTX */
-	sctk_thread_setspecific( mpc_mpi_cl_per_mpi_process_ctx, tmp );
+	mpc_thread_setspecific( mpc_mpi_cl_per_mpi_process_ctx, tmp );
 	/* Initialize commond data-types */
 	_mpc_dt_init();
 	/* Register the task specific in the disguisemement array */
@@ -584,7 +584,7 @@ int mpc_mpi_cl_per_mpi_process_ctx_at_exit_register( void ( *function )( void ) 
 {
 	/* Retrieve the task ctx pointer */
 	mpc_mpi_cl_per_mpi_process_ctx_t *tmp;
-	tmp = ( mpc_mpi_cl_per_mpi_process_ctx_t * ) sctk_thread_getspecific( mpc_mpi_cl_per_mpi_process_ctx );
+	tmp = ( mpc_mpi_cl_per_mpi_process_ctx_t * ) mpc_thread_getspecific( mpc_mpi_cl_per_mpi_process_ctx );
 
 	if ( !tmp )
 	{
@@ -613,7 +613,7 @@ static inline void __mpc_cl_per_mpi_process_ctx_at_exit_trigger()
 {
 	/* Retrieve the task ctx pointer */
 	mpc_mpi_cl_per_mpi_process_ctx_t *tmp;
-	tmp = ( mpc_mpi_cl_per_mpi_process_ctx_t * ) sctk_thread_getspecific( mpc_mpi_cl_per_mpi_process_ctx );
+	tmp = ( mpc_mpi_cl_per_mpi_process_ctx_t * ) mpc_thread_getspecific( mpc_mpi_cl_per_mpi_process_ctx );
 
 	if ( !tmp )
 	{
@@ -646,7 +646,7 @@ static void __mpc_cl_per_mpi_process_ctx_release()
 {
 	/* Retrieve the ctx pointer */
 	mpc_mpi_cl_per_mpi_process_ctx_t *tmp;
-	tmp = ( mpc_mpi_cl_per_mpi_process_ctx_t * ) sctk_thread_getspecific( mpc_mpi_cl_per_mpi_process_ctx );
+	tmp = ( mpc_mpi_cl_per_mpi_process_ctx_t * ) mpc_thread_getspecific( mpc_mpi_cl_per_mpi_process_ctx );
 	/* Clear progress */
 	__mpc_cl_egreq_progress_release( tmp );
 	/* Free the type array */
@@ -656,7 +656,7 @@ static void __mpc_cl_per_mpi_process_ctx_release()
 	/* Call atexit handlers */
 	__mpc_cl_per_mpi_process_ctx_at_exit_trigger();
 	/* Remove the ctx reference in the host thread */
-	sctk_thread_setspecific( mpc_mpi_cl_per_mpi_process_ctx, NULL );
+	mpc_thread_setspecific( mpc_mpi_cl_per_mpi_process_ctx, NULL );
 	/* Release the task ctx */
 	___mpc_cl_per_mpi_process_ctx_release( tmp );
 	/* Free the task ctx */
@@ -668,7 +668,7 @@ static void __mpc_cl_per_mpi_process_ctx_release()
  */
 void mpc_mpi_cl_per_mpi_process_ctx_reinit( struct mpc_mpi_cl_per_mpi_process_ctx_s *tmp )
 {
-	sctk_thread_setspecific( mpc_mpi_cl_per_mpi_process_ctx, tmp );
+	mpc_thread_setspecific( mpc_mpi_cl_per_mpi_process_ctx, tmp );
 }
 
 /** \brief Retrieves current thread task specific context
@@ -684,7 +684,7 @@ static inline struct mpc_mpi_cl_per_mpi_process_ctx_s *_mpc_cl_per_mpi_process_c
 
 	if ( maybe_disguised )
 	{
-		sctk_thread_data_t *th = __sctk_thread_data_get( 1 );
+		sctk_thread_data_t *th = mpc_thread_data_get_disg( 1 );
 
 		if ( th->ctx_disguisement )
 		{
@@ -703,7 +703,7 @@ static inline struct mpc_mpi_cl_per_mpi_process_ctx_s *_mpc_cl_per_mpi_process_c
 		}
 	}
 
-	ret = ( struct mpc_mpi_cl_per_mpi_process_ctx_s * ) sctk_thread_getspecific( mpc_mpi_cl_per_mpi_process_ctx );
+	ret = ( struct mpc_mpi_cl_per_mpi_process_ctx_s * ) mpc_thread_getspecific( mpc_mpi_cl_per_mpi_process_ctx );
 	last_specific = ret;
 	last_rank = mpc_common_get_task_rank();
 	return ret;
@@ -2369,7 +2369,7 @@ int mpc_mpi_cl_get_activity( int nb_item, mpc_mpi_cl_activity_t *tab, double *pr
 	{
 		double tmp;
 		tab[i].virtual_cpuid = i;
-		tmp = sctk_thread_get_activity( i );
+		tmp = mpc_thread_getactivity( i );
 		tab[i].usage = tmp;
 		proc_act += tmp;
 		sctk_nodebug( "\t- cpu %d activity %f\n", tab[i].virtual_cpuid,
@@ -3055,7 +3055,7 @@ int _mpc_cl_waitallp( mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parr
 				MPC_ERROR_SUCESS();
 			}
 
-			sctk_thread_yield();
+			mpc_thread_yield();
 		}
 	}
 
@@ -3146,7 +3146,7 @@ int _mpc_cl_waitsome( mpc_lowcomm_msg_count_t incount, mpc_lowcomm_request_t arr
 		if ( done == 0 )
 		{
 			TODO( "wait_for_value_and_poll should be used here" )
-			sctk_thread_yield();
+			mpc_thread_yield();
 		}
 	}
 
@@ -3182,7 +3182,7 @@ int _mpc_cl_waitany( mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t array_
 		}
 
 		TODO( "wait_for_value_and_poll should be used here" )
-		sctk_thread_yield();
+		mpc_thread_yield();
 	}
 }
 
@@ -4530,14 +4530,14 @@ int _mpc_cl_checkpoint( mpc_lowcomm_checkpoint_state_t *state )
 		{
 			while ( OPA_load_int( &init_once ) != 2 )
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		}
 
 		/* ensure there won't be any overlapping betwen different MPC_Checkpoint() calls */
 		while ( OPA_load_int( &gen_current ) < task_generations[local_tasknum] )
 		{
-			sctk_thread_yield();
+			mpc_thread_yield();
 		}
 
 		/* if I'm the last task to process: do the work */
@@ -4580,7 +4580,7 @@ int _mpc_cl_checkpoint( mpc_lowcomm_checkpoint_state_t *state )
 			/* waiting tasks */
 			while ( OPA_load_int( &gen_acquire ) != 0 )
 			{
-				sctk_thread_yield();
+				mpc_thread_yield();
 			}
 		}
 
@@ -5086,7 +5086,7 @@ int mpc_cl_move_to( int process, int cpuid )
 		if ( proc != cpuid )
 		{
 			mpc_common_init_trigger("MPC_MPI Force Yield");
-			int ret = sctk_thread_proc_migration( cpuid );
+			int ret = mpc_thread_migrate_to_core( cpuid );
 
 			if( 0 <= ret )
 			{
@@ -5133,8 +5133,8 @@ static void __release_barrier()
 
 static void __set_thread_trampoline()
 {
-        mpc_thread_per_mpi_task_atexit_set_trampoline(mpc_mpi_cl_per_mpi_process_ctx_at_exit_register);
-        mpc_thread_get_mpi_process_ctx_set_trampoline(mpc_cl_per_mpi_process_ctx_get);
+        mpc_thread_mpi_task_atexit(mpc_mpi_cl_per_mpi_process_ctx_at_exit_register);
+        mpc_thread_mpi_ctx_set(mpc_cl_per_mpi_process_ctx_get);
 }
 
 static void __set_lowcomm_trampoline()

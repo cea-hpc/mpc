@@ -898,12 +898,12 @@ typedef union mpcomp_node_or_leaf_u
 typedef struct mpcomp_mvp_s
 {
 	sctk_mctx_t vp_context; /* Context including registers, stack pointer, ... */
-	sctk_thread_t pid;
+	mpc_thread_t pid;
 	/* -- MVP Thread specific informations --                   */
 	/** VP on which microVP is executed                         */
 	int thread_vp_idx;
 	/** MVP thread structure pointer                            */
-	sctk_thread_t thread_self;
+	mpc_thread_t thread_self;
 	/** MVP keep alive after fall asleep                        */
 	volatile int enable;
 	/** MVP spinning value in topology tree                     */

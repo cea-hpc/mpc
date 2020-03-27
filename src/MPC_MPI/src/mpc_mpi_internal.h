@@ -114,12 +114,12 @@ typedef struct mpc_mpi_data_s{
         int NBC_Pthread_nb; // number of elements in the list
                             // NBC_Pthread_handles
         struct sctk_list_elem *NBC_Pthread_handles;
-        sctk_thread_mutex_t list_handles_lock;
-        sctk_thread_t NBC_Pthread;
+        mpc_thread_mutex_t list_handles_lock;
+        mpc_thread_t NBC_Pthread;
 
         /****** NBC_INITIALIZE ******/
         int nbc_initialized_per_task;
-        sctk_thread_mutex_t nbc_initializer_lock;
+        mpc_thread_mutex_t nbc_initializer_lock;
 
 }mpc_mpi_data_t;
 
@@ -404,5 +404,5 @@ int __INTERNAL__PMPI_Scan (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
 int __INTERNAL__PMPI_Scatter (void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
 int __INTERNAL__PMPI_Scatterv (void *, int *, int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
 
-int NBC_Finalize(sctk_thread_t *NBC_thread);
+int NBC_Finalize(mpc_thread_t *NBC_thread);
 

@@ -238,7 +238,7 @@ static inline int __sctk_ethread_sigpending(sctk_ethread_per_thread_t *
 static inline void __sctk_ethread_exit(void *retval,
                                        sctk_ethread_per_thread_t *
                                        th_data);
-extern void sctk_thread_exit(void *__retval);
+extern void mpc_thread_exit(void *__retval);
 
 static inline void SCTK_THREAD_CHECK_SIGNALS(sctk_ethread_per_thread_t
                                              *restrict cur,
@@ -259,7 +259,7 @@ static inline void SCTK_THREAD_CHECK_SIGNALS(sctk_ethread_per_thread_t
 		      !cancel_type) )
 		{
 			cur->cancel_status = 0;
-			sctk_thread_exit( (void *)SCTK_THREAD_CANCELED);
+			mpc_thread_exit( (void *)SCTK_THREAD_CANCELED);
 		}
 	}
 }
@@ -281,7 +281,7 @@ static inline int __sctk_ethread_sigmask(sctk_ethread_per_thread_t *
 	return res;
 }
 
-int sctk_thread_yield(void);
+int mpc_thread_yield(void);
 
 static inline int __sctk_ethread_sigsuspend(sctk_ethread_per_thread_t *
                                             cur, sigset_t *set)
@@ -294,7 +294,7 @@ static inline int __sctk_ethread_sigsuspend(sctk_ethread_per_thread_t *
 	__sctk_ethread_sigmask(cur, SIG_SETMASK, set, &oldmask);
 	while(cur->nb_sig_proceeded == 0)
 	{
-		sctk_thread_yield();
+		mpc_thread_yield();
 		sigpending(&pending);
 		for(i = 0; i < SCTK_NSIG; i++)
 		{
@@ -347,7 +347,7 @@ static inline int __sctk_ethread_kill(sctk_ethread_per_thread_t *
 	return 0;
 }
 
-extern sctk_thread_key_t stck_task_data;
+extern mpc_thread_keys_t stck_task_data;
 
 #if defined(SCTK_USE_THREAD_DEBUG)
 void sctk_thread_print_stack_out(void);
@@ -480,7 +480,7 @@ int __sctk_ethread_sched_yield_vp(sctk_ethread_virtual_processor_t
 
 	if(expect_false(status == ethread_ready) )
 	{
-		sctk_ethread_set_status(cur, sctk_thread_sleep_status);
+		sctk_ethread_set_status(cur, mpc_thread_sleep_status);
 		if(cur->no_auto_enqueue == 0)
 		{
 			sctk_ethread_enqueue_task(vp, cur);
@@ -504,7 +504,7 @@ int __sctk_ethread_sched_yield_vp(sctk_ethread_virtual_processor_t
 			/*Old tasks */
 			sctk_ethread_get_old_tasks(vp);
 
-			sctk_ethread_set_status(cur, sctk_thread_sleep_status);
+			sctk_ethread_set_status(cur, mpc_thread_sleep_status);
 		}
 		break;
 
@@ -522,7 +522,7 @@ int __sctk_ethread_sched_yield_vp(sctk_ethread_virtual_processor_t
 			/*Old tasks */
 			sctk_ethread_get_old_tasks(vp);
 
-			sctk_ethread_set_status(cur, sctk_thread_sleep_status);
+			sctk_ethread_set_status(cur, mpc_thread_sleep_status);
 		}
 		break;
 
@@ -551,7 +551,7 @@ int __sctk_ethread_sched_yield_vp(sctk_ethread_virtual_processor_t
 				__sctk_dump_tls(vp->dump->tls_mem, name);
 				vp->dump = NULL;
 			}
-			sctk_ethread_set_status(cur, sctk_thread_sleep_status);
+			sctk_ethread_set_status(cur, mpc_thread_sleep_status);
 			vp->dump     = cur;
 			vp->to_check = 1;
 			if(cur->dump_for_migration == 0)
@@ -573,7 +573,7 @@ int __sctk_ethread_sched_yield_vp(sctk_ethread_virtual_processor_t
 				vp->migration = NULL;
 				sctk_nodebug("mirgation in yield done");
 			}
-			sctk_ethread_set_status(cur, sctk_thread_sleep_status);
+			sctk_ethread_set_status(cur, mpc_thread_sleep_status);
 			sctk_nodebug("ethread_migrate");
 			cur->status       = ethread_ready;
 			vp->migration     = cur;
@@ -651,7 +651,7 @@ __sctk_ethread_sched_yield_vp_idle(sctk_ethread_virtual_processor_t
 
 		if(expect_true(cur != new_task) )
 		{
-			sctk_ethread_set_status(cur, sctk_thread_sleep_status);
+			sctk_ethread_set_status(cur, mpc_thread_sleep_status);
 			SCTK_ACTIVITY_UP(vp);
 
 			vp->current = new_task;
@@ -864,7 +864,7 @@ static inline void __sctk_grab_zombie(sctk_ethread_virtual_processor_t
 		tls = tmp_pid->tls_mem;
 		sctk_free(tmp_pid);
 
-		if(tls != sctk_thread_tls)
+		if(tls != mpc_thread_tls)
 		{
 			__sctk_delete_thread_memory_area(tls);
 		}
@@ -1526,7 +1526,7 @@ static inline void __sctk_ethread_idle_task(void *arg)
 		}
 
 /* Idle function is called here to avoid deadlocks.
- * Actually, when calling sctk_thread_yield(), the polling
+ * Actually, when calling mpc_thread_yield(), the polling
  * function is not called. */
 #ifdef MPC_Message_Passing
     #ifdef __MIC__
@@ -1653,12 +1653,12 @@ static inline int __sctk_ethread_create(sctk_ethread_status_t status,
 		tmp = *( (sctk_thread_data_t *)arg);
 		if(tmp.tls == NULL)
 		{
-			tmp.tls = sctk_thread_tls;
+			tmp.tls = mpc_thread_tls;
 		}
 	}
 	else
 	{
-		tmp.tls = sctk_thread_tls;
+		tmp.tls = mpc_thread_tls;
 	}
 
 	th_data = (sctk_ethread_per_thread_t *)
@@ -1920,7 +1920,7 @@ __sctk_ethread_wake_thread_on_vp(sctk_ethread_virtual_processor_t *
 
 	if(list->vp->rank != vp->rank)
 	{
-		sctk_thread_proc_migration(list->vp->rank);
+		mpc_thread_migrate_to_core(list->vp->rank);
 	}
 
 	vp = list->vp;

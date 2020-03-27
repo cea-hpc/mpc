@@ -675,7 +675,7 @@ int __mpcomp_guided_loop_begin( long lb, long b, long incr, long chunk_size,
 	while ( OPA_load_int( &( t->instance->team->for_dyn_nb_threads_exited[index].i ) ) ==
 	        MPCOMP_NOWAIT_STOP_SYMBOL )
 	{
-		sctk_thread_yield();
+		mpc_thread_yield();
 	}
 
 	__mpcomp_loop_gen_infos_init( &( t->info.loop_infos ), lb, b, incr, chunk_size );
@@ -874,7 +874,7 @@ int __mpcomp_loop_ull_guided_begin( bool up, unsigned long long lb,
 	while ( OPA_load_int( &( t->instance->team->for_dyn_nb_threads_exited[index].i ) ) ==
 	        MPCOMP_NOWAIT_STOP_SYMBOL )
 	{
-		sctk_thread_yield();
+		mpc_thread_yield();
 	}
 
 	__mpcomp_loop_gen_infos_init_ull( &( t->info.loop_infos ), lb, b, incr, chunk_size );
@@ -1309,7 +1309,7 @@ void __mpcomp_dynamic_loop_init( struct mpcomp_thread_s *t, long lb, long b, lon
 	    OPA_load_int( &( team_info->for_dyn_nb_threads_exited[index].i ) ) ==
 	    MPCOMP_NOWAIT_STOP_SYMBOL )
 	{
-		sctk_thread_yield();
+		mpc_thread_yield();
 	}
 
 	/* Fill private info about the loop */
@@ -1768,7 +1768,7 @@ static inline void __loop_dyn_init_ull( struct mpcomp_thread_s *t, bool up,
 	            &( t->instance->team->for_dyn_nb_threads_exited[index].i ) ) ==
 	        MPCOMP_NOWAIT_STOP_SYMBOL )
 	{
-		sctk_thread_yield();
+		mpc_thread_yield();
 	}
 
 	/* Fill private info about the loop */
@@ -2653,14 +2653,14 @@ static inline void __loop_internal_ordered_begin( mpcomp_thread_t *t, mpcomp_loo
 	if( cur_ordered_iter == loop->lb ) 
     {
         while( OPA_cas_int( &( t->instance->team->next_ordered_offset_finalized ), 0, 1 ) )
-            sctk_thread_yield();
+            mpc_thread_yield();
 
         return;
     }
 
     /* Do we have to wait for the right iteration? */
     while( cur_ordered_iter != ( loop->lb + loop->incr * t->instance->team->next_ordered_offset ) )
-	    sctk_thread_yield();
+	    mpc_thread_yield();
 } 
 
 static inline void __loop_internal_ordered_begin_ull( mpcomp_thread_t *t, mpcomp_loop_gen_info_t* loop_infos )
@@ -2673,14 +2673,14 @@ static inline void __loop_internal_ordered_begin_ull( mpcomp_thread_t *t, mpcomp
     if( cur_ordered_iter == loop->lb )                   
     {
         while( OPA_cas_int( &( t->instance->team->next_ordered_offset_finalized), 0, 1 ) )
-            sctk_thread_yield();
+            mpc_thread_yield();
 
         return;
     }
 
     /* Do we have to wait for the right iteration? */
     while( cur_ordered_iter != ( loop->lb + loop->incr * t->instance->team->next_ordered_offset_ull ) )
-        sctk_thread_yield();
+        mpc_thread_yield();
 }
 
 void __mpcomp_ordered_begin( void )

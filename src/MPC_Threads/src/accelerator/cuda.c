@@ -89,7 +89,7 @@ static int sctk_accl_cuda_get_closest_device(int cpu_id) {
  * 	- 1 otherwise
  */
 void sctk_accl_cuda_init_context() {
-  sctk_thread_yield();
+  mpc_thread_yield();
   int num_devices = sctk_accl_get_nb_devices(), check_nb;
 
   /* if CUDA support is loaded but the current configuration does not provide a

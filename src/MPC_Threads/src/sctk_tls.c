@@ -229,3 +229,13 @@ size_t sctk_align_size_to_page(size_t size)
 	size += page_size - (size % page_size);
 	return size;
 }
+
+/* Used by GCC to bypass TLS destructor calls */
+int __cxa_thread_mpc_atexit(void (*dfunc)(void *), void *obj, __UNUSED__ void *dso_symbol)
+{
+	sctk_thread_data_t *th;
+
+	th = mpc_thread_data_get();
+	sctk_tls_dtors_add(&(th->dtors_head), obj, dfunc);
+	return 0;
+}
