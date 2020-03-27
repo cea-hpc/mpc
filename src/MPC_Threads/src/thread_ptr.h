@@ -24,8 +24,7 @@
 
 #include <stdlib.h>
 #include <signal.h>
-#include "sctk_debug.h"
-#include "mpc_threads_config.h"
+
 #include "mpc_thread.h"
 
 #ifdef __cplusplus
@@ -279,8 +278,8 @@ extern int (*__sctk_ptr_thread_sem_getvalue) (mpc_thread_sem_t *sem,
                                               int *sval);
 extern int (*__sctk_ptr_thread_sem_destroy) (mpc_thread_sem_t *sem);
 extern mpc_thread_sem_t *(*__sctk_ptr_thread_sem_open) (const char
-                                                         *name,
-                                                         int oflag, ...);
+                                                        *name,
+                                                        int oflag, ...);
 extern int (*__sctk_ptr_thread_sem_close) (mpc_thread_sem_t *sem);
 extern int (*__sctk_ptr_thread_sem_unlink) (const char *name);
 
@@ -334,8 +333,8 @@ extern int (*__sctk_ptr_thread_rwlock_wrlock) (mpc_thread_rwlock_t *
 
 extern mpc_thread_t (*__sctk_ptr_thread_self) (void);
 
-extern int           (*__sctk_ptr_thread_setcancelstate) (int __state,
-                                                          int *__oldstate);
+extern int (*__sctk_ptr_thread_setcancelstate) (int __state,
+                                                int *__oldstate);
 extern int (*__sctk_ptr_thread_setcanceltype) (int __type, int *__oldtype);
 extern int (*__sctk_ptr_thread_setconcurrency) (int __level);
 extern int (*__sctk_ptr_thread_setschedparam) (mpc_thread_t
@@ -388,9 +387,9 @@ extern void (*__sctk_ptr_thread_kill_other_threads_np) (void);
 extern int (*__sctk_ptr_thread_futex)(void *addr1, int op, int val1,
                                       struct timespec *timeout, void *addr2, int val3);
 
-#define sctk_add_func(newlib, func)             __sctk_ptr_thread_ ## func = newlib ## _ ## func
-#define sctk_add_func_type(newlib, func, t)     __sctk_ptr_thread_ ## func = (t)newlib ## _ ## func
-#define sctk_remove_func(func)                  __sctk_ptr_thread_ ## func = sctk_gen_thread_ ## func
+#define sctk_add_func(newlib, func)              __sctk_ptr_thread_ ## func = newlib ## _ ## func
+#define sctk_add_func_type(newlib, func, t)      __sctk_ptr_thread_ ## func = (t)newlib ## _ ## func
+#define sctk_remove_func(func)                   __sctk_ptr_thread_ ## func = sctk_gen_thread_ ## func
 
 #define _mpc_threads_generic_check_size(a, b)    sctk_size_checking(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
 

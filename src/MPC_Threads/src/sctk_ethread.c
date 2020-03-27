@@ -27,7 +27,7 @@
 #include "sctk_ethread.h"
 #include "sctk_ethread_internal.h"
 #include "sctk_alloc.h"
-#include "sctk_internal_thread.h"
+#include "thread_ptr.h"
 #include "sctk_context.h"
 #include "sctk_posix_ethread.h"
 #include "mpc_topology.h"

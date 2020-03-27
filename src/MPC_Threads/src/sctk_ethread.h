@@ -31,7 +31,7 @@
 
 #include "sctk_ethread.h"
 #include "sctk_kernel_thread.h"
-#include "sctk_internal_thread.h"
+
 #include "sctk_context.h"
 #include "mpc_common_spinlock.h"
 #include "sctk_alloc.h"

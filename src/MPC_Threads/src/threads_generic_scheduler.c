@@ -25,7 +25,7 @@
 #include <mpc_arch.h>
 
 #include "sctk_debug.h"
-#include "sctk_internal_thread.h"
+#include "thread_ptr.h"
 #include "sctk_kernel_thread.h"
 #include "mpc_common_spinlock.h"
 #include "threads_generic.h"

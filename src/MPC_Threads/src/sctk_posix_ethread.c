@@ -21,7 +21,7 @@
 /* ######################################################################## */
 #include "sctk_posix_ethread.h"
 #include "sctk_posix_ethread_internal.h"
-#include "sctk_internal_thread.h"
+#include "thread_ptr.h"
 #include "sctk_posix_ethread_np.h"
 
 static sctk_ethread_sem_head_list __sctk_head_sem = SCTK_SEM_HEAD_INITIALIZER;
@@ -649,7 +649,7 @@ sctk_posix_ethread()
 	/*pthread_detach */
 	sctk_add_func_type(sctk_ethread, detach, int (*)(mpc_thread_t) );
 
-	/*les sémaphores */
+	/*les sï¿½maphores */
 	sctk_add_func_type(sctk_ethread, sem_init,
 	                   int (*)(mpc_thread_sem_t *lock,
 	                           int pshared, unsigned int value) );

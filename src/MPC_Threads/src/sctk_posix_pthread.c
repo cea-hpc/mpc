@@ -26,7 +26,7 @@
 #include <semaphore.h>
 
 #include "sctk_posix_pthread.h"
-#include "sctk_internal_thread.h"
+#include "thread_ptr.h"
 #include "sctk_posix_ethread_np.h"
 
 void

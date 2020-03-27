@@ -28,7 +28,7 @@
 #include "sctk_debug.h"
 #include "mpc_thread.h"
 #include "mpc_common_spinlock.h"
-#include "sctk_internal_thread.h"
+#include "thread_ptr.h"
 #include "sctk_context.h"
 #include <utlist.h>
 #include <semaphore.h>

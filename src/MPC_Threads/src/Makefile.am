@@ -15,7 +15,7 @@ endif
 
 lib_LTLIBRARIES = libmpcthread.la
 
-libmpcthread_la_SOURCES = sctk_context.c sctk_ethread.c sctk_ethread_mxn.c sctk_futex.c sctk_gen_thread.c
+libmpcthread_la_SOURCES = sctk_context.c sctk_ethread.c sctk_ethread_mxn.c sctk_futex.c thread_ptr.c
 libmpcthread_la_SOURCES += sctk_kernel_thread.c sctk_posix_ethread.c sctk_posix_ethread_mxn.c sctk_posix_pthread.c
 libmpcthread_la_SOURCES += sctk_pthread.c thread.c  threads_generic.c 
 libmpcthread_la_SOURCES += threads_generic_scheduler.c sctk_tls.c

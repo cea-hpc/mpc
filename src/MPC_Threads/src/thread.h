@@ -62,16 +62,12 @@ int mpc_thread_dump_restore(mpc_thread_t thread, char *type, int vp);
 double mpc_thread_getactivity(int i);
 
 
-void sctk_gen_thread_init(void);
 void sctk_pthread_thread_init(void);
 void sctk_ethread_thread_init(void);
 void sctk_ethread_mxn_thread_init(void);
 void sctk_ethread_ng_thread_init(void);
 void sctk_ethread_mxn_ng_thread_init(void);
 void sctk_pthread_ng_thread_init(void);
-
-
-void sctk_thread_init(void);
 
 int mpc_thread_getattr_np(mpc_thread_t th, mpc_thread_attr_t *attr);
 int mpc_thread_usleep(unsigned int useconds);

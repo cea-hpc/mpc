@@ -28,7 +28,7 @@
 #include <semaphore.h>
 
 #include "sctk_posix_pthread.h"
-#include "sctk_internal_thread.h"
+
 #include "sctk_posix_ethread_np.h"
 
 #ifdef __cplusplus

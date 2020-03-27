@@ -153,7 +153,7 @@ am__v_lt_1 =
 @MPC_CUDA_ENABLED_TRUE@	$(libdir)
 libmpcthread_la_DEPENDENCIES = ../../MPC_Launch/src/libmpclaunch.la
 am__libmpcthread_la_SOURCES_DIST = sctk_context.c sctk_ethread.c \
-	sctk_ethread_mxn.c sctk_futex.c sctk_gen_thread.c \
+	sctk_ethread_mxn.c sctk_futex.c thread_ptr.c \
 	sctk_kernel_thread.c sctk_posix_ethread.c \
 	sctk_posix_ethread_mxn.c sctk_posix_pthread.c sctk_pthread.c \
 	thread.c threads_generic.c threads_generic_scheduler.c \
@@ -162,7 +162,7 @@ am__libmpcthread_la_SOURCES_DIST = sctk_context.c sctk_ethread.c \
 @MPC_CUDA_ENABLED_TRUE@am__objects_1 = ./accelerator/cuda.lo \
 @MPC_CUDA_ENABLED_TRUE@	./accelerator/cuda_wrap.lo
 am_libmpcthread_la_OBJECTS = sctk_context.lo sctk_ethread.lo \
-	sctk_ethread_mxn.lo sctk_futex.lo sctk_gen_thread.lo \
+	sctk_ethread_mxn.lo sctk_futex.lo thread_ptr.lo \
 	sctk_kernel_thread.lo sctk_posix_ethread.lo \
 	sctk_posix_ethread_mxn.lo sctk_posix_pthread.lo \
 	sctk_pthread.lo thread.lo threads_generic.lo \
@@ -482,7 +482,7 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	$(am__append_2)
 lib_LTLIBRARIES = libmpcthread.la $(am__append_4)
 libmpcthread_la_SOURCES = sctk_context.c sctk_ethread.c \
-	sctk_ethread_mxn.c sctk_futex.c sctk_gen_thread.c \
+	sctk_ethread_mxn.c sctk_futex.c thread_ptr.c \
 	sctk_kernel_thread.c sctk_posix_ethread.c \
 	sctk_posix_ethread_mxn.c sctk_posix_pthread.c sctk_pthread.c \
 	thread.c threads_generic.c threads_generic_scheduler.c \
@@ -599,7 +599,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_ethread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_ethread_mxn.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_futex.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_gen_thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_kernel_thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_posix_ethread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_posix_ethread_mxn.Plo@am__quote@
@@ -607,6 +606,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_pthread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_tls.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thread.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thread_ptr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/threads_generic.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/threads_generic_scheduler.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./accelerator/$(DEPDIR)/cuda.Plo@am__quote@
