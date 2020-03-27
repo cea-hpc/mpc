@@ -696,13 +696,18 @@ cat <<EOF >> include/mpc_main.h
 	#define atexit mpc_atexit
 #endif
 
+#if __GNUC__ >= 4
+	#define FUNC_PUBLIC __attribute__((visibility ("default")))
+#else
+	#define FUNC_PUBLIC
+#endif
 
 #ifndef MPC_NO_AUTO_MAIN_REDEF
 #undef main
 #ifdef __cplusplus
-#define main(...) long mpc_user_main_dummy__ (); extern "C" int mpc_user_main__(__VA_ARGS__)
+#define main(...) long mpc_user_main_dummy__ (); extern "C" int FUNC_PUBLIC mpc_user_main__(__VA_ARGS__)
 #else
-#define main(...) mpc_user_main__(__VA_ARGS__)
+#define main(...) FUNC_PUBLIC mpc_user_main__(__VA_ARGS__)
 #if defined(MPC_TLS_DLWRAP) && defined(MPC_USE_EXTLS)
 #define dlopen extls_dlopen
 #define dlsym extls_dlsym
