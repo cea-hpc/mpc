@@ -1189,8 +1189,8 @@ RDMA_OP_def(sctk_wchar_t, , )
     mpc_lowcomm_rdma_window_fetch_and_op_operate_unsignedlonglong_(op, add, src, dest);
     return;
   case RDMA_TYPE_UNSIGNED_SHORT:
-    return;
     mpc_lowcomm_rdma_window_fetch_and_op_operate_unsignedshort_(op, add, src, dest);
+    return;
   case RDMA_TYPE_WCHAR:
     mpc_lowcomm_rdma_window_fetch_and_op_operate_sctk_wchar_t_(op, add, src, dest);
     return;

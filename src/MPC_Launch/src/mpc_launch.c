@@ -169,7 +169,7 @@ static inline int __parse_arg( char *arg, void ( *action )( void ), char *passed
 
 char * ___extract_argument_string_value(char * arg, char * passed_arg)
 {
-    int len = strlen(arg);
+    size_t len = strlen(arg);
 
     if( ! strncmp( passed_arg, arg, len ) )
     {
@@ -388,7 +388,7 @@ static void *__mpc_mpi_task_start_function( void *parg )
 #ifndef SCTK_LIB_MODE
     mpc_common_init_trigger( "Starting Main" );
 
-    CALL_MAIN(mpc_user_main__, duplicate_args->argc, duplicate_args->argv);
+    retcode = CALL_MAIN(mpc_user_main__, duplicate_args->argc, duplicate_args->argv);
 
     /* We need to handle the case when MPC's mains do not return the
        same value we then apply the following rules:
@@ -509,7 +509,7 @@ static void __unpack_arguments()
 
     if ( sctk_argument != NULL )
     {
-        char *str1, *str2, *token;
+        char *str1, *token;
         char *saveptr;
         int j;
 
@@ -566,7 +566,7 @@ static void __topology_init()
     {
         if ( mpc_common_get_flags()->process_number > 1 )
         {
-            int cpu_detected = mpc_topology_get_pu_count();
+            unsigned int cpu_detected = mpc_topology_get_pu_count();
 
             if ( cpu_detected < mpc_common_get_flags()->processor_number )
             {

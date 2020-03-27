@@ -5,118 +5,142 @@
 
 #include <mpc_config.h>
 
-void display_help() {
-  printf("mpirun MPC\n"
-         "USAGE: mpirun [OPTION]... [PROGRAM]...\n\n"
-         "\t-n|-np\t\tNumber of processes to launch\n"
-         "\t-c\t\tNumber of corees per process\n"
-         "\t--verbose\tEnable debug messages.\n"
-         "\n");
+void display_help()
+{
+	printf("mpirun MPC\n"
+	       "USAGE: mpirun [OPTION]... [PROGRAM]...\n\n"
+	       "\t-n|-np\t\tNumber of processes to launch\n"
+	       "\t-c\t\tNumber of corees per process\n"
+	       "\t--verbose\tEnable debug messages.\n"
+	       "\n");
 }
+
+#define COMMAND_SIZE 4*1024
 
 static int verbose_flag = 0;
 
-int main(int argc, char **argv) {
-  int nb_process = 0;
-  int nb_cores = 0;
-  int c;
-  int done = 0;
+int main(int argc, char **argv)
+{
+	int nb_process = 0;
+	int nb_cores   = 0;
+	int c;
+	int done = 0;
 
-  int i;
+	int i;
 
-  for (i = 1; i < argc; i++) {
-    if (!strcmp(argv[i], "-np")) {
-      argv[i] = "-n";
-    }
-  }
+	for(i = 1; i < argc; i++)
+	{
+		if(!strcmp(argv[i], "-np") )
+		{
+			argv[i] = "-n";
+		}
+	}
 
-  while (1) {
-    static struct option long_options[] = {
-        /* These options set a flag. */
-        {"verbose", no_argument, &verbose_flag, 1},
-        {"brief", no_argument, &verbose_flag, 0},
-        {"np", required_argument, 0, 'n'},
-        {"cores", required_argument, 0, 'c'},
-        {"help", no_argument, 0, 'h'},
-        {0, 0, 0, 0}};
-    /* getopt_long stores the option index here. */
-    int option_index = 0;
+	while(1)
+	{
+		static struct option long_options[] =
+		{
+			/* These options set a flag. */
+			{ "verbose", no_argument,       &verbose_flag, 1   },
+			{ "brief",   no_argument,       &verbose_flag, 0   },
+			{ "np",      required_argument, 0,             'n' },
+			{ "cores",   required_argument, 0,             'c' },
+			{ "help",    no_argument,       0,             'h' },
+			{ 0,         0,                 0,             0   }
+		};
+		/* getopt_long stores the option index here. */
+		int option_index = 0;
 
-    c = getopt_long(argc, argv, "+hn:c:", long_options, &option_index);
+		c = getopt_long(argc, argv, "+hn:c:", long_options, &option_index);
 
-    /* Detect the end of the options. */
-    if (c == -1)
-      break;
+		/* Detect the end of the options. */
+		if(c == -1)
+		{
+			break;
+		}
 
-    switch (c) {
-    case 'n':
-      nb_process = atoi(optarg);
-      break;
-    case 'c':
-      nb_cores = atoi(optarg);
-      break;
-    case 'h':
-      display_help();
-      return 0;
-      break;
-    default:
-      done = 1;
-      break;
-    }
+		switch(c)
+		{
+			case 'n':
+				nb_process = atoi(optarg);
+				break;
 
-    /* Encountered unknown arg */
-    if (done)
-      break;
-  }
+			case 'c':
+				nb_cores = atoi(optarg);
+				break;
 
-  char *command = malloc(4 * 1024 * sizeof(char));
+			case 'h':
+				display_help();
+				return 0;
 
-  if (!command) {
-    perror("malloc");
-    return 1;
-  }
+				break;
 
-  command[0] = '\0';
+			default:
+				done = 1;
+				break;
+		}
 
-  char tmp[128];
+		/* Encountered unknown arg */
+		if(done)
+		{
+			break;
+		}
+	}
 
-  strcat(command, MPC_PREFIX_PATH"/bin/mpcrun ");
+	char *command = malloc(COMMAND_SIZE * sizeof(char) );
 
-  char* nodes = getenv("SLURM_JOB_NUM_NODES");
+	if(!command)
+	{
+		perror("malloc");
+		return 1;
+	}
 
-  if(nodes)
-  {
-    snprintf(tmp, 128, " -N=%s ", nodes);
-    strcat(command, tmp);
-  }
+	command[0] = '\0';
 
-  if (0 < nb_process) {
-    snprintf(tmp, 128, " -p=%d ", nb_process);
-    strcat(command, tmp);
-  }
+	char tmp[128];
 
-  if (0 < nb_process) {
-    snprintf(tmp, 128, "-n=%d ", nb_process);
-    strcat(command, tmp);
-  }
+	strncat(command, MPC_PREFIX_PATH "/bin/mpcrun ", COMMAND_SIZE);
 
-  if (0 < nb_cores) {
-    snprintf(tmp, 128, "-c=%d ", nb_cores);
-    strcat(command, tmp);
-  }
+	char *nodes = getenv("SLURM_JOB_NUM_NODES");
 
-  if (verbose_flag) {
-    strcat(command, " -vvv");
-  }
+	if(nodes)
+	{
+		snprintf(tmp, 128, " -N=%s ", nodes);
+		strncat(command, tmp, COMMAND_SIZE);
+	}
 
-  for (i = optind; i < argc; i++) {
-    strcat(command, " ");
-    strcat(command, argv[i]);
-  }
+	if(0 < nb_process)
+	{
+		snprintf(tmp, 128, " -p=%d ", nb_process);
+		strncat(command, tmp, COMMAND_SIZE);
+	}
 
-  int ret = system(command);
+	if(0 < nb_process)
+	{
+		snprintf(tmp, 128, "-n=%d ", nb_process);
+		strncat(command, tmp, COMMAND_SIZE);
+	}
 
-  free(command);
+	if(0 < nb_cores)
+	{
+		snprintf(tmp, 128, "-c=%d ", nb_cores);
+		strncat(command, tmp, COMMAND_SIZE);
+	}
 
-  return ret;
+	if(verbose_flag)
+	{
+		strncat(command, " -vvv", COMMAND_SIZE);
+	}
+
+	for(i = optind; i < argc; i++)
+	{
+		strncat(command, " ",COMMAND_SIZE);
+		strncat(command, argv[i], COMMAND_SIZE);
+	}
+
+	int ret = system(command);
+
+	free(command);
+
+	return ret;
 }

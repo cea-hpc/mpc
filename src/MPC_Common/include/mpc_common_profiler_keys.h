@@ -1,15 +1,6 @@
-# 1 "./mpc_common_profiler_keys.h"
-# 1 "<built-in>"
-# 1 "<command-line>"
-# 31 "<command-line>"
-# 1 "/usr/include/stdc-predef.h" 1 3 4
-# 32 "<command-line>" 2
-# 1 "./mpc_common_profiler_keys.h"
-# 32 "./mpc_common_profiler_keys.h"
+
 PROBE(MPI,NO_PARENT,MPI Interface)
 
-
-# 1 "./sctk_profiler_keys_mpi.h" 1
 PROBE(MPI_POINT_TO_POINT,MPI,MPI point to point)
 
 PROBE(MPI_Send,MPI_POINT_TO_POINT,MPI_Send)

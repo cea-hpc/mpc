@@ -22,6 +22,8 @@
 #ifndef __SCTK_PTHREAD_COMPATIBLE_H_
 #define __SCTK_PTHREAD_COMPATIBLE_H_
 
+#include <mpc_common_spinlock.h>
+
 /*    _
  *   / \
  *  / | \        **************************************

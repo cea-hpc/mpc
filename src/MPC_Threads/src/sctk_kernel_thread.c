@@ -35,14 +35,12 @@
 
 #ifndef SCTK_KERNEL_THREAD_USE_TLS
 
-int
-kthread_key_create(kthread_key_t *key, void (*destr_function)(void *) )
+ int kthread_key_create(kthread_key_t *key, void (*destr_function)(void *) )
 {
 	return pthread_key_create( (pthread_key_t *)key, destr_function);
 }
 
-int
-kthread_key_delete(kthread_key_t key)
+ int kthread_key_delete(kthread_key_t key)
 {
 	pthread_key_t  keya;
 	pthread_key_t *keyp;
@@ -52,8 +50,7 @@ kthread_key_delete(kthread_key_t key)
 	return pthread_key_delete(keya);
 }
 
-int
-kthread_setspecific(kthread_key_t key, const void *pointer)
+ int kthread_setspecific(kthread_key_t key, const void *pointer)
 {
 	pthread_key_t  keya;
 	pthread_key_t *keyp;
@@ -63,8 +60,7 @@ kthread_setspecific(kthread_key_t key, const void *pointer)
 	return pthread_setspecific(keya, pointer);
 }
 
-void *
-kthread_getspecific(kthread_key_t key)
+void * kthread_getspecific(kthread_key_t key)
 {
 	pthread_key_t  keya;
 	pthread_key_t *keyp;
@@ -74,9 +70,6 @@ kthread_getspecific(kthread_key_t key)
 	return pthread_getspecific(keya);
 }
 #endif /* SCTK_KERNEL_THREAD_USE_TLS */
-
-TODO("Move kthread_stack_size_default to the configuration")
-#define kthread_stack_size_default    (10 * 1024 * 1024)
 
 typedef void *(*start_routine_t) (void *);
 
@@ -93,8 +86,7 @@ typedef struct kthread_create_start_s
 static mpc_common_spinlock_t            lock = { 0 };
 static volatile kthread_create_start_t *list = NULL;
 
-static void *
-kthread_create_start_routine(void *t_arg)
+static void * kthread_create_start_routine(void *t_arg)
 {
 	kthread_create_start_t slot;
 
@@ -148,8 +140,7 @@ kthread_create_start_routine(void *t_arg)
 	return NULL;
 }
 
-int
-kthread_create(kthread_t *thread, void *(*start_routine)(void *),
+ int kthread_create(kthread_t *thread, void *(*start_routine)(void *),
                void *arg)
 {
 	kthread_create_start_t *found = NULL;
@@ -188,13 +179,8 @@ kthread_create(kthread_t *thread, void *(*start_routine)(void *),
 		kthread_create_start_t tmp;
 		sctk_nodebug("Create new kernel thread");
 
-		res = pthread_attr_init(&attr);
-
-		sctk_nodebug("kthread_create: value returned by attr_init %d", res);
-
-		res = pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
-
-		sctk_nodebug("kthread_create: value returned by attr_setscope %d", res);
+		pthread_attr_init(&attr);
+		pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
 
 //#warning "Move it to the XML configuration file"
 		char *env;
@@ -202,31 +188,18 @@ kthread_create(kthread_t *thread, void *(*start_routine)(void *),
 		{
 			kthread_stack_size = atoll(env) /* + sctk_extls_size() */;
 		}
-		else
-		{
-			kthread_stack_size = kthread_stack_size_default /* + sctk_extls_size() */;
-		}
 
 #ifdef PTHREAD_STACK_MIN
 		if(PTHREAD_STACK_MIN > kthread_stack_size)
 		{
-			res = pthread_attr_setstacksize(&attr, PTHREAD_STACK_MIN);
-
-			sctk_nodebug("kthread_create: value returned by attr_setstacksize(PTHREAD %d) %d",
-			             PTHREAD_STACK_MIN, res);
+			pthread_attr_setstacksize(&attr, PTHREAD_STACK_MIN);
 		}
 		else
 		{
-			res = pthread_attr_setstacksize(&attr, kthread_stack_size);
-
-			sctk_nodebug("kthread_create: value returned by attr_setstacksize(KTHREAD %d) %d",
-			             kthread_stack_size, res);
+			pthread_attr_setstacksize(&attr, kthread_stack_size);
 		}
 #else
-		res = pthread_attr_setstacksize(&attr, kthread_stack_size);
-
-		sctk_nodebug("kthread_create: value returned by attr_setstacksize(KTHREAD_NO_PTHREAD %d) %d",
-		             kthread_stack_size, res);
+		pthread_attr_setstacksize(&attr, kthread_stack_size);
 #endif
 		assume(sizeof(kthread_t) == sizeof(pthread_t) );
 
@@ -237,18 +210,14 @@ kthread_create(kthread_t *thread, void *(*start_routine)(void *),
 
 		sctk_nodebug("kthread_create: before pthread_create");
 
-		res =
-		        pthread_create( (pthread_t *)thread, &attr, kthread_create_start_routine,
-		                        &tmp);
+		res = pthread_create( (pthread_t *)thread, &attr, kthread_create_start_routine, &tmp);
 
 		if(res != 0)
 		{
-			res = pthread_attr_destroy(&attr);
-			res = pthread_attr_init(&attr);
-			res = pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
-			res =
-			        pthread_create( (pthread_t *)thread, &attr, kthread_create_start_routine,
-			                        &tmp);
+			pthread_attr_destroy(&attr);
+			pthread_attr_init(&attr);
+			pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+			res = pthread_create( (pthread_t *)thread, &attr, kthread_create_start_routine, &tmp);
 		}
 		assume(res == 0);
 
@@ -268,6 +237,7 @@ kthread_create(kthread_t *thread, void *(*start_routine)(void *),
 		{
 			sched_yield();
 		}
+	
 		return res;
 	}
 }
@@ -318,14 +288,12 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	return res;
 }
 
-int
-kthread_join(kthread_t th, void **thread_return)
+ int kthread_join(kthread_t th, void **thread_return)
 {
 	return pthread_join( (pthread_t)th, thread_return);
 }
 
-int
-kthread_kill(kthread_t th, int val)
+ int kthread_kill(kthread_t th, int val)
 {
 	return pthread_kill( (pthread_t)th, val);
 }
@@ -336,8 +304,7 @@ kthread_self()
 	return (kthread_t)pthread_self();
 }
 
-int
-kthread_sigmask(int how, const sigset_t *newmask, sigset_t *oldmask)
+ int kthread_sigmask(int how, const sigset_t *newmask, sigset_t *oldmask)
 {
 	return pthread_sigmask(how, newmask, oldmask);
 }

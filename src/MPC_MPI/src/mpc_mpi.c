@@ -20832,8 +20832,6 @@ int PMPI_Intercomm_merge(MPI_Comm intercomm, int high, MPI_Comm *newintracomm)
 	MPI_Group new_group;
 	mpc_lowcomm_status_t status;
 
-	int rank = mpc_common_get_task_rank();
-
 	int grank;
 	_mpc_cl_comm_rank(intercomm, &grank);
 

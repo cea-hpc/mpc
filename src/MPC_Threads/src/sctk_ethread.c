@@ -367,8 +367,7 @@ sctk_ethread_freeze_thread_on_vp(sctk_ethread_mutex_t *lock,
 	                                   lock, (volatile void **)list_tmp);
 }
 
-static void
-sctk_ethread_wake_thread_on_vp(void **list_tmp)
+static void sctk_ethread_wake_thread_on_vp(void **list_tmp)
 {
 	sctk_ethread_per_thread_t *       current;
 	sctk_ethread_virtual_processor_t *current_vp;
@@ -526,6 +525,8 @@ sctk_ethread_thread_init(void)
 	sctk_add_func(sctk_ethread, wait_for_value_and_poll);
 	sctk_add_func_type(sctk_ethread, freeze_thread_on_vp,
 	                   void (*)(mpc_thread_mutex_t *, void **) );
+	sctk_add_func_type(sctk_ethread, wake_thread_on_vp,
+	                   void (*)( void **) );
 
 	sctk_add_func_type(sctk_ethread, get_activity, double (*)(int) );
 

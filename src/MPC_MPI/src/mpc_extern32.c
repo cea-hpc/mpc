@@ -32,9 +32,11 @@ static void FLOAT_convert(int type_byte_size, char *src, char *dest) {
     } break;
     case 8: {
       BASIC_convert64(src, dest);
+      break;
     }
     case 12: {
       BASIC_convert96(src, dest);
+      break;
     }
     case 16: {
       BASIC_convert128(src, dest);

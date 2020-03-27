@@ -855,7 +855,6 @@ void __mpcomp_init( void )
 	_mpc_ompt_pre_init();
 #endif /* OMPT_SUPPORT */
 
-	mpcomp_thread_t *t;
 	mpcomp_local_icv_t icvs;
 	/* Need to initialize the whole runtime (environment variables) This
 	* section is shared by every OpenMP instances among MPI tasks located inside

@@ -2406,7 +2406,6 @@ static inline void __mpc_cl_enter_tmp_directory()
 		return;
 	}
 
-	int ret;
 	char * cret = NULL;
 
 	/* Retrieve task rank */

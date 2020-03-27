@@ -1298,7 +1298,6 @@ static int _mpc_threads_generic_cond_init(mpc_thread_cond_t *plock,
 {
 	_mpc_threads_generic_cond_t *     lock  = (_mpc_threads_generic_cond_t *)plock;
 	_mpc_threads_generic_condattr_t * attr  = (_mpc_threads_generic_condattr_t *)pattr;
-	_mpc_threads_generic_scheduler_t *sched = &(_mpc_threads_generic_self()->sched);
 
 	/*
 	 *    ERRORS:
@@ -2002,7 +2001,7 @@ static mpc_thread_sem_t *_mpc_threads_generic_sem_open(const char *name, int ofl
 		return (mpc_thread_sem_t *)SCTK_SEM_FAILED;
 	}
 
-	strcpy(_name, name + 1);
+	strncpy(_name, name + 1, length);
 	_name[length] = '\0';
 
 	_mpc_threads_generic_sem_t *           sem_tmp;
@@ -2832,13 +2831,13 @@ static int _mpc_threads_generic_rwlock_timedwrlock(mpc_thread_rwlock_t *plock, c
 	return 0;
 }
 
-static int _mpc_threads_generic_rwlockattr_setkind_np(mpc_thread_rwlockattr_t *attr, int pref)
+static int _mpc_threads_generic_rwlockattr_setkind_np(__UNUSED__ mpc_thread_rwlockattr_t * attr, __UNUSED__ int pref)
 {
 	not_implemented();
 	return 0;
 }
 
-static int _mpc_threads_generic_rwlockattr_getkind_np(mpc_thread_rwlockattr_t *attr, int *pref)
+static int _mpc_threads_generic_rwlockattr_getkind_np( __UNUSED__ mpc_thread_rwlockattr_t *  attr, __UNUSED__ int * pref)
 {
 	not_implemented();
 	return 0;

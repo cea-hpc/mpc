@@ -1005,12 +1005,12 @@ static inline sctk_ethread_sem_t *__sctk_ethread_sem_open(const char
 	_name  = (char *)sctk_malloc( (length + 1) * sizeof(char) );
 	if(name[0] == '/')
 	{
-		strcpy(_name, name + 1);
+		strncpy(_name, name + 1, length + 1);
 		_name[length - 1] = '\0';
 	}
 	else
 	{
-		strcpy(_name, name);
+		strncpy(_name, name, length + 1);
 		_name[length] = '\0';
 	}
 	/* We search the semaphore */
@@ -1133,12 +1133,12 @@ int __sctk_ethread_sem_unlink(const char *name,
 	_name  = (char *)sctk_malloc( (length + 1) * sizeof(char) );
 	if(name[0] == '/')
 	{
-		strcpy(_name, name + 1);
+		strncpy(_name, name + 1, length + 1);
 		_name[length - 1] = '\0';
 	}
 	else
 	{
-		strcpy(_name, name);
+		strncpy(_name, name, length + 1);
 		_name[length] = '\0';
 	}
 	/*on recherche le s�maphore */

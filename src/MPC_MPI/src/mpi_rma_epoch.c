@@ -1447,7 +1447,7 @@ int mpc_Win_source_ctx_end_access_no_lock(MPI_Win win,
   /* Are we processing an UNLOCK ?
    * in this case we have a single rank to notify */
   if (0 <= remote_rank) {
-    assert(ctx->state = MPC_WIN_SOURCE_PASIVE);
+    assert(ctx->state == MPC_WIN_SOURCE_PASIVE);
 
     to_do_arity = MPC_WIN_SINGLE_REMOTE;
     single_remote_rank = remote_rank;

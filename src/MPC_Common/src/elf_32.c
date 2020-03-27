@@ -952,7 +952,7 @@ void sctk_read_elf_section_32( elf_class_t *c )
 	sctk_free( c->sections );
 	c->sections = sctk_malloc( c->header.h32.e_shnum * sizeof( Elf_Shdr ) );
 
-	int ret = 0;
+	size_t ret = 0;
 
 	fseek( c->fd, c->header.h32.e_shoff, SEEK_SET );
 	for ( i = 0; i < c->header.h32.e_shnum; i++ )
@@ -1102,7 +1102,7 @@ void sctk_read_elf_symbols_32( elf_class_t *c )
 	c->symbols = sctk_malloc( sec.sh_size );
 	sym = (Elf32_Sym *) c->symbols;
 	fseek( c->fd, sec.sh_offset, SEEK_SET );
-	int ret = fread( sym, 1, sec.sh_size, c->fd );
+	size_t ret = fread( sym, 1, sec.sh_size, c->fd );
 
 	if(ret != sec.sh_size)
 	{
