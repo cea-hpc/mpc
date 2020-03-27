@@ -882,8 +882,8 @@ int _mpc_thread_create_vp(mpc_thread_t *restrict __threadp,
 	// create user thread
 	assert(_funcptr_mpc_thread_create != NULL);
 	res = _funcptr_mpc_thread_create(__threadp, __attr, (void *(*)(void *) )
-	                               ___vp_thread_start_routine,
-	                               ( void * )tmp);
+	                                 ___vp_thread_start_routine,
+	                                 ( void * )tmp);
 
 
 	mpc_topology_render_notify(task_id);
@@ -1107,9 +1107,9 @@ int mpc_thread_core_thread_create(mpc_thread_t *restrict __threadp,
 #endif
 	assert(_funcptr_mpc_thread_user_create != NULL);
 	res = _funcptr_mpc_thread_user_create(__threadp, __attr,
-	                                    (void *(*)(void *) )
-	                                    ___nonvp_thread_start_routine,
-	                                    ( void * )tmp);
+	                                      (void *(*)(void *) )
+	                                      ___nonvp_thread_start_routine,
+	                                      ( void * )tmp);
 	sctk_check(res, 0);
 #ifdef MPC_USE_EXTLS
 	extls_ctx_restore(old_ctx);
@@ -1226,7 +1226,7 @@ static inline void __check_mpc_initialized()
 * ACTIVITY *
 ************/
 
-double mpc_thread_get_activity(int i)
+double mpc_thread_getactivity(int i)
 {
 	__check_mpc_initialized();
 	double tmp;
