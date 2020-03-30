@@ -70,7 +70,7 @@
 
 #include "thread_ptr.h"
 
-#include <sctk_kernel_thread.h>
+#include <kthread.h>
 #include <threads_generic.h>
 
 #include <sctk_tls.h>
@@ -455,9 +455,9 @@ sctk_thread_data_t *mpc_thread_data_get_disg(int no_disguise)
 
 	if(tmp)
 	{
-		if( (tmp->my_disguisement != NULL) && (no_disguise == 0) )
+		if( (tmp->disguise.my_disguisement != NULL) && (no_disguise == 0) )
 		{
-			return tmp->my_disguisement;
+			return tmp->disguise.my_disguisement;
 		}
 	}
 
@@ -467,6 +467,61 @@ sctk_thread_data_t *mpc_thread_data_get_disg(int no_disguise)
 sctk_thread_data_t *mpc_thread_data_get()
 {
 	return mpc_thread_data_get_disg(0);
+}
+
+struct mpc_thread_rank_info_s *mpc_thread_rank_info_get(void)
+{
+	sctk_thread_data_t *data = mpc_thread_data_get();
+
+	if(!data)
+	{
+		return NULL;
+	}
+
+	return &data->mpi_task;
+}
+
+int mpc_thread_get_pu(void)
+{
+	sctk_thread_data_t *data = mpc_thread_data_get();
+
+	if(!data)
+	{
+		return -1;
+	}
+
+	return data->virtual_processor;
+}
+
+int mpc_thread_get_thread_id(void)
+{
+	sctk_thread_data_t *data = mpc_thread_data_get();
+
+	if(!data)
+	{
+		return -1;
+	}
+
+	return data->user_thread;
+}
+
+/************
+ * DISGUISE *
+ ************/
+
+
+mpc_thread_mpi_disguise_t * mpc_thread_disguise_get()
+{
+	sctk_thread_data_t *th = mpc_thread_data_get_disg( 1 );
+	assume(th != NULL);
+	return &th->disguise;
+}
+
+int mpc_thread_disguise_set(struct sctk_thread_data_s * th_data, void * mpi_ctx)
+{
+	mpc_thread_mpi_disguise_t *d = mpc_thread_disguise_get();
+	d->my_disguisement = th_data;
+	d->ctx_disguisement = mpi_ctx;
 }
 
 /****************
@@ -493,9 +548,9 @@ static void *___timer_thread_main(void *arg)
 void __timer_thread_start(void)
 {
 	/* Create the timer thread */
-	kthread_t timer_thread;
+	mpc_thread_kthread_t timer_thread;
 
-	kthread_create(&timer_thread, ___timer_thread_main, NULL);
+	_mpc_thread_kthread_create(&timer_thread, ___timer_thread_main, NULL);
 }
 
 void __timer_thread_end(void)
@@ -774,7 +829,7 @@ static void *___vp_thread_start_routine(sctk_thread_data_t *__arg)
 	assume_m(mpc_topology_get_current_cpu() == ( int )tmp.bind_to, "___vp_thread_start_routine Bad Pinning");
 
 	/* Bind the thread to the right core if we are using pthreads */
-	if(mpc_common_get_flags()->thread_library_init == _mpc_thread_pthread_engine_thread_init)
+	if(mpc_common_get_flags()->thread_library_init == mpc_thread_pthread_engine_init)
 	{
 		mpc_topology_bind_to_cpu(tmp.bind_to);
 	}
@@ -788,8 +843,8 @@ static void *___vp_thread_start_routine(sctk_thread_data_t *__arg)
 	// we do not have an MPI
 	tmp.mpi_per_thread = NULL;
 	// Set no disguise
-	tmp.my_disguisement   = NULL;
-	tmp.ctx_disguisement  = NULL;
+	tmp.disguise.my_disguisement   = NULL;
+	tmp.disguise.ctx_disguisement  = NULL;
 	tmp.virtual_processor = mpc_topology_get_current_cpu();
 
 	_mpc_thread_data_set(&tmp);
@@ -822,7 +877,7 @@ static void *___vp_thread_start_routine(sctk_thread_data_t *__arg)
 
 	__tbb_finalize_for_mpc();
 	sctk_tls_dtors_free(&(tmp.dtors_head) );
-	sctk_unregister_task(tmp.task_id);
+	sctk_unregister_task(tmp.mpi_task.rank);
 
 	sctk_thread_remove(&tmp);
 	_mpc_thread_data_set(NULL);
@@ -857,13 +912,13 @@ int _mpc_thread_create_vp(mpc_thread_t *restrict __threadp,
 	sctk_thread_data_t *tmp = ( sctk_thread_data_t * )__sctk_malloc(sizeof(sctk_thread_data_t), tls);
 	assume(tmp != NULL);
 
-	tmp->tls             = tls;
-	tmp->__arg           = __arg;
-	tmp->__start_routine = __start_routine;
-	tmp->user_thread     = 0;
-	tmp->bind_to         = new_binding;
-	tmp->task_id         = sctk_safe_cast_long_int(task_id);
-	tmp->local_task_id   = sctk_safe_cast_long_int(local_task_id);
+	tmp->tls                 = tls;
+	tmp->__arg               = __arg;
+	tmp->__start_routine     = __start_routine;
+	tmp->user_thread         = 0;
+	tmp->bind_to             = new_binding;
+	tmp->mpi_task.rank       = sctk_safe_cast_long_int(task_id);
+	tmp->mpi_task.local_rank = sctk_safe_cast_long_int(local_task_id);
 
 
 #ifdef MPC_USE_EXTLS
@@ -1048,17 +1103,19 @@ int mpc_thread_core_thread_create(mpc_thread_t *restrict __threadp,
 	tmp = ( sctk_thread_data_t * )
 	      __sctk_malloc(sizeof(sctk_thread_data_t), tls);
 	memset(tmp, 0, sizeof(sctk_thread_data_t) );
-	tmp_father           = mpc_thread_data_get();
-	tmp->tls             = tls;
-	tmp->__arg           = __arg;
-	tmp->__start_routine = __start_routine;
-	tmp->task_id         = -1;
-	tmp->user_thread     = user_thread;
-	tmp->father_data     = mpc_thread_mpi_ctx_get();
+	tmp_father               = mpc_thread_data_get();
+	tmp->tls                 = tls;
+	tmp->__arg               = __arg;
+	tmp->__start_routine     = __start_routine;
+	tmp->mpi_task.rank       = -1;
+	tmp->mpi_task.local_rank = -1;
+	tmp->user_thread         = user_thread;
+	tmp->father_data         = mpc_thread_mpi_ctx_get();
 
 	if(tmp_father)
 	{
-		tmp->task_id = tmp_father->task_id;
+		tmp->mpi_task.rank       = tmp_father->mpi_task.rank;
+		tmp->mpi_task.local_rank = tmp_father->mpi_task.local_rank;
 	}
 
 	sctk_nodebug("Create Thread with MPI rank %d", tmp->task_id);
@@ -1321,13 +1378,13 @@ void _mpc_thread_exit_cleanup()
 	{
 		sctk_nodebug("ici %p %d", tmp, tmp->task_id);
 #ifdef MPC_Message_Passing
-		if(tmp->task_id >= 0 && tmp->user_thread == 0)
+		if(tmp->mpi_task.rank >= 0 && tmp->user_thread == 0)
 		{
 			//sctk_nodebug ( "mpc_lowcomm_terminaison_barrier" );
 			//mpc_lowcomm_terminaison_barrier ();
 			//sctk_nodebug ( "mpc_lowcomm_terminaison_barrier done" );
-			sctk_unregister_task(tmp->task_id);
-			sctk_net_send_task_end(tmp->task_id, mpc_common_get_process_rank() );
+			sctk_unregister_task(tmp->mpi_task.rank);
+			sctk_net_send_task_end(tmp->mpi_task.rank, mpc_common_get_process_rank() );
 		}
 #endif
 	}

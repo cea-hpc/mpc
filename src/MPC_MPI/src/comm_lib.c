@@ -362,6 +362,8 @@ static inline void __mpc_cl_thread_buffer_pool_step_async()
 
 /* Per Thread Storage Interface */
 
+extern __thread struct mpc_mpi_cl_per_thread_ctx_s *___mpc_p_per_VP_comm_ctx;
+
 static inline mpc_mpi_cl_per_thread_ctx_t *__mpc_cl_per_thread_ctx_get()
 {
 	if ( !___mpc_p_per_VP_comm_ctx )
@@ -451,7 +453,7 @@ int __mpc_p_disguise_init( struct mpc_mpi_cl_per_mpi_process_ctx_s *my_specific 
 
 int MPCX_Disguise( mpc_lowcomm_communicator_t comm, int target_rank )
 {
-	sctk_thread_data_t *th = mpc_thread_data_get_disg( 1 );
+	mpc_thread_mpi_disguise_t *th = mpc_thread_disguise_get();
 
 	if ( th->my_disguisement )
 	{
@@ -469,8 +471,8 @@ int MPCX_Disguise( mpc_lowcomm_communicator_t comm, int target_rank )
 		if ( __mpc_p_disguise_local_to_global_table[i] == cwr )
 		{
 			OPA_incr_int( &__mpc_p_disguise_flag );
-			th->my_disguisement = __mpc_p_disguise_costumes[i]->thread_data;
-			th->ctx_disguisement = ( void * ) __mpc_p_disguise_costumes[i];
+			mpc_thread_disguise_set(__mpc_p_disguise_costumes[i]->thread_data,
+						(void *) __mpc_p_disguise_costumes[i]);
 			return SCTK_SUCCESS;
 		}
 	}
@@ -480,15 +482,15 @@ int MPCX_Disguise( mpc_lowcomm_communicator_t comm, int target_rank )
 
 int MPCX_Undisguise()
 {
-	sctk_thread_data_t *th = mpc_thread_data_get_disg( 1 );
+	mpc_thread_mpi_disguise_t *th = mpc_thread_disguise_get();
 
 	if ( th->my_disguisement == NULL )
 	{
 		return MPC_ERR_ARG;
 	}
 
-	th->my_disguisement = NULL;
-	th->ctx_disguisement = NULL;
+	mpc_thread_disguise_set(NULL, NULL);
+
 	OPA_decr_int( &__mpc_p_disguise_flag );
 	return SCTK_SUCCESS;
 }
@@ -680,11 +682,11 @@ static inline struct mpc_mpi_cl_per_mpi_process_ctx_s *_mpc_cl_per_mpi_process_c
 	return ___the_process_specific;
 #endif
 	struct mpc_mpi_cl_per_mpi_process_ctx_s *ret = NULL;
-	int maybe_disguised = __MPC_Maybe_disguised();
+	int maybe_disguised = mpc_common_flags_disguised_get();
 
 	if ( maybe_disguised )
 	{
-		sctk_thread_data_t *th = mpc_thread_data_get_disg( 1 );
+		mpc_thread_mpi_disguise_t *th = mpc_thread_disguise_get();
 
 		if ( th->ctx_disguisement )
 		{
@@ -3206,11 +3208,7 @@ int mpc_mpi_cl_wait_pending_all_comm()
 	           per_communicator_tmp )
 	{
 		int j = per_communicator->key;
-
-		if ( sctk_is_valid_comm( j ) )
-		{
-			mpc_mpi_cl_wait_pending( j );
-		}
+		mpc_mpi_cl_wait_pending( j );
 	}
 	mpc_common_spinlock_unlock( &( task_specific->per_communicator_lock ) );
 	SCTK_PROFIL_END( MPC_Wait_pending_all_comm );

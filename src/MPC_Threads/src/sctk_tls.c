@@ -28,12 +28,16 @@
 
 #define _GNU_SOURCE
 
+#include <hwloc.h>
+
 #include "sctk_alloc.h"
 #include "mpc_topology.h"
-#include "sctk_accessor.h"
+#include "mpc_thread_accessor.h"
 #include "mpc_common_spinlock.h"
 #include "mpc_common_asm.h"
-#include "hwloc.h"
+
+
+#include "thread.h"
 
 #include <unistd.h>
 #include <sctk_tls.h>

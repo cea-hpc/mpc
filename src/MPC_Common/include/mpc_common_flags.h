@@ -68,7 +68,7 @@ static inline struct mpc_common_flags * mpc_common_get_flags()
 
 extern OPA_int_t __mpc_p_disguise_flag;
 
-static inline int __MPC_Maybe_disguised()
+static inline int mpc_common_flags_disguised_get()
 {
 	return OPA_load_int( &__mpc_p_disguise_flag );
 }

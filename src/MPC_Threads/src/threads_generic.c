@@ -26,7 +26,10 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
-#include "sctk_kernel_thread.h"
+
+#include "thread.h"
+#include "kthread.h"
+
 #include <mpc_topology.h>
 #include <string.h>
 #include <mpc_common_flags.h>
@@ -866,13 +869,13 @@ static inline void __default_sigset_init()
 	if(!main_thread_sigs_initialized)
 	{
 		main_thread_sigs_initialized++;
-		kthread_sigmask(SIG_SETMASK, &set, &sctk_thread_default_set);
-		kthread_sigmask(SIG_SETMASK, &sctk_thread_default_set, NULL);
+		_mpc_thread_kthread_sigmask(SIG_SETMASK, &set, &sctk_thread_default_set);
+		_mpc_thread_kthread_sigmask(SIG_SETMASK, &sctk_thread_default_set, NULL);
 	}
 	else
 	{
-		kthread_sigmask(SIG_SETMASK, (sigset_t *)&(_mpc_threads_generic_self()->attr.thread_sigset), &set);
-		kthread_sigmask(SIG_SETMASK, &set, &sctk_thread_default_set);
+		_mpc_thread_kthread_sigmask(SIG_SETMASK, (sigset_t *)&(_mpc_threads_generic_self()->attr.thread_sigset), &set);
+		_mpc_thread_kthread_sigmask(SIG_SETMASK, &set, &sctk_thread_default_set);
 	}
 }
 
@@ -890,14 +893,14 @@ static inline void ___check_signals(_mpc_threads_generic_t threadp)
 	{
 		th->attr.old_thread_sigset = th->attr.thread_sigset;
 	}
-	kthread_sigmask(SIG_SETMASK, &set, &current_set);
-	kthread_sigmask(SIG_SETMASK, &current_set, NULL);
+	_mpc_thread_kthread_sigmask(SIG_SETMASK, &set, &current_set);
+	_mpc_thread_kthread_sigmask(SIG_SETMASK, &current_set, NULL);
 	if( (*( (unsigned long *)&(th->attr.sa_sigset_mask) ) > 0) || (*( (unsigned long *)&(current_set) ) > 0) )
 	{
-		kthread_sigmask(SIG_SETMASK, (sigset_t *)&(th->attr.thread_sigset), NULL);
-		kthread_sigmask(SIG_BLOCK, &current_set, NULL);
-		kthread_sigmask(SIG_BLOCK, (sigset_t *)&(th->attr.sa_sigset_mask), NULL);
-		kthread_sigmask(SIG_SETMASK, &current_set, (sigset_t *)&(th->attr.thread_sigset) );
+		_mpc_thread_kthread_sigmask(SIG_SETMASK, (sigset_t *)&(th->attr.thread_sigset), NULL);
+		_mpc_thread_kthread_sigmask(SIG_BLOCK, &current_set, NULL);
+		_mpc_thread_kthread_sigmask(SIG_BLOCK, (sigset_t *)&(th->attr.sa_sigset_mask), NULL);
+		_mpc_thread_kthread_sigmask(SIG_SETMASK, &current_set, (sigset_t *)&(th->attr.thread_sigset) );
 	}
 
 	if(&(th->attr.spinlock) != &(_mpc_threads_generic_self()->attr.spinlock) )
@@ -915,7 +918,7 @@ static inline void ___check_signals(_mpc_threads_generic_t threadp)
 					done++;
 					nb_inner_calls++;
 
-					kthread_kill(kthread_self(), i + 1);
+					_mpc_thread_kthread_kill(_mpc_thread_kthread_self(), i + 1);
 					nb_inner_calls--;
 
 					if(nb_inner_calls == 0)
@@ -944,7 +947,7 @@ static inline void ___check_signals(_mpc_threads_generic_t threadp)
 					done++;
 					nb_inner_calls++;
 
-					kthread_kill(kthread_self(), i + 1);
+					_mpc_thread_kthread_kill(_mpc_thread_kthread_self(), i + 1);
 					nb_inner_calls--;
 
 					if(nb_inner_calls == 0)
@@ -1057,9 +1060,9 @@ static inline int __thread_sigmask(_mpc_threads_generic_t threadp, int how,
 	_mpc_threads_generic_p_t *th = threadp;
 	sigset_t set;
 
-	kthread_sigmask(SIG_SETMASK, (sigset_t *)&(th->attr.thread_sigset), &set);
-	res = kthread_sigmask(how, newmask, oldmask);
-	kthread_sigmask(SIG_SETMASK, &set, (sigset_t *)&(th->attr.thread_sigset) );
+	_mpc_thread_kthread_sigmask(SIG_SETMASK, (sigset_t *)&(th->attr.thread_sigset), &set);
+	res = _mpc_thread_kthread_sigmask(how, newmask, oldmask);
+	_mpc_thread_kthread_sigmask(SIG_SETMASK, &set, (sigset_t *)&(th->attr.thread_sigset) );
 
 	_mpc_threads_generic_check_signals(1);
 
@@ -1111,7 +1114,7 @@ static int _mpc_threads_generic_sigsuspend(const sigset_t *mask)
 			if( (sigismember( (sigset_t *)&(th->attr.thread_sigset), i + 1) == 1) &&
 			    (sigismember(&pending, i + 1) == 1) )
 			{
-				kthread_kill(kthread_self(), i + 1);
+				_mpc_thread_kthread_kill(_mpc_thread_kthread_self(), i + 1);
 				th->attr.nb_sig_treated = 1;
 			}
 		}
@@ -3532,9 +3535,9 @@ static int _mpc_threads_generic_kill(_mpc_threads_generic_t threadp, int val)
 	}
 
 	sigset_t set;
-	kthread_sigmask(SIG_SETMASK, (sigset_t *)&(th->attr.sa_sigset_mask), &set);
-	kthread_sigmask(SIG_BLOCK, &set, NULL);
-	kthread_sigmask(SIG_SETMASK, &set, (sigset_t *)&(th->attr.sa_sigset_mask) );
+	_mpc_thread_kthread_sigmask(SIG_SETMASK, (sigset_t *)&(th->attr.sa_sigset_mask), &set);
+	_mpc_thread_kthread_sigmask(SIG_BLOCK, &set, NULL);
+	_mpc_thread_kthread_sigmask(SIG_SETMASK, &set, (sigset_t *)&(th->attr.sa_sigset_mask) );
 
 	if(th->sched.status == _mpc_threads_generic_blocked)
 	{
@@ -5142,7 +5145,7 @@ static inline int __get_cpu_count()
 }
 
 /********* ETHREAD MXN ************/
-void sctk_ethread_mxn_ng_thread_init(void)
+void mpc_thread_ethread_mxn_ng_engine_init(void)
 {
 	mpc_common_get_flags()->new_scheduler_engine_enabled = 1;
 	_mpc_threads_generic_init("ethread_mxn",
@@ -5151,14 +5154,14 @@ void sctk_ethread_mxn_ng_thread_init(void)
 }
 
 /********* ETHREAD ************/
-void sctk_ethread_ng_thread_init(void)
+void mpc_thread_ethread_ng_engine_init(void)
 {
 	mpc_common_get_flags()->new_scheduler_engine_enabled = 1;
 	_mpc_threads_generic_init("ethread_mxn", "generic/multiple_queues", 1);
 }
 
 /********* PTHREAD ************/
-void _mpc_thread_pthread_engine_ng_thread_init(void)
+void mpc_thread_pthread_ng_engine_init(void)
 {
 	mpc_common_get_flags()->new_scheduler_engine_enabled = 1;
 	_mpc_threads_generic_init("pthread", "generic/multiple_queues", __get_cpu_count() );

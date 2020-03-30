@@ -33,7 +33,7 @@
 #include "sctk_debug.h"
 #include "sctk_ethread.h"
 #include "sctk_alloc.h"
-#include "sctk_kernel_thread.h"
+#include "kthread.h"
 #ifdef MPC_Thread_db
 #include "sctk_thread_dbg.h"
 #endif
@@ -141,7 +141,7 @@ int __sctk_ethread_poll_vp(sctk_ethread_virtual_processor_t *vp,
 #ifdef SCTK_KERNEL_THREAD_USE_TLS
 extern __thread void *sctk_ethread_key;
 #else
-extern kthread_key_t sctk_ethread_key;
+extern mpc_thread_keys_t sctk_ethread_key;
 #endif
 
 #ifdef SCTK_SCHED_CHECK
@@ -204,7 +204,7 @@ __sctk_ethread_sched_proceed_signals(sctk_ethread_per_thread_t *
 				cur->thread_sigpending[i] = 0;
 				cur->nb_sig_pending--;
 				done++;
-				kthread_kill(kthread_self(), i + 1);
+				_mpc_thread_kthread_kill(_mpc_thread_kthread_self(), i + 1);
 			}
 		}
 	}
@@ -274,9 +274,9 @@ static inline int __sctk_ethread_sigmask(sctk_ethread_per_thread_t *
 
 #ifndef WINDOWS_SYS
 	sigset_t set;
-	kthread_sigmask(SIG_SETMASK, (sigset_t *)&(cur->thread_sigset), &set);
-	res = kthread_sigmask(how, newmask, oldmask);
-	kthread_sigmask(SIG_SETMASK, &set, (sigset_t *)&(cur->thread_sigset) );
+	_mpc_thread_kthread_sigmask(SIG_SETMASK, (sigset_t *)&(cur->thread_sigset), &set);
+	res = _mpc_thread_kthread_sigmask(how, newmask, oldmask);
+	_mpc_thread_kthread_sigmask(SIG_SETMASK, &set, (sigset_t *)&(cur->thread_sigset) );
 	SCTK_THREAD_CHECK_SIGNALS(cur, 1);
 #endif
 	return res;
@@ -303,7 +303,7 @@ static inline int __sctk_ethread_sigsuspend(sctk_ethread_per_thread_t *
 			             ( (sigset_t *)&(cur->thread_sigset), i + 1) == 1) &&
 			    (sigismember(&pending, i + 1) == 1) )
 			{
-				kthread_kill(kthread_self(), i + 1);
+				_mpc_thread_kthread_kill(_mpc_thread_kthread_self(), i + 1);
 				cur->nb_sig_proceeded = 1;
 			}
 		}

@@ -165,11 +165,8 @@ static inline int mpc_topology_get_pu( void )
 
 #else
 
-/* Forward static declaration to solve recursive
-   include loop */
-static inline int mpc_thread_get_pu ( void );
-
-#include "sctk_accessor.h"
+int mpc_thread_get_pu(void);
+#include "mpc_thread_accessor.h"
 
 /**
  * @brief Return the PU executing current thread

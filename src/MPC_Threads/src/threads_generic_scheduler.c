@@ -26,7 +26,7 @@
 
 #include "sctk_debug.h"
 #include "thread_ptr.h"
-#include "sctk_kernel_thread.h"
+#include "kthread.h"
 #include "mpc_common_spinlock.h"
 #include "threads_generic.h"
 #include "threads_generic_scheduler.h"
@@ -132,7 +132,7 @@ void _mpc_threads_generic_scheduler_create_vp(_mpc_threads_generic_p_t *thread, 
 {
 	void *(*start_routine) (void *);
 	_mpc_threads_generic_scheduler_task_t *arg;
-	kthread_t kthread;
+	mpc_thread_kthread_t kthread;
 
 	if(thread == NULL)
 	{
@@ -147,7 +147,7 @@ void _mpc_threads_generic_scheduler_create_vp(_mpc_threads_generic_p_t *thread, 
 	arg->thread = thread;
 	arg->core   = core;
 
-	assume(kthread_create(&kthread,
+	assume(_mpc_thread_kthread_create(&kthread,
 	                      start_routine, arg) == 0);
 }
 

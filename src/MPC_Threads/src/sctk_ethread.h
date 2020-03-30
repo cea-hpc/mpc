@@ -30,7 +30,7 @@
 #include "thread.h"
 
 #include "sctk_ethread.h"
-#include "sctk_kernel_thread.h"
+#include "kthread.h"
 
 #include "sctk_context.h"
 #include "mpc_common_spinlock.h"
@@ -466,8 +466,8 @@ static inline void sctk_init_default_sigset()
 #ifndef WINDOWS_SYS
 	sigset_t set;
 	sigemptyset(&set);
-	kthread_sigmask(SIG_SETMASK, &set, &sctk_thread_default_set);
-	kthread_sigmask(SIG_SETMASK, &sctk_thread_default_set, NULL);
+	_mpc_thread_kthread_sigmask(SIG_SETMASK, &set, &sctk_thread_default_set);
+	_mpc_thread_kthread_sigmask(SIG_SETMASK, &sctk_thread_default_set, NULL);
 #endif
 }
 

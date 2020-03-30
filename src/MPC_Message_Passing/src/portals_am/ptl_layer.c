@@ -25,7 +25,7 @@
 #include "mpc_lowcomm.h"
 #include "sctk_ptl_am_iface.h"
 #include "mpc_config.h"
-#include "sctk_accessor.h"
+#include "mpc_thread_accessor.h"
 #include "arpc_weak.h"
 
 #include <mpc_common_rank.h>

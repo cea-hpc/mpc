@@ -44,7 +44,7 @@ sctk_ethread_mxn_init_kethread()
 {
 	if(use_ethread_mxn != 0)
 	{
-		kthread_setspecific(sctk_ethread_key, &virtual_processor);
+		_mpc_thread_kthread_setspecific(sctk_ethread_key, &virtual_processor);
 	}
 }
 
@@ -54,7 +54,7 @@ sctk_ethread_mxn_self()
 	sctk_ethread_virtual_processor_t *vp;
 	sctk_ethread_per_thread_t *       task;
 
-	vp = kthread_getspecific(sctk_ethread_key);
+	vp = _mpc_thread_kthread_getspecific(sctk_ethread_key);
 	if(vp == NULL)
 	{
 		return NULL;
@@ -68,7 +68,7 @@ static inline void
 sctk_ethread_mxn_self_all(sctk_ethread_virtual_processor_t **vp,
                           sctk_ethread_per_thread_t **task)
 {
-	*vp   = kthread_getspecific(sctk_ethread_key);
+	*vp   = _mpc_thread_kthread_getspecific(sctk_ethread_key);
 	*task = (sctk_ethread_t)(*vp)->current;
 	sctk_assert( (*task)->vp == *vp);
 }
@@ -548,7 +548,7 @@ sctk_ethread_mxn_func_kernel_thread(void *arg)
 	vp = (sctk_ethread_virtual_processor_t *)arg;
 	sctk_ethread_init_data(&th_data);
 	vp->current = &th_data;
-	kthread_setspecific(sctk_ethread_key, vp);
+	_mpc_thread_kthread_setspecific(sctk_ethread_key, vp);
 	th_data.vp     = vp;
 	vp->idle       = &th_data;
 	th_data.status = ethread_idle;
@@ -592,7 +592,7 @@ sctk_ethread_gen_func_kernel_thread(void *arg)
 		th_data.tls[i] = NULL;
 	}
 	vp->current = &th_data;
-	kthread_setspecific(sctk_ethread_key, vp);
+	_mpc_thread_kthread_setspecific(sctk_ethread_key, vp);
 	th_data.vp     = vp;
 	vp->idle       = &th_data;
 	th_data.status = ethread_idle;
@@ -613,7 +613,7 @@ sctk_ethread_gen_func_kernel_thread(void *arg)
 static void
 sctk_ethread_mxn_start_kernel_thread(int pos)
 {
-	kthread_t pid;
+	mpc_thread_kthread_t pid;
 	sctk_ethread_virtual_processor_t  tmp_init = SCTK_ETHREAD_VP_INIT;
 	sctk_ethread_virtual_processor_t *tmp;
 
@@ -630,7 +630,7 @@ sctk_ethread_mxn_start_kernel_thread(int pos)
 	sctk_ethread_mxn_vp_list[pos]->bind_to = pos;
 	sctk_nodebug("BIND to %d", pos);
 
-	kthread_create(&pid,
+	_mpc_thread_kthread_create(&pid,
 	               sctk_ethread_mxn_func_kernel_thread,
 	               sctk_ethread_mxn_vp_list[pos]);
 /*   mpc_topology_bind_to_cpu(0); */
@@ -639,7 +639,7 @@ sctk_ethread_mxn_start_kernel_thread(int pos)
 sctk_ethread_virtual_processor_t *
 sctk_ethread_start_kernel_thread()
 {
-	kthread_t pid;
+	mpc_thread_kthread_t pid;
 	sctk_ethread_virtual_processor_t  tmp_init = SCTK_ETHREAD_VP_INIT;
 	sctk_ethread_virtual_processor_t *tmp;
 	static mpc_thread_mutex_t        lock = SCTK_THREAD_MUTEX_INITIALIZER;
@@ -654,7 +654,7 @@ sctk_ethread_start_kernel_thread()
 	*tmp      = tmp_init;
 	tmp->rank = -1;
 
-	kthread_create(&pid, sctk_ethread_gen_func_kernel_thread, tmp);
+	_mpc_thread_kthread_create(&pid, sctk_ethread_gen_func_kernel_thread, tmp);
 	sctk_nodebug("Create Kthread done");
 
 	mpc_thread_mutex_unlock(&lock);
@@ -675,7 +675,7 @@ sctk_ethread_mxn_init_vp(sctk_ethread_per_thread_t *th_data,
 	}
 
 	vp->current = th_data;
-	kthread_setspecific(sctk_ethread_key, vp);
+	_mpc_thread_kthread_setspecific(sctk_ethread_key, vp);
 
 	th_data->vp = vp;
 	for(i = 0; i < SCTK_THREAD_KEYS_MAX; i++)
@@ -698,7 +698,7 @@ sctk_ethread_mxn_init_virtual_processors()
 	unsigned int i;
 
 	use_ethread_mxn = 1;
-	kthread_key_create(&sctk_ethread_key, NULL);
+	_mpc_thread_kthread_key_create(&sctk_ethread_key, NULL);
 
 	/*Init main thread and virtual processor */
 	sctk_ethread_mxn_init_vp(&sctk_ethread_main_thread, &virtual_processor);
@@ -886,7 +886,7 @@ static void sctk_ethread_mxn_at_fork_prepare()
 }
 
 void
-sctk_ethread_mxn_thread_init(void)
+mpc_thread_ethread_mxn_engine_init(void)
 {
 	int i;
 

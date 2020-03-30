@@ -33,6 +33,9 @@
 #include <mpc_runtime_config.h>
 #include <mpc_common_flags.h>
 #include <mpc_common_helper.h>
+#include <mpc_common_rank.h>
+
+#include <sctk_alloc.h>
 
 #include "mpc_launch.h"
 #include "sctk_debug.h"
@@ -109,37 +112,37 @@ void mpc_launch_print_banner( bool restart )
 void sctk_use_pthread( void )
 {
     mpc_common_get_flags()->thread_library_kind = "pthread";
-    mpc_common_get_flags()->thread_library_init = _mpc_thread_pthread_engine_thread_init;
+    mpc_common_get_flags()->thread_library_init = mpc_thread_pthread_engine_init;
 }
 
 static void sctk_use_ethread( void )
 {
     mpc_common_get_flags()->thread_library_kind = "ethread";
-    mpc_common_get_flags()->thread_library_init = sctk_ethread_thread_init;
+    mpc_common_get_flags()->thread_library_init = mpc_thread_ethread_engine_init;
 }
 
 void sctk_use_ethread_mxn( void )
 {
     mpc_common_get_flags()->thread_library_kind = "ethread_mxn";
-    mpc_common_get_flags()->thread_library_init = sctk_ethread_mxn_thread_init;
+    mpc_common_get_flags()->thread_library_init = mpc_thread_ethread_mxn_engine_init;
 }
 
 void sctk_use_ethread_mxn_ng( void )
 {
     mpc_common_get_flags()->thread_library_kind = "ethread_mxn_ng";
-    mpc_common_get_flags()->thread_library_init = sctk_ethread_mxn_ng_thread_init;
+    mpc_common_get_flags()->thread_library_init = mpc_thread_ethread_mxn_ng_engine_init;
 }
 
 void sctk_use_ethread_ng( void )
 {
     mpc_common_get_flags()->thread_library_kind = "ethread_ng";
-    mpc_common_get_flags()->thread_library_init = sctk_ethread_ng_thread_init;
+    mpc_common_get_flags()->thread_library_init = mpc_thread_ethread_ng_engine_init;
 }
 
 void sctk_use_pthread_ng( void )
 {
     mpc_common_get_flags()->thread_library_kind = "pthread_ng";
-    mpc_common_get_flags()->thread_library_init = _mpc_thread_pthread_engine_ng_thread_init;
+    mpc_common_get_flags()->thread_library_init = mpc_thread_pthread_ng_engine_init;
 }
 
 static void __arg_set_verbosity( char *arg )

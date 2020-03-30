@@ -22,15 +22,16 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK_THREADS_API_H_
-#define __SCTK_THREADS_API_H_
+#ifndef MPC_THREAD_H_
+#define MPC_THREAD_H_
 
 #include <unistd.h>
 #include <sys/types.h>
 #include <signal.h>
 #include <time.h>
 
-#include "mpc_threads_config.h"
+#include <mpc_threads_config.h>
+#include <mpc_thread_engines.h>
 
 #if defined(SunOS_SYS) || defined(AIX_SYS) || defined(HP_UX_SYS)
 /* typedef clockid_t __clockid_t; */
@@ -43,47 +44,54 @@ extern "C"
 #endif
 
 
+#define SCTK_ETHREAD_STACK_SIZE            10 * 1024 * 1024
+#define SCTK_ETHREAD_THREAD_STACK_SIZE     4 * 1024 * 1024
+#define SCTK_ETHREAD_STACK_SIZE_FORTRAN    1024 * 1024 * 1024
+
+
+
 struct sched_param;
+struct mpc_thread_rank_info_s;
 
 int mpc_thread_atfork(void (*__prepare)(void),
-                       void (*__parent)(void), void (*__child)(void) );
+                      void (*__parent)(void), void (*__child)(void) );
 int mpc_thread_attr_destroy(mpc_thread_attr_t *__attr);
 int mpc_thread_attr_getdetachstate(const mpc_thread_attr_t *__attr,
-                                    int *__detachstate);
+                                   int *__detachstate);
 int mpc_thread_attr_getguardsize(const mpc_thread_attr_t *
-                                  __attr, size_t *__guardsize);
+                                 __attr, size_t *__guardsize);
 int mpc_thread_attr_getinheritsched(const mpc_thread_attr_t *
-                                     __attr, int *__inherit);
+                                    __attr, int *__inherit);
 int mpc_thread_attr_getschedparam(const mpc_thread_attr_t *
-                                   __attr, struct sched_param *__param);
+                                  __attr, struct sched_param *__param);
 int mpc_thread_attr_getschedpolicy(const mpc_thread_attr_t *__attr,
-                                    int *__policy);
+                                   int *__policy);
 int mpc_thread_attr_getscope(const mpc_thread_attr_t *__attr,
-                              int *__scope);
+                             int *__scope);
 int mpc_thread_attr_getstackaddr(const mpc_thread_attr_t *__attr,
-                                  void **__stackaddr);
+                                 void **__stackaddr);
 int mpc_thread_attr_getstack(const mpc_thread_attr_t *__attr,
-                              void **__stackaddr, size_t *__stacksize);
+                             void **__stackaddr, size_t *__stacksize);
 int mpc_thread_attr_getstacksize(const mpc_thread_attr_t *__attr,
-                                  size_t *__stacksize);
+                                 size_t *__stacksize);
 int mpc_thread_attr_init(mpc_thread_attr_t *__attr);
 int mpc_thread_attr_setdetachstate(mpc_thread_attr_t *__attr,
-                                    int __detachstate);
+                                   int __detachstate);
 int mpc_thread_attr_setguardsize(mpc_thread_attr_t *__attr,
-                                  size_t __guardsize);
+                                 size_t __guardsize);
 int mpc_thread_attr_setinheritsched(mpc_thread_attr_t *__attr,
-                                     int __inherit);
+                                    int __inherit);
 int mpc_thread_attr_setschedparam(mpc_thread_attr_t *__attr,
-                                   const struct sched_param *__param);
+                                  const struct sched_param *__param);
 int mpc_thread_attr_setschedpolicy(mpc_thread_attr_t *__attr,
-                                    int __policy);
+                                   int __policy);
 int mpc_thread_attr_setscope(mpc_thread_attr_t *__attr, int __scope);
 int mpc_thread_attr_setstackaddr(mpc_thread_attr_t *__attr,
-                                  void *__stackaddr);
+                                 void *__stackaddr);
 int mpc_thread_attr_setstack(mpc_thread_attr_t *__attr,
-                              void *__stackaddr, size_t __stacksize);
+                             void *__stackaddr, size_t __stacksize);
 int mpc_thread_attr_setstacksize(mpc_thread_attr_t *__attr,
-                                  size_t __stacksize);
+                                 size_t __stacksize);
 int
 mpc_thread_attr_setbinding(mpc_thread_attr_t *__attr, int __binding);
 int
@@ -93,51 +101,51 @@ mpc_thread_attr_getbinding(mpc_thread_attr_t *__attr, int *__binding);
 int mpc_thread_barrierattr_destroy(mpc_thread_barrierattr_t *__attr);
 int mpc_thread_barrierattr_init(mpc_thread_barrierattr_t *__attr);
 int mpc_thread_barrierattr_setpshared(mpc_thread_barrierattr_t *
-                                       __attr, int __pshared);
+                                      __attr, int __pshared);
 int mpc_thread_core_barrier_destroy(mpc_thread_barrier_t *__barrier);
 int mpc_thread_core_barrier_init(mpc_thread_barrier_t *__barrier,
-                             const mpc_thread_barrierattr_t *
-                             __attr, unsigned int __count);
+                                 const mpc_thread_barrierattr_t *
+                                 __attr, unsigned int __count);
 int mpc_thread_core_barrier_wait(mpc_thread_barrier_t *__barrier);
 
 int mpc_thread_cancel(mpc_thread_t __cancelthread);
 int mpc_thread_condattr_destroy(mpc_thread_condattr_t *__attr);
 int mpc_thread_condattr_getpshared(const mpc_thread_condattr_t *
-                                    __attr, int *__pshared);
+                                   __attr, int *__pshared);
 int mpc_thread_condattr_init(mpc_thread_condattr_t *__attr);
 int mpc_thread_condattr_setpshared(mpc_thread_condattr_t *__attr,
-                                    int __pshared);
+                                   int __pshared);
 int mpc_thread_condattr_setclock(mpc_thread_condattr_t *
-                                  attr, clockid_t clock_id);
+                                 attr, clockid_t clock_id);
 int mpc_thread_condattr_getclock(mpc_thread_condattr_t *
-                                  attr, clockid_t *clock_id);
+                                 attr, clockid_t *clock_id);
 int mpc_thread_cond_broadcast(mpc_thread_cond_t *__cond);
 int mpc_thread_cond_destroy(mpc_thread_cond_t *__cond);
 int mpc_thread_cond_init(mpc_thread_cond_t *__cond,
-                          const mpc_thread_condattr_t *__cond_attr);
+                         const mpc_thread_condattr_t *__cond_attr);
 int mpc_thread_cond_signal(mpc_thread_cond_t *__cond);
 int mpc_thread_cond_timedwait(mpc_thread_cond_t *__cond,
-                               mpc_thread_mutex_t *__mutex,
-                               const struct timespec *__abstime);
+                              mpc_thread_mutex_t *__mutex,
+                              const struct timespec *__abstime);
 int mpc_thread_cond_wait(mpc_thread_cond_t *__cond,
-                          mpc_thread_mutex_t *__mutex);
+                         mpc_thread_mutex_t *__mutex);
 int _mpc_thread_create_vp(mpc_thread_t *__threadp,
-                                const mpc_thread_attr_t *__attr,
-                                void *(*__start_routine)(void *),
-                                void *__arg, long task_id, long local_task_id);
+                          const mpc_thread_attr_t *__attr,
+                          void *(*__start_routine)(void *),
+                          void *__arg, long task_id, long local_task_id);
 int
 mpc_thread_core_thread_create(mpc_thread_t *__threadp,
-                        const mpc_thread_attr_t *__attr,
-                        void *(*__start_routine)(void *), void *__arg);
+                              const mpc_thread_attr_t *__attr,
+                              void *(*__start_routine)(void *), void *__arg);
 
 int mpc_thread_detach(mpc_thread_t __th);
 int mpc_thread_equal(mpc_thread_t __thread1, mpc_thread_t __thread2);
 void mpc_thread_exit(void *__retval);
 int mpc_thread_getconcurrency(void);
 int mpc_thread_getcpuclockid(mpc_thread_t __thread_id,
-                              clockid_t *__clock_id);
+                             clockid_t *__clock_id);
 int mpc_thread_getschedparam(mpc_thread_t __target_thread,
-                              int *__policy, struct sched_param *__param);
+                             int *__policy, struct sched_param *__param);
 void *mpc_thread_getspecific(mpc_thread_keys_t __key);
 int mpc_thread_join(mpc_thread_t __th, void **__thread_return);
 int mpc_thread_kill(mpc_thread_t thread, int signo);
@@ -145,65 +153,65 @@ int mpc_thread_sigsuspend(sigset_t *set);
 int mpc_thread_process_kill(pid_t pid, int sig);
 int mpc_thread_sigpending(sigset_t *set);
 int mpc_thread_sigmask(int how, const sigset_t *newmask,
-                        sigset_t *oldmask);
+                       sigset_t *oldmask);
 int mpc_thread_sigwait(const sigset_t *set, int *sig);
 int mpc_thread_keys_create(mpc_thread_keys_t *__key,
                            void (*__destr_function)(void *) );
 int mpc_thread_keys_delete(mpc_thread_keys_t __key);
 int mpc_thread_mutexattr_destroy(mpc_thread_mutexattr_t *__attr);
 int mpc_thread_mutexattr_getpshared(const mpc_thread_mutexattr_t *
-                                     __attr, int *__pshared);
+                                    __attr, int *__pshared);
 int mpc_thread_mutexattr_gettype(const mpc_thread_mutexattr_t *
-                                  __attr, int *__kind);
+                                 __attr, int *__kind);
 int mpc_thread_mutexattr_init(mpc_thread_mutexattr_t *__attr);
 int mpc_thread_mutexattr_setpshared(mpc_thread_mutexattr_t *__attr,
-                                     int __pshared);
+                                    int __pshared);
 int mpc_thread_mutexattr_settype(mpc_thread_mutexattr_t *__attr,
-                                  int __kind);
+                                 int __kind);
 int mpc_thread_mutex_destroy(mpc_thread_mutex_t *__mutex);
 int mpc_thread_mutex_init(mpc_thread_mutex_t *__mutex,
-                           const mpc_thread_mutexattr_t *__mutex_attr);
+                          const mpc_thread_mutexattr_t *__mutex_attr);
 int mpc_thread_mutex_lock(mpc_thread_mutex_t *__mutex);
 int mpc_thread_mutex_spinlock(mpc_thread_mutex_t *__mutex);
 int mpc_thread_mutex_timedlock(mpc_thread_mutex_t *__mutex,
-                                const struct timespec *__abstime);
+                               const struct timespec *__abstime);
 int mpc_thread_mutex_trylock(mpc_thread_mutex_t *__mutex);
 int mpc_thread_mutex_unlock(mpc_thread_mutex_t *__mutex);
 
 int mpc_thread_sem_init(mpc_thread_sem_t *sem, int pshared,
-                         unsigned int value);
+                        unsigned int value);
 int mpc_thread_sem_wait(mpc_thread_sem_t *sem);
 int mpc_thread_sem_trywait(mpc_thread_sem_t *sem);
 int mpc_thread_sem_post(mpc_thread_sem_t *sem);
 int mpc_thread_sem_getvalue(mpc_thread_sem_t *sem, int *sval);
 int mpc_thread_sem_destroy(mpc_thread_sem_t *sem);
 mpc_thread_sem_t *mpc_thread_sem_open(const char *__name,
-                                        int __oflag, ...);
+                                      int __oflag, ...);
 int mpc_thread_sem_close(mpc_thread_sem_t *__sem);
 int mpc_thread_sem_unlink(const char *__name);
 int mpc_thread_sem_timedwait(mpc_thread_sem_t *__sem,
-                              const struct timespec *__abstime);
+                             const struct timespec *__abstime);
 
 int mpc_thread_once(mpc_thread_once_t *__once_control,
-                     void (*__init_routine)(void) );
+                    void (*__init_routine)(void) );
 
 int mpc_thread_rwlockattr_destroy(mpc_thread_rwlockattr_t *__attr);
 int mpc_thread_rwlockattr_getpshared(const mpc_thread_rwlockattr_t *
-                                      __attr, int *__pshared);
+                                     __attr, int *__pshared);
 int mpc_thread_rwlockattr_init(mpc_thread_rwlockattr_t *__attr);
 int mpc_thread_rwlockattr_setpshared(mpc_thread_rwlockattr_t *
-                                      __attr, int __pshared);
+                                     __attr, int __pshared);
 int mpc_thread_rwlock_destroy(mpc_thread_rwlock_t *__rwlock);
 int mpc_thread_rwlock_init(mpc_thread_rwlock_t *__rwlock,
-                            const mpc_thread_rwlockattr_t *__attr);
+                           const mpc_thread_rwlockattr_t *__attr);
 int mpc_thread_rwlock_rdlock(mpc_thread_rwlock_t *__rwlock);
 
 int mpc_thread_rwlock_timedrdlock(mpc_thread_rwlock_t *
-                                   __rwlock,
-                                   const struct timespec *__abstime);
+                                  __rwlock,
+                                  const struct timespec *__abstime);
 int mpc_thread_rwlock_timedwrlock(mpc_thread_rwlock_t *
-                                   __rwlock,
-                                   const struct timespec *__abstime);
+                                  __rwlock,
+                                  const struct timespec *__abstime);
 
 int mpc_thread_rwlock_tryrdlock(mpc_thread_rwlock_t *__rwlock);
 int mpc_thread_rwlock_trywrlock(mpc_thread_rwlock_t *__rwlock);
@@ -216,10 +224,10 @@ int mpc_thread_setcancelstate(int __state, int *__oldstate);
 int mpc_thread_setcanceltype(int __type, int *__oldtype);
 int mpc_thread_setconcurrency(int __level);
 int mpc_thread_setschedparam(mpc_thread_t __target_thread,
-                              int __policy,
-                              const struct sched_param *__param);
+                             int __policy,
+                             const struct sched_param *__param);
 int mpc_thread_setspecific(mpc_thread_keys_t __key,
-                            const void *__pointer);
+                           const void *__pointer);
 
 int mpc_thread_spin_destroy(mpc_thread_spinlock_t *__lock);
 int mpc_thread_spin_init(mpc_thread_spinlock_t *__lock, int __pshared);
@@ -232,20 +240,20 @@ int mpc_thread_yield(void);
 unsigned int mpc_thread_sleep(unsigned int seconds);
 int mpc_thread_usleep(unsigned int seconds);
 int mpc_thread_nanosleep(const struct timespec *req,
-                          struct timespec *rem);
+                         struct timespec *rem);
 
 int mpc_thread_getpriority_max(int policy);
 int mpc_thread_getpriority_min(int policy);
 int mpc_thread_attr_getschedpolicy(const mpc_thread_attr_t *, int *);
 int mpc_thread_barrierattr_getpshared(const mpc_thread_barrierattr_t
-                                       *, int *);
+                                      *, int *);
 int mpc_thread_mutex_getprioceiling(const mpc_thread_mutex_t *, int *);
 int mpc_thread_mutex_setprioceiling(mpc_thread_mutex_t *, int, int *);
 int mpc_thread_mutexattr_getprioceiling(const mpc_thread_mutexattr_t
-                                         *, int *);
+                                        *, int *);
 int mpc_thread_mutexattr_setprioceiling(mpc_thread_mutexattr_t *, int);
 int mpc_thread_mutexattr_getprotocol(const mpc_thread_mutexattr_t *
-                                      attr, int *protocol);
+                                     attr, int *protocol);
 int mpc_thread_mutexattr_setprotocol(mpc_thread_mutexattr_t *, int);
 
 int mpc_thread_setschedprio(mpc_thread_t, int);
@@ -253,7 +261,7 @@ int mpc_thread_getattr_np(mpc_thread_t th, mpc_thread_attr_t *attr);
 
 
 unsigned long mpc_thread_atomic_add(volatile unsigned long *ptr,
-                                     unsigned long val);
+                                    unsigned long val);
 unsigned long sctk_tls_entry_add(unsigned long size, void (*func)(void *) );
 void sctk_tls_init_key(unsigned long key, void (*func)(void *) );
 
@@ -266,8 +274,8 @@ long  mpc_thread_futex_with_vaargs(int sysop, ...);
 /* PUSH & POP */
 
 void mpc_thread_cleanup_push(struct _sctk_thread_cleanup_buffer *__buffer,
-                               void (*__routine)(void *),
-                               void *__arg);
+                             void (*__routine)(void *),
+                             void *__arg);
 
 
 void mpc_thread_cleanup_pop(struct _sctk_thread_cleanup_buffer *__buffer, int __execute);
@@ -291,7 +299,45 @@ void mpc_thread_freeze(mpc_thread_mutex_t *lock,
                        void **list);
 void mpc_thread_wake(void **list);
 
+void mpc_thread_spawn_mpi_tasks(void *(*run)(void *), void *arg);
+
+/* Rank and topo getters */
+
+struct mpc_thread_rank_info_s *mpc_thread_rank_info_get(void);
+int mpc_thread_get_pu(void);
+int mpc_thread_get_thread_id(void);
+int mpc_thread_get_current_local_tasks_nb();
+
+
+/* Thread data */
+
+struct sctk_thread_data_s;
+typedef struct sctk_thread_data_s sctk_thread_data_t;
+
+sctk_thread_data_t * mpc_thread_data_get();
+
+/* Thread MPI disguise */
+
+typedef struct mpc_thread_mpi_disguise_s
+{
+	struct sctk_thread_data_s *my_disguisement;
+	void *                     ctx_disguisement;
+}mpc_thread_mpi_disguise_t;
+
+mpc_thread_mpi_disguise_t * mpc_thread_disguise_get();
+int mpc_thread_disguise_set(struct sctk_thread_data_s * th_data, void * mpi_ctx);
+
+
+double mpc_thread_getactivity(int i);
+
+
+int mpc_thread_get_task_placement_and_count(int i, int *nbVp);
+int mpc_thread_get_task_placement(int i);
+
+int mpc_thread_migrate_to_core(const int cpu);
+
+
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif /* MPC_THREAD_H_ */

@@ -19,14 +19,15 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK_KTHREAD_H_
-#define __SCTK_KTHREAD_H_
+#ifndef KTHREAD_H_
+#define KTHREAD_H_
 
 #include "mpc_threads_config.h"
 #include "sctk_debug.h"
 
 #include <unistd.h>
 #include <signal.h>
+
 #ifdef WINDOWS_SYS
 #include <windows.h>
 #endif
@@ -39,33 +40,32 @@ extern "C"
 
 #ifdef SCTK_KERNEL_THREAD_USE_TLS
 
-#define kthread_key_create(key, destr_function)    (*(key) ) = NULL
-#define kthread_key_delete(key)                    (void)(0)
+#define _mpc_thread_kthread_key_create(key, destr_function)    (*(key) ) = NULL
+#define _mpc_thread_kthread_key_delete(key)                    (void)(0)
 
-#define kthread_setspecific(key, pointer)          ( (key) = (pointer) )
-#define kthread_getspecific(key)                   (key)
+#define _mpc_thread_kthread_setspecific(key, pointer)          ( (key) = (pointer) )
+#define _mpc_thread_kthread_getspecific(key)                   (key)
 
 #else
-typedef mpc_thread_keys_t   kthread_key_t;
 
-int kthread_key_create(kthread_key_t *key,
-                       void (*destr_function)(void *) );
-int kthread_key_delete(kthread_key_t key);
-int kthread_setspecific(kthread_key_t key, const void *pointer);
-void *kthread_getspecific(kthread_key_t key);
+int _mpc_thread_kthread_key_create(mpc_thread_keys_t *key, void (*destr_function)(void *) );
+int _mpc_thread_kthread_key_delete(mpc_thread_keys_t key);
+int _mpc_thread_kthread_setspecific(mpc_thread_keys_t key, const void *pointer);
+void *_mpc_thread_kthread_getspecific(mpc_thread_keys_t key);
 #endif
 
-typedef mpc_thread_t   kthread_t;
+typedef mpc_thread_t   mpc_thread_kthread_t;
 
-int kthread_create(kthread_t *thread, void *(*start_routine)(void *),
-                   void *arg);
-int kthread_join(kthread_t th, void **thread_return);
-int kthread_kill(kthread_t th, int val);
-kthread_t kthread_self(void);
-void kthread_exit(void *retval);
+int mpc_thread_kthread_pthread_create(pthread_t *thread, const pthread_attr_t *attr,
+                                      void *(*start_routine)(void *), void *arg);
+int _mpc_thread_kthread_create(mpc_thread_kthread_t *thread, void *(*start_routine)(void *), void *arg);
+int _mpc_thread_kthread_join(mpc_thread_kthread_t th, void **thread_return);
+int _mpc_thread_kthread_kill(mpc_thread_kthread_t th, int val);
+mpc_thread_kthread_t _mpc_thread_kthread_self(void);
+void _mpc_thread_kthread_exit(void *retval);
 
 
-int kthread_sigmask(int how, const sigset_t *newmask, sigset_t *oldmask);
+int _mpc_thread_kthread_sigmask(int how, const sigset_t *newmask, sigset_t *oldmask);
 
 static inline void kthread_usleep(unsigned long usec)
 {
@@ -79,4 +79,5 @@ static inline void kthread_usleep(unsigned long usec)
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif /* KTHREAD_H_ */

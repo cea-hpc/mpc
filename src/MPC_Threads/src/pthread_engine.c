@@ -39,7 +39,8 @@
 #include "sctk_tls.h"
 #include "thread_ptr.h"
 
-#include "sctk_kernel_thread.h"
+#include "thread.h"
+#include "kthread.h"
 
 #include <semaphore.h>
 #include <mpc_common_flags.h>
@@ -232,11 +233,11 @@ static int _mpc_thread_pthread_engine_user_create(pthread_t *thread, pthread_att
 		}
 
 		res =
-		        pthread_create(thread, &tmp_attr, tls_start_routine,
-		                       init_tls_start_routine_arg(def_start_routine, arg) );
+		        mpc_thread_kthread_pthread_create(thread, &tmp_attr, tls_start_routine,
+		                                          init_tls_start_routine_arg(def_start_routine, arg) );
 		if(res != 0)
 		{
-			perror("pthread_create: ");
+			perror("mpc_thread_kthread_pthread_create: ");
 			assume(res == 0);
 		}
 		pthread_attr_destroy(&tmp_attr);
@@ -273,17 +274,10 @@ static int _mpc_thread_pthread_engine_user_create(pthread_t *thread, pthread_att
 			assume(res == 0);
 		}
 
-		res = pthread_create(thread, attr, tls_start_routine,
-		                     init_tls_start_routine_arg(def_start_routine,
-		                                                arg) );
+		res = mpc_thread_kthread_pthread_create(thread, attr, tls_start_routine,
+		                                        init_tls_start_routine_arg(def_start_routine,
+		                                                                   arg) );
 
-		/* Sylvain: see file sctk_thread.c for more details about
-		 * the following commented block */
-#if 0
-		res = sctk_real_pthread_create(thread, attr, tls_start_routine,
-		                               init_tls_start_routine_arg(def_start_routine,
-		                                                          arg) );
-#endif
 		if(res != 0)
 		{
 			perror("pthread_create: ");
@@ -319,7 +313,7 @@ static int _mpc_thread_pthread_engine_create(pthread_t *restrict thread,
 		{
 			sctk_thread_data_t *data = (sctk_thread_data_t *)arg;
 			mpc_common_debug("Bind VP to core %d\n", data->local_task_id % mpc_topology_get_pu_count() );
-			mpc_topology_bind_to_cpu(data->local_task_id);
+			mpc_topology_bind_to_cpu(data->mpi_task.local_rank);
 		}
 
 		if(mpc_common_get_flags()->is_fortran == 1)
@@ -352,8 +346,8 @@ static int _mpc_thread_pthread_engine_create(pthread_t *restrict thread,
 		}
 
 		res =
-		        pthread_create(thread, &tmp_attr, tls_start_routine,
-		                       init_tls_start_routine_arg(start_routine, arg) );
+		        mpc_thread_kthread_pthread_create(thread, &tmp_attr, tls_start_routine,
+		                                          init_tls_start_routine_arg(start_routine, arg) );
 		if(res != 0)
 		{
 			perror("pthread_create: ");
@@ -365,7 +359,7 @@ static int _mpc_thread_pthread_engine_create(pthread_t *restrict thread,
 	else
 	{
 		int res;
-		res = pthread_create(thread, attr, start_routine, arg);
+		res = mpc_thread_kthread_pthread_create(thread, attr, start_routine, arg);
 
 		if(res != 0)
 		{
@@ -428,7 +422,7 @@ static void _mpc_thread_pthread_engine_at_fork_prepare()
 	sem_wait(&_mpc_thread_pthread_engine_user_create_sem);
 }
 
-void _mpc_thread_pthread_engine_thread_init(void)
+void mpc_thread_pthread_engine_init(void)
 
 {
 /*   pthread_mutex_t loc = PTHREAD_MUTEX_INITIALIZER; */

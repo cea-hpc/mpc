@@ -204,7 +204,7 @@ static inline int mpc_common_get_thread_id( void )
  */
 
 #else
-#include "sctk_accessor.h"
+#include "mpc_thread_accessor.h"
 #endif /* MPC_Thread */
 
 /* End rank getters */

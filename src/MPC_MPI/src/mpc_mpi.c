@@ -14710,7 +14710,7 @@ static int __cached_comm_rank(MPI_Comm comm, int *rank)
 	{
 		if(last_rank == mpc_common_get_task_rank() )
 		{
-			if(!__MPC_Maybe_disguised() )
+			if(!mpc_common_flags_disguised_get() )
 			{
 				*rank = last_crank;
 				return MPI_SUCCESS;
@@ -14720,7 +14720,7 @@ static int __cached_comm_rank(MPI_Comm comm, int *rank)
 
 	int ret = _mpc_cl_comm_rank(comm, rank);
 
-	if( (ret == MPI_SUCCESS) && (!__MPC_Maybe_disguised() ) )
+	if( (ret == MPI_SUCCESS) && (!mpc_common_flags_disguised_get() ) )
 	{
 		//sctk_error("SAVE %d@%d %p", *rank , comm,  rank);
 		last_rank  = mpc_common_get_task_rank();

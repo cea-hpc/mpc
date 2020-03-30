@@ -34,7 +34,7 @@
 
 #include "mpc_common_asm.h"
 #include "mpc_launch_pmi.h"
-#include "sctk_accessor.h"
+#include "mpc_thread_accessor.h"
 
 
 /** threshold for large ARPC request */

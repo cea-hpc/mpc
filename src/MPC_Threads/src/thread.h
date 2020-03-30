@@ -26,7 +26,11 @@
 
 #include <stdlib.h>
 #include <signal.h>
-#include "sctk_debug.h"
+
+#include <sctk_debug.h>
+#include <mpc_thread_accessor.h>
+
+
 #include "mpc_common_spinlock.h"
 #include "sctk_alloc.h"
 #include "mpc_thread.h"
@@ -38,36 +42,11 @@ extern "C"
 {
 #endif
 
-#define SCTK_O                             *1
-#define SCTK_KO                            *1024
-#define SCTK_MO                            *1024 * 1024
-
-#define SCTK_ETHREAD_STACK_SIZE            10 SCTK_MO
-#define SCTK_ETHREAD_THREAD_STACK_SIZE     4 SCTK_MO // UPDATE FOR UTS BENCHMARK
-
-#ifdef USER_FORTRAN_STACK_SIZE
-#define SCTK_ETHREAD_STACK_SIZE_FORTRAN    USER_FORTRAN_STACK_SIZE SCTK_MO
-#else
-#ifdef SCTK_32_BIT_ARCH
-#define SCTK_ETHREAD_STACK_SIZE_FORTRAN    12 SCTK_MO
-#else
-#define SCTK_ETHREAD_STACK_SIZE_FORTRAN    1024 SCTK_MO
-#endif
-#endif
-
 int mpc_thread_dump(char *file);
 int mpc_thread_dump_clean(void);
 int mpc_thread_migrate(void);
 int mpc_thread_dump_restore(mpc_thread_t thread, char *type, int vp);
-double mpc_thread_getactivity(int i);
 
-
-void _mpc_thread_pthread_engine_thread_init(void);
-void sctk_ethread_thread_init(void);
-void sctk_ethread_mxn_thread_init(void);
-void sctk_ethread_ng_thread_init(void);
-void sctk_ethread_mxn_ng_thread_init(void);
-void _mpc_thread_pthread_engine_ng_thread_init(void);
 
 int mpc_thread_getattr_np(mpc_thread_t th, mpc_thread_attr_t *attr);
 int mpc_thread_usleep(unsigned int useconds);
@@ -94,13 +73,13 @@ typedef td_thr_state_e   sctk_thread_status_t;
 struct mpc_mpi_cl_per_mpi_process_ctx_s;
 struct sctk_tls_dtors_s;
 
+
 typedef struct sctk_thread_data_s
 {
 	struct sctk_alloc_chain *                tls;
 	void *                                   __arg;
 	void *(*__start_routine)(void *);
-	int                                      task_id;
-	int                                      local_task_id;
+	mpc_thread_rank_info_t mpi_task;
 	int                                      virtual_processor;
 	int                                      user_thread;
 
@@ -116,8 +95,7 @@ typedef struct sctk_thread_data_s
 	/* This is the MPI interface per th ctx */
 	void *                                   mpi_per_thread;
 	/* The thread disguisement if present */
-	struct sctk_thread_data_s *              my_disguisement;
-	void *                                   ctx_disguisement;
+	mpc_thread_mpi_disguise_t disguise;
 } sctk_thread_data_t;
 
 #define SCTK_THREAD_DATA_INIT    { NULL, NULL, NULL, -1, -1, -1, -1, NULL,           \
@@ -126,15 +104,9 @@ typedef struct sctk_thread_data_s
 
 void _mpc_thread_data_init(void);
 void _mpc_thread_data_set(sctk_thread_data_t *task_id);
-sctk_thread_data_t *mpc_thread_data_get(void);
+
 sctk_thread_data_t *mpc_thread_data_get_disg(int no_disguise);
 
-int mpc_thread_get_current_local_tasks_nb();
-void mpc_thread_spawn_mpi_tasks(void *(*run)(void *), void *arg);
-
-int mpc_topology_get_current_cpu(void);
-int mpc_thread_get_task_placement_and_count(int i, int *nbVp);
-int mpc_thread_get_task_placement(int i);
 
 
 extern volatile unsigned sctk_long_long ___timer_thread_ticks;
@@ -144,8 +116,6 @@ extern struct sctk_alloc_chain *mpc_thread_tls;
 
 #define sctk_time_interval    10 /*millisecondes */
 
-
-int mpc_thread_migrate_to_core(const int cpu);
 
 void _mpc_thread_exit_cleanup(void);
 void sctk_ethread_mxn_init_kethread(void);

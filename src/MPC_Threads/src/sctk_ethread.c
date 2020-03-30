@@ -44,7 +44,7 @@ sctk_ethread_virtual_processor_t virtual_processor = SCTK_ETHREAD_VP_INIT;
 #ifdef SCTK_KERNEL_THREAD_USE_TLS
 __thread void *sctk_ethread_key;
 #else
-kthread_key_t sctk_ethread_key;
+mpc_thread_keys_t sctk_ethread_key;
 #endif
 
 inline sctk_ethread_t
@@ -53,7 +53,7 @@ sctk_ethread_self()
 	sctk_ethread_virtual_processor_t *vp;
 	sctk_ethread_per_thread_t *       task;
 
-	vp   = kthread_getspecific(sctk_ethread_key);
+	vp   = _mpc_thread_kthread_getspecific(sctk_ethread_key);
 	task = (sctk_ethread_t)vp->current;
 	return task;
 }
@@ -63,7 +63,7 @@ static inline void
 sctk_ethread_self_all(sctk_ethread_virtual_processor_t **vp,
                       sctk_ethread_per_thread_t **task)
 {
-	*vp   = kthread_getspecific(sctk_ethread_key);
+	*vp   = _mpc_thread_kthread_getspecific(sctk_ethread_key);
 	*task = (sctk_ethread_t)(*vp)->current;
 	sctk_assert( (*task)->vp == *vp);
 }
@@ -434,7 +434,7 @@ sctk_ethread_thread_attr_getbinding(__UNUSED__ mpc_thread_attr_t *__attr, __UNUS
 }
 
 void
-sctk_ethread_thread_init(void)
+mpc_thread_ethread_engine_init(void)
 {
 	int i;
 
@@ -445,8 +445,8 @@ sctk_ethread_thread_init(void)
 	/** **/
 
 	sctk_init_default_sigset();
-	kthread_key_create(&sctk_ethread_key, NULL);
-	kthread_setspecific(sctk_ethread_key, &virtual_processor);
+	_mpc_thread_kthread_key_create(&sctk_ethread_key, NULL);
+	_mpc_thread_kthread_setspecific(sctk_ethread_key, &virtual_processor);
 
 	sctk_ethread_check_size_eq(int, sctk_ethread_status_t);
 

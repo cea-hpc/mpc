@@ -27,16 +27,38 @@
 #include <mpc_topology.h>
 #include <mpc_common_flags.h>
 
-#include "mpc_common_rank.h"
 #include "sctk_debug.h"
-#include "thread.h"
 
-#include "sctk_tls.h"
+#include <mpc_thread.h>
+
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+typedef struct mpc_thread_rank_info_s
+{
+	int rank;
+	int local_rank;
+}mpc_thread_rank_info_t;
+
+static inline int ___get_task_rank()
+{
+	mpc_thread_rank_info_t *data = mpc_thread_rank_info_get();
+
+	if(!data)
+	{
+		return -1;
+	}
+
+	return ( int )(data->rank);
+}
+
+
+/* From manually switched TLSs */
+extern __thread int __mpc_task_rank;
+
 
 static inline int mpc_common_get_task_rank(void)
 {
@@ -45,7 +67,7 @@ static inline int mpc_common_get_task_rank(void)
 #endif
 	int can_be_disguised = 0;
 #ifdef MPC_MPI
-	can_be_disguised = __MPC_Maybe_disguised();
+	can_be_disguised = mpc_common_flags_disguised_get();
 #endif
 	int ret = -1;
 
@@ -65,28 +87,14 @@ static inline int mpc_common_get_task_rank(void)
 			return ret;
 		}
 
-		sctk_thread_data_t *data = mpc_thread_data_get();
-
-		if(!data)
-		{
-			return -1;
-		}
-
-		ret = ( int )(data->task_id);
+		ret = ___get_task_rank();
 
 		/* Save for next call */
 		__mpc_task_rank = ret;
 	}
 	else
 	{
-		sctk_thread_data_t *data = mpc_thread_data_get();
-
-		if(!data)
-		{
-			return -1;
-		}
-
-		ret = ( int )(data->task_id);
+		ret = ___get_task_rank();
 	}
 
 	return ret;
@@ -105,14 +113,14 @@ static inline int mpc_common_get_local_task_rank(void)
 #ifdef MPC_IN_PROCESS_MODE
 	return 0;
 #endif
-	sctk_thread_data_t *data = mpc_thread_data_get();
+	mpc_thread_rank_info_t *data = mpc_thread_rank_info_get();
 
 	if(!data)
 	{
 		return -1;
 	}
 
-	return ( int )(data->local_task_id);
+	return ( int )(data->local_rank);
 }
 
 static inline int mpc_common_get_local_task_count(void)
@@ -126,28 +134,9 @@ static inline int mpc_common_get_local_task_count(void)
 	return mpc_thread_get_current_local_tasks_nb();
 }
 
-static inline int mpc_thread_get_pu(void)
-{
-	sctk_thread_data_t *data = mpc_thread_data_get();
-
-	if(!data)
-	{
-		return -1;
-	}
-
-	return data->virtual_processor;
-}
-
 static inline int mpc_common_get_thread_id(void)
 {
-	sctk_thread_data_t *data = mpc_thread_data_get();
-
-	if(!data)
-	{
-		return -1;
-	}
-
-	return data->user_thread;
+	return mpc_thread_get_thread_id();
 }
 
 #ifdef __cplusplus

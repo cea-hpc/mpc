@@ -26,7 +26,7 @@
 
 #include <sctk_route.h>
 #include <mpc_launch_pmi.h>
-#include <sctk_accessor.h>
+#include <mpc_thread_accessor.h>
 
 #include <sctk_communicator.h>
 

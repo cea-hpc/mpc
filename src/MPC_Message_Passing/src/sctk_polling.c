@@ -21,7 +21,7 @@
 /* ######################################################################## */
 #include "sctk_polling.h"
 #include <stdlib.h>
-#include "sctk_accessor.h"
+#include "mpc_thread_accessor.h"
 
 void sctk_polling_cell_zero( struct sctk_polling_cell *cell )
 {

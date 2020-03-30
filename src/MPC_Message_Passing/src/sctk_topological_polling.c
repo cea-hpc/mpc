@@ -22,7 +22,7 @@
 #include "sctk_topological_polling.h"
 
 #include <stdlib.h>
-#include "sctk_accessor.h"
+#include "mpc_thread_accessor.h"
 
 
 /************************************************************************/
