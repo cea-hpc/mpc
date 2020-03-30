@@ -67,13 +67,12 @@ pthread_wait_for_value_and_poll( volatile int *data, int value,
 		{
 			func( arg );
 		}
-		/*       sctk_thread_yield(); */
+
 		if ( ( *data ) != value )
 		{
-			if ( i >= 150 )
+			if ( i >= 2048 )
 			{
-				kthread_usleep( 15 );
-				i = 0;
+				kthread_usleep(i >> 10);
 			}
 			else
 			{
