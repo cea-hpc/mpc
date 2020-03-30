@@ -185,7 +185,7 @@ post_add_fortran()
 
 	#build unprivatized usage
 	FLAGS="-I${MPC_INSTALL_PREFIX}/include/mpc/ -L${MPC_INSTALL_PREFIX}/lib/ -Wl,-rpath=${MPC_INSTALL_PREFIX}/lib/"
-	CC="`lookup_compiler c 1 | cut -f3 -d":"` $FLAGS  -lmpcframework"
+	CC="`lookup_compiler c 1 | cut -f3 -d":"` $FLAGS $(${MPC_INSTALL_PREFIX}/bin/mpc_cflags) $(${MPC_INSTALL_PREFIX}/bin/mpc_ldflags)"
 	FC="$1 $FLAGS"
 	mkdir -p $COMPILER_FILEPATH/$3/npriv
 	MPC_CALL_ORIGINAL_MAIN=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=1 sh $FORTRAN_GEN_PATH/fortran_gen/fortran_build.sh "$CC" "$FC" "$FORTRAN_GEN_PATH/fortran_gen/mpc_mpi.h" "$COMPILER_FILEPATH/$3/npriv"
