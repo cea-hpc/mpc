@@ -106,6 +106,20 @@
 						<config>tcp_config_mpi</config>
 					</rail>
 					<rail>
+						<name>tcp_mpi_rnd</name>
+						<priority>50</priority>
+						<ondemand>1</ondemand>
+						<topology>ring</topology>
+						<gates>
+							<gate>
+								<probabilistic>
+									<probability>50</probability>
+								</probabilistic>
+							</gate>
+						</gates>
+						<config>tcp_config_mpi</config>
+					</rail>
+					<rail>
 						<name>tcp_large</name>
 						<priority>10</priority>
 						<ondemand>1</ondemand>
@@ -133,15 +147,6 @@
 						<ondemand>0</ondemand>
 						<topology>fully</topology>
 						<config>shm_config_mpi</config>
-						<gates>
-							<gate>
-								<msgtype>
-									<task>1</task>
-									<emulated_rma>1</emulated_rma>
-								</msgtype>
-							</gate>
-						</gates>
-	
 					</rail>
 				</rails>
 				<cli_options>
@@ -165,6 +170,7 @@
 						<name>tcp</name>
 						<rails>
 							<rail>shm_mpi</rail>
+							<rail>tcp_mpi_rnd</rail>
 							<rail>tcp_mpi</rail>
 						</rails>
 					</cli_option>
