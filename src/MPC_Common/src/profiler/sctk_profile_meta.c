@@ -31,7 +31,7 @@
 
 void sctk_profile_meta_calibrate_begin(struct sctk_profile_meta *meta)
 {
-			meta->begin_ts = sctk_get_time_stamp();
+			meta->begin_ts = mpc_arch_get_timestamp_gettimeofday();
 	        gettimeofday( &meta->calibration_time , NULL );
 }
 
@@ -40,7 +40,7 @@ void sctk_profile_meta_calibrate_end(struct sctk_profile_meta *meta)
 {
         struct timeval e_tv;
 
-        uint64_t end = sctk_get_time_stamp();
+        uint64_t end = mpc_arch_get_timestamp_gettimeofday();
         gettimeofday( &e_tv , NULL );
 
         double t_begin, t_end;
@@ -108,7 +108,7 @@ void sctk_profile_meta_end_compute(struct sctk_profile_meta *meta)
 		{
 			/* Do it only once */
 
-			uint64_t now = sctk_get_time_stamp();
+			uint64_t now = mpc_arch_get_timestamp_gettimeofday();
 
 			meta->walltime = now - meta->begin_ts;
 

@@ -4634,7 +4634,7 @@ double _mpc_cl_wtime()
 	res = ( double ) tp.tv_usec + ( double ) tp.tv_sec * ( double ) 1000000;
 	res = res / ( double ) 1000000;
 #else
-	res = sctk_atomics_get_timestamp_tsc();
+	res = mpc_arch_get_timestamp();
 #endif
 	sctk_nodebug( "Wtime = %f", res );
 	SCTK_PROFIL_END( MPC_Wtime );

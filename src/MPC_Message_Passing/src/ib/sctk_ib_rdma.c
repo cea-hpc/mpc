@@ -336,7 +336,7 @@ static void sctk_ib_rdma_rendezvous_send_ack ( sctk_rail_info_t *rail, mpc_lowco
 	sctk_ib_qp_send_ibuf ( &rdma->remote_rail->network.ib, remote, ibuf);
 	sctk_nodebug ( "Send ACK to rail %d for task %d", rdma->remote_rail->rail_number, SCTK_MSG_SRC_TASK ( msg ) );
 
-	send_header->rdma.local.send_ack_timestamp = sctk_atomics_get_timestamp();
+	send_header->rdma.local.send_ack_timestamp = mpc_arch_get_timestamp();
 }
 
 sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req(sctk_rail_info_t *rail,
@@ -367,7 +367,7 @@ sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req(sctk_rail_info_t *rail,
   rdma->local.ready = 0;
   rdma->rail = rail;
   rdma->remote_peer = remote;
-  rdma->local.req_timestamp = sctk_atomics_get_timestamp();
+  rdma->local.req_timestamp = mpc_arch_get_timestamp();
 
   rdma->remote_rail = rail;
   rdma_req->remote_rail = rdma->rail->rail_number;
@@ -469,7 +469,7 @@ sctk_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
                      sctk_ib_rdma_rendezvous_net_copy);
   msg->tail.ib.protocol = SCTK_IB_RDMA_PROTOCOL;
   rdma = &msg->tail.ib.rdma;
-  rdma->local.req_timestamp = sctk_atomics_get_timestamp();
+  rdma->local.req_timestamp = mpc_arch_get_timestamp();
 
   SCTK_MSG_COMPLETION_FLAG_SET(msg, NULL);
   msg->tail.message_type = MPC_LOWCOMM_MESSAGE_NETWORK;
@@ -641,7 +641,7 @@ void sctk_ib_rdma_rendezvous_prepare_data_write(
   /*
   #endif
   */
-  rdma->local.send_rdma_timestamp = sctk_atomics_get_timestamp();
+  rdma->local.send_rdma_timestamp = mpc_arch_get_timestamp();
 }
 
 static inline mpc_lowcomm_ptp_message_t *

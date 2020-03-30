@@ -362,13 +362,13 @@ retry:
 				if ( ibuf->cq == SCTK_IB_RECV_CQ )
 				{
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
-					//            (sctk_atomics_get_timestamp() - ibuf->polled_timestamp));
+					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
 					sctk_network_poll_recv_ibuf ( ( sctk_rail_info_t * ) ibuf->rail, ibuf );
 				}
 				else
 				{
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
-					//            (sctk_atomics_get_timestamp() - ibuf->polled_timestamp));
+					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
 					sctk_network_poll_send_ibuf ( ( sctk_rail_info_t * ) ibuf->rail, ibuf);
 				}
 
@@ -479,7 +479,7 @@ static inline int __cp_steal ( struct sctk_ib_polling_s *poll, sctk_ibuf_t *vola
 					/* Profile the time to handle an ibuf once it has been polled
 					* from the CQ */
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
-					//            (sctk_atomics_get_timestamp() - ibuf->polled_timestamp));
+					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
 					sctk_network_poll_recv_ibuf ( ibuf->rail, ibuf );
 				}
 				else
@@ -487,7 +487,7 @@ static inline int __cp_steal ( struct sctk_ib_polling_s *poll, sctk_ibuf_t *vola
 					/* Profile the time to handle an ibuf once it has been polled
 					* from the CQ */
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
-					//            (sctk_atomics_get_timestamp() - ibuf->polled_timestamp));
+					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
 					sctk_network_poll_send_ibuf ( ibuf->rail, ibuf );
 				}
 

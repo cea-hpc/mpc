@@ -26,7 +26,7 @@
 int is_printing = 1;
 
   static double
-rrrsctk_get_time_stamp ()
+rrrmpc_arch_get_timestamp_gettimeofday ()
 {
   struct timeval tp;
   double res;
@@ -61,12 +61,12 @@ main (int argc, char **argv)
   MPC_Barrier (my_com);
   mprintf (stderr, "Avant barriers %d\n", my_rank);
 
-  begin = rrrsctk_get_time_stamp();
+  begin = rrrmpc_arch_get_timestamp_gettimeofday();
   for (i=0; i<NB_BARRIER; ++i)
   {
     MPC_Barrier (my_com);
   }
-  end = rrrsctk_get_time_stamp();
+  end = rrrmpc_arch_get_timestamp_gettimeofday();
   mprintf (stderr, "Apres barriers %d\n", my_rank);
 
   if (my_rank == 0)

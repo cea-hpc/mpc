@@ -2295,7 +2295,7 @@ quick_swap:
 			// timers
 			if(sched->th->attr.timestamp_base != -1)
 			{
-				sched->th->attr.timestamp_end    = sctk_atomics_get_timestamp_tsc();
+				sched->th->attr.timestamp_end    = mpc_arch_get_timestamp_gettimeofday();
 				sched->th->attr.timestamp_count +=
 				        sched->th->attr.timestamp_end - sched->th->attr.timestamp_begin;
 
@@ -2339,12 +2339,12 @@ quick_swap:
 			{
 				sched->th->attr.timestamp_threshold =
 				        sctk_runtime_config_get()->modules.scheduler.timestamp_threshold;
-				sched->th->attr.timestamp_base  = sctk_atomics_get_timestamp_tsc();
+				sched->th->attr.timestamp_base  = mpc_arch_get_timestamp_gettimeofday();
 				sched->th->attr.timestamp_begin = sched->th->attr.timestamp_base;
 			}
 			else
 			{
-				sched->th->attr.timestamp_begin = sctk_atomics_get_timestamp_tsc();
+				sched->th->attr.timestamp_begin = mpc_arch_get_timestamp_gettimeofday();
 			}
 			// endtimers
 

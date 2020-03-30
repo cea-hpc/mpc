@@ -66,10 +66,9 @@ static void _mpc_thread_pthread_engine_wait_for_value_and_poll(volatile int *dat
 
 		if( (*data) != value)
 		{
-			if(i >= 100)
+			if(i >= 2048)
 			{
-				kthread_usleep(5);
-				i = 0;
+				kthread_usleep(i >> 10);
 			}
 			else
 			{

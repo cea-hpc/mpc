@@ -33,7 +33,7 @@ func2(void)
 
 
 static double
-rrrsctk_get_time_stamp ()
+rrrmpc_arch_get_timestamp_gettimeofday ()
 {
   struct timeval tp;
   double res;
@@ -72,10 +72,10 @@ main(int argc, char *argv[])
 
     printf("main: swapcontext(&uctx_main, &uctx_func2)\n");
     i++;
-    start = rrrsctk_get_time_stamp();
+    start = rrrmpc_arch_get_timestamp_gettimeofday();
     if (swapcontext(&uctx_main, &uctx_func2) == -1)
         handle_error("swapcontext");
-    end = rrrsctk_get_time_stamp();
+    end = rrrmpc_arch_get_timestamp_gettimeofday();
 
     printf("main: exiting average time %fus\n",(end-start)/i);
     exit(EXIT_SUCCESS);

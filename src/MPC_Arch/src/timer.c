@@ -23,82 +23,100 @@
 #include <sys/time.h>
 #include <mpc_arch.h>
 
-double
-sctk_atomics_get_timestamp_gettimeofday ()
+double mpc_arch_get_timestamp_gettimeofday()
 {
-  struct timeval tp;
-  gettimeofday (&tp, NULL);
-  return tp.tv_usec + tp.tv_sec * 1000000;
+	struct timeval tp;
+
+	gettimeofday(&tp, NULL);
+	return tp.tv_sec * 1e6 + tp.tv_usec;
 }
 
 #if defined(SCTK_ia64_ARCH_SCTK)
-double
-sctk_atomics_get_timestamp ()
+static inline double __get_timestamp()
 {
-  unsigned long t;
-  __asm__ volatile ("mov %0=ar%1":"=r" (t):"i" (44));
-  return (double) t;
+	unsigned long t;
+	__asm__ volatile ("mov %0=ar%1" : "=r" (t) : "i" (44) );
+
+	return (double)t;
 }
+
 #elif defined(SCTK_i686_ARCH_SCTK)
-double
-sctk_atomics_get_timestamp ()
+static inline double __get_timestamp()
 {
-  unsigned long long t;
-  __asm__ volatile ("rdtsc":"=A" (t));
-  return (double) t;
+	unsigned long long t;
+	__asm__ volatile ("rdtsc" : "=A" (t) );
+
+	return (double)t;
 }
+
 #elif defined(SCTK_x86_64_ARCH_SCTK)
-double
-sctk_atomics_get_timestamp ()
+static inline double __get_timestamp()
 {
-  unsigned int a;
-  unsigned int d;
-  unsigned long t;
-  __asm__ volatile ("rdtsc":"=a" (a), "=d" (d));
-  t = ((unsigned long) a) | (((unsigned long) d) << 32);
-  return (double) t;
+	unsigned int  a;
+	unsigned int  d;
+	unsigned long t;
+	__asm__ volatile ("rdtsc" : "=a" (a), "=d" (d) );
+
+	t = ( (unsigned long)a) | ( ( (unsigned long)d) << 32);
+	return (double)t;
 }
+
 #elif defined(SCTK_arm_ARCH_SCTK)
-double
-sctk_atomics_get_timestamp ()
+static inline double __get_timestamp()
 {
-return sctk_atomics_get_timestamp_gettimeofday();
+	return mpc_arch_get_timestamp_gettimeofday();
 }
+
 #else
 #warning "Use get time of day for profiling"
-double
-sctk_atomics_get_timestamp ()
+static inline double __get_timestamp()
 {
-  return sctk_atomics_get_timestamp_gettimeofday();
+	return mpc_arch_get_timestamp_gettimeofday();
 }
 #endif
 
-static double sctk_cpu_freq = 0;
+static double __cpu_freq = 0;
 
-void sctk_atomics_cpu_freq_init(){
-  double begin_tsc, end_tsc;
-  double begin_timeofday, end_timeofday; 
+static double __begin_tsc          = 0.0;
+static double __start_gettimeofday = 0.0;
 
-  begin_timeofday = sctk_atomics_get_timestamp_gettimeofday ();
-  begin_tsc = sctk_atomics_get_timestamp (); 
-  usleep(10000);
-  end_tsc = sctk_atomics_get_timestamp ();
-  end_timeofday = sctk_atomics_get_timestamp_gettimeofday ();
-
-  sctk_cpu_freq = (end_tsc-begin_tsc) / ((end_timeofday-begin_timeofday)/1000000.0) ;
-  if(sctk_cpu_freq < 1){
-	sctk_cpu_freq = 1;
-  }
+void mpc_arch_tsc_freq_compute_start()
+{
+	__start_gettimeofday = mpc_arch_get_timestamp_gettimeofday();
+	__begin_tsc          = __get_timestamp();
 }
 
-double sctk_atomics_get_cpu_freq(){
-  return sctk_cpu_freq;
+void mpc_arch_tsc_freq_compute()
+{
+	if(!__begin_tsc)
+	{
+		mpc_arch_tsc_freq_compute_start();
+		usleep(10000);
+	}
+
+	double end_tsc       = __get_timestamp();
+	double end_timeofday = mpc_arch_get_timestamp_gettimeofday();
+
+	__cpu_freq = (end_tsc - __begin_tsc) / ( (end_timeofday - __start_gettimeofday) / 1e6);
+
+	if(__cpu_freq < 1)
+	{
+		__cpu_freq = 1;
+	}
 }
 
-double sctk_atomics_get_timestamp_tsc (){
-  double res; 
+double mpc_arch_tsc_freq_get()
+{
+	if(__cpu_freq == 0)
+	{
+		mpc_arch_tsc_freq_compute();
+	}
+	return __cpu_freq;
+}
 
-  res = sctk_atomics_get_timestamp();
-  res = res / sctk_cpu_freq;
-  return res;
+double mpc_arch_get_timestamp()
+{
+	double freq = mpc_arch_tsc_freq_get();
+
+	return (__get_timestamp() - __begin_tsc) / freq;
 }

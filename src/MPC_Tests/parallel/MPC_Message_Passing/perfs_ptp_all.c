@@ -32,7 +32,7 @@
 #define max_tab_size (4*1024*1024)
 
 static double
-rrrsctk_get_time_stamp ()
+rrrmpc_arch_get_timestamp_gettimeofday ()
 {
   struct timeval tp;
   double res;
@@ -76,7 +76,7 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
     }
 
 
-  start = rrrsctk_get_time_stamp ();
+  start = rrrmpc_arch_get_timestamp_gettimeofday ();
 
   if (my_rank % 2 == 0)
     {
@@ -99,7 +99,7 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
 
 
 /*   MPI_Barrier (SCTK_COMM_WORLD); */
-  end = rrrsctk_get_time_stamp ();
+  end = rrrmpc_arch_get_timestamp_gettimeofday ();
   t = end - start;
   tmp_t = t;
 

@@ -202,7 +202,7 @@ static void sctk_ib_cm_change_state_to_rts ( sctk_rail_info_t *rail,
 	                remote->rdma.pool->region[REGION_SEND].size_ibufs,
 	                device->eager_rdma_connections,
 	                (double) sctk_ibuf_rdma_get_regions_get_allocate_size ( remote ) / 1024.0,
-	                sctk_get_time_stamp() - remote->rdma.creation_timestamp );
+	                mpc_arch_get_timestamp_gettimeofday() - remote->rdma.creation_timestamp );
 
 }
 

@@ -46,7 +46,7 @@ sctk_require_page_handler (int signo, siginfo_t * info, void *context)
 #define max_tab_size (4*1024*1024)
 
 static double
-rrrsctk_get_time_stamp ()
+rrrmpc_arch_get_timestamp_gettimeofday ()
 {
   struct timeval tp;
   double res;
@@ -69,7 +69,7 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
   MPI_Barrier (SCTK_COMM_WORLD);
   MPI_Barrier (SCTK_COMM_WORLD);
 
-  start = rrrsctk_get_time_stamp ();
+  start = rrrmpc_arch_get_timestamp_gettimeofday ();
   if (my_rank == 0)
     {
       for (i = 0; i < iters; i++)
@@ -86,7 +86,7 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
 	}
     }
   MPI_Barrier (SCTK_COMM_WORLD);
-  end = rrrsctk_get_time_stamp ();
+  end = rrrmpc_arch_get_timestamp_gettimeofday ();
   MPI_Barrier (SCTK_COMM_WORLD);
   if (my_rank == 0)
     fprintf (stderr,

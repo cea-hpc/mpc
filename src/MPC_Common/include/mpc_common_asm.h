@@ -55,12 +55,6 @@ extern "C" {
         #error Unsupported architecture. Cannot compile MPC
 #endif
 
-/**********
- * TIMERS *
- **********/
-
-#define sctk_get_time_stamp sctk_atomics_get_timestamp
-#define sctk_get_time_stamp_gettimeofday sctk_atomics_get_timestamp_gettimeofday
 
 /***********************************
  * MPC TEST AND SET IMPLEMENTATION *

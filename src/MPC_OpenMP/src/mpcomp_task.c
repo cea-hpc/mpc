@@ -806,14 +806,14 @@ void __task_random_victim_init( mpcomp_generic_node_t *gen_node )
 	{
 		sctk_assert( gen_node->ptr.mvp->threads );
 		const int __globalRank = gen_node->ptr.mvp->threads->tree_array_rank;
-		srand48_r( sctk_get_time_stamp() * __globalRank, randBuffer );
+		srand48_r( mpc_arch_get_timestamp_gettimeofday() * __globalRank, randBuffer );
 		MPCOMP_TASK_MVP_SET_TASK_LIST_RANDBUFFER( gen_node->ptr.mvp, randBuffer );
 	}
 	else
 	{
 		sctk_assert( gen_node->type == MPCOMP_CHILDREN_NODE );
 		const int __globalRank = gen_node->ptr.node->tree_array_rank;
-		srand48_r( sctk_get_time_stamp() * __globalRank, randBuffer );
+		srand48_r( mpc_arch_get_timestamp_gettimeofday() * __globalRank, randBuffer );
 		MPCOMP_TASK_NODE_SET_TASK_LIST_RANDBUFFER( gen_node->ptr.node, randBuffer );
 	}
 }

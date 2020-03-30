@@ -589,6 +589,10 @@ void mpc_launch_init_runtime()
 
     __init_already_done = 1;
 
+    /* Start computing TSC frequency to avoid usleep in
+       the first waitall */
+    mpc_arch_tsc_freq_compute_start();
+
     mpc_common_init_trigger( "Base Runtime Init" );
 
     /* WARNING !! NO CONFIG before this point */

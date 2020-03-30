@@ -338,7 +338,7 @@ static int sctk_network_poll_recv ( sctk_rail_info_t *rail, struct ibv_wc *wc )
 
 	/* Put a timestamp in the buffer. We *MUST* do it
 	* before pushing the message to the list */
-	ibuf->polled_timestamp = sctk_atomics_get_timestamp();
+	ibuf->polled_timestamp = mpc_arch_get_timestamp();
 	/* We *MUST* recopy some informations to the ibuf */
 	ibuf->wc = *wc;
 	ibuf->cq = SCTK_IB_RECV_CQ;
@@ -415,7 +415,7 @@ static int sctk_network_poll_send ( sctk_rail_info_t *rail, struct ibv_wc *wc )
 
 	/* Put a timestamp in the buffer. We *MUST* do it
 	* before pushing the message to the list */
-	ibuf->polled_timestamp = sctk_atomics_get_timestamp();
+	ibuf->polled_timestamp = mpc_arch_get_timestamp();
 
 	/* We *MUST* recopy some informations to the ibuf */
 	ibuf->wc = *wc;

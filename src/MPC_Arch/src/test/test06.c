@@ -17,7 +17,7 @@ func1(void)
 }
 
 static double
-rrrsctk_get_time_stamp ()
+rrrmpc_arch_get_timestamp_gettimeofday ()
 {
   struct timeval tp;
   double res;
@@ -38,7 +38,7 @@ main(int argc, char *argv[])
     double start;
     double end;
 
-    start = rrrsctk_get_time_stamp();
+    start = rrrmpc_arch_get_timestamp_gettimeofday();
 
     while(i < MAX_ITER){
     i++;
@@ -52,7 +52,7 @@ main(int argc, char *argv[])
     if (swapcontext(&uctx_main, &uctx_func1) == -1)
         handle_error("swapcontext");
     }
-    end = rrrsctk_get_time_stamp();
+    end = rrrmpc_arch_get_timestamp_gettimeofday();
 
     printf("main: exiting average time %fus\n",(end-start)/i);
     exit(EXIT_SUCCESS);

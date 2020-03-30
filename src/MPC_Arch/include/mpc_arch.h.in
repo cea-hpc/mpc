@@ -55,11 +55,11 @@
  * ARCHITECTURAL TIMERS *
  ************************/
 
-void sctk_atomics_cpu_freq_init();
-double sctk_atomics_get_cpu_freq();
-double sctk_atomics_get_timestamp_tsc ();
-double sctk_atomics_get_timestamp_gettimeofday ();
-double sctk_atomics_get_timestamp ();
+double mpc_arch_get_timestamp_gettimeofday();
+void mpc_arch_tsc_freq_compute_start();
+void mpc_arch_tsc_freq_compute();
+double mpc_arch_tsc_freq_get();
+double mpc_arch_get_timestamp();
 
 /*********
  * PAUSE *
