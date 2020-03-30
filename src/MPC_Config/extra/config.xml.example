@@ -133,15 +133,6 @@
 						<ondemand>0</ondemand>
 						<topology>fully</topology>
 						<config>shm_config_mpi</config>
-						<gates>
-							<gate>
-								<msgtype>
-									<task>1</task>
-									<emulated_rma>1</emulated_rma>
-								</msgtype>
-							</gate>
-						</gates>
-	
 					</rail>
 				</rails>
 				<cli_options>

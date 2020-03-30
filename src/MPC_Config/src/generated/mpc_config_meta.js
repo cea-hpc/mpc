@@ -315,7 +315,7 @@ meta.types = {
 		spin_delay: {mode: 'param', name: "spin_delay", type: "int", doc: "Max number of accesses to the lock before calling thread_yield", dflt: "10", },
 		interval: {mode: 'param', name: "interval", type: "int", doc: "", dflt: "10", },
 		kthread_stack_size: {mode: 'param', name: "kthread_stack_size", type: "size", doc: "Define the stack size of MPC user threads", dflt: "10MB", },
-		placement_policy: {mode: 'param', name: "placement_policy", type: "funcptr", doc: "Initialize thread placement policy", dflt: "sctk_get_init_vp_and_nbvp_default", },
+		placement_policy: {mode: 'param', name: "placement_policy", type: "funcptr", doc: "Initialize thread placement policy", dflt: "mpc_thread_get_task_placement_and_count_default", },
 	}},
 	scheduler : {type: 'struct', name: "scheduler", childs: {
 		timestamp_threshold: {mode: 'param', name: "timestamp_threshold", type: "double", doc: "Threshold for priority scheduling quantum", dflt: "0.0", },

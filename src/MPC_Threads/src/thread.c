@@ -373,6 +373,7 @@ int mpc_thread_get_task_placement_and_count(int i, int *nbVp)
 	int ( *thread_placement_policy )(int i, int *nbVp);
 	thread_placement_policy = (int (*)(int, int *) )sctk_runtime_config_get()
 	                          ->modules.thread.placement_policy.value;
+	assume(thread_placement_policy != NULL);
 	return thread_placement_policy(i, nbVp);
 }
 
