@@ -71,7 +71,7 @@
 #include "thread_ptr.h"
 
 #include <kthread.h>
-#include <threads_generic.h>
+#include <ng_engine.h>
 
 #include <sctk_tls.h>
 

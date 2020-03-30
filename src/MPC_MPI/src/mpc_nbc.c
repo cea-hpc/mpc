@@ -40,7 +40,7 @@
 
 #include "mpc_nbc_progress_thread_binding.h"
 
-#include "mpc_threads_generic.h"
+#include "mpc_thread_ng_engine.h"
 #include "egreq_nbc.h"
 /* INTERNAL FOR NON-BLOCKING COLLECTIVES - CALL TO libNBC FUNCTIONS*/
 
@@ -4840,8 +4840,8 @@ static inline int NBC_Initialize() {
   struct mpc_mpi_cl_per_mpi_process_ctx_s * task_specific;
   task_specific = mpc_cl_per_mpi_process_ctx_get ();
 
-  // _mpc_threads_generic_attr_t attr;
-  // _mpc_threads_generic_attr_init(&attr);
+  // _mpc_threads_ng_engine_attr_t attr;
+  // _mpc_threads_ng_engine_attr_init(&attr);
 
   mpc_thread_attr_t attr;
   mpc_thread_attr_init(&attr);
@@ -4878,7 +4878,7 @@ static inline int NBC_Initialize() {
                                     NBC_Pthread_func, NULL);
   if(0 != ret) { printf("Error in mpc_thread_core_thread_create() (%i)\n", ret); return NBC_OOR; }
 
-  // _mpc_threads_generic_attr_destroy(&attr);
+  // _mpc_threads_ng_engine_attr_destroy(&attr);
   mpc_thread_attr_destroy(&attr);
 
   // task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;

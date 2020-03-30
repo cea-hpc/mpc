@@ -34,7 +34,7 @@
 #include "mpc_mpi_weak.h"
 #endif
 
-#include "mpc_threads_generic.h"
+#include "mpc_thread_ng_engine.h"
 
 #include "mpit_internal.h"
 

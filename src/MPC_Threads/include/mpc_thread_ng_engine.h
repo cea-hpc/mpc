@@ -139,49 +139,49 @@ static inline void mpc_threads_generic_kind_priorities_incr(int increment)
 
 /* These are perfectly ugly and should be reworked */
 
-extern void (*_mpc_threads_generic_scheduler_sched_init_ptr)();
-extern void (*_mpc_threads_generic_scheduler_increase_prio_ptr)();
-extern void (*_mpc_threads_generic_scheduler_decrease_prio_ptr)();
-extern void (*_mpc_threads_generic_scheduler_task_decrease_prio_ptr)(int core);
-extern void (*_mpc_threads_generic_scheduler_task_increase_prio_ptr)(int core);
+extern void (*_mpc_threads_ng_engine_scheduler_sched_init_ptr)();
+extern void (*_mpc_threads_ng_engine_scheduler_increase_prio_ptr)();
+extern void (*_mpc_threads_ng_engine_scheduler_decrease_prio_ptr)();
+extern void (*_mpc_threads_ng_engine_scheduler_task_decrease_prio_ptr)(int core);
+extern void (*_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr)(int core);
 
 static inline void mpc_threads_generic_scheduler_sched_init()
 {
-	if(mpc_common_get_flags()->new_scheduler_engine_enabled && _mpc_threads_generic_scheduler_sched_init_ptr)
+	if(mpc_common_get_flags()->new_scheduler_engine_enabled && _mpc_threads_ng_engine_scheduler_sched_init_ptr)
 	{
-		_mpc_threads_generic_scheduler_sched_init_ptr();
+		_mpc_threads_ng_engine_scheduler_sched_init_ptr();
 	}
 }
 
 static inline void mpc_threads_generic_scheduler_increase_prio()
 {
-	if(mpc_common_get_flags()->new_scheduler_engine_enabled && _mpc_threads_generic_scheduler_increase_prio_ptr)
+	if(mpc_common_get_flags()->new_scheduler_engine_enabled && _mpc_threads_ng_engine_scheduler_increase_prio_ptr)
 	{
-		_mpc_threads_generic_scheduler_increase_prio_ptr();
+		_mpc_threads_ng_engine_scheduler_increase_prio_ptr();
 	}
 }
 
 static inline void mpc_threads_generic_scheduler_decrease_prio()
 {
-	if(mpc_common_get_flags()->new_scheduler_engine_enabled && _mpc_threads_generic_scheduler_decrease_prio_ptr)
+	if(mpc_common_get_flags()->new_scheduler_engine_enabled && _mpc_threads_ng_engine_scheduler_decrease_prio_ptr)
 	{
-		_mpc_threads_generic_scheduler_decrease_prio_ptr();
+		_mpc_threads_ng_engine_scheduler_decrease_prio_ptr();
 	}
 }
 
 static inline void mpc_threads_generic_scheduler_task_increase_prio(int core)
 {
-	if(mpc_common_get_flags()->new_scheduler_engine_enabled && _mpc_threads_generic_scheduler_task_increase_prio_ptr)
+	if(mpc_common_get_flags()->new_scheduler_engine_enabled && _mpc_threads_ng_engine_scheduler_task_increase_prio_ptr)
 	{
-		_mpc_threads_generic_scheduler_task_increase_prio_ptr(core);
+		_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr(core);
 	}	
 }
 
 static inline void mpc_threads_generic_scheduler_task_decrease_prio(int core)
 {
-	if(mpc_common_get_flags()->new_scheduler_engine_enabled && _mpc_threads_generic_scheduler_task_decrease_prio_ptr)
+	if(mpc_common_get_flags()->new_scheduler_engine_enabled && _mpc_threads_ng_engine_scheduler_task_decrease_prio_ptr)
 	{
-		_mpc_threads_generic_scheduler_task_decrease_prio_ptr(core);
+		_mpc_threads_ng_engine_scheduler_task_decrease_prio_ptr(core);
 	}	
 }
 
