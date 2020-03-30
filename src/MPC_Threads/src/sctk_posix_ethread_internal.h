@@ -1867,6 +1867,16 @@ __sctk_ethread_barrierattr_setpshared(sctk_ethread_barrierattr_t *
 	return 0;
 }
 
+static inline int __sctk_ethread_getattr_np(sctk_ethread_t th,
+                                            sctk_ethread_attr_intern_t
+                                            *attr)
+{
+	sctk_nodebug("getattr : 1 :  %p , %p", th, attr);
+	*attr = th->attr;
+	sctk_nodebug("sortie de getattr");
+	return 0;
+}
+
 #ifdef __cplusplus
 }
 #endif

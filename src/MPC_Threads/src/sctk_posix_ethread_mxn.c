@@ -23,7 +23,6 @@
 #include "sctk_posix_ethread_mxn.h"
 #include "sctk_posix_ethread_internal.h"
 #include "thread_ptr.h"
-#include "sctk_posix_ethread_np.h"
 
 static sctk_ethread_sem_head_list __sctk_head_sem = SCTK_SEM_HEAD_INITIALIZER;
 
