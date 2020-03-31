@@ -16,7 +16,7 @@ endif
 lib_LTLIBRARIES = libmpcthread.la
 
 libmpcthread_la_SOURCES = sctk_context.c sctk_ethread.c sctk_ethread_mxn.c sctk_futex.c thread_ptr.c
-libmpcthread_la_SOURCES += kthread.c sctk_posix_ethread.c sctk_posix_ethread_mxn.c
+libmpcthread_la_SOURCES += kthread.c ethread_posix.c
 libmpcthread_la_SOURCES += pthread_engine.c thread.c  ng_engine.c 
 libmpcthread_la_SOURCES += ng_engine_scheduler.c sctk_tls.c
 

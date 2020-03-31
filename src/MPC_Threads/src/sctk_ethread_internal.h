@@ -314,8 +314,7 @@ static inline int __sctk_ethread_sigsuspend(sctk_ethread_per_thread_t *
 	return -1;
 }
 
-static inline
-void __sctk_ethread_testcancel(sctk_ethread_per_thread_t *owner)
+static inline void __sctk_ethread_testcancel(sctk_ethread_per_thread_t *owner)
 {
 	SCTK_THREAD_CHECK_SIGNALS(owner, 0);
 }
