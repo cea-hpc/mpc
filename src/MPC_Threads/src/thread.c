@@ -533,7 +533,7 @@ volatile int          ___timer_thread_running = 1;
 
 static void *___timer_thread_main(void *arg)
 {
-	sctk_ethread_mxn_init_kethread();
+	_mpc_thread_ethread_mxn_engine_init_kethread();
 	assume(arg == NULL);
 
 	while(___timer_thread_running)

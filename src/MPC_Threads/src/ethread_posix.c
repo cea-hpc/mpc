@@ -21,7 +21,7 @@
 /* ######################################################################## */
 #include "ethread_posix.h"
 
-#include "sctk_ethread_internal.h"
+#include "ethread_engine_internal.h"
 
 #include "thread_ptr.h"
 #include "thread.h"
@@ -70,15 +70,15 @@ int _mpc_thread_ethread_posix_once(mpc_thread_once_t *once_control,
 * ATTRIBUTES *
 **************/
 
-#define sctk_ethread_check_attr(attr)    do { if(attr == NULL){ return EINVAL; } if(attr->ptr == NULL){ return EINVAL; } } while(0)
+#define _mpc_thread_ethread_check_attr(attr)    do { if(attr == NULL){ return EINVAL; } if(attr->ptr == NULL){ return EINVAL; } } while(0)
 
-int _mpc_thread_ethread_posix_attr_setdetachstate(sctk_ethread_attr_t *attr, int detachstate)
+int _mpc_thread_ethread_posix_attr_setdetachstate(_mpc_thread_ethread_attr_t *attr, int detachstate)
 {
 	/*attributs posix
 	 * SCTK_THREAD_CREATE_JOINABLE
 	 * SCTK_THREAD_CREATE_DETACHED
 	 */
-	sctk_ethread_check_attr(attr);
+	_mpc_thread_ethread_check_attr(attr);
 
 	if(detachstate != SCTK_THREAD_CREATE_JOINABLE &&
 	   detachstate != SCTK_THREAD_CREATE_DETACHED)
@@ -92,22 +92,22 @@ int _mpc_thread_ethread_posix_attr_setdetachstate(sctk_ethread_attr_t *attr, int
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_attr_getdetachstate(const sctk_ethread_attr_t *attr,
+int _mpc_thread_ethread_posix_attr_getdetachstate(const _mpc_thread_ethread_attr_t *attr,
                                                   int *detachstate)
 {
-	sctk_ethread_check_attr(attr);
+	_mpc_thread_ethread_check_attr(attr);
 	*detachstate = attr->ptr->detached;
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_attr_setschedpolicy(sctk_ethread_attr_t *attr, int policy)
+int _mpc_thread_ethread_posix_attr_setschedpolicy(_mpc_thread_ethread_attr_t *attr, int policy)
 {
 	/*attributs posix
 	 * SCTK_SCHED_OTHER (normal)
 	 * SCTK_SCHED_RR (real time, round robin)
 	 * SCTK_SCHED_FIFO (realtime, first-in first-out)
 	 */
-	sctk_ethread_check_attr(attr);
+	_mpc_thread_ethread_check_attr(attr);
 	if(policy == SCTK_SCHED_FIFO || policy == SCTK_SCHED_RR)
 	{
 		return ENOTSUP;
@@ -123,21 +123,21 @@ int _mpc_thread_ethread_posix_attr_setschedpolicy(sctk_ethread_attr_t *attr, int
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_attr_getschedpolicy(const sctk_ethread_attr_t *attr,
+int _mpc_thread_ethread_posix_attr_getschedpolicy(const _mpc_thread_ethread_attr_t *attr,
                                                   int *policy)
 {
-	sctk_ethread_check_attr(attr);
+	_mpc_thread_ethread_check_attr(attr);
 	*policy = attr->ptr->schedpolicy;
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_attr_setinheritsched(sctk_ethread_attr_t *attr, int inherit)
+int _mpc_thread_ethread_posix_attr_setinheritsched(_mpc_thread_ethread_attr_t *attr, int inherit)
 {
 	/*attributs posix
 	 * SCTK_THREAD_EXPLICIT_SCHED
 	 * SCTK_THREAD_INHERIT_SCHED
 	 */
-	sctk_ethread_check_attr(attr);
+	_mpc_thread_ethread_check_attr(attr);
 	if(inherit != SCTK_THREAD_INHERIT_SCHED &&
 	   inherit != SCTK_THREAD_EXPLICIT_SCHED)
 	{
@@ -150,24 +150,24 @@ int _mpc_thread_ethread_posix_attr_setinheritsched(sctk_ethread_attr_t *attr, in
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_attr_getinheritsched(const sctk_ethread_attr_t *attr,
+int _mpc_thread_ethread_posix_attr_getinheritsched(const _mpc_thread_ethread_attr_t *attr,
                                                    int *inherit)
 {
-	sctk_ethread_check_attr(attr);
+	_mpc_thread_ethread_check_attr(attr);
 	*inherit = attr->ptr->inheritsched;
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_attr_getscope(const sctk_ethread_attr_t *attr, int *scope)
+int _mpc_thread_ethread_posix_attr_getscope(const _mpc_thread_ethread_attr_t *attr, int *scope)
 {
-	sctk_ethread_check_attr(attr);
+	_mpc_thread_ethread_check_attr(attr);
 	*scope = attr->ptr->scope;
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_attr_setscope(sctk_ethread_attr_t *attr, int scope)
+int _mpc_thread_ethread_posix_attr_setscope(_mpc_thread_ethread_attr_t *attr, int scope)
 {
-	sctk_ethread_check_attr(attr);
+	_mpc_thread_ethread_check_attr(attr);
 	if(attr == NULL)
 	{
 		return EINVAL;
@@ -186,7 +186,7 @@ int _mpc_thread_ethread_posix_attr_setscope(sctk_ethread_attr_t *attr, int scope
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_attr_getstacksize(const sctk_ethread_attr_t *attr,
+int _mpc_thread_ethread_posix_attr_getstacksize(const _mpc_thread_ethread_attr_t *attr,
                                                 size_t *stacksize)
 {
 	if(attr == NULL || stacksize == NULL)
@@ -195,24 +195,24 @@ int _mpc_thread_ethread_posix_attr_getstacksize(const sctk_ethread_attr_t *attr,
 	}
 	else
 	{
-		sctk_ethread_check_attr(attr);
+		_mpc_thread_ethread_check_attr(attr);
 		*stacksize = attr->ptr->stack_size;
 	}
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_attr_getstackaddr(const sctk_ethread_attr_t *attr, void **stackaddr)
+int _mpc_thread_ethread_posix_attr_getstackaddr(const _mpc_thread_ethread_attr_t *attr, void **stackaddr)
 {
 	if(attr == NULL || stackaddr == NULL)
 	{
 		return EINVAL;
 	}
-	sctk_ethread_check_attr(attr);
+	_mpc_thread_ethread_check_attr(attr);
 	*stackaddr = (void *)attr->ptr->stack;
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_attr_setstacksize(sctk_ethread_attr_t *attr, size_t stacksize)
+int _mpc_thread_ethread_posix_attr_setstacksize(_mpc_thread_ethread_attr_t *attr, size_t stacksize)
 {
 	if(stacksize < SCTK_THREAD_STACK_MIN)
 	{
@@ -223,27 +223,27 @@ int _mpc_thread_ethread_posix_attr_setstacksize(sctk_ethread_attr_t *attr, size_
 	{
 		return ESRCH;
 	}
-	sctk_ethread_check_attr(attr);
+	_mpc_thread_ethread_check_attr(attr);
 	attr->ptr->stack_size = (int)stacksize;
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_attr_setstackaddr(sctk_ethread_attr_t *attr, void *stackaddr)
+int _mpc_thread_ethread_posix_attr_setstackaddr(_mpc_thread_ethread_attr_t *attr, void *stackaddr)
 {
-	sctk_ethread_check_attr(attr);
+	_mpc_thread_ethread_check_attr(attr);
 	if(attr == NULL)
 	{
 		return ESRCH; /*la norme ne pr�cise pas le signal a envoyer */
 	}
-	sctk_ethread_check_attr(attr);
+	_mpc_thread_ethread_check_attr(attr);
 	attr->ptr->stack = (char *)stackaddr;
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_attr_setstack(sctk_ethread_attr_t *attr, void *stackaddr,
+int _mpc_thread_ethread_posix_attr_setstack(_mpc_thread_ethread_attr_t *attr, void *stackaddr,
                                             size_t stacksize)
 {
-	sctk_ethread_check_attr(attr);
+	_mpc_thread_ethread_check_attr(attr);
 	if(attr == NULL || stacksize < SCTK_THREAD_STACK_MIN)   /*on effectue pas  le test d'alignement */
 	{
 		return EINVAL;
@@ -253,10 +253,10 @@ int _mpc_thread_ethread_posix_attr_setstack(sctk_ethread_attr_t *attr, void *sta
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_attr_getstack(sctk_ethread_attr_t *attr, void **stackaddr,
+int _mpc_thread_ethread_posix_attr_getstack(_mpc_thread_ethread_attr_t *attr, void **stackaddr,
                                             size_t *stacksize)
 {
-	sctk_ethread_check_attr(attr);
+	_mpc_thread_ethread_check_attr(attr);
 	if(stackaddr != NULL)
 	{
 		*stackaddr = (void *)attr->ptr->stack;
@@ -268,10 +268,10 @@ int _mpc_thread_ethread_posix_attr_getstack(sctk_ethread_attr_t *attr, void **st
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_attr_setguardsize(sctk_ethread_attr_t *attr,
+int _mpc_thread_ethread_posix_attr_setguardsize(_mpc_thread_ethread_attr_t *attr,
                                                 size_t guardsize)
 {
-	sctk_ethread_check_attr(attr);
+	_mpc_thread_ethread_check_attr(attr);
 	if(attr == NULL)
 	{
 		return EINVAL;
@@ -280,10 +280,10 @@ int _mpc_thread_ethread_posix_attr_setguardsize(sctk_ethread_attr_t *attr,
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_attr_getguardsize(sctk_ethread_attr_t *attr,
+int _mpc_thread_ethread_posix_attr_getguardsize(_mpc_thread_ethread_attr_t *attr,
                                                 size_t *guardsize)
 {
-	sctk_ethread_check_attr(attr);
+	_mpc_thread_ethread_check_attr(attr);
 	if(attr == NULL)
 	{
 		return EINVAL;
@@ -292,7 +292,7 @@ int _mpc_thread_ethread_posix_attr_getguardsize(sctk_ethread_attr_t *attr,
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_attr_destroy(sctk_ethread_attr_t *attr)
+int _mpc_thread_ethread_posix_attr_destroy(_mpc_thread_ethread_attr_t *attr)
 {
 	sctk_free(attr->ptr);
 	attr->ptr = NULL;
@@ -306,12 +306,12 @@ int _mpc_thread_ethread_posix_attr_destroy(sctk_ethread_attr_t *attr)
 
 void _mpc_thread_ethread_posix_testcancel(void)
 {
-	sctk_ethread_per_thread_t *current = (sctk_ethread_per_thread_t *)mpc_thread_self();
+	_mpc_thread_ethread_per_thread_t *current = (_mpc_thread_ethread_per_thread_t *)mpc_thread_self();
 
-	__sctk_ethread_testcancel(current);
+	___mpc_thread_ethread_testcancel(current);
 }
 
-int _mpc_thread_ethread_posix_cancel(sctk_ethread_t target)
+int _mpc_thread_ethread_posix_cancel(_mpc_thread_ethread_t target)
 {
 	sctk_nodebug("target vaux : %d", target);
 	if(target == NULL)
@@ -332,7 +332,7 @@ int _mpc_thread_ethread_posix_cancel(sctk_ethread_t target)
 
 int _mpc_thread_ethread_posix_setcancelstate(int state, int *oldstate)
 {
-	sctk_ethread_per_thread_t *owner = (sctk_ethread_per_thread_t *)mpc_thread_self();
+	_mpc_thread_ethread_per_thread_t *owner = (_mpc_thread_ethread_per_thread_t *)mpc_thread_self();
 
 	if(oldstate != NULL)
 	{
@@ -352,7 +352,7 @@ int _mpc_thread_ethread_posix_setcancelstate(int state, int *oldstate)
 
 int _mpc_thread_ethread_posix_setcanceltype(int type, int *oldtype)
 {
-	sctk_ethread_per_thread_t *owner = (sctk_ethread_per_thread_t *)mpc_thread_self();
+	_mpc_thread_ethread_per_thread_t *owner = (_mpc_thread_ethread_per_thread_t *)mpc_thread_self();
 
 	sctk_nodebug("%d %d", type, owner->cancel_type);
 	if(oldtype != NULL)
@@ -377,10 +377,10 @@ int _mpc_thread_ethread_posix_setcanceltype(int type, int *oldtype)
 * SEMAPHORES *
 **************/
 
-int _mpc_thread_ethread_posix_sem_init(sctk_ethread_sem_t *lock,
+int _mpc_thread_ethread_posix_sem_init(_mpc_thread_ethread_sem_t *lock,
                                        int pshared, unsigned int value)
 {
-	sctk_ethread_sem_t lock_tmp = STCK_ETHREAD_SEM_INIT;
+	_mpc_thread_ethread_sem_t lock_tmp = STCK_ETHREAD_SEM_INIT;
 
 	lock_tmp.lock = (int)value;
 	if(value > SCTK_SEM_VALUE_MAX)
@@ -395,15 +395,15 @@ int _mpc_thread_ethread_posix_sem_init(sctk_ethread_sem_t *lock,
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_sem_wait(sctk_ethread_sem_t *lock)
+int _mpc_thread_ethread_posix_sem_wait(_mpc_thread_ethread_sem_t *lock)
 {
-	sctk_ethread_per_thread_t *       owner = (sctk_ethread_per_thread_t *)mpc_thread_self();
-	sctk_ethread_virtual_processor_t *vp    = (sctk_ethread_virtual_processor_t *)owner->vp;
+	_mpc_thread_ethread_per_thread_t *       owner = (_mpc_thread_ethread_per_thread_t *)mpc_thread_self();
+	_mpc_thread_ethread_virtual_processor_t *vp    = (_mpc_thread_ethread_virtual_processor_t *)owner->vp;
 
-	sctk_ethread_mutex_cell_t cell;
+	_mpc_thread_ethread_mutex_cell_t cell;
 
 	sctk_nodebug("%p lock on %p %d", owner, lock, lock->lock);
-	__sctk_ethread_testcancel(owner);
+	___mpc_thread_ethread_testcancel(owner);
 	mpc_common_spinlock_lock(&lock->spinlock);
 	lock->lock--;
 	if(lock->lock < 0)
@@ -427,7 +427,7 @@ int _mpc_thread_ethread_posix_sem_wait(sctk_ethread_sem_t *lock)
 			owner->status          = ethread_blocked;
 			owner->no_auto_enqueue = 1;
 			mpc_common_spinlock_unlock(&lock->spinlock);
-			__sctk_ethread_sched_yield_vp_poll(vp, owner);
+			___mpc_thread_ethread_sched_yield_vp_poll(vp, owner);
 			owner->status = ethread_ready;
 		}
 		else
@@ -435,7 +435,7 @@ int _mpc_thread_ethread_posix_sem_wait(sctk_ethread_sem_t *lock)
 			while(cell.wake != 1)
 			{
 				mpc_common_spinlock_unlock(&lock->spinlock);
-				__sctk_ethread_sched_yield_vp(vp, owner);
+				___mpc_thread_ethread_sched_yield_vp(vp, owner);
 				mpc_common_spinlock_lock(&lock->spinlock);
 			}
 			mpc_common_spinlock_unlock(&lock->spinlock);
@@ -450,7 +450,7 @@ int _mpc_thread_ethread_posix_sem_wait(sctk_ethread_sem_t *lock)
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_sem_trywait(sctk_ethread_sem_t *lock)
+int _mpc_thread_ethread_posix_sem_trywait(_mpc_thread_ethread_sem_t *lock)
 {
 /*    sctk_nodebug ("%p lock on %p %d", owner, lock, lock->lock);*/
 
@@ -479,23 +479,23 @@ int _mpc_thread_ethread_posix_sem_trywait(sctk_ethread_sem_t *lock)
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_sem_post(sctk_ethread_sem_t *lock, void (*return_task)(sctk_ethread_per_thread_t *) )
+int _mpc_thread_ethread_posix_sem_post(_mpc_thread_ethread_sem_t *lock, void (*return_task)(_mpc_thread_ethread_per_thread_t *) )
 {
-	sctk_ethread_mutex_cell_t *cell;
-	sctk_ethread_per_thread_t *to_wake_up;
+	_mpc_thread_ethread_mutex_cell_t *cell;
+	_mpc_thread_ethread_per_thread_t *to_wake_up;
 
 	mpc_common_spinlock_lock(&lock->spinlock);
 	if(lock->list != NULL)
 	{
-		sctk_ethread_per_thread_t *to_wake;
-		cell       = (sctk_ethread_mutex_cell_t *)lock->list;
+		_mpc_thread_ethread_per_thread_t *to_wake;
+		cell       = (_mpc_thread_ethread_mutex_cell_t *)lock->list;
 		to_wake_up = cell->my_self;
 		lock->list = lock->list->next;
 		if(lock->list == NULL)
 		{
 			lock->list_tail = NULL;
 		}
-		to_wake    = (sctk_ethread_per_thread_t *)to_wake_up;
+		to_wake    = (_mpc_thread_ethread_per_thread_t *)to_wake_up;
 		cell->wake = 1;
 		return_task(to_wake);
 	}
@@ -506,7 +506,7 @@ int _mpc_thread_ethread_posix_sem_post(sctk_ethread_sem_t *lock, void (*return_t
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_sem_getvalue(sctk_ethread_sem_t *sem, int *sval)
+int _mpc_thread_ethread_posix_sem_getvalue(_mpc_thread_ethread_sem_t *sem, int *sval)
 {
 	if(sval != NULL)
 	{
@@ -515,7 +515,7 @@ int _mpc_thread_ethread_posix_sem_getvalue(sctk_ethread_sem_t *sem, int *sval)
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_sem_destroy(sctk_ethread_sem_t *sem)
+int _mpc_thread_ethread_posix_sem_destroy(_mpc_thread_ethread_sem_t *sem)
 {
 	if(sem->list != NULL)
 	{
@@ -527,26 +527,26 @@ int _mpc_thread_ethread_posix_sem_destroy(sctk_ethread_sem_t *sem)
 	}
 }
 
-typedef struct sctk_ethread_sem_name_s
+typedef struct _mpc_thread_ethread_sem_name_s
 {
 	char *                                   name;
 	volatile int                             nb;
 	volatile int                             unlink;
-	sctk_ethread_sem_t *                     sem;
-	volatile struct sctk_ethread_sem_name_s *next;
-} sctk_ethread_sem_name_t;
+	_mpc_thread_ethread_sem_t *                     sem;
+	volatile struct _mpc_thread_ethread_sem_name_s *next;
+} _mpc_thread_ethread_sem_name_t;
 
 typedef struct
 {
 	mpc_common_spinlock_t             spinlock;
-	volatile sctk_ethread_sem_name_t *next;
-} sctk_ethread_sem_head_list;
+	volatile _mpc_thread_ethread_sem_name_t *next;
+} _mpc_thread_ethread_sem_head_list;
 
 #define SCTK_SEM_HEAD_INITIALIZER    { SCTK_SPINLOCK_INITIALIZER, NULL }
 
-static sctk_ethread_sem_head_list __sctk_head_sem = SCTK_SEM_HEAD_INITIALIZER;
+static _mpc_thread_ethread_sem_head_list __sctk_head_sem = SCTK_SEM_HEAD_INITIALIZER;
 
-sctk_ethread_sem_t *_mpc_thread_ethread_posix_sem_open(const char *name, int oflag, ...)
+_mpc_thread_ethread_sem_t *_mpc_thread_ethread_posix_sem_open(const char *name, int oflag, ...)
 {
 	int value = 0;
 	int mode  = 0;
@@ -561,15 +561,15 @@ sctk_ethread_sem_t *_mpc_thread_ethread_posix_sem_open(const char *name, int ofl
 	}
 
 	int length;
-	sctk_ethread_sem_t *sem = NULL;
-	volatile sctk_ethread_sem_name_t *tmp, *sem_struct;
+	_mpc_thread_ethread_sem_t *sem = NULL;
+	volatile _mpc_thread_ethread_sem_name_t *tmp, *sem_struct;
 	char *_name;
 
 	sem_struct = __sctk_head_sem.next;
 	if(name == NULL)
 	{
 		errno = EINVAL;
-		return (sctk_ethread_sem_t *)SCTK_SEM_FAILED;
+		return (_mpc_thread_ethread_sem_t *)SCTK_SEM_FAILED;
 	}
 
 	length = strlen(name);
@@ -604,7 +604,7 @@ sctk_ethread_sem_t *_mpc_thread_ethread_posix_sem_open(const char *name, int ofl
 	{
 		errno = EEXIST;
 		mpc_common_spinlock_unlock(&__sctk_head_sem.spinlock);
-		return (sctk_ethread_sem_t *)SCTK_SEM_FAILED;
+		return (_mpc_thread_ethread_sem_t *)SCTK_SEM_FAILED;
 	}
 	else if(tmp != NULL)
 	{
@@ -615,16 +615,16 @@ sctk_ethread_sem_t *_mpc_thread_ethread_posix_sem_open(const char *name, int ofl
 	}
 	if(tmp == NULL && (oflag & O_CREAT) )
 	{
-		sctk_ethread_sem_name_t *maillon;
+		_mpc_thread_ethread_sem_name_t *maillon;
 		int ret;
-		sem = (sctk_ethread_sem_t *)
-		      sctk_malloc(sizeof(sctk_ethread_sem_t) );
+		sem = (_mpc_thread_ethread_sem_t *)
+		      sctk_malloc(sizeof(_mpc_thread_ethread_sem_t) );
 		if(sem == NULL)
 		{
 			sctk_free(_name);
 			errno = ENOSPC;
 			mpc_common_spinlock_unlock(&__sctk_head_sem.spinlock);
-			return (sctk_ethread_sem_t *)SCTK_SEM_FAILED;
+			return (_mpc_thread_ethread_sem_t *)SCTK_SEM_FAILED;
 		}
 		ret = _mpc_thread_ethread_posix_sem_init(sem, 0, value);
 		if(ret != 0)
@@ -633,10 +633,10 @@ sctk_ethread_sem_t *_mpc_thread_ethread_posix_sem_open(const char *name, int ofl
 			sctk_free(sem);
 			errno = ret;
 			mpc_common_spinlock_unlock(&__sctk_head_sem.spinlock);
-			return (sctk_ethread_sem_t *)SCTK_SEM_FAILED;
+			return (_mpc_thread_ethread_sem_t *)SCTK_SEM_FAILED;
 		}
-		maillon = (sctk_ethread_sem_name_t *)
-		          sctk_malloc(sizeof(sctk_ethread_sem_name_t) );
+		maillon = (_mpc_thread_ethread_sem_name_t *)
+		          sctk_malloc(sizeof(_mpc_thread_ethread_sem_name_t) );
 		sctk_nodebug("%p pointe sur %p avec maillon vaux %p\n",
 		             sem_struct, sem_struct, maillon);
 		if(maillon == NULL)
@@ -645,7 +645,7 @@ sctk_ethread_sem_t *_mpc_thread_ethread_posix_sem_open(const char *name, int ofl
 			sctk_free(sem);
 			errno = ENOSPC;
 			mpc_common_spinlock_unlock(&__sctk_head_sem.spinlock);
-			return (sctk_ethread_sem_t *)SCTK_SEM_FAILED;
+			return (_mpc_thread_ethread_sem_t *)SCTK_SEM_FAILED;
 		}
 		if(sem_struct != NULL)
 		{
@@ -668,7 +668,7 @@ sctk_ethread_sem_t *_mpc_thread_ethread_posix_sem_open(const char *name, int ofl
 		sctk_free(_name);
 		errno = ENOENT;
 		mpc_common_spinlock_unlock(&__sctk_head_sem.spinlock);
-		return (sctk_ethread_sem_t *)SCTK_SEM_FAILED;
+		return (_mpc_thread_ethread_sem_t *)SCTK_SEM_FAILED;
 	}
 	sctk_nodebug("sem vaux %p avec une valeur de %d", sem, sem->lock);
 	mpc_common_spinlock_unlock(&__sctk_head_sem.spinlock);
@@ -676,7 +676,7 @@ sctk_ethread_sem_t *_mpc_thread_ethread_posix_sem_open(const char *name, int ofl
 }
 
 static inline void __semaphore_clean(volatile
-                                     sctk_ethread_sem_name_t *
+                                     _mpc_thread_ethread_sem_name_t *
                                      sem_struct)
 {
 	sctk_free(sem_struct->name);
@@ -685,9 +685,9 @@ static inline void __semaphore_clean(volatile
 	sem_struct->sem = NULL;
 }
 
-int _mpc_thread_ethread_posix_sem_close(sctk_ethread_sem_t *sem)
+int _mpc_thread_ethread_posix_sem_close(_mpc_thread_ethread_sem_t *sem)
 {
-	volatile sctk_ethread_sem_name_t *tmp, *sem_struct;
+	volatile _mpc_thread_ethread_sem_name_t *tmp, *sem_struct;
 
 	sem_struct = __sctk_head_sem.next;
 	/*on recherche le s�maphore */
@@ -723,7 +723,7 @@ int _mpc_thread_ethread_posix_sem_close(sctk_ethread_sem_t *sem)
 		}
 
 		__semaphore_clean(tmp);
-		sctk_free( (sctk_ethread_sem_name_t *)tmp);
+		sctk_free( (_mpc_thread_ethread_sem_name_t *)tmp);
 	}
 	mpc_common_spinlock_unlock(&__sctk_head_sem.spinlock);
 	return 0;
@@ -732,7 +732,7 @@ int _mpc_thread_ethread_posix_sem_close(sctk_ethread_sem_t *sem)
 int _mpc_thread_ethread_posix_sem_unlink(const char *name)
 {
 	char *_name;
-	volatile sctk_ethread_sem_name_t *tmp, *sem_struct;
+	volatile _mpc_thread_ethread_sem_name_t *tmp, *sem_struct;
 	int length;
 
 	sem_struct = __sctk_head_sem.next;
@@ -791,7 +791,7 @@ int _mpc_thread_ethread_posix_sem_unlink(const char *name)
 		}
 
 		__semaphore_clean(tmp);
-		sctk_free( (sctk_ethread_sem_name_t *)tmp);
+		sctk_free( (_mpc_thread_ethread_sem_name_t *)tmp);
 	}
 	else
 	{
@@ -806,7 +806,7 @@ int _mpc_thread_ethread_posix_sem_unlink(const char *name)
 * DETACH *
 **********/
 
-int _mpc_thread_ethread_posix_detach(sctk_ethread_t th)
+int _mpc_thread_ethread_posix_detach(_mpc_thread_ethread_t th)
 {
 	if(th == NULL)
 	{
@@ -860,7 +860,7 @@ int _mpc_thread_ethread_posix_sched_get_priority_min(int policy)
 * MUTEX ATTR *
 **************/
 
-int _mpc_thread_ethread_posix_mutexattr_init(sctk_ethread_mutexattr_t *attr)
+int _mpc_thread_ethread_posix_mutexattr_init(_mpc_thread_ethread_mutexattr_t *attr)
 {
 	if(attr == NULL)
 	{
@@ -870,7 +870,7 @@ int _mpc_thread_ethread_posix_mutexattr_init(sctk_ethread_mutexattr_t *attr)
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_mutexattr_destroy(sctk_ethread_mutexattr_t *attr)
+int _mpc_thread_ethread_posix_mutexattr_destroy(_mpc_thread_ethread_mutexattr_t *attr)
 {
 	if(attr == NULL)
 	{
@@ -879,7 +879,7 @@ int _mpc_thread_ethread_posix_mutexattr_destroy(sctk_ethread_mutexattr_t *attr)
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_mutexattr_gettype(const sctk_ethread_mutexattr_t *attr,
+int _mpc_thread_ethread_posix_mutexattr_gettype(const _mpc_thread_ethread_mutexattr_t *attr,
                                                 int *kind)
 {
 	if(attr == NULL || kind == NULL)
@@ -890,7 +890,7 @@ int _mpc_thread_ethread_posix_mutexattr_gettype(const sctk_ethread_mutexattr_t *
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_mutexattr_settype(sctk_ethread_mutexattr_t *attr, int kind)
+int _mpc_thread_ethread_posix_mutexattr_settype(_mpc_thread_ethread_mutexattr_t *attr, int kind)
 {
 	if( (attr == NULL) ||
 	    (kind != SCTK_THREAD_MUTEX_DEFAULT &&
@@ -904,7 +904,7 @@ int _mpc_thread_ethread_posix_mutexattr_settype(sctk_ethread_mutexattr_t *attr, 
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_mutexattr_getpshared(const sctk_ethread_mutexattr_t *attr,
+int _mpc_thread_ethread_posix_mutexattr_getpshared(const _mpc_thread_ethread_mutexattr_t *attr,
                                                    int *pshared)
 {
 	if(attr == NULL)
@@ -915,7 +915,7 @@ int _mpc_thread_ethread_posix_mutexattr_getpshared(const sctk_ethread_mutexattr_
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_mutexattr_setpshared(sctk_ethread_mutexattr_t *attr, int pshared)
+int _mpc_thread_ethread_posix_mutexattr_setpshared(_mpc_thread_ethread_mutexattr_t *attr, int pshared)
 {
 	if(attr == NULL ||
 	   (pshared != SCTK_THREAD_PROCESS_SHARED &&
@@ -934,7 +934,7 @@ int _mpc_thread_ethread_posix_mutexattr_setpshared(sctk_ethread_mutexattr_t *att
 * MUTEX *
 *********/
 
-int _mpc_thread_ethread_posix_mutex_destroy(sctk_ethread_mutex_t *mutex)
+int _mpc_thread_ethread_posix_mutex_destroy(_mpc_thread_ethread_mutex_t *mutex)
 {
 	if(mutex->lock > 0)
 	{
@@ -947,8 +947,8 @@ int _mpc_thread_ethread_posix_mutex_destroy(sctk_ethread_mutex_t *mutex)
 * CONDITIONS *
 **************/
 
-int _mpc_thread_ethread_posix_cond_init(sctk_ethread_cond_t *cond,
-                                        const sctk_ethread_condattr_t *attr)
+int _mpc_thread_ethread_posix_cond_init(_mpc_thread_ethread_cond_t *cond,
+                                        const _mpc_thread_ethread_condattr_t *attr)
 {
 	if(cond == NULL)
 	{
@@ -969,7 +969,7 @@ int _mpc_thread_ethread_posix_cond_init(sctk_ethread_cond_t *cond,
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_cond_destroy(sctk_ethread_cond_t *cond)
+int _mpc_thread_ethread_posix_cond_destroy(_mpc_thread_ethread_cond_t *cond)
 {
 	sctk_nodebug(" %p %p %d\n", cond->list, cond->list_tail, cond->is_init);
 	if(cond->is_init != 0)
@@ -983,17 +983,17 @@ int _mpc_thread_ethread_posix_cond_destroy(sctk_ethread_cond_t *cond)
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_cond_wait(sctk_ethread_cond_t *cond,
-                                        sctk_ethread_mutex_t *mutex,
-                                        void (*return_task)(sctk_ethread_per_thread_t *) )
+int _mpc_thread_ethread_posix_cond_wait(_mpc_thread_ethread_cond_t *cond,
+                                        _mpc_thread_ethread_mutex_t *mutex,
+                                        void (*return_task)(_mpc_thread_ethread_per_thread_t *) )
 {
-	sctk_ethread_per_thread_t *       owner = (sctk_ethread_per_thread_t *)mpc_thread_self();
-	sctk_ethread_virtual_processor_t *vp    = (sctk_ethread_virtual_processor_t *)owner->vp;
+	_mpc_thread_ethread_per_thread_t *       owner = (_mpc_thread_ethread_per_thread_t *)mpc_thread_self();
+	_mpc_thread_ethread_virtual_processor_t *vp    = (_mpc_thread_ethread_virtual_processor_t *)owner->vp;
 
-	sctk_ethread_mutex_cell_t cell;
+	_mpc_thread_ethread_mutex_cell_t cell;
 	int ret;
 
-	__sctk_ethread_testcancel(owner);
+	___mpc_thread_ethread_testcancel(owner);
 	mpc_common_spinlock_lock(&(cond->lock) );
 	if(cond == NULL || mutex == NULL)
 	{
@@ -1017,7 +1017,7 @@ int _mpc_thread_ethread_posix_cond_wait(sctk_ethread_cond_t *cond,
 	{
 		owner->status          = ethread_blocked;
 		owner->no_auto_enqueue = 1;
-		ret = __sctk_ethread_mutex_unlock(vp, owner, return_task, mutex);
+		ret = ___mpc_thread_ethread_mutex_unlock(vp, owner, return_task, mutex);
 		if(ret != 0)
 		{
 			cond->list = cond->list->next;
@@ -1031,11 +1031,11 @@ int _mpc_thread_ethread_posix_cond_wait(sctk_ethread_cond_t *cond,
 			return EPERM;
 		}
 		mpc_common_spinlock_unlock(&(cond->lock) );
-		__sctk_ethread_sched_yield_vp_poll(vp, owner);
+		___mpc_thread_ethread_sched_yield_vp_poll(vp, owner);
 	}
 	else
 	{
-		ret = __sctk_ethread_mutex_unlock(vp, owner, return_task, mutex);
+		ret = ___mpc_thread_ethread_mutex_unlock(vp, owner, return_task, mutex);
 		if(ret != 0)
 		{
 			cond->list = cond->list->next;
@@ -1049,28 +1049,28 @@ int _mpc_thread_ethread_posix_cond_wait(sctk_ethread_cond_t *cond,
 		mpc_common_spinlock_unlock(&(cond->lock) );
 		while(cell.wake != 1)
 		{
-			__sctk_ethread_sched_yield_vp(vp, owner);
+			___mpc_thread_ethread_sched_yield_vp(vp, owner);
 		}
 	}
-	__sctk_ethread_mutex_lock(vp, owner, mutex);
+	___mpc_thread_ethread_mutex_lock(vp, owner, mutex);
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_cond_timedwait(sctk_ethread_cond_t *cond,
-                                             sctk_ethread_mutex_t *mutex,
+int _mpc_thread_ethread_posix_cond_timedwait(_mpc_thread_ethread_cond_t *cond,
+                                             _mpc_thread_ethread_mutex_t *mutex,
                                              const struct timespec *abstime,
-                                             void (*return_task)(sctk_ethread_per_thread_t *) )
+                                             void (*return_task)(_mpc_thread_ethread_per_thread_t *) )
 {
-	sctk_ethread_per_thread_t *       owner = (sctk_ethread_per_thread_t *)mpc_thread_self();
-	sctk_ethread_virtual_processor_t *vp    = (sctk_ethread_virtual_processor_t *)owner->vp;
+	_mpc_thread_ethread_per_thread_t *       owner = (_mpc_thread_ethread_per_thread_t *)mpc_thread_self();
+	_mpc_thread_ethread_virtual_processor_t *vp    = (_mpc_thread_ethread_virtual_processor_t *)owner->vp;
 
 
 #if 0
-	sctk_ethread_mutex_cell_t cell;
+	_mpc_thread_ethread_mutex_cell_t cell;
 	struct timeval            tv;
 	int ret;
 
-	__sctk_ethread_testcancel(owner);
+	___mpc_thread_ethread_testcancel(owner);
 	if(cond == NULL || mutex == NULL)
 	{
 		return EINVAL;
@@ -1101,7 +1101,7 @@ int _mpc_thread_ethread_posix_cond_timedwait(sctk_ethread_cond_t *cond,
 		cond->list_tail->next = &cell;
 		cond->list_tail       = &cell;
 	}
-	ret = __sctk_ethread_mutex_unlock(vp, owner, return_task, mutex);
+	ret = ___mpc_thread_ethread_mutex_unlock(vp, owner, return_task, mutex);
 	if(ret != 0)
 	{
 		cond->list = cond->list->next;
@@ -1120,13 +1120,13 @@ int _mpc_thread_ethread_posix_cond_timedwait(sctk_ethread_cond_t *cond,
 	ret = 0;
 	while(cell.wake != 1)
 	{
-		__sctk_ethread_sched_yield_vp(vp, owner);
+		___mpc_thread_ethread_sched_yield_vp(vp, owner);
 		gettimeofday(&tv, NULL);
 		if(tv.tv_sec > abstime->tv_sec)
 		{
 			if(tv.tv_usec * 1000 > (abstime->tv_nsec) )
 			{
-				sctk_ethread_cond_t *ptr;
+				_mpc_thread_ethread_cond_t *ptr;
 				ptr = cond;
 
 				mpc_common_spinlock_lock(&(cond->lock) );
@@ -1170,7 +1170,7 @@ int _mpc_thread_ethread_posix_cond_timedwait(sctk_ethread_cond_t *cond,
 	}
 
 	sctk_nodebug("le mutex a �t� r�cup�r�");
-	__sctk_ethread_mutex_lock(vp, owner, mutex);
+	___mpc_thread_ethread_mutex_lock(vp, owner, mutex);
 	return ret;
 }
 
@@ -1180,11 +1180,11 @@ int _mpc_thread_ethread_posix_cond_timedwait(sctk_ethread_cond_t *cond,
 #endif
 }
 
-int _mpc_thread_ethread_posix_cond_broadcast(sctk_ethread_cond_t *cond,
-                                             void (*return_task)(sctk_ethread_per_thread_t *) )
+int _mpc_thread_ethread_posix_cond_broadcast(_mpc_thread_ethread_cond_t *cond,
+                                             void (*return_task)(_mpc_thread_ethread_per_thread_t *) )
 {
-	sctk_ethread_per_thread_t *to_wake;
-	sctk_ethread_mutex_cell_t *cell, *cell_next;
+	_mpc_thread_ethread_per_thread_t *to_wake;
+	_mpc_thread_ethread_mutex_cell_t *cell, *cell_next;
 
 	if(cond == NULL)
 	{
@@ -1194,8 +1194,8 @@ int _mpc_thread_ethread_posix_cond_broadcast(sctk_ethread_cond_t *cond,
 	while(cond->list != NULL)
 	{
 		cell_next = cond->list->next;
-		cell      = (sctk_ethread_mutex_cell_t *)cond->list;
-		to_wake   = (sctk_ethread_per_thread_t *)cell->my_self;
+		cell      = (_mpc_thread_ethread_mutex_cell_t *)cond->list;
+		to_wake   = (_mpc_thread_ethread_per_thread_t *)cell->my_self;
 		if(cell->wake == -1)
 		{
 			cell->wake = 1;
@@ -1213,11 +1213,11 @@ int _mpc_thread_ethread_posix_cond_broadcast(sctk_ethread_cond_t *cond,
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_cond_signal(sctk_ethread_cond_t *cond,
-                                          void (*return_task)(sctk_ethread_per_thread_t *) )
+int _mpc_thread_ethread_posix_cond_signal(_mpc_thread_ethread_cond_t *cond,
+                                          void (*return_task)(_mpc_thread_ethread_per_thread_t *) )
 {
-	sctk_ethread_per_thread_t *to_wake;
-	sctk_ethread_mutex_cell_t *cell, *cell_next;
+	_mpc_thread_ethread_per_thread_t *to_wake;
+	_mpc_thread_ethread_mutex_cell_t *cell, *cell_next;
 
 	if(cond == NULL)
 	{
@@ -1227,8 +1227,8 @@ int _mpc_thread_ethread_posix_cond_signal(sctk_ethread_cond_t *cond,
 	if(cond->list != NULL)
 	{
 		cell_next = cond->list->next;
-		cell      = (sctk_ethread_mutex_cell_t *)cond->list;
-		to_wake   = (sctk_ethread_per_thread_t *)cell->my_self;
+		cell      = (_mpc_thread_ethread_mutex_cell_t *)cond->list;
+		to_wake   = (_mpc_thread_ethread_per_thread_t *)cell->my_self;
 		if(cell->wake == -1)
 		{
 			cell->wake = 1;
@@ -1252,7 +1252,7 @@ int _mpc_thread_ethread_posix_cond_signal(sctk_ethread_cond_t *cond,
 * CONDITION ATTRIBUTES *
 ************************/
 
-int _mpc_thread_ethread_posix_condattr_destroy(sctk_ethread_condattr_t *attr)
+int _mpc_thread_ethread_posix_condattr_destroy(_mpc_thread_ethread_condattr_t *attr)
 {
 	if(attr == NULL)
 	{
@@ -1261,7 +1261,7 @@ int _mpc_thread_ethread_posix_condattr_destroy(sctk_ethread_condattr_t *attr)
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_condattr_init(sctk_ethread_condattr_t *attr)
+int _mpc_thread_ethread_posix_condattr_init(_mpc_thread_ethread_condattr_t *attr)
 {
 	if(attr == NULL)
 	{
@@ -1272,7 +1272,7 @@ int _mpc_thread_ethread_posix_condattr_init(sctk_ethread_condattr_t *attr)
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_condattr_getpshared(const sctk_ethread_condattr_t *attr,
+int _mpc_thread_ethread_posix_condattr_getpshared(const _mpc_thread_ethread_condattr_t *attr,
                                                   int *pshared)
 {
 	if(attr == NULL || pshared == NULL)
@@ -1283,7 +1283,7 @@ int _mpc_thread_ethread_posix_condattr_getpshared(const sctk_ethread_condattr_t 
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_condattr_setpshared(sctk_ethread_condattr_t *attr, int pshared)
+int _mpc_thread_ethread_posix_condattr_setpshared(_mpc_thread_ethread_condattr_t *attr, int pshared)
 {
 	if(attr == NULL)
 	{
@@ -1306,7 +1306,7 @@ int _mpc_thread_ethread_posix_condattr_setpshared(sctk_ethread_condattr_t *attr,
 * SPINLOCKS *
 *************/
 
-int _mpc_thread_ethread_posix_spin_init(sctk_ethread_spinlock_t *lock, int pshared)
+int _mpc_thread_ethread_posix_spin_init(_mpc_thread_ethread_spinlock_t *lock, int pshared)
 {
 	mpc_common_spinlock_init(lock, 0);
 	if(pshared == SCTK_THREAD_PROCESS_SHARED)
@@ -1316,7 +1316,7 @@ int _mpc_thread_ethread_posix_spin_init(sctk_ethread_spinlock_t *lock, int pshar
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_spin_destroy(sctk_ethread_spinlock_t *lock)
+int _mpc_thread_ethread_posix_spin_destroy(_mpc_thread_ethread_spinlock_t *lock)
 {
 	if(OPA_load_int(lock) != 0)
 	{
@@ -1328,7 +1328,7 @@ int _mpc_thread_ethread_posix_spin_destroy(sctk_ethread_spinlock_t *lock)
 /*on ne supporte pas le EDEADLOCK
  * La norme n'est pas precise a ce sujet
  */
-int _mpc_thread_ethread_posix_spin_lock(sctk_ethread_spinlock_t *lock)
+int _mpc_thread_ethread_posix_spin_lock(_mpc_thread_ethread_spinlock_t *lock)
 {
 	/*mpc_common_spinlock_lock(lock); */
 	long i = SCTK_SPIN_DELAY;
@@ -1348,7 +1348,7 @@ int _mpc_thread_ethread_posix_spin_lock(sctk_ethread_spinlock_t *lock)
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_spin_trylock(sctk_ethread_spinlock_t *lock)
+int _mpc_thread_ethread_posix_spin_trylock(_mpc_thread_ethread_spinlock_t *lock)
 {
 	if(mpc_common_spinlock_trylock(lock) != 0)
 	{
@@ -1360,7 +1360,7 @@ int _mpc_thread_ethread_posix_spin_trylock(sctk_ethread_spinlock_t *lock)
 	}
 }
 
-int _mpc_thread_ethread_posix_spin_unlock(sctk_ethread_spinlock_t *lock)
+int _mpc_thread_ethread_posix_spin_unlock(_mpc_thread_ethread_spinlock_t *lock)
 {
 	mpc_common_spinlock_unlock(lock);
 	return 0;
@@ -1372,10 +1372,10 @@ int _mpc_thread_ethread_posix_spin_unlock(sctk_ethread_spinlock_t *lock)
 
 /*on ne supporte pas les attributs dans le sens on ne supporte pas le fait
  * qu'on soit sur plusieurs processus*/
-int _mpc_thread_ethread_posix_rwlock_init(sctk_ethread_rwlock_t *rwlock,
-                                          const sctk_ethread_rwlockattr_t *attr)
+int _mpc_thread_ethread_posix_rwlock_init(_mpc_thread_ethread_rwlock_t *rwlock,
+                                          const _mpc_thread_ethread_rwlockattr_t *attr)
 {
-	sctk_ethread_rwlock_t rwlock2 = SCTK_ETHREAD_RWLOCK_INIT;
+	_mpc_thread_ethread_rwlock_t rwlock2 = SCTK_ETHREAD_RWLOCK_INIT;
 
 	if(attr != NULL)
 	{
@@ -1393,7 +1393,7 @@ int _mpc_thread_ethread_posix_rwlock_init(sctk_ethread_rwlock_t *rwlock,
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_rwlock_destroy(sctk_ethread_rwlock_t *rwlock)
+int _mpc_thread_ethread_posix_rwlock_destroy(_mpc_thread_ethread_rwlock_t *rwlock)
 {
 	if(rwlock == NULL)
 	{
@@ -1402,15 +1402,15 @@ int _mpc_thread_ethread_posix_rwlock_destroy(sctk_ethread_rwlock_t *rwlock)
 	return 0;
 }
 
-static inline int __rwlock_lock(sctk_ethread_rwlock_t *
+static inline int __rwlock_lock(_mpc_thread_ethread_rwlock_t *
                                 rwlock,
                                 unsigned char type,
-                                sctk_ethread_virtual_processor_t
+                                _mpc_thread_ethread_virtual_processor_t
                                 *vp,
-                                sctk_ethread_per_thread_t
+                                _mpc_thread_ethread_per_thread_t
                                 *owner)
 {
-	sctk_ethread_rwlock_cell_t cell;
+	_mpc_thread_ethread_rwlock_cell_t cell;
 
 	mpc_common_spinlock_lock(&rwlock->spinlock);
 	rwlock->lock++;
@@ -1469,7 +1469,7 @@ static inline int __rwlock_lock(sctk_ethread_rwlock_t *
 		owner->status          = ethread_blocked;
 		owner->no_auto_enqueue = 1;
 		mpc_common_spinlock_unlock(&rwlock->spinlock);
-		__sctk_ethread_sched_yield_vp_poll(vp, owner);
+		___mpc_thread_ethread_sched_yield_vp_poll(vp, owner);
 		owner->status = ethread_ready;
 		mpc_common_spinlock_lock(&rwlock->spinlock);
 	}
@@ -1478,7 +1478,7 @@ static inline int __rwlock_lock(sctk_ethread_rwlock_t *
 		while(cell.wake != 1)
 		{
 			mpc_common_spinlock_unlock(&rwlock->spinlock);
-			__sctk_ethread_sched_yield_vp(vp, owner);
+			___mpc_thread_ethread_sched_yield_vp(vp, owner);
 			mpc_common_spinlock_lock(&rwlock->spinlock);
 		}
 	}
@@ -1487,7 +1487,7 @@ static inline int __rwlock_lock(sctk_ethread_rwlock_t *
 	return 0;
 }
 
-static inline int __rwlock_trylock(sctk_ethread_rwlock_t *rwlock, int type)
+static inline int __rwlock_trylock(_mpc_thread_ethread_rwlock_t *rwlock, int type)
 {
 	mpc_common_spinlock_lock(&rwlock->spinlock);
 	/*si on n'est pas sur de devoir attendre */
@@ -1516,38 +1516,38 @@ static inline int __rwlock_trylock(sctk_ethread_rwlock_t *rwlock, int type)
 	return EBUSY;
 }
 
-int _mpc_thread_ethread_posix_rwlock_rdlock(sctk_ethread_rwlock_t *rwlock)
+int _mpc_thread_ethread_posix_rwlock_rdlock(_mpc_thread_ethread_rwlock_t *rwlock)
 {
-	sctk_ethread_per_thread_t *owner     = (sctk_ethread_per_thread_t *)mpc_thread_self();
-	sctk_ethread_virtual_processor_t *vp = (sctk_ethread_virtual_processor_t *)owner->vp;
+	_mpc_thread_ethread_per_thread_t *owner     = (_mpc_thread_ethread_per_thread_t *)mpc_thread_self();
+	_mpc_thread_ethread_virtual_processor_t *vp = (_mpc_thread_ethread_virtual_processor_t *)owner->vp;
 
 	return __rwlock_lock(rwlock, SCTK_RWLOCK_READ,
 	                     vp, owner);
 }
 
-int _mpc_thread_ethread_posix_rwlock_tryrdlock(sctk_ethread_rwlock_t *rwlock)
+int _mpc_thread_ethread_posix_rwlock_tryrdlock(_mpc_thread_ethread_rwlock_t *rwlock)
 {
 	return __rwlock_trylock(rwlock, SCTK_RWLOCK_READ);
 }
 
-int _mpc_thread_ethread_posix_rwlock_wrlock(sctk_ethread_rwlock_t *rwlock)
+int _mpc_thread_ethread_posix_rwlock_wrlock(_mpc_thread_ethread_rwlock_t *rwlock)
 {
-	sctk_ethread_per_thread_t *owner     = (sctk_ethread_per_thread_t *)mpc_thread_self();
-	sctk_ethread_virtual_processor_t *vp = (sctk_ethread_virtual_processor_t *)owner->vp;
+	_mpc_thread_ethread_per_thread_t *owner     = (_mpc_thread_ethread_per_thread_t *)mpc_thread_self();
+	_mpc_thread_ethread_virtual_processor_t *vp = (_mpc_thread_ethread_virtual_processor_t *)owner->vp;
 
 	return __rwlock_lock(rwlock, SCTK_RWLOCK_WRITE,
 	                     vp, owner);
 }
 
-int _mpc_thread_ethread_posix_rwlock_trywrlock(sctk_ethread_rwlock_t *rwlock)
+int _mpc_thread_ethread_posix_rwlock_trywrlock(_mpc_thread_ethread_rwlock_t *rwlock)
 {
 	return __rwlock_trylock(rwlock, SCTK_RWLOCK_WRITE);
 }
 
-int _mpc_thread_ethread_posix_rwlock_unlock(sctk_ethread_rwlock_t *lock, void (*return_task)(sctk_ethread_per_thread_t *) )
+int _mpc_thread_ethread_posix_rwlock_unlock(_mpc_thread_ethread_rwlock_t *lock, void (*return_task)(_mpc_thread_ethread_per_thread_t *) )
 {
-	sctk_ethread_rwlock_cell_t *cell;
-	sctk_ethread_per_thread_t *to_wake_up;
+	_mpc_thread_ethread_rwlock_cell_t *cell;
+	_mpc_thread_ethread_per_thread_t *to_wake_up;
 	int first = 1;
 
 	mpc_common_spinlock_lock(&(lock->spinlock) );
@@ -1562,8 +1562,8 @@ int _mpc_thread_ethread_posix_rwlock_unlock(sctk_ethread_rwlock_t *lock, void (*
 		 */
 		do
 		{
-			sctk_ethread_per_thread_t *to_wake;
-			cell = (sctk_ethread_rwlock_cell_t *)lock->list;
+			_mpc_thread_ethread_per_thread_t *to_wake;
+			cell = (_mpc_thread_ethread_rwlock_cell_t *)lock->list;
 
 			lock->current = cell->type;
 
@@ -1576,7 +1576,7 @@ int _mpc_thread_ethread_posix_rwlock_unlock(sctk_ethread_rwlock_t *lock, void (*
 			{
 				lock->list = lock->list->next;
 				to_wake_up = cell->my_self;
-				to_wake    = (sctk_ethread_per_thread_t *)to_wake_up;
+				to_wake    = (_mpc_thread_ethread_per_thread_t *)to_wake_up;
 				cell->wake = 1;
 				return_task(to_wake);
 				first = 0;
@@ -1601,7 +1601,7 @@ int _mpc_thread_ethread_posix_rwlock_unlock(sctk_ethread_rwlock_t *lock, void (*
 * RWLOCKATTR *
 **************/
 
-int _mpc_thread_ethread_posix_rwlockattr_getpshared(const sctk_ethread_rwlockattr_t *attr,
+int _mpc_thread_ethread_posix_rwlockattr_getpshared(const _mpc_thread_ethread_rwlockattr_t *attr,
                                                     int *pshared)
 {
 	if(attr == NULL || pshared == NULL)
@@ -1612,7 +1612,7 @@ int _mpc_thread_ethread_posix_rwlockattr_getpshared(const sctk_ethread_rwlockatt
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_rwlockattr_setpshared(sctk_ethread_rwlockattr_t *attr,
+int _mpc_thread_ethread_posix_rwlockattr_setpshared(_mpc_thread_ethread_rwlockattr_t *attr,
                                                     int pshared)
 {
 	if(attr == NULL)
@@ -1632,7 +1632,7 @@ int _mpc_thread_ethread_posix_rwlockattr_setpshared(sctk_ethread_rwlockattr_t *a
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_rwlockattr_init(sctk_ethread_rwlockattr_t *attr)
+int _mpc_thread_ethread_posix_rwlockattr_init(_mpc_thread_ethread_rwlockattr_t *attr)
 {
 	if(attr == NULL)
 	{
@@ -1642,7 +1642,7 @@ int _mpc_thread_ethread_posix_rwlockattr_init(sctk_ethread_rwlockattr_t *attr)
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_rwlockattr_destroy(sctk_ethread_rwlockattr_t *attr)
+int _mpc_thread_ethread_posix_rwlockattr_destroy(_mpc_thread_ethread_rwlockattr_t *attr)
 {
 	if(attr == NULL)
 	{
@@ -1655,8 +1655,8 @@ int _mpc_thread_ethread_posix_rwlockattr_destroy(sctk_ethread_rwlockattr_t *attr
 * BARRIER *
 ***********/
 
-int _mpc_thread_ethread_posix_barrier_init(sctk_ethread_barrier_t *barrier,
-                                           const sctk_ethread_barrierattr_t *attr,
+int _mpc_thread_ethread_posix_barrier_init(_mpc_thread_ethread_barrier_t *barrier,
+                                           const _mpc_thread_ethread_barrierattr_t *attr,
                                            unsigned count)
 {
 	if(barrier == NULL)
@@ -1684,7 +1684,7 @@ int _mpc_thread_ethread_posix_barrier_init(sctk_ethread_barrier_t *barrier,
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_barrier_destroy(sctk_ethread_barrier_t *barrier)
+int _mpc_thread_ethread_posix_barrier_destroy(_mpc_thread_ethread_barrier_t *barrier)
 {
 	if(barrier == NULL)
 	{
@@ -1693,12 +1693,12 @@ int _mpc_thread_ethread_posix_barrier_destroy(sctk_ethread_barrier_t *barrier)
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_barrier_wait(sctk_ethread_barrier_t *barrier, void (*return_task)(sctk_ethread_per_thread_t *) )
+int _mpc_thread_ethread_posix_barrier_wait(_mpc_thread_ethread_barrier_t *barrier, void (*return_task)(_mpc_thread_ethread_per_thread_t *) )
 {
-	sctk_ethread_per_thread_t *owner     = (sctk_ethread_per_thread_t *)mpc_thread_self();
-	sctk_ethread_virtual_processor_t *vp = (sctk_ethread_virtual_processor_t *)owner->vp;
+	_mpc_thread_ethread_per_thread_t *owner     = (_mpc_thread_ethread_per_thread_t *)mpc_thread_self();
+	_mpc_thread_ethread_virtual_processor_t *vp = (_mpc_thread_ethread_virtual_processor_t *)owner->vp;
 
-	sctk_ethread_mutex_cell_t cell;
+	_mpc_thread_ethread_mutex_cell_t cell;
 	int ret;
 
 	ret          = 0;
@@ -1728,7 +1728,7 @@ int _mpc_thread_ethread_posix_barrier_wait(sctk_ethread_barrier_t *barrier, void
 			owner->status          = ethread_blocked;
 			owner->no_auto_enqueue = 1;
 			mpc_common_spinlock_unlock(&barrier->spinlock);
-			__sctk_ethread_sched_yield_vp_poll(vp, owner);
+			___mpc_thread_ethread_sched_yield_vp_poll(vp, owner);
 			owner->status = ethread_ready;
 			mpc_common_spinlock_lock(&barrier->spinlock);
 		}
@@ -1737,15 +1737,15 @@ int _mpc_thread_ethread_posix_barrier_wait(sctk_ethread_barrier_t *barrier, void
 			mpc_common_spinlock_unlock(&barrier->spinlock);
 			while(cell.wake != 1)
 			{
-				__sctk_ethread_sched_yield_vp(vp, owner);
+				___mpc_thread_ethread_sched_yield_vp(vp, owner);
 			}
 		}
 	}
 	else
 	{
-		sctk_ethread_mutex_cell_t *list;
+		_mpc_thread_ethread_mutex_cell_t *list;
 
-		list = (sctk_ethread_mutex_cell_t *)barrier->list;
+		list = (_mpc_thread_ethread_mutex_cell_t *)barrier->list;
 
 		barrier->list_tail = NULL;
 		barrier->lock      = barrier->nb_max;
@@ -1754,13 +1754,13 @@ int _mpc_thread_ethread_posix_barrier_wait(sctk_ethread_barrier_t *barrier, void
 
 		while(list != NULL)
 		{
-			sctk_ethread_mutex_cell_t *cell2;
-			sctk_ethread_per_thread_t *to_wake;
-			sctk_ethread_per_thread_t *to_wake_up;
-			cell2       = (sctk_ethread_mutex_cell_t *)list;
+			_mpc_thread_ethread_mutex_cell_t *cell2;
+			_mpc_thread_ethread_per_thread_t *to_wake;
+			_mpc_thread_ethread_per_thread_t *to_wake_up;
+			cell2       = (_mpc_thread_ethread_mutex_cell_t *)list;
 			list        = list->next;
 			to_wake_up  = cell2->my_self;
-			to_wake     = (sctk_ethread_per_thread_t *)to_wake_up;
+			to_wake     = (_mpc_thread_ethread_per_thread_t *)to_wake_up;
 			cell2->wake = 1;
 			return_task(to_wake);
 		}
@@ -1774,7 +1774,7 @@ int _mpc_thread_ethread_posix_barrier_wait(sctk_ethread_barrier_t *barrier, void
 * BARRIERATTR *
 ***************/
 
-int _mpc_thread_ethread_posix_barrierattr_getpshared(const sctk_ethread_barrierattr_t *
+int _mpc_thread_ethread_posix_barrierattr_getpshared(const _mpc_thread_ethread_barrierattr_t *
                                                      attr, int *pshared)
 {
 	if(attr == NULL || pshared == NULL)
@@ -1785,7 +1785,7 @@ int _mpc_thread_ethread_posix_barrierattr_getpshared(const sctk_ethread_barriera
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_barrierattr_setpshared(sctk_ethread_barrierattr_t *attr,
+int _mpc_thread_ethread_posix_barrierattr_setpshared(_mpc_thread_ethread_barrierattr_t *attr,
                                                      int pshared)
 {
 	if(attr == NULL)
@@ -1805,7 +1805,7 @@ int _mpc_thread_ethread_posix_barrierattr_setpshared(sctk_ethread_barrierattr_t 
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_barrierattr_init(sctk_ethread_barrierattr_t *attr)
+int _mpc_thread_ethread_posix_barrierattr_init(_mpc_thread_ethread_barrierattr_t *attr)
 {
 	if(attr == NULL)
 	{
@@ -1815,7 +1815,7 @@ int _mpc_thread_ethread_posix_barrierattr_init(sctk_ethread_barrierattr_t *attr)
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_barrierattr_destroy(sctk_ethread_barrierattr_t *attr)
+int _mpc_thread_ethread_posix_barrierattr_destroy(_mpc_thread_ethread_barrierattr_t *attr)
 {
 	if(attr == NULL)
 	{
@@ -1828,12 +1828,12 @@ int _mpc_thread_ethread_posix_barrierattr_destroy(sctk_ethread_barrierattr_t *at
 * NON PORTABLE *
 ****************/
 
-int _mpc_thread_ethread_posix_getattr_np(sctk_ethread_t th, sctk_ethread_attr_t *attr)
+int _mpc_thread_ethread_posix_getattr_np(_mpc_thread_ethread_t th, _mpc_thread_ethread_attr_t *attr)
 {
 	int ret;
 
-	attr->ptr = (sctk_ethread_attr_intern_t *)
-	            sctk_malloc(sizeof(sctk_ethread_attr_intern_t) );
+	attr->ptr = (_mpc_thread_ethread_attr_intern_t *)
+	            sctk_malloc(sizeof(_mpc_thread_ethread_attr_intern_t) );
 	*attr->ptr = th->attr;
 	return 0;
 }

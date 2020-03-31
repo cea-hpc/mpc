@@ -29,7 +29,7 @@
 
 #include "thread.h"
 
-#include "sctk_ethread.h"
+#include "ethread_engine.h"
 #include "kthread.h"
 
 #include "sctk_context.h"
@@ -49,9 +49,9 @@ extern "C"
 
 typedef void (*stck_ethread_key_destr_function_t) (void *);
 
-extern mpc_common_spinlock_t sctk_ethread_key_spinlock;
-extern int sctk_ethread_key_pos;
-extern stck_ethread_key_destr_function_t sctk_ethread_destr_func_tab[];
+extern mpc_common_spinlock_t _mpc_thread_ethread_key_spinlock;
+extern int _mpc_thread_ethread_key_pos;
+extern stck_ethread_key_destr_function_t _mpc_thread_ethread_destr_func_tab[];
 
 /*detachstate*/
 #define SCTK_ETHREAD_CREATE_JOINABLE    SCTK_THREAD_CREATE_JOINABLE
@@ -68,7 +68,7 @@ extern stck_ethread_key_destr_function_t sctk_ethread_destr_func_tab[];
 #define SCTK_ETHREAD_SCOPE_SYSTEM       SCTK_THREAD_SCOPE_SYSTEM
 #define SCTK_ETHREAD_SCOPE_PROCESS      SCTK_THREAD_SCOPE_PROCESS
 
-typedef struct sctk_ethread_attr_intern_s
+typedef struct _mpc_thread_ethread_attr_intern_s
 {
 	int          priority;
 	int          detached;
@@ -79,7 +79,7 @@ typedef struct sctk_ethread_attr_intern_s
 	int          stack_size;
 	unsigned int binding;
 	size_t       guardsize;
-} sctk_ethread_attr_intern_t;
+} _mpc_thread_ethread_attr_intern_t;
 #define SCTK_ETHREAD_ATTR_INIT    { 0,                            \
 		                    SCTK_ETHREAD_CREATE_JOINABLE, \
 		                    SCTK_ETHREAD_SCHED_OTHER,     \
@@ -100,9 +100,9 @@ typedef enum
 	ethread_idle,
 	ethread_migrate,
 	ethread_dump
-} sctk_ethread_status_t;
+} _mpc_thread_ethread_status_t;
 
-static inline char *sctk_ethread_debug_status(sctk_ethread_status_t status)
+static inline char *_mpc_thread_ethread_debug_status(_mpc_thread_ethread_status_t status)
 {
 	switch(status)
 	{
@@ -134,31 +134,31 @@ static inline char *sctk_ethread_debug_status(sctk_ethread_status_t status)
 	return NULL;
 }
 
-struct sctk_ethread_virtual_processor_s;
-typedef struct sctk_ethread_per_thread_s
+struct _mpc_thread_ethread_virtual_processor_s;
+typedef struct _mpc_thread_ethread_per_thread_s
 {
 	sctk_mctx_t                                       ctx;
 	void *                                            tls[SCTK_THREAD_KEYS_MAX];
 
-	volatile sctk_ethread_status_t                    status;
+	volatile _mpc_thread_ethread_status_t                    status;
 	int                                               no_auto_enqueue;
 
-	struct sctk_ethread_per_thread_s *                next;
+	struct _mpc_thread_ethread_per_thread_s *                next;
 	void *                                            ret_val;
 	int                                               nb_wait_for_join;
 
-	sctk_ethread_attr_intern_t                        attr;
+	_mpc_thread_ethread_attr_intern_t                        attr;
 
 	void *(*start_routine)(void *);
 	void *                                            arg;
 	char *                                            stack;
 	size_t                                            stack_size;
 
-	volatile struct sctk_ethread_virtual_processor_s *vp;
+	volatile struct _mpc_thread_ethread_virtual_processor_s *vp;
 
 	mpc_common_spinlock_t                             spinlock;
-	struct sctk_ethread_virtual_processor_s *         migrate_to;
-	void (*migration_func)(struct sctk_ethread_per_thread_s *);
+	struct _mpc_thread_ethread_virtual_processor_s *         migrate_to;
+	void (*migration_func)(struct _mpc_thread_ethread_per_thread_s *);
 
 	struct sctk_alloc_chain *                         tls_mem;
 	int                                               dump_for_migration;
@@ -174,47 +174,47 @@ typedef struct sctk_ethread_per_thread_s
 	volatile int                                      nb_sig_proceeded;
 
 	void *                                            debug_p;
-} sctk_ethread_per_thread_t;
+} _mpc_thread_ethread_per_thread_t;
 
 
-extern sctk_ethread_per_thread_t sctk_ethread_main_thread;
+extern _mpc_thread_ethread_per_thread_t _mpc_thread_ethread_main_thread;
 
-typedef struct sctk_ethread_polling_s
+typedef struct _mpc_thread_ethread_polling_s
 {
 	volatile int *volatile         data;
 	int                            value;
 	void (*func)(void *);
 	void *                         arg;
 
-	struct sctk_ethread_polling_s *next;
+	struct _mpc_thread_ethread_polling_s *next;
 
-	sctk_ethread_per_thread_t *    my_self;
+	_mpc_thread_ethread_per_thread_t *    my_self;
 	volatile int                   forced;
-} sctk_ethread_polling_t;
+} _mpc_thread_ethread_polling_t;
 
-typedef struct sctk_ethread_virtual_processor_s
+typedef struct _mpc_thread_ethread_virtual_processor_s
 {
-	sctk_ethread_per_thread_t *         ready_queue;
-	sctk_ethread_per_thread_t *         ready_queue_tail;
+	_mpc_thread_ethread_per_thread_t *         ready_queue;
+	_mpc_thread_ethread_per_thread_t *         ready_queue_tail;
 
-	sctk_ethread_per_thread_t *         ready_queue_used;
-	sctk_ethread_per_thread_t *         ready_queue_tail_used;
+	_mpc_thread_ethread_per_thread_t *         ready_queue_used;
+	_mpc_thread_ethread_per_thread_t *         ready_queue_tail_used;
 
-	sctk_ethread_per_thread_t *         zombie_queue;
-	sctk_ethread_per_thread_t *         zombie_queue_tail;
+	_mpc_thread_ethread_per_thread_t *         zombie_queue;
+	_mpc_thread_ethread_per_thread_t *         zombie_queue_tail;
 
-	volatile sctk_ethread_per_thread_t *incomming_queue;
-	volatile sctk_ethread_per_thread_t *incomming_queue_tail;
+	volatile _mpc_thread_ethread_per_thread_t *incomming_queue;
+	volatile _mpc_thread_ethread_per_thread_t *incomming_queue_tail;
 
-	volatile sctk_ethread_per_thread_t *current;
-	volatile sctk_ethread_per_thread_t *migration;
-	volatile sctk_ethread_per_thread_t *dump;
-	volatile sctk_ethread_per_thread_t *zombie;
+	volatile _mpc_thread_ethread_per_thread_t *current;
+	volatile _mpc_thread_ethread_per_thread_t *migration;
+	volatile _mpc_thread_ethread_per_thread_t *dump;
+	volatile _mpc_thread_ethread_per_thread_t *zombie;
 	volatile int                        to_check;
 
-	sctk_ethread_per_thread_t *         idle;
+	_mpc_thread_ethread_per_thread_t *         idle;
 
-	volatile sctk_ethread_polling_t *   poll_list;
+	volatile _mpc_thread_ethread_polling_t *   poll_list;
 
 	mpc_common_spinlock_t               spinlock;
 
@@ -225,7 +225,7 @@ typedef struct sctk_ethread_virtual_processor_s
 	volatile int                        up;
 	volatile int                        eagerness;
 	int                                 bind_to;
-} sctk_ethread_virtual_processor_t;
+} _mpc_thread_ethread_virtual_processor_t;
 #define SCTK_ETHREAD_VP_INIT    {          \
 		NULL, NULL,                \
 		NULL, NULL,                \
@@ -237,21 +237,21 @@ typedef struct sctk_ethread_virtual_processor_s
 		SCTK_SPINLOCK_INITIALIZER, \
 		0, 0, 0, 0, 1, SCTK_ETHREAD_VP_EAGERNESS, -1 }
 
-extern sctk_ethread_virtual_processor_t virtual_processor;
+extern _mpc_thread_ethread_virtual_processor_t virtual_processor;
 
 
-sctk_ethread_t sctk_ethread_self(void);
-sctk_ethread_t sctk_ethread_mxn_self(void);
-void sctk_ethread_return_task(sctk_ethread_per_thread_t *);
-void sctk_ethread_mxn_return_task(sctk_ethread_per_thread_t *);
+_mpc_thread_ethread_t _mpc_thread_ethread_self(void);
+_mpc_thread_ethread_t _mpc_thread_ethread_mxn_engine_self(void);
+void _mpc_thread_ethread_return_task(_mpc_thread_ethread_per_thread_t *);
+void _mpc_thread_ethread_mxn_engine_return_task(_mpc_thread_ethread_per_thread_t *);
 
 /*
- * void sctk_ethread_mxn_place_task_on_vp (sctk_ethread_virtual_processor_t *,
- *                                        sctk_ethread_per_thread_t *);
+ * void _mpc_thread_ethread_mxn_engine_place_task_on_vp (_mpc_thread_ethread_virtual_processor_t *,
+ *                                        _mpc_thread_ethread_per_thread_t *);
  */
 
 static inline
-void sctk_ethread_print_task(sctk_ethread_per_thread_t *task)
+void _mpc_thread_ethread_print_task(_mpc_thread_ethread_per_thread_t *task)
 {
 	char *status = "not defined";
 
@@ -301,7 +301,7 @@ void sctk_ethread_print_task(sctk_ethread_per_thread_t *task)
 }
 
 #ifndef NO_INTERNAL_ASSERT
-static inline void sctk_print_attr(sctk_ethread_attr_intern_t *attr)
+static inline void sctk_print_attr(_mpc_thread_ethread_attr_intern_t *attr)
 {
 	sctk_nodebug("Attr %p:", attr);
 	if(attr != NULL)
@@ -320,18 +320,18 @@ static inline void sctk_print_attr(sctk_ethread_attr_intern_t *attr)
 #define sctk_print_attr(a)    (void)(0)
 #endif
 
-typedef struct sctk_ethread_freeze_on_vp_s
+typedef struct _mpc_thread_ethread_freeze_on_vp_s
 {
-	sctk_ethread_per_thread_t *       queue;
-	sctk_ethread_per_thread_t *       queue_tail;
-	sctk_ethread_virtual_processor_t *vp;
-} sctk_ethread_freeze_on_vp_t;
+	_mpc_thread_ethread_per_thread_t *       queue;
+	_mpc_thread_ethread_per_thread_t *       queue_tail;
+	_mpc_thread_ethread_virtual_processor_t *vp;
+} _mpc_thread_ethread_freeze_on_vp_t;
 
 static inline
-void __sctk_ethread_enqueue_task(sctk_ethread_per_thread_t *task,
-                                 sctk_ethread_per_thread_t **
+void ___mpc_thread_ethread_enqueue_task(_mpc_thread_ethread_per_thread_t *task,
+                                 _mpc_thread_ethread_per_thread_t **
                                  queue,
-                                 sctk_ethread_per_thread_t **queue_tail)
+                                 _mpc_thread_ethread_per_thread_t **queue_tail)
 {
 	task->next = NULL;
 	if(*queue != NULL)
@@ -346,29 +346,29 @@ void __sctk_ethread_enqueue_task(sctk_ethread_per_thread_t *task,
 }
 
 static inline
-void sctk_ethread_enqueue_task(sctk_ethread_virtual_processor_t *
-                               vp, sctk_ethread_per_thread_t *task)
+void _mpc_thread_ethread_enqueue_task(_mpc_thread_ethread_virtual_processor_t *
+                               vp, _mpc_thread_ethread_per_thread_t *task)
 {
 	sctk_assert_func(if(task->status != ethread_ready)
 	{
 		char *th_status;
 		th_status =
-		        sctk_ethread_debug_status(task->
+		        _mpc_thread_ethread_debug_status(task->
 		                                  status);
 		sctk_warning("task %p task->status = %d (%s) ",
 		             task, task->status, th_status);
 	}
 	                 sctk_assert(task->status == ethread_ready); );
-	__sctk_ethread_enqueue_task(task,
+	___mpc_thread_ethread_enqueue_task(task,
 	                            &(vp->ready_queue), &(vp->ready_queue_tail) );
 }
 
 static inline
-sctk_ethread_per_thread_t *
-__sctk_ethread_dequeue_task(sctk_ethread_per_thread_t **queue,
-                            sctk_ethread_per_thread_t **queue_tail)
+_mpc_thread_ethread_per_thread_t *
+___mpc_thread_ethread_dequeue_task(_mpc_thread_ethread_per_thread_t **queue,
+                            _mpc_thread_ethread_per_thread_t **queue_tail)
 {
-	sctk_ethread_per_thread_t *task;
+	_mpc_thread_ethread_per_thread_t *task;
 
 	if(*queue != NULL)
 	{
@@ -388,39 +388,39 @@ __sctk_ethread_dequeue_task(sctk_ethread_per_thread_t **queue,
 }
 
 static inline
-sctk_ethread_per_thread_t *
-sctk_ethread_dequeue_task(sctk_ethread_virtual_processor_t *vp)
+_mpc_thread_ethread_per_thread_t *
+_mpc_thread_ethread_dequeue_task(_mpc_thread_ethread_virtual_processor_t *vp)
 {
-	sctk_ethread_per_thread_t *task;
+	_mpc_thread_ethread_per_thread_t *task;
 
-	task = __sctk_ethread_dequeue_task(&(vp->ready_queue),
+	task = ___mpc_thread_ethread_dequeue_task(&(vp->ready_queue),
 	                                   &(vp->ready_queue_tail) );
 	return task;
 }
 
 static inline
-sctk_ethread_per_thread_t *
-sctk_ethread_dequeue_task_for_run(sctk_ethread_virtual_processor_t *vp)
+_mpc_thread_ethread_per_thread_t *
+_mpc_thread_ethread_dequeue_task_for_run(_mpc_thread_ethread_virtual_processor_t *vp)
 {
-	sctk_ethread_per_thread_t *task;
+	_mpc_thread_ethread_per_thread_t *task;
 
-	task = __sctk_ethread_dequeue_task(&(vp->ready_queue_used),
+	task = ___mpc_thread_ethread_dequeue_task(&(vp->ready_queue_used),
 	                                   &(vp->ready_queue_tail_used) );
 	return task;
 }
 
 static inline void
-sctk_ethread_get_incomming_tasks(sctk_ethread_virtual_processor_t *vp)
+_mpc_thread_ethread_get_incomming_tasks(_mpc_thread_ethread_virtual_processor_t *vp)
 {
 	if(vp->incomming_queue != NULL)
 	{
-		sctk_ethread_per_thread_t *head;
-		sctk_ethread_per_thread_t *tail;
+		_mpc_thread_ethread_per_thread_t *head;
+		_mpc_thread_ethread_per_thread_t *tail;
 		mpc_common_spinlock_lock(&vp->spinlock);
 		if(vp->incomming_queue != NULL)
 		{
-			head = (sctk_ethread_per_thread_t *)vp->incomming_queue;
-			tail = (sctk_ethread_per_thread_t *)vp->incomming_queue_tail;
+			head = (_mpc_thread_ethread_per_thread_t *)vp->incomming_queue;
+			tail = (_mpc_thread_ethread_per_thread_t *)vp->incomming_queue_tail;
 			vp->incomming_queue      = NULL;
 			vp->incomming_queue_tail = NULL;
 
@@ -439,22 +439,22 @@ sctk_ethread_get_incomming_tasks(sctk_ethread_virtual_processor_t *vp)
 }
 
 static inline
-void sctk_ethread_get_old_tasks(sctk_ethread_virtual_processor_t *vp)
+void _mpc_thread_ethread_get_old_tasks(_mpc_thread_ethread_virtual_processor_t *vp)
 {
 	if(vp->ready_queue != NULL)
 	{
 		if(vp->ready_queue_used != NULL)
 		{
 			vp->ready_queue_tail_used->next =
-			        (sctk_ethread_per_thread_t *)vp->ready_queue;
+			        (_mpc_thread_ethread_per_thread_t *)vp->ready_queue;
 		}
 		else
 		{
 			vp->ready_queue_used =
-			        (sctk_ethread_per_thread_t *)vp->ready_queue;
+			        (_mpc_thread_ethread_per_thread_t *)vp->ready_queue;
 		}
 		vp->ready_queue_tail_used =
-		        (sctk_ethread_per_thread_t *)vp->ready_queue_tail;
+		        (_mpc_thread_ethread_per_thread_t *)vp->ready_queue_tail;
 		vp->ready_queue      = NULL;
 		vp->ready_queue_tail = NULL;
 	}
@@ -471,10 +471,10 @@ static inline void sctk_init_default_sigset()
 #endif
 }
 
-static inline void sctk_ethread_init_data(sctk_ethread_per_thread_t *data)
+static inline void _mpc_thread_ethread_init_data(_mpc_thread_ethread_per_thread_t *data)
 {
 	int i;
-	sctk_ethread_attr_intern_t default_attr = SCTK_ETHREAD_ATTR_INIT;
+	_mpc_thread_ethread_attr_intern_t default_attr = SCTK_ETHREAD_ATTR_INIT;
 
 	for(i = 0; i < SCTK_THREAD_KEYS_MAX; i++)
 	{
@@ -501,18 +501,18 @@ static inline void sctk_ethread_init_data(sctk_ethread_per_thread_t *data)
 	data->thread_sigset    = sctk_thread_default_set;
 }
 
-#define sctk_ethread_check_size(a, b)       sctk_size_checking(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
-#define sctk_ethread_check_size_eq(a, b)    sctk_size_checking_eq(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
+#define _mpc_thread_ethread_check_size(a, b)       sctk_size_checking(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
+#define _mpc_thread_ethread_check_size_eq(a, b)    sctk_size_checking_eq(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
 
-typedef struct sctk_ethread_mutex_cell_s
+typedef struct _mpc_thread_ethread_mutex_cell_s
 {
-	struct sctk_ethread_mutex_cell_s *next;
-	sctk_ethread_per_thread_t *       my_self;
+	struct _mpc_thread_ethread_mutex_cell_s *next;
+	_mpc_thread_ethread_per_thread_t *       my_self;
 	volatile int                      wake;
-} sctk_ethread_mutex_cell_t;
+} _mpc_thread_ethread_mutex_cell_t;
 
 
-int sctk_ethread_check_state(void);
+int _mpc_thread_ethread_check_state(void);
 
 #ifdef __cplusplus
 }

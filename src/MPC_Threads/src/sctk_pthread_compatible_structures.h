@@ -40,24 +40,24 @@ extern "C"
 #endif
 
 /*Threads definitions */
-struct sctk_ethread_per_thread_s;
-typedef struct sctk_ethread_per_thread_s * sctk_ethread_t;
+struct _mpc_thread_ethread_per_thread_s;
+typedef struct _mpc_thread_ethread_per_thread_s * _mpc_thread_ethread_t;
 
-struct sctk_ethread_attr_intern_s;
+struct _mpc_thread_ethread_attr_intern_s;
 typedef struct
 {
-	struct sctk_ethread_attr_intern_s *ptr;
-} sctk_ethread_attr_t;
+	struct _mpc_thread_ethread_attr_intern_s *ptr;
+} _mpc_thread_ethread_attr_t;
 
 /*Condition definition */
-struct sctk_ethread_mutex_cell_s;
+struct _mpc_thread_ethread_mutex_cell_s;
 typedef struct
 {
 	mpc_common_spinlock_t                      lock;
 	volatile int                               is_init;
-	volatile struct sctk_ethread_mutex_cell_s *list;
-	volatile struct sctk_ethread_mutex_cell_s *list_tail;
-} sctk_ethread_cond_t;
+	volatile struct _mpc_thread_ethread_mutex_cell_s *list;
+	volatile struct _mpc_thread_ethread_mutex_cell_s *list_tail;
+} _mpc_thread_ethread_cond_t;
 #define SCTK_ETHREAD_COND_INIT    { SCTK_SPINLOCK_INITIALIZER, 0, NULL, NULL }
 
 /*condition attributes */
@@ -65,57 +65,57 @@ typedef struct
 {
 	short pshared;
 	short clock;
-} sctk_ethread_condattr_t;
+} _mpc_thread_ethread_condattr_t;
 
 /*Semaphore management */
 typedef struct
 {
 	volatile int                               lock;
 	mpc_common_spinlock_t                      spinlock;
-	volatile struct sctk_ethread_mutex_cell_s *list;
-	volatile struct sctk_ethread_mutex_cell_s *list_tail;
-} sctk_ethread_sem_t;
+	volatile struct _mpc_thread_ethread_mutex_cell_s *list;
+	volatile struct _mpc_thread_ethread_mutex_cell_s *list_tail;
+} _mpc_thread_ethread_sem_t;
 #define STCK_ETHREAD_SEM_INIT    { 0, SCTK_SPINLOCK_INITIALIZER, NULL, NULL }
 
 /*Mutex definition */
-struct sctk_ethread_mutex_cell_s;
+struct _mpc_thread_ethread_mutex_cell_s;
 
 typedef struct
 {
-	volatile struct sctk_ethread_per_thread_s *owner;
-	volatile struct sctk_ethread_mutex_cell_s *list;
-	volatile struct sctk_ethread_mutex_cell_s *list_tail;
+	volatile struct _mpc_thread_ethread_per_thread_s *owner;
+	volatile struct _mpc_thread_ethread_mutex_cell_s *list;
+	volatile struct _mpc_thread_ethread_mutex_cell_s *list_tail;
 	mpc_common_spinlock_t                      spinlock;
 	volatile unsigned int                      lock;
 	unsigned int                               type;
-} sctk_ethread_mutex_t;
+} _mpc_thread_ethread_mutex_t;
 #define SCTK_ETHREAD_MUTEX_INIT              { NULL, NULL, NULL, SCTK_SPINLOCK_INITIALIZER, 0, SCTK_THREAD_MUTEX_DEFAULT }
 #define SCTK_ETHREAD_MUTEX_RECURSIVE_INIT    { NULL, NULL, NULL, SCTK_SPINLOCK_INITIALIZER, 0, SCTK_THREAD_MUTEX_RECURSIVE }
 
 typedef struct
 {
 	unsigned short kind;
-} sctk_ethread_mutexattr_t;
+} _mpc_thread_ethread_mutexattr_t;
 
 /*Rwlock*/
-typedef struct sctk_ethread_rwlock_cell_s
+typedef struct _mpc_thread_ethread_rwlock_cell_s
 {
-	struct sctk_ethread_rwlock_cell_s *next;
-	struct sctk_ethread_per_thread_s * my_self;
+	struct _mpc_thread_ethread_rwlock_cell_s *next;
+	struct _mpc_thread_ethread_per_thread_s * my_self;
 	volatile int                       wake;
 	volatile unsigned short            type;
-} sctk_ethread_rwlock_cell_t;
+} _mpc_thread_ethread_rwlock_cell_t;
 
 
 typedef struct
 {
 	mpc_common_spinlock_t                spinlock;
-	volatile sctk_ethread_rwlock_cell_t *list;
-	volatile sctk_ethread_rwlock_cell_t *list_tail;
+	volatile _mpc_thread_ethread_rwlock_cell_t *list;
+	volatile _mpc_thread_ethread_rwlock_cell_t *list_tail;
 	volatile unsigned int                lock;
 	volatile unsigned short              current;
 	volatile unsigned short              wait;
-} sctk_ethread_rwlock_t;
+} _mpc_thread_ethread_rwlock_t;
 #define SCTK_ETHREAD_RWLOCK_INIT    { SCTK_SPINLOCK_INITIALIZER, NULL, NULL, 0, SCTK_RWLOCK_ALONE, SCTK_RWLOCK_NO_WR_WAIT }
 #define SCTK_RWLOCK_READ            1
 #define SCTK_RWLOCK_WRITE           2
@@ -127,21 +127,21 @@ typedef struct
 typedef struct
 {
 	int pshared;
-} sctk_ethread_rwlockattr_t;
+} _mpc_thread_ethread_rwlockattr_t;
 
 
 /*barrier*/
 typedef struct
 {
 	mpc_common_spinlock_t                      spinlock;
-	volatile struct sctk_ethread_mutex_cell_s *list;
-	volatile struct sctk_ethread_mutex_cell_s *list_tail;
+	volatile struct _mpc_thread_ethread_mutex_cell_s *list;
+	volatile struct _mpc_thread_ethread_mutex_cell_s *list_tail;
 	volatile unsigned int                      nb_max;
 	volatile unsigned int                      lock;
-} sctk_ethread_barrier_t;
+} _mpc_thread_ethread_barrier_t;
 
 /*barrier attributes*/
-typedef sctk_ethread_rwlockattr_t   sctk_ethread_barrierattr_t;
+typedef _mpc_thread_ethread_rwlockattr_t   _mpc_thread_ethread_barrierattr_t;
 #ifdef __cplusplus
 }
 #endif

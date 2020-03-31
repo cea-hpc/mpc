@@ -118,7 +118,7 @@ extern struct sctk_alloc_chain *mpc_thread_tls;
 
 
 void _mpc_thread_exit_cleanup(void);
-void sctk_ethread_mxn_init_kethread(void);
+void _mpc_thread_ethread_mxn_engine_init_kethread(void);
 
 int sctk_real_pthread_create(pthread_t *thread,
                              __const pthread_attr_t *attr, void *(*start_routine)(void *), void *arg);
