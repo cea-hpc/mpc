@@ -481,7 +481,6 @@ void *mpc_thread_mpi_data_get()
 	return th->mpi_per_thread;
 }
 
-
 void mpc_thread_mpi_data_set(void *mpi_thread_ctx)
 {
 	sctk_thread_data_t *th = mpc_thread_data_get_disg(0);
@@ -3116,8 +3115,13 @@ long  mpc_thread_futex(__UNUSED__ int sysop, void *addr1, int op, int val1,
 {
 	__check_mpc_initialized();
 	_mpc_thread_futex_context_init();
-	assert(_funcptr_mpc_thread_futex != NULL);
-	return _mpc_thread_futex(addr1, op, val1, timeout, addr2, val2);
+
+	if(_funcptr_mpc_thread_futex == NULL)
+	{
+		_funcptr_mpc_thread_futex = _mpc_thread_futex;
+	}
+
+	return _funcptr_mpc_thread_futex(addr1, op, val1, timeout, addr2, val2);
 }
 
 long mpc_thread_futex_with_vaargs(int sysop, ...)
@@ -3136,7 +3140,7 @@ long mpc_thread_futex_with_vaargs(int sysop, ...)
 	val2    = va_arg(ap, int);
 	va_end(ap);
 
-	return _mpc_thread_futex(&addr1, op, val1, timeout, addr2, val2);
+	return mpc_thread_futex(sysop, &addr1, op, val1, timeout, addr2, val2);
 }
 
 /*********************
