@@ -81,7 +81,7 @@ void _mpc_topology_map_and_restrict_by_cpuset(hwloc_topology_t target_topology,
 
 		if ( sum != mpc_common_get_flags()->processor_number )
 		{
-			sctk_error("MPC_PIN_PROCESSOR_LIST is set with"
+			bad_parameter("MPC_PIN_PROCESSOR_LIST is set with"
 			           " a different number of processor than"
 					   " requested: %d in the list, %d requested",
 					   sum,
@@ -107,7 +107,7 @@ static void _topo_add_cpuid_to_pin_cpuset( hwloc_cpuset_t pin_cpuset,
 
 	if ( cpuid > ( processor_count - 1 ) )
 	{
-		sctk_fatal("Error in MPC_PIN_PROCESSOR_LIST:"
+		bad_parameter("Error in MPC_PIN_PROCESSOR_LIST:"
 		           " processor %d is out of range "
 				   "[0-%d]", cpuid, processor_count - 1);
 	}
@@ -134,7 +134,7 @@ hwloc_cpuset_t _mpc_topology_get_pinning_constraints(int processor_count)
 
 	if ( mpc_common_get_process_count() != nodes_number )
 	{
-		sctk_fatal( "MPC_PIN_PROCESSOR_LIST cannot be set if more than 1 process per node is set. process_number=%d node_number=%d", mpc_common_get_process_count(), nodes_number );
+		bad_parameter( "MPC_PIN_PROCESSOR_LIST cannot be set if more than 1 process per node is set. process_number=%d node_number=%d", mpc_common_get_process_count(), nodes_number );
 	}
 
 	char * current = pinning_env;
@@ -153,7 +153,7 @@ hwloc_cpuset_t _mpc_topology_get_pinning_constraints(int processor_count)
 
 			if(!strlen(cv1) || !strlen(cv2))
 			{
-				sctk_fatal("Could not parse range-based pinning: '%s-%s'", cv1, cv2);
+				bad_parameter("Could not parse range-based pinning: '%s-%s'", cv1, cv2);
 			}
 
 			long v1 = mpc_common_parse_long(cv1);
@@ -161,7 +161,7 @@ hwloc_cpuset_t _mpc_topology_get_pinning_constraints(int processor_count)
 
 			if( v2 < v1 )
 			{
-				sctk_fatal("Bad range for pinning %d-%d"
+				bad_parameter("Bad range for pinning %d-%d"
 							" expected ascending order\n", v1, v2);
 			}
 
@@ -288,9 +288,8 @@ void _mpc_topology_apply_mpc_process_constraints(hwloc_topology_t target_topolog
 		{
 			if ( requested_processor_per_process > processor_per_process )
 			{
-				sctk_error( "Unable to allocate %d core (%d real cores)",
+				bad_parameter( "Unable to allocate %d core (%d real cores)",
 							requested_processor_per_process, processor_per_process );
-				sctk_abort();
 			}
 			else if ( requested_processor_per_process < processor_per_process )
 			{
