@@ -40,7 +40,7 @@
 #include <mpc_extern32.h>
 #include <mpc_mpi.h>
 #include <sctk_debug.h>
-#include <sctk_ethread_internal.h>
+
 #include <mpc_common_spinlock.h>
 #include <string.h>
 #include <uthash.h>

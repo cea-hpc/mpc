@@ -316,6 +316,9 @@ typedef struct sctk_thread_data_s sctk_thread_data_t;
 
 sctk_thread_data_t * mpc_thread_data_get();
 
+void *mpc_thread_mpi_data_get();
+void mpc_thread_mpi_data_set(void *mpi_thread_ctx);
+
 /* Thread MPI disguise */
 
 typedef struct mpc_thread_mpi_disguise_s

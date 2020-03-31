@@ -469,6 +469,31 @@ sctk_thread_data_t *mpc_thread_data_get()
 	return mpc_thread_data_get_disg(0);
 }
 
+void *mpc_thread_mpi_data_get()
+{
+	sctk_thread_data_t *th = mpc_thread_data_get_disg(0);
+
+	if(!th)
+	{
+		return NULL;
+	}
+
+	return th->mpi_per_thread;
+}
+
+
+void mpc_thread_mpi_data_set(void *mpi_thread_ctx)
+{
+	sctk_thread_data_t *th = mpc_thread_data_get_disg(0);
+
+	if(!th)
+	{
+		return;
+	}
+
+	th->mpi_per_thread = mpi_thread_ctx;
+}
+
 struct mpc_thread_rank_info_s *mpc_thread_rank_info_get(void)
 {
 	sctk_thread_data_t *data = mpc_thread_data_get();
@@ -506,21 +531,23 @@ int mpc_thread_get_thread_id(void)
 }
 
 /************
- * DISGUISE *
- ************/
+* DISGUISE *
+************/
 
 
-mpc_thread_mpi_disguise_t * mpc_thread_disguise_get()
+mpc_thread_mpi_disguise_t *mpc_thread_disguise_get()
 {
-	sctk_thread_data_t *th = mpc_thread_data_get_disg( 1 );
+	sctk_thread_data_t *th = mpc_thread_data_get_disg(1);
+
 	assume(th != NULL);
 	return &th->disguise;
 }
 
-int mpc_thread_disguise_set(struct sctk_thread_data_s * th_data, void * mpi_ctx)
+int mpc_thread_disguise_set(struct sctk_thread_data_s *th_data, void *mpi_ctx)
 {
 	mpc_thread_mpi_disguise_t *d = mpc_thread_disguise_get();
-	d->my_disguisement = th_data;
+
+	d->my_disguisement  = th_data;
 	d->ctx_disguisement = mpi_ctx;
 }
 
@@ -843,9 +870,9 @@ static void *___vp_thread_start_routine(sctk_thread_data_t *__arg)
 	// we do not have an MPI
 	tmp.mpi_per_thread = NULL;
 	// Set no disguise
-	tmp.disguise.my_disguisement   = NULL;
-	tmp.disguise.ctx_disguisement  = NULL;
-	tmp.virtual_processor = mpc_topology_get_current_cpu();
+	tmp.disguise.my_disguisement  = NULL;
+	tmp.disguise.ctx_disguisement = NULL;
+	tmp.virtual_processor         = mpc_topology_get_current_cpu();
 
 	_mpc_thread_data_set(&tmp);
 	sctk_thread_add(&tmp, mpc_thread_self() );

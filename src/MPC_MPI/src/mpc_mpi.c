@@ -1089,14 +1089,14 @@ static inline MPI_per_thread_ctx_t *MPI_per_thread_ctx_new()
 
 static inline MPI_per_thread_ctx_t *MPI_per_thread_ctx_get()
 {
-	sctk_thread_data_t *th = mpc_thread_data_get();
+	MPI_per_thread_ctx_t * mpictx = mpc_thread_mpi_data_get();
 
-	if(!th->mpi_per_thread)
+	if(!mpictx)
 	{
-		th->mpi_per_thread = MPI_per_thread_ctx_new();
+		mpc_thread_mpi_data_set(MPI_per_thread_ctx_new());
 	}
 
-	return th->mpi_per_thread;
+	return mpictx;
 }
 
 MPI_request_struct_t *__sctk_internal_get_MPC_requests()
