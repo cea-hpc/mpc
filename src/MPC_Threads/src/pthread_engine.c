@@ -370,7 +370,7 @@ static int _mpc_thread_pthread_engine_create(pthread_t *restrict thread,
 	}
 }
 
-static int _mpc_thread_pthread_engine_thread_attr_setbinding(__UNUSED__ mpc_thread_attr_t *__attr, __UNUSED__ int __binding)
+static int _mpc_thread_pthread_engine_attr_setbinding(__UNUSED__ mpc_thread_attr_t *__attr, __UNUSED__ int __binding)
 {
 #if HAVE_PTHREAD_ATTR_SETAFFINITY_NP
 	cpu_set_t mask;
@@ -381,7 +381,7 @@ static int _mpc_thread_pthread_engine_thread_attr_setbinding(__UNUSED__ mpc_thre
 	return 0;
 }
 
-static int _mpc_thread_pthread_engine_thread_attr_getbinding(__UNUSED__ mpc_thread_attr_t *__attr, __UNUSED__ int *__binding)
+static int _mpc_thread_pthread_engine_attr_getbinding(__UNUSED__ mpc_thread_attr_t *__attr, __UNUSED__ int *__binding)
 {
 	return 0;
 }
@@ -442,14 +442,13 @@ void mpc_thread_pthread_engine_init(void)
 	pthread_check_size(pthread_mutex_t, mpc_thread_mutex_t);
 	pthread_check_size(pthread_mutexattr_t, mpc_thread_mutexattr_t);
 
-	_funcptr_mpc_thread_attr_setbinding = _mpc_thread_pthread_engine_thread_attr_setbinding;
-	_funcptr_mpc_thread_attr_getbinding = _mpc_thread_pthread_engine_thread_attr_getbinding;
+	sctk_add_func(_mpc_thread_pthread_engine, attr_setbinding);
+	sctk_add_func(_mpc_thread_pthread_engine, attr_getbinding);
 
 	sctk_add_func_type(_mpc_thread_pthread, mutex_spinlock,
 	                   int (*)(mpc_thread_mutex_t *) );
 
-
-	_funcptr_mpc_thread_mutex_init = _mpc_thread_pthread_engine_mutex_init;
+	sctk_add_func(_mpc_thread_pthread_engine, mutex_init);
 
 	sctk_add_func(_mpc_thread_pthread_engine, wait_for_value_and_poll);
 	sctk_add_func(_mpc_thread_pthread_engine, freeze_thread_on_vp);
@@ -469,7 +468,6 @@ void mpc_thread_pthread_engine_init(void)
 
 /*   sctk_add_func (pthread, yield); */
 	_funcptr_mpc_thread_yield = sched_yield;
-
 
 	sctk_add_func_type(pthread, join, int (*)(mpc_thread_t, void **) );
 	sctk_add_func_type(pthread, attr_init, int (*)(mpc_thread_attr_t *) );
