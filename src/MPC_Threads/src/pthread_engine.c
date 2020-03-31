@@ -422,6 +422,11 @@ static void _mpc_thread_pthread_engine_at_fork_prepare()
 	sem_wait(&_mpc_thread_pthread_engine_user_create_sem);
 }
 
+int _mpc_thread_pthread_engine_proc_migration(const int cpu)
+{
+	return -1;
+}
+
 void mpc_thread_pthread_engine_init(void)
 
 {
@@ -449,6 +454,7 @@ void mpc_thread_pthread_engine_init(void)
 	sctk_add_func(_mpc_thread_pthread_engine, wait_for_value_and_poll);
 	sctk_add_func(_mpc_thread_pthread_engine, freeze_thread_on_vp);
 	sctk_add_func(_mpc_thread_pthread_engine, wake_thread_on_vp);
+	sctk_add_func(_mpc_thread_pthread_engine, proc_migration);
 
 	sctk_add_func_type(_mpc_thread_pthread_engine, create, int (*)(mpc_thread_t *,
 	                                                               const mpc_thread_attr_t
