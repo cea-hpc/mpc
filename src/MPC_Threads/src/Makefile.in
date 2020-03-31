@@ -152,18 +152,17 @@ am__v_lt_1 =
 @MPC_CUDA_ENABLED_TRUE@am_libmpc_cuda_addon_la_rpath = -rpath \
 @MPC_CUDA_ENABLED_TRUE@	$(libdir)
 libmpcthread_la_DEPENDENCIES = ../../MPC_Launch/src/libmpclaunch.la
-am__libmpcthread_la_SOURCES_DIST = sctk_context.c ethread_engine.c \
-	ethread_mxn_engine.c sctk_futex.c thread_ptr.c kthread.c \
-	ethread_posix.c pthread_engine.c thread.c ng_engine.c \
-	ng_engine_scheduler.c sctk_tls.c accelerator.c \
-	./accelerator/cuda.c ./accelerator/cuda_wrap.c
+am__libmpcthread_la_SOURCES_DIST = sctk_context.c futex.c thread_ptr.c \
+	thread.c tls.c kthread.c pthread_engine.c ng_engine.c \
+	ng_engine_scheduler.c ethread_engine.c ethread_mxn_engine.c \
+	ethread_posix.c accelerator.c ./accelerator/cuda.c \
+	./accelerator/cuda_wrap.c
 @MPC_CUDA_ENABLED_TRUE@am__objects_1 = ./accelerator/cuda.lo \
 @MPC_CUDA_ENABLED_TRUE@	./accelerator/cuda_wrap.lo
-am_libmpcthread_la_OBJECTS = sctk_context.lo ethread_engine.lo \
-	ethread_mxn_engine.lo sctk_futex.lo thread_ptr.lo kthread.lo \
-	ethread_posix.lo pthread_engine.lo thread.lo ng_engine.lo \
-	ng_engine_scheduler.lo sctk_tls.lo accelerator.lo \
-	$(am__objects_1)
+am_libmpcthread_la_OBJECTS = sctk_context.lo futex.lo thread_ptr.lo \
+	thread.lo tls.lo kthread.lo pthread_engine.lo ng_engine.lo \
+	ng_engine_scheduler.lo ethread_engine.lo ethread_mxn_engine.lo \
+	ethread_posix.lo accelerator.lo $(am__objects_1)
 libmpcthread_la_OBJECTS = $(am_libmpcthread_la_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -477,10 +476,10 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_builddir)/src/include/ $(am__append_1) \
 	$(am__append_2)
 lib_LTLIBRARIES = libmpcthread.la $(am__append_4)
-libmpcthread_la_SOURCES = sctk_context.c ethread_engine.c \
-	ethread_mxn_engine.c sctk_futex.c thread_ptr.c kthread.c \
-	ethread_posix.c pthread_engine.c thread.c ng_engine.c \
-	ng_engine_scheduler.c sctk_tls.c accelerator.c $(am__append_3)
+libmpcthread_la_SOURCES = sctk_context.c futex.c thread_ptr.c thread.c \
+	tls.c kthread.c pthread_engine.c ng_engine.c \
+	ng_engine_scheduler.c ethread_engine.c ethread_mxn_engine.c \
+	ethread_posix.c accelerator.c $(am__append_3)
 @MPC_CUDA_ENABLED_TRUE@libmpc_cuda_addon_la_SOURCES = ./accelerator/cuda_lib/cuda_lib.c
 @MPC_CUDA_ENABLED_TRUE@libmpc_cuda_addon_la_LIBADD = -lcuda
 libmpcthread_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la  -lpthread
@@ -592,15 +591,15 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ethread_engine.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ethread_mxn_engine.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ethread_posix.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/futex.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kthread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ng_engine.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ng_engine_scheduler.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pthread_engine.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_context.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_futex.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_tls.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thread_ptr.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tls.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./accelerator/$(DEPDIR)/cuda.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./accelerator/$(DEPDIR)/cuda_wrap.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./accelerator/cuda_lib/$(DEPDIR)/cuda_lib.Plo@am__quote@

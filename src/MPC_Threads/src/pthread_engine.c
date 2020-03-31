@@ -36,7 +36,7 @@
 
 #include "sctk_debug.h"
 #include "mpc_thread.h"
-#include "sctk_tls.h"
+#include "tls.h"
 #include "thread_ptr.h"
 
 #include "thread.h"

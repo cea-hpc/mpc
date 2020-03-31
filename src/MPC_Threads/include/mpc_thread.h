@@ -48,8 +48,6 @@ extern "C"
 #define SCTK_ETHREAD_THREAD_STACK_SIZE     4 * 1024 * 1024
 #define SCTK_ETHREAD_STACK_SIZE_FORTRAN    1024 * 1024 * 1024
 
-
-
 struct sched_param;
 struct mpc_thread_rank_info_s;
 
@@ -312,9 +310,9 @@ int mpc_thread_get_current_local_tasks_nb();
 /* Thread data */
 
 struct sctk_thread_data_s;
-typedef struct sctk_thread_data_s sctk_thread_data_t;
+typedef struct sctk_thread_data_s   sctk_thread_data_t;
 
-sctk_thread_data_t * mpc_thread_data_get();
+sctk_thread_data_t *mpc_thread_data_get();
 
 void *mpc_thread_mpi_data_get();
 void mpc_thread_mpi_data_set(void *mpi_thread_ctx);
@@ -327,8 +325,8 @@ typedef struct mpc_thread_mpi_disguise_s
 	void *                     ctx_disguisement;
 }mpc_thread_mpi_disguise_t;
 
-mpc_thread_mpi_disguise_t * mpc_thread_disguise_get();
-int mpc_thread_disguise_set(struct sctk_thread_data_s * th_data, void * mpi_ctx);
+mpc_thread_mpi_disguise_t *mpc_thread_disguise_get();
+int mpc_thread_disguise_set(struct sctk_thread_data_s *th_data, void *mpi_ctx);
 
 
 double mpc_thread_getactivity(int i);
@@ -338,6 +336,45 @@ int mpc_thread_get_task_placement_and_count(int i, int *nbVp);
 int mpc_thread_get_task_placement(int i);
 
 int mpc_thread_migrate_to_core(const int cpu);
+
+/************************************************************************/
+/* Internal MPC Futex Codes                                             */
+/************************************************************************/
+
+
+#define SCTK_FUTEX_WAIT               21210
+#define SCTK_FUTEX_WAKE               21211
+#define SCTK_FUTEX_REQUEUE            21212
+#define SCTK_FUTEX_CMP_REQUEUE        21213
+#define SCTK_FUTEX_WAKE_OP            21214
+#define SCTK_FUTEX_WAIT_BITSET        21215
+#define SCTK_FUTEX_WAKE_BITSET        21216
+#define SCTK_FUTEX_LOCK_PI            21217
+#define SCTK_FUTEX_TRYLOCK_PI         21218
+#define SCTK_FUTEX_UNLOCK_PI          21219
+#define SCTK_FUTEX_CMP_REQUEUE_PI     21220
+#define SCTK_FUTEX_WAIT_REQUEUE_PI    21221
+
+/* WAITERS */
+#define SCTK_FUTEX_WAITERS            (1 << 31)
+
+/* OPS */
+
+#define SCTK_FUTEX_OP_SET          0
+#define SCTK_FUTEX_OP_ADD          1
+#define SCTK_FUTEX_OP_OR           2
+#define SCTK_FUTEX_OP_ANDN         3
+#define SCTK_FUTEX_OP_XOR          4
+#define SCTK_FUTEX_OP_ARG_SHIFT    8
+
+/* CMP */
+
+#define SCTK_FUTEX_OP_CMP_EQ    0
+#define SCTK_FUTEX_OP_CMP_NE    1
+#define SCTK_FUTEX_OP_CMP_LT    2
+#define SCTK_FUTEX_OP_CMP_LE    3
+#define SCTK_FUTEX_OP_CMP_GT    4
+#define SCTK_FUTEX_OP_CMP_GE    5
 
 
 #ifdef __cplusplus

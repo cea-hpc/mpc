@@ -73,9 +73,9 @@
 #include <kthread.h>
 #include <ng_engine.h>
 
-#include <sctk_tls.h>
+#include <tls.h>
 
-#include <sctk_futex.h>
+#include <futex.h>
 
 #ifdef MPC_Thread_db
 	#include <sctk_thread_dbg.h>
@@ -992,7 +992,7 @@ static inline void __thread_base_init(void)
 #ifdef SCTK_CHECK_CODE_RETURN
 	fprintf(stderr, "Thread librarie return code check enable!!\n");
 #endif
-	sctk_futex_context_init();
+	_mpc_thread_futex_context_init();
 	/*Check all types */
 }
 
@@ -3115,9 +3115,9 @@ long  mpc_thread_futex(__UNUSED__ int sysop, void *addr1, int op, int val1,
                        struct timespec *timeout, void *addr2, int val2)
 {
 	__check_mpc_initialized();
-	sctk_futex_context_init();
+	_mpc_thread_futex_context_init();
 	assert(_funcptr_mpc_thread_futex != NULL);
-	return _funcptr_mpc_thread_futex(addr1, op, val1, timeout, addr2, val2);
+	return _mpc_thread_futex(addr1, op, val1, timeout, addr2, val2);
 }
 
 long mpc_thread_futex_with_vaargs(int sysop, ...)
@@ -3136,7 +3136,7 @@ long mpc_thread_futex_with_vaargs(int sysop, ...)
 	val2    = va_arg(ap, int);
 	va_end(ap);
 
-	return mpc_thread_futex(sysop, addr1, op, val1, timeout, addr2, val2);
+	return _mpc_thread_futex(&addr1, op, val1, timeout, addr2, val2);
 }
 
 /*********************

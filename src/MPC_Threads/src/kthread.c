@@ -31,7 +31,7 @@
 #include <semaphore.h>
 #include "mpc_runtime_config.h"
 #include "sctk_alloc.h"
-#include "sctk_tls.h"
+#include "tls.h"
 
 #ifndef SCTK_KERNEL_THREAD_USE_TLS
 

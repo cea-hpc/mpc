@@ -307,6 +307,3 @@ int ( *_funcptr_mpc_thread_rwlockattr_setkind_np )(mpc_thread_rwlockattr_t *
                                                  int pref) = NULL;
 
 void ( *_funcptr_mpc_thread_kill_other_threads_np )(void) = NULL;
-
-int ( *_funcptr_mpc_thread_futex )(void *addr1, int op, int val1,
-                                 struct timespec *timeout, void *addr2, int val3) = NULL;

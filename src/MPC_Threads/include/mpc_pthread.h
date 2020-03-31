@@ -533,8 +533,6 @@ extern "C"
 /* Futex Wrapping                                                       */
 /************************************************************************/
 
-#include "sctk_futex_def.h"
-
 #ifdef SCTK_FUTEX_SUPPORTED
 
 #include <unistd.h>

@@ -29,7 +29,7 @@
 #include "sctk_context.h"
 #include "mpc_common_spinlock.h"
 
-#include "sctk_tls.h"
+#include "tls.h"
 #include "sctk_alloc.h"
 
 typedef struct

@@ -40,7 +40,7 @@
 #include "thread.h"
 
 #include <unistd.h>
-#include <sctk_tls.h>
+#include <tls.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
