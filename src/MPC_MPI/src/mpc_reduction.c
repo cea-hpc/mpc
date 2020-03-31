@@ -41,7 +41,7 @@ mpc_no_exec (const void * restrict in, void * restrict inout, size_t size,
   fprintf (stderr,
 	   "Internal error: This can not be run at line %d in %s in %p out %p size %lu, datatype %d\n",
 	   line, file, in, inout, (unsigned long) size, (int) datatype);
-  verb_abort ();
+  not_reachable ();
 }
 
 static inline void

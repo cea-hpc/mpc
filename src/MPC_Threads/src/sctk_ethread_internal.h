@@ -1858,7 +1858,7 @@ static inline int __sctk_ethread_create(sctk_ethread_status_t status,
 	}
 	else
 	{
-		verb_abort();
+		not_reachable();
 	}
 
 	sctk_print_attr(attr);

@@ -335,18 +335,29 @@ void sctk_formated_dbg_print_abort( FILE *stream, const int line,
 	va_list ap;
 	char buff[SMALL_BUFFER_SIZE];
 
-	if ( func == NULL )
-		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE, "Debug at line %d file %s: %s\n",
-		                                line, file, fmt );
-	else
-		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
-		                                "Debug at line %d file %s func %s: %s\n", line, file, func,
-		                                fmt );
+#ifdef MPC_ENABLE_SHELL_COLORS
+	mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
+					"%s:%d (%s):\n"
+					"-------------------------------------\n"
+					SCTK_COLOR_RED_BOLD("%s")"\n"
+					"-------------------------------------\n"
+					"\n", file, line, func?func:"??",
+					fmt );
+#else
+	mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
+					"%s:%d (%s):\n"
+					"-------------------------------------\n"
+					"%s\n"
+					"-------------------------------------\n"
+					"\n", file, line, func?func:"??",
+					fmt );
+#endif
 
 	va_start( ap, fmt );
 	mpc_common_io_noalloc_vfprintf( stream, buff, ap );
 	va_end( ap );
-	sctk_abort();
+
+	exit(1);
 }
 
 /**********************************************************************/

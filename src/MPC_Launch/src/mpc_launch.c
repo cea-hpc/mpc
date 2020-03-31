@@ -549,8 +549,7 @@ static void __set_mpc_common_process_number(void)
     {
         if ( mpc_common_get_flags()->task_number < mpc_common_get_flags()->process_number )
         {
-            sctk_error( "\n--process-nb=%d\n--task-number=%d\n Nb tasks must be greater than nb processes\n Run your program with option --task-number=(>=%d) or --nb-process=(<=%d)", mpc_common_get_flags()->process_number, mpc_common_get_flags()->task_number, mpc_common_get_flags()->process_number, mpc_common_get_flags()->task_number );
-            abort();
+            bad_parameter("MPI process number (-n=%d) must be at least the process number (-p=%d)", mpc_common_get_flags()->task_number, mpc_common_get_flags()->process_number );
         }
     }
 

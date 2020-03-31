@@ -80,7 +80,6 @@ void mpc_common_debug_info( const char *fmt, ... );
 #define INFO( x )
 #endif
 
-
 #define MPC_GDB_INTR()       \
 	do                   \
 	{                    \
@@ -118,6 +117,7 @@ void mpc_common_debug_info( const char *fmt, ... );
 	} while ( 0 )
 
 void mpc_common_debug_log_file( FILE *file, const char *fmt, ... );
+
 void sctk_warning( const char *fmt, ... );
 
 void sctk_size_checking_eq( size_t a, size_t b, char *ca, char *cb,
@@ -168,9 +168,7 @@ static inline int sctk_safe_cast_long_int( long l )
 
 #define SCTK_DBG_INFO stderr, __LINE__, __FILE__, SCTK_FUNCTION
 
-
-#define verb_abort() sctk_formated_assert_print( SCTK_DBG_INFO, \
-        "Verbose abort" )
+#define bad_parameter(message, ... ) sctk_formated_dbg_print_abort( SCTK_DBG_INFO, message, __VA_ARGS__ )
 
 #define not_implemented() sctk_formated_dbg_print_abort( SCTK_DBG_INFO, "Function not implemented!!!!!" )
 
