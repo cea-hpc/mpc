@@ -30,7 +30,7 @@
 #include <fcntl.h>
 
 #include <mpc_threads_config.h>
-#include <sctk_pthread_compatible_structures.h>
+#include <ethread_pthread_struct.h>
 #include <ethread_engine.h>
 
 #ifdef __cplusplus
