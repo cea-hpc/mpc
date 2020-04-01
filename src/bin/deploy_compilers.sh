@@ -4,7 +4,7 @@ set -e
 
 
 INSTALL_PREFIX="$1"
-SHARE_PREFIX="$1/share/mpc/"
+SHARE_PREFIX="$1/share/mpcframework/"
 BIN_PREFIX="$1/bin/"
 BUILD_PREFIX="$2"
 BUILD_BIN_PREFIX="$2/bin"
@@ -28,7 +28,7 @@ MPI_H_PATH="$SCRIPTPATH/../MPC_MPI/include/mpc_mpi.h"
 
 # Installing Fortran environment
 
-cp -r $FORTRAN_GEN_DIR $SHARE_PREFIX/
+cp -rT $FORTRAN_GEN_DIR $SHARE_PREFIX/fortran_gen
 cp -r $MPI_H_PATH $SHARE_PREFIX/fortran_gen/
 
 # Installing Compiler Manager

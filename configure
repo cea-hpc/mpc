@@ -31121,9 +31121,11 @@ fi
 #
 # Generate the Reconfigure Script
 #
+
+
 cat << EOF > ./reconfigure
 #!/bin/sh
-if test -n `find ${ac_abs_confdir}/configure -newer $0`; then
+if test -n "\`find ${ac_abs_confdir}/configure -newer \$0\`"; then
 	printf "Warning: Source configure is newer than reconfigure file (./autogen.sh || git check-out)\n"
 	printf "Warning: Rebuilding over a different version of MPC can lead to unexpected errors.\n"
 fi
@@ -31143,7 +31145,7 @@ chmod +x ./reconfigure
 MPC_CONFIG_RESULT="\
 ========== MPC $MPC_VERSION_STRING Configuration ==========\n\
 PREFIX............ $prefix\n\
-BUILD DATE........ $MPC_GENERATION_DATE\n\
+Configure run on.. `date -d @$MPC_GENERATION_DATE`\n\
 $MPC_GIT_REVISION\
 \n\
 # Build Configuration\n\
