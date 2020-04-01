@@ -28,48 +28,48 @@ extern "C"
 {
 #endif
 
-#include <mpcmicrothread.h>
+#include <mpc_microthread.h>
 
 #include "sctk_context.h"
 
 /* Max number of microthreads to be scheduled per microVP */
-#define MAX_OP_LIST 512
+#define MAX_OP_LIST    512
 
-  /* An operation (or a microthread) */
-  typedef struct
-  {
-    /* Function to call when scheduling this micro thread */
-    volatile void *(*func) (void *);
-    /* Generic argument of the previous function */
-    volatile void *arg;
-  } sctk_microthread_op_t;
+/* An operation (or a microthread) */
+typedef struct
+{
+	/* Function to call when scheduling this micro thread */
+	volatile void *(*func)(void *);
+	/* Generic argument of the previous function */
+	volatile void *arg;
+} sctk_microthread_op_t;
 
-  /* Structure handling one virtual processor */
-  struct sctk_microthread_vp_s
-  {
-    /* Context including registers, stack pointer, ... */
-    sctk_mctx_t vp_context;
-    /* What remains to be executed on this VP (busy waiting) */
-    volatile long to_do_list;
-    /* Is this VP still alive? (Not really used) */
-    volatile long enable;
-    /* Is this microVP running or not? */
-    volatile int to_run ;
-    /* Padding to avoid misalignment of to_do_list/to_do_list_next */
-    char foo[64];
-    /* What remains to be executed on this VP (no busy waiting) */
-    volatile long to_do_list_next;
-    /* Queue of microthreads on this VP */
-    sctk_microthread_op_t op_list[MAX_OP_LIST];
-    /* Thread ID */
-    mpc_thread_t pid;
-    /* Padding to force a right alignment (32B) on ia64 */
-    char foo2[8];
+/* Structure handling one virtual processor */
+struct sctk_microthread_vp_s
+{
+	/* Context including registers, stack pointer, ... */
+	sctk_mctx_t           vp_context;
+	/* What remains to be executed on this VP (busy waiting) */
+	volatile long         to_do_list;
+	/* Is this VP still alive? (Not really used) */
+	volatile long         enable;
+	/* Is this microVP running or not? */
+	volatile int          to_run;
+	/* Padding to avoid misalignment of to_do_list/to_do_list_next */
+	char                  foo[64];
+	/* What remains to be executed on this VP (no busy waiting) */
+	volatile long         to_do_list_next;
+	/* Queue of microthreads on this VP */
+	sctk_microthread_op_t op_list[MAX_OP_LIST];
+	/* Thread ID */
+	mpc_thread_t          pid;
+	/* Padding to force a right alignment (32B) on ia64 */
+	char                  foo2[8];
 
-    /* TODO remove this part (should be replaced by 'levels') */
-    long barrier;
-    long barrier_done;
-  };
+	/* TODO remove this part (should be replaced by 'levels') */
+	long                  barrier;
+	long                  barrier_done;
+};
 
 #ifdef __cplusplus
 }

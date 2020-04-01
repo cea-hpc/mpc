@@ -43,145 +43,148 @@ extern "C"
 
 
 /* DEBUG FUNCTIONS START */
-void sctk_abort( void ) __attribute__( ( __noreturn__ ) );
+void sctk_abort(void) __attribute__( (__noreturn__) );
 void sctk_install_bt_sig_handler();
-void sctk_error( const char *fmt, ... );
-void sctk_formated_assert_print( FILE *stream, const int line,
-                                 const char *file, const char *func,
-                                 const char *fmt, ... );
+void sctk_error(const char *fmt, ...);
+void sctk_formated_assert_print(FILE *stream, const int line,
+                                const char *file, const char *func,
+                                const char *fmt, ...);
 
-void MPC_printf( const char *fmt, ... );
-void sctk_debug_root( const char *fmt, ... );
+void MPC_printf(const char *fmt, ...);
+void sctk_debug_root(const char *fmt, ...);
 
-void mpc_common_debug_log( const char *fmt, ... );
-void mpc_common_debug_info( const char *fmt, ... );
+void mpc_common_debug_log(const char *fmt, ...);
+void mpc_common_debug_info(const char *fmt, ...);
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
-        void mpc_common_debug( const char *fmt, ... );
+void mpc_common_debug(const char *fmt, ...);
+
 #else
-        #if defined( __GNUC__ ) || defined( __INTEL_COMPILER )
-                #define mpc_common_debug( fmt, ... ) (void) ( 0 )
-        #else
-                static inline void mpc_common_debug( const char *fmt, ... )
-                {
-                }
-        #endif
+	#if defined(__GNUC__) || defined(__INTEL_COMPILER)
+		#define mpc_common_debug(fmt, ...)    (void)(0)
+	#else
+static inline void mpc_common_debug(const char *fmt, ...)
+{
+}
+	#endif
 #endif
 
-#if ( defined HAVE_PRAGMA_MESSAGE ) && ( defined MPC_ENABLE_DEBUG_MESSAGES )
+#if (defined HAVE_PRAGMA_MESSAGE) && (defined MPC_ENABLE_DEBUG_MESSAGES)
+
 /* Add todo support (as stated in GCC doc
-* Supported since GCC 4.4.7 ignored in previous versions*/
-#define DO_PRAGMA( x ) _Pragma( #x )
+ * Supported since GCC 4.4.7 ignored in previous versions*/
+#define DO_PRAGMA(x)    _Pragma( #x)
 
-#define TODO( x ) DO_PRAGMA( message( "TODO - " #x ) )
-#define INFO( x ) DO_PRAGMA( message( "INFO - " #x ) )
+#define TODO(x)         DO_PRAGMA(message("TODO - " #x) )
+#define INFO(x)         DO_PRAGMA(message("INFO - " #x) )
 #else
-#define TODO( x )
-#define INFO( x )
+#define TODO(x)
+#define INFO(x)
 #endif
 
-#define MPC_GDB_INTR()       \
-	do                   \
-	{                    \
-		raise( SIGINT ); \
-	} while ( 0 )
+#define MPC_GDB_INTR()         \
+	do                     \
+	{                      \
+		raise(SIGINT); \
+	} while(0)
 
-#define MPC_GDB_BREAKPOINT()                                                              \
-	do                                                                                \
-	{                                                                                 \
-		char _hostname[300];                                                          \
-		gethostname( _hostname, 300 );                                                \
-		int _block = 1;                                                               \
-		sctk_error( "Breakpoint set to %s:%d on %s", __FILE__, __LINE__, _hostname ); \
-		sctk_error( "You can trace/unblock this process by running under GDB:" );     \
-		sctk_error( "(gdb) attach %d", getpid() );                                    \
-		sctk_error( "(gdb) p _block = 0" );                                           \
-		sctk_error( "(gdb) continue" );                                               \
-		while ( _block )                                                              \
-			;                                                                         \
-	} while ( 0 )
+#define MPC_GDB_BREAKPOINT()                                                                \
+	do                                                                                  \
+	{                                                                                   \
+		char _hostname[300];                                                        \
+		gethostname(_hostname, 300);                                                \
+		int _block = 1;                                                             \
+		sctk_error("Breakpoint set to %s:%d on %s", __FILE__, __LINE__, _hostname); \
+		sctk_error("You can trace/unblock this process by running under GDB:");     \
+		sctk_error("(gdb) attach %d", getpid() );                                   \
+		sctk_error("(gdb) p _block = 0");                                           \
+		sctk_error("(gdb) continue");                                               \
+		while(_block){                                                              \
+			; }                                                                 \
+	} while(0)
 
 /* Some Debug Helpers */
-#define MPC_CRASH()                                                                            \
-	do                                                                                     \
-	{                                                                                      \
-		if ( getenv( "MPC_DEBUG_CRASH" ) )                                                 \
-		{                                                                                  \
-			sctk_error( "MPC will now create a \"breakpoint\" where the SIGSEGV occurs" ); \
-			MPC_GDB_BREAKPOINT();                                                              \
-		}                                                                                  \
-		else                                                                               \
-		{                                                                                  \
-			( (void ( * )()) 0x0 )();                                                      \
-		}                                                                                  \
-	} while ( 0 )
+#define MPC_CRASH()                                                                                  \
+	do                                                                                           \
+	{                                                                                            \
+		if(getenv("MPC_DEBUG_CRASH") )                                                       \
+		{                                                                                    \
+			sctk_error("MPC will now create a \"breakpoint\" where the SIGSEGV occurs"); \
+			MPC_GDB_BREAKPOINT();                                                        \
+		}                                                                                    \
+		else                                                                                 \
+		{                                                                                    \
+			( (void (*)() ) 0x0)();                                                      \
+		}                                                                                    \
+	} while(0)
 
-void mpc_common_debug_log_file( FILE *file, const char *fmt, ... );
+void mpc_common_debug_log_file(FILE *file, const char *fmt, ...);
 
-void sctk_warning( const char *fmt, ... );
+void sctk_warning(const char *fmt, ...);
 
-void sctk_size_checking_eq( size_t a, size_t b, char *ca, char *cb,
-                            char *file, int line );
-void sctk_size_checking( size_t a, size_t b, char *ca, char *cb,
-                         char *file, int line );
+void sctk_size_checking_eq(size_t a, size_t b, char *ca, char *cb,
+                           char *file, int line);
+void sctk_size_checking(size_t a, size_t b, char *ca, char *cb,
+                        char *file, int line);
 
-void sctk_formated_dbg_print_abort( FILE *stream, const int line,
-                                    const char *file, const char *func,
-                                    const char *fmt, ... ) __attribute__( ( __noreturn__ ) );
+void sctk_formated_dbg_print_abort(FILE *stream, const int line,
+                                   const char *file, const char *func,
+                                   const char *fmt, ...) __attribute__( (__noreturn__) );
 
-void sctk_debug_print_backtrace( const char *format, ... );
+void sctk_debug_print_backtrace(const char *format, ...);
 
 /* DEBUG FUNCTIONS END */
 
 #ifndef MPC_Debugger
-	#define sctk_thread_add( a, b ) (void) ( 0 )
-	#define sctk_thread_remove( a ) (void) ( 0 )
-	#define sctk_enable_lib_thread_db() (void) ( 0 )
+	#define sctk_thread_add(a, b)                     (void)(0)
+	#define sctk_thread_remove(a)                     (void)(0)
+	#define sctk_enable_lib_thread_db()               (void)(0)
 
-	#define sctk_init_thread_debug( a ) (void) ( 0 )
-	#define sctk_refresh_thread_debug( a, b ) (void) ( 0 )
-	#define sctk_refresh_thread_debug_migration( a ) (void) ( 0 )
+	#define sctk_init_thread_debug(a)                 (void)(0)
+	#define sctk_refresh_thread_debug(a, b)           (void)(0)
+	#define sctk_refresh_thread_debug_migration(a)    (void)(0)
 
-	#define sctk_init_idle_thread_dbg( a, b ) (void) ( 0 )
-	#define sctk_free_idle_thread_dbg( a ) (void) ( 0 )
+	#define sctk_init_idle_thread_dbg(a, b)           (void)(0)
+	#define sctk_free_idle_thread_dbg(a)              (void)(0)
 
-	#define sctk_report_creation( a ) (void) ( 0 )
-	#define sctk_report_death( a ) (void) ( 0 )
+	#define sctk_report_creation(a)                   (void)(0)
+	#define sctk_report_death(a)                      (void)(0)
 #else
 	#include "sctk_thread_dbg.h"
 #endif
 
 #ifdef SCTK_64_BIT_ARCH
-static inline int sctk_safe_cast_long_int( long l )
+static inline int sctk_safe_cast_long_int(long l)
 {
 #ifdef SCTK_VERIFY_CAST
-	assume( INT_MIN <= l );
-	assume( l <= INT_MAX );
+	assume(INT_MIN <= l);
+	assume(l <= INT_MAX);
 #endif
-	return ( int ) l;
+	return ( int )l;
 }
+
 #else
-#define sctk_safe_cast_long_int( l ) l
+#define sctk_safe_cast_long_int(l)    l
 #endif
 
 
 
-#define SCTK_DBG_INFO stderr, __LINE__, __FILE__, SCTK_FUNCTION
+#define SCTK_DBG_INFO    stderr, __LINE__, __FILE__, SCTK_FUNCTION
 
-#define bad_parameter(message, ... ) sctk_formated_dbg_print_abort( SCTK_DBG_INFO, message, __VA_ARGS__ )
+#define bad_parameter(message, ...)     sctk_formated_dbg_print_abort(SCTK_DBG_INFO, message, __VA_ARGS__)
 
-#define not_implemented() sctk_formated_dbg_print_abort( SCTK_DBG_INFO, "Function not implemented!!!!!" )
+#define not_implemented()               sctk_formated_dbg_print_abort(SCTK_DBG_INFO, "Function not implemented!!!!!")
 
-#define not_available() sctk_formated_dbg_print_abort( SCTK_DBG_INFO, "Function not available!!!!!" )
+#define not_available()                 sctk_formated_dbg_print_abort(SCTK_DBG_INFO, "Function not available!!!!!")
 
-#define not_reachable() sctk_formated_dbg_print_abort( SCTK_DBG_INFO, "Function not reachable!!!!!" )
+#define not_reachable()                 sctk_formated_dbg_print_abort(SCTK_DBG_INFO, "Function not reachable!!!!!")
 
-#define sctk_check_equal_types( a, b ) sctk_size_checking_eq( sizeof( a ), sizeof( b ), SCTK_STRING( a ), SCTK_STRING( b ), __FILE__, __LINE__ )
+#define sctk_check_equal_types(a, b)    sctk_size_checking_eq(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
 
-#if defined( __GNUC__ ) || defined( __INTEL_COMPILER )
-#define sctk_nodebug( fmt, ... ) (void) ( 0 )
+#if defined(__GNUC__) || defined(__INTEL_COMPILER)
+#define sctk_nodebug(fmt, ...)          (void)(0)
 #else
-static inline void sctk_nodebug( const char *fmt, ... )
+static inline void sctk_nodebug(const char *fmt, ...)
 {
 }
 #endif
@@ -189,21 +192,21 @@ static inline void sctk_nodebug( const char *fmt, ... )
 
 //If inline is not supported, disable assertions
 
-#define assume_m( x, ... )                                          \
-	if ( !( x ) )                                                   \
-	{                                                               \
-		sctk_error( "Error at %s!%d\n%s", __FILE__, __LINE__, #x ); \
-		sctk_error( __VA_ARGS__ );                                  \
-		sctk_abort();                                               \
+#define assume_m(x, ...)                                                  \
+	if(!(x) )                                                         \
+	{                                                                 \
+		sctk_error("Error at %s!%d\n%s", __FILE__, __LINE__, #x); \
+		sctk_error(__VA_ARGS__);                                  \
+		sctk_abort();                                             \
 	}
 
 /** Print an error message and exit. It use the print formatting convention.
  * **/
-#define sctk_fatal( ... )                                         \
-	{                                                             \
-		sctk_error( "Fatal error at %s!%d", __FILE__, __LINE__ ); \
-		sctk_error( __VA_ARGS__ );                                \
-		sctk_abort();                                             \
+#define sctk_fatal(...)                                                 \
+	{                                                               \
+		sctk_error("Fatal error at %s!%d", __FILE__, __LINE__); \
+		sctk_error(__VA_ARGS__);                                \
+		sctk_abort();                                           \
 	}
 
 #ifndef SCTK_NO_INLINE
@@ -212,51 +215,51 @@ static inline void sctk_nodebug( const char *fmt, ... )
 #endif
 
 //for standard assert function, rewrite but maintain -DNDEBUG convention
-#if !defined( NDEBUG ) || !defined( NO_INTERNAL_ASSERT )
-        #undef assert
-        #define assert( op )                                                        \
-                do                                                                      \
-                {                                                                       \
-                        if ( expect_false( !( op ) ) )                                      \
-                                sctk_formated_assert_print( SCTK_DBG_INFO, SCTK_STRING( op ) ); \
-                } while ( 0 )
-        #endif //NDEBUG, NO_INTERNAL_ASSERT
+#if !defined(NDEBUG) || !defined(NO_INTERNAL_ASSERT)
+	#undef assert
+	#define assert(op)                                                             \
+	do                                                                             \
+	{                                                                              \
+		if(expect_false(!(op) ) ){                                             \
+			sctk_formated_assert_print(SCTK_DBG_INFO, SCTK_STRING(op) ); } \
+	} while(0)
+	#endif //NDEBUG, NO_INTERNAL_ASSERT
 
-        /** Assume stay present independently of NDEBUG/NO_INTERNAL_ASSERT **/
-        #define assume( op )                                                        \
-                do                                                                      \
-                {                                                                       \
-                        if ( expect_false( !( op ) ) )                                      \
-                                sctk_formated_assert_print( SCTK_DBG_INFO, SCTK_STRING( op ) ); \
-                } while ( 0 )
+/** Assume stay present independently of NDEBUG/NO_INTERNAL_ASSERT **/
+	#define assume(op)                                                             \
+	do                                                                             \
+	{                                                                              \
+		if(expect_false(!(op) ) ){                                             \
+			sctk_formated_assert_print(SCTK_DBG_INFO, SCTK_STRING(op) ); } \
+	} while(0)
 
-        #ifdef NO_INTERNAL_ASSERT
-                #define sctk_assert( op ) (void) ( 0 )
-                #define sctk_assert_func( op ) (void) ( 0 )
-        #else //NO_INTERNAL_ASSERT
-                #define sctk_assert_func( op ) \
-                        do                         \
-                        {                          \
-                                op                     \
-                        } while ( 0 )
+	#ifdef NO_INTERNAL_ASSERT
+		#define sctk_assert(op)         (void)(0)
+		#define sctk_assert_func(op)    (void)(0)
+	#else //NO_INTERNAL_ASSERT
+		#define sctk_assert_func(op) \
+	do                                   \
+	{                                    \
+		op                           \
+	} while(0)
 
-                #define sctk_assert( op )                      \
-                        if ( expect_false( !( op ) ) )             \
-                                sctk_formated_assert_print( SCTK_DBG_INFO, \
-                                                        SCTK_STRING( op ) )
+		#define sctk_assert(op)                   \
+	if(expect_false(!(op) ) )                         \
+		sctk_formated_assert_print(SCTK_DBG_INFO, \
+		                           SCTK_STRING(op) )
 #endif //NO_INTERNAL_ASSERT
 
-#define sctk_only_once()                                                                             \
-	do                                                                                               \
-	{                                                                                                \
-		static int sctk_only_once_initialized = 0;                                                   \
-		if ( sctk_only_once_initialized == 1 )                                                       \
-		{                                                                                            \
-			fprintf( stderr, "Multiple intialisation on line %d in file %s\n", __LINE__, __FILE__ ); \
-			sctk_abort();                                                                            \
-		}                                                                                            \
-		sctk_only_once_initialized++;                                                                \
-	} while ( 0 )
+#define sctk_only_once()                                                                                       \
+	do                                                                                                     \
+	{                                                                                                      \
+		static int sctk_only_once_initialized = 0;                                                     \
+		if(sctk_only_once_initialized == 1)                                                            \
+		{                                                                                              \
+			fprintf(stderr, "Multiple intialisation on line %d in file %s\n", __LINE__, __FILE__); \
+			sctk_abort();                                                                          \
+		}                                                                                              \
+		sctk_only_once_initialized++;                                                                  \
+	} while(0)
 
 #ifdef __cplusplus
 } /* end of extern "C" */

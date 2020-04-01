@@ -62,7 +62,8 @@ unsigned long     mpc_user_tls_1_entry_number     = 0;
 unsigned long     mpc_user_tls_1_entry_number_max = 0;
 sctk_tls_entry_t *mpc_user_tls_1_tab = NULL;
 
-unsigned long sctk_tls_entry_add(unsigned long size, void (*func)(void *) )
+unsigned long sctk_tls_entry_add(unsigned long size,
+                                 void (*func)(void *) )
 {
 	sctk_tls_entry_t *entry;
 
@@ -120,7 +121,8 @@ unsigned long sctk_tls_entry_add(unsigned long size, void (*func)(void *) )
 }
 
 /*Init specific key*/
-void sctk_tls_init_key(unsigned long key, void (*func)(void *) )
+void sctk_tls_init_key(unsigned long key,
+                       void (*func)(void *) )
 {
 	int *done;
 
@@ -143,7 +145,8 @@ void sctk_tls_init()
 {
 }
 
-unsigned long sctk_tls_entry_add(unsigned long size, void (*func)(void *) )
+unsigned long sctk_tls_entry_add(unsigned long size,
+                                 void (*func)(void *) )
 {
 	not_available();
 	return 0;
@@ -151,8 +154,7 @@ unsigned long sctk_tls_entry_add(unsigned long size, void (*func)(void *) )
 #endif
 
 #if SCTK_MCTX_MTH(mcsc)
-static inline int
-sctk_mctx_save(sctk_mctx_t *mctx)
+static inline int sctk_mctx_save(sctk_mctx_t *mctx)
 {
 	(mctx)->error    = errno;
 	(mctx)->restored = 0;
@@ -161,8 +163,7 @@ sctk_mctx_save(sctk_mctx_t *mctx)
 }
 
 #elif SCTK_MCTX_MTH(libcontext)
-static inline int
-sctk_mctx_save(sctk_mctx_t *mctx)
+static inline int sctk_mctx_save(sctk_mctx_t *mctx)
 {
 	(mctx)->error    = errno;
 	(mctx)->restored = 0;
@@ -171,8 +172,7 @@ sctk_mctx_save(sctk_mctx_t *mctx)
 }
 
 #elif SCTK_MCTX_MTH(sjlj)
-static inline int
-sctk_mctx_save(sctk_mctx_t *mctx)
+static inline int sctk_mctx_save(sctk_mctx_t *mctx)
 {
 	(mctx)->error    = errno;
 	(mctx)->restored = 0;
@@ -181,8 +181,7 @@ sctk_mctx_save(sctk_mctx_t *mctx)
 }
 
 #elif SCTK_MCTX_MTH(windows)
-static inline int
-sctk_mctx_save(sctk_mctx_t *mctx)
+static inline int sctk_mctx_save(sctk_mctx_t *mctx)
 {
 	(mctx)->error    = errno;
 	(mctx)->restored = 0;
@@ -195,8 +194,7 @@ sctk_mctx_save(sctk_mctx_t *mctx)
 #endif
 
 #if SCTK_MCTX_MTH(mcsc)
-static inline int
-sctk_mctx_restore(sctk_mctx_t *mctx)
+static inline int sctk_mctx_restore(sctk_mctx_t *mctx)
 {
 	errno            = (mctx)->error;
 	(mctx)->restored = 1;
@@ -205,8 +203,7 @@ sctk_mctx_restore(sctk_mctx_t *mctx)
 }
 
 #elif SCTK_MCTX_MTH(libcontext)
-static inline int
-sctk_mctx_restore(sctk_mctx_t *mctx)
+static inline int sctk_mctx_restore(sctk_mctx_t *mctx)
 {
 	errno            = (mctx)->error;
 	(mctx)->restored = 1;
@@ -215,8 +212,7 @@ sctk_mctx_restore(sctk_mctx_t *mctx)
 }
 
 #elif SCTK_MCTX_MTH(sjlj)
-static inline int
-sctk_mctx_restore(sctk_mctx_t *mctx)
+static inline int sctk_mctx_restore(sctk_mctx_t *mctx)
 {
 	errno            = (mctx)->error;
 	(mctx)->restored = 1;
@@ -225,8 +221,7 @@ sctk_mctx_restore(sctk_mctx_t *mctx)
 }
 
 #elif SCTK_MCTX_MTH(windows)
-static inline int
-sctk_mctx_restore(sctk_mctx_t *mctx)
+static inline int sctk_mctx_restore(sctk_mctx_t *mctx)
 {
 	errno            = (mctx)->error;
 	(mctx)->restored = 1;
@@ -239,10 +234,11 @@ sctk_mctx_restore(sctk_mctx_t *mctx)
 #endif
 
 #if SCTK_MCTX_MTH(mcsc)
-static inline int
-sctk_mctx_set(sctk_mctx_t *mctx,
-              void (*func)(void *), char *sk_addr_lo, char *sk_addr_hi,
-              void *arg)
+static inline int sctk_mctx_set(sctk_mctx_t *mctx,
+                                void (*func)(void *),
+                                char *sk_addr_lo,
+                                char *sk_addr_hi,
+                                void *arg)
 {
 	if(getcontext(&(mctx->uc) ) != 0)
 	{
@@ -264,10 +260,11 @@ sctk_mctx_set(sctk_mctx_t *mctx,
 }
 
 #elif SCTK_MCTX_MTH(libcontext)
-static inline int
-sctk_mctx_set(sctk_mctx_t *mctx,
-              void (*func)(void *), char *sk_addr_lo, char *sk_addr_hi,
-              void *arg)
+static inline int sctk_mctx_set(sctk_mctx_t *mctx,
+                                void (*func)(void *),
+                                char *sk_addr_lo,
+                                char *sk_addr_hi,
+                                void *arg)
 {
 	if(mpc__getcontext(&(mctx->uc) ) != 0)
 	{
@@ -292,8 +289,10 @@ sctk_mctx_set(sctk_mctx_t *mctx,
 #ifdef SCTK_USE_CONTEXT_FOR_CREATION
 #include <ucontext.h>
 
-static inline void sctk_bootstrap_func(void (*func)(void *), void *arg,
-                                       ucontext_t *root_uc, sctk_mctx_t *mctx)
+static inline void sctk_bootstrap_func(void (*func)(void *),
+                                       void *arg,
+                                       ucontext_t *root_uc,
+                                       sctk_mctx_t *mctx)
 {
 	if(sctk_setjmp( (mctx->jb) ) == 0)
 	{
@@ -305,9 +304,11 @@ static inline void sctk_bootstrap_func(void (*func)(void *), void *arg,
 	}
 }
 
-static inline int
-sctk_mctx_set(sctk_mctx_t *mctx,
-              void (*func)(void *), char *sk_addr_lo, char *sk_addr_hi, void *arg)
+static inline int sctk_mctx_set(sctk_mctx_t *mctx,
+                                void (*func)(void *),
+                                char *sk_addr_lo,
+                                char *sk_addr_hi,
+                                void *arg)
 {
 	ucontext_t uc;
 	ucontext_t root_uc;
@@ -349,9 +350,11 @@ static void sctk_mctx_set_trampoline(int);
 static void sctk_mctx_set_bootstrap(void);
 
 /* initialize a machine state */
-static inline int
-sctk_mctx_set(sctk_mctx_t *mctx, void (*func)(void *), char *sk_addr_lo,
-              char *sk_addr_hi, void *arg)
+static inline int sctk_mctx_set(sctk_mctx_t *mctx,
+                                void (*func)(void *),
+                                char *sk_addr_lo,
+                                char *sk_addr_hi,
+                                void *arg)
 {
 	struct sigaction   sa;
 	struct sigaction   osa;
@@ -439,8 +442,7 @@ sctk_mctx_set(sctk_mctx_t *mctx, void (*func)(void *), char *sk_addr_lo,
 	return TRUE;
 }
 
-static void
-sctk_mctx_set_trampoline(int sig)
+static void sctk_mctx_set_trampoline(int sig)
 {
 	if(sig != SIGUSR1)
 	{
@@ -457,8 +459,7 @@ sctk_mctx_set_trampoline(int sig)
 	sctk_mctx_set_bootstrap();
 }
 
-static void
-sctk_mctx_set_bootstrap(void)
+static void sctk_mctx_set_bootstrap(void)
 {
 	sctk_mctx_t volatile *mctx_starting;
 
@@ -534,7 +535,9 @@ int sctk_swapcontext(sctk_mctx_t *oucp, sctk_mctx_t *ucp)
 
 int sctk_makecontext(sctk_mctx_t *ucp,
                      void *arg,
-                     void (*func)(void *), char *stack, size_t stack_size)
+                     void (*func)(void *),
+                     char *stack,
+                     size_t stack_size)
 {
 	int         res;
 	sctk_mctx_t lucp;

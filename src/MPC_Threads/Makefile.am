@@ -1,6 +1,6 @@
 
 mpc_headerdir=$(includedir)/mpc/
-mpc_header_HEADERS= ./include/mpc_thread.h ./include/mpc_thread_engines.h
+mpc_header_HEADERS= ./include/mpc_thread.h ./include/mpc_thread_engines.h  ./include/mpc_microthread.h
 
 
 # Install the pthread.h interceptions header

@@ -453,7 +453,7 @@ top_srcdir = @top_srcdir@
 xmllint = @xmllint@
 xsltproc = @xsltproc@
 mpc_headerdir = $(includedir)/mpc/
-mpc_header_HEADERS = ./include/mpc_thread.h ./include/mpc_thread_engines.h
+mpc_header_HEADERS = ./include/mpc_thread.h ./include/mpc_thread_engines.h  ./include/mpc_microthread.h
 SUBDIRS = src
 all: all-recursive
 
