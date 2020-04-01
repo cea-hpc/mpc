@@ -28,7 +28,6 @@ extern "C"
 {
 #endif
 
-#include <mpc.h>
 #include <mpcomp.h>
 
   /* Dummy file.

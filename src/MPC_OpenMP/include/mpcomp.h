@@ -27,11 +27,13 @@
 extern "C" {
 #endif
 
-#include "ompt.h"
-#include <mpc_config.h>
+#include <stdio.h>
 #include <errno.h>
-#include <mpc.h>
 #include <opa_primitives.h>
+
+#include <ompt.h>
+#include <pthread.h>
+
 
 /* OpenMP 2.5 API - For backward compatibility with old patched GCC */
 int mpcomp_get_num_threads( void );
