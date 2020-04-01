@@ -422,7 +422,7 @@ static void _mpc_thread_pthread_engine_at_fork_prepare()
 	sem_wait(&_mpc_thread_pthread_engine_user_create_sem);
 }
 
-int _mpc_thread_pthread_engine_proc_migration(const int cpu)
+int _mpc_thread_pthread_engine_proc_migration(__UNUSED__ const int cpu)
 {
 	return -1;
 }

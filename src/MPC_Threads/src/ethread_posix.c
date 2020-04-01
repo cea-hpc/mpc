@@ -549,7 +549,7 @@ static _mpc_thread_ethread_sem_head_list __sctk_head_sem = SCTK_SEM_HEAD_INITIAL
 _mpc_thread_ethread_sem_t *_mpc_thread_ethread_posix_sem_open(const char *name, int oflag, ...)
 {
 	int value = 0;
-	int mode  = 0;
+	__UNUSED__ int mode = 0;
 
 	if(oflag & O_CREAT)
 	{
@@ -1056,16 +1056,16 @@ int _mpc_thread_ethread_posix_cond_wait(_mpc_thread_ethread_cond_t *cond,
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_cond_timedwait(_mpc_thread_ethread_cond_t *cond,
-                                             _mpc_thread_ethread_mutex_t *mutex,
-                                             const struct timespec *abstime,
-                                             void (*return_task)(_mpc_thread_ethread_per_thread_t *) )
+int _mpc_thread_ethread_posix_cond_timedwait(__UNUSED__ _mpc_thread_ethread_cond_t *cond,
+                                             __UNUSED__ _mpc_thread_ethread_mutex_t *mutex,
+                                             __UNUSED__ const struct timespec *abstime,
+                                             __UNUSED__ void (*return_task)(_mpc_thread_ethread_per_thread_t *) )
 {
+
+#if 0
 	_mpc_thread_ethread_per_thread_t *       owner = (_mpc_thread_ethread_per_thread_t *)mpc_thread_self();
 	_mpc_thread_ethread_virtual_processor_t *vp    = (_mpc_thread_ethread_virtual_processor_t *)owner->vp;
 
-
-#if 0
 	_mpc_thread_ethread_mutex_cell_t cell;
 	struct timeval            tv;
 	int ret;
@@ -1830,8 +1830,6 @@ int _mpc_thread_ethread_posix_barrierattr_destroy(_mpc_thread_ethread_barrieratt
 
 int _mpc_thread_ethread_posix_getattr_np(_mpc_thread_ethread_t th, _mpc_thread_ethread_attr_t *attr)
 {
-	int ret;
-
 	attr->ptr = (_mpc_thread_ethread_attr_intern_t *)
 	            sctk_malloc(sizeof(_mpc_thread_ethread_attr_intern_t) );
 	*attr->ptr = th->attr;

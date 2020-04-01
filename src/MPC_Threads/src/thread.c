@@ -548,6 +548,8 @@ int mpc_thread_disguise_set(struct sctk_thread_data_s *th_data, void *mpi_ctx)
 
 	d->my_disguisement  = th_data;
 	d->ctx_disguisement = mpi_ctx;
+
+	return 0;
 }
 
 /****************

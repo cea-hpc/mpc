@@ -60,7 +60,7 @@ inline _mpc_thread_ethread_t _mpc_thread_ethread_self()
 }
 
 static inline void _mpc_thread_ethread_self_all(_mpc_thread_ethread_virtual_processor_t **vp,
-                                         _mpc_thread_ethread_per_thread_t **task)
+                                                _mpc_thread_ethread_per_thread_t **task)
 {
 	*vp   = _mpc_thread_kthread_getspecific(_mpc_thread_ethread_key);
 	*task = (_mpc_thread_ethread_t)(*vp)->current;
@@ -68,17 +68,17 @@ static inline void _mpc_thread_ethread_self_all(_mpc_thread_ethread_virtual_proc
 }
 
 static inline void _mpc_thread_ethread_place_task_on_vp(_mpc_thread_ethread_virtual_processor_t *vp,
-                                                 _mpc_thread_ethread_per_thread_t *task)
+                                                        _mpc_thread_ethread_per_thread_t *task)
 {
 	task->vp = vp;
 	sctk_nodebug("Place %p on %d", task, vp->rank);
 	mpc_common_spinlock_lock(&vp->spinlock);
 	task->status = ethread_ready;
 	___mpc_thread_ethread_enqueue_task(task,
-	                            (_mpc_thread_ethread_per_thread_t **)&(vp->
-	                                                            incomming_queue),
-	                            (_mpc_thread_ethread_per_thread_t **)&(vp->
-	                                                            incomming_queue_tail) );
+	                                   (_mpc_thread_ethread_per_thread_t **)&(vp->
+	                                                                          incomming_queue),
+	                                   (_mpc_thread_ethread_per_thread_t **)&(vp->
+	                                                                          incomming_queue_tail) );
 	mpc_common_spinlock_unlock(&vp->spinlock);
 }
 
@@ -125,7 +125,7 @@ static int _mpc_thread_ethread_sched_dump(char *file)
 	self->file_to_dump = file;
 	return
 	        ___mpc_thread_ethread_sched_yield_vp( (_mpc_thread_ethread_virtual_processor_t *)
-	                                       self->vp, self);
+	                                              self->vp, self);
 }
 
 static int _mpc_thread_ethread_sched_migrate()
@@ -137,7 +137,7 @@ static int _mpc_thread_ethread_sched_migrate()
 	self->dump_for_migration = 1;
 	return
 	        ___mpc_thread_ethread_sched_yield_vp( (_mpc_thread_ethread_virtual_processor_t *)
-	                                       self->vp, self);
+	                                              self->vp, self);
 }
 
 static int _mpc_thread_ethread_sched_restore(mpc_thread_t thread, char *type, int vp)
@@ -176,7 +176,7 @@ _mpc_thread_ethread_get_activity(int i)
 
 /*Thread polling*/
 static void _mpc_thread_ethread_wait_for_value_and_poll(volatile int *data, int value,
-                                                 void (*func)(void *), void *arg)
+                                                        void (*func)(void *), void *arg)
 {
 	_mpc_thread_ethread_per_thread_t *       current;
 	_mpc_thread_ethread_virtual_processor_t *current_vp;
@@ -185,7 +185,7 @@ static void _mpc_thread_ethread_wait_for_value_and_poll(volatile int *data, int 
 
 	sctk_nodebug("wait real : %d", current_vp->rank);
 	___mpc_thread_ethread_wait_for_value_and_poll(current_vp,
-	                                       current, data, value, func, arg);
+	                                              current, data, value, func, arg);
 }
 
 static int _mpc_thread_ethread_join(_mpc_thread_ethread_t th, void **val)
@@ -208,10 +208,10 @@ static void _mpc_thread_ethread_exit(void *retval)
 
 /*Mutex management*/
 static int _mpc_thread_ethread_mutex_init(mpc_thread_mutex_t *lock,
-                                   const mpc_thread_mutexattr_t *attr)
+                                          const mpc_thread_mutexattr_t *attr)
 {
 	return ___mpc_thread_ethread_mutex_init( (_mpc_thread_ethread_mutex_t *)lock,
-	                                  (_mpc_thread_ethread_mutexattr_t *)attr);
+	                                         (_mpc_thread_ethread_mutexattr_t *)attr);
 }
 
 static int _mpc_thread_ethread_mutex_lock(_mpc_thread_ethread_mutex_t *lock)
@@ -252,13 +252,13 @@ static int _mpc_thread_ethread_mutex_unlock(_mpc_thread_ethread_mutex_t *lock)
 	_mpc_thread_ethread_self_all(&current_vp, &current);
 
 	return ___mpc_thread_ethread_mutex_unlock(current_vp,
-	                                   current,
-	                                   _mpc_thread_ethread_return_task, lock);
+	                                          current,
+	                                          _mpc_thread_ethread_return_task, lock);
 }
 
 /*Key management*/
 static int _mpc_thread_ethread_key_create(int *key,
-                                   stck_ethread_key_destr_function_t destr_func)
+                                          stck_ethread_key_destr_function_t destr_func)
 {
 	return ___mpc_thread_ethread_key_create(key, destr_func);
 }
@@ -294,43 +294,43 @@ static int _mpc_thread_ethread_attr_destroy(_mpc_thread_ethread_attr_t *attr)
 }
 
 static int _mpc_thread_ethread_create(_mpc_thread_ethread_t *threadp,
-                               _mpc_thread_ethread_attr_t *attr,
-                               void *(*start_routine)(void *), void *arg)
+                                      _mpc_thread_ethread_attr_t *attr,
+                                      void *(*start_routine)(void *), void *arg)
 {
 	if(attr != NULL)
 	{
 		return ___mpc_thread_ethread_create(ethread_ready, &virtual_processor,
-		                             _mpc_thread_ethread_self(),
-		                             threadp, attr->ptr, start_routine, arg);
+		                                    _mpc_thread_ethread_self(),
+		                                    threadp, attr->ptr, start_routine, arg);
 	}
 	else
 	{
 		return ___mpc_thread_ethread_create(ethread_ready, &virtual_processor,
-		                             _mpc_thread_ethread_self(),
-		                             threadp, NULL, start_routine, arg);
+		                                    _mpc_thread_ethread_self(),
+		                                    threadp, NULL, start_routine, arg);
 	}
 }
 
 static int _mpc_thread_ethread_user_create(_mpc_thread_ethread_t *threadp,
-                                    _mpc_thread_ethread_attr_t *attr,
-                                    void *(*start_routine)(void *), void *arg)
+                                           _mpc_thread_ethread_attr_t *attr,
+                                           void *(*start_routine)(void *), void *arg)
 {
 	if(attr != NULL)
 	{
 		return ___mpc_thread_ethread_create(ethread_ready, &virtual_processor,
-		                             _mpc_thread_ethread_self(),
-		                             threadp, attr->ptr, start_routine, arg);
+		                                    _mpc_thread_ethread_self(),
+		                                    threadp, attr->ptr, start_routine, arg);
 	}
 	else
 	{
 		return ___mpc_thread_ethread_create(ethread_ready, &virtual_processor,
-		                             _mpc_thread_ethread_self(),
-		                             threadp, NULL, start_routine, arg);
+		                                    _mpc_thread_ethread_self(),
+		                                    threadp, NULL, start_routine, arg);
 	}
 }
 
 static void _mpc_thread_ethread_freeze_thread_on_vp(_mpc_thread_ethread_mutex_t *lock,
-                                             void **list_tmp)
+                                                    void **list_tmp)
 {
 	_mpc_thread_ethread_per_thread_t *       current;
 	_mpc_thread_ethread_virtual_processor_t *current_vp;
@@ -338,9 +338,9 @@ static void _mpc_thread_ethread_freeze_thread_on_vp(_mpc_thread_ethread_mutex_t 
 	_mpc_thread_ethread_self_all(&current_vp, &current);
 
 	___mpc_thread_ethread_freeze_thread_on_vp(current_vp,
-	                                   current,
-	                                   _mpc_thread_ethread_mutex_unlock,
-	                                   lock, (volatile void **)list_tmp);
+	                                          current,
+	                                          _mpc_thread_ethread_mutex_unlock,
+	                                          lock, (volatile void **)list_tmp);
 }
 
 static void _mpc_thread_ethread_wake_thread_on_vp(void **list_tmp)
@@ -410,14 +410,14 @@ static int _mpc_thread_ethread_sem_post(_mpc_thread_ethread_sem_t *sem)
 }
 
 static int _mpc_thread_ethread_cond_wait(_mpc_thread_ethread_cond_t *cond,
-                           _mpc_thread_ethread_mutex_t *mutex)
+                                         _mpc_thread_ethread_mutex_t *mutex)
 {
 	return _mpc_thread_ethread_posix_cond_wait(cond, mutex, _mpc_thread_ethread_return_task);
 }
 
 static int _mpc_thread_ethread_cond_timedwait(_mpc_thread_ethread_cond_t *cond,
-                                _mpc_thread_ethread_mutex_t *mutex,
-                                const struct timespec *abstime)
+                                              _mpc_thread_ethread_mutex_t *mutex,
+                                              const struct timespec *abstime)
 {
 	return _mpc_thread_ethread_posix_cond_timedwait(cond, mutex, abstime, _mpc_thread_ethread_return_task);
 }
@@ -437,8 +437,7 @@ static int _mpc_thread_ethread_rwlock_unlock(_mpc_thread_ethread_rwlock_t *rwloc
 	return _mpc_thread_ethread_posix_rwlock_unlock(rwlock, _mpc_thread_ethread_return_task);
 }
 
-static int _mpc_thread_ethread_barrier_wait(_mpc_thread_ethread_barrier_t *barrier,
-                              void (*return_task)(_mpc_thread_ethread_per_thread_t *) )
+static int _mpc_thread_ethread_barrier_wait(_mpc_thread_ethread_barrier_t *barrier)
 {
 	return _mpc_thread_ethread_posix_barrier_wait(barrier, _mpc_thread_ethread_return_task);
 }
@@ -459,12 +458,12 @@ void mpc_thread_ethread_engine_init(void)
 
 	{
 		static _mpc_thread_ethread_mutex_t loc  = SCTK_ETHREAD_MUTEX_INIT;
-		static mpc_thread_mutex_t   glob = SCTK_THREAD_MUTEX_INITIALIZER;
+		static mpc_thread_mutex_t          glob = SCTK_THREAD_MUTEX_INITIALIZER;
 		assume(memcmp(&loc, &glob, sizeof(_mpc_thread_ethread_mutex_t) ) == 0);
 	}
 	{
 		_mpc_thread_ethread_cond_t loc  = SCTK_ETHREAD_COND_INIT;
-		mpc_thread_cond_t   glob = SCTK_THREAD_COND_INITIALIZER;
+		mpc_thread_cond_t          glob = SCTK_THREAD_COND_INITIALIZER;
 		assume(memcmp(&loc, &glob, sizeof(_mpc_thread_ethread_cond_t) ) == 0);
 	}
 
@@ -476,11 +475,11 @@ void mpc_thread_ethread_engine_init(void)
 	_mpc_thread_ethread_check_size(_mpc_thread_ethread_spinlock_t, mpc_thread_spinlock_t);
 	_mpc_thread_ethread_check_size(_mpc_thread_ethread_rwlock_t, mpc_thread_rwlock_t);
 	_mpc_thread_ethread_check_size(_mpc_thread_ethread_rwlockattr_t,
-	                        mpc_thread_rwlockattr_t);
+	                               mpc_thread_rwlockattr_t);
 	_mpc_thread_ethread_check_size(_mpc_thread_ethread_condattr_t, mpc_thread_condattr_t);
 	_mpc_thread_ethread_check_size(_mpc_thread_ethread_barrier_t, mpc_thread_barrier_t);
 	_mpc_thread_ethread_check_size(_mpc_thread_ethread_barrierattr_t,
-	                        mpc_thread_barrierattr_t);
+	                               mpc_thread_barrierattr_t);
 
 	/* Initialize Ethread */
 
@@ -507,10 +506,10 @@ void mpc_thread_ethread_engine_init(void)
 	_funcptr_mpc_thread_attr_getbinding = _mpc_thread_ethread_thread_attr_getbinding;
 
 	sctk_add_func_type(_mpc_thread_ethread, create, int (*)(mpc_thread_t *,
-	                                                 const
-	                                                 mpc_thread_attr_t *,
-	                                                 void *(*)(void *),
-	                                                 void *) );
+	                                                        const
+	                                                        mpc_thread_attr_t *,
+	                                                        void *(*)(void *),
+	                                                        void *) );
 	sctk_add_func_type(_mpc_thread_ethread, user_create,
 	                   int (*)(mpc_thread_t *, const mpc_thread_attr_t *,
 	                           void *(*)(void *), void *) );
@@ -542,7 +541,7 @@ void mpc_thread_ethread_engine_init(void)
 
 	_mpc_thread_ethread_check_size(int, mpc_thread_keys_t);
 	_mpc_thread_ethread_check_size(stck_ethread_key_destr_function_t,
-	                        void (*)(void *) );
+	                               void (*)(void *) );
 	sctk_add_func_type(_mpc_thread_ethread, key_create,
 	                   int (*)(mpc_thread_keys_t *, void (*)(void *) ) );
 	sctk_add_func_type(_mpc_thread_ethread, key_delete, int (*)(mpc_thread_keys_t) );
@@ -569,7 +568,7 @@ void mpc_thread_ethread_engine_init(void)
 	/*Init main thread and virtual processor */
 
 	_mpc_thread_ethread_init_data(&_mpc_thread_ethread_main_thread);
-	virtual_processor.current   = &_mpc_thread_ethread_main_thread;
+	virtual_processor.current          = &_mpc_thread_ethread_main_thread;
 	_mpc_thread_ethread_main_thread.vp = &virtual_processor;
 
 	for(i = 0; i < SCTK_THREAD_KEYS_MAX; i++)
@@ -581,9 +580,9 @@ void mpc_thread_ethread_engine_init(void)
 	{
 		_mpc_thread_ethread_t idle;
 		___mpc_thread_ethread_create(ethread_idle,
-		                      &virtual_processor,
-		                      &_mpc_thread_ethread_main_thread,
-		                      &idle, NULL, NULL, NULL);
+		                             &virtual_processor,
+		                             &_mpc_thread_ethread_main_thread,
+		                             &idle, NULL, NULL, NULL);
 	}
 
 
