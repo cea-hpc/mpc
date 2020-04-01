@@ -1,4 +1,4 @@
-#define _GNU_SOURCE 1
+#define _GNU_SOURCE    1
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
@@ -36,131 +36,132 @@
 #include "main.h"
 
 /***********************
- * COMMON MAIN WRAPPER *
- ***********************/
+* COMMON MAIN WRAPPER *
+***********************/
 
 void sctk_use_pthread();
 
-static int __main_wrapper ( int argc, char **argv )
+static int __main_wrapper(int argc, char **argv)
 {
-    int bypass_mpc_launch_main = 0;
+	int bypass_mpc_launch_main = 0;
 
-    /* If MPC has no main wrapping
-       directly call the original main */
+	/* If MPC has no main wrapping
+	 * directly call the original main */
     #ifndef MPC_Threads
-        bypass_mpc_launch_main |= 1;
+	bypass_mpc_launch_main |= 1;
     #endif
 
-    char *mpi_lib = getenv( "TRUE_MPI_LIB" );
+	char *mpi_lib = getenv("TRUE_MPI_LIB");
 
-    /* WI4MPI hack: avoid MPC initialisation when MPC is not the target MPI */
-    if ( mpi_lib && !strstr( mpi_lib, "libmpc_framework" ) )
-    {
-        bypass_mpc_launch_main |= 1;
-    }
+	/* WI4MPI hack: avoid MPC initialisation when MPC is not the target MPI */
+	if(mpi_lib && !strstr(mpi_lib, "libmpc_framework") )
+	{
+		bypass_mpc_launch_main |= 1;
+	}
 
-    /* Here we bypass all the MPC setup and call
-      the renamed main directly using env variable */
-    if ( getenv( "MPC_CALL_ORIGINAL_MAIN" ) )
-    {
-         bypass_mpc_launch_main |= 1;       
-    }
+	/* Here we bypass all the MPC setup and call
+	 * the renamed main directly using env variable */
+	if(getenv("MPC_CALL_ORIGINAL_MAIN") )
+	{
+		bypass_mpc_launch_main |= 1;
+	}
 
-    if(bypass_mpc_launch_main)
-    {
-        sctk_use_pthread();
-        return CALL_MAIN(mpc_user_main__,  argc, argv);
-    }
-
-#if defined(WINDOWS_SYS)
-    pthread_win32_process_attach_np ();
-#endif
-
-    int tmp = mpc_launch_main ( argc, argv );
+	if(bypass_mpc_launch_main)
+	{
+		sctk_use_pthread();
+		return CALL_MAIN(mpc_user_main__, argc, argv);
+	}
 
 #if defined(WINDOWS_SYS)
-    pthread_win32_process_detach_np ();
+	pthread_win32_process_attach_np();
 #endif
 
-    return tmp;
+	int tmp = mpc_launch_main(argc, argv);
+
+#if defined(WINDOWS_SYS)
+	pthread_win32_process_detach_np();
+#endif
+
+	return tmp;
 }
 
 /************************
- * FORTRAN ENTRY-POINTS *
- ************************/
+* FORTRAN ENTRY-POINTS *
+************************/
 
-void mpc_start_ ( void )
+void mpc_start_(void)
 {
-    char *argv[2];
-    argv[0] = "unknown";
-    argv[1] = NULL;
-    mpc_common_get_flags()->is_fortran = 1;
-    int ret = __main_wrapper ( 1, argv );
-    exit(ret);
+	char *argv[2];
+
+	argv[0] = "unknown";
+	argv[1] = NULL;
+	mpc_common_get_flags()->is_fortran = 1;
+	__main_wrapper(1, argv);
+	exit(0);
 }
 
-void mpc_start__ ( void )
+void mpc_start__(void)
 {
-    mpc_start_();
+	mpc_start_();
 }
 
 /*********************************************
- * MPC'S REPLACEMENT MAIN (MAIN ENTRY POINT) *
- *********************************************/
+* MPC'S REPLACEMENT MAIN (MAIN ENTRY POINT) *
+*********************************************/
 
 /* No Main if MPC is in library mode */
 #if !defined(SCTK_LIB_MODE)
 
 /* This is the replacement main */
 
-int main( int argc, char **argv )
+int main(int argc, char **argv)
 {
-    mpc_common_get_flags()->is_fortran = 0;
-    return __main_wrapper ( argc, argv );
+	mpc_common_get_flags()->is_fortran = 0;
+	return __main_wrapper(argc, argv);
 }
-
 #endif
 
 /******************************
- * LIBGFORTRAN INITIALIZATION *
- ******************************/
+* LIBGFORTRAN INITIALIZATION *
+******************************/
 
-static void __search_and_call_symbol( char *sym )
+static void __search_and_call_symbol(char *sym)
 {
-    void ( *ptr_func )( void ) = dlsym( RTLD_DEFAULT, sym );
+	void ( *ptr_func )(void) = dlsym(RTLD_DEFAULT, sym);
 
-    if ( ptr_func )
-    {
-        ptr_func();
-    }
+	if(ptr_func)
+	{
+		ptr_func();
+	}
 }
 
 /* Set up the modified libgfortran if needed */
 static void __libgfortran_init()
 {
-    /* init function for the modified libgfortran */
-    if ( mpc_common_get_flags()->is_fortran == 1 )
-    {
-        __search_and_call_symbol( "_gfortran_init_units" );
-    }
+	/* init function for the modified libgfortran */
+	if(mpc_common_get_flags()->is_fortran == 1)
+	{
+		__search_and_call_symbol("_gfortran_init_units");
+	}
 }
+
 /* Clear the modified libgfortran if needed */
 static void __libgfortran_close()
 {
-    /* init function for the modified libgfortran */
-    if ( mpc_common_get_flags()->is_fortran == 1 )
-    {
-        __search_and_call_symbol( "_gfortran_close_units" );
-    }
+	/* init function for the modified libgfortran */
+	if(mpc_common_get_flags()->is_fortran == 1)
+	{
+		__search_and_call_symbol("_gfortran_close_units");
+	}
 }
 
-
-void mpc_main_init() __attribute__((constructor));
+void mpc_main_init() __attribute__( (constructor) );
 
 void mpc_main_init()
 {
-    MPC_INIT_CALL_ONLY_ONCE
+	MPC_INIT_CALL_ONLY_ONCE
 
-    mpc_common_init_callback_register("Starting Main", "Initialize libgfortran", __libgfortran_init, 16);
-    mpc_common_init_callback_register("Ending Main", "Release libgfortran", __libgfortran_close, 16);
+	mpc_common_init_callback_register("Starting Main", "Initialize libgfortran", __libgfortran_init, 16);
+
+	mpc_common_init_callback_register("Ending Main", "Release libgfortran", __libgfortran_close, 16);
 }
