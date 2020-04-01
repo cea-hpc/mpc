@@ -118,7 +118,7 @@
 /* Define to 1 if you have the `memset' function. */
 #undef HAVE_MEMSET
 
-/* Define to 1 if you have a working `mmap' system call. */
+/* Define to 1 if you have the `mmap' function. */
 #undef HAVE_MMAP
 
 /* Define to 1 if you have the `munmap' function. */
@@ -791,11 +791,11 @@
 /* MPC Minor Version */
 #undef MPC_VERSION_MINOR
 
-/* MPC Pre Version */
-#undef MPC_VERSION_PRE
+/* MPC Patch Version */
+#undef MPC_VERSION_PATCH
 
-/* MPC Revision Version */
-#undef MPC_VERSION_REVISION
+/* MPC Pre-release Version */
+#undef MPC_VERSION_PRE
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
