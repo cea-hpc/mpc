@@ -98,9 +98,9 @@ typedef struct sctk_thread_data_s
 	mpc_thread_mpi_disguise_t disguise;
 } sctk_thread_data_t;
 
-#define SCTK_THREAD_DATA_INIT    { NULL, NULL, NULL, -1, -1, -1, -1, NULL,           \
+#define SCTK_THREAD_DATA_INIT    { NULL, NULL, NULL, {-1, -1}, -1, -1, NULL,           \
 		                   NULL, -1, (void *)NULL, sctk_thread_undef_status, \
-		                   NULL, NULL, -1, NULL, NULL, NULL }
+		                   NULL, NULL, -1, NULL, {NULL, NULL} }
 
 void _mpc_thread_data_init(void);
 void _mpc_thread_data_set(sctk_thread_data_t *task_id);
