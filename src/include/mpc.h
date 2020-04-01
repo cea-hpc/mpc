@@ -24,7 +24,7 @@
 #define ___MPC___GLOBAL___HEADER___FILE___
 #include <mpc_config.h>
 #include <mpc_main.h>
-int MPC_check_compatibility_lib(int major, int minor, char* pre);
+int MPC_check_compatibility_lib(int major, int minor, int patch, char* pre);
 void MPC_printf (const char *fmt, ...);
-#define MPC_check_compatibility() MPC_check_compatibility_lib(MPC_VERSION_MAJOR,MPC_VERSION_MINOR,MPC_VERSION_PRE)
+#define MPC_check_compatibility() MPC_check_compatibility_lib(MPC_VERSION_MAJOR,MPC_VERSION_MINOR,MPC_VERSION_PATCH,MPC_VERSION_PRE)
 #endif

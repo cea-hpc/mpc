@@ -1,4 +1,4 @@
-AC_INIT([mpc], [4.0], [france@paratools.com])
+AC_INIT([mpcframework], [4.0.0], [france@paratools.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AC_LANG(C)
@@ -12,7 +12,7 @@ LT_PREREQ([2.4.6])
 # IT MEANS YOU NEED TO REBUILD MANUALLY
 # EACH TIME YOU EDIT THE BUILD SYSTEM !
 # USE ./autogen.sh to do so
-AM_MAINTAINER_MODE
+AM_MAINTAINER_MODE([disable])
 
 #
 # Reload first configure environment if present
@@ -30,8 +30,9 @@ fi
 
 LT_INIT([disable-static])
 LT_LANG([C])
-LT_INIT
 AC_PROG_CXX
+AC_PROG_CC
+AC_PROG_FC
 
 # Define MPC_VERSION
 #
@@ -40,21 +41,21 @@ AC_PROG_CXX
 # MAJOR MINOR AND REV are Integers
 # PRE is a STRING
 #
-MPC_VERSION="4"
+MPC_VERSION_MAJOR="4"
 MPC_VERSION_MINOR="0"
-MPC_VERSION_REV="0"
-MPC_VERSION_PRE="beta"
+MPC_VERSION_PATCH="0"
+MPC_VERSION_PRE="alpha"
 
-MPC_VERSION_STRING="${MPC_VERSION}.${MPC_VERSION_MINOR}.${MPC_VERSION_REV}${MPC_VERSION_PRE}"
+MPC_VERSION_STRING="${MPC_VERSION_MAJOR}.${MPC_VERSION_MINOR}.${MPC_VERSION_PATCH}${MPC_VERSION_PRE}"
 
-AC_DEFINE_UNQUOTED([MPC_VERSION_MAJOR], [$MPC_VERSION], [MPC Major Version])
+AC_DEFINE_UNQUOTED([MPC_VERSION_MAJOR], [$MPC_VERSION_MAJOR], [MPC Major Version])
 AC_DEFINE_UNQUOTED([MPC_VERSION_MINOR], [$MPC_VERSION_MINOR], [MPC Minor Version])
-AC_DEFINE_UNQUOTED([MPC_VERSION_REVISION], [$MPC_VERSION_REV], [MPC Revision Version])
-AC_DEFINE([MPC_VERSION_PRE], ["beta"], [MPC Pre Version])
+AC_DEFINE_UNQUOTED([MPC_VERSION_PATCH], [$MPC_VERSION_PATCH], [MPC Patch Version])
+AC_DEFINE_UNQUOTED([MPC_VERSION_PRE], ["$MPC_VERSION_PRE"], [MPC Pre-release Version])
 
 AC_SUBST([MPC_VERSION_MAJOR])
 AC_SUBST([MPC_VERSION_MINOR])
-AC_SUBST([MPC_VERSION_REVISION])
+AC_SUBST([MPC_VERSION_PATCH])
 AC_SUBST([MPC_VERSION_PRE])
 AC_SUBST([MPC_VERSION_STRING])
 
@@ -72,19 +73,19 @@ MPC_TARGET_ARCHITECTURE="$host_cpu"
 
 # Check if architecture is in support list
 
-AC_MSG_CHECKING([Checking if target architecture is supported])
+AC_MSG_CHECKING([Support for target architecture])
 
 is_in_list()
 {
-    echo "$2" | grep -q "$1"
+    echo "$2" | grep -iq "$1"
     return $?
 }
 
 if is_in_list "$MPC_TARGET_ARCHITECTURE" "$MPC_SUPPORTED_ARCHITECTURES_LIST"; then
         AC_MSG_RESULT($MPC_TARGET_ARCHITECTURE)
 else
-        AC_MSG_RESULT(Unsupported)
-        AC_MSG_ERROR(Your architecture is unsupported)
+        AC_MSG_RESULT(Not supported)
+        AC_MSG_ERROR(The current architecture is not supported yet. Please contact support team.)
 fi
 
 AC_SUBST([MPC_TARGET_ARCHITECTURE])
@@ -96,17 +97,6 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_CC
 AM_PROG_AS
-
-AC_MSG_CHECKING([Checking for which program/built-in])
-which gcc 2>&1 > /dev/null
-
-if test "x$?" = "x0"; then
-        AC_MSG_RESULT([yes])
-else
-        AC_MSG_RESULT([no])
-        AC_MSG_ERROR([The which program is required to build MPC])
-fi
-
 
 # Optionnal XML generators
 
@@ -201,7 +191,7 @@ __check_or_infer_prefix_lib()
         var_prefix=$4
 
 	AC_CHECK_LIB($looked_up_lib, $looked_up_function, [lib_found=1], [lib_found=0])
-	AC_MSG_CHECKING([Looking for '$looked_up_lib'])
+	AC_MSG_CHECKING([support for '$looked_up_lib'])
 
 	if test "x$lib_found" = "x1"
 	then
@@ -224,7 +214,7 @@ __check_or_infer_prefix_lib()
 
                         ___unset_lib_cache
                         AC_CHECK_LIB($looked_up_lib, $looked_up_function, [lib_found=1], [lib_found=0])
-                        AC_MSG_CHECKING([Looking for '$looked_up_lib' in '$pref/$suffix'])
+                        AC_MSG_CHECKING([Support for '$looked_up_lib' in '$pref/$suffix'])
 
                         if test "x$lib_found" = "x1"
                         then
@@ -254,7 +244,7 @@ extract_integer_define_value()
 		can_fail="yes"
 	fi
 
-	AC_MSG_CHECKING([value of $2 in $1])
+	AC_MSG_CHECKING([macro define presence of $2 in $1])
 
 	MACRO_VALUE=""
 	AC_RUN_IFELSE(
@@ -371,9 +361,9 @@ AC_DEFUN([MPC_REQUIRED_DEPENDENCY],
          [
                 if test "x$2" = "xno"
                 then
-                        AC_MSG_NOTICE([consider using --with-$1=PREFIX])
-                        AC_MSG_NOTICE([consider using --with-$1-libs=LIBS])
-                        AC_MSG_NOTICE([consider using --with-$1-include=INCS])
+                        AC_MSG_WARN([consider using --with-$1=PREFIX])
+                        AC_MSG_WARN([consider using --with-$1-libs=LIBS])
+                        AC_MSG_WARN([consider using --with-$1-include=INCS])
                         AC_MSG_ERROR([Failed to locate required dependency $1])
                 fi
          ])
@@ -396,32 +386,30 @@ mpc_allocator="Standard"
 
 MPC_DETECT_DEPENDENCY([mpcalloc.h], [mpcalloc], [sctk_malloc], [ALLOC])
 
-AC_MSG_CHECKING([MPC target alocator])
+AC_MSG_CHECKING([MPC Allocator])
 
 if test "x$mpc_dep_found" = "xyes"; then
         AC_MSG_RESULT([mpcalloc])
         AC_DEFINE([MPC_Allocator], [1], [mpcalloc support is enabled])
         mpc_allocator="mpcalloc"
 else
-        AC_MSG_RESULT([Standard allocator])
+        AC_MSG_RESULT([System allocator])
 fi
 
 #
 # Detect libunwing
 #
-
+AC_MSG_CHECKING([support for libunwind library])
 mpc_libunwind="no"
 
 MPC_DETECT_DEPENDENCY([libunwind.h], [libunwind], [unw_init_local], [UNW])
-
-AC_MSG_CHECKING([for libunwind])
 
 if test "x$mpc_dep_found" = "xyes"; then
         AC_MSG_RESULT([yes])
         AC_DEFINE([MPC_HAVE_LIBUNWIND], [1], [libunwind support is enabled])
         mpc_libunwind="yes"
 else
-        AC_MSG_RESULT([Standard allocator])
+        AC_MSG_RESULT([no])
 fi
 
 #
@@ -440,7 +428,7 @@ infiniband_enabled="no"
 
 MPC_DETECT_DEPENDENCY([infiniband/verbs.h], [ibverbs], [ibv_query_qp], [IBV])
 
-AC_MSG_CHECKING([Checking for libiverbs to enable verbs support])
+AC_MSG_CHECKING([support for libiverbs (Infiniband)])
 
 if test "x$mpc_dep_found" = "xyes"; then
         AC_MSG_RESULT([yes])
@@ -461,7 +449,7 @@ portals4_enabled="no"
 
 MPC_DETECT_DEPENDENCY([portals4.h], [portals], [PtlGet], [PORTALS])
 
-AC_MSG_CHECKING([Checking for PORTALS4 to enable portals support])
+AC_MSG_CHECKING([support for libportals (Portals4)])
 
 if test "x$mpc_dep_found" = "xyes"; then
         AC_MSG_RESULT([yes])
@@ -490,13 +478,13 @@ AC_ARG_WITH([hydra],
 
 AC_ARG_WITH([slurm],
 [AS_HELP_STRING([--with-slurm],
-                [Rely on SLURM's PMI])],
+                [Rely on SLURM-based PMI])],
 [mpc_hydra_enabled=no; mpc_slurm_enabled=$withval],
 [mpc_slurm_enabled=no])
 
 if test "x$mpc_hydra_enabled" = "xyes" -a  "x$mpc_slurm_enabled" = "xyes"
 then
-        AC_MSG_ERROR([You mush choose between Hydra and Slurm (--with-hydra or --with-slurm)])
+        AC_MSG_ERROR([You must pick up one between Hydra and Slurm (--with-hydra or --with-slurm)])
 fi
 
 if test "x$mpc_hydra_enabled" = "xyes" -o  "x$mpc_slurm_enabled" = "xyes"
@@ -504,7 +492,7 @@ then
         #All good
         dummy=1337
 else
-        AC_MSG_ERROR([You mush activate either Hydra and Slurm (--with-hydra or --with-slurm)])
+        AC_MSG_ERROR([You must activate either Hydra and Slurm (--with-hydra or --with-slurm)])
 fi
 
 MPC_MPIEXEC_HYDRA_PATH="mpiexec.hydra"
@@ -521,7 +509,7 @@ else
 
         if test "x$HAVE_MPIEXEC" = "xno"
         then
-                AC_MSG_ERROR([Could not locate Hydra's 'mpiexec.hydra' in PATH])
+                AC_MSG_ERROR([Could not locate Hydra wrapper 'mpiexec.hydra' in PATH])
         fi
 
         MPC_MPIEXEC_HYDRA_PATH=$(which mpiexec.hydra)
@@ -562,7 +550,7 @@ if test "x$mpc_cuda_ctx_switch" = "xyes"; then
 	MPC_DETECT_DEPENDENCY([cuda.h], [cuda], [cuMemFree], [CUDA])
 	MPC_REQUIRED_DEPENDENCY([cuda], [$mpc_dep_found])
 
-	AC_MSG_CHECKING([Checking for cuda to enable support])
+	AC_MSG_CHECKING([support for libcuda (CUDA-capable accelerators)])
 
 	if test "x$mpc_dep_found" = "xyes"; then
 		AC_MSG_RESULT([yes])
@@ -597,14 +585,15 @@ if test "x$MPC_HAVE_DMTCP" = "xyes"; then
 
 AC_CHECK_PROG([dmtcp_launch],[dmtcp_launch],[yes],[no])
 
-	AC_MSG_CHECKING([for DMTCP support])
+	AC_MSG_CHECKING([support for DMTCP])
 
 	if test "x${dmtcp_launch}" = "xyes"; then
 		AC_MSG_RESULT([yes])
 		MPC_HAVE_DMTCP="yes"
 		AC_DEFINE([MPC_USE_DMTCP], [1], [MPC transparent checkpointing is enabled])
 	else
-		AC_MSG_ERROR([Cannot enable DMTCP as 'dmtcp_launch' was not found in PATH])
+		AC_MSG_RESULT([no])
+		AC_MSG_ERROR([Cannot enable DMTCP (no 'dmtcp_launch' command found)])
 	fi
 fi
 
@@ -699,11 +688,11 @@ AC_CHECK_TYPES([ptrdiff_t])
 
 # Checks for Macros
 
-AC_MSG_CHECKING([macro __func__])
+AC_MSG_CHECKING([presence of '__func__' variable])
 
-AC_COMPILE_IFELSE(AC_LANG_PROGRAM([#include <stdio.h>],
-                                  [fprintf(stderr,"%s",__func__);
-                                   return 0;]),
+# Alternative : AX_C_VAR_FUNC
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[ ]],
+                                  [[return __func__;]])],
                 res_macro=yes,res_macro=no)
 
 if test "$res_macro" = "yes" ; then 
@@ -715,11 +704,12 @@ else
    AC_MSG_ERROR([Unable to detect function name])
 fi
 
-AC_MSG_CHECKING([macro __STRING])
-
-AC_COMPILE_IFELSE(AC_LANG_PROGRAM([#include <stdio.h>],
-                                  [fprintf(stderr,"%s",__STRING(TOTO));
-                                   return 0;]),
+AC_MSG_CHECKING([presence of __STRING macro])
+# Alternative : insert #define __STRING(u) #u if not present (not portable macro)
+AC_PREPROC_IFELSE([AC_LANG_SOURCE([[#include <stdio.h>
+				  #ifndef __STRING
+				  #error "No __STRING macro defined !"
+				  #endif]])],
                 res_macro=yes,res_macro=no)
 
 if test "$res_macro" = "yes" ; then 
@@ -728,19 +718,17 @@ if test "$res_macro" = "yes" ; then
    AC_SUBST(MPC_ARCH_DETECTED_STRING)
 else
    AC_MSG_RESULT(no)
-   AC_MSG_ERROR([Unable to convert to string])
+   AC_MSG_ERROR([Missing '__STRING' macro])
 fi
 
 # Checking for ENVIRON variable
 
 
-AC_MSG_CHECKING([if environ variable is present])
+AC_MSG_CHECKING([presence of 'environ' global variable])
 
-AC_COMPILE_IFELSE(AC_LANG_PROGRAM([#include <stdlib.h>
-                                   #include <stdio.h>
-                                   extern char ** environ;
-                                   ],
-                                [fprintf(stderr,"%p\n",environ);]),
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>
+                                 extern char ** environ;]],
+                                [[return environ;]])],
                                 res_macro=yes,res_macro=no)
 
 if test "$res_macro" = "yes" ; then 
@@ -752,14 +740,14 @@ fi
 
 # Check for pragma message support
 
-AC_MSG_CHECKING([Testing if pragma message is supported])
+AC_MSG_CHECKING([pragma message support])
 
 OLD_CFLAGS="$CFLAGS"
 #Set WERROR to catch the ignored pragmas
 CFLAGS="-Werror -Wall"
 
-AC_COMPILE_IFELSE(AC_LANG_PROGRAM([#include <stdio.h>],
-                                [#pragma message "Hello There"]),
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdio.h>]],
+                                [[#pragma message "Hello There"]])],
                                 res_macro=yes,res_macro=no)
 
 if test "$res_macro" = "yes" ; then
@@ -811,7 +799,7 @@ AC_CHECK_FUNCS([memcpy memmove memset])
 AC_CHECK_FUNCS([strcasecmp strchr strdup strerror strstr strtol snprintf vsnprintf])
 AC_CHECK_FUNCS([gethostbyname gethostname])
 AC_CHECK_FUNCS([gettimeofday])
-AC_CHECK_FUNCS([munmap])
+AC_CHECK_FUNCS([mmap munmap])
 AC_CHECK_FUNCS([setenv getenv])
 AC_CHECK_FUNCS([uname])
 AC_CHECK_FUNCS([regcomp])
@@ -824,7 +812,7 @@ AC_CHECK_LIB([m],[log])
 
 # Check for pThread
 
-AC_MSG_NOTICE(Check Pthreads functions)
+AC_MSG_NOTICE(complete Pthreads API)
 AC_CHECK_HEADER([pthread.h])
 AC_CHECK_LIB(pthread,pthread_create,LIBS="$LIBS -lpthread")
 AC_CHECK_SIZEOF(pthread_t,,[#include <pthread.h>])
@@ -1042,7 +1030,7 @@ AC_SUBST([MPC_CONFIG_PTHREAD_STACK_MIN], [$MACRO_VALUE])
 # Pthread keys MAX
 #
 
-AC_MSG_CHECKING([Checking if PTHREAD_KEYS_MAX is defined])
+AC_MSG_CHECKING([support for PTHREAD_KEYS_MAX keyword])
 
 have_pthread_keys_max=no
 AC_RUN_IFELSE([AC_LANG_PROGRAM([
@@ -1061,6 +1049,7 @@ if test "x$have_pthread_keys_max" = "x1"; then
         extract_integer_define_value "pthread.h" "MPC_THREAD_KEYS_MAX"
         AC_SUBST([MPC_THREAD_KEYS_MAX], [$MACRO_VALUE])
 else
+        AC_MSG_CHECKING([PTHREAD_KEYS_MAX value manually (not defined)])
         for key_count in `seq 0 128 65536`
         do
 
@@ -1097,8 +1086,6 @@ else
         fi
 
         done
-
-        AC_MSG_CHECKING([Experimentally determined PTHREAD_KEYS_MAX to be])
 
         AC_DEFINE_UNQUOTED([MPC_THREAD_KEYS_MAX], [$key_count], [Experimentally defined PTHREAD_KEYS_MAX])
         AC_SUBST([MPC_THREAD_KEYS_MAX], [$key_count])
@@ -1303,31 +1290,18 @@ AC_ARG_ENABLE([process-mode],
                 [Compile MPC in process mode])],
 [mpc_in_process_mode=$enableval],
 [mpc_in_process_mode=no])
-
-AC_MSG_CHECKING([MPC is in process mode])
-
 if test "x${mpc_in_process_mode}" = "xyes"; then
-        AC_MSG_RESULT([yes])
         AC_DEFINE([MPC_IN_PROCESS_MODE], [1], [MPC compiled in process mode])
         MPC_IN_PROCESS_MODE="yes"
-else
-        AC_MSG_RESULT([no])
 fi
 
 AC_SUBST([MPC_IN_PROCESS_MODE])
 
 mpc_privatization_support="no"
 
-AC_MSG_CHECKING([privatization support is needed])
-
 if test "x$mpc_in_process_mode" = "xno"; then
 
-        AC_MSG_RESULT([yes])
-
         MPC_DETECT_DEPENDENCY([extls.h],[extls], [extls_init], [EXTLS])
-
-        AC_MSG_CHECKING([Enabling extended TLS support])
-
         if test "x$mpc_dep_found" = "xyes"; then
                 AC_MSG_RESULT([yes])
                 AC_DEFINE([MPC_USE_EXTLS], [1], [Extls support is enabled])
@@ -1337,9 +1311,6 @@ if test "x$mpc_in_process_mode" = "xno"; then
         else
                 AC_MSG_RESULT([no])
         fi
-
-else
-        AC_MSG_RESULT([no])
 fi
 
 #
@@ -1348,7 +1319,7 @@ fi
 
 MPC_CONTEXT_SWITCH_SUPPORTED_ARCHITECTURE="x86_64"
 
-AC_MSG_CHECKING([Configuring optimized context switches])
+AC_MSG_CHECKING([which context switches to use])
 
 MPC_ARCH_CONTEXT_SWITCH="generic"
 
@@ -1356,7 +1327,7 @@ if is_in_list "$MPC_TARGET_ARCHITECTURE" "$MPC_CONTEXT_SWITCH_SUPPORTED_ARCHITEC
         MPC_ARCH_CONTEXT_SWITCH="$MPC_TARGET_ARCHITECTURE"
         AC_MSG_RESULT($MPC_TARGET_ARCHITECTURE)
 else
-        AC_MSG_RESULT(Using standard context switches)
+        AC_MSG_RESULT(standard)
 fi
 
 # Note that by construction the following conditionnals are multually exclusive
@@ -1364,7 +1335,7 @@ AM_CONDITIONAL([MPC_ARCH_X86_64_CONTEXT_SWITCH], [test "x${MPC_ARCH_CONTEXT_SWIT
 
 MPC_MICROTASK_SUPPORTED_ARCHITECTURE="x86_64"
 
-AC_MSG_CHECKING([Configuring optimized microtasks])
+AC_MSG_CHECKING([which Configuring optimized microtasks])
 
 MPC_ARCH_MICROTASK_ARCH="generic"
 
@@ -1881,7 +1852,7 @@ AC_SUBST([CONFIGURE_LIBRARY_PATH])
 
 date +%s 2>&1 > /dev/null
 
-AC_MSG_CHECKING([build timestamp])
+AC_MSG_CHECKING([Save configure run timestamp ])
 
 MPC_GENERATION_DATE=""
 
@@ -1907,26 +1878,20 @@ AC_SUBST([MPC_GENERATION_DATE])
 # Extract git revision
 AC_CHECK_PROG([git],[git],[yes],[no])
 
-GIT_DESCRIBE=""
-GIT_DESCRIBE_RES=""
-
 if test "x$git" = "xyes"; then
-	GIT_DESCRIBE="$(git -C $CONFIGURE_SCRIPT_PATH describe --tags --dirty 2> /dev/null)"
-	test -n "$GIT_DESCRIBE" && GIT_DESCRIBE_RES="Git Revision...... ${GIT_DESCRIBE}\n"
+	MPC_GIT_REVISION="$(git -C $CONFIGURE_SCRIPT_PATH describe --tags --dirty 2> /dev/null)"
+	test -n "$MPC_GIT_REVISION" && MPC_GIT_REVISION="Git Revision...... ${MPC_GIT_REVISION}\n"
 fi
-
-AC_SUBST([GIT_DESCRIBE])
-
-#
-# Generate Reconfigure
-#
 
 #
 # Generate the Reconfigure Script
 #
 cat << EOF > ./reconfigure
 #!/bin/sh
-
+if test -n `find ${ac_abs_confdir}/configure -newer $0`; then
+	printf "Warning: Source configure is newer than reconfigure file (./autogen.sh || git check-out)\n"
+	printf "Warning: Rebuilding over a different version of MPC can lead to unexpected errors.\n"
+fi
 if test -f "${PWD}/src/bin/mpc_build_env.sh"; then
         . ${PWD}/src/bin/mpc_build_env.sh
 fi
@@ -1940,9 +1905,11 @@ chmod +x ./reconfigure
 
 # Generate configuration summary
 
-MPC_CONFIG_RESULT="========== MPC $MPC_VERSION_STRING Configuration ==========\n\
+MPC_CONFIG_RESULT="\
+========== MPC $MPC_VERSION_STRING Configuration ==========\n\
 PREFIX............ $prefix\n\
-$GIT_DESCRIBE_RES\
+BUILD DATE........ $MPC_GENERATION_DATE\n\
+$MPC_GIT_REVISION\
 \n\
 # Build Configuration\n\
 \n\
@@ -1992,10 +1959,7 @@ MPC_Message_passing.. $MPC_MESSAGE_PASSING_ENABLED\n\
 MPC_MPI.............. $MPC_MPI_ENABLED\n\
 ===========================================================\n"
 
-
 AC_SUBST([MPC_CONFIG_RESULT])
-
-
 
 #
 # Final Output
@@ -2043,7 +2007,6 @@ AC_OUTPUT([Makefile
 echo -e $MPC_CONFIG_RESULT
 
 if test "x${MPC_CONFIG_RELOADED}" = "xyes"; then
-
 
 echo "************ IMPORTANT NOTICE ****************"
 echo "MPCs configure realized that you already ran"

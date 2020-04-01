@@ -86,16 +86,15 @@ void sctk_abort( void )
 /*Messages                                                            */
 /**********************************************************************/
 
-int MPC_check_compatibility_lib( int major, int minor, char *pre )
+int MPC_check_compatibility_lib( int major, int minor, int patch, char *pre )
 {
 	static char errro_msg[4096];
 
-	if ( ( major != MPC_VERSION_MAJOR ) || ( minor != MPC_VERSION_MINOR ) || ( strcmp( pre, MPC_VERSION_PRE ) != 0 ) )
+	if ( ( major != MPC_VERSION_MAJOR ) || ( minor != MPC_VERSION_MINOR ) || (patch != MPC_VERSION_PATCH) || ( strcmp( pre, MPC_VERSION_PRE ) != 0 ) )
 	{
 		sprintf( errro_msg,
-		         "MPC version used for this file (%d.%d%s) differs from the library used for the link (%d.%d%s)\n",
-		         major, minor, pre, MPC_VERSION_MAJOR, MPC_VERSION_MINOR,
-		         MPC_VERSION_PRE );
+		         "MPC version used for this file (%d.%d.%d%s) differs from the library used for the link (%d.%d.%d%s)\n",
+		         major, minor, patch, pre, MPC_VERSION_MAJOR, MPC_VERSION_MINOR, MPC_VERSION_PATCH, MPC_VERSION_PRE );
 		sctk_warning( errro_msg );
 		return 1;
 	}

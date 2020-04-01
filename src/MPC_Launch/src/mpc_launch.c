@@ -83,7 +83,7 @@ void mpc_launch_print_banner(bool restart)
 				snprintf(version_string, 64, "version %d.%d.%d%s",
 				         MPC_VERSION_MAJOR,
 				         MPC_VERSION_MINOR,
-				         MPC_VERSION_REVISION,
+				         MPC_VERSION_PATCH,
 				         MPC_VERSION_PRE);
 			}
 			else

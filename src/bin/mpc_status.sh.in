@@ -1,14 +1,5 @@
 #!/bin/sh
 
 MPC_CONFIG_RESULT="@MPC_CONFIG_RESULT@"
-MPC_VERSION_STRING="@MPC_VERSION_STRING@"
-MPC_GEN_DATE="@MPC_GENERATION_DATE@"
-GIT_DESCRIBE="@GIT_DESCRIBE@"
 
-
-echo -n "${MPC_CONFIG_RESULT}\n\n"
-
-echo "MPC Version: $MPC_VERSION_STRING"
-test -n "$GIT_DESCRIBE" && echo "Git status: ${GIT_DESCRIBE}"
-echo "Configured on: `date -d @$MPC_GEN_DATE`"
-
+printf "${MPC_CONFIG_RESULT}\n\n"
