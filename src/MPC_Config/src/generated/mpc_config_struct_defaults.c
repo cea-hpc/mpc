@@ -186,12 +186,12 @@ void sctk_runtime_config_struct_init_collectives_shm(void * struct_ptr)
                         sctk_runtime_config_mpit_bind_variable( "MPI_COLL_REDUCE_INTERLEAVE_TRSH",
                                                                 sizeof(obj->reduce_pipelined_tresh ),
                                                                 &obj->reduce_pipelined_tresh);
-				obj->reduce_interleave = 8;
+				obj->reduce_interleave = 16;
 
                         sctk_runtime_config_mpit_bind_variable( "MPI_COLL_REDUCE_INTERLEAVE",
                                                                 sizeof(obj->reduce_interleave ),
                                                                 &obj->reduce_interleave);
-				obj->bcast_interleave = 8;
+				obj->bcast_interleave = 16;
 
                         sctk_runtime_config_mpit_bind_variable( "MPI_COLL_BCAST_INTERLEAVE",
                                                                 sizeof(obj->bcast_interleave ),

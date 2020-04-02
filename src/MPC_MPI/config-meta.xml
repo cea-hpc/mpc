@@ -26,10 +26,10 @@
 
             <param name="reduce_pipelined_blocks" type="int" default="16" doc="Number of blocks for pipelined Reduce" alias="MPI_COLL_REDUCE_PIPELINED_BLOCKS"/>
             <param name="reduce_pipelined_tresh" type="size" default="1KB" doc="Size required to rely on pipelined reduce" alias="MPI_COLL_REDUCE_INTERLEAVE_TRSH"/>
-            <param name="reduce_interleave" type="int" default="8" doc="Number of reduce slots to allocate (required to be power of 2)" alias="MPI_COLL_REDUCE_INTERLEAVE"/>
+            <param name="reduce_interleave" type="int" default="16" doc="Number of reduce slots to allocate (required to be power of 2)" alias="MPI_COLL_REDUCE_INTERLEAVE"/>
 
             <!-- MPI_Bcast -->	
-            <param name="bcast_interleave" type="int" default="8" doc="Number of bcast slots to allocate (required to be power of 2)" alias="MPI_COLL_BCAST_INTERLEAVE"/>
+            <param name="bcast_interleave" type="int" default="16" doc="Number of bcast slots to allocate (required to be power of 2)" alias="MPI_COLL_BCAST_INTERLEAVE"/>
         </struct>
 	
         <struct name="collectives_intra" doc="Collectives intracom MPI">

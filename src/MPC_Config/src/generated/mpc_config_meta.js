@@ -40,8 +40,8 @@ meta.types = {
 		coll_force_nocommute: {mode: 'param', name: "coll_force_nocommute", type: "bool", doc: "Force the use of deterministic algorithms", dflt: "false", },
 		reduce_pipelined_blocks: {mode: 'param', name: "reduce_pipelined_blocks", type: "int", doc: "Number of blocks for pipelined Reduce", dflt: "16", },
 		reduce_pipelined_tresh: {mode: 'param', name: "reduce_pipelined_tresh", type: "size", doc: "Size required to rely on pipelined reduce", dflt: "1KB", },
-		reduce_interleave: {mode: 'param', name: "reduce_interleave", type: "int", doc: "Number of reduce slots to allocate (required to be power of 2)", dflt: "8", },
-		bcast_interleave: {mode: 'param', name: "bcast_interleave", type: "int", doc: "Number of bcast slots to allocate (required to be power of 2)", dflt: "8", },
+		reduce_interleave: {mode: 'param', name: "reduce_interleave", type: "int", doc: "Number of reduce slots to allocate (required to be power of 2)", dflt: "16", },
+		bcast_interleave: {mode: 'param', name: "bcast_interleave", type: "int", doc: "Number of bcast slots to allocate (required to be power of 2)", dflt: "16", },
 	}},
 	collectives_intra : {type: 'struct', name: "collectives_intra", childs: {
 		barrier_intra: {mode: 'param', name: "barrier_intra", type: "funcptr", doc: "MPI_Barrier intracom algorithm", dflt: "__INTERNAL__PMPI_Barrier_intra", },
