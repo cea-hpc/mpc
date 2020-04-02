@@ -13420,8 +13420,8 @@ __INTERNAL__PMPI_Intercomm_merge (MPI_Comm intercomm, int high,
 /************************************************************************/
 
 static int MPI_TAG_UB_VALUE = 512*1024*1024;
-static char *MPI_HOST_VALUE[4096];
-static int MPI_IO_VALUE = 0;
+static int MPI_HOST_VALUE = MPI_PROC_NULL;
+static int MPI_IO_VALUE = MPI_ANY_SOURCE;
 static int MPI_WTIME_IS_GLOBAL_VALUE = 0;
 static int MPI_APPNUM_VALUE;
 static int MPI_UNIVERSE_SIZE_VALUE;
