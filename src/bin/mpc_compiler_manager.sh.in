@@ -4,9 +4,10 @@
 list_languages="@MPC_LANGUAGE_LIST@"
 CHECKSUM_TOOL=sha1sum
 CREATION_TIMESTAMP=@MPC_GENERATION_DATE@
-MPC_INSTALL_PREFIX=@prefix@
+MPC_INSTALL_PREFIX="@prefix@"
 MANAGER_COLOR=@MPC_ENABLE_SHELL_COLORS@
 OPA_CFLAGS="@OPA_CFLAGS@"
+MPC_SHARE_DIR="@PKG_DATADIR@"
 
 # Here we restore MPC's build environment
 . $MPC_INSTALL_PREFIX/bin/mpc_build_env.sh
@@ -77,7 +78,7 @@ create_home()
 	echo "$MPC_INSTALL_PREFIX" | sed -e "s#//*#/#g" > ${user_prefix}/mpc_install_path
 	echo "$CREATION_TIMESTAMP" > ${user_prefix}/.creation_timestamp
 	cp ${MPC_INSTALL_PREFIX}/.*_compilers.cfg ${user_prefix}/
-	cp -r ${MPC_INSTALL_PREFIX}/share/mpc/fortran_gen ${user_prefix}/
+	cp -r ${MPC_SHARE_DIR}/fortran_gen ${user_prefix}/
 	for mylang in $list_languages
 	do
 		#copy any existing directory for each language
@@ -172,7 +173,7 @@ post_add_fortran()
 
         if test "$MPC_INSTALL_PREFIX" = "$COMPILER_FILEPATH"
         then
-                FORTRAN_GEN_PATH=$MPC_INSTALL_PREFIX/share/mpc/
+                FORTRAN_GEN_PATH=${MPC_SHARE_DIR}
         fi
 
 	#rebuild Fortran modules and store them in HOME/.mpcompil/HASH
@@ -184,7 +185,7 @@ post_add_fortran()
 	#we have to build twice if compiler is privatizing => give *.mod for privatized or unprivatized usage.
 
 	#build unprivatized usage
-	FLAGS="-I${MPC_INSTALL_PREFIX}/include/mpc/ -L${MPC_INSTALL_PREFIX}/lib/ -Wl,-rpath=${MPC_INSTALL_PREFIX}/lib/"
+	FLAGS="-I${MPC_INSTALL_PREFIX}/include/mpcframework/ -L${MPC_INSTALL_PREFIX}/lib/ -Wl,-rpath=${MPC_INSTALL_PREFIX}/lib/"
 	CC="`lookup_compiler c 1 | cut -f3 -d":"` $FLAGS $(${MPC_INSTALL_PREFIX}/bin/mpc_cflags) $(${MPC_INSTALL_PREFIX}/bin/mpc_ldflags)"
 	FC="$1 $FLAGS"
 	mkdir -p $COMPILER_FILEPATH/$3/npriv

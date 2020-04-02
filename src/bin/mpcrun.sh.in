@@ -1,7 +1,7 @@
 #!/bin/sh
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
-# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+# Copyright or (C) or Copr. Commissariat a l Energie Atomique          #
 #                                                                      #
 # IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
 # This file is part of the MPC Runtime.                                #
@@ -39,8 +39,8 @@ mpcrun_error(){
 MPC_INSTALL_PREFIX=@prefix@
 MPC_BIN_DIR="${MPC_INSTALL_PREFIX}/bin"
 MPC_LIB_DIR="${MPC_INSTALL_PREFIX}/lib"
-MPC_SHARE_DIR="${MPC_INSTALL_PREFIX}/share/mpc"
 MPC_INCLUDE_DIR="${MPC_INSTALL_PREFIX}/include"
+MPC_SHARE_DIR="@PKG_DATADIR@"
 
 # Version of MPC library
 
@@ -61,7 +61,7 @@ MPC_HAVE_PROFILER=@MPC_HAVE_PROFILER@
 . $MPC_INSTALL_PREFIX/bin/mpc_build_env.sh
 
 # Here we prepend the PATH which is normally postpended
-# we do this as we can't override the whole prefix with
+# we do this as we can t override the whole prefix with
 # mpc binaries as it can cause version mismatches
 export PATH="${MPC_BIN_DIR}:${PATH}"
 
@@ -82,7 +82,7 @@ LAUNCHER_PLUGIN="mpiexec"
 LAUNCHER_CONFIG_LAUNCH_MODE="exec"
 
 # Where to find the specialized launchers
-LAUNCHER_CONFIG_BINS_HOME="${MPC_INSTALL_PREFIX}/share/mpc/mpcrun_opt/mpcrun"
+LAUNCHER_CONFIG_BINS_HOME="${MPC_SHARE_DIR}/mpcrun_opt/mpcrun"
 
 ##################################
 # Options Passed to the Launcher #
@@ -397,7 +397,7 @@ fi
 list_available_mpc_launchers()
 {
 	echo "Available launch method"
-	for i in "${MPC_INSTALL_PREFIX}"/share/mpc/mpcrun_opt/* ; do echo "    - $(basename "$i")" | sed s/mpcrun_//g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
+	for i in "${MPC_SHARE_DIR}/mpcrun_opt/*" ; do echo "    - $(basename "$i")" | sed s/mpcrun_//g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
 	if [ -n "${CONFIG_USER_LAUNCHERS}" ] && [ -e "${CONFIG_USER_LAUNCHERS}" ]; then
 		for i in "${CONFIG_USER_LAUNCHERS}"/mpcrun_* ; do echo "    - $(basename "$i")" | sed s/mpcrun_//g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
 	fi

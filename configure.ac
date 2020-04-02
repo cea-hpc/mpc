@@ -27,7 +27,6 @@ if test -f ${PWD}/bin/mpc_build_env.sh; then
 	. ${PWD}/bin/mpc_build_env.sh
 fi
 
-
 LT_INIT([disable-static])
 LT_LANG([C])
 AC_PROG_CXX
@@ -1960,6 +1959,9 @@ MPC_MPI.............. $MPC_MPI_ENABLED\n\
 ===========================================================\n"
 
 AC_SUBST([MPC_CONFIG_RESULT])
+
+AC_SUBST([PKG_DATADIR], ["${prefix}/share/${PACKAGE}/"])
+
 
 #
 # Final Output

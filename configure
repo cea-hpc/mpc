@@ -636,6 +636,7 @@ ac_header_list=
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+PKG_DATADIR
 MPC_CONFIG_RESULT
 git
 MPC_GENERATION_DATE
@@ -3824,7 +3825,6 @@ if test -f ${PWD}/bin/mpc_build_env.sh; then
 	MPC_CONFIG_RELOADED="yes"
 	. ${PWD}/bin/mpc_build_env.sh
 fi
-
 
 case `pwd` in
   *\ * | *\	*)
@@ -27189,6 +27189,8 @@ main ()
     if (*(data + i) != *(data3 + i))
       return 14;
   close (fd);
+  free (data);
+  free (data3);
   return 0;
 }
 _ACEOF
@@ -31121,8 +31123,6 @@ fi
 #
 # Generate the Reconfigure Script
 #
-
-
 cat << EOF > ./reconfigure
 #!/bin/sh
 if test -n "\`find ${ac_abs_confdir}/configure -newer \$0\`"; then
@@ -31195,6 +31195,10 @@ MPC_Thread........... $MPC_THREAD_ENABLED\n\
 MPC_Message_passing.. $MPC_MESSAGE_PASSING_ENABLED\n\
 MPC_MPI.............. $MPC_MPI_ENABLED\n\
 ===========================================================\n"
+
+
+
+PKG_DATADIR="${prefix}/share/${PACKAGE}"
 
 
 
