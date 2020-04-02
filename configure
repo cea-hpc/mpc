@@ -636,6 +636,7 @@ ac_header_list=
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+PKG_INCDIR
 PKG_DATADIR
 MPC_CONFIG_RESULT
 git
@@ -31198,8 +31199,9 @@ MPC_MPI.............. $MPC_MPI_ENABLED\n\
 
 
 
-PKG_DATADIR="${prefix}/share/${PACKAGE}"
+PKG_DATADIR="${prefix}/share/${PACKAGE}/"
 
+PKG_INCDIR="${prefix}/include/${PACKAGE}/"
 
 
 #

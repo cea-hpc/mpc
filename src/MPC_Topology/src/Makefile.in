@@ -328,6 +328,7 @@ PKG_CONFIG = @PKG_CONFIG@
 PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
 PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 PKG_DATADIR = @PKG_DATADIR@
+PKG_INCDIR = @PKG_INCDIR@
 PMI_CFLAGS = @PMI_CFLAGS@
 PMI_LIBS = @PMI_LIBS@
 PORTALS_CFLAGS = @PORTALS_CFLAGS@
@@ -426,7 +427,7 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/src/include/ \
 	-I$(abs_top_builddir)/src/include/ $(HWLOC_CFLAGS) \
 	$(am__append_1)
-mpc_headerdir = $(includedir)/mpc/
+mpc_headerdir = $(pkgincludedir)
 noinst_LTLIBRARIES = libmpctopology.la
 libmpctopology_la_SOURCES = topology.c  topology_device.c  topology_render.c
 libmpctopology_la_LIBADD = $(abs_top_builddir)/src/MPC_Common/src/libmpccommon.la $(HWLOC_LIBS)

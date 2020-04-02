@@ -12,7 +12,7 @@ endif
 
 
 
-mpc_headerdir=$(includedir)/mpc/
+mpc_headerdir=$(pkgincludedir)
 
 lib_LTLIBRARIES = libmpclaunch.la
 

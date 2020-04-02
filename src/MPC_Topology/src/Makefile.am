@@ -6,7 +6,7 @@ if MPC_THREAD_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
 endif
 
-mpc_headerdir=$(includedir)/mpc/
+mpc_headerdir=$(pkgincludedir)
 
 noinst_LTLIBRARIES = libmpctopology.la
 

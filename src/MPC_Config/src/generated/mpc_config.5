@@ -29,7 +29,7 @@
 .Nm mpc_config
 .Nd MPC runtime configuration files
 .Sh SYNOPSIS
-.Nm ${PREFIX}/share/mpc/config.xml or ${MPC_SYSTEM_CONFIG}
+.Nm ${PREFIX}/share/mpcframework/config.xml or ${MPC_SYSTEM_CONFIG}
 .Nm File given to ${MPC_USER_CONFIG} or to option --config of
 .Xr mpcrun 1
 .Sh DESCRIPTION
@@ -46,17 +46,17 @@ Each profile can override values of a previous loaded one of the onces from a fi
 Files are loaded in priority order :
 .Bl -enum -offset indent -compact
 .It
-System configuration (${PREFIX}/share/mpc/config.xml or $MPC_SYSTEM_CONFIG).
+System configuration (${PREFIX}/share/mpcframework/config.xml or $MPC_SYSTEM_CONFIG).
 .It
 User configuration given to mpcrun with option --config of $MPC_USER_CONFIG.
 .El
 .Pp
-You can find XML schema file for validation in ${PREFIX}/share/mpc/mpc-config.xsd. You can validate with one of the two solutions :
+You can find XML schema file for validation in ${PREFIX}/share/mpcframework/mpc-config.xsd. You can validate with one of the two solutions :
 .Bl -enum -offset indent -compact
 .It
 mpc_print_config --user={YOUR_XML_FILE}
 .It
-xmllint --noout --schema ${PREFIX}/share/mpc/mpc-config.xsd {YOUR_XML_FILE}
+xmllint --noout --schema ${PREFIX}/share/mpcframework/mpc-config.xsd {YOUR_XML_FILE}
 .El
 .Pp
 .Sh GLOBAL LAYOUT

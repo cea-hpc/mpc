@@ -71,7 +71,7 @@ Since MPC 2.4.1, a configuration system has been introduced through the module \
 In MPC 2.4.1, some variables can be configured during the runtime. To do this, a configuration file defines all the variables and their values, and MPC will load it at the execution.
 \newline
 
-\noindent An example of a configuration file can be found in the \texttt{\$PREFIX/share/mpc} folder, where \texttt{\$PREFIX} matches to the install directory of MPC.
+\noindent An example of a configuration file can be found in the \texttt{\$PREFIX/share/mpcframework} folder, where \texttt{\$PREFIX} matches to the install directory of MPC.
 \newline
 
 \noindent The configuration file is written in XML, and two parts make up it:
@@ -167,8 +167,8 @@ One way to select the profiles to apply during execution is to define mapping in
 
 MPC will use many configuration files that it will apply in the following order:
 \begin{enumerate}
-\item \texttt{\$PREFIX/share/mpc/config.xml};
-\item \texttt{\$PREFIX/share/mpc/config.xml.example} if the previous file does not exist;
+\item \texttt{\$PREFIX/share/mpcframework/config.xml};
+\item \texttt{\$PREFIX/share/mpcframework/config.xml.example} if the previous file does not exist;
 \item the file given by the parameter \texttt{--config} of \texttt{mpcrun} if present.
 \end{enumerate}
 

@@ -364,6 +364,7 @@ PKG_CONFIG = @PKG_CONFIG@
 PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
 PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 PKG_DATADIR = @PKG_DATADIR@
+PKG_INCDIR = @PKG_INCDIR@
 PMI_CFLAGS = @PMI_CFLAGS@
 PMI_LIBS = @PMI_LIBS@
 PORTALS_CFLAGS = @PORTALS_CFLAGS@
@@ -455,7 +456,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 xmllint = @xmllint@
 xsltproc = @xsltproc@
-mpc_headerdir = $(includedir)/mpc/
+mpc_headerdir = $(pkgincludedir)
 
 #mpc_header_HEADERS= $(abs_top_srcdir)/src/MPC_Common/include/mpc_common_aio.h $(abs_top_srcdir)/src/MPC_Common/include/mpc_common_asm.h $(abs_top_srcdir)/src/MPC_Common/include/mpc_common_datastructure.h $(abs_top_srcdir)/src/MPC_Common/include/mpc_common.h $(abs_top_srcdir)/src/MPC_Common/include/mpc_common_helper.h $(abs_top_srcdir)/src/MPC_Common/include/mpc_common_rank.h $(abs_top_srcdir)/src/MPC_Common/include/mpc_common_spinlock.h  $(abs_top_srcdir)/src/MPC_Common/include/sctk_alloc.h  $(abs_top_srcdir)/src/MPC_Common/include/sctk_dummy.h $(abs_top_srcdir)/src/MPC_Common/include/sctk_no_alloc.h $(abs_top_srcdir)/src/MPC_Common/include/sctk_pm_json.h $(abs_top_srcdir)/src/MPC_Common/include/utarray.h $(abs_top_srcdir)/src/MPC_Common/include/uthash.h $(abs_top_srcdir)/src/MPC_Common/include/utlist.h
 mpc_header_HEADERS = $(abs_top_srcdir)/src/MPC_Common/include/mpc_common_asm.h $(abs_top_srcdir)/src/MPC_Common/include/mpc_common_types.h  $(abs_top_srcdir)/src/MPC_Common/include/mpc_common_debugger.h $(abs_top_srcdir)/src/MPC_Common/include/sctk_debug.h  $(abs_top_srcdir)/src/MPC_Common/include/mpc_keywords.h $(abs_top_srcdir)/src/MPC_Common/include/uthash.h

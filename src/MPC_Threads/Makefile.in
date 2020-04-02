@@ -364,6 +364,7 @@ PKG_CONFIG = @PKG_CONFIG@
 PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
 PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 PKG_DATADIR = @PKG_DATADIR@
+PKG_INCDIR = @PKG_INCDIR@
 PMI_CFLAGS = @PMI_CFLAGS@
 PMI_LIBS = @PMI_LIBS@
 PORTALS_CFLAGS = @PORTALS_CFLAGS@
@@ -455,7 +456,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 xmllint = @xmllint@
 xsltproc = @xsltproc@
-mpc_headerdir = $(includedir)/mpc/
+mpc_headerdir = $(pkgincludedir)
 mpc_header_HEADERS = ./include/mpc_thread.h ./include/mpc_thread_engines.h  ./include/mpc_microthread.h
 SUBDIRS = src
 all: all-recursive
@@ -798,7 +799,7 @@ uninstall-am: uninstall-mpc_headerHEADERS
 
 # Install the pthread.h interceptions header
 install-data-local:
-	install -m 0644 -D $(abs_top_srcdir)/src/MPC_Threads/include/mpc_pthread.h $(includedir)/mpc/pthread.h
+	install -m 0644 -D $(abs_top_srcdir)/src/MPC_Threads/include/mpc_pthread.h $(pkgincludedir)/pthread.h
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

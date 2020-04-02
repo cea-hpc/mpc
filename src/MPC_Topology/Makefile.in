@@ -364,6 +364,7 @@ PKG_CONFIG = @PKG_CONFIG@
 PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
 PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 PKG_DATADIR = @PKG_DATADIR@
+PKG_INCDIR = @PKG_INCDIR@
 PMI_CFLAGS = @PMI_CFLAGS@
 PMI_LIBS = @PMI_LIBS@
 PORTALS_CFLAGS = @PORTALS_CFLAGS@
@@ -455,7 +456,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 xmllint = @xmllint@
 xsltproc = @xsltproc@
-mpc_headerdir = $(includedir)/mpc/
+mpc_headerdir = $(pkgincludedir)
 mpc_header_HEADERS = ./include/mpc_topology_device.h  ./include/mpc_topology.h  ./include/mpc_topology_render.h
 SUBDIRS = src
 all: all-recursive

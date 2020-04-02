@@ -1961,7 +1961,7 @@ MPC_MPI.............. $MPC_MPI_ENABLED\n\
 AC_SUBST([MPC_CONFIG_RESULT])
 
 AC_SUBST([PKG_DATADIR], ["${prefix}/share/${PACKAGE}/"])
-
+AC_SUBST([PKG_INCDIR], ["${prefix}/include/${PACKAGE}/"])
 
 #
 # Final Output
