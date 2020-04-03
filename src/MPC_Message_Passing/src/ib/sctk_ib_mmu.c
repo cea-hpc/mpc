@@ -75,7 +75,7 @@ sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( sctk_ib_rail_info_t *rail_ib, void 
 	}
 
 	/* No one ows it yet */
-	sctk_spin_rwlock_t lckinit = SCTK_SPIN_RWLOCK_INITIALIZER;
+	mpc_common_rwlock_t lckinit = SCTK_SPIN_RWLOCK_INITIALIZER;
 	new->entry_refcounter = lckinit;
 
 	new->free_on_relax = 0;

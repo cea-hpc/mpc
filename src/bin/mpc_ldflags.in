@@ -32,6 +32,7 @@ MPC_THREAD_ENABLED="@MPC_THREAD_ENABLED@"
 MPC_MESSAGE_PASSING_ENABLED="@MPC_MESSAGE_PASSING_ENABLED@"
 MPC_MPI_ENABLED="@MPC_MPI_ENABLED@"
 MPC_OPENMP_ENABLED="@MPC_OPENMP_ENABLED@"
+MPC_MPIIO_ENABLED="@MPC_MPIIO_ENABLED@"
 
 FLAGS=""
 
@@ -74,6 +75,10 @@ if test "x${MPC_MPI_ENABLED}" = "xyes"; then
 	FLAGS="$FLAGS -lmpcmpi"
 fi
 
+if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
+	# MPC_IO
+	FLAGS="$FLAGS -lmpcio"
+fi
 
 # Handle how the fortran specific module is passed in
 # we need lib for .mod

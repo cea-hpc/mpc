@@ -23,6 +23,6 @@
 #include <mpc.h>
 #include <mpc_mpi.h>
 
-#ifdef MPC_ROMIO_ENABLED
+#if @MPC_MPIIO_ENABLED@ == yes
 #include <mpio.h>
 #endif

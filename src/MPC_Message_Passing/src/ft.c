@@ -46,7 +46,7 @@ static int nb_restarts = 0;
 static mpc_lowcomm_checkpoint_state_t __state = MPC_STATE_NO_SUPPORT;
 
 /** Lock to create a critical section for C/R */
-static sctk_spin_rwlock_t checkpoint_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+static mpc_common_rwlock_t checkpoint_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 /** Number of threads blocking the C/R to be started */
 __thread int sctk_ft_critical_section = 0;
 

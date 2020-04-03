@@ -294,7 +294,7 @@ typedef struct sctk_internal_communicator_s
 	/** number of processes for the communicator **/
 	int process_nb;
 
-	sctk_spin_rwlock_t lock;
+	mpc_common_rwlock_t lock;
 	/** spinlock for the creation of the comunicator **/
 	mpc_common_spinlock_t creation_lock;
 

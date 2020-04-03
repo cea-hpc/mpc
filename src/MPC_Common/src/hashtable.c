@@ -125,27 +125,27 @@ static inline uint64_t murmur_hash( uint64_t val )
 
 static inline void mpc_common_hashtable_lock_read( struct mpc_common_hashtable *ht, uint64_t bucket )
 {
-	sctk_spin_rwlock_t *lock = &ht->rwlocks[bucket];
+	mpc_common_rwlock_t *lock = &ht->rwlocks[bucket];
 	mpc_common_spinlock_read_lock( lock );
 }
 
 static inline void mpc_common_hashtable_unlock_read( struct mpc_common_hashtable *ht, uint64_t bucket )
 {
-	sctk_spin_rwlock_t *lock = &ht->rwlocks[bucket];
+	mpc_common_rwlock_t *lock = &ht->rwlocks[bucket];
 	mpc_common_spinlock_read_unlock( lock );
 }
 
 static inline void mpc_common_hashtable_lock_write( struct mpc_common_hashtable *ht, uint64_t bucket )
 {
 	sctk_nodebug( "LOCKING cell %d", bucket );
-	sctk_spin_rwlock_t *lock = &ht->rwlocks[bucket];
+	mpc_common_rwlock_t *lock = &ht->rwlocks[bucket];
 	mpc_common_spinlock_write_lock_yield( lock );
 }
 
 static inline void mpc_common_hashtable_unlock_write( struct mpc_common_hashtable *ht, uint64_t bucket )
 {
 	sctk_nodebug( "UN-LOCKING cell %d", bucket );
-	sctk_spin_rwlock_t *lock = &ht->rwlocks[bucket];
+	mpc_common_rwlock_t *lock = &ht->rwlocks[bucket];
 	mpc_common_spinlock_write_unlock( lock );
 }
 
@@ -187,7 +187,7 @@ void mpc_common_hashtable_init( struct mpc_common_hashtable *ht, uint64_t size )
 		sctk_fatal( "Could not create HT array" );
 	}
 
-	ht->rwlocks = sctk_malloc( size * sizeof( sctk_spin_rwlock_t ) );
+	ht->rwlocks = sctk_malloc( size * sizeof( mpc_common_rwlock_t ) );
 
 	if ( ht->rwlocks == NULL )
 	{

@@ -24,8 +24,7 @@
 #define MPC_COMM_LIB_H_
 
 #include <mpc_lowcomm_types.h>
-#include <mpc_common_asm.h>
-
+#include <mpc_common_types.h>
 
 /************************************************************************/
 /* Per thread context                                                   */
@@ -33,8 +32,8 @@
 
 struct mpc_mpi_cl_per_thread_ctx_s;
 
-void mpc_mpi_cl_per_thread_ctx_init();
-void mpc_mpi_cl_per_thread_ctx_release();
+void mpc_mpi_cl_per_thread_ctx_init(void);
+void mpc_mpi_cl_per_thread_ctx_release(void);
 
 /************************************************************************/
 /* Per Process context                                                  */
@@ -42,7 +41,7 @@ void mpc_mpi_cl_per_thread_ctx_release();
 
 struct mpc_mpi_cl_per_mpi_process_ctx_s;
 
-struct mpc_mpi_cl_per_mpi_process_ctx_s *mpc_cl_per_mpi_process_ctx_get();
+struct mpc_mpi_cl_per_mpi_process_ctx_s *mpc_cl_per_mpi_process_ctx_get(void);
 
 void mpc_mpi_cl_per_mpi_process_ctx_reinit ( struct mpc_mpi_cl_per_mpi_process_ctx_s *tmp );
 int mpc_mpi_cl_per_mpi_process_ctx_at_exit_register( void ( *function )( void ) );

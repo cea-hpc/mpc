@@ -121,6 +121,7 @@ static inline void sctk_context_save_tls(sctk_mctx_t *ucp)
 	tls_save(sctk_ft_critical_section);
 #endif
 
+
 	/* the tls vector is restored by copy and cannot be changed
 	 * It is then useless to save it at this time
 	 */
@@ -165,6 +166,7 @@ static inline void sctk_context_restore_tls(sctk_mctx_t *ucp)
 #if defined MPC_USE_DMTCP
 	tls_restore(sctk_ft_critical_section);
 #endif
+
 
 #if defined(MPC_USE_CUDA)
 	tls_restore(sctk_cuda_ctx);
@@ -213,6 +215,7 @@ static inline void sctk_context_init_tls(sctk_mctx_t *ucp)
 #if defined(MPC_USE_CUDA)
 	tls_init(sctk_cuda_ctx);
 #endif
+
 
 #if defined MPC_USE_DMTCP
 	sctk_ft_critical_section = 0;

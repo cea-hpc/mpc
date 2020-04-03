@@ -65,7 +65,7 @@ typedef struct sctk_multirail_destination_table_entry_s
 	UT_hash_handle hh;
 	
 	sctk_endpoint_list_t * endpoints;
-	sctk_spin_rwlock_t endpoints_lock;
+	mpc_common_rwlock_t endpoints_lock;
 	
 	int destination;
 }sctk_multirail_destination_table_entry_t;
@@ -82,7 +82,7 @@ void sctk_multirail_destination_table_entry_pop_endpoint( sctk_multirail_destina
 struct sctk_multirail_destination_table
 {
 	sctk_multirail_destination_table_entry_t * destinations;
-	sctk_spin_rwlock_t table_lock;
+	mpc_common_rwlock_t table_lock;
 };
 
 void sctk_multirail_destination_table_init();

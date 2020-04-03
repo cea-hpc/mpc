@@ -38,7 +38,7 @@ typedef struct sctk_ib_mmu_entry_s
 	struct sctk_ib_rail_info_s *rail; /** Rail for which the block is pinned */
 	struct ibv_mr *mr; /** Pointer to the IBV memory region */
 
-	sctk_spin_rwlock_t entry_refcounter; /** Refcounter */
+	mpc_common_rwlock_t entry_refcounter; /** Refcounter */
 	
 	int free_on_relax;
 }sctk_ib_mmu_entry_t;
@@ -59,7 +59,7 @@ struct sctk_ib_mmu
 {
 	int cache_enabled;
 	sctk_ib_mmu_entry_t ** cache; /** Static fast cache */
-	sctk_spin_rwlock_t cache_lock; /** Lock for the MMU */
+	mpc_common_rwlock_t cache_lock; /** Lock for the MMU */
 	unsigned int cache_max_entry_count; /** Maximum size of the slow cache from the config */
 	
 	size_t cache_maximum_size;

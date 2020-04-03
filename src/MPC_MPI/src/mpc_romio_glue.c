@@ -250,68 +250,6 @@ int MPIR_Get_node_id(MPI_Comm comm, int rank, int *id) {
   return MPI_SUCCESS;
 }
 
-/** \brief MPICH says check wether the progress engine is blocked assuming
- * "YIELD"
- */
-void MPIR_Ext_cs_yield(void) { mpc_thread_yield(); }
-
-/************************************************************************/
-/* Locks                                                                */
-/************************************************************************/
-
-/* Here we gathered the locks which are required by ROMIO
- * in order to guarantee writing thread safety during
- * both strided and shared lock. The reason they have 
- * to be in MPC is that in ROMIO locks would be privatized
- * as global variables and it is not what we want. */
-
-/* STRIDED LOCK */
-mpc_common_spinlock_t mpio_strided_lock = SCTK_SPINLOCK_INITIALIZER;
-
-void MPIO_lock_strided()
-{
-	mpc_common_spinlock_lock(&mpio_strided_lock);
-}
-
-
-void MPIO_unlock_strided()
-{
-	mpc_common_spinlock_unlock(&mpio_strided_lock);
-}
-
-/* SHARED LOCK */
-mpc_common_spinlock_t mpio_shared_lock = SCTK_SPINLOCK_INITIALIZER;
-
-void MPIO_lock_shared()
-{
-	mpc_common_spinlock_lock(&mpio_shared_lock);
-}
-
-
-void MPIO_unlock_shared()
-{
-	mpc_common_spinlock_unlock(&mpio_shared_lock);
-}
-
-
-/************************************************************************/
-/* Dummy IO requests                                                    */
-/************************************************************************/
-/* These two functions are just reffered to in the FORTRAN
- * interface where the IO_Wait and IO_Tests bindings are 
- * defined, we do not expect them to be called as we rely
- * on extended requests. Therefore we just directly return */
-
-int PMPIO_Wait(__UNUSED__ void *r, __UNUSED__ MPI_Status *s)
-{
-	return MPI_SUCCESS;
-}
-
-int PMPIO_Test(__UNUSED__ void * r, __UNUSED__ int * c, __UNUSED__ MPI_Status *s)
-{
-	return MPI_SUCCESS;
-}
-
 
 /************************************************************************/
 /* C2F/F2C Functions                                                    */
@@ -335,7 +273,7 @@ MPI_Request PMPIO_Request_f2c(MPI_Fint rid )
 }
 
 /* File Pointers */
-
+#if 0
 unsigned int MPI_File_fortran_id = 0;
 
 struct MPI_File_Fortran_cell
@@ -384,40 +322,11 @@ void * MPIO_File_f2c(int fid)
 	
 	return ret;
 }
-
+#endif
 /************************************************************************/
 /* ERROR Handling                                                       */
 /************************************************************************/
 
-int MPIR_Err_create_code_valist(__UNUSED__ int a, __UNUSED__ int b, __UNUSED__ const char c[], __UNUSED__ int d,__UNUSED__ int e, 
-				const char __UNUSED__  f[], const char __UNUSED__ g[],__UNUSED__  va_list args )
-{
-	return MPI_SUCCESS;
-}
-
-int MPIR_Err_is_fatal(__UNUSED__ int a)
-{
-	return 0;
-}
-
-typedef int (* MPIR_Err_get_class_string_func_t)(int error, char *str, int length);
-
-void MPIR_Err_get_string( int errcode, char *msg, int maxlen,__UNUSED__  MPIR_Err_get_class_string_func_t fcname )
-{
-	char buff[128];
-	int len;
-	
-	if( !msg )
-		return;
-	
-	buff[0] = '\0';
-	msg[0] = '\0';
-	
-	_mpc_cl_error_string (errcode, buff, &len);
-
-	if( strlen( buff ) )
-		snprintf( msg, maxlen, "%s", buff );
-}
 
 
 struct MPID_Comm;
@@ -430,15 +339,6 @@ int MPID_Abort(__UNUSED__ struct MPID_Comm *comm, int mpi_errno, int exit_code, 
 
 
 
-void MPIR_Get_file_error_routine( __UNUSED__ MPI_Errhandler a, 
-				  __UNUSED__ void (**errr)(void * , int * , ...), 
-				  __UNUSED__ int * b)
-{
-	
-	
-	
-}
-
 
 int MPIR_File_call_cxx_errhandler( __UNUSED__ void *fh, __UNUSED__ int *errorcode, 
 			   __UNUSED__ void (*c_errhandler)(void  *, int *, ... ) )
@@ -448,30 +348,5 @@ int MPIR_File_call_cxx_errhandler( __UNUSED__ void *fh, __UNUSED__ int *errorcod
 }
 
 
-int MPIO_Err_create_code(__UNUSED__ int lastcode, __UNUSED__ int fatal, const char fcname[],
-			 int line, int error_class, const char generic_msg[],
-			 const char specific_msg[], ... )
-{
-    va_list Argp;
-    int idx = 0;
-    char *buf;
-
-    buf = (char *) sctk_malloc(1024);
-    if (buf != NULL) {
-	idx += snprintf(buf, 1023, "%s (line %d): ", fcname, line);
-	if (specific_msg == NULL) {
-	    snprintf(&buf[idx], 1023 - idx, "%s\n", generic_msg);
-	}
-	else {
-	    va_start(Argp, specific_msg);
-	    vsnprintf(&buf[idx], 1023 - idx, specific_msg, Argp);
-	    va_end(Argp);
-	}
-	fprintf(stderr, "%s\n", buf);
-	sctk_free(buf);
-    }
-
-    return error_class;
-}
 
 

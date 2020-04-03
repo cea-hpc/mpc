@@ -513,6 +513,7 @@ typedef int (MPI_Win_delete_attr_function)(MPI_Win, int, void *, void *);
 /* added in MPI-2.2 */
 typedef void (MPI_Comm_errhandler_function)(MPI_Comm *, int *, ...);
 typedef void (MPI_Win_errhandler_function)(MPI_Win *, int *, ...);
+
 /* names that were added in MPI-2.0 and deprecated in MPI-2.2 */
 typedef MPI_Comm_errhandler_function MPI_Comm_errhandler_fn;
 typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn;
@@ -523,6 +524,24 @@ typedef struct
 	int size;
 	MPI_Request request;
 } mpi_buffer_overhead_t;
+
+
+/* MPI File Support */
+#define HAVE_MPI_OFFSET
+typedef MPI_Count MPI_Offset;
+
+#define MPI_FILE_DEFINED
+struct ADIOI_FileD;
+typedef struct ADIOI_FileD * MPI_File; 
+
+#define MPIIMPL_HAVE_MPI_COMBINER_SUBARRAY
+#define MPIIMPL_HAVE_MPI_COMBINER_DUP
+#define MPIIMPL_HAVE_MPI_COMBINER_DARRAY
+
+/* Data-size conversion layer */
+typedef int (MPI_Datarep_conversion_function)(void *, MPI_Datatype, int, void *, MPI_Offset, void *);
+typedef int (MPI_Datarep_extent_function)(MPI_Datatype datatype, MPI_Aint *, void *);
+
 
 /************************************************************************/
 /*  MPI Interface                                                       */
@@ -550,6 +569,8 @@ int MPI_Errhandler_create (MPI_Handler_function *, MPI_Errhandler *);
 int MPI_Errhandler_set (MPI_Comm, MPI_Errhandler);
 int MPI_Errhandler_get (MPI_Comm, MPI_Errhandler *);
 int MPI_Errhandler_free (MPI_Errhandler *);
+int MPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler);
+int MPI_File_get_errhandler(MPI_File file, MPI_Errhandler * errhandler);
 int MPI_Error_string (int, char *, int *);
 int MPI_Error_class (int, int *);
 int MPI_Abort (MPI_Comm, int);
@@ -1359,6 +1380,8 @@ int PMPI_Errhandler_create (MPI_Handler_function *, MPI_Errhandler *);
 int PMPI_Errhandler_set (MPI_Comm, MPI_Errhandler);
 int PMPI_Errhandler_get (MPI_Comm, MPI_Errhandler *);
 int PMPI_Errhandler_free (MPI_Errhandler *);
+int PMPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler);
+int PMPI_File_get_errhandler(MPI_File file, MPI_Errhandler * errhandler);
 int PMPI_Error_string (int, char *, int *);
 int PMPI_Error_class (int, int *);
 int PMPI_Abort (MPI_Comm, int);

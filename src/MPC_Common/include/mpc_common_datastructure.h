@@ -309,7 +309,7 @@ struct _mpc_ht_cell
 struct mpc_common_hashtable
 {
 	struct _mpc_ht_cell *cells;       /**< Array of entries to be indexed */
-	sctk_spin_rwlock_t *rwlocks;    /**< Array of rwlocks for each cell */
+	mpc_common_rwlock_t *rwlocks;    /**< Array of rwlocks for each cell */
 	uint64_t table_size;            /**< Stores the Table size */
 };
 

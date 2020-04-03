@@ -153,7 +153,7 @@ struct sctk_route_table_s
 {
 	/* Dynamic Routes */
 	struct mpc_common_hashtable dynamic_route_table; /** Here are stored the dynamic routes (hash table) */
-	sctk_spin_rwlock_t dynamic_route_table_lock; /** This is the dynamic route lock */
+	mpc_common_rwlock_t dynamic_route_table_lock; /** This is the dynamic route lock */
 	/* Static Routes */
 	struct mpc_common_hashtable static_route_table; /** Here are stored static routes (hash table) -- no lock as they are read only */
 };

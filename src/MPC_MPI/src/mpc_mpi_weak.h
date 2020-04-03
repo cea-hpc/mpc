@@ -435,6 +435,11 @@
 #pragma weak MPI_Error_string = PMPI_Error_string
 #pragma weak mpi_error_string_ = pmpi_error_string_
 #pragma weak mpi_error_string__ = pmpi_error_string__
+
+#pragma weak MPI_File_set_errhandler = PMPI_File_set_errhandler
+
+#pragma weak MPI_File_get_errhandler = PMPI_File_get_errhandler
+
 #pragma weak MPI_Error_class = PMPI_Error_class
 #pragma weak mpi_error_class_ = pmpi_error_class_
 #pragma weak mpi_error_class__ = pmpi_error_class__

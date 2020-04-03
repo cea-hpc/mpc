@@ -59,12 +59,12 @@ static mpc_common_spinlock_t rdma_pool_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
 /* Linked list of regions */
 static sctk_ibuf_region_t *rdma_region_list = NULL;
-static sctk_spin_rwlock_t rdma_region_list_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+static mpc_common_rwlock_t rdma_region_list_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 /* Pointer for the clock algorithm */
 static sctk_ibuf_region_t *clock_pointer = NULL;
 
 static mpc_common_spinlock_t rdma_lock = SCTK_SPINLOCK_INITIALIZER;
-static sctk_spin_rwlock_t rdma_polling_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+static mpc_common_rwlock_t rdma_polling_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 
 /*-----------------------------------------------------------
  *  FUNCTIONS

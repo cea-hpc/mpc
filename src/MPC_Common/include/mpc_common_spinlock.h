@@ -128,7 +128,7 @@ typedef struct
 {
 	mpc_common_spinlock_t writer_lock;
 	OPA_int_t reader_number;
-} sctk_spin_rwlock_t;
+} mpc_common_rwlock_t;
 
 #define SCTK_SPIN_RWLOCK_INITIALIZER                          \
 	{                                                         \
@@ -142,7 +142,7 @@ typedef struct
 		OPA_store_int( &( a )->reader_number, 0 );  \
 	} while ( 0 )
 
-static inline int mpc_common_spinlock_read_lock( sctk_spin_rwlock_t *lock )
+static inline int mpc_common_spinlock_read_lock( mpc_common_rwlock_t *lock )
 {
 	mpc_common_spinlock_lock( &( lock->writer_lock ) );
 	OPA_incr_int( &( lock->reader_number ) );
@@ -150,7 +150,7 @@ static inline int mpc_common_spinlock_read_lock( sctk_spin_rwlock_t *lock )
 	return 0;
 }
 
-static inline int mpc_common_spinlock_read_lock_yield( sctk_spin_rwlock_t *lock )
+static inline int mpc_common_spinlock_read_lock_yield( mpc_common_rwlock_t *lock )
 {
 	mpc_common_spinlock_lock_yield( &( lock->writer_lock ) );
 	OPA_incr_int( &( lock->reader_number ) );
@@ -158,7 +158,7 @@ static inline int mpc_common_spinlock_read_lock_yield( sctk_spin_rwlock_t *lock 
 	return 0;
 }
 
-static inline int mpc_common_spinlock_read_trylock( sctk_spin_rwlock_t *lock )
+static inline int mpc_common_spinlock_read_trylock( mpc_common_rwlock_t *lock )
 {
 	if ( mpc_common_spinlock_trylock( &( lock->writer_lock ) ) == 0 )
 	{
@@ -170,7 +170,7 @@ static inline int mpc_common_spinlock_read_trylock( sctk_spin_rwlock_t *lock )
 	return 1;
 }
 
-static inline int mpc_common_spinlock_write_lock( sctk_spin_rwlock_t *lock )
+static inline int mpc_common_spinlock_write_lock( mpc_common_rwlock_t *lock )
 {
 	mpc_common_spinlock_lock( &( lock->writer_lock ) );
 	while ( expect_true( OPA_load_int( &( lock->reader_number ) ) != 0 ) )
@@ -180,7 +180,7 @@ static inline int mpc_common_spinlock_write_lock( sctk_spin_rwlock_t *lock )
 	return 0;
 }
 
-static inline int mpc_common_spinlock_write_trylock( sctk_spin_rwlock_t *lock )
+static inline int mpc_common_spinlock_write_trylock( mpc_common_rwlock_t *lock )
 {
 	if ( mpc_common_spinlock_trylock( &( lock->writer_lock ) ) == 0 )
 	{
@@ -196,7 +196,7 @@ static inline int mpc_common_spinlock_write_trylock( sctk_spin_rwlock_t *lock )
 	return 1;
 }
 
-static inline int mpc_common_spinlock_write_lock_yield( sctk_spin_rwlock_t *lock )
+static inline int mpc_common_spinlock_write_lock_yield( mpc_common_rwlock_t *lock )
 {
 	int cnt = 0;
 	mpc_common_spinlock_lock_yield( &( lock->writer_lock ) );
@@ -215,17 +215,17 @@ static inline int mpc_common_spinlock_write_lock_yield( sctk_spin_rwlock_t *lock
 	return 0;
 }
 
-static inline int mpc_common_spinlock_read_unlock( sctk_spin_rwlock_t *lock )
+static inline int mpc_common_spinlock_read_unlock( mpc_common_rwlock_t *lock )
 {
 	return OPA_fetch_and_add_int( &( lock->reader_number ), -1 ) - 1;
 }
 
-static inline int mpc_common_spinlock_read_unlock_state( sctk_spin_rwlock_t *lock )
+static inline int mpc_common_spinlock_read_unlock_state( mpc_common_rwlock_t *lock )
 {
 	return OPA_load_int( &( lock->reader_number ) );
 }
 
-static inline int mpc_common_spinlock_write_unlock( sctk_spin_rwlock_t *lock )
+static inline int mpc_common_spinlock_write_unlock( mpc_common_rwlock_t *lock )
 {
 	mpc_common_spinlock_unlock( &( lock->writer_lock ) );
 	return 0;

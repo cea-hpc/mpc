@@ -1,5 +1,8 @@
 /* mpc_config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* BGQ platform */
+#undef BGQPLATFORM
+
 /* Define to 1 if you have the `accept' function. */
 #undef HAVE_ACCEPT
 
@@ -66,8 +69,17 @@
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
+/* Define to 1 if you have the <gpfs_fcntl.h> header file. */
+#undef HAVE_GPFS_FCNTL_H
+
+/* Define to 1 if you have the <gpfs.h> header file. */
+#undef HAVE_GPFS_H
+
 /* Define to 1 if you have the <hwloc.h> header file. */
 #undef HAVE_HWLOC_H
+
+/* Define to 1 if you have the <ime_native.h> header file. */
+#undef HAVE_IME_NATIVE_H
 
 /* Define to 1 if you have the <immintrin.h> header file. */
 #undef HAVE_IMMINTRIN_H
@@ -96,8 +108,17 @@
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
 
+/* Define to 1 if you have the <linux/lustre/lustre_user.h> header file. */
+#undef HAVE_LINUX_LUSTRE_LUSTRE_USER_H
+
 /* Define to 1 if you have the <linux/personality.h> header file. */
 #undef HAVE_LINUX_PERSONALITY_H
+
+/* Define if LUSTRE_LOCKAHEAD is enabled. */
+#undef HAVE_LUSTRE_LOCKAHEAD
+
+/* Define to 1 if you have the <lustre/lustre_user.h> header file. */
+#undef HAVE_LUSTRE_LUSTRE_USER_H
 
 /* Define to 1 if you have the `makecontext' function. */
 #undef HAVE_MAKECONTEXT
@@ -445,6 +466,15 @@
 /* Define to 1 if the system has the type `ptrdiff_t'. */
 #undef HAVE_PTRDIFF_T
 
+/* Define if PVFS_sys_create does not have layout parameter */
+#undef HAVE_PVFS2_CREATE_WITHOUT_LAYOUT
+
+/* Define to 1 if you have the <pvfs2.h> header file. */
+#undef HAVE_PVFS2_H
+
+/* Define if PVFS2_SUPER_MAGIC defined. */
+#undef HAVE_PVFS2_SUPER_MAGIC
+
 /* Define to 1 if your system has a GNU libc compatible `realloc' function,
    and to 0 otherwise. */
 #undef HAVE_REALLOC
@@ -518,6 +548,9 @@
 /* Define to 1 if you have the `socket' function. */
 #undef HAVE_SOCKET
 
+/* Define to 1 if you have the `statfs' function. */
+#undef HAVE_STATFS
+
 /* Define to 1 if you have the <stdbool.h> header file. */
 #undef HAVE_STDBOOL_H
 
@@ -554,11 +587,17 @@
 /* Define to 1 if you have the `strtol' function. */
 #undef HAVE_STRTOL
 
+/* Define if struct statfs can be compiled */
+#undef HAVE_STRUCT_STATFS
+
 /* Define to 1 if you have the `swapcontext' function. */
 #undef HAVE_SWAPCONTEXT
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #undef HAVE_SYS_MMAN_H
+
+/* Define to 1 if you have the <sys/mount.h> header file. */
+#undef HAVE_SYS_MOUNT_H
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
@@ -568,6 +607,9 @@
 
 /* Define to 1 if you have the <sys/socket.h> header file. */
 #undef HAVE_SYS_SOCKET_H
+
+/* Define to 1 if you have the <sys/statvfs.h> header file. */
+#undef HAVE_SYS_STATVFS_H
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
@@ -589,6 +631,9 @@
 
 /* Define to 1 if you have the <sys/utsname.h> header file. */
 #undef HAVE_SYS_UTSNAME_H
+
+/* Define to 1 if you have the <sys/vfs.h> header file. */
+#undef HAVE_SYS_VFS_H
 
 /* Define to 1 if you have the <sys/wait.h> header file. */
 #undef HAVE_SYS_WAIT_H
@@ -743,6 +788,9 @@
 /* MPC_MPI module was enabled */
 #undef MPC_MPI
 
+/* MPC_MPIIO module was enabled */
+#undef MPC_MPIIO
+
 /* MPC_MESSAGE_PASSING module was enabled */
 #undef MPC_Message_Passing
 
@@ -814,6 +862,36 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* PE platform */
+#undef PEPLATFORM
+
+/* Define for ROMIO with GPFS */
+#undef ROMIO_GPFS
+
+/* Define if statfs has f_fstypename */
+#undef ROMIO_HAVE_STRUCT_STATFS_WITH_F_FSTYPENAME
+
+/* Define if statfs has f_type */
+#undef ROMIO_HAVE_STRUCT_STATFS_WITH_F_TYPE
+
+/* Define for ROMIO with IME */
+#undef ROMIO_IME
+
+/* Define for ROMIO with LUSTRE */
+#undef ROMIO_LUSTRE
+
+/* Define for ROMIO with NFS */
+#undef ROMIO_NFS
+
+/* Define for ROMIO with PVFS2 */
+#undef ROMIO_PVFS2
+
+/* Define for ROMIO with UFS */
+#undef ROMIO_UFS
+
+/* Define for ROMIO with XFS */
+#undef ROMIO_XFS
 
 /* The size of `char', as computed by sizeof. */
 #undef SIZEOF_CHAR

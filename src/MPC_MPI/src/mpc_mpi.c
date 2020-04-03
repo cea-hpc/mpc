@@ -22637,6 +22637,19 @@ int PMPIX_Checkpoint(MPIX_Checkpoint_state *state)
 	return __INTERNAL__PMPIX_Checkpoint(state);
 }
 
+int PMPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler)
+{
+
+}
+
+int PMPI_File_get_errhandler(MPI_File file, MPI_Errhandler * errhandler)
+{
+
+}
+
+
+
+
 /************************************************************************/
 /*  NOT IMPLEMENTED                                                     */
 /************************************************************************/

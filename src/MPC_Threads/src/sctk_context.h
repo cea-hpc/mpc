@@ -220,6 +220,7 @@ typedef struct sctk_mctx_st
 #if defined MPC_USE_DMTCP
 	int                                 sctk_ft_critical_section;
 #endif
+
 } sctk_mctx_t;
 
 int sctk_getcontext(sctk_mctx_t *ucp);

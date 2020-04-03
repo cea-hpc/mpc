@@ -193,7 +193,7 @@ struct mpc_MPI_win_locks {
   struct mpc_MPI_win_lock_request *head;
   mpc_common_spinlock_t lock;
 
-  sctk_spin_rwlock_t win_lock;
+  mpc_common_rwlock_t win_lock;
 };
 
 int mpc_MPI_win_locks_init(struct mpc_MPI_win_locks *locks);
@@ -265,7 +265,7 @@ struct mpc_Win_target_ctx {
   OPA_int_t ctrl_message_counter;
 
   /* Active epoch */
-  sctk_spin_rwlock_t active_epoch_lock;
+  mpc_common_rwlock_t active_epoch_lock;
 };
 
 int mpc_Win_target_ctx_init(struct mpc_Win_target_ctx *ctx, MPI_Comm comm);

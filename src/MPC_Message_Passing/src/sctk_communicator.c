@@ -48,7 +48,7 @@ typedef struct sctk_process_ht_s
 static sctk_internal_communicator_t *mpc_lowcomm_communicator_table = NULL;
 static sctk_internal_communicator_t *sctk_communicator_array[SCTK_MAX_COMMUNICATOR_TAB];
 /** spinlock for communicators table **/
-static sctk_spin_rwlock_t sctk_communicator_local_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+static mpc_common_rwlock_t sctk_communicator_local_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 static mpc_common_spinlock_t sctk_communicator_all_table_lock = SCTK_SPINLOCK_INITIALIZER;
 
 /************************* FUNCTION ************************/
@@ -1334,7 +1334,7 @@ int sctk_per_node_comm_context_release( struct sctk_per_node_comm_context *ctx )
 static inline void sctk_communicator_init_intern_init_only ( const int nb_task, int last_local, int first_local, int local_tasks,
         int *local_to_global, int *global_to_local, int *task_to_process, int *process_array, int process_nb, sctk_internal_communicator_t *tmp )
 {
-	sctk_spin_rwlock_t lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+	mpc_common_rwlock_t lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 	mpc_common_spinlock_t spinlock = SCTK_SPINLOCK_INITIALIZER;
 	tmp->collectives = NULL;
 	tmp->nb_task = nb_task;

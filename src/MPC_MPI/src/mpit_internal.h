@@ -503,7 +503,7 @@ int MPC_T_pvar_handle_read(struct MPC_T_pvar_handle *data, void *dataptr);
 
 struct MPC_T_session_array {
   int current_session;
-  sctk_spin_rwlock_t lock;
+  mpc_common_rwlock_t lock;
   struct MPC_T_pvar_handle *handle_lists[MPI_T_PVAR_COUNT];
 };
 

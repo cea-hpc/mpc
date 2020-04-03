@@ -655,7 +655,59 @@ MPC_FORTRAN_COMPILER_LIST
 MPC_CPP_COMPILER_LIST
 MPC_C_COMPILER_LIST
 MPC_LANGUAGE_LIST
+MPC_PRIV_FLAGS
+MPC_PRIV_COMPILER
 ALL_MPC_LIBS
+BUILD_AD_UFS_FALSE
+BUILD_AD_UFS_TRUE
+BUILD_AD_IME_FALSE
+BUILD_AD_IME_TRUE
+BUILD_AD_XFS_FALSE
+BUILD_AD_XFS_TRUE
+BUILD_AD_TESTFS_FALSE
+BUILD_AD_TESTFS_TRUE
+BUILD_AD_PVFS2_FALSE
+BUILD_AD_PVFS2_TRUE
+BUILD_AD_PE_FALSE
+BUILD_AD_PE_TRUE
+BUILD_AD_BG_FALSE
+BUILD_AD_BG_TRUE
+BUILD_AD_GPFS_FALSE
+BUILD_AD_GPFS_TRUE
+BUILD_AD_DAOS_FALSE
+BUILD_AD_DAOS_TRUE
+BUILD_PANFS_OPEN6_FALSE
+BUILD_PANFS_OPEN6_TRUE
+BUILD_AD_PANFS_FALSE
+BUILD_AD_PANFS_TRUE
+LUSTRE_LOCKAHEAD_FALSE
+LUSTRE_LOCKAHEAD_TRUE
+BUILD_AD_LUSTRE_FALSE
+BUILD_AD_LUSTRE_TRUE
+BUILD_AD_NFS_FALSE
+BUILD_AD_NFS_TRUE
+HAVE_MPI_DARRAY_SUBARRAY
+HAVE_MPI_INFO
+NEEDS_MPI_FINT
+DEFINE_MPI_OFFSET
+DEFINE_HAVE_MPI_GREQUEST
+MPIO_GLUE_MPICH_FALSE
+MPIO_GLUE_MPICH_TRUE
+MPIO_GLUE_OPENMPI_FALSE
+MPIO_GLUE_OPENMPI_TRUE
+MPIO_GLUE_DEFAULT_FALSE
+MPIO_GLUE_DEFAULT_TRUE
+BUILD_MPIO_ERRHAN_FALSE
+BUILD_MPIO_ERRHAN_TRUE
+BUILD_MPIO_REQUEST_FALSE
+BUILD_MPIO_REQUEST_TRUE
+BUILD_F77_BINDINGS_FALSE
+BUILD_F77_BINDINGS_TRUE
+BUILD_ROMIO_EMBEDDED_FALSE
+BUILD_ROMIO_EMBEDDED_TRUE
+MPC_MPIIO_ENABLED
+MPC_MPIIO_ENABLED_FALSE
+MPC_MPIIO_ENABLED_TRUE
 MPC_OPENMP_ENABLED
 MPC_OPENMP_ENABLED_FALSE
 MPC_OPENMP_ENABLED_TRUE
@@ -973,6 +1025,7 @@ enable_threads
 enable_message_passing
 enable_mpi
 enable_openmp
+enable_mpiio
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1674,6 +1727,7 @@ Optional Features:
                           Compile MPC with Message Passing Support
   --enable-mpi            Compile MPC's MPI interface
   --enable-openmp         Compile MPC's OpenMP interface
+  --enable-mpiio          Compile MPI IO support in MPC (romio)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -23003,8 +23057,8 @@ fi
                 # First try with PKG config
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $libname $version" >&5
-$as_echo_n "checking for $libname $version... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for XML2" >&5
+$as_echo_n "checking for XML2... " >&6; }
 
 if test -n "$XML2_CFLAGS"; then
     pkg_cv_XML2_CFLAGS="$XML2_CFLAGS"
@@ -23044,7 +23098,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -23062,7 +23116,7 @@ fi
 
 	pkg_found=0
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	pkg_found=0
 else
@@ -23165,8 +23219,8 @@ fi
                 # First try with PKG config
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $libname $version" >&5
-$as_echo_n "checking for $libname $version... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for HWLOC" >&5
+$as_echo_n "checking for HWLOC... " >&6; }
 
 if test -n "$HWLOC_CFLAGS"; then
     pkg_cv_HWLOC_CFLAGS="$HWLOC_CFLAGS"
@@ -23206,7 +23260,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -23224,7 +23278,7 @@ fi
 
 	pkg_found=0
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	pkg_found=0
 else
@@ -23327,8 +23381,8 @@ fi
                 # First try with PKG config
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $libname $version" >&5
-$as_echo_n "checking for $libname $version... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OPA" >&5
+$as_echo_n "checking for OPA... " >&6; }
 
 if test -n "$OPA_CFLAGS"; then
     pkg_cv_OPA_CFLAGS="$OPA_CFLAGS"
@@ -23368,7 +23422,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -23386,7 +23440,7 @@ fi
 
 	pkg_found=0
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	pkg_found=0
 else
@@ -23496,8 +23550,8 @@ fi
                 # First try with PKG config
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $libname $version" >&5
-$as_echo_n "checking for $libname $version... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ALLOC" >&5
+$as_echo_n "checking for ALLOC... " >&6; }
 
 if test -n "$ALLOC_CFLAGS"; then
     pkg_cv_ALLOC_CFLAGS="$ALLOC_CFLAGS"
@@ -23537,7 +23591,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -23555,7 +23609,7 @@ fi
 
 	pkg_found=0
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	pkg_found=0
 else
@@ -23659,8 +23713,8 @@ fi
                 # First try with PKG config
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $libname $version" >&5
-$as_echo_n "checking for $libname $version... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for UNW" >&5
+$as_echo_n "checking for UNW... " >&6; }
 
 if test -n "$UNW_CFLAGS"; then
     pkg_cv_UNW_CFLAGS="$UNW_CFLAGS"
@@ -23700,7 +23754,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -23718,7 +23772,7 @@ fi
 
 	pkg_found=0
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	pkg_found=0
 else
@@ -23831,8 +23885,8 @@ fi
                 # First try with PKG config
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $libname $version" >&5
-$as_echo_n "checking for $libname $version... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for IBV" >&5
+$as_echo_n "checking for IBV... " >&6; }
 
 if test -n "$IBV_CFLAGS"; then
     pkg_cv_IBV_CFLAGS="$IBV_CFLAGS"
@@ -23872,7 +23926,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -23890,7 +23944,7 @@ fi
 
 	pkg_found=0
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	pkg_found=0
 else
@@ -24003,8 +24057,8 @@ fi
                 # First try with PKG config
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $libname $version" >&5
-$as_echo_n "checking for $libname $version... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for PORTALS" >&5
+$as_echo_n "checking for PORTALS... " >&6; }
 
 if test -n "$PORTALS_CFLAGS"; then
     pkg_cv_PORTALS_CFLAGS="$PORTALS_CFLAGS"
@@ -24044,7 +24098,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -24062,7 +24116,7 @@ fi
 
 	pkg_found=0
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	pkg_found=0
 else
@@ -24213,8 +24267,8 @@ fi
                 # First try with PKG config
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $libname $version" >&5
-$as_echo_n "checking for $libname $version... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for PMI" >&5
+$as_echo_n "checking for PMI... " >&6; }
 
 if test -n "$PMI_CFLAGS"; then
     pkg_cv_PMI_CFLAGS="$PMI_CFLAGS"
@@ -24254,7 +24308,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -24272,7 +24326,7 @@ fi
 
 	pkg_found=0
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	pkg_found=0
 else
@@ -24485,8 +24539,8 @@ fi
                 # First try with PKG config
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $libname $version" >&5
-$as_echo_n "checking for $libname $version... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for CUDA" >&5
+$as_echo_n "checking for CUDA... " >&6; }
 
 if test -n "$CUDA_CFLAGS"; then
     pkg_cv_CUDA_CFLAGS="$CUDA_CFLAGS"
@@ -24526,7 +24580,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -24544,7 +24598,7 @@ fi
 
 	pkg_found=0
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	pkg_found=0
 else
@@ -24648,8 +24702,8 @@ fi
                 # First try with PKG config
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $libname $version" >&5
-$as_echo_n "checking for $libname $version... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for CUDART" >&5
+$as_echo_n "checking for CUDART... " >&6; }
 
 if test -n "$CUDART_CFLAGS"; then
     pkg_cv_CUDART_CFLAGS="$CUDART_CFLAGS"
@@ -24689,7 +24743,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -24707,7 +24761,7 @@ fi
 
 	pkg_found=0
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	pkg_found=0
 else
@@ -27217,7 +27271,7 @@ $as_echo "#define realloc rpl_realloc" >>confdefs.h
 fi
 
 
-for ac_func in memcpy memmove memset
+for ac_func in memcpy memmove memset statfs
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -30005,8 +30059,8 @@ fi
                 # First try with PKG config
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $libname $version" >&5
-$as_echo_n "checking for $libname $version... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for EXTLS" >&5
+$as_echo_n "checking for EXTLS... " >&6; }
 
 if test -n "$EXTLS_CFLAGS"; then
     pkg_cv_EXTLS_CFLAGS="$EXTLS_CFLAGS"
@@ -30046,7 +30100,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -30064,7 +30118,7 @@ fi
 
 	pkg_found=0
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	pkg_found=0
 else
@@ -30626,6 +30680,804 @@ fi
 
 
 
+
+#
+# MPI IO Support (ROMIO)
+#
+
+# TODO move it its own M4 file
+
+# Check whether --enable-mpiio was given.
+if test "${enable_mpiio+set}" = set; then :
+  enableval=$enable_mpiio; MPC_MPIIO_ENABLED=$enableval
+else
+  MPC_MPIIO_ENABLED=yes
+fi
+
+
+if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
+
+$as_echo "#define MPC_MPIIO 1" >>confdefs.h
+
+fi
+
+ if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
+  MPC_MPIIO_ENABLED_TRUE=
+  MPC_MPIIO_ENABLED_FALSE='#'
+else
+  MPC_MPIIO_ENABLED_TRUE='#'
+  MPC_MPIIO_ENABLED_FALSE=
+fi
+
+
+
+ if true; then
+  BUILD_ROMIO_EMBEDDED_TRUE=
+  BUILD_ROMIO_EMBEDDED_FALSE='#'
+else
+  BUILD_ROMIO_EMBEDDED_TRUE='#'
+  BUILD_ROMIO_EMBEDDED_FALSE=
+fi
+
+ if true; then
+  BUILD_F77_BINDINGS_TRUE=
+  BUILD_F77_BINDINGS_FALSE='#'
+else
+  BUILD_F77_BINDINGS_TRUE='#'
+  BUILD_F77_BINDINGS_FALSE=
+fi
+
+ if false; then
+  BUILD_MPIO_REQUEST_TRUE=
+  BUILD_MPIO_REQUEST_FALSE='#'
+else
+  BUILD_MPIO_REQUEST_TRUE='#'
+  BUILD_MPIO_REQUEST_FALSE=
+fi
+
+ if true; then
+  BUILD_MPIO_ERRHAN_TRUE=
+  BUILD_MPIO_ERRHAN_FALSE='#'
+else
+  BUILD_MPIO_ERRHAN_TRUE='#'
+  BUILD_MPIO_ERRHAN_FALSE=
+fi
+
+ if false; then
+  MPIO_GLUE_DEFAULT_TRUE=
+  MPIO_GLUE_DEFAULT_FALSE='#'
+else
+  MPIO_GLUE_DEFAULT_TRUE='#'
+  MPIO_GLUE_DEFAULT_FALSE=
+fi
+
+ if false; then
+  MPIO_GLUE_OPENMPI_TRUE=
+  MPIO_GLUE_OPENMPI_FALSE='#'
+else
+  MPIO_GLUE_OPENMPI_TRUE='#'
+  MPIO_GLUE_OPENMPI_FALSE=
+fi
+
+ if true; then
+  MPIO_GLUE_MPICH_TRUE=
+  MPIO_GLUE_MPICH_FALSE='#'
+else
+  MPIO_GLUE_MPICH_TRUE='#'
+  MPIO_GLUE_MPICH_FALSE=
+fi
+
+
+DEFINE_HAVE_MPI_GREQUEST="#define HAVE_MPI_GREQUEST"
+
+
+DEFINE_MPI_OFFSET="#define HAVE_MPI_OFFSET"
+
+NEEDS_MPI_FINT=""
+
+HAVE_MPI_INFO="#define HAVE_MPI_INFO"
+
+HAVE_MPI_DARRAY_SUBARRAY="#define HAVE_MPI_DARRAY_SUBARRAY"
+
+
+DEFINE_MPI_OFFSET="/* MPI OFFSET is in mpi.h */"
+
+
+#
+# Check for statfs (many) and specifically f_fstypename field (BSD)
+#
+for ac_header in sys/vfs.h sys/param.h sys/mount.h sys/statvfs.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+for ac_func in statfs
+do :
+  ac_fn_c_check_func "$LINENO" "statfs" "ac_cv_func_statfs"
+if test "x$ac_cv_func_statfs" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STATFS 1
+_ACEOF
+
+fi
+done
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether struct statfs properly defined" >&5
+$as_echo_n "checking whether struct statfs properly defined... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+#ifdef HAVE_SYS_STATVFS_H
+#include <sys/statvfs.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+
+int
+main ()
+{
+
+    struct statfs f;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  pac_cv_have_statfs=yes
+else
+  pac_cv_have_statfs=no
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pac_cv_have_statfs" >&5
+$as_echo "$pac_cv_have_statfs" >&6; }
+
+if test "$pac_cv_have_statfs" = yes ; then
+
+$as_echo "#define HAVE_STRUCT_STATFS 1" >>confdefs.h
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for f_type member of statfs structure" >&5
+$as_echo_n "checking for f_type member of statfs structure... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+#ifdef HAVE_SYS_STATVFS_H
+#include <sys/statvfs.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
+int
+main ()
+{
+
+    struct statfs f;
+    memset(&f, 0, sizeof(f));
+    f.f_type = 0;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  pac_cv_have_statfs_f_type=yes
+else
+  pac_cv_have_statfs_f_type=no
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pac_cv_have_statfs_f_type" >&5
+$as_echo "$pac_cv_have_statfs_f_type" >&6; }
+if test $pac_cv_have_statfs_f_type = yes ; then
+
+$as_echo "#define ROMIO_HAVE_STRUCT_STATFS_WITH_F_TYPE 1" >>confdefs.h
+
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for f_fstypename member of statfs structure" >&5
+$as_echo_n "checking for f_fstypename member of statfs structure... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+#ifdef HAVE_SYS_STATVFS_H
+#include <sys/statvfs.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
+int
+main ()
+{
+
+    struct statfs f;
+    memset(&f, 0, sizeof(f));
+    strncmp("nfs", f.f_fstypename, 3);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  pac_cv_have_statfs_f_fstypename=yes
+else
+  pac_cv_have_statfs_f_fstypename=no
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pac_cv_have_statfs_f_fstypename" >&5
+$as_echo "$pac_cv_have_statfs_f_fstypename" >&6; }
+if test $pac_cv_have_statfs_f_fstypename = yes ; then
+
+$as_echo "#define ROMIO_HAVE_STRUCT_STATFS_WITH_F_FSTYPENAME 1" >>confdefs.h
+
+fi
+
+#
+# ROMIO File systems
+#
+ if false; then
+  BUILD_AD_NFS_TRUE=
+  BUILD_AD_NFS_FALSE='#'
+else
+  BUILD_AD_NFS_TRUE='#'
+  BUILD_AD_NFS_FALSE=
+fi
+
+
+ if false; then
+  BUILD_AD_LUSTRE_TRUE=
+  BUILD_AD_LUSTRE_FALSE='#'
+else
+  BUILD_AD_LUSTRE_TRUE='#'
+  BUILD_AD_LUSTRE_FALSE=
+fi
+
+ if false; then
+  LUSTRE_LOCKAHEAD_TRUE=
+  LUSTRE_LOCKAHEAD_FALSE='#'
+else
+  LUSTRE_LOCKAHEAD_TRUE='#'
+  LUSTRE_LOCKAHEAD_FALSE=
+fi
+
+
+ if false; then
+  BUILD_AD_PANFS_TRUE=
+  BUILD_AD_PANFS_FALSE='#'
+else
+  BUILD_AD_PANFS_TRUE='#'
+  BUILD_AD_PANFS_FALSE=
+fi
+
+ if false; then
+  BUILD_PANFS_OPEN6_TRUE=
+  BUILD_PANFS_OPEN6_FALSE='#'
+else
+  BUILD_PANFS_OPEN6_TRUE='#'
+  BUILD_PANFS_OPEN6_FALSE=
+fi
+
+
+ if false; then
+  BUILD_AD_DAOS_TRUE=
+  BUILD_AD_DAOS_FALSE='#'
+else
+  BUILD_AD_DAOS_TRUE='#'
+  BUILD_AD_DAOS_FALSE=
+fi
+
+ if false; then
+  BUILD_AD_GPFS_TRUE=
+  BUILD_AD_GPFS_FALSE='#'
+else
+  BUILD_AD_GPFS_TRUE='#'
+  BUILD_AD_GPFS_FALSE=
+fi
+
+ if false; then
+  BUILD_AD_BG_TRUE=
+  BUILD_AD_BG_FALSE='#'
+else
+  BUILD_AD_BG_TRUE='#'
+  BUILD_AD_BG_FALSE=
+fi
+
+ if false; then
+  BUILD_AD_PE_TRUE=
+  BUILD_AD_PE_FALSE='#'
+else
+  BUILD_AD_PE_TRUE='#'
+  BUILD_AD_PE_FALSE=
+fi
+
+
+ if false; then
+  BUILD_AD_PVFS2_TRUE=
+  BUILD_AD_PVFS2_FALSE='#'
+else
+  BUILD_AD_PVFS2_TRUE='#'
+  BUILD_AD_PVFS2_FALSE=
+fi
+
+ if false; then
+  BUILD_AD_TESTFS_TRUE=
+  BUILD_AD_TESTFS_FALSE='#'
+else
+  BUILD_AD_TESTFS_TRUE='#'
+  BUILD_AD_TESTFS_FALSE=
+fi
+
+ if false; then
+  BUILD_AD_XFS_TRUE=
+  BUILD_AD_XFS_FALSE='#'
+else
+  BUILD_AD_XFS_TRUE='#'
+  BUILD_AD_XFS_FALSE=
+fi
+
+ if false; then
+  BUILD_AD_IME_TRUE=
+  BUILD_AD_IME_FALSE='#'
+else
+  BUILD_AD_IME_TRUE='#'
+  BUILD_AD_IME_FALSE=
+fi
+
+
+ if true; then
+  BUILD_AD_UFS_TRUE=
+  BUILD_AD_UFS_FALSE='#'
+else
+  BUILD_AD_UFS_TRUE='#'
+  BUILD_AD_UFS_FALSE=
+fi
+
+
+file_system_nfs="yes"
+file_system_lustre="yes"
+file_system_ime="yes"
+file_system_ufs="yes"
+
+file_system_xfs=""
+file_system_gpfs=""
+file_system_args=""
+
+if test -n "$file_system_nfs" ; then
+
+$as_echo "#define ROMIO_NFS 1" >>confdefs.h
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: File locks may not work with NFS.  See the Installation and
+users manual for instructions on testing and if necessary fixing this" >&5
+$as_echo "$as_me: WARNING: File locks may not work with NFS.  See the Installation and
+users manual for instructions on testing and if necessary fixing this" >&2;}
+     if true; then
+  BUILD_AD_NFS_TRUE=
+  BUILD_AD_NFS_FALSE='#'
+else
+  BUILD_AD_NFS_TRUE='#'
+  BUILD_AD_NFS_FALSE=
+fi
+
+fi
+
+
+if test -n "$file_system_gpfs"; then
+
+$as_echo "#define ROMIO_GPFS 1" >>confdefs.h
+
+fi
+
+if test -n "$file_system_ufs"; then
+
+$as_echo "#define ROMIO_UFS 1" >>confdefs.h
+
+fi
+
+ if false; then
+  BUILD_AD_BG_TRUE=
+  BUILD_AD_BG_FALSE='#'
+else
+  BUILD_AD_BG_TRUE='#'
+  BUILD_AD_BG_FALSE=
+fi
+
+ if false; then
+  BUILD_AD_PE_TRUE=
+  BUILD_AD_PE_FALSE='#'
+else
+  BUILD_AD_PE_TRUE='#'
+  BUILD_AD_PE_FALSE=
+fi
+
+
+if test "$file_system_args" = "BGQ" -a -n "$file_system_gpfs"; then
+
+$as_echo "#define BGQPLATFORM 1" >>confdefs.h
+
+     if true; then
+  BUILD_AD_BG_TRUE=
+  BUILD_AD_BG_FALSE='#'
+else
+  BUILD_AD_BG_TRUE='#'
+  BUILD_AD_BG_FALSE=
+fi
+
+        disable_aio=yes
+fi
+
+if test "$file_system_args" = "PE" -a -n "$file_system_gpfs"; then
+
+$as_echo "#define PEPLATFORM 1" >>confdefs.h
+
+     if true; then
+  BUILD_AD_PE_TRUE=
+  BUILD_AD_PE_FALSE='#'
+else
+  BUILD_AD_PE_TRUE='#'
+  BUILD_AD_PE_FALSE=
+fi
+
+fi
+
+#
+# Verify presence of lustre/lustre_user.h
+#
+lustre_lockahead="no"
+if test -n "$file_system_lustre"; then
+    for ac_header in linux/lustre/lustre_user.h lustre/lustre_user.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+ break
+fi
+
+done
+
+    if test x"$ac_cv_header_linux_lustre_lustre_user_h" = "xyes" -o x"$ac_cv_header_lustre_lustre_user_h" = "xyes" ; then
+
+$as_echo "#define ROMIO_LUSTRE 1" >>confdefs.h
+
+	 if true; then
+  BUILD_AD_LUSTRE_TRUE=
+  BUILD_AD_LUSTRE_FALSE='#'
+else
+  BUILD_AD_LUSTRE_TRUE='#'
+  BUILD_AD_LUSTRE_FALSE=
+fi
+
+    else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: LUSTRE support requested but cannot find lustre/lustre_user.h header file" >&5
+$as_echo "$as_me: LUSTRE support requested but cannot find lustre/lustre_user.h header file" >&6;}
+    fi
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <lustre/lustre_user.h>
+#include <sys/ioctl.h>
+        int main(int argc, char **argv) {
+            int fd=100;
+            struct ladvise_hdr *ladvise_hdr;
+            ioctl(fd, LL_IOC_LADVISE, &ladvise_hdr);
+            return 0; }
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  lustre_lockahead="yes"
+
+$as_echo "#define HAVE_LUSTRE_LOCKAHEAD 1" >>confdefs.h
+
+	 if true; then
+  LUSTRE_LOCKAHEAD_TRUE=
+  LUSTRE_LOCKAHEAD_FALSE='#'
+else
+  LUSTRE_LOCKAHEAD_TRUE='#'
+  LUSTRE_LOCKAHEAD_FALSE=
+fi
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+
+# Add conditional compilation of Lustre lockahead sources
+ if test "$lustre_lockahead" = "yes"; then
+  LUSTRE_LOCKAHEAD_TRUE=
+  LUSTRE_LOCKAHEAD_FALSE='#'
+else
+  LUSTRE_LOCKAHEAD_TRUE='#'
+  LUSTRE_LOCKAHEAD_FALSE=
+fi
+
+
+if test -n "$file_system_xfs"; then
+
+$as_echo "#define ROMIO_XFS 1" >>confdefs.h
+
+     if true; then
+  BUILD_AD_XFS_TRUE=
+  BUILD_AD_XFS_FALSE='#'
+else
+  BUILD_AD_XFS_TRUE='#'
+  BUILD_AD_XFS_FALSE=
+fi
+
+    # Check for memalign value
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for memory alignment needed for direct I/O" >&5
+$as_echo_n "checking for memory alignment needed for direct I/O... " >&6; }
+if ${pac_cv_memalignval+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+    rm -f confmemalignval
+    rm -f /tmp/romio_tmp.bin
+    if test "$cross_compiling" = yes; then :
+  pac_cv_memalignval="unknown"
+
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdio.h>
+int main(int argc, char **argv) {
+	struct dioattr st;
+	int fd = open("/tmp/romio_tmp.bin", O_RDWR | O_CREAT, 0644);
+	FILE *f=fopen("confmemalignval","w");
+	if (fd == -1) exit(1);
+	if (!f) exit(1);
+	fcntl(fd, F_DIOINFO, &st);
+	fprintf( f, "%u\n", st.d_mem);
+	exit(0);
+	}
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  pac_cv_memalignval=`cat confmemalignval`
+else
+  pac_cv_memalignval="unknown"
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+    rm -f confmemalignval
+    rm -f /tmp/romio_tmp.bin
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pac_cv_memalignval" >&5
+$as_echo "$pac_cv_memalignval" >&6; }
+    if test -n "$pac_cv_memalignval" -a "$pac_cv_memalignval" != 0 -a \
+	"$pac_cv_memalignval" != "unknown" ; then
+        CFLAGS="$CFLAGS -DXFS_MEMALIGN=$pac_cv_memalignval"
+    else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: assuming 128 for memory alignment" >&5
+$as_echo "assuming 128 for memory alignment" >&6; }
+        CFLAGS="$CFLAGS -DXFS_MEMALIGN=128"
+    fi
+fi
+
+if test -n "$file_system_ime"; then
+        for ac_header in ime_native.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "ime_native.h" "ac_cv_header_ime_native_h" "$ac_includes_default"
+if test "x$ac_cv_header_ime_native_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_IME_NATIVE_H 1
+_ACEOF
+
+$as_echo "#define ROMIO_IME 1" >>confdefs.h
+
+		 if true; then
+  BUILD_AD_IME_TRUE=
+  BUILD_AD_IME_FALSE='#'
+else
+  BUILD_AD_IME_TRUE='#'
+  BUILD_AD_IME_FALSE=
+fi
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: IME support requested but cannot find ime_native.h header file" >&5
+$as_echo "$as_me: IME support requested but cannot find ime_native.h header file" >&6;}
+
+fi
+
+done
+
+fi
+
+#
+# Verify presence of pvfs2.h
+#
+if test -n "$file_system_pvfs2"; then
+    CPPFLAGS="$CPPFLAGS $CFLAGS"
+    for ac_header in pvfs2.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "pvfs2.h" "ac_cv_header_pvfs2_h" "$ac_includes_default"
+if test "x$ac_cv_header_pvfs2_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_PVFS2_H 1
+_ACEOF
+
+$as_echo "#define ROMIO_PVFS2 1" >>confdefs.h
+
+	 if true; then
+  BUILD_AD_PVFS2_TRUE=
+  BUILD_AD_PVFS2_FALSE='#'
+else
+  BUILD_AD_PVFS2_TRUE='#'
+  BUILD_AD_PVFS2_FALSE=
+fi
+
+
+$as_echo "#define HAVE_PVFS2_SUPER_MAGIC 1" >>confdefs.h
+
+else
+  as_fn_error $? "PVFS2 support requested but cannot find pvfs2.h header file" "$LINENO" 5
+
+fi
+
+done
+
+fi
+
+# layout change after pvfs-2.6.3:
+if test -n "$file_system_pvfs2"; then
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdlib.h>
+#include "pvfs2.h"
+          int main(int argc, char **argv) {
+	      PVFS_object_ref ref;
+	      PVFS_sys_attr attr;
+	      PVFS_sys_create(NULL, ref, attr, NULL, NULL, NULL, NULL);
+	  return 0; }
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+else
+
+$as_echo "#define HAVE_PVFS2_CREATE_WITHOUT_LAYOUT 1" >>confdefs.h
+
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+
+if test -n "$file_system_gpfs"; then :
+  SYSDEP_INC=-I${prefix}/include
+else
+  SYSDEP_INC=
+fi
+
+if test -n "$file_system_gpfs"; then :
+  for ac_header in gpfs.h gpfs_fcntl.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+	if test "$ac_cv_header_gpfs_h" = "yes" -o "$ac_cv_header_gpfs_fcntl_h" = "yes"; then :
+
+	  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing gpfs_fcntl" >&5
+$as_echo_n "checking for library containing gpfs_fcntl... " >&6; }
+if ${ac_cv_search_gpfs_fcntl+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gpfs_fcntl ();
+int
+main ()
+{
+return gpfs_fcntl ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' gpfs; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_gpfs_fcntl=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_gpfs_fcntl+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_gpfs_fcntl+:} false; then :
+
+else
+  ac_cv_search_gpfs_fcntl=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_gpfs_fcntl" >&5
+$as_echo "$ac_cv_search_gpfs_fcntl" >&6; }
+ac_res=$ac_cv_search_gpfs_fcntl
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  as_fn_error $? "Library containing gpfs_fcntl symbols not found" "$LINENO" 5
+fi
+
+
+fi
+
+fi
+#
+# MPI IO (romio) END
+#
+
 #
 # Compute the all MPC libs variable
 #
@@ -30647,6 +31499,10 @@ fi
 
 if test "x${MPC_MPI_ENABLED}" = "xyes"; then
 	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_MPI/src/libmpcmpi.la"
+fi
+
+if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_IO/src/libmpcio.la"
 fi
 
 
@@ -30742,6 +31598,9 @@ $as_echo "no" >&6; }
 
 done
 
+MPC_PRIV_COMPILER="$CC"
+MPC_PRIV_FLAGS=""
+
 if test "x${mpc_privatization_support}" = "xyes"; then
 
         at_least_one_privatizing_compiler=""
@@ -30766,8 +31625,20 @@ $as_echo "no" >&6; }
 
         if test -z "$at_least_one_privatizing_compiler"; then
                 as_fn_error $? "Privatization was enabled but no privatizing compiler was found" "$LINENO" 5
+	else
+		locate_bin "apcc"
+		if test -n "$locate_bin_path"; then
+			# We have a privatizing C compiler
+			MPC_PRIV_COMPILER="$locate_bin_path"
+			MPC_PRIV_FLAGS="-fmpc-privatize"
+		else
+			as_fn_error $? "Privatization was enabled but no privatizing apcc compiler was found" "$LINENO" 5
+		fi
         fi
 fi
+
+
+
 
 # Check that we at least have a C compiler
 
@@ -31087,7 +31958,7 @@ PKG_INCDIR="${prefix}/include/${PACKAGE_TARNAME}/"
 ac_config_headers="$ac_config_headers mpc_config.h"
 
 
-ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Message_Passing/Makefile src/MPC_Message_Passing/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/include/mpc_threads_config.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_compiler_manager.sh src/bin/mpc_cc.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpc_cxx.sh src/bin/mpc_nvcc.sh src/bin/mpc_f77.sh src/bin/mpcrun.sh src/bin/mpcvars.sh src/bin/mpc_status.sh"
+ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Message_Passing/Makefile src/MPC_Message_Passing/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/MPC_IO/Makefile src/MPC_IO/src/Makefile src/MPC_IO/include/romioconf.h src/MPC_IO/include/mpio.h src/include/mpi.h src/MPC_IO/src/romio/Makefile src/include/mpc_threads_config.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_compiler_manager.sh src/bin/mpc_cc.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpc_cxx.sh src/bin/mpc_nvcc.sh src/bin/mpc_f77.sh src/bin/mpcrun.sh src/bin/mpcvars.sh src/bin/mpc_status.sh"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -31300,6 +32171,138 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_OPENMP_ENABLED_TRUE}" && test -z "${MPC_OPENMP_ENABLED_FALSE}"; then
   as_fn_error $? "conditional \"MPC_OPENMP_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPC_MPIIO_ENABLED_TRUE}" && test -z "${MPC_MPIIO_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_MPIIO_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_ROMIO_EMBEDDED_TRUE}" && test -z "${BUILD_ROMIO_EMBEDDED_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_ROMIO_EMBEDDED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_F77_BINDINGS_TRUE}" && test -z "${BUILD_F77_BINDINGS_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_F77_BINDINGS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_MPIO_REQUEST_TRUE}" && test -z "${BUILD_MPIO_REQUEST_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_MPIO_REQUEST\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_MPIO_ERRHAN_TRUE}" && test -z "${BUILD_MPIO_ERRHAN_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_MPIO_ERRHAN\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPIO_GLUE_DEFAULT_TRUE}" && test -z "${MPIO_GLUE_DEFAULT_FALSE}"; then
+  as_fn_error $? "conditional \"MPIO_GLUE_DEFAULT\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPIO_GLUE_OPENMPI_TRUE}" && test -z "${MPIO_GLUE_OPENMPI_FALSE}"; then
+  as_fn_error $? "conditional \"MPIO_GLUE_OPENMPI\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPIO_GLUE_MPICH_TRUE}" && test -z "${MPIO_GLUE_MPICH_FALSE}"; then
+  as_fn_error $? "conditional \"MPIO_GLUE_MPICH\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_NFS_TRUE}" && test -z "${BUILD_AD_NFS_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_NFS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_LUSTRE_TRUE}" && test -z "${BUILD_AD_LUSTRE_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_LUSTRE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${LUSTRE_LOCKAHEAD_TRUE}" && test -z "${LUSTRE_LOCKAHEAD_FALSE}"; then
+  as_fn_error $? "conditional \"LUSTRE_LOCKAHEAD\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_PANFS_TRUE}" && test -z "${BUILD_AD_PANFS_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_PANFS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_PANFS_OPEN6_TRUE}" && test -z "${BUILD_PANFS_OPEN6_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_PANFS_OPEN6\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_DAOS_TRUE}" && test -z "${BUILD_AD_DAOS_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_DAOS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_GPFS_TRUE}" && test -z "${BUILD_AD_GPFS_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_GPFS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_BG_TRUE}" && test -z "${BUILD_AD_BG_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_BG\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_PE_TRUE}" && test -z "${BUILD_AD_PE_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_PE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_PVFS2_TRUE}" && test -z "${BUILD_AD_PVFS2_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_PVFS2\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_TESTFS_TRUE}" && test -z "${BUILD_AD_TESTFS_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_TESTFS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_XFS_TRUE}" && test -z "${BUILD_AD_XFS_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_XFS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_IME_TRUE}" && test -z "${BUILD_AD_IME_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_IME\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_UFS_TRUE}" && test -z "${BUILD_AD_UFS_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_UFS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_NFS_TRUE}" && test -z "${BUILD_AD_NFS_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_NFS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_BG_TRUE}" && test -z "${BUILD_AD_BG_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_BG\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_PE_TRUE}" && test -z "${BUILD_AD_PE_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_PE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_BG_TRUE}" && test -z "${BUILD_AD_BG_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_BG\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_PE_TRUE}" && test -z "${BUILD_AD_PE_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_PE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_LUSTRE_TRUE}" && test -z "${BUILD_AD_LUSTRE_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_LUSTRE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${LUSTRE_LOCKAHEAD_TRUE}" && test -z "${LUSTRE_LOCKAHEAD_FALSE}"; then
+  as_fn_error $? "conditional \"LUSTRE_LOCKAHEAD\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${LUSTRE_LOCKAHEAD_TRUE}" && test -z "${LUSTRE_LOCKAHEAD_FALSE}"; then
+  as_fn_error $? "conditional \"LUSTRE_LOCKAHEAD\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_XFS_TRUE}" && test -z "${BUILD_AD_XFS_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_XFS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_IME_TRUE}" && test -z "${BUILD_AD_IME_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_IME\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_AD_PVFS2_TRUE}" && test -z "${BUILD_AD_PVFS2_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_AD_PVFS2\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_HAVE_AUTOPRIV_TRUE}" && test -z "${MPC_HAVE_AUTOPRIV_FALSE}"; then
@@ -32392,6 +33395,12 @@ do
     "src/MPC_Topology/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Topology/src/Makefile" ;;
     "src/MPC_Threads/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Threads/Makefile" ;;
     "src/MPC_Threads/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Threads/src/Makefile" ;;
+    "src/MPC_IO/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_IO/Makefile" ;;
+    "src/MPC_IO/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_IO/src/Makefile" ;;
+    "src/MPC_IO/include/romioconf.h") CONFIG_FILES="$CONFIG_FILES src/MPC_IO/include/romioconf.h" ;;
+    "src/MPC_IO/include/mpio.h") CONFIG_FILES="$CONFIG_FILES src/MPC_IO/include/mpio.h" ;;
+    "src/include/mpi.h") CONFIG_FILES="$CONFIG_FILES src/include/mpi.h" ;;
+    "src/MPC_IO/src/romio/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_IO/src/romio/Makefile" ;;
     "src/include/mpc_threads_config.h") CONFIG_FILES="$CONFIG_FILES src/include/mpc_threads_config.h" ;;
     "src/bin/Makefile") CONFIG_FILES="$CONFIG_FILES src/bin/Makefile" ;;
     "src/bin/mpc_build_env.sh") CONFIG_FILES="$CONFIG_FILES src/bin/mpc_build_env.sh" ;;

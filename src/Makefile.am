@@ -20,6 +20,8 @@ if MPC_MPI_ENABLED
         SUBDIRS += MPC_MPI
 endif
 
+SUBDIRS += MPC_IO
+
 # Bin must be the last as it depends on libmpcframework.so being
 # installed for Fortran generation
 SUBDIRS += lib bin

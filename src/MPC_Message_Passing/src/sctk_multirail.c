@@ -366,7 +366,7 @@ void sctk_endpoint_list_prune( sctk_endpoint_list_t ** list)
 void sctk_multirail_destination_table_entry_init( sctk_multirail_destination_table_entry_t * entry, int destination )
 {
 	entry->endpoints = NULL;
-	sctk_spin_rwlock_t lckinit = SCTK_SPIN_RWLOCK_INITIALIZER;
+	mpc_common_rwlock_t lckinit = SCTK_SPIN_RWLOCK_INITIALIZER;
 	entry->endpoints_lock = lckinit;
 	entry->destination = destination;
 }
@@ -1013,7 +1013,7 @@ void sctk_multirail_destination_table_init()
 {
 	struct sctk_multirail_destination_table * table = sctk_multirail_destination_table_get();
 	table->destinations = NULL;
-	sctk_spin_rwlock_t lckinit = SCTK_SPIN_RWLOCK_INITIALIZER;
+	mpc_common_rwlock_t lckinit = SCTK_SPIN_RWLOCK_INITIALIZER;
 	table->table_lock = lckinit;
 	
 	/* Register Probing Calls */

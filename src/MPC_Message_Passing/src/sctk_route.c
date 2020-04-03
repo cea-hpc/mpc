@@ -47,7 +47,7 @@ sctk_route_table_t * sctk_route_table_new()
 	
 	assume( ret != NULL );
 
-	sctk_spin_rwlock_t lck = SCTK_SPIN_RWLOCK_INITIALIZER;
+	mpc_common_rwlock_t lck = SCTK_SPIN_RWLOCK_INITIALIZER;
 	ret->dynamic_route_table_lock = lck;
 	
 	mpc_common_hashtable_init( &ret->dynamic_route_table, 128 );

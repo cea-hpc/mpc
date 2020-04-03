@@ -769,7 +769,7 @@ AC_FUNC_FORK
 AC_FUNC_MALLOC
 AC_FUNC_MMAP
 AC_FUNC_REALLOC
-AC_CHECK_FUNCS([memcpy memmove memset])
+AC_CHECK_FUNCS([memcpy memmove memset statfs])
 AC_CHECK_FUNCS([strcasecmp strchr strdup strerror strstr strtol snprintf vsnprintf])
 AC_CHECK_FUNCS([gethostbyname gethostname])
 AC_CHECK_FUNCS([gettimeofday])
@@ -1601,6 +1601,325 @@ fi
 AM_CONDITIONAL([MPC_OPENMP_ENABLED], [test "x${MPC_OPENMP_ENABLED}" = "xyes"])
 AC_SUBST([MPC_OPENMP_ENABLED])
 
+
+#
+# MPI IO Support (ROMIO)
+#
+
+# TODO move it its own M4 file
+
+AC_ARG_ENABLE([mpiio],
+[AS_HELP_STRING([--enable-mpiio],
+                [Compile MPI IO support in MPC (romio)])],
+[MPC_MPIIO_ENABLED=$enableval],
+[MPC_MPIIO_ENABLED=yes])
+
+if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
+        AC_DEFINE([MPC_MPIIO], [1], [MPC_MPIIO module was enabled])
+fi
+
+AM_CONDITIONAL([MPC_MPIIO_ENABLED], [test "x${MPC_MPIIO_ENABLED}" = "xyes"])
+AC_SUBST([MPC_MPIIO_ENABLED])
+
+AM_CONDITIONAL([BUILD_ROMIO_EMBEDDED], [true])
+AM_CONDITIONAL([BUILD_F77_BINDINGS], [true])
+AM_CONDITIONAL([BUILD_MPIO_REQUEST], [false])
+AM_CONDITIONAL([BUILD_MPIO_ERRHAN], [true])
+AM_CONDITIONAL([MPIO_GLUE_DEFAULT], [false])
+AM_CONDITIONAL([MPIO_GLUE_OPENMPI], [false])
+AM_CONDITIONAL([MPIO_GLUE_MPICH], [true])
+
+DEFINE_HAVE_MPI_GREQUEST="#define HAVE_MPI_GREQUEST"
+AC_SUBST([DEFINE_HAVE_MPI_GREQUEST])
+
+DEFINE_MPI_OFFSET="#define HAVE_MPI_OFFSET"
+AC_SUBST([DEFINE_MPI_OFFSET])
+NEEDS_MPI_FINT=""
+AC_SUBST([NEEDS_MPI_FINT])
+HAVE_MPI_INFO="#define HAVE_MPI_INFO"
+AC_SUBST([HAVE_MPI_INFO])
+HAVE_MPI_DARRAY_SUBARRAY="#define HAVE_MPI_DARRAY_SUBARRAY"
+AC_SUBST([HAVE_MPI_DARRAY_SUBARRAY])
+
+DEFINE_MPI_OFFSET="/* MPI OFFSET is in mpi.h */"
+AC_SUBST([DEFINE_MPI_OFFSET])
+
+#
+# Check for statfs (many) and specifically f_fstypename field (BSD)
+#
+AC_CHECK_HEADERS(sys/vfs.h sys/param.h sys/mount.h sys/statvfs.h)
+AC_CHECK_FUNCS([statfs])
+AC_MSG_CHECKING([whether struct statfs properly defined])
+AC_TRY_COMPILE([
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+#ifdef HAVE_SYS_STATVFS_H
+#include <sys/statvfs.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+    ],[
+    struct statfs f;
+    ],
+    pac_cv_have_statfs=yes,pac_cv_have_statfs=no
+)
+AC_MSG_RESULT($pac_cv_have_statfs)
+
+if test "$pac_cv_have_statfs" = yes ; then
+    AC_DEFINE(HAVE_STRUCT_STATFS,1,[Define if struct statfs can be compiled])
+fi
+AC_MSG_CHECKING([for f_type member of statfs structure])
+AC_TRY_COMPILE([
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+#ifdef HAVE_SYS_STATVFS_H
+#include <sys/statvfs.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+    ],[
+    struct statfs f;
+    memset(&f, 0, sizeof(f));
+    f.f_type = 0;
+    ],
+    pac_cv_have_statfs_f_type=yes,
+    pac_cv_have_statfs_f_type=no
+)
+AC_MSG_RESULT($pac_cv_have_statfs_f_type)
+if test $pac_cv_have_statfs_f_type = yes ; then
+    AC_DEFINE(ROMIO_HAVE_STRUCT_STATFS_WITH_F_TYPE, 1,[Define if statfs has f_type])
+fi
+
+
+AC_MSG_CHECKING([for f_fstypename member of statfs structure])
+AC_TRY_COMPILE([
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+#ifdef HAVE_SYS_STATVFS_H
+#include <sys/statvfs.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+    ],[
+    struct statfs f;
+    memset(&f, 0, sizeof(f));
+    strncmp("nfs", f.f_fstypename, 3);
+    ],
+    pac_cv_have_statfs_f_fstypename=yes,
+    pac_cv_have_statfs_f_fstypename=no
+)
+AC_MSG_RESULT($pac_cv_have_statfs_f_fstypename)
+if test $pac_cv_have_statfs_f_fstypename = yes ; then
+    AC_DEFINE(ROMIO_HAVE_STRUCT_STATFS_WITH_F_FSTYPENAME, 1,[Define if statfs has f_fstypename])
+fi
+
+#
+# ROMIO File systems
+#
+AM_CONDITIONAL([BUILD_AD_NFS], [false])
+
+AM_CONDITIONAL([BUILD_AD_LUSTRE], [false])
+AM_CONDITIONAL([LUSTRE_LOCKAHEAD], [false])
+
+AM_CONDITIONAL([BUILD_AD_PANFS], [false])
+AM_CONDITIONAL([BUILD_PANFS_OPEN6], [false])
+
+AM_CONDITIONAL([BUILD_AD_DAOS], [false])
+AM_CONDITIONAL([BUILD_AD_GPFS], [false])
+AM_CONDITIONAL([BUILD_AD_BG], [false])
+AM_CONDITIONAL([BUILD_AD_PE], [false])
+
+AM_CONDITIONAL([BUILD_AD_PVFS2], [false])
+AM_CONDITIONAL([BUILD_AD_TESTFS], [false])
+AM_CONDITIONAL([BUILD_AD_XFS], [false])
+AM_CONDITIONAL([BUILD_AD_IME], [false])
+
+AM_CONDITIONAL([BUILD_AD_UFS], [true])
+
+file_system_nfs="yes"
+file_system_lustre="yes"
+file_system_ime="yes"
+file_system_ufs="yes"
+
+file_system_xfs=""
+file_system_gpfs=""
+file_system_args=""
+
+if test -n "$file_system_nfs" ; then
+    AC_DEFINE(ROMIO_NFS,1,[Define for ROMIO with NFS])
+    AC_MSG_WARN([File locks may not work with NFS.  See the Installation and
+users manual for instructions on testing and if necessary fixing this])
+    AM_CONDITIONAL([BUILD_AD_NFS], [true])
+fi
+
+
+if test -n "$file_system_gpfs"; then
+    AC_DEFINE(ROMIO_GPFS,1,[Define for ROMIO with GPFS])
+fi
+
+if test -n "$file_system_ufs"; then
+    AC_DEFINE(ROMIO_UFS,1,[Define for ROMIO with UFS])
+fi
+
+AM_CONDITIONAL([BUILD_AD_BG],[false])
+AM_CONDITIONAL([BUILD_AD_PE],[false])
+
+if test "$file_system_args" = "BGQ" -a -n "$file_system_gpfs"; then
+    AC_DEFINE(BGQPLATFORM,1,BGQ platform)
+    AM_CONDITIONAL([BUILD_AD_BG],[true])
+    dnl what if anything can make Blue Gene support aio?
+    disable_aio=yes
+fi
+
+if test "$file_system_args" = "PE" -a -n "$file_system_gpfs"; then
+    AC_DEFINE(PEPLATFORM,1,PE platform)
+    AM_CONDITIONAL([BUILD_AD_PE],[true])
+fi
+
+#
+# Verify presence of lustre/lustre_user.h
+#
+lustre_lockahead="no"
+if test -n "$file_system_lustre"; then
+    AC_CHECK_HEADERS([linux/lustre/lustre_user.h lustre/lustre_user.h],
+        break)
+    if test x"$ac_cv_header_linux_lustre_lustre_user_h" = "xyes" -o x"$ac_cv_header_lustre_lustre_user_h" = "xyes" ; then
+        AC_DEFINE(ROMIO_LUSTRE, 1, [Define for ROMIO with LUSTRE])
+	AM_CONDITIONAL([BUILD_AD_LUSTRE], [true])
+    else
+        AC_MSG_NOTICE([LUSTRE support requested but cannot find lustre/lustre_user.h header file])
+    fi
+    AC_COMPILE_IFELSE([
+        AC_LANG_SOURCE([
+#include <lustre/lustre_user.h>
+#include <sys/ioctl.h>
+        int main(int argc, char **argv) {
+            int fd=100;
+            struct ladvise_hdr *ladvise_hdr;
+            ioctl(fd, LL_IOC_LADVISE, &ladvise_hdr);
+            return 0; }
+        ])],
+        lustre_lockahead="yes"
+	AC_DEFINE(HAVE_LUSTRE_LOCKAHEAD, 1, [Define if LUSTRE_LOCKAHEAD is enabled.])
+	AM_CONDITIONAL([LUSTRE_LOCKAHEAD], [true]))
+fi
+
+# Add conditional compilation of Lustre lockahead sources
+AM_CONDITIONAL([LUSTRE_LOCKAHEAD],[test "$lustre_lockahead" = "yes"])
+
+if test -n "$file_system_xfs"; then
+    AC_DEFINE(ROMIO_XFS,1,[Define for ROMIO with XFS])
+    AM_CONDITIONAL([BUILD_AD_XFS], [true])
+    # Check for memalign value
+    AC_CACHE_CHECK([for memory alignment needed for direct I/O],
+    pac_cv_memalignval,
+    [
+    rm -f confmemalignval
+    rm -f /tmp/romio_tmp.bin
+    AC_TRY_RUN([
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdio.h>
+int main(int argc, char **argv) { 
+	struct dioattr st;
+	int fd = open("/tmp/romio_tmp.bin", O_RDWR | O_CREAT, 0644);
+	FILE *f=fopen("confmemalignval","w");
+	if (fd == -1) exit(1);
+	if (!f) exit(1);
+	fcntl(fd, F_DIOINFO, &st);
+	fprintf( f, "%u\n", st.d_mem);
+	exit(0);
+	}
+	],
+	pac_cv_memalignval=`cat confmemalignval`,
+	pac_cv_memalignval="unknown",pac_cv_memalignval="unknown"
+    )
+    rm -f confmemalignval
+    rm -f /tmp/romio_tmp.bin
+    ])
+    if test -n "$pac_cv_memalignval" -a "$pac_cv_memalignval" != 0 -a \
+	"$pac_cv_memalignval" != "unknown" ; then
+        CFLAGS="$CFLAGS -DXFS_MEMALIGN=$pac_cv_memalignval"
+    else
+        AC_MSG_RESULT(assuming 128 for memory alignment)
+        CFLAGS="$CFLAGS -DXFS_MEMALIGN=128"
+    fi
+fi
+
+if test -n "$file_system_ime"; then
+        AC_CHECK_HEADERS(ime_native.h,
+                AC_DEFINE(ROMIO_IME,1,[Define for ROMIO with IME])
+		AM_CONDITIONAL([BUILD_AD_IME], [true]),
+                AC_MSG_NOTICE([IME support requested but cannot find ime_native.h header file])
+        )
+fi
+
+#
+# Verify presence of pvfs2.h
+#
+if test -n "$file_system_pvfs2"; then
+    CPPFLAGS="$CPPFLAGS $CFLAGS"
+    AC_CHECK_HEADERS(pvfs2.h,
+	AC_DEFINE(ROMIO_PVFS2,1,[Define for ROMIO with PVFS2])
+	AM_CONDITIONAL([BUILD_AD_PVFS2], [true])
+	AC_DEFINE(HAVE_PVFS2_SUPER_MAGIC, 1, [Define if PVFS2_SUPER_MAGIC defined.]),
+        AC_MSG_ERROR([PVFS2 support requested but cannot find pvfs2.h header file])                                        
+    )
+fi
+
+# layout change after pvfs-2.6.3:
+if test -n "$file_system_pvfs2"; then
+    AC_COMPILE_IFELSE([
+        AC_LANG_SOURCE([
+#include <stdlib.h>
+#include "pvfs2.h"
+          int main(int argc, char **argv) { 
+	      PVFS_object_ref ref;
+	      PVFS_sys_attr attr;
+	      PVFS_sys_create(NULL, ref, attr, NULL, NULL, NULL, NULL); 
+	  return 0; }
+       ])],
+       , AC_DEFINE(HAVE_PVFS2_CREATE_WITHOUT_LAYOUT, 1, 
+       		[Define if PVFS_sys_create does not have layout parameter])
+       )
+fi
+
+AS_IF([test -n "$file_system_gpfs"],
+    [SYSDEP_INC=-I${prefix}/include], [SYSDEP_INC=])
+
+AS_IF([test -n "$file_system_gpfs"],
+	AC_CHECK_HEADERS([gpfs.h gpfs_fcntl.h])
+	AS_IF([test "$ac_cv_header_gpfs_h" = "yes" -o "$ac_cv_header_gpfs_fcntl_h" = "yes"], [
+	  AC_SEARCH_LIBS([gpfs_fcntl], [gpfs], [],
+	    [AC_MSG_ERROR([Library containing gpfs_fcntl symbols not found])])
+	])
+	)
+#
+# MPI IO (romio) END
+#
+
 #
 # Compute the all MPC libs variable
 #
@@ -1624,8 +1943,12 @@ if test "x${MPC_MPI_ENABLED}" = "xyes"; then
 	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_MPI/src/libmpcmpi.la"
 fi
 
-AC_SUBST([ALL_MPC_LIBS])
+if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_IO/src/libmpcio.la"
+fi
 
+
+AC_SUBST([ALL_MPC_LIBS])
 
 #
 # Configure MPC's compilers
@@ -1714,6 +2037,9 @@ do
 
 done
 
+MPC_PRIV_COMPILER="$CC"
+MPC_PRIV_FLAGS=""
+
 if test "x${mpc_privatization_support}" = "xyes"; then
 
         at_least_one_privatizing_compiler=""
@@ -1735,8 +2061,20 @@ if test "x${mpc_privatization_support}" = "xyes"; then
 
         if test -z "$at_least_one_privatizing_compiler"; then
                 AC_MSG_ERROR([Privatization was enabled but no privatizing compiler was found])
+	else
+		locate_bin "apcc"
+		if test -n "$locate_bin_path"; then
+			# We have a privatizing C compiler
+			MPC_PRIV_COMPILER="$locate_bin_path"
+			MPC_PRIV_FLAGS="-fmpc-privatize"
+		else
+			AC_MSG_ERROR([Privatization was enabled but no privatizing apcc compiler was found])
+		fi
         fi
 fi
+
+AC_SUBST([MPC_PRIV_COMPILER])
+AC_SUBST([MPC_PRIV_FLAGS])
 
 # Check that we at least have a C compiler
 
@@ -1948,6 +2286,12 @@ AC_OUTPUT([Makefile
 	   src/MPC_Topology/src/Makefile
            src/MPC_Threads/Makefile
 	   src/MPC_Threads/src/Makefile
+	   src/MPC_IO/Makefile
+	   src/MPC_IO/src/Makefile
+	   src/MPC_IO/include/romioconf.h
+	   src/MPC_IO/include/mpio.h
+	   src/include/mpi.h
+	   src/MPC_IO/src/romio/Makefile
            src/include/mpc_threads_config.h
            src/bin/Makefile
 	   src/bin/mpc_build_env.sh

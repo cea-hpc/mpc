@@ -85,6 +85,7 @@ int sctk_locate_dynamic_initializers()
  */
 int sctk_call_dynamic_initializers()
 {
+	sctk_error("CALL INIT\n");
 #ifdef MPC_USE_EXTLS
 	extls_ret_t ret = extls_call_dynamic_initializers();
 
