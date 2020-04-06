@@ -615,6 +615,7 @@ fi
 cat << EOF >> $1
 			override_var_if_isset 'PRIV_FLAG' '-fmpc-privatize'
 			override_var_if_isset 'OMP_FLAG' '-fopenmp'
+			LIBPRIV_FLAG=\${LIBPRIV_FLAG} -DMPC_TASK_KWD=__task"
 			;;
 		*)
 			#Nothing to do, vars set by user option
