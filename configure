@@ -3824,6 +3824,9 @@ if test -f ${PWD}/bin/mpc_build_env.sh; then
 	. ${PWD}/bin/mpc_build_env.sh
 fi
 
+# General Configuration
+CONFIGURE_SCRIPT_PATH=$(dirname "`readlink -f "$0"`")
+
 case `pwd` in
   *\ * | *\	*)
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Libtool does not cope well with whitespace in \`pwd\`" >&5
@@ -20707,11 +20710,11 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-MPC_VERSION_MAJOR=3
-MPC_VERSION_MINOR=3
-MPC_VERSION_PATCH=1
-MPC_VERSION_TAINT="@a996b5a04-dirty"
-MPC_VERSION_STRING="3.3.1@a996b5a04-dirty"
+MPC_VERSION_MAJOR="$($CONFIGURE_SCRIPT_PATH/utils/get_version --major)"
+MPC_VERSION_MINOR="$($CONFIGURE_SCRIPT_PATH/utils/get_version --minor)"
+MPC_VERSION_PATCH="$($CONFIGURE_SCRIPT_PATH/utils/get_version --patch)"
+MPC_VERSION_TAINT="$($CONFIGURE_SCRIPT_PATH/utils/get_version --taint)"
+MPC_VERSION_STRING="$($CONFIGURE_SCRIPT_PATH/utils/get_version --all)"
 
 
 
@@ -20747,8 +20750,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-# General Configuration
-CONFIGURE_SCRIPT_PATH=$(dirname "`readlink -f "$0"`")
 
 MPC_SUPPORTED_ARCHITECTURES_LIST="x86_64 ia64 i686 arm aarch64 powerpc64"
 
@@ -22528,7 +22529,7 @@ __check_or_infer_prefix_include()
         provided_prefix=$2
         var_prefix=$3
 
-  	as_ac_Header=`$as_echo "ac_cv_header_$looked_up_header" | $as_tr_sh`
+	as_ac_Header=`$as_echo "ac_cv_header_$looked_up_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$looked_up_header" "$as_ac_Header" "$ac_includes_default"
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   hfound=yes
@@ -22539,22 +22540,22 @@ fi
 
 
 	if test "x$hfound" = "xyes"; then
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
 		check_or_infer_prefix_include=yes
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: System-wide" >&5
+$as_echo "System-wide" >&6; }
 		return
 	fi
 
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: Checking for $1 header manually in different places" >&5
+$as_echo "$as_me: Checking for $1 header manually in different places" >&6;}
         for pref in $provided_prefix $prefix_candidate_path
         do
                 for suffix in $prefix_candidate_sub_include_path
                 do
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for '$looked_up_header' in '$pref/$suffix'" >&5
-$as_echo_n "checking for '$looked_up_header' in '$pref/$suffix'... " >&6; }
+                        #AC_MSG_CHECKING([for '$looked_up_header' in '$pref/$suffix'])
                         if test -f "$pref/$suffix/$looked_up_header"
                         then
-                                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
+                                #AC_MSG_RESULT([yes])
                                 # Set include path for matched header
                                 CPPFLAGS+=" -I$pref/$suffix/"
 
@@ -22579,6 +22580,8 @@ fi
 
 
                                 check_or_infer_prefix_include=yes
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: '$1' found in $pref/$suffix" >&5
+$as_echo "$as_me: '$1' found in $pref/$suffix" >&6;}
                                 return
                         fi
                 done
@@ -22659,18 +22662,16 @@ else
   lib_found=0
 fi
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking support for '$looked_up_lib'" >&5
-$as_echo_n "checking support for '$looked_up_lib'... " >&6; }
 
 	if test "x$lib_found" = "x1"
 	then
 		LDFLAGS=" -l$1 $LDFLAGS"
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
 		check_or_infer_prefix_lib=yes
 		return
 	fi
 
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: Checking for '$looked_up_lib' library in different places" >&5
+$as_echo "$as_me: Checking for '$looked_up_lib' library in different places" >&6;}
         for pref in $provided_prefix $prefix_candidate_path
         do
                 for suffix in $prefix_candidate_sub_lib_path
@@ -22730,14 +22731,12 @@ fi
 
                         if test "x$lib_found" = "x1"
                         then
-                                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
+                        	{ $as_echo "$as_me:${as_lineno-$LINENO}: '$looked_up_lib' found in $pref/$suffix" >&5
+$as_echo "$as_me: '$looked_up_lib' found in $pref/$suffix" >&6;}
                                 check_or_infer_prefix_lib=yes
                                 return
                         fi
 
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
                         LDFLAGS=$OLD_LDFLAGS
 
                 done
@@ -22758,8 +22757,8 @@ extract_integer_define_value()
 		can_fail="yes"
 	fi
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking macro define presence of $2 in $1" >&5
-$as_echo_n "checking macro define presence of $2 in $1... " >&6; }
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 existence" >&5
+$as_echo_n "checking $2 existence... " >&6; }
 
 	MACRO_VALUE=""
 	if test "$cross_compiling" = yes; then :
@@ -22812,8 +22811,8 @@ $as_echo "not found" >&6; }
 		fi
 
 	else
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $MACRO_VALUE" >&5
-$as_echo "$MACRO_VALUE" >&6; }
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $MACRO_VALUE ($1)" >&5
+$as_echo "$MACRO_VALUE ($1)" >&6; }
 	fi
 }
 
@@ -23593,24 +23592,15 @@ fi
 
                 mpc_dep_found=$check_or_infer_prefix_result
 
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking MPC Allocator" >&5
-$as_echo_n "checking MPC Allocator... " >&6; }
-
 if test "x$mpc_dep_found" = "xyes"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: mpcalloc" >&5
-$as_echo "mpcalloc" >&6; }
 
 $as_echo "#define MPC_Allocator 1" >>confdefs.h
 
         mpc_allocator="mpcalloc"
-else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: System allocator" >&5
-$as_echo "System allocator" >&6; }
 fi
 
 #
-# Detect libunwing
+# Detect libunwind
 #
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking support for libunwind library" >&5
 $as_echo_n "checking support for libunwind library... " >&6; }
@@ -23768,15 +23758,10 @@ fi
 
 #AC_MSG_CHECKING([support for libunwind library])
 if test "x$mpc_dep_found" = "xyes"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
 
 $as_echo "#define MPC_HAVE_LIBUNWIND 1" >>confdefs.h
 
         mpc_libunwind="yes"
-else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
 fi
 
 #
@@ -23942,21 +23927,12 @@ fi
 
                 mpc_dep_found=$check_or_infer_prefix_result
 
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking support for libiverbs (Infiniband)" >&5
-$as_echo_n "checking support for libiverbs (Infiniband)... " >&6; }
-
 if test "x$mpc_dep_found" = "xyes"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
         MPC_NETWORK_LIST="$MPC_NETWORK_LIST verbs"
 
 $as_echo "#define MPC_USE_INFINIBAND 1" >>confdefs.h
 
         infiniband_enabled="yes"
-else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
 fi
 
  if test "x$infiniband_enabled" = "xyes"; then
@@ -24123,21 +24099,12 @@ fi
 
                 mpc_dep_found=$check_or_infer_prefix_result
 
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking support for libportals (Portals4)" >&5
-$as_echo_n "checking support for libportals (Portals4)... " >&6; }
-
 if test "x$mpc_dep_found" = "xyes"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
         MPC_NETWORK_LIST="$MPC_NETWORK_LIST portals4 portals4_am"
 
 $as_echo "#define MPC_USE_PORTALS 1" >>confdefs.h
 
         portals4_enabled="yes"
-else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
 fi
 
  if test "x$portals4_enabled" = "xyes"; then
@@ -24627,13 +24594,7 @@ $as_echo "$as_me: WARNING: consider using --with-cuda-include=INCS" >&2;}
                 fi
 
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking support for libcuda (CUDA-capable accelerators)" >&5
-$as_echo_n "checking support for libcuda (CUDA-capable accelerators)... " >&6; }
-
 	if test "x$mpc_dep_found" = "xyes"; then
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
 
 
 
@@ -24800,11 +24761,7 @@ $as_echo "$as_me: WARNING: consider using --with-cudart-include=INCS" >&2;}
 $as_echo "#define MPC_USE_CUDA 1" >>confdefs.h
 
 		cuda_enabled="yes"
-	else
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
 	fi
-
 fi
 
  if test "x$cuda_enabled" = "xyes"; then
@@ -27169,8 +27126,6 @@ main ()
     if (*(data + i) != *(data3 + i))
       return 14;
   close (fd);
-  free (data);
-  free (data3);
   return 0;
 }
 _ACEOF
@@ -27438,9 +27393,6 @@ fi
 
 
 # Check for pThread
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: complete Pthreads API" >&5
-$as_echo "$as_me: complete Pthreads API" >&6;}
 ac_fn_c_check_header_mongrel "$LINENO" "pthread.h" "ac_cv_header_pthread_h" "$ac_includes_default"
 if test "x$ac_cv_header_pthread_h" = xyes; then :
 
@@ -30148,18 +30100,11 @@ fi
                 mpc_dep_found=$check_or_infer_prefix_result
 
         if test "x$mpc_dep_found" = "xyes"; then
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
 
 $as_echo "#define MPC_USE_EXTLS 1" >>confdefs.h
 
-
-
                 mpc_privatization_support="yes"
-        else
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-        fi
+	fi
 fi
 
 #

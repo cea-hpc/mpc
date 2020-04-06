@@ -134,28 +134,30 @@ __check_or_infer_prefix_include()
         provided_prefix=$2
         var_prefix=$3
 
-  	AC_CHECK_HEADER([$looked_up_header],[hfound=yes],[hfound=no])
+	AC_CHECK_HEADER([$looked_up_header],[hfound=yes],[hfound=no])
 
 	if test "x$hfound" = "xyes"; then
-		AC_MSG_RESULT([yes])
 		check_or_infer_prefix_include=yes
+		AC_MSG_RESULT([System-wide])
 		return
 	fi
 
+	AC_MSG_NOTICE([Checking for $1 header manually in different places])
         for pref in $provided_prefix $prefix_candidate_path
         do
                 for suffix in $prefix_candidate_sub_include_path
                 do
-                        AC_MSG_CHECKING([for '$looked_up_header' in '$pref/$suffix'])
+                        #AC_MSG_CHECKING([for '$looked_up_header' in '$pref/$suffix'])
                         if test -f "$pref/$suffix/$looked_up_header"
                         then
-                                AC_MSG_RESULT([yes])
+                                #AC_MSG_RESULT([yes])
                                 # Set include path for matched header
                                 CPPFLAGS+=" -I$pref/$suffix/"
 
                                 AX_RESET_HEADERS_CACHE([$looked_up_header])
                                 AC_CHECK_HEADER([$looked_up_header],[],[AC_MSG_ERROR([Failed to autodetect '$looked_up_header' in '$pref/$suffix'])])
                                 check_or_infer_prefix_include=yes
+                                AC_MSG_NOTICE(['$1' found in $pref/$suffix])
                                 return
                         fi
                 done
@@ -193,16 +195,15 @@ __check_or_infer_prefix_lib()
         var_prefix=$4
 
 	AC_CHECK_LIB($looked_up_lib, $looked_up_function, [lib_found=1], [lib_found=0])
-	AC_MSG_CHECKING([support for '$looked_up_lib'])
 
 	if test "x$lib_found" = "x1"
 	then
 		LDFLAGS=" -l$1 $LDFLAGS"
-		AC_MSG_RESULT([yes])
 		check_or_infer_prefix_lib=yes
 		return
 	fi
 
+	AC_MSG_NOTICE([Checking for '$looked_up_lib' library in different places])
         for pref in $provided_prefix $prefix_candidate_path
         do
                 for suffix in $prefix_candidate_sub_lib_path
@@ -219,12 +220,11 @@ __check_or_infer_prefix_lib()
 
                         if test "x$lib_found" = "x1"
                         then
-                                AC_MSG_RESULT([yes])
+                        	AC_MSG_NOTICE(['$looked_up_lib' found in $pref/$suffix])
                                 check_or_infer_prefix_lib=yes
                                 return
                         fi
 
-                        AC_MSG_RESULT([no])
                         LDFLAGS=$OLD_LDFLAGS
 
                 done
@@ -245,7 +245,7 @@ extract_integer_define_value()
 		can_fail="yes"
 	fi
 
-	AC_MSG_CHECKING([macro define presence of $2 in $1])
+	AC_MSG_CHECKING([$2 existence])
 
 	MACRO_VALUE=""
 	AC_RUN_IFELSE(
@@ -273,7 +273,7 @@ extract_integer_define_value()
 		fi
 
 	else
-		AC_MSG_RESULT([$MACRO_VALUE])
+		AC_MSG_RESULT([$MACRO_VALUE ($1)])
 	fi
 }
 
@@ -386,19 +386,13 @@ MPC_REQUIRED_DEPENDENCY([openpa], [$mpc_dep_found])
 mpc_allocator="Standard"
 
 MPC_DETECT_DEPENDENCY([mpcalloc.h], [mpcalloc], [sctk_malloc], [ALLOC])
-
-AC_MSG_CHECKING([MPC Allocator])
-
 if test "x$mpc_dep_found" = "xyes"; then
-        AC_MSG_RESULT([mpcalloc])
         AC_DEFINE([MPC_Allocator], [1], [mpcalloc support is enabled])
         mpc_allocator="mpcalloc"
-else
-        AC_MSG_RESULT([System allocator])
 fi
 
 #
-# Detect libunwing
+# Detect libunwind
 #
 AC_MSG_CHECKING([support for libunwind library])
 mpc_libunwind="no"
@@ -407,11 +401,8 @@ MPC_DETECT_DEPENDENCY([libunwind.h], [libunwind], [unw_init_local], [UNW])
 
 #AC_MSG_CHECKING([support for libunwind library])
 if test "x$mpc_dep_found" = "xyes"; then
-        AC_MSG_RESULT([yes])
         AC_DEFINE([MPC_HAVE_LIBUNWIND], [1], [libunwind support is enabled])
         mpc_libunwind="yes"
-else
-        AC_MSG_RESULT([no])
 fi
 
 #
@@ -429,16 +420,10 @@ MPC_NETWORK_LIST="tcp shm"
 infiniband_enabled="no"
 
 MPC_DETECT_DEPENDENCY([infiniband/verbs.h], [ibverbs], [ibv_query_qp], [IBV])
-
-AC_MSG_CHECKING([support for libiverbs (Infiniband)])
-
 if test "x$mpc_dep_found" = "xyes"; then
-        AC_MSG_RESULT([yes])
         MPC_NETWORK_LIST="$MPC_NETWORK_LIST verbs"
         AC_DEFINE([MPC_USE_INFINIBAND], [1], [Infiniband support is enabled])
         infiniband_enabled="yes"
-else
-        AC_MSG_RESULT([no])
 fi
 
 AM_CONDITIONAL([INFINIBAND_DRIVER_ENABLED], [test "x$infiniband_enabled" = "xyes"])
@@ -450,16 +435,10 @@ AM_CONDITIONAL([INFINIBAND_DRIVER_ENABLED], [test "x$infiniband_enabled" = "xyes
 portals4_enabled="no"
 
 MPC_DETECT_DEPENDENCY([portals4.h], [portals], [PtlGet], [PORTALS])
-
-AC_MSG_CHECKING([support for libportals (Portals4)])
-
 if test "x$mpc_dep_found" = "xyes"; then
-        AC_MSG_RESULT([yes])
         MPC_NETWORK_LIST="$MPC_NETWORK_LIST portals4 portals4_am"
         AC_DEFINE([MPC_USE_PORTALS], [1], [Portals support is enabled])
         portals4_enabled="yes"
-else
-        AC_MSG_RESULT([no])
 fi
 
 AM_CONDITIONAL([PORTALS4_DRIVER_ENABLED], [test "x$portals4_enabled" = "xyes"])
@@ -552,20 +531,13 @@ if test "x$mpc_cuda_ctx_switch" = "xyes"; then
 	MPC_DETECT_DEPENDENCY([cuda.h], [cuda], [cuMemFree], [CUDA])
 	MPC_REQUIRED_DEPENDENCY([cuda], [$mpc_dep_found])
 
-	AC_MSG_CHECKING([support for libcuda (CUDA-capable accelerators)])
-
 	if test "x$mpc_dep_found" = "xyes"; then
-		AC_MSG_RESULT([yes])
-
 		MPC_DETECT_DEPENDENCY([cuda_runtime.h], [cudart], [cudaDeviceSetLimit], [CUDART])
 		MPC_REQUIRED_DEPENDENCY([cudart], [$mpc_dep_found])
 
 		AC_DEFINE([MPC_USE_CUDA], [1], [Cuda support is enabled])
 		cuda_enabled="yes"
-	else
-		AC_MSG_RESULT([no])
 	fi
-
 fi
 
 AM_CONDITIONAL([MPC_CUDA_ENABLED], [test "x$cuda_enabled" = "xyes"])
@@ -813,8 +785,6 @@ AC_CHECK_FUNCS([makecontext setcontext getcontext swapcontext])
 AC_CHECK_LIB([m],[log])
 
 # Check for pThread
-
-AC_MSG_NOTICE(complete Pthreads API)
 AC_CHECK_HEADER([pthread.h])
 AC_CHECK_LIB(pthread,pthread_create,LIBS="$LIBS -lpthread")
 AC_CHECK_SIZEOF(pthread_t,,[#include <pthread.h>])
@@ -1305,14 +1275,9 @@ if test "x$mpc_in_process_mode" = "xno"; then
 
         MPC_DETECT_DEPENDENCY([extls.h],[extls], [extls_init], [EXTLS])
         if test "x$mpc_dep_found" = "xyes"; then
-                AC_MSG_RESULT([yes])
                 AC_DEFINE([MPC_USE_EXTLS], [1], [Extls support is enabled])
-
-
                 mpc_privatization_support="yes"
-        else
-                AC_MSG_RESULT([no])
-        fi
+	fi
 fi
 
 #
