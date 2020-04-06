@@ -1,0 +1,46 @@
+#!/bin/bash
+
+UTILS_DIR="$(dirname "`readlink -f $0`")"
+
+MAJOR_VERSION=
+MINOR_VERSION=
+PATCH_VERSION=
+TAINT_VERSION=
+
+if test -n "$(command -v git)" -a -e "$UTILS_DIR/../.git"; then
+	res=$(git -C $UTILS_DIR describe --abbrev=0 | grep -o -E "[0-9]+\.[0-9]+\.[0-9]+$")
+	MAJOR_VERSION=$(echo "$res" | cut -f1 -d".")
+	MINOR_VERSION=$(echo "$res" | cut -f2 -d".")
+	PATCH_VERSION=$(echo "$res" | cut -f3 -d".")
+	TAINT_VERSION="$(git -C $UTILS_DIR rev-parse --short HEAD)"
+	git -C $UTILS_DIR diff --quiet || TAINT_VERSION="@$TAINT_VERSION-dirty"
+else
+	. $UTILS_DIR/VERSION
+	MAJOR_VERSION=$major
+	MINOR_VERSION=$minor
+	PATCH_VERSION=$patch
+	TAINT_VERSION=""
+fi
+
+for i in $@; do
+	case $i in
+		--major)
+			echo "$MAJOR_VERSION"
+			;;
+		--minor)
+			echo "$MINOR_VERSION"
+			;;
+		--patch)
+			echo "$PATCH_VERSION"
+			;;
+		--taint)
+			echo "$TAINT_VERSION"
+			;;
+		--all)
+			echo "$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION$TAINT_VERSION"
+			;;
+		*)
+			printf "$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION$TAINT_VERSION"
+			;;
+	esac
+done

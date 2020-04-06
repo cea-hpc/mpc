@@ -794,7 +794,7 @@
 /* MPC Patch Version */
 #undef MPC_VERSION_PATCH
 
-/* MPC Pre-release Version */
+/* MPC Tainted Version */
 #undef MPC_VERSION_PRE
 
 /* Define to the address where bug reports for this package should be sent. */

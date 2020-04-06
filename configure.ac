@@ -1,12 +1,21 @@
-AC_INIT([mpcframework], [4.0.0], [france@paratools.com])
-AC_CONFIG_AUX_DIR([build-aux])
-AC_CONFIG_MACRO_DIR([m4])
+MPC_VERSION_STRING="${MPC_VERSION_MAJOR}.${MPC_VERSION_MINOR}.${MPC_VERSION_PATCH}${MPC_VERSION_PRE}"
+
+# Pre-required maintainer tool to rebuild.
+# Enforcing this ensure mimnimum changes to
+# generated files under version control
+AC_PREREQ(2.69)
+LT_PREREQ([2.4.6])
+
+# Global AC setup, no update required here
+AC_INIT([Multi-Processor Computing Framework],
+	[m4_esyscmd_s([./utils/get_version])],
+	[france@paratools.com], [mpcframework], [https://mpc.hpcframework.com])
+AC_CONFIG_AUX_DIR([config])
+AC_CONFIG_MACRO_DIRS([config/m4])
+AC_CONFIG_SRCDIR([src/MPC_Arch/src/timer.c])
 AC_LANG(C)
 AM_INIT_AUTOMAKE([subdir-objects no-define])
-AC_CONFIG_SRCDIR([src/MPC_Arch/src/timer.c])
-AC_CONFIG_HEADERS([mpc_config.h])
 AM_SILENT_RULES([yes])
-LT_PREREQ([2.4.6])
 
 # DO NOT REBUILD Makefile.in & CO
 # IT MEANS YOU NEED TO REBUILD MANUALLY
@@ -27,30 +36,26 @@ if test -f ${PWD}/bin/mpc_build_env.sh; then
 	. ${PWD}/bin/mpc_build_env.sh
 fi
 
+# General Configuration
+CONFIGURE_SCRIPT_PATH=$(dirname "`readlink -f "$0"`")
+
 LT_INIT([disable-static])
 LT_LANG([C])
 AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_FC
 
-# Define MPC_VERSION
-#
-# Format is [MAJOR].[MINOR].[REV][PRE]
-#
-# MAJOR MINOR AND REV are Integers
-# PRE is a STRING
-#
-MPC_VERSION_MAJOR="4"
-MPC_VERSION_MINOR="0"
-MPC_VERSION_PATCH="0"
-MPC_VERSION_PRE="alpha"
+MPC_VERSION_MAJOR="$($CONFIGURE_SCRIPT_PATH/utils/get_version --major)"
+MPC_VERSION_MINOR="$($CONFIGURE_SCRIPT_PATH/utils/get_version --minor)"
+MPC_VERSION_PATCH="$($CONFIGURE_SCRIPT_PATH/utils/get_version --patch)"
+MPC_VERSION_TAINT="$($CONFIGURE_SCRIPT_PATH/utils/get_version --taint)"
+MPC_VERSION_STRING="$($CONFIGURE_SCRIPT_PATH/utils/get_version --all)"
 
-MPC_VERSION_STRING="${MPC_VERSION_MAJOR}.${MPC_VERSION_MINOR}.${MPC_VERSION_PATCH}${MPC_VERSION_PRE}"
 
 AC_DEFINE_UNQUOTED([MPC_VERSION_MAJOR], [$MPC_VERSION_MAJOR], [MPC Major Version])
 AC_DEFINE_UNQUOTED([MPC_VERSION_MINOR], [$MPC_VERSION_MINOR], [MPC Minor Version])
 AC_DEFINE_UNQUOTED([MPC_VERSION_PATCH], [$MPC_VERSION_PATCH], [MPC Patch Version])
-AC_DEFINE_UNQUOTED([MPC_VERSION_PRE], ["$MPC_VERSION_PRE"], [MPC Pre-release Version])
+AC_DEFINE_UNQUOTED([MPC_VERSION_PRE], ["$MPC_VERSION_TAINT"], [MPC Tainted Version])
 
 AC_SUBST([MPC_VERSION_MAJOR])
 AC_SUBST([MPC_VERSION_MINOR])
@@ -60,8 +65,6 @@ AC_SUBST([MPC_VERSION_STRING])
 
 AC_DEFINE_UNQUOTED([MPC_PREFIX_PATH], ["$prefix"], [Prefix Path for MPC])
 
-# General Configuration
-CONFIGURE_SCRIPT_PATH=$(dirname "`readlink -f "$0"`")
 
 MPC_SUPPORTED_ARCHITECTURES_LIST="x86_64 ia64 i686 arm aarch64 powerpc64"
 
@@ -134,6 +137,7 @@ __check_or_infer_prefix_include()
   	AC_CHECK_HEADER([$looked_up_header],[hfound=yes],[hfound=no])
 
 	if test "x$hfound" = "xyes"; then
+		AC_MSG_RESULT([yes])
 		check_or_infer_prefix_include=yes
 		return
 	fi
@@ -154,7 +158,6 @@ __check_or_infer_prefix_include()
                                 check_or_infer_prefix_include=yes
                                 return
                         fi
-                        AC_MSG_RESULT([no])
                 done
         done
 }
@@ -213,7 +216,6 @@ __check_or_infer_prefix_lib()
 
                         ___unset_lib_cache
                         AC_CHECK_LIB($looked_up_lib, $looked_up_function, [lib_found=1], [lib_found=0])
-                        AC_MSG_CHECKING([Support for '$looked_up_lib' in '$pref/$suffix'])
 
                         if test "x$lib_found" = "x1"
                         then
@@ -337,7 +339,7 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                         AC_SUBST([$4_CFLAGS])
                         AC_SUBST([$4_LIBS])
 
-                        AC_MSG_NOTICE([$libname found using pkg-config])
+                        #AC_MSG_NOTICE([$libname found using pkg-config])
                         #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                         check_or_infer_prefix_result="yes"
                 else
@@ -403,6 +405,7 @@ mpc_libunwind="no"
 
 MPC_DETECT_DEPENDENCY([libunwind.h], [libunwind], [unw_init_local], [UNW])
 
+#AC_MSG_CHECKING([support for libunwind library])
 if test "x$mpc_dep_found" = "xyes"; then
         AC_MSG_RESULT([yes])
         AC_DEFINE([MPC_HAVE_LIBUNWIND], [1], [libunwind support is enabled])
@@ -1873,15 +1876,6 @@ fi
 
 AC_SUBST([MPC_GENERATION_DATE])
 
-
-# Extract git revision
-AC_CHECK_PROG([git],[git],[yes],[no])
-
-if test "x$git" = "xyes"; then
-	MPC_GIT_REVISION="$(git -C $CONFIGURE_SCRIPT_PATH describe --tags --dirty 2> /dev/null)"
-	test -n "$MPC_GIT_REVISION" && MPC_GIT_REVISION="Git Revision...... ${MPC_GIT_REVISION}\n"
-fi
-
 #
 # Generate the Reconfigure Script
 #
@@ -1905,58 +1899,55 @@ chmod +x ./reconfigure
 # Generate configuration summary
 
 MPC_CONFIG_RESULT="\
-========== MPC $MPC_VERSION_STRING Configuration ==========\n\
-PREFIX............ $prefix\n\
-Configure run on.. `date -d @$MPC_GENERATION_DATE`\n\
-$MPC_GIT_REVISION\
-\n\
-# Build Configuration\n\
-\n\
-Configuring for... $MPC_TARGET_ARCHITECTURE\n\
-Optimized build... $mpc_enable_opt ($MPC_OPT_FLAGS)\n\
-Native build...... $mpc_enable_native_opt ($MPC_NATIVE_FLAGS)\n\
-Microtask arch.... $MPC_ARCH_MICROTASK_ARCH\n\
-Context switch.... $MPC_ARCH_CONTEXT_SWITCH\n\
-\n\
-# Debug and logging\n\
-\n\
-Internal profiler. $MPC_HAVE_PROFILER\n\
-Debug............. $mpc_debug\n\
-Debug messages.... $mpc_debug_messages\n\
-Color............. $mpc_shell_color\n\
-\n\
-# Compilers and privatization\n\
-\n\
-Privatization..... $mpc_privatization_support\n\
-Process only...... $mpc_in_process_mode\n\
-Languages......... $MPC_LANGUAGE_LIST\n\
-Compilers......... $MPC_COMPILER_LIST\n\
-\n\
-# Accelerator Support\n\
-\n\
-Cuda.............. $cuda_enabled\n\
-\n\
-# Launcher\n\
-\n\
-Launcher........ $MPC_LAUNCHER\n\
-\n\
-# Optionnal components\n\
-\n\
-Allocator....... $mpc_allocator\n\
-libunwind....... $mpc_libunwind\n\
-DMTPC c/r....... $MPC_HAVE_DMTCP\n\
-\n\
-# Network Configuration\n\
-\n\
-Networks........ $MPC_NETWORK_LIST\n\
-Shm CMA......... $mpc_enable_cma\n\
-\n\
-# Module to be Built\n\
-\n\
-MPC_Thread........... $MPC_THREAD_ENABLED\n\
-MPC_Message_passing.. $MPC_MESSAGE_PASSING_ENABLED\n\
-MPC_MPI.............. $MPC_MPI_ENABLED\n\
-===========================================================\n"
+########## MPC Configuration Script ##########\n\
+# Installation into.... $prefix\n\
+# Configure run on..... `date -d @$MPC_GENERATION_DATE`\n\
+# Version built........ $MPC_VERSION_STRING\n\
+#\n\
+### BUILD CONFIGURATION ###\n\
+#\n\
+# Architecture......... $MPC_TARGET_ARCHITECTURE\n\
+# Optimizations........ $mpc_enable_opt ($MPC_OPT_FLAGS)\n\
+# Native build......... $mpc_enable_native_opt ($MPC_NATIVE_FLAGS)\n\
+# Microtask arch....... $MPC_ARCH_MICROTASK_ARCH\n\
+# Context switch....... $MPC_ARCH_CONTEXT_SWITCH\n\
+#\n\
+### OPTIONAL BUILT MODULE ###\n\
+#\n\
+# MPC_Thread........... $MPC_THREAD_ENABLED\n\
+# MPC_Message_passing.. $MPC_MESSAGE_PASSING_ENABLED\n\
+# MPC_MPI.............. $MPC_MPI_ENABLED\n\
+#\n\
+### COMPILERS ###\n\
+#\n\
+# Privatization........ $mpc_privatization_support\n\
+# Process mode......... $mpc_in_process_mode\n\
+# Languages............ $MPC_LANGUAGE_LIST\n\
+# Compilers............ $MPC_COMPILER_LIST\n\
+#\n\
+### NETWORKS ###\n\
+#\n\
+# Supported list....... $MPC_NETWORK_LIST\n\
+# CMA over SHM......... $mpc_enable_cma\n\
+#\n\
+### ACCELERATORS ###\n\
+#\n\
+# Cuda support......... $cuda_enabled\n\
+#\n\
+### OTHER OPTIONS SET ###\n\
+#\n\
+# Launcher............. $MPC_LAUNCHER\n\
+# Allocator............ $mpc_allocator\n\
+# libunwind............ $mpc_libunwind\n\
+# DMTPC c/r............ $MPC_HAVE_DMTCP\n\
+#\n\
+### DEBUGGING ###\n\
+#\n\
+# Embedded profiler.... $MPC_HAVE_PROFILER\n\
+# Debug symbols........ $mpc_debug\n\
+# Debug messages....... $mpc_debug_messages\n\
+# Colored output....... $mpc_shell_color\n\
+#############################################\n"
 
 AC_SUBST([MPC_CONFIG_RESULT])
 
@@ -1966,6 +1957,8 @@ AC_SUBST([PKG_INCDIR], ["${prefix}/include/${PACKAGE}/"])
 #
 # Final Output
 #
+
+AC_CONFIG_HEADERS([mpc_config.h])
 
 AC_OUTPUT([Makefile
 	   src/MPC_Arch/include/mpc_arch.h
@@ -2006,7 +1999,7 @@ AC_OUTPUT([Makefile
 
 
 
-echo -e $MPC_CONFIG_RESULT
+printf "\n$MPC_CONFIG_RESULT"
 
 if test "x${MPC_CONFIG_RELOADED}" = "xyes"; then
 

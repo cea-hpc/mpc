@@ -90,7 +90,7 @@ int MPC_check_compatibility_lib( int major, int minor, int patch, char *pre )
 {
 	static char errro_msg[4096];
 
-	if ( ( major != MPC_VERSION_MAJOR ) || ( minor != MPC_VERSION_MINOR ) || (patch != MPC_VERSION_PATCH) || ( strcmp( pre, MPC_VERSION_PRE ) != 0 ) )
+	if ( ( major != MPC_VERSION_MAJOR ) || ( minor != MPC_VERSION_MINOR ) || (patch != MPC_VERSION_PATCH) )
 	{
 		sprintf( errro_msg,
 		         "MPC version used for this file (%d.%d.%d%s) differs from the library used for the link (%d.%d.%d%s)\n",

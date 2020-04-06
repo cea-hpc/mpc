@@ -89,11 +89,14 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/ax_gcc_builtin.m4 \
-	$(top_srcdir)/m4/ax_reset_header_cache.m4 \
-	$(top_srcdir)/m4/ax_tls.m4 $(top_srcdir)/m4/libtool.m4 \
-	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
-	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
+	$(top_srcdir)/config/m4/ax_reset_headers_cache.m4 \
+	$(top_srcdir)/config/m4/ax_tls.m4 \
+	$(top_srcdir)/config/m4/libtool.m4 \
+	$(top_srcdir)/config/m4/ltoptions.m4 \
+	$(top_srcdir)/config/m4/ltsugar.m4 \
+	$(top_srcdir)/config/m4/ltversion.m4 \
+	$(top_srcdir)/config/m4/lt~obsolete.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
@@ -164,17 +167,15 @@ CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = $(SUBDIRS)
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mpc_config.h.in \
-	$(top_srcdir)/build-aux/compile \
-	$(top_srcdir)/build-aux/config.guess \
-	$(top_srcdir)/build-aux/config.sub \
-	$(top_srcdir)/build-aux/install-sh \
-	$(top_srcdir)/build-aux/ltmain.sh \
-	$(top_srcdir)/build-aux/missing \
+	$(top_srcdir)/config/compile $(top_srcdir)/config/config.guess \
+	$(top_srcdir)/config/config.sub \
+	$(top_srcdir)/config/install-sh $(top_srcdir)/config/ltmain.sh \
+	$(top_srcdir)/config/missing \
 	$(top_srcdir)/src/MPC_Arch/include/mpc_arch.h.in \
 	$(top_srcdir)/src/include/mpc_threads_config.h.in AUTHORS \
-	COPYING ChangeLog INSTALL NEWS README build-aux/compile \
-	build-aux/config.guess build-aux/config.sub build-aux/depcomp \
-	build-aux/install-sh build-aux/ltmain.sh build-aux/missing
+	COPYING ChangeLog INSTALL NEWS README config/compile \
+	config/config.guess config/config.sub config/depcomp \
+	config/install-sh config/ltmain.sh config/missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -425,7 +426,6 @@ dmtcp_launch = @dmtcp_launch@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
-git = @git@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
@@ -458,6 +458,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 xmllint = @xmllint@
 xsltproc = @xsltproc@
+ACLOCAL_AMFLAGS = -I config/m4
 SUBDIRS = src
 all: mpc_config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
