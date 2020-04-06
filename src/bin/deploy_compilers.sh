@@ -12,7 +12,7 @@ C_COMPILER_LIST="$3"
 CXX_COMPILER_LIST="$4"
 FC_COMPILER_LIST="$5"
 
-if test "x$#" != "x4"; then
+if test "x$#" != "x5"; then
         echo "$0 [PREFIX] [BUILD PREFIX] [C COMP] [CXX COMP] [FC COMP]"
 fi
 
@@ -38,21 +38,21 @@ COMPILER_MANAGER="${BIN_PREFIX}/mpc_compiler_manager"
 
 # Installing Compiler Flags
 
-echo "CP mpc_cflags"
+#echo "CP mpc_cflags"
 install -m 0755 -D ${BUILD_BIN_PREFIX}/mpc_cflags ${BIN_PREFIX}/mpc_cflags
-echo "CP mpc_ldflags"
+#echo "CP mpc_ldflags"
 install -m 0755 -D ${BUILD_BIN_PREFIX}/mpc_ldflags ${BIN_PREFIX}/mpc_ldflags
 
 # Installing Compiler Wrappers
 
-echo "CP mpc_cc"
+#echo "CP mpc_cc"
 install -m 0755 -D ${BUILD_BIN_PREFIX}/mpc_cc.sh ${BIN_PREFIX}/mpc_cc
-echo "CP mpc_cxx"
+#echo "CP mpc_cxx"
 install -m 0755 -D ${BUILD_BIN_PREFIX}/mpc_cxx.sh ${BIN_PREFIX}/mpc_cxx
 
 for fc in mpc_f77 mpc_f90 mpc_f08
 do
-        echo "CP ${fc}"
+        #echo "CP ${fc}"
         install -m 0755 -D ${BUILD_BIN_PREFIX}/mpc_f77.sh ${BIN_PREFIX}/${fc}
 done
 
@@ -76,11 +76,11 @@ EOF
 
 for c in $C_COMPILER_LIST
 do
-	echo "REG $c C compiler";
-	${COMPILER_MANAGER} --global add c $c;
+	#echo "REG $c C compiler";
+	${COMPILER_MANAGER} --global add c $c > /dev/null;
 
         if test "x$?" = "x0"; then
-                echo "GEN mpc_$c"
+                #echo "GEN mpc_$c"
                 printf_per_compiler ${BIN_PREFIX}/mpc_$c ${BIN_PREFIX}/mpc_cc $c
                 chmod +x ${BIN_PREFIX}/mpc_$c
         fi
@@ -88,11 +88,11 @@ done
 
 for c in $CXX_COMPILER_LIST
 do
-	echo "REG $c CXX compiler";
-	${COMPILER_MANAGER} --global add cxx $c;
+	#echo "REG $c CXX compiler";
+	${COMPILER_MANAGER} --global add cxx $c > /dev/null;
 
         if test "x$?" = "x0"; then
-                echo "GEN mpc_$c"
+                #echo "GEN mpc_$c"
                 printf_per_compiler ${BIN_PREFIX}/mpc_$c ${BIN_PREFIX}/mpc_cxx $c
                 chmod +x ${BIN_PREFIX}/mpc_$c
         fi
@@ -102,11 +102,11 @@ if false; then
 
 for c in $FC_COMPILER_LIST
 do
-	echo "REG $c FC compiler";
-	${COMPILER_MANAGER} --global add fortran $c;
+	#echo "REG $c FC compiler";
+	${COMPILER_MANAGER} --global add fortran $c > /dev/null;
 
         if test "x$?" = "x0"; then
-                echo "GEN mpc_$c"
+                #echo "GEN mpc_$c"
                 printf_per_compiler ${BIN_PREFIX}/mpc_$c ${BIN_PREFIX}/mpc_f77 $c
                 chmod +x ${BIN_PREFIX}/mpc_$c
         fi
@@ -140,7 +140,7 @@ EOF
 }
 
 for i in cc cxx f77 f90 f08; do
-        echo "GEN mpi$i"
+        #echo "GEN mpi$i"
 	printf_mpi_compiler ${BIN_PREFIX}/mpi$i ${BIN_PREFIX}/mpc_$i
         chmod +x ${BIN_PREFIX}/mpi$i
 done

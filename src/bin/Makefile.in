@@ -805,9 +805,9 @@ install_compilers: install_build_env
 	$(abs_top_srcdir)/src/bin/deploy_compilers.sh "$(prefix)" "$(abs_top_builddir)/src" "$(MPC_C_COMPILER_LIST)" "$(MPC_CPP_COMPILER_LIST)" "$(MPC_FORTRAN_COMPILER_LIST)"
 
 @MPC_HAVE_AUTOPRIV_TRUE@deploy_compilers: install_compilers
-@MPC_HAVE_AUTOPRIV_TRUE@	$(prefix)/bin/mpc_compiler_manager --global set_default c apcc
-@MPC_HAVE_AUTOPRIV_TRUE@	$(prefix)/bin/mpc_compiler_manager --global set_default cxx ap++
-@MPC_HAVE_AUTOPRIV_TRUE@	$(prefix)/bin/mpc_compiler_manager --global set_default fortran apfortran
+@MPC_HAVE_AUTOPRIV_TRUE@	$(prefix)/bin/mpc_compiler_manager --global set_default c apcc > /dev/null
+@MPC_HAVE_AUTOPRIV_TRUE@	$(prefix)/bin/mpc_compiler_manager --global set_default cxx ap++ > /dev/null
+@MPC_HAVE_AUTOPRIV_TRUE@	$(prefix)/bin/mpc_compiler_manager --global set_default fortran apfortran > /dev/null
 @MPC_HAVE_AUTOPRIV_FALSE@deploy_compilers: install_compilers
 
 #
