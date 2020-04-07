@@ -1916,8 +1916,8 @@ MPC_CONFIG_RESULT="\
 
 AC_SUBST([MPC_CONFIG_RESULT])
 
-AC_SUBST([PKG_DATADIR], ["${prefix}/share/${PACKAGE}/"])
-AC_SUBST([PKG_INCDIR], ["${prefix}/include/${PACKAGE}/"])
+AC_SUBST([PKG_DATADIR], ["${prefix}/share/${PACKAGE_TARNAME}/"])
+AC_SUBST([PKG_INCDIR], ["${prefix}/include/${PACKAGE_TARNAME}/"])
 
 #
 # Final Output

@@ -88,7 +88,7 @@ Options :\n\
   --schema={file}   : Override the default path to XML schema for validation.\n\
 \n\
 You can also influence the loaded files with environment variables :\n\
-  - MPC_SYSTEM_CONFIG   : System configuration file (" MPC_PREFIX_PATH "/share/"PACKAGE_NAME"/config.xml)\n\
+  - MPC_SYSTEM_CONFIG   : System configuration file (" MPC_PREFIX_PATH "/share/"PACKAGE_TARNAME"/config.xml)\n\
   - MPC_USER_CONFIG     : Application configuration file (disabled)\n\
   - MPC_DISABLE_CONFIG  : Disable loading of configuration files if setup to 1.\n\
   - MPC_USER_PROFILES   : Equivalent to --profiles.\n";
