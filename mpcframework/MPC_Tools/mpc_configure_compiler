@@ -592,9 +592,9 @@ EOF
 if [ "$language" = "c" ]; then
 cat << EOF >> $1
 		#a getenv() is not enough to disable the plugin: better to skip the option
-		if test -e \${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so -a -n "\$MPC_DYN_PRIV_ENABLED";
+		if test -e \${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/dynpriv.so -a -n "\$MPC_DYN_PRIV_ENABLED";
 		then
-			LIBPRIV_FLAG="-fplugin=\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so"
+			LIBPRIV_FLAG="-fplugin=\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/dynpriv.so"
 		else
 			LIBPRIV_FLAG=""
 		fi
