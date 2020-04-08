@@ -148,3 +148,8 @@ done
 # Point C++ to CXX
 printf_mpi_compiler ${BIN_PREFIX}/mpic++ ${BIN_PREFIX}/mpc_cxx
 chmod +x ${BIN_PREFIX}/mpic++
+
+# Point fort to f08
+# Point C++ to CXX
+printf_mpi_compiler ${BIN_PREFIX}/mpifort ${BIN_PREFIX}/mpc_f08
+chmod +x ${BIN_PREFIX}/mpifort
