@@ -13,6 +13,7 @@
 /* MPC CONFIG */
 
 #define INT_LT_POINTER
+#define HAVE_STATUS_SET_BYTES
 
 /* Redirect init keyval to MPC's context switched TLS */
 extern int mpc_ADIOI_cb_config_list_keyval;

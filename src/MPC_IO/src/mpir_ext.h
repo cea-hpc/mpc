@@ -26,7 +26,6 @@ void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag);
 
 int MPIR_Status_set_bytes(MPI_Status *status, MPI_Datatype datatype, MPI_Count nbytes);
 
-
 int MPIR_Get_node_id(MPI_Comm comm, int rank, int *id);
 
 #endif /* MPIR_EXT */
