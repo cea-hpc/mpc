@@ -76,6 +76,12 @@ int mpc_mpi_cl_wait_pending( mpc_lowcomm_communicator_t comm );
 
 int mpc_mpi_cl_wait_pending_all_comm( void );
 
+/*******************
+ * RANK CONVERSION *
+ *******************/
+
+int mpc_mpi_cl_world_rank( mpc_lowcomm_communicator_t comm, int rank);
+
 /*************************
  * COLLECTIVE OPERATIONS *
  *************************/
@@ -261,6 +267,8 @@ end of execution */
 
 #define MPC_ERR_LASTCODE 77
 
+int mpc_mpi_cl_error_string( int code, char *str, int *len );
+
 /*************************
  * MESSAGING LAYER TYPES *
  *************************/
@@ -420,6 +428,8 @@ typedef int( MPC_Type_delete_attr_function )( mpc_lowcomm_datatype_t datatype,
         int type_keyval,
         void *attribute_val,
         void *extra_state );
+
+int mpc_mpi_cl_type_is_contiguous(mpc_lowcomm_datatype_t type);
 
 /********************
  * THREAD MIGRATION *

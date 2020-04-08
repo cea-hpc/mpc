@@ -6,7 +6,7 @@
 
 #include "adio.h"
 
-#if defined(MPICH)
+#if defined(MPICH) || defined(MPC_MESSAGE_PASSING_INTERFACE)
 /* MPICH also provides this routine */
 void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag);
 

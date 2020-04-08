@@ -216,10 +216,6 @@ int mpc_launch_pmi_get_process_layout( struct mpc_launch_pmi_process_layout **la
 */
 int mpc_launch_pmi_get_job_id( int *id );
 
-
-
-
-
 /*********************************
  * LIBRARY MODE TOPOLOGY GETTERS *
  *********************************/

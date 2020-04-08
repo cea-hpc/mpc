@@ -372,8 +372,6 @@ int _mpc_cl_errhandler_get( mpc_lowcomm_communicator_t comm, MPC_Errhandler *err
 
 int _mpc_cl_errhandler_free( MPC_Errhandler *errhandler );
 
-int _mpc_cl_error_string( int code, char *str, int *len );
-
 int _mpc_cl_error_class( int errorcode, int *errorclass );
 
 /************************
@@ -665,7 +663,6 @@ int _mpc_cl_derived_datatype_on_slot ( int id,
                                        long ub, int is_ub );
 
 int _mpc_cl_type_set_size( mpc_lowcomm_datatype_t datatype, size_t size );
-
 
 #ifdef __cplusplus
 }

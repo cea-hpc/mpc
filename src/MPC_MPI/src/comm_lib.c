@@ -2098,6 +2098,39 @@ int _mpc_cl_type_ctx_set( mpc_lowcomm_datatype_t datatype,
 	MPC_ERROR_SUCESS();
 }
 
+int mpc_mpi_cl_type_is_contiguous(mpc_lowcomm_datatype_t type)
+{
+
+	/* UB or LB are not contiguous */
+	if( _mpc_dt_is_boundary(type) )
+	{
+		return 0;
+	}
+
+	if(_mpc_dt_is_contiguous(type) ||  _mpc_dt_is_common( type ))
+	{
+		return 1;
+	}
+
+	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific;
+
+  	_mpc_dt_derived_t *target_type = NULL;
+
+	if( _mpc_dt_get_kind( type ) == MPC_DATATYPES_DERIVED )
+	{
+		task_specific = mpc_cl_per_mpi_process_ctx_get ();
+		target_type = _mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get(  task_specific, type );
+		assume( target_type != NULL );
+
+		/* If there is no block (0 size) or one block in the optimized representation
+			* then this data-type is contiguous */
+		if( (target_type->count == 0) ||  (target_type->opt_count == 1) )
+			return 1;
+	}
+
+	return 0;
+}
+
 /* Datatype  Attribute Handling                                         */
 
 /* KEYVALS */
@@ -3213,6 +3246,15 @@ int mpc_mpi_cl_wait_pending_all_comm()
 	mpc_common_spinlock_unlock( &( task_specific->per_communicator_lock ) );
 	SCTK_PROFIL_END( MPC_Wait_pending_all_comm );
 	MPC_ERROR_SUCESS();
+}
+
+/*******************
+ * RANK CONVERSION *
+ *******************/
+
+int mpc_mpi_cl_world_rank( mpc_lowcomm_communicator_t comm, int rank)
+{
+	return sctk_get_comm_world_rank(comm, rank);
 }
 
 /************************************************************************/
@@ -4367,7 +4409,7 @@ int _mpc_cl_errhandler_free( MPC_Errhandler *errhandler )
 	sprintf( str, msg );                  \
 	break
 
-int _mpc_cl_error_string( int code, char *str, int *len )
+int mpc_mpi_cl_error_string( int code, char *str, int *len )
 {
 	str[0] = '\0';
 
@@ -4426,7 +4468,7 @@ void _mpc_cl_default_error( mpc_lowcomm_communicator_t *comm, int *error, char *
 {
 	char str[1024];
 	int i;
-	_mpc_cl_error_string( *error, str, &i );
+	mpc_mpi_cl_error_string( *error, str, &i );
 
 	if ( i != 0 )
 	{
@@ -4444,7 +4486,7 @@ void _mpc_cl_return_error( mpc_lowcomm_communicator_t *comm, int *error, ... )
 {
 	char str[1024];
 	int i;
-	_mpc_cl_error_string( *error, str, &i );
+	mpc_mpi_cl_error_string( *error, str, &i );
 
 	if ( i != 0 )
 	{
@@ -4457,7 +4499,7 @@ void _mpc_cl_abort_error( mpc_lowcomm_communicator_t *comm, int *error, char *me
 {
 	char str[1024];
 	int i;
-	_mpc_cl_error_string( *error, str, &i );
+	mpc_mpi_cl_error_string( *error, str, &i );
 	sctk_error( "===================================================" );
 
 	if ( i != 0 )

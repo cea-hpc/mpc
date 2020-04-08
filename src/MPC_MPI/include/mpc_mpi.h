@@ -47,6 +47,11 @@ extern "C"
 {
 #endif
 
+/**
+ * @brief This Macro Informs the MPI Code that it is running in MPC
+ */
+#define MPC_MESSAGE_PASSING_INTERFACE 1
+
 #define MPI_VERSION    3
 #define MPI_SUBVERSION    1
 
