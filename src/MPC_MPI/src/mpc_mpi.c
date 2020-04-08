@@ -4432,7 +4432,7 @@ int sctk_Type_create_darray(int size, int rank, int ndims,
 	int          procs, tmp_rank, i, tmp_size, blklens[3], *coords;
 	MPI_Aint *   st_offsets, orig_extent, disps[3];
 
-	MPI_Type_extent(oldtype, &orig_extent);
+	PMPI_Type_extent(oldtype, &orig_extent);
 
 /* calculate position in Cartesian grid as MPI would (row-major
  * ordering) */
@@ -4484,7 +4484,7 @@ int sctk_Type_create_darray(int size, int rank, int ndims,
 			}
 			if(i)
 			{
-				MPI_Type_free(&type_old);
+				PMPI_Type_free(&type_old);
 			}
 			type_old = type_new;
 		}
@@ -4531,7 +4531,7 @@ int sctk_Type_create_darray(int size, int rank, int ndims,
 			}
 			if(i != ndims - 1)
 			{
-				MPI_Type_free(&type_old);
+				PMPI_Type_free(&type_old);
 			}
 			type_old = type_new;
 		}
@@ -4562,7 +4562,7 @@ int sctk_Type_create_darray(int size, int rank, int ndims,
 
 	PMPI_Type_struct(3, blklens, disps, types, newtype);
 
-	MPI_Type_free(&type_new);
+	PMPI_Type_free(&type_new);
 	sctk_free(st_offsets);
 	sctk_free(coords);
 
@@ -4617,7 +4617,7 @@ static int sctk_MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int n
 	{
 		if(dim == 0)
 		{
-			MPI_Type_contiguous(mysize, type_old, type_new);
+			PMPI_Type_contiguous(mysize, type_old, type_new);
 		}
 		else
 		{
@@ -4625,14 +4625,14 @@ static int sctk_MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int n
 			{
 				stride *= (MPI_Aint)array_of_gsizes[i];
 			}
-			MPI_Type_hvector(mysize, 1, stride, type_old, type_new);
+			PMPI_Type_hvector(mysize, 1, stride, type_old, type_new);
 		}
 	}
 	else
 	{
 		if(dim == ndims - 1)
 		{
-			MPI_Type_contiguous(mysize, type_old, type_new);
+			PMPI_Type_contiguous(mysize, type_old, type_new);
 		}
 		else
 		{
@@ -4640,7 +4640,7 @@ static int sctk_MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int n
 			{
 				stride *= (MPI_Aint)array_of_gsizes[i];
 			}
-			MPI_Type_hvector(mysize, 1, stride, type_old, type_new);
+			PMPI_Type_hvector(mysize, 1, stride, type_old, type_new);
 		}
 	}
 
@@ -4717,7 +4717,7 @@ static int sctk_MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int 
 		}
 	}
 
-	MPI_Type_hvector(count, blksize, stride, type_old, type_new);
+	PMPI_Type_hvector(count, blksize, stride, type_old, type_new);
 
 	if(rem)
 	{
@@ -4733,7 +4733,7 @@ static int sctk_MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int 
 
 		PMPI_Type_struct(2, blklens, disps, types, &type_tmp);
 
-		MPI_Type_free(type_new);
+		PMPI_Type_free(type_new);
 		*type_new = type_tmp;
 	}
 
@@ -4750,7 +4750,7 @@ static int sctk_MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int 
 		disps[2]   = orig_extent * (MPI_Aint)array_of_gsizes[dim];
 		blklens[0] = blklens[1] = blklens[2] = 1;
 		PMPI_Type_struct(3, blklens, disps, types, &type_tmp);
-		MPI_Type_free(type_new);
+		PMPI_Type_free(type_new);
 		*type_new = type_tmp;
 
 		*st_offset = 0; /* set it to 0 because it is taken care of in
@@ -4789,18 +4789,18 @@ int sctk_Type_create_subarray(int ndims,
 	int          i, blklens[3];
 	MPI_Datatype tmp1, tmp2, types[3];
 
-	MPI_Type_extent(oldtype, &extent);
+	PMPI_Type_extent(oldtype, &extent);
 
 	if(order == MPI_ORDER_FORTRAN)
 	{
 		/* dimension 0 changes fastest */
 		if(ndims == 1)
 		{
-			MPI_Type_contiguous(array_of_subsizes[0], oldtype, &tmp1);
+			PMPI_Type_contiguous(array_of_subsizes[0], oldtype, &tmp1);
 		}
 		else
 		{
-			MPI_Type_vector(array_of_subsizes[1],
+			PMPI_Type_vector(array_of_subsizes[1],
 			                array_of_subsizes[0],
 			                array_of_sizes[0], oldtype, &tmp1);
 
@@ -4808,8 +4808,8 @@ int sctk_Type_create_subarray(int ndims,
 			for(i = 2; i < ndims; i++)
 			{
 				size *= (MPI_Aint)array_of_sizes[i - 1];
-				MPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
-				MPI_Type_free(&tmp1);
+				PMPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
+				PMPI_Type_free(&tmp1);
 				tmp1 = tmp2;
 			}
 		}
@@ -4830,11 +4830,11 @@ int sctk_Type_create_subarray(int ndims,
 		/* dimension ndims-1 changes fastest */
 		if(ndims == 1)
 		{
-			MPI_Type_contiguous(array_of_subsizes[0], oldtype, &tmp1);
+			PMPI_Type_contiguous(array_of_subsizes[0], oldtype, &tmp1);
 		}
 		else
 		{
-			MPI_Type_vector(array_of_subsizes[ndims - 2],
+			PMPI_Type_vector(array_of_subsizes[ndims - 2],
 			                array_of_subsizes[ndims - 1],
 			                array_of_sizes[ndims - 1], oldtype, &tmp1);
 
@@ -4842,8 +4842,8 @@ int sctk_Type_create_subarray(int ndims,
 			for(i = ndims - 3; i >= 0; i--)
 			{
 				size *= (MPI_Aint)array_of_sizes[i + 1];
-				MPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
-				MPI_Type_free(&tmp1);
+				PMPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
+				PMPI_Type_free(&tmp1);
 				tmp1 = tmp2;
 			}
 		}
@@ -4874,7 +4874,7 @@ int sctk_Type_create_subarray(int ndims,
 
 	PMPI_Type_struct(3, blklens, disps, types, newtype);
 
-	MPI_Type_free(&tmp1);
+	PMPI_Type_free(&tmp1);
 
 	return MPI_SUCCESS;
 }
@@ -5622,8 +5622,8 @@ int __INTERNAL__PMPI_Pack_external(char *datarep, void *inbuf, int incount, MPI_
 	{
 		int      pack_size     = 0;
 		MPI_Aint ext_pack_size = 0;
-		MPI_Pack_external_size(datarep, incount, datatype, &ext_pack_size);
-		MPI_Pack_size(incount, datatype, MPI_COMM_WORLD, &pack_size);
+		PMPI_Pack_external_size(datarep, incount, datatype, &ext_pack_size);
+		PMPI_Pack_size(incount, datatype, MPI_COMM_WORLD, &pack_size);
 
 		int pos = 0;
 		/* MPI_Pack takes an integer output size */
@@ -5680,8 +5680,8 @@ int __INTERNAL__PMPI_Unpack_external(char *datarep, void *inbuf, MPI_Aint insize
 	{
 		int      pack_size     = 0;
 		MPI_Aint ext_pack_size = 0;
-		MPI_Pack_external_size(datarep, outcount, datatype, &ext_pack_size);
-		MPI_Pack_size(outcount, datatype, MPI_COMM_WORLD, &pack_size);
+		PMPI_Pack_external_size(datarep, outcount, datatype, &ext_pack_size);
+		PMPI_Pack_size(outcount, datatype, MPI_COMM_WORLD, &pack_size);
 
 		char *native_pack_buff = sctk_malloc(pack_size);
 		memset(native_pack_buff, 0, pack_size);
@@ -6597,7 +6597,7 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
 			{
 				/* If non-contig, we need to unpack to the final buffer */
 				int cnt = 0;
-				MPI_Unpack(src, bcast_ctx->scount * bcast_ctx->stype_size, &cnt, buffer,
+				PMPI_Unpack(src, bcast_ctx->scount * bcast_ctx->stype_size, &cnt, buffer,
 				           count, datatype, comm);
 			}
 			else
@@ -12117,7 +12117,7 @@ SHM_REDUCE_DONE:
 		{
 			/* If non-contig, we need to unpack to the final buffer */
 			int cnt = 0;
-			MPI_Unpack(reduce_ctx->target_buff, tsize * count, &cnt, recvbuf, count,
+			PMPI_Unpack(reduce_ctx->target_buff, tsize * count, &cnt, recvbuf, count,
 			           datatype, comm);
 
 			/* We had to allocate the segment */
@@ -16409,7 +16409,7 @@ static int __INTERNAL__PMPI_Cart_sub(MPI_Comm comm, int *remain_dims,
 
 	if(remain_dims == NULL)
 	{
-		MPI_Comm_dup(MPI_COMM_SELF, comm_new);
+		PMPI_Comm_dup(MPI_COMM_SELF, comm_new);
 		tmp      = mpc_mpc_get_per_comm_data(*comm_new);
 		topo_new = &(tmp->topo);
 
@@ -16451,7 +16451,7 @@ static int __INTERNAL__PMPI_Cart_sub(MPI_Comm comm, int *remain_dims,
 	{
 		if(rank == 0)
 		{
-			MPI_Comm_dup(MPI_COMM_SELF, comm_new);
+			PMPI_Comm_dup(MPI_COMM_SELF, comm_new);
 		}
 		else
 		{
@@ -21426,7 +21426,7 @@ int PMPI_Mprobe(int source, int tag, MPI_Comm comm, MPI_Message *message,
 
 	/* Allocate Memory */
 	int count = 0;
-	MPI_Get_count(status, MPI_CHAR, &count);
+	PMPI_Get_count(status, MPI_CHAR, &count);
 	m->buff = sctk_malloc(count);
 	assume(m->buff);
 	m->size = count;
@@ -21479,7 +21479,7 @@ int PMPI_Improbe(int source, int tag, MPI_Comm comm, int *flag,
 	{
 		/* Allocate Memory */
 		int count = 0;
-		MPI_Get_count(status, MPI_CHAR, &count);
+		PMPI_Get_count(status, MPI_CHAR, &count);
 		m->buff = sctk_malloc(count);
 		assume(m->buff);
 		m->size = count;
