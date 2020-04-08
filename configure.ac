@@ -1737,6 +1737,9 @@ fi
 #
 # ROMIO File systems
 #
+
+ROMIO_FS_LIST=""
+
 AM_CONDITIONAL([BUILD_AD_NFS], [false])
 
 AM_CONDITIONAL([BUILD_AD_LUSTRE], [false])
@@ -1771,15 +1774,18 @@ if test -n "$file_system_nfs" ; then
     AC_MSG_WARN([File locks may not work with NFS.  See the Installation and
 users manual for instructions on testing and if necessary fixing this])
     AM_CONDITIONAL([BUILD_AD_NFS], [true])
+    ROMIO_FS_LIST="${ROMIO_FS_LIST} nfs"
 fi
 
 
 if test -n "$file_system_gpfs"; then
     AC_DEFINE(ROMIO_GPFS,1,[Define for ROMIO with GPFS])
+    ROMIO_FS_LIST="${ROMIO_FS_LIST} gpfs"
 fi
 
 if test -n "$file_system_ufs"; then
     AC_DEFINE(ROMIO_UFS,1,[Define for ROMIO with UFS])
+    ROMIO_FS_LIST="${ROMIO_FS_LIST} unix"
 fi
 
 AM_CONDITIONAL([BUILD_AD_BG],[false])
@@ -1807,6 +1813,7 @@ if test -n "$file_system_lustre"; then
     if test x"$ac_cv_header_linux_lustre_lustre_user_h" = "xyes" -o x"$ac_cv_header_lustre_lustre_user_h" = "xyes" ; then
         AC_DEFINE(ROMIO_LUSTRE, 1, [Define for ROMIO with LUSTRE])
 	AM_CONDITIONAL([BUILD_AD_LUSTRE], [true])
+	ROMIO_FS_LIST="${ROMIO_FS_LIST} lustre"
     else
         AC_MSG_NOTICE([LUSTRE support requested but cannot find lustre/lustre_user.h header file])
     fi
@@ -1831,6 +1838,7 @@ AM_CONDITIONAL([LUSTRE_LOCKAHEAD],[test "$lustre_lockahead" = "yes"])
 if test -n "$file_system_xfs"; then
     AC_DEFINE(ROMIO_XFS,1,[Define for ROMIO with XFS])
     AM_CONDITIONAL([BUILD_AD_XFS], [true])
+    ROMIO_FS_LIST="${ROMIO_FS_LIST} xfs"
     # Check for memalign value
     AC_CACHE_CHECK([for memory alignment needed for direct I/O],
     pac_cv_memalignval,
@@ -1871,7 +1879,8 @@ fi
 if test -n "$file_system_ime"; then
         AC_CHECK_HEADERS(ime_native.h,
                 AC_DEFINE(ROMIO_IME,1,[Define for ROMIO with IME])
-		AM_CONDITIONAL([BUILD_AD_IME], [true]),
+		[AM_CONDITIONAL([BUILD_AD_IME], [true])
+		ROMIO_FS_LIST="${ROMIO_FS_LIST} ime"],
                 AC_MSG_NOTICE([IME support requested but cannot find ime_native.h header file])
         )
 fi
@@ -1883,8 +1892,9 @@ if test -n "$file_system_pvfs2"; then
     CPPFLAGS="$CPPFLAGS $CFLAGS"
     AC_CHECK_HEADERS(pvfs2.h,
 	AC_DEFINE(ROMIO_PVFS2,1,[Define for ROMIO with PVFS2])
-	AM_CONDITIONAL([BUILD_AD_PVFS2], [true])
-	AC_DEFINE(HAVE_PVFS2_SUPER_MAGIC, 1, [Define if PVFS2_SUPER_MAGIC defined.]),
+	[AM_CONDITIONAL([BUILD_AD_PVFS2], [true])
+	AC_DEFINE(HAVE_PVFS2_SUPER_MAGIC, 1, [Define if PVFS2_SUPER_MAGIC defined.])
+	ROMIO_FS_LIST="${ROMIO_FS_LIST} pvfs2"],
         AC_MSG_ERROR([PVFS2 support requested but cannot find pvfs2.h header file])                                        
     )
 fi
@@ -1916,6 +1926,19 @@ AS_IF([test -n "$file_system_gpfs"],
 	    [AC_MSG_ERROR([Library containing gpfs_fcntl symbols not found])])
 	])
 	)
+
+if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
+MPC_MPIIO_CONFIGURATION="\
+### MPI IO Configuration ###\n\
+#\n\
+# File Systems.........$ROMIO_FS_LIST\n\
+# Lustre Lookahead..... $lustre_lockahead\n\
+#"
+else
+MPC_MPIIO_CONFIGURATION=""
+fi
+
+
 #
 # MPI IO (romio) END
 #
@@ -2220,6 +2243,7 @@ MPC_CONFIG_RESULT="\
 # MPC_Thread........... $MPC_THREAD_ENABLED\n\
 # MPC_Message_passing.. $MPC_MESSAGE_PASSING_ENABLED\n\
 # MPC_MPI.............. $MPC_MPI_ENABLED\n\
+# MPC_MPIIO............ $MPC_MPIIO_ENABLED\n\
 #\n\
 ### COMPILERS ###\n\
 #\n\
@@ -2232,7 +2256,7 @@ MPC_CONFIG_RESULT="\
 #\n\
 # Supported list....... $MPC_NETWORK_LIST\n\
 # CMA over SHM......... $mpc_enable_cma\n\
-#\n\
+#\n$MPC_MPIIO_CONFIGURATION\
 ### ACCELERATORS ###\n\
 #\n\
 # Cuda support......... $cuda_enabled\n\

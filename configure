@@ -30953,6 +30953,9 @@ fi
 #
 # ROMIO File systems
 #
+
+ROMIO_FS_LIST=""
+
  if false; then
   BUILD_AD_NFS_TRUE=
   BUILD_AD_NFS_FALSE='#'
@@ -31096,6 +31099,7 @@ else
   BUILD_AD_NFS_FALSE=
 fi
 
+    ROMIO_FS_LIST="${ROMIO_FS_LIST} nfs"
 fi
 
 
@@ -31103,12 +31107,14 @@ if test -n "$file_system_gpfs"; then
 
 $as_echo "#define ROMIO_GPFS 1" >>confdefs.h
 
+    ROMIO_FS_LIST="${ROMIO_FS_LIST} gpfs"
 fi
 
 if test -n "$file_system_ufs"; then
 
 $as_echo "#define ROMIO_UFS 1" >>confdefs.h
 
+    ROMIO_FS_LIST="${ROMIO_FS_LIST} unix"
 fi
 
  if false; then
@@ -31187,6 +31193,7 @@ else
   BUILD_AD_LUSTRE_FALSE=
 fi
 
+	ROMIO_FS_LIST="${ROMIO_FS_LIST} lustre"
     else
         { $as_echo "$as_me:${as_lineno-$LINENO}: LUSTRE support requested but cannot find lustre/lustre_user.h header file" >&5
 $as_echo "$as_me: LUSTRE support requested but cannot find lustre/lustre_user.h header file" >&6;}
@@ -31243,6 +31250,7 @@ else
   BUILD_AD_XFS_FALSE=
 fi
 
+    ROMIO_FS_LIST="${ROMIO_FS_LIST} xfs"
     # Check for memalign value
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for memory alignment needed for direct I/O" >&5
 $as_echo_n "checking for memory alignment needed for direct I/O... " >&6; }
@@ -31319,6 +31327,7 @@ else
   BUILD_AD_IME_FALSE=
 fi
 
+		ROMIO_FS_LIST="${ROMIO_FS_LIST} ime"
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: IME support requested but cannot find ime_native.h header file" >&5
 $as_echo "$as_me: IME support requested but cannot find ime_native.h header file" >&6;}
@@ -31355,6 +31364,7 @@ fi
 
 $as_echo "#define HAVE_PVFS2_SUPER_MAGIC 1" >>confdefs.h
 
+	ROMIO_FS_LIST="${ROMIO_FS_LIST} pvfs2"
 else
   as_fn_error $? "PVFS2 support requested but cannot find pvfs2.h header file" "$LINENO" 5
 
@@ -31474,6 +31484,19 @@ fi
 fi
 
 fi
+
+if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
+MPC_MPIIO_CONFIGURATION="\
+### MPI IO Configuration ###\n\
+#\n\
+# File Systems.........$ROMIO_FS_LIST\n\
+# Lustre Lookahead..... $lustre_lockahead\n\
+#"
+else
+MPC_MPIIO_CONFIGURATION=""
+fi
+
+
 #
 # MPI IO (romio) END
 #
@@ -31912,6 +31935,7 @@ MPC_CONFIG_RESULT="\
 # MPC_Thread........... $MPC_THREAD_ENABLED\n\
 # MPC_Message_passing.. $MPC_MESSAGE_PASSING_ENABLED\n\
 # MPC_MPI.............. $MPC_MPI_ENABLED\n\
+# MPC_MPIIO............ $MPC_MPIIO_ENABLED\n\
 #\n\
 ### COMPILERS ###\n\
 #\n\
@@ -31924,7 +31948,7 @@ MPC_CONFIG_RESULT="\
 #\n\
 # Supported list....... $MPC_NETWORK_LIST\n\
 # CMA over SHM......... $mpc_enable_cma\n\
-#\n\
+#\n$MPC_MPIIO_CONFIGURATION\
 ### ACCELERATORS ###\n\
 #\n\
 # Cuda support......... $cuda_enabled\n\

@@ -45,14 +45,14 @@ void mpc_io_unlock()
 	mpc_common_spinlock_write_unlock(&__io_rw_lock);
 }
 
-static mpc_common_spinlock_t __cslock = SCTK_SPINLOCK_INITIALIZER;
+//static mpc_common_spinlock_t __cslock = SCTK_SPINLOCK_INITIALIZER;
 
 void mpc_io_critical_section_enter()
 {
-	mpc_common_spinlock_lock_yield(&__cslock);
+	//mpc_common_spinlock_lock_yield(&__cslock);
 }
 
 void mpc_io_critical_section_leave()
 {
-	mpc_common_spinlock_unlock(&__cslock);
+	//mpc_common_spinlock_unlock(&__cslock);
 }
