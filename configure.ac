@@ -41,9 +41,9 @@ CONFIGURE_SCRIPT_PATH=$(dirname "`readlink -f "$0"`")
 
 LT_INIT([disable-static])
 LT_LANG([C])
-AC_PROG_CXX
-AC_PROG_CC
-AC_PROG_FC
+AC_PROG_CXX([apc++ icpc g++ clang++])
+AC_PROG_CC([apcc icc gcc clang])
+AC_PROG_FC([apfortran ifort gfortran])
 
 MPC_VERSION_MAJOR="$($CONFIGURE_SCRIPT_PATH/utils/get_version --major)"
 MPC_VERSION_MINOR="$($CONFIGURE_SCRIPT_PATH/utils/get_version --minor)"
@@ -84,7 +84,7 @@ is_in_list()
 }
 
 if is_in_list "$MPC_TARGET_ARCHITECTURE" "$MPC_SUPPORTED_ARCHITECTURES_LIST"; then
-        AC_MSG_RESULT($MPC_TARGET_ARCHITECTURE)
+        AC_MSG_RESULT([$MPC_TARGET_ARCHITECTURE])
 else
         AC_MSG_RESULT(Not supported)
         AC_MSG_ERROR(The current architecture is not supported yet. Please contact support team.)
@@ -1470,7 +1470,7 @@ case $mpc_compiler_family in
                 MPC_OPT_FLAGS=" -O3  -opt-prefetch -unroll-aggressive"
         ;;
         "clang")
-                MPC_OPT_FLAGS=" -O3 -unroll-count=4"
+                MPC_OPT_FLAGS=" -O3"
         ;;
         *)
                 MPC_OPT_FLAGS=" -O3"
@@ -1933,7 +1933,7 @@ MPC_MPIIO_CONFIGURATION="\
 #\n\
 # File Systems.........$ROMIO_FS_LIST\n\
 # Lustre Lookahead..... $lustre_lockahead\n\
-#"
+#\n"
 else
 MPC_MPIIO_CONFIGURATION=""
 fi
@@ -2044,6 +2044,8 @@ locate_bin()
 
 }
 
+# Insert all known compiler wrappers for compilers
+
 for prog in gcc g++ gfortran icc icpc ifort pgcc pgc++ pgcpp pgfortran pgf77 clang clang++ flang
 do
         AC_MSG_CHECKING([for ${prog}])
@@ -2060,40 +2062,49 @@ do
 
 done
 
+# These variables are used to compile
+# privatized code inside MPC by default we
+# use  CC (no priv) and no priv flag
 MPC_PRIV_COMPILER="$CC"
 MPC_PRIV_FLAGS=""
 
-if test "x${mpc_privatization_support}" = "xyes"; then
+at_least_one_privatizing_compiler=""
 
-        at_least_one_privatizing_compiler=""
+# Is CC apcc ?
+AC_MSG_CHECKING([if CC is apcc])
 
-        for prog in apcc ap++ apfortran
-        do
-                AC_MSG_CHECKING([for ${prog}])
-                locate_bin $prog
+$CC --ap-help > /dev/null 2>&1
 
-                if test -n "$locate_bin_path"; then
-                        compiler_to_lang $prog
-                        MPC_COMPILER_LIST+=" $prog"
-                        AC_MSG_RESULT([yes])
-                        at_least_one_privatizing_compiler+="yes"
-                else
-                        AC_MSG_RESULT([no])
-                fi
-        done
+if test "x$?" = "x0"; then
+	at_least_one_privatizing_compiler="yes"
+	# MPC can privatize during BUILD
+	MPC_PRIV_COMPILER="$CC"
+	MPC_PRIV_FLAGS="-fmpc-privatize"
+	AC_MSG_RESULT([yes])
+else
+	AC_MSG_RESULT([no])
+fi
 
-        if test -z "$at_least_one_privatizing_compiler"; then
-                AC_MSG_ERROR([Privatization was enabled but no privatizing compiler was found])
+for prog in apcc ap++ apfortran
+do
+	AC_MSG_CHECKING([for ${prog}])
+	locate_bin $prog
+
+	if test -n "$locate_bin_path"; then
+		compiler_to_lang $prog
+		MPC_COMPILER_LIST+=" $prog"
+		AC_MSG_RESULT([yes])
+		at_least_one_privatizing_compiler+="yes"
 	else
-		locate_bin "apcc"
-		if test -n "$locate_bin_path"; then
-			# We have a privatizing C compiler
-			MPC_PRIV_COMPILER="$locate_bin_path"
-			MPC_PRIV_FLAGS="-fmpc-privatize"
-		else
-			AC_MSG_ERROR([Privatization was enabled but no privatizing apcc compiler was found])
-		fi
-        fi
+		AC_MSG_RESULT([no])
+	fi
+done
+
+if test "x${mpc_privatization_support}" = "xyes"; then
+        if test -z "$at_least_one_privatizing_compiler"; then
+		AC_MSG_WARN([Consider passing --enable-process-mode to deactivate priv])
+                AC_MSG_ERROR([Privatization was enabled but no privatizing compiler was found])
+	fi
 fi
 
 AC_SUBST([MPC_PRIV_COMPILER])
@@ -2133,15 +2144,27 @@ AC_MSG_CHECKING([for autopriv])
 
 if test "x${apcc}" = "xyes" -a "x${apcpp}" = "xyes" -a "x${apfortran}" = "xyes";
 then
+	# We have autopriv in path
 	AC_MSG_RESULT([yes])
 	mpc_have_autopriv=yes
+
+	# If we have no MPC_PRIV_FLAGS no privatizing compiler was ellected yet
+	if test -z "$MPC_PRIV_FLAGS"; then
+		# CC is not privatizing but APCC could be in the path
+		# if so use it to compile romio, as otherwise we cannot
+		# run in thread-based mode
+		AC_MSG_WARN([Privatized parts of MPC will be compiled with apcc (different compiler)])
+		# We have a privatizing C compiler
+		locate_bin "apcc"
+		MPC_PRIV_COMPILER="$locate_bin_path"
+		MPC_PRIV_FLAGS="-fmpc-privatize"
+	fi
+
 else
 	AC_MSG_RESULT([no])
 fi
 
 AM_CONDITIONAL([MPC_HAVE_AUTOPRIV], [test "x${mpc_have_autopriv}" = "xyes"])
-
-
 
 
 #
@@ -2229,6 +2252,10 @@ MPC_CONFIG_RESULT="\
 # Installation into.... $prefix\n\
 # Configure run on..... `date -d @$MPC_GENERATION_DATE`\n\
 # Version built........ $MPC_VERSION_STRING\n\
+# C Compiler........... $CC\n\
+# MPC C Priv Command... $(basename $MPC_PRIV_COMPILER) $MPC_PRIV_FLAGS\n\
+# C++ Compiler......... $CXX\n\
+# Fortran Compiler..... $FC\n\
 #\n\
 ### BUILD CONFIGURATION ###\n\
 #\n\
@@ -2274,6 +2301,7 @@ MPC_CONFIG_RESULT="\
 # Debug symbols........ $mpc_debug\n\
 # Debug messages....... $mpc_debug_messages\n\
 # Colored output....... $mpc_shell_color\n\
+#\n\
 #############################################\n"
 
 AC_SUBST([MPC_CONFIG_RESULT])
