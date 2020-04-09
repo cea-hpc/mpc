@@ -467,25 +467,6 @@ size_t sctk_net_determine_message_size ( mpc_lowcomm_ptp_message_t *
 	return SCTK_MSG_SIZE ( msg );
 }
 
-static  inline void
-amd64_cpy_nt ( volatile void *dst, volatile void *src, size_t n )
-{
-	memcpy ( ( void * ) dst, ( void * ) src, n );
-}
-
-static inline size_t
-copy_frag (  __UNUSED__ char *msg,
-             __UNUSED__ size_t size,
-             __UNUSED__ char *buffer,
-             __UNUSED__ size_t curr_copy,
-             __UNUSED__ size_t max_copy,
-             __UNUSED__ size_t tot_size,
-             __UNUSED__ int *go_on )
-{
-	not_implemented();
-	return 0;
-}
-
 
 int sctk_net_copy_frag_msg (
     const mpc_lowcomm_ptp_message_t *msg,
@@ -573,95 +554,6 @@ int sctk_net_copy_frag_msg (
 			not_reachable();
 	}
 
-	/* 	size_t i; */
-	/* 	size_t j; */
-	/* 	size_t size; */
-	/* 	size_t tot_size = 0; */
-	/* 	int go_on; */
-
-	/* 	sctk_nodebug ( "Write from %p", buffer ); */
-	/* 	sctk_nodebug ( "Curr_copy (%u), max_copy (%u)", curr_copy, max_copy ); */
-
-	/* 	for ( i = 0; i < msg->message.nb_items; i++ ) { */
-	/* 		if ( msg->message.begins_absolute[i] != NULL ) { */
-	/* 			for ( j = 0; j < msg->message.sizes[i]; j++ ) { */
-	/* 				size = ( msg->message.ends_absolute[i][j] - */
-	/* 				         msg->message.begins_absolute[i][j] + */
-	/* 				         1 ) * msg->message.elem_sizes[i]; */
-
-	/* 				sctk_nodebug ( "size 0: %d", size ); */
-
-	/* 				tot_size = copy_frag ( */
-	/* 				            ( ( char * ) ( msg->message.adresses[i] ) ) + */
-	/* 				            msg->message.begins_absolute[i][j] * */
-	/* 				            msg->message.elem_sizes[i], */
-	/* 				            size, */
-	/* 				            buffer, */
-	/* 				            curr_copy, */
-	/* 				            max_copy, */
-	/* 				            tot_size, */
-	/* 				            &go_on ); */
-
-	/* 				sctk_nodebug ( "Tot size : %ld", tot_size ); */
-
-	/* 				if ( go_on == 0 ) { */
-	/* 					sctk_nodebug ( "Tot size : %ld", tot_size ); */
-	/* 					return tot_size; */
-	/* 				} */
-	/* 			} */
-	/* 		} else { */
-	/* 			if ( msg->message.begins[i] == NULL ) { */
-	/* 				sctk_nodebug ( "size 1: %d", msg->message.sizes[i] ); */
-
-	/* 				tot_size = copy_frag ( */
-	/* 				            msg->message.adresses[i], */
-	/* 				            msg->message.sizes[i], */
-	/* 				            buffer, */
-	/* 				            curr_copy, */
-	/* 				            max_copy, */
-	/* 				            tot_size, */
-	/* 				            &go_on ); */
-
-	/* 				sctk_nodebug ( "Tot size : %ld", tot_size ); */
-
-	/* 				sctk_nodebug ( "Curr copy : %d", curr_copy ); */
-
-	/* 				if ( go_on == 0 ) { */
-	/* 					sctk_nodebug ( "Tot size : %ld", tot_size ); */
-	/* 					return tot_size; */
-	/* 				} */
-	/* 			} else { */
-	/* 				for ( j = 0; j < msg->message.sizes[i]; j++ ) { */
-	/* 					size = */
-	/* 					 ( msg->message.ends[i][j] - msg->message.begins[i][j] + */
-	/* 					   1 ) * msg->message.elem_sizes[i]; */
-
-	/* 					sctk_nodebug ( "size 2: %d", size ); */
-
-	/* 					tot_size = copy_frag ( */
-	/* 					            ( char * ) ( msg->message.adresses[i] ) + */
-	/* 					            msg->message.begins[i][j] * */
-	/* 					            msg->message.elem_sizes[i], */
-	/* 					            size, */
-	/* 					            buffer, */
-	/* 					            curr_copy, */
-	/* 					            max_copy, */
-	/* 					            tot_size, */
-	/* 					            &go_on ); */
-
-	/* 					sctk_nodebug ( "Tot size : %ld", tot_size ); */
-
-	/* 					if ( go_on == 0 ) { */
-	/* 						sctk_nodebug ( "Tot size : %ld", tot_size ); */
-	/* 						return tot_size; */
-	/* 					} */
-	/* 				} */
-	/* 			} */
-	/* 		} */
-	/* 	} */
-
-	/* 	sctk_nodebug ( "End of function (curr_copy %d) (max %d) (tot_size %d)", curr_copy, max_copy, tot_size ); */
-	/* 	return tot_size; */
 	not_implemented();
 	return 0;
 }

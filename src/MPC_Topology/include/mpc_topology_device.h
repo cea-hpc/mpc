@@ -80,6 +80,14 @@ typedef enum
  */
 const char *mpc_topology_device_type_to_char( mpc_topology_device_type_t type );
 
+/**
+ * @brief Convert an HWLOC type to an MPC type
+ * 
+ * @param type hwloc type to be converted
+ * @return mpc_topology_device_type_t MPC handled type
+ */
+mpc_topology_device_type_t mpc_topology_device_type_from_hwloc(hwloc_obj_osdev_type_t type);
+
 /** This enum define the type of binding of a given device */
 typedef enum
 {

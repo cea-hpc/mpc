@@ -1462,6 +1462,8 @@ AC_ARG_ENABLE([opt],
 [mpc_enable_opt=$enableval],
 [mpc_enable_opt=yes])
 
+MPC_PORTABLE_OPT_FLAGS=" -O3"
+
 case $mpc_compiler_family in
         "gcc")
                 MPC_OPT_FLAGS=" -O3  -funroll-loops"
@@ -1473,7 +1475,7 @@ case $mpc_compiler_family in
                 MPC_OPT_FLAGS=" -O3"
         ;;
         *)
-                MPC_OPT_FLAGS=" -O3"
+                MPC_OPT_FLAGS=" $MPC_PORTABLE_OPT_FLAGS"
         ;;
 esac
 
@@ -1488,6 +1490,8 @@ AC_ARG_ENABLE([opt-native],
 [mpc_enable_native_opt=$enableval],
 [mpc_enable_native_opt=no])
 
+MPC_PORTABLE_NATIVE_FLAGS=" "
+
 case $mpc_compiler_family in
         "gcc")
                 MPC_NATIVE_FLAGS=" -march=native"
@@ -1499,7 +1503,7 @@ case $mpc_compiler_family in
                 MPC_NATIVE_FLAGS=" -march=native"
         ;;
         *)
-                MPC_NATIVE_FLAGS=""
+                MPC_NATIVE_FLAGS=" $MPC_PORTABLE_NATIVE_FLAGS"
         ;;
 esac
 
@@ -1523,10 +1527,28 @@ AC_ARG_ENABLE([debug],
 [mpc_debug=$enableval],
 [mpc_debug=no])
 
-if test "x${mpc_debug}" = "xyes"; then
-        CFLAGS+=" -g -Wall -Wextra"
-fi
+MPC_PORTABLE_DEBUG_FLAGS=" -g"
 
+case $mpc_compiler_family in
+        "gcc")
+                MPC_DEBUG_FLAGS=" -g -Wall -Wextra"
+        ;;
+        "icc")
+                MPC_DEBUG_FLAGS=" -g -Wall"
+        ;;
+        "clang")
+                MPC_DEBUG_FLAGS=" -g -Wall -Wextra"
+        ;;
+        *)
+                MPC_DEBUG_FLAGS=" $MPC_PORTABLE_DEBUG_FLAGS"
+        ;;
+esac
+
+# Todo we cannot pass it to APCC portably
+
+if test "x${mpc_debug}" = "xyes"; then
+        CFLAGS+=" $MPC_DEBUG_FLAGS"
+fi
 
 AC_ARG_ENABLE([profiler],
 [AS_HELP_STRING([--enable-profiler],
@@ -2298,7 +2320,7 @@ MPC_CONFIG_RESULT="\
 ### DEBUGGING ###\n\
 #\n\
 # Embedded profiler.... $MPC_HAVE_PROFILER\n\
-# Debug symbols........ $mpc_debug\n\
+# Debug symbols........ $mpc_debug ($MPC_DEBUG_FLAGS)\n\
 # Debug messages....... $mpc_debug_messages\n\
 # Colored output....... $mpc_shell_color\n\
 #\n\

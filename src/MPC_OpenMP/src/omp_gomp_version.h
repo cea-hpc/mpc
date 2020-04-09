@@ -87,7 +87,6 @@ GOMP_ABI_FUNC(GOMP_parallel_start, "GOMP_1.0", mpcomp_GOMP_parallel_start,
               mpcomp_GOMP_parallel_start)
 GOMP_ABI_FUNC(GOMP_sections_end, "GOMP_1.0", mpcomp_GOMP_sections_end,
               mpcomp_GOMP_sections_end)
-GOMP_ABI_FUNC(GOMP_sections_end_nowait,"GOMP_1.0",GOMP_sections_end_nowait,GOMP_sections_end_nowait)
 GOMP_ABI_FUNC(GOMP_sections_end_nowait, "GOMP_1.0",
               mpcomp_GOMP_sections_end_nowait, mpcomp_GOMP_sections_end_nowait)
 GOMP_ABI_FUNC(GOMP_sections_next, "GOMP_1.0", mpcomp_GOMP_sections_next,

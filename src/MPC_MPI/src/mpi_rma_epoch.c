@@ -775,7 +775,7 @@ int mpc_Win_target_ctx_start_exposure_no_lock(MPI_Win win, mpc_Win_arity arity,
      * is another locking primitive */
     if ((ctx->state != MPC_WIN_TARGET_NONE) &&
         (ctx->state != MPC_WIN_TARGET_FENCE)) {
-      if ((ctx->state == MPC_WIN_TARGET_PASSIVE_EXCL)) {
+      if (ctx->state == MPC_WIN_TARGET_PASSIVE_EXCL) {
         /* Lock is already taken exclusive we cannot enter shared */
         delayed_locking = 1;
       } else if (ctx->state == MPC_WIN_TARGET_PASSIVE_SHARED) {
@@ -1523,7 +1523,7 @@ int mpc_Win_source_ctx_end_access_no_lock(MPI_Win win,
 
   case MPC_WIN_SOURCE_ACTIVE:
     /* End an active exposure */
-    ctx->state = MPC_WIN_TARGET_NONE;
+    ctx->state = MPC_WIN_SOURCE_NONE;
     clear_remote_ranks = 1;
     break;
 
@@ -1539,16 +1539,16 @@ int mpc_Win_source_ctx_end_access_no_lock(MPI_Win win,
 
         if (ctx->remote_count == 0) {
           clear_remote_ranks = 1;
-          ctx->state = MPC_WIN_TARGET_NONE;
+          ctx->state = MPC_WIN_SOURCE_NONE;
         }
       } else {
-        ctx->state = MPC_WIN_TARGET_NONE;
+        ctx->state = MPC_WIN_SOURCE_NONE;
       }
     }
   } break;
 
   case MPC_WIN_SOURCE_FENCE:
-    ctx->state = MPC_WIN_TARGET_NONE;
+    ctx->state = MPC_WIN_SOURCE_NONE;
     break;
   }
 

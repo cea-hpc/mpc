@@ -188,7 +188,7 @@ json_t * json_bool( int thruth )
 void json_bool_destroy(json_t * json)
 {
 	json_bool_t * b = json_to_bool( json );
-	b->value = 255;
+	b->value = -1;
 }
 
 json_t * json_string( const char * string )

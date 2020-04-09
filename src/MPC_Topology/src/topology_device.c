@@ -82,6 +82,37 @@ const char *mpc_topology_device_type_to_char( mpc_topology_device_type_t type )
 	return NULL;
 }
 
+mpc_topology_device_type_t mpc_topology_device_type_from_hwloc(hwloc_obj_osdev_type_t type)
+{
+	switch ( type )
+	{
+		case HWLOC_OBJ_OSDEV_BLOCK:
+			return MPC_TOPO_DEVICE_BLOCK;
+			break;
+
+		case HWLOC_OBJ_OSDEV_NETWORK:
+			return MPC_TOPO_DEVICE_NETWORK_HANDLE;
+			break;
+
+		case HWLOC_OBJ_OSDEV_OPENFABRICS:
+			return MPC_TOPO_DEVICE_NETWORK_OFA;
+			break;
+
+		case HWLOC_OBJ_OSDEV_GPU:
+			return MPC_TOPO_DEVICE_GPU;
+			break;
+
+		case HWLOC_OBJ_OSDEV_COPROC:
+			return MPC_TOPO_DEVICE_COPROCESSOR;
+			break;
+
+		case HWLOC_OBJ_OSDEV_DMA:
+			return MPC_TOPO_DEVICE_DMA;	
+	}
+
+	return MPC_TOPO_DEVICE_UKNOWN;
+}
+
 const char *mpc_topology_device_container_to_char( mpc_topology_device_container_t type )
 {
 	switch ( type )
@@ -438,7 +469,7 @@ static void __topology_device_init( hwloc_topology_t topology, mpc_topology_devi
 		/* If we resolved ATTR then retrieve the type */
 		if ( dev_attr )
 		{
-			dev->type = dev_attr->type;
+			dev->type = mpc_topology_device_type_from_hwloc(dev_attr->type);
 		}
 	}
 

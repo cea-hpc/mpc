@@ -68,7 +68,7 @@ char *sctk_char_fortran_to_c(char *buf, int size, char **free_ptr)
 		tmp++;
 	}
 
-	int len = strlen(tmp);
+	size_t len = strlen(tmp);
 
 	char *begin = tmp;
 
@@ -83,7 +83,7 @@ char *sctk_char_fortran_to_c(char *buf, int size, char **free_ptr)
 
 void sctk_char_c_to_fortran(char *buf, int size)
 {
-	long int i;
+	size_t i;
 
 	for(i = strlen(buf); i < size; i++)
 	{
@@ -1049,17 +1049,19 @@ static int SCTK__MPI_Attr_communicator_dup(MPI_Comm old, MPI_Comm new);
  * MPI Level Per Thread CTX
  *
  */
-
+//#define MPC_MPI_USE_REQUEST_CACHE
 
 #ifdef MPC_MPI_USE_REQUEST_CACHE
-    #define MPC_MPI_REQUEST_CACHE_SIZE    128
+    #define MPC_MPI_REQUEST_CACHE_SIZE   128
+#endif
+
+#ifdef MPC_MPI_USE_REQUEST_CACHE
+	__thread MPI_internal_request_t *mpc_mpi_request_cache[MPC_MPI_REQUEST_CACHE_SIZE];
 #endif
 
 typedef struct MPI_per_thread_ctx_s
 {
-#ifdef MPC_MPI_USE_REQUEST_CACHE
-	MPI_internal_request_t *mpc_mpi_request_cache[MPC_MPI_REQUEST_CACHE_SIZE];
-#endif
+
 
 #ifdef MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
 	MPI_internal_request_t *mpc_mpi_local_request_queue;

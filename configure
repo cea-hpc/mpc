@@ -30286,6 +30286,8 @@ else
 fi
 
 
+MPC_PORTABLE_OPT_FLAGS=" -O3"
+
 case $mpc_compiler_family in
         "gcc")
                 MPC_OPT_FLAGS=" -O3  -funroll-loops"
@@ -30297,7 +30299,7 @@ case $mpc_compiler_family in
                 MPC_OPT_FLAGS=" -O3"
         ;;
         *)
-                MPC_OPT_FLAGS=" -O3"
+                MPC_OPT_FLAGS=" $MPC_PORTABLE_OPT_FLAGS"
         ;;
 esac
 
@@ -30314,6 +30316,8 @@ else
 fi
 
 
+MPC_PORTABLE_NATIVE_FLAGS=" "
+
 case $mpc_compiler_family in
         "gcc")
                 MPC_NATIVE_FLAGS=" -march=native"
@@ -30325,7 +30329,7 @@ case $mpc_compiler_family in
                 MPC_NATIVE_FLAGS=" -march=native"
         ;;
         *)
-                MPC_NATIVE_FLAGS=""
+                MPC_NATIVE_FLAGS=" $MPC_PORTABLE_NATIVE_FLAGS"
         ;;
 esac
 
@@ -30355,10 +30359,26 @@ else
 fi
 
 
-if test "x${mpc_debug}" = "xyes"; then
-        CFLAGS+=" -g -Wall -Wextra"
-fi
+MPC_PORTABLE_DEBUG_FLAGS=" -g"
 
+case $mpc_compiler_family in
+        "gcc")
+                MPC_DEBUG_FLAGS=" -g -Wall -Wextra"
+        ;;
+        "icc")
+                MPC_DEBUG_FLAGS=" -g -Wall"
+        ;;
+        "clang")
+                MPC_DEBUG_FLAGS=" -g -Wall -Wextra"
+        ;;
+        *)
+                MPC_DEBUG_FLAGS=" $MPC_PORTABLE_DEBUG_FLAGS"
+        ;;
+esac
+
+if test "x${mpc_debug}" = "xyes"; then
+        CFLAGS+=" $MPC_DEBUG_FLAGS"
+fi
 
 # Check whether --enable-profiler was given.
 if test "${enable_profiler+set}" = set; then :
@@ -31803,7 +31823,7 @@ MPC_CONFIG_RESULT="\
 ### DEBUGGING ###\n\
 #\n\
 # Embedded profiler.... $MPC_HAVE_PROFILER\n\
-# Debug symbols........ $mpc_debug\n\
+# Debug symbols........ $mpc_debug ($MPC_DEBUG_FLAGS)\n\
 # Debug messages....... $mpc_debug_messages\n\
 # Colored output....... $mpc_shell_color\n\
 #\n\

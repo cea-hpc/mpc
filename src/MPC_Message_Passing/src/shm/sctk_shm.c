@@ -390,7 +390,7 @@ static void sctk_shm_init_raw_queue(size_t size, int cells_num, int rank)
     sctk_shm_pmi_handler_free(pmi_handler);
 }
 
-static void sctk_shm_free_raw_queue()
+static void sctk_shm_free_raw_queue(int i)
 {
 }
 
