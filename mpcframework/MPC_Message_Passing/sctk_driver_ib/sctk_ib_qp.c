@@ -346,7 +346,7 @@ struct ibv_qp *sctk_ib_qp_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
 	remote->qp = ibv_create_qp ( device->pd, attr );
 	PROF_INC ( rail_ib->rail, ib_qp_created );
         if (!remote->qp) {
-          sctk_warning("IB issue: try to reduce cap.max_send_wr %d -> %d",
+          sctk_info("IB issue: try to reduce cap.max_send_wr %d -> %d",
                        attr->cap.max_send_wr, attr->cap.max_send_wr / 3);
           attr->cap.max_send_wr = attr->cap.max_send_wr / 3;
           remote->qp = ibv_create_qp(device->pd, attr);
