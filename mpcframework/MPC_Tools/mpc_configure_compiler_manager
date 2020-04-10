@@ -376,7 +376,7 @@ set_default_compiler()
 
 	#set the compiler as the first one
 	CURRENT="\`cat \${COMPILER_FILEPATH}/.\${1}_compilers.cfg | grep -v \$2\`"
-	echo "${exists}\n${CURRENT}" > ${COMPILER_FILEPATH}/.${1}_compilers.cfg
+	echo "\${exists}\n\${CURRENT}" > \${COMPILER_FILEPATH}/.\${1}_compilers.cfg
 }
 
 stat_compilers()
