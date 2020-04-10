@@ -381,6 +381,63 @@ build_package_name()
 	fi
 }
 
+# The --force-spack-package=* option allows to force the use
+# of a given spack package for installing a given dependency
+# usually for testing or development purposes of when there are version conflicts
+#
+# Syntax is :
+#     DEP:SPACK_DESC,DEP:SPACK_DESC...
+# For example:
+#     libxml2:/dzadzad,openpa:openpa@9.9.9
+#
+# Args:
+#  -$1 package name
+#  -$2 package version
+#
+# Fils in concretized_package with either $1@$2 or overrid if exists
+#
+OVERRIDEN_SPACK_PKGS=""
+#
+check_if_spack_package_is_overriden()
+{
+	concretized_package="$(build_package_name "$1" "$2")"
+
+	if test -z "$OVERRIDEN_SPACK_PKGS"; then
+		return
+	fi
+
+	for override in $(echo "$OVERRIDEN_SPACK_PKGS" | sed "s/,/\n/g")
+	do
+		DEP=$(echo "$override" | cut -d ':' -f 1)
+		SPACK_DESC=$(echo "$override" | cut -d ':' -f 2)
+
+		if test "x${DEP}" = "x${SPACK_DESC}" -o -z "${SPACK_DESC}"; then
+			nok
+			die "No forced spack descriptor provided to dependency ${DEP}\n--force-spack-package=$OVERRIDEN_SPACK_PKGS"
+		fi
+
+		if test "x${DEP}" = "x${1}"; then
+			checking "overriden with ${SPACK_DESC}"
+			concretized_package="${SPACK_DESC}"
+
+			if echo "$concretized_package" | grep "^/" > /dev/null; then
+				#This is a hash so package must exist at load time
+					set +e
+					spack find "$TO_LOAD_NAME" > /dev/null 2>&1
+
+					if test "x$?" != "x0"; then
+						nok
+						die "Failed loading forced spack dependency ${SPACK_DESC} for ${DEP}"
+					fi
+
+					set -e
+			fi
+
+		
+		fi
+	done
+}
+
 
 # Try to find a dep using spack
 # Args:
@@ -409,11 +466,15 @@ find_dep_with_spack()
 		return
 	fi
 
-	show_run_cmd "spack load --sh $PKG_NAME"
+	# Now check if dependency has been forced
+	check_if_spack_package_is_overriden "$1" "$2"
+	TO_LOAD_NAME="$concretized_package"
+
+	show_run_cmd "spack load --sh $TO_LOAD_NAME"
 
 	set +e
 
-	LOAD_CMD=$(spack load --sh "$PKG_NAME" 2> /dev/null)
+	LOAD_CMD=$(spack load --sh "$TO_LOAD_NAME" 2> /dev/null)
 	check_retcode "$?"
 
 	set -e
@@ -434,8 +495,10 @@ install_dep_with_spack()
 	assert_cmd "spack"
 
 	PKG_NAME="$(build_package_name "$1" "$2")"
-
 	checking "install $PKG_NAME using spack"
+
+	check_if_spack_package_is_overriden "$1" "$2"
+	PKG_NAME="$concretized_package"
 
 	show_run_cmd "spack info  $PKG_NAME"
 	spack info  "$PKG_NAME" > /dev/null 2>&1 || notapplicable
@@ -668,8 +731,6 @@ build_configure_based_package()
 	show_run_cmd "touch ${DEP_FLAG}"
 	touch "${DEP_FLAG}"
 }
-
-
 
 # Deploy an MPC dependency using various methods (spack or not)
 # Args:
@@ -1054,6 +1115,9 @@ do
 			;;
 		--disable-build)
 			BUILD_IS_DISABLED="yes"
+			;;
+		--force-spack-package=*)
+			extractParamValue 'OVERRIDEN_SPACK_PKGS' 'force-spack-package' "$arg"
 			;;
 		# Deprecated options
 		--mirror=*|clean|distclean|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--with-hbict=*|--hbict-*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--mpc-*|--enable-check-deps|--disable-check-deps|--disable-check-install|--enable-all-internals|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*|--version)
