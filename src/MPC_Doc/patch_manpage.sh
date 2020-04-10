@@ -12,7 +12,7 @@ test -n "$file" || exit 42
 manpage="`cat $1`"
 
 echo "$manpage" | sed -e "s@#PACKAGE_DATE#@`date +%x`@" \
-    -e "s@#PACKAGE_VERSION#@$version@" \
+    -e "s,#PACKAGE_VERSION#,$version," \
     -e "s@#PACKAGE_NAME#@Multi-Processor Computing@"
 
 if test -n "`echo "$file" | grep "MPI_.*.3in"`"; then
