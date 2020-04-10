@@ -2905,6 +2905,7 @@ int PMPC_Type_free_keyval(int *type_keyval) {
 
 int PMPC_Type_get_attr(MPC_Datatype datatype, int type_keyval,
                        void *attribute_val, int *flag) {
+  *flag = 0;
   sctk_task_specific_t *task_specific = __MPC_get_task_specific();
   struct Datatype_Array *da = task_specific->datatype_array;
 
