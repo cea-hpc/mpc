@@ -833,17 +833,6 @@ EOF
 # MPC WRAPPER FOR BUILD                            #
 #                                                  #
 ####################################################
-
-
-# Build directory check
-#
-
-# Make sure we do not install inside the source directory
-
-if test "x${SCRIPTPATH}" = "x${PROJECT_BUILD_DIR}"; then
-	die "MPC cannot be configured inside the source directory"
-fi
-
 #
 # Disable all optionnal dependencies by default
 #
@@ -1045,6 +1034,7 @@ do
 			;;
 		--help|-h|-?)
 			showHelp
+			exit 0
 			;;
 		--spack|--enable-spack|--download-missing-deps)
 			assert_cmd "spack"
@@ -1074,6 +1064,16 @@ do
 			exit 1
 	esac
 done
+
+# Build directory check
+#
+
+# Make sure we do not install inside the source directory
+
+if test "x${SCRIPTPATH}" = "x${PROJECT_BUILD_DIR}"; then
+	die "MPC cannot be configured inside the source directory"
+fi
+
 
 # Make sure we have a prefix
 test -z "$PREFIX" && die "Please provide a prefix where to install MPC"

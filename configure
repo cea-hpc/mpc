@@ -20600,6 +20600,11 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+cat >>confdefs.h <<_ACEOF
+#define MPC_VERSION_STRING "$MPC_VERSION_STRING"
+_ACEOF
+
+
 
 
 
@@ -26988,8 +26993,6 @@ main ()
     if (*(data + i) != *(data3 + i))
       return 14;
   close (fd);
-  free (data);
-  free (data3);
   return 0;
 }
 _ACEOF
@@ -30375,6 +30378,8 @@ case $mpc_compiler_family in
                 MPC_DEBUG_FLAGS=" $MPC_PORTABLE_DEBUG_FLAGS"
         ;;
 esac
+
+# Todo we cannot pass it to APCC portably
 
 if test "x${mpc_debug}" = "xyes"; then
         CFLAGS+=" $MPC_DEBUG_FLAGS"
