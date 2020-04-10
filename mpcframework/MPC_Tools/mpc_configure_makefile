@@ -388,7 +388,7 @@ printf "\t@cp -r INSTALL/lib/* \${DESTDIR}${SCTK_LIB_DIR}">> Makefile; echo "">>
 printf "\t@cp -r INSTALL/include/mpcframework/* \${DESTDIR}${SCTK_INCLUDE_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/share/man/* \${DESTDIR}${SCTK_MAN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@echo \"LIB libmpc_framework.so\"">> Makefile; echo "">> Makefile
-printf "\t@\$(CC)  \$(COBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DESTDIR}${SCTK_LIB_DIR}/libmpc_framework.so  $SCTK_LDFLAGS -Wl,--version-script=\$(MPC_SOURCE_DIR)/MPC_OpenMP/version_gomp.txt || echo \"Unable to build C shared library\"">> Makefile; echo "">> Makefile
+printf "\t@\$(CC)  \$(COBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DESTDIR}${SCTK_LIB_DIR}/libmpc_framework.so  $SCTK_LDFLAGS -ldl -Wl,--version-script=\$(MPC_SOURCE_DIR)/MPC_OpenMP/version_gomp.txt || echo \"Unable to build C shared library\"">> Makefile; echo "">> Makefile
 if test "$SCTK_FORTRAN" = "1"; then
 printf "\t@echo \"LIB libmpc_frameworkf.so\"">> Makefile; echo "">> Makefile
 printf "\t@\$(CC) \$(FOBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DESTDIR}${SCTK_LIB_DIR}/libmpc_frameworkf.so $SCTK_LDFLAGS -Wl,--version-script=\$(MPC_SOURCE_DIR)/MPC_OpenMP/version_gomp.txt || echo \"Unable to build Fortran shared library\"">> Makefile; echo "">> Makefile
