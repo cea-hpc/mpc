@@ -616,7 +616,7 @@ int _mpc_dt_attr_set( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
  *  \return MPI_SUCCESS if ok
  */
 int _mpc_dt_attr_get( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
-					  int type_keyval, void *attribute_val, int *flag );
+					  int type_keyval, void **attribute_val, int *flag );
 
 /** \brief Delete a Datatype attr in a datatype-store (contained inside DT)
  *  \param da A pointer to the datatype array

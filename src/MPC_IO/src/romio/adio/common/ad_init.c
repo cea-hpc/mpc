@@ -8,6 +8,8 @@
 #include "adio.h"
 #include "adio_extern.h"
 
+/*MPC PATCH*/
+#if 0
 ADIOI_Datarep *ADIOI_Datarep_head = NULL;
     /* list of datareps registered by the user */
 
@@ -32,7 +34,9 @@ int ADIOI_Direct_read = 0, ADIOI_Direct_write = 0;
 int ADIO_Init_keyval = MPI_KEYVAL_INVALID;
 
 MPI_Errhandler ADIOI_DFLT_ERR_HANDLER = MPI_ERRORS_RETURN;
-
+#else
+	/* All those variables are now in the MPC Context */
+#endif
 
 static void my_consensus(void *invec, void *inoutvec, int *len, MPI_Datatype * datatype)
 {

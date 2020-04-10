@@ -469,6 +469,7 @@ typedef int MPI_Fint;
 typedef MPC_Type_combiner MPI_Type_combiner;
 
 /* MPI_Info Definitions */
+#define HAVE_MPI_INFO
 typedef MPC_Info MPI_Info;
 
 /* Copy Functions */
@@ -730,6 +731,8 @@ int MPI_Allreduce (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
 int MPI_Reduce_scatter (void *, void *, int *, MPI_Datatype, MPI_Op, MPI_Comm);
 int MPI_Reduce_scatter_block(void *, void *, int , MPI_Datatype , MPI_Op , MPI_Comm );
 int MPI_Scan (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
+int MPI_Alltoallw (void *, int[], int[], MPI_Datatype[], void *, int[], int[], MPI_Datatype[], MPI_Comm);
+
 
 /* Non Blocking Collectives Operations */
 int MPI_Iallreduce (void *sendbuf, void *recvbuf, int count,MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,MPI_Request *request);
@@ -1416,6 +1419,7 @@ int PMPI_Waitsome (int, MPI_Request *, int *, int *, MPI_Status *);
 int PMPI_Testsome (int, MPI_Request *, int *, int *, MPI_Status *);
 int PMPI_Iprobe (int, int, MPI_Comm, int *, MPI_Status *);
 int PMPI_Probe (int, int, MPI_Comm, MPI_Status *);
+int PMPI_Cancel (MPI_Request *);
 int PMPI_Test_cancelled (MPI_Status *, int *);
 int PMPI_Send_init (void *, int, MPI_Datatype, int, int, MPI_Comm,  MPI_Request *);
 int PMPI_Bsend_init (void *, int, MPI_Datatype, int, int, MPI_Comm,  MPI_Request *);
@@ -1447,6 +1451,11 @@ int PMPI_Type_create_hindexed (int, int *, MPI_Aint *, MPI_Datatype, MPI_Datatyp
 int PMPI_Type_struct (int, int *, MPI_Aint *, MPI_Datatype *, MPI_Datatype *);
 int PMPI_Type_create_struct (int, int *, MPI_Aint *, MPI_Datatype *, MPI_Datatype *);
 int PMPI_Address (void *, MPI_Aint *);
+int PMPI_Type_free_keyval (int *);
+int PMPI_Type_create_keyval (MPI_Type_copy_attr_function *, MPI_Type_delete_attr_function *, int *, void *);
+int PMPI_Type_delete_attr (MPI_Datatype, int);
+int PMPI_Type_set_attr (MPI_Datatype, int, void *);
+int PMPI_Type_get_attr (MPI_Datatype, int, void *, int *);
 int PMPI_Get_address( void *location, MPI_Aint *address);
 /* We could add __attribute__((deprecated)) to routines like MPI_Type_extent */
 int PMPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent);
@@ -1466,6 +1475,7 @@ int PMPI_Unpack (void *, int, int *, void *, int, MPI_Datatype, MPI_Comm);
 int PMPI_Pack_size (int, MPI_Datatype, MPI_Comm, int *);
 int PMPI_Type_set_name( MPI_Datatype datatype, char *name );
 int PMPI_Type_get_name( MPI_Datatype datatype, char *name, int * resultlen );
+int PMPI_Type_create_resized (MPI_Datatype, MPI_Aint , MPI_Aint , MPI_Datatype *);
 int PMPI_Type_dup( MPI_Datatype old_type, MPI_Datatype *newtype );
 int PMPI_Type_extent(MPI_Datatype datatype, MPI_Aint *extent);
 int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent);
@@ -1520,6 +1530,8 @@ int PMPI_Allreduce (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
 int PMPI_Reduce_scatter (void *, void *, int *, MPI_Datatype, MPI_Op, MPI_Comm);
 int PMPI_Reduce_scatter_block(void *, void *, int , MPI_Datatype , MPI_Op , MPI_Comm );
 int PMPI_Scan (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
+int PMPI_Alltoallw (void *, int[], int[], MPI_Datatype[], void *, int[], int[], MPI_Datatype[], MPI_Comm);
+
 
 /* Non Blocking Collectives Operations */
 int PMPI_Iallreduce (void *sendbuf, void *recvbuf, int count,MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,MPI_Request *request);
@@ -1912,7 +1924,6 @@ int MPI_Reduce_scatter_block(void *, void *, int , MPI_Datatype , MPI_Op , MPI_C
 int MPI_Reduce_local(const void *, void *, int, MPI_Datatype, MPI_Op);
 
 /* Extended Collective Operations */
-int MPI_Alltoallw (void *, int[], int[], MPI_Datatype[], void *, int[], int[], MPI_Datatype[], MPI_Comm);
 
 /* dist graph operations */
 int MPI_Dist_graph_neighbors_count(MPI_Comm , int *, int *, int *);

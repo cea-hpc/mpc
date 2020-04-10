@@ -35,9 +35,16 @@
 #undef CB_CONFIG_LIST_DEBUG
 
 /* a couple of globals keep things simple */
+
+/*MPC Patch */
+#if 0
 int ADIOI_cb_config_list_keyval = MPI_KEYVAL_INVALID;
 static char *yylval;
 static char *token_ptr;
+#else
+/* These variables are now in the MPC ROMIO ctx */
+#endif
+
 
 /* internal stuff */
 static int get_max_procs(int cb_nodes);

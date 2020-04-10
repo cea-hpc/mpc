@@ -2150,7 +2150,7 @@ int _mpc_cl_type_free_keyval( int *type_keyval )
 /* ATTRS */
 
 int _mpc_cl_type_get_attr( mpc_lowcomm_datatype_t datatype, int type_keyval,
-                           void *attribute_val, int *flag )
+                           void **attribute_val, int *flag )
 {
 	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
 	struct _mpc_dt_storage *da = task_specific->datatype_array;

@@ -18889,7 +18889,9 @@ int PMPI_Type_set_attr(MPI_Datatype datatype, int type_keyval,
 int PMPI_Type_get_attr(MPI_Datatype datatype, int type_keyval,
                        void *attribute_val, int *flag)
 {
-	return _mpc_cl_type_get_attr(datatype, type_keyval, attribute_val, flag);
+	*flag = 0;
+	return _mpc_cl_type_get_attr(datatype, type_keyval, (void **)attribute_val, flag);
+
 }
 
 int PMPI_Type_delete_attr(MPI_Datatype datatype, int type_keyval)

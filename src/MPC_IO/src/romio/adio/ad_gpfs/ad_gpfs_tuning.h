@@ -53,9 +53,12 @@ enum {
     GPFSMPIO_CIO_LAST
 };
 
+/* MPC Patch */
+#if 0
 /* +1 because GPFSMPIO_CIO_LAST is actually used to say "zero this counter"" */
 extern double gpfsmpio_prof_cw[GPFSMPIO_CIO_LAST + 1];
 extern double gpfsmpio_prof_cr[GPFSMPIO_CIO_LAST + 1];
+
 
 /* corresponds to environment variables to select optimizations and timing level */
 extern int gpfsmpio_timing;
@@ -68,6 +71,10 @@ extern int gpfsmpio_p2pcontig;
 extern int gpfsmpio_balancecontig;
 extern int gpfsmpio_devnullio;
 extern int gpfsmpio_bridgeringagg;
+#else
+/* These variable are in the MPC Context */
+#endif
+
 
 /* Default is, well, kind of complicated. Blue Gene /L and /P had "psets": one
  * i/o node and all compute nodes wired to it.  On Blue Gene /Q that
@@ -80,8 +87,11 @@ extern int gpfsmpio_bridgeringagg;
 
 #define ADIOI_BG_NAGG_PSET_DFLT 16
 
+#if 0
 extern int gpfsmpio_bg_nagg_pset;
-
+#else
+/* This variable is in the MPC Context */
+#endif
 
 /* set internal variables for tuning environment variables */
 void ad_gpfs_get_env_vars(void);

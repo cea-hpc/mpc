@@ -322,13 +322,13 @@ export PATH=${MPC_INSTALL_PREFIX}/bin/:${PATH}
 
 #Used to avoid header global variable privatization when libraries are not privatized
 #mpc_mpi_comm_lib.h and mpcmicrothread.h have been recopied from GCC patch
-MPC_UNPRIVATIZED_FILES="${MPC_UNPRIVATIZED_FILES}:mpc_mpi_comm_lib.h:mpcmicrothread.h:ompt.h:"
-MPC_UNPRIVATIZED_VARS="${MPC_UNPRIVATIZED_VARS}:`preprocess_main`"
+AP_UNPRIVATIZED_FILES="${AP_UNPRIVATIZED_FILES}:mpc_mpi_comm_lib.h:mpcmicrothread.h:ompt.h:"
+AP_UNPRIVATIZED_VARS="${AP_UNPRIVATIZED_VARS}:`preprocess_main`"
 
 custompath=""
 
-export MPC_UNPRIVATIZED_FILES
-export MPC_UNPRIVATIZED_VARS
+export AP_UNPRIVATIZED_FILES
+export AP_UNPRIVATIZED_VARS
 
 #first definition of compiler & linking flags
 CFLAGS="`${MPC_INSTALL_PREFIX}/bin/mpc_cflags cxx $custompath`"

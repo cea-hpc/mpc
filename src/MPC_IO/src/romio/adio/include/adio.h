@@ -431,6 +431,9 @@ void MPIO_Completed_request_create(MPI_File * fh, MPI_Offset nbytes,
 #include "adioi_fs_proto.h"
 #include "mpio_error.h"
 #include "mpipr.h"
+/* MPC Patch */
+#include "adio_extern.h"
+/* END */
 
 /* these two defines don't appear to be in any other header file */
 #define MPIR_ERR_FATAL 1

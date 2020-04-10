@@ -699,6 +699,8 @@ build_configure_based_package()
 	elif test -f "${PKG_SOURCE_DIR}/configure"; then
 		# Regular configure / make / make install
 		checking "Configuring $package-$version"
+		# we want parameter expansion
+		# shellcheck disable=SC2086
 		wrap_output "${PKG_SOURCE_DIR}/configure" "--prefix=${PREFIX}" $extra_config_args
 		ok
 
@@ -1297,6 +1299,8 @@ MPC_CONFIGURE_OPTS="--prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS"
 #
 
 checking "Configuring MPC"
+# we want parameter expansion
+# shellcheck disable=SC2086
 wrap_output "$SCRIPTPATH/configure" $MPC_CONFIGURE_OPTS
 ok
 

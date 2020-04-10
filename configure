@@ -655,8 +655,6 @@ MPC_FORTRAN_COMPILER_LIST
 MPC_CPP_COMPILER_LIST
 MPC_C_COMPILER_LIST
 MPC_LANGUAGE_LIST
-MPC_PRIV_FLAGS
-MPC_PRIV_COMPILER
 ALL_MPC_LIBS
 BUILD_AD_UFS_FALSE
 BUILD_AD_UFS_TRUE
@@ -26993,6 +26991,8 @@ main ()
     if (*(data + i) != *(data3 + i))
       return 14;
   close (fd);
+  free (data);
+  free (data3);
   return 0;
 }
 _ACEOF
@@ -31456,12 +31456,6 @@ $as_echo "no" >&6; }
 
 done
 
-# These variables are used to compile
-# privatized code inside MPC by default we
-# use  CC (no priv) and no priv flag
-MPC_PRIV_COMPILER="$CC"
-MPC_PRIV_FLAGS=""
-
 at_least_one_privatizing_compiler=""
 
 # Is CC apcc ?
@@ -31472,9 +31466,6 @@ $CC --ap-help > /dev/null 2>&1
 
 if test "x$?" = "x0"; then
 	at_least_one_privatizing_compiler="yes"
-	# MPC can privatize during BUILD
-	MPC_PRIV_COMPILER="$CC"
-	MPC_PRIV_FLAGS="-fmpc-privatize"
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 else
@@ -31507,9 +31498,6 @@ $as_echo "$as_me: WARNING: Consider passing --enable-process-mode to deactivate 
                 as_fn_error $? "Privatization was enabled but no privatizing compiler was found" "$LINENO" 5
 	fi
 fi
-
-
-
 
 # Check that we at least have a C compiler
 
@@ -31664,20 +31652,6 @@ then
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 	mpc_have_autopriv=yes
-
-	# If we have no MPC_PRIV_FLAGS no privatizing compiler was ellected yet
-	if test -z "$MPC_PRIV_FLAGS"; then
-		# CC is not privatizing but APCC could be in the path
-		# if so use it to compile romio, as otherwise we cannot
-		# run in thread-based mode
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Privatized parts of MPC will be compiled with apcc (different compiler)" >&5
-$as_echo "$as_me: WARNING: Privatized parts of MPC will be compiled with apcc (different compiler)" >&2;}
-		# We have a privatizing C compiler
-		locate_bin "apcc"
-		MPC_PRIV_COMPILER="$locate_bin_path"
-		MPC_PRIV_FLAGS="-fmpc-privatize"
-	fi
-
 else
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -31783,7 +31757,6 @@ MPC_CONFIG_RESULT="\
 # Configure run on..... `date -d @$MPC_GENERATION_DATE`\n\
 # Version built........ $MPC_VERSION_STRING\n\
 # C Compiler........... $CC\n\
-# MPC C Priv Command... $(basename $MPC_PRIV_COMPILER) $MPC_PRIV_FLAGS\n\
 # C++ Compiler......... $CXX\n\
 # Fortran Compiler..... $FC\n\
 #\n\

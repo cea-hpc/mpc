@@ -1312,7 +1312,7 @@ int _mpc_dt_attr_set( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
 }
 
 int _mpc_dt_attr_get( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
-					  int type_keyval, void *attribute_val, int *flag )
+					  int type_keyval, void **attribute_val, int *flag )
 {
 	struct __mpc_dt_attr_store *store = __mpc_dt_get_attr_store( da, type );
 
@@ -1327,7 +1327,7 @@ int _mpc_dt_attr_get( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
 	{
 		ret = (struct __mpc_dt_attr *) pret;
 
-		*( (void **) attribute_val ) = ret->attribute_val;
+		*( attribute_val ) = ret->attribute_val;
 
 		*flag = 1;
 	}

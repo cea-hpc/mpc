@@ -12,7 +12,9 @@
 #include "mpioprof.h"
 #endif
 
-extern int ADIO_Init_keyval;
+#include "adio_extern.h"
+
+//extern int ADIO_Init_keyval;
 
 /* common code to stuff an attribute on a communicator for the purpose of
  * cleaning up in MPI_Finalize() */

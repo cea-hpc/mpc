@@ -622,8 +622,8 @@ int _mpc_cl_type_create_keyval( MPC_Type_copy_attr_function *copy,
 int _mpc_cl_type_delete_attr( mpc_lowcomm_datatype_t datatype, int type_keyval );
 int _mpc_cl_type_set_attr( mpc_lowcomm_datatype_t datatype, int type_keyval,
                            void *attribute_val );
-int _mpc_cl_type_get_attr( mpc_lowcomm_datatype_t datatype, int attribute_val,
-                           void *type_keyval, int *flag );
+int _mpc_cl_type_get_attr( mpc_lowcomm_datatype_t datatype, int type_keyval,
+                           void **attribute_val, int *flag );
 
 struct _mpc_dt_context;
 int _mpc_cl_derived_datatype( mpc_lowcomm_datatype_t *datatype,

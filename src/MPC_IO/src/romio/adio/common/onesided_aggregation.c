@@ -27,6 +27,8 @@
  * the collective buffer to the file system.  In this fashion the synchronization can be minimized as that
  * only needs to occur during the actual read from or write to the file system.
  */
+/* MPC Patch */
+#if 0
 int iWasUsedStripingAgg;        /* whether this rank was ever a used agg for this striping segement */
 int numStripesUsed;             /* the number of stripes packed into an aggregator */
 /* These 2 variables are the offset and lengths in the file corresponding to the actual stripes */
@@ -40,6 +42,11 @@ ADIOI_Flatlist_node *flatBuf_global;
 int lastDataTypeExtent;
 int lastFlatBufIndice;
 ADIO_Offset lastIndiceOffset;
+#else
+/* These variables are now in the MPC context */
+#endif
+
+
 /* This data structure holds the number of extents, the index into the flattened buffer and the remnant length
  * beyond the flattened buffer index corresponding to the base buffer offset for non-contiguous source data
  * for the range to be written coresponding to the round and target agg.

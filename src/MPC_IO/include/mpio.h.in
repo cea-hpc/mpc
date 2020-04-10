@@ -12,15 +12,10 @@
 
 /* MPC CONFIG */
 
+#include <romio_priv.h>
+
 #define INT_LT_POINTER
 #define HAVE_STATUS_SET_BYTES
-
-/* Redirect init keyval to MPC's context switched TLS */
-extern int mpc_ADIOI_cb_config_list_keyval;
-extern int mpc_ADIO_Init_keyval;
-
-#define ADIO_Init_keyval mpc_ADIO_Init_keyval
-#define ADIOI_cb_config_list_keyval mpc_ADIOI_cb_config_list_keyval
 
 /* END OF MPC CONFIG */
 

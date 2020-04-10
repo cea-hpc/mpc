@@ -31,6 +31,8 @@
 #include <mpc_config.h>
 #include <mpc_thread_accelerator.h>
 
+#include "romio_ctx.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -108,6 +110,10 @@ static inline void sctk_context_save_tls(sctk_mctx_t *ucp)
 	tls_save(___mpc_p_per_VP_comm_ctx);
 #endif
 
+#ifdef MPC_MPIIO
+	tls_save(mpc_thread_romio_ctx_storage);
+#endif
+
 #ifdef MPC_Message_Passing
 	tls_save(__mpc_task_rank);
 #endif
@@ -159,6 +165,11 @@ static inline void sctk_context_restore_tls(sctk_mctx_t *ucp)
 	tls_restore(___mpc_p_per_VP_comm_ctx);
 #endif
 
+#ifdef MPC_MPIIO
+	tls_restore(mpc_thread_romio_ctx_storage);
+#endif
+
+
 #ifdef MPC_Message_Passing
 	tls_restore(__mpc_task_rank);
 #endif
@@ -207,6 +218,11 @@ static inline void sctk_context_init_tls(sctk_mctx_t *ucp)
 #ifdef MPC_MPI
 	tls_init(___mpc_p_per_VP_comm_ctx);
 #endif
+
+#ifdef MPC_MPIIO
+	ucp->mpc_thread_romio_ctx_storage = _mpc_thread_romio_ctx_init();
+#endif
+
 
 #ifdef MPC_Message_Passing
 	ucp->__mpc_task_rank = -2;

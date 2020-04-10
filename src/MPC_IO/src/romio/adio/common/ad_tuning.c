@@ -21,12 +21,17 @@
 
 #include "ad_tuning.h"
 
+/* MPC Patch */
+#if 0
 int romio_write_aggmethod;
 int romio_read_aggmethod;
 int romio_onesided_no_rmw;
 int romio_onesided_always_rmw;
 int romio_onesided_inform_rmw;
 int romio_tunegather;
+#else
+/* Variables now in the MPC Romio CTX */
+#endif
 
 /* set internal variables for tuning environment variables */
 /** \page mpiio_vars MPIIO Configuration

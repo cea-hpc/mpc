@@ -49,6 +49,7 @@ ADIOI_Flatlist_node *ADIOI_Flatten_datatype(MPI_Datatype datatype)
     /* has it already been flattened? */
     MPI_Type_get_attr(datatype, ADIOI_Flattened_type_keyval, &flat, &flag);
     if (flag) {
+	    sctk_error("RET %p FLAG %d", flat, flag);
 #ifdef FLATTEN_DEBUG
         DBG_FPRINTF(stderr, "ADIOI_Flatten_datatype:: found datatype %#X\n", datatype);
 #endif
@@ -1194,7 +1195,12 @@ void ADIOI_Optimize_flattened(ADIOI_Flatlist_node * flat_type)
     return;
 }
 
+/* MPC Patch */
+#if 0
 int ADIOI_Flattened_type_keyval = MPI_KEYVAL_INVALID;
+#else
+/* This variable is in the MPC Context */
+#endif
 
 int ADIOI_Flattened_type_copy(MPI_Datatype oldtype,
                               int type_keyval, void *extra_state, void *attribute_val_in,

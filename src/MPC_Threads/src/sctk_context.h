@@ -203,6 +203,10 @@ typedef struct sctk_mctx_st
 	struct mpc_mpi_cl_per_thread_ctx_s *___mpc_p_per_VP_comm_ctx;
 #endif
 
+#ifdef MPC_MPIIO
+	struct mpc_thread_romio_ctx_s * mpc_thread_romio_ctx_storage;
+#endif
+
 #ifdef MPC_Message_Passing
 	int                                 __mpc_task_rank;
 #endif

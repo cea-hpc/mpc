@@ -218,7 +218,7 @@ genfortranmods()
 	mpc_inc_path=""
 	test "x$GENERATE" = "x0" && mpc_inc_path="-I$SCRIPTPATH/pregenerated"
 	#We do not want to privatize Fortran constants
-	export MPC_UNPRIVATIZED_VARS=mpi_in_place:mpi_status_ignore:mpi_statuses_ignore:$MPC_UNPRIVATIZED_VARS
+	export AP_UNPRIVATIZED_VARS=mpi_in_place:mpi_status_ignore:mpi_statuses_ignore:$AP_UNPRIVATIZED_VARS
 
 	# Here we run the compilation three times.
 	# This is due to old Fortran compilers, not able to resolve module dependency at once.

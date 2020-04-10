@@ -29,8 +29,13 @@ int MPI_File_open(MPI_Comm comm, const char *filename, int amode, MPI_Info info,
 /* for user-definde reduce operator */
 #include "adio_extern.h"
 
-
+/* MPC Patch */
+#if 0
 extern int ADIO_Init_keyval;
+#else
+/* Variable inside MPC's ctx */
+#endif
+
 
 /*@
     MPI_File_open - Opens a file

@@ -209,7 +209,14 @@ static void ADIOI_W_Iexchange_data_send(ADIOI_NBC_Request *, int *);
 static void ADIOI_W_Iexchange_data_wait(ADIOI_NBC_Request *, int *);
 static void ADIOI_W_Iexchange_data_fini(ADIOI_NBC_Request *, int *);
 
+/* MPC Patch */
+#if 0
 static MPIX_Grequest_class ADIOI_GEN_greq_class = 0;
+#else
+/* This variable is in the MPC Context */
+#endif
+
+
 static int ADIOI_GEN_iwc_query_fn(void *extra_state, MPI_Status * status);
 static int ADIOI_GEN_iwc_free_fn(void *extra_state);
 static int ADIOI_GEN_iwc_poll_fn(void *extra_state, MPI_Status * status);
