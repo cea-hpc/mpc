@@ -12,8 +12,6 @@
 
 /* MPC CONFIG */
 
-#include <romio_priv.h>
-
 #define INT_LT_POINTER
 #define HAVE_STATUS_SET_BYTES
 

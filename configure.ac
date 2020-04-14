@@ -2337,7 +2337,6 @@ AC_OUTPUT([Makefile
 	   src/MPC_Threads/src/Makefile
 	   src/MPC_IO/Makefile
 	   src/MPC_IO/src/Makefile
-	   src/MPC_IO/include/romioconf.h
 	   src/MPC_IO/include/mpio.h
 	   src/include/mpi.h
 	   src/MPC_IO/src/romio/Makefile

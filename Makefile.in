@@ -107,8 +107,8 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = mpc_config.h
 CONFIG_CLEAN_FILES = src/MPC_Arch/include/mpc_arch.h \
-	src/MPC_IO/include/romioconf.h src/MPC_IO/include/mpio.h \
-	src/include/mpi.h src/include/mpc_threads_config.h
+	src/MPC_IO/include/mpio.h src/include/mpi.h \
+	src/include/mpc_threads_config.h
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -174,7 +174,6 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mpc_config.h.in \
 	$(top_srcdir)/config/missing \
 	$(top_srcdir)/src/MPC_Arch/include/mpc_arch.h.in \
 	$(top_srcdir)/src/MPC_IO/include/mpio.h.in \
-	$(top_srcdir)/src/MPC_IO/include/romioconf.h.in \
 	$(top_srcdir)/src/include/mpc_threads_config.h.in \
 	$(top_srcdir)/src/include/mpi.h.in AUTHORS COPYING ChangeLog \
 	INSTALL NEWS README config/compile config/config.guess \
@@ -523,8 +522,6 @@ $(srcdir)/mpc_config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 distclean-hdr:
 	-rm -f mpc_config.h stamp-h1
 src/MPC_Arch/include/mpc_arch.h: $(top_builddir)/config.status $(top_srcdir)/src/MPC_Arch/include/mpc_arch.h.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-src/MPC_IO/include/romioconf.h: $(top_builddir)/config.status $(top_srcdir)/src/MPC_IO/include/romioconf.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 src/MPC_IO/include/mpio.h: $(top_builddir)/config.status $(top_srcdir)/src/MPC_IO/include/mpio.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
