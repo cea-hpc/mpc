@@ -21,20 +21,30 @@
 #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
 #                                                                      #
 ########################################################################
-MPC_INSTALL_PREFIX=@prefix@
 
-MPC_INSTALL_PREFIX="@prefix@"
+#
+# Installation environment
+#
+
+MPC_INSTALL_PREFIX=@prefix@
+MPC_SHARE_DIR="@PKG_DATADIR@"
+
+#
+# Default compiler environmnent
+#
+
+MPC_DEFAULT_C_COMPILER="@MPC_DEFAULT_C_COMPILER@"
+MPC_DEFAULT_CXX_COMPILER="@MPC_DEFAULT_CXX_COMPILER@"
+MPC_DEFAULT_FC_COMPILER="@MPC_DEFAULT_FC_COMPILER@"
+
+#
+# Generate Flags
+#
 
 OPA_CFLAGS="@OPA_CFLAGS@"
 HWLOC_CFLAGS="@HWLOC_CFLAGS@"
 EXTLS_CFLAGS="@EXTLS_CFLAGS@"
 MPCALLOC_CFLAGS="@ALLOC_CFLAGS@"
-
-# Module FLAGS
-MPC_THREAD_ENABLED="@MPC_THREAD_ENABLED@"
-MPC_MESSAGE_PASSING_ENABLED="@MPC_MESSAGE_PASSING_ENABLED@"
-MPC_MPI_ENABLED="@MPC_MPI_ENABLED@"
-MPC_OPENMP_ENABLED="@MPC_OPENMP_ENABLED@"
 
 FLAGS="-I@PKG_INCDIR@"
 
@@ -43,12 +53,84 @@ FLAGS="$FLAGS ${HWLOC_CFLAGS}"
 FLAGS="$FLAGS ${EXTLS_CFLAGS}"
 FLAGS="$FLAGS ${MPCALLOC_CFLAGS}"
 
+#
+# Print Module list
+#
 
-# Handle how the fortran specific module is passed in
-# we need lib for .mod
-if test -n "$2"; then
-	FLAGS="${FLAGS} -I$2/include -I$2/lib"
+# Module FLAGS
+MPC_THREAD_ENABLED="@MPC_THREAD_ENABLED@"
+MPC_MESSAGE_PASSING_ENABLED="@MPC_MESSAGE_PASSING_ENABLED@"
+MPC_MPI_ENABLED="@MPC_MPI_ENABLED@"
+MPC_OPENMP_ENABLED="@MPC_OPENMP_ENABLED@"
+MPC_MPIIO_ENABLED="@MPC_MPIIO_ENABLED@"
+
+print_mod_list()
+{
+	test "x${MPC_THREAD_ENABLED}" = "xyes" && echo "thread"
+	test "x${MPC_MESSAGE_PASSING_ENABLED}" = "xyes" && echo "message_passing"
+	test "x${MPC_MPI_ENABLED}" = "xyes" && echo "mpi"
+	test "x${MPC_OPENMP_ENABLED}" = "xyes" && echo "openmp"
+	test "x${MPC_MPIIO_ENABLED}" = "xyes" && echo "mpiio"
+}
+
+#
+# Help
+#
+
+show_help()
+{
+	echo "mpc_cflags can be used to retrieve information on MPC's compilation flags"
+	echo ""
+	echo "mpc_cflags [-p] [-m] [-h]"
+	echo ""
+	echo " -h|--help    Print this help"
+	echo " [NO ARGS]    Print cflags"
+	echo ""
+	echo "Install env:"
+	echo " -p           Display mpc install prefix"
+	echo " -s           Display mpc share directory"
+	echo ""
+	echo "Modules:"
+	echo " -m           List compiled Modules"
+	echo ""
+	echo "Compilers:"
+	echo " -cc          Print default C compiler"
+	echo " -fc          Print default Fortran compiler"
+	echo " -cxx|-cpp    Print default C++ compiler"
+}
+
+#
+# Argument Parsing
+#
+
+for arg in "$@" ; do
+	case $arg in
+		# ----------------------------------------------------------------
+		# Compiler options that affect whether we are linking or not
+	-p)
+		echo "$MPC_INSTALL_PREFIX"
+		;;
+	-s)
+		echo "$MPC_SHARE_DIR"
+		;;
+	-m)
+		print_mod_list
+		;;
+	-cc)
+		echo "$MPC_DEFAULT_C_COMPILER"
+		;;
+	-fc)
+		echo "$MPC_DEFAULT_FC_COMPILER"
+		;;
+	-cxx|-cpp)
+		echo "$MPC_DEFAULT_CXX_COMPILER"
+		;;
+	*)
+		show_help
+		;;
+	esac
+done
+
+if test "x$#" = "x0"; then
+	echo "${FLAGS}"
 fi
-
-
-echo "${FLAGS}"

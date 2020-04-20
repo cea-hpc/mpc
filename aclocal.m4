@@ -1190,6 +1190,7 @@ AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
 m4_include([config/m4/ax_gcc_builtin.m4])
+m4_include([config/m4/ax_gcc_func_attribute.m4])
 m4_include([config/m4/ax_reset_headers_cache.m4])
 m4_include([config/m4/ax_tls.m4])
 m4_include([config/m4/libtool.m4])

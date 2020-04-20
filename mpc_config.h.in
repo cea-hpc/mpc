@@ -48,6 +48,18 @@
 /* Define to 1 if you have the `fork' function. */
 #undef HAVE_FORK
 
+/* Define to 1 if the system has the `constructor' function attribute */
+#undef HAVE_FUNC_ATTRIBUTE_CONSTRUCTOR
+
+/* Define to 1 if the system has the `unused' function attribute */
+#undef HAVE_FUNC_ATTRIBUTE_UNUSED
+
+/* Define to 1 if the system has the `visibility' function attribute */
+#undef HAVE_FUNC_ATTRIBUTE_VISIBILITY
+
+/* Define to 1 if the system has the `weak' function attribute */
+#undef HAVE_FUNC_ATTRIBUTE_WEAK
+
 /* Define to 1 if you have the `getcontext' function. */
 #undef HAVE_GETCONTEXT
 
@@ -649,6 +661,9 @@
 
 /* Define to 1 if you have the <vfork.h> header file. */
 #undef HAVE_VFORK_H
+
+/* Visibility attribute supported */
+#undef HAVE_VISIBILITY
 
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF

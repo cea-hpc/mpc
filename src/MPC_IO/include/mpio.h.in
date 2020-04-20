@@ -17,7 +17,7 @@
 
 /* END OF MPC CONFIG */
 
-#if defined(HAVE_VISIBILITY)
+#if @HAVE_VISIBILITY@
 #define ROMIO_API_PUBLIC __attribute__((visibility ("default")))
 #else
 #define ROMIO_API_PUBLIC

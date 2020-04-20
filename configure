@@ -645,11 +645,6 @@ CONFIGURE_CPATH
 CONFIGURE_PKG_CONFIG_PATH
 CONFIGURE_LD_LIBRARY_PATH
 CONFIGURE_PATH
-MPC_HAVE_AUTOPRIV_FALSE
-MPC_HAVE_AUTOPRIV_TRUE
-apfortran
-apcpp
-apcc
 MPC_COMPILER_LIST
 MPC_FORTRAN_COMPILER_LIST
 MPC_CPP_COMPILER_LIST
@@ -665,6 +660,7 @@ CXXDEPMODE
 ac_ct_CXX
 CXXFLAGS
 CXX
+apcc
 ALL_MPC_LIBS
 BUILD_AD_UFS_FALSE
 BUILD_AD_UFS_TRUE
@@ -738,9 +734,6 @@ MPC_ARCH_X86_64_MICROTASK_FALSE
 MPC_ARCH_X86_64_MICROTASK_TRUE
 MPC_ARCH_X86_64_CONTEXT_SWITCH_FALSE
 MPC_ARCH_X86_64_CONTEXT_SWITCH_TRUE
-EXTLS_LIBS
-EXTLS_CFLAGS
-MPC_IN_PROCESS_MODE
 MPC_CONFIG_SEM_FAILED
 MPC_CONFIG_SEM_VALUE_MAX
 SIZEOF_SEM_T
@@ -783,6 +776,7 @@ MPC_CONFIG_PTHREAD_MUTEX_ERRORCHECK
 MPC_CONFIG_PTHREAD_MUTEX_RECURSIVE
 MPC_CONFIG_PTHREAD_MUTEX_NORMAL
 MPC_CONFIG_NSIG
+HAVE_VISIBILITY
 MPC_ARCH_DETECTED_STRING
 MPC_ARCH_DETECTED_FUNCTION
 MPC_HAVE_DMTCP
@@ -1006,10 +1000,6 @@ with_cudart
 with_cudart_include
 with_cudart_libs
 with_dmtcp
-enable_process_mode
-with_extls
-with_extls_include
-with_extls_libs
 enable_shell_colors
 enable_cma
 enable_opt
@@ -1022,6 +1012,10 @@ enable_message_passing
 enable_mpi
 enable_openmp
 enable_mpiio
+enable_process_mode
+with_extls
+with_extls_include
+with_extls_libs
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1709,7 +1703,6 @@ Optional Features:
   --disable-dependency-tracking
                           speeds up one-time build
   --disable-libtool-lock  avoid locking (might break parallel builds)
-  --enable-process-mode   Compile MPC in process mode
   --enable-shell-colors   Activate Color Output in MPC
   --enable-cma            Activate Cross Memory Attach for SHM communications
   --enable-opt            Build MPC with optimization flags
@@ -1724,6 +1717,7 @@ Optional Features:
   --enable-mpi            Compile MPC's MPI interface
   --enable-openmp         Compile MPC's OpenMP interface
   --enable-mpiio          Compile MPI IO support in MPC (romio)
+  --enable-process-mode   Compile MPC in process mode
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -19272,6 +19266,223 @@ fi
 #Restore old CFLAGS after pragma test
 CFLAGS="$OLD_CFLAGS"
 
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __attribute__((visibility))" >&5
+$as_echo_n "checking for __attribute__((visibility))... " >&6; }
+if ${ax_cv_have_func_attribute_visibility+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+                    int foo_def( void ) __attribute__((visibility("default")));
+                    int foo_hid( void ) __attribute__((visibility("hidden")));
+                    int foo_int( void ) __attribute__((visibility("internal")));
+                    int foo_pro( void ) __attribute__((visibility("protected")));
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+                                      if grep -- -Wattributes conftest.err; then :
+  ax_cv_have_func_attribute_visibility=no
+else
+  ax_cv_have_func_attribute_visibility=yes
+fi
+else
+  ax_cv_have_func_attribute_visibility=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have_func_attribute_visibility" >&5
+$as_echo "$ax_cv_have_func_attribute_visibility" >&6; }
+
+    if test yes = $ax_cv_have_func_attribute_visibility; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FUNC_ATTRIBUTE_VISIBILITY 1
+_ACEOF
+
+fi
+
+
+
+
+if test "x$ax_cv_have_func_attribute_visibility" = "xyes"; then
+
+$as_echo "#define HAVE_VISIBILITY 1" >>confdefs.h
+
+	HAVE_VISIBILITY=1
+
+fi
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __attribute__((weak))" >&5
+$as_echo_n "checking for __attribute__((weak))... " >&6; }
+if ${ax_cv_have_func_attribute_weak+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+                    int foo( void ) __attribute__((weak));
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+                                      if grep -- -Wattributes conftest.err; then :
+  ax_cv_have_func_attribute_weak=no
+else
+  ax_cv_have_func_attribute_weak=yes
+fi
+else
+  ax_cv_have_func_attribute_weak=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have_func_attribute_weak" >&5
+$as_echo "$ax_cv_have_func_attribute_weak" >&6; }
+
+    if test yes = $ax_cv_have_func_attribute_weak; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FUNC_ATTRIBUTE_WEAK 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __attribute__((unused))" >&5
+$as_echo_n "checking for __attribute__((unused))... " >&6; }
+if ${ax_cv_have_func_attribute_unused+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+                    int foo( void ) __attribute__((unused));
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+                                      if grep -- -Wattributes conftest.err; then :
+  ax_cv_have_func_attribute_unused=no
+else
+  ax_cv_have_func_attribute_unused=yes
+fi
+else
+  ax_cv_have_func_attribute_unused=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have_func_attribute_unused" >&5
+$as_echo "$ax_cv_have_func_attribute_unused" >&6; }
+
+    if test yes = $ax_cv_have_func_attribute_unused; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FUNC_ATTRIBUTE_UNUSED 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __attribute__((constructor))" >&5
+$as_echo_n "checking for __attribute__((constructor))... " >&6; }
+if ${ax_cv_have_func_attribute_constructor+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+                    int foo( void ) __attribute__((constructor));
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+                                      if grep -- -Wattributes conftest.err; then :
+  ax_cv_have_func_attribute_constructor=no
+else
+  ax_cv_have_func_attribute_constructor=yes
+fi
+else
+  ax_cv_have_func_attribute_constructor=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have_func_attribute_constructor" >&5
+$as_echo "$ax_cv_have_func_attribute_constructor" >&6; }
+
+    if test yes = $ax_cv_have_func_attribute_constructor; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FUNC_ATTRIBUTE_CONSTRUCTOR 1
+_ACEOF
+
+fi
+
+
+
+
+if test "x$ax_cv_have_func_attribute_constructor" != "xyes"; then
+	as_fn_error $? "MPC relies on constructors for its initialization" "$LINENO" 5
+fi
+
 extract_integer_define_value "signal.h" "NSIG" "no"
 
 if test -z "$MACRO_VALUE"; then
@@ -21691,187 +21902,6 @@ _ACEOF
 fi
 done
 
-
-#
-# Configure Privatization Support
-#
-
-# Check whether --enable-process-mode was given.
-if test "${enable_process_mode+set}" = set; then :
-  enableval=$enable_process_mode; mpc_in_process_mode=$enableval
-else
-  mpc_in_process_mode=no
-fi
-
-if test "x${mpc_in_process_mode}" = "xyes"; then
-
-$as_echo "#define MPC_IN_PROCESS_MODE 1" >>confdefs.h
-
-        MPC_IN_PROCESS_MODE="yes"
-fi
-
-
-
-mpc_privatization_support="no"
-
-if test "x$mpc_in_process_mode" = "xno"; then
-
-
-
-
-# Check whether --with-extls was given.
-if test "${with_extls+set}" = set; then :
-  withval=$with_extls; whole_prefix=$withval
-else
-  whole_prefix="/usr/"
-fi
-
-
-                inc_prefix=""
-
-# Check whether --with-extls-include was given.
-if test "${with_extls_include+set}" = set; then :
-  withval=$with_extls_include; inc_prefix=$withval
-fi
-
-                lib_prefix=""
-
-# Check whether --with-extls-libs was given.
-if test "${with_extls_libs+set}" = set; then :
-  withval=$with_extls_libs; lib_prefix=$withval
-else
-  lib_prefix=""
-fi
-
-
-                check_or_infer_prefix_result="no"
-                header_name=extls.h
-                libname=extls
-                function_name=extls_init
-                var_prefix=EXTLS
-                version=""
-
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix=$whole_prefix
-                fi
-
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix=$whole_prefix
-                fi
-
-
-
-
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
-
-                # First try with PKG config
-
-pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for EXTLS" >&5
-$as_echo_n "checking for EXTLS... " >&6; }
-
-if test -n "$EXTLS_CFLAGS"; then
-    pkg_cv_EXTLS_CFLAGS="$EXTLS_CFLAGS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_EXTLS_CFLAGS=`$PKG_CONFIG --cflags "$libname $version" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-if test -n "$EXTLS_LIBS"; then
-    pkg_cv_EXTLS_LIBS="$EXTLS_LIBS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_EXTLS_LIBS=`$PKG_CONFIG --libs "$libname $version" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-
-
-
-if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
-        _pkg_short_errors_supported=yes
-else
-        _pkg_short_errors_supported=no
-fi
-        if test $_pkg_short_errors_supported = yes; then
-	        EXTLS_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$libname $version" 2>&1`
-        else
-	        EXTLS_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$libname $version" 2>&1`
-        fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$EXTLS_PKG_ERRORS" >&5
-
-	pkg_found=0
-elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	pkg_found=0
-else
-	EXTLS_CFLAGS=$pkg_cv_EXTLS_CFLAGS
-	EXTLS_LIBS=$pkg_cv_EXTLS_LIBS
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	pkg_found=1
-fi
-
-                if test "x$pkg_found" = "x1"
-                then
-                        #Insert flags
-                        CPPFLAGS="${EXTLS_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${EXTLS_LIBS} $LDFLAGS"
-
-
-
-
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                        then
-                                check_or_infer_prefix_result="yes"
-                        else
-                                check_or_infer_prefix_result="no"
-                        fi
-                fi
-
-                mpc_dep_found=$check_or_infer_prefix_result
-
-        if test "x$mpc_dep_found" = "xyes"; then
-
-$as_echo "#define MPC_USE_EXTLS 1" >>confdefs.h
-
-                mpc_privatization_support="yes"
-	fi
-fi
 
 #
 # Configure MPC_Arch
@@ -30928,75 +30958,11 @@ $as_echo "no" >&6; }
 
 done
 
-at_least_one_privatizing_compiler=""
-
-# Is CC apcc ?
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if CC is apcc" >&5
-$as_echo_n "checking if CC is apcc... " >&6; }
-
-$CC --ap-help > /dev/null 2>&1
-
-if test "x$?" = "x0"; then
-	at_least_one_privatizing_compiler="yes"
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-for prog in apcc ap++ apfortran
-do
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ${prog}" >&5
-$as_echo_n "checking for ${prog}... " >&6; }
-	locate_bin $prog
-
-	if test -n "$locate_bin_path"; then
-		compiler_to_lang $prog
-		MPC_COMPILER_LIST+=" $prog"
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-		at_least_one_privatizing_compiler+="yes"
-	else
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	fi
-done
-
-if test "x${mpc_privatization_support}" = "xyes"; then
-        if test -z "$at_least_one_privatizing_compiler"; then
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Consider passing --enable-process-mode to deactivate priv" >&5
-$as_echo "$as_me: WARNING: Consider passing --enable-process-mode to deactivate priv" >&2;}
-                as_fn_error $? "Privatization was enabled but no privatizing compiler was found" "$LINENO" 5
-	fi
-fi
-
-# Check that we at least have a C compiler
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if we have at least a C compiler for MPC" >&5
-$as_echo_n "checking if we have at least a C compiler for MPC... " >&6; }
-
-if test -n "$MPC_C_COMPILER_LIST"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-        as_fn_error $? "MPC requires at least a c compiler to be in your PATH" "$LINENO" 5
-fi
-
-
-
-
-
-
-MPC_COMPILER_LIST="$MPC_C_COMPILER_LIST $MPC_CPP_COMPILER_LIST $MPC_FORTRAN_COMPILER_LIST"
-
-
-
 #
+# Configure Privatization Support
+#
+
 # Set autopriv as default compiler if privatization is enabled and autpriv present
-#
 
 mpc_have_autopriv="no"
 
@@ -31118,12 +31084,40 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for autopriv" >&5
 $as_echo_n "checking for autopriv... " >&6; }
 
+MPC_DEFAULT_C_COMPILER="$(command -v $CC)"
+MPC_DEFAULT_CXX_COMPILER="$(command -v $CXX)"
+MPC_DEFAULT_FC_COMPILER="$(command -v $FC)"
+
+echo "$CC $CXX $FC"
+
 if test "x${apcc}" = "xyes" -a "x${apcpp}" = "xyes" -a "x${apfortran}" = "xyes";
 then
 	# We have autopriv in path
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 	mpc_have_autopriv=yes
+	MPC_DEFAULT_C_COMPILER="$(command -v apcc)"
+	MPC_DEFAULT_CXX_COMPILER="$(command -v ap++)"
+	MPC_DEFAULT_FC_COMPILER="$(command -v apfortran)"
+
+	# Create autopriv wrappers
+	for prog in apcc ap++ apfortran
+	do
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ${prog}" >&5
+$as_echo_n "checking for ${prog}... " >&6; }
+		locate_bin $prog
+
+		if test -n "$locate_bin_path"; then
+			compiler_to_lang $prog
+			MPC_COMPILER_LIST+=" $prog"
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		else
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		fi
+	done
+
 else
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -31143,6 +31137,228 @@ fi
 ####################################
 ###### FINALIZATION & SUMMARY ###### {sec:finalize}
 ####################################
+# however if no privatization MPC is forced in process-mode.
+
+# Check whether --enable-process-mode was given.
+if test "${enable_process_mode+set}" = set; then :
+  enableval=$enable_process_mode; mpc_in_process_mode=$enableval
+else
+  mpc_in_process_mode=no
+fi
+
+
+# First assume extls not found
+extls_support_found="no"
+
+if test "x$mpc_in_process_mode" = "xno"; then
+
+
+
+
+# Check whether --with-extls was given.
+if test "${with_extls+set}" = set; then :
+  withval=$with_extls; whole_prefix=$withval
+else
+  whole_prefix="/usr/"
+fi
+
+
+                inc_prefix=""
+
+# Check whether --with-extls-include was given.
+if test "${with_extls_include+set}" = set; then :
+  withval=$with_extls_include; inc_prefix=$withval
+fi
+
+                lib_prefix=""
+
+# Check whether --with-extls-libs was given.
+if test "${with_extls_libs+set}" = set; then :
+  withval=$with_extls_libs; lib_prefix=$withval
+else
+  lib_prefix=""
+fi
+
+
+                check_or_infer_prefix_result="no"
+                header_name=extls.h
+                libname=extls
+                function_name=extls_init
+                var_prefix=EXTLS
+                version=""
+
+                if test -z "$lib_prefix"
+                then
+                        lib_prefix=$whole_prefix
+                fi
+
+                if test -z "$inc_prefix"
+                then
+                        inc_prefix=$whole_prefix
+                fi
+
+
+
+
+                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+
+                # First try with PKG config
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for EXTLS" >&5
+$as_echo_n "checking for EXTLS... " >&6; }
+
+if test -n "$EXTLS_CFLAGS"; then
+    pkg_cv_EXTLS_CFLAGS="$EXTLS_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_EXTLS_CFLAGS=`$PKG_CONFIG --cflags "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$EXTLS_LIBS"; then
+    pkg_cv_EXTLS_LIBS="$EXTLS_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_EXTLS_LIBS=`$PKG_CONFIG --libs "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        EXTLS_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$libname $version" 2>&1`
+        else
+	        EXTLS_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$libname $version" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$EXTLS_PKG_ERRORS" >&5
+
+	pkg_found=0
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	pkg_found=0
+else
+	EXTLS_CFLAGS=$pkg_cv_EXTLS_CFLAGS
+	EXTLS_LIBS=$pkg_cv_EXTLS_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	pkg_found=1
+fi
+
+                if test "x$pkg_found" = "x1"
+                then
+                        #Insert flags
+                        CPPFLAGS="${EXTLS_CFLAGS} $CPPFLAGS"
+                        LDFLAGS="${EXTLS_LIBS} $LDFLAGS"
+
+
+
+
+                        #AC_MSG_NOTICE([$libname found using pkg-config])
+                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                        check_or_infer_prefix_result="yes"
+                else
+                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                        then
+                                check_or_infer_prefix_result="yes"
+                        else
+                                check_or_infer_prefix_result="no"
+                        fi
+                fi
+
+                mpc_dep_found=$check_or_infer_prefix_result
+
+        if test "x$mpc_dep_found" = "xyes"; then
+
+$as_echo "#define MPC_USE_EXTLS 1" >>confdefs.h
+
+                extls_support_found="yes"
+	else
+		# If no privatization is available we fallback to Process-Based model
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: No privatization support detected assuming Process-Based Model (no privatization)" >&5
+$as_echo "$as_me: No privatization support detected assuming Process-Based Model (no privatization)" >&6;}
+		mpc_in_process_mode="yes"
+	fi
+fi
+
+MPC_IN_PROCESS_MODE="no"
+
+if test "x${mpc_in_process_mode}" = "xyes"; then
+
+$as_echo "#define MPC_IN_PROCESS_MODE 1" >>confdefs.h
+
+        MPC_IN_PROCESS_MODE="yes"
+fi
+
+
+
+# One last sanity check (extls but no privatizing compilers)
+if test "x${extls_support_found}" = "xyes"; then
+        if test -z "$mpc_have_autopriv"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Consider passing --enable-process-mode to deactivate priv" >&5
+$as_echo "$as_me: WARNING: Consider passing --enable-process-mode to deactivate priv" >&2;}
+                as_fn_error $? "Extls support was enabled but autopriv was found" "$LINENO" 5
+	fi
+fi
+
+# Check that we at least have a C compiler
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if we have at least a C compiler for MPC" >&5
+$as_echo_n "checking if we have at least a C compiler for MPC... " >&6; }
+
+if test -n "$MPC_C_COMPILER_LIST"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        as_fn_error $? "MPC requires at least a c compiler to be in your PATH" "$LINENO" 5
+fi
+
+
+
+
+
+
+MPC_COMPILER_LIST="$MPC_C_COMPILER_LIST $MPC_CPP_COMPILER_LIST $MPC_FORTRAN_COMPILER_LIST"
+
+
+
+
+
 #
 # Extraction of compilation state
 #
@@ -31253,10 +31469,13 @@ MPC_CONFIG_RESULT="\
 #\n\
 ### COMPILERS ###\n\
 #\n\
-# Privatization........ $mpc_privatization_support\n\
+# Privatization........ $extls_support_found\n\
 # Process mode......... $mpc_in_process_mode\n\
 # Languages............ $MPC_LANGUAGE_LIST\n\
 # Compilers............ $MPC_COMPILER_LIST\n\
+# mpc_cc points to..... $(basename $MPC_DEFAULT_C_COMPILER)\n\
+# mpc_cxx points to.... $(basename $MPC_DEFAULT_CXX_COMPILER)\n\
+# mpc_fXX points to.... $(basename $MPC_DEFAULT_FC_COMPILER)\n\
 #\n\
 ### NETWORKS ###\n\
 #\n\
@@ -31297,7 +31516,7 @@ PKG_INCDIR="${prefix}/include/${PACKAGE_TARNAME}/"
 ac_config_headers="$ac_config_headers mpc_config.h"
 
 
-ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Message_Passing/Makefile src/MPC_Message_Passing/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/MPC_IO/Makefile src/MPC_IO/src/Makefile src/MPC_IO/include/mpio.h src/include/mpi.h src/MPC_IO/src/romio/Makefile src/include/mpc_threads_config.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_compiler_manager.sh src/bin/mpc_cc.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpc_cxx.sh src/bin/mpc_nvcc.sh src/bin/mpc_f77.sh src/bin/mpcrun.sh src/bin/mpcvars.sh src/bin/mpc_status.sh"
+ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Message_Passing/Makefile src/MPC_Message_Passing/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/MPC_IO/Makefile src/MPC_IO/src/Makefile src/MPC_IO/include/mpio.h src/include/mpi.h src/MPC_IO/src/romio/Makefile src/include/mpc_threads_config.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpcrun.sh src/bin/mpcvars.sh src/bin/mpc_status.sh"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -32742,13 +32961,8 @@ do
     "src/include/mpc_threads_config.h") CONFIG_FILES="$CONFIG_FILES src/include/mpc_threads_config.h" ;;
     "src/bin/Makefile") CONFIG_FILES="$CONFIG_FILES src/bin/Makefile" ;;
     "src/bin/mpc_build_env.sh") CONFIG_FILES="$CONFIG_FILES src/bin/mpc_build_env.sh" ;;
-    "src/bin/mpc_compiler_manager.sh") CONFIG_FILES="$CONFIG_FILES src/bin/mpc_compiler_manager.sh" ;;
-    "src/bin/mpc_cc.sh") CONFIG_FILES="$CONFIG_FILES src/bin/mpc_cc.sh" ;;
     "src/bin/mpc_cflags") CONFIG_FILES="$CONFIG_FILES src/bin/mpc_cflags" ;;
     "src/bin/mpc_ldflags") CONFIG_FILES="$CONFIG_FILES src/bin/mpc_ldflags" ;;
-    "src/bin/mpc_cxx.sh") CONFIG_FILES="$CONFIG_FILES src/bin/mpc_cxx.sh" ;;
-    "src/bin/mpc_nvcc.sh") CONFIG_FILES="$CONFIG_FILES src/bin/mpc_nvcc.sh" ;;
-    "src/bin/mpc_f77.sh") CONFIG_FILES="$CONFIG_FILES src/bin/mpc_f77.sh" ;;
     "src/bin/mpcrun.sh") CONFIG_FILES="$CONFIG_FILES src/bin/mpcrun.sh" ;;
     "src/bin/mpcvars.sh") CONFIG_FILES="$CONFIG_FILES src/bin/mpcvars.sh" ;;
     "src/bin/mpc_status.sh") CONFIG_FILES="$CONFIG_FILES src/bin/mpc_status.sh" ;;

@@ -96,6 +96,7 @@ bin_PROGRAMS = mpirun$(EXEEXT)
 subdir = src/bin
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
+	$(top_srcdir)/config/m4/ax_gcc_func_attribute.m4 \
 	$(top_srcdir)/config/m4/ax_reset_headers_cache.m4 \
 	$(top_srcdir)/config/m4/ax_tls.m4 \
 	$(top_srcdir)/config/m4/libtool.m4 \
@@ -109,9 +110,8 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/mpc_config.h
-CONFIG_CLEAN_FILES = mpc_build_env.sh mpc_compiler_manager.sh \
-	mpc_cc.sh mpc_cflags mpc_ldflags mpc_cxx.sh mpc_nvcc.sh \
-	mpc_f77.sh mpcrun.sh mpcvars.sh mpc_status.sh
+CONFIG_CLEAN_FILES = mpc_build_env.sh mpc_cflags mpc_ldflags mpcrun.sh \
+	mpcvars.sh mpc_status.sh
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -185,12 +185,9 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mpc_build_env.sh.in \
-	$(srcdir)/mpc_cc.sh.in $(srcdir)/mpc_cflags.in \
-	$(srcdir)/mpc_compiler_manager.sh.in $(srcdir)/mpc_cxx.sh.in \
-	$(srcdir)/mpc_f77.sh.in $(srcdir)/mpc_ldflags.in \
-	$(srcdir)/mpc_nvcc.sh.in $(srcdir)/mpc_status.sh.in \
-	$(srcdir)/mpcrun.sh.in $(srcdir)/mpcvars.sh.in \
-	$(top_srcdir)/config/depcomp
+	$(srcdir)/mpc_cflags.in $(srcdir)/mpc_ldflags.in \
+	$(srcdir)/mpc_status.sh.in $(srcdir)/mpcrun.sh.in \
+	$(srcdir)/mpcvars.sh.in $(top_srcdir)/config/depcomp
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 ALLOC_CFLAGS = @ALLOC_CFLAGS@
@@ -245,6 +242,7 @@ FGREP = @FGREP@
 GREP = @GREP@
 HAVE_MPI_DARRAY_SUBARRAY = @HAVE_MPI_DARRAY_SUBARRAY@
 HAVE_MPI_INFO = @HAVE_MPI_INFO@
+HAVE_VISIBILITY = @HAVE_VISIBILITY@
 HWLOC_CFLAGS = @HWLOC_CFLAGS@
 HWLOC_LIBS = @HWLOC_LIBS@
 IBV_CFLAGS = @IBV_CFLAGS@
@@ -301,6 +299,9 @@ MPC_CONFIG_SEM_FAILED = @MPC_CONFIG_SEM_FAILED@
 MPC_CONFIG_SEM_VALUE_MAX = @MPC_CONFIG_SEM_VALUE_MAX@
 MPC_CPP_COMPILER_LIST = @MPC_CPP_COMPILER_LIST@
 MPC_C_COMPILER_LIST = @MPC_C_COMPILER_LIST@
+MPC_DEFAULT_CXX_COMPILER = @MPC_DEFAULT_CXX_COMPILER@
+MPC_DEFAULT_C_COMPILER = @MPC_DEFAULT_C_COMPILER@
+MPC_DEFAULT_FC_COMPILER = @MPC_DEFAULT_FC_COMPILER@
 MPC_ENABLE_SHELL_COLORS = @MPC_ENABLE_SHELL_COLORS@
 MPC_FORTRAN_COMPILER_LIST = @MPC_FORTRAN_COMPILER_LIST@
 MPC_GENERATION_DATE = @MPC_GENERATION_DATE@
@@ -436,6 +437,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+MPC_SHARE_DIR = "@PKG_DATADIR@"
 mpirun_SOURCES = ./mpirun.c
 all: all-am
 
@@ -472,19 +474,9 @@ $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 $(am__aclocal_m4_deps):
 mpc_build_env.sh: $(top_builddir)/config.status $(srcdir)/mpc_build_env.sh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-mpc_compiler_manager.sh: $(top_builddir)/config.status $(srcdir)/mpc_compiler_manager.sh.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-mpc_cc.sh: $(top_builddir)/config.status $(srcdir)/mpc_cc.sh.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 mpc_cflags: $(top_builddir)/config.status $(srcdir)/mpc_cflags.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 mpc_ldflags: $(top_builddir)/config.status $(srcdir)/mpc_ldflags.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-mpc_cxx.sh: $(top_builddir)/config.status $(srcdir)/mpc_cxx.sh.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-mpc_nvcc.sh: $(top_builddir)/config.status $(srcdir)/mpc_nvcc.sh.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-mpc_f77.sh: $(top_builddir)/config.status $(srcdir)/mpc_f77.sh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 mpcrun.sh: $(top_builddir)/config.status $(srcdir)/mpcrun.sh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
@@ -832,13 +824,7 @@ install_build_env:
 	install -m 0755 -D $(abs_builddir)/mpc_build_env.sh $(bindir)/mpc_build_env.sh
 
 install_compilers: install_build_env
-	$(abs_srcdir)/deploy_compilers.sh "$(prefix)" "$(abs_top_builddir)/src" "$(MPC_C_COMPILER_LIST)" "$(MPC_CPP_COMPILER_LIST)" "$(MPC_FORTRAN_COMPILER_LIST)"
-
-@MPC_HAVE_AUTOPRIV_TRUE@deploy_compilers: install_compilers
-@MPC_HAVE_AUTOPRIV_TRUE@	$(prefix)/bin/mpc_compiler_manager --global set_default c apcc > /dev/null
-@MPC_HAVE_AUTOPRIV_TRUE@	$(prefix)/bin/mpc_compiler_manager --global set_default cxx ap++ > /dev/null
-@MPC_HAVE_AUTOPRIV_TRUE@	$(prefix)/bin/mpc_compiler_manager --global set_default fortran apfortran > /dev/null
-@MPC_HAVE_AUTOPRIV_FALSE@deploy_compilers: install_compilers
+	$(abs_srcdir)/deploy_compilers.sh "$(prefix)" "$(abs_top_builddir)/src" "$(MPC_SHARE_DIR)" "$(abs_top_srcdir)" "$(MPC_C_COMPILER_LIST)" "$(MPC_CPP_COMPILER_LIST)" "$(MPC_FORTRAN_COMPILER_LIST)"
 
 #
 # mpcrun setup
@@ -856,7 +842,7 @@ deploy_mpcrun:
 #
 
 @MPC_CUDA_ENABLED_TRUE@deploy_mpc_nvcc:
-@MPC_CUDA_ENABLED_TRUE@	install -m 0755 -D $(abs_builddir)/mpc_nvcc.sh $(bindir)/mpc_nvcc
+@MPC_CUDA_ENABLED_TRUE@	install -m 0755 -D $(abs_srcdir)/mpc_nvcc.sh $(bindir)/mpc_nvcc
 @MPC_CUDA_ENABLED_FALSE@deploy_mpc_nvcc:
 @MPC_CUDA_ENABLED_FALSE@	@echo ""
 
@@ -864,7 +850,7 @@ deploy_mpcrun:
 # All install time targets
 #
 
-install-data-local: install_build_env deploy_compilers deploy_mpcrun deploy_mpc_nvcc
+install-data-local: install_build_env install_compilers deploy_mpcrun deploy_mpc_nvcc
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

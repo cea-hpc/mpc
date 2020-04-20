@@ -21,79 +21,76 @@
 #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
 #                                                                      #
 ########################################################################
-MPC_INSTALL_PREFIX="@prefix@"
-OPA_LDFLAGS="@OPA_LIBS@"
-HWLOC_LDFLAGS="@HWLOC_LIBS@"
-EXTLS_LDFLAGS="@EXTLS_LIBS@"
-MPCALLOC_LDFLAGS="@ALLOC_LIBS@"
 
-# Module FLAGS
-MPC_THREAD_ENABLED="@MPC_THREAD_ENABLED@"
-MPC_MESSAGE_PASSING_ENABLED="@MPC_MESSAGE_PASSING_ENABLED@"
-MPC_MPI_ENABLED="@MPC_MPI_ENABLED@"
-MPC_OPENMP_ENABLED="@MPC_OPENMP_ENABLED@"
-MPC_MPIIO_ENABLED="@MPC_MPIIO_ENABLED@"
+MPC_INSTALL_PREFIX=$(mpc_cflags -p)
+MPC_SHARE_DIR=$("${MPC_INSTALL_PREFIX}/bin/mpc_cflags" -s)
 
-FLAGS=""
+# Source Common function library
 
-if test -d ${MPC_INSTALL_PREFIX}/lib/; then
-	FLAGS="$FLAGS -Wl,-rpath,${MPC_INSTALL_PREFIX}/lib"
+# shellcheck source=/dev/null
+. "${MPC_SHARE_DIR}/mpc_compiler_common.sh"
+
+# Common variables
+CC=$("${MPC_INSTALL_PREFIX}/bin/mpc_cflags" -cpp)
+COMPILER="nvcc --compiler-bindir $CC"
+
+#first definition of compiler & linking flags
+CFLAGS=$("${MPC_INSTALL_PREFIX}/bin/mpc_cflags")
+
+LDFLAGS=$("${MPC_INSTALL_PREFIX}/bin/mpc_ldflags")
+
+parse_cli_args $@
+
+# Update compiler in case CC was altered by CLI
+COMPILER="nvcc --compiler-bindir $CC"
+
+# Add forwaders for NVCC
+LDFLAGS=$(echo "$LDFLAGS" | sed -e 's/\-Wl,/-Xlinker /g' -e 's/ -B/ -Xcompiler &/g')
+
+# Here we restore MPC's build environment
+. ${MPC_INSTALL_PREFIX}/bin/mpc_build_env.sh
+
+
+#
+# NVCC additionnal blacklisting
+#
+
+#Used by nvcc to automatically blacklist some var patterns
+list_cuda_global_vars()
+{
+	CUDA_FILE="/tmp/cuda_tmp_main${RANDOM}.cu"
+
+cat<< EOF_FILE > ${CUDA_FILE}
+#include <stdlib.h>
+
+__global__
+void foo(void)
+{
+}
+
+int main(int argc, char ** argv)
+{
+	return 0;
+}
+EOF_FILE
+
+	IFS="
+	"
+
+	tmp=""
+	for decl in `${COMPILER} -Xcompiler -fmpc-privatize ${CUDA_FILE} -Xcompiler -B${MPC_INSTALL_PREFIX}/bin 2>&1 | grep "MPC task" | sed -e 's/.*variable //g' -e 's/ in file.*//g'`
+	do
+		tmp="${tmp}:${decl}"
+	done
+
+	echo "${tmp}"
+	rm ${CUDA_FILE}
+}
+
+compiler_is_privatizing "${1}"
+
+if test "x${RES}" = "xyes"; then
+	append_to "CFLAGS" "-fno-priv-var=$(list_cuda_global_vars)"
 fi
 
-if test -d ${MPC_INSTALL_PREFIX}/lib64/; then
-	FLAGS="$FLAGS -Wl,-rpath,${MPC_INSTALL_PREFIX}/lib64/"
-fi
-
-FLAGS="$FLAGS  -L${MPC_INSTALL_PREFIX}/lib"
-
-# MPC_Arch // MPC_Common // MPC_COnfig
-FLAGS="$FLAGS ${OPA_LDFLAGS} ${MPCALLOC_LDFLAGS}"
-
-# MPC_Topology
-FLAGS="$FLAGS ${HWLOC_LDFLAGS}"
-
-# MPC_Launch
-FLAGS="$FLAGS -lmpclaunch -ldl"
-
-if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
-	# MPC_Thread
-	FLAGS="$FLAGS  -lmpcthread -lpthread ${EXTLS_LDFLAGS}"
-fi
-
-if test "x${MPC_OPENMP_ENABLED}" = "xyes"; then
-	# MPC_OpenMP
-	FLAGS="$FLAGS  -lmpcomp"
-fi
-
-if test "x${MPC_MESSAGE_PASSING_ENABLED}" = "xyes"; then
-	# MPC_Message_Passing
-	FLAGS="$FLAGS  -lmpclowcomm -lm"
-fi
-
-if test "x${MPC_MPI_ENABLED}" = "xyes"; then
-	# MPC_MPI
-	FLAGS="$FLAGS -lmpcmpi"
-fi
-
-if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
-	# MPC_IO
-	FLAGS="$FLAGS -lmpcio"
-fi
-
-# CONFIG
-FLAGS="$FLAGS -lmpcconfig"
-
-# Handle how the fortran specific module is passed in
-# we need lib for .mod
-if test -n "$2"; then
-
-	FLAGS="${FLAGS} -L$2/lib -Wl,-rpath=$2/lib"
-fi
-
-if test "$1" != "fortran" ; then
-	# Not FORTRAN
-        echo "$FLAGS"
-else
-        echo "$FLAGS -lmpcfwrapper"
-fi
-
+run_compiler

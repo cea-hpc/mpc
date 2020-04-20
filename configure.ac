@@ -829,6 +829,22 @@ fi
 #Restore old CFLAGS after pragma test
 CFLAGS="$OLD_CFLAGS"
 
+AX_GCC_FUNC_ATTRIBUTE(visibility)
+
+if test "x$ax_cv_have_func_attribute_visibility" = "xyes"; then
+	AC_DEFINE([HAVE_VISIBILITY],[1],[Visibility attribute supported])
+	HAVE_VISIBILITY=1
+	AC_SUBST([HAVE_VISIBILITY])
+fi
+
+AX_GCC_FUNC_ATTRIBUTE(weak)
+AX_GCC_FUNC_ATTRIBUTE(unused)
+
+AX_GCC_FUNC_ATTRIBUTE(constructor)
+
+if test "x$ax_cv_have_func_attribute_constructor" != "xyes"; then
+	AC_MSG_ERROR([MPC relies on constructors for its initialization])
+fi
 extract_integer_define_value "signal.h" "NSIG" "no"
 
 if test -z "$MACRO_VALUE"; then
@@ -1293,33 +1309,6 @@ AC_CHECK_FUNCS(pthread_sigmask )
 AC_CHECK_FUNCS(pthread_kill )
 AC_CHECK_FUNCS(sched_get_priority_max )
 AC_CHECK_FUNCS(sched_get_priority_min )
-
-#
-# Configure Privatization Support
-#
-
-AC_ARG_ENABLE([process-mode],
-[AS_HELP_STRING([--enable-process-mode],
-                [Compile MPC in process mode])],
-[mpc_in_process_mode=$enableval],
-[mpc_in_process_mode=no])
-if test "x${mpc_in_process_mode}" = "xyes"; then
-        AC_DEFINE([MPC_IN_PROCESS_MODE], [1], [MPC compiled in process mode])
-        MPC_IN_PROCESS_MODE="yes"
-fi
-
-AC_SUBST([MPC_IN_PROCESS_MODE])
-
-mpc_privatization_support="no"
-
-if test "x$mpc_in_process_mode" = "xno"; then
-
-        MPC_DETECT_DEPENDENCY([extls.h],[extls], [extls_init], [EXTLS])
-        if test "x$mpc_dep_found" = "xyes"; then
-                AC_DEFINE([MPC_USE_EXTLS], [1], [Extls support is enabled])
-                mpc_privatization_support="yes"
-	fi
-fi
 
 #
 # Configure MPC_Arch
@@ -2135,39 +2124,99 @@ do
 
 done
 
-at_least_one_privatizing_compiler=""
+#
+# Configure Privatization Support
+#
 
-# Is CC apcc ?
-AC_MSG_CHECKING([if CC is apcc])
+# Set autopriv as default compiler if privatization is enabled and autpriv present
 
-$CC --ap-help > /dev/null 2>&1
+mpc_have_autopriv="no"
 
-if test "x$?" = "x0"; then
-	at_least_one_privatizing_compiler="yes"
+AC_CHECK_PROG([apcc],[apcc],[yes],[no])
+AC_CHECK_PROG([apcpp],[ap++],[yes],[no])
+AC_CHECK_PROG([apfortran],[apfortran],[yes],[no])
+
+AC_MSG_CHECKING([for autopriv])
+
+MPC_DEFAULT_C_COMPILER="$(command -v $CC)"
+MPC_DEFAULT_CXX_COMPILER="$(command -v $CXX)"
+MPC_DEFAULT_FC_COMPILER="$(command -v $FC)"
+
+echo "$CC $CXX $FC"
+
+if test "x${apcc}" = "xyes" -a "x${apcpp}" = "xyes" -a "x${apfortran}" = "xyes";
+then
+	# We have autopriv in path
 	AC_MSG_RESULT([yes])
+	mpc_have_autopriv=yes
+	MPC_DEFAULT_C_COMPILER="$(command -v apcc)"
+	MPC_DEFAULT_CXX_COMPILER="$(command -v ap++)"
+	MPC_DEFAULT_FC_COMPILER="$(command -v apfortran)"
+
+	# Create autopriv wrappers
+	for prog in apcc ap++ apfortran
+	do
+		AC_MSG_CHECKING([for ${prog}])
+		locate_bin $prog
+
+		if test -n "$locate_bin_path"; then
+			compiler_to_lang $prog
+			MPC_COMPILER_LIST+=" $prog"
+			AC_MSG_RESULT([yes])
+		else
+			AC_MSG_RESULT([no])
+		fi
+	done
+
 else
 	AC_MSG_RESULT([no])
 fi
 
-for prog in apcc ap++ apfortran
-do
-	AC_MSG_CHECKING([for ${prog}])
-	locate_bin $prog
+AM_CONDITIONAL([MPC_HAVE_AUTOPRIV], [test "x${mpc_have_autopriv}" = "xyes"])
 
-	if test -n "$locate_bin_path"; then
-		compiler_to_lang $prog
-		MPC_COMPILER_LIST+=" $prog"
-		AC_MSG_RESULT([yes])
-		at_least_one_privatizing_compiler+="yes"
+AC_SUBST([MPC_DEFAULT_C_COMPILER])
+AC_SUBST([MPC_DEFAULT_CXX_COMPILER])
+AC_SUBST([MPC_DEFAULT_FC_COMPILER])
+
+# If privatization supported process mode is not enforced
+# however if no privatization MPC is forced in process-mode.
+
+AC_ARG_ENABLE([process-mode],
+[AS_HELP_STRING([--enable-process-mode],
+                [Compile MPC in process mode])],
+[mpc_in_process_mode=$enableval],
+[mpc_in_process_mode=no])
+
+# First assume extls not found
+extls_support_found="no"
+
+if test "x$mpc_in_process_mode" = "xno"; then
+
+        MPC_DETECT_DEPENDENCY([extls.h],[extls], [extls_init], [EXTLS])
+        if test "x$mpc_dep_found" = "xyes"; then
+                AC_DEFINE([MPC_USE_EXTLS], [1], [Extls support is enabled])
+                extls_support_found="yes"
 	else
-		AC_MSG_RESULT([no])
+		# If no privatization is available we fallback to Process-Based model
+		AC_MSG_NOTICE([No privatization support detected assuming Process-Based Model (no privatization)])
+		mpc_in_process_mode="yes"
 	fi
-done
+fi
 
-if test "x${mpc_privatization_support}" = "xyes"; then
-        if test -z "$at_least_one_privatizing_compiler"; then
+MPC_IN_PROCESS_MODE="no"
+
+if test "x${mpc_in_process_mode}" = "xyes"; then
+        AC_DEFINE([MPC_IN_PROCESS_MODE], [1], [MPC compiled in process mode])
+        MPC_IN_PROCESS_MODE="yes"
+fi
+
+AC_SUBST([MPC_IN_PROCESS_MODE])
+
+# One last sanity check (extls but no privatizing compilers)
+if test "x${extls_support_found}" = "xyes"; then
+        if test -z "$mpc_have_autopriv"; then
 		AC_MSG_WARN([Consider passing --enable-process-mode to deactivate priv])
-                AC_MSG_ERROR([Privatization was enabled but no privatizing compiler was found])
+                AC_MSG_ERROR([Extls support was enabled but autopriv was found])
 	fi
 fi
 
@@ -2191,28 +2240,6 @@ MPC_COMPILER_LIST="$MPC_C_COMPILER_LIST $MPC_CPP_COMPILER_LIST $MPC_FORTRAN_COMP
 
 AC_SUBST([MPC_COMPILER_LIST])
 
-#
-# Set autopriv as default compiler if privatization is enabled and autpriv present
-#
-
-mpc_have_autopriv="no"
-
-AC_CHECK_PROG([apcc],[apcc],[yes],[no])
-AC_CHECK_PROG([apcpp],[ap++],[yes],[no])
-AC_CHECK_PROG([apfortran],[apfortran],[yes],[no])
-
-AC_MSG_CHECKING([for autopriv])
-
-if test "x${apcc}" = "xyes" -a "x${apcpp}" = "xyes" -a "x${apfortran}" = "xyes";
-then
-	# We have autopriv in path
-	AC_MSG_RESULT([yes])
-	mpc_have_autopriv=yes
-else
-	AC_MSG_RESULT([no])
-fi
-
-AM_CONDITIONAL([MPC_HAVE_AUTOPRIV], [test "x${mpc_have_autopriv}" = "xyes"])
 
 
 
@@ -2325,10 +2352,13 @@ MPC_CONFIG_RESULT="\
 #\n\
 ### COMPILERS ###\n\
 #\n\
-# Privatization........ $mpc_privatization_support\n\
+# Privatization........ $extls_support_found\n\
 # Process mode......... $mpc_in_process_mode\n\
 # Languages............ $MPC_LANGUAGE_LIST\n\
 # Compilers............ $MPC_COMPILER_LIST\n\
+# mpc_cc points to..... $(basename $MPC_DEFAULT_C_COMPILER)\n\
+# mpc_cxx points to.... $(basename $MPC_DEFAULT_CXX_COMPILER)\n\
+# mpc_fXX points to.... $(basename $MPC_DEFAULT_FC_COMPILER)\n\
 #\n\
 ### NETWORKS ###\n\
 #\n\
@@ -2397,13 +2427,8 @@ AC_OUTPUT([Makefile
            src/include/mpc_threads_config.h
            src/bin/Makefile
 	   src/bin/mpc_build_env.sh
-           src/bin/mpc_compiler_manager.sh
-           src/bin/mpc_cc.sh
            src/bin/mpc_cflags
            src/bin/mpc_ldflags
-           src/bin/mpc_cxx.sh
-	   src/bin/mpc_nvcc.sh
-           src/bin/mpc_f77.sh
            src/bin/mpcrun.sh
 	   src/bin/mpcvars.sh
 	   src/bin/mpc_status.sh])
