@@ -21,7 +21,7 @@ endif
 
 lib_LTLIBRARIES = libmpclowcomm.la
 
-libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c sctk_communicator.c sctk_control_messages.c ft.c arpc_weak.c
+libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c sctk_communicator.c sctk_control_messages.c ft.c
 libmpclowcomm_la_SOURCES += sctk_handle.c sctk_low_level_comm.c sctk_multirail.c sctk_net_tools.c sctk_net_topology.c
 libmpclowcomm_la_SOURCES += sctk_polling.c sctk_rail.c sctk_reorder.c sctk_route.c sctk_topological_polling.c sctk_topological_rail.c sctk_window.c
 
@@ -44,7 +44,7 @@ libmpclowcomm_la_SOURCES += ./portals/sctk_portals.c ./portals/sctk_ptl_cm.c ./p
 libmpclowcomm_la_SOURCES += ./portals/sctk_ptl_iface.c ./portals/sctk_ptl_offcoll.c ./portals/sctk_ptl_rdma.c
 libmpclowcomm_la_SOURCES += ./portals/sctk_ptl_rdv.c ./portals/sctk_ptl_toolkit.c
 
-libmpclowcomm_la_SOURCES += ./portals_am/sctk_ptl_am_iface.c  ./portals_am/sctk_ptl_am_toolkit.c ./portals_am/ptl_layer.c
+libmpclowcomm_la_SOURCES += ./portals_am/sctk_ptl_am_iface.c  ./portals_am/sctk_ptl_am_toolkit.c ./portals_am/sctk_ptl_am_arpc_api.c ./portals_am/arpc_weak.c
 endif
 
 

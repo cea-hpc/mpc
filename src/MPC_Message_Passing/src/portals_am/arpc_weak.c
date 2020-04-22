@@ -21,23 +21,16 @@
 /* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@paratools.com        # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include "sctk_ptl_am_types.h"
+#include <mpc_lowcomm.h>
+#include <mpc_keywords.h>
 
-#ifndef __SCTK_PORTALS_H_
-#define __SCTK_PORTALS_H_
-#ifdef __cplusplus
-extern "C"
+#pragma weak arpc_c_to_cxx_converter
+int arpc_c_to_cxx_converter( __UNUSED__ sctk_arpc_context_t *ctx,
+                             __UNUSED__ const void *request,
+			     __UNUSED__ size_t req_size,
+			     __UNUSED__ void **response,
+			     __UNUSED__ size_t *resp_size )
 {
-#endif
-
-#include <mpc_common_helper.h>
-#include <mpc_lowcomm_types.h>
-#include "sctk_ptl_types.h"
-
-struct sctk_rail_info_s;
-void sctk_network_init_ptl ( struct sctk_rail_info_s *rail);
-void sctk_network_finalize_ptl ( struct sctk_rail_info_s *rail);
-
-#ifdef __cplusplus
+	return 0;
 }
-#endif
-#endif

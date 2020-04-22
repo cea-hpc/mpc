@@ -21,23 +21,18 @@
 /* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@paratools.com        # */
 /* #                                                                      # */
 /* ######################################################################## */
+#ifndef MPC_ARPC_H
+#define MPC_ARPC_H
 
-#ifndef __SCTK_PORTALS_H_
-#define __SCTK_PORTALS_H_
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+struct sctk_arpc_context_s;
+struct sctk_ptl_am_msg_s;
 
-#include <mpc_common_helper.h>
-#include <mpc_lowcomm_types.h>
-#include "sctk_ptl_types.h"
+int mpc_arpc_init_ptl(int);
+int mpc_arpc_register_service_ptl(void* pool, int srvcode);
 
-struct sctk_rail_info_s;
-void sctk_network_init_ptl ( struct sctk_rail_info_s *rail);
-void sctk_network_finalize_ptl ( struct sctk_rail_info_s *rail);
+int mpc_arpc_emit_call_ptl(struct sctk_arpc_context_s* ctx, const void* input, size_t req_size, void** response, size_t*resp_size);
+int mpc_arpc_recv_call_ptl(struct sctk_arpc_context_s* ctx, const void* input, size_t req_size, void** response, size_t*resp_size, struct sctk_ptl_am_msg_s*);
 
-#ifdef __cplusplus
-}
-#endif
+int mpc_arpc_polling_request_ptl(struct sctk_arpc_context_s* ctx);
+int mpc_arpc_free_response_ptl(void* resp_addr);
 #endif

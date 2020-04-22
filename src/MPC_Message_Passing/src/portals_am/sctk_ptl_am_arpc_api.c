@@ -36,7 +36,7 @@ static void* cxx_pool;
 static size_t nb_process;
 static sctk_ptl_id_t* id_maps = NULL;
 
-int arpc_init_ptl(int nb_srv)
+int mpc_arpc_init_ptl(int nb_srv)
 {
 	unsigned int i;
 	srail = sctk_ptl_am_hardware_init();
@@ -57,7 +57,7 @@ int arpc_init_ptl(int nb_srv)
 }
 
 
-int arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
+int mpc_arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
 {
 	sctk_ptl_am_msg_t msg, *msg_ret = NULL;
 	msg.remote = id_maps[ctx->dest];
@@ -85,7 +85,7 @@ int arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_s
 	return 0;
 }
 
-int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size, struct sctk_ptl_am_msg_s* msg)
+int mpc_arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size, struct sctk_ptl_am_msg_s* msg)
 {
 	*response = NULL;
 	*resp_size = 0;
@@ -100,7 +100,7 @@ int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_s
 	return 0;
 }
 
-int arpc_polling_request_ptl(__UNUSED__ sctk_arpc_context_t* ctx)
+int mpc_arpc_polling_request_ptl(__UNUSED__ sctk_arpc_context_t* ctx)
 {
 	int ret = sctk_ptl_am_incoming_lookup(&srail);
 	if(!ret)
@@ -108,7 +108,7 @@ int arpc_polling_request_ptl(__UNUSED__ sctk_arpc_context_t* ctx)
 	return ret;
 }
 
-int arpc_register_service_ptl(void* pool, int srvcode)
+int mpc_arpc_register_service_ptl(void* pool, int srvcode)
 {
 	if(!cxx_pool)
 		cxx_pool = pool;
@@ -117,7 +117,7 @@ int arpc_register_service_ptl(void* pool, int srvcode)
 	return 0;
 }
 
-int arpc_free_response_ptl(void* resp_addr)
+int mpc_arpc_free_response_ptl(void* resp_addr)
 {
 	sctk_ptl_am_free_response(resp_addr);
 	return 0;

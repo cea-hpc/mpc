@@ -28,9 +28,9 @@
 #include "sctk_debug.h"
 #include "sctk_alloc.h"
 #include "mpc_common_helper.h"
-//#include "ptl_layer.h"
 #include "sctk_ptl_am_iface.h"
 #include "sctk_ptl_am_types.h"
+#include "arpc_weak.h"
 
 #include "mpc_common_asm.h"
 #include "mpc_launch_pmi.h"
@@ -807,7 +807,7 @@ static inline void __sctk_ptl_am_event_handle_put( sctk_ptl_am_rail_info_t *srai
 			}
 		}
 		/* now process the RPC call */
-		arpc_recv_call_ptl( &ctx, req_buf, req_sz, &resp_buf, &resp_sz, &msg );
+		mpc_arpc_recv_call_ptl( &ctx, req_buf, req_sz, &resp_buf, &resp_sz, &msg );
 
 		/* flag the memory in the ME as freeable */
 		int last_value = OPA_fetch_and_decr_int( &chunk->block->refcnt );

@@ -161,15 +161,13 @@
 /******************
  * ACTIVE MESSAGE *
  ******************/
-
-
-struct sctk_arpc_context
+typedef struct sctk_arpc_context_s
 {
 	int dest;
 	int rpcode;
 	int srvcode;
 	void* cxx_pool;
-};
+} sctk_arpc_context_t;
 
 /*********************************/
 /**** OTHER USEFUL CONSTANTS  ****/
