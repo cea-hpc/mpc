@@ -22,20 +22,22 @@
 #                                                                      #
 ########################################################################
 
-MPC_INSTALL_PREFIX=$(mpc_cflags -p)
-MPC_SHARE_DIR=$("${MPC_INSTALL_PREFIX}/bin/mpc_cflags" -s)
+# Common variables
+
+#Extract compiler configuration and flags
+# - MPC_INSTALL_PREFIX
+# - MPC_SHARE_DIR
+# - MPC_DEFAULT_C_COMPILER
+# - CFLAGS
+eval $(mpc_cflags -sh -p -s -cc -f)
+
+COMPILER="$MPC_DEFAULT_C_COMPILER"
+LDFLAGS=$("${MPC_INSTALL_PREFIX}/bin/mpc_ldflags")
 
 # Source Common function library
 
 # shellcheck source=/dev/null
 . "${MPC_SHARE_DIR}/mpc_compiler_common.sh"
-
-# Common variables
-COMPILER=$("${MPC_INSTALL_PREFIX}/bin/mpc_cflags" -cc)
-
-#first definition of compiler & linking flags
-CFLAGS=$("${MPC_INSTALL_PREFIX}/bin/mpc_cflags")
-LDFLAGS=$("${MPC_INSTALL_PREFIX}/bin/mpc_ldflags")
 
 parse_cli_args $@
 

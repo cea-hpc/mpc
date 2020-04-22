@@ -44,11 +44,6 @@ MPC_DEFAULT_FC_COMPILER="@MPC_DEFAULT_FC_COMPILER@"
 # Module FLAGS
 MPC_MODULE_LIST="@MPC_MODULE_LIST@"
 
-print_mod_list()
-{
-	echo "${MPC_MODULE_LIST}"
-}
-
 gen_module_defines()
 {
 	RET=""
@@ -87,10 +82,14 @@ show_help()
 {
 	echo "mpc_cflags can be used to retrieve information on MPC's compilation flags"
 	echo ""
-	echo "mpc_cflags [-p] [-m] [-h]"
+	echo "mpc_cflags [-sh] [-p] [-m] [-s] [-cc] [-fc] [-cpp] [-f] [-h]"
+	echo ""
+	echo "If not argument is provided CFLAGS are printed out"
 	echo ""
 	echo " -h|--help    Print this help"
-	echo " [NO ARGS]    Print cflags"
+	echo " -f|--cflags  Print cflags"
+	echo ""
+	echo " --sh         Output in shell format"
 	echo ""
 	echo "Install env:"
 	echo " -p           Display mpc install prefix"
@@ -109,33 +108,63 @@ show_help()
 # Argument Parsing
 #
 
+# First check if the SH flag is present
+
+HAS_SH_FLAG="no"
+
+for arg in "$@" ; do
+	case $arg in
+		-sh)
+			HAS_SH_FLAG="yes"
+		;;
+	esac
+done
+
+print_var()
+{
+	if test "x${HAS_SH_FLAG}" = "xyes"; then
+		echo "$1=\"$2\""
+	else
+		echo "$2"
+	fi
+}
+
+
 for arg in "$@" ; do
 	case $arg in
 		# ----------------------------------------------------------------
 		# Compiler options that affect whether we are linking or not
 	-p)
-		echo "$MPC_INSTALL_PREFIX"
+		print_var "MPC_INSTALL_PREFIX" "$MPC_INSTALL_PREFIX"
 		;;
 	-s)
-		echo "$MPC_SHARE_DIR"
+		print_var "MPC_SHARE_DIR" "$MPC_SHARE_DIR"
 		;;
 	-m)
-		print_mod_list
+		print_var "MPC_MODULE_LIST" "$MPC_MODULE_LIST"
 		;;
 	-cc)
-		echo "$MPC_DEFAULT_C_COMPILER"
+		print_var "MPC_DEFAULT_C_COMPILER" "$MPC_DEFAULT_C_COMPILER"
 		;;
 	-fc)
-		echo "$MPC_DEFAULT_FC_COMPILER"
+		print_var "MPC_DEFAULT_FC_COMPILER" "$MPC_DEFAULT_FC_COMPILER"
 		;;
 	-cxx|-cpp)
-		echo "$MPC_DEFAULT_CXX_COMPILER"
+		print_var "MPC_DEFAULT_CXX_COMPILER" "$MPC_DEFAULT_CXX_COMPILER"
 		;;
+	-f|--cflags)
+		print_var "CFLAGS" "$FLAGS"
+		;;
+	-sh)
+	# Handled in the first pass
+	;;
 	*)
 		show_help
 		;;
 	esac
 done
+
+# No param just print cflags
 
 if test "x$#" = "x0"; then
 	echo "${FLAGS}"
