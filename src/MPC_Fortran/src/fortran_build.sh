@@ -12,7 +12,6 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 PYTHON="/usr/bin/env python"
 MPCFC="mpc_f77"
 MPCCC="mpc_cc"
-AR="ar"
 INSTALL="./TEST/"
 MPIHFILE="${SCRIPTPATH}/../../MPC_MPI/include/mpc_mpi.h"
 
@@ -30,6 +29,8 @@ MPIF08MTYPE=""
 MPIF08C=""
 MPIF08CONST=""
 MPIF08=""
+
+set -x
 
 #Can the file be generated ?
 GENERATE=1
@@ -76,9 +77,6 @@ generate_from_backup()
 	GENERATE=0
 }
 
-
-
-
 checkFortranGenEnv()
 {
 	rm -fr ${INSTALL}/fortrangen.log
@@ -96,7 +94,7 @@ checkFortranGenEnv()
 	fi	
 
 	info "Found and running Python"
-	
+
 	TEMP=`mktemp`
 
 cat << EOF > $TEMP
