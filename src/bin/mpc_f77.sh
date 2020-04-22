@@ -262,12 +262,12 @@ if [ "$MPC_DOING_LINK" = yes ] ; then
 		# Append to compilation objects
 		append_to "OBJECT_FILES" "$FORTRAN_MAIN_OBJ"
 	fi
+
+	# Recretate compilation args from processed files and params
+	COMPILATION_ARGS="${ARGS_NO_SOURCES} ${OBJECT_FILES}"
 fi
 
 trap clean_fortran_main EXIT
 trap clean_tmp_obj_files EXIT
-
-# Recretate compilation args from processed files and params
-COMPILATION_ARGS="${ARGS_NO_SOURCES} ${OBJECT_FILES}"
 
 run_compiler
