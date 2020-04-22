@@ -262,6 +262,7 @@ static inline void __execinfo_backtrace( void )
 #endif
 }
 
+#ifdef MPC_HAVE_LIBUNWIND
 static inline void __libunwind_backtrace( void )
 {
 	unw_cursor_t cursor;
@@ -356,6 +357,7 @@ static inline void __libunwind_backtrace( void )
 
 	mpc_common_io_noalloc_fprintf( stderr, "\n"SCTK_COLOR_VIOLET_BOLD(})"\n" );
 }
+#endif
 
 
 
