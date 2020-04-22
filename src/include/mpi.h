@@ -23,6 +23,3 @@
 #include <mpc.h>
 #include <mpc_mpi.h>
 
-#if @MPC_MPIIO_ENABLED@ == yes
-#include <mpio.h>
-#endif

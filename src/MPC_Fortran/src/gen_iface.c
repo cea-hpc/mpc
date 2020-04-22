@@ -21,7 +21,7 @@
 /* ######################################################################## */
 #include <stdio.h>
 #include <assert.h>
-#include <mpi.h>
+#include <mpc_mpi.h>
 
 int is_mpif_only = 0;
 

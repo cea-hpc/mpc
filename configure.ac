@@ -2000,33 +2000,42 @@ fi
 
 #
 # Compute the all MPC libs variable
+# And generate module lists and defines
 #
 
 ALL_MPC_LIBS="${ac_pwd}/src/MPC_Config/src/libmpcconfig.la"
 
+MPC_MODULE_LIST=""
+
 if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
 	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Launch/src/libmpclaunch.la"
 	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Threads/src/libmpcthread.la"
+	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_THREAD_ENABLED"
 fi
 
 if test "x${MPC_OPENMP_ENABLED}" = "xyes"; then
 	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_OpenMP/src/libmpcomp.la"
+	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_OPENMP_ENABLED"
 fi
 
-if test "x${MPC_MPI_ENABLED}" = "xyes"; then
+if test "x${MPC_MESSAGE_PASSING_ENABLED}" = "xyes"; then
 	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Message_Passing/src/libmpclowcomm.la"
+	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_MESSAGE_PASSING_ENABLED"
 fi
 
 if test "x${MPC_MPI_ENABLED}" = "xyes"; then
 	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_MPI/src/libmpcmpi.la"
+	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_MPI_ENABLED"
 fi
 
 if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
 	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_IO/src/libmpcio.la"
+	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_MPIIO_ENABLED"
 fi
 
 
 AC_SUBST([ALL_MPC_LIBS])
+AC_SUBST([MPC_MODULE_LIST])
 
 ################################
 ###### COMPILER DETECTION ###### {sec:compilers}
@@ -2422,8 +2431,9 @@ AC_OUTPUT([Makefile
 	   src/MPC_IO/Makefile
 	   src/MPC_IO/src/Makefile
 	   src/MPC_IO/include/mpio.h
-	   src/include/mpi.h
 	   src/MPC_IO/src/romio/Makefile
+	   src/MPC_Fortran/Makefile
+	   src/MPC_Fortran/src/Makefile
            src/include/mpc_threads_config.h
            src/bin/Makefile
 	   src/bin/mpc_build_env.sh

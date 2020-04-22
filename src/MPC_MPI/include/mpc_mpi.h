@@ -29,19 +29,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
-#ifndef MPC_NO_AUTO_MAIN_REDEF
-	#undef main
-	#ifdef __cplusplus
-		#define main(...) long mpc_user_main_dummy__ (); extern "C" int mpc_user_main__(__VA_ARGS__)
-	#else
-		#define main(...) mpc_user_main__(__VA_ARGS__)
-	#endif
-#endif
-
-
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -1962,6 +1949,11 @@ int MPI_Improbe(int , int , MPI_Comm , int *, MPI_Message *, MPI_Status *);
 /* For ROMIO compatibility */
 #define MPICH_ATTR_POINTER_WITH_TYPE_TAG(a,b) 
 #define MPI_AINT_FMT_HEX_SPEC "%X"
+
+#ifdef MPC_MPIIO_ENABLED
+#include <mpio.h>
+#endif
+
 
 #ifdef __cplusplus
 }

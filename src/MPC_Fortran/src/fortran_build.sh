@@ -10,10 +10,14 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 #PREPARE BUILDING CONTEXT
 
 PYTHON="/usr/bin/env python"
-MPCFC="mpc_f77"
-MPCCC="mpc_cc"
+
+FC="mpc_f77"
+CC="mpc_cc"
+CFLAGS=""
+
+
 INSTALL="./TEST/"
-MPIHFILE="${SCRIPTPATH}/../../MPC_MPI/include/mpc_mpi.h"
+MPIHFILE=""
 
 #These are the files used for generation
 
@@ -30,7 +34,6 @@ MPIF08C=""
 MPIF08CONST=""
 MPIF08=""
 
-set -x
 
 #Can the file be generated ?
 GENERATE=1
@@ -124,7 +127,7 @@ END PROGRAM TESTAPP
 EOF
 
 	TEMP2=`mktemp`
-	$MPCFC $TEMP -o $TEMP2  2>> ./fortrangen.log
+	$FC ${CFLAGS} $TEMP -o $TEMP2  2>> ./fortrangen.log
 	if test "x$?" != "x0"; then
 		generate_from_backup "Failed to compile Fortran program."
 		return
@@ -152,7 +155,7 @@ END PROGRAM TESTAPP
 EOF
 
 	TEMP2=`mktemp`
-	$MPCFC $TEMP -o $TEMP2  2>> ./fortrangen.log
+	$FC ${CFLAGS} $TEMP -o $TEMP2  2>> ./fortrangen.log
 	if test "x$?" != "x0" -o ! -e "test_mod.mod"; then
 		generate_from_backup "Failed to compile a simple Fortran Module."
 		return
@@ -163,7 +166,7 @@ EOF
 
 	TEMP=`mktemp`.c
 cat << EOF > $TEMP
-#include <mpc.h>
+#include <mpc_mpi.h>
 int main(int argc, char ** argv )
 {
 	return 0;
@@ -171,7 +174,9 @@ int main(int argc, char ** argv )
 EOF
 
 	TEMP2=`mktemp`
-	$MPCCC $TEMP -o $TEMP2  2>> ./fortrangen.log
+	echo "$CC $CFLAGS $TEMP -o $TEMP2 "
+
+	$CC $CFLAGS $TEMP -o $TEMP2  2>> ./fortrangen.log
 
 	if test "x$?" != "x0"; then
 		generate_from_backup "Failed to build a C program."
@@ -185,8 +190,8 @@ EOF
 genfortranfiles()
 {
 	TEMP=`mktemp`
-	echo "$ $MPCCC ${SCRIPTPATH}/gen_iface.c -o ${TEMP}"
-	$MPCCC ${SCRIPTPATH}/gen_iface.c -o ${TEMP} 2>> ./fortrangen.log
+	echo "$ $CC $CFLAGS ${SCRIPTPATH}/gen_iface.c -o ${TEMP}"
+	$CC $CFLAGS ${SCRIPTPATH}/gen_iface.c -o ${TEMP} 2>> ./fortrangen.log
 	${TEMP} > constants.json 2>> ./fortrangen.log
 
 	if test "x$?" != "x0" -o ! -e "constants.json"; then
@@ -195,7 +200,7 @@ genfortranfiles()
 	fi
 	rm -f $TEMP
 	
-	${MPCCC} -E ${MPIHFILE} -o preparsed_mpih.dat 2>> ./fortrangen.log
+	${CC} ${CFLAGS} -E ${MPIHFILE} -o preparsed_mpih.dat 2>> ./fortrangen.log
 	
 	if test "x$?" != "x0" -o ! -e "preparsed_mpih.dat"; then
 		generate_from_backup "Failed to generate the preparsed mpi.h file"
@@ -203,7 +208,7 @@ genfortranfiles()
 	fi
 	info "Generated pre-parsed mpi.h file"
 	
-	${PYTHON} ${SCRIPTPATH}/genmod.py -f "${MPCFC}" -c "${MPCCC}" -m "${MPIHFILE}"
+	${PYTHON} ${SCRIPTPATH}/genmod.py -f "${FC}" -c "${CC}" -m "${MPIHFILE}"
 
 	if test "x$?" != "x0"; then
 		generate_from_backup "Fortran module/header generation failed."
@@ -222,28 +227,28 @@ genfortranmods()
 	# This is due to old Fortran compilers, not able to resolve module dependency at once.
 	# Each call resolves a dependency, leading to 3 compilatoins in a row.
 	# TODO: A loop, retrying to compile while return code != 0
-	$MPCFC -g -fpic -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF} ${MPIF08CTYPE} ${MPIF08MTYPE} ${MPIF08C} ${MPIF08CONST} ${MPIF08}  2>> ./fortrangen.log
-	$MPCFC -g -fpic -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF} ${MPIF08CTYPE} ${MPIF08MTYPE} ${MPIF08C} ${MPIF08CONST} ${MPIF08}  2>> ./fortrangen.log
-	$MPCFC -g -fpic -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF} ${MPIF08CTYPE} ${MPIF08MTYPE} ${MPIF08C} ${MPIF08CONST} ${MPIF08}  2>> ./fortrangen.log
+	$FC $CFLAGS -g -fpic -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF} ${MPIF08CTYPE} ${MPIF08MTYPE} ${MPIF08C} ${MPIF08CONST} ${MPIF08}  2>> ./fortrangen.log
+	$FC $CFLAGS -g -fpic -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF} ${MPIF08CTYPE} ${MPIF08MTYPE} ${MPIF08C} ${MPIF08CONST} ${MPIF08}  2>> ./fortrangen.log
+	$FC $CFLAGS -g -fpic -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF} ${MPIF08CTYPE} ${MPIF08MTYPE} ${MPIF08C} ${MPIF08CONST} ${MPIF08}  2>> ./fortrangen.log
 	
 	test "x$?" != "x0" && die "Failed to build pre-computed Fortran modules"
 	info "Built pre-computed Fortran modules"
 	
-	$MPCFC -g -fpic -I. ${mpc_inc_path} -c $SCRIPTPATH/predef_types.f $SCRIPTPATH/predef_types_08.f90  2>> ./fortrangen.log
+	$FC $CFLAGS -g -fpic -I. ${mpc_inc_path} -c $SCRIPTPATH/predef_types.f $SCRIPTPATH/predef_types_08.f90  2>> ./fortrangen.log
 	test "x$?" != "x0" && die "Failed to build pre-defined Fortran modules (types)"
 	info "Built pre-defined Fortran modules (types)"
 	
-	$MPCCC -g -fpic -c ${MPIF08CIF}  2>> ./fortrangen.log
+	$CC $CFLAGS -g -fpic -c ${MPIF08CIF}  2>> ./fortrangen.log
 	test "x$?" != "x0" && die "Failed to build Fortran 08 C interface."
 	info "Built MPI interface for Fortran 08"
 		
-	$MPCFC -g -fpic -shared -o libmpcfwrapper.so *.o  2>> ./fortrangen.log
+	$FC $CFLAGS -g -fpic -shared -o libmpcfwrapper.so *.o  2>> ./fortrangen.log
 	test "x$?" != "x0" && die "Failed to build MPI Wrapper C library"
 	info "Built MPI Wrapper library"
 
 	#Compiled twice for the same reasons as above
-	$MPCFC -c $SCRIPTPATH/pregenerated/omp.f90  2>> ./fortrangen.log
-	$MPCFC -c $SCRIPTPATH/pregenerated/omp.f90  2>> ./fortrangen.log
+	$FC $CFLAGS -c $SCRIPTPATH/pregenerated/omp.f90  2>> ./fortrangen.log
+	$FC $CFLAGS -c $SCRIPTPATH/pregenerated/omp.f90  2>> ./fortrangen.log
 	test "x$?" != "x0" && die "Failed to build OpenMP for Fortran"
 	info "Built OpenMP for Fortran module"
 }
@@ -350,20 +355,44 @@ proceedwithfortranfilegeneration()
 	mv libmpcfwrapper.so ${INSTALL}/lib
 }
 
+
+locate_mpih()
+{
+
+	TEMP="$(mktemp).c"
+cat << EOF > "$TEMP"
+#include <mpi.h>
+int main(int argc, char ** argv )
+{
+	return 0;
+}
+EOF
+
+	MPIHFILE=$($CC $CFLAGS -M $TEMP | grep "/mpi.h" | sed "s/\\\//g" | sed "s/ //g")
+
+	if test ! -f "${MPIHFILE}"; then
+		die "Could not locate mpi.h in ${MPIHFILE}"
+	fi
+
+	rm -f "$TEMP"
+}
+
+
+
 test "x${#}" != "x4" && die "
 ======================
 MPC Fortran Generator
 ======================
 
-${0} [MPC_CC] [MPC_F77] [MPIH] [INSTALL_PATH]
+${0} [CC] [FC] [CFLAGS] [INSTALL_PATH]
 "
 
-MPCCC="$1"
-MPCFC="$2"
-MPIHFILE="$3"
+CC="$1"
+FC="$2"
+CFLAGS="$3"
 INSTALL="$4"
 
-test ! -f "${MPIHFILE}" && die "Could not locate the mpi.h file in ${MPIHFILE}"
+locate_mpih
 
 
 BUILDIR=`mktemp -d`
@@ -377,6 +406,7 @@ echo "" > fortrangen.log
 proceedwithfortranfilegeneration
 
 cd $OLDIR
+echo "BUILD was done in $BUILDIR"
 #rm -rf $BUILDIR
 
 
