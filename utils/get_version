@@ -14,7 +14,11 @@ if test -n "$(command -v git)" -a -e "$UTILS_DIR/../.git"; then
 	PATCH_VERSION=$(echo "$res" | cut -f3 -d".")
 	TAINT_VERSION="$(git -C $UTILS_DIR rev-parse --short HEAD)"
 	git -C $UTILS_DIR diff --quiet || TAINT_VERSION="@$TAINT_VERSION-dirty"
-else
+fi
+
+#two scenarios: no Git repo OR issues with fetching tags
+# -> rollback
+if test -z "$MAJOR_VERSION"; then
 	. $UTILS_DIR/VERSION
 	MAJOR_VERSION=$major
 	MINOR_VERSION=$minor
