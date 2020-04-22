@@ -373,6 +373,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 xmllint = @xmllint@
 xsltproc = @xsltproc@
+MPC_VERSION = "${MPC_VERSION_MAJOR}.${MPC_VERSION_MINOR}.${MPC_VERSION_PATCH}"
+PACKAGE_SRING = "@PACKAGE_STRING@"
 all: all-am
 
 .SUFFIXES:
@@ -567,10 +569,10 @@ uninstall-am:
 
 
 @CAN_USE_PANDOC_TRUE@all:
-@CAN_USE_PANDOC_TRUE@	@$(abs_top_srcdir)/src/MPC_Doc/build_manpage.sh "$(MPC_VERSION_STRING)"
+@CAN_USE_PANDOC_TRUE@	@$(abs_top_srcdir)/src/MPC_Doc/build_manpage.sh "$(MPC_VERSION)"
 
 install-data-local:
-	@$(abs_top_srcdir)/src/MPC_Doc/install_all_manpages.sh "$(MPC_VERSION_STRING)" "$(mandir)"
+	@$(abs_top_srcdir)/src/MPC_Doc/install_all_manpages.sh "$(MPC_VERSION)" "$PACKAGE_SRING" "$(mandir)"
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

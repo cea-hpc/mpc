@@ -11,7 +11,8 @@ SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "$SCRIPT")
 
 version=$1
-dest_mandir=$2
+package_name=$2
+dest_mandir=$3
 
 test -z "$version" && exit 42
 test -z "$dest_mandir" && exit 42
@@ -32,7 +33,7 @@ do
 
 	if test ! -f "${man_dest}"; then
 		echo "  GEN $(basename "$path")"
-		manpage=$("${SCRIPTPATH}/patch_manpage.sh" "$path" "$version")
+		manpage=$("${SCRIPTPATH}/patch_manpage.sh" "$path" "$version" "${package_name}")
 
 		mkdir -p "${dest_mandir}/man${mannum}/"
 		man_dest=${dest_mandir}/man${mannum}/${manname}.${mannum}

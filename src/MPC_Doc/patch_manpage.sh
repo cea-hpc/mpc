@@ -5,15 +5,16 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 
 file=$1
 version=$2
+package_name=$3
 
 test -n "$version" || exit 42
 test -n "$file" || exit 42
 
 manpage="`cat $1`"
 
-echo "$manpage" | sed -e "s@#PACKAGE_DATE#@`date +%x`@" \
+echo "$manpage" | sed -e "s@#PACKAGE_DATE#@`date +%Y`@" \
     -e "s,#PACKAGE_VERSION#,$version," \
-    -e "s@#PACKAGE_NAME#@Multi-Processor Computing@"
+    -e "s@#PACKAGE_NAME#@$package_name@"
 
 if test -n "`echo "$file" | grep "MPI_.*.3in"`"; then
 cat<<EOF
