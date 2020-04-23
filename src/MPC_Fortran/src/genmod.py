@@ -4,7 +4,6 @@ import sys
 import argparse
 import os
 import string
-import subprocess
 
 scriptpath = os.path.dirname(os.path.realpath(sys.argv[0]))
 
@@ -14,13 +13,11 @@ Argument Parsing
 
 argparser = argparse.ArgumentParser(description='This is the MPC fortran Module Generator')
 
-argparser.add_argument('-c', '--ccomp', action='store', help='The C compiler used to preprocess the MPI.h header')
-argparser.add_argument('-f', '--fcomp', action='store', help='The F90 compiler used to generate modules')
 argparser.add_argument('-m', '--mpih', action='store', help='Path to the \'mpi.h\' header file to be preprocessed')
 
 args = argparser.parse_args()
 
-if (args.fcomp == None) or (args.mpih == None)  or (args.ccomp == None) :
+if (args.mpih is None) :
 	print "ERROR Missing argument see '" + os.path.basename(sys.argv[0]) + " -h'"
 
 '''
@@ -47,7 +44,7 @@ with open(scriptpath + '/sizeofs.json') as data_file:
 parsed_mpih=""
 
 try:
-	with open('./preparsed_mpih.dat') as data_file:    
+	with open(args.mpih) as data_file:    
 		parsed_mpih = data_file.read();
 except IOError:
 	print "Could not preparse the", args.mpih, "Header"
@@ -1822,11 +1819,6 @@ module_file_data = """
 #include <mpi.h>
 #include <stdint.h>
 #include <stddef.h>
-
-#ifndef MPIO_INCLUDE
-typedef void * MPI_File;
-typedef size_t MPI_Offset;
-#endif
 
 typedef struct {
          intptr_t  lower_bound,

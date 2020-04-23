@@ -119,8 +119,27 @@ CONFIGURE_SCRIPT_PATH=$(dirname "`readlink -f "$0"`")
 ####################################
 ###### VERSION IDENTIFICATION ###### {sec:version}
 ####################################
+AC_PROG_CXX([])
+AC_PROG_CC([])
+AC_PROG_FC([])
 
+#
+# Needed for Fortran module generation
+#
+
+AM_PATH_PYTHON([],[HAVE_PYTHON="yes"],[HAVE_PYTHON="no"])
+
+if test "x${HAVE_PYTHON}" = "xyes"; then
+	AX_PYTHON_MODULE([json])
+	AX_PYTHON_MODULE([argparse])
+fi
+
+AM_CONDITIONAL([HAVE_PYTHON], [test "x$HAVE_PYTHON" = "xyes" -a "x${HAVE_PYMOD_JSON}" = "xyes" -a "x${HAVE_PYMOD_ARGPARSE}" = "xyes"])
 #Create environment vars
+
+#
+# Compute version
+#
 MPC_VERSION_MAJOR="$($CONFIGURE_SCRIPT_PATH/utils/get_version --major)"
 MPC_VERSION_MINOR="$($CONFIGURE_SCRIPT_PATH/utils/get_version --minor)"
 MPC_VERSION_PATCH="$($CONFIGURE_SCRIPT_PATH/utils/get_version --patch)"

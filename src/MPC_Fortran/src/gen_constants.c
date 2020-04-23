@@ -41,7 +41,7 @@ int is_mpif_only = 0;
          "\"type\" : \"int\"},\n",                                             \
          sa, sa, sa, (int)a, is_mpif_only, (int)a)
 #define MPI_INTEGER_ARRAY_CONV(sa,size) printf("{ \"name\" : \"%s\" , \"decl\" : \"       integer %s(%d)\\n       COMMON %s\\n\", \"mpif_only\" : %d },\n",sa, sa, size, sa, is_mpif_only)
-#define MPI_INTEGER_ARRAY_OF_ARRAY_CONV(sa,size) printf("{ \"name\" : \"%s\" , \"decl\" : \"       integer %s(%d,1)\\n\       COMMON %s\\n\", \"mpif_only\" : %d },\n",sa, sa,size, sa, is_mpif_only)
+#define MPI_INTEGER_ARRAY_OF_ARRAY_CONV(sa,size) printf("{ \"name\" : \"%s\" , \"decl\" : \"       integer %s(%d,1)\\n       COMMON %s\\n\", \"mpif_only\" : %d },\n",sa, sa,size, sa, is_mpif_only)
 #define MPI_INTEGER_8_VAL(sa, a)                                               \
   printf("{ \"name\" : \"%s\" , \"decl\" : \"       INTEGER*8 %s\\n       "    \
          "PARAMETER (%s=%ld)\\n\", \"mpif_only\" : %d, \"value\" : %ld, "      \

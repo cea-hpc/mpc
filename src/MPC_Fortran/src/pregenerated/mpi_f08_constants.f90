@@ -172,7 +172,7 @@ use :: mpi_f08_types
 	integer, parameter :: MPI_ERR_DUP_DATAREP = 51
 	integer, parameter :: MPI_ERR_CONVERSION = 52
 	integer, parameter :: MPI_ERR_IO = 53
-	integer, parameter :: MPI_ERR_LASTCODE = 74
+	integer, parameter :: MPI_ERR_LASTCODE = 77
 	integer, parameter :: MPI_NOT_IMPLEMENTED = 56
 	type(MPI_Errhandler) :: MPI_ERRORS_RETURN = MPI_Errhandler(-6)
 	type(MPI_Errhandler) :: MPI_ERRORS_ARE_FATAL = MPI_Errhandler(-7)
@@ -238,6 +238,7 @@ use :: mpi_f08_types
 	type(MPI_Datatype) :: MPI_REAL16 = MPI_Datatype(30)
 	type(MPI_Datatype) :: MPI_SIGNED_CHAR = MPI_Datatype(31)
 	type(MPI_Datatype) :: MPI_REAL = MPI_Datatype(56)
+	type(MPI_Datatype) :: MPI_COUNT = MPI_Datatype(51)
 	type(MPI_Datatype) :: MPI_OFFSET = MPI_Datatype(50)
 	type(MPI_Op) :: MPI_SUM = MPI_Op(0)
 	type(MPI_Op) :: MPI_MAX = MPI_Op(1)
@@ -263,8 +264,8 @@ use :: mpi_f08_types
 	integer, parameter :: MPI_STATUS_SIZE = 5
 	integer, parameter :: MPI_REQUEST_SIZE = 1
 	integer, parameter :: MPI_BSEND_OVERHEAD = 4
-	integer, parameter :: MPI_VERSION = 1
-	integer, parameter :: MPI_SUBVERSION = 3
+	integer, parameter :: MPI_VERSION = 3
+	integer, parameter :: MPI_SUBVERSION = 1
 	integer, parameter :: MPI_COMM_TYPE_SHARED = 1
 	integer, parameter :: MPI_MESSAGE_NO_PROC = -2
 	integer, parameter :: MPI_WTIME_IS_GLOBAL = 3
