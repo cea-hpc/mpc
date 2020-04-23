@@ -41,6 +41,11 @@ module procedure MPI_Start_f08
 end interface
 
 
+interface MPI_File_write_all_begin
+module procedure MPI_File_write_all_begin_f08
+end interface
+
+
 interface MPI_Win_post
 module procedure MPI_Win_post_f08
 end interface
@@ -48,6 +53,11 @@ end interface
 
 interface MPI_Win_get_errhandler
 module procedure MPI_Win_get_errhandler_f08
+end interface
+
+
+interface MPI_File_get_group
+module procedure MPI_File_get_group_f08
 end interface
 
 
@@ -71,8 +81,18 @@ module procedure MPI_Attr_delete_f08
 end interface
 
 
+interface MPI_File_iwrite_shared
+module procedure MPI_File_iwrite_shared_f08
+end interface
+
+
 interface MPI_Comm_get_attr
 module procedure MPI_Comm_get_attr_f08
+end interface
+
+
+interface MPI_File_get_info
+module procedure MPI_File_get_info_f08
 end interface
 
 
@@ -111,13 +131,28 @@ module procedure MPI_Add_error_class_f08
 end interface
 
 
+interface MPI_File_write_shared
+module procedure MPI_File_write_shared_f08
+end interface
+
+
 interface MPI_Buffer_detach
 module procedure MPI_Buffer_detach_f08
 end interface
 
 
+interface MPI_File_set_size
+module procedure MPI_File_set_size_f08
+end interface
+
+
 interface MPI_Intercomm_create
 module procedure MPI_Intercomm_create_f08
+end interface
+
+
+interface MPI_File_iread_at
+module procedure MPI_File_iread_at_f08
 end interface
 
 
@@ -133,6 +168,11 @@ end interface
 
 interface MPI_Ibsend
 module procedure MPI_Ibsend_f08
+end interface
+
+
+interface MPI_File_read_all_end
+module procedure MPI_File_read_all_end_f08
 end interface
 
 
@@ -178,6 +218,16 @@ end interface
 
 interface MPI_Type_extent
 module procedure MPI_Type_extent_f08
+end interface
+
+
+interface MPI_File_preallocate
+module procedure MPI_File_preallocate_f08
+end interface
+
+
+interface MPI_File_get_position
+module procedure MPI_File_get_position_f08
 end interface
 
 
@@ -241,6 +291,11 @@ module procedure MPI_Type_create_resized_f08
 end interface
 
 
+interface MPI_File_seek_shared
+module procedure MPI_File_seek_shared_f08
+end interface
+
+
 interface MPI_Get_address
 module procedure MPI_Get_address_f08
 end interface
@@ -263,6 +318,11 @@ end interface
 
 interface MPI_Initialized
 module procedure MPI_Initialized_f08
+end interface
+
+
+interface MPI_File_iwrite
+module procedure MPI_File_iwrite_f08
 end interface
 
 
@@ -306,8 +366,18 @@ module procedure MPI_Issend_f08
 end interface
 
 
+interface MPI_File_sync
+module procedure MPI_File_sync_f08
+end interface
+
+
 interface MPI_Rsend
 module procedure MPI_Rsend_f08
+end interface
+
+
+interface MPI_File_get_amode
+module procedure MPI_File_get_amode_f08
 end interface
 
 
@@ -376,8 +446,18 @@ module procedure MPI_Type_create_hindexed_f08
 end interface
 
 
+interface MPI_File_iread_shared
+module procedure MPI_File_iread_shared_f08
+end interface
+
+
 interface MPI_File_set_errhandler
 module procedure MPI_File_set_errhandler_f08
+end interface
+
+
+interface MPI_File_read_ordered
+module procedure MPI_File_read_ordered_f08
 end interface
 
 
@@ -411,6 +491,11 @@ module procedure MPI_Testall_f08
 end interface
 
 
+interface MPI_File_set_info
+module procedure MPI_File_set_info_f08
+end interface
+
+
 interface MPI_Irsend
 module procedure MPI_Irsend_f08
 end interface
@@ -428,6 +513,11 @@ end interface
 
 interface MPI_Comm_create_errhandler
 module procedure MPI_Comm_create_errhandler_f08
+end interface
+
+
+interface MPI_File_write_all
+module procedure MPI_File_write_all_f08
 end interface
 
 
@@ -458,6 +548,11 @@ end interface
 
 interface MPI_Topo_test
 module procedure MPI_Topo_test_f08
+end interface
+
+
+interface MPI_File_read
+module procedure MPI_File_read_f08
 end interface
 
 
@@ -501,6 +596,11 @@ module procedure MPI_Graph_neighbors_count_f08
 end interface
 
 
+interface MPI_File_get_position_shared
+module procedure MPI_File_get_position_shared_f08
+end interface
+
+
 interface MPI_Graph_neighbors
 module procedure MPI_Graph_neighbors_f08
 end interface
@@ -511,8 +611,18 @@ module procedure MPI_Dims_create_f08
 end interface
 
 
+interface MPI_File_iread
+module procedure MPI_File_iread_f08
+end interface
+
+
 interface MPI_Scatter
 module procedure MPI_Scatter_f08
+end interface
+
+
+interface MPI_File_get_byte_offset
+module procedure MPI_File_get_byte_offset_f08
 end interface
 
 
@@ -523,6 +633,11 @@ end interface
 
 interface MPI_Op_create
 module procedure MPI_Op_create_f08
+end interface
+
+
+interface MPI_File_seek
+module procedure MPI_File_seek_f08
 end interface
 
 
@@ -551,8 +666,18 @@ module procedure MPI_Bcast_f08
 end interface
 
 
+interface MPI_File_write_ordered_end
+module procedure MPI_File_write_ordered_end_f08
+end interface
+
+
 interface MPI_Comm_free
 module procedure MPI_Comm_free_f08
+end interface
+
+
+interface MPI_File_write_at_all
+module procedure MPI_File_write_at_all_f08
 end interface
 
 
@@ -586,6 +711,16 @@ module procedure MPI_Win_complete_f08
 end interface
 
 
+interface MPI_File_get_type_extent
+module procedure MPI_File_get_type_extent_f08
+end interface
+
+
+interface MPI_File_read_all_begin
+module procedure MPI_File_read_all_begin_f08
+end interface
+
+
 interface MPI_Type_set_attr
 module procedure MPI_Type_set_attr_f08
 end interface
@@ -593,6 +728,16 @@ end interface
 
 interface MPI_Put
 module procedure MPI_Put_f08
+end interface
+
+
+interface MPI_File_read_at_all
+module procedure MPI_File_read_at_all_f08
+end interface
+
+
+interface MPI_File_read_ordered_end
+module procedure MPI_File_read_ordered_end_f08
 end interface
 
 
@@ -618,6 +763,11 @@ end interface
 
 interface MPI_File_create_errhandler
 module procedure MPI_File_create_errhandler_f08
+end interface
+
+
+interface MPI_File_iwrite_at
+module procedure MPI_File_iwrite_at_f08
 end interface
 
 
@@ -656,8 +806,18 @@ module procedure MPI_Type_free_f08
 end interface
 
 
+interface MPI_File_write_at_all_begin
+module procedure MPI_File_write_at_all_begin_f08
+end interface
+
+
 interface MPI_Errhandler_set
 module procedure MPI_Errhandler_set_f08
+end interface
+
+
+interface MPI_File_read_at_all_begin
+module procedure MPI_File_read_at_all_begin_f08
 end interface
 
 
@@ -691,6 +851,11 @@ module procedure MPI_Type_create_hvector_f08
 end interface
 
 
+interface MPI_File_write_all_end
+module procedure MPI_File_write_all_end_f08
+end interface
+
+
 interface MPI_Info_get_nkeys
 module procedure MPI_Info_get_nkeys_f08
 end interface
@@ -698,6 +863,11 @@ end interface
 
 interface MPI_Win_start
 module procedure MPI_Win_start_f08
+end interface
+
+
+interface MPI_File_get_size
+module procedure MPI_File_get_size_f08
 end interface
 
 
@@ -741,6 +911,16 @@ module procedure MPI_Get_elements_f08
 end interface
 
 
+interface MPI_File_write
+module procedure MPI_File_write_f08
+end interface
+
+
+interface MPI_File_read_at_all_end
+module procedure MPI_File_read_at_all_end_f08
+end interface
+
+
 interface MPI_Probe
 module procedure MPI_Probe_f08
 end interface
@@ -771,6 +951,11 @@ module procedure MPI_Type_hindexed_f08
 end interface
 
 
+interface MPI_File_set_atomicity
+module procedure MPI_File_set_atomicity_f08
+end interface
+
+
 interface MPI_Group_range_incl
 module procedure MPI_Group_range_incl_f08
 end interface
@@ -783,6 +968,11 @@ end interface
 
 interface MPI_Iprobe
 module procedure MPI_Iprobe_f08
+end interface
+
+
+interface MPI_File_write_at_all_end
+module procedure MPI_File_write_at_all_end_f08
 end interface
 
 
@@ -816,6 +1006,11 @@ module procedure MPI_Comm_join_f08
 end interface
 
 
+interface MPI_File_read_at
+module procedure MPI_File_read_at_f08
+end interface
+
+
 interface MPI_Keyval_free
 module procedure MPI_Keyval_free_f08
 end interface
@@ -841,6 +1036,16 @@ module procedure MPI_Type_size_f08
 end interface
 
 
+interface MPI_File_get_atomicity
+module procedure MPI_File_get_atomicity_f08
+end interface
+
+
+interface MPI_File_read_shared
+module procedure MPI_File_read_shared_f08
+end interface
+
+
 interface MPI_Type_create_darray
 module procedure MPI_Type_create_darray_f08
 end interface
@@ -856,6 +1061,16 @@ module procedure MPI_Cart_map_f08
 end interface
 
 
+interface MPI_File_write_at
+module procedure MPI_File_write_at_f08
+end interface
+
+
+interface MPI_File_close
+module procedure MPI_File_close_f08
+end interface
+
+
 interface MPI_Type_create_subarray
 module procedure MPI_Type_create_subarray_f08
 end interface
@@ -863,6 +1078,11 @@ end interface
 
 interface MPI_Comm_set_attr
 module procedure MPI_Comm_set_attr_f08
+end interface
+
+
+interface MPI_File_read_all
+module procedure MPI_File_read_all_f08
 end interface
 
 
@@ -941,6 +1161,11 @@ module procedure MPI_Accumulate_f08
 end interface
 
 
+interface MPI_File_write_ordered
+module procedure MPI_File_write_ordered_f08
+end interface
+
+
 interface MPI_Group_range_excl
 module procedure MPI_Group_range_excl_f08
 end interface
@@ -968,6 +1193,16 @@ end interface
 
 interface MPI_Type_create_keyval
 module procedure MPI_Type_create_keyval_f08
+end interface
+
+
+interface MPI_File_write_ordered_begin
+module procedure MPI_File_write_ordered_begin_f08
+end interface
+
+
+interface MPI_File_read_ordered_begin
+module procedure MPI_File_read_ordered_begin_f08
 end interface
 
 
@@ -1017,13 +1252,17 @@ end interface
 
 
 private :: MPI_Start_f08
+private :: MPI_File_write_all_begin_f08
 private :: MPI_Win_post_f08
 private :: MPI_Win_get_errhandler_f08
+private :: MPI_File_get_group_f08
 private :: MPI_Sendrecv_f08
 private :: MPI_Scan_f08
 private :: MPI_Startall_f08
 private :: MPI_Attr_delete_f08
+private :: MPI_File_iwrite_shared_f08
 private :: MPI_Comm_get_attr_f08
+private :: MPI_File_get_info_f08
 private :: MPI_Type_delete_attr_f08
 private :: MPI_Error_class_f08
 private :: MPI_Free_mem_f08
@@ -1031,11 +1270,15 @@ private :: MPI_Info_dup_f08
 private :: MPI_Type_lb_f08
 private :: MPI_Cart_get_f08
 private :: MPI_Add_error_class_f08
+private :: MPI_File_write_shared_f08
 private :: MPI_Buffer_detach_f08
+private :: MPI_File_set_size_f08
 private :: MPI_Intercomm_create_f08
+private :: MPI_File_iread_at_f08
 private :: MPI_Allreduce_f08
 private :: MPI_Comm_create_keyval_f08
 private :: MPI_Ibsend_f08
+private :: MPI_File_read_all_end_f08
 private :: MPI_Comm_remote_size_f08
 private :: MPI_Type_contiguous_f08
 private :: MPI_Send_init_f08
@@ -1045,6 +1288,8 @@ private :: MPI_Comm_get_parent_f08
 private :: MPI_Type_create_f90_integer_f08
 private :: MPI_Testany_f08
 private :: MPI_Type_extent_f08
+private :: MPI_File_preallocate_f08
+private :: MPI_File_get_position_f08
 private :: MPI_Sendrecv_replace_f08
 private :: MPI_Type_get_extent_f08
 private :: MPI_Keyval_create_f08
@@ -1057,11 +1302,13 @@ private :: MPI_Query_thread_f08
 private :: MPI_Comm_group_f08
 private :: MPI_Add_error_code_f08
 private :: MPI_Type_create_resized_f08
+private :: MPI_File_seek_shared_f08
 private :: MPI_Get_address_f08
 private :: MPI_Is_thread_main_f08
 private :: MPI_Irecv_f08
 private :: MPI_Type_create_indexed_block_f08
 private :: MPI_Initialized_f08
+private :: MPI_File_iwrite_f08
 private :: MPI_Bsend_f08
 private :: MPI_Group_excl_f08
 private :: MPI_Get_count_f08
@@ -1070,7 +1317,9 @@ private :: MPI_Cartdim_get_f08
 private :: MPI_Allgather_f08
 private :: MPI_Cart_coords_f08
 private :: MPI_Issend_f08
+private :: MPI_File_sync_f08
 private :: MPI_Rsend_f08
+private :: MPI_File_get_amode_f08
 private :: MPI_Abort_f08
 private :: MPI_Grequest_complete_f08
 private :: MPI_Pack_f08
@@ -1084,23 +1333,28 @@ private :: MPI_Cart_shift_f08
 private :: MPI_Group_incl_f08
 private :: MPI_Comm_size_f08
 private :: MPI_Type_create_hindexed_f08
+private :: MPI_File_iread_shared_f08
 private :: MPI_File_set_errhandler_f08
+private :: MPI_File_read_ordered_f08
 private :: MPI_Group_difference_f08
 private :: MPI_Attr_get_f08
 private :: MPI_Type_create_f90_real_f08
 private :: MPI_Imrecv_f08
 private :: MPI_Wait_f08
 private :: MPI_Testall_f08
+private :: MPI_File_set_info_f08
 private :: MPI_Irsend_f08
 private :: MPI_Get_version_f08
 private :: MPI_File_call_errhandler_f08
 private :: MPI_Comm_create_errhandler_f08
+private :: MPI_File_write_all_f08
 private :: MPI_Group_compare_f08
 private :: MPI_Address_f08
 private :: MPI_Comm_compare_f08
 private :: MPI_Win_unlock_f08
 private :: MPI_Request_free_f08
 private :: MPI_Topo_test_f08
+private :: MPI_File_read_f08
 private :: MPI_Buffer_attach_f08
 private :: MPI_Win_call_errhandler_f08
 private :: MPI_Win_get_group_f08
@@ -1109,30 +1363,41 @@ private :: MPI_Cart_create_f08
 private :: MPI_Status_set_cancelled_f08
 private :: MPI_Type_struct_f08
 private :: MPI_Graph_neighbors_count_f08
+private :: MPI_File_get_position_shared_f08
 private :: MPI_Graph_neighbors_f08
 private :: MPI_Dims_create_f08
+private :: MPI_File_iread_f08
 private :: MPI_Scatter_f08
+private :: MPI_File_get_byte_offset_f08
 private :: MPI_Comm_free_keyval_f08
 private :: MPI_Op_create_f08
+private :: MPI_File_seek_f08
 private :: MPI_Mprobe_f08
 private :: MPI_Ssend_init_f08
 private :: MPI_Rsend_init_f08
 private :: MPI_Info_free_f08
 private :: MPI_Bcast_f08
+private :: MPI_File_write_ordered_end_f08
 private :: MPI_Comm_free_f08
+private :: MPI_File_write_at_all_f08
 private :: MPI_Errhandler_get_f08
 private :: MPI_Pack_size_f08
 private :: MPI_Comm_call_errhandler_f08
 private :: MPI_Comm_test_inter_f08
 private :: MPI_Intercomm_merge_f08
 private :: MPI_Win_complete_f08
+private :: MPI_File_get_type_extent_f08
+private :: MPI_File_read_all_begin_f08
 private :: MPI_Type_set_attr_f08
 private :: MPI_Put_f08
+private :: MPI_File_read_at_all_f08
+private :: MPI_File_read_ordered_end_f08
 private :: MPI_Isend_f08
 private :: MPI_Type_get_envelope_f08
 private :: MPI_Group_rank_f08
 private :: MPI_Alltoall_f08
 private :: MPI_File_create_errhandler_f08
+private :: MPI_File_iwrite_at_f08
 private :: MPI_Group_intersection_f08
 private :: MPI_Type_free_keyval_f08
 private :: MPI_Type_create_struct_f08
@@ -1140,15 +1405,19 @@ private :: MPI_Type_get_contents_f08
 private :: MPI_Reduce_local_f08
 private :: MPI_Group_union_f08
 private :: MPI_Type_free_f08
+private :: MPI_File_write_at_all_begin_f08
 private :: MPI_Errhandler_set_f08
+private :: MPI_File_read_at_all_begin_f08
 private :: MPI_Comm_get_errhandler_f08
 private :: MPI_Test_cancelled_f08
 private :: MPI_Win_lock_f08
 private :: MPI_Win_create_f08
 private :: MPI_Test_f08
 private :: MPI_Type_create_hvector_f08
+private :: MPI_File_write_all_end_f08
 private :: MPI_Info_get_nkeys_f08
 private :: MPI_Win_start_f08
+private :: MPI_File_get_size_f08
 private :: MPI_Finalized_f08
 private :: MPI_Win_free_keyval_f08
 private :: MPI_Waitany_f08
@@ -1157,31 +1426,41 @@ private :: MPI_Op_commutative_f08
 private :: MPI_Gather_f08
 private :: MPI_Type_vector_f08
 private :: MPI_Get_elements_f08
+private :: MPI_File_write_f08
+private :: MPI_File_read_at_all_end_f08
 private :: MPI_Probe_f08
 private :: MPI_Unpack_f08
 private :: MPI_Type_ub_f08
 private :: MPI_Status_set_elements_f08
 private :: MPI_Win_delete_attr_f08
 private :: MPI_Type_hindexed_f08
+private :: MPI_File_set_atomicity_f08
 private :: MPI_Group_range_incl_f08
 private :: MPI_Get_f08
 private :: MPI_Iprobe_f08
+private :: MPI_File_write_at_all_end_f08
 private :: MPI_Type_get_true_extent_f08
 private :: MPI_Graph_get_f08
 private :: MPI_Win_get_attr_f08
 private :: MPI_Finalize_f08
 private :: MPI_Comm_create_f08
 private :: MPI_Comm_join_f08
+private :: MPI_File_read_at_f08
 private :: MPI_Keyval_free_f08
 private :: MPI_Win_wait_f08
 private :: MPI_Alloc_mem_f08
 private :: MPI_Improbe_f08
 private :: MPI_Type_size_f08
+private :: MPI_File_get_atomicity_f08
+private :: MPI_File_read_shared_f08
 private :: MPI_Type_create_darray_f08
 private :: MPI_Win_create_errhandler_f08
 private :: MPI_Cart_map_f08
+private :: MPI_File_write_at_f08
+private :: MPI_File_close_f08
 private :: MPI_Type_create_subarray_f08
 private :: MPI_Comm_set_attr_f08
+private :: MPI_File_read_all_f08
 private :: MPI_Recv_f08
 private :: MPI_Comm_dup_f08
 private :: MPI_Waitall_f08
@@ -1197,12 +1476,15 @@ private :: MPI_Exscan_f08
 private :: MPI_Op_free_f08
 private :: MPI_Win_set_errhandler_f08
 private :: MPI_Accumulate_f08
+private :: MPI_File_write_ordered_f08
 private :: MPI_Group_range_excl_f08
 private :: MPI_Comm_split_f08
 private :: MPI_Comm_set_errhandler_f08
 private :: MPI_Request_get_status_f08
 private :: MPI_Group_free_f08
 private :: MPI_Type_create_keyval_f08
+private :: MPI_File_write_ordered_begin_f08
+private :: MPI_File_read_ordered_begin_f08
 private :: MPI_Graphdims_get_f08
 private :: MPI_Comm_rank_f08
 private :: MPI_Cancel_f08
@@ -1244,8 +1526,48 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Start_f08
 
-! MPI_File_write_all_begin NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_write_all_begin_f08( fh,&
+buf,&
+count,&
+datatype,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+count_c = count
+datatype_c = datatype%val
+
+ret = MPI_File_write_all_begin_c(fh_c,&
+buf,&
+count_c,&
+datatype_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_write_all_begin_f08
 
 
 subroutine MPI_Win_post_f08( group,&
@@ -1322,8 +1644,40 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Win_get_errhandler_f08
 
-! MPI_File_get_group NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_get_group_f08( fh,&
+group,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(MPI_Group), intent(out) :: group
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: group_c     !MPI_Group* group
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+
+ret = MPI_File_get_group_c(fh_c,&
+group_c,&
+ierror_c)
+
+group%val = group_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_get_group_f08
 
 
 subroutine MPI_Sendrecv_f08( sendbuf,&
@@ -1533,8 +1887,54 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Attr_delete_f08
 
-! MPI_File_iwrite_shared NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_iwrite_shared_f08( fh,&
+buf,&
+count,&
+datatype,&
+request,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Request), intent(inout) :: request
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+integer(c_int) :: request_c     !MPI_Request* request
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+count_c = count
+datatype_c = datatype%val
+request_c = request%val
+
+ret = MPI_File_iwrite_shared_c(fh_c,&
+buf,&
+count_c,&
+datatype_c,&
+request_c,&
+ierror_c)
+
+request%val = request_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_iwrite_shared_f08
 
 
 subroutine MPI_Comm_get_attr_f08( comm,&
@@ -1579,8 +1979,40 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Comm_get_attr_f08
 
-! MPI_File_get_info NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_get_info_f08( fh,&
+info_used,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(MPI_Info), intent(out) :: info_used
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: info_used_c     !MPI_Info* info_used
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+
+ret = MPI_File_get_info_c(fh_c,&
+info_used_c,&
+ierror_c)
+
+info_used%val = info_used_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_get_info_f08
 
 
 subroutine MPI_Type_delete_attr_f08( type,&
@@ -1836,8 +2268,54 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Add_error_class_f08
 
-! MPI_File_write_shared NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_write_shared_f08( fh,&
+buf,&
+count,&
+datatype,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+count_c = count
+datatype_c = datatype%val
+status_c = status
+
+ret = MPI_File_write_shared_c(fh_c,&
+buf,&
+count_c,&
+datatype_c,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_write_shared_f08
 
 
 subroutine MPI_Buffer_detach_f08( buffer,&
@@ -1873,8 +2351,40 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Buffer_detach_f08
 
-! MPI_File_set_size NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_set_size_f08( fh,&
+size,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer*8, intent(in) :: size
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_intptr_t) :: size_c     !MPI_Offset size
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+size_c = size
+
+ret = MPI_File_set_size_c(fh_c,&
+size_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_set_size_f08
 
 
 subroutine MPI_Intercomm_create_f08( local_comm,&
@@ -1931,8 +2441,59 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Intercomm_create_f08
 
-! MPI_File_iread_at NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_iread_at_f08( fh,&
+offset,&
+buf,&
+count,&
+datatype,&
+request,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer*8, intent(in) :: offset
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Request), intent(inout) :: request
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_intptr_t) :: offset_c     !MPI_Offset offset
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+integer(c_int) :: request_c     !MPI_Request* request
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+offset_c = offset
+count_c = count
+datatype_c = datatype%val
+request_c = request%val
+
+ret = MPI_File_iread_at_c(fh_c,&
+offset_c,&
+buf,&
+count_c,&
+datatype_c,&
+request_c,&
+ierror_c)
+
+request%val = request_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_iread_at_f08
 
 
 subroutine MPI_Allreduce_f08( sendbuf,&
@@ -2087,8 +2648,44 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Ibsend_f08
 
-! MPI_File_read_all_end NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_read_all_end_f08( fh,&
+buf,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+status_c = status
+
+ret = MPI_File_read_all_end_c(fh_c,&
+buf,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_read_all_end_f08
 
 
 subroutine MPI_Comm_remote_size_f08( comm,&
@@ -2466,11 +3063,75 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Type_extent_f08
 
-! MPI_File_preallocate NOT IMPLEMENTED in MPC
+
+subroutine MPI_File_preallocate_f08( fh,&
+size,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer*8, intent(in) :: size
+integer, optional, intent(out) :: ierror
 
 
-! MPI_File_get_position NOT IMPLEMENTED in MPC
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_intptr_t) :: size_c     !MPI_Offset size
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
 
+fh_c = fh%val
+size_c = size
+
+ret = MPI_File_preallocate_c(fh_c,&
+size_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_preallocate_f08
+
+
+subroutine MPI_File_get_position_f08( fh,&
+offset,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer*8, intent(out) :: offset
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_intptr_t) :: offset_c     !MPI_Offset* offset
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+
+ret = MPI_File_get_position_c(fh_c,&
+offset_c,&
+ierror_c)
+
+offset = offset_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_get_position_f08
 
 
 subroutine MPI_Sendrecv_replace_f08( buf,&
@@ -3020,8 +3681,45 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Type_create_resized_f08
 
-! MPI_File_seek_shared NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_seek_shared_f08( fh,&
+offset,&
+whence,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer*8, intent(in) :: offset
+integer, intent(in) :: whence
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_intptr_t) :: offset_c     !MPI_Offset offset
+integer(c_int) :: whence_c     !int whence
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+offset_c = offset
+whence_c = whence
+
+ret = MPI_File_seek_shared_c(fh_c,&
+offset_c,&
+whence_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_seek_shared_f08
 
 !Skipped convert function in MPI_Unpublish_name
 
@@ -3230,8 +3928,54 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Initialized_f08
 
-! MPI_File_iwrite NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_iwrite_f08( fh,&
+buf,&
+count,&
+datatype,&
+request,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Request), intent(inout) :: request
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+integer(c_int) :: request_c     !MPI_Request* request
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+count_c = count
+datatype_c = datatype%val
+request_c = request%val
+
+ret = MPI_File_iwrite_c(fh_c,&
+buf,&
+count_c,&
+datatype_c,&
+request_c,&
+ierror_c)
+
+request%val = request_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_iwrite_f08
 
 
 subroutine MPI_Bsend_f08( buf,&
@@ -3628,8 +4372,35 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Issend_f08
 
-! MPI_File_sync NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_sync_f08( fh,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+
+ret = MPI_File_sync_c(fh_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_sync_f08
 
 
 subroutine MPI_Rsend_f08( ibuf,&
@@ -3684,8 +4455,40 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Rsend_f08
 
-! MPI_File_get_amode NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_get_amode_f08( fh,&
+amode,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer, intent(out) :: amode
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: amode_c     !int* amode
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+
+ret = MPI_File_get_amode_c(fh_c,&
+amode_c,&
+ierror_c)
+
+amode = amode_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_get_amode_f08
 
 
 subroutine MPI_Abort_f08( comm,&
@@ -3877,8 +4680,7 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Info_create_f08
 
-! MPI_File_open NOT IMPLEMENTED in MPC
-
+!Skipped convert function in MPI_File_open
 
 
 subroutine MPI_Type_create_f90_complex_f08( p,&
@@ -4218,8 +5020,54 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Type_create_hindexed_f08
 
-! MPI_File_iread_shared NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_iread_shared_f08( fh,&
+buf,&
+count,&
+datatype,&
+request,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Request), intent(inout) :: request
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+integer(c_int) :: request_c     !MPI_Request* request
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+count_c = count
+datatype_c = datatype%val
+request_c = request%val
+
+ret = MPI_File_iread_shared_c(fh_c,&
+buf,&
+count_c,&
+datatype_c,&
+request_c,&
+ierror_c)
+
+request%val = request_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_iread_shared_f08
 
 
 subroutine MPI_File_set_errhandler_f08( file,&
@@ -4256,11 +5104,56 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_File_set_errhandler_f08
 
-! MPI_Register_datarep NOT IMPLEMENTED in MPC
+!Skipped convert function in MPI_Register_datarep
 
 
-! MPI_File_read_ordered NOT IMPLEMENTED in MPC
+subroutine MPI_File_read_ordered_f08( fh,&
+buf,&
+count,&
+datatype,&
+status,&
+ierror)
 
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+count_c = count
+datatype_c = datatype%val
+status_c = status
+
+ret = MPI_File_read_ordered_c(fh_c,&
+buf,&
+count_c,&
+datatype_c,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_read_ordered_f08
 
 !Skipped convert function in MPI_Waitsome
 
@@ -4531,8 +5424,40 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Testall_f08
 
-! MPI_File_set_info NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_set_info_f08( fh,&
+info,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(MPI_Info), intent(in) :: info
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: info_c     !MPI_Info info
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+info_c = info%val
+
+ret = MPI_File_set_info_c(fh_c,&
+info_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_set_info_f08
 
 
 subroutine MPI_Irsend_f08( buf,&
@@ -4700,8 +5625,54 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Comm_create_errhandler_f08
 
-! MPI_File_write_all NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_write_all_f08( fh,&
+buf,&
+count,&
+datatype,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+count_c = count
+datatype_c = datatype%val
+status_c = status
+
+ret = MPI_File_write_all_c(fh_c,&
+buf,&
+count_c,&
+datatype_c,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_write_all_f08
 
 !Skipped convert function in MPI_Comm_connect
 
@@ -4921,8 +5892,53 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Topo_test_f08
 
-! MPI_File_read NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_read_f08( fh,&
+buf,&
+count,&
+datatype,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+count_c = count
+datatype_c = datatype%val
+status_c = status
+
+ret = MPI_File_read_c(fh_c,&
+buf,&
+count_c,&
+datatype_c,&
+status_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_read_f08
 
 
 subroutine MPI_Buffer_attach_f08( buffer,&
@@ -5257,13 +6273,44 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Graph_neighbors_count_f08
 
-! MPI_File_get_view NOT IMPLEMENTED in MPC
-
+!Skipped convert function in MPI_File_get_view
 
 !Skipped convert function in MPI_Allgatherv
 
-! MPI_File_get_position_shared NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_get_position_shared_f08( fh,&
+offset,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer*8, intent(out) :: offset
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_intptr_t) :: offset_c     !MPI_Offset* offset
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+
+ret = MPI_File_get_position_shared_c(fh_c,&
+offset_c,&
+ierror_c)
+
+offset = offset_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_get_position_shared_f08
 
 
 subroutine MPI_Graph_neighbors_f08( comm,&
@@ -5357,8 +6404,54 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Dims_create_f08
 
-! MPI_File_iread NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_iread_f08( fh,&
+buf,&
+count,&
+datatype,&
+request,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Request), intent(inout) :: request
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+integer(c_int) :: request_c     !MPI_Request* request
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+count_c = count
+datatype_c = datatype%val
+request_c = request%val
+
+ret = MPI_File_iread_c(fh_c,&
+buf,&
+count_c,&
+datatype_c,&
+request_c,&
+ierror_c)
+
+request%val = request_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_iread_f08
 
 
 subroutine MPI_Scatter_f08( sendbuf,&
@@ -5421,8 +6514,45 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Scatter_f08
 
-! MPI_File_get_byte_offset NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_get_byte_offset_f08( fh,&
+offset,&
+disp,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer*8, intent(in) :: offset
+integer*8, intent(out) :: disp
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_intptr_t) :: offset_c     !MPI_Offset offset
+integer(c_intptr_t) :: disp_c     !MPI_Offset* disp
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+offset_c = offset
+
+ret = MPI_File_get_byte_offset_c(fh_c,&
+offset_c,&
+disp_c,&
+ierror_c)
+
+disp = disp_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_get_byte_offset_f08
 
 
 subroutine MPI_Comm_free_keyval_f08( comm_keyval,&
@@ -5495,8 +6625,45 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Op_create_f08
 
-! MPI_File_seek NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_seek_f08( fh,&
+offset,&
+whence,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer*8, intent(in) :: offset
+integer, intent(in) :: whence
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_intptr_t) :: offset_c     !MPI_Offset offset
+integer(c_int) :: whence_c     !int whence
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+offset_c = offset
+whence_c = whence
+
+ret = MPI_File_seek_c(fh_c,&
+offset_c,&
+whence_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_seek_f08
 
 !Skipped convert function in MPI_Add_error_string
 
@@ -5754,8 +6921,44 @@ end subroutine MPI_Bcast_f08
 
 !Skipped convert function in MPI_Info_set
 
-! MPI_File_write_ordered_end NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_write_ordered_end_f08( fh,&
+buf,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+status_c = status
+
+ret = MPI_File_write_ordered_end_c(fh_c,&
+buf,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_write_ordered_end_f08
 
 !Skipped convert function in MPI_Graph_create
 
@@ -5790,8 +6993,59 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Comm_free_f08
 
-! MPI_File_write_at_all NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_write_at_all_f08( fh,&
+offset,&
+buf,&
+count,&
+datatype,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer*8, intent(in) :: offset
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_intptr_t) :: offset_c     !MPI_Offset offset
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+offset_c = offset
+count_c = count
+datatype_c = datatype%val
+status_c = status
+
+ret = MPI_File_write_at_all_c(fh_c,&
+offset_c,&
+buf,&
+count_c,&
+datatype_c,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_write_at_all_f08
 
 
 subroutine MPI_Errhandler_get_f08( comm,&
@@ -6015,11 +7269,88 @@ end subroutine MPI_Win_complete_f08
 
 !Skipped convert function in MPI_Pack_external
 
-! MPI_File_get_type_extent NOT IMPLEMENTED in MPC
+
+subroutine MPI_File_get_type_extent_f08( fh,&
+datatype,&
+extent,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(MPI_Datatype), intent(in) :: datatype
+integer*8, intent(out) :: extent
+integer, optional, intent(out) :: ierror
 
 
-! MPI_File_read_all_begin NOT IMPLEMENTED in MPC
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+integer(c_intptr_t) :: extent_c     !MPI_Aint* extent
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
 
+fh_c = fh%val
+datatype_c = datatype%val
+
+ret = MPI_File_get_type_extent_c(fh_c,&
+datatype_c,&
+extent_c,&
+ierror_c)
+
+extent = extent_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_get_type_extent_f08
+
+
+subroutine MPI_File_read_all_begin_f08( fh,&
+buf,&
+count,&
+datatype,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+count_c = count
+datatype_c = datatype%val
+
+ret = MPI_File_read_all_begin_c(fh_c,&
+buf,&
+count_c,&
+datatype_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_read_all_begin_f08
 
 
 subroutine MPI_Type_set_attr_f08( type,&
@@ -6124,11 +7455,98 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Put_f08
 
-! MPI_File_read_at_all NOT IMPLEMENTED in MPC
+
+subroutine MPI_File_read_at_all_f08( fh,&
+offset,&
+buf,&
+count,&
+datatype,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer*8, intent(in) :: offset
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
 
 
-! MPI_File_read_ordered_end NOT IMPLEMENTED in MPC
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_intptr_t) :: offset_c     !MPI_Offset offset
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
 
+fh_c = fh%val
+offset_c = offset
+count_c = count
+datatype_c = datatype%val
+status_c = status
+
+ret = MPI_File_read_at_all_c(fh_c,&
+offset_c,&
+buf,&
+count_c,&
+datatype_c,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_read_at_all_f08
+
+
+subroutine MPI_File_read_ordered_end_f08( fh,&
+buf,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+status_c = status
+
+ret = MPI_File_read_ordered_end_c(fh_c,&
+buf,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_read_ordered_end_f08
 
 
 subroutine MPI_Isend_f08( buf,&
@@ -6367,8 +7785,59 @@ end subroutine MPI_File_create_errhandler_f08
 
 !Skipped convert function in MPI_Info_get
 
-! MPI_File_iwrite_at NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_iwrite_at_f08( fh,&
+offset,&
+buf,&
+count,&
+datatype,&
+request,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer*8, intent(in) :: offset
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Request), intent(inout) :: request
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_intptr_t) :: offset_c     !MPI_Offset offset
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+integer(c_int) :: request_c     !MPI_Request* request
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+offset_c = offset
+count_c = count
+datatype_c = datatype%val
+request_c = request%val
+
+ret = MPI_File_iwrite_at_c(fh_c,&
+offset_c,&
+buf,&
+count_c,&
+datatype_c,&
+request_c,&
+ierror_c)
+
+request%val = request_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_iwrite_at_f08
 
 
 subroutine MPI_Group_intersection_f08( group1,&
@@ -6682,8 +8151,53 @@ end subroutine MPI_Type_free_f08
 
 !Skipped convert function in MPI_Info_get_nthkey
 
-! MPI_File_write_at_all_begin NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_write_at_all_begin_f08( fh,&
+offset,&
+buf,&
+count,&
+datatype,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer*8, intent(in) :: offset
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_intptr_t) :: offset_c     !MPI_Offset offset
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+offset_c = offset
+count_c = count
+datatype_c = datatype%val
+
+ret = MPI_File_write_at_all_begin_c(fh_c,&
+offset_c,&
+buf,&
+count_c,&
+datatype_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_write_at_all_begin_f08
 
 !Skipped convert function in MPI_Unpack_external
 
@@ -6722,8 +8236,53 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Errhandler_set_f08
 
-! MPI_File_read_at_all_begin NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_read_at_all_begin_f08( fh,&
+offset,&
+buf,&
+count,&
+datatype,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer*8, intent(in) :: offset
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_intptr_t) :: offset_c     !MPI_Offset offset
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+offset_c = offset
+count_c = count
+datatype_c = datatype%val
+
+ret = MPI_File_read_at_all_begin_c(fh_c,&
+offset_c,&
+buf,&
+count_c,&
+datatype_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_read_at_all_begin_f08
 
 
 subroutine MPI_Comm_get_errhandler_f08( comm,&
@@ -6984,8 +8543,44 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Type_create_hvector_f08
 
-! MPI_File_write_all_end NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_write_all_end_f08( fh,&
+buf,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+status_c = status
+
+ret = MPI_File_write_all_end_c(fh_c,&
+buf,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_write_all_end_f08
 
 
 subroutine MPI_Info_get_nkeys_f08( info,&
@@ -7063,8 +8658,40 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Win_start_f08
 
-! MPI_File_get_size NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_get_size_f08( fh,&
+size,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer*8, intent(out) :: size
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_intptr_t) :: size_c     !MPI_Offset* size
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+
+ret = MPI_File_get_size_c(fh_c,&
+size_c,&
+ierror_c)
+
+size = size_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_get_size_f08
 
 
 subroutine MPI_Finalized_f08( flag,&
@@ -7421,11 +9048,93 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Get_elements_f08
 
-! MPI_File_write NOT IMPLEMENTED in MPC
+
+subroutine MPI_File_write_f08( fh,&
+buf,&
+count,&
+datatype,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
 
 
-! MPI_File_read_at_all_end NOT IMPLEMENTED in MPC
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
 
+fh_c = fh%val
+count_c = count
+datatype_c = datatype%val
+status_c = status
+
+ret = MPI_File_write_c(fh_c,&
+buf,&
+count_c,&
+datatype_c,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_write_f08
+
+
+subroutine MPI_File_read_at_all_end_f08( fh,&
+buf,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+status_c = status
+
+ret = MPI_File_read_at_all_end_c(fh_c,&
+buf,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_read_at_all_end_f08
 
 
 subroutine MPI_Probe_f08( source,&
@@ -7473,8 +9182,7 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Probe_f08
 
-! MPI_File_set_view NOT IMPLEMENTED in MPC
-
+!Skipped convert function in MPI_File_set_view
 
 
 subroutine MPI_Unpack_f08( inbuf,&
@@ -7698,8 +9406,40 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Type_hindexed_f08
 
-! MPI_File_set_atomicity NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_set_atomicity_f08( fh,&
+flag,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+logical, intent(in) :: flag
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: flag_c     !bool flag
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+flag_c = flag
+
+ret = MPI_File_set_atomicity_c(fh_c,&
+flag_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_set_atomicity_f08
 
 
 subroutine MPI_Group_range_incl_f08( group,&
@@ -7862,8 +9602,44 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Iprobe_f08
 
-! MPI_File_write_at_all_end NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_write_at_all_end_f08( fh,&
+buf,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+status_c = status
+
+ret = MPI_File_write_at_all_end_c(fh_c,&
+buf,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_write_at_all_end_f08
 
 
 subroutine MPI_Type_get_true_extent_f08( datatype,&
@@ -8108,8 +9884,59 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Comm_join_f08
 
-! MPI_File_read_at NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_read_at_f08( fh,&
+offset,&
+buf,&
+count,&
+datatype,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer*8, intent(in) :: offset
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_intptr_t) :: offset_c     !MPI_Offset offset
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+offset_c = offset
+count_c = count
+datatype_c = datatype%val
+status_c = status
+
+ret = MPI_File_read_at_c(fh_c,&
+offset_c,&
+buf,&
+count_c,&
+datatype_c,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_read_at_f08
 
 
 subroutine MPI_Keyval_free_f08( keyval,&
@@ -8303,11 +10130,89 @@ end subroutine MPI_Type_size_f08
 
 !Skipped convert function in MPI_Lookup_name
 
-! MPI_File_get_atomicity NOT IMPLEMENTED in MPC
+
+subroutine MPI_File_get_atomicity_f08( fh,&
+flag,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+logical, intent(out) :: flag
+integer, optional, intent(out) :: ierror
 
 
-! MPI_File_read_shared NOT IMPLEMENTED in MPC
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: flag_c     !bool flag
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
 
+fh_c = fh%val
+
+ret = MPI_File_get_atomicity_c(fh_c,&
+flag_c,&
+ierror_c)
+
+flag = flag_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_get_atomicity_f08
+
+
+subroutine MPI_File_read_shared_f08( fh,&
+buf,&
+count,&
+datatype,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+count_c = count
+datatype_c = datatype%val
+status_c = status
+
+ret = MPI_File_read_shared_c(fh_c,&
+buf,&
+count_c,&
+datatype_c,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_read_shared_f08
 
 
 subroutine MPI_Type_create_darray_f08( size,&
@@ -8481,8 +10386,59 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Cart_map_f08
 
-! MPI_File_write_at NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_write_at_f08( fh,&
+offset,&
+buf,&
+count,&
+datatype,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer*8, intent(in) :: offset
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_intptr_t) :: offset_c     !MPI_Offset offset
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+offset_c = offset
+count_c = count
+datatype_c = datatype%val
+status_c = status
+
+ret = MPI_File_write_at_c(fh_c,&
+offset_c,&
+buf,&
+count_c,&
+datatype_c,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_write_at_f08
 
 !Skipped convert function in MPI_Comm_accept
 
@@ -8490,8 +10446,35 @@ end subroutine MPI_Cart_map_f08
 
 !Skipped convert function in MPI_Close_port
 
-! MPI_File_close NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_close_f08( fh,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File* fh
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+
+ret = MPI_File_close_c(fh_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_close_f08
 
 
 subroutine MPI_Type_create_subarray_f08( ndims,&
@@ -8559,8 +10542,7 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Type_create_subarray_f08
 
-! MPI_File_delete NOT IMPLEMENTED in MPC
-
+!Skipped convert function in MPI_File_delete
 
 
 subroutine MPI_Comm_set_attr_f08( comm,&
@@ -8600,8 +10582,54 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Comm_set_attr_f08
 
-! MPI_File_read_all NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_read_all_f08( fh,&
+buf,&
+count,&
+datatype,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+count_c = count
+datatype_c = datatype%val
+status_c = status
+
+ret = MPI_File_read_all_c(fh_c,&
+buf,&
+count_c,&
+datatype_c,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_read_all_f08
 
 
 subroutine MPI_Recv_f08( buf,&
@@ -9266,8 +11294,54 @@ end subroutine MPI_Accumulate_f08
 
 !Skipped convert function in MPI_Cart_sub
 
-! MPI_File_write_ordered NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_write_ordered_f08( fh,&
+buf,&
+count,&
+datatype,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+count_c = count
+datatype_c = datatype%val
+status_c = status
+
+ret = MPI_File_write_ordered_c(fh_c,&
+buf,&
+count_c,&
+datatype_c,&
+status_c,&
+ierror_c)
+
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_write_ordered_f08
 
 
 subroutine MPI_Group_range_excl_f08( group,&
@@ -9511,11 +11585,91 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Type_create_keyval_f08
 
-! MPI_File_write_ordered_begin NOT IMPLEMENTED in MPC
+
+subroutine MPI_File_write_ordered_begin_f08( fh,&
+buf,&
+count,&
+datatype,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+integer, optional, intent(out) :: ierror
 
 
-! MPI_File_read_ordered_begin NOT IMPLEMENTED in MPC
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
 
+fh_c = fh%val
+count_c = count
+datatype_c = datatype%val
+
+ret = MPI_File_write_ordered_begin_c(fh_c,&
+buf,&
+count_c,&
+datatype_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_write_ordered_begin_f08
+
+
+subroutine MPI_File_read_ordered_begin_f08( fh,&
+buf,&
+count,&
+datatype,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: count_c     !int count
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+count_c = count
+datatype_c = datatype%val
+
+ret = MPI_File_read_ordered_begin_c(fh_c,&
+buf,&
+count_c,&
+datatype_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_read_ordered_begin_f08
 
 
 subroutine MPI_Graphdims_get_f08( comm,&

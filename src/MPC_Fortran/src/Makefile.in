@@ -138,10 +138,10 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libmpcfortran_la_DEPENDENCIES =  \
-	$(abs_top_builddir)/src/lib/libmpcframework.la
+	$(abs_top_builddir)/src/MPC_MPI/src/libmpcmpi.la
 am__objects_1 = mpi_constants.lo mpi_sizeofs.lo mpi_base.lo mpi.lo \
 	mpi_f08_ctypes.lo mpi_f08_types.lo mpi_f08_constants.lo \
-	mpi_f08_c.lo mpi_f08.lo mpi_f08_c_iface.lo
+	mpi_f08_c.lo mpi_f08.lo mpi_f08_c_iface.lo mpif_iface.lo
 am_libmpcfortran_la_OBJECTS = $(am__objects_1) predef_types.lo \
 	predef_types_08.lo omp.lo
 libmpcfortran_la_OBJECTS = $(am_libmpcfortran_la_OBJECTS)
@@ -351,6 +351,7 @@ MPC_IN_PROCESS_MODE = @MPC_IN_PROCESS_MODE@
 MPC_LANGUAGE_LIST = @MPC_LANGUAGE_LIST@
 MPC_LAUNCHER = @MPC_LAUNCHER@
 MPC_MESSAGE_PASSING_ENABLED = @MPC_MESSAGE_PASSING_ENABLED@
+MPC_MODULE_DEFINES = @MPC_MODULE_DEFINES@
 MPC_MODULE_LIST = @MPC_MODULE_LIST@
 MPC_MPIEXEC_HYDRA_PATH = @MPC_MPIEXEC_HYDRA_PATH@
 MPC_MPIIO_ENABLED = @MPC_MPIIO_ENABLED@
@@ -489,14 +490,17 @@ xsltproc = @xsltproc@
 AM_CPPFLAGS = -I$(abs_top_builddir)/ \
 	-I$(abs_top_srcdir)/src/MPC_Message_Passing/include/ \
 	-I$(abs_top_srcdir)/src/include/ \
+	-I$(abs_top_builddir)/src/MPC_IO/include/ \
 	-I$(abs_top_srcdir)/src/MPC_MPI/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Common/include/ \
-	-I$(abs_top_builddir)
-AM_FCFLAGS = -I$(abs_top_builddir)/src/MPC_Fortran/src/
-FORTRAN_MOD_FILES = mpi_constants.f90 mpi_sizeofs.f90 mpi_base.f90 mpi.f90 mpi_f08_ctypes.f90 mpi_f08_types.f90 mpi_f08_constants.f90 mpi_f08_c.f90 mpi_f08.f90 mpi_f08_c_iface.c
+	-I$(abs_top_builddir) @MPC_MODULE_DEFINES@ \
+	-I$(abs_top_builddir)/src/MPC_Arch/include/ \
+	-I$(abs_top_srcdir)/src/MPC_Arch/include/
+AM_FCFLAGS = -I$(abs_top_builddir)/src/MPC_Fortran/src/ @MPC_MODULE_DEFINES@
+FORTRAN_MOD_FILES = mpi_constants.f90 mpi_sizeofs.f90 mpi_base.f90 mpi.f90 mpi_f08_ctypes.f90 mpi_f08_types.f90 mpi_f08_constants.f90 mpi_f08_c.f90 mpi_f08.f90 mpi_f08_c_iface.c mpif_iface.c
 lib_LTLIBRARIES = libmpcfortran.la
 libmpcfortran_la_SOURCES = $(FORTRAN_MOD_FILES) predef_types.f90 predef_types_08.f90 omp.f90
-libmpcfortran_la_LIBADD = $(abs_top_builddir)/src/lib/libmpcframework.la
+libmpcfortran_la_LIBADD = $(abs_top_builddir)/src/MPC_MPI/src/libmpcmpi.la
 all: all-am
 
 .SUFFIXES:
@@ -576,6 +580,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpi_f08_c_iface.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpif_iface.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -860,6 +865,7 @@ mpi.lo:mpi_sizeofs.lo mpi_base.lo
 
 # We need to explicit this dependency as the C file is generated
 mpi_f08_c_iface.$(OBJEXT): gen_fortran_iface
+mpif_iface.$(OBJEXT): gen_fortran_iface
 # F08 module fortran deps
 mpi_f08_types.lo: mpi_f08_ctypes.lo
 mpi_f08_constants.lo: mpi_f08_types.lo

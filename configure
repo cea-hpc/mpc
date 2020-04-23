@@ -661,6 +661,7 @@ MPC_HAVE_AUTOPRIV_TRUE
 apfortran
 apcpp
 apcc
+MPC_MODULE_DEFINES
 MPC_MODULE_LIST
 ALL_MPC_LIBS
 BUILD_AD_UFS_FALSE
@@ -31903,6 +31904,14 @@ if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
 	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_IO/src/libmpcio.la"
 	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_MPIIO_ENABLED"
 fi
+
+MPC_MODULE_DEFINES=""
+
+for m in $MPC_MODULE_LIST
+do
+	MPC_MODULE_DEFINES=" -D${m}"
+done
+
 
 
 

@@ -2052,9 +2052,17 @@ if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
 	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_MPIIO_ENABLED"
 fi
 
+MPC_MODULE_DEFINES=""
+
+for m in $MPC_MODULE_LIST
+do
+	MPC_MODULE_DEFINES=" -D${m}"
+done
+
 
 AC_SUBST([ALL_MPC_LIBS])
 AC_SUBST([MPC_MODULE_LIST])
+AC_SUBST([MPC_MODULE_DEFINES])
 
 ################################
 ###### COMPILER DETECTION ###### {sec:compilers}

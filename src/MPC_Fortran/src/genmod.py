@@ -1416,11 +1416,11 @@ module_file_data += "\n"
 
 
 
-def containsConvert( args ):
+def containsConvert( args, char=1, array=1 ):
     for arg in args:
-        if arg[0] == "char*":
+        if char and arg[0] == "char*":
             return 1
-        if 3 < len(arg):
+        if array and (3 < len(arg)):
             if arg[3] == "*":
                 return 1
     
@@ -1742,13 +1742,15 @@ def containsVoid( args ):
     
     return 0
 
-def gencfunc( mpi_func, args , suffix = "", lower = 0, rewrite_void = 0):
+def gencfunc( mpi_func, args , prefix="", suffix = "", lower = 0, rewrite_void = 0, handle_char=0):
     rtype = "void"
     ret = ""
     if lower == 1:
         mpi_func = mpi_func.lower()
-    ret += rtype + " " + mpi_func + suffix + "(\n"
+    ret += rtype + " " + prefix + mpi_func + suffix + "(\n"
     
+    suffixed_char_size=""
+
     for i in range(len(args)):
         arg = args[i]
         atype = arg[0]
@@ -1765,13 +1767,21 @@ def gencfunc( mpi_func, args , suffix = "", lower = 0, rewrite_void = 0):
             atype = "int *"
             aname = "ierror"
         ret += atype + " " + aname
+        if handle_char == 1:
+                if atype == "char*":
+                        ret += " CHAR_MIXED(size_{0})".format(aname)
+                        suffixed_char_size += " CHAR_END(size_{0}),".format(aname)
         if i != (len(args) - 1):
             ret += ",\n"
-    ret += ")"
+
+    if suffixed_char_size:
+        ret += "," + suffixed_char_size[:-1] + ")"
+    else:
+        ret += ")"
     return ret
 
 
-def f08cwrapperGen( mpi_func, args ):
+def fortran_c_wrapper_gen( mpi_func, args, prefix="",suffix="", lower_names=1, rewrite_void=0, handle_char=0):
     ret = ""
     if MPIFunctionsisPresentinMPC( mpi_func ) == 0:
         ret += "\n"
@@ -1780,8 +1790,9 @@ def f08cwrapperGen( mpi_func, args ):
         return ret
     
     #We only want to convert cho
-    if (containsConvert( args ) == 1):
-        return ""
+    skip_if_char = (not handle_char)
+    if (containsConvert( args, char=skip_if_char) == 1):
+        return "/* Skipped function " + mpi_func + "with conversion */\n"
     
     ret += "\n"
     ret += "\n"
@@ -1791,7 +1802,7 @@ def f08cwrapperGen( mpi_func, args ):
     #ret += ";\n\n"
     
     #Gen Wrapper function
-    ret += gencfunc( mpi_func, args, "_f08", 1, 1) 
+    ret += gencfunc( mpi_func, args, prefix, suffix, lower_names, rewrite_void, handle_char) 
     ret += "\n{\n"
 
     #EMIT CONVERSIONS
@@ -1799,8 +1810,15 @@ def f08cwrapperGen( mpi_func, args ):
         arg = args[i]
         atype = arg[0]
         aname = arg[1]
-        if atype == "void*":
+	if len(arg) >= 3:
+		intent= arg[2]
+	else:
+		intent ="notset"
+        if rewrite_void and atype == "void*":
             ret += "void* " + aname + " = " + aname + "_ptr->base_addr;\n"
+	if handle_char and atype == "char*" and intent.startswith("in"):
+		ret += "char *tmp_{0}, *ptr_{0};\n".format(aname)
+		ret += "tmp_{0} = sctk_char_fortran_to_c({0}, size_{0}, &ptr_{0});\n".format(aname)
     
     ret += "*ierror = " + mpi_func + genCallArgs(args, 0 , 0) + ";\n"
 
@@ -1809,6 +1827,14 @@ def f08cwrapperGen( mpi_func, args ):
         arg = args[i]
         atype = arg[0]
         aname = arg[1]
+	if len(arg) >= 3:
+		intent= arg[2]
+	else:
+		intent ="notset"
+	if handle_char and atype == "char*" and intent.startswith("in"):
+		ret += "sctk_free(ptr_{0});\n".format(aname)
+	if handle_char and atype == "char*" and intent.endswith("out"):
+		ret += "sctk_char_c_to_fortran({0}, size_{0});\n".format(aname)
         #if atype == "MPI_Status*":
             #ret += "fprintf(stderr, \"S : %d T : %d C : %ld \\n\" , status->MPC_SOURCE, status->MPC_TAG, status->size );\n"
 
@@ -1850,7 +1876,7 @@ typedef struct {
 for mpi_func,args in mpi_interface.items():
     if (mpi_func.find("_c2f") != -1) :
         continue 
-    module_file_data += f08cwrapperGen( mpi_func, args )
+    module_file_data += fortran_c_wrapper_gen( mpi_func, args, suffix="_f08", rewrite_void=1)
 
 
 """
@@ -1864,3 +1890,90 @@ f.write( module_file_data );
 f.close()
 
 
+
+print "\n###################################"
+print "Generating the c Fortran Interface"
+print "#####################################\n"
+
+module_file_data = """
+#include <mpi.h>
+#include <sctk_alloc.h>
+
+static inline char *sctk_char_fortran_to_c(char *buf, int size, char **free_ptr)
+{
+	char *   tmp;
+	long int i;
+
+	tmp = sctk_malloc(size + 1);
+	assume(tmp != NULL);
+	*free_ptr = tmp;
+
+	for(i = 0; i < size; i++)
+	{
+		tmp[i] = buf[i];
+	}
+	tmp[i] = '\0';
+
+	/* Trim */
+
+	while(*tmp == ' ')
+	{
+		tmp++;
+	}
+
+	size_t len = strlen(tmp);
+
+	char *begin = tmp;
+
+	while( (tmp[len - 1] == ' ') && (&tmp[len] != begin) )
+	{
+		tmp[len - 1] = '\0';
+		len--;
+	}
+
+	return tmp;
+}
+
+static inline void sctk_char_c_to_fortran(char *buf, int size)
+{
+	size_t i;
+
+	for(i = strlen(buf); i < size; i++)
+	{
+		buf[i] = ' ';
+	}
+}
+#if defined(USE_CHAR_MIXED)
+#define CHAR_END(thename)
+#define CHAR_MIXED(thename) , long int thename
+#else
+#define CHAR_END(thename) long int thename
+#define CHAR_MIXED(thename)
+#endif
+
+
+"""
+
+
+
+for mpi_func,args in mpi_interface.items():
+    if (mpi_func.find("_c2f") != -1) :
+        continue 
+
+    # Let ROMIO generate its bindings
+    if (mpi_func.find("MPI_File") != -1) :
+        continue 
+
+    module_file_data += "\n\n /*********" + mpi_func + "**************/\n\n"
+    module_file_data += fortran_c_wrapper_gen( mpi_func, args, prefix="p", suffix="_", handle_char=1)
+    module_file_data += fortran_c_wrapper_gen( mpi_func, args, prefix="p", suffix="__",handle_char=1)
+
+"""
+ Open Output C FILE
+"""
+
+f = open("mpif_iface.c", "w" )
+
+f.write( module_file_data );
+
+f.close()

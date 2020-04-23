@@ -36,9 +36,20 @@ int * ierror)
 {
 *ierror = MPI_Start( request);
 }
-/* MPI_File_write_all_begin NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_write_all_begin_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_write_all_begin( fh,
+buf,
+count,
+datatype);
+}
 
 void mpi_win_post_f08(
 MPI_Group group,
@@ -59,9 +70,15 @@ int * ierror)
 *ierror = MPI_Win_get_errhandler( win,
 errhandler);
 }
-/* MPI_File_get_group NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_get_group_f08(
+MPI_File fh,
+MPI_Group* group,
+int * ierror)
+{
+*ierror = MPI_File_get_group( fh,
+group);
+}
 
 void mpi_sendrecv_f08(
 CFI_cdesc_t* sendbuf_ptr,
@@ -130,9 +147,22 @@ int * ierror)
 *ierror = MPI_Attr_delete( comm,
 keyval);
 }
-/* MPI_File_iwrite_shared NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_iwrite_shared_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Request* request,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_iwrite_shared( fh,
+buf,
+count,
+datatype,
+request);
+}
 
 void mpi_comm_get_attr_f08(
 MPI_Comm comm,
@@ -147,9 +177,15 @@ comm_keyval,
 attribute_val,
 flag);
 }
-/* MPI_File_get_info NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_get_info_f08(
+MPI_File fh,
+MPI_Info* info_used,
+int * ierror)
+{
+*ierror = MPI_File_get_info( fh,
+info_used);
+}
 
 void mpi_type_delete_attr_f08(
 MPI_Datatype type,
@@ -216,9 +252,22 @@ int * ierror)
 {
 *ierror = MPI_Add_error_class( errorclass);
 }
-/* MPI_File_write_shared NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_write_shared_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_write_shared( fh,
+buf,
+count,
+datatype,
+status);
+}
 
 void mpi_buffer_detach_f08(
 CFI_cdesc_t* buffer_ptr,
@@ -229,9 +278,15 @@ void* buffer = buffer_ptr->base_addr;
 *ierror = MPI_Buffer_detach( buffer,
 size);
 }
-/* MPI_File_set_size NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_set_size_f08(
+MPI_File fh,
+MPI_Offset size,
+int * ierror)
+{
+*ierror = MPI_File_set_size( fh,
+size);
+}
 
 void mpi_intercomm_create_f08(
 MPI_Comm local_comm,
@@ -249,9 +304,24 @@ remote_leader,
 tag,
 newintercomm);
 }
-/* MPI_File_iread_at NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_iread_at_f08(
+MPI_File fh,
+MPI_Offset offset,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Request* request,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_iread_at( fh,
+offset,
+buf,
+count,
+datatype,
+request);
+}
 
 void mpi_allreduce_f08(
 CFI_cdesc_t* sendbuf_ptr,
@@ -305,9 +375,18 @@ tag,
 comm,
 request);
 }
-/* MPI_File_read_all_end NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_read_all_end_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_read_all_end( fh,
+buf,
+status);
+}
 
 void mpi_comm_remote_size_f08(
 MPI_Comm comm,
@@ -347,7 +426,8 @@ dest,
 tag,
 comm,
 request);
-}
+}/* Skipped function MPI_Type_get_namewith conversion */
+
 
 void mpi_reduce_f08(
 CFI_cdesc_t* sendbuf_ptr,
@@ -416,12 +496,24 @@ int * ierror)
 *ierror = MPI_Type_extent( type,
 extent);
 }
-/* MPI_File_preallocate NOT IMPLEMENTED in MPC */
 
+void mpi_file_preallocate_f08(
+MPI_File fh,
+MPI_Offset size,
+int * ierror)
+{
+*ierror = MPI_File_preallocate( fh,
+size);
+}
 
-/* MPI_File_get_position NOT IMPLEMENTED in MPC */
-
-
+void mpi_file_get_position_f08(
+MPI_File fh,
+MPI_Offset* offset,
+int * ierror)
+{
+*ierror = MPI_File_get_position( fh,
+offset);
+}
 
 void mpi_sendrecv_replace_f08(
 CFI_cdesc_t* buf_ptr,
@@ -516,7 +608,8 @@ n,
 ranks1,
 group2,
 ranks2);
-}
+}/* Skipped function MPI_Testsomewith conversion */
+
 
 void mpi_recv_init_f08(
 CFI_cdesc_t* buf_ptr,
@@ -536,7 +629,8 @@ source,
 tag,
 comm,
 request);
-}
+}/* Skipped function MPI_Win_set_namewith conversion */
+
 
 void mpi_type_dup_f08(
 MPI_Datatype type,
@@ -584,8 +678,17 @@ lb,
 extent,
 newtype);
 }
-/* MPI_File_seek_shared NOT IMPLEMENTED in MPC */
 
+void mpi_file_seek_shared_f08(
+MPI_File fh,
+MPI_Offset offset,
+int whence,
+int * ierror)
+{
+*ierror = MPI_File_seek_shared( fh,
+offset,
+whence);
+}/* Skipped function MPI_Unpublish_namewith conversion */
 
 
 void mpi_get_address_f08(
@@ -646,9 +749,22 @@ int * ierror)
 {
 *ierror = MPI_Initialized( flag);
 }
-/* MPI_File_iwrite NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_iwrite_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Request* request,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_iwrite( fh,
+buf,
+count,
+datatype,
+request);
+}
 
 void mpi_bsend_f08(
 CFI_cdesc_t* buf_ptr,
@@ -690,7 +806,8 @@ int * ierror)
 *ierror = MPI_Get_count( status,
 datatype,
 count);
-}
+}/* Skipped function MPI_Error_stringwith conversion */
+
 
 void mpi_grequest_start_f08(
 MPI_Grequest_query_function* query_fn,
@@ -749,7 +866,8 @@ int * ierror)
 rank,
 maxdims,
 coords);
-}
+}/* Skipped function MPI_Scattervwith conversion */
+
 
 void mpi_issend_f08(
 CFI_cdesc_t* buf_ptr,
@@ -770,9 +888,13 @@ tag,
 comm,
 request);
 }
-/* MPI_File_sync NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_sync_f08(
+MPI_File fh,
+int * ierror)
+{
+*ierror = MPI_File_sync( fh);
+}
 
 void mpi_rsend_f08(
 CFI_cdesc_t* ibuf_ptr,
@@ -791,9 +913,15 @@ dest,
 tag,
 comm);
 }
-/* MPI_File_get_amode NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_get_amode_f08(
+MPI_File fh,
+int* amode,
+int * ierror)
+{
+*ierror = MPI_File_get_amode( fh,
+amode);
+}
 
 void mpi_abort_f08(
 MPI_Comm comm,
@@ -849,9 +977,7 @@ MPI_Info* info,
 int * ierror)
 {
 *ierror = MPI_Info_create( info);
-}
-/* MPI_File_open NOT IMPLEMENTED in MPC */
-
+}/* Skipped function MPI_File_openwith conversion */
 
 
 void mpi_type_create_f90_complex_f08(
@@ -863,7 +989,8 @@ int * ierror)
 *ierror = MPI_Type_create_f90_complex( p,
 r,
 newtype);
-}
+}/* Skipped function MPI_Gathervwith conversion */
+
 
 void mpi_type_get_attr_f08(
 MPI_Datatype type,
@@ -877,7 +1004,8 @@ void* attribute_val = attribute_val_ptr->base_addr;
 type_keyval,
 attribute_val,
 flag);
-}
+}/* Skipped function MPI_Comm_set_namewith conversion */
+
 
 void mpi_comm_disconnect_f08(
 MPI_Comm* comm,
@@ -946,9 +1074,22 @@ array_of_displacements,
 oldtype,
 newtype);
 }
-/* MPI_File_iread_shared NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_iread_shared_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Request* request,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_iread_shared( fh,
+buf,
+count,
+datatype,
+request);
+}
 
 void mpi_file_set_errhandler_f08(
 MPI_File file,
@@ -957,12 +1098,24 @@ int * ierror)
 {
 *ierror = MPI_File_set_errhandler( file,
 errhandler);
-}
-/* MPI_Register_datarep NOT IMPLEMENTED in MPC */
+}/* Skipped function MPI_Register_datarepwith conversion */
 
 
-/* MPI_File_read_ordered NOT IMPLEMENTED in MPC */
-
+void mpi_file_read_ordered_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_read_ordered( fh,
+buf,
+count,
+datatype,
+status);
+}/* Skipped function MPI_Waitsomewith conversion */
 
 
 void mpi_group_difference_f08(
@@ -988,7 +1141,9 @@ void* attribute_val = attribute_val_ptr->base_addr;
 keyval,
 attribute_val,
 flag);
-}
+}/* Skipped function MPI_Reduce_scatterwith conversion */
+/* Skipped function MPI_Win_get_namewith conversion */
+
 
 void mpi_type_create_f90_real_f08(
 int p,
@@ -1038,9 +1193,15 @@ array_of_requests,
 flag,
 array_of_statuses);
 }
-/* MPI_File_set_info NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_set_info_f08(
+MPI_File fh,
+MPI_Info info,
+int * ierror)
+{
+*ierror = MPI_File_set_info( fh,
+info);
+}
 
 void mpi_irsend_f08(
 CFI_cdesc_t* buf_ptr,
@@ -1088,8 +1249,22 @@ int * ierror)
 *ierror = MPI_Comm_create_errhandler( function,
 errhandler);
 }
-/* MPI_File_write_all NOT IMPLEMENTED in MPC */
 
+void mpi_file_write_all_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_write_all( fh,
+buf,
+count,
+datatype,
+status);
+}/* Skipped function MPI_Comm_connectwith conversion */
 
 
 void mpi_group_compare_f08(
@@ -1131,7 +1306,8 @@ int * ierror)
 {
 *ierror = MPI_Win_unlock( rank,
 win);
-}
+}/* Skipped function MPI_Graph_mapwith conversion */
+
 
 void mpi_request_free_f08(
 MPI_Request* request,
@@ -1148,9 +1324,22 @@ int * ierror)
 *ierror = MPI_Topo_test( comm,
 status);
 }
-/* MPI_File_read NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_read_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_read( fh,
+buf,
+count,
+datatype,
+status);
+}
 
 void mpi_buffer_attach_f08(
 CFI_cdesc_t* buffer_ptr,
@@ -1242,13 +1431,18 @@ int * ierror)
 *ierror = MPI_Graph_neighbors_count( comm,
 rank,
 nneighbors);
+}/* Skipped function MPI_File_get_viewwith conversion */
+/* Skipped function MPI_Allgathervwith conversion */
+
+
+void mpi_file_get_position_shared_f08(
+MPI_File fh,
+MPI_Offset* offset,
+int * ierror)
+{
+*ierror = MPI_File_get_position_shared( fh,
+offset);
 }
-/* MPI_File_get_view NOT IMPLEMENTED in MPC */
-
-
-/* MPI_File_get_position_shared NOT IMPLEMENTED in MPC */
-
-
 
 void mpi_graph_neighbors_f08(
 MPI_Comm comm,
@@ -1273,9 +1467,22 @@ int * ierror)
 ndims,
 dims);
 }
-/* MPI_File_iread NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_iread_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Request* request,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_iread( fh,
+buf,
+count,
+datatype,
+request);
+}
 
 void mpi_scatter_f08(
 CFI_cdesc_t* sendbuf_ptr,
@@ -1299,9 +1506,17 @@ recvtype,
 root,
 comm);
 }
-/* MPI_File_get_byte_offset NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_get_byte_offset_f08(
+MPI_File fh,
+MPI_Offset offset,
+MPI_Offset* disp,
+int * ierror)
+{
+*ierror = MPI_File_get_byte_offset( fh,
+offset,
+disp);
+}
 
 void mpi_comm_free_keyval_f08(
 int* comm_keyval,
@@ -1320,8 +1535,17 @@ int * ierror)
 commute,
 op);
 }
-/* MPI_File_seek NOT IMPLEMENTED in MPC */
 
+void mpi_file_seek_f08(
+MPI_File fh,
+MPI_Offset offset,
+int whence,
+int * ierror)
+{
+*ierror = MPI_File_seek( fh,
+offset,
+whence);
+}/* Skipped function MPI_Add_error_stringwith conversion */
 
 
 void mpi_mprobe_f08(
@@ -1384,7 +1608,8 @@ MPI_Info* info,
 int * ierror)
 {
 *ierror = MPI_Info_free( info);
-}
+}/* Skipped function MPI_Publish_namewith conversion */
+
 
 void mpi_bcast_f08(
 CFI_cdesc_t* buffer_ptr,
@@ -1400,9 +1625,21 @@ count,
 datatype,
 root,
 comm);
-}
-/* MPI_File_write_ordered_end NOT IMPLEMENTED in MPC */
+}/* Skipped function MPI_Get_processor_namewith conversion */
+/* Skipped function MPI_Info_setwith conversion */
 
+
+void mpi_file_write_ordered_end_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_write_ordered_end( fh,
+buf,
+status);
+}/* Skipped function MPI_Graph_createwith conversion */
 
 
 void mpi_comm_free_f08(
@@ -1411,9 +1648,24 @@ int * ierror)
 {
 *ierror = MPI_Comm_free( comm);
 }
-/* MPI_File_write_at_all NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_write_at_all_f08(
+MPI_File fh,
+MPI_Offset offset,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_write_at_all( fh,
+offset,
+buf,
+count,
+datatype,
+status);
+}
 
 void mpi_errhandler_get_f08(
 MPI_Comm comm,
@@ -1471,13 +1723,33 @@ MPI_Win win,
 int * ierror)
 {
 *ierror = MPI_Win_complete( win);
+}/* Skipped function MPI_Pack_externalwith conversion */
+
+
+void mpi_file_get_type_extent_f08(
+MPI_File fh,
+MPI_Datatype datatype,
+MPI_Aint* extent,
+int * ierror)
+{
+*ierror = MPI_File_get_type_extent( fh,
+datatype,
+extent);
 }
-/* MPI_File_get_type_extent NOT IMPLEMENTED in MPC */
 
-
-/* MPI_File_read_all_begin NOT IMPLEMENTED in MPC */
-
-
+void mpi_file_read_all_begin_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_read_all_begin( fh,
+buf,
+count,
+datatype);
+}
 
 void mpi_type_set_attr_f08(
 MPI_Datatype type,
@@ -1489,7 +1761,8 @@ void* attr_val = attr_val_ptr->base_addr;
 *ierror = MPI_Type_set_attr( type,
 type_keyval,
 attr_val);
-}
+}/* Skipped function MPI_Info_get_valuelenwith conversion */
+
 
 void mpi_put_f08(
 CFI_cdesc_t* origin_addr_ptr,
@@ -1512,12 +1785,36 @@ target_count,
 target_datatype,
 win);
 }
-/* MPI_File_read_at_all NOT IMPLEMENTED in MPC */
 
+void mpi_file_read_at_all_f08(
+MPI_File fh,
+MPI_Offset offset,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_read_at_all( fh,
+offset,
+buf,
+count,
+datatype,
+status);
+}
 
-/* MPI_File_read_ordered_end NOT IMPLEMENTED in MPC */
-
-
+void mpi_file_read_ordered_end_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_read_ordered_end( fh,
+buf,
+status);
+}
 
 void mpi_isend_f08(
 CFI_cdesc_t* buf_ptr,
@@ -1591,10 +1888,26 @@ int * ierror)
 {
 *ierror = MPI_File_create_errhandler( function,
 errhandler);
+}/* Skipped function MPI_Info_getwith conversion */
+
+
+void mpi_file_iwrite_at_f08(
+MPI_File fh,
+MPI_Offset offset,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Request* request,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_iwrite_at( fh,
+offset,
+buf,
+count,
+datatype,
+request);
 }
-/* MPI_File_iwrite_at NOT IMPLEMENTED in MPC */
-
-
 
 void mpi_group_intersection_f08(
 MPI_Group group1,
@@ -1681,9 +1994,24 @@ MPI_Datatype* type,
 int * ierror)
 {
 *ierror = MPI_Type_free( type);
-}
-/* MPI_File_write_at_all_begin NOT IMPLEMENTED in MPC */
+}/* Skipped function MPI_Info_get_nthkeywith conversion */
 
+
+void mpi_file_write_at_all_begin_f08(
+MPI_File fh,
+MPI_Offset offset,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_write_at_all_begin( fh,
+offset,
+buf,
+count,
+datatype);
+}/* Skipped function MPI_Unpack_externalwith conversion */
 
 
 void mpi_errhandler_set_f08(
@@ -1694,9 +2022,22 @@ int * ierror)
 *ierror = MPI_Errhandler_set( comm,
 errhandler);
 }
-/* MPI_File_read_at_all_begin NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_read_at_all_begin_f08(
+MPI_File fh,
+MPI_Offset offset,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_read_at_all_begin( fh,
+offset,
+buf,
+count,
+datatype);
+}
 
 void mpi_comm_get_errhandler_f08(
 MPI_Comm comm,
@@ -1772,9 +2113,18 @@ stride,
 oldtype,
 newtype);
 }
-/* MPI_File_write_all_end NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_write_all_end_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_write_all_end( fh,
+buf,
+status);
+}
 
 void mpi_info_get_nkeys_f08(
 MPI_Info info,
@@ -1795,9 +2145,15 @@ int * ierror)
 assert,
 win);
 }
-/* MPI_File_get_size NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_get_size_f08(
+MPI_File fh,
+MPI_Offset* size,
+int * ierror)
+{
+*ierror = MPI_File_get_size( fh,
+size);
+}
 
 void mpi_finalized_f08(
 int* flag,
@@ -1824,7 +2180,8 @@ int * ierror)
 array_of_requests,
 index,
 status);
-}
+}/* Skipped function MPI_Open_portwith conversion */
+
 
 void mpi_type_indexed_f08(
 int count,
@@ -1898,12 +2255,34 @@ int * ierror)
 datatype,
 count);
 }
-/* MPI_File_write NOT IMPLEMENTED in MPC */
 
+void mpi_file_write_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_write( fh,
+buf,
+count,
+datatype,
+status);
+}
 
-/* MPI_File_read_at_all_end NOT IMPLEMENTED in MPC */
-
-
+void mpi_file_read_at_all_end_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_read_at_all_end( fh,
+buf,
+status);
+}
 
 void mpi_probe_f08(
 int source,
@@ -1916,9 +2295,7 @@ int * ierror)
 tag,
 comm,
 status);
-}
-/* MPI_File_set_view NOT IMPLEMENTED in MPC */
-
+}/* Skipped function MPI_File_set_viewwith conversion */
 
 
 void mpi_unpack_f08(
@@ -1985,9 +2362,15 @@ array_of_displacements,
 oldtype,
 newtype);
 }
-/* MPI_File_set_atomicity NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_set_atomicity_f08(
+MPI_File fh,
+int* flag,
+int * ierror)
+{
+*ierror = MPI_File_set_atomicity( fh,
+flag);
+}
 
 void mpi_group_range_incl_f08(
 MPI_Group group,
@@ -2038,9 +2421,18 @@ comm,
 flag,
 status);
 }
-/* MPI_File_write_at_all_end NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_write_at_all_end_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_write_at_all_end( fh,
+buf,
+status);
+}
 
 void mpi_type_get_true_extent_f08(
 MPI_Datatype datatype,
@@ -2066,7 +2458,8 @@ maxindex,
 maxedges,
 index,
 edges);
-}
+}/* Skipped function MPI_Info_deletewith conversion */
+
 
 void mpi_win_get_attr_f08(
 MPI_Win win,
@@ -2080,7 +2473,8 @@ void* attribute_val = attribute_val_ptr->base_addr;
 win_keyval,
 attribute_val,
 flag);
-}
+}/* Skipped function MPI_Cart_rankwith conversion */
+
 
 void mpi_finalize_f08(
 int * ierror)
@@ -2097,7 +2491,8 @@ int * ierror)
 *ierror = MPI_Comm_create( comm,
 group,
 newcomm);
-}
+}/* Skipped function MPI_Pack_external_sizewith conversion */
+
 
 void mpi_comm_join_f08(
 int fd,
@@ -2107,9 +2502,24 @@ int * ierror)
 *ierror = MPI_Comm_join( fd,
 intercomm);
 }
-/* MPI_File_read_at NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_read_at_f08(
+MPI_File fh,
+MPI_Offset offset,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_read_at( fh,
+offset,
+buf,
+count,
+datatype,
+status);
+}
 
 void mpi_keyval_free_f08(
 int* keyval,
@@ -2161,13 +2571,33 @@ int * ierror)
 {
 *ierror = MPI_Type_size( type,
 size);
+}/* Skipped function MPI_Lookup_namewith conversion */
+
+
+void mpi_file_get_atomicity_f08(
+MPI_File fh,
+int* flag,
+int * ierror)
+{
+*ierror = MPI_File_get_atomicity( fh,
+flag);
 }
-/* MPI_File_get_atomicity NOT IMPLEMENTED in MPC */
 
-
-/* MPI_File_read_shared NOT IMPLEMENTED in MPC */
-
-
+void mpi_file_read_shared_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_read_shared( fh,
+buf,
+count,
+datatype,
+status);
+}
 
 void mpi_type_create_darray_f08(
 int size,
@@ -2217,12 +2647,34 @@ dims,
 periods,
 newrank);
 }
-/* MPI_File_write_at NOT IMPLEMENTED in MPC */
+
+void mpi_file_write_at_f08(
+MPI_File fh,
+MPI_Offset offset,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_write_at( fh,
+offset,
+buf,
+count,
+datatype,
+status);
+}/* Skipped function MPI_Comm_acceptwith conversion */
+/* Skipped function MPI_Type_set_namewith conversion */
+/* Skipped function MPI_Close_portwith conversion */
 
 
-/* MPI_File_close NOT IMPLEMENTED in MPC */
-
-
+void mpi_file_close_f08(
+MPI_File* fh,
+int * ierror)
+{
+*ierror = MPI_File_close( fh);
+}
 
 void mpi_type_create_subarray_f08(
 int ndims,
@@ -2241,9 +2693,7 @@ start_array,
 order,
 oldtype,
 newtype);
-}
-/* MPI_File_delete NOT IMPLEMENTED in MPC */
-
+}/* Skipped function MPI_File_deletewith conversion */
 
 
 void mpi_comm_set_attr_f08(
@@ -2257,9 +2707,22 @@ void* attribute_val = attribute_val_ptr->base_addr;
 comm_keyval,
 attribute_val);
 }
-/* MPI_File_read_all NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_read_all_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_read_all( fh,
+buf,
+count,
+datatype,
+status);
+}
 
 void mpi_recv_f08(
 CFI_cdesc_t* buf_ptr,
@@ -2370,7 +2833,9 @@ MPI_Win* win,
 int * ierror)
 {
 *ierror = MPI_Win_free( win);
-}
+}/* Skipped function MPI_Alltoallwwith conversion */
+/* Skipped function MPI_Alltoallvwith conversion */
+
 
 void mpi_bsend_init_f08(
 CFI_cdesc_t* buf_ptr,
@@ -2449,10 +2914,25 @@ target_count,
 target_datatype,
 op,
 win);
+}/* Skipped function MPI_Comm_get_namewith conversion */
+/* Skipped function MPI_Cart_subwith conversion */
+
+
+void mpi_file_write_ordered_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Status* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_write_ordered( fh,
+buf,
+count,
+datatype,
+status);
 }
-/* MPI_File_write_ordered NOT IMPLEMENTED in MPC */
-
-
 
 void mpi_group_range_excl_f08(
 MPI_Group group,
@@ -2520,12 +3000,34 @@ type_delete_attr_fn,
 type_keyval,
 extra_state);
 }
-/* MPI_File_write_ordered_begin NOT IMPLEMENTED in MPC */
 
+void mpi_file_write_ordered_begin_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_write_ordered_begin( fh,
+buf,
+count,
+datatype);
+}
 
-/* MPI_File_read_ordered_begin NOT IMPLEMENTED in MPC */
-
-
+void mpi_file_read_ordered_begin_f08(
+MPI_File fh,
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_File_read_ordered_begin( fh,
+buf,
+count,
+datatype);
+}
 
 void mpi_graphdims_get_f08(
 MPI_Comm comm,
