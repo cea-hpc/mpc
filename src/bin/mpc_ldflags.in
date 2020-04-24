@@ -22,10 +22,52 @@
 #                                                                      #
 ########################################################################
 MPC_INSTALL_PREFIX="@prefix@"
+
 OPA_LDFLAGS="@OPA_LIBS@"
 HWLOC_LDFLAGS="@HWLOC_LIBS@"
 EXTLS_LDFLAGS="@EXTLS_LIBS@"
 MPCALLOC_LDFLAGS="@ALLOC_LIBS@"
+
+#
+# Usage and general argument parsing
+#
+
+show_help()
+{
+	echo "mpc_ldflags can be used to retrieve information on MPC's link flags"
+	echo ""
+	echo "mpc_ldflags [-sh] [-p] [-l] [-h]"
+	echo ""
+	echo "If not argument is provided LDFLAGS are printed out"
+	echo ""
+	echo " -h|--help    Print this help"
+	echo " -l|--ldflags Print ldflags"
+	echo " --fortran Generate flags for Fortran"
+	echo " --sh         Output in shell format"
+	echo ""
+	echo "Install env:"
+	echo " -p           Display mpc install prefix"
+}
+
+#if the SH flag is present or FORTRAN
+
+HAS_SH_FLAG="no"
+IS_FORTRAN="no"
+
+for arg in "$@" ; do
+	case $arg in
+		-sh)
+			HAS_SH_FLAG="yes"
+		;;
+		-f|--fortran)
+			IS_FORTRAN="yes"
+		;;
+	esac
+done
+
+#
+# Generate LDFLAGS
+#
 
 # Module FLAGS
 MPC_THREAD_ENABLED="@MPC_THREAD_ENABLED@"
@@ -73,27 +115,57 @@ fi
 if test "x${MPC_MPI_ENABLED}" = "xyes"; then
 	# MPC_MPI
 	FLAGS="$FLAGS -lmpcmpi"
-fi
 
-if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
-	# MPC_IO
-	FLAGS="$FLAGS -lmpcio"
+	if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
+		# MPC_IO
+		FLAGS="$FLAGS -lmpcio"
+	fi
+
+	if test "x${IS_FORTRAN}" = "xyes"; then
+		FLAGS="$FLAGS -lmpcfortran"
+	fi
 fi
 
 # CONFIG
 FLAGS="$FLAGS -lmpcconfig"
 
-# Handle how the fortran specific module is passed in
-# we need lib for .mod
-if test -n "$2"; then
 
-	FLAGS="${FLAGS} -L$2/lib -Wl,-rpath=$2/lib"
+#
+# Helper to print a var
+#
+
+print_var()
+{
+	if test "x${HAS_SH_FLAG}" = "xyes"; then
+		echo "$1=\"$2\""
+	else
+		echo "$2"
+	fi
+}
+
+
+for arg in "$@" ; do
+	case $arg in
+		# ----------------------------------------------------------------
+		# Compiler options that affect whether we are linking or not
+	-p)
+		print_var "MPC_INSTALL_PREFIX" "$MPC_INSTALL_PREFIX"
+		;;
+	-l|--ldflags)
+		print_var "CFLAGS" "$FLAGS"
+		;;
+	-sh|--fortran)
+	# Handled in the first pass
+	;;
+	*)
+		show_help
+		exit 0
+		;;
+	esac
+done
+
+# No param just print cflags
+
+if test "x$#" = "x0"; then
+	echo "${FLAGS}"
 fi
-
-if test "$1" != "fortran" ; then
-	# Not FORTRAN
-        echo "$FLAGS"
-else
-        echo "$FLAGS -lmpcfwrapper"
-fi
-

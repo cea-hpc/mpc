@@ -30,10 +30,10 @@
 # - MPC_SHARE_DIR
 # - MPC_DEFAULT_FC_COMPILER
 # - CFLAGS
-eval $(mpc_cflags -sh -p -s -fc -f)
+eval $(mpc_cflags -sh -p -s -fc -f --fortran)
 
 COMPILER="$MPC_DEFAULT_FC_COMPILER"
-LDFLAGS=$("${MPC_INSTALL_PREFIX}/bin/mpc_ldflags")
+LDFLAGS=$("${MPC_INSTALL_PREFIX}/bin/mpc_ldflags" --fortran -l)
 
 # Source Common function library
 

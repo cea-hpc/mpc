@@ -28,6 +28,7 @@
 
 MPC_INSTALL_PREFIX="@prefix@"
 MPC_SHARE_DIR="@PKG_DATADIR@"
+MPC_INCLUDEDIR="@PKG_INCDIR@"
 
 #
 # Default compiler environmnent
@@ -36,6 +37,26 @@ MPC_SHARE_DIR="@PKG_DATADIR@"
 MPC_DEFAULT_C_COMPILER="@MPC_DEFAULT_C_COMPILER@"
 MPC_DEFAULT_CXX_COMPILER="@MPC_DEFAULT_CXX_COMPILER@"
 MPC_DEFAULT_FC_COMPILER="@MPC_DEFAULT_FC_COMPILER@"
+
+#
+# General Argument Parsing
+#
+
+#if the SH flag is present or FORTRAN
+
+HAS_SH_FLAG="no"
+IS_FORTRAN="no"
+
+for arg in "$@" ; do
+	case $arg in
+		-sh)
+			HAS_SH_FLAG="yes"
+		;;
+		-f|--fortran)
+			IS_FORTRAN="yes"
+		;;
+	esac
+done
 
 #
 # Print Module list
@@ -65,7 +86,11 @@ HWLOC_CFLAGS="@HWLOC_CFLAGS@"
 EXTLS_CFLAGS="@EXTLS_CFLAGS@"
 MPCALLOC_CFLAGS="@ALLOC_CFLAGS@"
 
-FLAGS="-I@PKG_INCDIR@"
+FLAGS="-I${MPC_INCLUDEDIR}"
+
+if test "x${IS_FORTRAN}" = "xyes"; then
+	FLAGS="$FLAGS -I${MPC_INCLUDEDIR}/fortran/"
+fi
 
 FLAGS="$FLAGS ${OPA_CFLAGS}"
 FLAGS="$FLAGS ${HWLOC_CFLAGS}"
@@ -88,7 +113,7 @@ show_help()
 	echo ""
 	echo " -h|--help    Print this help"
 	echo " -f|--cflags  Print cflags"
-	echo ""
+	echo " --fortran    Generate flags for Fortran"
 	echo " --sh         Output in shell format"
 	echo ""
 	echo "Install env:"
@@ -107,18 +132,6 @@ show_help()
 #
 # Argument Parsing
 #
-
-# First check if the SH flag is present
-
-HAS_SH_FLAG="no"
-
-for arg in "$@" ; do
-	case $arg in
-		-sh)
-			HAS_SH_FLAG="yes"
-		;;
-	esac
-done
 
 print_var()
 {
@@ -155,11 +168,12 @@ for arg in "$@" ; do
 	-f|--cflags)
 		print_var "CFLAGS" "$FLAGS"
 		;;
-	-sh)
+	-sh|--fortran)
 	# Handled in the first pass
 	;;
 	*)
 		show_help
+		exit 0
 		;;
 	esac
 done

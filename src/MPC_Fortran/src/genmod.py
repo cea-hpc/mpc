@@ -1787,12 +1787,12 @@ def fortran_c_wrapper_gen( mpi_func, args, prefix="",suffix="", lower_names=1, r
         ret += "\n"
         ret += "/* " + mpi_func + " NOT IMPLEMENTED in MPC */\n"
         ret += "\n"
-        return ret
+        return ret, True
     
     #We only want to convert cho
     skip_if_char = (not handle_char)
     if (containsConvert( args, char=skip_if_char) == 1):
-        return "/* Skipped function " + mpi_func + "with conversion */\n"
+        return "/* Skipped function " + mpi_func + "with conversion */\n", True
     
     ret += "\n"
     ret += "\n"
@@ -1839,7 +1839,7 @@ def fortran_c_wrapper_gen( mpi_func, args, prefix="",suffix="", lower_names=1, r
             #ret += "fprintf(stderr, \"S : %d T : %d C : %ld \\n\" , status->MPC_SOURCE, status->MPC_TAG, status->size );\n"
 
     ret += "}"
-    return ret
+    return ret, False
 
 module_file_data = """
 #include <mpi.h>
@@ -1876,7 +1876,8 @@ typedef struct {
 for mpi_func,args in mpi_interface.items():
     if (mpi_func.find("_c2f") != -1) :
         continue 
-    module_file_data += fortran_c_wrapper_gen( mpi_func, args, suffix="_f08", rewrite_void=1)
+    (data, did_skip) = fortran_c_wrapper_gen( mpi_func, args, suffix="_f08", rewrite_void=1)
+    module_file_data += data
 
 
 """
@@ -1965,9 +1966,21 @@ for mpi_func,args in mpi_interface.items():
         continue 
 
     module_file_data += "\n\n /*********" + mpi_func + "**************/\n\n"
-    module_file_data += fortran_c_wrapper_gen( mpi_func, args, prefix="p", suffix="_", handle_char=1)
-    module_file_data += fortran_c_wrapper_gen( mpi_func, args, prefix="p", suffix="__",handle_char=1)
 
+    # Generate function body
+    did_skip = 0
+
+    (data, skip) = fortran_c_wrapper_gen( mpi_func, args, prefix="p", suffix="_", handle_char=1)
+    module_file_data += data
+    did_skip |= skip
+    (data, skip) = fortran_c_wrapper_gen( mpi_func, args, prefix="p", suffix="__",handle_char=1)
+    module_file_data += data
+    did_skip |= skip
+
+    if not did_skip:
+        # Generate weak redirections
+        module_file_data += "\n#pragma weak {0}_=p{0}_\n".format(mpi_func.lower())
+        module_file_data += "\n#pragma weak {0}__=p{0}__\n".format(mpi_func.lower())
 """
  Open Output C FILE
 """

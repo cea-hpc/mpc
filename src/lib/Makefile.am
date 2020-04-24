@@ -12,4 +12,4 @@ lib_LTLIBRARIES = libmpcframework.la
 
 libmpcframework_la_LIBADD = @ALL_MPC_LIBS@
 
-libmpcframework_la_SOURCES= lib.c
+libmpcframework_la_SOURCES=

@@ -62,3 +62,10 @@ predef_types.lo: mpi.lo
 
 libmpcfortran_la_SOURCES = $(FORTRAN_MOD_FILES) predef_types.f90 predef_types_08.f90 omp.f90
 libmpcfortran_la_LIBADD = $(abs_top_builddir)/src/MPC_MPI/src/libmpcmpi.la
+
+
+# Default configuration file and schema installation
+install-data-local:
+	test -d $(pkgincludedir)/fortran/ || mkdir $(pkgincludedir)/fortran/
+	install -m 0644 -D $(builddir)/*.mod $(pkgincludedir)/fortran/
+
