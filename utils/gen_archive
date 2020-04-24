@@ -45,41 +45,22 @@ if test ! -f mpcframework/.MPC_version && test ! -d tools && test ! -d mpcframew
 fi
 
 ##################### SECTION ####################
-if test ! -f .git && test ! -f .gitattributes; then
-	echo "This script only work on a git working copy" 1>&2
+if test ! -e .git; then
+	echo "This script is made to generate an archive from a Git repository !" 1>&2
 	exit 1
 fi
 
 ##################### SECTION ####################
 VERSION=$(cd ./mpcframework && ./MPC_Tools/mpc_print_version)
-echo "MPC version is $VERSION"
+echo "MPC version for this archive will be $VERSION"
+test -f ./mpcframework-${VERSION}.tar.gz && echo "A file named mpcframework-${VERSION}.tar.gz already exist!" && exit 1
 
-echo "Generate archive..."
-echo "git archive --format=tar --prefix=MPC_${VERSION}/ HEAD | gzip > MPC_${VERSION}.tar.gz"
-git archive --format=tar --prefix=MPC_${VERSION}/ HEAD | gzip > MPC_${VERSION}.tar.gz || exit 1
+git describe --exact-match MPC_${VERSION} > /dev/null 2>&1 || echo "If this is a release archive, please create an annotated tag for the following hash: `git rev-parse HEAD`"
 
-cp MPC_${VERSION}.tar.gz MPC_light_${VERSION}.tar.gz 
+echo "git archive --format=tar.gz --prefix=mpcframework-${VERSION}/ HEAD > mpcframework-${VERSION}.tar.gz"
+git archive --format=tar.gz --prefix=mpcframework-${VERSION}/ HEAD > mpcframework-${VERSION}.tar.gz || exit 1
 
-gunzip MPC_light_${VERSION}.tar.gz
-
-REMOVE_LIST=""
-REMOVE_LIST_SIZE=""
-for j in binutils  gcc  gdb  gmp  hwloc  hydra  libxml2  mpc mpfr; do 
-for i in extern-deps/$j/*.tar.*; do 
-	echo "Exclude $i"
-	REMOVE_LIST="$REMOVE_LIST MPC_${VERSION}/$i"
-	REMOVE_LIST_SIZE="$REMOVE_LIST_SIZE $i"
-done
-done
-
-echo "Remove"
-du -csh $REMOVE_LIST_SIZE
-
-tar -vf MPC_light_${VERSION}.tar --delete $REMOVE_LIST
-gzip MPC_light_${VERSION}.tar 
-
-md5sum MPC_${VERSION}.tar.gz MPC_light_${VERSION}.tar.gz 
-
+echo "Archive SHA256 sum: `command -v sha256sum > /dev/null 2>&1 && sha256sum mpcframework-${VERSION}.tar.gz`"
 
 if test "$1" = "--check"; then
 	do_check
