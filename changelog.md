@@ -10,7 +10,7 @@
 
 **OpenMP**
 
-- First OMPT support
+- Improved OMPT support
 - Bug fix on tasks with dependencies
 
 **Network / communication layers**
