@@ -47,8 +47,8 @@
 #endif
 
 /*******************
- * FORTRAN SUPPORT *
- *******************/
+* FORTRAN SUPPORT *
+*******************/
 
 static volatile int          did_resolve_fortran_binds = 0;
 static mpc_common_spinlock_t did_resolve_fortran_binds_lock;
@@ -904,17 +904,15 @@ static int SCTK__MPI_Attr_communicator_dup(MPI_Comm old, MPI_Comm new);
 //#define MPC_MPI_USE_REQUEST_CACHE
 
 #ifdef MPC_MPI_USE_REQUEST_CACHE
-    #define MPC_MPI_REQUEST_CACHE_SIZE   128
+    #define MPC_MPI_REQUEST_CACHE_SIZE    128
 #endif
 
 #ifdef MPC_MPI_USE_REQUEST_CACHE
-	__thread MPI_internal_request_t *mpc_mpi_request_cache[MPC_MPI_REQUEST_CACHE_SIZE];
+__thread MPI_internal_request_t *mpc_mpi_request_cache[MPC_MPI_REQUEST_CACHE_SIZE];
 #endif
 
 typedef struct MPI_per_thread_ctx_s
 {
-
-
 #ifdef MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
 	MPI_internal_request_t *mpc_mpi_local_request_queue;
 	int                     mpc_mpi_local_request_queue_nb_req;
@@ -4655,8 +4653,8 @@ int sctk_Type_create_subarray(int ndims,
 		else
 		{
 			PMPI_Type_vector(array_of_subsizes[1],
-			                array_of_subsizes[0],
-			                array_of_sizes[0], oldtype, &tmp1);
+			                 array_of_subsizes[0],
+			                 array_of_sizes[0], oldtype, &tmp1);
 
 			size = (MPI_Aint)array_of_sizes[0] * extent;
 			for(i = 2; i < ndims; i++)
@@ -4689,8 +4687,8 @@ int sctk_Type_create_subarray(int ndims,
 		else
 		{
 			PMPI_Type_vector(array_of_subsizes[ndims - 2],
-			                array_of_subsizes[ndims - 1],
-			                array_of_sizes[ndims - 1], oldtype, &tmp1);
+			                 array_of_subsizes[ndims - 1],
+			                 array_of_sizes[ndims - 1], oldtype, &tmp1);
 
 			size = (MPI_Aint)array_of_sizes[ndims - 1] * extent;
 			for(i = ndims - 3; i >= 0; i--)
@@ -6452,7 +6450,7 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
 				/* If non-contig, we need to unpack to the final buffer */
 				int cnt = 0;
 				PMPI_Unpack(src, bcast_ctx->scount * bcast_ctx->stype_size, &cnt, buffer,
-				           count, datatype, comm);
+				            count, datatype, comm);
 			}
 			else
 			{
@@ -11972,7 +11970,7 @@ SHM_REDUCE_DONE:
 			/* If non-contig, we need to unpack to the final buffer */
 			int cnt = 0;
 			PMPI_Unpack(reduce_ctx->target_buff, tsize * count, &cnt, recvbuf, count,
-			           datatype, comm);
+			            datatype, comm);
 
 			/* We had to allocate the segment */
 			sctk_free(data_buff);
@@ -18262,7 +18260,7 @@ int PMPI_Type_create_hindexed_block(int count, int blocklength, const MPI_Aint i
 	SCTK_MPI_CHECK_RETURN_VAL(res, comm);
 }
 
-int PMPI_Type_create_hindexed(int count, const int blocklens[], const  const MPI_Aint indices[], MPI_Datatype old_type, MPI_Datatype *newtype)
+int PMPI_Type_create_hindexed(int count, const int blocklens[], const const MPI_Aint indices[], MPI_Datatype old_type, MPI_Datatype *newtype)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
@@ -18360,7 +18358,7 @@ int PMPI_Address(void *location, MPI_Aint *address)
 	SCTK_MPI_CHECK_RETURN_VAL(res, comm);
 }
 
-int 
+int
 PMPI_Get_address(const void *location, MPI_Aint *address)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
@@ -18643,8 +18641,8 @@ int PMPI_Type_match_size(int typeclass, int size, MPI_Datatype *rtype)
 	return MPI_SUCCESS;
 }
 
-int PMPI_Pack(const 
-void *inbuf,
+int PMPI_Pack(const
+              void *inbuf,
               int incount,
               MPI_Datatype datatype,
               void *outbuf, int outcount, int *position, MPI_Comm comm)
@@ -18745,7 +18743,6 @@ int PMPI_Type_get_attr(MPI_Datatype datatype, int type_keyval,
 {
 	*flag = 0;
 	return _mpc_cl_type_get_attr(datatype, type_keyval, (void **)attribute_val, flag);
-
 }
 
 int PMPI_Type_delete_attr(MPI_Datatype datatype, int type_keyval)
@@ -20218,7 +20215,7 @@ int PMPI_Group_difference(MPI_Group group1, MPI_Group group2,
 	SCTK_MPI_CHECK_RETURN_VAL(res, comm);
 }
 
-int PMPI_Group_incl(MPI_Group group, int n,  const int ranks[], MPI_Group *newgroup)
+int PMPI_Group_incl(MPI_Group group, int n, const int ranks[], MPI_Group *newgroup)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
@@ -20916,7 +20913,7 @@ int PMPI_Cart_map(MPI_Comm comm_old, int ndims, const int dims[], const int peri
 	SCTK_MPI_CHECK_RETURN_VAL(res, comm_old);
 }
 
-int PMPI_Graph_map(MPI_Comm comm_old, int nnodes,  const int index[], const int edges[], int *newrank)
+int PMPI_Graph_map(MPI_Comm comm_old, int nnodes, const int index[], const int edges[], int *newrank)
 {
 	sctk_nodebug("Enter PMPI_Graph_map");
 	int res = MPI_ERR_INTERN;
@@ -22411,16 +22408,11 @@ int PMPIX_Checkpoint(MPIX_Checkpoint_state *state)
 
 int PMPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler)
 {
-
 }
 
-int PMPI_File_get_errhandler(MPI_File file, MPI_Errhandler * errhandler)
+int PMPI_File_get_errhandler(MPI_File file, MPI_Errhandler *errhandler)
 {
-
 }
-
-
-
 
 /************************************************************************/
 /*  NOT IMPLEMENTED                                                     */
@@ -22600,6 +22592,147 @@ int PMPIX_Comm_revoke(__UNUSED__ MPI_Comm comm)
 }
 
 int PMPIX_Comm_shrink(__UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Comm *newcomm)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+/* I neighbor */
+
+int PMPI_Neighbor_allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Ineighbor_alltoallw(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Ineighbor_alltoallv(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Ineighbor_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Ineighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Ineighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;	
+}
+
+
+/* Persistent Collectives */
+
+int PMPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+
+}
+
+int PMPI_Exscan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+
+int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Allreduce_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Barrier_init(MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Alltoallv_init(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Alltoallw_init(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Scan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Reduce_scatter_block_init(const void *sendbuf, void *recvbuf, int recvcount, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Neighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Neighbor_alltoallw_init(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Scatterv_init(const void *sendbuf, const int sendcounts[], const int displs[], MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Neighbor_alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Neighbor_allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Reduce_scatter_init(const void *sendbuf, void *recvbuf, const int recvcounts[], MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Reduce_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
 	not_implemented(); return MPI_ERR_INTERN;
 }
