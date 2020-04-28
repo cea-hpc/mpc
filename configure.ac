@@ -398,7 +398,7 @@ fi
 AC_MSG_CHECKING([support for libunwind library])
 mpc_libunwind="no"
 
-MPC_DETECT_DEPENDENCY([libunwind.h], [libunwind], [unw_init_local], [UNW])
+MPC_DETECT_DEPENDENCY([libunwind.h], [unwind], [unw_init_local], [UNW])
 
 #AC_MSG_CHECKING([support for libunwind library])
 if test "x$mpc_dep_found" = "xyes"; then
