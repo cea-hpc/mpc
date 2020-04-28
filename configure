@@ -714,6 +714,9 @@ BUILD_ROMIO_EMBEDDED_TRUE
 MPC_MPIIO_ENABLED
 MPC_MPIIO_ENABLED_FALSE
 MPC_MPIIO_ENABLED_TRUE
+MPC_FORTRAN_ENABLED
+MPC_FORTRAN_ENABLED_FALSE
+MPC_FORTRAN_ENABLED_TRUE
 MPC_OPENMP_ENABLED
 MPC_OPENMP_ENABLED_FALSE
 MPC_OPENMP_ENABLED_TRUE
@@ -1036,6 +1039,7 @@ enable_threads
 enable_message_passing
 enable_mpi
 enable_openmp
+enable_fortran
 enable_mpiio
 enable_process_mode
 with_extls
@@ -1742,6 +1746,7 @@ Optional Features:
                           Compile MPC with Message Passing Support
   --enable-mpi            Compile MPC's MPI interface
   --enable-openmp         Compile MPC's OpenMP interface
+  --enable-fortran        Compile MPC Fortran support
   --enable-mpiio          Compile MPI IO support in MPC (romio)
   --enable-process-mode   Compile MPC in process mode
 
@@ -31051,6 +31056,35 @@ fi
 
 
 #
+# MPC_Fortran
+#
+
+# Check whether --enable-fortran was given.
+if test "${enable_fortran+set}" = set; then :
+  enableval=$enable_fortran; MPC_FORTRAN_ENABLED=$enableval
+else
+  MPC_FORTRAN_ENABLED=yes
+fi
+
+
+if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
+
+$as_echo "#define MPC_FORTRAN 1" >>confdefs.h
+
+fi
+
+ if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
+  MPC_FORTRAN_ENABLED_TRUE=
+  MPC_FORTRAN_ENABLED_FALSE='#'
+else
+  MPC_FORTRAN_ENABLED_TRUE='#'
+  MPC_FORTRAN_ENABLED_FALSE=
+fi
+
+
+
+
+#
 # MPI IO Support (ROMIO)
 #
 
@@ -31088,7 +31122,7 @@ else
   BUILD_ROMIO_EMBEDDED_FALSE=
 fi
 
- if true; then
+ if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
   BUILD_F77_BINDINGS_TRUE=
   BUILD_F77_BINDINGS_FALSE='#'
 else
@@ -31903,6 +31937,11 @@ fi
 if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
 	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_IO/src/libmpcio.la"
 	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_MPIIO_ENABLED"
+fi
+
+if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Fortran/src/libmpcfortran.la"
+	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_FORTRAN_ENABLED"
 fi
 
 MPC_MODULE_DEFINES=""
@@ -32784,6 +32823,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_OPENMP_ENABLED_TRUE}" && test -z "${MPC_OPENMP_ENABLED_FALSE}"; then
   as_fn_error $? "conditional \"MPC_OPENMP_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPC_FORTRAN_ENABLED_TRUE}" && test -z "${MPC_FORTRAN_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_FORTRAN_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_MPIIO_ENABLED_TRUE}" && test -z "${MPC_MPIIO_ENABLED_FALSE}"; then

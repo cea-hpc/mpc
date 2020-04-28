@@ -1677,6 +1677,24 @@ AC_SUBST([MPC_OPENMP_ENABLED])
 
 
 #
+# MPC_Fortran
+#
+
+AC_ARG_ENABLE([fortran],
+[AS_HELP_STRING([--enable-fortran],
+                [Compile MPC Fortran support])],
+[MPC_FORTRAN_ENABLED=$enableval],
+[MPC_FORTRAN_ENABLED=yes])
+
+if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
+        AC_DEFINE([MPC_FORTRAN], [1], [MPC_Fortran module was enabled])
+fi
+
+AM_CONDITIONAL([MPC_FORTRAN_ENABLED], [test "x${MPC_FORTRAN_ENABLED}" = "xyes"])
+AC_SUBST([MPC_FORTRAN_ENABLED])
+
+
+#
 # MPI IO Support (ROMIO)
 #
 
@@ -1696,7 +1714,7 @@ AM_CONDITIONAL([MPC_MPIIO_ENABLED], [test "x${MPC_MPIIO_ENABLED}" = "xyes"])
 AC_SUBST([MPC_MPIIO_ENABLED])
 
 AM_CONDITIONAL([BUILD_ROMIO_EMBEDDED], [true])
-AM_CONDITIONAL([BUILD_F77_BINDINGS], [true])
+AM_CONDITIONAL([BUILD_F77_BINDINGS], [test "x${MPC_FORTRAN_ENABLED}" = "xyes"])
 AM_CONDITIONAL([BUILD_MPIO_REQUEST], [false])
 AM_CONDITIONAL([BUILD_MPIO_ERRHAN], [true])
 AM_CONDITIONAL([MPIO_GLUE_DEFAULT], [false])
@@ -2050,6 +2068,11 @@ fi
 if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
 	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_IO/src/libmpcio.la"
 	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_MPIIO_ENABLED"
+fi
+
+if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Fortran/src/libmpcfortran.la"
+	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_FORTRAN_ENABLED"
 fi
 
 MPC_MODULE_DEFINES=""

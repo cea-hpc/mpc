@@ -1,5 +1,5 @@
 AM_CPPFLAGS =  -I$(abs_top_builddir)/ -I$(abs_top_srcdir)/src/MPC_Message_Passing/include/ -I$(abs_top_srcdir)/src/include/ -I$(abs_top_builddir)/src/MPC_IO/include/
-AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_MPI/include/ -I$(abs_top_srcdir)/src/MPC_Common/include/ -I$(abs_top_builddir) @MPC_MODULE_DEFINES@
+AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_MPI/include/ -I$(abs_top_srcdir)/src/MPC_Fortran/include/ -I$(abs_top_srcdir)/src/MPC_Common/include/ -I$(abs_top_builddir) @MPC_MODULE_DEFINES@
 AM_CPPFLAGS += -I$(abs_top_builddir)/src/MPC_Arch/include/ -I$(abs_top_srcdir)/src/MPC_Arch/include/
 
 AM_FCFLAGS=-I$(abs_top_builddir)/src/MPC_Fortran/src/ @MPC_MODULE_DEFINES@
@@ -21,7 +21,7 @@ clean-local:
 	rm -f $(builddir)/*.mod
 	rm -f $(builddir)/genfortraniface
 
-FORTRAN_MOD_FILES=mpi_constants.f90 mpi_sizeofs.f90 mpi_base.f90 mpi.f90 mpi_f08_ctypes.f90 mpi_f08_types.f90 mpi_f08_constants.f90 mpi_f08_c.f90 mpi_f08.f90 mpi_f08_c_iface.c mpif_iface.c
+FORTRAN_MOD_FILES=mpi_constants.f90 mpi_sizeofs.f90 mpi_base.f90 mpi.f90 mpi_f08_ctypes.f90 mpi_f08_types.f90 mpi_f08_constants.f90 mpi_f08_c.f90 mpi_f08.f90 mpi_f08_c_iface.c
 
 if HAVE_PYTHON
 
@@ -60,7 +60,7 @@ predef_types_08.lo: mpi_f08.lo
 
 predef_types.lo: mpi.lo
 
-libmpcfortran_la_SOURCES = $(FORTRAN_MOD_FILES) predef_types.f90 predef_types_08.f90 omp.f90
+libmpcfortran_la_SOURCES = $(FORTRAN_MOD_FILES) predef_types.f90 predef_types_08.f90 omp.f90 mpc_fortran_helpers.c mpc_fortran.c
 libmpcfortran_la_LIBADD = $(abs_top_builddir)/src/MPC_MPI/src/libmpcmpi.la
 
 
@@ -68,4 +68,5 @@ libmpcfortran_la_LIBADD = $(abs_top_builddir)/src/MPC_MPI/src/libmpcmpi.la
 install-data-local:
 	test -d $(pkgincludedir)/fortran/ || mkdir $(pkgincludedir)/fortran/
 	install -m 0644 -D $(builddir)/*.mod $(pkgincludedir)/fortran/
+	install -m 0644 -D $(builddir)/*.h $(pkgincludedir)/fortran/
 

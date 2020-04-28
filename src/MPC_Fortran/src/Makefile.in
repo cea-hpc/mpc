@@ -141,9 +141,10 @@ libmpcfortran_la_DEPENDENCIES =  \
 	$(abs_top_builddir)/src/MPC_MPI/src/libmpcmpi.la
 am__objects_1 = mpi_constants.lo mpi_sizeofs.lo mpi_base.lo mpi.lo \
 	mpi_f08_ctypes.lo mpi_f08_types.lo mpi_f08_constants.lo \
-	mpi_f08_c.lo mpi_f08.lo mpi_f08_c_iface.lo mpif_iface.lo
+	mpi_f08_c.lo mpi_f08.lo mpi_f08_c_iface.lo
 am_libmpcfortran_la_OBJECTS = $(am__objects_1) predef_types.lo \
-	predef_types_08.lo omp.lo
+	predef_types_08.lo omp.lo mpc_fortran_helpers.lo \
+	mpc_fortran.lo
 libmpcfortran_la_OBJECTS = $(am_libmpcfortran_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -344,6 +345,7 @@ MPC_DEFAULT_C_COMPILER = @MPC_DEFAULT_C_COMPILER@
 MPC_DEFAULT_FC_COMPILER = @MPC_DEFAULT_FC_COMPILER@
 MPC_ENABLE_SHELL_COLORS = @MPC_ENABLE_SHELL_COLORS@
 MPC_FORTRAN_COMPILER_LIST = @MPC_FORTRAN_COMPILER_LIST@
+MPC_FORTRAN_ENABLED = @MPC_FORTRAN_ENABLED@
 MPC_GENERATION_DATE = @MPC_GENERATION_DATE@
 MPC_HAVE_DMTCP = @MPC_HAVE_DMTCP@
 MPC_HAVE_PROFILER = @MPC_HAVE_PROFILER@
@@ -492,14 +494,15 @@ AM_CPPFLAGS = -I$(abs_top_builddir)/ \
 	-I$(abs_top_srcdir)/src/include/ \
 	-I$(abs_top_builddir)/src/MPC_IO/include/ \
 	-I$(abs_top_srcdir)/src/MPC_MPI/include/ \
+	-I$(abs_top_srcdir)/src/MPC_Fortran/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_builddir) @MPC_MODULE_DEFINES@ \
 	-I$(abs_top_builddir)/src/MPC_Arch/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Arch/include/
 AM_FCFLAGS = -I$(abs_top_builddir)/src/MPC_Fortran/src/ @MPC_MODULE_DEFINES@
-FORTRAN_MOD_FILES = mpi_constants.f90 mpi_sizeofs.f90 mpi_base.f90 mpi.f90 mpi_f08_ctypes.f90 mpi_f08_types.f90 mpi_f08_constants.f90 mpi_f08_c.f90 mpi_f08.f90 mpi_f08_c_iface.c mpif_iface.c
+FORTRAN_MOD_FILES = mpi_constants.f90 mpi_sizeofs.f90 mpi_base.f90 mpi.f90 mpi_f08_ctypes.f90 mpi_f08_types.f90 mpi_f08_constants.f90 mpi_f08_c.f90 mpi_f08.f90 mpi_f08_c_iface.c
 lib_LTLIBRARIES = libmpcfortran.la
-libmpcfortran_la_SOURCES = $(FORTRAN_MOD_FILES) predef_types.f90 predef_types_08.f90 omp.f90
+libmpcfortran_la_SOURCES = $(FORTRAN_MOD_FILES) predef_types.f90 predef_types_08.f90 omp.f90 mpc_fortran_helpers.c mpc_fortran.c
 libmpcfortran_la_LIBADD = $(abs_top_builddir)/src/MPC_MPI/src/libmpcmpi.la
 all: all-am
 
@@ -579,8 +582,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_fortran.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_fortran_helpers.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpi_f08_c_iface.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpif_iface.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -880,6 +884,7 @@ predef_types.lo: mpi.lo
 install-data-local:
 	test -d $(pkgincludedir)/fortran/ || mkdir $(pkgincludedir)/fortran/
 	install -m 0644 -D $(builddir)/*.mod $(pkgincludedir)/fortran/
+	install -m 0644 -D $(builddir)/*.h $(pkgincludedir)/fortran/
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

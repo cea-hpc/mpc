@@ -27,6 +27,11 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Arch/include/ -I$(abs_top_srcdir)/src
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Message_Passing/include/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_builddir)/src/include/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Launch/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
 
+if MPC_FORTRAN_ENABLED
+     AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Fortran/include/
+endif
+
+
 SUBDIRS=romio
 
 lib_LTLIBRARIES = libmpcio.la

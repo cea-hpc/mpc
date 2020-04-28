@@ -844,24 +844,6 @@ int MPI_Pcontrol (const int, ...);
 /* Communicator Naming (MPI-2 functions) */
 int MPI_Comm_get_name (MPI_Comm, char *, int *);
 int MPI_Comm_set_name (MPI_Comm, char *);
-
-/* Fortran Converters */
-MPI_Comm MPI_Comm_f2c(MPI_Fint comm);
-MPI_Fint MPI_Comm_c2f(MPI_Comm comm);
-MPI_Datatype MPI_Type_f2c(MPI_Fint datatype);
-MPI_Fint MPI_Type_c2f(MPI_Datatype datatype);
-MPI_Group MPI_Group_f2c(MPI_Fint group);
-MPI_Fint MPI_Group_c2f(MPI_Group group);
-MPI_Request MPI_Request_f2c(MPI_Fint request);
-MPI_Fint MPI_Request_c2f(MPI_Request request);
-MPI_Win MPI_Win_f2c(MPI_Fint win);
-MPI_Fint MPI_Win_c2f(MPI_Win win);
-MPI_Op MPI_Op_f2c(MPI_Fint op);
-MPI_Fint MPI_Op_c2f(MPI_Op op);
-MPI_Info MPI_Info_f2c(MPI_Fint info);
-MPI_Fint MPI_Info_c2f(MPI_Info info);
-MPI_Errhandler MPI_Errhandler_f2c(MPI_Fint errhandler);
-MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler);
   
 /* Neighbors collectives */
 int MPI_Neighbor_allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
@@ -1622,24 +1604,6 @@ int PMPI_Pcontrol (const int, ...);
 /* Communicator Naming (MPI-2 functions) */
 int PMPI_Comm_get_name (MPI_Comm, char *, int *);
 int PMPI_Comm_set_name (MPI_Comm, char *);
-
-/* Fortran Converters */
-MPI_Comm PMPI_Comm_f2c(MPI_Fint comm);
-MPI_Fint PMPI_Comm_c2f(MPI_Comm comm);
-MPI_Datatype PMPI_Type_f2c(MPI_Fint datatype);
-MPI_Fint PMPI_Type_c2f(MPI_Datatype datatype);
-MPI_Group PMPI_Group_f2c(MPI_Fint group);
-MPI_Fint PMPI_Group_c2f(MPI_Group group);
-MPI_Request PMPI_Request_f2c(MPI_Fint request);
-MPI_Fint PMPI_Request_c2f(MPI_Request request);
-MPI_Win PMPI_Win_f2c(MPI_Fint win);
-MPI_Fint PMPI_Win_c2f(MPI_Win win);
-MPI_Op PMPI_Op_f2c(MPI_Fint op);
-MPI_Fint PMPI_Op_c2f(MPI_Op op);
-MPI_Info PMPI_Info_f2c(MPI_Fint info);
-MPI_Fint PMPI_Info_c2f(MPI_Info info);
-MPI_Errhandler PMPI_Errhandler_f2c(MPI_Fint errhandler);
-MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler);
   
 /* Neighbors collectives */
 int PMPI_Neighbor_allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
@@ -1941,6 +1905,7 @@ int MPI_Mprobe(int , int , MPI_Comm , MPI_Message *, MPI_Status *);
 int MPI_Mrecv(void *, int , MPI_Datatype , MPI_Message *, MPI_Status *);
 int MPI_Imrecv(void *, int , MPI_Datatype , MPI_Message *, MPI_Request *);
 int MPI_Improbe(int , int , MPI_Comm , int *, MPI_Message *, MPI_Status *);
+
 /************************************************************************/
 /* END NOT IMPLEMENTED                                                     */
 /************************************************************************/
@@ -1952,6 +1917,10 @@ int MPI_Improbe(int , int , MPI_Comm , int *, MPI_Message *, MPI_Status *);
 
 #ifdef MPC_MPIIO_ENABLED
 #include <mpio.h>
+#endif
+
+#ifdef MPC_FORTRAN_ENABLED
+#include <mpc_fortran.h>
 #endif
 
 

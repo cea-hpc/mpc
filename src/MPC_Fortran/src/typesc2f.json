@@ -61,6 +61,7 @@
     "int*": "INTEGER",
     "int[]": "INTEGER !!VAR!!(*)",
     "int[][3]": "INTEGER !!VAR!!(3,*)",
-    "void*": "EXTERNAL"
+    "void*": "EXTERNAL",
+    "char**": "EXTERNAL"
 }
 

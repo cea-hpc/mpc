@@ -782,6 +782,9 @@
 /* MPC color output was enabled */
 #undef MPC_ENABLE_SHELL_COLORS
 
+/* MPC_Fortran module was enabled */
+#undef MPC_FORTRAN
+
 /* libunwind support is enabled */
 #undef MPC_HAVE_LIBUNWIND
 

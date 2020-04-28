@@ -2047,6 +2047,9 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Register_datarep_c
 
+! MPI_Type_c2f NOT IMPLEMENTED in MPC
+
+
 
 function MPI_File_read_ordered_c( fh,&
 buf,&
@@ -2789,6 +2792,9 @@ integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
 end function MPI_Allgatherv_c
+
+! MPI_Info_c2f NOT IMPLEMENTED in MPC
+
 
 
 function MPI_File_get_position_shared_c( fh,&
@@ -3730,6 +3736,9 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_File_iwrite_at_c
 
+! MPI_Group_c2f NOT IMPLEMENTED in MPC
+
+
 
 function MPI_Group_intersection_c( group1,&
 group2,&
@@ -3897,6 +3906,9 @@ integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
 end function MPI_Info_get_nthkey_c
+
+! MPI_Request_c2f NOT IMPLEMENTED in MPC
+
 
 
 function MPI_File_write_at_all_begin_c( fh,&
@@ -5220,6 +5232,9 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Close_port_c
 
+! MPI_Errhandler_c2f NOT IMPLEMENTED in MPC
+
+
 
 function MPI_File_close_c( fh,&
 ierror)&
@@ -5263,6 +5278,9 @@ integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
 end function MPI_Type_create_subarray_c
+
+! MPI_Comm_c2f NOT IMPLEMENTED in MPC
+
 
 
 function MPI_File_delete_c( filename,&
@@ -5772,6 +5790,9 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_File_write_ordered_c
 
+! MPI_Win_c2f NOT IMPLEMENTED in MPC
+
+
 
 function MPI_Group_range_excl_c( group,&
 n,&
@@ -6063,6 +6084,9 @@ integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
 end function MPI_Win_test_c
+
+! MPI_Op_c2f NOT IMPLEMENTED in MPC
+
 
 
 function MPI_Type_match_size_c( typeclass,&

@@ -46,50 +46,9 @@
 #include <sctk_ptl_offcoll.h>
 #endif
 
-char *sctk_char_fortran_to_c(char *buf, int size, char **free_ptr)
-{
-	char *   tmp;
-	long int i;
-
-	tmp = sctk_malloc(size + 1);
-	assume(tmp != NULL);
-	*free_ptr = tmp;
-
-	for(i = 0; i < size; i++)
-	{
-		tmp[i] = buf[i];
-	}
-	tmp[i] = '\0';
-
-	/* Trim */
-
-	while(*tmp == ' ')
-	{
-		tmp++;
-	}
-
-	size_t len = strlen(tmp);
-
-	char *begin = tmp;
-
-	while( (tmp[len - 1] == ' ') && (&tmp[len] != begin) )
-	{
-		tmp[len - 1] = '\0';
-		len--;
-	}
-
-	return tmp;
-}
-
-void sctk_char_c_to_fortran(char *buf, int size)
-{
-	size_t i;
-
-	for(i = strlen(buf); i < size; i++)
-	{
-		buf[i] = ' ';
-	}
-}
+/*******************
+ * FORTRAN SUPPORT *
+ *******************/
 
 /* Now Define Special Fortran pointers */
 
@@ -267,15 +226,6 @@ static inline void fortran_check_binds_resolve()
 
 	mpc_common_spinlock_unlock(&did_resolve_fortran_binds_lock);
 }
-
-#undef ffunc
-#define ffunc(a)    a ## _
-#include <mpc_mpi_fortran.h>
-
-#undef ffunc
-#define ffunc(a)    a ## __
-#include <mpc_mpi_fortran.h>
-#undef ffunc
 
 /*
  * INTERNAL FUNCTIONS
@@ -21754,90 +21704,6 @@ int MPC_Mpi_win_dup_fn(__UNUSED__ MPI_Comm comm, __UNUSED__ int comm_keyval, __U
 	*flag = 1;
 	*(void **)attribute_val_out = attribute_val_in;
 	return MPI_SUCCESS;
-}
-
-/*************************************
- *  MPI-2 : Fortran handle conversion *
- **************************************/
-
-MPI_Comm PMPI_Comm_f2c(MPI_Fint comm)
-{
-	return (MPI_Comm)comm;
-}
-
-MPI_Fint PMPI_Comm_c2f(MPI_Comm comm)
-{
-	return (MPI_Fint)comm;
-}
-
-MPI_Datatype PMPI_Type_f2c(MPI_Fint datatype)
-{
-	return (MPI_Datatype)datatype;
-}
-
-MPI_Fint PMPI_Type_c2f(MPI_Datatype datatype)
-{
-	return (MPI_Fint)datatype;
-}
-
-MPI_Group PMPI_Group_f2c(MPI_Fint group)
-{
-	return (MPI_Group)group;
-}
-
-MPI_Fint PMPI_Group_c2f(MPI_Group group)
-{
-	return (MPI_Fint)group;
-}
-
-MPI_Request PMPI_Request_f2c(MPI_Fint request)
-{
-	return (MPI_Request)request;
-}
-
-MPI_Fint PMPI_Request_c2f(MPI_Request request)
-{
-	return (MPI_Fint)request;
-}
-
-MPI_Win PMPI_Win_f2c(MPI_Fint win)
-{
-	return (MPI_Win)win;
-}
-
-MPI_Fint PMPI_Win_c2f(MPI_Win win)
-{
-	return (MPI_Fint)win;
-}
-
-MPI_Op PMPI_Op_f2c(MPI_Fint op)
-{
-	return (MPI_Op)op;
-}
-
-MPI_Fint PMPI_Op_c2f(MPI_Op op)
-{
-	return (MPI_Fint)op;
-}
-
-MPI_Info PMPI_Info_f2c(MPI_Fint info)
-{
-	return (MPI_Info)info;
-}
-
-MPI_Fint PMPI_Info_c2f(MPI_Info info)
-{
-	return (MPI_Fint)info;
-}
-
-MPI_Errhandler PMPI_Errhandler_f2c(MPI_Fint errhandler)
-{
-	return (MPI_Errhandler)errhandler;
-}
-
-MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler)
-{
-	return (MPI_Fint)errhandler;
 }
 
 /***********************************

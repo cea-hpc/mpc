@@ -1102,7 +1102,7 @@ f.close()
 #
 #
 
-def genCallArgs( argArray, ierror = 0, fortranskip=1 ):
+def genCallArgs( argArray, ierror = 0, fortranskip=1, pointer_args=0 ):
     ret = "( "
     length = len( argArray )
     #Is there an errror flag to skip
@@ -1114,7 +1114,19 @@ def genCallArgs( argArray, ierror = 0, fortranskip=1 ):
 
     for i in range( 0, length):
         arg = argArray[i]
-        ret += arg[1]
+        atype = arg[0]
+        if len(arg) >= 3:
+            intent= arg[2]
+        else:
+	    	intent ="notset"
+
+        if pointer_args and intent == "in" and (atype.count("*") == 0):
+            add="*"
+            print("ADD")
+        else:
+            add=""
+
+        ret += add + arg[1]
         if i < ( length - 1 ):
                 if fortranskip == 1:
                         ret += ",&\n"
@@ -1742,7 +1754,7 @@ def containsVoid( args ):
     
     return 0
 
-def gencfunc( mpi_func, args , prefix="", suffix = "", lower = 0, rewrite_void = 0, handle_char=0):
+def gencfunc( mpi_func, args , prefix="", suffix = "", lower = 0, rewrite_void = 0, handle_char=0, all_pointers=0):
     rtype = "void"
     ret = ""
     if lower == 1:
@@ -1755,6 +1767,10 @@ def gencfunc( mpi_func, args , prefix="", suffix = "", lower = 0, rewrite_void =
         arg = args[i]
         atype = arg[0]
         aname = arg[1]
+        if len(arg) >= 3:
+            intent= arg[2]
+        else:
+	    	intent ="notset"
         if atype.find("bool") != -1:
                 atype = atype.replace("bool", "int*")
         if rewrite_void == 1:
@@ -1766,11 +1782,16 @@ def gencfunc( mpi_func, args , prefix="", suffix = "", lower = 0, rewrite_void =
         if aname == "ierror":
             atype = "int *"
             aname = "ierror"
-        ret += atype + " " + aname
         if handle_char == 1:
                 if atype == "char*":
                         ret += " CHAR_MIXED(size_{0})".format(aname)
                         suffixed_char_size += " CHAR_END(size_{0}),".format(aname)
+        if all_pointers:
+            if intent == "in":
+                atype= atype+" *"
+        ret += atype + " " + aname
+
+
         if i != (len(args) - 1):
             ret += ",\n"
 
@@ -1781,7 +1802,7 @@ def gencfunc( mpi_func, args , prefix="", suffix = "", lower = 0, rewrite_void =
     return ret
 
 
-def fortran_c_wrapper_gen( mpi_func, args, prefix="",suffix="", lower_names=1, rewrite_void=0, handle_char=0):
+def fortran_c_wrapper_gen( mpi_func, args, prefix="",suffix="", lower_names=1, rewrite_void=0, handle_char=0, all_pointers=0):
     ret = ""
     if MPIFunctionsisPresentinMPC( mpi_func ) == 0:
         ret += "\n"
@@ -1802,7 +1823,7 @@ def fortran_c_wrapper_gen( mpi_func, args, prefix="",suffix="", lower_names=1, r
     #ret += ";\n\n"
     
     #Gen Wrapper function
-    ret += gencfunc( mpi_func, args, prefix, suffix, lower_names, rewrite_void, handle_char) 
+    ret += gencfunc( mpi_func, args, prefix, suffix, lower_names, rewrite_void, handle_char, all_pointers=all_pointers) 
     ret += "\n{\n"
 
     #EMIT CONVERSIONS
@@ -1820,7 +1841,7 @@ def fortran_c_wrapper_gen( mpi_func, args, prefix="",suffix="", lower_names=1, r
 		ret += "char *tmp_{0}, *ptr_{0};\n".format(aname)
 		ret += "tmp_{0} = sctk_char_fortran_to_c({0}, size_{0}, &ptr_{0});\n".format(aname)
     
-    ret += "*ierror = " + mpi_func + genCallArgs(args, 0 , 0) + ";\n"
+    ret += "*ierror = " + mpi_func + genCallArgs(args, 0 , 0, pointer_args=all_pointers) + ";\n"
 
     #EMIT CONVERSIONS
     for i in range(len(args)):
@@ -1890,103 +1911,3 @@ f.write( module_file_data );
 
 f.close()
 
-
-
-print "\n###################################"
-print "Generating the c Fortran Interface"
-print "#####################################\n"
-
-module_file_data = """
-#include <mpi.h>
-#include <sctk_alloc.h>
-
-static inline char *sctk_char_fortran_to_c(char *buf, int size, char **free_ptr)
-{
-	char *   tmp;
-	long int i;
-
-	tmp = sctk_malloc(size + 1);
-	assume(tmp != NULL);
-	*free_ptr = tmp;
-
-	for(i = 0; i < size; i++)
-	{
-		tmp[i] = buf[i];
-	}
-	tmp[i] = '\0';
-
-	/* Trim */
-
-	while(*tmp == ' ')
-	{
-		tmp++;
-	}
-
-	size_t len = strlen(tmp);
-
-	char *begin = tmp;
-
-	while( (tmp[len - 1] == ' ') && (&tmp[len] != begin) )
-	{
-		tmp[len - 1] = '\0';
-		len--;
-	}
-
-	return tmp;
-}
-
-static inline void sctk_char_c_to_fortran(char *buf, int size)
-{
-	size_t i;
-
-	for(i = strlen(buf); i < size; i++)
-	{
-		buf[i] = ' ';
-	}
-}
-#if defined(USE_CHAR_MIXED)
-#define CHAR_END(thename)
-#define CHAR_MIXED(thename) , long int thename
-#else
-#define CHAR_END(thename) long int thename
-#define CHAR_MIXED(thename)
-#endif
-
-
-"""
-
-
-
-for mpi_func,args in mpi_interface.items():
-    if (mpi_func.find("_c2f") != -1) :
-        continue 
-
-    # Let ROMIO generate its bindings
-    if (mpi_func.find("MPI_File") != -1) :
-        continue 
-
-    module_file_data += "\n\n /*********" + mpi_func + "**************/\n\n"
-
-    # Generate function body
-    did_skip = 0
-
-    (data, skip) = fortran_c_wrapper_gen( mpi_func, args, prefix="p", suffix="_", handle_char=1)
-    module_file_data += data
-    did_skip |= skip
-    (data, skip) = fortran_c_wrapper_gen( mpi_func, args, prefix="p", suffix="__",handle_char=1)
-    module_file_data += data
-    did_skip |= skip
-
-    if not did_skip:
-        # Generate weak redirections
-        module_file_data += "\n#pragma weak {0}_=p{0}_\n".format(mpi_func.lower())
-        module_file_data += "\n#pragma weak {0}__=p{0}__\n".format(mpi_func.lower())
-"""
- Open Output C FILE
-"""
-
-f = open("mpif_iface.c", "w" )
-
-f.write( module_file_data );
-
-f.close()
