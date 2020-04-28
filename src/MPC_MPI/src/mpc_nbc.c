@@ -5757,7 +5757,7 @@ PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root,
 }
 
 int
-PMPI_Igather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+PMPI_Igather (const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	     void *recvbuf, int recvcnt, MPI_Datatype recvtype,
 	     int root, MPI_Comm comm, MPI_Request * request)
 {
@@ -5798,8 +5798,8 @@ PMPI_Igather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 }
 
 int
-PMPI_Igatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
-	      void *recvbuf, int *recvcnts, int *displs,
+PMPI_Igatherv (const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+	      void *recvbuf, const int *recvcnts, const int *displs,
 	      MPI_Datatype recvtype, int root, MPI_Comm comm,
 	      MPI_Request *request)
 {
@@ -5835,7 +5835,7 @@ res =
 }
 
 int
-PMPI_Iscatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+PMPI_Iscatter (const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	      void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root,
 	      MPI_Comm comm, MPI_Request * request)
 {
@@ -5876,8 +5876,9 @@ PMPI_Iscatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 }
 
 int
-PMPI_Iscatterv (void *sendbuf, int *sendcnts, int *displs,
-	       MPI_Datatype sendtype, void *recvbuf, int recvcnt,
+PMPI_Iscatterv (const void *sendbuf, const int *sendcnts, const int *displs,
+	       MPI_Datatype sendtype, void *recvbuf,
+          int recvcnt,
 	       MPI_Datatype recvtype, int root, MPI_Comm comm, 
 	       MPI_Request * request)
 {
@@ -5912,7 +5913,7 @@ PMPI_Iscatterv (void *sendbuf, int *sendcnts, int *displs,
 }
 
 int
-PMPI_Iallgather (void *sendbuf, int sendcount, MPI_Datatype sendtype,
+PMPI_Iallgather (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		void *recvbuf, int recvcount, MPI_Datatype recvtype,
 		MPI_Comm comm, MPI_Request *request)
 {
@@ -5946,8 +5947,8 @@ PMPI_Iallgather (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 }
 
 int
-PMPI_Iallgatherv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
-		 void *recvbuf, int *recvcounts, int *displs,
+PMPI_Iallgatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+		 void *recvbuf, const int *recvcounts, const int *displs,
 		 MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
@@ -5980,7 +5981,7 @@ PMPI_Iallgatherv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 }
 
 int
-PMPI_Ialltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
+PMPI_Ialltoall (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	       void *recvbuf, int recvcount, MPI_Datatype recvtype,
 	       MPI_Comm comm, MPI_Request *request)
 {
@@ -6014,9 +6015,9 @@ PMPI_Ialltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 }
 
 int
-PMPI_Ialltoallv (void *sendbuf, int *sendcnts, int *sdispls,
-		MPI_Datatype sendtype, void *recvbuf, int *recvcnts,
-		int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
+PMPI_Ialltoallv (const void *sendbuf, const int *sendcnts, const int *sdispls,
+		MPI_Datatype sendtype, void *recvbuf, const int *recvcnts,
+		const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
   sctk_nodebug ("Entering IALLTOALLV %d", comm);
@@ -6047,8 +6048,8 @@ PMPI_Ialltoallv (void *sendbuf, int *sendcnts, int *sdispls,
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
-int PMPI_Ialltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sendtypes, 
-				   void *recvbuf, int *recvcnts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Request *request)
+int PMPI_Ialltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls, const MPI_Datatype *sendtypes, 
+				   void *recvbuf, const int *recvcnts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
   sctk_nodebug ("Entering IALLTOALLW %d", comm);
@@ -6081,7 +6082,7 @@ int PMPI_Ialltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *se
 }
 
 int
-PMPI_Ireduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+PMPI_Ireduce (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	     MPI_Op op, int root, MPI_Comm comm, MPI_Request *request)
 {
 
@@ -6122,7 +6123,7 @@ PMPI_Ireduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 
 
 int
-PMPI_Iallreduce (void *sendbuf, void *recvbuf, int count,
+PMPI_Iallreduce (const void *sendbuf, void *recvbuf, int count,
 		MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
@@ -6153,7 +6154,7 @@ PMPI_Iallreduce (void *sendbuf, void *recvbuf, int count,
 }
 
 int
-PMPI_Ireduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
+PMPI_Ireduce_scatter (const void *sendbuf, void *recvbuf, const int *recvcnts,
 		     MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
@@ -6186,7 +6187,7 @@ PMPI_Ireduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 }
 
 int
-PMPI_Iscan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+PMPI_Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	   MPI_Op op, MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
@@ -6216,7 +6217,7 @@ PMPI_Iscan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 }
 
 int
-PMPI_Ireduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
+PMPI_Ireduce_scatter_block (const void *sendbuf, void *recvbuf, int recvcnt,
 		     MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
@@ -6249,7 +6250,7 @@ PMPI_Ireduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
 }
 
 int
-PMPI_Iexscan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+PMPI_Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	   MPI_Op op, MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
