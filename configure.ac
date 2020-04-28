@@ -2139,6 +2139,9 @@ compiler_to_lang()
                         MPC_CPP_COMPILER_LIST+=" $1"
                 ;;
                 apfortran|gfortran|ifort|pgfortran|pgf77|flang)
+                        if test "x${MPC_FORTRAN_ENABLED}" = "xno"; then
+                                return
+                        fi
                         mpc_comp_type="fortran"
                         MPC_FORTRAN_COMPILER_LIST+=" $1"
                 ;;
@@ -2407,6 +2410,7 @@ MPC_CONFIG_RESULT="\
 # MPC_Thread........... $MPC_THREAD_ENABLED\n\
 # MPC_Message_passing.. $MPC_MESSAGE_PASSING_ENABLED\n\
 # MPC_MPI.............. $MPC_MPI_ENABLED\n\
+# MPC_Fortran.......... $MPC_FORTRAN_ENABLED\n\
 # MPC_MPIIO............ $MPC_MPIIO_ENABLED\n\
 #\n\
 ### COMPILERS ###\n\
