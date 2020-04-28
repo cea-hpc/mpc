@@ -1,5 +1,5 @@
-#ifndef MPC_FORTRAN
-#define MPC_FORTRAN
+#ifndef MPC_FORTRAN_H_
+#define MPC_FORTRAN_H_
 
 #include <mpc_mpi.h>
 
@@ -43,4 +43,4 @@ MPI_Fint PMPI_Info_c2f(MPI_Info info);
 MPI_Errhandler PMPI_Errhandler_f2c(MPI_Fint errhandler);
 MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler);
 
-#endif /* MPC_FORTRAN */
+#endif /* MPC_FORTRAN_H_ */
