@@ -775,7 +775,6 @@ int mpi_attr_delete_(MPI_Fint *comm, int *keyval, int *ierror)
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
 	*ierror = MPI_Attr_delete(c_comm, *keyval);
-	*comm   = PMPI_Comm_c2f(c_comm);
 }
 
 int mpi_attr_delete__(MPI_Fint *comm, int *keyval, int *ierror)
@@ -784,7 +783,6 @@ int mpi_attr_delete__(MPI_Fint *comm, int *keyval, int *ierror)
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
 	*ierror = MPI_Attr_delete(c_comm, *keyval);
-	*comm   = PMPI_Comm_c2f(c_comm);
 }
 
 int mpi_attr_get_(MPI_Fint *comm, int *keyval, void *attribute_val, int *flag, int *ierror)
@@ -809,7 +807,6 @@ int mpi_attr_put_(MPI_Fint *comm, int *keyval, void *attribute_val, int *ierror)
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
 	*ierror = MPI_Attr_put(c_comm, *keyval, attribute_val);
-	*comm   = PMPI_Comm_c2f(c_comm);
 }
 
 int mpi_attr_put__(MPI_Fint *comm, int *keyval, void *attribute_val, int *ierror)
@@ -818,7 +815,6 @@ int mpi_attr_put__(MPI_Fint *comm, int *keyval, void *attribute_val, int *ierror
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
 	*ierror = MPI_Attr_put(c_comm, *keyval, attribute_val);
-	*comm   = PMPI_Comm_c2f(c_comm);
 }
 
 int mpi_barrier_(MPI_Fint *comm, int *ierror)
@@ -1359,7 +1355,6 @@ int mpi_comm_delete_attr_(MPI_Fint *comm, int *comm_keyval, int *ierror)
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
 	*ierror = MPI_Comm_delete_attr(c_comm, *comm_keyval);
-	*comm   = PMPI_Comm_c2f(c_comm);
 }
 
 int mpi_comm_delete_attr__(MPI_Fint *comm, int *comm_keyval, int *ierror)
@@ -1368,7 +1363,6 @@ int mpi_comm_delete_attr__(MPI_Fint *comm, int *comm_keyval, int *ierror)
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
 	*ierror = MPI_Comm_delete_attr(c_comm, *comm_keyval);
-	*comm   = PMPI_Comm_c2f(c_comm);
 }
 
 int mpi_comm_disconnect_(MPI_Fint *comm, int *ierror)
@@ -1701,7 +1695,6 @@ int mpi_comm_set_attr_(MPI_Fint *comm, int *comm_keyval, void *attribute_val, in
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
 	*ierror = MPI_Comm_set_attr(c_comm, *comm_keyval, attribute_val);
-	*comm   = PMPI_Comm_c2f(c_comm);
 }
 
 int mpi_comm_set_attr__(MPI_Fint *comm, int *comm_keyval, void *attribute_val, int *ierror)
@@ -1710,7 +1703,6 @@ int mpi_comm_set_attr__(MPI_Fint *comm, int *comm_keyval, void *attribute_val, i
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
 	*ierror = MPI_Comm_set_attr(c_comm, *comm_keyval, attribute_val);
-	*comm   = PMPI_Comm_c2f(c_comm);
 }
 
 int mpi_comm_set_errhandler_(MPI_Fint *comm, MPI_Fint *errhandler, int *ierror)
@@ -1720,7 +1712,6 @@ int mpi_comm_set_errhandler_(MPI_Fint *comm, MPI_Fint *errhandler, int *ierror)
 	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c(*errhandler);
 
 	*ierror = MPI_Comm_set_errhandler(c_comm, c_errhandler);
-	*comm   = PMPI_Comm_c2f(c_comm);
 }
 
 int mpi_comm_set_errhandler__(MPI_Fint *comm, MPI_Fint *errhandler, int *ierror)
@@ -1730,7 +1721,6 @@ int mpi_comm_set_errhandler__(MPI_Fint *comm, MPI_Fint *errhandler, int *ierror)
 	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c(*errhandler);
 
 	*ierror = MPI_Comm_set_errhandler(c_comm, c_errhandler);
-	*comm   = PMPI_Comm_c2f(c_comm);
 }
 
 int mpi_comm_set_info_(MPI_Fint *comm, MPI_Fint *info, int *ierror)
@@ -1740,7 +1730,6 @@ int mpi_comm_set_info_(MPI_Fint *comm, MPI_Fint *info, int *ierror)
 	MPI_Info c_info = PMPI_Info_f2c(*info);
 
 	*ierror = MPI_Comm_set_info(c_comm, c_info);
-	*comm   = PMPI_Comm_c2f(c_comm);
 }
 
 int mpi_comm_set_info__(MPI_Fint *comm, MPI_Fint *info, int *ierror)
@@ -1750,7 +1739,6 @@ int mpi_comm_set_info__(MPI_Fint *comm, MPI_Fint *info, int *ierror)
 	MPI_Info c_info = PMPI_Info_f2c(*info);
 
 	*ierror = MPI_Comm_set_info(c_comm, c_info);
-	*comm   = PMPI_Comm_c2f(c_comm);
 }
 
 int mpi_comm_set_name_(MPI_Fint *comm, const char *comm_name CHAR_MIXED(size_comm_name), int *ierror CHAR_END(size_comm_name) )
@@ -1762,7 +1750,6 @@ int mpi_comm_set_name_(MPI_Fint *comm, const char *comm_name CHAR_MIXED(size_com
 	tmp_comm_name = char_fortran_to_c( (char *)comm_name, size_comm_name, &ptr_comm_name);
 
 	*ierror = MPI_Comm_set_name(c_comm, tmp_comm_name);
-	*comm   = PMPI_Comm_c2f(c_comm);
 	sctk_free(ptr_comm_name);
 }
 
@@ -1775,7 +1762,6 @@ int mpi_comm_set_name__(MPI_Fint *comm, const char *comm_name CHAR_MIXED(size_co
 	tmp_comm_name = char_fortran_to_c( (char *)comm_name, size_comm_name, &ptr_comm_name);
 
 	*ierror = MPI_Comm_set_name(c_comm, tmp_comm_name);
-	*comm   = PMPI_Comm_c2f(c_comm);
 	sctk_free(ptr_comm_name);
 }
 
@@ -2161,24 +2147,10 @@ int mpi_exscan_init__(const void *sendbuf, void *recvbuf, int *count, MPI_Fint *
 
 int mpi_f_sync_reg_(void *buf)
 {
-/* MPI_F_sync_reg */
-	if(buffer_is_bottom( (void *)buf) )
-	{
-		buf = MPI_BOTTOM;
-	}
-
-	int ret = MPI_F_sync_reg(buf);
 }
 
 int mpi_f_sync_reg__(void *buf)
 {
-/* MPI_F_sync_reg */
-	if(buffer_is_bottom( (void *)buf) )
-	{
-		buf = MPI_BOTTOM;
-	}
-
-	int ret = MPI_F_sync_reg(buf);
 }
 
 int mpi_fetch_and_op_(const void *origin_addr, void *result_addr, MPI_Fint *datatype, int *target_rank, MPI_Aint *target_disp, MPI_Fint *op, MPI_Fint *win, int *ierror)
@@ -2656,8 +2628,7 @@ int mpi_grequest_complete_(MPI_Fint *request, int *ierror)
 /* MPI_Grequest_complete */
 	MPI_Request c_request = PMPI_Request_f2c(*request);
 
-	*ierror  = MPI_Grequest_complete(c_request);
-	*request = PMPI_Request_c2f(c_request);
+	*ierror = MPI_Grequest_complete(c_request);
 }
 
 int mpi_grequest_complete__(MPI_Fint *request, int *ierror)
@@ -2665,8 +2636,7 @@ int mpi_grequest_complete__(MPI_Fint *request, int *ierror)
 /* MPI_Grequest_complete */
 	MPI_Request c_request = PMPI_Request_f2c(*request);
 
-	*ierror  = MPI_Grequest_complete(c_request);
-	*request = PMPI_Request_c2f(c_request);
+	*ierror = MPI_Grequest_complete(c_request);
 }
 
 int mpi_grequest_start_(MPI_Grequest_query_function *query_fn, MPI_Grequest_free_function *free_fn, MPI_Grequest_cancel_function *cancel_fn, void *extra_state, MPI_Fint *request, int *ierror)
@@ -3708,7 +3678,6 @@ int mpi_info_delete_(MPI_Fint *info, const char *key CHAR_MIXED(size_key), int *
 	tmp_key = char_fortran_to_c( (char *)key, size_key, &ptr_key);
 
 	*ierror = MPI_Info_delete(c_info, tmp_key);
-	*info   = PMPI_Info_c2f(c_info);
 	sctk_free(ptr_key);
 }
 
@@ -3721,7 +3690,6 @@ int mpi_info_delete__(MPI_Fint *info, const char *key CHAR_MIXED(size_key), int 
 	tmp_key = char_fortran_to_c( (char *)key, size_key, &ptr_key);
 
 	*ierror = MPI_Info_delete(c_info, tmp_key);
-	*info   = PMPI_Info_c2f(c_info);
 	sctk_free(ptr_key);
 }
 
@@ -3884,7 +3852,6 @@ int mpi_info_set_(MPI_Fint *info, const char *key CHAR_MIXED(size_key), const ch
 	tmp_value = char_fortran_to_c( (char *)value, size_value, &ptr_value);
 
 	*ierror = MPI_Info_set(c_info, tmp_key, tmp_value);
-	*info   = PMPI_Info_c2f(c_info);
 	sctk_free(ptr_key);
 	sctk_free(ptr_value);
 }
@@ -3900,34 +3867,45 @@ int mpi_info_set__(MPI_Fint *info, const char *key CHAR_MIXED(size_key), const c
 	tmp_value = char_fortran_to_c( (char *)value, size_value, &ptr_value);
 
 	*ierror = MPI_Info_set(c_info, tmp_key, tmp_value);
-	*info   = PMPI_Info_c2f(c_info);
 	sctk_free(ptr_key);
 	sctk_free(ptr_value);
 }
 
-int mpi_init_(int *argc, char ***argv, int *ierror)
+int mpi_init_(int *ierror)
 {
+	int *   argc = NULL;
+	char ***argv = NULL;
+
 /* MPI_Init */
 
 	*ierror = MPI_Init(argc, argv);
 }
 
-int mpi_init__(int *argc, char ***argv, int *ierror)
+int mpi_init__(int *ierror)
 {
+	int *   argc = NULL;
+	char ***argv = NULL;
+
 /* MPI_Init */
 
 	*ierror = MPI_Init(argc, argv);
 }
 
-int mpi_init_thread_(int *argc, char ***argv, int *required, int *provided, int *ierror)
+int mpi_init_thread_(int *required, int *provided, int *ierror)
 {
+	int *   argc = NULL;
+	char ***argv = NULL;
+
 /* MPI_Init_thread */
 
 	*ierror = MPI_Init_thread(argc, argv, *required, provided);
 }
 
-int mpi_init_thread__(int *argc, char ***argv, int *required, int *provided, int *ierror)
+int mpi_init_thread__(int *required, int *provided, int *ierror)
 {
+	int *   argc = NULL;
+	char ***argv = NULL;
+
 /* MPI_Init_thread */
 
 	*ierror = MPI_Init_thread(argc, argv, *required, provided);
@@ -6095,28 +6073,6 @@ int mpi_sendrecv_replace__(void *buf, int *count, MPI_Fint *datatype, int *dest,
 	*ierror = MPI_Sendrecv_replace(buf, *count, c_datatype, *dest, *sendtag, *source, *recvtag, c_comm, &c_status);
 }
 
-int mpi_sizeof_(void *x, int *size, int *ierror)
-{
-/* MPI_Sizeof */
-	if(buffer_is_bottom( (void *)x) )
-	{
-		x = MPI_BOTTOM;
-	}
-
-	*ierror = MPI_Sizeof(x, size);
-}
-
-int mpi_sizeof__(void *x, int *size, int *ierror)
-{
-/* MPI_Sizeof */
-	if(buffer_is_bottom( (void *)x) )
-	{
-		x = MPI_BOTTOM;
-	}
-
-	*ierror = MPI_Sizeof(x, size);
-}
-
 int mpi_ssend_(const void *buf, int *count, MPI_Fint *datatype, int *dest, int *tag, MPI_Fint *comm, int *ierror)
 {
 /* MPI_Ssend */
@@ -6792,8 +6748,7 @@ int mpi_type_delete_attr_(MPI_Fint *datatype, int *type_keyval, int *ierror)
 /* MPI_Type_delete_attr */
 	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
 
-	*ierror   = MPI_Type_delete_attr(c_datatype, *type_keyval);
-	*datatype = PMPI_Type_c2f(c_datatype);
+	*ierror = MPI_Type_delete_attr(c_datatype, *type_keyval);
 }
 
 int mpi_type_delete_attr__(MPI_Fint *datatype, int *type_keyval, int *ierror)
@@ -6801,8 +6756,7 @@ int mpi_type_delete_attr__(MPI_Fint *datatype, int *type_keyval, int *ierror)
 /* MPI_Type_delete_attr */
 	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
 
-	*ierror   = MPI_Type_delete_attr(c_datatype, *type_keyval);
-	*datatype = PMPI_Type_c2f(c_datatype);
+	*ierror = MPI_Type_delete_attr(c_datatype, *type_keyval);
 }
 
 int mpi_type_dup_(MPI_Fint *oldtype, MPI_Fint *newtype, int *ierror)
@@ -7082,8 +7036,7 @@ int mpi_type_set_attr_(MPI_Fint *datatype, int *type_keyval, void *attribute_val
 /* MPI_Type_set_attr */
 	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
 
-	*ierror   = MPI_Type_set_attr(c_datatype, *type_keyval, attribute_val);
-	*datatype = PMPI_Type_c2f(c_datatype);
+	*ierror = MPI_Type_set_attr(c_datatype, *type_keyval, attribute_val);
 }
 
 int mpi_type_set_attr__(MPI_Fint *datatype, int *type_keyval, void *attribute_val, int *ierror)
@@ -7091,8 +7044,7 @@ int mpi_type_set_attr__(MPI_Fint *datatype, int *type_keyval, void *attribute_va
 /* MPI_Type_set_attr */
 	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
 
-	*ierror   = MPI_Type_set_attr(c_datatype, *type_keyval, attribute_val);
-	*datatype = PMPI_Type_c2f(c_datatype);
+	*ierror = MPI_Type_set_attr(c_datatype, *type_keyval, attribute_val);
 }
 
 int mpi_type_set_name_(MPI_Fint *datatype, const char *type_name CHAR_MIXED(size_type_name), int *ierror CHAR_END(size_type_name) )
@@ -7103,8 +7055,7 @@ int mpi_type_set_name_(MPI_Fint *datatype, const char *type_name CHAR_MIXED(size
 
 	tmp_type_name = char_fortran_to_c( (char *)type_name, size_type_name, &ptr_type_name);
 
-	*ierror   = MPI_Type_set_name(c_datatype, tmp_type_name);
-	*datatype = PMPI_Type_c2f(c_datatype);
+	*ierror = MPI_Type_set_name(c_datatype, tmp_type_name);
 	sctk_free(ptr_type_name);
 }
 
@@ -7116,8 +7067,7 @@ int mpi_type_set_name__(MPI_Fint *datatype, const char *type_name CHAR_MIXED(siz
 
 	tmp_type_name = char_fortran_to_c( (char *)type_name, size_type_name, &ptr_type_name);
 
-	*ierror   = MPI_Type_set_name(c_datatype, tmp_type_name);
-	*datatype = PMPI_Type_c2f(c_datatype);
+	*ierror = MPI_Type_set_name(c_datatype, tmp_type_name);
 	sctk_free(ptr_type_name);
 }
 
@@ -7635,7 +7585,6 @@ int mpi_win_delete_attr_(MPI_Fint *win, int *win_keyval, int *ierror)
 	MPI_Win c_win = PMPI_Win_f2c(*win);
 
 	*ierror = MPI_Win_delete_attr(c_win, *win_keyval);
-	*win    = PMPI_Win_c2f(c_win);
 }
 
 int mpi_win_delete_attr__(MPI_Fint *win, int *win_keyval, int *ierror)
@@ -7644,7 +7593,6 @@ int mpi_win_delete_attr__(MPI_Fint *win, int *win_keyval, int *ierror)
 	MPI_Win c_win = PMPI_Win_f2c(*win);
 
 	*ierror = MPI_Win_delete_attr(c_win, *win_keyval);
-	*win    = PMPI_Win_c2f(c_win);
 }
 
 int mpi_win_detach_(MPI_Fint *win, const void *base, int *ierror)
@@ -7935,7 +7883,6 @@ int mpi_win_set_attr_(MPI_Fint *win, int *win_keyval, void *attribute_val, int *
 	MPI_Win c_win = PMPI_Win_f2c(*win);
 
 	*ierror = MPI_Win_set_attr(c_win, *win_keyval, attribute_val);
-	*win    = PMPI_Win_c2f(c_win);
 }
 
 int mpi_win_set_attr__(MPI_Fint *win, int *win_keyval, void *attribute_val, int *ierror)
@@ -7944,7 +7891,6 @@ int mpi_win_set_attr__(MPI_Fint *win, int *win_keyval, void *attribute_val, int 
 	MPI_Win c_win = PMPI_Win_f2c(*win);
 
 	*ierror = MPI_Win_set_attr(c_win, *win_keyval, attribute_val);
-	*win    = PMPI_Win_c2f(c_win);
 }
 
 int mpi_win_set_errhandler_(MPI_Fint *win, MPI_Fint *errhandler, int *ierror)
@@ -7954,7 +7900,6 @@ int mpi_win_set_errhandler_(MPI_Fint *win, MPI_Fint *errhandler, int *ierror)
 	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c(*errhandler);
 
 	*ierror = MPI_Win_set_errhandler(c_win, c_errhandler);
-	*win    = PMPI_Win_c2f(c_win);
 }
 
 int mpi_win_set_errhandler__(MPI_Fint *win, MPI_Fint *errhandler, int *ierror)
@@ -7964,7 +7909,6 @@ int mpi_win_set_errhandler__(MPI_Fint *win, MPI_Fint *errhandler, int *ierror)
 	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c(*errhandler);
 
 	*ierror = MPI_Win_set_errhandler(c_win, c_errhandler);
-	*win    = PMPI_Win_c2f(c_win);
 }
 
 int mpi_win_set_info_(MPI_Fint *win, MPI_Fint *info, int *ierror)
@@ -7974,7 +7918,6 @@ int mpi_win_set_info_(MPI_Fint *win, MPI_Fint *info, int *ierror)
 	MPI_Info c_info = PMPI_Info_f2c(*info);
 
 	*ierror = MPI_Win_set_info(c_win, c_info);
-	*win    = PMPI_Win_c2f(c_win);
 }
 
 int mpi_win_set_info__(MPI_Fint *win, MPI_Fint *info, int *ierror)
@@ -7984,7 +7927,6 @@ int mpi_win_set_info__(MPI_Fint *win, MPI_Fint *info, int *ierror)
 	MPI_Info c_info = PMPI_Info_f2c(*info);
 
 	*ierror = MPI_Win_set_info(c_win, c_info);
-	*win    = PMPI_Win_c2f(c_win);
 }
 
 int mpi_win_set_name_(MPI_Fint *win, const char *win_name CHAR_MIXED(size_win_name), int *ierror CHAR_END(size_win_name) )
@@ -7996,7 +7938,6 @@ int mpi_win_set_name_(MPI_Fint *win, const char *win_name CHAR_MIXED(size_win_na
 	tmp_win_name = char_fortran_to_c( (char *)win_name, size_win_name, &ptr_win_name);
 
 	*ierror = MPI_Win_set_name(c_win, tmp_win_name);
-	*win    = PMPI_Win_c2f(c_win);
 	sctk_free(ptr_win_name);
 }
 
@@ -8009,7 +7950,6 @@ int mpi_win_set_name__(MPI_Fint *win, const char *win_name CHAR_MIXED(size_win_n
 	tmp_win_name = char_fortran_to_c( (char *)win_name, size_win_name, &ptr_win_name);
 
 	*ierror = MPI_Win_set_name(c_win, tmp_win_name);
-	*win    = PMPI_Win_c2f(c_win);
 	sctk_free(ptr_win_name);
 }
 
