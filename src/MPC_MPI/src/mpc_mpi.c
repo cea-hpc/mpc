@@ -18786,11 +18786,7 @@ int PMPI_Type_set_name(MPI_Datatype datatype, const char *name)
 
 int PMPI_Type_get_name(MPI_Datatype datatype, char *name, int *resultlen)
 {
-	int ret =  _mpc_cl_type_get_name(datatype, name, resultlen);
-
-	sctk_error("%d == %s\n", datatype, name);
-
-	return ret;
+	return _mpc_cl_type_get_name(datatype, name, resultlen);
 }
 
 int PMPI_Barrier(MPI_Comm comm)
