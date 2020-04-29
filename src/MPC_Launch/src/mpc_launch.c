@@ -299,7 +299,7 @@ static inline startup_arg_t *__startup_arg_extract_and_duplicate(startup_arg_t *
 	 * to prevent the case where a (strange)
 	 * program modifies the argv[i] pointers
 	 * preventing them to be freed at exit */
-	ret->saved_argv = (char **)sctk_malloc(ret->argc * sizeof(char *) );
+	ret->saved_argv = (char **)sctk_malloc((ret->argc + 1) * sizeof(char *) );
 	assume(ret->saved_argv);
 	int i;
 
@@ -308,7 +308,7 @@ static inline startup_arg_t *__startup_arg_extract_and_duplicate(startup_arg_t *
 		ret->saved_argv[i] = input_args->argv[i];
 	}
 
-	ret->argv = (char **)sctk_malloc(ret->argc * sizeof(char *) );
+	ret->argv = (char **)sctk_malloc((ret->argc + 1) * sizeof(char *) );
 	assume(ret->argv);
 
 	for(i = 0; i < ret->argc; i++)
