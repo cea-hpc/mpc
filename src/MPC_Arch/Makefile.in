@@ -465,7 +465,7 @@ top_srcdir = @top_srcdir@
 xmllint = @xmllint@
 xsltproc = @xsltproc@
 mpc_headerdir = $(pkgincludedir)
-mpc_header_HEADERS = $(abs_top_builddir)/src/MPC_Arch/include/mpc_arch.h $(abs_top_srcdir)/src/MPC_Arch/include/mpc_arch_context.h
+mpc_header_HEADERS = $(abs_builddir)/include/mpc_arch.h $(abs_srcdir)/include/mpc_arch_context.h
 SUBDIRS = src
 all: all-recursive
 

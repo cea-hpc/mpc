@@ -987,9 +987,9 @@ with_openpa_libs
 with_mpcalloc
 with_mpcalloc_include
 with_mpcalloc_libs
-with_libunwind
-with_libunwind_include
-with_libunwind_libs
+with_unwind
+with_unwind_include
+with_unwind_libs
 with_ibverbs
 with_ibverbs_include
 with_ibverbs_libs
@@ -1750,9 +1750,9 @@ Optional Packages:
   --with-mpcalloc         Provide prefix for mpcalloc
   --with-mpcalloc-inc     Provide include path for mpcalloc
   --with-mpcalloc-libs    Provide library path for mpcalloc
-  --with-libunwind        Provide prefix for libunwind
-  --with-libunwind-inc    Provide include path for libunwind
-  --with-libunwind-libs   Provide library path for libunwind
+  --with-unwind           Provide prefix for unwind
+  --with-unwind-inc       Provide include path for unwind
+  --with-unwind-libs      Provide library path for unwind
   --with-ibverbs          Provide prefix for ibverbs
   --with-ibverbs-inc      Provide include path for ibverbs
   --with-ibverbs-libs     Provide library path for ibverbs
@@ -23474,9 +23474,9 @@ mpc_libunwind="no"
 
 
 
-# Check whether --with-libunwind was given.
-if test "${with_libunwind+set}" = set; then :
-  withval=$with_libunwind; whole_prefix=$withval
+# Check whether --with-unwind was given.
+if test "${with_unwind+set}" = set; then :
+  withval=$with_unwind; whole_prefix=$withval
 else
   whole_prefix="/usr/"
 fi
@@ -23484,16 +23484,16 @@ fi
 
                 inc_prefix=""
 
-# Check whether --with-libunwind-include was given.
-if test "${with_libunwind_include+set}" = set; then :
-  withval=$with_libunwind_include; inc_prefix=$withval
+# Check whether --with-unwind-include was given.
+if test "${with_unwind_include+set}" = set; then :
+  withval=$with_unwind_include; inc_prefix=$withval
 fi
 
                 lib_prefix=""
 
-# Check whether --with-libunwind-libs was given.
-if test "${with_libunwind_libs+set}" = set; then :
-  withval=$with_libunwind_libs; lib_prefix=$withval
+# Check whether --with-unwind-libs was given.
+if test "${with_unwind_libs+set}" = set; then :
+  withval=$with_unwind_libs; lib_prefix=$withval
 else
   lib_prefix=""
 fi
@@ -23501,7 +23501,7 @@ fi
 
                 check_or_infer_prefix_result="no"
                 header_name=libunwind.h
-                libname=libunwind
+                libname=unwind
                 function_name=unw_init_local
                 var_prefix=UNW
                 version=""

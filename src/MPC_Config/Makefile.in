@@ -808,9 +808,9 @@ uninstall-am: uninstall-mpc_headerHEADERS
 # Editor installation
 
 install-data-local:
-	cp -r $(abs_top_srcdir)/src/MPC_Config/editor $(pkgdatadir)
-	install -m 0644 -D $(abs_top_srcdir)/src/MPC_Config/src/generated/mpc_config_meta.js $(pkgdatadir)/editor/javascript/
-	install -m 0644 -D $(abs_top_srcdir)/src/MPC_Config/src/generated/mpc_config_xsd.js $(pkgdatadir)/editor/javascript/
+	cp -r $(abs_srcdir)/editor $(pkgdatadir)
+	install -m 0644 -D $(abs_srcdir)/src/generated/mpc_config_meta.js $(pkgdatadir)/editor/javascript/
+	install -m 0644 -D $(abs_srcdir)/src/generated/mpc_config_xsd.js $(pkgdatadir)/editor/javascript/
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

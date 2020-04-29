@@ -8,7 +8,7 @@ endif
 noinst_LTLIBRARIES = libmpccommon.la
 
 elf_64.c: elf_32.c
-	$(abs_top_srcdir)/src/MPC_Common/src/gen_elf64
+	$(abs_srcdir)/gen_elf64
 
 libmpccommon_la_SOURCES = aio.c bit_array.c fifo.c hashtable.c io_helper.c rank.c sctk_debug.c sctk_no_alloc.c sctk_pm_json.c flags.c debugger.c elf_32.c elf_64.c
 

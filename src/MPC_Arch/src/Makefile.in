@@ -98,7 +98,7 @@ host_triplet = @host@
 
 # Microstask Support
 @MPC_ARCH_X86_64_MICROTASK_TRUE@am__append_2 = ./microtask/x86_64/z_Linux_asm.S
-@MPC_ARCH_GENERIC_MICROTASK_TRUE@am__append_3 = ./microtask/generic/z_Linux_asm.S
+@MPC_ARCH_GENERIC_MICROTASK_TRUE@am__append_3 = ./microtask/generic/microtask.c
 subdir = src/MPC_Arch/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -152,7 +152,7 @@ am__libmpcarch_la_SOURCES_DIST = ./pause.c ./timer.c \
 	./context/x86_64/setcontext.S ./context/x86_64/startcontext.S \
 	./context/x86_64/swapcontext.S \
 	./microtask/x86_64/z_Linux_asm.S \
-	./microtask/generic/z_Linux_asm.S
+	./microtask/generic/microtask.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @MPC_ARCH_X86_64_CONTEXT_SWITCH_TRUE@am__objects_1 = ./context/x86_64/getcontext.lo \
 @MPC_ARCH_X86_64_CONTEXT_SWITCH_TRUE@	./context/x86_64/makecontext.lo \
@@ -160,7 +160,7 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @MPC_ARCH_X86_64_CONTEXT_SWITCH_TRUE@	./context/x86_64/startcontext.lo \
 @MPC_ARCH_X86_64_CONTEXT_SWITCH_TRUE@	./context/x86_64/swapcontext.lo
 @MPC_ARCH_X86_64_MICROTASK_TRUE@am__objects_2 = ./microtask/x86_64/z_Linux_asm.lo
-@MPC_ARCH_GENERIC_MICROTASK_TRUE@am__objects_3 = ./microtask/generic/z_Linux_asm.lo
+@MPC_ARCH_GENERIC_MICROTASK_TRUE@am__objects_3 = ./microtask/generic/microtask.lo
 am_libmpcarch_la_OBJECTS = ./pause.lo ./timer.lo $(am__objects_1) \
 	$(am__objects_2) $(am__objects_3)
 libmpcarch_la_OBJECTS = $(am_libmpcarch_la_OBJECTS)
@@ -597,7 +597,7 @@ microtask/generic/$(am__dirstamp):
 microtask/generic/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) ./microtask/generic/$(DEPDIR)
 	@: > microtask/generic/$(DEPDIR)/$(am__dirstamp)
-./microtask/generic/z_Linux_asm.lo: microtask/generic/$(am__dirstamp) \
+./microtask/generic/microtask.lo: microtask/generic/$(am__dirstamp) \
 	microtask/generic/$(DEPDIR)/$(am__dirstamp)
 
 libmpcarch.la: $(libmpcarch_la_OBJECTS) $(libmpcarch_la_DEPENDENCIES) $(EXTRA_libmpcarch_la_DEPENDENCIES) 
@@ -624,7 +624,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./context/x86_64/$(DEPDIR)/setcontext.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./context/x86_64/$(DEPDIR)/startcontext.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./context/x86_64/$(DEPDIR)/swapcontext.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./microtask/generic/$(DEPDIR)/z_Linux_asm.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./microtask/generic/$(DEPDIR)/microtask.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./microtask/x86_64/$(DEPDIR)/z_Linux_asm.Plo@am__quote@
 
 .S.o:

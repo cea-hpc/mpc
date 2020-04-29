@@ -20,5 +20,5 @@ if MPC_ARCH_X86_64_MICROTASK
 endif
 
 if MPC_ARCH_GENERIC_MICROTASK
-        libmpcarch_la_SOURCES += ./microtask/generic/z_Linux_asm.S
+        libmpcarch_la_SOURCES += ./microtask/generic/microtask.c
 endif
