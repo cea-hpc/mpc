@@ -209,7 +209,7 @@ static int __INTERNAL__PMPI_Type_ub(MPI_Datatype, MPI_Aint *);
 static int __INTERNAL__PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint lb, MPI_Aint extent, MPI_Datatype *new_type);
 static int __INTERNAL__PMPI_Type_commit(MPI_Datatype *);
 static int __INTERNAL__PMPI_Type_free(MPI_Datatype *);
-static int __INTERNAL__PMPI_Get_elements_x(MPI_Status *, MPI_Datatype, MPI_Count *);
+static int __INTERNAL__PMPI_Type_get_elements_x(MPI_Status *, MPI_Datatype, MPI_Count *);
 int __INTERNAL__PMPI_Type_create_darray(int size,
                                         int rank,
                                         int ndims,
@@ -4981,7 +4981,7 @@ static int __INTERNAL__PMPI_Type_free(MPI_Datatype *datatype)
 	return _mpc_cl_type_free(datatype);
 }
 
-static int __INTERNAL__PMPI_Get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count *elements)
+static int __INTERNAL__PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count *elements)
 {
 	int           res  = MPI_SUCCESS;
 	long long int size = 0;
@@ -18514,7 +18514,7 @@ int PMPI_Type_dup(MPI_Datatype old_type, MPI_Datatype *newtype)
 	return _mpc_cl_type_dup(old_type, newtype);
 }
 
-int PMPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *elements)
+int PMPI_Type_get_elements(MPI_Status *status, MPI_Datatype datatype, int *elements)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
@@ -18523,21 +18523,21 @@ int PMPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *elements)
 
 	MPI_Count tmp_elements = 0;
 
-	res = __INTERNAL__PMPI_Get_elements_x(status, datatype, &tmp_elements);
+	res = __INTERNAL__PMPI_Type_get_elements_x(status, datatype, &tmp_elements);
 
 	*elements = tmp_elements;
 
 	SCTK_MPI_CHECK_RETURN_VAL(res, comm);
 }
 
-int PMPI_Get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count *elements)
+int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count *elements)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
 
 	mpi_check_type(datatype, comm);
 
-	res = __INTERNAL__PMPI_Get_elements_x(status, datatype, elements);
+	res = __INTERNAL__PMPI_Type_get_elements_x(status, datatype, elements);
 
 	SCTK_MPI_CHECK_RETURN_VAL(res, comm);
 }
@@ -18786,7 +18786,11 @@ int PMPI_Type_set_name(MPI_Datatype datatype, const char *name)
 
 int PMPI_Type_get_name(MPI_Datatype datatype, char *name, int *resultlen)
 {
-	return _mpc_cl_type_get_name(datatype, name, resultlen);
+	int ret =  _mpc_cl_type_get_name(datatype, name, resultlen);
+
+	sctk_error("%d == %s\n", datatype, name);
+
+	return ret;
 }
 
 int PMPI_Barrier(MPI_Comm comm)
@@ -21643,6 +21647,39 @@ int PMPI_Info_get(MPI_Info info, const char *key, int valuelen, char *value, int
 	return _mpc_cl_info_get( (MPC_Info)info, key, valuelen, value, flag);
 }
 
+int PMPI_Info_get_string(MPI_Info info, const char *key, int *buflen, char *value, int *flag)
+{
+	int valuelen = 0;
+	int ret = PMPI_Info_get_valuelen(info, key, &valuelen, &flag);
+
+	if(ret != MPI_SUCCESS)
+		return ret;
+
+	if(!flag)
+	{
+		return MPI_SUCCESS;
+	}
+
+	char * tmp_value = sctk_malloc(sizeof(char) * valuelen);
+
+	ret = PMPI_Info_get(info, key, valuelen, tmp_value, &flag);
+
+	if(ret != MPI_SUCCESS)
+		return ret;
+
+	if(!flag)
+	{
+		return MPI_SUCCESS;
+	}
+
+	snprintf(value, *buflen, "%s", tmp_value);
+	sctk_free(tmp_value);
+
+	*buflen = valuelen;
+
+	return MPI_SUCCESS;
+}
+
 int PMPI_Info_free(MPI_Info *info)
 {
 	return _mpc_cl_info_free( (MPC_Info *)info);
@@ -22414,12 +22451,47 @@ int PMPI_File_get_errhandler(MPI_File file, MPI_Errhandler *errhandler)
 {
 }
 
+/* Aint OPs */
+
+MPI_Aint PMPI_Aint_add(MPI_Aint base, MPI_Aint disp)
+{
+	return base + disp;
+}
+
+MPI_Aint PMPI_Aint_diff(MPI_Aint addr1, MPI_Aint addr2)
+{
+	return addr1 - addr2;
+}
+
+
+int PMPI_Get_library_version(char *version, __UNUSED__ int *resultlen)
+{
+	snprintf(version, MPI_MAX_LIBRARY_VERSION_STRING - 1,
+	         "MPC version %d.%d.%d%s %s",
+	         MPC_VERSION_MAJOR, MPC_VERSION_MINOR, MPC_VERSION_PATCH,
+	         MPC_VERSION_PRE,
+	         sctk_alloc_mode() );
+	*resultlen = strlen(version);
+	return MPI_SUCCESS;
+}
+
 /************************************************************************/
 /*  NOT IMPLEMENTED                                                     */
 /************************************************************************/
 
+int PMPI_Register_datarep(const char *datarep, MPI_Datarep_conversion_function *read_conversion_fn, MPI_Datarep_conversion_function *write_conversion_fn, MPI_Datarep_extent_function *dtype_file_extent_fn, void *extra_state)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
 /* Communicator Management */
 int PMPI_Comm_idup(__UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Comm *newcomm, __UNUSED__ MPI_Request *request)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+
+int PMPI_Comm_idup_with_info(MPI_Comm comm, MPI_Info info, MPI_Comm *newcomm, MPI_Request *request)
 {
 	not_implemented(); return MPI_ERR_INTERN;
 }
@@ -22444,16 +22516,6 @@ int PMPI_Comm_create_group(__UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Group group,
 	not_implemented(); return MPI_ERR_INTERN;
 }
 
-int PMPI_Get_library_version(char *version, __UNUSED__ int *resultlen)
-{
-	snprintf(version, MPI_MAX_LIBRARY_VERSION_STRING - 1,
-	         "MPC version %d.%d.%d%s %s",
-	         MPC_VERSION_MAJOR, MPC_VERSION_MINOR, MPC_VERSION_PATCH,
-	         MPC_VERSION_PRE,
-	         sctk_alloc_mode() );
-	*resultlen = strlen(version);
-	return MPI_SUCCESS;
-}
 
 /* Process Creation and Management */
 int PMPI_Close_port(__UNUSED__ const char *port_name)

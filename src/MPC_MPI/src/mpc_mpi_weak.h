@@ -77,7 +77,7 @@
 #pragma weak MPI_Type_ub = PMPI_Type_ub
 #pragma weak MPI_Type_commit = PMPI_Type_commit
 #pragma weak MPI_Type_free = PMPI_Type_free
-#pragma weak MPI_Get_elements = PMPI_Get_elements
+#pragma weak MPI_Type_get_elements = PMPI_Type_get_elements
 // PROFILER MPI_PACK MPI Pack related
 #pragma weak MPI_Pack = PMPI_Pack
 #pragma weak MPI_Unpack = PMPI_Unpack
@@ -194,6 +194,7 @@
 #pragma weak MPI_Info_free = PMPI_Info_free
 #pragma weak MPI_Info_set = PMPI_Info_set
 #pragma weak MPI_Info_get = PMPI_Info_get
+#pragma weak MPI_Info_get_string = PMPI_Info_get_string
 #pragma weak MPI_Info_get_nkeys = PMPI_Info_get_nkeys
 #pragma weak MPI_Info_get_nthkey = PMPI_Info_get_nthkey
 #pragma weak MPI_Info_get_valuelen = PMPI_Info_get_valuelen
@@ -223,7 +224,7 @@
 #pragma weak MPI_Type_size_x = PMPI_Type_size_x
 #pragma weak MPI_Type_get_extent_x = PMPI_Type_get_extent_x
 #pragma weak MPI_Type_get_true_extent_x = PMPI_Type_get_true_extent_x
-#pragma weak MPI_Get_elements_x = PMPI_Get_elements_x
+#pragma weak MPI_Type_get_elements_x = PMPI_Type_get_elements_x
 #pragma weak MPI_Type_create_darray = PMPI_Type_create_darray
 #pragma weak MPI_Type_create_subarray = PMPI_Type_create_subarray
 #pragma weak MPI_Pack_external_size = PMPI_Pack_external_size
@@ -417,8 +418,10 @@
 #pragma weak MPI_Gatherv_init = PMPI_Gatherv_init
 #pragma weak MPI_Scan_init = PMPI_Scan_init
 #pragma weak MPI_Reduce_scatter_block_init = PMPI_Reduce_scatter_block_init
-
-
+#pragma weak MPI_Register_datarep = PMPI_Register_datarep
+#pragma weak MPI_Comm_idup_with_info = PMPI_Comm_idup_with_info
+#pragma weak MPI_Aint_diff = PMPI_Aint_diff
+#pragma weak MPI_Aint_add = PMPI_Aint_add
 #pragma weak MPI_Allgatherv_init = PMPI_Allgatherv_init
 #pragma weak MPI_Alltoallw_init = PMPI_Alltoallw_init
 #pragma weak MPI_Neighbor_alltoallv_init = PMPI_Neighbor_alltoallv_init
