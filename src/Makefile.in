@@ -517,7 +517,7 @@ top_srcdir = @top_srcdir@
 # installed for Fortran generation
 SUBDIRS = MPC_Doc MPC_Arch MPC_Common MPC_Config MPC_Topology \
 	$(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5) lib bin
+	$(am__append_4) $(am__append_5) $(am__append_6) lib bin
 
 #
 # Print Config Program
