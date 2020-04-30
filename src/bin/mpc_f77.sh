@@ -47,6 +47,28 @@ set_fortran
 
 parse_cli_args $@
 
+#
+# Important we need to make sure the right libgfortran is used
+# if the compiler is altered with -cc= to do so we use a gcc
+# commanf to resolve the libgfortran as seen from the compiler
+# and to add it as a RPATH
+locate_libgfortran()
+{
+	# If we are using gcc version should contain gcc
+	if test "$(${COMPILER} -v 2>&1 | grep -c gcc)" = "0"; then
+		return
+	fi
+
+	LIB_GFORTRAN_PATH=$(${COMPILER} -print-file-name=libgfortran.so)
+
+	if test "x$?" = "x0" -a -f "${LIB_GFORTRAN_PATH}"; then
+		LIB_GFORTRAN_DIR=$(dirname "$LIB_GFORTRAN_PATH")
+		append_to "LDFLAGS" "-Wl,-rpath=${LIB_GFORTRAN_DIR}"
+	fi
+}
+
+locate_libgfortran
+
 # Here we restore MPC's build environment
 . ${MPC_INSTALL_PREFIX}/bin/mpc_build_env.sh
 

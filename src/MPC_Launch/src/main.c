@@ -139,20 +139,14 @@ static void __search_and_call_symbol(char *sym)
 static void __libgfortran_init()
 {
 	/* init function for the modified libgfortran */
-	if(mpc_common_get_flags()->is_fortran == 1)
-	{
-		__search_and_call_symbol("_gfortran_init_units");
-	}
+	__search_and_call_symbol("_gfortran_ap_init_units");
 }
 
 /* Clear the modified libgfortran if needed */
 static void __libgfortran_close()
 {
 	/* init function for the modified libgfortran */
-	if(mpc_common_get_flags()->is_fortran == 1)
-	{
-		__search_and_call_symbol("_gfortran_close_units");
-	}
+	__search_and_call_symbol("_gfortran_ap_close_units");
 }
 
 void mpc_main_init() __attribute__( (constructor) );
