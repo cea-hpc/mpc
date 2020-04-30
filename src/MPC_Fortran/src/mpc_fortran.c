@@ -3370,19 +3370,17 @@ int mpi_igatherv__(const void *sendbuf, int *sendcount, MPI_Fint *sendtype, void
 int mpi_improbe_(int *source, int *tag, MPI_Fint *comm, int *flag, MPI_Message *message, MPI_Status *status, int *ierror)
 {
 /* MPI_Improbe */
-	MPI_Comm   c_comm = PMPI_Comm_f2c(*comm);
-	MPI_Status c_status;
+	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
-	*ierror = MPI_Improbe(*source, *tag, c_comm, flag, message, &c_status);
+	*ierror = MPI_Improbe(*source, *tag, c_comm, flag, message, status);
 }
 
 int mpi_improbe__(int *source, int *tag, MPI_Fint *comm, int *flag, MPI_Message *message, MPI_Status *status, int *ierror)
 {
 /* MPI_Improbe */
-	MPI_Comm   c_comm = PMPI_Comm_f2c(*comm);
-	MPI_Status c_status;
+	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
-	*ierror = MPI_Improbe(*source, *tag, c_comm, flag, message, &c_status);
+	*ierror = MPI_Improbe(*source, *tag, c_comm, flag, message, status);
 }
 
 int mpi_imrecv_(void *buf, int *count, MPI_Fint *datatype, MPI_Message *message, MPI_Fint *request, int *ierror)
@@ -3970,19 +3968,17 @@ int mpi_intercomm_merge__(MPI_Fint *intercomm, int *high, MPI_Fint *newintracomm
 int mpi_iprobe_(int *source, int *tag, MPI_Fint *comm, int *flag, MPI_Status *status, int *ierror)
 {
 /* MPI_Iprobe */
-	MPI_Comm   c_comm = PMPI_Comm_f2c(*comm);
-	MPI_Status c_status;
+	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
-	*ierror = MPI_Iprobe(*source, *tag, c_comm, flag, &c_status);
+	*ierror = MPI_Iprobe(*source, *tag, c_comm, flag, status);
 }
 
 int mpi_iprobe__(int *source, int *tag, MPI_Fint *comm, int *flag, MPI_Status *status, int *ierror)
 {
 /* MPI_Iprobe */
-	MPI_Comm   c_comm = PMPI_Comm_f2c(*comm);
-	MPI_Status c_status;
+	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
-	*ierror = MPI_Iprobe(*source, *tag, c_comm, flag, &c_status);
+	*ierror = MPI_Iprobe(*source, *tag, c_comm, flag, status);
 }
 
 int mpi_irecv_(void *buf, int *count, MPI_Fint *datatype, int *source, int *tag, MPI_Fint *comm, MPI_Fint *request, int *ierror)
@@ -4400,37 +4396,33 @@ int mpi_lookup_name__(const char *service_name CHAR_MIXED(size_service_name), MP
 int mpi_mprobe_(int *source, int *tag, MPI_Fint *comm, MPI_Message *message, MPI_Status *status, int *ierror)
 {
 /* MPI_Mprobe */
-	MPI_Comm   c_comm = PMPI_Comm_f2c(*comm);
-	MPI_Status c_status;
+	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
-	*ierror = MPI_Mprobe(*source, *tag, c_comm, message, &c_status);
+	*ierror = MPI_Mprobe(*source, *tag, c_comm, message, status);
 }
 
 int mpi_mprobe__(int *source, int *tag, MPI_Fint *comm, MPI_Message *message, MPI_Status *status, int *ierror)
 {
 /* MPI_Mprobe */
-	MPI_Comm   c_comm = PMPI_Comm_f2c(*comm);
-	MPI_Status c_status;
+	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
-	*ierror = MPI_Mprobe(*source, *tag, c_comm, message, &c_status);
+	*ierror = MPI_Mprobe(*source, *tag, c_comm, message, status);
 }
 
 int mpi_mrecv_(void *buf, int *count, MPI_Fint *datatype, MPI_Message *message, MPI_Status *status, int *ierror)
 {
 /* MPI_Mrecv */
 	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
-	MPI_Status   c_status;
 
-	*ierror = MPI_Mrecv(buf, *count, c_datatype, message, &c_status);
+	*ierror = MPI_Mrecv(buf, *count, c_datatype, message, status);
 }
 
 int mpi_mrecv__(void *buf, int *count, MPI_Fint *datatype, MPI_Message *message, MPI_Status *status, int *ierror)
 {
 /* MPI_Mrecv */
 	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
-	MPI_Status   c_status;
 
-	*ierror = MPI_Mrecv(buf, *count, c_datatype, message, &c_status);
+	*ierror = MPI_Mrecv(buf, *count, c_datatype, message, status);
 }
 
 int mpi_neighbor_allgather_(const void *sendbuf, int *sendcount, MPI_Fint *sendtype, void *recvbuf, int *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, int *ierror)
@@ -5088,19 +5080,17 @@ int mpi_pack_size__(int *incount, MPI_Fint *datatype, MPI_Fint *comm, int *size,
 int mpi_probe_(int *source, int *tag, MPI_Fint *comm, MPI_Status *status, int *ierror)
 {
 /* MPI_Probe */
-	MPI_Comm   c_comm = PMPI_Comm_f2c(*comm);
-	MPI_Status c_status;
+	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
-	*ierror = MPI_Probe(*source, *tag, c_comm, &c_status);
+	*ierror = MPI_Probe(*source, *tag, c_comm, status);
 }
 
 int mpi_probe__(int *source, int *tag, MPI_Fint *comm, MPI_Status *status, int *ierror)
 {
 /* MPI_Probe */
-	MPI_Comm   c_comm = PMPI_Comm_f2c(*comm);
-	MPI_Status c_status;
+	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
-	*ierror = MPI_Probe(*source, *tag, c_comm, &c_status);
+	*ierror = MPI_Probe(*source, *tag, c_comm, status);
 }
 
 int mpi_publish_name_(const char *service_name CHAR_MIXED(size_service_name), MPI_Fint *info, const char *port_name CHAR_MIXED(size_port_name), int *ierror CHAR_END(size_service_name)CHAR_END(size_port_name) )
@@ -5214,9 +5204,8 @@ int mpi_recv_(void *buf, int *count, MPI_Fint *datatype, int *source, int *tag, 
 /* MPI_Recv */
 	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
 	MPI_Comm     c_comm     = PMPI_Comm_f2c(*comm);
-	MPI_Status   c_status;
 
-	*ierror = MPI_Recv(buf, *count, c_datatype, *source, *tag, c_comm, &c_status);
+	*ierror = MPI_Recv(buf, *count, c_datatype, *source, *tag, c_comm, status);
 }
 
 int mpi_recv__(void *buf, int *count, MPI_Fint *datatype, int *source, int *tag, MPI_Fint *comm, MPI_Status *status, int *ierror)
@@ -5224,9 +5213,8 @@ int mpi_recv__(void *buf, int *count, MPI_Fint *datatype, int *source, int *tag,
 /* MPI_Recv */
 	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
 	MPI_Comm     c_comm     = PMPI_Comm_f2c(*comm);
-	MPI_Status   c_status;
 
-	*ierror = MPI_Recv(buf, *count, c_datatype, *source, *tag, c_comm, &c_status);
+	*ierror = MPI_Recv(buf, *count, c_datatype, *source, *tag, c_comm, status);
 }
 
 int mpi_recv_init_(void *buf, int *count, MPI_Fint *datatype, int *source, int *tag, MPI_Fint *comm, MPI_Fint *request, int *ierror)
@@ -5579,18 +5567,16 @@ int mpi_request_get_status_(MPI_Fint *request, int *flag, MPI_Status *status, in
 {
 /* MPI_Request_get_status */
 	MPI_Request c_request = PMPI_Request_f2c(*request);
-	MPI_Status  c_status;
 
-	*ierror = MPI_Request_get_status(c_request, flag, &c_status);
+	*ierror = MPI_Request_get_status(c_request, flag, status);
 }
 
 int mpi_request_get_status__(MPI_Fint *request, int *flag, MPI_Status *status, int *ierror)
 {
 /* MPI_Request_get_status */
 	MPI_Request c_request = PMPI_Request_f2c(*request);
-	MPI_Status  c_status;
 
-	*ierror = MPI_Request_get_status(c_request, flag, &c_status);
+	*ierror = MPI_Request_get_status(c_request, flag, status);
 }
 
 int mpi_rget_(void *origin_addr, int *origin_count, MPI_Fint *origin_datatype, int *target_rank, MPI_Aint *target_disp, int *target_count, MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *request, int *ierror)
@@ -6025,9 +6011,8 @@ int mpi_sendrecv_(const void *sendbuf, int *sendcount, MPI_Fint *sendtype, int *
 	MPI_Datatype c_sendtype = PMPI_Type_f2c(*sendtype);
 	MPI_Datatype c_recvtype = PMPI_Type_f2c(*recvtype);
 	MPI_Comm     c_comm     = PMPI_Comm_f2c(*comm);
-	MPI_Status   c_status;
 
-	*ierror = MPI_Sendrecv(sendbuf, *sendcount, c_sendtype, *dest, *sendtag, recvbuf, *recvcount, c_recvtype, *source, *recvtag, c_comm, &c_status);
+	*ierror = MPI_Sendrecv(sendbuf, *sendcount, c_sendtype, *dest, *sendtag, recvbuf, *recvcount, c_recvtype, *source, *recvtag, c_comm, status);
 }
 
 int mpi_sendrecv__(const void *sendbuf, int *sendcount, MPI_Fint *sendtype, int *dest, int *sendtag, void *recvbuf, int *recvcount, MPI_Fint *recvtype, int *source, int *recvtag, MPI_Fint *comm, MPI_Status *status, int *ierror)
@@ -6040,9 +6025,8 @@ int mpi_sendrecv__(const void *sendbuf, int *sendcount, MPI_Fint *sendtype, int 
 	MPI_Datatype c_sendtype = PMPI_Type_f2c(*sendtype);
 	MPI_Datatype c_recvtype = PMPI_Type_f2c(*recvtype);
 	MPI_Comm     c_comm     = PMPI_Comm_f2c(*comm);
-	MPI_Status   c_status;
 
-	*ierror = MPI_Sendrecv(sendbuf, *sendcount, c_sendtype, *dest, *sendtag, recvbuf, *recvcount, c_recvtype, *source, *recvtag, c_comm, &c_status);
+	*ierror = MPI_Sendrecv(sendbuf, *sendcount, c_sendtype, *dest, *sendtag, recvbuf, *recvcount, c_recvtype, *source, *recvtag, c_comm, status);
 }
 
 int mpi_sendrecv_replace_(void *buf, int *count, MPI_Fint *datatype, int *dest, int *sendtag, int *source, int *recvtag, MPI_Fint *comm, MPI_Status *status, int *ierror)
@@ -6054,9 +6038,8 @@ int mpi_sendrecv_replace_(void *buf, int *count, MPI_Fint *datatype, int *dest, 
 	}
 	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
 	MPI_Comm     c_comm     = PMPI_Comm_f2c(*comm);
-	MPI_Status   c_status;
 
-	*ierror = MPI_Sendrecv_replace(buf, *count, c_datatype, *dest, *sendtag, *source, *recvtag, c_comm, &c_status);
+	*ierror = MPI_Sendrecv_replace(buf, *count, c_datatype, *dest, *sendtag, *source, *recvtag, c_comm, status);
 }
 
 int mpi_sendrecv_replace__(void *buf, int *count, MPI_Fint *datatype, int *dest, int *sendtag, int *source, int *recvtag, MPI_Fint *comm, MPI_Status *status, int *ierror)
@@ -6068,9 +6051,8 @@ int mpi_sendrecv_replace__(void *buf, int *count, MPI_Fint *datatype, int *dest,
 	}
 	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
 	MPI_Comm     c_comm     = PMPI_Comm_f2c(*comm);
-	MPI_Status   c_status;
 
-	*ierror = MPI_Sendrecv_replace(buf, *count, c_datatype, *dest, *sendtag, *source, *recvtag, c_comm, &c_status);
+	*ierror = MPI_Sendrecv_replace(buf, *count, c_datatype, *dest, *sendtag, *source, *recvtag, c_comm, status);
 }
 
 int mpi_ssend_(const void *buf, int *count, MPI_Fint *datatype, int *dest, int *tag, MPI_Fint *comm, int *ierror)
@@ -6249,9 +6231,8 @@ int mpi_test_(MPI_Fint *request, int *flag, MPI_Status *status, int *ierror)
 {
 /* MPI_Test */
 	MPI_Request c_request = PMPI_Request_f2c(*request);
-	MPI_Status  c_status;
 
-	*ierror  = MPI_Test(&c_request, flag, &c_status);
+	*ierror  = MPI_Test(&c_request, flag, status);
 	*request = PMPI_Request_c2f(c_request);
 }
 
@@ -6259,9 +6240,8 @@ int mpi_test__(MPI_Fint *request, int *flag, MPI_Status *status, int *ierror)
 {
 /* MPI_Test */
 	MPI_Request c_request = PMPI_Request_f2c(*request);
-	MPI_Status  c_status;
 
-	*ierror  = MPI_Test(&c_request, flag, &c_status);
+	*ierror  = MPI_Test(&c_request, flag, status);
 	*request = PMPI_Request_c2f(c_request);
 }
 
@@ -6292,7 +6272,6 @@ int mpi_testall_(int *count, MPI_Fint array_of_requests[], int *flag, MPI_Status
 	{
 		c_array_of_requests[incnt_array_of_requests] = PMPI_Request_f2c(array_of_requests[incnt_array_of_requests]);
 	}
-	/* OUT ARRAY array_of_statuses not manipulated */
 
 	*ierror = MPI_Testall(*count, c_array_of_requests, flag, array_of_statuses);
 
@@ -6319,7 +6298,6 @@ int mpi_testall__(int *count, MPI_Fint array_of_requests[], int *flag, MPI_Statu
 	{
 		c_array_of_requests[incnt_array_of_requests] = PMPI_Request_f2c(array_of_requests[incnt_array_of_requests]);
 	}
-	/* OUT ARRAY array_of_statuses not manipulated */
 
 	*ierror = MPI_Testall(*count, c_array_of_requests, flag, array_of_statuses);
 
@@ -6346,9 +6324,8 @@ int mpi_testany_(int *count, MPI_Fint array_of_requests[], int *index, int *flag
 	{
 		c_array_of_requests[incnt_array_of_requests] = PMPI_Request_f2c(array_of_requests[incnt_array_of_requests]);
 	}
-	MPI_Status c_status;
 
-	*ierror = MPI_Testany(*count, c_array_of_requests, index, flag, &c_status);
+	*ierror = MPI_Testany(*count, c_array_of_requests, index, flag, status);
 
 	int outcnt_array_of_requests = 0;
 
@@ -6373,9 +6350,8 @@ int mpi_testany__(int *count, MPI_Fint array_of_requests[], int *index, int *fla
 	{
 		c_array_of_requests[incnt_array_of_requests] = PMPI_Request_f2c(array_of_requests[incnt_array_of_requests]);
 	}
-	MPI_Status c_status;
 
-	*ierror = MPI_Testany(*count, c_array_of_requests, index, flag, &c_status);
+	*ierror = MPI_Testany(*count, c_array_of_requests, index, flag, status);
 
 	int outcnt_array_of_requests = 0;
 
@@ -6400,7 +6376,6 @@ int mpi_testsome_(int *incount, MPI_Fint array_of_requests[], int *outcount, int
 	{
 		c_array_of_requests[incnt_array_of_requests] = PMPI_Request_f2c(array_of_requests[incnt_array_of_requests]);
 	}
-	/* OUT ARRAY array_of_statuses not manipulated */
 
 	*ierror = MPI_Testsome(*incount, c_array_of_requests, outcount, array_of_indices, array_of_statuses);
 
@@ -6427,7 +6402,6 @@ int mpi_testsome__(int *incount, MPI_Fint array_of_requests[], int *outcount, in
 	{
 		c_array_of_requests[incnt_array_of_requests] = PMPI_Request_f2c(array_of_requests[incnt_array_of_requests]);
 	}
-	/* OUT ARRAY array_of_statuses not manipulated */
 
 	*ierror = MPI_Testsome(*incount, c_array_of_requests, outcount, array_of_indices, array_of_statuses);
 
@@ -7215,9 +7189,8 @@ int mpi_wait_(MPI_Fint *request, MPI_Status *status, int *ierror)
 {
 /* MPI_Wait */
 	MPI_Request c_request = PMPI_Request_f2c(*request);
-	MPI_Status  c_status;
 
-	*ierror  = MPI_Wait(&c_request, &c_status);
+	*ierror  = MPI_Wait(&c_request, status);
 	*request = PMPI_Request_c2f(c_request);
 }
 
@@ -7225,9 +7198,8 @@ int mpi_wait__(MPI_Fint *request, MPI_Status *status, int *ierror)
 {
 /* MPI_Wait */
 	MPI_Request c_request = PMPI_Request_f2c(*request);
-	MPI_Status  c_status;
 
-	*ierror  = MPI_Wait(&c_request, &c_status);
+	*ierror  = MPI_Wait(&c_request, status);
 	*request = PMPI_Request_c2f(c_request);
 }
 
@@ -7244,7 +7216,6 @@ int mpi_waitall_(int *count, MPI_Fint array_of_requests[], MPI_Status array_of_s
 	{
 		c_array_of_requests[incnt_array_of_requests] = PMPI_Request_f2c(array_of_requests[incnt_array_of_requests]);
 	}
-	/* OUT ARRAY array_of_statuses not manipulated */
 
 	*ierror = MPI_Waitall(*count, c_array_of_requests, array_of_statuses);
 
@@ -7271,7 +7242,6 @@ int mpi_waitall__(int *count, MPI_Fint array_of_requests[], MPI_Status array_of_
 	{
 		c_array_of_requests[incnt_array_of_requests] = PMPI_Request_f2c(array_of_requests[incnt_array_of_requests]);
 	}
-	/* OUT ARRAY array_of_statuses not manipulated */
 
 	*ierror = MPI_Waitall(*count, c_array_of_requests, array_of_statuses);
 
@@ -7298,9 +7268,8 @@ int mpi_waitany_(int *count, MPI_Fint array_of_requests[], int *index, MPI_Statu
 	{
 		c_array_of_requests[incnt_array_of_requests] = PMPI_Request_f2c(array_of_requests[incnt_array_of_requests]);
 	}
-	MPI_Status c_status;
 
-	*ierror = MPI_Waitany(*count, c_array_of_requests, index, &c_status);
+	*ierror = MPI_Waitany(*count, c_array_of_requests, index, status);
 
 	int outcnt_array_of_requests = 0;
 
@@ -7325,9 +7294,8 @@ int mpi_waitany__(int *count, MPI_Fint array_of_requests[], int *index, MPI_Stat
 	{
 		c_array_of_requests[incnt_array_of_requests] = PMPI_Request_f2c(array_of_requests[incnt_array_of_requests]);
 	}
-	MPI_Status c_status;
 
-	*ierror = MPI_Waitany(*count, c_array_of_requests, index, &c_status);
+	*ierror = MPI_Waitany(*count, c_array_of_requests, index, status);
 
 	int outcnt_array_of_requests = 0;
 
@@ -7352,7 +7320,6 @@ int mpi_waitsome_(int *incount, MPI_Fint array_of_requests[], int *outcount, int
 	{
 		c_array_of_requests[incnt_array_of_requests] = PMPI_Request_f2c(array_of_requests[incnt_array_of_requests]);
 	}
-	/* OUT ARRAY array_of_statuses not manipulated */
 
 	*ierror = MPI_Waitsome(*incount, c_array_of_requests, outcount, array_of_indices, array_of_statuses);
 
@@ -7379,7 +7346,6 @@ int mpi_waitsome__(int *incount, MPI_Fint array_of_requests[], int *outcount, in
 	{
 		c_array_of_requests[incnt_array_of_requests] = PMPI_Request_f2c(array_of_requests[incnt_array_of_requests]);
 	}
-	/* OUT ARRAY array_of_statuses not manipulated */
 
 	*ierror = MPI_Waitsome(*incount, c_array_of_requests, outcount, array_of_indices, array_of_statuses);
 

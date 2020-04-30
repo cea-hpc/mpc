@@ -26,8 +26,6 @@ mpc_manpages= \
 	mpc_cc.1 \
 	mpc_f77.1 \
 	mpc_status.1 \
-	mpc_compiler_status.1 \
-	mpc_compiler_manager.1 \
 	mpc_f08.1 \
 	mpc_f90.1 \
 	$(NULL)
