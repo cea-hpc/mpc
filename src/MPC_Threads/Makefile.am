@@ -1,4 +1,3 @@
-
 mpc_headerdir=$(pkgincludedir)
 mpc_header_HEADERS= ./include/mpc_thread.h ./include/mpc_thread_engines.h  ./include/mpc_microthread.h
 

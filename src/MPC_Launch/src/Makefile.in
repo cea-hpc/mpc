@@ -89,7 +89,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @MPC_THREAD_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
-@HYDRA_CLIENT_LIB_ENABED_TRUE@am__append_2 = -I$(abs_top_srcdir)/src/MPC_Launch/src/hydra_client
+@HYDRA_CLIENT_LIB_ENABED_TRUE@am__append_2 = -I$(abs_srcdir)/hydra_client
 @HYDRA_CLIENT_LIB_ENABED_TRUE@am__append_3 = ./hydra_client/safestr2.c  ./hydra_client/simple_pmi.c  ./hydra_client/simple_pmiutil.c
 subdir = src/MPC_Launch/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -491,9 +491,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/MPC_Launch/src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/MPC_Launch/src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/MPC_Launch/src/Makefile
+	  $(AUTOMAKE) --foreign src/MPC_Launch/src/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \

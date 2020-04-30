@@ -88,10 +88,11 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/src/MPC_Message_Passing/src/ib/
-@PORTALS4_DRIVER_ENABLED_TRUE@am__append_2 = -I$(abs_top_srcdir)/src/MPC_Message_Passing/src/portals/
-@MPC_THREAD_ENABLED_TRUE@am__append_3 = -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
-@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_4 = ./ib/sctk_ib_async.c \
+@MPC_THREAD_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
+
+# IB driver #
+@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_2 = -I$(abs_srcdir)/ib/
+@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_3 = ./ib/sctk_ib_async.c \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_buffered.c \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib.c \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_cm.c \
@@ -108,6 +109,11 @@ host_triplet = @host@
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_topology.c \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ibufs.c \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ibufs_rdma.c
+
+# PTL driver #
+@PORTALS4_DRIVER_ENABLED_TRUE@am__append_4 = -I$(abs_srcdir)/portals/
+
+# PTL-AM driver #
 @PORTALS4_DRIVER_ENABLED_TRUE@am__append_5 = ./portals/sctk_portals.c \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_cm.c \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_eager.c \
@@ -561,11 +567,16 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Topology/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Message_Passing/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Launch/include/ \
-	-I$(abs_top_builddir)/src/include/ \
-	-I$(abs_top_srcdir)/src/MPC_Message_Passing/src/tcp/ \
-	-I$(abs_top_srcdir)/src/MPC_Message_Passing/src/shm/ \
-	$(am__append_1) $(am__append_2) $(am__append_3)
+	-I$(abs_top_builddir)/src/include/ -I$(abs_srcdir)/tcp/ \
+	-I$(abs_srcdir)/shm/ $(am__append_1) $(am__append_2) \
+	$(am__append_4)
 lib_LTLIBRARIES = libmpclowcomm.la
+
+# low-level communication #
+
+# TCP driver #
+
+# SHM driver #
 libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	sctk_communicator.c sctk_control_messages.c ft.c sctk_handle.c \
 	sctk_low_level_comm.c sctk_multirail.c sctk_net_tools.c \
@@ -578,7 +589,9 @@ libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	./shm/sctk_shm_raw_queues.c ./shm/sctk_handler_pmi.c \
 	./shm/sctk_shm_cma.c ./shm/sctk_shm_frag.c \
 	./shm/sctk_shm_qemu.c ./shm/sctk_shm_raw_queues_internals.c \
-	$(am__append_4) $(am__append_5)
+	$(am__append_3) $(am__append_5)
+
+# library dependency #
 libmpclowcomm_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la -lm
 all: all-am
 
@@ -593,9 +606,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/MPC_Message_Passing/src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/MPC_Message_Passing/src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/MPC_Message_Passing/src/Makefile
+	  $(AUTOMAKE) --foreign src/MPC_Message_Passing/src/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \

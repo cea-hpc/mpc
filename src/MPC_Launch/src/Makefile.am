@@ -7,7 +7,7 @@ if MPC_THREAD_ENABLED
 endif
 
 if HYDRA_CLIENT_LIB_ENABED
-        AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Launch/src/hydra_client
+        AM_CPPFLAGS += -I$(abs_srcdir)/hydra_client
 endif
 
 

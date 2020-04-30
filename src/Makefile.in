@@ -92,6 +92,7 @@ host_triplet = @host@
 @MPC_OPENMP_ENABLED_TRUE@am__append_2 = MPC_OpenMP
 @MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_3 = MPC_Message_Passing
 @MPC_MPI_ENABLED_TRUE@am__append_4 = MPC_MPI
+@MPC_MPIIO_ENABLED_TRUE@am__append_5 = MPC_IO
 bin_PROGRAMS = mpc_print_config$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -482,7 +483,7 @@ xsltproc = @xsltproc@
 # installed for Fortran generation
 SUBDIRS = MPC_Doc MPC_Arch MPC_Common MPC_Config MPC_Topology \
 	$(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) MPC_IO lib bin
+	$(am__append_4) $(am__append_5) lib bin
 
 #
 # Print Config Program
@@ -515,9 +516,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/Makefile
+	  $(AUTOMAKE) --foreign src/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \

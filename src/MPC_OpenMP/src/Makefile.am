@@ -7,8 +7,6 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/
 
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_OpenMP/include/
 
-AM_LDFLAGS = lol
-
 lib_LTLIBRARIES = libmpcomp.la
 
 libmpcomp_la_SOURCES = mpcomp_api.c mpcomp_core.c mpcomp_fortran.c mpcomp_loop.c

@@ -1,5 +1,5 @@
 mpc_headerdir=$(pkgincludedir)
-mpc_header_HEADERS=./include/mpc_runtime_config.h
+mpc_header_HEADERS=$(srcdir)/include/mpc_runtime_config.h
 
 # Editor installation
 

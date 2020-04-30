@@ -838,9 +838,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/MPC_Doc/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/MPC_Doc/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/MPC_Doc/Makefile
+	  $(AUTOMAKE) --foreign src/MPC_Doc/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -1121,6 +1121,7 @@ uninstall-man: uninstall-man1 uninstall-man3
 # MPI interface
 $(mpi_manpages):MPI_%.3:man/MPI_%.3in $(srcdir)/gen_manpage.sh
 	@cat $< > $@
+	@cat $(srcdir)/man/mpi_std_footer.3 >> $@
 	@manpage_date=`date -d"@${MPC_GENERATION_DATE}" +%m/%Y`; \
 	sed -i -e "s,#PACKAGE_DATE#,$$manpage_date," -e "s/#PACKAGE_VERSION#/$(MPC_VERSION_STRING)/g" -e "s/#PACKAGE_NAME#/$(PACKAGE_NAME)/g" $@
 
