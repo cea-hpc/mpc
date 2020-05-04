@@ -22,14 +22,18 @@
 #                                                                      #
 ########################################################################
 
-
-# Global AC setup, no update required here
+#Autoconf initialization w/ project name, version, bug report email, package name & website
 AC_INIT([Multi-Processor Computing Framework],
 	[m4_esyscmd_s([./utils/get_version])],
 	[france@paratools.com], [mpcframework], [https://mpc.hpcframework.com])
+
+#Some basic setups: where build configuration/macro files are stored
+#and check for source directory properly found
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIRS([config/m4])
 AC_CONFIG_SRCDIR([src/MPC_Arch/src/timer.c])
+
+# Language is C-based (init compilers properly)
 AC_LANG(C)
 
 # Pre-required maintainer tool to rebuild.
@@ -37,13 +41,24 @@ AC_LANG(C)
 # generated files under version control
 AC_PREREQ(2.69)
 LT_PREREQ([2.4.6])
-AM_INIT_AUTOMAKE([1.15 subdir-objects foreign no-define])
+
+# two first arguments are omitted: PACKAGE & VERSION (infered from AC_INIT)
+# subdir-objects: any source file will map with a corresponding object file under same subtree from builddir
+# foreign: not conformant with GNU standard strictness
+# no-define: do not subst PACKAGE & VERSION (inferred from AC_INIT)
+# std-options: Check any installed script provides a '--help' and '--version'
+# no-dist: do not distribute the project through "make dist", MPC more complex than what provided
+AM_INIT_AUTOMAKE([1.16.1 subdir-objects foreign no-define std-options])
+
+# Avoid Makefile to print commands before running it
+# Overriden by configure: --disable-silent-rules
+# overriden by make: make V=1
 AM_SILENT_RULES([yes])
 
-# DO NOT REBUILD Makefile.in & CO
-# IT MEANS YOU NEED TO REBUILD MANUALLY
-# EACH TIME YOU EDIT THE BUILD SYSTEM !
-# USE ./autogen.sh to do so
+# Editing the build system (new directory, source file, changes in *.am/*.ac)
+# leads to regenerate the configuration. To do so, run "./autogen.sh" script.
+# by using `--enable-maintainer-mode` as configure option, a change in build files
+# will automatically trigger a new configuration (not working properly for now)
 AM_MAINTAINER_MODE([disable])
 
 #
@@ -68,19 +83,26 @@ AC_PROG_CXX([apc++ icpc g++ clang++])
 AC_PROG_CC([apcc icc gcc clang])
 AC_PROG_FC([apfortran ifort gfortran])
 
+##################################################
+###### Current build version identification ######
+##################################################
+#This detection is propagated to the whole project (sources, doc, build...)
+
+#Create environment vars
 MPC_VERSION_MAJOR="$($CONFIGURE_SCRIPT_PATH/utils/get_version --major)"
 MPC_VERSION_MINOR="$($CONFIGURE_SCRIPT_PATH/utils/get_version --minor)"
 MPC_VERSION_PATCH="$($CONFIGURE_SCRIPT_PATH/utils/get_version --patch)"
 MPC_VERSION_TAINT="$($CONFIGURE_SCRIPT_PATH/utils/get_version --taint)"
 MPC_VERSION_STRING="$($CONFIGURE_SCRIPT_PATH/utils/get_version --all)"
 
-
+# define macros in mpc_config.h for proper use from sources
 AC_DEFINE_UNQUOTED([MPC_VERSION_MAJOR], [$MPC_VERSION_MAJOR], [MPC Major Version])
 AC_DEFINE_UNQUOTED([MPC_VERSION_MINOR], [$MPC_VERSION_MINOR], [MPC Minor Version])
 AC_DEFINE_UNQUOTED([MPC_VERSION_PATCH], [$MPC_VERSION_PATCH], [MPC Patch Version])
 AC_DEFINE_UNQUOTED([MPC_VERSION_PRE], ["$MPC_VERSION_TAINT"], [MPC Tainted Version])
 AC_DEFINE_UNQUOTED([MPC_VERSION_STRING], ["$MPC_VERSION_STRING"], [MPC Tainted Version])
 
+#Substitute any @MPC_VERSION_*@ in *.in files
 AC_SUBST([MPC_VERSION_MAJOR])
 AC_SUBST([MPC_VERSION_MINOR])
 AC_SUBST([MPC_VERSION_PATCH])
