@@ -22,11 +22,6 @@
 #                                                                      #
 ########################################################################
 
-# Pre-required maintainer tool to rebuild.
-# Enforcing this ensure mimnimum changes to
-# generated files under version control
-AC_PREREQ(2.69)
-LT_PREREQ([2.4.6])
 
 # Global AC setup, no update required here
 AC_INIT([Multi-Processor Computing Framework],
@@ -36,7 +31,13 @@ AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIRS([config/m4])
 AC_CONFIG_SRCDIR([src/MPC_Arch/src/timer.c])
 AC_LANG(C)
-AM_INIT_AUTOMAKE([subdir-objects foreign no-define])
+
+# Pre-required maintainer tool to rebuild.
+# Enforcing this ensure mimnimum changes to
+# generated files under version control
+AC_PREREQ(2.69)
+LT_PREREQ([2.4.6])
+AM_INIT_AUTOMAKE([1.15 subdir-objects foreign no-define])
 AM_SILENT_RULES([yes])
 
 # DO NOT REBUILD Makefile.in & CO

@@ -3225,6 +3225,12 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+
+# Pre-required maintainer tool to rebuild.
+# Enforcing this ensure mimnimum changes to
+# generated files under version control
+
+
 am__api_version='1.15'
 
 # Find a good install program.  We prefer a C program (faster),
