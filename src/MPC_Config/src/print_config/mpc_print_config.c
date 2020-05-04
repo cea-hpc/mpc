@@ -61,6 +61,8 @@ struct command_options {
 	char * schema;
 	/** Request the help of the command (--help). **/
 	bool help;
+	/** request the version to be printed (--version) **/
+	bool version;
   /** Disable the loading of config files (--nofile). **/
   bool nofile;
   /** Display all the available profile names. **/
@@ -86,6 +88,7 @@ Options :\n\
   --nofile          : Only use the internal default values.\n\
   --profiles={list} : Manually enable some profiles (comma separated).\n\
   --schema={file}   : Override the default path to XML schema for validation.\n\
+  --version         : Get the current MPC framework version\n\
 \n\
 You can also influence the loaded files with environment variables :\n\
   - MPC_SYSTEM_CONFIG   : System configuration file (" MPC_PREFIX_PATH "/share/"PACKAGE_TARNAME"/config.xml)\n\
@@ -172,6 +175,11 @@ void display_help(void)
 	puts(cst_help_message);
 }
 
+void display_version(void)
+{
+	printf("mpc_print_config (MPC) %s\n", MPC_VERSION_STRING);
+}
+
 /********************************* FUNCTION *********************************/
 void init_default_options(struct command_options * options)
 {
@@ -180,6 +188,7 @@ void init_default_options(struct command_options * options)
 
 	/* default values */
 	options->help          = false;
+	options->version       = false;
 	options->mode          = OUTPUT_MODE_TEXT;
 	options->system_file   = NULL;
 	options->user_file     = NULL;
@@ -229,10 +238,13 @@ bool parse_args(struct command_options * options,int argc, char ** argv)
 			} else if (strncmp(argv[i],"--profiles=",11) == 0) {
 			  options->user_profiles = strdup(argv[i]+11);
 			} else if (strncmp(argv[i],"--schema=",9) == 0) {
-        options->schema = strdup(argv[i]+9);
-      } else if (strncmp(argv[i],"--list-profiles",15) == 0) {
-        options->list_profiles = true;
-      } else {
+				options->schema = strdup(argv[i]+9);
+			} else if (strncmp(argv[i],"--list-profiles",15) == 0) {
+				options->list_profiles = true;
+			} else if (strncmp(argv[i],"--version",9) == 0) {
+				options->version = true;
+
+			} else {
 			  fprintf(stderr,"Error : invalid argument %s\n",argv[i]);
 			  return false;
 			}
@@ -344,6 +356,8 @@ int main(int argc, char ** argv)
 	if (parse_args(&options,argc,argv)) {
 		if (options.help) {
 			display_help();
+		} else if(options.version) {
+			display_version();
 		} else if(options.list_profiles){
 		  res = load_mpc_config(&options, &config);
 		  print_profiles_names_config(&config);

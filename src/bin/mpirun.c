@@ -15,6 +15,12 @@ void display_help()
 	       "\n");
 }
 
+void display_version()
+{
+	printf("mpirun (MPC framework) %s\n", MPC_VERSION_STRING);
+
+}
+
 #define COMMAND_SIZE 4*1024
 
 static int verbose_flag = 0;
@@ -41,17 +47,18 @@ int main(int argc, char **argv)
 		static struct option long_options[] =
 		{
 			/* These options set a flag. */
-			{ "verbose", no_argument,       &verbose_flag, 1   },
-			{ "brief",   no_argument,       &verbose_flag, 0   },
-			{ "np",      required_argument, 0,             'n' },
-			{ "cores",   required_argument, 0,             'c' },
-			{ "help",    no_argument,       0,             'h' },
-			{ 0,         0,                 0,             0   }
+			{ "version" , no_argument       , 0 , 'V'} ,
+			{ "verbose" , no_argument       , 0 , 'v'} ,
+			{ "brief"   , no_argument       , 0 , 'v'} ,
+			{ "np"      , required_argument , 0 , 'n'} ,
+			{ "cores"   , required_argument , 0 , 'c'} ,
+			{ "help"    , no_argument       , 0 , 'h'} ,
+			{ 0         , 0                 , 0 , 0}
 		};
 		/* getopt_long stores the option index here. */
 		int option_index = 0;
 
-		c = getopt_long(argc, argv, "+hn:c:", long_options, &option_index);
+		c = getopt_long(argc, argv, "+hn:c:V", long_options, &option_index);
 
 		/* Detect the end of the options. */
 		if(c == -1)
@@ -72,9 +79,14 @@ int main(int argc, char **argv)
 			case 'h':
 				display_help();
 				return 0;
-
 				break;
-
+			case 'V':
+				display_version();
+				return 0;
+				break;
+			case 'v':
+				verbose_flag=1;
+				break;
 			default:
 				done = 1;
 				break;
