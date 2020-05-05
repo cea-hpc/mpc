@@ -84,26 +84,14 @@
 /* Define to 1 if you have the <immintrin.h> header file. */
 #undef HAVE_IMMINTRIN_H
 
-/* Define to 1 if you have the <infiniband/verbs.h> header file. */
-#undef HAVE_INFINIBAND_VERBS_H
-
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 
-/* Define to 1 if you have the <libunwind.h> header file. */
-#undef HAVE_LIBUNWIND_H
-
-/* Define to 1 if you have the <libxml/parser.h> header file. */
-#undef HAVE_LIBXML_PARSER_H
-
-/* Define to 1 if you have the <libxml/tree.h> header file. */
-#undef HAVE_LIBXML_TREE_H
-
-/* Define to 1 if you have the <libxml/xmlschemas.h> header file. */
-#undef HAVE_LIBXML_XMLSCHEMAS_H
+/* Define to 1 if you have the `pthread' library (-lpthread). */
+#undef HAVE_LIBPTHREAD
 
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H

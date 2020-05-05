@@ -22,6 +22,34 @@
 #                                                                      #
 ########################################################################
 
+#####################################################################
+####                    TABLE OF CONTENTS                        ####
+#####################################################################
+# This configure.ac is organized as follows:
+#(you may use tags below to reach the proper section directly)
+#
+# - {sec:setup}: GENERAL INITIALIZATION
+# - {sec:globals}: GLOBAL INFORMATION
+# - {sec:version}: BUILD VERSION IDENTIFICATION
+# - {sec:checks}: CHECKS BEFORE BUILD, including
+#     - {sec:arch}: ARCHITECTURE
+#     - {sec:programs} : EXTERNAL PROGRAMS
+#     - {sec:headers}: EXTERNAL HEADERS
+#     - {sec:libraries}: EXTERNAL LIBRARIES
+#     - {sec:datatypes}: DATA TYPES
+#     - {sec:funcs}: STANDARD FUNCTIONS
+# - {sec:deps}: LOOKING FOR DEPENDENCIES, including...
+# - {sec:pthread}: PThread API checks
+# - {sec:modular}: MPC MODULAR CONFIGURATION
+# - {sec:compiler}: COMPILERS IDENTIFICATION
+# - {sec:finalize}: FINALIZATION & SUMMARY
+#
+#####################################################################
+
+####################################
+###### GENERAL INITIALIZATION ###### {sec:setup}
+####################################
+
 #Autoconf initialization w/ project name, version, bug report email, package name & website
 AC_INIT([Multi-Processor Computing Framework],
 	[m4_esyscmd_s([./utils/get_version])],
@@ -40,7 +68,6 @@ AC_LANG(C)
 # Enforcing this ensure mimnimum changes to
 # generated files under version control
 AC_PREREQ(2.69)
-LT_PREREQ([2.4.6])
 
 # two first arguments are omitted: PACKAGE & VERSION (infered from AC_INIT)
 # subdir-objects: any source file will map with a corresponding object file under same subtree from builddir
@@ -61,7 +88,12 @@ AM_SILENT_RULES([yes])
 # will automatically trigger a new configuration (not working properly for now)
 AM_MAINTAINER_MODE([disable])
 
-#
+#libtool initialization
+LT_PREREQ([2.4.6])
+LT_INIT([disable-static])
+LT_LANG([C])
+
+# TODO:
 # Reload first configure environment if present
 # this is needed as we want all the variables
 # set by the root configure script (or first configure)
@@ -74,19 +106,19 @@ if test -f ${PWD}/bin/mpc_build_env.sh; then
 	. ${PWD}/bin/mpc_build_env.sh
 fi
 
-# General Configuration
+################################
+###### GLOBAL INFORMATION ###### {sec:globals}
+################################
+# installation prefix, defined for the whole build
+AC_DEFINE_UNQUOTED([MPC_PREFIX_PATH], ["$prefix"], [Prefix Path for MPC])
+#static list of supported architecture (to be expanded)
+MPC_SUPPORTED_ARCHITECTURES_LIST="x86_64 ia64 i686 arm aarch64 powerpc64"
+# General Configuration path
 CONFIGURE_SCRIPT_PATH=$(dirname "`readlink -f "$0"`")
 
-LT_INIT([disable-static])
-LT_LANG([C])
-AC_PROG_CXX([apc++ icpc g++ clang++])
-AC_PROG_CC([apcc icc gcc clang])
-AC_PROG_FC([apfortran ifort gfortran])
-
-##################################################
-###### Current build version identification ######
-##################################################
-#This detection is propagated to the whole project (sources, doc, build...)
+####################################
+###### VERSION IDENTIFICATION ###### {sec:version}
+####################################
 
 #Create environment vars
 MPC_VERSION_MAJOR="$($CONFIGURE_SCRIPT_PATH/utils/get_version --major)"
@@ -109,58 +141,161 @@ AC_SUBST([MPC_VERSION_PATCH])
 AC_SUBST([MPC_VERSION_PRE])
 AC_SUBST([MPC_VERSION_STRING])
 
-AC_DEFINE_UNQUOTED([MPC_PREFIX_PATH], ["$prefix"], [Prefix Path for MPC])
+#################################
+###### CHECKS BEFORE BUILD ###### {sec:checks}
+#################################
 
-
-MPC_SUPPORTED_ARCHITECTURES_LIST="x86_64 ia64 i686 arm aarch64 powerpc64"
-
-# Resolve Host CPU
-
+#### ARCHITECTURE #### {sec:arch}
+######################
 AC_CANONICAL_HOST
 MPC_TARGET_ARCHITECTURE="$host_cpu"
 
 # Check if architecture is in support list
-
 AC_MSG_CHECKING([Support for target architecture])
-
-is_in_list()
-{
-    echo "$2" | grep -iq "$1"
-    return $?
-}
-
-if is_in_list "$MPC_TARGET_ARCHITECTURE" "$MPC_SUPPORTED_ARCHITECTURES_LIST"; then
+if test -z "${MPC_SUPPORTED_ARCHITECTURES_LIST##*$MPC_TARGET_ARCHITECTURE*}" ; then
         AC_MSG_RESULT([$MPC_TARGET_ARCHITECTURE])
+	AC_SUBST([MPC_TARGET_ARCHITECTURE])
 else
-        AC_MSG_RESULT(Not supported)
-        AC_MSG_ERROR(The current architecture is not supported yet. Please contact support team.)
+        AC_MSG_RESULT([No])
+        AC_MSG_ERROR([Current architecture is not supported yet. Please contact support team])
 fi
 
-AC_SUBST([MPC_TARGET_ARCHITECTURE])
-
-
-
-# Programs Checks
+#### EXTERNAL PROGRAMS #### {sec:programs}
+###########################
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_CC
 AM_PROG_AS
 
-# Optionnal XML generators
+# Optional XML generators (dynamically regen config)
+AC_PATH_PROG([XSLTPROC],[xsltproc],[:])
+AC_PATH_PROG([XMLLINT],[xmllint],[:])
+AM_CONDITIONAL([CAN_GENERATE_CONFIG], [test "x$xsltproc" != "x:" -a "x$xmllint" != "x:"])
 
-AC_CHECK_PROG([xsltproc],[xsltproc],[yes],[no])
-AC_CHECK_PROG([xmllint],[xmllint],[yes],[no])
+# Optional Pandoc Generator (dynamically regen manpages
+AC_PATH_PROG([PANDOC],[pandoc],[:])
+AM_CONDITIONAL([CAN_USE_PANDOC], [test "x$PANDOC" != "x:"])
 
-AM_CONDITIONAL([CAN_GENERATE_CONFIG], [test "x$xsltproc" = xyes -o "x$xmllint" = xyes])
+#### EXTERNAL HEADERS #### {sec:headers}
+##########################
+AC_HEADER_STDC
+AC_CHECK_HEADER_STDBOOL
+AC_CHECK_HEADERS([ aio.h \
+	asm/unistd.h \
+	assert.h \
+	ctype.h \
+	errno.h \
+	execinfo.h \
+	elf.h \
+	fcntl.h \
+	getopt.h \
+	hwloc.h \
+	immintrin.h \
+	limits.h \
+	linux/personality.h \
+	netdb.h \
+	netinet/in.h \
+	netinet/tcp.h \
+	pthread.h \
+	regex.h \
+	sched.h \
+	semaphore.h \
+	setjmp.h \
+	signal.h \
+	stddef.h \
+	stdlib.h \
+	stdint.h \
+	stdbool.h \
+	string.h \
+	sys/mman.h \
+	sys/param.h \
+	sys/pstat.h \
+	sys/socket.h \
+	sys/stat.h \
+	sys/syscall.h \
+	sys/time.h \
+	sys/types.h \
+	sys/ucontext.h \
+	sys/un.h \
+	sys/utsname.h \
+	sys/wait.h \
+	time.h \
+	ucontext.h \
+	unistd.h \
+	wchar.h \
+	valgrind/memcheck.h \
+	valgrind/valgrind.h \
+])
 
-# Optionnal Pandoc Generator
+#### EXTERNAL LIBRARIES #### {sec:libraries}
+############################
+AC_CHECK_LIB([m],[log])
+AC_CHECK_LIB(pthread, pthread_create)
+AC_CHECK_SIZEOF(pthread_t,,[#include <pthread.h>])
 
-AC_CHECK_PROG([pandoc],[pandoc],[yes],[no])
 
-AM_CONDITIONAL([CAN_USE_PANDOC], [test "x$pandoc" = xyes])
+#### DATATYPES #### {sec:datatypes}
+###################
+AC_C_INLINE
+AC_TYPE_INT16_T
+AC_TYPE_INT32_T
+AC_TYPE_INT64_T
+AC_TYPE_INT8_T
+AC_TYPE_OFF_T
+AC_C_RESTRICT
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
+AC_TYPE_UINT8_T
+AC_CHECK_TYPES([ptrdiff_t])
+AX_GCC_BUILTIN([__builtin_expect])
+AC_C_CONST
+AC_C_RESTRICT
+AC_C_VOLATILE
+AC_C_INLINE
 
-# Checks for libraries.
+# Check for regular TLS support
+AX_TLS([AC_DEFINE([TLS_SUPPORT], [1], [TLS extension supported by compiler])],
+       [AC_DEFINE([TLS_SUPPORT], [0], [TLS extension NOT supported by compiler])])
 
+AC_CHECK_SIZEOF(char)
+AC_CHECK_SIZEOF(short)
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(float)
+AC_CHECK_SIZEOF(long)
+AC_SUBST([SIZEOF_LONG], [$ac_cv_sizeof_long])
+AC_CHECK_SIZEOF(double)
+AC_CHECK_SIZEOF(size_t)
+AC_CHECK_SIZEOF(void*)
+AC_CHECK_SIZEOF(long long)
+
+#### EXTERNAL FUNCTIONS #### {sec:funcs}
+############################
+AC_FUNC_FORK
+AC_FUNC_MALLOC
+AC_FUNC_MMAP
+AC_FUNC_REALLOC
+AC_CHECK_FUNCS([memcpy memmove memset statfs])
+AC_CHECK_FUNCS([strcasecmp strchr strdup strerror strstr strtol snprintf vsnprintf])
+AC_CHECK_FUNCS([gethostbyname gethostname])
+AC_CHECK_FUNCS([gettimeofday])
+AC_CHECK_FUNCS([mmap munmap])
+AC_CHECK_FUNCS([setenv getenv])
+AC_CHECK_FUNCS([uname])
+AC_CHECK_FUNCS([regcomp])
+AC_CHECK_FUNCS([socket connect accept])
+AC_CHECK_FUNCS([dup2 fdatasync])
+AC_CHECK_FUNCS([makecontext setcontext getcontext swapcontext])
+AC_CHECK_SIZEOF(sigset_t,,[#include <signal.h>])
+
+
+
+
+######################################
+###### LOOKING FOR DEPENDENCIES ###### {sec:deps}
+######################################
 # Library detector helper
 
 
@@ -514,15 +649,11 @@ then
         AC_MSG_ERROR([You must pick up one between Hydra and Slurm (--with-hydra or --with-slurm)])
 fi
 
-if test "x$mpc_hydra_enabled" = "xyes" -o  "x$mpc_slurm_enabled" = "xyes"
+if test "x$mpc_hydra_enabled" != "xyes" -a  "x$mpc_slurm_enabled" != "xyes"
 then
-        #All good
-        dummy=1337
-else
         AC_MSG_ERROR([You must activate either Hydra and Slurm (--with-hydra or --with-slurm)])
 fi
 
-MPC_MPIEXEC_HYDRA_PATH="mpiexec.hydra"
 
 if test "x$mpc_slurm_enabled" = "xyes"; then
 
@@ -532,15 +663,11 @@ if test "x$mpc_slurm_enabled" = "xyes"; then
 
         AC_DEFINE([MPC_USE_SLURM], [1], [Slurm PMI will be used to launch parallel programs])
 else
-        AC_CHECK_PROG([HAVE_MPIEXEC], [mpiexec.hydra], [yes], [no])
-
-        if test "x$HAVE_MPIEXEC" = "xno"
+	AC_PATH_PROG([MPIEXEC_HYDRA], [mpiexec.hydra], [no])
+        if test "x$MPIEXEC_HYDRA" = "xno"
         then
-                AC_MSG_ERROR([Could not locate Hydra wrapper 'mpiexec.hydra' in PATH])
+                AC_MSG_ERROR([Could not locate Hydra wrapper 'mpiexec.hydra' in PATH. Please reconsider using this launcher.])
         fi
-
-        MPC_MPIEXEC_HYDRA_PATH=$(which mpiexec.hydra)
-
         # Here we look for hydra only if hydra has not been disabled
         MPC_LAUNCHER="HYDRA"
 
@@ -555,9 +682,9 @@ else
         AC_DEFINE([MPC_USE_HYDRA], [1], [Hydra will be used to launch parallel programs])
 fi
 
-AM_CONDITIONAL([HYDRA_CLIENT_LIB_ENABED], [test "x$MPC_LAUNCHER" = "xHYDRA"])
+AM_CONDITIONAL([HYDRA_LAUNCHER_ENABLED], [test "x$MPC_LAUNCHER" = "xHYDRA"])
 
-AC_SUBST([MPC_MPIEXEC_HYDRA_PATH])
+AC_SUBST([MPIEXEC_HYDDRA])
 AC_SUBST([MPC_LAUNCHER])
 
 #
@@ -619,54 +746,6 @@ fi
 
 AC_SUBST([MPC_HAVE_DMTCP])
 
-# Checks for header files.
-
-AC_HEADER_STDC
-
-AC_CHECK_HEADERS([aio.h])
-AC_CHECK_HEADERS([asm/unistd.h])
-AC_CHECK_HEADERS([assert.h])
-AC_CHECK_HEADERS([ctype.h])
-AC_CHECK_HEADERS([errno.h])
-AC_CHECK_HEADERS([execinfo.h])
-AC_CHECK_HEADERS([elf.h])
-AC_CHECK_HEADERS([fcntl.h])
-AC_CHECK_HEADERS([getopt.h])
-AC_CHECK_HEADERS([hwloc.h])
-AC_CHECK_HEADERS([immintrin.h])
-AC_CHECK_HEADERS([libxml/parser.h])
-AC_CHECK_HEADERS([libxml/tree.h])
-AC_CHECK_HEADERS([libxml/xmlschemas.h])
-AC_CHECK_HEADERS([limits.h])
-AC_CHECK_HEADERS([linux/personality.h])
-AC_CHECK_HEADERS([netdb.h])
-AC_CHECK_HEADERS([netinet/in.h])
-AC_CHECK_HEADERS([netinet/tcp.h])
-AC_CHECK_HEADERS([regex.h])
-AC_CHECK_HEADERS([sched.h])
-AC_CHECK_HEADERS([setjmp.h])
-AC_CHECK_HEADERS([signal.h])
-AC_CHECK_HEADERS([stddef.h])
-AC_CHECK_HEADERS([stdlib.h])
-AC_CHECK_HEADERS([stdint.h])
-AC_CHECK_HEADERS([stdbool.h])
-AC_CHECK_HEADERS([string.h])
-AC_CHECK_HEADERS([sys/mman.h])
-AC_CHECK_HEADERS([sys/param.h])
-AC_CHECK_HEADERS([sys/pstat.h])
-AC_CHECK_HEADERS([sys/socket.h])
-AC_CHECK_HEADERS([sys/stat.h])
-AC_CHECK_HEADERS([sys/syscall.h])
-AC_CHECK_HEADERS([sys/time.h])
-AC_CHECK_HEADERS([sys/types.h])
-AC_CHECK_HEADERS([sys/ucontext.h])
-AC_CHECK_HEADERS([sys/un.h])
-AC_CHECK_HEADERS([sys/utsname.h])
-AC_CHECK_HEADERS([sys/wait.h])
-AC_CHECK_HEADERS([time.h])
-AC_CHECK_HEADERS([ucontext.h])
-AC_CHECK_HEADERS([unistd.h])
-AC_CHECK_HEADERS([wchar.h])
 
 # Checks for optionnal headers
 
@@ -675,36 +754,6 @@ AC_CHECK_HEADERS([wchar.h])
 #TODO CHECK PMI
 #TODO CHECK STDBOOL
 #TODO CHECK VALGRIND
-
-AC_CHECK_HEADERS([valgrind/memcheck.h])
-AC_CHECK_HEADERS([valgrind/valgrind.h])
-AC_CHECK_HEADER_STDBOOL
-AC_CHECK_HEADERS([libunwind.h])
-AC_CHECK_HEADERS([infiniband/verbs.h])
-
-
-AC_CHECK_HEADERS([semaphore.h],[HAVE_SEMAPHORE_H=1],[HAVE_SEMAPHORE_H=0])
-AC_SUBST([HAVE_SEMAPHORE_H])
-
-AC_CHECK_HEADERS([pthread.h], [HAVE_PTHREAD_H=1], [HAVE_PTHREAD_H=0])
-AC_SUBST([HAVE_PTHREAD_H])
-
-# Checks for typedefs, structures, and compiler characteristics.
-
-AC_C_INLINE
-AC_TYPE_INT16_T
-AC_TYPE_INT32_T
-AC_TYPE_INT64_T
-AC_TYPE_INT8_T
-AC_TYPE_OFF_T
-AC_C_RESTRICT
-AC_TYPE_SIZE_T
-AC_TYPE_SSIZE_T
-AC_TYPE_UINT16_T
-AC_TYPE_UINT32_T
-AC_TYPE_UINT64_T
-AC_TYPE_UINT8_T
-AC_CHECK_TYPES([ptrdiff_t])
 
 # Checks for Macros
 
@@ -780,62 +829,6 @@ fi
 #Restore old CFLAGS after pragma test
 CFLAGS="$OLD_CFLAGS"
 
-
-# Checking for builtin
-
-AX_GCC_BUILTIN([__builtin_expect])
-
-AC_C_CONST
-AC_C_RESTRICT
-AC_C_VOLATILE
-AC_C_INLINE
-
-AX_TLS([AC_DEFINE([TLS_SUPPORT], [1], [TLS extension supported by compiler])],
-       [AC_DEFINE([TLS_SUPPORT], [0], [TLS extension NOT supported by compiler])])
-
-
-# Checks for type sizes
-
-AC_CHECK_SIZEOF(char)
-AC_CHECK_SIZEOF(short)
-AC_CHECK_SIZEOF(int)
-AC_CHECK_SIZEOF(float)
-
-AC_CHECK_SIZEOF(long)
-AC_SUBST([SIZEOF_LONG], [$ac_cv_sizeof_long])
-
-AC_CHECK_SIZEOF(double)
-AC_CHECK_SIZEOF(size_t)
-AC_CHECK_SIZEOF(void*)
-AC_CHECK_SIZEOF(long long)
-
-# Checks for standard library functions.
-
-AC_FUNC_FORK
-AC_FUNC_MALLOC
-AC_FUNC_MMAP
-AC_FUNC_REALLOC
-AC_CHECK_FUNCS([memcpy memmove memset statfs])
-AC_CHECK_FUNCS([strcasecmp strchr strdup strerror strstr strtol snprintf vsnprintf])
-AC_CHECK_FUNCS([gethostbyname gethostname])
-AC_CHECK_FUNCS([gettimeofday])
-AC_CHECK_FUNCS([mmap munmap])
-AC_CHECK_FUNCS([setenv getenv])
-AC_CHECK_FUNCS([uname])
-AC_CHECK_FUNCS([regcomp])
-AC_CHECK_FUNCS([socket connect accept])
-AC_CHECK_FUNCS([dup2 fdatasync])
-AC_CHECK_FUNCS([makecontext setcontext getcontext swapcontext])
-
-# Check for libmath
-AC_CHECK_LIB([m],[log])
-
-# Check for pThread
-AC_CHECK_HEADER([pthread.h])
-AC_CHECK_LIB(pthread,pthread_create,LIBS="$LIBS -lpthread")
-AC_CHECK_SIZEOF(pthread_t,,[#include <pthread.h>])
-AC_CHECK_SIZEOF(sigset_t,,[#include <signal.h>])
-
 extract_integer_define_value "signal.h" "NSIG" "no"
 
 if test -z "$MACRO_VALUE"; then
@@ -848,7 +841,9 @@ fi
 AC_DEFINE_UNQUOTED([MPC_CONFIG_NSIG], [$MACRO_VALUE], [Value of NSIG from signal.h])
 AC_SUBST([MPC_CONFIG_NSIG], [$MACRO_VALUE])
 
-# All that is in pthread.h
+###################################
+###### PTHREAD API DETECTION ###### {sec:pthread}
+###################################
 
 #PTHREAD_MUTEX_NORMAL
 
@@ -1336,11 +1331,11 @@ AC_MSG_CHECKING([which context switches to use])
 
 MPC_ARCH_CONTEXT_SWITCH="generic"
 
-if is_in_list "$MPC_TARGET_ARCHITECTURE" "$MPC_CONTEXT_SWITCH_SUPPORTED_ARCHITECTURE"; then
+if test -z "${MPC_CONTEXT_SWITCH_SUPPORTED_ARCHITECTURE##*$MPC_TARGET_ARCHITECTURE*}"; then
         MPC_ARCH_CONTEXT_SWITCH="$MPC_TARGET_ARCHITECTURE"
         AC_MSG_RESULT($MPC_TARGET_ARCHITECTURE)
 else
-        AC_MSG_RESULT(standard)
+        AC_MSG_RESULT([Standard])
 fi
 
 # Note that by construction the following conditionnals are multually exclusive
@@ -1352,7 +1347,7 @@ AC_MSG_CHECKING([which Configuring optimized microtasks])
 
 MPC_ARCH_MICROTASK_ARCH="generic"
 
-if is_in_list "$MPC_TARGET_ARCHITECTURE" "$MPC_MICROTASK_SUPPORTED_ARCHITECTURE"; then
+if test -z "${MPC_MICROTASK_SUPPORTED_ARCHITECTURE##*$MPC_TARGET_ARCHITECTURE*}"; then
         MPC_ARCH_MICROTASK_ARCH="$MPC_TARGET_ARCHITECTURE"
         AC_MSG_RESULT($MPC_TARGET_ARCHITECTURE)
 else
@@ -1377,9 +1372,7 @@ if test "x$MPC_ARCH_MICROTASK_ARCH" = "xx86"; then
         AC_MSG_RESULT([x86_64])
 fi
 
-#
-# Guess Compiler Family
-#
+
 
 mpc_compiler_family="notset"
 
@@ -1589,6 +1582,11 @@ case $mpc_compiler_family in
                 MPC_DEBUG_FLAGS=" $MPC_PORTABLE_DEBUG_FLAGS"
         ;;
 esac
+
+
+###################################
+###### MPC MOD CONFIGURATION ###### {sec:modular}
+###################################
 
 # Todo we cannot pass it to APCC portably
 
@@ -2041,6 +2039,9 @@ fi
 
 AC_SUBST([ALL_MPC_LIBS])
 
+################################
+###### COMPILER DETECTION ###### {sec:compilers}
+################################
 #
 # Configure MPC's compilers
 #
@@ -2111,6 +2112,10 @@ locate_bin()
         fi
 
 }
+
+AC_PROG_CXX([apc++ icpc g++ clang++])
+AC_PROG_CC([apcc icc gcc clang])
+AC_PROG_FC([apfortran ifort gfortran])
 
 # Insert all known compiler wrappers for compilers
 
@@ -2210,6 +2215,10 @@ fi
 AM_CONDITIONAL([MPC_HAVE_AUTOPRIV], [test "x${mpc_have_autopriv}" = "xyes"])
 
 
+
+####################################
+###### FINALIZATION & SUMMARY ###### {sec:finalize}
+####################################
 #
 # Extraction of compilation state
 #

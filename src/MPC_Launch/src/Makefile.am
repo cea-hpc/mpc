@@ -29,7 +29,7 @@ if MPC_THREAD_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
 endif
 
-if HYDRA_CLIENT_LIB_ENABED
+if HYDRA_LAUNCHER_ENABLED
         AM_CPPFLAGS += -I$(abs_srcdir)/hydra_client
 endif
 
@@ -41,7 +41,7 @@ lib_LTLIBRARIES = libmpclaunch.la
 
 libmpclaunch_la_SOURCES = main.c  libc_main.c  mpc_launch.c pmi.c
 
-if HYDRA_CLIENT_LIB_ENABED
+if HYDRA_LAUNCHER_ENABLED
         libmpclaunch_la_SOURCES += ./hydra_client/safestr2.c  ./hydra_client/simple_pmi.c  ./hydra_client/simple_pmiutil.c
 endif
 

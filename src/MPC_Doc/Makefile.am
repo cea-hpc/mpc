@@ -440,7 +440,6 @@ mpi_manpages= \
 	$(NULL)
 
 man_MANS=$(mpi_manpages) $(mpc_manpages)
-CLEANFILES=$(mpi_manpages) $(mpc_manpages)
 
 manpage_date=`date -d"@${MPC_GENERATION_DATE}" +%m/%Y`
 

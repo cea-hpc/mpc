@@ -89,8 +89,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @MPC_THREAD_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
-@HYDRA_CLIENT_LIB_ENABED_TRUE@am__append_2 = -I$(abs_srcdir)/hydra_client
-@HYDRA_CLIENT_LIB_ENABED_TRUE@am__append_3 = ./hydra_client/safestr2.c  ./hydra_client/simple_pmi.c  ./hydra_client/simple_pmiutil.c
+@HYDRA_LAUNCHER_ENABLED_TRUE@am__append_2 = -I$(abs_srcdir)/hydra_client
+@HYDRA_LAUNCHER_ENABLED_TRUE@am__append_3 = ./hydra_client/safestr2.c  ./hydra_client/simple_pmi.c  ./hydra_client/simple_pmiutil.c
 subdir = src/MPC_Launch/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -144,10 +144,10 @@ am__libmpclaunch_la_SOURCES_DIST = main.c libc_main.c mpc_launch.c \
 	pmi.c ./hydra_client/safestr2.c ./hydra_client/simple_pmi.c \
 	./hydra_client/simple_pmiutil.c
 am__dirstamp = $(am__leading_dot)dirstamp
-@HYDRA_CLIENT_LIB_ENABED_TRUE@am__objects_1 =  \
-@HYDRA_CLIENT_LIB_ENABED_TRUE@	./hydra_client/safestr2.lo \
-@HYDRA_CLIENT_LIB_ENABED_TRUE@	./hydra_client/simple_pmi.lo \
-@HYDRA_CLIENT_LIB_ENABED_TRUE@	./hydra_client/simple_pmiutil.lo
+@HYDRA_LAUNCHER_ENABLED_TRUE@am__objects_1 =  \
+@HYDRA_LAUNCHER_ENABLED_TRUE@	./hydra_client/safestr2.lo \
+@HYDRA_LAUNCHER_ENABLED_TRUE@	./hydra_client/simple_pmi.lo \
+@HYDRA_LAUNCHER_ENABLED_TRUE@	./hydra_client/simple_pmiutil.lo
 am_libmpclaunch_la_OBJECTS = main.lo libc_main.lo mpc_launch.lo pmi.lo \
 	$(am__objects_1)
 libmpclaunch_la_OBJECTS = $(am_libmpclaunch_la_OBJECTS)
@@ -273,11 +273,8 @@ FC = @FC@
 FCFLAGS = @FCFLAGS@
 FGREP = @FGREP@
 GREP = @GREP@
-HAVE_MPIEXEC = @HAVE_MPIEXEC@
 HAVE_MPI_DARRAY_SUBARRAY = @HAVE_MPI_DARRAY_SUBARRAY@
 HAVE_MPI_INFO = @HAVE_MPI_INFO@
-HAVE_PTHREAD_H = @HAVE_PTHREAD_H@
-HAVE_SEMAPHORE_H = @HAVE_SEMAPHORE_H@
 HWLOC_CFLAGS = @HWLOC_CFLAGS@
 HWLOC_LIBS = @HWLOC_LIBS@
 IBV_CFLAGS = @IBV_CFLAGS@
@@ -343,7 +340,6 @@ MPC_IN_PROCESS_MODE = @MPC_IN_PROCESS_MODE@
 MPC_LANGUAGE_LIST = @MPC_LANGUAGE_LIST@
 MPC_LAUNCHER = @MPC_LAUNCHER@
 MPC_MESSAGE_PASSING_ENABLED = @MPC_MESSAGE_PASSING_ENABLED@
-MPC_MPIEXEC_HYDRA_PATH = @MPC_MPIEXEC_HYDRA_PATH@
 MPC_MPIIO_ENABLED = @MPC_MPIIO_ENABLED@
 MPC_MPI_ENABLED = @MPC_MPI_ENABLED@
 MPC_NETWORK_LIST = @MPC_NETWORK_LIST@
@@ -356,6 +352,8 @@ MPC_VERSION_MINOR = @MPC_VERSION_MINOR@
 MPC_VERSION_PATCH = @MPC_VERSION_PATCH@
 MPC_VERSION_PRE = @MPC_VERSION_PRE@
 MPC_VERSION_STRING = @MPC_VERSION_STRING@
+MPIEXEC_HYDDRA = @MPIEXEC_HYDDRA@
+MPIEXEC_HYDRA = @MPIEXEC_HYDRA@
 NEEDS_MPI_FINT = @NEEDS_MPI_FINT@
 NM = @NM@
 NMEDIT = @NMEDIT@
@@ -372,6 +370,7 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
+PANDOC = @PANDOC@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
 PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
@@ -406,6 +405,8 @@ UNW_LIBS = @UNW_LIBS@
 VERSION = @VERSION@
 XML2_CFLAGS = @XML2_CFLAGS@
 XML2_LIBS = @XML2_LIBS@
+XMLLINT = @XMLLINT@
+XSLTPROC = @XSLTPROC@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -452,7 +453,6 @@ localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
-pandoc = @pandoc@
 pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
@@ -466,8 +466,6 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-xmllint = @xmllint@
-xsltproc = @xsltproc@
 
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
