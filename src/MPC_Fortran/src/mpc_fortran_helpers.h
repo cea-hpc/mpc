@@ -1,7 +1,7 @@
 #ifndef MPI_FORTRAN_IFACE_H_
 #define MPI_FORTRAN_IFACE_H_
 
-#include <mpc_fortran.h>
+#include <mpc_mpi_fortran.h>
 
 /*******************
  * FORTRAN SUPPORT *

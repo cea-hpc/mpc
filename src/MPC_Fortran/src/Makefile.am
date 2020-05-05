@@ -38,6 +38,8 @@ genfortraniface: genmod.py preparsed_mpih.dat constants.json
 
 endif
 
+MPC_FORTRAN_COMPILER_LIST=@MPC_FORTRAN_COMPILER_LIST@
+
 # Deploy the Fortran build env for use at compile time if needed
 install-data-local: genfortraniface
 	test -d $(pkgdatadir)/fortran/ || mkdir $(pkgdatadir)/fortran/

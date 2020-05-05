@@ -11,6 +11,11 @@ warn()
 	printf "Warning: %s" "$@" 1>&2
 }
 
+info()
+{
+	printf "%s" "$@" 1>&2
+}
+
 check_rc()
 {			
 	if test "x$1" != "x0" ; then

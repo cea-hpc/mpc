@@ -170,6 +170,13 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AM_PROG_AS
 
+AM_PATH_PYTHON([],[HAVE_PYTHON="yes"],[HAVE_PYTHON="no"])
+
+if test "x${HAVE_PYTHON}" = "xyes"; then
+	AX_PYTHON_MODULE([json])
+	AX_PYTHON_MODULE([argparse])
+fi
+
 AM_CONDITIONAL([HAVE_PYTHON], [test "x$HAVE_PYTHON" = "xyes" -a "x${HAVE_PYMOD_JSON}" = "xyes" -a "x${HAVE_PYMOD_ARGPARSE}" = "xyes"])
 
 # Optional XML generators (dynamically regen config)
@@ -2156,13 +2163,6 @@ AC_PROG_FC([])
 #
 # Needed for Fortran module generation
 #
-
-AM_PATH_PYTHON([],[HAVE_PYTHON="yes"],[HAVE_PYTHON="no"])
-
-if test "x${HAVE_PYTHON}" = "xyes"; then
-	AX_PYTHON_MODULE([json])
-	AX_PYTHON_MODULE([argparse])
-fi
 
 # Insert all known compiler wrappers for compilers
 

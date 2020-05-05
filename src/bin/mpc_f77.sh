@@ -29,8 +29,10 @@
 # - MPC_INSTALL_PREFIX
 # - MPC_SHARE_DIR
 # - MPC_DEFAULT_FC_COMPILER
+# - MPC_DEFAULT_C_COMPILER
+# - MPC_GENERATION_DATE
 # - CFLAGS
-eval $(mpc_cflags -sh -p -s -fc -f --fortran)
+eval $(mpc_cflags -sh -p -s -fc -cc -f -t)
 
 COMPILER="$MPC_DEFAULT_FC_COMPILER"
 LDFLAGS=$("${MPC_INSTALL_PREFIX}/bin/mpc_ldflags" --fortran -l)
@@ -47,7 +49,21 @@ set_fortran
 
 parse_cli_args $@
 
-#
+insert_fortran_module_path()
+{
+		append_to "LDFLAGS" "-L${1} -Wl,-rpath=${1}"
+		append_to "CFLAGS" "-I${1}"
+}
+
+FORTRAN_HOME=$("${MPC_INSTALL_PREFIX}/bin/mpc_compile_fortran_modules" "-cc=${MPC_DEFAULT_C_COMPILER}" "-fc=${COMPILER}" "${CFLAGS}")
+
+if test -d "${FORTRAN_HOME}"; then
+	insert_fortran_module_path "${FORTRAN_HOME}"
+else
+	die "Could not build fortran modules for ${COMPILER}"
+fi
+
+
 # Important we need to make sure the right libgfortran is used
 # if the compiler is altered with -cc= to do so we use a gcc
 # commanf to resolve the libgfortran as seen from the compiler

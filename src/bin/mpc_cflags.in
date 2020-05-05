@@ -29,6 +29,7 @@
 MPC_INSTALL_PREFIX="@prefix@"
 MPC_SHARE_DIR="@PKG_DATADIR@"
 MPC_INCLUDEDIR="@PKG_INCDIR@"
+MPC_GENERATION_DATE="@MPC_GENERATION_DATE@"
 
 #
 # Default compiler environmnent
@@ -45,15 +46,11 @@ MPC_DEFAULT_FC_COMPILER="@MPC_DEFAULT_FC_COMPILER@"
 #if the SH flag is present or FORTRAN
 
 HAS_SH_FLAG="no"
-IS_FORTRAN="no"
 
 for arg in "$@" ; do
 	case $arg in
 		-sh)
 			HAS_SH_FLAG="yes"
-		;;
-		-f|--fortran)
-			IS_FORTRAN="yes"
 		;;
 	esac
 done
@@ -87,11 +84,6 @@ EXTLS_CFLAGS="@EXTLS_CFLAGS@"
 MPCALLOC_CFLAGS="@ALLOC_CFLAGS@"
 
 FLAGS="-I${MPC_INCLUDEDIR}"
-
-if test "x${IS_FORTRAN}" = "xyes"; then
-	FLAGS="$FLAGS -I${MPC_INCLUDEDIR}/fortran/"
-fi
-
 FLAGS="$FLAGS ${OPA_CFLAGS}"
 FLAGS="$FLAGS ${HWLOC_CFLAGS}"
 FLAGS="$FLAGS ${EXTLS_CFLAGS}"
@@ -113,12 +105,12 @@ show_help()
 	echo ""
 	echo " -h|--help    Print this help"
 	echo " -f|--cflags  Print cflags"
-	echo " --fortran    Generate flags for Fortran"
 	echo " --sh         Output in shell format"
 	echo ""
 	echo "Install env:"
 	echo " -p           Display mpc install prefix"
 	echo " -s           Display mpc share directory"
+	echo " -t           MPC configuration timestamp"
 	echo ""
 	echo "Modules:"
 	echo " -m           List compiled Modules"
@@ -165,10 +157,13 @@ for arg in "$@" ; do
 	-cxx|-cpp)
 		print_var "MPC_DEFAULT_CXX_COMPILER" "$MPC_DEFAULT_CXX_COMPILER"
 		;;
+	-t)
+		print_var "MPC_GENERATION_DATE" "$MPC_GENERATION_DATE"
+		;;
 	-f|--cflags)
 		print_var "CFLAGS" "$FLAGS"
 		;;
-	-sh|--fortran)
+	-sh)
 	# Handled in the first pass
 	;;
 	*)
