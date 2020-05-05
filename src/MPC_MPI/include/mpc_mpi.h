@@ -6811,7 +6811,7 @@ int PMPIX_Comm_shrink(MPI_Comm , MPI_Comm *);
 #endif
 
 #ifdef MPC_FORTRAN_ENABLED
-#include <mpc_fortran.h>
+#include <mpc_mpi_fortran.h>
 #endif
 
 

@@ -21,8 +21,6 @@ clean-local:
 	rm -f $(builddir)/*.mod
 	rm -f $(builddir)/genfortraniface
 
-FORTRAN_MOD_FILES=mpi_constants.f90 mpi_sizeofs.f90 mpi_base.f90 mpi.f90 mpi_f08_ctypes.f90 mpi_f08_types.f90 mpi_f08_constants.f90 mpi_f08_c.f90 mpi_f08.f90 mpi_f08_c_iface.c
-
 if HAVE_PYTHON
 
 # We can generate, so generate and save (should not produce diff)
@@ -40,7 +38,7 @@ genfortraniface: genmod.py preparsed_mpih.dat constants.json
 
 endif
 
-# Default configuration file and schema installation
+# Deploy the Fortran build env for use at compile time if needed
 install-data-local: genfortraniface
 	test -d $(pkgdatadir)/fortran/ || mkdir $(pkgdatadir)/fortran/
 	install -m 0644 -D $(builddir)/mpif.h $(pkgdatadir)/fortran/
