@@ -119,22 +119,7 @@ CONFIGURE_SCRIPT_PATH=$(dirname "`readlink -f "$0"`")
 ####################################
 ###### VERSION IDENTIFICATION ###### {sec:version}
 ####################################
-AC_PROG_CXX([])
-AC_PROG_CC([])
-AC_PROG_FC([])
 
-#
-# Needed for Fortran module generation
-#
-
-AM_PATH_PYTHON([],[HAVE_PYTHON="yes"],[HAVE_PYTHON="no"])
-
-if test "x${HAVE_PYTHON}" = "xyes"; then
-	AX_PYTHON_MODULE([json])
-	AX_PYTHON_MODULE([argparse])
-fi
-
-AM_CONDITIONAL([HAVE_PYTHON], [test "x$HAVE_PYTHON" = "xyes" -a "x${HAVE_PYMOD_JSON}" = "xyes" -a "x${HAVE_PYMOD_ARGPARSE}" = "xyes"])
 #Create environment vars
 
 #
@@ -184,6 +169,8 @@ fi
 AC_PROG_CC
 AC_PROG_INSTALL
 AM_PROG_AS
+
+AM_CONDITIONAL([HAVE_PYTHON], [test "x$HAVE_PYTHON" = "xyes" -a "x${HAVE_PYMOD_JSON}" = "xyes" -a "x${HAVE_PYMOD_ARGPARSE}" = "xyes"])
 
 # Optional XML generators (dynamically regen config)
 AC_PATH_PROG([XSLTPROC],[xsltproc],[:])
@@ -2070,7 +2057,6 @@ if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
 fi
 
 if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
-	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Fortran/src/libmpcfortran.la"
 	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_FORTRAN_ENABLED"
 fi
 
@@ -2163,9 +2149,20 @@ locate_bin()
 
 }
 
-AC_PROG_CXX([apc++ icpc g++ clang++])
-AC_PROG_CC([apcc icc gcc clang])
-AC_PROG_FC([apfortran ifort gfortran])
+AC_PROG_CXX([])
+AC_PROG_CC([])
+AC_PROG_FC([])
+
+#
+# Needed for Fortran module generation
+#
+
+AM_PATH_PYTHON([],[HAVE_PYTHON="yes"],[HAVE_PYTHON="no"])
+
+if test "x${HAVE_PYTHON}" = "xyes"; then
+	AX_PYTHON_MODULE([json])
+	AX_PYTHON_MODULE([argparse])
+fi
 
 # Insert all known compiler wrappers for compilers
 

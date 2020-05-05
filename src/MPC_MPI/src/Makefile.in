@@ -91,6 +91,7 @@ host_triplet = @host@
 @MPC_THREAD_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
 @INFINIBAND_DRIVER_ENABLED_TRUE@am__append_2 = -I$(abs_top_srcdir)/src/MPC_Message_Passing/src/ib/
 @PORTALS4_DRIVER_ENABLED_TRUE@am__append_3 = -I$(abs_top_srcdir)/src/MPC_Message_Passing/src/portals/
+@MPC_FORTRAN_ENABLED_TRUE@am__append_4 = fortran.c
 subdir = src/MPC_MPI/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -142,12 +143,19 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libmpcmpi_la_DEPENDENCIES =  \
 	../../MPC_Message_Passing/src/libmpclowcomm.la
+am__libmpcmpi_la_SOURCES_DIST = comm_lib.c egreq_nbc.c mpc_extern32.c \
+	mpc_mpi_halo.c mpc_reduction.c mpi_rma.c mpi_rma_win.c \
+	datatype.c egreq_progress.c mpc_info.c mpc_nbc.c \
+	mpi_rma_ctrl_msg.c mpit.c egreq_classes.c mpc_cs.c mpc_mpi.c \
+	mpc_nbc_progress_thread_binding.c mpi_alloc_mem.c \
+	mpi_rma_epoch.c fortran.c
+@MPC_FORTRAN_ENABLED_TRUE@am__objects_1 = fortran.lo
 am_libmpcmpi_la_OBJECTS = comm_lib.lo egreq_nbc.lo mpc_extern32.lo \
 	mpc_mpi_halo.lo mpc_reduction.lo mpi_rma.lo mpi_rma_win.lo \
 	datatype.lo egreq_progress.lo mpc_info.lo mpc_nbc.lo \
 	mpi_rma_ctrl_msg.lo mpit.lo egreq_classes.lo mpc_cs.lo \
 	mpc_mpi.lo mpc_nbc_progress_thread_binding.lo mpi_alloc_mem.lo \
-	mpi_rma_epoch.lo
+	mpi_rma_epoch.lo $(am__objects_1)
 libmpcmpi_la_OBJECTS = $(am_libmpcmpi_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -171,9 +179,10 @@ am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/comm_lib.Plo \
 	./$(DEPDIR)/datatype.Plo ./$(DEPDIR)/egreq_classes.Plo \
 	./$(DEPDIR)/egreq_nbc.Plo ./$(DEPDIR)/egreq_progress.Plo \
-	./$(DEPDIR)/mpc_cs.Plo ./$(DEPDIR)/mpc_extern32.Plo \
-	./$(DEPDIR)/mpc_info.Plo ./$(DEPDIR)/mpc_mpi.Plo \
-	./$(DEPDIR)/mpc_mpi_halo.Plo ./$(DEPDIR)/mpc_nbc.Plo \
+	./$(DEPDIR)/fortran.Plo ./$(DEPDIR)/mpc_cs.Plo \
+	./$(DEPDIR)/mpc_extern32.Plo ./$(DEPDIR)/mpc_info.Plo \
+	./$(DEPDIR)/mpc_mpi.Plo ./$(DEPDIR)/mpc_mpi_halo.Plo \
+	./$(DEPDIR)/mpc_nbc.Plo \
 	./$(DEPDIR)/mpc_nbc_progress_thread_binding.Plo \
 	./$(DEPDIR)/mpc_reduction.Plo ./$(DEPDIR)/mpi_alloc_mem.Plo \
 	./$(DEPDIR)/mpi_rma.Plo ./$(DEPDIR)/mpi_rma_ctrl_msg.Plo \
@@ -199,7 +208,7 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libmpcmpi_la_SOURCES)
-DIST_SOURCES = $(libmpcmpi_la_SOURCES)
+DIST_SOURCES = $(am__libmpcmpi_la_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -350,6 +359,7 @@ MPC_LANGUAGE_LIST = @MPC_LANGUAGE_LIST@
 MPC_LAUNCHER = @MPC_LAUNCHER@
 MPC_MESSAGE_PASSING_ENABLED = @MPC_MESSAGE_PASSING_ENABLED@
 MPC_MODULE_DEFINES = @MPC_MODULE_DEFINES@
+MPC_MODULE_LIST = @MPC_MODULE_LIST@
 MPC_MPIIO_ENABLED = @MPC_MPIIO_ENABLED@
 MPC_MPI_ENABLED = @MPC_MPI_ENABLED@
 MPC_NETWORK_LIST = @MPC_NETWORK_LIST@
@@ -533,7 +543,7 @@ libmpcmpi_la_SOURCES = comm_lib.c egreq_nbc.c mpc_extern32.c \
 	datatype.c egreq_progress.c mpc_info.c mpc_nbc.c \
 	mpi_rma_ctrl_msg.c mpit.c egreq_classes.c mpc_cs.c mpc_mpi.c \
 	mpc_nbc_progress_thread_binding.c mpi_alloc_mem.c \
-	mpi_rma_epoch.c
+	mpi_rma_epoch.c $(am__append_4)
 libmpcmpi_la_LIBADD = ../../MPC_Message_Passing/src/libmpclowcomm.la -lrt
 all: all-am
 
@@ -618,6 +628,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/egreq_classes.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/egreq_nbc.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/egreq_progress.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fortran.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_cs.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_extern32.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_info.Plo@am__quote@ # am--include-marker
@@ -802,6 +813,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/egreq_classes.Plo
 	-rm -f ./$(DEPDIR)/egreq_nbc.Plo
 	-rm -f ./$(DEPDIR)/egreq_progress.Plo
+	-rm -f ./$(DEPDIR)/fortran.Plo
 	-rm -f ./$(DEPDIR)/mpc_cs.Plo
 	-rm -f ./$(DEPDIR)/mpc_extern32.Plo
 	-rm -f ./$(DEPDIR)/mpc_info.Plo
@@ -866,6 +878,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/egreq_classes.Plo
 	-rm -f ./$(DEPDIR)/egreq_nbc.Plo
 	-rm -f ./$(DEPDIR)/egreq_progress.Plo
+	-rm -f ./$(DEPDIR)/fortran.Plo
 	-rm -f ./$(DEPDIR)/mpc_cs.Plo
 	-rm -f ./$(DEPDIR)/mpc_extern32.Plo
 	-rm -f ./$(DEPDIR)/mpc_info.Plo

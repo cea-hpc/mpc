@@ -330,6 +330,7 @@ MPC_LANGUAGE_LIST = @MPC_LANGUAGE_LIST@
 MPC_LAUNCHER = @MPC_LAUNCHER@
 MPC_MESSAGE_PASSING_ENABLED = @MPC_MESSAGE_PASSING_ENABLED@
 MPC_MODULE_DEFINES = @MPC_MODULE_DEFINES@
+MPC_MODULE_LIST = @MPC_MODULE_LIST@
 MPC_MPIIO_ENABLED = @MPC_MPIIO_ENABLED@
 MPC_MPI_ENABLED = @MPC_MPI_ENABLED@
 MPC_NETWORK_LIST = @MPC_NETWORK_LIST@
@@ -470,7 +471,7 @@ mpc_header_HEADERS = $(abs_top_builddir)/mpc_config.h \
 	$(abs_top_builddir)/src/include/mpc_threads_config.h \
 	$(abs_top_srcdir)/src/include/mpc.h \
 	$(abs_top_srcdir)/src/include/mpc_main.h \
-	$(abs_top_builddir)/src/include/mpi.h
+	$(abs_top_srcdir)/src/include/mpi.h
 
 #
 # Define the MPC Library
