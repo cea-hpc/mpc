@@ -40,33 +40,15 @@ genfortraniface: genmod.py preparsed_mpih.dat constants.json
 
 endif
 
-$(FORTRAN_MOD_FILES) mpif.h: genfortraniface
-
-lib_LTLIBRARIES = libmpcfortran.la
-
-# F90 module fortran deps
-mpi_base.lo: mpi_constants.lo
-mpi.lo:mpi_sizeofs.lo mpi_base.lo
-
-# We need to explicit this dependency as the C file is generated
-mpi_f08_c_iface.$(OBJEXT): gen_fortran_iface
-mpif_iface.$(OBJEXT): gen_fortran_iface
-# F08 module fortran deps
-mpi_f08_types.lo: mpi_f08_ctypes.lo
-mpi_f08_constants.lo: mpi_f08_types.lo
-mpi_f08_c.lo: mpi_f08_constants.lo
-mpi_f08.lo: mpi_f08_constants.lo mpi_f08_c.lo
-predef_types_08.lo: mpi_f08.lo
-
-predef_types.lo: mpi.lo
-
-libmpcfortran_la_SOURCES = $(FORTRAN_MOD_FILES) predef_types.f90 predef_types_08.f90 omp.f90 mpc_fortran_helpers.c mpc_fortran.c
-libmpcfortran_la_LIBADD = $(abs_top_builddir)/src/MPC_MPI/src/libmpcmpi.la
-
-
 # Default configuration file and schema installation
-install-data-local:
-	test -d $(pkgincludedir)/fortran/ || mkdir $(pkgincludedir)/fortran/
-	install -m 0644 -D $(builddir)/*.mod $(pkgincludedir)/fortran/
-	install -m 0644 -D $(builddir)/*.h $(pkgincludedir)/fortran/
-
+install-data-local: genfortraniface
+	test -d $(pkgdatadir)/fortran/ || mkdir $(pkgdatadir)/fortran/
+	install -m 0644 -D $(builddir)/mpif.h $(pkgdatadir)/fortran/
+	install -m 0644 -D $(builddir)/*.f90 $(pkgdatadir)/fortran/
+	install -m 0644 -D $(builddir)/*.c $(pkgdatadir)/fortran/
+	install -m 0644 -D $(srcdir)/mpc_fortran.c $(pkgdatadir)/fortran/
+	install -m 0644 -D $(srcdir)/mpc_fortran_helpers.c $(pkgdatadir)/fortran/
+	install -m 0644 -D $(srcdir)/mpc_fortran_helpers.h $(pkgdatadir)/fortran/
+	install -m 0644 -D $(srcdir)/mpc_fortran.c $(pkgdatadir)/fortran/
+	install -m 0644 -D $(srcdir)/*.f90 $(pkgdatadir)/fortran/
+	install -m 0644 -D $(srcdir)/Makefile.deploy $(pkgdatadir)/fortran/Makefile

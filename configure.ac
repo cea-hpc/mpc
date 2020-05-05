@@ -183,7 +183,6 @@ fi
 ###########################
 AC_PROG_CC
 AC_PROG_INSTALL
-AC_PROG_CC
 AM_PROG_AS
 
 # Optional XML generators (dynamically regen config)

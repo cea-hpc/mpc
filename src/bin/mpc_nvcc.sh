@@ -46,9 +46,6 @@ COMPILER="nvcc --compiler-bindir $CC"
 # Add forwaders for NVCC
 LDFLAGS=$(echo "$LDFLAGS" | sed -e 's/\-Wl,/-Xlinker /g' -e 's/ -B/ -Xcompiler &/g')
 
-# Here we restore MPC's build environment
-. ${MPC_INSTALL_PREFIX}/bin/mpc_build_env.sh
-
 
 #
 # NVCC additionnal blacklisting

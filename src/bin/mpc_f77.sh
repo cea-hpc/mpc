@@ -69,9 +69,6 @@ locate_libgfortran()
 
 locate_libgfortran
 
-# Here we restore MPC's build environment
-. ${MPC_INSTALL_PREFIX}/bin/mpc_build_env.sh
-
 #
 # Fortran compilation phase
 #

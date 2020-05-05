@@ -3,9 +3,6 @@
 MPC_INSTALL_DIR_PREFIX=@prefix@
 MPC_VERSION=@MPC_VERSION_STRING@
 
-# Here we restore MPC's build environment
-. $MPC_INSTALL_DIR_PREFIX/bin/mpc_build_env.sh
-
 PREFIX_TO_DEL=`echo "$MPC_INSTALL_DIR_PREFIX" | sed -e 's/\//\\\\\//g'`
 PATH=`echo ${PATH} | awk -v RS=: -v ORS=: '/'"$PREFIX_TO_DEL"'/ {next} {print}' | sed 's/:*$//'`
 PYTHONPATH=`echo ${PYTHONPATH} | awk -v RS=: -v ORS=: '/'"$PREFIX_TO_DEL"'/ {next} {print}' | sed 's/:*$//'`
