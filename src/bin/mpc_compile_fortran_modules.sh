@@ -35,6 +35,26 @@ NOPRIV="no"
 
 FORCE_INSTALL_LEVEL="no"
 
+show_help()
+{
+	echo "$0 can be used to build fortran modules for MPC"
+	echo ""
+	echo "$0 [-cc=] [-fc=] [-cf=] [--no-priv] [--check] [--use-install] [-h]"
+	echo ""
+	echo "This command prints the module path when found/built"
+	echo ""
+	echo " -cc=*         C compiler used to compile the module"
+	echo " -fc=*         Fortran compiler used to compile the module"
+	echo " -cf=*         Path or name of the mpc_cflags command"
+	echo ""
+	echo "Install configuration:"
+	echo " --no-priv     Do not pass the -fmpc-privatize flag"
+	echo " --check       Do not compile just return module path if found"
+	echo " --use-install Deploy modules in the install prefix"
+	echo "               (not in ~/.mpc/fortran)"
+	echo ""
+}
+
 
 for arg in "$@"
 do
@@ -59,6 +79,9 @@ do
 		;;
 	--use-install)
 		FORCE_INSTALL_LEVEL="yes"
+		;;
+	-h|--help)
+		show_help
 		;;
 	*)
 		CFLAGS="${CFLAGS} ${arg}"
