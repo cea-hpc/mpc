@@ -55,12 +55,16 @@ insert_fortran_module_path()
 		append_to "CFLAGS" "-I${1}"
 }
 
-FORTRAN_HOME=$("${MPC_INSTALL_PREFIX}/bin/mpc_compile_fortran_modules" "-cc=${MPC_DEFAULT_C_COMPILER}" "-fc=${COMPILER}" "${CFLAGS}")
+FORTRAN_HOME=$("${MPC_INSTALL_PREFIX}/bin/mpc_compile_fortran_modules" "-cc=${MPC_DEFAULT_C_COMPILER}" "-fc=${COMPILER}" --check)
 
 if test -d "${FORTRAN_HOME}"; then
 	insert_fortran_module_path "${FORTRAN_HOME}"
 else
-	die "Could not build fortran modules for ${COMPILER}"
+	info "You may build fortran modules for $(basename ${COMPILER}) by running:"
+	info ""
+	info "mpc_compile_fortran_modules -cc=${MPC_DEFAULT_C_COMPILER} -fc=${COMPILER}" 
+	info ""
+	die "Fortran modules are not available for $(basename ${COMPILER}) consider building them using previous command."
 fi
 
 

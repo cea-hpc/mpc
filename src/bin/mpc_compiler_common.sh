@@ -8,12 +8,12 @@ die()
 
 warn()
 {
-	printf "Warning: %s" "$@" 1>&2
+	printf "Warning: %s\n" "$@" 1>&2
 }
 
 info()
 {
-	printf "%s" "$@" 1>&2
+	printf "%s\n" "$@" 1>&2
 }
 
 check_rc()

@@ -54,6 +54,9 @@ do
 	--nopriv)
 		NOPRIV="yes"
 		;;
+	--check)
+		CHECK="yes"
+		;;
 	--use-install)
 		FORCE_INSTALL_LEVEL="yes"
 		;;
@@ -189,6 +192,10 @@ build_fortran_modules()
 
 }
 
-build_fortran_modules
+if test "x${CHECK}" = "xyes"; then
+	fortran_modules_found
+else
+	build_fortran_modules
+fi
 
 echo ${FORTRAN_HOME}
