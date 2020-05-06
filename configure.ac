@@ -75,7 +75,7 @@ AC_PREREQ(2.69)
 # no-define: do not subst PACKAGE & VERSION (inferred from AC_INIT)
 # std-options: Check any installed script provides a '--help' and '--version'
 # no-dist: do not distribute the project through "make dist", MPC more complex than what provided
-AM_INIT_AUTOMAKE([1.16.1 subdir-objects foreign no-define std-options])
+AM_INIT_AUTOMAKE([1.15 subdir-objects foreign no-define std-options])
 
 # Avoid Makefile to print commands before running it
 # Overriden by configure: --disable-silent-rules
@@ -1446,145 +1446,6 @@ else
 fi
 
 
-#
-# Mpc Optionnal Flags
-#
-
-AC_ARG_ENABLE([shell-colors],
-[AS_HELP_STRING([--enable-shell-colors],
-                [Activate Color Output in MPC])],
-[mpc_shell_color=$enableval],
-[mpc_shell_color=yes])
-
-if test "x${mpc_shell_color}" = "xyes"; then
-        AC_DEFINE([MPC_ENABLE_SHELL_COLORS], [1], [MPC color output was enabled])
-        MPC_ENABLE_SHELL_COLORS=1
-fi
-
-AC_SUBST([MPC_ENABLE_SHELL_COLORS])
-
-
-AC_ARG_ENABLE([cma],
-[AS_HELP_STRING([--enable-cma],
-                [Activate Cross Memory Attach for SHM communications])],
-[mpc_enable_cma=$enableval],
-[mpc_enable_cma=no])
-
-if test "x${mpc_enable_cma}" = "xyes"; then
-
-        #Check the content of the YAMA file if present
-        if test -f /proc/sys/kernel/yama/ptrace_scope; then
-                AC_MSG_CHECKING([YAMA ptrace rights])
-                YAMA_VAL=$(cat /proc/sys/kernel/yama/ptrace_scope)
-
-                if test "x$YAMA_VAL" = "x0"; then
-                        AC_MSG_RESULT([OK])
-                else
-                        AC_MSG_RESULT([FAIL])
-                        AC_MSG_NOTICE([/proc/sys/kernel/yama/ptrace_scope shoud contain 0 for CMA support in MPC])
-                        mpc_enable_cma="no"
-                fi
-        fi
-
-        AC_MSG_CHECKING([enabling CMA])
-        if test "x$mpc_enable_cma" = "xyes"; then
-                AC_MSG_RESULT([yes])
-                AC_DEFINE([MPC_USE_CMA], [1], [MPC CMA for SHM drive is enabled])
-        else
-                AC_MSG_RESULT([no])
-        fi
-
-fi
-
-AC_ARG_ENABLE([opt],
-[AS_HELP_STRING([--enable-opt],
-                [Build MPC with optimization flags])],
-[mpc_enable_opt=$enableval],
-[mpc_enable_opt=yes])
-
-MPC_PORTABLE_OPT_FLAGS=" -O3"
-
-case $mpc_compiler_family in
-        "gcc")
-                MPC_OPT_FLAGS=" -O3  -funroll-loops"
-        ;;
-        "icc")
-                MPC_OPT_FLAGS=" -O3  -opt-prefetch -unroll-aggressive"
-        ;;
-        "clang")
-                MPC_OPT_FLAGS=" -O3"
-        ;;
-        *)
-                MPC_OPT_FLAGS=" $MPC_PORTABLE_OPT_FLAGS"
-        ;;
-esac
-
-if test "x${mpc_enable_opt}" = "xyes"; then
-        CPPFLAGS+=" $MPC_OPT_FLAGS"
-fi
-
-
-AC_ARG_ENABLE([opt-native],
-[AS_HELP_STRING([--enable-opt-native],
-                [Build MPC for current architecture])],
-[mpc_enable_native_opt=$enableval],
-[mpc_enable_native_opt=no])
-
-MPC_PORTABLE_NATIVE_FLAGS=" "
-
-case $mpc_compiler_family in
-        "gcc")
-                MPC_NATIVE_FLAGS=" -march=native"
-        ;;
-        "icc")
-                MPC_NATIVE_FLAGS=" -xhost"
-        ;;
-        "clang")
-                MPC_NATIVE_FLAGS=" -march=native"
-        ;;
-        *)
-                MPC_NATIVE_FLAGS=" $MPC_PORTABLE_NATIVE_FLAGS"
-        ;;
-esac
-
-if test "x${mpc_enable_native_opt}" = "xyes"; then
-        CPPFLAGS+=" $MPC_NATIVE_FLAGS"
-fi
-
-AC_ARG_ENABLE([debug-messages],
-[AS_HELP_STRING([--enable-debug-messages],
-                [Output debug messages when running MPC])],
-[mpc_debug_messages=$enableval],
-[mpc_debug_messages=no])
-
-if test "x${mpc_debug_messages}" = "xyes"; then
-        AC_DEFINE([MPC_ENABLE_DEBUG_MESSAGES], [1], [MPC debug messages output was enabled])
-fi
-
-AC_ARG_ENABLE([debug],
-[AS_HELP_STRING([--enable-debug],
-                [Compile MPC in debug mode])],
-[mpc_debug=$enableval],
-[mpc_debug=no])
-
-MPC_PORTABLE_DEBUG_FLAGS=" -g"
-
-case $mpc_compiler_family in
-        "gcc")
-                MPC_DEBUG_FLAGS=" -g -Wall -Wextra"
-        ;;
-        "icc")
-                MPC_DEBUG_FLAGS=" -g -Wall"
-        ;;
-        "clang")
-                MPC_DEBUG_FLAGS=" -g -Wall -Wextra"
-        ;;
-        *)
-                MPC_DEBUG_FLAGS=" $MPC_PORTABLE_DEBUG_FLAGS"
-        ;;
-esac
-
-
 ###################################
 ###### MPC MOD CONFIGURATION ###### {sec:modular}
 ###################################
@@ -2308,6 +2169,134 @@ MPC_COMPILER_LIST="$MPC_C_COMPILER_LIST $MPC_CPP_COMPILER_LIST $MPC_FORTRAN_COMP
 
 AC_SUBST([MPC_COMPILER_LIST])
 
+
+
+###########################
+###### MISC. OPTIONS ###### {sec:custom}
+###########################
+
+#### Shell color
+AC_ARG_ENABLE([shell-colors], [AS_HELP_STRING([--enable-shell-colors], [Activate Color Output in MPC])],
+[AC_DEFINE([MPC_ENABLE_SHELL_COLORS], [1], [MPC Colored output])], [: #Disabled shell-colors])
+
+
+#### CMA support
+AC_ARG_ENABLE([cma], [AS_HELP_STRING([--enable-cma], [Activate Cross Memory Attach for SHM communications])],
+[if test "x${mpc_enable_cma}" = "xyes"; then
+
+        #Check the content of the YAMA file if present
+        if test -f /proc/sys/kernel/yama/ptrace_scope; then
+                AC_MSG_CHECKING([YAMA ptrace rights])
+                YAMA_VAL=$(cat /proc/sys/kernel/yama/ptrace_scope)
+
+                if test "x$YAMA_VAL" = "x0"; then
+                        AC_MSG_RESULT([OK])
+                else
+                        AC_MSG_RESULT([FAIL])
+                        AC_MSG_NOTICE([/proc/sys/kernel/yama/ptrace_scope shoud contain 0 for CMA support in MPC])
+                        mpc_enable_cma="no"
+                fi
+        fi
+
+        AC_MSG_CHECKING([enabling CMA])
+        if test "x$mpc_enable_cma" = "xyes"; then
+                AC_MSG_RESULT([yes])
+                AC_DEFINE([MPC_USE_CMA], [1], [MPC CMA for SHM drive is enabled])
+        else
+                AC_MSG_RESULT([no])
+        fi
+fi
+], [: #Disabled CMAs])
+
+
+#### Enabling default optimizations to build MPC
+AC_ARG_ENABLE([opt],
+[AS_HELP_STRING([--enable-optim],
+                [Enable standard optimizations to build MPC])],
+[mpc_enable_opt=$enableval],
+[mpc_enable_opt=yes])
+
+MPC_PORTABLE_OPT_FLAGS=" -O3"
+
+case $mpc_compiler_family in
+        "gcc")
+                MPC_OPT_FLAGS=" -O3  -funroll-loops"
+        ;;
+        "icc")
+                MPC_OPT_FLAGS=" -O3  -opt-prefetch -unroll-aggressive"
+        ;;
+        "clang")
+                MPC_OPT_FLAGS=" -O3"
+        ;;
+        *)
+                MPC_OPT_FLAGS=" $MPC_PORTABLE_OPT_FLAGS"
+        ;;
+esac
+
+if test "x${mpc_enable_opt}" = "xyes"; then
+        CPPFLAGS+=" $MPC_OPT_FLAGS"
+fi
+
+
+AC_ARG_ENABLE([opt-native],
+[AS_HELP_STRING([--enable-opt-native],
+                [Build MPC for current architecture])],
+[mpc_enable_native_opt=$enableval],
+[mpc_enable_native_opt=no])
+
+MPC_PORTABLE_NATIVE_FLAGS=" "
+
+case $mpc_compiler_family in
+        "gcc")
+                MPC_NATIVE_FLAGS=" -march=native"
+        ;;
+        "icc")
+                MPC_NATIVE_FLAGS=" -xhost"
+        ;;
+        "clang")
+                MPC_NATIVE_FLAGS=" -march=native"
+        ;;
+        *)
+                MPC_NATIVE_FLAGS=" $MPC_PORTABLE_NATIVE_FLAGS"
+        ;;
+esac
+
+if test "x${mpc_enable_native_opt}" = "xyes"; then
+        CPPFLAGS+=" $MPC_NATIVE_FLAGS"
+fi
+
+AC_ARG_ENABLE([debug-messages],
+[AS_HELP_STRING([--enable-debug-messages],
+                [Output debug messages when running MPC])],
+[mpc_debug_messages=$enableval],
+[mpc_debug_messages=no])
+
+if test "x${mpc_debug_messages}" = "xyes"; then
+        AC_DEFINE([MPC_ENABLE_DEBUG_MESSAGES], [1], [MPC debug messages output was enabled])
+fi
+
+AC_ARG_ENABLE([debug],
+[AS_HELP_STRING([--enable-debug],
+                [Compile MPC in debug mode])],
+[mpc_debug=$enableval],
+[mpc_debug=no])
+
+MPC_PORTABLE_DEBUG_FLAGS=" -g"
+
+case $mpc_compiler_family in
+        "gcc")
+                MPC_DEBUG_FLAGS=" -g -Wall -Wextra"
+        ;;
+        "icc")
+                MPC_DEBUG_FLAGS=" -g -Wall"
+        ;;
+        "clang")
+                MPC_DEBUG_FLAGS=" -g -Wall -Wextra"
+        ;;
+        *)
+                MPC_DEBUG_FLAGS=" $MPC_PORTABLE_DEBUG_FLAGS"
+        ;;
+esac
 
 
 

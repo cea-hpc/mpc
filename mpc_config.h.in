@@ -779,7 +779,7 @@
 /* MPC debug messages output was enabled */
 #undef MPC_ENABLE_DEBUG_MESSAGES
 
-/* MPC color output was enabled */
+/* MPC Colored output */
 #undef MPC_ENABLE_SHELL_COLORS
 
 /* MPC_Fortran module was enabled */
