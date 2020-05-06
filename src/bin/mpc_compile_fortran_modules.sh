@@ -71,7 +71,7 @@ done
 # - MPC_DEFAULT_C_COMPILER
 # - MPC_GENERATION_DATE
 # - CFLAGS
-eval $("$MPC_CFLAGS" -sh -p -s -fc -cc -t)
+eval $("$MPC_CFLAGS" -sh -p -s -fc -cc -f -t)
 
 test -z "$CC" && CC="$MPC_DEFAULT_C_COMPILER"
 test -z "$FC" && FC="$MPC_DEFAULT_FC_COMPILER"
@@ -79,8 +79,8 @@ test -z "$FC" && FC="$MPC_DEFAULT_FC_COMPILER"
 # shellcheck source=/dev/null
 . "${MPC_SHARE_DIR}/mpc_compiler_common.sh"
 
-if test "x${NOPRIV}" = "xyes"; then
-	append_to "CFLAGS" "-fno-mpc-privatize"
+if test "x${NOPRIV}" = "xno"; then
+	append_to "CFLAGS" "-fmpc-privatize"
 fi
 
 fortran_config_hash()

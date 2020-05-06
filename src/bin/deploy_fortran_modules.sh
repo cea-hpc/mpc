@@ -13,13 +13,14 @@ MPC_COMPILE_MOD_BIN=$3
 # - CFLAGS
 eval $(sh "$MPC_CFLAGS_BIN" -sh -cc)
 
+echo "C: $MPC_DEFAULT_C_COMPILER   FC: $FORTRAN_COMPILERS"
 
 for fc in $FORTRAN_COMPILERS
 do
 	if test "x$(basename $fc)" = "xapfortran"; then
-		$MPC_COMPILE_MOD_BIN -cc="$MPC_DEFAULT_C_COMPILER" -fc="$fc" --use-install --nopriv
-		$MPC_COMPILE_MOD_BIN -cc="$MPC_DEFAULT_C_COMPILER" -fc="$fc" --use-install
-	else
+		$MPC_COMPILE_MOD_BIN -cc="$MPC_DEFAULT_C_COMPILER" -fc="$fc" -cf="${MPC_CFLAGS_BIN}" --use-install --nopriv
 		$MPC_COMPILE_MOD_BIN -cc="$MPC_DEFAULT_C_COMPILER" -fc="$fc" -cf="${MPC_CFLAGS_BIN}" --use-install
+	else
+		$MPC_COMPILE_MOD_BIN -cc="$MPC_DEFAULT_C_COMPILER" -fc="$fc" -cf="${MPC_CFLAGS_BIN}" --use-install --nopriv
 	fi
 done

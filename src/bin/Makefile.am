@@ -5,6 +5,7 @@
 MPC_C_COMPILER_LIST=@MPC_C_COMPILER_LIST@
 MPC_CPP_COMPILER_LIST=@MPC_CPP_COMPILER_LIST@
 MPC_FORTRAN_COMPILER_LIST=@MPC_FORTRAN_COMPILER_LIST@
+MPC_FORTRAN_COMPILER_PATH=@MPC_FORTRAN_COMPILER_PATH@
 MPC_SHARE_DIR="@PKG_DATADIR@"
 
 install_build_env:
@@ -15,7 +16,7 @@ install_compilers: install_build_env
 	install -m 0755 -D $(abs_srcdir)/mpc_compile_fortran_modules.sh $(bindir)/mpc_compile_fortran_modules
 	$(abs_srcdir)/deploy_compilers.sh "$(prefix)" "$(abs_top_builddir)/src" "$(MPC_SHARE_DIR)" "$(abs_top_srcdir)" "$(MPC_C_COMPILER_LIST)" "$(MPC_CPP_COMPILER_LIST)" "$(MPC_FORTRAN_COMPILER_LIST)"
 	chmod +x "$(abs_top_builddir)/src/bin/mpc_cflags"
-	$(srcdir)/deploy_fortran_modules.sh "${MPC_FORTRAN_COMPILER_LIST}" "$(abs_srcdir)/mpc_cflags" "$(abs_srcdir)/mpc_compile_fortran_modules.sh"
+	$(srcdir)/deploy_fortran_modules.sh "${MPC_FORTRAN_COMPILER_PATH}" "$(abs_builddir)/mpc_cflags" "$(abs_srcdir)/mpc_compile_fortran_modules.sh"
 
 #
 # mpcrun setup

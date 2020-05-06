@@ -2093,6 +2093,10 @@ MPC_C_COMPILER_LIST=""
 MPC_CPP_COMPILER_LIST=""
 MPC_FORTRAN_COMPILER_LIST=""
 
+MPC_C_COMPILER_PATH=""
+MPC_CPP_COMPILER_PATH=""
+MPC_FORTRAN_COMPILER_PATH=""
+
 value_is_in_list()
 {
         is_in_list="no"
@@ -2125,10 +2129,12 @@ compiler_to_lang()
                 apcc|gcc|icc|pgcc|clang)
                         mpc_comp_type="c"
                         MPC_C_COMPILER_LIST+=" $1"
+                        MPC_C_COMPILER_PATH+=" $(command -v $1)"
                 ;;
                 ap++|g++|icpc|pgc++|pgcpp|clang++)
                         mpc_comp_type="cxx"
                         MPC_CPP_COMPILER_LIST+=" $1"
+                        MPC_CPP_COMPILER_PATH+=" $(command -v $1)"
                 ;;
                 apfortran|gfortran|ifort|pgfortran|pgf77|flang)
                         if test "x${MPC_FORTRAN_ENABLED}" = "xno"; then
@@ -2136,6 +2142,7 @@ compiler_to_lang()
                         fi
                         mpc_comp_type="fortran"
                         MPC_FORTRAN_COMPILER_LIST+=" $1"
+                        MPC_FORTRAN_COMPILER_PATH+=" $(command -v $1)"
                 ;;
                 *)
                         AC_MSG_ERROR([No such compiler type ${1}])
@@ -2293,6 +2300,9 @@ AC_SUBST([MPC_LANGUAGE_LIST])
 AC_SUBST([MPC_C_COMPILER_LIST])
 AC_SUBST([MPC_CPP_COMPILER_LIST])
 AC_SUBST([MPC_FORTRAN_COMPILER_LIST])
+AC_SUBST([MPC_C_COMPILER_PATH])
+AC_SUBST([MPC_CPP_COMPILER_PATH])
+AC_SUBST([MPC_FORTRAN_COMPILER_PATH])
 
 MPC_COMPILER_LIST="$MPC_C_COMPILER_LIST $MPC_CPP_COMPILER_LIST $MPC_FORTRAN_COMPILER_LIST"
 

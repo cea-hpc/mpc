@@ -13,7 +13,7 @@ C_COMPILER_LIST="$5"
 CXX_COMPILER_LIST="$6"
 FC_COMPILER_LIST="$7"
 
-if test "x$#" != "x5"; then
+if test "x$#" != "x7"; then
         echo "$0 [PREFIX] [BUILD PREFIX] [PKG_DATADIR] [TOP_SRCDIR] [C COMP] [CXX COMP] [FC COMP]"
 fi
 

@@ -646,6 +646,9 @@ CONFIGURE_PKG_CONFIG_PATH
 CONFIGURE_LD_LIBRARY_PATH
 CONFIGURE_PATH
 MPC_COMPILER_LIST
+MPC_FORTRAN_COMPILER_PATH
+MPC_CPP_COMPILER_PATH
+MPC_C_COMPILER_PATH
 MPC_FORTRAN_COMPILER_LIST
 MPC_CPP_COMPILER_LIST
 MPC_C_COMPILER_LIST
@@ -22952,6 +22955,10 @@ MPC_C_COMPILER_LIST=""
 MPC_CPP_COMPILER_LIST=""
 MPC_FORTRAN_COMPILER_LIST=""
 
+MPC_C_COMPILER_PATH=""
+MPC_CPP_COMPILER_PATH=""
+MPC_FORTRAN_COMPILER_PATH=""
+
 value_is_in_list()
 {
         is_in_list="no"
@@ -22984,10 +22991,12 @@ compiler_to_lang()
                 apcc|gcc|icc|pgcc|clang)
                         mpc_comp_type="c"
                         MPC_C_COMPILER_LIST+=" $1"
+                        MPC_C_COMPILER_PATH+=" $(command -v $1)"
                 ;;
                 ap++|g++|icpc|pgc++|pgcpp|clang++)
                         mpc_comp_type="cxx"
                         MPC_CPP_COMPILER_LIST+=" $1"
+                        MPC_CPP_COMPILER_PATH+=" $(command -v $1)"
                 ;;
                 apfortran|gfortran|ifort|pgfortran|pgf77|flang)
                         if test "x${MPC_FORTRAN_ENABLED}" = "xno"; then
@@ -22995,6 +23004,7 @@ compiler_to_lang()
                         fi
                         mpc_comp_type="fortran"
                         MPC_FORTRAN_COMPILER_LIST+=" $1"
+                        MPC_FORTRAN_COMPILER_PATH+=" $(command -v $1)"
                 ;;
                 *)
                         as_fn_error $? "No such compiler type ${1}" "$LINENO" 5
@@ -31194,6 +31204,9 @@ fi
 
 
 
+
+
+
 MPC_COMPILER_LIST="$MPC_C_COMPILER_LIST $MPC_CPP_COMPILER_LIST $MPC_FORTRAN_COMPILER_LIST"
 
 
@@ -33494,7 +33507,9 @@ $as_echo X/"$am_mf" |
     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "Something went wrong bootstrapping makefile fragments
-    for automatic dependency tracking.  Try re-running configure with the
+    for automatic dependency tracking.  If GNU make was not used, consider
+    re-running the configure script with MAKE=\"gmake\" (or whatever is
+    necessary).  You can also try re-running configure with the
     '--disable-dependency-tracking' option to at least be able to build
     the package (albeit without support for automatic dependency tracking).
 See \`config.log' for more details" "$LINENO" 5; }
