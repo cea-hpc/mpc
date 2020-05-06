@@ -438,6 +438,7 @@ mpi_manpages= \
 	$(NULL)
 
 man_MANS=$(mpi_manpages) $(mpc_manpages)
+CLEANFILES=$(mpi_manpages) $(mpc_manpages)
 
 manpage_date=`date -d"@${MPC_GENERATION_DATE}" +%m/%Y`
 
@@ -445,7 +446,7 @@ if CAN_USE_PANDOC
 $(mpc_manpages):%:md/%.md $(srcdir)/gen_manpage.sh
 	@$(srcdir)/gen_manpage.sh "$<" "$(builddir)/$@" "$(MPC_VERSION_STRING)"
 else
-$(mpc_manpages):%:man/%.1in
+$(mpc_manpages):%:man/%in
 	@cat $< > $@
 	@manpage_date=`date -d"@${MPC_GENERATION_DATE}" +%m/%Y`; \
 	sed -i -e "s,#PACKAGE_DATE#,$$manpage_date," -e "s/#PACKAGE_VERSION#/$(MPC_VERSION_STRING)/g" -e "s/#PACKAGE_NAME#/$(PACKAGE_NAME)/g" $@
