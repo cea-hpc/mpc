@@ -31,7 +31,7 @@ PATCH_VERSION=
 TAINT_VERSION=
 
 if test -n "$(command -v git)" -a -e "$UTILS_DIR/../.git"; then
-	res=$(git -C $UTILS_DIR describe --abbrev=0 | grep -o -E "[0-9]+\.[0-9]+\.[0-9]+$")
+	res=$(git -C $UTILS_DIR describe --abbrev=0 2>/dev/null | grep -o -E "[0-9]+\.[0-9]+\.[0-9]+$")
 	MAJOR_VERSION=$(echo "$res" | cut -f1 -d".")
 	MINOR_VERSION=$(echo "$res" | cut -f2 -d".")
 	PATCH_VERSION=$(echo "$res" | cut -f3 -d".")
@@ -42,7 +42,7 @@ fi
 #two scenarios: no Git repo OR issues with fetching tags
 # -> rollback
 if test -z "$MAJOR_VERSION"; then
-	. $UTILS_DIR/VERSION
+	. $UTILS_DIR/../VERSION
 	MAJOR_VERSION=$major
 	MINOR_VERSION=$minor
 	PATCH_VERSION=$patch
