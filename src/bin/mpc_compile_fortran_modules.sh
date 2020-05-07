@@ -199,12 +199,13 @@ build_fortran_modules()
 	trap clean_tempdir EXIT
 	cp ${MPC_SHARE_DIR}/fortran/* "${TEMPDIR}"
 
-	info "# Building Fortran module for $(basename ${FC})..."
+	info "# Building Fortran module for $(basename "${FC}")..."
 	make -C "${TEMPDIR}" CC="${CC}" FC="${FC}" CFLAGS="${CFLAGS}" > "$TEMPDIR/out.log" 2>&1 || true
 
-	if test -f ${TEMPDIR}/libmpcfortran.so -a ${TEMPDIR}/mpif.h; then
+	if test -f "${TEMPDIR}/libmpcfortran.so" -a "${TEMPDIR}/mpif.h"; then
 		create_mpc_fortran_user_home
 		cp "${TEMPDIR}/libmpcfortran.so" "${FORTRAN_HOME}"
+		cp ${TEMPDIR}/*.mod "${FORTRAN_HOME}"
 		cp "${TEMPDIR}/mpif.h" "${FORTRAN_HOME}"
 		# Save generation date for comparison (later rebuild)
 		echo "$MPC_GENERATION_DATE" > "${FORTRAN_HOME}/.ts"
@@ -221,4 +222,4 @@ else
 	build_fortran_modules
 fi
 
-echo ${FORTRAN_HOME}
+echo "${FORTRAN_HOME}"

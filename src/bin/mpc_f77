@@ -28,13 +28,13 @@
 #Extract compiler configuration and flags
 # - MPC_INSTALL_PREFIX
 # - MPC_SHARE_DIR
-# - MPC_DEFAULT_FC_COMPILER
-# - MPC_DEFAULT_C_COMPILER
+# - FC
+# - CC
 # - MPC_GENERATION_DATE
 # - CFLAGS
 eval $(mpc_cflags -sh -p -s -fc -cc -f -t)
 
-COMPILER="$MPC_DEFAULT_FC_COMPILER"
+COMPILER="$FC"
 LDFLAGS=$("${MPC_INSTALL_PREFIX}/bin/mpc_ldflags" --fortran -l)
 
 # Source Common function library
@@ -55,14 +55,14 @@ insert_fortran_module_path()
 		append_to "CFLAGS" "-I${1}"
 }
 
-FORTRAN_HOME=$("${MPC_INSTALL_PREFIX}/bin/mpc_compile_fortran_modules" "-cc=${MPC_DEFAULT_C_COMPILER}" "-fc=${COMPILER}" --check)
+FORTRAN_HOME=$("${MPC_INSTALL_PREFIX}/bin/mpc_compile_fortran_modules" "-cc=${CC}" "-fc=${COMPILER}" --check)
 
 if test -d "${FORTRAN_HOME}"; then
 	insert_fortran_module_path "${FORTRAN_HOME}"
 else
 	info "You may build fortran modules for $(basename ${COMPILER}) by running:"
 	info ""
-	info "mpc_compile_fortran_modules -cc=${MPC_DEFAULT_C_COMPILER} -fc=${COMPILER}" 
+	info "mpc_compile_fortran_modules -cc=${CC} -fc=${COMPILER}" 
 	info ""
 	die "Fortran modules are not available for $(basename ${COMPILER}) consider building them using previous command."
 fi

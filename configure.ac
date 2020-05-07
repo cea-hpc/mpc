@@ -166,7 +166,10 @@ fi
 
 #### EXTERNAL PROGRAMS #### {sec:programs}
 ###########################
-AC_PROG_CC
+AC_PROG_CC([gcc apcc icc pgcc clang])
+AC_PROG_CXX([g++ ap++ icpc pg++ pgcpp clan++])
+AC_PROG_FC([gfortran apfortran ifort pgfortran pgf77 flang])
+
 AC_PROG_INSTALL
 AM_PROG_AS
 
@@ -1947,113 +1950,6 @@ AC_SUBST([MPC_MODULE_DEFINES])
 # Configure MPC's compilers
 #
 
-MPC_LANGUAGE_LIST=""
-
-
-MPC_C_COMPILER_LIST=""
-MPC_CPP_COMPILER_LIST=""
-MPC_FORTRAN_COMPILER_LIST=""
-
-MPC_C_COMPILER_PATH=""
-MPC_CPP_COMPILER_PATH=""
-MPC_FORTRAN_COMPILER_PATH=""
-
-value_is_in_list()
-{
-        is_in_list="no"
-
-        echo $1 | grep $2 2>&1 > /dev/null
-
-        if test "x$?" = "x0"; then
-                is_in_list="yes"
-        fi
-}
-
-
-append_to_language_list_if_needed()
-{
-        value_is_in_list "$MPC_LANGUAGE_LIST" $1
-
-        if test "x$is_in_list" = "xyes"; then
-                return
-        else
-                MPC_LANGUAGE_LIST="$MPC_LANGUAGE_LIST $1 "
-        fi
-
-}
-
-
-compiler_to_lang()
-{
-        mpc_comp_type=""
-        case $1 in
-                apcc|gcc|icc|pgcc|clang)
-                        mpc_comp_type="c"
-                        MPC_C_COMPILER_LIST+=" $1"
-                        MPC_C_COMPILER_PATH+=" $(command -v $1)"
-                ;;
-                ap++|g++|icpc|pgc++|pgcpp|clang++)
-                        mpc_comp_type="cxx"
-                        MPC_CPP_COMPILER_LIST+=" $1"
-                        MPC_CPP_COMPILER_PATH+=" $(command -v $1)"
-                ;;
-                apfortran|gfortran|ifort|pgfortran|pgf77|flang)
-                        if test "x${MPC_FORTRAN_ENABLED}" = "xno"; then
-                                return
-                        fi
-                        mpc_comp_type="fortran"
-                        MPC_FORTRAN_COMPILER_LIST+=" $1"
-                        MPC_FORTRAN_COMPILER_PATH+=" $(command -v $1)"
-                ;;
-                *)
-                        AC_MSG_ERROR([No such compiler type ${1}])
-                ;;
-        esac
-
-        append_to_language_list_if_needed $mpc_comp_type
-}
-
-locate_bin()
-{
-        locate_bin_path=""
-        which $1 2>&1 > /dev/null
-
-        if test "x$?" = "x0"; then
-                locate_bin_path=$(which $1)
-        fi
-
-}
-
-AC_PROG_CXX([])
-AC_PROG_CC([])
-AC_PROG_FC([])
-
-#
-# Needed for Fortran module generation
-#
-
-# Insert all known compiler wrappers for compilers
-
-for prog in gcc g++ gfortran icc icpc ifort pgcc pgc++ pgcpp pgfortran pgf77 clang clang++ flang
-do
-        AC_MSG_CHECKING([for ${prog}])
-
-        locate_bin $prog
-
-        if test -n "$locate_bin_path"; then
-                compiler_to_lang $prog
-                MPC_COMPILER_LIST="$MPC_COMPILER_LIST $prog"
-                AC_MSG_RESULT([yes])
-        else
-                AC_MSG_RESULT([no])
-        fi
-
-done
-
-#
-# Configure Privatization Support
-#
-
 # Set autopriv as default compiler if privatization is enabled and autpriv present
 
 mpc_have_autopriv="no"
@@ -2064,35 +1960,48 @@ AC_CHECK_PROG([apfortran],[apfortran],[yes],[no])
 
 AC_MSG_CHECKING([for autopriv])
 
-MPC_DEFAULT_C_COMPILER="$(command -v $CC)"
-MPC_DEFAULT_CXX_COMPILER="$(command -v $CXX)"
-MPC_DEFAULT_FC_COMPILER="$(command -v $FC)"
+is_autopriv()
+{
+	RES="no"
 
-echo "$CC $CXX $FC"
+        if test -z "$1"; then
+                return
+        fi
+
+	${1} "--ap-help" > /dev/null 2>&1
+
+	if test "x$?" = "x0"; then
+		RES="yes"
+	fi
+
+        echo $RES
+}
 
 if test "x${apcc}" = "xyes" -a "x${apcpp}" = "xyes" -a "x${apfortran}" = "xyes";
 then
 	# We have autopriv in path
 	AC_MSG_RESULT([yes])
-	mpc_have_autopriv=yes
-	MPC_DEFAULT_C_COMPILER="$(command -v apcc)"
-	MPC_DEFAULT_CXX_COMPILER="$(command -v ap++)"
-	MPC_DEFAULT_FC_COMPILER="$(command -v apfortran)"
 
-	# Create autopriv wrappers
-	for prog in apcc ap++ apfortran
-	do
-		AC_MSG_CHECKING([for ${prog}])
-		locate_bin $prog
+        #Now check that all compilers are privatizing
+        AC_MSG_CHECKING([CC is privatizing])
+        CC_PRIV=$(is_autopriv "$CC")
+        AC_MSG_RESULT([$CC_PRIV])
 
-		if test -n "$locate_bin_path"; then
-			compiler_to_lang $prog
-			MPC_COMPILER_LIST+=" $prog"
-			AC_MSG_RESULT([yes])
-		else
-			AC_MSG_RESULT([no])
-		fi
-	done
+        AC_MSG_CHECKING([CXX is privatizing])
+        CXX_PRIV=$(is_autopriv "$CXX")
+        AC_MSG_RESULT([$CXX_PRIV])
+
+        AC_MSG_CHECKING([FC is privatizing])
+        FC_PRIV=$(is_autopriv "$FC")
+        AC_MSG_RESULT([$FC_PRIV])
+
+        AC_MSG_CHECKING([All compilers are privatizing])
+        if test "x${FC_PRIV}" = "xyes" -a "x${CXX_PRIV}" = "xyes" -a "x${CC_PRIV}" = "xyes"; then
+                AC_MSG_RESULT([yes])
+                mpc_have_autopriv=yes
+        else
+                AC_MSG_RESULT([no])
+        fi
 
 else
 	AC_MSG_RESULT([no])
@@ -2100,23 +2009,19 @@ fi
 
 AM_CONDITIONAL([MPC_HAVE_AUTOPRIV], [test "x${mpc_have_autopriv}" = "xyes"])
 
-AC_SUBST([MPC_DEFAULT_C_COMPILER])
-AC_SUBST([MPC_DEFAULT_CXX_COMPILER])
-AC_SUBST([MPC_DEFAULT_FC_COMPILER])
-
 # If privatization supported process mode is not enforced
 # however if no privatization MPC is forced in process-mode.
 
 AC_ARG_ENABLE([process-mode],
 [AS_HELP_STRING([--enable-process-mode],
                 [Compile MPC in process mode])],
-[mpc_in_process_mode=$enableval],
-[mpc_in_process_mode=no])
+[enable_mpc_proces_mode=$enableval],
+[enable_mpc_proces_mode=no])
 
 # First assume extls not found
 extls_support_found="no"
 
-if test "x$mpc_in_process_mode" = "xno"; then
+if test "x$enable_mpc_proces_mode" = "xno"; then
 
         MPC_DETECT_DEPENDENCY([extls.h],[extls], [extls_init], [EXTLS])
         if test "x$mpc_dep_found" = "xyes"; then
@@ -2125,13 +2030,13 @@ if test "x$mpc_in_process_mode" = "xno"; then
 	else
 		# If no privatization is available we fallback to Process-Based model
 		AC_MSG_NOTICE([No privatization support detected assuming Process-Based Model (no privatization)])
-		mpc_in_process_mode="yes"
+		enable_mpc_proces_mode="yes"
 	fi
 fi
 
 MPC_IN_PROCESS_MODE="no"
 
-if test "x${mpc_in_process_mode}" = "xyes"; then
+if test "x${enable_mpc_proces_mode}" = "xyes"; then
         AC_DEFINE([MPC_IN_PROCESS_MODE], [1], [MPC compiled in process mode])
         MPC_IN_PROCESS_MODE="yes"
 fi
@@ -2140,35 +2045,22 @@ AC_SUBST([MPC_IN_PROCESS_MODE])
 
 # One last sanity check (extls but no privatizing compilers)
 if test "x${extls_support_found}" = "xyes"; then
-        if test -z "$mpc_have_autopriv"; then
-		AC_MSG_WARN([Consider passing --enable-process-mode to deactivate priv])
-                AC_MSG_ERROR([Extls support was enabled but autopriv was found])
+        if test "x${mpc_have_autopriv}" = "xno"; then
+                echo "!!!!!!!!!!!!!!!!!!!!!!!!"
+                AC_MSG_CHECKING([priv in $CC])
+                AC_MSG_RESULT([$CC_PRIV])
+                
+                AC_MSG_CHECKING([priv in $CXX])
+                AC_MSG_RESULT([$CXX_PRIV])
+                
+                AC_MSG_CHECKING([priv in $FC])
+                AC_MSG_RESULT([$FC_PRIV])
+
+		AC_MSG_WARN([Make sure to configure with CC=apcc CXX=ap++ FC=apfortran])
+		AC_MSG_WARN([or consider passing --enable-process-mode to deactivate priv])
+                AC_MSG_ERROR([Extls support was enabled but autopriv was not found])
 	fi
 fi
-
-# Check that we at least have a C compiler
-
-AC_MSG_CHECKING([if we have at least a C compiler for MPC])
-
-if test -n "$MPC_C_COMPILER_LIST"; then
-        AC_MSG_RESULT([yes])
-else
-        AC_MSG_RESULT([no])
-        AC_MSG_ERROR([MPC requires at least a c compiler to be in your PATH])
-fi
-
-AC_SUBST([MPC_LANGUAGE_LIST])
-AC_SUBST([MPC_C_COMPILER_LIST])
-AC_SUBST([MPC_CPP_COMPILER_LIST])
-AC_SUBST([MPC_FORTRAN_COMPILER_LIST])
-AC_SUBST([MPC_C_COMPILER_PATH])
-AC_SUBST([MPC_CPP_COMPILER_PATH])
-AC_SUBST([MPC_FORTRAN_COMPILER_PATH])
-
-MPC_COMPILER_LIST="$MPC_C_COMPILER_LIST $MPC_CPP_COMPILER_LIST $MPC_FORTRAN_COMPILER_LIST"
-
-AC_SUBST([MPC_COMPILER_LIST])
-
 
 
 ###########################
@@ -2411,12 +2303,11 @@ MPC_CONFIG_RESULT="\
 ### COMPILERS ###\n\
 #\n\
 # Privatization........ $extls_support_found\n\
-# Process mode......... $mpc_in_process_mode\n\
+# Process mode......... $enable_mpc_proces_mode\n\
 # Languages............ $MPC_LANGUAGE_LIST\n\
-# Compilers............ $MPC_COMPILER_LIST\n\
-# mpc_cc points to..... $(basename $MPC_DEFAULT_C_COMPILER)\n\
-# mpc_cxx points to.... $(basename $MPC_DEFAULT_CXX_COMPILER)\n\
-# mpc_fXX points to.... $(basename $MPC_DEFAULT_FC_COMPILER)\n\
+# mpc_cc points to..... $(basename $CC)\n\
+# mpc_cxx points to.... $(basename $CXX)\n\
+# mpc_fXX points to.... $(basename $FC)\n\
 #\n\
 ### NETWORKS ###\n\
 #\n\
@@ -2488,9 +2379,9 @@ AC_OUTPUT([Makefile
 	   src/bin/mpc_build_env.sh
            src/bin/mpc_cflags
            src/bin/mpc_ldflags
-           src/bin/mpcrun.sh
+           src/bin/mpcrun
 	   src/bin/mpcvars.sh
-	   src/bin/mpc_status.sh])
+	   src/bin/mpc_status])
 
 
 

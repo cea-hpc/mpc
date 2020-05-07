@@ -35,9 +35,9 @@ MPC_GENERATION_DATE="@MPC_GENERATION_DATE@"
 # Default compiler environmnent
 #
 
-MPC_DEFAULT_C_COMPILER="@MPC_DEFAULT_C_COMPILER@"
-MPC_DEFAULT_CXX_COMPILER="@MPC_DEFAULT_CXX_COMPILER@"
-MPC_DEFAULT_FC_COMPILER="@MPC_DEFAULT_FC_COMPILER@"
+CC="@CC@"
+CXX="@CXX@"
+FC="@FC@"
 
 #
 # General Argument Parsing
@@ -149,13 +149,13 @@ for arg in "$@" ; do
 		print_var "MPC_MODULE_LIST" "$MPC_MODULE_LIST"
 		;;
 	-cc)
-		print_var "MPC_DEFAULT_C_COMPILER" "$MPC_DEFAULT_C_COMPILER"
+		print_var "CC" "$CC"
 		;;
 	-fc)
-		print_var "MPC_DEFAULT_FC_COMPILER" "$MPC_DEFAULT_FC_COMPILER"
+		print_var "FC" "$FC"
 		;;
 	-cxx|-cpp)
-		print_var "MPC_DEFAULT_CXX_COMPILER" "$MPC_DEFAULT_CXX_COMPILER"
+		print_var "CXX" "$CXX"
 		;;
 	-t)
 		print_var "MPC_GENERATION_DATE" "$MPC_GENERATION_DATE"

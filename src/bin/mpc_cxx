@@ -27,12 +27,13 @@
 #Extract compiler configuration and flags
 # - MPC_INSTALL_PREFIX
 # - MPC_SHARE_DIR
-# - MPC_DEFAULT_C_COMPILER
+# - CXX
 # - CFLAGS
-eval $(mpc_cflags -sh -p -s -cc -f)
+eval $(mpc_cflags -sh -p -s -cxx -f)
 
-COMPILER="$MPC_DEFAULT_C_COMPILER"
+COMPILER="$CXX"
 LDFLAGS=$("${MPC_INSTALL_PREFIX}/bin/mpc_ldflags")
+
 
 # Source Common function library
 
