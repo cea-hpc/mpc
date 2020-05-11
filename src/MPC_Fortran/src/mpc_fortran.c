@@ -9,7 +9,7 @@ static inline char *char_fortran_to_c(char *buf, int size, char **free_ptr)
 	long int i;
 
 	tmp = sctk_malloc(size + 1);
-	assume(tmp != NULL);
+
 	*free_ptr = tmp;
 
 	for(i = 0; i < size; i++)
@@ -604,7 +604,9 @@ int mpi_alltoallw_(const void *sendbuf, const int sendcounts[], const int sdispl
 /* MPI_Alltoallw */
 	int alltoallwlen = 0;
 
-	PMPI_Comm_size(comm, &alltoallwlen);
+	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
+
+	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
 	{
 		sendbuf = MPI_BOTTOM;
@@ -633,7 +635,7 @@ int mpi_alltoallw_(const void *sendbuf, const int sendcounts[], const int sdispl
 	{
 		c_recvtypes[incnt_recvtypes] = PMPI_Type_f2c(recvtypes[incnt_recvtypes]);
 	}
-	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
+
 
 	*ierror = MPI_Alltoallw(sendbuf, sendcounts, sdispls, c_sendtypes, recvbuf, recvcounts, rdispls, c_recvtypes, c_comm);
 	sctk_free(c_sendtypes);
@@ -643,9 +645,10 @@ int mpi_alltoallw_(const void *sendbuf, const int sendcounts[], const int sdispl
 int mpi_alltoallw__(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, int *ierror)
 {
 /* MPI_Alltoallw */
-	int alltoallwlen = 0;
+	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
-	PMPI_Comm_size(comm, &alltoallwlen);
+	int alltoallwlen = 0;
+	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
 	{
 		sendbuf = MPI_BOTTOM;
@@ -674,7 +677,6 @@ int mpi_alltoallw__(const void *sendbuf, const int sendcounts[], const int sdisp
 	{
 		c_recvtypes[incnt_recvtypes] = PMPI_Type_f2c(recvtypes[incnt_recvtypes]);
 	}
-	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
 	*ierror = MPI_Alltoallw(sendbuf, sendcounts, sdispls, c_sendtypes, recvbuf, recvcounts, rdispls, c_recvtypes, c_comm);
 	sctk_free(c_sendtypes);
@@ -684,9 +686,10 @@ int mpi_alltoallw__(const void *sendbuf, const int sendcounts[], const int sdisp
 int mpi_alltoallw_init_(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, int *ierror)
 {
 /* MPI_Alltoallw_init */
+	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
 	int alltoallwlen = 0;
 
-	PMPI_Comm_size(comm, &alltoallwlen);
+	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
 	{
 		sendbuf = MPI_BOTTOM;
@@ -715,7 +718,7 @@ int mpi_alltoallw_init_(const void *sendbuf, const int sendcounts[], const int s
 	{
 		c_recvtypes[incnt_recvtypes] = PMPI_Type_f2c(recvtypes[incnt_recvtypes]);
 	}
-	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
+
 	MPI_Info    c_info = PMPI_Info_f2c(*info);
 	MPI_Request c_request;
 
@@ -728,9 +731,10 @@ int mpi_alltoallw_init_(const void *sendbuf, const int sendcounts[], const int s
 int mpi_alltoallw_init__(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, int *ierror)
 {
 /* MPI_Alltoallw_init */
+	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
 	int alltoallwlen = 0;
 
-	PMPI_Comm_size(comm, &alltoallwlen);
+	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
 	{
 		sendbuf = MPI_BOTTOM;
@@ -759,7 +763,7 @@ int mpi_alltoallw_init__(const void *sendbuf, const int sendcounts[], const int 
 	{
 		c_recvtypes[incnt_recvtypes] = PMPI_Type_f2c(recvtypes[incnt_recvtypes]);
 	}
-	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
+
 	MPI_Info    c_info = PMPI_Info_f2c(*info);
 	MPI_Request c_request;
 
@@ -3092,9 +3096,10 @@ int mpi_ialltoallv__(const void *sendbuf, const int sendcounts[], const int sdis
 int mpi_ialltoallw_(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, MPI_Fint *request, int *ierror)
 {
 /* MPI_Ialltoallw */
+	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
 	int alltoallwlen = 0;
 
-	PMPI_Comm_size(comm, &alltoallwlen);
+	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
 	{
 		sendbuf = MPI_BOTTOM;
@@ -3123,7 +3128,7 @@ int mpi_ialltoallw_(const void *sendbuf, const int sendcounts[], const int sdisp
 	{
 		c_recvtypes[incnt_recvtypes] = PMPI_Type_f2c(recvtypes[incnt_recvtypes]);
 	}
-	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
+
 	MPI_Request c_request;
 
 	*ierror  = MPI_Ialltoallw(sendbuf, sendcounts, sdispls, c_sendtypes, recvbuf, recvcounts, rdispls, c_recvtypes, c_comm, &c_request);
@@ -3135,9 +3140,10 @@ int mpi_ialltoallw_(const void *sendbuf, const int sendcounts[], const int sdisp
 int mpi_ialltoallw__(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, MPI_Fint *request, int *ierror)
 {
 /* MPI_Ialltoallw */
+	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
 	int alltoallwlen = 0;
 
-	PMPI_Comm_size(comm, &alltoallwlen);
+	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
 	{
 		sendbuf = MPI_BOTTOM;
@@ -3166,7 +3172,7 @@ int mpi_ialltoallw__(const void *sendbuf, const int sendcounts[], const int sdis
 	{
 		c_recvtypes[incnt_recvtypes] = PMPI_Type_f2c(recvtypes[incnt_recvtypes]);
 	}
-	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
+
 	MPI_Request c_request;
 
 	*ierror  = MPI_Ialltoallw(sendbuf, sendcounts, sdispls, c_sendtypes, recvbuf, recvcounts, rdispls, c_recvtypes, c_comm, &c_request);
@@ -3566,9 +3572,10 @@ int mpi_ineighbor_alltoallv__(const void *sendbuf, const int sendcounts[], const
 int mpi_ineighbor_alltoallw_(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, MPI_Fint *request, int *ierror)
 {
 /* MPI_Ineighbor_alltoallw */
+	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
 	int alltoallwlen = 0;
 
-	PMPI_Comm_size(comm, &alltoallwlen);
+	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
 	{
 		sendbuf = MPI_BOTTOM;
@@ -3597,7 +3604,7 @@ int mpi_ineighbor_alltoallw_(const void *sendbuf, const int sendcounts[], const 
 	{
 		c_recvtypes[incnt_recvtypes] = PMPI_Type_f2c(recvtypes[incnt_recvtypes]);
 	}
-	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
+
 	MPI_Request c_request;
 
 	*ierror  = MPI_Ineighbor_alltoallw(sendbuf, sendcounts, sdispls, c_sendtypes, recvbuf, recvcounts, rdispls, c_recvtypes, c_comm, &c_request);
@@ -3609,9 +3616,10 @@ int mpi_ineighbor_alltoallw_(const void *sendbuf, const int sendcounts[], const 
 int mpi_ineighbor_alltoallw__(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, MPI_Fint *request, int *ierror)
 {
 /* MPI_Ineighbor_alltoallw */
+	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
 	int alltoallwlen = 0;
 
-	PMPI_Comm_size(comm, &alltoallwlen);
+	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
 	{
 		sendbuf = MPI_BOTTOM;
@@ -3640,7 +3648,7 @@ int mpi_ineighbor_alltoallw__(const void *sendbuf, const int sendcounts[], const
 	{
 		c_recvtypes[incnt_recvtypes] = PMPI_Type_f2c(recvtypes[incnt_recvtypes]);
 	}
-	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
+
 	MPI_Request c_request;
 
 	*ierror  = MPI_Ineighbor_alltoallw(sendbuf, sendcounts, sdispls, c_sendtypes, recvbuf, recvcounts, rdispls, c_recvtypes, c_comm, &c_request);
@@ -4740,9 +4748,10 @@ int mpi_neighbor_alltoallv_init__(const void *sendbuf, const int sendcounts[], c
 int mpi_neighbor_alltoallw_(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, int *ierror)
 {
 /* MPI_Neighbor_alltoallw */
+	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 	int alltoallwlen = 0;
 
-	PMPI_Comm_size(comm, &alltoallwlen);
+	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
 	{
 		sendbuf = MPI_BOTTOM;
@@ -4771,7 +4780,7 @@ int mpi_neighbor_alltoallw_(const void *sendbuf, const int sendcounts[], const M
 	{
 		c_recvtypes[incnt_recvtypes] = PMPI_Type_f2c(recvtypes[incnt_recvtypes]);
 	}
-	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
+
 
 	*ierror = MPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, c_sendtypes, recvbuf, recvcounts, rdispls, c_recvtypes, c_comm);
 	sctk_free(c_sendtypes);
@@ -4781,9 +4790,10 @@ int mpi_neighbor_alltoallw_(const void *sendbuf, const int sendcounts[], const M
 int mpi_neighbor_alltoallw__(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, int *ierror)
 {
 /* MPI_Neighbor_alltoallw */
+	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 	int alltoallwlen = 0;
 
-	PMPI_Comm_size(comm, &alltoallwlen);
+	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
 	{
 		sendbuf = MPI_BOTTOM;
@@ -4812,7 +4822,7 @@ int mpi_neighbor_alltoallw__(const void *sendbuf, const int sendcounts[], const 
 	{
 		c_recvtypes[incnt_recvtypes] = PMPI_Type_f2c(recvtypes[incnt_recvtypes]);
 	}
-	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
+
 
 	*ierror = MPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, c_sendtypes, recvbuf, recvcounts, rdispls, c_recvtypes, c_comm);
 	sctk_free(c_sendtypes);
@@ -4822,9 +4832,10 @@ int mpi_neighbor_alltoallw__(const void *sendbuf, const int sendcounts[], const 
 int mpi_neighbor_alltoallw_init_(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, int *ierror)
 {
 /* MPI_Neighbor_alltoallw_init */
+	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
 	int alltoallwlen = 0;
 
-	PMPI_Comm_size(comm, &alltoallwlen);
+	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
 	{
 		sendbuf = MPI_BOTTOM;
@@ -4853,7 +4864,7 @@ int mpi_neighbor_alltoallw_init_(const void *sendbuf, const int sendcounts[], co
 	{
 		c_recvtypes[incnt_recvtypes] = PMPI_Type_f2c(recvtypes[incnt_recvtypes]);
 	}
-	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
+
 	MPI_Info    c_info = PMPI_Info_f2c(*info);
 	MPI_Request c_request;
 
@@ -4866,9 +4877,10 @@ int mpi_neighbor_alltoallw_init_(const void *sendbuf, const int sendcounts[], co
 int mpi_neighbor_alltoallw_init__(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, int *ierror)
 {
 /* MPI_Neighbor_alltoallw_init */
+	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
 	int alltoallwlen = 0;
 
-	PMPI_Comm_size(comm, &alltoallwlen);
+	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
 	{
 		sendbuf = MPI_BOTTOM;
@@ -4897,7 +4909,7 @@ int mpi_neighbor_alltoallw_init__(const void *sendbuf, const int sendcounts[], c
 	{
 		c_recvtypes[incnt_recvtypes] = PMPI_Type_f2c(recvtypes[incnt_recvtypes]);
 	}
-	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
+
 	MPI_Info    c_info = PMPI_Info_f2c(*info);
 	MPI_Request c_request;
 

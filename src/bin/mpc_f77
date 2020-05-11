@@ -24,6 +24,8 @@
 ########################################################################
 
 # Common variables
+SCRIPT=$(readlink -f "$0")
+SCRIPTPATH=$(dirname "$SCRIPT")
 
 #Extract compiler configuration and flags
 # - MPC_INSTALL_PREFIX
@@ -32,10 +34,9 @@
 # - CC
 # - MPC_GENERATION_DATE
 # - CFLAGS
-eval $(mpc_cflags -sh -p -s -fc -cc -f -t)
+eval $("${SCRIPTPATH}/mpc_cflags" --sh -p -s -fc -cc -f -t --fortran)
 
 COMPILER="$FC"
-LDFLAGS=$("${MPC_INSTALL_PREFIX}/bin/mpc_ldflags" --fortran -l)
 
 # Source Common function library
 
@@ -49,24 +50,18 @@ set_fortran
 
 parse_cli_args $@
 
-insert_fortran_module_path()
-{
-		append_to "LDFLAGS" "-L${1} -Wl,-rpath=${1}"
-		append_to "CFLAGS" "-I${1}"
-}
+# It is not possible to change CC for Fortran
 
-FORTRAN_HOME=$("${MPC_INSTALL_PREFIX}/bin/mpc_compile_fortran_modules" "-cc=${CC}" "-fc=${COMPILER}" --check)
 
-if test -d "${FORTRAN_HOME}"; then
-	insert_fortran_module_path "${FORTRAN_HOME}"
+
+# Determine if we need to link to the privatized libmpc_fortran
+# mpc_ldflags does it for us just tell it if we privatize or not
+
+if test "x${DO_PRIV}" = "xyes"; then
+	LDFLAGS=$("${MPC_INSTALL_PREFIX}/bin/mpc_ldflags" -l --fortran --priv)
 else
-	info "You may build fortran modules for $(basename ${COMPILER}) by running:"
-	info ""
-	info "mpc_compile_fortran_modules -cc=${CC} -fc=${COMPILER}" 
-	info ""
-	die "Fortran modules are not available for $(basename ${COMPILER}) consider building them using previous command."
+	LDFLAGS=$("${MPC_INSTALL_PREFIX}/bin/mpc_ldflags" -l --fortran)
 fi
-
 
 # Important we need to make sure the right libgfortran is used
 # if the compiler is altered with -cc= to do so we use a gcc

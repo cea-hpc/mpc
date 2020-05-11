@@ -23,13 +23,15 @@
 ########################################################################
 
 # Common variables
+SCRIPT=$(readlink -f "$0")
+SCRIPTPATH=$(dirname "$SCRIPT")
 
 #Extract compiler configuration and flags
 # - MPC_INSTALL_PREFIX
 # - MPC_SHARE_DIR
 # - CXX
 # - CFLAGS
-eval $(mpc_cflags -sh -p -s -cxx -f)
+eval $("${SCRIPTPATH}/mpc_cflags" --sh -p -s -cxx -f)
 
 COMPILER="$CXX"
 LDFLAGS=$("${MPC_INSTALL_PREFIX}/bin/mpc_ldflags")

@@ -56,3 +56,25 @@ mpi.f90: mpi_sizeofs.lo mpi_base.lo
 lib_LTLIBRARIES = libmpcfortran.la
 
 libmpcfortran_la_SOURCES = mpc_fortran.c mpc_fortran_helpers.c omp.f90 predef_types_08.f90 predef_types.f90 $(MPCFORT_FILES)
+
+if MPC_HAVE_AUTOPRIV
+# Generate a privatized library note that
+# by defaut autopriv wrappers do not privatize
+
+lib_LTLIBRARIES += libmpcfortran_priv.la
+
+libmpcfortran_priv_la_SOURCES = mpc_fortran.c mpc_fortran_helpers.c omp.f90 predef_types_08.f90 predef_types.f90 $(MPCFORT_FILES)
+libmpcfortran_priv_la_CFLAGS = -fmpc-privatize
+
+endif
+
+#
+# Install Fortran modules
+#
+
+MPCFORT_MODULES = mpi_base.mod mpi_constants.mod mpi_f08_c.mod mpi_f08_constants.mod mpi_f08_ctypes.mod mpi_f08.mod mpi_f08_types.mod mpi.mod mpi_sizeofs.mod omp_lib_kinds.mod omp_lib.mod
+
+$(MPCFORT_MODULES): libmpcfortran_priv.la
+
+mpc_fort_headerdir=$(pkgincludedir)/fortran/
+mpc_fort_header_HEADERS = $(MPCFORT_MODULES)

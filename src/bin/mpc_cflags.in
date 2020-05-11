@@ -46,11 +46,15 @@ FC="@FC@"
 #if the SH flag is present or FORTRAN
 
 HAS_SH_FLAG="no"
+HAVE_FORTRAN="no"
 
 for arg in "$@" ; do
 	case $arg in
-		-sh)
+		--sh)
 			HAS_SH_FLAG="yes"
+		;;
+		--fortran)
+			HAVE_FORTRAN="yes"
 		;;
 	esac
 done
@@ -89,6 +93,10 @@ FLAGS="$FLAGS ${HWLOC_CFLAGS}"
 FLAGS="$FLAGS ${EXTLS_CFLAGS}"
 FLAGS="$FLAGS ${MPCALLOC_CFLAGS}"
 
+if test "x${HAVE_FORTRAN}" = "xyes"; then
+	FLAGS="$FLAGS -I${MPC_INCLUDEDIR}/fortran/"
+fi
+
 FLAGS="$FLAGS $(gen_module_defines)"
 
 #
@@ -106,6 +114,7 @@ show_help()
 	echo " -h|--help    Print this help"
 	echo " -f|--cflags  Print cflags"
 	echo " --sh         Output in shell format"
+	echo " --fortran    Add the fortran include path"
 	echo ""
 	echo "Install env:"
 	echo " -p           Display mpc install prefix"
@@ -163,7 +172,7 @@ for arg in "$@" ; do
 	-f|--cflags)
 		print_var "CFLAGS" "$FLAGS"
 		;;
-	-sh)
+	--sh|--fortran)
 	# Handled in the first pass
 	;;
 	*)
