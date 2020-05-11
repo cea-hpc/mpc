@@ -485,7 +485,8 @@ AM_CPPFLAGS = -I$(abs_top_builddir)/ \
 	-I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_builddir) @MPC_MODULE_DEFINES@ \
 	-I$(abs_top_builddir)/src/MPC_Arch/include/ \
-	-I$(abs_top_srcdir)/src/MPC_Arch/include/
+	-I$(abs_top_srcdir)/src/MPC_Arch/include/ \
+	-I$(abs_top_builddir)/src/MPC_Fortran/src/
 AM_FCFLAGS = -I$(abs_top_builddir)/src/MPC_Fortran/src/ @MPC_MODULE_DEFINES@
 MPCFORT_FILES = mpi_base.f90 mpi_constants.f90 mpi_f08_c.f90 mpi_f08_c_iface.c mpi_f08_constants.f90 mpi_f08_ctypes.f90 mpi_f08.f90 mpi_f08_types.f90 mpi.f90 mpi_sizeofs.f90
 lib_LTLIBRARIES = libmpcfortran.la
@@ -847,12 +848,13 @@ clean-local:
 @HAVE_PYTHON_FALSE@	@cp $(srcdir)/pregenerated/* $(builddir)/
 @HAVE_PYTHON_FALSE@	@touch genfortraniface
 
-$(MPCFORT_FILES) : genfortraniface
+$(MPCFORT_FILES) mpif.h : genfortraniface
 
 mpi_f08_types.lo: mpi_f08_ctypes.lo
 mpi_f08_constants.lo: mpi_f08_types.lo
 mpi_f08_c.lo: mpi_f08_constants.lo
 mpi_f08.lo: mpi_f08_constants.lo mpi_f08_c.lo
+predef_types.lo: mpif.h
 predef_types_08.lo: mpi_f08.lo
 mpi_base.lo: mpi_constants.lo
 mpi.f90: mpi_sizeofs.lo mpi_base.lo 
