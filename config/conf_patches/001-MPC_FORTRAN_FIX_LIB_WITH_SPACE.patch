@@ -1,0 +1,28 @@
+diff --git a/configure b/configure
+index ad7c2c1e4..7f7719904 100755
+--- a/configure
++++ b/configure
+@@ -15594,8 +15594,9 @@ if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
+     -L* | -R* | -l*)
+        # Some compilers place space between "-{L,R}" and the path.
+        # Remove the space.
+-       if test x-L = "$p" ||
+-          test x-R = "$p"; then
++       # MPC_FORTRAN_FIX_LIB_WITH_SPACE
++       if test x-L = "x$p" || test x-l = "x$p" ||
++          test x-R = "x$p"; then
+ 	 prev=$p
+ 	 continue
+        fi
+@@ -17775,8 +17776,9 @@ if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
+     -L* | -R* | -l*)
+        # Some compilers place space between "-{L,R}" and the path.
+        # Remove the space.
+-       if test x-L = "$p" ||
+-          test x-R = "$p"; then
++       # MPC_FORTRAN_FIX_LIB_WITH_SPACE
++       if test x-L = "x$p" || test x-l = "x$p" ||
++          test x-R = "x$p"; then
+ 	 prev=$p
+ 	 continue
+        fi

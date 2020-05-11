@@ -34,6 +34,12 @@ err()
 	ret=1
 }
 
+die()
+{
+	err "$1"
+	exit 1
+}
+
 extract_version()
 {
 	"$1" --version | head -n 1 | grep -E -o "[0-9]+(\.[0-9]+)*"
@@ -63,4 +69,102 @@ if test "$ret" = "0"; then
 	$arc -vi
 	ret=$?
 fi
-test "$ret" = "0" || printf "Abort configuration due to error(s) above.\n"
+
+test "$ret" = "0" || die "Abort configuration due to error(s) above.\n"
+
+#
+# Patching Phase
+#
+
+SCRIPT=$(readlink -f "$0")
+SCRIPTPATH=$(dirname "$SCRIPT")
+
+#
+# Check if a patch is already applied to a given file
+# Args:
+#  - $1 : Magic Pattern
+#
+# Returns:
+#  - PATCHED = yes | no
+#
+check_for_patch()
+{
+	CNT=$(grep -c "$1" "${SCRIPTPATH}/configure")
+
+	if test "x${CNT}" = "x0"; then
+		PATCHED="no"
+	else
+		PATCHED="yes"
+	fi
+}
+
+#
+# Add a comment in the configure to notify that patch is done
+#
+# Args:
+#   - $1 : watermark to be added
+#
+watermark_configure()
+{
+	echo "# MPC has applied patch $1" >> "${SCRIPTPATH}/configure"
+}
+
+#
+# Parse patch watermark
+#
+# Args:
+#  - $1: path to patch
+#
+# Returns:
+#  - WATERMARK: what is to be used to mark patch done
+#
+parse_watermark()
+{
+	WATERMARK=$(basename "$1" | sed "s/\.patch//g" | cut -d "-" -f 2)
+
+	if test -z "${WATERMARK}"; then
+		die "Could not parse watermark in $1"
+	fi
+}
+
+#
+# Apply all patches located in config/conf_patches/
+#
+# THEY must follow these guidelines:
+#   - Named as ORDER-MAGIC.patch
+#      - ORDER is the order of application 000 to 999
+#      - MAGIC is BOTH the patch description and patch watermark
+apply_configuration_patches()
+{
+	for i in "${SCRIPTPATH}"/config/conf_patches/*.patch
+	do
+		parse_watermark "$i"
+		check_for_patch "${WATERMARK}"
+
+		if test "x${PATCHED}" = "xno"; then
+			patch -p1 < "$i" || die "Could not apply ${WATERMARK} patch"
+			watermark_configure "${WATERMARK}"
+			echo "PATCH: ${WATERMARK} APPLIED"
+		else
+			echo "PATCH: ${WATERMARK} already APPLIED"
+		fi
+
+	done
+}
+
+apply_configuration_patches
+
+# Here is the patch description
+
+
+# 001-MPC_FORTRAN_FIX_LIB_WITH_SPACE
+#
+# Fix for Fortran libraries in libtools as reported in
+#
+# https://debbugs.gnu.org/cgi/bugreport.cgi?bug=10972
+# https://debbugs.gnu.org/cgi/bugreport.cgi?bug=21137
+# https://github.com/open-mpi/ompi/issues/576
+#
+
+
+

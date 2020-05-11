@@ -15594,8 +15594,9 @@ if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
     -L* | -R* | -l*)
        # Some compilers place space between "-{L,R}" and the path.
        # Remove the space.
-       if test x-L = "$p" ||
-          test x-R = "$p"; then
+       # MPC_FORTRAN_FIX_LIB_WITH_SPACE
+       if test x-L = "x$p" || test x-l = "x$p" ||
+          test x-R = "x$p"; then
 	 prev=$p
 	 continue
        fi
@@ -17775,8 +17776,9 @@ if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
     -L* | -R* | -l*)
        # Some compilers place space between "-{L,R}" and the path.
        # Remove the space.
-       if test x-L = "$p" ||
-          test x-R = "$p"; then
+       # MPC_FORTRAN_FIX_LIB_WITH_SPACE
+       if test x-L = "x$p" || test x-l = "x$p" ||
+          test x-R = "x$p"; then
 	 prev=$p
 	 continue
        fi
@@ -33393,3 +33395,4 @@ echo "you wanted please manually reconfigure MPC"
 echo "***********************************************"
 
 fi
+# MPC has applied patch MPC_FORTRAN_FIX_LIB_WITH_SPACE
