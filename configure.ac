@@ -55,6 +55,19 @@ AC_INIT([Multi-Processor Computing Framework],
 	[m4_esyscmd_s([./utils/get_version])],
 	[france@paratools.com], [mpcframework], [https://mpc.hpcframework.com])
 
+
+# The first check is that the configure was generated with
+# autogen.sh and not manually for example with autoconf
+# it is crucial to ensure that configuration patches (located in ./config/conf_patches/)
+# are applied before running the configure script for a patch
+# description see the end of the autogen.sh file
+GENERATED_WITH_AUTOGEN=$(tail -n 1 "$0" | grep -c "MPC_AUTOGEN_WAS_USED")
+
+if test "x${GENERATED_WITH_AUTOGEN}" = "x0"; then
+        AC_MSG_ERROR([The configure script was not generated using autogen.sh])
+fi
+
+
 #Some basic setups: where build configuration/macro files are stored
 #and check for source directory properly found
 AC_CONFIG_AUX_DIR([config])

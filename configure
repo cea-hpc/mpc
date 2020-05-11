@@ -3202,6 +3202,19 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+
+# The first check is that the configure was generated with
+# autogen.sh and not manually for example with autoconf
+# it is crucial to ensure that configuration patches (located in ./config/conf_patches/)
+# are applied before running the configure script for a patch
+# description see the end of the autogen.sh file
+GENERATED_WITH_AUTOGEN=$(tail -n 1 "$0" | grep -c "MPC_AUTOGEN_WAS_USED")
+
+if test "x${GENERATED_WITH_AUTOGEN}" = "x0"; then
+        as_fn_error $? "The configure script was not generated using autogen.sh" "$LINENO" 5
+fi
+
+
 #Some basic setups: where build configuration/macro files are stored
 #and check for source directory properly found
 ac_aux_dir=
@@ -33403,3 +33416,4 @@ echo "***********************************************"
 fi
 # MPC has applied patch MPC_FORTRAN_FIX_LIB_WITH_SPACE
 # MPC has applied patch MPC_FLANG_SUPPORT
+# MPC_AUTOGEN_WAS_USED

@@ -174,3 +174,11 @@ apply_configuration_patches
 # https://github.com/open-mpi/ompi/commit/6f8010c685d6fb0554c80cde9f131996081f7105
 
 
+#
+# Mark the configure as GENERATED with ./autogen.sh (if needed)
+#
+IS_AUTOGEN=$(tail -n 1 "${SCRIPTPATH}/configure"| grep -c "MPC_AUTOGEN_WAS_USED")
+
+if test "x${IS_AUTOGEN}" = "x0"; then
+	echo "# MPC_AUTOGEN_WAS_USED" >> "${SCRIPTPATH}/configure"
+fi
