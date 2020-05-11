@@ -93,11 +93,12 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@MPC_FORTRAN_ENABLED_TRUE@am__append_1 = mpc_f77
 
 #
 # Cuda support
 #
-@MPC_CUDA_ENABLED_TRUE@am__append_1 = mpc_nvcc
+@MPC_CUDA_ENABLED_TRUE@am__append_2 = mpc_nvcc
 bin_PROGRAMS = mpirun$(EXEEXT)
 subdir = src/bin
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -479,8 +480,8 @@ top_srcdir = @top_srcdir@
 #
 # Other scripts
 #
-bin_SCRIPTS = mpc_cc mpc_f77 mpc_cxx mpc_cflags mpc_ldflags mpc_status \
-	mpcrun mpcvars.sh $(am__append_1)
+bin_SCRIPTS = mpc_cc mpc_cxx mpc_cflags mpc_ldflags $(am__append_1) \
+	mpc_status mpcrun mpcvars.sh $(am__append_2)
 pkgdata_SCRIPTS = mpc_compiler_common.sh
 CLEANFILES = $(bin_SCRIPTS) $(pkgdata_SCRIPTS)
 mpirun_SOURCES = ./mpirun.c

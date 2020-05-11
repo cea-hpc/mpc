@@ -38,17 +38,18 @@ genfortraniface: genmod.py preparsed_mpih.dat constants.json
 
 endif
 
-MPC_FORTRAN_COMPILER_LIST=@MPC_FORTRAN_COMPILER_LIST@
+MPCFORT_FILES=mpi_base.f90 mpi_constants.f90 mpi_f08_c.f90 mpi_f08_c_iface.c mpi_f08_constants.f90 mpi_f08_ctypes.f90 mpi_f08.f90 mpi_f08_types.f90 mpi.f90 mpi_sizeofs.f90
 
-# Deploy the Fortran build env for use at compile time if needed
-install-data-local: genfortraniface
-	test -d $(pkgdatadir)/fortran/ || mkdir $(pkgdatadir)/fortran/
-	install -m 0644 -D $(builddir)/mpif.h $(pkgdatadir)/fortran/
-	install -m 0644 -D $(builddir)/*.f90 $(pkgdatadir)/fortran/
-	install -m 0644 -D $(builddir)/*.c $(pkgdatadir)/fortran/
-	install -m 0644 -D $(srcdir)/mpc_fortran.c $(pkgdatadir)/fortran/
-	install -m 0644 -D $(srcdir)/mpc_fortran_helpers.c $(pkgdatadir)/fortran/
-	install -m 0644 -D $(srcdir)/mpc_fortran_helpers.h $(pkgdatadir)/fortran/
-	install -m 0644 -D $(srcdir)/mpc_fortran.c $(pkgdatadir)/fortran/
-	install -m 0644 -D $(srcdir)/*.f90 $(pkgdatadir)/fortran/
-	install -m 0644 -D $(srcdir)/Makefile.deploy $(pkgdatadir)/fortran/Makefile
+$(MPCFORT_FILES) : genfortraniface
+
+mpi_f08_types.lo: mpi_f08_ctypes.lo
+mpi_f08_constants.lo: mpi_f08_types.lo
+mpi_f08_c.lo: mpi_f08_constants.lo
+mpi_f08.lo: mpi_f08_constants.lo mpi_f08_c.lo
+predef_types_08.lo: mpi_f08.lo
+mpi_base.lo: mpi_constants.lo
+mpi.f90: mpi_sizeofs.lo mpi_base.lo 
+
+lib_LTLIBRARIES = libmpcfortran.la
+
+libmpcfortran_la_SOURCES = mpc_fortran.c mpc_fortran_helpers.c omp.f90 predef_types_08.f90 predef_types.f90 $(MPCFORT_FILES)

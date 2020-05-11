@@ -30271,9 +30271,9 @@ MPC_CONFIG_RESULT="\
 # Installation into.... $prefix\n\
 # Configure run on..... `date -d @$MPC_GENERATION_DATE`\n\
 # Version built........ $MPC_VERSION_STRING\n\
-# C Compiler........... $CC\n\
-# C++ Compiler......... $CXX\n\
-# Fortran Compiler..... $FC\n\
+# C Compiler........... $(basename $CC)\n\
+# C++ Compiler......... $(basename $CXX)\n\
+# Fortran Compiler..... $(basename $FC)\n\
 #\n\
 ### BUILD CONFIGURATION ###\n\
 #\n\
