@@ -35,8 +35,8 @@ if test -n "$(command -v git)" -a -e "$UTILS_DIR/../.git"; then
 	MAJOR_VERSION=$(echo "$res" | cut -f1 -d".")
 	MINOR_VERSION=$(echo "$res" | cut -f2 -d".")
 	PATCH_VERSION=$(echo "$res" | cut -f3 -d".")
-	TAINT_VERSION="$(git -C $UTILS_DIR rev-parse --short HEAD)"
-	git -C $UTILS_DIR diff --quiet || TAINT_VERSION="@$TAINT_VERSION-dirty"
+	TAINT_VERSION="@$(git -C $UTILS_DIR rev-parse --short HEAD)"
+	git -C $UTILS_DIR diff --quiet || TAINT_VERSION="$TAINT_VERSION-dirty"
 fi
 
 #two scenarios: no Git repo OR issues with fetching tags
