@@ -14,6 +14,12 @@ endif
 bin_SCRIPTS += mpc_status mpcrun mpcvars.sh
 pkgdata_SCRIPTS = mpc_compiler_common.sh
 
+# Make sure the source script is at the root of the prefix for retro-compatibility
+install-data-local:
+	ln -sf $(bindir)/mpcvars.sh $(prefix)/mpcvars.sh
+
+CLEANFILES = $(prefix)/mpcvars.sh
+
 #
 # Cuda support
 #
@@ -22,7 +28,7 @@ if MPC_CUDA_ENABLED
    bin_SCRIPTS += mpc_nvcc
 endif
 
-CLEANFILES = $(bin_SCRIPTS) $(pkgdata_SCRIPTS)
+CLEANFILES += $(bin_SCRIPTS) $(pkgdata_SCRIPTS)
 
 #
 # mpirun

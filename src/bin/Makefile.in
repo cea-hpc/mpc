@@ -483,7 +483,7 @@ top_srcdir = @top_srcdir@
 bin_SCRIPTS = mpc_cc mpc_cxx mpc_cflags mpc_ldflags $(am__append_1) \
 	mpc_status mpcrun mpcvars.sh $(am__append_2)
 pkgdata_SCRIPTS = mpc_compiler_common.sh
-CLEANFILES = $(bin_SCRIPTS) $(pkgdata_SCRIPTS)
+CLEANFILES = $(prefix)/mpcvars.sh $(bin_SCRIPTS) $(pkgdata_SCRIPTS)
 mpirun_SOURCES = ./mpirun.c
 all: all-am
 
@@ -890,7 +890,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-pkgdataSCRIPTS
+install-data-am: install-data-local install-pkgdataSCRIPTS
 
 install-dvi: install-dvi-am
 
@@ -947,20 +947,25 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 	ctags ctags-am distclean distclean-compile distclean-generic \
 	distclean-libtool distclean-tags distdir dvi dvi-am html \
 	html-am info info-am install install-am install-binPROGRAMS \
-	install-binSCRIPTS install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-pkgdataSCRIPTS install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installcheck-binPROGRAMS installcheck-binSCRIPTS \
-	installcheck-pkgdataSCRIPTS installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-binSCRIPTS uninstall-pkgdataSCRIPTS
+	install-binSCRIPTS install-data install-data-am \
+	install-data-local install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-man install-pdf install-pdf-am \
+	install-pkgdataSCRIPTS install-ps install-ps-am install-strip \
+	installcheck installcheck-am installcheck-binPROGRAMS \
+	installcheck-binSCRIPTS installcheck-pkgdataSCRIPTS \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-binPROGRAMS uninstall-binSCRIPTS \
+	uninstall-pkgdataSCRIPTS
 
 .PRECIOUS: Makefile
 
+
+# Make sure the source script is at the root of the prefix for retro-compatibility
+install-data-local:
+	ln -sf $(bindir)/mpcvars.sh $(prefix)/mpcvars.sh
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
