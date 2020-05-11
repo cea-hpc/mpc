@@ -1,0 +1,17 @@
+diff --git a/configure b/configure
+index 288610390..ea91dd8f2 100755
+--- a/configure
++++ b/configure
+@@ -18062,6 +18062,12 @@ lt_prog_compiler_static_FC=
+ 	lt_prog_compiler_pic_FC='-KPIC'
+ 	lt_prog_compiler_static_FC='-static'
+         ;;
++      # Flang Compiler
++      *flang)
++  lt_prog_compiler_wl_FC='-Wl,'
++  lt_prog_compiler_pic_FC='-fPIC -DPIC'
++  lt_prog_compiler_static_FC='-static'
++        ;;
+       # icc used to be incompatible with GCC.
+       # ICC 10 doesn't accept -KPIC any more.
+       icc* | ifort*)

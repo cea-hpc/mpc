@@ -166,5 +166,11 @@ apply_configuration_patches
 # https://github.com/open-mpi/ompi/issues/576
 #
 
+# 002-MPC_FLANG_SUPPORT
+#
+# Allow libtool to know flang (taken from OpenMPI)
+# facing the exact same issues
+#
+# https://github.com/open-mpi/ompi/commit/6f8010c685d6fb0554c80cde9f131996081f7105
 
 
