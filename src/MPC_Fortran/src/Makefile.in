@@ -161,16 +161,28 @@ am__libmpcfortran_priv_la_SOURCES_DIST = mpc_fortran.c \
 	predef_types.f90 mpi_base.f90 mpi_constants.f90 mpi_f08_c.f90 \
 	mpi_f08_c_iface.c mpi_f08_constants.f90 mpi_f08_ctypes.f90 \
 	mpi_f08.f90 mpi_f08_types.f90 mpi.f90 mpi_sizeofs.f90
-am__objects_2 = mpi_base.lo mpi_constants.lo mpi_f08_c.lo \
-	libmpcfortran_priv_la-mpi_f08_c_iface.lo mpi_f08_constants.lo \
-	mpi_f08_ctypes.lo mpi_f08.lo mpi_f08_types.lo mpi.lo \
-	mpi_sizeofs.lo
+am__objects_2 = libmpcfortran_priv_la-mpi_base.lo \
+	libmpcfortran_priv_la-mpi_constants.lo \
+	libmpcfortran_priv_la-mpi_f08_c.lo \
+	libmpcfortran_priv_la-mpi_f08_c_iface.lo \
+	libmpcfortran_priv_la-mpi_f08_constants.lo \
+	libmpcfortran_priv_la-mpi_f08_ctypes.lo \
+	libmpcfortran_priv_la-mpi_f08.lo \
+	libmpcfortran_priv_la-mpi_f08_types.lo \
+	libmpcfortran_priv_la-mpi.lo \
+	libmpcfortran_priv_la-mpi_sizeofs.lo
 @MPC_HAVE_AUTOPRIV_TRUE@am_libmpcfortran_priv_la_OBJECTS =  \
 @MPC_HAVE_AUTOPRIV_TRUE@	libmpcfortran_priv_la-mpc_fortran.lo \
 @MPC_HAVE_AUTOPRIV_TRUE@	libmpcfortran_priv_la-mpc_fortran_helpers.lo \
-@MPC_HAVE_AUTOPRIV_TRUE@	omp.lo predef_types_08.lo \
-@MPC_HAVE_AUTOPRIV_TRUE@	predef_types.lo $(am__objects_2)
+@MPC_HAVE_AUTOPRIV_TRUE@	libmpcfortran_priv_la-omp.lo \
+@MPC_HAVE_AUTOPRIV_TRUE@	libmpcfortran_priv_la-predef_types_08.lo \
+@MPC_HAVE_AUTOPRIV_TRUE@	libmpcfortran_priv_la-predef_types.lo \
+@MPC_HAVE_AUTOPRIV_TRUE@	$(am__objects_2)
 libmpcfortran_priv_la_OBJECTS = $(am_libmpcfortran_priv_la_OBJECTS)
+libmpcfortran_priv_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=FC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(FCLD) \
+	$(libmpcfortran_priv_la_FCFLAGS) $(FCFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
 @MPC_HAVE_AUTOPRIV_TRUE@am_libmpcfortran_priv_la_rpath = -rpath \
 @MPC_HAVE_AUTOPRIV_TRUE@	$(libdir)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -519,7 +531,8 @@ MPCFORT_FILES = mpi_base.f90 mpi_constants.f90 mpi_f08_c.f90 mpi_f08_c_iface.c m
 lib_LTLIBRARIES = libmpcfortran.la $(am__append_1)
 libmpcfortran_la_SOURCES = mpc_fortran.c mpc_fortran_helpers.c omp.f90 predef_types_08.f90 predef_types.f90 $(MPCFORT_FILES)
 @MPC_HAVE_AUTOPRIV_TRUE@libmpcfortran_priv_la_SOURCES = mpc_fortran.c mpc_fortran_helpers.c omp.f90 predef_types_08.f90 predef_types.f90 $(MPCFORT_FILES)
-@MPC_HAVE_AUTOPRIV_TRUE@libmpcfortran_priv_la_CFLAGS = -fmpc-privatize
+@MPC_HAVE_AUTOPRIV_TRUE@libmpcfortran_priv_la_CFLAGS = -fmpc-privatize $(AM_CPPFLAGS)
+@MPC_HAVE_AUTOPRIV_TRUE@libmpcfortran_priv_la_FCFLAGS = -fmpc-privatize $(AM_FCFLAGS)
 
 #
 # Install Fortran modules
@@ -600,7 +613,7 @@ libmpcfortran.la: $(libmpcfortran_la_OBJECTS) $(libmpcfortran_la_DEPENDENCIES) $
 	$(AM_V_FCLD)$(FCLINK) -rpath $(libdir) $(libmpcfortran_la_OBJECTS) $(libmpcfortran_la_LIBADD) $(LIBS)
 
 libmpcfortran_priv.la: $(libmpcfortran_priv_la_OBJECTS) $(libmpcfortran_priv_la_DEPENDENCIES) $(EXTRA_libmpcfortran_priv_la_DEPENDENCIES) 
-	$(AM_V_FCLD)$(FCLINK) $(am_libmpcfortran_priv_la_rpath) $(libmpcfortran_priv_la_OBJECTS) $(libmpcfortran_priv_la_LIBADD) $(LIBS)
+	$(AM_V_FCLD)$(libmpcfortran_priv_la_LINK) $(am_libmpcfortran_priv_la_rpath) $(libmpcfortran_priv_la_OBJECTS) $(libmpcfortran_priv_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -668,6 +681,42 @@ libmpcfortran_priv_la-mpi_f08_c_iface.lo: mpi_f08_c_iface.c
 
 .f90.lo:
 	$(AM_V_FC)$(LTFCCOMPILE) -c -o $@ $<
+
+libmpcfortran_priv_la-omp.lo: omp.f90
+	$(AM_V_FC)$(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(FC) $(libmpcfortran_priv_la_FCFLAGS) $(FCFLAGS) -c -o libmpcfortran_priv_la-omp.lo `test -f 'omp.f90' || echo '$(srcdir)/'`omp.f90
+
+libmpcfortran_priv_la-predef_types_08.lo: predef_types_08.f90
+	$(AM_V_FC)$(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(FC) $(libmpcfortran_priv_la_FCFLAGS) $(FCFLAGS) -c -o libmpcfortran_priv_la-predef_types_08.lo `test -f 'predef_types_08.f90' || echo '$(srcdir)/'`predef_types_08.f90
+
+libmpcfortran_priv_la-predef_types.lo: predef_types.f90
+	$(AM_V_FC)$(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(FC) $(libmpcfortran_priv_la_FCFLAGS) $(FCFLAGS) -c -o libmpcfortran_priv_la-predef_types.lo `test -f 'predef_types.f90' || echo '$(srcdir)/'`predef_types.f90
+
+libmpcfortran_priv_la-mpi_base.lo: mpi_base.f90
+	$(AM_V_FC)$(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(FC) $(libmpcfortran_priv_la_FCFLAGS) $(FCFLAGS) -c -o libmpcfortran_priv_la-mpi_base.lo `test -f 'mpi_base.f90' || echo '$(srcdir)/'`mpi_base.f90
+
+libmpcfortran_priv_la-mpi_constants.lo: mpi_constants.f90
+	$(AM_V_FC)$(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(FC) $(libmpcfortran_priv_la_FCFLAGS) $(FCFLAGS) -c -o libmpcfortran_priv_la-mpi_constants.lo `test -f 'mpi_constants.f90' || echo '$(srcdir)/'`mpi_constants.f90
+
+libmpcfortran_priv_la-mpi_f08_c.lo: mpi_f08_c.f90
+	$(AM_V_FC)$(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(FC) $(libmpcfortran_priv_la_FCFLAGS) $(FCFLAGS) -c -o libmpcfortran_priv_la-mpi_f08_c.lo `test -f 'mpi_f08_c.f90' || echo '$(srcdir)/'`mpi_f08_c.f90
+
+libmpcfortran_priv_la-mpi_f08_constants.lo: mpi_f08_constants.f90
+	$(AM_V_FC)$(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(FC) $(libmpcfortran_priv_la_FCFLAGS) $(FCFLAGS) -c -o libmpcfortran_priv_la-mpi_f08_constants.lo `test -f 'mpi_f08_constants.f90' || echo '$(srcdir)/'`mpi_f08_constants.f90
+
+libmpcfortran_priv_la-mpi_f08_ctypes.lo: mpi_f08_ctypes.f90
+	$(AM_V_FC)$(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(FC) $(libmpcfortran_priv_la_FCFLAGS) $(FCFLAGS) -c -o libmpcfortran_priv_la-mpi_f08_ctypes.lo `test -f 'mpi_f08_ctypes.f90' || echo '$(srcdir)/'`mpi_f08_ctypes.f90
+
+libmpcfortran_priv_la-mpi_f08.lo: mpi_f08.f90
+	$(AM_V_FC)$(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(FC) $(libmpcfortran_priv_la_FCFLAGS) $(FCFLAGS) -c -o libmpcfortran_priv_la-mpi_f08.lo `test -f 'mpi_f08.f90' || echo '$(srcdir)/'`mpi_f08.f90
+
+libmpcfortran_priv_la-mpi_f08_types.lo: mpi_f08_types.f90
+	$(AM_V_FC)$(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(FC) $(libmpcfortran_priv_la_FCFLAGS) $(FCFLAGS) -c -o libmpcfortran_priv_la-mpi_f08_types.lo `test -f 'mpi_f08_types.f90' || echo '$(srcdir)/'`mpi_f08_types.f90
+
+libmpcfortran_priv_la-mpi.lo: mpi.f90
+	$(AM_V_FC)$(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(FC) $(libmpcfortran_priv_la_FCFLAGS) $(FCFLAGS) -c -o libmpcfortran_priv_la-mpi.lo `test -f 'mpi.f90' || echo '$(srcdir)/'`mpi.f90
+
+libmpcfortran_priv_la-mpi_sizeofs.lo: mpi_sizeofs.f90
+	$(AM_V_FC)$(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(FC) $(libmpcfortran_priv_la_FCFLAGS) $(FCFLAGS) -c -o libmpcfortran_priv_la-mpi_sizeofs.lo `test -f 'mpi_sizeofs.f90' || echo '$(srcdir)/'`mpi_sizeofs.f90
 
 mostlyclean-libtool:
 	-rm -f *.lo

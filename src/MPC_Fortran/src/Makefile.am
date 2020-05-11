@@ -64,7 +64,8 @@ if MPC_HAVE_AUTOPRIV
 lib_LTLIBRARIES += libmpcfortran_priv.la
 
 libmpcfortran_priv_la_SOURCES = mpc_fortran.c mpc_fortran_helpers.c omp.f90 predef_types_08.f90 predef_types.f90 $(MPCFORT_FILES)
-libmpcfortran_priv_la_CFLAGS = -fmpc-privatize
+libmpcfortran_priv_la_CFLAGS = -fmpc-privatize $(AM_CPPFLAGS)
+libmpcfortran_priv_la_FCFLAGS = -fmpc-privatize $(AM_FCFLAGS)
 
 endif
 
