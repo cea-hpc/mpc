@@ -49,11 +49,13 @@ arc=$(command -v autoreconf)
 ac=$(command -v autoconf)
 am=$(command -v automake)
 lt=$(command -v libtoolize)
+ptch=$(command -v patch)
 
 test -n "$arc" || err "No 'autoreconf' command in PATH. Please install autoconf first."
 test -n "$ac" || err "No 'autoconf' command in PATH. Please install autoconf first."
 test -n "$am" || err "No 'automake' command in PATH. Please install automake first."
 test -n "$lt" || err "No 'libtoolize' command in PATH. Please install libtool first."
+test -n "$ptch" || err "No 'patch' command in PATH. Please install patch first."
 
 
 ac_version=$(extract_version "$ac")
