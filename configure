@@ -18062,6 +18062,12 @@ lt_prog_compiler_static_FC=
 	lt_prog_compiler_pic_FC='-KPIC'
 	lt_prog_compiler_static_FC='-static'
         ;;
+      # Flang Compiler
+      *flang)
+  lt_prog_compiler_wl_FC='-Wl,'
+  lt_prog_compiler_pic_FC='-fPIC -DPIC'
+  lt_prog_compiler_static_FC='-static'
+        ;;
       # icc used to be incompatible with GCC.
       # ICC 10 doesn't accept -KPIC any more.
       icc* | ifort*)
@@ -33396,3 +33402,4 @@ echo "***********************************************"
 
 fi
 # MPC has applied patch MPC_FORTRAN_FIX_LIB_WITH_SPACE
+# MPC has applied patch MPC_FLANG_SUPPORT
