@@ -72,20 +72,24 @@ lib_LTLIBRARIES += libmpcfortran_priv.la
 # modules files as they have the same modules inside and
 # lead to random failures as compiler manipulates .mod files
 mpi08_module_priv.f90 :  mpi08_module.f90 libmpcfortran.la
-	cat mpi08_module.f90 > mpi08_module_priv.f90
+	cat $< > $@
 
 # F08 Iface
 libmpcfortran_priv_la_SOURCES = mpi_f08_c_iface.c  mpi08_module_priv.f90 
 # F90 Iface
 
 mpi_module_priv.f90 :  mpi_module.f90 libmpcfortran.la
-	cat mpi_module.f90 > mpi_module_priv.f90
+	cat $< > $@
 
 libmpcfortran_priv_la_SOURCES += mpi_module_priv.f90 
 # F77 Iface
 libmpcfortran_priv_la_SOURCES += mpc_fortran.c mpc_fortran_helpers.c
 # OMP
-libmpcfortran_priv_la_SOURCES += omp.f90 
+
+omp_priv.f90: omp.f90 libmpcfortran.la
+	cat $< > $@
+
+libmpcfortran_priv_la_SOURCES += omp_priv.f90 
 
 libmpcfortran_priv_la_CFLAGS = -fmpc-privatize $(AM_CPPFLAGS)
 libmpcfortran_priv_la_FCFLAGS = -fmpc-privatize $(AM_FCFLAGS)

@@ -155,13 +155,13 @@ am__v_lt_1 =
 libmpcfortran_priv_la_LIBADD =
 am__libmpcfortran_priv_la_SOURCES_DIST = mpi_f08_c_iface.c \
 	mpi08_module_priv.f90 mpi_module_priv.f90 mpc_fortran.c \
-	mpc_fortran_helpers.c omp.f90
+	mpc_fortran_helpers.c omp_priv.f90
 @MPC_HAVE_AUTOPRIV_TRUE@am_libmpcfortran_priv_la_OBJECTS = libmpcfortran_priv_la-mpi_f08_c_iface.lo \
 @MPC_HAVE_AUTOPRIV_TRUE@	libmpcfortran_priv_la-mpi08_module_priv.lo \
 @MPC_HAVE_AUTOPRIV_TRUE@	libmpcfortran_priv_la-mpi_module_priv.lo \
 @MPC_HAVE_AUTOPRIV_TRUE@	libmpcfortran_priv_la-mpc_fortran.lo \
 @MPC_HAVE_AUTOPRIV_TRUE@	libmpcfortran_priv_la-mpc_fortran_helpers.lo \
-@MPC_HAVE_AUTOPRIV_TRUE@	libmpcfortran_priv_la-omp.lo
+@MPC_HAVE_AUTOPRIV_TRUE@	libmpcfortran_priv_la-omp_priv.lo
 libmpcfortran_priv_la_OBJECTS = $(am_libmpcfortran_priv_la_OBJECTS)
 libmpcfortran_priv_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=FC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(FCLD) \
@@ -523,12 +523,11 @@ libmpcfortran_la_SOURCES = mpi_f08_c_iface.c mpi08_module.f90 \
 
 # F08 Iface
 # F77 Iface
-# OMP
 @MPC_HAVE_AUTOPRIV_TRUE@libmpcfortran_priv_la_SOURCES =  \
 @MPC_HAVE_AUTOPRIV_TRUE@	mpi_f08_c_iface.c \
 @MPC_HAVE_AUTOPRIV_TRUE@	mpi08_module_priv.f90 \
 @MPC_HAVE_AUTOPRIV_TRUE@	mpi_module_priv.f90 mpc_fortran.c \
-@MPC_HAVE_AUTOPRIV_TRUE@	mpc_fortran_helpers.c omp.f90
+@MPC_HAVE_AUTOPRIV_TRUE@	mpc_fortran_helpers.c omp_priv.f90
 @MPC_HAVE_AUTOPRIV_TRUE@libmpcfortran_priv_la_CFLAGS = -fmpc-privatize $(AM_CPPFLAGS)
 @MPC_HAVE_AUTOPRIV_TRUE@libmpcfortran_priv_la_FCFLAGS = -fmpc-privatize $(AM_FCFLAGS)
 
@@ -687,8 +686,8 @@ libmpcfortran_priv_la-mpi08_module_priv.lo: mpi08_module_priv.f90
 libmpcfortran_priv_la-mpi_module_priv.lo: mpi_module_priv.f90
 	$(AM_V_FC)$(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(FC) $(libmpcfortran_priv_la_FCFLAGS) $(FCFLAGS) -c -o libmpcfortran_priv_la-mpi_module_priv.lo `test -f 'mpi_module_priv.f90' || echo '$(srcdir)/'`mpi_module_priv.f90
 
-libmpcfortran_priv_la-omp.lo: omp.f90
-	$(AM_V_FC)$(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(FC) $(libmpcfortran_priv_la_FCFLAGS) $(FCFLAGS) -c -o libmpcfortran_priv_la-omp.lo `test -f 'omp.f90' || echo '$(srcdir)/'`omp.f90
+libmpcfortran_priv_la-omp_priv.lo: omp_priv.f90
+	$(AM_V_FC)$(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(FC) $(libmpcfortran_priv_la_FCFLAGS) $(FCFLAGS) -c -o libmpcfortran_priv_la-omp_priv.lo `test -f 'omp_priv.f90' || echo '$(srcdir)/'`omp_priv.f90
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -971,13 +970,17 @@ mpi08_module.f90: mpi_f08_ctypes.f90 mpi_f08_types.f90 mpi_f08_constants.f90 mpi
 
 # We need to sequentialize compilation for the two fortran
 # modules files as they have the same modules inside and
-# lead to random failures as compiler manipulates them
+# lead to random failures as compiler manipulates .mod files
 @MPC_HAVE_AUTOPRIV_TRUE@mpi08_module_priv.f90 :  mpi08_module.f90 libmpcfortran.la
-@MPC_HAVE_AUTOPRIV_TRUE@	cat mpi08_module.f90 > mpi08_module_priv.f90
+@MPC_HAVE_AUTOPRIV_TRUE@	cat $< > $@
 # F90 Iface
 
 @MPC_HAVE_AUTOPRIV_TRUE@mpi_module_priv.f90 :  mpi_module.f90 libmpcfortran.la
-@MPC_HAVE_AUTOPRIV_TRUE@	cat mpi_module.f90 > mpi_module_priv.f90
+@MPC_HAVE_AUTOPRIV_TRUE@	cat $< > $@
+# OMP
+
+@MPC_HAVE_AUTOPRIV_TRUE@omp_priv.f90: omp.f90 libmpcfortran.la
+@MPC_HAVE_AUTOPRIV_TRUE@	cat $< > $@
 
 $(MPCFORT_MODULES): libmpcfortran.la
 
