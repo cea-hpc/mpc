@@ -39,23 +39,28 @@ genfortraniface: genmod.py preparsed_mpih.dat constants.json
 
 endif
 
-MPCFORT_FILES=mpi_base.f90 mpi_constants.f90 mpi_f08_c.f90 mpi_f08_c_iface.c mpi_f08_constants.f90 mpi_f08_ctypes.f90 mpi_f08.f90 mpi_f08_types.f90 mpi.f90 mpi_sizeofs.f90
+BUILT_SOURCES= $(MPCFORT_FILES) mpif.h
 
 $(MPCFORT_FILES) mpif.h : genfortraniface
 
+# Let Fortran find out its dependency mess
+mpi_module.f90: mpi_sizeofs.f90 mpi_constants.f90 mpi_base.f90 mpi.f90 $(srcdir)/predef_types.f90
+	cat $^ > $@
 
-mpi_f08_types.lo: mpi_f08_ctypes.lo
-mpi_f08_constants.lo: mpi_f08_types.lo
-mpi_f08_c.lo: mpi_f08_constants.lo
-mpi_f08.lo: mpi_f08_constants.lo mpi_f08_c.lo
-predef_types.lo: mpif.h
-predef_types_08.lo: mpi_f08.lo
-mpi_base.lo: mpi_constants.lo
-mpi.f90: mpi_sizeofs.lo mpi_base.lo 
+# Let Fortran find out its dependency mess
+mpi08_module.f90: mpi_f08_ctypes.f90 mpi_f08_types.f90 mpi_f08_constants.f90 mpi_f08_c.f90 mpi_f08.f90 mpi_f08_c.f90 $(srcdir)/predef_types_08.f90
+	cat $^ > $@
 
 lib_LTLIBRARIES = libmpcfortran.la
 
-libmpcfortran_la_SOURCES = mpc_fortran.c mpc_fortran_helpers.c omp.f90 predef_types_08.f90 predef_types.f90 $(MPCFORT_FILES)
+# F08 Iface
+libmpcfortran_la_SOURCES = mpi_f08_c_iface.c  mpi08_module.f90 
+# F90 Iface
+libmpcfortran_la_SOURCES += mpi_module.f90 
+# F77 Iface
+libmpcfortran_la_SOURCES += mpc_fortran.c mpc_fortran_helpers.c
+# OMP
+libmpcfortran_la_SOURCES += omp.f90 
 
 if MPC_HAVE_AUTOPRIV
 # Generate a privatized library note that
@@ -63,7 +68,25 @@ if MPC_HAVE_AUTOPRIV
 
 lib_LTLIBRARIES += libmpcfortran_priv.la
 
-libmpcfortran_priv_la_SOURCES = mpc_fortran.c mpc_fortran_helpers.c omp.f90 predef_types_08.f90 predef_types.f90 $(MPCFORT_FILES)
+# We need to sequentialize compilation for the two fortran
+# modules files as they have the same modules inside and
+# lead to random failures as compiler manipulates .mod files
+mpi08_module_priv.f90 :  mpi08_module.f90 libmpcfortran.la
+	cat mpi08_module.f90 > mpi08_module_priv.f90
+
+# F08 Iface
+libmpcfortran_priv_la_SOURCES = mpi_f08_c_iface.c  mpi08_module_priv.f90 
+# F90 Iface
+
+mpi_module_priv.f90 :  mpi_module.f90 libmpcfortran.la
+	cat mpi_module.f90 > mpi_module_priv.f90
+
+libmpcfortran_priv_la_SOURCES += mpi_module_priv.f90 
+# F77 Iface
+libmpcfortran_priv_la_SOURCES += mpc_fortran.c mpc_fortran_helpers.c
+# OMP
+libmpcfortran_priv_la_SOURCES += omp.f90 
+
 libmpcfortran_priv_la_CFLAGS = -fmpc-privatize $(AM_CPPFLAGS)
 libmpcfortran_priv_la_FCFLAGS = -fmpc-privatize $(AM_FCFLAGS)
 
@@ -75,7 +98,7 @@ endif
 
 MPCFORT_MODULES = mpi_base.mod mpi_constants.mod mpi_f08_c.mod mpi_f08_constants.mod mpi_f08_ctypes.mod mpi_f08.mod mpi_f08_types.mod mpi.mod mpi_sizeofs.mod omp_lib_kinds.mod omp_lib.mod
 
-$(MPCFORT_MODULES): libmpcfortran_priv.la
+$(MPCFORT_MODULES): libmpcfortran.la
 
 mpc_fort_headerdir=$(pkgincludedir)/fortran/
 mpc_fort_header_HEADERS = $(MPCFORT_MODULES)
