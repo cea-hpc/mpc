@@ -109,7 +109,8 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = mpc_config.h
 CONFIG_CLEAN_FILES = src/MPC_Arch/include/mpc_arch.h \
-	src/MPC_IO/include/mpio.h src/include/mpc_threads_config.h
+	src/MPC_IO/include/mpio.h src/include/mpc_threads_config.h \
+	src/include/mpc.h
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -175,6 +176,7 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mpc_config.h.in \
 	$(top_srcdir)/config/missing \
 	$(top_srcdir)/src/MPC_Arch/include/mpc_arch.h.in \
 	$(top_srcdir)/src/MPC_IO/include/mpio.h.in \
+	$(top_srcdir)/src/include/mpc.h.in \
 	$(top_srcdir)/src/include/mpc_threads_config.h.in AUTHORS \
 	COPYING INSTALL README config/compile config/config.guess \
 	config/config.sub config/depcomp config/install-sh \
@@ -555,6 +557,8 @@ src/MPC_Arch/include/mpc_arch.h: $(top_builddir)/config.status $(top_srcdir)/src
 src/MPC_IO/include/mpio.h: $(top_builddir)/config.status $(top_srcdir)/src/MPC_IO/include/mpio.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 src/include/mpc_threads_config.h: $(top_builddir)/config.status $(top_srcdir)/src/include/mpc_threads_config.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+src/include/mpc.h: $(top_builddir)/config.status $(top_srcdir)/src/include/mpc.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 
 mostlyclean-libtool:

@@ -30452,7 +30452,7 @@ PKG_INCDIR="${prefix}/include/${PACKAGE_TARNAME}/"
 ac_config_headers="$ac_config_headers mpc_config.h"
 
 
-ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Message_Passing/Makefile src/MPC_Message_Passing/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/MPC_IO/Makefile src/MPC_IO/src/Makefile src/MPC_IO/include/mpio.h src/MPC_IO/src/romio/Makefile src/MPC_Fortran/Makefile src/MPC_Fortran/src/Makefile src/include/mpc_threads_config.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpcrun src/bin/mpcvars.sh src/bin/mpc_status"
+ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Message_Passing/Makefile src/MPC_Message_Passing/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/MPC_IO/Makefile src/MPC_IO/src/Makefile src/MPC_IO/include/mpio.h src/MPC_IO/src/romio/Makefile src/MPC_Fortran/Makefile src/MPC_Fortran/src/Makefile src/include/mpc_threads_config.h src/include/mpc.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpcrun src/bin/mpcvars.sh src/bin/mpc_status"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -31896,6 +31896,7 @@ do
     "src/MPC_Fortran/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Fortran/Makefile" ;;
     "src/MPC_Fortran/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Fortran/src/Makefile" ;;
     "src/include/mpc_threads_config.h") CONFIG_FILES="$CONFIG_FILES src/include/mpc_threads_config.h" ;;
+    "src/include/mpc.h") CONFIG_FILES="$CONFIG_FILES src/include/mpc.h" ;;
     "src/bin/Makefile") CONFIG_FILES="$CONFIG_FILES src/bin/Makefile" ;;
     "src/bin/mpc_build_env.sh") CONFIG_FILES="$CONFIG_FILES src/bin/mpc_build_env.sh" ;;
     "src/bin/mpc_cflags") CONFIG_FILES="$CONFIG_FILES src/bin/mpc_cflags" ;;

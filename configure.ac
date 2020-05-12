@@ -2440,6 +2440,7 @@ AC_OUTPUT([Makefile
 	   src/MPC_Fortran/Makefile
 	   src/MPC_Fortran/src/Makefile
            src/include/mpc_threads_config.h
+           src/include/mpc.h
            src/bin/Makefile
 	   src/bin/mpc_build_env.sh
            src/bin/mpc_cflags
