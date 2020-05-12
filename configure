@@ -23228,8 +23228,56 @@ _ACEOF
 ######################################
 ###### LOOKING FOR DEPENDENCIES ###### {sec:deps}
 ######################################
-# Library detector helper
 
+# Rpath helper
+#
+# $1: LDFLAGS to inspect
+#
+promote_to_rpath()
+{
+	# In MPC in order to fortify link/runtime dependencies
+	# we prefer to add rpath as much as possible to be
+	# more independent from the build env (closer to static build)
+	# the role of this helper is to look for libdirs and
+	# add them as rpaths (if not already present)
+
+	# Remove space in GCC's library search path args
+	CURRENT_RPATH=""
+
+	# Extract existing RPATH
+	for arg in $@
+	do
+		if echo "$arg" | grep "^\\-Wl,\\-rpath=" > /dev/null; then
+			# Ensure path exists
+			RPATH=$(echo "$arg" | sed s/^-Wl,-rpath=//g)
+			if test -d "${RPATH}"; then
+				CURRENT_RPATH="${CURRENT_RPATH}:$RPATH"
+			fi
+		fi
+	done
+
+	NEW_RPATH=""
+
+	# Extract -L args
+	for arg in $@
+	do
+		if echo "$arg" | grep "^-L" > /dev/null; then
+			arg=$(echo "$arg" | sed "s/-L /-L/g")
+			# Ensure path exists
+			LPATH=$(echo "$arg" | sed s/^-L//g)
+			if test -d "${LPATH}"; then
+				CNT=$(echo "$CURRENT_RPATH" | grep -c "${LPATH}")
+				#If path not in rpath then emit it
+				if test "x${CNT}" = "x0"; then
+					NEW_RPATH="${NEW_RPATH} -Wl,-rpath=${LPATH}"
+				fi
+			fi
+		fi
+	done
+
+	echo "$NEW_RPATH $@"
+}
+# Library detector helper
 
 prefix_candidate_path="/usr /usr/local /opt"
 prefix_candidate_sub_include_path=". include include/slurm include/slurm-wml"
@@ -23793,6 +23841,10 @@ fi
 
                 if test "x$pkg_found" = "x1"
                 then
+                        # Ensure PKG config dependencies are also
+                        # injected using RPATH
+                        XML2_LIBS=$(promote_to_rpath ${XML2_LIBS})
+
                         #Insert flags
                         CPPFLAGS="${XML2_CFLAGS} $CPPFLAGS"
                         LDFLAGS="${XML2_LIBS} $LDFLAGS"
@@ -23955,6 +24007,10 @@ fi
 
                 if test "x$pkg_found" = "x1"
                 then
+                        # Ensure PKG config dependencies are also
+                        # injected using RPATH
+                        HWLOC_LIBS=$(promote_to_rpath ${HWLOC_LIBS})
+
                         #Insert flags
                         CPPFLAGS="${HWLOC_CFLAGS} $CPPFLAGS"
                         LDFLAGS="${HWLOC_LIBS} $LDFLAGS"
@@ -24117,6 +24173,10 @@ fi
 
                 if test "x$pkg_found" = "x1"
                 then
+                        # Ensure PKG config dependencies are also
+                        # injected using RPATH
+                        OPA_LIBS=$(promote_to_rpath ${OPA_LIBS})
+
                         #Insert flags
                         CPPFLAGS="${OPA_CFLAGS} $CPPFLAGS"
                         LDFLAGS="${OPA_LIBS} $LDFLAGS"
@@ -24286,6 +24346,10 @@ fi
 
                 if test "x$pkg_found" = "x1"
                 then
+                        # Ensure PKG config dependencies are also
+                        # injected using RPATH
+                        ALLOC_LIBS=$(promote_to_rpath ${ALLOC_LIBS})
+
                         #Insert flags
                         CPPFLAGS="${ALLOC_CFLAGS} $CPPFLAGS"
                         LDFLAGS="${ALLOC_LIBS} $LDFLAGS"
@@ -24449,6 +24513,10 @@ fi
 
                 if test "x$pkg_found" = "x1"
                 then
+                        # Ensure PKG config dependencies are also
+                        # injected using RPATH
+                        UNW_LIBS=$(promote_to_rpath ${UNW_LIBS})
+
                         #Insert flags
                         CPPFLAGS="${UNW_CFLAGS} $CPPFLAGS"
                         LDFLAGS="${UNW_LIBS} $LDFLAGS"
@@ -24621,6 +24689,10 @@ fi
 
                 if test "x$pkg_found" = "x1"
                 then
+                        # Ensure PKG config dependencies are also
+                        # injected using RPATH
+                        IBV_LIBS=$(promote_to_rpath ${IBV_LIBS})
+
                         #Insert flags
                         CPPFLAGS="${IBV_CFLAGS} $CPPFLAGS"
                         LDFLAGS="${IBV_LIBS} $LDFLAGS"
@@ -24793,6 +24865,10 @@ fi
 
                 if test "x$pkg_found" = "x1"
                 then
+                        # Ensure PKG config dependencies are also
+                        # injected using RPATH
+                        PORTALS_LIBS=$(promote_to_rpath ${PORTALS_LIBS})
+
                         #Insert flags
                         CPPFLAGS="${PORTALS_CFLAGS} $CPPFLAGS"
                         LDFLAGS="${PORTALS_LIBS} $LDFLAGS"
@@ -24999,6 +25075,10 @@ fi
 
                 if test "x$pkg_found" = "x1"
                 then
+                        # Ensure PKG config dependencies are also
+                        # injected using RPATH
+                        PMI_LIBS=$(promote_to_rpath ${PMI_LIBS})
+
                         #Insert flags
                         CPPFLAGS="${PMI_CFLAGS} $CPPFLAGS"
                         LDFLAGS="${PMI_LIBS} $LDFLAGS"
@@ -25270,6 +25350,10 @@ fi
 
                 if test "x$pkg_found" = "x1"
                 then
+                        # Ensure PKG config dependencies are also
+                        # injected using RPATH
+                        CUDA_LIBS=$(promote_to_rpath ${CUDA_LIBS})
+
                         #Insert flags
                         CPPFLAGS="${CUDA_CFLAGS} $CPPFLAGS"
                         LDFLAGS="${CUDA_LIBS} $LDFLAGS"
@@ -25433,6 +25517,10 @@ fi
 
                 if test "x$pkg_found" = "x1"
                 then
+                        # Ensure PKG config dependencies are also
+                        # injected using RPATH
+                        CUDART_LIBS=$(promote_to_rpath ${CUDART_LIBS})
+
                         #Insert flags
                         CPPFLAGS="${CUDART_CFLAGS} $CPPFLAGS"
                         LDFLAGS="${CUDART_LIBS} $LDFLAGS"
@@ -29964,6 +30052,10 @@ fi
 
                 if test "x$pkg_found" = "x1"
                 then
+                        # Ensure PKG config dependencies are also
+                        # injected using RPATH
+                        EXTLS_LIBS=$(promote_to_rpath ${EXTLS_LIBS})
+
                         #Insert flags
                         CPPFLAGS="${EXTLS_CFLAGS} $CPPFLAGS"
                         LDFLAGS="${EXTLS_LIBS} $LDFLAGS"

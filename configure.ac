@@ -324,8 +324,56 @@ AC_CHECK_SIZEOF(sigset_t,,[#include <signal.h>])
 ######################################
 ###### LOOKING FOR DEPENDENCIES ###### {sec:deps}
 ######################################
-# Library detector helper
 
+# Rpath helper
+#
+# $1: LDFLAGS to inspect
+#
+promote_to_rpath()
+{
+	# In MPC in order to fortify link/runtime dependencies
+	# we prefer to add rpath as much as possible to be
+	# more independent from the build env (closer to static build)
+	# the role of this helper is to look for libdirs and 
+	# add them as rpaths (if not already present)
+
+	# Remove space in GCC's library search path args
+	CURRENT_RPATH=""
+
+	# Extract existing RPATH
+	for arg in $@
+	do
+		if echo "$arg" | grep "^\\-Wl,\\-rpath=" > /dev/null; then
+			# Ensure path exists
+			RPATH=$(echo "$arg" | sed s/^-Wl,-rpath=//g)
+			if test -d "${RPATH}"; then
+				CURRENT_RPATH="${CURRENT_RPATH}:$RPATH"
+			fi
+		fi
+	done
+
+	NEW_RPATH=""
+
+	# Extract -L args
+	for arg in $@
+	do
+		if echo "$arg" | grep "^-L" > /dev/null; then
+			arg=$(echo "$arg" | sed "s/-L /-L/g")
+			# Ensure path exists
+			LPATH=$(echo "$arg" | sed s/^-L//g)
+			if test -d "${LPATH}"; then
+				CNT=$(echo "$CURRENT_RPATH" | grep -c "${LPATH}")
+				#If path not in rpath then emit it
+				if test "x${CNT}" = "x0"; then
+					NEW_RPATH="${NEW_RPATH} -Wl,-rpath=${LPATH}"
+				fi
+			fi
+		fi
+	done
+
+	echo "$NEW_RPATH $@"
+}
+# Library detector helper
 
 prefix_candidate_path="/usr /usr/local /opt"
 prefix_candidate_sub_include_path=". include include/slurm include/slurm-wml"
@@ -541,6 +589,10 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
 
                 if test "x$pkg_found" = "x1"
                 then
+                        # Ensure PKG config dependencies are also
+                        # injected using RPATH
+                        $4_LIBS=$(promote_to_rpath ${$4_LIBS})
+
                         #Insert flags
                         CPPFLAGS="${$4_CFLAGS} $CPPFLAGS"
                         LDFLAGS="${$4_LIBS} $LDFLAGS"
