@@ -28,16 +28,6 @@
 #include "mpc_nbc_weak.h"
 #endif
 
-
-#undef ffunc
-#define ffunc(f)  f##_
-#include <mpc_nbc_fortran.h>
-
-#undef ffunc
-#define ffunc(f) f##__
-#include <mpc_nbc_fortran.h>
-#undef ffunc
-
 #include "mpc_nbc_progress_thread_binding.h"
 
 #include "mpc_thread_ng_engine.h"
