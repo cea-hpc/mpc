@@ -116,7 +116,7 @@ void display_launcher(const struct sctk_runtime_config * config)
 	{
 
 		snprintf(localbuff, 500, "%s%s", config->networks.cli_options[i].name, (i!=config->networks.cli_options_size-1)?" ":"");
-		strncat(list_of_cli_options, localbuff, 4096);
+		strncat(list_of_cli_options, localbuff, 4095);
 	}
 
 	printf("NETWORKING_CLI_OPTION_LIST=\"%s\"\n", list_of_cli_options);
@@ -138,7 +138,7 @@ void display_launcher(const struct sctk_runtime_config * config)
 		for(j=0; j < cli->rails_size; j++)
 		{
 			snprintf(localbuff, 500, "%s%s", cli->rails[j], (j != cli->rails_size-1)?" ":"");
-			strncat(rail_list_tmp, localbuff, 1024);
+			strncat(rail_list_tmp, localbuff, 1023);
 		}
 
 		printf("%s=\"%s\"\n", varname, rail_list_tmp);

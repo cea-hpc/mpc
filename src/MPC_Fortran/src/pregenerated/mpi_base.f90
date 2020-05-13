@@ -720,6 +720,17 @@ SUBROUTINE MPI_STATUS_SET_CANCELLED(status,flag,ierror)
 END SUBROUTINE MPI_STATUS_SET_CANCELLED
 
 
+SUBROUTINE MPI_TYPE_STRUCT(count,array_of_blocklengths,array_of_displacements,&
+   array_of_types,newtype,ierror)
+   INTEGER	count
+   INTEGER array_of_blocklengths(*)
+   INTEGER array_of_displacements(*)
+   INTEGER array_of_types(*)
+   INTEGER	newtype
+   INTEGER	ierror
+END SUBROUTINE MPI_TYPE_STRUCT
+
+
 SUBROUTINE MPI_GRAPH_NEIGHBORS_COUNT(comm,rank,nneighbors,&
    ierror)
    INTEGER	comm

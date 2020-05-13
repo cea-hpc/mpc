@@ -33,6 +33,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <sctk_alloc.h>
+
 #include "sctk_multirail.h"
 
 /************************************************************************/

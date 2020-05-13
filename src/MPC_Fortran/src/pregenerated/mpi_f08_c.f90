@@ -2249,8 +2249,29 @@ end function MPI_Status_set_cancelled_c
 ! MPI_Status_f2c NOT IMPLEMENTED in MPC
 
 
-! MPI_Type_struct NOT IMPLEMENTED in MPC
 
+function MPI_Type_struct_c( count,&
+array_of_blocklengths,&
+array_of_displacements,&
+array_of_types,&
+newtype,&
+ierror)&
+bind(C, name="mpi_type_struct_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: count     !int count
+type(c_ptr), value :: array_of_blocklengths     !int[] array_of_blocklengths
+type(c_ptr), value :: array_of_displacements     !int[] array_of_displacements
+type(c_ptr), value :: array_of_types     !MPI_Datatype[] array_of_types
+integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_struct_c
 
 
 function MPI_Graph_neighbors_count_c( comm,&

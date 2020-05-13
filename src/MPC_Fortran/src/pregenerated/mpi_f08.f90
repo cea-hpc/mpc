@@ -466,6 +466,11 @@ module procedure MPI_Status_set_cancelled_f08
 end interface
 
 
+interface MPI_Type_struct
+module procedure MPI_Type_struct_f08
+end interface
+
+
 interface MPI_Graph_neighbors_count
 module procedure MPI_Graph_neighbors_count_f08
 end interface
@@ -1037,6 +1042,7 @@ private :: MPI_Win_call_errhandler_f08
 private :: MPI_Win_get_group_f08
 private :: MPI_Cart_create_f08
 private :: MPI_Status_set_cancelled_f08
+private :: MPI_Type_struct_f08
 private :: MPI_Graph_neighbors_count_f08
 private :: MPI_Graph_neighbors_f08
 private :: MPI_Dims_create_f08
@@ -4907,8 +4913,61 @@ end subroutine MPI_Status_set_cancelled_f08
 ! MPI_Status_f2c NOT IMPLEMENTED in MPC
 
 
-! MPI_Type_struct NOT IMPLEMENTED in MPC
 
+subroutine MPI_Type_struct_f08( count,&
+array_of_blocklengths,&
+array_of_displacements,&
+array_of_types,&
+newtype,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+integer, intent(in) :: count
+integer, intent(in) :: array_of_blocklengths(count)
+integer, intent(in) :: array_of_displacements(count)
+type(MPI_Datatype), target, intent(in) :: array_of_types(count)
+type(MPI_Datatype), intent(out) :: newtype
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: count_c     !int count
+integer(c_int), target  :: array_of_blocklengths_c(count)     !int[] array_of_blocklengths
+integer(c_int), target  :: array_of_displacements_c(count)     !int[] array_of_displacements
+integer(c_int), target  :: array_of_types_c(count)     !MPI_Datatype[] array_of_types
+integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+count_c = count
+do 19 n_ = 1 , count
+array_of_blocklengths_c(n_) = array_of_blocklengths(n_)
+19 continue
+do 20 n_ = 1 , count
+array_of_displacements_c(n_) = array_of_displacements(n_)
+20 continue
+do 21 n_ = 1 , count
+array_of_types_c(n_) = array_of_types(n_)
+21 continue
+
+ret = MPI_Type_struct_c(count_c,&
+c_loc(array_of_blocklengths_c),&
+c_loc(array_of_displacements_c),&
+c_loc(array_of_types_c),&
+newtype_c,&
+ierror_c)
+
+newtype%val = newtype_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Type_struct_f08
 
 
 subroutine MPI_Graph_neighbors_count_f08( comm,&
@@ -4997,9 +5056,9 @@ maxneighbors_c,&
 c_loc(neighbors_c),&
 ierror_c)
 
-do 19 n_ = 1 , maxneighbors
+do 22 n_ = 1 , maxneighbors
 neighbors(n_) = neighbors_c(n_)
-19 continue
+22 continue
 
 if( present(ierror)) ierror = ierror_c
 
@@ -5033,18 +5092,18 @@ integer(c_int) ::  r_ ! for comm array expansion
 
 nnodes_c = nnodes
 ndims_c = ndims
-do 20 n_ = 1 , ndims
+do 23 n_ = 1 , ndims
 dims_c(n_) = dims(n_)
-20 continue
+23 continue
 
 ret = MPI_Dims_create_c(nnodes_c,&
 ndims_c,&
 c_loc(dims_c),&
 ierror_c)
 
-do 21 n_ = 1 , ndims
+do 24 n_ = 1 , ndims
 dims(n_) = dims_c(n_)
-21 continue
+24 continue
 
 if( present(ierror)) ierror = ierror_c
 
@@ -6103,15 +6162,15 @@ integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
 count_c = count
-do 22 n_ = 1 , count
+do 25 n_ = 1 , count
 array_of_block_lengths_c(n_) = array_of_block_lengths(n_)
-22 continue
-do 23 n_ = 1 , count
+25 continue
+do 26 n_ = 1 , count
 array_of_displacements_c(n_) = array_of_displacements(n_)
-23 continue
-do 24 n_ = 1 , count
+26 continue
+do 27 n_ = 1 , count
 array_of_types_c(n_) = array_of_types(n_)
-24 continue
+27 continue
 
 ret = MPI_Type_create_struct_c(count_c,&
 c_loc(array_of_block_lengths_c),&
@@ -6168,15 +6227,15 @@ mtype_c = mtype%val
 max_integers_c = max_integers
 max_addresses_c = max_addresses
 max_datatypes_c = max_datatypes
-do 25 n_ = 1 , max_integers
+do 28 n_ = 1 , max_integers
 array_of_integers_c(n_) = array_of_integers(n_)
-25 continue
-do 26 n_ = 1 , max_addresses
+28 continue
+do 29 n_ = 1 , max_addresses
 array_of_addresses_c(n_) = array_of_addresses(n_)
-26 continue
-do 27 n_ = 1 , max_datatypes
+29 continue
+do 30 n_ = 1 , max_datatypes
 array_of_datatypes_c(n_) = array_of_datatypes(n_)
-27 continue
+30 continue
 
 ret = MPI_Type_get_contents_c(mtype_c,&
 max_integers_c,&
@@ -6754,9 +6813,9 @@ integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
 count_c = count
-do 28 n_ = 1 , count
+do 31 n_ = 1 , count
 array_of_requests_c(n_) = array_of_requests(n_)
-28 continue
+31 continue
 index_c = index
 status_c = status
 
@@ -6766,9 +6825,9 @@ index_c,&
 status_c,&
 ierror_c)
 
-do 29 n_ = 1 , count
+do 32 n_ = 1 , count
 array_of_requests(n_) = array_of_requests_c(n_)
-29 continue
+32 continue
 index = index_c
 status = status_c
 
@@ -6811,12 +6870,12 @@ integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
 count_c = count
-do 30 n_ = 1 , count
+do 33 n_ = 1 , count
 array_of_blocklengths_c(n_) = array_of_blocklengths(n_)
-30 continue
-do 31 n_ = 1 , count
+33 continue
+do 34 n_ = 1 , count
 array_of_displacements_c(n_) = array_of_displacements(n_)
-31 continue
+34 continue
 oldtype_c = oldtype%val
 
 ret = MPI_Type_indexed_c(count_c,&
@@ -7209,9 +7268,9 @@ integer(c_int) ::  r_ ! for comm array expansion
 
 group_c = group%val
 n_c = n
-do 32 n_ = 1 , n
+do 35 n_ = 1 , n
 !ERR LAYOUT int[][3] 
-32 continue
+35 continue
 
 ret = MPI_Group_range_incl_c(group_c,&
 n_c,&
@@ -7425,12 +7484,12 @@ c_loc(index_c),&
 c_loc(edges_c),&
 ierror_c)
 
-do 33 n_ = 1 , maxindex
+do 36 n_ = 1 , maxindex
 index(n_) = index_c(n_)
-33 continue
-do 34 n_ = 1 , maxedges
+36 continue
+do 37 n_ = 1 , maxedges
 edges(n_) = edges_c(n_)
-34 continue
+37 continue
 
 if( present(ierror)) ierror = ierror_c
 
@@ -7836,18 +7895,18 @@ integer(c_int) ::  r_ ! for comm array expansion
 size_c = size
 rank_c = rank
 ndims_c = ndims
-do 35 n_ = 1 , ndims
-gsize_array_c(n_) = gsize_array(n_)
-35 continue
-do 36 n_ = 1 , ndims
-distrib_array_c(n_) = distrib_array(n_)
-36 continue
-do 37 n_ = 1 , ndims
-darg_array_c(n_) = darg_array(n_)
-37 continue
 do 38 n_ = 1 , ndims
-psize_array_c(n_) = psize_array(n_)
+gsize_array_c(n_) = gsize_array(n_)
 38 continue
+do 39 n_ = 1 , ndims
+distrib_array_c(n_) = distrib_array(n_)
+39 continue
+do 40 n_ = 1 , ndims
+darg_array_c(n_) = darg_array(n_)
+40 continue
+do 41 n_ = 1 , ndims
+psize_array_c(n_) = psize_array(n_)
+41 continue
 order_c = order
 oldtype_c = oldtype%val
 
@@ -7938,12 +7997,12 @@ integer(c_int) ::  r_ ! for comm array expansion
 
 comm_c = comm%val
 ndims_c = ndims
-do 39 n_ = 1 , ndims
+do 42 n_ = 1 , ndims
 dims_c(n_) = dims(n_)
-39 continue
-do 40 n_ = 1 , ndims
+42 continue
+do 43 n_ = 1 , ndims
 !ERR LAYOUT bool[] 
-40 continue
+43 continue
 
 ret = MPI_Cart_map_c(comm_c,&
 ndims_c,&
@@ -8009,15 +8068,15 @@ integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
 ndims_c = ndims
-do 41 n_ = 1 , ndims
+do 44 n_ = 1 , ndims
 size_array_c(n_) = size_array(n_)
-41 continue
-do 42 n_ = 1 , ndims
+44 continue
+do 45 n_ = 1 , ndims
 subsize_array_c(n_) = subsize_array(n_)
-42 continue
-do 43 n_ = 1 , ndims
+45 continue
+do 46 n_ = 1 , ndims
 start_array_c(n_) = start_array(n_)
-43 continue
+46 continue
 order_c = order
 oldtype_c = oldtype%val
 
@@ -8201,28 +8260,28 @@ integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
 count_c = count
-do 44 n_ = 1 , count
+do 47 n_ = 1 , count
 array_of_requests_c(n_) = array_of_requests(n_)
-44 continue
-do 45 n_ = 1 , count
+47 continue
+do 48 n_ = 1 , count
 array_of_statuses_c(n_) = array_of_statuses(n_)
-45 continue
+48 continue
 
 ret = MPI_Waitall_c(count_c,&
 array_of_requests%val,&
 c_loc(array_of_statuses_c),&
 ierror_c)
 
-do 46 n_ = 1 , count
+do 49 n_ = 1 , count
 array_of_requests(n_) = array_of_requests_c(n_)
-46 continue
+49 continue
 if ( c_associated(c_loc(array_of_statuses), c_loc(MPI_STATUSES_IGNORE))&
 .OR. ( c_associated(c_loc(array_of_statuses), c_loc(MPI_STATUS_IGNORE)))) then
     n_=2 !dummy operation
 else
-do 47 n_ = 1 , count
+do 50 n_ = 1 , count
 array_of_statuses(n_) = array_of_statuses_c(n_)
-47 continue
+50 continue
 end if
 
 if( present(ierror)) ierror = ierror_c
@@ -8745,9 +8804,9 @@ integer(c_int) ::  r_ ! for comm array expansion
 
 group_c = group%val
 n_c = n
-do 48 n_ = 1 , n
+do 51 n_ = 1 , n
 !ERR LAYOUT int[][3] 
-48 continue
+51 continue
 
 ret = MPI_Group_range_excl_c(group_c,&
 n_c,&

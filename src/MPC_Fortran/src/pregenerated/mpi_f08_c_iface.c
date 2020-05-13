@@ -1192,9 +1192,21 @@ flag);
 /* MPI_Status_f2c NOT IMPLEMENTED in MPC */
 
 
-/* MPI_Type_struct NOT IMPLEMENTED in MPC */
 
-
+void mpi_type_struct_f08(
+int count,
+int* array_of_blocklengths,
+int* array_of_displacements,
+MPI_Datatype* array_of_types,
+MPI_Datatype* newtype,
+int * ierror)
+{
+*ierror = MPI_Type_struct( count,
+array_of_blocklengths,
+array_of_displacements,
+array_of_types,
+newtype);
+}
 
 void mpi_graph_neighbors_count_f08(
 MPI_Comm comm,
