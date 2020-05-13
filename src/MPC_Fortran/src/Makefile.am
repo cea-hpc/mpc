@@ -6,7 +6,7 @@ AM_CPPFLAGS += -I$(abs_top_builddir)/src/MPC_Fortran/src/
 AM_FCFLAGS=-I$(abs_top_builddir)/src/MPC_Fortran/src/ @MPC_MODULE_DEFINES@
 
 constants.json: gen_constants.c
-	$(CC) $(AM_CPPFLAGS) $^ -o ./gen_constants
+	$(CC) $(LDFLAGS) $(AM_CPPFLAGS) $^ -o ./gen_constants
 	./gen_constants > constants.json
 
 preparsed_mpih.dat: preparsed_mpih.c
@@ -24,10 +24,13 @@ clean-local:
 
 if HAVE_PYTHON
 
+
+MPCFORT_FILES= mpi_f08_c_iface.c mpi_constants.f90 mpi_f08_c.f90 mpi_f08_constants.f90 mpi_f08_ctypes.f90 mpi_f08.f90 mpi_f08_types.f90 mpi.f90 mpi_sizeofs.f90 mpi_base.f90
+
 # We can generate, so generate and save (should not produce diff)
 genfortraniface: genmod.py preparsed_mpih.dat constants.json
 	python $(srcdir)/genmod.py -m $(builddir)/preparsed_mpih.dat
-	@cp *.c *.h *.f90 $(srcdir)/pregenerated/
+	@cp mpif.h $(MPCFORT_FILES) $(srcdir)/pregenerated/
 	@touch genfortraniface
 
 else
