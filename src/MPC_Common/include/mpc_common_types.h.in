@@ -24,8 +24,6 @@
 #ifndef MPC_COMMON_INCLUDE_MPC_COMMON_TYPES_H_
 #define MPC_COMMON_INCLUDE_MPC_COMMON_TYPES_H_
 
-#include <mpc_config.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -36,13 +34,14 @@ extern "C" {
  ********/
 #ifndef __cplusplus
 
-#ifdef HAVE_STDBOOL_H
+/* HAVE_STDBOOL_H */
+#if @HAVE_STDBOOL_H@ == 1
 	#include <stdbool.h>
-#else
+#else /* HAVE_STDBOOL_H */
 	#define bool unsigned char
 	#define true 1
 	#define false 0
-#endif
+#endif /* HAVE_STDBOOL_H */
 
 #endif
 
@@ -53,10 +52,11 @@ extern "C" {
 //stdint.h is C99, if we didn't get support of it, fall-back on manual
 //definitions of uint64_t... For compatibility, please use sctk_stdin.h in MPC
 //in place of stdint.h
-#if defined(HAVE_STDINT_H) || defined(__cplusplus)
+/* HAVE_STDINT_H */
+#if (@HAVE_STDINT_H@ == 1) || defined(__cplusplus)
 	//use standard defs
 	#include <stdint.h>
-#else //HAVE_STDINT_H
+#else /* HAVE_STDINT_H */
 	//select arch specific mode
 	#if defined(SCTK_x86_64_ARCH_SCTK) || defined(SCTK_i686_ARCH_SCTK)
 		//for x86 64bit
@@ -76,18 +76,19 @@ extern "C" {
 	#else //arch
 		#error "Unsupported architecture without stdint.h"
 	#endif //arch
-#endif //HAVE_STDINT_H
+#endif /* HAVE_STDINT_H */
 
 /**************
  * WIDE CHARS *
  **************/
 
-#if defined(HAVE_WCHAR_H) || defined(__cplusplus)
+/* HAVE_WCHAR_H */
+#if (@HAVE_WCHAR_H@ == 1) || defined(__cplusplus)
 	#include <wchar.h>
 	#define sctk_wchar_t wchar_t
-#else
+#else /* HAVE_WCHAR_H */
 	#define sctk_wchar_t uint16_t
-#endif
+#endif /* HAVE_WCHAR_H */
 
 #ifdef __cplusplus
 }

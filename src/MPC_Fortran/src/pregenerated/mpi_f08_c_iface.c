@@ -402,9 +402,15 @@ index,
 flag,
 status);
 }
-/* MPI_Type_extent NOT IMPLEMENTED in MPC */
 
-
+void mpi_type_extent_f08(
+MPI_Datatype type,
+MPI_Aint* extent,
+int * ierror)
+{
+*ierror = MPI_Type_extent( type,
+extent);
+}
 /* MPI_File_preallocate NOT IMPLEMENTED in MPC */
 
 
@@ -1076,9 +1082,16 @@ int * ierror)
 group2,
 result);
 }
-/* MPI_Address NOT IMPLEMENTED in MPC */
 
-
+void mpi_address_f08(
+CFI_cdesc_t* location_ptr,
+MPI_Aint* address,
+int * ierror)
+{
+void* location = location_ptr->base_addr;
+*ierror = MPI_Address( location,
+address);
+}
 
 void mpi_comm_compare_f08(
 MPI_Comm comm1,

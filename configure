@@ -718,6 +718,7 @@ MPC_MPI_ENABLED_TRUE
 MPC_MESSAGE_PASSING_ENABLED
 MPC_MESSAGE_PASSING_ENABLED_FALSE
 MPC_MESSAGE_PASSING_ENABLED_TRUE
+HAVE_MPC_THREAD
 MPC_THREAD_ENABLED
 MPC_THREAD_ENABLED_FALSE
 MPC_THREAD_ENABLED_TRUE
@@ -814,6 +815,10 @@ XML2_LIBS
 XML2_CFLAGS
 LIBOBJS
 SIZEOF_LONG
+HAVE_BUILTIN_EXPECT
+HAVE_WCHAR_H
+HAVE_STDINT_H
+HAVE_STDBOOL_H
 CAN_USE_PANDOC_FALSE
 CAN_USE_PANDOC_TRUE
 PANDOC
@@ -21662,6 +21667,43 @@ _ACEOF
 
 #### DATATYPES #### {sec:datatypes}
 ###################
+
+# Configure subtitutions for mpc_common_types.h
+ac_fn_c_check_header_mongrel "$LINENO" "stdbool.h" "ac_cv_header_stdbool_h" "$ac_includes_default"
+if test "x$ac_cv_header_stdbool_h" = xyes; then :
+  HAVE_STDBOOL_H=1
+else
+  HAVE_STDBOOL_H=0
+fi
+
+
+HAVE_STDBOOL_H=$HAVE_STDBOOL_H
+
+
+ac_fn_c_check_header_mongrel "$LINENO" "stdint.h" "ac_cv_header_stdint_h" "$ac_includes_default"
+if test "x$ac_cv_header_stdint_h" = xyes; then :
+  HAVE_STDINT_H=1
+else
+  HAVE_STDINT_H=0
+fi
+
+
+HAVE_STDINT_H=$HAVE_STDINT_H
+
+
+ac_fn_c_check_header_mongrel "$LINENO" "wchar.h" "ac_cv_header_wchar_h" "$ac_includes_default"
+if test "x$ac_cv_header_wchar_h" = xyes; then :
+  HAVE_WCHAR_H=1
+else
+  HAVE_WCHAR_H=0
+fi
+
+
+HAVE_WCHAR_H=$HAVE_WCHAR_H
+
+
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for inline" >&5
 $as_echo_n "checking for inline... " >&6; }
 if ${ac_cv_c_inline+:} false; then :
@@ -21894,6 +21936,7 @@ fi
 
 
 
+
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __builtin_expect" >&5
 $as_echo_n "checking for __builtin_expect... " >&6; }
 if ${ax_cv_have___builtin_expect+:} false; then :
@@ -21931,6 +21974,15 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE___BUILTIN_EXPECT 1
 _ACEOF
 
+fi
+
+
+
+
+if test "x${ax_cv_have___builtin_expect}" = "xyes"; then
+        HAVE_BUILTIN_EXPECT=1
+else
+        HAVE_BUILTIN_EXPECT=0
 fi
 
 
@@ -28739,6 +28791,13 @@ fi
 
 
 
+HAVE_MPC_THREAD=0
+
+if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
+        HAVE_MPC_THREAD=1
+fi
+
+
 
 # Check whether --enable-message-passing was given.
 if test "${enable_message_passing+set}" = set; then :
@@ -29710,6 +29769,7 @@ do
 	MPC_MODULE_DEFINES=" -D${m}"
 done
 
+CFLAGS="${CFLAGS} ${MPC_MODULE_DEFINES}"
 
 
 
@@ -30452,7 +30512,7 @@ PKG_INCDIR="${prefix}/include/${PACKAGE_TARNAME}/"
 ac_config_headers="$ac_config_headers mpc_config.h"
 
 
-ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Message_Passing/Makefile src/MPC_Message_Passing/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/MPC_IO/Makefile src/MPC_IO/src/Makefile src/MPC_IO/include/mpio.h src/MPC_IO/src/romio/Makefile src/MPC_Fortran/Makefile src/MPC_Fortran/src/Makefile src/include/mpc_threads_config.h src/include/mpc.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpcrun src/bin/mpcvars.sh src/bin/mpc_status"
+ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Common/include/mpc_common_types.h src/MPC_Common/include/mpc_common_spinlock.h src/MPC_Common/include/mpc_keywords.h src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Message_Passing/Makefile src/MPC_Message_Passing/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/MPC_IO/Makefile src/MPC_IO/src/Makefile src/MPC_IO/include/mpio.h src/MPC_IO/src/romio/Makefile src/MPC_Fortran/Makefile src/MPC_Fortran/src/Makefile src/include/mpc_threads_config.h src/include/mpc.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpcrun src/bin/mpcvars.sh src/bin/mpc_status"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -31875,6 +31935,9 @@ do
     "src/MPC_Arch/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Arch/src/Makefile" ;;
     "src/MPC_Common/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Common/Makefile" ;;
     "src/MPC_Common/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Common/src/Makefile" ;;
+    "src/MPC_Common/include/mpc_common_types.h") CONFIG_FILES="$CONFIG_FILES src/MPC_Common/include/mpc_common_types.h" ;;
+    "src/MPC_Common/include/mpc_common_spinlock.h") CONFIG_FILES="$CONFIG_FILES src/MPC_Common/include/mpc_common_spinlock.h" ;;
+    "src/MPC_Common/include/mpc_keywords.h") CONFIG_FILES="$CONFIG_FILES src/MPC_Common/include/mpc_keywords.h" ;;
     "src/MPC_Config/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Config/Makefile" ;;
     "src/MPC_Config/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Config/src/Makefile" ;;
     "src/MPC_Launch/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Launch/Makefile" ;;

@@ -26,6 +26,8 @@
 #include <sctk_debug.h>
 #include <string.h>
 
+#include <sctk_alloc.h>
+
 void _mpc_ht_cell_init( struct _mpc_ht_cell *cell, uint64_t key, void *data, struct _mpc_ht_cell *next )
 {
 	cell->use_flag = 1;

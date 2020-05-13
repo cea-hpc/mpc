@@ -36,6 +36,7 @@
 #include <utarray.h>
 #include <sctk_multirail.h>
 
+#include <sctk_alloc.h>
 
 /************************************************************************/
 /* Route Table                                                          */

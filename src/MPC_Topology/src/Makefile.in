@@ -234,9 +234,14 @@ FC = @FC@
 FCFLAGS = @FCFLAGS@
 FGREP = @FGREP@
 GREP = @GREP@
+HAVE_BUILTIN_EXPECT = @HAVE_BUILTIN_EXPECT@
+HAVE_MPC_THREAD = @HAVE_MPC_THREAD@
 HAVE_MPI_DARRAY_SUBARRAY = @HAVE_MPI_DARRAY_SUBARRAY@
 HAVE_MPI_INFO = @HAVE_MPI_INFO@
+HAVE_STDBOOL_H = @HAVE_STDBOOL_H@
+HAVE_STDINT_H = @HAVE_STDINT_H@
 HAVE_VISIBILITY = @HAVE_VISIBILITY@
+HAVE_WCHAR_H = @HAVE_WCHAR_H@
 HWLOC_CFLAGS = @HWLOC_CFLAGS@
 HWLOC_LIBS = @HWLOC_LIBS@
 IBV_CFLAGS = @IBV_CFLAGS@
@@ -460,6 +465,7 @@ top_srcdir = @top_srcdir@
 ########################################################################
 AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Topology/include/ \
+	-I$(abs_top_builddir)/src/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Arch/include/ \
 	-I$(abs_top_builddir)/src/MPC_Arch/include/ \
 	-I$(abs_top_srcdir)/src/include/ \

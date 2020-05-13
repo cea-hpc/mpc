@@ -23,9 +23,10 @@
 #include "coll.h"
 
 #include <math.h>
-
 #include <mpc_launch_pmi.h>
 #include <sctk_communicator.h>
+
+#include <sctk_alloc.h>
 
 /************************************************************************/
 /*collective communication implementation                               */

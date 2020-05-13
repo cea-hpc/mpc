@@ -33,7 +33,9 @@
 #include "mpcomp.h"
 #include "ompt.h"
 
-#include "mpc_common_spinlock.h"
+#include "sctk_alloc.h"
+
+#include "mpc_common_mcs.h"
 
 #ifdef MPCOMP_USE_INTEL_ABI
 	#include "omp_intel_types.h"

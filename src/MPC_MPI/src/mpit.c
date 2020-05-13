@@ -28,6 +28,8 @@
 
 #include <mpc_common_flags.h>
 
+#include <sctk_alloc.h>
+
 #include <string.h>
 
 #include <mpc_runtime_config.h>

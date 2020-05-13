@@ -109,6 +109,9 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = mpc_config.h
 CONFIG_CLEAN_FILES = src/MPC_Arch/include/mpc_arch.h \
+	src/MPC_Common/include/mpc_common_types.h \
+	src/MPC_Common/include/mpc_common_spinlock.h \
+	src/MPC_Common/include/mpc_keywords.h \
 	src/MPC_IO/include/mpio.h src/include/mpc_threads_config.h \
 	src/include/mpc.h
 CONFIG_CLEAN_VPATH_FILES =
@@ -175,6 +178,9 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mpc_config.h.in \
 	$(top_srcdir)/config/install-sh $(top_srcdir)/config/ltmain.sh \
 	$(top_srcdir)/config/missing \
 	$(top_srcdir)/src/MPC_Arch/include/mpc_arch.h.in \
+	$(top_srcdir)/src/MPC_Common/include/mpc_common_spinlock.h.in \
+	$(top_srcdir)/src/MPC_Common/include/mpc_common_types.h.in \
+	$(top_srcdir)/src/MPC_Common/include/mpc_keywords.h.in \
 	$(top_srcdir)/src/MPC_IO/include/mpio.h.in \
 	$(top_srcdir)/src/include/mpc.h.in \
 	$(top_srcdir)/src/include/mpc_threads_config.h.in AUTHORS \
@@ -274,9 +280,14 @@ FC = @FC@
 FCFLAGS = @FCFLAGS@
 FGREP = @FGREP@
 GREP = @GREP@
+HAVE_BUILTIN_EXPECT = @HAVE_BUILTIN_EXPECT@
+HAVE_MPC_THREAD = @HAVE_MPC_THREAD@
 HAVE_MPI_DARRAY_SUBARRAY = @HAVE_MPI_DARRAY_SUBARRAY@
 HAVE_MPI_INFO = @HAVE_MPI_INFO@
+HAVE_STDBOOL_H = @HAVE_STDBOOL_H@
+HAVE_STDINT_H = @HAVE_STDINT_H@
 HAVE_VISIBILITY = @HAVE_VISIBILITY@
+HAVE_WCHAR_H = @HAVE_WCHAR_H@
 HWLOC_CFLAGS = @HWLOC_CFLAGS@
 HWLOC_LIBS = @HWLOC_LIBS@
 IBV_CFLAGS = @IBV_CFLAGS@
@@ -553,6 +564,12 @@ $(srcdir)/mpc_config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 distclean-hdr:
 	-rm -f mpc_config.h stamp-h1
 src/MPC_Arch/include/mpc_arch.h: $(top_builddir)/config.status $(top_srcdir)/src/MPC_Arch/include/mpc_arch.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+src/MPC_Common/include/mpc_common_types.h: $(top_builddir)/config.status $(top_srcdir)/src/MPC_Common/include/mpc_common_types.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+src/MPC_Common/include/mpc_common_spinlock.h: $(top_builddir)/config.status $(top_srcdir)/src/MPC_Common/include/mpc_common_spinlock.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+src/MPC_Common/include/mpc_keywords.h: $(top_builddir)/config.status $(top_srcdir)/src/MPC_Common/include/mpc_keywords.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 src/MPC_IO/include/mpio.h: $(top_builddir)/config.status $(top_srcdir)/src/MPC_IO/include/mpio.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@

@@ -24,6 +24,8 @@
 #include "mpc_lowcomm_msg.h"
 #include <string.h>
 
+#include <sctk_alloc.h>
+
 
 void * sctk_malloc( size_t );
 void * sctk_realloc( void * , size_t );

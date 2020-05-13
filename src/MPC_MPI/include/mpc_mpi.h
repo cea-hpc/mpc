@@ -2551,6 +2551,20 @@ int MPI_Get_address(const void *location, MPI_Aint *address);
 int PMPI_Get_address(const void *location, MPI_Aint *address);
 
 
+/*MPI_Address (DEPRECATED) */
+
+/**
+ * @brief MPI function MPI_Address
+ * 
+ * @param location location in caller memory
+ * @param address address of location
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
+ */
+int MPI_Address(const void *location, MPI_Aint *address);
+int PMPI_Address(const void *location, MPI_Aint *address);
+
+
 /*MPI_Get_count*/
 
 /**
@@ -5664,6 +5678,30 @@ int PMPI_Type_create_resized(MPI_Datatype oldtype, MPI_Aint lb, MPI_Aint extent,
 int MPI_Type_create_struct(int count, const int array_of_blocklengths[], const MPI_Aint array_of_displacements[], const MPI_Datatype array_of_types[], MPI_Datatype *newtype);
 int PMPI_Type_create_struct(int count, const int array_of_blocklengths[], const MPI_Aint array_of_displacements[], const MPI_Datatype array_of_types[], MPI_Datatype *newtype);
 
+/*MPI_Type_struct (DEPRECATED)*/
+
+/**
+ * @brief MPI function MPI_Type_struct
+ * 
+ * @param count number of blocks also number of entries in arrays array_of_types, array_of_displacements, and array_of_blocklengths
+ * @param array_of_blocklengths number of elements in each block
+ * @param array_of_displacements byte displacement of each block
+ * @param array_of_types types of elements in each block
+ * @param newtype new datatype
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
+ */
+int MPI_Type_struct(int count,
+                   const int *array_of_blocklengths,
+                   const MPI_Aint *array_of_displacements,
+                   const MPI_Datatype *array_of_types,
+                   MPI_Datatype *newtype);
+
+int PMPI_Type_struct(int count,
+                     const int *array_of_blocklengths,
+                     const MPI_Aint *array_of_displacements,
+                     const MPI_Datatype *array_of_types,
+                     MPI_Datatype *newtype);
 
 /*MPI_Type_create_subarray*/
 
@@ -5834,6 +5872,19 @@ int PMPI_Type_get_envelope(MPI_Datatype datatype, int *num_integers, int *num_ad
 int MPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent);
 int PMPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent);
 
+
+/*MPI_Type_extent (DEPRECATED)*/
+
+/**
+ * @brief MPI function MPI_Type_extent
+ * 
+ * @param datatype datatype to get information on
+ * @param extent extent of datatype
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
+ */
+int MPI_Type_extent(MPI_Datatype datatype, MPI_Aint * extent);
+int PMPI_Type_extent(MPI_Datatype datatype, MPI_Aint *extent);
 
 /*MPI_Type_get_extent_x*/
 
@@ -6688,21 +6739,6 @@ double PMPI_Wtime();
 /* Checkpointing */
 int MPIX_Checkpoint(MPIX_Checkpoint_state* state);
 int PMPIX_Checkpoint(MPIX_Checkpoint_state* state);
-
-/* Generalized Requests */
-int MPI_Grequest_start( MPI_Grequest_query_function *query_fn,
-			MPI_Grequest_free_function * free_fn,
-			MPI_Grequest_cancel_function * cancel_fn,
-			void *extra_state,
-			MPI_Request * request);
-int PMPI_Grequest_start( MPI_Grequest_query_function *query_fn,
-			MPI_Grequest_free_function * free_fn,
-			MPI_Grequest_cancel_function * cancel_fn,
-			void *extra_state,
-			MPI_Request * request);
-  
-int MPI_Grequest_complete(  MPI_Request request); 
-int PMPI_Grequest_complete(  MPI_Request request); 
 
 /* Extended Generalized Requests */
 int MPIX_Grequest_start(MPI_Grequest_query_function *query_fn,

@@ -37,6 +37,8 @@
 #include <unistd.h>
 #include <mpc_common_flags.h>
 
+#include <sctk_alloc.h>
+
 //#define SCTK_DEBUG_SCHEDULER
 
 static void (*_mpc_threads_ng_engine_sched_idle_start)(void);

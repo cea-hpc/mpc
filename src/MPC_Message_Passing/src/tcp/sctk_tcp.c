@@ -26,6 +26,8 @@
 #include <sctk_tcp_toolkit.h>
 #include <sys/socket.h> /* shutdown() */
 
+#include <sctk_alloc.h>
+
 /********************************************************************/
 /* Inter Thread Comm Hooks                                          */
 /********************************************************************/

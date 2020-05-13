@@ -171,6 +171,11 @@ module procedure MPI_Testany_f08
 end interface
 
 
+interface MPI_Type_extent
+module procedure MPI_Type_extent_f08
+end interface
+
+
 interface MPI_Sendrecv_replace
 module procedure MPI_Sendrecv_replace_f08
 end interface
@@ -408,6 +413,11 @@ end interface
 
 interface MPI_Group_compare
 module procedure MPI_Group_compare_f08
+end interface
+
+
+interface MPI_Address
+module procedure MPI_Address_f08
 end interface
 
 
@@ -968,6 +978,7 @@ private :: MPI_Type_commit_f08
 private :: MPI_Comm_get_parent_f08
 private :: MPI_Type_create_f90_integer_f08
 private :: MPI_Testany_f08
+private :: MPI_Type_extent_f08
 private :: MPI_Sendrecv_replace_f08
 private :: MPI_Type_get_extent_f08
 private :: MPI_Keyval_create_f08
@@ -1016,6 +1027,7 @@ private :: MPI_Irsend_f08
 private :: MPI_Get_version_f08
 private :: MPI_Comm_create_errhandler_f08
 private :: MPI_Group_compare_f08
+private :: MPI_Address_f08
 private :: MPI_Comm_compare_f08
 private :: MPI_Win_unlock_f08
 private :: MPI_Request_free_f08
@@ -2309,8 +2321,40 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Testany_f08
 
-! MPI_Type_extent NOT IMPLEMENTED in MPC
 
+subroutine MPI_Type_extent_f08( type,&
+extent,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Datatype), intent(in) :: type
+integer*8, intent(out) :: extent
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: type_c     !MPI_Datatype type
+integer(c_intptr_t) :: extent_c     !MPI_Aint* extent
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+type_c = type%val
+
+ret = MPI_Type_extent_c(type_c,&
+extent_c,&
+ierror_c)
+
+extent = extent_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Type_extent_f08
 
 ! MPI_File_preallocate NOT IMPLEMENTED in MPC
 
@@ -4479,8 +4523,38 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Group_compare_f08
 
-! MPI_Address NOT IMPLEMENTED in MPC
 
+subroutine MPI_Address_f08( location,&
+address,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(*), dimension(..) :: location
+integer*8, intent(out) :: address
+integer, optional, intent(out) :: ierror
+
+
+integer(c_intptr_t) :: address_c     !MPI_Aint* address
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+
+ret = MPI_Address_c(location,&
+address_c,&
+ierror_c)
+
+address = address_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Address_f08
 
 
 subroutine MPI_Comm_compare_f08( comm1,&

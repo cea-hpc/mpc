@@ -1,9 +1,7 @@
 #ifndef MPC_COMMON_FLAGS_H_
 #define MPC_COMMON_FLAGS_H_
 
-#include <mpc_config.h>
-
-#include "opa_primitives.h"
+#include <opa_primitives.h>
 
 /******************
  * FLAG STRUCTURE *

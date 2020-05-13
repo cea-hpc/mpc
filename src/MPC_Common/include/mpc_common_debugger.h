@@ -28,7 +28,6 @@ extern "C" {
 
 #include <stdio.h>
 #include <stdarg.h>
-#include <mpc_config.h>
 
 typedef struct
 {

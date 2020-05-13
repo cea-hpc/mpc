@@ -55,6 +55,8 @@
 	#include "sctk_ft_iface.h"
 #endif
 
+#include <sctk_alloc.h>
+
 sctk_Op_f sctk_get_common_function( mpc_lowcomm_datatype_t datatype, sctk_Op op );
 
 

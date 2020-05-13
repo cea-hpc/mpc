@@ -42,7 +42,7 @@
 #include <extls_hls.h>
 #endif
 
-
+#include <sctk_alloc.h>
 
 #include <stdio.h>
 #include <stdlib.h>

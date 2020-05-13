@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+
+#include <sctk_alloc.h>
+
 /*
  * The Work Unit
  */

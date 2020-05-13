@@ -23,6 +23,7 @@
 
 #ifndef ADIOI_H_INCLUDED
 #define ADIOI_H_INCLUDED
+
 /* used to keep track of hint/info values.
  * Note that there are a lot of int-sized values in here...they are
  * used as int-sized entities other places as well.  This would be a

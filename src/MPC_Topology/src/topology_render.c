@@ -8,6 +8,8 @@
 #include <mpc_common_rank.h>
 #include <mpc_common_flags.h>
 
+#include <sctk_alloc.h>
+
 static char file_placement[128];
 static char placement_txt[128];
 static char textual_file[128];

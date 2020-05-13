@@ -37,6 +37,8 @@
 	#include "mpc_thread.h"
 #endif
 
+#include <sctk_alloc.h>
+
 typedef struct sctk_process_ht_s
 {
 	int process_id;

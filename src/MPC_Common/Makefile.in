@@ -295,9 +295,14 @@ FC = @FC@
 FCFLAGS = @FCFLAGS@
 FGREP = @FGREP@
 GREP = @GREP@
+HAVE_BUILTIN_EXPECT = @HAVE_BUILTIN_EXPECT@
+HAVE_MPC_THREAD = @HAVE_MPC_THREAD@
 HAVE_MPI_DARRAY_SUBARRAY = @HAVE_MPI_DARRAY_SUBARRAY@
 HAVE_MPI_INFO = @HAVE_MPI_INFO@
+HAVE_STDBOOL_H = @HAVE_STDBOOL_H@
+HAVE_STDINT_H = @HAVE_STDINT_H@
 HAVE_VISIBILITY = @HAVE_VISIBILITY@
+HAVE_WCHAR_H = @HAVE_WCHAR_H@
 HWLOC_CFLAGS = @HWLOC_CFLAGS@
 HWLOC_LIBS = @HWLOC_LIBS@
 IBV_CFLAGS = @IBV_CFLAGS@
@@ -498,7 +503,7 @@ top_srcdir = @top_srcdir@
 mpc_headerdir = $(pkgincludedir)
 
 #mpc_header_HEADERS= $(abs_srcdir)/include/mpc_common_aio.h $(abs_srcdir)/include/mpc_common_asm.h $(abs_srcdir)/include/mpc_common_datastructure.h $(abs_srcdir)/include/mpc_common.h $(abs_srcdir)/include/mpc_common_helper.h $(abs_srcdir)/include/mpc_common_rank.h $(abs_srcdir)/include/mpc_common_spinlock.h  $(abs_srcdir)/include/sctk_alloc.h  $(abs_srcdir)/include/sctk_dummy.h $(abs_srcdir)/include/sctk_no_alloc.h $(abs_srcdir)/include/sctk_pm_json.h $(abs_srcdir)/include/utarray.h $(abs_srcdir)/include/uthash.h $(abs_srcdir)/include/utlist.h
-mpc_header_HEADERS = $(abs_srcdir)/include/mpc_common_asm.h $(abs_srcdir)/include/mpc_common_types.h  $(abs_srcdir)/include/mpc_common_debugger.h $(abs_srcdir)/include/sctk_debug.h  $(abs_srcdir)/include/mpc_keywords.h $(abs_srcdir)/include/uthash.h $(abs_srcdir)/include/mpc_common_spinlock.h $(abs_srcdir)/include/sctk_alloc.h  $(abs_srcdir)/include/sctk_no_alloc.h $(abs_srcdir)/include/mpc_common_flags.h
+mpc_header_HEADERS = $(abs_srcdir)/include/mpc_common_asm.h $(abs_builddir)/include/mpc_common_types.h  $(abs_srcdir)/include/mpc_common_debugger.h $(abs_srcdir)/include/sctk_debug.h  $(abs_builddir)/include/mpc_keywords.h $(abs_srcdir)/include/uthash.h $(abs_builddir)/include/mpc_common_spinlock.h
 SUBDIRS = src
 all: all-recursive
 

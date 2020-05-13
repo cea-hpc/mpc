@@ -25,6 +25,7 @@
 
 #include <sctk_multirail.h>
 
+#include <sctk_alloc.h>
 
 sctk_endpoint_t * sctk_topological_rail_ellect_endpoint( int remote , mpc_lowcomm_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {

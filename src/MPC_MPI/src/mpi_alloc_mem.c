@@ -24,6 +24,8 @@
 
 #include <mpc_common_rank.h>
 
+#include <sctk_alloc.h>
+
 #include "mpc_lowcomm.h"
 #include <mpc_common_helper.h>
 #include "mpc_mpi.h"

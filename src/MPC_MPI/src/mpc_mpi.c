@@ -199,8 +199,11 @@ static int __INTERNAL__PMPI_Type_indexed(int, int *, int *, MPI_Datatype,
                                          MPI_Datatype *);
 static int __INTERNAL__PMPI_Type_hindexed(int, int *, MPI_Aint *,
                                           MPI_Datatype, MPI_Datatype *);
-static int __INTERNAL__PMPI_Type_struct(int, int *, MPI_Aint *,
-                                        MPI_Datatype *, MPI_Datatype *);
+static int __INTERNAL__PMPI_Type_struct(int count,
+                     const int *array_of_blocklengths,
+                     const MPI_Aint *array_of_displacements,
+                     const MPI_Datatype *array_of_types,
+                     MPI_Datatype *newtype);
 static int __INTERNAL__PMPI_Address(void *, MPI_Aint *);
 int __INTERNAL__PMPI_Type_extent(MPI_Datatype, MPI_Aint *);
 int __INTERNAL__PMPI_Type_size(MPI_Datatype, int *);
@@ -3907,7 +3910,11 @@ static int __INTERNAL__PMPI_Type_hindexed(int count,
 	}
 }
 
-static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint indices[], MPI_Datatype old_types[], MPI_Datatype *newtype)
+static int __INTERNAL__PMPI_Type_struct(int count,
+                     const int *blocklens,
+                     const MPI_Aint *indices,
+                     const MPI_Datatype *old_types,
+                     MPI_Datatype *newtype)
 {
 	int i;
 	int res = MPI_SUCCESS;
@@ -18289,7 +18296,12 @@ int PMPI_Type_create_hindexed(int count, const int blocklens[], const const MPI_
 	SCTK_MPI_CHECK_RETURN_VAL(res, comm);
 }
 
-int PMPI_Type_struct(int count, int blocklens[], MPI_Aint indices[], MPI_Datatype old_types[], MPI_Datatype *newtype)
+
+int PMPI_Type_struct(int count,
+                     const int *blocklens,
+                     const MPI_Aint *indices,
+                     const MPI_Datatype *old_types,
+                     MPI_Datatype *newtype)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
@@ -18349,7 +18361,7 @@ int PMPI_Type_create_struct(int count, const int blocklens[], const MPI_Aint ind
 	SCTK_MPI_CHECK_RETURN_VAL(res, comm);
 }
 
-int PMPI_Address(void *location, MPI_Aint *address)
+int PMPI_Address(const void *location, MPI_Aint *address)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;

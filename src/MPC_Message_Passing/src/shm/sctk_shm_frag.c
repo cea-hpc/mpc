@@ -1,13 +1,14 @@
 #include "sctk_shm_frag.h"
 #include "sctk_net_tools.h"
 
-
 #include <mpc_common_rank.h>
 
 #ifdef SCTK_USE_CHECKSUM
 #include <zlib.h>
 #define hash_payload(a,b) adler32(0UL, (void*)a, (size_t)b)
 #endif
+
+#include <sctk_alloc.h>
 
 static volatile int sctk_shm_idle_frag_msg = 0;
 static volatile int sctk_shm_process_msg_id = 0;

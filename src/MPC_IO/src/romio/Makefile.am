@@ -8,9 +8,9 @@ noinst_HEADERS =
 
 AM_CPPFLAGS = -I$(top_builddir)/src/include -I$(top_builddir)/src/MPI_IO/src/ -I$(top_srcdir)/src/MPI_IO/src/ -I$(top_builddir)/src/MPC_IO/include
 AM_CPPFLAGS += -I$(top_builddir)/src/MPC_IO/src/ -I$(top_srcdir)/src/MPC_IO/src/ -I$(top_srcdir)/src/MPC_IO/src/romio/mpi-io/ -I$(top_srcdir)/src/MPC_IO/include/
-AM_CPPFLAGS += -I$(top_srcdir)/src/MPC_MPI/include/ -I$(top_srcdir)/src/include/ -I$(top_srcdir)/src/MPC_Arch/include/
+AM_CPPFLAGS += -I$(top_srcdir)/src/MPC_MPI/include/ -I$(top_srcdir)/src/include/ -I$(top_srcdir)/src/MPC_Arch/include/ -I$(abs_top_builddir)/src/MPC_Common/include/
 AM_CPPFLAGS += -I$(top_srcdir)/src/MPC_Message_Passing/include/ -I$(top_srcdir)/src/MPC_Common/include/ -I$(top_builddir)/src/MPC_Arch/include/
-AM_CPPFLAGS += -I$(top_builddir)/adio/include  -I$(top_srcdir)/src/MPC_IO/src/romio/adio/include -I$(top_srcdir)/src/MPC_Threads/include/
+AM_CPPFLAGS += -I$(top_builddir)/adio/include  -I$(top_srcdir)/src/MPC_IO/src/romio/adio/include -I$(top_srcdir)/src/MPC_Threads/include/ 
 
 
 # ------------------------------------------------------------------------

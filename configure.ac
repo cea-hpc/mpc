@@ -264,6 +264,19 @@ AC_CHECK_SIZEOF(pthread_t,,[#include <pthread.h>])
 
 #### DATATYPES #### {sec:datatypes}
 ###################
+
+# Configure subtitutions for mpc_common_types.h
+AC_CHECK_HEADER([stdbool.h],[HAVE_STDBOOL_H=1],[HAVE_STDBOOL_H=0])
+AC_SUBST([HAVE_STDBOOL_H], [$HAVE_STDBOOL_H])
+
+AC_CHECK_HEADER([stdint.h],[HAVE_STDINT_H=1],[HAVE_STDINT_H=0])
+AC_SUBST([HAVE_STDINT_H], [$HAVE_STDINT_H])
+
+AC_CHECK_HEADER([wchar.h],[HAVE_WCHAR_H=1],[HAVE_WCHAR_H=0])
+AC_SUBST([HAVE_WCHAR_H], [$HAVE_WCHAR_H])
+
+
+
 AC_C_INLINE
 AC_TYPE_INT16_T
 AC_TYPE_INT32_T
@@ -278,7 +291,17 @@ AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
 AC_TYPE_UINT8_T
 AC_CHECK_TYPES([ptrdiff_t])
+
 AX_GCC_BUILTIN([__builtin_expect])
+
+if test "x${ax_cv_have___builtin_expect}" = "xyes"; then
+        HAVE_BUILTIN_EXPECT=1
+else
+        HAVE_BUILTIN_EXPECT=0
+fi
+
+AC_SUBST([HAVE_BUILTIN_EXPECT])
+
 AC_C_CONST
 AC_C_RESTRICT
 AC_C_VOLATILE
@@ -1555,6 +1578,13 @@ fi
 AM_CONDITIONAL([MPC_THREAD_ENABLED], [test "x${MPC_THREAD_ENABLED}" = "xyes"])
 AC_SUBST([MPC_THREAD_ENABLED])
 
+HAVE_MPC_THREAD=0
+
+if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
+        HAVE_MPC_THREAD=1
+fi
+
+AC_SUBST([HAVE_MPC_THREAD])
 
 AC_ARG_ENABLE([message-passing],
 [AS_HELP_STRING([--enable-message-passing],
@@ -2003,6 +2033,7 @@ do
 	MPC_MODULE_DEFINES=" -D${m}"
 done
 
+CFLAGS="${CFLAGS} ${MPC_MODULE_DEFINES}"
 
 AC_SUBST([ALL_MPC_LIBS])
 AC_SUBST([MPC_MODULE_LIST])
@@ -2419,6 +2450,9 @@ AC_OUTPUT([Makefile
 	   src/MPC_Arch/src/Makefile
            src/MPC_Common/Makefile
 	   src/MPC_Common/src/Makefile
+           src/MPC_Common/include/mpc_common_types.h
+           src/MPC_Common/include/mpc_common_spinlock.h
+           src/MPC_Common/include/mpc_keywords.h
            src/MPC_Config/Makefile
 	   src/MPC_Config/src/Makefile
            src/MPC_Launch/Makefile

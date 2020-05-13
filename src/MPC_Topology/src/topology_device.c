@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <regex.h>
 
+#include <sctk_alloc.h>
 
 #include <mpc_thread_accelerator.h>
 

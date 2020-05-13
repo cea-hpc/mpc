@@ -22,10 +22,9 @@
 #ifndef __SCTK_ASM_H_
 #define __SCTK_ASM_H_
 
-#include "mpc_config.h"
-
 #include <sched.h>
 #include <mpc_arch.h>
+
 #ifdef __MIC__
 #include <immintrin.h>
 #endif

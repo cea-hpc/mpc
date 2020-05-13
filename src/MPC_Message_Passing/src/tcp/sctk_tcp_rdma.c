@@ -24,6 +24,8 @@
 #include <sctk_net_tools.h>
 #include <sctk_tcp_toolkit.h>
 
+#include <sctk_alloc.h>
+
 /**
  * Define TCP RDMA values
  */
