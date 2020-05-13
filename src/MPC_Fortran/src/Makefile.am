@@ -100,7 +100,7 @@ endif
 # Install Fortran modules
 #
 
-MPCFORT_MODULES = mpi_base.mod mpi_constants.mod mpi_f08_c.mod mpi_f08_constants.mod mpi_f08_ctypes.mod mpi_f08.mod mpi_f08_types.mod mpi.mod mpi_sizeofs.mod omp_lib_kinds.mod omp_lib.mod
+MPCFORT_MODULES = mpif.h mpi_base.mod mpi_constants.mod mpi_f08_c.mod mpi_f08_constants.mod mpi_f08_ctypes.mod mpi_f08.mod mpi_f08_types.mod mpi.mod mpi_sizeofs.mod omp_lib_kinds.mod omp_lib.mod
 
 $(MPCFORT_MODULES): libmpcfortran.la
 
