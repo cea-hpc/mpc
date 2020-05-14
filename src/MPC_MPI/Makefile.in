@@ -275,6 +275,8 @@ HAVE_BUILTIN_EXPECT = @HAVE_BUILTIN_EXPECT@
 HAVE_MPC_THREAD = @HAVE_MPC_THREAD@
 HAVE_MPI_DARRAY_SUBARRAY = @HAVE_MPI_DARRAY_SUBARRAY@
 HAVE_MPI_INFO = @HAVE_MPI_INFO@
+HAVE_PTHREAD_H = @HAVE_PTHREAD_H@
+HAVE_SEMAPHORE_H = @HAVE_SEMAPHORE_H@
 HAVE_STDBOOL_H = @HAVE_STDBOOL_H@
 HAVE_STDINT_H = @HAVE_STDINT_H@
 HAVE_VISIBILITY = @HAVE_VISIBILITY@
@@ -501,7 +503,7 @@ top_srcdir = @top_srcdir@
 #                                                                      #
 ########################################################################
 mpc_headerdir = $(pkgincludedir)
-mpc_header_HEADERS = include/mpc_mpi_comm_lib.h  include/mpc_mpi.h include/nbc.h  include/mpc_mpi_fortran.h
+mpc_header_HEADERS = include/mpc_mpi_comm_lib.h  include/mpc_mpi.h include/mpc_mpi_fortran.h
 SUBDIRS = src
 all: all-recursive
 

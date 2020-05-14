@@ -189,8 +189,6 @@ void mpc_lowcomm_allreduce(const void *buffer_in, void *buffer_out,
 
 void mpc_lowcomm_terminaison_barrier (void);
 
-extern void ( *mpc_lowcomm_coll_init_hook ) ( mpc_lowcomm_communicator_t id );
-
 /***************************
  * MPC LOWCOMM TRAMPOLINES *
  ***************************/

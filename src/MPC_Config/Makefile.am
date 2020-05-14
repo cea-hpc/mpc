@@ -21,8 +21,7 @@
 #   - JAEGER Julien julien.jaeger@cea.fr                               #
 #                                                                      #
 ########################################################################
-mpc_headerdir=$(pkgincludedir)
-mpc_header_HEADERS=$(srcdir)/include/mpc_runtime_config.h
+noinst_HEADERS=$(srcdir)/include/mpc_runtime_config.h
 
 # Editor installation
 

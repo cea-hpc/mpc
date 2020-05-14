@@ -30,8 +30,6 @@
 /* Per thread context                                                   */
 /************************************************************************/
 
-struct mpc_mpi_cl_per_thread_ctx_s;
-
 void mpc_mpi_cl_per_thread_ctx_init(void);
 void mpc_mpi_cl_per_thread_ctx_release(void);
 

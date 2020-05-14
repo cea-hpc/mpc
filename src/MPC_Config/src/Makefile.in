@@ -107,7 +107,7 @@ am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
 	$(top_srcdir)/config/m4/pkg.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
-DIST_COMMON = $(srcdir)/Makefile.am $(mpc_header_HEADERS) \
+DIST_COMMON = $(srcdir)/Makefile.am $(noinst_HEADERS) \
 	$(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/mpc_config.h
@@ -140,7 +140,7 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(mpc_headerdir)"
+am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libmpcconfig_la_DEPENDENCIES =  \
@@ -199,7 +199,7 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-HEADERS = $(mpc_header_HEADERS)
+HEADERS = $(noinst_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
 # and print each of them once, without duplicates.  Input order is
@@ -276,6 +276,8 @@ HAVE_BUILTIN_EXPECT = @HAVE_BUILTIN_EXPECT@
 HAVE_MPC_THREAD = @HAVE_MPC_THREAD@
 HAVE_MPI_DARRAY_SUBARRAY = @HAVE_MPI_DARRAY_SUBARRAY@
 HAVE_MPI_INFO = @HAVE_MPI_INFO@
+HAVE_PTHREAD_H = @HAVE_PTHREAD_H@
+HAVE_SEMAPHORE_H = @HAVE_SEMAPHORE_H@
 HAVE_STDBOOL_H = @HAVE_STDBOOL_H@
 HAVE_STDINT_H = @HAVE_STDINT_H@
 HAVE_VISIBILITY = @HAVE_VISIBILITY@
@@ -513,7 +515,6 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 #
 # MPC_Config Library
 #
-mpc_headerdir = $(pkgincludedir)
 lib_LTLIBRARIES = libmpcconfig.la
 libmpcconfig_la_SOURCES = libxml_helper.c runtime_config_mapper.c \
 	runtime_config_selectors.c runtime_config_validation.c \
@@ -523,7 +524,7 @@ libmpcconfig_la_SOURCES = libxml_helper.c runtime_config_mapper.c \
 	./generated/mpc_config_struct_meta.c
 
 # Use pre-generated files
-mpc_header_HEADERS = ./generated/mpc_config_struct_defaults.h ./generated/mpc_config_struct.h
+noinst_HEADERS = ./generated/mpc_config_struct_defaults.h ./generated/mpc_config_struct.h
 libmpcconfig_la_LIBADD = $(abs_top_builddir)/src/MPC_Common/src/libmpccommon.la $(XML2_LIBS) -ldl
 all: all-am
 
@@ -656,27 +657,6 @@ mostlyclean-libtool:
 clean-libtool:
 	-rm -rf .libs _libs
 	-rm -rf ./generated/.libs ./generated/_libs
-install-mpc_headerHEADERS: $(mpc_header_HEADERS)
-	@$(NORMAL_INSTALL)
-	@list='$(mpc_header_HEADERS)'; test -n "$(mpc_headerdir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(mpc_headerdir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(mpc_headerdir)" || exit 1; \
-	fi; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(mpc_headerdir)'"; \
-	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(mpc_headerdir)" || exit $$?; \
-	done
-
-uninstall-mpc_headerHEADERS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(mpc_header_HEADERS)'; test -n "$(mpc_headerdir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	dir='$(DESTDIR)$(mpc_headerdir)'; $(am__uninstall_files_from_dir)
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -764,7 +744,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(LTLIBRARIES) $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(mpc_headerdir)"; do \
+	for dir in "$(DESTDIR)$(libdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -822,7 +802,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-data-local install-mpc_headerHEADERS
+install-data-am: install-data-local
 
 install-dvi: install-dvi-am
 
@@ -868,7 +848,7 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-libLTLIBRARIES uninstall-mpc_headerHEADERS
+uninstall-am: uninstall-libLTLIBRARIES
 
 .MAKE: install-am install-strip
 
@@ -880,13 +860,12 @@ uninstall-am: uninstall-libLTLIBRARIES uninstall-mpc_headerHEADERS
 	install-data-am install-data-local install-dvi install-dvi-am \
 	install-exec install-exec-am install-html install-html-am \
 	install-info install-info-am install-libLTLIBRARIES \
-	install-man install-mpc_headerHEADERS install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am uninstall-libLTLIBRARIES \
-	uninstall-mpc_headerHEADERS
+	install-man install-pdf install-pdf-am install-ps \
+	install-ps-am install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-libLTLIBRARIES
 
 .PRECIOUS: Makefile
 

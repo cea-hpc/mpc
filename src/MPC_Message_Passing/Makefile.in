@@ -275,6 +275,8 @@ HAVE_BUILTIN_EXPECT = @HAVE_BUILTIN_EXPECT@
 HAVE_MPC_THREAD = @HAVE_MPC_THREAD@
 HAVE_MPI_DARRAY_SUBARRAY = @HAVE_MPI_DARRAY_SUBARRAY@
 HAVE_MPI_INFO = @HAVE_MPI_INFO@
+HAVE_PTHREAD_H = @HAVE_PTHREAD_H@
+HAVE_SEMAPHORE_H = @HAVE_SEMAPHORE_H@
 HAVE_STDBOOL_H = @HAVE_STDBOOL_H@
 HAVE_STDINT_H = @HAVE_STDINT_H@
 HAVE_VISIBILITY = @HAVE_VISIBILITY@
@@ -501,7 +503,7 @@ top_srcdir = @top_srcdir@
 #                                                                      #
 ########################################################################
 mpc_headerdir = $(pkgincludedir)
-mpc_header_HEADERS = ./include/mpc_lowcomm.h  ./include/mpc_lowcomm_msg.h  ./include/mpc_lowcomm_rdma.h  ./include/mpc_lowcomm_types.h ./include/mpc_lowcomm_arpc.h
+mpc_header_HEADERS = ./include/mpc_lowcomm.h  ./include/mpc_lowcomm_rdma.h  ./include/mpc_lowcomm_types.h ./include/mpc_lowcomm_arpc.h
 SUBDIRS = src
 all: all-recursive
 

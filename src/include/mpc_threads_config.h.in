@@ -1,8 +1,6 @@
 #ifndef MPC_THREAD_CONFIG_H_
 #define MPC_THREAD_CONFIG_H_
 
-#include "mpc_config.h"
-
 /***********
 * HELPERS *
 ***********/
@@ -21,7 +19,7 @@
 **************/
 
 /* HAVE_SEMAPHORE_H */
-#if HAVE_SEMAPHORE_H
+#if @HAVE_SEMAPHORE_H@ == 1
 
 TYPEDEF_STRUCT(@SIZEOF_SEM_T@, mpc_thread_sem_t);
 
@@ -36,7 +34,7 @@ typedef void * mpc_thread_t;
 *************************/
 
 /* HAVE_PTHREAD_H */
-#if HAVE_PTHREAD_H
+#if @HAVE_PTHREAD_H@ == 1
 
 /*****************
 * PTHREAD MUTEX *

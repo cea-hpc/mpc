@@ -24,7 +24,6 @@
 #define SCTK_RUNTIME_CONFIG_H
 
 /********************************* INCLUDES *********************************/
-#include <sctk_debug.h>
 #include <mpc_config_struct.h>
 #include <mpc_keywords.h>
 /********************************** GLOBALS *********************************/
@@ -59,8 +58,6 @@ static inline bool sctk_runtime_config_init_done(void)
 **/
 static inline const struct sctk_runtime_config * sctk_runtime_config_get(void) {
 	/* ensure we have called sctk_runtime_config_init */
-	assert( __sctk_global_runtime_config_init__ );
-
 	/* ok can return directly, so normally compiler will inline it and directly
 	 * use the static address */
 	return &__sctk_global_runtime_config__;

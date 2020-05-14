@@ -43,6 +43,7 @@
 
 #include <mpc_thread.h>
 #include <mpc_common_rank.h>
+#include <sctk_alloc.h>
 
 /********************************************************************/
 /* Connection Setup                                                 */

@@ -22,8 +22,6 @@
 #ifndef MPC_ARCHITECTURE
 #define MPC_ARCHITECTURE
 
-#include <mpc_config.h>
-
 /******************
  * HELPER DEFINES *
  ******************/

@@ -816,6 +816,8 @@ XML2_CFLAGS
 LIBOBJS
 SIZEOF_LONG
 HAVE_BUILTIN_EXPECT
+HAVE_PTHREAD_H
+HAVE_SEMAPHORE_H
 HAVE_WCHAR_H
 HAVE_STDINT_H
 HAVE_STDBOOL_H
@@ -21702,6 +21704,28 @@ fi
 HAVE_WCHAR_H=$HAVE_WCHAR_H
 
 
+# Configure substitutions for mpc_thread_config.h
+
+ac_fn_c_check_header_mongrel "$LINENO" "semaphore.h" "ac_cv_header_semaphore_h" "$ac_includes_default"
+if test "x$ac_cv_header_semaphore_h" = xyes; then :
+  HAVE_SEMAPHORE_H=1
+else
+  HAVE_SEMAPHORE_H=0
+fi
+
+
+HAVE_SEMAPHORE_H=$HAVE_SEMAPHORE_H
+
+
+ac_fn_c_check_header_mongrel "$LINENO" "pthread.h" "ac_cv_header_pthread_h" "$ac_includes_default"
+if test "x$ac_cv_header_pthread_h" = xyes; then :
+  HAVE_PTHREAD_H=1
+else
+  HAVE_PTHREAD_H=0
+fi
+
+
+HAVE_PTHREAD_H=$HAVE_PTHREAD_H
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for inline" >&5

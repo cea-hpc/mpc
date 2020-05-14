@@ -508,7 +508,7 @@ typedef struct
 typedef MPI_Count MPI_Offset;
 
 #define MPI_FILE_DEFINED
-struct ADIOI_FileD;
+
 typedef struct ADIOI_FileD * MPI_File; 
 
 #define MPIIMPL_HAVE_MPI_COMBINER_SUBARRAY
@@ -579,8 +579,6 @@ typedef enum {
 } MPC_T_pvar_class;
 
 /** Internal storage class (see mpit_internal.h) */
-struct MPC_T_enum;
-
 /** MPI Storage (just a pointer as no Fortran) */
 typedef struct MPC_T_enum *MPI_T_enum;
 
@@ -601,8 +599,6 @@ typedef enum {
 
 /** Forward declaration of the VAR container */
 
-struct MPC_T_data;
-
 /** CVAR Handles */
 
 #define MPI_T_CVAR_HANDLE_NULL ((MPI_T_cvar_handle)NULL)
@@ -610,7 +606,6 @@ struct MPC_T_data;
 typedef struct MPC_T_cvar *MPI_T_cvar_handle;
 
 /* Forward declaration of the session container */
-struct MPC_T_session;
 
 #define MPI_T_PVAR_SESSION_NULL (-2)
 

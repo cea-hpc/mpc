@@ -1,6 +1,8 @@
 #include "sctk_shm_eager.h"
 #include "sctk_net_tools.h"
 
+#include <sctk_alloc.h>
+
 /**
  * NO COPY FUNCTION
  */

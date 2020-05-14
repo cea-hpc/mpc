@@ -22,6 +22,6 @@
 #                                                                      #
 ########################################################################
 mpc_headerdir=$(pkgincludedir)
-mpc_header_HEADERS= include/mpc_mpi_comm_lib.h  include/mpc_mpi.h include/nbc.h  include/mpc_mpi_fortran.h
+mpc_header_HEADERS= include/mpc_mpi_comm_lib.h  include/mpc_mpi.h include/mpc_mpi_fortran.h
 
 SUBDIRS=src

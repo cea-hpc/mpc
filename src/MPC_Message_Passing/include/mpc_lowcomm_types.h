@@ -66,9 +66,6 @@ typedef int sctk_Grequest_wait_fn( int count, void **array_of_states, double tim
 /** Generalized Request classes **/
 typedef int sctk_Request_class;
 
-
-struct progressWorkUnit;
-
 /** Request definition **/
 typedef struct
 {

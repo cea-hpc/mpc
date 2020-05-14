@@ -40,6 +40,7 @@
 #include <sctk_window.h>
 #include <mpc_common_profiler.h>
 #include <sctk_alloc.h>
+#include <coll.h>
 
 #ifdef SCTK_LIB_MODE
 	#include "sctk_handle.h"

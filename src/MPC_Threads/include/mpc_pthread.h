@@ -26,13 +26,9 @@ extern "C"
 {
 #endif
 
-#include <sched.h>
-#include <stdlib.h>
 #include <mpc.h>
-#include <mpc_main.h>
-#include <mpc_threads_config.h>
 #include <mpc_thread.h>
-
+#include <sched.h>
 
 #define sem_t                                  mpc_thread_sem_t
 #define pthread_t                              mpc_thread_t
@@ -535,7 +531,6 @@ extern "C"
 
 #ifdef SCTK_FUTEX_SUPPORTED
 
-#include <unistd.h>
 #include <linux/futex.h>
 #include <sys/syscall.h>
 
