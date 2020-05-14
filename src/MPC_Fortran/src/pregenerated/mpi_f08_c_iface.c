@@ -482,9 +482,21 @@ datatype,
 message,
 status);
 }
-/* MPI_Type_hvector NOT IMPLEMENTED in MPC */
 
-
+void mpi_type_hvector_f08(
+int count,
+int blocklength,
+int stride,
+MPI_Datatype oldtype,
+MPI_Datatype* newtype,
+int * ierror)
+{
+*ierror = MPI_Type_hvector( count,
+blocklength,
+stride,
+oldtype,
+newtype);
+}
 
 void mpi_group_translate_ranks_f08(
 MPI_Group group1,

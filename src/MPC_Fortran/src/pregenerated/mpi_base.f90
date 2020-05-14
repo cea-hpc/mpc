@@ -309,6 +309,17 @@ SUBROUTINE MPI_TYPE_GET_EXTENT(type,lb,extent,&
 END SUBROUTINE MPI_TYPE_GET_EXTENT
 
 
+SUBROUTINE MPI_TYPE_HVECTOR(count,blocklength,stride,&
+   oldtype,newtype,ierror)
+   INTEGER	count
+   INTEGER	blocklength
+   INTEGER	stride
+   INTEGER	oldtype
+   INTEGER	newtype
+   INTEGER	ierror
+END SUBROUTINE MPI_TYPE_HVECTOR
+
+
 SUBROUTINE MPI_GROUP_TRANSLATE_RANKS(group1,n,ranks1,&
    group2,ranks2,ierror)
    INTEGER	group1

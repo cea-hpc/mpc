@@ -6051,6 +6051,32 @@ int PMPI_Type_size_x(MPI_Datatype datatype, MPI_Count *size);
 int MPI_Type_vector(int count, int blocklength, int stride, MPI_Datatype oldtype, MPI_Datatype *newtype);
 int PMPI_Type_vector(int count, int blocklength, int stride, MPI_Datatype oldtype, MPI_Datatype *newtype);
 
+/*MPI_Type_hvector*/
+
+/**
+ * @brief MPI function MPI_Type_hvector
+ * 
+ * @param count number of blocks
+ * @param blocklength number of elements in each block
+ * @param stride number of elements between start of each block
+ * @param oldtype old datatype
+ * @param newtype new datatype
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
+ */
+
+int MPI_Type_hvector( 
+        int count, 
+        int blocklen, 
+        MPI_Aint stride, 
+        MPI_Datatype old_type, 
+        MPI_Datatype *newtype );
+int PMPI_Type_hvector( 
+        int count, 
+        int blocklen, 
+        MPI_Aint stride, 
+        MPI_Datatype old_type, 
+        MPI_Datatype *newtype );
 
 /*MPI_Unpack*/
 

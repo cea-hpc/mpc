@@ -778,8 +778,29 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Mrecv_c
 
-! MPI_Type_hvector NOT IMPLEMENTED in MPC
 
+function MPI_Type_hvector_c( count,&
+blocklength,&
+stride,&
+oldtype,&
+newtype,&
+ierror)&
+bind(C, name="mpi_type_hvector_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: blocklength     !int blocklength
+integer(c_int), value, intent(in) :: stride     !int stride
+integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
+integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_hvector_c
 
 
 function MPI_Group_translate_ranks_c( group1,&

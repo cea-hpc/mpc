@@ -196,6 +196,11 @@ module procedure MPI_Mrecv_f08
 end interface
 
 
+interface MPI_Type_hvector
+module procedure MPI_Type_hvector_f08
+end interface
+
+
 interface MPI_Group_translate_ranks
 module procedure MPI_Group_translate_ranks_f08
 end interface
@@ -988,6 +993,7 @@ private :: MPI_Sendrecv_replace_f08
 private :: MPI_Type_get_extent_f08
 private :: MPI_Keyval_create_f08
 private :: MPI_Mrecv_f08
+private :: MPI_Type_hvector_f08
 private :: MPI_Group_translate_ranks_f08
 private :: MPI_Recv_init_f08
 private :: MPI_Type_dup_f08
@@ -2569,8 +2575,55 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Mrecv_f08
 
-! MPI_Type_hvector NOT IMPLEMENTED in MPC
 
+subroutine MPI_Type_hvector_f08( count,&
+blocklength,&
+stride,&
+oldtype,&
+newtype,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+integer, intent(in) :: count
+integer, intent(in) :: blocklength
+integer, intent(in) :: stride
+type(MPI_Datatype), intent(in) :: oldtype
+type(MPI_Datatype), intent(out) :: newtype
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: count_c     !int count
+integer(c_int) :: blocklength_c     !int blocklength
+integer(c_int) :: stride_c     !int stride
+integer(c_int) :: oldtype_c     !MPI_Datatype oldtype
+integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+count_c = count
+blocklength_c = blocklength
+stride_c = stride
+oldtype_c = oldtype%val
+
+ret = MPI_Type_hvector_c(count_c,&
+blocklength_c,&
+stride_c,&
+oldtype_c,&
+newtype_c,&
+ierror_c)
+
+newtype%val = newtype_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Type_hvector_f08
 
 
 subroutine MPI_Group_translate_ranks_f08( group1,&
