@@ -49,7 +49,20 @@
 #define ENABLE_COLLECTIVES_ON_INTERCOMM
 //#define MPC_MPI_USE_REQUEST_CACHE
 //#define MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
-int __INTERNAL__PMPI_Attr_set_fortran (int keyval);
+
+
+/*
+ * TODO: RULE FROM THE MPI STANDARD
+ * In order to fully support the MPI standard, we cannot fail if the returned value of
+ * an MPI function is different than MPI_SUCCESS.
+ * We could add an additional MPC mode in order to fail in the case of a wrong returned value.
+ */
+int _mpc_mpi_report_error(mpc_lowcomm_communicator_t comm, int error, char *message, char *file, int line);
+
+#define MPI_ERROR_REPORT(comm, error, message)      return _mpc_mpi_report_error(comm, error, message, __FILE__, __LINE__)
+#define MPI_HANDLE_RETURN_VAL(res, comm)            do { if(res == MPI_SUCCESS){ return res; } else { MPI_ERROR_REPORT(comm, res, "Generic error retrun"); } } while(0)
+#define MPI_HANDLE_ERROR(res, comm, desc_string)    do { if(res != MPI_SUCCESS){ MPI_ERROR_REPORT(comm, res, desc_string); } } while(0)
+
 
 char * sctk_char_fortran_to_c (char *buf, int size, char ** free_ptr);
 void sctk_char_c_to_fortran (char *buf, int size);
@@ -372,7 +385,6 @@ static inline void sctk_mpi_shared_mem_buffer_get(union shared_mem_buffer *b,
 int _mpc_cl_error_init();
 
 void SCTK__MPI_INIT_REQUEST (MPI_Request * request);
-int SCTK__MPI_ERROR_REPORT__ (mpc_lowcomm_communicator_t comm, int error, char *message, char *file, int line);
 
 int __INTERNAL__PMPI_Type_extent (MPI_Datatype, MPI_Aint *);
 int __INTERNAL__PMPI_Type_size (MPI_Datatype, int *);

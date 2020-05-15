@@ -141,7 +141,6 @@
 #pragma weak MPI_Keyval_free = PMPI_Keyval_free
 #pragma weak MPI_Attr_put = PMPI_Attr_put
 #pragma weak MPI_Attr_get = PMPI_Attr_get
-#pragma weak MPI_Attr_get_fortran = PMPI_Attr_get_fortran
 #pragma weak MPI_Attr_delete = PMPI_Attr_delete
 // PROFILER MPI_TOPO MPI Topology operations
 #pragma weak MPI_Topo_test = PMPI_Topo_test
