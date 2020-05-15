@@ -50,10 +50,3 @@ libmpcconfig_la_SOURCES += ./generated/mpc_config_struct_meta.c
 
 
 libmpcconfig_la_LIBADD = $(abs_top_builddir)/src/MPC_Common/src/libmpccommon.la $(XML2_LIBS) -ldl
-
-
-# Default configuration file and schema installation
-install-data-local:
-	install -m 0644 -D $(abs_top_srcdir)/src/MPC_Config/extra/config.xml.example $(pkgdatadir)/config.xml
-	install -m 0644 -D $(abs_top_srcdir)/src/MPC_Config/src/generated/mpc-config.xsd $(pkgdatadir)/mpc-config.xsd
-

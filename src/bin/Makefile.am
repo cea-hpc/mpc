@@ -18,7 +18,8 @@ pkgdata_SCRIPTS = mpc_compiler_common.sh
 install-data-local:
 	ln -sf $(bindir)/mpcvars.sh $(prefix)/mpcvars.sh
 
-CLEANFILES = $(prefix)/mpcvars.sh
+uninstall-local:
+	rm -f $(prefix)/mpcvars.sh
 
 #
 # Cuda support
@@ -43,4 +44,4 @@ bin_SCRIPTS += mpcrun
 mpcrun_plugindir = $(pkgdatadir)/mpcrun_opt/
 mpcrun_plugin_SCRIPTS = mpcrun_opt/mpcrun_default mpcrun_opt/mpcrun_hydra mpcrun_opt/mpcrun_mpiexec mpcrun_opt/mpcrun_mpiexec_allinea mpcrun_opt/mpcrun_mpiexec_gdb mpcrun_opt/mpcrun_none mpcrun_opt/mpcrun_none_ddd mpcrun_opt/mpcrun_none_gdb mpcrun_opt/mpcrun_none_mpc-gdb mpcrun_opt/mpcrun_none_totalview mpcrun_opt/mpcrun_none_valgrind mpcrun_opt/mpcrun_propagate_env mpcrun_opt/mpcrun_remote mpcrun_opt/mpcrun_remote_launcher mpcrun_opt/mpcrun_salloc_hydra mpcrun_opt/mpcrun_srun mpcrun_opt/mpcrun_srun_gdb mpcrun_opt/mpcrun_srun_mpcdb mpcrun_opt/mpcrun_srun_totalview
 
-CLEANFILES += $(bin_SCRIPTS) $(mpcrun_plugin_SCRIPTS)
+#CLEANFILES += $(bin_SCRIPTS) $(mpcrun_plugin_SCRIPTS)

@@ -494,8 +494,6 @@ top_srcdir = @top_srcdir@
 bin_SCRIPTS = mpc_cc mpc_cxx mpc_cflags mpc_ldflags $(am__append_1) \
 	mpc_status mpcvars.sh $(am__append_2) mpcrun
 pkgdata_SCRIPTS = mpc_compiler_common.sh
-CLEANFILES = $(prefix)/mpcvars.sh $(bin_SCRIPTS) \
-	$(mpcrun_plugin_SCRIPTS)
 mpirun_SOURCES = ./mpirun.c
 mpcrun_plugindir = $(pkgdatadir)/mpcrun_opt/
 mpcrun_plugin_SCRIPTS = mpcrun_opt/mpcrun_default mpcrun_opt/mpcrun_hydra mpcrun_opt/mpcrun_mpiexec mpcrun_opt/mpcrun_mpiexec_allinea mpcrun_opt/mpcrun_mpiexec_gdb mpcrun_opt/mpcrun_none mpcrun_opt/mpcrun_none_ddd mpcrun_opt/mpcrun_none_gdb mpcrun_opt/mpcrun_none_mpc-gdb mpcrun_opt/mpcrun_none_totalview mpcrun_opt/mpcrun_none_valgrind mpcrun_opt/mpcrun_propagate_env mpcrun_opt/mpcrun_remote mpcrun_opt/mpcrun_remote_launcher mpcrun_opt/mpcrun_salloc_hydra mpcrun_opt/mpcrun_srun mpcrun_opt/mpcrun_srun_gdb mpcrun_opt/mpcrun_srun_mpcdb mpcrun_opt/mpcrun_srun_totalview
@@ -921,7 +919,6 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
-	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -1003,7 +1000,8 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
-	uninstall-mpcrun_pluginSCRIPTS uninstall-pkgdataSCRIPTS
+	uninstall-local uninstall-mpcrun_pluginSCRIPTS \
+	uninstall-pkgdataSCRIPTS
 
 .MAKE: install-am install-strip
 
@@ -1024,7 +1022,8 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 	mostlyclean mostlyclean-compile mostlyclean-generic \
 	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
 	uninstall-am uninstall-binPROGRAMS uninstall-binSCRIPTS \
-	uninstall-mpcrun_pluginSCRIPTS uninstall-pkgdataSCRIPTS
+	uninstall-local uninstall-mpcrun_pluginSCRIPTS \
+	uninstall-pkgdataSCRIPTS
 
 .PRECIOUS: Makefile
 
@@ -1032,6 +1031,11 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 # Make sure the source script is at the root of the prefix for retro-compatibility
 install-data-local:
 	ln -sf $(bindir)/mpcvars.sh $(prefix)/mpcvars.sh
+
+uninstall-local:
+	rm -f $(prefix)/mpcvars.sh
+
+#CLEANFILES += $(bin_SCRIPTS) $(mpcrun_plugin_SCRIPTS)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

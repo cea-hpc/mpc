@@ -768,7 +768,7 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am:
+uninstall-am: uninstall-local
 
 .MAKE: $(am__recursive_targets) install-am install-strip
 
@@ -784,17 +784,25 @@ uninstall-am:
 	installcheck-am installdirs installdirs-am maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-generic \
 	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am
+	uninstall-am uninstall-local
 
 .PRECIOUS: Makefile
 
 
-# Editor installation
-
+# Probably better to replace this with:
+# configdir =/path
+# configdir_DATA= files
 install-data-local:
 	cp -r $(abs_srcdir)/editor $(pkgdatadir)
 	install -m 0644 -D $(abs_srcdir)/src/generated/mpc_config_meta.js $(pkgdatadir)/editor/javascript/
 	install -m 0644 -D $(abs_srcdir)/src/generated/mpc_config_xsd.js $(pkgdatadir)/editor/javascript/
+	install -m 0644 -D $(abs_srcdir)/src/generated/mpc-config.xsd $(pkgdatadir)/mpc-config.xsd
+	install -m 0644 -D $(abs_srcdir)/extra/config.xml.example $(pkgdatadir)/config.xml
+
+uninstall-local:
+	rm -rf $($pkgdatadir)/editor
+	rm -f $(pkgdatadir)/config.xml
+	rm -f $(pkgdatadir)/mpc-config.xsd
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
