@@ -386,8 +386,8 @@ int _mpc_cl_error_init();
 
 void SCTK__MPI_INIT_REQUEST (MPI_Request * request);
 
-int __INTERNAL__PMPI_Type_extent (MPI_Datatype, MPI_Aint *);
-int __INTERNAL__PMPI_Type_size (MPI_Datatype, int *);
+int PMPI_Type_extent (MPI_Datatype, MPI_Aint *);
+int PMPI_Type_size (MPI_Datatype, int *);
 int __INTERNAL__PMPI_Pack (void *, int, MPI_Datatype, void *, int,
                                   int *, MPI_Comm);
 int __INTERNAL__PMPI_Unpack (void *, int, int *, void *, int,
