@@ -27,9 +27,10 @@ noinst_HEADERS=$(srcdir)/include/mpc_runtime_config.h
 # configdir =/path
 # configdir_DATA= files
 install-data-local:
+	test -d $(pkgdatadir) || mkdir -p $(pkgdatadir)
 	cp -r $(abs_srcdir)/editor $(pkgdatadir)
-	install -m 0644 -D $(abs_srcdir)/src/generated/mpc_config_meta.js $(pkgdatadir)/editor/javascript/
-	install -m 0644 -D $(abs_srcdir)/src/generated/mpc_config_xsd.js $(pkgdatadir)/editor/javascript/
+	install -m 0644 -D $(abs_srcdir)/src/generated/mpc_config_meta.js $(pkgdatadir)/editor/javascript/mpc_config_meta.js
+	install -m 0644 -D $(abs_srcdir)/src/generated/mpc_config_xsd.js $(pkgdatadir)/editor/javascript/mpc_config_xsd.js
 	install -m 0644 -D $(abs_srcdir)/src/generated/mpc-config.xsd $(pkgdatadir)/mpc-config.xsd
 	install -m 0644 -D $(abs_srcdir)/extra/config.xml.example $(pkgdatadir)/config.xml
 
