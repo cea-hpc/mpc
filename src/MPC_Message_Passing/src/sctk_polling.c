@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include "mpc_thread_accessor.h"
 
+#include <sctk_alloc.h>
+
 void sctk_polling_cell_zero( struct sctk_polling_cell *cell )
 {
 	OPA_store_int( &cell->polling_counter, 0 );

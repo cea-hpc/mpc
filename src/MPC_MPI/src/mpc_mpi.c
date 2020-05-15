@@ -197,7 +197,7 @@ static int __INTERNAL__PMPI_Type_hvector(int, int, MPI_Aint, MPI_Datatype,
                                          MPI_Datatype *);
 static int __INTERNAL__PMPI_Type_indexed(int, int *, int *, MPI_Datatype,
                                          MPI_Datatype *);
-static int __INTERNAL__PMPI_Type_hindexed(int, int *, MPI_Aint *,
+static int __INTERNAL__PMPI_Type_create_hindexed(int, int *, MPI_Aint *,
                                           MPI_Datatype, MPI_Datatype *);
 static int __INTERNAL__PMPI_Type_struct(int count,
                      const int *array_of_blocklengths,
@@ -3669,7 +3669,7 @@ static int __INTERNAL__PMPI_Type_indexed(int count, int blocklens[], int indices
 	}
 
 	/* Call the byte offseted version of type_indexed */
-	int res = __INTERNAL__PMPI_Type_hindexed(count, blocklens, byte_offsets, old_type, newtype);
+	int res = __INTERNAL__PMPI_Type_create_hindexed(count, blocklens, byte_offsets, old_type, newtype);
 
 	/* Set its context to overide the one from hdindexed */
 	struct _mpc_dt_context dtctx;
@@ -3708,7 +3708,7 @@ static int __INTERNAL__PMPI_Type_create_hindexed_block(int count, int blocklengt
 	}
 
 	/* Call the orignal indexed function */
-	int res = __INTERNAL__PMPI_Type_hindexed(count, blocklength_array, indices, old_type, newtype);
+	int res = __INTERNAL__PMPI_Type_create_hindexed(count, blocklength_array, indices, old_type, newtype);
 
 	/* Set its context to overide the one from hdindexed */
 	struct _mpc_dt_context dtctx;
@@ -3779,10 +3779,10 @@ static int __INTERNAL__PMPI_Type_create_indexed_block(int count, int blocklength
  *      \param old_type Input data-type
  *      \param newtype_p New vector data-type
  */
-static int __INTERNAL__PMPI_Type_hindexed(int count,
-                                          int blocklens[],
-                                          MPI_Aint indices[],
-                                          MPI_Datatype old_type, MPI_Datatype *newtype)
+static int __INTERNAL__PMPI_Type_create_hindexed(int count,
+                                                 int blocklens[],
+                                                MPI_Aint indices[],
+                                                MPI_Datatype old_type, MPI_Datatype *newtype)
 {
 	/* Set its context */
 	struct _mpc_dt_context dtctx;
@@ -3901,7 +3901,7 @@ static int __INTERNAL__PMPI_Type_hindexed(int count,
 		_mpc_cl_type_convert_to_derived(old_type, &data_out);
 
 		/* Call the hindexed function again */
-		res = __INTERNAL__PMPI_Type_hindexed(count, blocklens, indices, data_out, newtype);
+		res = __INTERNAL__PMPI_Type_create_hindexed(count, blocklens, indices, data_out, newtype);
 
 		/* Free the temporary type */
 		__INTERNAL__PMPI_Type_free(&data_out);
@@ -18191,7 +18191,7 @@ int PMPI_Type_indexed(int count, const int blocklens[], const int indices[], MPI
 	SCTK_MPI_CHECK_RETURN_VAL(res, comm);
 }
 
-int PMPI_Type_hindexed(int count, int blocklens[], MPI_Aint indices[], MPI_Datatype old_type, MPI_Datatype *newtype)
+int PMPI_Type_hindexed(int count, const int blocklens[], const int indices[], MPI_Datatype old_type, MPI_Datatype *newtype)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
@@ -18209,16 +18209,23 @@ int PMPI_Type_hindexed(int count, int blocklens[], MPI_Aint indices[], MPI_Datat
 		return MPI_SUCCESS;
 	}
 
+	MPI_Aint * lindices = sctk_malloc(sizeof(MPI_Aint) * count);
+	assume(lindices != NULL);
+
 	for(i = 0; i < count; i++)
 	{
 		if(blocklens[i] < 0)
 		{
 			MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Error negative block lengths provided");
 		}
+		lindices[i] = (MPI_Aint)indices[i];
 	}
 
 	mpi_check_type_create(old_type, comm);
-	res = __INTERNAL__PMPI_Type_hindexed(count, blocklens, indices, old_type, newtype);
+	res = __INTERNAL__PMPI_Type_create_hindexed(count, blocklens, lindices, old_type, newtype);
+
+	sctk_free(lindices);
+
 	SCTK_MPI_CHECK_RETURN_VAL(res, comm);
 }
 
@@ -18292,7 +18299,7 @@ int PMPI_Type_create_hindexed(int count, const int blocklens[], const const MPI_
 		}
 	}
 	mpi_check_type_create(old_type, comm);
-	res = __INTERNAL__PMPI_Type_hindexed(count, blocklens, indices, old_type, newtype);
+	res = __INTERNAL__PMPI_Type_create_hindexed(count, blocklens, indices, old_type, newtype);
 	SCTK_MPI_CHECK_RETURN_VAL(res, comm);
 }
 

@@ -38,6 +38,7 @@
 #endif
 
 #include <sctk_alloc.h>
+#include <coll.h>
 
 typedef struct sctk_process_ht_s
 {

@@ -1157,6 +1157,17 @@ SUBROUTINE MPI_WIN_DELETE_ATTR(win,win_keyval,ierror)
 END SUBROUTINE MPI_WIN_DELETE_ATTR
 
 
+SUBROUTINE MPI_TYPE_HINDEXED(count,array_of_blocklengths,array_of_displacements,&
+   oldtype,newtype,ierror)
+   INTEGER	count
+   INTEGER array_of_blocklengths(*)
+   INTEGER array_of_displacements(*)
+   INTEGER	oldtype
+   INTEGER	newtype
+   INTEGER	ierror
+END SUBROUTINE MPI_TYPE_HINDEXED
+
+
 SUBROUTINE MPI_GROUP_RANGE_INCL(group,n,ranges,&
    newgroup,ierror)
    INTEGER	group

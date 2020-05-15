@@ -35,6 +35,8 @@
 #include <sctk_ib_mpi.h>
 #endif
 
+#include <sctk_alloc.h>
+
 #include <sctk_route.h>
 #include <sctk_multirail.h>
 #ifdef MPC_USE_DMTCP

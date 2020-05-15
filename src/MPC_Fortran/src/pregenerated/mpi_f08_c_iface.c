@@ -1937,9 +1937,21 @@ int * ierror)
 *ierror = MPI_Win_delete_attr( win,
 win_keyval);
 }
-/* MPI_Type_hindexed NOT IMPLEMENTED in MPC */
 
-
+void mpi_type_hindexed_f08(
+int count,
+int* array_of_blocklengths,
+int* array_of_displacements,
+MPI_Datatype oldtype,
+MPI_Datatype* newtype,
+int * ierror)
+{
+*ierror = MPI_Type_hindexed( count,
+array_of_blocklengths,
+array_of_displacements,
+oldtype,
+newtype);
+}
 /* MPI_File_set_atomicity NOT IMPLEMENTED in MPC */
 
 

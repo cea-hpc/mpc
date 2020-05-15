@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <sctk_alloc.h>
+
 #include <sys/uio.h>
 
 struct iovec *

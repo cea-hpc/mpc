@@ -721,6 +721,11 @@ module procedure MPI_Win_delete_attr_f08
 end interface
 
 
+interface MPI_Type_hindexed
+module procedure MPI_Type_hindexed_f08
+end interface
+
+
 interface MPI_Group_range_incl
 module procedure MPI_Group_range_incl_f08
 end interface
@@ -1098,6 +1103,7 @@ private :: MPI_Probe_f08
 private :: MPI_Unpack_f08
 private :: MPI_Status_set_elements_f08
 private :: MPI_Win_delete_attr_f08
+private :: MPI_Type_hindexed_f08
 private :: MPI_Group_range_incl_f08
 private :: MPI_Get_f08
 private :: MPI_Iprobe_f08
@@ -7284,8 +7290,59 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Win_delete_attr_f08
 
-! MPI_Type_hindexed NOT IMPLEMENTED in MPC
 
+subroutine MPI_Type_hindexed_f08( count,&
+array_of_blocklengths,&
+array_of_displacements,&
+oldtype,&
+newtype,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+integer, intent(in) :: count
+integer, intent(in) :: array_of_blocklengths(count)
+integer, intent(in) :: array_of_displacements(count)
+type(MPI_Datatype), intent(in) :: oldtype
+type(MPI_Datatype), intent(out) :: newtype
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: count_c     !int count
+integer(c_int), target  :: array_of_blocklengths_c(count)     !int[] array_of_blocklengths
+integer(c_int), target  :: array_of_displacements_c(count)     !int[] array_of_displacements
+integer(c_int) :: oldtype_c     !MPI_Datatype oldtype
+integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+count_c = count
+do 35 n_ = 1 , count
+array_of_blocklengths_c(n_) = array_of_blocklengths(n_)
+35 continue
+do 36 n_ = 1 , count
+array_of_displacements_c(n_) = array_of_displacements(n_)
+36 continue
+oldtype_c = oldtype%val
+
+ret = MPI_Type_hindexed_c(count_c,&
+c_loc(array_of_blocklengths_c),&
+c_loc(array_of_displacements_c),&
+oldtype_c,&
+newtype_c,&
+ierror_c)
+
+newtype%val = newtype_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Type_hindexed_f08
 
 ! MPI_File_set_atomicity NOT IMPLEMENTED in MPC
 
@@ -7321,9 +7378,9 @@ integer(c_int) ::  r_ ! for comm array expansion
 
 group_c = group%val
 n_c = n
-do 35 n_ = 1 , n
+do 37 n_ = 1 , n
 !ERR LAYOUT int[][3] 
-35 continue
+37 continue
 
 ret = MPI_Group_range_incl_c(group_c,&
 n_c,&
@@ -7537,12 +7594,12 @@ c_loc(index_c),&
 c_loc(edges_c),&
 ierror_c)
 
-do 36 n_ = 1 , maxindex
+do 38 n_ = 1 , maxindex
 index(n_) = index_c(n_)
-36 continue
-do 37 n_ = 1 , maxedges
+38 continue
+do 39 n_ = 1 , maxedges
 edges(n_) = edges_c(n_)
-37 continue
+39 continue
 
 if( present(ierror)) ierror = ierror_c
 
@@ -7948,18 +8005,18 @@ integer(c_int) ::  r_ ! for comm array expansion
 size_c = size
 rank_c = rank
 ndims_c = ndims
-do 38 n_ = 1 , ndims
-gsize_array_c(n_) = gsize_array(n_)
-38 continue
-do 39 n_ = 1 , ndims
-distrib_array_c(n_) = distrib_array(n_)
-39 continue
 do 40 n_ = 1 , ndims
-darg_array_c(n_) = darg_array(n_)
+gsize_array_c(n_) = gsize_array(n_)
 40 continue
 do 41 n_ = 1 , ndims
-psize_array_c(n_) = psize_array(n_)
+distrib_array_c(n_) = distrib_array(n_)
 41 continue
+do 42 n_ = 1 , ndims
+darg_array_c(n_) = darg_array(n_)
+42 continue
+do 43 n_ = 1 , ndims
+psize_array_c(n_) = psize_array(n_)
+43 continue
 order_c = order
 oldtype_c = oldtype%val
 
@@ -8050,12 +8107,12 @@ integer(c_int) ::  r_ ! for comm array expansion
 
 comm_c = comm%val
 ndims_c = ndims
-do 42 n_ = 1 , ndims
+do 44 n_ = 1 , ndims
 dims_c(n_) = dims(n_)
-42 continue
-do 43 n_ = 1 , ndims
+44 continue
+do 45 n_ = 1 , ndims
 !ERR LAYOUT bool[] 
-43 continue
+45 continue
 
 ret = MPI_Cart_map_c(comm_c,&
 ndims_c,&
@@ -8121,15 +8178,15 @@ integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
 ndims_c = ndims
-do 44 n_ = 1 , ndims
-size_array_c(n_) = size_array(n_)
-44 continue
-do 45 n_ = 1 , ndims
-subsize_array_c(n_) = subsize_array(n_)
-45 continue
 do 46 n_ = 1 , ndims
-start_array_c(n_) = start_array(n_)
+size_array_c(n_) = size_array(n_)
 46 continue
+do 47 n_ = 1 , ndims
+subsize_array_c(n_) = subsize_array(n_)
+47 continue
+do 48 n_ = 1 , ndims
+start_array_c(n_) = start_array(n_)
+48 continue
 order_c = order
 oldtype_c = oldtype%val
 
@@ -8313,28 +8370,28 @@ integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
 count_c = count
-do 47 n_ = 1 , count
+do 49 n_ = 1 , count
 array_of_requests_c(n_) = array_of_requests(n_)
-47 continue
-do 48 n_ = 1 , count
+49 continue
+do 50 n_ = 1 , count
 array_of_statuses_c(n_) = array_of_statuses(n_)
-48 continue
+50 continue
 
 ret = MPI_Waitall_c(count_c,&
 array_of_requests%val,&
 c_loc(array_of_statuses_c),&
 ierror_c)
 
-do 49 n_ = 1 , count
+do 51 n_ = 1 , count
 array_of_requests(n_) = array_of_requests_c(n_)
-49 continue
+51 continue
 if ( c_associated(c_loc(array_of_statuses), c_loc(MPI_STATUSES_IGNORE))&
 .OR. ( c_associated(c_loc(array_of_statuses), c_loc(MPI_STATUS_IGNORE)))) then
     n_=2 !dummy operation
 else
-do 50 n_ = 1 , count
+do 52 n_ = 1 , count
 array_of_statuses(n_) = array_of_statuses_c(n_)
-50 continue
+52 continue
 end if
 
 if( present(ierror)) ierror = ierror_c
@@ -8857,9 +8914,9 @@ integer(c_int) ::  r_ ! for comm array expansion
 
 group_c = group%val
 n_c = n
-do 51 n_ = 1 , n
+do 53 n_ = 1 , n
 !ERR LAYOUT int[][3] 
-51 continue
+53 continue
 
 ret = MPI_Group_range_excl_c(group_c,&
 n_c,&

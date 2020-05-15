@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include "mpc_thread_accessor.h"
 
+#include <sctk_alloc.h>
+
 
 /************************************************************************/
 /* TOPOLOGICAL POLLING CELL SCTRUCTURE                                  */

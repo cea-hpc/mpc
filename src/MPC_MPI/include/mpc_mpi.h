@@ -5573,6 +5573,27 @@ int PMPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype);
 int MPI_Type_create_hindexed(int count, const int array_of_blocklengths[], const MPI_Aint array_of_displacements[], MPI_Datatype oldtype, MPI_Datatype *newtype);
 int PMPI_Type_create_hindexed(int count, const int array_of_blocklengths[], const MPI_Aint array_of_displacements[], MPI_Datatype oldtype, MPI_Datatype *newtype);
 
+/*MPI_Type_hindexed (deprecated) */
+
+/**
+ * @brief MPI function MPI_Type_hindexed
+ * 
+ * @param count number of blocks -- also number of entries in array_of_displacements and array_of_blocklengths
+ * @param array_of_blocklengths number of elements in each block
+ * @param array_of_displacements byte displacement of each block
+ * @param oldtype old datatype
+ * @param newtype new datatype
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
+ */
+int MPI_Type_hindexed(int count,
+                      const int array_of_blocklengths[],
+                      const int array_of_displacements[],
+                      MPI_Datatype oldtype, MPI_Datatype * newtype);
+int PMPI_Type_hindexed(int count,
+                       const int array_of_blocklengths[],
+                       const int array_of_displacements[],
+                       MPI_Datatype oldtype, MPI_Datatype * newtype);
 
 /*MPI_Type_create_hindexed_block*/
 
@@ -5672,6 +5693,21 @@ int PMPI_Type_create_resized(MPI_Datatype oldtype, MPI_Aint lb, MPI_Aint extent,
  */
 int MPI_Type_create_struct(int count, const int array_of_blocklengths[], const MPI_Aint array_of_displacements[], const MPI_Datatype array_of_types[], MPI_Datatype *newtype);
 int PMPI_Type_create_struct(int count, const int array_of_blocklengths[], const MPI_Aint array_of_displacements[], const MPI_Datatype array_of_types[], MPI_Datatype *newtype);
+
+
+/*PMPI_Type_lb (DEPRECATED)*/
+
+/**
+ * @brief MPI function MPI_Type_struct
+ * 
+ * @param datatype type to set LB on
+ * @param value of LB
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
+ */
+int MPI_Type_lb(MPI_Datatype datatype, MPI_Aint *displacement);
+int PMPI_Type_lb(MPI_Datatype datatype, MPI_Aint *displacement);
+
 
 /*MPI_Type_struct (DEPRECATED)*/
 
