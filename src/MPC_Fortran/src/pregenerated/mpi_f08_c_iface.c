@@ -185,9 +185,15 @@ int * ierror)
 *ierror = MPI_Info_dup( info,
 newinfo);
 }
-/* MPI_Type_lb NOT IMPLEMENTED in MPC */
 
-
+void mpi_type_lb_f08(
+MPI_Datatype type,
+MPI_Aint* lb,
+int * ierror)
+{
+*ierror = MPI_Type_lb( type,
+lb);
+}
 
 void mpi_cart_get_f08(
 MPI_Comm comm,

@@ -5588,11 +5588,11 @@ int PMPI_Type_create_hindexed(int count, const int array_of_blocklengths[], cons
  */
 int MPI_Type_hindexed(int count,
                       const int array_of_blocklengths[],
-                      const int array_of_displacements[],
+                      const MPI_Aint array_of_displacements[],
                       MPI_Datatype oldtype, MPI_Datatype * newtype);
 int PMPI_Type_hindexed(int count,
                        const int array_of_blocklengths[],
-                       const int array_of_displacements[],
+                       const MPI_Aint array_of_displacements[],
                        MPI_Datatype oldtype, MPI_Datatype * newtype);
 
 /*MPI_Type_create_hindexed_block*/

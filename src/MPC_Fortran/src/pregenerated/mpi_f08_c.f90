@@ -293,8 +293,23 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Info_dup_c
 
-! MPI_Type_lb NOT IMPLEMENTED in MPC
 
+function MPI_Type_lb_c( type,&
+lb,&
+ierror)&
+bind(C, name="mpi_type_lb_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: type     !MPI_Datatype type
+integer(c_intptr_t), value, intent(in) :: lb     !MPI_Aint* lb
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_lb_c
 
 
 function MPI_Cart_get_c( comm,&

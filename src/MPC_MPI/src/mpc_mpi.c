@@ -18191,7 +18191,7 @@ int PMPI_Type_indexed(int count, const int blocklens[], const int indices[], MPI
 	SCTK_MPI_CHECK_RETURN_VAL(res, comm);
 }
 
-int PMPI_Type_hindexed(int count, const int blocklens[], const int indices[], MPI_Datatype old_type, MPI_Datatype *newtype)
+int PMPI_Type_hindexed(int count, const int blocklens[], const MPI_Aint indices[], MPI_Datatype old_type, MPI_Datatype *newtype)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
@@ -18209,22 +18209,16 @@ int PMPI_Type_hindexed(int count, const int blocklens[], const int indices[], MP
 		return MPI_SUCCESS;
 	}
 
-	MPI_Aint * lindices = sctk_malloc(sizeof(MPI_Aint) * count);
-	assume(lindices != NULL);
-
 	for(i = 0; i < count; i++)
 	{
 		if(blocklens[i] < 0)
 		{
 			MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Error negative block lengths provided");
 		}
-		lindices[i] = (MPI_Aint)indices[i];
 	}
 
 	mpi_check_type_create(old_type, comm);
-	res = __INTERNAL__PMPI_Type_create_hindexed(count, blocklens, lindices, old_type, newtype);
-
-	sctk_free(lindices);
+	res = __INTERNAL__PMPI_Type_create_hindexed(count, blocklens, indices, old_type, newtype);
 
 	SCTK_MPI_CHECK_RETURN_VAL(res, comm);
 }

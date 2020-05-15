@@ -96,6 +96,11 @@ module procedure MPI_Info_dup_f08
 end interface
 
 
+interface MPI_Type_lb
+module procedure MPI_Type_lb_f08
+end interface
+
+
 interface MPI_Cart_get
 module procedure MPI_Cart_get_f08
 end interface
@@ -978,6 +983,7 @@ private :: MPI_Type_delete_attr_f08
 private :: MPI_Error_class_f08
 private :: MPI_Free_mem_f08
 private :: MPI_Info_dup_f08
+private :: MPI_Type_lb_f08
 private :: MPI_Cart_get_f08
 private :: MPI_Add_error_class_f08
 private :: MPI_Buffer_detach_f08
@@ -1655,8 +1661,40 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Info_dup_f08
 
-! MPI_Type_lb NOT IMPLEMENTED in MPC
 
+subroutine MPI_Type_lb_f08( type,&
+lb,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Datatype), intent(in) :: type
+integer*8, intent(in) :: lb
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: type_c     !MPI_Datatype type
+integer(c_intptr_t) :: lb_c     !MPI_Aint* lb
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+type_c = type%val
+lb_c = lb
+
+ret = MPI_Type_lb_c(type_c,&
+lb_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Type_lb_f08
 
 
 subroutine MPI_Cart_get_f08( comm,&

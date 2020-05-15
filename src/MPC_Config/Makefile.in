@@ -800,7 +800,7 @@ install-data-local:
 	install -m 0644 -D $(abs_srcdir)/extra/config.xml.example $(pkgdatadir)/config.xml
 
 uninstall-local:
-	rm -rf $($pkgdatadir)/editor
+	rm -rf $(pkgdatadir)/editor
 	rm -f $(pkgdatadir)/config.xml
 	rm -f $(pkgdatadir)/mpc-config.xsd
 
