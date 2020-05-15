@@ -1514,18 +1514,13 @@ mpc_lowcomm_ptp_message_t *mpc_lowcomm_ptp_message_header_create( mpc_lowcomm_pt
 	return tmp;
 }
 
-static inline void __mpc_comm_ptp_message_set_contiguous_addr( mpc_lowcomm_ptp_message_t *restrict msg,
-        void *restrict addr, const size_t size )
-{
-	msg->tail.message.contiguous.size = size;
-	msg->tail.message.contiguous.addr = addr;
-}
 
 void mpc_lowcomm_ptp_message_set_contiguous_addr( mpc_lowcomm_ptp_message_t *restrict msg,
-        void *restrict addr, const size_t size )
+        const void *restrict addr, const size_t size )
 {
 	assert( msg->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS );
-	__mpc_comm_ptp_message_set_contiguous_addr( msg, addr, size );
+	msg->tail.message.contiguous.size = size;
+	msg->tail.message.contiguous.addr = (void *)addr;
 }
 
 static inline void __mpc_comm_fill_request( mpc_lowcomm_request_t *request,
@@ -2659,7 +2654,7 @@ int mpc_lowcomm_request_cancel( mpc_lowcomm_request_t *msg )
 	return ret;
 }
 
-void mpc_lowcomm_isend_class_src( int src, int dest, void *data, size_t size,
+void mpc_lowcomm_isend_class_src( int src, int dest, const void *data, size_t size,
                                   int tag, mpc_lowcomm_communicator_t comm,
                                   mpc_lowcomm_ptp_message_class_t class,
                                   mpc_lowcomm_request_t *req )
@@ -2678,7 +2673,7 @@ void mpc_lowcomm_isend_class_src( int src, int dest, void *data, size_t size,
 	mpc_lowcomm_ptp_message_send( msg );
 }
 
-void mpc_lowcomm_isend_class( int dest, void *data, size_t size, int tag,
+void mpc_lowcomm_isend_class( int dest, const void *data, size_t size, int tag,
                               mpc_lowcomm_communicator_t comm,
                               mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req )
 {
@@ -2770,7 +2765,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_delete_comm( const mpc_lowcomm_communicat
  *  ############### */
 
 
-void mpc_lowcomm_isend( int dest, void *data, size_t size, int tag,
+void mpc_lowcomm_isend( int dest, const void *data, size_t size, int tag,
                         mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req )
 {
 	mpc_lowcomm_isend_class( dest, data, size, tag, comm, MPC_LOWCOMM_P2P_MESSAGE, req );
@@ -2801,7 +2796,7 @@ void mpc_lowcomm_wait( mpc_lowcomm_request_t *request )
 	mpc_lowcomm_request_wait( request );
 }
 
-void mpc_lowcomm_send( int dest, void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm )
+void mpc_lowcomm_send( int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm )
 {
 	mpc_lowcomm_request_t req;
 	mpc_lowcomm_isend( dest, data, size, tag, comm, &req );

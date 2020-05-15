@@ -109,7 +109,7 @@ void mpc_lowcomm_wait( mpc_lowcomm_request_t * request );
  * @param comm Communicator of the message
  * @param req Returned request to be waited with @ref mpc_lowcomm_wait
  */
-void mpc_lowcomm_isend( int dest, void * data, size_t size, int tag, mpc_lowcomm_communicator_t comm , mpc_lowcomm_request_t *req );
+void mpc_lowcomm_isend( int dest, const void * data, size_t size, int tag, mpc_lowcomm_communicator_t comm , mpc_lowcomm_request_t *req );
 
 /** Receive an asynchornous message
  * @param src Source rank
@@ -128,7 +128,7 @@ void mpc_lowcomm_irecv( int src, void * buffer, size_t size, int tag, mpc_lowcom
  * @param tag Message tag
  * @param comm Communicator of the message
  */
-void mpc_lowcomm_send( int dest, void * data, size_t size, int tag, mpc_lowcomm_communicator_t comm );
+void mpc_lowcomm_send( int dest, const void * data, size_t size, int tag, mpc_lowcomm_communicator_t comm );
 
 /** Receive a synchornous message
  * @param src Source rank

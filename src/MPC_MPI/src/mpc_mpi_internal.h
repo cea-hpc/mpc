@@ -368,7 +368,7 @@ static inline void sctk_mpi_shared_mem_buffer_get(union shared_mem_buffer *b,
   }
 }
 
-#define MPI_ERROR_REPORT(comm, error,message) return SCTK__MPI_ERROR_REPORT__(comm, error,message,__FILE__, __LINE__)
+
 int _mpc_cl_error_init();
 
 void SCTK__MPI_INIT_REQUEST (MPI_Request * request);

@@ -286,7 +286,7 @@ int _mpc_cl_irsend( void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_dataty
 int _mpc_cl_irecv( void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype,
                    int source, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *request );
 
-int _mpc_cl_send( void *buf, mpc_lowcomm_msg_count_t count,
+int _mpc_cl_send( const void *buf, mpc_lowcomm_msg_count_t count,
                   mpc_lowcomm_datatype_t datatype, int dest, int tag, mpc_lowcomm_communicator_t comm );
 
 int _mpc_cl_ssend( void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype,
