@@ -388,33 +388,6 @@ void SCTK__MPI_INIT_REQUEST (MPI_Request * request);
 
 int PMPI_Type_extent (MPI_Datatype, MPI_Aint *);
 int PMPI_Type_size (MPI_Datatype, int *);
-int __INTERNAL__PMPI_Pack (void *, int, MPI_Datatype, void *, int,
-                                  int *, MPI_Comm);
-int __INTERNAL__PMPI_Unpack (void *, int, int *, void *, int,
-                                    MPI_Datatype, MPI_Comm);
-int __INTERNAL__PMPI_Pack_size (int, MPI_Datatype, MPI_Comm, int *);
-
-int __INTERNAL__PMPI_Waitall (int, MPI_Request *, MPI_Status *);
-int __INTERNAL__PMPI_Waitany (int, MPI_Request *, int *, MPI_Status *);
-
-int __INTERNAL__PMPI_Irecv (void *, int, MPI_Datatype, int, int,
-				   MPI_Comm, MPI_Request *);
-int __INTERNAL__PMPI_Allgather (void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
-int __INTERNAL__PMPI_Allgatherv (void *, int, MPI_Datatype, void *, int *, int *, MPI_Datatype, MPI_Comm);
-int __INTERNAL__PMPI_Allreduce (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
-int __INTERNAL__PMPI_Alltoall (void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
-int __INTERNAL__PMPI_Alltoallv (void *, int *, int *, MPI_Datatype,void *, int *, int *, MPI_Datatype, MPI_Comm);
-int __INTERNAL__PMPI_Alltoallw (void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sendtypes, void *recvbuf, int *recvcnts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm);
-int __INTERNAL__PMPI_Bcast (void *, int, MPI_Datatype, int, MPI_Comm);
-int __INTERNAL__PMPI_Exscan (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
-int __INTERNAL__PMPI_Gather (void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
-int __INTERNAL__PMPI_Gatherv (void *, int, MPI_Datatype, void *, int *, int *, MPI_Datatype, int, MPI_Comm);
-int __INTERNAL__PMPI_Reduce (void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm);
-int __INTERNAL__PMPI_Reduce_scatter (void *, void *, int *, MPI_Datatype, MPI_Op, MPI_Comm);
-int __INTERNAL__PMPI_Reduce_scatter_block (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
-int __INTERNAL__PMPI_Scan (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
-int __INTERNAL__PMPI_Scatter (void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
-int __INTERNAL__PMPI_Scatterv (void *, int *, int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
 
 int NBC_Finalize(mpc_thread_t *NBC_thread);
 

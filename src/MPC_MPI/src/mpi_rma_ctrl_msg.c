@@ -168,7 +168,7 @@ void mpc_MPI_Win_handle_non_contiguous_write(void *data, size_t size) {
       target_disp, pack_size, target_t_ext, target_count);
 
   int pos = 0;
-  __INTERNAL__PMPI_Unpack(pack_data, pack_size, &pos, start_addr, target_count,
+  PMPI_Unpack(pack_data, pack_size, &pos, start_addr, target_count,
                           target_type, desc->comm);
 
   /* Now ACK */
@@ -329,7 +329,7 @@ void mpc_MPI_Win_handle_non_contiguous_accumulate_send(void *data,
 
   /* Now that we are done put the computed data back in place */
   pos = 0;
-  __INTERNAL__PMPI_Unpack(local_pack_data, local_pack_size, &pos, start_addr,
+  PMPI_Unpack(local_pack_data, local_pack_size, &pos, start_addr,
                           target_count, target_type, desc->comm);
 
   mpc_MPI_accumulate_op_unlock();

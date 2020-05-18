@@ -13566,6 +13566,12 @@ int PMPI_Unpack(const void *inbuf,
 	}
 }
 
+int *sctk_group_raw_ranks(MPI_Group group)
+{
+	return __sctk_convert_mpc_group(group)->task_list_in_global_ranks;
+}
+
+
 int PMPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm, int *size)
 {
 	mpi_check_comm(comm, comm);
