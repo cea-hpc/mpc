@@ -188,6 +188,7 @@ typedef enum sctk_ft_state_e
 #define SCTK_PROC_NULL -2
 /** SUCCESS and ERROR **/
 #define SCTK_SUCCESS 0
+#define SCTK_ERROR 1
 
 /** Wildcards **/
 #define SCTK_ANY_TAG -1

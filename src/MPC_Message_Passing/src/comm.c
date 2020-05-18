@@ -2734,6 +2734,11 @@ int mpc_lowcomm_get_comm_rank( const mpc_lowcomm_communicator_t communicator )
 	return mpc_lowcomm_communicator_rank ( communicator, mpc_lowcomm_get_rank() );
 }
 
+int mpc_lowcomm_get_comm_size(const mpc_lowcomm_communicator_t communicator)
+{
+	mpc_lowcomm_communicator_size( communicator );
+}
+
 int mpc_lowcomm_get_process_count()
 {
 	return mpc_common_get_process_count();

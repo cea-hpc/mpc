@@ -2504,7 +2504,7 @@ int _mpc_cl_comm_rank( mpc_lowcomm_communicator_t comm, int *rank )
 int _mpc_cl_comm_size( mpc_lowcomm_communicator_t comm, int *size )
 {
 	SCTK_PROFIL_START( MPC_Comm_size );
-	*size = mpc_lowcomm_communicator_size( comm );
+	*size = mpc_lowcomm_get_comm_size( comm );
 	SCTK_PROFIL_END( MPC_Comm_size );
 	MPC_ERROR_SUCESS();
 }

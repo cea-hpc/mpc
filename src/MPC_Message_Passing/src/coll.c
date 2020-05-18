@@ -2017,15 +2017,66 @@ void mpc_lowcomm_terminaison_barrier( void )
 /*BARRIER                                                               */
 /************************************************************************/
 
-void mpc_lowcomm_barrier( const mpc_lowcomm_communicator_t communicator )
+
+int mpc_lowcomm_barrier_shm_on_context(struct shared_mem_barrier *barrier_ctx,
+                                       int comm_size)
+{
+	int my_phase = !OPA_load_int(&barrier_ctx->phase);
+
+	if(OPA_fetch_and_decr_int(&barrier_ctx->counter) == 1)
+	{
+		OPA_store_int(&barrier_ctx->counter, comm_size);
+		OPA_store_int(&barrier_ctx->phase, my_phase);
+	}
+	else
+	{
+		while(OPA_load_int(&barrier_ctx->phase) != my_phase)
+		{
+	
+				int cnt = 0;
+				while(OPA_load_int(&barrier_ctx->phase) != my_phase)
+				{
+					if(128 < cnt++)
+					{
+						mpc_thread_yield();
+					}
+				}
+		}
+	}
+
+	return SCTK_SUCCESS;
+}
+
+int mpc_lowcomm_barrier( const mpc_lowcomm_communicator_t communicator )
 {
 	struct mpc_lowcomm_coll_s *tmp;
 
-	if ( communicator != SCTK_COMM_SELF )
+	if ( communicator == SCTK_COMM_SELF )
 	{
+		return SCTK_SUCCESS;
+	}
+
+	if(sctk_is_shared_mem(communicator) )
+	{
+		/* Call the SHM version */
+		struct sctk_comm_coll *    coll        = sctk_communicator_get_coll(communicator);
+
+		if(!coll)
+		{
+			return SCTK_ERROR;
+		}
+
+		struct shared_mem_barrier *barrier_ctx = &coll->shm_barrier;
+		return mpc_lowcomm_barrier_shm_on_context(barrier_ctx, coll->comm_size);
+	}
+	else
+	{
+		/* Call the inter-node version */
 		tmp = _mpc_comm_get_internal_coll( communicator );
 		tmp->barrier_func( communicator, tmp );
 	}
+
+	return SCTK_SUCCESS;
 }
 
 /************************************************************************/

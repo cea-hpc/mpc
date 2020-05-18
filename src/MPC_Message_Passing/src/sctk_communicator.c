@@ -1369,19 +1369,15 @@ static inline void sctk_communicator_init_intern_init_only ( const int nb_task, 
 	{
 		tmp->is_shared_mem = 1;
 	}
-
-	/* Set the shared-node flag */
-	if ( local_to_global )
-	{
-		tmp->is_shared_node = 0;
-	}
 	else
 	{
-		/* We are building comm_world */
-		if ( mpc_common_get_node_count() == 1 )
+		/* These are mutually exclusive */
+		/* Clearly a bug at node level SHM coll */
+		if ( mpc_common_get_node_count() == 1 && 0)
 		{
 			tmp->is_shared_node = 1;
 		}
+
 	}
 
 	if ( tmp->is_shared_mem )

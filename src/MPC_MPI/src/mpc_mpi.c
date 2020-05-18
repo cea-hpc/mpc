@@ -2635,7 +2635,6 @@ static inline MPI_Datatype * __get_typemask(MPI_Datatype datatype, int *type_mas
 
 /* Function pointer for user collectives */
 int (*barrier_intra)(MPI_Comm);
-int (*barrier_intra_shm)(MPI_Comm);
 int (*barrier_intra_shared_node)(MPI_Comm);
 int (*barrier_inter)(MPI_Comm);
 int (*barrier_offload)(int, int, int);
@@ -2802,51 +2801,6 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm)
 	return MPI_SUCCESS;
 }
 
-int __INTERNAL__PMPI_Barrier_intra_shm_on_ctx(struct shared_mem_barrier *barrier_ctx,
-                                              int comm_size)
-{
-	int my_phase = !OPA_load_int(&barrier_ctx->phase);
-
-	if(OPA_fetch_and_decr_int(&barrier_ctx->counter) == 1)
-	{
-		OPA_store_int(&barrier_ctx->counter, comm_size);
-		OPA_store_int(&barrier_ctx->phase, my_phase);
-	}
-	else
-	{
-		while(OPA_load_int(&barrier_ctx->phase) != my_phase)
-		{
-			{
-				while(OPA_load_int(&barrier_ctx->phase) != my_phase)
-				{
-					if(__do_yield)
-					{
-						mpc_thread_yield();
-					}
-					else
-					{
-						sctk_cpu_relax();
-					};
-				}
-			}
-		}
-	}
-
-	return MPI_SUCCESS;
-}
-
-int __INTERNAL__PMPI_Barrier_intra_shm(MPI_Comm comm)
-{
-	struct sctk_comm_coll *    coll        = sctk_communicator_get_coll(comm);
-	struct shared_mem_barrier *barrier_ctx = &coll->shm_barrier;
-
-	if(!coll)
-	{
-		return MPI_ERR_COMM;
-	}
-
-	return __INTERNAL__PMPI_Barrier_intra_shm_on_ctx(barrier_ctx, coll->comm_size);
-}
 
 int __MPC_init_node_comm_ctx(struct sctk_comm_coll *coll, MPI_Comm comm)
 {
@@ -2909,281 +2863,41 @@ static inline int __MPC_node_comm_coll_check(struct sctk_comm_coll *coll, MPI_Co
 	return 1;
 }
 
-int __INTERNAL__PMPI_Barrier_intra_shared_node(MPI_Comm comm)
-{
-	struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
 
-	if(__MPC_node_comm_coll_check(coll, comm) )
-	{
-		return __INTERNAL__PMPI_Barrier_intra_shm_on_ctx(&coll->node_ctx->shm_barrier,
-		                                                 coll->comm_size);
-	}
-	else
-	{
-		return (barrier_intra)(comm);
-	}
-}
-
-#define FOR_MPI_BARRIER_STATIC_REQ    32
-
-static inline int __INTERNAL__PMPI_Barrier_intra_for(MPI_Comm comm, int size)
-{
-	int i, res = MPI_ERR_INTERN, rank;
-
-	if(size == 1)
-	{
-		MPI_ERROR_SUCESS();
-	}
-
-	res = __cached_comm_rank(comm, &rank);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-
-	/* All non-root send & receive zero-length message. */
-	if(rank > 0)
-	{
-		res = PMPI_Send(NULL, 0, MPI_BYTE, 0, MPC_BARRIER_TAG, comm);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-
-		res = PMPI_Recv(NULL, 0, MPI_BYTE, 0, MPC_BARRIER_TAG, comm,
-		                MPI_STATUS_IGNORE);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-
-	/* The root collects and broadcasts the messages. */
-	else
-	{
-		if( (size - 1) < FOR_MPI_BARRIER_STATIC_REQ)
-		{
-			MPI_Request reqs[FOR_MPI_BARRIER_STATIC_REQ];
-
-			for(i = 1; i < size; ++i)
-			{
-				res = PMPI_Irecv(NULL, 0, MPI_BYTE, MPI_ANY_SOURCE,
-				                             MPC_BARRIER_TAG, comm, &reqs[i - 1]);
-				if(res != MPI_SUCCESS)
-				{
-					return res;
-				}
-			}
-
-			res = PMPI_Waitall(size - 1, reqs, MPI_STATUSES_IGNORE);
-
-			if(res != MPI_SUCCESS)
-			{
-				return res;
-			}
-
-			for(i = 1; i < size; ++i)
-			{
-				res = PMPI_Isend(NULL, 0, MPI_BYTE, i, MPC_BARRIER_TAG, comm, &reqs[i - 1]);
-				if(res != MPI_SUCCESS)
-				{
-					return res;
-				}
-			}
-
-			res = PMPI_Waitall(size - 1, reqs, MPI_STATUSES_IGNORE);
-
-			if(res != MPI_SUCCESS)
-			{
-				return res;
-			}
-		}
-		else
-		{
-			for(i = 1; i < size; ++i)
-			{
-				res = PMPI_Recv(NULL, 0, MPI_BYTE, MPI_ANY_SOURCE,
-				                MPC_BARRIER_TAG, comm, MPI_STATUS_IGNORE);
-				if(res != MPI_SUCCESS)
-				{
-					return res;
-				}
-			}
-
-			for(i = 1; i < size; ++i)
-			{
-				res = PMPI_Send(NULL, 0, MPI_BYTE, i, MPC_BARRIER_TAG, comm);
-				if(res != MPI_SUCCESS)
-				{
-					return res;
-				}
-			}
-		}
-	}
-	MPI_ERROR_SUCESS();
-}
-
-static inline int __INTERNAL__PMPI_Barrier_btree_mpi(MPI_Comm comm, int size)
-{
-	int res = MPI_ERR_INTERN, rank;
-
-
-	if(size == 1)
-	{
-		MPI_ERROR_SUCESS();
-	}
-
-	res = __cached_comm_rank(comm, &rank);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-
-	int parent = -1;
-
-	if(rank)
-	{
-		parent = ( (rank + 1) / 2) - 1;
-	}
-
-	int left_child  = ( (rank + 1) * 2) - 1;
-	int right_child = ( (rank + 1) * 2);
-
-	if(size <= left_child)
-	{
-		left_child = -1;
-	}
-
-	if(size <= right_child)
-	{
-		right_child = -1;
-	}
-
-	// sctk_error("%d P %d LC %d RC %d", rank, parent, left_child, right_child );
-
-	/* To Child */
-
-	if(parent != -1)
-	{
-		res = PMPI_Recv(NULL, 0, MPI_BYTE, parent, MPC_BARRIER_TAG,
-		                comm, MPI_STATUS_IGNORE);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-
-	if(left_child != -1)
-	{
-		res = PMPI_Send(NULL, 0, MPI_BYTE, left_child, MPC_BARRIER_TAG,
-		                comm);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-
-	if(right_child != -1)
-	{
-		res = PMPI_Send(NULL, 0, MPI_BYTE, right_child, MPC_BARRIER_TAG,
-		                comm);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-
-	/* From Child */
-
-	if(left_child != -1)
-	{
-		res = PMPI_Recv(NULL, 0, MPI_BYTE, left_child, MPC_BARRIER_TAG,
-		                comm, MPI_STATUS_IGNORE);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-
-	if(right_child != -1)
-	{
-		res = PMPI_Recv(NULL, 0, MPI_BYTE, right_child, MPC_BARRIER_TAG,
-		                comm, MPI_STATUS_IGNORE);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-
-	if(parent != -1)
-	{
-		res =
-		        PMPI_Send(NULL, 0, MPI_BYTE, parent, MPC_BARRIER_TAG, comm);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-
-	/* To Child */
-
-	if(parent != -1)
-	{
-		res = PMPI_Recv(NULL, 0, MPI_BYTE, parent, MPC_BARRIER_TAG,
-		                comm, MPI_STATUS_IGNORE);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-
-	if(left_child != -1)
-	{
-		res = PMPI_Send(NULL, 0, MPI_BYTE, left_child, MPC_BARRIER_TAG,
-		                comm);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-
-	if(right_child != -1)
-	{
-		res = PMPI_Send(NULL, 0, MPI_BYTE, right_child, MPC_BARRIER_TAG,
-		                comm);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-
-	MPI_ERROR_SUCESS();
-}
 
 int __INTERNAL__PMPI_Barrier_intra(MPI_Comm comm)
 {
-	int size, rank, res;
+	int res;
 
+#ifdef MPC_USE_PORTALS
+	int rank, size;
 	__cached_comm_size(comm, &size);
 	__cached_comm_rank(comm, &rank);
 
-#ifdef MPC_USE_PORTALS
 	if(ptl_offcoll_enabled() )
 	{
 		res = ptl_offcoll_barrier(comm, rank, size);
 		return res;
 	}
 #endif
-	if(size < sctk_runtime_config_get()->modules.collectives_intra.barrier_intra_for_trsh)
+
+	return mpc_lowcomm_barrier(comm);
+}
+
+
+int __INTERNAL__PMPI_Barrier_intra_shared_node(MPI_Comm comm)
+{
+	struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+
+	if(__MPC_node_comm_coll_check(coll, comm) )
 	{
-		res = __INTERNAL__PMPI_Barrier_intra_for(comm, size);
+		return mpc_lowcomm_barrier_shm_on_context(&coll->node_ctx->shm_barrier,
+		                                                 coll->comm_size);
 	}
 	else
 	{
-		res = __INTERNAL__PMPI_Barrier_btree_mpi(comm, size);
+		return __INTERNAL__PMPI_Barrier_intra(comm);
 	}
-
-	return res;
 }
 
 int __INTERNAL__PMPI_Barrier_inter(MPI_Comm comm)
@@ -14194,12 +13908,6 @@ int PMPI_Barrier(MPI_Comm comm)
 	{
 		/* Intracomm */
 
-		if(barrier_intra_shm == NULL)
-		{
-			barrier_intra_shm = (int (*)(MPI_Comm) )(
-			        sctk_runtime_config_get()
-			        ->modules.collectives_shm.barrier_intra_shm.value);
-		}
 
 		if(barrier_intra_shared_node == NULL)
 		{
@@ -14215,12 +13923,7 @@ int PMPI_Barrier(MPI_Comm comm)
 			        ->modules.collectives_intra.barrier_intra.value);
 		}
 
-		if(sctk_is_shared_mem(comm) )
-		{
-			/* Here only work in shared-mem */
-			res = (barrier_intra_shm)(comm);
-		}
-		else if(sctk_is_shared_node(comm) )
+		if(sctk_is_shared_node(comm) )
 		{
 			res = (barrier_intra_shared_node)(comm);
 		}
