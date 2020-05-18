@@ -1388,7 +1388,7 @@ static int __Ibsend_test_req(void *buf, int count, MPI_Datatype datatype,
 			head_next->request = MPI_REQUEST_NULL;
 		}
 
-		res = PPMPI_Pack(buf, count, datatype, head_buf, head->size,
+		res = PMPI_Pack(buf, count, datatype, head_buf, head->size,
 		                 &position, comm);
 		if(res != MPI_SUCCESS)
 		{
@@ -4381,7 +4381,7 @@ int __INTERNAL__PMPI_Scatter_intra_shared_node(void *sendbuf, int sendcnt, MPI_D
 
 		int rez = 0;
 
-		__INTERNAL__PMPI_Allreduce(&bool_val, &rez, 1, MPI_INT, MPI_BAND, comm);
+		PMPI_Allreduce(&bool_val, &rez, 1, MPI_INT, MPI_BAND, comm);
 
 		if(!rez)
 		{
@@ -5313,7 +5313,7 @@ int __INTERNAL__PMPI_Alltoall_intra_shared_node(void *sendbuf, int sendcount,
 
 	int rez = 0;
 
-	__INTERNAL__PMPI_Allreduce(&bool_val, &rez, 1, MPI_INT, MPI_BAND, comm);
+	PMPI_Allreduce(&bool_val, &rez, 1, MPI_INT, MPI_BAND, comm);
 
 	if(!rez)
 	{
@@ -11930,7 +11930,7 @@ int PMPI_Sendrecv_replace(void *buf, int count, MPI_Datatype datatype,
 	tmp = sctk_malloc(type_size);
 
 	MPI_HANDLE_ERROR(MPI_ERR_INTERN, comm, "Temporary Buffer alloc Failed");
-	res = PPMPI_Pack(buf, count, datatype, tmp, type_size, &position, comm);
+	res = PMPI_Pack(buf, count, datatype, tmp, type_size, &position, comm);
 	if(res != MPI_SUCCESS)
 	{
 		sctk_free(tmp);

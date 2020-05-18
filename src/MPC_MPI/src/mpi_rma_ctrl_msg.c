@@ -230,7 +230,7 @@ void mpc_MPI_Win_handle_non_contiguous_read(void *data, size_t size) {
 
   int pos = 0;
 
-  __INTERNAL__PMPI_Pack(start_addr, target_count, target_type, pack_data,
+  PMPI_Pack(start_addr, target_count, target_type, pack_data,
                         pack_size, &pos, desc->comm);
 
   mpc_lowcomm_request_t *request =
@@ -309,7 +309,7 @@ void mpc_MPI_Win_handle_non_contiguous_accumulate_send(void *data,
 
   mpc_MPI_accumulate_op_lock();
 
-  __INTERNAL__PMPI_Pack(start_addr, target_count, target_type, local_pack_data,
+  PMPI_Pack(start_addr, target_count, target_type, local_pack_data,
                         local_pack_size, &pos, desc->comm);
 
   /* Now do the sum in the local pack
