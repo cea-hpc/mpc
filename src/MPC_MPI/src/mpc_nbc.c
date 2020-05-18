@@ -1216,7 +1216,7 @@ static int NBC_Ialltoall( void *sendbuf, int sendcount, MPI_Datatype sendtype, v
 		}
 		else
 		{
-			res = __INTERNAL__PMPI_Pack_size( sendcount, sendtype, comm, &datasize );
+			res = PMPI_Pack_size( sendcount, sendtype, comm, &datasize );
 			if ( MPI_SUCCESS != res )
 			{
 				printf( "MPI Error in MPI_Pack_size() (%i)\n", res );
@@ -1247,7 +1247,7 @@ static int NBC_Ialltoall( void *sendbuf, int sendcount, MPI_Datatype sendtype, v
 			int pos = 0;
 
 			/* non-contiguous - pack */
-			res = __INTERNAL__PMPI_Pack( (char *) sendbuf + rank * sendcount * sndext, ( p - rank ) * sendcount, sendtype, handle->tmpbuf, ( p - rank ) * datasize, &pos, comm );
+			res = PMPI_Pack( (char *) sendbuf + rank * sendcount * sndext, ( p - rank ) * sendcount, sendtype, handle->tmpbuf, ( p - rank ) * datasize, &pos, comm );
 			if ( MPI_SUCCESS != res )
 			{
 				printf( "MPI Error in MPI_Pack() (%i)\n", res );
@@ -1256,7 +1256,7 @@ static int NBC_Ialltoall( void *sendbuf, int sendcount, MPI_Datatype sendtype, v
 			if ( rank != 0 )
 			{
 				pos = 0;
-				__INTERNAL__PMPI_Pack( sendbuf, rank * sendcount, sendtype, (char *) handle->tmpbuf + datasize * ( p - rank ), rank * datasize, &pos, comm );
+				PMPI_Pack( sendbuf, rank * sendcount, sendtype, (char *) handle->tmpbuf + datasize * ( p - rank ), rank * datasize, &pos, comm );
 				if ( MPI_SUCCESS != res )
 				{
 					printf( "MPI Error in MPI_Pack() (%i)\n", res );
@@ -1398,7 +1398,7 @@ static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcve
 	if(NBC_Type_intrinsic(sendtype)) {
 		datasize = sndext*sendcount;
 	} else {
-		res = __INTERNAL__PMPI_Pack_size(sendcount, sendtype, comm, &datasize);
+		res = PMPI_Pack_size(sendcount, sendtype, comm, &datasize);
 		if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Pack_size() (%i)\n", res); return res; }
 	}
  
@@ -4533,7 +4533,7 @@ static inline int __NBC_Progress( NBC_Handle *handle, int depth )
 		if ( ( handle->req_count > 0 ) && ( handle->req_array != NULL ) )
 		{
 			mpc_common_debug( "INSIDE THE PROGRESS THREAD" );
-			res = __INTERNAL__PMPI_Waitall( handle->req_count, handle->req_array,
+			res = PMPI_Waitall( handle->req_count, handle->req_array,
 											/*&flag,*/ MPI_STATUSES_IGNORE );
 			if ( res != MPI_SUCCESS )
 			{
@@ -5731,7 +5731,7 @@ PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root,
   MPI_Comm_size(comm, &csize);
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Bcast (buffer, count, datatype, root, comm);
+    res = PMPI_Bcast (buffer, count, datatype, root, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
@@ -5769,7 +5769,7 @@ PMPI_Igather (const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
   }
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Gather (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
+    res = PMPI_Gather (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
 			     recvtype, root, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
@@ -5806,7 +5806,7 @@ PMPI_Igatherv (const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
   }
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Gatherv (sendbuf, sendcnt, sendtype, recvbuf, recvcnts,
+    res = PMPI_Gatherv (sendbuf, sendcnt, sendtype, recvbuf, recvcnts,
 			     displs, recvtype, root, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
@@ -5847,7 +5847,7 @@ PMPI_Iscatter (const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
   }
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Scatter (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
+    res = PMPI_Scatter (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
 			      recvtype, root, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
@@ -5884,7 +5884,7 @@ PMPI_Iscatterv (const void *sendbuf, const int *sendcnts, const int *displs,
   }
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Scatterv (sendbuf, sendcnts, displs, sendtype, recvbuf, recvcnt,
+    res = PMPI_Scatterv (sendbuf, sendcnts, displs, sendtype, recvbuf, recvcnt,
 			      recvtype, root, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
@@ -5919,7 +5919,7 @@ PMPI_Iallgather (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Allgather (sendbuf, sendcount, sendtype, recvbuf,
+    res = PMPI_Allgather (sendbuf, sendcount, sendtype, recvbuf,
 				recvcount, recvtype, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
@@ -5952,7 +5952,7 @@ PMPI_Iallgatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   }
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Allgatherv (sendbuf, sendcount, sendtype, recvbuf,
+    res = PMPI_Allgatherv (sendbuf, sendcount, sendtype, recvbuf,
 				 recvcounts, displs, recvtype, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
@@ -5986,7 +5986,7 @@ PMPI_Ialltoall (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   }
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Alltoall (sendbuf, sendcount, sendtype, recvbuf,
+    res = PMPI_Alltoall (sendbuf, sendcount, sendtype, recvbuf,
 			       recvcount, recvtype, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
@@ -6020,7 +6020,7 @@ PMPI_Ialltoallv (const void *sendbuf, const int *sendcnts, const int *sdispls,
   }
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Alltoallv (sendbuf, sendcnts, sdispls, sendtype, recvbuf,
+    res = PMPI_Alltoallv (sendbuf, sendcnts, sdispls, sendtype, recvbuf,
 				recvcnts, rdispls, recvtype, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
@@ -6052,7 +6052,7 @@ int PMPI_Ialltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls
   }
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Alltoallw (sendbuf, sendcnts, sdispls, sendtypes, recvbuf, 
+    res = PMPI_Alltoallw (sendbuf, sendcnts, sdispls, sendtypes, recvbuf, 
         recvcnts, rdispls, recvtypes, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
@@ -6093,7 +6093,7 @@ PMPI_Ireduce (const void *sendbuf, void *recvbuf, int count, MPI_Datatype dataty
   }
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, root,
+    res = PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, root,
 			     comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
@@ -6127,7 +6127,7 @@ PMPI_Iallreduce (const void *sendbuf, void *recvbuf, int count,
   }
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Allreduce (sendbuf, recvbuf, count, datatype, op, comm);
+    res = PMPI_Allreduce (sendbuf, recvbuf, count, datatype, op, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
@@ -6158,7 +6158,7 @@ PMPI_Ireduce_scatter (const void *sendbuf, void *recvbuf, const int *recvcnts,
   }
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Reduce_scatter (sendbuf, recvbuf, recvcnts, datatype, op,
+    res = PMPI_Reduce_scatter (sendbuf, recvbuf, recvcnts, datatype, op,
 				     comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
@@ -6191,7 +6191,7 @@ PMPI_Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype
   }
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Scan (sendbuf, recvbuf, count, datatype, op, comm);
+    res = PMPI_Scan (sendbuf, recvbuf, count, datatype, op, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
@@ -6221,7 +6221,7 @@ PMPI_Ireduce_scatter_block (const void *sendbuf, void *recvbuf, int recvcnt,
   }
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Reduce_scatter_block (sendbuf, recvbuf, recvcnt, datatype, op,
+    res = PMPI_Reduce_scatter_block (sendbuf, recvbuf, recvcnt, datatype, op,
 				     comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
@@ -6254,7 +6254,7 @@ PMPI_Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype dataty
   }
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Exscan (sendbuf, recvbuf, count, datatype, op, comm);
+    res = PMPI_Exscan (sendbuf, recvbuf, count, datatype, op, comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
