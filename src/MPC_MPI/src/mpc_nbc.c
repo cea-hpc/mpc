@@ -4034,7 +4034,7 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr ) {
       requests_handles = (NBC_Handle **)sctk_malloc(sizeof(NBC_Handle *) * size);
 
 
-      if(req==MPI_REQUEST_NULL) __INTERNAL__PMPI_Irecv(&tmp_recv, 1, MPI_INT, 0, 0, MPI_COMM_SELF, &req);
+      if(req==MPI_REQUEST_NULL) PMPI_Irecv(&tmp_recv, 1, MPI_INT, 0, 0, MPI_COMM_SELF, &req);
       requests[0]=req;
 
       /* re-compile list of requests */
@@ -4081,7 +4081,7 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr ) {
 
     int retidx = 0;
     NBC_DEBUG(10, "waiting for %i elements\n", cpt);
-    int res = __INTERNAL__PMPI_Waitany(cpt, requests, &retidx, MPI_STATUS_IGNORE);
+    int res = PMPI_Waitany(cpt, requests, &retidx, MPI_STATUS_IGNORE);
     NBC_DEBUG(10, "elements %d is finished", retidx);
     if(res != MPI_SUCCESS) { printf("Error %i in MPI_Waitany()\n", res); }
     if(0 != retidx) { // 0 is the fake request ...
