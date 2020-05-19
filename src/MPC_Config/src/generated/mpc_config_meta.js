@@ -29,7 +29,6 @@ meta.types = {
 		scatter_intra_shared_node: {mode: 'param', name: "scatter_intra_shared_node", type: "funcptr", doc: "MPI_Scatter intracom algorithm on shared-node comms", dflt: "__INTERNAL__PMPI_Scatter_intra_shared_node", },
 	}},
 	collectives_shm : {type: 'struct', name: "collectives_shm", childs: {
-		barrier_intra_shm: {mode: 'param', name: "barrier_intra_shm", type: "funcptr", doc: "MPI_Barrier intracom algorithm on shared communicators", dflt: "__INTERNAL__PMPI_Barrier_intra_shm", },
 		bcast_intra_shm: {mode: 'param', name: "bcast_intra_shm", type: "funcptr", doc: "Type of MPI_Bcast intracom algorithm on shared communicators", dflt: "__INTERNAL__PMPI_Bcast_intra_shm", },
 		alltoallv_intra_shm: {mode: 'param', name: "alltoallv_intra_shm", type: "funcptr", doc: "Alltoallv intracom algorithm", dflt: "__INTERNAL__PMPI_Alltoallv_intra_shm", },
 		gatherv_intra_shm: {mode: 'param', name: "gatherv_intra_shm", type: "funcptr", doc: "MPI_Gatherv intracom algorithm for shared communicators", dflt: "__INTERNAL__PMPI_Gatherv_intra_shm", },

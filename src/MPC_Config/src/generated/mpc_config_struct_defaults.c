@@ -149,8 +149,6 @@ void sctk_runtime_config_struct_init_collectives_shm(void * struct_ptr)
 	if( obj->init_done != 0 ) return;
 
 	/* Simple params : */
-	obj->barrier_intra_shm.name = "__INTERNAL__PMPI_Barrier_intra_shm";
-	*(void **) &(obj->barrier_intra_shm.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_intra_shm");
 	obj->bcast_intra_shm.name = "__INTERNAL__PMPI_Bcast_intra_shm";
 	*(void **) &(obj->bcast_intra_shm.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Bcast_intra_shm");
 	obj->alltoallv_intra_shm.name = "__INTERNAL__PMPI_Alltoallv_intra_shm";

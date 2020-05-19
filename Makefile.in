@@ -1018,6 +1018,8 @@ lint:
 #
 
 # Generate and copy back to sources to ensure transparent update on success
+@CAN_GENERATE_CONFIG_TRUE@.PHONY: config
+
 @CAN_GENERATE_CONFIG_TRUE@config:
 @CAN_GENERATE_CONFIG_TRUE@	$(abs_top_srcdir)/src/MPC_Config/generators/mpc_gen_runtime_config $(abs_top_srcdir)/src $(abs_top_srcdir)/src/MPC_Config/generators/ $(abs_top_srcdir)/src/MPC_Config/src/generated/
 @CAN_GENERATE_CONFIG_FALSE@config:

@@ -4859,20 +4859,7 @@ int __INTERNAL__PMPI_Allgather_intra(void *sendbuf, int sendcount,
 	{
 		return res;
 	}
-
-	if(sendbuf == MPI_IN_PLACE)
-	{
-		MPI_Aint extent;
-		res = PMPI_Type_extent(recvtype, &extent);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-		sendbuf   = ( (char *)recvbuf) + (rank * extent * recvcount);
-		sendtype  = recvtype;
-		sendcount = recvcount;
-	}
-
+ 
 	res = PMPI_Gather(sendbuf, sendcount, sendtype, recvbuf,
 	                  recvcount, recvtype, root, comm);
 	if(res != MPI_SUCCESS)
@@ -5001,58 +4988,62 @@ int __INTERNAL__PMPI_Allgatherv_intra(void *sendbuf, int sendcount,
 {
 	int size, rank;
 	int root = 0;
-	MPI_Aint extent;
+	MPI_Aint extent, sendtype_extent;
 	int res = MPI_ERR_INTERN;
 
 	res = __cached_comm_rank(comm, &rank);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
+	MPI_HANDLE_ERROR(res, comm, "Could not retrieve comm rank");
+
 	res = __cached_comm_size(comm, &size);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
+	MPI_HANDLE_ERROR(res, comm, "Could not retrieve comm size");
+
 	res = PMPI_Type_extent(recvtype, &extent);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
+	MPI_HANDLE_ERROR(res, comm, "Could not retrieve type extent");
+
+	res = PMPI_Type_extent(sendtype, &sendtype_extent);
+	MPI_HANDLE_ERROR(res, comm, "Could not retrieve type extent");
+
+
+	int free_sendbuf = 0;
+	int i;
 
 	if(sendbuf == MPI_IN_PLACE)
 	{
-		int i = 0;
-		sendtype = recvtype;
-		sendbuf  = (char *)recvbuf;
-		for(i = 0; i < rank; ++i)
+		void * my_rcv_pointer = recvbuf;
+		for(i = 0 ; i < rank ; i++)
 		{
-			sendbuf += (recvcounts[i] * extent);
+			my_rcv_pointer += extent * recvcounts[i];
 		}
-		sendcount = recvcounts[rank];
+
+		if(my_rcv_pointer == recvbuf)
+		{
+			void * tmp = sctk_malloc(sendtype_extent * sendcount);
+			assume(sendbuf != NULL);
+			memcpy(tmp, my_rcv_pointer, sendtype_extent * sendcount);
+			sendbuf = tmp;
+			free_sendbuf=1;
+		}
+		else
+		{
+			sendbuf = my_rcv_pointer;
+		}
 	}
 
 	res = PMPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf,
 	                   recvcounts, displs, recvtype, root, comm);
-	if(res != MPI_SUCCESS)
+	MPI_HANDLE_ERROR(res, comm, "Gatherv failed");
+
+	if(free_sendbuf)
 	{
-		return res;
+		sctk_free(sendbuf);
 	}
 
 	size--;
 	for(; size >= 0; size--)
 	{
 		res = PMPI_Bcast( ( (char *)recvbuf) + (displs[size] * extent),
-		                  recvcounts[size], recvtype, root, comm);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-	res = PMPI_Barrier(comm);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
+						recvcounts[size], recvtype, root, comm);
+		MPI_HANDLE_ERROR(res, comm, "Bcast failed");
 	}
 
 	return res;
@@ -10887,6 +10878,8 @@ int PMPI_Request_free(MPI_Request *request)
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
+
+
 int PMPI_Waitany(int count, MPI_Request array_of_requests[], int *index,
                  MPI_Status *status)
 {
@@ -14073,7 +14066,6 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
 	}
 
-
 	/* Error checking */
 	mpi_check_root(root, size, comm);
 	if(rank != root)
@@ -14207,6 +14199,7 @@ int PMPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
 	}
+
 	if( (rank != root && MPI_IN_PLACE == sendbuf) ||
 	    (rank == root && MPI_IN_PLACE == recvbuf) )
 	{
@@ -14575,12 +14568,14 @@ int PMPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
 	/* Error checking */
 	mpi_check_comm(comm, comm);
+
 	if(sendbuf != MPI_IN_PLACE)
 	{
 		mpi_check_buf(sendbuf, comm);
 		mpi_check_count(sendcount, comm);
 		mpi_check_type(sendtype, comm);
 	}
+
 	if(sendbuf == recvbuf)
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
@@ -14588,7 +14583,10 @@ int PMPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	mpi_check_buf(recvbuf, comm);
 	mpi_check_count(recvcount, comm);
 	mpi_check_type(recvtype, comm);
-	if(sctk_is_inter_comm(comm) )
+
+	int is_intercomm = sctk_is_inter_comm(comm);
+
+	if( is_intercomm )
 	{
 		if(0 == sendcount && 0 == recvcount)
 		{
@@ -14618,7 +14616,7 @@ int PMPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
 
 	/* Intercomm */
-	if(sctk_is_inter_comm(comm) )
+	if( is_intercomm )
 	{
 		if(allgather_inter == NULL)
 		{
@@ -14663,26 +14661,30 @@ int PMPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
 #endif
+
 	/* Profiling */
 	SCTK_PROFIL_START(MPI_Allgatherv);
 
 	mpi_check_comm(comm, comm);
+
 	if(sendbuf != MPI_IN_PLACE)
 	{
 		mpi_check_buf(sendbuf, comm);
 		mpi_check_count(sendcount, comm);
 		mpi_check_type(sendtype, comm);
 	}
+
 	if(sendbuf == recvbuf)
 	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Sendbuf is equal to Recv Buff");
 	}
+
 	mpi_check_buf(recvbuf, comm);
 	mpi_check_type(recvtype, comm);
 
 	if(MPI_IN_PLACE == recvbuf)
 	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "RecvBuff is MPI_IN_PLACE");
 	}
 
 	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
@@ -14693,8 +14695,9 @@ int PMPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	{
 		if(allgatherv_inter == NULL)
 		{
-			allgatherv_inter = (int (*)(void *, int, MPI_Datatype, void *, int,
-			                            MPI_Datatype, MPI_Comm) )(
+			allgatherv_inter = (int (*)(const void *, int , MPI_Datatype,
+                    void *, const int *, const int *,
+                    MPI_Datatype , MPI_Comm ) )(
 			        sctk_runtime_config_get()
 			        ->modules.collectives_inter.allgatherv_inter.value);
 		}
@@ -14706,8 +14709,9 @@ int PMPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		/* Intracomm */
 		if(allgatherv_intra == NULL)
 		{
-			allgatherv_intra = (int (*)(void *, int, MPI_Datatype, void *, int,
-			                            MPI_Datatype, MPI_Comm) )(
+			allgatherv_intra = (int (*)(const void *, int , MPI_Datatype,
+                    void *, const int *, const int *,
+                    MPI_Datatype , MPI_Comm ) )(
 			        sctk_runtime_config_get()
 			        ->modules.collectives_intra.allgatherv_intra.value);
 		}

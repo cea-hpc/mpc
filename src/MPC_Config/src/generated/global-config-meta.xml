@@ -47,7 +47,6 @@
         </struct>
         <struct name="collectives_shm" doc="Shared Memory Collectives for MPC">
             <!-- Function Pointers -->
-            <param name="barrier_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Barrier_intra_shm" doc="MPI_Barrier intracom algorithm on shared communicators"/>
             <param name="bcast_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Bcast_intra_shm" doc="Type of MPI_Bcast intracom algorithm on shared communicators"/>
             <param name="alltoallv_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Alltoallv_intra_shm" doc="Alltoallv intracom algorithm"/>
             <param name="gatherv_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Gatherv_intra_shm" doc="MPI_Gatherv intracom algorithm for shared communicators"/>

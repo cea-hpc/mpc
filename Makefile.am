@@ -33,6 +33,8 @@ lint:
 
 if CAN_GENERATE_CONFIG
 # Generate and copy back to sources to ensure transparent update on success
+.PHONY: config
+
 config:
 	$(abs_top_srcdir)/src/MPC_Config/generators/mpc_gen_runtime_config $(abs_top_srcdir)/src $(abs_top_srcdir)/src/MPC_Config/generators/ $(abs_top_srcdir)/src/MPC_Config/src/generated/
 else
