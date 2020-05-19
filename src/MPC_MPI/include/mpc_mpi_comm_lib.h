@@ -55,7 +55,7 @@ int mpc_mpi_cl_add_pack( void *buf, mpc_lowcomm_msg_count_t count,
                       unsigned long *ends, mpc_lowcomm_datatype_t datatype,
                       mpc_lowcomm_request_t *request );
 
-int mpc_mpi_cl_add_pack_absolute( void *buf, mpc_lowcomm_msg_count_t count,
+int mpc_mpi_cl_add_pack_absolute(const void *buf, mpc_lowcomm_msg_count_t count,
                                long *begins,
                                long *ends,
                                mpc_lowcomm_datatype_t datatype, mpc_lowcomm_request_t *request );

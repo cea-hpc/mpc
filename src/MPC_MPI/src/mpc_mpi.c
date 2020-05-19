@@ -186,11 +186,10 @@ static inline int __PMPI_Cart_rank_locked(MPI_Comm, int *, int *);
 static int __PMPI_Cart_coords_locked(MPI_Comm, int, int, int *);
 
 struct MPI_request_struct_s;
-static int __Isend_test_req(void *buf, int count,
-                            MPI_Datatype datatype, int dest, int tag,
-                            MPI_Comm comm,
+static int __Isend_test_req(const void *buf, int count, MPI_Datatype datatype,
+                            int dest, int tag, MPI_Comm comm,
                             MPI_Request *request, int is_valid_request,
-                            struct MPI_request_struct_s *requests);
+                            MPI_request_struct_t *requests);
 
 /* checkpoint */
 
@@ -1325,7 +1324,7 @@ static inline mpi_buffer_overhead_t *__buffer_compact(int size, mpi_buffer_t *tm
 	return found;
 }
 
-static int __Ibsend_test_req(void *buf, int count, MPI_Datatype datatype,
+static int __Ibsend_test_req(const void *buf, int count, MPI_Datatype datatype,
                              int dest, int tag, MPI_Comm comm,
                              MPI_Request *request, int is_valid_request,
                              struct MPI_request_struct_s *requests)
@@ -1435,7 +1434,7 @@ static int __Ibsend_test_req(void *buf, int count, MPI_Datatype datatype,
 	return MPI_SUCCESS;
 }
 
-static int __Isend_test_req(void *buf, int count, MPI_Datatype datatype,
+static int __Isend_test_req(const void *buf, int count, MPI_Datatype datatype,
                             int dest, int tag, MPI_Comm comm,
                             MPI_Request *request, int is_valid_request,
                             MPI_request_struct_t *requests)
@@ -1921,20 +1920,20 @@ static int __INTERNAL__PMPI_Type_create_indexed_block(int count, int blocklength
 /************************************************************************/
 
 
-static int sctk_MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs,
+static int sctk_MPIOI_Type_block(const int *array_of_gsizes, int dim, int ndims, int nprocs,
                                  int rank, int darg, int order, MPI_Aint orig_extent,
                                  MPI_Datatype type_old, MPI_Datatype *type_new,
                                  MPI_Aint *st_offset);
 
-static int sctk_MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nprocs,
+static int sctk_MPIOI_Type_cyclic(const int *array_of_gsizes, int dim, int ndims, int nprocs,
                                   int rank, int darg, int order, MPI_Aint orig_extent,
                                   MPI_Datatype type_old, MPI_Datatype *type_new,
                                   MPI_Aint *st_offset);
 
 
 int sctk_Type_create_darray(int size, int rank, int ndims,
-                            int *array_of_gsizes, int *array_of_distribs,
-                            int *array_of_dargs, int *array_of_psizes,
+                            const int *array_of_gsizes, const int *array_of_distribs,
+                            const int *array_of_dargs, const int *array_of_psizes,
                             int order, MPI_Datatype oldtype,
                             MPI_Datatype *newtype)
 {
@@ -2082,7 +2081,7 @@ int sctk_Type_create_darray(int size, int rank, int ndims,
 /* Returns MPI_SUCCESS on success, an MPI error code on failure.  Code above
  * needs to call MPIO_Err_return_xxx.
  */
-static int sctk_MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs,
+static int sctk_MPIOI_Type_block(const int *array_of_gsizes, int dim, int ndims, int nprocs,
                                  int rank, int darg, int order, MPI_Aint orig_extent,
                                  MPI_Datatype type_old, MPI_Datatype *type_new,
                                  MPI_Aint *st_offset)
@@ -2167,7 +2166,7 @@ static int sctk_MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int n
 /* Returns MPI_SUCCESS on success, an MPI error code on failure.  Code above
  * needs to call MPIO_Err_return_xxx.
  */
-static int sctk_MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nprocs,
+static int sctk_MPIOI_Type_cyclic(const int *array_of_gsizes, int dim, int ndims, int nprocs,
                                   int rank, int darg, int order, MPI_Aint orig_extent,
                                   MPI_Datatype type_old, MPI_Datatype *type_new,
                                   MPI_Aint *st_offset)
@@ -2288,9 +2287,9 @@ static int sctk_MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int 
 
 
 int sctk_Type_create_subarray(int ndims,
-                              int *array_of_sizes,
-                              int *array_of_subsizes,
-                              int *array_of_starts,
+                              const int *array_of_sizes,
+                              const int *array_of_subsizes,
+                              const int *array_of_starts,
                               int order,
                               MPI_Datatype oldtype,
                               MPI_Datatype *newtype)
@@ -4860,18 +4859,44 @@ int __INTERNAL__PMPI_Allgather_intra(void *sendbuf, int sendcount,
 		return res;
 	}
  
-	res = PMPI_Gather(sendbuf, sendcount, sendtype, recvbuf,
-	                  recvcount, recvtype, root, comm);
-	if(res != MPI_SUCCESS)
+	MPI_Aint sendtype_extent;
+	res = PMPI_Type_extent(sendtype, &sendtype_extent);
+	MPI_HANDLE_ERROR(res, comm, "Could not retrieve type extent");
+
+	int free_sendbuf = 0;
+	int i;
+
+	if(sendbuf == MPI_IN_PLACE)
 	{
-		return res;
+		void * my_rcv_pointer = recvbuf + rank * recvcount;
+
+		if(my_rcv_pointer == recvbuf)
+		{
+			void * tmp = sctk_malloc(sendtype_extent * sendcount);
+			assume(sendbuf != NULL);
+			memcpy(tmp, my_rcv_pointer, sendtype_extent * sendcount);
+			sendbuf = tmp;
+			free_sendbuf=1;
+		}
+		else
+		{
+			sendbuf = my_rcv_pointer;
+		}
 	}
 
-	res = PMPI_Bcast(recvbuf, size * recvcount, recvtype, root, comm);
-	if(res != MPI_SUCCESS)
+
+	res = PMPI_Gather(sendbuf, sendcount, sendtype, recvbuf,
+	                  recvcount, recvtype, root, comm);
+
+	if(free_sendbuf)
 	{
-		return res;
+		sctk_free(sendbuf);
 	}
+
+	MPI_HANDLE_ERROR(res, comm, "Error in Gather");
+
+	res = PMPI_Bcast(recvbuf, size * recvcount, recvtype, root, comm);
+	MPI_HANDLE_ERROR(res, comm, "Error in Bcast");
 
 	return res;
 }
@@ -11496,7 +11521,7 @@ int PMPI_Send_init(const void *buf, int count, MPI_Datatype datatype, int dest,
 		req->is_active        = 0;
 		req->req.request_type = REQUEST_NULL;
 
-		req->persistant.buf         = buf;
+		req->persistant.buf         = (void *)buf;
 		req->persistant.count       = 0;
 		req->persistant.datatype    = datatype;
 		req->persistant.dest_source = SCTK_PROC_NULL;
@@ -11510,7 +11535,7 @@ int PMPI_Send_init(const void *buf, int count, MPI_Datatype datatype, int dest,
 		req->is_active        = 0;
 		req->req.request_type = REQUEST_SEND;
 
-		req->persistant.buf         = buf;
+		req->persistant.buf         = (void *)buf;
 		req->persistant.count       = count;
 		req->persistant.datatype    = datatype;
 		req->persistant.dest_source = dest;
@@ -11548,7 +11573,7 @@ int PMPI_Bsend_init(const void *buf, int count, MPI_Datatype datatype,
 		req->is_active        = 0;
 		req->req.request_type = REQUEST_NULL;
 
-		req->persistant.buf         = buf;
+		req->persistant.buf         = (void *)buf;
 		req->persistant.count       = 0;
 		req->persistant.datatype    = datatype;
 		req->persistant.dest_source = SCTK_PROC_NULL;
@@ -11562,7 +11587,7 @@ int PMPI_Bsend_init(const void *buf, int count, MPI_Datatype datatype,
 		req->is_active        = 0;
 		req->req.request_type = REQUEST_SEND;
 
-		req->persistant.buf         = buf;
+		req->persistant.buf         = (void *)buf;
 		req->persistant.count       = count;
 		req->persistant.datatype    = datatype;
 		req->persistant.dest_source = dest;
@@ -11599,7 +11624,7 @@ int PMPI_Ssend_init(const void *buf, int count, MPI_Datatype datatype, int dest,
 		req->is_active        = 0;
 		req->req.request_type = REQUEST_NULL;
 
-		req->persistant.buf         = buf;
+		req->persistant.buf         = (void *)buf;
 		req->persistant.count       = 0;
 		req->persistant.datatype    = datatype;
 		req->persistant.dest_source = SCTK_PROC_NULL;
@@ -11613,7 +11638,7 @@ int PMPI_Ssend_init(const void *buf, int count, MPI_Datatype datatype, int dest,
 		req->is_active        = 0;
 		req->req.request_type = REQUEST_SEND;
 
-		req->persistant.buf         = buf;
+		req->persistant.buf         = (void *)buf;
 		req->persistant.count       = count;
 		req->persistant.datatype    = datatype;
 		req->persistant.dest_source = dest;
@@ -11650,7 +11675,7 @@ int PMPI_Rsend_init(const void *buf, int count, MPI_Datatype datatype, int dest,
 		req->is_active        = 0;
 		req->req.request_type = REQUEST_NULL;
 
-		req->persistant.buf         = buf;
+		req->persistant.buf         = (void *)buf;
 		req->persistant.count       = 0;
 		req->persistant.datatype    = datatype;
 		req->persistant.dest_source = SCTK_PROC_NULL;
@@ -11664,7 +11689,7 @@ int PMPI_Rsend_init(const void *buf, int count, MPI_Datatype datatype, int dest,
 		req->is_active        = 0;
 		req->req.request_type = REQUEST_SEND;
 
-		req->persistant.buf         = buf;
+		req->persistant.buf         = (void *)buf;
 		req->persistant.count       = count;
 		req->persistant.datatype    = datatype;
 		req->persistant.dest_source = dest;

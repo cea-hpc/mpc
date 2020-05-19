@@ -144,11 +144,11 @@ struct _mpc_dt_context
 	int *array_of_distribs;
 	int *array_of_dargs;
 	int *array_of_psizes;
-	int *array_of_blocklenght;
+	const int *array_of_blocklenght;
 	int *array_of_sizes;
 	int *array_of_subsizes;
 	int *array_of_starts;
-	int *array_of_displacements;
+	const int *array_of_displacements;
 	size_t *array_of_displacements_addr;
 	mpc_lowcomm_datatype_t *array_of_types;
 };

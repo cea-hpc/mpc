@@ -2532,7 +2532,7 @@ int _mpc_cl_get_processor_name( char *name, int *resultlen )
 
 static void sctk_no_free_header( __UNUSED__ void *tmp ) {}
 
-int _mpc_cl_isend( void *buf, mpc_lowcomm_msg_count_t count,
+int _mpc_cl_isend( const void *buf, mpc_lowcomm_msg_count_t count,
                    mpc_lowcomm_datatype_t datatype, int dest, int tag,
                    mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *request )
 {
@@ -2593,7 +2593,7 @@ FALLBACK_TO_UNBUFERED_ISEND:
 	MPC_ERROR_SUCESS();
 }
 
-int _mpc_cl_issend( void *buf, mpc_lowcomm_msg_count_t count,
+int _mpc_cl_issend( const void *buf, mpc_lowcomm_msg_count_t count,
                     mpc_lowcomm_datatype_t datatype, int dest, int tag,
                     mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *request )
 {
@@ -2616,14 +2616,14 @@ int _mpc_cl_issend( void *buf, mpc_lowcomm_msg_count_t count,
 	MPC_ERROR_SUCESS();
 }
 
-int _mpc_cl_ibsend( void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype, int dest,
+int _mpc_cl_ibsend( const void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype, int dest,
                     int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *request )
 {
 	return _mpc_cl_isend( buf, count, datatype, dest, tag, comm, request );
 }
 
 
-int _mpc_cl_irsend( void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype, int dest,
+int _mpc_cl_irsend( const void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype, int dest,
                     int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *request )
 {
 	return _mpc_cl_isend( buf, count, datatype, dest, tag, comm, request );
@@ -2651,7 +2651,7 @@ int _mpc_cl_irecv( void *buf, mpc_lowcomm_msg_count_t count,
 	MPC_ERROR_SUCESS();
 }
 
-int _mpc_cl_ssend( void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype,
+int _mpc_cl_ssend( const void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype,
                    int dest, int tag, mpc_lowcomm_communicator_t comm )
 {
 	mpc_lowcomm_request_t request;
@@ -3290,7 +3290,7 @@ int _mpc_cl_status_set_elements( mpc_lowcomm_status_t *status, mpc_lowcomm_datat
 }
 
 
-int _mpc_cl_status_get_count( mpc_lowcomm_status_t *status, mpc_lowcomm_datatype_t datatype, mpc_lowcomm_msg_count_t *count )
+int _mpc_cl_status_get_count( const mpc_lowcomm_status_t *status, mpc_lowcomm_datatype_t datatype, mpc_lowcomm_msg_count_t *count )
 {
 	int res = SCTK_SUCCESS;
 	unsigned long size;
@@ -4754,7 +4754,7 @@ int mpc_mpi_cl_add_pack( void *buf, mpc_lowcomm_msg_count_t count,
 	MPC_ERROR_SUCESS();
 }
 
-int mpc_mpi_cl_add_pack_absolute( void *buf, mpc_lowcomm_msg_count_t count,
+int mpc_mpi_cl_add_pack_absolute(const void *buf, mpc_lowcomm_msg_count_t count,
                                long *begins,
                                long *ends,
                                mpc_lowcomm_datatype_t datatype,

@@ -359,7 +359,7 @@ void mpc_lowcomm_ptp_message_add_pack(mpc_lowcomm_ptp_message_t *msg, void *adr,
                                       unsigned long *begins,
                                       unsigned long *ends);
 
-void mpc_lowcomm_ptp_message_add_pack_absolute(mpc_lowcomm_ptp_message_t *msg, void *adr,
+void mpc_lowcomm_ptp_message_add_pack_absolute(mpc_lowcomm_ptp_message_t *msg, const void *adr,
                                                const unsigned int nb_items,
                                                const size_t elem_size,
                                                long *begins,
@@ -497,7 +497,7 @@ static inline int mpc_lowcomm_status_set_cancelled(mpc_lowcomm_status_t *status,
 	return SCTK_SUCCESS;
 }
 
-static inline int mpc_lowcomm_status_get_cancelled(mpc_lowcomm_status_t *status, int *flag)
+static inline int mpc_lowcomm_status_get_cancelled(const mpc_lowcomm_status_t *status, int *flag)
 {
 	*flag = (status->cancelled == 1);
 	return SCTK_SUCCESS;

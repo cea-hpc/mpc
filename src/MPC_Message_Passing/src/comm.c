@@ -1738,7 +1738,7 @@ void mpc_lowcomm_ptp_message_add_pack( mpc_lowcomm_ptp_message_t *msg, void *adr
 	msg->tail.message.pack.count++;
 }
 void mpc_lowcomm_ptp_message_add_pack_absolute( mpc_lowcomm_ptp_message_t *msg,
-        void *adr, const unsigned int nb_items,
+        const void *adr, const unsigned int nb_items,
         const size_t elem_size,
         long *begins,
         long *ends )

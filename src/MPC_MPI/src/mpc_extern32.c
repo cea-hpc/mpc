@@ -486,7 +486,7 @@ void MPC_Extern32_convert( mpc_lowcomm_datatype_t * typevector ,
 						   int type_vector_size, 
 						   char * native_buff, 
 						   size_t max_native_size, 
-						   char * extern_buff, 
+						   const char * extern_buff, 
 						   size_t max_extern_size , 
 						   int encode )
 {

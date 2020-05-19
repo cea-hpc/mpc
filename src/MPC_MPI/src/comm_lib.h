@@ -230,7 +230,7 @@ int _mpc_cl_request_get_status( mpc_lowcomm_request_t request, int *flag, mpc_lo
 
 int _mpc_cl_status_set_elements_x( mpc_lowcomm_status_t *status, mpc_lowcomm_datatype_t datatype, size_t count );
 int _mpc_cl_status_set_elements( mpc_lowcomm_status_t *status, mpc_lowcomm_datatype_t datatype, int count );
-int _mpc_cl_status_get_count( mpc_lowcomm_status_t *, mpc_lowcomm_datatype_t, mpc_lowcomm_msg_count_t * );
+int _mpc_cl_status_get_count( const mpc_lowcomm_status_t *, mpc_lowcomm_datatype_t, mpc_lowcomm_msg_count_t * );
 
 
 /********************
@@ -266,19 +266,19 @@ int _mpc_cl_op_free( sctk_Op * );
  * POINT TO POINT OPERATIONS *
  *****************************/
 
-int _mpc_cl_isend( void *buf, mpc_lowcomm_msg_count_t count,
+int _mpc_cl_isend( const void *buf, mpc_lowcomm_msg_count_t count,
                    mpc_lowcomm_datatype_t datatype, int dest, int tag,
                    mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *request );
 
-int _mpc_cl_ibsend( void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype, int dest,
+int _mpc_cl_ibsend( const void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype, int dest,
                     int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *request );
 
 
-int _mpc_cl_issend( void *buf, mpc_lowcomm_msg_count_t count,
+int _mpc_cl_issend( const void *buf, mpc_lowcomm_msg_count_t count,
                     mpc_lowcomm_datatype_t datatype, int dest, int tag,
                     mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *request );
 
-int _mpc_cl_irsend( void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype, int dest,
+int _mpc_cl_irsend( const void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype, int dest,
                     int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *request );
 
 
@@ -289,7 +289,7 @@ int _mpc_cl_irecv( void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatyp
 int _mpc_cl_send( const void *buf, mpc_lowcomm_msg_count_t count,
                   mpc_lowcomm_datatype_t datatype, int dest, int tag, mpc_lowcomm_communicator_t comm );
 
-int _mpc_cl_ssend( void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype,
+int _mpc_cl_ssend( const void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype,
                    int dest, int tag, mpc_lowcomm_communicator_t comm );
 
 int _mpc_cl_recv( void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype, int source,
