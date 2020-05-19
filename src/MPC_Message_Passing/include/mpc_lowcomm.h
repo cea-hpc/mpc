@@ -41,6 +41,11 @@
  */
 int mpc_lowcomm_get_rank();
 
+/** Get SCTK_COMM_WORLD rank
+ * @return the comm world size
+ */
+int mpc_lowcomm_get_size();
+
 /** Get Rank in a communicator
  * @arg communicator Communicator from which to get the rank
  * @return the rank of the process in the given communicator

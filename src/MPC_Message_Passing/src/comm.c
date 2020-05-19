@@ -2729,6 +2729,12 @@ int mpc_lowcomm_get_rank()
 	return mpc_common_get_task_rank();
 }
 
+int mpc_lowcomm_get_size()
+{
+	return mpc_common_get_task_count();
+}
+
+
 int mpc_lowcomm_get_comm_rank( const mpc_lowcomm_communicator_t communicator )
 {
 	return mpc_lowcomm_communicator_rank ( communicator, mpc_lowcomm_get_rank() );
@@ -2830,6 +2836,7 @@ void mpc_lowcomm_libmode_init()
 
 void mpc_lowcomm_libmode_release()
 {
+	mpc_launch_release_runtime();
 	mpc_lowcomm_barrier( SCTK_COMM_WORLD );
 }
 

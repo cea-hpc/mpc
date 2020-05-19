@@ -2047,6 +2047,16 @@ int mpc_lowcomm_barrier_shm_on_context(struct shared_mem_barrier *barrier_ctx,
 	return SCTK_SUCCESS;
 }
 
+
+int __intercomm_barrier( const mpc_lowcomm_communicator_t communicator )
+{
+	mpc_lowcomm_barrier(sctk_get_local_comm_id(communicator));
+	/* Todo understand intercomms */
+	mpc_lowcomm_barrier(sctk_get_local_comm_id(communicator));
+	return SCTK_SUCCESS;
+}
+
+
 int mpc_lowcomm_barrier( const mpc_lowcomm_communicator_t communicator )
 {
 	struct mpc_lowcomm_coll_s *tmp;
@@ -2054,6 +2064,11 @@ int mpc_lowcomm_barrier( const mpc_lowcomm_communicator_t communicator )
 	if ( communicator == SCTK_COMM_SELF )
 	{
 		return SCTK_SUCCESS;
+	}
+
+	if(sctk_is_inter_comm(communicator))
+	{
+		return __intercomm_barrier(communicator);
 	}
 
 	if(sctk_is_shared_mem(communicator) )
