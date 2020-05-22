@@ -55,8 +55,8 @@ main (int argc, char **argv)
 
 
   fprintf (stderr, "MODES:\n");
-#if defined(MPC_Message_Passing) || defined(MPC_MODULE_MPC_Message_Passing)
-  fprintf (stderr, "\t- MPC_Message_Passing\n");
+#if defined(MPC_Lowcomm) || defined(MPC_MODULE_MPC_Lowcomm)
+  fprintf (stderr, "\t- MPC_Lowcomm\n");
 #endif
 
 #if defined(MPC_Threads) || defined(MPC_MODULE_MPC_Threads)
@@ -76,7 +76,7 @@ main (int argc, char **argv)
 #endif
 
 
-#if defined(MPC_Message_Passing) || defined(MPC_MODULE_MPC_Message_Passing)
+#if defined(MPC_Lowcomm) || defined(MPC_MODULE_MPC_Lowcomm)
   MPC_Init (&argc, &argv);
   MPC_Finalize ();
 #endif

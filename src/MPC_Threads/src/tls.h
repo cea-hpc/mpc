@@ -114,7 +114,7 @@ static inline void sctk_context_save_tls(sctk_mctx_t *ucp)
 	tls_save(mpc_thread_romio_ctx_storage);
 #endif
 
-#ifdef MPC_Message_Passing
+#ifdef MPC_Lowcomm
 	tls_save(__mpc_task_rank);
 #endif
 
@@ -170,7 +170,7 @@ static inline void sctk_context_restore_tls(sctk_mctx_t *ucp)
 #endif
 
 
-#ifdef MPC_Message_Passing
+#ifdef MPC_Lowcomm
 	tls_restore(__mpc_task_rank);
 #endif
 
@@ -224,7 +224,7 @@ static inline void sctk_context_init_tls(sctk_mctx_t *ucp)
 #endif
 
 
-#ifdef MPC_Message_Passing
+#ifdef MPC_Lowcomm
 	ucp->__mpc_task_rank = -2;
 #endif
 

@@ -169,7 +169,7 @@
 
 
         </config>
-<config name="MPC_Message_Passing">
+<config name="MPC_Lowcomm">
 	<usertypes>
 
 		<!-- DMTCP support -->

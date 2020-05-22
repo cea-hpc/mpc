@@ -1,4 +1,4 @@
-Module MPC_Message_Passing
+Module MPC_Lowcomm
 ======================
 
 SUMMARY:

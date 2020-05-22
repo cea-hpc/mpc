@@ -1598,18 +1598,26 @@ fi
 
 AC_SUBST([HAVE_MPC_THREAD])
 
+# Message Passing is for retro compatibility
 AC_ARG_ENABLE([message-passing],
 [AS_HELP_STRING([--enable-message-passing],
-                [Compile MPC with Message Passing Support])],
-[MPC_MESSAGE_PASSING_ENABLED=$enableval],
-[MPC_MESSAGE_PASSING_ENABLED=yes])
+                [Compile MPC with Message Passing Support (same as lowcomm)])],
+[MPC_LOWCOMM_MP_ENABLED=$enableval],
+[MPC_LOWCOMM_MP_ENABLED=yes])
 
-if test "x${MPC_MESSAGE_PASSING_ENABLED}" = "xyes"; then
-        AC_DEFINE([MPC_Message_Passing], [1], [MPC_MESSAGE_PASSING module was enabled])
+AC_ARG_ENABLE([lowcomm],
+[AS_HELP_STRING([--enable-lowcomm],
+                [Compile MPC with Lowcomm Support])],
+[MPC_LOWCOMM_ENABLED=$enableval],
+[MPC_LOWCOMM_ENABLED=yes])
+
+if test "x${MPC_LOWCOMM_ENABLED}" = "xyes" -o "x${MPC_LOWCOMM_MP_ENABLE}" = "xyes"; then
+        AC_DEFINE([MPC_Lowcomm], [1], [MPC_Lowcomm module was enabled])
+        MPC_LOWCOMM_ENABLED="yes"
 fi
 
-AM_CONDITIONAL([MPC_MESSAGE_PASSING_ENABLED], [test "x${MPC_MESSAGE_PASSING_ENABLED}" = "xyes"])
-AC_SUBST([MPC_MESSAGE_PASSING_ENABLED])
+AM_CONDITIONAL([MPC_LOWCOMM_ENABLED], [test "x${MPC_LOWCOMM_ENABLED}" = "xyes"])
+AC_SUBST([MPC_LOWCOMM_ENABLED])
 
 
 AC_ARG_ENABLE([mpi],
@@ -2019,9 +2027,9 @@ if test "x${MPC_OPENMP_ENABLED}" = "xyes"; then
 	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_OPENMP_ENABLED"
 fi
 
-if test "x${MPC_MESSAGE_PASSING_ENABLED}" = "xyes"; then
-	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Message_Passing/src/libmpclowcomm.la"
-	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_MESSAGE_PASSING_ENABLED"
+if test "x${MPC_LOWCOMM_ENABLED}" = "xyes"; then
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Lowcomm/src/libmpclowcomm.la"
+	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_LOWCOMM_ENABLED"
 fi
 
 if test "x${MPC_MPI_ENABLED}" = "xyes"; then
@@ -2406,7 +2414,7 @@ MPC_CONFIG_RESULT="\
 ### OPTIONAL BUILT MODULE ###\n\
 #\n\
 # MPC_Thread........... $MPC_THREAD_ENABLED\n\
-# MPC_Message_passing.. $MPC_MESSAGE_PASSING_ENABLED\n\
+# MPC_Lowcomm.......... $MPC_LOWCOMM_ENABLED\n\
 # MPC_MPI.............. $MPC_MPI_ENABLED\n\
 # MPC_Fortran.......... $MPC_FORTRAN_ENABLED\n\
 # MPC_MPIIO............ $MPC_MPIIO_ENABLED\n\
@@ -2472,8 +2480,8 @@ AC_OUTPUT([Makefile
 	   src/MPC_Config/src/Makefile
            src/MPC_Launch/Makefile
 	   src/MPC_Launch/src/Makefile
-           src/MPC_Message_Passing/Makefile
-	   src/MPC_Message_Passing/src/Makefile
+           src/MPC_Lowcomm/Makefile
+	   src/MPC_Lowcomm/src/Makefile
            src/MPC_MPI/Makefile
 	   src/MPC_MPI/src/Makefile
            src/MPC_OpenMP/src/Makefile

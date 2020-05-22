@@ -1514,7 +1514,7 @@ static inline void ___mpc_thread_ethread_idle_task(void *arg)
 /* Idle function is called here to avoid deadlocks.
  * Actually, when calling mpc_thread_yield(), the polling
  * function is not called. */
-#ifdef MPC_Message_Passing
+#ifdef MPC_Lowcomm
     #ifdef __MIC__
 		if( (vp->ready_queue_used == NULL) &&
 		    (vp->incomming_queue == NULL) &&

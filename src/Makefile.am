@@ -35,8 +35,8 @@ if MPC_OPENMP_ENABLED
         SUBDIRS += MPC_OpenMP
 endif
 
-if MPC_MESSAGE_PASSING_ENABLED
-        SUBDIRS += MPC_Message_Passing
+if MPC_LOWCOMM_ENABLED
+        SUBDIRS += MPC_Lowcomm
 endif
 
 if MPC_MPI_ENABLED

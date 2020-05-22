@@ -893,7 +893,7 @@ void mpc_thread_pthread_engine_init(void)
 
 	sctk_free(sctk_malloc(5) );
 
-#ifdef MPC_Message_Passing
+#ifdef MPC_Lowcomm
 	sctk_set_net_migration_available(0);
 #endif
 }

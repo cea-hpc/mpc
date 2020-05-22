@@ -20,7 +20,7 @@
 #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
 #                                                                      #
 ########################################################################
-need_module MPC_Message_Passing
+need_module MPC_Lowcomm
 need_module MPC_Launch
 need_module MPC_Shm_mapper
 need_module MPC_Common

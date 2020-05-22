@@ -1,4 +1,4 @@
-AM_CPPFLAGS =  -I$(abs_top_builddir)/ -I$(abs_top_srcdir)/src/MPC_Message_Passing/include/ -I$(abs_top_srcdir)/src/include/ -I$(abs_top_builddir)/src/include/ -I$(abs_top_builddir)/src/MPC_IO/include/
+AM_CPPFLAGS =  -I$(abs_top_builddir)/ -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/ -I$(abs_top_srcdir)/src/include/ -I$(abs_top_builddir)/src/include/ -I$(abs_top_builddir)/src/MPC_IO/include/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_MPI/include/ -I$(abs_top_srcdir)/src/MPC_Fortran/include/ -I$(abs_top_srcdir)/src/MPC_Common/include/ -I$(abs_top_builddir) @MPC_MODULE_DEFINES@
 AM_CPPFLAGS += -I$(abs_top_builddir)/src/MPC_Arch/include/ -I$(abs_top_srcdir)/src/MPC_Arch/include/ -I$(abs_top_builddir)/src/MPC_Common/include/
 AM_CPPFLAGS += -I$(abs_top_builddir)/src/MPC_Fortran/src/

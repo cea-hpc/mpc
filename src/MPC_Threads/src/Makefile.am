@@ -26,13 +26,13 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Arch/include/ -I$(abs_top_srcdir)/src
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Config/include/ -I$(abs_top_srcdir)/src/MPC_Config/src/generated/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Topology/include/ -I$(abs_top_builddir)/src/include/
 
-if MPC_MESSAGE_PASSING_ENABLED
-        AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Message_Passing/src/ -I$(abs_top_srcdir)/src/MPC_Message_Passing/include/
+if MPC_LOWCOMM_ENABLED
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/
 endif
 
 if MPC_MPI_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_MPI/include/ -I$(abs_top_srcdir)/src/MPC_MPI/src/
-        AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Message_Passing/include/
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/
 endif
 
 

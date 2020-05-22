@@ -1405,7 +1405,7 @@ void _mpc_thread_exit_cleanup()
 	if(tmp != NULL)
 	{
 		mpc_common_nodebug("ici %p %d", tmp, tmp->task_id);
-#ifdef MPC_Message_Passing
+#ifdef MPC_Lowcomm
 		if(tmp->mpi_task.rank >= 0 && tmp->user_thread == 0)
 		{
 			//mpc_common_nodebug ( "mpc_lowcomm_terminaison_barrier" );

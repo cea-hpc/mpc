@@ -177,7 +177,7 @@ void mpc_common_debug_info( const char *fmt, ... )
 
 void mpc_common_debug( const char *fmt, ... )
 {
-#if defined( MPC_Message_Passing ) || defined( MPC_Threads )
+#if defined( MPC_Lowcomm ) || defined( MPC_Threads )
 
 	if ( mpc_common_get_flags()->verbosity < 3 )
 	{
@@ -278,7 +278,7 @@ void mpc_common_debug_log_file( FILE *file, const char *fmt, ... )
 
 void mpc_common_debug_warning( const char *fmt, ... )
 {
-	/* #if defined(MPC_Message_Passing) || defined(MPC_Threads) */
+	/* #if defined(MPC_Lowcomm) || defined(MPC_Threads) */
 	/*   if( mpc_common_get_flags()->verbosity < 1 ) */
 	/*     return; */
 	/* #endif */

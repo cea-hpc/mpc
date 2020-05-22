@@ -88,10 +88,10 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@MPC_MESSAGE_PASSING_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/src/MPC_Message_Passing/src/ -I$(abs_top_srcdir)/src/MPC_Message_Passing/include/
+@MPC_LOWCOMM_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/
 @MPC_MPI_ENABLED_TRUE@am__append_2 = -I$(abs_top_srcdir)/src/MPC_MPI/include/ \
 @MPC_MPI_ENABLED_TRUE@	-I$(abs_top_srcdir)/src/MPC_MPI/src/ \
-@MPC_MPI_ENABLED_TRUE@	-I$(abs_top_srcdir)/src/MPC_Message_Passing/include/
+@MPC_MPI_ENABLED_TRUE@	-I$(abs_top_srcdir)/src/MPC_Lowcomm/include/
 @MPC_CUDA_ENABLED_TRUE@am__append_3 = ./accelerator/cuda.c ./accelerator/cuda_wrap.c
 @MPC_CUDA_ENABLED_TRUE@am__append_4 = libmpc_cuda_addon.la
 subdir = src/MPC_Threads/src
@@ -353,7 +353,7 @@ MPC_HAVE_DMTCP = @MPC_HAVE_DMTCP@
 MPC_HAVE_PROFILER = @MPC_HAVE_PROFILER@
 MPC_IN_PROCESS_MODE = @MPC_IN_PROCESS_MODE@
 MPC_LAUNCHER = @MPC_LAUNCHER@
-MPC_MESSAGE_PASSING_ENABLED = @MPC_MESSAGE_PASSING_ENABLED@
+MPC_LOWCOMM_ENABLED = @MPC_LOWCOMM_ENABLED@
 MPC_MODULE_DEFINES = @MPC_MODULE_DEFINES@
 MPC_MODULE_LIST = @MPC_MODULE_LIST@
 MPC_MPIIO_ENABLED = @MPC_MPIIO_ENABLED@

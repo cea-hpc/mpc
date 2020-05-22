@@ -791,14 +791,14 @@
 /* MPC compiled in process mode */
 #undef MPC_IN_PROCESS_MODE
 
+/* MPC_Lowcomm module was enabled */
+#undef MPC_Lowcomm
+
 /* MPC_MPI module was enabled */
 #undef MPC_MPI
 
 /* MPC_MPIIO module was enabled */
 #undef MPC_MPIIO
-
-/* MPC_MESSAGE_PASSING module was enabled */
-#undef MPC_Message_Passing
 
 /* MPC_OpenMP module was enabled */
 #undef MPC_OpenMP

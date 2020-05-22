@@ -207,7 +207,7 @@ typedef struct sctk_mctx_st
 	struct mpc_thread_romio_ctx_s * mpc_thread_romio_ctx_storage;
 #endif
 
-#ifdef MPC_Message_Passing
+#ifdef MPC_Lowcomm
 	int                                 __mpc_task_rank;
 #endif
 

@@ -30,7 +30,7 @@ free to open and edit them as necessary to make them as accurate as possible.
 
 Here a list of all Markdown files (to be upated):
 - `MPC_MPI.md`
-- `MPC_Message_Passing.md`
+- `MPC_Lowcomm.md`
 - `MPC_Tools.md`
 - `MPC_OpenMP.md`
 - `MPC_Config.md`

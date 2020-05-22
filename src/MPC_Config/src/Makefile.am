@@ -27,7 +27,7 @@ AM_CPPFLAGS += -I$(abs_top_builddir)/src/MPC_Arch/include/  -I$(abs_top_srcdir)/
 
 if MPC_MPI_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_MPI/include/ -I$(abs_top_srcdir)/src/MPC_MPI/src/
-        AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Message_Passing/include/ 
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/ 
 endif
 
 

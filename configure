@@ -715,9 +715,9 @@ MPC_OPENMP_ENABLED_TRUE
 MPC_MPI_ENABLED
 MPC_MPI_ENABLED_FALSE
 MPC_MPI_ENABLED_TRUE
-MPC_MESSAGE_PASSING_ENABLED
-MPC_MESSAGE_PASSING_ENABLED_FALSE
-MPC_MESSAGE_PASSING_ENABLED_TRUE
+MPC_LOWCOMM_ENABLED
+MPC_LOWCOMM_ENABLED_FALSE
+MPC_LOWCOMM_ENABLED_TRUE
 HAVE_MPC_THREAD
 MPC_THREAD_ENABLED
 MPC_THREAD_ENABLED_FALSE
@@ -1030,6 +1030,7 @@ with_dmtcp
 enable_profiler
 enable_threads
 enable_message_passing
+enable_lowcomm
 enable_mpi
 enable_openmp
 enable_fortran
@@ -1736,7 +1737,9 @@ Optional Features:
   --enable-threads        Compile MPC with pthread and user-level thread
                           support
   --enable-message-passing
-                          Compile MPC with Message Passing Support
+                          Compile MPC with Message Passing Support (same as
+                          lowcomm)
+  --enable-lowcomm        Compile MPC with Lowcomm Support
   --enable-mpi            Compile MPC's MPI interface
   --enable-openmp         Compile MPC's OpenMP interface
   --enable-fortran        Compile MPC Fortran support
@@ -28987,26 +28990,36 @@ fi
 
 
 
+# Message Passing is for retro compatibility
 # Check whether --enable-message-passing was given.
 if test "${enable_message_passing+set}" = set; then :
-  enableval=$enable_message_passing; MPC_MESSAGE_PASSING_ENABLED=$enableval
+  enableval=$enable_message_passing; MPC_LOWCOMM_MP_ENABLED=$enableval
 else
-  MPC_MESSAGE_PASSING_ENABLED=yes
+  MPC_LOWCOMM_MP_ENABLED=yes
 fi
 
 
-if test "x${MPC_MESSAGE_PASSING_ENABLED}" = "xyes"; then
-
-$as_echo "#define MPC_Message_Passing 1" >>confdefs.h
-
+# Check whether --enable-lowcomm was given.
+if test "${enable_lowcomm+set}" = set; then :
+  enableval=$enable_lowcomm; MPC_LOWCOMM_ENABLED=$enableval
+else
+  MPC_LOWCOMM_ENABLED=yes
 fi
 
- if test "x${MPC_MESSAGE_PASSING_ENABLED}" = "xyes"; then
-  MPC_MESSAGE_PASSING_ENABLED_TRUE=
-  MPC_MESSAGE_PASSING_ENABLED_FALSE='#'
+
+if test "x${MPC_LOWCOMM_ENABLED}" = "xyes" -o "x${MPC_LOWCOMM_MP_ENABLE}" = "xyes"; then
+
+$as_echo "#define MPC_Lowcomm 1" >>confdefs.h
+
+        MPC_LOWCOMM_ENABLED="yes"
+fi
+
+ if test "x${MPC_LOWCOMM_ENABLED}" = "xyes"; then
+  MPC_LOWCOMM_ENABLED_TRUE=
+  MPC_LOWCOMM_ENABLED_FALSE='#'
 else
-  MPC_MESSAGE_PASSING_ENABLED_TRUE='#'
-  MPC_MESSAGE_PASSING_ENABLED_FALSE=
+  MPC_LOWCOMM_ENABLED_TRUE='#'
+  MPC_LOWCOMM_ENABLED_FALSE=
 fi
 
 
@@ -29931,9 +29944,9 @@ if test "x${MPC_OPENMP_ENABLED}" = "xyes"; then
 	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_OPENMP_ENABLED"
 fi
 
-if test "x${MPC_MESSAGE_PASSING_ENABLED}" = "xyes"; then
-	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Message_Passing/src/libmpclowcomm.la"
-	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_MESSAGE_PASSING_ENABLED"
+if test "x${MPC_LOWCOMM_ENABLED}" = "xyes"; then
+	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Lowcomm/src/libmpclowcomm.la"
+	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_LOWCOMM_ENABLED"
 fi
 
 if test "x${MPC_MPI_ENABLED}" = "xyes"; then
@@ -30650,7 +30663,7 @@ MPC_CONFIG_RESULT="\
 ### OPTIONAL BUILT MODULE ###\n\
 #\n\
 # MPC_Thread........... $MPC_THREAD_ENABLED\n\
-# MPC_Message_passing.. $MPC_MESSAGE_PASSING_ENABLED\n\
+# MPC_Lowcomm.......... $MPC_LOWCOMM_ENABLED\n\
 # MPC_MPI.............. $MPC_MPI_ENABLED\n\
 # MPC_Fortran.......... $MPC_FORTRAN_ENABLED\n\
 # MPC_MPIIO............ $MPC_MPIIO_ENABLED\n\
@@ -30703,7 +30716,7 @@ PKG_INCDIR="${prefix}/include/${PACKAGE_TARNAME}/"
 ac_config_headers="$ac_config_headers mpc_config.h"
 
 
-ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Common/include/mpc_common_types.h src/MPC_Common/include/mpc_common_spinlock.h src/MPC_Common/include/mpc_keywords.h src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Message_Passing/Makefile src/MPC_Message_Passing/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/MPC_IO/Makefile src/MPC_IO/src/Makefile src/MPC_IO/include/mpio.h src/MPC_IO/src/romio/Makefile src/MPC_Fortran/Makefile src/MPC_Fortran/src/Makefile src/include/mpc_threads_config.h src/include/mpc.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpcrun src/bin/mpcvars.sh src/bin/mpc_status"
+ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Common/include/mpc_common_types.h src/MPC_Common/include/mpc_common_spinlock.h src/MPC_Common/include/mpc_keywords.h src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Lowcomm/Makefile src/MPC_Lowcomm/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/MPC_IO/Makefile src/MPC_IO/src/Makefile src/MPC_IO/include/mpio.h src/MPC_IO/src/romio/Makefile src/MPC_Fortran/Makefile src/MPC_Fortran/src/Makefile src/include/mpc_threads_config.h src/include/mpc.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpcrun src/bin/mpcvars.sh src/bin/mpc_status"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -30902,8 +30915,8 @@ if test -z "${MPC_THREAD_ENABLED_TRUE}" && test -z "${MPC_THREAD_ENABLED_FALSE}"
   as_fn_error $? "conditional \"MPC_THREAD_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${MPC_MESSAGE_PASSING_ENABLED_TRUE}" && test -z "${MPC_MESSAGE_PASSING_ENABLED_FALSE}"; then
-  as_fn_error $? "conditional \"MPC_MESSAGE_PASSING_ENABLED\" was never defined.
+if test -z "${MPC_LOWCOMM_ENABLED_TRUE}" && test -z "${MPC_LOWCOMM_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_LOWCOMM_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_MPI_ENABLED_TRUE}" && test -z "${MPC_MPI_ENABLED_FALSE}"; then
@@ -32133,8 +32146,8 @@ do
     "src/MPC_Config/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Config/src/Makefile" ;;
     "src/MPC_Launch/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Launch/Makefile" ;;
     "src/MPC_Launch/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Launch/src/Makefile" ;;
-    "src/MPC_Message_Passing/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Message_Passing/Makefile" ;;
-    "src/MPC_Message_Passing/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Message_Passing/src/Makefile" ;;
+    "src/MPC_Lowcomm/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Lowcomm/Makefile" ;;
+    "src/MPC_Lowcomm/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Lowcomm/src/Makefile" ;;
     "src/MPC_MPI/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_MPI/Makefile" ;;
     "src/MPC_MPI/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_MPI/src/Makefile" ;;
     "src/MPC_OpenMP/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_OpenMP/src/Makefile" ;;

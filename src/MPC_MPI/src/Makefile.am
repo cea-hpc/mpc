@@ -24,7 +24,7 @@
 AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ -I$(abs_top_srcdir)/src/include/ -I$(abs_top_builddir)/src/MPC_Arch/include/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Arch/include/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_builddir)/src/MPC_Common/include/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Config/include/ -I$(abs_top_srcdir)/src/MPC_Config/src/generated/
-AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Topology/include/ -I$(abs_top_srcdir)/src/MPC_Message_Passing/include/ -I$(abs_top_srcdir)/src/MPC_Message_Passing/src/
+AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Topology/include/ -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/ -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Launch/include/ -I$(abs_top_srcdir)/src/MPC_MPI/include/  -I$(abs_top_builddir)/src/include/
 
 if MPC_THREAD_ENABLED
@@ -32,18 +32,18 @@ if MPC_THREAD_ENABLED
 endif
 
 if INFINIBAND_DRIVER_ENABLED
-AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Message_Passing/src/ib/
+AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ib/
 endif
 
 if PORTALS4_DRIVER_ENABLED
-        AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Message_Passing/src/portals/
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/portals/
 endif
 
 
 #Yes drivers are leaking out
 
-AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Message_Passing/src/tcp/
-AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Message_Passing/src/shm/
+AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/tcp/
+AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/shm/
 
 
 lib_LTLIBRARIES = libmpcmpi.la
@@ -56,4 +56,4 @@ if MPC_FORTRAN_ENABLED
    libmpcmpi_la_SOURCES += fortran.c
 endif
 
-libmpcmpi_la_LIBADD = ../../MPC_Message_Passing/src/libmpclowcomm.la -lrt
+libmpcmpi_la_LIBADD = ../../MPC_Lowcomm/src/libmpclowcomm.la -lrt

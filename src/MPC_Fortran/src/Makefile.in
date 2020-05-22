@@ -368,7 +368,7 @@ MPC_HAVE_DMTCP = @MPC_HAVE_DMTCP@
 MPC_HAVE_PROFILER = @MPC_HAVE_PROFILER@
 MPC_IN_PROCESS_MODE = @MPC_IN_PROCESS_MODE@
 MPC_LAUNCHER = @MPC_LAUNCHER@
-MPC_MESSAGE_PASSING_ENABLED = @MPC_MESSAGE_PASSING_ENABLED@
+MPC_LOWCOMM_ENABLED = @MPC_LOWCOMM_ENABLED@
 MPC_MODULE_DEFINES = @MPC_MODULE_DEFINES@
 MPC_MODULE_LIST = @MPC_MODULE_LIST@
 MPC_MPIIO_ENABLED = @MPC_MPIIO_ENABLED@
@@ -507,7 +507,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(abs_top_builddir)/ \
-	-I$(abs_top_srcdir)/src/MPC_Message_Passing/include/ \
+	-I$(abs_top_srcdir)/src/MPC_Lowcomm/include/ \
 	-I$(abs_top_srcdir)/src/include/ \
 	-I$(abs_top_builddir)/src/include/ \
 	-I$(abs_top_builddir)/src/MPC_IO/include/ \
