@@ -2836,7 +2836,6 @@ void mpc_lowcomm_libmode_init()
 
 void mpc_lowcomm_libmode_release()
 {
-	mpc_launch_release_runtime();
 	mpc_lowcomm_barrier( SCTK_COMM_WORLD );
 }
 
