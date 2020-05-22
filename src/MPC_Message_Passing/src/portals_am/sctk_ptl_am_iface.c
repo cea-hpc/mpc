@@ -273,7 +273,7 @@ static void sctk_ptl_am_pte_populate( sctk_ptl_am_rail_info_t *srail, int srv_id
 		if ( prev )
 			prev->next = last;
 
-		sctk_nodebug( "POPULATE %d %s %p - %p (%llu)", last->tag, ( ( me_type == SCTK_PTL_AM_REQ_TYPE ) ? "REQ" : "REP" ), last->buf, last->buf + SCTK_PTL_AM_CHUNK_SZ, SCTK_PTL_AM_CHUNK_SZ );
+		mpc_common_nodebug( "POPULATE %d %s %p - %p (%llu)", last->tag, ( ( me_type == SCTK_PTL_AM_REQ_TYPE ) ? "REQ" : "REP" ), last->buf, last->buf + SCTK_PTL_AM_CHUNK_SZ, SCTK_PTL_AM_CHUNK_SZ );
 	}
 
 	/* store the list  */

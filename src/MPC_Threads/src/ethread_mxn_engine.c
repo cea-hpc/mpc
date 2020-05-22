@@ -78,7 +78,7 @@ _mpc_thread_ethread_mxn_engine_place_task_on_vp(_mpc_thread_ethread_virtual_proc
                                                 _mpc_thread_ethread_per_thread_t *task)
 {
 	task->vp = vp;
-	sctk_nodebug("Place %p on %d", task, vp->rank);
+	mpc_common_nodebug("Place %p on %d", task, vp->rank);
 	mpc_common_spinlock_lock(&vp->spinlock);
 	task->status = ethread_ready;
 	___mpc_thread_ethread_enqueue_task(task,
@@ -100,23 +100,23 @@ _mpc_thread_ethread_mxn_engine_return_task(_mpc_thread_ethread_per_thread_t *tas
 	}
 	else
 	{
-		sctk_nodebug("status %d %p", task->status, task);
+		mpc_common_nodebug("status %d %p", task->status, task);
 	}
 }
 
 static void _mpc_thread_ethread_mxn_engine_migration_task(_mpc_thread_ethread_per_thread_t *task)
 {
-	sctk_nodebug("_mpc_thread_ethread_mxn_engine_migration_task %p", task);
+	mpc_common_nodebug("_mpc_thread_ethread_mxn_engine_migration_task %p", task);
 	_mpc_thread_ethread_mxn_engine_place_task_on_vp(task->migrate_to, task);
-	sctk_nodebug("_mpc_thread_ethread_mxn_engine_migration_task %p done", task);
+	mpc_common_nodebug("_mpc_thread_ethread_mxn_engine_migration_task %p done", task);
 }
 
 static void _mpc_thread_ethread_mxn_engine_migration_task_relocalise(_mpc_thread_ethread_per_thread_t *task)
 {
-	sctk_nodebug("_mpc_thread_ethread_mxn_engine_migration_task rel %p", task);
+	mpc_common_nodebug("_mpc_thread_ethread_mxn_engine_migration_task rel %p", task);
 	sctk_alloc_posix_numa_migrate_chain(task->tls_mem);
 	_mpc_thread_ethread_mxn_engine_place_task_on_vp(task->migrate_to, task);
-	sctk_nodebug("_mpc_thread_ethread_mxn_engine_migration_task rel %p done", task);
+	mpc_common_nodebug("_mpc_thread_ethread_mxn_engine_migration_task rel %p done", task);
 }
 
 static int _mpc_thread_ethread_mxn_engine_sched_yield()
@@ -172,11 +172,11 @@ static int _mpc_thread_ethread_mxn_engine_sched_migrate()
 	self                     = _mpc_thread_ethread_mxn_engine_self();
 	self->status             = ethread_dump;
 	self->dump_for_migration = 1;
-	sctk_nodebug("Start migration _mpc_thread_ethread_mxn_engine_sched_migrate");
+	mpc_common_nodebug("Start migration _mpc_thread_ethread_mxn_engine_sched_migrate");
 	res =
 	        ___mpc_thread_ethread_sched_yield_vp( (_mpc_thread_ethread_virtual_processor_t *)
 	                                              self->vp, self);
-	sctk_nodebug("Start migration _mpc_thread_ethread_mxn_engine_sched_migrate DONE");
+	mpc_common_nodebug("Start migration _mpc_thread_ethread_mxn_engine_sched_migrate DONE");
 	return res;
 }
 
@@ -185,9 +185,9 @@ static int _mpc_thread_ethread_mxn_engine_sched_restore(mpc_thread_t thread, cha
 	struct sctk_alloc_chain *tls;
 	_mpc_thread_ethread_virtual_processor_t *cpu;
 
-	sctk_nodebug("Try to restore %p on vp %d", thread, vp);
+	mpc_common_nodebug("Try to restore %p on vp %d", thread, vp);
 	__sctk_restore_tls(&tls, type);
-	sctk_nodebug("Try to restore %p on vp %d DONE", thread, vp);
+	mpc_common_nodebug("Try to restore %p on vp %d DONE", thread, vp);
 
 	/*Reinit status */
 	cpu = _mpc_thread_ethread_mxn_engine_vp_list[vp];
@@ -196,16 +196,16 @@ static int _mpc_thread_ethread_mxn_engine_sched_restore(mpc_thread_t thread, cha
 	/*Place in ready queue */
 	_mpc_thread_ethread_mxn_engine_place_task_on_vp(cpu, thread);
 
-	sctk_nodebug("Restored");
+	mpc_common_nodebug("Restored");
 
 	/*Free migration request */
 /*   sprintf (name, "%s/mig_task", sctk_store_dir); */
 /*   if (strncmp (type, name, strlen (name)) == 0) */
 /*     { */
 /*       remove (type); */
-/*       sctk_nodebug ("%s removed Restored",name); */
+/*       mpc_common_nodebug ("%s removed Restored",name); */
 /*     } */
-	sctk_nodebug("All done Restored");
+	mpc_common_nodebug("All done Restored");
 	return 0;
 }
 
@@ -223,7 +223,7 @@ static int _mpc_thread_ethread_mxn_engine_sched_dump_clean()
 /*   while (file != NULL) */
 /*     { */
 /*       fclose (file); */
-/*       sctk_nodebug ("Clean file %s", name); */
+/*       mpc_common_nodebug ("Clean file %s", name); */
 /*       remove (name); */
 /*       step++; */
 /*       sprintf (name, "%s/task_%p_%lu", sctk_store_dir, self, step); */
@@ -242,7 +242,7 @@ static void _mpc_thread_ethread_mxn_engine_wait_for_value_and_poll(volatile int 
 
 	_mpc_thread_ethread_mxn_engine_self_all(&current_vp, &current);
 
-	sctk_nodebug("wait real : %d", current_vp->rank);
+	mpc_common_nodebug("wait real : %d", current_vp->rank);
 	___mpc_thread_ethread_wait_for_value_and_poll(current_vp,
 	                                              current, data, value, func, arg);
 }
@@ -388,14 +388,14 @@ static int _mpc_thread_ethread_mxn_engine_user_create(_mpc_thread_ethread_t *thr
 	assume(pos < sctk_nb_vp_initialized);
 	assume(_mpc_thread_ethread_mxn_engine_vp_list[pos] != NULL);
 
-	sctk_nodebug("Put %d", pos);
+	mpc_common_nodebug("Put %d", pos);
 	pos = (pos + 1) % sctk_nb_vp_initialized;
 
 	if(attr != NULL)
 	{
 		if(attr->ptr->binding != (unsigned int)-1)
 		{
-			sctk_nodebug("Thread pinned to core %d", attr->ptr->binding);
+			mpc_common_nodebug("Thread pinned to core %d", attr->ptr->binding);
 			assume(attr->ptr->binding < sctk_nb_vp_initialized);
 			current_vp = _mpc_thread_ethread_mxn_engine_vp_list[attr->ptr->binding];
 		}
@@ -546,7 +546,7 @@ _mpc_thread_ethread_mxn_engine_func_kernel_thread(void *arg)
 		mpc_topology_bind_to_cpu(vp->bind_to);
 /*     fprintf(stderr,"bind thread to %d\n",vp->bind_to); */
 	}
-	sctk_nodebug("%d %d", mpc_topology_get_current_cpu(), vp->bind_to);
+	mpc_common_nodebug("%d %d", mpc_topology_get_current_cpu(), vp->bind_to);
 	___mpc_thread_ethread_idle_task(&th_data);
 	return NULL;
 }
@@ -578,7 +578,7 @@ _mpc_thread_ethread_gen_func_kernel_thread(void *arg)
 	_mpc_thread_data_set(&tmp);
 	sctk_set_tls(NULL);
 
-	sctk_nodebug("Entering in kernel idle");
+	mpc_common_nodebug("Entering in kernel idle");
 
 
 	___mpc_thread_ethread_kernel_idle_task(&th_data);
@@ -602,7 +602,7 @@ static void _mpc_thread_ethread_mxn_engine_start_kernel_thread(int pos)
 		_mpc_thread_ethread_mxn_engine_vp_list[pos] = tmp;
 	}
 	_mpc_thread_ethread_mxn_engine_vp_list[pos]->bind_to = pos;
-	sctk_nodebug("BIND to %d", pos);
+	mpc_common_nodebug("BIND to %d", pos);
 
 	_mpc_thread_kthread_create(&pid,
 	                           _mpc_thread_ethread_mxn_engine_func_kernel_thread,
@@ -618,7 +618,7 @@ _mpc_thread_ethread_start_kernel_thread()
 	_mpc_thread_ethread_virtual_processor_t *tmp;
 	static mpc_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
 
-	sctk_nodebug("Create Kthread");
+	mpc_common_nodebug("Create Kthread");
 
 	mpc_thread_mutex_lock(&lock);
 
@@ -629,7 +629,7 @@ _mpc_thread_ethread_start_kernel_thread()
 	tmp->rank = -1;
 
 	_mpc_thread_kthread_create(&pid, _mpc_thread_ethread_gen_func_kernel_thread, tmp);
-	sctk_nodebug("Create Kthread done");
+	mpc_common_nodebug("Create Kthread done");
 
 	mpc_thread_mutex_unlock(&lock);
 	return tmp;
@@ -677,7 +677,7 @@ static void _mpc_thread_ethread_mxn_engine_init_virtual_processors()
 
 	cpu_number = mpc_topology_get_pu_count();
 
-	sctk_nodebug("starts %d virtual processors", cpu_number);
+	mpc_common_nodebug("starts %d virtual processors", cpu_number);
 
 	_mpc_thread_ethread_mxn_engine_vp_list = (_mpc_thread_ethread_virtual_processor_t **)
 	                                         __sctk_malloc(cpu_number *
@@ -691,7 +691,7 @@ static void _mpc_thread_ethread_mxn_engine_init_virtual_processors()
 	}
 	mpc_topology_bind_to_cpu(0);
 
-	sctk_nodebug("I'am %p", _mpc_thread_ethread_mxn_engine_self() );
+	mpc_common_nodebug("I'am %p", _mpc_thread_ethread_mxn_engine_self() );
 	while(cpu_number != sctk_nb_vp_initialized)
 	{
 		assume(sctk_nb_vp_initialized <= cpu_number);
@@ -759,7 +759,7 @@ static int _mpc_thread_ethread_mxn_engine_thread_proc_migration(const int cpu)
 	assume(last >= 0);
 	assume(last < mpc_topology_get_pu_count() );
 
-	sctk_nodebug("task %p Jump from %d to %d", current, last, cpu);
+	mpc_common_nodebug("task %p Jump from %d to %d", current, last, cpu);
 
 	if(cpu != last)
 	{
@@ -778,7 +778,7 @@ static int _mpc_thread_ethread_mxn_engine_thread_proc_migration(const int cpu)
 		current->migrate_to     = NULL;
 	}
 
-	sctk_nodebug("task %p Jump from %d to %d(%d) done", current, last, cpu,
+	mpc_common_nodebug("task %p Jump from %d to %d(%d) done", current, last, cpu,
 	             (_mpc_thread_ethread_virtual_processor_t
 	              *)(_mpc_thread_ethread_mxn_engine_self()->vp)->rank);
 
@@ -1201,7 +1201,7 @@ void mpc_thread_ethread_mxn_engine_init(void)
 
 
 	sctk_multithreading_initialised = 1;
-	sctk_nodebug("FORCE allocation");
+	mpc_common_nodebug("FORCE allocation");
 	sctk_free(sctk_malloc(5) );
 
 	_mpc_thread_data_init();

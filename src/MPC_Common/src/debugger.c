@@ -49,7 +49,7 @@ static void determine_elf_class( char *name, elf_class_t *c )
 	Elf32_Ehdr header;
 	c->name = name;
 	c->fd = fopen( c->name, "r" );
-	sctk_nodebug( "determine_elf_class %s", c->name );
+	mpc_common_nodebug( "determine_elf_class %s", c->name );
 
 	if ( c->fd != NULL )
 	{
@@ -297,7 +297,7 @@ static inline void __libunwind_backtrace( void )
 			}
 		}
 
-		sctk_nodebug( "ip %p", ptr.ptr );
+		mpc_common_nodebug( "ip %p", ptr.ptr );
 
 		if ( map[i].c.is_lib )
 		{
@@ -305,7 +305,7 @@ static inline void __libunwind_backtrace( void )
 			    ( char * ) ( ( unsigned long ) ptr.ptr - ( unsigned long ) map[i].start );
 		}
 
-		sctk_nodebug( "ip %p in lib %d %d", ptr.ptr, i, nb_lines );
+		mpc_common_nodebug( "ip %p in lib %d %d", ptr.ptr, i, nb_lines );
 
 		if ( map[i].c.read_elf_sym != NULL )
 		{
@@ -316,7 +316,7 @@ static inline void __libunwind_backtrace( void )
 			ptr.line = -1;
 		}
 
-		sctk_nodebug( "ip %p in lib %d %d read map done line %d", ptr.ptr, i,
+		mpc_common_nodebug( "ip %p in lib %d %d read map done line %d", ptr.ptr, i,
 		              nb_lines, ptr.line );
 
 		if ( strcmp( func_name_buf, "" ) == 0 )
@@ -337,14 +337,14 @@ static inline void __libunwind_backtrace( void )
 		}
 
 
-		sctk_nodebug( "ip %p", ip );
-		sctk_nodebug( "%-50s", func_name_buf );
-		sctk_nodebug( "abs %p", ptr.absolute );
-		sctk_nodebug( "dir %p", ptr.dir );
-		sctk_nodebug( "file %p", ptr.file );
-		sctk_nodebug( "dir %s", ptr.dir );
-		sctk_nodebug( "file %s", ptr.file );
-		sctk_nodebug( "absolute %s", ptr.absolute );
+		mpc_common_nodebug( "ip %p", ip );
+		mpc_common_nodebug( "%-50s", func_name_buf );
+		mpc_common_nodebug( "abs %p", ptr.absolute );
+		mpc_common_nodebug( "dir %p", ptr.dir );
+		mpc_common_nodebug( "file %p", ptr.file );
+		mpc_common_nodebug( "dir %s", ptr.dir );
+		mpc_common_nodebug( "file %s", ptr.file );
+		mpc_common_nodebug( "absolute %s", ptr.absolute );
 		mpc_common_io_noalloc_fprintf( stderr, "\t[%2d] "MPC_COLOR_RED_BOLD( %s )" @ "MPC_COLOR_YELLOW( %llx )"\n", frame_id, func_name_buf, ip );
 
 		if ( ptr.line != ( unsigned long ) - 1 )

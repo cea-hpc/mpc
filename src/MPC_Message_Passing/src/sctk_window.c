@@ -176,7 +176,7 @@ void sctk_win_acquire( mpc_lowcomm_rdma_window_t win_id )
 
 static int _sctk_win_relax( struct mpc_lowcomm_rdma_window * win )
 {
-	sctk_nodebug("%s win_id %d on %d", __FUNCTION__, win->id, mpc_common_get_task_rank() );
+	mpc_common_nodebug("%s win_id %d on %d", __FUNCTION__, win->id, mpc_common_get_task_rank() );
 	int ret = 0;
 
 	mpc_common_spinlock_lock( &win->lock );
@@ -250,7 +250,7 @@ mpc_lowcomm_rdma_window_t mpc_lowcomm_rdma_window_init( void *addr, size_t size,
 
         win->access_mode = SCTK_WIN_ACCESS_AUTO;
 
-        sctk_nodebug("CREATING WIN (%p) %d on %d RC %d", win, win->id,
+        mpc_common_nodebug("CREATING WIN (%p) %d on %d RC %d", win, win->id,
                      mpc_common_get_task_rank(), win->refcounter);
 
         return win->id;
@@ -261,7 +261,7 @@ void mpc_lowcomm_rdma_window_release( mpc_lowcomm_rdma_window_t win_id  )
 {
 	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( win_id );
 
-        sctk_nodebug("%s %p win_id %d on %d RC %d", __FUNCTION__, win, win_id,
+        mpc_common_nodebug("%s %p win_id %d on %d RC %d", __FUNCTION__, win, win_id,
                      mpc_common_get_task_rank(), win->refcounter);
 
         if (!win) {
@@ -271,7 +271,7 @@ void mpc_lowcomm_rdma_window_release( mpc_lowcomm_rdma_window_t win_id  )
         /* Do we need to signal a remote win ? */
         if ((win->owner != mpc_common_get_task_rank()) &&
             mpc_lowcomm_is_remote_rank(win->owner)) {
-          sctk_nodebug("Remote is %d on %d", win->remote_id, win->owner);
+          mpc_common_nodebug("Remote is %d on %d", win->remote_id, win->owner);
           /* This is a remote window sigal release
            * to remote rank */
           assume(0 <= win->remote_id);
@@ -290,12 +290,12 @@ void mpc_lowcomm_rdma_window_release( mpc_lowcomm_rdma_window_t win_id  )
 
         /* Did the refcounter reach "0" ? */
         if (refcount != 0) {
-          sctk_nodebug("NO REL %s win_id %d on %d (RC %d)", __FUNCTION__,
+          mpc_common_nodebug("NO REL %s win_id %d on %d (RC %d)", __FUNCTION__,
                        win_id, mpc_common_get_task_rank(), refcount);
           return;
         }
 
-        sctk_nodebug("REL %s win_id %d on %d (RC %d)", __FUNCTION__, win_id,
+        mpc_common_nodebug("REL %s win_id %d on %d (RC %d)", __FUNCTION__, win_id,
                      mpc_common_get_task_rank(), refcount);
 
         /* If we are at "0" we free the window */
@@ -337,7 +337,7 @@ int mpc_lowcomm_rdma_window_build_from_remote(struct mpc_lowcomm_rdma_window *re
   int local_id = new_win->id;
   int remote_id = remote_win_data->id;
 
-  sctk_nodebug("CREATE win %d by copying %p to %p", local_id, remote_win_data,
+  mpc_common_nodebug("CREATE win %d by copying %p to %p", local_id, remote_win_data,
                new_win);
 
   /* Copy remote inside it */
@@ -373,7 +373,7 @@ int mpc_lowcomm_rdma_window_build_from_remote(struct mpc_lowcomm_rdma_window *re
 
 int mpc_lowcomm_rdma_window_map_remote(int remote_rank, mpc_lowcomm_communicator_t comm,
                            mpc_lowcomm_rdma_window_t win_id) {
-  sctk_nodebug("%s winid is %d", __FUNCTION__, win_id);
+  mpc_common_nodebug("%s winid is %d", __FUNCTION__, win_id);
 
   struct mpc_lowcomm_rdma_window_map_request mr;
   mpc_lowcomm_rdma_window_map_request_init(&mr, remote_rank, win_id);
@@ -447,7 +447,7 @@ void mpc_lowcomm_rdma_window_map_remote_ctrl_msg_handler( struct mpc_lowcomm_rdm
           return;
         }
 
-        sctk_nodebug("MAP REMOTE HANDLER RESPONDS TO %d", mr->source_rank);
+        mpc_common_nodebug("MAP REMOTE HANDLER RESPONDS TO %d", mr->source_rank);
 
         /* We have a local window matching */
 
@@ -468,7 +468,7 @@ void mpc_lowcomm_rdma_window_relax_ctrl_msg_handler( mpc_lowcomm_rdma_window_t w
 {
 	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( win_id );
 
-	sctk_nodebug("%s win is %p target is %d (RC %d)", __FUNCTION__, win, win_id , win->refcounter);
+	mpc_common_nodebug("%s win is %p target is %d (RC %d)", __FUNCTION__, win, win_id , win->refcounter);
 
         if (!win) {
           mpc_common_debug_warning("No such window %d in remote relax", win_id);
@@ -595,7 +595,7 @@ static inline void mpc_lowcomm_rdma_window_RDMA_write_net(struct mpc_lowcomm_rdm
     mpc_common_debug_fatal("Error RDMA write operation overflows the window");
   }
 
-  sctk_nodebug("RDMA WRITE NET");
+  mpc_common_nodebug("RDMA WRITE NET");
 
   mpc_lowcomm_ptp_message_t *msg =
       mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
@@ -624,7 +624,7 @@ static inline void __mpc_lowcomm_rdma_window_RDMA_write(mpc_lowcomm_rdma_window_
 
   mpc_lowcomm_request_init(req, win->comm, REQUEST_RDMA);
 
-  sctk_nodebug("RDMA WRITE");
+  mpc_common_nodebug("RDMA WRITE");
 
   if (!win) {
     mpc_common_debug_fatal("No such window ID");
@@ -652,7 +652,7 @@ static inline void __mpc_lowcomm_rdma_window_RDMA_write(mpc_lowcomm_rdma_window_
     mpc_lowcomm_isend_class(win->comm_rank, src_addr, size, TAG_RDMA_WRITE,
                              win->comm, MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &data_req);
 
-    sctk_nodebug("WRITE to rank %d (%d) in %d", win->comm_rank, win->owner,
+    mpc_common_nodebug("WRITE to rank %d (%d) in %d", win->comm_rank, win->owner,
                  win->comm);
     sctk_control_messages_send_process(
         sctk_get_process_rank_from_task_rank(win->owner),
@@ -786,7 +786,7 @@ void __mpc_lowcomm_rdma_window_RDMA_read( mpc_lowcomm_rdma_window_t win_id, sctk
 
         mpc_lowcomm_request_init(req, win->comm, REQUEST_RDMA);
 
-        sctk_nodebug("RDMA READ");
+        mpc_common_nodebug("RDMA READ");
 
         if (!win) {
           mpc_common_debug_fatal("No such window ID %d", win_id);

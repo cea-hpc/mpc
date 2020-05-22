@@ -99,7 +99,7 @@ static void *_mpc_threads_ng_engine_scheduler_idle_task(_mpc_threads_ng_engine_s
 	/* Start Idle*/
 	_mpc_threads_ng_engine_sched_idle_start();
 
-	sctk_nodebug("End vp");
+	mpc_common_nodebug("End vp");
 
 //#warning "Handle zombies"
 	not_implemented();
@@ -123,7 +123,7 @@ static void *_mpc_threads_ng_engine_scheduler_bootstrap_task(_mpc_threads_ng_eng
 	_mpc_threads_ng_engine_self_set(thread);
 	sctk_swapcontext(&(thread->sched.ctx_bootstrap), &(thread->sched.ctx) );
 
-	sctk_nodebug("End vp");
+	mpc_common_nodebug("End vp");
 
 //#warning "Handle zombies"
 
@@ -161,7 +161,7 @@ void _mpc_threads_ng_engine_scheduler_swapcontext(_mpc_threads_ng_engine_schedul
                                                _mpc_threads_ng_engine_scheduler_t *new_th)
 {
 	_mpc_threads_ng_engine_self_set(new_th->th);
-	sctk_nodebug("SWAP %p %p -> %p", pthread_self(), &(old_th->ctx), &(new_th->ctx) );
+	mpc_common_nodebug("SWAP %p %p -> %p", pthread_self(), &(old_th->ctx), &(new_th->ctx) );
 	mpc_common_spinlock_unlock(&(old_th->debug_lock) );
 	assume(mpc_common_spinlock_trylock(&(new_th->debug_lock) ) == 0);
 	sctk_swapcontext(&(old_th->ctx), &(new_th->ctx) );
@@ -170,7 +170,7 @@ void _mpc_threads_ng_engine_scheduler_swapcontext(_mpc_threads_ng_engine_schedul
 void _mpc_threads_ng_engine_scheduler_setcontext(_mpc_threads_ng_engine_scheduler_t *new_th)
 {
 	_mpc_threads_ng_engine_self_set(new_th->th);
-	sctk_nodebug("SET %p", &(new_th->ctx) );
+	mpc_common_nodebug("SET %p", &(new_th->ctx) );
 	sctk_setcontext(&(new_th->ctx) );
 	assume(mpc_common_spinlock_trylock(&(new_th->debug_lock) ) == 0);
 }
@@ -210,7 +210,7 @@ static void sctk_centralized_add_to_list(_mpc_threads_ng_engine_scheduler_t *sch
 	assume(sched->generic.sched == sched);
 	mpc_common_spinlock_lock(&sctk_centralized_sched_list_lock);
 	DL_APPEND(sctk_centralized_sched_list, &(sched->generic) );
-	sctk_nodebug("ADD Thread %p", sched);
+	mpc_common_nodebug("ADD Thread %p", sched);
 	mpc_common_spinlock_unlock(&sctk_centralized_sched_list_lock);
 }
 
@@ -237,7 +237,7 @@ static _mpc_threads_ng_engine_scheduler_t *sctk_centralized_get_from_list()
 		mpc_common_spinlock_unlock(&sctk_centralized_sched_list_lock);
 		if(res != NULL)
 		{
-			sctk_nodebug("REMOVE Thread %p", res->sched);
+			mpc_common_nodebug("REMOVE Thread %p", res->sched);
 			return res->sched;
 		}
 		else
@@ -269,7 +269,7 @@ static _mpc_threads_ng_engine_scheduler_t *sctk_centralized_get_from_list_pthrea
 		mpc_common_spinlock_unlock(&sctk_centralized_sched_list_lock);
 		if(res != NULL)
 		{
-			sctk_nodebug("REMOVE Thread %p", res->sched);
+			mpc_common_nodebug("REMOVE Thread %p", res->sched);
 			return res->sched;
 		}
 		else
@@ -322,7 +322,7 @@ void sctk_centralized_poll_tasks(_mpc_threads_ng_engine_scheduler_t *sched)
 			if(_mpc_threads_ng_engine_scheduler_check_task(task) == 1)
 			{
 				DL_DELETE(sctk_centralized_task_list, task);
-				sctk_nodebug("WAKE task %p", task);
+				mpc_common_nodebug("WAKE task %p", task);
 
 				mpc_common_spinlock_lock(&(sched->generic.lock) );
 				lsched = task->sched;
@@ -437,7 +437,7 @@ static void sctk_multiple_queues_add_to_list(_mpc_threads_ng_engine_scheduler_t 
 
 	mpc_common_spinlock_lock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock) );
 	DL_APPEND( (sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list), &(sched->generic) );
-	sctk_nodebug("ADD Thread %p", sched);
+	mpc_common_nodebug("ADD Thread %p", sched);
 	mpc_common_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock) );
 }
 
@@ -524,7 +524,7 @@ static _mpc_threads_ng_engine_scheduler_t *sctk_multiple_queues_get_from_list()
 		                           .sctk_multiple_queues_sched_list_lock);
 		if(res != NULL)
 		{
-			sctk_nodebug("REMOVE Thread %p", res->sched);
+			mpc_common_nodebug("REMOVE Thread %p", res->sched);
 			return res->sched;
 		}
 		else
@@ -564,7 +564,7 @@ static void sctk_multiple_queues_with_priority_dynamic_add_to_list(
 	DL_APPEND(
 	        (sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list),
 	        &(sched->generic) );
-	sctk_nodebug("ADD Thread %p", sched);
+	mpc_common_nodebug("ADD Thread %p", sched);
 	mpc_common_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
 	                             .sctk_multiple_queues_sched_list_lock) );
 }
@@ -672,7 +672,7 @@ sctk_multiple_queues_with_priority_dynamic_get_from_list()
 		                           .sctk_multiple_queues_sched_list_lock);
 		if(res != NULL)
 		{
-			sctk_nodebug("REMOVE Thread %p", res->sched);
+			mpc_common_nodebug("REMOVE Thread %p", res->sched);
 			return res->sched;
 		}
 		else
@@ -713,7 +713,7 @@ static void sctk_multiple_queues_with_priority_default_add_to_list(
 	DL_APPEND(
 	        (sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list),
 	        &(sched->generic) );
-	sctk_nodebug("ADD Thread %p", sched);
+	mpc_common_nodebug("ADD Thread %p", sched);
 	mpc_common_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
 	                             .sctk_multiple_queues_sched_list_lock) );
 }
@@ -811,7 +811,7 @@ sctk_multiple_queues_with_priority_default_get_from_list()
 		                           .sctk_multiple_queues_sched_list_lock);
 		if(res != NULL)
 		{
-			sctk_nodebug("REMOVE Thread %p", res->sched);
+			mpc_common_nodebug("REMOVE Thread %p", res->sched);
 			return res->sched;
 		}
 		else
@@ -852,7 +852,7 @@ static void sctk_multiple_queues_with_priority_omp_add_to_list(
 	DL_APPEND(
 	        (sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list),
 	        &(sched->generic) );
-	sctk_nodebug("ADD Thread %p", sched);
+	mpc_common_nodebug("ADD Thread %p", sched);
 	mpc_common_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
 	                             .sctk_multiple_queues_sched_list_lock) );
 }
@@ -937,7 +937,7 @@ sctk_multiple_queues_with_priority_omp_get_from_list()
 		                           .sctk_multiple_queues_sched_list_lock);
 		if(res != NULL)
 		{
-			sctk_nodebug("REMOVE Thread %p", res->sched);
+			mpc_common_nodebug("REMOVE Thread %p", res->sched);
 			return res->sched;
 		}
 		else
@@ -978,7 +978,7 @@ static void sctk_multiple_queues_with_priority_nofamine_add_to_list(
 	DL_APPEND(
 	        (sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list),
 	        &(sched->generic) );
-	sctk_nodebug("ADD Thread %p", sched);
+	mpc_common_nodebug("ADD Thread %p", sched);
 	mpc_common_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
 	                             .sctk_multiple_queues_sched_list_lock) );
 }
@@ -1303,7 +1303,7 @@ static void sctk_multiple_queues_with_priority_dyn_sorted_list_add_to_list(
 				DL_PREPEND_ELEM( (sctk_multiple_queues_sched_lists[core]
 				                  .sctk_multiple_queues_sched_list),
 				                 &(res->sched->generic), &(sched->generic) );
-				sctk_nodebug("ADD Thread %p", sched);
+				mpc_common_nodebug("ADD Thread %p", sched);
 				goto unlock;
 			}
 		}
@@ -1437,7 +1437,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list()
 			if(res->sched->th->attr.current_priority >=
 			   sched->th->attr.current_priority)
 			{
-				sctk_nodebug("REMOVE Thread %p", res->sched);
+				mpc_common_nodebug("REMOVE Thread %p", res->sched);
 				return res->sched;
 			}
 			else
@@ -1541,7 +1541,7 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old()
 
 		if(res != NULL)
 		{
-			sctk_nodebug("REMOVE Thread %p", res->sched);
+			mpc_common_nodebug("REMOVE Thread %p", res->sched);
 			return res->sched;
 		}
 		else
@@ -1714,7 +1714,7 @@ static _mpc_threads_ng_engine_scheduler_t *sctk_multiple_queues_get_from_list_pt
 		mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
 		if(res != NULL)
 		{
-			sctk_nodebug("REMOVE Thread %p", res->sched);
+			mpc_common_nodebug("REMOVE Thread %p", res->sched);
 			return res->sched;
 		}
 		else
@@ -1833,7 +1833,7 @@ void sctk_multiple_queues_poll_tasks(_mpc_threads_ng_engine_scheduler_t *sched)
 				}
 
 				// endhmt
-				sctk_nodebug("WAKE task %p", task);
+				mpc_common_nodebug("WAKE task %p", task);
 
 				mpc_common_spinlock_lock(&(sched->generic.lock) );
 				lsched = task->sched;
@@ -1944,7 +1944,7 @@ static int sctk_sem_wait(sem_t *sem)
 	{
 		res = sem_wait(sem);
 	} while(res != 0);
-	sctk_nodebug("SEM WAIT %d", res);
+	mpc_common_nodebug("SEM WAIT %d", res);
 	if(res != 0)
 	{
 		perror("SEM WAIT");
@@ -1960,8 +1960,8 @@ void _mpc_threads_ng_engine_scheduler_swapcontext_pthread(_mpc_threads_ng_engine
 
 	assume(new_th->status == _mpc_threads_ng_engine_running);
 	assume(sem_getvalue(&(old_th->generic.sem), &val) == 0);
-	sctk_nodebug("SLEEP %p (%d) WAKE %p %d (%d)", old_th, old_th->status, new_th, val, new_th->status);
-	sctk_nodebug("Register spinunlock %p execute SWAP", vp->sctk_generic_delegated_spinlock);
+	mpc_common_nodebug("SLEEP %p (%d) WAKE %p %d (%d)", old_th, old_th->status, new_th, val, new_th->status);
+	mpc_common_nodebug("Register spinunlock %p execute SWAP", vp->sctk_generic_delegated_spinlock);
 
 	new_th->generic.vp = vp;
 	old_th->generic.vp = NULL;
@@ -1979,9 +1979,9 @@ void _mpc_threads_ng_engine_scheduler_swapcontext_pthread(_mpc_threads_ng_engine
 	assume(old_th->status == _mpc_threads_ng_engine_running);
 	assume(old_th->generic.vp != NULL);
 	memcpy(&vp_data, old_th->generic.vp, sizeof(sctk_per_vp_data_t) );
-	sctk_nodebug("Register spinunlock %p execute SWAP NEW", old_th->generic.vp->sctk_generic_delegated_spinlock);
+	mpc_common_nodebug("Register spinunlock %p execute SWAP NEW", old_th->generic.vp->sctk_generic_delegated_spinlock);
 
-	sctk_nodebug("RESTART %p", old_th);
+	mpc_common_nodebug("RESTART %p", old_th);
 }
 
 void _mpc_threads_ng_engine_scheduler_swapcontext_ethread(_mpc_threads_ng_engine_scheduler_t *old_th,
@@ -2008,7 +2008,7 @@ void _mpc_threads_ng_engine_scheduler_swapcontext_none(__UNUSED__ _mpc_threads_n
 static void sctk_generic_add_to_list(_mpc_threads_ng_engine_scheduler_t *sched, int is_idle_mode)
 {
 	assume(sched->status == _mpc_threads_ng_engine_running);
-	sctk_nodebug("ADD TASK %p idle mode %d", sched, is_idle_mode);
+	mpc_common_nodebug("ADD TASK %p idle mode %d", sched, is_idle_mode);
 	if(is_idle_mode == 0)
 	{
 		sctk_generic_add_to_list_intern(sched);
@@ -2028,7 +2028,7 @@ static void sctk_generic_add_task(_mpc_threads_ng_engine_task_t *task)
 	{
 		tmp[MPC_THREADS_GENERIC_TASK_LOCK] = (void *)1;
 	}
-	sctk_nodebug("ADD task %p FROM %p", task, task->sched);
+	mpc_common_nodebug("ADD task %p FROM %p", task, task->sched);
 	if(task->is_blocking)
 	{
 		_mpc_threads_ng_engine_thread_status(task->sched, _mpc_threads_ng_engine_blocked);
@@ -2060,7 +2060,7 @@ static void sctk_generic_add_task(_mpc_threads_ng_engine_task_t *task)
 		}
 		// endhmt
 	}
-	sctk_nodebug("ADD task %p FROM %p DONE", task, task->sched);
+	mpc_common_nodebug("ADD task %p FROM %p DONE", task, task->sched);
 }
 
 static void sctk_generic_sched_yield(_mpc_threads_ng_engine_scheduler_t *sched);
@@ -2074,7 +2074,7 @@ static void sctk_generic_sched_idle_start()
 		sched_yield();
 		next = sctk_generic_get_from_list();
 	} while(next == NULL);
-	sctk_nodebug("Launch %p", next);
+	mpc_common_nodebug("Launch %p", next);
 	sctk_swapcontext(&(next->ctx_bootstrap), &(next->ctx) );
 	not_reachable();
 }
@@ -2092,7 +2092,7 @@ static void sctk_generic_sched_idle_start_pthread()
 		sched_yield();
 		next = sctk_generic_get_from_list_pthread_init();
 	} while(next == NULL);
-	sctk_nodebug("Launch PTHREAD %p", next);
+	mpc_common_nodebug("Launch PTHREAD %p", next);
 	sctk_swapcontext(&(next->ctx_bootstrap), &(next->ctx) );
 	not_reachable();
 }
@@ -2220,7 +2220,7 @@ static void sctk_generic_sched_yield_intern(
 	}
 	else
 	{
-		sctk_nodebug("TASK %p status %d type %d %d %d", sched, sched->status,
+		mpc_common_nodebug("TASK %p status %d type %d %d %d", sched, sched->status,
 		             sched->generic.vp_type, _mpc_threads_ng_engine_zombie,
 		             sched->th->attr.cancel_status);
 		// Register the current thread for a futur destruction (zombie state)
@@ -2229,12 +2229,12 @@ static void sctk_generic_sched_yield_intern(
 		{
 			assume(vp_data.sctk_generic_delegated_zombie_detach_thread == NULL);
 			vp_data.sctk_generic_delegated_zombie_detach_thread = &(sched->generic);
-			sctk_nodebug("Detached Zombie %p", sched);
+			mpc_common_nodebug("Detached Zombie %p", sched);
 		}
 
 		if(sched->status == _mpc_threads_ng_engine_zombie)
 		{
-			sctk_nodebug("Attached Zombie %p", sched);
+			mpc_common_nodebug("Attached Zombie %p", sched);
 		}
 	}
 
@@ -2289,8 +2289,8 @@ quick_swap:
 	{
 		if(next != NULL)
 		{
-			sctk_nodebug("SWAP from %p to %p", sched, next);
-			sctk_nodebug("SLEEP TASK %p status %d type %d %d cancel status %d", sched,
+			mpc_common_nodebug("SWAP from %p to %p", sched, next);
+			mpc_common_nodebug("SLEEP TASK %p status %d type %d %d cancel status %d", sched,
 			             sched->status, sched->generic.vp_type,
 			             _mpc_threads_ng_engine_zombie, sched->th->attr.cancel_status);
 
@@ -2350,8 +2350,8 @@ quick_swap:
 			}
 			// endtimers
 
-			sctk_nodebug("Enter %p", sched);
-			sctk_nodebug("WAKE TASK %p status %d type %d %d cancel status %d", sched,
+			mpc_common_nodebug("Enter %p", sched);
+			mpc_common_nodebug("WAKE TASK %p status %d type %d %d cancel status %d", sched,
 			             sched->status, sched->generic.vp_type,
 			             _mpc_threads_ng_engine_zombie, sched->th->attr.cancel_status);
 		}
@@ -2387,12 +2387,12 @@ quick_swap:
 
 				assume(vp_data.registered_spin_unlock == NULL);
 
-				sctk_nodebug("REGISTER delegated IDLE %p", sched);
+				mpc_common_nodebug("REGISTER delegated IDLE %p", sched);
 				vp_data.sched_idle             = sched;
 				vp_data.registered_spin_unlock =
 				        vp_data.sctk_generic_delegated_spinlock;
 
-				sctk_nodebug("Register spinunlock %p execute IDLE",
+				mpc_common_nodebug("Register spinunlock %p execute IDLE",
 				             vp_data.sctk_generic_delegated_spinlock);
 				mpc_common_spinlock_unlock(vp_data.sctk_generic_delegated_spinlock);
 				vp_data.sctk_generic_delegated_spinlock = NULL;
@@ -2433,7 +2433,7 @@ quick_swap:
 				vp_data.sched_idle->generic.is_idle_mode = 0;
 				if(vp_data.sched_idle->status == _mpc_threads_ng_engine_running)
 				{
-					sctk_nodebug("ADD FROM delegated spinlock %p", vp_data.sched_idle);
+					mpc_common_nodebug("ADD FROM delegated spinlock %p", vp_data.sched_idle);
 
 #ifdef SCTK_DEBUG_SCHEDULER
 					// hmt
@@ -2454,17 +2454,17 @@ quick_swap:
 
 	if(vp_data.sctk_generic_delegated_spinlock != NULL)
 	{
-		sctk_nodebug("Register spinunlock %p execute",
+		mpc_common_nodebug("Register spinunlock %p execute",
 		             vp_data.sctk_generic_delegated_spinlock);
 		mpc_common_spinlock_unlock(vp_data.sctk_generic_delegated_spinlock);
 		vp_data.sctk_generic_delegated_spinlock = NULL;
 	}
 
-	sctk_nodebug("TASK %p status %d type %d _mpc_threads_ng_engine_check_signals",
+	mpc_common_nodebug("TASK %p status %d type %d _mpc_threads_ng_engine_check_signals",
 	             sched, sched->status, sched->generic.vp_type);
 	_mpc_threads_ng_engine_check_signals(1);
 
-	sctk_nodebug(
+	mpc_common_nodebug(
 	        "TASK %p status %d type %d _mpc_threads_ng_engine_check_signals done %p ",
 	        sched, sched->status, sched->generic.vp_type, vp_data.swap_to_sched);
 
@@ -2482,7 +2482,7 @@ quick_swap:
 		goto quick_swap;
 	}
 
-	sctk_nodebug("TASK %p status %d type %d Deal with zombie threads", sched,
+	mpc_common_nodebug("TASK %p status %d type %d Deal with zombie threads", sched,
 	             sched->status, sched->generic.vp_type);
 	/* Deal with zombie threads */
 	if(vp_data.sctk_generic_delegated_zombie_detach_thread != NULL)
@@ -2561,7 +2561,7 @@ static void sctk_generic_sched_yield(_mpc_threads_ng_engine_scheduler_t *sched)
 				mpc_common_spinlock_unlock(&(sched->debug_lock) );
 				assume(sctk_sem_wait(&(sched->generic.sem) ) == 0);
 				memcpy(&vp_data, sched->generic.vp, sizeof(sctk_per_vp_data_t) );
-				sctk_nodebug("Register spinunlock %p execute SWAP NEW FIRST", sched->generic.vp->sctk_generic_delegated_spinlock);
+				mpc_common_nodebug("Register spinunlock %p execute SWAP NEW FIRST", sched->generic.vp->sctk_generic_delegated_spinlock);
 				return;
 			}
 			sctk_generic_sched_yield_intern(sched, _mpc_threads_ng_engine_scheduler_swapcontext_pthread,
@@ -2598,7 +2598,7 @@ void sctk_generic_thread_status(_mpc_threads_ng_engine_scheduler_t *sched,
 static void sctk_generic_register_spinlock_unlock(__UNUSED__ _mpc_threads_ng_engine_scheduler_t *sched,
                                                   mpc_common_spinlock_t *lock)
 {
-	sctk_nodebug("Register spinunlock %p", lock);
+	mpc_common_nodebug("Register spinunlock %p", lock);
 	vp_data.sctk_generic_delegated_spinlock = lock;
 }
 
@@ -2608,7 +2608,7 @@ static void sctk_generic_wake(_mpc_threads_ng_engine_scheduler_t *sched)
 
 	is_idle_mode = sched->generic.is_idle_mode;
 
-	sctk_nodebug("WAKE %p", sched);
+	mpc_common_nodebug("WAKE %p", sched);
 
 	if(sched->generic.vp_type == 0)
 	{
@@ -2666,13 +2666,13 @@ static void sctk_generic_create_common(_mpc_threads_ng_engine_p_t *thread)
 	{
 		thread->sched.generic.vp_type = 1;
 
-		sctk_nodebug("Create thread scope %d (%d SYSTEM) vp _type %d",
+		mpc_common_nodebug("Create thread scope %d (%d SYSTEM) vp _type %d",
 		             thread->attr.scope, SCTK_THREAD_SCOPE_SYSTEM, thread->sched.generic.vp_type);
 		_mpc_threads_ng_engine_scheduler_create_vp(thread, thread->attr.bind_to);
 	}
 	else
 	{
-		sctk_nodebug("Create thread scope %d (%d SYSTEM) vp _type %d",
+		mpc_common_nodebug("Create thread scope %d (%d SYSTEM) vp _type %d",
 		             thread->attr.scope, SCTK_THREAD_SCOPE_SYSTEM, thread->sched.generic.vp_type);
 		sctk_generic_add_to_list(&(thread->sched), (&(thread->sched) )->generic.is_idle_mode);
 	}
@@ -2713,7 +2713,7 @@ static void *sctk_generic_polling_func(void *arg)
 	sctk_multiple_queues_task_lists[sched->th->attr.bind_to]
 	.sctk_multiple_queues_task_polling_thread_sched = sched;
 
-	sctk_nodebug("Start polling func %p", sched);
+	mpc_common_nodebug("Start polling func %p", sched);
 
 	do
 	{
@@ -2733,7 +2733,7 @@ static void sctk_generic_scheduler_init_thread_common(_mpc_threads_ng_engine_sch
 	mpc_common_spinlock_init(&sched->generic.lock, 0);
 
 	assume(sem_init(&(sched->generic.sem), 0, 0) == 0);
-	sctk_nodebug("INIT DONE FOR TASK %p status %d type %d %d cancel status %d %p", sched, sched->status, sched->generic.vp_type, _mpc_threads_ng_engine_zombie, sched->th->attr.cancel_status, sched->th);
+	mpc_common_nodebug("INIT DONE FOR TASK %p status %d type %d %d cancel status %d %p", sched, sched->status, sched->generic.vp_type, _mpc_threads_ng_engine_zombie, sched->th->attr.cancel_status, sched->th);
 	/* assume(sched->th->attr.cancel_status == 0); */
 }
 

@@ -133,7 +133,7 @@ static inline void sctk_ib_cq_poll ( sctk_rail_info_t *rail,
 		res = ibv_poll_cq ( cq, WC_COUNT, wc );
 
 		if ( res )
-			sctk_nodebug ( "Polled %d msgs from cq", res );
+			mpc_common_nodebug ( "Polled %d msgs from cq", res );
 
 		for ( i = 0; i < res; ++i )
 		{

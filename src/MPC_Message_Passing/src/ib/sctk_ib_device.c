@@ -216,7 +216,7 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, cha
 	rail_ib->device->link_width = link_width;
 	strcpy ( rail_ib->device->link_rate, link_rate_string );
 
-	sctk_nodebug ( "device %d", device->dev_attr.max_qp_wr );
+	mpc_common_nodebug ( "device %d", device->dev_attr.max_qp_wr );
 	srand48 ( getpid () * time ( NULL ) );
 	rail_ib->device->dev_index = device_id;
 	rail_ib->device->dev = dev_list[device_id];

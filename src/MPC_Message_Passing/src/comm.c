@@ -668,7 +668,7 @@ inline void mpc_lowcomm_ptp_message_copy( mpc_lowcomm_ptp_message_content_to_cop
 	{
 		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
 		{
-			sctk_nodebug( "MPC_LOWCOMM_MESSAGE_CONTIGUOUS - MPC_LOWCOMM_MESSAGE_CONTIGUOUS" );
+			mpc_common_nodebug( "MPC_LOWCOMM_MESSAGE_CONTIGUOUS - MPC_LOWCOMM_MESSAGE_CONTIGUOUS" );
 			size_t size;
 			size = mpc_common_min( send->tail.message.contiguous.size,
 			                       recv->tail.message.contiguous.size );
@@ -680,7 +680,7 @@ inline void mpc_lowcomm_ptp_message_copy( mpc_lowcomm_ptp_message_content_to_cop
 
 		case MPC_LOWCOMM_MESSAGE_PACK:
 		{
-			sctk_nodebug( "MPC_LOWCOMM_MESSAGE_CONTIGUOUS - MPC_LOWCOMM_MESSAGE_PACK size %d",
+			mpc_common_nodebug( "MPC_LOWCOMM_MESSAGE_CONTIGUOUS - MPC_LOWCOMM_MESSAGE_PACK size %d",
 			              send->tail.message.contiguous.size );
 			size_t i;
 			ssize_t j;
@@ -704,7 +704,7 @@ inline void mpc_lowcomm_ptp_message_copy( mpc_lowcomm_ptp_message_content_to_cop
 				/* MPI 1.3 : The length of the received message must be less than or equal
 				* to the length of the receive buffer */
 				assume( send->tail.message.contiguous.size <= recv_size );
-				sctk_nodebug( "contiguous size : %d, PACK SIZE : %d",
+				mpc_common_nodebug( "contiguous size : %d, PACK SIZE : %d",
 				              send->tail.message.contiguous.size, recv_size );
 				char skip = 0;
 
@@ -740,7 +740,7 @@ inline void mpc_lowcomm_ptp_message_copy( mpc_lowcomm_ptp_message_content_to_cop
 
 		case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
 		{
-			sctk_nodebug( "MPC_LOWCOMM_MESSAGE_CONTIGUOUS - MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE size %d",
+			mpc_common_nodebug( "MPC_LOWCOMM_MESSAGE_CONTIGUOUS - MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE size %d",
 			              send->tail.message.contiguous.size );
 			size_t i;
 			ssize_t j;
@@ -764,7 +764,7 @@ inline void mpc_lowcomm_ptp_message_copy( mpc_lowcomm_ptp_message_content_to_cop
 				/* MPI 1.3 : The length of the received message must be less than or equal
 				   to the length of the receive buffer */
 				assume( send->tail.message.contiguous.size <= recv_size );
-				sctk_nodebug( "contiguous size : %d, ABSOLUTE SIZE : %d",
+				mpc_common_nodebug( "contiguous size : %d, ABSOLUTE SIZE : %d",
 				              send->tail.message.contiguous.size, recv_size );
 				char skip = 0;
 
@@ -817,10 +817,10 @@ static inline void __mpc_comm_copy_buffer_pack_pack( unsigned long *restrict in_
 
 	if ( ( in_begins == NULL ) && ( out_begins == NULL ) )
 	{
-		sctk_nodebug( "__mpc_comm_copy_buffer_pack_pack no mpc_pack" );
-		sctk_nodebug( "%s == %s", out_adress, in_adress );
+		mpc_common_nodebug( "__mpc_comm_copy_buffer_pack_pack no mpc_pack" );
+		mpc_common_nodebug( "%s == %s", out_adress, in_adress );
 		memcpy( out_adress, in_adress, in_sizes );
-		sctk_nodebug( "%s == %s", out_adress, in_adress );
+		mpc_common_nodebug( "%s == %s", out_adress, in_adress );
 	}
 	else
 	{
@@ -828,7 +828,7 @@ static inline void __mpc_comm_copy_buffer_pack_pack( unsigned long *restrict in_
 		unsigned long j;
 		unsigned long in_i;
 		unsigned long in_j;
-		sctk_nodebug( "__mpc_comm_copy_buffer_pack_pack mpc_pack" );
+		mpc_common_nodebug( "__mpc_comm_copy_buffer_pack_pack mpc_pack" );
 
 		if ( in_begins == NULL )
 		{
@@ -877,7 +877,7 @@ static inline void __mpc_comm_copy_buffer_pack_pack( unsigned long *restrict in_
 				                    ( in_ends[in_i] * in_elem_size - in_j + in_elem_size ) );
 				memcpy( &( ( ( char * ) out_adress )[j] ), &( ( ( char * ) in_adress )[in_j] ),
 				        max_length );
-				sctk_nodebug( "Copy out[%d-%d]%s == in[%d-%d]%s", j, j + max_length,
+				mpc_common_nodebug( "Copy out[%d-%d]%s == in[%d-%d]%s", j, j + max_length,
 				              &( ( ( char * ) out_adress )[j] ), in_j, in_j + max_length,
 				              &( ( ( char * ) in_adress )[in_j] ) );
 				j += max_length;
@@ -902,10 +902,10 @@ static inline void __mpc_comm_copy_buffer_absolute_pack( long *restrict in_begin
 
 	if ( ( in_begins == NULL ) && ( out_begins == NULL ) )
 	{
-		sctk_nodebug( "__mpc_comm_copy_buffer_pack_pack no mpc_pack" );
-		sctk_nodebug( "%s == %s", out_adress, in_adress );
+		mpc_common_nodebug( "__mpc_comm_copy_buffer_pack_pack no mpc_pack" );
+		mpc_common_nodebug( "%s == %s", out_adress, in_adress );
 		memcpy( out_adress, in_adress, in_sizes );
-		sctk_nodebug( "%s == %s", out_adress, in_adress );
+		mpc_common_nodebug( "%s == %s", out_adress, in_adress );
 	}
 	else
 	{
@@ -913,7 +913,7 @@ static inline void __mpc_comm_copy_buffer_absolute_pack( long *restrict in_begin
 		unsigned long j;
 		unsigned long in_i;
 		unsigned long in_j;
-		sctk_nodebug( "__mpc_comm_copy_buffer_pack_pack mpc_pack" );
+		mpc_common_nodebug( "__mpc_comm_copy_buffer_pack_pack mpc_pack" );
 
 		if ( in_begins == NULL )
 		{
@@ -962,7 +962,7 @@ static inline void __mpc_comm_copy_buffer_absolute_pack( long *restrict in_begin
 				                    ( in_ends[in_i] * in_elem_size - in_j + in_elem_size ) );
 				memcpy( &( ( ( char * ) out_adress )[j] ), &( ( ( char * ) in_adress )[in_j] ),
 				        max_length );
-				sctk_nodebug( "Copy out[%d-%d]%s == in[%d-%d]%s", j, j + max_length,
+				mpc_common_nodebug( "Copy out[%d-%d]%s == in[%d-%d]%s", j, j + max_length,
 				              &( ( ( char * ) out_adress )[j] ), in_j, in_j + max_length,
 				              &( ( ( char * ) in_adress )[in_j] ) );
 				j += max_length;
@@ -990,10 +990,10 @@ static inline void __mpc_comm_copy_buffer_pack_absolute(
 
 	if ( ( in_begins == NULL ) && ( out_begins == NULL ) )
 	{
-		sctk_nodebug( "__mpc_comm_copy_buffer_absolute_absolute no mpc_pack" );
-		sctk_nodebug( "%s == %s", out_adress, in_adress );
+		mpc_common_nodebug( "__mpc_comm_copy_buffer_absolute_absolute no mpc_pack" );
+		mpc_common_nodebug( "%s == %s", out_adress, in_adress );
 		memcpy( out_adress, in_adress, in_sizes );
-		sctk_nodebug( "%s == %s", out_adress, in_adress );
+		mpc_common_nodebug( "%s == %s", out_adress, in_adress );
 	}
 	else
 	{
@@ -1001,7 +1001,7 @@ static inline void __mpc_comm_copy_buffer_pack_absolute(
 		unsigned long j;
 		unsigned long in_i;
 		unsigned long in_j;
-		sctk_nodebug( "__mpc_comm_copy_buffer_absolute_absolute mpc_pack" );
+		mpc_common_nodebug( "__mpc_comm_copy_buffer_absolute_absolute mpc_pack" );
 
 		if ( in_begins == NULL )
 		{
@@ -1048,12 +1048,12 @@ static inline void __mpc_comm_copy_buffer_pack_absolute(
 				max_length =
 				    mpc_common_min( ( out_ends[i] * out_elem_size - j + out_elem_size ),
 				                    ( in_ends[in_i] * in_elem_size - in_j + in_elem_size ) );
-				sctk_nodebug( "Copy out[%lu-%lu]%p == in[%lu-%lu]%p", j, j + max_length,
+				mpc_common_nodebug( "Copy out[%lu-%lu]%p == in[%lu-%lu]%p", j, j + max_length,
 				              &( ( ( char * ) out_adress )[j] ), in_j, in_j + max_length,
 				              &( ( ( char * ) in_adress )[in_j] ) );
 				memcpy( &( ( ( char * ) out_adress )[j] ), &( ( ( char * ) in_adress )[in_j] ),
 				        max_length );
-				sctk_nodebug( "Copy out[%d-%d]%d == in[%d-%d]%d", j, j + max_length,
+				mpc_common_nodebug( "Copy out[%d-%d]%d == in[%d-%d]%d", j, j + max_length,
 				              ( ( ( char * ) out_adress )[j] ), in_j, in_j + max_length,
 				              ( ( ( char * ) in_adress )[in_j] ) );
 				j += max_length;
@@ -1079,10 +1079,10 @@ static inline void __mpc_comm_copy_buffer_absolute_absolute(
 
 	if ( ( in_begins == NULL ) && ( out_begins == NULL ) )
 	{
-		sctk_nodebug( "__mpc_comm_copy_buffer_absolute_absolute no mpc_pack" );
-		sctk_nodebug( "%s == %s", out_adress, in_adress );
+		mpc_common_nodebug( "__mpc_comm_copy_buffer_absolute_absolute no mpc_pack" );
+		mpc_common_nodebug( "%s == %s", out_adress, in_adress );
 		memcpy( out_adress, in_adress, in_sizes );
-		sctk_nodebug( "%s == %s", out_adress, in_adress );
+		mpc_common_nodebug( "%s == %s", out_adress, in_adress );
 	}
 	else
 	{
@@ -1090,7 +1090,7 @@ static inline void __mpc_comm_copy_buffer_absolute_absolute(
 		unsigned long j;
 		unsigned long in_i;
 		unsigned long in_j;
-		sctk_nodebug( "__mpc_comm_copy_buffer_absolute_absolute mpc_pack %p", in_begins );
+		mpc_common_nodebug( "__mpc_comm_copy_buffer_absolute_absolute mpc_pack %p", in_begins );
 
 		/* Empty message */
 		if ( !in_sizes )
@@ -1143,12 +1143,12 @@ static inline void __mpc_comm_copy_buffer_absolute_absolute(
 				max_length =
 				    mpc_common_min( ( out_ends[i] * out_elem_size - j + out_elem_size ),
 				                    ( in_ends[in_i] * in_elem_size - in_j + in_elem_size ) );
-				sctk_nodebug( "Copy out[%lu-%lu]%p == in[%lu-%lu]%p", j, j + max_length,
+				mpc_common_nodebug( "Copy out[%lu-%lu]%p == in[%lu-%lu]%p", j, j + max_length,
 				              &( ( ( char * ) out_adress )[j] ), in_j, in_j + max_length,
 				              &( ( ( char * ) in_adress )[in_j] ) );
 				memcpy( &( ( ( char * ) out_adress )[j] ), &( ( ( char * ) in_adress )[in_j] ),
 				        max_length );
-				sctk_nodebug( "Copy out[%d-%d]%d == in[%d-%d]%d", j, j + max_length,
+				mpc_common_nodebug( "Copy out[%d-%d]%d == in[%d-%d]%d", j, j + max_length,
 				              ( ( ( char * ) out_adress )[j] ), in_j, in_j + max_length,
 				              ( ( ( char * ) in_adress )[in_j] ) );
 				j += max_length;
@@ -1173,7 +1173,7 @@ inline void mpc_lowcomm_ptp_message_copy_pack( mpc_lowcomm_ptp_message_content_t
 	{
 		case MPC_LOWCOMM_MESSAGE_PACK:
 		{
-			sctk_nodebug( "MPC_LOWCOMM_MESSAGE_PACK - MPC_LOWCOMM_MESSAGE_PACK" );
+			mpc_common_nodebug( "MPC_LOWCOMM_MESSAGE_PACK - MPC_LOWCOMM_MESSAGE_PACK" );
 			size_t i;
 
 			for ( i = 0; i < send->tail.message.pack.count; i++ )
@@ -1196,7 +1196,7 @@ inline void mpc_lowcomm_ptp_message_copy_pack( mpc_lowcomm_ptp_message_content_t
 
 		case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
 		{
-			sctk_nodebug( "MPC_LOWCOMM_MESSAGE_PACK - MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE" );
+			mpc_common_nodebug( "MPC_LOWCOMM_MESSAGE_PACK - MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE" );
 			size_t i;
 
 			for ( i = 0; i < send->tail.message.pack.count; i++ )
@@ -1220,13 +1220,13 @@ inline void mpc_lowcomm_ptp_message_copy_pack( mpc_lowcomm_ptp_message_content_t
 
 		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
 		{
-			sctk_nodebug( "MPC_LOWCOMM_MESSAGE_PACK - MPC_LOWCOMM_MESSAGE_CONTIGUOUS" );
+			mpc_common_nodebug( "MPC_LOWCOMM_MESSAGE_PACK - MPC_LOWCOMM_MESSAGE_CONTIGUOUS" );
 			size_t i;
 			ssize_t j;
 			size_t size;
 			char *body;
 			body = recv->tail.message.contiguous.addr;
-			sctk_nodebug( "COUNT %lu", send->tail.message.pack.count );
+			mpc_common_nodebug( "COUNT %lu", send->tail.message.pack.count );
 
 			for ( i = 0; i < send->tail.message.pack.count; i++ )
 			{
@@ -1267,7 +1267,7 @@ inline void mpc_lowcomm_ptp_message_copy_pack_absolute( mpc_lowcomm_ptp_message_
 	{
 		case MPC_LOWCOMM_MESSAGE_PACK:
 		{
-			sctk_nodebug( "MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE - MPC_LOWCOMM_MESSAGE_PACK" );
+			mpc_common_nodebug( "MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE - MPC_LOWCOMM_MESSAGE_PACK" );
 			size_t i;
 
 			for ( i = 0; i < send->tail.message.pack.count; i++ )
@@ -1291,7 +1291,7 @@ inline void mpc_lowcomm_ptp_message_copy_pack_absolute( mpc_lowcomm_ptp_message_
 
 		case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
 		{
-			sctk_nodebug(
+			mpc_common_nodebug(
 			    "MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE - MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE count == %d",
 			    send->tail.message.pack.count );
 			size_t i;
@@ -1317,14 +1317,14 @@ inline void mpc_lowcomm_ptp_message_copy_pack_absolute( mpc_lowcomm_ptp_message_
 
 		case MPC_LOWCOMM_MESSAGE_CONTIGUOUS:
 		{
-			sctk_nodebug( "MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE - MPC_LOWCOMM_MESSAGE_CONTIGUOUS" );
+			mpc_common_nodebug( "MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE - MPC_LOWCOMM_MESSAGE_CONTIGUOUS" );
 			size_t i;
 			ssize_t j;
 			size_t size;
 			size_t send_size = 0;
 			char *body;
 			body = recv->tail.message.contiguous.addr;
-			sctk_nodebug( "COUNT %lu", send->tail.message.pack.count );
+			mpc_common_nodebug( "COUNT %lu", send->tail.message.pack.count );
 
 			for ( i = 0; i < send->tail.message.pack.count; i++ )
 			{
@@ -1337,7 +1337,7 @@ inline void mpc_lowcomm_ptp_message_copy_pack_absolute( mpc_lowcomm_ptp_message_
 				}
 			}
 
-			sctk_nodebug( "msg_size = %d, send_size = %d, recv_size = %d",
+			mpc_common_nodebug( "msg_size = %d, send_size = %d, recv_size = %d",
 			              SCTK_MSG_SIZE( send ), send_size,
 			              recv->tail.message.contiguous.size );
 			/* MPI 1.3 : The length of the received message must be less than or equal
@@ -1406,7 +1406,7 @@ static void __mpc_comm_buffered_ptp_init( void )
 void __mpc_comm_free_header( void *tmp )
 {
 	mpc_lowcomm_ptp_message_t *header = ( mpc_lowcomm_ptp_message_t * )tmp;
-	sctk_nodebug( "Free buffer %p buffered?%d", header, header->from_buffered );
+	mpc_common_nodebug( "Free buffer %p buffered?%d", header, header->from_buffered );
 
 	/* Header is from the buffered list */
 	if ( header->from_buffered )
@@ -1788,13 +1788,13 @@ void sctk_m_probe_matching_set( int value )
 {
 	while ( OPA_cas_int( &m_probe_id, 0, value ) != 0 )
 	{
-		sctk_nodebug( "CAS %d", OPA_load_int( &m_probe_id ) );
+		mpc_common_nodebug( "CAS %d", OPA_load_int( &m_probe_id ) );
 		mpc_thread_yield();
 	}
 
 	int thread_id = mpc_common_get_thread_id();
 
-	sctk_nodebug( "THREAD ID %d", thread_id );
+	mpc_common_nodebug( "THREAD ID %d", thread_id );
 	OPA_store_int( &m_probe_id_task, thread_id + 1 );
 }
 
@@ -2311,7 +2311,7 @@ void mpc_lowcomm_request_wait_all_msgs( const int task, const mpc_lowcomm_commun
 	do
 	{
 		i = OPA_load_int( &pair->pending_nb );
-		sctk_nodebug( "pending = %d", pair->pending_nb );
+		mpc_common_nodebug( "pending = %d", pair->pending_nb );
 
 		if ( i != 0 )
 		{
@@ -2862,10 +2862,10 @@ static void __lowcomm_release()
 
 	if ( task_rank >= 0 )
 	{
-		sctk_nodebug( "mpc_lowcomm_terminaison_barrier" );
+		mpc_common_nodebug( "mpc_lowcomm_terminaison_barrier" );
 		mpc_lowcomm_terminaison_barrier();
 		mpc_lowcomm_terminaison_barrier();
-		sctk_nodebug( "mpc_lowcomm_terminaison_barrier done" );
+		mpc_common_nodebug( "mpc_lowcomm_terminaison_barrier done" );
 		sctk_net_finalize_task_level( task_rank, mpc_topology_get_current_cpu() );
 	}
 	else

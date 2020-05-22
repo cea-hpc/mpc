@@ -945,11 +945,11 @@ sctk_endpoint_t * sctk_rail_get_any_route_to_process_or_on_demand ( sctk_rail_in
 
 	if ( tmp )
 	{
-		sctk_nodebug ( "Directly connected to %d", dest );
+		mpc_common_nodebug ( "Directly connected to %d", dest );
 	}
 	else
 	{
-		sctk_nodebug ( "NOT Directly connected to %d", dest );
+		mpc_common_nodebug ( "NOT Directly connected to %d", dest );
 	}
 
 	if ( tmp == NULL )

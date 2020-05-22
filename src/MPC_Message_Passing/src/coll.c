@@ -305,7 +305,7 @@ static void _mpc_coll_messages_table_wait( _mpc_coll_messages_table_t *tab )
 
 	for ( i = 0; i < tab->nb_used; i++ )
 	{
-		sctk_nodebug( "Wait for messag %d", i );
+		mpc_common_nodebug( "Wait for messag %d", i );
 		mpc_lowcomm_request_wait( &( tab->msg_req[i].request ) );
 	}
 
@@ -322,7 +322,7 @@ static _mpc_coll_messages_t *_mpc_coll_message_table_get_item( _mpc_coll_message
 	}
 
 	tmp = &( tab->msg_req[tab->nb_used] );
-	sctk_nodebug( "tab->nb_used = %d", tab->nb_used );
+	mpc_common_nodebug( "tab->nb_used = %d", tab->nb_used );
 	tab->nb_used++;
 	return tmp;
 }
@@ -348,11 +348,11 @@ static void _mpc_coll_opt_barrier( const mpc_lowcomm_communicator_t communicator
 		int i;
 		_mpc_coll_messages_table_t table;
 		char c = 'c';
-		sctk_nodebug( "_mpc_coll_opt_barrier() begin:" ); //AMAHEO
+		mpc_common_nodebug( "_mpc_coll_opt_barrier() begin:" ); //AMAHEO
 		_mpc_coll_message_table_init( &table );
 		total = mpc_lowcomm_communicator_size( communicator );
 		myself = mpc_lowcomm_communicator_rank( communicator, mpc_common_get_task_rank() );
-		sctk_nodebug( "enter barrier total = %d, myself = %d", total,
+		mpc_common_nodebug( "enter barrier total = %d, myself = %d", total,
 		              myself );
 		total_max = log( total ) / log( barrier_arity );
 		total_max = pow( barrier_arity, total_max );
@@ -513,7 +513,7 @@ void mpc_lowcomm_bcast_opt_messages( void *buffer, const size_t size,
 		}
 
 		assume( total_max >= total );
-		sctk_nodebug( "enter broadcast total = %d, total_max = %d, "
+		mpc_common_nodebug( "enter broadcast total = %d, total_max = %d, "
 		              "myself = %d, BROADCAST_ARRITY = %d",
 		              total, total_max, myself, BROADCAST_ARRITY );
 
@@ -659,7 +659,7 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
 				{
 					if ( ( src + ( j * ( i / ALLREDUCE_ARRITY ) ) ) < total )
 					{
-						sctk_nodebug( "Recv from %d",
+						mpc_common_nodebug( "Recv from %d",
 						              src + ( j * ( i / ALLREDUCE_ARRITY ) ) );
 						_mpc_coll_message_recv(
 						    communicator, src + ( j * ( i / ALLREDUCE_ARRITY ) ),
@@ -688,12 +688,12 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
 				if ( dest >= 0 )
 				{
 					memcpy( buffer_tmp, buffer_out, size );
-					sctk_nodebug( "Leaf send to %d", dest );
+					mpc_common_nodebug( "Leaf send to %d", dest );
 					_mpc_coll_message_send(
 					    communicator, myself, dest, 0, buffer_tmp, size,
 					    MPC_LOWCOMM_ALLREDUCE_MESSAGE,
 					    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
-					sctk_nodebug( "Leaf Recv from %d", dest );
+					mpc_common_nodebug( "Leaf Recv from %d", dest );
 					_mpc_coll_message_recv( communicator, dest, myself, 1,
 					                        buffer_out, size,
 					                        MPC_LOWCOMM_ALLREDUCE_MESSAGE,
@@ -719,7 +719,7 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
 				{
 					if ( ( dest + ( j * ( i / ALLREDUCE_ARRITY ) ) ) < total )
 					{
-						sctk_nodebug( "send to %d",
+						mpc_common_nodebug( "send to %d",
 						              dest + ( j * ( i / ALLREDUCE_ARRITY ) ) );
 						_mpc_coll_message_send(
 						    communicator, myself,
@@ -803,14 +803,14 @@ static void _mpc_coll_hetero_barrier_inter( const mpc_lowcomm_communicator_t com
 		return;
 	}
 
-	sctk_nodebug( "Start inter" );
+	mpc_common_nodebug( "Start inter" );
 	_mpc_coll_message_table_init( &table );
 	int process_rank = mpc_common_get_process_rank();
 	process_array = sctk_get_process_array( communicator ),
 	myself_ptr = ( ( int * ) bsearch( ( void * ) &process_rank,
 	                                  process_array,
 	                                  total, sizeof( int ), int_cmp ) );
-	sctk_nodebug( "rank : %d, myself_ptr: %p", mpc_common_get_process_rank(), myself_ptr );
+	mpc_common_nodebug( "rank : %d, myself_ptr: %p", mpc_common_get_process_rank(), myself_ptr );
 	assume( myself_ptr );
 	myself = ( myself_ptr - process_array );
 	total_max = log( total ) / log( barrier_arity );
@@ -835,7 +835,7 @@ static void _mpc_coll_hetero_barrier_inter( const mpc_lowcomm_communicator_t com
 			{
 				if ( ( src + ( j * ( i / barrier_arity ) ) ) < total )
 				{
-					sctk_nodebug( "Recv %d to %d", src + ( j * ( i / barrier_arity ) ),
+					mpc_common_nodebug( "Recv %d to %d", src + ( j * ( i / barrier_arity ) ),
 					              myself );
 					_mpc_coll_message_recv(
 					    communicator,
@@ -855,12 +855,12 @@ static void _mpc_coll_hetero_barrier_inter( const mpc_lowcomm_communicator_t com
 
 			if ( dest >= 0 )
 			{
-				sctk_nodebug( "send %d to %d", myself, dest );
+				mpc_common_nodebug( "send %d to %d", myself, dest );
 				_mpc_coll_message_send(
 				    communicator, process_array[myself], process_array[dest], 0,
 				    &c, 1, MPC_LOWCOMM_BARRIER_HETERO_MESSAGE,
 				    _mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ), 0 );
-				sctk_nodebug( "recv %d to %d", dest, myself );
+				mpc_common_nodebug( "recv %d to %d", dest, myself );
 				_mpc_coll_message_recv(
 				    communicator, process_array[dest], process_array[myself], 1,
 				    &c, 1, MPC_LOWCOMM_BARRIER_HETERO_MESSAGE,
@@ -885,7 +885,7 @@ static void _mpc_coll_hetero_barrier_inter( const mpc_lowcomm_communicator_t com
 			{
 				if ( ( dest + ( j * ( i / barrier_arity ) ) ) < total )
 				{
-					sctk_nodebug( "send %d to %d", myself,
+					mpc_common_nodebug( "send %d to %d", myself,
 					              dest + ( j * ( i / barrier_arity ) ) );
 					_mpc_coll_message_send(
 					    communicator, process_array[myself],
@@ -898,7 +898,7 @@ static void _mpc_coll_hetero_barrier_inter( const mpc_lowcomm_communicator_t com
 	}
 
 	_mpc_coll_messages_table_wait( &table );
-	sctk_nodebug( "End inter" );
+	mpc_common_nodebug( "End inter" );
 }
 
 static void _mpc_coll_hetero_barrier( const mpc_lowcomm_communicator_t communicator,
@@ -1223,7 +1223,7 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
 			{
 				if ( ( src + ( j * ( i / ALLREDUCE_ARRITY ) ) ) < total )
 				{
-					sctk_nodebug( "Recv from %d",
+					mpc_common_nodebug( "Recv from %d",
 					              src + ( j * ( i / ALLREDUCE_ARRITY ) ) );
 					_mpc_coll_message_recv(
 					    communicator,
@@ -1253,12 +1253,12 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
 			if ( dest >= 0 )
 			{
 				memcpy( buffer_tmp, buffer_out, size );
-				sctk_nodebug( "src %d Leaf send to %d", myself, dest );
+				mpc_common_nodebug( "src %d Leaf send to %d", myself, dest );
 				_mpc_coll_message_send(
 				    communicator, process_array[myself], process_array[dest], 0,
 				    buffer_tmp, size, specific_tag,
 				    _mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ), 1 );
-				sctk_nodebug( "Leaf Recv from %d", dest );
+				mpc_common_nodebug( "Leaf Recv from %d", dest );
 				_mpc_coll_message_recv(
 				    communicator, process_array[dest], process_array[myself], 1,
 				    buffer_out, size, specific_tag,
@@ -1283,7 +1283,7 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
 			{
 				if ( ( dest + ( j * ( i / ALLREDUCE_ARRITY ) ) ) < total )
 				{
-					sctk_nodebug( "send to %d", dest + ( j * ( i / ALLREDUCE_ARRITY ) ) );
+					mpc_common_nodebug( "send to %d", dest + ( j * ( i / ALLREDUCE_ARRITY ) ) );
 					_mpc_coll_message_send(
 					    communicator, process_array[myself],
 					    process_array[dest + ( j * ( i / ALLREDUCE_ARRITY ) )], 1,
@@ -1315,7 +1315,7 @@ static void _mpc_coll_hetero_allreduce_hetero_intern( const void *buffer_in, voi
 	}
 	else
 	{
-		sctk_nodebug( "Starting allreduce" );
+		mpc_common_nodebug( "Starting allreduce" );
 		int task_id_in_node;
 		int nb_tasks_in_node;
 		_mpc_coll_hetero_allreduce_t *allreduce;
@@ -1352,11 +1352,11 @@ static void _mpc_coll_hetero_allreduce_hetero_intern( const void *buffer_in, voi
 					mpc_thread_yield();
 				}
 
-				sctk_nodebug( "Add content %d to buffer", *( ( int * ) buff_in[i] ) );
+				mpc_common_nodebug( "Add content %d to buffer", *( ( int * ) buff_in[i] ) );
 				func( ( const void * ) buff_in[i], buffer_out, elem_number, data_type );
 			}
 
-			sctk_nodebug( "Buffer content : %d", *( ( int * ) buffer_out ) );
+			mpc_common_nodebug( "Buffer content : %d", *( ( int * ) buffer_out ) );
 			/* Begin allreduce inter-node */
 			_mpc_coll_hetero_allreduce_intern_inter( buffer_in, buffer_out,
 			        elem_size, elem_number, func,
@@ -1395,7 +1395,7 @@ static void _mpc_coll_hetero_allreduce_hetero_intern( const void *buffer_in, voi
 			}
 		}
 
-		sctk_nodebug( "End allreduce" );
+		mpc_common_nodebug( "End allreduce" );
 	}
 }
 
@@ -1461,7 +1461,7 @@ static void _mpc_coll_noalloc_barrier( const mpc_lowcomm_communicator_t communic
 		_mpc_coll_message_table_init( &table );
 		total = mpc_lowcomm_communicator_size( communicator );
 		myself = mpc_lowcomm_communicator_rank( communicator, mpc_common_get_task_rank() );
-		sctk_nodebug( "enter barrier total = %d, myself = %d", total,
+		mpc_common_nodebug( "enter barrier total = %d, myself = %d", total,
 		              myself );
 		total_max = log( total ) / log( barrier_arity );
 		total_max = pow( barrier_arity, total_max );
@@ -1624,7 +1624,7 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 		}
 
 		assume( total_max >= total );
-		sctk_nodebug( "enter broadcast total = %d, total_max = %d, "
+		mpc_common_nodebug( "enter broadcast total = %d, total_max = %d, "
 		              "myself = %d, BROADCAST_ARRITY = %d",
 		              total, total_max, myself, BROADCAST_ARRITY );
 
@@ -1798,7 +1798,7 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 			{
 				if ( ( src + ( j * ( i / ALLREDUCE_ARRITY ) ) ) < total )
 				{
-					sctk_nodebug( "Recv from %d",
+					mpc_common_nodebug( "Recv from %d",
 					              src + ( j * ( i / ALLREDUCE_ARRITY ) ) );
 					_mpc_coll_message_recv(
 					    communicator, src + ( j * ( i / ALLREDUCE_ARRITY ) ), myself, 0,
@@ -1826,12 +1826,12 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 			if ( dest >= 0 )
 			{
 				memcpy( buffer_tmp, buffer_out, size );
-				sctk_nodebug( "Leaf send to %d", dest );
+				mpc_common_nodebug( "Leaf send to %d", dest );
 				_mpc_coll_message_send(
 				    communicator, myself, dest, 0, buffer_tmp, size,
 				    MPC_LOWCOMM_ALLREDUCE_MESSAGE,
 				    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ), 0 );
-				sctk_nodebug( "Leaf Recv from %d", dest );
+				mpc_common_nodebug( "Leaf Recv from %d", dest );
 				_mpc_coll_message_recv(
 				    communicator, dest, myself, 1, buffer_out, size,
 				    MPC_LOWCOMM_ALLREDUCE_MESSAGE,
@@ -1857,7 +1857,7 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 			{
 				if ( ( dest + ( j * ( i / ALLREDUCE_ARRITY ) ) ) < total )
 				{
-					sctk_nodebug( "send to %d", dest + ( j * ( i / ALLREDUCE_ARRITY ) ) );
+					mpc_common_nodebug( "send to %d", dest + ( j * ( i / ALLREDUCE_ARRITY ) ) );
 					_mpc_coll_message_send(
 					    communicator, myself, dest + ( j * ( i / ALLREDUCE_ARRITY ) ),
 					    1, buffer_out, size, MPC_LOWCOMM_ALLREDUCE_MESSAGE,
@@ -1983,7 +1983,7 @@ void mpc_lowcomm_terminaison_barrier( void )
 	local = sctk_get_nb_task_local( SCTK_COMM_WORLD );
 	mpc_thread_mutex_lock( &lock );
 	done++;
-	sctk_nodebug( "mpc_lowcomm_terminaison_barrier %d %d", done, local );
+	mpc_common_nodebug( "mpc_lowcomm_terminaison_barrier %d %d", done, local );
 
 	if ( done == local )
 	{
@@ -1995,22 +1995,22 @@ void mpc_lowcomm_terminaison_barrier( void )
 		 * simply ignore it )*/
 		if ( mpc_common_get_process_count() > 1 )
 		{
-			sctk_nodebug( "sctk_pmi_barrier" );
+			mpc_common_nodebug( "sctk_pmi_barrier" );
 			mpc_launch_pmi_barrier();
 		}
 
 #endif
-		sctk_nodebug( "WAKE ALL in mpc_lowcomm_terminaison_barrier" );
+		mpc_common_nodebug( "WAKE ALL in mpc_lowcomm_terminaison_barrier" );
 		mpc_thread_cond_broadcast( &cond );
 	}
 	else
 	{
-		sctk_nodebug( "WAIT in mpc_lowcomm_terminaison_barrier" );
+		mpc_common_nodebug( "WAIT in mpc_lowcomm_terminaison_barrier" );
 		mpc_thread_cond_wait( &cond, &lock );
 	}
 
 	mpc_thread_mutex_unlock( &lock );
-	sctk_nodebug( "mpc_lowcomm_terminaison_barrier %d %d DONE", done, local );
+	mpc_common_nodebug( "mpc_lowcomm_terminaison_barrier %d %d DONE", done, local );
 }
 
 /************************************************************************/

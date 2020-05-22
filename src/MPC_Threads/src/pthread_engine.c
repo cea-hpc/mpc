@@ -287,8 +287,8 @@ static int _mpc_thread_pthread_engine_user_create(pthread_t *thread, pthread_att
 	}
 }
 
-#define pthread_check_size(a, b)       mpc_common_debug_check_large_enough(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
-#define pthread_check_size_eq(a, b)    mpc_common_debug_check_size_equal(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
+#define pthread_check_size(a, b)       mpc_common_debug_check_large_enough(sizeof(a), sizeof(b), MPC_STRING(a), MPC_STRING(b), __FILE__, __LINE__)
+#define pthread_check_size_eq(a, b)    mpc_common_debug_check_size_equal(sizeof(a), sizeof(b), MPC_STRING(a), MPC_STRING(b), __FILE__, __LINE__)
 
 static int _mpc_thread_pthread_mutex_spinlock(pthread_mutex_t *lock)
 {

@@ -202,7 +202,7 @@ char *sctk_ib_cq_print_status ( enum ibv_wc_status status )
  *----------------------------------------------------------*/
 void sctk_ib_qp_key_print ( __UNUSED__ sctk_ib_cm_qp_connection_t *keys )
 {
-	sctk_nodebug ( "LID=%lu psn=%lu qp_num=%lu", keys->lid,
+	mpc_common_nodebug ( "LID=%lu psn=%lu qp_num=%lu", keys->lid,
 	               keys->psn,
 	               keys->qp_num );
 }
@@ -233,7 +233,7 @@ void sctk_ib_qp_key_create_key ( char *msg, size_t size, int rail_id, int src, i
 
 	/* We create the key with the number of the rail */
 	snprintf ( msg, size, "IB-%02d|%06d:%06d", rail_id, src, dest );
-	sctk_nodebug ( "key: %s", msg );
+	mpc_common_nodebug ( "key: %s", msg );
 	/* We assume the value doest not overflow with the buffer */
 	ib_assume ( ret < size );
 }
@@ -354,7 +354,7 @@ struct ibv_qp *sctk_ib_qp_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
           SCTK_IB_ABORT("Cannot create QP for rank %d", rank);
         }
 
-        sctk_nodebug("QP Initialized for rank %d %p", remote->rank, remote->qp);
+        mpc_common_nodebug("QP Initialized for rank %d %p", remote->rank, remote->qp);
 
         /* Add QP to HT */
         struct sctk_ib_qp_s *rem;
@@ -527,7 +527,7 @@ struct ibv_qp_attr sctk_ib_qp_STATE_RESET_attr ( int *flags )
 
 void sctk_ib_qp_modify ( sctk_ib_qp_t *remote, struct ibv_qp_attr *attr, int flags )
 {
-	sctk_nodebug ( "Modify QP for remote %p to state %d", remote, attr->qp_state );
+	mpc_common_nodebug ( "Modify QP for remote %p to state %d", remote, attr->qp_state );
 
 	if ( ibv_modify_qp ( remote->qp, attr, flags ) != 0 )
 	{
@@ -632,7 +632,7 @@ void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, s
 	struct ibv_qp_attr       attr;
 	int flags;
 
-	sctk_nodebug ( "QP reinited for rank %d", rank );
+	mpc_common_nodebug ( "QP reinited for rank %d", rank );
 
 	remote->endpoint = endpoint;
 	remote->psn = lrand48 () & 0xffffff;
@@ -652,7 +652,7 @@ void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, s
 		remote->R = 1;
 		remote->ondemand = 1;
 		mpc_common_spinlock_lock ( &od->lock );
-		sctk_nodebug ( "[%d] Add QP to rank %d %p", rail_ib->rail->rail_number, remote->rank, remote );
+		mpc_common_nodebug ( "[%d] Add QP to rank %d %p", rail_ib->rail->rail_number, remote->rank, remote );
 		CDL_PREPEND ( od->qp_list, remote );
 
 		if ( od->qp_list_ptr == NULL )
@@ -692,7 +692,7 @@ void sctk_ib_qp_allocate_rtr ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t
 	int flags;
 
 	attr = sctk_ib_qp_state_rtr_attr ( rail_ib, keys, &flags );
-	sctk_nodebug ( "Modify QR RTR for rank %d", remote->rank );
+	mpc_common_nodebug ( "Modify QR RTR for rank %d", remote->rank );
 	sctk_ib_qp_modify ( remote, &attr, flags );
 	sctk_ib_qp_allocate_set_rtr ( remote, 1 );
 }
@@ -703,7 +703,7 @@ void sctk_ib_qp_allocate_rts ( struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_qp_
 	int flags;
 
 	attr = sctk_ib_qp_state_rts_attr ( rail_ib, remote->psn, &flags );
-	sctk_nodebug ( "Modify QR RTS for rank %d", remote->rank );
+	mpc_common_nodebug ( "Modify QR RTS for rank %d", remote->rank );
 	sctk_ib_qp_modify ( remote, &attr, flags );
 	sctk_ib_qp_allocate_set_rts ( remote, 1 );
 }
@@ -715,7 +715,7 @@ void sctk_ib_qp_allocate_reset ( __UNUSED__ struct sctk_ib_rail_info_s *rail_ib,
 	int flags;
 
 	attr = sctk_ib_qp_STATE_RESET_attr ( &flags );
-	sctk_nodebug ( "Modify QR RESET for rank %d", remote->rank );
+	mpc_common_nodebug ( "Modify QR RESET for rank %d", remote->rank );
 	sctk_ib_qp_modify ( remote, &attr, flags );
 
 	sctk_ib_qp_allocate_set_rtr ( remote, 0 );
@@ -820,7 +820,7 @@ static inline void __send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
 {
 	int rc;
 
-	sctk_nodebug ( "[%d] Send no-lock message to process %d %p %d", rail_ib->rail_nb, remote->rank, remote->qp, rail_ib->rail->rail_number );
+	mpc_common_nodebug ( "[%d] Send no-lock message to process %d %p %d", rail_ib->rail_nb, remote->rank, remote->qp, rail_ib->rail->rail_number );
 
 	ibuf->remote = remote;
 
@@ -855,10 +855,10 @@ static inline void __send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
 
 		mpc_common_debug_warning ( "[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d) DONE", rail_ib->rail->rail_number,
 		               remote->rank, sctk_ib_qp_get_pending_data ( remote ) );
-		sctk_nodebug ( "[%d] NO LOCK QP message sent to remote %d", rail_ib->rail->rail_number, remote->rank );
+		mpc_common_nodebug ( "[%d] NO LOCK QP message sent to remote %d", rail_ib->rail->rail_number, remote->rank );
 	}
 
-	sctk_nodebug ( "SENT no-lock message to process %d %p", remote->rank, remote->qp );
+	mpc_common_nodebug ( "SENT no-lock message to process %d %p", remote->rank, remote->qp );
 }
 
 /* Send an ibuf to a remote.

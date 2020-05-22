@@ -214,7 +214,7 @@ int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 
 		case SCTK_IB_RDMA_PROTOCOL:
 			release_ibuf = sctk_ib_rdma_poll_send ( rail, ibuf );
-			sctk_nodebug ( "Received RMDA write send" );
+			mpc_common_nodebug ( "Received RMDA write send" );
 			break;
 
 		case SCTK_IB_BUFFERED_PROTOCOL:
@@ -255,8 +255,8 @@ int sctk_network_poll_recv_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 	int release_ibuf = 1;
 	const struct ibv_wc wc = ibuf->wc;
 
-	sctk_nodebug ( "[%d] Recv ibuf:%p", rail->rail_number, ibuf );
-	sctk_nodebug ( "Protocol received: %s", sctk_ib_protocol_print ( protocol ) );
+	mpc_common_nodebug ( "[%d] Recv ibuf:%p", rail->rail_number, ibuf );
+	mpc_common_nodebug ( "Protocol received: %s", sctk_ib_protocol_print ( protocol ) );
 
 	/* First we check if the message has an immediate data */
 	if ( wc.wc_flags == IBV_WC_WITH_IMM )
@@ -778,7 +778,7 @@ void sctk_ib_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ct
 
 void sctk_ib_unpin_region( __UNUSED__ struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list )
 {
-	sctk_nodebug("Unpin %p at %p size %ld releaseon %d", list->pin.ib.p_entry, list->pin.ib.p_entry->addr, list->pin.ib.p_entry->size, list->pin.ib.p_entry->free_on_relax );
+	mpc_common_nodebug("Unpin %p at %p size %ld releaseon %d", list->pin.ib.p_entry, list->pin.ib.p_entry->addr, list->pin.ib.p_entry->size, list->pin.ib.p_entry->free_on_relax );
 	
 	sctk_ib_mmu_relax( list->pin.ib.p_entry );
 	list->pin.ib.p_entry = NULL;

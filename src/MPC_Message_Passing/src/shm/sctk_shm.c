@@ -447,7 +447,7 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
    rail->network_name = "SHM";
    rail->driver_finalize = sctk_network_finalize_shm;
 //   if( strcmp(rail->runtime_config_rail->topology, "none"))
-//	sctk_nodebug("SHM topology must be 'none'");
+//	mpc_common_nodebug("SHM topology must be 'none'");
 
    sctk_rail_init_route ( rail, "none", NULL );
 

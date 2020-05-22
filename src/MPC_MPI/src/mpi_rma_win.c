@@ -150,7 +150,7 @@ void *mpc_MPI_Win_progress_thread(void *pdesc) {
 
     desc->progress_thread_running = 99;
 
-    sctk_nodebug("Joining the POOL :=)");
+    mpc_common_nodebug("Joining the POOL :=)");
     desc = mpc_MPI_Win_progress_pool_wait();
   }
 
@@ -588,7 +588,7 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
       win_segment = sctk_shm_mapper_create(to_map_size, role,
                                            process_on_node_count, handler);
 
-      sctk_nodebug("MAPPED at %p size %ld", win_segment, to_map_size);
+      mpc_common_nodebug("MAPPED at %p size %ld", win_segment, to_map_size);
       sctk_shm_mpi_handler_free(handler);
     }
 
@@ -619,7 +619,7 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
   sctk_free(individual_sizes);
 
   void *local_base = win_segment + local_offset;
-  sctk_nodebug("Base is %p for size %ld over WS %p", local_base, size,
+  mpc_common_nodebug("Base is %p for size %ld over WS %p", local_base, size,
                win_segment);
 
   ret = __mpc_MPI_Win_create(local_base, size, disp_unit, info, comm, win,

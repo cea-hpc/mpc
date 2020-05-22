@@ -296,7 +296,7 @@ int sctk_ib_eager_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 		recopy = 1;
 	}
 
-	sctk_nodebug ( "Received IBUF %p %d", ibuf, IBUF_GET_CHANNEL ( ibuf ) );
+	mpc_common_nodebug ( "Received IBUF %p %d", ibuf, IBUF_GET_CHANNEL ( ibuf ) );
 
 	/* Normal message: we handle it */
 	msg = sctk_ib_eager_recv ( rail, ibuf, recopy, protocol );

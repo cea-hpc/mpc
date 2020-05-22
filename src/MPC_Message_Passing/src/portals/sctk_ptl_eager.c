@@ -124,7 +124,7 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	/* finish creating an MPC message heder */
 	_mpc_comm_ptp_message_clear_request(net_msg);
 
-	sctk_nodebug("PORTALS: RECV-EAGER from %d (idx=%d, match=%s, size=%lu) -> %p", SCTK_MSG_SRC_TASK(net_msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, match.raw), ev.mlength, ev.start);
+	mpc_common_nodebug("PORTALS: RECV-EAGER from %d (idx=%d, match=%s, size=%lu) -> %p", SCTK_MSG_SRC_TASK(net_msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, match.raw), ev.mlength, ev.start);
 
 	/* notify ther inter_thread_comm a new message has arrived */
 	rail->send_message_from_network(net_msg);
@@ -192,7 +192,7 @@ void sctk_ptl_eager_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t
 	sctk_ptl_md_register(srail, request);
 	sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0, hdr.raw, request);
 	
-	sctk_nodebug("PORTALS: SEND-EAGER to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), size);
+	mpc_common_nodebug("PORTALS: SEND-EAGER to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), size);
 }
 
 /**
@@ -259,7 +259,7 @@ void sctk_ptl_eager_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_in
 	msg->tail.ptl.user_ptr = user_ptr;
 	sctk_ptl_me_register(srail, user_ptr, pte);
 	
-	sctk_nodebug("PORTALS: NOTIFY-RECV-EAGER from %d (idx=%llu, match=%s, ign=%llu start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);
+	mpc_common_nodebug("PORTALS: NOTIFY-RECV-EAGER from %d (idx=%llu, match=%s, ign=%llu start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);
 }
 
 /**

@@ -303,16 +303,16 @@ void _mpc_thread_ethread_print_task(_mpc_thread_ethread_per_thread_t *task)
 #ifndef NO_INTERNAL_ASSERT
 static inline void sctk_print_attr(_mpc_thread_ethread_attr_intern_t *attr)
 {
-	sctk_nodebug("Attr %p:", attr);
+	mpc_common_nodebug("Attr %p:", attr);
 	if(attr != NULL)
 	{
-		sctk_nodebug("\t- priority %d", attr->priority);
-		sctk_nodebug("\t- detached %d", attr->detached);
-		sctk_nodebug("\t- schedpolicy %d", attr->schedpolicy);
-		sctk_nodebug("\t- inheritsched %d", attr->inheritsched);
-		sctk_nodebug("\t- scope %d", attr->scope);
-		sctk_nodebug("\t- stack %p", attr->stack);
-		sctk_nodebug("\t- stack_size %d", attr->stack_size);
+		mpc_common_nodebug("\t- priority %d", attr->priority);
+		mpc_common_nodebug("\t- detached %d", attr->detached);
+		mpc_common_nodebug("\t- schedpolicy %d", attr->schedpolicy);
+		mpc_common_nodebug("\t- inheritsched %d", attr->inheritsched);
+		mpc_common_nodebug("\t- scope %d", attr->scope);
+		mpc_common_nodebug("\t- stack %p", attr->stack);
+		mpc_common_nodebug("\t- stack_size %d", attr->stack_size);
 	}
 }
 
@@ -484,7 +484,7 @@ static inline void _mpc_thread_ethread_init_data(_mpc_thread_ethread_per_thread_
 	{
 		data->thread_sigpending[i] = 0;
 #ifndef WINDOWS_SYS
-		sctk_nodebug("%d signal is %d", i + 1,
+		mpc_common_nodebug("%d signal is %d", i + 1,
 		             sigismember(&sctk_thread_default_set, i + 1) );
 #endif
 	}
@@ -501,8 +501,8 @@ static inline void _mpc_thread_ethread_init_data(_mpc_thread_ethread_per_thread_
 	data->thread_sigset    = sctk_thread_default_set;
 }
 
-#define _mpc_thread_ethread_check_size(a, b)       mpc_common_debug_check_large_enough(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
-#define _mpc_thread_ethread_check_size_eq(a, b)    mpc_common_debug_check_size_equal(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
+#define _mpc_thread_ethread_check_size(a, b)       mpc_common_debug_check_large_enough(sizeof(a), sizeof(b), MPC_STRING(a), MPC_STRING(b), __FILE__, __LINE__)
+#define _mpc_thread_ethread_check_size_eq(a, b)    mpc_common_debug_check_size_equal(sizeof(a), sizeof(b), MPC_STRING(a), MPC_STRING(b), __FILE__, __LINE__)
 
 typedef struct _mpc_thread_ethread_mutex_cell_s
 {

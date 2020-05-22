@@ -33,7 +33,7 @@ mpcomp_stack_node_leaf_t * __mpcomp_create_stack_node_leaf(int max_elements)
 
      s = (mpcomp_stack_node_leaf_t *) sctk_malloc(sizeof(mpcomp_stack_node_leaf_t));
 
-     sctk_nodebug("__mpcomp_create_stack_node_leaf: max_elements=%d", max_elements);
+     mpc_common_nodebug("__mpcomp_create_stack_node_leaf: max_elements=%d", max_elements);
      s->elements = (mpcomp_elem_stack_t **) sctk_malloc(max_elements * sizeof(mpcomp_elem_stack_t *));
  
      sctk_assert(s->elements != NULL);
@@ -41,18 +41,18 @@ mpcomp_stack_node_leaf_t * __mpcomp_create_stack_node_leaf(int max_elements)
      s->n_elements = 0;
 
      for (i=0; i<max_elements; i++) {
-	  sctk_nodebug("__mpcomp_create_stack_node_leaf: i=%d", i);
+	  mpc_common_nodebug("__mpcomp_create_stack_node_leaf: i=%d", i);
 	  s->elements[i] = (mpcomp_elem_stack_t *) sctk_malloc(sizeof(mpcomp_elem_stack_t));
 	  sctk_assert(s->elements[i] != NULL);
      }
   
-     sctk_nodebug("__mpcomp_create_stack_node_leaf: s->max_elements=%d", s->max_elements);
+     mpc_common_nodebug("__mpcomp_create_stack_node_leaf: s->max_elements=%d", s->max_elements);
      return s;
 }
 
 int __mpcomp_is_stack_node_leaf_empty(mpcomp_stack_node_leaf_t *s) 
 {
-     sctk_nodebug("__mpcomp_is_stack_node_leaf_empty: s->n_elements=%d", s->n_elements);
+     mpc_common_nodebug("__mpcomp_is_stack_node_leaf_empty: s->n_elements=%d", s->n_elements);
 
      return (s->n_elements == 0);
 }
@@ -61,7 +61,7 @@ void __mpcomp_push_node( mpcomp_stack_node_leaf_t *s, mpcomp_node_t *n)
 {
      if (s->n_elements == s->max_elements) {
           /* Error */
-	  sctk_nodebug("__mpcomp_push_node: n_elements=%d max_elements=%d => exit", s->n_elements, s->max_elements);
+	  mpc_common_nodebug("__mpcomp_push_node: n_elements=%d max_elements=%d => exit", s->n_elements, s->max_elements);
 	  exit(1);
      }
 
@@ -81,7 +81,7 @@ void __mpcomp_push_leaf(mpcomp_stack_node_leaf_t *s, mpcomp_mvp_t *l)
 {
      if (s->n_elements == s->max_elements) {
 	  /* Error */
-	  sctk_nodebug("__mpcomp_push_leaf: n_elements=%d max_elements=%d => exit", s->n_elements, s->max_elements);    
+	  mpc_common_nodebug("__mpcomp_push_leaf: n_elements=%d max_elements=%d => exit", s->n_elements, s->max_elements);    
 	  exit(1);
      }
   

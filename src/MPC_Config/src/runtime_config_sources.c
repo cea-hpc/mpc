@@ -77,7 +77,7 @@ void sctk_runtime_config_sources_select_profile_name(struct sctk_runtime_config_
 	/* Check if the profile name is unique and store its name if true */
 	if( sctk_runtime_config_sources_profile_name_is_unique( config_sources, profile_name ) ) {
 		config_sources->profile_names[config_sources->cnt_profile_names] = profile_name;
-		sctk_nodebug("MPC_Config : Add profile %s\n",config_sources->profile_names[config_sources->cnt_profile_names]);
+		mpc_common_nodebug("MPC_Config : Add profile %s\n",config_sources->profile_names[config_sources->cnt_profile_names]);
 		config_sources->cnt_profile_names++;
 		assume_m(config_sources->cnt_profile_names < SCTK_RUNTIME_CONFIG_MAX_PROFILES,
 		         "Reach maximum number of profiles : SCTK_RUNTIME_CONFIG_MAX_PROFILES = %d.",SCTK_RUNTIME_CONFIG_MAX_PROFILES);
@@ -241,7 +241,7 @@ xmlNodePtr sctk_runtime_config_sources_find_profile_node(struct sctk_runtime_con
 		profile_name = sctk_libxml_find_child_node_content(profile,BAD_CAST("name"));
 		if (profile_name != NULL ) {
 			if( xmlStrcmp(name,profile_name) == 0 ) {
-				sctk_nodebug("MPC_Config : ok find node for %s in %p.\n",name,source);
+				mpc_common_nodebug("MPC_Config : ok find node for %s in %p.\n",name,source);
 				free(profile_name);
 				break;
 			}

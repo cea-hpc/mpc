@@ -199,7 +199,7 @@ void *async_thread ( void *arg )
 		ibv_ack_async_event ( &event );
 	}
 
-	sctk_nodebug ( "Async thread exits..." );
+	mpc_common_nodebug ( "Async thread exits..." );
 	return NULL;
 }
 

@@ -114,7 +114,7 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 
 						if ( tmp == NULL )
 						{
-							sctk_nodebug("ON-DEMAND : REQUEST %d <--> %d", from, to);
+							mpc_common_nodebug("ON-DEMAND : REQUEST %d <--> %d", from, to);
 							rail->connect_from ( from, to, rail );
 							SCTK_COUNTER_INC ( signalization_endpoints, 1 );
 						}
@@ -138,7 +138,7 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 				}
 			}
 		}
-		sctk_nodebug("%d finished its requests !!!!!!!", mpc_common_get_process_rank());
+		mpc_common_nodebug("%d finished its requests !!!!!!!", mpc_common_get_process_rank());
 
 	 mpc_launch_pmi_barrier();
 	}

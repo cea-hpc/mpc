@@ -114,7 +114,7 @@ static inline int ___mpc_thread_ethread_poll_vp(_mpc_thread_ethread_virtual_proc
 					            ethread_polling);
 				}
 				        );
-				sctk_nodebug("Wake %p from polling %p vp %p",
+				mpc_common_nodebug("Wake %p from polling %p vp %p",
 				             poll_list->my_self, poll_list->data, vp);
 				poll_list->my_self->status = ethread_ready;
 				_mpc_thread_ethread_enqueue_task(vp, poll_list->my_self);
@@ -156,7 +156,7 @@ static inline void ___mpc_thread_ethread_sched_yield_vp_head(_mpc_thread_ethread
 	_mpc_thread_ethread_status_t      start_status;
 #endif
 
-	sctk_nodebug("thread %p yield %d", cur, cur->status);
+	mpc_common_nodebug("thread %p yield %d", cur, cur->status);
 
 	sctk_assert_func(start_status = cur->status;
 	                 );
@@ -252,7 +252,7 @@ static inline void SCTK_THREAD_CHECK_SIGNALS(_mpc_thread_ethread_per_thread_t
 	}
 	if(expect_false(cur->cancel_status > 0) )
 	{
-		sctk_nodebug("%p %d %d", cur,
+		mpc_common_nodebug("%p %d %d", cur,
 		             (cur->cancel_state != SCTK_THREAD_CANCEL_DISABLE),
 		             ( (cur->cancel_type != SCTK_THREAD_CANCEL_DEFERRED) &&
 		               cancel_type) );
@@ -323,7 +323,7 @@ static inline void ___mpc_thread_ethread_testcancel(_mpc_thread_ethread_per_thre
 static inline int ___mpc_thread_ethread_kill(_mpc_thread_ethread_per_thread_t *
                                              thread, int val)
 {
-	sctk_nodebug("___mpc_thread_ethread_kill %p %d set", thread, val);
+	mpc_common_nodebug("___mpc_thread_ethread_kill %p %d set", thread, val);
 	if(thread->status == ethread_joined)
 	{
 		return ESRCH;
@@ -359,7 +359,7 @@ static inline void _mpc_thread_ethread_set_status(_mpc_thread_ethread_per_thread
 	sctk_thread_data_t *tmp;
 
 	tmp = (sctk_thread_data_t *)cur->tls[stck_task_data];
-	sctk_nodebug("TMP = %p", tmp);
+	mpc_common_nodebug("TMP = %p", tmp);
 
 	/** ** **/
 	sctk_refresh_thread_debug(cur, s);
@@ -397,22 +397,22 @@ static inline void ___mpc_thread_ethread_sched_yield_vp_tail(_mpc_thread_ethread
 	_mpc_thread_ethread_set_status(cur, sctk_thread_check_status);
 
 	vp = (_mpc_thread_ethread_virtual_processor_t *)cur->vp;
-	sctk_nodebug("thread %p(%p) restart vp->current %p", cur,
+	mpc_common_nodebug("thread %p(%p) restart vp->current %p", cur,
 	             &(cur->ctx), vp->current);
 
 
-	sctk_nodebug("%p %d", cur, cur->nb_sig_pending);
+	mpc_common_nodebug("%p %d", cur, cur->nb_sig_pending);
 	SCTK_THREAD_CHECK_SIGNALS(cur, 1);
 
 	if(expect_false(vp->to_check) )
 	{
 		if(vp->migration != NULL)
 		{
-			sctk_nodebug("mirgation in yield");
+			mpc_common_nodebug("mirgation in yield");
 			vp->migration->
 			migration_func( (_mpc_thread_ethread_per_thread_t *)vp->migration);
 			vp->migration = NULL;
-			sctk_nodebug("mirgation in yield done");
+			mpc_common_nodebug("mirgation in yield done");
 		}
 		if(vp->dump != NULL)
 		{
@@ -448,7 +448,7 @@ static inline void ___mpc_thread_ethread_sched_yield_vp_tail(_mpc_thread_ethread
 				                                    &(vp->zombie_queue_tail) );
 			}
 			vp->zombie->status = ethread_zombie;
-			sctk_nodebug("%p thread become zombie", vp->zombie);
+			mpc_common_nodebug("%p thread become zombie", vp->zombie);
 			vp->zombie = NULL;
 		}
 		vp->to_check = 0;
@@ -565,15 +565,15 @@ static inline int ___mpc_thread_ethread_sched_yield_vp(_mpc_thread_ethread_virtu
 			{
 				if(vp->migration != NULL)
 				{
-					sctk_nodebug("mirgation in yield");
+					mpc_common_nodebug("mirgation in yield");
 					vp->migration->
 					migration_func( (_mpc_thread_ethread_per_thread_t *)vp->
 					                migration);
 					vp->migration = NULL;
-					sctk_nodebug("mirgation in yield done");
+					mpc_common_nodebug("mirgation in yield done");
 				}
 				_mpc_thread_ethread_set_status(cur, mpc_thread_sleep_status);
-				sctk_nodebug("ethread_migrate");
+				mpc_common_nodebug("ethread_migrate");
 				cur->status       = ethread_ready;
 				vp->migration     = cur;
 				vp->to_check      = 1;
@@ -612,7 +612,7 @@ static inline int ___mpc_thread_ethread_sched_yield_vp(_mpc_thread_ethread_virtu
 	if(expect_true(cur != new_task) )
 	{
 		vp->current = new_task;
-		sctk_nodebug("Jump %p to %p(%p) on vp %d", cur, new_task,
+		mpc_common_nodebug("Jump %p to %p(%p) on vp %d", cur, new_task,
 		             &(new_task->ctx), vp->rank);
 		sctk_swapcontext(&(cur->ctx), &(new_task->ctx) );
 	}
@@ -653,10 +653,10 @@ static inline int ___mpc_thread_ethread_sched_yield_vp_idle(_mpc_thread_ethread_
 			SCTK_ACTIVITY_UP(vp);
 
 			vp->current = new_task;
-			sctk_nodebug("idle Jump %p to %p(%p) on vp %d", cur,
+			mpc_common_nodebug("idle Jump %p to %p(%p) on vp %d", cur,
 			             new_task, &(new_task->ctx), vp->rank);
 			sctk_swapcontext(&(cur->ctx), &(new_task->ctx) );
-			sctk_nodebug("idle thread %p(%p) restart vp->current %p",
+			mpc_common_nodebug("idle thread %p(%p) restart vp->current %p",
 			             cur, &(cur->ctx), vp->current);
 		}
 		else
@@ -697,7 +697,7 @@ static inline int ___mpc_thread_ethread_sched_yield_vp_poll(_mpc_thread_ethread_
 		SCTK_ACTIVITY_UP(vp);
 	}
 
-	sctk_nodebug("NEW task %p cur %p vp %p", new_task, cur, vp);
+	mpc_common_nodebug("NEW task %p cur %p vp %p", new_task, cur, vp);
 	sctk_assert(new_task != NULL);
 	sctk_assert(new_task != cur);
 	sctk_assert( (new_task->status == ethread_ready) ||
@@ -706,7 +706,7 @@ static inline int ___mpc_thread_ethread_sched_yield_vp_poll(_mpc_thread_ethread_
 
 
 	vp->current = new_task;
-	sctk_nodebug("Jump %p to %p(%p) on vp %d", cur, new_task,
+	mpc_common_nodebug("Jump %p to %p(%p) on vp %d", cur, new_task,
 	             &(new_task->ctx), vp->rank);
 	sctk_swapcontext(&(cur->ctx), &(new_task->ctx) );
 
@@ -747,7 +747,7 @@ static inline int ___mpc_thread_ethread_sched_yield_vp_freeze
 
 
 	vp->current = new_task;
-	sctk_nodebug("Jump %p to %p(%p) on vp %d", cur, new_task,
+	mpc_common_nodebug("Jump %p to %p(%p) on vp %d", cur, new_task,
 	             &(new_task->ctx), vp->rank);
 	sctk_swapcontext(&(cur->ctx), &(new_task->ctx) );
 
@@ -826,9 +826,9 @@ static inline void ___mpc_thread_ethread_wait_for_value_and_poll(_mpc_thread_eth
 	cell.next            = (_mpc_thread_ethread_polling_t *)vp->poll_list;
 	vp->poll_list        = &cell;
 
-	sctk_nodebug("Wait %p from polling", cell.my_self);
+	mpc_common_nodebug("Wait %p from polling", cell.my_self);
 	___mpc_thread_ethread_sched_yield_vp_poll(vp, cell.my_self);
-	sctk_nodebug("Wait %p from polling done", cell.my_self);
+	mpc_common_nodebug("Wait %p from polling done", cell.my_self);
 
 	sctk_assert(cell.forced == 0);
 	sctk_assert_func(if(*data != value)
@@ -881,7 +881,7 @@ static inline int ___mpc_thread_ethread_join(_mpc_thread_ethread_virtual_process
 	 */
 	_mpc_thread_ethread_status_t *status;
 
-	sctk_nodebug("Join Thread %p", th);
+	mpc_common_nodebug("Join Thread %p", th);
 	___mpc_thread_ethread_testcancel(cur);
 	if(th != cur)
 	{
@@ -901,11 +901,11 @@ static inline int ___mpc_thread_ethread_join(_mpc_thread_ethread_virtual_process
 		}
 
 		status = (_mpc_thread_ethread_status_t *)&(th->status);
-		sctk_nodebug("TO Join Thread %p", th);
+		mpc_common_nodebug("TO Join Thread %p", th);
 		___mpc_thread_ethread_wait_for_value_and_poll(vp, cur,
 		                                              (volatile int *)status,
 		                                              ethread_zombie, NULL, NULL);
-		sctk_nodebug("Joined Thread %p", th);
+		mpc_common_nodebug("Joined Thread %p", th);
 		if(val != NULL)
 		{
 			*val = th->ret_val;
@@ -915,9 +915,9 @@ static inline int ___mpc_thread_ethread_join(_mpc_thread_ethread_virtual_process
 /*                                   &(vp->zombie_queue), */
 /*                                   &(vp->zombie_queue_tail)); */
 
-		sctk_nodebug("Joined Thread %p grab ", th);
+		mpc_common_nodebug("Joined Thread %p grab ", th);
 		__sctk_grab_zombie(vp);
-		sctk_nodebug("Joined Thread %p grab done", th);
+		mpc_common_nodebug("Joined Thread %p grab done", th);
 	}
 	else
 	{
@@ -951,7 +951,7 @@ static inline int ___mpc_thread_ethread_mutex_lock(_mpc_thread_ethread_virtual_p
 {
 	_mpc_thread_ethread_mutex_cell_t cell;
 
-	sctk_nodebug("%p lock on %p %d", owner, lock, lock->lock);
+	mpc_common_nodebug("%p lock on %p %d", owner, lock, lock->lock);
 	if(lock->owner == owner)
 	{
 		if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
@@ -986,7 +986,7 @@ static inline int ___mpc_thread_ethread_mutex_lock(_mpc_thread_ethread_virtual_p
 			lock->list_tail->next = &cell;
 			lock->list_tail       = &cell;
 		}
-		sctk_nodebug("%p blocked on %p", owner, lock);
+		mpc_common_nodebug("%p blocked on %p", owner, lock);
 		if(owner->status == ethread_ready)
 		{
 			owner->status          = ethread_blocked;
@@ -1027,7 +1027,7 @@ static inline int ___mpc_thread_ethread_mutex_spinlock(_mpc_thread_ethread_virtu
 {
 	_mpc_thread_ethread_mutex_cell_t cell;
 
-	sctk_nodebug("%p lock on %p %d", owner, lock, lock->lock);
+	mpc_common_nodebug("%p lock on %p %d", owner, lock, lock->lock);
 	if(lock->owner == owner)
 	{
 		if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
@@ -1064,7 +1064,7 @@ static inline int ___mpc_thread_ethread_mutex_spinlock(_mpc_thread_ethread_virtu
 			lock->list_tail->next = &cell;
 			lock->list_tail       = &cell;
 		}
-		sctk_nodebug("%p blocked on %p", owner, lock);
+		mpc_common_nodebug("%p blocked on %p", owner, lock);
 		if(owner->status == ethread_ready)
 		{
 			mpc_common_spinlock_unlock(&lock->spinlock);
@@ -1121,14 +1121,14 @@ static inline int ___mpc_thread_ethread_mutex_trylock(_mpc_thread_ethread_virtua
                                                       restrict owner,
                                                       _mpc_thread_ethread_mutex_t *restrict lock)
 {
-	sctk_nodebug("%p trylock on %p %d", owner, lock, lock->lock);
+	mpc_common_nodebug("%p trylock on %p %d", owner, lock, lock->lock);
 
 
 	if(lock->owner == owner)
 	{
 		if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
 		{
-			sctk_nodebug("on est dans le mutex r�cursif");
+			mpc_common_nodebug("on est dans le mutex r�cursif");
 			mpc_common_spinlock_lock(&lock->spinlock);
 			lock->lock++;
 			mpc_common_spinlock_unlock(&lock->spinlock);
@@ -1202,7 +1202,7 @@ static inline int ___mpc_thread_ethread_mutex_unlock(__UNUSED__ _mpc_thread_ethr
 {
 	_mpc_thread_ethread_mutex_cell_t *cell;
 
-	sctk_nodebug
+	mpc_common_nodebug
 	        (" owner = %p ; le lock appartient � : %p -- on est : %p",
 	        owner, lock->owner, vp->current);
 	if(lock->owner != owner)
@@ -1235,7 +1235,7 @@ static inline int ___mpc_thread_ethread_mutex_unlock(__UNUSED__ _mpc_thread_ethr
 		}
 		to_wake    = (_mpc_thread_ethread_per_thread_t *)lock->owner;
 		cell->wake = 1;
-		sctk_nodebug("a r�veiller %p", to_wake);
+		mpc_common_nodebug("a r�veiller %p", to_wake);
 		retrun_task(to_wake);
 	}
 	else
@@ -1246,7 +1246,7 @@ static inline int ___mpc_thread_ethread_mutex_unlock(__UNUSED__ _mpc_thread_ethr
 	mpc_common_spinlock_unlock(&lock->spinlock);
 
 
-	sctk_nodebug("%p unlock on %p %d", owner, lock, lock->lock);
+	mpc_common_nodebug("%p unlock on %p %d", owner, lock, lock->lock);
 	return 0;
 }
 
@@ -1365,7 +1365,7 @@ static inline int ___mpc_thread_ethread_sched_yield_vp_exit(_mpc_thread_ethread_
 	             (new_task->status == ethread_inside_polling) );
 
 	vp->current = new_task;
-	sctk_nodebug("Jump %p to %p(%p) on vp %d", cur, new_task,
+	mpc_common_nodebug("Jump %p to %p(%p) on vp %d", cur, new_task,
 	             &(new_task->ctx), vp->rank);
 	sctk_swapcontext(&(cur->ctx), &(new_task->ctx) );
 
@@ -1387,7 +1387,7 @@ static inline void ___mpc_thread_ethread_exit(void *retval,
 
 	th_data->ret_val = retval;
 
-	sctk_nodebug("thread %p key liberation", th_data);
+	mpc_common_nodebug("thread %p key liberation", th_data);
 	/*key liberation */
 	for(i = 0; i < _mpc_thread_ethread_key_pos; i++)
 	{
@@ -1400,11 +1400,11 @@ static inline void ___mpc_thread_ethread_exit(void *retval,
 			}
 		}
 	}
-	sctk_nodebug("thread %p key liberation done", th_data);
+	mpc_common_nodebug("thread %p key liberation done", th_data);
 
 	vp = (_mpc_thread_ethread_virtual_processor_t *)th_data->vp;
 
-	sctk_nodebug("thread %p ends", th_data);
+	mpc_common_nodebug("thread %p ends", th_data);
 
 
 	vp->zombie   = th_data;
@@ -1427,7 +1427,7 @@ static inline void ___mpc_thread_ethread_exit_kernel(void *retval,
 
 	th_data->ret_val = retval;
 
-	sctk_nodebug("thread %p key liberation", th_data);
+	mpc_common_nodebug("thread %p key liberation", th_data);
 	/*key liberation */
 	for(i = 0; i < _mpc_thread_ethread_key_pos; i++)
 	{
@@ -1440,13 +1440,13 @@ static inline void ___mpc_thread_ethread_exit_kernel(void *retval,
 			}
 		}
 	}
-	sctk_nodebug("thread %p key liberation done", th_data);
+	mpc_common_nodebug("thread %p key liberation done", th_data);
 
 	vp           = (_mpc_thread_ethread_virtual_processor_t *)th_data->vp;
 	vp->zombie   = th_data;
 	vp->to_check = 1;
 
-	sctk_nodebug("thread %p ends", th_data);
+	mpc_common_nodebug("thread %p ends", th_data);
 
 	vp->up = 0;
 	___mpc_thread_ethread_sched_yield_vp_exit(vp, th_data);
@@ -1485,7 +1485,7 @@ static inline void ___mpc_thread_ethread_idle_task(void *arg)
 
 	th_data = (_mpc_thread_ethread_per_thread_t *)arg;
 	vp      = (_mpc_thread_ethread_virtual_processor_t *)th_data->vp;
-	sctk_nodebug("Idle %p starts on vp %d", th_data, vp->rank);
+	mpc_common_nodebug("Idle %p starts on vp %d", th_data, vp->rank);
 
 	th_data->status = ethread_idle;
 	last_timer      = ___timer_thread_ticks;
@@ -1579,7 +1579,7 @@ static inline void ___mpc_thread_ethread_kernel_idle_task(void *arg)
 
 	th_data = (_mpc_thread_ethread_per_thread_t *)arg;
 	vp      = (_mpc_thread_ethread_virtual_processor_t *)th_data->vp;
-	sctk_nodebug("Kernel Idle %p starts on vp %d", th_data, vp->rank);
+	mpc_common_nodebug("Kernel Idle %p starts on vp %d", th_data, vp->rank);
 
 	th_data->status = ethread_idle;
 	last_timer      = ___timer_thread_ticks;
@@ -1610,7 +1610,7 @@ static inline void ___mpc_thread_ethread_kernel_idle_task(void *arg)
 	sctk_free_idle_thread_dbg(th_data);
 	/** **/
 	__sctk_grab_zombie(vp);
-	sctk_nodebug("Kernel Idle %p ends on vp %d", th_data, vp->rank);
+	mpc_common_nodebug("Kernel Idle %p ends on vp %d", th_data, vp->rank);
 }
 
 _mpc_thread_ethread_virtual_processor_t *_mpc_thread_ethread_start_kernel_thread(void);
@@ -1651,7 +1651,7 @@ static inline int ___mpc_thread_ethread_create(_mpc_thread_ethread_status_t stat
 	          __sctk_malloc(sizeof(_mpc_thread_ethread_per_thread_t), tmp.tls);
 	assume(th_data != NULL);
 	*threadp = th_data;
-	sctk_nodebug("Thread data %p", th_data);
+	mpc_common_nodebug("Thread data %p", th_data);
 
 	_mpc_thread_ethread_init_data(th_data);
 	th_data->start_routine      = start_routine;
@@ -1730,7 +1730,7 @@ static inline int ___mpc_thread_ethread_create(_mpc_thread_ethread_status_t stat
 		th_data->attr.guardsize = 0;
 	}
 
-	sctk_nodebug("Thread data %p create stack", th_data);
+	mpc_common_nodebug("Thread data %p create stack", th_data);
 
 	if(stack == NULL)
 	{
@@ -1869,11 +1869,11 @@ static inline void ___mpc_thread_ethread_freeze_thread_on_vp(_mpc_thread_ethread
 		cell.queue_tail = NULL;
 		cell.vp         = vp;
 		*list_tmp       = &cell;
-		sctk_nodebug("task %p create new cell %p", cur, &cell);
+		mpc_common_nodebug("task %p create new cell %p", cur, &cell);
 	}
 
 	list = (_mpc_thread_ethread_freeze_on_vp_t *)(*list_tmp);
-	sctk_nodebug("Add task in %p %d task %p %s", list, vp->rank, cur,
+	mpc_common_nodebug("Add task in %p %d task %p %s", list, vp->rank, cur,
 	             _mpc_thread_ethread_debug_status(cur->status) );
 	sctk_assert(list->vp == vp);
 	sctk_assert(cur->status != ethread_idle);
@@ -1887,7 +1887,7 @@ static inline void ___mpc_thread_ethread_freeze_thread_on_vp(_mpc_thread_ethread
 	func_unlock(lock);
 
 	___mpc_thread_ethread_sched_yield_vp_freeze(vp, cur);
-	sctk_nodebug("Add task in %p %d task %p done", list, vp->rank, cur);
+	mpc_common_nodebug("Add task in %p %d task %p done", list, vp->rank, cur);
 }
 
 static inline void
@@ -1910,7 +1910,7 @@ ___mpc_thread_ethread_wake_thread_on_vp(_mpc_thread_ethread_virtual_processor_t 
 
 	vp = list->vp;
 
-	sctk_nodebug("Wake tasks in %p", list);
+	mpc_common_nodebug("Wake tasks in %p", list);
 	sctk_assert(list != NULL);
 
 	sctk_assert_func(if(list->vp != vp)

@@ -88,7 +88,7 @@ int sctk_errhandler_register(sctk_generic_handler eh, sctk_errhandler_t *errh) {
   /* Give it to the iface */
   *errh = (sctk_errhandler_t)new_id;
   /* Save in the HT */
-  sctk_nodebug("REGISTER Is %p for %d", eh, *errh);
+  mpc_common_nodebug("REGISTER Is %p for %d", eh, *errh);
   mpc_common_hashtable_set(&error_handlers, new_id, (void *)eh);
   /* All ok */
   return 0;
@@ -109,7 +109,7 @@ sctk_generic_handler sctk_errhandler_resolve(sctk_errhandler_t errh) {
 
   sctk_generic_handler ret = mpc_common_hashtable_get(&error_handlers, errh);
 
-  sctk_nodebug("RET Is %p for %d", ret, errh);
+  mpc_common_nodebug("RET Is %p for %d", ret, errh);
 
   return ret;
 }
@@ -143,7 +143,7 @@ static inline uint64_t sctk_handle_compute(sctk_handle id,
   ret |= id << 16;
   ret |= rank << 32;
 
-  sctk_nodebug("RET (%d %d %d) %ld", mpc_common_get_task_rank(), id, type, ret);
+  mpc_common_nodebug("RET (%d %d %d) %ld", mpc_common_get_task_rank(), id, type, ret);
   return ret;
 }
 
@@ -256,7 +256,7 @@ sctk_errhandler_t sctk_handle_get_errhandler(sctk_handle id,
     return SCTK_ERRHANDLER_NULL;
   }
 
-  sctk_nodebug("GET at %p == %d for %d", hctx, hctx->handler, id);
+  mpc_common_nodebug("GET at %p == %d for %d", hctx, hctx->handler, id);
 
   return hctx->handler;
 }
@@ -271,7 +271,7 @@ int sctk_handle_set_errhandler(sctk_handle id, sctk_handle_type type,
 
   hctx->handler = errh;
 
-  sctk_nodebug("SET %d at %p <= %p for %d", errh, hctx, hctx->handler, id);
+  mpc_common_nodebug("SET %d at %p <= %p for %d", errh, hctx, hctx->handler, id);
 
   return 0;
 }

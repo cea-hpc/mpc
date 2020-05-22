@@ -57,7 +57,7 @@ sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( sctk_ib_rail_info_t *rail_ib, void 
 		           ib_global_config->mmu_cache_maximum_pin_size / (1024.0 * 1024.0 * 1024.0));
 	}
 	
-	sctk_nodebug("NEW MMU ENTRY at %p size %ld", new->addr, new->size );
+	mpc_common_nodebug("NEW MMU ENTRY at %p size %ld", new->addr, new->size );
 	
 	/* Pin memory and save memory handle */
 	if( rail_ib )
@@ -87,7 +87,7 @@ void sctk_ib_mmu_entry_release( sctk_ib_mmu_entry_t * release )
 {
 	int ret = 0;
 	
-	sctk_nodebug("MMU UNPIN at %p size %ld", release->addr, release->size );
+	mpc_common_nodebug("MMU UNPIN at %p size %ld", release->addr, release->size );
 	
 	/* Unregister memory */
 	if( release->mr )
@@ -109,7 +109,7 @@ void sctk_ib_mmu_entry_release( sctk_ib_mmu_entry_t * release )
 
 int sctk_ib_mmu_entry_contains( sctk_ib_mmu_entry_t * entry, void * addr, size_t size )
 {
-	sctk_nodebug("Test %p (%ld) == %p (%ld)\n",  addr, size,  entry->addr, entry->size );
+	mpc_common_nodebug("Test %p (%ld) == %p (%ld)\n",  addr, size,  entry->addr, entry->size );
 	
 	if( ( entry->addr <= addr )
 	&&  ( (addr + size) <= (entry->addr + entry->size) ) )
@@ -157,7 +157,7 @@ void sctk_ib_mmu_entry_acquire( sctk_ib_mmu_entry_t * entry )
 	if( !entry )
 		return;
 	
-	sctk_nodebug("ACQUIRING(%p) %p s %ld", entry, entry->addr, entry->size );
+	mpc_common_nodebug("ACQUIRING(%p) %p s %ld", entry, entry->addr, entry->size );
 	
 	mpc_common_spinlock_read_lock( &entry->entry_refcounter );
 }
@@ -168,7 +168,7 @@ void sctk_ib_mmu_entry_relax( sctk_ib_mmu_entry_t * entry )
 	if( !entry )
 		return;
 
-	sctk_nodebug("Entry RELAX %p", entry );
+	mpc_common_nodebug("Entry RELAX %p", entry );
 	
 	
 	mpc_common_spinlock_read_unlock( &entry->entry_refcounter );
@@ -205,7 +205,7 @@ void _sctk_ib_mmu_init( struct sctk_ib_mmu * mmu )
 	{
 		mmu->cache_max_entry_count = ib_global_config->mmu_cache_entry_count;
 		
-		sctk_nodebug("CACHE IS %d", mmu->cache_max_entry_count );
+		mpc_common_nodebug("CACHE IS %d", mmu->cache_max_entry_count );
 		
 		assume( mmu->cache_max_entry_count != 0 );
 		mmu->cache = sctk_calloc( mmu->cache_max_entry_count , sizeof( sctk_ib_mmu_entry_t * ));
@@ -351,7 +351,7 @@ void _sctk_ib_mmu_push_entry( struct sctk_ib_mmu * mmu , sctk_ib_mmu_entry_t * e
 		 _sctk_ib_mmu_try_to_release_and_replace_entry( mmu, NULL );
 	}
 
-	sctk_nodebug("Current MMU size %ld", mmu->current_size );
+	mpc_common_nodebug("Current MMU size %ld", mmu->current_size );
 
 	/* Warning YOU must enter here MMU LOCKED ! */
 	int trials = 0;

@@ -115,7 +115,7 @@ unsigned long sctk_tls_entry_add(unsigned long size,
 #endif
 	mpc_user_tls_1_entry_number++;
 
-	sctk_nodebug("%p %p %p", entry->offset, mpc_user_tls_1,
+	mpc_common_nodebug("%p %p %p", entry->offset, mpc_user_tls_1,
 	             mpc_user_tls_1_offset);
 	return entry->offset;
 }
@@ -385,7 +385,7 @@ static inline int sctk_mctx_set(sctk_mctx_t *mctx,
 		mpc_common_debug_abort();
 	}
 
-	sctk_nodebug("Structures initalized %p ", mctx);
+	mpc_common_nodebug("Structures initalized %p ", mctx);
 
 	mctx_called = FALSE;
 
@@ -394,7 +394,7 @@ static inline int sctk_mctx_set(sctk_mctx_t *mctx,
 	sigfillset(&sigs);
 	sigdelset(&sigs, SIGUSR1);
 
-	sctk_nodebug("Main returned %d", mctx_called);
+	mpc_common_nodebug("Main returned %d", mctx_called);
 
 	sigaltstack(NULL, &ss);
 	ss.ss_flags = SS_DISABLE;
@@ -425,7 +425,7 @@ static inline int sctk_mctx_set(sctk_mctx_t *mctx,
 	mctx_caller.error    = errno;
 	mctx_caller.restored = 0;
 
-	sctk_nodebug("retore new thread %p ", &mctx_caller);
+	mpc_common_nodebug("retore new thread %p ", &mctx_caller);
 
 	if(sctk_setjmp(mctx_caller.jb) == 0)
 	{
@@ -437,7 +437,7 @@ static inline int sctk_mctx_set(sctk_mctx_t *mctx,
 	mctx_creating_func = NULL;
 	memset(&mctx_trampoline, 0, sizeof(jmp_buf) );
 
-	sctk_nodebug("Creation ended");
+	mpc_common_nodebug("Creation ended");
 	mpc_common_spinlock_unlock(&sjlj_spinlock);
 	return TRUE;
 }
@@ -448,11 +448,11 @@ static void sctk_mctx_set_trampoline(int sig)
 	{
 		return;
 	}
-	sctk_nodebug("In trampoline");
+	mpc_common_nodebug("In trampoline");
 	if(sctk_setjmp(mctx_trampoline) == 0)
 	{
 		mctx_called = TRUE;
-		sctk_nodebug("In trampoline return");
+		mpc_common_nodebug("In trampoline return");
 		return;
 	}
 
@@ -466,16 +466,16 @@ static void sctk_mctx_set_bootstrap(void)
 	void(*volatile mctx_starting_func)(void *);
 	volatile void *args;
 
-	sctk_nodebug("In bootstrap");
+	mpc_common_nodebug("In bootstrap");
 	mctx_starting      = mctx_creating;
 	mctx_starting_func = mctx_creating_func;
 	args = sctk_create_arg;
 
-	sctk_nodebug("Restore main %p %p", mctx_starting, &mctx_caller);
+	mpc_common_nodebug("Restore main %p %p", mctx_starting, &mctx_caller);
 	sctk_swapcontext( (sctk_mctx_t *)mctx_starting,
 	                  (sctk_mctx_t *)&mctx_caller);
 
-	sctk_nodebug("Start func");
+	mpc_common_nodebug("Start func");
 	mctx_starting_func( (void *)args);
 	abort();
 }
@@ -488,7 +488,7 @@ static void sctk_mctx_set_bootstrap(void)
 
 int sctk_getcontext(sctk_mctx_t *ucp)
 {
-	sctk_nodebug("Save %d", sizeof(sctk_mctx_t) );
+	mpc_common_nodebug("Save %d", sizeof(sctk_mctx_t) );
 	sctk_mctx_save(ucp);
 	sctk_context_save_tls(ucp);
 	return 0;
@@ -516,13 +516,13 @@ int sctk_swapcontext(sctk_mctx_t *oucp, sctk_mctx_t *ucp)
 #elif SCTK_MCTX_MTH(libcontext)
 	mpc__swapcontext(&(oucp->uc), &(ucp->uc) );
 #elif SCTK_MCTX_MTH(sjlj)
-	sctk_nodebug("swap %p to %p", oucp, ucp);
+	mpc_common_nodebug("swap %p to %p", oucp, ucp);
 	if(sctk_setjmp( (oucp->jb) ) == 0)
 	{
 		sctk_longjmp( (ucp->jb), 1);
 	}
 #elif SCTK_MCTX_MTH(windows)
-	sctk_nodebug("swap %p to %p", oucp, ucp);
+	mpc_common_nodebug("swap %p to %p", oucp, ucp);
 	if(sctk_setjmp( (oucp->jb) ) == 0)
 	{
 		sctk_longjmp( (ucp->jb), 1);
@@ -553,7 +553,7 @@ int sctk_makecontext(sctk_mctx_t *ucp,
 #ifdef SCTK_USE_VALGRIND
 	VALGRIND_STACK_REGISTER(stack, ( ( (char *)stack) + stack_size) );
 #endif
-	sctk_nodebug("new stack %p-%p", stack, ( ( (char *)stack) + stack_size) );
+	mpc_common_nodebug("new stack %p-%p", stack, ( ( (char *)stack) + stack_size) );
 	res = sctk_mctx_set(ucp, func, stack, stack + stack_size, arg);
 
 	sctk_context_restore_tls(&lucp);

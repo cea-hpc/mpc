@@ -214,7 +214,7 @@ __mpcomp_get_specific_chunk_per_rank_ull ( unsigned long rank, unsigned long nb_
 	{
 		local_from = lb + ( trip_count / chunk_size ) * chunk_size * incr;
 		local_to = lb + trip_count * incr;
-		sctk_nodebug ( "__loop_static_schedule_get_specific_chunk: "
+		mpc_common_nodebug ( "__loop_static_schedule_get_specific_chunk: "
 		               "Thread %d: %ld -> %ld (excl) step %ld => "
 		               "%ld -> %ld (excl) step %ld (chunk of %ld)\n",
 		               rank, lb, b, incr, local_from, local_to, incr,
@@ -226,7 +226,7 @@ __mpcomp_get_specific_chunk_per_rank_ull ( unsigned long rank, unsigned long nb_
 		             chunk_size * incr * rank;
 		local_to   = lb + chunk_num * nb_threads * chunk_size * incr +
 		             chunk_size * incr * rank + chunk_size * incr;
-		sctk_nodebug ( "__loop_static_schedule_get_specific_chunk: "
+		mpc_common_nodebug ( "__loop_static_schedule_get_specific_chunk: "
 		               "Thread %d / Chunk %ld: %ld -> %ld (excl) step %ld => "
 		               "%ld -> %ld (excl) step %ld (chunk of %ld)\n",
 		               rank, chunk_num, lb, b, incr, local_from, local_to, incr,
@@ -270,7 +270,7 @@ static inline int __loop_static_schedule_get_single_chunk( long lb, long b, long
 
 	if ( trip_count <= t->rank )
 	{
-		sctk_nodebug( "____loop_static_schedule_get_single_chunk: "
+		mpc_common_nodebug( "____loop_static_schedule_get_single_chunk: "
 		              "#%d (%d -> %d step %d) -> NO CHUNK",
 		              rank, lb, b, incr );
 		return 0;
@@ -295,7 +295,7 @@ static inline int __loop_static_schedule_get_single_chunk( long lb, long b, long
 	}
 
 	sctk_assert( ( incr > 0 ) ? ( *to - incr <= b ) : ( *to - incr >= b ) );
-	sctk_nodebug( "____loop_static_schedule_get_single_chunk: "
+	mpc_common_nodebug( "____loop_static_schedule_get_single_chunk: "
 	              "#%d (%d -> %d step %d) -> (%d -> %d step %d)",
 	              rank, lb, b, incr, *from, *to, incr );
 	return 1;
@@ -337,7 +337,7 @@ static inline int __loop_static_schedule_get_nb_chunks( long lb, long b, long in
 		nb_chunks_per_thread++;
 	}
 
-	sctk_nodebug( "____loop_static_schedule_get_nb_chunks[%d]: %ld -> [%ld] "
+	mpc_common_nodebug( "____loop_static_schedule_get_nb_chunks[%d]: %ld -> [%ld] "
 	              "(cs=%ld) final nb_chunks = %ld",
 	              rank, lb, b, incr, chunk_size, nb_chunks_per_thread );
 	return nb_chunks_per_thread;
@@ -363,7 +363,7 @@ void __loop_static_schedule_get_specific_chunk( long rank, long num_threads,
 		*to = loop->b;
 	}
 
-	sctk_nodebug( " %d %s: from: %ld  %ld - to: %ld %ld  - %ld - %ld",
+	mpc_common_nodebug( " %d %s: from: %ld  %ld - to: %ld %ld  - %ld - %ld",
 	              rank, __func__, *from, loop->lb, loop->b, *to,
 	              loop->incr, chunk_num );
 }
@@ -399,7 +399,7 @@ void __mpcomp_static_loop_init( struct mpcomp_thread_s *t, long lb, long b, long
 	/* Compute the number of chunk for this thread */
 	t->static_nb_chunks = __loop_get_static_nb_chunks_per_rank(
 	                          t->rank, t->info.num_threads, &( loop_infos->loop.mpcomp_long ) );
-	sctk_nodebug( "[%d] %s: Got %d chunk(s)", t->rank, __func__,
+	mpc_common_nodebug( "[%d] %s: Got %d chunk(s)", t->rank, __func__,
 	              t->static_nb_chunks );
 }
 
@@ -440,7 +440,7 @@ int __mpcomp_static_loop_next( long *from, long *to )
 	const long nb_threads = ( long ) t->info.num_threads;
 	/* Next chunk */
 	t->static_current_chunk++;
-	sctk_nodebug( "[%d] %s: checking if current_chunk %d >= nb_chunks %d?",
+	mpc_common_nodebug( "[%d] %s: checking if current_chunk %d >= nb_chunks %d?",
 	              t->rank, t->static_current_chunk, t->static_nb_chunks );
 
 	/* Check if there is still a chunk to execute */
@@ -459,7 +459,7 @@ int __mpcomp_static_loop_next( long *from, long *to )
 	__loop_static_schedule_get_specific_chunk(
 	    rank, nb_threads, &( loop_infos->loop.mpcomp_long ),
 	    t->static_current_chunk, from, to );
-	sctk_nodebug( "[%d] ____mpcomp_static_loop_next: got a chunk %d -> %d",
+	mpc_common_nodebug( "[%d] ____mpcomp_static_loop_next: got a chunk %d -> %d",
 	              t->rank, *from, *to );
 	return 1;
 }
@@ -506,7 +506,7 @@ int __mpcomp_ordered_static_loop_begin( long lb, long b, long incr,
 	__mpcomp_init();
 	struct mpcomp_thread_s *t = mpcomp_get_thread_tls();
 	const int ret = __mpcomp_static_loop_begin( lb, b, incr, chunk_size, from, to );
-	sctk_nodebug( "%d %s: lb : %ld b: %ld", t->rank, __func__, lb, b );
+	mpc_common_nodebug( "%d %s: lb : %ld b: %ld", t->rank, __func__, lb, b );
 
 	if ( !from )
 	{
@@ -1256,7 +1256,7 @@ static inline void __loop_dyn_target_init( struct mpcomp_thread_s *thread )
 	sctk_assert( thread->mvp );
 	sctk_assert( thread->mvp->tree_rank );
 	__loop_dyn_target_reset( thread );
-	sctk_nodebug( "[%d] %s: initialization of target and shift", thread->rank,
+	mpc_common_nodebug( "[%d] %s: initialization of target and shift", thread->rank,
 	              __func__ );
 }
 
@@ -1593,7 +1593,7 @@ void __mpcomp_for_dyn_coherency_end_parallel_region(
 	team = instance->team;
 	sctk_assert( team != NULL );
 	const int tree_depth = instance->tree_depth - 1;
-	sctk_nodebug( "[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+	mpc_common_nodebug( "[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
 	              "Checking for %d thread(s)...",
 	              team->info.num_threads );
 	/* Check team coherency */
@@ -1617,7 +1617,7 @@ void __mpcomp_for_dyn_coherency_end_parallel_region(
 				break;
 		}
 
-		sctk_nodebug( "[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+		mpc_common_nodebug( "[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
 		              "TEAM - FOR_DYN - nb_threads_exited[%d] = %d",
 		              i, team->for_dyn_nb_threads_exited[i].i );
 	}
@@ -1637,7 +1637,7 @@ void __mpcomp_for_dyn_coherency_end_parallel_region(
 		struct mpcomp_thread_s *target_t;
 		int j;
 		target_t = &( instance->mvps[i].ptr.mvp->threads[0] );
-		sctk_nodebug( "[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+		mpc_common_nodebug( "[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
 		              "Checking thread %d...",
 		              target_t->rank );
 
@@ -1666,7 +1666,7 @@ void __mpcomp_for_dyn_coherency_end_parallel_region(
 			{
 				if ( target_t->for_dyn_target[j] != target_t->mvp->tree_rank[j] )
 				{
-					sctk_nodebug( "[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+					mpc_common_nodebug( "[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
 					              "error rank %d has target[%d] = %d (depth: %d, "
 					              "max_depth: %d, for_dyn_current=%d)",
 					              target_t->rank, j, target_t->for_dyn_target[j],
@@ -1688,7 +1688,7 @@ void __mpcomp_for_dyn_coherency_end_parallel_region(
 			{
 				if ( target_t->for_dyn_shift[j] != 0 )
 				{
-					sctk_nodebug( "[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+					mpc_common_nodebug( "[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
 					              "error rank %d has shift[%d] = %d (depth: %d, "
 					              "max_depth: %d, for_dyn_current=%d)",
 					              target_t->rank, j, target_t->for_dyn_shift[j],
@@ -1849,7 +1849,7 @@ void __mpcomp_loop_ull_dynamic_next_debug( __UNUSED__ char *funcname )
 
 	for ( i = 0; i < tree_depth; i++ )
 	{
-		sctk_nodebug( "[%d] %s:\ttarget[%d] = %d \t shift[%d] = %d", t->rank,
+		mpc_common_nodebug( "[%d] %s:\ttarget[%d] = %d \t shift[%d] = %d", t->rank,
 		              funcname, i, t->for_dyn_target[i], i, t->for_dyn_shift[i] );
 	}
 }
@@ -1967,7 +1967,7 @@ int __mpcomp_loop_ull_ordered_dynamic_begin( bool up, unsigned long long lb,
 	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;
 	t->schedule_is_forced = 1;
 	// TODO EXTEND MODIF WITH UP VALUE
-	sctk_nodebug( "[%d] %s: %d -> %d [%d] cs:%d", t->rank, __func__, lb, b, incr,
+	mpc_common_nodebug( "[%d] %s: %d -> %d [%d] cs:%d", t->rank, __func__, lb, b, incr,
 	              chunk_size );
 	const int res =
 	    __mpcomp_loop_ull_dynamic_begin( up, lb, b, incr, chunk_size, from, to );
@@ -1977,7 +1977,7 @@ int __mpcomp_loop_ull_ordered_dynamic_begin( bool up, unsigned long long lb,
 		t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from;
 	}
 
-	sctk_nodebug( "[%d] %s: exit w/ res=%d", t->rank, __func__, res );
+	mpc_common_nodebug( "[%d] %s: exit w/ res=%d", t->rank, __func__, res );
 	return res;
 }
 
@@ -2010,7 +2010,7 @@ mpcomp_for_dyn_coherency_end_barrier()
 	/* Grab info on the current thread */
 	t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
 	sctk_assert( t != NULL );
-	sctk_nodebug( "[%d] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+	mpc_common_nodebug( "[%d] __mpcomp_for_dyn_coherency_checking_end_barrier: "
 	              "Checking for %d thread(s)...",
 	              t->rank, t->info.num_threads ) ;
 	instance = t->instance ;
@@ -2038,7 +2038,7 @@ mpcomp_for_dyn_coherency_end_barrier()
 				break ;
 		}
 
-		sctk_nodebug( "[%d] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+		mpc_common_nodebug( "[%d] __mpcomp_for_dyn_coherency_checking_end_barrier: "
 		              "TEAM - FOR_DYN - nb_threads_exited[%d] = %d"
 		              ,
 		              t->rank, i, team->for_dyn_nb_threads_exited[i].i ) ;
@@ -2058,7 +2058,7 @@ mpcomp_for_dyn_coherency_end_barrier()
 		struct mpcomp_thread_s *target_t ;
 		int j ;
 		target_t = &( instance->mvps[i].ptr.mvp->threads[0] ) ;
-		sctk_nodebug( "[%d] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+		mpc_common_nodebug( "[%d] __mpcomp_for_dyn_coherency_checking_end_barrier: "
 		              "Checking thread %d...",
 		              t->rank, target_t->rank ) ;
 
@@ -2087,7 +2087,7 @@ mpcomp_for_dyn_coherency_end_barrier()
 			{
 				if ( target_t->for_dyn_target[j] != target_t->mvp->tree_rank[j] )
 				{
-					sctk_nodebug( "[%d] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+					mpc_common_nodebug( "[%d] __mpcomp_for_dyn_coherency_checking_end_barrier: "
 					              "error rank %d has target[%d] = %d (depth: %d, max_depth: %d, for_dyn_current=%d)",
 					              t->rank,
 					              target_t->rank, j,
@@ -2111,7 +2111,7 @@ mpcomp_for_dyn_coherency_end_barrier()
 			{
 				if ( target_t->for_dyn_shift[j] != 0 )
 				{
-					sctk_nodebug( "[%d] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+					mpc_common_nodebug( "[%d] __mpcomp_for_dyn_coherency_checking_end_barrier: "
 					              "error rank %d has shift[%d] = %d (dept: %d, max_depth: %d, for_dyn_current=%d)",
 					              t->rank,
 					              target_t->rank, j,
@@ -2429,7 +2429,7 @@ int __mpcomp_loop_ull_ordered_runtime_begin( bool up, unsigned long long lb,
 	const int run_sched_var = t->info.icvs.run_sched_var;
 	const unsigned long long chunk_size =
 	    ( unsigned long long ) t->info.icvs.modifier_sched_var;
-	sctk_nodebug( "%s: value of schedule %d", __func__, run_sched_var );
+	mpc_common_nodebug( "%s: value of schedule %d", __func__, run_sched_var );
 
 	switch ( run_sched_var )
 	{

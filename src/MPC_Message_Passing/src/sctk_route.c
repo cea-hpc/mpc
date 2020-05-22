@@ -196,7 +196,7 @@ void sctk_route_table_add_dynamic_route (  sctk_route_table_t * table, sctk_endp
 
 void sctk_route_table_add_static_route (  sctk_route_table_t * table, sctk_endpoint_t *tmp , int push_in_multirail)
 {
-	sctk_nodebug("New static route to %d", tmp->dest );
+	mpc_common_nodebug("New static route to %d", tmp->dest );
 	
 	assume( tmp->origin == ROUTE_ORIGIN_STATIC );
 		
@@ -220,7 +220,7 @@ sctk_endpoint_t * sctk_route_table_get_static_route(   sctk_route_table_t * tabl
 
 	tmp = mpc_common_hashtable_get(&table->static_route_table, dest);
 
-	sctk_nodebug ( "Get static route for %d -> %p", dest, tmp );
+	mpc_common_nodebug ( "Get static route for %d -> %p", dest, tmp );
 
 	return tmp;
 }

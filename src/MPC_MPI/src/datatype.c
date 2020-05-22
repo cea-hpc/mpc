@@ -818,7 +818,7 @@ void _mpc_dt_derived_init( _mpc_dt_derived_t *type,
 						   long ub,
 						   int is_ub )
 {
-	sctk_nodebug( "Derived create ID %d", id );
+	mpc_common_nodebug( "Derived create ID %d", id );
 	/* Set the integer id */
 	type->id = id;
 
@@ -856,11 +856,11 @@ void _mpc_dt_derived_init( _mpc_dt_derived_t *type,
 
 	for ( j = 0; j < count; j++ )
 	{
-		sctk_nodebug( "( %d / %d ) => B : %d  E : %d D : %d ", j, count - 1, type->begins[j], type->ends[j], type->datatypes[j] );
+		mpc_common_nodebug( "( %d / %d ) => B : %d  E : %d D : %d ", j, count - 1, type->begins[j], type->ends[j], type->datatypes[j] );
 		type->size += type->ends[j] - type->begins[j] + 1;
 	}
 
-	sctk_nodebug( "TYPE SIZE : %d", type->size );
+	mpc_common_nodebug( "TYPE SIZE : %d", type->size );
 
 	/* Set lower and upper bound parameters */
 	type->ub = ub;
@@ -881,7 +881,7 @@ void _mpc_dt_derived_init( _mpc_dt_derived_t *type,
 
 int _mpc_dt_derived_release( _mpc_dt_derived_t *type )
 {
-	sctk_nodebug( "Derived %d free REF : %d", type->id, type->ref_count );
+	mpc_common_nodebug( "Derived %d free REF : %d", type->id, type->ref_count );
 
 	/* Here we decrement the refcounter */
 	type->ref_count--;
@@ -1053,7 +1053,7 @@ int _mpc_dt_derived_optimize( _mpc_dt_derived_t *target_type )
 
 		for ( j = ( i + 1 ); j < count; j++ )
 		{
-			sctk_nodebug( "[%d]{%d,%d} <=> [%d]{%d,%d} (%d == %d)[%d]", i, cells[i].begin, cells[i].end, j, cells[j].begin, cells[j].end, cells[i].end + 1, cells[j].begin, ( cells[i].end + 1 ) == cells[j].begin );
+			mpc_common_nodebug( "[%d]{%d,%d} <=> [%d]{%d,%d} (%d == %d)[%d]", i, cells[i].begin, cells[i].end, j, cells[j].begin, cells[j].end, cells[i].end + 1, cells[j].begin, ( cells[i].end + 1 ) == cells[j].begin );
 			if ( ( cells[i].end + 1 ) == cells[j].begin )
 			{
 				/* If cells are contiguous we merge with
@@ -1073,7 +1073,7 @@ int _mpc_dt_derived_optimize( _mpc_dt_derived_t *target_type )
 
 	if ( count != new_count )
 	{
-		sctk_nodebug( "Datatype Optimizer : merged %.4g percents of copies %s", ( count - new_count ) * 100.0 / count, ( new_count == 1 ) ? "[Type is now Contiguous]" : "" );
+		mpc_common_nodebug( "Datatype Optimizer : merged %.4g percents of copies %s", ( count - new_count ) * 100.0 / count, ( new_count == 1 ) ? "[Type is now Contiguous]" : "" );
 
 		target_type->opt_begins = sctk_malloc( sizeof( long ) * new_count );
 		target_type->opt_ends = sctk_malloc( sizeof( long ) * new_count );
@@ -1090,7 +1090,7 @@ int _mpc_dt_derived_optimize( _mpc_dt_derived_t *target_type )
 		if ( cells[i].ignore )
 			continue;
 
-		sctk_nodebug( "{%d - %d}", cells[i].begin, cells[i].end );
+		mpc_common_nodebug( "{%d - %d}", cells[i].begin, cells[i].end );
 		target_type->opt_begins[cnt] = cells[i].begin;
 		target_type->opt_ends[cnt] = cells[i].end;
 		cnt++;
@@ -1615,7 +1615,7 @@ static void __mpc_context_set_refcount( struct _mpc_dt_footprint *ctx, struct _m
 	__mpc_context_free( ctx );
 
 	/* Save the combiner which is always needed */
-	sctk_nodebug( "Setting combiner to %d\n", dctx->combiner );
+	mpc_common_nodebug( "Setting combiner to %d\n", dctx->combiner );
 	ctx->combiner = dctx->combiner;
 
 	/* This combiner is used for serialized datatypes
@@ -2108,14 +2108,14 @@ struct _mpc_dt_layout *_mpc_dt_get_layout( struct _mpc_dt_footprint *ctx, size_t
 				number_of_blocks += ctx->array_of_integers[i] + 1;
 			}
 
-			sctk_nodebug( "Num block : %d", number_of_blocks );
+			mpc_common_nodebug( "Num block : %d", number_of_blocks );
 
 			/* Allocate blocks */
 			ret = please_allocate_layout( number_of_blocks );
 
 			for ( i = 0; i < count; i++ )
 			{
-				sctk_nodebug( "CTX : BL : %d   T : %d", ctx->array_of_integers[i + 1], ctx->array_of_types[i] );
+				mpc_common_nodebug( "CTX : BL : %d   T : %d", ctx->array_of_integers[i + 1], ctx->array_of_types[i] );
 
 				/* Here we don't consider empty blocks as elements */
 				if ( ctx->array_of_integers[i + 1] == 0 )
@@ -2127,7 +2127,7 @@ struct _mpc_dt_layout *_mpc_dt_get_layout( struct _mpc_dt_footprint *ctx, size_t
 				/* And we copy all the individual blocks */
 				for ( j = 0; j < ctx->array_of_integers[i + 1]; j++ )
 				{
-					sctk_nodebug( "CUR : %d", cnt );
+					mpc_common_nodebug( "CUR : %d", cnt );
 
 					/* Here we avoid reporting types which are not allocated
 					 * in the layout as sometimes user only partially free

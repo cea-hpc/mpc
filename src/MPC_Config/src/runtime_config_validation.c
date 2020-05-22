@@ -43,7 +43,7 @@ void sctk_runtime_config_validate(struct sctk_runtime_config * config)
 	assert(config != NULL);
 
 	/* debug message */
-	sctk_nodebug("Validator called on config...");
+	mpc_common_nodebug("Validator called on config...");
 
 	/* call all post actions */
 	sctk_runtime_config_old_getenv_compatibility(config);

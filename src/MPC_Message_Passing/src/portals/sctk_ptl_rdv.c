@@ -163,7 +163,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 		/* if the should take '+1' to compensate non-distributed bytes */
 		size_t cur_sz = (chunk < chunk_rest) ? chunk_sz + 1 : chunk_sz;
 
-		sctk_nodebug("EMIT GET %d - %d (sz=%d for %d chunks)", cur_off, cur_off + cur_sz, cur_sz, chunk_nb);
+		mpc_common_nodebug("EMIT GET %d - %d (sz=%d for %d chunks)", cur_off, cur_off + cur_sz, cur_sz, chunk_nb);
 		sctk_ptl_emit_get(
 			get_request,        /* the current GET request */
 			cur_sz,             /* the size for this chunk */

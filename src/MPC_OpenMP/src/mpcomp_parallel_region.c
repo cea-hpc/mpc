@@ -162,7 +162,7 @@ void __mpcomp_internal_end_parallel_region( __UNUSED__ mpcomp_instance_t *instan
 
     OPA_store_int(&(root->barrier), 0);
 
-    sctk_nodebug("%s: final barrier done...", __func__);
+    mpc_common_nodebug("%s: final barrier done...", __func__);
 
   }
   #endif

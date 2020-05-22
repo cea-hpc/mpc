@@ -89,7 +89,7 @@ int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
 	}
 
 	number = OPA_fetch_and_incr_int ( &remote->ib_buffered.number );
-	sctk_nodebug ( "Sending buffered message (size:%lu)", size );
+	mpc_common_nodebug ( "Sending buffered message (size:%lu)", size );
 
 	/* While it reamins slots to copy */
 	do
@@ -100,16 +100,16 @@ int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
 
 		size_t buffer_size = ibuf_size;
 		/* We remove the buffered header's size from the size */
-		sctk_nodebug ( "Payload with size %lu %lu", buffer_size, sizeof ( mpc_lowcomm_ptp_message_body_t ) );
+		mpc_common_nodebug ( "Payload with size %lu %lu", buffer_size, sizeof ( mpc_lowcomm_ptp_message_body_t ) );
 		buffer_size -= IBUF_GET_BUFFERED_SIZE;
-		sctk_nodebug ( "Sending a message with size %lu", buffer_size );
+		mpc_common_nodebug ( "Sending a message with size %lu", buffer_size );
 
 		buffered = IBUF_GET_BUFFERED_HEADER ( ibuf->buffer );
 		buffered->number = number;
 
 		ib_assume ( buffer_size >= sizeof ( mpc_lowcomm_ptp_message_body_t ) );
 		memcpy ( &buffered->msg, msg, sizeof ( mpc_lowcomm_ptp_message_body_t ) );
-		sctk_nodebug ( "Send number %d, src:%d, dest:%d", SCTK_MSG_NUMBER ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ) );
+		mpc_common_nodebug ( "Send number %d, src:%d, dest:%d", SCTK_MSG_NUMBER ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ) );
 
 		if ( msg_copied + buffer_size > size )
 		{
@@ -124,7 +124,7 @@ int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
 		memcpy ( IBUF_GET_BUFFERED_PAYLOAD ( ibuf->buffer ), ( char * ) payload + msg_copied,
 		         payload_size );
 
-		sctk_nodebug ( "Send message %d to %d (msg_copied:%lu pyload_size:%lu header:%lu, buffer_size:%lu number:%lu)",
+		mpc_common_nodebug ( "Send message %d to %d (msg_copied:%lu pyload_size:%lu header:%lu, buffer_size:%lu number:%lu)",
 		               buffer_index, remote->rank, msg_copied, payload_size, IBUF_GET_BUFFERED_SIZE, buffer_size, SCTK_MSG_NUMBER ( msg ) );
 		/* Initialization of the buffer */
 		buffered->index = buffer_index;
@@ -151,7 +151,7 @@ int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
 		sctk_free ( payload );
 	}
 
-	sctk_nodebug ( "End of message sending" );
+	mpc_common_nodebug ( "End of message sending" );
 	return 0;
 }
 
@@ -168,7 +168,7 @@ void sctk_ib_buffered_free_msg ( void *arg )
 	switch ( entry->status & MASK_BASE )
 	{
 		case SCTK_IB_RDMA_RECOPY:
-			sctk_nodebug ( "Free payload %p from entry %p", entry->payload, entry );
+			mpc_common_nodebug ( "Free payload %p from entry %p", entry->payload, entry );
 			sctk_free ( entry->payload );
 			break;
 
@@ -197,12 +197,12 @@ void sctk_ib_buffered_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
 
 	mpc_common_spinlock_lock ( &entry->lock );
 	entry->copy_ptr = tmp;
-	sctk_nodebug ( "Copy status (%p): %d", entry, entry->status );
+	mpc_common_nodebug ( "Copy status (%p): %d", entry, entry->status );
 
 	switch ( entry->status & MASK_BASE )
 	{
 		case SCTK_IB_RDMA_NOT_SET:
-			sctk_nodebug ( "Message directly copied (entry:%p)", entry );
+			mpc_common_nodebug ( "Message directly copied (entry:%p)", entry );
 
 			if ( recv->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS )
 			{
@@ -214,23 +214,23 @@ void sctk_ib_buffered_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
 			}
 
 		case SCTK_IB_RDMA_RECOPY:
-			sctk_nodebug ( "Message recopied" );
+			mpc_common_nodebug ( "Message recopied" );
 
 			/* transfer done */
 			if ( ( entry->status & MASK_DONE ) == SCTK_IB_RDMA_DONE )
 			{
 				mpc_common_spinlock_unlock ( &entry->lock );
 				/* The message is done. All buffers have been received */
-				sctk_nodebug ( "Message recopied free from copy %d (%p)", entry->status, entry );
+				mpc_common_nodebug ( "Message recopied free from copy %d (%p)", entry->status, entry );
 				sctk_net_message_copy_from_buffer ( entry->payload, tmp, 1 );
 				sctk_free ( entry );
 			}
 			else
 			{
-				sctk_nodebug ( "Matched" );
+				mpc_common_nodebug ( "Matched" );
 				/* Add matching OK */
 				entry->status |= SCTK_IB_RDMA_MATCH;
-				sctk_nodebug ( "1 Matched ? %p %d", entry, entry->status & MASK_MATCH );
+				mpc_common_nodebug ( "1 Matched ? %p %d", entry, entry->status & MASK_MATCH );
 				mpc_common_spinlock_unlock ( &entry->lock );
 			}
 
@@ -254,7 +254,7 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
 	buffered = IBUF_GET_BUFFERED_HEADER ( ibuf->buffer );
 	body = &buffered->msg;
 	key = buffered->number;
-	sctk_nodebug ( "Got message number %d", key );
+	mpc_common_nodebug ( "Got message number %d", key );
 
 	mpc_common_spinlock_lock ( &remote->ib_buffered.lock );
 	HASH_FIND ( hh, remote->ib_buffered.entries, &key, sizeof ( int ), entry );
@@ -279,7 +279,7 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
 		entry->key = key;
 		entry->total = buffered->nb;
 		entry->status = SCTK_IB_RDMA_NOT_SET;
-		sctk_nodebug ( "Not set: %d (%p)", entry->status, entry );
+		mpc_common_nodebug ( "Not set: %d (%p)", entry->status, entry );
 		mpc_common_spinlock_init(&entry->lock, 0);
 		mpc_common_spinlock_init(&entry->current_copied_lock, 0);
 		entry->current_copied = 0;
@@ -288,7 +288,7 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
 		HASH_ADD ( hh, remote->ib_buffered.entries, key, sizeof ( int ), entry );
 		/* Send message to high level MPC */
 
-		sctk_nodebug ( "Read msg with number %d", body->header.message_number );
+		mpc_common_nodebug ( "Read msg with number %d", body->header.message_number );
 		rail->send_message_from_network ( &entry->msg );
 
 		mpc_common_spinlock_lock ( &entry->lock );
@@ -296,7 +296,7 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
 		/* Should be 'SCTK_IB_RDMA_NOT_SET' or 'SCTK_IB_RDMA_ZEROCOPY' */
 		if ( ( entry->status & MASK_BASE ) == SCTK_IB_RDMA_NOT_SET )
 		{
-			sctk_nodebug ( "We recopy the message" );
+			mpc_common_nodebug ( "We recopy the message" );
 			entry->payload = sctk_malloc ( body->header.msg_size );
 			ib_assume ( entry->payload );
 			entry->status |= SCTK_IB_RDMA_RECOPY;
@@ -323,7 +323,7 @@ void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 	size_t current_copied;
 	int src_process;
 
-	sctk_nodebug ( "Polled buffered message" );
+	mpc_common_nodebug ( "Polled buffered message" );
 
 	IBUF_CHECK_POISON ( ibuf->buffer );
 	buffered = IBUF_GET_BUFFERED_HEADER ( ibuf->buffer );
@@ -350,7 +350,7 @@ void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 	mpc_common_spinlock_lock ( &entry->current_copied_lock );
 	current_copied = ( entry->current_copied += buffered->payload_size );
 	mpc_common_spinlock_unlock ( &entry->current_copied_lock );
-	sctk_nodebug ( "Received current copied : %lu on %lu number %d", current_copied, body->header.msg_size, body->header.message_number );
+	mpc_common_nodebug ( "Received current copied : %lu on %lu number %d", current_copied, body->header.msg_size, body->header.message_number );
 
 	/* XXX: horrible use of locks. but we do not have the choice */
 	if ( current_copied >= body->header.msg_size )
@@ -364,7 +364,7 @@ void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 		mpc_common_spinlock_unlock ( &remote->ib_buffered.lock );
 
 		mpc_common_spinlock_lock ( &entry->lock );
-		sctk_nodebug ( "2 - Matched ? %p %d", entry, entry->status & MASK_MATCH );
+		mpc_common_nodebug ( "2 - Matched ? %p %d", entry, entry->status & MASK_MATCH );
 
 		switch ( entry->status & MASK_BASE )
 		{
@@ -377,12 +377,12 @@ void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 					ib_assume ( entry->copy_ptr );
 					/* The message is done. All buffers have been received */
 					sctk_net_message_copy_from_buffer ( entry->payload, entry->copy_ptr, 1 );
-					sctk_nodebug ( "Message recopied free from done" );
+					mpc_common_nodebug ( "Message recopied free from done" );
 					sctk_free ( entry );
 				}
 				else
 				{
-					sctk_nodebug ( "Free done:%p", entry );
+					mpc_common_nodebug ( "Free done:%p", entry );
 					entry->status |= SCTK_IB_RDMA_DONE;
 					mpc_common_spinlock_unlock ( &entry->lock );
 				}
@@ -399,7 +399,7 @@ void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 					_mpc_comm_ptp_message_commit_request ( entry->copy_ptr->msg_send,
 					                                   entry->copy_ptr->msg_recv );
 					sctk_free ( entry );
-					sctk_nodebug ( "Message zerocpy free from done" );
+					mpc_common_nodebug ( "Message zerocpy free from done" );
 				}
 				else
 				{
@@ -413,6 +413,6 @@ void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 				not_reachable();
 		}
 
-		sctk_nodebug ( "Free done:%p", entry );
+		mpc_common_nodebug ( "Free done:%p", entry );
 	}
 }

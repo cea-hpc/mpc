@@ -19,15 +19,15 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef MPC_ARCHITECTURE
-#define MPC_ARCHITECTURE
+#ifndef MPC_ARCHITECTURE_H_
+#define MPC_ARCHITECTURE_H_
 
 /******************
  * HELPER DEFINES *
  ******************/
 
-#define SCTK_STRING(a) @MPC_ARCH_DETECTED_STRING@(a)
-#define SCTK_FUNCTION @MPC_ARCH_DETECTED_FUNCTION@
+#define MPC_STRING(a) @MPC_ARCH_DETECTED_STRING@(a)
+#define MPC_FUNCTION @MPC_ARCH_DETECTED_FUNCTION@
 
 /**************************
  * ARCHITECTURE DETECTION *
@@ -137,6 +137,6 @@ double     __kmp_test_then_add_real64( kmp_real64 *, kmp_real64 );
 
 int __kmp_x86_pause();
 
-#endif /* MPC_ARCHITECTURE */
+#endif /* MPC_ARCHITECTURE_H_ */
 
 

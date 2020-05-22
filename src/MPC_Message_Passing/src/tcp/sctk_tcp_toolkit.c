@@ -79,7 +79,7 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 			/* Make sure we hold the right port-no (from original buffer)
 			 * as it might be overwriten if we fallback network */
 			portno = name_init + ( i + 1 );
-			sctk_nodebug ( "%s Port no %s", name, portno );
+			mpc_common_nodebug ( "%s Port no %s", name, portno );
 			break;
 		}
 	}
@@ -115,7 +115,7 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 
 	/* Start Name Resolution */
 
-	sctk_nodebug ( "Try connection to |%s| on port %s type %d", name, portno, AF_INET );
+	mpc_common_nodebug ( "Try connection to |%s| on port %s type %d", name, portno, AF_INET );
 	struct addrinfo *results;
 
 
@@ -327,7 +327,7 @@ static void sctk_tcp_add_route ( int dest, int fd, sctk_rail_info_t *rail,
 	/* Make sure the route is flagged connected */
 	sctk_endpoint_set_state ( new_route, STATE_CONNECTED );
 
-	sctk_nodebug ( "Register fd %d", fd );
+	mpc_common_nodebug ( "Register fd %d", fd );
 	new_route->data.tcp.fd = fd;
 
 	mpc_common_spinlock_init(&new_route->data.tcp.lock, 0);
@@ -535,10 +535,10 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	right_rank = ( mpc_common_get_process_rank() + 1 ) % mpc_common_get_process_count();
 	left_rank = ( mpc_common_get_process_rank() + mpc_common_get_process_count() - 1 ) % mpc_common_get_process_count();
 
-	sctk_nodebug ( "Connection Infos (%d): %s", mpc_common_get_process_rank(), rail->network.tcp.connection_infos );
+	mpc_common_nodebug ( "Connection Infos (%d): %s", mpc_common_get_process_rank(), rail->network.tcp.connection_infos );
 
 #ifdef SCTK_LIB_MODE
-	sctk_nodebug("TCP BOOTSTRAP LIB MODE %d %d", mpc_common_get_process_count(), mpc_common_get_process_rank());
+	mpc_common_nodebug("TCP BOOTSTRAP LIB MODE %d %d", mpc_common_get_process_count(), mpc_common_get_process_rank());
 	if ( mpc_common_get_process_count() > 2 )
 	{
 		if ( mpc_common_get_process_rank() % 2 == 0 )
@@ -579,7 +579,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
  mpc_launch_pmi_barrier();
 #endif
 
-	sctk_nodebug ( "DEST Connection Infos(%d) to %d: %s", mpc_common_get_process_rank(), right_rank, right_rank_connection_infos );
+	mpc_common_nodebug ( "DEST Connection Infos(%d) to %d: %s", mpc_common_get_process_rank(), right_rank, right_rank_connection_infos );
 
 
 	/* Intiate ring connection */
@@ -587,7 +587,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	{
 		if ( mpc_common_get_process_rank() % 2 == 0 )
 		{
-			sctk_nodebug ( "Connect to %d", right_rank );
+			mpc_common_nodebug ( "Connect to %d", right_rank );
 			right_socket = sctk_tcp_connect_to ( right_rank_connection_infos, rail );
 
 			if ( right_socket < 0 )
@@ -596,7 +596,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 				mpc_common_debug_abort();
 			}
 
-			sctk_nodebug ( "Wait connection" );
+			mpc_common_nodebug ( "Wait connection" );
 			left_socket = accept ( rail->network.tcp.sockfd, NULL, 0 );
 
 			if ( left_socket < 0 )
@@ -607,7 +607,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 		}
 		else
 		{
-			sctk_nodebug ( "Wait connection" );
+			mpc_common_nodebug ( "Wait connection" );
 			left_socket = accept ( rail->network.tcp.sockfd, NULL, 0 );
 
 			if ( left_socket < 0 )
@@ -616,7 +616,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 				mpc_common_debug_abort();
 			}
 
-			sctk_nodebug ( "Connect to %d", right_rank );
+			mpc_common_nodebug ( "Connect to %d", right_rank );
 			right_socket = sctk_tcp_connect_to ( right_rank_connection_infos, rail );
 
 			if ( right_socket < 0 )
@@ -631,7 +631,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 		/* Here particular case of two processes (not to loop) */
 		if ( mpc_common_get_process_rank() == 0 )
 		{
-			sctk_nodebug ( "Connect to %d", right_rank );
+			mpc_common_nodebug ( "Connect to %d", right_rank );
 			right_socket = sctk_tcp_connect_to ( right_rank_connection_infos, rail );
 
 			if ( right_socket < 0 )
@@ -642,7 +642,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 		}
 		else
 		{
-			sctk_nodebug ( "Wait connection" );
+			mpc_common_nodebug ( "Wait connection" );
 			right_socket = accept ( rail->network.tcp.sockfd, NULL, 0 );
 
 			if ( right_socket < 0 )

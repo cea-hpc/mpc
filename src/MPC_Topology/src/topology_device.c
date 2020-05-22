@@ -655,7 +655,7 @@ static inline void __topology_device_matrix_init( hwloc_topology_t topology )
 
 			/* Compute the distance */
 			*cell = _mpc_topology_get_distance_from_pu( topology, j, device_obj );
-			sctk_nodebug( "Distance (PU %d, DEV %d (%s)) == %d", j,
+			mpc_common_nodebug( "Distance (PU %d, DEV %d (%s)) == %d", j,
 						  i, __mpc_topology_device_list[i].name, *cell );
 		}
 	}
@@ -734,7 +734,7 @@ void _mpc_topology_device_init( hwloc_topology_t topology )
 		pci_dev = hwloc_get_next_pcidev( topology, pci_dev );
 	}
 
-	sctk_nodebug( "sctk_topology located %d PCI devices",
+	mpc_common_nodebug( "sctk_topology located %d PCI devices",
 				  __mpc_topology_device_list_count );
 	/* Allocate devices */
 	__mpc_topology_device_list = sctk_malloc( sizeof( mpc_topology_device_t ) * __mpc_topology_device_list_count );
@@ -884,7 +884,7 @@ mpc_topology_device_t **mpc_topology_device_get_from_handle_regexp( char *handle
 		if ( ret == 0 )
 		{
 			/* Match then push the device */
-			sctk_nodebug( "Regex %s MATCH %s", handle_reg_exp, __mpc_topology_device_list[i].name );
+			mpc_common_nodebug( "Regex %s MATCH %s", handle_reg_exp, __mpc_topology_device_list[i].name );
 			ret_dev[current_count] = &__mpc_topology_device_list[i];
 			current_count++;
 		}
@@ -948,7 +948,7 @@ mpc_topology_device_t *mpc_topology_device_attach_freest_device_from( mpc_topolo
 		{
 			freest_value = current->nb_res;
 			freest_elem = current;
-			sctk_nodebug( "First device: %d (%d)", freest_elem->device_id,
+			mpc_common_nodebug( "First device: %d (%d)", freest_elem->device_id,
 						  freest_elem->nb_res );
 		}
 		else if ( (int) current->nb_res < freest_value )
@@ -957,7 +957,7 @@ mpc_topology_device_t *mpc_topology_device_attach_freest_device_from( mpc_topolo
 			mpc_common_spinlock_unlock( &freest_elem->res_lock );
 			freest_value = current->nb_res;
 			freest_elem = current;
-			sctk_nodebug( "New best device: %d (%d)", freest_elem->device_id,
+			mpc_common_nodebug( "New best device: %d (%d)", freest_elem->device_id,
 						  freest_elem->nb_res );
 		}
 		else

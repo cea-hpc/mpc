@@ -313,7 +313,7 @@ void _mpc_thread_ethread_posix_testcancel(void)
 
 int _mpc_thread_ethread_posix_cancel(_mpc_thread_ethread_t target)
 {
-	sctk_nodebug("target vaux : %d", target);
+	mpc_common_nodebug("target vaux : %d", target);
 	if(target == NULL)
 	{
 		return ESRCH;
@@ -354,7 +354,7 @@ int _mpc_thread_ethread_posix_setcanceltype(int type, int *oldtype)
 {
 	_mpc_thread_ethread_per_thread_t *owner = (_mpc_thread_ethread_per_thread_t *)mpc_thread_self();
 
-	sctk_nodebug("%d %d", type, owner->cancel_type);
+	mpc_common_nodebug("%d %d", type, owner->cancel_type);
 	if(oldtype != NULL)
 	{
 		*oldtype = owner->cancel_type;
@@ -362,7 +362,7 @@ int _mpc_thread_ethread_posix_setcanceltype(int type, int *oldtype)
 	if(type != SCTK_THREAD_CANCEL_DEFERRED &&
 	   type != SCTK_THREAD_CANCEL_ASYNCHRONOUS)
 	{
-		sctk_nodebug("%d %d %d", type != SCTK_THREAD_CANCEL_DEFERRED,
+		mpc_common_nodebug("%d %d %d", type != SCTK_THREAD_CANCEL_DEFERRED,
 		             type != SCTK_THREAD_CANCEL_ASYNCHRONOUS, type);
 		return EINVAL;
 	}
@@ -402,7 +402,7 @@ int _mpc_thread_ethread_posix_sem_wait(_mpc_thread_ethread_sem_t *lock)
 
 	_mpc_thread_ethread_mutex_cell_t cell;
 
-	sctk_nodebug("%p lock on %p %d", owner, lock, lock->lock);
+	mpc_common_nodebug("%p lock on %p %d", owner, lock, lock->lock);
 	___mpc_thread_ethread_testcancel(owner);
 	mpc_common_spinlock_lock(&lock->spinlock);
 	lock->lock--;
@@ -421,7 +421,7 @@ int _mpc_thread_ethread_posix_sem_wait(_mpc_thread_ethread_sem_t *lock)
 			lock->list_tail->next = &cell;
 			lock->list_tail       = &cell;
 		}
-		sctk_nodebug("%p blocked on %p", owner, lock);
+		mpc_common_nodebug("%p blocked on %p", owner, lock);
 		if(owner->status == ethread_ready)
 		{
 			owner->status          = ethread_blocked;
@@ -452,11 +452,11 @@ int _mpc_thread_ethread_posix_sem_wait(_mpc_thread_ethread_sem_t *lock)
 
 int _mpc_thread_ethread_posix_sem_trywait(_mpc_thread_ethread_sem_t *lock)
 {
-/*    sctk_nodebug ("%p lock on %p %d", owner, lock, lock->lock);*/
+/*    mpc_common_nodebug ("%p lock on %p %d", owner, lock, lock->lock);*/
 
 	if(lock->lock <= 0)
 	{
-		sctk_nodebug("try_wait : sem occup�");
+		mpc_common_nodebug("try_wait : sem occup�");
 		errno = EAGAIN;
 		return -1;
 	}
@@ -464,7 +464,7 @@ int _mpc_thread_ethread_posix_sem_trywait(_mpc_thread_ethread_sem_t *lock)
 
 	if(lock->lock <= 0)
 	{
-		sctk_nodebug("try_wait : sem occup�");
+		mpc_common_nodebug("try_wait : sem occup�");
 		mpc_common_spinlock_unlock(&lock->spinlock);
 		errno = EAGAIN;
 		return -1;
@@ -472,7 +472,7 @@ int _mpc_thread_ethread_posix_sem_trywait(_mpc_thread_ethread_sem_t *lock)
 	else
 	{
 		lock->lock--;
-		sctk_nodebug("try_wait : sem libre");
+		mpc_common_nodebug("try_wait : sem libre");
 		mpc_common_spinlock_unlock(&lock->spinlock);
 	}
 
@@ -501,7 +501,7 @@ int _mpc_thread_ethread_posix_sem_post(_mpc_thread_ethread_sem_t *lock, void (*r
 	}
 	lock->lock++;
 	mpc_common_spinlock_unlock(&lock->spinlock);
-/*    sctk_nodebug ("%p unlock on %p %d", owner, lock, lock->lock);*/
+/*    mpc_common_nodebug ("%p unlock on %p %d", owner, lock, lock->lock);*/
 
 	return 0;
 }
@@ -637,7 +637,7 @@ _mpc_thread_ethread_sem_t *_mpc_thread_ethread_posix_sem_open(const char *name, 
 		}
 		maillon = (_mpc_thread_ethread_sem_name_t *)
 		          sctk_malloc(sizeof(_mpc_thread_ethread_sem_name_t) );
-		sctk_nodebug("%p pointe sur %p avec maillon vaux %p\n",
+		mpc_common_nodebug("%p pointe sur %p avec maillon vaux %p\n",
 		             sem_struct, sem_struct, maillon);
 		if(maillon == NULL)
 		{
@@ -660,7 +660,7 @@ _mpc_thread_ethread_sem_t *_mpc_thread_ethread_posix_sem_open(const char *name, 
 		maillon->sem    = sem;
 		maillon->nb     = 1;
 		maillon->unlink = 0;
-		sctk_nodebug("__sctk_head_sem %p pointe sur %p avec maillon vaux %p\n",
+		mpc_common_nodebug("__sctk_head_sem %p pointe sur %p avec maillon vaux %p\n",
 		             __sctk_head_sem, __sctk_head_sem.next, maillon);
 	}
 	if(tmp == NULL && !(oflag & O_CREAT) )
@@ -670,7 +670,7 @@ _mpc_thread_ethread_sem_t *_mpc_thread_ethread_posix_sem_open(const char *name, 
 		mpc_common_spinlock_unlock(&__sctk_head_sem.spinlock);
 		return (_mpc_thread_ethread_sem_t *)SCTK_SEM_FAILED;
 	}
-	sctk_nodebug("sem vaux %p avec une valeur de %d", sem, sem->lock);
+	mpc_common_nodebug("sem vaux %p avec une valeur de %d", sem, sem->lock);
 	mpc_common_spinlock_unlock(&__sctk_head_sem.spinlock);
 	return sem;
 }
@@ -699,7 +699,7 @@ int _mpc_thread_ethread_posix_sem_close(_mpc_thread_ethread_sem_t *sem)
 		tmp        = tmp->next;
 	}
 
-	sctk_nodebug("la recherche a trouv� : %p pour le s�maphore %p\n",
+	mpc_common_nodebug("la recherche a trouv� : %p pour le s�maphore %p\n",
 	             tmp, sem);
 	if(tmp == NULL)
 	{
@@ -710,9 +710,9 @@ int _mpc_thread_ethread_posix_sem_close(_mpc_thread_ethread_sem_t *sem)
 	tmp->nb--;
 	if(tmp->nb == 0 && tmp->unlink != 0)
 	{
-		sctk_nodebug
+		mpc_common_nodebug
 		        ("close d�truit le maillon %p avec le s�maphore %p", tmp, tmp->sem);
-		sctk_nodebug("sem_struct : %p , tmp : %p ", sem_struct, tmp);
+		mpc_common_nodebug("sem_struct : %p , tmp : %p ", sem_struct, tmp);
 		if(__sctk_head_sem.next == tmp)
 		{
 			__sctk_head_sem.next = tmp->next;
@@ -778,7 +778,7 @@ int _mpc_thread_ethread_posix_sem_unlink(const char *name)
 	}
 	else if(tmp->nb == 0)
 	{                       /*tout le monde a d�ja ferm� ce s�maphore, on le d�truit */
-		sctk_nodebug
+		mpc_common_nodebug
 		        ("unlink d�truit le maillon %p avec le s�maphore %p", tmp,
 		        tmp->sem);
 		if(__sctk_head_sem.next == tmp)
@@ -971,7 +971,7 @@ int _mpc_thread_ethread_posix_cond_init(_mpc_thread_ethread_cond_t *cond,
 
 int _mpc_thread_ethread_posix_cond_destroy(_mpc_thread_ethread_cond_t *cond)
 {
-	sctk_nodebug(" %p %p %d\n", cond->list, cond->list_tail, cond->is_init);
+	mpc_common_nodebug(" %p %p %d\n", cond->list, cond->list_tail, cond->is_init);
 	if(cond->is_init != 0)
 	{
 		return EINVAL;
@@ -1012,7 +1012,7 @@ int _mpc_thread_ethread_posix_cond_wait(_mpc_thread_ethread_cond_t *cond,
 		cond->list_tail->next = &cell;
 		cond->list_tail       = &cell;
 	}
-/*    sctk_nodebug("%p blocked on %p", owner, lock);*/
+/*    mpc_common_nodebug("%p blocked on %p", owner, lock);*/
 	if(owner->status == ethread_ready)
 	{
 		owner->status          = ethread_blocked;
@@ -1076,13 +1076,13 @@ int _mpc_thread_ethread_posix_cond_timedwait(__UNUSED__ _mpc_thread_ethread_cond
 		return EINVAL;
 	}
 	gettimeofday(&tv, NULL);
-	sctk_nodebug("temps : %d %d  =  %d %d ", tv.tv_sec,
+	mpc_common_nodebug("temps : %d %d  =  %d %d ", tv.tv_sec,
 	             tv.tv_usec * 1000, abstime->tv_sec, abstime->tv_nsec);
 	if(tv.tv_sec > abstime->tv_sec)
 	{
 		if(tv.tv_usec * 1000 > (abstime->tv_nsec) )
 		{
-			sctk_nodebug("sortie direct");
+			mpc_common_nodebug("sortie direct");
 			return ETIMEDOUT;
 		}
 	}
@@ -1112,10 +1112,10 @@ int _mpc_thread_ethread_posix_cond_timedwait(__UNUSED__ _mpc_thread_ethread_cond
 		owner->status          = ethread_ready;
 		owner->no_auto_enqueue = 0;
 		mpc_common_spinlock_unlock(&(cond->lock) );
-		sctk_nodebug("sortie eperm");
+		mpc_common_nodebug("sortie eperm");
 		return EPERM;
 	}
-	sctk_nodebug("cond ->list = %p", cond->list);
+	mpc_common_nodebug("cond ->list = %p", cond->list);
 	mpc_common_spinlock_unlock(&(cond->lock) );
 	ret = 0;
 	while(cell.wake != 1)
@@ -1133,7 +1133,7 @@ int _mpc_thread_ethread_posix_cond_timedwait(__UNUSED__ _mpc_thread_ethread_cond
 
 				cell.wake     = 1;
 				owner->status = ethread_ready;
-				sctk_nodebug("cond ->list 2 = %p", cond->list);
+				mpc_common_nodebug("cond ->list 2 = %p", cond->list);
 
 				/*
 				 * on reparcours toute la liste pour savoir ou on est
@@ -1163,13 +1163,13 @@ int _mpc_thread_ethread_posix_cond_timedwait(__UNUSED__ _mpc_thread_ethread_cond
 				}
 
 				ret = ETIMEDOUT;
-				sctk_nodebug("cond ->list 3 = %p", cond->list);
+				mpc_common_nodebug("cond ->list 3 = %p", cond->list);
 				mpc_common_spinlock_unlock(&(cond->lock) );
 			}
 		}
 	}
 
-	sctk_nodebug("le mutex a �t� r�cup�r�");
+	mpc_common_nodebug("le mutex a �t� r�cup�r�");
 	___mpc_thread_ethread_mutex_lock(vp, owner, mutex);
 	return ret;
 }
@@ -1415,7 +1415,7 @@ static inline int __rwlock_lock(_mpc_thread_ethread_rwlock_t *
 	mpc_common_spinlock_lock(&rwlock->spinlock);
 	rwlock->lock++;
 
-	sctk_nodebug
+	mpc_common_nodebug
 	        (" rwlock : \nlock = %d\ncurrent = %d\nwait = %d\ntype : %d\n",
 	        rwlock->lock, rwlock->current, rwlock->wait, type);
 
@@ -1463,7 +1463,7 @@ static inline int __rwlock_lock(_mpc_thread_ethread_rwlock_t *
 		rwlock->list_tail->next = &cell;
 		rwlock->list_tail       = &cell;
 	}
-	sctk_nodebug("blocked on %p", rwlock);
+	mpc_common_nodebug("blocked on %p", rwlock);
 	if(owner->status == ethread_ready)
 	{
 		owner->status          = ethread_blocked;
@@ -1551,7 +1551,7 @@ int _mpc_thread_ethread_posix_rwlock_unlock(_mpc_thread_ethread_rwlock_t *lock, 
 	int first = 1;
 
 	mpc_common_spinlock_lock(&(lock->spinlock) );
-	sctk_nodebug("unlock : %p", lock->list);
+	mpc_common_nodebug("unlock : %p", lock->list);
 	lock->lock--;
 	if(lock->list != NULL)
 	{
@@ -1722,7 +1722,7 @@ int _mpc_thread_ethread_posix_barrier_wait(_mpc_thread_ethread_barrier_t *barrie
 			barrier->list_tail->next = &cell;
 			barrier->list_tail       = &cell;
 		}
-		sctk_nodebug("blocked on %p", barrier);
+		mpc_common_nodebug("blocked on %p", barrier);
 		if(owner->status == ethread_ready)
 		{
 			owner->status          = ethread_blocked;

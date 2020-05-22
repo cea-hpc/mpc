@@ -197,7 +197,7 @@ static void ___tree_task_check_neigborhood( mpcomp_node_t *node )
 			break;
 
 		default:
-			sctk_nodebug( "not reachable" );
+			mpc_common_nodebug( "not reachable" );
 	}
 }
 

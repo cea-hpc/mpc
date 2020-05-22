@@ -71,7 +71,7 @@ static inline void _mpc_thread_ethread_place_task_on_vp(_mpc_thread_ethread_virt
                                                         _mpc_thread_ethread_per_thread_t *task)
 {
 	task->vp = vp;
-	sctk_nodebug("Place %p on %d", task, vp->rank);
+	mpc_common_nodebug("Place %p on %d", task, vp->rank);
 	mpc_common_spinlock_lock(&vp->spinlock);
 	task->status = ethread_ready;
 	___mpc_thread_ethread_enqueue_task(task,
@@ -92,7 +92,7 @@ void _mpc_thread_ethread_return_task(_mpc_thread_ethread_per_thread_t *task)
 	}
 	else
 	{
-		sctk_nodebug("status %d %p", task->status, task);
+		mpc_common_nodebug("status %d %p", task->status, task);
 	}
 }
 
@@ -146,7 +146,7 @@ static int _mpc_thread_ethread_sched_restore(mpc_thread_t thread, char *type, in
 
 	assume(vp == 0);
 
-	sctk_nodebug("Try to restore %p %s", thread, type);
+	mpc_common_nodebug("Try to restore %p %s", thread, type);
 	__sctk_restore_tls(&tls, type);
 
 	/*Reinit status */
@@ -183,7 +183,7 @@ static void _mpc_thread_ethread_wait_for_value_and_poll(volatile int *data, int 
 
 	_mpc_thread_ethread_self_all(&current_vp, &current);
 
-	sctk_nodebug("wait real : %d", current_vp->rank);
+	mpc_common_nodebug("wait real : %d", current_vp->rank);
 	___mpc_thread_ethread_wait_for_value_and_poll(current_vp,
 	                                              current, data, value, func, arg);
 }

@@ -406,7 +406,7 @@ void sctk_ptl_rdma_cas(sctk_rail_info_t *rail,
 		copy
 
 	);
-	sctk_nodebug("PORTALS: SEND-CAS (loff=%llu, roff=%llu, comp=%p, new=%p)", local_off, remote_off, comp, new);
+	mpc_common_nodebug("PORTALS: SEND-CAS (loff=%llu, roff=%llu, comp=%p, new=%p)", local_off, remote_off, comp, new);
 }
 
 /**
@@ -592,7 +592,7 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 	list->pin.ptl.start   = addr;
 	list->pin.ptl.match   = match;
 
-	sctk_nodebug("REGISTER RDMA %p->%p (match=%s) '%llu'", addr, addr + size,  __sctk_ptl_match_str(sctk_malloc(32), 32, match.raw), *(unsigned long long int*)addr);
+	mpc_common_nodebug("REGISTER RDMA %p->%p (match=%s) '%llu'", addr, addr + size,  __sctk_ptl_match_str(sctk_malloc(32), 32, match.raw), *(unsigned long long int*)addr);
 }
 
 /**
@@ -610,7 +610,7 @@ void sctk_ptl_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin
 	sctk_assert(list);
 	sctk_ptl_md_release(list->pin.ptl.md_data);
 	sctk_ptl_me_release(list->pin.ptl.me_data);
-	sctk_nodebug("RELEASE RDMA %p->%p %s", list->pin.ptl.me_data->slot.me.start, list->pin.ptl.me_data->slot.me.start + list->pin.ptl.me_data->slot.me.length, __sctk_ptl_match_str(sctk_malloc(32), 32, list->pin.ptl.me_data->slot.me.match_bits));
+	mpc_common_nodebug("RELEASE RDMA %p->%p %s", list->pin.ptl.me_data->slot.me.start, list->pin.ptl.me_data->slot.me.start + list->pin.ptl.me_data->slot.me.length, __sctk_ptl_match_str(sctk_malloc(32), 32, list->pin.ptl.me_data->slot.me.match_bits));
 }
 
 /**

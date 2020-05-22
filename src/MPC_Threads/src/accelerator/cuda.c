@@ -76,7 +76,7 @@ static int sctk_accl_cuda_get_closest_device(int cpu_id) {
 
   nearest_id = elected->device_id;
 
-  sctk_nodebug("CUDA: (DETECTION) elected device %d", nearest_id);
+  mpc_common_nodebug("CUDA: (DETECTION) elected device %d", nearest_id);
 
   sctk_free(closest_devices);
   return nearest_id;
@@ -95,7 +95,7 @@ void sctk_accl_cuda_init_context() {
   /* if CUDA support is loaded but the current configuration does not provide a
    * GPU: stop */
   if (num_devices <= 0) {
-    sctk_nodebug("CUDA support enabled but no GPU found !");
+    mpc_common_nodebug("CUDA support enabled but no GPU found !");
     return;
   }
 
@@ -109,7 +109,7 @@ void sctk_accl_cuda_init_context() {
   cuda->pushed = 0;
   cuda->cpu_id = mpc_topology_get_current_cpu();
 
-  sctk_nodebug("CUDA: (MALLOC) pushed?%d, cpu_id=%d, address=%p", cuda->pushed,
+  mpc_common_nodebug("CUDA: (MALLOC) pushed?%d, cpu_id=%d, address=%p", cuda->pushed,
                cuda->cpu_id, cuda);
 
   /* cast from int -> CUdevice (which is a typedef to a int) */
@@ -175,7 +175,7 @@ int sctk_accl_cuda_pop_context() {
     ///* DEBUG
     int cuda_id;
     safe_cudart(cudaGetDevice(&cuda_id));
-    sctk_nodebug("CUDA: (POP) PU %d detached from device %d", cuda->cpu_id,
+    mpc_common_nodebug("CUDA: (POP) PU %d detached from device %d", cuda->cpu_id,
                  cuda_id);
     //*/
   }
@@ -222,7 +222,7 @@ int sctk_accl_cuda_push_context() {
     ///* DEBUG
     int cuda_id;
     safe_cudart(cudaGetDevice(&cuda_id));
-    sctk_nodebug("CUDA (PUSH) PU %d pushed to device %d", cuda->cpu_id,
+    mpc_common_nodebug("CUDA (PUSH) PU %d pushed to device %d", cuda->cpu_id,
                  cuda_id);
     //*/
   }

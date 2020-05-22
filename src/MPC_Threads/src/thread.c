@@ -158,7 +158,7 @@ int mpc_thread_get_task_placement_and_count_default(int i, int *nbVp)
 	cpu_nb             = mpc_topology_get_pu_count(); // number of cpu per process
 	total_tasks_number = mpc_common_get_task_count();
 	/*   rank_in_node = i - sctk_first_local; */
-	/*   sctk_nodebug("check for %d(%d) %d cpu",i,rank_in_node,cpu_nb); */
+	/*   mpc_common_nodebug("check for %d(%d) %d cpu",i,rank_in_node,cpu_nb); */
 	assume( (sctk_last_local != 0) || (total_tasks_number == 1) || (mpc_common_get_process_rank() == 0) );
 	task_nb      = sctk_last_local - sctk_first_local + 1;
 	slot_size    = task_nb / cpu_nb;
@@ -179,26 +179,26 @@ int mpc_thread_get_task_placement_and_count_default(int i, int *nbVp)
 		i = i - sctk_first_local;
 	}
 
-	sctk_nodebug("i normalized=%d", i);
+	mpc_common_nodebug("i normalized=%d", i);
 	first = 0;
-	sctk_nodebug("cpu_per_task %d", cpu_per_task);
+	mpc_common_nodebug("cpu_per_task %d", cpu_per_task);
 	j = 0;
 
 	for(proc = 0; proc < cpu_nb; proc += cpu_per_task)
 	{
 		int local_slot_size;
 		local_slot_size = slot_size;
-		sctk_nodebug("local_slot_size=%d", local_slot_size);
+		mpc_common_nodebug("local_slot_size=%d", local_slot_size);
 
 		if( (task_nb % cpu_nb) > j)
 		{
 			local_slot_size++;
-			sctk_nodebug("local_slot_size inside the if=%d", local_slot_size);
+			mpc_common_nodebug("local_slot_size inside the if=%d", local_slot_size);
 		}
 
-		sctk_nodebug("%d proc %d slot size", proc, local_slot_size);
+		mpc_common_nodebug("%d proc %d slot size", proc, local_slot_size);
 		last = first + local_slot_size - 1;
-		sctk_nodebug("First %d last %d", first, last);
+		mpc_common_nodebug("First %d last %d", first, last);
 
 		if( (i >= first) && (i <= last) )
 		{
@@ -211,7 +211,7 @@ int mpc_thread_get_task_placement_and_count_default(int i, int *nbVp)
 				*nbVp = cpu_per_task;
 			}
 
-			sctk_nodebug("mpc_thread_get_task_placement: Put task %d on VP %d", i, proc);
+			mpc_common_nodebug("mpc_thread_get_task_placement: Put task %d on VP %d", i, proc);
 			return proc;
 		}
 
@@ -224,7 +224,7 @@ int mpc_thread_get_task_placement_and_count_default(int i, int *nbVp)
 		}
 	}
 
-	sctk_nodebug("mpc_thread_get_task_placement: (After loop) Put task %d on VP %d", i, proc);
+	mpc_common_nodebug("mpc_thread_get_task_placement: (After loop) Put task %d on VP %d", i, proc);
 	fflush(stdout);
 	mpc_common_debug_abort();
 	return proc;
@@ -419,7 +419,7 @@ mpc_thread_keys_t stck_task_data;
 void _mpc_thread_data_init()
 {
 	mpc_thread_keys_create(&stck_task_data, NULL);
-	sctk_nodebug("stck_task_data = %d", stck_task_data);
+	mpc_common_nodebug("stck_task_data = %d", stck_task_data);
 	_mpc_thread_data_set(&sctk_main_datas);
 }
 
@@ -602,10 +602,10 @@ void mpc_thread_cleanup_push(struct _sctk_thread_cleanup_buffer *__buffer,
 	__buffer->__routine = __routine;
 	__buffer->__arg     = __arg;
 	__head = mpc_thread_getspecific(___thread_cleanup_callback_list_key);
-	sctk_nodebug("%p %p %p", __buffer, __head, *__head);
+	mpc_common_nodebug("%p %p %p", __buffer, __head, *__head);
 	__buffer->next = *__head;
 	*__head        = __buffer;
-	sctk_nodebug("%p %p %p", __buffer, __head, *__head);
+	mpc_common_nodebug("%p %p %p", __buffer, __head, *__head);
 }
 
 void mpc_thread_cleanup_pop(struct _sctk_thread_cleanup_buffer *__buffer,
@@ -670,9 +670,9 @@ static inline void __init_brk_for_task(void)
 	sctk_enter_no_alloc_land();
 	size = ( size_t )(SCTK_MAX_MEMORY_SIZE);
 	tmp  = sctk_get_heap_start();
-	sctk_nodebug("INIT ADRESS %p", tmp);
+	mpc_common_nodebug("INIT ADRESS %p", tmp);
 	s = ( size_t )tmp /*  + 1*1024*1024*1024 */;
-	sctk_nodebug("Max allocation %luMo %lu",
+	mpc_common_nodebug("Max allocation %luMo %lu",
 	             ( unsigned long )(size /
 	                               (1024 * 1024 * mpc_common_get_process_count() ) ), s);
 	start = s;
@@ -685,14 +685,14 @@ static inline void __init_brk_for_task(void)
 	}
 
 	tmp = ( void * )start;
-	sctk_nodebug("INIT ADRESS REALIGNED %p", tmp);
+	mpc_common_nodebug("INIT ADRESS REALIGNED %p", tmp);
 
 	if(mpc_common_get_process_count() > 1)
 	{
 		sctk_mem_reset_heap( ( size_t )tmp, size);
 	}
 
-	sctk_nodebug("Heap start at %p (%p %p)", sctk_get_heap_start(),
+	mpc_common_nodebug("Heap start at %p (%p %p)", sctk_get_heap_start(),
 	             ( void * )s, tmp);
 	sctk_leave_no_alloc_land();
 }
@@ -812,7 +812,7 @@ static inline void __tbb_init_for_mpc()
 	}
 	else
 	{
-		sctk_nodebug("Calling fake TBB Initializer");
+		mpc_common_nodebug("Calling fake TBB Initializer");
 	}
 }
 
@@ -827,7 +827,7 @@ static inline void __tbb_finalize_for_mpc()
 	}
 	else
 	{
-		sctk_nodebug("Calling fake TBB Finalizer");
+		mpc_common_nodebug("Calling fake TBB Finalizer");
 	}
 }
 
@@ -1076,7 +1076,7 @@ static void *___nonvp_thread_start_routine(sctk_thread_data_t *__arg)
 	mpc_thread_setspecific(___thread_cleanup_callback_list_key, ptr_cleanup);
 	sctk_free(__arg);
 	tmp.virtual_processor = mpc_topology_get_current_cpu();
-	sctk_nodebug("%d on %d", tmp.task_id, tmp.virtual_processor);
+	mpc_common_nodebug("%d on %d", tmp.task_id, tmp.virtual_processor);
 	_mpc_thread_data_set(&tmp);
 	sctk_thread_add(&tmp, mpc_thread_self() );
 	/** ** **/
@@ -1127,7 +1127,7 @@ int mpc_thread_core_thread_create(mpc_thread_t *restrict __threadp,
 	user_thread = sctk_nb_user_threads;
 	mpc_common_spinlock_unlock(&lock);
 	tls = __sctk_create_thread_memory_area();
-	sctk_nodebug("create tls %p attr %p", tls, __attr);
+	mpc_common_nodebug("create tls %p attr %p", tls, __attr);
 	tmp = ( sctk_thread_data_t * )
 	      __sctk_malloc(sizeof(sctk_thread_data_t), tls);
 	memset(tmp, 0, sizeof(sctk_thread_data_t) );
@@ -1146,14 +1146,14 @@ int mpc_thread_core_thread_create(mpc_thread_t *restrict __threadp,
 		tmp->mpi_task.local_rank = tmp_father->mpi_task.local_rank;
 	}
 
-	sctk_nodebug("Create Thread with MPI rank %d", tmp->task_id);
+	mpc_common_nodebug("Create Thread with MPI rank %d", tmp->task_id);
 	int scope_init;
 #if 0
 	/* Must be disabled because it unbind midcro VPs */
 	if(__attr != NULL)
 	{
 		mpc_thread_attr_getscope(__attr, &scope_init);
-		sctk_nodebug("Thread to create with scope %d ", scope_init);
+		mpc_common_nodebug("Thread to create with scope %d ", scope_init);
 
 		if(scope_init == SCTK_THREAD_SCOPE_SYSTEM)
 		{
@@ -1201,7 +1201,7 @@ int mpc_thread_core_thread_create(mpc_thread_t *restrict __threadp,
 	if(__attr != NULL)
 	{
 		mpc_thread_attr_getscope(__attr, &scope_init);
-		sctk_nodebug("Thread created with scope %d", scope_init);
+		mpc_common_nodebug("Thread created with scope %d", scope_init);
 	}
 #endif
 	TODO("THIS CODE IS UGLY ! FIX TO REEENABLE");
@@ -1316,7 +1316,7 @@ double mpc_thread_getactivity(int i)
 
 	assert(_funcptr_mpc_thread_get_activity != NULL);
 	tmp = _funcptr_mpc_thread_get_activity(i);
-	sctk_nodebug("mpc_thread_get_activity %d %f", i, tmp);
+	mpc_common_nodebug("mpc_thread_get_activity %d %f", i, tmp);
 	return tmp;
 }
 
@@ -1371,7 +1371,7 @@ static inline void __run_cleanup_callbacks(struct _sctk_thread_cleanup_buffer **
 {
 	if(__buffer != NULL)
 	{
-		sctk_nodebug("end %p %p", __buffer, *__buffer);
+		mpc_common_nodebug("end %p %p", __buffer, *__buffer);
 
 		if(*__buffer != NULL)
 		{
@@ -1400,17 +1400,17 @@ void _mpc_thread_exit_cleanup()
 	__head = mpc_thread_getspecific(___thread_cleanup_callback_list_key);
 	__run_cleanup_callbacks(__head);
 	mpc_thread_setspecific(___thread_cleanup_callback_list_key, NULL);
-	sctk_nodebug("%p", tmp);
+	mpc_common_nodebug("%p", tmp);
 
 	if(tmp != NULL)
 	{
-		sctk_nodebug("ici %p %d", tmp, tmp->task_id);
+		mpc_common_nodebug("ici %p %d", tmp, tmp->task_id);
 #ifdef MPC_Message_Passing
 		if(tmp->mpi_task.rank >= 0 && tmp->user_thread == 0)
 		{
-			//sctk_nodebug ( "mpc_lowcomm_terminaison_barrier" );
+			//mpc_common_nodebug ( "mpc_lowcomm_terminaison_barrier" );
 			//mpc_lowcomm_terminaison_barrier ();
-			//sctk_nodebug ( "mpc_lowcomm_terminaison_barrier done" );
+			//mpc_common_nodebug ( "mpc_lowcomm_terminaison_barrier done" );
 			sctk_unregister_task(tmp->mpi_task.rank);
 			sctk_net_send_task_end(tmp->mpi_task.rank, mpc_common_get_process_rank() );
 		}
@@ -1753,7 +1753,7 @@ int mpc_thread_attr_setscope(mpc_thread_attr_t *__attr, int __scope)
 	__check_mpc_initialized();
 	int res;
 
-	sctk_nodebug("thread attr_setscope %d == %d || %d", __scope,
+	mpc_common_nodebug("thread attr_setscope %d == %d || %d", __scope,
 	             SCTK_THREAD_SCOPE_PROCESS, SCTK_THREAD_SCOPE_SYSTEM);
 	assert(_funcptr_mpc_thread_attr_setscope != NULL);
 	res = _funcptr_mpc_thread_attr_setscope(__attr, __scope);

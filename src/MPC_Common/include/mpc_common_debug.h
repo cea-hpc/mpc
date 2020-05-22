@@ -67,12 +67,12 @@ void mpc_common_debug_check_size_equal(size_t a, size_t b, char *ca, char *cb,
                                        char *file, int line);
 
 
-#define mpc_common_debug_check_type_equal(a, b)    mpc_common_debug_check_size_equal(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
+#define mpc_common_debug_check_type_equal(a, b)    mpc_common_debug_check_size_equal(sizeof(a), sizeof(b), MPC_STRING(a), MPC_STRING(b), __FILE__, __LINE__)
 
 void mpc_common_debug_check_large_enough(size_t a, size_t b, char *ca, char *cb,
                                          char *file, int line);
 
-#define MPC_COMMON_DEBUG_INFO    stderr, __LINE__, __FILE__, SCTK_FUNCTION
+#define MPC_COMMON_DEBUG_INFO    stderr, __LINE__, __FILE__, MPC_FUNCTION
 
 #define bad_parameter(message, ...)     mpc_common_debug_abort_log(MPC_COMMON_DEBUG_INFO, message, __VA_ARGS__)
 
@@ -107,9 +107,9 @@ static inline void mpc_common_debug(const char *fmt, ...)
 #endif
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#define sctk_nodebug(fmt, ...)    (void)(0)
+#define mpc_common_nodebug(fmt, ...)    (void)(0)
 #else
-static inline void sctk_nodebug(const char *fmt, ...)
+static inline void mpc_common_nodebug(const char *fmt, ...)
 {
 }
 #endif
@@ -228,7 +228,7 @@ void mpc_common_debug_assert_print(FILE *stream, const int line,
 	do                                                                                        \
 	{                                                                                         \
 		if(expect_false(!(op) ) ){                                                        \
-			mpc_common_debug_assert_print(MPC_COMMON_DEBUG_INFO, SCTK_STRING(op) ); } \
+			mpc_common_debug_assert_print(MPC_COMMON_DEBUG_INFO, MPC_STRING(op) ); } \
 	} while(0)
 	#endif //NDEBUG, NO_INTERNAL_ASSERT
 
@@ -237,7 +237,7 @@ void mpc_common_debug_assert_print(FILE *stream, const int line,
 	do                                                                                        \
 	{                                                                                         \
 		if(expect_false(!(op) ) ){                                                        \
-			mpc_common_debug_assert_print(MPC_COMMON_DEBUG_INFO, SCTK_STRING(op) ); } \
+			mpc_common_debug_assert_print(MPC_COMMON_DEBUG_INFO, MPC_STRING(op) ); } \
 	} while(0)
 
 	#ifdef NO_INTERNAL_ASSERT
@@ -253,7 +253,7 @@ void mpc_common_debug_assert_print(FILE *stream, const int line,
 		#define sctk_assert(op)                              \
 	if(expect_false(!(op) ) )                                    \
 		mpc_common_debug_assert_print(MPC_COMMON_DEBUG_INFO, \
-		                              SCTK_STRING(op) )
+		                              MPC_STRING(op) )
 #endif //NO_INTERNAL_ASSERT
 
 #define mpc_common_debug_only_once()                                                                           \

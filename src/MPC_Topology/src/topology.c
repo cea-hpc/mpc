@@ -569,11 +569,11 @@ int __mpc_topology_get_distance_from_pu_fill_prefix( hwloc_obj_t *prefix,
 	cur = target_obj;
 	int cur_depth = depth;
 
-	sctk_nodebug( "================\n" );
+	mpc_common_nodebug( "================\n" );
 
 	while ( cur )
 	{
-		sctk_nodebug( "%d == %d == %s", cur_depth, cur->logical_index,
+		mpc_common_nodebug( "%d == %d == %s", cur_depth, cur->logical_index,
 					  hwloc_obj_type_string( cur->type ) );
 		prefix[cur_depth] = cur;
 		cur_depth--;
@@ -636,7 +636,7 @@ int _mpc_topology_get_distance_from_pu(hwloc_topology_t target_topo, int source_
          * without the common part plus one */
 	int distance = ( pu_depth + obj_depth - ( common_prefix * 2 ) );
 
-	sctk_nodebug( "Common prefix %d PU %d OBJ %d == %d", common_prefix,
+	mpc_common_nodebug( "Common prefix %d PU %d OBJ %d == %d", common_prefix,
 				  pu_depth, obj_depth, distance );
 
 	/* Free prefixes */

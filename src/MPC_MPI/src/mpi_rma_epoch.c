@@ -51,7 +51,7 @@ void mpc_MPI_Win_tmp_purge(struct mpc_MPI_Win_tmp *tmp) {
   while (curr) {
     to_free = curr;
     curr = curr->next;
-    sctk_nodebug("Freeing %p size %ld", to_free->buff, to_free->size);
+    mpc_common_nodebug("Freeing %p size %ld", to_free->buff, to_free->size);
     sctk_free(to_free->buff);
     to_free->buff = NULL;
     sctk_free(to_free);
@@ -88,7 +88,7 @@ int mpc_MPI_Win_tmp_register(struct mpc_MPI_Win_tmp *tmp, void *ptr,
 
   pbuff->size = size;
 
-  sctk_nodebug("Registering %p size %ld", pbuff->buff, pbuff->size);
+  mpc_common_nodebug("Registering %p size %ld", pbuff->buff, pbuff->size);
   pbuff->next = tmp->head;
   tmp->head = pbuff;
 
@@ -1748,7 +1748,7 @@ int mpc_Win_contexes_fence_control(MPI_Win win) {
     int target = OPA_load_int(&tctx->ctrl_message_counter);
 
     PMPI_Allreduce(&target, &reduce_target, 1, MPI_INT, MPI_SUM, desc->comm);
-    sctk_nodebug("REDUCE TARG %ld/%ld", reduce_target, reduce_source);
+    mpc_common_nodebug("REDUCE TARG %ld/%ld", reduce_target, reduce_source);
 
     /* All messages were matched, all OK */
     if (reduce_target == reduce_source) {
@@ -1794,7 +1794,7 @@ int mpc_MPI_Win_fence(__UNUSED__ int assert, MPI_Win win) {
     }
   }
 
-  sctk_nodebug("FENCE ============================");
+  mpc_common_nodebug("FENCE ============================");
 
   return MPI_SUCCESS;
 }
@@ -1804,7 +1804,7 @@ int mpc_MPI_Win_fence(__UNUSED__ int assert, MPI_Win win) {
 /************************************************************************/
 
 int mpc_MPI_Win_lock(int lock_type, int rank, __UNUSED__ int assert, MPI_Win win) {
-  sctk_nodebug("LLLLLLLLLLLLLLLLL to %d", rank);
+  mpc_common_nodebug("LLLLLLLLLLLLLLLLL to %d", rank);
   if (rank == SCTK_PROC_NULL) {
     return MPI_SUCCESS;
   }
@@ -1894,7 +1894,7 @@ int mpc_MPI_Win_lock(int lock_type, int rank, __UNUSED__ int assert, MPI_Win win
     }
   }
 
-  sctk_nodebug("DONE LLLLLLLLLLLLLLLLL to %d", rank);
+  mpc_common_nodebug("DONE LLLLLLLLLLLLLLLLL to %d", rank);
 
   return MPI_SUCCESS;
 }

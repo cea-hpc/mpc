@@ -95,7 +95,7 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 
 	sctk_ib_topology_check_and_allocate_tls ();
 
-	sctk_nodebug ( "[%d] Initializing task on vp %d node %d", rail_ib->rail_nb, vp, node_nb );
+	mpc_common_nodebug ( "[%d] Initializing task on vp %d node %d", rail_ib->rail_nb, vp, node_nb );
 	
 	/* Only one task allocates the IB structures per NUMA node */
 	mpc_common_spinlock_lock ( &init->initialization_lock );
@@ -107,7 +107,7 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 	 * The leader allocates and init IB structures for the NUMA node */
 	if ( init->is_leader == 1 )
 	{
-		sctk_nodebug ( "[%d] Task leader on node init SR on node %d", rail_ib->rail_nb, node_nb );
+		mpc_common_nodebug ( "[%d] Task leader on node init SR on node %d", rail_ib->rail_nb, node_nb );
 		
 		/* Allocate a new numa node */
 		node = sctk_malloc ( sizeof ( sctk_ib_topology_numa_node_t ) );
@@ -132,7 +132,7 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 		node->ibufs.numa_node = node;
 		sctk_ibuf_init_numa_node ( rail_ib, &node->ibufs, config->init_ibufs, 1 );
 		init->is_leader = 0;
-		sctk_nodebug ( "NUMA Node node %d on rail %d initialized", node_nb, rail_ib->rail_nb );
+		mpc_common_nodebug ( "NUMA Node node %d on rail %d initialized", node_nb, rail_ib->rail_nb );
 	}
 	else
 	{
@@ -147,7 +147,7 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 
 	if ( init->is_leader == 1 )
 	{
-		sctk_nodebug ( "Task leader on node init SRQ on node %d", numa_node_count );
+		mpc_common_nodebug ( "Task leader on node init SRQ on node %d", numa_node_count );
 		sctk_ib_topology_numa_node_t *srq_node = sctk_malloc ( sizeof ( sctk_ib_topology_numa_node_t ) );
 		memset ( srq_node, 0, sizeof ( sctk_ib_topology_numa_node_t ) );
 
@@ -163,7 +163,7 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 		sctk_ibuf_pool_set_node_srq_buffers ( rail_ib, &srq_node->ibufs );
 
 		init->is_leader = 0;
-		sctk_nodebug ( "SRQ node ready for rail %d", rail_ib->rail_nb );
+		mpc_common_nodebug ( "SRQ node ready for rail %d", rail_ib->rail_nb );
 	}
 
 	mpc_common_spinlock_unlock ( &init->initialization_lock );

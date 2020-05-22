@@ -19,16 +19,16 @@
 
 void mpcomp_GOMP_ordered_start( void )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_ordered_begin();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_ordered_end( void )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_ordered_end();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 /***********
@@ -37,16 +37,16 @@ void mpcomp_GOMP_ordered_end( void )
 
 void mpcomp_GOMP_barrier( void )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_barrier();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 bool GOMP_barrier_cancel( void )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return false;
 }
 
@@ -57,9 +57,9 @@ bool GOMP_barrier_cancel( void )
 bool mpcomp_GOMP_single_start( void )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = ( __mpcomp_do_single() ) ? true : false;
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd -- ret: %s", __func__,
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd -- ret: %s", __func__,
 	              ( ret == true ) ? "true" : "false" );
 	return ret;
 }
@@ -67,17 +67,17 @@ bool mpcomp_GOMP_single_start( void )
 void *mpcomp_GOMP_single_copy_start( void )
 {
 	void *ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __mpcomp_do_single_copyprivate_begin();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
 void mpcomp_GOMP_single_copy_end( void *data )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_do_single_copyprivate_end( data );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return;
 }
 
@@ -119,23 +119,23 @@ static inline void __gomp_in_order_scheduler_master_begin( mpcomp_mvp_t *mvp )
 	switch ( t->info.combined_pragma )
 	{
 		case MPCOMP_COMBINED_NONE:
-			sctk_nodebug( "%s:\nBEGIN - No combined parallel", __func__ );
+			mpc_common_nodebug( "%s:\nBEGIN - No combined parallel", __func__ );
 			break;
 
 		case MPCOMP_COMBINED_SECTION:
-			sctk_nodebug( "%s:\n BEGIN - Combined parallel/sections w/ %d section(s)",
+			mpc_common_nodebug( "%s:\n BEGIN - Combined parallel/sections w/ %d section(s)",
 			              __func__, t->info.nb_sections );
 			__mpcomp_sections_init( t, t->info.nb_sections );
 			break;
 
 		case MPCOMP_COMBINED_STATIC_LOOP:
-			sctk_nodebug( "%s:\tBEGIN - Combined parallel/loop", __func__ );
+			mpc_common_nodebug( "%s:\tBEGIN - Combined parallel/loop", __func__ );
 			__mpcomp_static_loop_init( t, t->info.loop_lb, t->info.loop_b,
 			                           t->info.loop_incr, t->info.loop_chunk_size );
 			break;
 
 		case MPCOMP_COMBINED_DYN_LOOP:
-			sctk_nodebug( "%s:\tBEGIN - Combined parallel/loop", __func__ );
+			mpc_common_nodebug( "%s:\tBEGIN - Combined parallel/loop", __func__ );
 			__mpcomp_dynamic_loop_init( t, t->info.loop_lb, t->info.loop_b,
 			                            t->info.loop_incr, t->info.loop_chunk_size );
 			break;
@@ -155,20 +155,20 @@ static inline void __gomp_in_order_scheduler_master_end( void )
 	switch ( t->info.combined_pragma )
 	{
 		case MPCOMP_COMBINED_NONE:
-			sctk_nodebug( "%s:\tEND - No combined parallel", __func__ );
+			mpc_common_nodebug( "%s:\tEND - No combined parallel", __func__ );
 			break;
 
 		case MPCOMP_COMBINED_SECTION:
-			sctk_nodebug( "%s:\tEND - Combined parallel/sections w/ %d section(s)",
+			mpc_common_nodebug( "%s:\tEND - Combined parallel/sections w/ %d section(s)",
 			              __func__, t->info.nb_sections );
 			break;
 
 		case MPCOMP_COMBINED_STATIC_LOOP:
-			sctk_nodebug( "%s:\tEND - Combined parallel/loop", __func__ );
+			mpc_common_nodebug( "%s:\tEND - Combined parallel/loop", __func__ );
 			break;
 
 		case MPCOMP_COMBINED_DYN_LOOP:
-			sctk_nodebug( "%s:\tEND - Combined parallel/loop", __func__ );
+			mpc_common_nodebug( "%s:\tEND - Combined parallel/loop", __func__ );
 			__mpcomp_dynamic_loop_end_nowait();
 			break;
 
@@ -229,39 +229,39 @@ static inline void __gomp_end_parallel_region( void )
 void mpcomp_GOMP_parallel( void ( *fn )( void * ), void *data, unsigned num_threads,
                            unsigned flags )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__gomp_start_parallel( fn, data, num_threads, flags );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_parallel_start( void ( *fn )( void * ), void *data,
                                  unsigned num_threads )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__gomp_start_parallel_region( fn, data, num_threads );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_parallel_end( void )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__gomp_end_parallel_region();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 bool mpcomp_GOMP_cancellation_point( __UNUSED__ int which )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return false;
 }
 
 bool mpcomp_GOMP_cancel( __UNUSED__ int which, __UNUSED__ bool do_cancel )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return false;
 }
 
@@ -308,9 +308,9 @@ bool mpcomp_GOMP_loop_runtime_start( long istart, long iend, long incr,
                                      long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __gomp_loop_runtime_start( istart, iend, incr, start, end );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -327,19 +327,19 @@ bool mpcomp_GOMP_loop_ordered_runtime_start( long istart, long iend, long incr,
         long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __gomp_loop_ordered_runtime_start( istart, iend, incr,
 	        start, end );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
 bool mpcomp_GOMP_loop_ordered_runtime_next( long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __mpcomp_ordered_runtime_loop_next( start, end );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -358,19 +358,19 @@ bool mpcomp_GOMP_loop_ordered_static_start( long istart, long iend, long incr,
         long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __gomp_loop_ordered_static_start( istart, iend, incr,
 	                                        chunk_size, start, end );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
 bool mpcomp_GOMP_loop_ordered_static_next( long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = ( __mpcomp_ordered_static_loop_next( start, end ) ) ? true : false;
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -389,19 +389,19 @@ bool mpcomp_GOMP_loop_ordered_dynamic_start( long istart, long iend, long incr,
         long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __gomp_loop_ordered_dynamic_start( istart, iend, incr,
 	        chunk_size, start, end );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
 bool mpcomp_GOMP_loop_ordered_dynamic_next( long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = ( __mpcomp_ordered_dynamic_loop_next( start, end ) ) ? true : false;
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -420,19 +420,19 @@ bool mpcomp_GOMP_loop_ordered_guided_start( long istart, long iend, long incr,
         long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __gomp_loop_ordered_guided_start( istart, iend, incr,
 	                                        chunk_size, start, end );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
 bool mpcomp_GOMP_loop_ordered_guided_next( long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = ( __mpcomp_ordered_guided_loop_next( start, end ) ) ? true : false;
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -446,7 +446,7 @@ void mpcomp_GOMP_parallel_loop_static_start( void ( *fn )( void * ), void *data,
 	__gomp_parallel_loop_generic_start(
 	    fn, data, num_threads, start, end, incr, chunk_size,
 	    ( long ) MPCOMP_COMBINED_STATIC_LOOP );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 static inline bool __gomp_loop_static_start( long start, long end, long incr,
@@ -463,19 +463,19 @@ bool mpcomp_GOMP_loop_static_start( long istart, long iend, long incr,
                                     long chunk_size, long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __gomp_loop_static_start( istart, iend, incr, chunk_size,
 	                                start, end );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
 bool mpcomp_GOMP_loop_static_next( long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = ( __mpcomp_static_loop_next( start, end ) ) ? true : false;
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -486,11 +486,11 @@ void mpcomp_GOMP_parallel_loop_dynamic_start( void ( *fn )( void * ), void *data
         long end, long incr,
         long chunk_size )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin\tSTART:%ld", __func__, start );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin\tSTART:%ld", __func__, start );
 	__gomp_parallel_loop_generic_start(
 	    fn, data, num_threads, start, end, incr, chunk_size,
 	    ( long ) MPCOMP_COMBINED_DYN_LOOP );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 static inline bool __gomp_loop_dynamic_start( long start, long end, long incr,
@@ -507,18 +507,18 @@ bool mpcomp_GOMP_loop_dynamic_start( long istart, long iend, long incr,
                                      long chunk_size, long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __gomp_loop_dynamic_start( istart, iend, incr, chunk_size, start, end );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
 bool mpcomp_GOMP_loop_dynamic_next( long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = ( __mpcomp_dynamic_loop_next( start, end ) ) ? true : false;
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -540,10 +540,10 @@ void mpcomp_GOMP_parallel_loop_guided_start( void ( *fn )( void * ), void *data,
         long end, long incr,
         long chunk_size )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__gomp_parallel_loop_guided_start( fn, data, num_threads, start,
 	                                   end, incr, chunk_size );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 static inline bool __gomp_loop_guided_start( long start, long end, long incr,
@@ -560,19 +560,19 @@ bool mpcomp_GOMP_loop_guided_start( long istart, long iend, long incr,
                                     long chunk_size, long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __gomp_loop_guided_start( istart, iend, incr, chunk_size,
 	                                start, end );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
 bool mpcomp_GOMP_loop_guided_next( long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = ( __mpcomp_guided_loop_next( start, end ) ) ? true : false;
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -617,10 +617,10 @@ void mpcomp_GOMP_parallel_loop_runtime_start( void ( *fn )( void * ), void *data
         unsigned num_threads, long start,
         long end, long incr )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__gomp_parallel_loop_runtime_start( fn, data, num_threads, start,
 	                                    end, incr );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 /* loop nonmonotonic */
@@ -629,7 +629,7 @@ void mpcomp_GOMP_parallel_loop_nonmonotonic_dynamic(
     void ( *fn )( void * ), void *data, unsigned num_threads, long start, long end,
     long incr, long chunk_size, unsigned flags )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	MPCOMP_GOMP_UNUSED_VAR( fn );
 	MPCOMP_GOMP_UNUSED_VAR( data );
 	MPCOMP_GOMP_UNUSED_VAR( num_threads );
@@ -639,7 +639,7 @@ void mpcomp_GOMP_parallel_loop_nonmonotonic_dynamic(
 	MPCOMP_GOMP_UNUSED_VAR( chunk_size );
 	MPCOMP_GOMP_UNUSED_VAR( flags );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 bool mpcomp_GOMP_loop_nonmonotonic_dynamic_start( long istart, long iend,
@@ -647,7 +647,7 @@ bool mpcomp_GOMP_loop_nonmonotonic_dynamic_start( long istart, long iend,
         long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = false;
 	MPCOMP_GOMP_UNUSED_VAR( istart );
 	MPCOMP_GOMP_UNUSED_VAR( iend );
@@ -656,7 +656,7 @@ bool mpcomp_GOMP_loop_nonmonotonic_dynamic_start( long istart, long iend,
 	MPCOMP_GOMP_UNUSED_VAR( start );
 	MPCOMP_GOMP_UNUSED_VAR( end );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -666,7 +666,7 @@ void mpcomp_GOMP_parallel_loop_nonmonotonic_guided(
     void ( *fn )( void * ), void *data, unsigned num_threads, long start, long end,
     long incr, long chunk_size, unsigned flags )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	MPCOMP_GOMP_UNUSED_VAR( fn );
 	MPCOMP_GOMP_UNUSED_VAR( data );
 	MPCOMP_GOMP_UNUSED_VAR( num_threads );
@@ -676,7 +676,7 @@ void mpcomp_GOMP_parallel_loop_nonmonotonic_guided(
 	MPCOMP_GOMP_UNUSED_VAR( chunk_size );
 	MPCOMP_GOMP_UNUSED_VAR( flags );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 bool mpcomp_GOMP_loop_nonmonotonic_guided_start( long istart, long iend,
@@ -684,7 +684,7 @@ bool mpcomp_GOMP_loop_nonmonotonic_guided_start( long istart, long iend,
         long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = false;
 	MPCOMP_GOMP_UNUSED_VAR( istart );
 	MPCOMP_GOMP_UNUSED_VAR( iend );
@@ -693,31 +693,31 @@ bool mpcomp_GOMP_loop_nonmonotonic_guided_start( long istart, long iend,
 	MPCOMP_GOMP_UNUSED_VAR( start );
 	MPCOMP_GOMP_UNUSED_VAR( end );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
 bool mpcomp_GOMP_loop_nonmonotonic_dynamic_next( long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = false;
 	MPCOMP_GOMP_UNUSED_VAR( start );
 	MPCOMP_GOMP_UNUSED_VAR( end );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
 bool mpcomp_GOMP_loop_nonmonotonic_guided_next( long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = false;
 	MPCOMP_GOMP_UNUSED_VAR( start );
 	MPCOMP_GOMP_UNUSED_VAR( end );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -807,34 +807,34 @@ static inline void __gomp_loop_end_nowait( void )
 bool mpcomp_GOMP_loop_runtime_next( long *start, long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __mpcomp_runtime_loop_next( start, end );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
 void mpcomp_GOMP_loop_end( void )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__gomp_loop_end();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 bool mpcomp_GOMP_loop_end_cancel( void )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = false;
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
 void mpcomp_GOMP_loop_end_nowait( void )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__gomp_loop_end_nowait();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 /* Doacross */
@@ -844,7 +844,7 @@ bool mpcomp_GOMP_loop_doacross_static_start( unsigned ncounts, long *counts,
         long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = false;
 	MPCOMP_GOMP_UNUSED_VAR( ncounts );
 	MPCOMP_GOMP_UNUSED_VAR( counts );
@@ -852,7 +852,7 @@ bool mpcomp_GOMP_loop_doacross_static_start( unsigned ncounts, long *counts,
 	MPCOMP_GOMP_UNUSED_VAR( start );
 	MPCOMP_GOMP_UNUSED_VAR( end );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -861,7 +861,7 @@ bool mpcomp_GOMP_loop_doacross_dynamic_start( unsigned ncounts, long *counts,
         long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = false;
 	MPCOMP_GOMP_UNUSED_VAR( ncounts );
 	MPCOMP_GOMP_UNUSED_VAR( counts );
@@ -869,7 +869,7 @@ bool mpcomp_GOMP_loop_doacross_dynamic_start( unsigned ncounts, long *counts,
 	MPCOMP_GOMP_UNUSED_VAR( start );
 	MPCOMP_GOMP_UNUSED_VAR( end );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -878,7 +878,7 @@ bool mpcomp_GOMP_loop_doacross_guided_start( unsigned ncounts, long *counts,
         long *end )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = false;
 	MPCOMP_GOMP_UNUSED_VAR( ncounts );
 	MPCOMP_GOMP_UNUSED_VAR( counts );
@@ -886,7 +886,7 @@ bool mpcomp_GOMP_loop_doacross_guided_start( unsigned ncounts, long *counts,
 	MPCOMP_GOMP_UNUSED_VAR( start );
 	MPCOMP_GOMP_UNUSED_VAR( end );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -959,7 +959,7 @@ bool mpcomp_GOMP_loop_ull_runtime_start( bool up, unsigned long long start,
         unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = __mpcomp_loop_ull_runtime_begin( up, start, end, incr, istart, iend );
 	TODO( "CHECK why correct schedule is not used" );
@@ -968,7 +968,7 @@ bool mpcomp_GOMP_loop_ull_runtime_start( bool up, unsigned long long start,
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -997,7 +997,7 @@ bool mpcomp_GOMP_loop_ull_ordered_runtime_start( bool up,
         unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = __gomp_loop_ull_ordered_runtime_start( up, start, end,
 	        incr, istart, iend );
@@ -1005,7 +1005,7 @@ bool mpcomp_GOMP_loop_ull_ordered_runtime_start( bool up,
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1015,7 +1015,7 @@ bool mpcomp_GOMP_loop_ull_doacross_runtime_start( __UNUSED__ unsigned ncounts,
         __UNUSED__ unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = false;
 	not_implemented();
@@ -1023,7 +1023,7 @@ bool mpcomp_GOMP_loop_ull_doacross_runtime_start( __UNUSED__ unsigned ncounts,
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1031,14 +1031,14 @@ bool mpcomp_GOMP_loop_ull_runtime_next( unsigned long long *istart,
                                         unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = __mpcomp_loop_ull_runtime_next( istart, iend );
 #else  /* MPC_SUPPORT_ULL_LOOP */
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1046,14 +1046,14 @@ bool mpcomp_GOMP_loop_ull_ordered_runtime_next( unsigned long long *istart,
         unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = __mpcomp_loop_ull_ordered_runtime_next( istart, iend );
 #else  /* MPC_SUPPORT_ULL_LOOP */
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1082,7 +1082,7 @@ bool mpcomp_GOMP_loop_ull_static_start( bool up, unsigned long long start,
                                         unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = __gomp_loop_ull_static_start( up, start, end, incr,
 	                                    chunk_size, istart, iend );
@@ -1090,7 +1090,7 @@ bool mpcomp_GOMP_loop_ull_static_start( bool up, unsigned long long start,
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1120,7 +1120,7 @@ bool mpcomp_GOMP_loop_ull_dynamic_start( bool up, unsigned long long start,
 {
 	bool ret;
 #ifdef MPC_SUPPORT_ULL_LOOP
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin - start: %llu - end: %llu - step: "
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin - start: %llu - end: %llu - step: "
 	              "%llu - up: %d",
 	              __func__, start, end, incr, up );
 	TODO( "CHECK why this was changed" );
@@ -1128,7 +1128,7 @@ bool mpcomp_GOMP_loop_ull_dynamic_start( bool up, unsigned long long start,
 	                                       istart, iend );
 	// ret =
 	// __gomp_loop_ull_dynamic_start(up,start,end,incr,chunk_size,istart,iend);
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 #else  /* MPC_SUPPORT_ULL_LOOP */
 	ret = false;
 	not_implemented();
@@ -1161,7 +1161,7 @@ bool mpcomp_GOMP_loop_ull_guided_start( bool up, unsigned long long start,
                                         unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	TODO( "CHECK why GUIDED schedule is not used from previous function" );
 	ret = __mpcomp_loop_ull_guided_begin( up, start, end, incr, chunk_size, istart,
@@ -1172,7 +1172,7 @@ bool mpcomp_GOMP_loop_ull_guided_start( bool up, unsigned long long start,
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1182,7 +1182,7 @@ bool mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_start(
     __UNUSED__ unsigned long long *istart, __UNUSED__ unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #if ( defined( MPC_SUPPORT_ULL_LOOP ) && defined( MPC_SUPPORT_NONMONOTONIC ) )
 	ret = false;
 	not_implemented();
@@ -1190,7 +1190,7 @@ bool mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_start(
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_NONMONOTONIC */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1200,7 +1200,7 @@ bool mpcomp_GOMP_loop_ull_nonmonotonic_guided_start(
     __UNUSED__ unsigned long long *istart, __UNUSED__ unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #if ( defined( MPC_SUPPORT_ULL_LOOP ) && defined( MPC_SUPPORT_NONMONOTONIC ) )
 	ret = false;
 	not_implemented();
@@ -1208,7 +1208,7 @@ bool mpcomp_GOMP_loop_ull_nonmonotonic_guided_start(
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_NONMONOTONIC */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1235,7 +1235,7 @@ bool mpcomp_GOMP_loop_ull_ordered_static_start(
     unsigned long long *istart, unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( __gomp_loop_ull_ordered_static_start(
 	            up, start, end, incr, chunk_size, istart, iend ) )
@@ -1245,7 +1245,7 @@ bool mpcomp_GOMP_loop_ull_ordered_static_start(
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1272,7 +1272,7 @@ bool mpcomp_GOMP_loop_ull_ordered_dynamic_start(
     unsigned long long *istart, unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( __gomp_loop_ull_ordered_dynamic_start(
 	            up, start, end, incr, chunk_size, istart, iend ) )
@@ -1282,7 +1282,7 @@ bool mpcomp_GOMP_loop_ull_ordered_dynamic_start(
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1309,7 +1309,7 @@ bool mpcomp_GOMP_loop_ull_ordered_guided_start(
     unsigned long long *istart, unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( __gomp_loop_ull_ordered_guided_start(
 	            up, start, end, incr, chunk_size, istart, iend ) )
@@ -1319,7 +1319,7 @@ bool mpcomp_GOMP_loop_ull_ordered_guided_start(
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1330,7 +1330,7 @@ bool mpcomp_GOMP_loop_ull_doacross_static_start( __UNUSED__ unsigned ncounts,
         __UNUSED__ unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = false;
 	not_implemented();
@@ -1338,7 +1338,7 @@ bool mpcomp_GOMP_loop_ull_doacross_static_start( __UNUSED__ unsigned ncounts,
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1349,7 +1349,7 @@ bool mpcomp_GOMP_loop_ull_doacross_dynamic_start( __UNUSED__ unsigned ncounts,
         __UNUSED__ unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #if ( defined( MPC_SUPPORT_ULL_LOOP ) && defined( MPC_SUPPORT_DOACCROSS ) )
 	ret = false;
 	not_implemented();
@@ -1357,7 +1357,7 @@ bool mpcomp_GOMP_loop_ull_doacross_dynamic_start( __UNUSED__ unsigned ncounts,
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_DOACCROSS */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1368,7 +1368,7 @@ bool mpcomp_GOMP_loop_ull_doacross_guided_start( __UNUSED__ unsigned ncounts,
         __UNUSED__ unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #if ( defined( MPC_SUPPORT_ULL_LOOP ) && defined( MPC_SUPPORT_DOACCROSS ) )
 	ret = false;
 	not_implemented();
@@ -1376,7 +1376,7 @@ bool mpcomp_GOMP_loop_ull_doacross_guided_start( __UNUSED__ unsigned ncounts,
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_DOACCROSS */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1384,14 +1384,14 @@ bool mpcomp_GOMP_loop_ull_static_next( unsigned long long *istart,
                                        unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( __mpcomp_static_loop_next_ull( istart, iend ) ) ? true : false;
 #else  /* MPC_SUPPORT_ULL_LOOP */
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1399,14 +1399,14 @@ bool mpcomp_GOMP_loop_ull_dynamic_next( unsigned long long *istart,
                                         unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( __mpcomp_loop_ull_dynamic_next( istart, iend ) ) ? true : false;
 #else  /* MPC_SUPPORT_ULL_LOOP */
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1414,14 +1414,14 @@ bool mpcomp_GOMP_loop_ull_guided_next( unsigned long long *istart,
                                        unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( __mpcomp_loop_ull_guided_next( istart, iend ) ) ? true : false;
 #else  /* MPC_SUPPORT_ULL_LOOP */
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1429,14 +1429,14 @@ bool mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_next( __UNUSED__ unsigned long lo
         __UNUSED__ unsigned long long *iend )
 {
 	bool ret = false;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #if ( defined( MPC_SUPPORT_ULL_LOOP ) && defined( MPC_SUPPORT_NONMONOTONIC ) )
 	not_implemented();
 #else  /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_NONMONOTONIC */
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_NONMONOTONIC */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1444,14 +1444,14 @@ bool mpcomp_GOMP_loop_ull_nonmonotonic_guided_next( __UNUSED__ unsigned long lon
         __UNUSED__ unsigned long long *iend )
 {
 	bool ret = false;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #if ( defined( MPC_SUPPORT_ULL_LOOP ) && defined( MPC_SUPPORT_NONMONOTONIC ) )
 	not_implemented();
 #else  /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_NONMONOTONIC */
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_NONMONOTONIC */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1459,14 +1459,14 @@ bool mpcomp_GOMP_loop_ull_ordered_static_next( unsigned long long *istart,
         unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( __mpcomp_ordered_static_loop_next_ull( istart, iend ) ) ? true : false;
 #else  /* MPC_SUPPORT_ULL_LOOP */
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1474,14 +1474,14 @@ bool mpcomp_GOMP_loop_ull_ordered_dynamic_next( unsigned long long *istart,
         unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( __mpcomp_loop_ull_ordered_dynamic_next( istart, iend ) ) ? true : false;
 #else  /* MPC_SUPPORT_ULL_LOOP */
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1489,14 +1489,14 @@ bool mpcomp_GOMP_loop_ull_ordered_guided_next( unsigned long long *istart,
         unsigned long long *iend )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
 	ret = ( __mpcomp_loop_ull_ordered_guided_next( istart, iend ) ) ? true : false;
 #else  /* MPC_SUPPORT_ULL_LOOP */
 	ret = false;
 	not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1507,25 +1507,25 @@ bool mpcomp_GOMP_loop_ull_ordered_guided_next( unsigned long long *istart,
 unsigned mpcomp_GOMP_sections_start( unsigned count )
 {
 	unsigned ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __mpcomp_sections_begin( count );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
 void mpcomp_GOMP_sections_end( void )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	/* Nothing to do */
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 unsigned mpcomp_GOMP_sections_next( void )
 {
 	unsigned ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __mpcomp_sections_next();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1533,9 +1533,9 @@ void mpcomp_GOMP_parallel_sections( void ( *fn )( void * ), void *data,
                                     unsigned num_threads, unsigned count,
                                     __UNUSED__ unsigned flags )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_start_sections_parallel_region( fn, data, num_threads, count );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 static inline void __gomp_parallel_section_start( void ( *fn )( void * ),
@@ -1573,18 +1573,18 @@ static inline void __gomp_parallel_section_start( void ( *fn )( void * ),
 void mpcomp_GOMP_parallel_sections_start( void ( *fn )( void * ), void *data,
         unsigned num_threads, unsigned count )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__gomp_parallel_section_start( fn, data, num_threads, count );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 bool mpcomp_GOMP_sections_end_cancel( void )
 {
 	bool ret;
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = false;
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
@@ -1593,7 +1593,7 @@ void mpcomp_GOMP_sections_end_nowait( void )
 	mpc_common_debug_error( "[Redirect GOMP]%s:\tBegin", __func__ );
 	/* Nothing to do */
 	__mpcomp_sections_end_nowait();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 /************
@@ -1602,44 +1602,44 @@ void mpcomp_GOMP_sections_end_nowait( void )
 
 void mpcomp_GOMP_critical_start( void )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_anonymous_critical_begin();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_critical_end( void )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_anonymous_critical_end();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_critical_name_start( void **pptr )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_named_critical_begin( pptr );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_critical_name_end( void **pptr )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_named_critical_end( pptr );
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_atomic_start( void )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_atomic_begin();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_atomic_end( void )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_atomic_end();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 /*********
@@ -1658,7 +1658,7 @@ void mpcomp_GOMP_task( void ( *fn )( void * ), void *data,
                        void **depend, int priority )
 #endif
 {
-	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
 #if MPCOMP_USE_TASKDEP
 	_mpc_task_new_with_deps( ( void ( * )( void * ) ) fn, data, cpyfn, arg_size, arg_align,
 	                       if_clause, flags, depend, false, NULL );
@@ -1666,37 +1666,37 @@ void mpcomp_GOMP_task( void ( *fn )( void * ), void *data,
 	_mpc_task_new( ( void *( * ) ( void * ) ) fn, data, cpyfn, arg_size, arg_align,
 	               if_clause, flags );
 #endif
-	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_taskwait( void )
 {
-	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
 	_mpc_task_wait();
-	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_taskyield( void )
 {
 	/* Nothing at the moment.  */
-	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
 	_mpc_taskyield();
-	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
 }
 
 #if MPCOMP_TASK
 void mpcomp_GOMP_taskgroup_start( void )
 {
-	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
 	_mpc_task_taskgroup_start();
-	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_taskgroup_end( void )
 {
-	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
 	_mpc_task_taskgroup_end();
-	sctk_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
 }
 #endif /* MPCOMP_TASK */
 
@@ -1708,43 +1708,43 @@ void mpcomp_GOMP_offload_register_ver( __UNUSED__ unsigned version, __UNUSED__ c
                                        __UNUSED__ int target_type,
                                        __UNUSED__ const void *target_data )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_offload_register( __UNUSED__ const void *host_table, __UNUSED__ int target_type,
                                    __UNUSED__ const void *target_data )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_offload_unregister_ver( __UNUSED__ unsigned version,
         __UNUSED__ const void *host_table, __UNUSED__ int target_type,
         __UNUSED__ const void *target_data )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_offload_unregister( __UNUSED__ const void *host_table, __UNUSED__ int target_type,
                                      __UNUSED__ const void *target_data )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_target( __UNUSED__ int device, __UNUSED__ void ( *fn )( void * ), __UNUSED__ const void *unused,
                          __UNUSED__ size_t mapnum, __UNUSED__ void **hostaddrs, __UNUSED__ size_t *sizes,
                          __UNUSED__ unsigned char *kinds )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_target_ext( __UNUSED__ int device, __UNUSED__  void ( *fn )( void * ), __UNUSED__ size_t mapnum,
@@ -1752,51 +1752,51 @@ void mpcomp_GOMP_target_ext( __UNUSED__ int device, __UNUSED__  void ( *fn )( vo
                              __UNUSED__ unsigned short *kinds, __UNUSED__  unsigned int flags,
                              __UNUSED__ void **depend, __UNUSED__ void **args )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_target_data( __UNUSED__ int device, __UNUSED__ const void *unused, __UNUSED__  size_t mapnum,
                               __UNUSED__ void **hostaddrs, __UNUSED__ size_t *sizes,
                               __UNUSED__ unsigned char *kinds )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_target_data_ext( __UNUSED__ int device, __UNUSED__ size_t mapnum, __UNUSED__ void **hostaddrs,
                                   __UNUSED__ size_t *sizes, __UNUSED__ unsigned short *kinds )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_target_end_data( void )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_target_update( __UNUSED__ int device, __UNUSED__ const void *unused, __UNUSED__ size_t mapnum,
                                 __UNUSED__ void **hostaddrs, __UNUSED__ size_t *sizes,
                                 __UNUSED__ unsigned char *kinds )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_target_update_ext( __UNUSED__ int device, __UNUSED__ size_t mapnum, __UNUSED__ void **hostaddrs,
                                     __UNUSED__  size_t *sizes, __UNUSED__  unsigned short *kinds,
                                     __UNUSED__ unsigned int flags, __UNUSED__ void **depend )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_target_enter_exit_data( __UNUSED__ int device, __UNUSED__ size_t mapnum,
@@ -1804,15 +1804,15 @@ void mpcomp_GOMP_target_enter_exit_data( __UNUSED__ int device, __UNUSED__ size_
         __UNUSED__ unsigned short *kinds,
         __UNUSED__ unsigned int flags, __UNUSED__  void **depend )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
 void mpcomp_GOMP_teams( __UNUSED__ unsigned int num_teams, __UNUSED__ unsigned int thread_limit )
 {
-	sctk_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
-	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 

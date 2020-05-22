@@ -396,7 +396,7 @@ __mpcomp_init_omp_task_tree( const int num_mvps, int *shape, const int *cpus_ord
 static inline void __mpcomp_read_env_variables()
 {
 	char *env;
-	sctk_nodebug( "__mpcomp_read_env_variables: Read env vars (MPC rank: %d)",
+	mpc_common_nodebug( "__mpcomp_read_env_variables: Read env vars (MPC rank: %d)",
 	              mpc_common_get_task_rank() );
 	/******* OMP_VP_NUMBER *********/
 	OMP_MICROVP_NUMBER = sctk_runtime_config_get()->modules.openmp.vp;
@@ -462,12 +462,12 @@ static inline void __mpcomp_read_env_variables()
 		{
 			int chunk_size = 0;
 			/* Check for chunk size, if present */
-			sctk_nodebug( "Remaining string for schedule: <%s>", &env[offset] );
+			mpc_common_nodebug( "Remaining string for schedule: <%s>", &env[offset] );
 
 			switch ( env[offset] )
 			{
 				case ',':
-					sctk_nodebug( "There is a chunk size -> <%s>", &env[offset + 1] );
+					mpc_common_nodebug( "There is a chunk size -> <%s>", &env[offset + 1] );
 					chunk_size = atoi( &env[offset + 1] );
 
 					if ( chunk_size <= 0 )
@@ -485,7 +485,7 @@ static inline void __mpcomp_read_env_variables()
 					break;
 
 				case '\0':
-					sctk_nodebug( "No chunk size\n" );
+					mpc_common_nodebug( "No chunk size\n" );
 					break;
 
 				default:
@@ -892,7 +892,7 @@ void __mpcomp_init( void )
 			case MPCOMP_MODE_SIMPLE_MIXED:
 				/* Compute the number of cores for this task */
 				mpc_thread_get_task_placement_and_count( task_rank, &nb_mvps );
-				sctk_nodebug( "[%d] %s: SIMPLE_MIXED -> #mvps = %d", task_rank, __func__,
+				mpc_common_nodebug( "[%d] %s: SIMPLE_MIXED -> #mvps = %d", task_rank, __func__,
 				              nb_mvps );
 
 				/* Consider the env variable if between 1 and the number
@@ -1025,7 +1025,7 @@ void __mpcomp_in_order_scheduler( mpcomp_thread_t *thread )
 
 	if ( thread->info.combined_pragma < 0 || thread->info.combined_pragma > 10 )
 	{
-		sctk_nodebug( stderr, "[%d/%ld] Start %s :: %ld\n", thread->mvp->global_rank, thread->rank, __func__, thread->info.combined_pragma );
+		mpc_common_nodebug( stderr, "[%d/%ld] Start %s :: %ld\n", thread->mvp->global_rank, thread->rank, __func__, thread->info.combined_pragma );
 	}
 
 	/* Handle beginning of combined parallel region */

@@ -108,7 +108,7 @@ sctk_shm_send_register_new_frag_msg(int dest)
    {
       sctk_free(frag_infos);
       frag_infos = NULL;
-      sctk_nodebug("FAILED TO SEND MSG");
+      mpc_common_nodebug("FAILED TO SEND MSG");
    }   
    else
    {
@@ -216,7 +216,7 @@ sctk_network_frag_msg_first_recv(mpc_lowcomm_ptp_message_t* msg, sctk_shm_cell_t
 
    frag_infos = sctk_shm_init_recv_frag_msg(msg_key, msg_src, msg);
    memcpy(frag_infos->header, cell->data, sizeof(mpc_lowcomm_ptp_message_body_t));
-   //sctk_nodebug("[KEY:%d-%ld]\t\tRECV FIRST PART MSG (HEADER:%lu)", msg_key, SCTK_MSG_SIZE(msg), hash_payload(frag_infos->header, sizeof(mpc_lowcomm_ptp_message_body_t)));
+   //mpc_common_nodebug("[KEY:%d-%ld]\t\tRECV FIRST PART MSG (HEADER:%lu)", msg_key, SCTK_MSG_SIZE(msg), hash_payload(frag_infos->header, sizeof(mpc_lowcomm_ptp_message_body_t)));
    
    /* reset tail */
    msg = frag_infos->header;
@@ -242,7 +242,7 @@ sctk_network_frag_msg_next_send(sctk_shm_proc_frag_info_t* frag_infos)
   msg_key = frag_infos->msg_frag_key;
   msg_dest = frag_infos->remote_mpi_rank;
 
-  sctk_nodebug("[KEY:%d] TRY SEND NEXT PART OF FRAGMENTED MSG", msg_key);
+  mpc_common_nodebug("[KEY:%d] TRY SEND NEXT PART OF FRAGMENTED MSG", msg_key);
   if (_mpc_comm_ptp_message_is_for_control(
           SCTK_MSG_SPECIFIC_CLASS(frag_infos->header))) {
     is_control_msg = 1;
@@ -266,7 +266,7 @@ sctk_network_frag_msg_next_send(sctk_shm_proc_frag_info_t* frag_infos)
    memcpy(cell->data, frag_infos->msg+frag_infos->size_copied, cell->size_to_copy); 
    frag_infos->size_copied += cell->size_to_copy;
 
-   sctk_nodebug("[KEY:%d] SEND NEXT PART MSG", msg_key);
+   mpc_common_nodebug("[KEY:%d] SEND NEXT PART MSG", msg_key);
    sctk_shm_send_cell(cell); 
 
    if(frag_infos->size_total == frag_infos->size_copied)
@@ -277,7 +277,7 @@ sctk_network_frag_msg_next_send(sctk_shm_proc_frag_info_t* frag_infos)
    
    if(frag_infos->size_total == frag_infos->size_copied)
    {
-        sctk_nodebug("[KEY:%d] SEND END PART MSG", msg_key);
+        mpc_common_nodebug("[KEY:%d] SEND END PART MSG", msg_key);
         msg = frag_infos->header;
         sctk_free(frag_infos);
         mpc_lowcomm_ptp_message_complete_and_free(msg) ;
@@ -341,7 +341,7 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell)
    }
    else
    {
-      sctk_nodebug("[KEY:%d]\t\tRECV NEXT PART MSG", msg_key);
+      mpc_common_nodebug("[KEY:%d]\t\tRECV NEXT PART MSG", msg_key);
       mpc_common_spinlock_lock(&sctk_shm_recving_frag_hastable_lock);
       frag_infos = sctk_shm_frag_get_elt_from_hash(msg_key, msg_src, SCTK_SHM_RECVER_HT); 
       assume_m((frag_infos->size_copied < frag_infos->size_total), "WRONG SIZE FOR FRAGMENT");
@@ -379,7 +379,7 @@ sctk_network_frag_shm_interface_init(void)
     
     for(i=0; i < sctk_shm_process_on_node; i++)
     { 
-        sctk_nodebug("%d %d %p", mpc_common_get_local_process_rank(), i, &(sctk_shm_recving_frag_hastable_ptr[i]));
+        mpc_common_nodebug("%d %d %p", mpc_common_get_local_process_rank(), i, &(sctk_shm_recving_frag_hastable_ptr[i]));
     	mpc_common_hashtable_init(&(sctk_shm_recving_frag_hastable_ptr[i]), SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS);
     	mpc_common_hashtable_init(&(sctk_shm_sending_frag_hastable_ptr[i]), SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS);
     }

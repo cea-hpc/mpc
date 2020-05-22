@@ -30,7 +30,7 @@
 void omp_set_num_threads(int num_threads) {
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
-  sctk_nodebug("[%d-%p] %s new num threads: %d", t->rank, t, __func__,
+  mpc_common_nodebug("[%d-%p] %s new num threads: %d", t->rank, t, __func__,
                num_threads);
   t->info.icvs.nthreads_var = num_threads;
 }
@@ -45,7 +45,7 @@ void omp_set_num_threads(int num_threads) {
 int omp_get_thread_num(void) {
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
-  sctk_nodebug("[%d] %s thread id: ", t->rank, __func__);
+  mpc_common_nodebug("[%d] %s thread id: ", t->rank, __func__);
   return t->rank;
 }
 
@@ -57,7 +57,7 @@ int omp_get_thread_num(void) {
 int omp_get_max_threads(void) {
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
-  sctk_nodebug("[%d] %s max num threads : %d", t->rank, __func__,
+  mpc_common_nodebug("[%d] %s max num threads : %d", t->rank, __func__,
                t->info.icvs.nthreads_var);
   return t->info.icvs.nthreads_var;
 }
@@ -79,7 +79,7 @@ int omp_get_num_procs(void) {
 void omp_set_dynamic(int dynamic_threads) {
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
-  sctk_nodebug("[%d] %s enter ...", t->rank, __func__);
+  mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
   t->info.icvs.dyn_var = dynamic_threads;
 }
 
@@ -91,7 +91,7 @@ void omp_set_dynamic(int dynamic_threads) {
 int omp_get_dynamic(void) {
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
-  sctk_nodebug("[%d] %s enter ...", t->rank, __func__);
+  mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
   return t->info.icvs.dyn_var;
 }
 
@@ -102,7 +102,7 @@ int omp_get_dynamic(void) {
 void omp_set_nested(int nested) {
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
-  sctk_nodebug("[%d] %s enter ...", t->rank, __func__);
+  mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
   /* no mpcomp nested support */
   t->info.icvs.nest_var = nested;
 }
@@ -114,7 +114,7 @@ void omp_set_nested(int nested) {
 int omp_get_nested(void) {
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
-  sctk_nodebug("[%d] %s enter ...", t->rank, __func__);
+  mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
   return t->info.icvs.nest_var;
 }
 
@@ -126,7 +126,7 @@ int omp_get_nested(void) {
 void omp_set_schedule(omp_sched_t kind, int modifier) {
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
-  sctk_nodebug("[%d] %s enter ...", t->rank, __func__);
+  mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
   t->info.icvs.run_sched_var = kind;
   t->info.icvs.modifier_sched_var = modifier;
 }
@@ -138,7 +138,7 @@ void omp_set_schedule(omp_sched_t kind, int modifier) {
 void omp_get_schedule(omp_sched_t *kind, int *modifier) {
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
-  sctk_nodebug("[%d] %s enter ...", t->rank, __func__);
+  mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
   sctk_assert(kind && modifier);
   *kind = t->info.icvs.run_sched_var;
   *modifier = t->info.icvs.modifier_sched_var;
@@ -152,7 +152,7 @@ void omp_get_schedule(omp_sched_t *kind, int *modifier) {
 int omp_in_parallel(void) {
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
-  sctk_nodebug("[%d] %s enter ...", t->rank, __func__);
+  mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
   return (t->instance->team->depth != 0);
 }
 
@@ -163,7 +163,7 @@ int omp_in_parallel(void) {
 int omp_get_level(void) {
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
-  sctk_nodebug("[%d] %s level: %d", t->rank, __func__, t->info.icvs.levels_var);
+  mpc_common_nodebug("[%d] %s level: %d", t->rank, __func__, t->info.icvs.levels_var);
   return t->info.icvs.levels_var;
 }
 
@@ -174,7 +174,7 @@ int omp_get_level(void) {
 int omp_get_active_level(void) {
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
-  sctk_nodebug("[%d] %s level: %d", t->rank, __func__,
+  mpc_common_nodebug("[%d] %s level: %d", t->rank, __func__,
                t->info.icvs.active_levels_var);
   return t->info.icvs.active_levels_var;
 }
@@ -215,7 +215,7 @@ int omp_get_team_size(int level) {
 int omp_get_num_threads(void) {
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
-  sctk_nodebug("[%d] %s entering ...", t->rank, __func__);
+  mpc_common_nodebug("[%d] %s entering ...", t->rank, __func__);
   return t->info.num_threads;
 }
 
@@ -227,7 +227,7 @@ double omp_get_wtime(void) {
   gettimeofday (&tp, NULL);
   res = tp.tv_sec + tp.tv_usec * 0.000001;
 
-  sctk_nodebug("%s Wtime = %f", __func__, res);
+  mpc_common_nodebug("%s Wtime = %f", __func__, res);
   return res;
 }
 

@@ -61,7 +61,7 @@ void __kmpc_atomic_fixed4_wr(__UNUSED__ ident_t *id_ref, __UNUSED__ int gtid, km
   __UNUSED__ mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t);
 
-  sctk_nodebug("[%d] %s: Write %d", t->rank, __func__, rhs);
+  mpc_common_nodebug("[%d] %s: Write %d", t->rank, __func__, rhs);
   __kmp_xchg_fixed32(lhs, rhs);
 
 #if 0
@@ -80,7 +80,7 @@ void __kmpc_atomic_float8_add(__UNUSED__ ident_t *id_ref,__UNUSED__  int gtid, k
   __UNUSED__ mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t);
 
-  sctk_nodebug("[%d] (ASM) %s: Add %g", t->rank, rhs);
+  mpc_common_nodebug("[%d] (ASM) %s: Add %g", t->rank, rhs);
 
 #if 0
   __kmp_test_then_add_real64( lhs, rhs ) ;

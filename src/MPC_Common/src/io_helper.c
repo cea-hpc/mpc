@@ -110,7 +110,7 @@ ssize_t mpc_common_io_safe_read( int fd, void *buf, size_t count )
 			}
 			else if ( errno == EBADF ) /* possibly closed socket */
 			{
-				sctk_nodebug( "Socket %d not valid anymore !", fd );
+				mpc_common_nodebug( "Socket %d not valid anymore !", fd );
 				res = -1;
 				break;
 			}
@@ -151,7 +151,7 @@ ssize_t mpc_common_io_safe_write( int fd, const void *buf, size_t count )
 			}
 			else if ( errno == EBADF ) /* possibly closed socket */
 			{
-				sctk_nodebug( "Socket %d not valid anymore !", fd );
+				mpc_common_nodebug( "Socket %d not valid anymore !", fd );
 				res = -1;
 				break;
 			}

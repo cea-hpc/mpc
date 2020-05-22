@@ -572,7 +572,7 @@ void sctk_net_init_driver ( char *name )
 
 	/* Here we retrieve the network configuration from the network list
 	   according to its name */
-	sctk_nodebug ( "Run with driver %s", option_name );
+	mpc_common_nodebug ( "Run with driver %s", option_name );
 
 	cli_option = sctk_get_net_config_by_name ( option_name );
 

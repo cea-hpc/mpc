@@ -73,15 +73,15 @@ sctk_microthread_scheduler(sctk_microthread_vp_t *self)
 	/* Iterate on the TO DO list and call the corresponding function */
 	for(i = 0; i < to_do; i++)
 	{
-		sctk_nodebug("sctk_microthread_scheduler: BEGIN func %d", i);
+		mpc_common_nodebug("sctk_microthread_scheduler: BEGIN func %d", i);
 
 		/* Execute the i-th function */
 		self->op_list[i].func( (void *)self->op_list[i].arg);
 
-		sctk_nodebug("sctk_microthread_scheduler: END func %d", i);
+		mpc_common_nodebug("sctk_microthread_scheduler: END func %d", i);
 	}
 
-	sctk_nodebug("sctk_microthread_scheduler: exit scheduler (vp=%p)", self);
+	mpc_common_nodebug("sctk_microthread_scheduler: exit scheduler (vp=%p)", self);
 
 	/* The list is now empty */
 	self->to_do_list = 0;
@@ -95,7 +95,7 @@ sctk_microthread_slave_vp(void *arg)
 {
 	sctk_microthread_vp_t *self;
 
-	sctk_nodebug("sctk_microthread_slave_vp: START");
+	mpc_common_nodebug("sctk_microthread_slave_vp: START");
 
 	/* Grab the information on the VP */
 	self = (sctk_microthread_vp_t *)arg;
@@ -111,7 +111,7 @@ sctk_microthread_slave_vp(void *arg)
 		if(self->to_do_list)
 		{
 			/* Run the microthread scheduler */
-			sctk_nodebug
+			mpc_common_nodebug
 			        ("sctk_microthread_slave_vp: running the scheduler (vp=%p)",
 			        self);
 			sctk_microthread_scheduler(self);
@@ -124,7 +124,7 @@ sctk_microthread_slave_vp(void *arg)
 #endif
 	}
 
-	sctk_nodebug("sctk_microthread_slave_vp: END");
+	mpc_common_nodebug("sctk_microthread_slave_vp: END");
 
 	return NULL;
 }
@@ -138,7 +138,7 @@ sctk_microthread_add_task(void *(*func)(void *), void *arg,
 	sctk_microthread_vp_t *self;
 	long i;
 
-	sctk_nodebug("sctk_microthread_add_task: VP=%d", vp);
+	mpc_common_nodebug("sctk_microthread_add_task: VP=%d", vp);
 
 	/* Grab the information on the currently scheduled VP */
 	self = &(task->__list[vp]);
@@ -158,7 +158,7 @@ sctk_microthread_add_task(void *(*func)(void *), void *arg,
 	 */
 	if( (val == i) || (val == MPC_MICROTHREAD_LAST_TASK) )
 	{
-		sctk_nodebug("sctk_microthread_add_task: to_do switch forced");
+		mpc_common_nodebug("sctk_microthread_add_task: to_do switch forced");
 
 		self->to_do_list_next = 0;
 		self->to_do_list      = i;
@@ -166,7 +166,7 @@ sctk_microthread_add_task(void *(*func)(void *), void *arg,
 	}
 	else
 	{
-		sctk_nodebug("sctk_microthread_add_task: no to_do switch = %d", i);
+		mpc_common_nodebug("sctk_microthread_add_task: no to_do switch = %d", i);
 
 		self->to_do_list_next = i;
 	}
@@ -207,14 +207,14 @@ sctk_microthread_init(long nb_vp, sctk_microthread_t *self)
 	assume(mpc_thread_once(&sctk_microthread_key_is_initialized,
 	                       sctk_microthread_key_init) == 0);
 
-	sctk_nodebug("sctk_microthread_init: Ask for %d VP(s)", nb_vp);
+	mpc_common_nodebug("sctk_microthread_init: Ask for %d VP(s)", nb_vp);
 
 	/* Memory allocation for all VPs */
 	self->__list = (sctk_microthread_vp_t *)sctk_malloc(nb_vp * sizeof
 	                                                    (sctk_microthread_vp_t) );
 	sctk_assert(self->__list != NULL);
 
-	sctk_nodebug("sctk_microthread_init: Ready to enter loop...");
+	mpc_common_nodebug("sctk_microthread_init: Ready to enter loop...");
 
 	TODO("Put a warning when the #microVP > #cores")
 
@@ -233,7 +233,7 @@ sctk_microthread_init(long nb_vp, sctk_microthread_t *self)
 	/* Create all VPs */
 	for(i = 0; i < nb_vp; i++)
 	{
-		sctk_nodebug("sctk_microthread_init: %d %d %p %ld", i,
+		mpc_common_nodebug("sctk_microthread_init: %d %d %p %ld", i,
 		             sizeof(sctk_mctx_t), &( (&(self->__list[i]) )->vp_context),
 		             ( (long)&( (&(self->__list[i]) )->vp_context) ) % 32);
 
@@ -242,12 +242,12 @@ sctk_microthread_init(long nb_vp, sctk_microthread_t *self)
 		/* Initialize the corresponding VP */
 		sctk_microthread_init_microthread_vp_t( (&(self->__list[i]) ) );
 
-		sctk_nodebug("sctk_microthread_init: %d done", i);
+		mpc_common_nodebug("sctk_microthread_init: %d done", i);
 	}
 
 
 
-	sctk_nodebug("sctk_microthread_init: Ready to enter loop2...");
+	mpc_common_nodebug("sctk_microthread_init: Ready to enter loop2...");
 
 	/* Initialize slave VPs */
 	for(i = 1; i < nb_vp; i++)
@@ -255,17 +255,17 @@ sctk_microthread_init(long nb_vp, sctk_microthread_t *self)
 		int    target_vp; /* Where the microVP has to be created */
 		size_t stack_size;
 
-		sctk_nodebug("sctk_microthread_init: Before attr init (microVP #%d)...", i);
+		mpc_common_nodebug("sctk_microthread_init: Before attr init (microVP #%d)...", i);
 
 		mpc_thread_attr_init(&__attr);
 
-		sctk_nodebug("sctk_microthread_init: Before computing target vp");
+		mpc_common_nodebug("sctk_microthread_init: Before computing target vp");
 
 		TODO("Placement policy of microVPs is not optimal when #microVPs > #VPs")
 		// target_vp = (current_mpc_vp + i) % (mpc_topology_get_pu_count ()) ;
 		target_vp = order[i % mpc_topology_get_pu_count()];
 
-		sctk_nodebug("Putting microVP %d on VP %d", i, target_vp);
+		mpc_common_nodebug("Putting microVP %d on VP %d", i, target_vp);
 
 		mpc_thread_attr_setbinding(&__attr, target_vp);
 
@@ -288,7 +288,7 @@ sctk_microthread_init(long nb_vp, sctk_microthread_t *self)
 
 		mpc_thread_attr_destroy(&__attr);
 
-		sctk_nodebug("sctk_microthread_init: After user thread create...");
+		mpc_common_nodebug("sctk_microthread_init: After user thread create...");
 	}
 
 	sctk_free(order);
@@ -296,7 +296,7 @@ sctk_microthread_init(long nb_vp, sctk_microthread_t *self)
 	/* Update the PID for the master VP */
 	self->__list[0].pid = mpc_thread_self();
 
-	sctk_nodebug("sctk_microthread_init: Ready to enter loop3...");
+	mpc_common_nodebug("sctk_microthread_init: Ready to enter loop3...");
 
 
 	/* Schedule a storage of the global structure 'sctk_microthread_t' */
@@ -309,7 +309,7 @@ sctk_microthread_init(long nb_vp, sctk_microthread_t *self)
 		                          self, MPC_MICROTHREAD_NO_TASK_INFO);
 	}
 
-	sctk_nodebug("sctk_microthread_init: Ready to exec...");
+	mpc_common_nodebug("sctk_microthread_init: Ready to exec...");
 
 	/* Launch the master execution of this micro thread instance */
 	sctk_microthread_parallel_exec(self, MPC_MICROTHREAD_WAKE_VPS);
@@ -339,7 +339,7 @@ sctk_microthread_parallel_exec(sctk_microthread_t *task, int val)
 	/* If needed, launch the other VPs by switching 'to_do' and 'to_do_next' */
 	if(val == MPC_MICROTHREAD_WAKE_VPS)
 	{
-		sctk_nodebug("Wake %d VPs", __nb_vp);
+		mpc_common_nodebug("Wake %d VPs", __nb_vp);
 
 		for(i = 0; i < __nb_vp; i++)
 		{
@@ -350,7 +350,7 @@ sctk_microthread_parallel_exec(sctk_microthread_t *task, int val)
 	}
 
 	/* Execute the operations of the current (master) VP */
-	sctk_nodebug
+	mpc_common_nodebug
 	        ("sctk_microthread_parallel_exec: running the scheduler (vp=%p)", self);
 	sctk_microthread_scheduler(self);
 

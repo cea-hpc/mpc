@@ -161,7 +161,7 @@ void mpc_MPI_Win_handle_non_contiguous_write(void *data, size_t size) {
   size_t target_t_ext;
   _mpc_cl_type_size(target_type, &target_t_ext);
 
-  sctk_nodebug(
+  mpc_common_nodebug(
       "UNPACK to %p in a win of size %ld starting at %p (disp here %d, remote "
       "off %d) an incoming size of %ld to a type of size %ld count %d",
       start_addr, low_win->size, low_win->start_addr, low_win->disp_unit,
@@ -216,13 +216,13 @@ void mpc_MPI_Win_handle_non_contiguous_read(void *data, size_t size) {
   void *start_addr =
       (char *)low_win->start_addr + low_win->disp_unit * target_disp;
 
-  sctk_nodebug("ADDR %p LOWIN %p disp %lld target %lld", start_addr,
+  mpc_common_nodebug("ADDR %p LOWIN %p disp %lld target %lld", start_addr,
                low_win->start_addr, low_win->disp_unit, target_disp);
 
   size_t target_t_ext;
   _mpc_cl_type_size(target_type, &target_t_ext);
 
-  sctk_nodebug(
+  mpc_common_nodebug(
       "PACK to %p in a win of size %ld starting at %p (disp here %d, remote "
       "off %d) an incoming size of %ld to a type of size %ld count %d",
       start_addr, low_win->size, low_win->start_addr, low_win->disp_unit,
@@ -585,7 +585,7 @@ void mpc_MPI_Win_notify_dest_ctx_counter(MPI_Win win) {
     return;
 
   OPA_incr_int(&desc->target.ctrl_message_counter);
-  sctk_nodebug("NOTIFY TAR on %d(%p) now %d", win, desc,
+  mpc_common_nodebug("NOTIFY TAR on %d(%p) now %d", win, desc,
                OPA_load_int(&desc->target.ctrl_message_counter));
 }
 
@@ -597,6 +597,6 @@ void mpc_MPI_Win_notify_src_ctx_counter(MPI_Win win) {
     return;
 
   OPA_incr_int(&desc->source.ctrl_message_counter);
-  sctk_nodebug("NOTIFY SRC on %d(%p) now %d", win, desc,
+  mpc_common_nodebug("NOTIFY SRC on %d(%p) now %d", win, desc,
                OPA_load_int(&desc->source.ctrl_message_counter));
 }

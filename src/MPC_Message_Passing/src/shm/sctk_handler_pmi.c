@@ -12,10 +12,10 @@
 char *sctk_pmi_handler_gen_filename(void *option, __UNUSED__ void *option1) {
   char *filename = sctk_malloc(mpc_launch_pmi_get_max_key_len());
   if (filename == NULL) {
-    sctk_nodebug("Can't gen filename : filename allocation failed");
+    mpc_common_nodebug("Can't gen filename : filename allocation failed");
   }
   sprintf(filename, "%s_%d", (char *)option, getpid());
-  sctk_nodebug("SHM filename generated: %s", filename);
+  mpc_common_nodebug("SHM filename generated: %s", filename);
   return filename;
 }
 
@@ -26,11 +26,11 @@ char *sctk_pmi_handler_gen_filename(void *option, __UNUSED__ void *option1) {
 bool sctk_pmi_handler_send_filename(const char *filename, void *option,
                                     __UNUSED__ void *option1) {
   if(option == NULL || filename == NULL){
-	  sctk_nodebug("Can't send filename : incorrect key or filename");
+	  mpc_common_nodebug("Can't send filename : incorrect key or filename");
 	  return 0;
   	  }
-  sctk_nodebug("opt : %s\n", (char*) option);
-  sctk_nodebug("filename : %s\n", filename);
+  mpc_common_nodebug("opt : %s\n", (char*) option);
+  mpc_common_nodebug("filename : %s\n", filename);
   mpc_launch_pmi_put((void*)filename, (char*) option); 
   mpc_launch_pmi_barrier();
   return 1;
@@ -47,10 +47,10 @@ bool sctk_pmi_handler_send_filename(const char *filename, void *option,
           0,
           "Can't recv filename : incorrect key or filename allocation failed");
     }
-    sctk_nodebug("opt : %s\n", (char *)option);
+    mpc_common_nodebug("opt : %s\n", (char *)option);
     mpc_launch_pmi_barrier();
     mpc_launch_pmi_get(filename, 64, (char *)option);
-    sctk_nodebug("filename : %s\n", filename);
+    mpc_common_nodebug("filename : %s\n", filename);
     return filename;
   }
 

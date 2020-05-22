@@ -91,7 +91,7 @@ int sctk_init_thread_debug (sctk_thread_data_t *item) {
 
   tid = (sctk_ethread_per_thread_t *) item->tid ;
   
-  sctk_nodebug("enabled ? %d", sctk_use_rtdb) ;
+  mpc_common_nodebug("enabled ? %d", sctk_use_rtdb) ;
   rtdb_add_thread (tid, &thread) ;
   rtdb_set_thread_startfunc (thread, item->__start_routine) ;
   rtdb_set_thread_stkbase (thread, tid->stack);
@@ -102,7 +102,7 @@ int sctk_init_thread_debug (sctk_thread_data_t *item) {
   rtdb_set_thread_extls(thread,tid->ctx.tls_ctx);
 #endif
 
-  sctk_nodebug("context");
+  mpc_common_nodebug("context");
 #if defined(TDB_i686_ARCH_TDB) || defined(TDB_x86_64_ARCH_TDB)
 #if SCTK_MCTX_MTH(mcsc)
   rtdb_set_thread_context (thread, tid->ctx.uc.uc_mcontext.gregs) ;
@@ -118,7 +118,7 @@ int sctk_init_thread_debug (sctk_thread_data_t *item) {
 #endif
   tid->debug_p = (tdb_thread_debug_t *)thread;
 
-  sctk_nodebug("refresh");
+  mpc_common_nodebug("refresh");
   
   /*initialiaze variable parts of the data*/
   rtdb_update_thread_this_lid (thread) ;
@@ -153,7 +153,7 @@ void sctk_refresh_thread_debug (sctk_ethread_per_thread_t *tid, sctk_thread_stat
 
   /*   /\* the kernel threads are not managed bu rtdb *\/ */
   /*   if (thread == NULL) { */
-  /*     sctk_nodebug("(NO THREAD/Thread %p NOT) IN THE LIST", tid); */
+  /*     mpc_common_nodebug("(NO THREAD/Thread %p NOT) IN THE LIST", tid); */
   /*     return ; */
   /*   } */
 
@@ -171,7 +171,7 @@ void sctk_refresh_thread_debug_migration (sctk_ethread_per_thread_t *tid) {
   
 /*   /\* the kernel threads are not managed bu rtdb *\/ */
 /*   if (thread == NULL) { */
-/*     sctk_nodebug("(NO THREAD/Thread %p NOT) IN THE LIST", tid); */
+/*     mpc_common_nodebug("(NO THREAD/Thread %p NOT) IN THE LIST", tid); */
 /*     return ; */
 /*   } */
  
@@ -249,7 +249,7 @@ int sctk_init_idle_thread_dbg (void *tid, void *start_fct) {
   if (!sctk_use_rtdb) return 0 ;
   ttid = (sctk_ethread_per_thread_t *) tid ;
   
-  sctk_nodebug ("-----------> IDLE TASK : %p",tid) ;
+  mpc_common_nodebug ("-----------> IDLE TASK : %p",tid) ;
 
   rtdb_add_thread (ttid, &thread) ;
   rtdb_set_thread_stkbase (thread, ttid->stack);
@@ -273,11 +273,11 @@ int sctk_init_idle_thread_dbg (void *tid, void *start_fct) {
 #endif
 
   ttid->debug_p = (tdb_thread_debug_t *)thread;
-  sctk_nodebug("refresh idle");
+  mpc_common_nodebug("refresh idle");
   /*initialiaze variable parts of the data*/
   rtdb_update_thread_this_lid (thread) ;
 
-  sctk_nodebug("creation of the idle task");
+  mpc_common_nodebug("creation of the idle task");
   rtdb_report_creation_event (thread) ;
 
   return 0 ;
@@ -294,7 +294,7 @@ int sctk_free_idle_thread_dbg (void *tid) {
 
 int sctk_report_creation (void *tid) {
   if (!sctk_use_rtdb) return 0 ;
-  sctk_nodebug("creation of a task");
+  mpc_common_nodebug("creation of a task");
   rtdb_report_creation_event_tid (tid);
 
   return 0 ;

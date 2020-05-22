@@ -301,7 +301,7 @@ int MPC_T_data_read(struct MPC_T_data *tdata, void *data) {
   size_t size;
   void *p = MPC_T_data_get_ptr_size(tdata, &size);
 
-  sctk_nodebug("READ is from %p in %p for size %d", p, tdata, size);
+  mpc_common_nodebug("READ is from %p in %p for size %d", p, tdata, size);
 
   memcpy(data, p, size);
 
@@ -309,7 +309,7 @@ int MPC_T_data_read(struct MPC_T_data *tdata, void *data) {
 }
 
 int MPC_T_data_alias(struct MPC_T_data *tdata, void *data) {
-  sctk_nodebug("NOW SET ALLIAS TO %p in %p", data, tdata);
+  mpc_common_nodebug("NOW SET ALLIAS TO %p in %p", data, tdata);
   tdata->pcontent = data;
   return MPI_SUCCESS;
 }
@@ -392,7 +392,7 @@ void MPI_T_cvars_array_release() {
 }
 
 struct MPC_T_cvar *MPI_T_cvars_array_get(MPC_T_cvar_t slot) {
-  sctk_nodebug("GET SLOT %d over %d == %p", slot, MPI_T_CVAR_COUNT,
+  mpc_common_nodebug("GET SLOT %d over %d == %p", slot, MPI_T_CVAR_COUNT,
                &__cvar_array.st_vars[slot]);
 
   if (slot < MPI_T_CVAR_COUNT) {
@@ -557,7 +557,7 @@ int mpc_MPI_T_cvar_get_index(const char *name, int *cvar_index) {
     if (!strcmp(cvar->name, name)) {
       *cvar_index = i;
       found = 1;
-      sctk_nodebug("%s is at %d", name, i);
+      mpc_common_nodebug("%s is at %d", name, i);
       break;
     }
   }

@@ -30,14 +30,14 @@
 void
 omp_set_num_threads_ (int *num_threads)
 {
-  sctk_nodebug ("Fortran: omp_set_num_threads_ %d", *num_threads);
+  mpc_common_nodebug ("Fortran: omp_set_num_threads_ %d", *num_threads);
   omp_set_num_threads (*num_threads);
 }
 
 void
 omp_set_num_threads__ (int *num_threads)
 {
-  sctk_nodebug ("Fortran: omp_set_num_threads__ %d", *num_threads);
+  mpc_common_nodebug ("Fortran: omp_set_num_threads__ %d", *num_threads);
   omp_set_num_threads (*num_threads);
 }
 

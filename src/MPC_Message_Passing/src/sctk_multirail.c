@@ -798,7 +798,7 @@ void sctk_multirail_send_message( mpc_lowcomm_ptp_message_t *msg )
 			if( endpoint->parent_rail != NULL )
 				target_rail = endpoint->parent_rail;
 			
-			sctk_nodebug("RAIL %d", target_rail->rail_number );
+			mpc_common_nodebug("RAIL %d", target_rail->rail_number );
 			
 			/* Prepare reordering */
 			sctk_prepare_send_message_to_network_reorder ( msg );
@@ -1170,12 +1170,12 @@ void sctk_multirail_destination_table_route_to_process( int destination, int * n
 		if( entry->endpoints )
 		{
 			
-			sctk_nodebug("STATE %d == %d", entry->destination, sctk_endpoint_get_state ( entry->endpoints->endpoint ) );
+			mpc_common_nodebug("STATE %d == %d", entry->destination, sctk_endpoint_get_state ( entry->endpoints->endpoint ) );
 	
 			if( sctk_endpoint_get_state ( entry->endpoints->endpoint ) == STATE_CONNECTED )
 			{
 			
-				sctk_nodebug( " %d --- %d" , destination, entry->destination  );
+				mpc_common_nodebug( " %d --- %d" , destination, entry->destination  );
 				if( destination == entry->destination )
 				{
 					distance = 0;

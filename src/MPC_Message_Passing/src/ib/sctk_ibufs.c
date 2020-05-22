@@ -107,7 +107,7 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
 	/* register buffers at once
 	* FIXME: Always task on NUMA node 0 which firs-touch all pages... really bad */
 	region->mmu_entry = sctk_ib_mmu_entry_new( rail_ib, ptr, nb_ibufs * config->eager_limit );
-	sctk_nodebug ( "Reg %p registered. lkey : %lu", ptr, region->mmu_entry->mr->lkey );
+	mpc_common_nodebug ( "Reg %p registered. lkey : %lu", ptr, region->mmu_entry->mr->lkey );
 
 	/* init all buffers - the last one */
 	for ( i = 0; i < nb_ibufs; ++i )
@@ -269,7 +269,7 @@ sctk_ibuf_t *sctk_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib,
 			mpc_common_spinlock_unlock ( &remote->rdma.flushing_lock );
 
 			limit = sctk_ibuf_rdma_get_eager_limit ( remote );
-			sctk_nodebug ( "Eager limit: %lu", limit );
+			mpc_common_nodebug ( "Eager limit: %lu", limit );
 
 			if ( s == ULONG_MAX )
 			{
@@ -278,14 +278,14 @@ sctk_ibuf_t *sctk_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib,
 
 			if ( ( IBUF_RDMA_GET_SIZE + s ) <= limit )
 			{
-				sctk_nodebug ( "requested:%lu max:%lu header:%lu", s, limit, IBUF_RDMA_GET_SIZE );
+				mpc_common_nodebug ( "requested:%lu max:%lu header:%lu", s, limit, IBUF_RDMA_GET_SIZE );
 				ibuf = sctk_ibuf_rdma_pick ( remote );
-				sctk_nodebug ( "Picked a rdma buffer: %p", ibuf );
+				mpc_common_nodebug ( "Picked a rdma buffer: %p", ibuf );
 
 				/* A buffer has been picked-up */
 				if ( ibuf )
 				{
-					sctk_nodebug ( "Picking from RDMA %d", ibuf->index );
+					mpc_common_nodebug ( "Picking from RDMA %d", ibuf->index );
 #ifdef DEBUG_IB_BUFS
 					sctk_endpoint_state_t state = sctk_ibuf_rdma_get_remote_state_rts ( remote );
 
@@ -327,7 +327,7 @@ sctk_ibuf_t *sctk_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib,
 
 	if ( s <= config->eager_limit )
 	{
-		sctk_nodebug ( "Picking from SR" );
+		mpc_common_nodebug ( "Picking from SR" );
 
 		sctk_ibuf_numa_t *node = sctk_ibuf_get_closest_node ( rail_ib );
 		mpc_common_spinlock_t *lock = &node->lock;
@@ -423,7 +423,7 @@ sctk_ibuf_pick_recv ( struct sctk_ib_rail_info_s *rail_ib, struct sctk_ibuf_numa
 		mpc_common_debug_error ( "Wrong flag (%d) got from ibuf", ibuf->flag );
 	}
 
-	sctk_nodebug ( "ibuf: %p, lock:%p, need_lock:%d next free_entryr: %p, nb_free %d, nb_got %d, nb_free_srq %d, node %d)", ibuf, lock, need_lock, node->free_entry, node->nb_free, node->nb_got, node->nb_free_srq, node->id );
+	mpc_common_nodebug ( "ibuf: %p, lock:%p, need_lock:%d next free_entryr: %p, nb_free %d, nb_got %d, nb_free_srq %d, node %d)", ibuf, lock, need_lock, node->free_entry, node->nb_free, node->nb_got, node->nb_free_srq, node->id );
 #endif
 
 
@@ -453,7 +453,7 @@ static int srq_post ( struct sctk_ib_rail_info_s *rail_ib,
 	/* limit of buffer posted */
 	free_srq_nb = OPA_load_int ( &node->free_srq_nb );
 	nb_ibufs = config->max_srq_ibufs_posted - free_srq_nb;
-	sctk_nodebug ( "TRY Post %d ibufs in SRQ (free:%d max:%d)", nb_ibufs, free_srq_nb, config->max_srq_ibufs_posted );
+	mpc_common_nodebug ( "TRY Post %d ibufs in SRQ (free:%d max:%d)", nb_ibufs, free_srq_nb, config->max_srq_ibufs_posted );
 
 
 	if ( nb_ibufs <= 0 )
@@ -471,7 +471,7 @@ static int srq_post ( struct sctk_ib_rail_info_s *rail_ib,
 		/* limit of buffer posted */
 		free_srq_nb = OPA_load_int ( &node->free_srq_nb );
 		nb_ibufs = config->max_srq_ibufs_posted - free_srq_nb;
-		sctk_nodebug ( "Post %d ibufs in SRQ (free:%d max:%d force:%d)", nb_ibufs, free_srq_nb, config->max_srq_ibufs_posted, force );
+		mpc_common_nodebug ( "Post %d ibufs in SRQ (free:%d max:%d force:%d)", nb_ibufs, free_srq_nb, config->max_srq_ibufs_posted, force );
 
 		mpc_common_spinlock_lock ( lock );
 

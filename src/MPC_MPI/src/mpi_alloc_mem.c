@@ -207,7 +207,7 @@ int mpc_MPI_allocmem_pool_init()
 		/* And to finish the actual memory pool */
 		____mpc_sctk_mpi_alloc_mem_pool.pool =
 		    ____mpc_sctk_mpi_alloc_mem_pool.lock + 1;
-		sctk_nodebug( "BASE %p LOCK %p POOL %p", bit_array_page,
+		mpc_common_nodebug( "BASE %p LOCK %p POOL %p", bit_array_page,
 		              ____mpc_sctk_mpi_alloc_mem_pool.lock,
 		              ____mpc_sctk_mpi_alloc_mem_pool.pool );
 		____mpc_sctk_mpi_alloc_mem_pool.size = pool_size;
@@ -368,7 +368,7 @@ void *mpc_MPI_allocmem_pool_alloc_check( size_t size, int *is_shared )
 				/* Store bit size for free for address */
 				mpc_common_hashtable_set( &____mpc_sctk_mpi_alloc_mem_pool.size_ht, ( uint64_t )addr,
 				                          ( void * )number_of_bits );
-				sctk_nodebug( "ALLOC %ld", number_of_bits );
+				mpc_common_nodebug( "ALLOC %ld", number_of_bits );
 				mpc_MPI_allocmem_pool_unlock();
 				*is_shared = 1;
 				/* Proudly return the address */

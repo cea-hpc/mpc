@@ -139,14 +139,14 @@ static inline void mpc_common_hashtable_unlock_read( struct mpc_common_hashtable
 
 static inline void mpc_common_hashtable_lock_write( struct mpc_common_hashtable *ht, uint64_t bucket )
 {
-	sctk_nodebug( "LOCKING cell %d", bucket );
+	mpc_common_nodebug( "LOCKING cell %d", bucket );
 	mpc_common_rwlock_t *lock = &ht->rwlocks[bucket];
 	mpc_common_spinlock_write_lock_yield( lock );
 }
 
 static inline void mpc_common_hashtable_unlock_write( struct mpc_common_hashtable *ht, uint64_t bucket )
 {
-	sctk_nodebug( "UN-LOCKING cell %d", bucket );
+	mpc_common_nodebug( "UN-LOCKING cell %d", bucket );
 	mpc_common_rwlock_t *lock = &ht->rwlocks[bucket];
 	mpc_common_spinlock_write_unlock( lock );
 }

@@ -273,7 +273,7 @@ void sctk_ib_cp_init_task ( int rank, int vp )
           vps = sctk_malloc(sizeof(vp_t *) * vp_number);
           ib_assume(vps);
           memset(vps, 0, sizeof(vp_t *) * vp_number);
-          sctk_nodebug("vp: %d - numa: %d", mpc_topology_get_pu_count(), numa_number);
+          mpc_common_nodebug("vp: %d - numa: %d", mpc_topology_get_pu_count(), numa_number);
         }
 
         /* Add NUMA node if not already added */
@@ -433,7 +433,7 @@ int sctk_ib_cp_poll ( struct sctk_ib_polling_s *poll, int task_id )
             return 0;
 
           if (vps[vp] == NULL) {
-            sctk_nodebug( "Are we in hybrid mode? try to find dest task %d", task_id );
+            mpc_common_nodebug( "Are we in hybrid mode? try to find dest task %d", task_id );
             HASH_FIND( hh_all, all_tasks, &task_id, sizeof( int ), task );
             assume(task);
 
@@ -618,7 +618,7 @@ int sctk_ib_cp_handle_message ( sctk_ibuf_t *ibuf, int dest_task, int target_tas
 	/* Process specific message */
 	if ( dest_task < 0 )
 	{
-		sctk_nodebug ( "Received global msg" );
+		mpc_common_nodebug ( "Received global msg" );
 		mpc_common_spinlock_lock ( task->global_ibufs_list_lock );
 		DL_APPEND ( * ( task->global_ibufs_list ), ibuf );
 		mpc_common_spinlock_unlock ( task->global_ibufs_list_lock );
@@ -628,12 +628,12 @@ int sctk_ib_cp_handle_message ( sctk_ibuf_t *ibuf, int dest_task, int target_tas
 	}
 	else
 	{
-		sctk_nodebug ( "Received local msg from task %d", target_task );
+		mpc_common_nodebug ( "Received local msg from task %d", target_task );
 		mpc_common_spinlock_lock ( &task->local_ibufs_list_lock );
 		DL_APPEND ( task->local_ibufs_list, ibuf );
 		mpc_common_spinlock_unlock ( &task->local_ibufs_list_lock );
 		sctk_ib_cp_incr_nb_pending_msg();
-		sctk_nodebug ( "Add message to task %d (%d)", dest_task, target_task );
+		mpc_common_nodebug ( "Add message to task %d (%d)", dest_task, target_task );
 		return 1;
 	}
 }

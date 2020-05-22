@@ -190,7 +190,7 @@ void sctk_net_read_in_fd ( mpc_lowcomm_ptp_message_t *msg,
 
 			size = SCTK_MSG_SIZE ( msg );
 
-			sctk_nodebug ( "MSG SEND |%s|", ( char * ) msg->tail.message.contiguous.addr );
+			mpc_common_nodebug ( "MSG SEND |%s|", ( char * ) msg->tail.message.contiguous.addr );
 			mpc_common_io_safe_read ( fd, msg->tail.message.contiguous.addr, size );
 			break;
 		}
@@ -271,7 +271,7 @@ void sctk_net_write_in_fd ( mpc_lowcomm_ptp_message_t *msg,
 
 			size = SCTK_MSG_SIZE ( msg );
 
-			sctk_nodebug ( "MSG SEND |%s|", ( char * ) msg->tail.message.contiguous.addr );
+			mpc_common_nodebug ( "MSG SEND |%s|", ( char * ) msg->tail.message.contiguous.addr );
 
 			mpc_common_io_safe_write ( fd, msg->tail.message.contiguous.addr, size );
 			break;
@@ -380,7 +380,7 @@ void sctk_net_copy_in_buffer ( mpc_lowcomm_ptp_message_t *msg,
 			size_t size;
 
 			size = SCTK_MSG_SIZE ( msg );
-			sctk_nodebug ( "MSG SEND |%s|", ( char * ) msg->tail.message.contiguous.addr );
+			mpc_common_nodebug ( "MSG SEND |%s|", ( char * ) msg->tail.message.contiguous.addr );
 			memcpy ( buffer, msg->tail.message.contiguous.addr, size );
 			buffer += size;
 			break;
@@ -575,7 +575,7 @@ void sctk_net_message_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
 
         //	mpc_common_debug_error( "HERE REQ is %p", recv->tail.request );
 
-        sctk_nodebug("MSG |%s|", (char *)body);
+        mpc_common_nodebug("MSG |%s|", (char *)body);
 
         switch (recv->tail.message_type) {
         case MPC_LOWCOMM_MESSAGE_CONTIGUOUS: {
@@ -708,7 +708,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 	mpc_lowcomm_ptp_message_t *send;
 	mpc_lowcomm_ptp_message_t *recv;
 
-	sctk_nodebug ( "MSG RECV |%s|", ( char * ) body );
+	mpc_common_nodebug ( "MSG RECV |%s|", ( char * ) body );
 	send = tmp->msg_send;
 	recv = tmp->msg_recv;
 
@@ -747,7 +747,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 						         recv->tail.message.pack.list.std[i].begins[j] +
 						         1 ) * recv->tail.message.pack.list.std[i].elem_size;
 
-						sctk_nodebug("%p - %p \n", recv->tail.message.pack.list.std[i].begins[j], recv->tail.message.pack.list.std[i].ends[j]); 
+						mpc_common_nodebug("%p - %p \n", recv->tail.message.pack.list.std[i].begins[j], recv->tail.message.pack.list.std[i].ends[j]); 
 						if ( total + size > SCTK_MSG_SIZE ( send ) )
 						{
 							skip = 1;
@@ -788,7 +788,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 						         recv->tail.message.pack.list.absolute[i].begins[j] +
 						         1 ) * recv->tail.message.pack.list.absolute[i].elem_size;
 
-						sctk_nodebug("%p - %p \n", recv->tail.message.pack.list.std[i].begins[j], recv->tail.message.pack.list.std[i].ends[j]); 
+						mpc_common_nodebug("%p - %p \n", recv->tail.message.pack.list.std[i].begins[j], recv->tail.message.pack.list.std[i].ends[j]); 
 						if ( total + size > SCTK_MSG_SIZE ( send ) )
 						{
 							skip = 1;

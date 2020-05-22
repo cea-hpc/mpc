@@ -159,7 +159,7 @@ struct MPC_Info_key * MPC_Info_key_get_nth( struct MPC_Info_key * head, int n )
 	
 	while( current )
 	{
-		sctk_nodebug("%p ==> %s (P : %p , N : %p )\n", current, current->key , current->prev, current->next );
+		mpc_common_nodebug("%p ==> %s (P : %p , N : %p )\n", current, current->key , current->prev, current->next );
 		/* Is it the nth key ? */
 		if( cnt == n )
 			return current;
@@ -182,7 +182,7 @@ int MPC_Info_key_count( struct MPC_Info_key * head )
 	
 	while( current )
 	{
-		sctk_nodebug("%p ==> %s (P : %p , N : %p )\n", current, current->key , current->prev, current->next );
+		mpc_common_nodebug("%p ==> %s (P : %p , N : %p )\n", current, current->key , current->prev, current->next );
 		/* Go to next */
 		cnt++;
 		current = current->next;	
@@ -212,7 +212,7 @@ struct MPC_Info_key * MPC_Info_key_pop( struct MPC_Info_key * topop )
 		prev = topop->prev;
 	}
 	
-	sctk_nodebug("TOPOP : %p %s  P : %p  N : %p \n", topop, topop->key, prev, next );
+	mpc_common_nodebug("TOPOP : %p %s  P : %p  N : %p \n", topop, topop->key, prev, next );
 	
 	/* Update links */
 	

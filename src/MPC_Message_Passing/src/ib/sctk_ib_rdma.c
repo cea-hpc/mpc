@@ -93,14 +93,14 @@ mpc_lowcomm_ptp_message_t * sctk_ib_rdma_recv_done_remote_imm (__UNUSED__  sctk_
 
 
         /* If SCTK_IB_RDMA_RECOPY, we delete the temporary msg copy */
-        sctk_nodebug("MSG DONE REMOTE");
+        mpc_common_nodebug("MSG DONE REMOTE");
 
         if (rdma->local.status == SCTK_IB_RDMA_RECOPY) {
 
           sctk_net_message_copy_from_buffer(rdma->local.addr, rdma->copy_ptr,
                                             0);
 
-          sctk_nodebug("FREE: %p", rdma->local.addr);
+          mpc_common_nodebug("FREE: %p", rdma->local.addr);
           /* If we SCTK_IB_RDMA_RECOPY, we can delete the temp buffer */
           sctk_free(rdma->local.addr);
         }
@@ -136,12 +136,12 @@ sctk_ib_rdma_recv_done_remote(__UNUSED__  sctk_rail_info_t *rail, sctk_ibuf_t *i
   send = rdma->copy_ptr->msg_send;
   recv = rdma->copy_ptr->msg_recv;
 
-  sctk_nodebug("msg: %p - Rail: %p (%p-%p) copy_ptr:%p (send:%p recv:%p)",
+  mpc_common_nodebug("msg: %p - Rail: %p (%p-%p) copy_ptr:%p (send:%p recv:%p)",
                dest_msg_header, rail, ibuf, rdma_done, rdma->copy_ptr, send,
                recv);
 
   /* If SCTK_IB_RDMA_RECOPY, we delete the temporary msg copy */
-  sctk_nodebug("MSG DONE REMOTE %p ", dest_msg_header);
+  mpc_common_nodebug("MSG DONE REMOTE %p ", dest_msg_header);
 
   if (dest_msg_header->tail.ib.rdma.local.status == SCTK_IB_RDMA_RECOPY) {
 
@@ -149,7 +149,7 @@ sctk_ib_rdma_recv_done_remote(__UNUSED__  sctk_rail_info_t *rail, sctk_ibuf_t *i
                                       dest_msg_header->tail.ib.rdma.copy_ptr,
                                       0);
 
-    sctk_nodebug("FREE: %p", dest_msg_header->tail.ib.rdma.local.addr);
+    mpc_common_nodebug("FREE: %p", dest_msg_header->tail.ib.rdma.local.addr);
     /* If we SCTK_IB_RDMA_RECOPY, we can delete the temp buffer */
     sctk_free(dest_msg_header->tail.ib.rdma.local.addr);
   }
@@ -171,11 +171,11 @@ sctk_ib_rdma_recv_done_local ( mpc_lowcomm_ptp_message_t *msg )
 	if ( msg->tail.ib.rdma.local.status == SCTK_IB_RDMA_RECOPY )
 	{
 		/* Unregister MMU and free message */
-		sctk_nodebug ( "FREE PTR: %p", msg->tail.ib.rdma.local.addr );
+		mpc_common_nodebug ( "FREE PTR: %p", msg->tail.ib.rdma.local.addr );
 		sctk_free ( msg->tail.ib.rdma.local.addr );
 	}
 
-	sctk_nodebug ( "MSG LOCAL FREE %p", msg );
+	mpc_common_nodebug ( "MSG LOCAL FREE %p", msg );
 	mpc_lowcomm_ptp_message_complete_and_free ( msg );
 
 }
@@ -190,13 +190,13 @@ void sctk_ib_rdma_net_free_recv ( void *arg )
 
 
 	/* Unregister MMU and free message */
-	sctk_nodebug ( "Free MMu for msg: %p", msg );
+	mpc_common_nodebug ( "Free MMu for msg: %p", msg );
 	assume ( rdma->local.mmu_entry );
 	sctk_ib_mmu_relax ( rdma->local.mmu_entry );
-	sctk_nodebug ( "FREE: %p", msg );
+	mpc_common_nodebug ( "FREE: %p", msg );
 	mpc_common_spinlock_lock ( &recv_rdma_headers_lock );
 	HASH_DELETE ( hh, recv_rdma_headers, rdma );
-	sctk_nodebug ( "REM msg %p with key %d", rdma, rdma->ht_key );
+	mpc_common_nodebug ( "REM msg %p with key %d", rdma, rdma->ht_key );
 	mpc_common_spinlock_unlock ( &recv_rdma_headers_lock );
 	sctk_free ( msg );
 }
@@ -235,7 +235,7 @@ static void sctk_ib_rdma_prepare_recv_recopy ( mpc_lowcomm_ptp_message_t *msg )
 	send_header->rdma.local.size          = send_header->rdma.requested_size;
 	send_header->rdma.local.addr          = send_header->rdma.local.aligned_addr;
 
-        sctk_nodebug("Allocating memory (size:%lu,ptr:%p, msg:%p)",
+        mpc_common_nodebug("Allocating memory (size:%lu,ptr:%p, msg:%p)",
                      send_header->rdma.requested_size,
                      send_header->rdma.local.aligned_addr, msg);
 }
@@ -310,7 +310,7 @@ static inline sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_ack ( __UNUSED__ sctk
 	IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_RDMA_PROTOCOL );
 	IBUF_SET_RDMA_TYPE ( rdma_header, SCTK_IB_RDMA_RDV_ACK_TYPE );
 
-	sctk_nodebug ( "Send RDMA ACK message: %lu %u", rdma_ack->addr, rdma_ack->rkey );
+	mpc_common_nodebug ( "Send RDMA ACK message: %lu %u", rdma_ack->addr, rdma_ack->rkey );
 	return ibuf;
 }
 
@@ -327,14 +327,14 @@ static void sctk_ib_rdma_rendezvous_send_ack ( sctk_rail_info_t *rail, mpc_lowco
 	send_header->rdma.local.mmu_entry =  sctk_ib_mmu_pin (
 	                                         &rdma->remote_rail->network.ib, send_header->rdma.local.aligned_addr,
 	                                         send_header->rdma.local.aligned_size );
-	sctk_nodebug ( "MMU registered for msg %p", send_header );
+	mpc_common_nodebug ( "MMU registered for msg %p", send_header );
 
 	ibuf = sctk_ib_rdma_rendezvous_prepare_ack ( rail, msg );
 
 	/* Send message */
 	remote = send_header->rdma.remote_peer;
 	sctk_ib_qp_send_ibuf ( &rdma->remote_rail->network.ib, remote, ibuf);
-	sctk_nodebug ( "Send ACK to rail %d for task %d", rdma->remote_rail->rail_number, SCTK_MSG_SRC_TASK ( msg ) );
+	mpc_common_nodebug ( "Send ACK to rail %d for task %d", rdma->remote_rail->rail_number, SCTK_MSG_SRC_TASK ( msg ) );
 
 	send_header->rdma.local.send_ack_timestamp = mpc_arch_get_timestamp();
 }
@@ -377,15 +377,15 @@ sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req(sctk_rail_info_t *rail,
   rdma_req->dest_msg_header = msg;
   /* Register the type of the message */
   rdma_req->message_type = msg->tail.message_type;
-  sctk_nodebug("Send message on rail %d (%d) and reply on rail %d (%d)",
+  mpc_common_nodebug("Send message on rail %d (%d) and reply on rail %d (%d)",
                rail->rail_number, SCTK_MSG_DEST_TASK(msg),
                rdma_req->remote_rail, SCTK_MSG_SRC_TASK(msg));
 
   /* Initialization of the buffer */
   IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_RDMA_PROTOCOL);
 
-  sctk_nodebug("Request size: %d", IBUF_GET_RDMA_REQ_SIZE);
-  sctk_nodebug("Req sent (size:%lu, requested:%d, ibuf:%p)",
+  mpc_common_nodebug("Request size: %d", IBUF_GET_RDMA_REQ_SIZE);
+  mpc_common_nodebug("Req sent (size:%lu, requested:%d, ibuf:%p)",
                IBUF_GET_RDMA_REQ_SIZE, rdma_req->requested_size, ibuf);
 
   return ibuf;
@@ -420,7 +420,7 @@ void sctk_ib_rdma_rendezvous_net_copy ( mpc_lowcomm_ptp_message_content_to_copy_
 			send_header->rdma.local.addr  = recv->tail.message.contiguous.addr;
 			send_header->rdma.local.size  = recv->tail.message.contiguous.size;
 			send_header->rdma.local.status       = SCTK_IB_RDMA_ZEROCOPY;
-			sctk_nodebug ( "Zerocopy. (Send:%p Recv:%p)", send, recv );
+			mpc_common_nodebug ( "Zerocopy. (Send:%p Recv:%p)", send, recv );
 			sctk_ib_rdma_prepare_recv_zerocopy ( send );
 			sctk_ib_rdma_rendezvous_send_ack ( send_header->rdma.rail, send );
 			send_header->rdma.copy_ptr = tmp;
@@ -431,13 +431,13 @@ void sctk_ib_rdma_rendezvous_net_copy ( mpc_lowcomm_ptp_message_content_to_copy_
 		{
 			send_header->rdma.local.status       = SCTK_IB_RDMA_RECOPY;
 			sctk_ib_rdma_prepare_recv_recopy ( send );
-			sctk_nodebug ( "Msg %p recopied from buffer %p", tmp->msg_send, send_header->rdma.local.addr );
+			mpc_common_nodebug ( "Msg %p recopied from buffer %p", tmp->msg_send, send_header->rdma.local.addr );
 			send_header->rdma.copy_ptr = tmp;
 			sctk_ib_rdma_rendezvous_send_ack ( send_header->rdma.rail, send );
 			send_header->rdma.local.ready = 1;
 		}
 
-		sctk_nodebug ( "Copy_ptr: %p (free:%p, ptr:%p)", tmp, send->tail.free_memory,
+		mpc_common_nodebug ( "Copy_ptr: %p (free:%p, ptr:%p)", tmp, send->tail.free_memory,
 		               send_header->rdma.local.addr );
 
 	}
@@ -495,7 +495,7 @@ sctk_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
                                                             src_process);
     assume(route);
 
-    sctk_nodebug("Got message on rail %d and reply on rail %d",
+    mpc_common_nodebug("Got message on rail %d and reply on rail %d",
                  rail->rail_number, rdma->remote_rail->rail_number);
     /* Update the remote peer */
     rdma->remote_peer = route->data.ib.remote;
@@ -509,7 +509,7 @@ sctk_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
 
   mpc_common_spinlock_lock(&recv_rdma_headers_lock);
   HASH_ADD(hh, recv_rdma_headers, ht_key, sizeof(int), rdma);
-  sctk_nodebug("ADD msg %p with key %d", rdma, rdma->ht_key);
+  mpc_common_nodebug("ADD msg %p with key %d", rdma, rdma->ht_key);
   mpc_common_spinlock_unlock(&recv_rdma_headers_lock);
 
   /* XXX: Only for collaborative polling */
@@ -520,7 +520,7 @@ sctk_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf) {
    * of function. */
   rail->send_message_from_network(msg);
 
-  sctk_nodebug("End send_message (matching:%p, stats:%d, "
+  mpc_common_nodebug("End send_message (matching:%p, stats:%d, "
                "requested_size:%lu, required_size:%lu)",
                rdma->local.addr, rdma->local.status, rdma_req->requested_size,
                rdma->local.size);
@@ -593,7 +593,7 @@ sctk_ib_rdma_rendezvous_recv_ack(__UNUSED__ sctk_rail_info_t *rail, sctk_ibuf_t 
       (int *)&rdma->local.ready, 1,
       (void (*)(void *))sctk_network_notify_idle_message, NULL);
 
-  sctk_nodebug("Remote addr: %p", rdma_ack->addr);
+  mpc_common_nodebug("Remote addr: %p", rdma_ack->addr);
   rdma->remote.addr = rdma_ack->addr;
   rdma->remote.size = rdma_ack->size;
   rdma->remote.rkey = rdma_ack->rkey;
@@ -627,7 +627,7 @@ void sctk_ib_rdma_rendezvous_prepare_data_write(
   IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_RDMA_PROTOCOL);
   IBUF_SET_RDMA_TYPE(rdma_header, SCTK_IB_RDMA_RDV_WRITE_TYPE);
 
-  sctk_nodebug("Write from %p (%lu) to %p (%lu)", rdma->local.addr,
+  mpc_common_nodebug("Write from %p (%lu) to %p (%lu)", rdma->local.addr,
                rdma->local.size, rdma->remote.addr, rdma->remote.size);
 
   sctk_ibuf_rdma_write_init(ibuf, rdma->local.addr,
@@ -919,7 +919,7 @@ int sctk_ib_rdma_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 	{
 		case SCTK_IB_RDMA_RDV_REQ_TYPE:
 		{
-			sctk_nodebug ( "Poll recv: message RDMA req received" );
+			mpc_common_nodebug ( "Poll recv: message RDMA req received" );
 			sctk_ib_rdma_rendezvous_recv_req ( rail, ibuf );
 			return 1;
 		}
@@ -927,7 +927,7 @@ int sctk_ib_rdma_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 
 		case SCTK_IB_RDMA_RDV_ACK_TYPE:
 		{
-			sctk_nodebug ( "Poll recv: message RDMA ack received" );
+			mpc_common_nodebug ( "Poll recv: message RDMA ack received" );
 			/* Buffer reused: don't need to free it */
 			header = sctk_ib_rdma_rendezvous_recv_ack ( rail, ibuf );
 			sctk_ib_rdma_rendezvous_prepare_data_write ( rail, header );
@@ -937,7 +937,7 @@ int sctk_ib_rdma_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 
 		case SCTK_IB_RDMA_RDV_DONE_TYPE:
 		{
-			sctk_nodebug ( "Poll recv: message RDMA done received" );
+			mpc_common_nodebug ( "Poll recv: message RDMA done received" );
 			sctk_ib_rdma_recv_done_remote ( rail, ibuf );
 			return 1;
 		}
@@ -967,21 +967,21 @@ sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 	switch ( IBUF_GET_RDMA_TYPE ( rdma_header ) )
 	{
 		case SCTK_IB_RDMA_RDV_REQ_TYPE:
-			sctk_nodebug ( "Poll send: message RDMA req received" );
+			mpc_common_nodebug ( "Poll send: message RDMA req received" );
 			break;
 
 		case SCTK_IB_RDMA_RDV_ACK_TYPE:
-			sctk_nodebug ( "Poll send: message RDMA ack received" );
+			mpc_common_nodebug ( "Poll send: message RDMA ack received" );
 			break;
 
 		case SCTK_IB_RDMA_RDV_WRITE_TYPE:
-			sctk_nodebug ( "Poll send: message RDMA data write received" );
+			mpc_common_nodebug ( "Poll send: message RDMA data write received" );
 			msg = sctk_ib_rdma_rendezvous_prepare_done_write ( rail, ibuf );
 			sctk_ib_rdma_recv_done_local ( msg );
 			break;
 
 		case SCTK_IB_RDMA_RDV_DONE_TYPE:
-			sctk_nodebug ( "Poll send: message RDMA done received" );
+			mpc_common_nodebug ( "Poll send: message RDMA done received" );
 			break;
 
 

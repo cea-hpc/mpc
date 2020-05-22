@@ -5691,7 +5691,7 @@ PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request)
       return MPI_Ixbarrier( comm, request );
   }
 
-  sctk_nodebug ("Entering IBARRIER %d", comm);
+  mpc_common_nodebug ("Entering IBARRIER %d", comm);
   int res = MPI_ERR_INTERN;
   SCTK__MPI_INIT_REQUEST (request);
   int csize;
@@ -5725,7 +5725,7 @@ PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root,
 
 
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering IBCAST %d with count %d", comm, count);
+  mpc_common_nodebug ("Entering IBCAST %d with count %d", comm, count);
   SCTK__MPI_INIT_REQUEST (request);
   int csize;
   MPI_Comm_size(comm, &csize);
@@ -5758,7 +5758,7 @@ PMPI_Igather (const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
   }
 
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering IGATHER %d", comm);
+  mpc_common_nodebug ("Entering IGATHER %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
   int csize,rank;
@@ -5795,7 +5795,7 @@ PMPI_Igatherv (const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 {
 
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering IGATHERV %d", comm);
+  mpc_common_nodebug ("Entering IGATHERV %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
   int csize,rank;
@@ -5836,7 +5836,7 @@ PMPI_Iscatter (const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
   }
 
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering ISCATTER %d", comm);
+  mpc_common_nodebug ("Entering ISCATTER %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
   int csize,rank;
@@ -5873,7 +5873,7 @@ PMPI_Iscatterv (const void *sendbuf, const int *sendcnts, const int *displs,
 	       MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering ISCATTERV %d", comm);
+  mpc_common_nodebug ("Entering ISCATTERV %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
   int csize,rank;
@@ -5908,7 +5908,7 @@ PMPI_Iallgather (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering IALLGATHER %d", comm);
+  mpc_common_nodebug ("Entering IALLGATHER %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
   
   int csize;
@@ -5942,7 +5942,7 @@ PMPI_Iallgatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		 MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering IALLGATHERV %d", comm);
+  mpc_common_nodebug ("Entering IALLGATHERV %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
   int csize;
@@ -5976,7 +5976,7 @@ PMPI_Ialltoall (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	       MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering IALLTOALL %d", comm);
+  mpc_common_nodebug ("Entering IALLTOALL %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
   int csize;
@@ -6010,7 +6010,7 @@ PMPI_Ialltoallv (const void *sendbuf, const int *sendcnts, const int *sdispls,
 		const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering IALLTOALLV %d", comm);
+  mpc_common_nodebug ("Entering IALLTOALLV %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
   int csize;
@@ -6042,7 +6042,7 @@ int PMPI_Ialltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls
 				   void *recvbuf, const int *recvcnts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering IALLTOALLW %d", comm);
+  mpc_common_nodebug ("Entering IALLTOALLW %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
   int csize;
@@ -6082,7 +6082,7 @@ PMPI_Ireduce (const void *sendbuf, void *recvbuf, int count, MPI_Datatype dataty
   }
 
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering IREDUCE %d", comm);
+  mpc_common_nodebug ("Entering IREDUCE %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
   int csize,rank;
@@ -6117,7 +6117,7 @@ PMPI_Iallreduce (const void *sendbuf, void *recvbuf, int count,
 		MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering IALLREDUCE %d", comm);
+  mpc_common_nodebug ("Entering IALLREDUCE %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
   int csize;
@@ -6148,7 +6148,7 @@ PMPI_Ireduce_scatter (const void *sendbuf, void *recvbuf, const int *recvcnts,
 		     MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering IREDUCE_SCATTER %d", comm);
+  mpc_common_nodebug ("Entering IREDUCE_SCATTER %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
   int csize;
@@ -6181,7 +6181,7 @@ PMPI_Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype
 	   MPI_Op op, MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering ISCAN %d", comm);
+  mpc_common_nodebug ("Entering ISCAN %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
   int csize;
@@ -6211,7 +6211,7 @@ PMPI_Ireduce_scatter_block (const void *sendbuf, void *recvbuf, int recvcnt,
 		     MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering IREDUCE_SCATTER_BLOCK %d", comm);
+  mpc_common_nodebug ("Entering IREDUCE_SCATTER_BLOCK %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
   int csize;
@@ -6244,7 +6244,7 @@ PMPI_Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype dataty
 	   MPI_Op op, MPI_Comm comm, MPI_Request *request)
 {
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering IEXSCAN %d", comm);
+  mpc_common_nodebug ("Entering IEXSCAN %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
   int csize;

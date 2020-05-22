@@ -264,7 +264,7 @@ void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
 	}
 	else
 	{
-		sctk_nodebug ( "Send msg to rail %d", rail->rail_number );
+		mpc_common_nodebug ( "Send msg to rail %d", rail->rail_number );
 		/* create remote for dest */
 		endpoint_dest = sctk_ib_create_remote();
 		sctk_ib_init_remote ( dest_rank, rail, endpoint_dest, 0 );
@@ -285,7 +285,7 @@ void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
 		sctk_ib_cm_change_state_connected ( rail, endpoint_dest );
 	}
 
-	sctk_nodebug ( "Recv from %d, send to %d", src_rank, dest_rank );
+	mpc_common_nodebug ( "Recv from %d, send to %d", src_rank, dest_rank );
 }
 
 
@@ -306,7 +306,7 @@ void sctk_ib_cm_connect_to ( int from, int to, sctk_rail_info_t *rail )
 	sctk_ib_cm_qp_connection_t send_keys;
 	sctk_ib_cm_qp_connection_t recv_keys;
 	sctk_ib_cm_done_t done;
-	sctk_nodebug ( "Connection TO from %d to %d", from, to );
+	mpc_common_nodebug ( "Connection TO from %d to %d", from, to );
 
 	/* create remote for dest */
 	endpoint = sctk_ib_create_remote();
@@ -348,7 +348,7 @@ void sctk_ib_cm_connect_from ( int from, int to, sctk_rail_info_t *rail )
 		.rail_id = rail->rail_number,
 		.done = 1,
 	};
-	sctk_nodebug ( "Connection FROM from %d to %d", from, to );
+	mpc_common_nodebug ( "Connection FROM from %d to %d", from, to );
 
 	/* create remote for dest */
 	endpoint = sctk_ib_create_remote();
@@ -365,7 +365,7 @@ void sctk_ib_cm_connect_from ( int from, int to, sctk_rail_info_t *rail )
 	sctk_route_messages_recv ( to, from, MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL, CM_OD_STATIC_TAG, &recv_keys, sizeof ( sctk_ib_cm_qp_connection_t ) );
 	sctk_ib_qp_allocate_rtr ( rail_ib, remote, &recv_keys );
 	sctk_ib_qp_allocate_rts ( rail_ib, remote );
-	sctk_nodebug ( "FROM: Ready to send to %d", to );
+	mpc_common_nodebug ( "FROM: Ready to send to %d", to );
 
 	sctk_route_messages_send ( from, to, MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL, CM_OD_STATIC_TAG, &done,
 	                           sizeof ( sctk_ib_cm_done_t ) );
@@ -570,7 +570,7 @@ int sctk_ib_cm_on_demand_rdma_request ( sctk_rail_info_t *rail, struct sctk_ib_q
 		/* Can connect to RDMA */
 
 		sctk_ib_cm_rdma_connection_t send_keys;
-		sctk_nodebug ( "Can connect to remote %d", remote->rank );
+		mpc_common_nodebug ( "Can connect to remote %d", remote->rank );
 
 		send_keys.connected = 1;
 		/* We fill the request and we save how many slots are requested as well
@@ -723,7 +723,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request ( sctk_rail_info_t *ra
 	else
 	{
 		/* Cannot connect to RDMA */
-		sctk_nodebug ( "Cannot connect to remote %d", remote->rank );
+		mpc_common_nodebug ( "Cannot connect to remote %d", remote->rank );
 
 		send_keys.connected = 0;
 		send_keys.size = 0;

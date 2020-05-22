@@ -56,28 +56,28 @@ MPC_get_task_count (void)
 void
 MPC_barrier (void)
 {
-  sctk_nodebug ("barrier");
+  mpc_common_nodebug ("barrier");
   MPC_Barrier (SCTK_COMM_WORLD);
 }
 
 void
 MPC_wait (void)
 {
-  sctk_nodebug ("wait");
+  mpc_common_nodebug ("wait");
   MPC_Wait_pending (SCTK_COMM_WORLD);
 }
 
 void
 MPC_send (int dest, double DATA[], int start, int count)
 {
-  sctk_nodebug ("send : %d", dest);
+  mpc_common_nodebug ("send : %d", dest);
   MPC_Isend (DATA + start, count, MPC_DOUBLE, dest, 0, SCTK_COMM_WORLD, NULL);
 }
 
 void
 MPC_receive (int src, double DATA[], int start, int count)
 {
-  sctk_nodebug ("rcv : %d", src);
+  mpc_common_nodebug ("rcv : %d", src);
   MPC_Irecv (DATA + start, count, MPC_DOUBLE, src, 0, SCTK_COMM_WORLD, NULL);
 }
 
@@ -85,7 +85,7 @@ void
 MPC_allreduce_min (double DATAIN[], double DATAOUT[], int start_in,
 		   int start_out, int count)
 {
-  sctk_nodebug ("all reduce ");
+  mpc_common_nodebug ("all reduce ");
   MPC_Allreduce (DATAIN + start_in, DATAOUT + start_out, count,
 		 MPC_DOUBLE, MPC_MIN, SCTK_COMM_WORLD);
 }
@@ -94,7 +94,7 @@ void
 MPC_allreduce_max (double DATAIN[], double DATAOUT[], int start_in,
 		   int start_out, int count)
 {
-  sctk_nodebug ("all reduce ");
+  mpc_common_nodebug ("all reduce ");
   MPC_Allreduce (DATAIN + start_in, DATAOUT + start_out, count,
 		 MPC_DOUBLE, MPC_MAX, SCTK_COMM_WORLD);
 }
@@ -103,7 +103,7 @@ void
 MPC_allreduce_sum (double DATAIN[], double DATAOUT[], int start_in,
 		   int start_out, int count)
 {
-  sctk_nodebug ("all reduce ");
+  mpc_common_nodebug ("all reduce ");
   MPC_Allreduce (DATAIN + start_in, DATAOUT + start_out, count,
 		 MPC_DOUBLE, MPC_SUM, SCTK_COMM_WORLD);
 }

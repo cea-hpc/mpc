@@ -94,7 +94,7 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 				msg = sctk_malloc ( size );
 
 				/* Recv header*/
-				sctk_nodebug ( "Read %d", sizeof ( mpc_lowcomm_ptp_message_body_t ) );
+				mpc_common_nodebug ( "Read %d", sizeof ( mpc_lowcomm_ptp_message_body_t ) );
 				mpc_common_io_safe_read ( fd, ( char * ) msg, sizeof ( mpc_lowcomm_ptp_message_body_t ) );
 				mpc_common_io_safe_read ( fd, & ( msg->tail.rdma_src ), sizeof ( void * ) );
 				msg->tail.route_table = tmp;
@@ -105,7 +105,7 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 				_mpc_comm_ptp_message_clear_request ( msg );
 				_mpc_comm_ptp_message_set_copy_and_free ( msg, sctk_free, sctk_tcp_rdma_message_copy );
 
-				sctk_nodebug ( "Msg recved" );
+				mpc_common_nodebug ( "Msg recved" );
 				tmp->rail->send_message_from_network ( msg );
 				break;
 			}

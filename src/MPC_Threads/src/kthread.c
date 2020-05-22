@@ -125,7 +125,7 @@ static void *__kthread_start_func(void *t_arg)
 
 		slot.used = 0;
 
-		sctk_nodebug("Kernel thread done");
+		mpc_common_nodebug("Kernel thread done");
 
 		sem_wait(&(slot.sem) );
 
@@ -134,7 +134,7 @@ static void *__kthread_start_func(void *t_arg)
 			sched_yield();
 		}
 
-		sctk_nodebug("Kernel thread reuse");
+		mpc_common_nodebug("Kernel thread reuse");
 	}
 	return NULL;
 }
@@ -192,7 +192,7 @@ int _mpc_thread_kthread_create(mpc_thread_kthread_t *thread, void *(*start_routi
 	_mpc_thread_kthread_create_start_t *cursor;
 	size_t kthread_stack_size = sctk_runtime_config_get()->modules.thread.kthread_stack_size;
 
-	sctk_nodebug("Scan already started kthreads");
+	mpc_common_nodebug("Scan already started kthreads");
 	mpc_common_spinlock_lock(&lock);
 	cursor = (_mpc_thread_kthread_create_start_t *)list;
 	while(cursor != NULL)
@@ -206,11 +206,11 @@ int _mpc_thread_kthread_create(mpc_thread_kthread_t *thread, void *(*start_routi
 		cursor = (_mpc_thread_kthread_create_start_t *)cursor->next;
 	}
 	mpc_common_spinlock_unlock(&lock);
-	sctk_nodebug("Scan already started kthreads done found %p", found);
+	mpc_common_nodebug("Scan already started kthreads done found %p", found);
 
 	if(found)
 	{
-		sctk_nodebug("Reuse old thread %p", found);
+		mpc_common_nodebug("Reuse old thread %p", found);
 		found->arg           = arg;
 		found->start_routine = start_routine;
 		found->started       = 0;
@@ -222,7 +222,7 @@ int _mpc_thread_kthread_create(mpc_thread_kthread_t *thread, void *(*start_routi
 		pthread_attr_t attr;
 		int            res;
 		_mpc_thread_kthread_create_start_t tmp;
-		sctk_nodebug("Create new kernel thread");
+		mpc_common_nodebug("Create new kernel thread");
 
 		pthread_attr_init(&attr);
 		pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
@@ -253,7 +253,7 @@ int _mpc_thread_kthread_create(mpc_thread_kthread_t *thread, void *(*start_routi
 		tmp.start_routine = start_routine;
 		tmp.used          = 1;
 
-		sctk_nodebug("_mpc_thread_kthread_create: before pthread_create");
+		mpc_common_nodebug("_mpc_thread_kthread_create: before pthread_create");
 
 		res = mpc_thread_kthread_pthread_create( (pthread_t *)thread, &attr, __kthread_start_func, &tmp);
 
@@ -266,13 +266,13 @@ int _mpc_thread_kthread_create(mpc_thread_kthread_t *thread, void *(*start_routi
 		}
 		assume(res == 0);
 
-		sctk_nodebug("_mpc_thread_kthread_create: after pthread_create with res = %d", res);
+		mpc_common_nodebug("_mpc_thread_kthread_create: after pthread_create with res = %d", res);
 
 		pthread_attr_destroy(&attr);
 
 		if(res != 0)
 		{
-			sctk_nodebug("Warning: Creating kernel threads with no attribute");
+			mpc_common_nodebug("Warning: Creating kernel threads with no attribute");
 			res = mpc_thread_kthread_pthread_create( (pthread_t *)thread, NULL, __kthread_start_func, &tmp);
 
 			assume(res == 0);

@@ -2077,7 +2077,7 @@ static void ___task_schedule( mpcomp_thread_t *thread, mpcomp_mvp_t *mvp,  __UNU
 	    No need to schedule                                    */
 	if ( thread->info.num_threads == 1 || thread->instance->task_infos.is_initialized == false )
 	{
-		sctk_nodebug( "sequential or no task" );
+		mpc_common_nodebug( "sequential or no task" );
 		return;
 	}
 
@@ -2740,7 +2740,7 @@ static inline int ___task_dep_process( mpcomp_task_dep_node_t *task_node,
 #endif /* OMPT_SUPPORT */
 		}
 
-		sctk_nodebug( "task: %p deps: %p redundant : %d \n", task_node, addr,
+		mpc_common_nodebug( "task: %p deps: %p redundant : %d \n", task_node, addr,
 		              redundant );
 
 		/** OUT are in first position en OUT > IN deps */
@@ -2782,7 +2782,7 @@ static inline int ___task_dep_process( mpcomp_task_dep_node_t *task_node,
 						node->successors = ___task_dep_alloc_node_list_elem(
 						                       node->successors, task_node );
 						predecessors_num++;
-						sctk_nodebug( "IN predecessors" );
+						mpc_common_nodebug( "IN predecessors" );
 					}
 
 					MPCOMP_TASK_DEP_UNLOCK_NODE( node );
@@ -2808,7 +2808,7 @@ static inline int ___task_dep_process( mpcomp_task_dep_node_t *task_node,
 					last_out->successors = ___task_dep_alloc_node_list_elem(
 					                           last_out->successors, task_node );
 					predecessors_num++;
-					sctk_nodebug( "OUT predecessors" );
+					mpc_common_nodebug( "OUT predecessors" );
 				}
 
 				MPCOMP_TASK_DEP_UNLOCK_NODE( last_out );
@@ -2819,7 +2819,7 @@ static inline int ___task_dep_process( mpcomp_task_dep_node_t *task_node,
 		{
 			___task_dep_node_unref( last_out );
 			entry->last_out = ___task_dep_node_ref( task_node );
-			sctk_nodebug( "last_out : %p -- %p", last_out, addr );
+			mpc_common_nodebug( "last_out : %p -- %p", last_out, addr );
 		}
 		else
 		{

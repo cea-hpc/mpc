@@ -101,14 +101,14 @@ void sctk_control_message_process_level(__UNUSED__ int source_process, __UNUSED_
     break;
 
   case SCTK_PROCESS_RDMA_WIN_MAPTO:
-    sctk_nodebug("Received a MAP remote from %d", source_rank);
+    mpc_common_nodebug("Received a MAP remote from %d", source_rank);
     mr = (struct mpc_lowcomm_rdma_window_map_request *)data;
     mpc_lowcomm_rdma_window_map_remote_ctrl_msg_handler(mr);
     break;
 
   case SCTK_PROCESS_RDMA_WIN_RELAX:
     memcpy(&win_id, data, sizeof(int));
-    sctk_nodebug("Received a  WIN relax from %d on %d", source_rank, win_id);
+    mpc_common_nodebug("Received a  WIN relax from %d on %d", source_rank, win_id);
     mpc_lowcomm_rdma_window_relax_ctrl_msg_handler(win_id);
     break;
 

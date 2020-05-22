@@ -68,7 +68,7 @@ void sctk_ib_init_remote ( int dest, sctk_rail_info_t *rail, struct sctk_endpoin
 	route_ib = &route_table->data.ib;
 	route_ib->remote = sctk_ib_qp_new();
 
-	sctk_nodebug ( "Initializing QP for dest %d", dest );
+	mpc_common_nodebug ( "Initializing QP for dest %d", dest );
 	
 	/* Allocate QP */
 	sctk_ib_qp_allocate_init ( rail_ib, dest, route_ib->remote, ondemand, route_table );

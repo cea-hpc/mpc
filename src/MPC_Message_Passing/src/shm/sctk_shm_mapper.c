@@ -116,7 +116,7 @@ sctk_shm_mapper_sync_header_init(void *ptr, sctk_size_t size,
   assert(participants > 0);
 
   // debug
-  // sctk_nodebug("sctk_shm_mapper_sync_header_init(%p,%d,%lu)",ptr,participants,size);
+  // mpc_common_nodebug("sctk_shm_mapper_sync_header_init(%p,%d,%lu)",ptr,participants,size);
 
   // setup entries
   OPA_store_int(&sync_header->cnt_invalid, 0);
@@ -178,7 +178,7 @@ SCTK_STATIC void sctk_shm_mapper_barrier( sctk_shm_mapper_sync_header_t * sync_h
 
         OPA_incr_int(&local_gen);
 
-        sctk_nodebug("ROLE %d PART %d (GEN %d VAL %d)", role, participants,
+        mpc_common_nodebug("ROLE %d PART %d (GEN %d VAL %d)", role, participants,
          						local_gen, OPA_load_int
         						(&sync_header->barrier_cnt));
 
@@ -422,7 +422,7 @@ SCTK_STATIC void * sctk_shm_mapper_master(sctk_size_t size,int participants,sctk
         assume_m(participants > 1, "Required more than 1 participant.");
 
         // debug
-        // sctk_nodebug("sctk_shm_mapper_master(%lu,%d,handler)",size,participants);
+        // mpc_common_nodebug("sctk_shm_mapper_master(%lu,%d,handler)",size,participants);
 
         // get filename
         filename = handler->gen_filename(handler->option, handler->option1);

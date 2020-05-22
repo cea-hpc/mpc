@@ -371,7 +371,7 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
       }
 
       int target_win = mpc_MPI_win_get_remote_win(desc, target_rank, 1);
-      sctk_nodebug("--> %d %p write %d to off %d", target_rank, origin_addr,
+      mpc_common_nodebug("--> %d %p write %d to off %d", target_rank, origin_addr,
                    remote_size, target_disp);
       mpc_lowcomm_rdma_window_RDMA_write(target_win, (void *)origin_addr, remote_size,
                              target_disp, request);
@@ -655,7 +655,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
     size_t max_size =
         (target_pack_size < pack_size) ? target_pack_size : pack_size;
 
-    sctk_nodebug("F %p ORIG %p TARGET %p SI %ld INT %d PE %d", func,
+    mpc_common_nodebug("F %p ORIG %p TARGET %p SI %ld INT %d PE %d", func,
                  origin_addr, target_address, max_size / per_elem_size,
                  inner_type, per_elem_size);
     func(origin_addr, target_address, max_size / per_elem_size, inner_type);

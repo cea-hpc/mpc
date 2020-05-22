@@ -448,16 +448,16 @@ int __mpcomp_do_single(void)
   		current = t->single_sections_current ;
   		t->single_sections_current++ ;
 
-  		sctk_nodebug("[%d]%s : Entering with current %d...", __func__, t->rank,
+  		mpc_common_nodebug("[%d]%s : Entering with current %d...", __func__, t->rank,
                current);
-  		sctk_nodebug("[%d]%s : team current is %d", __func__, t->rank,
+  		mpc_common_nodebug("[%d]%s : team current is %d", __func__, t->rank,
                OPA_load_int(&(team->single_sections_last_current)));
 
   		if (current == OPA_load_int(&(team->single_sections_last_current))) 
 		{
     		const int res = OPA_cas_int(&(team->single_sections_last_current),
                                          current, current + 1);
-    		sctk_nodebug("[%d]%s: incr team %d -> %d ==> %d", __func__, t->rank,
+    		mpc_common_nodebug("[%d]%s: incr team %d -> %d ==> %d", __func__, t->rank,
                  current, current + 1, res);
     		/* Success => execute the single block */
     		if (res == current) 
@@ -735,7 +735,7 @@ void __mpcomp_barrier(void) {
   /* Grab info on the current thread */
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
-  sctk_nodebug("[%d] %s: Entering w/ %d thread(s)\n", t->rank, __func__,
+  mpc_common_nodebug("[%d] %s: Entering w/ %d thread(s)\n", t->rank, __func__,
                t->info.num_threads);
 
 #if OMPT_SUPPORT
@@ -778,7 +778,7 @@ void __mpcomp_barrier(void) {
     /* Get the corresponding microVP */
     mpcomp_mvp_t *mvp = t->mvp;
     sctk_assert(mvp != NULL);
-    sctk_nodebug("[%d] %s: t->mvp = %p", t->rank, __func__, t->mvp);
+    mpc_common_nodebug("[%d] %s: t->mvp = %p", t->rank, __func__, t->mvp);
  
     /* Call the real barrier */
     sctk_assert( t->info.num_threads == t->mvp->threads->info.num_threads );
@@ -823,7 +823,7 @@ static int __sync_section_next(mpcomp_thread_t *t,
 
   t->single_sections_current =
       OPA_load_int(&(team->single_sections_last_current));
-  sctk_nodebug("[%d] %s: Current = %d (target = %d)", t->rank, __func__,
+  mpc_common_nodebug("[%d] %s: Current = %d (target = %d)", t->rank, __func__,
                t->single_sections_current, t->single_sections_target_current);
   success = 0 ;
 
@@ -833,7 +833,7 @@ static int __sync_section_next(mpcomp_thread_t *t,
                              t->single_sections_current,
                              t->single_sections_current + 1);
 
-    sctk_nodebug("[%d] %s: CAS %d -> %d (res %d)", t->rank, __func__,
+    mpc_common_nodebug("[%d] %s: CAS %d -> %d (res %d)", t->rank, __func__,
                  t->single_sections_current, t->single_sections_current + 1, r);
 
     if (r != t->single_sections_current) {
@@ -848,12 +848,12 @@ static int __sync_section_next(mpcomp_thread_t *t,
   }
 
   if ( t->single_sections_current < t->single_sections_target_current ) {
-    sctk_nodebug("[%d] %s: Success w/ current = %d", t->rank, __func__,
+    mpc_common_nodebug("[%d] %s: Success w/ current = %d", t->rank, __func__,
                  t->single_sections_current);
     return t->single_sections_current - t->single_sections_start_current + 1;
   }
 
-  sctk_nodebug("[%d] %s: Fail w/ final current = %d", t->rank, __func__,
+  mpc_common_nodebug("[%d] %s: Fail w/ final current = %d", t->rank, __func__,
                t->single_sections_current);
 
   return 0 ;
@@ -867,7 +867,7 @@ void __mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) {
   num_threads = t->info.num_threads;
   sctk_assert( num_threads > 0 ) ;
 
-  sctk_nodebug("[%d] %s: Entering w/ %d section(s)", t->rank, __func__,
+  mpc_common_nodebug("[%d] %s: Entering w/ %d section(s)", t->rank, __func__,
                nb_sections);
 
   /* Update current sections construct and update
@@ -876,7 +876,7 @@ void __mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) {
   t->single_sections_target_current = t->single_sections_current + nb_sections ;
   t->nb_sections = nb_sections;
 
-  sctk_nodebug("[%d] %s: Current %d, start %d, target %d", t->rank, __func__,
+  mpc_common_nodebug("[%d] %s: Current %d, start %d, target %d", t->rank, __func__,
                t->single_sections_current, t->single_sections_start_current,
                t->single_sections_target_current);
 
@@ -903,7 +903,7 @@ int __mpcomp_sections_begin(int nb_sections) {
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-  sctk_nodebug("[%d] %s: entering w/ %d section(s)", t->rank, __func__,
+  mpc_common_nodebug("[%d] %s: entering w/ %d section(s)", t->rank, __func__,
                nb_sections);
 
   __mpcomp_sections_init( t, nb_sections ) ;
@@ -960,7 +960,7 @@ int __mpcomp_sections_next(void) {
   num_threads = t->info.num_threads;
   sctk_assert( num_threads > 0 ) ;
 
-  sctk_nodebug("[%d] %s: Current %d, start %d, target %d", t->rank, __func__,
+  mpc_common_nodebug("[%d] %s: Current %d, start %d, target %d", t->rank, __func__,
                t->single_sections_current, t->single_sections_start_current,
                t->single_sections_target_current);
 

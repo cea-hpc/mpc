@@ -163,7 +163,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 
 		if(ret == PTL_OK)
 		{
-			sctk_nodebug("PORTALS: EQS EVENT '%s' idx=%d, from %s, type=%s, prot=%s, match=%s,  sz=%llu, user=%p, start=%p", sctk_ptl_event_decode(ev), ev.pt_index, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), ev.mlength, ev.user_ptr, ev.start);
+			mpc_common_nodebug("PORTALS: EQS EVENT '%s' idx=%d, from %s, type=%s, prot=%s, match=%s,  sz=%llu, user=%p, start=%p", sctk_ptl_event_decode(ev), ev.pt_index, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), ev.mlength, ev.user_ptr, ev.start);
 			
 			/* if the event is related to a probe request */
 			if(ev.type == PTL_EVENT_SEARCH)
@@ -251,7 +251,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 		{
 			user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 			sctk_assert(user_ptr != NULL);
-			sctk_nodebug("PORTALS: MDS EVENT '%s' from %s, type=%s, prot=%s",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot));
+			mpc_common_nodebug("PORTALS: MDS EVENT '%s' from %s, type=%s, prot=%s",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot));
 			/* we only care about Portals-sucess events */
 			if(ev.ni_fail_type != PTL_NI_OK)
 			{
@@ -459,7 +459,7 @@ int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_he
 	int tag = hdr->message_tag;
 	int ret = -1;
 
-	sctk_nodebug("PROBE: c%d r%d t%d", comm, rank, tag);
+	mpc_common_nodebug("PROBE: c%d r%d t%d", comm, rank, tag);
 	
 	sctk_ptl_rail_info_t* prail = &rail->network.ptl;
 	sctk_ptl_pte_t* pte = mpc_common_hashtable_get(&prail->pt_table, (int)((comm + SCTK_PTL_PTE_HIDDEN_NB) % prail->nb_entries));

@@ -323,7 +323,7 @@ static inline void __mpc_cl_thread_buffer_pool_release( __mpc_cl_buffer_pool_t *
 
 	for ( i = 0; i < MAX_MPC_BUFFERED_MSG; i++ )
 	{
-		sctk_nodebug( "WAIT message ASYNC %d", i );
+		mpc_common_nodebug( "WAIT message ASYNC %d", i );
 		mpc_lowcomm_request_wait( &( pool->async.buffer[i].request ) );
 	}
 }
@@ -1191,7 +1191,7 @@ int _mpc_cl_type_free( mpc_lowcomm_datatype_t *datatype_p )
 				                  "Tried to release an uninitialized datatype" );
 			}
 
-			sctk_nodebug( "Free derived [%d] contructor %d", datatype,
+			mpc_common_nodebug( "Free derived [%d] contructor %d", datatype,
 			              derived_type_target->context.combiner );
 
 			/* Free it  (not that the container is also freed in this function */
@@ -1842,7 +1842,7 @@ int _mpc_cl_type_use( mpc_lowcomm_datatype_t datatype )
 			    _mpc_cl_per_mpi_process_ctx_contiguous_datatype_ts_get( task_specific, datatype );
 			/* Increment the refcounter */
 			target_contiguous_type->ref_count++;
-			sctk_nodebug( "Type %d Refcount %d", datatype,
+			mpc_common_nodebug( "Type %d Refcount %d", datatype,
 			              target_contiguous_type->ref_count );
 			break;
 
@@ -1852,7 +1852,7 @@ int _mpc_cl_type_use( mpc_lowcomm_datatype_t datatype )
 			    _mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get( task_specific, datatype );
 			/* Increment the refcounter */
 			target_derived_type->ref_count++;
-			sctk_nodebug( "Type %d Refcount %d", datatype,
+			mpc_common_nodebug( "Type %d Refcount %d", datatype,
 			              target_derived_type->ref_count );
 			break;
 
@@ -2035,7 +2035,7 @@ int _mpc_cl_derived_datatype_try_get_info( mpc_lowcomm_datatype_t datatype, int 
 		/* Retrieve task specific context */
 		mpc_mpi_cl_per_mpi_process_ctx_t *task_specific;
 		task_specific = _mpc_cl_per_mpi_process_ctx_get();
-		sctk_nodebug( "datatype(%d) - SCTK_COMMON_DATA_TYPE_COUNT(%d) - "
+		mpc_common_nodebug( "datatype(%d) - SCTK_COMMON_DATA_TYPE_COUNT(%d) - "
 		              "SCTK_USER_DATA_TYPES_MAX(%d) ==  %d-%d-%d == %d",
 		              datatype, SCTK_COMMON_DATA_TYPE_COUNT,
 		              SCTK_USER_DATA_TYPES_MAX, datatype,
@@ -2400,7 +2400,7 @@ int mpc_mpi_cl_get_activity( int nb_item, mpc_mpi_cl_activity_t *tab, double *pr
 	int nb_proc;
 	double proc_act = 0;
 	nb_proc = mpc_topology_get_pu_count();
-	sctk_nodebug( "Activity %d/%d:", nb_item, nb_proc );
+	mpc_common_nodebug( "Activity %d/%d:", nb_item, nb_proc );
 
 	for ( i = 0; ( i < nb_item ) && ( i < nb_proc ); i++ )
 	{
@@ -2409,7 +2409,7 @@ int mpc_mpi_cl_get_activity( int nb_item, mpc_mpi_cl_activity_t *tab, double *pr
 		tmp = mpc_thread_getactivity( i );
 		tab[i].usage = tmp;
 		proc_act += tmp;
-		sctk_nodebug( "\t- cpu %d activity %f\n", tab[i].virtual_cpuid,
+		mpc_common_nodebug( "\t- cpu %d activity %f\n", tab[i].virtual_cpuid,
 		              tab[i].usage );
 	}
 
@@ -2899,7 +2899,7 @@ static inline void wfv_waitall( void *arg )
 			{
 				mpc_lowcomm_status_t *status = &( args->array_of_statuses[i] );
 				__mpc_cl_request_commit_status( request, status );
-				sctk_nodebug( "source %d\n", status->MPC_SOURCE );
+				mpc_common_nodebug( "source %d\n", status->MPC_SOURCE );
 				mpc_lowcomm_request_set_null( request, 1 );
 			}
 		}
@@ -3016,7 +3016,7 @@ int _mpc_cl_waitallp( mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parr
                       mpc_lowcomm_status_t array_of_statuses[] )
 {
 	int i;
-	sctk_nodebug( "waitall count %d\n", count );
+	mpc_common_nodebug( "waitall count %d\n", count );
 	/* We have to detect generalized requests as we are not able
 	to progress them in the pooling function as we have no
 	MPI context therefore we force a non-pooled progress
@@ -3311,7 +3311,7 @@ int _mpc_cl_status_get_count( const mpc_lowcomm_status_t *status, mpc_lowcomm_da
 	if ( data_size != 0 )
 	{
 		size = status->size;
-		sctk_nodebug( "Get_count : count %d, data_type %d (size %d)", size, datatype,
+		mpc_common_nodebug( "Get_count : count %d, data_type %d (size %d)", size, datatype,
 		              data_size );
 
 		if ( size % data_size == 0 )
@@ -3773,14 +3773,14 @@ int _mpc_cl_allgather( void *sendbuf, mpc_lowcomm_msg_count_t sendcount,
 			if ( sendcount != 0 )
 			{
 				root = ( rank == 0 ) ? MPC_ROOT : SCTK_PROC_NULL;
-				sctk_nodebug( "bcast size %d to the left", size * sendcount );
+				mpc_common_nodebug( "bcast size %d to the left", size * sendcount );
 				_mpc_cl_bcast( tmp_buf, size * sendcount, sendtype, root, comm );
 			}
 
 			if ( recvcount != 0 )
 			{
 				root = 0;
-				sctk_nodebug( "bcast size %d from the left", remote_size * recvcount );
+				mpc_common_nodebug( "bcast size %d from the left", remote_size * recvcount );
 				_mpc_cl_bcast( recvbuf, remote_size * recvcount, recvtype, root, comm );
 			}
 		}
@@ -3789,13 +3789,13 @@ int _mpc_cl_allgather( void *sendbuf, mpc_lowcomm_msg_count_t sendcount,
 			if ( recvcount != 0 )
 			{
 				root = 0;
-				sctk_nodebug( "bcast size %d from the right", remote_size * recvcount );
+				mpc_common_nodebug( "bcast size %d from the right", remote_size * recvcount );
 				_mpc_cl_bcast( recvbuf, remote_size * recvcount, recvtype, root, comm );
 			}
 
 			if ( sendcount != 0 )
 			{
-				sctk_nodebug( "bcast size %d to the right", size * sendcount );
+				mpc_common_nodebug( "bcast size %d to the right", size * sendcount );
 				root = ( rank == 0 ) ? MPC_ROOT : SCTK_PROC_NULL;
 				_mpc_cl_bcast( tmp_buf, size * sendcount, sendtype, root, comm );
 			}
@@ -3829,7 +3829,7 @@ int _mpc_cl_comm_group( mpc_lowcomm_communicator_t comm, _mpc_cl_group_t **group
 	int size;
 	int i;
 	size = mpc_lowcomm_communicator_size( comm );
-	sctk_nodebug( "MPC_Comm_group" );
+	mpc_common_nodebug( "MPC_Comm_group" );
 	*group = ( _mpc_cl_group_t * ) sctk_malloc( sizeof( _mpc_cl_group_t ) );
 	( *group )->task_nb = size;
 	( *group )->task_list_in_global_ranks = ( int * ) sctk_malloc( size * sizeof( int ) );
@@ -3848,7 +3848,7 @@ int _mpc_cl_comm_remote_group( mpc_lowcomm_communicator_t comm, _mpc_cl_group_t 
 	int size;
 	int i;
 	size = mpc_lowcomm_communicator_remote_size( comm );
-	sctk_nodebug( "MPC_Comm_group" );
+	mpc_common_nodebug( "MPC_Comm_group" );
 	*group = ( _mpc_cl_group_t * ) sctk_malloc( sizeof( _mpc_cl_group_t ) );
 	( *group )->task_nb = size;
 	( *group )->task_list_in_global_ranks = ( int * ) sctk_malloc( size * sizeof( int ) );
@@ -3889,7 +3889,7 @@ int _mpc_cl_group_incl( _mpc_cl_group_t *group, int n, int *ranks, _mpc_cl_group
 	{
 		( *newgroup )->task_list_in_global_ranks[i] =
 		    group->task_list_in_global_ranks[ranks[i]];
-		sctk_nodebug( "%d", group->task_list_in_global_ranks[ranks[i]] );
+		mpc_common_nodebug( "%d", group->task_list_in_global_ranks[ranks[i]] );
 	}
 
 	MPC_ERROR_SUCESS();
@@ -3903,12 +3903,12 @@ int _mpc_cl_group_difference( _mpc_cl_group_t *group1, _mpc_cl_group_t *group2, 
 
 	for ( i = 0; i < group1->task_nb; i++ )
 	{
-		sctk_nodebug( "group1[%d] = %d", i, group1->task_list_in_global_ranks[i] );
+		mpc_common_nodebug( "group1[%d] = %d", i, group1->task_list_in_global_ranks[i] );
 	}
 
 	for ( i = 0; i < group2->task_nb; i++ )
 	{
-		sctk_nodebug( "group2[%d] = %d", i, group2->task_list_in_global_ranks[i] );
+		mpc_common_nodebug( "group2[%d] = %d", i, group2->task_list_in_global_ranks[i] );
 	}
 
 	/* get the size of newgroup */
@@ -3993,7 +3993,7 @@ int _mpc_cl_comm_create_from_intercomm( mpc_lowcomm_communicator_t comm,
 	{
 		if ( group->task_list_in_global_ranks[i] == rank )
 		{
-			sctk_nodebug( "%d present", rank );
+			mpc_common_nodebug( "%d present", rank );
 			present = 1;
 			break;
 		}
@@ -4001,7 +4001,7 @@ int _mpc_cl_comm_create_from_intercomm( mpc_lowcomm_communicator_t comm,
 
 	for ( i = 0; i < group->task_nb; i++ )
 	{
-		sctk_nodebug( "task_list[%d] = %d", i, group->task_list_in_global_ranks[i] );
+		mpc_common_nodebug( "task_list[%d] = %d", i, group->task_list_in_global_ranks[i] );
 	}
 
 	if ( sctk_is_in_local_group( comm ) )
@@ -4011,18 +4011,18 @@ int _mpc_cl_comm_create_from_intercomm( mpc_lowcomm_communicator_t comm,
 		( *comm_out ) = sctk_create_communicator_from_intercomm(
 		                    comm, group->task_nb, group->task_list_in_global_ranks );
 
-	sctk_nodebug( "\tnew comm from intercomm %d", *comm_out );
+	mpc_common_nodebug( "\tnew comm from intercomm %d", *comm_out );
 	_mpc_cl_barrier( comm );
 
 	if ( present == 1 )
 	{
-		sctk_nodebug( "from intercomm barrier comm %d", *comm_out );
+		mpc_common_nodebug( "from intercomm barrier comm %d", *comm_out );
 		_mpc_cl_barrier( *comm_out );
-		sctk_nodebug( "sortie barrier" );
+		mpc_common_nodebug( "sortie barrier" );
 		__mpc_cl_per_communicator_alloc_from_existing( task_specific, *comm_out, comm );
 	}
 
-	sctk_nodebug( "comm %d created from intercomm %d", *comm_out, comm );
+	mpc_common_nodebug( "comm %d created from intercomm %d", *comm_out, comm );
 	MPC_ERROR_SUCESS();
 }
 
@@ -4079,7 +4079,7 @@ static inline int __mpc_cl_comm_create( mpc_lowcomm_communicator_t comm, _mpc_cl
 			( *comm_out ) = sctk_create_intercommunicator_from_intercommunicator(
 			                    comm, remote_leader,
 			                    intra_comm );
-			sctk_nodebug( "\trank %d: new intercomm -> %d", rank, *comm_out );
+			mpc_common_nodebug( "\trank %d: new intercomm -> %d", rank, *comm_out );
 		}
 		else
 		{
@@ -4090,7 +4090,7 @@ static inline int __mpc_cl_comm_create( mpc_lowcomm_communicator_t comm, _mpc_cl
 	{
 		( *comm_out ) = sctk_create_communicator( comm, group->task_nb,
 		                group->task_list_in_global_ranks );
-		sctk_nodebug( "\trank %d: new intracomm -> %d", rank, *comm_out );
+		mpc_common_nodebug( "\trank %d: new intracomm -> %d", rank, *comm_out );
 	}
 
 	_mpc_cl_barrier( comm );
@@ -4160,7 +4160,7 @@ int _mpc_cl_intercomm_create( mpc_lowcomm_communicator_t local_comm, int local_l
 
 	*newintercomm = sctk_create_intercommunicator(local_comm, local_leader, peer_comm, remote_leader, tag, first);
 
-	sctk_nodebug( "new intercomm %d", *newintercomm );
+	mpc_common_nodebug( "new intercomm %d", *newintercomm );
 
 	int present = 0;
 	int i;
@@ -4214,7 +4214,7 @@ int _mpc_cl_comm_free( mpc_lowcomm_communicator_t *comm )
 
 int _mpc_cl_comm_dup( mpc_lowcomm_communicator_t comm, mpc_lowcomm_communicator_t *comm_out )
 {
-	sctk_nodebug( "duplicate comm %d", comm );
+	mpc_common_nodebug( "duplicate comm %d", comm );
 	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific;
 	int rank;
 	task_specific = _mpc_cl_per_mpi_process_ctx_get();
@@ -4223,11 +4223,11 @@ int _mpc_cl_comm_dup( mpc_lowcomm_communicator_t comm, mpc_lowcomm_communicator_
 
 	if ( sctk_is_inter_comm( comm ) )
 	{
-		sctk_nodebug( "intercomm %d duplicate --> newintercomm %d", comm, *comm_out );
+		mpc_common_nodebug( "intercomm %d duplicate --> newintercomm %d", comm, *comm_out );
 	}
 	else
 	{
-		sctk_nodebug( "comm %d duplicate --> newcomm %d", comm, *comm_out );
+		mpc_common_nodebug( "comm %d duplicate --> newcomm %d", comm, *comm_out );
 	}
 
 	__mpc_cl_per_communicator_alloc_from_existing_dup( task_specific,
@@ -4257,21 +4257,21 @@ int _mpc_cl_comm_split( mpc_lowcomm_communicator_t comm, int color, int key, mpc
 	mpc_lowcomm_communicator_t comm_res = SCTK_COMM_NULL;
 	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific;
 	task_specific = _mpc_cl_per_mpi_process_ctx_get();
-	sctk_nodebug( "MPC_Comm_split color=%d key=%d out_comm=%p", color, key,
+	mpc_common_nodebug( "MPC_Comm_split color=%d key=%d out_comm=%p", color, key,
 	              comm_out );
 	size = mpc_lowcomm_communicator_size( comm );
 	rank = mpc_lowcomm_communicator_rank( comm, task_specific->task_id );
-	sctk_nodebug( "rank %d : _mpc_cl_comm_split with comm %d, color %d and key %d",
+	mpc_common_nodebug( "rank %d : _mpc_cl_comm_split with comm %d, color %d and key %d",
 	              rank, comm, color, key );
 	tab = ( mpc_comm_split_t * ) sctk_malloc( size * sizeof( mpc_comm_split_t ) );
 	color_tab = ( int * ) sctk_malloc( size * sizeof( int ) );
 	tab_this.rank = rank;
 	tab_this.color = color;
 	tab_this.key = key;
-	sctk_nodebug( "Allgather..." );
+	mpc_common_nodebug( "Allgather..." );
 	_mpc_cl_allgather( &tab_this, sizeof( mpc_comm_split_t ), MPC_CHAR, tab,
 	                   sizeof( mpc_comm_split_t ), MPC_CHAR, comm );
-	sctk_nodebug( "done" );
+	mpc_common_nodebug( "done" );
 
 	/*Sort the new tab */
 	for ( i = 0; i < size; i++ )
@@ -4315,10 +4315,10 @@ int _mpc_cl_comm_split( mpc_lowcomm_communicator_t comm, int color, int key, mpc
 			color_number++;
 		}
 
-		sctk_nodebug( "rank %d color %d", i, tab[i].color, tab[i].rank );
+		mpc_common_nodebug( "rank %d color %d", i, tab[i].color, tab[i].rank );
 	}
 
-	sctk_nodebug( "%d colors", color_number );
+	mpc_common_nodebug( "%d colors", color_number );
 
 	/*We need on comm_create per color */
 	for ( k = 0; k < color_number; k++ )
@@ -4348,7 +4348,7 @@ int _mpc_cl_comm_split( mpc_lowcomm_communicator_t comm, int color, int key, mpc
 				{
 					group.task_list_in_global_ranks[j] =
 					    sctk_get_comm_world_rank( comm, tab[i].rank );
-					sctk_nodebug( "Thread %d color (%d) size %d on %d rank %d", tmp_color,
+					mpc_common_nodebug( "Thread %d color (%d) size %d on %d rank %d", tmp_color,
 					              k, j, group_size, tab[i].rank );
 					j++;
 				}
@@ -4359,19 +4359,19 @@ int _mpc_cl_comm_split( mpc_lowcomm_communicator_t comm, int color, int key, mpc
 			if ( *comm_out != SCTK_COMM_NULL )
 			{
 				comm_res = *comm_out;
-				sctk_nodebug( "Split done -> new %s %d",
+				mpc_common_nodebug( "Split done -> new %s %d",
 				              ( sctk_is_inter_comm( comm ) ) ? "intercomm" : "intracom",
 				              comm_res );
 			}
 
 			sctk_free( group.task_list_in_global_ranks );
-			sctk_nodebug( "Split color %d done", tmp_color );
+			mpc_common_nodebug( "Split color %d done", tmp_color );
 		}
 	}
 
 	sctk_free( color_tab );
 	sctk_free( tab );
-	sctk_nodebug( "Split done" );
+	mpc_common_nodebug( "Split done" );
 	*comm_out = comm_res;
 	MPC_ERROR_SUCESS();
 }
@@ -4678,7 +4678,7 @@ double _mpc_cl_wtime()
 #else
 	res = mpc_arch_get_timestamp();
 #endif
-	sctk_nodebug( "Wtime = %f", res );
+	mpc_common_nodebug( "Wtime = %f", res );
 	SCTK_PROFIL_END( MPC_Wtime );
 	return res;
 }

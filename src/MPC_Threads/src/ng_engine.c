@@ -590,7 +590,7 @@ static int _mpc_threads_ng_engine_mutex_lock(mpc_thread_mutex_t *plock)
 		tmp[MPC_THREADS_GENERIC_MUTEX] = (void *)lock;
 
 		_mpc_threads_ng_engine_thread_status(sched, _mpc_threads_ng_engine_blocked);
-		sctk_nodebug("WAIT MUTEX LOCK sleep %p", sched);
+		mpc_common_nodebug("WAIT MUTEX LOCK sleep %p", sched);
 		_mpc_threads_ng_engine_register_spinlock_unlock(sched, &(lock->lock) );
 		_mpc_threads_ng_engine_sched_yield(sched);
 		tmp[MPC_THREADS_GENERIC_MUTEX] = NULL;
@@ -827,7 +827,7 @@ static int _mpc_threads_ng_engine_mutex_unlock(mpc_thread_mutex_t *plock)
 			DL_DELETE(lock->blocked, head);
 			if(head->sched->status != _mpc_threads_ng_engine_running)
 			{
-				sctk_nodebug("ADD MUTEX UNLOCK wake %p", head->sched);
+				mpc_common_nodebug("ADD MUTEX UNLOCK wake %p", head->sched);
 				_mpc_threads_ng_engine_wake(head->sched);
 			}
 		}
@@ -969,7 +969,7 @@ void _mpc_threads_ng_engine_check_signals(int select)
 
 	/* Get the current thread */
 	sched = &(_mpc_threads_ng_engine_self()->sched);
-	sctk_nodebug("_mpc_threads_ng_engine_check_signals %p", sched);
+	mpc_common_nodebug("_mpc_threads_ng_engine_check_signals %p", sched);
 	current = sched->th;
 	sctk_assert(&current->sched == sched);
 
@@ -1389,7 +1389,7 @@ static int _mpc_threads_ng_engine_cond_wait(mpc_thread_cond_t *pcond,
 	DL_APPEND(cond->blocked, &cell);
 	tmp[MPC_THREADS_GENERIC_COND] = (void *)cond;
 
-	sctk_nodebug("WAIT on %p", sched);
+	mpc_common_nodebug("WAIT on %p", sched);
 
 	_mpc_threads_ng_engine_thread_status(sched, _mpc_threads_ng_engine_blocked);
 	_mpc_threads_ng_engine_register_spinlock_unlock(sched, &(cond->lock) );
@@ -1572,7 +1572,7 @@ static int _mpc_threads_ng_engine_cond_timedwait(mpc_thread_cond_t *pcond,
 	DL_APPEND(cond->blocked, &cell);
 	tmp[MPC_THREADS_GENERIC_COND] = (void *)cond;
 
-	sctk_nodebug("WAIT on %p", sched);
+	mpc_common_nodebug("WAIT on %p", sched);
 
 	status = (_mpc_threads_ng_engine_thread_status_t *)&(sched->status);
 
@@ -1636,7 +1636,7 @@ static int _mpc_threads_ng_engine_cond_broadcast(mpc_thread_cond_t *pcond)
 	DL_FOREACH_SAFE(cond->blocked, task, task_tmp)
 	{
 		DL_DELETE(cond->blocked, task);
-		sctk_nodebug("ADD BCAST cond wake %p from %p", task->sched, sched);
+		mpc_common_nodebug("ADD BCAST cond wake %p from %p", task->sched, sched);
 		_mpc_threads_ng_engine_wake(task->sched);
 	}
 	mpc_common_spinlock_unlock(&(cond->lock) );
@@ -1731,7 +1731,7 @@ static int _mpc_threads_ng_engine_sem_wait(mpc_thread_sem_t *psem)
 	cell.sched = sched;
 	DL_APPEND(sem->list, &cell);
 	_mpc_threads_ng_engine_thread_status(sched, _mpc_threads_ng_engine_blocked);
-	sctk_nodebug("WAIT SEM LOCK sleep %p", sched);
+	mpc_common_nodebug("WAIT SEM LOCK sleep %p", sched);
 	tmp[MPC_THREADS_GENERIC_SEM] = (void *)sem;
 	_mpc_threads_ng_engine_register_spinlock_unlock(sched, &(sem->spinlock) );
 	_mpc_threads_ng_engine_sched_yield(sched);
@@ -1888,7 +1888,7 @@ static int _mpc_threads_ng_engine_sem_post(mpc_thread_sem_t *psem)
 		DL_DELETE(sem->list, head);
 		if(head->sched->status != _mpc_threads_ng_engine_running)
 		{
-			sctk_nodebug("ADD SEM UNLOCK wake %p", head->sched);
+			mpc_common_nodebug("ADD SEM UNLOCK wake %p", head->sched);
 			_mpc_threads_ng_engine_wake(head->sched);
 		}
 	}
@@ -2112,7 +2112,7 @@ static mpc_thread_sem_t *_mpc_threads_ng_engine_sem_open(const char *name, int o
 		return (mpc_thread_sem_t *)SCTK_SEM_FAILED;
 	}
 
-	sctk_nodebug("sem vaux %p avec une valeur de %d", sem_named_tmp->sem, sem_named_tmp->sem->lock);
+	mpc_common_nodebug("sem vaux %p avec une valeur de %d", sem_named_tmp->sem, sem_named_tmp->sem->lock);
 
 	return (mpc_thread_sem_t *)sem_named_tmp->sem;
 }
@@ -2363,7 +2363,7 @@ static inline int __rwlock_lock(_mpc_threads_ng_engine_rwlock_t *lock,
 	}
 	lock->count++;
 
-	sctk_nodebug(" rwlock : \nlock = %d\ncurrent = %d\nwait = %d\ntype : %d\n",
+	mpc_common_nodebug(" rwlock : \nlock = %d\ncurrent = %d\nwait = %d\ntype : %d\n",
 	             lock->lock, lock->current, lock->wait, type);
 
 	if(ltype == SCTK_RWLOCK_READ)
@@ -2445,10 +2445,10 @@ static inline int __rwlock_lock(_mpc_threads_ng_engine_rwlock_t *lock,
 	cell.sched = sched;
 	cell.type  = ltype;
 	DL_APPEND(lock->waiting, &cell);
-	sctk_nodebug("blocked on %p", lock);
+	mpc_common_nodebug("blocked on %p", lock);
 
 	_mpc_threads_ng_engine_thread_status(sched, _mpc_threads_ng_engine_blocked);
-	sctk_nodebug("WAIT RWLOCK LOCK sleep %p", sched);
+	mpc_common_nodebug("WAIT RWLOCK LOCK sleep %p", sched);
 	tmp[MPC_THREADS_GENERIC_RWLOCK] = (void *)lock;
 	_mpc_threads_ng_engine_register_spinlock_unlock(sched, &(lock->lock) );
 	_mpc_threads_ng_engine_sched_yield(sched);
@@ -2700,7 +2700,7 @@ static int _mpc_threads_ng_engine_rwlock_unlock(mpc_thread_rwlock_t *plock)
 			}
 			if(lsched->status != _mpc_threads_ng_engine_running)
 			{
-				sctk_nodebug("ADD RWLOCK UNLOCK wake %p", lsched);
+				mpc_common_nodebug("ADD RWLOCK UNLOCK wake %p", lsched);
 				_mpc_threads_ng_engine_wake(lsched);
 			}
 		}
@@ -2715,7 +2715,7 @@ static int _mpc_threads_ng_engine_rwlock_unlock(mpc_thread_rwlock_t *plock)
 				lsched = cell->sched;
 				if(lsched->status != _mpc_threads_ng_engine_running)
 				{
-					sctk_nodebug("ADD RWLOCK UNLOCK wake %p", lsched);
+					mpc_common_nodebug("ADD RWLOCK UNLOCK wake %p", lsched);
 					_mpc_threads_ng_engine_wake(lsched);
 				}
 				lock->reads_count++;
@@ -3040,7 +3040,7 @@ static int _mpc_threads_ng_engine_barrier_wait(mpc_thread_barrier_t *pbarrier)
 		DL_APPEND(barrier->blocked, &cell);
 		_mpc_threads_ng_engine_thread_status(sched, _mpc_threads_ng_engine_blocked);
 		tmp[MPC_THREADS_GENERIC_BARRIER] = (void *)barrier;
-		sctk_nodebug("blocked on %p", barrier);
+		mpc_common_nodebug("blocked on %p", barrier);
 		_mpc_threads_ng_engine_register_spinlock_unlock(sched, &(barrier->lock) );
 		_mpc_threads_ng_engine_sched_yield(sched);
 		tmp[MPC_THREADS_GENERIC_BARRIER] = NULL;
@@ -3053,7 +3053,7 @@ static int _mpc_threads_ng_engine_barrier_wait(mpc_thread_barrier_t *pbarrier)
 			DL_DELETE(barrier->blocked, list);
 			if(list->sched->status != _mpc_threads_ng_engine_running)
 			{
-				sctk_nodebug("Sched %p pass barrier %p", list->sched, barrier);
+				mpc_common_nodebug("Sched %p pass barrier %p", list->sched, barrier);
 				_mpc_threads_ng_engine_wake(list->sched);
 			}
 			list = barrier->blocked;
@@ -3483,7 +3483,7 @@ static inline void __handle_blocked_threads(_mpc_threads_ng_engine_t threadp,
 			break;
 
 		default:
-			sctk_nodebug("No saved lock, thread %p has been wakened", th);
+			mpc_common_nodebug("No saved lock, thread %p has been wakened", th);
 	}
 }
 
@@ -3495,7 +3495,7 @@ static int _mpc_threads_ng_engine_kill(_mpc_threads_ng_engine_t threadp, int val
 	 *    EINVAL An invalid signal was specified
 	 */
 
-	sctk_nodebug("_mpc_threads_ng_engine_kill %p %d set", threadp, val);
+	mpc_common_nodebug("_mpc_threads_ng_engine_kill %p %d set", threadp, val);
 
 	_mpc_threads_ng_engine_p_t *th = threadp;
 	if(th->sched.status == _mpc_threads_ng_engine_joined ||
@@ -4038,15 +4038,15 @@ static void ___threads_generic_start_func(void *arg)
 
 	thread = arg;
 
-	sctk_nodebug("Before yield %p", &(thread->sched) );
+	mpc_common_nodebug("Before yield %p", &(thread->sched) );
 	/*It is mandatory to have two yields for pthread mode*/
 	_mpc_threads_ng_engine_self_set(thread);
 	_mpc_threads_ng_engine_sched_yield(&(thread->sched) );
 	_mpc_threads_ng_engine_sched_yield(&(thread->sched) );
 
-	sctk_nodebug("Start %p %p", &(thread->sched), thread->attr.arg);
+	mpc_common_nodebug("Start %p %p", &(thread->sched), thread->attr.arg);
 	thread->attr.return_value = thread->attr.start_routine(thread->attr.arg);
-	sctk_nodebug("End %p %p", &(thread->sched), thread->attr.arg);
+	mpc_common_nodebug("End %p %p", &(thread->sched), thread->attr.arg);
 
 	/* Handel Exit */
 	if(thread->attr.scope == SCTK_THREAD_SCOPE_SYSTEM)
@@ -4096,7 +4096,7 @@ int _mpc_threads_ng_engine_user_create(_mpc_threads_ng_engine_t *threadp,
 	__attr_init_signals(&lattr);
 	__alloc_blocking_lock_table(&lattr);
 
-	sctk_nodebug("Create %p", arg);
+	mpc_common_nodebug("Create %p", arg);
 
 	if(arg != NULL)
 	{
@@ -4205,7 +4205,7 @@ int _mpc_threads_ng_engine_user_create(_mpc_threads_ng_engine_t *threadp,
 	{
 		thread_id->attr.start_routine = start_routine;
 		thread_id->attr.arg           = arg;
-		sctk_nodebug("STACK %p STACK SIZE %lu", stack, stack_size);
+		mpc_common_nodebug("STACK %p STACK SIZE %lu", stack, stack_size);
 		sctk_makecontext(&(thread_id->sched.ctx),
 		                 (void *)thread_id,
 		                 ___threads_generic_start_func, stack, stack_size);
@@ -4466,7 +4466,7 @@ static int _mpc_threads_ng_engine_setschedprio(_mpc_threads_ng_engine_t threadp,
 		return ESRCH;
 	}
 
-	sctk_nodebug("Only Priority 0 handled in current version of MPC, priority remains the same as before the call");
+	mpc_common_nodebug("Only Priority 0 handled in current version of MPC, priority remains the same as before the call");
 
 	return 0;
 }
@@ -4516,7 +4516,7 @@ static inline void __zombies_handle(_mpc_threads_ng_engine_scheduler_generic_t *
 	_mpc_threads_ng_engine_scheduler_generic_t *schedg = th;
 
 
-	sctk_nodebug("th %p to be freed", th->sched->th);
+	mpc_common_nodebug("th %p to be freed", th->sched->th);
 	if(schedg->sched->th->attr.user_stack == NULL)
 	{
 		sctk_free(schedg->sched->th->attr.stack);
@@ -4545,7 +4545,7 @@ static int _mpc_threads_ng_engine_join(_mpc_threads_ng_engine_t threadp, void **
 	current = sched->th;
 	sctk_assert(&current->sched == sched);
 
-	sctk_nodebug("Join Thread %p", th);
+	mpc_common_nodebug("Join Thread %p", th);
 
 	/* test cancel */
 	_mpc_threads_ng_engine_check_signals(0);
@@ -4568,14 +4568,14 @@ static int _mpc_threads_ng_engine_join(_mpc_threads_ng_engine_t threadp, void **
 		}
 
 		status = (_mpc_threads_ng_engine_thread_status_t *)&(th->sched.status);
-		sctk_nodebug("TO Join Thread %p", th);
+		mpc_common_nodebug("TO Join Thread %p", th);
 		_mpc_threads_ng_engine_wait_for_value_and_poll( (volatile int *)status,
 		                                              _mpc_threads_ng_engine_zombie, NULL, NULL);
 
 		/* test cancel */
 		_mpc_threads_ng_engine_check_signals(0);
 
-		sctk_nodebug("Joined Thread %p", th);
+		mpc_common_nodebug("Joined Thread %p", th);
 
 		if(val != NULL)
 		{
@@ -4613,13 +4613,13 @@ static void _mpc_threads_ng_engine_exit(void *retval)
 
 	current->attr.return_value = retval;
 
-	sctk_nodebug("thread %p key liberation", current);
+	mpc_common_nodebug("thread %p key liberation", current);
 	/*key liberation */
 	__keys_delete_all(&(current->keys) );
 
-	sctk_nodebug("thread %p key liberation done", current);
+	mpc_common_nodebug("thread %p key liberation done", current);
 
-	sctk_nodebug("thread %p ends", current);
+	mpc_common_nodebug("thread %p ends", current);
 
 	_mpc_threads_ng_engine_thread_status(&(current->sched), _mpc_threads_ng_engine_zombie);
 	_mpc_threads_ng_engine_sched_yield(&(current->sched) );
