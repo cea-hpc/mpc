@@ -48,7 +48,7 @@ append_to "CFLAGS" "-fPIC"
 # Notify CLI parser that we are in FORTRAN
 set_fortran
 
-parse_cli_args $@
+parse_cli_args "$@"
 
 # It is not possible to change CC for Fortran
 

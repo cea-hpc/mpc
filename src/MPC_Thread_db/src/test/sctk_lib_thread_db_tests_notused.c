@@ -11,10 +11,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#if defined(LIB_THREAD_DB)
-
-#if defined(MPC_Thread_db)
-
 #include "sctk_lib_thread_db_tests.h"
 
 #ifdef ENABLE_TEST
@@ -591,5 +587,3 @@ td_err_e test_td_ta_get_nthreads (const td_thragent_t *ta, int *np) {
 }
 
 #endif /* ENABLE_TEST */
-#endif /* MPC_Thread_db*/
-#endif /* LIB_THREAD_DB*/

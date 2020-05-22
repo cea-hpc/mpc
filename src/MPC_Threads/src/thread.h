@@ -35,6 +35,8 @@
 #include "sctk_alloc.h"
 #include "mpc_thread.h"
 
+#include "thread_dbg.h"
+
 #include "sctk_dummy.h"
 
 #ifdef __cplusplus

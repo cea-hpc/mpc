@@ -21,14 +21,11 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#if !(defined(TDB_i686_ARCH_TDB) || defined(TDB_x86_64_ARCH_TDB))
-#undef LIB_THREAD_DB
+#include <mpc_arch.h>
+
+#if !(defined(MPC_I686_ARCH) || defined(MPC_X86_64_ARCH))
 #warning "Architecture not supported (no GDB support)"
 #endif
-
-#ifdef LIB_THREAD_DB
-
-#if defined(MPC_Thread_db)
 
 #include "sctk_lib_thread_db.h"
 
@@ -1869,7 +1866,7 @@ exit:
 /** **************  REGISTERS TRANSLATION  ************************************** **/
 /** ***************************************************************************** **/
 
-#if defined(TDB_i686_ARCH_TDB)
+#if defined(MPC_I686_ARCH)
 void td_utils_context_to_prgregset(const td_thragent_t *ta,
 				   psaddr_t *context, prgregset_t prgregset) {
   prgregset[EBX] = (long) context[ta->reg_offsets.off_ebx] ;         /* EBX */
@@ -1888,7 +1885,7 @@ void td_utils_prgregset_to_context(const td_thragent_t *ta,
   context[ta->reg_offsets.off_eip] = (psaddr_t) prgregset[EIP]  ;         /* EIP */
 }
 
-#elif defined(TDB_x86_64_ARCH_TDB)
+#elif defined(MPC_X86_64_ARCH)
 void td_utils_context_to_prgregset(const td_thragent_t *ta,
 				   psaddr_t *context, prgregset_t prgregset) {
   prgregset[RBX] = (long) context[ta->reg_offsets.off_rbx] ; 
@@ -2181,7 +2178,3 @@ td_err_e td_thr_tlsbase (const td_thrhandle_t *th,
   fprintf(stderr,"ERROR in td_thr_tlsbase %p %d tls %p %p\n",th,__modid,tls, tls_level);
   return TD_OK;
 }
-
-#endif /*SCTK_USE_THREAD_DEBUG*/
-#endif /*LIB_THREAD_DB*/
-

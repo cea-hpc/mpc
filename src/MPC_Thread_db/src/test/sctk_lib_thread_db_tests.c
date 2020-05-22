@@ -11,10 +11,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#if defined(LIB_THREAD_DB)
-
-#if defined(MPC_Thread_db) 
-
 #include "sctk_lib_thread_db_tests.h"
 
 #ifdef ENABLE_TEST
@@ -424,5 +420,3 @@ int test_td_check_thread_eq(const td_thrinfo_t *info1, const td_thrinfo_t *info2
 }
 
 #endif /*enable tests*/
-#endif /*mpc_debugger*/
-#endif /*lib thread_db*/

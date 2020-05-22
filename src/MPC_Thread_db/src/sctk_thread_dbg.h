@@ -27,61 +27,24 @@ extern "C"
 {
 #endif
 
-#include "mpc_config.h"
-#include "mpc_thread.h"
+sctk_thread_data_t *;
 
-#if defined(TDB_i686_ARCH_TDB) || defined(TDB_x86_64_ARCH_TDB)
-#define SCTK_USE_THREAD_DEBUG
-#else
-#warning "Architecture not supported"
-#endif
+void sctk_thread_add(sctk_thread_data_t *item, void *tid);
+void sctk_thread_remove(sctk_thread_data_t *item);
+int sctk_enable_lib_thread_db(void);
+int sctk_init_thread_debug(sctk_thread_data_t *item);
 
-#if defined(SCTK_USE_THREAD_DEBUG)
+struct sctk_ethread_per_thread_s;
 
-  /** ** **/
-/*   #include <thread_db.h> */
-/*   #include <sys/syscall.h> */
-/*   #include "tdb_remote.h" */
-  /** **/
+void sctk_refresh_thread_debug(struct sctk_ethread_per_thread_s *tid, sctk_thread_status_t s);
+void sctk_refresh_thread_debug_migration(struct sctk_ethread_per_thread_s *tid);
+int sctk_init_idle_thread_dbg(void *tid, void *start_fact);
+int sctk_free_idle_thread_dbg(void *tid);
+int sctk_report_creation(void *tid);
+int sctk_report_death(void *tid);
 
-  void sctk_thread_add (sctk_thread_data_t * item, void* tid);
-  void sctk_thread_remove (sctk_thread_data_t * item);
-
-  /** ** **/
-  int sctk_enable_lib_thread_db (void) ;
-    
-  int sctk_init_thread_debug (sctk_thread_data_t *item) ;
-  struct sctk_ethread_per_thread_s;
-  void sctk_refresh_thread_debug (struct sctk_ethread_per_thread_s *tid, sctk_thread_status_t s) ;
-  void sctk_refresh_thread_debug_migration (struct sctk_ethread_per_thread_s *tid);
-  
-  int sctk_init_idle_thread_dbg (void *tid, void *start_fact) ;  
-  int sctk_free_idle_thread_dbg (void *tid) ;
-
-  int sctk_report_creation (void *tid) ;
-  int sctk_report_death (void *tid) ;
-  /** ** **/
-  
-#else
-#define sctk_thread_add(a, b) (void)(0)
-#define sctk_thread_remove(a) (void)(0)
-
-/** ** **/
-#define sctk_enable_lib_thread_db() (void)(0)
-  
-#define sctk_init_thread_debug(a) (void)(0)
-#define sctk_refresh_thread_debug(a,b) (void)(0)
-#define sctk_refresh_thread_debug_migration(a) (void)(0)
-
-#define sctk_init_idle_thread_dbg(a,b) (void)(0)
-#define sctk_free_idle_thread_dbg(a) (void)(0)
-  
-#define sctk_report_creation(a) (void)(0) 
-#define sctk_report_death(a) (void) (0)
-  /** **/
-#endif
 
 #ifdef __cplusplus
-}				/* end of extern "C" */
+}                               /* end of extern "C" */
 #endif
 #endif

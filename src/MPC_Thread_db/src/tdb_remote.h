@@ -103,7 +103,7 @@ extern "C"
   } tdb_thread_debug_t ;
 
 
-#if defined(TDB_i686_ARCH_TDB)
+#if defined(MPC_I686_ARCH)
 #include <sys/reg.h> 
   #define TDB_PC EIP
   #define TDB_SP UESP
@@ -115,7 +115,7 @@ extern "C"
     size_t off_ebx ;
     size_t size ;
   } register_offsets_t ;
-#elif defined(TDB_x86_64_ARCH_TDB)
+#elif defined(MPC_X86_64_ARCH)
 #include <sys/reg.h> 
   #define TDB_PC RIP
   #define TDB_SP RSP
@@ -318,7 +318,7 @@ extern "C"
   }
 
   /* ******************************************************************/
-#if defined(TDB_i686_ARCH_TDB)
+#if defined(MPC_I686_ARCH)
   static inline tdb_err_e rtdb_set_eip_offset (size_t offset) {
     rtdb_reg_offsets.off_eip = offset ;
     
@@ -364,7 +364,7 @@ extern "C"
     rtdb_log ("%s -> %d, size = %d", __FUNCTION__, offset, rtdb_reg_offsets.size);
     return TDB_OK ;
   }
-#elif defined(TDB_x86_64_ARCH_TDB) 
+#elif defined(MPC_X86_64_ARCH) 
   static inline tdb_err_e rtdb_set_rbx_offset (size_t offset) {
     rtdb_reg_offsets.off_rbx = offset ;
     

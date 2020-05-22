@@ -40,6 +40,7 @@
 #include "ethread_engine.h"
 #include "sctk_alloc.h"
 #include "kthread.h"
+#include "thread_dbg.h"
 
 #ifdef MPC_Thread_db
 #include "sctk_thread_dbg.h"

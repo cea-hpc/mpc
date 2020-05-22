@@ -21,10 +21,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef LIB_THREAD_DB
-
-#if defined(MPC_Thread_db) 
-
 #include "sctk_lib_thread_db.h"
 
 /** ***************************************************************************** **/
@@ -256,6 +252,3 @@ td_err_e td_thr_sleepinfo(const td_thrhandle_t *th, td_synchandle_t *sh_p) {
 }
 
 #endif /*SunOS*/
-
-#endif /*MPC_Thread_db*/
-#endif /*lib_thread_db*/

@@ -41,6 +41,6 @@ LDFLAGS=$("${MPC_INSTALL_PREFIX}/bin/mpc_ldflags")
 # shellcheck source=/dev/null
 . "${MPC_SHARE_DIR}/mpc_compiler_common.sh"
 
-parse_cli_args $@
+parse_cli_args "$@"
 
 run_compiler
