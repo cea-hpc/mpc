@@ -687,7 +687,13 @@ fi
 AC_MSG_CHECKING([support for libunwind library])
 mpc_libunwind="no"
 
-MPC_DETECT_DEPENDENCY([libunwind.h], [unwind], [unw_init_local], [UNW])
+# First use the pkgconfig naming scheme
+MPC_DETECT_DEPENDENCY([libunwind.h], [libunwind], [unw_init_local], [UNW])
+
+if test "x$mpc_dep_found" = "xno"; then
+        # Try to find the library
+        MPC_DETECT_DEPENDENCY([libunwind.h], [unwind], [unw_init_local], [UNW])
+fi
 
 #AC_MSG_CHECKING([support for libunwind library])
 if test "x$mpc_dep_found" = "xyes"; then
@@ -2171,8 +2177,11 @@ fi
 
 #### Shell color
 AC_ARG_ENABLE([shell-colors], [AS_HELP_STRING([--enable-shell-colors], [Activate Color Output in MPC])],
-[AC_DEFINE([MPC_ENABLE_SHELL_COLORS], [1], [MPC Colored output])], [: #Disabled shell-colors])
+[mpc_shell_color=$enableval], [mpc_shell_color="yes"])
 
+if test "x${mpc_shell_color}" = "xyes"; then
+        AC_DEFINE([MPC_ENABLE_SHELL_COLORS], [1], [MPC Colored output])
+fi
 
 #### CMA support
 AC_ARG_ENABLE([cma], [AS_HELP_STRING([--enable-cma], [Activate Cross Memory Attach for SHM communications])],
