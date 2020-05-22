@@ -23,7 +23,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <sctk_ib_toolkit.h>
 #include <sctk_route.h>
 #include <sctk_net_tools.h>
@@ -184,7 +184,7 @@ sctk_endpoint_t * sctk_on_demand_connection_ib( struct sctk_rail_info_s * rail ,
 	/* If route not connected, so we wait for until it is connected */
 	while ( sctk_endpoint_get_state ( tmp ) != STATE_CONNECTED )
 	{
-	//	sctk_warning("YA WAIT");
+	//	mpc_common_debug_warning("YA WAIT");
 		
 		
 		sctk_network_notify_idle_message();
@@ -222,7 +222,7 @@ int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 			break;
 
 		default:
-			sctk_error ( "Got wrong protocol: %d %p", IBUF_GET_PROTOCOL ( ibuf->buffer ), &IBUF_GET_PROTOCOL ( ibuf->buffer ) );
+			mpc_common_debug_error ( "Got wrong protocol: %d %p", IBUF_GET_PROTOCOL ( ibuf->buffer ), &IBUF_GET_PROTOCOL ( ibuf->buffer ) );
 			MPC_CRASH();
 			break;
 	}
@@ -905,7 +905,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 
 	if ( mpc_common_get_process_rank() == 0 )
 	{
-		fprintf ( stderr, SCTK_COLOR_RED_BOLD ( WARNING: MPC debug mode activated. Your job * MAY * be * VERY * slow! ) "\n" );
+		fprintf ( stderr, MPC_COLOR_RED_BOLD ( WARNING: MPC debug mode activated. Your job * MAY * be * VERY * slow! ) "\n" );
 	}
 
 #endif

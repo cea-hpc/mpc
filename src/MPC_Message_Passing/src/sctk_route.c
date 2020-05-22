@@ -21,7 +21,7 @@
 /* ######################################################################## */
 
 
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <sctk_route.h>
 #include <sctk_reorder.h>
 #include <sctk_communicator.h>
@@ -96,7 +96,7 @@ int sctk_endpoint_is_low_memory_mode_local ( sctk_endpoint_t *tmp )
 void sctk_endpoint_set_low_memory_mode_local ( sctk_endpoint_t *tmp, int low )
 {
 	if ( low )
-		sctk_warning ( "Local process %d set to low level memory", tmp->dest );
+		mpc_common_debug_warning ( "Local process %d set to low level memory", tmp->dest );
 
 	OPA_store_int ( &tmp->low_memory_mode_local, low );
 }
@@ -108,7 +108,7 @@ int sctk_endpoint_is_low_memory_mode_remote ( sctk_endpoint_t *tmp )
 void sctk_endpoint_set_low_memory_mode_remote ( sctk_endpoint_t *tmp, int low )
 {
 	if ( low )
-		sctk_warning ( "Remote process %d set to low level memory", tmp->dest );
+		mpc_common_debug_warning ( "Remote process %d set to low level memory", tmp->dest );
 
 	OPA_store_int ( &tmp->low_memory_mode_remote, low );
 }

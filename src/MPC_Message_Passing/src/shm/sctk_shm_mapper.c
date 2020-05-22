@@ -31,7 +31,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 #ifdef MPC_THREAD
 #include "mpcthread.h"
@@ -187,7 +187,7 @@ SCTK_STATIC void sctk_shm_mapper_barrier( sctk_shm_mapper_sync_header_t * sync_h
           OPA_read_write_barrier();
         }
 
-        // sctk_error("VAL %d",OPA_load_int( &sync_header->barrier_cnt
+        // mpc_common_debug_error("VAL %d",OPA_load_int( &sync_header->barrier_cnt
         // ) );
 
         // loop until pids equal to 0

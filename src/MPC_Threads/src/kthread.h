@@ -23,7 +23,7 @@
 #define KTHREAD_H_
 
 #include "mpc_threads_config.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 #include <unistd.h>
 #include <signal.h>

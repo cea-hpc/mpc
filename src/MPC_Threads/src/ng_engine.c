@@ -4779,7 +4779,7 @@ static int _mpc_threads_ng_engine_yield()
 /***************************************/
 static void _mpc_threads_ng_engine_init(char *thread_type, char *scheduler_type, int vp_number)
 {
-	sctk_only_once();
+	mpc_common_debug_only_once();
 	_mpc_threads_ng_engine_self_data = sctk_malloc(sizeof(_mpc_threads_ng_engine_p_t) );
 
 	_mpc_threads_ng_engine_check_size(_mpc_threads_ng_engine_t, mpc_thread_t);

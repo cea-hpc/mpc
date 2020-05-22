@@ -332,7 +332,7 @@ void sctk_ib_qp_destroy ( sctk_ib_qp_t *remote )
 	/* destroy the QP */
 	int ret = ibv_destroy_qp ( remote->qp );
 	if(ret)
-		sctk_fatal("Failure to destroy QP: %s", strerror(ret));
+		mpc_common_debug_fatal("Failure to destroy QP: %s", strerror(ret));
 	/* We do not remove the entry. */
 	sctk_free(remote); 
 }
@@ -547,7 +547,7 @@ struct ibv_srq *sctk_ib_srq_init ( struct sctk_ib_rail_info_s *rail_ib, struct i
 	if ( !device->srq )
 	{
 		SCTK_IB_ABORT_WITH_ERRNO ( "Cannot create Shared Received Queue" );
-		sctk_abort();
+		mpc_common_debug_abort();
 	}
 
 	//  config->max_srq_ibufs_posted = attr->attr.max_wr;
@@ -563,7 +563,7 @@ void sctk_ib_srq_free(sctk_ib_rail_info_t *rail_ib)
 	LOAD_DEVICE (rail_ib);
 	int ret = ibv_destroy_srq(device->srq);
 	if(ret)
-		sctk_fatal("Failure to destroy the SRQ: %s", strerror(ret));
+		mpc_common_debug_fatal("Failure to destroy the SRQ: %s", strerror(ret));
 	device->srq = NULL;
 }
 
@@ -615,7 +615,7 @@ char * sctk_ib_qp_print_state( struct ibv_qp *qp)
 			case IBV_QPS_UNKNOWN: return qp_states[7]; break;
 		}
 	}
-	sctk_fatal("Unable to query the QP !");
+	mpc_common_debug_fatal("Unable to query the QP !");
 	return NULL;
 }
 	
@@ -847,13 +847,13 @@ static inline void __send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
 		wait_send_arg.ibuf = ibuf;
 		wait_send_arg.rail_ib = rail_ib;
 
-		//#warning "We should remove these sctk_error and use a counter instead"
-		sctk_warning ( "[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d)", rail_ib->rail->rail_number,
+		//#warning "We should remove these mpc_common_debug_error and use a counter instead"
+		mpc_common_debug_warning ( "[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d)", rail_ib->rail->rail_number,
 		               remote->rank, sctk_ib_qp_get_pending_data ( remote ) );
 		mpc_thread_wait_for_value_and_poll ( &wait_send_arg.flag, 1,
 		                                      ( void ( * ) ( void * ) ) wait_send, &wait_send_arg );
 
-		sctk_warning ( "[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d) DONE", rail_ib->rail->rail_number,
+		mpc_common_debug_warning ( "[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d) DONE", rail_ib->rail->rail_number,
 		               remote->rank, sctk_ib_qp_get_pending_data ( remote ) );
 		sctk_nodebug ( "[%d] NO LOCK QP message sent to remote %d", rail_ib->rail->rail_number, remote->rank );
 	}

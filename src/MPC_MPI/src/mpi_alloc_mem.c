@@ -135,7 +135,7 @@ int mpc_MPI_allocmem_pool_init()
 		{
 			if ( !cw_rank )
 			{
-				sctk_warning( "Shared-Node memory RMA are not supported when C/R is enabled" );
+				mpc_common_debug_warning( "Shared-Node memory RMA are not supported when C/R is enabled" );
 			}
 
 			*( ( int * )&sctk_runtime_config_get()->modules.rma.alloc_mem_pool_enable ) = 0;

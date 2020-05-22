@@ -21,7 +21,7 @@
 /* ######################################################################## */
 
 /********************************* INCLUDES *********************************/
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include "runtime_config_selectors.h"
 
 /********************************  CONSTS  **********************************/
@@ -84,7 +84,7 @@ bool sctk_runtime_config_xml_selector_check(xmlNodePtr selector)
 	}
 	else
 	{
-		sctk_fatal("Invalid selector in mappings : %s.",selector->name);
+		mpc_common_debug_fatal("Invalid selector in mappings : %s.",selector->name);
 		return false;
 	}
 }

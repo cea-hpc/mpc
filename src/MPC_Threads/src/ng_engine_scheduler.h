@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpc_thread.h"
 #include "mpc_common_spinlock.h"
 #include "thread_ptr.h"

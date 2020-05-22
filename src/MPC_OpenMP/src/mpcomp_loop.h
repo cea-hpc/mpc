@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include <mpc_common_types.h>
 
 #include "mpcomp_types.h"

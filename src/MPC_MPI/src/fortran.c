@@ -3,7 +3,7 @@
 #include <mpc_common_types.h>
 #include <mpc_common_spinlock.h>
 #include <mpc_common_flags.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 
 #include <uthash.h>
 

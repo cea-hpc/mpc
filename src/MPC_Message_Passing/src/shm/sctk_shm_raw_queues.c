@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "sctk_shm_raw_queues.h"
 #include "sctk_shm_raw_queues_helpers.h"
 #include "sctk_shm_raw_queues_internals.h"
@@ -69,7 +69,7 @@ sctk_shm_get_queue_by_type(sctk_shm_list_type_t type, int rank)
           break;
         default:
             printf("PROBLEM\n");
-            sctk_abort();
+            mpc_common_debug_abort();
     }
     return queue; 
 }

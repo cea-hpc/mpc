@@ -31,7 +31,7 @@ double mpc_arch_get_timestamp_gettimeofday()
 	return tp.tv_sec * 1e6 + tp.tv_usec;
 }
 
-#if defined(SCTK_ia64_ARCH_SCTK)
+#if defined(MPC_IA64_ARCH)
 static inline double __get_timestamp()
 {
 	unsigned long t;
@@ -40,7 +40,7 @@ static inline double __get_timestamp()
 	return (double)t;
 }
 
-#elif defined(SCTK_i686_ARCH_SCTK)
+#elif defined(MPC_I686_ARCH)
 static inline double __get_timestamp()
 {
 	unsigned long long t;
@@ -49,7 +49,7 @@ static inline double __get_timestamp()
 	return (double)t;
 }
 
-#elif defined(SCTK_x86_64_ARCH_SCTK)
+#elif defined(MPC_X86_64_ARCH)
 static inline double __get_timestamp()
 {
 	unsigned int  a;
@@ -61,7 +61,7 @@ static inline double __get_timestamp()
 	return (double)t;
 }
 
-#elif defined(SCTK_arm_ARCH_SCTK)
+#elif defined(MPC_ARM_ARCH)
 static inline double __get_timestamp()
 {
 	return mpc_arch_get_timestamp_gettimeofday();

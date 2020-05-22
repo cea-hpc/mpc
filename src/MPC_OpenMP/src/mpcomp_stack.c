@@ -22,7 +22,7 @@
 /* ######################################################################## */
 
 #if 0 // NO MORE USED
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpcomp_types.h"
 #include "mpcomp_stack.h"
 

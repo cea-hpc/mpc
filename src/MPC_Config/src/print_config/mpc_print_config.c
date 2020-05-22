@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <mpc_config.h>
 #include <mpc_runtime_config.h>
 #include <mpc_config_struct.h>

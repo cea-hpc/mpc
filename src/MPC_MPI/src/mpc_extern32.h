@@ -24,7 +24,7 @@
 #define MPC_EXTERN32_H
 
 #include <string.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 
 #include "comm_lib.h"
 #include "mpc_common_types.h"
@@ -306,7 +306,7 @@ static inline size_t MPC_Extern32_common_type_size( mpc_lowcomm_datatype_t commo
 {
 	if( !_mpc_dt_is_common( common_type ) )
 	{
-		sctk_fatal( "MPC_Extern32_common_type_size only handle common types");
+		mpc_common_debug_fatal( "MPC_Extern32_common_type_size only handle common types");
 	}
 
 
@@ -385,7 +385,7 @@ static inline int MPC_Unsigned_type( mpc_lowcomm_datatype_t common_type )
 {
 	if( !_mpc_dt_is_common( common_type ) )
 	{
-		sctk_fatal( "MPC_Extern32_common_type_size only handle common types");
+		mpc_common_debug_fatal( "MPC_Extern32_common_type_size only handle common types");
 	}
 
 

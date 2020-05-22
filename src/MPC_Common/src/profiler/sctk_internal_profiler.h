@@ -23,7 +23,7 @@
 #define SCTK_INTERNAL_PROFILER
 
 #include <mpc_common_types.h>
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "sctk_profiler_array.h"
 #include "sctk_profile_meta.h"
 #include "mpc_common_asm.h"

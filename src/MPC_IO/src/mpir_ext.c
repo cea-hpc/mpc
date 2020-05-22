@@ -1,6 +1,6 @@
 #include "mpir_ext.h"
 
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <sctk_alloc.h>
 
 #include <mpc_thread.h>
@@ -45,7 +45,7 @@ int MPIR_Err_create_code_valist(__UNUSED__ int lastcode, __UNUSED__ int fatal, c
 		{
 			vsnprintf(&buf[idx], 1023 - idx, specific_msg, Argp);
 		}
-		sctk_error("%s", buf);
+		mpc_common_debug_error("%s", buf);
 		sctk_free(buf);
 	}
 	return lastcode;
@@ -85,7 +85,7 @@ void MPIR_Get_file_error_routine(__UNUSED__ MPI_Errhandler a,
 
 int MPIR_Abort(MPI_Comm comm, int mpi_errno, int exit_code, const char *error_msg)
 {
-	sctk_error("ERRNO %d EXIT %d MSG: %s", mpi_errno, exit_code, error_msg);
+	mpc_common_debug_error("ERRNO %d EXIT %d MSG: %s", mpi_errno, exit_code, error_msg);
 	PMPI_Abort(comm, exit_code);
 }
 
@@ -285,7 +285,7 @@ int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
     break;
 
   case MPC_DATATYPES_UNKNOWN:
-    sctk_fatal("CANNOT PROCESS AN UNKNOWN DATATYPE");
+    mpc_common_debug_fatal("CANNOT PROCESS AN UNKNOWN DATATYPE");
     break;
   }
 
@@ -294,7 +294,7 @@ int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
 
 int MPIR_Type_flatten(MPI_Datatype type, MPI_Aint **off_array,
                       MPI_Aint **size_array, MPI_Aint *array_len_p) {
-  sctk_error("Hello flatten");
+  mpc_common_debug_error("Hello flatten");
   return MPCX_Type_flatten(type, off_array, size_array, array_len_p);
 }
 
@@ -324,7 +324,7 @@ MPI_Aint MPCX_Type_get_count(MPI_Datatype datatype) {
     break;
 
   case MPC_DATATYPES_UNKNOWN:
-    sctk_fatal("CANNOT PROCESS AN UNKNOWN DATATYPE");
+    mpc_common_debug_fatal("CANNOT PROCESS AN UNKNOWN DATATYPE");
     return 0;
     break;
   }

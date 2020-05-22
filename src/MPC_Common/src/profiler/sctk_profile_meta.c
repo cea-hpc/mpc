@@ -25,7 +25,7 @@
 #include <mpc_common_rank.h>
 #include <mpc_common_spinlock.h>
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpc_common_asm.h"
 
 

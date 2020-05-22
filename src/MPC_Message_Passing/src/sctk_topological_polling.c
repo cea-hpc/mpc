@@ -77,7 +77,7 @@ static inline hwloc_obj_type_t sctk_topological_polling_trigget_to_hwloc_type( s
 		
 		default:
 		case SCTK_POLL_NOT_SET:
-			sctk_fatal("Bad polling trigger provided");
+			mpc_common_debug_fatal("Bad polling trigger provided");
 		break;
 	}
 	return HWLOC_OBJ_MACHINE;
@@ -107,7 +107,7 @@ sctk_topological_polling_set_t sctk_rail_convert_polling_set_from_config( enum r
 			return SCTK_POLL_MACHINE;
 		break;
 		default:
-			sctk_fatal("Error converting polling value from config");
+			mpc_common_debug_fatal("Error converting polling value from config");
 	}
 	return SCTK_POLL_MACHINE;
 }
@@ -157,7 +157,7 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 
 		default:
 		case SCTK_POLL_NOT_SET:
-			sctk_fatal("Bad polling range provided");
+			mpc_common_debug_fatal("Bad polling range provided");
 		break;
 	}
 
@@ -213,7 +213,7 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 	}
 	else
 	{
-		sctk_warning("Avoided a possible overflow when creating a topological polling tree");
+		mpc_common_debug_warning("Avoided a possible overflow when creating a topological polling tree");
 	}
 	hwloc_bitmap_foreach_end();
 	

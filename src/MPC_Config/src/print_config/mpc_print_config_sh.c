@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mpc_common_types.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <runtime_config_walk.h>
 #include <runtime_config_printer.h>
 #include "mpc_print_config_sh.h"
@@ -113,14 +113,14 @@ void display_handler_sh(enum sctk_runtime_config_walk_type type,
 					print_var_name_sh(state,name,level);
 					state->is_simple_array = true;
 				} else {
-					sctk_warning("Can't display array of struct in sh compatible output mode.");
+					mpc_common_debug_warning("Can't display array of struct in sh compatible output mode.");
 				}
 				break;
 			case SCTK_RUNTIME_CONFIG_WALK_STRUCT:
 				state->names[level] = name;
 				break;
 			case SCTK_RUNTIME_CONFIG_WALK_UNION:
-				sctk_warning("Can't display union in sh compatible output mode.");
+				mpc_common_debug_warning("Can't display union in sh compatible output mode.");
 				break;
 		}
 	}

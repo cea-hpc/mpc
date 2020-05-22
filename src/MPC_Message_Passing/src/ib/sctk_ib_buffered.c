@@ -237,7 +237,7 @@ void sctk_ib_buffered_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
 			break;
 
 		default:
-			sctk_error ( "Got mask %d", entry->status );
+			mpc_common_debug_error ( "Got mask %d", entry->status );
 			not_reachable();
 	}
 }

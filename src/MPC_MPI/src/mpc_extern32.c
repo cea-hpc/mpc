@@ -92,7 +92,7 @@ static inline void uinteger_8_convert( uint8_t in, void * out, size_t target )
 			uinteger_8_64( in, (uint64_t *)out );
 		break;
 		default:
-			sctk_fatal("No such converter 8 to %d", target );
+			mpc_common_debug_fatal("No such converter 8 to %d", target );
 	}	
 }
 
@@ -129,7 +129,7 @@ static inline void uinteger_16_convert( uint16_t in, void * out, size_t target )
 			uinteger_16_64( in, (uint64_t *)out );
 		break;
 		default:
-			sctk_fatal("No such converter 16 to %d", target );
+			mpc_common_debug_fatal("No such converter 16 to %d", target );
 	}	
 }
 
@@ -164,7 +164,7 @@ static inline void uinteger_32_convert( uint32_t in, void * out, size_t target )
 			uinteger_32_64( in, (uint64_t *)out );
 		break;
 		default:
-			sctk_fatal("No such converter 16 to %d", target );
+			mpc_common_debug_fatal("No such converter 16 to %d", target );
 	}	
 }
 
@@ -199,7 +199,7 @@ static inline void uinteger_64_convert( uint64_t in, void * out, size_t target )
 			uinteger_64_32( in, (uint32_t *)out );
 		break;
 		default:
-			sctk_fatal("No such converter 16 to %d", target );
+			mpc_common_debug_fatal("No such converter 16 to %d", target );
 	}	
 }
 
@@ -234,7 +234,7 @@ static inline void integer_8_convert( int8_t in, void * out, size_t target )
 			integer_8_64( in, (int64_t *)out );
 		break;
 		default:
-			sctk_fatal("No such converter 8 to %d", target );
+			mpc_common_debug_fatal("No such converter 8 to %d", target );
 	}	
 }
 
@@ -271,7 +271,7 @@ static inline void integer_16_convert( int16_t in, void * out, size_t target )
 			integer_16_64( in, (int64_t *)out );
 		break;
 		default:
-			sctk_fatal("No such converter 16 to %d", target );
+			mpc_common_debug_fatal("No such converter 16 to %d", target );
 	}	
 }
 
@@ -306,7 +306,7 @@ static inline void integer_32_convert( int32_t in, void * out, size_t target )
 			integer_32_64( in, (int64_t *)out );
 		break;
 		default:
-			sctk_fatal("No such converter 16 to %d", target );
+			mpc_common_debug_fatal("No such converter 16 to %d", target );
 	}	
 }
 
@@ -341,7 +341,7 @@ static inline void integer_64_convert( int64_t in, void * out, size_t target )
 			integer_64_32( in, (int32_t *)out );
 		break;
 		default:
-			sctk_fatal("No such converter 16 to %d", target );
+			mpc_common_debug_fatal("No such converter 16 to %d", target );
 	}	
 }
 
@@ -404,7 +404,7 @@ static inline void MPC_Extern32_encode( mpc_lowcomm_datatype_t type, char * in, 
 {
 	if( !_mpc_dt_is_common(type) )
 	{
-		sctk_fatal("Cannot convert a non-common data-type");
+		mpc_common_debug_fatal("Cannot convert a non-common data-type");
 	}
 	
 	/* Prepare for width Conversion */
@@ -415,7 +415,7 @@ static inline void MPC_Extern32_encode( mpc_lowcomm_datatype_t type, char * in, 
 	{
 		if( sctk_is_float_datatype( type ) )
 		{
-			sctk_warning("UNEXPECTED: Float size conversion %d -> %d", type_size, type_extern_size );
+			mpc_common_debug_warning("UNEXPECTED: Float size conversion %d -> %d", type_size, type_extern_size );
 		}
 		else
 		{
@@ -470,7 +470,7 @@ static inline void MPC_Extern32_decode( mpc_lowcomm_datatype_t type, char * in, 
 	{
 		if( sctk_is_float_datatype( type ) )
 		{
-			sctk_warning("UNEXPECTED: Float size conversion %d -> %d", type_size, type_extern_size );
+			mpc_common_debug_warning("UNEXPECTED: Float size conversion %d -> %d", type_size, type_extern_size );
 		}
 		else
 		{

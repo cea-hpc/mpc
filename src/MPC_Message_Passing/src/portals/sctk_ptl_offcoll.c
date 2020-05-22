@@ -346,7 +346,7 @@ static inline void __sctk_ptl_offcoll_barrier_run(__UNUSED__ sctk_ptl_rail_info_
          */
 	sctk_ptl_ct_wait_thrs(*me_cnt_down, (size_t)(cnt_prev_ops + 1), &dummy);
 
-	/*sctk_warning("Barrier Done over idx = %d CPT=%d", pte->idx, cpt);*/
+	/*mpc_common_debug_warning("Barrier Done over idx = %d CPT=%d", pte->idx, cpt);*/
 }
 
 /**
@@ -520,7 +520,7 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 		get_me->match = SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops);
 		sctk_ptl_me_register(srail, get_me, pte);
 		sctk_assert(get_me);
-		/*sctk_error("INTERMEDIATE set a GET-ME match=%s SZ=%llu", __sctk_ptl_match_str(sctk_malloc(32), 32, SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops).raw), bytes);*/
+		/*mpc_common_debug_error("INTERMEDIATE set a GET-ME match=%s SZ=%llu", __sctk_ptl_match_str(sctk_malloc(32), 32, SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops).raw), bytes);*/
 	}
 	
 	/* compute number of chunks (fragmentation) needed to retrieve/expose */
@@ -543,7 +543,7 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 		{
 			size_t cur_sz = (chunk < rest) ? chunk_sz + 1 : chunk_sz;
 			sctk_assert((chunk+1) * cur_sz <= bytes);
-			/*sctk_error("intermediate emit %d GET-MD %s FROM=%llu TO=%llu SZ=%llu", chunk_nb, __sctk_ptl_match_str(sctk_malloc(32), 32, SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops).raw), cur_off, cur_off+cur_sz, chunk_sz);*/
+			/*mpc_common_debug_error("intermediate emit %d GET-MD %s FROM=%llu TO=%llu SZ=%llu", chunk_nb, __sctk_ptl_match_str(sctk_malloc(32), 32, SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops).raw), cur_off, cur_off+cur_sz, chunk_sz);*/
 			sctk_ptl_emit_trig_get(
 				get_md,
 				chunk_sz, /* chunk size */
@@ -593,15 +593,15 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 	/* Now, wait until completion of the bcast for the current process */
 	if(bnode->leaf)
 	{
-		/*sctk_warning("LEAF WAIT on %d...", chunk_nb);*/
+		/*mpc_common_debug_warning("LEAF WAIT on %d...", chunk_nb);*/
 		sctk_ptl_ct_wait_thrs(get_md->slot.md.ct_handle, chunk_nb, &dummy);
-		/*sctk_warning("LEAF WAIT DONE");*/
+		/*mpc_common_debug_warning("LEAF WAIT DONE");*/
 	}
 	else
 	{
-		/*sctk_warning("OTHERS WAIT on %d", (nb_children * chunk_nb));*/
+		/*mpc_common_debug_warning("OTHERS WAIT on %d", (nb_children * chunk_nb));*/
 		sctk_ptl_ct_wait_thrs(get_me->slot.me.ct_handle, (nb_children * chunk_nb), &dummy);
-		/*sctk_warning("OTHERS WAIT DONE");*/
+		/*mpc_common_debug_warning("OTHERS WAIT DONE");*/
 		sctk_ptl_ct_free(get_me->slot.me.ct_handle); /* Don't forget to free, to avoid starvation in the NIC */
 		sctk_ptl_me_release(get_me);
 		sctk_ptl_me_free(get_me, 0);
@@ -634,7 +634,7 @@ static inline void __sctk_ptl_offcoll_bcast_run(sctk_ptl_rail_info_t* srail, sct
 void sctk_ptl_offcoll_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
-	/*sctk_warning("PORTALS: EQS EVENT '%s' idx=%d, from %s, type=%s, prot=%s, match=%s,  sz=%llu, user=%p", sctk_ptl_event_decode(ev), ev.pt_index, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), ev.mlength, ev.user_ptr);*/
+	/*mpc_common_debug_warning("PORTALS: EQS EVENT '%s' idx=%d, from %s, type=%s, prot=%s, match=%s,  sz=%llu, user=%p", sctk_ptl_event_decode(ev), ev.pt_index, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), ev.mlength, ev.user_ptr);*/
 	UNUSED(rail);
 
 	switch(ev.type)
@@ -670,7 +670,7 @@ void sctk_ptl_offcoll_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			not_reachable();              /* have been disabled */
 			break;
 		default:
-			sctk_fatal("Portals ME event not recognized: %d", ev.type);
+			mpc_common_debug_fatal("Portals ME event not recognized: %d", ev.type);
 			break;
 	}
 }
@@ -683,7 +683,7 @@ void sctk_ptl_offcoll_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 void sctk_ptl_offcoll_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	//sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
-	/*sctk_warning("PORTALS: MDS EVENT '%s' from %s, type=%d, prot=%d",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), user_ptr->type, user_ptr->prot);*/
+	/*mpc_common_debug_warning("PORTALS: MDS EVENT '%s' from %s, type=%d, prot=%d",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), user_ptr->type, user_ptr->prot);*/
 	UNUSED(rail);
 
 	switch(ev.type)
@@ -697,7 +697,7 @@ void sctk_ptl_offcoll_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 		case PTL_EVENT_SEND: /* a Put() left the local process */
 			break;
 		default:
-			sctk_fatal("Unrecognized MD event: %d", ev.type);
+			mpc_common_debug_fatal("Unrecognized MD event: %d", ev.type);
 			break;
 	}
 }

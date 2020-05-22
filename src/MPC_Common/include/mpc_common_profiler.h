@@ -204,7 +204,7 @@ static inline void sctk_profiler_internal_hit( int key, uint64_t duration )
 	}\
 	else\
 	{\
-		sctk_error("Cannot increment a time probe at %s:%d", __FILE__, __LINE__);\
+		mpc_common_debug_error("Cannot increment a time probe at %s:%d", __FILE__, __LINE__);\
 		abort();\
 	}
 
@@ -214,7 +214,7 @@ static inline void sctk_profiler_internal_hit( int key, uint64_t duration )
 	}\
 	else\
 	{\
-		sctk_error("Cannot decrement a time probe at %s:%d", __FILE__, __LINE__);\
+		mpc_common_debug_error("Cannot decrement a time probe at %s:%d", __FILE__, __LINE__);\
 		abort();\
 	}
 

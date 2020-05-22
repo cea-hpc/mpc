@@ -37,7 +37,7 @@ extern "C"
 
 #include <stdlib.h>
 #include <limits.h>
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 /********************  MACRO  ***********************/
 /*Specify data_alignemnt */

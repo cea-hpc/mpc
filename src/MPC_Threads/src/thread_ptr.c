@@ -20,7 +20,7 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <mpc_thread.h>
 
 #include "thread_ptr.h"

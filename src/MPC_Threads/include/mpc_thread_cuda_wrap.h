@@ -23,15 +23,15 @@
 
 #ifndef SCTK_CUDA_WRAP_H
 #define SCTK_CUDA_WRAP_H
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 
 /** Global FATAL CUDA routines to catch weak symbol call */
 #define sctk_cuFatal()                                                                     \
 	do {                                                                               \
-		sctk_error("You reached fake CUDA %s() call inside MPC", __func__);        \
-		sctk_error("Please ensure a valid CUDA driver library is present and you " \
+		mpc_common_debug_error("You reached fake CUDA %s() call inside MPC", __func__);        \
+		mpc_common_debug_error("Please ensure a valid CUDA driver library is present and you " \
 		           "provided --cuda option to mpc_* compilers");                   \
-		sctk_abort();                                                              \
+		mpc_common_debug_abort();                                                              \
 	} while(0)
 
 #ifdef MPC_USE_CUDA

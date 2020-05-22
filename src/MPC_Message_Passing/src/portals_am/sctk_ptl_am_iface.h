@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <sctk_alloc.h>
 #include "sctk_ptl_am_types.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 #if !defined(NDEBUG)
 #define sctk_ptl_chk(x) do { int __ret = 0; \
@@ -46,11 +46,11 @@
     		mpc_common_debug("%s (%s:%u)", #x, __FILE__, (unsigned int)__LINE__); \
     switch (__ret = x) { \
 	case PTL_EQ_DROPPED: \
-		sctk_warning("At least one event has been dropped. This is a major concern !"); \
+		mpc_common_debug_warning("At least one event has been dropped. This is a major concern !"); \
 	case PTL_EQ_EMPTY: \
 	case PTL_CT_NONE_REACHED: \
     case PTL_OK: break; \
-	default: sctk_error("%s -> %s (%s:%u)", #x, sctk_ptl_am_rc_decode(__ret), __FILE__, (unsigned int)__LINE__); MPC_CRASH(); break; \
+	default: mpc_common_debug_error("%s -> %s (%s:%u)", #x, sctk_ptl_am_rc_decode(__ret), __FILE__, (unsigned int)__LINE__); MPC_CRASH(); break; \
     } } while (0)
 #else
 #define sctk_ptl_chk(x) x
@@ -108,7 +108,7 @@ sctk_ptl_id_t sctk_ptl_am_self(sctk_ptl_am_rail_info_t* srail);
  */
 static inline int __sctk_ptl_am_id_undefined(sctk_ptl_id_t r)
 {
-	// sctk_warning("check %d/%d", r.phys.nid, r.phys.pid);
+	// mpc_common_debug_warning("check %d/%d", r.phys.nid, r.phys.pid);
 	return (r.phys.nid == PTL_NID_ANY && r.phys.pid == PTL_PID_ANY);
 }
 

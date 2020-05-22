@@ -1,7 +1,7 @@
 #ifndef __MPCOMP_OPENMP_THREAD_TLS_H__
 #define __MPCOMP_OPENMP_THREAD_TLS_H__
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpcomp_types.h"
 
 static inline mpcomp_thread_t *mpcomp_get_thread_tls(void) {

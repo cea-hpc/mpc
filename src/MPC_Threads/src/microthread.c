@@ -32,7 +32,7 @@
 #include "sctk_context.h"
 #include "mpc_thread.h"
 #include "mpc_topology.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 static mpc_thread_once_t sctk_microthread_key_is_initialized = PTHREAD_ONCE_INIT;
 

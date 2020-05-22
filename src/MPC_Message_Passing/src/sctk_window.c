@@ -167,7 +167,7 @@ void sctk_win_acquire( mpc_lowcomm_rdma_window_t win_id )
 	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( win_id );
 
         if (!win) {
-          sctk_fatal("No such window ID");
+          mpc_common_debug_fatal("No such window ID");
         }
 
         _sctk_win_acquire(win);
@@ -192,11 +192,11 @@ static int _sctk_win_relax( struct mpc_lowcomm_rdma_window * win )
 
 int sctk_win_relax( mpc_lowcomm_rdma_window_t win_id )
 {
-	sctk_error("%s", __FUNCTION__ );
+	mpc_common_debug_error("%s", __FUNCTION__ );
 	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( win_id );
 
         if (!win) {
-          sctk_fatal("No such window ID");
+          mpc_common_debug_fatal("No such window ID");
         }
 
         return _sctk_win_relax(win);
@@ -265,7 +265,7 @@ void mpc_lowcomm_rdma_window_release( mpc_lowcomm_rdma_window_t win_id  )
                      mpc_common_get_task_rank(), win->refcounter);
 
         if (!win) {
-          sctk_fatal("No such window ID");
+          mpc_common_debug_fatal("No such window ID");
         }
 
         /* Do we need to signal a remote win ? */
@@ -307,7 +307,7 @@ void mpc_lowcomm_rdma_window_local_release(mpc_lowcomm_rdma_window_t win_id) {
   struct mpc_lowcomm_rdma_window *win = sctk_win_translate(win_id);
 
   if (!win) {
-    sctk_fatal("No such window ID");
+    mpc_common_debug_fatal("No such window ID");
   }
 
   /* Make sure that the window is not emulated and
@@ -325,7 +325,7 @@ void mpc_lowcomm_rdma_window_local_release(mpc_lowcomm_rdma_window_t win_id) {
 int mpc_lowcomm_rdma_window_build_from_remote(struct mpc_lowcomm_rdma_window *remote_win_data) {
   if (remote_win_data->id < 0) {
     /* No such remote */
-    sctk_error("NO SUCH remote");
+    mpc_common_debug_error("NO SUCH remote");
     return -1;
   }
 
@@ -391,7 +391,7 @@ int mpc_lowcomm_rdma_window_map_remote(int remote_rank, mpc_lowcomm_communicator
 
     if (!win) {
       /* No such window */
-      sctk_error("No such win");
+      mpc_common_debug_error("No such win");
       return -1;
     }
 
@@ -471,7 +471,7 @@ void mpc_lowcomm_rdma_window_relax_ctrl_msg_handler( mpc_lowcomm_rdma_window_t w
 	sctk_nodebug("%s win is %p target is %d (RC %d)", __FUNCTION__, win, win_id , win->refcounter);
 
         if (!win) {
-          sctk_warning("No such window %d in remote relax", win_id);
+          mpc_common_debug_warning("No such window %d in remote relax", win_id);
           return;
         }
 
@@ -538,14 +538,14 @@ void mpc_lowcomm_rdma_window_RDMA_emulated_write_ctrl_msg_handler(
   struct mpc_lowcomm_rdma_window *win = sctk_win_translate(erma->win_id);
 
   if (!win) {
-    sctk_fatal("No such window in emulated RDMA write");
+    mpc_common_debug_fatal("No such window in emulated RDMA write");
   }
 
   size_t offset = erma->offset * win->disp_unit;
 
   if ((win->size < (offset + erma->size)) &&
       (win->access_mode != SCTK_WIN_ACCESS_EMULATED)) {
-    sctk_fatal("Error RDMA emulated write operation overflows the window");
+    mpc_common_debug_fatal("Error RDMA emulated write operation overflows the window");
   }
 
   mpc_lowcomm_request_t req;
@@ -570,7 +570,7 @@ static inline void mpc_lowcomm_rdma_window_RDMA_write_local(struct mpc_lowcomm_r
 
   if ((win->size < (offset + size)) &&
       (win->access_mode != SCTK_WIN_ACCESS_EMULATED)) {
-    sctk_fatal("Error RDMA write operation overflows the window");
+    mpc_common_debug_fatal("Error RDMA write operation overflows the window");
   }
 
   /* Do the local RDMA */
@@ -585,14 +585,14 @@ static inline void mpc_lowcomm_rdma_window_RDMA_write_net(struct mpc_lowcomm_rdm
   sctk_rail_info_t *rdma_rail = sctk_rail_get_rdma();
 
   if (!rdma_rail->rdma_write) {
-    sctk_fatal("This rails despite flagged RDMA did not define rdma_write");
+    mpc_common_debug_fatal("This rails despite flagged RDMA did not define rdma_write");
   }
 
   void *dest_address = win->start_addr + win->disp_unit * dest_offset;
   void *win_end_addr = win->start_addr + win->size;
 
   if (win_end_addr < (dest_address + size)) {
-    sctk_fatal("Error RDMA write operation overflows the window");
+    mpc_common_debug_fatal("Error RDMA write operation overflows the window");
   }
 
   sctk_nodebug("RDMA WRITE NET");
@@ -627,7 +627,7 @@ static inline void __mpc_lowcomm_rdma_window_RDMA_write(mpc_lowcomm_rdma_window_
   sctk_nodebug("RDMA WRITE");
 
   if (!win) {
-    sctk_fatal("No such window ID");
+    mpc_common_debug_fatal("No such window ID");
   }
 
   int my_rank = mpc_common_get_task_rank();
@@ -684,7 +684,7 @@ void mpc_lowcomm_rdma_window_RDMA_write_win( mpc_lowcomm_rdma_window_t src_win_i
 
 	if( !src_win )
 	{
-		sctk_fatal("No such window ID");
+		mpc_common_debug_fatal("No such window ID");
 	}
 
         void *src_addr = src_win->start_addr + src_offset * src_win->disp_unit;
@@ -692,7 +692,7 @@ void mpc_lowcomm_rdma_window_RDMA_write_win( mpc_lowcomm_rdma_window_t src_win_i
 
         if ((win_end_addr < (src_addr + size)) &&
             (src_win->access_mode != SCTK_WIN_ACCESS_EMULATED)) {
-          sctk_fatal("Error RDMA write operation overflows the window");
+          mpc_common_debug_fatal("Error RDMA write operation overflows the window");
         }
 
         __mpc_lowcomm_rdma_window_RDMA_write(dest_win_id, &src_win->pin, src_addr, size,
@@ -710,14 +710,14 @@ void mpc_lowcomm_rdma_window_RDMA_emulated_read_ctrl_msg_handler( struct mpc_low
 	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( erma->win_id );
 
         if (!win) {
-          sctk_fatal("No such window in emulated RDMA write");
+          mpc_common_debug_fatal("No such window in emulated RDMA write");
         }
 
         size_t offset = erma->offset * win->disp_unit;
 
         if ((win->size < (offset + erma->size)) &&
             (win->access_mode != SCTK_WIN_ACCESS_EMULATED)) {
-          sctk_fatal("Error RDMA emulated read operation overflows the window\n"
+          mpc_common_debug_fatal("Error RDMA emulated read operation overflows the window\n"
                      " WIN S : %ld , offset %ld, disp %ld, actual off %ld",
                      win->size, erma->offset, win->disp_unit, offset);
         }
@@ -737,7 +737,7 @@ void mpc_lowcomm_rdma_window_RDMA_read_local( struct mpc_lowcomm_rdma_window * w
 
         if ((win->size < (offset + size)) &&
             (win->access_mode != SCTK_WIN_ACCESS_EMULATED)) {
-          sctk_fatal("Error RDMA read operation overflows the window");
+          mpc_common_debug_fatal("Error RDMA read operation overflows the window");
         }
 
         /* Do the local RDMA */
@@ -750,7 +750,7 @@ void mpc_lowcomm_rdma_window_RDMA_read_net( struct mpc_lowcomm_rdma_window * win
   sctk_rail_info_t *rdma_rail = sctk_rail_get_rdma();
 
   if (!rdma_rail->rdma_write) {
-    sctk_fatal("This rails despite flagged RDMA did not define rdma_write");
+    mpc_common_debug_fatal("This rails despite flagged RDMA did not define rdma_write");
   }
 
   void *src_address = win->start_addr + win->disp_unit * src_offset;
@@ -758,7 +758,7 @@ void mpc_lowcomm_rdma_window_RDMA_read_net( struct mpc_lowcomm_rdma_window * win
   size_t offset = src_offset * win->disp_unit;
 
   if (win->size < (offset + size)) {
-    sctk_fatal("Error RDMA read operation overflows the window");
+    mpc_common_debug_fatal("Error RDMA read operation overflows the window");
   }
 
   mpc_lowcomm_ptp_message_t *msg =
@@ -789,7 +789,7 @@ void __mpc_lowcomm_rdma_window_RDMA_read( mpc_lowcomm_rdma_window_t win_id, sctk
         sctk_nodebug("RDMA READ");
 
         if (!win) {
-          sctk_fatal("No such window ID %d", win_id);
+          mpc_common_debug_fatal("No such window ID %d", win_id);
         }
 
         /* Set an empty request */
@@ -839,7 +839,7 @@ void mpc_lowcomm_rdma_window_RDMA_read_win( mpc_lowcomm_rdma_window_t src_win_id
 
 	if( !dest_win )
 	{
-		sctk_fatal("No such window ID");
+		mpc_common_debug_fatal("No such window ID");
 	}
 
         void *dest_addr =
@@ -848,7 +848,7 @@ void mpc_lowcomm_rdma_window_RDMA_read_win( mpc_lowcomm_rdma_window_t src_win_id
 
         if ((win_end_addr < (dest_addr + size)) &&
             (dest_win->access_mode != SCTK_WIN_ACCESS_EMULATED)) {
-          sctk_fatal("Error RDMA read operation overflows the window");
+          mpc_common_debug_fatal("Error RDMA read operation overflows the window");
         }
 
         __mpc_lowcomm_rdma_window_RDMA_read(src_win_id, &dest_win->pin, dest_addr, size,
@@ -901,7 +901,7 @@ size_t RDMA_type_size( RDMA_type type )
                   return sizeof(void *);
                 }
 
-                sctk_fatal("Found an unhandled RDMA datatype");
+                mpc_common_debug_fatal("Found an unhandled RDMA datatype");
 		return -1;
 }
 
@@ -1102,7 +1102,7 @@ static inline void mpc_lowcomm_rdma_window_fetch_and_op_operate_int(RDMA_op op, 
       break;                                                                   \
                                                                                \
     case RDMA_BAND:                                                            \
-      sctk_fatal("RDMA Binary operand is not defined for %s", #type);          \
+      mpc_common_debug_fatal("RDMA Binary operand is not defined for %s", #type);          \
       break;                                                                   \
                                                                                \
     case RDMA_LOR:                                                             \
@@ -1110,7 +1110,7 @@ static inline void mpc_lowcomm_rdma_window_fetch_and_op_operate_int(RDMA_op op, 
       break;                                                                   \
                                                                                \
     case RDMA_BOR:                                                             \
-      sctk_fatal("RDMA Binary operand is not defined for %s", #type);          \
+      mpc_common_debug_fatal("RDMA Binary operand is not defined for %s", #type);          \
       break;                                                                   \
                                                                                \
     case RDMA_LXOR:                                                            \
@@ -1118,7 +1118,7 @@ static inline void mpc_lowcomm_rdma_window_fetch_and_op_operate_int(RDMA_op op, 
       break;                                                                   \
                                                                                \
     case RDMA_BXOR:                                                            \
-      sctk_fatal("RDMA Binary operand is not defined for %s", #type);          \
+      mpc_common_debug_fatal("RDMA Binary operand is not defined for %s", #type);          \
       break;                                                                   \
     }                                                                          \
                                                                                \
@@ -1207,14 +1207,14 @@ void mpc_lowcomm_rdma_window_RDMA_fetch_and_op_ctrl_msg_handler( struct mpc_lowc
 	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( fop->rdma.win_id );
 
         if (!win) {
-          sctk_fatal("No such window in emulated RDMA fetch and op");
+          mpc_common_debug_fatal("No such window in emulated RDMA fetch and op");
         }
 
         size_t offset = fop->rdma.offset * win->disp_unit;
 
         if ((win->size < (offset + fop->rdma.size)) &&
             (win->access_mode != SCTK_WIN_ACCESS_EMULATED)) {
-          sctk_fatal(
+          mpc_common_debug_fatal(
               "Error RDMA emulated feth and op operation overflows the window\n"
               " WIN S : %ld , offset %ld, disp %ld, actual off %ld",
               win->size, fop->rdma.offset, win->disp_unit, offset);
@@ -1236,18 +1236,18 @@ static inline void mpc_lowcomm_rdma_window_RDMA_fetch_and_op_local(
     void *add, RDMA_op op, RDMA_type type, mpc_lowcomm_request_t *req) {
   struct mpc_lowcomm_rdma_window *win = sctk_win_translate(remote_win_id);
 
-  // sctk_error("Fetch and add");
+  // mpc_common_debug_error("Fetch and add");
   mpc_lowcomm_request_init(req, win->comm, REQUEST_RDMA);
 
   if (!win) {
-    sctk_fatal("No such window ID %d", remote_win_id);
+    mpc_common_debug_fatal("No such window ID %d", remote_win_id);
   }
 
   size_t offset = remote_offset * win->disp_unit;
 
   if ((win->size < (offset + RDMA_type_size(type))) &&
       (win->access_mode != SCTK_WIN_ACCESS_EMULATED)) {
-    sctk_fatal("Error RDMA fetch and op operation overflows the window");
+    mpc_common_debug_fatal("Error RDMA fetch and op operation overflows the window");
   }
 
   void *remote_addr = win->start_addr + offset;
@@ -1264,13 +1264,13 @@ static inline void mpc_lowcomm_rdma_window_RDMA_fetch_and_op_net(
   sctk_rail_info_t *rdma_rail = sctk_rail_get_rdma();
 
   if (!rdma_rail->rdma_fetch_and_op) {
-    sctk_fatal("This rails despite flagged RDMA did not define fetch and op");
+    mpc_common_debug_fatal("This rails despite flagged RDMA did not define fetch and op");
   }
 
   struct mpc_lowcomm_rdma_window *win = sctk_win_translate(remote_win_id);
 
   if (!win) {
-    sctk_fatal("No such window ID %d", remote_win_id);
+    mpc_common_debug_fatal("No such window ID %d", remote_win_id);
   }
 
   void *src_address = win->start_addr + win->disp_unit * remote_offset;
@@ -1278,7 +1278,7 @@ static inline void mpc_lowcomm_rdma_window_RDMA_fetch_and_op_net(
   size_t offset = remote_offset * win->disp_unit;
 
   if (win->size < (offset + RDMA_type_size(type))) {
-    sctk_fatal("Error RDMA fetch and op operation overflows the window");
+    mpc_common_debug_fatal("Error RDMA fetch and op operation overflows the window");
   }
 
   mpc_lowcomm_ptp_message_t *msg =
@@ -1309,10 +1309,10 @@ static inline void __mpc_lowcomm_rdma_window_RDMA_fetch_and_op(
 
   mpc_lowcomm_request_init(req, win->comm, REQUEST_RDMA);
 
-  // sctk_error("Fetch and add");
+  // mpc_common_debug_error("Fetch and add");
 
   if (!win) {
-    sctk_fatal("No such window ID %d", remote_win_id);
+    mpc_common_debug_fatal("No such window ID %d", remote_win_id);
   }
 
   /* Now try to see if we pass the RDMA rail gate function for fetch and op */
@@ -1380,7 +1380,7 @@ void mpc_lowcomm_rdma_window_RDMA_fetch_and_add_win( mpc_lowcomm_rdma_window_t r
 
 	if( !local_win )
 	{
-		sctk_fatal("No such window ID");
+		mpc_common_debug_fatal("No such window ID");
 	}
 
         void *dest_addr =
@@ -1389,7 +1389,7 @@ void mpc_lowcomm_rdma_window_RDMA_fetch_and_add_win( mpc_lowcomm_rdma_window_t r
 
         if ((win_end_addr < (dest_addr + RDMA_type_size(type))) &&
             (local_win->access_mode != SCTK_WIN_ACCESS_EMULATED)) {
-          sctk_fatal("Error RDMA Fetch and OP operation overflows the window");
+          mpc_common_debug_fatal("Error RDMA Fetch and OP operation overflows the window");
         }
 
         __mpc_lowcomm_rdma_window_RDMA_fetch_and_op(remote_win_id, remote_offset,
@@ -1412,7 +1412,7 @@ void mpc_lowcomm_rdma_window_RDMA_CAS_int_local( void * cmp , void * new, void *
 
         local = OPA_cas_int(ptarget, oldv, newv);
 
-        // sctk_error("OLD %d NEW %d RES %d", oldv, newv, local );
+        // mpc_common_debug_error("OLD %d NEW %d RES %d", oldv, newv, local );
 
         if (pres)
           *pres = local;
@@ -1467,14 +1467,14 @@ void mpc_lowcomm_rdma_window_RDMA_CAS_local( mpc_lowcomm_rdma_window_t remote_wi
 
 	if( !win )
 	{
-		sctk_fatal("No such window ID %d", remote_win_id);
+		mpc_common_debug_fatal("No such window ID %d", remote_win_id);
 	}
 
 	size_t offset = remote_offset * win->disp_unit;
 
         if ((win->size < (offset + RDMA_type_size(type))) &&
             (win->access_mode != SCTK_WIN_ACCESS_EMULATED)) {
-          sctk_fatal("Error RDMA CAS operation overflows the window");
+          mpc_common_debug_fatal("Error RDMA CAS operation overflows the window");
         }
 
         void *remote_addr = (OPA_int_t *)(win->start_addr + offset);
@@ -1500,14 +1500,14 @@ void mpc_lowcomm_rdma_window_RDMA_CAS_ctrl_msg_handler( struct mpc_lowcomm_rdma_
 	struct mpc_lowcomm_rdma_window * win = sctk_win_translate( fcas->rdma.win_id );
 
         if (!win) {
-          sctk_fatal("No such window in emulated RDMA CAS");
+          mpc_common_debug_fatal("No such window in emulated RDMA CAS");
         }
 
         size_t offset = fcas->rdma.offset * win->disp_unit;
 
         if ((win->size < (offset + fcas->rdma.size)) &&
             (win->access_mode != SCTK_WIN_ACCESS_EMULATED)) {
-          sctk_fatal("Error RDMA emulated CAS operation overflows the window\n"
+          mpc_common_debug_fatal("Error RDMA emulated CAS operation overflows the window\n"
                      " WIN S : %ld , offset %ld, disp %ld, actual off %ld",
                      win->size, fcas->rdma.offset, win->disp_unit, offset);
         }
@@ -1528,13 +1528,13 @@ void mpc_lowcomm_rdma_window_RDMA_CAS_net( mpc_lowcomm_rdma_window_t remote_win_
 	sctk_rail_info_t * rdma_rail = sctk_rail_get_rdma ();
 
         if (!rdma_rail->rdma_cas) {
-          sctk_fatal("This rails despite flagged RDMA did not define CAS");
+          mpc_common_debug_fatal("This rails despite flagged RDMA did not define CAS");
         }
 
         struct mpc_lowcomm_rdma_window *win = sctk_win_translate(remote_win_id);
 
         if (!win) {
-          sctk_fatal("No such window ID %d", remote_win_id);
+          mpc_common_debug_fatal("No such window ID %d", remote_win_id);
         }
 
         void *dest_addr = win->start_addr + win->disp_unit * remote_offset;
@@ -1542,7 +1542,7 @@ void mpc_lowcomm_rdma_window_RDMA_CAS_net( mpc_lowcomm_rdma_window_t remote_win_
         size_t offset = remote_offset * win->disp_unit;
 
         if (win->size < (offset + RDMA_type_size(type))) {
-          sctk_fatal("Error RDMA CAS operation overflows the window");
+          mpc_common_debug_fatal("Error RDMA CAS operation overflows the window");
         }
 
         mpc_lowcomm_ptp_message_t *msg =
@@ -1574,7 +1574,7 @@ void __mpc_lowcomm_rdma_window_RDMA_CAS( mpc_lowcomm_rdma_window_t remote_win_id
 
 	if( !win )
 	{
-		sctk_fatal("No such window ID %d", remote_win_id);
+		mpc_common_debug_fatal("No such window ID %d", remote_win_id);
 	}
 
         mpc_lowcomm_request_init(req, win->comm, REQUEST_RDMA);
@@ -1645,7 +1645,7 @@ void mpc_lowcomm_rdma_window_RDMA_CAS_win( mpc_lowcomm_rdma_window_t remote_win_
 
 	if( !local_win )
 	{
-		sctk_fatal("No such window ID");
+		mpc_common_debug_fatal("No such window ID");
 	}
 
         void *res_addr =
@@ -1654,7 +1654,7 @@ void mpc_lowcomm_rdma_window_RDMA_CAS_win( mpc_lowcomm_rdma_window_t remote_win_
 
         if ((win_end_addr < (res_addr + RDMA_type_size(type))) &&
             (local_win->access_mode != SCTK_WIN_ACCESS_EMULATED)) {
-          sctk_fatal("Error RDMA CAS operation overflows the window");
+          mpc_common_debug_fatal("Error RDMA CAS operation overflows the window");
         }
 
         __mpc_lowcomm_rdma_window_RDMA_CAS(remote_win_id, remote_offset, comp, new_data,
@@ -1678,7 +1678,7 @@ void mpc_lowcomm_rdma_window_RDMA_fence(mpc_lowcomm_rdma_window_t win_id, mpc_lo
   struct mpc_lowcomm_rdma_window *win = sctk_win_translate(win_id);
 
   if (!win) {
-    sctk_fatal("No such window ID");
+    mpc_common_debug_fatal("No such window ID");
   }
 
   int my_rank = mpc_common_get_task_rank();

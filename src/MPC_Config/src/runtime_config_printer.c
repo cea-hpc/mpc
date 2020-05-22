@@ -24,7 +24,7 @@
 /********************************* INCLUDES *********************************/
 #include <stdio.h>
 #include <string.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include "runtime_config_printer.h"
 #include "runtime_config_mapper.h"
 #include "runtime_config_walk.h"

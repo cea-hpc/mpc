@@ -22,7 +22,7 @@
 
 /********************************* INCLUDES *********************************/
 #include <string.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include "runtime_config_walk.h"
 
 /********************************* FUNCTION *********************************/
@@ -233,7 +233,7 @@ void sctk_runtime_config_walk_value(const struct sctk_runtime_config_entry_meta 
       }
     }
     else {
-      sctk_fatal("Invalid enum type : %s.", type_name);
+      mpc_common_debug_fatal("Invalid enum type : %s.", type_name);
     }
 
     handler(SCTK_RUNTIME_CONFIG_WALK_VALUE,name,"char *",&enum_name,SCTK_RUNTIME_CONFIG_WALK_OPEN,NULL,level,opt);
@@ -250,7 +250,7 @@ void sctk_runtime_config_walk_value(const struct sctk_runtime_config_entry_meta 
       sctk_runtime_config_walk_union(config_meta, handler, name , type_name, value,level,opt);
     }
     else {
-      sctk_fatal("Invalid type.");
+      mpc_common_debug_fatal("Invalid type.");
     }
   }
 }

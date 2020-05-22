@@ -120,7 +120,7 @@ static inline sctk_internal_communicator_t *sctk_get_internal_communicator ( con
 
 	if ( tmp == NULL )
 	{
-		sctk_fatal ( "Communicator %d does not exist", communicator );
+		mpc_common_debug_fatal ( "Communicator %d does not exist", communicator );
 	}
 
 	return tmp;
@@ -254,7 +254,7 @@ static inline int sctk_del_internal_communicator_no_lock_no_check ( const mpc_lo
 
 		//delete in the hash table
 		HASH_DELETE ( hh, mpc_lowcomm_communicator_table, tmp );
-		sctk_error( "COMM %d DEL in HAS_TAB", id );
+		mpc_common_debug_error( "COMM %d DEL in HAS_TAB", id );
 		mpc_common_spinlock_write_unlock( &sctk_communicator_local_table_lock );
 	}
 	else
@@ -1213,8 +1213,8 @@ int sctk_comm_coll_init( struct sctk_comm_coll *coll, int nb_task )
 
 	if ( !powerof2( coll->reduce_interleave ) )
 	{
-		sctk_error( "INFO : Reduce interleave is required to be power of 2" );
-		sctk_error( "INFO : now default to 8" );
+		mpc_common_debug_error( "INFO : Reduce interleave is required to be power of 2" );
+		mpc_common_debug_error( "INFO : now default to 8" );
 		coll->reduce_interleave = 8;
 	}
 
@@ -1233,8 +1233,8 @@ int sctk_comm_coll_init( struct sctk_comm_coll *coll, int nb_task )
 
 	if ( !powerof2( coll->bcast_interleave ) )
 	{
-		sctk_error( "INFO : Bcast interleave is required to be power of 2" );
-		sctk_error( "INFO : now default to 8" );
+		mpc_common_debug_error( "INFO : Bcast interleave is required to be power of 2" );
+		mpc_common_debug_error( "INFO : now default to 8" );
 		coll->bcast_interleave = 8;
 	}
 
@@ -1755,7 +1755,7 @@ int __sctk_is_shared_mem( const mpc_lowcomm_communicator_t communicator )
 {
 	sctk_internal_communicator_t *tmp;
 	tmp = sctk_get_internal_communicator( communicator );
-	// sctk_error("%d == %d", communicator, tmp->is_shared_mem );
+	// mpc_common_debug_error("%d == %d", communicator, tmp->is_shared_mem );
 	return tmp->is_shared_mem;
 }
 
@@ -1768,7 +1768,7 @@ int __sctk_is_shared_node( const mpc_lowcomm_communicator_t communicator )
 {
 	sctk_internal_communicator_t *tmp;
 	tmp = sctk_get_internal_communicator( communicator );
-	// sctk_error("%d == %d", communicator, tmp->is_shared_mem );
+	// mpc_common_debug_error("%d == %d", communicator, tmp->is_shared_mem );
 	return tmp->is_shared_node;
 }
 
@@ -1886,7 +1886,7 @@ int mpc_lowcomm_communicator_rank( const mpc_lowcomm_communicator_t communicator
 		}
 	}
 
-	sctk_error( "HERE IS -1" );
+	mpc_common_debug_error( "HERE IS -1" );
 	return -1;
 }
 

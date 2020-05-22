@@ -223,7 +223,7 @@ sctk_ibuf_t *sctk_ibuf_pick_send_sr ( struct sctk_ib_rail_info_s *rail_ib )
 
 	if ( ibuf->flag != FREE_FLAG )
 	{
-		sctk_error ( "Wrong flag (%d) got from ibuf", ibuf->flag );
+		mpc_common_debug_error ( "Wrong flag (%d) got from ibuf", ibuf->flag );
 	}
 
 #endif
@@ -291,7 +291,7 @@ sctk_ibuf_t *sctk_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib,
 
 					if ( ( state != STATE_CONNECTED ) && ( state != STATE_FLUSHING ) )
 					{
-						sctk_error ( "Got a wrong state : %d", state );
+						mpc_common_debug_error ( "Got a wrong state : %d", state );
 						not_reachable();
 					}
 
@@ -354,8 +354,8 @@ sctk_ibuf_t *sctk_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib,
 
 		if ( ibuf->flag != FREE_FLAG )
 		{
-			sctk_error ( "Wrong flag (%d) got from ibuf", ibuf->flag );
-			sctk_abort();
+			mpc_common_debug_error ( "Wrong flag (%d) got from ibuf", ibuf->flag );
+			mpc_common_debug_abort();
 		}
 
 #endif
@@ -420,7 +420,7 @@ sctk_ibuf_pick_recv ( struct sctk_ib_rail_info_s *rail_ib, struct sctk_ibuf_numa
 
 	if ( ibuf->flag != FREE_FLAG )
 	{
-		sctk_error ( "Wrong flag (%d) got from ibuf", ibuf->flag );
+		mpc_common_debug_error ( "Wrong flag (%d) got from ibuf", ibuf->flag );
 	}
 
 	sctk_nodebug ( "ibuf: %p, lock:%p, need_lock:%d next free_entryr: %p, nb_free %d, nb_got %d, nb_free_srq %d, node %d)", ibuf, lock, need_lock, node->free_entry, node->nb_free, node->nb_got, node->nb_free_srq, node->id );

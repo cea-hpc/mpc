@@ -49,7 +49,7 @@ ADIOI_Flatlist_node *ADIOI_Flatten_datatype(MPI_Datatype datatype)
     /* has it already been flattened? */
     MPI_Type_get_attr(datatype, ADIOI_Flattened_type_keyval, &flat, &flag);
     if (flag) {
-	    sctk_error("RET %p FLAG %d", flat, flag);
+	    mpc_common_debug_error("RET %p FLAG %d", flat, flag);
 #ifdef FLATTEN_DEBUG
         DBG_FPRINTF(stderr, "ADIOI_Flatten_datatype:: found datatype %#X\n", datatype);
 #endif

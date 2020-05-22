@@ -1,4 +1,4 @@
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "sctk_alloc.h"
 #include "sctk_shm_mapper.h"
 #include "mpc_launch_pmi.h"

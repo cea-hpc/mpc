@@ -22,7 +22,7 @@
 /* ######################################################################## */
 
 
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <sctk_route.h>
 #include <sctk_tcp.h>
 #include <mpc_launch_pmi.h>
@@ -151,7 +151,7 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 
 			if ( setsockopt ( clientsock_fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof ( one ) ) == -1 )
 			{
-				sctk_error ( "Cannot modify the socket options!" );
+				mpc_common_debug_error ( "Cannot modify the socket options!" );
 			}
 
 			/* Try to connect */
@@ -166,7 +166,7 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 			else
 			{
 				perror ( "connect" );
-				sctk_abort();
+				mpc_common_debug_abort();
 			}
 
 			close ( clientsock_fd );
@@ -181,8 +181,8 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 	/* Did we fail ? */
 	if ( connected == 0 )
 	{
-		sctk_error ( "Failed to connect to %s:%s\n", name, portno );
-		sctk_abort();
+		mpc_common_debug_error ( "Failed to connect to %s:%s\n", name, portno );
+		mpc_common_debug_abort();
 	}
 
 	return clientsock_fd;
@@ -212,7 +212,7 @@ static void sctk_client_create_recv_socket ( sctk_rail_info_t *rail )
 	if ( ret != 0 )
 	{
 		printf ( "Failed to create a bindable socket : %s\n", gai_strerror ( ret ) );
-		sctk_abort();
+		mpc_common_debug_abort();
 	}
 
 	struct addrinfo *current = results;
@@ -239,7 +239,7 @@ static void sctk_client_create_recv_socket ( sctk_rail_info_t *rail )
 
 			if ( setsockopt ( rail->network.tcp.sockfd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof ( one ) ) == -1 )
 			{
-				sctk_error ( "Cannot modify the socket options!" );
+				mpc_common_debug_error ( "Cannot modify the socket options!" );
 			}
 
 			errno = 0;
@@ -257,7 +257,7 @@ static void sctk_client_create_recv_socket ( sctk_rail_info_t *rail )
 					if ( getsockname ( rail->network.tcp.sockfd, ( struct sockaddr * ) &socket_infos, &infolen ) == -1 )
 					{
 						perror ( "getsockname" );
-						sctk_abort();
+						mpc_common_debug_abort();
 					}
 					else
 					{
@@ -267,9 +267,9 @@ static void sctk_client_create_recv_socket ( sctk_rail_info_t *rail )
 						}
 						else
 						{
-							sctk_error ( "Could not retrieve port number\n" );
+							mpc_common_debug_error ( "Could not retrieve port number\n" );
 							close ( rail->network.tcp.sockfd );
-							sctk_abort();
+							mpc_common_debug_abort();
 						}
 					}
 
@@ -298,8 +298,8 @@ static void sctk_client_create_recv_socket ( sctk_rail_info_t *rail )
 	/* Did we fail ? */
 	if ( rail->network.tcp.sockfd < 0 )
 	{
-		sctk_error ( "Failed to set a listening socket\n" );
-		sctk_abort();
+		mpc_common_debug_error ( "Failed to set a listening socket\n" );
+		mpc_common_debug_abort();
 	}
 }
 
@@ -431,7 +431,7 @@ static void __sctk_network_connection_from_tcp( int from, int to, sctk_rail_info
 	if ( src_socket < 0 )
 	{
 		perror ( "Connection error" );
-		sctk_abort();
+		mpc_common_debug_abort();
 	}
 
 	sctk_tcp_add_route ( to, src_socket, rail, ( void * ( * ) ( sctk_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ), route_type );
@@ -593,7 +593,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 			if ( right_socket < 0 )
 			{
 				perror ( "Connection error" );
-				sctk_abort();
+				mpc_common_debug_abort();
 			}
 
 			sctk_nodebug ( "Wait connection" );
@@ -602,7 +602,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 			if ( left_socket < 0 )
 			{
 				perror ( "Connection error" );
-				sctk_abort();
+				mpc_common_debug_abort();
 			}
 		}
 		else
@@ -613,7 +613,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 			if ( left_socket < 0 )
 			{
 				perror ( "Connection error" );
-				sctk_abort();
+				mpc_common_debug_abort();
 			}
 
 			sctk_nodebug ( "Connect to %d", right_rank );
@@ -622,7 +622,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 			if ( right_socket < 0 )
 			{
 				perror ( "Connection error" );
-				sctk_abort();
+				mpc_common_debug_abort();
 			}
 		}
 	}
@@ -637,7 +637,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 			if ( right_socket < 0 )
 			{
 				perror ( "Connection error" );
-				sctk_abort();
+				mpc_common_debug_abort();
 			}
 		}
 		else
@@ -648,7 +648,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 			if ( right_socket < 0 )
 			{
 				perror ( "Connection error" );
-				sctk_abort();
+				mpc_common_debug_abort();
 			}
 		}
 	}

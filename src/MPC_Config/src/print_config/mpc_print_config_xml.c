@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mpc_common_types.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <runtime_config_walk.h>
 #include <runtime_config_printer.h>
 #include "mpc_print_config_xml.h"

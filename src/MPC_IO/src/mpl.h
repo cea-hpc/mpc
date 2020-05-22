@@ -6,7 +6,7 @@
 
 #include <mpc_mpi.h>
 
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <mpc_common_helper.h>
 
 #define HAVE_MPIIO_CONST

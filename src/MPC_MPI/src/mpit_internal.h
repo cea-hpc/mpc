@@ -22,7 +22,7 @@
 #ifndef MPIT_INTERNAL_H
 #define MPIT_INTERNAL_H
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpc_mpi.h"
 #include "mpc_common_spinlock.h"
 #include "mpc_common_datastructure.h"
@@ -160,7 +160,7 @@ struct MPC_T_data {
 
 static inline int MPC_T_data_start(struct MPC_T_data *tdata) {
   if (tdata->continuous == 1) {
-    sctk_warning("Cannot start a variable which is continuous");
+    mpc_common_debug_warning("Cannot start a variable which is continuous");
     return MPI_ERR_ARG;
   }
 
@@ -171,7 +171,7 @@ static inline int MPC_T_data_start(struct MPC_T_data *tdata) {
 
 static inline int MPC_T_data_stop(struct MPC_T_data *tdata) {
   if (tdata->continuous == 1) {
-    sctk_warning("Cannot stop a variable which is continuous");
+    mpc_common_debug_warning("Cannot stop a variable which is continuous");
     return MPI_ERR_ARG;
   }
 

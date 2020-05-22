@@ -766,7 +766,7 @@ void mpc_lowcomm_coll_init_opt( mpc_lowcomm_communicator_t id )
 	                _mpc_coll_opt_bcast_init,
 	                _mpc_coll_opt_allreduce_init );
 	/* if(get_process_rank() == 0){ */
-	/*   sctk_warning("Use low performances collectives"); */
+	/*   mpc_common_debug_warning("Use low performances collectives"); */
 	/* } */
 }
 
@@ -1438,7 +1438,7 @@ void mpc_lowcomm_coll_init_hetero( mpc_lowcomm_communicator_t id )
 	                _mpc_coll_hetero_bcast_init,
 	                _mpc_coll_hetero_allreduce_init );
 	/* if(get_process_rank() == 0){ */
-	/*   sctk_warning("Use low performances collectives"); */
+	/*   mpc_common_debug_warning("Use low performances collectives"); */
 	/* } */
 }
 
@@ -1963,7 +1963,7 @@ void mpc_lowcomm_coll_init_noalloc( mpc_lowcomm_communicator_t id )
 	                _mpc_coll_noalloc_bcast_init,
 	                _mpc_coll_noalloc_allreduce_init );
 	/* if(get_process_rank() == 0){ */
-	/*   sctk_warning("Use low performances collectives"); */
+	/*   mpc_common_debug_warning("Use low performances collectives"); */
 	/* } */
 }
 

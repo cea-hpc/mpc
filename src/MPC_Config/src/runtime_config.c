@@ -22,7 +22,7 @@
 
 /********************************* INCLUDES *********************************/
 #include <string.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include "mpc_runtime_config.h"
 #include "runtime_config_sources.h"
 #include "runtime_config_mapper.h"

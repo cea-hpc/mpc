@@ -22,7 +22,7 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <sctk_net_tools.h>
 #include <sctk_ib.h>
 #include <mpc_launch_pmi.h>
@@ -111,7 +111,7 @@ char *sctk_ib_print_procotol ( sctk_ib_protocol_t p )
 
 void sctk_ib_print_msg ( mpc_lowcomm_ptp_message_t *msg )
 {
-	sctk_error ( "IB protocol: %s", sctk_ib_print_procotol ( msg->tail.ib.protocol ) );
+	mpc_common_debug_error ( "IB protocol: %s", sctk_ib_print_procotol ( msg->tail.ib.protocol ) );
 
 	switch ( msg->tail.ib.protocol )
 	{

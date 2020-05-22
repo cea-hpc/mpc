@@ -302,7 +302,7 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
 
   int pack_size = local_size;
 
-  // sctk_error("SOURCE S %d DEST S %d", local_size, remote_size );
+  // mpc_common_debug_error("SOURCE S %d DEST S %d", local_size, remote_size );
 
   /* Basic Check */
   if (remote_size < local_size) {
@@ -357,7 +357,7 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
         low_remote_win->start_addr + target_disp * desc->win_disp;
 
     if (mpc_MPI_win_can_write_directly(desc, target_addr, target_rank)) {
-      //	sctk_error("DIRECT");
+      //	mpc_common_debug_error("DIRECT");
       memcpy(target_addr, origin_addr, remote_size);
     } else {
 
@@ -591,7 +591,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
   if (!_mpc_dt_is_common(inner_type) &&
       !_mpc_dt_is_struct(inner_type)) {
-    sctk_warning("MPI_Accumulate : cannot accumulate a derived datatype which "
+    mpc_common_debug_warning("MPI_Accumulate : cannot accumulate a derived datatype which "
                  "is not made of a single predefined type");
     mpc_MPI_accumulate_op_unlock();
     return MPI_ERR_ARG;
@@ -1156,7 +1156,7 @@ mpc_MPI_Fetch_and_op_RMA(struct mpc_MPI_Win *desc, const void *origin_addr,
 
   /* If we are here we were not able to use the optmized FOP now use
    * getaccumulate which is more general */
-  sctk_error("ACC");
+  mpc_common_debug_error("ACC");
   return mpc_MPI_Get_accumulate_RMA(desc, origin_addr, 1, datatype, result_addr,
                                     1, datatype, target_rank, target_disp, 1,
                                     datatype, op, win, ref_request);

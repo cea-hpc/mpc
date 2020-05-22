@@ -29,12 +29,14 @@
 #include <string.h>
 #include <execinfo.h>
 #include <signal.h>
-#include <mpc_config.h>
 
-#include "mpc_common_rank.h"
-#include "sctk_debug.h"
-#include "mpc_common_spinlock.h"
-#include "mpc_common_helper.h"
+
+#include <mpc_config.h>
+#include <mpc_common_rank.h>
+#include <mpc_common_spinlock.h>
+#include <mpc_common_helper.h>
+
+#include <mpc_common_debug.h>
 
 
 #ifdef MPC_Thread_db
@@ -54,10 +56,10 @@ static inline char *__debug_print_info( char *buffer )
 #ifdef MPC_ENABLE_SHELL_COLORS
 		snprintf( buffer,
 		          DEBUG_INFO_SIZE,
-		          SCTK_COLOR_GREEN( [ )
-		                            SCTK_COLOR_RED(R%4d)
-		                            SCTK_COLOR_BLUE( P%4dN%4d)
-		                            SCTK_COLOR_GREEN( ] ),
+		          MPC_COLOR_GREEN( [ )
+		                            MPC_COLOR_RED(R%4d)
+		                            MPC_COLOR_BLUE( P%4dN%4d)
+		                            MPC_COLOR_GREEN( ] ),
 		          mpc_common_get_task_rank(), mpc_common_get_process_rank(), mpc_common_get_node_rank() );
 #else
 		snprintf( buffer,
@@ -75,9 +77,9 @@ static inline char *__debug_print_info( char *buffer )
 #ifdef MPC_Launch
 	void mpc_launch_pmi_abort();
 #endif
-void sctk_abort( void )
+void mpc_common_debug_abort( void )
 {
-	mpc_common_debuger_print_backtrace( "sctk_abort" );
+	mpc_common_debuger_print_backtrace( "mpc_common_debug_abort" );
 	abort();
 }
 
@@ -95,7 +97,7 @@ int MPC_check_compatibility_lib( int major, int minor, int patch, char *pre )
 		sprintf( errro_msg,
 		         "MPC version used for this file (%d.%d.%d%s) differs from the library used for the link (%d.%d.%d%s)\n",
 		         major, minor, patch, pre, MPC_VERSION_MAJOR, MPC_VERSION_MINOR, MPC_VERSION_PATCH, MPC_VERSION_PRE );
-		sctk_warning( errro_msg );
+		mpc_common_debug_warning( errro_msg );
 		return 1;
 	}
 
@@ -117,30 +119,6 @@ void MPC_printf( const char *fmt, ... )
 	va_end( ap );
 }
 
-/* Sometimes it's interesting if only rank 0 show messages... */
-void sctk_debug_root( const char *fmt, ... )
-{
-	va_list ap;
-	char buff[SMALL_BUFFER_SIZE];
-
-	if ( mpc_common_get_process_rank() != 0 )
-	{
-		return;
-	}
-
-	va_start( ap, fmt );
-
-#ifdef MPC_ENABLE_SHELL_COLORS
-		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE, SCTK_COLOR_RED_BOLD( "%s" ) "\n", fmt );
-#else
-		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE, "%s\n", fmt );
-#endif
-
-	mpc_common_io_noalloc_vfprintf( stderr, buff, ap );
-	fflush( stderr );
-	va_end( ap );
-}
-
 void mpc_common_debug_log( const char *fmt, ... )
 {
 	if ( mpc_common_get_flags()->verbosity < 1 )
@@ -153,7 +131,7 @@ void mpc_common_debug_log( const char *fmt, ... )
         va_start( ap, fmt );
 
 #ifdef MPC_ENABLE_SHELL_COLORS
-        mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE, ""SCTK_COLOR_GREEN_BOLD( %s )"\n", fmt );
+        mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE, ""MPC_COLOR_GREEN_BOLD( %s )"\n", fmt );
 
 #else
         mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
@@ -179,7 +157,7 @@ void mpc_common_debug_info( const char *fmt, ... )
 
 #ifdef MPC_ENABLE_SHELL_COLORS
 		char info_message[SMALL_BUFFER_SIZE];
-		mpc_common_io_noalloc_snprintf( info_message, SMALL_BUFFER_SIZE, SCTK_COLOR_VIOLET_BOLD( "%s" ), fmt );
+		mpc_common_io_noalloc_snprintf( info_message, SMALL_BUFFER_SIZE, MPC_COLOR_VIOLET_BOLD( "%s" ), fmt );
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s INFO %s\n",
 		                                __debug_print_info( debug_info ),
@@ -214,7 +192,7 @@ void mpc_common_debug( const char *fmt, ... )
 
 #ifdef MPC_ENABLE_SHELL_COLORS
 		char debug_message[SMALL_BUFFER_SIZE];
-		mpc_common_io_noalloc_snprintf( debug_message, SMALL_BUFFER_SIZE, SCTK_COLOR_CYAN_BOLD( "%s" ), fmt );
+		mpc_common_io_noalloc_snprintf( debug_message, SMALL_BUFFER_SIZE, MPC_COLOR_CYAN_BOLD( "%s" ), fmt );
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s DEBUG %s\n",
 		                                __debug_print_info( debug_info ),
@@ -232,7 +210,7 @@ void mpc_common_debug( const char *fmt, ... )
 }
 #endif
 
-void sctk_error( const char *fmt, ... )
+void mpc_common_debug_error( const char *fmt, ... )
 {
 	va_list ap;
 	char debug_info[SMALL_BUFFER_SIZE];
@@ -241,7 +219,7 @@ void sctk_error( const char *fmt, ... )
 
 #ifdef MPC_ENABLE_SHELL_COLORS
 		char error_message[SMALL_BUFFER_SIZE];
-		mpc_common_io_noalloc_snprintf( error_message, SMALL_BUFFER_SIZE, SCTK_COLOR_RED_BOLD( "%s" ), fmt );
+		mpc_common_io_noalloc_snprintf( error_message, SMALL_BUFFER_SIZE, MPC_COLOR_RED_BOLD( "%s" ), fmt );
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s ERROR %s\n",
 		                                __debug_print_info( debug_info ),
@@ -257,7 +235,7 @@ void sctk_error( const char *fmt, ... )
 	va_end( ap );
 }
 
-void sctk_formated_assert_print( FILE *stream, const int line, const char *file,
+void mpc_common_debug_assert_print( FILE *stream, const int line, const char *file,
                                  const char *func, const char *fmt, ... )
 {
 	va_list ap;
@@ -279,7 +257,7 @@ void sctk_formated_assert_print( FILE *stream, const int line, const char *file,
 	va_start( ap, fmt );
 	mpc_common_io_noalloc_vfprintf( stream, buff, ap );
 	va_end( ap );
-	sctk_abort();
+	mpc_common_debug_abort();
 }
 
 
@@ -298,7 +276,7 @@ void mpc_common_debug_log_file( FILE *file, const char *fmt, ... )
 	fflush( file );
 }
 
-void sctk_warning( const char *fmt, ... )
+void mpc_common_debug_warning( const char *fmt, ... )
 {
 	/* #if defined(MPC_Message_Passing) || defined(MPC_Threads) */
 	/*   if( mpc_common_get_flags()->verbosity < 1 ) */
@@ -311,7 +289,7 @@ void sctk_warning( const char *fmt, ... )
 
 #ifdef MPC_ENABLE_SHELL_COLORS
 		char warning_message[SMALL_BUFFER_SIZE];
-		mpc_common_io_noalloc_snprintf( warning_message, SMALL_BUFFER_SIZE, SCTK_COLOR_YELLOW_BOLD( "%s" ), fmt );
+		mpc_common_io_noalloc_snprintf( warning_message, SMALL_BUFFER_SIZE, MPC_COLOR_YELLOW_BOLD( "%s" ), fmt );
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s WARNING %s\n",
 		                                __debug_print_info( debug_info ),
@@ -327,7 +305,7 @@ void sctk_warning( const char *fmt, ... )
 	va_end( ap );
 }
 
-void sctk_formated_dbg_print_abort( FILE *stream, const int line,
+void mpc_common_debug_abort_log( FILE *stream, const int line,
                                     const char *file, const char *func,
                                     const char *fmt, ... )
 {
@@ -338,7 +316,7 @@ void sctk_formated_dbg_print_abort( FILE *stream, const int line,
 	mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 					"%s:%d (%s):\n"
 					"-------------------------------------\n"
-					SCTK_COLOR_RED_BOLD("%s")"\n"
+					MPC_COLOR_RED_BOLD("%s")"\n"
 					"-------------------------------------\n"
 					"\n", file, line, func?func:"??",
 					fmt );
@@ -362,7 +340,7 @@ void sctk_formated_dbg_print_abort( FILE *stream, const int line,
 /**********************************************************************/
 /*Sizes                                                               */
 /**********************************************************************/
-void sctk_size_checking( size_t a, size_t b, char *ca, char *cb, char *file,
+void mpc_common_debug_check_large_enough( size_t a, size_t b, char *ca, char *cb, char *file,
                          int line )
 {
 	if ( !( a <= b ) )
@@ -370,10 +348,10 @@ void sctk_size_checking( size_t a, size_t b, char *ca, char *cb, char *file,
 		mpc_common_io_noalloc_fprintf( stderr,
 		                               "Internal error !(%s <= %s) at line %d in %s\n",
 		                               ca, cb, line, file );
-		abort();
+		mpc_common_debug_abort();
 	}
 }
-void sctk_size_checking_eq( size_t a, size_t b, char *ca, char *cb, char *file,
+void mpc_common_debug_check_size_equal( size_t a, size_t b, char *ca, char *cb, char *file,
                             int line )
 {
 	if ( a != b )
@@ -381,6 +359,6 @@ void sctk_size_checking_eq( size_t a, size_t b, char *ca, char *cb, char *file,
 		mpc_common_io_noalloc_fprintf( stderr,
 		                               "Internal error %s != %s at line %d in %s\n",
 		                               ca, cb, line, file );
-		abort();
+		mpc_common_debug_abort();
 	}
 }

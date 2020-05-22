@@ -1,7 +1,7 @@
 #include "omp_gomp.h"
 
 #include "mpc_common_types.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 #include "mpcomp_abi.h"
 #include "mpcomp_sync.h"
@@ -1590,7 +1590,7 @@ bool mpcomp_GOMP_sections_end_cancel( void )
 
 void mpcomp_GOMP_sections_end_nowait( void )
 {
-	sctk_error( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_debug_error( "[Redirect GOMP]%s:\tBegin", __func__ );
 	/* Nothing to do */
 	__mpcomp_sections_end_nowait();
 	sctk_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );

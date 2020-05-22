@@ -209,8 +209,8 @@ unsigned long sctk_checksum_verify ( mpc_lowcomm_ptp_message_t *send, mpc_lowcom
 
 		if ( adler != send->body.checksum )
 		{
-			sctk_error ( "Got wrong checksum (got:%lu, expected:%lu)", adler, send->body.checksum );
-			sctk_abort();
+			mpc_common_debug_error ( "Got wrong checksum (got:%lu, expected:%lu)", adler, send->body.checksum );
+			mpc_common_debug_abort();
 		}
 		else
 		{
@@ -225,7 +225,7 @@ void sctk_checksum_init()
 {
 	if ( mpc_common_get_process_rank() == 0 )
 	{
-	fprintf ( stderr, SCTK_COLOR_RED_BOLD ( WARNING: inter - node message checking enabled! ) "\n" );
+	fprintf ( stderr, MPC_COLOR_RED_BOLD ( WARNING: inter - node message checking enabled! ) "\n" );
 	}
 
 	checksum_enabled = sctk_runtime_config_get()->modules.low_level_comm.checksum;

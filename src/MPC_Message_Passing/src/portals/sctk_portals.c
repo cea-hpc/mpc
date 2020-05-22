@@ -22,7 +22,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include "sctk_rail.h"
 #include "sctk_ptl_toolkit.h"
 #include "sctk_ptl_iface.h"
@@ -252,8 +252,8 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 {
 	if(sctk_rail_count() > 1 && mpc_common_get_process_rank() == 0)
 	{
-		sctk_warning("This Portals 4 process-based driver is not suited for multi-rail usage.");
-		sctk_warning("Please do not consider using more than one rail to avoid memory leaks.");
+		mpc_common_debug_warning("This Portals 4 process-based driver is not suited for multi-rail usage.");
+		mpc_common_debug_warning("Please do not consider using more than one rail to avoid memory leaks.");
 	}
 	/* just select the type of init for this rail (ring,full..), nothing more */
 	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, NULL );

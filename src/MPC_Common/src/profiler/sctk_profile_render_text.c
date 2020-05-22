@@ -24,7 +24,7 @@
 #include "mpc_common_helper.h"
 #include <stdlib.h>
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 static int sctk_profile_render_text_is_stdout = 0;
 static int sctk_profile_render_text_is_raw = 0;
@@ -79,7 +79,7 @@ void sctk_profile_render_text_setup( struct sctk_profile_renderer *rd )
 
 		if( !rd->output_file )
 		{
-			sctk_error( "Failed to open profile file : %s ", output_file );
+			mpc_common_debug_error( "Failed to open profile file : %s ", output_file );
 			perror( " fopen " );
 			abort();
 		}
@@ -160,8 +160,8 @@ void sctk_profile_render_text_render_entry( struct sctk_profiler_array *array, i
 
 		if( sctk_profile_get_config()->color_stdout && sctk_profile_render_text_is_stdout )
 		{
-				fprintf( rd->output_file, SCTK_COLOR_RED_BOLD(%-15s)"  "SCTK_COLOR_BLUE_BOLD(%10llu)"  "SCTK_COLOR_GREEN_BOLD(%-10s)"  "
-										  SCTK_COLOR_VIOLET_BOLD(( %.2f %% ))"  %-10s  %-10s  %-10s\n", sctk_profiler_array_get_desc( id ), (unsigned long long int )sctk_profiler_array_get_hits( array, id ),
+				fprintf( rd->output_file, MPC_COLOR_RED_BOLD(%-15s)"  "MPC_COLOR_BLUE_BOLD(%10llu)"  "MPC_COLOR_GREEN_BOLD(%-10s)"  "
+										  MPC_COLOR_VIOLET_BOLD(( %.2f %% ))"  %-10s  %-10s  %-10s\n", sctk_profiler_array_get_desc( id ), (unsigned long long int )sctk_profiler_array_get_hits( array, id ),
 																			 to_unit_total, rd->ptree.entry_total_percentage_time[id] * 100,
 																			 to_unit_avg, to_unit_min, to_unit_max);
 		}

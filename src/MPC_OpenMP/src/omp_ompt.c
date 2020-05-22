@@ -175,7 +175,7 @@ void _mpc_ompt_pre_init( void )
 
 			if ( __ompt_fns )
 			{
-				sctk_error( "OMPT is ENABLED ..." );
+				mpc_common_debug_error( "OMPT is ENABLED ..." );
 				_omp_ompt_enabled_flag = 1;
 			}
 	}

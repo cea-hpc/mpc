@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#if defined(SCTK_i686_ARCH_SCTK) || defined(SCTK_x86_64_ARCH_SCTK)
+#if defined(MPC_I686_ARCH) || defined(MPC_X86_64_ARCH)
 
 /*****************************
  * CONTEXT SWITCH DEFINITION *

@@ -24,12 +24,13 @@
 /********************************* INCLUDES *********************************/
 #include <mpc_common_helper.h>
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <signal.h>
 #include <limits.h>
 
 /********************************** GLOBALS *********************************/
@@ -54,7 +55,7 @@ long mpc_common_parse_long( char *input )
 {
 	if ( !_mpc_io_all_digits( input ) )
 	{
-		sctk_fatal( "Could not parse value '%s' expected integer", input );
+		mpc_common_debug_fatal( "Could not parse value '%s' expected integer", input );
 	}
 
 	long ret = 0;
@@ -67,12 +68,12 @@ long mpc_common_parse_long( char *input )
 	     || ( errno != 0 && ret == 0 ) )
 	{
 		perror( "strtol" );
-		sctk_fatal( "Could not parse value '%s' expected integer", input );
+		mpc_common_debug_fatal( "Could not parse value '%s' expected integer", input );
 	}
 
 	if ( endptr == input )
 	{
-		sctk_fatal( "Could not parse value '%s' expected integer", input );
+		mpc_common_debug_fatal( "Could not parse value '%s' expected integer", input );
 	}
 
 	return ret;
@@ -216,7 +217,7 @@ size_t mpc_common_io_noalloc_fwrite ( const void *ptr, size_t size, size_t nmemb
 
 		if ( fd < 0 )
 		{
-			sctk_error ( "Unknown file descriptor" );
+			mpc_common_debug_error ( "Unknown file descriptor" );
 			abort ();
 		}
 	}

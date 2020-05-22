@@ -117,7 +117,7 @@ int sctk_get_progress_thread_binding_numa_iter(void) {
     return cpu_id_to_bind_progress_thread;
   }
   printf("SCTK_PROGRESS_THREAD_BINDING_NUMA failed. Program will be abort\n");
-  sctk_abort();
+  mpc_common_debug_abort();
   return -1;
 }
 

@@ -814,11 +814,11 @@ void sctk_ib_rdma_fetch_and_op(sctk_rail_info_t *rail,
   LOAD_RAIL(rail);
 
   if (op != RDMA_SUM) {
-    sctk_fatal("Infiniband only supports the SUM operand");
+    mpc_common_debug_fatal("Infiniband only supports the SUM operand");
   }
 
   if (RDMA_type_size(type) != 8) {
-    sctk_fatal(
+    mpc_common_debug_fatal(
         "This implementation only supports 64bits operands for Fetch and Op");
   }
 
@@ -864,7 +864,7 @@ void sctk_ib_rdma_cas(    sctk_rail_info_t *rail,
 	LOAD_RAIL ( rail );
 
         if (RDMA_type_size(type) != 8) {
-          sctk_fatal(
+          mpc_common_debug_fatal(
               "This implementation only supports 64bits operands for CAS");
         }
 
@@ -944,7 +944,7 @@ int sctk_ib_rdma_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 		break;
 
 		default:
-			sctk_error ( "RDMA type %d not found!!!", IBUF_GET_RDMA_TYPE ( rdma_header ) );
+			mpc_common_debug_error ( "RDMA type %d not found!!!", IBUF_GET_RDMA_TYPE ( rdma_header ) );
 			not_reachable();
 	}
 
@@ -1011,19 +1011,19 @@ sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 			break;
 
                 default:
-                  sctk_error("Got RDMA type:%d, payload_size;%lu",
+                  mpc_common_debug_error("Got RDMA type:%d, payload_size;%lu",
                              IBUF_GET_RDMA_TYPE(rdma_header),
                              rdma_header->payload_size);
                   break;
                   char ibuf_desc[4096];
-                  sctk_error("BEGIN ERROR");
+                  mpc_common_debug_error("BEGIN ERROR");
                   sctk_ibuf_print(ibuf, ibuf_desc);
-                  sctk_error("\nIB - FATAL ERROR FROM PROCESS %d\n"
+                  mpc_common_debug_error("\nIB - FATAL ERROR FROM PROCESS %d\n"
                              "######### IBUF DESC ############\n"
                              "%s\n"
                              "################################",
                              mpc_common_get_process_rank(), ibuf_desc);
-                  sctk_error("END ERROR");
+                  mpc_common_debug_error("END ERROR");
                   //      not_reachable();
                 }
 
@@ -1037,7 +1037,7 @@ void sctk_ib_rdma_print ( mpc_lowcomm_ptp_message_t *msg )
 {
 	sctk_ib_msg_header_t *h = &msg->tail.ib;
 
-	sctk_error ( "MSG INFOS\n"
+	mpc_common_debug_error ( "MSG INFOS\n"
 	             "requested_size: %d\n"
 	             "rail: %p\n"
 	             "remote_peer: %p\n"

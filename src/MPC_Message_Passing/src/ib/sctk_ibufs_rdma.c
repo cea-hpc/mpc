@@ -148,7 +148,7 @@ sctk_ibuf_rdma_region_resize ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t
 	{
 		if ( ( busy = OPA_load_int ( &remote->rdma.pool->busy_nb[REGION_SEND] ) ) != 0 )
 		{
-			sctk_error ( "Buffer with wrong number in SEND channel (busy_nb:%d)", busy );
+			mpc_common_debug_error ( "Buffer with wrong number in SEND channel (busy_nb:%d)", busy );
 			not_reachable();
 		}
 	}
@@ -158,7 +158,7 @@ sctk_ibuf_rdma_region_resize ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t
 		{
 			if ( ( busy = OPA_load_int ( &remote->rdma.pool->busy_nb[REGION_RECV] ) ) != 0 )
 			{
-				sctk_error ( "Buffer with wrong numer in RECV channel (busy_nb:%d)", busy );
+				mpc_common_debug_error ( "Buffer with wrong numer in RECV channel (busy_nb:%d)", busy );
 				not_reachable();
 			}
 		}
@@ -172,7 +172,7 @@ sctk_ibuf_rdma_region_resize ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t
 
 			if ( ibuf_ptr->flag != FREE_FLAG )
 			{
-				sctk_error ( "Buffer %d (tail:%d) with wrong flag: %d in RECV channel (busy_nb:%d)", ibuf_ptr->index, region->tail->index,
+				mpc_common_debug_error ( "Buffer %d (tail:%d) with wrong flag: %d in RECV channel (busy_nb:%d)", ibuf_ptr->index, region->tail->index,
 				             ibuf_ptr->flag,
 				             OPA_load_int ( &remote->rdma.pool->busy_nb[REGION_RECV] ) );
 			}
@@ -190,7 +190,7 @@ sctk_ibuf_rdma_region_resize ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t
 
 				if ( ibuf_ptr->flag != FREE_FLAG )
 				{
-					sctk_error ( "Buffer with wrong flag: %d in SEND channel (busy_nb:%d)", ibuf_ptr->flag,
+					mpc_common_debug_error ( "Buffer with wrong flag: %d in SEND channel (busy_nb:%d)", ibuf_ptr->flag,
 					             OPA_load_int ( &remote->rdma.pool->busy_nb[REGION_SEND] ) );
 				}
 			}
@@ -593,7 +593,7 @@ inline sctk_ibuf_t *sctk_ibuf_rdma_pick ( sctk_ib_qp_t *remote )
 		/* If the buffer is not free for the moment, we skip the
 		 * RDMA */
 //    if (head->flag != FREE_FLAG) {
-//      sctk_error("Buffer %p not free", head);
+//      mpc_common_debug_error("Buffer %p not free", head);
 //      IBUF_RDMA_UNLOCK_REGION(remote, REGION_SEND);
 //      return NULL;
 //    }
@@ -611,7 +611,7 @@ inline sctk_ibuf_t *sctk_ibuf_rdma_pick ( sctk_ib_qp_t *remote )
 
 		if ( head->flag != FREE_FLAG )
 		{
-			sctk_error ( "Wrong flag (%d) got from ibuf", head->flag );
+			mpc_common_debug_error ( "Wrong flag (%d) got from ibuf", head->flag );
 			not_implemented();
 		}
 
@@ -840,7 +840,7 @@ retry:
 
 			if ( head->flag != FREE_FLAG )
 			{
-				sctk_error ( "Got a wrong flag, it seems there is a problem with MPC: %d %p", head->flag,
+				mpc_common_debug_error ( "Got a wrong flag, it seems there is a problem with MPC: %d %p", head->flag,
 				             head );
 				not_reachable();
 			}
@@ -994,7 +994,7 @@ void sctk_ibuf_rdma_release ( sctk_ib_rail_info_t *rail_ib, sctk_ibuf_t *ibuf )
 		/* Mark the buffer as polled */
 		if ( ibuf->flag != BUSY_FLAG )
 		{
-			sctk_error ( "Got a wrong flag, it seems there is a problem with MPC: %d", ibuf->flag );
+			mpc_common_debug_error ( "Got a wrong flag, it seems there is a problem with MPC: %d", ibuf->flag );
 			not_reachable();
 		}
 

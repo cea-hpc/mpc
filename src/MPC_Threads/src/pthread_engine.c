@@ -34,7 +34,7 @@
 
 #include "pthread_engine.h"
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpc_thread.h"
 #include "tls.h"
 #include "thread_ptr.h"
@@ -287,8 +287,8 @@ static int _mpc_thread_pthread_engine_user_create(pthread_t *thread, pthread_att
 	}
 }
 
-#define pthread_check_size(a, b)       sctk_size_checking(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
-#define pthread_check_size_eq(a, b)    sctk_size_checking_eq(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
+#define pthread_check_size(a, b)       mpc_common_debug_check_large_enough(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
+#define pthread_check_size_eq(a, b)    mpc_common_debug_check_size_equal(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
 
 static int _mpc_thread_pthread_mutex_spinlock(pthread_mutex_t *lock)
 {
@@ -432,7 +432,7 @@ void mpc_thread_pthread_engine_init(void)
 {
 /*   pthread_mutex_t loc = PTHREAD_MUTEX_INITIALIZER; */
 /*   mpc_thread_mutex_t glob = SCTK_THREAD_MUTEX_INITIALIZER; */
-	sctk_only_once();
+	mpc_common_debug_only_once();
 
 	sem_init(&_mpc_thread_pthread_engine_user_create_sem, 0, 1);
 

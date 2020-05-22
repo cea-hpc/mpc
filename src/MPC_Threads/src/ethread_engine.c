@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpc_thread.h"
 #include "ethread_engine.h"
 #include "ethread_engine_internal.h"
@@ -448,7 +448,7 @@ static int _mpc_thread_ethread_barrier_wait(_mpc_thread_ethread_barrier_t *barri
 
 void mpc_thread_ethread_engine_init(void)
 {
-	sctk_only_once();
+	mpc_common_debug_only_once();
 
 	/* Size Checks */
 	_mpc_thread_ethread_check_size_eq(int, _mpc_thread_ethread_status_t);

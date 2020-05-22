@@ -48,7 +48,7 @@
 #define DESC_EVENT(config, event, desc, level, fatal)  do { \
   if ( (level != -1) && ( (level <= (config)->verbose_level) || fatal )) \
     sctk_ib_debug(event":\t"desc); \
-  if (fatal) sctk_abort(); \
+  if (fatal) mpc_common_debug_abort(); \
   } while(0)
 
 /********************************************************************/
@@ -77,7 +77,7 @@ void *async_thread ( void *arg )
 		/* Get an async event from the card (this is a blocking call) */
 		if ( ibv_get_async_event ( ( struct ibv_context * ) device->context, &event ) )
 		{
-			sctk_error ( "[async thread] cannot get event" );
+			mpc_common_debug_error ( "[async thread] cannot get event" );
 		}
 
 		/* All these events are described in the Mellanox RDMA verbs API

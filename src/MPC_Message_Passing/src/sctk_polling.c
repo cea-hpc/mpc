@@ -97,7 +97,7 @@ void sctk_polling_tree_join( struct sctk_polling_tree *tree )
 			/* Acquire it */
 			tree->cells[i].is_free = 0;
 			/* A cell cannot be acquire twice */
-			//sctk_warning("TASK %d got cell %d", my_local_rank, i );
+			//mpc_common_debug_warning("TASK %d got cell %d", my_local_rank, i );
 			//assume( tree->local_task_id_to_cell_lut[ my_local_rank ] == -1 );
 			/* Register in LUT */
 			tree->local_task_id_to_cell_lut[ my_local_rank ] = i;

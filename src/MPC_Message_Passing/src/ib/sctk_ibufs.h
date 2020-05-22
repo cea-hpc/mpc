@@ -38,7 +38,7 @@ enum sctk_ib_cq_type_t
 #include "mpc_common_spinlock.h"
 #include "sctk_ib_mmu.h"
 #include "sctk_ib.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 struct sctk_rail_info_s;
 struct sctk_ib_rail_info_s;
@@ -99,7 +99,7 @@ typedef struct sctk_ibuf_header_s
 #define IBUF_GET_POISON(buffer) (IBUF_GET_HEADER(buffer)->poison)
 #define IBUF_CHECK_POISON(buffer) do {\
   if (IBUF_GET_HEADER(buffer)->poison != IBUF_POISON) { \
-    sctk_error("Wrong header received from buffer %p (got=%d expected=%d %p)", buffer, IBUF_GET_HEADER(buffer)->poison, IBUF_POISON, &IBUF_GET_HEADER(buffer)->poison); \
+    mpc_common_debug_error("Wrong header received from buffer %p (got=%d expected=%d %p)", buffer, IBUF_GET_HEADER(buffer)->poison, IBUF_POISON, &IBUF_GET_HEADER(buffer)->poison); \
     assume(0); \
   }} while(0)
 

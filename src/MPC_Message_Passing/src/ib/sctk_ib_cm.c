@@ -92,7 +92,7 @@ static void sctk_ib_cm_change_state_connected ( sctk_rail_info_t *rail,  sctk_en
 
 		default:
 			not_reachable();
-			sctk_abort(); /* Not reachable */
+			mpc_common_debug_abort(); /* Not reachable */
 	}
 }
 
@@ -110,7 +110,7 @@ static void sctk_ib_cm_change_state_to_rtr ( sctk_rail_info_t *rail,
 	if ( type == CONNECTION )
 	{
 		state = sctk_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_CONNECTING, STATE_CONNECTED );
-		sprintf ( txt, SCTK_COLOR_GREEN ( RTR CONNECTED ) );
+		sprintf ( txt, MPC_COLOR_GREEN ( RTR CONNECTED ) );
 		assume ( state == STATE_CONNECTING );
 
 	}
@@ -122,14 +122,14 @@ static void sctk_ib_cm_change_state_to_rtr ( sctk_rail_info_t *rail,
 				/* We deconnect */
 				/* Change the state of the route */
 				state = sctk_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_FLUSHED, STATE_DECONNECTED );
-				sprintf ( txt, SCTK_COLOR_RED ( RTR DECONNECTED ) );
+				sprintf ( txt, MPC_COLOR_RED ( RTR DECONNECTED ) );
 
 			}
 			else
 			{
 				/* We connect */
 				state = sctk_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_FLUSHED, STATE_CONNECTED );
-				sprintf ( txt, SCTK_COLOR_BLUE ( RTR RESIZED ) );
+				sprintf ( txt, MPC_COLOR_BLUE ( RTR RESIZED ) );
 
 			}
 
@@ -164,7 +164,7 @@ static void sctk_ib_cm_change_state_to_rts ( sctk_rail_info_t *rail,
 	if ( type == CONNECTION )
 	{
 		state = sctk_ibuf_rdma_cas_remote_state_rts ( remote, STATE_CONNECTING, STATE_CONNECTED );
-		sprintf ( txt, SCTK_COLOR_GREEN ( RTS CONNECTED ) );
+		sprintf ( txt, MPC_COLOR_GREEN ( RTS CONNECTED ) );
 		assume ( state == STATE_CONNECTING );
 
 	}
@@ -175,14 +175,14 @@ static void sctk_ib_cm_change_state_to_rts ( sctk_rail_info_t *rail,
 			{
 				/* We deconnect */
 				state = sctk_ibuf_rdma_cas_remote_state_rts ( remote, STATE_FLUSHED, STATE_DECONNECTED );
-				sprintf ( txt, SCTK_COLOR_RED ( RTS DISCONNECTED ) );
+				sprintf ( txt, MPC_COLOR_RED ( RTS DISCONNECTED ) );
 
 			}
 			else
 			{
 				/* We connect */
 				state = sctk_ibuf_rdma_cas_remote_state_rts ( remote, STATE_FLUSHED, STATE_CONNECTED );
-				sprintf ( txt, SCTK_COLOR_BLUE ( RTS RESIZED ) );
+				sprintf ( txt, MPC_COLOR_BLUE ( RTS RESIZED ) );
 
 			}
 
@@ -937,7 +937,7 @@ void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int pro
 			break;
 
 		default:
-			sctk_error ( "Message Type Not Handled" );
+			mpc_common_debug_error ( "Message Type Not Handled" );
 			not_reachable();
 			break;
 

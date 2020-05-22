@@ -124,7 +124,7 @@ static inline void mpc_lowcomm_rdma_window_set_payload(mpc_lowcomm_rdma_window_t
                                            void *payload) {
   struct mpc_lowcomm_rdma_window *win = sctk_win_translate(win_id);
   if (!win) {
-    sctk_warning("No such window %d in remote relax", win_id);
+    mpc_common_debug_warning("No such window %d in remote relax", win_id);
     return;
   }
 
@@ -135,7 +135,7 @@ static inline void *mpc_lowcomm_rdma_window_get_payload(mpc_lowcomm_rdma_window_
   struct mpc_lowcomm_rdma_window *win = sctk_win_translate(win_id);
 
   if (!win) {
-    sctk_warning("No such window %d in remote relax", win_id);
+    mpc_common_debug_warning("No such window %d in remote relax", win_id);
     return NULL;
   }
 

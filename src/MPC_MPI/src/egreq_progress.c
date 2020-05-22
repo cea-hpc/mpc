@@ -1,6 +1,6 @@
 #include "egreq_progress.h"
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -324,7 +324,7 @@ struct _mpc_egreq_progress_list *_mpc_egreq_progress_pool_join( struct _mpc_egre
 	if ( p->booked == p->size )
 	{
 		fprintf( stderr, "Error no free pool\n" );
-		sctk_abort();
+		mpc_common_debug_abort();
 	}
 
 	ret = &p->lists[p->booked];
@@ -338,7 +338,7 @@ struct _mpc_egreq_progress_list *_mpc_egreq_progress_pool_join( struct _mpc_egre
 
 int _mpc_egreq_progress_pool_poll( struct _mpc_egreq_progress_pool *p, int my_id )
 {
-	//sctk_error("POLL as %d", my_id);
+	//mpc_common_debug_error("POLL as %d", my_id);
 
 	if ( !p->booked )
 		return PWU_NO_PROGRESS;
@@ -378,7 +378,7 @@ int _mpc_egreq_progress_pool_poll( struct _mpc_egreq_progress_pool *p, int my_id
 	//    return ret;
 	/* Try to steal progress neighbor */
 	targ = rand() % p->booked;
-	//sctk_error("LOL");
+	//mpc_common_debug_error("LOL");
 
 	ret = _mpc_egreq_progress_list_poll( &p->lists[targ] );
 

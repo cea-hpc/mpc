@@ -253,7 +253,7 @@ void sctk_network_init_topological_rail_info(  sctk_rail_info_t *rail )
 		{
 			if( sctk_rail_device_is_regexp( rail->subrails[i] ) )
 			{
-				sctk_fatal("Device names with regular expressions are not allowed in subrails");
+				mpc_common_debug_fatal("Device names with regular expressions are not allowed in subrails");
 			}
 			
 			device_name_list[i] =  sctk_rail_get_device_name( rail->subrails[i] );
@@ -384,7 +384,7 @@ void sctk_topological_rail_pin_region( struct sctk_rail_info_s * rail, struct sc
 		
 		if( !subrail->rail_pin_region || !subrail->rail_unpin_region )
 		{
-			sctk_fatal("To be RDMA capable a topological rail must\n"
+			mpc_common_debug_fatal("To be RDMA capable a topological rail must\n"
 				 "only contain RDMA capable networks (error %s)", subrail->network_name );
 		}
 		
@@ -405,7 +405,7 @@ void sctk_topological_rail_unpin_region( struct sctk_rail_info_s * rail, struct 
 		
 		if( !subrail->rail_pin_region || !subrail->rail_unpin_region )
 		{
-			sctk_fatal("To be RDMA capable a topological rail must\n"
+			mpc_common_debug_fatal("To be RDMA capable a topological rail must\n"
 				 "only contain RDMA capable networks (error %s)", subrail->network_name );
 		}
 		

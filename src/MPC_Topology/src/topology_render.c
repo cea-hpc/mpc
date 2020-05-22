@@ -2,7 +2,7 @@
 
 #include <sys/types.h>
 #include <sys/syscall.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <mpc_common_spinlock.h>
 #include <mpc_topology.h>
 #include <mpc_common_rank.h>
@@ -819,7 +819,7 @@ restart_restrict:
     if (mpc_common_get_flags()->enable_smt_capabilities)
     {
         int i;
-        sctk_warning ("SMT capabilities ENABLED");
+        mpc_common_debug_warning ("SMT capabilities ENABLED");
 
         int proc_count = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
         hwloc_bitmap_zero(topology_cpuset_compute_node);
@@ -855,7 +855,7 @@ restart_restrict:
             hwloc_bitmap_free(cpuset);
             hwloc_bitmap_free(set);
             mpc_common_get_flags()->enable_smt_capabilities = 1;
-            sctk_warning ("Topology reduction issue");
+            mpc_common_debug_warning ("Topology reduction issue");
             goto restart_restrict;
         }
     }

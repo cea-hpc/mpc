@@ -23,7 +23,7 @@
 
 #include <mpc_common_spinlock.h>
 
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <string.h>
 
 #include <sctk_alloc.h>
@@ -186,7 +186,7 @@ void mpc_common_hashtable_init( struct mpc_common_hashtable *ht, uint64_t size )
 	if ( ht->cells == NULL )
 	{
 		perror( "sctk_malloc" );
-		sctk_fatal( "Could not create HT array" );
+		mpc_common_debug_fatal( "Could not create HT array" );
 	}
 
 	ht->rwlocks = sctk_malloc( size * sizeof( mpc_common_rwlock_t ) );
@@ -194,7 +194,7 @@ void mpc_common_hashtable_init( struct mpc_common_hashtable *ht, uint64_t size )
 	if ( ht->rwlocks == NULL )
 	{
 		perror( "sctk_malloc" );
-		sctk_fatal( "Could not create HT RW lock array" );
+		mpc_common_debug_fatal( "Could not create HT RW lock array" );
 	}
 
 	unsigned int i;

@@ -28,7 +28,7 @@
 #include "topology.h"
 
 #include "mpc_config.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "machine_info.h"
 #include "mpc_common_helper.h"
 #include "mpc_common_flags.h"
@@ -86,7 +86,7 @@ void _mpc_topology_map_and_restrict_by_cpuset(hwloc_topology_t target_topology,
 					   " requested: %d in the list, %d requested",
 					   sum,
 					   processor_count );
-			sctk_abort();
+			mpc_common_debug_abort();
 		}
 
 		hwloc_bitmap_copy( cpuset, pinning_constraints);
@@ -216,7 +216,7 @@ restart_restrict:
 			hwloc_bitmap_free( topology_cpuset );
 			hwloc_bitmap_free( set );
 			mpc_common_get_flags()->enable_smt_capabilities = 1;
-			sctk_warning( "Failed to restrict topology : enabling SMT support" );
+			mpc_common_debug_warning( "Failed to restrict topology : enabling SMT support" );
 			goto restart_restrict;
 		}
 
@@ -293,7 +293,7 @@ void _mpc_topology_apply_mpc_process_constraints(hwloc_topology_t target_topolog
 			}
 			else if ( requested_processor_per_process < processor_per_process )
 			{
-				sctk_warning("Process %d does not use all avaiable CPUs (%d/%d)",
+				mpc_common_debug_warning("Process %d does not use all avaiable CPUs (%d/%d)",
 							 mpc_common_get_process_rank(),
 							 requested_processor_per_process, processor_per_process );
 
@@ -537,7 +537,7 @@ hwloc_cpuset_t _mpc_topology_get_first_pu_for_level( hwloc_topology_t target_top
 
 	if ( hwloc_bitmap_iszero( roots ) )
 	{
-		sctk_fatal( "Did not find any roots for this level" );
+		mpc_common_debug_fatal( "Did not find any roots for this level" );
 	}
 
 	return roots;

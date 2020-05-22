@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "mpc_config.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpc_reduction.h"
 #include "mpc_common_types.h"
 

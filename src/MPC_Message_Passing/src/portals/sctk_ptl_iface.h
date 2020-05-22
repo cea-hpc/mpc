@@ -32,7 +32,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "sctk_ptl_types.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "sctk_rail.h"
 
 #if !defined(NDEBUG)
@@ -70,7 +70,7 @@ static __UNUSED__ char * __sctk_ptl_str_prot[] = {
 	case PTL_EQ_EMPTY: \
 	case PTL_CT_NONE_REACHED: \
         case PTL_OK: break; \
-	default: sctk_fatal("%s -> %s (%s:%u)", #x, sctk_ptl_rc_decode(__ret), __FILE__, (unsigned int)__LINE__); break; \
+	default: mpc_common_debug_fatal("%s -> %s (%s:%u)", #x, sctk_ptl_rc_decode(__ret), __FILE__, (unsigned int)__LINE__); break; \
     } } while (0)
 #else
 #define sctk_ptl_chk(x) x

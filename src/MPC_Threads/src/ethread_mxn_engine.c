@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpc_thread.h"
 #include "ethread_engine.h"
 #include "ethread_engine_internal.h"
@@ -833,20 +833,20 @@ static int _mpc_thread_ethread_mxn_engine_sigsuspend(sigset_t *set)
 
 static void _mpc_thread_ethread_mxn_engine_at_fork_child()
 {
-	/* sctk_error("Unable to fork with user threads child"); */
-	/* sctk_abort(); */
+	/* mpc_common_debug_error("Unable to fork with user threads child"); */
+	/* mpc_common_debug_abort(); */
 }
 
 static void _mpc_thread_ethread_mxn_engine_at_fork_parent()
 {
-	/* sctk_error("Unable to fork with user threads parent"); */
-	/* sctk_abort(); */
+	/* mpc_common_debug_error("Unable to fork with user threads parent"); */
+	/* mpc_common_debug_abort(); */
 }
 
 static void _mpc_thread_ethread_mxn_engine_at_fork_prepare()
 {
-	/* sctk_error("Unable to fork with user threads prepare"); */
-	/* sctk_abort(); */
+	/* mpc_common_debug_error("Unable to fork with user threads prepare"); */
+	/* mpc_common_debug_abort(); */
 }
 
 /* These are wrappers around the Ethread Posix interface
@@ -892,7 +892,7 @@ static int _mpc_thread_ethread_mxn_engine_barrier_wait(_mpc_thread_ethread_barri
 
 void mpc_thread_ethread_mxn_engine_init(void)
 {
-	sctk_only_once();
+	mpc_common_debug_only_once();
 
 	pthread_atfork(_mpc_thread_ethread_mxn_engine_at_fork_prepare, _mpc_thread_ethread_mxn_engine_at_fork_parent, _mpc_thread_ethread_mxn_engine_at_fork_child);
 

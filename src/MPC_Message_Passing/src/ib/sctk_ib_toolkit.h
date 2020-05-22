@@ -23,7 +23,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpc_launch.h"
 #include "string.h"
 
@@ -53,7 +53,7 @@ __UNUSED__ static void sctk_ib_debug ( const char *fmt, ... )
 		va_start ( ap, fmt );
 #ifdef HAVE_SHELL_COLORS
 		snprintf ( buff, SMALL_BUFFER_SIZE,
-		           " "SCTK_COLOR_RED_BOLD ( [ %5s] ) " %s\n",
+		           " "MPC_COLOR_RED_BOLD ( [ %5s] ) " %s\n",
 		           SCTK_IB_MODULE_NAME, fmt );
 #else
 		snprintf ( buff, SMALL_BUFFER_SIZE,
@@ -93,12 +93,12 @@ static inline void sctk_ib_nodebug ( const char *fmt, ... )
 
 /* Error handler */
 #define SCTK_IB_ABORT_WITH_ERRNO(...)                           \
-		sctk_error(__VA_ARGS__"(errno: %s)", strerror(errno));      \
-		sctk_abort();
+		mpc_common_debug_error(__VA_ARGS__"(errno: %s)", strerror(errno));      \
+		mpc_common_debug_abort();
 
 #define SCTK_IB_ABORT(...)        \
-		sctk_error(__VA_ARGS__);      \
-		sctk_abort();
+		mpc_common_debug_error(__VA_ARGS__);      \
+		mpc_common_debug_abort();
 
 #define ALIGN_ON(x, align) ( (x + (align-1)) & (~(align-1)) )
 

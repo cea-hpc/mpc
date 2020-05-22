@@ -28,9 +28,9 @@
 #include <stdarg.h>
 
 #include "mpc_config.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "sctk_thread_dbg.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpc_thread.h"
 #include "mpc_common_spinlock.h"
 #include "sctk_ethread.h"
@@ -192,7 +192,7 @@ int sctk_enable_lib_thread_db (void) {
   rtdb_enable_lib_thread_db () ;
   sctk_use_rtdb = 1 ;
   
-#if defined(SCTK_i686_ARCH_SCTK)
+#if defined(MPC_I686_ARCH)
 #if SCTK_MCTX_MTH(mcsc)
   rtdb_set_eip_offset (14) ;
   rtdb_set_esp_offset (7) ;
@@ -207,7 +207,7 @@ int sctk_enable_lib_thread_db (void) {
   rtdb_set_edi_offset (2) ;
   rtdb_set_ebx_offset (0) ;
 #endif
-#elif defined(SCTK_x86_64_ARCH_SCTK)
+#elif defined(MPC_X86_64_ARCH)
 #if SCTK_MCTX_MTH(libcontext)
   rtdb_set_rbx_offset (SCTK_REG_RBX) ;
   rtdb_set_rbp_offset (SCTK_REG_RBP) ;

@@ -26,7 +26,7 @@
 #include <math.h>
 
 #include "sctk_profiler_array.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpc_common_asm.h"
 
 /* Profile renderer list */
@@ -105,7 +105,7 @@ void sctk_profile_renderer_remove_output_iface( struct sctk_profile_renderer *rd
 
 	if( rd->output_file )
 	{
-		sctk_error( "An output interface left a non-null file ptr did you close it ?" );
+		mpc_common_debug_error( "An output interface left a non-null file ptr did you close it ?" );
 		abort();
 	}
 }
@@ -170,7 +170,7 @@ int sctk_profile_renderer_check_render_list( char *render_list )
 		    && sctk_profile_renderer_is_authorized_symbol( render_list[i] ) 
 		  )
 		 {
-			sctk_warning("Render list contains unauthorized character : '%c' ", render_list[i]);
+			mpc_common_debug_warning("Render list contains unauthorized character : '%c' ", render_list[i]);
 			return 1;
 		 }
 	}
@@ -204,7 +204,7 @@ void sctk_profile_renderer_init( struct sctk_profile_renderer *rd, struct sctk_p
 	
 	if( sctk_profile_renderer_check_render_list( render_list ) )
 	{
-		sctk_error( "Provided render list syntax is not correct: %s", render_list );
+		mpc_common_debug_error( "Provided render list syntax is not correct: %s", render_list );
 		abort();
 	}
 
@@ -292,7 +292,7 @@ void sctk_profile_renderer_render( struct sctk_profile_renderer *rd )
 		
 		if( rd_type < 0 )
 		{
-			sctk_warning( "No such renderer type : %s", render_string );
+			mpc_common_debug_warning( "No such renderer type : %s", render_string );
 			continue;
 		}
 

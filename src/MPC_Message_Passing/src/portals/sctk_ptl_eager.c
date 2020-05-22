@@ -294,7 +294,7 @@ void sctk_ptl_eager_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			not_reachable();              /* have been disabled */
 			break;
 		default:
-			sctk_fatal("Portals ME event not recognized: %d", ev.type);
+			mpc_common_debug_fatal("Portals ME event not recognized: %d", ev.type);
 			break;
 	}
 }
@@ -328,7 +328,7 @@ void sctk_ptl_eager_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			not_reachable();
 			break;
 		default:
-			sctk_fatal("Unrecognized MD event: %d", ev.type);
+			mpc_common_debug_fatal("Unrecognized MD event: %d", ev.type);
 			break;
 	}
 }

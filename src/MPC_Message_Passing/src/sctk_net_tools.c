@@ -22,7 +22,7 @@
 
 #include "comm.h"
 #include "sctk_low_level_comm.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "sctk_net_tools.h"
 #include <string.h>
 #include <stdlib.h>
@@ -573,7 +573,7 @@ void sctk_net_message_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
 
 	SCTK_MSG_COMPLETION_FLAG_SET ( send , NULL );
 
-        //	sctk_error( "HERE REQ is %p", recv->tail.request );
+        //	mpc_common_debug_error( "HERE REQ is %p", recv->tail.request );
 
         sctk_nodebug("MSG |%s|", (char *)body);
 
@@ -822,7 +822,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 /*     res = write(fd,buf + done ,size - done); */
 /*     if(res < 0){ */
 /*       perror("Write error"); */
-/*       sctk_abort(); */
+/*       mpc_common_debug_abort(); */
 /*     } */
 /*     done += res; */
 /*   }while(done < size); */
@@ -835,7 +835,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 /*     res = read(fd,buf + done,size - done); */
 /*     if(res < 0){ */
 /*       perror("Read error"); */
-/*       sctk_abort(); */
+/*       mpc_common_debug_abort(); */
 /*     } */
 /*     done += res; */
 /*   }while(done < size); */

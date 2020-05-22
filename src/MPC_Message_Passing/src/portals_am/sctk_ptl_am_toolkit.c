@@ -207,7 +207,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 	
 			/* we only consider Portals-succeded events */
 			if(ev.ni_fail_type != PTL_NI_OK) 
-				sctk_fatal("ME: Failed event %s: %d", sctk_ptl_event_decode(ev), ev.ni_fail_type);
+				mpc_common_debug_fatal("ME: Failed event %s: %d", sctk_ptl_event_decode(ev), ev.ni_fail_type);
 		
 			/* if the request consumed an unexpected slot, append a new one */
 			if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST)
@@ -269,7 +269,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
 			mpc_common_debug("PORTALS: MDS EVENT '%s' from %s, type=%d, prot=%d",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), user_ptr->type, user_ptr->prot);
 			/* we only care about Portals-sucess events */
 			if(ev.ni_fail_type != PTL_NI_OK)
-				sctk_fatal("MD: Failed event %s: %d", sctk_ptl_event_decode(ev), ev.ni_fail_type);
+				mpc_common_debug_fatal("MD: Failed event %s: %d", sctk_ptl_event_decode(ev), ev.ni_fail_type);
 
 
 			switch((int)user_ptr->type)
@@ -463,7 +463,7 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 
 	if(cut < eager_limit)
 	{
-		sctk_warning("PORTALS: eager are larger than allowed memory region size ! Resize eager limits.");
+		mpc_common_debug_warning("PORTALS: eager are larger than allowed memory region size ! Resize eager limits.");
 		eager_limit = cut;
 	}
 

@@ -28,7 +28,7 @@ extern "C"
 {
 #endif
 
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <mpc_common_debugger.h>
 #include <stdlib.h>
 #include <stdio.h>

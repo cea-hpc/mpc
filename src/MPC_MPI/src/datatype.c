@@ -23,7 +23,7 @@
 #include "datatype.h"
 
 #include <string.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 
 #include "mpc_reduction.h"
 #include "comm_lib.h"
@@ -709,14 +709,14 @@ void _mpc_dt_common_display( mpc_lowcomm_datatype_t datatype )
 {
 	if ( !_mpc_dt_is_common( datatype ) )
 	{
-		sctk_error( "Unknown datatype provided to %s\n", __FUNCTION__ );
+		mpc_common_debug_error( "Unknown datatype provided to %s\n", __FUNCTION__ );
 		abort();
 	}
 
-	sctk_error( "=============COMMON=================" );
-	sctk_error( "NAME %s", _mpc_dt_name_get( datatype ) );
-	sctk_error( "SIZE %ld", __sctk_common_type_sizes[datatype] );
-	sctk_error( "====================================" );
+	mpc_common_debug_error( "=============COMMON=================" );
+	mpc_common_debug_error( "NAME %s", _mpc_dt_name_get( datatype ) );
+	mpc_common_debug_error( "SIZE %ld", __sctk_common_type_sizes[datatype] );
+	mpc_common_debug_error( "====================================" );
 }
 
 /************************************************************************/
@@ -765,18 +765,18 @@ void _mpc_dt_contiguous_release( _mpc_dt_contiguout_t *type )
 
 void _mpc_dt_contiguous_display( _mpc_dt_contiguout_t *target_type )
 {
-	sctk_error( "=============CONTIGUOUS==================" );
-	sctk_error( "ID_RANK %ld", target_type->id_rank );
-	sctk_error( "REF_COUNT %ld", target_type->ref_count );
-	sctk_error( "SIZE %ld", target_type->size );
-	sctk_error( "ELEM SIZE %ld", target_type->element_size );
-	sctk_error( "COUNT %ld", target_type->count );
-	sctk_error( "DTYPE %d", target_type->datatype );
+	mpc_common_debug_error( "=============CONTIGUOUS==================" );
+	mpc_common_debug_error( "ID_RANK %ld", target_type->id_rank );
+	mpc_common_debug_error( "REF_COUNT %ld", target_type->ref_count );
+	mpc_common_debug_error( "SIZE %ld", target_type->size );
+	mpc_common_debug_error( "ELEM SIZE %ld", target_type->element_size );
+	mpc_common_debug_error( "COUNT %ld", target_type->count );
+	mpc_common_debug_error( "DTYPE %d", target_type->datatype );
 
 	int ni, na, nd, c;
 
 	_mpc_dt_fill_envelope( &target_type->context, &ni, &na, &nd, &c );
-	sctk_error( "COMBINER : %s[%d]", _mpc_dt_get_combiner_name( c ), c );
+	mpc_common_debug_error( "COMBINER : %s[%d]", _mpc_dt_get_combiner_name( c ), c );
 
 	int i;
 
@@ -800,7 +800,7 @@ void _mpc_dt_contiguous_display( _mpc_dt_contiguout_t *target_type )
 		printf( "[%d] %d , ", i, target_type->context.array_of_types[i] );
 	}
 	printf( "]\n" );
-	sctk_error( "==============================================" );
+	mpc_common_debug_error( "==============================================" );
 }
 
 /************************************************************************/
@@ -834,7 +834,7 @@ void _mpc_dt_derived_init( _mpc_dt_derived_t *type,
 	/*EXPAT*/
 	if ( !type->begins || !type->ends || !type->datatypes )
 	{
-		sctk_fatal( "Failled to allocate derived type content" );
+		mpc_common_debug_fatal( "Failled to allocate derived type content" );
 	}
 
 	/* And we fill them from the parameters */
@@ -955,7 +955,7 @@ int _mpc_dt_derived_release( _mpc_dt_derived_t *type )
 		else
 		{
 			if ( type->context.combiner != MPC_COMBINER_DUMMY )
-				sctk_fatal( "We found a derived datatype %d with no layout",
+				mpc_common_debug_fatal( "We found a derived datatype %d with no layout",
 							type->id );
 		}
 		/* Counter == 0 then free */
@@ -1107,54 +1107,54 @@ int _mpc_dt_derived_optimize( _mpc_dt_derived_t *target_type )
 
 void _mpc_dt_derived_display( _mpc_dt_derived_t *target_type )
 {
-	sctk_error( "============DERIVED===================" );
-	sctk_error( "TYPE %d", target_type->id );
-	sctk_error( "NAME %s", _mpc_dt_name_get( target_type->id ) );
-	sctk_error( "SIZE %ld", target_type->size );
-	sctk_error( "REF_COUNT %ld", target_type->ref_count );
-	sctk_error( "COUNT %ld", target_type->count );
-	sctk_error( "OPT_COUNT %ld", target_type->opt_count );
+	mpc_common_debug_error( "============DERIVED===================" );
+	mpc_common_debug_error( "TYPE %d", target_type->id );
+	mpc_common_debug_error( "NAME %s", _mpc_dt_name_get( target_type->id ) );
+	mpc_common_debug_error( "SIZE %ld", target_type->size );
+	mpc_common_debug_error( "REF_COUNT %ld", target_type->ref_count );
+	mpc_common_debug_error( "COUNT %ld", target_type->count );
+	mpc_common_debug_error( "OPT_COUNT %ld", target_type->opt_count );
 
 	int ni, na, nd, c;
 
 	_mpc_dt_fill_envelope( &target_type->context, &ni, &na, &nd, &c );
-	sctk_error( "COMBINER : %s[%d]", _mpc_dt_get_combiner_name( c ), c );
+	mpc_common_debug_error( "COMBINER : %s[%d]", _mpc_dt_get_combiner_name( c ), c );
 
 	int i;
 
-	sctk_error( "INT : [" );
+	mpc_common_debug_error( "INT : [" );
 	for ( i = 0; i < ni; i++ )
 	{
-		sctk_error( "[%d] %d , ", i,
+		mpc_common_debug_error( "[%d] %d , ", i,
 					target_type->context.array_of_integers[i] );
 	}
-	sctk_error( "]\n" );
+	mpc_common_debug_error( "]\n" );
 
-	sctk_error( "ADD : [" );
+	mpc_common_debug_error( "ADD : [" );
 	for ( i = 0; i < na; i++ )
 	{
-		sctk_error( "[%d] %ld , ", i,
+		mpc_common_debug_error( "[%d] %ld , ", i,
 					target_type->context.array_of_addresses[i] );
 	}
-	sctk_error( "]\n" );
+	mpc_common_debug_error( "]\n" );
 
-	sctk_error( "TYP : [" );
+	mpc_common_debug_error( "TYP : [" );
 	for ( i = 0; i < nd; i++ )
 	{
-		sctk_error(
+		mpc_common_debug_error(
 			"[%d] %d (%s), ", i, target_type->context.array_of_types[i],
 			_mpc_dt_name_get( target_type->context.array_of_types[i] ) );
 	}
-	sctk_error( "]\n" );
+	mpc_common_debug_error( "]\n" );
 
 	unsigned int j;
 	for ( j = 0; j < target_type->opt_count; j++ )
 	{
-		sctk_error( "[%d , %d]\n", target_type->opt_begins[j],
+		mpc_common_debug_error( "[%d , %d]\n", target_type->opt_begins[j],
 					target_type->opt_ends[j] );
 	}
 
-	sctk_error( "==============================================" );
+	mpc_common_debug_error( "==============================================" );
 }
 
 /************************************************************************/
@@ -1475,18 +1475,18 @@ static int _mpc_dt_footprint_check_envelope( struct _mpc_dt_footprint *ref, stru
 	for( i = 0 ; i < num_datatypes ; i++ )
 	{
 		if( ref->array_of_types[i] != candidate->array_of_types[i] )
-		sctk_error("DT %d == %d", ref->array_of_types[i] ,candidate->array_of_types[i] );
+		mpc_common_debug_error("DT %d == %d", ref->array_of_types[i] ,candidate->array_of_types[i] );
 	}
 
 
 	for( i = 0 ; i < num_integers ; i++ )
 	{
-		sctk_error("INT %d == %d", ref->array_of_integers[i] ,candidate->array_of_integers[i] );
+		mpc_common_debug_error("INT %d == %d", ref->array_of_integers[i] ,candidate->array_of_integers[i] );
 	}
 
 	for( i = 0 ; i < num_addresses ; i++ )
 	{
-		sctk_error("AD %d == %d", ref->array_of_addresses[i] ,candidate->array_of_addresses[i] );
+		mpc_common_debug_error("AD %d == %d", ref->array_of_addresses[i] ,candidate->array_of_addresses[i] );
 	}
 	*/
 
@@ -1514,7 +1514,7 @@ static int _mpc_dt_footprint_check_envelope( struct _mpc_dt_footprint *ref, stru
 			return 0;
 	}
 
-	//sctk_error("TYPE MATCH");
+	//mpc_common_debug_error("TYPE MATCH");
 
 	/* Here equality has been  verified */
 	return 1;
@@ -1652,10 +1652,10 @@ static void __mpc_context_set_refcount( struct _mpc_dt_footprint *ctx, struct _m
 	switch ( ctx->combiner )
 	{
 		case MPC_COMBINER_DUMMY:
-			sctk_fatal( "ERROR : You are setting a context on a dummy data-type" );
+			mpc_common_debug_fatal( "ERROR : You are setting a context on a dummy data-type" );
 			break;
 		case MPC_COMBINER_NAMED:
-			sctk_fatal( "ERROR : You are setting a context on a common data-type" );
+			mpc_common_debug_fatal( "ERROR : You are setting a context on a common data-type" );
 			break;
 		case MPC_COMBINER_DUP:
 			ctx->array_of_types[0] = dctx->oldtype;

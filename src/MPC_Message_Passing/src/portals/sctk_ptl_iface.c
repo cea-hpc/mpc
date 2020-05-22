@@ -23,7 +23,7 @@
 /* ######################################################################## */
 
 #include <limits.h>
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "sctk_alloc.h"
 #include "mpc_common_helper.h"
 #include "mpc_common_spinlock.h"

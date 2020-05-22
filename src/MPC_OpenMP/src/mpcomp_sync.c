@@ -21,7 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 
 #include "mpcomp_sync.h"

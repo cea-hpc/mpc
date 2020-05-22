@@ -25,7 +25,7 @@
 #if defined(MPC_USE_CUDA)
 #include <mpc_thread_accelerator.h>
 #include <sctk_alloc.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <mpc_topology_device.h>
 #include <mpc_common_spinlock.h>
 #include <mpc_topology.h>

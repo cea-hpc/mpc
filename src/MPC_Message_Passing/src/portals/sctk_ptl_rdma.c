@@ -59,7 +59,7 @@ static inline ptl_datatype_t __sctk_ptl_convert_type(RDMA_type type)
 		case RDMA_TYPE_UNSIGNED_SHORT     : return PTL_UINT16_T    ; break ;
 		case RDMA_TYPE_WCHAR              : return PTL_INT16_T     ; break ;
 		default: 
-			sctk_fatal("Type not handled by Portals: %d", type);
+			mpc_common_debug_fatal("Type not handled by Portals: %d", type);
 	}
 	return 0;
 }
@@ -84,7 +84,7 @@ static inline ptl_op_t __sctk_ptl_convert_op(RDMA_op op)
 		case RDMA_LXOR : return PTL_LXOR ; break ;
 		case RDMA_BXOR : return PTL_BXOR ; break ;
 		default:
-			sctk_fatal("Operation not supported by Portals %d", op);
+			mpc_common_debug_fatal("Operation not supported by Portals %d", op);
 	}
 	return 0;
 }
@@ -644,7 +644,7 @@ void sctk_ptl_rdma_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			not_reachable();              /* have been disabled */
 			break;
 		default:
-			sctk_fatal("Portals ME event not recognized: %d", ev.type);
+			mpc_common_debug_fatal("Portals ME event not recognized: %d", ev.type);
 			break;
 	}
 
@@ -681,7 +681,7 @@ void sctk_ptl_rdma_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			sctk_ptl_md_release(atomic_ptr);
 			break;
 		default:
-			sctk_fatal("Unrecognized MD event: %d", ev.type);
+			mpc_common_debug_fatal("Unrecognized MD event: %d", ev.type);
 			break;
 	}
 }

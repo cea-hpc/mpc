@@ -25,7 +25,7 @@
 
 #include "mpcomp_task.h"
 
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <mpc_runtime_config.h>
 #include <mpc_common_types.h>
 #include <mpc_common_asm.h>
@@ -2447,7 +2447,7 @@ void _mpc_task_new( void ( *fn )( void * ), void *data,
 {
 	if ( cpyfn )
 	{
-		sctk_abort();
+		mpc_common_debug_abort();
 	}
 
 	fn( data );

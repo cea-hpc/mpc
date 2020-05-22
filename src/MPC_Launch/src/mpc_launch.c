@@ -38,7 +38,7 @@
 #include <sctk_alloc.h>
 
 #include "mpc_launch.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpc_common_asm.h"
 #include "opa_primitives.h"
 
@@ -274,7 +274,7 @@ static inline void __parse_argument(char *passed_arg)
 	PARSE_ARG("--use-ethread_ng", sctk_use_ethread_ng);
 	PARSE_ARG("--use-ethread", sctk_use_ethread);
 
-	sctk_warning("Argument %s Unknown\n", passed_arg);
+	mpc_common_debug_warning("Argument %s Unknown\n", passed_arg);
 }
 
 /*********************
@@ -396,7 +396,7 @@ static void *__mpc_mpi_task_start_function(void *parg)
 	/* Firs check if retcodes are not already incoherent */
 	if(OPA_load_int(&__mpc_main_return_code) == MPC_INCOHERENT_RETCODE)
 	{
-		sctk_warning("main returned %d", retcode);
+		mpc_common_debug_warning("main returned %d", retcode);
 	}
 	else
 	{
@@ -410,8 +410,8 @@ static void *__mpc_mpi_task_start_function(void *parg)
 			{
 				/* Set retcodes as incoherent */
 				OPA_swap_int(&__mpc_main_return_code, MPC_INCOHERENT_RETCODE);
-				sctk_warning("main returned %d and a previous main returned %d", retcode, previous_val);
-				sctk_warning("Retcodes are incoherent for local mains, returning 42");
+				mpc_common_debug_warning("main returned %d and a previous main returned %d", retcode, previous_val);
+				mpc_common_debug_warning("Retcodes are incoherent for local mains, returning 42");
 			}
 		}
 	}
@@ -538,7 +538,7 @@ static void __set_mpc_common_process_number(void)
 	if(!mpc_common_get_flags()->task_number)
 	{
 		fprintf(stderr, "No task number specified!\n");
-		sctk_abort();
+		mpc_common_debug_abort();
 	}
 
 	if(mpc_common_get_flags()->process_number && mpc_common_get_flags()->task_number)

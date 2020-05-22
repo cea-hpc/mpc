@@ -25,7 +25,7 @@
 #include <mpc_common_rank.h>
 #include <string.h>
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "sctk_performance_tree.h"
 #include "sctk_profile_render.h"
 
@@ -62,7 +62,7 @@ static void sctk_internal_profiler_check_config()
 	/* Check for at least one color */
 	if( sctk_profile_get_config()->level_colors_size < 1 )
 	{
-		sctk_error("You should provide at least one level color to MPC Profiler");
+		mpc_common_debug_error("You should provide at least one level color to MPC Profiler");
 		abort();
 	}
 }
@@ -151,7 +151,7 @@ static inline void __set_profiler_output()
 	{
 		if ( sctk_profile_renderer_check_render_list( arg ) )
 		{
-			sctk_error( "Provided profiling output syntax is not correct: %s", arg );
+			mpc_common_debug_error( "Provided profiling output syntax is not correct: %s", arg );
 			abort();
 		}
 	}

@@ -22,7 +22,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpcomp_types.h"
 #include "omp_intel_types.h"
 #include "omp_intel_atomics.h"

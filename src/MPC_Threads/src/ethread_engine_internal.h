@@ -36,7 +36,7 @@
 #include <mpc_runtime_config.h>
 
 #include "thread.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "ethread_engine.h"
 #include "sctk_alloc.h"
 #include "kthread.h"
@@ -108,7 +108,7 @@ static inline int ___mpc_thread_ethread_poll_vp(_mpc_thread_ethread_virtual_proc
 				        (if(poll_list->my_self->status != ethread_polling)
 				{
 					_mpc_thread_ethread_print_task(poll_list->my_self);
-					sctk_error("Cur vp %p", vp);
+					mpc_common_debug_error("Cur vp %p", vp);
 					_mpc_thread_ethread_print_task(cur);
 					sctk_assert(poll_list->my_self->status ==
 					            ethread_polling);
@@ -164,7 +164,7 @@ static inline void ___mpc_thread_ethread_sched_yield_vp_head(_mpc_thread_ethread
 	sctk_assert(cur->status != ethread_system);
 	sctk_assert_func(if(cur->vp != vp)
 	{
-		sctk_error("%p != %p", cur->vp, vp);
+		mpc_common_debug_error("%p != %p", cur->vp, vp);
 		_mpc_thread_ethread_print_task(cur);
 		sctk_assert(cur->vp == vp);
 	}
@@ -172,13 +172,13 @@ static inline void ___mpc_thread_ethread_sched_yield_vp_head(_mpc_thread_ethread
 	sctk_assert(vp->current == cur);
 
 	/*
-	 * #if !defined(SCTK_ia64_ARCH_SCTK)
+	 * #if !defined(MPC_IA64_ARCH)
 	 * sctk_assert_func
 	 * (
 	 * do{
 	 * if(cur->stack != NULL){
 	 * if(cur->stack[SCTK_ETHREAD_STACK_SIZE] != 123){
-	 * sctk_error("Stack overflow %d",cur->stack[SCTK_ETHREAD_STACK_SIZE]);
+	 * mpc_common_debug_error("Stack overflow %d",cur->stack[SCTK_ETHREAD_STACK_SIZE]);
 	 * abort();
 	 * }
 	 * }
@@ -833,7 +833,7 @@ static inline void ___mpc_thread_ethread_wait_for_value_and_poll(_mpc_thread_eth
 	sctk_assert(cell.forced == 0);
 	sctk_assert_func(if(*data != value)
 	{
-		sctk_error("%d != %d", *data, value);
+		mpc_common_debug_error("%d != %d", *data, value);
 		_mpc_thread_ethread_print_task(cur);
 		sctk_assert(*data == value);
 	}
@@ -1181,7 +1181,7 @@ static inline int ___mpc_thread_ethread_mutex_trylock(_mpc_thread_ethread_virtua
 	}
 	if(lock->owner != owner)
 	{
-		sctk_error("%p != %p in %s at line %d",
+		mpc_common_debug_error("%p != %p in %s at line %d",
 		           lock->owner, owner, __FILE__, __LINE__);
 		_mpc_thread_ethread_print_task(owner);
 		_mpc_thread_ethread_print_task( (_mpc_thread_ethread_per_thread_t *)lock->owner);
@@ -1915,10 +1915,10 @@ ___mpc_thread_ethread_wake_thread_on_vp(_mpc_thread_ethread_virtual_processor_t 
 
 	sctk_assert_func(if(list->vp != vp)
 	{
-		sctk_error("%d %p != %p %d", list->vp->rank,
+		mpc_common_debug_error("%d %p != %p %d", list->vp->rank,
 		           list->vp, vp, vp->rank);
-		sctk_error("list->queue %p", list->queue);
-		sctk_error("list->queue_tail %p",
+		mpc_common_debug_error("list->queue %p", list->queue);
+		mpc_common_debug_error("list->queue_tail %p",
 		           list->queue_tail);
 		_mpc_thread_ethread_print_task( (_mpc_thread_ethread_per_thread_t
 		                                 *)

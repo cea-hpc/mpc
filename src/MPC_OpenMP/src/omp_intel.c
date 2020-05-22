@@ -1,6 +1,6 @@
 #include "omp_intel.h"
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 #include "mpcomp_core.h"
 #include "mpcomp_loop.h"
@@ -250,7 +250,7 @@ void __kmpc_push_num_threads( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 glo
                               kmp_int32 num_threads )
 {
 	mpcomp_thread_t __UNUSED__ *t;
-	sctk_warning( "%s: pushing %d thread(s)", __func__, num_threads );
+	mpc_common_debug_warning( "%s: pushing %d thread(s)", __func__, num_threads );
 	/* Handle orphaned directive (initialize OpenMP environment) */
 	__mpcomp_init();
 	/* Grab the thread info */
@@ -810,9 +810,9 @@ kmp_int32 __kmpc_reduce_nowait( ident_t *loc, kmp_int32 global_tid, kmp_int32 nu
 	}
 	else
 	{
-		sctk_error( "__kmpc_reduce_nowait: Unexpected reduction method %d",
+		mpc_common_debug_error( "__kmpc_reduce_nowait: Unexpected reduction method %d",
 		            packed_reduction_method );
-		sctk_abort();
+		mpc_common_debug_abort();
 	}
 
 	return retval;
@@ -844,9 +844,9 @@ void __kmpc_end_reduce_nowait( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 glo
 	}
 	else
 	{
-		sctk_error( "__kmpc_end_reduce_nowait: Unexpected reduction method %d",
+		mpc_common_debug_error( "__kmpc_end_reduce_nowait: Unexpected reduction method %d",
 		            packed_reduction_method );
-		sctk_abort();
+		mpc_common_debug_abort();
 	}
 }
 
@@ -885,9 +885,9 @@ kmp_int32 __kmpc_reduce( ident_t *loc, kmp_int32 global_tid, kmp_int32 num_vars,
 	}
 	else
 	{
-		sctk_error( "__kmpc_reduce_nowait: Unexpected reduction method %d",
+		mpc_common_debug_error( "__kmpc_reduce_nowait: Unexpected reduction method %d",
 		            packed_reduction_method );
-		sctk_abort();
+		mpc_common_debug_abort();
 	}
 
 	return retval;
@@ -1545,7 +1545,7 @@ static inline void __intel_dispatch_init_long( mpcomp_thread_t __UNUSED__ *t, lo
 			break;
 
 		default:
-			sctk_error( "Schedule not handled: %d\n", t->schedule_type );
+			mpc_common_debug_error( "Schedule not handled: %d\n", t->schedule_type );
 			not_implemented();
 	}
 }
@@ -1605,7 +1605,7 @@ static inline void __intel_dispatch_init_ull( mpcomp_thread_t __UNUSED__ *t, boo
 			break;
 
 		default:
-			sctk_error( "Schedule not handled: %d\n", t->schedule_type );
+			mpc_common_debug_error( "Schedule not handled: %d\n", t->schedule_type );
 			not_implemented();
 			break;
 	}
@@ -2539,9 +2539,9 @@ void *__kmpc_threadprivate( __UNUSED__ ident_t *loc, kmp_int32 global_tid, void 
 	{
 		if ( ( size_t )size > tn->cmn_size )
 		{
-			sctk_error(
+			mpc_common_debug_error(
 			    "TPCommonBlockInconsist: -> Wong size threadprivate variable found" );
-			sctk_abort();
+			mpc_common_debug_abort();
 		}
 	}
 

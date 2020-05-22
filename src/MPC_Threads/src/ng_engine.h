@@ -26,7 +26,7 @@
 
 #include <mpc_thread_ng_engine.h>
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpc_thread.h"
 
 

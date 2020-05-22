@@ -23,7 +23,7 @@
 /* ######################################################################## */
 #include <mpc_topology_device.h>
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 #include "mpc_common_spinlock.h"
 
@@ -216,7 +216,7 @@ static inline void __topology_device_load_topology_limits( hwloc_topology_t topo
 
 			if ( local_count < last_count )
 			{
-				sctk_warning( "Machine seems to be asymetric" );
+				mpc_common_debug_warning( "Machine seems to be asymetric" );
 				last_count = local_count;
 			}
 		}
@@ -325,7 +325,7 @@ static void __topology_device_init( hwloc_topology_t topology, mpc_topology_devi
 {
 	if ( obj->type != HWLOC_OBJ_PCI_DEVICE )
 	{
-		sctk_fatal( "%s only expect PCI devices", __FUNCTION__ );
+		mpc_common_debug_fatal( "%s only expect PCI devices", __FUNCTION__ );
 	}
 
 	/* First clear everything */
@@ -438,7 +438,7 @@ static void __topology_device_init( hwloc_topology_t topology, mpc_topology_devi
 			}
 			else
 			{
-				sctk_error( "Warning a non os object was passed to a PCI device initializer" );
+				mpc_common_debug_error( "Warning a non os object was passed to a PCI device initializer" );
 			}
 		}
 	}
@@ -649,7 +649,7 @@ static inline void __topology_device_matrix_init( hwloc_topology_t topology )
 
 			if ( !cell )
 			{
-				sctk_warning( "Could not get cell" );
+				mpc_common_debug_warning( "Could not get cell" );
 				continue;
 			}
 
@@ -871,7 +871,7 @@ mpc_topology_device_t **mpc_topology_device_get_from_handle_regexp( char *handle
 	{
 		perror( "regcomp" );
 		regerror( ret, &regexp, msg_buff, 100 );
-		sctk_fatal( "Could not compile device regexp %s ( %s )", handle_reg_exp, msg_buff );
+		mpc_common_debug_fatal( "Could not compile device regexp %s ( %s )", handle_reg_exp, msg_buff );
 	}
 
 	/* Lets walk the devices to see who matches */
@@ -895,7 +895,7 @@ mpc_topology_device_t **mpc_topology_device_get_from_handle_regexp( char *handle
 		else
 		{
 			regerror( ret, &regexp, msg_buff, 100 );
-			sctk_fatal( "Could not execute device regexp %s on %s ( %s )", handle_reg_exp,
+			mpc_common_debug_fatal( "Could not execute device regexp %s on %s ( %s )", handle_reg_exp,
 						__mpc_topology_device_list[i].name,
 						msg_buff );
 		}

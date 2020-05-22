@@ -703,7 +703,7 @@ static inline MPI_per_thread_ctx_t *MPI_per_thread_ctx_new()
 
 	if(!ret)
 	{
-		sctk_abort();
+		mpc_common_debug_abort();
 	}
 
 #ifdef MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
@@ -2492,15 +2492,15 @@ static int __INTERNAL__PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype
 			{
 				if(!count)
 				{
-					sctk_fatal("We found an empty layout");
+					mpc_common_debug_fatal("We found an empty layout");
 				}
 
 				while(!done)
 				{
-					sctk_error("count : %d  size : %d done : %d", count, size, done);
+					mpc_common_debug_error("count : %d  size : %d done : %d", count, size, done);
 					for(i = 0; i < count; i++)
 					{
-						sctk_error("BLOCK SIZE  : %d", layout[i].size);
+						mpc_common_debug_error("BLOCK SIZE  : %d", layout[i].size);
 
 						size -= layout[i].size;
 
@@ -2618,7 +2618,7 @@ static inline MPI_Datatype *__get_typemask(MPI_Datatype datatype, int *type_mask
 			break;
 
 		default:
-			sctk_fatal("Unreachable code in __get_typemask");
+			mpc_common_debug_fatal("Unreachable code in __get_typemask");
 	}
 
 	return NULL;
@@ -2700,7 +2700,7 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm)
 	struct sctk_comm_coll *        coll        = sctk_communicator_get_coll(comm);
 	struct shared_mem_barrier_sig *barrier_ctx = &coll->shm_barrier_sig;
 
-	// sctk_error("BARRIER CTX : %p", barrier_ctx	);
+	// mpc_common_debug_error("BARRIER CTX : %p", barrier_ctx	);
 
 	if(!coll)
 	{
@@ -7006,8 +7006,8 @@ sctk_Op_f sctk_get_common_function(mpc_lowcomm_datatype_t datatype, sctk_Op op)
 												COMPAT_DATA_TYPE3(func,
 												                  MPC_MINLOC_func) else
 												{
-													sctk_error("No such operation");
-													sctk_abort();
+													mpc_common_debug_error("No such operation");
+													mpc_common_debug_abort();
 												}
 											}
 										}
@@ -7064,7 +7064,7 @@ sctk_mpi_shared_mem_buffer_collect(union shared_mem_buffer *b,
 			break;
 
 		default:
-			sctk_fatal("Unsupported data-type");
+			mpc_common_debug_fatal("Unsupported data-type");
 	}
 
 	switch(op)
@@ -7089,7 +7089,7 @@ sctk_mpi_shared_mem_buffer_collect(union shared_mem_buffer *b,
 					break;
 
 				default:
-					sctk_fatal("Unsupported data-type");
+					mpc_common_debug_fatal("Unsupported data-type");
 			}
 			break;
 
@@ -7113,7 +7113,7 @@ sctk_mpi_shared_mem_buffer_collect(union shared_mem_buffer *b,
 					break;
 
 				default:
-					sctk_fatal("Unsupported data-type");
+					mpc_common_debug_fatal("Unsupported data-type");
 			}
 			break;
 	}
@@ -7759,7 +7759,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 	void *result_buff = recvbuf;
 	int allocated     = 0;
 
-	// sctk_error("OP %d T %d CONT %d FROM %p to %p (%p, %p)", op, datatype, count
+	// mpc_common_debug_error("OP %d T %d CONT %d FROM %p to %p (%p, %p)", op, datatype, count
 	// , sendbuf, recvbuf, data_buff, result_buff );
 
 	int will_be_in_shm_buff = sctk_mpi_type_is_shared_mem(datatype, count) &&
@@ -8020,7 +8020,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 
 							if(rest_done == 0)
 							{
-								// sctk_error("THe rest %d over %d divided by %d", rest, count,
+								// mpc_common_debug_error("THe rest %d over %d divided by %d", rest, count,
 								// SHM_COLL_BUFF_LOCKS);
 								void *from = data_buff + reduce_ctx->pipelined_blocks * stripe_offset;
 								void *to   = reduce_ctx->target_buff + reduce_ctx->pipelined_blocks * stripe_offset;
@@ -8045,7 +8045,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 					}
 
 					/* Now process the core */
-					// sctk_error("TARG %d R %d i %d/%d SEG %d STR %ld", target_cell,
+					// mpc_common_debug_error("TARG %d R %d i %d/%d SEG %d STR %ld", target_cell,
 					// rank, i, reduce_ctx->pipelined_blocks, per_lock, stripe_offset);
 
 					void *from = data_buff + target_cell * stripe_offset;
@@ -9492,7 +9492,7 @@ static int __cached_comm_rank(MPI_Comm comm, int *rank)
 
 	if( (ret == MPI_SUCCESS) && (!mpc_common_flags_disguised_get() ) )
 	{
-		//sctk_error("SAVE %d@%d %p", *rank , comm,  rank);
+		//mpc_common_debug_error("SAVE %d@%d %p", *rank , comm,  rank);
 		last_rank  = mpc_common_get_task_rank();
 		last_comm  = comm;
 		last_crank = *rank;
@@ -10030,11 +10030,11 @@ MPI_Abort_error(MPI_Comm *comm, int *error, char *msg, char *file,
 	PMPI_Error_string(*error, str, &i);
 	if(i != 0)
 	{
-		sctk_error("%s in file %s at line %d %s", str, file, line, msg);
+		mpc_common_debug_error("%s in file %s at line %d %s", str, file, line, msg);
 	}
 	else
 	{
-		sctk_error("Unknown error");
+		mpc_common_debug_error("Unknown error");
 	}
 	/* The lib is not supposed to crash but deliver message */
 	PMPI_Abort(*comm, *error);
@@ -10063,13 +10063,13 @@ void mpc_mp_profiler_do_reduce()
 
 	if(!sctk_internal_profiler_get_tls_array() )
 	{
-		sctk_error("Profiler TLS is not initialized");
+		mpc_common_debug_error("Profiler TLS is not initialized");
 		return;
 	}
 
 	if(sctk_profiler_internal_enabled() )
 	{
-		sctk_error("This section must be entered with a disabled profiler");
+		mpc_common_debug_error("This section must be entered with a disabled profiler");
 		abort();
 	}
 
@@ -13678,7 +13678,7 @@ int PMPI_Pack_external_size(const char *datarep, int incount, MPI_Datatype datat
 
 	if(strcmp(datarep, "external32") )
 	{
-		sctk_warning("MPI_Pack_external_size: unsuported data-rep %s", datarep);
+		mpc_common_debug_warning("MPI_Pack_external_size: unsuported data-rep %s", datarep);
 		return MPI_ERR_ARG;
 	}
 
@@ -13745,7 +13745,7 @@ int PMPI_Pack_external_size(const char *datarep, int incount, MPI_Datatype datat
 			break;
 
 		default:
-			sctk_fatal("PMPI_Pack_external_size unreachable");
+			mpc_common_debug_fatal("PMPI_Pack_external_size unreachable");
 	}
 
 	return MPI_SUCCESS;
@@ -15940,10 +15940,10 @@ int PMPI_Group_translate_ranks(MPI_Group mpi_group1, int n, const int ranks1[],
 
 	/*
 	 * for(i = 0 ; i < group1->task_nb ; i++)
-	 *      sctk_error("group1 : task_list_in_global_ranks[%d] = %d", i, group1->task_list_in_global_ranks[i]);
+	 *      mpc_common_debug_error("group1 : task_list_in_global_ranks[%d] = %d", i, group1->task_list_in_global_ranks[i]);
 	 *
 	 * for(i = 0 ; i < group2->task_nb ; i++)
-	 *      sctk_error("group2 : task_list_in_global_ranks[%d] = %d", i, group2->task_list_in_global_ranks[i]);
+	 *      mpc_common_debug_error("group2 : task_list_in_global_ranks[%d] = %d", i, group2->task_list_in_global_ranks[i]);
 	 */
 
 
@@ -17058,7 +17058,7 @@ int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_
 
 		/* char hname[200];
 		 * gethostname(hname, 200);
-		 * sctk_error("Color %d on %s", color, hname); */
+		 * mpc_common_debug_error("Color %d on %s", color, hname); */
 	}
 
 	TODO("Handle info in Comm_split_type");
@@ -18685,7 +18685,7 @@ int PMPI_Error_string(int errorcode, char *string, int *resultlen)
 		MPI_Error_string_convert(MPI_ERR_LASTCODE, "Last error code");
 
 		default:
-			sctk_warning("%d error code unknown : %s", errorcode,
+			mpc_common_debug_warning("%d error code unknown : %s", errorcode,
 			             string ? string : "");
 	}
 

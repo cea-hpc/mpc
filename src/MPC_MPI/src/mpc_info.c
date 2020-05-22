@@ -21,7 +21,7 @@
 /* ######################################################################## */
 #include "mpc_info.h"
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "sctk_alloc.h"
 #include "string.h"
 #include "comm_lib.h"
@@ -311,7 +311,7 @@ int MPC_Info_cell_get( struct MPC_Info_cell * cell , char * key , char * dest, i
 {
 	if( !flag )
 	{
-		sctk_error("Flag cannot be NULL in %s", __FUNCTION__);
+		mpc_common_debug_error("Flag cannot be NULL in %s", __FUNCTION__);
 	}
 	
 	

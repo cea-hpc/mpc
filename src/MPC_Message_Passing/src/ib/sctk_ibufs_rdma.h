@@ -111,8 +111,8 @@ struct sctk_ib_rail_info_s;
 
 #define IBUF_RDMA_CHECK_POISON_FLAG(ibuf) do {\
    if ( *(ibuf->poison_flag_head) != IBUF_RDMA_POISON_HEAD) {  \
-      sctk_error("Got a wrong Poison flag. Aborting");  \
-      sctk_abort(); \
+      mpc_common_debug_error("Got a wrong Poison flag. Aborting");  \
+      mpc_common_debug_abort(); \
     } \
 }while(0)\
  

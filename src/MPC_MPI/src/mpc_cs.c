@@ -21,7 +21,7 @@
 /* ######################################################################## */
 #include <sys/time.h>
 #include <mpc.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 
 /*
   This file contain the C# binding of MPC (deprecated)

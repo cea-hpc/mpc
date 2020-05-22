@@ -49,7 +49,7 @@ typedef unsigned long long kmp_uint64;
 typedef float kmp_real32;
 typedef double kmp_real64;
 
-#ifdef SCTK_x86_64_ARCH_SCTK
+#ifdef MPC_X86_64_ARCH
 typedef __float128 _Quad;
 /* Check for quad-precision extension. Here, forced to 1 for MPC for x86*/
 #define KMP_HAVE_QUAD 1

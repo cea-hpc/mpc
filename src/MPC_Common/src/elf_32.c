@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <mpc_common_debugger.h>
 #include <debugger.h>
 
@@ -1388,7 +1388,7 @@ restart:
 				case DW_LNS_set_file:
 					adv = read_leb128( (unsigned char *) data, &bytes_read, 0 );
 					inc_line( data, bytes_read, c );
-					//sctk_error("get %d / %d", adv-1, file_nb);
+					//mpc_common_debug_error("get %d / %d", adv-1, file_nb);
 					if(adv - 1 < file_nb)
 					{
 						file = c->file_list[adv - 1];

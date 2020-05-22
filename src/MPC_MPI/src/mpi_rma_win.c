@@ -297,7 +297,7 @@ static inline int mpc_MPI_Win_do_registration(mpc_lowcomm_rdma_window_t internal
       (struct mpc_MPI_Win *)mpc_lowcomm_rdma_window_get_payload(internal_win);
 
   if (!desc) {
-    sctk_error("Could not retrieve internal payload");
+    mpc_common_debug_error("Could not retrieve internal payload");
     return MPI_ERR_INTERN;
   }
 
@@ -347,7 +347,7 @@ static inline int mpc_MPI_Win_do_registration(mpc_lowcomm_rdma_window_t internal
 
   if (!remote_windows) {
     perror("calloc");
-    sctk_fatal("Failed to allocated window remote array");
+    mpc_common_debug_fatal("Failed to allocated window remote array");
   }
 
   /* We now exchange the remote windows all at once */

@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "mpc_mpi_halo.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpc_lowcomm_msg.h"
 #include <string.h>
 
@@ -305,12 +305,12 @@ int sctk_mpi_halo_set(  struct sctk_mpi_halo_s * halo, void * ptr )
 		
 	if( halo->type != MPI_HALO_CELL_LOCAL )
 	{
-		sctk_fatal("Could not set a buffer to a non-local halo\n");
+		mpc_common_debug_fatal("Could not set a buffer to a non-local halo\n");
 	}
 	
 	if( !halo->is_committed )
 	{
-		sctk_fatal("Could not set a buffer to a non-commited halo\n");
+		mpc_common_debug_fatal("Could not set a buffer to a non-commited halo\n");
 	}
 	
 	halo->halo_buffer = ptr;
@@ -325,12 +325,12 @@ int sctk_mpi_halo_get(  struct sctk_mpi_halo_s * halo, void ** ptr )
 	
 	if( halo->type != MPI_HALO_CELL_REMOTE )
 	{
-		sctk_fatal("Could not get a buffer from a non-remote halo\n");
+		mpc_common_debug_fatal("Could not get a buffer from a non-remote halo\n");
 	}
 	
 	if( !halo->is_committed )
 	{
-		sctk_fatal("Could not get a buffer from a non-commited halo\n");
+		mpc_common_debug_fatal("Could not get a buffer from a non-commited halo\n");
 	}
 	
 	*ptr = halo->halo_buffer;
@@ -340,19 +340,19 @@ int sctk_mpi_halo_get(  struct sctk_mpi_halo_s * halo, void ** ptr )
 
 void sctk_mpi_halo_print(  struct sctk_mpi_halo_s * halo )
 {
-	sctk_warning("=============== Halo ================");
-	sctk_warning("type : %d", halo->type);
-	sctk_warning("label : %s", halo->label);
-	sctk_warning("committed : %d", halo->is_committed);
-	sctk_warning("halo_buffer : %p", halo->halo_buffer);
-	sctk_warning("halo_buffer_type : %d", halo->halo_buffer_type);
-	sctk_warning("halo_remote : %d", halo->halo_remote);
-	sctk_warning("halo_tag : %d", halo->halo_tag);
-	sctk_warning("remote_label : %s", halo->remote_label);
-	sctk_warning("halo_type : %d", halo->halo_type);
-	sctk_warning("halo_count : %d", halo->halo_count);
-	sctk_warning("halo_extent : %d", halo->halo_extent);
-	sctk_warning("=====================================");
+	mpc_common_debug_warning("=============== Halo ================");
+	mpc_common_debug_warning("type : %d", halo->type);
+	mpc_common_debug_warning("label : %s", halo->label);
+	mpc_common_debug_warning("committed : %d", halo->is_committed);
+	mpc_common_debug_warning("halo_buffer : %p", halo->halo_buffer);
+	mpc_common_debug_warning("halo_buffer_type : %d", halo->halo_buffer_type);
+	mpc_common_debug_warning("halo_remote : %d", halo->halo_remote);
+	mpc_common_debug_warning("halo_tag : %d", halo->halo_tag);
+	mpc_common_debug_warning("remote_label : %s", halo->remote_label);
+	mpc_common_debug_warning("halo_type : %d", halo->halo_type);
+	mpc_common_debug_warning("halo_count : %d", halo->halo_count);
+	mpc_common_debug_warning("halo_extent : %d", halo->halo_extent);
+	mpc_common_debug_warning("=====================================");
 }
 
 
@@ -405,7 +405,7 @@ int sctk_mpi_halo_exchange_action_trigger( struct sctk_mpi_halo_exchange_action_
 	&& ( ( action->action == MPI_HALO_EXCHANGE_SEND ) || ( action->action == MPI_HALO_EXCHANGE_SEND_LOCAL ) ) )
 	{
 		sctk_mpi_halo_print(  halo );
-		sctk_fatal("Make sure all your local halos are bound and that data is set before doing an exchange");
+		mpc_common_debug_fatal("Make sure all your local halos are bound and that data is set before doing an exchange");
 	}
 	
 	int rank;
@@ -582,13 +582,13 @@ int sctk_mpi_halo_exchange_request_relase( struct sctk_mpi_halo_exchange_request
 
 void sctk_mpi_halo_exchange_request_print( struct sctk_mpi_halo_exchange_request * req )
 {
-	sctk_warning("======== HALO REQUEST ========");
-	sctk_warning("Source : %d", req->source_process);
-	sctk_warning("Dest : %d", req->dest_process);
-	sctk_warning("Source Label : %s", req->source_label);
-	sctk_warning("Remote Label : %s", req->remote_label);
-	sctk_warning("Extent : %ld", req->extent);
-	sctk_warning("==============================");
+	mpc_common_debug_warning("======== HALO REQUEST ========");
+	mpc_common_debug_warning("Source : %d", req->source_process);
+	mpc_common_debug_warning("Dest : %d", req->dest_process);
+	mpc_common_debug_warning("Source Label : %s", req->source_label);
+	mpc_common_debug_warning("Remote Label : %s", req->remote_label);
+	mpc_common_debug_warning("Extent : %ld", req->extent);
+	mpc_common_debug_warning("==============================");
 }
 
 /*
@@ -717,7 +717,7 @@ int sctk_mpi_halo_exchange_commit( struct sctk_mpi_halo_exchange_s * ex )
 		if( ! target_halo )
 		{
 			sctk_mpi_halo_exchange_request_print( current_req );
-			sctk_error("Could not find a halo named %s in order to satify this request", current_req->remote_label );
+			mpc_common_debug_error("Could not find a halo named %s in order to satify this request", current_req->remote_label );
 			abort();
 		}
 		
@@ -725,7 +725,7 @@ int sctk_mpi_halo_exchange_commit( struct sctk_mpi_halo_exchange_s * ex )
 		if( target_halo->type != MPI_HALO_CELL_LOCAL )
 		{
 			sctk_mpi_halo_exchange_request_print( current_req );
-			sctk_error("Only locally bound halo cells can be requested by a remote buffer");
+			mpc_common_debug_error("Only locally bound halo cells can be requested by a remote buffer");
 			abort();
 		}
 		
@@ -734,7 +734,7 @@ int sctk_mpi_halo_exchange_commit( struct sctk_mpi_halo_exchange_s * ex )
 		if( target_halo->halo_extent != current_req->extent )
 		{
 			sctk_mpi_halo_exchange_request_print( current_req );
-			sctk_error("Size mismatch between these buffers");
+			mpc_common_debug_error("Size mismatch between these buffers");
 			abort();
 		}	
 		

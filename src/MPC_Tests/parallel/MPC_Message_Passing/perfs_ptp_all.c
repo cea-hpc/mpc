@@ -129,7 +129,7 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
 }
 
 #ifdef __mpc__H
-extern void sctk_abort ();
+extern void mpc_common_debug_abort ();
 
 static void
 sctk_require_page_handler (int signo, siginfo_t * info, void *context)
@@ -137,7 +137,7 @@ sctk_require_page_handler (int signo, siginfo_t * info, void *context)
   static mpc_thread_mutex_t lock = MPI_THREAD_MUTEX_INITIALIZER;
   mpc_thread_mutex_lock (&lock);
   fprintf (stderr, "Erreure de segmentation\n");
-  sctk_abort ();
+  mpc_common_debug_abort ();
   mpc_thread_mutex_unlock (&lock);
 }
 #endif

@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 uint64_t sctk_profile_has_child[ SCTK_PROFILE_KEY_COUNT ];
 uint64_t sctk_profile_parent_key[ SCTK_PROFILE_KEY_COUNT ];
@@ -244,7 +244,7 @@ void sctk_profiler_array_unify( struct sctk_profiler_array *array )
 {
 	if ( array->been_unified )
 	{
-		sctk_error( "You cant unify an array two times !" );
+		mpc_common_debug_error( "You cant unify an array two times !" );
 		abort();
 	}
 

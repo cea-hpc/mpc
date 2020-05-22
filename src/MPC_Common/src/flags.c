@@ -1,7 +1,7 @@
 #include <mpc_common_flags.h>
 #include <mpc_common_spinlock.h>
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,7 +64,7 @@ static inline void __list_add_callback(struct mpc_common_init_list * list, char 
 {
         if(list->entry_count == MAX_INIT_ENTRY)
         {
-                sctk_fatal("Maximum number of entries reached when adding callback '%s' to '%s'", callback_name, list->name );
+                mpc_common_debug_fatal("Maximum number of entries reached when adding callback '%s' to '%s'", callback_name, list->name );
         }
 
 
@@ -135,7 +135,7 @@ void mpc_common_init_list_register(char * list_name)
 
         if(__mpc_init.list_count == MAX_INIT_LIST)
         {
-                sctk_fatal("Cannot create more than %d Initialization lists", MAX_INIT_LIST);
+                mpc_common_debug_fatal("Cannot create more than %d Initialization lists", MAX_INIT_LIST);
         }
 
         list = &__mpc_init.lists[ __mpc_init.list_count ];
@@ -154,7 +154,7 @@ void mpc_common_init_callback_register(char * list_name, char * callback_name, v
 
         if(!list)
         {
-                sctk_fatal("Cannot register callback '%s' to non-existent list '%s'", callback_name, list_name);
+                mpc_common_debug_fatal("Cannot register callback '%s' to non-existent list '%s'", callback_name, list_name);
         }
 
         __list_add_callback(list, callback_name, callback, priority);

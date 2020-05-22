@@ -25,7 +25,7 @@
 
 #include <limits.h>
 #include <mpc_lowcomm.h>
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "sctk_alloc.h"
 #include "mpc_common_helper.h"
 #include "sctk_ptl_am_iface.h"
@@ -178,7 +178,7 @@ sctk_ptl_am_rail_info_t sctk_ptl_am_hardware_init()
 	*/
 	sctk_assert( SCTK_PTL_AM_CHUNK_SZ > SCTK_PTL_AM_REP_CELL_SZ );
 	if ( SCTK_PTL_AM_CHUNK_SZ % SCTK_PTL_AM_REP_CELL_SZ != 0 )
-		sctk_fatal( "Please make sure the max chunk size is a multiple of the number of cells !" );
+		mpc_common_debug_fatal( "Please make sure the max chunk size is a multiple of the number of cells !" );
 
 	return res;
 }
@@ -432,7 +432,7 @@ void sctk_ptl_am_pte_create( sctk_ptl_am_rail_info_t *srail, size_t key )
 	 * This saves us from a mapping table.
 	 */
 	if ( key != pte->idx )
-		sctk_warning( "A Portals entry does not match the computed index !" );
+		mpc_common_debug_warning( "A Portals entry does not match the computed index !" );
 
 	mpc_common_spinlock_init(&pte->pte_lock, 0);
 	OPA_store_int( &pte->next_tag, 0 );
@@ -926,7 +926,7 @@ int sctk_ptl_am_incoming_lookup( sctk_ptl_am_rail_info_t *srail )
 		sctk_ptl_am_pte_t *pte = srail->pte_table[id];
 		if ( ev.ni_fail_type != PTL_NI_OK )
 		{
-			sctk_error( "ME: Failed event %s: %d", sctk_ptl_am_event_decode( ev ), ev.ni_fail_type );
+			mpc_common_debug_error( "ME: Failed event %s: %d", sctk_ptl_am_event_decode( ev ), ev.ni_fail_type );
 			MPC_CRASH();
 		}
 
@@ -948,14 +948,14 @@ int sctk_ptl_am_incoming_lookup( sctk_ptl_am_rail_info_t *srail )
 				break;
 			}
 			default:
-				sctk_error( "Not handled ME event: %s", sctk_ptl_am_event_decode( ev ) );
+				mpc_common_debug_error( "Not handled ME event: %s", sctk_ptl_am_event_decode( ev ) );
 		}
 		return 0;
 	}
 	else
 	{
 		if ( ret != PTL_EQ_EMPTY )
-			sctk_fatal( "NOK ME: %s", sctk_ptl_am_rc_decode( ret ) );
+			mpc_common_debug_fatal( "NOK ME: %s", sctk_ptl_am_rc_decode( ret ) );
 	}
 
 	/* no event found in any valid EQ */
@@ -994,7 +994,7 @@ int sctk_ptl_am_outgoing_lookup( sctk_ptl_am_rail_info_t *srail )
 	else
 	{
 		if ( ret != PTL_EQ_EMPTY )
-			sctk_fatal( "NOK MD: %s", sctk_ptl_am_rc_decode( ret ) );
+			mpc_common_debug_fatal( "NOK MD: %s", sctk_ptl_am_rc_decode( ret ) );
 	}
 
 	return ret;
@@ -1140,7 +1140,7 @@ int sctk_ptl_am_emit_put( sctk_ptl_am_local_data_t *user, size_t size, sctk_ptl_
 {
 	assert( size <= user->slot.md.length );
 
-	//sctk_warning("PUT-%d %init_msg+%llu -> %llu REMOTE=%d/%d MATCH=%s (EXTRA=%llu)", pte->idx, user->slot.md.start+local_off, size, remote_off, remote.phys.nid, remote.phys.pid, __sctk_ptl_am_match_str((char*)sctk_malloc(70), 70, match.raw), extra.raw);
+	//mpc_common_debug_warning("PUT-%d %init_msg+%llu -> %llu REMOTE=%d/%d MATCH=%s (EXTRA=%llu)", pte->idx, user->slot.md.start+local_off, size, remote_off, remote.phys.nid, remote.phys.pid, __sctk_ptl_am_match_str((char*)sctk_malloc(70), 70, match.raw), extra.raw);
 
 	sctk_ptl_chk( PtlPut(
 		user->slot_h.mdh,

@@ -144,7 +144,7 @@ static inline void sctk_gate_get_context( struct sctk_runtime_config_struct_net_
 		
 		case SCTK_RTCFG_net_gate_NONE:
 		default:
-			sctk_fatal("No such gate type");
+			mpc_common_debug_fatal("No such gate type");
 	}
 }
 
@@ -156,7 +156,7 @@ int sctk_endpoint_list_init_entry( sctk_endpoint_list_t * entry, sctk_endpoint_t
 {
 	if( !endpoint )
 	{
-		sctk_error("No endpoint provided.. ignoring");
+		mpc_common_debug_error("No endpoint provided.. ignoring");
 		return 1;
 	}
 	
@@ -165,7 +165,7 @@ int sctk_endpoint_list_init_entry( sctk_endpoint_list_t * entry, sctk_endpoint_t
 	
 	if( !endpoint->rail )
 	{
-		sctk_error("No rail found in endpoint.. ignoring");
+		mpc_common_debug_error("No rail found in endpoint.. ignoring");
 		return 1;	
 	}
 	
@@ -204,7 +204,7 @@ sctk_endpoint_list_t * sctk_endpoint_list_push( sctk_endpoint_list_t * list, sct
 
 	if( !new )
 	{
-		sctk_error("Failed to insert a route.. ignoring");
+		mpc_common_debug_error("Failed to insert a route.. ignoring");
 		return list;
 	}
 	
@@ -309,7 +309,7 @@ sctk_endpoint_list_t * sctk_endpoint_list_pop_endpoint( sctk_endpoint_list_t * l
 	
 	if( !topop_list_entry )
 	{
-		sctk_warning("Could not find this entry in table");
+		mpc_common_debug_warning("Could not find this entry in table");
 		return list;
 	}
 	
@@ -714,7 +714,7 @@ void sctk_multirail_on_demand_connection( mpc_lowcomm_ptp_message_t *msg )
 	if( max_offset < 0 )
 	{
 		/* No rail found */
-		sctk_fatal("No route to host == Make sure you have at least one on-demand rail able to satify any type of message");
+		mpc_common_debug_fatal("No route to host == Make sure you have at least one on-demand rail able to satify any type of message");
 	}
 
 	/* Enter the critical section to guanrantee the uniqueness of the 
@@ -1071,7 +1071,7 @@ sctk_multirail_destination_table_entry_t * sctk_multirail_destination_table_acqu
 	
 	mpc_common_spinlock_read_lock( &table->table_lock );
 	
-	//sctk_warning("GET endpoint to %d", destination );
+	//mpc_common_debug_warning("GET endpoint to %d", destination );
 	
 	HASH_FIND_INT(table->destinations, &destination, dest_entry);
 	
@@ -1203,7 +1203,7 @@ void sctk_multirail_destination_table_route_to_process( int destination, int * n
 	
 	if( distance == -1 )
 	{
-		sctk_warning("No route to host %d ", destination);
+		mpc_common_debug_warning("No route to host %d ", destination);
 	}
 	
 }

@@ -22,7 +22,7 @@
 #ifndef SCTK_TOPOLOGICAL_POLLING
 #define SCTK_TOPOLOGICAL_POLLING
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpc_common_spinlock.h"
 #include <mpc_common_asm.h>
 #include <mpc_config_struct.h>

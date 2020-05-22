@@ -167,7 +167,7 @@ void sctk_route_torus_init(sctk_rail_info_t* rail)
 
 	/*if(nbprocs % dim_x > 0)*/
 	/*{*/
-		/*sctk_fatal("Torus with a number of process which is not a square, are not supported for now !");*/
+		/*mpc_common_debug_fatal("Torus with a number of process which is not a square, are not supported for now !");*/
 	/*}*/
 
 	offset = (int)(i/dim_x) * dim_x;

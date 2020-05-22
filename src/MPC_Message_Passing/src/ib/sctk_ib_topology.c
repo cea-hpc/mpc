@@ -192,7 +192,7 @@ void sctk_ib_topology_init( sctk_ib_topology_t * topology )
 
 	if ( sctk_ib_topology_use_default_node )
 	{
-		sctk_error ( "Use default node !!" );
+		mpc_common_debug_error ( "Use default node !!" );
 	}
 
 	/* Compute node and alloc count */

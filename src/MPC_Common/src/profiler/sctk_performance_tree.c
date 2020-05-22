@@ -22,7 +22,7 @@
 
 #include "sctk_performance_tree.h"
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -61,13 +61,13 @@ void sctk_performance_tree_relative_percentage( struct sctk_profiler_array *arra
 
 		if( 1 < tr->entry_relative_percentage_time[ id ] )
 		{
-			sctk_warning( "sctk_performance_tree detected an overflow in performance measurements");
+			mpc_common_debug_warning( "sctk_performance_tree detected an overflow in performance measurements");
 			tr->entry_relative_percentage_time[ id ] = 1;
 		}
 
 		if( 1 < tr->entry_relative_percentage_hits[ id ] )
 		{
-			sctk_warning( "sctk_performance_tree detected an overflow in performance measurements");
+			mpc_common_debug_warning( "sctk_performance_tree detected an overflow in performance measurements");
 			tr->entry_relative_percentage_hits[ id ] = 1;
 		}
 
@@ -149,7 +149,7 @@ void  sctk_performance_tree_init( struct sctk_performance_tree *tr, struct sctk_
 {
 	if( !array->been_unified )
 	{
-		sctk_error( "Performance tree can be built only over an unified tree !");
+		mpc_common_debug_error( "Performance tree can be built only over an unified tree !");
 		abort();
 	}
 

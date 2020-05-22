@@ -1,7 +1,7 @@
 #include <mpc_mpi.h>
 
 #include <mpc_common_types.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 
 /************************
  * FORTRAN PREDEF TYPES *

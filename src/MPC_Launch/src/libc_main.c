@@ -21,7 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <mpc_config.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 
 #if defined(ENABLE_HOOK_MAIN) && !defined(SCTK_LIB_MODE)
 

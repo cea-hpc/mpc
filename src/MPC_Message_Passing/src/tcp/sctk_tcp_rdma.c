@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <sctk_net_tools.h>
 #include <sctk_tcp_toolkit.h>
 

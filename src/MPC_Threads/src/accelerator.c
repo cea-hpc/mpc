@@ -26,7 +26,7 @@
 #include <mpc_topology_device.h>
 #include <mpc_common_flags.h>
 
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 
 static size_t nb_devices = 0;
 
@@ -44,7 +44,7 @@ void sctk_accl_init()
 		return;
 	}
 
-	sctk_warning("Accelerators support ENABLED");
+	mpc_common_debug_warning("Accelerators support ENABLED");
 
 	mpc_topology_device_t **list = mpc_topology_device_get_from_handle_regexp(
 	        "cuda-enabled-card*", (int *)&nb_devices);

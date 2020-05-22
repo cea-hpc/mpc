@@ -89,7 +89,7 @@ void mpc_MPI_Win_handle_win_flush(void *data ) {
   int cnt = 0;
   while (incoming_rma != outgoing_rma) {
 
-    // sctk_error("%d == %d", outgoing_rma , incoming_rma );
+    // mpc_common_debug_error("%d == %d", outgoing_rma , incoming_rma );
     mpc_thread_yield();
 
     if (10 < cnt) {
@@ -353,7 +353,7 @@ int lock_type_to_exposure_mode(int lock_type) {
   } else if (lock_type == MPI_LOCK_SHARED) {
     return MPC_WIN_TARGET_PASSIVE_SHARED;
   } else {
-    sctk_fatal("No such lock type");
+    mpc_common_debug_fatal("No such lock type");
     return MPC_WIN_TARGET_NONE;
   }
 }

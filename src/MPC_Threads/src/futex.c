@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "futex.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpc_thread.h"
 
 #include <stdio.h>
@@ -172,7 +172,7 @@ static inline int __translate_futex_op(int OPCODE)
 		break;
 
 	default:
-		sctk_error("Not implemented YET :=)");
+		mpc_common_debug_error("Not implemented YET :=)");
 	}
 
 	return OPCODE;
@@ -209,7 +209,7 @@ static inline int __translate_futex_opcode(int opcode)
 		break;
 
 	default:
-		sctk_error("Failled to convert FUTEX OP");
+		mpc_common_debug_error("Failled to convert FUTEX OP");
 	}
 
 	return opcode;
@@ -265,7 +265,7 @@ int __translate_futex_cmp(int cmp)
 		break;
 
 	default:
-		sctk_fatal("No such cmp operation");
+		mpc_common_debug_fatal("No such cmp operation");
 	}
 
 	return cmp;
@@ -317,7 +317,7 @@ struct futex_cell *futex_cell_new(int bitmask, int orig_op)
 	if(!cell->do_wait)
 	{
 		perror("calloc");
-		sctk_fatal("alloc failed");
+		mpc_common_debug_fatal("alloc failed");
 	}
 
 	*cell->do_wait = 1;
@@ -518,7 +518,7 @@ int futex_queue_wake(struct futex_queue *fq, int bitmask, int use_mask, int coun
 				}
 				else
 				{
-					sctk_error("Popped an empty elem ??");
+					mpc_common_debug_error("Popped an empty elem ??");
 				}
 			}
 		}
@@ -586,7 +586,7 @@ int futex_queue_requeue(struct futex_queue *fq, struct futex_queue *out, int cou
 			}
 			else
 			{
-				sctk_error("Popped an empty elem ??");
+				mpc_common_debug_error("Popped an empty elem ??");
 			}
 		}
 	}
@@ -976,7 +976,7 @@ int _mpc_thread_futex_WAKE_OP_do_op(int oldval, int val3)
 		break;
 
 	default:
-		sctk_fatal("No such operation");
+		mpc_common_debug_fatal("No such operation");
 	}
 
 	return oparg;
@@ -1021,7 +1021,7 @@ int _mpc_thread_futex_WAKE_OP_do_cmp(int oldval, int val3)
 		break;
 
 	default:
-		sctk_fatal("No such operation");
+		mpc_common_debug_fatal("No such operation");
 	}
 
 	return oparg;
@@ -1222,7 +1222,7 @@ int _mpc_thread_futex(void *addr1, int op, int val1,
 		break;
 
 	default:
-		sctk_fatal("Not implemented YET");
+		mpc_common_debug_fatal("Not implemented YET");
 	}
 
 	return ret;

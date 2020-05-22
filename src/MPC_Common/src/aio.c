@@ -33,7 +33,7 @@
 #include <signal.h>
 #include <time.h>
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include <mpc_common_flags.h>
 #include "pthread.h"
 

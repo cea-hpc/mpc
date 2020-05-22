@@ -61,7 +61,7 @@
 #include <mpc_topology.h>
 #include <mpc_topology_render.h>
 
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <mpc_common_rank.h>
 #include <mpc_common_flags.h>
 
@@ -226,7 +226,7 @@ int mpc_thread_get_task_placement_and_count_default(int i, int *nbVp)
 
 	sctk_nodebug("mpc_thread_get_task_placement: (After loop) Put task %d on VP %d", i, proc);
 	fflush(stdout);
-	sctk_abort();
+	mpc_common_debug_abort();
 	return proc;
 }
 
@@ -296,7 +296,7 @@ int mpc_thread_get_task_placement_and_count_numa_packed(int i, int *nbVp)
 	}
 
 	//mpc_common_debug("mpc_thread_get_task_placement: (After loop) Put task %d on VP %d", i, proc);
-	sctk_abort();
+	mpc_common_debug_abort();
 	return proc;
 }
 

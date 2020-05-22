@@ -56,7 +56,7 @@ void sctk_ib_config_check ( sctk_ib_rail_info_t *rail_ib )
 	if ( ( mpc_common_get_process_rank() == 0 )
 	        && ( config->low_memory ) )
 	{
-		sctk_error ( "LOW mem module enabled: use it at your own risk!" );
+		mpc_common_debug_error ( "LOW mem module enabled: use it at your own risk!" );
 	}
 
 	/* Good conf, we return */

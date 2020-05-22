@@ -51,7 +51,7 @@ sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( sctk_ib_rail_info_t *rail_ib, void 
 	
 	if( (ib_global_config->mmu_cache_maximum_pin_size) < size )
 	{
-		sctk_fatal("You have reached the maximum size of a pinned memory region(%g GB),"
+		mpc_common_debug_fatal("You have reached the maximum size of a pinned memory region(%g GB),"
 				   "consider splitting this large segment is several segments or \n"
 				   "increase the size limitation in the config depending on your IB card specs",
 		           ib_global_config->mmu_cache_maximum_pin_size / (1024.0 * 1024.0 * 1024.0));
@@ -95,7 +95,7 @@ void sctk_ib_mmu_entry_release( sctk_ib_mmu_entry_t * release )
 		ret = ibv_dereg_mr ( release->mr );
 		if(ret)
 		{
-			sctk_fatal ( "Failure to de-register the MR: %s (%p)", strerror ( ret ) );
+			mpc_common_debug_fatal ( "Failure to de-register the MR: %s (%p)", strerror ( ret ) );
 		}
 	}
 	
@@ -572,7 +572,7 @@ static int store_onethousand_then_retrieve_centers_on_root( struct sctk_ib_mmu *
 	{
 		pointers[i] = sctk_malloc( 64 );
 
-		//sctk_error("Push %p", pointers[i]);
+		//mpc_common_debug_error("Push %p", pointers[i]);
 		sctk_ib_mmu_entry_t * ret = _sctk_ib_mmu_pin( root, NULL, pointers[i], 64 );
 		
 		if( ret == NULL )
@@ -588,7 +588,7 @@ static int store_onethousand_then_retrieve_centers_on_root( struct sctk_ib_mmu *
 	{
 		sctk_ib_mmu_entry_t * ent = _sctk_ib_mmu_get_entry_containing( root, pointers[i] , 8 , NULL);
 		
-		//sctk_error("Get %p  -- %p", pointers[i], ent);
+		//mpc_common_debug_error("Get %p  -- %p", pointers[i], ent);
 		
 		if( ent == NULL )
 			return 1;
@@ -643,17 +643,17 @@ void test_topological_mmu()
 	
 	if( init_and_release( &root ) )
 	{
-		sctk_fatal("init_and_release");
+		mpc_common_debug_fatal("init_and_release");
 	}
 	
 	if( store_onethousand_then_retrieve_centers_on_root( &root ) )
 	{
-		sctk_fatal("store_onethousand_then_retrieve_centers_on_root");
+		mpc_common_debug_fatal("store_onethousand_then_retrieve_centers_on_root");
 	}
 	
 	if( pin_unpin_on_root( &root ) )
 	{
-		sctk_fatal("pin_unpin_on_root");
+		mpc_common_debug_fatal("pin_unpin_on_root");
 	}
 
 }

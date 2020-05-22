@@ -22,7 +22,7 @@
 /* ######################################################################## */
 
 #include "mpc_config.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include <string.h>
 #include <dlfcn.h>
 #include <stdlib.h>

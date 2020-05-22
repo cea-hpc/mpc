@@ -514,7 +514,7 @@ void sctk_rail_init_driver( sctk_rail_info_t * rail, int driver_type )
 		
 
 		default:
-			sctk_fatal("No such network type");
+			mpc_common_debug_fatal("No such network type");
 			break;
 	}
 }
@@ -579,9 +579,9 @@ void sctk_net_init_driver ( char *name )
 	if ( cli_option == NULL )
 	{
 		/* We did not find this name in the network configurations */
-		sctk_error ( "No configuration found for the network '%s'. Please check you '-net=' argument"
+		mpc_common_debug_error ( "No configuration found for the network '%s'. Please check you '-net=' argument"
 		             " and your configuration file", option_name );
-		sctk_abort();
+		mpc_common_debug_abort();
 	}
 
 	
@@ -595,7 +595,7 @@ void sctk_net_init_driver ( char *name )
 
 	if( 255 < total_rail_nb )
 	{
-		sctk_fatal("There cannot be more than 255 rails");
+		mpc_common_debug_fatal("There cannot be more than 255 rails");
 		/* If you want to remove this limation make sure that 
 		 * the rail ID is encoded with a larger type in
 		 * struct mpc_lowcomm_ptp_ctrl_message_header_s */
@@ -611,13 +611,13 @@ void sctk_net_init_driver ( char *name )
 		struct sctk_runtime_config_struct_net_rail *rail_config_struct;
 #ifndef MPC_USE_INFINIBAND
 		if(strcmp(cli_option->rails[k],"ib_mpi") == 0) {
-		  sctk_warning("Network support %s not available switching to tcp_mpi",cli_option->rails[k]);
+		  mpc_common_debug_warning("Network support %s not available switching to tcp_mpi",cli_option->rails[k]);
 		  cli_option->rails[k] = "tcp_mpi";
 		}
 #endif
 #ifndef MPC_USE_PORTALS
 		if(strcmp(cli_option->rails[k],"portals_mpi") == 0) {
-		  sctk_warning("Network support %s not available switching to tcp_mpi",cli_option->rails[k]);
+		  mpc_common_debug_warning("Network support %s not available switching to tcp_mpi",cli_option->rails[k]);
 		  cli_option->rails[k] = "tcp_mpi";
 		}
 #endif
@@ -625,8 +625,8 @@ void sctk_net_init_driver ( char *name )
 
 		if ( rail_config_struct == NULL )
 		{
-			sctk_error ( "Rail with name '%s' not found in config!", cli_option->rails[k] );
-			sctk_abort();
+			mpc_common_debug_error ( "Rail with name '%s' not found in config!", cli_option->rails[k] );
+			mpc_common_debug_abort();
 		}
 
 		/* For this rail retrieve the config */
@@ -637,7 +637,7 @@ void sctk_net_init_driver ( char *name )
 			/* This can only be accepted for topological rails */
 			if( rail_config_struct->subrails_size == 0 )
 			{
-				sctk_error ( "Driver with name '%s' not found in config!", rail_config_struct->config );
+				mpc_common_debug_error ( "Driver with name '%s' not found in config!", rail_config_struct->config );
 				continue;
 			}
 		}

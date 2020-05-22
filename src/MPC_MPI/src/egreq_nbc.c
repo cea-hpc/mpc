@@ -3,7 +3,7 @@
 #include <string.h>
 #include <mpc_mpi.h>
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include <mpc_thread.h>
 #include "sctk_alloc.h"
 #include "mpc_lowcomm_msg.h"
@@ -216,7 +216,7 @@ static inline int nbc_op_trigger( struct nbc_op * op )
             break;
         default:
             LOG(stderr, "BAD OP TYPE\n");
-            sctk_abort();
+            mpc_common_debug_abort();
     }
 
     op->trig = 1;

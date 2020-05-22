@@ -410,7 +410,7 @@ static inline int sctk_is_shared_mem( const mpc_lowcomm_communicator_t communica
 
 	last_comm = communicator;
 	last_val = __sctk_is_shared_mem( communicator );
-	// sctk_error("%d == %d", communicator, tmp->is_shared_mem );
+	// mpc_common_debug_error("%d == %d", communicator, tmp->is_shared_mem );
 	return last_val;
 }
 

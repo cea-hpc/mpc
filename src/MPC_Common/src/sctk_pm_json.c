@@ -23,7 +23,7 @@
 
 #include "sctk_alloc.h"
 #include "sctk_pm_json.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 /*
    MAIN Json type definition

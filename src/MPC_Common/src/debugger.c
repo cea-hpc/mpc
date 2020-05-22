@@ -21,7 +21,7 @@
 /* ######################################################################## */
 
 #include <mpc_config.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <mpc_common_debugger.h>
 
 #include <stdlib.h>
@@ -30,6 +30,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 #include <debugger.h>
 #include <mpc_common_spinlock.h>
 #include <mpc_common_helper.h>
@@ -328,10 +329,10 @@ static inline void __libunwind_backtrace( void )
 		{
 			if(first_lib == 0)
 			{
-				mpc_common_io_noalloc_fprintf( stderr, "\n"SCTK_COLOR_VIOLET_BOLD(})"\n" );
+				mpc_common_io_noalloc_fprintf( stderr, "\n"MPC_COLOR_VIOLET_BOLD(})"\n" );
 			}
 			first_lib=0;
-			mpc_common_io_noalloc_fprintf( stderr, SCTK_COLOR_VIOLET_BOLD( %s )"\n"SCTK_COLOR_VIOLET_BOLD({)"\n", map[i].file );
+			mpc_common_io_noalloc_fprintf( stderr, MPC_COLOR_VIOLET_BOLD( %s )"\n"MPC_COLOR_VIOLET_BOLD({)"\n", map[i].file );
 						previous_lib = map[i].file;
 		}
 
@@ -344,18 +345,18 @@ static inline void __libunwind_backtrace( void )
 		sctk_nodebug( "dir %s", ptr.dir );
 		sctk_nodebug( "file %s", ptr.file );
 		sctk_nodebug( "absolute %s", ptr.absolute );
-		mpc_common_io_noalloc_fprintf( stderr, "\t[%2d] "SCTK_COLOR_RED_BOLD( %s )" @ "SCTK_COLOR_YELLOW( %llx )"\n", frame_id, func_name_buf, ip );
+		mpc_common_io_noalloc_fprintf( stderr, "\t[%2d] "MPC_COLOR_RED_BOLD( %s )" @ "MPC_COLOR_YELLOW( %llx )"\n", frame_id, func_name_buf, ip );
 
 		if ( ptr.line != ( unsigned long ) - 1 )
 		{
-			mpc_common_io_noalloc_fprintf( stderr, "\t     "SCTK_COLOR_BLUE_BOLD( %s/%s/%s:%d )"\n", ptr.absolute,
+			mpc_common_io_noalloc_fprintf( stderr, "\t     "MPC_COLOR_BLUE_BOLD( %s/%s/%s:%d )"\n", ptr.absolute,
 							ptr.dir, ptr.file, ptr.line );
 		}
 
 		frame_id++;
 	}
 
-	mpc_common_io_noalloc_fprintf( stderr, "\n"SCTK_COLOR_VIOLET_BOLD(})"\n" );
+	mpc_common_io_noalloc_fprintf( stderr, "\n"MPC_COLOR_VIOLET_BOLD(})"\n" );
 }
 #endif
 
@@ -457,31 +458,31 @@ void mpc_common_debugger_sig_handler( int sig, siginfo_t *info, __UNUSED__ void 
 		exit( sig );
 	}
 
-	sctk_error( "==========================================================" );
-	sctk_error( "                                                          " );
-	sctk_error( "Process Caught signal %s(%d)", ssig, sig );
-	sctk_error( "                                                          " );
+	mpc_common_debug_error( "==========================================================" );
+	mpc_common_debug_error( "                                                          " );
+	mpc_common_debug_error( "Process Caught signal %s(%d)", ssig, sig );
+	mpc_common_debug_error( "                                                          " );
 
 	switch ( sig )
 	{
 		case SIGILL:
 		case SIGFPE:
 		case SIGTRAP:
-			sctk_error( "Instruction : %p ", info->si_addr );
+			mpc_common_debug_error( "Instruction : %p ", info->si_addr );
 			break;
 
 		case SIGBUS:
 		case SIGSEGV:
-			sctk_error( "Faulty address was : %p ", info->si_addr );
+			mpc_common_debug_error( "Faulty address was : %p ", info->si_addr );
 			break;
 	}
 
-	sctk_error( "                                                          " );
-	sctk_error( " INFO : Disable signal capture by exporting MPC_BT_SIG=0  " );
-	sctk_error( "        or through MPC's configuration file (mpc_bt_sig)  " );
-	sctk_error( "                                                          " );
-	sctk_error( "!!! MPC will now segfault indiferently from the signal !!!" );
-	sctk_error( "==========================================================" );
+	mpc_common_debug_error( "                                                          " );
+	mpc_common_debug_error( " INFO : Disable signal capture by exporting MPC_BT_SIG=0  " );
+	mpc_common_debug_error( "        or through MPC's configuration file (mpc_bt_sig)  " );
+	mpc_common_debug_error( "                                                          " );
+	mpc_common_debug_error( "!!! MPC will now segfault indiferently from the signal !!!" );
+	mpc_common_debug_error( "==========================================================" );
 	
 	static __thread int already_in_sighandler = 0;
 
@@ -505,7 +506,7 @@ void mpc_common_debugger_sig_handler( int sig, siginfo_t *info, __UNUSED__ void 
 	fprintf( stderr, "* you may now launch GDB -- good debugging      *\n" );
 	fprintf( stderr, "*************************************************\n" );
 	fprintf( stderr, "\n" );
-	sctk_error(
+	mpc_common_debug_error(
 	    "/!\\ CHECK THE ACTUAL SIGNAL IN PREVIOUS ERROR (may not be SIGSEV)" );
 	MPC_CRASH();
 }

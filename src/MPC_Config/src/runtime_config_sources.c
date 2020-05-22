@@ -23,7 +23,7 @@
 /********************************* INCLUDES *********************************/
 #include <mpc_common_types.h>
 #include <mpc_config.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <string.h>
 #include <errno.h>
 #include <libxml/xmlschemas.h>
@@ -424,10 +424,10 @@ void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml *
 	if ( ! sckt_runtime_config_file_exist(filename) ) {
 		switch(level) {
 			case SCTK_RUNTIME_CONFIG_OPEN_WARNING:
-				sctk_warning("Cannot open XML file : %s",filename);
+				mpc_common_debug_warning("Cannot open XML file : %s",filename);
 				return;
 			case SCTK_RUNTIME_CONFIG_OPEN_ERROR:
-				sctk_fatal("Cannot open XML file : %s",filename);
+				mpc_common_debug_fatal("Cannot open XML file : %s",filename);
 				return;
 			case SCTK_RUNTIME_CONFIG_OPEN_SILENT:
 				return;
@@ -527,7 +527,7 @@ bool sctk_runtime_config_sources_validate(struct sctk_runtime_config_sources * c
 	/* Create validation context */
 	if ((vctxt = xmlSchemaNewValidCtxt(schema)) == NULL) {
 		xmlSchemaFree(schema);
-		sctk_fatal("Fail to create validation context from XML schema file : %s.",xml_shema_path);
+		mpc_common_debug_fatal("Fail to create validation context from XML schema file : %s.",xml_shema_path);
 	}
 
 	/* Create validation output system */

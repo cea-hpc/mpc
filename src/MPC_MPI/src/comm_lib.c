@@ -881,7 +881,7 @@ static void __mpc_cl_disable_buffering()
 {
 	if ( mpc_common_get_task_rank() == 0 )
 	{
-		sctk_warning( "Message Buffering has been disabled in configuration" );
+		mpc_common_debug_warning( "Message Buffering has been disabled in configuration" );
 	}
 
 	__mpc_cl_buffering_enabled = 0;
@@ -950,7 +950,7 @@ void mpc_mpi_cl_egreq_progress_poll()
 int ___mpc_cl_egreq_disguise_poll( void *arg )
 {
 	int ret = 0;
-	//sctk_error("POLL %p", arg);
+	//mpc_common_debug_error("POLL %p", arg);
 	int disguised = 0;
 	int my_rank = -1;
 	mpc_lowcomm_request_t *req = ( mpc_lowcomm_request_t * ) arg;
@@ -1464,7 +1464,7 @@ static inline size_t __mpc_cl_datatype_get_size( mpc_lowcomm_datatype_t datatype
 			if ( !derived_type_target )
 			{
 				/* ERROR */
-				sctk_fatal( "Tried to retrieve an uninitialized datatype %d", datatype );
+				mpc_common_debug_fatal( "Tried to retrieve an uninitialized datatype %d", datatype );
 			}
 
 			if ( derived_type_target->is_a_padded_struct )
@@ -1485,12 +1485,12 @@ static inline size_t __mpc_cl_datatype_get_size( mpc_lowcomm_datatype_t datatype
 		case MPC_DATATYPES_UNKNOWN:
 			/* No such datatype */
 			/* ERROR */
-			sctk_fatal( "An unknown datatype was provided" );
+			mpc_common_debug_fatal( "An unknown datatype was provided" );
 			break;
 	}
 
 	/* We shall never arrive here ! */
-	sctk_fatal( "This error shall never be reached" );
+	mpc_common_debug_fatal( "This error shall never be reached" );
 	return MPC_ERR_INTERN;
 }
 
@@ -1555,7 +1555,7 @@ int _mpc_cl_type_flag_padded( mpc_lowcomm_datatype_t datatype )
 		case MPC_DATATYPES_COMMON:
 		case MPC_DATATYPES_CONTIGUOUS:
 		case MPC_DATATYPES_UNKNOWN:
-			sctk_fatal( "Only Common datatypes can be flagged" );
+			mpc_common_debug_fatal( "Only Common datatypes can be flagged" );
 			break;
 
 		case MPC_DATATYPES_DERIVED:
@@ -1706,7 +1706,7 @@ int _mpc_cl_type_hcontiguous_ctx( mpc_lowcomm_datatype_t *datatype, size_t count
 	/* If we are here we did not find any slot so we abort you might think of
 	* increasing
 	* SCTK_USER_DATA_TYPES_MAX if you app needs more than 265 datatypes =) */
-	sctk_fatal( "Not enough datatypes allowed : you requested to many contiguous "
+	mpc_common_debug_fatal( "Not enough datatypes allowed : you requested to many contiguous "
 	            "types (forgot to free ?)" );
 	return -1;
 }
@@ -1777,9 +1777,9 @@ int _mpc_cl_type_debug( mpc_lowcomm_datatype_t datatype )
 
 	if ( datatype == MPC_DATATYPE_NULL )
 	{
-		sctk_error( "=============ERROR==================" );
-		sctk_error( "MPC_DATATYPE_NULL" );
-		sctk_error( "====================================" );
+		mpc_common_debug_error( "=============ERROR==================" );
+		mpc_common_debug_error( "MPC_DATATYPE_NULL" );
+		mpc_common_debug_error( "====================================" );
 		MPC_ERROR_SUCESS();
 	}
 
@@ -1879,7 +1879,7 @@ int _mpc_cl_derived_datatype_on_slot( int id, long *begins,
 
 	if ( !new_type )
 	{
-		sctk_fatal( "Failled to allocate a new derived type" );
+		mpc_common_debug_fatal( "Failled to allocate a new derived type" );
 	}
 
 	/* And we call the datatype initializer */
@@ -1956,7 +1956,7 @@ int _mpc_cl_derived_datatype( mpc_lowcomm_datatype_t *datatype,
 	}
 
 	/* If we are here we did not find any slot so we abort you might think of  increasing SCTK_USER_DATA_TYPES_MAX if you app needs more than 265 datatypes =) */
-	sctk_fatal( "Not enough datatypes allowed : you requested too many derived "
+	mpc_common_debug_fatal( "Not enough datatypes allowed : you requested too many derived "
 	            "types (forgot to free ?)" );
 	return MPC_ERR_INTERN;
 }
@@ -2461,11 +2461,11 @@ static inline void __mpc_cl_enter_tmp_directory()
 			cret = mkdtemp( tmpdir );
 			if(cret)
 			{
-				sctk_warning( "Creating temp directory %s", tmpdir );
+				mpc_common_debug_warning( "Creating temp directory %s", tmpdir );
 			}
 			else
 			{
-				sctk_error("Failed to create a tmd directory");
+				mpc_common_debug_error("Failed to create a tmd directory");
 			}
 			
 		}
@@ -2481,7 +2481,7 @@ static inline void __mpc_cl_enter_tmp_directory()
 
 		if( ret < 0)
 		{
-			sctk_warning("Failed entering temporary directory");
+			mpc_common_debug_warning("Failed entering temporary directory");
 		}
 	}
 }
@@ -2771,8 +2771,8 @@ int _mpc_cl_sendrecv( void *sendbuf, mpc_lowcomm_msg_count_t sendcount, mpc_lowc
 	reqs[0] = MPC_REQUEST_NULL;
 	reqs[1] = MPC_REQUEST_NULL;
  
-	//sctk_error("SEND %p CNT %d DEST %d TAG %d", sendbuf, sendcount, dest, sendtag);
-	//sctk_error("RECV %p CNT %d SRC %d TAG %d", recvbuf, recvcount, source, recvtag);
+	//mpc_common_debug_error("SEND %p CNT %d DEST %d TAG %d", sendbuf, sendcount, dest, sendtag);
+	//mpc_common_debug_error("RECV %p CNT %d SRC %d TAG %d", recvbuf, recvcount, source, recvtag);
 
 	_mpc_cl_irecv( recvbuf, recvcount, recvtype, source, recvtag, comm, &reqs[0] );
 	_mpc_cl_isend( sendbuf, sendcount, sendtype, dest, sendtag, comm, &reqs[1] );
@@ -4443,7 +4443,7 @@ int mpc_mpi_cl_error_string( int code, char *str, int *len )
 			err_case_sprintf( MPC_ERR_INFO_NOKEY, "Could not locate a value with this key" );
 
 		default:
-			sctk_warning( "%d error code unknown", code );
+			mpc_common_debug_warning( "%d error code unknown", code );
 	}
 
 	*len = strlen( str );
@@ -4458,10 +4458,10 @@ int _mpc_cl_error_class( int errorcode, int *errorclass )
 
 int _mpc_cl_abort( __UNUSED__ mpc_lowcomm_communicator_t comm, int errorcode )
 {
-	sctk_error( "MPC_Abort with error %d", errorcode );
+	mpc_common_debug_error( "MPC_Abort with error %d", errorcode );
 	fflush( stderr );
 	fflush( stdout );
-	sctk_abort();
+	mpc_common_debug_abort();
 	MPC_ERROR_SUCESS();
 }
 
@@ -4474,11 +4474,11 @@ void _mpc_cl_default_error( mpc_lowcomm_communicator_t *comm, int *error, char *
 
 	if ( i != 0 )
 	{
-		sctk_error( "%s file %s line %d %s", str, file, line, msg );
+		mpc_common_debug_error( "%s file %s line %d %s", str, file, line, msg );
 	}
 	else
 	{
-		sctk_error( "Unknown error" );
+		mpc_common_debug_error( "Unknown error" );
 	}
 
 	_mpc_cl_abort( *comm, *error );
@@ -4492,7 +4492,7 @@ void _mpc_cl_return_error( mpc_lowcomm_communicator_t *comm, int *error, ... )
 
 	if ( i != 0 )
 	{
-		sctk_error( "Warning: %s on comm %d", str, ( int ) *comm );
+		mpc_common_debug_error( "Warning: %s on comm %d", str, ( int ) *comm );
 	}
 }
 
@@ -4502,17 +4502,17 @@ void _mpc_cl_abort_error( mpc_lowcomm_communicator_t *comm, int *error, char *me
 	char str[1024];
 	int i;
 	mpc_mpi_cl_error_string( *error, str, &i );
-	sctk_error( "===================================================" );
+	mpc_common_debug_error( "===================================================" );
 
 	if ( i != 0 )
 	{
-		sctk_error( "Error: %s on comm %d", str, ( int ) *comm, message );
+		mpc_common_debug_error( "Error: %s on comm %d", str, ( int ) *comm, message );
 	}
 
-	sctk_error( "This occured at %s:%d", file, line );
-	sctk_error( "MPC Encountered an Error will now abort" );
-	sctk_error( "===================================================" );
-	sctk_abort();
+	mpc_common_debug_error( "This occured at %s:%d", file, line );
+	mpc_common_debug_error( "MPC Encountered an Error will now abort" );
+	mpc_common_debug_error( "===================================================" );
+	mpc_common_debug_abort();
 }
 
 
@@ -5140,7 +5140,7 @@ int mpc_cl_move_to( int process, int cpuid )
 	}
 #endif
 
-	sctk_warning( "Inter process migration Disabled" );
+	mpc_common_debug_warning( "Inter process migration Disabled" );
 	return MPC_ERR_UNSUPPORTED_OPERATION;
 }
 
@@ -5151,10 +5151,10 @@ int mpc_cl_move_to( int process, int cpuid )
 static void __init_basic_checks()
 {
 	__mpc_cl_request_init_null();
-	sctk_size_checking_eq( SCTK_COMM_WORLD, SCTK_COMM_WORLD, "SCTK_COMM_WORLD",  "SCTK_COMM_WORLD", __FILE__, __LINE__ );
-	sctk_size_checking_eq( SCTK_COMM_SELF, SCTK_COMM_SELF, "SCTK_COMM_SELF",  "SCTK_COMM_SELF", __FILE__, __LINE__ );
+	mpc_common_debug_check_size_equal( SCTK_COMM_WORLD, SCTK_COMM_WORLD, "SCTK_COMM_WORLD",  "SCTK_COMM_WORLD", __FILE__, __LINE__ );
+	mpc_common_debug_check_size_equal( SCTK_COMM_SELF, SCTK_COMM_SELF, "SCTK_COMM_SELF",  "SCTK_COMM_SELF", __FILE__, __LINE__ );
 
-	sctk_check_equal_types(mpc_lowcomm_msg_count_t, unsigned int );
+	mpc_common_debug_check_type_equal(mpc_lowcomm_msg_count_t, unsigned int );
 
 	sctk_net_init_task_level ( mpc_common_get_process_rank(), 0 );
 }

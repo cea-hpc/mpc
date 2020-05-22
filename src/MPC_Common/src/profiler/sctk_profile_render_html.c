@@ -25,7 +25,7 @@
 
 #include <stdlib.h>
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 
 void sctk_profile_render_html_register( struct sctk_profile_renderer *rd )
@@ -52,7 +52,7 @@ void sctk_profile_render_html_setup( struct sctk_profile_renderer *rd )
 	
 	if( !rd->output_file )
 	{
-		sctk_error( "Failed to open profile file : %s ", output_file );
+		mpc_common_debug_error( "Failed to open profile file : %s ", output_file );
 		perror( " fopen " );
 		abort();
 	}

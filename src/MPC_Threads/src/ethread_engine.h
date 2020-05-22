@@ -25,7 +25,7 @@
 #include <signal.h>
 #include <stdio.h>
 
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 #include "thread.h"
 
@@ -296,7 +296,7 @@ void _mpc_thread_ethread_print_task(_mpc_thread_ethread_per_thread_t *task)
 		default:
 			not_reachable();
 	}
-	sctk_error("task %p on %d\n\t\t\t- status %s\n\t\t\t- vp %p",
+	mpc_common_debug_error("task %p on %d\n\t\t\t- status %s\n\t\t\t- vp %p",
 	           task, task->vp->rank, status, task->vp);
 }
 
@@ -355,7 +355,7 @@ void _mpc_thread_ethread_enqueue_task(_mpc_thread_ethread_virtual_processor_t *
 		th_status =
 		        _mpc_thread_ethread_debug_status(task->
 		                                         status);
-		sctk_warning("task %p task->status = %d (%s) ",
+		mpc_common_debug_warning("task %p task->status = %d (%s) ",
 		             task, task->status, th_status);
 	}
 	                 sctk_assert(task->status == ethread_ready); );
@@ -501,8 +501,8 @@ static inline void _mpc_thread_ethread_init_data(_mpc_thread_ethread_per_thread_
 	data->thread_sigset    = sctk_thread_default_set;
 }
 
-#define _mpc_thread_ethread_check_size(a, b)       sctk_size_checking(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
-#define _mpc_thread_ethread_check_size_eq(a, b)    sctk_size_checking_eq(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
+#define _mpc_thread_ethread_check_size(a, b)       mpc_common_debug_check_large_enough(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
+#define _mpc_thread_ethread_check_size_eq(a, b)    mpc_common_debug_check_size_equal(sizeof(a), sizeof(b), SCTK_STRING(a), SCTK_STRING(b), __FILE__, __LINE__)
 
 typedef struct _mpc_thread_ethread_mutex_cell_s
 {

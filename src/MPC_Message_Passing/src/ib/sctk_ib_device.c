@@ -105,7 +105,7 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, cha
 			
 			if( device_id < 0 )
 			{
-				sctk_warning("Could not locate a device with name %s assuming default device '0'", device_name );
+				mpc_common_debug_warning("Could not locate a device with name %s assuming default device '0'", device_name );
 				device_id = 0;
 			}
 		}
@@ -228,7 +228,7 @@ void sctk_ib_device_close (struct sctk_ib_rail_info_s *rail_ib)
 	int ret = ibv_close_device(rail_ib->device->context);
 
 	if(ret)
-		sctk_error("Failure to close IB device");
+		mpc_common_debug_error("Failure to close IB device");
 
 	sctk_free(rail_ib->device); rail_ib->device = NULL;
 }
@@ -251,7 +251,7 @@ void sctk_ib_pd_free(sctk_ib_device_t *device)
 	int ret = ibv_dealloc_pd(device->pd);
 
 	if(ret)
-		sctk_error("Failure to de-alloc PD: %s", strerror(ret));
+		mpc_common_debug_error("Failure to de-alloc PD: %s", strerror(ret));
 
 	device->pd = NULL;
 }
@@ -304,5 +304,5 @@ void sctk_ib_cq_free(struct ibv_cq * queue)
 	int ret = ibv_destroy_cq(queue);
 
 	if(ret)
-		sctk_fatal("Failure to destroy CQ: %s", strerror(ret));
+		mpc_common_debug_fatal("Failure to destroy CQ: %s", strerror(ret));
 }

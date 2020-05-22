@@ -24,7 +24,7 @@
 
 #include "comm_lib.h"
 #include "mpc_thread.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 #include <mpc_common_flags.h>
 
@@ -239,7 +239,7 @@ size_t MPC_T_data_get_size(struct MPC_T_data *tdata) {
     ret = sizeof(char);
     break;
   default:
-    sctk_fatal("No such datatype for MPI_T_DATA");
+    mpc_common_debug_fatal("No such datatype for MPI_T_DATA");
   }
 
   return ret;
@@ -279,7 +279,7 @@ static inline void *MPC_T_data_get_ptr_size(struct MPC_T_data *tdata,
     return (void *)alias ? alias : &tdata->content.c;
     break;
   default:
-    sctk_fatal("No such datatype for MPI_T_DATA");
+    mpc_common_debug_fatal("No such datatype for MPI_T_DATA");
     return 0;
   }
 }
@@ -776,7 +776,7 @@ int mpc_MPI_T_pvars_array_register_on_slot(
     int pvar_index, char *name, MPC_T_verbosity verbosity,
     MPC_T_pvar_class var_class, MPI_Datatype datatype, MPI_T_enum enumtype,
     char *desc, MPC_T_binding bind, int readonly, int continuous, int atomic) {
-  // sctk_warning("REGISTER %s on slot %d", name , pvar_index);
+  // mpc_common_debug_warning("REGISTER %s on slot %d", name , pvar_index);
   struct MPC_T_pvar *pv = NULL;
 
   if (pvar_index < MPI_T_PVAR_COUNT) {
@@ -1452,7 +1452,7 @@ int MPC_T_session_array_free(__UNUSED__ MPI_T_pvar_session session,
 int MPC_T_session_set(MPI_T_pvar_session session, void *handle,
                       MPC_T_pvar_t pvar, void *dataptr) {
   if (!mpc_MPI_T_initialized()) {
-    sctk_error("NOT INIT");
+    mpc_common_debug_error("NOT INIT");
     return MPI_ERR_ARG;
   }
 
@@ -1492,7 +1492,7 @@ int MPC_T_session_set(MPI_T_pvar_session session, void *handle,
 int MPC_T_session_start(MPI_T_pvar_session session, void *handle,
                         MPC_T_pvar_t pvar) {
   if (!mpc_MPI_T_initialized()) {
-    sctk_error("NOT INIT");
+    mpc_common_debug_error("NOT INIT");
     return MPI_ERR_ARG;
   }
 
@@ -1532,7 +1532,7 @@ int MPC_T_session_start(MPI_T_pvar_session session, void *handle,
 int MPC_T_session_stop(MPI_T_pvar_session session, void *handle,
                        MPC_T_pvar_t pvar) {
   if (!mpc_MPI_T_initialized()) {
-    sctk_error("NOT INIT");
+    mpc_common_debug_error("NOT INIT");
     return MPI_ERR_ARG;
   }
 

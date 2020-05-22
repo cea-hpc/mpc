@@ -24,7 +24,7 @@
 /********************************* INCLUDES *********************************/
 #include <string.h>
 #include <stdlib.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include "libxml_helper.h"
 #include "runtime_config_mapper.h"
 #include "runtime_config_printer.h"
@@ -51,7 +51,7 @@ bool sctk_runtime_config_map_entry_to_bool(xmlNodePtr node)
 	} else if (xmlStrcmp(value,BAD_CAST("false")) == 0 || xmlStrcmp(value,BAD_CAST("1")) == 0) {
 		res = false;
 	} else {
-		sctk_fatal("Invalid boolean value (true|false) : %s",value);
+		mpc_common_debug_fatal("Invalid boolean value (true|false) : %s",value);
 	}
 	xmlFree(value);
 	return res;
@@ -181,14 +181,14 @@ size_t sctk_runtime_config_map_entry_parse_size( const char *pval )
 			value[len - 2 ]= '\0';
 			ret = atoll(value);
 			if( 16384 <= ret ) {
-				sctk_fatal("%llu PB is close to overflow 64bits values please choose a lower value", (unsigned long long int)ret);
+				mpc_common_debug_fatal("%llu PB is close to overflow 64bits values please choose a lower value", (unsigned long long int)ret);
 			}
 			ret = ret * 1125899906842624llu;
 		} else if( sctk_runtime_config_map_case_cmp(value[ len - 1 ],'B') ) {
 			value[len - 1 ]= '\0';
 			ret = atoll(value);
 		} else {
-			sctk_warning("Found no units in  '%s' assuming Bytes (you may use B, KB, MB, GB, TB, PB)\n", pval);
+			mpc_common_debug_warning("Found no units in  '%s' assuming Bytes (you may use B, KB, MB, GB, TB, PB)\n", pval);
 			ret = atoll(value);
 		}
 	}
@@ -254,11 +254,11 @@ int sctk_runtime_config_map_entry_to_enum(xmlNodePtr node, const char * type_nam
       res = current_value->value;
     }
     else {
-      sctk_fatal("Invalid enum value.");
+      mpc_common_debug_fatal("Invalid enum value.");
     }
   }
   else {
-    sctk_fatal("Invalid enum type.");
+    mpc_common_debug_fatal("Invalid enum type.");
   }
 
   free(value);
@@ -474,7 +474,7 @@ void sctk_runtime_config_map_union( const struct sctk_runtime_config_entry_meta 
 
 	/* not found */
 	if (child == NULL) {
-		sctk_warning("Invalid child in union node %s.",current->name);
+		mpc_common_debug_warning("Invalid child in union node %s.",current->name);
 		return;
 	}
 
@@ -486,7 +486,7 @@ void sctk_runtime_config_map_union( const struct sctk_runtime_config_entry_meta 
 
 	/* not found */
 	if (entry->type != SCTK_CONFIG_META_TYPE_UNION_ENTRY)
-		sctk_fatal("Invalid entry type in enum %s : %s.",current->name,child->name);
+		mpc_common_debug_fatal("Invalid entry type in enum %s : %s.",current->name,child->name);
 
 	/* setup type ID */
 	*(int*)value = entry->offset;
@@ -540,7 +540,7 @@ void sctk_runtime_config_map_value( const struct sctk_runtime_config_entry_meta 
 			/* check for errors and types */
 			if (entry == NULL)
 			{
-				sctk_fatal("Can't find type information for : %s.",type_name);
+				mpc_common_debug_fatal("Can't find type information for : %s.",type_name);
 			}
 			else if (entry->type == SCTK_CONFIG_META_TYPE_STRUCT)
 			{
@@ -552,7 +552,7 @@ void sctk_runtime_config_map_value( const struct sctk_runtime_config_entry_meta 
 			}
 			else
 			{
-			sctk_fatal("Unknown custom type : %s (%d)",type_name,entry->type);
+			mpc_common_debug_fatal("Unknown custom type : %s (%d)",type_name,entry->type);
 			}
 		}
 	}
@@ -642,7 +642,7 @@ void sctk_runtime_config_map_struct( const struct sctk_runtime_config_entry_meta
 				sctk_runtime_config_map_value(config_meta,child_ptr,child->inner_type,node);
 				break;
 			default:
-				sctk_fatal("Invalid current meta entry type : %d",current->type);
+				mpc_common_debug_fatal("Invalid current meta entry type : %d",current->type);
 		}
 
 		/* move to next lement */
@@ -691,7 +691,7 @@ void* sctk_runtime_config_get_symbol(char * symbol_name)
   void * symbol = dlsym(sctk_handler, symbol_name);
   if (symbol == NULL && sctk_crash_on_symbol_load) {
     char * msg = dlerror();
-    sctk_warning("Fail to load config symbol %s : %s", symbol_name, msg);
+    mpc_common_debug_warning("Fail to load config symbol %s : %s", symbol_name, msg);
   }
   
   return symbol;

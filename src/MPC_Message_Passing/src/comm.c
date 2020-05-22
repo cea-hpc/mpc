@@ -26,7 +26,7 @@
 #include <sctk_low_level_comm.h>
 #include <sctk_communicator.h>
 #include <mpc_common_helper.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <mpc_common_spinlock.h>
 #include <uthash.h>
 #include <utlist.h>
@@ -1844,7 +1844,7 @@ static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matchin
 		}
 
 		/* Match the communicator, the tag, the source and the specific message tag */
-		//sctk_error("Looking for C %d S %d SS %d T %d HAVE C %d S %d SS %d T %d", header->communicator, header->source_task, header->source, header->message_tag,
+		//mpc_common_debug_error("Looking for C %d S %d SS %d T %d HAVE C %d S %d SS %d T %d", header->communicator, header->source_task, header->source, header->message_tag,
 		//													header_found->communicator, header_found->source_task, header_found->source, header_found->message_tag);
 		if ( /* Match Communicator */
 		    ( header->communicator == header_found->communicator ) &&
@@ -2637,7 +2637,7 @@ int mpc_lowcomm_request_cancel( mpc_lowcomm_request_t *msg )
 			/* NOTE: cancelling a Send is deprecated */
 			if ( _mpc_comm_is_remote_rank( SCTK_MSG_DEST_PROCESS( msg->msg ) ) )
 			{
-				sctk_error( "Try to cancel a network message for %d from UNIX process %d",
+				mpc_common_debug_error( "Try to cancel a network message for %d from UNIX process %d",
 				            SCTK_MSG_DEST_PROCESS( msg->msg ), mpc_common_get_process_rank() );
 				not_implemented();
 			}

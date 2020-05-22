@@ -27,7 +27,7 @@
 #include <mpc_common_rank.h>
 
 #include "sctk_alloc.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 #include "mpc_launch.h"
 
@@ -104,13 +104,13 @@ void mpc_lowcomm_hook_barrier()
 #pragma weak mpc_lowcomm_hook_send_to
 void mpc_lowcomm_hook_send_to( void *data, size_t size, int target )
 {
-	sctk_fatal( "You must implement the mpc_lowcomm_send_to function to run in multiprocess" );
+	mpc_common_debug_fatal( "You must implement the mpc_lowcomm_send_to function to run in multiprocess" );
 }
 
 #pragma weak mpc_lowcomm_hook_recv_from
 void mpc_lowcomm_hook_recv_from( void *data, size_t size, int source )
 {
-	sctk_fatal( "You must implement the mpc_lowcomm_recv_from function to run in multiprocess" );
+	mpc_common_debug_fatal( "You must implement the mpc_lowcomm_recv_from function to run in multiprocess" );
 }
 #endif
 

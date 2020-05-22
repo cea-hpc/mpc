@@ -26,7 +26,7 @@
 #include <sctk_low_level_comm.h>
 #include <sctk_communicator.h>
 
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 #include <mpc_common_spinlock.h>
 #include <uthash.h>
 #include <utlist.h>
@@ -180,7 +180,7 @@ void __sctk_control_messages_send(int dest, int dest_task,
   }
 
   if (!_mpc_comm_ptp_message_is_for_control(message_class)) {
-    sctk_fatal("Cannot send a non-contol message using this function");
+    mpc_common_debug_fatal("Cannot send a non-contol message using this function");
   }
 
   int source = -1;
@@ -276,11 +276,11 @@ void control_message_submit(mpc_lowcomm_ptp_message_class_t class, int rail_id,
     sctk_rail_info_t *rail = sctk_rail_get_by_id(rail_id);
 
     if (!rail) {
-      sctk_fatal("No such rail %d", rail_id);
+      mpc_common_debug_fatal("No such rail %d", rail_id);
     }
 
     if (!rail->control_message_handler) {
-      sctk_warning("No handler was set to rail (%d = %s) control messages, set "
+      mpc_common_debug_warning("No handler was set to rail (%d = %s) control messages, set "
                    "it prior to send such messages",
                    rail_id, rail->network_name);
       return;
@@ -303,7 +303,7 @@ void control_message_submit(mpc_lowcomm_ptp_message_class_t class, int rail_id,
     struct sctk_control_message_context *ctx = sctk_control_message_ctx();
 
     if (!ctx->sctk_user_control_message) {
-      sctk_warning("No handler was set to process user level control messages, "
+      mpc_common_debug_warning("No handler was set to process user level control messages, "
                    "set it prior to send such messages");
       return;
     }
@@ -322,7 +322,7 @@ void sctk_control_messages_perform(mpc_lowcomm_ptp_message_t *msg, int force) {
   mpc_lowcomm_ptp_message_class_t class = SCTK_MSG_SPECIFIC_CLASS(msg);
 
   if (!_mpc_comm_ptp_message_is_for_control(class)) {
-    sctk_fatal("Cannot process a non-control message using this function (%s)",
+    mpc_common_debug_fatal("Cannot process a non-control message using this function (%s)",
                mpc_lowcomm_ptp_message_class_name[class]);
   }
 
@@ -433,7 +433,7 @@ void sctk_control_message_fence(int target_task, mpc_lowcomm_communicator_t comm
 void sctk_control_message_fence_handler( struct sctk_control_message_fence_ctx *ctx )
 {
   static int dummy = 0;
-  sctk_error("FENCE SEND %d -> %d", ctx->remote, ctx->source);
+  mpc_common_debug_error("FENCE SEND %d -> %d", ctx->remote, ctx->source);
 
   sctk_control_message_process_local( mpc_common_get_task_rank());
 

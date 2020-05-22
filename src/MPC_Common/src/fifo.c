@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 
 uint64_t mpc_common_fifo_count( struct mpc_common_fifo *fifo )
 {

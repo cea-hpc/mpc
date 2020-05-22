@@ -29,7 +29,7 @@
 
 #include <mpc_mpi_comm_lib.h>
 #include <mpc_common_asm.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 
 #include "mpc_lowcomm.h" /* mpc_lowcomm_datatype_t */
 #include "mpc_common_datastructure.h"

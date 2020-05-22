@@ -29,7 +29,7 @@
 #include "mpc_lowcomm.h"
 #include "sctk_communicator.h"
 #include "sctk_communicator.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "sctk_handle.h"
 #include <mpc_lowcomm_msg.h>
 #include "mpc_runtime_config.h"
@@ -39,7 +39,7 @@
 #include <mpc.h>
 #include <mpc_extern32.h>
 #include <mpc_mpi.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 
 #include <mpc_common_spinlock.h>
 #include <string.h>
@@ -342,7 +342,7 @@ static inline void sctk_mpi_shared_mem_buffer_fill(union shared_mem_buffer *b,
     break;
 
   default:
-    sctk_fatal("Unsupported data-type");
+    mpc_common_debug_fatal("Unsupported data-type");
   }
 }
 

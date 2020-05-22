@@ -70,7 +70,7 @@ static inline sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_run
 		/* This avoid dynamic rail creation (rail array is statically sized) */
 		if ( __rails.rail_current_id ==  sctk_rail_count() )
 		{
-			sctk_fatal ( "Error : Rail overflow detected\n" );
+			mpc_common_debug_fatal ( "Error : Rail overflow detected\n" );
 		}
 
 		/* Set rail Number */
@@ -109,7 +109,7 @@ static inline sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_run
 	{
 		if( strcmp( runtime_config_rail->device, "default") && runtime_config_rail->device[0] != '!' )
 		{
-			sctk_fatal("No such device %s", runtime_config_rail->device );
+			mpc_common_debug_fatal("No such device %s", runtime_config_rail->device );
 		}
 	}
 
@@ -170,7 +170,7 @@ static inline sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_run
 
 			if( !subrail_driver_conf )
 			{
-				sctk_fatal("Could not locate driver config for subrail %s", subrail_rail_conf->config );
+				mpc_common_debug_fatal("Could not locate driver config for subrail %s", subrail_rail_conf->config );
 			}
 
 			/* Now do the init */
@@ -327,7 +327,7 @@ void rdma_rail_ellection()
 			 * RDMA condition UP which is not allowed */
 			sctk_rail_info_t * previous = sctk_rail_get_by_id ( rdma_rail_id );
 
-			sctk_fatal("Found two rails with the RDMA flag up (%s and %s)\n"
+			mpc_common_debug_fatal("Found two rails with the RDMA flag up (%s and %s)\n"
 			           "this is not allowed, please make sure that only one is set",
 				   rail->network_name, previous->network_name);
 		}
@@ -347,7 +347,7 @@ void rdma_rail_ellection()
 
 		/*if( !get_process_rank() )*/
 		/*{*/
-				/*sctk_warning("No RDMA capable rail found (using emulated calls)");*/
+				/*mpc_common_debug_warning("No RDMA capable rail found (using emulated calls)");*/
 		/*}*/
 	}
 
@@ -508,7 +508,7 @@ void sctk_rail_dump_routes()
 	if( local_task_rank )
 		return;
 
-	sctk_error(" %d / %d ", rank , size  );
+	mpc_common_debug_error(" %d / %d ", rank , size  );
 	char path[512];
 
 	/* Each Proces fill its local data */
@@ -703,7 +703,7 @@ void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_de
 				}
 				else
 				{
-					sctk_fatal("No such topology %s", topology);
+					mpc_common_debug_fatal("No such topology %s", topology);
 				}
 			}
 		}
@@ -898,7 +898,7 @@ inline sctk_endpoint_t * sctk_rail_get_any_route_to_process_or_forward ( sctk_ra
 
 		if( new_dest == dest )
 		{
-			sctk_fatal("Routing loop identified");
+			mpc_common_debug_fatal("Routing loop identified");
 		}
 
 		/* Use the same function which does not create new routes */
@@ -922,7 +922,7 @@ inline sctk_endpoint_t * sctk_rail_get_static_route_to_process_or_forward ( sctk
 
 		if( new_dest == dest )
 		{
-			sctk_fatal("Routing loop identified");
+			mpc_common_debug_fatal("Routing loop identified");
 		}
 
 		return sctk_rail_get_static_route_to_process_or_forward ( rail, new_dest );
@@ -971,7 +971,7 @@ sctk_endpoint_t * sctk_rail_get_any_route_to_process_or_on_demand ( sctk_rail_in
 
 			if( new_dest == dest )
 			{
-				sctk_fatal("Routing loop identified");
+				mpc_common_debug_fatal("Routing loop identified");
 			}
 
 			return sctk_rail_get_any_route_to_process_or_forward ( rail, new_dest );

@@ -86,13 +86,13 @@ __UNUSED__ static inline void sctk_ib_polling_check_wc ( struct sctk_ib_rail_inf
 
 		if ( config->quiet_crash )
 		{
-			sctk_error ( "\nIB - PROCESS %d CRASHED (%s): %s",
+			mpc_common_debug_error ( "\nIB - PROCESS %d CRASHED (%s): %s",
 			             mpc_common_get_process_rank(), host, ibv_wc_status_str ( wc.status ) );
 		}
 		else
 		{
 			sctk_ibuf_print ( ibuf, ibuf_desc );
-			sctk_error ( "\nIB - FATAL ERROR FROM PROCESS %d (%s)\n"
+			mpc_common_debug_error ( "\nIB - FATAL ERROR FROM PROCESS %d (%s)\n"
 			             "################################\n"
 			             "Work ID is   : %d\n"
 			             "Status       : %s\n"
@@ -112,7 +112,7 @@ __UNUSED__ static inline void sctk_ib_polling_check_wc ( struct sctk_ib_rail_inf
 			             ibuf_desc );
 		}
 
-		sctk_abort();
+		mpc_common_debug_abort();
 	}
 }
 

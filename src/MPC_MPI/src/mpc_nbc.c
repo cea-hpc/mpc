@@ -4610,7 +4610,7 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 	/* get schedule address */
 	myschedule = (NBC_Schedule *) ( (char *) *handle->schedule + handle->row_offset );
 
-  //sctk_error("=> %p + %d", *handle->schedule,  handle->row_offset);
+  //mpc_common_debug_error("=> %p + %d", *handle->schedule,  handle->row_offset);
 
 	numptr = (int *) myschedule;
 

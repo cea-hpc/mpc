@@ -125,7 +125,7 @@ libmpccommon_la_DEPENDENCIES =  \
 	$(abs_top_builddir)/src/MPC_Arch/src/libmpcarch.la \
 	$(am__DEPENDENCIES_1)
 am__libmpccommon_la_SOURCES_DIST = aio.c bit_array.c fifo.c \
-	hashtable.c io_helper.c rank.c sctk_debug.c sctk_no_alloc.c \
+	hashtable.c io_helper.c rank.c debug.c sctk_no_alloc.c \
 	sctk_pm_json.c flags.c debugger.c elf_32.c elf_64.c \
 	./profiler/sctk_internal_profiler.c \
 	./profiler/sctk_performance_tree.c \
@@ -147,9 +147,8 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_render_text.lo \
 @MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_render_xml.lo
 am_libmpccommon_la_OBJECTS = aio.lo bit_array.lo fifo.lo hashtable.lo \
-	io_helper.lo rank.lo sctk_debug.lo sctk_no_alloc.lo \
-	sctk_pm_json.lo flags.lo debugger.lo elf_32.lo elf_64.lo \
-	$(am__objects_1)
+	io_helper.lo rank.lo debug.lo sctk_no_alloc.lo sctk_pm_json.lo \
+	flags.lo debugger.lo elf_32.lo elf_64.lo $(am__objects_1)
 libmpccommon_la_OBJECTS = $(am_libmpccommon_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -509,7 +508,7 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 noinst_LTLIBRARIES = libmpccommon.la
 CLEANFILES = elf_64.c
 libmpccommon_la_SOURCES = aio.c bit_array.c fifo.c hashtable.c \
-	io_helper.c rank.c sctk_debug.c sctk_no_alloc.c sctk_pm_json.c \
+	io_helper.c rank.c debug.c sctk_no_alloc.c sctk_pm_json.c \
 	flags.c debugger.c elf_32.c elf_64.c $(am__append_3)
 libmpccommon_la_LIBADD = $(abs_top_builddir)/src/MPC_Arch/src/libmpcarch.la $(OPENPA_LIBS) $(ALLOC_LIBS)
 all: all-am
@@ -594,6 +593,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/aio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bit_array.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/debug.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/debugger.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf_32.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf_64.Plo@am__quote@
@@ -602,7 +602,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hashtable.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/io_helper.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rank.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_debug.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_no_alloc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_pm_json.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./profiler/$(DEPDIR)/sctk_internal_profiler.Plo@am__quote@

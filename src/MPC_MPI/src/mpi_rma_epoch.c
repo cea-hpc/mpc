@@ -500,7 +500,7 @@ int mpc_MPI_win_locks_release(struct mpc_MPI_win_locks *locks) {
   struct mpc_MPI_win_lock_request *to_free = NULL;
 
   while (cur) {
-    sctk_warning("MPI Win : A lock from %d was not unlocked", cur->source_rank);
+    mpc_common_debug_warning("MPI Win : A lock from %d was not unlocked", cur->source_rank);
     to_free = cur;
     cur = cur->next;
     mpc_MPI_win_lock_request_free(to_free);
@@ -656,7 +656,7 @@ int mpc_Win_target_ctx_check_for_pending_locks(MPI_Win win) {
           win, MPC_WIN_TARGET_PASSIVE_SHARED, unlock_source);
       return 1;
     } else {
-      sctk_fatal("MPI Win : unhandled lock mode");
+      mpc_common_debug_fatal("MPI Win : unhandled lock mode");
     }
 
     /* In this case directly start another exposure epoch
@@ -703,7 +703,7 @@ int mpc_Win_target_ctx_start_exposure_no_lock(MPI_Win win, mpc_Win_arity arity,
 
   switch (state) {
   case MPC_WIN_TARGET_NONE:
-    sctk_error("MPI Win : you are starting a NONE exposure");
+    mpc_common_debug_error("MPI Win : you are starting a NONE exposure");
     had_error = 1;
     break;
 
@@ -717,7 +717,7 @@ int mpc_Win_target_ctx_start_exposure_no_lock(MPI_Win win, mpc_Win_arity arity,
         active_exposure_fence_end = 1;
         active_exposure_fence_start = 1;
       } else {
-        sctk_error("MPI Win : you cannot enter a fence when already being "
+        mpc_common_debug_error("MPI Win : you cannot enter a fence when already being "
                    "exposed through another mechanism");
         had_error = 1;
       }
@@ -728,7 +728,7 @@ int mpc_Win_target_ctx_start_exposure_no_lock(MPI_Win win, mpc_Win_arity arity,
 
   case MPC_WIN_TARGET_ACTIVE:
     if (ctx->state != MPC_WIN_TARGET_NONE) {
-      sctk_error("MPI Win : you cannot enter an active target epoch when "
+      mpc_common_debug_error("MPI Win : you cannot enter an active target epoch when "
                  "already being exposed through another mechanism");
       had_error = 1;
     } else {
@@ -746,7 +746,7 @@ int mpc_Win_target_ctx_start_exposure_no_lock(MPI_Win win, mpc_Win_arity arity,
         /* Lock is already taken we cannot enter exclusive */
         delayed_locking = 1;
       } else {
-        sctk_fatal("MPI Win : you cannot lock exclusive a window which is "
+        mpc_common_debug_fatal("MPI Win : you cannot lock exclusive a window which is "
                    "being manipulated through another mechanism");
         had_error = 1;
       }
@@ -763,7 +763,7 @@ int mpc_Win_target_ctx_start_exposure_no_lock(MPI_Win win, mpc_Win_arity arity,
     for (i = 0; i < ctx->remote_count; i++) {
       for (j = 0; j < remote_count; j++) {
         if (ctx->remote_ranks[i] == remotes[j]) {
-          sctk_error("LOL");
+          mpc_common_debug_error("LOL");
           mpc_MPI_win_locks_push_delayed(&ctx->locks, remotes[j],
                                          MPI_LOCK_SHARED);
           remotes[j] = -1;
@@ -782,7 +782,7 @@ int mpc_Win_target_ctx_start_exposure_no_lock(MPI_Win win, mpc_Win_arity arity,
         /* Lock is already taken shared we can enter shared */
         taking_a_lock = 1;
       } else {
-        sctk_error("MPI Win : you cannot lock shared a window which is being "
+        mpc_common_debug_error("MPI Win : you cannot lock shared a window which is being "
                    "manipulated through another mechanism");
         had_error = 1;
       }
@@ -1053,7 +1053,7 @@ int mpc_Win_target_ctx_end_exposure_no_lock(MPI_Win win,
 
   switch (ctx->state) {
   case MPC_WIN_TARGET_NONE:
-    sctk_fatal("MPI Win : Cannot end an exposure epoch which did not start");
+    mpc_common_debug_fatal("MPI Win : Cannot end an exposure epoch which did not start");
     had_error = 1;
     break;
 
@@ -1113,7 +1113,7 @@ int mpc_Win_target_ctx_end_exposure_no_lock(MPI_Win win,
     if (source_rank == desc->comm_rank)
       break;
 
-    // sctk_error("END exposure RECV from %d to %d", desc->comm_rank,
+    // mpc_common_debug_error("END exposure RECV from %d to %d", desc->comm_rank,
     // source_rank );
 
     mpc_Win_ctx_get_ack_remote(&ctx->requests, desc->comm_rank, source_rank);
@@ -1258,7 +1258,7 @@ int mpc_Win_source_ctx_start_access_no_lock(MPI_Win win, mpc_Win_arity arity,
 
   switch (state) {
   case MPC_WIN_SOURCE_NONE:
-    sctk_error("MPI Win : Error cannot enter a none access epoch");
+    mpc_common_debug_error("MPI Win : Error cannot enter a none access epoch");
     had_error = 1;
     break;
 
@@ -1396,7 +1396,7 @@ int mpc_Win_source_ctx_start_access_no_lock(MPI_Win win, mpc_Win_arity arity,
       if ((i == desc->comm_rank) || (desc->remote_wins[i] < 0))
         continue;
 
-      // sctk_error("START ALL RECV from  %d", i);
+      // mpc_common_debug_error("START ALL RECV from  %d", i);
 
       mpc_Win_ctx_get_ack_remote(&ctx->requests, desc->comm_rank, i);
     }
@@ -1502,7 +1502,7 @@ int mpc_Win_source_ctx_end_access_no_lock(MPI_Win win,
       if ((i == desc->comm_rank) || (desc->remote_wins[i] < 0))
         continue;
 
-      // sctk_error("END ALL SEND to  %d", i);
+      // mpc_common_debug_error("END ALL SEND to  %d", i);
 
       mpc_Win_ctx_ack_remote(&ctx->requests, desc->comm_rank, i);
     }
@@ -1517,7 +1517,7 @@ int mpc_Win_source_ctx_end_access_no_lock(MPI_Win win,
 
   switch (ctx->state) {
   case MPC_WIN_SOURCE_NONE:
-    sctk_error("MPI Win : Cannot end an access epoch which did not start");
+    mpc_common_debug_error("MPI Win : Cannot end an access epoch which did not start");
     had_error = 1;
     break;
 
@@ -1758,7 +1758,7 @@ int mpc_Win_contexes_fence_control(MPI_Win win) {
     retry++;
   }
 
-  sctk_warning(
+  mpc_common_debug_warning(
       "Someting went wrong when probing MPI Window control message counters");
 
   return 0;
@@ -1935,7 +1935,7 @@ static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
 
       if (!do_unlock_all) {
         if (mpc_Win_source_ctx_end_access(win, MPC_WIN_SOURCE_PASIVE, -1)) {
-          sctk_error("Could not end access epoch");
+          mpc_common_debug_error("Could not end access epoch");
           return MPI_ERR_INTERN;
         }
       }
@@ -1960,14 +1960,14 @@ static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
 
       if (!do_unlock_all) {
         if (mpc_Win_source_ctx_end_access(win, MPC_WIN_SOURCE_PASIVE, -1)) {
-          sctk_error("Could not end access epoch");
+          mpc_common_debug_error("Could not end access epoch");
           return MPI_ERR_INTERN;
         }
       }
 
       goto UNPD;
     } else {
-      sctk_error("CTX is %d", rdesc->target.state);
+      mpc_common_debug_error("CTX is %d", rdesc->target.state);
       not_reachable();
     }
   }
@@ -1982,7 +1982,7 @@ static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
   if (!do_unlock_all) {
     /* Now end the access epoch */
     if (mpc_Win_source_ctx_end_access(win, MPC_WIN_SOURCE_PASIVE, rank)) {
-      sctk_error("Could not end access epoch");
+      mpc_common_debug_error("Could not end access epoch");
       return MPI_ERR_INTERN;
     }
   }

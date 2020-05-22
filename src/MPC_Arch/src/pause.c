@@ -22,7 +22,7 @@
 
 #include <mpc_arch.h>
 
-#if defined(SCTK_i686_ARCH_SCTK) || defined(SCTK_x86_64_ARCH_SCTK)
+#if defined(MPC_I686_ARCH) || defined(MPC_X86_64_ARCH)
 static inline void __sctk_cpu_relax ()
 {
   #ifdef __MIC__
@@ -31,7 +31,7 @@ static inline void __sctk_cpu_relax ()
     __asm__ __volatile__ ("rep;nop":::"memory");
   #endif
 }
-#elif defined(SCTK_ia64_ARCH_SCTK)
+#elif defined(MPC_IA64_ARCH)
 static inline void __sctk_cpu_relax ()
 {
   __asm__ __volatile__ ("hint @pause":::"memory");

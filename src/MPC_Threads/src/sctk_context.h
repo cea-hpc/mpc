@@ -53,7 +53,7 @@ extern "C"
 #define SCTK_MCTX_MTH_use    SCTK_MCTX_MTH_mcsc
 #define SCTK_MCTX_DSP_use    SCTK_MCTX_DSP_sc
 
-#if defined(SCTK_i686_ARCH_SCTK)
+#if defined(MPC_I686_ARCH)
 #ifndef DONOTHAVE_CONTEXTS
 #define SCTK_USE_CONTEXT_FOR_CREATION
 #endif
@@ -62,7 +62,7 @@ extern "C"
 #define DONOTHAVE_CONTEXTS
 #endif
 
-#if defined(SCTK_x86_64_ARCH_SCTK)
+#if defined(MPC_X86_64_ARCH)
 #if 1
 #undef SCTK_MCTX_MTH_use
 #undef SCTK_MCTX_DSP_use

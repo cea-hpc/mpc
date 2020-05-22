@@ -23,7 +23,7 @@
 /* ######################################################################## */
 #include <errno.h>
 #include <string.h>
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 #include "thread.h"
 #include "sctk_context.h"
@@ -374,7 +374,7 @@ static inline int sctk_mctx_set(sctk_mctx_t *mctx,
 
 	if(sigaction(SIGUSR1, &sa, &osa) != 0)
 	{
-		sctk_abort();
+		mpc_common_debug_abort();
 	}
 
 	ss.ss_sp    = sctk_skaddr(sigaltstack, sk_addr_lo, sk_addr_hi - sk_addr_lo);
@@ -382,7 +382,7 @@ static inline int sctk_mctx_set(sctk_mctx_t *mctx,
 	ss.ss_flags = 0;
 	if(sigaltstack(&ss, &oss) < 0)
 	{
-		sctk_abort();
+		mpc_common_debug_abort();
 	}
 
 	sctk_nodebug("Structures initalized %p ", mctx);
@@ -400,12 +400,12 @@ static inline int sctk_mctx_set(sctk_mctx_t *mctx,
 	ss.ss_flags = SS_DISABLE;
 	if(sigaltstack(&ss, NULL) < 0)
 	{
-		sctk_abort();
+		mpc_common_debug_abort();
 	}
 	sigaltstack(NULL, &ss);
 	if(!(ss.ss_flags & SS_DISABLE) )
 	{
-		sctk_abort();
+		mpc_common_debug_abort();
 	}
 	if(!(oss.ss_flags & SS_DISABLE) )
 	{

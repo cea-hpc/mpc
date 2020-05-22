@@ -21,7 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <mpcomp.h>
-#include <sctk_debug.h>
+#include <mpc_common_debug.h>
 
 /* FORTRAN MAPPING */
 

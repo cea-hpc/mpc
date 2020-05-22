@@ -1,7 +1,7 @@
 #ifndef SCTK_LIB_MODE
 
 #include "mpc_lowcomm.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "sctk_shm_mapper.h"
 #include "mpc_common_types.h"
 #include <stdio.h>

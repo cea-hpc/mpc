@@ -35,7 +35,7 @@ elf_64.c: elf_32.c
 
 CLEANFILES=elf_64.c
 
-libmpccommon_la_SOURCES = aio.c bit_array.c fifo.c hashtable.c io_helper.c rank.c sctk_debug.c sctk_no_alloc.c sctk_pm_json.c flags.c debugger.c elf_32.c elf_64.c
+libmpccommon_la_SOURCES = aio.c bit_array.c fifo.c hashtable.c io_helper.c rank.c debug.c sctk_no_alloc.c sctk_pm_json.c flags.c debugger.c elf_32.c elf_64.c
 
 
 if MPC_PROFILER_ENABLED

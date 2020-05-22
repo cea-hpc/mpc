@@ -23,7 +23,7 @@
 
 #include <assert.h>
 #include <signal.h>
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include <mpc_launch_pmi.h>
 #include <mpc_launch.h>
 #include <mpc_common_flags.h>
@@ -53,7 +53,7 @@ __thread int sctk_ft_critical_section = 0;
 
 int dmtcp_get_ckpt_signal()
 {
-	sctk_fatal("This function should be called outside of running wrapped by DMTPC")
+	mpc_common_debug_fatal("This function should be called outside of running wrapped by DMTPC")
 	return 2;
 }
 
@@ -107,8 +107,8 @@ void sctk_ft_init()
 
 		if(dmtcp_get_ckpt_signal() == SIGUSR1)
 		{
-			sctk_error("DMTCP and MPC both set an handler for SIGUSR1");
-			sctk_fatal("Signal value: %d", dmtcp_get_ckpt_signal());
+			mpc_common_debug_error("DMTCP and MPC both set an handler for SIGUSR1");
+			mpc_common_debug_fatal("Signal value: %d", dmtcp_get_ckpt_signal());
 		}
 
 		mpc_common_get_flags()->checkpoint_model = "C/R (DMTCP) ENABLED";

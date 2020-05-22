@@ -1087,7 +1087,7 @@ static inline int __tree_node_init( mpcomp_meta_tree_node_t *root, const int *tr
 			break;
 
 		default:
-			sctk_abort();
+			mpc_common_debug_abort();
 	}
 
 	if ( !( me->fathers_array ) )

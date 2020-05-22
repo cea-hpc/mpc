@@ -36,46 +36,46 @@
 
 #ifdef MPC_ENABLE_SHELL_COLORS
 
-	#define SCTK_COLOR_ESC "\033["
+	#define MPC_COLOR_ESC "\033["
 	/* Normal colors */
-	#define SCTK_COLOR_RED(txt)             SCTK_COLOR_ESC"31m"#txt SCTK_COLOR_ESC"0m"
-	#define SCTK_COLOR_GREEN(txt)           SCTK_COLOR_ESC"32m"#txt SCTK_COLOR_ESC"0m"
-	#define SCTK_COLOR_YELLOW(txt)          SCTK_COLOR_ESC"33m"#txt SCTK_COLOR_ESC"0m"
-	#define SCTK_COLOR_BLUE(txt)            SCTK_COLOR_ESC"34m"#txt SCTK_COLOR_ESC"0m"
-	#define SCTK_COLOR_VIOLET(txt)          SCTK_COLOR_ESC"35m"#txt SCTK_COLOR_ESC"0m"
-	#define SCTK_COLOR_GRAY(txt)            SCTK_COLOR_ESC"30m"#txt SCTK_COLOR_ESC"0m"
-	#define SCTK_COLOR_WHITE(txt)           SCTK_COLOR_ESC"37m"#txt SCTK_COLOR_ESC"0m"
-	#define SCTK_COLOR_CYAN(txt)            SCTK_COLOR_ESC"36m"#txt SCTK_COLOR_ESC"0m"
+	#define MPC_COLOR_RED(txt)             MPC_COLOR_ESC"31m"#txt MPC_COLOR_ESC"0m"
+	#define MPC_COLOR_GREEN(txt)           MPC_COLOR_ESC"32m"#txt MPC_COLOR_ESC"0m"
+	#define MPC_COLOR_YELLOW(txt)          MPC_COLOR_ESC"33m"#txt MPC_COLOR_ESC"0m"
+	#define MPC_COLOR_BLUE(txt)            MPC_COLOR_ESC"34m"#txt MPC_COLOR_ESC"0m"
+	#define MPC_COLOR_VIOLET(txt)          MPC_COLOR_ESC"35m"#txt MPC_COLOR_ESC"0m"
+	#define MPC_COLOR_GRAY(txt)            MPC_COLOR_ESC"30m"#txt MPC_COLOR_ESC"0m"
+	#define MPC_COLOR_WHITE(txt)           MPC_COLOR_ESC"37m"#txt MPC_COLOR_ESC"0m"
+	#define MPC_COLOR_CYAN(txt)            MPC_COLOR_ESC"36m"#txt MPC_COLOR_ESC"0m"
 	/* Bold colors */
-	#define SCTK_COLOR_RED_BOLD(txt)        SCTK_COLOR_ESC"1;31m"#txt SCTK_COLOR_ESC"0m"
-	#define SCTK_COLOR_GREEN_BOLD(txt)      SCTK_COLOR_ESC"1;32m"#txt SCTK_COLOR_ESC"0m"
-	#define SCTK_COLOR_YELLOW_BOLD(txt)     SCTK_COLOR_ESC"1;33m"#txt SCTK_COLOR_ESC"0m"
-	#define SCTK_COLOR_BLUE_BOLD(txt)       SCTK_COLOR_ESC"1;34m"#txt SCTK_COLOR_ESC"0m"
-	#define SCTK_COLOR_VIOLET_BOLD(txt)     SCTK_COLOR_ESC"1;35m"#txt SCTK_COLOR_ESC"0m"
-	#define SCTK_COLOR_GRAY_BOLD(txt)       SCTK_COLOR_ESC"1;30m"#txt SCTK_COLOR_ESC"0m"
-	#define SCTK_COLOR_WHITE_BOLD(txt)      SCTK_COLOR_ESC"1;37m"#txt SCTK_COLOR_ESC"0m"
-	#define SCTK_COLOR_CYAN_BOLD(txt)       SCTK_COLOR_ESC"1;36m"#txt SCTK_COLOR_ESC"0m"
+	#define MPC_COLOR_RED_BOLD(txt)        MPC_COLOR_ESC"1;31m"#txt MPC_COLOR_ESC"0m"
+	#define MPC_COLOR_GREEN_BOLD(txt)      MPC_COLOR_ESC"1;32m"#txt MPC_COLOR_ESC"0m"
+	#define MPC_COLOR_YELLOW_BOLD(txt)     MPC_COLOR_ESC"1;33m"#txt MPC_COLOR_ESC"0m"
+	#define MPC_COLOR_BLUE_BOLD(txt)       MPC_COLOR_ESC"1;34m"#txt MPC_COLOR_ESC"0m"
+	#define MPC_COLOR_VIOLET_BOLD(txt)     MPC_COLOR_ESC"1;35m"#txt MPC_COLOR_ESC"0m"
+	#define MPC_COLOR_GRAY_BOLD(txt)       MPC_COLOR_ESC"1;30m"#txt MPC_COLOR_ESC"0m"
+	#define MPC_COLOR_WHITE_BOLD(txt)      MPC_COLOR_ESC"1;37m"#txt MPC_COLOR_ESC"0m"
+	#define MPC_COLOR_CYAN_BOLD(txt)       MPC_COLOR_ESC"1;36m"#txt MPC_COLOR_ESC"0m"
 
 #else
 
 	/* Normal colors */
-	#define SCTK_COLOR_RED(txt)             #txt
-	#define SCTK_COLOR_GREEN(txt)           #txt
-	#define SCTK_COLOR_YELLOW(txt)          #txt
-	#define SCTK_COLOR_BLUE(txt)            #txt
-	#define SCTK_COLOR_VIOLET(txt)          #txt
-	#define SCTK_COLOR_GRAY(txt)            #txt
-	#define SCTK_COLOR_WHITE(txt)           #txt
-	#define SCTK_COLOR_CYAN(txt)            #txt
+	#define MPC_COLOR_RED(txt)             #txt
+	#define MPC_COLOR_GREEN(txt)           #txt
+	#define MPC_COLOR_YELLOW(txt)          #txt
+	#define MPC_COLOR_BLUE(txt)            #txt
+	#define MPC_COLOR_VIOLET(txt)          #txt
+	#define MPC_COLOR_GRAY(txt)            #txt
+	#define MPC_COLOR_WHITE(txt)           #txt
+	#define MPC_COLOR_CYAN(txt)            #txt
 	/* Bold colors */
-	#define SCTK_COLOR_RED_BOLD(txt)        #txt
-	#define SCTK_COLOR_GREEN_BOLD(txt)      #txt
-	#define SCTK_COLOR_YELLOW_BOLD(txt)     #txt
-	#define SCTK_COLOR_BLUE_BOLD(txt)       #txt
-	#define SCTK_COLOR_VIOLET_BOLD(txt)     #txt
-	#define SCTK_COLOR_GRAY_BOLD(txt)       #txt
-	#define SCTK_COLOR_WHITE_BOLD(txt)      #txt
-	#define SCTK_COLOR_CYAN_BOLD(txt)       #txt
+	#define MPC_COLOR_RED_BOLD(txt)        #txt
+	#define MPC_COLOR_GREEN_BOLD(txt)      #txt
+	#define MPC_COLOR_YELLOW_BOLD(txt)     #txt
+	#define MPC_COLOR_BLUE_BOLD(txt)       #txt
+	#define MPC_COLOR_VIOLET_BOLD(txt)     #txt
+	#define MPC_COLOR_GRAY_BOLD(txt)       #txt
+	#define MPC_COLOR_WHITE_BOLD(txt)      #txt
+	#define MPC_COLOR_CYAN_BOLD(txt)       #txt
 
 #endif /* SHELL_COLORS */
 
@@ -174,5 +174,24 @@ void mpc_common_helper_ignore_sigpipe();
  ****************/
 
 size_t mpc_common_helper_memory_in_use( void );
+
+/*****************
+ * CAST INTEGERS *
+ *****************/
+
+#ifdef MPC_64_BIT_ARCH
+static inline int sctk_safe_cast_long_int(long l)
+{
+#ifdef SCTK_VERIFY_CAST
+	assume(INT_MIN <= l);
+	assume(l <= INT_MAX);
+#endif
+	return ( int )l;
+}
+
+#else
+#define sctk_safe_cast_long_int(l)    l
+#endif
+
 
 #endif /* MPC_COMMON_INCLUDE_MPC_COMMON_HELPER_H_ */

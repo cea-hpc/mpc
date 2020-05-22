@@ -19,7 +19,7 @@
 #include <mpc_common_datastructure.h>
 
 #include "sctk_alloc.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include <string.h>
 
 void mpc_common_bit_array_init_buff(struct mpc_common_bit_array *ba, uint64_t size,
@@ -28,14 +28,14 @@ void mpc_common_bit_array_init_buff(struct mpc_common_bit_array *ba, uint64_t si
   ba->size = (size >> 3);
 
   if (buff_size < ba->size) {
-    sctk_fatal("%s : Buffer must be at least %ld to store %ld bits (got %ld)",
+    mpc_common_debug_fatal("%s : Buffer must be at least %ld to store %ld bits (got %ld)",
                __FUNCTION__, ba->size, size, buff_size);
   }
 
   ba->array = buff;
 
   if (!ba->array) {
-    sctk_fatal("%s : Buffer was NULL", __FUNCTION__);
+    mpc_common_debug_fatal("%s : Buffer was NULL", __FUNCTION__);
   }
 
   unsigned int i = 0;
@@ -50,7 +50,7 @@ void mpc_common_bit_array_init(struct mpc_common_bit_array *ba, uint64_t size) {
   void *array = sctk_malloc(array_size * sizeof(uint8_t));
 
   if (!array) {
-    sctk_fatal("Failed to allocate a mpc_common_bit_array \n");
+    mpc_common_debug_fatal("Failed to allocate a mpc_common_bit_array \n");
   }
 
   mpc_common_bit_array_init_buff(ba, size, array, array_size);

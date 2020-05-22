@@ -24,7 +24,7 @@
 
 #include <mpc_common_rank.h>
 #include <mpc_common_flags.h>
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "mpc_topology.h"
 #include "mpc_runtime_config.h"
 #include <sys/time.h>
@@ -413,7 +413,7 @@ static inline void __mpcomp_read_env_variables()
 
 	if ( OMP_MICROVP_NUMBER > mpc_topology_get_pu_count() )
 	{
-		sctk_warning("Number of microVPs should be at most the number "
+		mpc_common_debug_warning("Number of microVPs should be at most the number "
 		         "of cores per node: %d\n"
 		         "Switching to default value %d\n",
 		         mpc_topology_get_pu_count(), OMP_MICROVP_NUMBER );
@@ -472,7 +472,7 @@ static inline void __mpcomp_read_env_variables()
 
 					if ( chunk_size <= 0 )
 					{
-						sctk_warning("Incorrect chunk size within OMP_SCHEDULE "
+						mpc_common_debug_warning("Incorrect chunk size within OMP_SCHEDULE "
 						         "variable: <%s>\n",
 						         env );
 						chunk_size = 0;
@@ -498,7 +498,7 @@ static inline void __mpcomp_read_env_variables()
 		}
 		else
 		{
-			sctk_warning("Unknown schedule <%s> (must be static, guided, "
+			mpc_common_debug_warning("Unknown schedule <%s> (must be static, guided, "
 			         "dynamic or auto),"
 			         " fallback to default schedule <%d>\n",
 			         env, OMP_SCHEDULE );
@@ -608,7 +608,7 @@ static inline void __mpcomp_read_env_variables()
 		}
 		else
 		{
-			sctk_warning("Unknown mode <%s> (must be SIMPLE_MIXED, "
+			mpc_common_debug_warning("Unknown mode <%s> (must be SIMPLE_MIXED, "
 			         "ALTERNATING, OVERSUBSCRIBED_MIXED or FULLY_MIXED),"
 			         " fallback to default mode <%d>\n",
 			         env, OMP_MODE );
@@ -651,7 +651,7 @@ static inline void __mpcomp_read_env_variables()
 		}
 		else
 		{
-			sctk_warning("Unknown affinity <%s> (must be COMPACT, "
+			mpc_common_debug_warning("Unknown affinity <%s> (must be COMPACT, "
 			         "SCATTER or BALANCED),"
 			         " fallback to default affinity <%d>\n",
 			         env, OMP_AFFINITY );

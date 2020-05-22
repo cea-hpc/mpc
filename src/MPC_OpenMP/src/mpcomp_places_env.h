@@ -25,7 +25,7 @@
 
 #include "hwloc.h"
 #include "utlist.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 #include "sctk_alloc.h"
 
 typedef struct mpcomp_places_info_s

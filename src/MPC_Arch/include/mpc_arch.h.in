@@ -34,17 +34,21 @@
  **************************/
 
 #if defined(__i686__) && !defined(__x86_64__)
-        #define SCTK_i686_ARCH_SCTK
+        #define MPC_I686_ARCH
 #elif defined(__x86_64__)
-        #define SCTK_x86_64_ARCH_SCTK
+        #define MPC_X86_64_ARCH
+        #define MPC_64_BIT_ARCH
 #elif defined(__ia64__)
-        #define SCTK_ia64_ARCH_SCTK
+        #define MPC_IA64_ARCH
+        #define MPC_64_BIT_ARCH
 #elif defined(__arm__)
-        #define SCTK_arm_ARCH_SCTK
+        #define MPC_ARM_ARCH
 #elif defined(__aarch64__)
-        #define SCTK_arm64_ARCH_SCTK
+        #define MPC_ARM64_ARCH
+        #define MPC_64_BIT_ARCH
 #elif defined(__powerpc64__)
-        #define SCTK_ppc64_ARCH_SCTK
+        #define MPC_PPC64_ARCH
+        #define MPC_64_BIT_ARCH
 #else
   #error "Unknown architecture"
 #endif

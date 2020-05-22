@@ -28,7 +28,7 @@
 #include "mpcomp_core.h"
 #include "mpcomp_task.h"
 #include "mpcomp_types.h"
-#include "sctk_debug.h"
+#include "mpc_common_debug.h"
 
 /***********
  * ATOMICS *
