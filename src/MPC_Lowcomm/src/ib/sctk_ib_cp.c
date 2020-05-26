@@ -38,6 +38,8 @@
 #include "sctk_ib_rdma.h"
 #include "sctk_ib_topology.h"
 
+#include <sctk_alloc.h>
+
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
 #endif

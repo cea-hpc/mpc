@@ -35,6 +35,8 @@
 #include "sctk_ib_cp.h"
 #include "sctk_ibufs_rdma.h"
 
+#include <sctk_alloc.h>
+
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
 #endif

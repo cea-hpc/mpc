@@ -37,6 +37,8 @@
 
 #include <mpc_thread.h>
 #include <mpc_topology.h>
+#include <sctk_alloc.h>
+
 
 /* used to remember __thread var init for IB re-enabling */
 extern volatile char* vps_reset;

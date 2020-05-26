@@ -29,6 +29,8 @@
 #include "sctk_ibufs_rdma.h"
 #include "sctk_ib_qp.h"
 #include "sctk_ib_polling.h"
+#include <mpc_common_debug.h>
+#include <sctk_alloc.h>
 #include "mpc_launch_pmi.h"
 #include "mpc_common_asm.h"
 #include "utlist.h"
@@ -344,8 +346,8 @@ struct ibv_qp *sctk_ib_qp_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
 	remote->qp = ibv_create_qp ( device->pd, attr );
 
         if (!remote->qp) {
-          sctk_debug("IB issue: try to reduce cap.max_send_wr %d -> %d",
-                       attr->cap.max_send_wr, attr->cap.max_send_wr / 3);
+          mpc_common_debug("IB issue: try to reduce cap.max_send_wr %d -> %d",
+                           attr->cap.max_send_wr, attr->cap.max_send_wr / 3);
           attr->cap.max_send_wr = attr->cap.max_send_wr / 3;
           remote->qp = ibv_create_qp(device->pd, attr);
         }

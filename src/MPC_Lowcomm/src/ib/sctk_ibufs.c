@@ -34,6 +34,9 @@
 #include "sctk_ibufs_rdma.h"
 #include "utlist.h"
 
+#include <sctk_alloc.h>
+
+
 static sctk_ibuf_numa_t *sctk_ibuf_get_closest_node ( struct sctk_ib_rail_info_s *rail_ib )
 {
 	struct sctk_ib_topology_numa_node_s *closest_node = sctk_ib_topology_get_numa_node ( rail_ib );

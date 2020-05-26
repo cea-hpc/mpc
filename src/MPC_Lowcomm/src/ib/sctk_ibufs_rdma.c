@@ -39,6 +39,9 @@
 #include "sctk_net_tools.h"
 #include "utlist.h"
 
+#include <sctk_alloc.h>
+
+
 /**
  *  RDMA for eager messages. This implementation is based on the
  *  paper 'High Performance RDMA-Based MPI Implementation

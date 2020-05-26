@@ -42,7 +42,9 @@
 #include "sctk_ib_topology.h"
 #include "sctk_ib_cp.h"
 #include "mpc_common_asm.h"
-#include "mpc_common_asm.h"
+
+#include <sctk_alloc.h>
+
 
 /** array of VPS, for remembering __thread vars to reset when rail is re-enabled */
 volatile char *vps_reset = NULL;

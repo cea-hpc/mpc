@@ -27,6 +27,7 @@
 #include "sctk_ib_toolkit.h"
 
 #include <mpc_topology_device.h>
+#include <sctk_alloc.h>
 
 #include <string.h>
 #include <arpa/inet.h> /* ntohs() */

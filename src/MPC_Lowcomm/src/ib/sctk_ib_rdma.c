@@ -33,6 +33,8 @@
 #include "sctk_net_tools.h"
 #include "sctk_ib_cp.h"
 
+#include <sctk_alloc.h>
+
 
 /* IB debug macros */
 #if defined SCTK_IB_MODULE_NAME

@@ -28,6 +28,9 @@
 #include <infiniband/verbs.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <mpc_common_debug.h>
+#include <sctk_alloc.h>
+#include <sctk_alloc.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <stdlib.h>
