@@ -1,358 +1,335 @@
-# CHANGELOG
+# Changelog
 
+All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog][Keep a Changelog].
 
-## Changes in **MPC 3.4.0**
+## [Unreleased]
 
-**MPI**
+This release was subject to a deep refactoring, after many years of intense development. While trying to keep this changelog as exhaustive as possible, some changes might be missing.
 
-- Optimizations and corrections of nonblocking collectives
-- Bug fix on virtual topologies (MPI_Cart...)
+### Added
 
-**OpenMP**
+### Changed
 
-- Improved OMPT support
-- Bug fix on tasks with dependencies
+- **BUILD**: Installation process compatible w/ Spack to manage package dependencies
 
-**Network / communication layers**
+### Deprecated
 
-- Support of MPI HW-enabled operations through Portals4 driver
+- **RUN**: Many `mpcrun` options will provide a warning
 
-**Privatization / compilers**
+### Removed
 
-- MPC default privatizing compiler is now GCC 7.3.0
+- **PRIV**: Compiler manager
+- **PRIV**: installation cleaner (?)
 
-**Active Message**
+### Fixed
 
-- Integration of custom Active Message relying on gRPC approach
+## [3.4.0] - 2020-04-27
 
-**Misc**
+### Added
 
-- Addition of this Changelog file
-- New doc structure through Markdown
-- Many other small optimizations and bug fixes
+- **AM**: Integration of custom Active Message relying on gRPC approach
+- **NET**: Support of MPI HW-enabled operations through Portals4 driver
+- **MISC**: Addition of this Changelog file
+- **MISC**: New doc structure through Markdown
 
+### Changed
+
+- **OMP**: Improved OMPT support
+- **PRIV**: MPC default privatizing compiler is now GCC 7.3.0
+
+### Fixed
+
+- **MPI**: Optimizations and corrections of nonblocking collectives
+- **MPI**: Bug fix on virtual topologies (MPI_Cart...)
+- **OMP**: Bug fix on tasks with dependencies
+- **MISC**: Many other small optimizations and bug fixes
 
 ## Changes in **MPC 3.3.1**
 
-**MPI**
+## [3.3.1] - 2019-06-03
 
-- Message latency optimization
-- Message progress with copy engine
-- MPI wrappers (mpirun) bugfix
-- NBCs, Collectives and Communicators bugfixes
+### Changed
 
+- **MISC**: General source-code cleanup
+- **MPI**: Message latency optimization
+- **MPI**: Message progress with copy engine
 
-**Misc**
+### Fixed
 
-- General source-code cleanup
+- **MPI**: wrappers (mpirun) bugfix
+- **MPI**: NBCs, Collectives and Communicators bugfixes
 
+## [3.3.0] - 2018-12-18
 
-## Changes in **MPC 3.3.0**
+### Added
 
-**MPI** 
-        
-- C/R support (Shmem, TCP & IB handlings) 
-- Collective algorithms optimizations 
-- NBC communication progress improvements
-- Shared-memory shortcut set qfor intra-node comms
+- **MPI**: C/R support (Shmem, TCP & IB handlings)
+- **MPI**: Shared-memory shortcut set for intra-node communications
+- **OMP**: Support for OMP_PLACES
+- **PRIV**: GCC 7.2.0 compatibility (not set as default)
+- **BUILD**: Spack recipes for MPC, and patched GCC
+- **BUILD**: Docker recipes for CentOS/Debian
+- **RUN**: New mpcrun options related to placement debugging
 
-**OpenMP** 
-        
-- Support for OMP_PLACES 
-- Tasking bug fixes 
-- OMPT Stabilization
-    
-**Network / communication layers**
+### Changed
 
-- Full rewrite for the Portals 4 driver (only process-mode)
-    
+- **MPI**: Collective algorithms optimizations
+- **MPI**: NBC communication progress improvements
+- **NET**: Full rewrite for the Portals 4 driver (only process-mode)
 
-**Privatization / compilers** 
-        
-- GCC 7.2.0 compatibility (not set as default)
+### Fixed
 
-**Miscs** 
+- **OMP**: Tasking bug fixes
+- **OMP**: OMPT Stabilization
+- **BUILD**: Fix for older Autotools
+- **MISC**: Process-mode performance optimizations
+- **PRIV**: mpc_compiler_manager optimizations and Fortran bug fixes
+- **BUILD**: Improve installmpc procedure when GCC is not required
+- **MISC**: Various bug fixes
+- **MISC**: Documentation
 
-- Spack recipes for MPC, and patched GCC 
-- Fix for older Autotools 
-- Process-mode performance optimizations 
-- mpc_compiler_manager optimizations and Fortran bug fixes 
-- Improve installmpc procedure when GCC is not required 
-- Docker recipes for CentOS/Debian 
-- New mpcrun options related to placement debugging 
-- Various bug fixes 
-- Documentation
+## [3.2.0] - 2017-07-04
 
+### Added
 
-## Changes in **MPC 3.2.0**
+- **MPI**: Support for MPI RMA (3.1)
+- **MPI**: MPI-T Support
+- **MPI**: Fortran 2008 modules
+- **OMP**: Support for the GOMP ABI
+- **OMP**: Support for OMP tasks with dependencies
+- **OMP**: OMPT Support
+- **PRIV**: Support for privatized CUDA contexts and privatization of Cuda programs using a dedicated compiler wrappers (mpc_nvcc)
+- **PRIV**: On the fly Fortran module generation
+- **PRIV**: Initial support for ARM
+- **BUILD**: Add a process mode for the installation (–mpc-process-mode)
+- **BUILD**: Add an “mpc_cleaner” command
 
-**MPI**
+### Changed
 
-- Support for MPI RMA (3.1) 
-- MPI-T Support 
-- Fortran 2008 modules 
-- Shared-memory optimization of collectives 
-- Stabilization of the NBCs 
-- Several bug-fixes     
+- **MPI**: Shared-memory optimization of collectives
+- **PRIV**: Update to GCC 6.2 as the default privatizing compiler
+- **PRIV**: Enhance compiler manager and install management
 
-**OpenMP**
- 
-- Support for the GOMP ABI 
-- Support for OMP tasks with dependencies 
-- OMPT Support 
-- Several bug-fixes 
-    
+### Removed
 
-**Privatization / compilers**
-        
-- Support for privatized CUDA contexts and privatization of Cuda programs using a dedicated compiler wrappers (mpc_nvcc) 
-- Fix support for optimized TLS with icc 
-- Update to GCC 6.2 as the default privatizing compiler 
-- Initial support for ARM 
-- Several bug-fixes 
-    
-**Miscs** 
-        
-- Add a process mode for the installation (–mpc-process-mode) 
-- On the fly Fortran module generation 
-- Enhance compiler manager and install management 
-- Add an “mpc_cleaner” command 
-- For now TBB has been disabled by default
+- **MISC**: For now TBB has been disabled by default
 
+### Fixed
 
+- **MPI**: Stabilization of the NBCs
+- **MPI**: Several bug-fixes
+- **OMP**: Several bug-fixes
+- **PRIV**: Fix support for optimized TLS with icc
+- **PRIV**: Several bug-fixes
 
-## Changes in **MPC 3.1.0**
+## [3.1.0] - 2016-06-27
 
-**OpenMP**
-- Major bugfixing in OpenMP interface
+### Added
 
-**Privatization / compilers**
+- **PRIV**: Rewrite of the TLS/HLS support
+- **PRIV**: Support for all linker level optimizations
+- **PRIV**: Definition of new C and C++ keywords
+- **PRIV**: Outlining of the exTLS library separating TLS from MPC
+- **PRIV**: Full support for global variable privatization in C
+- **PRIV**: Support for dynamic intializers in C to handle some TLS edge cases
+- **PRIV**: New compiler manager (from command line)
 
-- Rewrite of the TLS/HLS support
-- Support for all linker level optimizations
-- Definition of new C and C++ keywords
-- Outlining of the exTLS library separating TLS from MPC
-- Full support for global variable privatization in C
-- Support for dynamic intializers in C to handle some TLS edge cases
+## [3.0.0] - 2016-02-18
 
-**Misc**
+### Added
 
-- New compiler selector (from command line)
+- **MPI**: Integration of ROMIO and MPI-IO
+- **MPI**: Integration of Non-Blocking Collectives (NBC) (excluding IO)
+- **MPI**: Add Fortran90 support (.mod)
+- **MPI**: Support for heterogeneous data-types in collectives
+- **BUILD**: Add support for a library mode for embedding inside another MPI runtime
+- **MISC**: Internal implementation of asynchronous IO for old libc (AIO threads are launched with small stacks)
+- **NET**: Generic Multi-rail support with gates (from XML configuration file)
+- **NET**: Support for Portals 4
+- **NET**: Support for SHM
+- **NET**: Add low-level RDMA (for IB and Portals) and implement emulated calls
 
+### Changed
 
+- **MPI**: Various improvements on data-types and collectives
+- **MPI**: Request management in the MPI interface was optimized
+- **PRIV**: Support for a privatized version of Getopt
+- **NET**: Addition of a generic device detection engine with distance matrix (HWLOC-based)
+- **NET**: Improved topological polling in Infiniband (from device detection)
+- **NET**: Outline of a « low-level » communication interface (cont. p2p messages and RDMA)
 
-## Changes in **MPC 3.0.0**
+### Fixed
 
-**MPI**
+- **MPI**: Collectives on inter-communicators and IN_PLACE related fixes
+- **MPI**: Fixes on MPI topologies
+- **MPI**: Various Bugfixes
+- **OMP**: Fixes in the Intel OpenMP interface
+- **OMP**: Corrections on topology support
 
-- Integration of ROMIO and MPI-IO
-- Integration of Non-Blocking Collectives (NBC) (excluding IO)
-- Add Fortran90 support (.mod)
-- Support for heterogeneous data-types in collectives
-- Collectives on inter-communicators and IN_PLACE related fixes
-- Various improvements on data-types and collectives
-- Request management in the MPI interface was optimized
-- Fixes on MPI topologies
-- Various Bugfixes
-    
-**OpenMP**
+## [2.5.2] - 2015-01-20
 
-- Fixes in the Intel OpenMP interface
-- Corrections on topology support
+### Added
 
-**Network / communication layers**
+- **MPI**: Extended data-type support (up to MPI 3.0)
+- **MPI**: Optimized data-types (flattening and reuse)
+- **MPI**: Extended Generic Request and extended generic request class support
+- **MPI**: External32 data-representation support
+- **MPI**: MPI_Info support
+- **OMP**: Add support for Intel(r) OpenMP ABI (run OpenMP applications compiled with ICC)
 
-- Generic Multi-rail support with gates (from XML configuration file)
-- Support for Portals 4
-- Support for SHM
-- Addition of a generic device detection engine with distance matrix (HWLOC-based)
-- Improved topological polling in Infiniband (from device detection)
-- Outline of a « low-level » communication interface (cont. p2p messages and RDMA)
-- Add low-level RDMA (for IB and Portals) and implement emulated calls
+### Changed
 
-**Misc**
+### Deprecated
 
-- Support for a privatized version of Getopt
-- Internal implementation of asynchronous IO for old libc (AIO threads are launched with small stacks)
-- Add support for a library mode for embedding inside another MPI runtime
+### Removed
 
+### Fixed
 
+- **MPI**: Several fixes to the Fortran interface
+- **MPI**: Various bugfixes
 
-## Changes in **MPC 2.5.2**
+## [2.5.1]
 
-**MPI**
+### Added
 
-- Extended data-type support (up to MPI 3.0)
-- Optimized data-types (flattening and reuse)
-- Extended Generic Request and extended generic request class support
-- External32 data-representation support
-- MPI_Info support
-- Several fixes to the Fortran interface
-- Various bugfixes
+- **BUILD**: New build system
+- **ARCH**: Xeon-Phi Support
+- **ARCH**: Cross compilation support
 
-**OpenMP**
-    
-- Add support for Intel(r) OpenMP ABI (run OpenMP applications compiled with ICC)
+### Changed
 
+- **OMP**: optimizations
 
+### Fixed
 
-## Changes in **MPC 2.5.1**
+- **MISC**: Various Bugfixes
 
-**OpenMP**
+## [2.5.0] - 2014-01-30
 
-- OpenMP optimizations
+### Added
 
-**Misc**
+- **PRIV**: Add Patched GCC 4.8.0 with privatization of global objects
 
-- New build system
-- Xeon-Phi Support
-- Cross compilation support
-- Various Bugfixes
+### Changed
 
+- **MPI**: Performance optimizations
+- **OMP**: New runtime (NUMA optimizations)
+- **OMP**: Performance optimizations
 
-##Changes in **MPC 2.5.0**
-
-**MPI**
-
-- Performance optimizations
-
-**OpenMP**
-
-- New OpenMP runtime (NUMA optimizations)
-- Performance optimizations
-
-**Privatization / compilers**
-
-- Patched GCC 4.8.0 with privatization of global objects
-    
-**Misc**
+### Fixed
 
 - Many bug fixes
 
-
-
 ## Changes in **MPC.2.4.1**
 
-**Allocator**
-- New memory allocator
- 
+## [2.4.1] - 2012-12-21
 
-**Misc**
+### Added
 
-- Bug fixes
-- Performance optimizations
+- **ALLOC**: Custom memory allocator embedded into mpcframework
 
+### Changed
 
+- **MISC**: Performance optimizations
 
-## Changes in **MPC 2.4.0**
+### Fixed
 
-**MPI**
+- many small bug fixes
 
-- Collaborative polling
- 
+## [2.4.0] - 2012-09-25
 
-**Privatization / compilers**
+### Added
 
-- Enhancement of automatic privatization
+- **NET**: Collaborative polling
 
-**Misc**
-    
-- Bug fixes
-- Performance optimizations
+### Changed
 
+- **PRIV**: automtic privatization improvements
+- **MISC**: "Performance optimizations"
 
+### Fixed
 
-## Changes in **MPC 2.3.1**
+- many small fixes
 
-**Privatization / compilers**
-- Bug fixes in HLS support
+## [2.3.1] - 2011-12-09
 
+### Fixed
 
+- **PRIV**: Bug fixes in HLS support
 
 ## Changes in **MPC 2.3.0**
 
-**MPI**
+## [2.3.0] - 2011-11-23
 
-- Bug fixes with MPI programming model
+### Added
 
-**OpenMP**
+- **PRIV**: HLS (Hierarchical Local Storage) support
+- **RUN**: Hydra launcher
 
-- Bug fixes with OpenMP programming model
+### Fixed
 
-**Privatization / compilers**
+- **MPI**: programming model
+- **OMP**: programming model
+- **BUILD**: installation process
 
-- HLS (Hierarchical Local Storage) support
+## [2.2.0] - 2011-06-14
 
-**Misc**
+### Added
 
-- Scalable and flexible launcher based on HYDRA
-- Bug fixes in the installation process
+- **PRIV**: Extended TLS support
 
+### Changed
 
+- **NET**: New InfiniBand support
 
-## Changes in **MPC 2.2.0**
+### Fixed
 
-**MPI**
- 
-- Bug fixes with MPI programming model
+- **MPI**: Programming model
+- **OMP**: Programming model
+- **BUILD**: installation process
 
-**OpenMP**
+## [2.1.0] - 2011-04-29
 
-- Bug fixes with OpenMP programming model
+### Added
 
-**Network / communication layers**
+- SHM module (shared memory communications between processes)
 
-- New InfiniBand support
+### Fixed
 
-**Privatization / compilers**
+- **MPI**: Programming model
+- **OMP**: Programming model
+- **BUILD**: Installation process
 
-- Extended TLS support
+## [1.1.0]
 
-**Misc**
+### Added
 
-- Bug fixes in the installation process
+- **MPI**: MPI-compliant API (MPI 1.3)
+- **MPI**: MPI_Cancel support
+- **MPI**: MPI_THREAD_MULTIPLE support
+- **OMP**: First OpeMP support (OpenMP 1.3)
+- **NET**: Full Infiniband support
+- **DBG**: Debugger support with a patched version of GDB
 
+### Fixed
 
-## Changes in **MPC 2.1.0**
+- many small bug fixes
 
-**MPI**
-
-- Bug fixes with MPI programming model
-
-**OpenMP**
-
-- Bug fixes with OpenMP programming model
-
-**Network / communication layers**
-
-- SHM module (shared memory communications between processes) 
-
-**Misc**
-
-- Bug fixes in the installation process
-
-
-
-## Changes in **MPC 1.1**
-
-**MPI**
-
-- MPI-compliant API (MPI 1.3)
-- MPI_Cancel support
-- MPI_THREAD_MULTIPLE support
-
-**OpenMP**
-
-- First OpeMP support (OpenMP 1.3)
-
-**Network / communication layers**
-
-- Full Infiniband support
-
-**Debug**
-
-- Debugger support with a patched version of GDB
-
-**Misc**
-
-- Small bug fixes
+<!-- Links -->
+[Keep a Changelog]: https://keepachangelog.com/
+[1.1.0]: https://france.paratools.com/mpc/releases/MPC_1.1.tar.gz
+[2.1.0]: https://france.paratools.com/mpc/releases/MPC_2.1.0.tar.gz
+[2.2.0]: https://france.paratools.com/mpc/releases/MPC_2.2.0.tar.gz
+[2.3.0]: https://france.paratools.com/mpc/releases/MPC_2.3.0.tar.gz
+[2.3.1]: https://france.paratools.com/mpc/releases/MPC_2.3.1.tar.gz
+[2.4.0]: https://france.paratools.com/mpc/releases/MPC_2.4.0.tar.gz
+[2.4.1]: https://france.paratools.com/mpc/releases/MPC_2.4.1.tar.gz
+[2.5.0]: https://france.paratools.com/mpc/releases/MPC_2.5.0.tar.gz
+[2.5.1]: https://france.paratools.com/mpc/releases/MPC_2.5.1.tar.gz
+[2.5.2]: https://france.paratools.com/mpc/releases/MPC_2.5.2.tar.gz
+[3.0.0]: https://france.paratools.com/mpc/releases/MPC_3.0.0.tar.gz
+[3.1.0]: https://france.paratools.com/mpc/releases/MPC_3.1.0.tar.gz
+[3.2.0]: https://france.paratools.com/mpc/releases/MPC_3.2.0.tar.gz
+[3.3.0]: https://france.paratools.com/mpc/releases/MPC_3.3.0.tar.gz
+[3.3.1]: https://france.paratools.com/mpc/releases/MPC_3.3.1.tar.gz
+[3.4.0]: https://france.paratools.com/mpc/releases/mpcframework-3.4.0.tar.gz
