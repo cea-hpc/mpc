@@ -1881,19 +1881,6 @@ if test -n "$file_system_lustre"; then
     else
         AC_MSG_NOTICE([LUSTRE support requested but cannot find lustre/lustre_user.h header file])
     fi
-    AC_COMPILE_IFELSE([
-        AC_LANG_SOURCE([
-#include <lustre/lustre_user.h>
-#include <sys/ioctl.h>
-        int main(int argc, char **argv) {
-            int fd=100;
-            struct ladvise_hdr *ladvise_hdr;
-            ioctl(fd, LL_IOC_LADVISE, &ladvise_hdr);
-            return 0; }
-        ])],
-        lustre_lockahead="yes"
-	AC_DEFINE(HAVE_LUSTRE_LOCKAHEAD, 1, [Define if LUSTRE_LOCKAHEAD is enabled.])
-	AM_CONDITIONAL([LUSTRE_LOCKAHEAD], [true]))
 fi
 
 # Add conditional compilation of Lustre lockahead sources

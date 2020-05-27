@@ -114,9 +114,6 @@
 /* Define to 1 if you have the <linux/personality.h> header file. */
 #undef HAVE_LINUX_PERSONALITY_H
 
-/* Define if LUSTRE_LOCKAHEAD is enabled. */
-#undef HAVE_LUSTRE_LOCKAHEAD
-
 /* Define to 1 if you have the <lustre/lustre_user.h> header file. */
 #undef HAVE_LUSTRE_LUSTRE_USER_H
 
