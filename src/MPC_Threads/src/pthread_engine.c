@@ -1,4 +1,4 @@
-/* ############################# MPC License ############################## */
+//* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
 /* #                                                                      # */
@@ -312,7 +312,7 @@ static int _mpc_thread_pthread_engine_create(pthread_t *restrict thread,
 		if(env != NULL)
 		{
 			sctk_thread_data_t *data = (sctk_thread_data_t *)arg;
-			mpc_common_debug("Bind VP to core %d\n", data->local_task_id % mpc_topology_get_pu_count() );
+			mpc_common_debug("Bind VP to core %d\n", data->mpi_task.local_rank % mpc_topology_get_pu_count() );
 			mpc_topology_bind_to_cpu(data->mpi_task.local_rank);
 		}
 
