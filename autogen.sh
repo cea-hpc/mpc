@@ -65,7 +65,7 @@ lt_version=$(extract_version "$lt")
 
 test "$ac_version" = "$ac_expect" || err "Exact version required for Autoconf: $ac_expect (got $ac_version)"
 test "$am_version" = "$am_expect" || err "Exact version required for Automake: $am_expect (got $am_version)"
-test "$lt_version" = "$lt_expect" || err "Exact version required for Autoconf: $lt_expect (got $lt_version)"
+test "$lt_version" = "$lt_expect" || err "Exact version required for Libtool: $lt_expect (got $lt_version)"
 
 if test "$ret" = "0"; then
 	$arc -vi
