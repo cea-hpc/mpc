@@ -509,12 +509,19 @@ int mpc_thread_get_pu(void)
 {
 	sctk_thread_data_t *data = mpc_thread_data_get();
 
-	if(!data)
+	if(!data )
 	{
 		return mpc_topology_get_current_cpu();
 	}
 
-	return data->virtual_processor;
+    int ret = data->virtual_processor;
+
+    if( ret < 0)
+    {
+        ret = mpc_topology_get_current_cpu();
+    }
+
+	return ret;
 }
 
 int mpc_thread_get_thread_id(void)

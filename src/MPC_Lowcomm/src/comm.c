@@ -1453,7 +1453,8 @@ static inline mpc_lowcomm_ptp_message_t *__mpc_comm_alloc_header()
  */
 void mpc_lowcomm_init_per_task( int rank )
 {
-	mpc_comm_ptp_t *tmp;
+	sctk_net_init_task_level( rank, mpc_topology_get_current_cpu() );
+    
 	int comm_id;
 
 	__mpc_comm_ptp_task_init();
@@ -1461,7 +1462,7 @@ void mpc_lowcomm_init_per_task( int rank )
 
 	for ( comm_id = 0; comm_id < SCTK_PARALLEL_COMM_QUEUES_NUMBER; comm_id++ )
 	{
-		tmp = sctk_malloc( sizeof( mpc_comm_ptp_t ) );
+        mpc_comm_ptp_t *tmp = sctk_malloc( sizeof( mpc_comm_ptp_t ) );
 		memset( tmp, 0, sizeof( mpc_comm_ptp_t ) );
 		_mpc_comm_dest_key_init( &tmp->key, comm_id, rank );
 		/* Initialize reordering for the list */
@@ -1472,7 +1473,6 @@ void mpc_lowcomm_init_per_task( int rank )
 		__mpc_comm_ptp_array_insert( tmp );
 	}
 
-	sctk_net_init_task_level( rank, mpc_topology_get_current_cpu() );
 }
 
 void mpc_lowcomm_release_per_task(int task_rank)

@@ -94,7 +94,7 @@ void _mpc_topology_map_and_restrict_by_cpuset(hwloc_topology_t target_topology,
 
 	int err = hwloc_topology_restrict( target_topology,
 									   cpuset,
-									   HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES );
+									   HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES | HWLOC_RESTRICT_FLAG_ADAPT_IO );
 	assume( !err );
 
 	hwloc_bitmap_free(cpuset);
@@ -663,7 +663,7 @@ static inline int _mpc_topology_get_current_cpu(hwloc_topology_t target_topo)
 	if ( !pu )
 	{
 		hwloc_bitmap_free( set );
-		return -1;
+        return 0;
 	}
 
 	hwloc_bitmap_free( set );
