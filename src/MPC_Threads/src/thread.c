@@ -511,7 +511,7 @@ int mpc_thread_get_pu(void)
 
 	if(!data)
 	{
-		return -1;
+		return mpc_topology_get_current_cpu();
 	}
 
 	return data->virtual_processor;

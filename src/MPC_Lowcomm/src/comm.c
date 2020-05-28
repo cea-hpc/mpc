@@ -1455,6 +1455,7 @@ void mpc_lowcomm_init_per_task( int rank )
 {
 	mpc_comm_ptp_t *tmp;
 	int comm_id;
+
 	__mpc_comm_ptp_task_init();
 	__mpc_comm_buffered_ptp_init();
 
@@ -1470,6 +1471,13 @@ void mpc_lowcomm_init_per_task( int rank )
 		/* And insert them */
 		__mpc_comm_ptp_array_insert( tmp );
 	}
+
+	sctk_net_init_task_level( rank, mpc_topology_get_current_cpu() );
+}
+
+void mpc_lowcomm_release_per_task(int task_rank)
+{
+		sctk_net_finalize_task_level( task_rank, mpc_topology_get_current_cpu() );
 }
 
 /********************************************************************/
@@ -2841,7 +2849,7 @@ void mpc_lowcomm_libmode_release()
 
 static void __lowcomm_init_per_task()
 {
-        int task_rank = mpc_common_get_task_rank();
+    int task_rank = mpc_common_get_task_rank();
 
 	/* We call for all threads as some
 	   progress threads may need buffered headers */
@@ -2856,17 +2864,17 @@ static void __lowcomm_init_per_task()
 	}
 }
 
-static void __lowcomm_release()
+static void __lowcomm_release_per_task()
 {
-        int task_rank = mpc_common_get_task_rank();
+    int task_rank = mpc_common_get_task_rank();
 
 	if ( task_rank >= 0 )
 	{
 		mpc_common_nodebug( "mpc_lowcomm_terminaison_barrier" );
 		mpc_lowcomm_terminaison_barrier();
 		mpc_lowcomm_terminaison_barrier();
+		mpc_lowcomm_release_per_task(task_rank);
 		mpc_common_nodebug( "mpc_lowcomm_terminaison_barrier done" );
-		sctk_net_finalize_task_level( task_rank, mpc_topology_get_current_cpu() );
 	}
 	else
 	{
@@ -2931,7 +2939,7 @@ void mpc_lowcomm_registration()
 
         mpc_common_init_callback_register("VP Thread Start", "MPC Message Passing Init per Task", __lowcomm_init_per_task, 0);
 
-        mpc_common_init_callback_register("VP Thread End", "MPC Message Passing Release", __lowcomm_release, 0);
+        mpc_common_init_callback_register("VP Thread End", "MPC Message Passing Release", __lowcomm_release_per_task, 0);
 
 #ifdef MPC_USE_DMTCP
         mpc_common_init_callback_register("Base Runtime Init with Config", "Initialize Fault-Tolerance", __initialize_ft, 77);

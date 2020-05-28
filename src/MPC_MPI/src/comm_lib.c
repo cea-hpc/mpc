@@ -5155,8 +5155,6 @@ static void __init_basic_checks()
 	mpc_common_debug_check_size_equal( SCTK_COMM_SELF, SCTK_COMM_SELF, "SCTK_COMM_SELF",  "SCTK_COMM_SELF", __FILE__, __LINE__ );
 
 	mpc_common_debug_check_type_equal(mpc_lowcomm_msg_count_t, unsigned int );
-
-	sctk_net_init_task_level ( mpc_common_get_process_rank(), 0 );
 }
 
 static void __init_buffering()
