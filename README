@@ -251,10 +251,68 @@ hybrid programming. There are different implementations of inter-process
 communications and launch methods. A call to mpcrun -help detail all the
 available implementations and launch methods.
 
+Multi-process job on multiple nodes with process-based MPI flavor
+-----------------------------------------------------------------
+
+MPC offers two flavors of its MPI implementation: process-based and thread-based.
+Process-based implementation is similar to the behavior of OpenMPI or MPICH.
+The flavor can be directly driven by the launch arguments.
+To use MPC-MPI in process-based flavor, the number of MPI processes specified
+in the launch command should be the same as the number of OS processes specified
+(hence -n value should be the same as -p value).
+The following examples launch eight MPI processes on two nodes, in process-based 
+flavor. Each node will end up with four OS processes, each of these OS processes
+embedding a MPI process.
+
+	$ mpcrun -m=ethread      -n=8 -p=8 -net=tcp -N=2 -c=2 hello_world
+	$ mpcrun -m=ethread_mxn  -n=8 -p=8 -net=tcp -N=2 -c=2 hello_world
+	$ mpcrun -m=pthread      -n=8 -p=8 -net=tcp -N=2 -c=2 hello_world
+
+Note that the -c argument specified the number of cores per OS process.
+In the ebove examples, we can deduce that the nodes we want to work on have
+at least 8 cores, with four OS processes per node, and two cores per OS 
+process.
+
+Multi-process job on multiple nodes with thread-based MPI flavor
+-----------------------------------------------------------------
+
+MPC-MPI was developed to allow a thread-based flavor, e.g. inside a node,
+MPI processes are threads. This flavor allows sharing constructs through
+the shared memory. Communications between MPI processes on the node are just
+data exchange in the shared memory, without having to go through the SHM module.
+The following examples launch eight MPI processes on two nodes, in thread-based 
+flavor. Each node will end up with one OS process, each of these OS processes
+embedding four MPI processes which are threads. 
+
+	$ mpcrun -m=ethread      -n=8 -p=2 -net=tcp -N=2 -c=8 hello_world
+	$ mpcrun -m=ethread_mxn  -n=8 -p=2 -net=tcp -N=2 -c=8 hello_world
+	$ mpcrun -m=pthread      -n=8 -p=2 -net=tcp -N=2 -c=8 hello_world
+
+Since the -c argument specifies the number of cores per OS process, and not 
+per MPI process, the user need to give a number of cores per OS process at least
+equals to the number of MPI process per OS process to avoid oversubscribing.
+In the examples above, we will have four MPI process per OS process and eight 
+cores per OS process, hence two cores per MPI process.
+
+The examples above display an example of full thread-based: one OS process per node,
+and all MPI processes on the node are threads. It is also possible to have a 
+mitigated behavior: several OS processes per node, and multiple MPI processes which
+are thread in each of these OS processes. 
+The following examples show such a behavior:
+
+	$ mpcrun -m=ethread      -n=8 -p=4 -net=tcp -N=2 -c=4 hello_world
+	$ mpcrun -m=ethread_mxn  -n=8 -p=4 -net=tcp -N=2 -c=4 hello_world
+	$ mpcrun -m=pthread      -n=8 -p=4 -net=tcp -N=2 -c=4 hello_world
+
+With these values for -N, -n, -p, each node will end up with two OS processes
+and four MPI processes. It implies that each OS process embeds two MPI processes
+which are threads. Then, to have two cores per MPI process, it is necessary to 
+ask four cores per OS process.
+
 Launch with Hydra
 -----------------
 
-In order to execute an MPC job on multile nodes using *Hydra*, you need to
+In order to execute an MPC job on multiple nodes using *Hydra*, you need to
 provide the list of nodes in a *hosts* file and set the HYDRA\_HOST\_FILE
 variable with the path to the file. You can also pass the host file as a
 parameter of the launcher as follow:
