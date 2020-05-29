@@ -41,6 +41,7 @@ MPC_BIN_DIR="${MPC_INSTALL_PREFIX}/bin"
 MPC_LIB_DIR="${MPC_INSTALL_PREFIX}/lib"
 MPC_INCLUDE_DIR="${MPC_INSTALL_PREFIX}/include"
 MPC_SHARE_DIR="@PKG_DATADIR@"
+USING_ASAN="@USING_ASAN@"
 
 VERSION_STRING="@MPC_VERSION_STRING"
 # Optionnal modules
@@ -112,6 +113,24 @@ MPC_ARG_NETWORKING=""
 MPC_ARG_THREAD_TYPE=""
 MPC_ARG_FORCE_CPU_NB=""
 
+###########################################
+# Preload libasan if enabled in configure #
+###########################################
+
+if test "x${USING_ASAN}" = "xyes"; then
+	if test -z "${ASAN_OPTIONS}"; then
+		ASAN_OPTIONS=strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:asan_exitcode=0
+		echo "# Set ASAN_OPTIONS to override defaults"
+	fi
+
+	echo "# Using ASAN_OPTIONS=${ASAN_OPTIONS}"
+	export ASAN_OPTIONS
+
+	# We make libasan first in loading order
+	export LD_PRELOAD="libasan.so:$LD_PRELOAD"
+fi
+
+
 ###################
 # Supported Modes #
 ###################
@@ -168,13 +187,24 @@ load_mpc_configuration()
 {
 	# Load config files options
 	CONFIG_FILES_VALID=false
-	preload_tmp="$LD_PRELOAD"
-	LD_PRELOAD=""
+
+	# ASAN SPECIFIC as we do not want asan to 
+	# tamper with our return code when getting config
+	# so we force asan_exitcode=0 as param
+	SAVED_ASAN=""
+	if test -n "${ASAN_OPTION}"; then
+		SAVED_ASAN="${ASAN_OPTION}"
+		export ASAN_OPTION="${ASAN_OPTION}:asan_exitcode=0"
+	fi
+
 	config_files_vars="$(${MPC_BIN_DIR}/mpc_print_config --launcher 2>/dev/null)"
-	LD_PRELOAD="$preload_tmp"
 
 	# Load configuration variables
 	test "x$?" = "x0" && eval "${config_files_vars}"
+
+	if test -n "${ASAN_OPTION}"; then
+		export ASAN_OPTION="${SAVED_ASAN}"
+	fi
 
 	if [ "${CONFIG_FILES_VALID}" = "true" ]; then
 		# Default value related to --enable-smt
@@ -247,7 +277,6 @@ fi
 
 load_mpc_configuration
 
-
 ##########################################
 # Check for disabling ASLR using Setarch #
 ##########################################
@@ -263,12 +292,11 @@ if test "x${CONFIG_DISABLE_ASLR}" = "x1"; then
 
 		if test "x$?" = "x0"; then
 			# Here we have setarch -R
-			LAUNCHER_OPTION_WRAPPER="setarch $(uname -m) -R"
+			LAUNCHER_OPTION_WRAPPER="setarch $(uname -m) -R "
 		fi
 	fi
 
 fi
-
 
 ######################
 # Display MPC's Help #

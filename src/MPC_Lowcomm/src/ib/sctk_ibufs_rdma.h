@@ -171,22 +171,6 @@ typedef struct _mpc_lowcomm_ib_ibuf_rdma_pool_s
 	struct _mpc_lowcomm_ib_ibuf_rdma_pool_s *prev;
 } _mpc_lowcomm_ib_ibuf_rdma_pool_t;
 
-/* Description of an ibuf */
-typedef struct _mpc_lowcomm_ib_ibuf_rdma_desc_s
-{
-	union
-	{
-		struct ibv_recv_wr recv;
-		struct ibv_send_wr send;
-	}              wr;
-	union
-	{
-		struct ibv_recv_wr *recv;
-		struct ibv_send_wr *send;
-	}              bad_wr;
-
-	struct ibv_sge sg_entry;
-} _mpc_lowcomm_ib_ibuf_rdma_desc_t;
 
 /*-----------------------------------------------------------
 *  FUNCTIONS

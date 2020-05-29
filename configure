@@ -645,6 +645,9 @@ CONFIGURE_CPATH
 CONFIGURE_PKG_CONFIG_PATH
 CONFIGURE_LD_LIBRARY_PATH
 CONFIGURE_PATH
+USING_ASAN
+USING_ASAN_FALSE
+USING_ASAN_TRUE
 MPC_IN_PROCESS_MODE
 EXTLS_LIBS
 EXTLS_CFLAGS
@@ -957,6 +960,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -1043,6 +1047,7 @@ enable_cma
 enable_opt
 enable_opt_native
 enable_debug_messages
+enable_debug_mem
 enable_debug
 '
       ac_precious_vars='build_alias
@@ -1127,6 +1132,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1379,6 +1385,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1516,7 +1531,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1669,6 +1684,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1738,6 +1754,7 @@ Optional Features:
   --enable-optim          Enable standard optimizations to build MPC
   --enable-opt-native     Build MPC for current architecture
   --enable-debug-messages Output debug messages when running MPC
+  --enable-debug-mem      Compile MPC with efence checks
   --enable-debug          Compile MPC in debug mode
 
 Optional Packages:
@@ -23040,6 +23057,8 @@ main ()
     if (*(data + i) != *(data3 + i))
       return 14;
   close (fd);
+  free (data);
+  free (data3);
   return 0;
 }
 _ACEOF
@@ -28909,12 +28928,6 @@ fi
 ###### MPC MOD CONFIGURATION ###### {sec:modular}
 ###################################
 
-# Todo we cannot pass it to APCC portably
-
-if test "x${mpc_debug}" = "xyes"; then
-        CFLAGS+=" $MPC_DEBUG_FLAGS"
-fi
-
 # Check whether --enable-profiler was given.
 if test "${enable_profiler+set}" = set; then :
   enableval=$enable_profiler; MPC_HAVE_PROFILER=$enableval
@@ -30487,12 +30500,92 @@ $as_echo "#define MPC_ENABLE_DEBUG_MESSAGES 1" >>confdefs.h
 
 fi
 
+# Check whether --enable-debug-mem was given.
+if test "${enable_debug_mem+set}" = set; then :
+  enableval=$enable_debug_mem; mpc_debug_mem=$enableval
+else
+  mpc_debug_mem=no
+fi
+
+
 # Check whether --enable-debug was given.
 if test "${enable_debug+set}" = set; then :
   enableval=$enable_debug; mpc_debug=$enableval
 else
   mpc_debug=no
 fi
+
+
+USING_ASAN="no"
+
+if test "x${mpc_debug_mem}" = "xyes"; then
+
+        case $mpc_compiler_family in
+                "gcc"|"clang")
+                        CFLAGS+=" -fsanitize=address"
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __asan_report_load8 in -lasan" >&5
+$as_echo_n "checking for __asan_report_load8 in -lasan... " >&6; }
+if ${ac_cv_lib_asan___asan_report_load8+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lasan  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char __asan_report_load8 ();
+int
+main ()
+{
+return __asan_report_load8 ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_asan___asan_report_load8=yes
+else
+  ac_cv_lib_asan___asan_report_load8=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_asan___asan_report_load8" >&5
+$as_echo "$ac_cv_lib_asan___asan_report_load8" >&6; }
+if test "x$ac_cv_lib_asan___asan_report_load8" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBASAN 1
+_ACEOF
+
+  LIBS="-lasan $LIBS"
+
+fi
+
+                        USING_ASAN="yes"
+                        # Also set the debug flag
+                        mpc_debug="yes"
+                ;;
+                *)
+                        as_fn_error $? "Memory debugging is only supported with ASAN from clang/gcc" "$LINENO" 5
+                ;;
+        esac
+fi
+
+ if test "x$USING_ASAN" != "xyes"; then
+  USING_ASAN_TRUE=
+  USING_ASAN_FALSE='#'
+else
+  USING_ASAN_TRUE='#'
+  USING_ASAN_FALSE=
+fi
+
 
 
 MPC_PORTABLE_DEBUG_FLAGS=" -g"
@@ -30512,6 +30605,9 @@ case $mpc_compiler_family in
         ;;
 esac
 
+if test "x${mpc_debug}" = "xyes"; then
+        CFLAGS+=" $MPC_DEBUG_FLAGS"
+fi
 
 
 ####################################
@@ -30655,6 +30751,7 @@ MPC_CONFIG_RESULT="\
 #\n\
 # Embedded profiler.... $MPC_HAVE_PROFILER\n\
 # Debug symbols........ $mpc_debug ($MPC_DEBUG_FLAGS)\n\
+# Memory Debug......... $mpc_debug_mem\n\
 # Debug messages....... $mpc_debug_messages\n\
 # Colored output....... $mpc_shell_color\n\
 #\n\
@@ -31019,6 +31116,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_HAVE_AUTOPRIV_TRUE}" && test -z "${MPC_HAVE_AUTOPRIV_FALSE}"; then
   as_fn_error $? "conditional \"MPC_HAVE_AUTOPRIV\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${USING_ASAN_TRUE}" && test -z "${USING_ASAN_FALSE}"; then
+  as_fn_error $? "conditional \"USING_ASAN\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

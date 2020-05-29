@@ -1553,12 +1553,6 @@ fi
 ###### MPC MOD CONFIGURATION ###### {sec:modular}
 ###################################
 
-# Todo we cannot pass it to APCC portably
-
-if test "x${mpc_debug}" = "xyes"; then
-        CFLAGS+=" $MPC_DEBUG_FLAGS"
-fi
-
 AC_ARG_ENABLE([profiler],
 [AS_HELP_STRING([--enable-profiler],
                 [Compile MPC with Internal Profiling Support])],
@@ -2273,11 +2267,38 @@ if test "x${mpc_debug_messages}" = "xyes"; then
         AC_DEFINE([MPC_ENABLE_DEBUG_MESSAGES], [1], [MPC debug messages output was enabled])
 fi
 
+AC_ARG_ENABLE([debug-mem],
+[AS_HELP_STRING([--enable-debug-mem],
+                [Compile MPC with efence checks])],
+[mpc_debug_mem=$enableval],
+[mpc_debug_mem=no])
+
 AC_ARG_ENABLE([debug],
 [AS_HELP_STRING([--enable-debug],
                 [Compile MPC in debug mode])],
 [mpc_debug=$enableval],
 [mpc_debug=no])
+
+USING_ASAN="no"
+
+if test "x${mpc_debug_mem}" = "xyes"; then
+
+        case $mpc_compiler_family in
+                "gcc"|"clang")
+                        CFLAGS+=" -fsanitize=address"
+                        AC_CHECK_LIB([asan], [__asan_report_load8])
+                        USING_ASAN="yes"
+                        # Also set the debug flag
+                        mpc_debug="yes"
+                ;;
+                *)
+                        AC_MSG_ERROR([Memory debugging is only supported with ASAN from clang/gcc])
+                ;;
+        esac
+fi
+
+AM_CONDITIONAL([USING_ASAN], [test "x$USING_ASAN" != "xyes"])
+AC_SUBST([USING_ASAN])
 
 MPC_PORTABLE_DEBUG_FLAGS=" -g"
 
@@ -2296,6 +2317,9 @@ case $mpc_compiler_family in
         ;;
 esac
 
+if test "x${mpc_debug}" = "xyes"; then
+        CFLAGS+=" $MPC_DEBUG_FLAGS"
+fi
 
 
 ####################################
@@ -2435,6 +2459,7 @@ MPC_CONFIG_RESULT="\
 #\n\
 # Embedded profiler.... $MPC_HAVE_PROFILER\n\
 # Debug symbols........ $mpc_debug ($MPC_DEBUG_FLAGS)\n\
+# Memory Debug......... $mpc_debug_mem\n\
 # Debug messages....... $mpc_debug_messages\n\
 # Colored output....... $mpc_shell_color\n\
 #\n\
