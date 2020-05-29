@@ -296,6 +296,15 @@ int _mpc_lowcomm_ib_ibuf_write_with_imm_init ( sctk_ibuf_t *ibuf,
                                          char to_release,
                                          uint32_t imm_data );
 
+int _mpc_lowcomm_ib_ibuf_write_init(sctk_ibuf_t *ibuf,
+                                    void *local_address,
+                                    uint32_t lkey,
+                                    void *remote_address,
+                                    uint32_t rkey,
+                                    unsigned int len,
+                                    int send_flags,
+                                    char to_release);
+
 void _mpc_lowcomm_ib_ibuf_read_init ( sctk_ibuf_t *ibuf,
                                 void *local_address,
                                 uint32_t lkey,

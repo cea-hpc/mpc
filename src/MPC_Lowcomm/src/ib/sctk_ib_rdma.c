@@ -632,7 +632,7 @@ void sctk_ib_rdma_rendezvous_prepare_data_write(
   mpc_common_nodebug("Write from %p (%lu) to %p (%lu)", rdma->local.addr,
                rdma->local.size, rdma->remote.addr, rdma->remote.size);
 
-  sctk_ibuf_rdma_write_init(ibuf, rdma->local.addr,
+  _mpc_lowcomm_ib_ibuf_write_init(ibuf, rdma->local.addr,
                             rdma->local.mmu_entry->mr->lkey, rdma->remote.addr,
                             rdma->remote.rkey, rdma->local.size,
                             IBV_SEND_SIGNALED, IBUF_RELEASE);
@@ -766,7 +766,7 @@ void sctk_ib_rdma_write(  sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg
         mpc_common_debug("RDMA Write from %p (%lu) to %p (%lu)", src_addr, size,
                   dest_addr, size);
 
-        sctk_ibuf_rdma_write_init(ibuf, src_addr, local_key->pin.ib.mr.lkey,
+        _mpc_lowcomm_ib_ibuf_write_init(ibuf, src_addr, local_key->pin.ib.mr.lkey,
                                   dest_addr, remote_key->pin.ib.mr.rkey, size,
                                   IBV_SEND_SIGNALED, IBUF_RELEASE);
 

@@ -305,7 +305,7 @@ int _mpc_lowcomm_ib_ibuf_write_with_imm_init(sctk_ibuf_t *ibuf,
 	return is_inlined;
 }
 
-static inline int __rdma_write_init(sctk_ibuf_t *ibuf,
+int _mpc_lowcomm_ib_ibuf_write_init(sctk_ibuf_t *ibuf,
                                     void *local_address,
                                     uint32_t lkey,
                                     void *remote_address,
@@ -630,13 +630,13 @@ sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib,
 
 	s = *size;
 	/***** RDMA CHANNEL *****/
-	state = _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(remote);
+	state = sctk_ibuf_rdma_get_remote_state_rts(remote);
 
 	if(state == STATE_CONNECTED)
 	{
 		/* Double lock checking */
 		mpc_common_spinlock_lock(&remote->rdma.flushing_lock);
-		state = _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(remote);
+		state = sctk_ibuf_rdma_get_remote_state_rts(remote);
 
 		if(state == STATE_CONNECTED)
 		{
@@ -664,7 +664,7 @@ sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib,
 				{
 					mpc_common_nodebug("Picking from RDMA %d", ibuf->index);
 #ifdef DEBUG_IB_BUFS
-					sctk_endpoint_state_t state = _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(remote);
+					sctk_endpoint_state_t state = sctk_ibuf_rdma_get_remote_state_rts(remote);
 
 					if( (state != STATE_CONNECTED) && (state != STATE_FLUSHING) )
 					{
@@ -1003,7 +1003,7 @@ void _mpc_lowcomm_ib_ibuf_prepare(sctk_ib_qp_t *remote,
 		const sctk_ibuf_region_t *region = IBUF_RDMA_GET_REGION(remote, REGION_SEND);
 
 		/* Initialization of the buffer */
-		__rdma_write_init(ibuf,
+		_mpc_lowcomm_ib_ibuf_write_init(ibuf,
 		                  IBUF_RDMA_GET_BASE_FLAG(ibuf),           /* Local addr */
 		                  region->mmu_entry->mr->lkey,             /* lkey */
 		                  IBUF_RDMA_GET_REMOTE_ADDR(remote, ibuf), /* Remote addr */
