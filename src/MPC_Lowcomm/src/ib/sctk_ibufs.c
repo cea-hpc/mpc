@@ -630,13 +630,13 @@ sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib,
 
 	s = *size;
 	/***** RDMA CHANNEL *****/
-	state = sctk_ibuf_rdma_get_remote_state_rts(remote);
+	state = _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(remote);
 
 	if(state == STATE_CONNECTED)
 	{
 		/* Double lock checking */
 		mpc_common_spinlock_lock(&remote->rdma.flushing_lock);
-		state = sctk_ibuf_rdma_get_remote_state_rts(remote);
+		state = _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(remote);
 
 		if(state == STATE_CONNECTED)
 		{
@@ -664,7 +664,7 @@ sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib,
 				{
 					mpc_common_nodebug("Picking from RDMA %d", ibuf->index);
 #ifdef DEBUG_IB_BUFS
-					sctk_endpoint_state_t state = sctk_ibuf_rdma_get_remote_state_rts(remote);
+					sctk_endpoint_state_t state = _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(remote);
 
 					if( (state != STATE_CONNECTED) && (state != STATE_FLUSHING) )
 					{
