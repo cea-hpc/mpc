@@ -630,13 +630,13 @@ sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib,
 
 	s = *size;
 	/***** RDMA CHANNEL *****/
-	state = sctk_ibuf_rdma_get_remote_state_rts(remote);
+	state = _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(remote);
 
 	if(state == STATE_CONNECTED)
 	{
 		/* Double lock checking */
 		mpc_common_spinlock_lock(&remote->rdma.flushing_lock);
-		state = sctk_ibuf_rdma_get_remote_state_rts(remote);
+		state = _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(remote);
 
 		if(state == STATE_CONNECTED)
 		{
@@ -645,7 +645,7 @@ sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib,
 			OPA_incr_int(&remote->rdma.pool->busy_nb[REGION_SEND]);
 			mpc_common_spinlock_unlock(&remote->rdma.flushing_lock);
 
-			limit = sctk_ibuf_rdma_get_eager_limit(remote);
+			limit = _mpc_lowcomm_ib_ibuf_rdma_eager_limit_get(remote);
 			mpc_common_nodebug("Eager limit: %lu", limit);
 
 			if(s == ULONG_MAX)
@@ -664,7 +664,7 @@ sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib,
 				{
 					mpc_common_nodebug("Picking from RDMA %d", ibuf->index);
 #ifdef DEBUG_IB_BUFS
-					sctk_endpoint_state_t state = sctk_ibuf_rdma_get_remote_state_rts(remote);
+					sctk_endpoint_state_t state = _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(remote);
 
 					if( (state != STATE_CONNECTED) && (state != STATE_FLUSHING) )
 					{
@@ -686,7 +686,7 @@ sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib,
 
 			/* If we cannot pick a buffer from the RDMA channel, we switch to SR */
 			OPA_decr_int(&remote->rdma.pool->busy_nb[REGION_SEND]);
-			sctk_ibuf_rdma_check_flush_send(rail_ib, remote);
+			_mpc_lowcomm_ib_ibuf_rdma_flush_send(rail_ib, remote);
 		}
 		else
 		{
@@ -761,7 +761,7 @@ exit:
 	IBUF_SET_POISON(ibuf->buffer);
 
 
-	sctk_ibuf_rdma_check_remote(rail_ib, remote);
+	_mpc_lowcomm_ib_ibuf_rdma_remote_check(rail_ib, remote);
 	return ibuf;
 }
 
@@ -927,7 +927,7 @@ void _mpc_lowcomm_ib_ibuf_release(struct sctk_ib_rail_info_s *rail_ib,
 	{
 		if(IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL)
 		{
-			sctk_ibuf_rdma_release(rail_ib, ibuf);
+			_mpc_lowcomm_ib_ibuf_rdma_release(rail_ib, ibuf);
 		}
 		else
 		{

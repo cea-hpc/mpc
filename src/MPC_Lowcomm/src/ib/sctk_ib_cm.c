@@ -109,7 +109,7 @@ static void sctk_ib_cm_change_state_to_rtr ( sctk_rail_info_t *rail,
 
     if ( type == CONNECTION )
     {
-        state = sctk_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_CONNECTING, STATE_CONNECTED );
+        state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_CONNECTING, STATE_CONNECTED );
         sprintf ( txt, MPC_COLOR_GREEN ( RTR CONNECTED ) );
         assume ( state == STATE_CONNECTING );
 
@@ -121,14 +121,14 @@ static void sctk_ib_cm_change_state_to_rtr ( sctk_rail_info_t *rail,
             {
                 /* We deconnect */
                 /* Change the state of the route */
-                state = sctk_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_FLUSHED, STATE_DECONNECTED );
+                state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_FLUSHED, STATE_DECONNECTED );
                 sprintf ( txt, MPC_COLOR_RED ( RTR DECONNECTED ) );
 
             }
             else
             {
                 /* We connect */
-                state = sctk_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_FLUSHED, STATE_CONNECTED );
+                state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_FLUSHED, STATE_CONNECTED );
                 sprintf ( txt, MPC_COLOR_BLUE ( RTR RESIZED ) );
 
             }
@@ -147,7 +147,7 @@ static void sctk_ib_cm_change_state_to_rtr ( sctk_rail_info_t *rail,
             remote->rdma.pool->region[REGION_RECV].size_ibufs_previous,
             remote->rdma.pool->region[REGION_RECV].size_ibufs,
             device->eager_rdma_connections,
-            (double) sctk_ibuf_rdma_get_regions_get_allocate_size ( remote ) / 1024.0 );
+            (double) _mpc_lowcomm_ib_ibuf_rdma_region_size_get ( remote ) / 1024.0 );
 }
 
 /* Change the state of a remote process */
@@ -163,7 +163,7 @@ static void sctk_ib_cm_change_state_to_rts ( sctk_rail_info_t *rail,
 
     if ( type == CONNECTION )
     {
-        state = sctk_ibuf_rdma_cas_remote_state_rts ( remote, STATE_CONNECTING, STATE_CONNECTED );
+        state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rts ( remote, STATE_CONNECTING, STATE_CONNECTED );
         sprintf ( txt, MPC_COLOR_GREEN ( RTS CONNECTED ) );
         assume ( state == STATE_CONNECTING );
 
@@ -174,14 +174,14 @@ static void sctk_ib_cm_change_state_to_rts ( sctk_rail_info_t *rail,
             if ( remote->rdma.pool->resizing_request.send_keys.nb == 0 )
             {
                 /* We deconnect */
-                state = sctk_ibuf_rdma_cas_remote_state_rts ( remote, STATE_FLUSHED, STATE_DECONNECTED );
+                state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rts ( remote, STATE_FLUSHED, STATE_DECONNECTED );
                 sprintf ( txt, MPC_COLOR_RED ( RTS DISCONNECTED ) );
 
             }
             else
             {
                 /* We connect */
-                state = sctk_ibuf_rdma_cas_remote_state_rts ( remote, STATE_FLUSHED, STATE_CONNECTED );
+                state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rts ( remote, STATE_FLUSHED, STATE_CONNECTED );
                 sprintf ( txt, MPC_COLOR_BLUE ( RTS RESIZED ) );
 
             }
@@ -201,7 +201,7 @@ static void sctk_ib_cm_change_state_to_rts ( sctk_rail_info_t *rail,
             remote->rdma.pool->region[REGION_SEND].size_ibufs_previous,
             remote->rdma.pool->region[REGION_SEND].size_ibufs,
             device->eager_rdma_connections,
-            (double) sctk_ibuf_rdma_get_regions_get_allocate_size ( remote ) / 1024.0,
+            (double) _mpc_lowcomm_ib_ibuf_rdma_region_size_get ( remote ) / 1024.0,
             mpc_arch_get_timestamp_gettimeofday() - remote->rdma.creation_timestamp );
 
 }
@@ -544,9 +544,9 @@ int sctk_ib_cm_on_demand_rdma_check_request ( __UNUSED__ sctk_rail_info_t *rail,
      * the remote process */
     ROUTE_LOCK ( remote->endpoint );
 
-    if ( sctk_ibuf_rdma_get_remote_state_rts ( remote ) == STATE_DECONNECTED )
+    if ( _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts ( remote ) == STATE_DECONNECTED )
     {
-        sctk_ibuf_rdma_set_remote_state_rts ( remote, STATE_CONNECTING );
+        _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rts ( remote, STATE_CONNECTING );
         send_request = 1;
     }
 
@@ -572,7 +572,7 @@ int sctk_ib_cm_on_demand_rdma_request ( sctk_rail_info_t *rail, struct sctk_ib_q
     /* If we are the first to access the route and if the state
      * is deconnected, so we can proceed to a connection*/
 
-    if ( sctk_ibuf_rdma_is_connectable ( rail_ib_targ ) )
+    if ( _mpc_lowcomm_ib_ibuf_rdma_is_connectable ( rail_ib_targ ) )
     {
         /* Can connect to RDMA */
 
@@ -597,7 +597,7 @@ int sctk_ib_cm_on_demand_rdma_request ( sctk_rail_info_t *rail, struct sctk_ib_q
         mpc_common_debug( "[%d] Cannot connect to remote %d", rail->rail_number, remote->rank );
         /* We reset the state to deconnected */
         /* FIXME: state to reset */
-        sctk_ibuf_rdma_set_remote_state_rts ( remote, STATE_DECONNECTED );
+        _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rts ( remote, STATE_DECONNECTED );
     }
 
     return 1;
@@ -619,7 +619,7 @@ static inline void sctk_ib_cm_on_demand_rdma_done_recv ( sctk_rail_info_t *rail,
 
     ib_assume ( recv_keys->connected == 1 );
     /* Update the RDMA regions */
-    sctk_ibuf_rdma_update_remote_addr ( remote, recv_keys, REGION_SEND );
+    _mpc_lowcomm_ib_ibuf_rdma_update_remote_addr ( remote, recv_keys, REGION_SEND );
     sctk_ib_cm_change_state_to_rtr ( rail, endpoint, CONNECTION );
 }
 
@@ -649,9 +649,9 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_ack ( sctk_rail_info_t *rail, 
                 RDMA_CHANNEL | SEND_CHANNEL, remote->od_request.nb, remote->od_request.size_ibufs );
 
         /* Update the RDMA regions */
-        sctk_ibuf_rdma_update_remote_addr ( remote, recv_keys, REGION_RECV );
+        _mpc_lowcomm_ib_ibuf_rdma_update_remote_addr ( remote, recv_keys, REGION_RECV );
         /* Fill the keys */
-        sctk_ibuf_rdma_fill_remote_addr ( remote, &send_keys, REGION_SEND );
+        _mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr ( remote, &send_keys, REGION_SEND );
         send_keys.rail_id = * ( ( int * ) ack );
 
         /* Send the message */
@@ -665,7 +665,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_ack ( sctk_rail_info_t *rail, 
     {
         /* cannot connect */
         /* We cancel the RDMA connection */
-        sctk_ibuf_rdma_connection_cancel ( rail_ib_targ, remote );
+        _mpc_lowcomm_ib_ibuf_rdma_connexion_cancel ( rail_ib_targ, remote );
     }
 }
 
@@ -693,9 +693,9 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request ( sctk_rail_info_t *ra
 
     ROUTE_LOCK ( endpoint );
 
-    if ( sctk_ibuf_rdma_get_remote_state_rtr ( remote ) == STATE_DECONNECTED )
+    if ( _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rtr ( remote ) == STATE_DECONNECTED )
     {
-        sctk_ibuf_rdma_set_remote_state_rtr ( remote, STATE_CONNECTING );
+        _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rtr ( remote, STATE_CONNECTING );
     }
 
     ROUTE_UNLOCK ( endpoint );
@@ -709,7 +709,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request ( sctk_rail_info_t *ra
     ib_assume ( recv_keys->connected == 1 );
 
     /* We check if we can also be connected using RDMA */
-    if ( sctk_ibuf_rdma_is_connectable ( rail_ib_targ ) )
+    if ( _mpc_lowcomm_ib_ibuf_rdma_is_connectable ( rail_ib_targ ) )
     {
         /* Can connect to RDMA */
 
@@ -725,7 +725,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request ( sctk_rail_info_t *ra
                 RDMA_CHANNEL | RECV_CHANNEL, recv_keys->nb, recv_keys->size );
 
         /* Fill the keys */
-        sctk_ibuf_rdma_fill_remote_addr ( remote, &send_keys, REGION_RECV );
+        _mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr ( remote, &send_keys, REGION_RECV );
     }
     else
     {
@@ -763,7 +763,7 @@ int sctk_ib_cm_resizing_rdma_request ( sctk_rail_info_t *rail, struct sctk_ib_qp
 {
 
     /* Assume that the route is in a flushed state */
-    ib_assume ( sctk_ibuf_rdma_get_remote_state_rts ( remote ) == STATE_FLUSHED );
+    ib_assume ( _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts ( remote ) == STATE_FLUSHED );
     /* Assume there is no more pending messages */
     ib_assume ( OPA_load_int ( &remote->rdma.pool->busy_nb[REGION_SEND] ) == 0 );
 
@@ -788,7 +788,7 @@ void sctk_ib_cm_resizing_rdma_ack ( sctk_rail_info_t *rail,  struct sctk_ib_qp_s
 
     ib_assume ( sctk_endpoint_get_state ( remote->endpoint ) == STATE_CONNECTED );
     /* Assume that the route is in a flushed state */
-    ib_assume ( sctk_ibuf_rdma_get_remote_state_rtr ( remote ) == STATE_FLUSHED );
+    ib_assume ( _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rtr ( remote ) == STATE_FLUSHED );
     /* Assume there is no more pending messages */
     ib_assume ( OPA_load_int ( &remote->rdma.pool->busy_nb[REGION_RECV] ) == 0 );
 
@@ -815,7 +815,7 @@ static inline void sctk_ib_cm_resizing_rdma_done_recv ( sctk_rail_info_t *rail, 
     ib_assume ( recv_keys->connected == 1 );
 
     /* Update the RDMA regions */
-    sctk_ibuf_rdma_update_remote_addr ( remote, recv_keys, REGION_SEND );
+    _mpc_lowcomm_ib_ibuf_rdma_update_remote_addr ( remote, recv_keys, REGION_SEND );
 
     sctk_ib_cm_change_state_to_rtr ( rail, endpoint, RESIZING );
 }
@@ -836,7 +836,7 @@ static inline void sctk_ib_cm_resizing_rdma_ack_recv ( sctk_rail_info_t *rail, v
 
     /* Update the RDMA regions */
     /* FIXME: the rail number should be determinated */
-    sctk_ibuf_rdma_update_remote_addr ( remote, recv_keys, REGION_RECV );
+    _mpc_lowcomm_ib_ibuf_rdma_update_remote_addr ( remote, recv_keys, REGION_RECV );
 
     /* If the remote peer is connectable */
     sctk_ib_cm_rdma_connection_t *send_keys =
@@ -851,7 +851,7 @@ static inline void sctk_ib_cm_resizing_rdma_ack_recv ( sctk_rail_info_t *rail, v
     OPA_incr_int ( &remote->rdma.resizing_nb );
     send_keys->connected = 1;
     send_keys->rail_id = rail_ib_targ->rail->rail_number;
-    sctk_ibuf_rdma_fill_remote_addr ( remote, send_keys, REGION_SEND );
+    _mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr ( remote, send_keys, REGION_SEND );
 
     sctk_control_messages_send_rail ( src, CM_RESIZING_RDMA_DONE_TAG, 0, send_keys, sizeof ( sctk_ib_cm_rdma_connection_t ), rail->rail_number );
 

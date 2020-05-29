@@ -44,7 +44,7 @@ typedef struct sctk_ibuf_rdma_s
 	char dummy1[64];
 	mpc_common_spinlock_t polling_lock;
 	char dummy2[64];
-	struct sctk_ibuf_rdma_pool_s *pool;
+	struct _mpc_lowcomm_ib_ibuf_rdma_pool_s *pool;
 	OPA_int_t state_rtr; 			/**< If remote is RTR. Type: sctk_endpoint_state_t */
 	OPA_int_t state_rts;			/**< If remote is RTS. Type: sctk_endpoint_state_t */
 	mpc_common_spinlock_t pending_data_lock;

@@ -110,8 +110,8 @@ static void sctk_network_send_message_ib_endpoint(mpc_lowcomm_ptp_message_t *msg
 	 *  We switch between available protocols
 	 *
 	 * */
-	if( ( (sctk_ibuf_rdma_get_remote_state_rts(remote) == STATE_CONNECTED) &&
-	      (size + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE <= sctk_ibuf_rdma_get_eager_limit(remote) ) ) ||
+	if( ( (_mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(remote) == STATE_CONNECTED) &&
+	      (size + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE <= _mpc_lowcomm_ib_ibuf_rdma_eager_limit_get(remote) ) ) ||
 	    (size + IBUF_GET_EAGER_SIZE <= config->eager_limit) )
 	{
 		mpc_common_debug("Eager");
@@ -128,7 +128,7 @@ static void sctk_network_send_message_ib_endpoint(mpc_lowcomm_ptp_message_t *msg
 		mpc_lowcomm_ptp_message_complete_and_free(msg);
 
 		/* Remote profiling */
-		sctk_ibuf_rdma_update_remote(remote, size);
+		_mpc_lowcomm_ib_ibuf_rdma_remote_update(remote, size);
 		goto exit;
 	}
 
@@ -142,7 +142,7 @@ buffered:
 		mpc_lowcomm_ptp_message_complete_and_free(msg);
 
 		/* Remote profiling */
-		sctk_ibuf_rdma_update_remote(remote, size);
+		_mpc_lowcomm_ib_ibuf_rdma_remote_update(remote, size);
 
 		goto exit;
 	}
@@ -290,7 +290,7 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf)
 		}
 
 		/* Check if we are in a flush state */
-		sctk_ibuf_rdma_check_flush_send(rail_ib, remote);
+		_mpc_lowcomm_ib_ibuf_rdma_flush_send(rail_ib, remote);
 		/* We release the buffer */
 		release_ibuf = 1;
 	}
@@ -399,7 +399,7 @@ static int sctk_network_poll_send(sctk_rail_info_t *rail, struct ibv_wc *wc)
 		{
 			int current_pending;
 			current_pending = sctk_ib_qp_fetch_and_sub_pending_data(ibuf->remote, ibuf);
-			sctk_ibuf_rdma_update_max_pending_data(ibuf->remote,
+			_mpc_lowcomm_ib_ibuf_rdma_max_pending_data_update(ibuf->remote,
 			                                       current_pending);
 
 			/* Check if we are in a flush state */
@@ -431,7 +431,7 @@ static int sctk_network_poll_send(sctk_rail_info_t *rail, struct ibv_wc *wc)
 	/* Decrease the number of pending requests */
 	int current_pending;
 	current_pending = sctk_ib_qp_fetch_and_sub_pending_data(ibuf->remote, ibuf);
-	sctk_ibuf_rdma_update_max_pending_data(ibuf->remote,
+	_mpc_lowcomm_ib_ibuf_rdma_max_pending_data_update(ibuf->remote,
 	                                       current_pending);
 
 	if( (IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL) )
@@ -581,7 +581,7 @@ static void sctk_network_notify_perform_message_ib(__UNUSED__ int remote_process
 
 	int ret;
 
-	sctk_ib_rdma_eager_walk_remotes(rail_ib, sctk_ib_rdma_eager_poll_remote, &ret);
+	_mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(rail_ib, _mpc_lowcomm_ib_ibuf_rdma_eager_poll_remote, &ret);
 
 	if(ret == REORDER_FOUND_EXPECTED)
 	{
@@ -638,7 +638,7 @@ static void sctk_network_notify_idle_message_ib(sctk_rail_info_t *rail)
 	}
 
 	int ret;
-	sctk_ib_rdma_eager_walk_remotes(rail_ib, sctk_ib_rdma_eager_poll_remote, &ret);
+	_mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(rail_ib, _mpc_lowcomm_ib_ibuf_rdma_eager_poll_remote, &ret);
 
 	if(ret == REORDER_FOUND_EXPECTED)
 	{
@@ -684,7 +684,7 @@ static void sctk_network_notify_any_source_message_ib(int polling_task_id, __UNU
 
 	{
 		int ret;
-		sctk_ib_rdma_eager_walk_remotes(rail_ib, sctk_ib_rdma_eager_poll_remote, &ret);
+		_mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(rail_ib, _mpc_lowcomm_ib_ibuf_rdma_eager_poll_remote, &ret);
 
 		if(ret == REORDER_FOUND_EXPECTED)
 		{

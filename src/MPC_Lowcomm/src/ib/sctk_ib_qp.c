@@ -897,7 +897,7 @@ int sctk_ib_qp_send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *re
 		/* Decrease the number of pending requests */
 		int current_pending;
 		current_pending = sctk_ib_qp_fetch_and_sub_pending_data ( remote, ibuf );
-		sctk_ibuf_rdma_update_max_pending_data ( remote, current_pending );
+		_mpc_lowcomm_ib_ibuf_rdma_max_pending_data_update ( remote, current_pending );
 		sctk_network_poll_send_ibuf ( rail_ib->rail, ibuf);
 		return 0;
 	}
