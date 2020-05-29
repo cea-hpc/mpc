@@ -119,7 +119,7 @@ MPC_ARG_FORCE_CPU_NB=""
 
 if test "x${USING_ASAN}" = "xyes"; then
 	if test -z "${ASAN_OPTIONS}"; then
-		ASAN_OPTIONS=strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:asan_exitcode=0
+		ASAN_OPTIONS=strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:exitcode=0
 		echo "# Set ASAN_OPTIONS to override defaults"
 	fi
 
@@ -194,7 +194,7 @@ load_mpc_configuration()
 	SAVED_ASAN=""
 	if test -n "${ASAN_OPTION}"; then
 		SAVED_ASAN="${ASAN_OPTION}"
-		export ASAN_OPTION="${ASAN_OPTION}:asan_exitcode=0"
+		export ASAN_OPTION="${ASAN_OPTION}:exitcode=0"
 	fi
 
 	config_files_vars="$(${MPC_BIN_DIR}/mpc_print_config --launcher 2>/dev/null)"
