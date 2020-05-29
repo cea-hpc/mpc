@@ -682,7 +682,7 @@ void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, s
 	mpc_common_spinlock_init(&remote->lock_send, 0);
 	mpc_common_spinlock_init(&remote->flushing_lock, 0);
 	/* RDMA */
-	sctk_ibuf_rdma_remote_init ( remote );
+	_mpc_lowcomm_ib_ibuf_rdma_remote_init ( remote );
 
 	attr = sctk_ib_qp_state_init_attr ( rail_ib, &flags );
 	sctk_ib_qp_modify ( remote, &attr, flags );

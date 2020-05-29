@@ -261,20 +261,20 @@ typedef struct sctk_ibuf_s
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
-void sctk_ibuf_pool_init ( struct sctk_ib_rail_info_s *rail );
-void sctk_ibuf_pool_free ( struct sctk_ib_rail_info_s *rail );
+void _mpc_lowcomm_ib_ibuf_pool_init ( struct sctk_ib_rail_info_s *rail );
+void _mpc_lowcomm_ib_ibuf_pool_free ( struct sctk_ib_rail_info_s *rail );
 
-sctk_ibuf_t *sctk_ibuf_pick_send_tst ( struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_qp_s *remote, size_t *size );
+sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send_tst ( struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_qp_s *remote, size_t *size );
 
-sctk_ibuf_t *sctk_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_qp_s *remote, size_t *size );
+sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_qp_s *remote, size_t *size );
 
-sctk_ibuf_t *sctk_ibuf_pick_send_sr ( struct sctk_ib_rail_info_s *rail_ib );
+sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send_sr ( struct sctk_ib_rail_info_s *rail_ib );
 
-int sctk_ibuf_srq_check_and_post ( struct sctk_ib_rail_info_s *rail_ib );
+int _mpc_lowcomm_ib_ibuf_srq_post ( struct sctk_ib_rail_info_s *rail_ib );
 
-void sctk_ibuf_release_from_srq ( struct sctk_ib_rail_info_s *rail_ib, sctk_ibuf_t *ibuf );
+void _mpc_lowcomm_ib_ibuf_srq_release ( struct sctk_ib_rail_info_s *rail_ib, sctk_ibuf_t *ibuf );
 
-void sctk_ibuf_print ( sctk_ibuf_t *ibuf, char *desc );
+void _mpc_lowcomm_ib_ibuf_print ( sctk_ibuf_t *ibuf, char *desc );
 
 void *sctk_ibuf_get_buffer ( sctk_ibuf_t *ibuf );
 
@@ -282,22 +282,12 @@ void *sctk_ibuf_get_buffer ( sctk_ibuf_t *ibuf );
 /*-----------------------------------------------------------
  *  WR INITIALIZATION
  *----------------------------------------------------------*/
-void sctk_ibuf_recv_init ( sctk_ibuf_t *ibuf );
 
 void sctk_ibuf_rdma_recv_init ( sctk_ibuf_t *ibuf, void *local_address, uint32_t lkey );
 
-void sctk_ibuf_barrier_send_init ( sctk_ibuf_t *ibuf,
-                                   void *local_address,
-                                   uint32_t lkey,
-                                   void *remote_address,
-                                   uint32_t rkey,
-                                   int len );
-
-void sctk_ibuf_send_init ( sctk_ibuf_t *ibuf, size_t size );
-
 int sctk_ibuf_send_inline_init ( sctk_ibuf_t *ibuf, size_t size );
 
-int sctk_ibuf_rdma_write_with_imm_init ( sctk_ibuf_t *ibuf,
+int _mpc_lowcomm_ib_ibuf_write_with_imm_init ( sctk_ibuf_t *ibuf,
                                          void *local_address,
                                          uint32_t lkey,
                                          void *remote_address,
@@ -306,30 +296,21 @@ int sctk_ibuf_rdma_write_with_imm_init ( sctk_ibuf_t *ibuf,
                                          char to_release,
                                          uint32_t imm_data );
 
-int sctk_ibuf_rdma_write_init ( sctk_ibuf_t *ibuf,
-                                void *local_address,
-                                uint32_t lkey,
-                                void *remote_address,
-                                uint32_t rkey,
-                                unsigned int len,
-                                int send_flags,
-                                char to_release );
-
-void sctk_ibuf_rdma_read_init ( sctk_ibuf_t *ibuf,
+void _mpc_lowcomm_ib_ibuf_read_init ( sctk_ibuf_t *ibuf,
                                 void *local_address,
                                 uint32_t lkey,
                                 void *remote_address,
                                 uint32_t rkey,
                                 int len );
 
-void sctk_ibuf_rdma_fetch_and_add_init( sctk_ibuf_t *ibuf,
+void _mpc_lowcomm_ib_ibuf_fetch_and_add_init( sctk_ibuf_t *ibuf,
 										void *fetch_addr,
 										uint32_t lkey,
 										void *remote_address,
 										uint32_t rkey,
 										uint64_t add );
 
-void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,
+void _mpc_lowcomm_ib_ibuf_compare_and_swap_init( sctk_ibuf_t *ibuf,
 							  void *  res_addr,
 							  uint32_t local_key,
 							  void *remote_address,
@@ -339,24 +320,24 @@ void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,
 
 
 
-void sctk_ibuf_release ( struct sctk_ib_rail_info_s *rail_ib,
+void _mpc_lowcomm_ib_ibuf_release ( struct sctk_ib_rail_info_s *rail_ib,
                          sctk_ibuf_t *ibuf,
                          int decr_free_srq_nb );
 
-void sctk_ibuf_prepare ( struct sctk_ib_qp_s *remote,
+void _mpc_lowcomm_ib_ibuf_prepare ( struct sctk_ib_qp_s *remote,
                          sctk_ibuf_t *ibuf,
                          size_t size );
 
 void sctk_ibuf_init_task ( int rank, int vp );
 
-void sctk_ibuf_pool_set_node_srq_buffers ( struct sctk_ib_rail_info_s *rail_ib,
+void _mpc_lowcomm_ib_ibuf_set_node_srq_buffers ( struct sctk_ib_rail_info_s *rail_ib,
                                            sctk_ibuf_numa_t *node );
 
-void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
+void _mpc_lowcomm_ib_ibuf_init_numa ( struct sctk_ib_rail_info_s *rail_ib,
                                 struct sctk_ibuf_numa_s *node,
                                 int nb_ibufs,
                                 char is_initial_allocation );
-void sctk_ibuf_free_numa_node( struct sctk_ibuf_numa_s *node);
+void _mpc_lowcomm_ib_ibuf_free_numa( struct sctk_ibuf_numa_s *node);
 
 
 #endif

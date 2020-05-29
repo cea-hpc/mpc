@@ -292,7 +292,7 @@ static inline sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_ack ( __UNUSED__ sctk
 	sctk_ib_rdma_ack_t *rdma_ack;
 	size_t ibuf_size = IBUF_GET_RDMA_ACK_SIZE;
 
-	ibuf = sctk_ibuf_pick_send ( &rdma->remote_rail->network.ib, rdma->remote_peer, &ibuf_size );
+	ibuf = _mpc_lowcomm_ib_ibuf_pick_send ( &rdma->remote_rail->network.ib, rdma->remote_peer, &ibuf_size );
 	assume ( ibuf );
 
 	IBUF_SET_DEST_TASK ( ibuf->buffer, msg->tail.ib.rdma.source_task );
@@ -352,7 +352,7 @@ sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req(sctk_rail_info_t *rail,
   sctk_ib_rdma_req_t *rdma_req;
   size_t ibuf_size = IBUF_GET_RDMA_REQ_SIZE;
 
-  ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size);
+  ibuf = _mpc_lowcomm_ib_ibuf_pick_send(rail_ib, remote, &ibuf_size);
   assume(ibuf);
   IBUF_SET_DEST_TASK(ibuf->buffer, SCTK_MSG_DEST_TASK(msg));
   IBUF_SET_SRC_TASK(ibuf->buffer, SCTK_MSG_SRC_TASK(msg));
@@ -617,7 +617,7 @@ void sctk_ib_rdma_rendezvous_prepare_data_write(
   route = sctk_rail_get_any_route_to_process_or_on_demand(
       rdma->remote_rail, rdma->remote_peer->rank);
 
-  ibuf = sctk_ibuf_pick_send_sr(&rdma->remote_rail->network.ib);
+  ibuf = _mpc_lowcomm_ib_ibuf_pick_send_sr(&rdma->remote_rail->network.ib);
   assume(ibuf);
 
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
@@ -668,7 +668,7 @@ sctk_ib_rdma_rendezvous_prepare_done_write(sctk_rail_info_t *rail,
 	 * At least we should provide an option for fallbacking to the previous mode */
 	sctk_ib_rdma_t *rdma_header;
 	rdma_header = IBUF_GET_RDMA_HEADER ( incoming_ibuf->buffer );
-	ibuf = sctk_ibuf_pick_send ( rail_ib, rdma->remote_peer, &ibuf_size );
+	ibuf = _mpc_lowcomm_ib_ibuf_pick_send ( rail_ib, rdma->remote_peer, &ibuf_size );
 	assume ( ibuf );
 	sctk_ib_rdma_done_t *rdma_done;
 	rdma_done = IBUF_GET_RDMA_DONE ( ibuf->buffer );
@@ -750,7 +750,7 @@ void sctk_ib_rdma_write(  sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg
 
 	sctk_endpoint_t  * route = sctk_rail_get_any_route_to_process_or_on_demand ( rail, SCTK_MSG_DEST_PROCESS ( msg ) );
 
-	sctk_ibuf_t * ibuf = sctk_ibuf_pick_send_sr ( rail_ib );
+	sctk_ibuf_t * ibuf = _mpc_lowcomm_ib_ibuf_pick_send_sr ( rail_ib );
 	assume ( ibuf );
 
 	sctk_ib_rdma_t *rdma_header  = IBUF_GET_RDMA_HEADER ( ibuf->buffer );
@@ -785,7 +785,7 @@ void sctk_ib_rdma_read(   sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg
             sctk_rail_get_any_route_to_process_or_on_demand(
                 rail, SCTK_MSG_DEST_PROCESS(msg));
 
-        sctk_ibuf_t *ibuf = sctk_ibuf_pick_send_sr(rail_ib);
+        sctk_ibuf_t *ibuf = _mpc_lowcomm_ib_ibuf_pick_send_sr(rail_ib);
         assume(ibuf);
 
         sctk_ib_rdma_t *rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
@@ -801,7 +801,7 @@ void sctk_ib_rdma_read(   sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg
         mpc_common_debug("RDMA Read from %p (%lu) to %p (%lu)", src_addr, size,
                   dest_addr, size);
 
-        sctk_ibuf_rdma_read_init(ibuf, dest_addr, local_key->pin.ib.mr.rkey,
+        _mpc_lowcomm_ib_ibuf_read_init(ibuf, dest_addr, local_key->pin.ib.mr.rkey,
                                  src_addr, remote_key->pin.ib.mr.lkey, size);
 
         sctk_ib_qp_send_ibuf(&rail->network.ib, route->data.ib.remote, ibuf);
@@ -828,7 +828,7 @@ void sctk_ib_rdma_fetch_and_op(sctk_rail_info_t *rail,
   sctk_endpoint_t *route = sctk_rail_get_any_route_to_process_or_on_demand(
       rail, SCTK_MSG_DEST_PROCESS(msg));
 
-  sctk_ibuf_t *ibuf = sctk_ibuf_pick_send_sr(rail_ib);
+  sctk_ibuf_t *ibuf = _mpc_lowcomm_ib_ibuf_pick_send_sr(rail_ib);
   assume(ibuf);
 
   sctk_ib_rdma_t *rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
@@ -846,7 +846,7 @@ void sctk_ib_rdma_fetch_and_op(sctk_rail_info_t *rail,
   uint64_t local_add = 0;
   memcpy(&local_add, add, sizeof(uint64_t));
 
-  sctk_ibuf_rdma_fetch_and_add_init(ibuf, fetch_addr, local_key->pin.ib.mr.lkey,
+  _mpc_lowcomm_ib_ibuf_fetch_and_add_init(ibuf, fetch_addr, local_key->pin.ib.mr.lkey,
                                     remote_addr, remote_key->pin.ib.mr.rkey,
                                     local_add);
 
@@ -875,7 +875,7 @@ void sctk_ib_rdma_cas(    sctk_rail_info_t *rail,
             sctk_rail_get_any_route_to_process_or_on_demand(
                 rail, SCTK_MSG_DEST_PROCESS(msg));
 
-        sctk_ibuf_t *ibuf = sctk_ibuf_pick_send_sr(rail_ib);
+        sctk_ibuf_t *ibuf = _mpc_lowcomm_ib_ibuf_pick_send_sr(rail_ib);
         assume(ibuf);
 
         sctk_ib_rdma_t *rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
@@ -896,7 +896,7 @@ void sctk_ib_rdma_cas(    sctk_rail_info_t *rail,
         mpc_common_debug("RDMA CASS to %p to comp %lld new %lld", remote_addr,
                   local_comp, local_new);
 
-        sctk_ibuf_rdma_CAS_init(ibuf, res_addr, local_key->pin.ib.mr.lkey,
+        _mpc_lowcomm_ib_ibuf_compare_and_swap_init(ibuf, res_addr, local_key->pin.ib.mr.lkey,
                                 remote_addr, remote_key->pin.ib.mr.rkey,
                                 local_comp, local_new);
 
@@ -1019,7 +1019,7 @@ sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
                   break;
                   char ibuf_desc[4096];
                   mpc_common_debug_error("BEGIN ERROR");
-                  sctk_ibuf_print(ibuf, ibuf_desc);
+                  _mpc_lowcomm_ib_ibuf_print(ibuf, ibuf_desc);
                   mpc_common_debug_error("\nIB - FATAL ERROR FROM PROCESS %d\n"
                              "######### IBUF DESC ############\n"
                              "%s\n"

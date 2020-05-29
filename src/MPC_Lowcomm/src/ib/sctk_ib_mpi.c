@@ -236,7 +236,7 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf)
 	/* We do not need to release the buffer with the RDMA channel */
 	if(IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL)
 	{
-		sctk_ibuf_release(rail_ib, ibuf, 1);
+		_mpc_lowcomm_ib_ibuf_release(rail_ib, ibuf, 1);
 		return 0;
 	}
 
@@ -245,11 +245,11 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf)
 	if(release_ibuf)
 	{
 		/* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
-		sctk_ibuf_release(rail_ib, ibuf, 1);
+		_mpc_lowcomm_ib_ibuf_release(rail_ib, ibuf, 1);
 	}
 	else
 	{
-		sctk_ibuf_release_from_srq(rail_ib, ibuf);
+		_mpc_lowcomm_ib_ibuf_srq_release(rail_ib, ibuf);
 	}
 
 	return 0;
@@ -321,11 +321,11 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf)
 	if(release_ibuf)
 	{
 		/* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
-		sctk_ibuf_release(&rail->network.ib, ibuf, 1);
+		_mpc_lowcomm_ib_ibuf_release(&rail->network.ib, ibuf, 1);
 	}
 	else
 	{
-		sctk_ibuf_release_from_srq(&rail->network.ib, ibuf);
+		_mpc_lowcomm_ib_ibuf_srq_release(&rail->network.ib, ibuf);
 	}
 
 	return 0;
@@ -404,7 +404,7 @@ static int sctk_network_poll_send(sctk_rail_info_t *rail, struct ibv_wc *wc)
 
 			/* Check if we are in a flush state */
 			OPA_decr_int(&ibuf->remote->rdma.pool->busy_nb[REGION_RECV]);
-			sctk_ibuf_rdma_check_flush_recv(rail_ib, ibuf->remote);
+			_mpc_lowcomm_ib_ibuf_rdma_check_flush_recv(rail_ib, ibuf->remote);
 
 			return 0;
 		}
@@ -751,7 +751,7 @@ void sctk_network_initialize_leader_task_mpi_ib(sctk_rail_info_t *rail)
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 
 	/* Fill SRQ with buffers */
-	sctk_ibuf_srq_check_and_post(rail_ib);
+	_mpc_lowcomm_ib_ibuf_srq_post(rail_ib);
 
 	/* Initialize Async thread */
 	sctk_ib_async_init(rail_ib->rail);

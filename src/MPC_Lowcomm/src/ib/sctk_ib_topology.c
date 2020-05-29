@@ -132,7 +132,7 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 		topo->nodes[node_nb] = node;
 
 		node->ibufs.numa_node = node;
-		sctk_ibuf_init_numa_node ( rail_ib, &node->ibufs, config->init_ibufs, 1 );
+		_mpc_lowcomm_ib_ibuf_init_numa ( rail_ib, &node->ibufs, config->init_ibufs, 1 );
 		init->is_leader = 0;
 		mpc_common_nodebug ( "NUMA Node node %d on rail %d initialized", node_nb, rail_ib->rail_nb );
 	}
@@ -161,8 +161,8 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 
 		srq_node->ibufs.numa_node = srq_node;
 
-		sctk_ibuf_init_numa_node ( rail_ib, &srq_node->ibufs, config->init_recv_ibufs, 1 );
-		sctk_ibuf_pool_set_node_srq_buffers ( rail_ib, &srq_node->ibufs );
+		_mpc_lowcomm_ib_ibuf_init_numa ( rail_ib, &srq_node->ibufs, config->init_recv_ibufs, 1 );
+		_mpc_lowcomm_ib_ibuf_set_node_srq_buffers ( rail_ib, &srq_node->ibufs );
 
 		init->is_leader = 0;
 		mpc_common_nodebug ( "SRQ node ready for rail %d", rail_ib->rail_nb );
@@ -240,19 +240,19 @@ void sctk_ib_topology_init_rail( struct sctk_ib_rail_info_s *rail_ib )
 	rail_ib->topology  = topology;
 
 	/* Initialize the pool */
-	sctk_ibuf_pool_init ( rail_ib );
+	_mpc_lowcomm_ib_ibuf_pool_init ( rail_ib );
 }
 
 void sctk_ib_topology_free(struct sctk_ib_rail_info_s *rail_ib)
 {
-	sctk_ibuf_pool_free(rail_ib);
+	_mpc_lowcomm_ib_ibuf_pool_free(rail_ib);
 	
 	int i = -1, numa_node_nb = rail_ib->topology->numa_node_count;
 	for (i = 0; i < numa_node_nb; ++i)
 	{
 		if(rail_ib->topology->nodes[i])
 		{
-			sctk_ibuf_free_numa_node( &rail_ib->topology->nodes[i]->ibufs);
+			_mpc_lowcomm_ib_ibuf_free_numa( &rail_ib->topology->nodes[i]->ibufs);
 			sctk_free(rail_ib->topology->nodes[i]);
 			rail_ib->topology->nodes[i] = NULL;
 		}
@@ -260,7 +260,7 @@ void sctk_ib_topology_free(struct sctk_ib_rail_info_s *rail_ib)
 
 	if(rail_ib->topology->nodes[numa_node_nb])
 	{
-		sctk_ibuf_free_numa_node( &rail_ib->topology->nodes[numa_node_nb]->ibufs);
+		_mpc_lowcomm_ib_ibuf_free_numa( &rail_ib->topology->nodes[numa_node_nb]->ibufs);
 		sctk_free(rail_ib->topology->nodes[numa_node_nb]);
 		rail_ib->topology->nodes[numa_node_nb] = NULL;
 

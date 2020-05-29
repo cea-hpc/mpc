@@ -192,7 +192,7 @@ typedef struct sctk_ibuf_rdma_desc_s
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
-void sctk_ibuf_rdma_remote_init ( sctk_ib_qp_t *remote );
+void _mpc_lowcomm_ib_ibuf_rdma_remote_init ( sctk_ib_qp_t *remote );
 
 int sctk_ibuf_rdma_is_connectable ( sctk_ib_rail_info_t *rail_ib);
 
@@ -201,7 +201,7 @@ void sctk_ibuf_rdma_update_remote ( sctk_ib_qp_t *remote, size_t size );
 void sctk_ibuf_rdma_check_remote ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote );
 
 sctk_ibuf_rdma_pool_t *
-sctk_ibuf_rdma_pool_init ( sctk_ib_qp_t *remote );
+_mpc_lowcomm_ib_ibuf_rdma_pool_init ( sctk_ib_qp_t *remote );
 
 void
 sctk_ibuf_rdma_update_remote_addr ( sctk_ib_qp_t *remote, sctk_ib_cm_rdma_connection_t *key, int region );
@@ -217,13 +217,13 @@ void sctk_ibuf_rdma_update_max_pending_requests ( sctk_ib_rail_info_t *rail_ib, 
 
 void sctk_ib_rdma_eager_poll_recv ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int index );
 
-sctk_ibuf_t *sctk_ibuf_rdma_pick ( sctk_ib_qp_t *remote );
+sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_rdma_pick ( sctk_ib_qp_t *remote );
 
-void sctk_ib_rdma_set_tail_flag ( sctk_ibuf_t *ibuf, size_t size );
+void _mpc_lowcomm_ib_ibuf_rdma_set_tail_flag ( sctk_ibuf_t *ibuf, size_t size );
 
-void sctk_ibuf_rdma_region_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
+void _mpc_lowcomm_ib_ibuf_rdma_region_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
                                   sctk_ibuf_region_t *region, enum sctk_ibuf_channel channel, int nb_ibufs, int size_ibufs );
-void sctk_ibuf_rdma_region_reinit ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
+void _mpc_lowcomm_ib_ibuf_rdma_region_reinit ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
                                     sctk_ibuf_region_t *region, enum sctk_ibuf_channel channel, int nb_ibufs, int size_ibufs );
 
 size_t sctk_ibuf_rdma_get_eager_limit ( sctk_ib_qp_t *remote );
@@ -283,9 +283,9 @@ sctk_ibuf_rdma_cas_remote_state_rts ( sctk_ib_qp_t *remote,
 
 int sctk_ibuf_rdma_check_send_flush ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote );
 
-void sctk_ibuf_rdma_flush_recv ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote );
-int sctk_ibuf_rdma_check_flush_send ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote );
-int sctk_ibuf_rdma_check_flush_recv ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote );
+void _mpc_lowcomm_ib_ibuf_rdma_flush_recv ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote );
+int  sctk_ibuf_rdma_check_flush_send( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote );
+int _mpc_lowcomm_ib_ibuf_rdma_check_flush_recv ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote );
 size_t sctk_ibuf_rdma_get_regions_get_allocate_size ( sctk_ib_qp_t *remote );
 void sctk_ibuf_rdma_update_max_pending_data ( sctk_ib_qp_t *remote, int current_pending );
 #endif

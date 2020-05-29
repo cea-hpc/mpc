@@ -150,12 +150,12 @@ sctk_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,  sctk_ib_
 
 	if ( is_control_message )
 	{
-		ibuf = sctk_ibuf_pick_send_sr ( rail_ib );
-		sctk_ibuf_prepare ( remote, ibuf, ibuf_size );
+		ibuf = _mpc_lowcomm_ib_ibuf_pick_send_sr ( rail_ib );
+		_mpc_lowcomm_ib_ibuf_prepare ( remote, ibuf, ibuf_size );
 	}
 	else
 	{
-		ibuf = sctk_ibuf_pick_send ( rail_ib, remote, &ibuf_size );
+		ibuf = _mpc_lowcomm_ib_ibuf_pick_send ( rail_ib, remote, &ibuf_size );
 	}
 
 	/* We cannot pick an ibuf. We should try the buffered eager protocol */
@@ -191,7 +191,7 @@ static void __free_no_recopy ( void *arg )
 	/* Assume msg not recopies */
 	ib_assume ( !msg->tail.ib.eager.recopied );
 	ibuf = msg->tail.ib.eager.ibuf;
-	sctk_ibuf_release ( ibuf->region->rail, ibuf, 0 );
+	_mpc_lowcomm_ib_ibuf_release ( ibuf->region->rail, ibuf, 0 );
 	sctk_ib_eager_release_buffered_ptp_message ( ibuf->region->rail->rail, msg );
 }
 
@@ -213,7 +213,7 @@ void sctk_ib_eager_recv_free ( sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t
 	if ( recopy )
 	{
 		_mpc_comm_ptp_message_set_copy_and_free ( msg, __free_with_recopy, sctk_net_message_copy );
-		sctk_ibuf_release ( &rail->network.ib, ibuf, 0 );
+		_mpc_lowcomm_ib_ibuf_release ( &rail->network.ib, ibuf, 0 );
 		/* Read from network buffer  */
 	}
 	else

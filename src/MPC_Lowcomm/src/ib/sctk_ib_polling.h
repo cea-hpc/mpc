@@ -91,7 +91,7 @@ __UNUSED__ static inline void sctk_ib_polling_check_wc ( struct sctk_ib_rail_inf
 		}
 		else
 		{
-			sctk_ibuf_print ( ibuf, ibuf_desc );
+			_mpc_lowcomm_ib_ibuf_print ( ibuf, ibuf_desc );
 			mpc_common_debug_error ( "\nIB - FATAL ERROR FROM PROCESS %d (%s)\n"
 			             "################################\n"
 			             "Work ID is   : %d\n"

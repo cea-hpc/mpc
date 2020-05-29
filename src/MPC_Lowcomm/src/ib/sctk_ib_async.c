@@ -170,7 +170,7 @@ void *async_thread ( void *arg )
 
 				/* We re-arm the limit for the SRQ. */
 				config->max_srq_ibufs_posted += 100;
-				sctk_ibuf_srq_check_and_post ( rail_ib );
+				_mpc_lowcomm_ib_ibuf_srq_post ( rail_ib );
 
 				mod_attr.srq_limit = config->srq_credit_thread_limit;
 				config->srq_credit_limit = config->max_srq_ibufs_posted / 2;

@@ -642,9 +642,9 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_ack ( sctk_rail_info_t *rail, 
     if ( recv_keys->connected == 1 )
     {
         /* Allocate the buffer */
-        sctk_ibuf_rdma_pool_init ( remote );
+        _mpc_lowcomm_ib_ibuf_rdma_pool_init ( remote );
         /* We create the SEND region */
-        sctk_ibuf_rdma_region_init ( rail_ib_targ, remote,
+        _mpc_lowcomm_ib_ibuf_rdma_region_init ( rail_ib_targ, remote,
                 &remote->rdma.pool->region[REGION_SEND],
                 RDMA_CHANNEL | SEND_CHANNEL, remote->od_request.nb, remote->od_request.size_ibufs );
 
@@ -718,9 +718,9 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request ( sctk_rail_info_t *ra
 
         /* We firstly allocate the main structure. 'ibuf_rdma_pool_init'
          * implicitely does not allocate memory if already created */
-        sctk_ibuf_rdma_pool_init ( remote );
+        _mpc_lowcomm_ib_ibuf_rdma_pool_init ( remote );
         /* We create the RECV region */
-        sctk_ibuf_rdma_region_init ( rail_ib_targ, remote,
+        _mpc_lowcomm_ib_ibuf_rdma_region_init ( rail_ib_targ, remote,
                 &remote->rdma.pool->region[REGION_RECV],
                 RDMA_CHANNEL | RECV_CHANNEL, recv_keys->nb, recv_keys->size );
 
@@ -843,7 +843,7 @@ static inline void sctk_ib_cm_resizing_rdma_ack_recv ( sctk_rail_info_t *rail, v
         &remote->rdma.pool->resizing_request.send_keys;
     /* FIXME: do some cool stuff here */
     /* Resizing the RDMA buffer */
-    sctk_ibuf_rdma_region_reinit ( rail_ib_targ, remote,
+    _mpc_lowcomm_ib_ibuf_rdma_region_reinit ( rail_ib_targ, remote,
             &remote->rdma.pool->region[REGION_SEND],
             RDMA_CHANNEL | SEND_CHANNEL,
             send_keys->nb, send_keys->size );
@@ -889,7 +889,7 @@ static inline int sctk_ib_cm_resizing_rdma_recv_request ( sctk_rail_info_t *rail
             rail->rail_number, remote->rank, recv_keys->connected, recv_keys->size, recv_keys->nb );
 
     /* Start flushing */
-    sctk_ibuf_rdma_flush_recv ( rail_ib_targ, remote );
+    _mpc_lowcomm_ib_ibuf_rdma_flush_recv ( rail_ib_targ, remote );
 
     return 0;
 }

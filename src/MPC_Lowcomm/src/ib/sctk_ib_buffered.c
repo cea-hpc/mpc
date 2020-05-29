@@ -97,7 +97,7 @@ int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
 	do
 	{
 		size_t ibuf_size = ULONG_MAX;
-		ibuf = sctk_ibuf_pick_send ( rail_ib, remote, &ibuf_size );
+		ibuf = _mpc_lowcomm_ib_ibuf_pick_send ( rail_ib, remote, &ibuf_size );
 		ib_assume ( ibuf );
 
 		size_t buffer_size = ibuf_size;
@@ -139,7 +139,7 @@ int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
 		IBUF_SET_SRC_TASK ( ibuf->buffer, SCTK_MSG_SRC_TASK ( msg ) );
 
 		/* Recalculate size and send */
-		sctk_ibuf_prepare ( remote, ibuf, payload_size + IBUF_GET_BUFFERED_SIZE );
+		_mpc_lowcomm_ib_ibuf_prepare ( remote, ibuf, payload_size + IBUF_GET_BUFFERED_SIZE );
 		sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
 
 		buffer_index++;
