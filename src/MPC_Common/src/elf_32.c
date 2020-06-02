@@ -1389,7 +1389,7 @@ restart:
 					adv = read_leb128( (unsigned char *) data, &bytes_read, 0 );
 					inc_line( data, bytes_read, c );
 					//mpc_common_debug_error("get %d / %d", adv-1, file_nb);
-					if(adv - 1 < file_nb)
+					if( (adv - 1 < file_nb) && (adv > 0) )
 					{
 						file = c->file_list[adv - 1];
 					}
@@ -1400,8 +1400,8 @@ restart:
 						file.absolute = "";
 					}
 #if defined( DEBUG )
-					fprintf( stderr, "SET FILE %d %s %p\n", adv,
-							 c->file_list[adv - 1], address );
+					fprintf( stderr, "SET FILE %d %s %p\n", adv - 1,
+							 c->file_list[adv], address );
 #endif
 					break;
 
