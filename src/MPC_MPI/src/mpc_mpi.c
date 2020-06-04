@@ -7718,7 +7718,8 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 	int res;
 	MPI_Aint tsize = 0;
 	res = PMPI_Type_extent(datatype, &tsize);
-	if(res != MPI_SUCCESS)
+
+    if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
@@ -7759,8 +7760,8 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 	void *result_buff = recvbuf;
 	int allocated     = 0;
 
-	// mpc_common_debug_error("OP %d T %d CONT %d FROM %p to %p (%p, %p)", op, datatype, count
-	// , sendbuf, recvbuf, data_buff, result_buff );
+	//mpc_common_debug_error("OP %d T %d CONT %d FROM %p to %p (%p, %p)", op, datatype, count
+	//, sendbuf, recvbuf, data_buff, result_buff );
 
 	int will_be_in_shm_buff = sctk_mpi_type_is_shared_mem(datatype, count) &&
 	                          (sctk_mpi_op_is_shared_mem(op) );
@@ -7820,6 +7821,10 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 			reduce_ctx->target_buff = data_buff;
 		}
 
+        /* We use this to create a memory fence
+         * protecting target buffer address*/
+        sctk_cpu_relax();
+
 		/* Now unleash the others */
 		OPA_store_int(&reduce_ctx->owner, rank);
 	}
@@ -7865,105 +7870,9 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 	mpi_op = sctk_convert_to_mpc_op(op);
 	mpc_op = mpi_op->op;
 
-	if(sctk_op_can_commute(mpi_op, datatype) || reduce_force_nocommute)
+	if(!sctk_op_can_commute(mpi_op, datatype) || reduce_force_nocommute)
 	{
-		/* Is the target buffer large enough ? */
-		if(reduce_pipelined_tresh <= (count * tsize) )
-		{
-			int per_lock = count / reduce_ctx->pipelined_blocks;
-			int rest     = count % per_lock;
-
-			size_t stripe_offset = tsize * per_lock;
-
-			int rest_done = 0;
-
-			for(i = 0; i < reduce_ctx->pipelined_blocks; i++)
-			{
-				/* Now process the core */
-				int target_cell = (rank + i) % reduce_ctx->pipelined_blocks;
-
-				void *from = data_buff + target_cell * stripe_offset;
-				void *to   = reduce_ctx->target_buff + target_cell * stripe_offset;
-
-				/* As we want to process in order we have
-				 * to notify the next rank to allow it
-				 * to start processing the block he have just done */
-				if(rank != 0)
-				{
-					int dummy_go;
-					_mpc_cl_recv(&dummy_go, 1, MPI_INT, rank - 1, MPC_REDUCE_TAG, comm,
-					             MPI_STATUS_IGNORE);
-				}
-
-				if(rank != root)
-				{
-					mpc_common_spinlock_lock_yield(&reduce_ctx->buff_lock[target_cell]);
-
-					if(mpc_op.u_func != NULL)
-					{
-						mpc_op.u_func(from, to, &per_lock, &datatype);
-					}
-					else
-					{
-						sctk_Op_f func;
-						func = sctk_get_common_function(datatype, mpc_op);
-						func(from, to, per_lock, datatype);
-					}
-
-					mpc_common_spinlock_unlock(&reduce_ctx->buff_lock[target_cell]);
-
-					if(rest_done == 0)
-					{
-						from = data_buff + reduce_ctx->pipelined_blocks * stripe_offset;
-						to   = reduce_ctx->target_buff +
-						       reduce_ctx->pipelined_blocks * stripe_offset;
-
-						if(mpc_op.u_func != NULL)
-						{
-							mpc_op.u_func(from, to, &rest, &datatype);
-						}
-						else
-						{
-							sctk_Op_f func;
-							func = sctk_get_common_function(datatype, mpc_op);
-							func(from, to, rest, datatype);
-						}
-
-						rest_done = 1;
-					}
-				}
-
-				if(rank != (size - 1) )
-				{
-					int dummy_go;
-					_mpc_cl_send(&dummy_go, 1, MPI_INT, rank + 1, MPC_REDUCE_TAG, comm);
-				}
-			}
-
-			if(rank == root)
-			{
-				/* Wait for the GO in order */
-
-				if(__do_yield)
-				{
-					while(OPA_load_int(&reduce_ctx->left_to_push) != 1)
-					{
-						mpc_thread_yield();
-					}
-				}
-				else
-				{
-					while(OPA_load_int(&reduce_ctx->left_to_push) != 1)
-					{
-						sctk_cpu_relax();
-					}
-				}
-			}
-		}
-		else
-		{
 			/* Wait for the GO in order */
-
 			if(__do_yield)
 			{
 				while(OPA_load_int(&reduce_ctx->left_to_push) != (rank + 1) )
@@ -7981,6 +7890,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 
 			if(rank != root)
 			{
+
 				if(mpc_op.u_func != NULL)
 				{
 					mpc_op.u_func(data_buff, reduce_ctx->target_buff, &count, &datatype);
@@ -7992,7 +7902,6 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 					func(data_buff, reduce_ctx->target_buff, count, datatype);
 				}
 			}
-		}
 	}
 	else
 	{
@@ -8128,6 +8037,8 @@ SHM_REDUCE_DONE:
 		}
 		/* Set the counter */
 		OPA_store_int(&reduce_ctx->left_to_push, size);
+
+        reduce_ctx->target_buff = NULL;
 
 		/* Now flag slot as free */
 		OPA_store_int(&reduce_ctx->owner, -1);

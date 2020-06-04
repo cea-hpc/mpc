@@ -71,7 +71,7 @@ struct shared_mem_reduce
 	mpc_common_spinlock_t *buff_lock;
 	OPA_int_t owner;
 	OPA_int_t left_to_push;
-	void *target_buff;
+	volatile void *target_buff;
 	union shared_mem_buffer *buffer;
 	int pipelined_blocks;
 };
