@@ -26,7 +26,7 @@
 #include "sctk_ibufs.h"
 
 /* #define MPC_LOWCOMM_IB_MODULE_DEBUG */
-#define MPC_LOWCOMM_IB_MODULE_NAME "TOPO"
+#define MPC_LOWCOMM_IB_MODULE_NAME    "TOPO"
 #include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
 #include "sctk_ib_eager.h"
@@ -41,7 +41,7 @@
 
 
 /* used to remember __thread var init for IB re-enabling */
-extern volatile char* vps_reset;
+extern volatile char *vps_reset;
 
 /* For the moment, the following structures are supported by the TOPOLOGY interface :
  *  - Network buffers
@@ -53,107 +53,112 @@ extern volatile char* vps_reset;
 
 /* TLS variable sized according the number of IB rails. Allows a more efficient access to the structure
  * of the closest node */
-static __thread struct sctk_ib_topology_numa_node_s **numa_node_task = NULL;
+static __thread struct _mpc_lowcomm_ib_topology_numa_node_s **__ib_rail_numas = NULL;
 
-static void sctk_ib_topology_check_and_allocate_tls (void)
+static void __check_reset_tls(void)
 {
 	int nvp = mpc_topology_get_pu();
+
 	/* if __thread vars need to be reset when re-enabling the rail */
 	if(vps_reset[nvp] == 0)
 	{
-		if(numa_node_task) { sctk_free(numa_node_task); numa_node_task = NULL; }
+		if(__ib_rail_numas)
+		{
+			sctk_free(__ib_rail_numas);
+			__ib_rail_numas = NULL;
+		}
 	}
 
 	/* Create the TLS variable if not already created */
-	if ( numa_node_task == NULL )
+	if(__ib_rail_numas == NULL)
 	{
 		int rails_nb = sctk_rail_count();
-		numa_node_task = sctk_malloc ( rails_nb * sizeof ( struct sctk_ib_topology_numa_node_s ) );
-		memset ( numa_node_task, 0, rails_nb * sizeof ( struct sctk_ib_topology_numa_node_s ) );
+		__ib_rail_numas = sctk_malloc(rails_nb * sizeof(struct _mpc_lowcomm_ib_topology_numa_node_s) );
+		memset(__ib_rail_numas, 0, rails_nb * sizeof(struct _mpc_lowcomm_ib_topology_numa_node_s) );
 	}
 }
 
-
-
-static void sctk_ib_topology_init_tls ( sctk_ib_rail_info_t *rail_ib, sctk_ib_topology_numa_node_t *node )
+static void __init_tls(sctk_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_topology_numa_node_t *node)
 {
-	assume ( numa_node_task );
+	assume(__ib_rail_numas);
 
-	if ( numa_node_task[rail_ib->rail_nb] == NULL )
+	if(__ib_rail_numas[rail_ib->rail_nb] == NULL)
 	{
-		numa_node_task[rail_ib->rail_nb] = node;
+		__ib_rail_numas[rail_ib->rail_nb] = node;
 	}
 }
 
-void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
+void _mpc_lowcomm_ib_topology_init_task(struct sctk_rail_info_s *rail, int vp)
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-	struct sctk_ib_topology_s * topo = rail_ib->topology;
+	sctk_ib_rail_info_t *rail_ib            = &rail->network.ib;
+	struct _mpc_lowcomm_ib_topology_s *topo = rail_ib->topology;
 	struct sctk_runtime_config_struct_net_driver_infiniband *config = rail_ib->config;
-	int node_nb =  mpc_topology_get_numa_node_from_cpu ( vp );
+	int node_nb         = mpc_topology_get_numa_node_from_cpu(vp);
 	int numa_node_count = topo->numa_node_count;
 
-	sctk_ib_topology_numa_node_init_t *init = &topo->init[node_nb];
+	_mpc_lowcomm_ib_topology_numa_node_init_t *init = &topo->init[node_nb];
 
-	sctk_ib_topology_check_and_allocate_tls ();
+	__check_reset_tls();
 
-	mpc_common_nodebug ( "[%d] Initializing task on vp %d node %d", rail_ib->rail_nb, vp, node_nb );
-	
+	mpc_common_nodebug("[%d] Initializing task on vp %d node %d", rail_ib->rail_nb, vp, node_nb);
+
 	/* Only one task allocates the IB structures per NUMA node */
-	mpc_common_spinlock_lock ( &init->initialization_lock );
+	mpc_common_spinlock_lock(&init->initialization_lock);
 
 	/* First try to retrieve a previously allocated node */
-	sctk_ib_topology_numa_node_t *node = topo->nodes[node_nb];
+	_mpc_lowcomm_ib_topology_numa_node_t *node = topo->nodes[node_nb];
 
 	/* Is this is the first task to enter the init for the node, it is the leader for the node.
 	 * The leader allocates and init IB structures for the NUMA node */
-	if ( init->is_leader == 1 )
+	if(init->is_leader == 1)
 	{
-		mpc_common_nodebug ( "[%d] Task leader on node init SR on node %d", rail_ib->rail_nb, node_nb );
-		
+		mpc_common_nodebug("[%d] Task leader on node init SR on node %d", rail_ib->rail_nb, node_nb);
+
 		/* Allocate a new numa node */
-		node = sctk_malloc ( sizeof ( sctk_ib_topology_numa_node_t ) );
+		node = sctk_malloc(sizeof(_mpc_lowcomm_ib_topology_numa_node_t) );
 		/* We touch the pages. The thread has already be pinned */
-		memset ( node, 0, sizeof ( sctk_ib_topology_numa_node_t ) );
+		memset(node, 0, sizeof(_mpc_lowcomm_ib_topology_numa_node_t) );
 
 		/* If no previous default node set it as default */
-		if ( topo->default_node == NULL )
+		if(topo->default_node == NULL)
+		{
 			topo->default_node = node;
+		}
 
 		node->id = node_nb;
 		mpc_common_spinlock_init(&node->polling_lock, 0);
 
 		/* WARNING: we *MUST* initialize the TLS before initializing IB structure
 		 * as they access to the TLS variable*/
-		sctk_ib_topology_init_tls ( rail_ib, node );
+		__init_tls(rail_ib, node);
 
 		/* Register it */
-		assume( topo->nodes[node_nb] == NULL );
+		assume(topo->nodes[node_nb] == NULL);
 		topo->nodes[node_nb] = node;
 
 		node->ibufs.numa_node = node;
-		_mpc_lowcomm_ib_ibuf_init_numa ( rail_ib, &node->ibufs, config->init_ibufs, 1 );
+		_mpc_lowcomm_ib_ibuf_init_numa(rail_ib, &node->ibufs, config->init_ibufs, 1);
 		init->is_leader = 0;
-		mpc_common_nodebug ( "NUMA Node node %d on rail %d initialized", node_nb, rail_ib->rail_nb );
+		mpc_common_nodebug("NUMA Node node %d on rail %d initialized", node_nb, rail_ib->rail_nb);
 	}
 	else
 	{
-		sctk_ib_topology_init_tls ( rail_ib, node );
+		__init_tls(rail_ib, node);
 	}
 
-	mpc_common_spinlock_unlock ( &init->initialization_lock );
+	mpc_common_spinlock_unlock(&init->initialization_lock);
 
 	/* The last node is the SRQ. We init it ! */
 	init = &topo->init[numa_node_count];
-	mpc_common_spinlock_lock ( &init->initialization_lock );
+	mpc_common_spinlock_lock(&init->initialization_lock);
 
-	if ( init->is_leader == 1 )
+	if(init->is_leader == 1)
 	{
-		mpc_common_nodebug ( "Task leader on node init SRQ on node %d", numa_node_count );
-		sctk_ib_topology_numa_node_t *srq_node = sctk_malloc ( sizeof ( sctk_ib_topology_numa_node_t ) );
-		memset ( srq_node, 0, sizeof ( sctk_ib_topology_numa_node_t ) );
+		mpc_common_nodebug("Task leader on node init SRQ on node %d", numa_node_count);
+		_mpc_lowcomm_ib_topology_numa_node_t *srq_node = sctk_malloc(sizeof(_mpc_lowcomm_ib_topology_numa_node_t) );
+		memset(srq_node, 0, sizeof(_mpc_lowcomm_ib_topology_numa_node_t) );
 
-		assume ( topo->nodes[numa_node_count] == NULL );
+		assume(topo->nodes[numa_node_count] == NULL);
 		topo->nodes[numa_node_count] = srq_node;
 
 		srq_node->id = numa_node_count;
@@ -161,98 +166,97 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 
 		srq_node->ibufs.numa_node = srq_node;
 
-		_mpc_lowcomm_ib_ibuf_init_numa ( rail_ib, &srq_node->ibufs, config->init_recv_ibufs, 1 );
-		_mpc_lowcomm_ib_ibuf_set_node_srq_buffers ( rail_ib, &srq_node->ibufs );
+		_mpc_lowcomm_ib_ibuf_init_numa(rail_ib, &srq_node->ibufs, config->init_recv_ibufs, 1);
+		_mpc_lowcomm_ib_ibuf_set_node_srq_buffers(rail_ib, &srq_node->ibufs);
 
 		init->is_leader = 0;
-		mpc_common_nodebug ( "SRQ node ready for rail %d", rail_ib->rail_nb );
+		mpc_common_nodebug("SRQ node ready for rail %d", rail_ib->rail_nb);
 	}
 
-	mpc_common_spinlock_unlock ( &init->initialization_lock );
-
+	mpc_common_spinlock_unlock(&init->initialization_lock);
 }
 
-void sctk_ib_topology_free_task(void)
+void _mpc_lowcomm_ib_topology_free_task(void)
 {
-	if(numa_node_task)
+	if(__ib_rail_numas)
 	{
-		sctk_free(numa_node_task); numa_node_task = NULL;
+		sctk_free(__ib_rail_numas);
+		__ib_rail_numas = NULL;
 	}
 }
 
-static int sctk_ib_topology_use_default_node = 0;
+static int __use_default_node = 0;
 
-void sctk_ib_topology_init( sctk_ib_topology_t * topology )
+void _mpc_lowcomm_ib_topology_init(_mpc_lowcomm_ib_topology_t *topology)
 {
 	/* Are we forced on a single node ? */
 	char *env;
 
-	if ( ( env = getenv ( "MPC_IBV_USE_DEFAULT_NODE" ) ) != NULL )
+	if( (env = getenv("MPC_IBV_USE_DEFAULT_NODE") ) != NULL)
 	{
-		sctk_ib_topology_use_default_node = atoi ( env );
+		__use_default_node = atoi(env);
 	}
 
-	if ( sctk_ib_topology_use_default_node )
+	if(__use_default_node)
 	{
-		mpc_common_debug_error ( "Use default node !!" );
+		mpc_common_debug_error("Use default node !!");
 	}
 
 	/* Compute node and alloc count */
-	
+
 	int numa_node_count = mpc_topology_get_numa_node_count();
 	/* FIXME: get_numa_node_number may return 1 when SMP */
-	numa_node_count = ( numa_node_count == 0 ) ? 1 : numa_node_count;
+	numa_node_count = (numa_node_count == 0) ? 1 : numa_node_count;
 	/* We allocate a pool in addition in order to store the SRQ buffers */
 	int alloc_nb = numa_node_count + 1;
-	
+
 	/* Fill the topology object */
-	
+
 	topology->numa_node_count = numa_node_count;
-	topology->default_node = NULL;
+	topology->default_node    = NULL;
 	/* Allocate node entries */
-	topology->nodes = sctk_malloc ( alloc_nb * sizeof ( sctk_ib_topology_numa_node_t * ) );
-	memset ( topology->nodes, 0, alloc_nb * sizeof ( sctk_ib_topology_numa_node_t * ) );
+	topology->nodes = sctk_calloc(alloc_nb, sizeof(_mpc_lowcomm_ib_topology_numa_node_t *) );
 	/* We allocate a structure which is used ONLY for initialization */
-	topology->init = sctk_malloc ( alloc_nb * sizeof ( sctk_ib_topology_numa_node_init_t ) );
-	memset ( topology->init, 0, alloc_nb * sizeof ( sctk_ib_topology_numa_node_init_t ) );
+	topology->init = sctk_calloc(alloc_nb, sizeof(_mpc_lowcomm_ib_topology_numa_node_init_t) );
 
 	int i;
 	/* Init each node */
-	for ( i = 0; i < numa_node_count + 1; ++i )
+	for(i = 0; i < numa_node_count + 1; ++i)
 	{
-		sctk_ib_topology_numa_node_init_t *init = &topology->init[i];
+		_mpc_lowcomm_ib_topology_numa_node_init_t *init = &topology->init[i];
 		mpc_common_spinlock_init(&init->initialization_lock, 0);
 		init->is_leader = 1;
 	}
 }
 
-void sctk_ib_topology_init_rail( struct sctk_ib_rail_info_s *rail_ib )
+void _mpc_lowcomm_ib_topology_init_rail(struct sctk_ib_rail_info_s *rail_ib)
 {
 	/* Allocate the topology structure */
-	struct sctk_ib_topology_s *topology = sctk_malloc ( sizeof ( sctk_ib_topology_t ) );
-	assume ( topology );
-	memset ( topology, 0, sizeof ( sctk_ib_topology_t ) );
+	struct _mpc_lowcomm_ib_topology_s *topology = sctk_malloc(sizeof(_mpc_lowcomm_ib_topology_t) );
+
+	assume(topology);
+	memset(topology, 0, sizeof(_mpc_lowcomm_ib_topology_t) );
 
 	/* Initialize it */
-	sctk_ib_topology_init( topology );
+	_mpc_lowcomm_ib_topology_init(topology);
 
 	/* Set in the rail */
-	rail_ib->topology  = topology;
+	rail_ib->topology = topology;
 
 	/* Initialize the pool */
-	_mpc_lowcomm_ib_ibuf_pool_init ( rail_ib );
+	_mpc_lowcomm_ib_ibuf_pool_init(rail_ib);
 }
 
-void sctk_ib_topology_free(struct sctk_ib_rail_info_s *rail_ib)
+void _mpc_lowcomm_ib_topology_free(struct sctk_ib_rail_info_s *rail_ib)
 {
 	_mpc_lowcomm_ib_ibuf_pool_free(rail_ib);
-	
+
 	int i = -1, numa_node_nb = rail_ib->topology->numa_node_count;
-	for (i = 0; i < numa_node_nb; ++i)
+	for(i = 0; i < numa_node_nb; ++i)
 	{
 		if(rail_ib->topology->nodes[i])
 		{
-			_mpc_lowcomm_ib_ibuf_free_numa( &rail_ib->topology->nodes[i]->ibufs);
+			_mpc_lowcomm_ib_ibuf_free_numa(&rail_ib->topology->nodes[i]->ibufs);
 			sctk_free(rail_ib->topology->nodes[i]);
 			rail_ib->topology->nodes[i] = NULL;
 		}
@@ -260,61 +264,59 @@ void sctk_ib_topology_free(struct sctk_ib_rail_info_s *rail_ib)
 
 	if(rail_ib->topology->nodes[numa_node_nb])
 	{
-		_mpc_lowcomm_ib_ibuf_free_numa( &rail_ib->topology->nodes[numa_node_nb]->ibufs);
+		_mpc_lowcomm_ib_ibuf_free_numa(&rail_ib->topology->nodes[numa_node_nb]->ibufs);
 		sctk_free(rail_ib->topology->nodes[numa_node_nb]);
 		rail_ib->topology->nodes[numa_node_nb] = NULL;
-
 	}
 
-	sctk_free(rail_ib->topology->nodes) ;  rail_ib->topology->nodes = NULL;
-	sctk_free(rail_ib->topology->init)  ;  rail_ib->topology->init = NULL;
-	sctk_free(rail_ib->topology)        ;  rail_ib->topology = NULL;
+	sctk_free(rail_ib->topology->nodes);  rail_ib->topology->nodes = NULL;
+	sctk_free(rail_ib->topology->init);  rail_ib->topology->init   = NULL;
+	sctk_free(rail_ib->topology);  rail_ib->topology = NULL;
 }
 
-sctk_ib_topology_numa_node_t *
-sctk_ib_topology_get_default_numa_node ( struct sctk_ib_rail_info_s *rail_ib )
+_mpc_lowcomm_ib_topology_numa_node_t *
+_mpc_lowcomm_ib_topology_get_default_numa_node(struct sctk_ib_rail_info_s *rail_ib)
 {
-	sctk_ib_topology_check_and_allocate_tls ();
+	__check_reset_tls();
 
-	struct sctk_ib_topology_s * topo = rail_ib->topology;
+	struct _mpc_lowcomm_ib_topology_s *topo = rail_ib->topology;
 	return topo->default_node;
 }
 
-sctk_ib_topology_numa_node_t *
-sctk_ib_topology_get_numa_node ( struct sctk_ib_rail_info_s *rail_ib )
+_mpc_lowcomm_ib_topology_numa_node_t *
+_mpc_lowcomm_ib_topology_get_numa_node(struct sctk_ib_rail_info_s *rail_ib)
 {
 	const int rail_nb = rail_ib->rail_nb;
 
-	if ( sctk_ib_topology_use_default_node )
+	if(__use_default_node)
 	{
-
-		return sctk_ib_topology_get_default_numa_node ( rail_ib );
+		return _mpc_lowcomm_ib_topology_get_default_numa_node(rail_ib);
 	}
 
-	sctk_ib_topology_check_and_allocate_tls ();
+	__check_reset_tls();
 
-	if ( numa_node_task[rail_nb] == NULL )
+	if(__ib_rail_numas[rail_nb] == NULL)
 	{
-		struct sctk_ib_topology_s * topo = rail_ib->topology;
+		struct _mpc_lowcomm_ib_topology_s *topo = rail_ib->topology;
 		int vp = mpc_topology_get_pu();
-		struct sctk_ib_topology_numa_node_s *node;
+		struct _mpc_lowcomm_ib_topology_numa_node_s *node;
 
 
 		// TODO: we should initialize the VP number for *EACH* created thread, in *EVERY* thread modes
-		if ( vp < 0 )
+		if(vp < 0)
 		{
 			node = topo->default_node;
 		}
 		else
 		{
-			int node_num =  mpc_topology_get_numa_node_from_cpu ( vp );
-			assume ( topo );
+			int node_num = mpc_topology_get_numa_node_from_cpu(vp);
+			assume(topo);
 
-			if( topo->numa_node_count == 0 )
+			if(topo->numa_node_count == 0)
 			{
 				node = topo->default_node;
 			}
-			else if ( topo->nodes[node_num] == NULL  )
+			else if(topo->nodes[node_num] == NULL)
 			{
 				node = topo->default_node;
 			}
@@ -324,10 +326,10 @@ sctk_ib_topology_get_numa_node ( struct sctk_ib_rail_info_s *rail_ib )
 			}
 		}
 
-		numa_node_task[rail_nb] = node;
-		assume ( numa_node_task[rail_nb] );
+		__ib_rail_numas[rail_nb] = node;
+		assume(__ib_rail_numas[rail_nb]);
 	}
 
 
-	return numa_node_task[rail_nb];
+	return __ib_rail_numas[rail_nb];
 }

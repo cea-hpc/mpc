@@ -823,7 +823,7 @@ void sctk_network_finalize_mpi_ib(sctk_rail_info_t *rail)
 	sctk_ib_cp_finalize(rail_ib);
 
 	/* - Free IB topology                                         */
-	sctk_ib_topology_free(rail_ib);
+	_mpc_lowcomm_ib_topology_free(rail_ib);
 
 	/* - Flush the eager entries (sctk_ib_eager_init)             */
 	sctk_ib_eager_finalize(rail_ib);
@@ -914,8 +914,8 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 		sctk_ib_config_print(rail_ib);
 	}
 
-	sctk_ib_topology_init_rail(rail_ib);
-	sctk_ib_topology_init_task(rail, mpc_topology_get_pu() );
+	_mpc_lowcomm_ib_topology_init_rail(rail_ib);
+	_mpc_lowcomm_ib_topology_init_task(rail, mpc_topology_get_pu() );
 
 	/* Initialize network */
 	sprintf(network_name, "IB-MT - %dx %s (%d Gb/s)", device->link_width, device->link_rate, device->data_rate);

@@ -338,7 +338,7 @@ AC_CHECK_FUNCS([memcpy memmove memset statfs])
 AC_CHECK_FUNCS([strcasecmp strchr strdup strerror strstr strtol snprintf vsnprintf])
 AC_CHECK_FUNCS([gethostbyname gethostname])
 AC_CHECK_FUNCS([gettimeofday])
-AC_CHECK_FUNCS([mmap munmap])
+AC_CHECK_FUNCS([mmap munmap posix_memalign memalign])
 AC_CHECK_FUNCS([setenv getenv])
 AC_CHECK_FUNCS([uname])
 AC_CHECK_FUNCS([regcomp])
@@ -763,12 +763,6 @@ if test "x$mpc_hydra_enabled" = "xyes" -a  "x$mpc_slurm_enabled" = "xyes"
 then
         AC_MSG_ERROR([You must pick up one between Hydra and Slurm (--with-hydra or --with-slurm)])
 fi
-
-if test "x$mpc_hydra_enabled" != "xyes" -a  "x$mpc_slurm_enabled" != "xyes"
-then
-        AC_MSG_ERROR([You must activate either Hydra and Slurm (--with-hydra or --with-slurm)])
-fi
-
 
 if test "x$mpc_slurm_enabled" = "xyes"; then
 

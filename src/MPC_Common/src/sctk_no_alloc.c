@@ -217,7 +217,6 @@ int __sctk_posix_memalign (void **memptr, size_t alignment, size_t size, __UNUSE
 	return posix_memalign (memptr, alignment, size);
 	#else
 	not_available ();
-	return 0;
 	#endif
 }
 
@@ -349,7 +348,7 @@ int sctk_posix_memalign (void **memptr, size_t alignment, size_t size)
 	#ifdef HAVE_POSIX_MEMALIGN
 	return posix_memalign (memptr, alignment, size);
 	#else
-	not_available ();
+	*memptr = sctk_memalign(alignment, size);
 	return 0;
 	#endif
 }
@@ -361,7 +360,6 @@ void * sctk_memalign (size_t boundary, size_t size)
 	return memalign (boundary, size);
 	#else
 	not_available ();
-	return NULL;
 	#endif
 }
 

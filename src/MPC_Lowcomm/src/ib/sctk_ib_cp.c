@@ -677,7 +677,7 @@ void sctk_network_initialize_task_collaborative_ib (sctk_rail_info_t *rail, int 
 		return;
 		
 	/* Register task for topology infos */
-	sctk_ib_topology_init_task ( rail, vp );
+	_mpc_lowcomm_ib_topology_init_task ( rail, vp );
 
         vps_reset[vp] = 1;
 }
@@ -693,7 +693,7 @@ void sctk_network_finalize_task_collaborative_ib (sctk_rail_info_t *rail, int ta
 	if( 0 < rail->subrail_count )
 		return;
 	/* Register task for topology infos */
-	sctk_ib_topology_free_task ( rail );
+	_mpc_lowcomm_ib_topology_free_task ( rail );
 
 	if ( mpc_common_get_process_count() > 1 && sctk_network_is_ib_used() )
 	{

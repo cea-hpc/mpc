@@ -39,7 +39,7 @@
 
 static inline _mpc_lowcomm_ib_ibuf_numa_t *__ibuf_get_numaware(struct sctk_ib_rail_info_s *rail_ib)
 {
-	struct sctk_ib_topology_numa_node_s *closest_node = sctk_ib_topology_get_numa_node(rail_ib);
+	struct _mpc_lowcomm_ib_topology_numa_node_s *closest_node = _mpc_lowcomm_ib_topology_get_numa_node(rail_ib);
 	_mpc_lowcomm_ib_ibuf_numa_t *node = NULL;
 
 	node = &closest_node->ibufs;

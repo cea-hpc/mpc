@@ -139,7 +139,7 @@ typedef struct _mpc_lowcomm_ib_ibuf_numa_s
 	OPA_int_t                             free_srq_nb;       /**< Number of SRQ buffers free */
 	int                                   free_srq_cache_nb; /**< Number of SRQ buffers free in cache */
 
-	struct sctk_ib_topology_numa_node_s * numa_node;         /**< Pointer to the topological NUMA node structure */
+	struct _mpc_lowcomm_ib_topology_numa_node_s * numa_node;         /**< Pointer to the topological NUMA node structure */
 
 	/* MMU is now at a node level. We got many issues while
 	 * sharing the MMU accross very large NUMA nodes (>=128 cores) */
