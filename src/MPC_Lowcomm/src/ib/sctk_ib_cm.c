@@ -33,11 +33,11 @@
 #include "mpc_common_asm.h"
 
 /* IB debug macros */
-#if defined SCTK_IB_MODULE_NAME
-#error "SCTK_IB_MODULE already defined"
+#if defined MPC_LOWCOMM_IB_MODULE_NAME
+#error "MPC_LOWCOMM_IB_MODULE already defined"
 #endif
-#define SCTK_IB_MODULE_DEBUG
-#define SCTK_IB_MODULE_NAME "CM"
+#define MPC_LOWCOMM_IB_MODULE_DEBUG
+#define MPC_LOWCOMM_IB_MODULE_NAME "CM"
 #include "sctk_ib_toolkit.h"
 
 #include "sctk_control_messages.h"
@@ -646,7 +646,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_ack ( sctk_rail_info_t *rail, 
         /* We create the SEND region */
         _mpc_lowcomm_ib_ibuf_rdma_region_init ( rail_ib_targ, remote,
                 &remote->rdma.pool->region[REGION_SEND],
-                RDMA_CHANNEL | SEND_CHANNEL, remote->od_request.nb, remote->od_request.size_ibufs );
+                MPC_LOWCOMM_IB_RDMA_CHANNEL | MPC_LOWCOMM_IB_SEND_CHANNEL, remote->od_request.nb, remote->od_request.size_ibufs );
 
         /* Update the RDMA regions */
         _mpc_lowcomm_ib_ibuf_rdma_update_remote_addr ( remote, recv_keys, REGION_RECV );
@@ -722,7 +722,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request ( sctk_rail_info_t *ra
         /* We create the RECV region */
         _mpc_lowcomm_ib_ibuf_rdma_region_init ( rail_ib_targ, remote,
                 &remote->rdma.pool->region[REGION_RECV],
-                RDMA_CHANNEL | RECV_CHANNEL, recv_keys->nb, recv_keys->size );
+                MPC_LOWCOMM_IB_RDMA_CHANNEL | MPC_LOWCOMM_IB_RECV_CHANNEL, recv_keys->nb, recv_keys->size );
 
         /* Fill the keys */
         _mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr ( remote, &send_keys, REGION_RECV );
@@ -845,7 +845,7 @@ static inline void sctk_ib_cm_resizing_rdma_ack_recv ( sctk_rail_info_t *rail, v
     /* Resizing the RDMA buffer */
     _mpc_lowcomm_ib_ibuf_rdma_region_reinit ( rail_ib_targ, remote,
             &remote->rdma.pool->region[REGION_SEND],
-            RDMA_CHANNEL | SEND_CHANNEL,
+            MPC_LOWCOMM_IB_RDMA_CHANNEL | MPC_LOWCOMM_IB_SEND_CHANNEL,
             send_keys->nb, send_keys->size );
 
     OPA_incr_int ( &remote->rdma.resizing_nb );

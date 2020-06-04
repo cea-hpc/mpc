@@ -36,13 +36,13 @@
 #define SMALL_BUFFER_SIZE (4*1024)
 #define HAVE_SHELL_COLORS
 
-#ifndef SCTK_IB_MODULE_NAME
-#define SCTK_IB_MODULE_NAME "NONE"
+#ifndef MPC_LOWCOMM_IB_MODULE_NAME
+#define MPC_LOWCOMM_IB_MODULE_NAME "NONE"
 #endif
 
 void sctk_ib_toolkit_print_backtrace ( void );
 
-#ifdef SCTK_IB_MODULE_DEBUG
+#ifdef MPC_LOWCOMM_IB_MODULE_DEBUG
 __UNUSED__ static void sctk_ib_debug ( const char *fmt, ... )
 {
 	va_list ap;
@@ -54,11 +54,11 @@ __UNUSED__ static void sctk_ib_debug ( const char *fmt, ... )
 #ifdef HAVE_SHELL_COLORS
 		snprintf ( buff, SMALL_BUFFER_SIZE,
 		           " "MPC_COLOR_RED_BOLD ( [ %5s] ) " %s\n",
-		           SCTK_IB_MODULE_NAME, fmt );
+		           MPC_LOWCOMM_IB_MODULE_NAME, fmt );
 #else
 		snprintf ( buff, SMALL_BUFFER_SIZE,
 		           " [%5s] %s\n",
-		           SCTK_IB_MODULE_NAME_STR ), fmt );
+		           MPC_LOWCOMM_IB_MODULE_NAME_STR ), fmt );
 #endif
 
 		mpc_common_io_noalloc_vfprintf ( stderr, buff, ap );
@@ -86,17 +86,17 @@ static inline void sctk_ib_nodebug ( const char *fmt, ... )
 #define LOAD_CONFIG(x) struct sctk_runtime_config_struct_net_driver_infiniband *config = (x)->config;
 #define LOAD_MMU(x)    sctk_ib_mmu_t* mmu = (x)->mmu;
 #define LOAD_DEVICE(x)    sctk_ib_device_t* device = (x)->device;
-#define LOAD_POOL(x)    sctk_ibuf_pool_t* pool = (x)->pool_buffers;
+#define LOAD_POOL(x)    _mpc_lowcomm_ib_ibuf_poll_t* pool = (x)->pool_buffers;
 #define LOAD_CP(x)    sctk_ib_cp_t* cp = (x)->cp;
 #define LOAD_PROFILER(x)    sctk_ib_prof_t* profiler = (x)->profiler;
 
 
 /* Error handler */
-#define SCTK_IB_ABORT_WITH_ERRNO(...)                           \
+#define MPC_LOWCOMM_IB_ABORT_WITH_ERRNO(...)                           \
 		mpc_common_debug_error(__VA_ARGS__"(errno: %s)", strerror(errno));      \
 		mpc_common_debug_abort();
 
-#define SCTK_IB_ABORT(...)        \
+#define MPC_LOWCOMM_IB_ABORT(...)        \
 		mpc_common_debug_error(__VA_ARGS__);      \
 		mpc_common_debug_abort();
 

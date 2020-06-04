@@ -69,7 +69,7 @@ typedef struct sctk_ib_buffered_entry_s
 	struct mpc_lowcomm_ptp_message_content_to_copy_s *copy_ptr;
 } sctk_ib_buffered_entry_t;
 
-struct sctk_ibuf_s;
+struct _mpc_lowcomm_ib_ibuf_s;
 
 /********************************************************************/
 /* Functions                                                        */
@@ -80,6 +80,6 @@ int sctk_ib_buffered_prepare_msg ( struct sctk_rail_info_s *rail,
                                    struct mpc_lowcomm_ptp_message_s *msg,
                                    size_t size );
 
-void sctk_ib_buffered_poll_recv ( struct sctk_rail_info_s *rail, struct sctk_ibuf_s *ibuf );
+void sctk_ib_buffered_poll_recv ( struct sctk_rail_info_s *rail, struct _mpc_lowcomm_ib_ibuf_s *ibuf );
 
 #endif

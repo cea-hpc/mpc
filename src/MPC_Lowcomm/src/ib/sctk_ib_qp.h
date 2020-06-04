@@ -38,7 +38,7 @@
 #define ACK_UNSET   111
 #define ACK_OK      222
 #define ACK_CANCEL  333
-typedef struct sctk_ibuf_rdma_s
+typedef struct _mpc_lowcomm_ib_ibuf_rdma_s
 {
 	mpc_common_spinlock_t lock;			/**< Lock for allocating pool */
 	char dummy1[64];
@@ -65,15 +65,15 @@ typedef struct sctk_ibuf_rdma_s
 	size_t messages_size;			/**< Cumulative sum of msg sizes */
 	size_t messages_nb;				/**< Number of messages exchanged */
 	double creation_timestamp;
-} sctk_ibuf_rdma_t;
+} _mpc_lowcomm_ib_ibuf_rdma_t;
 
 #define IBV_SR_SAMPLES 1000
 /* Structure which stores some information about SR protocol
  * TODO: ideally, we should move some variables from ib_qp_s to here... */
-typedef struct sctk_ibuf_sr_s
+typedef struct _mpc_lowcomm_ib_ibuf_sr_s
 {
 	/* Empty */
-} sctk_ibuf_sr_t;
+} _mpc_lowcomm_ib_ibuf_sr_t;
 
 /*Structure associated to a remote QP */
 typedef struct sctk_ib_qp_s
@@ -108,8 +108,8 @@ typedef struct sctk_ib_qp_s
 					 * \warning the number of unsignaled messages cannot
 					 * excess the max number of send entries in  QP */
 	struct sctk_ib_buffered_table_s ib_buffered; /**< List of pending buffered messages */
-	struct sctk_ibuf_rdma_s rdma; 	     /**< Structure for ibuf rdma */
-	struct sctk_ibuf_sr_s sr;
+	struct _mpc_lowcomm_ib_ibuf_rdma_s rdma; 	     /**< Structure for ibuf rdma */
+	struct _mpc_lowcomm_ib_ibuf_sr_s sr;
 	struct
 	{
 		int nb;
@@ -169,26 +169,26 @@ void sctk_ib_srq_free(sctk_ib_rail_info_t *rail_ib);
 
 struct ibv_srq_init_attr sctk_ib_srq_init_attr ( struct sctk_ib_rail_info_s *rail_ib );
 
-int sctk_ib_qp_send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, sctk_ibuf_t *ibuf );
+int sctk_ib_qp_send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, _mpc_lowcomm_ib_ibuf_t *ibuf );
 
 void sctk_ib_qp_release_entry ( struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_qp_t *remote );
 
 int sctk_ib_qp_get_cap_flags ( struct sctk_ib_rail_info_s *rail_ib );
 
 /* Amount of data pending */
-__UNUSED__ static int sctk_ib_qp_fetch_and_add_pending_data ( sctk_ib_qp_t *remote, sctk_ibuf_t *ibuf )
+__UNUSED__ static int sctk_ib_qp_fetch_and_add_pending_data ( sctk_ib_qp_t *remote, _mpc_lowcomm_ib_ibuf_t *ibuf )
 {
 	const int size = ( int ) ibuf->desc.sg_entry.length;
 	return OPA_fetch_and_add_int ( &remote->pending_data, size );
 }
 
-__UNUSED__ static int sctk_ib_qp_fetch_and_sub_pending_data ( sctk_ib_qp_t *remote, sctk_ibuf_t *ibuf )
+__UNUSED__ static int sctk_ib_qp_fetch_and_sub_pending_data ( sctk_ib_qp_t *remote, _mpc_lowcomm_ib_ibuf_t *ibuf )
 {
 	const int size = - ( ( int ) ibuf->desc.sg_entry.length );
 	return OPA_fetch_and_add_int ( &remote->pending_data, size );
 }
 
-__UNUSED__ static void sctk_ib_qp_add_pending_data ( sctk_ib_qp_t *remote, sctk_ibuf_t *ibuf )
+__UNUSED__ static void sctk_ib_qp_add_pending_data ( sctk_ib_qp_t *remote, _mpc_lowcomm_ib_ibuf_t *ibuf )
 {
 	const size_t size = ibuf->desc.sg_entry.length;
 	OPA_add_int ( &remote->pending_data, size );

@@ -74,13 +74,13 @@ typedef struct sctk_ib_polling_s
 __UNUSED__ static inline void sctk_ib_polling_check_wc ( struct sctk_ib_rail_info_s *rail_ib,  struct ibv_wc wc )
 {
 	struct sctk_runtime_config_struct_net_driver_infiniband *config = ( rail_ib )->config;
-	struct sctk_ibuf_s *ibuf;
+	struct _mpc_lowcomm_ib_ibuf_s *ibuf;
 	char host[HOSTNAME];
 	char ibuf_desc[4096];
 
 	if ( wc.status != IBV_WC_SUCCESS )
 	{
-		ibuf = ( struct sctk_ibuf_s * ) wc.wr_id;
+		ibuf = ( struct _mpc_lowcomm_ib_ibuf_s * ) wc.wr_id;
 		assume ( ibuf );
 		gethostname ( host, HOSTNAME );
 

@@ -91,18 +91,18 @@ sctk_endpoint_t * sctk_ib_create_remote()
 	return tmp;
 }
 
-char *sctk_ib_print_procotol ( sctk_ib_protocol_t p )
+char *sctk_ib_print_procotol ( _mpc_lowcomm_ib_protocol_t p )
 {
 	switch ( p )
 	{
-		case SCTK_IB_EAGER_PROTOCOL:
-			return "SCTK_IB_EAGER_PROTOCOL";
+		case MPC_LOWCOMM_IB_EAGER_PROTOCOL:
+			return "MPC_LOWCOMM_IB_EAGER_PROTOCOL";
 
-		case SCTK_IB_RDMA_PROTOCOL:
-			return "SCTK_IB_RDMA_PROTOCOL";
+		case MPC_LOWCOMM_IB_RDMA_PROTOCOL:
+			return "MPC_LOWCOMM_IB_RDMA_PROTOCOL";
 
-		case SCTK_IB_BUFFERED_PROTOCOL:
-			return "SCTK_IB_BUFFERED_PROTOCOL";
+		case MPC_LOWCOMM_IB_BUFFERED_PROTOCOL:
+			return "MPC_LOWCOMM_IB_BUFFERED_PROTOCOL";
 
 		default:
 			not_reachable();
@@ -117,14 +117,14 @@ void sctk_ib_print_msg ( mpc_lowcomm_ptp_message_t *msg )
 
 	switch ( msg->tail.ib.protocol )
 	{
-		case SCTK_IB_EAGER_PROTOCOL:
+		case MPC_LOWCOMM_IB_EAGER_PROTOCOL:
 			break;
 
-		case SCTK_IB_RDMA_PROTOCOL:
+		case MPC_LOWCOMM_IB_RDMA_PROTOCOL:
 			sctk_ib_rdma_print ( msg );
 			break;
 
-		case SCTK_IB_BUFFERED_PROTOCOL:
+		case MPC_LOWCOMM_IB_BUFFERED_PROTOCOL:
 			break;
 
 		default:

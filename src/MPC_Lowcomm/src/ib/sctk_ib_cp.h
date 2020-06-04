@@ -40,10 +40,10 @@ typedef struct sctk_ib_cp_task_s
 	int vp;
 	int node;				/**< numa node */
 	int rank;				/**< rank is the key of HT */
-	sctk_ibuf_t *volatile local_ibufs_list;  /**< local pending ibufs for the current task  */
+	_mpc_lowcomm_ib_ibuf_t *volatile local_ibufs_list;  /**< local pending ibufs for the current task  */
 	mpc_common_spinlock_t local_ibufs_list_lock;
 	char dummy[64];
-	sctk_ibuf_t *volatile *global_ibufs_list;		/**< global pending ibufs for the current task  */
+	_mpc_lowcomm_ib_ibuf_t *volatile *global_ibufs_list;		/**< global pending ibufs for the current task  */
 	mpc_common_spinlock_t *global_ibufs_list_lock;
 	/* Counters */
 	OPA_int_t c[64];
@@ -85,7 +85,7 @@ void sctk_ib_cp_init_task ( int rank, int vp );
 
 void sctk_ib_cp_finalize_task ( int rank );
 
-int sctk_ib_cp_handle_message ( sctk_ibuf_t *ibuf, int dest_task, int target_task );
+int sctk_ib_cp_handle_message ( _mpc_lowcomm_ib_ibuf_t *ibuf, int dest_task, int target_task );
 
 int sctk_ib_cp_poll ( struct sctk_ib_polling_s *poll,
                       int task_id );

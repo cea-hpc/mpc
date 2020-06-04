@@ -40,15 +40,15 @@
 
 #include <sctk_alloc.h>
 
-#if defined SCTK_IB_MODULE_NAME
-#error "SCTK_IB_MODULE already defined"
+#if defined MPC_LOWCOMM_IB_MODULE_NAME
+#error "MPC_LOWCOMM_IB_MODULE already defined"
 #endif
-//#define SCTK_IB_MODULE_DEBUG
-#define SCTK_IB_MODULE_NAME "CP"
+//#define MPC_LOWCOMM_IB_MODULE_DEBUG
+#define MPC_LOWCOMM_IB_MODULE_NAME "CP"
 #include "sctk_ib_toolkit.h"
 #include "math.h"
 
-#define SCTK_IB_PROFILER
+#define MPC_LOWCOMM_IB_PROFILER
 
 extern mpc_lowcomm_request_t *blocked_request;
 /* used to remember __thread var init for IB re-enabling */
@@ -222,7 +222,7 @@ void sctk_ib_cp_init_task ( int rank, int vp )
 	sctk_ib_cp_task_t *task = NULL;
 	int node =  mpc_topology_get_numa_node_from_cpu( vp );
 	/* Process specific list of messages */
-	static sctk_ibuf_t *volatile __global_ibufs_list = NULL;
+	static _mpc_lowcomm_ib_ibuf_t *volatile __global_ibufs_list = NULL;
 	static mpc_common_spinlock_t __global_ibufs_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
 	mpc_common_spinlock_lock ( &vps_lock );
@@ -340,9 +340,9 @@ void sctk_ib_cp_finalize_task ( int rank )
 
 }
 
-static inline int __cp_poll ( struct sctk_ib_polling_s *poll, sctk_ibuf_t *volatile *list, mpc_common_spinlock_t *lock )
+static inline int __cp_poll ( struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t *volatile *list, mpc_common_spinlock_t *lock )
 {
-	sctk_ibuf_t *ibuf = NULL;
+	_mpc_lowcomm_ib_ibuf_t *ibuf = NULL;
 	int nb_found = 0;
 
 retry:
@@ -361,7 +361,7 @@ retry:
 
 
 				/* Run the polling function according to the type of message */
-				if ( ibuf->cq == SCTK_IB_RECV_CQ )
+				if ( ibuf->cq == MPC_LOWCOMM_IB_RECV_CQ )
 				{
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
 					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
@@ -459,9 +459,9 @@ int sctk_ib_cp_poll ( struct sctk_ib_polling_s *poll, int task_id )
         return 0;
 }
 
-static inline int __cp_steal ( struct sctk_ib_polling_s *poll, sctk_ibuf_t *volatile *list, mpc_common_spinlock_t *lock, __UNUSED__ sctk_ib_cp_task_t *task, __UNUSED__ sctk_ib_cp_task_t *stealing_task )
+static inline int __cp_steal ( struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t *volatile *list, mpc_common_spinlock_t *lock, __UNUSED__ sctk_ib_cp_task_t *task, __UNUSED__ sctk_ib_cp_task_t *stealing_task )
 {
-	sctk_ibuf_t *ibuf = NULL;
+	_mpc_lowcomm_ib_ibuf_t *ibuf = NULL;
 	int nb_found = 0;
 
 	if ( *list != NULL )
@@ -476,7 +476,7 @@ static inline int __cp_steal ( struct sctk_ib_polling_s *poll, sctk_ibuf_t *vola
 				sctk_ib_cp_decr_nb_pending_msg();
 
 				/* Run the polling function */
-				if ( ibuf->cq == SCTK_IB_RECV_CQ )
+				if ( ibuf->cq == MPC_LOWCOMM_IB_RECV_CQ )
 				{
 					/* Profile the time to handle an ibuf once it has been polled
 					* from the CQ */
@@ -597,7 +597,7 @@ int sctk_ib_cp_steal ( struct sctk_ib_polling_s *poll, char other_numa )
 }while(0);
 #define IBUF_GET_RDMA_TYPE(x) ((x)->type)
 
-int sctk_ib_cp_handle_message ( sctk_ibuf_t *ibuf, int dest_task, int target_task )
+int sctk_ib_cp_handle_message ( _mpc_lowcomm_ib_ibuf_t *ibuf, int dest_task, int target_task )
 {
 	sctk_ib_cp_task_t *task = NULL;
 

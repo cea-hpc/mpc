@@ -22,8 +22,8 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef SCTK_IB_DEVICE
-#define SCTK_IB_DEVICE
+#ifndef MPC_LOWCOMM_IB_DEVICE
+#define MPC_LOWCOMM_IB_DEVICE
 
 #include <infiniband/verbs.h>
 #include <inttypes.h>
@@ -100,4 +100,4 @@ void sctk_ib_cq_free(struct ibv_cq*);
 
 int sctk_ib_device_found();
 
-#endif /* SCTK_IB_DEVICE */
+#endif /* MPC_LOWCOMM_IB_DEVICE */

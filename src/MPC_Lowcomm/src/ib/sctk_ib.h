@@ -23,8 +23,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __SCTK_IB_H_
-#define __SCTK_IB_H_
+#ifndef __MPC_LOWCOMM_IB_H_
+#define __MPC_LOWCOMM_IB_H_
 #ifdef __cplusplus
 extern "C"
 {
@@ -56,8 +56,8 @@ extern "C"
  *----------------------------------------------------------*/
 
 struct sctk_rail_info_s;
-struct sctk_ibuf_pool_s;
-struct sctk_ibuf_s;
+struct _mpc_lowcomm_ib_ibuf_poll_s;
+struct _mpc_lowcomm_ib_ibuf_s;
 struct sctk_ib_mmu_s;
 struct sctk_ib_topology_s;
 struct sctk_ib_config_s;
@@ -72,7 +72,7 @@ struct sctk_ib_qp_ht_s;
 
 typedef struct sctk_ib_rail_info_s
 {
-	struct sctk_ibuf_pool_s *pool_buffers;
+	struct _mpc_lowcomm_ib_ibuf_poll_s *pool_buffers;
 	/* struct sctk_ib_mmu_s    *mmu; */
 	struct sctk_ib_topology_s *topology;
 	struct sctk_runtime_config_struct_net_driver_infiniband *config;
@@ -102,25 +102,25 @@ typedef struct sctk_ib_route_info_s
 /* ib protocol used */
 typedef enum sctk_ib_protocol_e
 {
-    SCTK_IB_EAGER_PROTOCOL        = 111,
-    SCTK_IB_BUFFERED_PROTOCOL     = 222,
-    SCTK_IB_RDMA_PROTOCOL         = 333,
-    SCTK_IB_NULL_PROTOCOL         = 444,
-} sctk_ib_protocol_t;
+    MPC_LOWCOMM_IB_EAGER_PROTOCOL        = 111,
+    MPC_LOWCOMM_IB_BUFFERED_PROTOCOL     = 222,
+    MPC_LOWCOMM_IB_RDMA_PROTOCOL         = 333,
+    MPC_LOWCOMM_IB_NULL_PROTOCOL         = 444,
+} _mpc_lowcomm_ib_protocol_t;
 
 
-/* 2 first bits: SCTK_IB_RDMA_NOT_SET, SCTK_IB_RDMA_ZEROCOPY, SCTK_IB_RDMA_RECOPY */
-/* third bit: if SCTK_IB_RDMA_MATCH */
+/* 2 first bits: MPC_LOWCOMM_IB_RDMA_NOT_SET, MPC_LOWCOMM_IB_RDMA_ZEROCOPY, MPC_LOWCOMM_IB_RDMA_RECOPY */
+/* third bit: if MPC_LOWCOMM_IB_RDMA_MATCH */
 /* forth bit: if done  */
 /* free from 1<<4 */
 typedef volatile enum sctk_ib_rdma_status_e
 {
-	SCTK_IB_RDMA_NOT_SET = 1,
-	SCTK_IB_RDMA_ZEROCOPY = 2,
-	SCTK_IB_RDMA_RECOPY = 3,
-	SCTK_IB_RDMA_MATCH = 4,
-	SCTK_IB_RDMA_DONE = 8,
-	SCTK_IB_RDMA_ALLOCATION = 1 << 4,
+	MPC_LOWCOMM_IB_RDMA_NOT_SET = 1,
+	MPC_LOWCOMM_IB_RDMA_ZEROCOPY = 2,
+	MPC_LOWCOMM_IB_RDMA_RECOPY = 3,
+	MPC_LOWCOMM_IB_RDMA_MATCH = 4,
+	MPC_LOWCOMM_IB_RDMA_DONE = 8,
+	MPC_LOWCOMM_IB_RDMA_ALLOCATION = 1 << 4,
 }
 sctk_ib_rdma_status_t;
 
@@ -178,7 +178,7 @@ typedef struct sctk_ib_header_rdma_s
 /* Structure included in msg header */
 typedef struct mpc_lowcomm_ib_tail_s
 {
-	sctk_ib_protocol_t protocol;
+	_mpc_lowcomm_ib_protocol_t protocol;
 
 	union
 	{
@@ -188,7 +188,7 @@ typedef struct mpc_lowcomm_ib_tail_s
 			* from network buffer */
 			int recopied;
 			/* Ibuf to release */
-			struct sctk_ibuf_s *ibuf;
+			struct _mpc_lowcomm_ib_ibuf_s *ibuf;
 		} eager;
 
 		struct
@@ -212,11 +212,11 @@ void sctk_ib_route_dynamic_set_connected ( struct sctk_endpoint_s *tmp, int conn
 
 /* IB header: generic */
 #define IBUF_GET_EAGER_HEADER(buffer) \
-(sctk_ib_eager_t*) ((char*) buffer + sizeof(sctk_ibuf_header_t))
+(sctk_ib_eager_t*) ((char*) buffer + sizeof(_mpc_lowcomm_ib_ibuf_header_t))
 #define IBUF_GET_BUFFERED_HEADER(buffer) \
-(sctk_ib_buffered_t*) ((char*) buffer + sizeof(sctk_ibuf_header_t))
+(sctk_ib_buffered_t*) ((char*) buffer + sizeof(_mpc_lowcomm_ib_ibuf_header_t))
 #define IBUF_GET_RDMA_HEADER(buffer) \
-(sctk_ib_rdma_t*) ((char*) buffer + sizeof(sctk_ibuf_header_t))
+(sctk_ib_rdma_t*) ((char*) buffer + sizeof(_mpc_lowcomm_ib_ibuf_header_t))
 
 /* IB payload: generic */
 #define IBUF_GET_EAGER_PAYLOAD(buffer) \

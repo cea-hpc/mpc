@@ -140,9 +140,9 @@ void sctk_ib_eager_release_buffered_ptp_message ( sctk_rail_info_t *rail, mpc_lo
 }
 
 
-sctk_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,  sctk_ib_qp_t *remote, mpc_lowcomm_ptp_message_t *msg, size_t size, char is_control_message )
+_mpc_lowcomm_ib_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,  sctk_ib_qp_t *remote, mpc_lowcomm_ptp_message_t *msg, size_t size, char is_control_message )
 {
-	sctk_ibuf_t *ibuf;
+	_mpc_lowcomm_ib_ibuf_t *ibuf;
 	sctk_ib_eager_t *eager_header;
 
 	size_t ibuf_size = size + IBUF_GET_EAGER_SIZE;
@@ -174,7 +174,7 @@ sctk_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,  sctk_ib_
 
 	eager_header = IBUF_GET_EAGER_HEADER ( ibuf->buffer );
 	eager_header->payload_size = size - sizeof ( mpc_lowcomm_ptp_message_body_t );
-	IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_EAGER_PROTOCOL );
+	IBUF_SET_PROTOCOL ( ibuf->buffer, MPC_LOWCOMM_IB_EAGER_PROTOCOL );
 
 	return ibuf;
 }
@@ -186,7 +186,7 @@ sctk_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,  sctk_ib_
 static void __free_no_recopy ( void *arg )
 {
 	mpc_lowcomm_ptp_message_t *msg = ( mpc_lowcomm_ptp_message_t * ) arg;
-	sctk_ibuf_t *ibuf = NULL;
+	_mpc_lowcomm_ib_ibuf_t *ibuf = NULL;
 
 	/* Assume msg not recopies */
 	ib_assume ( !msg->tail.ib.eager.recopied );
@@ -198,7 +198,7 @@ static void __free_no_recopy ( void *arg )
 static void __free_with_recopy ( void *arg )
 {
 	mpc_lowcomm_ptp_message_t *msg = ( mpc_lowcomm_ptp_message_t * ) arg;
-	sctk_ibuf_t *ibuf = NULL;
+	_mpc_lowcomm_ib_ibuf_t *ibuf = NULL;
 
 	ibuf = msg->tail.ib.eager.ibuf;
 	sctk_ib_eager_release_buffered_ptp_message ( ibuf->region->rail->rail, msg );
@@ -207,7 +207,7 @@ static void __free_with_recopy ( void *arg )
 /*-----------------------------------------------------------
  *  Ibuf free function
  *----------------------------------------------------------*/
-void sctk_ib_eager_recv_free ( sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,  sctk_ibuf_t *ibuf, int recopy )
+void sctk_ib_eager_recv_free ( sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,  _mpc_lowcomm_ib_ibuf_t *ibuf, int recopy )
 {
 	/* Read from recopied buffer */
 	if ( recopy )
@@ -223,7 +223,7 @@ void sctk_ib_eager_recv_free ( sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t
 }
 
 
-static mpc_lowcomm_ptp_message_t *sctk_ib_eager_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf, int recopy,  sctk_ib_protocol_t protocol )
+static mpc_lowcomm_ptp_message_t *sctk_ib_eager_recv ( sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf, int recopy,  _mpc_lowcomm_ib_protocol_t protocol )
 {
 	size_t size;
 	mpc_lowcomm_ptp_message_t *msg;
@@ -273,7 +273,7 @@ void sctk_ib_eager_recv_msg_no_recopy ( mpc_lowcomm_ptp_message_content_to_copy_
 {
 	mpc_lowcomm_ptp_message_t *send;
 
-	sctk_ibuf_t *ibuf;
+	_mpc_lowcomm_ib_ibuf_t *ibuf;
 	void *body;
 
 
@@ -287,10 +287,10 @@ void sctk_ib_eager_recv_msg_no_recopy ( mpc_lowcomm_ptp_message_content_to_copy_
 	sctk_net_message_copy_from_buffer ( body, tmp, 1 );
 }
 
-int sctk_ib_eager_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
+int sctk_ib_eager_poll_recv ( sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf )
 {
 	mpc_lowcomm_ptp_message_body_t *msg_ibuf = IBUF_GET_EAGER_MSG_HEADER ( ibuf->buffer );
-	const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL ( ibuf->buffer );
+	const _mpc_lowcomm_ib_protocol_t protocol = IBUF_GET_PROTOCOL ( ibuf->buffer );
 	int recopy = 0;
 
 	mpc_lowcomm_ptp_message_t *msg = NULL;

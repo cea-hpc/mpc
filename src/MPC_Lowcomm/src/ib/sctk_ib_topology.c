@@ -25,8 +25,8 @@
 
 #include "sctk_ibufs.h"
 
-/* #define SCTK_IB_MODULE_DEBUG */
-#define SCTK_IB_MODULE_NAME "TOPO"
+/* #define MPC_LOWCOMM_IB_MODULE_DEBUG */
+#define MPC_LOWCOMM_IB_MODULE_NAME "TOPO"
 #include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
 #include "sctk_ib_eager.h"

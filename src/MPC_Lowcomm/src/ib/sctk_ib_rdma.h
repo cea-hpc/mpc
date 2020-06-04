@@ -38,14 +38,14 @@
 /* XXX: Packed structures */
 typedef enum sctk_ib_rdma_type_e
 {
-    SCTK_IB_RDMA_RDV_REQ_TYPE = 111,
-    SCTK_IB_RDMA_RDV_ACK_TYPE = 222,
-    SCTK_IB_RDMA_RDV_DONE_TYPE = 333,
-    SCTK_IB_RDMA_RDV_WRITE_TYPE = 555,
-    SCTK_IB_RDMA_WRITE = 666,
-    SCTK_IB_RDMA_READ = 777,
-    SCTK_IB_RDMA_FETCH_AND_ADD = 888,
-    SCTK_IB_RDMA_CAS = 999
+    MPC_LOWCOMM_IB_RDMA_RDV_REQ_TYPE = 111,
+    MPC_LOWCOMM_IB_RDMA_RDV_ACK_TYPE = 222,
+    MPC_LOWCOMM_IB_RDMA_RDV_DONE_TYPE = 333,
+    MPC_LOWCOMM_IB_RDMA_RDV_WRITE_TYPE = 555,
+    MPC_LOWCOMM_IB_RDMA_WRITE = 666,
+    MPC_LOWCOMM_IB_RDMA_READ = 777,
+    MPC_LOWCOMM_IB_RDMA_FETCH_AND_ADD = 888,
+    MPC_LOWCOMM_IB_RDMA_CAS = 999
 } __attribute__ ( ( packed ) )
 sctk_ib_rdma_type_t;
 
@@ -123,7 +123,7 @@ sctk_ib_rdma_done_t;
  
  /* Rendez-vous */
 
-sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req ( sctk_rail_info_t *rail,
+_mpc_lowcomm_ib_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req ( sctk_rail_info_t *rail,
 						sctk_ib_qp_t *remote, mpc_lowcomm_ptp_message_t *msg, size_t size );
 
 void sctk_ib_rdma_rendezvous_prepare_send_msg ( mpc_lowcomm_ptp_message_t *msg, size_t size );
@@ -167,15 +167,15 @@ int sctk_ib_rdma_cas_gate( sctk_rail_info_t *rail, size_t size, RDMA_type type )
 
 
 int
-sctk_ib_rdma_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf );
+sctk_ib_rdma_poll_recv ( sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf );
 
 int
-sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf );
+sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf );
 
 
 void sctk_ib_rdma_print ( mpc_lowcomm_ptp_message_t *msg );
 
-sctk_ibuf_t *sctk_ib_rdma_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,
+_mpc_lowcomm_ib_ibuf_t *sctk_ib_rdma_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,
                                               sctk_ib_qp_t *remote, mpc_lowcomm_ptp_message_t *msg, size_t size );
 
 mpc_lowcomm_ptp_message_t * sctk_ib_rdma_recv_done_remote_imm ( sctk_rail_info_t *rail, int imm_data );

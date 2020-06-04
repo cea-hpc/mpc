@@ -20,8 +20,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_IB_MMU_H
-#define SCTK_IB_MMU_H
+#ifndef MPC_LOWCOMM_IB_MMU_H
+#define MPC_LOWCOMM_IB_MMU_H
 
 #include <stdlib.h>
 #include <mpc_common_spinlock.h>
@@ -82,4 +82,4 @@ void sctk_ib_mmu_relax( sctk_ib_mmu_entry_t * handler );
 int sctk_ib_mmu_unpin(  void * addr, size_t size);
 
 
-#endif /* SCTK_IB_MMU_H */
+#endif /* MPC_LOWCOMM_IB_MMU_H */

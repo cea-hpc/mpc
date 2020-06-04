@@ -24,8 +24,8 @@
 /* ######################################################################## */
 #include "sctk_ibufs.h"
 
-//#define SCTK_IB_MODULE_DEBUG
-#define SCTK_IB_MODULE_NAME    "IBUF"
+//#define MPC_LOWCOMM_IB_MODULE_DEBUG
+#define MPC_LOWCOMM_IB_MODULE_NAME    "IBUF"
 #include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
 #include "sctk_ib_eager.h"
@@ -37,10 +37,10 @@
 #include <sctk_alloc.h>
 
 
-static inline sctk_ibuf_numa_t *__ibuf_get_numaware(struct sctk_ib_rail_info_s *rail_ib)
+static inline _mpc_lowcomm_ib_ibuf_numa_t *__ibuf_get_numaware(struct sctk_ib_rail_info_s *rail_ib)
 {
 	struct sctk_ib_topology_numa_node_s *closest_node = sctk_ib_topology_get_numa_node(rail_ib);
-	sctk_ibuf_numa_t *node = NULL;
+	_mpc_lowcomm_ib_ibuf_numa_t *node = NULL;
 
 	node = &closest_node->ibufs;
 
@@ -51,16 +51,16 @@ static inline sctk_ibuf_numa_t *__ibuf_get_numaware(struct sctk_ib_rail_info_s *
  * FIXME: use malloc_on_node instead of memalign
  * Carreful: this function is *NOT* thread-safe */
 void _mpc_lowcomm_ib_ibuf_init_numa(struct sctk_ib_rail_info_s *rail_ib,
-                                    struct sctk_ibuf_numa_s *node,
+                                    struct _mpc_lowcomm_ib_ibuf_numa_s *node,
                                     int nb_ibufs,
                                     char is_initial_allocation)
 {
 	LOAD_CONFIG(rail_ib);
 	LOAD_POOL(rail_ib);
-	sctk_ibuf_region_t *region = NULL;
+	_mpc_lowcomm_ib_ibuf_region_t *region = NULL;
 	void *       ptr           = NULL;
 	void *       ibuf;
-	sctk_ibuf_t *ibuf_ptr;
+	_mpc_lowcomm_ib_ibuf_t *ibuf_ptr;
 	int          i;
 
 
@@ -82,7 +82,7 @@ void _mpc_lowcomm_ib_ibuf_init_numa(struct sctk_ib_rail_info_s *rail_ib,
 		OPA_store_int(&node->free_nb, 0);
 	}
 
-	region = sctk_malloc_on_node(sizeof(sctk_ibuf_region_t), 0);
+	region = sctk_malloc_on_node(sizeof(_mpc_lowcomm_ib_ibuf_region_t), 0);
 	ib_assume(region);
 
 	/* XXX: replaced by memalign_on_node */
@@ -91,18 +91,18 @@ void _mpc_lowcomm_ib_ibuf_init_numa(struct sctk_ib_rail_info_s *rail_ib,
 	memset(ptr, 0, nb_ibufs * config->eager_limit);
 
 	/* XXX: replaced by memalign_on_node */
-	sctk_posix_memalign(&ibuf, getpagesize(), nb_ibufs * sizeof(sctk_ibuf_t) );
+	sctk_posix_memalign(&ibuf, getpagesize(), nb_ibufs * sizeof(_mpc_lowcomm_ib_ibuf_t) );
 	ib_assume(ibuf);
-	memset(ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t) );
+	memset(ibuf, 0, nb_ibufs * sizeof(_mpc_lowcomm_ib_ibuf_t) );
 
 	region->size_ibufs     = config->eager_limit;
 	region->list           = ibuf;
 	region->nb             = nb_ibufs;
 	region->node           = node;
 	region->rail           = rail_ib;
-	region->channel        = RC_SR_CHANNEL;
+	region->channel        = MPC_LOWCOMM_IB_RC_SR_CHANNEL;
 	region->ibuf           = ibuf;
-	region->allocated_size = (nb_ibufs * (config->eager_limit + sizeof(sctk_ibuf_t) ) );
+	region->allocated_size = (nb_ibufs * (config->eager_limit + sizeof(_mpc_lowcomm_ib_ibuf_t) ) );
 	DL_APPEND(node->regions, region);
 
 	/* register buffers at once
@@ -113,7 +113,7 @@ void _mpc_lowcomm_ib_ibuf_init_numa(struct sctk_ib_rail_info_s *rail_ib,
 	/* init all buffers - the last one */
 	for(i = 0; i < nb_ibufs; ++i)
 	{
-		ibuf_ptr         = ( sctk_ibuf_t * )ibuf + i;
+		ibuf_ptr         = ( _mpc_lowcomm_ib_ibuf_t * )ibuf + i;
 		ibuf_ptr->region = region;
 		ibuf_ptr->size   = 0;
 		ibuf_ptr->flag   = FREE_FLAG;
@@ -121,7 +121,7 @@ void _mpc_lowcomm_ib_ibuf_init_numa(struct sctk_ib_rail_info_s *rail_ib,
 
 		ibuf_ptr->buffer = ( unsigned char * )( ( char * )ptr + (i * config->eager_limit) );
 		ib_assume(ibuf_ptr->buffer);
-		DL_APPEND(node->free_entry, ( ( sctk_ibuf_t * )ibuf + i) );
+		DL_APPEND(node->free_entry, ( ( _mpc_lowcomm_ib_ibuf_t * )ibuf + i) );
 	}
 
 	OPA_add_int(&node->free_nb, nb_ibufs);
@@ -129,10 +129,10 @@ void _mpc_lowcomm_ib_ibuf_init_numa(struct sctk_ib_rail_info_s *rail_ib,
 	node->nb += nb_ibufs;
 }
 
-void _mpc_lowcomm_ib_ibuf_free_numa(struct sctk_ibuf_numa_s *node)
+void _mpc_lowcomm_ib_ibuf_free_numa(struct _mpc_lowcomm_ib_ibuf_numa_s *node)
 {
-	struct sctk_ibuf_region_s *region, *tmp;
-	sctk_ibuf_t *buf, *tmp2;
+	struct _mpc_lowcomm_ib_ibuf_region_s *region, *tmp;
+	_mpc_lowcomm_ib_ibuf_t *buf, *tmp2;
 
 	DL_FOREACH_SAFE(node->free_entry, buf, tmp2)
 	{
@@ -166,7 +166,7 @@ void _mpc_lowcomm_ib_ibuf_free_numa(struct sctk_ibuf_numa_s *node)
 }
 
 void _mpc_lowcomm_ib_ibuf_set_node_srq_buffers(struct sctk_ib_rail_info_s *rail_ib,
-                                               sctk_ibuf_numa_t *node)
+                                               _mpc_lowcomm_ib_ibuf_numa_t *node)
 {
 	LOAD_POOL(rail_ib);
 	pool->node_srq_buffers = node;
@@ -176,13 +176,13 @@ void _mpc_lowcomm_ib_ibuf_set_node_srq_buffers(struct sctk_ib_rail_info_s *rail_
 /* Init the pool of buffers on each NUMA node */
 void _mpc_lowcomm_ib_ibuf_pool_init(struct sctk_ib_rail_info_s *rail_ib)
 {
-	sctk_ibuf_pool_t *pool;
+	_mpc_lowcomm_ib_ibuf_poll_t *pool;
 
-	pool = sctk_malloc(sizeof(sctk_ibuf_pool_t) );
+	pool = sctk_malloc(sizeof(_mpc_lowcomm_ib_ibuf_poll_t) );
 
 	/* WARNING: Do not remove the following memset.
 	 * Be sure that is_srq_poll is set to 0 !! */
-	memset(pool, 0, sizeof(sctk_ibuf_pool_t) );
+	memset(pool, 0, sizeof(_mpc_lowcomm_ib_ibuf_poll_t) );
 	mpc_common_spinlock_init(&pool->post_srq_lock, 0);
 	/* update pool buffer */
 	rail_ib->pool_buffers = pool;
@@ -197,7 +197,7 @@ void _mpc_lowcomm_ib_ibuf_pool_free(sctk_ib_rail_info_t *rail_ib)
 /*-----------------------------------------------------------
 *  WR INITIALIZATION
 *----------------------------------------------------------*/
-static inline void __recv_init(sctk_ibuf_t *ibuf)
+static inline void __recv_init(_mpc_lowcomm_ib_ibuf_t *ibuf)
 {
 	LOAD_CONFIG(ibuf->region->rail);
 
@@ -223,7 +223,7 @@ static inline void __recv_init(sctk_ibuf_t *ibuf)
 	ibuf->flag = RECV_IBUF_FLAG;
 }
 
-static inline int __send_inline_init(sctk_ibuf_t *ibuf, size_t size)
+static inline int __send_inline_init(_mpc_lowcomm_ib_ibuf_t *ibuf, size_t size)
 {
 	LOAD_CONFIG(ibuf->region->rail);
 	int is_inlined = 0;
@@ -260,7 +260,7 @@ static inline int __send_inline_init(sctk_ibuf_t *ibuf, size_t size)
 	return is_inlined;
 }
 
-int _mpc_lowcomm_ib_ibuf_write_with_imm_init(sctk_ibuf_t *ibuf,
+int _mpc_lowcomm_ib_ibuf_write_with_imm_init(_mpc_lowcomm_ib_ibuf_t *ibuf,
                                              void *local_address,
                                              uint32_t lkey,
                                              void *remote_address,
@@ -305,7 +305,7 @@ int _mpc_lowcomm_ib_ibuf_write_with_imm_init(sctk_ibuf_t *ibuf,
 	return is_inlined;
 }
 
-int _mpc_lowcomm_ib_ibuf_write_init(sctk_ibuf_t *ibuf,
+int _mpc_lowcomm_ib_ibuf_write_init(_mpc_lowcomm_ib_ibuf_t *ibuf,
                                     void *local_address,
                                     uint32_t lkey,
                                     void *remote_address,
@@ -350,7 +350,7 @@ int _mpc_lowcomm_ib_ibuf_write_init(sctk_ibuf_t *ibuf,
 	return is_inlined;
 }
 
-void _mpc_lowcomm_ib_ibuf_read_init(sctk_ibuf_t *ibuf,
+void _mpc_lowcomm_ib_ibuf_read_init(_mpc_lowcomm_ib_ibuf_t *ibuf,
                                     void *local_address,
                                     uint32_t lkey,
                                     void *remote_address,
@@ -378,7 +378,7 @@ void _mpc_lowcomm_ib_ibuf_read_init(sctk_ibuf_t *ibuf,
 	ibuf->flag = RDMA_READ_IBUF_FLAG;
 }
 
-void _mpc_lowcomm_ib_ibuf_fetch_and_add_init(sctk_ibuf_t *ibuf,
+void _mpc_lowcomm_ib_ibuf_fetch_and_add_init(_mpc_lowcomm_ib_ibuf_t *ibuf,
                                              void *fetch_addr,
                                              uint32_t lkey,
                                              void *remote_address,
@@ -410,7 +410,7 @@ void _mpc_lowcomm_ib_ibuf_fetch_and_add_init(sctk_ibuf_t *ibuf,
 	ibuf->flag = RDMA_FETCH_AND_OP_IBUF_FLAG;
 }
 
-void _mpc_lowcomm_ib_ibuf_compare_and_swap_init(sctk_ibuf_t *ibuf,
+void _mpc_lowcomm_ib_ibuf_compare_and_swap_init(_mpc_lowcomm_ib_ibuf_t *ibuf,
                                                 void *res_addr,
                                                 uint32_t local_key,
                                                 void *remote_address,
@@ -442,7 +442,7 @@ void _mpc_lowcomm_ib_ibuf_compare_and_swap_init(sctk_ibuf_t *ibuf,
 	ibuf->flag = RDMA_CAS_IBUF_FLAG;
 }
 
-static inline char *__ibuf_print_flag(enum sctk_ibuf_status flag)
+static inline char *__ibuf_print_flag(enum _mpc_lowcomm_ib_ibuf_status flag)
 {
 	switch(flag)
 	{
@@ -515,7 +515,7 @@ static inline char *__ibuf_print_flag(enum sctk_ibuf_status flag)
 	return NULL;
 }
 
-void _mpc_lowcomm_ib_ibuf_print_rdma(sctk_ibuf_t *ibuf, char *desc)
+void _mpc_lowcomm_ib_ibuf_print_rdma(_mpc_lowcomm_ib_ibuf_t *ibuf, char *desc)
 {
 	sprintf(desc, "region       :%p\n"
 	              "buffer       :%p\n"
@@ -540,12 +540,12 @@ void _mpc_lowcomm_ib_ibuf_print_rdma(sctk_ibuf_t *ibuf, char *desc)
 	        ( void * )ibuf->desc.wr.send.wr.rdma.remote_addr);
 }
 
-void _mpc_lowcomm_ib_ibuf_print(sctk_ibuf_t *ibuf, char *desc)
+void _mpc_lowcomm_ib_ibuf_print(_mpc_lowcomm_ib_ibuf_t *ibuf, char *desc)
 {
 	char *poison = (IBUF_GET_HEADER(ibuf->buffer)->poison != IBUF_POISON) ? "NAK" : "OK";
 	char  channel[5];
 
-	sctk_ibuf_channel_print(channel, ibuf->region->channel);
+	_mpc_lowcomm_ib_ibuf_channel_t_print(channel, ibuf->region->channel);
 
 	sprintf(desc, "rail         :%d\n"
 	              "region       :%p\n"
@@ -572,11 +572,11 @@ void _mpc_lowcomm_ib_ibuf_print(sctk_ibuf_t *ibuf, char *desc)
 	        poison);
 }
 
-sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib)
+_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib)
 {
 	LOAD_CONFIG(rail_ib);
-	sctk_ibuf_t *     ibuf;
-	sctk_ibuf_numa_t *node = __ibuf_get_numaware(rail_ib);
+	_mpc_lowcomm_ib_ibuf_t *     ibuf;
+	_mpc_lowcomm_ib_ibuf_numa_t *node = __ibuf_get_numaware(rail_ib);
 
 	mpc_common_spinlock_t *lock = &node->lock;
 
@@ -595,7 +595,7 @@ sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_
 
 	mpc_common_spinlock_unlock(lock);
 
-	IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_NULL_PROTOCOL);
+	IBUF_SET_PROTOCOL(ibuf->buffer, MPC_LOWCOMM_IB_NULL_PROTOCOL);
 
 #ifdef DEBUG_IB_BUFS
 	assume(ibuf);
@@ -618,12 +618,12 @@ sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_
  * If '*size' == ULONG_MAX, the fonction returns in '*size' the maximum size
  * of the payload for the buffer. The user next needs to manually call sctk_ib_prepare.
  */
-sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib,
+_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib,
                                             sctk_ib_qp_t *remote,
                                             size_t *size)
 {
 	LOAD_CONFIG(rail_ib);
-	sctk_ibuf_t *         ibuf = NULL;
+	_mpc_lowcomm_ib_ibuf_t *         ibuf = NULL;
 	size_t                s;
 	size_t                limit;
 	sctk_endpoint_state_t state;
@@ -706,7 +706,7 @@ sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib,
 	{
 		mpc_common_nodebug("Picking from SR");
 
-		sctk_ibuf_numa_t *     node = __ibuf_get_numaware(rail_ib);
+		_mpc_lowcomm_ib_ibuf_numa_t *     node = __ibuf_get_numaware(rail_ib);
 		mpc_common_spinlock_t *lock = &node->lock;
 
 		mpc_common_spinlock_lock(lock);
@@ -724,7 +724,7 @@ sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib,
 
 		mpc_common_spinlock_unlock(lock);
 
-		IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_NULL_PROTOCOL);
+		IBUF_SET_PROTOCOL(ibuf->buffer, MPC_LOWCOMM_IB_NULL_PROTOCOL);
 
 #ifdef DEBUG_IB_BUFS
 		assume(ibuf);
@@ -769,10 +769,10 @@ exit:
  * oncurrent calls.
  * - remote: process where picking buffer. It may be NULL. In this case,
  *   we pick a buffer from the SR channel */
-static inline sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_recv(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ibuf_numa_s *node)
+static inline _mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_recv(struct sctk_ib_rail_info_s *rail_ib, struct _mpc_lowcomm_ib_ibuf_numa_s *node)
 {
 	LOAD_CONFIG(rail_ib);
-	sctk_ibuf_t *ibuf;
+	_mpc_lowcomm_ib_ibuf_t *ibuf;
 	assume(node);
 
 	/* Allocate additionnal buffers if no more are available */
@@ -804,7 +804,7 @@ static inline sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_recv(struct sctk_ib_rail_in
 }
 
 static inline int __srq_post(struct sctk_ib_rail_info_s *rail_ib,
-                             sctk_ibuf_numa_t *node,
+                             _mpc_lowcomm_ib_ibuf_numa_t *node,
                              int force)
 {
 	assume(node);
@@ -812,7 +812,7 @@ static inline int __srq_post(struct sctk_ib_rail_info_s *rail_ib,
 	LOAD_CONFIG(rail_ib);
 	int                    i;
 	int                    nb_posted = 0;
-	sctk_ibuf_t *          ibuf;
+	_mpc_lowcomm_ib_ibuf_t *          ibuf;
 	int                    rc;
 	mpc_common_spinlock_t *lock = &node->lock;
 	int                    nb_ibufs;
@@ -896,7 +896,7 @@ int _mpc_lowcomm_ib_ibuf_srq_post(struct sctk_ib_rail_info_s *rail_ib)
 }
 
 static inline void __release_in_srq(struct sctk_ib_rail_info_s *rail_ib,
-                                    sctk_ibuf_numa_t *node,
+                                    _mpc_lowcomm_ib_ibuf_numa_t *node,
                                     int decr_free_srq_nb)
 {
 	if(decr_free_srq_nb)
@@ -908,9 +908,9 @@ static inline void __release_in_srq(struct sctk_ib_rail_info_s *rail_ib,
 	__srq_post(rail_ib, node, 0);
 }
 
-void _mpc_lowcomm_ib_ibuf_srq_release(struct sctk_ib_rail_info_s *rail_ib, sctk_ibuf_t *ibuf)
+void _mpc_lowcomm_ib_ibuf_srq_release(struct sctk_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_ibuf_t *ibuf)
 {
-	sctk_ibuf_numa_t *node = ibuf->region->node;
+	_mpc_lowcomm_ib_ibuf_numa_t *node = ibuf->region->node;
 
 	__release_in_srq(rail_ib, node, 1);
 }
@@ -918,31 +918,31 @@ void _mpc_lowcomm_ib_ibuf_srq_release(struct sctk_ib_rail_info_s *rail_ib, sctk_
 /* release one buffer given as parameter.
  * is_srq: if the buffer is released from the SRQ */
 void _mpc_lowcomm_ib_ibuf_release(struct sctk_ib_rail_info_s *rail_ib,
-                                  sctk_ibuf_t *ibuf,
+                                  _mpc_lowcomm_ib_ibuf_t *ibuf,
                                   int decr_free_srq_nb)
 {
 	ib_assume(ibuf);
 
 	if(ibuf->to_release & IBUF_RELEASE)
 	{
-		if(IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL)
+		if(IBUF_GET_CHANNEL(ibuf) & MPC_LOWCOMM_IB_RDMA_CHANNEL)
 		{
 			_mpc_lowcomm_ib_ibuf_rdma_release(rail_ib, ibuf);
 		}
 		else
 		{
-			ib_assume(IBUF_GET_CHANNEL(ibuf) == RC_SR_CHANNEL);
-			sctk_ibuf_numa_t *     node = ibuf->region->node;
+			ib_assume(IBUF_GET_CHANNEL(ibuf) == MPC_LOWCOMM_IB_RC_SR_CHANNEL);
+			_mpc_lowcomm_ib_ibuf_numa_t *     node = ibuf->region->node;
 			mpc_common_spinlock_t *lock = &node->lock;
 
 			if(ibuf->in_srq)
 			{
 				/* If buffer from SRQ */
 				ibuf->flag = FREE_FLAG;
-				IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_NULL_PROTOCOL);
+				IBUF_SET_PROTOCOL(ibuf->buffer, MPC_LOWCOMM_IB_NULL_PROTOCOL);
 
 				{
-					sctk_ibuf_numa_t *     closest_node   = __ibuf_get_numaware(rail_ib);
+					_mpc_lowcomm_ib_ibuf_numa_t *     closest_node   = __ibuf_get_numaware(rail_ib);
 					mpc_common_spinlock_t *srq_cache_lock = &closest_node->srq_cache_lock;
 
 					mpc_common_spinlock_lock(srq_cache_lock);
@@ -975,11 +975,11 @@ void _mpc_lowcomm_ib_ibuf_release(struct sctk_ib_rail_info_s *rail_ib,
 			{
 				/* TODO: only for debugging */
 #if 0
-				sctk_ibuf_numa_t *closest_node = __ibuf_get_numaware(rail_ib);
+				_mpc_lowcomm_ib_ibuf_numa_t *closest_node = __ibuf_get_numaware(rail_ib);
 				assume(closest_node == node);
 #endif
 				ibuf->flag = FREE_FLAG;
-				IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_NULL_PROTOCOL);
+				IBUF_SET_PROTOCOL(ibuf->buffer, MPC_LOWCOMM_IB_NULL_PROTOCOL);
 
 				OPA_incr_int(&node->free_nb);
 				mpc_common_spinlock_lock(lock);
@@ -995,12 +995,12 @@ void _mpc_lowcomm_ib_ibuf_release(struct sctk_ib_rail_info_s *rail_ib,
 }
 
 void _mpc_lowcomm_ib_ibuf_prepare(sctk_ib_qp_t *remote,
-                                  sctk_ibuf_t *ibuf,
+                                  _mpc_lowcomm_ib_ibuf_t *ibuf,
                                   size_t size)
 {
-	if(IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL)
+	if(IBUF_GET_CHANNEL(ibuf) & MPC_LOWCOMM_IB_RDMA_CHANNEL)
 	{
-		const sctk_ibuf_region_t *region = IBUF_RDMA_GET_REGION(remote, REGION_SEND);
+		const _mpc_lowcomm_ib_ibuf_region_t *region = IBUF_RDMA_GET_REGION(remote, REGION_SEND);
 
 		/* Initialization of the buffer */
 		_mpc_lowcomm_ib_ibuf_write_init(ibuf,
@@ -1016,7 +1016,7 @@ void _mpc_lowcomm_ib_ibuf_prepare(sctk_ib_qp_t *remote,
 	}
 	else
 	{
-		ib_assume(IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL);
+		ib_assume(IBUF_GET_CHANNEL(ibuf) & MPC_LOWCOMM_IB_RC_SR_CHANNEL);
 		__send_inline_init(ibuf, size);
 	}
 }

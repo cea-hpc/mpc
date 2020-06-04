@@ -26,10 +26,10 @@
 #include "sctk_ib_config.h"
 
 /* IB debug macros */
-#if defined SCTK_IB_MODULE_NAME
-#error "SCTK_IB_MODULE already defined"
+#if defined MPC_LOWCOMM_IB_MODULE_NAME
+#error "MPC_LOWCOMM_IB_MODULE already defined"
 #endif
-#define SCTK_IB_MODULE_NAME "CONFIG"
+#define MPC_LOWCOMM_IB_MODULE_NAME "CONFIG"
 #include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
 #include "sctk_ib_eager.h"

@@ -29,11 +29,11 @@
 #include "sctk_ibufs.h"
 
 /* IB debug macros */
-#if defined SCTK_IB_MODULE_NAME
-#error "SCTK_IB_MODULE already defined"
+#if defined MPC_LOWCOMM_IB_MODULE_NAME
+#error "MPC_LOWCOMM_IB_MODULE already defined"
 #endif
-#define SCTK_IB_MODULE_DEBUG
-#define SCTK_IB_MODULE_NAME "POLLING"
+#define MPC_LOWCOMM_IB_MODULE_DEBUG
+#define MPC_LOWCOMM_IB_MODULE_NAME "POLLING"
 #include "sctk_ib_toolkit.h"
 
 /*-----------------------------------------------------------

@@ -45,12 +45,12 @@ typedef struct sctk_ib_eager_s
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
-sctk_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *route_data, mpc_lowcomm_ptp_message_t *msg, size_t size, char is_control_message );
+_mpc_lowcomm_ib_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *route_data, mpc_lowcomm_ptp_message_t *msg, size_t size, char is_control_message );
 void sctk_ib_eager_free_msg_no_recopy ( void *arg );
 void sctk_ib_eager_recv_msg_no_recopy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp );
-void sctk_ib_eager_recv_free ( struct sctk_rail_info_s *rail, mpc_lowcomm_ptp_message_t *msg,  sctk_ibuf_t *ibuf, int recopy );
+void sctk_ib_eager_recv_free ( struct sctk_rail_info_s *rail, mpc_lowcomm_ptp_message_t *msg,  _mpc_lowcomm_ib_ibuf_t *ibuf, int recopy );
 void sctk_ib_eager_init ( struct sctk_ib_rail_info_s *rail_ib );
 void sctk_ib_eager_finalize( struct sctk_ib_rail_info_s *rail_ib);
-int sctk_ib_eager_poll_recv ( struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf );
+int sctk_ib_eager_poll_recv ( struct sctk_rail_info_s *rail, _mpc_lowcomm_ib_ibuf_t *ibuf );
 
 #endif

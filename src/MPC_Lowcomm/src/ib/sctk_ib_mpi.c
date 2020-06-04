@@ -50,27 +50,27 @@
 volatile char *vps_reset = NULL;
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
-static char *sctk_ib_protocol_print(sctk_ib_protocol_t prot)
+static char *sctk_ib_protocol_print(_mpc_lowcomm_ib_protocol_t prot)
 {
 	switch(prot)
 	{
-		case SCTK_IB_EAGER_PROTOCOL:
-			return "SCTK_IB_EAGER_PROTOCOL";
+		case MPC_LOWCOMM_IB_EAGER_PROTOCOL:
+			return "MPC_LOWCOMM_IB_EAGER_PROTOCOL";
 
 			break;
 
-		case SCTK_IB_BUFFERED_PROTOCOL:
-			return "SCTK_IB_BUFFERED_PROTOCOL";
+		case MPC_LOWCOMM_IB_BUFFERED_PROTOCOL:
+			return "MPC_LOWCOMM_IB_BUFFERED_PROTOCOL";
 
 			break;
 
-		case SCTK_IB_RDMA_PROTOCOL:
-			return "SCTK_IB_RDMA_PROTOCOL";
+		case MPC_LOWCOMM_IB_RDMA_PROTOCOL:
+			return "MPC_LOWCOMM_IB_RDMA_PROTOCOL";
 
 			break;
 
-		case SCTK_IB_NULL_PROTOCOL:
-			return "SCTK_IB_NULL_PROTOCOL";
+		case MPC_LOWCOMM_IB_NULL_PROTOCOL:
+			return "MPC_LOWCOMM_IB_NULL_PROTOCOL";
 
 			break;
 
@@ -92,7 +92,7 @@ static void sctk_network_send_message_ib_endpoint(mpc_lowcomm_ptp_message_t *msg
 	LOAD_CONFIG(rail_ib);
 	sctk_ib_route_info_t *route_data;
 	sctk_ib_qp_t *        remote;
-	sctk_ibuf_t *         ibuf;
+	_mpc_lowcomm_ib_ibuf_t *         ibuf;
 	size_t size;
 
 
@@ -206,7 +206,7 @@ sctk_endpoint_t *sctk_on_demand_connection_ib(struct sctk_rail_info_s *rail, int
 	return tmp;
 }
 
-int sctk_network_poll_send_ibuf(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf)
+int sctk_network_poll_send_ibuf(sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf)
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	int release_ibuf             = 1;
@@ -214,16 +214,16 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf)
 	/* Switch on the protocol of the received message */
 	switch(IBUF_GET_PROTOCOL(ibuf->buffer) )
 	{
-		case SCTK_IB_EAGER_PROTOCOL:
+		case MPC_LOWCOMM_IB_EAGER_PROTOCOL:
 			release_ibuf = 1;
 			break;
 
-		case SCTK_IB_RDMA_PROTOCOL:
+		case MPC_LOWCOMM_IB_RDMA_PROTOCOL:
 			release_ibuf = sctk_ib_rdma_poll_send(rail, ibuf);
 			mpc_common_nodebug("Received RMDA write send");
 			break;
 
-		case SCTK_IB_BUFFERED_PROTOCOL:
+		case MPC_LOWCOMM_IB_BUFFERED_PROTOCOL:
 			release_ibuf = 1;
 			break;
 
@@ -234,13 +234,13 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf)
 	}
 
 	/* We do not need to release the buffer with the RDMA channel */
-	if(IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL)
+	if(IBUF_GET_CHANNEL(ibuf) & MPC_LOWCOMM_IB_RDMA_CHANNEL)
 	{
 		_mpc_lowcomm_ib_ibuf_release(rail_ib, ibuf, 1);
 		return 0;
 	}
 
-	ib_assume(IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL);
+	ib_assume(IBUF_GET_CHANNEL(ibuf) & MPC_LOWCOMM_IB_RC_SR_CHANNEL);
 
 	if(release_ibuf)
 	{
@@ -255,9 +255,9 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf)
 	return 0;
 }
 
-int sctk_network_poll_recv_ibuf(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf)
+int sctk_network_poll_recv_ibuf(sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf)
 {
-	const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
+	const _mpc_lowcomm_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
 	int release_ibuf       = 1;
 	const struct ibv_wc wc = ibuf->wc;
 
@@ -299,16 +299,16 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf)
 		/* Switch on the protocol of the received message */
 		switch(protocol)
 		{
-			case SCTK_IB_EAGER_PROTOCOL:
+			case MPC_LOWCOMM_IB_EAGER_PROTOCOL:
 				sctk_ib_eager_poll_recv(rail, ibuf);
 				release_ibuf = 0;
 				break;
 
-			case SCTK_IB_RDMA_PROTOCOL:
+			case MPC_LOWCOMM_IB_RDMA_PROTOCOL:
 				release_ibuf = sctk_ib_rdma_poll_recv(rail, ibuf);
 				break;
 
-			case SCTK_IB_BUFFERED_PROTOCOL:
+			case MPC_LOWCOMM_IB_BUFFERED_PROTOCOL:
 				sctk_ib_buffered_poll_recv(rail, ibuf);
 				release_ibuf = 1;
 				break;
@@ -333,9 +333,9 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t *rail, sctk_ibuf_t *ibuf)
 
 static int sctk_network_poll_recv(sctk_rail_info_t *rail, struct ibv_wc *wc)
 {
-	sctk_ibuf_t *ibuf = NULL;
+	_mpc_lowcomm_ib_ibuf_t *ibuf = NULL;
 
-	ibuf = ( sctk_ibuf_t * )wc->wr_id;
+	ibuf = ( _mpc_lowcomm_ib_ibuf_t * )wc->wr_id;
 	ib_assume(ibuf);
 	int dest_task = -1;
 
@@ -345,7 +345,7 @@ static int sctk_network_poll_recv(sctk_rail_info_t *rail, struct ibv_wc *wc)
 	ibuf->polled_timestamp = mpc_arch_get_timestamp();
 	/* We *MUST* recopy some informations to the ibuf */
 	ibuf->wc   = *wc;
-	ibuf->cq   = SCTK_IB_RECV_CQ;
+	ibuf->cq   = MPC_LOWCOMM_IB_RECV_CQ;
 	ibuf->rail = rail;
 
 	/* If this is an immediate message, we process it */
@@ -354,10 +354,10 @@ static int sctk_network_poll_recv(sctk_rail_info_t *rail, struct ibv_wc *wc)
 		return sctk_network_poll_recv_ibuf(rail, ibuf);
 	}
 
-	if(IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL)
+	if(IBUF_GET_CHANNEL(ibuf) & MPC_LOWCOMM_IB_RC_SR_CHANNEL)
 	{
 		dest_task = IBUF_GET_DEST_TASK(ibuf->buffer);
-		ibuf->cq  = SCTK_IB_RECV_CQ;
+		ibuf->cq  = MPC_LOWCOMM_IB_RECV_CQ;
 
 		if(sctk_ib_cp_handle_message(ibuf, dest_task, dest_task) == 0)
 		{
@@ -377,9 +377,9 @@ static int sctk_network_poll_recv(sctk_rail_info_t *rail, struct ibv_wc *wc)
 static int sctk_network_poll_send(sctk_rail_info_t *rail, struct ibv_wc *wc)
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-	sctk_ibuf_t *        ibuf    = NULL;
+	_mpc_lowcomm_ib_ibuf_t *        ibuf    = NULL;
 
-	ibuf = ( sctk_ibuf_t * )
+	ibuf = ( _mpc_lowcomm_ib_ibuf_t * )
 	       wc->wr_id;
 
 	ib_assume(ibuf);
@@ -425,7 +425,7 @@ static int sctk_network_poll_send(sctk_rail_info_t *rail, struct ibv_wc *wc)
 
 	/* We *MUST* recopy some informations to the ibuf */
 	ibuf->wc   = *wc;
-	ibuf->cq   = SCTK_IB_SEND_CQ;
+	ibuf->cq   = MPC_LOWCOMM_IB_SEND_CQ;
 	ibuf->rail = rail;
 
 	/* Decrease the number of pending requests */
@@ -434,7 +434,7 @@ static int sctk_network_poll_send(sctk_rail_info_t *rail, struct ibv_wc *wc)
 	_mpc_lowcomm_ib_ibuf_rdma_max_pending_data_update(ibuf->remote,
 	                                       current_pending);
 
-	if( (IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL) )
+	if( (IBUF_GET_CHANNEL(ibuf) & MPC_LOWCOMM_IB_RC_SR_CHANNEL) )
 	{
 		src_task  = IBUF_GET_SRC_TASK(ibuf->buffer);
 		dest_task = IBUF_GET_DEST_TASK(ibuf->buffer);
@@ -473,7 +473,7 @@ void sctk_network_poll_all_cq(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 	/* Poll sent messages */
 	sctk_ib_cq_poll(rail, device->send_cq, config->wc_out_number, poll, sctk_network_poll_send);
 
-#ifdef SCTK_IB_CQ_MUTEX
+#ifdef MPC_LOWCOMM_IB_CQ_MUTEX
 #if 1
 	static pthread_mutex_t poll_mutex = PTHREAD_MUTEX_INITIALIZER;
 	static pthread_cond_t  poll_cond  = PTHREAD_COND_INITIALIZER;

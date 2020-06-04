@@ -40,11 +40,11 @@
 #include <string.h>
 
 /* IB debug macros */
-#if defined SCTK_IB_MODULE_NAME
-#error "SCTK_IB_MODULE already defined"
+#if defined MPC_LOWCOMM_IB_MODULE_NAME
+#error "MPC_LOWCOMM_IB_MODULE already defined"
 #endif
-//#define SCTK_IB_MODULE_DEBUG
-#define SCTK_IB_MODULE_NAME "QP"
+//#define MPC_LOWCOMM_IB_MODULE_DEBUG
+#define MPC_LOWCOMM_IB_MODULE_NAME "QP"
 #include "sctk_ib_toolkit.h"
 
 /*-----------------------------------------------------------
@@ -328,7 +328,7 @@ void sctk_ib_qp_destroy ( sctk_ib_qp_t *remote )
 {
 	if ( !remote )
 	{
-		SCTK_IB_ABORT ( "Trying to free a remote entry which is not initialized" );
+		MPC_LOWCOMM_IB_ABORT ( "Trying to free a remote entry which is not initialized" );
 	}
 
 	/* destroy the QP */
@@ -353,7 +353,7 @@ struct ibv_qp *sctk_ib_qp_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
         }
 
         if (!remote->qp) {
-          SCTK_IB_ABORT("Cannot create QP for rank %d", rank);
+          MPC_LOWCOMM_IB_ABORT("Cannot create QP for rank %d", rank);
         }
 
         mpc_common_nodebug("QP Initialized for rank %d %p", remote->rank, remote->qp);
@@ -533,7 +533,7 @@ void sctk_ib_qp_modify ( sctk_ib_qp_t *remote, struct ibv_qp_attr *attr, int fla
 
 	if ( ibv_modify_qp ( remote->qp, attr, flags ) != 0 )
 	{
-		SCTK_IB_ABORT_WITH_ERRNO ( "Cannot modify Queue Pair" );
+		MPC_LOWCOMM_IB_ABORT_WITH_ERRNO ( "Cannot modify Queue Pair" );
 	}
 }
 
@@ -548,7 +548,7 @@ struct ibv_srq *sctk_ib_srq_init ( struct sctk_ib_rail_info_s *rail_ib, struct i
 
 	if ( !device->srq )
 	{
-		SCTK_IB_ABORT_WITH_ERRNO ( "Cannot create Shared Received Queue" );
+		MPC_LOWCOMM_IB_ABORT_WITH_ERRNO ( "Cannot create Shared Received Queue" );
 		mpc_common_debug_abort();
 	}
 
@@ -731,7 +731,7 @@ void sctk_ib_qp_allocate_reset ( __UNUSED__ struct sctk_ib_rail_info_s *rail_ib,
 /*
  * Returns if the counter has to be reset because a signaled message needs to be send
  */
-static int check_signaled ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, sctk_ibuf_t *ibuf )
+static int check_signaled ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, _mpc_lowcomm_ib_ibuf_t *ibuf )
 {
 	LOAD_CONFIG ( rail_ib );
 	char is_signaled = ( ibuf->desc.wr.send.send_flags & IBV_SEND_SIGNALED ) ? 1 : 0;
@@ -776,7 +776,7 @@ struct wait_send_s
 	struct sctk_ib_rail_info_s *rail_ib;
 	int flag;
 	sctk_ib_qp_t *remote;
-	sctk_ibuf_t *ibuf;
+	_mpc_lowcomm_ib_ibuf_t *ibuf;
 };
 
 void sctk_ib_qp_release_entry ( __UNUSED__ struct sctk_ib_rail_info_s *rail_ib,  __UNUSED__ sctk_ib_qp_t *remote )
@@ -818,7 +818,7 @@ static void *wait_send ( void *arg )
 
 /* Send a message without locks. Messages which are sent are not blocked by locks.
  * This is useful for QP deconnexion */
-static inline void __send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, sctk_ibuf_t *ibuf )
+static inline void __send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, _mpc_lowcomm_ib_ibuf_t *ibuf )
 {
 	int rc;
 
@@ -865,11 +865,11 @@ static inline void __send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
 
 /* Send an ibuf to a remote.
  */
-int sctk_ib_qp_send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, sctk_ibuf_t *ibuf )
+int sctk_ib_qp_send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, _mpc_lowcomm_ib_ibuf_t *ibuf )
 {
 #ifdef IB_DEBUG
 
-	if ( IBUF_GET_PROTOCOL ( ibuf->buffer )  ==  SCTK_IB_NULL_PROTOCOL )
+	if ( IBUF_GET_PROTOCOL ( ibuf->buffer )  ==  MPC_LOWCOMM_IB_NULL_PROTOCOL )
 	{
 		sctk_ib_toolkit_print_backtrace();
 		not_reachable();

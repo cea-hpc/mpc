@@ -41,14 +41,14 @@ struct sctk_ib_rail_info_s;
 #define IBUF_RDMA_GET_TAIL(remote, ptr)    (remote->rdma.pool->region[ptr].tail)
 #define IBUF_RDMA_GET_NEXT(i)                  \
 	( ( (i->index + 1) >= i->region->nb) ? \
-	  (sctk_ibuf_t *)i->region->ibuf :     \
-	  (sctk_ibuf_t *)i->region->ibuf + (i->index + 1) )
+	  (_mpc_lowcomm_ib_ibuf_t *)i->region->ibuf :     \
+	  (_mpc_lowcomm_ib_ibuf_t *)i->region->ibuf + (i->index + 1) )
 
 #define IBUF_RDMA_ADD(i, x) \
-	( (sctk_ibuf_t *)( (i->region->ibuf + ( (i->index + x) % (i->region->nb) ) ) ) )
+	( (_mpc_lowcomm_ib_ibuf_t *)( (i->region->ibuf + ( (i->index + x) % (i->region->nb) ) ) ) )
 
 #define IBUF_RDMA_GET_ADDR_FROM_INDEX(remote, ptr, index) \
-	( (sctk_ibuf_t *)remote->rdma.pool->region[ptr].ibuf + index)
+	( (_mpc_lowcomm_ib_ibuf_t *)remote->rdma.pool->region[ptr].ibuf + index)
 
 #define IBUF_RDMA_GET_REGION(remote, ptr)        (&remote->rdma.pool->region[ptr])
 
@@ -141,10 +141,10 @@ struct sctk_ib_rail_info_s;
 typedef struct _mpc_lowcomm_ib_ibuf_rdma_pool_s
 {
 	/* Pointer to the RDMA regions: send and recv */
-	struct sctk_ibuf_region_s                region[2];
+	struct _mpc_lowcomm_ib_ibuf_region_s                region[2];
 
 	/* Remote addr of the buffers pool */
-	struct sctk_ibuf_region_s *              remote_region[2];
+	struct _mpc_lowcomm_ib_ibuf_region_s *              remote_region[2];
 
 	/* Rkey of the remote buffer pool */
 	uint32_t                                 rkey[2];
@@ -187,25 +187,25 @@ _mpc_lowcomm_ib_ibuf_rdma_pool_t * _mpc_lowcomm_ib_ibuf_rdma_pool_init(sctk_ib_q
 
 void _mpc_lowcomm_ib_ibuf_rdma_update_remote_addr(sctk_ib_qp_t *remote, sctk_ib_cm_rdma_connection_t *key, int region);
 
-void _mpc_lowcomm_ib_ibuf_rdma_release(sctk_ib_rail_info_t *rail_ib, sctk_ibuf_t *ibuf);
+void _mpc_lowcomm_ib_ibuf_rdma_release(sctk_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_ibuf_t *ibuf);
 
 int _mpc_lowcomm_ib_ibuf_rdma_eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);
 
 void _mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(sctk_ib_rail_info_t * rail, int(func) (sctk_ib_rail_info_t * rail, sctk_ib_qp_t * remote), int *ret);
 
-sctk_ibuf_t *_mpc_lowcomm_ib_ibuf_rdma_pick(sctk_ib_qp_t *remote);
+_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_rdma_pick(sctk_ib_qp_t *remote);
 
-void _mpc_lowcomm_ib_ibuf_rdma_set_tail_flag(sctk_ibuf_t *ibuf, size_t size);
+void _mpc_lowcomm_ib_ibuf_rdma_set_tail_flag(_mpc_lowcomm_ib_ibuf_t *ibuf, size_t size);
 
 void _mpc_lowcomm_ib_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
-                                           sctk_ibuf_region_t *region, enum sctk_ibuf_channel channel, int nb_ibufs, int size_ibufs);
+                                           _mpc_lowcomm_ib_ibuf_region_t *region, enum _mpc_lowcomm_ib_ibuf_channel_t channel, int nb_ibufs, int size_ibufs);
 
 void _mpc_lowcomm_ib_ibuf_rdma_region_reinit(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
-                                             sctk_ibuf_region_t *region, enum sctk_ibuf_channel channel, int nb_ibufs, int size_ibufs);
+                                             _mpc_lowcomm_ib_ibuf_region_t *region, enum _mpc_lowcomm_ib_ibuf_channel_t channel, int nb_ibufs, int size_ibufs);
 
 size_t _mpc_lowcomm_ib_ibuf_rdma_eager_limit_get(sctk_ib_qp_t *remote);
 
-void sctk_ibuf_rdma_determine_config_from_sample(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int *nb,
+void _mpc_lowcomm_ib_ibuf_rdma_determine_config_from_sample(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int *nb,
                                                  int *size_ibufs);
 
 void _mpc_lowcomm_ib_ibuf_rdma_connexion_cancel(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);

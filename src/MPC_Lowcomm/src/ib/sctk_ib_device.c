@@ -57,7 +57,7 @@ sctk_ib_device_t *sctk_ib_device_init ( struct sctk_ib_rail_info_s *rail_ib )
 	/* Check parameters */
 	if ( !dev_list )
 	{
-		SCTK_IB_ABORT ( "No IB devices found." );
+		MPC_LOWCOMM_IB_ABORT ( "No IB devices found." );
 	}
 
 
@@ -115,7 +115,7 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, cha
 
 	if ( device_id >= devices_nb )
 	{
-		SCTK_IB_ABORT ( "Cannot open rail. You asked rail %d on %d", device_id, devices_nb );
+		MPC_LOWCOMM_IB_ABORT ( "Cannot open rail. You asked rail %d on %d", device_id, devices_nb );
 	}
 
 	sctk_ib_nodebug ( "Opening rail %d on %d", device_id, devices_nb );
@@ -124,17 +124,17 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, cha
 
 	if ( !device->context )
 	{
-		SCTK_IB_ABORT_WITH_ERRNO ( "Cannot get device context." );
+		MPC_LOWCOMM_IB_ABORT_WITH_ERRNO ( "Cannot get device context." );
 	}
 
 	if ( ibv_query_device ( device->context, &device->dev_attr ) != 0 )
 	{
-		SCTK_IB_ABORT_WITH_ERRNO ( "Unable to get device attr." );
+		MPC_LOWCOMM_IB_ABORT_WITH_ERRNO ( "Unable to get device attr." );
 	}
 
 	if ( ibv_query_port ( device->context, 1, &device->port_attr ) != 0 )
 	{
-		SCTK_IB_ABORT ( "Unable to get port attr" );
+		MPC_LOWCOMM_IB_ABORT ( "Unable to get port attr" );
 	}
 
     	{
@@ -157,7 +157,7 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, cha
 			    }
 		    }
 		    if(device->index_pkey == -1){
-			SCTK_IB_ABORT ( "Unable to find pkey" );
+			MPC_LOWCOMM_IB_ABORT ( "Unable to find pkey" );
 		    }
 	        }
 	}
@@ -241,7 +241,7 @@ struct ibv_pd *sctk_ib_pd_init ( sctk_ib_device_t *device )
 
 	if ( !device->pd )
 	{
-		SCTK_IB_ABORT ( "Cannot get IB protection domain." );
+		MPC_LOWCOMM_IB_ABORT ( "Cannot get IB protection domain." );
 	}
 
 	return device->pd;
@@ -265,7 +265,7 @@ struct ibv_comp_channel *sctk_ib_comp_channel_init ( sctk_ib_device_t *device )
 
 	if ( !comp_channel )
 	{
-		SCTK_IB_ABORT_WITH_ERRNO ( "Cannot create Completion Channel." );
+		MPC_LOWCOMM_IB_ABORT_WITH_ERRNO ( "Cannot create Completion Channel." );
 	}
 
 	return comp_channel;
@@ -284,7 +284,7 @@ struct ibv_cq *sctk_ib_cq_init ( sctk_ib_device_t *device,
 
 	if ( !cq )
 	{
-		SCTK_IB_ABORT_WITH_ERRNO ( "Cannot create Completion Queue." );
+		MPC_LOWCOMM_IB_ABORT_WITH_ERRNO ( "Cannot create Completion Queue." );
 	}
 
 	if ( comp_channel != NULL )
@@ -293,7 +293,7 @@ struct ibv_cq *sctk_ib_cq_init ( sctk_ib_device_t *device,
 
 		if ( ret != 0 )
 		{
-			SCTK_IB_ABORT_WITH_ERRNO ( "Couldn't request CQ notification" );
+			MPC_LOWCOMM_IB_ABORT_WITH_ERRNO ( "Couldn't request CQ notification" );
 		}
 	}
 

@@ -37,11 +37,11 @@
 
 #include <sctk_alloc.h>
 
-#if defined SCTK_IB_MODULE_NAME
-#error "SCTK_IB_MODULE already defined"
+#if defined MPC_LOWCOMM_IB_MODULE_NAME
+#error "MPC_LOWCOMM_IB_MODULE already defined"
 #endif
-//#define SCTK_IB_MODULE_DEBUG
-#define SCTK_IB_MODULE_NAME "BUFF"
+//#define MPC_LOWCOMM_IB_MODULE_DEBUG
+#define MPC_LOWCOMM_IB_MODULE_NAME "BUFF"
 #include "sctk_ib_toolkit.h"
 #include "math.h"
 
@@ -75,7 +75,7 @@ int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
 	int    buffer_index = 0;
 	size_t msg_copied = 0;
 	size_t payload_size;
-	sctk_ibuf_t *ibuf;
+	_mpc_lowcomm_ib_ibuf_t *ibuf;
 	sctk_ib_buffered_t *buffered;
 	void *payload;
 	int number;
@@ -132,7 +132,7 @@ int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
 		buffered->index = buffer_index;
 		buffered->payload_size = payload_size;
 		buffered->copied = msg_copied;
-		IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_BUFFERED_PROTOCOL );
+		IBUF_SET_PROTOCOL ( ibuf->buffer, MPC_LOWCOMM_IB_BUFFERED_PROTOCOL );
 		msg_copied += payload_size;
 
 		IBUF_SET_DEST_TASK ( ibuf->buffer, SCTK_MSG_DEST_TASK ( msg ) );
@@ -169,12 +169,12 @@ void sctk_ib_buffered_free_msg ( void *arg )
 
 	switch ( entry->status & MASK_BASE )
 	{
-		case SCTK_IB_RDMA_RECOPY:
+		case MPC_LOWCOMM_IB_RDMA_RECOPY:
 			mpc_common_nodebug ( "Free payload %p from entry %p", entry->payload, entry );
 			sctk_free ( entry->payload );
 			break;
 
-		case SCTK_IB_RDMA_ZEROCOPY:
+		case MPC_LOWCOMM_IB_RDMA_ZEROCOPY:
 			/* Nothing to do */
 			break;
 
@@ -203,23 +203,23 @@ void sctk_ib_buffered_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
 
 	switch ( entry->status & MASK_BASE )
 	{
-		case SCTK_IB_RDMA_NOT_SET:
+		case MPC_LOWCOMM_IB_RDMA_NOT_SET:
 			mpc_common_nodebug ( "Message directly copied (entry:%p)", entry );
 
 			if ( recv->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS )
 			{
 				entry->payload = recv->tail.message.contiguous.addr;
 				/* Add matching OK */
-				entry->status = SCTK_IB_RDMA_ZEROCOPY | SCTK_IB_RDMA_MATCH;
+				entry->status = MPC_LOWCOMM_IB_RDMA_ZEROCOPY | MPC_LOWCOMM_IB_RDMA_MATCH;
 				mpc_common_spinlock_unlock ( &entry->lock );
 				break;
 			}
 
-		case SCTK_IB_RDMA_RECOPY:
+		case MPC_LOWCOMM_IB_RDMA_RECOPY:
 			mpc_common_nodebug ( "Message recopied" );
 
 			/* transfer done */
-			if ( ( entry->status & MASK_DONE ) == SCTK_IB_RDMA_DONE )
+			if ( ( entry->status & MASK_DONE ) == MPC_LOWCOMM_IB_RDMA_DONE )
 			{
 				mpc_common_spinlock_unlock ( &entry->lock );
 				/* The message is done. All buffers have been received */
@@ -231,7 +231,7 @@ void sctk_ib_buffered_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
 			{
 				mpc_common_nodebug ( "Matched" );
 				/* Add matching OK */
-				entry->status |= SCTK_IB_RDMA_MATCH;
+				entry->status |= MPC_LOWCOMM_IB_RDMA_MATCH;
 				mpc_common_nodebug ( "1 Matched ? %p %d", entry, entry->status & MASK_MATCH );
 				mpc_common_spinlock_unlock ( &entry->lock );
 			}
@@ -246,7 +246,7 @@ void sctk_ib_buffered_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
 
 static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_info_t *rail,
                                                                      sctk_ib_qp_t *remote,
-                                                                     sctk_ibuf_t *ibuf )
+                                                                     _mpc_lowcomm_ib_ibuf_t *ibuf )
 {
 	sctk_ib_buffered_entry_t *entry = NULL;
 	mpc_lowcomm_ptp_message_body_t *body;
@@ -268,7 +268,7 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
 		ib_assume ( entry );
 		/* Copy message header */
 		memcpy ( &entry->msg.body, body, sizeof ( mpc_lowcomm_ptp_message_body_t ) );
-		entry->msg.tail.ib.protocol = SCTK_IB_BUFFERED_PROTOCOL;
+		entry->msg.tail.ib.protocol = MPC_LOWCOMM_IB_BUFFERED_PROTOCOL;
 		entry->msg.tail.ib.buffered.entry = entry;
 		entry->msg.tail.ib.buffered.rail = rail;
 		/* Prepare matching */
@@ -280,7 +280,7 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
 		/* Add msg to hashtable */
 		entry->key = key;
 		entry->total = buffered->nb;
-		entry->status = SCTK_IB_RDMA_NOT_SET;
+		entry->status = MPC_LOWCOMM_IB_RDMA_NOT_SET;
 		mpc_common_nodebug ( "Not set: %d (%p)", entry->status, entry );
 		mpc_common_spinlock_init(&entry->lock, 0);
 		mpc_common_spinlock_init(&entry->current_copied_lock, 0);
@@ -295,16 +295,16 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
 
 		mpc_common_spinlock_lock ( &entry->lock );
 
-		/* Should be 'SCTK_IB_RDMA_NOT_SET' or 'SCTK_IB_RDMA_ZEROCOPY' */
-		if ( ( entry->status & MASK_BASE ) == SCTK_IB_RDMA_NOT_SET )
+		/* Should be 'MPC_LOWCOMM_IB_RDMA_NOT_SET' or 'MPC_LOWCOMM_IB_RDMA_ZEROCOPY' */
+		if ( ( entry->status & MASK_BASE ) == MPC_LOWCOMM_IB_RDMA_NOT_SET )
 		{
 			mpc_common_nodebug ( "We recopy the message" );
 			entry->payload = sctk_malloc ( body->header.msg_size );
 			ib_assume ( entry->payload );
-			entry->status |= SCTK_IB_RDMA_RECOPY;
+			entry->status |= MPC_LOWCOMM_IB_RDMA_RECOPY;
 		}
 		else
-			if ( ( entry->status & MASK_BASE ) != SCTK_IB_RDMA_ZEROCOPY )
+			if ( ( entry->status & MASK_BASE ) != MPC_LOWCOMM_IB_RDMA_ZEROCOPY )
 				not_reachable();
 
 		mpc_common_spinlock_unlock ( &entry->lock );
@@ -315,7 +315,7 @@ static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_i
 	return entry;
 }
 
-void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
+void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf )
 {
 	mpc_lowcomm_ptp_message_body_t *body;
 	sctk_ib_buffered_t *buffered;
@@ -370,10 +370,10 @@ void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 
 		switch ( entry->status & MASK_BASE )
 		{
-			case SCTK_IB_RDMA_RECOPY:
+			case MPC_LOWCOMM_IB_RDMA_RECOPY:
 
 				/* Message matched */
-				if ( ( entry->status & MASK_MATCH ) == SCTK_IB_RDMA_MATCH )
+				if ( ( entry->status & MASK_MATCH ) == MPC_LOWCOMM_IB_RDMA_MATCH )
 				{
 					mpc_common_spinlock_unlock ( &entry->lock );
 					ib_assume ( entry->copy_ptr );
@@ -385,16 +385,16 @@ void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 				else
 				{
 					mpc_common_nodebug ( "Free done:%p", entry );
-					entry->status |= SCTK_IB_RDMA_DONE;
+					entry->status |= MPC_LOWCOMM_IB_RDMA_DONE;
 					mpc_common_spinlock_unlock ( &entry->lock );
 				}
 
 				break;
 
-			case SCTK_IB_RDMA_ZEROCOPY:
+			case MPC_LOWCOMM_IB_RDMA_ZEROCOPY:
 
 				/* Message matched */
-				if ( ( entry->status & MASK_MATCH ) == SCTK_IB_RDMA_MATCH )
+				if ( ( entry->status & MASK_MATCH ) == MPC_LOWCOMM_IB_RDMA_MATCH )
 				{
 					mpc_common_spinlock_unlock ( &entry->lock );
 					ib_assume ( entry->copy_ptr );
