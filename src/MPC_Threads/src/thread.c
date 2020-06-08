@@ -245,7 +245,7 @@ int mpc_thread_get_task_placement_and_count_numa_packed(int i, int *nbVp)
 	// initialization
 	cpu_nb = mpc_topology_get_pu_count();           // number of cpu per process
 	nb_numa_node_per_node =
-	        mpc_topology_get_numa_node_count();     // number of numa nodes in the node
+		mpc_topology_get_numa_node_count();     // number of numa nodes in the node
 	// config
 	int T = sctk_last_local - sctk_first_local + 1; // number of task per node
 	int C = cpu_nb;                                 // number of cpu per node
@@ -311,10 +311,10 @@ int mpc_thread_get_task_placement_and_count_numa(int i, int *nbVp)
 	int local_id = mpc_common_get_local_task_rank();
 
 	int task_per_numa_node =
-	        ( ( (numa_node_id + 1) * task_nb + numa_node_per_node_nb - 1) /
-	          numa_node_per_node_nb) -
-	        ( ( (numa_node_id) * task_nb + numa_node_per_node_nb - 1) /
-	          numa_node_per_node_nb);
+		( ( (numa_node_id + 1) * task_nb + numa_node_per_node_nb - 1) /
+		  numa_node_per_node_nb) -
+		( ( (numa_node_id) * task_nb + numa_node_per_node_nb - 1) /
+		  numa_node_per_node_nb);
 	int proc_local  = (local_id * cpu_per_numa_node) / task_per_numa_node;
 	int proc_global = proc_local + (numa_node_id * cpu_per_numa_node);
 	// calculate nbVp value
@@ -324,7 +324,7 @@ int mpc_thread_get_task_placement_and_count_numa(int i, int *nbVp)
 	if(local_id < task_per_numa_node)
 	{
 		proc_next_global =
-		        ( (local_id + 1) * cpu_per_numa_node) / task_per_numa_node;
+			( (local_id + 1) * cpu_per_numa_node) / task_per_numa_node;
 		proc_next_local = proc_next_global + numa_node_id * cpu_per_numa_node;
 		*nbVp           = proc_next_local - proc_global;
 	}
@@ -509,17 +509,17 @@ int mpc_thread_get_pu(void)
 {
 	sctk_thread_data_t *data = mpc_thread_data_get();
 
-	if(!data )
+	if(!data)
 	{
 		return mpc_topology_get_current_cpu();
 	}
 
-    int ret = data->virtual_processor;
+	int ret = data->virtual_processor;
 
-    if( ret < 0)
-    {
-        ret = mpc_topology_get_current_cpu();
-    }
+	if(ret < 0)
+	{
+		ret = mpc_topology_get_current_cpu();
+	}
 
 	return ret;
 }
@@ -651,6 +651,7 @@ void  MPC_Process_hook(void)
 {
 	/*This function is used to intercept MPC process's creation when profiling*/
 }
+
 #endif
 
 static inline void __prepare_free_pages(void)
@@ -680,8 +681,8 @@ static inline void __init_brk_for_task(void)
 	mpc_common_nodebug("INIT ADRESS %p", tmp);
 	s = ( size_t )tmp /*  + 1*1024*1024*1024 */;
 	mpc_common_nodebug("Max allocation %luMo %lu",
-	             ( unsigned long )(size /
-	                               (1024 * 1024 * mpc_common_get_process_count() ) ), s);
+	                   ( unsigned long )(size /
+	                                     (1024 * 1024 * mpc_common_get_process_count() ) ), s);
 	start = s;
 	start = start / SCTK_MAX_MEMORY_OFFSET;
 	start = start * SCTK_MAX_MEMORY_OFFSET;
@@ -700,7 +701,7 @@ static inline void __init_brk_for_task(void)
 	}
 
 	mpc_common_nodebug("Heap start at %p (%p %p)", sctk_get_heap_start(),
-	             ( void * )s, tmp);
+	                   ( void * )s, tmp);
 	sctk_leave_no_alloc_land();
 }
 
@@ -845,11 +846,11 @@ static inline void __scheduler_set_thread_kind_mpi(void)
 	{
 		mpc_threads_generic_kind_mask_add(KIND_MASK_MPI);
 		mpc_threads_generic_kind_basic_priority(
-		        sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
+			sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
 		mpc_threads_generic_kind_priority(
-		        sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
+			sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
 		mpc_threads_generic_kind_current_priority(
-		        sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
+			sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
 	}
 }
 
@@ -1038,6 +1039,7 @@ static void __extls_runtime_end(void)
 {
 	extls_fini();
 }
+
 #endif
 
 
@@ -1094,11 +1096,11 @@ static void *___nonvp_thread_start_routine(sctk_thread_data_t *__arg)
 	{
 		mpc_threads_generic_kind_mask_add(KIND_MASK_PTHREAD);
 		mpc_threads_generic_kind_basic_priority(
-		        sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
+			sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
 		mpc_threads_generic_kind_priority(
-		        sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
+			sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
 		mpc_threads_generic_kind_current_priority(
-		        sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
+			sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
 	}
 
 	mpc_common_init_trigger("Per Thread Init");
@@ -1761,7 +1763,7 @@ int mpc_thread_attr_setscope(mpc_thread_attr_t *__attr, int __scope)
 	int res;
 
 	mpc_common_nodebug("thread attr_setscope %d == %d || %d", __scope,
-	             SCTK_THREAD_SCOPE_PROCESS, SCTK_THREAD_SCOPE_SYSTEM);
+	                   SCTK_THREAD_SCOPE_PROCESS, SCTK_THREAD_SCOPE_SYSTEM);
 	assert(_funcptr_mpc_thread_attr_setscope != NULL);
 	res = _funcptr_mpc_thread_attr_setscope(__attr, __scope);
 	sctk_check(res, 0);
@@ -2148,7 +2150,6 @@ int mpc_thread_process_kill(pid_t pid, int sig)
 	sctk_check(res, 0);
 	mpc_thread_yield();
 	return res;
-
 #else
 	not_available();
 	return 1;
@@ -2911,8 +2912,8 @@ unsigned int mpc_thread_sleep(unsigned int seconds)
 	_mpc_thread_core_sleep_pool_t wake_time;
 	wake_time.done      = 1;
 	wake_time.wake_time =
-	        ( ( ( sctk_timer_t )seconds * ( sctk_timer_t )1000) /
-	          ( sctk_timer_t )sctk_time_interval) + ___timer_thread_ticks + 1;
+		( ( ( sctk_timer_t )seconds * ( sctk_timer_t )1000) /
+		  ( sctk_timer_t )sctk_time_interval) + ___timer_thread_ticks + 1;
 	mpc_thread_yield();
 	assert(_funcptr_mpc_thread_testcancel != NULL);
 	_funcptr_mpc_thread_testcancel();
@@ -2933,8 +2934,8 @@ int mpc_thread_usleep(unsigned int useconds)
 	_mpc_thread_core_sleep_pool_t wake_time;
 	wake_time.done      = 1;
 	wake_time.wake_time =
-	        ( ( ( sctk_timer_t )useconds / ( sctk_timer_t )1000) /
-	          ( sctk_timer_t )sctk_time_interval) + ___timer_thread_ticks + 1;
+		( ( ( sctk_timer_t )useconds / ( sctk_timer_t )1000) /
+		  ( sctk_timer_t )sctk_time_interval) + ___timer_thread_ticks + 1;
 	mpc_thread_yield();
 	assert(_funcptr_mpc_thread_testcancel != NULL);
 	_funcptr_mpc_thread_testcancel();

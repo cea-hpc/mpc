@@ -80,6 +80,7 @@ static char *sctk_ib_protocol_print(_mpc_lowcomm_ib_protocol_t prot)
 			break;
 	}
 }
+
 #endif
 
 
@@ -90,9 +91,9 @@ static void sctk_network_send_message_ib_endpoint(mpc_lowcomm_ptp_message_t *msg
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 
 	LOAD_CONFIG(rail_ib);
-	sctk_ib_route_info_t *route_data;
-	sctk_ib_qp_t *        remote;
-	_mpc_lowcomm_ib_ibuf_t *         ibuf;
+	sctk_ib_route_info_t *  route_data;
+	sctk_ib_qp_t *          remote;
+	_mpc_lowcomm_ib_ibuf_t *ibuf;
 	size_t size;
 
 
@@ -359,7 +360,7 @@ static int sctk_network_poll_recv(sctk_rail_info_t *rail, struct ibv_wc *wc)
 		dest_task = IBUF_GET_DEST_TASK(ibuf->buffer);
 		ibuf->cq  = MPC_LOWCOMM_IB_RECV_CQ;
 
-		if(sctk_ib_cp_handle_message(ibuf, dest_task, dest_task) == 0)
+		if(_mpc_lowcomm_ib_cp_ctx_handle_message(ibuf, dest_task, dest_task) == 0)
 		{
 			return sctk_network_poll_recv_ibuf(rail, ibuf);
 		}
@@ -376,8 +377,8 @@ static int sctk_network_poll_recv(sctk_rail_info_t *rail, struct ibv_wc *wc)
 
 static int sctk_network_poll_send(sctk_rail_info_t *rail, struct ibv_wc *wc)
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-	_mpc_lowcomm_ib_ibuf_t *        ibuf    = NULL;
+	sctk_ib_rail_info_t *   rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_ibuf_t *ibuf    = NULL;
 
 	ibuf = ( _mpc_lowcomm_ib_ibuf_t * )
 	       wc->wr_id;
@@ -400,7 +401,7 @@ static int sctk_network_poll_send(sctk_rail_info_t *rail, struct ibv_wc *wc)
 			int current_pending;
 			current_pending = sctk_ib_qp_fetch_and_sub_pending_data(ibuf->remote, ibuf);
 			_mpc_lowcomm_ib_ibuf_rdma_max_pending_data_update(ibuf->remote,
-			                                       current_pending);
+			                                                  current_pending);
 
 			/* Check if we are in a flush state */
 			OPA_decr_int(&ibuf->remote->rdma.pool->busy_nb[REGION_RECV]);
@@ -432,7 +433,7 @@ static int sctk_network_poll_send(sctk_rail_info_t *rail, struct ibv_wc *wc)
 	int current_pending;
 	current_pending = sctk_ib_qp_fetch_and_sub_pending_data(ibuf->remote, ibuf);
 	_mpc_lowcomm_ib_ibuf_rdma_max_pending_data_update(ibuf->remote,
-	                                       current_pending);
+	                                                  current_pending);
 
 	if( (IBUF_GET_CHANNEL(ibuf) & MPC_LOWCOMM_IB_RC_SR_CHANNEL) )
 	{
@@ -441,7 +442,7 @@ static int sctk_network_poll_send(sctk_rail_info_t *rail, struct ibv_wc *wc)
 
 		/* We still check the dest_task. If it is -1, this is a process_specific
 		 * message, so we need to handle the message asap */
-		if(sctk_ib_cp_handle_message(ibuf, dest_task, src_task) == 0)
+		if(_mpc_lowcomm_ib_cp_ctx_handle_message(ibuf, dest_task, src_task) == 0)
 		{
 			return sctk_network_poll_send_ibuf(rail, ibuf);
 		}
@@ -456,6 +457,81 @@ static int sctk_network_poll_send(sctk_rail_info_t *rail, struct ibv_wc *wc)
 	}
 }
 
+static inline void __check_wc(struct sctk_ib_rail_info_s *rail_ib, struct ibv_wc wc)
+{
+	struct sctk_runtime_config_struct_net_driver_infiniband *config = (rail_ib)->config;
+	struct _mpc_lowcomm_ib_ibuf_s *ibuf;
+	char host[HOSTNAME];
+	char ibuf_desc[4096];
+
+	if(wc.status != IBV_WC_SUCCESS)
+	{
+		ibuf = ( struct _mpc_lowcomm_ib_ibuf_s * )wc.wr_id;
+		assume(ibuf);
+		gethostname(host, HOSTNAME);
+
+		if(config->quiet_crash)
+		{
+			mpc_common_debug_error("\nIB - PROCESS %d CRASHED (%s): %s",
+			                       mpc_common_get_process_rank(), host, ibv_wc_status_str(wc.status) );
+		}
+		else
+		{
+			_mpc_lowcomm_ib_ibuf_print(ibuf, ibuf_desc);
+			mpc_common_debug_error("\nIB - FATAL ERROR FROM PROCESS %d (%s)\n"
+			                       "################################\n"
+			                       "Work ID is   : %d\n"
+			                       "Status       : %s\n"
+			                       "ERROR Vendor : %d\n"
+			                       "Byte_len     : %d\n"
+			                       "Dest process : %d\n"
+			                       "######### IBUF DESC ############\n"
+			                       "%s\n"
+			                       "################################", mpc_common_get_process_rank(),
+			                       host,
+			                       wc.wr_id,
+			                       ibv_wc_status_str(wc.status),
+			                       wc.vendor_err,
+			                       wc.byte_len,
+			                       /* Remote can be NULL if the buffer comes from SRQ */
+			                       (ibuf->remote) ? ibuf->remote->rank : 0,
+			                       ibuf_desc);
+		}
+
+		mpc_common_debug_abort();
+	}
+}
+
+#define WC_COUNT    100
+static inline void __poll_cq(sctk_rail_info_t *rail,
+                             struct ibv_cq *cq,
+                             __UNUSED__ const int poll_nb,
+                             struct sctk_ib_polling_s *poll,
+                             int (*ptr_func)(sctk_rail_info_t *rail, struct ibv_wc *) )
+{
+	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	struct ibv_wc        wc[WC_COUNT];
+	int res = 0;
+	int i;
+
+	do
+	{
+		res = ibv_poll_cq(cq, WC_COUNT, wc);
+
+		if(res)
+		{
+			mpc_common_nodebug("Polled %d msgs from cq", res);
+		}
+
+		for(i = 0; i < res; ++i)
+		{
+			__check_wc(rail_ib, wc[i]);
+			ptr_func(rail, &wc[i]);
+			POLL_RECV_CQ(poll);
+		}
+	} while(res == WC_COUNT);
+}
+
 /* Count how many times the vp is entered to the polling function. We
  * allow recursive calls to the polling function */
 
@@ -468,100 +544,12 @@ void sctk_network_poll_all_cq(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 
 
 	/* Poll received messages */
-	sctk_ib_cq_poll(rail, device->recv_cq, config->wc_in_number, poll, sctk_network_poll_recv);
+	__poll_cq(rail, device->recv_cq, config->wc_in_number, poll, sctk_network_poll_recv);
 
 	/* Poll sent messages */
-	sctk_ib_cq_poll(rail, device->send_cq, config->wc_out_number, poll, sctk_network_poll_send);
+	__poll_cq(rail, device->send_cq, config->wc_out_number, poll, sctk_network_poll_send);
 
-#ifdef MPC_LOWCOMM_IB_CQ_MUTEX
-#if 1
-	static pthread_mutex_t poll_mutex = PTHREAD_MUTEX_INITIALIZER;
-	static pthread_cond_t  poll_cond  = PTHREAD_COND_INITIALIZER;
-	static int             retry;
-	if(sctk_net_is_mode_hybrid() )
-	{
-		/* The condition must change according if we are in MT or not */
-		if(POLL_GET_RECV(poll) > 0 || polling_task_id < 0)
-		{
-			retry = 0;
-			__release_cq_broadcast();
-		}
-		else
-		if(sctk_ib_cp_get_nb_pending_msg() != 0)
-		{
-			/* If nothing to poll from the pending list, we retry */
-			retry = 1;
-			__release_cq_broadcast();
-		}
-		else
-		{
-			if(blocking)
-			{
-				retry = 1;
-			}
-			else
-			{
-				retry = 2;
-				__release_cq_signal();
-			}
-		}
-	}
-	else
-	{
-		retry = 0;
-		__release_cq_broadcast();
-	}
-}
-
-while(retry == 1)
-{
-	;
-}
-}
-else
-if(blocking == 0)
-{
-	/* We leave the polling function as soon as possible */
-	pthread_mutex_unlock(&poll_mutex);
-}
-else
-{
-	/*  We are in blocked mode, so we wait ... */
-	pthread_cond_wait(&poll_cond, &poll_mutex);
-
-	/* If a recheck is asked, we return to the beginning of the function without
-	 * releasing the lock */
-	if(retry == 2)
-	{
-		goto recheck;
-	}
-
-	pthread_mutex_unlock(&poll_mutex);
-}
-
-#else
-}
-
-while(0)
-{
-	;
-}
-
-__release_cq_broadcast();
-}
-else
-{
-	/*  We are in blocked mode, so we wait ... */
-	pthread_cond_wait(&poll_cond, &poll_mutex);
-
-	/* If a recheck is asked, we return to the beginning of the function without
-	 * releasing the lock */
-	pthread_mutex_unlock(&poll_mutex);
-}
-#endif
-#endif
-
-	sctk_ib_cp_poll_global_list(poll);
+	_mpc_lowcomm_ib_cp_ctx_poll_global_list(poll);
 }
 
 static void sctk_network_notify_recv_message_ib(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail)
@@ -590,7 +578,7 @@ static void sctk_network_notify_perform_message_ib(__UNUSED__ int remote_process
 
 	POLL_INIT(&poll);
 
-	sctk_ib_cp_poll(&poll, polling_task_id);
+	_mpc_lowcomm_ib_cp_ctx_poll(&poll, polling_task_id);
 
 	/* If nothing to poll, we poll the CQ */
 	if(POLL_GET_RECV(&poll) == 0)
@@ -603,7 +591,7 @@ static void sctk_network_notify_perform_message_ib(__UNUSED__ int remote_process
 		if(POLL_GET_RECV_CQ(&poll) != 0)
 		{
 			POLL_INIT(&poll);
-			sctk_ib_cp_poll(&poll, polling_task_id);
+			_mpc_lowcomm_ib_cp_ctx_poll(&poll, polling_task_id);
 		}
 	}
 }
@@ -662,7 +650,7 @@ static void sctk_network_notify_idle_message_ib(sctk_rail_info_t *rail)
 		if(polling_task_id >= 0)
 		{
 			POLL_INIT(&poll);
-			sctk_ib_cp_poll(&poll, polling_task_id);
+			_mpc_lowcomm_ib_cp_ctx_poll(&poll, polling_task_id);
 		}
 	}
 	else
@@ -693,7 +681,7 @@ static void sctk_network_notify_any_source_message_ib(int polling_task_id, __UNU
 	}
 
 	POLL_INIT(&poll);
-	sctk_ib_cp_poll(&poll, polling_task_id);
+	_mpc_lowcomm_ib_cp_ctx_poll(&poll, polling_task_id);
 
 	/* If nothing to poll, we poll the CQ */
 	if(POLL_GET_RECV(&poll) == 0)
@@ -707,7 +695,7 @@ static void sctk_network_notify_any_source_message_ib(int polling_task_id, __UNU
 		   POLL_GET_RECV_CQ(&poll) == POLL_CQ_BUSY)
 		{
 			POLL_INIT(&poll);
-			sctk_ib_cp_poll(&poll, polling_task_id);
+			_mpc_lowcomm_ib_cp_ctx_poll(&poll, polling_task_id);
 		}
 	}
 }
@@ -757,7 +745,7 @@ void sctk_network_initialize_leader_task_mpi_ib(sctk_rail_info_t *rail)
 	sctk_ib_async_init(rail_ib->rail);
 
 	/* Initialize collaborative polling */
-	sctk_ib_cp_init(rail_ib);
+	_mpc_lowcomm_ib_cp_ctx_init(rail_ib);
 
 	LOAD_CONFIG(rail_ib);
 	LOAD_DEVICE(rail_ib);
@@ -820,7 +808,7 @@ void sctk_network_finalize_mpi_ib(sctk_rail_info_t *rail)
 	sctk_ib_async_finalize(rail);
 
 	/* collaborative polling shutdown (from leader_initialize)    */
-	sctk_ib_cp_finalize(rail_ib);
+	_mpc_lowcomm_ib_cp_ctx_finalize(rail_ib);
 
 	/* - Free IB topology                                         */
 	_mpc_lowcomm_ib_topology_free(rail_ib);
@@ -879,7 +867,7 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 	rail_ib->rail_nb = rail->rail_number;
 
 	/* Profiler init */
-	sctk_ib_device_t *device;
+	sctk_ib_device_t *       device;
 	struct ibv_srq_init_attr srq_attr;
 
 	/* Open config */

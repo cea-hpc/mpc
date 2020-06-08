@@ -44,7 +44,7 @@
 #error "MPC_LOWCOMM_IB_MODULE already defined"
 #endif
 //#define MPC_LOWCOMM_IB_MODULE_DEBUG
-#define MPC_LOWCOMM_IB_MODULE_NAME "CP"
+#define MPC_LOWCOMM_IB_MODULE_NAME    "CP"
 #include "sctk_ib_toolkit.h"
 #include "math.h"
 
@@ -52,124 +52,124 @@
 
 extern mpc_lowcomm_request_t *blocked_request;
 /* used to remember __thread var init for IB re-enabling */
-extern volatile char* vps_reset;
+extern volatile char *vps_reset;
 
-typedef struct sctk_ib_cp_s
+typedef struct _mpc_lowcomm_ib_cp_ctx_s
 {
 	/* Void for now */
-} sctk_ib_cp_t;
+} _mpc_lowcomm_ib_cp_ctx_t;
 
-struct numa_s;
+struct __mpc_lowcomm_ib_numa_s;
 
-typedef struct vp_s
+typedef struct __mpc_lowcomm_ib_vp_s
 {
-	int number; 				/**< Number */
-	sctk_ib_cp_task_t *tasks;
-	struct numa_s *node;		/**< Pointer to the numa node where the VP is located */
+	int                             number; /**< Number */
+	_mpc_lowcomm_ib_cp_task_t *     tasks;
+	struct __mpc_lowcomm_ib_numa_s *node;   /**< Pointer to the numa node where the VP is located */
 	/* For CDL list */
-	struct vp_s *prev;
-	struct vp_s *next;
-	char pad[128];
-} vp_t;
+	struct __mpc_lowcomm_ib_vp_s *  prev;
+	struct __mpc_lowcomm_ib_vp_s *  next;
+	char                            pad[128];
+} __mpc_lowcomm_ib_vp_t;
 
-typedef struct numa_s
+typedef struct __mpc_lowcomm_ib_numa_s
 {
-
-	int number;					/**< Number */
-	struct vp_s *vps;			/**< Circular list of VPs */
-	int     vp_nb;				/**< Number of VPs on the numa node*/
+	int                             number; /**< Number */
+	struct __mpc_lowcomm_ib_vp_s *  vps;    /**< Circular list of VPs */
+	int                             vp_nb;  /**< Number of VPs on the numa node*/
 	/* For CDL list */
-	struct numa_s *prev;
-	struct numa_s *next;
-	int tasks_nb;
-	sctk_ib_cp_task_t *tasks;	/** CDL of tasks for a NUMA node */
-	char pad[128];				/**< Padding avoiding false sharing */
-} numa_t;
+	struct __mpc_lowcomm_ib_numa_s *prev;
+	struct __mpc_lowcomm_ib_numa_s *next;
+	int                             tasks_nb;
+	_mpc_lowcomm_ib_cp_task_t *     tasks;    /** CDL of tasks for a NUMA node */
+	char                            pad[128]; /**< Padding avoiding false sharing */
+} __mpc_lowcomm_ib_numa_t;
 
 /** Array of numa nodes */
-static mpc_common_spinlock_t numas_lock = SCTK_SPINLOCK_INITIALIZER;
-static volatile numa_t *volatile *numas = NULL;
+static mpc_common_spinlock_t __numas_lock = SCTK_SPINLOCK_INITIALIZER;
+static volatile __mpc_lowcomm_ib_numa_t *volatile *numas = NULL;
 
-static int numa_number = -1;
-int numa_registered = 0;
+static int numa_number     = -1;
+int        numa_registered = 0;
 
 /** Array of vps */
-static vp_t   **vps = NULL;
-static mpc_common_spinlock_t vps_lock = SCTK_SPINLOCK_INITIALIZER;
+static __mpc_lowcomm_ib_vp_t **vps        = NULL;
+static mpc_common_spinlock_t   __vps_lock = SCTK_SPINLOCK_INITIALIZER;
 
-static sctk_ib_cp_task_t *all_tasks = NULL;
+static _mpc_lowcomm_ib_cp_task_t *all_tasks = NULL;
 
 /** NUMA node where the task is located */
 /** vars used to reducde latency access */
-static __thread int task_node_number = -1;
-static __thread vp_t *tls_vp = NULL;
-static __thread unsigned int seed;
-static __thread numa_t **numas_copy = NULL;
+static __thread int task_node_number             = -1;
+static __thread __mpc_lowcomm_ib_vp_t *   __vp_tls_save = NULL;
+static __thread unsigned int              seed;
+static __thread __mpc_lowcomm_ib_numa_t **__vp_numa_descriptor = NULL;
 
-#define CHECK_AND_QUIT(rail_ib) do {  \
-  LOAD_CONFIG(rail_ib);                             \
-  int steal = config->steal;                    \
-  if (steal < 0) return; }while(0)
+#define CHECK_AND_QUIT(rail_ib)    do {    \
+		LOAD_CONFIG(rail_ib);      \
+		int steal = config->steal; \
+		if(steal < 0){ return; } } while(0)
 
 OPA_int_t cp_nb_pending_msg;
 
-void sctk_ib_cp_incr_nb_pending_msg()
+void _mpc_lowcomm_ib_cp_ctx_incr_nb_pending_msg()
 {
-	OPA_incr_int ( &cp_nb_pending_msg );
+	OPA_incr_int(&cp_nb_pending_msg);
 }
 
-void sctk_ib_cp_decr_nb_pending_msg()
+void _mpc_lowcomm_ib_cp_ctx_decr_nb_pending_msg()
 {
-	OPA_decr_int ( &cp_nb_pending_msg );
+	OPA_decr_int(&cp_nb_pending_msg);
 }
 
-int sctk_ib_cp_get_nb_pending_msg()
+int _mpc_lowcomm_ib_cp_ctx_get_nb_pending_msg()
 {
-	return OPA_load_int ( &cp_nb_pending_msg );
+	return OPA_load_int(&cp_nb_pending_msg);
 }
 
 /*-----------------------------------------------------------
- *  FUNCTIONS
- *----------------------------------------------------------*/
+*  FUNCTIONS
+*----------------------------------------------------------*/
 #if 0
-sctk_ib_cp_task_t *sctk_ib_cp_get_task ( int rank )
+_mpc_lowcomm_ib_cp_task_t *_mpc_lowcomm_ib_cp_ctx_get_task(int rank)
 {
-	sctk_ib_cp_task_t *task = NULL;
+	_mpc_lowcomm_ib_cp_task_t *task = NULL;
 
 	/* XXX: Do not support thread migration */
-	HASH_FIND ( hh_all, all_tasks, &rank, sizeof ( int ), task );
-	ib_assume ( task );
+	HASH_FIND(hh_all, all_tasks, &rank, sizeof(int), task);
+	ib_assume(task);
 
 	return task;
 }
+
 #endif
 
 /* XXX: is called before 'cp_init_task' */
-void sctk_ib_cp_init ( struct sctk_ib_rail_info_s *rail_ib )
+void _mpc_lowcomm_ib_cp_ctx_init(struct sctk_ib_rail_info_s *rail_ib)
 {
-	CHECK_AND_QUIT ( rail_ib );
-	sctk_ib_cp_t *cp;
+	CHECK_AND_QUIT(rail_ib);
+	_mpc_lowcomm_ib_cp_ctx_t *cp;
 
-	cp = sctk_malloc ( sizeof ( sctk_ib_cp_t ) );
-	ib_assume ( cp );
+	cp = sctk_malloc(sizeof(_mpc_lowcomm_ib_cp_ctx_t) );
+	ib_assume(cp);
 	rail_ib->cp = cp;
-	OPA_store_int ( &cp_nb_pending_msg, 0 );
-	numa_number = -1;
+	OPA_store_int(&cp_nb_pending_msg, 0);
+	numa_number     = -1;
 	numa_registered = 0;
 	assume(numas == NULL);
 	assume(all_tasks == NULL);
 }
 
-void sctk_ib_cp_finalize(struct sctk_ib_rail_info_s *rail_ib)
+void _mpc_lowcomm_ib_cp_ctx_finalize(struct sctk_ib_rail_info_s *rail_ib)
 {
 	int i;
 
-	mpc_common_spinlock_lock(&vps_lock);
+	mpc_common_spinlock_lock(&__vps_lock);
 	/* free vps struct */
 	int nbvps = mpc_topology_get_pu_count();
 	if(vps)
 	{
-		for (i = 0; i < nbvps; ++i)
+		for(i = 0; i < nbvps; ++i)
 		{
 			if(vps[i])
 			{
@@ -182,56 +182,55 @@ void sctk_ib_cp_finalize(struct sctk_ib_rail_info_s *rail_ib)
 		sctk_free(vps);
 		vps = NULL;
 	}
-	
+
 	/* free numas struct */
 	int max_node = mpc_topology_get_numa_node_count();
 	max_node = (max_node < 1) ? 1 : max_node;
 
-	mpc_common_spinlock_lock(&numas_lock);
+	mpc_common_spinlock_lock(&__numas_lock);
 	if(numas)
 	{
-		for (i = 0; i < max_node; ++i)
+		for(i = 0; i < max_node; ++i)
 		{
 			if(numas[i])
 			{
-				sctk_free((void*)numas[i]);
+				sctk_free( (void *)numas[i]);
 				numas[i] = NULL;
 			}
 		}
-		sctk_free((void*)numas);
+		sctk_free( (void *)numas);
 		numas = NULL;
 	}
-	mpc_common_spinlock_unlock(&numas_lock);
+	mpc_common_spinlock_unlock(&__numas_lock);
 
-	sctk_ib_cp_task_t *tofree = NULL, *tmp = NULL;
+	_mpc_lowcomm_ib_cp_task_t *tofree = NULL, *tmp = NULL;
 	HASH_ITER(hh_all, all_tasks, tofree, tmp)
 	{
 		HASH_DELETE(hh_all, all_tasks, tofree);
 		sctk_free(tofree);
 	}
 	assert(HASH_CNT(hh_all, all_tasks) == 0); /* all elements should be removed */
-	mpc_common_spinlock_unlock(&vps_lock);
+	mpc_common_spinlock_unlock(&__vps_lock);
 	sctk_free(rail_ib->cp);
 	rail_ib->cp = NULL;
 	OPA_store_int(&cp_nb_pending_msg, 0);
-
 }
 
-void sctk_ib_cp_init_task ( int rank, int vp )
+void _mpc_lowcomm_ib_cp_ctx_init_task(int rank, int vp)
 {
-	sctk_ib_cp_task_t *task = NULL;
-	int node =  mpc_topology_get_numa_node_from_cpu( vp );
+	_mpc_lowcomm_ib_cp_task_t *task = NULL;
+	int node = mpc_topology_get_numa_node_from_cpu(vp);
 	/* Process specific list of messages */
-	static _mpc_lowcomm_ib_ibuf_t *volatile __global_ibufs_list = NULL;
-	static mpc_common_spinlock_t __global_ibufs_list_lock = SCTK_SPINLOCK_INITIALIZER;
+	static _mpc_lowcomm_ib_ibuf_t *volatile __global_ibufs_list      = NULL;
+	static mpc_common_spinlock_t            __global_ibufs_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
-	mpc_common_spinlock_lock ( &vps_lock );
+	mpc_common_spinlock_lock(&__vps_lock);
 	/* If the task has already been added, we do not add it once again and skip */
-	HASH_FIND ( hh_all, all_tasks, &rank, sizeof ( int ), task );
+	HASH_FIND(hh_all, all_tasks, &rank, sizeof(int), task);
 
-	if ( task )
+	if(task)
 	{
-		mpc_common_spinlock_unlock ( &vps_lock );
+		mpc_common_spinlock_unlock(&__vps_lock);
 		return;
 	}
 
@@ -241,89 +240,96 @@ void sctk_ib_cp_init_task ( int rank, int vp )
 	if(vps_reset[vp] == 0)
 	{
 		/* re-init all __thread vars (globals are reset at finalize() time) */
-		if(numas_copy) {sctk_free(numas_copy); numas_copy = NULL; }
-		seed = 0;
+		if(__vp_numa_descriptor)
+		{
+			sctk_free(__vp_numa_descriptor); __vp_numa_descriptor = NULL;
+		}
+		seed             = 0;
 		task_node_number = -1;
-
 	}
 
 	task_node_number = node;
-	task = sctk_malloc ( sizeof ( sctk_ib_cp_task_t ) );
-	memset ( task, 0, sizeof ( sctk_ib_cp_task_t ) );
-	ib_assume ( task );
-	task->node =  node;
-	task->vp = vp;
+	task             = sctk_malloc(sizeof(_mpc_lowcomm_ib_cp_task_t) );
+	memset(task, 0, sizeof(_mpc_lowcomm_ib_cp_task_t) );
+	ib_assume(task);
+	task->node = node;
+	task->vp   = vp;
 	task->rank = rank;
-        mpc_common_spinlock_init(&task->local_ibufs_list_lock, 0);
+	mpc_common_spinlock_init(&task->local_ibufs_list_lock, 0);
 	mpc_common_spinlock_init(&task->lock_timers, 0);
-	task->ready = 0;
-	task->global_ibufs_list = &__global_ibufs_list;
+	task->ready                  = 0;
+	task->global_ibufs_list      = &__global_ibufs_list;
 	task->global_ibufs_list_lock = &__global_ibufs_list_lock;
 
 	/* Initial allocation of structures */
-        mpc_common_spinlock_lock(&numas_lock);
-        if (!numas) {
-	  numa_number = mpc_topology_get_numa_node_count();
+	mpc_common_spinlock_lock(&__numas_lock);
+	if(!numas)
+	{
+		numa_number = mpc_topology_get_numa_node_count();
 
-          if (numa_number == 0)
-            numa_number = 1;
+		if(numa_number == 0)
+		{
+			numa_number = 1;
+		}
 
-          numas = sctk_calloc(numa_number, sizeof(numa_t));
-          ib_assume(numas);
+		numas = sctk_calloc(numa_number, sizeof(__mpc_lowcomm_ib_numa_t) );
+		ib_assume(numas);
 
-          int vp_number = mpc_topology_get_pu_count();
-          vps = sctk_malloc(sizeof(vp_t *) * vp_number);
-          ib_assume(vps);
-          memset(vps, 0, sizeof(vp_t *) * vp_number);
-          mpc_common_nodebug("vp: %d - numa: %d", mpc_topology_get_pu_count(), numa_number);
-        }
+		int vp_number = mpc_topology_get_pu_count();
+		vps = sctk_malloc(sizeof(__mpc_lowcomm_ib_vp_t *) * vp_number);
+		ib_assume(vps);
+		memset(vps, 0, sizeof(__mpc_lowcomm_ib_vp_t *) * vp_number);
+		mpc_common_nodebug("vp: %d - numa: %d", mpc_topology_get_pu_count(), numa_number);
+	}
 
-        /* Add NUMA node if not already added */
-        if (numas[node] == NULL) {
-          numa_t *tmp_numa = sctk_malloc(sizeof(numa_t));
-          memset(tmp_numa, 0, sizeof(numa_t));
-          numa_registered += 1;
-          tmp_numa->number = node;
-          numas[node] = tmp_numa;
-        }
-        mpc_common_spinlock_unlock(&numas_lock);
+	/* Add NUMA node if not already added */
+	if(numas[node] == NULL)
+	{
+		__mpc_lowcomm_ib_numa_t *tmp_numa = sctk_malloc(sizeof(__mpc_lowcomm_ib_numa_t) );
+		memset(tmp_numa, 0, sizeof(__mpc_lowcomm_ib_numa_t) );
+		numa_registered += 1;
+		tmp_numa->number = node;
+		numas[node]      = tmp_numa;
+	}
+	mpc_common_spinlock_unlock(&__numas_lock);
 
-        /* Add the VP to the CDL list of the correct NUMA node if it not already
-         * done */
-        if (vps[vp] == NULL) {
-          vp_t *tmp_vp = sctk_malloc(sizeof(vp_t));
-          memset(tmp_vp, 0, sizeof(vp_t));
-          tmp_vp->node = (numa_t*)numas[node];
-          CDL_PREPEND(numas[node]->vps, tmp_vp);
-          tmp_vp->number = vp;
-          vps[vp] = tmp_vp;
-          numas[node]->tasks_nb++;
-        }
+	/* Add the VP to the CDL list of the correct NUMA node if it not already
+	 * done */
+	if(vps[vp] == NULL)
+	{
+		__mpc_lowcomm_ib_vp_t *tmp_vp = sctk_malloc(sizeof(__mpc_lowcomm_ib_vp_t) );
+		memset(tmp_vp, 0, sizeof(__mpc_lowcomm_ib_vp_t) );
+		tmp_vp->node = (__mpc_lowcomm_ib_numa_t *)numas[node];
+		CDL_PREPEND(numas[node]->vps, tmp_vp);
+		tmp_vp->number = vp;
+		vps[vp]        = tmp_vp;
+		numas[node]->tasks_nb++;
+	}
 
-        HASH_ADD(hh_vp, vps[vp]->tasks, rank, sizeof(int), task);
-        HASH_ADD(hh_all, all_tasks, rank, sizeof(int), task);
-        CDL_PREPEND(numas[node]->tasks, task);
-        mpc_common_spinlock_unlock(&vps_lock);
-        sctk_ib_debug("Task %d registered on VP %d (numa:%d:tasks_nb:%d)", rank,
-                      vp, node, numas[node]->tasks_nb);
+	HASH_ADD(hh_vp, vps[vp]->tasks, rank, sizeof(int), task);
+	HASH_ADD(hh_all, all_tasks, rank, sizeof(int), task);
+	CDL_PREPEND(numas[node]->tasks, task);
+	mpc_common_spinlock_unlock(&__vps_lock);
+	sctk_ib_debug("Task %d registered on VP %d (numa:%d:tasks_nb:%d)", rank,
+	              vp, node, numas[node]->tasks_nb);
 
-        /* Initialize seed for steal */
-        seed = getpid() * time(NULL);
+	/* Initialize seed for steal */
+	seed = getpid() * time(NULL);
 
-        task->ready = 1;
-	tls_vp = vps[vp];
+	task->ready = 1;
+	__vp_tls_save      = vps[vp];
 }
 
-void sctk_ib_cp_finalize_task ( int rank )
+void _mpc_lowcomm_ib_cp_ctx_finalize_task(int rank)
 {
-	sctk_ib_cp_task_t *task = NULL;
+	_mpc_lowcomm_ib_cp_task_t *task = NULL;
 	int vp, node;
 
-	mpc_common_spinlock_lock(&vps_lock);
-	HASH_FIND ( hh_all, all_tasks, &rank, sizeof ( int ), task );
-	if ( task )
+	mpc_common_spinlock_lock(&__vps_lock);
+	HASH_FIND(hh_all, all_tasks, &rank, sizeof(int), task);
+	if(task)
 	{
-		vp = task->vp;
+		vp   = task->vp;
 		node = mpc_topology_get_numa_node_from_cpu(vp);
 
 		CDL_DELETE(numas[node]->tasks, task);
@@ -332,49 +338,52 @@ void sctk_ib_cp_finalize_task ( int rank )
 		task->ready = 0;
 		sctk_free(task);
 	}
-	mpc_common_spinlock_unlock(&vps_lock);
-	
-	seed = 0;
-	if(numas_copy){ sctk_free(numas_copy); numas_copy = NULL; }
-	task_node_number = -1;
+	mpc_common_spinlock_unlock(&__vps_lock);
 
+	seed = 0;
+	if(__vp_numa_descriptor)
+	{
+		sctk_free(__vp_numa_descriptor);
+		__vp_numa_descriptor = NULL;
+	}
+	task_node_number = -1;
 }
 
-static inline int __cp_poll ( struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t *volatile *list, mpc_common_spinlock_t *lock )
+static inline int __cp_poll(struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t *volatile *list, mpc_common_spinlock_t *lock)
 {
 	_mpc_lowcomm_ib_ibuf_t *ibuf = NULL;
 	int nb_found = 0;
 
 retry:
 
-	if ( *list != NULL )
+	if(*list != NULL)
 	{
-		if ( mpc_common_spinlock_trylock ( lock ) == 0 )
+		if(mpc_common_spinlock_trylock(lock) == 0)
 		{
-			if ( *list != NULL )
+			if(*list != NULL)
 			{
 				ibuf = *list;
-				DL_DELETE ( *list, ibuf );
-				mpc_common_spinlock_unlock ( lock );
-				sctk_ib_cp_decr_nb_pending_msg();
+				DL_DELETE(*list, ibuf);
+				mpc_common_spinlock_unlock(lock);
+				_mpc_lowcomm_ib_cp_ctx_decr_nb_pending_msg();
 
 
 
 				/* Run the polling function according to the type of message */
-				if ( ibuf->cq == MPC_LOWCOMM_IB_RECV_CQ )
+				if(ibuf->cq == MPC_LOWCOMM_IB_RECV_CQ)
 				{
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
 					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
-					sctk_network_poll_recv_ibuf ( ( sctk_rail_info_t * ) ibuf->rail, ibuf );
+					sctk_network_poll_recv_ibuf( ( sctk_rail_info_t * )ibuf->rail, ibuf);
 				}
 				else
 				{
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
 					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
-					sctk_network_poll_send_ibuf ( ( sctk_rail_info_t * ) ibuf->rail, ibuf);
+					sctk_network_poll_send_ibuf( ( sctk_rail_info_t * )ibuf->rail, ibuf);
 				}
 
-				POLL_RECV_OWN ( poll );
+				POLL_RECV_OWN(poll);
 
 
 				nb_found++;
@@ -382,7 +391,7 @@ retry:
 			}
 			else
 			{
-				mpc_common_spinlock_unlock ( lock );
+				mpc_common_spinlock_unlock(lock);
 			}
 		}
 	}
@@ -390,117 +399,124 @@ retry:
 	return nb_found;
 }
 
-int sctk_ib_cp_poll_global_list ( struct sctk_ib_polling_s *poll )
+int _mpc_lowcomm_ib_cp_ctx_poll_global_list(struct sctk_ib_polling_s *poll)
 {
-	sctk_ib_cp_task_t *task = NULL;
-	int vp = mpc_topology_get_pu();
+	_mpc_lowcomm_ib_cp_task_t *task = NULL;
 
-	if ( vp < 0 )
-		return 0;
-
-	if ( vps == NULL || vps[vp] == NULL )
+	if(__vp_tls_save == NULL)
 	{
 		return 0;
 	}
 
-	task = vps[vp]->tasks;
+	task = __vp_tls_save->tasks;
 
-	if ( !task )
-		return 0;
-
-	ib_assume ( task );
-
-	return __cp_poll (  poll, task->global_ibufs_list, task->global_ibufs_list_lock );
-}
-
-int sctk_ib_cp_poll ( struct sctk_ib_polling_s *poll, int task_id )
-{
-	sctk_ib_cp_task_t *task = NULL;
-#ifdef HAVE_PROGRESS_THREAD
-	if ( task_id < 0 || 1)
-#else
-	if ( task_id < 0 )
-#endif
+	if(!task)
 	{
-          sctk_ib_cp_steal( poll, 1);
-          return 0;
-        }
+		return 0;
+	}
 
-        int vp = -1;
+	ib_assume(task);
 
-        if (tls_vp == NULL) {
-          vp = mpc_topology_get_pu();
-
-          if (vp < 0 || vps == NULL )
-            return 0;
-
-          if (vps[vp] == NULL) {
-            mpc_common_nodebug( "Are we in hybrid mode? try to find dest task %d", task_id );
-            HASH_FIND( hh_all, all_tasks, &task_id, sizeof( int ), task );
-            assume(task);
-
-            vp = task->vp;
-            assume(vp >= 0);
-
-            if (vps[vp] == NULL)
-              return 0;
-          }
-
-          mpc_common_spinlock_lock(&vps_lock);
-          tls_vp = vps[vp];
-          mpc_common_spinlock_unlock(&vps_lock);
-        }
-
-        for (task = tls_vp->tasks; task; task = task->hh_vp.next) {
-          __cp_poll( poll, &(task->local_ibufs_list),
-                    &(task->local_ibufs_list_lock));
-        }
-
-        return 0;
+	return __cp_poll(poll, task->global_ibufs_list, task->global_ibufs_list_lock);
 }
 
-static inline int __cp_steal ( struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t *volatile *list, mpc_common_spinlock_t *lock, __UNUSED__ sctk_ib_cp_task_t *task, __UNUSED__ sctk_ib_cp_task_t *stealing_task )
+int _mpc_lowcomm_ib_cp_ctx_poll(struct sctk_ib_polling_s *poll, int task_id)
+{
+	_mpc_lowcomm_ib_cp_task_t *task = NULL;
+
+	int vp = -1;
+
+	if(__vp_tls_save == NULL)
+	{
+		vp = mpc_topology_get_pu();
+
+		if(vp < 0 || vps == NULL)
+		{
+			return 0;
+		}
+
+		if(vps[vp] == NULL)
+		{
+			mpc_common_nodebug("Are we in hybrid mode? try to find dest task %d", task_id);
+			HASH_FIND(hh_all, all_tasks, &task_id, sizeof(int), task);
+			assume(task);
+
+			vp = task->vp;
+			assume(vp >= 0);
+
+			if(vps[vp] == NULL)
+			{
+				return 0;
+			}
+		}
+
+		if(0 <= task_id)
+		{
+			mpc_common_spinlock_lock(&__vps_lock);
+			__vp_tls_save = vps[vp];
+			mpc_common_spinlock_unlock(&__vps_lock);
+		}
+	}
+
+	int nb_found = 0;
+
+	for(task = __vp_tls_save->tasks; task; task = task->hh_vp.next)
+	{
+		nb_found += __cp_poll(poll, &(task->local_ibufs_list),
+		          &(task->local_ibufs_list_lock) );
+	}
+
+	/* If nothing on our NUMA poll for others */
+	if(nb_found == 0)
+	{
+		_mpc_lowcomm_ib_cp_ctx_steal(poll, 1);
+	}
+
+	return 0;
+}
+
+static inline int __cp_steal(struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t *volatile *list, mpc_common_spinlock_t *lock, __UNUSED__ _mpc_lowcomm_ib_cp_task_t *task)
 {
 	_mpc_lowcomm_ib_ibuf_t *ibuf = NULL;
 	int nb_found = 0;
 
-	if ( *list != NULL )
+	if(*list != NULL)
 	{
-		if ( mpc_common_spinlock_trylock ( lock ) == 0 )
+		if(mpc_common_spinlock_trylock(lock) == 0)
 		{
-			if ( *list != NULL )
+			if(*list != NULL)
 			{
 				ibuf = *list;
-				DL_DELETE ( *list, ibuf );
-				mpc_common_spinlock_unlock ( lock );
-				sctk_ib_cp_decr_nb_pending_msg();
+				DL_DELETE(*list, ibuf);
+				mpc_common_spinlock_unlock(lock);
+				_mpc_lowcomm_ib_cp_ctx_decr_nb_pending_msg();
 
 				/* Run the polling function */
-				if ( ibuf->cq == MPC_LOWCOMM_IB_RECV_CQ )
+				if(ibuf->cq == MPC_LOWCOMM_IB_RECV_CQ)
 				{
 					/* Profile the time to handle an ibuf once it has been polled
-					* from the CQ */
+					 * from the CQ */
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
 					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
-					sctk_network_poll_recv_ibuf ( ibuf->rail, ibuf );
+					sctk_network_poll_recv_ibuf(ibuf->rail, ibuf);
 				}
 				else
 				{
 					/* Profile the time to handle an ibuf once it has been polled
-					* from the CQ */
+					 * from the CQ */
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
 					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
-					sctk_network_poll_send_ibuf ( ibuf->rail, ibuf );
+					sctk_network_poll_send_ibuf(ibuf->rail, ibuf);
 				}
 
-				POLL_RECV_OTHER ( poll );
+				POLL_RECV_OTHER(poll);
 
 
 				nb_found++;
 				goto exit;
 			}
 
-			mpc_common_spinlock_unlock ( lock );
+			mpc_common_spinlock_unlock(lock);
 		}
 	}
 
@@ -508,103 +524,118 @@ exit:
 	return nb_found;
 }
 
-int sctk_ib_cp_steal ( struct sctk_ib_polling_s *poll, char other_numa )
+int _mpc_lowcomm_ib_cp_ctx_steal(struct sctk_ib_polling_s *poll, char other_numa)
 {
 	int nb_found = 0;
-	int vp = mpc_topology_get_pu();
-	sctk_ib_cp_task_t *stealing_task = NULL;
-	sctk_ib_cp_task_t *task = NULL;
-	vp_t *tmp_vp;
-	numa_t *numa;
 
-	if ( vp < 0 || vps_reset[vp] == 0 || !vps || !numas)
-		return 0;
 
-	if ( numas_copy == NULL )
+	if(!__vp_tls_save || !vps || !numas)
 	{
-          mpc_common_spinlock_lock(&numas_lock);
+		return 0;
+	}
 
-          assume(numa_number != -1);
+	if(__vp_numa_descriptor == NULL)
+	{
+		mpc_common_spinlock_lock(&__numas_lock);
 
-          if (numas_copy == NULL) {
-            numas_copy = malloc(sizeof(numa_t) * numa_number);
-            memcpy(numas_copy, (void *)numas, sizeof(numa_t) * numa_number);
-          }
+		assume(numa_number != -1);
 
-          mpc_common_spinlock_unlock(&numas_lock);
-        }
+		if(__vp_numa_descriptor == NULL)
+		{
+			__vp_numa_descriptor = malloc(sizeof(__mpc_lowcomm_ib_numa_t) * numa_number);
+			memcpy(__vp_numa_descriptor, (void *)numas, sizeof(__mpc_lowcomm_ib_numa_t) * numa_number);
+		}
 
-        if (vps[vp] != NULL) {
-          /* XXX: Not working with oversubscribing */
-          stealing_task = vps[vp]->tasks;
+		mpc_common_spinlock_unlock(&__numas_lock);
+	}
 
-          /* In PTHREAD mode, the idle task do not call the cp_init_task
-          * function.
-          * If task_node_number not initialized, we do it now */
-          if (task_node_number < 0)
-            task_node_number = mpc_topology_get_numa_node_from_cpu(vp);
+	_mpc_lowcomm_ib_cp_task_t *task          = NULL;
+	__mpc_lowcomm_ib_numa_t *  numa;
+	__mpc_lowcomm_ib_vp_t *    tmp_vp;
 
-          /* First, try to steal from the same NUMA node*/
-          assume((task_node_number < numa_number));
-          if (task_node_number >= 0) {
-            numa = numas_copy[task_node_number];
+	/* In PTHREAD mode, the idle task do not call the cp_init_task
+		* function.
+		* If task_node_number not initialized, we do it now */
+	if(task_node_number < 0)
+	{
+		if(__vp_tls_save)
+		{
+			task_node_number = mpc_topology_get_numa_node_from_cpu(__vp_tls_save->number);
+		}
+	}
 
-            if (numa != NULL) {
-              CDL_FOREACH(numa->vps, tmp_vp) {
-                for (task = tmp_vp->tasks; task; task = task->hh_vp.next) {
-                  nb_found += __cp_steal(poll, &(task->local_ibufs_list),
-                                         &(task->local_ibufs_list_lock), task,
-                                         stealing_task);
-                }
+	/* First, try to steal from the same NUMA node*/
+	assume( (task_node_number < numa_number) );
+	if(task_node_number >= 0)
+	{
 
-                /* Return if message stolen */
-                //        if (nb_found) return nb_found;
-              }
-            } else {
-              mpc_common_spinlock_lock(&numas_lock);
-              memcpy(numas_copy, (void *)numas, sizeof(numa_t) * numa_number);
-              mpc_common_spinlock_unlock(&numas_lock);
-            }
-          }
-        }
+		numa = __vp_numa_descriptor[task_node_number];
 
-        if (nb_found)
-          return nb_found;
+		if(numa != NULL)
+		{
+			CDL_FOREACH(numa->vps, tmp_vp)
+			{
+				for(task = tmp_vp->tasks; task; task = task->hh_vp.next)
+				{
+					nb_found += __cp_steal(poll, &(task->local_ibufs_list),
+								&(task->local_ibufs_list_lock), task);
+				}
 
-        if (other_numa && numas_copy) {
-          int random = rand_r(&seed) % numa_registered;
+			}
+		}
+		else
+		{
+			mpc_common_spinlock_lock(&__numas_lock);
+			memcpy(__vp_numa_descriptor, (void *)numas, sizeof(__mpc_lowcomm_ib_numa_t) * numa_number);
+			mpc_common_spinlock_unlock(&__numas_lock);
+		}
+	}
 
-          numa = numas_copy[random];
-          if (numa != NULL) {
-            CDL_FOREACH(numa->vps, tmp_vp) {
-              for (task = tmp_vp->tasks; task; task = task->hh_vp.next) {
-                nb_found += __cp_steal(poll, &(task->local_ibufs_list),
-                                       &(task->local_ibufs_list_lock), task,
-                                       stealing_task);
 
-                if (nb_found)
-                  return nb_found;
-              }
-            }
-          }
-        }
+	if(nb_found)
+	{
+		return nb_found;
+	}
 
-        return nb_found;
+	if(other_numa && __vp_numa_descriptor)
+	{
+		int random = rand_r(&seed) % numa_registered;
+
+		numa = __vp_numa_descriptor[random];
+		if(numa != NULL)
+		{
+			CDL_FOREACH(numa->vps, tmp_vp)
+			{
+				for(task = tmp_vp->tasks; task; task = task->hh_vp.next)
+				{
+					nb_found += __cp_steal(poll, &(task->local_ibufs_list),
+					                       &(task->local_ibufs_list_lock), task);
+
+					if(nb_found)
+					{
+						return nb_found;
+					}
+				}
+			}
+		}
+	}
+
+	return nb_found;
 }
 
-#define CHECK_IS_READY(x)  do {\
-  if (task->ready != 1) return 0; \
-}while(0);
-#define IBUF_GET_RDMA_TYPE(x) ((x)->type)
+#define CHECK_IS_READY(x)        do {             \
+		if(task->ready != 1){ return 0; } \
+} while(0);
+#define IBUF_GET_RDMA_TYPE(x)    ( (x)->type)
 
-int sctk_ib_cp_handle_message ( _mpc_lowcomm_ib_ibuf_t *ibuf, int dest_task, int target_task )
+int _mpc_lowcomm_ib_cp_ctx_handle_message(_mpc_lowcomm_ib_ibuf_t *ibuf, int dest_task, int target_task)
 {
-	sctk_ib_cp_task_t *task = NULL;
+	_mpc_lowcomm_ib_cp_task_t *task = NULL;
 
 	/* XXX: Do not support thread migration */
-	HASH_FIND ( hh_all, all_tasks, &target_task, sizeof ( int ), task );
+	HASH_FIND(hh_all, all_tasks, &target_task, sizeof(int), task);
 
-	if ( !task )
+	if(!task)
 	{
 		//sctk_ib_rdma_t *rdma_header;
 		//rdma_header = IBUF_GET_RDMA_HEADER ( ibuf->buffer );
@@ -614,92 +645,97 @@ int sctk_ib_cp_handle_message ( _mpc_lowcomm_ib_ibuf_t *ibuf, int dest_task, int
 		return 0;
 	}
 
-	ib_assume ( task );
-	ib_assume ( task->rank == target_task );
+	ib_assume(task);
+	ib_assume(task->rank == target_task);
 
 	/* Process specific message */
-	if ( dest_task < 0 )
+	if(dest_task < 0)
 	{
-		mpc_common_nodebug ( "Received global msg" );
-		mpc_common_spinlock_lock ( task->global_ibufs_list_lock );
-		DL_APPEND ( * ( task->global_ibufs_list ), ibuf );
-		mpc_common_spinlock_unlock ( task->global_ibufs_list_lock );
-		sctk_ib_cp_incr_nb_pending_msg();
+		mpc_common_nodebug("Received global msg");
+		mpc_common_spinlock_lock(task->global_ibufs_list_lock);
+		DL_APPEND(*(task->global_ibufs_list), ibuf);
+		mpc_common_spinlock_unlock(task->global_ibufs_list_lock);
+		_mpc_lowcomm_ib_cp_ctx_incr_nb_pending_msg();
 
 		return 1;
 	}
 	else
 	{
-		mpc_common_nodebug ( "Received local msg from task %d", target_task );
-		mpc_common_spinlock_lock ( &task->local_ibufs_list_lock );
-		DL_APPEND ( task->local_ibufs_list, ibuf );
-		mpc_common_spinlock_unlock ( &task->local_ibufs_list_lock );
-		sctk_ib_cp_incr_nb_pending_msg();
-		mpc_common_nodebug ( "Add message to task %d (%d)", dest_task, target_task );
+		mpc_common_nodebug("Received local msg from task %d", target_task);
+		mpc_common_spinlock_lock(&task->local_ibufs_list_lock);
+		DL_APPEND(task->local_ibufs_list, ibuf);
+		mpc_common_spinlock_unlock(&task->local_ibufs_list_lock);
+		_mpc_lowcomm_ib_cp_ctx_incr_nb_pending_msg();
+		mpc_common_nodebug("Add message to task %d (%d)", dest_task, target_task);
 		return 1;
 	}
 }
 
-
 /** Collaborative Polling Init and release */
 
-void sctk_network_notify_idle_message_multirail_ib_wait_send ()
+void sctk_network_notify_idle_message_multirail_ib_wait_send()
 {
 	int i;
 
-	for ( i = 0; i < sctk_rail_count(); i++ )
+	for(i = 0; i < sctk_rail_count(); i++)
 	{
-		sctk_rail_info_t * rail = sctk_rail_get_by_id ( i );
-		
-		if( rail->runtime_config_driver_config->driver.type != SCTK_RTCFG_net_driver_infiniband )
+		sctk_rail_info_t *rail = sctk_rail_get_by_id(i);
+
+		if(rail->runtime_config_driver_config->driver.type != SCTK_RTCFG_net_driver_infiniband)
+		{
 			continue;
-		
-		rail->notify_idle_message ( rail );
+		}
+
+		rail->notify_idle_message(rail);
 	}
 }
 
-
-
-void sctk_network_initialize_task_collaborative_ib (sctk_rail_info_t *rail, int rank, int vp )
+void sctk_network_initialize_task_collaborative_ib(sctk_rail_info_t *rail, int rank, int vp)
 {
-	if ( mpc_common_get_process_count() > 1 && sctk_network_is_ib_used() )
+	if(mpc_common_get_process_count() > 1 && sctk_network_is_ib_used() )
 	{
 		/* Register task for collaborative polling */
-		sctk_ib_cp_init_task ( rank, vp );
+		_mpc_lowcomm_ib_cp_ctx_init_task(rank, vp);
 	}
 
 	/* It can happen for topological rails */
-	if( ! rail->runtime_config_driver_config )
+	if(!rail->runtime_config_driver_config)
+	{
 		return;
-		
-	/* Skip topological rails */
-	if( 0 < rail->subrail_count )
-		return;
-		
-	/* Register task for topology infos */
-	_mpc_lowcomm_ib_topology_init_task ( rail, vp );
+	}
 
-        vps_reset[vp] = 1;
+	/* Skip topological rails */
+	if(0 < rail->subrail_count)
+	{
+		return;
+	}
+
+	/* Register task for topology infos */
+	_mpc_lowcomm_ib_topology_init_task(rail, vp);
+
+	vps_reset[vp] = 1;
 }
 
-
-void sctk_network_finalize_task_collaborative_ib (sctk_rail_info_t *rail, int taskid, int vp )
+void sctk_network_finalize_task_collaborative_ib(sctk_rail_info_t *rail, int taskid, int vp)
 {
 	/* It can happen for topological rails */
-	if( ! rail->runtime_config_driver_config )
-		return;
-
-	/* Skip topological rails */
-	if( 0 < rail->subrail_count )
-		return;
-	/* Register task for topology infos */
-	_mpc_lowcomm_ib_topology_free_task ( rail );
-
-	if ( mpc_common_get_process_count() > 1 && sctk_network_is_ib_used() )
+	if(!rail->runtime_config_driver_config)
 	{
-		sctk_ib_cp_finalize_task ( taskid );
+		return;
 	}
 
-        vps_reset[vp] = 0;
-}
+	/* Skip topological rails */
+	if(0 < rail->subrail_count)
+	{
+		return;
+	}
+	/* Register task for topology infos */
+	_mpc_lowcomm_ib_topology_free_task(rail);
 
+	if(mpc_common_get_process_count() > 1 && sctk_network_is_ib_used() )
+	{
+		_mpc_lowcomm_ib_cp_ctx_finalize_task(taskid);
+	}
+
+	vps_reset[vp] = 0;
+}

@@ -63,7 +63,7 @@ struct _mpc_lowcomm_ib_topology_s;
 struct sctk_ib_config_s;
 struct sctk_ib_device_s;
 struct sctk_ib_qp_s;
-struct sctk_ib_cp_s;
+struct _mpc_lowcomm_ib_cp_ctx_s;
 struct mpc_lowcomm_ptp_message_s;
 struct sctk_rail_info_s;
 struct mpc_lowcomm_ptp_message_content_to_copy_s;
@@ -78,7 +78,7 @@ typedef struct sctk_ib_rail_info_s
 	struct sctk_runtime_config_struct_net_driver_infiniband *config;
 	struct sctk_ib_device_s *device;
 	/* Collaborative polling */
-	struct sctk_ib_cp_s *cp;
+	struct _mpc_lowcomm_ib_cp_ctx_s *cp;
 
 	/* HashTable where all remote are stored.
 	* qp_num is the key of the HT */
