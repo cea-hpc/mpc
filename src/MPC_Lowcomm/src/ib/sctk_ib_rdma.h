@@ -36,147 +36,160 @@
 #include "utlist.h"
 
 /* XXX: Packed structures */
-typedef enum sctk_ib_rdma_type_e
+typedef enum _mpc_lowcomm_ib_rdma_type_e
 {
-    MPC_LOWCOMM_IB_RDMA_RDV_REQ_TYPE = 111,
-    MPC_LOWCOMM_IB_RDMA_RDV_ACK_TYPE = 222,
-    MPC_LOWCOMM_IB_RDMA_RDV_DONE_TYPE = 333,
-    MPC_LOWCOMM_IB_RDMA_RDV_WRITE_TYPE = 555,
-    MPC_LOWCOMM_IB_RDMA_WRITE = 666,
-    MPC_LOWCOMM_IB_RDMA_READ = 777,
-    MPC_LOWCOMM_IB_RDMA_FETCH_AND_ADD = 888,
-    MPC_LOWCOMM_IB_RDMA_CAS = 999
-} __attribute__ ( ( packed ) )
-sctk_ib_rdma_type_t;
+	MPC_LOWCOMM_IB_RDMA_RDV_REQ_TYPE = 1,
+	MPC_LOWCOMM_IB_RDMA_RDV_ACK_TYPE,
+	MPC_LOWCOMM_IB_RDMA_RDV_DONE_TYPE,
+	MPC_LOWCOMM_IB_RDMA_RDV_WRITE_TYPE,
+	MPC_LOWCOMM_IB_RDMA_WRITE,
+	MPC_LOWCOMM_IB_RDMA_READ,
+	MPC_LOWCOMM_IB_RDMA_FETCH_AND_ADD,
+	MPC_LOWCOMM_IB_RDMA_CAS
+}
+_mpc_lowcomm_ib_rdma_type_t;
 
-typedef struct sctk_ib_rdma_s
-{
-	size_t payload_size;
-	sctk_ib_rdma_type_t type;
-	void * msg_pointer;
-} __attribute__ ( ( packed ) )
-sctk_ib_rdma_t;
 
 /*
  * ACK
  */
-typedef struct sctk_ib_rdma_ack_s
+typedef struct _mpc_lowcomm_ib_rdma_ack_s
 {
-	void *addr;
-	size_t size;
-	uint32_t  rkey;
+	void *                     addr;
+	size_t                     size;
+	uint32_t                   rkey;
 	mpc_lowcomm_ptp_message_t *src_msg_header;
 	mpc_lowcomm_ptp_message_t *dest_msg_header;
-	int ht_key;
-} __attribute__ ( ( packed ) )
-sctk_ib_rdma_ack_t;
+	int                        ht_key;
+}_mpc_lowcomm_ib_rdma_ack_t;
 
 /*
  * REQ
  */
-typedef struct sctk_ib_rdma_req_s
+typedef struct _mpc_lowcomm_ib_rdma_req_s
 {
 	/* MPC header of msg */
 	mpc_lowcomm_ptp_message_body_t msg_header;
 	/* remote MPC header */
-	mpc_lowcomm_ptp_message_t *dest_msg_header;
-	size_t requested_size;
+	mpc_lowcomm_ptp_message_t *    dest_msg_header;
+	size_t                         requested_size;
 	mpc_lowcomm_ptp_message_type_t message_type;
-	int source;
-	int source_task;
-	int remote_rail;
-} __attribute__ ( ( packed ) )
-sctk_ib_rdma_req_t;
+	int                            source;
+	int                            source_task;
+	int                            remote_rail;
+}_mpc_lowcomm_ib_rdma_req_t;
 
 /*
  * DATA READ
  */
-typedef struct sctk_ib_rdma_data_read_s
+typedef struct _mpc_lowcomm_ib_rdma_data_read_s
 {
 	mpc_lowcomm_ptp_message_t *dest_msg_header;
-} __attribute__ ( ( packed ) )
-sctk_ib_rdma_data_read_t;
+}_mpc_lowcomm_ib_rdma_data_read_t;
 
 /*
  * DATA WRITE
  */
-typedef struct sctk_ib_rdma_data_write_s
+typedef struct _mpc_lowcomm_ib_rdma_data_write_s
 {
 	mpc_lowcomm_ptp_message_t *src_msg_header;
-} __attribute__ ( ( packed ) )
-sctk_ib_rdma_data_write_t;
+}_mpc_lowcomm_ib_rdma_data_write_t;
 
 
 /*
  * DONE
  */
-typedef struct sctk_ib_rdma_done_s
+typedef struct _mpc_lowcomm_ib_rdma_done_s
 {
 	mpc_lowcomm_ptp_message_t *dest_msg_header;
-} __attribute__ ( ( packed ) )
-sctk_ib_rdma_done_t;
+}_mpc_lowcomm_ib_rdma_done_t;
+
+
+typedef struct _mpc_lowcomm_ib_rdma_header_s
+{
+	size_t              payload_size;
+	_mpc_lowcomm_ib_rdma_type_t type;
+	void *              msg_pointer;
+} _mpc_lowcomm_ib_rdma_header_t;
+
+typedef struct _mpc_lowcomm_ib_rdma_s
+{
+	_mpc_lowcomm_ib_ibuf_header_t ibuf;
+	_mpc_lowcomm_ib_rdma_header_t rdma_header;
+
+	union
+	{
+		_mpc_lowcomm_ib_rdma_ack_t        ack;
+		_mpc_lowcomm_ib_rdma_req_t        req;
+		_mpc_lowcomm_ib_rdma_data_read_t  read;
+		_mpc_lowcomm_ib_rdma_data_write_t write;
+		_mpc_lowcomm_ib_rdma_done_t       done;
+	};
+}_mpc_lowcomm_ib_rdma_t;
+
 
 /*-----------------------------------------------------------
- *  FUNCTIONS
- *----------------------------------------------------------*/
- 
- 
- /* Rendez-vous */
+*  FUNCTIONS
+*----------------------------------------------------------*/
 
-_mpc_lowcomm_ib_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req ( sctk_rail_info_t *rail,
-						sctk_ib_qp_t *remote, mpc_lowcomm_ptp_message_t *msg, size_t size );
 
-void sctk_ib_rdma_rendezvous_prepare_send_msg ( mpc_lowcomm_ptp_message_t *msg, size_t size );
+/* Rendez-vous */
+
+_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_rdma_rendezvous_prepare_req(sctk_rail_info_t *rail,
+                                                            sctk_ib_qp_t *remote, mpc_lowcomm_ptp_message_t *msg, size_t size);
+
+void _mpc_lowcomm_ib_rdma_rendezvous_prepare_send_msg(mpc_lowcomm_ptp_message_t *msg, size_t size);
 
 /* RDMA Read-Write */
 
-void sctk_ib_rdma_write(  sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
-                         void * src_addr, struct sctk_rail_pin_ctx_list * local_key,
-                         void * dest_addr, struct sctk_rail_pin_ctx_list * remote_key,
-                         size_t size );
+void _mpc_lowcomm_ib_rdma_write(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
+                        void *src_addr, struct sctk_rail_pin_ctx_list *local_key,
+                        void *dest_addr, struct sctk_rail_pin_ctx_list *remote_key,
+                        size_t size);
 
-void sctk_ib_rdma_read(   sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
-                         void * src_addr, struct  sctk_rail_pin_ctx_list * remote_key,
-                         void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
-                         size_t size );
+void _mpc_lowcomm_ib_rdma_read(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
+                       void *src_addr, struct  sctk_rail_pin_ctx_list *remote_key,
+                       void *dest_addr, struct  sctk_rail_pin_ctx_list *local_key,
+                       size_t size);
 
 /* RDMA Atomics */
-int sctk_ib_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type );
+int _mpc_lowcomm_ib_rdma_fetch_and_op_gate(sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type);
 
-void sctk_ib_rdma_fetch_and_op(   sctk_rail_info_t *rail,
-								  mpc_lowcomm_ptp_message_t *msg,
-								  void * fetch_addr,
-								  struct  sctk_rail_pin_ctx_list * local_key,
-								  void * remote_addr,
-								  struct  sctk_rail_pin_ctx_list * remote_key,
-								  void * add,
-								  RDMA_op op,
-							      RDMA_type type );
+void _mpc_lowcomm_ib_rdma_fetch_and_op(sctk_rail_info_t *rail,
+                               mpc_lowcomm_ptp_message_t *msg,
+                               void *fetch_addr,
+                               struct  sctk_rail_pin_ctx_list *local_key,
+                               void *remote_addr,
+                               struct  sctk_rail_pin_ctx_list *remote_key,
+                               void *add,
+                               RDMA_op op,
+                               RDMA_type type);
 
-void sctk_ib_rdma_cas(    sctk_rail_info_t *rail,
-						  mpc_lowcomm_ptp_message_t *msg,
-						  void *  res_addr,
-						  struct  sctk_rail_pin_ctx_list * local_key,
-						  void * remote_addr,
-						  struct  sctk_rail_pin_ctx_list * remote_key,
-						  void * comp,
-						  void * new,
-						  RDMA_type type );
+void _mpc_lowcomm_ib_rdma_cas(sctk_rail_info_t *rail,
+                      mpc_lowcomm_ptp_message_t *msg,
+                      void *res_addr,
+                      struct  sctk_rail_pin_ctx_list *local_key,
+                      void *remote_addr,
+                      struct  sctk_rail_pin_ctx_list *remote_key,
+                      void *comp,
+                      void *new,
+                      RDMA_type type);
 
-int sctk_ib_rdma_cas_gate( sctk_rail_info_t *rail, size_t size, RDMA_type type );
+int _mpc_lowcomm_ib_rdma_cas_gate(sctk_rail_info_t *rail, size_t size, RDMA_type type);
 
 
 int
-sctk_ib_rdma_poll_recv ( sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf );
+_mpc_lowcomm_ib_rdma_poll_recv(sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf);
 
 int
-sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf );
+_mpc_lowcomm_ib_rdma_poll_send(sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf);
 
 
-void sctk_ib_rdma_print ( mpc_lowcomm_ptp_message_t *msg );
+void _mpc_lowcomm_ib_rdma_print(mpc_lowcomm_ptp_message_t *msg);
 
-_mpc_lowcomm_ib_ibuf_t *sctk_ib_rdma_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,
-                                              sctk_ib_qp_t *remote, mpc_lowcomm_ptp_message_t *msg, size_t size );
+_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_rdma_eager_prepare_msg(sctk_ib_rail_info_t *rail_ib,
+                                                       sctk_ib_qp_t *remote, mpc_lowcomm_ptp_message_t *msg, size_t size);
 
-mpc_lowcomm_ptp_message_t * sctk_ib_rdma_recv_done_remote_imm ( sctk_rail_info_t *rail, int imm_data );
+mpc_lowcomm_ptp_message_t *_mpc_lowcomm_ib_rdma_recv_done_remote_imm(sctk_rail_info_t *rail, int imm_data);
+
 #endif

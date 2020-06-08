@@ -116,7 +116,7 @@ static void sctk_network_send_message_ib_endpoint(mpc_lowcomm_ptp_message_t *msg
 	    (size + IBUF_GET_EAGER_SIZE <= config->eager_limit) )
 	{
 		mpc_common_debug("Eager");
-		ibuf = sctk_ib_eager_prepare_msg(rail_ib, remote, msg, size, _mpc_comm_ptp_message_is_for_process(SCTK_MSG_SPECIFIC_CLASS(msg) ) );
+		ibuf = _mpc_lowcomm_ib_eager_prepare_msg(rail_ib, remote, msg, size, _mpc_comm_ptp_message_is_for_process(SCTK_MSG_SPECIFIC_CLASS(msg) ) );
 
 		/* Actually, it is possible to get a NULL pointer for ibuf. We falback to buffered */
 		if(ibuf == NULL)
@@ -139,7 +139,7 @@ buffered:
 	if(size <= config->buffered_limit)
 	{
 		mpc_common_debug("Buffered");
-		sctk_ib_buffered_prepare_msg(rail, remote, msg, size);
+		_mpc_lowcomm_ib_buffered_prepare_msg(rail, remote, msg, size);
 		mpc_lowcomm_ptp_message_complete_and_free(msg);
 
 		/* Remote profiling */
@@ -150,11 +150,11 @@ buffered:
 
 	/***** RDMA RENDEZVOUS CHANNEL *****/
 	mpc_common_debug("Size of message: %lu", size);
-	ibuf = sctk_ib_rdma_rendezvous_prepare_req(rail, remote, msg, size);
+	ibuf = _mpc_lowcomm_ib_rdma_rendezvous_prepare_req(rail, remote, msg, size);
 
 	/* Send message */
 	sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
-	sctk_ib_rdma_rendezvous_prepare_send_msg(msg, size);
+	_mpc_lowcomm_ib_rdma_rendezvous_prepare_send_msg(msg, size);
 exit:
 	{}
 
@@ -220,7 +220,7 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *
 			break;
 
 		case MPC_LOWCOMM_IB_RDMA_PROTOCOL:
-			release_ibuf = sctk_ib_rdma_poll_send(rail, ibuf);
+			release_ibuf = _mpc_lowcomm_ib_rdma_poll_send(rail, ibuf);
 			mpc_common_nodebug("Received RMDA write send");
 			break;
 
@@ -281,7 +281,7 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *
 		{
 			if(wc.imm_data & IMM_DATA_RDMA_MSG)
 			{
-				sctk_ib_rdma_recv_done_remote_imm(rail,
+				_mpc_lowcomm_ib_rdma_recv_done_remote_imm(rail,
 				                                  wc.imm_data - IMM_DATA_RDMA_MSG);
 			}
 			else
@@ -301,16 +301,16 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *
 		switch(protocol)
 		{
 			case MPC_LOWCOMM_IB_EAGER_PROTOCOL:
-				sctk_ib_eager_poll_recv(rail, ibuf);
+				_mpc_lowcomm_ib_eager_poll_recv(rail, ibuf);
 				release_ibuf = 0;
 				break;
 
 			case MPC_LOWCOMM_IB_RDMA_PROTOCOL:
-				release_ibuf = sctk_ib_rdma_poll_recv(rail, ibuf);
+				release_ibuf = _mpc_lowcomm_ib_rdma_poll_recv(rail, ibuf);
 				break;
 
 			case MPC_LOWCOMM_IB_BUFFERED_PROTOCOL:
-				sctk_ib_buffered_poll_recv(rail, ibuf);
+				_mpc_lowcomm_ib_buffered_poll_recv(rail, ibuf);
 				release_ibuf = 1;
 				break;
 
@@ -502,7 +502,7 @@ static inline void __check_wc(struct sctk_ib_rail_info_s *rail_ib, struct ibv_wc
 	}
 }
 
-#define WC_COUNT    100
+#define WC_COUNT    10
 static inline void __poll_cq(sctk_rail_info_t *rail,
                              struct ibv_cq *cq,
                              __UNUSED__ const int poll_nb,
@@ -535,13 +535,14 @@ static inline void __poll_cq(sctk_rail_info_t *rail,
 /* Count how many times the vp is entered to the polling function. We
  * allow recursive calls to the polling function */
 
+mpc_common_spinlock_t __cq_lock = SCTK_SPINLOCK_INITIALIZER;
+
 void sctk_network_poll_all_cq(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 
 	LOAD_DEVICE(rail_ib);
 	LOAD_CONFIG(rail_ib);
-
 
 	/* Poll received messages */
 	__poll_cq(rail, device->recv_cq, config->wc_in_number, poll, sctk_network_poll_recv);
@@ -550,6 +551,7 @@ void sctk_network_poll_all_cq(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 	__poll_cq(rail, device->send_cq, config->wc_out_number, poll, sctk_network_poll_send);
 
 	_mpc_lowcomm_ib_cp_ctx_poll_global_list(poll);
+
 }
 
 static void sctk_network_notify_recv_message_ib(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail)
@@ -596,11 +598,10 @@ static void sctk_network_notify_perform_message_ib(__UNUSED__ int remote_process
 	}
 }
 
-__thread int idle_poll_all  = 0;
-__thread int idle_poll_freq = 100;
 static void sctk_network_notify_idle_message_ib(sctk_rail_info_t *rail)
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+
 
 	struct sctk_ib_polling_s poll;
 
@@ -609,36 +610,14 @@ static void sctk_network_notify_idle_message_ib(sctk_rail_info_t *rail)
 		return;
 	}
 
-	idle_poll_all++;
-
-	if(idle_poll_all != idle_poll_freq)
-	{
-		return;
-	}
-	else
-	{
-		idle_poll_all = 0;
-	}
-
-	if(idle_poll_freq < idle_poll_all)
-	{
-		idle_poll_all = 0;
-	}
-
 	int ret;
 	_mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(rail_ib, _mpc_lowcomm_ib_ibuf_rdma_eager_poll_remote, &ret);
 
 	if(ret == REORDER_FOUND_EXPECTED)
 	{
-		idle_poll_freq = 100;
 		return;
 	}
-	else
-	{
-		idle_poll_freq *= 4;
-	}
 
-	int polling_task_id = mpc_common_get_task_rank();
 	POLL_INIT(&poll);
 	sctk_network_poll_all_cq(rail, &poll);
 
@@ -646,21 +625,12 @@ static void sctk_network_notify_idle_message_ib(sctk_rail_info_t *rail)
 	 * we retry to poll the pending lists */
 	if(POLL_GET_RECV_CQ(&poll) != 0)
 	{
-		idle_poll_freq = 100;
+	    int polling_task_id = mpc_common_get_task_rank();
 		if(polling_task_id >= 0)
 		{
 			POLL_INIT(&poll);
 			_mpc_lowcomm_ib_cp_ctx_poll(&poll, polling_task_id);
 		}
-	}
-	else
-	{
-		idle_poll_freq *= 4;
-	}
-
-	if(150000 < idle_poll_freq)
-	{
-		idle_poll_freq = 150000;
 	}
 }
 
@@ -813,8 +783,8 @@ void sctk_network_finalize_mpi_ib(sctk_rail_info_t *rail)
 	/* - Free IB topology                                         */
 	_mpc_lowcomm_ib_topology_free(rail_ib);
 
-	/* - Flush the eager entries (sctk_ib_eager_init)             */
-	sctk_ib_eager_finalize(rail_ib);
+	/* - Flush the eager entries (_mpc_lowcomm_ib_eager_init)             */
+	_mpc_lowcomm_ib_eager_finalize(rail_ib);
 
 	/* - Destroy the Shared Receive Queue (sctk_ib_srq_init)      */
 	sctk_ib_srq_free(rail_ib);
@@ -894,7 +864,7 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 	sctk_ib_srq_init(rail_ib, &srq_attr);
 
 	/* Configure all channels */
-	sctk_ib_eager_init(rail_ib);
+	_mpc_lowcomm_ib_eager_init(rail_ib);
 
 	/* Print config */
 	if(mpc_common_get_flags()->verbosity >= 2)
@@ -941,14 +911,14 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 	rail->rail_unpin_region = sctk_ib_unpin_region;
 
 	/* RDMA */
-	rail->rdma_write = sctk_ib_rdma_write;
-	rail->rdma_read  = sctk_ib_rdma_read;
+	rail->rdma_write = _mpc_lowcomm_ib_rdma_write;
+	rail->rdma_read  = _mpc_lowcomm_ib_rdma_read;
 
-	rail->rdma_fetch_and_op_gate = sctk_ib_rdma_fetch_and_op_gate;
-	rail->rdma_fetch_and_op      = sctk_ib_rdma_fetch_and_op;
+	rail->rdma_fetch_and_op_gate = _mpc_lowcomm_ib_rdma_fetch_and_op_gate;
+	rail->rdma_fetch_and_op      = _mpc_lowcomm_ib_rdma_fetch_and_op;
 
-	rail->rdma_cas_gate = sctk_ib_rdma_cas_gate;
-	rail->rdma_cas      = sctk_ib_rdma_cas;
+	rail->rdma_cas_gate = _mpc_lowcomm_ib_rdma_cas_gate;
+	rail->rdma_cas      = _mpc_lowcomm_ib_rdma_cas;
 
 	rail->network_name = network_name;
 

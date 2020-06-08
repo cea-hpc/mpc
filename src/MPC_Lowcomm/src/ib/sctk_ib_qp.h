@@ -107,7 +107,7 @@ typedef struct sctk_ib_qp_s
 	int unsignaled_counter;		/**< The number of unsignaled messages sent.
 					 * \warning the number of unsignaled messages cannot
 					 * excess the max number of send entries in  QP */
-	struct sctk_ib_buffered_table_s ib_buffered; /**< List of pending buffered messages */
+	struct _mpc_lowcomm_ib_buffered_table_s ib_buffered; /**< List of pending buffered messages */
 	struct _mpc_lowcomm_ib_ibuf_rdma_s rdma; 	     /**< Structure for ibuf rdma */
 	struct _mpc_lowcomm_ib_ibuf_sr_s sr;
 	struct

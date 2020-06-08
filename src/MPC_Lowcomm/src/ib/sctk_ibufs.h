@@ -58,15 +58,14 @@ struct _mpc_lowcomm_ib_ibuf_rdma_region_s;
 *----------------------------------------------------------*/
 typedef struct   _mpc_lowcomm_ib_ibuf_header_s
 {
-	/* Poison */
-	int                        poison;
 	/* Protocol used */
 	int                        piggyback;
-	_mpc_lowcomm_ib_protocol_t protocol;
 	int                        src_task;
 	int                        dest_task;
-	int                        low_memory_mode;
-} __attribute__( (aligned(16) ) ) _mpc_lowcomm_ib_ibuf_header_t;
+	_mpc_lowcomm_ib_protocol_t protocol;
+	/* Poison */
+	char                        poison;
+}_mpc_lowcomm_ib_ibuf_header_t;
 
 #define IBUF_GET_HEADER(buffer)             ( (_mpc_lowcomm_ib_ibuf_header_t *)buffer)
 #define IBUF_GET_HEADER_SIZE    (sizeof(_mpc_lowcomm_ib_ibuf_header_t) )
@@ -91,17 +90,17 @@ typedef struct   _mpc_lowcomm_ib_ibuf_header_s
 #define IBUF_DO_NOT_RELEASE        (1 << 1)
 
 /* Only for debugging */
-#define IBUF_POISON                213819238
+#define IBUF_POISON                0x77
 #define IBUF_SET_POISON(buffer)    (IBUF_GET_HEADER(buffer)->poison = IBUF_POISON)
 #define IBUF_GET_POISON(buffer)    (IBUF_GET_HEADER(buffer)->poison)
-#define IBUF_CHECK_POISON(buffer)                                                                                                                                                                       \
-	do                                                                                                                                                                                              \
+#define IBUF_CHECK_POISON(buffer) \
+	do\
 	{                                                                                                                                                                                               \
-		if(IBUF_GET_HEADER(buffer)->poison != IBUF_POISON)                                                                                                                                      \
-		{                                                                                                                                                                                       \
+		if(IBUF_GET_HEADER(buffer)->poison != IBUF_POISON)\
+		{\
 			mpc_common_debug_error("Wrong header received from buffer %p (got=%d expected=%d %p)", buffer, IBUF_GET_HEADER(buffer)->poison, IBUF_POISON, &IBUF_GET_HEADER(buffer)->poison); \
-			assume(0);                                                                                                                                                                      \
-		}                                                                                                                                                                                       \
+			assume(0); \
+		}\
 	} while(0)
 
 typedef struct _mpc_lowcomm_ib_ibuf_desc_s
@@ -126,20 +125,20 @@ typedef struct _mpc_lowcomm_ib_ibuf_desc_s
 /** NUMA aware pool of buffers */
 typedef struct _mpc_lowcomm_ib_ibuf_numa_s
 {
-	mpc_common_spinlock_t                 lock;           /**< lock when moving pointers */
-	char                                  _padd[128];
-	mpc_common_spinlock_t                 srq_cache_lock;
-	char                                  _padd2[128];
-	char                                  is_srq_pool;       /**< if this is a SRQ pool */
-	struct _mpc_lowcomm_ib_ibuf_region_s *regions;           /**< DL list of regions */
-	struct _mpc_lowcomm_ib_ibuf_s *       free_entry;        /**< flag to the first free header */
-	struct _mpc_lowcomm_ib_ibuf_s *       free_srq_cache;    /**< Free SRQ buffers */
-	unsigned int                          nb;                /**< Number of buffers created total */
-	OPA_int_t                             free_nb;           /**< Number of buffers free */
-	OPA_int_t                             free_srq_nb;       /**< Number of SRQ buffers free */
-	int                                   free_srq_cache_nb; /**< Number of SRQ buffers free in cache */
+	mpc_common_spinlock_t                        lock;    /**< lock when moving pointers */
+	char                                         _padd[128];
+	mpc_common_spinlock_t                        srq_cache_lock;
+	char                                         _padd2[128];
+	char                                         is_srq_pool;       /**< if this is a SRQ pool */
+	struct _mpc_lowcomm_ib_ibuf_region_s *       regions;           /**< DL list of regions */
+	struct _mpc_lowcomm_ib_ibuf_s *              free_entry;        /**< flag to the first free header */
+	struct _mpc_lowcomm_ib_ibuf_s *              free_srq_cache;    /**< Free SRQ buffers */
+	unsigned int                                 nb;                /**< Number of buffers created total */
+	OPA_int_t                                    free_nb;           /**< Number of buffers free */
+	OPA_int_t                                    free_srq_nb;       /**< Number of SRQ buffers free */
+	int                                          free_srq_cache_nb; /**< Number of SRQ buffers free in cache */
 
-	struct _mpc_lowcomm_ib_topology_numa_node_s * numa_node;         /**< Pointer to the topological NUMA node structure */
+	struct _mpc_lowcomm_ib_topology_numa_node_s *numa_node;         /**< Pointer to the topological NUMA node structure */
 
 	/* MMU is now at a node level. We got many issues while
 	 * sharing the MMU accross very large NUMA nodes (>=128 cores) */
@@ -246,12 +245,12 @@ typedef struct _mpc_lowcomm_ib_ibuf_s
 	struct _mpc_lowcomm_ib_ibuf_s *       next;
 	struct _mpc_lowcomm_ib_ibuf_s *       prev;
 	int *                                 poison_flag_head; /**< Poison flag */
-	volatile int volatile *               head_flag;        /**< Head flag */
+	volatile int *                        head_flag;        /**< Head flag */
 	size_t *                              size_flag;        /**< Size flag */
 	int                                   previous_flag;    /**< Previous flag for RDMA */
 	double                                polled_timestamp; /**< Timestamp when the ibuf has been polled from the CQ */
 	struct sctk_rail_info_s *             rail;             /**< We save the rail where the message has been pooled*/
-	enum _mpc_lowcomm_ib_cq_type_t             cq;
+	enum _mpc_lowcomm_ib_cq_type_t        cq;
 	uint32_t                              send_imm_data;
 } _mpc_lowcomm_ib_ibuf_t;
 

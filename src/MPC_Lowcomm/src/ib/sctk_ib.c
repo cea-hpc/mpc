@@ -121,7 +121,7 @@ void sctk_ib_print_msg ( mpc_lowcomm_ptp_message_t *msg )
 			break;
 
 		case MPC_LOWCOMM_IB_RDMA_PROTOCOL:
-			sctk_ib_rdma_print ( msg );
+			_mpc_lowcomm_ib_rdma_print ( msg );
 			break;
 
 		case MPC_LOWCOMM_IB_BUFFERED_PROTOCOL:

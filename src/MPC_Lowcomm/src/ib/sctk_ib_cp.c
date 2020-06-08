@@ -87,10 +87,10 @@ typedef struct __mpc_lowcomm_ib_numa_s
 
 /** Array of numa nodes */
 static mpc_common_spinlock_t __numas_lock = SCTK_SPINLOCK_INITIALIZER;
-static volatile __mpc_lowcomm_ib_numa_t *volatile *numas = NULL;
+static __mpc_lowcomm_ib_numa_t ** numas = NULL;
 
-static int numa_number     = -1;
-int        numa_registered = 0;
+static int numa_number = -1;
+int        __number_of_registered_numa = 0;
 
 /** Array of vps */
 static __mpc_lowcomm_ib_vp_t **vps        = NULL;
@@ -100,7 +100,7 @@ static _mpc_lowcomm_ib_cp_task_t *all_tasks = NULL;
 
 /** NUMA node where the task is located */
 /** vars used to reducde latency access */
-static __thread int task_node_number             = -1;
+static __thread int task_node_number = -1;
 static __thread __mpc_lowcomm_ib_vp_t *   __vp_tls_save = NULL;
 static __thread unsigned int              seed;
 static __thread __mpc_lowcomm_ib_numa_t **__vp_numa_descriptor = NULL;
@@ -154,8 +154,8 @@ void _mpc_lowcomm_ib_cp_ctx_init(struct sctk_ib_rail_info_s *rail_ib)
 	ib_assume(cp);
 	rail_ib->cp = cp;
 	OPA_store_int(&cp_nb_pending_msg, 0);
-	numa_number     = -1;
-	numa_registered = 0;
+	numa_number = -1;
+	__number_of_registered_numa = 0;
 	assume(numas == NULL);
 	assume(all_tasks == NULL);
 }
@@ -216,13 +216,14 @@ void _mpc_lowcomm_ib_cp_ctx_finalize(struct sctk_ib_rail_info_s *rail_ib)
 	OPA_store_int(&cp_nb_pending_msg, 0);
 }
 
+static _mpc_lowcomm_ib_ibuf_t *__global_ibufs_list      = NULL;
+static mpc_common_spinlock_t   __global_ibufs_list_lock = SCTK_SPINLOCK_INITIALIZER;
+
 void _mpc_lowcomm_ib_cp_ctx_init_task(int rank, int vp)
 {
 	_mpc_lowcomm_ib_cp_task_t *task = NULL;
 	int node = mpc_topology_get_numa_node_from_cpu(vp);
 	/* Process specific list of messages */
-	static _mpc_lowcomm_ib_ibuf_t *volatile __global_ibufs_list      = NULL;
-	static mpc_common_spinlock_t            __global_ibufs_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
 	mpc_common_spinlock_lock(&__vps_lock);
 	/* If the task has already been added, we do not add it once again and skip */
@@ -287,9 +288,9 @@ void _mpc_lowcomm_ib_cp_ctx_init_task(int rank, int vp)
 	{
 		__mpc_lowcomm_ib_numa_t *tmp_numa = sctk_malloc(sizeof(__mpc_lowcomm_ib_numa_t) );
 		memset(tmp_numa, 0, sizeof(__mpc_lowcomm_ib_numa_t) );
-		numa_registered += 1;
-		tmp_numa->number = node;
-		numas[node]      = tmp_numa;
+		__number_of_registered_numa += 1;
+		tmp_numa->number             = node;
+		numas[node] = tmp_numa;
 	}
 	mpc_common_spinlock_unlock(&__numas_lock);
 
@@ -310,14 +311,14 @@ void _mpc_lowcomm_ib_cp_ctx_init_task(int rank, int vp)
 	HASH_ADD(hh_all, all_tasks, rank, sizeof(int), task);
 	CDL_PREPEND(numas[node]->tasks, task);
 	mpc_common_spinlock_unlock(&__vps_lock);
-	sctk_ib_debug("Task %d registered on VP %d (numa:%d:tasks_nb:%d)", rank,
+	mpc_common_debug_error("Task %d registered on VP %d (numa:%d:tasks_nb:%d)", rank,
 	              vp, node, numas[node]->tasks_nb);
 
 	/* Initialize seed for steal */
 	seed = getpid() * time(NULL);
 
-	task->ready = 1;
-	__vp_tls_save      = vps[vp];
+	task->ready   = 1;
+	__vp_tls_save = vps[vp];
 }
 
 void _mpc_lowcomm_ib_cp_ctx_finalize_task(int rank)
@@ -349,52 +350,49 @@ void _mpc_lowcomm_ib_cp_ctx_finalize_task(int rank)
 	task_node_number = -1;
 }
 
-static inline int __cp_poll(struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t *volatile *list, mpc_common_spinlock_t *lock)
+static inline int __cp_poll(struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t **list, mpc_common_spinlock_t *lock)
 {
 	_mpc_lowcomm_ib_ibuf_t *ibuf = NULL;
 	int nb_found = 0;
 
 retry:
-
-	if(*list != NULL)
+	if(mpc_common_spinlock_trylock(lock) == 0)
 	{
-		if(mpc_common_spinlock_trylock(lock) == 0)
+		if(*list != NULL)
 		{
-			if(*list != NULL)
+			ibuf = *list;
+			DL_DELETE(*list, ibuf);
+			mpc_common_spinlock_unlock(lock);
+			_mpc_lowcomm_ib_cp_ctx_decr_nb_pending_msg();
+
+
+
+			/* Run the polling function according to the type of message */
+			if(ibuf->cq == MPC_LOWCOMM_IB_RECV_CQ)
 			{
-				ibuf = *list;
-				DL_DELETE(*list, ibuf);
-				mpc_common_spinlock_unlock(lock);
-				_mpc_lowcomm_ib_cp_ctx_decr_nb_pending_msg();
-
-
-
-				/* Run the polling function according to the type of message */
-				if(ibuf->cq == MPC_LOWCOMM_IB_RECV_CQ)
-				{
-					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
-					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
-					sctk_network_poll_recv_ibuf( ( sctk_rail_info_t * )ibuf->rail, ibuf);
-				}
-				else
-				{
-					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
-					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
-					sctk_network_poll_send_ibuf( ( sctk_rail_info_t * )ibuf->rail, ibuf);
-				}
-
-				POLL_RECV_OWN(poll);
-
-
-				nb_found++;
-				goto retry;
+				//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
+				//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
+				sctk_network_poll_recv_ibuf( ( sctk_rail_info_t * )ibuf->rail, ibuf);
 			}
 			else
 			{
-				mpc_common_spinlock_unlock(lock);
+				//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
+				//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
+				sctk_network_poll_send_ibuf( ( sctk_rail_info_t * )ibuf->rail, ibuf);
 			}
+
+			POLL_RECV_OWN(poll);
+
+
+			nb_found++;
+			goto retry;
+		}
+		else
+		{
+			mpc_common_spinlock_unlock(lock);
 		}
 	}
+
 
 	return nb_found;
 }
@@ -463,7 +461,7 @@ int _mpc_lowcomm_ib_cp_ctx_poll(struct sctk_ib_polling_s *poll, int task_id)
 	for(task = __vp_tls_save->tasks; task; task = task->hh_vp.next)
 	{
 		nb_found += __cp_poll(poll, &(task->local_ibufs_list),
-		          &(task->local_ibufs_list_lock) );
+		                      &(task->local_ibufs_list_lock) );
 	}
 
 	/* If nothing on our NUMA poll for others */
@@ -475,49 +473,47 @@ int _mpc_lowcomm_ib_cp_ctx_poll(struct sctk_ib_polling_s *poll, int task_id)
 	return 0;
 }
 
-static inline int __cp_steal(struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t *volatile *list, mpc_common_spinlock_t *lock, __UNUSED__ _mpc_lowcomm_ib_cp_task_t *task)
+static inline int __cp_steal(struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t **list, mpc_common_spinlock_t *lock, __UNUSED__ _mpc_lowcomm_ib_cp_task_t *task)
 {
 	_mpc_lowcomm_ib_ibuf_t *ibuf = NULL;
 	int nb_found = 0;
 
-	if(*list != NULL)
+
+	if(mpc_common_spinlock_trylock(lock) == 0)
 	{
-		if(mpc_common_spinlock_trylock(lock) == 0)
+		if(*list != NULL)
 		{
-			if(*list != NULL)
+			ibuf = *list;
+			DL_DELETE(*list, ibuf);
+			mpc_common_spinlock_unlock(lock);
+			_mpc_lowcomm_ib_cp_ctx_decr_nb_pending_msg();
+
+			/* Run the polling function */
+			if(ibuf->cq == MPC_LOWCOMM_IB_RECV_CQ)
 			{
-				ibuf = *list;
-				DL_DELETE(*list, ibuf);
-				mpc_common_spinlock_unlock(lock);
-				_mpc_lowcomm_ib_cp_ctx_decr_nb_pending_msg();
-
-				/* Run the polling function */
-				if(ibuf->cq == MPC_LOWCOMM_IB_RECV_CQ)
-				{
-					/* Profile the time to handle an ibuf once it has been polled
-					 * from the CQ */
-					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
-					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
-					sctk_network_poll_recv_ibuf(ibuf->rail, ibuf);
-				}
-				else
-				{
-					/* Profile the time to handle an ibuf once it has been polled
-					 * from the CQ */
-					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
-					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
-					sctk_network_poll_send_ibuf(ibuf->rail, ibuf);
-				}
-
-				POLL_RECV_OTHER(poll);
-
-
-				nb_found++;
-				goto exit;
+				/* Profile the time to handle an ibuf once it has been polled
+					* from the CQ */
+				//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
+				//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
+				sctk_network_poll_recv_ibuf(ibuf->rail, ibuf);
+			}
+			else
+			{
+				/* Profile the time to handle an ibuf once it has been polled
+					* from the CQ */
+				//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
+				//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
+				sctk_network_poll_send_ibuf(ibuf->rail, ibuf);
 			}
 
-			mpc_common_spinlock_unlock(lock);
+			POLL_RECV_OTHER(poll);
+
+
+			nb_found++;
+			goto exit;
 		}
+
+		mpc_common_spinlock_unlock(lock);
 	}
 
 exit:
@@ -549,26 +545,22 @@ int _mpc_lowcomm_ib_cp_ctx_steal(struct sctk_ib_polling_s *poll, char other_numa
 		mpc_common_spinlock_unlock(&__numas_lock);
 	}
 
-	_mpc_lowcomm_ib_cp_task_t *task          = NULL;
+	_mpc_lowcomm_ib_cp_task_t *task = NULL;
 	__mpc_lowcomm_ib_numa_t *  numa;
 	__mpc_lowcomm_ib_vp_t *    tmp_vp;
 
 	/* In PTHREAD mode, the idle task do not call the cp_init_task
-		* function.
-		* If task_node_number not initialized, we do it now */
+	 * function.
+	 * If task_node_number not initialized, we do it now */
 	if(task_node_number < 0)
 	{
-		if(__vp_tls_save)
-		{
-			task_node_number = mpc_topology_get_numa_node_from_cpu(__vp_tls_save->number);
-		}
+		task_node_number = mpc_topology_get_numa_node_from_cpu(__vp_tls_save->number);
 	}
 
 	/* First, try to steal from the same NUMA node*/
 	assume( (task_node_number < numa_number) );
 	if(task_node_number >= 0)
 	{
-
 		numa = __vp_numa_descriptor[task_node_number];
 
 		if(numa != NULL)
@@ -578,9 +570,8 @@ int _mpc_lowcomm_ib_cp_ctx_steal(struct sctk_ib_polling_s *poll, char other_numa
 				for(task = tmp_vp->tasks; task; task = task->hh_vp.next)
 				{
 					nb_found += __cp_steal(poll, &(task->local_ibufs_list),
-								&(task->local_ibufs_list_lock), task);
+					                       &(task->local_ibufs_list_lock), task);
 				}
-
 			}
 		}
 		else
@@ -597,9 +588,9 @@ int _mpc_lowcomm_ib_cp_ctx_steal(struct sctk_ib_polling_s *poll, char other_numa
 		return nb_found;
 	}
 
-	if(other_numa && __vp_numa_descriptor)
+	if(other_numa && (__number_of_registered_numa > 1) )
 	{
-		int random = rand_r(&seed) % numa_registered;
+		int random = rand_r(&seed) % __number_of_registered_numa;
 
 		numa = __vp_numa_descriptor[random];
 		if(numa != NULL)
@@ -626,7 +617,7 @@ int _mpc_lowcomm_ib_cp_ctx_steal(struct sctk_ib_polling_s *poll, char other_numa
 #define CHECK_IS_READY(x)        do {             \
 		if(task->ready != 1){ return 0; } \
 } while(0);
-#define IBUF_GET_RDMA_TYPE(x)    ( (x)->type)
+
 
 int _mpc_lowcomm_ib_cp_ctx_handle_message(_mpc_lowcomm_ib_ibuf_t *ibuf, int dest_task, int target_task)
 {
@@ -637,9 +628,8 @@ int _mpc_lowcomm_ib_cp_ctx_handle_message(_mpc_lowcomm_ib_ibuf_t *ibuf, int dest
 
 	if(!task)
 	{
-		//sctk_ib_rdma_t *rdma_header;
+		//_mpc_lowcomm_ib_rdma_t *rdma_header;
 		//rdma_header = IBUF_GET_RDMA_HEADER ( ibuf->buffer );
-		//int type = IBUF_GET_RDMA_TYPE ( rdma_header );
 		//    mpc_common_debug_error("Indirect message!! (target task:%d dest_task:%d) %d process %d", target_task, dest_task, type, mpc_common_get_process_rank());
 		/* We return without error -> indirect message that we need to handle */
 		return 0;

@@ -138,12 +138,12 @@ typedef struct mpc_lowcomm_ptp_message_header_s
 	int                                          message_tag;           /**< Message TAG */
 	mpc_lowcomm_communicator_t                   communicator;          /**< Message communicator */
 	struct mpc_lowcomm_ptp_ctrl_message_header_s message_type;          /**< Control Message Infos */
-	/* Ordering */
-	int                                          message_number;        /**< Message order (for reorder) */
-	char                                         use_message_numbering; /**< Should this message be reordered */
 	/* Content */
 	mpc_lowcomm_datatype_t                       datatype;              /**< Caried data-type (for matching check) */
 	size_t                                       msg_size;              /**< Message size */
+	/* Ordering */
+	int                                          message_number;        /**< Message order (for reorder) */
+	char                                         use_message_numbering; /**< Should this message be reordered */
 } mpc_lowcomm_ptp_message_header_t;
 
 void mpc_lowcomm_message_probe_any_tag(int destination, int source, const mpc_lowcomm_communicator_t comm, int *status, mpc_lowcomm_ptp_message_header_t *msg);

@@ -59,7 +59,6 @@ static inline int ___get_task_rank()
 /* From manually switched TLSs */
 extern __thread int __mpc_task_rank;
 
-static int mpc_common_get_process_rank();
 
 static inline int mpc_common_get_task_rank(void)
 {

@@ -25,25 +25,11 @@
 
 #include "sctk_ib.h"
 #include "sctk_ib_buffered.h"
-#include "sctk_ib_polling.h"
-#include "sctk_ib_topology.h"
-#include "sctk_ibufs.h"
 #include "sctk_route.h"
-#include "sctk_ib_mmu.h"
-#include "sctk_net_tools.h"
-#include "sctk_ib_eager.h"
-#include "sctk_ib_cp.h"
-#include "sctk_ibufs_rdma.h"
+#include "sctk_ib_qp.h"
 
+#include <sctk_net_tools.h>
 #include <sctk_alloc.h>
-
-#if defined MPC_LOWCOMM_IB_MODULE_NAME
-#error "MPC_LOWCOMM_IB_MODULE already defined"
-#endif
-//#define MPC_LOWCOMM_IB_MODULE_DEBUG
-#define MPC_LOWCOMM_IB_MODULE_NAME "BUFF"
-#include "sctk_ib_toolkit.h"
-#include "math.h"
 
 
 /* XXX: Modifications required:
@@ -53,125 +39,129 @@
  * */
 
 /* Handle non contiguous messages. Returns 1 if the message was handled, 0 if not */
-static inline void *sctk_ib_buffered_send_non_contiguous_msg ( __UNUSED__ sctk_rail_info_t *rail,
-                                                               __UNUSED__ sctk_ib_qp_t *remote,
-                                                               mpc_lowcomm_ptp_message_t *msg,
-                                                               size_t size )
+static inline void *__pack_non_contig_msg(mpc_lowcomm_ptp_message_t *msg,
+                                          size_t size)
 {
 	void *buffer = NULL;
-	buffer = sctk_malloc ( size );
-	sctk_net_copy_in_buffer ( msg, buffer );
+
+	buffer = sctk_malloc(size);
+	sctk_net_copy_in_buffer(msg, buffer);
 
 	return buffer;
 }
 
-
-int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
-                                   sctk_ib_qp_t *remote, mpc_lowcomm_ptp_message_t *msg, size_t size )
+int _mpc_lowcomm_ib_buffered_prepare_msg(sctk_rail_info_t *rail,
+                                         sctk_ib_qp_t *remote,
+                                         mpc_lowcomm_ptp_message_t *msg,
+                                         size_t size)
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-	/* Maximum size for an eager buffer */
-	size = size - sizeof ( mpc_lowcomm_ptp_message_body_t );
-	int    buffer_index = 0;
-	size_t msg_copied = 0;
-	size_t payload_size;
-	_mpc_lowcomm_ib_ibuf_t *ibuf;
-	sctk_ib_buffered_t *buffered;
-	void *payload;
-	int number;
 
-	if ( msg->tail.message_type != MPC_LOWCOMM_MESSAGE_CONTIGUOUS )
+	/* Maximum size for an eager buffer */
+	size = size - sizeof(mpc_lowcomm_ptp_message_body_t);
+
+	int    buffer_index = 0;
+	size_t already_sent = 0;
+
+	void *payload = NULL;
+
+	if(msg->tail.message_type != MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
 	{
-		payload = sctk_ib_buffered_send_non_contiguous_msg ( rail, remote, msg, size );
-		assume ( payload );
+		payload = __pack_non_contig_msg(msg, size);
+		assume(payload);
 	}
 	else
 	{
 		payload = msg->tail.message.contiguous.addr;
 	}
 
-	number = OPA_fetch_and_incr_int ( &remote->ib_buffered.number );
-	mpc_common_nodebug ( "Sending buffered message (size:%lu)", size );
+	int number = OPA_fetch_and_incr_int(&remote->ib_buffered.number);
+	mpc_common_nodebug("Sending buffered message (size:%lu)", size);
 
 	/* While it reamins slots to copy */
 	do
 	{
-		size_t ibuf_size = ULONG_MAX;
-		ibuf = _mpc_lowcomm_ib_ibuf_pick_send ( rail_ib, remote, &ibuf_size );
-		ib_assume ( ibuf );
+		size_t buffer_size           = ULONG_MAX;
+		_mpc_lowcomm_ib_ibuf_t *ibuf = _mpc_lowcomm_ib_ibuf_pick_send(rail_ib, remote, &buffer_size);
+		ib_assume(ibuf);
 
-		size_t buffer_size = ibuf_size;
-		/* We remove the buffered header's size from the size */
-		mpc_common_nodebug ( "Payload with size %lu %lu", buffer_size, sizeof ( mpc_lowcomm_ptp_message_body_t ) );
-		buffer_size -= IBUF_GET_BUFFERED_SIZE;
-		mpc_common_nodebug ( "Sending a message with size %lu", buffer_size );
+		/* At this point buffer_size is now max eager size */
 
-		buffered = IBUF_GET_BUFFERED_HEADER ( ibuf->buffer );
-		buffered->number = number;
+		/* We remove the buffered header's size from the size
+		 * at it cannot be accounted for actual payload */
+		assume(buffer_size > sizeof(_mpc_lowcomm_ib_buffered_t) );
+		buffer_size -= sizeof(_mpc_lowcomm_ib_buffered_t);
 
-		ib_assume ( buffer_size >= sizeof ( mpc_lowcomm_ptp_message_body_t ) );
-		memcpy ( &buffered->msg, msg, sizeof ( mpc_lowcomm_ptp_message_body_t ) );
-		mpc_common_nodebug ( "Send number %d, src:%d, dest:%d", SCTK_MSG_NUMBER ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ) );
+		_mpc_lowcomm_ib_buffered_t *buffered_msg = (_mpc_lowcomm_ib_buffered_t *)(ibuf->buffer);
 
-		if ( msg_copied + buffer_size > size )
+		/* Copy message header */
+		memcpy(&buffered_msg->msg, msg, sizeof(mpc_lowcomm_ptp_message_body_t) );
+
+		size_t payload_size = 0;
+
+		if(size < already_sent + buffer_size)
 		{
-			payload_size = size - msg_copied;
+			/* Can fit in last buffer send the remainder */
+			payload_size = size - already_sent;
 		}
 		else
 		{
+			/* Still too large send full buffer */
 			payload_size = buffer_size;
 		}
 
+		/* Copy message payload */
+		memcpy(buffered_msg->payload,
+		       ( char * )payload + already_sent,
+		       payload_size);
 
-		memcpy ( IBUF_GET_BUFFERED_PAYLOAD ( ibuf->buffer ), ( char * ) payload + msg_copied,
-		         payload_size );
+		mpc_common_nodebug("Send message %d to %d (already_sent:%lu pyload_size:%lu header:%lu, buffer_size:%lu number:%lu)",
+		                   buffer_index, remote->rank, already_sent, payload_size, sizeof(_mpc_lowcomm_ib_buffered_t), buffer_size, SCTK_MSG_NUMBER(msg) );
 
-		mpc_common_nodebug ( "Send message %d to %d (msg_copied:%lu pyload_size:%lu header:%lu, buffer_size:%lu number:%lu)",
-		               buffer_index, remote->rank, msg_copied, payload_size, IBUF_GET_BUFFERED_SIZE, buffer_size, SCTK_MSG_NUMBER ( msg ) );
 		/* Initialization of the buffer */
-		buffered->index = buffer_index;
-		buffered->payload_size = payload_size;
-		buffered->copied = msg_copied;
-		IBUF_SET_PROTOCOL ( ibuf->buffer, MPC_LOWCOMM_IB_BUFFERED_PROTOCOL );
-		msg_copied += payload_size;
 
-		IBUF_SET_DEST_TASK ( ibuf->buffer, SCTK_MSG_DEST_TASK ( msg ) );
-		IBUF_SET_SRC_TASK ( ibuf->buffer, SCTK_MSG_SRC_TASK ( msg ) );
+		buffered_msg->buffered_header.number       = number;
+		buffered_msg->buffered_header.index        = buffer_index;
+		buffered_msg->buffered_header.payload_size = payload_size;
+		buffered_msg->buffered_header.copied       = already_sent;
+
+		IBUF_SET_PROTOCOL(ibuf->buffer, MPC_LOWCOMM_IB_BUFFERED_PROTOCOL);
+
+		IBUF_SET_DEST_TASK(ibuf->buffer, SCTK_MSG_DEST_TASK(msg) );
+		IBUF_SET_SRC_TASK(ibuf->buffer, SCTK_MSG_SRC_TASK(msg) );
 
 		/* Recalculate size and send */
-		_mpc_lowcomm_ib_ibuf_prepare ( remote, ibuf, payload_size + IBUF_GET_BUFFERED_SIZE );
-		sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
+		_mpc_lowcomm_ib_ibuf_prepare(remote, ibuf, payload_size + sizeof(_mpc_lowcomm_ib_buffered_t) );
+		sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
 
 		buffer_index++;
-	}
-	while ( msg_copied < size );
+		already_sent += payload_size;
+	} while(already_sent < size);
 
 	/* We free the temp copy */
-	if ( msg->tail.message_type != MPC_LOWCOMM_MESSAGE_CONTIGUOUS )
+	if(msg->tail.message_type != MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
 	{
-		assume ( payload );
-		sctk_free ( payload );
+		assume(payload);
+		sctk_free(payload);
 	}
 
-	mpc_common_nodebug ( "End of message sending" );
+	mpc_common_nodebug("End of message sending");
 	return 0;
 }
 
-void sctk_ib_buffered_free_msg ( void *arg )
+static void __buffered_free_msg(void *arg)
 {
-	mpc_lowcomm_ptp_message_t *msg = ( mpc_lowcomm_ptp_message_t * ) arg;
-	sctk_ib_buffered_entry_t *entry = NULL;
-	__UNUSED__ sctk_rail_info_t *rail;
+	mpc_lowcomm_ptp_message_t *       msg   = ( mpc_lowcomm_ptp_message_t * )arg;
+	_mpc_lowcomm_ib_buffered_entry_t *entry = NULL;
 
 	entry = msg->tail.ib.buffered.entry;
-	rail = entry->msg.tail.ib.buffered.rail;
-	ib_assume ( entry );
+	ib_assume(entry);
 
-	switch ( entry->status & MASK_BASE )
+	switch(entry->status & MASK_BASE)
 	{
 		case MPC_LOWCOMM_IB_RDMA_RECOPY:
-			mpc_common_nodebug ( "Free payload %p from entry %p", entry->payload, entry );
-			sctk_free ( entry->payload );
+			mpc_common_nodebug("Free payload %p from entry %p", entry->payload, entry);
+			sctk_free(entry->payload);
 			break;
 
 		case MPC_LOWCOMM_IB_RDMA_ZEROCOPY:
@@ -183,229 +173,221 @@ void sctk_ib_buffered_free_msg ( void *arg )
 	}
 }
 
-void sctk_ib_buffered_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
+static void __buffered_copy_msg(mpc_lowcomm_ptp_message_content_to_copy_t *tmp)
 {
-	sctk_ib_buffered_entry_t *entry = NULL;
-	__UNUSED__ sctk_rail_info_t *rail;
+	_mpc_lowcomm_ib_buffered_entry_t *entry = NULL;
+
 	mpc_lowcomm_ptp_message_t *send;
 	mpc_lowcomm_ptp_message_t *recv;
 
 	recv = tmp->msg_recv;
 	send = tmp->msg_send;
-	rail = send->tail.ib.buffered.rail;
+
 	entry = send->tail.ib.buffered.entry;
-	ib_assume ( entry );
+	ib_assume(entry);
 	//ib_assume(recv->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 
-	mpc_common_spinlock_lock ( &entry->lock );
+	mpc_common_spinlock_lock(&entry->lock);
 	entry->copy_ptr = tmp;
-	mpc_common_nodebug ( "Copy status (%p): %d", entry, entry->status );
+	mpc_common_nodebug("Copy status (%p): %d", entry, entry->status);
 
-	switch ( entry->status & MASK_BASE )
+	switch(entry->status & MASK_BASE)
 	{
 		case MPC_LOWCOMM_IB_RDMA_NOT_SET:
-			mpc_common_nodebug ( "Message directly copied (entry:%p)", entry );
+			mpc_common_nodebug("Message directly copied (entry:%p)", entry);
 
-			if ( recv->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS )
+			if(recv->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
 			{
 				entry->payload = recv->tail.message.contiguous.addr;
 				/* Add matching OK */
 				entry->status = MPC_LOWCOMM_IB_RDMA_ZEROCOPY | MPC_LOWCOMM_IB_RDMA_MATCH;
-				mpc_common_spinlock_unlock ( &entry->lock );
+				mpc_common_spinlock_unlock(&entry->lock);
 				break;
 			}
 
 		case MPC_LOWCOMM_IB_RDMA_RECOPY:
-			mpc_common_nodebug ( "Message recopied" );
+			mpc_common_nodebug("Message recopied");
 
 			/* transfer done */
-			if ( ( entry->status & MASK_DONE ) == MPC_LOWCOMM_IB_RDMA_DONE )
+			if( (entry->status & MASK_DONE) == MPC_LOWCOMM_IB_RDMA_DONE)
 			{
-				mpc_common_spinlock_unlock ( &entry->lock );
+				mpc_common_spinlock_unlock(&entry->lock);
 				/* The message is done. All buffers have been received */
-				mpc_common_nodebug ( "Message recopied free from copy %d (%p)", entry->status, entry );
-				sctk_net_message_copy_from_buffer ( entry->payload, tmp, 1 );
-				sctk_free ( entry );
+				mpc_common_nodebug("Message recopied free from copy %d (%p)", entry->status, entry);
+				sctk_net_message_copy_from_buffer(entry->payload, tmp, 1);
+				sctk_free(entry);
 			}
 			else
 			{
-				mpc_common_nodebug ( "Matched" );
+				mpc_common_nodebug("Matched");
 				/* Add matching OK */
 				entry->status |= MPC_LOWCOMM_IB_RDMA_MATCH;
-				mpc_common_nodebug ( "1 Matched ? %p %d", entry, entry->status & MASK_MATCH );
-				mpc_common_spinlock_unlock ( &entry->lock );
+				mpc_common_nodebug("1 Matched ? %p %d", entry, entry->status & MASK_MATCH);
+				mpc_common_spinlock_unlock(&entry->lock);
 			}
 
 			break;
 
 		default:
-			mpc_common_debug_error ( "Got mask %d", entry->status );
+			mpc_common_debug_error("Got mask %d", entry->status);
 			not_reachable();
 	}
 }
 
-static inline sctk_ib_buffered_entry_t *sctk_ib_buffered_get_entry ( sctk_rail_info_t *rail,
+static inline _mpc_lowcomm_ib_buffered_entry_t *__buffered_get_entry(sctk_rail_info_t *rail,
                                                                      sctk_ib_qp_t *remote,
-                                                                     _mpc_lowcomm_ib_ibuf_t *ibuf )
+                                                                     _mpc_lowcomm_ib_ibuf_t *ibuf)
 {
-	sctk_ib_buffered_entry_t *entry = NULL;
-	mpc_lowcomm_ptp_message_body_t *body;
-	sctk_ib_buffered_t *buffered;
-	int key;
+	_mpc_lowcomm_ib_buffered_entry_t *entry        = NULL;
+	_mpc_lowcomm_ib_buffered_t *      buffered_msg = (_mpc_lowcomm_ib_buffered_t *)ibuf->buffer;
+	mpc_lowcomm_ptp_message_body_t *  body         = &buffered_msg->msg;
+	int key = buffered_msg->buffered_header.number;
 
-	buffered = IBUF_GET_BUFFERED_HEADER ( ibuf->buffer );
-	body = &buffered->msg;
-	key = buffered->number;
-	mpc_common_nodebug ( "Got message number %d", key );
+	mpc_common_nodebug("Got message number %d", key);
 
-	mpc_common_spinlock_lock ( &remote->ib_buffered.lock );
-	HASH_FIND ( hh, remote->ib_buffered.entries, &key, sizeof ( int ), entry );
+	mpc_common_spinlock_lock(&remote->ib_buffered.lock);
 
-	if ( !entry )
+	HASH_FIND(hh, remote->ib_buffered.entries, &key, sizeof(int), entry);
+
+	if(!entry)
 	{
 		/* Allocate memory for message header */
-		entry = sctk_malloc ( sizeof ( sctk_ib_buffered_entry_t ) );
-		ib_assume ( entry );
+		entry = sctk_malloc(sizeof(_mpc_lowcomm_ib_buffered_entry_t) );
+		ib_assume(entry);
 		/* Copy message header */
-		memcpy ( &entry->msg.body, body, sizeof ( mpc_lowcomm_ptp_message_body_t ) );
-		entry->msg.tail.ib.protocol = MPC_LOWCOMM_IB_BUFFERED_PROTOCOL;
+		memcpy(&entry->msg.body, body, sizeof(mpc_lowcomm_ptp_message_body_t) );
+		entry->msg.tail.ib.protocol       = MPC_LOWCOMM_IB_BUFFERED_PROTOCOL;
 		entry->msg.tail.ib.buffered.entry = entry;
-		entry->msg.tail.ib.buffered.rail = rail;
+		entry->msg.tail.ib.buffered.rail  = rail;
+
 		/* Prepare matching */
 		entry->msg.tail.completion_flag = NULL;
-		entry->msg.tail.message_type = MPC_LOWCOMM_MESSAGE_NETWORK;
-		_mpc_comm_ptp_message_clear_request ( &entry->msg );
-		_mpc_comm_ptp_message_set_copy_and_free ( &entry->msg, sctk_ib_buffered_free_msg,
-		                     sctk_ib_buffered_copy );
+		entry->msg.tail.message_type    = MPC_LOWCOMM_MESSAGE_NETWORK;
+		_mpc_comm_ptp_message_clear_request(&entry->msg);
+		_mpc_comm_ptp_message_set_copy_and_free(&entry->msg, __buffered_free_msg, __buffered_copy_msg);
+
 		/* Add msg to hashtable */
-		entry->key = key;
-		entry->total = buffered->nb;
+		entry->key    = key;
+		entry->total  = buffered_msg->buffered_header.nb;
 		entry->status = MPC_LOWCOMM_IB_RDMA_NOT_SET;
-		mpc_common_nodebug ( "Not set: %d (%p)", entry->status, entry );
+		mpc_common_nodebug("Not set: %d (%p)", entry->status, entry);
 		mpc_common_spinlock_init(&entry->lock, 0);
 		mpc_common_spinlock_init(&entry->current_copied_lock, 0);
 		entry->current_copied = 0;
-		entry->payload = NULL;
-		entry->copy_ptr = NULL;
-		HASH_ADD ( hh, remote->ib_buffered.entries, key, sizeof ( int ), entry );
+		entry->payload        = NULL;
+		entry->copy_ptr       = NULL;
+		HASH_ADD(hh, remote->ib_buffered.entries, key, sizeof(int), entry);
 		/* Send message to high level MPC */
 
-		mpc_common_nodebug ( "Read msg with number %d", body->header.message_number );
-		rail->send_message_from_network ( &entry->msg );
+		mpc_common_nodebug("Read msg with number %d", body->header.message_number);
+		rail->send_message_from_network(&entry->msg);
 
-		mpc_common_spinlock_lock ( &entry->lock );
+		mpc_common_spinlock_lock(&entry->lock);
 
 		/* Should be 'MPC_LOWCOMM_IB_RDMA_NOT_SET' or 'MPC_LOWCOMM_IB_RDMA_ZEROCOPY' */
-		if ( ( entry->status & MASK_BASE ) == MPC_LOWCOMM_IB_RDMA_NOT_SET )
+		if( (entry->status & MASK_BASE) == MPC_LOWCOMM_IB_RDMA_NOT_SET)
 		{
-			mpc_common_nodebug ( "We recopy the message" );
-			entry->payload = sctk_malloc ( body->header.msg_size );
-			ib_assume ( entry->payload );
+			mpc_common_nodebug("We recopy the message");
+			entry->payload = sctk_malloc(body->header.msg_size);
+			ib_assume(entry->payload);
 			entry->status |= MPC_LOWCOMM_IB_RDMA_RECOPY;
 		}
-		else
-			if ( ( entry->status & MASK_BASE ) != MPC_LOWCOMM_IB_RDMA_ZEROCOPY )
-				not_reachable();
+		else if( (entry->status & MASK_BASE) != MPC_LOWCOMM_IB_RDMA_ZEROCOPY)
+		{
+			not_reachable();
+		}
 
-		mpc_common_spinlock_unlock ( &entry->lock );
+		mpc_common_spinlock_unlock(&entry->lock);
 	}
 
-	mpc_common_spinlock_unlock ( &remote->ib_buffered.lock );
+	mpc_common_spinlock_unlock(&remote->ib_buffered.lock);
 
 	return entry;
 }
 
-void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf )
+void _mpc_lowcomm_ib_buffered_poll_recv(sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf)
 {
-	mpc_lowcomm_ptp_message_body_t *body;
-	sctk_ib_buffered_t *buffered;
-	sctk_endpoint_t *route_table;
-	sctk_ib_buffered_entry_t *entry = NULL;
-	sctk_ib_qp_t *remote;
-	size_t current_copied;
-	int src_process;
+	mpc_common_nodebug("Polled buffered message");
 
-	mpc_common_nodebug ( "Polled buffered message" );
-
-	IBUF_CHECK_POISON ( ibuf->buffer );
-	buffered = IBUF_GET_BUFFERED_HEADER ( ibuf->buffer );
-	body = &buffered->msg;
+	IBUF_CHECK_POISON(ibuf->buffer);
+	_mpc_lowcomm_ib_buffered_t *    buffered_msg = (_mpc_lowcomm_ib_buffered_t *)ibuf->buffer;
+	mpc_lowcomm_ptp_message_body_t *body         = &buffered_msg->msg;
 
 	/* Determine the Source process */
-	src_process = body->header.source;
-	ib_assume ( src_process != -1 );
+	int src_process = body->header.source;
+	ib_assume(src_process != -1);
 	/* Determine if the message is expected or not (good sequence number) */
-	route_table = sctk_rail_get_any_route_to_process ( rail, src_process );
-	ib_assume ( route_table );
-	remote = route_table->data.ib.remote;
+	sctk_endpoint_t *route_table = sctk_rail_get_any_route_to_process(rail, src_process);
+	ib_assume(route_table);
+	sctk_ib_qp_t * remote = route_table->data.ib.remote;
 
 	/* Get the entry */
-	entry = sctk_ib_buffered_get_entry ( rail, remote, ibuf );
+	_mpc_lowcomm_ib_buffered_entry_t *entry = __buffered_get_entry(rail, remote, ibuf);
 
 	//fprintf(stderr, "Copy frag %d on %d (size:%lu copied:%lu)\n", buffered->index, buffered->nb, buffered->payload_size, buffered->copied);
 	/* Copy the message payload */
-	memcpy ( ( char * ) entry->payload + buffered->copied, IBUF_GET_BUFFERED_PAYLOAD ( ibuf->buffer ),
-	         buffered->payload_size );
+	memcpy( ( char * )entry->payload + buffered_msg->buffered_header.copied,
+	        buffered_msg->payload,
+	        buffered_msg->buffered_header.payload_size);
+
+	size_t current_copied = 0;
 
 	/* We check if we have receive the whole message.
-	* If yes, we send it to MPC */
-	mpc_common_spinlock_lock ( &entry->current_copied_lock );
-	current_copied = ( entry->current_copied += buffered->payload_size );
-	mpc_common_spinlock_unlock ( &entry->current_copied_lock );
-	mpc_common_nodebug ( "Received current copied : %lu on %lu number %d", current_copied, body->header.msg_size, body->header.message_number );
+	 * If yes, we send it to MPC */
+	mpc_common_spinlock_lock(&entry->current_copied_lock);
+        entry->current_copied += buffered_msg->buffered_header.payload_size;
+	mpc_common_spinlock_unlock(&entry->current_copied_lock);
+
+	mpc_common_nodebug("Received current copied : %lu on %lu number %d", current_copied, body->header.msg_size, body->header.message_number);
 
 	/* XXX: horrible use of locks. but we do not have the choice */
-	if ( current_copied >= body->header.msg_size )
+	if(current_copied == body->header.msg_size)
 	{
-		ib_assume ( current_copied == body->header.msg_size );
-		/* remove entry from HT.
-		* XXX: We have to do this before marking message as done */
-		mpc_common_spinlock_lock ( &remote->ib_buffered.lock );
-		assume ( remote->ib_buffered.entries != NULL );
-		HASH_DEL ( remote->ib_buffered.entries, entry );
-		mpc_common_spinlock_unlock ( &remote->ib_buffered.lock );
+		mpc_common_spinlock_lock(&remote->ib_buffered.lock);
+		assume(remote->ib_buffered.entries != NULL);
+		HASH_DEL(remote->ib_buffered.entries, entry);
+		mpc_common_spinlock_unlock(&remote->ib_buffered.lock);
 
-		mpc_common_spinlock_lock ( &entry->lock );
-		mpc_common_nodebug ( "2 - Matched ? %p %d", entry, entry->status & MASK_MATCH );
+		mpc_common_spinlock_lock(&entry->lock);
+		mpc_common_nodebug("2 - Matched ? %p %d", entry, entry->status & MASK_MATCH);
 
-		switch ( entry->status & MASK_BASE )
+		switch(entry->status & MASK_BASE)
 		{
 			case MPC_LOWCOMM_IB_RDMA_RECOPY:
 
 				/* Message matched */
-				if ( ( entry->status & MASK_MATCH ) == MPC_LOWCOMM_IB_RDMA_MATCH )
+				if( (entry->status & MASK_MATCH) == MPC_LOWCOMM_IB_RDMA_MATCH)
 				{
-					mpc_common_spinlock_unlock ( &entry->lock );
-					ib_assume ( entry->copy_ptr );
+					mpc_common_spinlock_unlock(&entry->lock);
+					ib_assume(entry->copy_ptr);
 					/* The message is done. All buffers have been received */
-					sctk_net_message_copy_from_buffer ( entry->payload, entry->copy_ptr, 1 );
-					mpc_common_nodebug ( "Message recopied free from done" );
-					sctk_free ( entry );
+					sctk_net_message_copy_from_buffer(entry->payload, entry->copy_ptr, 1);
+					mpc_common_nodebug("Message recopied free from done");
+					sctk_free(entry);
 				}
 				else
 				{
-					mpc_common_nodebug ( "Free done:%p", entry );
+					mpc_common_nodebug("Free done:%p", entry);
 					entry->status |= MPC_LOWCOMM_IB_RDMA_DONE;
-					mpc_common_spinlock_unlock ( &entry->lock );
+					mpc_common_spinlock_unlock(&entry->lock);
 				}
 
 				break;
 
 			case MPC_LOWCOMM_IB_RDMA_ZEROCOPY:
-
 				/* Message matched */
-				if ( ( entry->status & MASK_MATCH ) == MPC_LOWCOMM_IB_RDMA_MATCH )
+				if( (entry->status & MASK_MATCH) == MPC_LOWCOMM_IB_RDMA_MATCH)
 				{
-					mpc_common_spinlock_unlock ( &entry->lock );
-					ib_assume ( entry->copy_ptr );
-					_mpc_comm_ptp_message_commit_request ( entry->copy_ptr->msg_send,
-					                                   entry->copy_ptr->msg_recv );
-					sctk_free ( entry );
-					mpc_common_nodebug ( "Message zerocpy free from done" );
+					mpc_common_spinlock_unlock(&entry->lock);
+					ib_assume(entry->copy_ptr);
+					_mpc_comm_ptp_message_commit_request(entry->copy_ptr->msg_send,
+					                                     entry->copy_ptr->msg_recv);
+					sctk_free(entry);
+					mpc_common_nodebug("Message zerocpy free from done");
 				}
 				else
 				{
-					mpc_common_spinlock_unlock ( &entry->lock );
+					mpc_common_spinlock_unlock(&entry->lock);
 					not_reachable();
 				}
 
@@ -415,6 +397,6 @@ void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t
 				not_reachable();
 		}
 
-		mpc_common_nodebug ( "Free done:%p", entry );
+		mpc_common_nodebug("Free done:%p", entry);
 	}
 }

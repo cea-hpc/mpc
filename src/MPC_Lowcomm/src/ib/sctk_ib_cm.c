@@ -32,6 +32,8 @@
 #include "sctk_route.h"
 #include "mpc_common_asm.h"
 
+#include <mpc_launch_pmi.h>
+
 /* IB debug macros */
 #if defined MPC_LOWCOMM_IB_MODULE_NAME
 #error "MPC_LOWCOMM_IB_MODULE already defined"

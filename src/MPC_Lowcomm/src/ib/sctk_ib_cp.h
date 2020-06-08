@@ -40,10 +40,10 @@ typedef struct _mpc_lowcomm_ib_cp_ctx_task_s
 	int vp;
 	int node;				/**< numa node */
 	int rank;				/**< rank is the key of HT */
-	_mpc_lowcomm_ib_ibuf_t *volatile local_ibufs_list;  /**< local pending ibufs for the current task  */
+	_mpc_lowcomm_ib_ibuf_t * local_ibufs_list;  /**< local pending ibufs for the current task  */
 	mpc_common_spinlock_t local_ibufs_list_lock;
 	char dummy[64];
-	_mpc_lowcomm_ib_ibuf_t *volatile *global_ibufs_list;		/**< global pending ibufs for the current task  */
+	_mpc_lowcomm_ib_ibuf_t **global_ibufs_list;		/**< global pending ibufs for the current task  */
 	mpc_common_spinlock_t *global_ibufs_list_lock;
 	/* Counters */
 	OPA_int_t c[64];
@@ -90,7 +90,7 @@ int _mpc_lowcomm_ib_cp_ctx_handle_message ( _mpc_lowcomm_ib_ibuf_t *ibuf, int de
 int _mpc_lowcomm_ib_cp_ctx_poll ( struct sctk_ib_polling_s *poll,
                       int task_id );
 
-void _mpc_lowcomm_ib_cp_ctx_poll_all ( const struct sctk_rail_info_s const *rail, struct sctk_ib_polling_s *poll );
+void _mpc_lowcomm_ib_cp_ctx_poll_all ( const struct sctk_rail_info_s *rail, struct sctk_ib_polling_s *poll );
 
 int _mpc_lowcomm_ib_cp_ctx_steal ( struct sctk_ib_polling_s *poll, char other_numa );
 

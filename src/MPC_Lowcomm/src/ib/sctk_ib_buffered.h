@@ -30,36 +30,49 @@
 #include <uthash.h>
 #include <comm.h>
 
+#include "sctk_ibufs.h"
+
 /********************************************************************/
 /* Structures                                                       */
 /********************************************************************/
-typedef struct sctk_ib_buffered_table_s
+typedef struct _mpc_lowcomm_ib_buffered_table_s
 {
-	struct sctk_ib_buffered_entry_s *entries;
+	struct _mpc_lowcomm_ib_buffered_entry_s *entries;
 	mpc_common_spinlock_t lock;
 
 	OPA_int_t number;
-} sctk_ib_buffered_table_t;
+} _mpc_lowcomm_ib_buffered_table_t;
 
-typedef struct sctk_ib_buffered_s
+
+typedef struct _mpc_lowcomm_ib_buffered_header_s
 {
-	mpc_lowcomm_ptp_message_body_t msg;
 	int number;
 	int index;
 	int nb;
 	size_t payload_size;
 	size_t copied;
-}
-__attribute__ ( ( aligned ( 16 ) ) ) sctk_ib_buffered_t;
+} _mpc_lowcomm_ib_buffered_header_t;
 
-typedef struct sctk_ib_buffered_entry_s
+
+
+
+typedef struct _mpc_lowcomm_ib_buffered_s
+{
+	_mpc_lowcomm_ib_ibuf_header_t  ibuf_header;
+	_mpc_lowcomm_ib_buffered_header_t buffered_header;
+	mpc_lowcomm_ptp_message_body_t msg;
+	char payload[0];
+} _mpc_lowcomm_ib_buffered_t;
+
+
+typedef struct _mpc_lowcomm_ib_buffered_entry_s
 {
 	struct mpc_lowcomm_ptp_message_s msg;
 	int key;
 	UT_hash_handle hh;
 	int total;
 	void *payload;
-	sctk_ib_rdma_status_t status;
+	_mpc_lowcomm_ib_rdma_status_t status;
 	mpc_common_spinlock_t lock;
 	char dummy[64];
 	/* Current copied */
@@ -67,7 +80,7 @@ typedef struct sctk_ib_buffered_entry_s
 	size_t current_copied;
 
 	struct mpc_lowcomm_ptp_message_content_to_copy_s *copy_ptr;
-} sctk_ib_buffered_entry_t;
+} _mpc_lowcomm_ib_buffered_entry_t;
 
 struct _mpc_lowcomm_ib_ibuf_s;
 
@@ -75,11 +88,11 @@ struct _mpc_lowcomm_ib_ibuf_s;
 /* Functions                                                        */
 /********************************************************************/
 
-int sctk_ib_buffered_prepare_msg ( struct sctk_rail_info_s *rail,
+int _mpc_lowcomm_ib_buffered_prepare_msg ( struct sctk_rail_info_s *rail,
                                    struct sctk_ib_qp_s *remote,
                                    struct mpc_lowcomm_ptp_message_s *msg,
                                    size_t size );
 
-void sctk_ib_buffered_poll_recv ( struct sctk_rail_info_s *rail, struct _mpc_lowcomm_ib_ibuf_s *ibuf );
+void _mpc_lowcomm_ib_buffered_poll_recv ( struct sctk_rail_info_s *rail, struct _mpc_lowcomm_ib_ibuf_s *ibuf );
 
 #endif

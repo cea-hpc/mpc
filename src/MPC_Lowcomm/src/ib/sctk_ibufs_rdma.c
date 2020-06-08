@@ -333,9 +333,9 @@ void __rdma_region_free(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remot
 	{
 		_mpc_lowcomm_ib_ibuf_rdma_pool_t *pool = remote->rdma.pool;
 //#warning "We should lock during DELETING the element."
-		//    mpc_common_spinlock_write_lock(&rdma_polling_lock);
+		mpc_common_spinlock_write_lock(&rdma_polling_lock);
 		DL_DELETE(rdma_pool_list, pool);
-		//    mpc_common_spinlock_write_unlock(&rdma_polling_lock);
+		mpc_common_spinlock_write_unlock(&rdma_polling_lock);
 
 		mpc_common_spinlock_write_lock(&rdma_region_list_lock);
 
@@ -677,17 +677,17 @@ static inline void __poll_ibuf(sctk_ib_rail_info_t *rail_ib,
 	switch(protocol)
 	{
 		case MPC_LOWCOMM_IB_EAGER_PROTOCOL:
-			sctk_ib_eager_poll_recv(rail, ibuf);
+			_mpc_lowcomm_ib_eager_poll_recv(rail, ibuf);
 			release_ibuf = 0;
 			break;
 
 		case MPC_LOWCOMM_IB_RDMA_PROTOCOL:
 			mpc_common_nodebug("RDMA received from RDMA channel");
-			release_ibuf = sctk_ib_rdma_poll_recv(rail, ibuf);
+			release_ibuf = _mpc_lowcomm_ib_rdma_poll_recv(rail, ibuf);
 			break;
 
 		case MPC_LOWCOMM_IB_BUFFERED_PROTOCOL:
-			sctk_ib_buffered_poll_recv(rail, ibuf);
+			_mpc_lowcomm_ib_buffered_poll_recv(rail, ibuf);
 			release_ibuf = 1;
 			break;
 
@@ -799,7 +799,7 @@ retry:
 			mpc_common_nodebug("Head set: %d-%d", *(head->head_flag), IBUF_RDMA_RESET_FLAG);
 
 			const size_t           size_flag = *head->size_flag;
-			volatile int volatile *tail_flag = IBUF_RDMA_GET_TAIL_FLAG(head->buffer, size_flag);
+			volatile int *tail_flag = IBUF_RDMA_GET_TAIL_FLAG(head->buffer, size_flag);
 
 			mpc_common_nodebug("Head set: %d-%d", *(head->head_flag), IBUF_RDMA_RESET_FLAG);
 
