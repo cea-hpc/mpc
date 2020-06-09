@@ -115,7 +115,7 @@ int _mpc_lowcomm_ib_buffered_prepare_msg(sctk_rail_info_t *rail,
 		       ( char * )payload + already_sent,
 		       payload_size);
 
-		mpc_common_nodebug("Send message %d to %d (already_sent:%lu pyload_size:%lu header:%lu, buffer_size:%lu number:%lu)",
+	    mpc_common_nodebug("Send message %d to %d (already_sent:%lu pyload_size:%lu header:%lu, buffer_size:%lu number:%lu)",
 		                   buffer_index, remote->rank, already_sent, payload_size, sizeof(_mpc_lowcomm_ib_buffered_t), buffer_size, SCTK_MSG_NUMBER(msg) );
 
 		/* Initialization of the buffer */
@@ -324,7 +324,7 @@ void _mpc_lowcomm_ib_buffered_poll_recv(sctk_rail_info_t *rail, _mpc_lowcomm_ib_
 	/* Get the entry */
 	_mpc_lowcomm_ib_buffered_entry_t *entry = __buffered_get_entry(rail, remote, ibuf);
 
-	//fprintf(stderr, "Copy frag %d on %d (size:%lu copied:%lu)\n", buffered->index, buffered->nb, buffered->payload_size, buffered->copied);
+	//fprintf(stderr, "Copy frag %d on %d (size:%lu copied:%lu)\n", buffered_msg->buffered_header.index, buffered_msg->buffered_header.nb, buffered_msg->buffered_header.payload_size, buffered_msg->buffered_header.copied);
 	/* Copy the message payload */
 	memcpy( ( char * )entry->payload + buffered_msg->buffered_header.copied,
 	        buffered_msg->payload,
@@ -335,10 +335,12 @@ void _mpc_lowcomm_ib_buffered_poll_recv(sctk_rail_info_t *rail, _mpc_lowcomm_ib_
 	/* We check if we have receive the whole message.
 	 * If yes, we send it to MPC */
 	mpc_common_spinlock_lock(&entry->current_copied_lock);
-        entry->current_copied += buffered_msg->buffered_header.payload_size;
-	mpc_common_spinlock_unlock(&entry->current_copied_lock);
+    entry->current_copied += buffered_msg->buffered_header.payload_size;
+	current_copied = entry->current_copied;
+    mpc_common_spinlock_unlock(&entry->current_copied_lock);
 
-	mpc_common_nodebug("Received current copied : %lu on %lu number %d", current_copied, body->header.msg_size, body->header.message_number);
+	//mpc_common_debug_error("Received current copied : %lu on %lu number %d", current_copied, body->header.msg_size, body->header.message_number);
+
 
 	/* XXX: horrible use of locks. but we do not have the choice */
 	if(current_copied == body->header.msg_size)
