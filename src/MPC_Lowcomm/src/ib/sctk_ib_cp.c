@@ -350,7 +350,7 @@ void _mpc_lowcomm_ib_cp_ctx_finalize_task(int rank)
 	task_node_number = -1;
 }
 
-static inline int __cp_poll(struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t **list, mpc_common_spinlock_t *lock)
+static inline int __cp_poll(struct sctk_ib_polling_s *poll, volatile _mpc_lowcomm_ib_ibuf_t **list, mpc_common_spinlock_t *lock)
 {
 	_mpc_lowcomm_ib_ibuf_t *ibuf = NULL;
 	int nb_found = 0;
@@ -473,7 +473,7 @@ int _mpc_lowcomm_ib_cp_ctx_poll(struct sctk_ib_polling_s *poll, int task_id)
 	return 0;
 }
 
-static inline int __cp_steal(struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t **list, mpc_common_spinlock_t *lock, __UNUSED__ _mpc_lowcomm_ib_cp_task_t *task)
+static inline int __cp_steal(struct sctk_ib_polling_s *poll, volatile _mpc_lowcomm_ib_ibuf_t **list, mpc_common_spinlock_t *lock, __UNUSED__ _mpc_lowcomm_ib_cp_task_t *task)
 {
 	_mpc_lowcomm_ib_ibuf_t *ibuf = NULL;
 	int nb_found = 0;

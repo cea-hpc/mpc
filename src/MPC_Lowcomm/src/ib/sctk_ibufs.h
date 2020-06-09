@@ -181,7 +181,7 @@ typedef struct _mpc_lowcomm_ib_ibuf_region_s
 	struct sctk_ib_rail_info_s *          rail;                /**< A region is associated to a rail */
 	sctk_ib_mmu_entry_t *                 mmu_entry;           /**< MMU entry */
 	uint32_t                              polled_nb;           /**< Number of messages polled */
-	struct _mpc_lowcomm_ib_ibuf_s *       list;                /** List of buffers */
+	volatile struct _mpc_lowcomm_ib_ibuf_s *       list;                /** List of buffers */
 	struct _mpc_lowcomm_ib_ibuf_s *       ibuf;                /**< Pointer to the addr where ibufs are  allocated */
 	enum _mpc_lowcomm_ib_ibuf_channel_t   channel;             /**< Channel where the region has been allocated */
 	/* Specific to SR */
