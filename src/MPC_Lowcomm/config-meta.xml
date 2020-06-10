@@ -61,7 +61,7 @@
 		</struct>
 
 		<struct name="ib_global" doc="Global Parameters for IB common structs.">
-			<param name="mmu_cache_enabled" type="int" doc="Defines if the MMU cache is enabled." default="1" alias="IB_MMU_CHACHE_ENABLED" />
+			<param name="mmu_cache_enabled" type="int" doc="Defines if the MMU cache is enabled." default="0" alias="IB_MMU_CHACHE_ENABLED" />
 			<param name="mmu_cache_entry_count" type="int" doc="Number of entries to keep in the cache." default="1000" alias="IB_MMU_CHACHE_COUNT" />
 			<param name="mmu_cache_maximum_size" type="size" doc="Total size of entries to keep in the cache." default="4GB"  alias="IB_MMU_CHACHE_MAX_SIZE" />
 			<param name="mmu_cache_maximum_pin_size" type="size" doc="Maximum size of an pinned entry." default="1GB" alias="IB_MMU_CHACHE_MAX_PIN_SIZE" />

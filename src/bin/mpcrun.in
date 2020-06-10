@@ -48,6 +48,8 @@ VERSION_STRING="@MPC_VERSION_STRING"
 
 MPC_HAVE_DMTCP=@MPC_HAVE_DMTCP@
 MPC_HAVE_PROFILER=@MPC_HAVE_PROFILER@
+MPC_ALLOCATOR=@MPC_ALLOCATOR@
+
 ##########################
 # Inject MPC in the PATH #
 ##########################
@@ -113,6 +115,15 @@ MPC_ARG_NETWORKING=""
 MPC_ARG_THREAD_TYPE=""
 MPC_ARG_FORCE_CPU_NB=""
 
+
+############################################
+# Make sure MPC allocator is always used   #
+############################################
+
+if test "x${MPC_ALLOCATOR}" = "xmpcalloc"; then
+    export LD_PRELOAD="libmpcalloc.so:$LD_PRELOAD"
+fi
+
 ###########################################
 # Preload libasan if enabled in configure #
 ###########################################
@@ -129,7 +140,6 @@ if test "x${USING_ASAN}" = "xyes"; then
 	# We make libasan first in loading order
 	export LD_PRELOAD="libasan.so:$LD_PRELOAD"
 fi
-
 
 ###################
 # Supported Modes #

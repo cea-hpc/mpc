@@ -673,13 +673,15 @@ MPC_REQUIRED_DEPENDENCY([openpa], [$mpc_dep_found])
 # Detect MPC Allocator
 #
 
-mpc_allocator="Standard"
+MPC_ALLOCATOR="Standard"
 
 MPC_DETECT_DEPENDENCY([mpcalloc.h], [mpcalloc], [sctk_malloc], [ALLOC])
 if test "x$mpc_dep_found" = "xyes"; then
         AC_DEFINE([MPC_Allocator], [1], [mpcalloc support is enabled])
-        mpc_allocator="mpcalloc"
+        MPC_ALLOCATOR="mpcalloc"
 fi
+
+AC_SUBST([MPC_ALLOCATOR])
 
 #
 # Detect libunwind
@@ -2445,7 +2447,7 @@ MPC_CONFIG_RESULT="\
 ### OTHER OPTIONS SET ###\n\
 #\n\
 # Launcher............. $MPC_LAUNCHER\n\
-# Allocator............ $mpc_allocator\n\
+# Allocator............ $MPC_ALLOCATOR\n\
 # libunwind............ $mpc_libunwind\n\
 # DMTPC c/r............ $MPC_HAVE_DMTCP\n\
 #\n\
