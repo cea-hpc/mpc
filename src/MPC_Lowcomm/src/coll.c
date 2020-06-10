@@ -2023,6 +2023,7 @@ int mpc_lowcomm_barrier_shm_on_context(struct shared_mem_barrier *barrier_ctx,
 {
 	int my_phase = !OPA_load_int(&barrier_ctx->phase);
 
+
 	if(OPA_fetch_and_decr_int(&barrier_ctx->counter) == 1)
 	{
 		OPA_store_int(&barrier_ctx->counter, comm_size);
@@ -2030,21 +2031,18 @@ int mpc_lowcomm_barrier_shm_on_context(struct shared_mem_barrier *barrier_ctx,
 	}
 	else
 	{
-		while(OPA_load_int(&barrier_ctx->phase) != my_phase)
-		{
-	
 				int cnt = 0;
 				while(OPA_load_int(&barrier_ctx->phase) != my_phase)
 				{
 					if(128 < cnt++)
 					{
 						mpc_thread_yield();
+                        
 					}
 				}
-		}
 	}
-
-	return SCTK_SUCCESS;
+	
+    return SCTK_SUCCESS;
 }
 
 
