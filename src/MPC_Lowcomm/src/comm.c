@@ -392,12 +392,12 @@ int mpc_lowcomm_is_remote_rank( int dest )
  * matched and are wainting to be copied */
 mpc_lowcomm_ptp_message_content_to_copy_t **__mpc_ptp_task_list = NULL;
 mpc_common_spinlock_t *__mpc_ptp_task_lock = 0;
-int sctk_ptp_tasks_count = 0;
 
 static short __mpc_comm_ptp_task_init_done = 0;
 mpc_common_spinlock_t __mpc_comm_ptp_task_init_lock = SCTK_SPINLOCK_INITIALIZER;
 
-#define PTP_MAX_TASK_LISTS 100
+/* MUST BE POWER of 2 as we use masking for modulos */
+#define PTP_TASKING_QUEUE_COUNT 0xF
 
 static inline void __mpc_comm_ptp_task_init()
 {
@@ -409,22 +409,13 @@ static inline void __mpc_comm_ptp_task_init()
 		return;
 	}
 
-	if ( mpc_common_get_task_count() < PTP_MAX_TASK_LISTS )
-	{
-		sctk_ptp_tasks_count = mpc_common_get_task_count();
-	}
-	else
-	{
-		sctk_ptp_tasks_count = PTP_MAX_TASK_LISTS;
-	}
-
-	__mpc_ptp_task_list = sctk_malloc( sizeof( mpc_lowcomm_ptp_message_content_to_copy_t * ) * sctk_ptp_tasks_count );
+	__mpc_ptp_task_list = sctk_malloc( sizeof( mpc_lowcomm_ptp_message_content_to_copy_t * ) * PTP_TASKING_QUEUE_COUNT );
 	assume( __mpc_ptp_task_list );
-	__mpc_ptp_task_lock = sctk_malloc( sizeof( mpc_common_spinlock_t * ) * sctk_ptp_tasks_count );
+	__mpc_ptp_task_lock = sctk_malloc( sizeof( mpc_common_spinlock_t * ) * PTP_TASKING_QUEUE_COUNT );
 	assume( __mpc_ptp_task_lock );
 	int i;
 
-	for ( i = 0; i < sctk_ptp_tasks_count; i++ )
+	for ( i = 0; i < PTP_TASKING_QUEUE_COUNT; i++ )
 	{
 		__mpc_ptp_task_list[i] = NULL;
 		mpc_common_spinlock_init(&__mpc_ptp_task_lock[i], 0 );
@@ -442,7 +433,7 @@ static inline void __mpc_comm_ptp_task_init()
 static inline int ___mpc_comm_ptp_task_perform( int key, int depth )
 {
 	int nb_messages_copied = 0; /* Number of messages processed */
-	int target_list = key % sctk_ptp_tasks_count;
+	int target_list = key & PTP_TASKING_QUEUE_COUNT;
 
 	/* Each element of this list has already been matched */
 	while ( __mpc_ptp_task_list[target_list] != NULL )
@@ -498,7 +489,7 @@ static inline int _mpc_comm_ptp_task_perform( int key )
 static inline void _mpc_comm_ptp_task_insert( mpc_lowcomm_ptp_message_content_to_copy_t *tmp,
         mpc_comm_ptp_t *pair )
 {
-	int key = pair->key.rank % PTP_MAX_TASK_LISTS;
+	int key = pair->key.rank & PTP_TASKING_QUEUE_COUNT;
 	mpc_common_spinlock_lock( &( __mpc_ptp_task_lock[key] ) );
 	DL_APPEND( __mpc_ptp_task_list[key], tmp );
 	mpc_common_spinlock_unlock( &( __mpc_ptp_task_lock[key] ) );
