@@ -408,13 +408,13 @@ static inline void __mpc_comm_ptp_task_init()
 		return;
 	}
 
-	__mpc_ptp_task_list = sctk_malloc( sizeof( mpc_lowcomm_ptp_message_content_to_copy_t * ) * PTP_TASKING_QUEUE_COUNT );
+	__mpc_ptp_task_list = sctk_malloc( sizeof( mpc_lowcomm_ptp_message_content_to_copy_t * ) * ( PTP_TASKING_QUEUE_COUNT + 1) );
 	assume( __mpc_ptp_task_list );
-	__mpc_ptp_task_lock = sctk_malloc( sizeof( mpc_common_spinlock_t * ) * PTP_TASKING_QUEUE_COUNT );
+	__mpc_ptp_task_lock = sctk_malloc( sizeof( mpc_common_spinlock_t * ) * ( PTP_TASKING_QUEUE_COUNT + 1) );
 	assume( __mpc_ptp_task_lock );
 	int i;
 
-	for ( i = 0; i < PTP_TASKING_QUEUE_COUNT; i++ )
+	for ( i = 0; i <= PTP_TASKING_QUEUE_COUNT; i++ )
 	{
 		__mpc_ptp_task_list[i] = NULL;
 		mpc_common_spinlock_init(&__mpc_ptp_task_lock[i], 0 );
