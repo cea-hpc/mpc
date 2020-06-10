@@ -58,378 +58,6 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
-  <xs:complexType name="user_type_collectives_shm_shared">
-    <xs:all>
-      <xs:element minOccurs="0" name="barrier_intra_shared_node">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="bcast_intra_shared_node">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="alltoall_intra_shared_node">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="scatter_intra_shared_node">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
-  <xs:complexType name="user_type_collectives_shm">
-    <xs:all>
-      <xs:element minOccurs="0" name="bcast_intra_shm">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="alltoallv_intra_shm">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="gatherv_intra_shm">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="scatterv_intra_shm">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="reduce_intra_shm">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="topo_tree_arity" type="xs:integer"/>
-      <xs:element minOccurs="0" name="topo_tree_dump" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="coll_force_nocommute" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="reduce_pipelined_blocks" type="xs:integer"/>
-      <xs:element minOccurs="0" name="reduce_pipelined_tresh">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="reduce_interleave" type="xs:integer"/>
-      <xs:element minOccurs="0" name="bcast_interleave" type="xs:integer"/>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
-  <xs:complexType name="user_type_collectives_intra">
-    <xs:all>
-      <xs:element minOccurs="0" name="barrier_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="barrier_intra_for_trsh" type="xs:integer"/>
-      <xs:element minOccurs="0" name="bcast_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="bcast_intra_for_trsh" type="xs:integer"/>
-      <xs:element minOccurs="0" name="bcast_intra_for_count_trsh" type="xs:integer"/>
-      <xs:element minOccurs="0" name="allgather_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="allgatherv_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="alltoall_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="alltoallv_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="alltoallw_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="gather_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="gatherv_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="scatter_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="scatterv_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="scan_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="exscan_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="reduce_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="reduce_intra_for_trsh" type="xs:integer"/>
-      <xs:element minOccurs="0" name="reduce_intra_for_count_trsh" type="xs:integer"/>
-      <xs:element minOccurs="0" name="allreduce_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="reduce_scatter_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="reduce_scatter_block_intra">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
-  <xs:complexType name="user_type_collectives_inter">
-    <xs:all>
-      <xs:element minOccurs="0" name="barrier_inter">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="bcast_inter">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="allgather_inter">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="allgatherv_inter">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="alltoall_inter">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="alltoallv_inter">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="alltoallw_inter">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="gather_inter">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="gatherv_inter">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="scatter_inter">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="scatterv_inter">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="reduce_inter">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="allreduce_inter">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="reduce_scatter_inter">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="reduce_scatter_block_inter">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
-  <xs:complexType name="user_type_nbc">
-    <xs:all>
-      <xs:element minOccurs="0" name="use_progress_thread" type="xs:integer"/>
-      <xs:element minOccurs="0" name="progress_thread_binding">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="use_egreq_bcast" type="xs:integer"/>
-      <xs:element minOccurs="0" name="use_egreq_scatter" type="xs:integer"/>
-      <xs:element minOccurs="0" name="use_egreq_gather" type="xs:integer"/>
-      <xs:element minOccurs="0" name="use_egreq_reduce" type="xs:integer"/>
-      <xs:element minOccurs="0" name="use_egreq_barrier" type="xs:integer"/>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
-  <xs:complexType name="user_type_mpi_rma">
-    <xs:all>
-      <xs:element minOccurs="0" name="alloc_mem_pool_enable" type="xs:integer"/>
-      <xs:element minOccurs="0" name="alloc_mem_pool_size">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="alloc_mem_pool_autodetect" type="xs:integer"/>
-      <xs:element minOccurs="0" name="alloc_mem_pool_force_process_linear" type="xs:integer"/>
-      <xs:element minOccurs="0" name="alloc_mem_pool_per_process_size">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="win_thread_pool_max" type="xs:integer"/>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
-  <xs:complexType name="user_type_mpc">
-    <xs:all>
-      <xs:element minOccurs="0" name="disable_message_buffering" type="xs:boolean"/>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
   <xs:complexType name="user_type_ft">
     <xs:all>
       <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
@@ -859,6 +487,378 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_collectives_shm_shared">
+    <xs:all>
+      <xs:element minOccurs="0" name="barrier_intra_shared_node">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="bcast_intra_shared_node">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="alltoall_intra_shared_node">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="scatter_intra_shared_node">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_collectives_shm">
+    <xs:all>
+      <xs:element minOccurs="0" name="bcast_intra_shm">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="alltoallv_intra_shm">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="gatherv_intra_shm">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="scatterv_intra_shm">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="reduce_intra_shm">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="topo_tree_arity" type="xs:integer"/>
+      <xs:element minOccurs="0" name="topo_tree_dump" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="coll_force_nocommute" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="reduce_pipelined_blocks" type="xs:integer"/>
+      <xs:element minOccurs="0" name="reduce_pipelined_tresh">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="reduce_interleave" type="xs:integer"/>
+      <xs:element minOccurs="0" name="bcast_interleave" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_collectives_intra">
+    <xs:all>
+      <xs:element minOccurs="0" name="barrier_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="barrier_intra_for_trsh" type="xs:integer"/>
+      <xs:element minOccurs="0" name="bcast_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="bcast_intra_for_trsh" type="xs:integer"/>
+      <xs:element minOccurs="0" name="bcast_intra_for_count_trsh" type="xs:integer"/>
+      <xs:element minOccurs="0" name="allgather_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="allgatherv_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="alltoall_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="alltoallv_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="alltoallw_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="gather_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="gatherv_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="scatter_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="scatterv_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="scan_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="exscan_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="reduce_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="reduce_intra_for_trsh" type="xs:integer"/>
+      <xs:element minOccurs="0" name="reduce_intra_for_count_trsh" type="xs:integer"/>
+      <xs:element minOccurs="0" name="allreduce_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="reduce_scatter_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="reduce_scatter_block_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_collectives_inter">
+    <xs:all>
+      <xs:element minOccurs="0" name="barrier_inter">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="bcast_inter">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="allgather_inter">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="allgatherv_inter">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="alltoall_inter">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="alltoallv_inter">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="alltoallw_inter">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="gather_inter">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="gatherv_inter">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="scatter_inter">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="scatterv_inter">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="reduce_inter">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="allreduce_inter">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="reduce_scatter_inter">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="reduce_scatter_block_inter">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_nbc">
+    <xs:all>
+      <xs:element minOccurs="0" name="use_progress_thread" type="xs:integer"/>
+      <xs:element minOccurs="0" name="progress_thread_binding">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="use_egreq_bcast" type="xs:integer"/>
+      <xs:element minOccurs="0" name="use_egreq_scatter" type="xs:integer"/>
+      <xs:element minOccurs="0" name="use_egreq_gather" type="xs:integer"/>
+      <xs:element minOccurs="0" name="use_egreq_reduce" type="xs:integer"/>
+      <xs:element minOccurs="0" name="use_egreq_barrier" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_mpi_rma">
+    <xs:all>
+      <xs:element minOccurs="0" name="alloc_mem_pool_enable" type="xs:integer"/>
+      <xs:element minOccurs="0" name="alloc_mem_pool_size">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="alloc_mem_pool_autodetect" type="xs:integer"/>
+      <xs:element minOccurs="0" name="alloc_mem_pool_force_process_linear" type="xs:integer"/>
+      <xs:element minOccurs="0" name="alloc_mem_pool_per_process_size">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="win_thread_pool_max" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_mpc">
+    <xs:all>
+      <xs:element minOccurs="0" name="disable_message_buffering" type="xs:boolean"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:simpleType name="user_type_mpcomp_task_larceny_mode_t">
     <xs:restriction base="xs:string">
       <xs:enumeration value="MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL"/>
@@ -973,6 +973,9 @@
     <xs:all>
       <xs:element minOccurs="0" name="debugger" type="user_type_debugger"/>
       <xs:element minOccurs="0" name="launcher" type="user_type_launcher"/>
+      <xs:element minOccurs="0" name="inter_thread_comm" type="user_type_inter_thread_comm"/>
+      <xs:element minOccurs="0" name="low_level_comm" type="user_type_low_level_comm"/>
+      <xs:element minOccurs="0" name="ft_system" type="user_type_ft"/>
       <xs:element minOccurs="0" name="collectives_shm_shared" type="user_type_collectives_shm_shared"/>
       <xs:element minOccurs="0" name="collectives_shm" type="user_type_collectives_shm"/>
       <xs:element minOccurs="0" name="collectives_intra" type="user_type_collectives_intra"/>
@@ -980,9 +983,6 @@
       <xs:element minOccurs="0" name="nbc" type="user_type_nbc"/>
       <xs:element minOccurs="0" name="mpc" type="user_type_mpc"/>
       <xs:element minOccurs="0" name="rma" type="user_type_mpi_rma"/>
-      <xs:element minOccurs="0" name="inter_thread_comm" type="user_type_inter_thread_comm"/>
-      <xs:element minOccurs="0" name="low_level_comm" type="user_type_low_level_comm"/>
-      <xs:element minOccurs="0" name="ft_system" type="user_type_ft"/>
       <xs:element minOccurs="0" name="openmp" type="user_type_openmp"/>
       <xs:element minOccurs="0" name="thread" type="user_type_thread"/>
       <xs:element minOccurs="0" name="scheduler" type="user_type_scheduler"/>
