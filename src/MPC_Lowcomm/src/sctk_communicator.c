@@ -2132,7 +2132,7 @@ mpc_lowcomm_communicator_t sctk_duplicate_communicator ( const mpc_lowcomm_commu
 
 			if ( tmp->task_to_process )
 			{
-				dup_task_to_process = malloc( sizeof( int ) * tmp->nb_task );
+				dup_task_to_process = sctk_malloc( sizeof( int ) * tmp->nb_task );
 				sctk_assert( dup_task_to_process != NULL );
 				memcpy( dup_task_to_process, tmp->task_to_process, sizeof( int ) * tmp->nb_task );
 			}

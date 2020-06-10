@@ -538,7 +538,7 @@ int _mpc_lowcomm_ib_cp_ctx_steal(struct sctk_ib_polling_s *poll, char other_numa
 
 		if(__vp_numa_descriptor == NULL)
 		{
-			__vp_numa_descriptor = malloc(sizeof(__mpc_lowcomm_ib_numa_t) * numa_number);
+			__vp_numa_descriptor = sctk_malloc(sizeof(__mpc_lowcomm_ib_numa_t) * numa_number);
 			memcpy(__vp_numa_descriptor, (void *)numas, sizeof(__mpc_lowcomm_ib_numa_t) * numa_number);
 		}
 
