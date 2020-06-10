@@ -211,7 +211,6 @@ static inline void __mpc_comm_ptp_message_list_merge_pending( mpc_comm_ptp_messa
 	}
 
 	/* Change the flag. New messages have been inserted to the 'pending' lists */
-	lists->changed = 1;
 }
 
 static inline void __mpc_comm_ptp_message_list_lock_pending( mpc_comm_ptp_message_lists_t *lists )
@@ -1979,38 +1978,31 @@ static inline int __mpc_comm_pending_msg_list_search_matching_from_recv( mpc_com
 	return 0;
 }
 
-/*
- * Function with loop on the recv 'pending' messages and try to match all
- * messages in this
- * list with the send 'pending' messages. This function must be called protected
- * by locks.
- * The function returns the number of messages copied (implies that this
- * messages where
- * matched).
- */
-static inline int __mpc_comm_ptp_perform_msg_pair_locked( mpc_comm_ptp_t *pair )
-{
-	mpc_lowcomm_msg_list_t *ptr_recv;
-	mpc_lowcomm_msg_list_t *tmp;
-	int nb_messages_copied = 0;
-	__mpc_comm_ptp_message_list_merge_pending( &( pair->lists ) );
-	DL_FOREACH_SAFE( pair->lists.pending_recv.list, ptr_recv, tmp )
-	{
-		nb_messages_copied = __mpc_comm_pending_msg_list_search_matching_from_recv( pair, ptr_recv->msg );
-	}
-	return nb_messages_copied;
-}
 
 static inline int __mpc_comm_ptp_perform_msg_pair( mpc_comm_ptp_t *pair )
 {
-	if ( ( ( pair->lists.pending_send.list != NULL ) || ( pair->lists.incomming_send.list != NULL ) ) &&
-	     ( ( pair->lists.pending_recv.list != NULL ) || ( pair->lists.incomming_recv.list != NULL ) ) )
+
+	if( __mpc_comm_ptp_message_list_trylock_pending( &( pair->lists ) ) == 0)
 	{
-		__mpc_comm_ptp_message_list_lock_pending( &( pair->lists ) );
-		__mpc_comm_ptp_perform_msg_pair_locked( pair );
-		pair->lists.changed = 0;
+		if( ( pair->lists.incomming_send.list != NULL ) || ( pair->lists.incomming_recv.list != NULL ) )
+		{
+			__mpc_comm_ptp_message_list_merge_pending( &( pair->lists ) );
+		}
+
+		if( ( pair->lists.pending_send.list != NULL ) || ( pair->lists.pending_recv.list != NULL ) )
+		{
+			mpc_lowcomm_msg_list_t *ptr_recv;
+			mpc_lowcomm_msg_list_t *tmp;
+
+			DL_FOREACH_SAFE( pair->lists.pending_recv.list, ptr_recv, tmp )
+			{
+				__mpc_comm_pending_msg_list_search_matching_from_recv( pair, ptr_recv->msg );
+			}
+		}
+
 		__mpc_comm_ptp_message_list_unlock_pending( &( pair->lists ) );
 	}
+
 
 	/* Call the task engine */
 	return _mpc_comm_ptp_task_perform( pair->key.rank );
