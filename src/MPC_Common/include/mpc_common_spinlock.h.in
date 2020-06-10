@@ -82,7 +82,6 @@ static inline int mpc_common_spinlock_lock_yield( mpc_common_spinlock_t *lock )
 		}
 	}
 
-    OPA_read_write_barrier();
 
 	return 0;
 }
@@ -98,14 +97,12 @@ static inline int mpc_common_spinlock_lock( mpc_common_spinlock_t *lock )
 		} while ( OPA_load_int(p) );
 	}
 
-    OPA_read_write_barrier();
 
 	return 0;
 }
 
 static inline int mpc_common_spinlock_trylock( mpc_common_spinlock_t *lock )
 {
-    OPA_read_write_barrier();
 	OPA_int_t *p =  (OPA_int_t *) lock;
 	return sctk_test_and_set( p );
 }
@@ -113,7 +110,6 @@ static inline int mpc_common_spinlock_trylock( mpc_common_spinlock_t *lock )
 static inline int mpc_common_spinlock_unlock( mpc_common_spinlock_t *lock )
 {
 	mpc_common_spinlock_init(lock, 0);
-    OPA_read_write_barrier();
     return 0;
 }
 
@@ -210,7 +206,6 @@ static inline int mpc_common_spinlock_write_lock_yield( mpc_common_rwlock_t *loc
 
 static inline int mpc_common_spinlock_read_unlock( mpc_common_rwlock_t *lock )
 {
-    OPA_read_write_barrier();
 	return OPA_fetch_and_add_int( &( lock->reader_number ), -1 ) - 1;
 }
 
