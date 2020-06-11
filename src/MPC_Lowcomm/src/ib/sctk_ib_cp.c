@@ -311,7 +311,7 @@ void _mpc_lowcomm_ib_cp_ctx_init_task(int rank, int vp)
 	HASH_ADD(hh_all, all_tasks, rank, sizeof(int), task);
 	CDL_PREPEND(numas[node]->tasks, task);
 	mpc_common_spinlock_unlock(&__vps_lock);
-	mpc_common_debug_error("Task %d registered on VP %d (numa:%d:tasks_nb:%d)", rank,
+	mpc_common_nodebug("Task %d registered on VP %d (numa:%d:tasks_nb:%d)", rank,
 	              vp, node, numas[node]->tasks_nb);
 
 	/* Initialize seed for steal */

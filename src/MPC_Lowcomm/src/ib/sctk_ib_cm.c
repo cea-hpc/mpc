@@ -242,14 +242,12 @@ void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
         sctk_ib_init_remote ( src_rank, rail, endpoint_src, 0 );
         route_src = &endpoint_src->data.ib;
 
-        mpc_common_debug_warning("SENDING RAIL %d DEST %d", rail_ib, route_dest->remote);
         sctk_ib_qp_keys_send ( rail_ib, route_dest->remote );
 
         mpc_launch_pmi_barrier();
 
         /* change state to RTR */
         
-        mpc_common_debug_warning("RCVING RAIL %d DEST %d", rail_ib, src_rank);
         keys = sctk_ib_qp_keys_recv ( rail_ib, src_rank );
         sctk_ib_qp_allocate_rtr ( rail_ib, route_src->remote, &keys );
         sctk_ib_qp_allocate_rts ( rail_ib, route_src->remote );
@@ -276,12 +274,10 @@ void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
         sctk_ib_init_remote ( dest_rank, rail, endpoint_dest, 0 );
         route_dest = &endpoint_dest->data.ib;
 
-        mpc_common_debug_warning("BBB SENDING RAIL %d DEST %d", rail_ib, route_dest->remote);
         sctk_ib_qp_keys_send ( rail_ib, route_dest->remote );
         mpc_launch_pmi_barrier();
 
 
-        mpc_common_debug_warning("BBB RCV RAIL %d DEST %d", rail_ib, src_rank);
         /* change state to RTR */
         keys = sctk_ib_qp_keys_recv ( rail_ib, src_rank );
         sctk_ib_qp_allocate_rtr ( rail_ib, route_dest->remote, &keys );

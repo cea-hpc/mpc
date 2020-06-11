@@ -511,7 +511,7 @@ void _mpc_lowcomm_ib_mmu_release()
 
 _mpc_lowcomm_ib_mmu_entry_t *_mpc_lowcomm_ib_mmu_pin(sctk_ib_rail_info_t *rail_ib, void *addr, size_t size)
 {
-	mpc_common_debug_error("Pin %p side %ld", addr, size);
+	mpc_common_nodebug("Pin %p side %ld", addr, size);
 	return __mpc_lowcomm_ib_mmu_pin(&__main_ib_mmu, rail_ib, addr, size);
 }
 
@@ -532,7 +532,7 @@ int _mpc_lowcomm_ib_mmu_unpin(void *addr, size_t size)
 		return 0;
 	}
 
-	mpc_common_debug_error("UNPIN %p side %ld", addr, size);
+	mpc_common_nodebug("UNPIN %p side %ld", addr, size);
 
 	return __mpc_lowcomm_ib_mmu_unpin(&__main_ib_mmu, addr, size);
 }
