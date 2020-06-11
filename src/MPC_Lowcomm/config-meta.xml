@@ -22,8 +22,8 @@
 			<param name="pkey" type="string" doc="Define the pkey value" default="undefined"/>
 			<param name="adm_port" type="int" doc="Defines the port number to use." default="1" />
 			<param name="verbose_level" type="int" doc="Defines the verbose level of the Infiniband interface ." default="0" alias="IB_VERBOSE" />
-			<param name="eager_limit" type="size" doc="Size of the eager buffers (short messages)." default="12KB" alias="IB_EAGER_THRESH" />
-			<param name="buffered_limit" type="size" doc="Max size for using the Buffered protocol (message split into several Eager messages)." default="26KB" alias="IB_BUFFERED_THRESH" />
+			<param name="eager_limit" type="size" doc="Size of the eager buffers (short messages)." default="4KB" alias="IB_EAGER_THRESH" />
+			<param name="buffered_limit" type="size" doc="Max size for using the Buffered protocol (message split into several Eager messages)." default="48KB" alias="IB_BUFFERED_THRESH" />
 			<param name="qp_tx_depth" type="int" doc="Number of entries to allocate in the QP for sending messages. If too low, may cause an QP overrun" default="15000" alias="IB_TX_DEPTH" />
 			<param name="qp_rx_depth" type="int" doc="Number of entries to allocate in the QP for receiving messages. Must be 0 if using SRQ" default="0" alias="IB_RX_DEPTH" />
 			<param name="cq_depth" type="int" doc="Number of entries to allocate in the CQ. If too low, may cause a CQ overrun" default="40000" alias="IB_CQ_DEPTH" />
@@ -34,8 +34,8 @@
 			<param name="rdma_resizing" type="int" doc="Defines if RDMA connections may be resized." default="0" alias="IB_RDMA_RESIZING" />
 			<param name="max_rdma_connections" type="int" doc="Number of RDMA buffers allocated for each neighbor" default="0" alias="IB_RDMA_CONN" />
 			<param name="max_rdma_resizing" type="int" doc="Max number of RDMA buffers resizing allowed" default="0" alias="IB_RDMA_MAX_RESIZING" />
-			<param name="init_ibufs" type="int" doc="Max number of Eager buffers to allocate during the initialization step" default="1000" alias="IB_INIT_IBUF" />
-   			<param name="init_recv_ibufs" type="int" doc="Defines the number of receive buffers initially allocated. The number is on-the-fly expanded when needed (see init_recv_ibufs_chunk)" default="200" alias="IB_INIT_RECV_IBUF" />
+			<param name="init_ibufs" type="int" doc="Max number of Eager buffers to allocate during the initialization step" default="1024" alias="IB_INIT_IBUF" />
+   			<param name="init_recv_ibufs" type="int" doc="Defines the number of receive buffers initially allocated. The number is on-the-fly expanded when needed (see init_recv_ibufs_chunk)" default="1024" alias="IB_INIT_RECV_IBUF" />
 			<param name="max_srq_ibufs_posted" type="int" doc="Max number of Eager buffers which can be posted to the SRQ. This number cannot be higher than the number fixed by the HW" default="1500" alias="IB_MAX_SRQ_IBUF_POSTED" />
 			<param name="max_srq_ibufs" type="int" doc="Max number of Eager buffers which can be used by the SRQ. This number is not fixed by the HW" default="1000" alias="IB_MAX_SRQ_IBUF" />
 			<param name="srq_credit_limit" type="int" doc="Min number of free recv Eager buffers before posting a new buffer." default="500" alias="IB_SRQ_CREDIT_LIMIT" />

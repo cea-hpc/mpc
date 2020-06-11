@@ -163,12 +163,12 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
                         sctk_runtime_config_mpit_bind_variable( "IB_VERBOSE",
                                                                 sizeof(obj->verbose_level ),
                                                                 &obj->verbose_level);
-				obj->eager_limit = sctk_runtime_config_map_entry_parse_size("12KB");
+				obj->eager_limit = sctk_runtime_config_map_entry_parse_size("4KB");
 
                         sctk_runtime_config_mpit_bind_variable( "IB_EAGER_THRESH",
                                                                 sizeof(obj->eager_limit ),
                                                                 &obj->eager_limit);
-				obj->buffered_limit = sctk_runtime_config_map_entry_parse_size("26KB");
+				obj->buffered_limit = sctk_runtime_config_map_entry_parse_size("48KB");
 
                         sctk_runtime_config_mpit_bind_variable( "IB_BUFFERED_THRESH",
                                                                 sizeof(obj->buffered_limit ),
@@ -223,12 +223,12 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
                         sctk_runtime_config_mpit_bind_variable( "IB_RDMA_MAX_RESIZING",
                                                                 sizeof(obj->max_rdma_resizing ),
                                                                 &obj->max_rdma_resizing);
-				obj->init_ibufs = 1000;
+				obj->init_ibufs = 1024;
 
                         sctk_runtime_config_mpit_bind_variable( "IB_INIT_IBUF",
                                                                 sizeof(obj->init_ibufs ),
                                                                 &obj->init_ibufs);
-				obj->init_recv_ibufs = 200;
+				obj->init_recv_ibufs = 1024;
 
                         sctk_runtime_config_mpit_bind_variable( "IB_INIT_RECV_IBUF",
                                                                 sizeof(obj->init_recv_ibufs ),
