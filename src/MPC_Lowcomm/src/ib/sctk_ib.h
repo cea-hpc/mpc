@@ -58,7 +58,7 @@ extern "C"
 struct sctk_rail_info_s;
 struct _mpc_lowcomm_ib_ibuf_poll_s;
 struct _mpc_lowcomm_ib_ibuf_s;
-struct sctk_ib_mmu_s;
+struct _mpc_lowcomm_ib_mmu_s;
 struct _mpc_lowcomm_ib_topology_s;
 struct sctk_ib_config_s;
 struct sctk_ib_device_s;
@@ -73,7 +73,7 @@ struct sctk_ib_qp_ht_s;
 typedef struct sctk_ib_rail_info_s
 {
 	struct _mpc_lowcomm_ib_ibuf_poll_s *                     pool_buffers;
-	/* struct sctk_ib_mmu_s    *mmu; */
+	/* struct _mpc_lowcomm_ib_mmu_s    *mmu; */
 	struct _mpc_lowcomm_ib_topology_s *                      topology;
 	struct sctk_runtime_config_struct_net_driver_infiniband *config;
 	struct sctk_ib_device_s *                                device;
@@ -143,7 +143,7 @@ typedef struct sctk_ib_header_rdma_s
 	struct
 	{
 		struct mpc_lowcomm_ptp_message_s *msg_header;
-		struct sctk_ib_mmu_entry_s *      mmu_entry;
+		struct _mpc_lowcomm_ib_mmu_entry_s *      mmu_entry;
 		void *                            addr;
 		size_t                            size;
 		void *                            aligned_addr;

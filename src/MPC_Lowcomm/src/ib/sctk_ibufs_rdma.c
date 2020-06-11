@@ -209,7 +209,7 @@ void __rdma_region_resize(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *rem
 	/* Unregister the memory.
 	 * FIXME: ideally, we should use ibv_reregister() but this call is currently not
 	 * supported by the libverb. */
-	sctk_ib_mmu_entry_release(region->mmu_entry);
+	_mpc_lowcomm_ib_mmu_entry_release(region->mmu_entry);
 
 	/* Realloc a new memory region.
 	 * FIXME: Using realloc is a little bit useless here because we get an additional
@@ -250,7 +250,7 @@ void __rdma_region_resize(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *rem
 	/* register buffers at once
 	 * FIXME: ideally, we should use ibv_reregister() but this call is currently not
 	 * supported by the libverb. */
-	region->mmu_entry = sctk_ib_mmu_entry_new(rail_ib, ptr,
+	region->mmu_entry = _mpc_lowcomm_ib_mmu_entry_new(rail_ib, ptr,
 	                                          nb_ibufs * size_ibufs);
 	mpc_common_nodebug("Size_ibufs: %lu", size_ibufs);
 	mpc_common_nodebug("[%d] Reg %p registered for rank %d (channel:%d). lkey : %lu", rail_ib->rail->rail_number, ptr, remote->rank, channel, region->mmu_entry->mr->lkey);
@@ -415,7 +415,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib, 
 	mpc_common_nodebug("Channel: %d", region->channel);
 
 	/* register buffers at once */
-	region->mmu_entry = sctk_ib_mmu_entry_new(rail_ib, ptr,
+	region->mmu_entry = _mpc_lowcomm_ib_mmu_entry_new(rail_ib, ptr,
 	                                          nb_ibufs * size_ibufs);
 	mpc_common_nodebug("Reg %p registered. lkey : %lu", ptr, region->mmu_entry->mr->lkey);
 	mpc_common_nodebug("Size_ibufs: %lu", size_ibufs);

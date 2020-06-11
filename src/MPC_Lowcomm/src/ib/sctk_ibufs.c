@@ -107,7 +107,7 @@ void _mpc_lowcomm_ib_ibuf_init_numa(struct sctk_ib_rail_info_s *rail_ib,
 
 	/* register buffers at once
 	 * FIXME: Always task on NUMA node 0 which firs-touch all pages... really bad */
-	region->mmu_entry = sctk_ib_mmu_entry_new(rail_ib, ptr, nb_ibufs * config->eager_limit);
+	region->mmu_entry = _mpc_lowcomm_ib_mmu_entry_new(rail_ib, ptr, nb_ibufs * config->eager_limit);
 	mpc_common_nodebug("Reg %p registered. lkey : %lu", ptr, region->mmu_entry->mr->lkey);
 
 	/* init all buffers - the last one */
@@ -154,7 +154,7 @@ void _mpc_lowcomm_ib_ibuf_free_numa(struct _mpc_lowcomm_ib_ibuf_numa_s *node)
 	{
 		sctk_free(region->mmu_entry->addr); /* MMU entry */
 		region->mmu_entry->addr = NULL;
-		sctk_ib_mmu_entry_release(region->mmu_entry);
+		_mpc_lowcomm_ib_mmu_entry_release(region->mmu_entry);
 		region->mmu_entry = NULL;
 		sctk_free(region->list);
 		region->list = NULL;

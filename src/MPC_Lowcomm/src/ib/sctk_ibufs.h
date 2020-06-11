@@ -32,7 +32,7 @@
 #include <mpc_common_debug.h>
 
 #include "sctk_ib.h"
-#include "sctk_ib_mmu.h"
+#include "_mpc_lowcomm_ib_mmu.h"
 
 enum   _mpc_lowcomm_ib_cq_type_t
 {
@@ -179,7 +179,7 @@ typedef struct _mpc_lowcomm_ib_ibuf_region_s
 	int                                   size_ibufs_previous; /**< Size of the buffers (previous)*/
 	size_t                                allocated_size;      /**< Memory allocated for the region */
 	struct sctk_ib_rail_info_s *          rail;                /**< A region is associated to a rail */
-	sctk_ib_mmu_entry_t *                 mmu_entry;           /**< MMU entry */
+	_mpc_lowcomm_ib_mmu_entry_t *                 mmu_entry;           /**< MMU entry */
 	uint32_t                              polled_nb;           /**< Number of messages polled */
 	volatile struct _mpc_lowcomm_ib_ibuf_s *       list;                /** List of buffers */
 	struct _mpc_lowcomm_ib_ibuf_s *       ibuf;                /**< Pointer to the addr where ibufs are  allocated */

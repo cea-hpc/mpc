@@ -30,7 +30,7 @@
 #include "sctk_ib.h"
 #include <sctk_ibufs.h>
 #include <sctk_ibufs_rdma.h>
-#include <sctk_ib_mmu.h>
+#include <_mpc_lowcomm_ib_mmu.h>
 #include <sctk_ib_config.h>
 #include "sctk_ib_qp.h"
 #include "sctk_ib_cm.h"
@@ -738,7 +738,7 @@ void sctk_network_finalize_task_mpi_ib(sctk_rail_info_t *rail, int taskid, int v
 /* This hook is called by the allocator when freing a segment */
 void sctk_network_memory_free_hook_ib(void *ptr, size_t size)
 {
-	sctk_ib_mmu_unpin(ptr, size);
+	_mpc_lowcomm_ib_mmu_unpin(ptr, size);
 }
 
 /* Pinning */
@@ -747,8 +747,8 @@ void sctk_ib_pin_region(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_
 {
 	/* Fill entry */
 	list->rail_id = rail->rail_number;
-	/* Save the pointer (to free the block returned by sctk_ib_mmu_entry_new) */
-	list->pin.ib.p_entry = sctk_ib_mmu_pin(&rail->network.ib, addr, size);
+	/* Save the pointer (to free the block returned by _mpc_lowcomm_ib_mmu_entry_new) */
+	list->pin.ib.p_entry = _mpc_lowcomm_ib_mmu_pin(&rail->network.ib, addr, size);
 
 	/* Save it inside the struct to allow serialization */
 	memcpy(&list->pin.ib.mr, list->pin.ib.p_entry->mr, sizeof(struct ibv_mr) );
@@ -758,7 +758,7 @@ void sctk_ib_unpin_region(__UNUSED__ struct sctk_rail_info_s *rail, struct sctk_
 {
 	mpc_common_nodebug("Unpin %p at %p size %ld releaseon %d", list->pin.ib.p_entry, list->pin.ib.p_entry->addr, list->pin.ib.p_entry->size, list->pin.ib.p_entry->free_on_relax);
 
-	sctk_ib_mmu_relax(list->pin.ib.p_entry);
+	_mpc_lowcomm_ib_mmu_relax(list->pin.ib.p_entry);
 	list->pin.ib.p_entry = NULL;
 	memset(&list->pin.ib.mr, 0, sizeof(struct ibv_mr) );
 	list->rail_id = -1;
@@ -797,7 +797,7 @@ void sctk_network_finalize_mpi_ib(sctk_rail_info_t *rail)
 	sctk_ib_pd_free(device);
 
 	/* - Free MMU */
-	sctk_ib_mmu_release();
+	_mpc_lowcomm_ib_mmu_release();
 
 	/* - unload IB device (sctk_ib_device_open)                   */
 	/* - close IB device struct (sctk_ib_device_init)             */
@@ -850,7 +850,7 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 	sctk_ib_device_open(rail_ib, rail_config->device);
 
 	/* Init the MMU (done once) */
-	sctk_ib_mmu_init();
+	_mpc_lowcomm_ib_mmu_init();
 
 	/* Init Proctection Domain */
 	sctk_ib_pd_init(device);

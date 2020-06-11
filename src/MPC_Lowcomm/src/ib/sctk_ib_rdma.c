@@ -29,7 +29,7 @@
 #include "sctk_ib_topology.h"
 #include "sctk_ib_polling.h"
 #include "sctk_ibufs.h"
-#include "sctk_ib_mmu.h"
+#include "_mpc_lowcomm_ib_mmu.h"
 #include "sctk_net_tools.h"
 #include "sctk_ib_cp.h"
 
@@ -155,7 +155,7 @@ static inline mpc_lowcomm_ptp_message_t *__rdma_recv_done_remote(__UNUSED__ sctk
 static inline void __rdma_recv_done_local(mpc_lowcomm_ptp_message_t *msg)
 {
 	assume(msg->tail.ib.rdma.local.mmu_entry);
-	sctk_ib_mmu_relax(msg->tail.ib.rdma.local.mmu_entry);
+	_mpc_lowcomm_ib_mmu_relax(msg->tail.ib.rdma.local.mmu_entry);
 
 	if(msg->tail.ib.rdma.local.status == MPC_LOWCOMM_IB_RDMA_RECOPY)
 	{
@@ -180,7 +180,7 @@ void _mpc_lowcomm_ib_rdma_net_free_recv(void *arg)
 	/* Unregister MMU and free message */
 	mpc_common_nodebug("Free MMu for msg: %p", msg);
 	assume(rdma->local.mmu_entry);
-	sctk_ib_mmu_relax(rdma->local.mmu_entry);
+	_mpc_lowcomm_ib_mmu_relax(rdma->local.mmu_entry);
 	mpc_common_nodebug("FREE: %p", msg);
 	mpc_common_spinlock_lock(&recv_rdma_headers_lock);
 	HASH_DELETE(hh, recv_rdma_headers, rdma);
@@ -309,7 +309,7 @@ static void _mpc_lowcomm_ib_rdma_rendezvous_send_ack(sctk_rail_info_t *rail, mpc
 	send_header = &msg->tail.ib;
 	sctk_ib_header_rdma_t *rdma = &send_header->rdma;
 	/* Register MMU */
-	send_header->rdma.local.mmu_entry = sctk_ib_mmu_pin(
+	send_header->rdma.local.mmu_entry = _mpc_lowcomm_ib_mmu_pin(
 		&rdma->remote_rail->network.ib, send_header->rdma.local.aligned_addr,
 		send_header->rdma.local.aligned_size);
 	mpc_common_nodebug("MMU registered for msg %p", send_header);
@@ -546,7 +546,7 @@ void _mpc_lowcomm_ib_rdma_rendezvous_prepare_send_msg(mpc_lowcomm_ptp_message_t 
 	}
 
 	/* Register MMU */
-	rdma->local.mmu_entry = sctk_ib_mmu_pin(&rdma->remote_rail->network.ib, aligned_addr, aligned_size);
+	rdma->local.mmu_entry = _mpc_lowcomm_ib_mmu_pin(&rdma->remote_rail->network.ib, aligned_addr, aligned_size);
 
 	/* Save addr and size */
 	rdma->local.aligned_addr = aligned_addr;

@@ -84,7 +84,7 @@ static inline void sctk_ib_nodebug ( const char *fmt, ... )
 #endif
 #define LOAD_RAIL(x) sctk_ib_rail_info_t *rail_ib = &(x)->network.ib;
 #define LOAD_CONFIG(x) struct sctk_runtime_config_struct_net_driver_infiniband *config = (x)->config;
-#define LOAD_MMU(x)    sctk_ib_mmu_t* mmu = (x)->mmu;
+#define LOAD_MMU(x)    _mpc_lowcomm_ib_mmu_t* mmu = (x)->mmu;
 #define LOAD_DEVICE(x)    sctk_ib_device_t* device = (x)->device;
 #define LOAD_POOL(x)    _mpc_lowcomm_ib_ibuf_poll_t* pool = (x)->pool_buffers;
 #define LOAD_CP(x)    _mpc_lowcomm_ib_cp_ctx_t* cp = (x)->cp;
