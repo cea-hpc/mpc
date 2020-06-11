@@ -316,7 +316,7 @@ void sctk_runtime_config_struct_init_ib_global(void * struct_ptr)
 	if( obj->init_done != 0 ) return;
 
 	/* Simple params : */
-	obj->mmu_cache_enabled = 0;
+	obj->mmu_cache_enabled = 1;
 
                         sctk_runtime_config_mpit_bind_variable( "IB_MMU_CHACHE_ENABLED",
                                                                 sizeof(obj->mmu_cache_enabled ),

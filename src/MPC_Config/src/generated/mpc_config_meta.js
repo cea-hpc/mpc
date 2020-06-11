@@ -70,7 +70,7 @@ meta.types = {
 		size_recv_ibufs_chunk: {mode: 'param', name: "size_recv_ibufs_chunk", type: "int", doc: "Defines the number of receive buffers allocated on the fly.", dflt: "400", },
 	}},
 	ib_global : {type: 'struct', name: "ib_global", childs: {
-		mmu_cache_enabled: {mode: 'param', name: "mmu_cache_enabled", type: "int", doc: "Defines if the MMU cache is enabled.", dflt: "0", },
+		mmu_cache_enabled: {mode: 'param', name: "mmu_cache_enabled", type: "int", doc: "Defines if the MMU cache is enabled.", dflt: "1", },
 		mmu_cache_entry_count: {mode: 'param', name: "mmu_cache_entry_count", type: "int", doc: "Number of entries to keep in the cache.", dflt: "1000", },
 		mmu_cache_maximum_size: {mode: 'param', name: "mmu_cache_maximum_size", type: "size", doc: "Total size of entries to keep in the cache.", dflt: "4GB", },
 		mmu_cache_maximum_pin_size: {mode: 'param', name: "mmu_cache_maximum_pin_size", type: "size", doc: "Maximum size of an pinned entry.", dflt: "1GB", },
