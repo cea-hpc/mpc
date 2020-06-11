@@ -29,6 +29,7 @@
 #include <mpc_launch.h>
 
 #include <mpc_common_rank.h>
+#include <sctk_alloc.h>
 
 /*Networks*/
 #ifdef MPC_USE_INFINIBAND
@@ -543,8 +544,62 @@ void sctk_net_finalize_task_level(int taskid, int vp)
 
 }
 
+/********************************************************************/
+/* Memory Allocator                                                 */
+/********************************************************************/
+
+#define IB_MEM_THRESHOLD_ALIGNED_SIZE (256*1024) /* RDMA threshold */
+#define IB_MEM_ALIGNMENT        (4096) /* Page size */
+
+static inline size_t __mpc_memory_allocation_hook_ib ( size_t size )
+{
+	if ( size > IB_MEM_THRESHOLD_ALIGNED_SIZE )
+	{
+		return ( ( size + ( IB_MEM_ALIGNMENT - 1 ) ) & ( ~ ( IB_MEM_ALIGNMENT - 1 ) ) );
+	}
+
+	return 0;
+}
+
+
+static size_t __mpc_memory_allocation_hook ( size_t size_origin )
+{
+
+#ifdef MPC_USE_INFINIBAND
+
+	if ( sctk_network_is_ib_used() )
+	{
+		return __mpc_memory_allocation_hook_ib ( size_origin );
+	}
+#else
+	UNUSED(size_origin);
+#endif
+	return 0;
+}
+
+void __mpc_memory_free_hook ( void * ptr , size_t size )
+{
+
+#ifdef MPC_USE_INFINIBAND
+
+	if ( sctk_network_is_ib_used())
+	{
+		return sctk_network_memory_free_hook_ib ( ptr, size );
+	}
+#else
+	UNUSED(ptr);
+	UNUSED(size);
+#endif
+}
+
+
 void sctk_net_init_driver ( char *name )
-{	
+{
+#ifdef MPC_Allocator
+	sctk_net_memory_allocation_hook_register(__mpc_memory_allocation_hook);
+	sctk_net_memory_free_hook_register(__mpc_memory_free_hook);
+#endif
+
 	if ( mpc_common_get_process_count() == 1 )
 	{
 		/* Nothing to do */
@@ -666,51 +721,4 @@ int sctk_net_set_mode_hybrid ()
 {
 	is_mode_hybrid = 1;
 	return 0;
-}
-/********************************************************************/
-/* Memory Allocator                                                 */
-/********************************************************************/
-
-#define IB_MEM_THRESHOLD_ALIGNED_SIZE (256*1024) /* RDMA threshold */
-#define IB_MEM_ALIGNMENT        (4096) /* Page size */
-
-static inline size_t sctk_network_memory_allocator_hook_ib ( size_t size )
-{
-	if ( size > IB_MEM_THRESHOLD_ALIGNED_SIZE )
-	{
-		return ( ( size + ( IB_MEM_ALIGNMENT - 1 ) ) & ( ~ ( IB_MEM_ALIGNMENT - 1 ) ) );
-	}
-
-	return 0;
-}
-
-
-size_t sctk_net_memory_allocation_hook ( size_t size_origin )
-{
-
-#ifdef MPC_USE_INFINIBAND
-
-	if ( sctk_network_is_ib_used() )
-	{
-		return sctk_network_memory_allocator_hook_ib ( size_origin );
-	}
-#else
-	UNUSED(size_origin);
-#endif
-	return 0;
-}
-
-void sctk_net_memory_free_hook ( void * ptr , size_t size )
-{
-
-#ifdef MPC_USE_INFINIBAND
-
-	if ( sctk_network_is_ib_used())
-	{
-		return sctk_network_memory_free_hook_ib ( ptr, size );
-	}
-#else
-	UNUSED(ptr);
-	UNUSED(size);
-#endif
 }
