@@ -67,7 +67,7 @@ typedef union
 struct sctk_rail_ib_pin_ctx
 {
 	struct ibv_mr mr;
-	sctk_ib_mmu_entry_t * p_entry;
+	_mpc_lowcomm_ib_mmu_entry_t * p_entry;
 };
 #endif
 
