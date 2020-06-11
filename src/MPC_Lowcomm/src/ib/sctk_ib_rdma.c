@@ -29,7 +29,7 @@
 #include "sctk_ib_topology.h"
 #include "sctk_ib_polling.h"
 #include "sctk_ibufs.h"
-#include "_mpc_lowcomm_ib_mmu.h"
+#include "sctk_ib_mmu.h"
 #include "sctk_net_tools.h"
 #include "sctk_ib_cp.h"
 

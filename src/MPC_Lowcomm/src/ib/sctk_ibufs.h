@@ -32,7 +32,7 @@
 #include <mpc_common_debug.h>
 
 #include "sctk_ib.h"
-#include "_mpc_lowcomm_ib_mmu.h"
+#include "sctk_ib_mmu.h"
 
 enum   _mpc_lowcomm_ib_cq_type_t
 {

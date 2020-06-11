@@ -30,7 +30,7 @@
 #include "sctk_ib.h"
 #include <sctk_ibufs.h>
 #include <sctk_ibufs_rdma.h>
-#include <_mpc_lowcomm_ib_mmu.h>
+#include <sctk_ib_mmu.h>
 #include <sctk_ib_config.h>
 #include "sctk_ib_qp.h"
 #include "sctk_ib_cm.h"

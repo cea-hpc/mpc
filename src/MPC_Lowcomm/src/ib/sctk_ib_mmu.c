@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "_mpc_lowcomm_ib_mmu.h"
+#include "sctk_ib_mmu.h"
 #include "sctk_ib_device.h"
 #include "mpc_runtime_config.h"
 #include "mpc_common_asm.h"
