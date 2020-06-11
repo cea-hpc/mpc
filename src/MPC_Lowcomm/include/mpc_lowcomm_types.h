@@ -70,6 +70,7 @@ typedef int sctk_Request_class;
 typedef struct
 {
 	volatile int completion_flag;
+    char pad[128];
 	volatile int request_type;
 	volatile sctk_header_t header;
 	struct mpc_lowcomm_ptp_message_s *msg;

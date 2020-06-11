@@ -273,7 +273,7 @@ static inline void __mpc_cl_request_init_null()
 
 /* Asyncronous Buffers Storage */
 
-#define MAX_MPC_BUFFERED_MSG 256
+#define MAX_MPC_BUFFERED_MSG 64
 
 typedef struct
 {

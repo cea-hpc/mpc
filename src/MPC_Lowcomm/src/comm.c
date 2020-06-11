@@ -80,16 +80,17 @@ typedef struct
 
 typedef struct
 {
-	/* Messages are posted to the 'incoming' lists before being merged to the pending list. */
+	mpc_common_spinlock_t pending_lock;
+	char pad[128];
+    
+    /* Messages are posted to the 'incoming' lists before being merged to the pending list. */
 	mpc_comm_ptp_list_incomming_t incomming_send;
 	mpc_comm_ptp_list_incomming_t incomming_recv;
 
-	mpc_common_spinlock_t pending_lock;
 	/* Messages in the 'pending' lists are waiting to be matched */
 	mpc_comm_ptp_list_pending_t pending_send;
 	mpc_comm_ptp_list_pending_t pending_recv;
 	/* Flag to indicate that new messages have been merged into the 'pending' list */
-	char changed;
 
 } mpc_comm_ptp_message_lists_t;
 
@@ -389,14 +390,21 @@ int mpc_lowcomm_is_remote_rank( int dest )
 
 /* Messages in the '__mpc_ptp_task_list' have already been
  * matched and are wainting to be copied */
-mpc_lowcomm_ptp_message_content_to_copy_t **__mpc_ptp_task_list = NULL;
-mpc_common_spinlock_t *__mpc_ptp_task_lock = 0;
 
 static short __mpc_comm_ptp_task_init_done = 0;
 mpc_common_spinlock_t __mpc_comm_ptp_task_init_lock = SCTK_SPINLOCK_INITIALIZER;
 
 /* MUST BE POWER of 2 as we use masking for modulos */
 #define PTP_TASKING_QUEUE_COUNT 0xF
+
+struct __mpc_lowcomm_copy_task_s
+{
+    mpc_common_spinlock_t lock;
+    mpc_lowcomm_ptp_message_content_to_copy_t *cpy;
+    char pad[128];
+};
+
+struct __mpc_lowcomm_copy_task_s __mpc_ptp_task_list[PTP_TASKING_QUEUE_COUNT + 1];
 
 static inline void __mpc_comm_ptp_task_init()
 {
@@ -408,16 +416,12 @@ static inline void __mpc_comm_ptp_task_init()
 		return;
 	}
 
-	__mpc_ptp_task_list = sctk_malloc( sizeof( mpc_lowcomm_ptp_message_content_to_copy_t * ) * ( PTP_TASKING_QUEUE_COUNT + 1) );
-	assume( __mpc_ptp_task_list );
-	__mpc_ptp_task_lock = sctk_malloc( sizeof( mpc_common_spinlock_t * ) * ( PTP_TASKING_QUEUE_COUNT + 1) );
-	assume( __mpc_ptp_task_lock );
 	int i;
 
 	for ( i = 0; i <= PTP_TASKING_QUEUE_COUNT; i++ )
 	{
-		__mpc_ptp_task_list[i] = NULL;
-		mpc_common_spinlock_init(&__mpc_ptp_task_lock[i], 0 );
+		__mpc_ptp_task_list[i].cpy = NULL;
+		mpc_common_spinlock_init(&__mpc_ptp_task_list[i].lock, 0 );
 	}
 
 	__mpc_comm_ptp_task_init_done = 1;
@@ -429,27 +433,27 @@ static inline void __mpc_comm_ptp_task_init()
  * pending messages which have been already matched.
  * Only called if the task engine is enabled
  */
-static inline int ___mpc_comm_ptp_task_perform( int key, int depth )
+static inline int ___mpc_comm_ptp_task_perform( unsigned int key, int depth )
 {
 	int nb_messages_copied = 0; /* Number of messages processed */
 	int target_list = key & PTP_TASKING_QUEUE_COUNT;
 
 	/* Each element of this list has already been matched */
-	while ( __mpc_ptp_task_list[target_list] != NULL )
+	while ( __mpc_ptp_task_list[target_list].cpy != NULL )
 	{
 		mpc_lowcomm_ptp_message_content_to_copy_t *tmp = NULL;
 
-		if ( mpc_common_spinlock_trylock( &( __mpc_ptp_task_lock[target_list] ) ) == 0 )
+		if ( mpc_common_spinlock_trylock( &( __mpc_ptp_task_list[target_list].lock ) ) == 0 )
 		{
-			tmp = __mpc_ptp_task_list[target_list];
+			tmp = __mpc_ptp_task_list[target_list].cpy;
 
 			if ( tmp != NULL )
 			{
 				/* Message found, we remove it from the list */
-				DL_DELETE( __mpc_ptp_task_list[target_list], tmp );
+				DL_DELETE( __mpc_ptp_task_list[target_list].cpy, tmp );
 			}
 
-			mpc_common_spinlock_unlock( &( __mpc_ptp_task_lock[target_list] ) );
+			mpc_common_spinlock_unlock( &( __mpc_ptp_task_list[target_list].lock ) );
 		}
 
 		if ( tmp != NULL )
@@ -460,24 +464,18 @@ static inline int ___mpc_comm_ptp_task_perform( int key, int depth )
 			tmp->msg_send->tail.message_copy( tmp );
 			nb_messages_copied++;
 		}
-		else
-		{
-			if ( depth )
-			{
-				return nb_messages_copied;
-			}
-		}
 	}
 
-	if ( ( nb_messages_copied == 0 ) && ( depth < 3 ) )
+	if ( ( depth <  2) )
 	{
-		___mpc_comm_ptp_task_perform( key + 1, depth + 1 );
+		___mpc_comm_ptp_task_perform( key + depth - 1, depth + 1 );
 	}
+
 
 	return nb_messages_copied;
 }
 
-static inline int _mpc_comm_ptp_task_perform( int key )
+static inline int _mpc_comm_ptp_task_perform( unsigned int key )
 {
 	return ___mpc_comm_ptp_task_perform( key, 0 );
 }
@@ -489,15 +487,15 @@ static inline void _mpc_comm_ptp_task_insert( mpc_lowcomm_ptp_message_content_to
         mpc_comm_ptp_t *pair )
 {
 	int key = pair->key.rank & PTP_TASKING_QUEUE_COUNT;
-	mpc_common_spinlock_lock( &( __mpc_ptp_task_lock[key] ) );
-	DL_APPEND( __mpc_ptp_task_list[key], tmp );
-	mpc_common_spinlock_unlock( &( __mpc_ptp_task_lock[key] ) );
+	mpc_common_spinlock_lock( &( __mpc_ptp_task_list[key].lock ) );
+	DL_APPEND( __mpc_ptp_task_list[key].cpy, tmp );
+	mpc_common_spinlock_unlock( &( __mpc_ptp_task_list[key].lock ) );
 }
 
 /*
  * Insert the message to copy into the pending list
  */
-static inline void _mpc_comm_ptp_copy_task_insert( mpc_lowcomm_msg_list_t *ptr_recv,
+static inline int _mpc_comm_ptp_copy_task_insert( mpc_lowcomm_msg_list_t *ptr_recv,
         mpc_lowcomm_msg_list_t *ptr_send,
         mpc_comm_ptp_t *pair )
 {
@@ -507,10 +505,12 @@ static inline void _mpc_comm_ptp_copy_task_insert( mpc_lowcomm_msg_list_t *ptr_r
 	tmp->msg_send = ptr_send->msg;
 	tmp->msg_recv = ptr_recv->msg;
 
+    int new_task = 0;
+
 	/* If the message is small just copy */
 	if ( tmp->msg_send->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS )
 	{
-		if ( tmp->msg_send->tail.message.contiguous.size <= 64 )
+		if ( tmp->msg_send->tail.message.contiguous.size <= 128 )
 		{
 			assume( tmp->msg_send->tail.message_copy );
 			tmp->msg_send->tail.message_copy( tmp );
@@ -518,6 +518,7 @@ static inline void _mpc_comm_ptp_copy_task_insert( mpc_lowcomm_msg_list_t *ptr_r
 		else
 		{
 			_mpc_comm_ptp_task_insert( tmp, pair );
+            new_task = 1;
 		}
 	}
 	else
@@ -526,6 +527,8 @@ static inline void _mpc_comm_ptp_copy_task_insert( mpc_lowcomm_msg_list_t *ptr_r
 	}
 
 	SCTK_PROFIL_END( MPC_Copy_message );
+
+    return new_task;
 }
 
 /********************************************************************/
@@ -1971,8 +1974,7 @@ static inline int __mpc_comm_pending_msg_list_search_matching_from_recv( mpc_com
 		}
 
 		/*Insert the matching message to the list of messages that needs to be copied.*/
-		_mpc_comm_ptp_copy_task_insert( ptr_recv, ptr_send, pair );
-		return 1;
+		return _mpc_comm_ptp_copy_task_insert( ptr_recv, ptr_send, pair );
 	}
 
 	return 0;
@@ -1981,6 +1983,7 @@ static inline int __mpc_comm_pending_msg_list_search_matching_from_recv( mpc_com
 
 static inline int __mpc_comm_ptp_perform_msg_pair( mpc_comm_ptp_t *pair )
 {
+    int task_polling_required = 0;
 
 	if( __mpc_comm_ptp_message_list_trylock_pending( &( pair->lists ) ) == 0)
 	{
@@ -1996,16 +1999,20 @@ static inline int __mpc_comm_ptp_perform_msg_pair( mpc_comm_ptp_t *pair )
 
 			DL_FOREACH_SAFE( pair->lists.pending_recv.list, ptr_recv, tmp )
 			{
-				__mpc_comm_pending_msg_list_search_matching_from_recv( pair, ptr_recv->msg );
+				task_polling_required |= __mpc_comm_pending_msg_list_search_matching_from_recv( pair, ptr_recv->msg );
 			}
 		}
 
 		__mpc_comm_ptp_message_list_unlock_pending( &( pair->lists ) );
 	}
 
+    if(task_polling_required || OPA_load_int(&pair->pending_nb))
+    {
+	    /* Call the task engine */
+	    return _mpc_comm_ptp_task_perform( pair->key.rank );
+    }
 
-	/* Call the task engine */
-	return _mpc_comm_ptp_task_perform( pair->key.rank );
+    return 0;
 }
 
 /*
@@ -2247,8 +2254,7 @@ static inline void __mpc_comm_ptp_msg_wait( struct mpc_lowcomm_ptp_msg_progress_
 			sctk_network_notify_any_source_message( polling_task_id, blocking );
 		}
 		else if ( ( request->request_type == REQUEST_SEND && !recv_ptp ) ||
-		          ( request->request_type == REQUEST_RECV && !send_ptp ) ||
-		          ( request->header.source_task == request->header.destination_task ) )
+		          ( request->request_type == REQUEST_RECV && !send_ptp ) )
 		{
 			/* We poll the network only if we need it (empty queues) */
 			/* If the src and the dest tasks are same, we poll the network.
@@ -2258,6 +2264,7 @@ static inline void __mpc_comm_ptp_msg_wait( struct mpc_lowcomm_ptp_msg_progress_
 			sctk_network_notify_perform_message( remote_process, source_task_id, polling_task_id, blocking );
 		}
 
+
 		if ( ( request->request_type == REQUEST_SEND ) && send_ptp )
 		{
 			__mpc_comm_ptp_perform_msg_pair_trylock( send_ptp );
@@ -2266,15 +2273,7 @@ static inline void __mpc_comm_ptp_msg_wait( struct mpc_lowcomm_ptp_msg_progress_
 		{
 			__mpc_comm_ptp_perform_msg_pair_trylock( recv_ptp );
 		}
-		else
-		{
-			return;
-		}
 
-                if (  request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE )
-                {
-		        	sctk_network_notify_idle_message();
-                }
 	}
 	else
 	{
@@ -2645,7 +2644,7 @@ int mpc_lowcomm_request_cancel( mpc_lowcomm_request_t *msg )
 	return ret;
 }
 
-void mpc_lowcomm_isend_class_src( int src, int dest, const void *data, size_t size,
+static inline void __mpc_lowcomm_isend_class_src( int src, int dest, const void *data, size_t size,
                                   int tag, mpc_lowcomm_communicator_t comm,
                                   mpc_lowcomm_ptp_message_class_t class,
                                   mpc_lowcomm_request_t *req )
@@ -2664,21 +2663,44 @@ void mpc_lowcomm_isend_class_src( int src, int dest, const void *data, size_t si
 	mpc_lowcomm_ptp_message_send( msg );
 }
 
+void mpc_lowcomm_isend_class_src( int src, int dest, const void *data, size_t size,
+                                  int tag, mpc_lowcomm_communicator_t comm,
+                                  mpc_lowcomm_ptp_message_class_t class,
+                                  mpc_lowcomm_request_t *req )
+{
+    return __mpc_lowcomm_isend_class_src(src, dest, data, size, tag, comm, class, req);
+}
+
+static inline void __mpc_lowcomm_isend_class( int dest, const void *data, size_t size, int tag,
+                                              mpc_lowcomm_communicator_t comm,
+                                              mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req )
+{
+	__mpc_lowcomm_isend_class_src( mpc_lowcomm_communicator_rank( comm, mpc_common_get_task_rank() ),
+	                               dest,
+	                               data,
+	                               size,
+	                               tag,
+	                               comm,
+	                               class,
+	                               req );
+
+}
+
+
 void mpc_lowcomm_isend_class( int dest, const void *data, size_t size, int tag,
                               mpc_lowcomm_communicator_t comm,
                               mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req )
 {
-	mpc_lowcomm_isend_class_src( mpc_lowcomm_communicator_rank( comm, mpc_common_get_task_rank() ),
-	                             dest,
-	                             data,
-	                             size,
-	                             tag,
-	                             comm,
-	                             class,
-	                             req );
+	__mpc_lowcomm_isend_class( dest,
+	                           data,
+	                           size,
+	                           tag,
+	                           comm,
+	                           class,
+	                           req );
 }
 
-void mpc_lowcomm_irecv_class_dest( int src, int dest, void *buffer, size_t size,
+static inline void __mpc_lowcomm_irecv_class_dest( int src, int dest, void *buffer, size_t size,
                                    int tag, mpc_lowcomm_communicator_t comm,
                                    mpc_lowcomm_ptp_message_class_t class,
                                    mpc_lowcomm_request_t *req )
@@ -2695,14 +2717,35 @@ void mpc_lowcomm_irecv_class_dest( int src, int dest, void *buffer, size_t size,
 	mpc_lowcomm_ptp_message_header_init( msg, tag, comm, src, dest, req, size, class,
 	                                     SCTK_DATATYPE_IGNORE, REQUEST_RECV );
 	mpc_lowcomm_ptp_message_recv( msg );
+
 }
+
+
+
+void mpc_lowcomm_irecv_class_dest( int src, int dest, void *buffer, size_t size,
+                                   int tag, mpc_lowcomm_communicator_t comm,
+                                   mpc_lowcomm_ptp_message_class_t class,
+                                   mpc_lowcomm_request_t *req )
+{
+    __mpc_lowcomm_irecv_class_dest(src, dest, buffer, size, tag, comm, class, req);
+}
+
+
+static inline void __mpc_lowcomm_irecv_class(  int src, void *buffer, size_t size, int tag,
+                                               mpc_lowcomm_communicator_t comm,
+                                               mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req )
+{
+	__mpc_lowcomm_irecv_class_dest( src, mpc_lowcomm_communicator_rank( comm, mpc_common_get_task_rank() ),
+	                                buffer, size, tag, comm, class, req );
+
+}
+
 
 void mpc_lowcomm_irecv_class(  int src, void *buffer, size_t size, int tag,
                                mpc_lowcomm_communicator_t comm,
                                mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req )
 {
-	mpc_lowcomm_irecv_class_dest( src, mpc_lowcomm_communicator_rank( comm, mpc_common_get_task_rank() ),
-	                              buffer, size, tag, comm, class, req );
+    __mpc_lowcomm_irecv_class(src, buffer, size, tag, comm, class, req);
 }
 
 
