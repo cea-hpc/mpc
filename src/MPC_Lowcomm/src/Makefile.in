@@ -175,7 +175,9 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libmpclowcomm_la_DEPENDENCIES = ../../MPC_Launch/src/libmpclaunch.la
+am__DEPENDENCIES_1 =
+libmpclowcomm_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	../../MPC_Launch/src/libmpclaunch.la
 am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
 	sctk_communicator.c sctk_control_messages.c ft.c sctk_handle.c \
 	sctk_low_level_comm.c sctk_multirail.c sctk_net_tools.c \
@@ -564,6 +566,7 @@ program_transform_name = @program_transform_name@
 psdir = @psdir@
 pyexecdir = @pyexecdir@
 pythondir = @pythondir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -632,7 +635,7 @@ libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	$(am__append_3) $(am__append_5)
 
 # library dependency #
-libmpclowcomm_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la -lm
+libmpclowcomm_la_LIBADD = $(ALLOC_LIBS) ../../MPC_Launch/src/libmpclaunch.la -lm
 all: all-am
 
 .SUFFIXES:

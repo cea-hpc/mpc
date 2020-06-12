@@ -70,6 +70,6 @@ bin_PROGRAMS = mpc_print_config
 mpc_print_config_SOURCES = ./MPC_Config/src/print_config/mpc_print_config.c ./MPC_Config/src/print_config/mpc_print_config_sh.c ./MPC_Config/src/print_config/mpc_print_config_sh.h
 mpc_print_config_SOURCES += ./MPC_Config/src/print_config/mpc_print_config_xml.c ./MPC_Config/src/print_config/mpc_print_config_xml.h
 
-mpc_print_config_LDADD = $(XML2_LIBS)
+mpc_print_config_LDADD = $(XML2_LIBS) $(ALLOC_LIBS)
 
 mpc_print_config_LDADD += @ALL_MPC_LIBS@
