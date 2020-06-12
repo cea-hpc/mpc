@@ -689,6 +689,14 @@
 /* Define to 1 if the system has the `__builtin_expect' built-in function */
 #undef HAVE___BUILTIN_EXPECT
 
+/* Define to 1 if the system has the `__builtin_frame_address' built-in
+   function */
+#undef HAVE___BUILTIN_FRAME_ADDRESS
+
+/* Define to 1 if the system has the `__builtin_return_address' built-in
+   function */
+#undef HAVE___BUILTIN_RETURN_ADDRESS
+
 /* KMP intrisincs enabled */
 #undef KMP_ARCH_X86
 

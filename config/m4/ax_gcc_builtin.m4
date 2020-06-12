@@ -81,6 +81,8 @@
 #    __builtin_trap
 #    __builtin_types_compatible_p
 #    __builtin_unreachable
+#    __builtin_return_address
+#    __builtin_frame_address
 #
 #   Unsupported built-ins will be tested with an empty parameter set and the
 #   result of the check might be wrong or meaningless so use with care.
@@ -160,6 +162,8 @@ AC_DEFUN([AX_GCC_BUILTIN], [
                 [__builtin_trap], [$1()],
                 [__builtin_types_compatible_p], [$1(int, int)],
                 [__builtin_unreachable], [$1()],
+                [__builtin_return_address], [$1(0)],
+                [__builtin_frame_address], [$1(0)],
                 [m4_warn([syntax], [Unsupported built-in $1, the test may fail])
                  $1()]
             )
