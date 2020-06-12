@@ -11032,6 +11032,7 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 		}
 	}
 
+
 	/* Call the MPC waitall implementation */
 	int ret = _mpc_cl_waitallp(count, mpc_array_of_requests,
 	                           (mpc_lowcomm_status_t *)array_of_statuses);

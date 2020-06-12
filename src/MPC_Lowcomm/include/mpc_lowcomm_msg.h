@@ -23,8 +23,19 @@ typedef enum
 	REQUEST_RECV,
 	REQUEST_GENERALIZED,
 	REQUEST_PICKED,
-	REQUEST_RDMA
+	REQUEST_RDMA,
+	REQUEST_TYPE_COUNT
 } mpc_lowcomm_request_type_t;
+
+static const char *const mpc_lowcomm_request_type_name[REQUEST_TYPE_COUNT] =
+{
+	"REQUEST_NULL",
+	"REQUEST_SEND",
+	"REQUEST_RECV",
+	"REQUEST_GENERALIZED",
+	"REQUEST_PICKED",
+	"REQUEST_RDMA"
+};
 
 /************************************************************************/
 /* Messages Types                                               */
