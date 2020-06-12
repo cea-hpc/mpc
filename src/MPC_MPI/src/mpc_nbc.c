@@ -4150,6 +4150,8 @@ static inline int NBC_Sched_send_pos(int pos, void* buf, char tmpbuf, int count,
 
   NBC_Args* send_args;
  
+  mpc_common_nodebug("SEND to %d", dest);
+
   /* adjust the function type */
   *(NBC_Fn_type *)((char *)*schedule + sizeof(int) + pos) = SEND;
 
@@ -4199,6 +4201,8 @@ static inline int NBC_Sched_recv_pos(int pos, void* buf, char tmpbuf, int count,
 
   NBC_Args* recv_args;
  
+  mpc_common_nodebug("RECV from %d", source);
+
   
   /* adjust the function type */
   *(NBC_Fn_type *)((char *)*schedule + sizeof(int) + pos) = RECV;
@@ -4686,7 +4690,6 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 				else
 					buf1 = sendargs->buf;
 				NBC_CHECK_NULL( handle->req_array );
-        res = _mpc_cl_isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, handle->mycomm, __sctk_new_mpc_request (handle->req_array+(old_req_count+req_cpt-1), requests));
 				res = _mpc_cl_isend( buf1,
                           sendargs->count,
                           sendargs->datatype,
