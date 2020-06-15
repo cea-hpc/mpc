@@ -1343,9 +1343,9 @@ fi
 #
 
 if test $STEP_WRAPPER_VERBOSE -gt 0; then
-	if test -f ./bin/mpc_status.sh; then
-		show_run_cmd "sh ./bin/mpc_status.sh"
-		sh ./bin/mpc_status.sh
+	if test -f ./src/bin/mpc_status; then
+		show_run_cmd "sh ./src/bin/mpc_status"
+		sh ./src/bin/mpc_status
 	fi
 fi
 

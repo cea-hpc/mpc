@@ -2171,8 +2171,9 @@ if test "x${mpc_shell_color}" = "xyes"; then
 fi
 
 #### CMA support
+MPC_ENABLE_CMA="no"
 AC_ARG_ENABLE([cma], [AS_HELP_STRING([--enable-cma], [Activate Cross Memory Attach for SHM communications])],
-[if test "x${mpc_enable_cma}" = "xyes"; then
+[if test "x${MPC_ENABLE_CMA}" = "xyes"; then
 
         #Check the content of the YAMA file if present
         if test -f /proc/sys/kernel/yama/ptrace_scope; then
@@ -2184,12 +2185,12 @@ AC_ARG_ENABLE([cma], [AS_HELP_STRING([--enable-cma], [Activate Cross Memory Atta
                 else
                         AC_MSG_RESULT([FAIL])
                         AC_MSG_NOTICE([/proc/sys/kernel/yama/ptrace_scope shoud contain 0 for CMA support in MPC])
-                        mpc_enable_cma="no"
+                        MPC_ENABLE_CMA="no"
                 fi
         fi
 
         AC_MSG_CHECKING([enabling CMA])
-        if test "x$mpc_enable_cma" = "xyes"; then
+        if test "x$MPC_ENABLE_CMA" = "xyes"; then
                 AC_MSG_RESULT([yes])
                 AC_DEFINE([MPC_USE_CMA], [1], [MPC CMA for SHM drive is enabled])
         else
@@ -2432,7 +2433,6 @@ MPC_CONFIG_RESULT="\
 #\n\
 # Privatization........ $extls_support_found\n\
 # Process mode......... $enable_mpc_proces_mode\n\
-# Languages............ $MPC_LANGUAGE_LIST\n\
 # mpc_cc points to..... $(basename $CC)\n\
 # mpc_cxx points to.... $(basename $CXX)\n\
 # mpc_fXX points to.... $(basename $FC)\n\
@@ -2440,7 +2440,7 @@ MPC_CONFIG_RESULT="\
 ### NETWORKS ###\n\
 #\n\
 # Supported list....... $MPC_NETWORK_LIST\n\
-# CMA over SHM......... $mpc_enable_cma\n\
+# CMA over SHM......... $MPC_ENABLE_CMA\n\
 #\n$MPC_MPIIO_CONFIGURATION\
 ### ACCELERATORS ###\n\
 #\n\
