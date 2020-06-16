@@ -3064,94 +3064,85 @@ int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parra
 	 * when we have generalized requests*/
 	int contains_generalized = 0;
 
-	int do_one_done_pass = 0;
-
 	for(i = 0; i < count; i++)
 	{
-		/* This is the all done fastpath */
-		if( mpc_lowcomm_request_get_completion(parray_of_requests[i]) == MPC_LOWCOMM_MESSAGE_DONE )
-		{
-			do_one_done_pass |= 1;
-		}
-
 		if(parray_of_requests[i]->request_type == REQUEST_GENERALIZED)
 		{
 			contains_generalized |= 1;
+			break;
 		}
 	}
 
-	/* If we have genealized we only poll here */
+	int direct_pass_count = 16;
+
+	/* Can we do a batch wait ? */
 	if(contains_generalized)
 	{
-		do_one_done_pass = 0;
-	}
-
-
-	if(contains_generalized || do_one_done_pass)
-	{
-		/* Can we do a batch wait ? */
-		if(contains_generalized)
+		if(_mpc_cl_waitall_Grequest(count, parray_of_requests, array_of_statuses) )
 		{
-			if(_mpc_cl_waitall_Grequest(count, parray_of_requests, array_of_statuses) )
-			{
-				MPC_ERROR_SUCESS()
-			}
+			MPC_ERROR_SUCESS()
 		}
 
-		int flag = 0;
+		/* Prevent wfv polling as == 0 cannot occur */
+		direct_pass_count = -1;
+	}
 
-		/* Here we force the local polling because of generalized requests
-		 *      This will happen only if classical and generalized requests are
-		 *      mixed or if the wait_fn is not the same for all requests */
-		do
+	int flag = 0;
+
+	/* Here we force the local polling because of generalized requests
+		*      This will happen only if classical and generalized requests are
+		*      mixed or if the wait_fn is not the same for all requests */
+	do
+	{
+		flag = 1;
+
+		for(i = 0; i < count; i++)
 		{
-			flag = 1;
+			int tmp_flag = 0;
+			mpc_lowcomm_status_t * status;
+			mpc_lowcomm_request_t *request;
 
-			for(i = 0; i < count; i++)
+			if(array_of_statuses != NULL)
 			{
-				int tmp_flag = 0;
-				mpc_lowcomm_status_t * status;
-				mpc_lowcomm_request_t *request;
-
-				if(array_of_statuses != NULL)
-				{
-					status = &(array_of_statuses[i]);
-				}
-				else
-				{
-					status = SCTK_STATUS_NULL;
-				}
-
-				request = parray_of_requests[i];
-
-				if(mpc_lowcomm_request_is_null(request) )
-				{
-					continue;
-				}
-
-				_mpc_cl_test(request, &tmp_flag, status);
-
-				/* We set this flag in order to prevent the status
-				 * from being updated repetitivelly in __mpc_cl_test */
-				if(tmp_flag)
-				{
-					mpc_lowcomm_request_set_null(request, 1);
-				}
-
-				flag = flag & tmp_flag;
-			}
-
-			if(flag == 1)
-			{
-				MPC_ERROR_SUCESS();
+				status = &(array_of_statuses[i]);
 			}
 			else
 			{
-				mpc_thread_yield();
+				status = SCTK_STATUS_NULL;
 			}
 
-		}while(flag == 0 && !do_one_done_pass);
-	}
+			request = parray_of_requests[i];
+
+			if(mpc_lowcomm_request_is_null(request) )
+			{
+				continue;
+			}
+
+			_mpc_cl_test(request, &tmp_flag, status);
+
+			/* We set this flag in order to prevent the status
+				* from being updated repetitivelly in __mpc_cl_test */
+			if(tmp_flag)
+			{
+				mpc_lowcomm_request_set_null(request, 1);
+			}
+
+			flag = flag & tmp_flag;
+		}
+
+		if(flag == 1)
+		{
+			MPC_ERROR_SUCESS();
+		}
+		else
+		{
+			mpc_thread_yield();
+		}
+
+		direct_pass_count--;
+
+	}while( (flag == 0) && (direct_pass_count != 0));
+
 
 	/* XXX: Waitall has been ported for using wait_for_value_and_poll
 	 * because it provides better results than thread_yield.

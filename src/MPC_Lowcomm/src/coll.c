@@ -2036,8 +2036,8 @@ int mpc_lowcomm_barrier_shm_on_context(struct shared_mem_barrier *barrier_ctx,
 				{
 					if(128 < cnt++)
 					{
+						sctk_network_notify_idle_message();
 						mpc_thread_yield();
-                        
 					}
 				}
 	}
