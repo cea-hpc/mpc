@@ -677,7 +677,7 @@ static int SCTK__MPI_Attr_communicator_dup(MPI_Comm old, MPI_Comm new);
  * MPI Level Per Thread CTX
  *
  */
-//#define MPC_MPI_USE_REQUEST_CACHE
+#define MPC_MPI_USE_REQUEST_CACHE
 
 #ifdef MPC_MPI_USE_REQUEST_CACHE
     #define MPC_MPI_REQUEST_CACHE_SIZE    128
@@ -917,8 +917,7 @@ inline void __sctk_init_mpc_request_internal(MPI_internal_request_t *tmp)
  *  \param req Request to allocate (will be written with the ID of the request)
  * */
 /* extern inline */
-MPI_internal_request_t *
-__sctk_new_mpc_request_internal(MPI_Request *req,
+MPI_internal_request_t * __sctk_new_mpc_request_internal(MPI_Request *req,
                                 MPI_request_struct_t *requests)
 {
 	MPI_internal_request_t *tmp;
@@ -1138,7 +1137,7 @@ inline void __sctk_delete_mpc_request(MPI_Request *req,
 	/* Retrieve the request */
 	tmp = __sctk_convert_mpc_request_internal(req, requests);
 
-	memset(&tmp->req, 0, sizeof(mpc_lowcomm_request_t) );
+	//memset(&tmp->req, 0, sizeof(mpc_lowcomm_request_t) );
 
 	/* Clear the request */
 	mpc_common_spinlock_lock(&(tmp->lock) );
