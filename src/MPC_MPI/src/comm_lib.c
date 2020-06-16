@@ -3064,16 +3064,14 @@ int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parra
 	 * when we have generalized requests*/
 	int contains_generalized = 0;
 
-	int done_cnt = 0;
+	int do_one_done_pass = 0;
 
 	for(i = 0; i < count; i++)
 	{
 		/* This is the all done fastpath */
-		if( (mpc_lowcomm_request_get_completion(parray_of_requests[i]) == MPC_LOWCOMM_MESSAGE_DONE) ||
-		    mpc_lowcomm_request_is_null(parray_of_requests[i] ) )
+		if( mpc_lowcomm_request_get_completion(parray_of_requests[i]) == MPC_LOWCOMM_MESSAGE_DONE )
 		{
-			done_cnt++;
-			continue;
+			do_one_done_pass |= 1;
 		}
 
 		if(parray_of_requests[i]->request_type == REQUEST_GENERALIZED)
@@ -3082,12 +3080,14 @@ int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parra
 		}
 	}
 
-	if(done_cnt == count)
+	/* If we have genealized we only poll here */
+	if(contains_generalized)
 	{
-		return MPI_SUCCESS;
+		do_one_done_pass = 0;
 	}
 
-	if(contains_generalized)
+
+	if(contains_generalized || do_one_done_pass)
 	{
 		/* Can we do a batch wait ? */
 		if(contains_generalized)
@@ -3103,7 +3103,7 @@ int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parra
 		/* Here we force the local polling because of generalized requests
 		 *      This will happen only if classical and generalized requests are
 		 *      mixed or if the wait_fn is not the same for all requests */
-		while(flag == 0)
+		do
 		{
 			flag = 1;
 
@@ -3115,14 +3115,14 @@ int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parra
 
 				if(array_of_statuses != NULL)
 				{
-					status = &(array_of_statuses[i % count]);
+					status = &(array_of_statuses[i]);
 				}
 				else
 				{
 					status = SCTK_STATUS_NULL;
 				}
 
-				request = parray_of_requests[i % count];
+				request = parray_of_requests[i];
 
 				if(mpc_lowcomm_request_is_null(request) )
 				{
@@ -3147,7 +3147,7 @@ int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parra
 			}
 
 			mpc_thread_yield();
-		}
+		}while(flag == 0 && !do_one_done_pass);
 	}
 
 	/* XXX: Waitall has been ported for using wait_for_value_and_poll

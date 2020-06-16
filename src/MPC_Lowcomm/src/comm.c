@@ -1583,37 +1583,60 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 		int dest_task   = -1;
 		/* Fill in Source and Dest Process Informations (convert from task) */
 
-		if( (communicator != SCTK_COMM_WORLD) && sctk_is_inter_comm(communicator) )
+		int is_intercomm = sctk_is_inter_comm(communicator);
+
+		/* SOURCE */
+
+		if(source != SCTK_ANY_SOURCE)
+		{
+			if( is_intercomm )
+			{
+				if(request_type == REQUEST_RECV)
+				{
+					/* If this is a RECV make sure the translation is done on the source according to remote */
+					source_task = sctk_get_remote_comm_world_rank(communicator, source);
+
+				}
+				else if(request_type == REQUEST_SEND)
+				{
+					/* If this is a SEND make sure the translation is done on the dest according to remote */
+					source_task = sctk_get_comm_world_rank(communicator, source);
+					dest_task   = sctk_get_remote_comm_world_rank(communicator, destination);
+				}
+			}
+			else
+			{
+				source_task = sctk_get_comm_world_rank(communicator, source);
+			}
+
+		}
+		else
+		{
+			source_task = SCTK_ANY_SOURCE;
+		}
+
+		/* DEST Handling */
+
+		if( is_intercomm )
 		{
 			if(request_type == REQUEST_RECV)
 			{
 				/* If this is a RECV make sure the translation is done on the source according to remote */
-				source_task = sctk_get_remote_comm_world_rank(communicator, source);
 				dest_task   = sctk_get_comm_world_rank(communicator, destination);
 			}
 			else if(request_type == REQUEST_SEND)
 			{
 				/* If this is a SEND make sure the translation is done on the dest according to remote */
-				source_task = sctk_get_comm_world_rank(communicator, source);
 				dest_task   = sctk_get_remote_comm_world_rank(communicator, destination);
 			}
 		}
 		else
 		{
-			/* If we are not using an inter-comm just translate to COMM_WORLD */
-			if(source != SCTK_ANY_SOURCE)
-			{
-				source_task = sctk_get_comm_world_rank(communicator, source);
-			}
-			else
-			{
-				source_task = SCTK_ANY_SOURCE;
-			}
-
 			dest_task = sctk_get_comm_world_rank(communicator, destination);
 		}
 
 		SCTK_MSG_SRC_TASK_SET(msg, source_task);
+		SCTK_MSG_DEST_TASK_SET(msg, dest_task);
 
 		if(source_task != SCTK_ANY_SOURCE)
 		{
@@ -1624,10 +1647,10 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 			SCTK_MSG_SRC_PROCESS_SET(msg, SCTK_ANY_SOURCE);
 		}
 
-		SCTK_MSG_DEST_TASK_SET(msg, dest_task);
+
 		SCTK_MSG_DEST_PROCESS_SET(msg, sctk_get_process_rank_from_task_rank(SCTK_MSG_DEST_TASK(msg) ) );
 
-		mpc_common_debug("%s [T(%d -> %d) P(%d -> %d) C %d CL %s TA %d]",
+		mpc_common_debug("%s [T(%d -> %d) P(%d -> %d) C %d CL %s TA %d REQ %p]",
 		                 mpc_lowcomm_request_type_name[request_type],
 		                 source_task,
 		                 dest_task,
@@ -1635,7 +1658,8 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 		                 SCTK_MSG_DEST_PROCESS(msg),
 		                 communicator,
 		                 mpc_lowcomm_ptp_message_class_name[message_class],
-		                 message_tag);
+		                 message_tag,
+				 request);
 
 #if 0
 		/* If source matters */

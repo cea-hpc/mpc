@@ -1387,8 +1387,8 @@ static int __Ibsend_test_req(const void *buf, int count, MPI_Datatype datatype,
 			head_next->request = MPI_REQUEST_NULL;
 		}
 
-		res = PMPI_Pack(buf, count, datatype, head_buf, head->size,
-		                 &position, comm);
+		res = PMPI_Pack(buf, count, datatype, head_buf, head->size, &position, comm);
+
 		if(res != MPI_SUCCESS)
 		{
 			mpc_common_spinlock_unlock(&(tmp->lock) );
