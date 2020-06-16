@@ -87,6 +87,23 @@ check_retcode()
 }
 
 #
+# Ensures the prefix has not been emptied
+# and remove marker file if so
+# Args:
+# - $1: prefix to check
+#
+check_prefix_is_clean()
+{
+	if test -d "$PREFIX/lib/" -a -d "$PREFIX/bin/" -a -f "$PREFIX/bin/mpcvars.sh"; then
+		return
+	else
+		# Apparently prefix was cleared somehow
+		# Make sure deps are reinstalled
+		rm -fr "$PREFIX"/.mpc-installed-*
+	fi
+}
+
+#
 # Output helpers
 #
 if test "x$USE_COLOR" = "xyes"; then
@@ -1124,6 +1141,8 @@ do
 			extractParamValue 'PREFIX' 'prefix' "$arg"
 			if [ ! -d "${PREFIX}" ]; then
 				mkdir -p "${PREFIX}"
+			else
+				check_prefix_is_clean "${PREFIX}"
 			fi
 			;;
 		--help|-h|-?)
