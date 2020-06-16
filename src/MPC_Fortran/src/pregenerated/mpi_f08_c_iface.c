@@ -1677,9 +1677,15 @@ int * ierror)
 
 /* Skipped function MPI_Unpack_externalwith conversion */
 
-/* MPI_Errhandler_set NOT IMPLEMENTED in MPC */
 
-
+void mpi_errhandler_set_f08(
+MPI_Comm comm,
+MPI_Errhandler errhandler,
+int * ierror)
+{
+*ierror = MPI_Errhandler_set( comm,
+errhandler);
+}
 /* MPI_File_read_at_all_begin NOT IMPLEMENTED in MPC */
 
 
@@ -1920,9 +1926,15 @@ outcount,
 datatype,
 comm);
 }
-/* MPI_Type_ub NOT IMPLEMENTED in MPC */
 
-
+void mpi_type_ub_f08(
+MPI_Datatype mtype,
+MPI_Aint* ub,
+int * ierror)
+{
+*ierror = MPI_Type_ub( mtype,
+ub);
+}
 
 void mpi_status_set_elements_f08(
 MPI_Status* status,

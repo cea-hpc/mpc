@@ -3265,8 +3265,23 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Unpack_external_c
 
-! MPI_Errhandler_set NOT IMPLEMENTED in MPC
 
+function MPI_Errhandler_set_c( comm,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_errhandler_set_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: errhandler     !MPI_Errhandler errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Errhandler_set_c
 
 ! MPI_File_read_at_all_begin NOT IMPLEMENTED in MPC
 
@@ -3673,8 +3688,23 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Unpack_c
 
-! MPI_Type_ub NOT IMPLEMENTED in MPC
 
+function MPI_Type_ub_c( mtype,&
+ub,&
+ierror)&
+bind(C, name="mpi_type_ub_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: mtype     !MPI_Datatype mtype
+integer(c_intptr_t), value, intent(in) :: ub     !MPI_Aint* ub
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_ub_c
 
 
 function MPI_Status_set_elements_c( status,&

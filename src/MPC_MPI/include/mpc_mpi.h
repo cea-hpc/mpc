@@ -2263,6 +2263,19 @@ int PMPI_Dist_graph_neighbors(MPI_Comm comm, int maxindegree, int sources[], int
 int MPI_Dist_graph_neighbors_count(MPI_Comm comm, int *indegree, int *outdegree, int *weighted);
 int PMPI_Dist_graph_neighbors_count(MPI_Comm comm, int *indegree, int *outdegree, int *weighted);
 
+/*MPI_Errhandler_set (DEPRECATED) */
+
+/**
+ * @brief MPI function MPI_Errhandler_set
+ * 
+ * @param Comm to set the errhandler on
+ * @param errhandler 
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
+ */
+int MPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler);
+int PMPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler);
+
 
 /*MPI_Errhandler_free*/
 
@@ -5698,7 +5711,7 @@ int PMPI_Type_create_struct(int count, const int array_of_blocklengths[], const 
 /*PMPI_Type_lb (DEPRECATED)*/
 
 /**
- * @brief MPI function MPI_Type_struct
+ * @brief MPI function MPI_Type_lb
  * 
  * @param datatype type to set LB on
  * @param value of LB
@@ -5708,6 +5721,18 @@ int PMPI_Type_create_struct(int count, const int array_of_blocklengths[], const 
 int MPI_Type_lb(MPI_Datatype datatype, MPI_Aint *displacement);
 int PMPI_Type_lb(MPI_Datatype datatype, MPI_Aint *displacement);
 
+/*PMPI_Type_ub (DEPRECATED)) */
+
+/**
+ * @brief MPI function MPI_Type_ub
+ * 
+ * @param datatype type to set UB on
+ * @param value of IB
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
+ */
+int MPI_Type_ub(MPI_Datatype datatype, MPI_Aint *displacement);
+int PMPI_Type_ub(MPI_Datatype datatype, MPI_Aint *displacement);
 
 /*MPI_Type_struct (DEPRECATED)*/
 

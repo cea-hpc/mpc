@@ -631,6 +631,11 @@ module procedure MPI_Type_free_f08
 end interface
 
 
+interface MPI_Errhandler_set
+module procedure MPI_Errhandler_set_f08
+end interface
+
+
 interface MPI_Comm_get_errhandler
 module procedure MPI_Comm_get_errhandler_f08
 end interface
@@ -713,6 +718,11 @@ end interface
 
 interface MPI_Unpack
 module procedure MPI_Unpack_f08
+end interface
+
+
+interface MPI_Type_ub
+module procedure MPI_Type_ub_f08
 end interface
 
 
@@ -1090,6 +1100,7 @@ private :: MPI_Type_get_contents_f08
 private :: MPI_Reduce_local_f08
 private :: MPI_Group_union_f08
 private :: MPI_Type_free_f08
+private :: MPI_Errhandler_set_f08
 private :: MPI_Comm_get_errhandler_f08
 private :: MPI_Test_cancelled_f08
 private :: MPI_Win_lock_f08
@@ -1107,6 +1118,7 @@ private :: MPI_Gather_f08
 private :: MPI_Type_vector_f08
 private :: MPI_Probe_f08
 private :: MPI_Unpack_f08
+private :: MPI_Type_ub_f08
 private :: MPI_Status_set_elements_f08
 private :: MPI_Win_delete_attr_f08
 private :: MPI_Type_hindexed_f08
@@ -6472,8 +6484,40 @@ end subroutine MPI_Type_free_f08
 
 !Skipped convert function in MPI_Unpack_external
 
-! MPI_Errhandler_set NOT IMPLEMENTED in MPC
 
+subroutine MPI_Errhandler_set_f08( comm,&
+errhandler,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Comm), intent(in) :: comm
+type(MPI_Errhandler), intent(in) :: errhandler
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: comm_c     !MPI_Comm comm
+integer(c_int) :: errhandler_c     !MPI_Errhandler errhandler
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+comm_c = comm%val
+errhandler_c = errhandler%val
+
+ret = MPI_Errhandler_set_c(comm_c,&
+errhandler_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Errhandler_set_f08
 
 ! MPI_File_read_at_all_begin NOT IMPLEMENTED in MPC
 
@@ -7249,8 +7293,40 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Unpack_f08
 
-! MPI_Type_ub NOT IMPLEMENTED in MPC
 
+subroutine MPI_Type_ub_f08( mtype,&
+ub,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Datatype), intent(in) :: mtype
+integer*8, intent(in) :: ub
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: mtype_c     !MPI_Datatype mtype
+integer(c_intptr_t) :: ub_c     !MPI_Aint* ub
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+mtype_c = mtype%val
+ub_c = ub
+
+ret = MPI_Type_ub_c(mtype_c,&
+ub_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Type_ub_f08
 
 
 subroutine MPI_Status_set_elements_f08( status,&
