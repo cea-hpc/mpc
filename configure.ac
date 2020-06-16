@@ -676,14 +676,28 @@ MPC_REQUIRED_DEPENDENCY([openpa], [$mpc_dep_found])
 #
 
 MPC_ALLOCATOR="Standard"
+# Default preload
+MPC_ALLOCATOR_PRELOAD="libmpcalloc.so"
 
 MPC_DETECT_DEPENDENCY([mpcalloc.h], [mpcalloc], [sctk_malloc], [ALLOC])
 if test "x$mpc_dep_found" = "xyes"; then
         AC_DEFINE([MPC_Allocator], [1], [mpcalloc support is enabled])
         MPC_ALLOCATOR="mpcalloc"
+        # Locate the MPC Allocator libdir to provide
+        # a complete preload path
+        ALLOC_PRELOAD_BIN="$(which mpcalloc_preload)"
+        if test ! -z "$ALLOC_PRELOAD_BIN"; then
+            # Locate PREFIX
+           ALLOC_PREFIX=$(echo "$ALLOC_PRELOAD_BIN" | rev | cut -d / -f 3- | rev)
+           CANDIDATE_ALLOC_LIB_PATH="${ALLOC_PREFIX}/lib/libmpcalloc.so"
+           if test -e "${CANDIDATE_ALLOC_LIB_PATH}"; then
+                MPC_ALLOCATOR_PRELOAD="${CANDIDATE_ALLOC_LIB_PATH}"
+           fi
+        fi
 fi
 
 AC_SUBST([MPC_ALLOCATOR])
+AC_SUBST([MPC_ALLOCATOR_PRELOAD])
 
 #
 # Detect libunwind
@@ -2173,7 +2187,9 @@ fi
 #### CMA support
 MPC_ENABLE_CMA="no"
 AC_ARG_ENABLE([cma], [AS_HELP_STRING([--enable-cma], [Activate Cross Memory Attach for SHM communications])],
-[if test "x${MPC_ENABLE_CMA}" = "xyes"; then
+[MPC_ENABLE_CMA=$enableval], [])
+
+if test "x${MPC_ENABLE_CMA}" = "xyes"; then
 
         #Check the content of the YAMA file if present
         if test -f /proc/sys/kernel/yama/ptrace_scope; then
@@ -2197,8 +2213,6 @@ AC_ARG_ENABLE([cma], [AS_HELP_STRING([--enable-cma], [Activate Cross Memory Atta
                 AC_MSG_RESULT([no])
         fi
 fi
-], [: #Disabled CMAs])
-
 
 #### Enabling default optimizations to build MPC
 AC_ARG_ENABLE([opt],

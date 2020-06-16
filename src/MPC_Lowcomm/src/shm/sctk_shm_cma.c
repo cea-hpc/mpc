@@ -5,6 +5,7 @@
 
 #ifdef MPC_USE_CMA
 
+#include <sctk_alloc.h>
 #include "sctk_net_tools.h"
 #include "sctk_shm_cma.h"
 
