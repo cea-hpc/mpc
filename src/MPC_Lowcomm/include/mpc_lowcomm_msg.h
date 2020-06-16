@@ -204,8 +204,8 @@ typedef enum
 /** MPC_LOWCOMM_MESSAGE_CONTIGUOUS */
 typedef struct
 {
-	size_t      size;
-	void *addr;
+	size_t size;
+	void * addr;
 } mpc_lowcomm_ptp_message_contiguous_t;
 
 /** MPC_LOWCOMM_MESSAGE_PACK */
@@ -294,17 +294,16 @@ struct mpc_comm_ptp_s;
 /*Data not to tranfers in inter-process communications*/
 typedef struct
 {
-	char                                      remote_source;
-
 	volatile int *volatile                    completion_flag;
 
 	/* Matchind ID used for MPROBE */
-	OPA_int_t                                 matching_id; /**< 0 By default unique id otherwise */
+	OPA_int_t                                 matching_id;  /**< 0 By default unique id otherwise */
+	mpc_lowcomm_ptp_message_type_t            message_type;
 
 	mpc_lowcomm_request_t *                   request;
 
 	/*Message data*/
-	mpc_lowcomm_ptp_message_type_t            message_type;
+
 	mpc_lowcomm_ptp_message_content_t         message;
 
 	/*Storage structs*/
@@ -315,7 +314,6 @@ typedef struct
 
 	/*Destructor*/
 	void (*free_memory)(void *);
-
 	/*Copy operator*/
 	void (*message_copy)(mpc_lowcomm_ptp_message_content_to_copy_t *);
 
@@ -339,6 +337,7 @@ typedef struct
 #ifdef MPC_USE_INFINIBAND
 	struct mpc_lowcomm_ib_tail_s              ib;
 #endif
+	char                                      remote_source;
 } mpc_lowcomm_ptp_message_tail_t;
 
 /************************************************************************/

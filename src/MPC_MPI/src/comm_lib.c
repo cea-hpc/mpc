@@ -3145,8 +3145,11 @@ int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parra
 			{
 				MPC_ERROR_SUCESS();
 			}
+			else
+			{
+				mpc_thread_yield();
+			}
 
-			mpc_thread_yield();
 		}while(flag == 0 && !do_one_done_pass);
 	}
 
