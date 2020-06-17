@@ -13423,7 +13423,10 @@ int PMPI_Pack(const
 int PMPI_Unpack(const void *inbuf,
                 int insize,
                 int *position,
-                void *outbuf, int outcount, MPI_Datatype datatype, MPI_Comm comm)
+                void *outbuf,
+		int outcount,
+		MPI_Datatype datatype,
+		MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
 
@@ -13444,6 +13447,8 @@ int PMPI_Unpack(const void *inbuf,
 
 	int copied = 0;
 
+	_mpc_cl_type_debug(datatype);
+
 	mpc_common_nodebug("MPI_Unpack insise = %d, position = %d, outcount = %d, datatype = %d, comm = %d", insize, *position, outcount, datatype, comm);
 	if(_mpc_dt_is_derived(datatype) )
 	{
@@ -13461,6 +13466,7 @@ int PMPI_Unpack(const void *inbuf,
 		{
 			for(i = 0; i < output_datatype.opt_count; i++)
 			{
+
 				size_t size;
 				size    = output_datatype.opt_ends[i] - output_datatype.opt_begins[i] + 1;
 				copied += size;

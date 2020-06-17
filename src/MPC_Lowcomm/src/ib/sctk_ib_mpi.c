@@ -537,7 +537,19 @@ static inline void __poll_cq(sctk_rail_info_t *rail,
 
 mpc_common_spinlock_t __cq_lock = SCTK_SPINLOCK_INITIALIZER;
 
-void sctk_network_poll_all_cq(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
+static inline void __poll_send(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
+{
+	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+
+	LOAD_DEVICE(rail_ib);
+	LOAD_CONFIG(rail_ib);
+
+	/* Poll sent messages */
+	__poll_cq(rail, device->send_cq, config->wc_out_number, poll, sctk_network_poll_send);
+}
+
+
+static inline void __poll_recv(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 
@@ -546,9 +558,17 @@ void sctk_network_poll_all_cq(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 
 	/* Poll received messages */
 	__poll_cq(rail, device->recv_cq, config->wc_in_number, poll, sctk_network_poll_recv);
+}
 
-	/* Poll sent messages */
-	__poll_cq(rail, device->send_cq, config->wc_out_number, poll, sctk_network_poll_send);
+
+
+static inline void __poll_all_cq(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
+{
+	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+
+	__poll_send(rail, poll);
+
+	__poll_recv(rail, poll);
 
 	_mpc_lowcomm_ib_cp_ctx_poll_global_list(poll);
 
@@ -556,6 +576,16 @@ void sctk_network_poll_all_cq(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 
 static void sctk_network_notify_recv_message_ib(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail)
 {
+	struct sctk_ib_polling_s poll;
+	POLL_INIT(&poll);
+
+	__poll_recv(rail, &poll);
+
+	if(POLL_GET_RECV_CQ(&poll) != 0)
+	{
+		POLL_INIT(&poll);
+		_mpc_lowcomm_ib_cp_ctx_poll(&poll, SCTK_MSG_DEST_TASK(msg));
+	}
 }
 
 static void sctk_network_notify_matching_message_ib(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail)
@@ -586,7 +616,7 @@ static void sctk_network_notify_perform_message_ib(__UNUSED__ int remote_process
 	if(POLL_GET_RECV(&poll) == 0)
 	{
 		POLL_INIT(&poll);
-		sctk_network_poll_all_cq(rail, &poll);
+		__poll_all_cq(rail, &poll);
 
 		/* If the polling returned something or someone already inside the function,
 		 * we retry to poll the pending lists */
@@ -619,7 +649,7 @@ static void sctk_network_notify_idle_message_ib(sctk_rail_info_t *rail)
 	}
 
 	POLL_INIT(&poll);
-	sctk_network_poll_all_cq(rail, &poll);
+	__poll_all_cq(rail, &poll);
 
 	/* If the polling returned something or someone already inside the function,
 	 * we retry to poll the pending lists */
@@ -657,7 +687,7 @@ static void sctk_network_notify_any_source_message_ib(int polling_task_id, __UNU
 	if(POLL_GET_RECV(&poll) == 0)
 	{
 		POLL_INIT(&poll);
-		sctk_network_poll_all_cq(rail, &poll);
+		__poll_all_cq(rail, &poll);
 
 		/* If the polling returned something or someone already inside the function,
 		 * we retry to poll the pending lists */
