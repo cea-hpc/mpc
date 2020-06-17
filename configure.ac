@@ -2241,10 +2241,10 @@ MPC_PORTABLE_OPT_FLAGS=" -O3"
 
 case $mpc_compiler_family in
         "gcc")
-                MPC_OPT_FLAGS=" -O3  -funroll-loops"
+                MPC_OPT_FLAGS=" -O3"
         ;;
         "icc")
-                MPC_OPT_FLAGS=" -O3  -opt-prefetch -unroll-aggressive"
+                MPC_OPT_FLAGS=" -O3"
         ;;
         "clang")
                 MPC_OPT_FLAGS=" -O3"
@@ -2295,6 +2295,12 @@ AC_ARG_ENABLE([debug-messages],
 if test "x${mpc_debug_messages}" = "xyes"; then
         AC_DEFINE([MPC_ENABLE_DEBUG_MESSAGES], [1], [MPC debug messages output was enabled])
 fi
+
+AC_ARG_ENABLE([debug-mem],
+[AS_HELP_STRING([--enable-debug-mem],
+                [Compile MPC with ASAN checks])],
+[mpc_debug_mem=$enableval],
+[mpc_debug_mem=no])
 
 AC_ARG_ENABLE([debug],
 [AS_HELP_STRING([--enable-debug],
