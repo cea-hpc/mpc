@@ -675,25 +675,41 @@ MPC_REQUIRED_DEPENDENCY([openpa], [$mpc_dep_found])
 # Detect MPC Allocator
 #
 
+
+AC_ARG_ENABLE([mpcalloc],
+[AS_HELP_STRING([--enable-mpcalloc],
+                [If the MPC allocator is to be used])],
+[use_mpcalloc=$enableval],
+[use_mpcalloc=maybe])
+
 MPC_ALLOCATOR="Standard"
 # Default preload
 MPC_ALLOCATOR_PRELOAD="libmpcalloc.so"
 
-MPC_DETECT_DEPENDENCY([mpcalloc.h], [mpcalloc], [sctk_malloc], [ALLOC])
-if test "x$mpc_dep_found" = "xyes"; then
-        AC_DEFINE([MPC_Allocator], [1], [mpcalloc support is enabled])
-        MPC_ALLOCATOR="mpcalloc"
-        # Locate the MPC Allocator libdir to provide
-        # a complete preload path
-        ALLOC_PRELOAD_BIN="$(which mpcalloc_preload)"
-        if test ! -z "$ALLOC_PRELOAD_BIN"; then
-            # Locate PREFIX
-           ALLOC_PREFIX=$(echo "$ALLOC_PRELOAD_BIN" | rev | cut -d / -f 3- | rev)
-           CANDIDATE_ALLOC_LIB_PATH="${ALLOC_PREFIX}/lib/libmpcalloc.so"
-           if test -e "${CANDIDATE_ALLOC_LIB_PATH}"; then
-                MPC_ALLOCATOR_PRELOAD="${CANDIDATE_ALLOC_LIB_PATH}"
-           fi
-        fi
+if test ! "x${use_mpcalloc}" = "xno"; then
+
+	MPC_DETECT_DEPENDENCY([mpcalloc.h], [mpcalloc], [sctk_malloc], [ALLOC])
+	if test "x$mpc_dep_found" = "xyes"; then
+		AC_DEFINE([MPC_Allocator], [1], [mpcalloc support is enabled])
+		MPC_ALLOCATOR="mpcalloc"
+		# Locate the MPC Allocator libdir to provide
+		# a complete preload path
+		ALLOC_PRELOAD_BIN="$(which mpcalloc_preload)"
+		if test ! -z "$ALLOC_PRELOAD_BIN"; then
+		# Locate PREFIX
+		ALLOC_PREFIX=$(echo "$ALLOC_PRELOAD_BIN" | rev | cut -d / -f 3- | rev)
+		CANDIDATE_ALLOC_LIB_PATH="${ALLOC_PREFIX}/lib/libmpcalloc.so"
+		if test -e "${CANDIDATE_ALLOC_LIB_PATH}"; then
+			MPC_ALLOCATOR_PRELOAD="${CANDIDATE_ALLOC_LIB_PATH}"
+		fi
+		fi
+	else
+		if test  "x${use_mpcalloc}" = "xyes"; then
+			AC_MSG_ERROR([Could not locate MPC allocator which was explicitly enabled])
+		fi
+	fi
+
+
 fi
 
 AC_SUBST([MPC_ALLOCATOR])
@@ -2279,12 +2295,6 @@ AC_ARG_ENABLE([debug-messages],
 if test "x${mpc_debug_messages}" = "xyes"; then
         AC_DEFINE([MPC_ENABLE_DEBUG_MESSAGES], [1], [MPC debug messages output was enabled])
 fi
-
-AC_ARG_ENABLE([debug-mem],
-[AS_HELP_STRING([--enable-debug-mem],
-                [Compile MPC with efence checks])],
-[mpc_debug_mem=$enableval],
-[mpc_debug_mem=no])
 
 AC_ARG_ENABLE([debug],
 [AS_HELP_STRING([--enable-debug],
