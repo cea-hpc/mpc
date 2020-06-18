@@ -572,8 +572,7 @@ static inline void __poll_all_cq(sctk_rail_info_t *rail, sctk_ib_polling_t *poll
 
 static void sctk_network_notify_recv_message_ib(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail)
 {
-	return;
-	struct sctk_ib_polling_s poll;
+    struct sctk_ib_polling_s poll;
 
 	POLL_INIT(&poll);
 

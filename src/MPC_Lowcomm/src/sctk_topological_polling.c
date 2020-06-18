@@ -330,7 +330,7 @@ void sctk_topological_polling_tree_poll( struct sctk_topological_polling_tree * 
 	struct sctk_topological_polling_cell * cells = tree->cells;
 
 	/* Check bounds */
-	if( (cpu_id < 0) || ( tree->cell_count <= cpu_id ) || (cells == NULL) )
+	if( 1 || (cpu_id < 0) || ( tree->cell_count <= cpu_id ) || (cells == NULL) )
 	{
 		/* Something went wrong the just poll */
 		(func)( arg );

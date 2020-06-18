@@ -13447,8 +13447,6 @@ int PMPI_Unpack(const void *inbuf,
 
 	int copied = 0;
 
-	_mpc_cl_type_debug(datatype);
-
 	mpc_common_nodebug("MPI_Unpack insise = %d, position = %d, outcount = %d, datatype = %d, comm = %d", insize, *position, outcount, datatype, comm);
 	if(_mpc_dt_is_derived(datatype) )
 	{

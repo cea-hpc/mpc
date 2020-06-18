@@ -929,13 +929,6 @@ static void sctk_multirail_notify_probe  (mpc_lowcomm_ptp_message_header_t* hdr,
         }
 }
 
-void notify_idle_message_trampoline( void * prail )
-{
-	sctk_rail_info_t * rail = (sctk_rail_info_t * )prail;
-	(rail->notify_idle_message)( rail );
-}
-
-
 void sctk_multirail_notify_idle()
 {
 	int count = sctk_rail_count();
@@ -947,8 +940,8 @@ void sctk_multirail_notify_idle()
 		
 		if( rail->state == SCTK_RAIL_ST_ENABLED && rail->notify_idle_message )
 		{
-			sctk_topological_polling_tree_poll( &rail->idle_polling_tree , notify_idle_message_trampoline , (void *)rail );
-		}
+		    (rail->notify_idle_message)(rail);
+        }
 	}
 }
 
