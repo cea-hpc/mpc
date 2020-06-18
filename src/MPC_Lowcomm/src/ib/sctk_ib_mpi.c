@@ -282,7 +282,7 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *
 			if(wc.imm_data & IMM_DATA_RDMA_MSG)
 			{
 				_mpc_lowcomm_ib_rdma_recv_done_remote_imm(rail,
-				                                  wc.imm_data - IMM_DATA_RDMA_MSG);
+				                                          wc.imm_data - IMM_DATA_RDMA_MSG);
 			}
 			else
 			{
@@ -548,7 +548,6 @@ static inline void __poll_send(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 	__poll_cq(rail, device->send_cq, config->wc_out_number, poll, sctk_network_poll_send);
 }
 
-
 static inline void __poll_recv(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -560,8 +559,6 @@ static inline void __poll_recv(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 	__poll_cq(rail, device->recv_cq, config->wc_in_number, poll, sctk_network_poll_recv);
 }
 
-
-
 static inline void __poll_all_cq(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -571,12 +568,13 @@ static inline void __poll_all_cq(sctk_rail_info_t *rail, sctk_ib_polling_t *poll
 	__poll_recv(rail, poll);
 
 	_mpc_lowcomm_ib_cp_ctx_poll_global_list(poll);
-
 }
 
 static void sctk_network_notify_recv_message_ib(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail)
 {
+	return;
 	struct sctk_ib_polling_s poll;
+
 	POLL_INIT(&poll);
 
 	__poll_recv(rail, &poll);
@@ -584,7 +582,7 @@ static void sctk_network_notify_recv_message_ib(__UNUSED__ mpc_lowcomm_ptp_messa
 	if(POLL_GET_RECV_CQ(&poll) != 0)
 	{
 		POLL_INIT(&poll);
-		_mpc_lowcomm_ib_cp_ctx_poll(&poll, SCTK_MSG_DEST_TASK(msg));
+		_mpc_lowcomm_ib_cp_ctx_poll(&poll, SCTK_MSG_DEST_TASK(msg) );
 	}
 }
 
@@ -628,6 +626,8 @@ static void sctk_network_notify_perform_message_ib(__UNUSED__ int remote_process
 	}
 }
 
+__thread int idle_poll_all  = 0;
+__thread int idle_poll_freq = 100;
 static void sctk_network_notify_idle_message_ib(sctk_rail_info_t *rail)
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -640,12 +640,35 @@ static void sctk_network_notify_idle_message_ib(sctk_rail_info_t *rail)
 		return;
 	}
 
+
+	idle_poll_all++;
+
+	if(idle_poll_all != idle_poll_freq)
+	{
+		return;
+	}
+	else
+	{
+		idle_poll_all = 0;
+	}
+
+	if(idle_poll_freq < idle_poll_all)
+	{
+		idle_poll_all = 0;
+	}
+
+
 	int ret;
 	_mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(rail_ib, _mpc_lowcomm_ib_ibuf_rdma_eager_poll_remote, &ret);
 
 	if(ret == REORDER_FOUND_EXPECTED)
 	{
+		idle_poll_freq = 100;
 		return;
+	}
+	else
+	{
+		idle_poll_freq *= 4;
 	}
 
 	POLL_INIT(&poll);
@@ -655,12 +678,22 @@ static void sctk_network_notify_idle_message_ib(sctk_rail_info_t *rail)
 	 * we retry to poll the pending lists */
 	if(POLL_GET_RECV_CQ(&poll) != 0)
 	{
-	    int polling_task_id = mpc_common_get_task_rank();
+		idle_poll_freq = 100;
+		int polling_task_id = mpc_common_get_task_rank();
 		if(polling_task_id >= 0)
 		{
 			POLL_INIT(&poll);
 			_mpc_lowcomm_ib_cp_ctx_poll(&poll, polling_task_id);
 		}
+	}
+	else
+	{
+		idle_poll_freq *= 4;
+	}
+
+	if(150000 < idle_poll_freq)
+	{
+		idle_poll_freq = 150000;
 	}
 }
 

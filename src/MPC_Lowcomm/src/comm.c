@@ -2344,6 +2344,16 @@ static inline void __mpc_comm_ptp_msg_wait(struct mpc_lowcomm_ptp_msg_progress_s
 			 *         An additional thread is created and waiting ob MPI_Recv with src = dest */
 			sctk_network_notify_perform_message(remote_process, source_task_id, polling_task_id, blocking);
 		}
+		else if (request->header.source_task == request->header.destination_task)
+		{
+			/* If the src and the dest tasks are same, we pool the network.
+			* INFO: it is usefull for the overlap benchmark from the
+			* MPC_THREAD_MULTIPLE Test Suite.
+			* An additional thread is created and waiting ob MPI_Recv with src
+			* = dest */
+			sctk_network_notify_perform_message(remote_process, source_task_id,
+								polling_task_id, blocking);
+		}
 
 
 		if( (request->request_type == REQUEST_SEND) && send_ptp)
