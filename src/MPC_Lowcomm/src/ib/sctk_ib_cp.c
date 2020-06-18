@@ -392,6 +392,10 @@ static inline int __poll_ibuf(struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ib
 											__poll_ibuf(poll, ibuf, no_steal);\
 											counter++;\
 										}\
+                                        else\
+                                        {\
+											mpc_common_spinlock_unlock(&lock);\
+                                        }\
 									}\
 								}\
 								else\
