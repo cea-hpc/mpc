@@ -1878,8 +1878,8 @@ __thread volatile int already_processsing_a_control_message = 0;
 static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matching(mpc_comm_ptp_list_pending_t *pending_list,
                                                                                   mpc_lowcomm_ptp_message_header_t *header)
 {
-	mpc_lowcomm_msg_list_t *ptr_found;
-	mpc_lowcomm_msg_list_t *tmp;
+	mpc_lowcomm_msg_list_t *ptr_found = NULL;
+	mpc_lowcomm_msg_list_t *tmp = NULL;
 
 	/* Loop on all  pending messages */
 	DL_FOREACH_SAFE(pending_list->list, ptr_found, tmp)
