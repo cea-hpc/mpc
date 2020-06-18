@@ -216,7 +216,7 @@ void _mpc_lowcomm_ib_cp_ctx_finalize(struct sctk_ib_rail_info_s *rail_ib)
 	OPA_store_int(&cp_nb_pending_msg, 0);
 }
 
-static _mpc_lowcomm_ib_ibuf_t *__global_ibufs_list      = NULL;
+static _mpc_lowcomm_ib_ibuf_t * volatile __global_ibufs_list      = NULL;
 static mpc_common_spinlock_t   __global_ibufs_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
 void _mpc_lowcomm_ib_cp_ctx_init_task(int rank, int vp)
@@ -350,47 +350,51 @@ void _mpc_lowcomm_ib_cp_ctx_finalize_task(int rank)
 	task_node_number = -1;
 }
 
-static inline int __cp_poll(struct sctk_ib_polling_s *poll, volatile _mpc_lowcomm_ib_ibuf_t **list, mpc_common_spinlock_t *lock)
+static inline int __cp_poll(struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t * volatile *list, mpc_common_spinlock_t *lock)
 {
 	_mpc_lowcomm_ib_ibuf_t *ibuf = NULL;
 	int nb_found = 0;
 
 retry:
-	if(mpc_common_spinlock_trylock(lock) == 0)
+	if ( *list != NULL )
 	{
-		if(*list != NULL)
+		if(mpc_common_spinlock_trylock(lock) == 0)
 		{
-			ibuf = *list;
-			DL_DELETE(*list, ibuf);
-			mpc_common_spinlock_unlock(lock);
-			_mpc_lowcomm_ib_cp_ctx_decr_nb_pending_msg();
-
-
-
-			/* Run the polling function according to the type of message */
-			if(ibuf->cq == MPC_LOWCOMM_IB_RECV_CQ)
+			if(*list != NULL)
 			{
-				//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
-				//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
-				sctk_network_poll_recv_ibuf( ( sctk_rail_info_t * )ibuf->rail, ibuf);
+				ibuf = (_mpc_lowcomm_ib_ibuf_t *)*list;
+				DL_DELETE(*list, ibuf);
+				mpc_common_spinlock_unlock(lock);
+				_mpc_lowcomm_ib_cp_ctx_decr_nb_pending_msg();
+
+
+
+				/* Run the polling function according to the type of message */
+				if(ibuf->cq == MPC_LOWCOMM_IB_RECV_CQ)
+				{
+					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
+					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
+					sctk_network_poll_recv_ibuf( ( sctk_rail_info_t * )ibuf->rail, ibuf);
+				}
+				else
+				{
+					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
+					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
+					sctk_network_poll_send_ibuf( ( sctk_rail_info_t * )ibuf->rail, ibuf);
+				}
+
+				POLL_RECV_OWN(poll);
+
+
+				nb_found++;
+				goto retry;
 			}
 			else
 			{
-				//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
-				//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
-				sctk_network_poll_send_ibuf( ( sctk_rail_info_t * )ibuf->rail, ibuf);
+				mpc_common_spinlock_unlock(lock);
 			}
-
-			POLL_RECV_OWN(poll);
-
-
-			nb_found++;
-			goto retry;
 		}
-		else
-		{
-			mpc_common_spinlock_unlock(lock);
-		}
+
 	}
 
 
@@ -473,47 +477,49 @@ int _mpc_lowcomm_ib_cp_ctx_poll(struct sctk_ib_polling_s *poll, int task_id)
 	return 0;
 }
 
-static inline int __cp_steal(struct sctk_ib_polling_s *poll, volatile _mpc_lowcomm_ib_ibuf_t **list, mpc_common_spinlock_t *lock, __UNUSED__ _mpc_lowcomm_ib_cp_task_t *task)
+static inline int __cp_steal(struct sctk_ib_polling_s *poll,  _mpc_lowcomm_ib_ibuf_t * volatile *list, mpc_common_spinlock_t *lock, __UNUSED__ _mpc_lowcomm_ib_cp_task_t *task)
 {
 	_mpc_lowcomm_ib_ibuf_t *ibuf = NULL;
 	int nb_found = 0;
 
-
-	if(mpc_common_spinlock_trylock(lock) == 0)
+	if ( *list != NULL )
 	{
-		if(*list != NULL)
+		if(mpc_common_spinlock_trylock(lock) == 0)
 		{
-			ibuf = *list;
-			DL_DELETE(*list, ibuf);
+			if(*list != NULL)
+			{
+				ibuf = (_mpc_lowcomm_ib_ibuf_t *)*list;
+				DL_DELETE(*list, ibuf);
+				mpc_common_spinlock_unlock(lock);
+				_mpc_lowcomm_ib_cp_ctx_decr_nb_pending_msg();
+
+				/* Run the polling function */
+				if(ibuf->cq == MPC_LOWCOMM_IB_RECV_CQ)
+				{
+					/* Profile the time to handle an ibuf once it has been polled
+						* from the CQ */
+					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
+					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
+					sctk_network_poll_recv_ibuf(ibuf->rail, ibuf);
+				}
+				else
+				{
+					/* Profile the time to handle an ibuf once it has been polled
+						* from the CQ */
+					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
+					//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
+					sctk_network_poll_send_ibuf(ibuf->rail, ibuf);
+				}
+
+				POLL_RECV_OTHER(poll);
+
+
+				nb_found++;
+				goto exit;
+			}
+
 			mpc_common_spinlock_unlock(lock);
-			_mpc_lowcomm_ib_cp_ctx_decr_nb_pending_msg();
-
-			/* Run the polling function */
-			if(ibuf->cq == MPC_LOWCOMM_IB_RECV_CQ)
-			{
-				/* Profile the time to handle an ibuf once it has been polled
-					* from the CQ */
-				//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
-				//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
-				sctk_network_poll_recv_ibuf(ibuf->rail, ibuf);
-			}
-			else
-			{
-				/* Profile the time to handle an ibuf once it has been polled
-					* from the CQ */
-				//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
-				//            (mpc_arch_get_timestamp() - ibuf->polled_timestamp));
-				sctk_network_poll_send_ibuf(ibuf->rail, ibuf);
-			}
-
-			POLL_RECV_OTHER(poll);
-
-
-			nb_found++;
-			goto exit;
 		}
-
-		mpc_common_spinlock_unlock(lock);
 	}
 
 exit:
