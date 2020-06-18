@@ -2065,7 +2065,8 @@ static inline int __mpc_comm_ptp_perform_msg_pair(mpc_comm_ptp_t *pair)
 		   (pair->lists.incomming_recv.list != NULL)
 		   )
 		{
-			__mpc_comm_ptp_message_list_lock_pending(&(pair->lists) );
+			if( __mpc_comm_ptp_message_list_trylock_pending(&(pair->lists) ) == 0 )
+            {
 
 
 			__mpc_comm_ptp_message_list_merge_pending(&(pair->lists) );
@@ -2085,6 +2086,8 @@ static inline int __mpc_comm_ptp_perform_msg_pair(mpc_comm_ptp_t *pair)
 
 			/* Call the task engine */
 			return _mpc_comm_ptp_task_perform(pair->key.rank);
+
+            }
 		}
 	}
 
@@ -2178,12 +2181,15 @@ static inline void __mpc_comm_ptp_msg_done(struct mpc_lowcomm_ptp_msg_progress_s
 	if(request->header.source_task == SCTK_ANY_SOURCE)
 	{
 		sctk_network_notify_any_source_message(request->header.source_task, 0);
-	}else if (request->request_type == REQUEST_SEND && !recv_ptp) {
+	}
+#if 0
+    else if (request->request_type == REQUEST_SEND && !recv_ptp) {
 		const int remote_process = wait->remote_process;
 		const int source_task_id = wait->source_task_id;
 		/* This call may INCREASE the latency in the send... */
 		sctk_network_notify_perform_message (remote_process, source_task_id, request->header.source_task, 0);
  	}
+#endif
 }
 
 static inline void __mpc_comm_ptp_msg_wait(struct mpc_lowcomm_ptp_msg_progress_s *wait);
@@ -2333,26 +2339,10 @@ static inline void __mpc_comm_ptp_msg_wait(struct mpc_lowcomm_ptp_msg_progress_s
 			/* We try to poll for finding a message with a SCTK_ANY_SOURCE source */
 			sctk_network_notify_any_source_message(polling_task_id, blocking);
 		}
-		else if( (request->request_type == REQUEST_SEND && !recv_ptp) ||
-		         (request->request_type == REQUEST_RECV && !send_ptp) )
+		else if( (!recv_ptp) || (!send_ptp) )
 		{
 			/* We poll the network only if we need it (empty queues) */
-
-			/* If the src and the dest tasks are same, we poll the network.
-			 * INFO: it is usefull for the overlap benchmark from the
-			 *         MPC_THREAD_MULTIPLE Test Suite.
-			 *         An additional thread is created and waiting ob MPI_Recv with src = dest */
 			sctk_network_notify_perform_message(remote_process, source_task_id, polling_task_id, blocking);
-		}
-		else if (request->header.source_task == request->header.destination_task)
-		{
-			/* If the src and the dest tasks are same, we pool the network.
-			* INFO: it is usefull for the overlap benchmark from the
-			* MPC_THREAD_MULTIPLE Test Suite.
-			* An additional thread is created and waiting ob MPI_Recv with src
-			* = dest */
-			sctk_network_notify_perform_message(remote_process, source_task_id,
-								polling_task_id, blocking);
 		}
 
 
@@ -2364,11 +2354,6 @@ static inline void __mpc_comm_ptp_msg_wait(struct mpc_lowcomm_ptp_msg_progress_s
 		{
 			__mpc_comm_ptp_perform_msg_pair_trylock(recv_ptp);
 		}
-
-		if ((volatile int)request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE) {
-			sctk_network_notify_idle_message();
-		}
-
 	}
 	else
 	{
