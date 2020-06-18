@@ -134,12 +134,6 @@ void _mpc_comm_ptp_message_send_check( mpc_lowcomm_ptp_message_t *msg, int perfo
 void _mpc_comm_ptp_message_recv_check( mpc_lowcomm_ptp_message_t *msg, int perform_check );
 void _mpc_comm_ptp_message_commit_request( mpc_lowcomm_ptp_message_t *send, mpc_lowcomm_ptp_message_t *recv );
 
-static inline void _mpc_comm_ptp_message_clear_request( mpc_lowcomm_ptp_message_t *msg )
-{
-	msg->tail.request = NULL;
-	msg->tail.internal_ptp = NULL;
-}
-
 static inline void _mpc_comm_ptp_message_set_copy_and_free( mpc_lowcomm_ptp_message_t *tmp,
         void ( *free_memory )( void * ),
         void ( *message_copy )( mpc_lowcomm_ptp_message_content_to_copy_t * ) )
@@ -287,6 +281,21 @@ static inline int sctk_is_process_specific_message( mpc_lowcomm_ptp_message_head
 }
 
 
+
+static inline void _mpc_comm_ptp_message_clear_request( mpc_lowcomm_ptp_message_t *msg )
+{
+	msg->tail.request = NULL;
+	msg->tail.internal_ptp = NULL;
+
+	if (sctk_is_process_specific_message(SCTK_MSG_HEADER(msg))) {
+		return;
+	} else {
+		if (SCTK_MSG_SRC_PROCESS(msg) == SCTK_ANY_SOURCE) {
+			/* Source task not available */
+			SCTK_MSG_SRC_TASK_SET(msg, -1);
+		}
+	}
+}
 
 
 #ifdef __cplusplus

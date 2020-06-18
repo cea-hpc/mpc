@@ -621,8 +621,8 @@ typedef struct MPC_T_pvar_handle *MPI_T_pvar_handle;
 
 
 /* ######################################
-/* #  NULL delete handlers              #
-/* ######################################*/
+   #  NULL delete handlers              #
+   ######################################*/
 
 
 /*****************/
@@ -901,8 +901,8 @@ int MPI_WIN_NULL_COPY_FN(MPI_Win oldwin, int win_keyval, void *extra_state, void
 int MPI_WIN_NULL_DELETE_FN(MPI_Win win, int win_keyval, void *attribute_val, void *extra_state);
 
 /* ######################################
-/* #  MPI Interface                     #
-/* ######################################*/
+   #  MPI Interface                     #
+   ######################################*/
 
 void PMPI_Default_error (MPI_Comm * comm, int *error, char *msg, char *file, int line);
 void PMPI_Abort_error (MPI_Comm * comm, int *error, char *msg, char *file, int line);

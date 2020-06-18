@@ -91,6 +91,7 @@ typedef struct
 	mpc_comm_ptp_list_pending_t   pending_send;
 	mpc_comm_ptp_list_pending_t   pending_recv;
 	/* Flag to indicate that new messages have been merged into the 'pending' list */
+	char changed;
 } mpc_comm_ptp_message_lists_t;
 
 typedef struct mpc_comm_ptp_s
@@ -210,6 +211,8 @@ static inline void __mpc_comm_ptp_message_list_merge_pending(mpc_comm_ptp_messag
 	}
 
 	/* Change the flag. New messages have been inserted to the 'pending' lists */
+	/* Change the flag. New messages have been inserted to the 'pending' lists */
+	lists->changed = 1;
 }
 
 static inline void __mpc_comm_ptp_message_list_lock_pending(mpc_comm_ptp_message_lists_t *lists)
@@ -1374,29 +1377,35 @@ inline void mpc_lowcomm_ptp_message_copy_pack_absolute(mpc_lowcomm_ptp_message_c
 ****************/
 
 /* For message creation: a set of buffered ptp_message entries is allocated during init */
-#define BUFFERED_PTP_MESSAGE_NUMBER    4096
+#define BUFFERED_PTP_MESSAGE_NUMBER    100
 
 __thread mpc_lowcomm_ptp_message_t *buffered_ptp_message = NULL;
+__thread mpc_common_spinlock_t lock_buffered_ptp_message = SCTK_SPINLOCK_INITIALIZER;
 
 static void __mpc_comm_buffered_ptp_init(void)
 {
 	/* Initialize the buffered_ptp_message list for the VP */
 	if(buffered_ptp_message == NULL)
 	{
-		mpc_lowcomm_ptp_message_t *tmp_message;
-		tmp_message = sctk_malloc(sizeof(mpc_lowcomm_ptp_message_t) *
-		                          BUFFERED_PTP_MESSAGE_NUMBER);
-		assume(tmp_message);
-		int j;
-
-		/* Loop on all buffers and create a list */
-		for(j = 0; j < BUFFERED_PTP_MESSAGE_NUMBER; ++j)
+      		mpc_common_spinlock_lock(&lock_buffered_ptp_message);
+		if(buffered_ptp_message == NULL)
 		{
-			mpc_lowcomm_ptp_message_t *entry = &tmp_message[j];
-			entry->from_buffered = 1;
-			/* Add it to the list */
-			LL_PREPEND(buffered_ptp_message, entry);
+			mpc_lowcomm_ptp_message_t *tmp_message;
+			tmp_message = sctk_malloc(sizeof(mpc_lowcomm_ptp_message_t) *
+						BUFFERED_PTP_MESSAGE_NUMBER);
+			assume(tmp_message);
+			int j;
+
+			/* Loop on all buffers and create a list */
+			for(j = 0; j < BUFFERED_PTP_MESSAGE_NUMBER; ++j)
+			{
+				mpc_lowcomm_ptp_message_t *entry = &tmp_message[j];
+				entry->from_buffered = 1;
+				/* Add it to the list */
+				LL_PREPEND(buffered_ptp_message, entry);
+			}
 		}
+		mpc_common_spinlock_unlock(&lock_buffered_ptp_message);
 	}
 }
 
@@ -1413,7 +1422,9 @@ void __mpc_comm_free_header(void *tmp)
 	/* Header is from the buffered list */
 	if(header->from_buffered)
 	{
+		mpc_common_spinlock_lock(&lock_buffered_ptp_message);
 		LL_PREPEND(buffered_ptp_message, header);
+		mpc_common_spinlock_unlock(&lock_buffered_ptp_message);
 	}
 	else
 	{
@@ -1430,18 +1441,24 @@ static inline mpc_lowcomm_ptp_message_t *__mpc_comm_alloc_header()
 {
 	mpc_lowcomm_ptp_message_t *tmp = NULL;
 
+	mpc_common_spinlock_lock(&lock_buffered_ptp_message);
+
 	if(buffered_ptp_message != NULL)
 	{
 		tmp = buffered_ptp_message;
 		assume(tmp->from_buffered);
 		LL_DELETE(buffered_ptp_message, buffered_ptp_message);
 	}
-	else
+
+	mpc_common_spinlock_unlock(&lock_buffered_ptp_message);
+
+	if(!tmp)
 	{
 		tmp = sctk_malloc(sizeof(mpc_lowcomm_ptp_message_t) );
 		/* Header must be freed after use */
 		tmp->from_buffered = 0;
 	}
+
 
 	return tmp;
 }
@@ -2034,36 +2051,44 @@ static inline int __mpc_comm_pending_msg_list_search_matching_from_recv(mpc_comm
 
 static inline int __mpc_comm_ptp_perform_msg_pair(mpc_comm_ptp_t *pair)
 {
-	int task_polling_required = 0;
+	int nb_messages_copied = 0;
 
-	if(__mpc_comm_ptp_message_list_trylock_pending(&(pair->lists) ) == 0)
+	if( ( (pair->lists.pending_send.list != NULL) ||
+	      (pair->lists.incomming_send.list != NULL)
+	      ) &&
+	    ( (pair->lists.pending_recv.list != NULL) ||
+	      (pair->lists.incomming_recv.list != NULL)
+	    ) )
 	{
-		if( (pair->lists.incomming_send.list != NULL) || (pair->lists.incomming_recv.list != NULL) )
+		if(pair->lists.changed ||
+		   (pair->lists.incomming_send.list != NULL) ||
+		   (pair->lists.incomming_recv.list != NULL)
+		   )
 		{
-			__mpc_comm_ptp_message_list_merge_pending(&(pair->lists) );
-		}
+			__mpc_comm_ptp_message_list_lock_pending(&(pair->lists) );
 
-		if( (pair->lists.pending_send.list != NULL) || (pair->lists.pending_recv.list != NULL) )
-		{
+
+			__mpc_comm_ptp_message_list_merge_pending(&(pair->lists) );
+
 			mpc_lowcomm_msg_list_t *ptr_recv;
 			mpc_lowcomm_msg_list_t *tmp;
 
 			DL_FOREACH_SAFE(pair->lists.pending_recv.list, ptr_recv, tmp)
 			{
-				task_polling_required |= __mpc_comm_pending_msg_list_search_matching_from_recv(pair, ptr_recv->msg);
+				nb_messages_copied += __mpc_comm_pending_msg_list_search_matching_from_recv(pair, ptr_recv->msg);
 			}
+
+
+			pair->lists.changed = 0;
+
+			__mpc_comm_ptp_message_list_unlock_pending(&(pair->lists) );
+
+			/* Call the task engine */
+			return _mpc_comm_ptp_task_perform(pair->key.rank);
 		}
-
-		__mpc_comm_ptp_message_list_unlock_pending(&(pair->lists) );
 	}
 
-	if(task_polling_required || OPA_load_int(&pair->pending_nb) )
-	{
-		/* Call the task engine */
-		return _mpc_comm_ptp_task_perform(pair->key.rank);
-	}
-
-	return 0;
+	return nb_messages_copied;
 }
 
 /*
@@ -2144,6 +2169,7 @@ void mpc_lowcomm_ptp_msg_wait_init(struct mpc_lowcomm_ptp_msg_progress_s *wait,
 static inline void __mpc_comm_ptp_msg_done(struct mpc_lowcomm_ptp_msg_progress_s *wait)
 {
 	const mpc_lowcomm_request_t *request = wait->request;
+  	const mpc_comm_ptp_t *recv_ptp = wait->recv_ptp;
 
 	/* The message is marked as done.
 	 * However, we need to poll if it is a inter-process message
@@ -2152,7 +2178,12 @@ static inline void __mpc_comm_ptp_msg_done(struct mpc_lowcomm_ptp_msg_progress_s
 	if(request->header.source_task == SCTK_ANY_SOURCE)
 	{
 		sctk_network_notify_any_source_message(request->header.source_task, 0);
-	}
+	}else if (request->request_type == REQUEST_SEND && !recv_ptp) {
+		const int remote_process = wait->remote_process;
+		const int source_task_id = wait->source_task_id;
+		/* This call may INCREASE the latency in the send... */
+		sctk_network_notify_perform_message (remote_process, source_task_id, request->header.source_task, 0);
+ 	}
 }
 
 static inline void __mpc_comm_ptp_msg_wait(struct mpc_lowcomm_ptp_msg_progress_s *wait);
@@ -2323,6 +2354,11 @@ static inline void __mpc_comm_ptp_msg_wait(struct mpc_lowcomm_ptp_msg_progress_s
 		{
 			__mpc_comm_ptp_perform_msg_pair_trylock(recv_ptp);
 		}
+
+		if ((volatile int)request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE) {
+			sctk_network_notify_idle_message();
+		}
+
 	}
 	else
 	{
@@ -2828,7 +2864,7 @@ int mpc_lowcomm_get_comm_rank(const mpc_lowcomm_communicator_t communicator)
 
 int mpc_lowcomm_get_comm_size(const mpc_lowcomm_communicator_t communicator)
 {
-	mpc_lowcomm_communicator_size(communicator);
+	return mpc_lowcomm_communicator_size(communicator);
 }
 
 int mpc_lowcomm_get_process_count()
