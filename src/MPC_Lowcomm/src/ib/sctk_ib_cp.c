@@ -530,8 +530,7 @@ int _mpc_lowcomm_ib_cp_ctx_steal(struct sctk_ib_polling_s *poll, char other_numa
 {
 	int nb_found = 0;
 
-
-	if(!__vp_tls_save || !vps || !numas)
+	if( !vps || !numas)
 	{
 		return 0;
 	}
@@ -556,8 +555,8 @@ int _mpc_lowcomm_ib_cp_ctx_steal(struct sctk_ib_polling_s *poll, char other_numa
 	__mpc_lowcomm_ib_vp_t *    tmp_vp;
 
 	/* In PTHREAD mode, the idle task do not call the cp_init_task
-	 * function.
-	 * If task_node_number not initialized, we do it now */
+	* function.
+	* If task_node_number not initialized, we do it now */
 	if(task_node_number < 0)
 	{
 		task_node_number = mpc_topology_get_numa_node_from_cpu(__vp_tls_save->number);
@@ -576,7 +575,7 @@ int _mpc_lowcomm_ib_cp_ctx_steal(struct sctk_ib_polling_s *poll, char other_numa
 				for(task = tmp_vp->tasks; task; task = task->hh_vp.next)
 				{
 					nb_found += __cp_steal(poll, &(task->local_ibufs_list),
-					                       &(task->local_ibufs_list_lock), task);
+							&(task->local_ibufs_list_lock), task);
 				}
 			}
 		}
@@ -594,7 +593,7 @@ int _mpc_lowcomm_ib_cp_ctx_steal(struct sctk_ib_polling_s *poll, char other_numa
 		return nb_found;
 	}
 
-	if(other_numa && (__number_of_registered_numa > 1) )
+	if(other_numa && __vp_numa_descriptor && (__number_of_registered_numa > 1) )
 	{
 		int random = rand_r(&seed) % __number_of_registered_numa;
 
