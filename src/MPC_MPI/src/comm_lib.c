@@ -64,7 +64,6 @@ sctk_Op_f sctk_get_common_function(mpc_lowcomm_datatype_t datatype, sctk_Op op);
 /*GLOBAL VARIABLES                                                      */
 /************************************************************************/
 
-mpc_thread_keys_t        mpc_mpi_cl_per_mpi_process_ctx;
 static mpc_thread_keys_t sctk_func_key;
 static int __mpc_cl_buffering_enabled = 1;
 
@@ -78,7 +77,6 @@ mpc_lowcomm_request_t mpc_request_null;
 void mpc_cl_init_thread_keys()
 {
 	mpc_thread_keys_create(&sctk_func_key, NULL);
-	mpc_thread_keys_create(&mpc_mpi_cl_per_mpi_process_ctx, NULL);
 }
 
 /****************************
@@ -297,6 +295,7 @@ typedef struct sctk_thread_buffer_pool_s
 typedef struct mpc_mpi_cl_per_thread_ctx_s
 {
 	__mpc_cl_buffer_pool_t buffer_pool;
+	mpc_mpi_cl_per_mpi_process_ctx_t * per_task_ctx;
 } mpc_mpi_cl_per_thread_ctx_t;
 
 
@@ -372,26 +371,38 @@ static inline void __mpc_cl_thread_buffer_pool_step_async()
 
 /* Per Thread Storage Interface */
 
-extern __thread struct mpc_mpi_cl_per_thread_ctx_s *___mpc_p_per_VP_comm_ctx;
+extern __thread struct mpc_mpi_cl_per_thread_ctx_s *___mpc_p_per_thread_comm_ctx;
 
 static inline mpc_mpi_cl_per_thread_ctx_t *__mpc_cl_per_thread_ctx_get()
 {
-	if(!___mpc_p_per_VP_comm_ctx)
+	if(!___mpc_p_per_thread_comm_ctx)
 	{
 		mpc_mpi_cl_per_thread_ctx_init();
 	}
 
-	return ( mpc_mpi_cl_per_thread_ctx_t * )___mpc_p_per_VP_comm_ctx;
+	return ( mpc_mpi_cl_per_thread_ctx_t * )___mpc_p_per_thread_comm_ctx;
+}
+
+static inline mpc_mpi_cl_per_mpi_process_ctx_t *__mpc_cl_per_thread_ctx_get_task_level()
+{
+	mpc_mpi_cl_per_thread_ctx_t *ctx = __mpc_cl_per_thread_ctx_get();
+	return ctx->per_task_ctx;
+}
+
+static inline void __mpc_cl_per_thread_ctx_set_task_level(mpc_mpi_cl_per_mpi_process_ctx_t *per_task)
+{
+	mpc_mpi_cl_per_thread_ctx_t *ctx = __mpc_cl_per_thread_ctx_get();
+	ctx->per_task_ctx = per_task;
 }
 
 static inline void __mpc_cl_per_thread_ctx_set(mpc_mpi_cl_per_thread_ctx_t *pointer)
 {
-	___mpc_p_per_VP_comm_ctx = ( struct mpc_mpi_cl_per_thread_ctx_s * )pointer;
+	___mpc_p_per_thread_comm_ctx = ( struct mpc_mpi_cl_per_thread_ctx_s * )pointer;
 }
 
 void mpc_mpi_cl_per_thread_ctx_init()
 {
-	if(___mpc_p_per_VP_comm_ctx)
+	if(___mpc_p_per_thread_comm_ctx)
 	{
 		return;
 	}
@@ -403,18 +414,19 @@ void mpc_mpi_cl_per_thread_ctx_init()
 	memset(tmp, 0, sizeof(mpc_mpi_cl_per_thread_ctx_t) );
 	/* Initialize */
 	__mpc_cl_thread_buffer_pool_init(&tmp->buffer_pool);
+	tmp->per_task_ctx = (mpc_mpi_cl_per_mpi_process_ctx_t *)mpc_thread_get_parent_mpi_task_ctx();
 	/* Register thread context */
 	__mpc_cl_per_thread_ctx_set(tmp);
 }
 
 void mpc_mpi_cl_per_thread_ctx_release()
 {
-	if(!___mpc_p_per_VP_comm_ctx)
+	if(!___mpc_p_per_thread_comm_ctx)
 	{
 		return;
 	}
 
-	mpc_mpi_cl_per_thread_ctx_t *thread_specific = ___mpc_p_per_VP_comm_ctx;
+	mpc_mpi_cl_per_thread_ctx_t *thread_specific = ___mpc_p_per_thread_comm_ctx;
 	/* Release */
 	__mpc_cl_thread_buffer_pool_release(&thread_specific->buffer_pool);
 	/* Free */
@@ -572,9 +584,11 @@ static inline void ___mpc_cl_per_mpi_process_ctx_release(mpc_mpi_cl_per_mpi_proc
 static inline void __mpc_cl_per_mpi_process_ctx_init()
 {
 	/* Retrieve the task ctx pointer */
-	mpc_mpi_cl_per_mpi_process_ctx_t *tmp;
 
-	tmp = ( mpc_mpi_cl_per_mpi_process_ctx_t * )mpc_thread_getspecific(mpc_mpi_cl_per_mpi_process_ctx);
+	assume(__mpc_cl_per_thread_ctx_get_task_level() == NULL);
+
+	mpc_mpi_cl_per_mpi_process_ctx_t *tmp = ( mpc_mpi_cl_per_mpi_process_ctx_t * )__mpc_cl_per_thread_ctx_get();
+
 	/* Make sure that it is not already present */
 	sctk_assert(tmp == NULL);
 	/* If not allocate a new mpc_mpi_cl_per_mpi_process_ctx_t */
@@ -582,7 +596,7 @@ static inline void __mpc_cl_per_mpi_process_ctx_init()
 	/* And initalize it */
 	___mpc_cl_per_mpi_process_ctx_init(tmp);
 	/* Set the mpc_mpi_cl_per_mpi_process_ctx key in thread CTX */
-	mpc_thread_setspecific(mpc_mpi_cl_per_mpi_process_ctx, tmp);
+	__mpc_cl_per_thread_ctx_set_task_level(tmp);
 	/* Initialize commond data-types */
 	_mpc_dt_init();
 	/* Register the task specific in the disguisemement array */
@@ -596,17 +610,14 @@ static inline void __mpc_cl_per_mpi_process_ctx_init()
 int mpc_mpi_cl_per_mpi_process_ctx_at_exit_register(void (*function)(void) )
 {
 	/* Retrieve the task ctx pointer */
-	mpc_mpi_cl_per_mpi_process_ctx_t *tmp;
-
-	tmp = ( mpc_mpi_cl_per_mpi_process_ctx_t * )mpc_thread_getspecific(mpc_mpi_cl_per_mpi_process_ctx);
+	mpc_mpi_cl_per_mpi_process_ctx_t *tmp = __mpc_cl_per_thread_ctx_get_task_level();
 
 	if(!tmp)
 	{
 		return 1;
 	}
 
-	struct mpc_mpi_cl_per_mpi_process_ctx_atexit_s *new_exit =
-	        sctk_malloc(sizeof(struct mpc_mpi_cl_per_mpi_process_ctx_atexit_s) );
+	struct mpc_mpi_cl_per_mpi_process_ctx_atexit_s *new_exit = sctk_malloc(sizeof(struct mpc_mpi_cl_per_mpi_process_ctx_atexit_s) );
 
 	if(!new_exit)
 	{
@@ -626,9 +637,7 @@ int mpc_mpi_cl_per_mpi_process_ctx_at_exit_register(void (*function)(void) )
 static inline void __mpc_cl_per_mpi_process_ctx_at_exit_trigger()
 {
 	/* Retrieve the task ctx pointer */
-	mpc_mpi_cl_per_mpi_process_ctx_t *tmp;
-
-	tmp = ( mpc_mpi_cl_per_mpi_process_ctx_t * )mpc_thread_getspecific(mpc_mpi_cl_per_mpi_process_ctx);
+	mpc_mpi_cl_per_mpi_process_ctx_t *tmp = __mpc_cl_per_thread_ctx_get_task_level();
 
 	if(!tmp)
 	{
@@ -660,9 +669,8 @@ static inline int __mpc_cl_egreq_progress_release(mpc_mpi_cl_per_mpi_process_ctx
 static void __mpc_cl_per_mpi_process_ctx_release()
 {
 	/* Retrieve the ctx pointer */
-	mpc_mpi_cl_per_mpi_process_ctx_t *tmp;
+	mpc_mpi_cl_per_mpi_process_ctx_t *tmp = __mpc_cl_per_thread_ctx_get_task_level();
 
-	tmp = ( mpc_mpi_cl_per_mpi_process_ctx_t * )mpc_thread_getspecific(mpc_mpi_cl_per_mpi_process_ctx);
 	/* Clear progress */
 	__mpc_cl_egreq_progress_release(tmp);
 	/* Free the type array */
@@ -671,20 +679,14 @@ static void __mpc_cl_per_mpi_process_ctx_release()
 	_mpc_dt_release();
 	/* Call atexit handlers */
 	__mpc_cl_per_mpi_process_ctx_at_exit_trigger();
-	/* Remove the ctx reference in the host thread */
-	mpc_thread_setspecific(mpc_mpi_cl_per_mpi_process_ctx, NULL);
 	/* Release the task ctx */
 	___mpc_cl_per_mpi_process_ctx_release(tmp);
 	/* Free the task ctx */
-	sctk_free(tmp);
-}
 
-/** \brief Set current thread task specific context
- *  \param tmp New value to be set
- */
-void mpc_mpi_cl_per_mpi_process_ctx_reinit(struct mpc_mpi_cl_per_mpi_process_ctx_s *tmp)
-{
-	mpc_thread_setspecific(mpc_mpi_cl_per_mpi_process_ctx, tmp);
+	/* Remove the ctx reference in the host thread */
+	__mpc_cl_per_thread_ctx_set_task_level(NULL);
+
+	sctk_free(tmp);
 }
 
 /** \brief Retrieves current thread task specific context
@@ -708,21 +710,8 @@ static inline struct mpc_mpi_cl_per_mpi_process_ctx_s *_mpc_cl_per_mpi_process_c
 		}
 	}
 
-	static __thread int last_rank = -2;
-	static __thread struct mpc_mpi_cl_per_mpi_process_ctx_s *last_specific = NULL;
+	return __mpc_cl_per_thread_ctx_get_task_level();
 
-	if(last_rank == mpc_common_get_task_rank() )
-	{
-		if(last_specific)
-		{
-			return last_specific;
-		}
-	}
-
-	ret           = ( struct mpc_mpi_cl_per_mpi_process_ctx_s * )mpc_thread_getspecific(mpc_mpi_cl_per_mpi_process_ctx);
-	last_specific = ret;
-	last_rank     = mpc_common_get_task_rank();
-	return ret;
 }
 
 struct mpc_mpi_cl_per_mpi_process_ctx_s *mpc_cl_per_mpi_process_ctx_get()
@@ -5269,9 +5258,6 @@ void mpc_cl_comm_lib_init()
 
 	/* Thread START */
 
-	mpc_common_init_callback_register("Per Thread Init",
-	                                  "Per MPI Process CTX",
-	                                  mpc_mpi_cl_per_mpi_process_ctx_reinit, 21);
 
 	mpc_common_init_callback_register("Per Thread Init",
 	                                  "Per MPI Thread CTX",
@@ -5314,5 +5300,5 @@ void mpc_cl_comm_lib_init()
 
 	mpc_common_init_callback_register("Ending Main",
 	                                  "Per MPI Process CTX Release",
-	                                  __mpc_cl_per_mpi_process_ctx_release, 24);
+	                                  __mpc_cl_per_mpi_process_ctx_release, 0);
 }

@@ -53,7 +53,7 @@ __thread void *sctk_openmp_thread_tls;
 
 #if defined(MPC_MPI)
 struct mpc_mpi_cl_per_thread_ctx_s;
-__thread struct mpc_mpi_cl_per_thread_ctx_s *___mpc_p_per_VP_comm_ctx;
+__thread struct mpc_mpi_cl_per_thread_ctx_s *___mpc_p_per_thread_comm_ctx;
 #endif
 
 

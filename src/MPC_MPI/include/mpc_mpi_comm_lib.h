@@ -41,7 +41,6 @@ struct mpc_mpi_cl_per_mpi_process_ctx_s;
 
 struct mpc_mpi_cl_per_mpi_process_ctx_s *mpc_cl_per_mpi_process_ctx_get(void);
 
-void mpc_mpi_cl_per_mpi_process_ctx_reinit ( struct mpc_mpi_cl_per_mpi_process_ctx_s *tmp );
 int mpc_mpi_cl_per_mpi_process_ctx_at_exit_register( void ( *function )( void ) );
 
 /*******************

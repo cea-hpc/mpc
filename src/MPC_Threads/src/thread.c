@@ -536,6 +536,18 @@ int mpc_thread_get_thread_id(void)
 	return data->user_thread;
 }
 
+void * mpc_thread_get_parent_mpi_task_ctx(void)
+{
+	sctk_thread_data_t *data = mpc_thread_data_get();
+
+	if(!data)
+	{
+		return -1;
+	}
+
+	return data->father_data;
+}
+
 /************
 * DISGUISE *
 ************/

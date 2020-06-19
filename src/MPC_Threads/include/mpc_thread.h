@@ -305,7 +305,7 @@ struct mpc_thread_rank_info_s *mpc_thread_rank_info_get(void);
 int mpc_thread_get_pu(void);
 int mpc_thread_get_thread_id(void);
 int mpc_thread_get_current_local_tasks_nb();
-
+void * mpc_thread_get_parent_mpi_task_ctx(void);
 
 /* Thread data */
 

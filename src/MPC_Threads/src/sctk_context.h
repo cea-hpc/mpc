@@ -200,7 +200,7 @@ typedef struct sctk_mctx_st
 #endif
 
 #ifdef MPC_MPI
-	struct mpc_mpi_cl_per_thread_ctx_s *___mpc_p_per_VP_comm_ctx;
+	struct mpc_mpi_cl_per_thread_ctx_s *___mpc_p_per_thread_comm_ctx;
 #endif
 
 #ifdef MPC_MPIIO

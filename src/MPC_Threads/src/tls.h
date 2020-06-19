@@ -82,7 +82,7 @@ extern __thread int __mpc_task_rank;
 #endif
 
 #ifdef MPC_MPI
-extern __thread struct mpc_mpi_cl_per_thread_ctx_s *___mpc_p_per_VP_comm_ctx;
+extern __thread struct mpc_mpi_cl_per_thread_ctx_s *___mpc_p_per_thread_comm_ctx;
 #endif
 
 /** macro copying the global value to the context */
@@ -107,7 +107,7 @@ static inline void sctk_context_save_tls(sctk_mctx_t *ucp)
 	tls_save(mpc_user_tls_1);
 
 #ifdef MPC_MPI
-	tls_save(___mpc_p_per_VP_comm_ctx);
+	tls_save(___mpc_p_per_thread_comm_ctx);
 #endif
 
 #ifdef MPC_MPIIO
@@ -162,7 +162,7 @@ static inline void sctk_context_restore_tls(sctk_mctx_t *ucp)
 #endif
 
 #ifdef MPC_MPI
-	tls_restore(___mpc_p_per_VP_comm_ctx);
+	tls_restore(___mpc_p_per_thread_comm_ctx);
 #endif
 
 #ifdef MPC_MPIIO
@@ -216,7 +216,7 @@ static inline void sctk_context_init_tls(sctk_mctx_t *ucp)
 	ucp->mpc_user_tls_1 = mpc_user_tls_1;
 
 #ifdef MPC_MPI
-	tls_init(___mpc_p_per_VP_comm_ctx);
+	tls_init(___mpc_p_per_thread_comm_ctx);
 #endif
 
 #ifdef MPC_MPIIO
