@@ -150,11 +150,6 @@ int mpc_thread_kthread_pthread_create(pthread_t *thread, const pthread_attr_t *a
 	size_t          kthread_stack_size;
 	int             res;
 
-	if(real_pthread_create == NULL)
-	{
-		real_pthread_create = dlsym(RTLD_NEXT, "pthread_create");
-	}
-
 	r_attr = (pthread_attr_t *)attr;
 
 	if(r_attr == NULL)
@@ -181,7 +176,7 @@ int mpc_thread_kthread_pthread_create(pthread_t *thread, const pthread_attr_t *a
 		return res;
 	}
 
-	res = real_pthread_create(thread, r_attr, start_routine, arg);
+	res = pthread_create(thread, r_attr, start_routine, arg);
 	return res;
 }
 
