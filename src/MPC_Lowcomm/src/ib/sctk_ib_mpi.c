@@ -502,7 +502,7 @@ static inline void __check_wc(struct sctk_ib_rail_info_s *rail_ib, struct ibv_wc
 	}
 }
 
-#define WC_COUNT    10
+#define WC_COUNT    32
 static inline void __poll_cq(sctk_rail_info_t *rail,
                              struct ibv_cq *cq,
                              __UNUSED__ const int poll_nb,
@@ -537,6 +537,8 @@ static inline void __poll_cq(sctk_rail_info_t *rail,
 
 mpc_common_spinlock_t __cq_lock = SCTK_SPINLOCK_INITIALIZER;
 
+#define POLL_CQ_CONCURENCY 4
+
 static inline void __poll_send(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -544,8 +546,17 @@ static inline void __poll_send(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 	LOAD_DEVICE(rail_ib);
 	LOAD_CONFIG(rail_ib);
 
-	/* Poll sent messages */
-	__poll_cq(rail, device->send_cq, config->wc_out_number, poll, sctk_network_poll_send);
+    OPA_int_t max_cq_poll = { 0 };
+
+    int polling = OPA_fetch_and_incr_int(&max_cq_poll);
+
+    if(polling < POLL_CQ_CONCURENCY)
+    {
+	    /* Poll sent messages */
+        __poll_cq(rail, device->send_cq, config->wc_out_number, poll, sctk_network_poll_send);
+    }
+
+    OPA_decr_int(&max_cq_poll);
 }
 
 static inline void __poll_recv(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
@@ -555,8 +566,21 @@ static inline void __poll_recv(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 	LOAD_DEVICE(rail_ib);
 	LOAD_CONFIG(rail_ib);
 
-	/* Poll received messages */
-	__poll_cq(rail, device->recv_cq, config->wc_in_number, poll, sctk_network_poll_recv);
+
+    OPA_int_t max_cq_poll = { 0 };
+
+    int polling = OPA_fetch_and_incr_int(&max_cq_poll);
+
+    if(polling < POLL_CQ_CONCURENCY)
+    {
+	    /* Poll received messages */
+	    __poll_cq(rail, device->recv_cq, config->wc_in_number, poll, sctk_network_poll_recv);
+    }
+
+    OPA_decr_int(&max_cq_poll);
+
+
+
 }
 
 static inline void __poll_all_cq(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
@@ -564,11 +588,9 @@ static inline void __poll_all_cq(sctk_rail_info_t *rail, sctk_ib_polling_t *poll
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 
 	__poll_send(rail, poll);
-
 	__poll_recv(rail, poll);
-
-	_mpc_lowcomm_ib_cp_ctx_poll_global_list(poll);
-}
+    _mpc_lowcomm_ib_cp_ctx_poll_global_list(poll);
+ }
 
 static void sctk_network_notify_recv_message_ib(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail)
 {
@@ -609,6 +631,7 @@ static void sctk_network_notify_perform_message_ib(__UNUSED__ int remote_process
 
 	_mpc_lowcomm_ib_cp_ctx_poll(&poll, polling_task_id);
 
+
 	/* If nothing to poll, we poll the CQ */
 	if(POLL_GET_RECV(&poll) == 0)
 	{
@@ -623,6 +646,9 @@ static void sctk_network_notify_perform_message_ib(__UNUSED__ int remote_process
 			_mpc_lowcomm_ib_cp_ctx_poll(&poll, polling_task_id);
 		}
 	}
+
+
+
 }
 
 __thread int idle_poll_all  = 0;

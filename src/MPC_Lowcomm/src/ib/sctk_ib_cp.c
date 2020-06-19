@@ -544,7 +544,6 @@ int _mpc_lowcomm_ib_cp_ctx_steal(struct sctk_ib_polling_s *poll, char other_numa
 		}
 	}
 
-
 	if(nb_found)
 	{
 		return nb_found;
@@ -553,8 +552,14 @@ int _mpc_lowcomm_ib_cp_ctx_steal(struct sctk_ib_polling_s *poll, char other_numa
 	if(other_numa && __vp_numa_descriptor && (__number_of_registered_numa > 1) )
 	{
 		int random = rand_r(&seed) % __number_of_registered_numa;
+   
+        if(random == task_node_number)
+        {
+            random = (random + 1 ) % __number_of_registered_numa;
+        }
 
 		numa = __vp_numa_descriptor[random];
+
 		if(numa != NULL)
 		{
 			CDL_FOREACH(numa->vps, tmp_vp)
