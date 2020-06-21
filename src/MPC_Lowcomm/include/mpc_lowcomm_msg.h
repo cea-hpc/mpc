@@ -310,8 +310,6 @@ typedef struct
 	mpc_lowcomm_msg_list_t                    distant_list;
 	mpc_lowcomm_ptp_message_content_to_copy_t copy_list;
 
-	struct mpc_comm_ptp_s *                   internal_ptp;
-
 	/*Destructor*/
 	void (*free_memory)(void *);
 	/*Copy operator*/
@@ -431,7 +429,6 @@ void mpc_lowcomm_ptp_msg_progress(struct mpc_lowcomm_ptp_msg_progress_s *wait);
 /* General Functions                                                    */
 /************************************************************************/
 
-void mpc_lowcomm_request_wait_all_msgs(const int task, const mpc_lowcomm_communicator_t com);
 
 int mpc_lowcomm_is_remote_rank(int dest);
 void mpc_lowcomm_init_per_task(int i);

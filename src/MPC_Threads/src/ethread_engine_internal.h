@@ -1495,6 +1495,8 @@ static inline void ___mpc_thread_ethread_idle_task(void *arg)
 	sctk_init_idle_thread_dbg(th_data, ___mpc_thread_ethread_idle_task);
 	/** **/
 
+//    int cnt = 0;
+
 	while(___timer_thread_running)
 	{
 		__sctk_grab_zombie(vp);
