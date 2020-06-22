@@ -110,36 +110,30 @@ static inline void __mpc_comm_request_init(mpc_lowcomm_request_t *request,
                                            mpc_lowcomm_communicator_t comm,
                                            int request_type)
 {
-	static mpc_lowcomm_request_t the_initial_request =
-	{
-		.completion_flag         = MPC_LOWCOMM_MESSAGE_DONE,
-		.header.source           = SCTK_PROC_NULL,
-		.header.destination      = SCTK_PROC_NULL,
-		.header.source_task      = SCTK_PROC_NULL,
-		.header.destination_task = SCTK_PROC_NULL,
-		.header.message_tag      = SCTK_ANY_TAG,
-		.header.communicator     = SCTK_COMM_NULL,
-		.header.msg_size         = 0,
-		.source_type             = 0,
-		.dest_type    = 0,
-		.request_type = 0,
-		.is_null      = 0,
-		.truncated    = 0,
-		.msg          = NULL,
-		.query_fn     = NULL,
-		.cancel_fn    = NULL,
-		.wait_fn      = NULL,
-		.poll_fn      = NULL,
-		.free_fn      = NULL,
-		.extra_state  = NULL,
-		.pointer_to_source_request = NULL,
-		.pointer_to_shadow_request = NULL,
-		.ptr_to_pin_ctx            = NULL
-	};
-
 	if(request != NULL)
 	{
-		*request = the_initial_request;
+		request->completion_flag         = MPC_LOWCOMM_MESSAGE_DONE;
+		request->header.source           = SCTK_PROC_NULL;
+		request->header.destination      = SCTK_PROC_NULL;
+		request->header.source_task      = SCTK_PROC_NULL;
+		request->header.destination_task = SCTK_PROC_NULL;
+		request->header.message_tag      = SCTK_ANY_TAG;
+		request->header.msg_size         = 0;
+		request->source_type             = 0;
+		request->dest_type    = 0;
+		request->is_null      = 0;
+		request->truncated    = 0;
+		request->msg          = NULL;
+		request->query_fn     = NULL;
+		request->cancel_fn    = NULL;
+		request->wait_fn      = NULL;
+		request->poll_fn      = NULL;
+		request->free_fn      = NULL;
+		request->extra_state  = NULL;
+		request->pointer_to_source_request = NULL;
+		request->pointer_to_shadow_request = NULL;
+		request->ptr_to_pin_ctx            = NULL;
+
 		request->request_type        = request_type;
 		request->header.communicator = comm;
 	}
