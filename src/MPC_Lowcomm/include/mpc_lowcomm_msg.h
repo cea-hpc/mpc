@@ -401,8 +401,6 @@ void mpc_lowcomm_ptp_message_complete_and_free(mpc_lowcomm_ptp_message_t *msg);
 typedef struct mpc_buffered_msg_s
 {
 	mpc_lowcomm_ptp_message_t header;
-	/* Completion flag to use if the user do not provide a valid request */
-	int                       completion_flag;
 	/* mpc_lowcomm_request_t if the message is buffered  */
 	mpc_lowcomm_request_t     request;
 	long                      buf[(MAX_MPC_BUFFERED_SIZE / sizeof(long) ) + 1];

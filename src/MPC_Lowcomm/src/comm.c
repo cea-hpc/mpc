@@ -610,12 +610,6 @@ void mpc_lowcomm_ptp_message_complete_and_free(mpc_lowcomm_ptp_message_t *msg)
 		OPA_decr_int(&msg->tail.internal_ptp->pending_nb);
 	}
 
-	if(msg->tail.buffer_async)
-	{
-		mpc_buffered_msg_t *buffer_async = msg->tail.buffer_async;
-		buffer_async->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-	}
-
 	if(SCTK_MSG_COMPLETION_FLAG(msg) )
 	{
 		*(SCTK_MSG_COMPLETION_FLAG(msg) ) = MPC_LOWCOMM_MESSAGE_DONE;
@@ -1379,7 +1373,7 @@ inline void mpc_lowcomm_ptp_message_copy_pack_absolute(mpc_lowcomm_ptp_message_c
 ****************/
 
 /* For message creation: a set of buffered ptp_message entries is allocated during init */
-#define BUFFERED_PTP_MESSAGE_NUMBER    512
+#define BUFFERED_PTP_MESSAGE_NUMBER    2048
 
 __thread mpc_lowcomm_ptp_message_t *buffered_ptp_message = NULL;
 
@@ -1406,8 +1400,8 @@ static void __mpc_comm_buffered_ptp_init(void)
 }
 
 /*
- * Free the header. If the header is a from the buffered list, re-add it to
- * the list. Else, free the header.
+ * If the list grows it means that there was a header scarcity at one point
+ * so we keep them considering potential repetitive behavior
  */
 void __mpc_comm_free_header(void *tmp)
 {
@@ -1415,15 +1409,9 @@ void __mpc_comm_free_header(void *tmp)
 
 	mpc_common_nodebug("Free buffer %p buffered?%d", header, header->from_buffered);
 
-	/* Header is from the buffered list */
-	if(header->from_buffered)
-	{
-		LL_PREPEND(buffered_ptp_message, header);
-	}
-	else
-	{
-		sctk_free(tmp);
-	}
+	/* Always keep headers if we had to alloc */
+	header->from_buffered = 1;
+	LL_PREPEND(buffered_ptp_message, header);
 }
 
 /*
@@ -1824,6 +1812,7 @@ void mpc_lowcomm_ptp_message_add_pack_absolute(mpc_lowcomm_ptp_message_t *msg,
 /* Searching functions                                              */
 /********************************************************************/
 
+static __thread int did_mprobe = 0;
 static __thread OPA_int_t m_probe_id;
 static __thread OPA_int_t m_probe_id_task;
 
@@ -1835,6 +1824,8 @@ void sctk_m_probe_matching_init()
 
 void sctk_m_probe_matching_set(int value)
 {
+	did_mprobe = 1;
+
 	while(OPA_cas_int(&m_probe_id, 0, value) != 0)
 	{
 		mpc_common_nodebug("CAS %d", OPA_load_int(&m_probe_id) );
@@ -1855,6 +1846,11 @@ void sctk_m_probe_matching_reset()
 
 int sctk_m_probe_matching_get()
 {
+	if(!did_mprobe)
+	{
+		return -1;
+	}
+
 	int thread_id = mpc_common_get_thread_id();
 
 	if(OPA_load_int(&m_probe_id_task) != (thread_id + 1) )
@@ -2066,11 +2062,11 @@ static inline int __mpc_comm_ptp_perform_msg_pair(mpc_comm_ptp_t *pair)
 			{
 				nb_messages_copied += __mpc_comm_pending_msg_list_search_matching_from_recv(pair, ptr_recv->msg);
 			}
-			
+
 			__mpc_comm_ptp_message_list_unlock_pending(&(pair->lists) );
 			return _mpc_comm_ptp_task_perform(pair->key.rank);
             }
-			
+
 	}
 
 	return nb_messages_copied;

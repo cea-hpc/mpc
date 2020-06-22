@@ -2597,10 +2597,8 @@ FALLBACK_TO_UNBUFERED_ISEND:
 	{
 		mpc_buffered_msg_t *tmp_buf = __mpc_cl_thread_buffer_pool_acquire_async();
 
-		if(tmp_buf->completion_flag == MPC_LOWCOMM_MESSAGE_DONE)
+		if( request->completion_flag == MPC_LOWCOMM_MESSAGE_DONE)
 		{
-			/* We set the buffer as busy */
-			tmp_buf->completion_flag = MPC_LOWCOMM_MESSAGE_PENDING;
 			/* Use the header from the slot */
 			msg = &tmp_buf->header;
 			/* We move asynchronous buffer pool head ahead */
