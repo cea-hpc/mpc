@@ -204,6 +204,7 @@ void mpc_lowcomm_allreduce(const void *buffer_in, void *buffer_out,
 
 void mpc_lowcomm_terminaison_barrier(void);
 
+void mpc_lowcomm_request_wait_all_msgs(const int task, const mpc_lowcomm_communicator_t com);
 /***************************
 * MPC LOWCOMM TRAMPOLINES *
 ***************************/

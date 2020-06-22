@@ -96,6 +96,8 @@ typedef struct mpc_comm_ptp_s
 
 	mpc_comm_ptp_message_lists_t lists;
 
+	/* Number of pending messages for the MPI task */
+	OPA_int_t                    pending_nb;
 
 	UT_hash_handle               hh;
 
@@ -229,6 +231,16 @@ static inline void __mpc_comm_ptp_message_list_unlock_pending(mpc_comm_ptp_messa
 	mpc_common_spinlock_unlock(&(lists->pending_lock) );
 }
 
+/*
+ * Add message into the 'pending' recv list
+ */
+static inline void __mpc_comm_ptp_message_list_add_pending(mpc_comm_ptp_t *tmp,
+                                                           mpc_lowcomm_ptp_message_t *msg)
+{
+	msg->tail.internal_ptp = tmp;
+	assert(tmp != NULL);
+	OPA_incr_int(&tmp->pending_nb);
+}
 
 /*
  * Add message into the 'incoming' recv list
@@ -590,7 +602,13 @@ void mpc_lowcomm_ptp_message_complete_and_free(mpc_lowcomm_ptp_message_t *msg)
 
 	void ( *free_memory )(void *);
 	free_memory = msg->tail.free_memory;
-	assert(free_memory);
+	assume(free_memory);
+
+	if(msg->tail.internal_ptp)
+	{
+		assume(msg->tail.internal_ptp);
+		OPA_decr_int(&msg->tail.internal_ptp->pending_nb);
+	}
 
 	if(msg->tail.buffer_async)
 	{
@@ -2327,6 +2345,41 @@ void mpc_lowcomm_ptp_msg_progress(struct mpc_lowcomm_ptp_msg_progress_s *wait)
 	return __mpc_comm_ptp_msg_wait(wait);
 }
 
+/*
+ * Wait for all message according to a communicator and a task id
+ */
+void mpc_lowcomm_request_wait_all_msgs(const int task, const mpc_lowcomm_communicator_t com)
+{
+	mpc_comm_ptp_t *pair;
+	int             i;
+
+	/* Get the pending list associated to the task */
+	pair = __mpc_comm_ptp_array_get(com, task);
+	sctk_assert(pair);
+
+	do
+	{
+		i = OPA_load_int(&pair->pending_nb);
+		mpc_common_nodebug("pending = %d", pair->pending_nb);
+
+		if(i != 0)
+		{
+			/* WARNING: The inter-process module *MUST* implement
+			 *         the 'notify_any_source_message function'. If not,
+			 *         the polling will never occur. */
+			sctk_network_notify_any_source_message(task, 0);
+			__mpc_comm_ptp_perform_msg_pair_trylock(pair);
+			/* Second test to avoid a thread_yield if the message has been handled */
+			i = OPA_load_int(&pair->pending_nb);
+
+			if(i != 0)
+			{
+				mpc_thread_yield();
+			}
+		}
+	} while(i != 0);
+}
+
 /********************************************************************/
 /* Send messages                                                    */
 /********************************************************************/
@@ -2380,6 +2433,17 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 	/* We are searching for the corresponding pending list. If we do not find any entry, we forward the message */
 	mpc_comm_ptp_t *src_pair  = __mpc_comm_ptp_array_get(SCTK_MSG_COMMUNICATOR(msg), SCTK_MSG_SRC_TASK(msg) );
 	mpc_comm_ptp_t *dest_pair = __mpc_comm_ptp_array_get(SCTK_MSG_COMMUNICATOR(msg), SCTK_MSG_DEST_TASK(msg) );
+
+	if(src_pair)
+	{
+		/* Message source is local */
+		__mpc_comm_ptp_message_list_add_pending(src_pair, msg);
+	}
+	else
+	{
+		/* Message comes from network */
+		msg->tail.internal_ptp = NULL;
+	}
 
 	assert(dest_pair != NULL);
 	__mpc_comm_ptp_message_list_add_incoming_send(dest_pair, msg);
@@ -2465,6 +2529,7 @@ void _mpc_comm_ptp_message_recv_check(mpc_lowcomm_ptp_message_t *msg,
 	}
 
 	/* We add the message to the pending list */
+	__mpc_comm_ptp_message_list_add_pending(recv_ptp, msg);
 	__mpc_comm_ptp_message_list_add_incoming_recv(recv_ptp, msg);
 
 	/* Iw we ask for a matching, we run it */

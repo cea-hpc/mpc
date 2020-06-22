@@ -195,7 +195,7 @@ sctk_send_message_from_network_shm(mpc_lowcomm_ptp_message_t *msg)
 	return 1;
 }
 
-static inline __shm_poll()
+static inline void __shm_poll()
 {
 	sctk_shm_cell_t *          cell;
 	mpc_lowcomm_ptp_message_t *msg;

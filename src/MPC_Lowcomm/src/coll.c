@@ -25,7 +25,7 @@
 #include <math.h>
 #include <mpc_launch_pmi.h>
 #include <sctk_communicator.h>
-
+#include <sctk_low_level_comm.h>
 #include <sctk_alloc.h>
 
 /************************************************************************/

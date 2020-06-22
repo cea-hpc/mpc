@@ -300,6 +300,9 @@ typedef struct
 	OPA_int_t                                 matching_id;  /**< 0 By default unique id otherwise */
 	mpc_lowcomm_ptp_message_type_t            message_type;
 
+	/* Pointer to the local ptp list if local */
+	struct mpc_comm_ptp_s *			  internal_ptp;
+
 	mpc_lowcomm_request_t *                   request;
 
 	/*Message data*/
