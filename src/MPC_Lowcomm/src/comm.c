@@ -641,6 +641,12 @@ void _mpc_comm_ptp_message_commit_request(mpc_lowcomm_ptp_message_t *send,
 	/* If a send request is available */
 	if(send->tail.request)
 	{
+		/* Recopy error if present */
+		if(send->tail.request->status_error != SCTK_SUCCESS)
+		{
+			recv->tail.request->status_error = send->tail.request->status_error;
+		}
+
 		send->tail.request->msg = NULL;
 	}
 
@@ -2010,15 +2016,6 @@ static inline int __mpc_comm_pending_msg_list_search_matching_from_recv(mpc_comm
 	/* We found a send request which corresponds to the recv request 'ptr_recv' */
 	if(ptr_send != NULL)
 	{
-		/* Recopy error if present */
-		if(ptr_send->msg->tail.request != NULL)
-		{
-			if(ptr_send->msg->tail.request->status_error != SCTK_SUCCESS)
-			{
-				ptr_recv->msg->tail.request->status_error = ptr_send->msg->tail.request->status_error;
-			}
-		}
-
 		/* Recv has matched a send, remove from list */
 		DL_DELETE(pair->lists.pending_recv.list, ptr_recv);
 
