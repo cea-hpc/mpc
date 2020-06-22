@@ -112,27 +112,14 @@ static inline void __mpc_comm_request_init(mpc_lowcomm_request_t *request,
 {
 	if(request != NULL)
 	{
+        memset(request, 0, sizeof(mpc_lowcomm_request_t));
+
 		request->completion_flag         = MPC_LOWCOMM_MESSAGE_DONE;
 		request->header.source           = SCTK_PROC_NULL;
 		request->header.destination      = SCTK_PROC_NULL;
 		request->header.source_task      = SCTK_PROC_NULL;
 		request->header.destination_task = SCTK_PROC_NULL;
 		request->header.message_tag      = SCTK_ANY_TAG;
-		request->header.msg_size         = 0;
-		request->source_type             = 0;
-		request->dest_type    = 0;
-		request->is_null      = 0;
-		request->truncated    = 0;
-		request->msg          = NULL;
-		request->query_fn     = NULL;
-		request->cancel_fn    = NULL;
-		request->wait_fn      = NULL;
-		request->poll_fn      = NULL;
-		request->free_fn      = NULL;
-		request->extra_state  = NULL;
-		request->pointer_to_source_request = NULL;
-		request->pointer_to_shadow_request = NULL;
-		request->ptr_to_pin_ctx            = NULL;
 
 		request->request_type        = request_type;
 		request->header.communicator = comm;
@@ -2251,9 +2238,9 @@ void mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request)
 
 		do
 		{
-			__mpc_comm_ptp_msg_wait(&_wait);
+		    __mpc_comm_ptp_msg_wait(&_wait);
 			trials++;
-		} while( (request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE) && (trials < 64) );
+		} while( (request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE) && (trials < 16) );
 
 		if(request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE)
 		{

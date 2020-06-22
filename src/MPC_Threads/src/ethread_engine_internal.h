@@ -663,6 +663,7 @@ static inline int ___mpc_thread_ethread_sched_yield_vp_idle(_mpc_thread_ethread_
 		else
 		{
 			SCTK_ACTIVITY_DOWN(vp);
+            return 1;
 		}
 		___mpc_thread_ethread_sched_yield_vp_tail(vp, cur);
 	}
@@ -1495,12 +1496,11 @@ static inline void ___mpc_thread_ethread_idle_task(void *arg)
 	sctk_init_idle_thread_dbg(th_data, ___mpc_thread_ethread_idle_task);
 	/** **/
 
-//    int cnt = 0;
 
-	while(___timer_thread_running)
+	while(1)
 	{
 		__sctk_grab_zombie(vp);
-		___mpc_thread_ethread_sched_yield_vp_idle(vp, th_data);
+		int no_work = ___mpc_thread_ethread_sched_yield_vp_idle(vp, th_data);
 		sctk_assert(vp->idle == th_data);
 		if(___timer_thread_ticks != last_timer)
 		{
@@ -1514,64 +1514,24 @@ static inline void ___mpc_thread_ethread_idle_task(void *arg)
 			last_timer        = ___timer_thread_ticks;
 		}
 
+#ifdef MPC_Lowcomm
 /* Idle function is called here to avoid deadlocks.
  * Actually, when calling mpc_thread_yield(), the polling
  * function is not called. */
-#ifdef MPC_Lowcomm
-    #ifdef __MIC__
-		if( (vp->ready_queue_used == NULL) &&
-		    (vp->incomming_queue == NULL) &&
-		    (vp->ready_queue == NULL) && (vp->poll_list == NULL) )
-		{
-			int i = 0;
-			while( (vp->ready_queue_used == NULL) &&
-			       (vp->incomming_queue == NULL) &&
-			       (vp->ready_queue == NULL) )
-			{
-				_mm_delay_32(4000);
-				i++;
-				if(i >= 10000)
-				{
-					break;
-				}
-			}
-		}
-		else
-		{
-			if( (vp->ready_queue_used == NULL) &&
-			    (vp->incomming_queue == NULL) &&
-			    (vp->ready_queue == NULL) )
-			{
-				_mm_delay_32(400);
-			}
-		}
-    #else
-		TODO("CHECK CONSEQUENCES OF COMMENT");
-		//sctk_network_notify_idle_message();
-    #endif
+    TODO("CHECK CONSEQUENCES OF COMMENT");
+	//sctk_network_notify_idle_message();
 #endif
-# if 0
-		if( (vp->ready_queue_used == NULL) &&
-		    (vp->incomming_queue == NULL) &&
-		    (vp->ready_queue == NULL) && (vp->poll_list == NULL) )
-		{
-			sctk_cpu_relax();
+		if(no_work)
+        {
+			if(!___timer_thread_running)
+            {
+                break;
+            }
 		}
-		else
-		{
-			if( (vp->ready_queue_used == NULL) &&
-			    (vp->incomming_queue == NULL) &&
-			    (vp->ready_queue == NULL) )
-			{
-				sctk_cpu_relax();
-			}
-		}
-#endif
 	}
 	/** ** **/
 	sctk_free_idle_thread_dbg(th_data);
 	/** **/
-	__sctk_grab_zombie(vp);
 }
 
 static inline void ___mpc_thread_ethread_kernel_idle_task(void *arg)

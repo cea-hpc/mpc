@@ -71,8 +71,8 @@ typedef struct
 {
 	volatile int completion_flag;
     char pad[128];
-	volatile int request_type;
-	volatile sctk_header_t header;
+	int request_type;
+	sctk_header_t header;
 	struct mpc_lowcomm_ptp_message_s *msg;
 	mpc_lowcomm_datatype_t source_type; /**< Type in the remote message */
 	mpc_lowcomm_datatype_t dest_type; /**< Type in the local message */
