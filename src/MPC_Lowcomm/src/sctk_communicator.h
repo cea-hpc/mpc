@@ -112,10 +112,10 @@ struct shared_mem_gatherv
 
 	/* Root infos */
 	void *target_buff;
-	int *counts;
+	const int *counts;
 	int *send_count;
 	size_t *send_type_size;
-	int *disps;
+	const int *disps;
 	size_t rtype_size;
 	int rcount;
 	int let_me_unpack;
@@ -147,10 +147,10 @@ int sctk_shared_mem_scatterv_release( struct shared_mem_scatterv *shmgv );
 struct sctk_shared_mem_a2a_infos
 {
 	size_t stype_size;
-	void *source_buff;
+	const void *source_buff;
 	void **packed_buff;
-	int *disps;
-	int *counts;
+	const int *disps;
+	const int *counts;
 };
 
 struct shared_mem_a2a

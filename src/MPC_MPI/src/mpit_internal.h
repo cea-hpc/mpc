@@ -399,7 +399,7 @@ int mpc_MPI_T_pvar_get_info(int pvar_index, char *name, int *name_len,
                             char *desc, int *desc_len, int *bind, int *readonly,
                             int *continuous, int *atomic);
 
-int mpc_MPI_T_pvar_get_index(char *name, int *pvar_class, int *pvar_index);
+int mpc_MPI_T_pvar_get_index(const char *name, int *pvar_class, int *pvar_index);
 
 /************************************************************************/
 /* INTERNAL MPI_T Performance variables PVARS SESSIONS                  */
@@ -470,7 +470,7 @@ int mpc_MPI_T_category_get_info(int cat_index, char *name, int *name_len,
                                 char *desc, int *desc_len, int *num_cvars,
                                 int *num_pvars, int *num_categories);
 
-int mpc_MPI_T_category_get_index(char *name, int *cat_index);
+int mpc_MPI_T_category_get_index(const char *name, int *cat_index);
 
 int mpc_MPI_T_category_get_cvars(int cat_index, int len, int indices[]);
 

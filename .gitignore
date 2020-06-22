@@ -3,3 +3,4 @@
 BUILD/*
 autom4te.cache/*
 /mpc_config.h.in~
+MPC_Test_Suite/*

@@ -2276,6 +2276,19 @@ int PMPI_Dist_graph_neighbors_count(MPI_Comm comm, int *indegree, int *outdegree
 int MPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler);
 int PMPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler);
 
+/*MPI_Errhandler_get (DEPRECATED) */
+
+/**
+ * @brief MPI function MPI_Errhandler_get
+ * 
+ * @param Comm to get the errhandler from
+ * @param errhandler 
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
+ */
+int MPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler);
+int PMPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler);
+
 
 /*MPI_Errhandler_free*/
 

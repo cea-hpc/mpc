@@ -1396,7 +1396,7 @@ static inline struct __mpc_dt_name_cell *__mpc_dt_get_name_cell( mpc_lowcomm_dat
 	return cell;
 }
 
-int _mpc_dt_name_set( mpc_lowcomm_datatype_t datatype, char *name )
+int _mpc_dt_name_set( mpc_lowcomm_datatype_t datatype, const char *name )
 {
 	/* First locate a previous cell */
 	mpc_common_spinlock_lock( &datatype_names_lock );

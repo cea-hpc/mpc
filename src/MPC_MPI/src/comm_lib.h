@@ -110,7 +110,7 @@ extern const _mpc_cl_group_t mpc_group_null;
 int _mpc_cl_comm_group( mpc_lowcomm_communicator_t, _mpc_cl_group_t ** );
 int _mpc_cl_comm_remote_group( mpc_lowcomm_communicator_t, _mpc_cl_group_t ** );
 int _mpc_cl_group_free( _mpc_cl_group_t ** );
-int _mpc_cl_group_incl( _mpc_cl_group_t *, int, int *, _mpc_cl_group_t ** );
+int _mpc_cl_group_incl( _mpc_cl_group_t *, int, const int *, _mpc_cl_group_t ** );
 int _mpc_cl_group_difference( _mpc_cl_group_t *, _mpc_cl_group_t *, _mpc_cl_group_t ** );
 
 
@@ -215,7 +215,7 @@ int _mpc_cl_info_get( MPC_Info, const char *, int, char *, int * );
 int _mpc_cl_info_dup( MPC_Info, MPC_Info * );
 int _mpc_cl_info_get_nkeys( MPC_Info, int * );
 int _mpc_cl_info_get_count( MPC_Info, int, char * );
-int _mpc_cl_info_get_valuelen( MPC_Info, char *, int *, int * );
+int _mpc_cl_info_get_valuelen( MPC_Info, const char *, int *, int * );
 
 
 /*********************************
@@ -538,7 +538,7 @@ int _mpc_cl_type_dup( mpc_lowcomm_datatype_t old_type, mpc_lowcomm_datatype_t *n
  *  \param datatype Datatype to be named
  *  \param name Name to be set
  */
-int _mpc_cl_type_set_name( mpc_lowcomm_datatype_t datatype, char *name );
+int _mpc_cl_type_set_name( mpc_lowcomm_datatype_t datatype, const char *name );
 
 /** \brief Get a name to an mpc_lowcomm_datatype_t
  *  \param datatype Datatype to get the name of

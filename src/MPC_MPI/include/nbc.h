@@ -397,7 +397,7 @@ static inline int NBC_Type_intrinsic(MPI_Datatype type) {
 }
 
 /* let's give a try to inline functions */
-static inline int NBC_Copy(void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm) {
+static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm) {
 	int size, pos, res;
 	MPI_Aint ext;
 	void *packbuf;
@@ -461,7 +461,7 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
 		inplace = 1; \
 	} else \
 	if(recvbuf == MPI_IN_PLACE) { \
-		recvbuf = sendbuf; \
+		recvbuf = (void*)sendbuf; \
 		inplace = 1; \
 	} \
 }

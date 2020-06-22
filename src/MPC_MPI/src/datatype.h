@@ -140,17 +140,17 @@ struct _mpc_dt_context
 	size_t stride_addr;
 	size_t lb;
 	size_t extent;
-	int *array_of_gsizes;
-	int *array_of_distribs;
-	int *array_of_dargs;
-	int *array_of_psizes;
+	const int *array_of_gsizes;
+	const int *array_of_distribs;
+	const int *array_of_dargs;
+	const int *array_of_psizes;
 	const int *array_of_blocklenght;
-	int *array_of_sizes;
-	int *array_of_subsizes;
-	int *array_of_starts;
+	const int *array_of_sizes;
+	const int *array_of_subsizes;
+	const int *array_of_starts;
 	const int *array_of_displacements;
-	size_t *array_of_displacements_addr;
-	mpc_lowcomm_datatype_t *array_of_types;
+	const size_t *array_of_displacements_addr;
+	const mpc_lowcomm_datatype_t *array_of_types;
 };
 
 /** \brief Clears the external context
@@ -649,7 +649,7 @@ int _mpc_dt_name_set_nocheck( mpc_lowcomm_datatype_t datatype, char *name );
  *  \return 1 on error 0 otherwise
  *
  */
-int _mpc_dt_name_set( mpc_lowcomm_datatype_t datatype, char *name );
+int _mpc_dt_name_set( mpc_lowcomm_datatype_t datatype, const char *name );
 
 /** \brief Returns the name of a data-type
  *  \param datatype Requested data-type

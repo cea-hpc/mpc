@@ -861,7 +861,7 @@ int mpc_MPI_T_pvar_get_info(int pvar_index, char *name, int *name_len,
   return MPI_SUCCESS;
 }
 
-int mpc_MPI_T_pvar_get_index(char *name, int *pvar_class, int *pvar_index) {
+int mpc_MPI_T_pvar_get_index(const char *name, int *pvar_class, int *pvar_index) {
   int num_pvar;
   mpc_MPI_T_pvar_get_num(&num_pvar);
 
@@ -1160,7 +1160,7 @@ int mpc_MPI_T_category_get_info(int cat_index, char *name, int *name_len,
   return MPI_SUCCESS;
 }
 
-int mpc_MPI_T_category_get_index(char *name, int *cat_index) {
+int mpc_MPI_T_category_get_index(const char *name, int *cat_index) {
   int i;
 
   for (i = 0; i < MPI_T_CATEGORY_COUNT; i++) {

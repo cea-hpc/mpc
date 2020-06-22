@@ -1234,7 +1234,7 @@ int _mpc_cl_type_free(mpc_lowcomm_datatype_t *datatype_p)
 	MPC_ERROR_SUCESS();
 }
 
-int _mpc_cl_type_set_name(mpc_lowcomm_datatype_t datatype, char *name)
+int _mpc_cl_type_set_name(mpc_lowcomm_datatype_t datatype, const char *name)
 {
 	if(_mpc_dt_name_set(datatype, name) )
 	{
@@ -3920,7 +3920,7 @@ int _mpc_cl_group_free(_mpc_cl_group_t **group)
 	MPC_ERROR_SUCESS();
 }
 
-int _mpc_cl_group_incl(_mpc_cl_group_t *group, int n, int *ranks, _mpc_cl_group_t **newgroup)
+int _mpc_cl_group_incl(_mpc_cl_group_t *group, int n, const int *ranks, _mpc_cl_group_t **newgroup)
 {
 	int i;
 
@@ -5127,7 +5127,7 @@ int _mpc_cl_info_dup(MPC_Info info, MPC_Info *newinfo)
 	MPC_ERROR_SUCESS();
 }
 
-int _mpc_cl_info_get_valuelen(MPC_Info info, char *key, int *valuelen, int *flag)
+int _mpc_cl_info_get_valuelen(MPC_Info info, const char *key, int *valuelen, int *flag)
 {
 	/* Retrieve task context */
 	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();

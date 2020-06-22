@@ -224,7 +224,7 @@ typedef struct
 	unsigned int count;
 	long *       begins;
 	long *       ends;
-	void *       addr;
+	const void *       addr;
 	size_t       elem_size;
 } mpc_lowcomm_ptp_message_pack_absolute_list_t;
 

@@ -98,6 +98,8 @@ typedef struct
   int status;
 } MPI_Handler_user_function_t;
 
+struct _mpc_mpi_buffer;
+
 typedef struct mpc_mpi_data_s{
 	/****** ERRORS ******/
 	MPI_Handler_user_function_t* user_func;
@@ -115,7 +117,7 @@ typedef struct mpc_mpi_data_s{
 	struct MPI_group_struct_s *groups;
 
 	/****** BUFFERS ******/
-	struct MPI_buffer_struct_s *buffers;
+	struct _mpc_mpi_buffer *buffers;
 
 	/****** OP ******/
 	struct sctk_mpi_ops_s *ops;

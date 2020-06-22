@@ -769,7 +769,7 @@ inline void mpc_lowcomm_ptp_message_copy(mpc_lowcomm_ptp_message_content_to_copy
 							size = send->tail.message.contiguous.size - total;
 						}
 
-						memcpy( (recv->tail.message.pack.list.absolute[i].addr) +
+						memcpy( (void*)(recv->tail.message.pack.list.absolute[i].addr) +
 						        recv->tail.message.pack.list.absolute[i].begins[j] *
 						        recv->tail.message.pack.list.absolute[i].elem_size,
 						        send->tail.message.contiguous.addr, size);
@@ -874,7 +874,7 @@ static inline void __mpc_comm_copy_buffer_pack_pack(unsigned long *restrict in_b
 
 static inline void __mpc_comm_copy_buffer_absolute_pack(long *restrict in_begins,
                                                         long *restrict in_ends, size_t in_sizes,
-                                                        void *restrict in_adress, size_t in_elem_size,
+                                                        const void *restrict in_adress, size_t in_elem_size,
                                                         unsigned long *restrict out_begins,
                                                         unsigned long *restrict out_ends, size_t out_sizes,
                                                         void *restrict out_adress, size_t out_elem_size)
@@ -965,7 +965,7 @@ static inline void __mpc_comm_copy_buffer_pack_absolute(
         void *restrict in_adress, size_t in_elem_size,
         long *restrict out_begins,
         long *restrict out_ends, size_t out_sizes,
-        void *restrict out_adress, size_t out_elem_size)
+        const void *restrict out_adress, size_t out_elem_size)
 {
 	unsigned long tmp_begin[1];
 	unsigned long tmp_end[1];
@@ -976,7 +976,7 @@ static inline void __mpc_comm_copy_buffer_pack_absolute(
 	{
 		mpc_common_nodebug("__mpc_comm_copy_buffer_absolute_absolute no mpc_pack");
 		mpc_common_nodebug("%s == %s", out_adress, in_adress);
-		memcpy(out_adress, in_adress, in_sizes);
+		memcpy((void*)out_adress, in_adress, in_sizes);
 		mpc_common_nodebug("%s == %s", out_adress, in_adress);
 	}
 	else
@@ -1053,10 +1053,10 @@ static inline void __mpc_comm_copy_buffer_pack_absolute(
 static inline void __mpc_comm_copy_buffer_absolute_absolute(
         long *restrict in_begins,
         long *restrict in_ends, size_t in_sizes,
-        void *restrict in_adress, size_t in_elem_size,
+        const void *restrict in_adress, size_t in_elem_size,
         long *restrict out_begins,
         long *restrict out_ends, size_t out_sizes,
-        void *restrict out_adress, size_t out_elem_size)
+        const void *restrict out_adress, size_t out_elem_size)
 {
 	long tmp_begin[1];
 	long tmp_end[1];
@@ -1065,7 +1065,7 @@ static inline void __mpc_comm_copy_buffer_absolute_absolute(
 	{
 		mpc_common_nodebug("__mpc_comm_copy_buffer_absolute_absolute no mpc_pack");
 		mpc_common_nodebug("%s == %s", out_adress, in_adress);
-		memcpy(out_adress, in_adress, in_sizes);
+		memcpy((void*)out_adress, in_adress, in_sizes);
 		mpc_common_nodebug("%s == %s", out_adress, in_adress);
 	}
 	else
