@@ -285,6 +285,7 @@ static inline int sctk_is_process_specific_message( mpc_lowcomm_ptp_message_head
 static inline void _mpc_comm_ptp_message_clear_request( mpc_lowcomm_ptp_message_t *msg )
 {
 	msg->tail.request = NULL;
+    msg->tail.internal_ptp = NULL;
 
 	if (sctk_is_process_specific_message(SCTK_MSG_HEADER(msg))) {
 		return;

@@ -363,7 +363,6 @@ void sctk_control_messages_perform(mpc_lowcomm_ptp_message_t *msg, int force) {
     * a portable way (idependently from driver) */
 
     mpc_lowcomm_ptp_message_t recvmsg;
-
     mpc_lowcomm_ptp_message_header_clear(&recvmsg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS,
                      sctk_free_control_messages, mpc_lowcomm_ptp_message_copy);
     mpc_lowcomm_ptp_message_set_contiguous_addr(&recvmsg, tmp_contol_buffer, msg_size);
