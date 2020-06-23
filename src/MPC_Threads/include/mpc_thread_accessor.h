@@ -58,12 +58,12 @@ static inline int ___get_task_rank()
 
 /* From manually switched TLSs */
 extern __thread int __mpc_task_rank;
-
+extern int __process_rank;
 
 static inline int mpc_common_get_task_rank(void)
 {
 #if defined(MPC_IN_PROCESS_MODE) || defined(SCTK_LIB_MODE)
-	return mpc_common_get_process_rank();
+	return __process_rank;
 #endif
 	int can_be_disguised = 0;
 #ifdef MPC_MPI

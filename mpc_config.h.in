@@ -697,6 +697,9 @@
    function */
 #undef HAVE___BUILTIN_RETURN_ADDRESS
 
+/* Define to 1 if the system has the type `__float128'. */
+#undef HAVE___FLOAT128
+
 /* KMP intrisincs enabled */
 #undef KMP_ARCH_X86
 

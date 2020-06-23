@@ -25,6 +25,7 @@
 #define __MPCOMP_TYPES_KMP_H__
 
 #include <stdlib.h>
+#include <mpc_config.h>
 
 #define MPCOMP_FORCE_PARALLEL_REGION_ALLOC 1
 
@@ -49,7 +50,7 @@ typedef unsigned long long kmp_uint64;
 typedef float kmp_real32;
 typedef double kmp_real64;
 
-#ifdef MPC_X86_64_ARCH
+#if defined(MPC_X86_64_ARCH) && defined(HAVE___FLOAT128)
 typedef __float128 _Quad;
 /* Check for quad-precision extension. Here, forced to 1 for MPC for x86*/
 #define KMP_HAVE_QUAD 1
