@@ -93,7 +93,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@MPC_FORTRAN_ENABLED_TRUE@am__append_1 = mpc_f77
+@MPC_FORTRAN_ENABLED_TRUE@am__append_1 = mpc_f77 mpif77
 
 #
 # Cuda support
@@ -494,8 +494,8 @@ top_srcdir = @top_srcdir@
 #
 # mpcrun
 #
-bin_SCRIPTS = mpc_cc mpc_cxx mpc_cflags mpc_ldflags $(am__append_1) \
-	mpc_status mpcvars.sh $(am__append_2) mpcrun
+bin_SCRIPTS = mpc_cc mpc_cxx mpc_cflags mpc_ldflags mpicc mpicxx \
+	$(am__append_1) mpc_status mpcvars.sh $(am__append_2) mpcrun
 pkgdata_SCRIPTS = mpc_compiler_common.sh
 mpirun_SOURCES = ./mpirun.c
 mpcrun_plugindir = $(pkgdatadir)/mpcrun_opt/

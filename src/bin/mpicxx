@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# This is the MPI class compiler proxy
+# to the MPC one, just passes the arguments
+# through however note that by default
+# this compiler does not privatize
+# you can export MPI_PRIV to do it from here
+# or just use their mpc_* counterpart
+
+MPI_PRIV_ARG="-fnompc-privatize"
+
+if test -n "$MPI_PRIV"; then
+	MPI_PRIV_ARG=""
+fi
+
+# Now invoke the compiler
+mpc_cxx $MPI_PRIV_ARG "$@"
+

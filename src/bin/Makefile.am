@@ -2,10 +2,10 @@
 # Compiler Setup
 #
 
-bin_SCRIPTS = mpc_cc mpc_cxx mpc_cflags mpc_ldflags
+bin_SCRIPTS = mpc_cc mpc_cxx mpc_cflags mpc_ldflags mpicc mpicxx
 
 if MPC_FORTRAN_ENABLED
-  bin_SCRIPTS += mpc_f77
+  bin_SCRIPTS += mpc_f77 mpif77
 endif
 
 #
