@@ -2726,8 +2726,23 @@ end function MPI_Comm_free_c
 ! MPI_File_write_at_all NOT IMPLEMENTED in MPC
 
 
-! MPI_Errhandler_get NOT IMPLEMENTED in MPC
 
+function MPI_Errhandler_get_c( comm,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_errhandler_get_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: errhandler     !MPI_Errhandler* errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Errhandler_get_c
 
 
 function MPI_Pack_size_c( incount,&

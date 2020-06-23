@@ -859,6 +859,13 @@ SUBROUTINE MPI_COMM_FREE(comm,ierror)
 END SUBROUTINE MPI_COMM_FREE
 
 
+SUBROUTINE MPI_ERRHANDLER_GET(comm,errhandler,ierror)
+   INTEGER	comm
+   INTEGER	errhandler
+   INTEGER	ierror
+END SUBROUTINE MPI_ERRHANDLER_GET
+
+
 SUBROUTINE MPI_PACK_SIZE(incount,datatype,comm,&
    size,ierror)
    INTEGER	incount

@@ -541,6 +541,11 @@ module procedure MPI_Comm_free_f08
 end interface
 
 
+interface MPI_Errhandler_get
+module procedure MPI_Errhandler_get_f08
+end interface
+
+
 interface MPI_Pack_size
 module procedure MPI_Pack_size_f08
 end interface
@@ -1082,6 +1087,7 @@ private :: MPI_Rsend_init_f08
 private :: MPI_Info_free_f08
 private :: MPI_Bcast_f08
 private :: MPI_Comm_free_f08
+private :: MPI_Errhandler_get_f08
 private :: MPI_Pack_size_f08
 private :: MPI_Comm_call_errhandler_f08
 private :: MPI_Comm_test_inter_f08
@@ -5654,8 +5660,40 @@ end subroutine MPI_Comm_free_f08
 ! MPI_File_write_at_all NOT IMPLEMENTED in MPC
 
 
-! MPI_Errhandler_get NOT IMPLEMENTED in MPC
 
+subroutine MPI_Errhandler_get_f08( comm,&
+errhandler,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Comm), intent(in) :: comm
+type(MPI_Errhandler), intent(out) :: errhandler
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: comm_c     !MPI_Comm comm
+integer(c_int) :: errhandler_c     !MPI_Errhandler* errhandler
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+comm_c = comm%val
+
+ret = MPI_Errhandler_get_c(comm_c,&
+errhandler_c,&
+ierror_c)
+
+errhandler%val = errhandler_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Errhandler_get_f08
 
 
 subroutine MPI_Pack_size_f08( incount,&

@@ -1413,9 +1413,15 @@ int * ierror)
 /* MPI_File_write_at_all NOT IMPLEMENTED in MPC */
 
 
-/* MPI_Errhandler_get NOT IMPLEMENTED in MPC */
 
-
+void mpi_errhandler_get_f08(
+MPI_Comm comm,
+MPI_Errhandler* errhandler,
+int * ierror)
+{
+*ierror = MPI_Errhandler_get( comm,
+errhandler);
+}
 
 void mpi_pack_size_f08(
 int incount,
