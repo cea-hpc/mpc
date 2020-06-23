@@ -19264,7 +19264,7 @@ int MPI_NULL_DELETE_FN(__UNUSED__ MPI_Datatype datatype, __UNUSED__ int type_key
 	return MPI_SUCCESS;
 }
 
-int MPI_NULL_COPY_FN(MPI_Comm oldcomm, int keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, void *flag)
+int MPI_NULL_COPY_FN(MPI_Comm oldcomm, int keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag)
 {
 	mpc_common_nodebug("MPC_Mpi_null_copy_fn");
 	*flag = 0;
