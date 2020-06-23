@@ -9,6 +9,8 @@
 #include "mpiu_greq.h"
 #include "mpioimpl.h"
 
+#include "mpir_ext.h"
+
 #ifdef AGGREGATION_PROFILE
 #include "mpe.h"
 #endif

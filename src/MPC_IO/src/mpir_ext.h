@@ -28,4 +28,7 @@ int MPIR_Status_set_bytes(MPI_Status *status, MPI_Datatype datatype, MPI_Count n
 
 int MPIR_Get_node_id(MPI_Comm comm, int rank, int *id);
 
+int MPIR_File_call_cxx_errhandler( void *fh, int *errorcode,
+			           void (*c_errhandler)(void  *, int *, ... ) );
+
 #endif /* MPIR_EXT */

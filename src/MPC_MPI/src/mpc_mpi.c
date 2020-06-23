@@ -13758,7 +13758,7 @@ int PMPI_Unpack_external(const char *datarep, const void *inbuf, MPI_Aint insize
 		                     type_vector_count,
 		                     native_pack_buff,
 		                     pack_size,
-		                     inbuf,
+		                     (char*)inbuf,
 		                     ext_pack_size,
 		                     0);
 
@@ -19264,14 +19264,14 @@ int MPI_NULL_DELETE_FN(__UNUSED__ MPI_Datatype datatype, __UNUSED__ int type_key
 	return MPI_SUCCESS;
 }
 
-int MPI_NULL_COPY_FN(MPI_Comm oldcomm, int keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag, int ierr)
+int MPI_NULL_COPY_FN(MPI_Comm oldcomm, int keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, void *flag)
 {
 	mpc_common_nodebug("MPC_Mpi_null_copy_fn");
 	*flag = 0;
 	return MPI_SUCCESS;
 }
 
-int MPI_DUP_FN(__UNUSED__ MPI_Comm comm, __UNUSED__ int comm_keyval, __UNUSED__ void *extra_state, __UNUSED__ void *attribute_val_in, __UNUSED__ void *attribute_val_out, int *flag, int ierr)
+int MPI_DUP_FN(__UNUSED__ MPI_Comm comm, __UNUSED__ int comm_keyval, __UNUSED__ void *extra_state, __UNUSED__ void *attribute_val_in, __UNUSED__ void *attribute_val_out, int *flag)
 {
 	mpc_common_nodebug("MPC_Mpi_dup_fn");
 	*flag = 1;

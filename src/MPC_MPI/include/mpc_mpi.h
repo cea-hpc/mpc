@@ -640,7 +640,6 @@ typedef struct MPC_T_pvar_handle *MPI_T_pvar_handle;
  * @param attribute_val_in 
  * @param attribute_val_out 
  * @param flag 
- * @param ierror 
 
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
  */
@@ -663,7 +662,6 @@ int PMPI_COMM_DUP_FN(MPI_Comm oldcomm, int comm_keyval, void *extra_state, void 
  * @param attribute_val_in 
  * @param attribute_val_out 
  * @param flag 
- * @param ierror 
 
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
  */
@@ -732,7 +730,7 @@ int PMPI_CONVERSION_FN_NULL(void *userbuf, MPI_Datatype datatype, int count, voi
 
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
  */
-int MPI_DUP_FN(MPI_Comm oldcomm, int keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag, int ierr);
+int MPI_DUP_FN(MPI_Comm oldcomm, int keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag);
 
 
 /******************/
@@ -754,7 +752,7 @@ int MPI_DUP_FN(MPI_Comm oldcomm, int keyval, void *extra_state, void *attribute_
 
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
  */
-int MPI_NULL_COPY_FN(MPI_Comm oldcomm, int keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag, int ierr);
+int MPI_NULL_COPY_FN(MPI_Comm oldcomm, int keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, void *flag, int *ierr);
 
 
 /********************/

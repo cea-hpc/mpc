@@ -156,7 +156,7 @@ void _mpc_lowcomm_ib_ibuf_free_numa(struct _mpc_lowcomm_ib_ibuf_numa_s *node)
 		region->mmu_entry->addr = NULL;
 		_mpc_lowcomm_ib_mmu_entry_release(region->mmu_entry);
 		region->mmu_entry = NULL;
-		sctk_free(region->list);
+		sctk_free((void*)region->list);
 		region->list = NULL;
 		DL_DELETE(node->regions, region);
 		sctk_free(region);

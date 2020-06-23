@@ -486,7 +486,7 @@ void MPC_Extern32_convert( mpc_lowcomm_datatype_t * typevector ,
 						   int type_vector_size, 
 						   char * native_buff, 
 						   size_t max_native_size, 
-						   const char * extern_buff, 
+						   char * extern_buff, 
 						   size_t max_extern_size , 
 						   int encode )
 {
@@ -519,7 +519,7 @@ void MPC_Extern32_convert( mpc_lowcomm_datatype_t * typevector ,
 		
 		/* Move in the output */
 		extern_offset += MPC_Extern32_common_type_size( typevector[ typeIdx ] );
-		current_extern_entry = extern_buff + extern_offset;
+		current_extern_entry = (void*)(extern_buff + extern_offset);
 	
 		
 		if( max_native_size <= current_offset )

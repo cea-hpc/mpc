@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #endif
 
+#include "mpir_ext.h"
+
 #ifdef HAVE_DIRENT_H
 #include <dirent.h>
 #endif
