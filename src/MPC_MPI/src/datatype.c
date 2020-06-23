@@ -71,7 +71,7 @@ static const char *const type_combiner_names[MPC_COMBINER_COUNT__] =
 
 char *_mpc_dt_get_combiner_name( MPC_Type_combiner combiner )
 {
-	if ( ( combiner < MPC_COMBINER_COUNT__ ) && ( 0 <= combiner ) )
+	if ( combiner < MPC_COMBINER_COUNT__ )
 	{
 		return (char *) type_combiner_names[combiner];
 	}

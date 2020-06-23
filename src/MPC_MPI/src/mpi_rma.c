@@ -929,7 +929,7 @@ static inline int mpc_MPI_Get_accumulate_RMA(
       RDMA_op rmaop = mpc_RMA_convert_op(op);
       RDMA_type rmatype = mpc_RMA_convert_type(target_datatype);
 
-      if ((0 <= rmaop) && (0 <= rmatype) && (origin_count == result_count) &&
+      if ((rmaop != RDMA_OP_NULL) && (rmatype!=RDMA_TYPE_NULL)  && (origin_count == result_count) &&
           (origin_count == target_count)) {
 
         int target_win_direct =
@@ -1102,10 +1102,10 @@ mpc_MPI_Fetch_and_op_RMA(struct mpc_MPI_Win *desc, const void *origin_addr,
 
   RDMA_op rmaop = mpc_RMA_convert_op(op);
 
-  if (0 <= rmaop) {
+  if (rmaop!=RDMA_OP_NULL) {
     RDMA_type rmatype = mpc_RMA_convert_type(datatype);
 
-    if (0 <= rmatype) {
+    if (rmatype!=RDMA_TYPE_NULL) {
       int target_win_direct = mpc_MPI_win_get_remote_win(desc, target_rank, 0);
       struct mpc_lowcomm_rdma_window *low_remote_win =
           sctk_win_translate(target_win_direct);
@@ -1203,7 +1203,7 @@ static inline int mpc_MPI_Compare_and_swap_RMA(
 
   RDMA_type rmatype = mpc_RMA_convert_type(datatype);
 
-  if (0 <= rmatype) {
+  if (rmatype!=RDMA_TYPE_NULL) {
     size_t rmatsize = RDMA_type_size(rmatype);
 
     int target_win_direct = mpc_MPI_win_get_remote_win(desc, target_rank, 0);

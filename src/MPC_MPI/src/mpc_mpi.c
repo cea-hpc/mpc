@@ -5932,7 +5932,7 @@ int __INTERNAL__PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const i
 		if(alltoallw_intra == NULL)
 		{
 			alltoallw_intra = (int (*)(const void *, const int *, const int *, const MPI_Datatype *, void *,
-			                           const const int *, const int *, const MPI_Datatype *, MPI_Comm) )(
+			                           const int *, const int *, const MPI_Datatype *, MPI_Comm) )(
 			        sctk_runtime_config_get()
 			        ->modules.collectives_intra.alltoallw_intra.value);
 		}
@@ -12332,7 +12332,7 @@ int PMPI_Type_create_hindexed_block(int count, int blocklength, const MPI_Aint i
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
-int PMPI_Type_create_hindexed(int count, const int blocklens[], const const MPI_Aint indices[], MPI_Datatype old_type, MPI_Datatype *newtype)
+int PMPI_Type_create_hindexed(int count, const int blocklens[], const MPI_Aint indices[], MPI_Datatype old_type, MPI_Datatype *newtype)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
@@ -14736,7 +14736,7 @@ int PMPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
 		if(alltoallv_intra_shm == NULL)
 		{
-			alltoallv_intra_shm = (const int (*)(const void *, const int *, const int *, MPI_Datatype, void *,
+			alltoallv_intra_shm = (int (*)(const void *, const int *, const int *, MPI_Datatype, void *,
 			                               const int *, const int *, MPI_Datatype, MPI_Comm) )(
 			        sctk_runtime_config_get()
 			        ->modules.collectives_shm.alltoallv_intra_shm.value);
@@ -16734,8 +16734,8 @@ int PMPI_Group_free(MPI_Group *mpi_group)
 		return MPI_SUCCESS;
 	}
 
-	if(/*(*mpi_group == MPI_GROUP_EMPTY)
-	   || */(*mpi_group == MPI_GROUP_NULL) )
+	if(/*(*mpi_group == MPI_GROUP_EMPTY) || */
+	   *mpi_group == MPI_GROUP_NULL )
 	{
 		return MPI_ERR_ARG;
 	}
@@ -17394,7 +17394,7 @@ int PMPI_Attr_delete(MPI_Comm comm, int keyval)
 		mpc_common_spinlock_unlock(&(tmp->lock) );
 		return MPI_ERR_ARG;
 	}
-	if( (tmp->attrs_fn[keyval].used == 0) )
+	if( tmp->attrs_fn[keyval].used == 0 )
 	{
 		mpc_common_spinlock_unlock(&(tmp->lock) );
 		return MPI_ERR_ARG;
@@ -20312,10 +20312,12 @@ int PMPIX_Checkpoint(MPIX_Checkpoint_state *state)
 
 int PMPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler)
 {
+	return MPI_SUCCESS;
 }
 
 int PMPI_File_get_errhandler(MPI_File file, MPI_Errhandler *errhandler)
 {
+	return MPI_SUCCESS;
 }
 
 /* Aint OPs */
@@ -20558,6 +20560,7 @@ int PMPI_Ineighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype se
 
 int PMPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
+	not_implemented(); return MPI_ERR_INTERN;
 }
 
 int PMPI_Exscan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)

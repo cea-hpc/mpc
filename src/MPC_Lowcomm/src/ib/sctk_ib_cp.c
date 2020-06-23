@@ -350,7 +350,7 @@ void _mpc_lowcomm_ib_cp_ctx_finalize_task(int rank)
 
 
 
-static inline int __poll_ibuf(struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t *ibuf, int no_steal)
+static inline void __poll_ibuf(struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t *ibuf, int no_steal)
 {
 		/* Run the polling function according to the type of message */
 		if(ibuf->cq == MPC_LOWCOMM_IB_RECV_CQ)

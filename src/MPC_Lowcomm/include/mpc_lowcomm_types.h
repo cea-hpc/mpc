@@ -120,6 +120,7 @@ typedef int mpc_lowcomm_rdma_window_t;
 
 typedef enum
 {
+	RDMA_OP_NULL,
 	RDMA_SUM,
 	RDMA_INC,
 	RDMA_DEC,
@@ -136,6 +137,7 @@ typedef enum
 
 typedef enum
 {
+	RDMA_TYPE_NULL,
 	RDMA_TYPE_CHAR,
 	RDMA_TYPE_DOUBLE,
 	RDMA_TYPE_FLOAT,

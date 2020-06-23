@@ -742,7 +742,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(sctk_ib_rail_info_t *rail, int(
 		{
 			sctk_endpoint_state_t state = _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rtr(pool->remote);
 
-			if( (state == STATE_CONNECTED) )
+			if(state == STATE_CONNECTED)
 			{
 				/* Remove the entry from the merge list... */
 				DL_DELETE(rdma_pool_list_to_merge, pool);
