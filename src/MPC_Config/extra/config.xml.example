@@ -73,11 +73,6 @@
 					<rail>
 						<name>ib_mpi</name>
 						<device>!mlx.*</device>
-						<!-- Restrict Idle Polling only to the device NUMA -->
-						<idle_polling>
-							<range>RAIL_POLL_MACHINE</range>
-							<trigger>RAIL_POLL_SOCKET</trigger>
-						</idle_polling>
 						<priority>1</priority>
 						<rdma>1</rdma>
 						<ondemand>1</ondemand>
@@ -87,11 +82,6 @@
 					<rail>
 						<name>opa_mpi</name>
 						<device>!hfi1*</device>
-						<!-- Restrict Idle Polling only to the device NUMA -->
-						<idle_polling>
-							<range>RAIL_POLL_MACHINE</range>
-							<trigger>RAIL_POLL_SOCKET</trigger>
-						</idle_polling>
 						<priority>1</priority>
 						<rdma>1</rdma>
 						<ondemand>1</ondemand>

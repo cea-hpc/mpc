@@ -708,7 +708,6 @@ void sctk_runtime_config_struct_init_net_rail(void * struct_ptr)
 	obj->name = NULL;
 	obj->priority = 1;
 	obj->device = "default";
-	sctk_runtime_config_struct_init_topological_polling(&obj->idle_polling);
 	sctk_runtime_config_struct_init_topological_polling(&obj->any_source_polling);
 	obj->topology = "ring";
 	obj->ondemand = 1;

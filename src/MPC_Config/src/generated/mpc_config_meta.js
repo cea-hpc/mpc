@@ -162,7 +162,6 @@ meta.types = {
 		name: {mode: 'param', name: "name", type: "string", doc: "Define the name of current rail.", dflt: null},
 		priority: {mode: 'param', name: "priority", type: "int", doc: "Number which defines the order in which routes are tested (higher first).", dflt: "1", },
 		device: {mode: 'param', name: "device", type: "string", doc: "Define the name of the device to use in this rail.", dflt: "default", },
-		idle_polling: {mode: 'param', name: "idle_polling", type: "topological_polling", doc: "Define how the idle polling is done.", dflt: null},
 		any_source_polling: {mode: 'param', name: "any_source_polling", type: "topological_polling", doc: "Define how the any-source polling is done.", dflt: null},
 		topology: {mode: 'param', name: "topology", type: "string", doc: "Define the network topology to apply on this rail.", dflt: "ring", },
 		ondemand: {mode: 'param', name: "ondemand", type: "int", doc: "Define if on-demand connections are allowed on this rail.", dflt: "1", },

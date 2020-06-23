@@ -150,7 +150,6 @@ struct sctk_rail_info_s
 	sctk_route_table_t * route_table;
 
 	/* Polling mechanism */
-	struct sctk_topological_polling_tree idle_polling_tree;
 	struct sctk_topological_polling_tree any_source_polling_tree;
 
 	/* HOOKS */

@@ -129,14 +129,7 @@ static inline sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_run
 	}
 
 	/* Load Polling Config */
-	struct sctk_runtime_config_struct_topological_polling * idle = &runtime_config_rail->idle_polling;
 	struct sctk_runtime_config_struct_topological_polling * any_source = &runtime_config_rail->any_source_polling;
-
-	/* Set idle Polling */
-	sctk_topological_polling_tree_init( &new_rail->idle_polling_tree,
-	                                    sctk_rail_convert_polling_set_from_config(idle->trigger),
-	                                    sctk_rail_convert_polling_set_from_config(idle->range),
-	                                    target_core );
 
 	/* Set any source Polling */
 	sctk_topological_polling_tree_init( &new_rail->any_source_polling_tree,

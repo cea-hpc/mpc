@@ -444,8 +444,6 @@ struct sctk_runtime_config_struct_net_rail
 	int priority;
 	/**Define the name of the device to use in this rail.**/
 	char * device;
-	/**Define how the idle polling is done.**/
-	struct sctk_runtime_config_struct_topological_polling idle_polling;
 	/**Define how the any-source polling is done.**/
 	struct sctk_runtime_config_struct_topological_polling any_source_polling;
 	/**Define the network topology to apply on this rail.**/
