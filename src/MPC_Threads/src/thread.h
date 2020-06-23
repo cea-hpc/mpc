@@ -90,7 +90,7 @@ typedef struct sctk_thread_data_s
 	unsigned long                            thread_number;
 	mpc_thread_t                             tid;
 	volatile sctk_thread_status_t            status;
-	struct mpc_mpi_cl_per_mpi_process_ctx_s *father_data;
+	struct mpc_mpi_cl_per_mpi_process_ctx_s *mpc_mpi_context_data;
 	struct sctk_tls_dtors_s *                dtors_head;
 	/* Where the thread must be bound */
 	unsigned int                             bind_to;

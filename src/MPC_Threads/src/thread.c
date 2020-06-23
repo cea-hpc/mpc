@@ -542,10 +542,10 @@ void * mpc_thread_get_parent_mpi_task_ctx(void)
 
 	if(!data)
 	{
-		return -1;
+		return NULL;
 	}
 
-	return data->father_data;
+	return data->mpc_mpi_context_data;
 }
 
 /************
@@ -959,6 +959,7 @@ int _mpc_thread_create_vp(mpc_thread_t *restrict __threadp,
 
 	sctk_thread_data_t *tmp = ( sctk_thread_data_t * )__sctk_malloc(sizeof(sctk_thread_data_t), tls);
 	assume(tmp != NULL);
+	memset(tmp, 0, sizeof(sctk_thread_data_t));
 
 	tmp->tls                 = tls;
 	tmp->__arg               = __arg;
@@ -967,6 +968,8 @@ int _mpc_thread_create_vp(mpc_thread_t *restrict __threadp,
 	tmp->bind_to             = new_binding;
 	tmp->mpi_task.rank       = sctk_safe_cast_long_int(task_id);
 	tmp->mpi_task.local_rank = sctk_safe_cast_long_int(local_task_id);
+	tmp->mpc_mpi_context_data = NULL;
+
 
 
 #ifdef MPC_USE_EXTLS
@@ -1159,7 +1162,7 @@ int mpc_thread_core_thread_create(mpc_thread_t *restrict __threadp,
 	tmp->mpi_task.rank       = -1;
 	tmp->mpi_task.local_rank = -1;
 	tmp->user_thread         = user_thread;
-	tmp->father_data         = mpc_thread_mpi_ctx_get();
+	tmp->mpc_mpi_context_data         = mpc_thread_mpi_ctx_get();
 
 	if(tmp_father)
 	{
