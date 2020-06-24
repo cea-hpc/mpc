@@ -35,6 +35,13 @@ void omp_set_num_threads(int num_threads) {
   t->info.icvs.nthreads_var = num_threads;
 }
 
+/* ICC renames set_num_threads to ompc_ so provide it too
+ * https://software.intel.com/en-us/forums/intel-c-compiler/topic/798675
+ */
+void ompc_set_num_threads(int num_threads) {
+    omp_set_num_threads(num_threads);
+}
+
 /*
  * Return the thread number (ID) of the current thread whitin its team.
  * The master thread of each team has a thread ID equals to 0.
