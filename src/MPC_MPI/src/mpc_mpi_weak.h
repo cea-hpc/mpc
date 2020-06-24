@@ -167,8 +167,6 @@
 #pragma weak MPI_Errhandler_get = PMPI_Errhandler_get
 #pragma weak MPI_Errhandler_free = PMPI_Errhandler_free
 #pragma weak MPI_Error_string = PMPI_Error_string
-#pragma weak MPI_File_set_errhandler = PMPI_File_set_errhandler
-#pragma weak MPI_File_get_errhandler = PMPI_File_get_errhandler
 #pragma weak MPI_Error_class = PMPI_Error_class
 // PROFILER MPI_TIME MPI_Timing operations
 #pragma weak MPI_Wtime = PMPI_Wtime
@@ -297,16 +295,10 @@
 #pragma weak MPI_Dist_graph_create_adjacent = PMPI_Dist_graph_create_adjacent
 /* collectives */
 #pragma weak MPI_Reduce_local = PMPI_Reduce_local
-/* Error handling */
-#pragma weak MPI_File_create_errhandler = PMPI_File_create_errhandler
-#pragma weak MPI_File_call_errhandler = PMPI_File_call_errhandler
 /* FORTRAN TYPE */
 #pragma weak MPI_Type_create_f90_complex = PMPI_Type_create_f90_complex
 #pragma weak MPI_Type_create_f90_integer = PMPI_Type_create_f90_integer
 #pragma weak MPI_Type_create_f90_real = PMPI_Type_create_f90_real
-#pragma weak mpi_type_create_f90_complex_ = PMPI_Type_create_f90_complex
-#pragma weak mpi_type_create_f90_integer_ = PMPI_Type_create_f90_integer
-#pragma weak mpi_type_create_f90_real_ = PMPI_Type_create_f90_real
 /* MPI_T methods */
 // PROFILER MPI_T MPI_T methods
 #pragma weak MPI_T_init_thread = PMPI_T_init_thread

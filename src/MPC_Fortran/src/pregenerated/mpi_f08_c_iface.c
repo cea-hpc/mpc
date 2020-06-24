@@ -1178,9 +1178,15 @@ int * ierror)
 *ierror = MPI_Win_get_group( win,
 group);
 }
-/* MPI_Errhandler_create NOT IMPLEMENTED in MPC */
 
-
+void mpi_errhandler_create_f08(
+MPI_Handler_function* function,
+MPI_Errhandler* errhandler,
+int * ierror)
+{
+*ierror = MPI_Errhandler_create( function,
+errhandler);
+}
 
 void mpi_cart_create_f08(
 MPI_Comm old_comm,

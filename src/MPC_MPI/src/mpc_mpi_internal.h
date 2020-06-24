@@ -21,7 +21,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 //#include "sctk_alloc.h"
-#include "mpc_reduction.h"
 
 #include "mpi_alloc_mem.h"
 #include "nbc.h"

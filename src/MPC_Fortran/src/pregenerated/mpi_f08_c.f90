@@ -2235,8 +2235,23 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Win_get_group_c
 
-! MPI_Errhandler_create NOT IMPLEMENTED in MPC
 
+function MPI_Errhandler_create_c( function,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_errhandler_create_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(c_ptr), value , intent(in) :: function     !MPI_Handler_function* function
+integer(c_int), intent(out) :: errhandler     !MPI_Errhandler* errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Errhandler_create_c
 
 
 function MPI_Cart_create_c( old_comm,&

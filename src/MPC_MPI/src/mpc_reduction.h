@@ -27,7 +27,7 @@ extern "C"
 #endif
 
 #include "mpc.h"
-
+#include <mpc_common_types.h>
 #include "mpc_mpi_comm_lib.h"
 
 typedef struct {float a ; int b;} mpc_float_int;
@@ -100,18 +100,18 @@ MPC_DEFINED_FUNCS(MPC_INTEGER1,int8_t,name);			\
 MPC_DEFINED_FUNCS(MPC_INTEGER2,int16_t,name);			\
 MPC_DEFINED_FUNCS(MPC_INTEGER4,int32_t,name);			\
 MPC_DEFINED_FUNCS(MPC_INTEGER8,int64_t,name);			\
-MPC_DEFINED_FUNCS (MPC_UINT8_T, uint8_t,name);   \
-MPC_DEFINED_FUNCS (MPC_UINT16_T, uint16_t,name);   \
-MPC_DEFINED_FUNCS (MPC_UINT32_T, uint32_t,name);   \
-MPC_DEFINED_FUNCS (MPC_UINT64_T, uint64_t,name);   \
-MPC_DEFINED_FUNCS (MPC_INT8_T, int8_t,name);   \
-MPC_DEFINED_FUNCS (MPC_INT16_T, int16_t,name);   \
-MPC_DEFINED_FUNCS (MPC_INT32_T, int32_t,name);   \
-MPC_DEFINED_FUNCS (MPC_INT64_T, int64_t,name);   \
-MPC_DEFINED_FUNCS (MPC_COUNT, size_t, name);       \
-MPC_DEFINED_FUNCS (MPC_AINT, size_t, name);         \
-MPC_DEFINED_FUNCS (MPC_OFFSET, size_t, name);       \
-MPC_DEFINED_FUNCS (MPC_C_BOOL, char, name)
+MPC_DEFINED_FUNCS(MPC_UINT8_T, uint8_t,name);   \
+MPC_DEFINED_FUNCS(MPC_UINT16_T, uint16_t,name);   \
+MPC_DEFINED_FUNCS(MPC_UINT32_T, uint32_t,name);   \
+MPC_DEFINED_FUNCS(MPC_UINT64_T, uint64_t,name);   \
+MPC_DEFINED_FUNCS(MPC_INT8_T, int8_t,name);   \
+MPC_DEFINED_FUNCS(MPC_INT16_T, int16_t,name);   \
+MPC_DEFINED_FUNCS(MPC_INT32_T, int32_t,name);   \
+MPC_DEFINED_FUNCS(MPC_INT64_T, int64_t,name);   \
+MPC_DEFINED_FUNCS(MPC_COUNT, size_t, name);       \
+MPC_DEFINED_FUNCS(MPC_AINT, size_t, name);         \
+MPC_DEFINED_FUNCS(MPC_OFFSET, size_t, name);       \
+MPC_DEFINED_FUNCS(MPC_C_BOOL, char, name)
 
 MPC_PROTOTYPES (MIN);
 MPC_PROTOTYPES (MAX);

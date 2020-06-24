@@ -466,6 +466,11 @@ module procedure MPI_Win_get_group_f08
 end interface
 
 
+interface MPI_Errhandler_create
+module procedure MPI_Errhandler_create_f08
+end interface
+
+
 interface MPI_Cart_create
 module procedure MPI_Cart_create_f08
 end interface
@@ -1072,6 +1077,7 @@ private :: MPI_Topo_test_f08
 private :: MPI_Buffer_attach_f08
 private :: MPI_Win_call_errhandler_f08
 private :: MPI_Win_get_group_f08
+private :: MPI_Errhandler_create_f08
 private :: MPI_Cart_create_f08
 private :: MPI_Status_set_cancelled_f08
 private :: MPI_Type_struct_f08
@@ -4927,8 +4933,40 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Win_get_group_f08
 
-! MPI_Errhandler_create NOT IMPLEMENTED in MPC
 
+subroutine MPI_Errhandler_create_f08( function,&
+errhandler,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Handler_function), intent(in) :: function
+type(MPI_Errhandler), intent(out) :: errhandler
+integer, optional, intent(out) :: ierror
+
+
+type(c_ptr) :: function_c     !MPI_Handler_function* function
+integer(c_int) :: errhandler_c     !MPI_Errhandler* errhandler
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+function_c = function%val
+
+ret = MPI_Errhandler_create_c(function_c,&
+errhandler_c,&
+ierror_c)
+
+errhandler%val = errhandler_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Errhandler_create_f08
 
 
 subroutine MPI_Cart_create_f08( old_comm,&

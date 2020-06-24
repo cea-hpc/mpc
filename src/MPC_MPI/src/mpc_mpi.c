@@ -30,6 +30,7 @@
 #include "sctk_handle.h"
 #include "mpc_mpi_halo.h"
 
+
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 #include "mpc_mpi_weak.h"
 #endif
@@ -45,6 +46,8 @@
 #ifdef MPC_USE_PORTALS
 #include <sctk_ptl_offcoll.h>
 #endif
+
+#include "mpc_reduction.h"
 
 /*******************
 * FORTRAN SUPPORT *

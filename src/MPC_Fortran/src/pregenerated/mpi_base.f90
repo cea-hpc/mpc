@@ -718,6 +718,17 @@ SUBROUTINE MPI_WIN_GET_GROUP(win,group,ierror)
 END SUBROUTINE MPI_WIN_GET_GROUP
 
 
+SUBROUTINE MPI_ERRHANDLER_CREATE(function,errhandler,ierror)
+   INTERFACE 
+	SUBROUTINE function(vv0,vv1)
+	INTEGER vv0,vv1
+	END SUBROUTINE
+	END INTERFACE
+   INTEGER	errhandler
+   INTEGER	ierror
+END SUBROUTINE MPI_ERRHANDLER_CREATE
+
+
 SUBROUTINE MPI_CART_CREATE(old_comm,ndims,dims,&
    periods,reorder,comm_cart,&
    ierror)
