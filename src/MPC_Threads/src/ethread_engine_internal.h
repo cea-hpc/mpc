@@ -777,7 +777,7 @@ static inline void ___mpc_thread_ethread_wait_for_value_and_poll(_mpc_thread_eth
 				func(arg);
 			}
 
-			if(128 < i)
+			if(4096 < i)
 			{
 				___mpc_thread_ethread_sched_yield_vp(vp, cur);
 				i = 0;
