@@ -604,12 +604,23 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
 
                 if test -z "$lib_prefix"
                 then
-                        lib_prefix=$whole_prefix
+                        lib_prefix="$whole_prefix/lib"
+                else
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                            export PKG_CONFIG_PATH="${lib_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                        fi
+                fi
+
+                if test ! -z "$whole_prefix"
+                then
+                        if test -d "${whole_prefix}/lib/pkgconfig"; then
+                            export PKG_CONFIG_PATH="${whole_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                        fi
                 fi
 
                 if test -z "$inc_prefix"
                 then
-                        inc_prefix=$whole_prefix
+                        inc_prefix="$whole_prefix/include/"
                 fi
 
                 AC_SUBST([$4_CFLAGS])
@@ -669,7 +680,7 @@ MPC_REQUIRED_DEPENDENCY([libxml-2.0], [$mpc_dep_found])
 MPC_DETECT_DEPENDENCY([hwloc.h],[hwloc], [hwloc_topology_init], [HWLOC], [< 2.0.0])
 MPC_REQUIRED_DEPENDENCY([hwloc], [$mpc_dep_found])
 
-MPC_DETECT_DEPENDENCY([opa.h],[openpa], [OPA_load_int], [OPA])
+MPC_DETECT_DEPENDENCY([opa_config.h],[openpa], [OPA_load_int], [OPA])
 MPC_REQUIRED_DEPENDENCY([openpa], [$mpc_dep_found])
 
 
