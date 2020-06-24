@@ -802,6 +802,9 @@
 /* MPC_Fortran module was enabled */
 #undef MPC_FORTRAN
 
+/* MPC_Fortran module was enabled */
+#undef MPC_FORTRAN_ENABLED
+
 /* libunwind support is enabled */
 #undef MPC_HAVE_LIBUNWIND
 

@@ -29231,6 +29231,11 @@ fi
 
 
 
+if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
+
+$as_echo "#define MPC_FORTRAN_ENABLED 1" >>confdefs.h
+
+fi
 
 #
 # MPI IO Support (ROMIO)

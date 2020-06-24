@@ -182,6 +182,9 @@ int MPIR_Get_node_id(MPI_Comm comm, int rank, int *id) {
 /* C2F/F2C Functions                                                    */
 /************************************************************************/
 
+
+#ifdef MPC_FORTRAN_ENABLED
+
 /* These requests conversion functions are needed because
  * the fortran interface in ROMIO reffers to the old IOWait
  * requests, therefore we just have to remap these calls to
@@ -198,6 +201,8 @@ MPI_Request PMPIO_Request_f2c(MPI_Fint rid )
 {
 	return MPI_Request_f2c( rid );
 }
+
+#endif
 
 
 #if 0

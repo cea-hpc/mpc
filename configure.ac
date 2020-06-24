@@ -1689,6 +1689,9 @@ fi
 AM_CONDITIONAL([MPC_FORTRAN_ENABLED], [test "x${MPC_FORTRAN_ENABLED}" = "xyes"])
 AC_SUBST([MPC_FORTRAN_ENABLED])
 
+if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
+        AC_DEFINE([MPC_FORTRAN_ENABLED], [1], [MPC_Fortran module was enabled])
+fi
 
 #
 # MPI IO Support (ROMIO)
