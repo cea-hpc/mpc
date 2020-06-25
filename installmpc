@@ -94,7 +94,7 @@ check_retcode()
 #
 check_prefix_is_clean()
 {
-	if test -d "$PREFIX/lib/" -a -d "$PREFIX/bin/" -a -f "$PREFIX/bin/mpcvars.sh"; then
+	if test -d "$PREFIX/lib/" -a -d "$PREFIX/bin/"; then
 		return
 	else
 		# Apparently prefix was cleared somehow
