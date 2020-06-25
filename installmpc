@@ -387,8 +387,6 @@ propagate_build_env()
 	export LD_LIBRARY_PATH
 }
 
-
-
 #
 # Check for avoiding GLIBC 2.28
 #
@@ -396,16 +394,19 @@ check_glibc_is_compatible_with_priv()
 {
 	have_cmd "ldd"
 
+	if test "x${MPC_NOGLIBC_CHECK}" = "x1"; then
+		return
+	fi
+
 	if test "x${HAVE_CMD}" = "xyes"; then
-		GLIBC=$(ldd --version | head -n 1 | rev | cut -d " " -f 1 | rev)
-		(echo "${GLIBC}" | grep "2.28" || true) > /dev/null
-		if test "x$?" != "x0"; then
-			die "GLIBC 2.28 is not compatible with privarization yet" || true
+		GLIBC=$(ldd --version | head -n 1 | rev | cut -d " " -f 1 | rev | sed "s/\.//g")
+		# Check for incompatibilities in versions >= 2.27
+		if test $GLIBC -gt 227; then
+			echo "If you want to bypass this check set MPC_NOGLIBC_CHECK=1"
+			die "GLIBC $GLIBC is not compatible with privarization yet (consider disabling autopriv)" || true
 		fi
 	fi
 }
-
-
 
 # Build spack package name
 # Args:
