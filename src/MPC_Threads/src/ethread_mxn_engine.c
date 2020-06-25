@@ -174,8 +174,8 @@ static int _mpc_thread_ethread_mxn_engine_sched_migrate()
 	self->dump_for_migration = 1;
 	mpc_common_nodebug("Start migration _mpc_thread_ethread_mxn_engine_sched_migrate");
 	res =
-	        ___mpc_thread_ethread_sched_yield_vp( (_mpc_thread_ethread_virtual_processor_t *)
-	                                              self->vp, self);
+		___mpc_thread_ethread_sched_yield_vp( (_mpc_thread_ethread_virtual_processor_t *)
+		                                      self->vp, self);
 	mpc_common_nodebug("Start migration _mpc_thread_ethread_mxn_engine_sched_migrate DONE");
 	return res;
 }
@@ -378,24 +378,23 @@ static int _mpc_thread_ethread_mxn_engine_user_create(_mpc_thread_ethread_t *thr
                                                       void *(*start_routine)(void *), void *arg)
 {
 	static unsigned int pos = 0;
-	_mpc_thread_ethread_per_thread_t *       current;
-	_mpc_thread_ethread_virtual_processor_t *current_vp;
-
-	current = _mpc_thread_ethread_mxn_engine_self();
-
-	current_vp = _mpc_thread_ethread_mxn_engine_vp_list[pos];
 
 	assume(pos < sctk_nb_vp_initialized);
 	assume(_mpc_thread_ethread_mxn_engine_vp_list[pos] != NULL);
 
-	mpc_common_nodebug("Put %d", pos);
+	_mpc_thread_ethread_per_thread_t *current = _mpc_thread_ethread_mxn_engine_self();
+
+	/* This is where Threads are scattered in round-robin when doing
+	   MxN Scheduling */
+	_mpc_thread_ethread_virtual_processor_t *current_vp = _mpc_thread_ethread_mxn_engine_vp_list[pos];
+
+	mpc_common_debug("Non VP thread creation on VP %d / %d", pos, sctk_nb_vp_initialized);
 	pos = (pos + 1) % sctk_nb_vp_initialized;
 
 	if(attr != NULL)
 	{
 		if(attr->ptr->binding != (unsigned int)-1)
 		{
-			mpc_common_nodebug("Thread pinned to core %d", attr->ptr->binding);
 			assume(attr->ptr->binding < sctk_nb_vp_initialized);
 			current_vp = _mpc_thread_ethread_mxn_engine_vp_list[attr->ptr->binding];
 		}
@@ -779,8 +778,8 @@ static int _mpc_thread_ethread_mxn_engine_thread_proc_migration(const int cpu)
 	}
 
 	mpc_common_nodebug("task %p Jump from %d to %d(%d) done", current, last, cpu,
-	             (_mpc_thread_ethread_virtual_processor_t
-	              *)(_mpc_thread_ethread_mxn_engine_self()->vp)->rank);
+	                   (_mpc_thread_ethread_virtual_processor_t
+	                    *)(_mpc_thread_ethread_mxn_engine_self()->vp)->rank);
 
 	sctk_assert(current->vp == _mpc_thread_ethread_mxn_engine_vp_list[cpu]);
 	return last;

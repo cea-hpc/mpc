@@ -134,6 +134,8 @@ int mpc_topology_has_numa_nodes(void);
 */
 int mpc_topology_bind_to_cpu(int i);
 
+/** @brief Bind the current thread to the whole process
+*/
 void mpc_topology_bind_to_process_cpuset();
 
 /** @brief Print the topology tree into a file

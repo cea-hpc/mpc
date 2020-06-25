@@ -876,12 +876,6 @@ static void *___vp_thread_start_routine(sctk_thread_data_t *__arg)
 
 	assume_m(mpc_topology_get_current_cpu() == ( int )tmp.bind_to, "___vp_thread_start_routine Bad Pinning");
 
-	/* Bind the thread to the right core if we are using pthreads */
-	if(mpc_common_get_flags()->thread_library_init == mpc_thread_pthread_engine_init)
-	{
-		mpc_topology_bind_to_cpu(tmp.bind_to);
-	}
-
 	//mark the given TLS as currant thread allocator
 	sctk_set_tls(tmp.tls);
 	//do NUMA migration if required
@@ -950,6 +944,7 @@ int _mpc_thread_create_vp(mpc_thread_t *restrict __threadp,
 	int new_binding = mpc_thread_get_task_placement(core);
 
 	core++;
+	mpc_common_debug_info("Task %d is bound to core %d", local_task_id, new_binding);
 	int previous_binding = mpc_topology_bind_to_cpu(new_binding);
 
 	assert(new_binding == mpc_topology_get_current_cpu() );
@@ -1171,24 +1166,16 @@ int mpc_thread_core_thread_create(mpc_thread_t *restrict __threadp,
 	}
 
 	mpc_common_nodebug("Create Thread with MPI rank %d", tmp->task_id);
-	int scope_init;
-#if 0
-	/* Must be disabled because it unbind midcro VPs */
-	if(__attr != NULL)
-	{
-		mpc_thread_attr_getscope(__attr, &scope_init);
-		mpc_common_nodebug("Thread to create with scope %d ", scope_init);
 
-		if(scope_init == SCTK_THREAD_SCOPE_SYSTEM)
-		{
-			mpc_topology_bind_to_process_cpuset();
-		}
-	}
-	else
+	/* Bind the user thread to the whole process if we are using pthreads
+	   as otherwise they are stuck to the VP's CPU */
+	if(mpc_common_get_flags()->thread_library_init == mpc_thread_pthread_engine_init)
 	{
 		mpc_topology_bind_to_process_cpuset();
 	}
-#endif
+
+	int scope_init;
+
 #ifdef MPC_USE_EXTLS
 	extls_ctx_t * old_ctx = sctk_extls_storage;
 	extls_ctx_t **cur_tx  = ( (extls_ctx_t **)sctk_get_ctx_addr() );
