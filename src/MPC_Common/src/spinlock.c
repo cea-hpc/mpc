@@ -43,11 +43,13 @@ int mpc_common_spinlock_lock( mpc_common_spinlock_t *lock )
 	return 0;
 }
 
-int _mpc_common_spinlock_trylock( mpc_common_spinlock_t *lock )
+int mpc_common_spinlock_trylock( mpc_common_spinlock_t *lock )
 {
-	OPA_int_t *p =  (OPA_int_t *) lock;
-	return sctk_test_and_set( p );
-
+	if(*((volatile int*)lock) != 1 )
+	{
+		OPA_int_t *p =  (OPA_int_t *) lock;
+		return sctk_test_and_set( p );
+	}
 	return 1;
 }
 
