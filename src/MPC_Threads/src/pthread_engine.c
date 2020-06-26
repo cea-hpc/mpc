@@ -71,6 +71,10 @@ static void _mpc_thread_pthread_engine_wait_for_value_and_poll(volatile int *dat
 			{
 				kthread_usleep(i >> 10);
 			}
+			else
+			{
+				sctk_cpu_relax();
+			}
 
 			i++;
 		}

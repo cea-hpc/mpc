@@ -546,21 +546,17 @@ static inline void __poll_send(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 	LOAD_DEVICE(rail_ib);
 	LOAD_CONFIG(rail_ib);
 
-#ifndef MPC_IN_PROCESS_MODE
     OPA_int_t max_cq_poll = { 0 };
 
     int polling = OPA_fetch_and_incr_int(&max_cq_poll);
 
     if(polling < POLL_CQ_CONCURENCY)
     {
-#endif
 	    /* Poll sent messages */
         __poll_cq(rail, device->send_cq, config->wc_out_number, poll, sctk_network_poll_send);
-#ifndef MPC_IN_PROCESS_MODE
     }
 
     OPA_decr_int(&max_cq_poll);
-#endif
 }
 
 static inline void __poll_recv(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
@@ -571,22 +567,18 @@ static inline void __poll_recv(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 	LOAD_CONFIG(rail_ib);
 
 
-#ifndef MPC_IN_PROCESS_MODE
     OPA_int_t max_cq_poll = { 0 };
 
     int polling = OPA_fetch_and_incr_int(&max_cq_poll);
 
     if(polling < POLL_CQ_CONCURENCY)
     {
-#endif
 	    /* Poll received messages */
 	    __poll_cq(rail, device->recv_cq, config->wc_in_number, poll, sctk_network_poll_recv);
-#ifndef MPC_IN_PROCESS_MODE
     }
 
     OPA_decr_int(&max_cq_poll);
 
-#endif
 
 
 }

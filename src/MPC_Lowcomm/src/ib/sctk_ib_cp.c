@@ -475,13 +475,11 @@ int _mpc_lowcomm_ib_cp_ctx_poll(struct sctk_ib_polling_s *poll, int task_id)
 		POLL_LIST(poll, task->local_ibufs_list, task->local_ibufs_list_lock, 1, nb_found);
 	}
 
-#ifndef MPC_IN_PROCESS_MODE
 	/* If nothing on our NUMA poll for others */
 	if(nb_found == 0)
 	{
 		_mpc_lowcomm_ib_cp_ctx_steal(poll, 1);
 	}
-#endif
 
 	return 0;
 }

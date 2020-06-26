@@ -552,12 +552,8 @@ void sctk_control_message_process()
 
   __inside_sctk_control_message_process = 1;
 
-#ifdef MPC_IN_PROCESS_MODE
-  __sctk_control_message_process(NULL);
-#else
   sctk_topological_polling_tree_poll(&___control_message_list_polling_tree,
                                      __sctk_control_message_process, NULL);
-#endif
 
   __inside_sctk_control_message_process = 0;
 }
@@ -566,7 +562,5 @@ void sctk_control_message_process()
 
 void sctk_control_message_init()
 {
-#ifndef MPC_IN_PROCESS_MODE
 	sctk_topological_polling_tree_init(  &___control_message_list_polling_tree, SCTK_POLL_SOCKET, SCTK_POLL_MACHINE,  0 );
-#endif
 }

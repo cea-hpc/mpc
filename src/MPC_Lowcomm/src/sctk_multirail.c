@@ -1006,7 +1006,7 @@ void sctk_multirail_notify_anysource(int polling_task_id, int blocking)
 
 		if(rail->notify_any_source_message)
 		{
-			#ifdef MPC_IN_PROCESS_MODE
+			#if MPC_IN_PROCESS_MODE
 				(rail->notify_any_source_message)(polling_task_id, blocking, rail);
 			#else
 				struct sctk_anysource_polling_ctx ctx;
