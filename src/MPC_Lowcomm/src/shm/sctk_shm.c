@@ -210,10 +210,10 @@ static inline void __shm_poll()
 		return;
 	}
 
+
 	while(1)
 	{
 		cell = sctk_shm_recv_cell();
-
 		if(!cell)
 		{
 			break;
@@ -255,7 +255,6 @@ static inline void __shm_poll()
 			default:
 				abort();
 		}
-
 	}
 
 	if(!cell)
