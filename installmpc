@@ -1276,17 +1276,6 @@ fi
 # Basic optionnal dependencies
 find_in_prefix_or_use_spack_optionnal "libunwind" "" "spackonly" "${LIBUNWIND_PREFIX}"
 
-# Dependencies which can be deactivated
-find_in_prefix_or_use_spack "autopriv" "" "${AUTOPRIV_PREFIX}"
-
-if test "x${DEP_FOUND}" = "xno"; then
-	assert_cmd "gcc"
-	assert_cmd "g++"
-	check_glibc_is_compatible_with_priv
-	# Could not use spack now installing manually
-	build_configure_based_package "autopriv" "0.5.0" "$AUTOPRIV_BUILD_PARAMETERS"
-fi
-
 
 find_in_prefix_or_use_spack "hydra" "" "${HYDRA_PREFIX}"
 
@@ -1320,6 +1309,16 @@ if test "x${DEP_FOUND}" = "xno"; then
 	build_configure_based_package "mpcalloc" "0.1" "$MPCALLOC_BUILD_PARAMETERS"
 fi
 
+# Dependencies which can be deactivated
+find_in_prefix_or_use_spack "autopriv" "" "${AUTOPRIV_PREFIX}"
+
+if test "x${DEP_FOUND}" = "xno"; then
+	assert_cmd "gcc"
+	assert_cmd "g++"
+	check_glibc_is_compatible_with_priv
+	# Could not use spack now installing manually
+	build_configure_based_package "autopriv" "0.5.0" "$AUTOPRIV_BUILD_PARAMETERS"
+fi
 
 # It is now time to configure MPC
 
