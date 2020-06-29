@@ -32,16 +32,17 @@ safe_exec()
 ##################### FUNCTION ###################
 do_check()
 {
-	if test -d MPC_${VERSION}; then safe_exec rm -rf MPC_${VERSION}; fi
-	safe_exec tar -xzf MPC_${VERSION}.tar.gz
-	safe_exec cp -r ./MPC_Test_Suite ./MPC_${VERSION}/
-	safe_exec cd MPC_${VERSION}/MPC_Test_Suite
-	./mpc_validation --build --submit
-	safe_exec ./mpc_validation --test --submit --fast
+	if test -d mpcframework-${VERSION}; then safe_exec rm -rf mpcframework-${VERSION}; fi
+	safe_exec tar -xzf mpcframework-${VERSION}.tar.gz
+	safe_exec cp -r ./MPC_Test_Suite ./mpcframework-${VERSION}/
+	safe_exec cd mpcframework-${VERSION}/MPC_Test_Suite
+	safe_exec rm -fr ./build/
+	./mpc_validation --build --color 
+	safe_exec ./mpc_validation --test --color --select=simple
 }
 
 ##################### SECTION ####################
-if test ! -f mpcframework/.MPC_version && test ! -d tools && test ! -d mpcframework; then
+if test ! -f ./installmpc; then
 	echo "Please run this script from the root directory of MPC" 1>&2
 	exit 1
 fi
@@ -53,16 +54,19 @@ if test ! -e .git; then
 fi
 
 ##################### SECTION ####################
-VERSION=$(cd ./mpcframework && ./MPC_Tools/mpc_print_version)
+VERSION=$(./utils/get_version)
 echo "MPC version for this archive will be $VERSION"
 test -f ./mpcframework-${VERSION}.tar.gz && echo "A file named mpcframework-${VERSION}.tar.gz already exist!" && exit 1
-
-git describe --exact-match MPC_${VERSION} > /dev/null 2>&1 || echo "If this is a release archive, please create an annotated tag for the following hash: `git rev-parse HEAD`"
 
 echo "git archive --format=tar.gz --prefix=mpcframework-${VERSION}/ HEAD > mpcframework-${VERSION}.tar.gz"
 git archive --format=tar.gz --prefix=mpcframework-${VERSION}/ HEAD > mpcframework-${VERSION}.tar.gz || exit 1
 
-echo "Archive SHA256 sum: `command -v sha256sum > /dev/null 2>&1 && sha256sum mpcframework-${VERSION}.tar.gz`"
+echo "$(sha512sum mpcframework-${VERSION}.tar.gz)" > ./mpcframework-${VERSION}.tar.gz.digest
+echo "$(sha256sum mpcframework-${VERSION}.tar.gz)" >> ./mpcframework-${VERSION}.tar.gz.digest
+echo "$(md5sum mpcframework-${VERSION}.tar.gz)" >> ./mpcframework-${VERSION}.tar.gz.digest
+
+echo "Archive sum (./mpcframework-${VERSION}.tar.gz.digest):"
+cat ./mpcframework-${VERSION}.tar.gz.digest
 
 if test "$1" = "--check"; then
 	do_check
