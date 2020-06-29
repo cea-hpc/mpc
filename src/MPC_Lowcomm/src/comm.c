@@ -1622,6 +1622,10 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 		SCTK_MSG_SRC_TASK_SET(msg, source_task);
 		SCTK_MSG_DEST_TASK_SET(msg, dest_task);
 
+		assert(source_task < mpc_common_get_task_count());
+		assert(dest_task < mpc_common_get_task_count());
+
+
 		if(source_task != SCTK_ANY_SOURCE)
 		{
 			SCTK_MSG_SRC_PROCESS_SET(msg, sctk_get_process_rank_from_task_rank(SCTK_MSG_SRC_TASK(msg) ) );
@@ -1633,6 +1637,10 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 
 
 		SCTK_MSG_DEST_PROCESS_SET(msg, sctk_get_process_rank_from_task_rank(SCTK_MSG_DEST_TASK(msg) ) );
+
+		assert(SCTK_MSG_SRC_PROCESS(msg) < mpc_common_get_process_count());
+		assert( SCTK_MSG_DEST_PROCESS(msg) < mpc_common_get_process_count());
+
 
 		mpc_common_debug("%s [T(%d -> %d) P(%d -> %d) C %d CL %s TA %d REQ %p]",
 		                 mpc_lowcomm_request_type_name[request_type],

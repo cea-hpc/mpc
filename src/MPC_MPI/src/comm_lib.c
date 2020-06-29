@@ -4031,7 +4031,7 @@ int _mpc_cl_comm_create_from_intercomm(mpc_lowcomm_communicator_t comm,
 	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific;
 
 	task_specific = _mpc_cl_per_mpi_process_ctx_get();
-	rank          = mpc_lowcomm_communicator_rank(SCTK_COMM_WORLD, task_specific->task_id);
+	rank          = task_specific->task_id;
 	sctk_assert(comm != SCTK_COMM_NULL);
 	_mpc_cl_barrier(comm);
 
@@ -4091,7 +4091,7 @@ static inline int __mpc_cl_comm_create(mpc_lowcomm_communicator_t comm, _mpc_cl_
 	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific;
 
 	task_specific = _mpc_cl_per_mpi_process_ctx_get();
-	rank          = mpc_lowcomm_communicator_rank(SCTK_COMM_WORLD, task_specific->task_id);
+	rank          = task_specific->task_id;
 	grank         = mpc_lowcomm_communicator_rank(comm, task_specific->task_id);
 	sctk_assert(comm != SCTK_COMM_NULL);
 	_mpc_cl_barrier(comm);
