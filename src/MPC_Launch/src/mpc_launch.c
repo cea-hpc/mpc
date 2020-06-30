@@ -483,7 +483,7 @@ static void __set_default_values()
 	}
 
 	mpc_common_get_flags()->task_number    = sctk_runtime_config_get()->modules.launcher.nb_task;
-	mpc_common_get_flags()->process_number = sctk_runtime_config_get()->modules.launcher.nb_process;
+	mpc_common_get_flags()->process_number = 0;
 #endif
 	mpc_common_get_flags()->processor_number        = sctk_runtime_config_get()->modules.launcher.nb_processor;
 	mpc_common_get_flags()->verbosity               = sctk_runtime_config_get()->modules.launcher.verbosity;
@@ -533,7 +533,7 @@ static void __unpack_arguments()
 	}
 }
 
-static void __set_mpc_common_process_number(void)
+static void __check_cli_params(void)
 {
 	if(!mpc_common_get_flags()->task_number)
 	{
@@ -549,11 +549,6 @@ static void __set_mpc_common_process_number(void)
 			              mpc_common_get_flags()->task_number,
 			              mpc_common_get_flags()->process_number);
 		}
-	}
-
-	if(mpc_common_get_flags()->process_number > 1)
-	{
-		mpc_common_set_process_count(mpc_common_get_flags()->process_number);
 	}
 }
 
@@ -604,10 +599,13 @@ void mpc_launch_init_runtime()
 	__create_autokill_thread();
 	__set_default_values();
 	__unpack_arguments();
-	__set_mpc_common_process_number();
+
+
+	__check_cli_params();
 
 	/* As a first step initialize the PMI */
 	mpc_launch_pmi_init();
+
 
 	__topology_init();
 

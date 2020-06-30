@@ -328,13 +328,6 @@ int mpc_launch_pmi_init()
 	return __mpc_pmi_init_lib_mode();
 #endif
 
-	/* Note that process count is first set in sctk_lauch
-	   according to command line parameters */
-	if ( mpc_common_get_process_count() <= 1 )
-	{
-		return MPC_LAUNCH_PMI_FAIL;
-	}
-
 	int rc;
 	// Initialized PMI/SLURM
 	rc = PMI_Init( &pmi_context.spawned );
@@ -490,6 +483,22 @@ int mpc_launch_pmi_init()
 	/* Set the whole context */
 	mpc_common_set_process_rank( pmi_context.process_rank );
 	mpc_common_set_process_count( pmi_context.process_count );
+
+	if( 0 < mpc_common_get_flags()->process_number)
+	{
+		/* Ensure coherency if a process number was on CLI */
+		assume(mpc_common_get_flags()->process_number == pmi_context.process_count);
+	}
+
+	/* Get process number from PMI */
+	mpc_common_get_flags()->process_number = pmi_context.process_count;
+
+	/* Ensure N is at least P for bare srun configurations */
+	if(mpc_common_get_flags()->task_number < mpc_common_get_flags()->process_number)
+	{
+		mpc_common_get_flags()->task_number = mpc_common_get_flags()->process_number;
+	}
+
 	int node_rank;
 	__mpc_pmi_get_node_rank( &node_rank );
 	mpc_common_set_node_rank( node_rank );
