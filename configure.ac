@@ -52,8 +52,8 @@
 
 #Autoconf initialization w/ project name, version, bug report email, package name & website
 AC_INIT([Multi-Processor Computing Framework],
-	[m4_esyscmd_s([./utils/get_version])],
-	[france@paratools.com], [mpcframework], [https://mpc.hpcframework.com])
+        [m4_esyscmd_s([./utils/get_version])],
+        [france@paratools.com], [mpcframework], [https://mpc.hpcframework.com])
 
 
 # The first check is that the configure was generated with
@@ -115,8 +115,8 @@ LT_LANG([C])
 MPC_CONFIG_RELOADED="no"
 
 if test -f ${PWD}/bin/mpc_build_env.sh; then
-	MPC_CONFIG_RELOADED="yes"
-	. ${PWD}/bin/mpc_build_env.sh
+        MPC_CONFIG_RELOADED="yes"
+        . ${PWD}/bin/mpc_build_env.sh
 fi
 
 ################################
@@ -171,7 +171,7 @@ MPC_TARGET_ARCHITECTURE="$host_cpu"
 AC_MSG_CHECKING([Support for target architecture])
 if test -z "${MPC_SUPPORTED_ARCHITECTURES_LIST##*$MPC_TARGET_ARCHITECTURE*}" ; then
         AC_MSG_RESULT([$MPC_TARGET_ARCHITECTURE])
-	AC_SUBST([MPC_TARGET_ARCHITECTURE])
+        AC_SUBST([MPC_TARGET_ARCHITECTURE])
 else
         AC_MSG_RESULT([No])
         AC_MSG_ERROR([Current architecture is not supported yet. Please contact support team])
@@ -189,8 +189,8 @@ AM_PROG_AS
 AM_PATH_PYTHON([],[HAVE_PYTHON="yes"],[HAVE_PYTHON="no"])
 
 if test "x${HAVE_PYTHON}" = "xyes"; then
-	AX_PYTHON_MODULE([json])
-	AX_PYTHON_MODULE([argparse])
+        AX_PYTHON_MODULE([json])
+        AX_PYTHON_MODULE([argparse])
 fi
 
 AM_CONDITIONAL([HAVE_PYTHON], [test "x$HAVE_PYTHON" = "xyes" -a "x${HAVE_PYMOD_JSON}" = "xyes" -a "x${HAVE_PYMOD_ARGPARSE}" = "xyes"])
@@ -209,50 +209,50 @@ AM_CONDITIONAL([CAN_USE_PANDOC], [test "x$PANDOC" != "x:"])
 AC_HEADER_STDC
 AC_CHECK_HEADER_STDBOOL
 AC_CHECK_HEADERS([ aio.h \
-	asm/unistd.h \
-	assert.h \
-	ctype.h \
-	errno.h \
-	execinfo.h \
-	elf.h \
-	fcntl.h \
-	getopt.h \
-	hwloc.h \
-	immintrin.h \
-	limits.h \
-	linux/personality.h \
-	netdb.h \
-	netinet/in.h \
-	netinet/tcp.h \
-	pthread.h \
-	regex.h \
-	sched.h \
-	semaphore.h \
-	setjmp.h \
-	signal.h \
-	stddef.h \
-	stdlib.h \
-	stdint.h \
-	stdbool.h \
-	string.h \
-	sys/mman.h \
-	sys/param.h \
-	sys/pstat.h \
-	sys/socket.h \
-	sys/stat.h \
-	sys/syscall.h \
-	sys/time.h \
-	sys/types.h \
-	sys/ucontext.h \
-	sys/un.h \
-	sys/utsname.h \
-	sys/wait.h \
-	time.h \
-	ucontext.h \
-	unistd.h \
-	wchar.h \
-	valgrind/memcheck.h \
-	valgrind/valgrind.h \
+        asm/unistd.h \
+        assert.h \
+        ctype.h \
+        errno.h \
+        execinfo.h \
+        elf.h \
+        fcntl.h \
+        getopt.h \
+        hwloc.h \
+        immintrin.h \
+        limits.h \
+        linux/personality.h \
+        netdb.h \
+        netinet/in.h \
+        netinet/tcp.h \
+        pthread.h \
+        regex.h \
+        sched.h \
+        semaphore.h \
+        setjmp.h \
+        signal.h \
+        stddef.h \
+        stdlib.h \
+        stdint.h \
+        stdbool.h \
+        string.h \
+        sys/mman.h \
+        sys/param.h \
+        sys/pstat.h \
+        sys/socket.h \
+        sys/stat.h \
+        sys/syscall.h \
+        sys/time.h \
+        sys/types.h \
+        sys/ucontext.h \
+        sys/un.h \
+        sys/utsname.h \
+        sys/wait.h \
+        time.h \
+        ucontext.h \
+        unistd.h \
+        wchar.h \
+        valgrind/memcheck.h \
+        valgrind/valgrind.h \
 ])
 
 #### EXTERNAL LIBRARIES #### {sec:libraries}
@@ -364,47 +364,47 @@ AC_CHECK_SIZEOF(sigset_t,,[#include <signal.h>])
 #
 promote_to_rpath()
 {
-	# In MPC in order to fortify link/runtime dependencies
-	# we prefer to add rpath as much as possible to be
-	# more independent from the build env (closer to static build)
-	# the role of this helper is to look for libdirs and 
-	# add them as rpaths (if not already present)
+        # In MPC in order to fortify link/runtime dependencies
+        # we prefer to add rpath as much as possible to be
+        # more independent from the build env (closer to static build)
+        # the role of this helper is to look for libdirs and 
+        # add them as rpaths (if not already present)
 
-	# Remove space in GCC's library search path args
-	CURRENT_RPATH=""
+        # Remove space in GCC's library search path args
+        CURRENT_RPATH=""
 
-	# Extract existing RPATH
-	for arg in $@
-	do
-		if echo "$arg" | grep "^\\-Wl,\\-rpath=" > /dev/null; then
-			# Ensure path exists
-			RPATH=$(echo "$arg" | sed s/^-Wl,-rpath=//g)
-			if test -d "${RPATH}"; then
-				CURRENT_RPATH="${CURRENT_RPATH}:$RPATH"
-			fi
-		fi
-	done
+        # Extract existing RPATH
+        for arg in $@
+        do
+                if echo "$arg" | grep "^\\-Wl,\\-rpath=" > /dev/null; then
+                        # Ensure path exists
+                        RPATH=$(echo "$arg" | sed s/^-Wl,-rpath=//g)
+                        if test -d "${RPATH}"; then
+                                CURRENT_RPATH="${CURRENT_RPATH}:$RPATH"
+                        fi
+                fi
+        done
 
-	NEW_RPATH=""
+        NEW_RPATH=""
 
-	# Extract -L args
-	for arg in $@
-	do
-		if echo "$arg" | grep "^-L" > /dev/null; then
-			arg=$(echo "$arg" | sed "s/-L /-L/g")
-			# Ensure path exists
-			LPATH=$(echo "$arg" | sed s/^-L//g)
-			if test -d "${LPATH}"; then
-				CNT=$(echo "$CURRENT_RPATH" | grep -c "${LPATH}")
-				#If path not in rpath then emit it
-				if test "x${CNT}" = "x0"; then
-					NEW_RPATH="${NEW_RPATH} -Wl,-rpath=${LPATH}"
-				fi
-			fi
-		fi
-	done
+        # Extract -L args
+        for arg in $@
+        do
+                if echo "$arg" | grep "^-L" > /dev/null; then
+                        arg=$(echo "$arg" | sed "s/-L /-L/g")
+                        # Ensure path exists
+                        LPATH=$(echo "$arg" | sed s/^-L//g)
+                        if test -d "${LPATH}"; then
+                                CNT=$(echo "$CURRENT_RPATH" | grep -c "${LPATH}")
+                                #If path not in rpath then emit it
+                                if test "x${CNT}" = "x0"; then
+                                        NEW_RPATH="${NEW_RPATH} -Wl,-rpath=${LPATH}"
+                                fi
+                        fi
+                fi
+        done
 
-	echo "$NEW_RPATH $@"
+        echo "$NEW_RPATH $@"
 }
 # Library detector helper
 
@@ -424,15 +424,15 @@ __check_or_infer_prefix_include()
         provided_prefix=$2
         var_prefix=$3
 
-	AC_CHECK_HEADER([$looked_up_header],[hfound=yes],[hfound=no])
+        AC_CHECK_HEADER([$looked_up_header],[hfound=yes],[hfound=no])
 
-	if test "x$hfound" = "xyes"; then
-		check_or_infer_prefix_include=yes
-		AC_MSG_RESULT([System-wide])
-		return
-	fi
+        if test "x$hfound" = "xyes"; then
+                check_or_infer_prefix_include=yes
+                AC_MSG_RESULT([System-wide])
+                return
+        fi
 
-	AC_MSG_NOTICE([Checking for $1 header manually in different places])
+        AC_MSG_NOTICE([Checking for $1 header manually in different places])
         for pref in $provided_prefix $prefix_candidate_path
         do
                 for suffix in $prefix_candidate_sub_include_path
@@ -484,16 +484,16 @@ __check_or_infer_prefix_lib()
         provided_prefix=$3
         var_prefix=$4
 
-	AC_CHECK_LIB($looked_up_lib, $looked_up_function, [lib_found=1], [lib_found=0])
+        AC_CHECK_LIB($looked_up_lib, $looked_up_function, [lib_found=1], [lib_found=0])
 
-	if test "x$lib_found" = "x1"
-	then
-		LDFLAGS=" -l$1 $LDFLAGS"
-		check_or_infer_prefix_lib=yes
-		return
-	fi
+        if test "x$lib_found" = "x1"
+        then
+                LDFLAGS=" -l$1 $LDFLAGS"
+                check_or_infer_prefix_lib=yes
+                return
+        fi
 
-	AC_MSG_NOTICE([Checking for '$looked_up_lib' library in different places])
+        AC_MSG_NOTICE([Checking for '$looked_up_lib' library in different places])
         for pref in $provided_prefix $prefix_candidate_path
         do
                 for suffix in $prefix_candidate_sub_lib_path
@@ -510,7 +510,7 @@ __check_or_infer_prefix_lib()
 
                         if test "x$lib_found" = "x1"
                         then
-                        	AC_MSG_NOTICE(['$looked_up_lib' found in $pref/$suffix])
+                                AC_MSG_NOTICE(['$looked_up_lib' found in $pref/$suffix])
                                 check_or_infer_prefix_lib=yes
                                 return
                         fi
@@ -529,42 +529,42 @@ __check_or_infer_prefix_lib()
 #
 extract_integer_define_value()
 {
-	can_fail="$3"
+        can_fail="$3"
 
-	if test -z "$can_fail"; then
-		can_fail="yes"
-	fi
+        if test -z "$can_fail"; then
+                can_fail="yes"
+        fi
 
-	AC_MSG_CHECKING([$2 existence])
+        AC_MSG_CHECKING([$2 existence])
 
-	MACRO_VALUE=""
-	AC_RUN_IFELSE(
-	[AC_LANG_PROGRAM([#include <$1>
-			#include <stdio.h>],
-			[
-				long long int val = $2;
-				FILE *out = fopen("./conftest.out", "w");
+        MACRO_VALUE=""
+        AC_RUN_IFELSE(
+        [AC_LANG_PROGRAM([#include <$1>
+                        #include <stdio.h>],
+                        [
+                                long long int val = $2;
+                                FILE *out = fopen("./conftest.out", "w");
 
-				if(!out)
-					return 1;
+                                if(!out)
+                                        return 1;
 
-				fprintf(out, "%lld\n", val);
+                                fprintf(out, "%lld\n", val);
 
-				fclose(out);
-			])],
-	[MACRO_VALUE="`cat conftest.out`"],
-	[MACRO_VALUE=""])
+                                fclose(out);
+                        ])],
+        [MACRO_VALUE="`cat conftest.out`"],
+        [MACRO_VALUE=""])
 
-	if test -z "$MACRO_VALUE"; then
-		if test "x$can_fail" = "xyes"; then
-			AC_MSG_FAILURE([Failed to lookup for $2 in $1])
-		else
-			AC_MSG_RESULT([not found])
-		fi
+        if test -z "$MACRO_VALUE"; then
+                if test "x$can_fail" = "xyes"; then
+                        AC_MSG_FAILURE([Failed to lookup for $2 in $1])
+                else
+                        AC_MSG_RESULT([not found])
+                fi
 
-	else
-		AC_MSG_RESULT([$MACRO_VALUE ($1)])
-	fi
+        else
+                AC_MSG_RESULT([$MACRO_VALUE ($1)])
+        fi
 }
 
 
@@ -701,26 +701,26 @@ MPC_ALLOCATOR_PRELOAD="libmpcalloc.so"
 
 if test ! "x${use_mpcalloc}" = "xno"; then
 
-	MPC_DETECT_DEPENDENCY([mpcalloc.h], [mpcalloc], [sctk_malloc], [ALLOC])
-	if test "x$mpc_dep_found" = "xyes"; then
-		AC_DEFINE([MPC_Allocator], [1], [mpcalloc support is enabled])
-		MPC_ALLOCATOR="mpcalloc"
-		# Locate the MPC Allocator libdir to provide
-		# a complete preload path
-		ALLOC_PRELOAD_BIN="$(which mpcalloc_preload)"
-		if test ! -z "$ALLOC_PRELOAD_BIN"; then
-		# Locate PREFIX
-		ALLOC_PREFIX=$(echo "$ALLOC_PRELOAD_BIN" | rev | cut -d / -f 3- | rev)
-		CANDIDATE_ALLOC_LIB_PATH="${ALLOC_PREFIX}/lib/libmpcalloc.so"
-		if test -e "${CANDIDATE_ALLOC_LIB_PATH}"; then
-			MPC_ALLOCATOR_PRELOAD="${CANDIDATE_ALLOC_LIB_PATH}"
-		fi
-		fi
-	else
-		if test  "x${use_mpcalloc}" = "xyes"; then
-			AC_MSG_ERROR([Could not locate MPC allocator which was explicitly enabled])
-		fi
-	fi
+        MPC_DETECT_DEPENDENCY([mpcalloc.h], [mpcalloc], [sctk_malloc], [ALLOC])
+        if test "x$mpc_dep_found" = "xyes"; then
+                AC_DEFINE([MPC_Allocator], [1], [mpcalloc support is enabled])
+                MPC_ALLOCATOR="mpcalloc"
+                # Locate the MPC Allocator libdir to provide
+                # a complete preload path
+                ALLOC_PRELOAD_BIN="$(which mpcalloc_preload)"
+                if test ! -z "$ALLOC_PRELOAD_BIN"; then
+                # Locate PREFIX
+                ALLOC_PREFIX=$(echo "$ALLOC_PRELOAD_BIN" | rev | cut -d / -f 3- | rev)
+                CANDIDATE_ALLOC_LIB_PATH="${ALLOC_PREFIX}/lib/libmpcalloc.so"
+                if test -e "${CANDIDATE_ALLOC_LIB_PATH}"; then
+                        MPC_ALLOCATOR_PRELOAD="${CANDIDATE_ALLOC_LIB_PATH}"
+                fi
+                fi
+        else
+                if test  "x${use_mpcalloc}" = "xyes"; then
+                        AC_MSG_ERROR([Could not locate MPC allocator which was explicitly enabled])
+                fi
+        fi
 
 
 fi
@@ -819,7 +819,7 @@ if test "x$mpc_slurm_enabled" = "xyes"; then
 
         AC_DEFINE([MPC_USE_SLURM], [1], [Slurm PMI will be used to launch parallel programs])
 else
-	AC_PATH_PROG([MPIEXEC_HYDRA], [mpiexec.hydra], [no])
+        AC_PATH_PROG([MPIEXEC_HYDRA], [mpiexec.hydra], [no])
         if test "x$MPIEXEC_HYDRA" = "xno"
         then
                 AC_MSG_ERROR([Could not locate Hydra wrapper 'mpiexec.hydra' in PATH. Please reconsider using this launcher.])
@@ -857,16 +857,16 @@ cuda_enabled="no"
 
 if test "x$mpc_cuda_ctx_switch" = "xyes"; then
 
-	MPC_DETECT_DEPENDENCY([cuda.h], [cuda], [cuMemFree], [CUDA])
-	MPC_REQUIRED_DEPENDENCY([cuda], [$mpc_dep_found])
+        MPC_DETECT_DEPENDENCY([cuda.h], [cuda], [cuMemFree], [CUDA])
+        MPC_REQUIRED_DEPENDENCY([cuda], [$mpc_dep_found])
 
-	if test "x$mpc_dep_found" = "xyes"; then
-		MPC_DETECT_DEPENDENCY([cuda_runtime.h], [cudart], [cudaDeviceSetLimit], [CUDART])
-		MPC_REQUIRED_DEPENDENCY([cudart], [$mpc_dep_found])
+        if test "x$mpc_dep_found" = "xyes"; then
+                MPC_DETECT_DEPENDENCY([cuda_runtime.h], [cudart], [cudaDeviceSetLimit], [CUDART])
+                MPC_REQUIRED_DEPENDENCY([cudart], [$mpc_dep_found])
 
-		AC_DEFINE([MPC_USE_CUDA], [1], [Cuda support is enabled])
-		cuda_enabled="yes"
-	fi
+                AC_DEFINE([MPC_USE_CUDA], [1], [Cuda support is enabled])
+                cuda_enabled="yes"
+        fi
 fi
 
 AM_CONDITIONAL([MPC_CUDA_ENABLED], [test "x$cuda_enabled" = "xyes"])
@@ -888,16 +888,16 @@ if test "x$MPC_HAVE_DMTCP" = "xyes"; then
 
 AC_CHECK_PROG([dmtcp_launch],[dmtcp_launch],[yes],[no])
 
-	AC_MSG_CHECKING([support for DMTCP])
+        AC_MSG_CHECKING([support for DMTCP])
 
-	if test "x${dmtcp_launch}" = "xyes"; then
-		AC_MSG_RESULT([yes])
-		MPC_HAVE_DMTCP="yes"
-		AC_DEFINE([MPC_USE_DMTCP], [1], [MPC transparent checkpointing is enabled])
-	else
-		AC_MSG_RESULT([no])
-		AC_MSG_ERROR([Cannot enable DMTCP (no 'dmtcp_launch' command found)])
-	fi
+        if test "x${dmtcp_launch}" = "xyes"; then
+                AC_MSG_RESULT([yes])
+                MPC_HAVE_DMTCP="yes"
+                AC_DEFINE([MPC_USE_DMTCP], [1], [MPC transparent checkpointing is enabled])
+        else
+                AC_MSG_RESULT([no])
+                AC_MSG_ERROR([Cannot enable DMTCP (no 'dmtcp_launch' command found)])
+        fi
 fi
 
 AC_SUBST([MPC_HAVE_DMTCP])
@@ -932,9 +932,9 @@ fi
 AC_MSG_CHECKING([presence of __STRING macro])
 # Alternative : insert #define __STRING(u) #u if not present (not portable macro)
 AC_PREPROC_IFELSE([AC_LANG_SOURCE([[#include <stdio.h>
-				  #ifndef __STRING
-				  #error "No __STRING macro defined !"
-				  #endif]])],
+                                  #ifndef __STRING
+                                  #error "No __STRING macro defined !"
+                                  #endif]])],
                 res_macro=yes,res_macro=no)
 
 if test "$res_macro" = "yes" ; then 
@@ -988,9 +988,9 @@ CFLAGS="$OLD_CFLAGS"
 AX_GCC_FUNC_ATTRIBUTE(visibility)
 
 if test "x$ax_cv_have_func_attribute_visibility" = "xyes"; then
-	AC_DEFINE([HAVE_VISIBILITY],[1],[Visibility attribute supported])
-	HAVE_VISIBILITY=1
-	AC_SUBST([HAVE_VISIBILITY])
+        AC_DEFINE([HAVE_VISIBILITY],[1],[Visibility attribute supported])
+        HAVE_VISIBILITY=1
+        AC_SUBST([HAVE_VISIBILITY])
 fi
 
 AX_GCC_FUNC_ATTRIBUTE(weak)
@@ -999,15 +999,15 @@ AX_GCC_FUNC_ATTRIBUTE(unused)
 AX_GCC_FUNC_ATTRIBUTE(constructor)
 
 if test "x$ax_cv_have_func_attribute_constructor" != "xyes"; then
-	AC_MSG_ERROR([MPC relies on constructors for its initialization])
+        AC_MSG_ERROR([MPC relies on constructors for its initialization])
 fi
 extract_integer_define_value "signal.h" "NSIG" "no"
 
 if test -z "$MACRO_VALUE"; then
-	extract_integer_define_value "signal.h" "_NSIG" "no"
-	if test -z "$MACRO_VALUE"; then
-		MACRO_VALUE="32"
-	fi
+        extract_integer_define_value "signal.h" "_NSIG" "no"
+        if test -z "$MACRO_VALUE"; then
+                MACRO_VALUE="32"
+        fi
 fi
 
 AC_DEFINE_UNQUOTED([MPC_CONFIG_NSIG], [$MACRO_VALUE], [Value of NSIG from signal.h])
@@ -1446,17 +1446,17 @@ if test "$is_semaphore" = "yes" ; then
         AC_CHECK_FUNCS(sem_unlink )
         AC_CHECK_FUNCS(sem_timedwait )
 
-	extract_integer_define_value "semaphore.h" "SEM_VALUE_MAX" "no"
+        extract_integer_define_value "semaphore.h" "SEM_VALUE_MAX" "no"
 
-	if test -z "$MACRO_VALUE"; then
-		MACRO_VALUE="2147483647"
-	fi
+        if test -z "$MACRO_VALUE"; then
+                MACRO_VALUE="2147483647"
+        fi
 
-	AC_DEFINE_UNQUOTED([MPC_CONFIG_SEM_VALUE_MAX], [$MACRO_VALUE], [Value of SEM_VALUE_MAX from semaphore.h])
+        AC_DEFINE_UNQUOTED([MPC_CONFIG_SEM_VALUE_MAX], [$MACRO_VALUE], [Value of SEM_VALUE_MAX from semaphore.h])
         AC_SUBST([MPC_CONFIG_SEM_VALUE_MAX],[$MACRO_VALUE])
 
-	extract_integer_define_value "semaphore.h" "SEM_FAILED"
-	AC_DEFINE_UNQUOTED([MPC_CONFIG_SEM_FAILED], [$MACRO_VALUE], [Value of SEM_FAILED from semaphore.h])
+        extract_integer_define_value "semaphore.h" "SEM_FAILED"
+        AC_DEFINE_UNQUOTED([MPC_CONFIG_SEM_FAILED], [$MACRO_VALUE], [Value of SEM_FAILED from semaphore.h])
         AC_SUBST([MPC_CONFIG_SEM_FAILED],[$MACRO_VALUE])
 
 fi
@@ -1569,6 +1569,23 @@ else
         AC_MSG_RESULT([no])
 fi
 
+mpc_compiler_is_pgi="no"
+
+AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdlib.h>],[
+#ifndef __PGIC__
+exit(1);
+#endif
+])], [mpc_compiler_is_pgi="yes"])
+
+AC_MSG_CHECKING([if compiler is pgi])
+
+if test "x${mpc_compiler_is_pgi}" = "xyes"; then
+        AC_MSG_RESULT([yes])
+else
+        AC_MSG_RESULT([no])
+fi
+
+
 # Now set the compiler family
 
 AC_MSG_CHECKING([compiler family to be])
@@ -1584,6 +1601,10 @@ else
                         if test "x$mpc_compiler_is_gcc" = "xyes"; then
                                 AC_MSG_RESULT([gcc])
                                 mpc_compiler_family="gcc"
+                        else
+                                if test "x${mpc_compiler_is_pgi}" = "xyes"; then
+                                        mpc_compiler_family="pgi"
+                                fi
                         fi
         fi
 
@@ -1914,8 +1935,8 @@ if test -n "$file_system_lustre"; then
         break)
     if test x"$ac_cv_header_linux_lustre_lustre_user_h" = "xyes" -o x"$ac_cv_header_lustre_lustre_user_h" = "xyes" ; then
         AC_DEFINE(ROMIO_LUSTRE, 1, [Define for ROMIO with LUSTRE])
-	AM_CONDITIONAL([BUILD_AD_LUSTRE], [true])
-	ROMIO_FS_LIST="${ROMIO_FS_LIST} lustre"
+        AM_CONDITIONAL([BUILD_AD_LUSTRE], [true])
+        ROMIO_FS_LIST="${ROMIO_FS_LIST} lustre"
     else
         AC_MSG_NOTICE([LUSTRE support requested but cannot find lustre/lustre_user.h header file])
     fi
@@ -1940,24 +1961,24 @@ if test -n "$file_system_xfs"; then
 #include <fcntl.h>
 #include <stdio.h>
 int main(int argc, char **argv) { 
-	struct dioattr st;
-	int fd = open("/tmp/romio_tmp.bin", O_RDWR | O_CREAT, 0644);
-	FILE *f=fopen("confmemalignval","w");
-	if (fd == -1) exit(1);
-	if (!f) exit(1);
-	fcntl(fd, F_DIOINFO, &st);
-	fprintf( f, "%u\n", st.d_mem);
-	exit(0);
-	}
-	],
-	pac_cv_memalignval=`cat confmemalignval`,
-	pac_cv_memalignval="unknown",pac_cv_memalignval="unknown"
+        struct dioattr st;
+        int fd = open("/tmp/romio_tmp.bin", O_RDWR | O_CREAT, 0644);
+        FILE *f=fopen("confmemalignval","w");
+        if (fd == -1) exit(1);
+        if (!f) exit(1);
+        fcntl(fd, F_DIOINFO, &st);
+        fprintf( f, "%u\n", st.d_mem);
+        exit(0);
+        }
+        ],
+        pac_cv_memalignval=`cat confmemalignval`,
+        pac_cv_memalignval="unknown",pac_cv_memalignval="unknown"
     )
     rm -f confmemalignval
     rm -f /tmp/romio_tmp.bin
     ])
     if test -n "$pac_cv_memalignval" -a "$pac_cv_memalignval" != 0 -a \
-	"$pac_cv_memalignval" != "unknown" ; then
+        "$pac_cv_memalignval" != "unknown" ; then
         CFLAGS="$CFLAGS -DXFS_MEMALIGN=$pac_cv_memalignval"
     else
         AC_MSG_RESULT(assuming 128 for memory alignment)
@@ -1968,8 +1989,8 @@ fi
 if test -n "$file_system_ime"; then
         AC_CHECK_HEADERS(ime_native.h,
                 AC_DEFINE(ROMIO_IME,1,[Define for ROMIO with IME])
-		[AM_CONDITIONAL([BUILD_AD_IME], [true])
-		ROMIO_FS_LIST="${ROMIO_FS_LIST} ime"],
+                [AM_CONDITIONAL([BUILD_AD_IME], [true])
+                ROMIO_FS_LIST="${ROMIO_FS_LIST} ime"],
                 AC_MSG_NOTICE([IME support requested but cannot find ime_native.h header file])
         )
 fi
@@ -1980,10 +2001,10 @@ fi
 if test -n "$file_system_pvfs2"; then
     CPPFLAGS="$CPPFLAGS $CFLAGS"
     AC_CHECK_HEADERS(pvfs2.h,
-	AC_DEFINE(ROMIO_PVFS2,1,[Define for ROMIO with PVFS2])
-	[AM_CONDITIONAL([BUILD_AD_PVFS2], [true])
-	AC_DEFINE(HAVE_PVFS2_SUPER_MAGIC, 1, [Define if PVFS2_SUPER_MAGIC defined.])
-	ROMIO_FS_LIST="${ROMIO_FS_LIST} pvfs2"],
+        AC_DEFINE(ROMIO_PVFS2,1,[Define for ROMIO with PVFS2])
+        [AM_CONDITIONAL([BUILD_AD_PVFS2], [true])
+        AC_DEFINE(HAVE_PVFS2_SUPER_MAGIC, 1, [Define if PVFS2_SUPER_MAGIC defined.])
+        ROMIO_FS_LIST="${ROMIO_FS_LIST} pvfs2"],
         AC_MSG_ERROR([PVFS2 support requested but cannot find pvfs2.h header file])                                        
     )
 fi
@@ -1995,13 +2016,13 @@ if test -n "$file_system_pvfs2"; then
 #include <stdlib.h>
 #include "pvfs2.h"
           int main(int argc, char **argv) { 
-	      PVFS_object_ref ref;
-	      PVFS_sys_attr attr;
-	      PVFS_sys_create(NULL, ref, attr, NULL, NULL, NULL, NULL); 
-	  return 0; }
+              PVFS_object_ref ref;
+              PVFS_sys_attr attr;
+              PVFS_sys_create(NULL, ref, attr, NULL, NULL, NULL, NULL); 
+          return 0; }
        ])],
        , AC_DEFINE(HAVE_PVFS2_CREATE_WITHOUT_LAYOUT, 1, 
-       		[Define if PVFS_sys_create does not have layout parameter])
+                       [Define if PVFS_sys_create does not have layout parameter])
        )
 fi
 
@@ -2009,12 +2030,12 @@ AS_IF([test -n "$file_system_gpfs"],
     [SYSDEP_INC=-I${prefix}/include], [SYSDEP_INC=])
 
 AS_IF([test -n "$file_system_gpfs"],
-	AC_CHECK_HEADERS([gpfs.h gpfs_fcntl.h])
-	AS_IF([test "$ac_cv_header_gpfs_h" = "yes" -o "$ac_cv_header_gpfs_fcntl_h" = "yes"], [
-	  AC_SEARCH_LIBS([gpfs_fcntl], [gpfs], [],
-	    [AC_MSG_ERROR([Library containing gpfs_fcntl symbols not found])])
-	])
-	)
+        AC_CHECK_HEADERS([gpfs.h gpfs_fcntl.h])
+        AS_IF([test "$ac_cv_header_gpfs_h" = "yes" -o "$ac_cv_header_gpfs_fcntl_h" = "yes"], [
+          AC_SEARCH_LIBS([gpfs_fcntl], [gpfs], [],
+            [AC_MSG_ERROR([Library containing gpfs_fcntl symbols not found])])
+        ])
+        )
 
 if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
 MPC_MPIIO_CONFIGURATION="\
@@ -2042,40 +2063,40 @@ ALL_MPC_LIBS="${ac_pwd}/src/MPC_Config/src/libmpcconfig.la"
 MPC_MODULE_LIST=""
 
 if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
-	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Launch/src/libmpclaunch.la"
-	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Threads/src/libmpcthread.la"
-	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_THREAD_ENABLED"
+        ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Launch/src/libmpclaunch.la"
+        ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Threads/src/libmpcthread.la"
+        MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_THREAD_ENABLED"
 fi
 
 if test "x${MPC_OPENMP_ENABLED}" = "xyes"; then
-	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_OpenMP/src/libmpcomp.la"
-	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_OPENMP_ENABLED"
+        ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_OpenMP/src/libmpcomp.la"
+        MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_OPENMP_ENABLED"
 fi
 
 if test "x${MPC_LOWCOMM_ENABLED}" = "xyes"; then
-	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Lowcomm/src/libmpclowcomm.la"
-	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_LOWCOMM_ENABLED"
+        ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Lowcomm/src/libmpclowcomm.la"
+        MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_LOWCOMM_ENABLED"
 fi
 
 if test "x${MPC_MPI_ENABLED}" = "xyes"; then
-	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_MPI/src/libmpcmpi.la"
-	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_MPI_ENABLED"
+        ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_MPI/src/libmpcmpi.la"
+        MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_MPI_ENABLED"
 fi
 
 if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
-	ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_IO/src/libmpcio.la"
-	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_MPIIO_ENABLED"
+        ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_IO/src/libmpcio.la"
+        MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_MPIIO_ENABLED"
 fi
 
 if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
-	MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_FORTRAN_ENABLED"
+        MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_FORTRAN_ENABLED"
 fi
 
 MPC_MODULE_DEFINES=""
 
 for m in $MPC_MODULE_LIST
 do
-	MPC_MODULE_DEFINES=" -D${m}"
+        MPC_MODULE_DEFINES=" -D${m}"
 done
 
 CFLAGS="${CFLAGS} ${MPC_MODULE_DEFINES}"
@@ -2103,25 +2124,25 @@ AC_MSG_CHECKING([for autopriv])
 
 is_autopriv()
 {
-	RES="no"
+        RES="no"
 
         if test -z "$1"; then
                 return
         fi
 
-	${1} "--ap-help" > /dev/null 2>&1
+        ${1} "--ap-help" > /dev/null 2>&1
 
-	if test "x$?" = "x0"; then
-		RES="yes"
-	fi
+        if test "x$?" = "x0"; then
+                RES="yes"
+        fi
 
         echo $RES
 }
 
 if test "x${apcc}" = "xyes" -a "x${apcpp}" = "xyes" -a "x${apfortran}" = "xyes";
 then
-	# We have autopriv in path
-	AC_MSG_RESULT([yes])
+        # We have autopriv in path
+        AC_MSG_RESULT([yes])
 
         #Now check that all compilers are privatizing
         AC_MSG_CHECKING([CC is privatizing])
@@ -2145,7 +2166,7 @@ then
         fi
 
 else
-	AC_MSG_RESULT([no])
+        AC_MSG_RESULT([no])
 fi
 
 AM_CONDITIONAL([MPC_HAVE_AUTOPRIV], [test "x${mpc_have_autopriv}" = "xyes"])
@@ -2168,11 +2189,11 @@ if test "x$enable_mpc_proces_mode" = "xno"; then
         if test "x$mpc_dep_found" = "xyes"; then
                 AC_DEFINE([MPC_USE_EXTLS], [1], [Extls support is enabled])
                 extls_support_found="yes"
-	else
-		# If no privatization is available we fallback to Process-Based model
-		AC_MSG_NOTICE([No privatization support detected assuming Process-Based Model (no privatization)])
-		enable_mpc_proces_mode="yes"
-	fi
+        else
+                # If no privatization is available we fallback to Process-Based model
+                AC_MSG_NOTICE([No privatization support detected assuming Process-Based Model (no privatization)])
+                enable_mpc_proces_mode="yes"
+        fi
 fi
 
 MPC_IN_PROCESS_MODE="no"
@@ -2197,10 +2218,10 @@ if test "x${extls_support_found}" = "xyes"; then
                 AC_MSG_CHECKING([priv in $FC])
                 AC_MSG_RESULT([$FC_PRIV])
 
-		AC_MSG_WARN([Make sure to configure with CC=apcc CXX=ap++ FC=apfortran])
-		AC_MSG_WARN([or consider passing --enable-process-mode to deactivate priv])
+                AC_MSG_WARN([Make sure to configure with CC=apcc CXX=ap++ FC=apfortran])
+                AC_MSG_WARN([or consider passing --enable-process-mode to deactivate priv])
                 AC_MSG_ERROR([Extls support was enabled but autopriv was not found])
-	fi
+        fi
 fi
 
 
@@ -2376,17 +2397,17 @@ fi
 
 clean_env_path_var()
 {
-	var_data=$1
+        var_data=$1
 
-	new_data_list=`echo $var_data | sed "s/\\:/\\n/g" | sort | uniq | xargs echo`
+        new_data_list=`echo $var_data | sed "s/\\:/\\n/g" | sort | uniq | xargs echo`
 
-	ret=""
-	for entry in $new_data_list
-	do
-		ret="${ret}:${entry}"
-	done
+        ret=""
+        for entry in $new_data_list
+        do
+                ret="${ret}:${entry}"
+        done
 
-	echo $ret
+        echo $ret
 }
 
 
@@ -2434,8 +2455,8 @@ AC_SUBST([MPC_GENERATION_DATE])
 cat << EOF > ./reconfigure
 #!/bin/sh
 if test -n "\`find ${ac_abs_confdir}/configure -newer \$0\`"; then
-	printf "Warning: Source configure is newer than reconfigure file (./autogen.sh || git check-out)\n"
-	printf "Warning: Rebuilding over a different version of MPC can lead to unexpected errors.\n"
+        printf "Warning: Source configure is newer than reconfigure file (./autogen.sh || git check-out)\n"
+        printf "Warning: Rebuilding over a different version of MPC can lead to unexpected errors.\n"
 fi
 if test -f "${PWD}/src/bin/mpc_build_env.sh"; then
         . ${PWD}/src/bin/mpc_build_env.sh
@@ -2521,46 +2542,46 @@ AC_SUBST([PKG_INCDIR], ["${prefix}/include/${PACKAGE_TARNAME}/"])
 AC_CONFIG_HEADERS([mpc_config.h])
 
 AC_OUTPUT([Makefile
-	   src/MPC_Arch/include/mpc_arch.h
-	   src/Makefile
-	   src/lib/Makefile
+           src/MPC_Arch/include/mpc_arch.h
+           src/Makefile
+           src/lib/Makefile
            src/MPC_Doc/Makefile
            src/MPC_Arch/Makefile
-	   src/MPC_Arch/src/Makefile
+           src/MPC_Arch/src/Makefile
            src/MPC_Common/Makefile
-	   src/MPC_Common/src/Makefile
+           src/MPC_Common/src/Makefile
            src/MPC_Common/include/mpc_common_types.h
            src/MPC_Common/include/mpc_common_spinlock.h
            src/MPC_Common/include/mpc_keywords.h
            src/MPC_Config/Makefile
-	   src/MPC_Config/src/Makefile
+           src/MPC_Config/src/Makefile
            src/MPC_Launch/Makefile
-	   src/MPC_Launch/src/Makefile
+           src/MPC_Launch/src/Makefile
            src/MPC_Lowcomm/Makefile
-	   src/MPC_Lowcomm/src/Makefile
+           src/MPC_Lowcomm/src/Makefile
            src/MPC_MPI/Makefile
-	   src/MPC_MPI/src/Makefile
+           src/MPC_MPI/src/Makefile
            src/MPC_OpenMP/src/Makefile
-	   src/MPC_OpenMP/Makefile
+           src/MPC_OpenMP/Makefile
            src/MPC_Topology/Makefile
-	   src/MPC_Topology/src/Makefile
+           src/MPC_Topology/src/Makefile
            src/MPC_Threads/Makefile
-	   src/MPC_Threads/src/Makefile
-	   src/MPC_IO/Makefile
-	   src/MPC_IO/src/Makefile
-	   src/MPC_IO/include/mpio.h
-	   src/MPC_IO/src/romio/Makefile
-	   src/MPC_Fortran/Makefile
-	   src/MPC_Fortran/src/Makefile
+           src/MPC_Threads/src/Makefile
+           src/MPC_IO/Makefile
+           src/MPC_IO/src/Makefile
+           src/MPC_IO/include/mpio.h
+           src/MPC_IO/src/romio/Makefile
+           src/MPC_Fortran/Makefile
+           src/MPC_Fortran/src/Makefile
            src/include/mpc_threads_config.h
            src/include/mpc.h
            src/bin/Makefile
-	   src/bin/mpc_build_env.sh
+           src/bin/mpc_build_env.sh
            src/bin/mpc_cflags
            src/bin/mpc_ldflags
            src/bin/mpcrun
-	   src/bin/mpcvars.sh
-	   src/bin/mpc_status])
+           src/bin/mpcvars.sh
+           src/bin/mpc_status])
 
 
 
