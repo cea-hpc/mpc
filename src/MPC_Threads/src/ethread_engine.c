@@ -766,7 +766,10 @@ void mpc_thread_ethread_engine_init(void)
 	/*non portable */
 	sctk_add_func_type(_mpc_thread_ethread_posix, getattr_np,
 	                   int (*)(mpc_thread_t, mpc_thread_attr_t *) );
-
+	sctk_add_func_type(_mpc_thread_ethread_posix, setaffinity_np,
+	                   int (*)(mpc_thread_t, size_t, const mpc_cpu_set_t *) );
+	sctk_add_func_type(_mpc_thread_ethread_posix, getaffinity_np,
+	                   int (*)(mpc_thread_t, size_t, mpc_cpu_set_t *) );
 
 	/* Current */
 	_mpc_thread_ethread_debug_status(ethread_ready);

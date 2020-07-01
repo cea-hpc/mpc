@@ -93,6 +93,12 @@ TYPEDEF_STRUCT(@SIZEOF_PTHREAD_ONCE_T@, mpc_thread_once_t);
 
 TYPEDEF_STRUCT(@SIZEOF_PTHREAD_ATTR_T@, mpc_thread_attr_t);
 
+/****************
+* CPU SET       *
+****************/
+
+TYPEDEF_STRUCT(@SIZEOF_CPU_SET_T@, mpc_cpu_set_t);
+
 /*******************
 * PTHREAD BARRIER *
 *******************/

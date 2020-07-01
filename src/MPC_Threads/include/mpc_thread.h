@@ -64,6 +64,10 @@ int mpc_thread_attr_getschedparam(const mpc_thread_attr_t *
                                   __attr, struct sched_param *__param);
 int mpc_thread_attr_getschedpolicy(const mpc_thread_attr_t *__attr,
                                    int *__policy);
+int mpc_thread_setaffinity_np(mpc_thread_t thread, size_t cpusetsize,
+                              const mpc_cpu_set_t *cpuset);
+int mpc_thread_getaffinity_np(mpc_thread_t thread, size_t cpusetsize,
+                              mpc_cpu_set_t *cpuset);
 int mpc_thread_attr_getscope(const mpc_thread_attr_t *__attr,
                              int *__scope);
 int mpc_thread_attr_getstackaddr(const mpc_thread_attr_t *__attr,
@@ -305,7 +309,7 @@ struct mpc_thread_rank_info_s *mpc_thread_rank_info_get(void);
 int mpc_thread_get_pu(void);
 int mpc_thread_get_thread_id(void);
 int mpc_thread_get_current_local_tasks_nb();
-void * mpc_thread_get_parent_mpi_task_ctx(void);
+void *mpc_thread_get_parent_mpi_task_ctx(void);
 
 /* Thread data */
 

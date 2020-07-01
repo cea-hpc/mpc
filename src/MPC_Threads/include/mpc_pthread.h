@@ -106,6 +106,12 @@ extern "C"
 /* pthread_attr_getschedpolicy */
 #define pthread_attr_getschedpolicy            mpc_thread_attr_getschedpolicy
 
+/* pthread_setaffinity_np */
+#define pthread_setaffinity_np                 mpc_thread_setaffinity_np
+
+/* pthread_getaffinity_np */
+#define pthread_getaffinity_np                 mpc_thread_getaffinity_np
+
 /* pthread_attr_getscope */
 #define pthread_attr_getscope                  mpc_thread_attr_getscope
 

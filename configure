@@ -747,6 +747,7 @@ SIZEOF_PTHREAD_COND_T
 SIZEOF_PTHREAD_ONCE_T
 SIZEOF_PTHREAD_BARRIERATTR_T
 SIZEOF_PTHREAD_BARRIER_T
+SIZEOF_CPU_SET_T
 SIZEOF_PTHREAD_ATTR_T
 MPC_THREAD_KEYS_MAX
 MPC_CONFIG_PTHREAD_STACK_MIN
@@ -26808,11 +26809,10 @@ done
 
 for ac_func in pthread_atfork
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_atfork" "ac_cv_func_pthread_atfork"
+if test "x$ac_cv_func_pthread_atfork" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATFORK 1
 _ACEOF
 
 fi
@@ -26820,11 +26820,10 @@ done
 
 for ac_func in pthread_cancel
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_cancel" "ac_cv_func_pthread_cancel"
+if test "x$ac_cv_func_pthread_cancel" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_CANCEL 1
 _ACEOF
 
 fi
@@ -26832,11 +26831,10 @@ done
 
 for ac_func in pthread_create
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_create" "ac_cv_func_pthread_create"
+if test "x$ac_cv_func_pthread_create" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_CREATE 1
 _ACEOF
 
 fi
@@ -26844,11 +26842,10 @@ done
 
 for ac_func in pthread_detach
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_detach" "ac_cv_func_pthread_detach"
+if test "x$ac_cv_func_pthread_detach" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_DETACH 1
 _ACEOF
 
 fi
@@ -26856,11 +26853,10 @@ done
 
 for ac_func in pthread_equal
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_equal" "ac_cv_func_pthread_equal"
+if test "x$ac_cv_func_pthread_equal" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_EQUAL 1
 _ACEOF
 
 fi
@@ -26868,11 +26864,10 @@ done
 
 for ac_func in pthread_exit
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_exit" "ac_cv_func_pthread_exit"
+if test "x$ac_cv_func_pthread_exit" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_EXIT 1
 _ACEOF
 
 fi
@@ -26880,11 +26875,10 @@ done
 
 for ac_func in pthread_getconcurrency
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_getconcurrency" "ac_cv_func_pthread_getconcurrency"
+if test "x$ac_cv_func_pthread_getconcurrency" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_GETCONCURRENCY 1
 _ACEOF
 
 fi
@@ -26892,11 +26886,10 @@ done
 
 for ac_func in pthread_getcpuclockid
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_getcpuclockid" "ac_cv_func_pthread_getcpuclockid"
+if test "x$ac_cv_func_pthread_getcpuclockid" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_GETCPUCLOCKID 1
 _ACEOF
 
 fi
@@ -26904,11 +26897,10 @@ done
 
 for ac_func in pthread_getschedparam
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_getschedparam" "ac_cv_func_pthread_getschedparam"
+if test "x$ac_cv_func_pthread_getschedparam" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_GETSCHEDPARAM 1
 _ACEOF
 
 fi
@@ -26916,11 +26908,10 @@ done
 
 for ac_func in pthread_getspecific
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_getspecific" "ac_cv_func_pthread_getspecific"
+if test "x$ac_cv_func_pthread_getspecific" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_GETSPECIFIC 1
 _ACEOF
 
 fi
@@ -26928,11 +26919,10 @@ done
 
 for ac_func in pthread_join
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_join" "ac_cv_func_pthread_join"
+if test "x$ac_cv_func_pthread_join" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_JOIN 1
 _ACEOF
 
 fi
@@ -26940,11 +26930,10 @@ done
 
 for ac_func in pthread_key_create
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_key_create" "ac_cv_func_pthread_key_create"
+if test "x$ac_cv_func_pthread_key_create" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_KEY_CREATE 1
 _ACEOF
 
 fi
@@ -26952,11 +26941,10 @@ done
 
 for ac_func in pthread_key_delete
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_key_delete" "ac_cv_func_pthread_key_delete"
+if test "x$ac_cv_func_pthread_key_delete" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_KEY_DELETE 1
 _ACEOF
 
 fi
@@ -26964,11 +26952,10 @@ done
 
 for ac_func in pthread_once
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_once" "ac_cv_func_pthread_once"
+if test "x$ac_cv_func_pthread_once" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ONCE 1
 _ACEOF
 
 fi
@@ -27248,11 +27235,10 @@ _ACEOF
 
         for ac_func in pthread_attr_destroy
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_destroy" "ac_cv_func_pthread_attr_destroy"
+if test "x$ac_cv_func_pthread_attr_destroy" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_DESTROY 1
 _ACEOF
 
 fi
@@ -27260,11 +27246,10 @@ done
 
         for ac_func in pthread_attr_getdetachstate
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_getdetachstate" "ac_cv_func_pthread_attr_getdetachstate"
+if test "x$ac_cv_func_pthread_attr_getdetachstate" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_GETDETACHSTATE 1
 _ACEOF
 
 fi
@@ -27272,11 +27257,10 @@ done
 
         for ac_func in pthread_attr_getguardsize
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_getguardsize" "ac_cv_func_pthread_attr_getguardsize"
+if test "x$ac_cv_func_pthread_attr_getguardsize" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_GETGUARDSIZE 1
 _ACEOF
 
 fi
@@ -27284,11 +27268,10 @@ done
 
         for ac_func in pthread_attr_getinheritsched
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_getinheritsched" "ac_cv_func_pthread_attr_getinheritsched"
+if test "x$ac_cv_func_pthread_attr_getinheritsched" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_GETINHERITSCHED 1
 _ACEOF
 
 fi
@@ -27296,11 +27279,10 @@ done
 
         for ac_func in pthread_attr_getschedparam
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_getschedparam" "ac_cv_func_pthread_attr_getschedparam"
+if test "x$ac_cv_func_pthread_attr_getschedparam" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_GETSCHEDPARAM 1
 _ACEOF
 
 fi
@@ -27308,11 +27290,10 @@ done
 
         for ac_func in pthread_attr_getschedpolicy
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_getschedpolicy" "ac_cv_func_pthread_attr_getschedpolicy"
+if test "x$ac_cv_func_pthread_attr_getschedpolicy" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_GETSCHEDPOLICY 1
 _ACEOF
 
 fi
@@ -27320,11 +27301,10 @@ done
 
         for ac_func in pthread_attr_getscope
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_getscope" "ac_cv_func_pthread_attr_getscope"
+if test "x$ac_cv_func_pthread_attr_getscope" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_GETSCOPE 1
 _ACEOF
 
 fi
@@ -27332,11 +27312,10 @@ done
 
         for ac_func in pthread_attr_getstack
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_getstack" "ac_cv_func_pthread_attr_getstack"
+if test "x$ac_cv_func_pthread_attr_getstack" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_GETSTACK 1
 _ACEOF
 
 fi
@@ -27344,11 +27323,10 @@ done
 
         for ac_func in pthread_attr_getstackaddr
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_getstackaddr" "ac_cv_func_pthread_attr_getstackaddr"
+if test "x$ac_cv_func_pthread_attr_getstackaddr" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_GETSTACKADDR 1
 _ACEOF
 
 fi
@@ -27356,11 +27334,10 @@ done
 
         for ac_func in pthread_attr_getstacksize
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_getstacksize" "ac_cv_func_pthread_attr_getstacksize"
+if test "x$ac_cv_func_pthread_attr_getstacksize" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_GETSTACKSIZE 1
 _ACEOF
 
 fi
@@ -27368,11 +27345,10 @@ done
 
         for ac_func in pthread_attr_init
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_init" "ac_cv_func_pthread_attr_init"
+if test "x$ac_cv_func_pthread_attr_init" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_INIT 1
 _ACEOF
 
 fi
@@ -27380,11 +27356,10 @@ done
 
         for ac_func in pthread_attr_setdetachstate
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_setdetachstate" "ac_cv_func_pthread_attr_setdetachstate"
+if test "x$ac_cv_func_pthread_attr_setdetachstate" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_SETDETACHSTATE 1
 _ACEOF
 
 fi
@@ -27392,11 +27367,10 @@ done
 
         for ac_func in pthread_attr_setguardsize
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_setguardsize" "ac_cv_func_pthread_attr_setguardsize"
+if test "x$ac_cv_func_pthread_attr_setguardsize" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_SETGUARDSIZE 1
 _ACEOF
 
 fi
@@ -27404,11 +27378,10 @@ done
 
         for ac_func in pthread_attr_setinheritsched
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_setinheritsched" "ac_cv_func_pthread_attr_setinheritsched"
+if test "x$ac_cv_func_pthread_attr_setinheritsched" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_SETINHERITSCHED 1
 _ACEOF
 
 fi
@@ -27416,11 +27389,10 @@ done
 
         for ac_func in pthread_attr_setschedparam
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_setschedparam" "ac_cv_func_pthread_attr_setschedparam"
+if test "x$ac_cv_func_pthread_attr_setschedparam" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_SETSCHEDPARAM 1
 _ACEOF
 
 fi
@@ -27428,11 +27400,10 @@ done
 
         for ac_func in pthread_attr_setschedpolicy
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_setschedpolicy" "ac_cv_func_pthread_attr_setschedpolicy"
+if test "x$ac_cv_func_pthread_attr_setschedpolicy" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_SETSCHEDPOLICY 1
 _ACEOF
 
 fi
@@ -27440,11 +27411,10 @@ done
 
         for ac_func in pthread_attr_setscope
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_setscope" "ac_cv_func_pthread_attr_setscope"
+if test "x$ac_cv_func_pthread_attr_setscope" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_SETSCOPE 1
 _ACEOF
 
 fi
@@ -27452,11 +27422,10 @@ done
 
         for ac_func in pthread_attr_setstack
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_setstack" "ac_cv_func_pthread_attr_setstack"
+if test "x$ac_cv_func_pthread_attr_setstack" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_SETSTACK 1
 _ACEOF
 
 fi
@@ -27464,11 +27433,10 @@ done
 
         for ac_func in pthread_attr_setstackaddr
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_setstackaddr" "ac_cv_func_pthread_attr_setstackaddr"
+if test "x$ac_cv_func_pthread_attr_setstackaddr" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_SETSTACKADDR 1
 _ACEOF
 
 fi
@@ -27476,29 +27444,100 @@ done
 
         for ac_func in pthread_attr_setstacksize
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_setstacksize" "ac_cv_func_pthread_attr_setstacksize"
+if test "x$ac_cv_func_pthread_attr_setstacksize" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_SETSTACKSIZE 1
 _ACEOF
 
 fi
 done
 
-        for ac_func in pthread_attr_setaffinity_np
+	for ac_func in pthread_attr_setaffinity_np
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_attr_setaffinity_np" "ac_cv_func_pthread_attr_setaffinity_np"
+if test "x$ac_cv_func_pthread_attr_setaffinity_np" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_ATTR_SETAFFINITY_NP 1
 _ACEOF
 
 fi
 done
 
 fi
+
+for ac_func in pthread_getaffinity_np
+do :
+  ac_fn_c_check_func "$LINENO" "pthread_getaffinity_np" "ac_cv_func_pthread_getaffinity_np"
+if test "x$ac_cv_func_pthread_getaffinity_np" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_PTHREAD_GETAFFINITY_NP 1
+_ACEOF
+
+fi
+done
+
+for ac_func in pthread_setaffinity_np
+do :
+  ac_fn_c_check_func "$LINENO" "pthread_setaffinity_np" "ac_cv_func_pthread_setaffinity_np"
+if test "x$ac_cv_func_pthread_setaffinity_np" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_PTHREAD_SETAFFINITY_NP 1
+_ACEOF
+
+fi
+done
+
+
+SIZEOF_CPU_SET_T=128
+ac_fn_c_check_type "$LINENO" "cpu_set_t" "ac_cv_type_cpu_set_t" "#include <pthread.h>
+"
+if test "x$ac_cv_type_cpu_set_t" = xyes; then :
+  is_cpuset=yes
+else
+  is_cpuset=no
+fi
+
+
+if test "x$is_cpuset" = "xyes" ; then
+	# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of cpu_set_t" >&5
+$as_echo_n "checking size of cpu_set_t... " >&6; }
+if ${ac_cv_sizeof_cpu_set_t+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (cpu_set_t))" "ac_cv_sizeof_cpu_set_t"        "#include <pthread.h>
+"; then :
+
+else
+  if test "$ac_cv_type_cpu_set_t" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (cpu_set_t)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_cpu_set_t=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_cpu_set_t" >&5
+$as_echo "$ac_cv_sizeof_cpu_set_t" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_CPU_SET_T $ac_cv_sizeof_cpu_set_t
+_ACEOF
+
+
+	SIZEOF_CPU_SET_T=$ac_cv_sizeof_cpu_set_t
+fi
+
+
 
 ac_fn_c_check_type "$LINENO" "pthread_barrier_t" "ac_cv_type_pthread_barrier_t" "#include <pthread.h>
 "
@@ -27586,11 +27625,10 @@ _ACEOF
 
         for ac_func in pthread_barrier_destroy
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_barrier_destroy" "ac_cv_func_pthread_barrier_destroy"
+if test "x$ac_cv_func_pthread_barrier_destroy" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_BARRIER_DESTROY 1
 _ACEOF
 
 fi
@@ -27598,11 +27636,10 @@ done
 
         for ac_func in pthread_barrier_init
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_barrier_init" "ac_cv_func_pthread_barrier_init"
+if test "x$ac_cv_func_pthread_barrier_init" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_BARRIER_INIT 1
 _ACEOF
 
 fi
@@ -27610,11 +27647,10 @@ done
 
         for ac_func in pthread_barrier_wait
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_barrier_wait" "ac_cv_func_pthread_barrier_wait"
+if test "x$ac_cv_func_pthread_barrier_wait" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_BARRIER_WAIT 1
 _ACEOF
 
 fi
@@ -27622,11 +27658,10 @@ done
 
         for ac_func in pthread_barrierattr_destroy
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_barrierattr_destroy" "ac_cv_func_pthread_barrierattr_destroy"
+if test "x$ac_cv_func_pthread_barrierattr_destroy" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_BARRIERATTR_DESTROY 1
 _ACEOF
 
 fi
@@ -27634,11 +27669,10 @@ done
 
         for ac_func in pthread_barrierattr_getpshared
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_barrierattr_getpshared" "ac_cv_func_pthread_barrierattr_getpshared"
+if test "x$ac_cv_func_pthread_barrierattr_getpshared" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_BARRIERATTR_GETPSHARED 1
 _ACEOF
 
 fi
@@ -27646,11 +27680,10 @@ done
 
         for ac_func in pthread_barrierattr_init
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_barrierattr_init" "ac_cv_func_pthread_barrierattr_init"
+if test "x$ac_cv_func_pthread_barrierattr_init" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_BARRIERATTR_INIT 1
 _ACEOF
 
 fi
@@ -27658,11 +27691,10 @@ done
 
         for ac_func in pthread_barrierattr_setpshared
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_barrierattr_setpshared" "ac_cv_func_pthread_barrierattr_setpshared"
+if test "x$ac_cv_func_pthread_barrierattr_setpshared" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_BARRIERATTR_SETPSHARED 1
 _ACEOF
 
 fi
@@ -27792,11 +27824,10 @@ _ACEOF
 
         for ac_func in pthread_cond_broadcast
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_cond_broadcast" "ac_cv_func_pthread_cond_broadcast"
+if test "x$ac_cv_func_pthread_cond_broadcast" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_COND_BROADCAST 1
 _ACEOF
 
 fi
@@ -27804,11 +27835,10 @@ done
 
         for ac_func in pthread_cond_destroy
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_cond_destroy" "ac_cv_func_pthread_cond_destroy"
+if test "x$ac_cv_func_pthread_cond_destroy" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_COND_DESTROY 1
 _ACEOF
 
 fi
@@ -27816,11 +27846,10 @@ done
 
         for ac_func in pthread_cond_init
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_cond_init" "ac_cv_func_pthread_cond_init"
+if test "x$ac_cv_func_pthread_cond_init" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_COND_INIT 1
 _ACEOF
 
 fi
@@ -27828,11 +27857,10 @@ done
 
         for ac_func in pthread_cond_signal
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_cond_signal" "ac_cv_func_pthread_cond_signal"
+if test "x$ac_cv_func_pthread_cond_signal" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_COND_SIGNAL 1
 _ACEOF
 
 fi
@@ -27840,11 +27868,10 @@ done
 
         for ac_func in pthread_cond_timedwait
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_cond_timedwait" "ac_cv_func_pthread_cond_timedwait"
+if test "x$ac_cv_func_pthread_cond_timedwait" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_COND_TIMEDWAIT 1
 _ACEOF
 
 fi
@@ -27852,11 +27879,10 @@ done
 
         for ac_func in pthread_cond_wait
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_cond_wait" "ac_cv_func_pthread_cond_wait"
+if test "x$ac_cv_func_pthread_cond_wait" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_COND_WAIT 1
 _ACEOF
 
 fi
@@ -27864,11 +27890,10 @@ done
 
         for ac_func in pthread_condattr_destroy
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_condattr_destroy" "ac_cv_func_pthread_condattr_destroy"
+if test "x$ac_cv_func_pthread_condattr_destroy" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_CONDATTR_DESTROY 1
 _ACEOF
 
 fi
@@ -27876,11 +27901,10 @@ done
 
         for ac_func in pthread_condattr_getclock
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_condattr_getclock" "ac_cv_func_pthread_condattr_getclock"
+if test "x$ac_cv_func_pthread_condattr_getclock" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_CONDATTR_GETCLOCK 1
 _ACEOF
 
 fi
@@ -27888,11 +27912,10 @@ done
 
         for ac_func in pthread_condattr_getpshared
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_condattr_getpshared" "ac_cv_func_pthread_condattr_getpshared"
+if test "x$ac_cv_func_pthread_condattr_getpshared" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_CONDATTR_GETPSHARED 1
 _ACEOF
 
 fi
@@ -27900,11 +27923,10 @@ done
 
         for ac_func in pthread_condattr_init
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_condattr_init" "ac_cv_func_pthread_condattr_init"
+if test "x$ac_cv_func_pthread_condattr_init" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_CONDATTR_INIT 1
 _ACEOF
 
 fi
@@ -27912,11 +27934,10 @@ done
 
         for ac_func in pthread_condattr_setclock
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_condattr_setclock" "ac_cv_func_pthread_condattr_setclock"
+if test "x$ac_cv_func_pthread_condattr_setclock" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_CONDATTR_SETCLOCK 1
 _ACEOF
 
 fi
@@ -27924,11 +27945,10 @@ done
 
         for ac_func in pthread_condattr_setpshared
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_condattr_setpshared" "ac_cv_func_pthread_condattr_setpshared"
+if test "x$ac_cv_func_pthread_condattr_setpshared" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_CONDATTR_SETPSHARED 1
 _ACEOF
 
 fi
@@ -28022,11 +28042,10 @@ _ACEOF
 
         for ac_func in pthread_mutex_destroy
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutex_destroy" "ac_cv_func_pthread_mutex_destroy"
+if test "x$ac_cv_func_pthread_mutex_destroy" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEX_DESTROY 1
 _ACEOF
 
 fi
@@ -28034,11 +28053,10 @@ done
 
         for ac_func in pthread_mutex_getprioceiling
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutex_getprioceiling" "ac_cv_func_pthread_mutex_getprioceiling"
+if test "x$ac_cv_func_pthread_mutex_getprioceiling" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEX_GETPRIOCEILING 1
 _ACEOF
 
 fi
@@ -28046,11 +28064,10 @@ done
 
         for ac_func in pthread_mutex_init
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutex_init" "ac_cv_func_pthread_mutex_init"
+if test "x$ac_cv_func_pthread_mutex_init" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEX_INIT 1
 _ACEOF
 
 fi
@@ -28058,11 +28075,10 @@ done
 
         for ac_func in pthread_mutex_lock
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutex_lock" "ac_cv_func_pthread_mutex_lock"
+if test "x$ac_cv_func_pthread_mutex_lock" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEX_LOCK 1
 _ACEOF
 
 fi
@@ -28070,11 +28086,10 @@ done
 
         for ac_func in pthread_mutex_setprioceiling
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutex_setprioceiling" "ac_cv_func_pthread_mutex_setprioceiling"
+if test "x$ac_cv_func_pthread_mutex_setprioceiling" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEX_SETPRIOCEILING 1
 _ACEOF
 
 fi
@@ -28082,11 +28097,10 @@ done
 
         for ac_func in pthread_mutex_timedlock
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutex_timedlock" "ac_cv_func_pthread_mutex_timedlock"
+if test "x$ac_cv_func_pthread_mutex_timedlock" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEX_TIMEDLOCK 1
 _ACEOF
 
 fi
@@ -28094,11 +28108,10 @@ done
 
         for ac_func in pthread_mutex_trylock
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutex_trylock" "ac_cv_func_pthread_mutex_trylock"
+if test "x$ac_cv_func_pthread_mutex_trylock" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEX_TRYLOCK 1
 _ACEOF
 
 fi
@@ -28106,11 +28119,10 @@ done
 
         for ac_func in pthread_mutex_unlock
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutex_unlock" "ac_cv_func_pthread_mutex_unlock"
+if test "x$ac_cv_func_pthread_mutex_unlock" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEX_UNLOCK 1
 _ACEOF
 
 fi
@@ -28118,11 +28130,10 @@ done
 
         for ac_func in pthread_mutexattr_destroy
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutexattr_destroy" "ac_cv_func_pthread_mutexattr_destroy"
+if test "x$ac_cv_func_pthread_mutexattr_destroy" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEXATTR_DESTROY 1
 _ACEOF
 
 fi
@@ -28130,11 +28141,10 @@ done
 
         for ac_func in pthread_mutexattr_getprioceiling
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutexattr_getprioceiling" "ac_cv_func_pthread_mutexattr_getprioceiling"
+if test "x$ac_cv_func_pthread_mutexattr_getprioceiling" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEXATTR_GETPRIOCEILING 1
 _ACEOF
 
 fi
@@ -28142,11 +28152,10 @@ done
 
         for ac_func in pthread_mutexattr_getprotocol
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutexattr_getprotocol" "ac_cv_func_pthread_mutexattr_getprotocol"
+if test "x$ac_cv_func_pthread_mutexattr_getprotocol" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEXATTR_GETPROTOCOL 1
 _ACEOF
 
 fi
@@ -28154,11 +28163,10 @@ done
 
         for ac_func in pthread_mutexattr_getpshared
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutexattr_getpshared" "ac_cv_func_pthread_mutexattr_getpshared"
+if test "x$ac_cv_func_pthread_mutexattr_getpshared" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEXATTR_GETPSHARED 1
 _ACEOF
 
 fi
@@ -28166,11 +28174,10 @@ done
 
         for ac_func in pthread_mutexattr_gettype
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutexattr_gettype" "ac_cv_func_pthread_mutexattr_gettype"
+if test "x$ac_cv_func_pthread_mutexattr_gettype" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEXATTR_GETTYPE 1
 _ACEOF
 
 fi
@@ -28178,11 +28185,10 @@ done
 
         for ac_func in pthread_mutexattr_init
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutexattr_init" "ac_cv_func_pthread_mutexattr_init"
+if test "x$ac_cv_func_pthread_mutexattr_init" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEXATTR_INIT 1
 _ACEOF
 
 fi
@@ -28190,11 +28196,10 @@ done
 
         for ac_func in pthread_mutexattr_setprioceiling
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutexattr_setprioceiling" "ac_cv_func_pthread_mutexattr_setprioceiling"
+if test "x$ac_cv_func_pthread_mutexattr_setprioceiling" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEXATTR_SETPRIOCEILING 1
 _ACEOF
 
 fi
@@ -28202,11 +28207,10 @@ done
 
         for ac_func in pthread_mutexattr_setprotocol
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutexattr_setprotocol" "ac_cv_func_pthread_mutexattr_setprotocol"
+if test "x$ac_cv_func_pthread_mutexattr_setprotocol" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEXATTR_SETPROTOCOL 1
 _ACEOF
 
 fi
@@ -28214,11 +28218,10 @@ done
 
         for ac_func in pthread_mutexattr_setpshared
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutexattr_setpshared" "ac_cv_func_pthread_mutexattr_setpshared"
+if test "x$ac_cv_func_pthread_mutexattr_setpshared" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEXATTR_SETPSHARED 1
 _ACEOF
 
 fi
@@ -28226,11 +28229,10 @@ done
 
         for ac_func in pthread_mutexattr_settype
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_mutexattr_settype" "ac_cv_func_pthread_mutexattr_settype"
+if test "x$ac_cv_func_pthread_mutexattr_settype" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_MUTEXATTR_SETTYPE 1
 _ACEOF
 
 fi
@@ -28324,11 +28326,10 @@ _ACEOF
 
         for ac_func in pthread_rwlock_destroy
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_rwlock_destroy" "ac_cv_func_pthread_rwlock_destroy"
+if test "x$ac_cv_func_pthread_rwlock_destroy" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_RWLOCK_DESTROY 1
 _ACEOF
 
 fi
@@ -28336,11 +28337,10 @@ done
 
         for ac_func in pthread_rwlock_init
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_rwlock_init" "ac_cv_func_pthread_rwlock_init"
+if test "x$ac_cv_func_pthread_rwlock_init" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_RWLOCK_INIT 1
 _ACEOF
 
 fi
@@ -28348,11 +28348,10 @@ done
 
         for ac_func in pthread_rwlock_rdlock
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_rwlock_rdlock" "ac_cv_func_pthread_rwlock_rdlock"
+if test "x$ac_cv_func_pthread_rwlock_rdlock" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_RWLOCK_RDLOCK 1
 _ACEOF
 
 fi
@@ -28360,11 +28359,10 @@ done
 
         for ac_func in pthread_rwlock_timedrdlock
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_rwlock_timedrdlock" "ac_cv_func_pthread_rwlock_timedrdlock"
+if test "x$ac_cv_func_pthread_rwlock_timedrdlock" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_RWLOCK_TIMEDRDLOCK 1
 _ACEOF
 
 fi
@@ -28372,11 +28370,10 @@ done
 
         for ac_func in pthread_rwlock_timedwrlock
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_rwlock_timedwrlock" "ac_cv_func_pthread_rwlock_timedwrlock"
+if test "x$ac_cv_func_pthread_rwlock_timedwrlock" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_RWLOCK_TIMEDWRLOCK 1
 _ACEOF
 
 fi
@@ -28384,11 +28381,10 @@ done
 
         for ac_func in pthread_rwlock_tryrdlock
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_rwlock_tryrdlock" "ac_cv_func_pthread_rwlock_tryrdlock"
+if test "x$ac_cv_func_pthread_rwlock_tryrdlock" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_RWLOCK_TRYRDLOCK 1
 _ACEOF
 
 fi
@@ -28396,11 +28392,10 @@ done
 
         for ac_func in pthread_rwlock_trywrlock
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_rwlock_trywrlock" "ac_cv_func_pthread_rwlock_trywrlock"
+if test "x$ac_cv_func_pthread_rwlock_trywrlock" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_RWLOCK_TRYWRLOCK 1
 _ACEOF
 
 fi
@@ -28408,11 +28403,10 @@ done
 
         for ac_func in pthread_rwlock_unlock
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_rwlock_unlock" "ac_cv_func_pthread_rwlock_unlock"
+if test "x$ac_cv_func_pthread_rwlock_unlock" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_RWLOCK_UNLOCK 1
 _ACEOF
 
 fi
@@ -28420,11 +28414,10 @@ done
 
         for ac_func in pthread_rwlock_wrlock
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_rwlock_wrlock" "ac_cv_func_pthread_rwlock_wrlock"
+if test "x$ac_cv_func_pthread_rwlock_wrlock" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_RWLOCK_WRLOCK 1
 _ACEOF
 
 fi
@@ -28432,11 +28425,10 @@ done
 
         for ac_func in pthread_rwlockattr_destroy
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_rwlockattr_destroy" "ac_cv_func_pthread_rwlockattr_destroy"
+if test "x$ac_cv_func_pthread_rwlockattr_destroy" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_RWLOCKATTR_DESTROY 1
 _ACEOF
 
 fi
@@ -28444,11 +28436,10 @@ done
 
         for ac_func in pthread_rwlockattr_getpshared
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_rwlockattr_getpshared" "ac_cv_func_pthread_rwlockattr_getpshared"
+if test "x$ac_cv_func_pthread_rwlockattr_getpshared" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_RWLOCKATTR_GETPSHARED 1
 _ACEOF
 
 fi
@@ -28456,11 +28447,10 @@ done
 
         for ac_func in pthread_rwlockattr_init
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_rwlockattr_init" "ac_cv_func_pthread_rwlockattr_init"
+if test "x$ac_cv_func_pthread_rwlockattr_init" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_RWLOCKATTR_INIT 1
 _ACEOF
 
 fi
@@ -28468,11 +28458,10 @@ done
 
         for ac_func in pthread_rwlockattr_setpshared
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_rwlockattr_setpshared" "ac_cv_func_pthread_rwlockattr_setpshared"
+if test "x$ac_cv_func_pthread_rwlockattr_setpshared" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_RWLOCKATTR_SETPSHARED 1
 _ACEOF
 
 fi
@@ -28482,11 +28471,10 @@ fi
 
 for ac_func in pthread_self
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_self" "ac_cv_func_pthread_self"
+if test "x$ac_cv_func_pthread_self" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_SELF 1
 _ACEOF
 
 fi
@@ -28494,11 +28482,10 @@ done
 
 for ac_func in pthread_setcancelstate
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_setcancelstate" "ac_cv_func_pthread_setcancelstate"
+if test "x$ac_cv_func_pthread_setcancelstate" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_SETCANCELSTATE 1
 _ACEOF
 
 fi
@@ -28506,11 +28493,10 @@ done
 
 for ac_func in pthread_setcanceltype
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_setcanceltype" "ac_cv_func_pthread_setcanceltype"
+if test "x$ac_cv_func_pthread_setcanceltype" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_SETCANCELTYPE 1
 _ACEOF
 
 fi
@@ -28518,11 +28504,10 @@ done
 
 for ac_func in pthread_setconcurrency
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_setconcurrency" "ac_cv_func_pthread_setconcurrency"
+if test "x$ac_cv_func_pthread_setconcurrency" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_SETCONCURRENCY 1
 _ACEOF
 
 fi
@@ -28530,11 +28515,10 @@ done
 
 for ac_func in pthread_setschedparam
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_setschedparam" "ac_cv_func_pthread_setschedparam"
+if test "x$ac_cv_func_pthread_setschedparam" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_SETSCHEDPARAM 1
 _ACEOF
 
 fi
@@ -28542,11 +28526,10 @@ done
 
 for ac_func in pthread_setschedprio
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_setschedprio" "ac_cv_func_pthread_setschedprio"
+if test "x$ac_cv_func_pthread_setschedprio" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_SETSCHEDPRIO 1
 _ACEOF
 
 fi
@@ -28554,11 +28537,10 @@ done
 
 for ac_func in pthread_setspecific
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_setspecific" "ac_cv_func_pthread_setspecific"
+if test "x$ac_cv_func_pthread_setspecific" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_SETSPECIFIC 1
 _ACEOF
 
 fi
@@ -28613,11 +28595,10 @@ _ACEOF
 
         for ac_func in pthread_spin_destroy
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_spin_destroy" "ac_cv_func_pthread_spin_destroy"
+if test "x$ac_cv_func_pthread_spin_destroy" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_SPIN_DESTROY 1
 _ACEOF
 
 fi
@@ -28625,11 +28606,10 @@ done
 
         for ac_func in pthread_spin_init
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_spin_init" "ac_cv_func_pthread_spin_init"
+if test "x$ac_cv_func_pthread_spin_init" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_SPIN_INIT 1
 _ACEOF
 
 fi
@@ -28637,11 +28617,10 @@ done
 
         for ac_func in pthread_spin_lock
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_spin_lock" "ac_cv_func_pthread_spin_lock"
+if test "x$ac_cv_func_pthread_spin_lock" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_SPIN_LOCK 1
 _ACEOF
 
 fi
@@ -28649,11 +28628,10 @@ done
 
         for ac_func in pthread_spin_trylock
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_spin_trylock" "ac_cv_func_pthread_spin_trylock"
+if test "x$ac_cv_func_pthread_spin_trylock" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_SPIN_TRYLOCK 1
 _ACEOF
 
 fi
@@ -28661,11 +28639,10 @@ done
 
         for ac_func in pthread_spin_unlock
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_spin_unlock" "ac_cv_func_pthread_spin_unlock"
+if test "x$ac_cv_func_pthread_spin_unlock" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_SPIN_UNLOCK 1
 _ACEOF
 
 fi
@@ -28675,11 +28652,10 @@ fi
 
 for ac_func in pthread_testcancel
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_testcancel" "ac_cv_func_pthread_testcancel"
+if test "x$ac_cv_func_pthread_testcancel" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_TESTCANCEL 1
 _ACEOF
 
 fi
@@ -28741,11 +28717,10 @@ _ACEOF
 
         for ac_func in sem_init
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "sem_init" "ac_cv_func_sem_init"
+if test "x$ac_cv_func_sem_init" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_SEM_INIT 1
 _ACEOF
 
 fi
@@ -28753,11 +28728,10 @@ done
 
         for ac_func in sem_wait
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "sem_wait" "ac_cv_func_sem_wait"
+if test "x$ac_cv_func_sem_wait" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_SEM_WAIT 1
 _ACEOF
 
 fi
@@ -28765,11 +28739,10 @@ done
 
         for ac_func in sem_trywait
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "sem_trywait" "ac_cv_func_sem_trywait"
+if test "x$ac_cv_func_sem_trywait" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_SEM_TRYWAIT 1
 _ACEOF
 
 fi
@@ -28777,11 +28750,10 @@ done
 
         for ac_func in sem_post
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "sem_post" "ac_cv_func_sem_post"
+if test "x$ac_cv_func_sem_post" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_SEM_POST 1
 _ACEOF
 
 fi
@@ -28789,11 +28761,10 @@ done
 
         for ac_func in sem_getvalue
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "sem_getvalue" "ac_cv_func_sem_getvalue"
+if test "x$ac_cv_func_sem_getvalue" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_SEM_GETVALUE 1
 _ACEOF
 
 fi
@@ -28801,11 +28772,10 @@ done
 
         for ac_func in sem_destroy
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "sem_destroy" "ac_cv_func_sem_destroy"
+if test "x$ac_cv_func_sem_destroy" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_SEM_DESTROY 1
 _ACEOF
 
 fi
@@ -28813,11 +28783,10 @@ done
 
         for ac_func in sem_open
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "sem_open" "ac_cv_func_sem_open"
+if test "x$ac_cv_func_sem_open" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_SEM_OPEN 1
 _ACEOF
 
 fi
@@ -28825,11 +28794,10 @@ done
 
         for ac_func in sem_close
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "sem_close" "ac_cv_func_sem_close"
+if test "x$ac_cv_func_sem_close" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_SEM_CLOSE 1
 _ACEOF
 
 fi
@@ -28837,11 +28805,10 @@ done
 
         for ac_func in sem_unlink
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "sem_unlink" "ac_cv_func_sem_unlink"
+if test "x$ac_cv_func_sem_unlink" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_SEM_UNLINK 1
 _ACEOF
 
 fi
@@ -28849,11 +28816,10 @@ done
 
         for ac_func in sem_timedwait
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "sem_timedwait" "ac_cv_func_sem_timedwait"
+if test "x$ac_cv_func_sem_timedwait" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_SEM_TIMEDWAIT 1
 _ACEOF
 
 fi
@@ -28887,11 +28853,10 @@ fi
 
 for ac_func in pthread_sigmask
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_sigmask" "ac_cv_func_pthread_sigmask"
+if test "x$ac_cv_func_pthread_sigmask" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_SIGMASK 1
 _ACEOF
 
 fi
@@ -28899,11 +28864,10 @@ done
 
 for ac_func in pthread_kill
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "pthread_kill" "ac_cv_func_pthread_kill"
+if test "x$ac_cv_func_pthread_kill" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_PTHREAD_KILL 1
 _ACEOF
 
 fi
@@ -28911,11 +28875,10 @@ done
 
 for ac_func in sched_get_priority_max
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "sched_get_priority_max" "ac_cv_func_sched_get_priority_max"
+if test "x$ac_cv_func_sched_get_priority_max" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_SCHED_GET_PRIORITY_MAX 1
 _ACEOF
 
 fi
@@ -28923,11 +28886,10 @@ done
 
 for ac_func in sched_get_priority_min
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "sched_get_priority_min" "ac_cv_func_sched_get_priority_min"
+if test "x$ac_cv_func_sched_get_priority_min" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_SCHED_GET_PRIORITY_MIN 1
 _ACEOF
 
 fi

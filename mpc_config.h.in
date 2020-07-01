@@ -301,6 +301,9 @@
 /* Define to 1 if you have the `pthread_exit' function. */
 #undef HAVE_PTHREAD_EXIT
 
+/* Define to 1 if you have the `pthread_getaffinity_np' function. */
+#undef HAVE_PTHREAD_GETAFFINITY_NP
+
 /* Define to 1 if you have the `pthread_getconcurrency' function. */
 #undef HAVE_PTHREAD_GETCONCURRENCY
 
@@ -426,6 +429,9 @@
 
 /* Define to 1 if you have the `pthread_self' function. */
 #undef HAVE_PTHREAD_SELF
+
+/* Define to 1 if you have the `pthread_setaffinity_np' function. */
+#undef HAVE_PTHREAD_SETAFFINITY_NP
 
 /* Define to 1 if you have the `pthread_setcancelstate' function. */
 #undef HAVE_PTHREAD_SETCANCELSTATE
@@ -924,6 +930,9 @@
 
 /* The size of `char', as computed by sizeof. */
 #undef SIZEOF_CHAR
+
+/* The size of `cpu_set_t', as computed by sizeof. */
+#undef SIZEOF_CPU_SET_T
 
 /* The size of `double', as computed by sizeof. */
 #undef SIZEOF_DOUBLE

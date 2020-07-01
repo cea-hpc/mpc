@@ -19,8 +19,11 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "ethread_posix.h"
+#define _GNU_SOURCE
+#include <sched.h>
 
+
+#include "ethread_posix.h"
 #include "ethread_engine_internal.h"
 
 #include "thread_ptr.h"
@@ -1834,4 +1837,44 @@ int _mpc_thread_ethread_posix_getattr_np(_mpc_thread_ethread_t th, _mpc_thread_e
 	            sctk_malloc(sizeof(_mpc_thread_ethread_attr_intern_t) );
 	*attr->ptr = th->attr;
 	return 0;
+}
+
+
+int _mpc_thread_ethread_posix_setaffinity_np(_mpc_thread_ethread_t thread, size_t cpusetsize,
+                              const mpc_cpu_set_t *cpuset)
+{
+	if(CPU_COUNT(((cpu_set_t*)cpuset)) != 1)
+	{
+		return EINVAL;
+	}
+
+	/* Can migration be supported ? */
+	if(!_funcptr_mpc_thread_proc_migration)
+	{
+		mpc_common_debug_warning("setaffinity_np not supported");
+		return EINVAL;
+	}
+
+	/* Migrate to the given core */
+	int i;
+	for(i = 0 ; i < CPU_SETSIZE ; i++)
+	{
+		if(CPU_ISSET(i, ((cpu_set_t*)cpuset)))
+		{
+			(_funcptr_mpc_thread_proc_migration)(i);
+			break;
+		}
+	}
+
+	return 0;
+}
+
+int _mpc_thread_ethread_posix_getaffinity_np(_mpc_thread_ethread_t thread, size_t cpusetsize,
+                              mpc_cpu_set_t *cpuset)
+{
+	/* Ethreads only run on a single PU */
+	CPU_ZERO(((cpu_set_t*)cpuset));
+	CPU_SET(mpc_thread_get_pu(), ((cpu_set_t*)cpuset) );
+	return 0;
+
 }

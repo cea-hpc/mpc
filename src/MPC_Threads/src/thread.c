@@ -1641,6 +1641,30 @@ int mpc_thread_attr_getschedpolicy(const mpc_thread_attr_t *restrict __attr,
 	return res;
 }
 
+int mpc_thread_setaffinity_np(mpc_thread_t thread, size_t cpusetsize,
+                              const mpc_cpu_set_t *cpuset)
+{
+	__check_mpc_initialized();
+	int res;
+
+	assert(_funcptr_mpc_thread_setaffinity_np != NULL);
+	res = _funcptr_mpc_thread_setaffinity_np(thread, cpusetsize, cpuset);
+	sctk_check(res, 0);
+	return res;
+}
+
+int mpc_thread_getaffinity_np(mpc_thread_t thread, size_t cpusetsize,
+                              mpc_cpu_set_t *cpuset)
+{
+	__check_mpc_initialized();
+	int res;
+
+	assert(_funcptr_mpc_thread_getaffinity_np != NULL);
+	res = _funcptr_mpc_thread_getaffinity_np(thread, cpusetsize, cpuset);
+	sctk_check(res, 0);
+	return res;
+}
+
 int mpc_thread_attr_getscope(const mpc_thread_attr_t *restrict __attr,
                              int *restrict __scope)
 {

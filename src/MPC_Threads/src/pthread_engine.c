@@ -534,6 +534,14 @@ void mpc_thread_pthread_engine_init(void)
 	sctk_add_func_type(pthread, attr_getschedpolicy,
 	                   int (*)(const mpc_thread_attr_t *, int *) );
 #endif
+#ifdef HAVE_PTHREAD_SETAFFINITY_NP
+	sctk_add_func_type(pthread, setaffinity_np,
+	                  int (*)(mpc_thread_t , size_t ,const mpc_cpu_set_t *) );
+#endif
+#ifdef HAVE_PTHREAD_GETAFFINITY_NP
+	sctk_add_func_type(pthread, getaffinity_np,
+	                  int (*)(mpc_thread_t , size_t , mpc_cpu_set_t *) );
+#endif
 #ifdef HAVE_PTHREAD_ATTR_SETINHERITSCHED
 	sctk_add_func_type(pthread, attr_setinheritsched,
 	                   int (*)(mpc_thread_attr_t *, int) );

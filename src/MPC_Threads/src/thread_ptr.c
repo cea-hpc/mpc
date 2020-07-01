@@ -51,6 +51,8 @@ int ( *_funcptr_mpc_thread_attr_getschedparam )(const mpc_thread_attr_t *
 int ( *_funcptr_mpc_thread_attr_getschedpolicy )(const mpc_thread_attr_t *
                                                  __attr,
                                                  int *__policy) = NULL;
+int ( *_funcptr_mpc_thread_setaffinity_np)(mpc_thread_t, size_t, const mpc_cpu_set_t *) = NULL;
+int ( *_funcptr_mpc_thread_getaffinity_np)(mpc_thread_t, size_t, mpc_cpu_set_t *) = NULL;
 int ( *_funcptr_mpc_thread_attr_getscope )(const mpc_thread_attr_t *__attr,
                                            int *__scope) = NULL;
 int ( *_funcptr_mpc_thread_attr_getstackaddr )(const mpc_thread_attr_t *
