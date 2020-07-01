@@ -366,7 +366,7 @@ cat << EOF
 Launcher:
 	-l=n, --launcher=n              Define launcher
 	--opt=<options>                 Launcher specific options
-	--launch_list                   Print available launch methods
+	--launchlist                    Print available launch methods
 	--config=<file>                 Configuration file to load.
 	--profiles=<p1,p2>              List of profiles to enable in config.
 
@@ -426,9 +426,15 @@ fi
 list_available_mpc_launchers()
 {
 	echo "Available launch method"
-	for i in "${MPC_SHARE_DIR}/mpcrun_opt/*" ; do echo "    - $(basename "$i")" | sed s/mpcrun_//g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
+	for i in ${MPC_SHARE_DIR}/mpcrun_opt/*
+	do
+		echo "    - $(basename "$i")" | sed s/mpcrun_//g  | grep -v default_param | grep -v propagate_env | grep -v "~"
+	done
 	if [ -n "${CONFIG_USER_LAUNCHERS}" ] && [ -e "${CONFIG_USER_LAUNCHERS}" ]; then
-		for i in "${CONFIG_USER_LAUNCHERS}"/mpcrun_* ; do echo "    - $(basename "$i")" | sed s/mpcrun_//g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
+		for i in "${CONFIG_USER_LAUNCHERS}"/mpcrun_* ;
+		do
+			echo "    - $(basename "$i")" | sed s/mpcrun_//g  | grep -v default_param | grep -v propagate_env | grep -v "~"
+		done
 	fi
 	exit 0
 }
@@ -481,7 +487,7 @@ for arg in "$@" ; do
 			--version|-V)
 				print_version
 				;;
-			--launch_list|-l=help|--launcher=help)
+			--launch_list|--launchlist|-l=help|--launcher=help)
 				list_available_mpc_launchers
 				;;
 			--disable-smt)
