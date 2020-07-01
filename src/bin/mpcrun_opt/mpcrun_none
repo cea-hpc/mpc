@@ -20,4 +20,10 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 # 
 #                                                                      # 
 ######################################################################## 
+
+if test "x${LAUNCHER_OPTION_PROCESS_NB}" != "x1"; then
+	mpcrun_error "The 'none' launcher can only be used for a single process"
+fi
+
+
 LAUNCH_COMMAND="$LAUNCHER_OPTION_WRAPPER $LAUNCHER_OPTION_BINARY $LAUNCHER_OPTION_BINARY_ARGS $SCTK_ARGS"
