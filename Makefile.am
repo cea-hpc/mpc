@@ -24,8 +24,10 @@
 ACLOCAL_AMFLAGS=-I config/m4
 SUBDIRS=src
 
-lint:
-	$(abs_top_srcdir)/utils/lint.sh $(abs_top_builddir)
+#
+# Override autoconf for maintainer mode
+#
+AUTOCONF = ${SHELL} ${abs_builddir}/src/bin/mpc_build_env.sh ${srcdir}/autogen.sh
 
 #
 # Config generation helper

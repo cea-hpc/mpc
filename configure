@@ -31954,7 +31954,12 @@ fi
 _ACEOF
 cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
 if \$ac_cs_recheck; then
-  set X $SHELL '$0' $ac_configure_args \$ac_configure_extra_args --no-create --no-recursion
+  BDIR=\$(dirname \$(readlink -f "\$0"))
+  MPC_ENV=""
+  if test -f "\${BDIR}/src/bin/mpc_build_env.sh"; then
+	MPC_ENV="\${BDIR}/src/bin/mpc_build_env.sh"
+  fi
+  set X $SHELL \${MPC_ENV} '$0' $ac_configure_args \$ac_configure_extra_args --no-create --no-recursion
   shift
   \$as_echo "running CONFIG_SHELL=$SHELL \$*" >&6
   CONFIG_SHELL='$SHELL'
@@ -34104,4 +34109,5 @@ echo "***********************************************"
 fi
 # MPC has applied patch MPC_FORTRAN_FIX_LIB_WITH_SPACE
 # MPC has applied patch MPC_FLANG_SUPPORT
+# MPC has applied patch MPC_MAINTAINER_MODE
 # MPC_AUTOGEN_WAS_USED
