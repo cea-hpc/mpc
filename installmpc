@@ -30,7 +30,7 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 # Where MPC is currently being BUILT
 PROJECT_BUILD_DIR=$(readlink -f "$PWD")
 
-USE_COLOR="yes"
+USE_COLOR="no"
 
 ####################
 # BUILD PARAMETERS #
@@ -106,18 +106,22 @@ check_prefix_is_clean()
 #
 # Output helpers
 #
-if test "x$USE_COLOR" = "xyes"; then
-colRESET="\e[0m"
-colGRAY="\e[90m"
-colRED="\e[31m"
-colGREEN="\e[32m"
-colMAGENTA="\e[35m"
-colYELLOW="\e[33m"
-colbgGRAY="\e[100m"
-colbgMAGENTA="\e[45m"
-colBLINK="\e[5m"
-UNDERLINE="\e[4m"
-fi
+set_color_model()
+{
+	if test "x$USE_COLOR" = "xyes"; then
+		colRESET="\e[0m"
+		colGRAY="\e[90m"
+		colRED="\e[31m"
+		colGREEN="\e[32m"
+		colMAGENTA="\e[35m"
+		colYELLOW="\e[33m"
+		colbgGRAY="\e[100m"
+		colbgMAGENTA="\e[45m"
+		colBLINK="\e[5m"
+		UNDERLINE="\e[4m"
+	fi
+}
+
 
 PENDING_LB=""
 STEP_WRAPPER_VERBOSE=0
@@ -899,7 +903,7 @@ Defaults for the options are specified in brackets.
   --lib-mode                              : Build MPC as a communication library
   --mpc-process-mode                      : Build MPC in process-mode (1 MPI process = 1 UNIX process)
   --{enable,disable}-mpc-ft               : Activate/Deactivate checkpoint/restart support
-  --{enable,disable}-color                         : Disable colors in display
+  --{enable,disable}-color                : Disable colors in display
   --enable-mpc-debug                      : Enable every debug levels (symbols, messages)
   --verbose=1|2|3                         : Level of verbosity
   -v|-vv|-vvv                             : Level of verbosity
@@ -1181,6 +1185,11 @@ do
 			exit 1
 	esac
 done
+
+#
+# Enable output color if set
+#
+set_color_model
 
 # Build directory check
 #
