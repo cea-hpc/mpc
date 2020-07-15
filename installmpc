@@ -735,13 +735,7 @@ build_configure_based_package()
 	show_run_cmd "cd ${PKG_SOURCE_DIR}/BUILD"
 	cd "${PKG_SOURCE_DIR}/BUILD"
 
-
-	if test -f "${PKG_SOURCE_DIR}/autopriv_deploy.sh"; then
-		# Handle the special case of the autopriv deploy script
-		checking "Deploying $package-$version"
-		wrap_output "${PKG_SOURCE_DIR}/autopriv_deploy.sh" -b "${PWD}" -i "${PREFIX}" -j "${MAKE_J}" -o "\"${extra_config_args}\""
-		ok
-	elif test -f "${PKG_SOURCE_DIR}/configure"; then
+	if test -f "${PKG_SOURCE_DIR}/configure"; then
 		# Regular configure / make / make install
 		checking "Configuring $package-$version"
 		# we want parameter expansion
@@ -757,7 +751,7 @@ build_configure_based_package()
 		wrap_output make install
 		ok
 	else
-		die "Could not locate ./configure or autopriv_deploy.sh in ${PKG_SOURCE_DIR}"
+		die "Could not locate ./configure in ${PKG_SOURCE_DIR}"
 	fi
 
 	show_run_cmd "cd ${PROJECT_BUILD_DIR}"
@@ -1326,7 +1320,7 @@ if test "x${DEP_FOUND}" = "xno"; then
 	assert_cmd "g++"
 	check_glibc_is_compatible_with_priv
 	# Could not use spack now installing manually
-	build_configure_based_package "autopriv" "0.5.0" "$AUTOPRIV_BUILD_PARAMETERS"
+	build_configure_based_package "autopriv" "0.6.0" "$AUTOPRIV_BUILD_PARAMETERS"
 fi
 
 # It is now time to configure MPC

@@ -1043,9 +1043,9 @@ enable_openmp
 enable_fortran
 enable_mpiio
 enable_process_mode
-with_extls
-with_extls_include
-with_extls_libs
+with_autopriv
+with_autopriv_include
+with_autopriv_libs
 enable_shell_colors
 enable_cma
 enable_opt
@@ -1811,9 +1811,9 @@ Optional Packages:
   --with-cudart-inc       Provide include path for cudart
   --with-cudart-libs      Provide library path for cudart
   --with-dmtcp            Compile MPC with checkpoint restart support
-  --with-extls            Provide prefix for extls
-  --with-extls-inc        Provide include path for extls
-  --with-extls-libs       Provide library path for extls
+  --with-autopriv         Provide prefix for autopriv
+  --with-autopriv-inc     Provide include path for autopriv
+  --with-autopriv-libs    Provide library path for autopriv
 
 Some influential environment variables:
   CC          C compiler command
@@ -30419,16 +30419,16 @@ fi
 
 
 # First assume extls not found
-extls_support_found="no"
+autopriv_support_found="no"
 
 if test "x$enable_mpc_proces_mode" = "xno"; then
 
 
 
 
-# Check whether --with-extls was given.
-if test "${with_extls+set}" = set; then :
-  withval=$with_extls; whole_prefix=$withval
+# Check whether --with-autopriv was given.
+if test "${with_autopriv+set}" = set; then :
+  withval=$with_autopriv; whole_prefix=$withval
 else
   whole_prefix="/usr/"
 fi
@@ -30436,16 +30436,16 @@ fi
 
                 inc_prefix=""
 
-# Check whether --with-extls-include was given.
-if test "${with_extls_include+set}" = set; then :
-  withval=$with_extls_include; inc_prefix=$withval
+# Check whether --with-autopriv-include was given.
+if test "${with_autopriv_include+set}" = set; then :
+  withval=$with_autopriv_include; inc_prefix=$withval
 fi
 
                 lib_prefix=""
 
-# Check whether --with-extls-libs was given.
-if test "${with_extls_libs+set}" = set; then :
-  withval=$with_extls_libs; lib_prefix=$withval
+# Check whether --with-autopriv-libs was given.
+if test "${with_autopriv_libs+set}" = set; then :
+  withval=$with_autopriv_libs; lib_prefix=$withval
 else
   lib_prefix=""
 fi
@@ -30453,7 +30453,7 @@ fi
 
                 check_or_infer_prefix_result="no"
                 header_name=extls.h
-                libname=extls
+                libname=autopriv
                 function_name=extls_init
                 var_prefix=EXTLS
                 version=""
@@ -30591,7 +30591,7 @@ fi
 
 $as_echo "#define MPC_USE_EXTLS 1" >>confdefs.h
 
-                extls_support_found="yes"
+                autopriv_support_found="yes"
         else
                 # If no privatization is available we fallback to Process-Based model
                 { $as_echo "$as_me:${as_lineno-$LINENO}: No privatization support detected assuming Process-Based Model (no privatization)" >&5
@@ -30612,7 +30612,7 @@ fi
 
 
 # One last sanity check (extls but no privatizing compilers)
-if test "x${extls_support_found}" = "xyes"; then
+if test "x${autopriv_support_found}" = "xyes"; then
         if test "x${mpc_have_autopriv}" = "xno"; then
                 echo "!!!!!!!!!!!!!!!!!!!!!!!!"
                 { $as_echo "$as_me:${as_lineno-$LINENO}: checking priv in $CC" >&5
@@ -30998,7 +30998,7 @@ MPC_CONFIG_RESULT="\
 #\n\
 ### COMPILERS ###\n\
 #\n\
-# Privatization........ $extls_support_found\n\
+# Privatization........ $autopriv_support_found\n\
 # Process mode......... $enable_mpc_proces_mode\n\
 # mpc_cc points to..... $(basename $CC)\n\
 # mpc_cxx points to.... $(basename $CXX)\n\

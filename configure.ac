@@ -2194,14 +2194,14 @@ AC_ARG_ENABLE([process-mode],
 [enable_mpc_proces_mode=no])
 
 # First assume extls not found
-extls_support_found="no"
+autopriv_support_found="no"
 
 if test "x$enable_mpc_proces_mode" = "xno"; then
 
-        MPC_DETECT_DEPENDENCY([extls.h],[extls], [extls_init], [EXTLS])
+        MPC_DETECT_DEPENDENCY([extls.h],[autopriv], [extls_init], [EXTLS])
         if test "x$mpc_dep_found" = "xyes"; then
                 AC_DEFINE([MPC_USE_EXTLS], [1], [Extls support is enabled])
-                extls_support_found="yes"
+                autopriv_support_found="yes"
         else
                 # If no privatization is available we fallback to Process-Based model
                 AC_MSG_NOTICE([No privatization support detected assuming Process-Based Model (no privatization)])
@@ -2219,7 +2219,7 @@ fi
 AC_SUBST([MPC_IN_PROCESS_MODE])
 
 # One last sanity check (extls but no privatizing compilers)
-if test "x${extls_support_found}" = "xyes"; then
+if test "x${autopriv_support_found}" = "xyes"; then
         if test "x${mpc_have_autopriv}" = "xno"; then
                 echo "!!!!!!!!!!!!!!!!!!!!!!!!"
                 AC_MSG_CHECKING([priv in $CC])
@@ -2511,7 +2511,7 @@ MPC_CONFIG_RESULT="\
 #\n\
 ### COMPILERS ###\n\
 #\n\
-# Privatization........ $extls_support_found\n\
+# Privatization........ $autopriv_support_found\n\
 # Process mode......... $enable_mpc_proces_mode\n\
 # mpc_cc points to..... $(basename $CC)\n\
 # mpc_cxx points to.... $(basename $CXX)\n\
