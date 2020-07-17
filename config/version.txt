@@ -1,0 +1,9 @@
+#PACKAGE    VERSION
+libxml2     2.9.3
+hwloc       1.11.13
+openpa      1.0.4
+hydra       3.2
+mpcalloc    0.1
+autopriv    0.6.0
+mpc-dmtcp   2.5.0
+gdb         7.7

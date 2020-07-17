@@ -23,6 +23,10 @@
 #                                                                      #
 ########################################################################
 
+
+SCRIPTPATH=$(dirname "$(readlink -f "$0")")
+
+
 ##################### FUNCTION ###################
 safe_exec()
 {
@@ -32,8 +36,8 @@ safe_exec()
 ##################### FUNCTION ###################
 do_check()
 {
-	if test -d mpcframework-${VERSION}; then safe_exec rm -rf mpcframework-${VERSION}; fi
-	safe_exec tar -xzf mpcframework-${VERSION}.tar.gz
+	if test -d "mpcframework-${VERSION}"; then safe_exec rm -rf "mpcframework-${VERSION}"; fi
+	safe_exec tar -xzf "${FILE}"
 	safe_exec cp -r ./MPC_Test_Suite ./mpcframework-${VERSION}/
 	safe_exec cd mpcframework-${VERSION}/MPC_Test_Suite
 	safe_exec rm -fr ./build/
@@ -55,18 +59,41 @@ fi
 
 ##################### SECTION ####################
 VERSION=$(./utils/get_version)
+FILE="${PWD}/mpcframework-${VERSION}.tar.gz"
+
 echo "MPC version for this archive will be $VERSION"
-test -f ./mpcframework-${VERSION}.tar.gz && echo "A file named mpcframework-${VERSION}.tar.gz already exist!" && exit 1
+test -f "${FILE}" && echo "A file named ${FILE} already exist!" && exit 1
 
-echo "git archive --format=tar.gz --prefix=mpcframework-${VERSION}/ HEAD > mpcframework-${VERSION}.tar.gz"
-git archive --format=tar.gz --prefix=mpcframework-${VERSION}/ HEAD > mpcframework-${VERSION}.tar.gz || exit 1
+echo "git archive --format=tar.gz --prefix=mpcframework-${VERSION}/ HEAD > ${FILE}"
+git archive --format=tar.gz --prefix="mpcframework-${VERSION}/" HEAD > "${FILE}" || exit 1
 
-echo "$(sha512sum mpcframework-${VERSION}.tar.gz)" > ./mpcframework-${VERSION}.tar.gz.digest
-echo "$(sha256sum mpcframework-${VERSION}.tar.gz)" >> ./mpcframework-${VERSION}.tar.gz.digest
-echo "$(md5sum mpcframework-${VERSION}.tar.gz)" >> ./mpcframework-${VERSION}.tar.gz.digest
+# Now enrich archive with deps
+TMPDIR=$(mktemp -d)
+cd "${TMPDIR}" || exit 42
 
-echo "Archive sum (./mpcframework-${VERSION}.tar.gz.digest):"
-cat ./mpcframework-${VERSION}.tar.gz.digest
+safe_exec tar xf "${FILE}"
+cd "./mpcframework-${VERSION}/deps/" || exit 42
+
+echo "Downloading dependencies.."
+
+safe_exec "${SCRIPTPATH}/../installmpc" --download "$@"
+
+echo "Inserting dependencies ..."
+
+cd "${TMPDIR}" || exit 42
+
+safe_exec tar czf "${FILE}" "./mpcframework-${VERSION}/"
+
+rm -fr "${TMPDIR}"
+
+
+
+sha512sum "${FILE}" > "${FILE}.digest"
+sha256sum "${FILE}" >> "${FILE}.digest"
+md5sum "${FILE}" >> "${FILE}.digest"
+
+echo "Archive sum (./${FILE}.digest):"
+cat "${FILE}.digest"
 
 if test "$1" = "--check"; then
 	do_check

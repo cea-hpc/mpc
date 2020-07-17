@@ -47,7 +47,6 @@ HYDRA_BUILD_PARAMETERS=""
 MPC_DMTCP_BUILD_PARAMETERS="--enable-pthread-mutex-wrappers"
 MPC_GDB_BUILD_PARAMETERS="--without-zlib --disable-werror"
 
-
 # Stop on error
 set -e
 
@@ -184,7 +183,7 @@ notapplicable()
 #
 
 LIST_OF_FOUND_CMD=""
-COMMON_CMD="cmake spack patch cut ls pwd grep rm rev basename dirname make bzip2 gcc g++ ldd pkg-config mktemp getconf nproc lscpu"
+COMMON_CMD="cmake spack patch cut ls pwd grep rm rev basename dirname make bzip2 gcc g++ ldd pkg-config mktemp getconf nproc lscpu wget curl"
 check_for_commands()
 {
 	# Check already done
@@ -605,6 +604,199 @@ load_prefix()
 	propagate_build_env
 }
 
+# Check if an entry is in a list
+#
+# Args:
+# - 1: needle
+# - 2: haystack
+in_list()
+{
+	echo "$2" | grep "$1" > /dev/null
+}
+
+# Cat a file filtering lines starting with #
+# Args:
+#   - Path to file
+#
+_config_file_clean()
+{
+    grep -v "^\#" < "$1" | sed -E "s/\s+/ /g"
+}
+
+# Get package list from source.txt
+package_list()
+{
+    _config_file_clean "${SCRIPTPATH}/config/source.txt" | cut -d " " -f 1
+}
+
+# Assert package is known
+# Args:
+# - 1: package name
+assert_package()
+{
+	if in_list "$1" "$(package_list)"; then
+		true
+	else
+		die "No such package $1."
+	fi
+}
+
+# Get package list from version.txt
+vesion_list()
+{
+    _config_file_clean "${SCRIPTPATH}/config/version.txt" | cut -d " " -f 1
+}
+
+# Assert package version is known
+# Args:
+# - 1: package name
+assert_version()
+{
+	if in_list "$1" "$(vesion_list)"; then
+		true
+	else
+		die "No such package $1 in version.txt."
+	fi
+}
+
+# Get package version
+# Args:
+# - 1: package name
+# - 2: version
+#
+package_version()
+{
+	assert_version "$1"
+	_config_file_clean "${SCRIPTPATH}/config/version.txt" | grep "$1" | cut -d " " -f 2
+}
+
+# Get package URL
+# Args:
+# - 1: package name
+# - 2: version
+#
+package_download_address()
+{
+	_config_file_clean "${SCRIPTPATH}/config/source.txt" | grep "$1" | cut -d " " -f 2 | sed "s/VERSION/${2}/g"
+}
+
+# Package Filename
+# - 1: package name
+# - 2: version
+#
+package_filename()
+{
+	package_download_address "$1" "$2" | rev | cut -d "/" -f 1 | rev
+}
+
+# Download a dependency
+# Args:
+# - 1 : package name
+# - 2 : package version
+# Returns in ENV:
+# TARBALL_PATH where the tarball is
+download_package()
+{
+	PKG=$1
+	VERS=$2
+
+	cd "$PROJECT_BUILD_DIR" || die "Could not go back to builddir"
+
+	assert_package "$PKG"
+
+	FNAME=$(package_filename "$PKG" "${VERS}")
+
+	checking "Downloading $PKG-$VERS"
+
+	have_cmd "wget"
+	if test "x${HAVE_CMD}" = "xyes"; then
+		wrap_output wget "$(package_download_address "$PKG" "${VERS}")"
+	else
+		have_cmd "curl"
+		if test "x${HAVE_CMD}" = "xyes"; then
+			wrap_output curl -L "$(package_download_address "$PKG" "${VERS}")" -o "./${FNAME}"
+		else
+			nok
+			die "Curl or wget is required for dep download or use --download."
+		fi
+	fi
+	ok
+
+	#(TARBALL_PATH is the return value)
+	TARBALL_PATH="${PWD}/${FNAME}"
+}
+
+
+# Locate tarball for a dependency (or download it)
+# Args:
+# - 1 : package name
+# - 2 : package version
+# Returns in ENV:
+# TARBALL_PATH where the tarball is
+locate_tarball()
+{
+	PKG=$1
+	VERS=$2
+
+	# Now attempt to locate archive
+	tarball="$PKG-$VERS"
+
+	TARBALL_PATH=$(ls "$SCRIPTPATH/deps/$package/${tarball}"*tar* 2> /dev/null|| true)
+
+	if test -f "$TARBALL_PATH"; then
+		# Found in dependency patch dir
+		return
+	fi
+
+	TARBALL_PATH=$(ls "${PROJECT_BUILD_DIR}/${tarball}"*tar* 2> /dev/null || true)
+
+	if test -f "$TARBALL_PATH"; then
+		# Found in build dir
+		return
+	fi
+
+	TARBALL_PATH=$(ls "$SCRIPTPATH/deps/$package/${tarball}"*tar* 2> /dev/null || true)
+
+	if test -f "$TARBALL_PATH"; then
+		# Found in dependency patch dir
+		return
+	fi
+
+	TARBALL_PATH=$(ls "$SCRIPTPATH/deps/${tarball}"*tar* 2> /dev/null|| true)
+
+	if test -f "$TARBALL_PATH"; then
+		# Found in flat deps dir
+		return
+	fi
+
+	TARBALL_PATH=$(ls "${SCRIPTPATH}/${tarball}"*tar* 2> /dev/null || true)
+
+	if test -f "$TARBALL_PATH"; then
+		# Found in root source dir
+		return
+	fi
+
+	# All failed now download
+	download_package "$PKG" "$VERS"
+}
+
+# Download all deps for MPC
+download_all_missing_deps()
+{
+	DEP_LIST=""
+	for p in $(package_list)
+	do
+		VERSION="$(package_version "$p")"
+		FNAME=$(package_filename "$p" "${VERSION}")
+		locate_tarball "$p" "$VERSION"
+
+		# Only consider deps not already in source tree
+		if test -f "./${FNAME}"; then
+			DEP_LIST="${TARBALL_PATH} ${DEP_LIST}"
+		fi
+	done
+	echo "DEP_LIST=${DEP_LIST}"
+}
 
 #
 # Build a configure based package
@@ -621,8 +813,6 @@ build_configure_based_package()
 	package="$1"
 	version="$2"
 	extra_config_args=$3
-
-	pkg_dir="$SCRIPTPATH/deps/$package/"
 
 	if test "x${BUILD_IS_DISABLED}" = "xyes"; then
 		die "--disable-build was passed and a package was not provided through spack"
@@ -669,29 +859,24 @@ build_configure_based_package()
 	# Where we move it in MPC to simplify deletion thanks to dep-* prefix
 	PKG_SOURCE_DIR=${PROJECT_BUILD_DIR}/dep-${package}-${version}/
 
-	checking "Extracting $package-$version"
-
 	if test ! -d "$PKG_SOURCE_DIR"; then
-		# Extract the source tarball only if not already present
-		if test ! -d "$pkg_dir"; then
-			die "Could not locate a directory $pkg_dir for $package $version"
-		fi
+		pkg_dir="$SCRIPTPATH/deps/$package/"
 
-		# Now attempt to locate archive
-		tarball="$package-$version"
-		tarball_path=$(ls "${pkg_dir}/${tarball}"*tar*)
+		locate_tarball "$package" "$version"
 
-		if test ! -f "$tarball_path"; then
+		checking "Extracting $package-$version"
+
+
+		if test ! -f "$TARBALL_PATH"; then
 			nok
 			die "Could not locate a tarball for $package-$version in $pkg_dir"
 		fi
 
-		show_run_cmd "tar xf $tarball_path"
-		tar xf "$tarball_path" || true
+		wrap_output tar xf "$TARBALL_PATH"
 
 		if test ! -d "$ORIG_PKG_SOURCE_DIR"; then
 			nok
-			die "Could not locate sources in $PKG_SOURCE_DIR after extracting $tarball_path"
+			die "Could not locate sources in $PKG_SOURCE_DIR after extracting $TARBALL_PATH"
 		else
 			show_run_cmd "mv $ORIG_PKG_SOURCE_DIR $PKG_SOURCE_DIR"
 			# Rename to $PKG_SOURCE_DIR
@@ -802,7 +987,6 @@ find_in_prefix_or_use_spack_internal()
 		return
 	fi
 
-
 	DEP_FOUND="no"
 
 	if test -d "$candidate_prefix"; then
@@ -811,7 +995,7 @@ find_in_prefix_or_use_spack_internal()
 		DEP_FOUND="yes"
 	fi
 
-	# First use spack to locate in existing packages
+	# use spack to locate in existing packages
 	if test "x${SPACK_LOCATE_DEPENDENCY}" = "xyes"; then
 		find_dep_with_spack "$package" "$version"
 	fi
@@ -909,7 +1093,7 @@ Defaults for the options are specified in brackets.
   --disable-mpc-fortran                   : Disable fortran
   --disable-mpc-hydra                     : Disable Hydra
   --disable-romio                         : Disable ROMIO MPI-IO support
-  --{enable,disable}-mpc-gdb              : Enable/Disable gdb
+  --{enable,disable}-gdb                  : Enable/Disable gdb
   --{enable,disable}-tbb                  : Enable/Disable TBB
 
 # Specify system subpackages
@@ -926,7 +1110,7 @@ Defaults for the options are specified in brackets.
 
 # Options to transmit to subpackages
   --autopriv-*                            : Add options to autopriv configure
-  --mpc-gdb-*                             : Add options to gdb configure
+  --gdb-*                                 : Add options to gdb configure
   --openpa-*                              : Add options to openpa configure
   --libxml2-*                             : Add options to libxml2 configure
   --hydra-*                               : Add options to Hydra configure
@@ -971,6 +1155,11 @@ add_process_mode_flag_to_mpc()
 	MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-process-mode"
 }
 
+#
+# Locate common tools ahead of time
+#
+check_for_commands
+
 
 for arg in "$@"
 do
@@ -993,16 +1182,16 @@ do
 			extractAndAddPackageOption 'OPENPA_BUILD_PARAMETERS' 'openpa' "$arg"
 			;;
 		################### MPC GDB #################
-		--with-mpc-gdb=*)
-			extractParamValue 'MPC_GDB_PREFIX' 'with-mpc-gdb' "$arg"
+		--with-gdb=*)
+			extractParamValue 'MPC_GDB_PREFIX' 'with-gdb' "$arg"
 			;;
-		--mpc-gdb-*)
-			extractAndAddPackageOption 'MPC_GDB_BUILD_PARAMETERS' 'mpc-gdb' "$arg"
+		--gdb-*)
+			extractAndAddPackageOption 'MPC_GDB_BUILD_PARAMETERS' 'gdb' "$arg"
 			;;
-		--disable-mpc-gdb)
+		--disable-gdb)
 			MPC_GDB_PREFIX='disabled'
 			;;
-		--enable-mpc-gdb)
+		--enable-gdb|--enable-mpc-gdb)
 			enableParamIfNot 'MPC_GDB_PREFIX' "$MPC_GDB_PREFIX" 'disabled' 'internal'
 			;;
 		################### MPC GCC #################
@@ -1148,7 +1337,11 @@ do
 			showHelp
 			exit 0
 			;;
-		--spack|--enable-spack|--download-missing-deps)
+		--download|--download-missing-deps)
+			download_all_missing_deps
+			exit 0
+		;;
+		--spack|--enable-spack)
 			assert_cmd "spack"
 			SPACK_LOCATE_DEPENDENCY="yes"
 			;;
@@ -1215,14 +1408,6 @@ else
 	info "Building with ${MAKE_J} cores"
 fi
 
-
-
-#
-# Locate common tools ahead of time
-#
-check_for_commands
-
-
 #
 # Can we use spack ? provide information message
 #
@@ -1258,21 +1443,21 @@ find_in_prefix_or_use_spack "openpa" "" "${OPENPA_PREFIX}"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
-	build_configure_based_package "openpa" "1.0.4" "$OPENPA_BUILD_PARAMETERS"
+	build_configure_based_package "openpa" "$(package_version "openpa")" "$OPENPA_BUILD_PARAMETERS"
 fi
 
 find_in_prefix_or_use_spack "libxml2" "" "${LIBXML2_PREFIX}"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
-	build_configure_based_package "libxml2" "2.9.3" "$LIBXML2_BUILD_PARAMETERS"
+	build_configure_based_package "libxml2" "$(package_version "libxml2")" "$LIBXML2_BUILD_PARAMETERS"
 fi
 
-find_in_prefix_or_use_spack "hwloc" "1.11.11" "${HWLOC_PREFIX}"
+find_in_prefix_or_use_spack "hwloc" "$(package_version "hwloc")" "${HWLOC_PREFIX}"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
-	build_configure_based_package "hwloc" "1.11.13" "$HWLOC_BUILD_PARAMETERS"
+	build_configure_based_package "hwloc" "$(package_version "hwloc")" "$HWLOC_BUILD_PARAMETERS"
 fi
 
 
@@ -1284,15 +1469,15 @@ find_in_prefix_or_use_spack "hydra" "" "${HYDRA_PREFIX}"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
-	build_configure_based_package "hydra" "3.2" "$HYDRA_BUILD_PARAMETERS"
+	build_configure_based_package "hydra" "$(package_version "hydra")" "$HYDRA_BUILD_PARAMETERS"
 fi
 
 
-find_in_prefix_or_use_spack "mpc-gdb" "" "${MPC_DMTCP_PREFIX}"
+find_in_prefix_or_use_spack "gdb" "" "${MPC_GDB_PREFIX}"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
-	build_configure_based_package "mpc-gdb" "7.7" "$MPC_GDB_BUILD_PARAMETERS"
+	build_configure_based_package "gdb" "$(package_version "gdb")" "$MPC_GDB_BUILD_PARAMETERS"
 fi
 
 
@@ -1300,7 +1485,7 @@ find_in_prefix_or_use_spack "mpc-dmtcp" "" "${MPC_DMTCP_PREFIX}"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
-	build_configure_based_package "mpc-dmtcp" "2.5.0" "$MPC_DMTCP_BUILD_PARAMETERS"
+	build_configure_based_package "mpc-dmtcp" "$(package_version "mpc-dmtcp")" "$MPC_DMTCP_BUILD_PARAMETERS"
 fi
 
 
@@ -1309,7 +1494,7 @@ find_in_prefix_or_use_spack "mpcalloc" "" "$MPCALLOC_PREFIX"
 if test "x${DEP_FOUND}" = "xno"; then
 	assert_cmd "cmake"
 	# Could not use spack now installing manually
-	build_configure_based_package "mpcalloc" "0.1" "$MPCALLOC_BUILD_PARAMETERS"
+	build_configure_based_package "mpcalloc" "$(package_version "mpcalloc")" "$MPCALLOC_BUILD_PARAMETERS"
 fi
 
 # Dependencies which can be deactivated
@@ -1320,7 +1505,7 @@ if test "x${DEP_FOUND}" = "xno"; then
 	assert_cmd "g++"
 	check_glibc_is_compatible_with_priv
 	# Could not use spack now installing manually
-	build_configure_based_package "autopriv" "0.6.0" "$AUTOPRIV_BUILD_PARAMETERS"
+	build_configure_based_package "autopriv" "$(package_version "autopriv")" "$AUTOPRIV_BUILD_PARAMETERS"
 fi
 
 # It is now time to configure MPC
