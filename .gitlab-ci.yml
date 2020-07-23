@@ -2,6 +2,7 @@
 # For convenience, implicit stages have been made explicit here...
 stages:
   - Initialization
+  - Configurations
   - Builds
   - Basic Testing
   - Regular Testing
@@ -66,6 +67,52 @@ Resource Relinquishing:
   - scancel --name GL-build_$CI_PIPELINE_ID
   # Ugly, our way to kill allocations from tests
   - scancel -u $USER
+
+############################
+####### CONF STAGE  ########
+############################
+
+MPC Process Mode:
+  <<: *run_by_main
+  stage: Configurations
+  script:
+  - mkdir $HOME/GL_$CI_PIPELINE_ID/build_nopriv/
+  - cd $HOME/GL_$CI_PIPELINE_ID/build_nopriv/
+  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_process_mode --disable-mpc-autopriv
+
+MPC Disable Lowcomm:
+  <<: *run_by_main
+  stage: Configurations
+  script:
+  - mkdir $HOME/GL_$CI_PIPELINE_ID/build_no_lowcomm/
+  - cd $HOME/GL_$CI_PIPELINE_ID/build_no_lowcomm/
+  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_nolowcomm --disable-mpc-autopriv --mpc-option="--disable-lowcomm"
+
+
+MPC Disable MPI:
+  <<: *run_by_main
+  stage: Configurations
+  script:
+  - mkdir $HOME/GL_$CI_PIPELINE_ID/build_nompi/
+  - cd $HOME/GL_$CI_PIPELINE_ID/build_nompi/
+  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_nompi --disable-mpc-autopriv --mpc-option="--disable-mpi"
+
+
+MPC Disable Threads:
+  <<: *run_by_main
+  stage: Configurations
+  script:
+  - mkdir $HOME/GL_$CI_PIPELINE_ID/build_nothread/
+  - cd $HOME/GL_$CI_PIPELINE_ID/build_nothread/
+  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_nothread --disable-mpc-autopriv --mpc-option="--disable-threads"
+
+MPC Debug Messages:
+  <<: *run_by_main
+  stage: Configurations
+  script:
+  - mkdir $HOME/GL_$CI_PIPELINE_ID/build_debug/
+  - cd $HOME/GL_$CI_PIPELINE_ID/build_debug/
+  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_debug --disable-mpc-autopriv --mpc-option="--enable-debug-messages --enable-debug"
 
 
 ############################
