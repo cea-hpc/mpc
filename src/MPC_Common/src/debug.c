@@ -37,6 +37,7 @@
 #include <mpc_common_helper.h>
 
 #include <mpc_common_debug.h>
+#include <mpc_common_flags.h>
 
 
 #ifdef MPC_Thread_db

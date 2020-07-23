@@ -23,9 +23,10 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "mpc_common_debug.h"
-#include "mpc_launch.h"
-#include "string.h"
+#include <mpc_common_debug.h>
+#include <mpc_common_flags.h>
+#include <mpc_launch.h>
+#include <string.h>
 
 #ifndef __SCTK__IB_TOOLKIT_H_
 #define __SCTK__IB_TOOLKIT_H_

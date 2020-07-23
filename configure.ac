@@ -1652,8 +1652,16 @@ AC_ARG_ENABLE([threads],
 [MPC_THREAD_ENABLED=$enableval],
 [MPC_THREAD_ENABLED=yes])
 
+# Modules dependent on threads
+MPC_OPENMP_ENABLED=yes
+MPC_MPI_ENABLED=yes
+
 if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
         AC_DEFINE([MPC_Threads], [1], [MPC_THREAD module was enabled])
+else
+        AC_MSG_WARN([Disabling threads means disabling OpenMP])
+        MPC_OPENMP_ENABLED=no
+        MPC_MPI_ENABLED=no
 fi
 
 AM_CONDITIONAL([MPC_THREAD_ENABLED], [test "x${MPC_THREAD_ENABLED}" = "xyes"])
@@ -1680,9 +1688,15 @@ AC_ARG_ENABLE([lowcomm],
 [MPC_LOWCOMM_ENABLED=$enableval],
 [MPC_LOWCOMM_ENABLED=yes])
 
+# Modules dependent on lowcomm
+#MPC_MPI_ENABLED
+
 if test "x${MPC_LOWCOMM_ENABLED}" = "xyes" -o "x${MPC_LOWCOMM_MP_ENABLE}" = "xyes"; then
         AC_DEFINE([MPC_Lowcomm], [1], [MPC_Lowcomm module was enabled])
         MPC_LOWCOMM_ENABLED="yes"
+else
+        AC_MSG_WARN([Disabling lowcomm means disabling MPC's MPI layer and its dependencies])
+        MPC_MPI_ENABLED=no
 fi
 
 AM_CONDITIONAL([MPC_LOWCOMM_ENABLED], [test "x${MPC_LOWCOMM_ENABLED}" = "xyes"])
@@ -1693,10 +1707,18 @@ AC_ARG_ENABLE([mpi],
 [AS_HELP_STRING([--enable-mpi],
                 [Compile MPC's MPI interface])],
 [MPC_MPI_ENABLED=$enableval],
-[MPC_MPI_ENABLED=yes])
+[])
+
+# Modules dependent on MPI
+MPC_FORTRAN_ENABLED=yes
+MPC_MPIIO_ENABLED=yes
 
 if test "x${MPC_MPI_ENABLED}" = "xyes"; then
         AC_DEFINE([MPC_MPI], [1], [MPC_MPI module was enabled])
+else
+        AC_MSG_WARN([Disabling MPI means disabling Fortran and MPI-IO])
+        MPC_FORTRAN_ENABLED=no
+        MPC_MPIIO_ENABLED=no
 fi
 
 AM_CONDITIONAL([MPC_MPI_ENABLED], [test "x${MPC_MPI_ENABLED}" = "xyes"])
@@ -1707,9 +1729,14 @@ AC_ARG_ENABLE([openmp],
 [AS_HELP_STRING([--enable-openmp],
                 [Compile MPC's OpenMP interface])],
 [MPC_OPENMP_ENABLED=$enableval],
-[MPC_OPENMP_ENABLED=yes])
+[])
 
 if test "x${MPC_OPENMP_ENABLED}" = "xyes"; then
+
+        if test "x${MPC_THREAD_ENABLED}" = "xno"; then
+                AC_MSG_ERROR([--enable-openmp requires --enable-threads])
+        fi
+
         AC_DEFINE([MPC_OpenMP], [1], [MPC_OpenMP module was enabled])
 fi
 
@@ -1725,9 +1752,14 @@ AC_ARG_ENABLE([fortran],
 [AS_HELP_STRING([--enable-fortran],
                 [Compile MPC Fortran support])],
 [MPC_FORTRAN_ENABLED=$enableval],
-[MPC_FORTRAN_ENABLED=yes])
+[])
 
 if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
+
+        if test "x${MPC_MPI_ENABLED}" = "xno"; then
+                AC_MSG_ERROR([--enable-fortran requires --enable-mpi])
+        fi
+
         AC_DEFINE([MPC_FORTRAN], [1], [MPC_Fortran module was enabled])
 fi
 
@@ -1748,9 +1780,14 @@ AC_ARG_ENABLE([mpiio],
 [AS_HELP_STRING([--enable-mpiio],
                 [Compile MPI IO support in MPC (romio)])],
 [MPC_MPIIO_ENABLED=$enableval],
-[MPC_MPIIO_ENABLED=yes])
+[])
 
 if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
+
+        if test "x${MPC_MPI_ENABLED}" = "xno"; then
+                AC_MSG_ERROR([--enable-mpio requires --enable-mpi])
+        fi
+
         AC_DEFINE([MPC_MPIIO], [1], [MPC_MPIIO module was enabled])
 fi
 
@@ -2504,6 +2541,7 @@ MPC_CONFIG_RESULT="\
 ### OPTIONAL BUILT MODULE ###\n\
 #\n\
 # MPC_Thread........... $MPC_THREAD_ENABLED\n\
+# MPC_Openmp........... $MPC_OPENMP_ENABLED\n\
 # MPC_Lowcomm.......... $MPC_LOWCOMM_ENABLED\n\
 # MPC_MPI.............. $MPC_MPI_ENABLED\n\
 # MPC_Fortran.......... $MPC_FORTRAN_ENABLED\n\

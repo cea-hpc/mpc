@@ -28,7 +28,9 @@
 #include "mpc_nbc_weak.h"
 #endif
 
+#ifdef MPC_Threads
 #include "mpc_nbc_progress_thread_binding.h"
+#endif
 
 #include "mpc_thread_ng_engine.h"
 #include "egreq_nbc.h"

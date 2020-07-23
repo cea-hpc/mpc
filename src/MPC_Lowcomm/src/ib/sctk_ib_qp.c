@@ -852,7 +852,8 @@ static inline void __send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
 		//#warning "We should remove these mpc_common_debug_error and use a counter instead"
 		mpc_common_debug_warning ( "[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d)", rail_ib->rail->rail_number,
 		               remote->rank, sctk_ib_qp_get_pending_data ( remote ) );
-		mpc_thread_wait_for_value_and_poll ( &wait_send_arg.flag, 1,
+
+		mpc_lowcomm_perform_idle ( &wait_send_arg.flag, 1,
 		                                      ( void ( * ) ( void * ) ) wait_send, &wait_send_arg );
 
 		mpc_common_debug_warning ( "[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d) DONE", rail_ib->rail->rail_number,

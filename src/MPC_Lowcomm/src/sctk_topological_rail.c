@@ -21,8 +21,8 @@
 /* ######################################################################## */
 #include <sctk_route.h>
 #include "sctk_topological_rail.h"
-#include <mpc_thread_accessor.h>
-
+#include <mpc_common_rank.h>
+#include <mpc_topology.h>
 #include <sctk_multirail.h>
 
 #include <sctk_alloc.h>

@@ -26,7 +26,12 @@
 #include "sctk_ib_config.h"
 #include <sctk_route.h>
 #include <mpc_topology.h>
+
+#ifdef MPC_Threads
 #include <mpc_thread.h>
+#else
+#include <pthread.h>
+#endif
 
 /* IB debug macros */
 #if defined MPC_LOWCOMM_IB_MODULE_NAME
@@ -207,7 +212,13 @@ void *async_thread ( void *arg )
 /********************************************************************/
 /* Async thread Init                                                */
 /********************************************************************/
-static mpc_thread_t async_pidt;
+
+#ifdef MPC_Threads
+	static mpc_thread_t async_pidt;
+#else
+	static pthread_t async_pidt;
+#endif
+
 void sctk_ib_async_init ( sctk_rail_info_t *rail )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -216,12 +227,15 @@ void sctk_ib_async_init ( sctk_rail_info_t *rail )
 	/* Activate or not the async thread */
 	if ( config->async_thread )
 	{
+#ifdef MPC_Threads
 		mpc_thread_attr_t attr;
-
 		mpc_thread_attr_init ( &attr );
 		/* The thread *MUST* be in a system scope (calls a blocking call) */
 		mpc_thread_attr_setscope ( &attr, SCTK_THREAD_SCOPE_SYSTEM );
 		mpc_thread_core_thread_create ( &async_pidt, &attr, async_thread, rail );
+#else
+		pthread_create ( &async_pidt, NULL, async_thread, rail );
+#endif
 	}
 }
 
@@ -232,8 +246,13 @@ void sctk_ib_async_finalize( sctk_rail_info_t *rail)
 
 	if(config->async_thread)
 	{
+#ifdef MPC_Threads
 		mpc_thread_kill(&async_pidt, 15);
+		async_pidt = NULL;
+#else
+		pthread_kill(async_pidt, 15);
+#endif
 	}
 
-	async_pidt = NULL;
+
 }

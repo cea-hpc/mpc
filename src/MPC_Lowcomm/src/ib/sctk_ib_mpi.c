@@ -32,6 +32,7 @@
 #include <sctk_ibufs_rdma.h>
 #include <sctk_ib_mmu.h>
 #include <sctk_ib_config.h>
+#include <mpc_topology.h>
 #include "sctk_ib_qp.h"
 #include "sctk_ib_cm.h"
 #include "sctk_ib_eager.h"

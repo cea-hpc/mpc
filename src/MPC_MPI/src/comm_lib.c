@@ -34,6 +34,8 @@
 #include <mpc_common_rank.h>
 #include <mpc_common_helper.h>
 #include <mpc_common_profiler.h>
+#include <mpc_common_flags.h>
+#include <mpc_topology.h>
 
 #include "sctk_low_level_comm.h"
 
@@ -443,77 +445,87 @@ static struct mpc_mpi_cl_per_mpi_process_ctx_s **__mpc_p_disguise_costumes = NUL
 
 int __mpc_p_disguise_init(struct mpc_mpi_cl_per_mpi_process_ctx_s *my_specific)
 {
-	int my_id = mpc_common_get_local_task_rank();
+	#ifdef MPC_Threads
+		int my_id = mpc_common_get_local_task_rank();
 
-	if(my_id == 0)
-	{
-		OPA_store_int(&__mpc_p_disguise_flag, 0);
-		int local_count = mpc_common_get_local_task_count();
-		__mpc_p_disguise_costumes = sctk_malloc(sizeof(struct mpc_mpi_cl_per_mpi_process_ctx_s *) * local_count);
-
-		if(__mpc_p_disguise_costumes == NULL)
+		if(my_id == 0)
 		{
-			perror("malloc");
-			abort();
+			OPA_store_int(&__mpc_p_disguise_flag, 0);
+			int local_count = mpc_common_get_local_task_count();
+			__mpc_p_disguise_costumes = sctk_malloc(sizeof(struct mpc_mpi_cl_per_mpi_process_ctx_s *) * local_count);
+
+			if(__mpc_p_disguise_costumes == NULL)
+			{
+				perror("malloc");
+				abort();
+			}
+
+			__mpc_p_disguise_local_to_global_table = sctk_malloc(sizeof(int) * local_count);
+
+			if(__mpc_p_disguise_local_to_global_table == NULL)
+			{
+				perror("malloc");
+				abort();
+			}
 		}
 
-		__mpc_p_disguise_local_to_global_table = sctk_malloc(sizeof(int) * local_count);
-
-		if(__mpc_p_disguise_local_to_global_table == NULL)
-		{
-			perror("malloc");
-			abort();
-		}
-	}
-
-	mpc_lowcomm_barrier(SCTK_COMM_WORLD);
-	__mpc_p_disguise_costumes[my_id] = my_specific;
-	__mpc_p_disguise_local_to_global_table[my_id] = mpc_common_get_task_rank();
-	mpc_lowcomm_barrier(SCTK_COMM_WORLD);
+		mpc_lowcomm_barrier(SCTK_COMM_WORLD);
+		__mpc_p_disguise_costumes[my_id] = my_specific;
+		__mpc_p_disguise_local_to_global_table[my_id] = mpc_common_get_task_rank();
+		mpc_lowcomm_barrier(SCTK_COMM_WORLD);
+	#endif
 	return 0;
 }
 
 int MPCX_Disguise(mpc_lowcomm_communicator_t comm, int target_rank)
 {
-	mpc_thread_mpi_disguise_t *th = mpc_thread_disguise_get();
+	#ifndef MPC_Threads
+		bad_parameter("MPCX_Disguise is not supported when there is no MPC thread support","");
+	#else
+		mpc_thread_mpi_disguise_t *th = mpc_thread_disguise_get();
 
-	if(th->my_disguisement)
-	{
-		/* Sorry I'm already wearing a mask */
-		return MPC_ERR_ARG;
-	}
-
-	/* Retrieve the ctx pointer */
-	int cwr         = sctk_get_comm_world_rank( ( mpc_lowcomm_communicator_t )comm, target_rank);
-	int local_count = mpc_common_get_local_task_count();
-	int i;
-
-	for(i = 0; i < local_count; ++i)
-	{
-		if(__mpc_p_disguise_local_to_global_table[i] == cwr)
+		if(th->my_disguisement)
 		{
-			OPA_incr_int(&__mpc_p_disguise_flag);
-			mpc_thread_disguise_set(__mpc_p_disguise_costumes[i]->thread_data,
-			                        (void *)__mpc_p_disguise_costumes[i]);
-			return SCTK_SUCCESS;
+			/* Sorry I'm already wearing a mask */
+			return MPC_ERR_ARG;
 		}
-	}
+
+		/* Retrieve the ctx pointer */
+		int cwr         = sctk_get_comm_world_rank( ( mpc_lowcomm_communicator_t )comm, target_rank);
+		int local_count = mpc_common_get_local_task_count();
+		int i;
+
+		for(i = 0; i < local_count; ++i)
+		{
+			if(__mpc_p_disguise_local_to_global_table[i] == cwr)
+			{
+				OPA_incr_int(&__mpc_p_disguise_flag);
+				mpc_thread_disguise_set(__mpc_p_disguise_costumes[i]->thread_data,
+										(void *)__mpc_p_disguise_costumes[i]);
+				return SCTK_SUCCESS;
+			}
+		}
+	#endif
 
 	return MPC_ERR_ARG;
 }
 
 int MPCX_Undisguise()
 {
-	mpc_thread_mpi_disguise_t *th = mpc_thread_disguise_get();
+	#ifndef MPC_Threads
+		bad_parameter("MPCX_Undisguise is not supported when there is no MPC thread support","");
+	#else
+		mpc_thread_mpi_disguise_t *th = mpc_thread_disguise_get();
 
-	if(th->my_disguisement == NULL)
-	{
-		return MPC_ERR_ARG;
-	}
+		if(th->my_disguisement == NULL)
+		{
+			return MPC_ERR_ARG;
+		}
 
-	mpc_thread_disguise_set(NULL, NULL);
+		mpc_thread_disguise_set(NULL, NULL);
 
-	OPA_decr_int(&__mpc_p_disguise_flag);
+		OPA_decr_int(&__mpc_p_disguise_flag);
+	#endif
 	return SCTK_SUCCESS;
 }
 

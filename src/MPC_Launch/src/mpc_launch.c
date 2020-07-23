@@ -97,6 +97,8 @@ void mpc_launch_print_banner(bool restart)
 * ARGUMENT SETTERS *
 ********************/
 
+#ifdef MPC_Threads
+
 void sctk_use_pthread(void)
 {
 	mpc_common_get_flags()->thread_library_kind = "pthread";
@@ -132,6 +134,47 @@ void sctk_use_pthread_ng(void)
 	mpc_common_get_flags()->thread_library_kind = "pthread_ng";
 	mpc_common_get_flags()->thread_library_init = mpc_thread_pthread_ng_engine_init;
 }
+
+#else
+
+void sctk_use_pthread(void)
+{
+	mpc_common_get_flags()->thread_library_kind = "NA";
+	mpc_common_get_flags()->thread_library_init = NULL;
+}
+
+static void sctk_use_ethread(void)
+{
+	mpc_common_get_flags()->thread_library_kind = "NA";
+	mpc_common_get_flags()->thread_library_init = NULL;
+}
+
+void sctk_use_ethread_mxn(void)
+{
+	mpc_common_get_flags()->thread_library_kind = "NA";
+	mpc_common_get_flags()->thread_library_init = NULL;
+}
+
+void sctk_use_ethread_mxn_ng(void)
+{
+	mpc_common_get_flags()->thread_library_kind = "NA";
+	mpc_common_get_flags()->thread_library_init = NULL;
+}
+
+void sctk_use_ethread_ng(void)
+{
+	mpc_common_get_flags()->thread_library_kind = "NA";
+	mpc_common_get_flags()->thread_library_init = NULL;
+}
+
+void sctk_use_pthread_ng(void)
+{
+	mpc_common_get_flags()->thread_library_kind = "NA";
+	mpc_common_get_flags()->thread_library_init = NULL;
+}
+
+#endif
+
 
 static void __arg_set_verbosity(char *arg)
 {
@@ -641,7 +684,11 @@ int mpc_launch_main(int argc, char **argv)
 	arg.argc = argc;
 	arg.argv = argv;
 
+#ifdef MPC_Threads
 	mpc_thread_spawn_mpi_tasks(__mpc_mpi_task_start_function, &arg);
+#else
+	__mpc_mpi_task_start_function(&arg);
+#endif
 
 	mpc_launch_release_runtime();
 

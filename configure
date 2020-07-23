@@ -29224,10 +29224,19 @@ else
 fi
 
 
+# Modules dependent on threads
+MPC_OPENMP_ENABLED=yes
+MPC_MPI_ENABLED=yes
+
 if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
 
 $as_echo "#define MPC_Threads 1" >>confdefs.h
 
+else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Disabling threads means disabling OpenMP" >&5
+$as_echo "$as_me: WARNING: Disabling threads means disabling OpenMP" >&2;}
+        MPC_OPENMP_ENABLED=no
+        MPC_MPI_ENABLED=no
 fi
 
  if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
@@ -29265,11 +29274,18 @@ else
 fi
 
 
+# Modules dependent on lowcomm
+#MPC_MPI_ENABLED
+
 if test "x${MPC_LOWCOMM_ENABLED}" = "xyes" -o "x${MPC_LOWCOMM_MP_ENABLE}" = "xyes"; then
 
 $as_echo "#define MPC_Lowcomm 1" >>confdefs.h
 
         MPC_LOWCOMM_ENABLED="yes"
+else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Disabling lowcomm means disabling MPC's MPI layer and its dependencies" >&5
+$as_echo "$as_me: WARNING: Disabling lowcomm means disabling MPC's MPI layer and its dependencies" >&2;}
+        MPC_MPI_ENABLED=no
 fi
 
  if test "x${MPC_LOWCOMM_ENABLED}" = "xyes"; then
@@ -29286,15 +29302,22 @@ fi
 # Check whether --enable-mpi was given.
 if test "${enable_mpi+set}" = set; then :
   enableval=$enable_mpi; MPC_MPI_ENABLED=$enableval
-else
-  MPC_MPI_ENABLED=yes
 fi
 
+
+# Modules dependent on MPI
+MPC_FORTRAN_ENABLED=yes
+MPC_MPIIO_ENABLED=yes
 
 if test "x${MPC_MPI_ENABLED}" = "xyes"; then
 
 $as_echo "#define MPC_MPI 1" >>confdefs.h
 
+else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Disabling MPI means disabling Fortran and MPI-IO" >&5
+$as_echo "$as_me: WARNING: Disabling MPI means disabling Fortran and MPI-IO" >&2;}
+        MPC_FORTRAN_ENABLED=no
+        MPC_MPIIO_ENABLED=no
 fi
 
  if test "x${MPC_MPI_ENABLED}" = "xyes"; then
@@ -29311,12 +29334,15 @@ fi
 # Check whether --enable-openmp was given.
 if test "${enable_openmp+set}" = set; then :
   enableval=$enable_openmp; MPC_OPENMP_ENABLED=$enableval
-else
-  MPC_OPENMP_ENABLED=yes
 fi
 
 
 if test "x${MPC_OPENMP_ENABLED}" = "xyes"; then
+
+        if test "x${MPC_THREAD_ENABLED}" = "xno"; then
+                as_fn_error $? "--enable-openmp requires --enable-threads" "$LINENO" 5
+        fi
+
 
 $as_echo "#define MPC_OpenMP 1" >>confdefs.h
 
@@ -29340,12 +29366,15 @@ fi
 # Check whether --enable-fortran was given.
 if test "${enable_fortran+set}" = set; then :
   enableval=$enable_fortran; MPC_FORTRAN_ENABLED=$enableval
-else
-  MPC_FORTRAN_ENABLED=yes
 fi
 
 
 if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
+
+        if test "x${MPC_MPI_ENABLED}" = "xno"; then
+                as_fn_error $? "--enable-fortran requires --enable-mpi" "$LINENO" 5
+        fi
+
 
 $as_echo "#define MPC_FORTRAN 1" >>confdefs.h
 
@@ -29376,12 +29405,15 @@ fi
 # Check whether --enable-mpiio was given.
 if test "${enable_mpiio+set}" = set; then :
   enableval=$enable_mpiio; MPC_MPIIO_ENABLED=$enableval
-else
-  MPC_MPIIO_ENABLED=yes
 fi
 
 
 if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
+
+        if test "x${MPC_MPI_ENABLED}" = "xno"; then
+                as_fn_error $? "--enable-mpio requires --enable-mpi" "$LINENO" 5
+        fi
+
 
 $as_echo "#define MPC_MPIIO 1" >>confdefs.h
 
@@ -30991,6 +31023,7 @@ MPC_CONFIG_RESULT="\
 ### OPTIONAL BUILT MODULE ###\n\
 #\n\
 # MPC_Thread........... $MPC_THREAD_ENABLED\n\
+# MPC_Openmp........... $MPC_OPENMP_ENABLED\n\
 # MPC_Lowcomm.......... $MPC_LOWCOMM_ENABLED\n\
 # MPC_MPI.............. $MPC_MPI_ENABLED\n\
 # MPC_Fortran.......... $MPC_FORTRAN_ENABLED\n\

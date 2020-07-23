@@ -21,7 +21,9 @@
 /* ######################################################################## */
 #include "sctk_polling.h"
 #include <stdlib.h>
-#include "mpc_thread_accessor.h"
+#include <mpc_common_rank.h>
+#include <mpc_topology.h>
+
 
 #include <sctk_alloc.h>
 

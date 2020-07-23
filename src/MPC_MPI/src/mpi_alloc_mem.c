@@ -28,9 +28,15 @@
 
 #include "mpc_lowcomm.h"
 #include <mpc_common_helper.h>
+#include <mpc_common_rank.h>
 #include "mpc_mpi.h"
+#include <mpc_common_debug.h>
+#include <mpc_common_flags.h>
+
+#ifdef MPC_Threads
 #include "mpc_thread.h"
-#include "mpc_thread_accessor.h"
+#endif
+
 #include "sctk_handler_mpi.h"
 #include "mpc_runtime_config.h"
 #include "sctk_shm_mapper.h"

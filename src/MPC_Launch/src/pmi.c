@@ -25,7 +25,7 @@
 
 #include <mpc_common_helper.h>
 #include <mpc_common_rank.h>
-
+#include <mpc_common_flags.h>
 #include "sctk_alloc.h"
 #include "mpc_common_debug.h"
 

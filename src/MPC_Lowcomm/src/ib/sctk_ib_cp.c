@@ -38,6 +38,8 @@
 #include "sctk_ib_rdma.h"
 #include "sctk_ib_topology.h"
 
+
+#include <mpc_topology.h>
 #include <sctk_alloc.h>
 
 #if defined MPC_LOWCOMM_IB_MODULE_NAME

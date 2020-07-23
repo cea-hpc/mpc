@@ -35,7 +35,6 @@
 
 #include <sctk_alloc.h>
 
-#include <mpc_thread_accelerator.h>
 
 #ifdef MPC_USE_INFINIBAND
 #include <infiniband/verbs.h>

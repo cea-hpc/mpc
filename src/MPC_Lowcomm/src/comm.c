@@ -41,6 +41,8 @@
 #include <mpc_common_profiler.h>
 #include <sctk_alloc.h>
 #include <coll.h>
+#include <mpc_common_flags.h>
+#include <mpc_topology.h>
 
 #ifdef SCTK_LIB_MODE
 	#include "sctk_handle.h"
@@ -2193,7 +2195,14 @@ void mpc_lowcomm_perform_idle(volatile int *data, int value,
 		return;
 	}
 
+#ifndef MPC_Threads
+	while(*data != value)
+	{
+		func(arg);
+	}
+#else
 	mpc_thread_wait_for_value_and_poll(data, value, func, arg);
+#endif
 }
 
 static void (*__egreq_poll_trampoline)(void) = NULL;

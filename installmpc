@@ -1201,7 +1201,7 @@ do
 		--mpc-autopriv-*)
 			extractAndAddPackageOption 'AUTOPRIV_BUILD_PARAMETERS' 'mpc-autopriv' "$arg"
 			;;
-		--disable-mpc-gcc|--disable-autopriv)
+		--disable-mpc-gcc|--disable-autopriv|--disable-mpc-autopriv)
 			AUTOPRIV_PREFIX='disabled'
 			add_process_mode_flag_to_mpc
 			;;

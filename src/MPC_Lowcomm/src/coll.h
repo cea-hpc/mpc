@@ -23,7 +23,12 @@
 #define __SCTK_COLLECTIVE_COMMUNICATIONS_H_
 
 #include <mpc_lowcomm.h>
-#include <mpc_thread.h>
+
+#ifdef MPC_Threads
+#include <mpc_pthread.h>
+#else
+#include <pthread.h>
+#endif
 
 #include "comm.h"
 
@@ -42,8 +47,8 @@ struct mpc_lowcomm_coll_s;
 typedef struct
 {
 	volatile int done /* = 0 */;
-	mpc_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
-	mpc_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
+	pthread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
+	pthread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
 } _mpc_coll_barrier_simple_t;
 
 void _mpc_coll_barrier_simple_init ( struct mpc_lowcomm_coll_s *tmp, mpc_lowcomm_communicator_t id );
@@ -53,8 +58,8 @@ void _mpc_coll_barrier_simple_init ( struct mpc_lowcomm_coll_s *tmp, mpc_lowcomm
 typedef struct
 {
 	volatile int done /* = 0 */;
-	mpc_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
-	mpc_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
+	pthread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
+	pthread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
 	void *buffer;
 	size_t size;
 } _mpc_coll_bcast_simple_t;
@@ -66,8 +71,8 @@ void _mpc_coll_bcast_simple_init ( struct mpc_lowcomm_coll_s *tmp, mpc_lowcomm_c
 typedef struct
 {
 	volatile int done /* = 0 */;
-	mpc_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
-	mpc_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
+	pthread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
+	pthread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
 	void *buffer;
 	size_t size;
 } _mpc_coll_allreduce_simple_t;
