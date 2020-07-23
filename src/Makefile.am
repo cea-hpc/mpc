@@ -23,9 +23,9 @@
 ########################################################################
 SUBDIRS=MPC_Doc MPC_Arch MPC_Common MPC_Config MPC_Topology
 
-if MPC_THREAD_ENABLED
-        SUBDIRS += MPC_Launch
-endif
+
+SUBDIRS += MPC_Launch
+
 
 if MPC_THREAD_ENABLED
         SUBDIRS += MPC_Threads

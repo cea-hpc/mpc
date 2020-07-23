@@ -637,7 +637,7 @@ libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	$(am__append_3) $(am__append_5)
 
 # library dependency #
-libmpclowcomm_la_LIBADD = $(ALLOC_LIBS) ../../MPC_Launch/src/libmpclaunch.la -lm
+libmpclowcomm_la_LIBADD = $(ALLOC_LIBS) ../../MPC_Launch/src/libmpclaunch.la -lm -lrt
 all: all-am
 
 .SUFFIXES:
