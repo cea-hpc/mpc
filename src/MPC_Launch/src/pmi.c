@@ -210,10 +210,14 @@ static inline int __mpc_pmi_get_local_process_count( int *size )
 #ifdef SCTK_LIB_MODE
 	*size = mpc_common_get_local_process_count();
 	return MPC_LAUNCH_PMI_SUCCESS;
-#elif defined(MPC_USE_HYDRA)
+#elif defined(MPC_USE_HYDRA) || defined(MPC_USE_SLURM)
+
+	/* Testing with new PMI we had PMI_Get_clique_size returning -1
+	   on PMIX compat so we rely on the manual computation
+	   when running with slurm 20.02.3 and openpmi 3.1.5 */
 	*size = pmi_context.local_process_count;
 	return MPC_LAUNCH_PMI_SUCCESS;
-#elif defined(MPC_USE_SLURM)
+#elif 0
 	int rc;
 
 	// Get the number of processes on the current node
