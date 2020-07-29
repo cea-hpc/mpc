@@ -1048,7 +1048,7 @@ with_autopriv_include
 with_autopriv_libs
 enable_shell_colors
 enable_cma
-enable_opt
+enable_optim
 enable_opt_native
 enable_debug_messages
 enable_debug_mem
@@ -25415,6 +25415,11 @@ then
         as_fn_error $? "You must pick up one between Hydra and Slurm (--with-hydra or --with-slurm)" "$LINENO" 5
 fi
 
+if test "x$mpc_hydra_enabled" = "xno" -a  "x$mpc_slurm_enabled" = "xno"
+then
+        as_fn_error $? "You must select at least one launcher (between slurm and hydra)" "$LINENO" 5
+fi
+
 if test ! "x$mpc_slurm_enabled" = "xno"; then
 
         MPC_LAUNCHER="SLURM"
@@ -30735,9 +30740,9 @@ $as_echo "no" >&6; }
 fi
 
 #### Enabling default optimizations to build MPC
-# Check whether --enable-opt was given.
-if test "${enable_opt+set}" = set; then :
-  enableval=$enable_opt; mpc_enable_opt=$enableval
+# Check whether --enable-optim was given.
+if test "${enable_optim+set}" = set; then :
+  enableval=$enable_optim; mpc_enable_opt=$enableval
 else
   mpc_enable_opt=yes
 fi

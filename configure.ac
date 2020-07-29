@@ -811,6 +811,11 @@ then
         AC_MSG_ERROR([You must pick up one between Hydra and Slurm (--with-hydra or --with-slurm)])
 fi
 
+if test "x$mpc_hydra_enabled" = "xno" -a  "x$mpc_slurm_enabled" = "xno"
+then
+        AC_MSG_ERROR([You must select at least one launcher (between slurm and hydra)])
+fi
+
 if test ! "x$mpc_slurm_enabled" = "xno"; then
 
         MPC_LAUNCHER="SLURM"
@@ -2318,7 +2323,7 @@ if test "x${MPC_ENABLE_CMA}" = "xyes"; then
 fi
 
 #### Enabling default optimizations to build MPC
-AC_ARG_ENABLE([opt],
+AC_ARG_ENABLE([optim],
 [AS_HELP_STRING([--enable-optim],
                 [Enable standard optimizations to build MPC])],
 [mpc_enable_opt=$enableval],
