@@ -811,7 +811,7 @@ then
         AC_MSG_ERROR([You must pick up one between Hydra and Slurm (--with-hydra or --with-slurm)])
 fi
 
-if test "x$mpc_slurm_enabled" = "xyes"; then
+if test ! "x$mpc_slurm_enabled" = "xno"; then
 
         MPC_LAUNCHER="SLURM"
         MPC_DETECT_DEPENDENCY([pmi.h],[pmi], [PMI_Finalize], [PMI])
