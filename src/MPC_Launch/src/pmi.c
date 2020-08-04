@@ -332,6 +332,8 @@ int mpc_launch_pmi_init()
 	return __mpc_pmi_init_lib_mode();
 #endif
 
+	mpc_common_tracepoint("Starting PMI");
+
 	int rc;
 	// Initialized PMI/SLURM
 	rc = PMI_Init( &pmi_context.spawned );
@@ -515,12 +517,16 @@ int mpc_launch_pmi_init()
 	int local_process_count;
 	__mpc_pmi_get_local_process_count( &local_process_count );
 	mpc_common_set_local_process_count( local_process_count );
+
+	mpc_common_tracepoint_fmt("DONE Starting PMI N%d/%d LPR%d/%d", node_rank, node_count, local_process_rank, local_process_count);
+
 	PMI_RETURN( rc );
 }
 
 /*! \brief Finalization function */
 int mpc_launch_pmi_finalize()
 {
+	mpc_common_debug("ENDING PMI");
 #ifdef SCTK_LIB_MODE
 	return MPC_LAUNCH_PMI_SUCCESS;
 #endif /* SCTK_LIB_MODE */

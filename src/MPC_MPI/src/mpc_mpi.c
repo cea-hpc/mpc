@@ -165,9 +165,6 @@ int _mpc_mpi_report_error(mpc_lowcomm_communicator_t comm, int error, char *mess
 static int __PMPI_Type_contiguous_inherits(unsigned long, MPI_Datatype,
                                            MPI_Datatype *, struct _mpc_dt_context *ctx);
 
-static int __INTERNAL__PMPI_Type_get_elements_x(MPI_Status *, MPI_Datatype, MPI_Count *);
-
-
 /* Neighbor collectives */
 static int __INTERNAL__PMPI_Neighbor_allgather_cart(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
 static int __INTERNAL__PMPI_Neighbor_allgather_graph(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
@@ -2394,183 +2391,6 @@ int sctk_Type_create_subarray(int ndims,
 *  END OF ROMIO CODE
 * ########################################################################*/
 
-
-static int __INTERNAL__PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count *elements)
-{
-	int           res  = MPI_SUCCESS;
-	long long int size = 0;
-	int           data_size;
-
-	/* First check if the status is valid */
-	if(MPI_STATUS_IGNORE == status || NULL == elements)
-	{
-		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_ARG, "Invalid argument");
-	}
-
-	/* Now check the data-type */
-	mpi_check_type(datatype, MPI_COMM_WORLD);
-
-	/* Get type size */
-	res = PMPI_Type_size(datatype, &data_size);
-
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-
-
-	MPI_Datatype data_in;
-	int          data_in_size = 0;
-	size_t       count        = 0;
-	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = NULL;
-	unsigned long i = 0;
-
-	*elements = 0;
-
-	/* If size is NULL we have no element */
-	if(data_size == 0)
-	{
-		return res;
-	}
-
-	_mpc_dt_contiguout_t *contiguous_user_types = NULL;
-	_mpc_dt_derived_t *   target_type           = NULL;
-	int done = 0;
-	struct _mpc_dt_layout *layout = NULL;
-
-	/* If we are here our type has a size
-	 * we can now count the number of elements*/
-	switch(_mpc_dt_get_kind(datatype) )
-	{
-		case MPC_DATATYPES_CONTIGUOUS:
-
-			/* A contiguous datatype is made of several
-			 * elements of a single type next to each other
-			 * we have to find out how many elements of this
-			 * type are here */
-			task_specific = mpc_cl_per_mpi_process_ctx_get();
-
-			/* First retrieve the contiguous type descriptor */
-			contiguous_user_types = _mpc_cl_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);
-			/* Number of entries in the contiguous type */
-			count = contiguous_user_types->count;
-			/* Input type */
-			data_in = contiguous_user_types->datatype;
-
-			/* Retrieve the size of the input type */
-			res = PMPI_Type_size(data_in, &data_in_size);
-
-			/* This is the size we received */
-			size = status->size;
-
-			*elements = size / data_in_size;
-
-			if(res != MPI_SUCCESS)
-			{
-				return res;
-			}
-			break;
-
-		case MPC_DATATYPES_DERIVED:
-
-			task_specific = mpc_cl_per_mpi_process_ctx_get();
-
-			/* This is the size we received */
-			size = status->size;
-
-			*elements = 0;
-
-			/* Retrieve the derived datatype */
-			sctk_assert( (datatype) < SCTK_USER_DATA_TYPES_MAX);
-			target_type = _mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
-			sctk_assert(target_type != NULL);
-
-			/* Try to rely on the datype layout */
-			layout = _mpc_dt_get_layout(&target_type->context, &count);
-
-			done = 0;
-
-			if(0 /* Do not Use the Layout to compute Get_Element*/)
-			{
-				if(!count)
-				{
-					mpc_common_debug_fatal("We found an empty layout");
-				}
-
-				while(!done)
-				{
-					mpc_common_debug_error("count : %d  size : %d done : %d", count, size, done);
-					for(i = 0; i < count; i++)
-					{
-						mpc_common_debug_error("BLOCK SIZE  : %d", layout[i].size);
-
-						size -= layout[i].size;
-
-						(*elements)++;
-
-						if(size <= 0)
-						{
-							done = 1;
-							break;
-						}
-					}
-				}
-
-				sctk_free(layout);
-			}
-			else
-			{
-				/* Retrieve the number of block in the datatype */
-				count = target_type->count;
-
-				while(!done)
-				{
-					/* Count the number of elements by substracting
-					 * individual blocks from total size until reaching 0 */
-					for(i = 0; i < count; i++)
-					{
-						size -= target_type->ends[i] - target_type->begins[i] + 1;
-
-						(*elements)++;
-
-						if(size <= 0)
-						{
-							done = 1;
-							break;
-						}
-					}
-				}
-			}
-			break;
-
-		case MPC_DATATYPES_COMMON:
-			/* This is the size we received */
-			size = status->size;
-
-			mpc_common_nodebug("Normal type : count %d, data_type %d (size %d)", size, datatype, data_size);
-
-			/* Check if we have an exact number of object */
-			if(size % data_size == 0)
-			{
-				/* If so elements can be directly computed */
-				size      = size / data_size;
-				*elements = size;
-			}
-			else
-			{
-				/* Here we can say nothing as the size is not
-				 * a multiple of the data-type size */
-				*elements = MPI_UNDEFINED;
-			}
-			break;
-
-		default:
-			not_reachable();
-	}
-
-
-	return res;
-}
 
 static inline MPI_Datatype *__get_typemask(MPI_Datatype datatype, int *type_mask_count, mpc_lowcomm_datatype_t *static_type)
 {
@@ -13147,6 +12967,189 @@ int PMPI_Type_dup(MPI_Datatype old_type, MPI_Datatype *newtype)
 	return _mpc_cl_type_dup(old_type, newtype);
 }
 
+int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count *elements)
+{
+	MPI_Comm comm = MPI_COMM_WORLD;
+	mpi_check_type(datatype, comm);
+
+	int           res  = MPI_SUCCESS;
+	long long int size = 0;
+	int           data_size;
+
+	/* First check if the status is valid */
+	if(MPI_STATUS_IGNORE == status || NULL == elements)
+	{
+		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_ARG, "Invalid argument");
+	}
+
+	/* Now check the data-type */
+	mpi_check_type(datatype, MPI_COMM_WORLD);
+
+	/* Get type size */
+	res = PMPI_Type_size(datatype, &data_size);
+
+	if(res != MPI_SUCCESS)
+	{
+		return res;
+	}
+
+	MPI_Datatype data_in;
+	int          data_in_size = 0;
+	size_t       count        = 0;
+	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = NULL;
+	unsigned long i = 0;
+
+	*elements = 0;
+
+	/* If size is NULL we have no element */
+	if(data_size == 0)
+	{
+		return res;
+	}
+
+	_mpc_dt_contiguout_t *contiguous_user_types = NULL;
+	_mpc_dt_derived_t *   target_type           = NULL;
+	int done = 0;
+	struct _mpc_dt_layout *layout = NULL;
+
+	/* If we are here our type has a size
+	 * we can now count the number of elements*/
+	switch(_mpc_dt_get_kind(datatype) )
+	{
+		case MPC_DATATYPES_CONTIGUOUS:
+
+			/* A contiguous datatype is made of several
+			 * elements of a single type next to each other
+			 * we have to find out how many elements of this
+			 * type are here */
+			task_specific = mpc_cl_per_mpi_process_ctx_get();
+
+			/* First retrieve the contiguous type descriptor */
+			contiguous_user_types = _mpc_cl_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);
+			/* Number of entries in the contiguous type */
+			count = contiguous_user_types->count;
+			/* Input type */
+			data_in = contiguous_user_types->datatype;
+
+			/* Retrieve the size of the input type */
+			res = PMPI_Type_size(data_in, &data_in_size);
+
+			/* This is the size we received */
+			size = status->size;
+
+			*elements = size / data_in_size;
+
+			if(res != MPI_SUCCESS)
+			{
+				return res;
+			}
+			break;
+
+		case MPC_DATATYPES_DERIVED:
+
+			task_specific = mpc_cl_per_mpi_process_ctx_get();
+
+			/* This is the size we received */
+			size = status->size;
+
+			*elements = 0;
+
+			/* Retrieve the derived datatype */
+			sctk_assert( (datatype) < SCTK_USER_DATA_TYPES_MAX);
+			target_type = _mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
+			sctk_assert(target_type != NULL);
+
+			/* Try to rely on the datype layout */
+			layout = _mpc_dt_get_layout(&target_type->context, &count);
+
+			done = 0;
+
+			if(0 /* Do not Use the Layout to compute Get_Element*/)
+			{
+				if(!count)
+				{
+					mpc_common_debug_fatal("We found an empty layout");
+				}
+
+				while(!done)
+				{
+					mpc_common_debug_error("count : %d  size : %d done : %d", count, size, done);
+					for(i = 0; i < count; i++)
+					{
+						mpc_common_debug_error("BLOCK SIZE  : %d", layout[i].size);
+
+						size -= layout[i].size;
+
+						(*elements)++;
+
+						if(size <= 0)
+						{
+							done = 1;
+							break;
+						}
+					}
+				}
+
+				sctk_free(layout);
+			}
+			else
+			{
+				/* Retrieve the number of block in the datatype */
+				count = target_type->count;
+
+				while(!done)
+				{
+					/* Count the number of elements by substracting
+					 * individual blocks from total size until reaching 0 */
+					for(i = 0; i < count; i++)
+					{
+						size -= target_type->ends[i] - target_type->begins[i] + 1;
+
+						(*elements)++;
+
+						if(size <= 0)
+						{
+							done = 1;
+							break;
+						}
+					}
+				}
+			}
+			break;
+
+		case MPC_DATATYPES_COMMON:
+			/* This is the size we received */
+			size = status->size;
+
+			mpc_common_nodebug("Normal type : count %d, data_type %d (size %d)", size, datatype, data_size);
+
+			/* Check if we have an exact number of object */
+			if(size % data_size == 0)
+			{
+				/* If so elements can be directly computed */
+				size      = size / data_size;
+				*elements = size;
+			}
+			else
+			{
+				/* Here we can say nothing as the size is not
+				 * a multiple of the data-type size */
+				*elements = MPI_UNDEFINED;
+			}
+			break;
+
+		default:
+			not_reachable();
+	}
+
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+int PMPI_Get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count *elements)
+{
+	return PMPI_Type_get_elements_x(status, datatype, elements);
+}
+
 int PMPI_Type_get_elements(MPI_Status *status, MPI_Datatype datatype, int *elements)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
@@ -13156,23 +13159,16 @@ int PMPI_Type_get_elements(MPI_Status *status, MPI_Datatype datatype, int *eleme
 
 	MPI_Count tmp_elements = 0;
 
-	res = __INTERNAL__PMPI_Type_get_elements_x(status, datatype, &tmp_elements);
+	res = PMPI_Type_get_elements_x(status, datatype, &tmp_elements);
 
 	*elements = tmp_elements;
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
-int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count *elements)
+int PMPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *elements)
 {
-	MPI_Comm comm = MPI_COMM_WORLD;
-	int res       = MPI_ERR_INTERN;
-
-	mpi_check_type(datatype, comm);
-
-	res = __INTERNAL__PMPI_Type_get_elements_x(status, datatype, elements);
-
-	MPI_HANDLE_RETURN_VAL(res, comm);
+	return PMPI_Type_get_elements(status, datatype, elements);
 }
 
 int PMPI_Type_create_darray(int size,

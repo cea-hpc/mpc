@@ -258,6 +258,20 @@ void mpc_lowcomm_rdma_MPC_MPI_notify_src_ctx_set_trampoline(void (*trampoline)(m
 void mpc_lowcomm_rdma_MPC_MPI_notify_dest_ctx_set_trampoline(void (*trampoline)(mpc_lowcomm_rdma_window_t) );
 
 /************************************************************************/
+/* Setup and Teardown when running as a library                         */
+/************************************************************************/
+
+/* In this configuration MPC will rely on the PMI to bootstrap */
+
+/* To compile for this library:
+   * If mpc has threads: gcc `mpc_cflags` `mpc_ldflags` -include mpc.h ./a.c
+   * If mpc is without threads: gcc `mpc_cflags` `mpc_ldflags` ./a.c
+*/
+
+void mpc_lowcomm_init();
+void mpc_lowcomm_release();
+
+/************************************************************************/
 /* Setup and Teardow when running in libmode                            */
 /************************************************************************/
 

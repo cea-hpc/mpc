@@ -23,7 +23,9 @@
 #ifndef ___MPC___GLOBAL___HEADER___FILE___
 #define ___MPC___GLOBAL___HEADER___FILE___
 
-#include <mpc_main.h>
+#if @HAVE_MPC_THREAD@
+    #include <mpc_main.h>
+#endif
 
 int MPC_check_compatibility_lib(int major, int minor, int patch, char* pre);
 

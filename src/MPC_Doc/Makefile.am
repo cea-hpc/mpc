@@ -30,6 +30,12 @@ mpc_manpages= \
 	mpc_f90.1 \
 	$(NULL)
 
+
+man_MANS=$(mpc_manpages)
+CLEANFILES=$(mpc_manpages)
+
+if MPC_MPI_ENABLED
+
 mpi_manpages= \
 	MPI_Message_f2c.3 \
 	MPI_Allgather.3 \
@@ -437,8 +443,16 @@ mpi_manpages= \
 	MPI_Comm_call_errhandler.3 \
 	$(NULL)
 
-man_MANS=$(mpi_manpages) $(mpc_manpages)
-CLEANFILES=$(mpi_manpages) $(mpc_manpages)
+# MPI interface
+$(mpi_manpages):MPI_%.3:man/MPI_%.3in $(srcdir)/gen_manpage.sh
+	@cat $< > $@
+	@cat $(srcdir)/man/mpi_std_footer.3 >> $@
+	@manpage_date=`date -d"@${MPC_GENERATION_DATE}" +%m/%Y`; \
+	sed -i -e "s,#PACKAGE_DATE#,$$manpage_date," -e "s/#PACKAGE_VERSION#/$(MPC_VERSION_STRING)/g" -e "s/#PACKAGE_NAME#/$(PACKAGE_NAME)/g" $@
+
+man_MANS+=$(mpi_manpages)
+CLEANFILES+=$(mpi_manpages)
+endif
 
 manpage_date=`date -d"@${MPC_GENERATION_DATE}" +%m/%Y`
 
@@ -451,11 +465,4 @@ $(mpc_manpages):%:man/%in
 	@manpage_date=`date -d"@${MPC_GENERATION_DATE}" +%m/%Y`; \
 	sed -i -e "s,#PACKAGE_DATE#,$$manpage_date," -e "s/#PACKAGE_VERSION#/$(MPC_VERSION_STRING)/g" -e "s/#PACKAGE_NAME#/$(PACKAGE_NAME)/g" $@
 endif
-
-# MPI interface
-$(mpi_manpages):MPI_%.3:man/MPI_%.3in $(srcdir)/gen_manpage.sh
-	@cat $< > $@
-	@cat $(srcdir)/man/mpi_std_footer.3 >> $@
-	@manpage_date=`date -d"@${MPC_GENERATION_DATE}" +%m/%Y`; \
-	sed -i -e "s,#PACKAGE_DATE#,$$manpage_date," -e "s/#PACKAGE_VERSION#/$(MPC_VERSION_STRING)/g" -e "s/#PACKAGE_NAME#/$(PACKAGE_NAME)/g" $@
 

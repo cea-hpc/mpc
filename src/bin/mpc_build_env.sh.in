@@ -7,6 +7,6 @@ export CPATH="@CONFIGURE_CPATH@:$CPATH"
 export LIBRARY_PATH="@CONFIGURE_LIBRARY_PATH@:$LIBRARY_PATH"
 
 
-if test "x$#" != "x0"; then
+if test "x$#" != "x0" -a -z "$MPC_CONFIG_RELOADED"; then
 	 "$@"
 fi

@@ -2916,16 +2916,37 @@ void mpc_lowcomm_recv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_c
 
 void mpc_launch_init_runtime();
 
+void mpc_lowcomm_init()
+{
+#ifndef MPC_Threads
+	mpc_launch_init_runtime();
+	mpc_common_init_trigger("VP Thread Start");
+#endif
+	mpc_lowcomm_barrier(SCTK_COMM_WORLD);
+}
+
+void mpc_lowcomm_release()
+{
+	mpc_lowcomm_barrier(SCTK_COMM_WORLD);
+#ifndef MPC_Threads
+	mpc_common_init_trigger("VP Thread End");
+	mpc_common_init_trigger("After Ending VPs");
+	mpc_launch_release_runtime();
+#endif
+}
+
+/* Old interface for retro-compat */
+
 void mpc_lowcomm_libmode_init()
 {
-	mpc_launch_init_runtime();
-	mpc_lowcomm_barrier(SCTK_COMM_WORLD);
+	mpc_lowcomm_init();
 }
 
 void mpc_lowcomm_libmode_release()
 {
-	mpc_lowcomm_barrier(SCTK_COMM_WORLD);
+	mpc_lowcomm_release();
 }
+
 
 static void __lowcomm_init_per_task()
 {

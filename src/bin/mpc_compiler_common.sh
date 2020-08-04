@@ -139,7 +139,7 @@ COMPILATION_ARGS=""
 # Output file argument
 OUTPUT_FILE_ARGS=""
 # Default included MPC header
-MPC_HEADER_INCLUDE="-include mpc_main.h"
+MPC_HEADER_INCLUDE="-include mpc.h"
 # This variable is updated to 'echo' when '-show' is active
 MPC_COMMAND_WRAPPER="eval"
 

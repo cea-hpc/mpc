@@ -77,7 +77,6 @@
 #pragma weak MPI_Type_ub = PMPI_Type_ub
 #pragma weak MPI_Type_commit = PMPI_Type_commit
 #pragma weak MPI_Type_free = PMPI_Type_free
-#pragma weak MPI_Type_get_elements = PMPI_Type_get_elements
 // PROFILER MPI_PACK MPI Pack related
 #pragma weak MPI_Pack = PMPI_Pack
 #pragma weak MPI_Unpack = PMPI_Unpack
@@ -222,6 +221,9 @@
 #pragma weak MPI_Type_get_extent_x = PMPI_Type_get_extent_x
 #pragma weak MPI_Type_get_true_extent_x = PMPI_Type_get_true_extent_x
 #pragma weak MPI_Type_get_elements_x = PMPI_Type_get_elements_x
+#pragma weak MPI_Type_get_elements = PMPI_Type_get_elements
+#pragma weak MPI_Get_elements_x = PMPI_Get_elements_x
+#pragma weak MPI_Get_elements = PMPI_Get_elements
 #pragma weak MPI_Type_create_darray = PMPI_Type_create_darray
 #pragma weak MPI_Type_create_subarray = PMPI_Type_create_subarray
 #pragma weak MPI_Pack_external_size = PMPI_Pack_external_size

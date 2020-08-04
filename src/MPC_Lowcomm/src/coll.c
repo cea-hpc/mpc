@@ -28,6 +28,12 @@
 #include <sctk_low_level_comm.h>
 #include <sctk_alloc.h>
 
+#ifdef MPC_Threads
+/* This is needed to rewrite pthread primitives
+   to MPC ones when MPC_Threads is enabled */
+#include <mpc_pthread.h>
+#endif
+
 /************************************************************************/
 /*collective communication implementation                               */
 /************************************************************************/

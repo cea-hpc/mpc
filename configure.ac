@@ -129,6 +129,24 @@ MPC_SUPPORTED_ARCHITECTURES_LIST="x86_64 ia64 i686 arm aarch64 powerpc64"
 # General Configuration path
 CONFIGURE_SCRIPT_PATH=$(dirname "`readlink -f "$0"`")
 
+# Proceed to prefix checks
+
+AC_ARG_ENABLE([prefix-check],
+[AS_HELP_STRING([--enable-prefix-check],
+                [Make sure MPC is not installed over a previous install.])],
+[prefix_check=$enableval],
+[prefix_check=yes])
+
+if test -f "${prefix}/bin/mpc_status" -a "x${prefix_check}" = "xyes"; then
+        AC_MSG_NOTICE([!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!])
+        AC_MSG_NOTICE([There seems to be a previous install of MPC in ${prefix}.])
+        AC_MSG_NOTICE([Reinstalling over it can lead to spurious errors if configuration changed.])
+        AC_MSG_NOTICE([It is recommended to remove MPC beforehand to avoid conflicts.])
+        AC_MSG_NOTICE([If you are sure of what you are doing pass --disable-prefix-check to force install.])
+        AC_MSG_NOTICE([!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!])
+        AC_MSG_ERROR([Previous install in target prefix.])
+fi
+
 ####################################
 ###### VERSION IDENTIFICATION ###### {sec:version}
 ####################################
@@ -2509,22 +2527,28 @@ AC_SUBST([MPC_GENERATION_DATE])
 #
 cat << EOF > ./reconfigure
 #!/bin/sh
-if test -n "\`find ${ac_abs_confdir}/configure -newer \$0\`"; then
+if test -n "\$(find ${ac_abs_confdir}/configure -newer \$0)"; then
         printf "Warning: Source configure is newer than reconfigure file (./autogen.sh || git check-out)\n"
         printf "Warning: Rebuilding over a different version of MPC can lead to unexpected errors.\n"
 fi
 if test -f "${PWD}/src/bin/mpc_build_env.sh"; then
+        export MPC_CONFIG_RELOADED=yes
         . ${PWD}/src/bin/mpc_build_env.sh
 fi
 
 ${ac_abs_confdir}/configure $ac_configure_args "\$@"
-
 EOF
 
 chmod +x ./reconfigure
 
 
 # Generate configuration summary
+
+if test "x${mpc_debug_messages}" = "xyes" -o "x${mpc_debug_mem}" = "xyes" -o "x${mpc_debug}" = "xyes"; then
+        PERF_WARNING="WARNING: some debug options are turned on. This impacts performance."
+else
+        PERF_WARNING=""
+fi
 
 MPC_CONFIG_RESULT="\
 ########## MPC Configuration Script ##########\n\
@@ -2583,7 +2607,7 @@ MPC_CONFIG_RESULT="\
 # Memory Debug......... $mpc_debug_mem\n\
 # Debug messages....... $mpc_debug_messages\n\
 # Colored output....... $mpc_shell_color\n\
-#\n\
+# ${PERF_WARNING}\n\
 #############################################\n"
 
 AC_SUBST([MPC_CONFIG_RESULT])

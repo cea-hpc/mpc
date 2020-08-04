@@ -997,6 +997,7 @@ enable_dependency_tracking
 with_gnu_ld
 with_sysroot
 enable_libtool_lock
+enable_prefix_check
 with_libxml_2_0
 with_libxml_2_0_include
 with_libxml_2_0_libs
@@ -1741,6 +1742,8 @@ Optional Features:
   --disable-dependency-tracking
                           speeds up one-time build
   --disable-libtool-lock  avoid locking (might break parallel builds)
+  --enable-prefix-check   Make sure MPC is not installed over a previous
+                          install.
   --enable-mpcalloc       If the MPC allocator is to be used
   --enable-profiler       Compile MPC with Internal Profiling Support
   --enable-threads        Compile MPC with pthread and user-level thread
@@ -13089,6 +13092,32 @@ _ACEOF
 MPC_SUPPORTED_ARCHITECTURES_LIST="x86_64 ia64 i686 arm aarch64 powerpc64"
 # General Configuration path
 CONFIGURE_SCRIPT_PATH=$(dirname "`readlink -f "$0"`")
+
+# Proceed to prefix checks
+
+# Check whether --enable-prefix-check was given.
+if test "${enable_prefix_check+set}" = set; then :
+  enableval=$enable_prefix_check; prefix_check=$enableval
+else
+  prefix_check=yes
+fi
+
+
+if test -f "${prefix}/bin/mpc_status" -a "x${prefix_check}" = "xyes"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&5
+$as_echo "$as_me: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&6;}
+        { $as_echo "$as_me:${as_lineno-$LINENO}: There seems to be a previous install of MPC in ${prefix}." >&5
+$as_echo "$as_me: There seems to be a previous install of MPC in ${prefix}." >&6;}
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Reinstalling over it can lead to spurious errors if configuration changed." >&5
+$as_echo "$as_me: Reinstalling over it can lead to spurious errors if configuration changed." >&6;}
+        { $as_echo "$as_me:${as_lineno-$LINENO}: It is recommended to remove MPC beforehand to avoid conflicts." >&5
+$as_echo "$as_me: It is recommended to remove MPC beforehand to avoid conflicts." >&6;}
+        { $as_echo "$as_me:${as_lineno-$LINENO}: If you are sure of what you are doing pass --disable-prefix-check to force install." >&5
+$as_echo "$as_me: If you are sure of what you are doing pass --disable-prefix-check to force install." >&6;}
+        { $as_echo "$as_me:${as_lineno-$LINENO}: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&5
+$as_echo "$as_me: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&6;}
+        as_fn_error $? "Previous install in target prefix." "$LINENO" 5
+fi
 
 ####################################
 ###### VERSION IDENTIFICATION ###### {sec:version}
@@ -30993,22 +31022,28 @@ fi
 #
 cat << EOF > ./reconfigure
 #!/bin/sh
-if test -n "\`find ${ac_abs_confdir}/configure -newer \$0\`"; then
+if test -n "\$(find ${ac_abs_confdir}/configure -newer \$0)"; then
         printf "Warning: Source configure is newer than reconfigure file (./autogen.sh || git check-out)\n"
         printf "Warning: Rebuilding over a different version of MPC can lead to unexpected errors.\n"
 fi
 if test -f "${PWD}/src/bin/mpc_build_env.sh"; then
+        export MPC_CONFIG_RELOADED=yes
         . ${PWD}/src/bin/mpc_build_env.sh
 fi
 
 ${ac_abs_confdir}/configure $ac_configure_args "\$@"
-
 EOF
 
 chmod +x ./reconfigure
 
 
 # Generate configuration summary
+
+if test "x${mpc_debug_messages}" = "xyes" -o "x${mpc_debug_mem}" = "xyes" -o "x${mpc_debug}" = "xyes"; then
+        PERF_WARNING="WARNING: some debug options are turned on. This impacts performance."
+else
+        PERF_WARNING=""
+fi
 
 MPC_CONFIG_RESULT="\
 ########## MPC Configuration Script ##########\n\
@@ -31067,7 +31102,7 @@ MPC_CONFIG_RESULT="\
 # Memory Debug......... $mpc_debug_mem\n\
 # Debug messages....... $mpc_debug_messages\n\
 # Colored output....... $mpc_shell_color\n\
-#\n\
+# ${PERF_WARNING}\n\
 #############################################\n"
 
 

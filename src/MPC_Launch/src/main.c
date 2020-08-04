@@ -109,8 +109,31 @@ void mpc_start__(void)
 * MPC'S REPLACEMENT MAIN (MAIN ENTRY POINT) *
 *********************************************/
 
-/* No Main if MPC is in library mode */
-#if !defined(SCTK_LIB_MODE)
+
+#if defined(SCTK_LIB_MODE) || !defined(MPC_Threads)
+/* Handle the case where the main is not being rewritten
+   and provide the symbol to handle it */
+
+	#ifdef HAVE_ENVIRON_VAR
+		/**
+		 * @brief Definition of the user-main
+		 */
+		int mpc_user_main__ (int argc, char **argv,char**envp)
+		{
+			not_reachable();
+		}
+	#else
+		int mpc_user_main__ (int argc, char **argv)
+		{
+			not_reachable();
+		}
+	#endif
+#endif
+
+
+
+/* No Main if MPC is in library mode of if MPC_Threads are disabled */
+#if !defined(SCTK_LIB_MODE) && defined(MPC_Threads)
 
 /* This is the replacement main */
 

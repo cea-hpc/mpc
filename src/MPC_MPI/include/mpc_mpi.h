@@ -2522,7 +2522,6 @@ int PMPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void
 int MPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 
-
 /*MPI_Get*/
 
 /**
@@ -5888,6 +5887,34 @@ int PMPI_Type_get_attr(MPI_Datatype datatype, int type_keyval, void *attribute_v
 int MPI_Type_get_contents(MPI_Datatype datatype, int max_integers, int max_addresses, int max_datatypes, int array_of_integers[], MPI_Aint array_of_addresses[], MPI_Datatype array_of_datatypes[]);
 int PMPI_Type_get_contents(MPI_Datatype datatype, int max_integers, int max_addresses, int max_datatypes, int array_of_integers[], MPI_Aint array_of_addresses[], MPI_Datatype array_of_datatypes[]);
 
+
+/* MPI_Get_elements_x */
+
+/**
+ * @brief MPI function MPI_Get_elements_x
+ * 
+ * @param status status to query
+ * @param datatype type used to compute element size
+ * @param elements number of type entry in the corresponding status
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
+ */
+int MPI_Get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count *elements);
+int PMPI_Get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count *elements);
+
+/* MPI_Get_elements */
+
+/**
+ * @brief MPI function MPI_Get_elements
+ * 
+ * @param status status to query
+ * @param datatype type used to compute element size
+ * @param elements number of type entry in the corresponding status
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
+ */
+int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *elements);
+int PMPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *elements);
 
 /*MPI_Type_get_elements*/
 

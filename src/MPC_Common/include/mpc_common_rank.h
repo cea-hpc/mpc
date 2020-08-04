@@ -154,7 +154,7 @@ static inline int mpc_common_get_node_rank( void )
  */
 static inline int mpc_common_get_task_count( void )
 {
-	return 1;
+	return mpc_common_get_process_count();
 }
 
 /**
@@ -164,7 +164,7 @@ static inline int mpc_common_get_task_count( void )
  */
 static inline int mpc_common_get_task_rank( void )
 {
-	return 0;
+	return mpc_common_get_process_rank();
 }
 
 /**

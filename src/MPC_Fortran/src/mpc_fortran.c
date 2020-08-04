@@ -1709,6 +1709,24 @@ void mpi_comm_set_attr__(MPI_Fint *comm, int *comm_keyval, void *attribute_val, 
 	*ierror = MPI_Comm_set_attr(c_comm, *comm_keyval, attribute_val);
 }
 
+void mpi_errhandler_set_(MPI_Fint *comm, MPI_Fint *errhandler, int *ierror)
+{
+/* MPI_Errhandler_set */
+	MPI_Comm       c_comm       = PMPI_Comm_f2c(*comm);
+	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c(*errhandler);
+
+	*ierror = MPI_Errhandler_set(c_comm, c_errhandler);
+}
+
+void mpi_errhandler_set__(MPI_Fint *comm, MPI_Fint *errhandler, int *ierror)
+{
+/* MPI_Errhandler_set */
+	MPI_Comm       c_comm       = PMPI_Comm_f2c(*comm);
+	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c(*errhandler);
+
+	*ierror = MPI_Errhandler_set(c_comm, c_errhandler);
+}
+
 void mpi_comm_set_errhandler_(MPI_Fint *comm, MPI_Fint *errhandler, int *ierror)
 {
 /* MPI_Comm_set_errhandler */
@@ -6709,6 +6727,26 @@ void mpi_type_create_struct__(int *count, const int array_of_blocklengths[], con
 	sctk_free(c_array_of_types);
 }
 
+void mpi_type_struct_(int *count,
+							 const int array_of_blocklengths[],
+							 const MPI_Aint array_of_displacements[],
+							 const MPI_Fint array_of_types[],
+							 MPI_Fint *newtype,
+							 int *ierror)
+{
+	mpi_type_create_struct_(count, array_of_blocklengths, array_of_displacements, array_of_types, newtype, ierror);
+}
+
+void mpi_type_struct__(int *count,
+							 const int array_of_blocklengths[],
+							 const MPI_Aint array_of_displacements[],
+							 const MPI_Fint array_of_types[],
+							 MPI_Fint *newtype,
+							 int *ierror)
+{
+	mpi_type_struct_(count, array_of_blocklengths, array_of_displacements, array_of_types, newtype, ierror);
+}
+
 void mpi_type_create_subarray_(int *ndims, const int array_of_sizes[], const int array_of_subsizes[], const int array_of_starts[], int *order, MPI_Fint *oldtype, MPI_Fint *newtype, int *ierror)
 {
 /* MPI_Type_create_subarray */
@@ -6849,6 +6887,38 @@ void mpi_type_get_contents__(MPI_Fint *datatype, int *max_integers, int *max_add
 	sctk_free(c_array_of_datatypes);
 }
 
+void mpi_get_elements_(MPI_Status *status, MPI_Fint *datatype, int *count, int *ierror)
+{
+/* MPI_Type_get_elements */
+	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
+
+	*ierror = MPI_Type_get_elements(status, c_datatype, count);
+}
+
+void mpi_get_elements__(MPI_Status *status, MPI_Fint *datatype, int *count, int *ierror)
+{
+/* MPI_Type_get_elements */
+	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
+
+	*ierror = MPI_Type_get_elements(status, c_datatype, count);
+}
+
+void mpi_get_elements_x_(MPI_Status *status, MPI_Fint *datatype, MPI_Count *count, int *ierror)
+{
+/* MPI_Type_get_elements_x */
+	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
+
+	*ierror = MPI_Get_elements_x(status, c_datatype, count);
+}
+
+void mpi_get_elements_x__(MPI_Status *status, MPI_Fint *datatype, MPI_Count *count, int *ierror)
+{
+/* MPI_Type_get_elements_x */
+	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
+
+	*ierror = MPI_Get_elements_x(status, c_datatype, count);
+}
+
 void mpi_type_get_elements_(MPI_Status *status, MPI_Fint *datatype, int *count, int *ierror)
 {
 /* MPI_Type_get_elements */
@@ -6895,6 +6965,54 @@ void mpi_type_get_envelope__(MPI_Fint *datatype, int *num_integers, int *num_add
 	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
 
 	*ierror = MPI_Type_get_envelope(c_datatype, num_integers, num_addresses, num_datatypes, combiner);
+}
+
+void mpi_type_extent_(MPI_Fint *datatype, MPI_Aint *extent, int *ierror)
+{
+/* MPI_Type_get_extent */
+	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
+
+	*ierror = MPI_Type_extent(c_datatype, extent);
+}
+
+void mpi_type_extent__(MPI_Fint *datatype, MPI_Aint *extent, int *ierror)
+{
+/* MPI_Type_get_extent */
+	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
+
+	*ierror = MPI_Type_extent(c_datatype, extent);
+}
+
+void mpi_type_lb_(MPI_Fint *datatype, MPI_Aint *lb, int *ierror)
+{
+/* MPI_Type_get_extent */
+	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
+
+	*ierror = MPI_Type_lb(c_datatype, lb);
+}
+
+void mpi_type_lb__(MPI_Fint *datatype, MPI_Aint *lb, int *ierror)
+{
+/* MPI_Type_get_extent */
+	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
+
+	*ierror = MPI_Type_lb(c_datatype, lb);
+}
+
+void mpi_type_ub_(MPI_Fint *datatype, MPI_Aint *ub, int *ierror)
+{
+/* MPI_Type_get_extent */
+	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
+
+	*ierror = MPI_Type_ub(c_datatype, ub);
+}
+
+void mpi_type_ub__(MPI_Fint *datatype, MPI_Aint *ub, int *ierror)
+{
+/* MPI_Type_get_extent */
+	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
+
+	*ierror = MPI_Type_ub(c_datatype, ub);
 }
 
 void mpi_type_get_extent_(MPI_Fint *datatype, MPI_Aint *lb, MPI_Aint *extent, int *ierror)

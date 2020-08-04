@@ -11,6 +11,11 @@ stages:
   - Breaking tests
   - Finalization
 
+# Add clone variables for concurent PIPELINES
+variables:
+  GIT_DEPTH: 10 # No need to clone the whole history
+  GIT_CLONE_PATH: $CI_BUILDS_DIR/$CI_RUNNER_ID/$CI_CONCURRENT_ID/$CI_PROJECT_PATH
+
 .run_by_main: &run_by_main
   only:
   - devel

@@ -95,7 +95,6 @@ void mpc_common_debug_info(const char *fmt, ...);
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
 void mpc_common_debug(const char *fmt, ...);
-
 #else
 	#if defined(__GNUC__) || defined(__INTEL_COMPILER)
 		#define mpc_common_debug(fmt, ...)    (void)(0)
@@ -105,6 +104,9 @@ static inline void mpc_common_debug(const char *fmt, ...)
 }
 	#endif
 #endif
+
+#define mpc_common_tracepoint(FMT) mpc_common_debug("%s:%d : "FMT, __FILE__, __LINE__);
+#define mpc_common_tracepoint_fmt(FMT, ...) mpc_common_debug("%s:%d : "FMT, __FILE__, __LINE__, __VA_ARGS__);
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
 #define mpc_common_nodebug(fmt, ...)    (void)(0)

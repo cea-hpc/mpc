@@ -23,7 +23,6 @@
 #define __SCTK_REORDER_H_
 
 #include <uthash.h>
-#include <opa_primitives.h>
 #include <mpc_common_spinlock.h>
 struct mpc_lowcomm_ptp_message_s;
 struct sctk_ib_buffered_table_s;

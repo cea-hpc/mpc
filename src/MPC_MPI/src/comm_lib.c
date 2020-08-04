@@ -4037,13 +4037,11 @@ int _mpc_cl_comm_create_from_intercomm(mpc_lowcomm_communicator_t comm,
                                        _mpc_cl_group_t *group,
                                        mpc_lowcomm_communicator_t *comm_out)
 {
-	int rank;
 	int i;
 	int present = 0;
-	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific;
+	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
+	int rank          = task_specific->task_id;
 
-	task_specific = _mpc_cl_per_mpi_process_ctx_get();
-	rank          = task_specific->task_id;
 	sctk_assert(comm != SCTK_COMM_NULL);
 	_mpc_cl_barrier(comm);
 
@@ -4062,27 +4060,22 @@ int _mpc_cl_comm_create_from_intercomm(mpc_lowcomm_communicator_t comm,
 		mpc_common_nodebug("task_list[%d] = %d", i, group->task_list_in_global_ranks[i]);
 	}
 
-	if(sctk_is_in_local_group(comm) )
-	{
-		(*comm_out) = sctk_create_communicator_from_intercomm(
+	mpc_lowcomm_communicator_t new_comm = sctk_create_communicator_from_intercomm(
 		        comm, group->task_nb, group->task_list_in_global_ranks);
-	}
-	else
-	{
-		(*comm_out) = sctk_create_communicator_from_intercomm(
-		        comm, group->task_nb, group->task_list_in_global_ranks);
-	}
 
-	mpc_common_nodebug("\tnew comm from intercomm %d", *comm_out);
+
+	mpc_common_nodebug("\tnew comm from intercomm %d", new_comm);
 	_mpc_cl_barrier(comm);
 
 	if(present == 1)
 	{
-		mpc_common_nodebug("from intercomm barrier comm %d", *comm_out);
-		_mpc_cl_barrier(*comm_out);
+		mpc_common_nodebug("from intercomm barrier comm %d", new_comm);
+		_mpc_cl_barrier(new_comm);
 		mpc_common_nodebug("sortie barrier");
-		__mpc_cl_per_communicator_alloc_from_existing(task_specific, *comm_out, comm);
+		__mpc_cl_per_communicator_alloc_from_existing(task_specific, new_comm, comm);
 	}
+
+	*comm_out = new_comm;
 
 	mpc_common_nodebug("comm %d created from intercomm %d", *comm_out, comm);
 	MPC_ERROR_SUCESS();
@@ -4117,6 +4110,8 @@ static inline int __mpc_cl_comm_create(mpc_lowcomm_communicator_t comm, _mpc_cl_
 		}
 	}
 
+	mpc_lowcomm_communicator_t new_comm = SCTK_COMM_NULL;
+
 	if(is_inter_comm)
 	{
 		rleader = sctk_get_remote_leader(comm);
@@ -4138,30 +4133,32 @@ static inline int __mpc_cl_comm_create(mpc_lowcomm_communicator_t comm, _mpc_cl_
 		if(intra_comm != SCTK_COMM_NULL)
 		{
 			/* create intercomm */
-			(*comm_out) = sctk_create_intercommunicator_from_intercommunicator(
+			new_comm = sctk_create_intercommunicator_from_intercommunicator(
 			        comm, remote_leader,
 			        intra_comm);
-			mpc_common_nodebug("\trank %d: new intercomm -> %d", rank, *comm_out);
+			mpc_common_nodebug("\trank %d: new intercomm -> %d", rank, new_comm);
 		}
 		else
 		{
-			(*comm_out) = SCTK_COMM_NULL;
+			new_comm = SCTK_COMM_NULL;
 		}
 	}
 	else
 	{
-		(*comm_out) = sctk_create_communicator(comm, group->task_nb,
+		new_comm = sctk_create_communicator(comm, group->task_nb,
 		                                       group->task_list_in_global_ranks);
-		mpc_common_nodebug("\trank %d: new intracomm -> %d", rank, *comm_out);
+		mpc_common_nodebug("\trank %d: new intracomm -> %d", rank, new_comm);
 	}
 
 	_mpc_cl_barrier(comm);
 
 	if(present == 1)
 	{
-		_mpc_cl_barrier(*comm_out);
-		__mpc_cl_per_communicator_alloc_from_existing(task_specific, *comm_out, comm);
+		_mpc_cl_barrier(new_comm);
+		__mpc_cl_per_communicator_alloc_from_existing(task_specific, new_comm, comm);
 	}
+
+	*comm_out = new_comm;
 
 	MPC_ERROR_SUCESS();
 }
