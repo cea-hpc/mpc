@@ -20,9 +20,9 @@
 
 static inline int __scatter_compute_node_num_thread( mpcomp_node_t *node, const int num_threads, int rank, int *first )
 {
-	sctk_assert( node );
-	sctk_assert( num_threads > 0 );
-	sctk_assert( first );
+	assert( node );
+	assert( num_threads > 0 );
+	assert( first );
 	const int quot = num_threads / node->nb_children;
 	const int rest = num_threads % node->nb_children;
 	const int min = ( num_threads > node->nb_children ) ? node->nb_children : num_threads;
@@ -42,8 +42,8 @@ static inline int __scatter_compute_node_num_thread( mpcomp_node_t *node, const 
 static inline int __scatter_compute_mvp_index( mpcomp_node_t *node, const int num_threads, const int first_rank, const int rank )
 {
 	int i;
-	sctk_assert( node );
-	sctk_assert( num_threads > 0 );
+	assert( node );
+	assert( num_threads > 0 );
 	const int quot = node->nb_children / num_threads;
 
 	for ( i = 0; i < node->nb_children; i++ )
@@ -84,7 +84,7 @@ int __scatter_compute_global_rank_from_instance_rank( mpcomp_instance_t *instanc
 		}
 
 		const int index = j - 1;
-		sctk_assert( start_node->child_type == MPCOMP_CHILDREN_NODE );
+		assert( start_node->child_type == MPCOMP_CHILDREN_NODE );
 		start_node = start_node->children.node[index];
 		num_threads = ( index < rest ) ? ( quot + 1 ) : quot;
 		local_rank -= ( index < rest ) ? ( quot + 1 ) * index : ( quot * index + rest );
@@ -126,19 +126,19 @@ int __scatter_compute_instance_rank_from_mvp( mpcomp_instance_t *instance, mpcom
 	int *mvp_fathers;
 	mpcomp_node_t *prev_node, *next_node;
 	mpcomp_meta_tree_node_t *tree_array;
-	sctk_assert( mvp );
-	sctk_assert( instance );
+	assert( mvp );
+	assert( instance );
 
 	if ( !( instance->root ) )
 	{
 		return 0;
 	}
 
-	sctk_assert( mvp->father );
+	assert( mvp->father );
 	tree_array = mvp->father->tree_array;
-	sctk_assert( tree_array );
+	assert( tree_array );
 	mvp_fathers = tree_array[mvp->global_rank].fathers_array;
-	sctk_assert( mvp_fathers );
+	assert( mvp_fathers );
 	const int start_depth = instance->root->depth;
 	mvp_instance_rank = 0;
 	prev_node = instance->root;
@@ -167,7 +167,7 @@ int __scatter_compute_instance_rank_from_mvp( mpcomp_instance_t *instance, mpcom
 static inline int __scatter_compute_instance_tree_depth( mpcomp_node_t *node, const int expected_nb_mvps )
 {
 	int next_depth, num_nodes;
-	sctk_assert( expected_nb_mvps > 0 );
+	assert( expected_nb_mvps > 0 );
 
 	/* No more nested parallelism */
 	if ( node == NULL || expected_nb_mvps == 1 )
@@ -193,17 +193,17 @@ static inline int __scatter_compute_instance_array_info( mpcomp_instance_t *inst
 	mpcomp_node_t *root;
 	int i, j, last_level_shape, tot_nnodes;
 	int *num_nodes_per_depth, *shape, *num_children_per_depth, *first_rank_per_depth;
-	sctk_assert( instance );
+	assert( instance );
 	root = instance->root;
 
 	if ( !root || expected_nb_mvps == 1 )
 	{
-		sctk_assert( expected_nb_mvps == 1 );
+		assert( expected_nb_mvps == 1 );
 		int *singleton = ( int * ) mpcomp_alloc( sizeof( int ) );
-		sctk_assert( singleton );
+		assert( singleton );
 		singleton[0] = 1;
 		first_rank_per_depth = ( int * ) mpcomp_alloc( sizeof( int ) );
-		sctk_assert( first_rank_per_depth );
+		assert( first_rank_per_depth );
 		first_rank_per_depth[0] = 0;
 		instance->tree_base = singleton;
 		instance->tree_cumulative = singleton;
@@ -212,25 +212,25 @@ static inline int __scatter_compute_instance_array_info( mpcomp_instance_t *inst
 		return 1;
 	}
 
-	sctk_assert( root );
-	sctk_assert( root->tree_base );
+	assert( root );
+	assert( root->tree_base );
 	const int array_size = instance->tree_depth;
 	last_level_shape = expected_nb_mvps;
 	/* Instance tree_base */
 	shape = ( int * ) mpcomp_alloc( array_size * sizeof( int ) );
-	sctk_assert( shape );
+	assert( shape );
 	memset( shape, 0, array_size * sizeof( int ) );
 	/* Instance tree_nb_nodes_per_depth */
 	num_nodes_per_depth = ( int * ) mpcomp_alloc( ( array_size ) * sizeof( int ) );
-	sctk_assert( num_nodes_per_depth );
+	assert( num_nodes_per_depth );
 	memset( num_nodes_per_depth, 0, array_size * sizeof( int ) );
 	/* Instance tree_cumulative */
 	num_children_per_depth = ( int * ) mpcomp_alloc( ( array_size + 1 ) * sizeof( int ) );
-	sctk_assert( num_children_per_depth );
+	assert( num_children_per_depth );
 	memset( num_children_per_depth, 0, ( array_size + 1 ) * sizeof( int ) );
 	/* Instance tree first level rank */
 	first_rank_per_depth = ( int * ) mpcomp_alloc( array_size * sizeof( int ) );
-	sctk_assert( num_children_per_depth );
+	assert( num_children_per_depth );
 	memset( num_children_per_depth, 0, array_size * sizeof( int ) );
 	/* Intermediate stage */
 	tot_nnodes = 0;
@@ -261,7 +261,7 @@ static inline int __scatter_compute_instance_array_info( mpcomp_instance_t *inst
 		for ( j = i + 1; j < array_size; j++ )
 		{
 			num_children_per_depth[i] *= shape[j];
-			sctk_assert( num_children_per_depth[i] );
+			assert( num_children_per_depth[i] );
 		}
 	}
 
@@ -300,25 +300,25 @@ static inline mpcomp_instance_t *__scatter_instance_pre_init( mpcomp_thread_t *t
 {
 	mpcomp_node_t *root;
 	mpcomp_instance_t *instance;
-	sctk_assert( thread );
-	sctk_assert( num_mvps > 0 );
+	assert( thread );
+	assert( num_mvps > 0 );
 	root = thread->root;
 	instance = ( mpcomp_instance_t * ) mpcomp_alloc( sizeof( mpcomp_instance_t ) );
-	sctk_assert( instance );
+	assert( instance );
 	memset( instance, 0, sizeof( mpcomp_instance_t ) );
 	instance->root = root;
 	instance->tree_depth = __scatter_compute_instance_tree_depth( root, num_mvps );
 	instance->tree_array_size = __scatter_compute_instance_array_info( instance, num_mvps );
 	//fprintf(stderr, "%s> tree_depth: %d tree_array: %d num_mvps : %d\n", __func__, instance->tree_depth, instance->tree_array_size, num_mvps);
 	instance->tree_array = ( mpcomp_generic_node_t * )mpcomp_alloc( sizeof( mpcomp_generic_node_t ) * instance->tree_array_size );
-	sctk_assert( instance->tree_array );
+	assert( instance->tree_array );
 	memset( instance->tree_array, 0, sizeof( mpcomp_generic_node_t ) * instance->tree_array_size );
 	/* First Mvp entry in tree_array */
 	const int instance_last_stage_size = instance->tree_cumulative[0];
-	sctk_assert( !root || instance_last_stage_size <= root->tree_nb_nodes_per_depth[instance->tree_depth - 1] );
+	assert( !root || instance_last_stage_size <= root->tree_nb_nodes_per_depth[instance->tree_depth - 1] );
 	const int first_mvp = instance->tree_array_size - instance_last_stage_size;
 	instance->mvps = &( instance->tree_array[first_mvp] );
-	sctk_assert( instance_last_stage_size >= num_mvps );
+	assert( instance_last_stage_size >= num_mvps );
 	return instance;
 }
 
@@ -327,7 +327,7 @@ static inline void __mpcomp_instance_tree_array_node_init( struct mpcomp_node_s 
 	int i;
 	mpcomp_instance_t *instance;
 	struct mpcomp_generic_node_s *meta_node;
-	sctk_assert( parent->instance );
+	assert( parent->instance );
 	instance = parent->instance;
 	const int vdepth = parent->depth - parent->instance->root->depth + 1;
 	const int next_tree_base_val = parent->instance->tree_base[vdepth + 1];
@@ -336,12 +336,12 @@ static inline void __mpcomp_instance_tree_array_node_init( struct mpcomp_node_s 
 	const int local_rank = global_rank - parent->instance_stage_first_rank;
 	child->instance_global_rank = child->instance_stage_first_rank + local_rank * next_tree_base_val;
 	meta_node = &( parent->instance->tree_array[global_rank] );
-	sctk_assert( meta_node );
+	assert( meta_node );
 	meta_node->ptr.node = child;
 	meta_node->type = MPCOMP_CHILDREN_NODE;
 	child->tree_array_rank = global_rank;
 	child->tree_array_ancestor_path = ( int * ) mpcomp_alloc( ( vdepth ) * sizeof( int ) );
-	sctk_assert( child->tree_array_ancestor_path );
+	assert( child->tree_array_ancestor_path );
 	memset( child->tree_array_ancestor_path, 0, ( vdepth + 1 ) * sizeof( int ) );
 
 	for ( i = 0; i < vdepth - 1; i++ )
@@ -363,14 +363,14 @@ static inline void __mpcomp_instance_tree_array_mvp_init( struct mpcomp_node_s *
 	const int vdepth = parent->depth - parent->instance->root->depth + 1;
 	const int global_rank = parent->instance_global_rank + index;
 	meta_node = &( parent->instance->tree_array[global_rank] );
-	sctk_assert( meta_node );
+	assert( meta_node );
 	meta_node->ptr.mvp = mvp;
 	meta_node->type = MPCOMP_CHILDREN_LEAF;
-	sctk_assert( mvp->threads );
-	sctk_assert( mvp->threads );
+	assert( mvp->threads );
+	assert( mvp->threads );
 	mvp->threads->tree_array_rank = global_rank;
 	mvp->threads->tree_array_ancestor_path = ( int * ) mpcomp_alloc( ( vdepth + 1 ) * sizeof( int ) );
-	sctk_assert( mvp->threads->tree_array_ancestor_path );
+	assert( mvp->threads->tree_array_ancestor_path );
 	memset( mvp->threads->tree_array_ancestor_path, 0,  ( vdepth + 1 ) * sizeof( int ) );
 
 	for ( i = 0; i < vdepth - 1; i++ )
@@ -389,16 +389,16 @@ static inline mpcomp_node_t *__scatter_wakeup_intermediate_node( mpcomp_node_t *
 {
 	int i;
 	mpcomp_node_t *child_node;
-	sctk_assert( node->instance );
-	sctk_assert( node->child_type == MPCOMP_CHILDREN_NODE );
-	sctk_assert( node->instance->root->depth <= node->depth );
+	assert( node->instance );
+	assert( node->child_type == MPCOMP_CHILDREN_NODE );
+	assert( node->instance->root->depth <= node->depth );
 	const int node_vdepth = node->depth - node->instance->root->depth + 1;
 	const int num_vchildren = node->instance->tree_base[node_vdepth];
 	const int num_children = node->nb_children;
 	const int nthreads = node->num_threads;
-	sctk_assert( num_children >= num_vchildren );
+	assert( num_children >= num_vchildren );
 	const int node_first_mvp = node->mvp_first_id;
-	sctk_assert( node->children.node );
+	assert( node->children.node );
 	node->reduce_data = ( void ** ) mpcomp_alloc( node->nb_children * 64 * sizeof( void * ) );
 	node->isArrived = ( int * ) mpcomp_alloc( node->nb_children * 64 * sizeof( int ) );
 
@@ -418,7 +418,7 @@ static inline mpcomp_node_t *__scatter_wakeup_intermediate_node( mpcomp_node_t *
 		for ( i = 0; i < num_vchildren; i++ )
 		{
 			child_node = node->children.node[i];
-			sctk_assert( child_node );
+			assert( child_node );
 			child_node->already_init = 0;
 
 			if ( !node->instance->buffered )
@@ -446,9 +446,9 @@ static inline mpcomp_node_t *__scatter_wakeup_intermediate_node( mpcomp_node_t *
 		{
 			mpcomp_thread_t *next;
 			child_node = node->children.node[cur_node];
-			sctk_assert( child_node );
+			assert( child_node );
 			mvp = child_node->mvp;
-			sctk_assert( mvp );
+			assert( mvp );
 			child_node->already_init = 1;
 
 			if ( !node->instance->buffered )
@@ -457,7 +457,7 @@ static inline mpcomp_node_t *__scatter_wakeup_intermediate_node( mpcomp_node_t *
 				child_node->instance = node->instance;
 				child_node->mvp_first_id = node_first_mvp + i;
 				/* Set MVP infos */
-				sctk_assert( mvp->threads );
+				assert( mvp->threads );
 				next = mvp->threads->next;
 				memset( mvp->threads, 0, sizeof( mpcomp_thread_t ) );
 				mvp->threads->mvp = mvp;
@@ -490,15 +490,15 @@ static inline mpcomp_node_t *__scatter_wakeup_intermediate_node( mpcomp_node_t *
 static inline mpcomp_mvp_t *__scatter_wakeup_final_mvp( mpcomp_node_t *node )
 {
 	int i, cur_mvp;
-	sctk_assert( node );
-	sctk_assert( node->child_type == MPCOMP_CHILDREN_LEAF );
-	sctk_assert( node->instance->root->depth <= node->depth );
+	assert( node );
+	assert( node->child_type == MPCOMP_CHILDREN_LEAF );
+	assert( node->instance->root->depth <= node->depth );
 	const int node_vdepth = node->depth - node->instance->root->depth + 1;
 	const int  __UNUSED__ num_vchildren = node->instance->tree_base[node_vdepth];
-	sctk_assert( node->num_threads <= num_vchildren );
+	assert( node->num_threads <= num_vchildren );
 	const int nthreads = node->num_threads;
 	const int num_children = node->nb_children;
-	sctk_assert( nthreads <= num_children );
+	assert( nthreads <= num_children );
 	const int min_shift = num_children / nthreads;
 	const int ext_shift = num_children % nthreads;
 	node->barrier_num_threads = node->num_threads;
@@ -521,7 +521,7 @@ static inline mpcomp_mvp_t *__scatter_wakeup_final_mvp( mpcomp_node_t *node )
 		{
 			mvp->instance = node->instance;
 			/* Set MVP instance rank in thread structure */
-			sctk_assert( mvp->threads );
+			assert( mvp->threads );
 			next = mvp->threads->next;
 			memset( mvp->threads, 0, sizeof( mpcomp_thread_t ) );
 			mvp->threads->mvp = mvp;
@@ -561,8 +561,8 @@ static inline mpcomp_mvp_t *__scatter_wakeup_final_node( mpcomp_node_t *node )
 static inline mpcomp_mvp_t *__scatter_wakeup( mpcomp_node_t *node )
 {
 	mpcomp_node_t *cur_node;
-	sctk_assert( node->instance );
-	sctk_assert( node->instance->root );
+	assert( node->instance );
+	assert( node->instance->root );
 	const int target_depth = node->instance->tree_depth + node->instance->root->depth - 1;
 	/* Node Wake-Up */
 	cur_node = node;
@@ -587,8 +587,8 @@ static inline mpcomp_mvp_t *__scatter_wakeup( mpcomp_node_t *node )
 
 static inline void __scatter_instance_post_init( mpcomp_thread_t *thread )
 {
-	sctk_assert( thread );
-	sctk_assert( thread->mvp );
+	assert( thread );
+	assert( thread->mvp );
 	mpcomp_mvp_t *mvp = thread->mvp;
 	int j;
 
@@ -648,7 +648,7 @@ static inline void __scatter_instance_post_init( mpcomp_thread_t *thread )
 					break;
 
 				default:
-					sctk_assert( 0 );
+					assert( 0 );
 			}
 		}
 	}
@@ -662,7 +662,7 @@ static OPA_int_t nb_teams = OPA_INT_T_INITIALIZER( 0 );
 /** Reset mpcomp_team informations */
 static inline void __team_reset( mpcomp_team_t *team )
 {
-	sctk_assert( team );
+	assert( team );
 	OPA_int_t *last_array_slot;
 	memset( team, 0, sizeof( mpcomp_team_t ) );
 	last_array_slot = &( team->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i );
@@ -674,10 +674,10 @@ static inline void __team_reset( mpcomp_team_t *team )
 static inline void __mvp_del_saved_ctx( mpcomp_mvp_t *mvp )
 {
 	mpcomp_mvp_saved_context_t *prev_mvp_context = NULL;
-	sctk_assert( mvp );
+	assert( mvp );
 	/* Get previous context */
 	prev_mvp_context =  mvp->prev_node_father;
-	sctk_assert( prev_mvp_context );
+	assert( prev_mvp_context );
 	/* Restore MVP previous status */
 	mvp->father = prev_mvp_context->father;
 	mvp->prev_node_father = prev_mvp_context->prev;
@@ -688,10 +688,10 @@ static inline void __mvp_del_saved_ctx( mpcomp_mvp_t *mvp )
 static inline void __mvp_add_saved_ctx( mpcomp_mvp_t *mvp )
 {
 	mpcomp_mvp_saved_context_t *prev_mvp_context = NULL;
-	sctk_assert( mvp );
+	assert( mvp );
 	/* Allocate new chained elt */
 	prev_mvp_context = ( mpcomp_mvp_saved_context_t * ) mpcomp_alloc( sizeof( mpcomp_mvp_saved_context_t ) );
-	sctk_assert( prev_mvp_context );
+	assert( prev_mvp_context );
 	memset( prev_mvp_context, 0, sizeof( mpcomp_mvp_saved_context_t ) );
 	/* Get previous context */
 	prev_mvp_context->prev = mvp->prev_node_father;
@@ -738,13 +738,13 @@ mpcomp_instance_t *__mpcomp_tree_array_instance_init( mpcomp_thread_t *thread, c
 {
 	mpcomp_thread_t *master;
 	mpcomp_instance_t *instance;
-	sctk_assert( thread );
-	sctk_assert( expected_nb_mvps > 0 );
+	assert( thread );
+	assert( expected_nb_mvps > 0 );
 	instance =  __scatter_instance_pre_init( thread, expected_nb_mvps );
-	sctk_assert( instance );
+	assert( instance );
 	instance->nb_mvps = expected_nb_mvps;
 	instance->team = ( mpcomp_team_t * ) mpcomp_alloc( sizeof( mpcomp_team_t ) );
-	sctk_assert( instance->team );
+	assert( instance->team );
 	memset( instance->team, 0, sizeof( mpcomp_team_t ) );
 	instance->thread_ancestor = thread;
 	__team_reset( instance->team );
@@ -754,7 +754,7 @@ mpcomp_instance_t *__mpcomp_tree_array_instance_init( mpcomp_thread_t *thread, c
 #endif /* MPCOMP_OPENMP_3_0 */
 	/* Allocate new thread context */
 	master = ( mpcomp_thread_t * ) mpcomp_alloc( sizeof( mpcomp_thread_t ) );
-	sctk_assert( master );
+	assert( master );
 	memset( master, 0, sizeof( mpcomp_thread_t ) );
 	master->next = thread;
 	master->mvp = thread->mvp;
@@ -771,9 +771,9 @@ mpcomp_instance_t *__mpcomp_tree_array_instance_init( mpcomp_thread_t *thread, c
 static inline mpcomp_thread_t *__mvp_wakeup( mpcomp_mvp_t *mvp )
 {
 	mpcomp_thread_t *new_thread;
-	sctk_assert( mvp );
+	assert( mvp );
 	new_thread = mvp->threads;
-	sctk_assert( new_thread );
+	assert( new_thread );
 	_mpc_task_tree_array_thread_init( new_thread );
 	mvp->father = new_thread->father_node;
 #if MPCOMP_TRANSFER_INFO_ON_NODES
@@ -804,10 +804,10 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
 {
 	mpcomp_thread_t *cur_thread = NULL;
 	volatile int *spin_status;
-	sctk_assert( mvp );
+	assert( mvp );
 	__mvp_add_saved_ctx( mvp );
 	cur_thread =  __mvp_wakeup( mvp );
-	sctk_assert( cur_thread->mvp );
+	assert( cur_thread->mvp );
 	sctk_openmp_thread_tls = ( void * ) cur_thread;
 	__scatter_instance_post_init( cur_thread );
 	__mpcomp_in_order_scheduler( ( mpcomp_thread_t * )sctk_openmp_thread_tls );
@@ -874,7 +874,7 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
 void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp )
 {
 	mpcomp_node_t *spin_node;
-	sctk_assert( mvp );
+	assert( mvp );
 	spin_node = mvp->spin_node;
 
 	if ( spin_node )

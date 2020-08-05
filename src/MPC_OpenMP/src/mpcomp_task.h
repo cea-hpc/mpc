@@ -355,8 +355,8 @@ static inline void _mpc_task_info_init( mpcomp_task_t *task,
         void ( *func )( void * ), void *data,
         struct mpcomp_thread_s *thread )
 {
-	sctk_assert( task != NULL );
-	sctk_assert( thread != NULL );
+	assert( task != NULL );
+	assert( thread != NULL );
 	/* Reset all task infos to NULL */
 	memset( task, 0, sizeof( mpcomp_task_t ) );
 	/* Set non null task infos field */
@@ -487,7 +487,7 @@ static inline void mpcomp_taskgroup_add_task( mpcomp_task_t *new_task )
 	mpcomp_task_t *current_task;
 	mpcomp_thread_t *omp_thread_tls;
 	mpcomp_task_taskgroup_t *taskgroup;
-	sctk_assert( sctk_openmp_thread_tls );
+	assert( sctk_openmp_thread_tls );
 	omp_thread_tls = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
 	current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( omp_thread_tls );
 	taskgroup = current_task->taskgroup;

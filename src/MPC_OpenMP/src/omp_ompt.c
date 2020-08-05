@@ -481,7 +481,7 @@ ompt_state_t ompt_get_state_internal( __UNUSED__ ompt_wait_id_t *wait_id )
 {
 	mpcomp_thread_t *t;
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 
 	if ( t )
 	{
@@ -500,9 +500,9 @@ ompt_frame_t *ompt_get_task_frame( int ancestor_level )
 	mpcomp_mvp_t * __UNUSED__  mvp;
 	//mpc_ompt_team_t *team;
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	mvp = t->mvp;
-	sctk_assert( mvp != NULL );
+	assert( mvp != NULL );
 
 	//team = mvp->mpc_ompt_thread.team;
 
@@ -661,7 +661,7 @@ void ompt_push_taskteam( mpc_ompt_taskteam_t *taskteam, mpcomp_thread_t *t )
 {
 	mpcomp_thread_t *t;
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 
 	if ( t->mpc_ompt_thread.taskteam == NULL )
 	{
@@ -683,7 +683,7 @@ void ompt_push_taskteam( mpc_ompt_taskteam_t *taskteam, mpcomp_thread_t *t )
 void ompt_pull_taskteam( mpc_ompt_taskteam_t *taskteam, mpcomp_thread_t *t )
 {
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	t->mpc_ompt_thread.taskteam = taskteam->parent;
 }
 
@@ -695,9 +695,9 @@ mpc_ompt_team_t *ompt_get_team( int ancestor_level )
 	mpc_ompt_team_t *team;
 	fprintf( stderr, "ompt_get_team: ancestor_level = %d\n", ancestor_level );
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	//mvp = t->mvp;
-	sctk_assert( mvp != NULL );
+	assert( mvp != NULL );
 
 	//team = mvp->mpc_ompt_thread.team;
 
@@ -714,7 +714,7 @@ void ompt_parallel_region_init()
 {
 	mpcomp_thread_t *t;
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	mpc_ompt_parallel_t ompt_parallel = t->mpc_ompt_thread.ompt_parallel_info;
 
 	if ( ompt_parallel != NULL )

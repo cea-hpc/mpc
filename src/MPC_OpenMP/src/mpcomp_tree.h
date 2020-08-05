@@ -11,7 +11,7 @@
 
 static inline void mpcomp_task_thread_infos_init( struct mpcomp_thread_s *thread )
 {
-	sctk_assert( thread );
+	assert( thread );
 
 	if ( !MPCOMP_TASK_THREAD_IS_INITIALIZED( thread ) )
 	{
@@ -19,13 +19,13 @@ static inline void mpcomp_task_thread_infos_init( struct mpcomp_thread_s *thread
 		mpcomp_task_list_t *tied_tasks_list;
 		/* Allocate the default current task (no func, no data, no parent) */
 		implicit_task = ( mpcomp_task_t * ) mpcomp_alloc( sizeof( mpcomp_task_t ) );
-		sctk_assert( implicit_task );
+		assert( implicit_task );
 		MPCOMP_TASK_THREAD_SET_CURRENT_TASK( thread, NULL );
 		_mpc_task_info_init( implicit_task, NULL, NULL, thread );
 #ifdef MPCOMP_USE_TASKDEP
 		implicit_task->task_dep_infos = ( mpcomp_task_dep_task_infos_t * )
 		                                mpcomp_alloc( sizeof( mpcomp_task_dep_task_infos_t ) );
-		sctk_assert( implicit_task->task_dep_infos );
+		assert( implicit_task->task_dep_infos );
 		memset( implicit_task->task_dep_infos, 0,
 		        sizeof( mpcomp_task_dep_task_infos_t ) );
 #endif /* MPCOMP_USE_TASKDEP */
@@ -52,7 +52,7 @@ static inline void mpcomp_task_thread_infos_init( struct mpcomp_thread_s *thread
 #endif /* OMPT_SUPPORT */
 		/* Allocate private task data structures */
 		tied_tasks_list = ( mpcomp_task_list_t * ) mpcomp_alloc( sizeof( mpcomp_task_list_t ) );
-		sctk_assert( tied_tasks_list );
+		assert( tied_tasks_list );
 		MPCOMP_TASK_THREAD_SET_CURRENT_TASK( thread, implicit_task );
 		MPCOMP_TASK_THREAD_SET_TIED_TASK_LIST_HEAD( thread, tied_tasks_list );
 		OPA_store_int( &( implicit_task->refcount ), 1 );
@@ -64,7 +64,7 @@ static inline void mpcomp_task_thread_infos_init( struct mpcomp_thread_s *thread
 
 static inline void mpcomp_thread_infos_reset( mpcomp_thread_t *thread )
 {
-	sctk_assert( thread );
+	assert( thread );
 	memset( thread, 0, sizeof( mpcomp_thread_t ) );
 }
 
@@ -72,7 +72,7 @@ static inline void mpcomp_thread_infos_reset( mpcomp_thread_t *thread )
 static inline void
 mpcomp_common_table_reset( struct common_table *th_pri_common )
 {
-	sctk_assert( th_pri_common );
+	assert( th_pri_common );
 	memset( th_pri_common, 0, sizeof( struct common_table ) );
 }
 
@@ -81,7 +81,7 @@ static inline struct common_table *mpcomp_common_table_allocate( void )
 	struct common_table *th_pri_common;
 	th_pri_common =
 	    ( struct common_table * )sctk_malloc( sizeof( struct common_table ) );
-	sctk_assert( th_pri_common );
+	assert( th_pri_common );
 	mpcomp_common_table_reset( th_pri_common );
 	return th_pri_common;
 }
@@ -148,7 +148,7 @@ __mpcomp_thread_infos_fini_and_pop( mpcomp_mvp_t *mvp )
 static inline void __mpcomp_team_infos_init( mpcomp_team_t *team )
 {
 	int i;
-	sctk_assert( team );
+	assert( team );
 	/* SET all non null task info fields */
 	memset( team, 0, sizeof( mpcomp_team_t ) );
 	OPA_store_int(

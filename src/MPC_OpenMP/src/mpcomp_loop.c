@@ -294,7 +294,7 @@ static inline int __loop_static_schedule_get_single_chunk( long lb, long b, long
 		      ( rank + 1 - ( trip_count % num_threads ) ) * chunk_size * incr;
 	}
 
-	sctk_assert( ( incr > 0 ) ? ( *to - incr <= b ) : ( *to - incr >= b ) );
+	assert( ( incr > 0 ) ? ( *to - incr <= b ) : ( *to - incr >= b ) );
 	mpc_common_nodebug( "____loop_static_schedule_get_single_chunk: "
 	              "#%d (%d -> %d step %d) -> (%d -> %d step %d)",
 	              rank, lb, b, incr, *from, *to, incr );
@@ -380,7 +380,7 @@ void __mpcomp_static_loop_init( struct mpcomp_thread_s *t, long lb, long b, long
 {
 	mpcomp_loop_gen_info_t *loop_infos;
 	/* Get the team info */
-	sctk_assert( t->instance != NULL );
+	assert( t->instance != NULL );
 	t->schedule_type =
 	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_STATIC_LOOP;
 	t->schedule_is_forced = 0;
@@ -665,7 +665,7 @@ int __mpcomp_guided_loop_begin( long lb, long b, long incr, long chunk_size,
                                 long *from, long *to )
 {
 	struct mpcomp_thread_s *t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t );
+	assert( t );
 	t->schedule_type =
 	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;
 	t->schedule_is_forced = 1;
@@ -695,7 +695,7 @@ int __mpcomp_guided_loop_begin( long lb, long b, long incr, long chunk_size,
 int __mpcomp_guided_loop_next( long *from, long *to )
 {
 	struct mpcomp_thread_s *t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t );
+	assert( t );
 	mpcomp_loop_long_iter_t *loop = &( t->info.loop_infos.loop.mpcomp_long );
 	const long num_threads = ( long ) t->info.num_threads;
 	long long int ret = 0, anc_from, chunk_size, new_from;
@@ -749,12 +749,12 @@ void __mpcomp_guided_loop_end_nowait()
 	mpcomp_team_t *team_info;  /* Info on the team */
 	/* Grab the thread info */
 	t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	/* Number of threads in the current team */
 	const int num_threads = t->info.num_threads;
 	/* Compute the index of the dynamic for construct */
 	const int index = __loop_dyn_get_for_dyn_index( t );
-	sctk_assert( index >= 0 && index < MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
+	assert( index >= 0 && index < MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
 #if OMPT_SUPPORT
 	/* Avoid double call during runtime schedule policy */
 	if( _mpc_omp_ompt_is_enabled() )
@@ -776,9 +776,9 @@ void __mpcomp_guided_loop_end_nowait()
 	}
 #endif /* OMPT_SUPPORT */
 	/* Get the team info */
-	sctk_assert( t->instance != NULL );
+	assert( t->instance != NULL );
 	team_info = t->instance->team;
-	sctk_assert( team_info != NULL );
+	assert( team_info != NULL );
 	/* WARNING: the following order is important */
 	mpc_common_spinlock_lock( &( t->info.update_lock ) );
 	OPA_incr_int( &( t->for_dyn_ull_current ) );
@@ -787,13 +787,13 @@ void __mpcomp_guided_loop_end_nowait()
 	nb_threads_exited = OPA_fetch_and_incr_int(
 	                        &( team_info->for_dyn_nb_threads_exited[index].i ) ) +
 	                    1;
-	sctk_assert( nb_threads_exited > 0 && nb_threads_exited <= num_threads );
+	assert( nb_threads_exited > 0 && nb_threads_exited <= num_threads );
 
 	if ( nb_threads_exited == num_threads )
 	{
 		t->instance->team->is_first[index] = 1;
 		const int previous_index = __loop_dyn_get_for_dyn_prev_index( t );
-		sctk_assert( previous_index >= 0 &&
+		assert( previous_index >= 0 &&
 		             previous_index < MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
 		OPA_store_int( &( team_info->for_dyn_nb_threads_exited[index].i ),
 		               MPCOMP_NOWAIT_STOP_SYMBOL );
@@ -821,7 +821,7 @@ int __mpcomp_ordered_guided_loop_begin( long lb, long b, long incr,
                                         long chunk_size, long *from, long *to )
 {
 	struct mpcomp_thread_s *t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	const int ret = __mpcomp_guided_loop_begin( lb, b, incr, chunk_size, from, to );
 
 	if ( from )
@@ -835,7 +835,7 @@ int __mpcomp_ordered_guided_loop_begin( long lb, long b, long incr,
 int __mpcomp_ordered_guided_loop_next( long *from, long *to )
 {
 	struct mpcomp_thread_s *t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	const int ret = __mpcomp_guided_loop_next( from, to );
 	t->info.loop_infos.loop.mpcomp_long.cur_ordered_iter = *from;
 	return ret;
@@ -865,7 +865,7 @@ int __mpcomp_loop_ull_guided_begin( bool up, unsigned long long lb,
                                     unsigned long long *to )
 {
 	struct mpcomp_thread_s *t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t );
+	assert( t );
 	t->schedule_type =
 	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;
 	t->schedule_is_forced = 1;
@@ -896,7 +896,7 @@ int __mpcomp_loop_ull_guided_next( unsigned long long *from,
                                    unsigned long long *to )
 {
 	struct mpcomp_thread_s *t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t );
+	assert( t );
 	mpcomp_loop_ull_iter_t *loop = ( mpcomp_loop_ull_iter_t * ) & ( t->info.loop_infos.loop.mpcomp_ull );
 	const unsigned long long num_threads = ( unsigned long long ) t->info.num_threads;
 	unsigned long long ret = 0, anc_from, chunk_size, new_from;
@@ -970,7 +970,7 @@ int __mpcomp_loop_ull_ordered_guided_begin( bool up, unsigned long long lb,
         unsigned long long *to )
 {
 	struct mpcomp_thread_s *t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	const int ret =
 	    __mpcomp_loop_ull_guided_begin( up, lb, b, incr, chunk_size, from, to );
 
@@ -986,7 +986,7 @@ int __mpcomp_loop_ull_ordered_guided_next( unsigned long long *from,
         unsigned long long *to )
 {
 	struct mpcomp_thread_s *t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	const int ret = __mpcomp_loop_ull_guided_next( from, to );
 	t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from;
 	return ret;
@@ -1201,12 +1201,12 @@ static inline int __loop_dyn_get_victim_rank( struct mpcomp_thread_s *thread )
 	int i;
 	unsigned int target;
 	int *tree_cumulative;
-	sctk_assert( thread );
-	sctk_assert( thread->instance );
+	assert( thread );
+	assert( thread->instance );
 	tree_cumulative = thread->instance->tree_cumulative + 1;
 	const int tree_depth = thread->instance->tree_depth - 1;
-	sctk_assert( thread->for_dyn_target );
-	sctk_assert( thread->instance->tree_cumulative );
+	assert( thread->for_dyn_target );
+	assert( thread->instance->tree_cumulative );
 
 	for ( i = 0, target = 0; i < tree_depth; i++ )
 	{
@@ -1214,7 +1214,7 @@ static inline int __loop_dyn_get_victim_rank( struct mpcomp_thread_s *thread )
 	}
 
 	target = ( thread->rank + target ) % thread->instance->nb_mvps;
-	sctk_assert( target < thread->instance->nb_mvps );
+	assert( target < thread->instance->nb_mvps );
 	//fprintf(stderr, "[%d] ::: %s ::: Get Victim  %d\n", thread->rank, __func__, target );
 	return target;
 }
@@ -1222,13 +1222,13 @@ static inline int __loop_dyn_get_victim_rank( struct mpcomp_thread_s *thread )
 static inline void __loop_dyn_target_reset( struct mpcomp_thread_s *thread )
 {
 	int i;
-	sctk_assert( thread );
-	sctk_assert( thread->instance );
+	assert( thread );
+	assert( thread->instance );
 	const int tree_depth = thread->instance->tree_depth - 1;
-	sctk_assert( thread->mvp );
-	sctk_assert( thread->mvp->tree_rank );
-	sctk_assert( thread->for_dyn_target );
-	sctk_assert( thread->for_dyn_shift );
+	assert( thread->mvp );
+	assert( thread->mvp->tree_rank );
+	assert( thread->for_dyn_target );
+	assert( thread->for_dyn_shift );
 
 	/* Re-initialize the target to steal */
 	for ( i = 0; i < tree_depth; i++ )
@@ -1240,21 +1240,21 @@ static inline void __loop_dyn_target_reset( struct mpcomp_thread_s *thread )
 
 static inline void __loop_dyn_target_init( struct mpcomp_thread_s *thread )
 {
-	sctk_assert( thread );
+	assert( thread );
 
 	if ( thread->for_dyn_target )
 	{
 		return;
 	}
 
-	sctk_assert( thread->instance );
+	assert( thread->instance );
 	const int tree_depth = thread->instance->tree_depth - 1;
 	thread->for_dyn_target = ( int * ) malloc( tree_depth * sizeof( int ) );
-	sctk_assert( thread->for_dyn_target );
+	assert( thread->for_dyn_target );
 	thread->for_dyn_shift = ( int * ) malloc( tree_depth * sizeof( int ) );
-	sctk_assert( thread->for_dyn_shift );
-	sctk_assert( thread->mvp );
-	sctk_assert( thread->mvp->tree_rank );
+	assert( thread->for_dyn_shift );
+	assert( thread->mvp );
+	assert( thread->mvp->tree_rank );
 	__loop_dyn_target_reset( thread );
 	mpc_common_nodebug( "[%d] %s: initialization of target and shift", thread->rank,
 	              __func__ );
@@ -1273,7 +1273,7 @@ static int __loop_dyn_get_chunk_from_rank( struct mpcomp_thread_s *t,
 
 	const long rank = ( long ) target->rank;
 	const long num_threads = ( long ) t->info.num_threads;
-	sctk_assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_LONG );
+	assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_LONG );
 	mpcomp_loop_long_iter_t *loop = &( t->info.loop_infos.loop.mpcomp_long );
 	cur = __loop_dyn_get_chunk_from_target( t, target );
 
@@ -1292,9 +1292,9 @@ void __mpcomp_dynamic_loop_init( struct mpcomp_thread_s *t, long lb, long b, lon
 {
 	mpcomp_team_t *team_info; /* Info on the team */
 	/* Get the team info */
-	sctk_assert( t->instance != NULL );
+	assert( t->instance != NULL );
 	team_info = t->instance->team;
-	sctk_assert( team_info != NULL );
+	assert( team_info != NULL );
 	/* WORKAROUND (pr35196.c)
 	* Reinitialize the flag for the last iteration of the loop */
 	t->for_dyn_last_loop_iteration = 0;
@@ -1329,7 +1329,7 @@ int __mpcomp_dynamic_loop_begin( long lb, long b, long incr, long chunk_size,
 	__mpcomp_init();
 	/* Grab the thread info */
 	t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 
 	if ( !( t->instance->root ) )
 	{
@@ -1373,7 +1373,7 @@ int __mpcomp_dynamic_loop_next( long *from, long *to )
 	int found, target_idx, barrier_nthreads, ret;
 	/* Grab the thread info */
 	t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	/* Stop the stealing at the following depth.
 	 * Nodes above this depth will not be traversed */
 	const int num_threads = t->info.num_threads;
@@ -1466,12 +1466,12 @@ void __mpcomp_dynamic_loop_end_nowait( void )
 	mpcomp_team_t *team_info;  /* Info on the team */
 	/* Grab the thread info */
 	t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	/* Number of threads in the current team */
 	const int num_threads = t->info.num_threads;
 	/* Compute the index of the dynamic for construct */
 	const int index = __loop_dyn_get_for_dyn_index( t );
-	sctk_assert( index >= 0 && index < MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
+	assert( index >= 0 && index < MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
 #if OMPT_SUPPORT
 	/* Avoid double call during runtime schedule policy */
 	if( _mpc_omp_ompt_is_enabled() )
@@ -1502,9 +1502,9 @@ void __mpcomp_dynamic_loop_end_nowait( void )
 	}
 
 	/* Get the team info */
-	sctk_assert( t->instance != NULL );
+	assert( t->instance != NULL );
 	team_info = t->instance->team;
-	sctk_assert( team_info != NULL );
+	assert( team_info != NULL );
 	/* WARNING: the following order is important */
 	mpc_common_spinlock_lock( &( t->info.update_lock ) );
 	OPA_incr_int( &( t->for_dyn_ull_current ) );
@@ -1514,12 +1514,12 @@ void __mpcomp_dynamic_loop_end_nowait( void )
 	nb_threads_exited = OPA_fetch_and_incr_int(
 	                        &( team_info->for_dyn_nb_threads_exited[index].i ) ) +
 	                    1;
-	sctk_assert( nb_threads_exited > 0 && nb_threads_exited <= num_threads );
+	assert( nb_threads_exited > 0 && nb_threads_exited <= num_threads );
 
 	if ( nb_threads_exited == num_threads )
 	{
 		const int previous_index = __loop_dyn_get_for_dyn_prev_index( t );
-		sctk_assert( previous_index >= 0 &&
+		assert( previous_index >= 0 &&
 		             previous_index < MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
 		OPA_store_int( &( team_info->for_dyn_nb_threads_exited[index].i ),
 		               MPCOMP_NOWAIT_STOP_SYMBOL );
@@ -1551,7 +1551,7 @@ int __mpcomp_ordered_dynamic_loop_begin( long lb, long b, long incr,
         long chunk_size, long *from, long *to )
 {
 	struct mpcomp_thread_s *t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	__mpcomp_loop_gen_infos_init( &( t->info.loop_infos ), lb, b, incr, chunk_size );
 	const int ret =
 	    __mpcomp_dynamic_loop_begin( lb, b, incr, chunk_size, from, to );
@@ -1567,7 +1567,7 @@ int __mpcomp_ordered_dynamic_loop_begin( long lb, long b, long incr,
 int __mpcomp_ordered_dynamic_loop_next( long *from, long *to )
 {
 	struct mpcomp_thread_s *t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	const int ret = __mpcomp_dynamic_loop_next( from, to );
 	t->info.loop_infos.loop.mpcomp_long.cur_ordered_iter = *from;
 	return ret;
@@ -1591,7 +1591,7 @@ void __mpcomp_for_dyn_coherency_end_parallel_region(
 	int i;
 	int n;
 	team = instance->team;
-	sctk_assert( team != NULL );
+	assert( team != NULL );
 	const int tree_depth = instance->tree_depth - 1;
 	mpc_common_nodebug( "[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
 	              "Checking for %d thread(s)...",
@@ -1725,7 +1725,7 @@ static int __loop_dyn_get_chunk_from_rank_ull(
 	const unsigned long long rank = ( unsigned long long ) target->rank;
 	const unsigned long long num_threads =
 	    ( unsigned long long ) t->info.num_threads;
-	sctk_assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_ULL );
+	assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_ULL );
 	mpcomp_loop_ull_iter_t *loop = &( t->info.loop_infos.loop.mpcomp_ull );
 	cur = __loop_dyn_get_chunk_from_target( t, target );
 
@@ -1752,8 +1752,8 @@ static inline void __loop_dyn_init_ull( struct mpcomp_thread_s *t, bool up,
 {
 	mpcomp_loop_ull_iter_t *loop;
 	/* Get the team info */
-	sctk_assert( t->instance != NULL );
-	sctk_assert( t->instance->team != NULL );
+	assert( t->instance != NULL );
+	assert( t->instance->team != NULL );
 	/* WORKAROUND (pr35196.c)
 	* Reinitialize the flag for the last iteration of the loop */
 	t->for_dyn_last_loop_iteration = 0;
@@ -1797,7 +1797,7 @@ int __mpcomp_loop_ull_dynamic_begin( bool up, unsigned long long lb,
 	__mpcomp_init();
 	/* Grab the thread info */
 	t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	t->dyn_last_target = t;
 
 	if ( !( t->instance->root ) )
@@ -1843,8 +1843,8 @@ void __mpcomp_loop_ull_dynamic_next_debug( __UNUSED__ char *funcname )
 	struct mpcomp_thread_s *t; /* Info on the current thread */
 	/* Grab the thread info */
 	t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
-	sctk_assert( t->instance );
+	assert( t != NULL );
+	assert( t->instance );
 	const int tree_depth = t->instance->tree_depth;
 
 	for ( i = 0; i < tree_depth; i++ )
@@ -1862,7 +1862,7 @@ int __mpcomp_loop_ull_dynamic_next( unsigned long long *from,
 	int found, target_idx, barrier_nthreads, ret;
 	/* Grab the thread info */
 	t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	/* Stop the stealing at the following depth.
 	 * Nodes above this depth will not be traversed */
 	const int num_threads = t->info.num_threads;
@@ -1962,7 +1962,7 @@ int __mpcomp_loop_ull_ordered_dynamic_begin( bool up, unsigned long long lb,
         unsigned long long *to )
 {
 	struct mpcomp_thread_s *t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	t->schedule_type =
 	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;
 	t->schedule_is_forced = 1;
@@ -1986,7 +1986,7 @@ int __mpcomp_loop_ull_ordered_dynamic_next( unsigned long long *from,
 {
 	struct mpcomp_thread_s *t;
 	t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	const int ret = __mpcomp_loop_ull_dynamic_next( from, to );
 	t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from;
 	return ret;
@@ -2009,14 +2009,14 @@ mpcomp_for_dyn_coherency_end_barrier()
 	int n ;
 	/* Grab info on the current thread */
 	t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	mpc_common_nodebug( "[%d] __mpcomp_for_dyn_coherency_checking_end_barrier: "
 	              "Checking for %d thread(s)...",
 	              t->rank, t->info.num_threads ) ;
 	instance = t->instance ;
-	sctk_assert( instance != NULL ) ;
+	assert( instance != NULL ) ;
 	team = instance->team ;
-	sctk_assert( team != NULL ) ;
+	assert( team != NULL ) ;
 	/* Check team coherency */
 	n = 0 ;
 
@@ -2512,7 +2512,7 @@ static unsigned long __loop_taskloop_compute_loop_value(long iteration_num, unsi
   unsigned long compute_num_tasks, compute_extra_chunk;
 
   omp_thread_tls = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(omp_thread_tls);
+  assert(omp_thread_tls);
 
   compute_taskstep = step;
   compute_extra_chunk = iteration_num;
@@ -2645,7 +2645,7 @@ __asm__(".symver mpcomp_taskloop, GOMP_taskloop@@GOMP_4.0");
 
 static inline void __loop_internal_ordered_begin( mpcomp_thread_t *t, mpcomp_loop_gen_info_t* loop_infos )
 {
-    sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG );
+    assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG );
     mpcomp_loop_long_iter_t* loop = &( loop_infos->loop.mpcomp_long );
     const long cur_ordered_iter = loop->cur_ordered_iter;
 
@@ -2665,7 +2665,7 @@ static inline void __loop_internal_ordered_begin( mpcomp_thread_t *t, mpcomp_loo
 
 static inline void __loop_internal_ordered_begin_ull( mpcomp_thread_t *t, mpcomp_loop_gen_info_t* loop_infos )
 {
-    sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_ULL );
+    assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_ULL );
     mpcomp_loop_ull_iter_t* loop = &( loop_infos->loop.mpcomp_ull );
     const unsigned long long cur_ordered_iter = loop->cur_ordered_iter;
 
@@ -2691,7 +2691,7 @@ void __mpcomp_ordered_begin( void )
 	__mpcomp_init();
 
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-	sctk_assert(t != NULL); 
+	assert(t != NULL); 
 
     /* No need to check something in case of 1 thread */
     if ( t->info.num_threads == 1 )
@@ -2714,7 +2714,7 @@ static inline void __mpcomp_internal_ordered_end( mpcomp_thread_t* t, mpcomp_loo
 {
     int isLastIteration;
 
-    sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG );
+    assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG );
     mpcomp_loop_long_iter_t* loop = &( loop_infos->loop.mpcomp_long );
 
     isLastIteration = 0;
@@ -2740,7 +2740,7 @@ static inline void __mpcomp_internal_ordered_end( mpcomp_thread_t* t, mpcomp_loo
 static inline void __mpcomp_internal_ordered_end_ull( mpcomp_thread_t* t, mpcomp_loop_gen_info_t* loop_infos  )
 {
     int isLastIteration;
-    sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_ULL );
+    assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_ULL );
     mpcomp_loop_ull_iter_t* loop = &( loop_infos->loop.mpcomp_ull );
 
     unsigned long long cast_cur_ordered_iter = (unsigned long long) loop->cur_ordered_iter;
@@ -2780,7 +2780,7 @@ void __mpcomp_ordered_end( void )
     mpcomp_loop_gen_info_t* loop_infos; 
 
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-	sctk_assert(t != NULL); 
+	assert(t != NULL); 
 
     /* No need to check something in case of 1 thread */
     if ( t->info.num_threads == 1 ) return ;

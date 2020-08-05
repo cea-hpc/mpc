@@ -146,7 +146,7 @@ void omp_get_schedule(omp_sched_t *kind, int *modifier) {
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
   mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
-  sctk_assert(kind && modifier);
+  assert(kind && modifier);
   *kind = t->info.icvs.run_sched_var;
   *modifier = t->info.icvs.modifier_sched_var;
 }

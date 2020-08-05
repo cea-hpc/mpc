@@ -92,7 +92,7 @@ typedef struct mpcomp_ompt_thread_info_s
 
 static inline void mpcomp_ompt_task_info_reset( mpcomp_ompt_task_info_t *info )
 {
-	sctk_assert( info );
+	assert( info );
 	memset( info, 0, sizeof( mpcomp_ompt_task_info_t ) );
 }
 
@@ -100,14 +100,14 @@ static inline mpcomp_ompt_task_info_t *mpcomp_ompt_task_info_alloc( void )
 {
 	mpcomp_ompt_task_info_t *info = NULL;
 	info = ( mpcomp_ompt_task_info_t * ) sctk_malloc( sizeof( mpcomp_ompt_task_info_t ) );
-	sctk_assert( info );
+	assert( info );
 	mpcomp_ompt_task_info_reset( info );
 	return info;
 }
 
 static inline void mpcomp_ompt_parallel_info_reset( mpcomp_ompt_parallel_info_t *info )
 {
-	sctk_assert( info );
+	assert( info );
 	memset( info, 0, sizeof( mpcomp_ompt_parallel_info_t ) );
 }
 
@@ -115,7 +115,7 @@ static inline mpcomp_ompt_parallel_info_t *mpcomp_ompt_parallel_info_alloc( void
 {
 	mpcomp_ompt_parallel_info_t *info = NULL;
 	info = ( mpcomp_ompt_parallel_info_t * ) sctk_malloc( sizeof( mpcomp_ompt_parallel_info_t ) );
-	sctk_assert( info );
+	assert( info );
 	mpcomp_ompt_parallel_info_reset( info );
 	return info;
 }
@@ -123,7 +123,7 @@ static inline mpcomp_ompt_parallel_info_t *mpcomp_ompt_parallel_info_alloc( void
 static inline void
 mpcomp_ompt_thread_info_reset( mpcomp_ompt_thread_info_t *info )
 {
-	sctk_assert( info );
+	assert( info );
 	memset( info, 0, sizeof( mpcomp_ompt_thread_info_t ) );
 }
 
@@ -131,7 +131,7 @@ static inline mpcomp_ompt_thread_info_t *mpcomp_ompt_thread_info_alloc( void )
 {
 	mpcomp_ompt_thread_info_t *info = NULL;
 	info = ( mpcomp_ompt_thread_info_t * ) sctk_malloc( sizeof( mpcomp_ompt_thread_info_t ) );
-	sctk_assert( info );
+	assert( info );
 	mpcomp_ompt_thread_info_reset( info );
 	return info;
 }

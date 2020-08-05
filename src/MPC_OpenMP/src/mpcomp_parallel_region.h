@@ -57,7 +57,7 @@ static inline void __mpcomp_parallel_set_specific_infos(
     mpcomp_parallel_region_t *info, void *( *func )( void * ), void *data,
     mpcomp_local_icv_t icvs, mpcomp_combined_mode_t type )
 {
-	sctk_assert( info );
+	assert( info );
 	info->func = ( void *( * ) ( void * ) ) func;
 	info->shared = data;
 	info->icvs = icvs;

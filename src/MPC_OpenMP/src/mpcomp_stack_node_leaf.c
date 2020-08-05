@@ -36,14 +36,14 @@ mpcomp_stack_node_leaf_t * __mpcomp_create_stack_node_leaf(int max_elements)
      mpc_common_nodebug("__mpcomp_create_stack_node_leaf: max_elements=%d", max_elements);
      s->elements = (mpcomp_elem_stack_t **) sctk_malloc(max_elements * sizeof(mpcomp_elem_stack_t *));
  
-     sctk_assert(s->elements != NULL);
+     assert(s->elements != NULL);
      s->max_elements = max_elements;
      s->n_elements = 0;
 
      for (i=0; i<max_elements; i++) {
 	  mpc_common_nodebug("__mpcomp_create_stack_node_leaf: i=%d", i);
 	  s->elements[i] = (mpcomp_elem_stack_t *) sctk_malloc(sizeof(mpcomp_elem_stack_t));
-	  sctk_assert(s->elements[i] != NULL);
+	  assert(s->elements[i] != NULL);
      }
   
      mpc_common_nodebug("__mpcomp_create_stack_node_leaf: s->max_elements=%d", s->max_elements);
@@ -65,11 +65,11 @@ void __mpcomp_push_node( mpcomp_stack_node_leaf_t *s, mpcomp_node_t *n)
 	  exit(1);
      }
 
-     sctk_assert(s->elements != NULL);
-     sctk_assert(s->elements[s->n_elements] != NULL);
+     assert(s->elements != NULL);
+     assert(s->elements[s->n_elements] != NULL);
 
      s->elements[s->n_elements]->elem.node = (mpcomp_node_t *) sctk_malloc(sizeof(mpcomp_node_t));
-     sctk_assert(s->elements[s->n_elements]->elem.node != NULL);
+     assert(s->elements[s->n_elements]->elem.node != NULL);
      //s->elements[s->n_elements]->elem.node = (mpcomp_node_t *) sctk_malloc_on_node(sizeof(mpcomp_node_t),0);
 
      s->elements[s->n_elements]->elem.node = n;
@@ -85,7 +85,7 @@ void __mpcomp_push_leaf(mpcomp_stack_node_leaf_t *s, mpcomp_mvp_t *l)
 	  exit(1);
      }
   
-     sctk_assert(s->elements[s->n_elements] != NULL);
+     assert(s->elements[s->n_elements] != NULL);
 
      s->elements[s->n_elements]->elem.leaf = (mpcomp_mvp_t *) sctk_malloc(sizeof(mpcomp_mvp_t));
 

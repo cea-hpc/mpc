@@ -72,7 +72,7 @@ void __mpcomp_atomic_begin( void )
 		if ( !OPA_cas_int( &__mpcomp_atomic_lock_init_once, 0, 1 ) )
 		{
 			__mpcomp_omp_global_atomic_lock = (mpc_common_spinlock_t*) sctk_malloc(sizeof(mpc_common_spinlock_t));
-			sctk_assert( __mpcomp_omp_global_atomic_lock );
+			assert( __mpcomp_omp_global_atomic_lock );
 			mpc_common_spinlock_init( __mpcomp_omp_global_atomic_lock, 0 );
 #if OMPT_SUPPORT
 
@@ -185,7 +185,7 @@ void __mpcomp_anonymous_critical_begin( void )
 		if ( !OPA_cas_int( &__mpcomp_critical_lock_init_once, 0, 1 ) )
 		{
 			__mpcomp_omp_global_critical_lock = (mpcomp_lock_t *) sctk_malloc( sizeof( mpcomp_lock_t ));
-			sctk_assert( __mpcomp_omp_global_critical_lock );
+			assert( __mpcomp_omp_global_critical_lock );
 			memset( __mpcomp_omp_global_critical_lock, 0, sizeof( mpcomp_lock_t ) );
 			mpc_common_spinlock_init( &( __mpcomp_omp_global_critical_lock->lock ), 0 );
 #if OMPT_SUPPORT
@@ -292,7 +292,7 @@ void __mpcomp_anonymous_critical_end( void )
 
 void __mpcomp_named_critical_begin( void **l )
 {
-	sctk_assert( l );
+	assert( l );
 	mpcomp_lock_t *named_critical_lock;
 
 	if ( *l == NULL )
@@ -302,7 +302,7 @@ void __mpcomp_named_critical_begin( void **l )
 		if ( *l == NULL )
 		{
 			named_critical_lock = (mpcomp_lock_t *) sctk_malloc( sizeof( mpcomp_lock_t ));
-			sctk_assert( named_critical_lock );
+			assert( named_critical_lock );
 			memset( named_critical_lock, 0, sizeof( mpcomp_lock_t ) );
 			mpc_common_spinlock_init( &( named_critical_lock->lock ), 0 );
 #if OMPT_SUPPORT
@@ -366,8 +366,8 @@ void __mpcomp_named_critical_begin( void **l )
 
 void __mpcomp_named_critical_end( void **l )
 {
-	sctk_assert( l );
-	sctk_assert( *l );
+	assert( l );
+	assert( *l );
 	mpcomp_lock_t *named_critical_lock = ( mpcomp_lock_t * )( *l );
 	mpc_common_spinlock_unlock( &( named_critical_lock->lock ) );
 #if OMPT_SUPPORT
@@ -425,7 +425,7 @@ int __mpcomp_do_single(void)
 
   	/* Number of threads in the current team */
   	const long num_threads = t->info.num_threads;
-  	sctk_assert( num_threads > 0 ) ;
+  	assert( num_threads > 0 ) ;
 
   	/* If this function is called from a sequential part (orphaned directive) or 
      this team has only 1 thread, the current thread will execute the single block
@@ -437,9 +437,9 @@ int __mpcomp_do_single(void)
 	else
 	{
   		/* Grab the team info */
-  		sctk_assert( t->instance != NULL ) ;
+  		assert( t->instance != NULL ) ;
   		team = t->instance->team ;
-  		sctk_assert( team != NULL ) ;
+  		assert( team != NULL ) ;
 
   		int current ;
 
@@ -503,11 +503,11 @@ void *__mpcomp_do_single_copyprivate_begin( void )
 	/* Grab the thread info */
 	mpcomp_thread_t *t = mpcomp_get_thread_tls();
 	/* In this flow path, the number of threads should not be 1 */
-	sctk_assert( t->info.num_threads > 0 );
+	assert( t->info.num_threads > 0 );
 	/* Grab the team info */
-	sctk_assert( t->instance != NULL );
+	assert( t->instance != NULL );
 	team = t->instance->team;
-	sctk_assert( team != NULL );
+	assert( team != NULL );
 	__mpcomp_barrier();
 	return team->single_copyprivate_data;
 }
@@ -523,9 +523,9 @@ void __mpcomp_do_single_copyprivate_end( void *data )
 	}
 
 	/* Grab the team info */
-	sctk_assert( t->instance != NULL );
+	assert( t->instance != NULL );
 	team = t->instance->team;
-	sctk_assert( team != NULL );
+	assert( team != NULL );
 	team->single_copyprivate_data = data;
 	__mpcomp_barrier();
 }
@@ -539,7 +539,7 @@ void __mpcomp_single_coherency_end_barrier( void )
 	mpcomp_thread_t *t = mpcomp_get_thread_tls();
 	/* Number of threads in the current team */
 	const long num_threads = t->info.num_threads;
-	sctk_assert( num_threads > 0 );
+	assert( num_threads > 0 );
 
 	for ( i = 0; i < num_threads; i++ )
 	{
@@ -576,16 +576,16 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
   long b, b_done;
   mpcomp_node_t *c, *new_root;
 
-  sctk_assert(mvp);
+  assert(mvp);
 
   if( mvp->threads->info.num_threads == 1)
   {
     return;
   }
 
-  sctk_assert(mvp->father);
-  sctk_assert(mvp->father->instance);
-  sctk_assert(mvp->father->instance->team);
+  assert(mvp->father);
+  assert(mvp->father->instance);
+  assert(mvp->father->instance->team);
 
   mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
   c = mvp->father;
@@ -674,14 +674,14 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
 void __mpcomp_internal_half_barrier_start( mpcomp_mvp_t *mvp )
 {
 	mpcomp_node_t *c, *new_root;
-	sctk_assert( mvp );
-	sctk_assert( mvp->father );
-	sctk_assert( mvp->father->instance );
-	sctk_assert( mvp->father->instance->team );
+	assert( mvp );
+	assert( mvp->father );
+	assert( mvp->father->instance );
+	assert( mvp->father->instance->team );
 	new_root = mvp->instance->root;
 	c = mvp->father;
-	sctk_assert( c );
-	sctk_assert( new_root != NULL );
+	assert( c );
+	assert( new_root != NULL );
 #if 0 //MPCOMP_TASK
 	( void )mpcomp_thread_tls_store( mvp->threads[0] );
 	__mpcomp_internal_full_barrier( mvp );
@@ -777,11 +777,11 @@ void __mpcomp_barrier(void) {
   {
     /* Get the corresponding microVP */
     mpcomp_mvp_t *mvp = t->mvp;
-    sctk_assert(mvp != NULL);
+    assert(mvp != NULL);
     mpc_common_nodebug("[%d] %s: t->mvp = %p", t->rank, __func__, t->mvp);
  
     /* Call the real barrier */
-    sctk_assert( t->info.num_threads == t->mvp->threads->info.num_threads );
+    assert( t->info.num_threads == t->mvp->threads->info.num_threads );
     __mpcomp_internal_full_barrier(mvp);
   }
 
@@ -865,7 +865,7 @@ void __mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) {
 
   /* Number of threads in the current team */
   num_threads = t->info.num_threads;
-  sctk_assert( num_threads > 0 ) ;
+  assert( num_threads > 0 ) ;
 
   mpc_common_nodebug("[%d] %s: Entering w/ %d section(s)", t->rank, __func__,
                nb_sections);
@@ -901,7 +901,7 @@ int __mpcomp_sections_begin(int nb_sections) {
 
   /* Grab the thread info */
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-  sctk_assert( t != NULL ) ;
+  assert( t != NULL ) ;
 
   mpc_common_nodebug("[%d] %s: entering w/ %d section(s)", t->rank, __func__,
                nb_sections);
@@ -910,7 +910,7 @@ int __mpcomp_sections_begin(int nb_sections) {
 
   /* Number of threads in the current team */
   num_threads = t->info.num_threads;
-  sctk_assert( num_threads > 0 ) ;
+  assert( num_threads > 0 ) ;
 
 #if OMPT_SUPPORT
 	if( _mpc_omp_ompt_is_enabled() )
@@ -940,9 +940,9 @@ int __mpcomp_sections_begin(int nb_sections) {
   }
 
   /* Grab the team info */
-  sctk_assert( t->instance != NULL ) ;
+  assert( t->instance != NULL ) ;
   team = t->instance->team ;
-  sctk_assert( team != NULL ) ;
+  assert( team != NULL ) ;
 
   return __sync_section_next( t, team ) ;
 }
@@ -954,11 +954,11 @@ int __mpcomp_sections_next(void) {
 
   /* Grab the thread info */
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-  sctk_assert( t != NULL ) ;
+  assert( t != NULL ) ;
 
   /* Number of threads in the current team */
   num_threads = t->info.num_threads;
-  sctk_assert( num_threads > 0 ) ;
+  assert( num_threads > 0 ) ;
 
   mpc_common_nodebug("[%d] %s: Current %d, start %d, target %d", t->rank, __func__,
                t->single_sections_current, t->single_sections_start_current,
@@ -980,9 +980,9 @@ int __mpcomp_sections_next(void) {
   }
 
   /* Grab the team info */
-  sctk_assert( t->instance != NULL ) ;
+  assert( t->instance != NULL ) ;
   team = t->instance->team ;
-  sctk_assert( team != NULL ) ;
+  assert( team != NULL ) ;
 
   return __sync_section_next( t, team ) ;
 }
@@ -1036,7 +1036,7 @@ static void __sync_lock_init_with_hint( omp_lock_t *lock, omp_lock_hint_t hint )
 	mpcomp_lock_t *mpcomp_user_lock = NULL;
 	__mpcomp_init();
 	mpcomp_user_lock = ( mpcomp_lock_t * )mpcomp_alloc( sizeof( mpcomp_lock_t ) );
-	sctk_assert( mpcomp_user_lock );
+	assert( mpcomp_user_lock );
 	memset( mpcomp_user_lock, 0, sizeof( mpcomp_lock_t ) );
 	mpc_common_spinlock_init( &( mpcomp_user_lock->lock ), 0 );
 #if OMPT_SUPPORT
@@ -1059,7 +1059,7 @@ static void __sync_lock_init_with_hint( omp_lock_t *lock, omp_lock_hint_t hint )
 	}
 
 #endif /* OMPT_SUPPORT */
-	sctk_assert( lock );
+	assert( lock );
 	*lock = mpcomp_user_lock;
 	mpcomp_user_lock->hint = hint;
 }
@@ -1083,7 +1083,7 @@ void omp_init_lock( omp_lock_t *lock )
 void omp_destroy_lock( omp_lock_t *lock )
 {
 	mpcomp_lock_t *mpcomp_user_lock = NULL;
-	sctk_assert( lock );
+	assert( lock );
 	mpcomp_user_lock = ( mpcomp_lock_t * )*lock;
 #if OMPT_SUPPORT
 
@@ -1111,7 +1111,7 @@ void omp_destroy_lock( omp_lock_t *lock )
 void omp_set_lock( omp_lock_t *lock )
 {
 	mpcomp_lock_t *mpcomp_user_lock = NULL;
-	sctk_assert( lock );
+	assert( lock );
 	mpcomp_user_lock = ( mpcomp_lock_t * )*lock;
 #if OMPT_SUPPORT
 
@@ -1158,7 +1158,7 @@ void omp_set_lock( omp_lock_t *lock )
 void omp_unset_lock( omp_lock_t *lock )
 {
 	mpcomp_lock_t *mpcomp_user_lock = NULL;
-	sctk_assert( lock );
+	assert( lock );
 	mpcomp_user_lock = ( mpcomp_lock_t * )*lock;
 	mpc_common_spinlock_unlock( &( mpcomp_user_lock->lock ) );
 #if OMPT_SUPPORT
@@ -1186,7 +1186,7 @@ int omp_test_lock( omp_lock_t *lock )
 {
 	int retval;
 	mpcomp_lock_t *mpcomp_user_lock = NULL;
-	sctk_assert( lock );
+	assert( lock );
 	mpcomp_user_lock = ( mpcomp_lock_t * )*lock;
 #if OMPT_SUPPORT
 
@@ -1236,7 +1236,7 @@ static void __sync_nest_lock_init_with_hint( omp_nest_lock_t *lock, omp_lock_hin
 	mpcomp_nest_lock_t *mpcomp_user_nest_lock = NULL;
 	__mpcomp_init();
 	mpcomp_user_nest_lock = ( mpcomp_nest_lock_t * )mpcomp_alloc( sizeof( mpcomp_nest_lock_t ) );
-	sctk_assert( mpcomp_user_nest_lock );
+	assert( mpcomp_user_nest_lock );
 	memset( mpcomp_user_nest_lock, 0, sizeof( mpcomp_nest_lock_t ) );
 	mpc_common_spinlock_init( &( mpcomp_user_nest_lock->lock ), 0 );
 #if OMPT_SUPPORT
@@ -1259,7 +1259,7 @@ static void __sync_nest_lock_init_with_hint( omp_nest_lock_t *lock, omp_lock_hin
 	}
 
 #endif /* OMPT_SUPPORT */
-	sctk_assert( lock );
+	assert( lock );
 	*lock = mpcomp_user_nest_lock;
 	mpcomp_user_nest_lock->hint = hint;
 }
@@ -1283,7 +1283,7 @@ void omp_init_nest_lock_with_hint( omp_nest_lock_t *lock, omp_lock_hint_t hint )
 void omp_destroy_nest_lock( omp_nest_lock_t *lock )
 {
 	mpcomp_nest_lock_t *mpcomp_user_nest_lock = NULL;
-	sctk_assert( lock );
+	assert( lock );
 	mpcomp_user_nest_lock = ( mpcomp_nest_lock_t * )*lock;
 #if OMPT_SUPPORT
 
@@ -1313,7 +1313,7 @@ void omp_set_nest_lock( omp_nest_lock_t *lock )
 	mpcomp_nest_lock_t *mpcomp_user_nest_lock;
 	__mpcomp_init();
 	mpcomp_thread_t *thread = mpcomp_get_thread_tls();
-	sctk_assert( lock );
+	assert( lock );
 	mpcomp_user_nest_lock = ( mpcomp_nest_lock_t * )*lock;
 #if OMPT_SUPPORT
 
@@ -1388,7 +1388,7 @@ void omp_set_nest_lock( omp_nest_lock_t *lock )
 void omp_unset_nest_lock( omp_nest_lock_t *lock )
 {
 	mpcomp_nest_lock_t *mpcomp_user_nest_lock = NULL;
-	sctk_assert( lock );
+	assert( lock );
 	mpcomp_user_nest_lock = ( mpcomp_nest_lock_t * )*lock;
 #if OMPT_SUPPORT
 
@@ -1445,7 +1445,7 @@ int omp_test_nest_lock( omp_nest_lock_t *lock )
 	mpcomp_nest_lock_t *mpcomp_user_nest_lock;
 	__mpcomp_init();
 	mpcomp_thread_t *thread = mpcomp_get_thread_tls();
-	sctk_assert( lock );
+	assert( lock );
 	mpcomp_user_nest_lock = ( mpcomp_nest_lock_t * )*lock;
 #if OMPT_SUPPORT
 

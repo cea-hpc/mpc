@@ -6,7 +6,7 @@
 
 static inline mpcomp_thread_t *mpcomp_get_thread_tls(void) {
   mpcomp_thread_t *thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(thread);
+  assert(thread);
   return thread;
 }
 
@@ -23,7 +23,7 @@ static inline mpcomp_thread_t *mpc_omp_tree_array_ancestor_get_thread_tls(int le
   /* Go up to the right level and catch the rank */
   for (i = max_level_var; i > level; i--) {
     thread = thread->father;
-    sctk_assert(thread != NULL);
+    assert(thread != NULL);
   }
 
   return thread;
@@ -45,7 +45,7 @@ mpcomp_thread_tls_swap(mpcomp_thread_t *new_value) {
 static inline mpcomp_thread_t *mpcomp_thread_tls_store_first_mvp(void) {
   mpcomp_thread_t *father = NULL;
   mpcomp_thread_t *thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(thread);
+  assert(thread);
   father = thread->father;
   sctk_openmp_thread_tls = (void *)father;
   return father;
@@ -54,7 +54,7 @@ static inline mpcomp_thread_t *mpcomp_thread_tls_store_first_mvp(void) {
 static inline mpcomp_thread_t *mpcomp_thread_tls_store_father(void) {
   mpcomp_thread_t *father = NULL;
   mpcomp_thread_t *thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(thread);
+  assert(thread);
   father = thread->father;
   sctk_openmp_thread_tls = (void *)father;
   return father;
@@ -63,7 +63,7 @@ static inline mpcomp_thread_t *mpcomp_thread_tls_store_father(void) {
 static inline mpcomp_thread_t *mpcomp_thread_tls_swap_father(void) {
   mpcomp_thread_t *father = NULL;
   mpcomp_thread_t *thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(thread);
+  assert(thread);
   father = thread->father;
   sctk_openmp_thread_tls = (void *)father;
   return thread;

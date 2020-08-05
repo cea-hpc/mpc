@@ -102,7 +102,7 @@ mpcomp_nest_lock_test_task( mpcomp_thread_t *thread,
 #if MPCOMP_TASK
 	struct mpcomp_task_s *current_task =
 	    MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
-	sctk_assert( current_task );
+	assert( current_task );
 	const bool is_task_owner =
 	    ( mpcomp_user_nest_lock->owner_task == current_task );
 	const bool is_thread_owned =

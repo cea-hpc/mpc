@@ -48,7 +48,7 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
 
     /* Grab the thread info */
     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-    sctk_assert(t != NULL);
+    assert(t != NULL);
    
 
     /* Compute new num threads value */
@@ -67,14 +67,14 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
         real_num_threads = 1;
     }
 
-    sctk_assert(real_num_threads > 0);
+    assert(real_num_threads > 0);
    
     if( !t->children_instance ||
         (t->children_instance && 
         t->children_instance->nb_mvps != real_num_threads ) )
     {
         t->children_instance = __mpcomp_tree_array_instance_init( t, real_num_threads );
-        sctk_assert( t->children_instance );
+        assert( t->children_instance );
     }
     else
     {
@@ -136,7 +136,7 @@ void __mpcomp_internal_end_parallel_region( __UNUSED__ mpcomp_instance_t *instan
     /* Grab the thread info */
     mpcomp_thread_t *t;
     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-    sctk_assert(t != NULL);
+    assert(t != NULL);
 
     if( instance->team->info.num_threads > 1 ) {
 
@@ -203,13 +203,13 @@ void __mpcomp_start_parallel_region(void (*func)(void *), void *shared,
   	mpcomp_parallel_region_t info;
 
 	mpcomp_start_func_t start = ( mpcomp_start_func_t ) func;
-	sctk_assert( start );
+	assert( start );
 
   	__mpcomp_init();
 
 
   	t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-  	sctk_assert(t != NULL);
+  	assert(t != NULL);
 
   	__mpcomp_parallel_region_infos_init(&info);
   	__mpcomp_parallel_set_specific_infos(&info, start, shared, t->info.icvs, MPCOMP_COMBINED_NONE);
@@ -240,10 +240,10 @@ void __mpcomp_start_sections_parallel_region(void (*func)(void *), void *shared,
   	__mpcomp_init();
 
 	mpcomp_start_func_t start = ( mpcomp_start_func_t ) func;
-	sctk_assert( start );
+	assert( start );
 
   	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  	sctk_assert(t != NULL);
+  	assert(t != NULL);
 
   	__mpcomp_parallel_region_infos_init(&info);
   	__mpcomp_parallel_set_specific_infos(&info,start,shared,t->info.icvs,MPCOMP_COMBINED_SECTION);
@@ -266,18 +266,18 @@ void __mpcomp_start_parallel_dynamic_loop(void (*func)(void *), void *shared,
  	mpcomp_parallel_region_t info;
 
 	mpcomp_start_func_t start = ( mpcomp_start_func_t ) func;
-	sctk_assert( start );
+	assert( start );
 
   	__mpcomp_init();
 
   	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  	sctk_assert(t != NULL);
+  	assert(t != NULL);
 
   	__mpcomp_parallel_region_infos_init(&info);
   	__mpcomp_parallel_set_specific_infos(&info,start, shared,
                                        t->info.icvs, MPCOMP_COMBINED_DYN_LOOP);
 
-    sctk_assert( info.combined_pragma == MPCOMP_COMBINED_DYN_LOOP );
+    assert( info.combined_pragma == MPCOMP_COMBINED_DYN_LOOP );
   	__mpcomp_loop_gen_infos_init(&(info.loop_infos), lb, b, incr, chunk_size);
 
 	if( !( t->schedule_is_forced ) )
@@ -297,12 +297,12 @@ void __mpcomp_start_parallel_static_loop(void (*func)(void *), void *shared,
   mpcomp_parallel_region_t info;
 
 	mpcomp_start_func_t start = ( mpcomp_start_func_t ) func;
-	sctk_assert( start );
+	assert( start );
 
   	__mpcomp_init();
 
   	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  	sctk_assert(t != NULL);
+  	assert(t != NULL);
 
   	__mpcomp_parallel_region_infos_init(&info);
   	__mpcomp_parallel_set_specific_infos(&info, start, shared,
@@ -327,18 +327,18 @@ void __mpcomp_start_parallel_guided_loop(void (*func)(void *), void *shared,
  	mpcomp_parallel_region_t info;
 
 	mpcomp_start_func_t start = ( mpcomp_start_func_t ) func;
-	sctk_assert( start );
+	assert( start );
 
   	__mpcomp_init();
 
   	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  	sctk_assert(t != NULL);
+  	assert(t != NULL);
 
   	__mpcomp_parallel_region_infos_init(&info);
   	__mpcomp_parallel_set_specific_infos(&info,start, shared,
                                        t->info.icvs, MPCOMP_COMBINED_GUIDED_LOOP);
 
-    sctk_assert( info.combined_pragma == MPCOMP_COMBINED_GUIDED_LOOP );
+    assert( info.combined_pragma == MPCOMP_COMBINED_GUIDED_LOOP );
   	__mpcomp_loop_gen_infos_init(&(info.loop_infos), lb, b, incr, chunk_size);
 
 	if( !( t->schedule_is_forced ) )
@@ -360,7 +360,7 @@ void __mpcomp_start_parallel_runtime_loop(void (*func)(void *), void *shared,
 
   /* Grab the thread info */
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);
+  assert(t != NULL);
 
   switch (t->info.icvs.run_sched_var) {
   case omp_sched_static:

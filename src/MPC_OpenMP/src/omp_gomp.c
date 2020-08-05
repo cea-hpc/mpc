@@ -94,8 +94,8 @@ void mpcomp_GOMP_single_copy_end( void *data )
 static inline void *mpcomp_GOMP_wrapper_fn( void *args )
 {
 	mpcomp_GOMP_wrapper_t *w = ( mpcomp_GOMP_wrapper_t * ) args;
-	sctk_assert( w );
-	sctk_assert( w->fn );
+	assert( w );
+	assert( w->fn );
 	w->fn( w->data );
 	return NULL;
 }
@@ -110,9 +110,9 @@ static inline void __gomp_in_order_scheduler_master_begin( mpcomp_mvp_t *mvp )
 	/* Switch OpenMP TLS */
 	sctk_openmp_thread_tls = &( mvp->threads[0] );
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t->instance != NULL );
-	sctk_assert( t->instance->team != NULL );
-	sctk_assert( t->info.func != NULL );
+	assert( t->instance != NULL );
+	assert( t->instance->team != NULL );
+	assert( t->info.func != NULL );
 	t->schedule_type = ( long ) t->info.combined_pragma;
 
 	/* Handle beginning of combined parallel region */
@@ -149,7 +149,7 @@ static inline void __gomp_in_order_scheduler_master_begin( mpcomp_mvp_t *mvp )
 static inline void __gomp_in_order_scheduler_master_end( void )
 {
 	mpcomp_thread_t *t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 
 	/* Handle ending of combined parallel region */
 	switch ( t->info.combined_pragma )
@@ -198,10 +198,10 @@ static inline void __gomp_start_parallel_region( void ( *fn )( void * ), void *d
 	/* Initialize OpenMP environment */
 	__mpcomp_init();
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	/* Prepare MPC OpenMP parallel region infos */
 	info = sctk_malloc( sizeof( mpcomp_parallel_region_t ) );
-	sctk_assert( info );
+	assert( info );
 	__mpcomp_parallel_region_infos_init( info );
 	info->func = ( void *( * ) ( void * ) ) fn;
 	info->shared = data;
@@ -218,9 +218,9 @@ static inline void __gomp_end_parallel_region( void )
 {
 	__gomp_in_order_scheduler_master_end();
 	mpcomp_thread_t *t = sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	mpcomp_instance_t *instance = t->children_instance;
-	sctk_assert( instance != NULL );
+	assert( instance != NULL );
 	__mpcomp_internal_end_parallel_region( instance );
 }
 
@@ -278,9 +278,9 @@ static inline void __gomp_parallel_loop_generic_start(
 	/* Initialize OpenMP environment */
 	__mpcomp_init();
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	info = sctk_malloc( sizeof( mpcomp_parallel_region_t ) );
-	sctk_assert( info );
+	assert( info );
 	__mpcomp_parallel_region_infos_init( info );
 	__mpcomp_parallel_set_specific_infos( info, ( void *( * ) ( void * ) ) fn, data,
 	                                      t->info.icvs, combined_pragma );
@@ -590,7 +590,7 @@ static inline void __gomp_parallel_loop_runtime_start( void ( *fn )( void * ),
 	__mpcomp_init();
 	/* Grab the thread info */
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 
 	switch ( t->info.icvs.run_sched_var )
 	{
@@ -727,7 +727,7 @@ static inline void __gomp_loop_end( void )
 {
 	mpcomp_thread_t *t;
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 
 	switch ( t->schedule_type )
 	{
@@ -768,7 +768,7 @@ static inline void __gomp_loop_end_nowait( void )
 {
 	mpcomp_thread_t *t;
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 
 	switch ( t->schedule_type )
 	{
@@ -944,7 +944,7 @@ static inline bool __gomp_loop_ull_runtime_start( bool up,
 	bool ret;
 	mpcomp_thread_t *t;
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	t->schedule_type = MPCOMP_COMBINED_RUNTIME_LOOP;
 	ret = ( __mpcomp_loop_ull_runtime_begin( up, start, end, incr, istart, iend ) )
 	      ? true
@@ -980,7 +980,7 @@ static inline bool __gomp_loop_ull_ordered_runtime_start(
 	bool ret;
 	mpcomp_thread_t *t;
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	t->schedule_type = MPCOMP_COMBINED_RUNTIME_LOOP;
 	ret = ( __mpcomp_loop_ull_ordered_runtime_begin( up, start, end, incr, istart,
 	        iend ) )
@@ -1065,7 +1065,7 @@ static inline bool __gomp_loop_ull_static_start(
 	bool ret;
 	mpcomp_thread_t *t;
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	t->schedule_type = MPCOMP_COMBINED_STATIC_LOOP;
 	ret = ( __mpcomp_static_loop_begin_ull( up, start, end, incr, chunk_size,
 	                                        istart, iend ) )
@@ -1102,7 +1102,7 @@ static inline bool __gomp_loop_ull_dynamic_start(
 	bool ret;
 	mpcomp_thread_t *t;
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	t->schedule_type = MPCOMP_COMBINED_DYN_LOOP;
 	ret = ( __mpcomp_loop_ull_dynamic_begin( up, start, end, incr, chunk_size,
 	        istart, iend ) )
@@ -1144,7 +1144,7 @@ static inline bool __gomp_loop_ull_guided_start(
 	bool ret;
 	mpcomp_thread_t *t;
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	t->schedule_type = MPCOMP_COMBINED_GUIDED_LOOP;
 	ret = ( __mpcomp_loop_ull_guided_begin( up, start, end, incr, chunk_size,
 	                                        istart, iend ) )
@@ -1220,7 +1220,7 @@ static inline bool __gomp_loop_ull_ordered_static_start(
 	bool ret;
 	mpcomp_thread_t *t;
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	t->schedule_type = MPCOMP_COMBINED_STATIC_LOOP;
 	ret = ( __mpcomp_ordered_static_loop_begin_ull( up, start, end, incr,
 	        chunk_size, istart, iend ) )
@@ -1257,7 +1257,7 @@ static inline bool __gomp_loop_ull_ordered_dynamic_start(
 	bool ret;
 	mpcomp_thread_t *t;
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	t->schedule_type = MPCOMP_COMBINED_DYN_LOOP;
 	ret = ( __mpcomp_loop_ull_ordered_dynamic_begin( up, start, end, incr,
 	        chunk_size, istart, iend ) )
@@ -1294,7 +1294,7 @@ static inline bool __gomp_loop_ull_ordered_guided_start(
 	bool ret;
 	mpcomp_thread_t *t;
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	t->schedule_type = MPCOMP_COMBINED_GUIDED_LOOP;
 	ret = ( __mpcomp_loop_ull_ordered_guided_begin( up, start, end, incr,
 	        chunk_size, istart, iend ) )
@@ -1549,12 +1549,12 @@ static inline void __gomp_parallel_section_start( void ( *fn )( void * ),
 	/* Initialize OpenMP environment */
 	__mpcomp_init();
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	sctk_assert( t != NULL );
+	assert( t != NULL );
 	info = sctk_malloc( sizeof( mpcomp_parallel_region_t ) );
-	sctk_assert( info );
+	assert( info );
 	__mpcomp_parallel_region_infos_init( info );
 	wrapper_gomp = sctk_malloc( sizeof( mpcomp_GOMP_wrapper_t ) );
-	sctk_assert( wrapper_gomp );
+	assert( wrapper_gomp );
 	wrapper_gomp->fn = fn;
 	wrapper_gomp->data = data;
 	info->func = mpcomp_GOMP_wrapper_fn;

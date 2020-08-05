@@ -37,8 +37,8 @@ static inline void __mpcomp_instance_tree_array_root_init( struct mpcomp_node_s 
 
 static inline mpcomp_thread_t * __mpcomp_spinning_push_mvp_thread( mpcomp_mvp_t *mvp, mpcomp_thread_t *new_thread )
 {
-	sctk_assert( mvp );
-	sctk_assert( new_thread );
+	assert( mvp );
+	assert( new_thread );
 	new_thread->father = mvp->threads;
 	mvp->threads = new_thread;
 	return new_thread;
@@ -47,8 +47,8 @@ static inline mpcomp_thread_t * __mpcomp_spinning_push_mvp_thread( mpcomp_mvp_t 
 static inline mpcomp_thread_t * __mpcomp_spinning_pop_mvp_thread( mpcomp_mvp_t *mvp )
 {
 	mpcomp_thread_t *cur_thread;
-	sctk_assert( mvp );
-	sctk_assert( mvp->threads );
+	assert( mvp );
+	assert( mvp->threads );
 	cur_thread = mvp->threads;
 	mvp->threads = cur_thread->father;
 	return cur_thread;
@@ -76,7 +76,7 @@ static inline mpcomp_thread_t * __mpcomp_spinning_get_thread_ancestor( mpcomp_th
 static inline mpcomp_thread_t * __mpcomp_spinning_get_mvp_thread_ancestor( mpcomp_mvp_t *mvp, const int depth )
 {
 	mpcomp_thread_t *mvp_thread, *ancestor;
-	sctk_assert( mvp );
+	assert( mvp );
 	mvp_thread = mvp->threads;
 	ancestor = __mpcomp_spinning_get_thread_ancestor( mvp_thread, depth );
 	return ancestor;
@@ -84,7 +84,7 @@ static inline mpcomp_thread_t * __mpcomp_spinning_get_mvp_thread_ancestor( mpcom
 
 static inline mpcomp_node_t * __mpcomp_spinning_get_thread_root_node( mpcomp_thread_t *thread )
 {
-	sctk_assert( thread );
+	assert( thread );
 	return thread->root;
 }
 
@@ -104,8 +104,8 @@ static inline mpcomp_node_t * __mpcomp_spinning_get_mvp_father_node( mpcomp_mvp_
 {
 	int *mvp_father_array;
 	mpcomp_meta_tree_node_t *tree_array_node, *tree_array;
-	sctk_assert( mvp );
-	sctk_assert( instance );
+	assert( mvp );
+	assert( instance );
 
 	if ( !( instance->root ) )
 	{
@@ -121,20 +121,20 @@ static inline mpcomp_node_t * __mpcomp_spinning_get_mvp_father_node( mpcomp_mvp_
 		return mvp->father;
 	}
 
-	sctk_assert( mvp->father );
+	assert( mvp->father );
 	tree_array = mvp->father->tree_array;
-	sctk_assert( tree_array );
+	assert( tree_array );
 	mvp_father_array = tree_array[mvp->global_rank].fathers_array;
-	sctk_assert( mvp_ancestor_node < tree_array[mvp->global_rank].fathers_array_size );
+	assert( mvp_ancestor_node < tree_array[mvp->global_rank].fathers_array_size );
 	tree_array_node = &( tree_array[mvp_father_array[father_depth - 1]] );
 	return ( mpcomp_node_t * ) tree_array_node->user_pointer;
 }
 
 static inline int __mpcomp_spinning_node_compute_rank( mpcomp_node_t *node, const int num_threads, int rank, int *first )
 {
-	sctk_assert( node );
-	sctk_assert( num_threads > 0 );
-	sctk_assert( first );
+	assert( node );
+	assert( num_threads > 0 );
+	assert( first );
 	const int quot = num_threads / node->nb_children;
 	const int rest = num_threads % node->nb_children;
 	const int min = ( num_threads > node->nb_children ) ? node->nb_children : num_threads;
@@ -152,8 +152,8 @@ static inline int __mpcomp_spinning_node_compute_rank( mpcomp_node_t *node, cons
 static inline int __mpcomp_spinning_leaf_compute_rank( mpcomp_node_t *node, const int num_threads, const int first_rank, const int rank )
 {
 	int i;
-	sctk_assert( node );
-	sctk_assert( num_threads > 0 );
+	assert( node );
+	assert( num_threads > 0 );
 	const int quot = node->nb_children / num_threads;
 
 	for ( i = 0; i < node->nb_children; i++ )

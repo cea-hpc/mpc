@@ -32,7 +32,7 @@ mpcomp_stack_t * __mpcomp_create_stack(int max_elements)
 
      s = (mpcomp_stack_t *) malloc(sizeof(mpcomp_stack_t));
      s->elements = (mpcomp_node_t **) malloc(max_elements * sizeof(mpcomp_node_t *));
-     sctk_assert(s->elements != NULL);
+     assert(s->elements != NULL);
      s->max_elements = max_elements;
      s->n_elements = 0; 
 

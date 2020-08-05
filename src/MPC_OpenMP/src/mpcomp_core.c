@@ -106,7 +106,7 @@ static char **__mpcomp_tokenizer( char *string_to_tokenize, int *nb_tokens )
 	int new_argc = 0;
 	/* TODO check sizes of every mpcomp_alloc... */
 	new_argv = ( char ** ) mpcomp_alloc( 32 * sizeof( char * ) );
-	sctk_assert( new_argv != NULL );
+	assert( new_argv != NULL );
 	cursor = string_to_tokenize;
 
 	while ( *cursor == ' ' )
@@ -159,9 +159,9 @@ __mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int *shape_d
 	int *reverse_shape;
 	int i, j, reverse_shape_depth;
 	const int max_depth = hwloc_topology_get_depth( topology );
-	sctk_assert( max_depth > 1 );
+	assert( max_depth > 1 );
 	reverse_shape = ( int * ) mpcomp_alloc( sizeof( int ) * max_depth );
-	sctk_assert( reverse_shape );
+	assert( reverse_shape );
 	memset( reverse_shape, 0, sizeof( int ) * max_depth );
 	/* Last level size */
 	reverse_shape[0] = hwloc_get_nbobjs_by_depth( topology, max_depth - 1 );
@@ -254,7 +254,7 @@ int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t *restrictedTopology,
 	const int __UNUSED__ npus = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_PU );
 	const int __UNUSED__ ncores = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_CORE );
 	// Every core must have the same number of PU
-	sctk_assert( npus % ncores == 0 );
+	assert( npus % ncores == 0 );
 
 	if ( omp_threads_expected > 0 && num_mvps > omp_threads_expected )
 	{
@@ -272,7 +272,7 @@ int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t *restrictedTopology,
 		{
 			const int cur_pu_id = cpulist[i];
 			pu_obj = hwloc_get_obj_by_type( topology, HWLOC_OBJ_PU, cur_pu_id );
-			sctk_assert( pu_obj );
+			assert( pu_obj );
 			hwloc_bitmap_or( final_cpuset, final_cpuset, pu_obj->cpuset );
 		}
 	}
@@ -293,13 +293,13 @@ int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t *restrictedTopology,
 				pu_obj = hwloc_get_obj_inside_cpuset_by_type( topology, core_obj->cpuset, HWLOC_OBJ_PU, 0 );
 			}
 
-			sctk_assert( core_obj );
-			sctk_assert( pu_obj );
+			assert( core_obj );
+			assert( pu_obj );
 			hwloc_bitmap_or( final_cpuset, final_cpuset, pu_obj->cpuset );
 		}
 	}
 
-	sctk_assert( num_mvps == hwloc_bitmap_weight( final_cpuset ) );
+	assert( num_mvps == hwloc_bitmap_weight( final_cpuset ) );
 
 	if ( ( err = hwloc_topology_init( restrictedTopology ) ) )
 	{
@@ -335,7 +335,7 @@ __mpcomp_prepare_omp_task_tree_init( const int num_mvps, const int *cpus_order )
 	hwloc_topology_t restrictedTopology;
 	err = __mpcomp_restrict_topology_for_mpcomp( &restrictedTopology, num_mvps, cpus_order );
 	assert( !err );
-	sctk_assert( restrictedTopology );
+	assert( restrictedTopology );
 	return restrictedTopology;
 }
 
@@ -668,7 +668,7 @@ static inline void __mpcomp_read_env_variables()
 		char **tokens = NULL;
 		int i;
 		tokens = __mpcomp_tokenizer( env, &nb_tokens );
-		sctk_assert( tokens != NULL );
+		assert( tokens != NULL );
 		/* TODO check that arguments are ok and #leaves is correct */
 		OMP_TREE = ( int * ) mpcomp_alloc( nb_tokens * sizeof( int ) );
 		OMP_TREE_DEPTH = nb_tokens;
@@ -1017,10 +1017,10 @@ void __mpcomp_exit( void )
 void __mpcomp_in_order_scheduler( mpcomp_thread_t *thread )
 {
 	mpcomp_loop_long_iter_t *loop;
-	sctk_assert( thread );
-	sctk_assert( thread->instance );
-	sctk_assert( thread->info.func );
-	sctk_assert( thread->instance->team );
+	assert( thread );
+	assert( thread->instance );
+	assert( thread->info.func );
+	assert( thread->instance->team );
 	loop = &( thread->info.loop_infos.loop.mpcomp_long );
 
 	if ( thread->info.combined_pragma < 0 || thread->info.combined_pragma > 10 )

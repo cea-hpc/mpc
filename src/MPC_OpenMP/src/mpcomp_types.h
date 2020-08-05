@@ -704,14 +704,14 @@ typedef struct mpcomp_new_parallel_region_info_s
 static inline void
 __mpcomp_parallel_region_infos_reset( mpcomp_parallel_region_t *info )
 {
-	sctk_assert( info );
+	assert( info );
 	memset( info, 0, sizeof( mpcomp_parallel_region_t ) );
 }
 
 static inline void
 __mpcomp_parallel_region_infos_init( mpcomp_parallel_region_t *info )
 {
-	sctk_assert( info );
+	assert( info );
 	__mpcomp_parallel_region_infos_reset( info );
 	info->combined_pragma = MPCOMP_COMBINED_NONE;
 }
