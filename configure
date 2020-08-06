@@ -1054,7 +1054,6 @@ enable_opt_native
 enable_debug_messages
 enable_debug_mem
 enable_debug
-enable_assert
 '
       ac_precious_vars='build_alias
 host_alias
@@ -30858,14 +30857,6 @@ if test "${enable_debug+set}" = set; then :
 else
   mpc_debug=no
   $as_echo "#define NDEBUG 1" >>confdefs.h
-fi
-
-# Check whether --enable-assert was given.
-if test "${enable_assert+set}" = set; then :
-  enableval=$enable_assert; mpc_assert=$enableval
-else
-  mpc_assert=no
-  $as_echo "#define NO_INTERNAL_ASSERT 1" >>confdefs.h
 fi
 
 USING_ASAN="no"

@@ -105,7 +105,7 @@ static inline int ___mpc_thread_ethread_poll_vp(_mpc_thread_ethread_virtual_proc
 			tmp = poll_list->next;
 			if(*(poll_list->data) == poll_list->value)
 			{
-				sctk_assert_func
+				assert_func
 				        (if(poll_list->my_self->status != ethread_polling)
 				{
 					_mpc_thread_ethread_print_task(poll_list->my_self);
@@ -159,11 +159,11 @@ static inline void ___mpc_thread_ethread_sched_yield_vp_head(_mpc_thread_ethread
 
 	mpc_common_nodebug("thread %p yield %d", cur, cur->status);
 
-	sctk_assert_func(start_status = cur->status;
+	assert_func(start_status = cur->status;
 	                 );
 
 	assert(cur->status != ethread_system);
-	sctk_assert_func(if(cur->vp != vp)
+	assert_func(if(cur->vp != vp)
 	{
 		mpc_common_debug_error("%p != %p", cur->vp, vp);
 		_mpc_thread_ethread_print_task(cur);
@@ -174,7 +174,7 @@ static inline void ___mpc_thread_ethread_sched_yield_vp_head(_mpc_thread_ethread
 
 	/*
 	 * #if !defined(MPC_IA64_ARCH)
-	 * sctk_assert_func
+	 * assert_func
 	 * (
 	 * do{
 	 * if(cur->stack != NULL){
@@ -833,7 +833,7 @@ static inline void ___mpc_thread_ethread_wait_for_value_and_poll(_mpc_thread_eth
 	mpc_common_nodebug("Wait %p from polling done", cell.my_self);
 
 	assert(cell.forced == 0);
-	sctk_assert_func(if(*data != value)
+	assert_func(if(*data != value)
 	{
 		mpc_common_debug_error("%d != %d", *data, value);
 		_mpc_thread_ethread_print_task(cur);
@@ -1876,7 +1876,7 @@ ___mpc_thread_ethread_wake_thread_on_vp(_mpc_thread_ethread_virtual_processor_t 
 	mpc_common_nodebug("Wake tasks in %p", list);
 	assert(list != NULL);
 
-	sctk_assert_func(if(list->vp != vp)
+	assert_func(if(list->vp != vp)
 	{
 		mpc_common_debug_error("%d %p != %p %d", list->vp->rank,
 		           list->vp, vp, vp->rank);

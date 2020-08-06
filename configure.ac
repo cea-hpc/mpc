@@ -2422,16 +2422,6 @@ if test "x${mpc_debug}" = "xno"; then
         AC_DEFINE([NDEBUG], [1], [Disable assert function])
 fi
 
-AC_ARG_ENABLE([assert],
-[AS_HELP_STRING([--enable-assert],
-                [Activates internal assert functions])],
-[mpc_assert=$enableval],
-[mpc_assert=no])
-
-if test "x${mpc_assert}" = "xno"; then
-        AC_DEFINE([NO_INTERNAL_ASSERT], [1], [Disable internal assert function])
-fi
-
 USING_ASAN="no"
 
 if test "x${mpc_debug_mem}" = "xyes"; then

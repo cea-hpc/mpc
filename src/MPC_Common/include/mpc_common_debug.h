@@ -194,15 +194,25 @@ void mpc_common_debug_assert_print(FILE *stream, const int line,
 
 
 //for standard assert function, rewrite but maintain -DNDEBUG convention
-#if !defined(NDEBUG) || !defined(NO_INTERNAL_ASSERT)
+#if !defined(NDEBUG)
 	#undef assert
+	#undef assert_func
 	#define assert(op)                                                                  \
 	do                                                                                  \
 	{                                                                                   \
 		if(expect_false(!(op) ) ){                                                        \
 			mpc_common_debug_assert_print(MPC_COMMON_DEBUG_INFO, MPC_STRING(op) ); }        \
 	} while(0)
-#endif //NDEBUG, NO_INTERNAL_ASSERT
+
+	#define assert_func(op)                             \
+	  do                                                \
+	  {                                                 \
+		  op                                              \
+	  } while(0)
+#else
+  #define assert_func(op)    (void)(0)
+  #define assert(op)         (void)(0)
+#endif //NDEBUG
 
 /** Assume stay present independently of NDEBUG/NO_INTERNAL_ASSERT **/
 #define assume(op)                                                                    \
@@ -211,22 +221,6 @@ void mpc_common_debug_assert_print(FILE *stream, const int line,
 		if(expect_false(!(op) ) ){                                                        \
 			mpc_common_debug_assert_print(MPC_COMMON_DEBUG_INFO, MPC_STRING(op) ); }        \
 	} while(0)
-
-#ifdef NO_INTERNAL_ASSERT
-	#define sctk_assert(op)         (void)(0)
-	#define sctk_assert_func(op)    (void)(0)
-#else //NO_INTERNAL_ASSERT
-	#define sctk_assert_func(op)                             \
-	  do                                                     \
-	  {                                                      \
-		  op                                                   \
-	  } while(0)
-
-	#define sctk_assert(op)                                  \
-	   if(expect_false(!(op) ) )                             \
-	    mpc_common_debug_assert_print(MPC_COMMON_DEBUG_INFO, \
-	                              MPC_STRING(op) )
-#endif //NO_INTERNAL_ASSERT
 
 #define mpc_common_debug_only_once()                                                                           \
 	do                                                                                                     \

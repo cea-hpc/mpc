@@ -349,7 +349,7 @@ static inline
 void _mpc_thread_ethread_enqueue_task(_mpc_thread_ethread_virtual_processor_t *
                                       vp, _mpc_thread_ethread_per_thread_t *task)
 {
-	sctk_assert_func(if(task->status != ethread_ready)
+	assert_func(if(task->status != ethread_ready)
 	{
 		char *th_status;
 		th_status =
