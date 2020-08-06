@@ -2428,7 +2428,7 @@ AC_ARG_ENABLE([assert],
 [mpc_assert=$enableval],
 [mpc_assert=no])
 
-if test "x${mpc_debug}" = "xno"; then
+if test "x${mpc_assert}" = "xno"; then
         AC_DEFINE([NO_INTERNAL_ASSERT], [1], [Disable internal assert function])
 fi
 
