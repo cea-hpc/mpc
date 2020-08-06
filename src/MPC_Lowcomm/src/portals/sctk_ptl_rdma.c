@@ -104,7 +104,7 @@ static inline short __sctk_ptl_is_unary_op(RDMA_op op, RDMA_type type, char* buf
 		return 0;
 	}
 
-	sctk_assert(size >= RDMA_type_size(type));
+	assert(size >= RDMA_type_size(type));
 	
 	memset(buf, 0, size);
 	if(op == RDMA_INC)
@@ -282,10 +282,10 @@ void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 	}
 
 	/* sanity checks */
-	sctk_assert(local_start == local_key->pin.ptl.md_data->slot.md.start);
-	sctk_assert(fetch_addr  >= local_start);
-	sctk_assert(fetch_addr + size <= local_start + local_key->pin.ptl.md_data->slot.md.length);
-	sctk_assert(remote_addr >= remote_start);
+	assert(local_start == local_key->pin.ptl.md_data->slot.md.start);
+	assert(fetch_addr  >= local_start);
+	assert(fetch_addr + size <= local_start + local_key->pin.ptl.md_data->slot.md.length);
+	assert(remote_addr >= remote_start);
 	
 	local_off  = fetch_addr  - local_start;
 	remote_off = remote_addr - remote_start;
@@ -369,10 +369,10 @@ void sctk_ptl_rdma_cas(sctk_rail_info_t *rail,
 
 	size = RDMA_type_size(type);
 	/* sanity checks */
-	sctk_assert(local_start == local_key->pin.ptl.md_data->slot.md.start);
-	sctk_assert(res_addr  >= local_start);
-	sctk_assert(res_addr + size <= local_start + local_key->pin.ptl.md_data->slot.md.length);
-	sctk_assert(remote_addr >= remote_start);
+	assert(local_start == local_key->pin.ptl.md_data->slot.md.start);
+	assert(res_addr  >= local_start);
+	assert(res_addr + size <= local_start + local_key->pin.ptl.md_data->slot.md.length);
+	assert(remote_addr >= remote_start);
 	
 	local_off  = res_addr  - local_start;
 	remote_off = remote_addr - remote_start;
@@ -439,10 +439,10 @@ void sctk_ptl_rdma_write(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
 	sctk_ptl_local_data_t* copy = NULL;
 
 	/* sanity checks */
-	sctk_assert(local_start == local_key->pin.ptl.md_data->slot.md.start);
-	sctk_assert(src_addr  >= local_start);
-	sctk_assert(src_addr + size <= local_start + local_key->pin.ptl.md_data->slot.md.length);
-	sctk_assert(dest_addr >= remote_start);
+	assert(local_start == local_key->pin.ptl.md_data->slot.md.start);
+	assert(src_addr  >= local_start);
+	assert(src_addr + size <= local_start + local_key->pin.ptl.md_data->slot.md.length);
+	assert(dest_addr >= remote_start);
 	
 	/* compute offsets, WRITE --> src = local, dest = remote */
 	local_off  = src_addr  - local_start;
@@ -499,10 +499,10 @@ void sctk_ptl_rdma_read(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
 	size_t local_off, remote_off;
 
 	/* sanity checks */
-	sctk_assert(local_start == local_key->pin.ptl.md_data->slot.md.start);
-	sctk_assert(dest_addr + size <= local_start + local_key->pin.ptl.md_data->slot.md.length);
-	sctk_assert(src_addr  >= remote_start);
-	sctk_assert(dest_addr >= local_start);
+	assert(local_start == local_key->pin.ptl.md_data->slot.md.start);
+	assert(dest_addr + size <= local_start + local_key->pin.ptl.md_data->slot.md.length);
+	assert(src_addr  >= remote_start);
+	assert(dest_addr >= local_start);
 	
 	/* compute offsets, READ --> src = remote, dest = local */
 	local_off  = dest_addr - local_start;
@@ -607,7 +607,7 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 void sctk_ptl_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list )
 {
 	UNUSED(rail);
-	sctk_assert(list);
+	assert(list);
 	sctk_ptl_md_release(list->pin.ptl.md_data);
 	sctk_ptl_me_release(list->pin.ptl.me_data);
 	mpc_common_nodebug("RELEASE RDMA %p->%p %s", list->pin.ptl.me_data->slot.me.start, list->pin.ptl.me_data->slot.me.start + list->pin.ptl.me_data->slot.me.length, __sctk_ptl_match_str(sctk_malloc(32), 32, list->pin.ptl.me_data->slot.me.match_bits));
@@ -677,7 +677,7 @@ void sctk_ptl_rdma_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			sctk_free(ptr);
 			break;
 		case PTL_EVENT_SEND:   /* special case, here will fall extra-allocated MD for atomic ops */
-			sctk_assert(atomic_ptr != NULL);
+			assert(atomic_ptr != NULL);
 			sctk_ptl_md_release(atomic_ptr);
 			break;
 		default:

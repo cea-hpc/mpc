@@ -3021,7 +3021,7 @@ int mpc_thread_migrate_to_core(const int cpu)
 	sctk_thread_data_t *tmp_data;
 
 	tmp_data = mpc_thread_data_get();
-	/*   sctk_assert(tmp_data != NULL); */
+	/*   assert(tmp_data != NULL); */
 	assert(_funcptr_mpc_thread_proc_migration != NULL);
 	tmp = _funcptr_mpc_thread_proc_migration(cpu);
 

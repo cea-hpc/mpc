@@ -87,7 +87,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	size_t cur_off, chunk_sz, chunk_nb, chunk, chunk_rest, sz_sent;
 	int flags;
 
-	sctk_assert(msg);
+	assert(msg);
 
 	/* As usual, two cases can reach this function:
 	 *   A. PUT in PRIORITY -> early-recv
@@ -124,13 +124,13 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	pte       = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
 	flags     = SCTK_PTL_MD_GET_FLAGS;
 	sz_sent  = *(size_t*)ev.start;
-	sctk_assert(pte);
+	assert(pte);
 
 	/* this function will compute byte equal distribution between multiple GET, if needed */
-	sctk_assert(((sctk_ptl_imm_data_t)ev.hdr_data).std.putsz);
+	assert(((sctk_ptl_imm_data_t)ev.hdr_data).std.putsz);
 	sctk_ptl_compute_chunks(srail, sz_sent, &chunk_sz, &chunk_nb, &chunk_rest);
-	sctk_assert(chunk_nb > 0);
-   	sctk_assert(chunk_rest < chunk_nb);
+	assert(chunk_nb > 0);
+   	assert(chunk_rest < chunk_nb);
 	/* create a new MD and configure it */
 	get_request = sctk_ptl_md_create(
 		srail,
@@ -138,7 +138,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 		sz_sent,
 		flags
 	);
-	sctk_assert(get_request);
+	assert(get_request);
 
 	get_request->msg                    = msg;
 	get_request->list                  = SCTK_PTL_PRIORITY_LIST;
@@ -196,8 +196,8 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	mpc_lowcomm_ptp_message_t* recv_msg = (mpc_lowcomm_ptp_message_t*)ptr->msg;
 
 	/* sanity checks */
-	sctk_assert(rail);
-	sctk_assert(ev.ni_fail_type == PTL_NI_OK);
+	assert(rail);
+	assert(ev.ni_fail_type == PTL_NI_OK);
 
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
 	mpc_lowcomm_ptp_message_header_clear(net_msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS , sctk_ptl_rdv_free_memory, sctk_ptl_rdv_message_copy);
@@ -303,8 +303,8 @@ void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* 
 	/***************************/
 	/* compute how many chunks we'll need to expose the memory  */
 	sctk_ptl_compute_chunks(srail, SCTK_MSG_SIZE(msg), &chunk_sz, &chunk_nb, &chunk_rest);
-	sctk_assert(chunk_nb > 0ull);
-	sctk_assert(chunk_rest < chunk_nb);
+	assert(chunk_nb > 0ull);
+	assert(chunk_rest < chunk_nb);
 	me_flags         = SCTK_PTL_ME_GET_FLAGS | ((chunk_nb == 1) ? SCTK_PTL_ONCE : 0);
 	/* if the message is non-contiguous, we need a copy to 'pack' it first */
 	if(msg->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
@@ -387,8 +387,8 @@ void sctk_ptl_rdv_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_info
 	 */
 	 put_request->slot.me.start = &put_request->req_sz;
 
-	sctk_assert(put_request);
-	sctk_assert(pte);
+	assert(put_request);
+	assert(pte);
 
 	put_request->msg       = msg;
 	put_request->list      = SCTK_PTL_PRIORITY_LIST;

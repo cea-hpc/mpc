@@ -358,7 +358,7 @@ void _mpc_thread_ethread_enqueue_task(_mpc_thread_ethread_virtual_processor_t *
 		mpc_common_debug_warning("task %p task->status = %d (%s) ",
 		             task, task->status, th_status);
 	}
-	                 sctk_assert(task->status == ethread_ready); );
+	                 assert(task->status == ethread_ready); );
 	___mpc_thread_ethread_enqueue_task(task,
 	                                   &(vp->ready_queue), &(vp->ready_queue_tail) );
 }

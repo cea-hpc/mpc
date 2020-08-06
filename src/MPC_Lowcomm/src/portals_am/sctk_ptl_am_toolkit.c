@@ -92,10 +92,10 @@ void sctk_ptl_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_rail_info_t* rail
 	sctk_ptl_id_t remote            = SCTK_PTL_ANY_PROCESS;
 
 	/* pre-actions */
-	sctk_assert(msg);
-	sctk_assert(rail);
-	sctk_assert(srail);
-	sctk_assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
+	assert(msg);
+	assert(rail);
+	assert(srail);
+	assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
 
 	if(SCTK_MSG_SIZE(msg) <= srail->eager_limit)
 	{
@@ -118,7 +118,7 @@ void sctk_ptl_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* endp
 	int process_rank            = sctk_get_process_rank();
 	sctk_ptl_rail_info_t* srail = &endpoint->rail->network.ptl;
 
-	sctk_assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
+	assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
 
 	/* specific cases: control messages */
 	if(_mpc_comm_ptp_message_is_for_control(SCTK_MSG_SPECIFIC_CLASS(msg)))
@@ -155,7 +155,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 
 	/* at least, try each entry once */
 	threshold = (size > threshold) ? size : threshold;
-	sctk_assert(threshold > 0);
+	assert(threshold > 0);
 	while(max++ < threshold)
 	{
 		do
@@ -171,12 +171,12 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 					default:
 						not_implemented();
 				}
-				sctk_assert(cur_pte);
+				assert(cur_pte);
 			}
 			else if( (i - SCTK_PTL_PTE_HIDDEN) == SCTK_COMM_WORLD) /* if COMM_WORLD, first standard PTE */
 			{
 				cur_pte = comm_world_pte;
-				sctk_assert(cur_pte);
+				assert(cur_pte);
 			}
 			else if (i - SCTK_PTL_PTE_HIDDEN == SCTK_COMM_SELF) /* if COMM_SELF, net layer not involved */
 			{
@@ -265,7 +265,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
 		if(ret == PTL_OK)
 		{
 			user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
-			sctk_assert(user_ptr != NULL);
+			assert(user_ptr != NULL);
 			mpc_common_debug("PORTALS: MDS EVENT '%s' from %s, type=%d, prot=%d",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), user_ptr->type, user_ptr->prot);
 			/* we only care about Portals-sucess events */
 			if(ev.ni_fail_type != PTL_NI_OK)
@@ -473,7 +473,7 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	
 	sctk_ptl_software_init( &rail->network.ptl, min_comms);
 	
-	sctk_assert(eager_limit == rail->network.ptl.eager_limit);
+	assert(eager_limit == rail->network.ptl.eager_limit);
 	rail->network.ptl.max_mr      = rail->network.ptl.max_limits.max_msg_size;
 	rail->network.ptl.cutoff      = cut;
 	/*rail->network.ptl.max_mr = (1024 * 1024 * 8);*/

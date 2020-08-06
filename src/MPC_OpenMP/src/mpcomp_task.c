@@ -2168,7 +2168,7 @@ void _mpc_task_wait( void )
                 assert(current_task); // Fail if tasks disable...(from full barrier call
 
                 #if OMPT_SUPPORT
-                if( sctk_atomics_load_int(&(current_task->refcount)) != 1) {
+                if( OPA_load_int(&(current_task->refcount)) != 1) {
                 ompt_sync_wait = 1;
 
                 if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks ) {
@@ -3082,7 +3082,7 @@ void _mpc_task_taskgroup_end( void )
 #if OMPT_SUPPORT
   static int ompt_sync_wait = 0;
 
-  if( sctk_atomics_load_int( &( taskgroup->children_num ))) {
+  if( OPA_load_int( &( taskgroup->children_num ))) {
     ompt_sync_wait = 1;
 
     if( mpcomp_ompt_is_enabled() && OMPT_Callbacks ) {

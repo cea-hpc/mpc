@@ -645,8 +645,8 @@ static inline void __mpc_composed_common_types_init()
 #define tostring( a ) #a
 #define SCTK_INIT_TYPE_SIZE( datatype, t )              \
 	__sctk_common_type_sizes[datatype] = sizeof( t );   \
-	sctk_assert( datatype >= 0 );                       \
-	sctk_assert( _mpc_dt_is_common( datatype ) ); \
+	assert( datatype >= 0 );                       \
+	assert( _mpc_dt_is_common( datatype ) ); \
 	__mpc_common_dt_set_name( datatype, #datatype );
 
 

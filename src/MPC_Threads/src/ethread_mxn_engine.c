@@ -70,7 +70,7 @@ _mpc_thread_ethread_mxn_engine_self_all(_mpc_thread_ethread_virtual_processor_t 
 {
 	*vp   = _mpc_thread_kthread_getspecific(_mpc_thread_ethread_key);
 	*task = (_mpc_thread_ethread_t)(*vp)->current;
-	sctk_assert( (*task)->vp == *vp);
+	assert( (*task)->vp == *vp);
 }
 
 static inline void
@@ -751,8 +751,8 @@ static int _mpc_thread_ethread_mxn_engine_thread_proc_migration(const int cpu)
 	_mpc_thread_ethread_mxn_engine_self_all(&current_vp, &current);
 	last = current_vp->rank;
 
-	sctk_assert(current->vp == current_vp);
-	sctk_assert(last == mpc_topology_get_current_cpu() );
+	assert(current->vp == current_vp);
+	assert(last == mpc_topology_get_current_cpu() );
 	assume(cpu >= 0);
 	assume(cpu < mpc_topology_get_pu_count() );
 	assume(last >= 0);
@@ -781,7 +781,7 @@ static int _mpc_thread_ethread_mxn_engine_thread_proc_migration(const int cpu)
 	                   (_mpc_thread_ethread_virtual_processor_t
 	                    *)(_mpc_thread_ethread_mxn_engine_self()->vp)->rank);
 
-	sctk_assert(current->vp == _mpc_thread_ethread_mxn_engine_vp_list[cpu]);
+	assert(current->vp == _mpc_thread_ethread_mxn_engine_vp_list[cpu]);
 	return last;
 }
 

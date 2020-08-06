@@ -64,7 +64,7 @@ int sctk_ptl_offcoll_enabled(sctk_ptl_rail_info_t* srail)
  */
 void sctk_ptl_offcoll_init(sctk_ptl_rail_info_t* srail)
 {
-	sctk_assert(__sctk_ptl_offcoll_enabled(srail));
+	assert(__sctk_ptl_offcoll_enabled(srail));
 	md_up = sctk_ptl_md_create_with_cnt(srail, NULL, 0, (SCTK_PTL_MD_PUT_NOEV_FLAGS | PTL_MD_EVENT_CT_SEND));
 	md_down = sctk_ptl_md_create_with_cnt(srail, NULL, 0, (SCTK_PTL_MD_PUT_NOEV_FLAGS | PTL_MD_EVENT_CT_SEND));
 	dummy_md = sctk_ptl_md_create_with_cnt(srail, NULL, 0, (SCTK_PTL_MD_PUT_NOEV_FLAGS | PTL_MD_EVENT_CT_SEND));
@@ -83,7 +83,7 @@ void sctk_ptl_offcoll_init(sctk_ptl_rail_info_t* srail)
 
 void sctk_ptl_offcoll_fini(__UNUSED__ sctk_ptl_rail_info_t* srail)
 {
-	sctk_assert(__sctk_ptl_offcoll_enabled(srail));
+	assert(__sctk_ptl_offcoll_enabled(srail));
 	sctk_ptl_md_release(md_up);   md_up = NULL;
 	sctk_ptl_md_release(md_down); md_down = NULL;
 }
@@ -94,9 +94,9 @@ void sctk_ptl_offcoll_fini(__UNUSED__ sctk_ptl_rail_info_t* srail)
 void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 {
 	sctk_ptl_local_data_t* me_up = NULL, *me_down = NULL, *tmp = NULL;
-	sctk_assert(srail);
-	sctk_assert(pte);
-	sctk_assert(__sctk_ptl_offcoll_enabled(srail));
+	assert(srail);
+	assert(pte);
+	assert(__sctk_ptl_offcoll_enabled(srail));
 	
 	int i;
 	sctk_ptl_offcoll_tree_node_t* cur;
@@ -125,8 +125,8 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 				me_down->list = SCTK_PTL_PRIORITY_LIST;
 				me_down->type = SCTK_PTL_TYPE_OFFCOLL;
 				me_down->prot = SCTK_PTL_PROT_EAGER;
-				sctk_assert(me_up);
-				sctk_assert(me_down);
+				assert(me_up);
+				assert(me_down);
 				sctk_ptl_me_register(srail, me_up, pte);
 				sctk_ptl_me_register(srail, me_down, pte);
 				/* store counters (one for each half barrier) */
@@ -145,7 +145,7 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 					SCTK_PTL_ME_PUT_NOEV_FLAGS
 				);
 				sctk_ptl_me_register(srail, tmp, pte);
-				sctk_assert(tmp);
+				assert(tmp);
 				tmp->msg = NULL;                    /* no need for it (for noww */
 				tmp->list = SCTK_PTL_PRIORITY_LIST; /* not really significant here */
 				tmp->type = SCTK_PTL_TYPE_OFFCOLL;  /* Standard MPI message */
@@ -166,7 +166,7 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
  */
 void sctk_ptl_offcoll_pte_fini(__UNUSED__ sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 {
-	sctk_assert(__sctk_ptl_offcoll_enabled(srail));
+	assert(__sctk_ptl_offcoll_enabled(srail));
 	int i = 0;
 	sctk_ptl_offcoll_tree_node_t* cur; 
 	for(i = 0; i < SCTK_PTL_OFFCOLL_NB; i++)
@@ -218,10 +218,10 @@ static inline void __sctk_ptl_offcoll_build_tree(sctk_ptl_rail_info_t* srail, sc
 {
         int l_child = -1, h_child = -1, parent_rank, child_rank; 
         size_t i, nb_children;
-        sctk_assert(srail);
+        assert(srail);
         sctk_rail_info_t* rail = sctk_ptl_promote_to_rail(srail);
 	sctk_ptl_offcoll_tree_node_t* node = pte->node + collective;
-        sctk_assert(rail);
+        assert(rail);
 
 	/* if no tree has been built yet OR if the currently saved tree is not the one we want => built it */
         if(node->leaf == -1 || node->root != root)
@@ -293,8 +293,8 @@ static inline void __sctk_ptl_offcoll_build_tree(sctk_ptl_rail_info_t* srail, sc
  */
 static inline void __sctk_ptl_offcoll_barrier_run(__UNUSED__ sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 {
-        sctk_assert(srail);
-        sctk_assert(__sctk_ptl_offcoll_enabled(srail));
+        assert(srail);
+        assert(__sctk_ptl_offcoll_enabled(srail));
 
         size_t i, nb_children; 
 	int cnt_prev_ops;
@@ -359,13 +359,13 @@ static inline void __sctk_ptl_offcoll_bcast_eager_run(sctk_ptl_rail_info_t* srai
 	sctk_ptl_cnt_t dummy;
 	sctk_ptl_local_data_t* recv_me = NULL, *tmp_md = NULL;
 
-	sctk_assert(buf);
-	sctk_assert(srail);
+	assert(buf);
+	assert(srail);
 
 	/* first, retrieve the tree related to this broadcast */
-	sctk_assert(pte);
+	assert(pte);
 	bnode        = pte->node + SCTK_PTL_OFFCOLL_BCAST;
-	sctk_assert(bnode);
+	assert(bnode);
         nb_children  = bnode->nb_children;
 
 	/* if only one node in the tree, don't */
@@ -380,7 +380,7 @@ static inline void __sctk_ptl_offcoll_bcast_eager_run(sctk_ptl_rail_info_t* srai
 		tmp_md = sctk_ptl_md_create_with_cnt(srail, buf, bytes, (SCTK_PTL_MD_PUT_NOEV_FLAGS | PTL_MD_EVENT_CT_SEND));
 		tmp_md->prot = SCTK_PTL_PROT_EAGER;
 		tmp_md->type = SCTK_PTL_TYPE_OFFCOLL;
-		sctk_assert(tmp_md);
+		assert(tmp_md);
 		sctk_ptl_md_register(srail, tmp_md);
 	}
 
@@ -404,7 +404,7 @@ static inline void __sctk_ptl_offcoll_bcast_eager_run(sctk_ptl_rail_info_t* srai
 		recv_me->type = SCTK_PTL_TYPE_OFFCOLL; /* Standard MPI message */
 		recv_me->prot = SCTK_PTL_PROT_EAGER; /* handled by offload protocols */
 		sctk_ptl_me_register(srail, recv_me, pte);
-		sctk_assert(recv_me);
+		assert(recv_me);
 		
 		/* register a trigger to send data to children once data have been received.
 		 * The ct_event is set to SCTK_PTL_ACTIVE_UNLOCK_THRS from a software manner
@@ -486,13 +486,13 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 	sctk_ptl_local_data_t* get_me = NULL, *get_md = NULL;
 	sctk_ptl_cnth_t* me_cnt_puts = NULL;
 
-	sctk_assert(buf);
-	sctk_assert(srail);
+	assert(buf);
+	assert(srail);
 
 	/* first, retrieve the tree related to this broadcast */
-	sctk_assert(pte);
+	assert(pte);
 	bnode        = pte->node + SCTK_PTL_OFFCOLL_BCAST;
-	sctk_assert(bnode);
+	assert(bnode);
         nb_children  = bnode->nb_children;
 	cnt_ops = OPA_fetch_and_incr_int(&bnode->iter);
 	me_cnt_puts  = &bnode->spec.bcast.large_puts->slot.me.ct_handle;
@@ -519,7 +519,7 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 		get_me->prot = SCTK_PTL_PROT_RDV;      /* handled by offload protocols */
 		get_me->match = SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops);
 		sctk_ptl_me_register(srail, get_me, pte);
-		sctk_assert(get_me);
+		assert(get_me);
 		/*mpc_common_debug_error("INTERMEDIATE set a GET-ME match=%s SZ=%llu", __sctk_ptl_match_str(sctk_malloc(32), 32, SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops).raw), bytes);*/
 	}
 	
@@ -534,7 +534,7 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 		get_md = sctk_ptl_md_create_with_cnt(srail, buf, bytes, (SCTK_PTL_MD_GET_NOEV_FLAGS | PTL_MD_EVENT_CT_REPLY));
 		get_md->type = SCTK_PTL_TYPE_OFFCOLL;
 		get_md->prot = SCTK_PTL_PROT_RDV;
-		sctk_assert(get_md);
+		assert(get_md);
 		sctk_ptl_md_register(srail, get_md);
 
 		cur_off = 0;
@@ -542,7 +542,7 @@ static inline void __sctk_ptl_offcoll_bcast_large_run(sctk_ptl_rail_info_t* srai
 		for(chunk = 0; chunk < chunk_nb; ++chunk)
 		{
 			size_t cur_sz = (chunk < rest) ? chunk_sz + 1 : chunk_sz;
-			sctk_assert((chunk+1) * cur_sz <= bytes);
+			assert((chunk+1) * cur_sz <= bytes);
 			/*mpc_common_debug_error("intermediate emit %d GET-MD %s FROM=%llu TO=%llu SZ=%llu", chunk_nb, __sctk_ptl_match_str(sctk_malloc(32), 32, SCTK_PTL_MATCH_OFFCOLL_BCAST_LARGET(cnt_ops).raw), cur_off, cur_off+cur_sz, chunk_sz);*/
 			sctk_ptl_emit_trig_get(
 				get_md,
@@ -640,7 +640,7 @@ void sctk_ptl_offcoll_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	switch(ev.type)
 	{
 		case PTL_EVENT_PUT_OVERFLOW:         /* a previous received PUT matched a just appended ME */
-			sctk_assert(ev.mlength <= user_ptr->slot.me.length);
+			assert(ev.mlength <= user_ptr->slot.me.length);
 			if(user_ptr->prot == SCTK_PTL_PROT_EAGER && ev.mlength > 0)
 				memcpy(user_ptr->slot.me.start, ev.start, ev.mlength);
 		case PTL_EVENT_PUT:                  /* a Put() reached the local process */
@@ -715,7 +715,7 @@ void sctk_ptl_offcoll_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 int ptl_offcoll_barrier(int comm_idx, int rank, int size)
 {
         sctk_ptl_pte_t* pte = SCTK_PTL_PTE_ENTRY(grail->pt_table, comm_idx);
-        sctk_assert(pte);
+        assert(pte);
 	
 	__sctk_ptl_offcoll_build_tree(grail, pte, rank, 0, size, SCTK_PTL_OFFCOLL_BARRIER);
         __sctk_ptl_offcoll_barrier_run(grail, pte);
@@ -729,7 +729,7 @@ int ptl_offcoll_barrier(int comm_idx, int rank, int size)
 int ptl_offcoll_bcast(int comm_idx, int rank, int size, void* buf, size_t bytes, int root)
 {
 	sctk_ptl_pte_t* pte = SCTK_PTL_PTE_ENTRY(grail->pt_table, comm_idx);
-	sctk_assert(pte);
+	assert(pte);
 
 	__sctk_ptl_offcoll_build_tree(grail, pte, rank, root, size, SCTK_PTL_OFFCOLL_BCAST);
 	__sctk_ptl_offcoll_bcast_run(grail, pte, buf, bytes, (root == rank));

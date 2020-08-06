@@ -176,7 +176,7 @@ sctk_ptl_am_rail_info_t sctk_ptl_am_hardware_init()
 	   2. A chunk should be a multiple of the number of cells, to manage reponse slots properly.
 	   These values could be provided by the MPC configuration, if desired
 	*/
-	sctk_assert( SCTK_PTL_AM_CHUNK_SZ > SCTK_PTL_AM_REP_CELL_SZ );
+	assert( SCTK_PTL_AM_CHUNK_SZ > SCTK_PTL_AM_REP_CELL_SZ );
 	if ( SCTK_PTL_AM_CHUNK_SZ % SCTK_PTL_AM_REP_CELL_SZ != 0 )
 		mpc_common_debug_fatal( "Please make sure the max chunk size is a multiple of the number of cells !" );
 
@@ -213,10 +213,10 @@ static void sctk_ptl_am_pte_populate( sctk_ptl_am_rail_info_t *srail, int srv_id
 	size_t j = 0;
 	sctk_ptl_am_pte_t *pte = srail->pte_table[srv_idx];
 
-	sctk_assert( srail );
-	sctk_assert( srv_idx >= 0 && nb_elts >= 1 );
-	sctk_assert( pte );
-	sctk_assert( me_type == SCTK_PTL_AM_REQ_TYPE || me_type == SCTK_PTL_AM_REP_TYPE );
+	assert( srail );
+	assert( srv_idx >= 0 && nb_elts >= 1 );
+	assert( pte );
+	assert( me_type == SCTK_PTL_AM_REQ_TYPE || me_type == SCTK_PTL_AM_REP_TYPE );
 
 	sctk_ptl_am_matchbits_t match = ( sctk_ptl_am_matchbits_t ){
 		.data.srvcode = srv_idx,			  /* the SRV code */
@@ -468,10 +468,10 @@ void sctk_ptl_am_pte_create( sctk_ptl_am_rail_info_t *srail, size_t key )
  */
 sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int srv, int rpc, const void *start_in, size_t sz_in, void **start_out, __UNUSED__ size_t *sz_out, sctk_ptl_am_msg_t *msg )
 {
-	sctk_assert( srail );
-	sctk_assert( srv >= 0 && rpc >= 0 );
-	sctk_assert( msg );
-	sctk_assert( sz_in >= 0 );
+	assert( srail );
+	assert( srv >= 0 && rpc >= 0 );
+	assert( msg );
+	assert( sz_in >= 0 );
 
 	sctk_ptl_am_pte_t *pte = srail->pte_table[srv];
 	sctk_ptl_am_msg_t *msg_resp = NULL;
@@ -481,7 +481,7 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 	sctk_ptl_id_t remote = msg->remote;
 	sctk_ptl_am_matchbits_t md_match;
 
-	sctk_assert( pte );
+	assert( pte );
 
 	/* 1. Look for a place to store the response, if needed */
 	if ( start_out )
@@ -503,7 +503,7 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 					if ( req_imm.data.offset == ( SCTK_PTL_AM_CHUNK_SZ - SCTK_PTL_AM_REP_CELL_SZ ) ) /* last cell */
 					{
 						__UNUSED__ int cas_val = OPA_cas_int( &rep_me->up, 1, 0 );
-						sctk_assert( cas_val == 1 );
+						assert( cas_val == 1 );
 						break;
 					}
 
@@ -528,9 +528,9 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 			}
 		} while ( !found_space );
 
-		sctk_assert( rep_me );
-		sctk_assert( req_imm.data.offset >= 0 );
-		sctk_assert( req_imm.data.offset <= SCTK_PTL_AM_CHUNK_SZ - SCTK_PTL_AM_REP_CELL_SZ );
+		assert( rep_me );
+		assert( req_imm.data.offset >= 0 );
+		assert( req_imm.data.offset <= SCTK_PTL_AM_CHUNK_SZ - SCTK_PTL_AM_REP_CELL_SZ );
 
 		/* save the tag of the found ME-REP */
 		tag = rep_me->tag;
@@ -607,9 +607,9 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
  */
 void sctk_ptl_am_send_response( sctk_ptl_am_rail_info_t *srail, int srv, int rpc, void *start, size_t sz, __UNUSED__ int remote_id, sctk_ptl_am_msg_t *msg )
 {
-	sctk_assert( srail );
-	sctk_assert( srv >= 0 && rpc >= 0 );
-	sctk_assert( msg );
+	assert( srail );
+	assert( srv >= 0 && rpc >= 0 );
+	assert( msg );
 
 	sctk_ptl_am_pte_t *pte = srail->pte_table[srv];
 	sctk_ptl_id_t remote = msg->remote;
@@ -691,15 +691,15 @@ void sctk_ptl_am_wait_response( sctk_ptl_am_rail_info_t *srail, sctk_ptl_am_msg_
  */
 static inline void __sctk_ptl_am_free_chunk( sctk_ptl_am_local_data_t *c )
 {
-	sctk_assert( c );
+	assert( c );
 
 	/* if a bloc is associated, it is a 'small' chunk (REQ/REP, but not large) */
 	if ( c->block )
 	{
 		/* in that case, check that all cells have been released by their owners */
-		sctk_assert( OPA_load_int( &c->block->refcnt ) <= 0 );
+		assert( OPA_load_int( &c->block->refcnt ) <= 0 );
 		/* check also that the chunk has been detached from the Portals device */
-		sctk_assert( OPA_load_int( &c->block->up ) == 0 );
+		assert( OPA_load_int( &c->block->up ) == 0 );
 		sctk_free( (void *) c->block );
 	}
 	sctk_free( (void *) c );
@@ -791,12 +791,12 @@ static inline void __sctk_ptl_am_event_handle_put( sctk_ptl_am_rail_info_t *srai
 
 		if ( !m.data.inc_data )
 		{
-			sctk_assert( req_sz == 0 );
+			assert( req_sz == 0 );
 			req_sz = rep_imm.data.size;
 			/* data to GET() are large and embedded in the message */
 			m.data.is_large = 1;
 			m.data.inc_data = 1;
-			sctk_assert( ( m.data.is_req & 0x1 ) == SCTK_PTL_AM_REQ_TYPE );
+			assert( ( m.data.is_req & 0x1 ) == SCTK_PTL_AM_REQ_TYPE );
 			req_buf = sctk_malloc( req_sz );
 			sctk_ptl_am_emit_get( &srail->md_slot, req_sz, ev->initiator, pte, m, (size_t) req_buf, 0, &msg.completed );
 
@@ -827,7 +827,7 @@ static inline void __sctk_ptl_am_event_handle_put( sctk_ptl_am_rail_info_t *srai
 	}
 	else /********** IF RESPONSE ************/
 	{
-		sctk_assert( ( m.data.is_req & 0x1 ) == SCTK_PTL_AM_REP_TYPE );
+		assert( ( m.data.is_req & 0x1 ) == SCTK_PTL_AM_REP_TYPE );
 		sctk_ptl_am_msg_t *init_msg = container_of( ev->start, sctk_ptl_am_msg_t, data );
 
 		init_msg->msg_type.rep.addr = ev->start;
@@ -835,7 +835,7 @@ static inline void __sctk_ptl_am_event_handle_put( sctk_ptl_am_rail_info_t *srai
 
 		if ( !m.data.inc_data )
 		{
-			sctk_assert( req_sz == 0 );
+			assert( req_sz == 0 );
 			resp_sz = rep_imm.data.size;
 			m.data.is_large = 1;
 			m.data.inc_data = 1;
@@ -891,7 +891,7 @@ static inline void __sctk_ptl_am_event_handle_unlink(__UNUSED__ sctk_ptl_am_rail
 		 *  	not be triggered (check w/ an assert())
 		 */
 
-		sctk_assert( m.data.is_req == SCTK_PTL_AM_REQ_TYPE );
+		assert( m.data.is_req == SCTK_PTL_AM_REQ_TYPE );
 		//int cas_res = OPA_cas_int( &chunk->block->up, 1, 0 ); /* currenT ME is unlinked */
 		int cnt_res = OPA_load_int( &chunk->block->refcnt );
 		/* Are all slots unused at the unlinking time ? */
@@ -977,13 +977,13 @@ int sctk_ptl_am_outgoing_lookup( sctk_ptl_am_rail_info_t *srail )
 
 	if ( ret == PTL_OK )
 	{
-		sctk_assert( ev.ni_fail_type == PTL_NI_OK );
+		assert( ev.ni_fail_type == PTL_NI_OK );
 		switch ( ev.type )
 		{
 			case PTL_EVENT_REPLY: /* When a GET() completes, unlocks the waiting request */
 			{
 				char *c = (char *) ev.user_ptr;
-				sctk_assert( c );
+				assert( c );
 				( *c ) = 1;
 				break;
 			}

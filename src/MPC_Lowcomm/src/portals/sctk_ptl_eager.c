@@ -85,9 +85,9 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	sctk_ptl_matchbits_t match = (sctk_ptl_matchbits_t) ev.match_bits;
 
 	/* sanity checks */
-	sctk_assert(rail);
-	sctk_assert(ev.ni_fail_type == PTL_NI_OK);
-	sctk_assert(ev.mlength <= rail->network.ptl.eager_limit);
+	assert(rail);
+	assert(ev.ni_fail_type == PTL_NI_OK);
+	assert(ev.mlength <= rail->network.ptl.eager_limit);
 	
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
 	mpc_lowcomm_ptp_message_header_clear(net_msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS , sctk_ptl_eager_free_memory, sctk_ptl_eager_message_copy);
@@ -176,8 +176,8 @@ void sctk_ptl_eager_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t
 	remote                 = infos->dest;
 	request                = sctk_ptl_md_create(srail, start, size, flags);
 
-	sctk_assert(request);
-	sctk_assert(pte);
+	assert(request);
+	assert(pte);
 
 	/* double-linking */
 	request->msg           = msg;
@@ -249,8 +249,8 @@ void sctk_ptl_eager_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_in
 	flags    = SCTK_PTL_ME_PUT_FLAGS | SCTK_PTL_ONCE;
 	user_ptr = sctk_ptl_me_create(start, size, remote, match, ign, flags); assert(user_ptr);
 
-	sctk_assert(user_ptr);
-	sctk_assert(pte);
+	assert(user_ptr);
+	assert(pte);
 
 	user_ptr->msg          = msg;
 	user_ptr->list         = SCTK_PTL_PRIORITY_LIST;

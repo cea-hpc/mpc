@@ -1054,6 +1054,7 @@ enable_opt_native
 enable_debug_messages
 enable_debug_mem
 enable_debug
+enable_assert
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1764,6 +1765,7 @@ Optional Features:
   --enable-debug-messages Output debug messages when running MPC
   --enable-debug-mem      Compile MPC with ASAN checks
   --enable-debug          Compile MPC in debug mode
+  --enable-assert         Enable internal assert function in MPC
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -30855,8 +30857,16 @@ if test "${enable_debug+set}" = set; then :
   enableval=$enable_debug; mpc_debug=$enableval
 else
   mpc_debug=no
+  $as_echo "#define NDEBUG 1" >>confdefs.h
 fi
 
+# Check whether --enable-assert was given.
+if test "${enable_assert+set}" = set; then :
+  enableval=$enable_assert; mpc_assert=$enableval
+else
+  mpc_assert=no
+  $as_echo "#define NO_INTERNAL_ASSERT 1" >>confdefs.h
+fi
 
 USING_ASAN="no"
 
@@ -31099,6 +31109,7 @@ MPC_CONFIG_RESULT="\
 #\n\
 # Embedded profiler.... $MPC_HAVE_PROFILER\n\
 # Debug symbols........ $mpc_debug ($MPC_DEBUG_FLAGS)\n\
+# Internal Assert...... $mpc_assert\n\
 # Memory Debug......... $mpc_debug_mem\n\
 # Debug messages....... $mpc_debug_messages\n\
 # Colored output....... $mpc_shell_color\n\

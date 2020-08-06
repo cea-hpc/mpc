@@ -355,7 +355,7 @@ char* sctk_ft_str_status(mpc_lowcomm_checkpoint_state_t s)
 		"MPC_STATE_COUNT"
 	};
 
-	sctk_assert(s >= 0 && s < MPC_STATE_COUNT);
+	assert(s >= 0 && s < MPC_STATE_COUNT);
 	return strdup(state_names[s]);
 }
 

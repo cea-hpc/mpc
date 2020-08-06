@@ -82,10 +82,10 @@ void sctk_ptl_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_rail_info_t* rail
 	sctk_ptl_rail_info_t* srail     = &rail->network.ptl;
 	
 	/* pre-actions */
-	sctk_assert(msg);
-	sctk_assert(rail);
-	sctk_assert(srail);
-	sctk_assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
+	assert(msg);
+	assert(rail);
+	assert(srail);
+	assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
 	if(SCTK_MSG_SIZE(msg) <= srail->eager_limit)
 	{
 		sctk_ptl_eager_notify_recv(msg, srail);
@@ -106,7 +106,7 @@ void sctk_ptl_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* endp
 {
 	sctk_ptl_rail_info_t* srail = &endpoint->rail->network.ptl;
 
-	sctk_assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
+	assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
 
 	/* specific cases: control messages */
 	if(_mpc_comm_ptp_message_is_for_control(SCTK_MSG_SPECIFIC_CLASS(msg)))
@@ -144,7 +144,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 
 	/* at least, try each entry once */
 	threshold = (size > threshold) ? size : threshold;
-	sctk_assert(threshold > 0);
+	assert(threshold > 0);
 	while(max++ < threshold)
 	{
 		do
@@ -169,7 +169,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 			if(ev.type == PTL_EVENT_SEARCH)
 			{
 				/* sanity check */
-				sctk_assert(user_ptr->type == SCTK_PTL_TYPE_PROBE);
+				assert(user_ptr->type == SCTK_PTL_TYPE_PROBE);
 				int found = (ev.ni_fail_type == PTL_NI_OK);
 				if(found)
 				{
@@ -250,7 +250,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 		if(ret == PTL_OK)
 		{
 			user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
-			sctk_assert(user_ptr != NULL);
+			assert(user_ptr != NULL);
 			mpc_common_nodebug("PORTALS: MDS EVENT '%s' from %s, type=%s, prot=%s",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot));
 			/* we only care about Portals-sucess events */
 			if(ev.ni_fail_type != PTL_NI_OK)
@@ -258,7 +258,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 				mpc_common_debug_fatal("PORTALS: FAILED MDS EVENT '%s' from %s, type=%s, prot=%s, match=%s err='%s'",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), __sctk_ptl_match_str(sctk_malloc(32), 32, user_ptr->match.raw), sctk_ptl_ni_fail_decode(ev));
 			}
 
-			sctk_assert(user_ptr->type != SCTK_PTL_TYPE_NONE);
+			assert(user_ptr->type != SCTK_PTL_TYPE_NONE);
 
 
 			switch((int)user_ptr->type)
@@ -271,7 +271,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 					 *
 					 * As we know that 
 					 */
-					sctk_assert(user_ptr->prot != SCTK_PTL_PROT_NONE);
+					assert(user_ptr->prot != SCTK_PTL_PROT_NONE);
 					switch((int)user_ptr->prot)
 					{
 						case SCTK_PTL_PROT_EAGER:
@@ -283,7 +283,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 					}
 					break;
 				case SCTK_PTL_TYPE_OFFCOLL:
-					sctk_assert(user_ptr->prot != SCTK_PTL_PROT_NONE);
+					assert(user_ptr->prot != SCTK_PTL_PROT_NONE);
 					sctk_ptl_offcoll_event_md(rail, ev);
 					break;
 				case SCTK_PTL_TYPE_RDMA:
@@ -421,7 +421,7 @@ sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, int dest)
 				sizeof (sctk_ptl_id_t)      /* target struct size */
 				);
 	}
-	sctk_assert(!SCTK_PTL_IS_ANY_PROCESS(ranks_ids_map[dest]));
+	assert(!SCTK_PTL_IS_ANY_PROCESS(ranks_ids_map[dest]));
 	return ranks_ids_map[dest];
 }
 
@@ -547,7 +547,7 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	rail->network.ptl.offload_support = offloading;
 	
 	sctk_ptl_software_init( &rail->network.ptl, min_comms);
-	sctk_assert(eager_limit == rail->network.ptl.eager_limit);
+	assert(eager_limit == rail->network.ptl.eager_limit);
 
 	if(!ranks_ids_map)
 	{

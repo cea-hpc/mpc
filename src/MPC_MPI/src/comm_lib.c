@@ -599,10 +599,8 @@ static inline void __mpc_cl_per_mpi_process_ctx_init()
 
 	assume(__mpc_cl_per_thread_ctx_get_task_level() == NULL);
 
-	mpc_mpi_cl_per_mpi_process_ctx_t *tmp = ( mpc_mpi_cl_per_mpi_process_ctx_t * )__mpc_cl_per_thread_ctx_get();
+	mpc_mpi_cl_per_mpi_process_ctx_t *tmp = NULL;
 
-	/* Make sure that it is not already present */
-	sctk_assert(tmp == NULL);
 	/* If not allocate a new mpc_mpi_cl_per_mpi_process_ctx_t */
 	tmp = ( mpc_mpi_cl_per_mpi_process_ctx_t * )sctk_malloc(sizeof(mpc_mpi_cl_per_mpi_process_ctx_t) );
 	/* And initalize it */
@@ -745,7 +743,7 @@ struct mpc_mpi_cl_per_mpi_process_ctx_s *mpc_cl_per_mpi_process_ctx_get()
 _mpc_dt_contiguout_t *_mpc_cl_per_mpi_process_ctx_contiguous_datatype_ts_get(mpc_mpi_cl_per_mpi_process_ctx_t *task_specific,
                                                                              mpc_lowcomm_datatype_t datatype)
 {
-	sctk_assert(task_specific != NULL);
+	assert(task_specific != NULL);
 	/* Return the pointed _mpc_dt_contiguout_t */
 	return _mpc_dt_storage_get_contiguous_datatype(task_specific->datatype_array, datatype);
 }
@@ -771,7 +769,7 @@ _mpc_dt_contiguout_t *_mpc_cl_per_mpi_process_ctx_contiguous_datatype_get(mpc_lo
 _mpc_dt_derived_t *_mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get(mpc_mpi_cl_per_mpi_process_ctx_t *task_specific,
                                                                        mpc_lowcomm_datatype_t datatype)
 {
-	sctk_assert(task_specific != NULL);
+	assert(task_specific != NULL);
 	return _mpc_dt_storage_get_derived_datatype(task_specific->datatype_array, datatype);
 }
 
@@ -784,7 +782,7 @@ _mpc_dt_derived_t *_mpc_cl_per_mpi_process_ctx_derived_datatype_get(mpc_lowcomm_
 {
 	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
 
-	sctk_assert(task_specific != NULL);
+	assert(task_specific != NULL);
 	return _mpc_dt_storage_get_derived_datatype(task_specific->datatype_array, datatype);
 }
 
@@ -797,7 +795,7 @@ static inline void __mpc_cl_per_mpi_process_ctx_derived_datatype_set(
         mpc_mpi_cl_per_mpi_process_ctx_t *task_specific, mpc_lowcomm_datatype_t datatype,
         _mpc_dt_derived_t *value)
 {
-	sctk_assert(task_specific != NULL);
+	assert(task_specific != NULL);
 	_mpc_dt_storage_set_derived_datatype(task_specific->datatype_array, datatype, value);
 }
 
@@ -4042,7 +4040,7 @@ int _mpc_cl_comm_create_from_intercomm(mpc_lowcomm_communicator_t comm,
 	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
 	int rank          = task_specific->task_id;
 
-	sctk_assert(comm != SCTK_COMM_NULL);
+	assert(comm != SCTK_COMM_NULL);
 	_mpc_cl_barrier(comm);
 
 	for(i = 0; i < group->task_nb; i++)
@@ -4098,7 +4096,7 @@ static inline int __mpc_cl_comm_create(mpc_lowcomm_communicator_t comm, _mpc_cl_
 	task_specific = _mpc_cl_per_mpi_process_ctx_get();
 	rank          = task_specific->task_id;
 	grank         = mpc_lowcomm_communicator_rank(comm, task_specific->task_id);
-	sctk_assert(comm != SCTK_COMM_NULL);
+	assert(comm != SCTK_COMM_NULL);
 	_mpc_cl_barrier(comm);
 
 	for(i = 0; i < group->task_nb; i++)
@@ -4189,7 +4187,7 @@ int _mpc_cl_intercomm_create(mpc_lowcomm_communicator_t local_comm, int local_le
 
 	mpc_lowcomm_status_t status;
 
-	sctk_assert(local_comm != SCTK_COMM_NULL);
+	assert(local_comm != SCTK_COMM_NULL);
 
 	int rank  = mpc_common_get_task_rank();
 	int grank = mpc_lowcomm_communicator_rank(local_comm, rank);

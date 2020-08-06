@@ -2647,7 +2647,7 @@ int __MPC_init_node_comm_ctx(struct sctk_comm_coll *coll, MPI_Comm comm)
 			sctk_per_node_comm_context_init(tmp_ctx, comm, coll->comm_size);
 		}
 
-		sctk_assert(tmp_ctx != NULL);
+		assert(tmp_ctx != NULL);
 		mpc_lowcomm_bcast(&tmp_ctx, sizeof(void *), 0, comm);
 		mpc_lowcomm_barrier(comm);
 		coll->node_ctx = tmp_ctx;
@@ -13055,9 +13055,9 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
 			*elements = 0;
 
 			/* Retrieve the derived datatype */
-			sctk_assert( (datatype) < SCTK_USER_DATA_TYPES_MAX);
+			assert( (datatype) < SCTK_USER_DATA_TYPES_MAX);
 			target_type = _mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
-			sctk_assert(target_type != NULL);
+			assert(target_type != NULL);
 
 			/* Try to rely on the datype layout */
 			layout = _mpc_dt_get_layout(&target_type->context, &count);

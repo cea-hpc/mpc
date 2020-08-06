@@ -287,7 +287,7 @@ static inline int sctk_ptl_am_eq_poll_md(sctk_ptl_am_rail_info_t* srail, sctk_pt
 	assert(ev);
 	ret = PtlEQPoll(&srail->mds_eq, 1, SCTK_PTL_AM_EQ_TIMEOUT, ev, &id);
 	sctk_ptl_chk(ret);
-	sctk_assert(ret == PTL_EQ_EMPTY || id == 0);
+	assert(ret == PTL_EQ_EMPTY || id == 0);
 	
 	return ret;
 }

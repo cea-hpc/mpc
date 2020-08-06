@@ -907,7 +907,7 @@ static void sctk_multirail_notify_probe  (mpc_lowcomm_ptp_message_header_t* hdr,
 			(rail->notify_probe_message)( rail, hdr, &tmp_ret);
 		}
 		
-		sctk_assert(tmp_ret == -1 || tmp_ret == 1 || tmp_ret == 0);
+		assert(tmp_ret == -1 || tmp_ret == 1 || tmp_ret == 0);
 		
 		/* three scenarios based on that :
 		 * - If a rail found a matching message -> returns 1

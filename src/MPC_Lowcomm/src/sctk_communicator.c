@@ -1597,7 +1597,7 @@ inline mpc_lowcomm_communicator_t sctk_get_peer_comm( const mpc_lowcomm_communic
 {
 	sctk_internal_communicator_t *tmp;
 	tmp = sctk_get_internal_communicator( communicator );
-	sctk_assert( tmp->is_inter_comm == 1 );
+	assert( tmp->is_inter_comm == 1 );
 	return tmp->peer_comm;
 }
 
@@ -2128,7 +2128,7 @@ mpc_lowcomm_communicator_t sctk_duplicate_communicator( const mpc_lowcomm_commun
 			if ( tmp->task_to_process )
 			{
 				dup_task_to_process = sctk_malloc( sizeof( int ) * tmp->nb_task );
-				sctk_assert( dup_task_to_process != NULL );
+				assert( dup_task_to_process != NULL );
 				memcpy( dup_task_to_process, tmp->task_to_process, sizeof( int ) * tmp->nb_task );
 			}
 

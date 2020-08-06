@@ -65,7 +65,7 @@ int mpc_arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t r
 	if(__sctk_ptl_am_id_undefined(msg.remote))
 	{
 		msg.remote = sctk_ptl_am_map_id(&srail, ctx->dest);
-		sctk_assert(!__sctk_ptl_am_id_undefined(msg.remote));
+		assert(!__sctk_ptl_am_id_undefined(msg.remote));
 	}
 
 	/* yes, it is dirty to provide a pointer to sctk_ptl_am_msg as a parameter and wait for
@@ -77,7 +77,7 @@ int mpc_arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t r
 
 	if(response != NULL)
 	{
-		sctk_assert(msg_ret);
+		assert(msg_ret);
 		sctk_ptl_am_wait_response(&srail, msg_ret);
 		*response = (void*)msg_ret->msg_type.rep.addr;
 		*resp_size = msg_ret->size;

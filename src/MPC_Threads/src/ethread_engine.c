@@ -64,7 +64,7 @@ static inline void _mpc_thread_ethread_self_all(_mpc_thread_ethread_virtual_proc
 {
 	*vp   = _mpc_thread_kthread_getspecific(_mpc_thread_ethread_key);
 	*task = (_mpc_thread_ethread_t)(*vp)->current;
-	sctk_assert( (*task)->vp == *vp);
+	assert( (*task)->vp == *vp);
 }
 
 static inline void _mpc_thread_ethread_place_task_on_vp(_mpc_thread_ethread_virtual_processor_t *vp,

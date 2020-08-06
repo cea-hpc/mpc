@@ -179,7 +179,7 @@ sctk_microthread_first_task(void *arg)
 {
 	sctk_microthread_t *self = (sctk_microthread_t *)arg;
 
-	sctk_assert(self != NULL);
+	assert(self != NULL);
 
 	assume(mpc_thread_setspecific(sctk_microthread_key, self) == 0);
 
@@ -212,7 +212,7 @@ sctk_microthread_init(long nb_vp, sctk_microthread_t *self)
 	/* Memory allocation for all VPs */
 	self->__list = (sctk_microthread_vp_t *)sctk_malloc(nb_vp * sizeof
 	                                                    (sctk_microthread_vp_t) );
-	sctk_assert(self->__list != NULL);
+	assert(self->__list != NULL);
 
 	mpc_common_nodebug("sctk_microthread_init: Ready to enter loop...");
 
@@ -225,7 +225,7 @@ sctk_microthread_init(long nb_vp, sctk_microthread_t *self)
 	current_mpc_vp = mpc_topology_get_current_cpu();
 
 	order = sctk_malloc(mpc_topology_get_pu_count() * sizeof(int) );
-	sctk_assert(order != NULL);
+	assert(order != NULL);
 
 	/* Grab the right order to allocate microVPs */
 	mpc_topology_get_pu_neighborhood(current_mpc_vp, mpc_topology_get_pu_count(), order);
@@ -284,7 +284,7 @@ sctk_microthread_init(long nb_vp, sctk_microthread_t *self)
 		        mpc_thread_core_thread_create(&(self->__list[i].pid), &__attr,
 		                                      sctk_microthread_slave_vp,
 		                                      &(self->__list[i]) );
-		sctk_assert(res == 0);
+		assert(res == 0);
 
 		mpc_thread_attr_destroy(&__attr);
 

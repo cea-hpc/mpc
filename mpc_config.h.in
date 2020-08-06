@@ -802,6 +802,12 @@
 /* MPC debug messages output was enabled */
 #undef MPC_ENABLE_DEBUG_MESSAGES
 
+/* Disable assert function */
+#undef NDEBUG
+
+/* Disable internal assert function */
+#undef NO_INTERNAL_ASSERT
+
 /* MPC Colored output */
 #undef MPC_ENABLE_SHELL_COLORS
 

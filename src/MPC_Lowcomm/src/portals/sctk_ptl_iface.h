@@ -424,10 +424,10 @@ static inline void sctk_ptl_compute_chunks(sctk_ptl_rail_info_t* srail, size_t d
 	size_t size = 0;
 	size_t nb = 1;
 
-	sctk_assert(srail);
-	sctk_assert(sz_out);
-	sctk_assert(nb_out);
-	sctk_assert(rest_out);
+	assert(srail);
+	assert(sz_out);
+	assert(nb_out);
+	assert(rest_out);
 
 	/* first, if the msg size reached the cufoff, the chunk size if a simple division */
 	size = (total > srail->cutoff) ? (size_t)(total / SCTK_PTL_MAX_RDV_BLOCKS) : total;
@@ -441,12 +441,12 @@ static inline void sctk_ptl_compute_chunks(sctk_ptl_rail_info_t* srail, size_t d
 	{
 		/* compute how many chunks we need (add one if necessary if not well-balanced) */
 		nb = (size_t)(total / srail->max_mr) + ((total % srail->max_mr == 0) ? 0 : 1);
-		sctk_assert(nb > 0);
+		assert(nb > 0);
 		/* compute the effective size per chunk (load-balancing if an extra-chunk is needed */
 		size = (size_t)(total / nb);
 	}
 
-	sctk_assert(nb > 0);
+	assert(nb > 0);
 
 	*sz_out   = size;
 	*nb_out   = nb;

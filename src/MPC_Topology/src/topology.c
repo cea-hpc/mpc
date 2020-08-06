@@ -676,7 +676,7 @@ int _mpc_topology_get_pu_per_core_count(hwloc_topology_t target_topo, int cpuid)
 	int pu_per_core;
 
 	hwloc_obj_t core = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_CORE, cpuid);
-	sctk_assert( core );
+	assert( core );
 
 	pu_per_core = hwloc_get_nbobjs_inside_cpuset_by_type( target_topo, core->cpuset, HWLOC_OBJ_PU );
 	assert( pu_per_core > 0 );
@@ -845,7 +845,7 @@ void _mpc_topology_get_pu_neighborhood(hwloc_topology_t target_topo, int cpuid, 
 
 	/* alloc size for retreiving objects. We could also use a static array */
 	objs = sctk_malloc( nb_cpus * sizeof( hwloc_obj_t ) );
-	sctk_assert( objs != NULL );
+	assert( objs != NULL );
 
 	/* The closest CPU is actually... the current CPU :-).
 	* Set the closest CPU as the current CPU */

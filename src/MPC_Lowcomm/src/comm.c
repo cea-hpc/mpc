@@ -1871,7 +1871,7 @@ static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matchin
 	{
 		mpc_lowcomm_ptp_message_header_t *header_found;
 
-		sctk_assert(ptr_found->msg != NULL);
+		assert(ptr_found->msg != NULL);
 		header_found = &(ptr_found->msg->body.header);
 
 		/* Control Message Handling */
@@ -1949,7 +1949,7 @@ static inline int __mpc_comm_ptp_probe(mpc_comm_ptp_t *pair,
 	__mpc_comm_ptp_message_list_merge_pending(&(pair->lists) );
 	DL_FOREACH_SAFE(pair->lists.pending_send.list, ptr_send, tmp)
 	{
-		sctk_assert(ptr_send->msg != NULL);
+		assert(ptr_send->msg != NULL);
 		mpc_lowcomm_ptp_message_header_t *header_send = &(ptr_send->msg->body.header);
 		mpc_lowcomm_ptp_message_tail_t *  tail_send   = &(ptr_send->msg->tail);
 		int send_message_matching_id =
@@ -1994,7 +1994,7 @@ static inline int __mpc_comm_ptp_probe(mpc_comm_ptp_t *pair,
 
 static inline int __mpc_comm_pending_msg_list_search_matching_from_recv(mpc_comm_ptp_t *pair, mpc_lowcomm_ptp_message_t *msg)
 {
-	sctk_assert(msg != NULL);
+	assert(msg != NULL);
 	mpc_lowcomm_msg_list_t *ptr_recv = &msg->tail.distant_list;
 	mpc_lowcomm_msg_list_t *ptr_send = __mpc_comm_pending_msg_list_search_matching(&pair->lists.pending_send, &(msg->body.header) );
 
@@ -2346,7 +2346,7 @@ void mpc_lowcomm_request_wait_all_msgs(const int task, const mpc_lowcomm_communi
 
 	/* Get the pending list associated to the task */
 	pair = __mpc_comm_ptp_array_get(com, task);
-	sctk_assert(pair);
+	assert(pair);
 
 	do
 	{

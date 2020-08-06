@@ -64,10 +64,10 @@ static inline void sctk_ptl_cm_recv_message(sctk_rail_info_t* rail, sctk_ptl_eve
 	sctk_ptl_imm_data_t hdr ;
 
 	/* sanity checks */
-	sctk_assert(rail);
-	sctk_assert(ev.ni_fail_type == PTL_NI_OK);
-	sctk_assert(ev.mlength <= rail->network.ptl.eager_limit);
-	sctk_assert(ev.type == PTL_EVENT_PUT);
+	assert(rail);
+	assert(ev.ni_fail_type == PTL_NI_OK);
+	assert(ev.mlength <= rail->network.ptl.eager_limit);
+	assert(ev.type == PTL_EVENT_PUT);
 	
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
 	mpc_lowcomm_ptp_message_header_clear(net_msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS , sctk_ptl_cm_free_memory, sctk_ptl_cm_message_copy);
@@ -122,7 +122,7 @@ void sctk_ptl_cm_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* e
 	sctk_ptl_imm_data_t hdr;
 
 	/* CM are always contiguous `*/
-	sctk_assert(msg->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
+	assert(msg->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 
 	/* configure the MD */
 	start           = msg->tail.message.contiguous.addr;
@@ -136,8 +136,8 @@ void sctk_ptl_cm_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* e
 	pte             = mpc_common_hashtable_get(&srail->pt_table, SCTK_PTL_PTE_CM);
 	request         = sctk_ptl_md_create(srail, start, size, flags);
 	
-	sctk_assert(pte);
-	sctk_assert(request);
+	assert(pte);
+	assert(request);
 	
 	/* double-linking */
 	request->msg           = msg;

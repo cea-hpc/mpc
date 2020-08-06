@@ -69,7 +69,7 @@ static inline int ___mpc_thread_ethread_poll_vp(_mpc_thread_ethread_virtual_proc
 	_mpc_thread_ethread_status_t stat_sav;
 
 	stat_sav = cur->status;
-	sctk_assert(cur->status != ethread_inside_polling);
+	assert(cur->status != ethread_inside_polling);
 	cur->status = ethread_inside_polling;
 
 /*   if (sctk_net_ptp_poll != NULL) */
@@ -89,8 +89,8 @@ static inline int ___mpc_thread_ethread_poll_vp(_mpc_thread_ethread_virtual_proc
 			void *arg;
 			void  (*func) (void *);
 
-			sctk_assert(vp->current == cur);
-			sctk_assert(vp == poll_list->my_self->vp);
+			assert(vp->current == cur);
+			assert(vp == poll_list->my_self->vp);
 
 			arg  = poll_list->arg;
 			func = poll_list->func;
@@ -101,7 +101,7 @@ static inline int ___mpc_thread_ethread_poll_vp(_mpc_thread_ethread_virtual_proc
 				func(arg);
 			}
 
-			sctk_assert(vp->current == cur);
+			assert(vp->current == cur);
 			tmp = poll_list->next;
 			if(*(poll_list->data) == poll_list->value)
 			{
@@ -111,7 +111,7 @@ static inline int ___mpc_thread_ethread_poll_vp(_mpc_thread_ethread_virtual_proc
 					_mpc_thread_ethread_print_task(poll_list->my_self);
 					mpc_common_debug_error("Cur vp %p", vp);
 					_mpc_thread_ethread_print_task(cur);
-					sctk_assert(poll_list->my_self->status ==
+					assert(poll_list->my_self->status ==
 					            ethread_polling);
 				}
 				        );
@@ -162,15 +162,15 @@ static inline void ___mpc_thread_ethread_sched_yield_vp_head(_mpc_thread_ethread
 	sctk_assert_func(start_status = cur->status;
 	                 );
 
-	sctk_assert(cur->status != ethread_system);
+	assert(cur->status != ethread_system);
 	sctk_assert_func(if(cur->vp != vp)
 	{
 		mpc_common_debug_error("%p != %p", cur->vp, vp);
 		_mpc_thread_ethread_print_task(cur);
-		sctk_assert(cur->vp == vp);
+		assert(cur->vp == vp);
 	}
 	                 );
-	sctk_assert(vp->current == cur);
+	assert(vp->current == cur);
 
 	/*
 	 * #if !defined(MPC_IA64_ARCH)
@@ -455,10 +455,10 @@ static inline void ___mpc_thread_ethread_sched_yield_vp_tail(_mpc_thread_ethread
 		vp->to_check = 0;
 	}
 
-	sctk_assert( (cur->status == ethread_ready) ||
+	assert( (cur->status == ethread_ready) ||
 	             (cur->status == ethread_idle) ||
 	             (cur->status == ethread_inside_polling) );
-	sctk_assert(vp->current == cur);
+	assert(vp->current == cur);
 
 	cur->no_auto_enqueue = 0;
 }
@@ -596,7 +596,7 @@ static inline int ___mpc_thread_ethread_sched_yield_vp(_mpc_thread_ethread_virtu
 		}
 		else
 		{
-			sctk_assert(vp->current == cur);
+			assert(vp->current == cur);
 			return 0;
 		}
 	}
@@ -605,8 +605,8 @@ static inline int ___mpc_thread_ethread_sched_yield_vp(_mpc_thread_ethread_virtu
 		SCTK_ACTIVITY_UP(vp);
 	}
 
-	sctk_assert(new_task != NULL);
-	sctk_assert( (new_task->status == ethread_ready) ||
+	assert(new_task != NULL);
+	assert( (new_task->status == ethread_ready) ||
 	             (new_task->status == ethread_idle) ||
 	             (new_task->status == ethread_inside_polling) );
 
@@ -645,8 +645,8 @@ static inline int ___mpc_thread_ethread_sched_yield_vp_idle(_mpc_thread_ethread_
 
 	if(expect_true(new_task != NULL) )
 	{
-		sctk_assert(new_task != NULL);
-		sctk_assert(new_task->status == ethread_ready);
+		assert(new_task != NULL);
+		assert(new_task->status == ethread_ready);
 
 		if(expect_true(cur != new_task) )
 		{
@@ -700,9 +700,9 @@ static inline int ___mpc_thread_ethread_sched_yield_vp_poll(_mpc_thread_ethread_
 	}
 
 	mpc_common_nodebug("NEW task %p cur %p vp %p", new_task, cur, vp);
-	sctk_assert(new_task != NULL);
-	sctk_assert(new_task != cur);
-	sctk_assert( (new_task->status == ethread_ready) ||
+	assert(new_task != NULL);
+	assert(new_task != cur);
+	assert( (new_task->status == ethread_ready) ||
 	             (new_task->status == ethread_idle) ||
 	             (new_task->status == ethread_inside_polling) );
 
@@ -741,9 +741,9 @@ static inline int ___mpc_thread_ethread_sched_yield_vp_freeze
 		SCTK_ACTIVITY_UP(vp);
 	}
 
-	sctk_assert(new_task != NULL);
-	sctk_assert(new_task != cur);
-	sctk_assert( (new_task->status == ethread_ready) ||
+	assert(new_task != NULL);
+	assert(new_task != cur);
+	assert( (new_task->status == ethread_ready) ||
 	             (new_task->status == ethread_idle) ||
 	             (new_task->status == ethread_inside_polling) );
 
@@ -790,7 +790,7 @@ static inline void ___mpc_thread_ethread_wait_for_value_and_poll(_mpc_thread_eth
 
 	assume( (cur->status == ethread_ready) );
 
-	sctk_assert(vp->current == cur);
+	assert(vp->current == cur);
 
 	for(i = 0; i < vp->eagerness; i++)
 	{
@@ -832,12 +832,12 @@ static inline void ___mpc_thread_ethread_wait_for_value_and_poll(_mpc_thread_eth
 	___mpc_thread_ethread_sched_yield_vp_poll(vp, cell.my_self);
 	mpc_common_nodebug("Wait %p from polling done", cell.my_self);
 
-	sctk_assert(cell.forced == 0);
+	assert(cell.forced == 0);
 	sctk_assert_func(if(*data != value)
 	{
 		mpc_common_debug_error("%d != %d", *data, value);
 		_mpc_thread_ethread_print_task(cur);
-		sctk_assert(*data == value);
+		assert(*data == value);
 	}
 	                 );
 
@@ -958,7 +958,7 @@ static inline int ___mpc_thread_ethread_mutex_lock(_mpc_thread_ethread_virtual_p
 	{
 		if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
 		{
-			sctk_assert(lock->lock >= 1);
+			assert(lock->lock >= 1);
 			mpc_common_spinlock_lock(&lock->spinlock);
 			lock->lock++;
 			mpc_common_spinlock_unlock(&lock->spinlock);
@@ -1017,7 +1017,7 @@ static inline int ___mpc_thread_ethread_mutex_lock(_mpc_thread_ethread_virtual_p
 		lock->owner = owner;
 		mpc_common_spinlock_unlock(&lock->spinlock);
 	}
-	sctk_assert(lock->lock >= 1);
+	assert(lock->lock >= 1);
 
 	return 0;
 }
@@ -1034,7 +1034,7 @@ static inline int ___mpc_thread_ethread_mutex_spinlock(_mpc_thread_ethread_virtu
 	{
 		if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
 		{
-			sctk_assert(lock->lock >= 1);
+			assert(lock->lock >= 1);
 			mpc_common_spinlock_lock(&lock->spinlock);
 			lock->lock++;
 			mpc_common_spinlock_unlock(&lock->spinlock);
@@ -1112,7 +1112,7 @@ static inline int ___mpc_thread_ethread_mutex_spinlock(_mpc_thread_ethread_virtu
 		lock->owner = owner;
 		mpc_common_spinlock_unlock(&lock->spinlock);
 	}
-	sctk_assert(lock->lock >= 1);
+	assert(lock->lock >= 1);
 
 	return 0;
 }
@@ -1175,7 +1175,7 @@ static inline int ___mpc_thread_ethread_mutex_trylock(_mpc_thread_ethread_virtua
 		mpc_common_spinlock_unlock(&lock->spinlock);
 	}
 
-	sctk_assert(lock->lock > 0);
+	assert(lock->lock > 0);
 	/*Courte pahse d'attente en cas de lib�ration d'une t�che de polling */
 	while(lock->owner != owner)
 	{
@@ -1187,7 +1187,7 @@ static inline int ___mpc_thread_ethread_mutex_trylock(_mpc_thread_ethread_virtua
 		           lock->owner, owner, __FILE__, __LINE__);
 		_mpc_thread_ethread_print_task(owner);
 		_mpc_thread_ethread_print_task( (_mpc_thread_ethread_per_thread_t *)lock->owner);
-		sctk_assert(lock->owner == owner);
+		assert(lock->owner == owner);
 		return EPERM;
 	}
 
@@ -1223,7 +1223,7 @@ static inline int ___mpc_thread_ethread_mutex_unlock(__UNUSED__ _mpc_thread_ethr
 		}
 	}
 	mpc_common_spinlock_lock(&lock->spinlock);
-	sctk_assert(lock->lock == 1);
+	assert(lock->lock == 1);
 	if(lock->list != NULL)
 	{
 		_mpc_thread_ethread_per_thread_t *to_wake;
@@ -1361,8 +1361,8 @@ static inline int ___mpc_thread_ethread_sched_yield_vp_exit(_mpc_thread_ethread_
 
 	new_task = vp->idle;
 
-	sctk_assert(new_task != NULL);
-	sctk_assert( (new_task->status == ethread_ready) ||
+	assert(new_task != NULL);
+	assert( (new_task->status == ethread_ready) ||
 	             (new_task->status == ethread_idle) ||
 	             (new_task->status == ethread_inside_polling) );
 
@@ -1501,7 +1501,7 @@ static inline void ___mpc_thread_ethread_idle_task(void *arg)
 	{
 		__sctk_grab_zombie(vp);
 		int no_work = ___mpc_thread_ethread_sched_yield_vp_idle(vp, th_data);
-		sctk_assert(vp->idle == th_data);
+		assert(vp->idle == th_data);
 		if(___timer_thread_ticks != last_timer)
 		{
 			double activity;
@@ -1553,9 +1553,9 @@ static inline void ___mpc_thread_ethread_kernel_idle_task(void *arg)
 	while(vp->up == 1)
 	{
 		___mpc_thread_ethread_sched_yield_vp_idle(vp, th_data);
-		sctk_assert(vp->current == th_data);
-		sctk_assert(vp == th_data->vp);
-		sctk_assert(vp->idle == th_data);
+		assert(vp->current == th_data);
+		assert(vp == th_data->vp);
+		assert(vp->idle == th_data);
 		if(___timer_thread_ticks != last_timer)
 		{
 			double activity;
@@ -1824,7 +1824,7 @@ static inline void ___mpc_thread_ethread_freeze_thread_on_vp(_mpc_thread_ethread
 	volatile _mpc_thread_ethread_freeze_on_vp_t cell;
 	_mpc_thread_ethread_freeze_on_vp_t *        list;
 
-	sctk_assert(vp->current == cur);
+	assert(vp->current == cur);
 
 	if(*list_tmp == NULL)
 	{
@@ -1838,9 +1838,9 @@ static inline void ___mpc_thread_ethread_freeze_thread_on_vp(_mpc_thread_ethread
 	list = (_mpc_thread_ethread_freeze_on_vp_t *)(*list_tmp);
 	mpc_common_nodebug("Add task in %p %d task %p %s", list, vp->rank, cur,
 	             _mpc_thread_ethread_debug_status(cur->status) );
-	sctk_assert(list->vp == vp);
-	sctk_assert(cur->status != ethread_idle);
-	sctk_assert(cur->status == ethread_ready);
+	assert(list->vp == vp);
+	assert(cur->status != ethread_idle);
+	assert(cur->status == ethread_ready);
 
 	___mpc_thread_ethread_enqueue_task(cur, &(list->queue), &(list->queue_tail) );
 
@@ -1874,7 +1874,7 @@ ___mpc_thread_ethread_wake_thread_on_vp(_mpc_thread_ethread_virtual_processor_t 
 	vp = list->vp;
 
 	mpc_common_nodebug("Wake tasks in %p", list);
-	sctk_assert(list != NULL);
+	assert(list != NULL);
 
 	sctk_assert_func(if(list->vp != vp)
 	{
@@ -1886,7 +1886,7 @@ ___mpc_thread_ethread_wake_thread_on_vp(_mpc_thread_ethread_virtual_processor_t 
 		_mpc_thread_ethread_print_task( (_mpc_thread_ethread_per_thread_t
 		                                 *)
 		                                vp->current);
-		sctk_assert(list->vp == vp);
+		assert(list->vp == vp);
 	}
 	                 );
 

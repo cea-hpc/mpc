@@ -971,7 +971,7 @@ void _mpc_threads_ng_engine_check_signals(int select)
 	sched = &(_mpc_threads_ng_engine_self()->sched);
 	mpc_common_nodebug("_mpc_threads_ng_engine_check_signals %p", sched);
 	current = sched->th;
-	sctk_assert(&current->sched == sched);
+	assert(&current->sched == sched);
 
 	if(expect_false(current->attr.nb_sig_pending > 0) )
 	{
@@ -4543,7 +4543,7 @@ static int _mpc_threads_ng_engine_join(_mpc_threads_ng_engine_t threadp, void **
 	/* Get the current thread */
 	sched   = &(_mpc_threads_ng_engine_self()->sched);
 	current = sched->th;
-	sctk_assert(&current->sched == sched);
+	assert(&current->sched == sched);
 
 	mpc_common_nodebug("Join Thread %p", th);
 
@@ -4609,7 +4609,7 @@ static void _mpc_threads_ng_engine_exit(void *retval)
 	/* Get the current thread */
 	sched   = &(_mpc_threads_ng_engine_self()->sched);
 	current = sched->th;
-	sctk_assert(&current->sched == sched);
+	assert(&current->sched == sched);
 
 	current->attr.return_value = retval;
 

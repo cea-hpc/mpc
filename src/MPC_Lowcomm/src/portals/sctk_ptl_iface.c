@@ -151,13 +151,13 @@ sctk_ptl_rail_info_t sctk_ptl_hardware_init()
 	sctk_ptl_limits_t l;
 
 	/* pre-actions */
-	sctk_assert(sizeof(sctk_ptl_std_content_t)     <= sizeof(ptl_match_bits_t));
-	sctk_assert(sizeof(sctk_ptl_offload_content_t) <= sizeof(ptl_match_bits_t));
-	sctk_assert(sizeof(sctk_ptl_matchbits_t)       <= sizeof(ptl_match_bits_t));
-	sctk_assert(sizeof(sctk_ptl_std_data_t)        <= sizeof(ptl_hdr_data_t));
-	sctk_assert(sizeof(sctk_ptl_cm_data_t)         <= sizeof(ptl_hdr_data_t));
-	sctk_assert(sizeof(sctk_ptl_offload_data_t)    <= sizeof(ptl_hdr_data_t));
-	sctk_assert(sizeof(sctk_ptl_imm_data_t)        <= sizeof(ptl_hdr_data_t));
+	assert(sizeof(sctk_ptl_std_content_t)     <= sizeof(ptl_match_bits_t));
+	assert(sizeof(sctk_ptl_offload_content_t) <= sizeof(ptl_match_bits_t));
+	assert(sizeof(sctk_ptl_matchbits_t)       <= sizeof(ptl_match_bits_t));
+	assert(sizeof(sctk_ptl_std_data_t)        <= sizeof(ptl_hdr_data_t));
+	assert(sizeof(sctk_ptl_cm_data_t)         <= sizeof(ptl_hdr_data_t));
+	assert(sizeof(sctk_ptl_offload_data_t)    <= sizeof(ptl_hdr_data_t));
+	assert(sizeof(sctk_ptl_imm_data_t)        <= sizeof(ptl_hdr_data_t));
 	
 	/* init the driver */
 	sctk_ptl_chk(PtlInit());
@@ -494,7 +494,7 @@ sctk_ptl_local_data_t* sctk_ptl_me_create_with_cnt(sctk_ptl_rail_info_t* srail, 
 void sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* user_ptr, sctk_ptl_pte_t* pte)
 {
 	assert(user_ptr);
-	sctk_assert(user_ptr->slot.me.start);
+	assert(user_ptr->slot.me.start);
 	sctk_ptl_chk(PtlMEAppend(
 		srail->iface,         /* the NI handler */
 		pte->idx,             /* the targeted PT entry */
@@ -647,7 +647,7 @@ sctk_ptl_id_t sctk_ptl_self(sctk_ptl_rail_info_t* srail)
 void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb, int list, char type, char protocol)
 {
 	int j;
-	sctk_assert(list == SCTK_PTL_PRIORITY_LIST || list == SCTK_PTL_OVERFLOW_LIST);
+	assert(list == SCTK_PTL_PRIORITY_LIST || list == SCTK_PTL_OVERFLOW_LIST);
 
 	for (j = 0; j < nb; j++)
 	{
