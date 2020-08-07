@@ -22,6 +22,9 @@ variables:
   - pt_devel
   - merge_requests
   - web
+  except:
+    variables:
+      - $CI_MERGE_REQUEST_TITLE =~ /^WIP:/
 
 .breaking_tests: &breaking_tests
   allow_failure: true
