@@ -53,7 +53,7 @@ typedef struct
 } mpc_lowcomm_status_t;
 
 #define SCTK_STATUS_NULL NULL
-#define SCTK_STATUS_INIT {SCTK_ANY_SOURCE,SCTK_ANY_TAG,SCTK_SUCCESS,0,0}
+#define SCTK_STATUS_INIT {MPC_ANY_SOURCE,MPC_ANY_TAG,SCTK_SUCCESS,0,0}
 
 
 /** Generalized requests functions **/
@@ -176,26 +176,26 @@ typedef enum sctk_ft_state_e
 
 /************************** MACROS *************************/
 /** define the MPI_COMM_WORLD internal communicator number **/
-#define SCTK_COMM_WORLD 0
+#define MPC_COMM_WORLD 0
 /** define the MPI_COMM_SELF internal communicator number **/
-#define SCTK_COMM_SELF 1
+#define MPC_COMM_SELF 1
 /** Define the NULL communicator number */
-#define SCTK_COMM_NULL  ((mpc_lowcomm_communicator_t)(-1))
+#define MPC_COMM_NULL  ((mpc_lowcomm_communicator_t)(-1))
 /** Define the NULL error handler */
 #define SCTK_ERRHANDLER_NULL 0
 /** Not using datatypes */
-#define SCTK_DATATYPE_IGNORE ((mpc_lowcomm_datatype_t)0)
+#define MPC_DATATYPE_IGNORE ((mpc_lowcomm_datatype_t)0)
 /** In place collectives **/
-#define SCTK_IN_PLACE ((void*)-1)
+#define MPC_IN_PLACE ((void*)-1)
 /** PROC_NULL **/
-#define SCTK_PROC_NULL -2
+#define MPC_PROC_NULL -2
 /** SUCCESS and ERROR **/
 #define SCTK_SUCCESS 0
 #define SCTK_ERROR 1
 
 /** Wildcards **/
-#define SCTK_ANY_TAG -1
-#define SCTK_ANY_SOURCE -1
-#define SCTK_ANY_COMM -99
+#define MPC_ANY_TAG -1
+#define MPC_ANY_SOURCE -1
+#define MPC_ANY_COMM -99
 
 #endif /* SCTK_TYPES_H */

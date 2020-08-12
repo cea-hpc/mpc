@@ -883,10 +883,12 @@ hwloc_topology_t mpc_topology_get()
 	return __mpc_module_topology;
 }
 
+#ifdef MPC_USE_EXTLS
 static hwloc_topology_t* __extls_get_topology_addr(void)
 {
 	return &__mpc_module_topology;
 }
+#endif
 
 void mpc_topology_init()
 {

@@ -371,8 +371,8 @@ void sctk_ptl_rdv_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_info
 	match.data.uid  = SCTK_MSG_NUMBER(msg)         % SCTK_PTL_MAX_UIDS;
 	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg) % SCTK_PTL_MAX_TYPES;
 	SCTK_PTL_TYPE_RDV_UNSET(match.data.type); /* the emitted PUT does not carry the information */
-	ign.data.tag    = (SCTK_MSG_TAG(msg)         == SCTK_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
-	ign.data.rank   = (SCTK_MSG_SRC_PROCESS(msg) == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
+	ign.data.tag    = (SCTK_MSG_TAG(msg)         == MPC_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
+	ign.data.rank   = (SCTK_MSG_SRC_PROCESS(msg) == MPC_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
 	ign.data.uid    = SCTK_PTL_IGN_UID;
 	ign.data.type   = SCTK_PTL_MATCH_TYPE;
 

@@ -183,7 +183,7 @@ static void _mpc_coll_allreduce_simple( const void *buffer_in, void *buffer_out,
 
 		if ( tmp->allreduce.allreduce_simple.done == 0 )
 		{
-			if ( buffer_in != SCTK_IN_PLACE )
+			if ( buffer_in != MPC_IN_PLACE )
 			{
 				memcpy( tmp->allreduce.allreduce_simple.buffer, buffer_in, size );
 			}
@@ -289,7 +289,7 @@ static void _mpc_coll_message_send( const mpc_lowcomm_communicator_t communicato
 	mpc_lowcomm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
 	mpc_lowcomm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, myself, dest,
 	                                     &( msg_req->request ), size, message_class,
-	                                     SCTK_DATATYPE_IGNORE, REQUEST_SEND );
+	                                     MPC_DATATYPE_IGNORE, REQUEST_SEND );
 	_mpc_comm_ptp_message_send_check( &( msg_req->msg ), check_msg );
 }
 
@@ -301,7 +301,7 @@ static void _mpc_coll_message_recv( const mpc_lowcomm_communicator_t communicato
 	mpc_lowcomm_ptp_message_set_contiguous_addr( &( msg_req->msg ), buffer, size );
 	mpc_lowcomm_ptp_message_header_init( &( msg_req->msg ), tag, communicator, src, myself,
 	                                     &( msg_req->request ), size, message_class,
-	                                     SCTK_DATATYPE_IGNORE, REQUEST_RECV );
+	                                     MPC_DATATYPE_IGNORE, REQUEST_RECV );
 	_mpc_comm_ptp_message_recv_check( &( msg_req->msg ), check_msg );
 }
 
@@ -634,7 +634,7 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
 			}
 		}
 
-		if ( buffer_in != SCTK_IN_PLACE )
+		if ( buffer_in != MPC_IN_PLACE )
 		{
 			memcpy( buffer_out, buffer_in, size );
 		}
@@ -1774,7 +1774,7 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 		}
 	}
 
-	if ( buffer_in != SCTK_IN_PLACE )
+	if ( buffer_in != MPC_IN_PLACE )
 	{
 		memcpy( buffer_out, buffer_in, size );
 	}
@@ -1986,7 +1986,7 @@ void mpc_lowcomm_terminaison_barrier( void )
 	static volatile int done = 0;
 	static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 	static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-	local = sctk_get_nb_task_local( SCTK_COMM_WORLD );
+	local = sctk_get_nb_task_local( MPC_COMM_WORLD );
 	pthread_mutex_lock( &lock );
 	done++;
 	mpc_common_nodebug( "mpc_lowcomm_terminaison_barrier %d %d", done, local );
@@ -1994,7 +1994,6 @@ void mpc_lowcomm_terminaison_barrier( void )
 	if ( done == local )
 	{
 		done = 0;
-#ifndef SCTK_LIB_MODE
 
 		/* In libmode we do not want the pmi barrier
 		 * to be called after MPI_Finalize (therefore we
@@ -2005,7 +2004,6 @@ void mpc_lowcomm_terminaison_barrier( void )
 			mpc_launch_pmi_barrier();
 		}
 
-#endif
 		mpc_common_nodebug( "WAKE ALL in mpc_lowcomm_terminaison_barrier" );
 		pthread_cond_broadcast( &cond );
 	}
@@ -2065,7 +2063,7 @@ int mpc_lowcomm_barrier( const mpc_lowcomm_communicator_t communicator )
 {
 	struct mpc_lowcomm_coll_s *tmp;
 
-	if ( communicator == SCTK_COMM_SELF )
+	if ( communicator == MPC_COMM_SELF )
 	{
 		return SCTK_SUCCESS;
 	}
@@ -2106,7 +2104,7 @@ void mpc_lowcomm_bcast( void *buffer, const size_t size,
 {
 	struct mpc_lowcomm_coll_s *tmp;
 
-	if ( communicator != SCTK_COMM_SELF )
+	if ( communicator != MPC_COMM_SELF )
 	{
 		tmp = _mpc_comm_get_internal_coll( communicator );
 		tmp->broadcast_func( buffer, size, root, communicator, tmp );
@@ -2125,7 +2123,7 @@ void mpc_lowcomm_allreduce( const void *buffer_in, void *buffer_out,
 {
 	struct mpc_lowcomm_coll_s *tmp;
 
-	if ( communicator != SCTK_COMM_SELF )
+	if ( communicator != MPC_COMM_SELF )
 	{
 		tmp = _mpc_comm_get_internal_coll( communicator );
 		tmp->allreduce_func( buffer_in, buffer_out, elem_size,

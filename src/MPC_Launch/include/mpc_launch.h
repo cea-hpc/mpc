@@ -45,6 +45,12 @@ void mpc_launch_print_banner( bool restarting );
 void mpc_launch_init_runtime();
 
 /**
+* @brief This is the main entry point to finalize MPC
+*
+*/
+void mpc_launch_release_runtime();
+
+/**
 * @brief Main wrapper for MPC launch (calling INIT/RELEASE)
 *
 * @param argc number of arguments

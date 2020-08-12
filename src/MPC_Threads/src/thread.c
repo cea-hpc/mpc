@@ -1174,9 +1174,10 @@ int mpc_thread_core_thread_create(mpc_thread_t *restrict __threadp,
 		mpc_topology_bind_to_process_cpuset();
 	}
 
-	int scope_init;
 
 #ifdef MPC_USE_EXTLS
+	int scope_init;
+
 	extls_ctx_t * old_ctx = sctk_extls_storage;
 	extls_ctx_t **cur_tx  = ( (extls_ctx_t **)sctk_get_ctx_addr() );
 	*cur_tx = calloc(1, sizeof(extls_ctx_t) );
@@ -1207,13 +1208,13 @@ int mpc_thread_core_thread_create(mpc_thread_t *restrict __threadp,
 	sctk_check(res, 0);
 #ifdef MPC_USE_EXTLS
 	extls_ctx_restore(old_ctx);
-#endif
-#ifndef NO_INTERNAL_ASSERT
-	if(__attr != NULL)
-	{
-		mpc_thread_attr_getscope(__attr, &scope_init);
-		mpc_common_nodebug("Thread created with scope %d", scope_init);
-	}
+	#ifndef NO_INTERNAL_ASSERT
+		if(__attr != NULL)
+		{
+			mpc_thread_attr_getscope(__attr, &scope_init);
+			mpc_common_nodebug("Thread created with scope %d", scope_init);
+		}
+	#endif
 #endif
 	TODO("THIS CODE IS UGLY ! FIX TO REEENABLE");
 #if 0

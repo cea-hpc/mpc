@@ -238,8 +238,8 @@ void sctk_ptl_eager_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_in
 	/* apply the mask, depending on request infos
 	 * The UID is always ignored, it we only be used to make RDV requests consistent
 	 */
-	ign.data.tag  = (SCTK_MSG_TAG(msg)         == SCTK_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
-	ign.data.rank = (SCTK_MSG_SRC_PROCESS(msg) == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
+	ign.data.tag  = (SCTK_MSG_TAG(msg)         == MPC_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
+	ign.data.rank = (SCTK_MSG_SRC_PROCESS(msg) == MPC_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
 	ign.data.uid  = SCTK_PTL_IGN_UID;
 	ign.data.type = SCTK_PTL_MATCH_TYPE;
 

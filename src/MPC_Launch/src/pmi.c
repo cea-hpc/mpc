@@ -31,14 +31,9 @@
 
 #include "mpc_launch.h"
 
-#ifndef SCTK_LIB_MODE
+#if defined(MPC_USE_SLURM) || defined(MPC_USE_HYDRA)
 	#include <pmi.h>
-#else
-	/* We have to define these constants
-	* as in lib mode we have no PMI.h */
-	#define PMI_SUCCESS 0
-	#define PMI_FAIL 1
-#endif /*SCTK_LIB_MODE */
+#endif
 
 struct mpc_pmi_context
 {
@@ -79,57 +74,10 @@ void __mpc_launch_pmi_context_clear( void )
 	memset( &pmi_context, 0, sizeof( struct mpc_pmi_context ) );
 }
 
-/******************************************************************************
-LIBRARY MODE TOLOGY GETTERS
-******************************************************************************/
-#ifdef SCTK_LIB_MODE
-/* Here are the hook used by the host MPI when running in libmode */
-#pragma weak mpc_lowcomm_hook_rank
-int mpc_lowcomm_hook_rank()
-{
-	return 0;
-}
-
-#pragma weak mpc_lowcomm_hook_size
-int mpc_lowcomm_hook_size()
-{
-	return 1;
-}
-
-#pragma weak mpc_lowcomm_hook_barrier
-void mpc_lowcomm_hook_barrier()
-{
-}
-
-#pragma weak mpc_lowcomm_hook_send_to
-void mpc_lowcomm_hook_send_to( void *data, size_t size, int target )
-{
-	mpc_common_debug_fatal( "You must implement the mpc_lowcomm_send_to function to run in multiprocess" );
-}
-
-#pragma weak mpc_lowcomm_hook_recv_from
-void mpc_lowcomm_hook_recv_from( void *data, size_t size, int source )
-{
-	mpc_common_debug_fatal( "You must implement the mpc_lowcomm_recv_from function to run in multiprocess" );
-}
-#endif
 
 /******************************************************************************
 INITIALIZATION/FINALIZE
 ******************************************************************************/
-
-#ifdef SCTK_LIB_MODE
-static inline int __mpc_pmi_init_lib_mode()
-{
-	pmi_context.process_rank = mpc_lowcomm_hook_rank();
-	pmi_context.process_count = mpc_lowcomm_hook_size();
-	/* Consider nodes as processes */
-	mpc_common_set_node_rank( pmi_context.process_rank );
-	mpc_common_set_node_count( pmi_context.process_count );
-	mpc_common_set_local_process_rank( 0 ) : mpc_common_set_local_process_count( 1 );
-		return 0;
-	}
-#endif
 
 #define PMI_CHECK_RC(retcode, ctx)do\
 {\
@@ -159,10 +107,6 @@ NUMBERING/TOPOLOGY INFORMATION
 */
 	static inline int __mpc_pmi_get_process_count( int *size )
 {
-#ifdef SCTK_LIB_MODE
-	*size = pmi_context.process_count;
-	return MPC_LAUNCH_PMI_SUCCESS;
-#endif /* SCTK_LIB_MODE */
 	int rc;
 	// Get the total number of processes
 	rc = PMI_Get_size( size );
@@ -175,10 +119,7 @@ NUMBERING/TOPOLOGY INFORMATION
 */
 static inline int __mpc_pmi_get_local_process_rank( int *rank )
 {
-#ifdef SCTK_LIB_MODE
-	*rank = mpc_common_get_local_process_rank();
-	return MPC_LAUNCH_PMI_SUCCESS;
-#elif defined(MPC_USE_HYDRA)
+#if defined(MPC_USE_HYDRA)
 	*rank = pmi_context.local_process_rank;
 	return MPC_LAUNCH_PMI_SUCCESS;
 #elif defined(MPC_USE_SLURM)
@@ -207,10 +148,7 @@ static inline int __mpc_pmi_get_local_process_rank( int *rank )
 */
 static inline int __mpc_pmi_get_local_process_count( int *size )
 {
-#ifdef SCTK_LIB_MODE
-	*size = mpc_common_get_local_process_count();
-	return MPC_LAUNCH_PMI_SUCCESS;
-#elif defined(MPC_USE_HYDRA) || defined(MPC_USE_SLURM)
+#if defined(MPC_USE_HYDRA) || defined(MPC_USE_SLURM)
 
 	/* Testing with new PMI we had PMI_Get_clique_size returning -1
 	   on PMIX compat so we rely on the manual computation
@@ -239,9 +177,7 @@ static inline int __mpc_pmi_get_local_process_count( int *size )
 */
 static inline int __mpc_pmi_get_node_rank( int *rank )
 {
-#ifdef SCTK_LIB_MODE
-	return __mpc_pmi_get_process_rank( rank );
-#elif defined(MPC_USE_HYDRA)
+#if defined(MPC_USE_HYDRA)
 	*rank = pmi_context.node_rank;
 	return MPC_LAUNCH_PMI_SUCCESS;
 #elif defined(MPC_USE_SLURM)
@@ -271,9 +207,7 @@ static inline int __mpc_pmi_get_node_rank( int *rank )
 */
 static inline int __mpc_pmi_get_node_count( int *size )
 {
-#ifdef SCTK_LIB_MODE
-	return __mpc_pmi_get_process_count( size );
-#elif defined(MPC_USE_HYDRA)
+#if defined(MPC_USE_HYDRA)
 	*size = pmi_context.node_count;
 	return MPC_LAUNCH_PMI_SUCCESS;
 #elif defined(MPC_USE_SLURM)
@@ -303,10 +237,6 @@ static inline int __mpc_pmi_get_node_count( int *size )
 */
 static inline int __mpc_pmi_get_process_rank( int *rank )
 {
-#ifdef SCTK_LIB_MODE
-	*rank = pmi_context.process_rank;
-	return MPC_LAUNCH_PMI_SUCCESS;
-#endif /* SCTK_LIB_MODE */
 	int rc;
 	// Get the rank of the current process
 	rc = PMI_Get_rank( rank );
@@ -328,9 +258,6 @@ static inline int __mpc_pmi_get_process_rank( int *rank )
 int mpc_launch_pmi_init()
 {
 	__mpc_launch_pmi_context_clear();
-#ifdef SCTK_LIB_MODE
-	return __mpc_pmi_init_lib_mode();
-#endif
 
 	mpc_common_tracepoint("Starting PMI");
 
@@ -493,7 +420,7 @@ int mpc_launch_pmi_init()
 	if( 0 < mpc_common_get_flags()->process_number)
 	{
 		/* Ensure coherency if a process number was on CLI */
-		assume(mpc_common_get_flags()->process_number == pmi_context.process_count);
+		assume((int)mpc_common_get_flags()->process_number == pmi_context.process_count);
 	}
 
 	/* Get process number from PMI */
@@ -527,9 +454,6 @@ int mpc_launch_pmi_init()
 int mpc_launch_pmi_finalize()
 {
 	mpc_common_debug("ENDING PMI");
-#ifdef SCTK_LIB_MODE
-	return MPC_LAUNCH_PMI_SUCCESS;
-#endif /* SCTK_LIB_MODE */
 	int rc;
 	// Finalize PMI/SLURM
 	rc = PMI_Finalize();
@@ -550,10 +474,6 @@ SYNCHRONIZATION
 */
 int mpc_launch_pmi_barrier()
 {
-#ifdef SCTK_LIB_MODE
-	mpc_lowcomm_hook_barrier();
-	return MPC_LAUNCH_PMI_SUCCESS;
-#endif /* SCTK_LIB_MODE */
 	int rc;
 	// Perform the barrier
 	rc = PMI_Barrier();
@@ -578,11 +498,7 @@ int mpc_launch_pmi_is_initialized()
 
 void mpc_launch_pmi_abort()
 {
-#if defined(SCTK_LIB_MODE)
-	abort();
-#else
 	PMI_Abort( 6, "ABORT from mpc_launch_pmi_abort" );
-#endif
 }
 
 
@@ -595,7 +511,7 @@ int mpc_launch_pmi_get_job_id( int *id )
 	/* in mpich with pmi1, kvs name is used as job id. */
 	*id = atoi( pmi_context.kvsname );
 	return MPC_LAUNCH_PMI_SUCCESS;
-#elif defined( SCTK_LIB_MODE ) || defined( MPC_USE_SLURM )
+#elif defined( MPC_USE_SLURM )
 	char *env = NULL;
 	env = getenv( "SLURM_JOB_ID" );
 
@@ -631,10 +547,6 @@ INFORMATION DIFFUSION
 
 int mpc_launch_pmi_put( char *value, char *key )
 {
-#ifdef SCTK_LIB_MODE
-	not_implemented();
-	return MPC_LAUNCH_PMI_FAIL;
-#endif /* SCTK_LIB_MODE */
 	int rc;
 	// Put info in Key-Value-Space
 	rc = PMI_KVS_Put( pmi_context.kvsname, key, value );
@@ -647,10 +559,6 @@ int mpc_launch_pmi_put( char *value, char *key )
 
 int mpc_launch_pmi_put_as_rank( char *value, int tag )
 {
-#ifdef SCTK_LIB_MODE
-	not_implemented();
-	return MPC_LAUNCH_PMI_FAIL;
-#endif  /* SCTK_LIB_MODE */
 	int iRank, rc;
 	char *key = NULL;
 	// Get the process rank
@@ -665,10 +573,6 @@ int mpc_launch_pmi_put_as_rank( char *value, int tag )
 
 int mpc_launch_pmi_get_as_rank( char *value, size_t size, int tag, int rank )
 {
-#ifdef SCTK_LIB_MODE
-	not_implemented();
-	return MPC_LAUNCH_PMI_FAIL;
-#endif /* SCTK_LIB_MODE */
 	int rc;
 	char *key = NULL;
 	// Build the key
@@ -682,10 +586,6 @@ int mpc_launch_pmi_get_as_rank( char *value, size_t size, int tag, int rank )
 
 int mpc_launch_pmi_get( char *value, size_t size, char *key )
 {
-#ifdef SCTK_LIB_MODE
-	not_implemented();
-	return MPC_LAUNCH_PMI_FAIL;
-#endif /* SCTK_LIB_MODE */
 	int rc;
 	// Get the value associated to the given key
 	rc = PMI_KVS_Get( pmi_context.kvsname, key, value, size );

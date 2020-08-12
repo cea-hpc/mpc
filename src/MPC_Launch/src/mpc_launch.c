@@ -423,7 +423,6 @@ static void *__mpc_mpi_task_start_function(void *parg)
 	startup_arg_t *duplicate_args = __startup_arg_extract_and_duplicate(arg);
 
 	/* In libmode there is no main */
-#ifndef SCTK_LIB_MODE
 	mpc_common_init_trigger("Starting Main");
 
 	retcode = CALL_MAIN(mpc_user_main__, duplicate_args->argc, duplicate_args->argv);
@@ -460,7 +459,7 @@ static void *__mpc_mpi_task_start_function(void *parg)
 	}
 
 	mpc_common_init_trigger("Ending Main");
-#endif  /* SCTK_LIB_MODE */
+
 	__startup_arg_free(duplicate_args);
 	return NULL;
 }
@@ -508,15 +507,6 @@ static void __set_default_values()
 	mpc_common_get_flags()->sctk_network_description_string = "No networking";
 	mpc_common_get_flags()->checkpoint_model = "No C/R";
 
-#ifdef SCTK_LIB_MODE
-	/* In lib mode we force the pthread MODE */
-	sctk_use_pthread();
-
-	/* In LIB mode comm size is inherited from
-	 * the host application (not from the launcher) */
-	mpc_common_get_flags()->process_number = mpc_lowcomm_hook_size();
-	mpc_common_get_flags()->task_number    = mpc_lowcomm_hook_size();
-#else
 	sctk_use_ethread_mxn();
 
 	// Initializing multithreading mode
@@ -527,7 +517,6 @@ static void __set_default_values()
 
 	mpc_common_get_flags()->task_number    = sctk_runtime_config_get()->modules.launcher.nb_task;
 	mpc_common_get_flags()->process_number = 0;
-#endif
 	mpc_common_get_flags()->processor_number        = sctk_runtime_config_get()->modules.launcher.nb_processor;
 	mpc_common_get_flags()->verbosity               = sctk_runtime_config_get()->modules.launcher.verbosity;
 	mpc_common_get_flags()->launcher                = sctk_runtime_config_get()->modules.launcher.launcher;
@@ -662,14 +651,11 @@ void mpc_launch_init_runtime()
 	mpc_launch_print_banner(0 /* not in restart mode */);
 }
 
-int mpc_launch_release_runtime()
+void mpc_launch_release_runtime()
 {
 	mpc_common_init_trigger("Base Runtime Finalize");
 	mpc_topology_destroy();
-	return 0;
 }
-
-#ifndef SCTK_LIB_MODE
 
 int mpc_launch_main(int argc, char **argv)
 {
@@ -694,4 +680,3 @@ int mpc_launch_main(int argc, char **argv)
 
 	return OPA_load_int(&__mpc_main_return_code);
 }
-#endif /* SCTK_LIB_MODE */

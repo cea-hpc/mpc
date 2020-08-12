@@ -85,152 +85,152 @@ main (int argc, char **argv)
 #endif
   MPI_Init (&argc, &argv);
 
-  MPI_Comm_rank (SCTK_COMM_WORLD, &my_rank);
+  MPI_Comm_rank (MPC_COMM_WORLD, &my_rank);
 
 #if 1
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
   start = rrrmpc_arch_get_timestamp_gettimeofday ();
   for (i = 0; i < iters; i++)
     {
-      MPI_Barrier (SCTK_COMM_WORLD);
+      MPI_Barrier (MPC_COMM_WORLD);
     }
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
   end = rrrmpc_arch_get_timestamp_gettimeofday ();
   if (my_rank == 0)
     fprintf (stderr, "Barrier %fus %f\n", (end - start) / iters,
 	     (((end - start) / iters) * 1600) / 4);
 
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
 
   start = rrrmpc_arch_get_timestamp_gettimeofday ();
   for (i = 0; i < iters; i++)
     {
-      MPI_Bcast (msg, 1, MPI_CHAR, 0, SCTK_COMM_WORLD);
+      MPI_Bcast (msg, 1, MPI_CHAR, 0, MPC_COMM_WORLD);
     }
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
   end = rrrmpc_arch_get_timestamp_gettimeofday ();
   if (my_rank == 0)
     fprintf (stderr, "Broadcast %fus %f\n", (end - start) / iters,
 	     (((end - start) / iters) * 1600) / 4);
 
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
 
 #endif
   start = rrrmpc_arch_get_timestamp_gettimeofday ();
   for (i = 0; i < iters; i++)
     {
-      MPI_Allreduce (sendbuf, recvbuf, 1, MPI_INT, MPI_SUM, SCTK_COMM_WORLD);
+      MPI_Allreduce (sendbuf, recvbuf, 1, MPI_INT, MPI_SUM, MPC_COMM_WORLD);
     }
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
   end = rrrmpc_arch_get_timestamp_gettimeofday ();
   if (my_rank == 0)
     fprintf (stderr, "Reduce %fus %f\n", (end - start) / iters,
 	     (((end - start) / iters) * 1600) / 4);
 
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
 
   start = rrrmpc_arch_get_timestamp_gettimeofday ();
   for (i = 0; i < iters; i++)
     {
-      MPI_Bcast (msg, 512, MPI_CHAR, 0, SCTK_COMM_WORLD);
+      MPI_Bcast (msg, 512, MPI_CHAR, 0, MPC_COMM_WORLD);
     }
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
   end = rrrmpc_arch_get_timestamp_gettimeofday ();
   if (my_rank == 0)
     fprintf (stderr, "Broadcast 512 %fus %f\n", (end - start) / iters,
 	     (((end - start) / iters) * 1600) / 4);
 
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
 
 
   start = rrrmpc_arch_get_timestamp_gettimeofday ();
   for (i = 0; i < iters; i++)
     {
-      MPI_Allreduce (sendbuf, recvbuf, 128, MPI_INT, MPI_SUM, SCTK_COMM_WORLD);
+      MPI_Allreduce (sendbuf, recvbuf, 128, MPI_INT, MPI_SUM, MPC_COMM_WORLD);
     }
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
   end = rrrmpc_arch_get_timestamp_gettimeofday ();
   if (my_rank == 0)
     fprintf (stderr, "Reduce 512 %fus %f\n", (end - start) / iters,
 	     (((end - start) / iters) * 1600) / 4);
 
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
 
   start = rrrmpc_arch_get_timestamp_gettimeofday ();
   for (i = 0; i < iters/2; i++)
     {
-      MPI_Bcast (msg, 8 * 1024, MPI_CHAR, 0, SCTK_COMM_WORLD);
+      MPI_Bcast (msg, 8 * 1024, MPI_CHAR, 0, MPC_COMM_WORLD);
     }
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
   end = rrrmpc_arch_get_timestamp_gettimeofday ();
   if (my_rank == 0)
     fprintf (stderr, "Broadcast %d %fus %f\n", 8 * 1024,
 	     (end - start) / iters, (((end - start) / iters) * 1600) / 4);
 
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
 
 
   start = rrrmpc_arch_get_timestamp_gettimeofday ();
   for (i = 0; i < iters/10; i++)
     {
       MPI_Allreduce (sendbuf, recvbuf, 8 * 1024 / 4,
-		     MPI_INT, MPI_SUM, SCTK_COMM_WORLD);
+		     MPI_INT, MPI_SUM, MPC_COMM_WORLD);
     }
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
   end = rrrmpc_arch_get_timestamp_gettimeofday ();
   if (my_rank == 0)
     fprintf (stderr, "Reduce %d %fus %f\n", 8 * 1024, (end - start) / iters,
 	     (((end - start) / iters) * 1600) / 4);
 
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
 
   start = rrrmpc_arch_get_timestamp_gettimeofday ();
   for (i = 0; i < iters / 20; i++)
     {
-      MPI_Bcast (msg, 1024 * 1024, MPI_CHAR, 0, SCTK_COMM_WORLD);
+      MPI_Bcast (msg, 1024 * 1024, MPI_CHAR, 0, MPC_COMM_WORLD);
     }
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
   end = rrrmpc_arch_get_timestamp_gettimeofday ();
   if (my_rank == 0)
     fprintf (stderr, "Broadcast %d %fus %f\n", 1024 * 1024,
 	     (end - start) / iters, (((end - start) / iters) * 1600) / 4);
 
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
 
 
   start = rrrmpc_arch_get_timestamp_gettimeofday ();
   for (i = 0; i < iters / 20; i++)
     {
       MPI_Allreduce (sendbuf, recvbuf, 1024 * 1024 / 4,
-		     MPI_INT, MPI_SUM, SCTK_COMM_WORLD);
+		     MPI_INT, MPI_SUM, MPC_COMM_WORLD);
     }
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
   end = rrrmpc_arch_get_timestamp_gettimeofday ();
   if (my_rank == 0)
     fprintf (stderr, "Reduce %d %fus %f\n", 1024 * 1024,
 	     (end - start) / iters, (((end - start) / iters) * 1600) / 4);
 
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
-  MPI_Barrier (SCTK_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
+  MPI_Barrier (MPC_COMM_WORLD);
 
 
   MPI_Finalize ();

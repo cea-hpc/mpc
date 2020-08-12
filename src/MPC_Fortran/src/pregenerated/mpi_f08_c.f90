@@ -3656,8 +3656,25 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Type_vector_c
 
-! MPI_Get_elements NOT IMPLEMENTED in MPC
 
+function MPI_Get_elements_c( status,&
+datatype,&
+count,&
+ierror)&
+bind(C, name="mpi_get_elements_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(c_Status) :: status     !MPI_Status* status
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), intent(out) :: count     !int* count
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Get_elements_c
 
 ! MPI_File_write NOT IMPLEMENTED in MPC
 

@@ -173,12 +173,12 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 				}
 				assert(cur_pte);
 			}
-			else if( (i - SCTK_PTL_PTE_HIDDEN) == SCTK_COMM_WORLD) /* if COMM_WORLD, first standard PTE */
+			else if( (i - SCTK_PTL_PTE_HIDDEN) == MPC_COMM_WORLD) /* if COMM_WORLD, first standard PTE */
 			{
 				cur_pte = comm_world_pte;
 				assert(cur_pte);
 			}
-			else if (i - SCTK_PTL_PTE_HIDDEN == SCTK_COMM_SELF) /* if COMM_SELF, net layer not involved */
+			else if (i - SCTK_PTL_PTE_HIDDEN == MPC_COMM_SELF) /* if COMM_SELF, net layer not involved */
 			{
 				i++;
 				cur_pte = NULL;
@@ -488,7 +488,7 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	comm_rdma_pte = mpc_common_hashtable_get(&rail->network.ptl.pt_table, SCTK_PTL_PTE_RDMA);
 
 	if(min_comms > 0)
-		comm_world_pte = mpc_common_hashtable_get(&rail->network.ptl.pt_table, SCTK_PTL_PTE_HIDDEN + SCTK_COMM_WORLD);
+		comm_world_pte = mpc_common_hashtable_get(&rail->network.ptl.pt_table, SCTK_PTL_PTE_HIDDEN + MPC_COMM_WORLD);
 }
 
 /**

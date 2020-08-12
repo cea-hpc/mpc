@@ -29,10 +29,10 @@ main (int argc, char **argv)
   int rank, size;
   char name[1024];
   MPI_Init (&argc, &argv);
-  MPI_Comm_size (SCTK_COMM_WORLD, &size);
-  MPI_Comm_rank (SCTK_COMM_WORLD, &rank);
+  MPI_Comm_size (MPC_COMM_WORLD, &size);
+  MPI_Comm_rank (MPC_COMM_WORLD, &rank);
   gethostname (name, 1023);
-  MPI_Barrier(SCTK_COMM_WORLD);
+  MPI_Barrier(MPC_COMM_WORLD);
   printf ("Hello world from process %d of %d %s\n", rank, size, name);
   MPI_Finalize ();
   return 0;

@@ -35,6 +35,7 @@
 #include "mpc_common_debug.h"
 #include <unistd.h>
 #include <sys/mman.h>
+#include <mpc_keywords.h>
 
 /*******************  FUNCTION  *********************/
 void sctk_dsm_prefetch (void *addr)
@@ -423,15 +424,22 @@ int sctk_user_munmap (void *start, size_t length)
 }
 
 /*******************  FUNCTION  *********************/
+
+#ifdef HAVE_MREMAP
 void * sctk_user_mremap (void *old_address, size_t old_size, size_t new_size,
                          int flags)
 {
-	#ifdef HAVE_MREMAP
 	return mremap (old_address, old_size, new_size, flags);
-	#else /* HAVE_MREMAP*/
-	not_available ();
-	#endif /*HAVE_MREMAP*/
 }
+	#else /* HAVE_MREMAP*/
+void * sctk_user_mremap (__UNUSED__ void *old_address,
+					     __UNUSED__ size_t old_size,
+						 __UNUSED__ size_t new_size,
+                         __UNUSED__ int flags)
+{
+	not_available ();
+}
+#endif /*HAVE_MREMAP*/
 
 /*******************  FUNCTION  *********************/
 void sctk_alloc_posix_numa_migrate(void)

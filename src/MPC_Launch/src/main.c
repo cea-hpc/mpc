@@ -27,6 +27,7 @@
 #include <dlfcn.h>
 #include <stdlib.h>
 #include <mpc_launch.h>
+#include <mpc_keywords.h>
 #include <mpc_common_flags.h>
 
 #if defined(WINDOWS_SYS)
@@ -110,7 +111,7 @@ void mpc_start__(void)
 *********************************************/
 
 
-#if defined(SCTK_LIB_MODE) || !defined(MPC_Threads)
+#if !defined(MPC_Threads)
 /* Handle the case where the main is not being rewritten
    and provide the symbol to handle it */
 
@@ -118,30 +119,25 @@ void mpc_start__(void)
 		/**
 		 * @brief Definition of the user-main
 		 */
-		int mpc_user_main__ (int argc, char **argv,char**envp)
+		int mpc_user_main__ (__UNUSED__ int argc, __UNUSED__ char **argv, __UNUSED__  char**envp)
 		{
 			not_reachable();
 		}
 	#else
-		int mpc_user_main__ (int argc, char **argv)
+		int mpc_user_main__ (__UNUSED__ int argc, __UNUSED__ char **argv)
 		{
 			not_reachable();
 		}
 	#endif
-#endif
 
+#else
+	/* This is the replacement main */
 
-
-/* No Main if MPC is in library mode of if MPC_Threads are disabled */
-#if !defined(SCTK_LIB_MODE) && defined(MPC_Threads)
-
-/* This is the replacement main */
-
-int main(int argc, char **argv)
-{
-	mpc_common_get_flags()->is_fortran = 0;
-	return __main_wrapper(argc, argv);
-}
+	int main(int argc, char **argv)
+	{
+		mpc_common_get_flags()->is_fortran = 0;
+		return __main_wrapper(argc, argv);
+	}
 #endif
 
 /******************************

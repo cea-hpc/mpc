@@ -36,7 +36,7 @@ run (void *arg)
   int my_rank;
   int my_size;
   int res;
-  my_com = SCTK_COMM_WORLD;
+  my_com = MPC_COMM_WORLD;
   MPI_Comm_rank (my_com, &my_rank);
   MPI_Comm_size (my_com, &my_size);
 

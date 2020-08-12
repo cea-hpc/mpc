@@ -36,7 +36,7 @@ run (void *arg)
   int my_rank;
   char msg[50];
 
-  my_com = SCTK_COMM_WORLD;
+  my_com = MPC_COMM_WORLD;
   MPI_Comm_rank (my_com, &my_rank);
 
   sprintf (msg, "nothing");

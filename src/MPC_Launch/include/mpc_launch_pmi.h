@@ -216,66 +216,6 @@ int mpc_launch_pmi_get_process_layout( struct mpc_launch_pmi_process_layout **la
 */
 int mpc_launch_pmi_get_job_id( int *id );
 
-/*********************************
- * LIBRARY MODE TOPOLOGY GETTERS *
- *********************************/
-
-/**
- * @addtogroup libmode_hooks
- * @{
- */
-
-
-/**
- */
-
-#ifdef SCTK_LIB_MODE
-
-/**
- * @brief Return an unique rank
- *
- * @return int rank
- */
-int mpc_lowcomm_hook_rank();
-
-/**
- * @brief Return the communicator size
- *
- * @return int comm size
- */
-int mpc_lowcomm_hook_size();
-
-/**
- * @brief Implement a barrier between processes
- *
- */
-void mpc_lowcomm_hook_barrier();
-
-/**
- * @brief Send data to a given rank
- *
- * @param data pointer to data to be sent
- * @param size size of the data in bytes
- * @param target target rank
- */
-void mpc_lowcomm_hook_send_to( void *data, size_t size, int target );
-
-/**
- * @brief Receive data from a given rank
- *
- * @param data pointer to data to be received
- * @param size size of the data in bytes
- * @param source source rank
- */
-void mpc_lowcomm_hook_recv_from( void *data, size_t size, int source );
-
-#endif /* SCTK_LIB_MODE */
-
-/* End Lib-mode hooks */
-/**
- * @}
- */
-
 /* End Process Management Interface */
 /**
  * @}

@@ -54,7 +54,7 @@ main (int argc, char **argv)
   if (printing != NULL)
     is_printing = 0;
 
-  my_com = SCTK_COMM_WORLD;
+  my_com = MPC_COMM_WORLD;
   MPC_Comm_rank (my_com, &my_rank);
   MPC_Barrier (my_com);
   mprintf (stderr, "Avant barrier init %d\n", my_rank);

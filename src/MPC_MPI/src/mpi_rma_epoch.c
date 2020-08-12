@@ -1805,7 +1805,7 @@ int mpc_MPI_Win_fence(__UNUSED__ int assert, MPI_Win win) {
 
 int mpc_MPI_Win_lock(int lock_type, int rank, __UNUSED__ int assert, MPI_Win win) {
   mpc_common_nodebug("LLLLLLLLLLLLLLLLL to %d", rank);
-  if (rank == SCTK_PROC_NULL) {
+  if (rank == MPC_PROC_NULL) {
     return MPI_SUCCESS;
   }
 
@@ -1902,7 +1902,7 @@ int mpc_MPI_Win_lock(int lock_type, int rank, __UNUSED__ int assert, MPI_Win win
 static inline int __mpc_MPI_Win_unlock(int rank, MPI_Win win,
                                        int do_unlock_all) {
   mpc_common_debug("UUUUUUUUUUUUUU to %d", rank);
-  if (rank == SCTK_PROC_NULL)
+  if (rank == MPC_PROC_NULL)
     return MPI_SUCCESS;
 
   /* Retrieve the MPI Desc */

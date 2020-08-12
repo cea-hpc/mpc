@@ -561,37 +561,39 @@ static inline size_t __mpc_memory_allocation_hook_ib ( size_t size )
 	return 0;
 }
 
+#ifdef MPC_Allocator
 
-static size_t __mpc_memory_allocation_hook ( size_t size_origin )
-{
-
-#ifdef MPC_USE_INFINIBAND
-
-	if ( sctk_network_is_ib_used() )
+	static size_t __mpc_memory_allocation_hook ( size_t size_origin )
 	{
-		return __mpc_memory_allocation_hook_ib ( size_origin );
+
+	#ifdef MPC_USE_INFINIBAND
+
+		if ( sctk_network_is_ib_used() )
+		{
+			return __mpc_memory_allocation_hook_ib ( size_origin );
+		}
+	#else
+		UNUSED(size_origin);
+	#endif
+		return 0;
 	}
-#else
-	UNUSED(size_origin);
-#endif
-	return 0;
-}
 
-void __mpc_memory_free_hook ( void * ptr , size_t size )
-{
-
-#ifdef MPC_USE_INFINIBAND
-
-	if ( sctk_network_is_ib_used())
+	void __mpc_memory_free_hook ( void * ptr , size_t size )
 	{
-		return sctk_network_memory_free_hook_ib ( ptr, size );
-	}
-#else
-	UNUSED(ptr);
-	UNUSED(size);
-#endif
-}
 
+	#ifdef MPC_USE_INFINIBAND
+
+		if ( sctk_network_is_ib_used())
+		{
+			return sctk_network_memory_free_hook_ib ( ptr, size );
+		}
+	#else
+		UNUSED(ptr);
+		UNUSED(size);
+	#endif
+	}
+
+#endif
 
 void sctk_net_init_driver ( char *name )
 {

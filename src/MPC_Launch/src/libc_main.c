@@ -23,7 +23,7 @@
 #include <mpc_config.h>
 #include <mpc_common_debug.h>
 
-#if defined(ENABLE_HOOK_MAIN) && !defined(SCTK_LIB_MODE)
+#if defined(ENABLE_HOOK_MAIN)
 
 #include <dlfcn.h>
 #include <stdio.h>

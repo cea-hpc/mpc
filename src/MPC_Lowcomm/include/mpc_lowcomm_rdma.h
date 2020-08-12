@@ -55,7 +55,7 @@
  * @arg addr Start address of the window
  * @arg size Size of the region ot be mapped
  * @arg disp_unit Offsetting unit (used to compute displacements)
- * @arg comm Communicator used by this window (SCTK_COMM_WORLD is a godd default)
+ * @arg comm Communicator used by this window (MPC_COMM_WORLD is a godd default)
  * 
  * @return The ID of the newly created window (is an integer)
  */

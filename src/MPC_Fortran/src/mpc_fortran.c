@@ -1,6 +1,6 @@
 #include <mpc_mpi.h>
 #include <sctk_alloc.h>
-
+#include <mpc_keywords.h>
 #include "mpc_fortran_helpers.h"
 
 static inline char *char_fortran_to_c(char *buf, int size, char **free_ptr)
@@ -40,7 +40,7 @@ static inline char *char_fortran_to_c(char *buf, int size, char **free_ptr)
 
 static inline void char_c_to_fortran(char *buf, int size)
 {
-	size_t i;
+	ssize_t i;
 
 	for(i = strlen(buf); i < size; i++)
 	{
@@ -2167,11 +2167,11 @@ void mpi_exscan_init__(const void *sendbuf, void *recvbuf, int *count, MPI_Fint 
 	*request = PMPI_Request_c2f(c_request);
 }
 
-void mpi_f_sync_reg_(void *buf)
+void mpi_f_sync_reg_(__UNUSED__ void *buf)
 {
 }
 
-void mpi_f_sync_reg__(void *buf)
+void mpi_f_sync_reg__(__UNUSED__ void *buf)
 {
 }
 

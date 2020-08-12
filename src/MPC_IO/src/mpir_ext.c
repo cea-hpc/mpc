@@ -26,11 +26,11 @@ void MPIR_Ext_cs_yield(void)
 ******************/
 
 int MPIR_Err_create_code_valist(__UNUSED__ int lastcode, __UNUSED__ int fatal, const char fcname[],
-                                int line, int error_class, const char generic_msg[],
+                                int line, __UNUSED__ int error_class, const char generic_msg[],
                                 const char specific_msg[], __UNUSED__ va_list Argp)
 {
 	char *buf;
-	int   idx;
+	int   idx=0;
 
 	buf = (char *)sctk_malloc(1024);
 	if(buf != NULL)
@@ -72,7 +72,7 @@ void MPIR_Err_get_string(int errcode, char *msg, int maxlen, __UNUSED__ MPIR_Err
 	}
 }
 
-int MPIR_Err_is_fatal(int a)
+int MPIR_Err_is_fatal(__UNUSED__ int a)
 {
 	return 0;
 }

@@ -342,7 +342,7 @@ int _sctk_get_comm_world_rank ( const mpc_lowcomm_communicator_t communicator, c
 
 static inline int sctk_get_comm_world_rank ( const mpc_lowcomm_communicator_t communicator, const int rank )
 {
-	if ( communicator == SCTK_COMM_WORLD )
+	if ( communicator == MPC_COMM_WORLD )
 	{
 		return rank;
 	}
@@ -371,7 +371,7 @@ int __sctk_is_inter_comm( const mpc_lowcomm_communicator_t );
 
 static inline int sctk_is_inter_comm( const mpc_lowcomm_communicator_t communicator )
 {
-	if ( communicator == SCTK_COMM_WORLD )
+	if ( communicator == MPC_COMM_WORLD )
 	{
 		return 0;
 	}

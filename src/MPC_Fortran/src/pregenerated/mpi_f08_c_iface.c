@@ -1892,9 +1892,17 @@ stride,
 oldtype,
 newtype);
 }
-/* MPI_Get_elements NOT IMPLEMENTED in MPC */
 
-
+void mpi_get_elements_f08(
+MPI_Status* status,
+MPI_Datatype datatype,
+int* count,
+int * ierror)
+{
+*ierror = MPI_Get_elements( status,
+datatype,
+count);
+}
 /* MPI_File_write NOT IMPLEMENTED in MPC */
 
 

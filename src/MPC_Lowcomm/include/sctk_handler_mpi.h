@@ -20,7 +20,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_LIB_MODE
 #include <stdlib.h>
 #include "sctk_shm_mapper.h"
 
@@ -52,5 +51,3 @@ void sctk_shm_mpi_handler_free(struct sctk_alloc_mapper_handler_s *mpi_handler);
  */
 struct sctk_alloc_mapper_handler_s *
 sctk_shm_mpi_handler_init(mpc_lowcomm_communicator_t comm);
-
-#endif

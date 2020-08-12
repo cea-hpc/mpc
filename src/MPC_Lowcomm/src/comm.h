@@ -290,7 +290,7 @@ static inline void _mpc_comm_ptp_message_clear_request( mpc_lowcomm_ptp_message_
 	if (sctk_is_process_specific_message(SCTK_MSG_HEADER(msg))) {
 		return;
 	} else {
-		if (SCTK_MSG_SRC_PROCESS(msg) == SCTK_ANY_SOURCE) {
+		if (SCTK_MSG_SRC_PROCESS(msg) == MPC_ANY_SOURCE) {
 			/* Source task not available */
 			SCTK_MSG_SRC_TASK_SET(msg, -1);
 		}

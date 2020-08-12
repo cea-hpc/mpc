@@ -81,7 +81,7 @@ void sctk_internal_profiler_init()
     /* Fill in the meta informations */
     sctk_profile_meta_init(&sctk_internal_profiler_meta);
 
-    //	__MPC_Barrier(SCTK_COMM_WORLD);
+    //	__MPC_Barrier(MPC_COMM_WORLD);
 
     /* Start Program */
     sctk_profile_meta_begin_compute(&sctk_internal_profiler_meta);

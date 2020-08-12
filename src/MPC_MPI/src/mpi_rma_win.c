@@ -48,7 +48,7 @@ int mpc_MPI_Win_progress_probe(struct mpc_MPI_Win *desc, void *prebuff,
 
   int dest = sctk_get_comm_world_rank(desc->comm, desc->comm_rank);
 
-  MPC_Iprobe_inter(SCTK_ANY_SOURCE, dest, 16008, desc->comm, &have_msg, &st);
+  MPC_Iprobe_inter(MPC_ANY_SOURCE, dest, 16008, desc->comm, &have_msg, &st);
 
   if (have_msg) {
 

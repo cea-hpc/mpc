@@ -350,7 +350,7 @@ void sctk_route_messages_send ( int myself, int dest, mpc_lowcomm_ptp_message_cl
 {
 	mpc_common_debug("ROUTE SEND [ %d -> %d ] ( size %d)", myself, dest, size );
 	
-	mpc_lowcomm_communicator_t communicator = SCTK_COMM_WORLD;
+	mpc_lowcomm_communicator_t communicator = MPC_COMM_WORLD;
 	sctk_route_messages_t msg;
 	sctk_route_messages_t *msg_req;
 	
@@ -358,7 +358,7 @@ void sctk_route_messages_send ( int myself, int dest, mpc_lowcomm_ptp_message_cl
 	
 	mpc_lowcomm_ptp_message_header_clear ( & ( msg_req->msg ), MPC_LOWCOMM_MESSAGE_CONTIGUOUS, sctk_free_route_messages, mpc_lowcomm_ptp_message_copy );
 	mpc_lowcomm_ptp_message_set_contiguous_addr ( & ( msg_req->msg ), buffer, size );
-	mpc_lowcomm_ptp_message_header_init ( & ( msg_req->msg ), tag, communicator, myself, dest,  & ( msg_req->request ), size, message_class, SCTK_DATATYPE_IGNORE, REQUEST_SEND );
+	mpc_lowcomm_ptp_message_header_init ( & ( msg_req->msg ), tag, communicator, myself, dest,  & ( msg_req->request ), size, message_class, MPC_DATATYPE_IGNORE, REQUEST_SEND );
 	mpc_lowcomm_ptp_message_send ( & ( msg_req->msg ) );
 	mpc_lowcomm_request_wait ( & ( msg_req->request ) );
 }
@@ -367,7 +367,7 @@ void sctk_route_messages_recv ( int src, int myself, mpc_lowcomm_ptp_message_cla
 {
 	mpc_common_debug("ROUTE RECV [ %d -> %d ] ( size %d)", src, myself, size );
 	
-	mpc_lowcomm_communicator_t communicator = SCTK_COMM_WORLD;
+	mpc_lowcomm_communicator_t communicator = MPC_COMM_WORLD;
 	sctk_route_messages_t msg;
 	sctk_route_messages_t *msg_req;
 
@@ -375,7 +375,7 @@ void sctk_route_messages_recv ( int src, int myself, mpc_lowcomm_ptp_message_cla
 
 	mpc_lowcomm_ptp_message_header_clear ( & ( msg_req->msg ), MPC_LOWCOMM_MESSAGE_CONTIGUOUS, sctk_free_route_messages, mpc_lowcomm_ptp_message_copy );
 	mpc_lowcomm_ptp_message_set_contiguous_addr ( & ( msg_req->msg ), buffer, size );
-	mpc_lowcomm_ptp_message_header_init ( & ( msg_req->msg ), tag, communicator,  src, myself,  & ( msg_req->request ), size, message_class, SCTK_DATATYPE_IGNORE,REQUEST_RECV );
+	mpc_lowcomm_ptp_message_header_init ( & ( msg_req->msg ), tag, communicator,  src, myself,  & ( msg_req->request ), size, message_class, MPC_DATATYPE_IGNORE,REQUEST_RECV );
 	mpc_lowcomm_ptp_message_recv ( & ( msg_req->msg ) );
 	mpc_lowcomm_request_wait ( & ( msg_req->request ) );
 }

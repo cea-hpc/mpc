@@ -721,6 +721,11 @@ module procedure MPI_Type_vector_f08
 end interface
 
 
+interface MPI_Get_elements
+module procedure MPI_Get_elements_f08
+end interface
+
+
 interface MPI_Probe
 module procedure MPI_Probe_f08
 end interface
@@ -1128,6 +1133,7 @@ private :: MPI_Type_indexed_f08
 private :: MPI_Op_commutative_f08
 private :: MPI_Gather_f08
 private :: MPI_Type_vector_f08
+private :: MPI_Get_elements_f08
 private :: MPI_Probe_f08
 private :: MPI_Unpack_f08
 private :: MPI_Type_ub_f08
@@ -7254,8 +7260,45 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Type_vector_f08
 
-! MPI_Get_elements NOT IMPLEMENTED in MPC
 
+subroutine MPI_Get_elements_f08( status,&
+datatype,&
+count,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Status) :: status
+type(MPI_Datatype), intent(in) :: datatype
+integer, intent(out) :: count
+integer, optional, intent(out) :: ierror
+
+
+type(c_Status) :: status_c     !MPI_Status* status
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+integer(c_int) :: count_c     !int* count
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+status_c = status
+datatype_c = datatype%val
+
+ret = MPI_Get_elements_c(status_c,&
+datatype_c,&
+count_c,&
+ierror_c)
+
+count = count_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Get_elements_f08
 
 ! MPI_File_write NOT IMPLEMENTED in MPC
 

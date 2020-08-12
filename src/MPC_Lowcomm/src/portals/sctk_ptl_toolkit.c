@@ -479,8 +479,8 @@ int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_he
 	 */
 	ign.data = (sctk_ptl_std_content_t)
 	{
-		.rank = (rank == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK,
-		.tag = (tag == SCTK_ANY_TAG) ? SCTK_PTL_IGN_TAG : SCTK_PTL_MATCH_TAG,
+		.rank = (rank == MPC_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK,
+		.tag = (tag == MPC_ANY_TAG) ? SCTK_PTL_IGN_TAG : SCTK_PTL_MATCH_TAG,
 		.type = hdr->message_type.type,
 		.uid = SCTK_PTL_IGN_UID
 	};

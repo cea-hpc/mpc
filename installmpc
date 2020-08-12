@@ -416,12 +416,28 @@ check_glibc_is_compatible_with_priv()
 # -$1 : package
 # -$2 : version
 #
+SPECIFY_SPACK_ARCH="yes"
 build_package_name()
 {
+	SPACK_ARCH=""
+
+	if test "x${SPECIFY_SPACK_ARCH}" = "xyes"; then
+
+		set +e
+		spack arch > /dev/null 2>&1
+
+		if test "x$?" = "x0"; then
+			SPACK_ARCH=" arch=$(spack arch)"
+		fi
+
+		set -e
+
+	fi
+
 	if test -n "$2"; then
-		echo "$1@$2"
+		echo "${1}@${2}${SPACK_ARCH}"
 	else
-		echo "$1"
+		echo "$1${SPACK_ARCH}"
 	fi
 }
 
@@ -1076,6 +1092,8 @@ Defaults for the options are specified in brackets.
   --force-spack-package=*                 : Force a given version of dependencies loaded/installed with spack
                                             syntax is comma a separated list of DEP:SPACK descriptors for example
                                             openpa:/ffefdkk,autopriv:autopriv@2.0.0, ...
+  --enable-spack-arch                     : add architecture specifiers to spack descriptors (default)
+  --disable-spack-arch                    : do not pass architecture specifiers to spack descriptors
 
 # Features
   --lib-mode                              : Build MPC as a communication library
@@ -1359,6 +1377,12 @@ do
 			;;
 		--disable-spack-build)
 			SPACK_INSTALL_DEPENDENCY="no"
+			;;
+		--enable-spack-arch)
+			SPECIFY_SPACK_ARCH="yes"
+			;;
+		--disable-spack-arch)
+			SPECIFY_SPACK_ARCH="no"
 			;;
 		--disable-build)
 			BUILD_IS_DISABLED="yes"

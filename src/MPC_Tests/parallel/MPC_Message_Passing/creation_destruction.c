@@ -33,7 +33,7 @@ run (void *arg)
   mpc_lowcomm_communicator_t my_com;
   int my_rank;
   char name[4096];
-  my_com = SCTK_COMM_WORLD;
+  my_com = MPC_COMM_WORLD;
   MPI_Comm_rank (my_com, &my_rank);
   gethostname (name, 4095);
   mprintf (stderr, "coucou from %d %s\n", my_rank, name);

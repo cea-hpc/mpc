@@ -542,37 +542,6 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 
 	mpc_common_nodebug ( "Connection Infos (%d): %s", mpc_common_get_process_rank(), rail->network.tcp.connection_infos );
 
-#ifdef SCTK_LIB_MODE
-	mpc_common_nodebug("TCP BOOTSTRAP LIB MODE %d %d", mpc_common_get_process_count(), mpc_common_get_process_rank());
-	if ( mpc_common_get_process_count() > 2 )
-	{
-		if ( mpc_common_get_process_rank() % 2 == 0 )
-		{
-			mpc_lowcomm_hook_send_to( rail->network.tcp.connection_infos, MPC_COMMON_MAX_STRING_SIZE, left_rank );
-			mpc_lowcomm_hook_recv_from( right_rank_connection_infos, MPC_COMMON_MAX_STRING_SIZE, right_rank );
-		}
-		else
-		{
-			mpc_lowcomm_hook_recv_from( right_rank_connection_infos, MPC_COMMON_MAX_STRING_SIZE, right_rank );
-			mpc_lowcomm_hook_send_to( rail->network.tcp.connection_infos, MPC_COMMON_MAX_STRING_SIZE, left_rank );
-		}
-	}
-	else
-	{
-		if( mpc_common_get_process_count() == 2 )
-		{
-			if( mpc_common_get_process_rank() == 1 )
-			{
-				mpc_lowcomm_hook_send_to( rail->network.tcp.connection_infos, MPC_COMMON_MAX_STRING_SIZE, left_rank );
-			}
-			else
-			{
-				mpc_lowcomm_hook_recv_from( right_rank_connection_infos, MPC_COMMON_MAX_STRING_SIZE, right_rank );
-			}
-		}
-	}
-#else
-
 	/* Register connection info inside the PMPI */
 	assume ( mpc_launch_pmi_put_as_rank ( rail->network.tcp.connection_infos, rail->rail_number ) == 0 );
 
@@ -581,8 +550,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	/* Retrieve Connection info to dest rank from the PMI */
 	assume ( mpc_launch_pmi_get_as_rank ( right_rank_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, right_rank ) == 0 );
 
- mpc_launch_pmi_barrier();
-#endif
+ 	mpc_launch_pmi_barrier();
 
 	mpc_common_nodebug ( "DEST Connection Infos(%d) to %d: %s", mpc_common_get_process_rank(), right_rank, right_rank_connection_infos );
 

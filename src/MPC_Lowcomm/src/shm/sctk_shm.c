@@ -277,12 +277,12 @@ sctk_network_notify_perform_message_shm(__UNUSED__ int remote, __UNUSED__ int re
 	__shm_poll();
 }
 
-static void sctk_network_notify_recv_message_shm(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, sctk_rail_info_t *rail)
+static void sctk_network_notify_recv_message_shm(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail)
 {
 }
 
 static void
-sctk_network_notify_any_source_message_shm(__UNUSED__ int polling_task_id, __UNUSED__ int blocking, sctk_rail_info_t *rail)
+sctk_network_notify_any_source_message_shm(__UNUSED__ int polling_task_id, __UNUSED__ int blocking, __UNUSED__ sctk_rail_info_t *rail)
 {
 	__shm_poll();
 }
@@ -430,7 +430,7 @@ static void sctk_shm_init_raw_queue(size_t size, int cells_num, int rank)
 	sctk_shm_pmi_handler_free(pmi_handler);
 }
 
-static void sctk_shm_free_raw_queue(int i)
+static void sctk_shm_free_raw_queue(__UNUSED__ int i)
 {
 }
 

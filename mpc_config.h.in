@@ -145,6 +145,9 @@
 /* Define to 1 if you have the `mmap' function. */
 #undef HAVE_MMAP
 
+/* Define to 1 if you have the `mremap' function. */
+#undef HAVE_MREMAP
+
 /* Define to 1 if you have the `munmap' function. */
 #undef HAVE_MUNMAP
 

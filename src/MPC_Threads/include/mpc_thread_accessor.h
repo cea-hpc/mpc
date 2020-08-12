@@ -62,7 +62,7 @@ extern int __process_rank;
 
 static inline int mpc_common_get_task_rank(void)
 {
-#if defined(MPC_IN_PROCESS_MODE) || defined(SCTK_LIB_MODE)
+#if defined(MPC_IN_PROCESS_MODE)
 	return __process_rank;
 #endif
 	int can_be_disguised = 0;
@@ -107,9 +107,6 @@ static inline int mpc_common_get_task_count(void)
 
 static inline int mpc_common_get_local_task_rank(void)
 {
-#ifdef SCTK_LIB_MODE
-	return 0;
-#endif
 #ifdef MPC_IN_PROCESS_MODE
 	return 0;
 #endif
@@ -125,9 +122,6 @@ static inline int mpc_common_get_local_task_rank(void)
 
 static inline int mpc_common_get_local_task_count(void)
 {
-#ifdef SCTK_LIB_MODE
-	return 1;
-#endif
 #ifdef MPC_IN_PROCESS_MODE
 	return 1;
 #endif

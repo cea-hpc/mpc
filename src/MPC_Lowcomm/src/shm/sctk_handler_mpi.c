@@ -1,5 +1,3 @@
-#ifndef SCTK_LIB_MODE
-
 #include "mpc_lowcomm.h"
 #include "mpc_common_debug.h"
 #include "sctk_shm_mapper.h"
@@ -92,4 +90,3 @@ void sctk_shm_mpi_handler_free(struct sctk_alloc_mapper_handler_s* mpi_handler){
 	free(mpi_handler->option);
 	free(mpi_handler);
 	}
-#endif

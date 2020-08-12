@@ -32,7 +32,7 @@ int
 MPC_init (void)
 {
   int n;
-  MPC_Comm_rank (SCTK_COMM_WORLD, &n);
+  MPC_Comm_rank (MPC_COMM_WORLD, &n);
   return n;
 }
 
@@ -40,7 +40,7 @@ int
 MPC_comm_size (void)
 {
   int n;
-  MPC_Comm_size (SCTK_COMM_WORLD, &n);
+  MPC_Comm_size (MPC_COMM_WORLD, &n);
   return n;
 }
 
@@ -48,7 +48,7 @@ int
 MPC_get_task_count (void)
 {
   int n;
-  MPC_Comm_rank (SCTK_COMM_WORLD, &n);
+  MPC_Comm_rank (MPC_COMM_WORLD, &n);
   return n;
 }
 
@@ -57,28 +57,28 @@ void
 MPC_barrier (void)
 {
   mpc_common_nodebug ("barrier");
-  MPC_Barrier (SCTK_COMM_WORLD);
+  MPC_Barrier (MPC_COMM_WORLD);
 }
 
 void
 MPC_wait (void)
 {
   mpc_common_nodebug ("wait");
-  MPC_Wait_pending (SCTK_COMM_WORLD);
+  MPC_Wait_pending (MPC_COMM_WORLD);
 }
 
 void
 MPC_send (int dest, double DATA[], int start, int count)
 {
   mpc_common_nodebug ("send : %d", dest);
-  MPC_Isend (DATA + start, count, MPC_DOUBLE, dest, 0, SCTK_COMM_WORLD, NULL);
+  MPC_Isend (DATA + start, count, MPC_DOUBLE, dest, 0, MPC_COMM_WORLD, NULL);
 }
 
 void
 MPC_receive (int src, double DATA[], int start, int count)
 {
   mpc_common_nodebug ("rcv : %d", src);
-  MPC_Irecv (DATA + start, count, MPC_DOUBLE, src, 0, SCTK_COMM_WORLD, NULL);
+  MPC_Irecv (DATA + start, count, MPC_DOUBLE, src, 0, MPC_COMM_WORLD, NULL);
 }
 
 void
@@ -87,7 +87,7 @@ MPC_allreduce_min (double DATAIN[], double DATAOUT[], int start_in,
 {
   mpc_common_nodebug ("all reduce ");
   MPC_Allreduce (DATAIN + start_in, DATAOUT + start_out, count,
-		 MPC_DOUBLE, MPC_MIN, SCTK_COMM_WORLD);
+		 MPC_DOUBLE, MPC_MIN, MPC_COMM_WORLD);
 }
 
 void
@@ -96,7 +96,7 @@ MPC_allreduce_max (double DATAIN[], double DATAOUT[], int start_in,
 {
   mpc_common_nodebug ("all reduce ");
   MPC_Allreduce (DATAIN + start_in, DATAOUT + start_out, count,
-		 MPC_DOUBLE, MPC_MAX, SCTK_COMM_WORLD);
+		 MPC_DOUBLE, MPC_MAX, MPC_COMM_WORLD);
 }
 
 void
@@ -105,7 +105,7 @@ MPC_allreduce_sum (double DATAIN[], double DATAOUT[], int start_in,
 {
   mpc_common_nodebug ("all reduce ");
   MPC_Allreduce (DATAIN + start_in, DATAOUT + start_out, count,
-		 MPC_DOUBLE, MPC_SUM, SCTK_COMM_WORLD);
+		 MPC_DOUBLE, MPC_SUM, MPC_COMM_WORLD);
 }
 
 void

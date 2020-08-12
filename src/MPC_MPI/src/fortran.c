@@ -84,6 +84,7 @@ void _mpc_handle_factory_delete(struct _mpc_handle_factory *fact, MPI_Fint handl
  * FACTORIES FOR ALL HANDLE TYPES *
  **********************************/
 
+#if 0
 static struct _mpc_handle_factory __comm_factory;
 static struct _mpc_handle_factory __types_factory;
 static struct _mpc_handle_factory __groups_factory;
@@ -92,6 +93,7 @@ static struct _mpc_handle_factory __wins_factory;
 static struct _mpc_handle_factory __ops_factory;
 static struct _mpc_handle_factory __infos_factory;
 static struct _mpc_handle_factory __errhandlers_factory;
+#endif
 
 static void __initialize_handle_factories()
 {
@@ -159,7 +161,7 @@ MPI_Fint PMPI_Comm_c2f(MPI_Comm comm)
 #endif
 }
 
-void mpc_fortran_comm_delete(MPI_Fint comm)
+void mpc_fortran_comm_delete(__UNUSED__ MPI_Fint comm)
 {
 #if 0
 	_mpc_handle_factory_delete(&__comm_factory, comm);
@@ -170,7 +172,7 @@ void mpc_fortran_comm_delete(MPI_Fint comm)
  * TYPES *
  *********/
 
-MPI_Datatype PMPI_Type_f2c(MPI_Fint datatype)
+MPI_Datatype PMPI_Type_f2c(__UNUSED__ MPI_Fint datatype)
 {
 #if 0
 	_fortran_handle_storage_t pdatatype = NULL;
@@ -197,7 +199,7 @@ MPI_Fint PMPI_Type_c2f(MPI_Datatype datatype)
 #endif
 }
 
-void mpc_fortran_datatype_delete(MPI_Fint datatype)
+void mpc_fortran_datatype_delete(__UNUSED__ MPI_Fint datatype)
 {
 #if 0
 	_mpc_handle_factory_delete(&__types_factory, datatype);
@@ -236,7 +238,7 @@ MPI_Fint PMPI_Group_c2f(MPI_Group group)
 #endif
 }
 
-void mpc_fortran_group_delete(MPI_Fint group)
+void mpc_fortran_group_delete(__UNUSED__ MPI_Fint group)
 {
 #if 0
 	_mpc_handle_factory_delete(&__groups_factory, group);
@@ -274,7 +276,7 @@ MPI_Fint PMPI_Request_c2f(MPI_Request request)
 #endif
 }
 
-void mpc_fortran_request_delete(MPI_Fint request)
+void mpc_fortran_request_delete(__UNUSED__ MPI_Fint request)
 {
 #if 0
 	_mpc_handle_factory_delete(&__requests_factory, request);
@@ -312,7 +314,7 @@ MPI_Fint PMPI_Win_c2f(MPI_Win win)
 #endif
 }
 
-void mpc_fortran_win_delete(MPI_Fint win)
+void mpc_fortran_win_delete(__UNUSED__ MPI_Fint win)
 {
 #if 0
 	_mpc_handle_factory_delete(&__wins_factory, win);
@@ -350,7 +352,7 @@ MPI_Fint PMPI_Op_c2f(MPI_Op op)
 #endif
 }
 
-void mpc_fortran_op_delete(MPI_Fint op)
+void mpc_fortran_op_delete(__UNUSED__ MPI_Fint op)
 {
 #if 0
 	_mpc_handle_factory_delete(&__ops_factory, op);
@@ -388,7 +390,7 @@ MPI_Fint PMPI_Info_c2f(MPI_Info info)
 #endif
 }
 
-void mpc_fortran_info_delete(MPI_Fint info)
+void mpc_fortran_info_delete(__UNUSED__ MPI_Fint info)
 {
 #if 0
 	_mpc_handle_factory_delete(&__infos_factory, info);
@@ -427,7 +429,7 @@ MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler)
 #endif
 }
 
-void mpc_fortran_errhandler_delete(MPI_Fint errhandler)
+void mpc_fortran_errhandler_delete(__UNUSED__ MPI_Fint errhandler)
 {
 #if 0
 	_mpc_handle_factory_delete(&__errhandlers_factory, errhandler);

@@ -37,7 +37,7 @@ run (void *arg)
   char msg[50];
   mpc_lowcomm_status_t status;
 
-  my_com = SCTK_COMM_WORLD;
+  my_com = MPC_COMM_WORLD;
   MPI_Comm_rank (my_com, &my_rank);
 
   sprintf (msg, "nothing");
