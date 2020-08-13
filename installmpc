@@ -1487,11 +1487,6 @@ if test "x${DEP_FOUND}" = "xno"; then
 	build_configure_based_package "hwloc" "$(package_version "hwloc")" "$HWLOC_BUILD_PARAMETERS"
 fi
 
-
-# Basic optionnal dependencies
-find_in_prefix_or_use_spack_optionnal "libunwind" "" "spackonly" "${LIBUNWIND_PREFIX}"
-
-
 find_in_prefix_or_use_spack "hydra" "" "${HYDRA_PREFIX}"
 
 if test "x${DEP_FOUND}" = "xno"; then
@@ -1534,6 +1529,10 @@ if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
 	build_configure_based_package "autopriv" "$(package_version "autopriv")" "$AUTOPRIV_BUILD_PARAMETERS"
 fi
+
+
+# Make sure to load libunwind after autopriv (https://trac.macports.org/ticket/43869)
+find_in_prefix_or_use_spack_optionnal "libunwind" "" "spackonly" "${LIBUNWIND_PREFIX}"
 
 # It is now time to configure MPC
 
