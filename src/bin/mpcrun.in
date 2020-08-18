@@ -43,7 +43,6 @@ MPC_INCLUDE_DIR="${MPC_INSTALL_PREFIX}/include"
 MPC_SHARE_DIR="@PKG_DATADIR@"
 USING_ASAN="@USING_ASAN@"
 
-VERSION_STRING="@MPC_VERSION_STRING"
 # Optionnal modules
 
 MPC_HAVE_DMTCP=@MPC_HAVE_DMTCP@
@@ -441,7 +440,7 @@ list_available_mpc_launchers()
 
 print_version()
 {
-	echo "mpcrun ${MPC_VERSION_STRING}"
+	echo "mpcrun @MPC_VERSION_STRING@"
 	echo ""
 	echo "Please report bugs at @PACKAGE_BUGREPORT@"
 	exit 0
