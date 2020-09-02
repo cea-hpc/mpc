@@ -45,7 +45,7 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-var-decl">
 		<xsl:text>&#10;/******************************** VARIABLES *********************************/&#10;</xsl:text>
-		<xsl:text>void * sctk_handler;&#10;</xsl:text>
+		<xsl:text>extern void * sctk_handler;&#10;</xsl:text>
 		
 		<xsl:text>&#10;struct enum_value {&#10;</xsl:text>
 		<xsl:text>&#9;char name[50];&#10;</xsl:text>
@@ -58,7 +58,7 @@
 		<xsl:text>&#9;struct enum_value * values;&#10;</xsl:text>
 		<xsl:text>&#9;UT_hash_handle hh;&#10;</xsl:text>
 		<xsl:text>};&#10;</xsl:text>
-		<xsl:text>&#10;struct enum_type * enums_types;&#10;</xsl:text>
+		<xsl:text>&#10;extern struct enum_type * enums_types;&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->

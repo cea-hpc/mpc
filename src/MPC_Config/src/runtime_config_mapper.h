@@ -31,7 +31,7 @@
 
 /********************************* GLOBALS **********************************/
 extern void * sctk_handler;
-const char * sctk_cst_string_undefined;
+extern const char * sctk_cst_string_undefined;
 
 /******************************** STRUCTURE *********************************/
 /**

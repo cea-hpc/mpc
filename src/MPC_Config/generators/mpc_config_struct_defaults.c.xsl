@@ -37,6 +37,8 @@
 		<xsl:text>#include "mpc_config_struct.h"&#10;</xsl:text>
 		<xsl:text>#include "mpc_config_struct_defaults.h"&#10;</xsl:text>
 		<xsl:text>#include "runtime_config_mapper.h"&#10;</xsl:text>
+		<xsl:text>&#10;void * sctk_handler;&#10;</xsl:text>
+		<xsl:text>struct enum_type * enums_types;&#10;</xsl:text>
 		<xsl:apply-templates select='config'/>
 		<xsl:call-template name="gen-main-reset-function"/>
 		<xsl:call-template name="gen-struct-default"/>

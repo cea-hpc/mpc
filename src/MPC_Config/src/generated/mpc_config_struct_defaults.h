@@ -29,7 +29,7 @@
 #define SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H
 
 /******************************** VARIABLES *********************************/
-void * sctk_handler;
+extern void * sctk_handler;
 
 struct enum_value {
 	char name[50];
@@ -43,7 +43,7 @@ struct enum_type {
 	UT_hash_handle hh;
 };
 
-struct enum_type * enums_types;
+extern struct enum_type * enums_types;
 
 /******************************** STRUCTURE *********************************/
 /* forward declaration functions */

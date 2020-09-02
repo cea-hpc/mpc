@@ -29,6 +29,9 @@
 #include "mpc_config_struct_defaults.h"
 #include "runtime_config_mapper.h"
 
+void * sctk_handler;
+struct enum_type * enums_types;
+
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_debugger(void * struct_ptr)
 {

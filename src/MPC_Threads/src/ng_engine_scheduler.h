@@ -95,14 +95,14 @@ typedef struct _mpc_threads_ng_engine_scheduler_s
 } _mpc_threads_ng_engine_scheduler_t;
 
 // NBC_hook functions
-void (*_mpc_threads_ng_engine_scheduler_increase_prio_ptr)();
-void (*_mpc_threads_ng_engine_scheduler_decrease_prio_ptr)();
-void (*_mpc_threads_ng_engine_scheduler_sched_init)();
+extern void (*_mpc_threads_ng_engine_scheduler_increase_prio_ptr)();
+extern void (*_mpc_threads_ng_engine_scheduler_decrease_prio_ptr)();
+extern void (*_mpc_threads_ng_engine_scheduler_sched_init)();
 
 // polling mpc
-void (*_mpc_threads_ng_engine_scheduler_task_decrease_prio_ptr)(
+extern void (*_mpc_threads_ng_engine_scheduler_task_decrease_prio_ptr)(
         int core);
-void (*_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr)(
+extern void (*_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr)(
         int bind_to);
 
 extern void (*_mpc_threads_ng_engine_sched_yield)(_mpc_threads_ng_engine_scheduler_t *);
