@@ -1028,7 +1028,7 @@ mpcomp_places_detect_heretogeneous_places( mpcomp_places_info_t *list )
 mpcomp_places_info_t *
 mpcomp_places_env_variable_parsing( const int nb_mvps )
 {
-	int error;
+	int error = 0;
 	char *tmp, *string, *end;
 	mpcomp_places_info_t *list = NULL;
 	/* Get the value of OMP_PLACES (as a string) */

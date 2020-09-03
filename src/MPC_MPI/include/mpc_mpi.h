@@ -426,8 +426,8 @@ extern "C"
 typedef mpc_lowcomm_datatype_t MPI_Datatype; /* unsigned int */
 typedef mpc_lowcomm_communicator_t MPI_Comm; /* unsigned int */
 typedef int MPI_Request;
-typedef size_t MPI_Aint;
-typedef size_t MPI_Count;
+typedef ssize_t MPI_Aint;
+typedef ssize_t MPI_Count;
 typedef int MPI_Errhandler;
 typedef sctk_Op_User_function MPI_User_function;
 typedef int MPI_Op;

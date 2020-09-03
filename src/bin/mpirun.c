@@ -99,7 +99,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	char *command = malloc(COMMAND_SIZE * sizeof(char) );
+	char *command = malloc(1 + COMMAND_SIZE * sizeof(char) );
 
 	if(!command)
 	{

@@ -11,7 +11,7 @@
 
 #define HAVE_MPIIO_CONST
 
-#define MPL_UNREFERENCED_ARG(arg) arg
+#define MPL_UNREFERENCED_ARG(arg) (void)(arg)
 
 #define MPIO_Request_c2f MPI_Request_c2f
 #define MPIO_Request_f2c MPI_Request_f2c

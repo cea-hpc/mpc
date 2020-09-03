@@ -1840,7 +1840,7 @@ int _mpc_thread_ethread_posix_getattr_np(_mpc_thread_ethread_t th, _mpc_thread_e
 }
 
 
-int _mpc_thread_ethread_posix_setaffinity_np(__UNUSED__ _mpc_thread_ethread_t thread, size_t cpusetsize,
+int _mpc_thread_ethread_posix_setaffinity_np(__UNUSED__ _mpc_thread_ethread_t thread, __UNUSED__ size_t cpusetsize,
                               const mpc_cpu_set_t *cpuset)
 {
 	if(CPU_COUNT(((cpu_set_t*)cpuset)) != 1)
@@ -1869,7 +1869,7 @@ int _mpc_thread_ethread_posix_setaffinity_np(__UNUSED__ _mpc_thread_ethread_t th
 	return 0;
 }
 
-int _mpc_thread_ethread_posix_getaffinity_np(_mpc_thread_ethread_t thread, size_t cpusetsize,
+int _mpc_thread_ethread_posix_getaffinity_np(__UNUSED__ _mpc_thread_ethread_t thread, __UNUSED__ size_t cpusetsize,
                               mpc_cpu_set_t *cpuset)
 {
 	/* Ethreads only run on a single PU */

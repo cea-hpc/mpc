@@ -1504,7 +1504,7 @@ static inline void __intel_dispatch_init_long( mpcomp_thread_t __UNUSED__ *t, lo
 		case kmp_sch_auto:
 		case kmp_sch_static:
 			chunk = 0;
-
+			/* FALLTHRU */
 		case kmp_sch_static_chunked:
 			__mpcomp_static_loop_begin( lb, b, incr, chunk, NULL, NULL );
 			break;
@@ -1513,7 +1513,7 @@ static inline void __intel_dispatch_init_long( mpcomp_thread_t __UNUSED__ *t, lo
 		case kmp_ord_auto:
 		case kmp_ord_static:
 			chunk = 0;
-
+			/* FALLTHRU */
 		case kmp_ord_static_chunked:
 			__mpcomp_ordered_static_loop_begin( lb, b, incr, chunk, NULL, NULL );
 			break;
@@ -1564,7 +1564,7 @@ static inline void __intel_dispatch_init_ull( mpcomp_thread_t __UNUSED__ *t, boo
 		case kmp_sch_auto:
 		case kmp_sch_static:
 			chunk = 0;
-
+			/* FALLTHRU */
 		case kmp_sch_static_chunked:
 			__mpcomp_static_loop_begin_ull( up, lb, b, incr, chunk, NULL, NULL );
 			break;
@@ -1573,7 +1573,7 @@ static inline void __intel_dispatch_init_ull( mpcomp_thread_t __UNUSED__ *t, boo
 		case kmp_ord_auto:
 		case kmp_ord_static:
 			chunk = 0;
-
+			/* FALLTHRU */
 		case kmp_ord_static_chunked:
 			__mpcomp_ordered_static_loop_begin_ull( up, lb, b, incr, chunk, NULL, NULL );
 			break;
@@ -2350,7 +2350,7 @@ void __kmpc_taskloop( ident_t *loc, int gtid, kmp_task_t *task, __UNUSED__ int i
 	{
 		case 0:
 			grainsize = t->info.num_threads * 10;
-
+			/* FALLTHRU */
 		case 2:
 			if ( grainsize > trip_count )
 			{
