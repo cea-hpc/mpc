@@ -1214,10 +1214,13 @@ do
 			;;
 		################### MPC GCC #################
 		--with-autopriv=*)
-			extractParamValue 'AUTOPRIV_PREFIX' 'with-mpc-gcc' "$arg"
+			extractParamValue 'AUTOPRIV_PREFIX' 'with-autopriv' "$arg"
 			;;
 		--mpc-autopriv-*)
 			extractAndAddPackageOption 'AUTOPRIV_BUILD_PARAMETERS' 'mpc-autopriv' "$arg"
+			;;
+		--autopriv-*)
+			extractAndAddPackageOption 'AUTOPRIV_BUILD_PARAMETERS' 'autopriv' "$arg"
 			;;
 		--disable-mpc-gcc|--disable-autopriv|--disable-mpc-autopriv)
 			AUTOPRIV_PREFIX='disabled'
