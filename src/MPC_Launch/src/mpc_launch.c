@@ -427,33 +427,41 @@ static void *__mpc_mpi_task_start_function(void *parg)
 
 	retcode = CALL_MAIN(mpc_user_main__, duplicate_args->argc, duplicate_args->argv);
 
-	/* We need to handle the case when MPC's mains do not return the
-	 * same value we then apply the following rules:
-	 *
-	 * - All 0 => OK
-	 * - All != 0 and same value return value
-	 * - All/Some != 0 return MPC err code 42 (MPC_INCOHERENT_RETCODE) and warnings for each retcode
-	 */
-
-	/* Firs check if retcodes are not already incoherent */
-	if(OPA_load_int(&__mpc_main_return_code) == MPC_INCOHERENT_RETCODE)
+	if(mpc_common_get_flags()->is_fortran)
 	{
-		mpc_common_debug_warning("main returned %d", retcode);
+		/* No retcode in Fortran */
+		OPA_store_int(&__mpc_main_return_code, 0);
 	}
 	else
 	{
-		int previous_val = OPA_swap_int(&__mpc_main_return_code, retcode);
+		/* We need to handle the case when MPC's mains do not return the
+		* same value we then apply the following rules:
+		*
+		* - All 0 => OK
+		* - All != 0 and same value return value
+		* - All/Some != 0 return MPC err code 42 (MPC_INCOHERENT_RETCODE) and warnings for each retcode
+		*/
 
-		/* if -1 I'm the firt to return all ok */
-		if(previous_val != -1)
+		/* Firs check if retcodes are not already incoherent */
+		if(OPA_load_int(&__mpc_main_return_code) == MPC_INCOHERENT_RETCODE)
 		{
-			/* Check if previous val is not different if so enter incoherent mode */
-			if(previous_val != retcode)
+			mpc_common_debug_warning("main returned %d", retcode);
+		}
+		else
+		{
+			int previous_val = OPA_swap_int(&__mpc_main_return_code, retcode);
+
+			/* if -1 I'm the firt to return all ok */
+			if(previous_val != -1)
 			{
-				/* Set retcodes as incoherent */
-				OPA_swap_int(&__mpc_main_return_code, MPC_INCOHERENT_RETCODE);
-				mpc_common_debug_warning("main returned %d and a previous main returned %d", retcode, previous_val);
-				mpc_common_debug_warning("Retcodes are incoherent for local mains, returning 42");
+				/* Check if previous val is not different if so enter incoherent mode */
+				if(previous_val != retcode)
+				{
+					/* Set retcodes as incoherent */
+					OPA_swap_int(&__mpc_main_return_code, MPC_INCOHERENT_RETCODE);
+					mpc_common_debug_warning("main returned %d and a previous main returned %d", retcode, previous_val);
+					mpc_common_debug_warning("Retcodes are incoherent for local mains, returning 42");
+				}
 			}
 		}
 	}
