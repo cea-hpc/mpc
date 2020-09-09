@@ -1096,11 +1096,10 @@ Defaults for the options are specified in brackets.
   --disable-spack-arch                    : do not pass architecture specifiers to spack descriptors
 
 # Features
-  --lib-mode                              : Build MPC as a communication library
   --mpc-process-mode                      : Build MPC in process-mode (1 MPI process = 1 UNIX process)
   --{enable,disable}-mpc-ft               : Activate/Deactivate checkpoint/restart support
   --{enable,disable}-color                : Disable colors in display
-  --enable-mpc-debug                      : Enable every debug levels (symbols, messages)
+  --enable-debug                          : Enable maximum debug (symbols, messages)
   --verbose=1|2|3                         : Level of verbosity
   -v|-vv|-vvv                             : Level of verbosity
   -jN                                     : Allow N jobs at once (parallel install)
@@ -1135,7 +1134,7 @@ Defaults for the options are specified in brackets.
   --hwloc-*                               : Add options to hwloc configure
   --tbb-*                                 : Add options to TBB configure
   --{dmtcp,hbict}-*                       : Add options to DMTCP/HBICT configure
-  --mpc-option=*                          : Add options to mpc framework configure
+  --mpc-*|--mpc-option=*                  : Add options to mpc framework configure
 
 EOF
 }
@@ -1173,6 +1172,12 @@ add_process_mode_flag_to_mpc()
 	MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-process-mode"
 }
 
+enable_debug()
+{
+	MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug --enable-debug-messages"
+	AUTOPRIV_BUILD_PARAMETERS="${AUTOPRIV_BUILD_PARAMETERS} --opts=--enable-debug"
+}
+
 #
 # Locate common tools ahead of time
 #
@@ -1186,7 +1191,7 @@ do
 		--with-hydra=*)
 			extractParamValue 'HYDRA_PREFIX' 'with-hydra' "$arg"
 			;;
-		--hydra-*)
+		--hydra*)
 			extractAndAddPackageOption 'HYDRA_BUILD_PARAMETERS' 'hydra' "$arg"
 			;;
 		--disable-mpc-hydra)
@@ -1196,14 +1201,14 @@ do
 		--with-openpa=*)
 			extractParamValue 'OPENPA_PREFIX' 'with-openpa' "$arg"
 			;;
-		--openpa-*)
+		--openpa*)
 			extractAndAddPackageOption 'OPENPA_BUILD_PARAMETERS' 'openpa' "$arg"
 			;;
 		################### MPC GDB #################
 		--with-gdb=*)
 			extractParamValue 'MPC_GDB_PREFIX' 'with-gdb' "$arg"
 			;;
-		--gdb-*)
+		--gdb*)
 			extractAndAddPackageOption 'MPC_GDB_BUILD_PARAMETERS' 'gdb' "$arg"
 			;;
 		--disable-gdb)
@@ -1211,15 +1216,16 @@ do
 			;;
 		--enable-gdb|--enable-mpc-gdb)
 			enableParamIfNot 'MPC_GDB_PREFIX' "$MPC_GDB_PREFIX" 'disabled' 'internal'
+			enable_debug
 			;;
 		################### MPC GCC #################
 		--with-autopriv=*)
 			extractParamValue 'AUTOPRIV_PREFIX' 'with-autopriv' "$arg"
 			;;
-		--mpc-autopriv-*)
+		--mpc-autopriv*)
 			extractAndAddPackageOption 'AUTOPRIV_BUILD_PARAMETERS' 'mpc-autopriv' "$arg"
 			;;
-		--autopriv-*)
+		--autopriv*)
 			extractAndAddPackageOption 'AUTOPRIV_BUILD_PARAMETERS' 'autopriv' "$arg"
 			;;
 		--disable-mpc-gcc|--disable-autopriv|--disable-mpc-autopriv)
@@ -1234,14 +1240,14 @@ do
 		--with-libxml2=*)
 			extractParamValue 'LIBXML2_PREFIX' 'with-libxml2' "$arg"
 			;;
-		--libxml2-*)
+		--libxml2*)
 			extractAndAddPackageOption 'LIBXML2_BUILD_PARAMETERS' 'libxml2' "$arg"
 			;;
 		################### HWLOC ###################
 		--with-hwloc=*)
 			extractParamValue 'HWLOC_PREFIX' 'with-hwloc' "$arg"
 			;;
-		--hwloc-*)
+		--hwloc*)
 			extractAndAddPackageOption 'HWLOC_BUILD_PARAMETERS' 'hwloc' "$arg"
 			;;
 		################### CUDA ###################
@@ -1258,7 +1264,7 @@ do
 		--with-tbb=*)
 			extractParamValue 'TBB_PREFIX' 'with-tbb' "$arg"
 			;;
-		--tbb-*)
+		--tbb*)
 			extractAndAddPackageOption 'TBB_BUILD_PARAMETERS' 'tbb' "$arg"
 			;;
 		--enable-mpc-tbb)
@@ -1274,14 +1280,14 @@ do
 		--disable-mpc-allocator|--disable-mpcalloc)
 			MPCALLOC_PREFIX="disabled"
 			;;
-		--mpcalloc-*)
+		--mpcalloc*)
 			extractAndAddPackageOption 'MPCALLOC_BUILD_PARAMETERS' 'mpcalloc' "$arg"
 			;;
 		################### DMTCP ###################
 		--with-dmtcp=*)
 			extractParamValue 'MPC_DMTCP_PREFIX' 'with-dmtcp' "$arg"
 			;;
-		--dmtcp-*)
+		--dmtcp*)
 			extractAndAddPackageOption 'MPC_DMTCP_BUILD_PARAMETERS' 'dmtcp' "$arg"
 			;;
 		################### GENERIC FT ###################
@@ -1302,18 +1308,20 @@ do
 			;;
 		--enable-color)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-shell-colors"
+			AUTOPRIV_BUILD_PARAMETERS="${AUTOPRIV_BUILD_PARAMETERS} --opts=--enable-color"
 			USE_COLOR="yes"
 			;;
 		--disable-color)
 			MPCFRAMEWORK_BUILD_PARAMETERS=$(echo "$MPCFRAMEWORK_BUILD_PARAMETERS" | sed "s/--enable-shell-colors//")
 			USE_COLOR="no"
 			;;
-		--enable-mpc-debug)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug --enable-debug-messages"
-			enableParamIfNot 'MPC_GDB_PREFIX' "$MPC_GDB_PREFIX" 'disabled' 'internal'
+		--enable-debug)
+			enable_debug
 			;;
 		--with-slurm)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-slurm"
+			# No need for hydra
+			HYDRA_PREFIX='disabled'
 			;;
 		--disable-prefix-check)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-prefix-check"
@@ -1321,18 +1329,10 @@ do
 		--disable-MPC_MPI)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-MPC_MPI"
 			;;
-		--lib-mode)
-			TBB_PREFIX='disabled'
-			MPC_GDB_PREFIX='disabled'
-			AUTOPRIV_PREFIX='disabled'
-			HYDRA_PREFIX='disabled'
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-MPC_MPI --disable-MPC_Allocator --enable-lib-mode"
-			;;
 		--mpc-process-mode)
 			AUTOPRIV_PREFIX='disabled'
 			add_process_mode_flag_to_mpc
 			;;
-
 		################## COMMON ###################
 		-v | --verbose | --verbose=1)
 			STEP_WRAPPER_VERBOSE=1
@@ -1394,8 +1394,13 @@ do
 			extractParamValue 'OVERRIDEN_SPACK_PKGS' 'force-spack-package' "$arg"
 			;;
 		# Deprecated options
-		--mirror=*|clean|distclean|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--with-hbict=*|--hbict-*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--mpc-*|--enable-check-deps|--disable-check-deps|--disable-check-install|--enable-all-internals|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*|--version)
+		--lib-mode|--mirror=*|clean|distclean|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--with-hbict=*|--hbict-*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--enable-check-deps|--disable-check-deps|--disable-check-install|--enable-all-internals|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*|--version)
 			info "$arg is deprecated"
+			;;
+		# This pattern is the last due to its large wildcard
+		--mpc*)
+			# Pass extra options to MPC
+			extractAndAddPackageOption 'MPCFRAMEWORK_BUILD_PARAMETERS' 'mpc' "$arg"
 			;;
 		*)
 			echo "Invalid argument '$arg', please check your command line or get help with --help." 1>&2
