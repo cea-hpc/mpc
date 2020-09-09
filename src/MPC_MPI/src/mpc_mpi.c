@@ -27,6 +27,8 @@
 #include <mpc_launch.h>
 #include <mpc_common_datastructure.h>
 #include <mpc_common_profiler.h>
+#include <mpc_common_debug.h>
+
 #include "sctk_handle.h"
 #include "mpc_mpi_halo.h"
 
@@ -678,15 +680,6 @@ static int SCTK__MPI_Attr_communicator_dup(MPI_Comm old, MPI_Comm new);
  * MPI Level Per Thread CTX
  *
  */
-#define MPC_MPI_USE_REQUEST_CACHE
-
-#ifdef MPC_MPI_USE_REQUEST_CACHE
-    #define MPC_MPI_REQUEST_CACHE_SIZE    128
-#endif
-
-#ifdef MPC_MPI_USE_REQUEST_CACHE
-__thread MPI_internal_request_t *mpc_mpi_request_cache[MPC_MPI_REQUEST_CACHE_SIZE];
-#endif
 
 typedef struct MPI_per_thread_ctx_s
 {
@@ -764,42 +757,6 @@ void __sctk_init_mpc_request()
 
 	mpc_thread_mutex_unlock(&sctk_request_lock);
 }
-
-#ifdef MPC_MPI_USE_REQUEST_CACHE
-
-inline MPI_internal_request_t *
-__sctk_convert_mpc_request_internal_cache_get(MPI_Request *req,
-                                              MPI_request_struct_t *requests)
-{
-	int id;
-	MPI_internal_request_t *tmp;
-
-	id = *req;
-	id = id % MPC_MPI_REQUEST_CACHE_SIZE;
-
-	tmp = mpc_mpi_request_cache[id];
-
-	if( (tmp->rank != *req) || (tmp->task_req_id != requests) )
-	{
-		return NULL;
-	}
-
-	return tmp;
-}
-
-inline void __sctk_convert_mpc_request_internal_cache_register(MPI_internal_request_t *req)
-{
-	int id;
-
-	id = req->rank % MPC_MPI_REQUEST_CACHE_SIZE;
-	mpc_mpi_request_cache[id] = req;
-}
-
-#else
-
-#define __sctk_convert_mpc_request_internal_cache_get(a, b)      NULL
-#define __sctk_convert_mpc_request_internal_cache_register(a)    (void)(0)
-#endif
 
 inline void sctk_delete_internal_request_clean(MPI_internal_request_t *tmp)
 {
@@ -998,8 +955,6 @@ MPI_internal_request_t *__sctk_new_mpc_request_internal(MPI_Request *req,
 	/* Mark it as not an nbc */
 	tmp->is_nbc = 0;
 
-	__sctk_convert_mpc_request_internal_cache_register(tmp);
-
 	/* Set request to be the id in the tab array (rank) */
 	*req = tmp->rank;
 
@@ -1049,22 +1004,16 @@ __sctk_convert_mpc_request_internal(MPI_Request *req,
 	/* Check bounds */
 	assume( ( (int_req) >= 0) && ( (int_req) < requests->max_size) );
 
-	tmp = __sctk_convert_mpc_request_internal_cache_get(req, requests);
-	if(tmp == NULL)
-	{
-		/* Lock it */
-		mpc_common_spinlock_lock(&(requests->lock) );
+	/* Lock it */
+	mpc_common_spinlock_lock(&(requests->lock) );
 
-		mpc_common_nodebug("Convert request %d", *req);
+	mpc_common_nodebug("Convert request %d", *req);
 
-		/* Directly get the request in the tab */
-		tmp = requests->tab[int_req];
+	/* Directly get the request in the tab */
+	tmp = requests->tab[int_req];
 
-		/* Unlock the request array */
-		mpc_common_spinlock_unlock(&(requests->lock) );
-
-		__sctk_convert_mpc_request_internal_cache_register(tmp);
-	}
+	/* Unlock the request array */
+	mpc_common_spinlock_unlock(&(requests->lock) );
 
 	assume(tmp->task_req_id == requests);
 

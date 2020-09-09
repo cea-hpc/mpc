@@ -1075,6 +1075,12 @@ int _mpc_cl_grequest_start(sctk_Grequest_query_function *query_fn,
 int _mpc_cl_grequest_complete(mpc_lowcomm_request_t request)
 {
 	mpc_lowcomm_request_t *src_req            = ( mpc_lowcomm_request_t * )request.pointer_to_source_request;
+
+	if(!src_req)
+	{
+		MPC_ERROR_SUCESS()
+	}
+
 	struct _mpc_egreq_progress_work_unit *pwu = ( ( struct _mpc_egreq_progress_work_unit * )src_req->progress_unit);
 
 	pwu->done = 1;
