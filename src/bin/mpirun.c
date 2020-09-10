@@ -99,6 +99,7 @@ int main(int argc, char **argv)
 		}
 	}
 
+    /* This is passed to strncat and we need the NULL terminator */
 	char *command = malloc(1 + COMMAND_SIZE * sizeof(char) );
 
 	if(!command)
