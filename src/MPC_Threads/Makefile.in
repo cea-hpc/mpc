@@ -847,6 +847,7 @@ uninstall-am: uninstall-mpc_headerHEADERS
 .PRECIOUS: Makefile
 
 
+	install -m 0644 -D $(abs_top_srcdir)/src/MPC_Threads/include/mpc_pthread.h $(pkgincludedir)/semaphore.h
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
