@@ -1398,7 +1398,7 @@ do
 			info "$arg is deprecated"
 			;;
 		# This pattern is the last due to its large wildcard
-		--mpc*)
+		--mpcframework*)
 			# Pass extra options to MPC
 			extractAndAddPackageOption 'MPCFRAMEWORK_BUILD_PARAMETERS' 'mpc' "$arg"
 			;;
