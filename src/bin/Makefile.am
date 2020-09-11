@@ -16,10 +16,10 @@ pkgdata_SCRIPTS = mpc_compiler_common.sh
 
 # Make sure the source script is at the root of the prefix for retro-compatibility
 install-data-local:
-	ln -sf $(bindir)/mpcvars.sh $(prefix)/mpcvars.sh
+	ln -sf $(bindir)/mpcvars.sh $(DESTDIR)$(prefix)/mpcvars.sh
 
 uninstall-local:
-	rm -f $(prefix)/mpcvars.sh
+	rm -f $(DESTDIR)$(prefix)/mpcvars.sh
 
 #
 # Cuda support

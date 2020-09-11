@@ -27,17 +27,17 @@ noinst_HEADERS=$(srcdir)/include/mpc_runtime_config.h
 # configdir =/path
 # configdir_DATA= files
 install-data-local:
-	test -d $(pkgdatadir) || mkdir -p $(pkgdatadir)
-	cp -r $(abs_srcdir)/editor $(pkgdatadir)
-	install -m 0644 -D $(abs_srcdir)/src/generated/mpc_config_meta.js $(pkgdatadir)/editor/javascript/mpc_config_meta.js
-	install -m 0644 -D $(abs_srcdir)/src/generated/mpc_config_xsd.js $(pkgdatadir)/editor/javascript/mpc_config_xsd.js
-	install -m 0644 -D $(abs_srcdir)/src/generated/mpc-config.xsd $(pkgdatadir)/mpc-config.xsd
-	install -m 0644 -D $(abs_srcdir)/extra/config.xml.example $(pkgdatadir)/config.xml
+	test -d $(DESTDIR)$(pkgdatadir) || mkdir -p $(DESTDIR)$(pkgdatadir)
+	cp -r $(abs_srcdir)/editor $(DESTDIR)$(pkgdatadir)
+	install -m 0644 -D $(abs_srcdir)/src/generated/mpc_config_meta.js $(DESTDIR)$(pkgdatadir)/editor/javascript/mpc_config_meta.js
+	install -m 0644 -D $(abs_srcdir)/src/generated/mpc_config_xsd.js $(DESTDIR)$(pkgdatadir)/editor/javascript/mpc_config_xsd.js
+	install -m 0644 -D $(abs_srcdir)/src/generated/mpc-config.xsd $(DESTDIR)$(pkgdatadir)/mpc-config.xsd
+	install -m 0644 -D $(abs_srcdir)/extra/config.xml.example $(DESTDIR)$(pkgdatadir)/config.xml
 
 uninstall-local:
-	rm -rf $(pkgdatadir)/editor
-	rm -f $(pkgdatadir)/config.xml
-	rm -f $(pkgdatadir)/mpc-config.xsd
+	rm -rf $(DESTDIR)$(pkgdatadir)/editor
+	rm -f $(DESTDIR)$(pkgdatadir)/config.xml
+	rm -f $(DESTDIR)$(pkgdatadir)/mpc-config.xsd
 
 
 SUBDIRS=src
