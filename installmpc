@@ -1072,7 +1072,7 @@ cat << EOF
 
 MPC Meta-Build script
 
-Usage: ./configure [OPTION]... [VAR=VALUE]...
+Usage: ./installmpc [OPTION]... [VAR=VALUE]...
 
 Defaults for the options are specified in brackets.
 
