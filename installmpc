@@ -38,6 +38,7 @@ USE_COLOR="no"
 
 # NOTE: these are only meaningfull when not using spack
 MAKE_J=""
+ALL_PACKAGE_ARGS=""
 AUTOPRIV_BUILD_PARAMETERS=""
 OPENPA_BUILD_PARAMETERS=""
 MPCALLOC_BUILD_PARAMETERS=""
@@ -941,7 +942,7 @@ build_configure_based_package()
 		checking "Configuring $package-$version"
 		# we want parameter expansion
 		# shellcheck disable=SC2086
-		wrap_output "${PKG_SOURCE_DIR}/configure" "--prefix=${PREFIX}" $extra_config_args
+		wrap_output "${PKG_SOURCE_DIR}/configure" "--prefix=${PREFIX}" $extra_config_args $ALL_PACKAGE_ARGS
 		ok
 
 		checking "Building $package-$version"
@@ -1105,10 +1106,9 @@ Defaults for the options are specified in brackets.
   -jN                                     : Allow N jobs at once (parallel install)
 
 # Disable sub packages
-  --disable-mpc-autopriv                  : Disable privatizing compiler support
-  --disable-mpc-gcc                       : Equivalent of disable-mpc-autopriv
-  --disable-mpc-fortran                   : Disable fortran
-  --disable-mpc-hydra                     : Disable Hydra
+  --disable-autopriv                      : Disable privatizing compiler support
+  --disable-fortran                       : Disable fortran
+  --disable-hydra                         : Disable Hydra
   --disable-romio                         : Disable ROMIO MPI-IO support
   --{enable,disable}-gdb                  : Enable/Disable gdb
   --{enable,disable}-tbb                  : Enable/Disable TBB
@@ -1125,16 +1125,16 @@ Defaults for the options are specified in brackets.
   --with-tbb=*                            : Specify TBB prefix on the system
   --with-{dmtcp,hbict}=*                  : Specify DMTCP/HBICT prefix on the system
 
-# Options to transmit to subpackages
-  --autopriv-*                            : Add options to autopriv configure
-  --gdb-*                                 : Add options to gdb configure
-  --openpa-*                              : Add options to openpa configure
-  --libxml2-*                             : Add options to libxml2 configure
-  --hydra-*                               : Add options to Hydra configure
-  --hwloc-*                               : Add options to hwloc configure
-  --tbb-*                                 : Add options to TBB configure
-  --{dmtcp,hbict}-*                       : Add options to DMTCP/HBICT configure
-  --mpc-*|--mpc-option=*                  : Add options to mpc framework configure
+# Options to transmit to subpackages (only if not using SPACK)
+  --autopriv=*                            : Add options to autopriv configure
+  --gdb=*                                 : Add options to gdb configure
+  --openpa=*                              : Add options to openpa configure
+  --libxml2=*                             : Add options to libxml2 configure
+  --hydra=*                               : Add options to Hydra configure
+  --hwloc=*                               : Add options to hwloc configure
+  --tbb=*                                 : Add options to TBB configure
+  --dmtpc=*                               : Add options to DMTCP/HBICT configure
+  --mpcframework=*                        : Add options to mpc framework configure
 
 EOF
 }
@@ -1191,25 +1191,25 @@ do
 		--with-hydra=*)
 			extractParamValue 'HYDRA_PREFIX' 'with-hydra' "$arg"
 			;;
-		--hydra*)
-			extractAndAddPackageOption 'HYDRA_BUILD_PARAMETERS' 'hydra' "$arg"
+		--hydra=*)
+			extractAndAddPackageOption 'HYDRA_BUILD_PARAMETERS' 'hydra=' "$arg"
 			;;
-		--disable-mpc-hydra)
+		--disable-mpc-hydra|--disable-hydra)
 			HYDRA_PREFIX='disabled'
 			;;
 		#################### OPENPA #################
 		--with-openpa=*)
 			extractParamValue 'OPENPA_PREFIX' 'with-openpa' "$arg"
 			;;
-		--openpa*)
-			extractAndAddPackageOption 'OPENPA_BUILD_PARAMETERS' 'openpa' "$arg"
+		--openpa=*)
+			extractAndAddPackageOption 'OPENPA_BUILD_PARAMETERS' 'openpa=' "$arg"
 			;;
 		################### MPC GDB #################
 		--with-gdb=*)
 			extractParamValue 'MPC_GDB_PREFIX' 'with-gdb' "$arg"
 			;;
-		--gdb*)
-			extractAndAddPackageOption 'MPC_GDB_BUILD_PARAMETERS' 'gdb' "$arg"
+		--gdb=*)
+			extractAndAddPackageOption 'MPC_GDB_BUILD_PARAMETERS' 'gdb=' "$arg"
 			;;
 		--disable-gdb)
 			MPC_GDB_PREFIX='disabled'
@@ -1222,33 +1222,33 @@ do
 		--with-autopriv=*)
 			extractParamValue 'AUTOPRIV_PREFIX' 'with-autopriv' "$arg"
 			;;
-		--mpc-autopriv*)
-			extractAndAddPackageOption 'AUTOPRIV_BUILD_PARAMETERS' 'mpc-autopriv' "$arg"
+		--mpc-autopriv=*)
+			extractAndAddPackageOption 'AUTOPRIV_BUILD_PARAMETERS' 'mpc-autopriv=' "$arg"
 			;;
-		--autopriv*)
-			extractAndAddPackageOption 'AUTOPRIV_BUILD_PARAMETERS' 'autopriv' "$arg"
+		--autopriv=*)
+			extractAndAddPackageOption 'AUTOPRIV_BUILD_PARAMETERS' 'autopriv=' "$arg"
 			;;
 		--disable-mpc-gcc|--disable-autopriv|--disable-mpc-autopriv)
 			AUTOPRIV_PREFIX='disabled'
 			add_process_mode_flag_to_mpc
 			;;
 		################# FORTRAN GCC ###############
-		--disable-mpc-fortran)
+		--disable-mpc-fortran|--disable-fortran)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-fortran"
 			;;
 		################## LIBXML2 ##################
 		--with-libxml2=*)
 			extractParamValue 'LIBXML2_PREFIX' 'with-libxml2' "$arg"
 			;;
-		--libxml2*)
-			extractAndAddPackageOption 'LIBXML2_BUILD_PARAMETERS' 'libxml2' "$arg"
+		--libxml2=*)
+			extractAndAddPackageOption 'LIBXML2_BUILD_PARAMETERS' 'libxml2=' "$arg"
 			;;
 		################### HWLOC ###################
 		--with-hwloc=*)
 			extractParamValue 'HWLOC_PREFIX' 'with-hwloc' "$arg"
 			;;
-		--hwloc*)
-			extractAndAddPackageOption 'HWLOC_BUILD_PARAMETERS' 'hwloc' "$arg"
+		--hwloc=*)
+			extractAndAddPackageOption 'HWLOC_BUILD_PARAMETERS' 'hwloc=' "$arg"
 			;;
 		################### CUDA ###################
 		--with-cuda=*)
@@ -1264,8 +1264,8 @@ do
 		--with-tbb=*)
 			extractParamValue 'TBB_PREFIX' 'with-tbb' "$arg"
 			;;
-		--tbb*)
-			extractAndAddPackageOption 'TBB_BUILD_PARAMETERS' 'tbb' "$arg"
+		--tbb=*)
+			extractAndAddPackageOption 'TBB_BUILD_PARAMETERS' 'tbb=' "$arg"
 			;;
 		--enable-mpc-tbb)
 			enableParamIfNot 'TBB_PREFIX' "$TBB_PREFIX" 'disabled' 'internal'
@@ -1280,15 +1280,15 @@ do
 		--disable-mpc-allocator|--disable-mpcalloc)
 			MPCALLOC_PREFIX="disabled"
 			;;
-		--mpcalloc*)
-			extractAndAddPackageOption 'MPCALLOC_BUILD_PARAMETERS' 'mpcalloc' "$arg"
+		--mpcalloc=*)
+			extractAndAddPackageOption 'MPCALLOC_BUILD_PARAMETERS' 'mpcalloc=' "$arg"
 			;;
 		################### DMTCP ###################
 		--with-dmtcp=*)
 			extractParamValue 'MPC_DMTCP_PREFIX' 'with-dmtcp' "$arg"
 			;;
-		--dmtcp*)
-			extractAndAddPackageOption 'MPC_DMTCP_BUILD_PARAMETERS' 'dmtcp' "$arg"
+		--dmtcp=*)
+			extractAndAddPackageOption 'MPC_DMTCP_BUILD_PARAMETERS' 'dmtcp=' "$arg"
 			;;
 		################### GENERIC FT ###################
 		--enable-mpc-ft)
@@ -1301,11 +1301,9 @@ do
 		################# COMPILER ##################
 		--compiler=*)
 			extractParamValue 'MPC_COMPILER' 'compiler' "$arg"
+			ALL_PACKAGE_ARGS="$ALL_PACKAGE_ARGS CC=${MPC_COMPILER}"
 			;;
 		############### MPCFRAMEWORK ################
-		--mpc-option=*)
-			extractAndAddPackageOption 'MPCFRAMEWORK_BUILD_PARAMETERS' 'mpc-option=' "$arg"
-			;;
 		--enable-color)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-shell-colors"
 			AUTOPRIV_BUILD_PARAMETERS="${AUTOPRIV_BUILD_PARAMETERS} --opts=--enable-color"
@@ -1326,12 +1324,22 @@ do
 		--disable-MPC_MPI|--lib-mode)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-mpi"
 			;;
+		--disable-romio)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-mpiio"
+			;;
 		--mpc-process-mode)
 			AUTOPRIV_PREFIX='disabled'
 			add_process_mode_flag_to_mpc
 			;;
 		--disable-prefix-check|--disable-check-install)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-prefix-check"
+			;;
+		--mpcframework=*)
+			# Pass extra options to MPC
+			extractAndAddPackageOption 'MPCFRAMEWORK_BUILD_PARAMETERS' 'mpcframework=' "$arg"
+			;;
+		--mpc-option=*)
+			extractAndAddPackageOption 'MPCFRAMEWORK_BUILD_PARAMETERS' 'mpc-option=' "$arg"
 			;;
 		################## COMMON ###################
 		-v | --verbose | --verbose=1)
@@ -1407,11 +1415,6 @@ do
 		# Deprecated options
 		--mirror=*|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--with-hbict=*|--hbict-*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--enable-check-deps|--disable-check-deps|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*)
 			info "$arg is deprecated"
-			;;
-		# This pattern is the last due to its large wildcard
-		--mpcframework*)
-			# Pass extra options to MPC
-			extractAndAddPackageOption 'MPCFRAMEWORK_BUILD_PARAMETERS' 'mpc' "$arg"
 			;;
 		*)
 			echo "Invalid argument '$arg', please check your command line or get help with --help." 1>&2
@@ -1579,7 +1582,7 @@ checking "Configuring MPC"
 if test "x${AUTOPRIV_PREFIX}" = "xdisabled"; then
 	# we want parameter expansion
 	# shellcheck disable=SC2086
-	wrap_output "$SCRIPTPATH/configure" $MPC_CONFIGURE_OPTS
+	wrap_output "$SCRIPTPATH/configure" $MPC_CONFIGURE_OPTS $ALL_PACKAGE_ARGS
 	ok
 else
 	# We have autopriv so we explicitly set CC CXX and FC
