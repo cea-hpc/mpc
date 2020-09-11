@@ -1323,15 +1323,15 @@ do
 			# No need for hydra
 			HYDRA_PREFIX='disabled'
 			;;
-		--disable-prefix-check)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-prefix-check"
-			;;
-		--disable-MPC_MPI)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-MPC_MPI"
+		--disable-MPC_MPI|--lib-mode)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-mpi"
 			;;
 		--mpc-process-mode)
 			AUTOPRIV_PREFIX='disabled'
 			add_process_mode_flag_to_mpc
+			;;
+		--disable-prefix-check|--disable-check-install)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-prefix-check"
 			;;
 		################## COMMON ###################
 		-v | --verbose | --verbose=1)
@@ -1369,7 +1369,7 @@ do
 			assert_cmd "spack"
 			SPACK_LOCATE_DEPENDENCY="yes"
 			;;
-		--disable-spack)
+		--disable-spack|--enable-all-internals)
 			SPACK_LOCATE_DEPENDENCY="no"
 			SPACK_INSTALL_DEPENDENCY="no"
 			;;
@@ -1393,8 +1393,19 @@ do
 		--force-spack-package=*)
 			extractParamValue 'OVERRIDEN_SPACK_PKGS' 'force-spack-package' "$arg"
 			;;
+		# Build wrappers
+		--version)
+			printf "%s\n" "$("$SCRIPTPATH/utils/get_version")"
+			exit 0
+			;;
+		clean)
+			make clean
+			;;
+		distclean)
+			make distclean
+			;;
 		# Deprecated options
-		--lib-mode|--mirror=*|clean|distclean|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--with-hbict=*|--hbict-*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--enable-check-deps|--disable-check-deps|--disable-check-install|--enable-all-internals|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*|--version)
+		--mirror=*|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--with-hbict=*|--hbict-*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--enable-check-deps|--disable-check-deps|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*)
 			info "$arg is deprecated"
 			;;
 		# This pattern is the last due to its large wildcard
