@@ -826,6 +826,9 @@
 /* MPC_Fortran module was enabled */
 #undef MPC_FORTRAN_ENABLED
 
+/* libffi support is enabled */
+#undef MPC_HAVE_LIBFFI
+
 /* libunwind support is enabled */
 #undef MPC_HAVE_LIBUNWIND
 

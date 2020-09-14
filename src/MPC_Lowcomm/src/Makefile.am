@@ -76,3 +76,11 @@ endif
 
 # library dependency #
 libmpclowcomm_la_LIBADD =  $(ALLOC_LIBS) ../../MPC_Launch/src/libmpclaunch.la -lm -lrt
+
+
+if MPC_HAVE_AM
+ # Active message support (ffi)
+ libmpclowcomm_la_SOURCES += am.c
+ libmpclowcomm_la_LIBADD += $(FFI_LIBS)
+endif
+

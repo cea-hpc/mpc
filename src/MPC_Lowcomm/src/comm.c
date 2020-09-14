@@ -2936,7 +2936,6 @@ static inline void __init_request_null()
 	mpc_lowcomm_request_init(&__request_null, MPC_COMM_NULL, REQUEST_NULL);
 	__request_null.is_null = 1;
 }
-
 mpc_lowcomm_request_t* mpc_lowcomm_request_null(void)
 {
 	return &__request_null;
@@ -3243,6 +3242,16 @@ int mpc_lowcomm_probe(int source, int tag, mpc_lowcomm_communicator_t comm, mpc_
 	}
 
 	return SCTK_SUCCESS;
+}
+
+int mpc_lowcomm_get_req_source(mpc_lowcomm_request_t *req)
+{
+	return req->header.source;
+}
+
+size_t mpc_lowcomm_get_req_size(mpc_lowcomm_request_t *req)
+{
+   return req->header.msg_size;
 }
 
 /*  ###############

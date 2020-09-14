@@ -757,9 +757,47 @@ AC_SUBST([MPC_ALLOCATOR])
 AC_SUBST([MPC_ALLOCATOR_PRELOAD])
 
 #
+# Detect libffi / Active Message support
+#
+
+AC_ARG_ENABLE([am],
+[AS_HELP_STRING([--enable-am],
+                [Compile MPC active messages])],
+[MPC_AM_ENABLED=$enableval],
+[MPC_AM_ENABLED=maybe])
+
+MPC_HAVE_AM="no"
+
+MPC_DETECT_DEPENDENCY([ffi.h], [libffi], [ffi_prep_cif], [FFI])
+HAVE_LIB_FFI="no"
+
+if test "x$mpc_dep_found" = "xyes"; then
+        AC_DEFINE([MPC_HAVE_LIBFFI], [1], [libffi support is enabled])
+
+        # Enable AM if not explicitly disabled
+        if test "x$MPC_AM_ENABLED" != "xno"; then
+                MPC_AM_ENABLED=yes
+        fi
+
+        MPC_HAVE_AM="$MPC_AM_ENABLED"
+        HAVE_LIB_FFI="yes"
+else
+        # Ensure AM were not REQUIRED as we do not have libffi
+        if test "x$MPC_AM_ENABLED" = "xyes"; then
+                AC_MSG_ERROR([Could not libffi required for Active Message support (--enable-am)])
+        fi
+        # Not possible to support AM
+        MPC_AM_ENABLED="no"
+fi
+
+AC_MSG_CHECKING([Support for active messages])
+AC_MSG_RESULT([$MPC_HAVE_AM])
+
+AM_CONDITIONAL([MPC_HAVE_AM], [test "x$MPC_HAVE_AM" = "xyes"])
+
+#
 # Detect libunwind
 #
-AC_MSG_CHECKING([support for libunwind library])
 mpc_libunwind="no"
 
 # First use the pkgconfig naming scheme
@@ -770,6 +808,9 @@ if test "x$mpc_dep_found" = "xyes"; then
         AC_DEFINE([MPC_HAVE_LIBUNWIND], [1], [libunwind support is enabled])
         mpc_libunwind="yes"
 fi
+
+AC_MSG_CHECKING([Building libunwind support])
+AC_MSG_RESULT([$mpc_libunwind])
 
 #
 # Network list
@@ -2762,6 +2803,10 @@ MPC_CONFIG_RESULT="\
 # MPC_MPI.............. $MPC_MPI_ENABLED\n\
 # MPC_Fortran.......... $MPC_FORTRAN_ENABLED\n\
 # MPC_MPIIO............ $MPC_MPIIO_ENABLED\n\
+#
+### OPTIONAL Interfaces ###\n\
+#\n\
+# Active Messages...... $MPC_HAVE_AM\n\
 #\n\
 ### COMPILERS ###\n\
 #\n\
@@ -2785,6 +2830,7 @@ MPC_CONFIG_RESULT="\
 # Launcher............. $MPC_LAUNCHER\n\
 # Allocator............ $MPC_ALLOCATOR\n\
 # libunwind............ $mpc_libunwind\n\
+# libffi............... $HAVE_LIB_FFI\n\
 # DMTPC c/r............ $MPC_HAVE_DMTCP\n\
 #\n\
 ### DEBUGGING ###\n\
