@@ -122,7 +122,8 @@ CONFIG_CLEAN_FILES = mpc_build_env.sh mpc_cflags mpc_ldflags mpcrun \
 	mpcvars.sh mpc_status
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)" \
-	"$(DESTDIR)$(mpcrun_plugindir)" "$(DESTDIR)$(pkgdatadir)"
+	"$(DESTDIR)$(mpcrun_plugindir)" "$(DESTDIR)$(pkgdatadir)" \
+	"$(DESTDIR)$(prefix_bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
 am_mpirun_OBJECTS = ./mpirun.$(OBJEXT)
@@ -159,7 +160,8 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-SCRIPTS = $(bin_SCRIPTS) $(mpcrun_plugin_SCRIPTS) $(pkgdata_SCRIPTS)
+SCRIPTS = $(bin_SCRIPTS) $(mpcrun_plugin_SCRIPTS) $(pkgdata_SCRIPTS) \
+	$(prefix_bin_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -478,7 +480,6 @@ program_transform_name = @program_transform_name@
 psdir = @psdir@
 pyexecdir = @pyexecdir@
 pythondir = @pythondir@
-runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -498,6 +499,10 @@ top_srcdir = @top_srcdir@
 bin_SCRIPTS = mpc_cc mpc_cxx mpc_cflags mpc_ldflags mpicc mpicxx \
 	$(am__append_1) mpc_status mpcvars.sh $(am__append_2) mpcrun
 pkgdata_SCRIPTS = mpc_compiler_common.sh
+
+# It duplicates mpcvarsh.sh but is needed for retrocompat
+prefix_bindir = $(prefix)
+prefix_bin_SCRIPTS = mpcvars.sh
 mpirun_SOURCES = ./mpirun.c
 mpcrun_plugindir = $(pkgdatadir)/mpcrun_opt/
 mpcrun_plugin_SCRIPTS = mpcrun_opt/mpcrun_default mpcrun_opt/mpcrun_hydra mpcrun_opt/mpcrun_mpiexec mpcrun_opt/mpcrun_mpiexec_allinea mpcrun_opt/mpcrun_mpiexec_gdb mpcrun_opt/mpcrun_none mpcrun_opt/mpcrun_none_ddd mpcrun_opt/mpcrun_none_gdb mpcrun_opt/mpcrun_none_mpc-gdb mpcrun_opt/mpcrun_none_totalview mpcrun_opt/mpcrun_none_valgrind mpcrun_opt/mpcrun_propagate_env mpcrun_opt/mpcrun_remote mpcrun_opt/mpcrun_remote_launcher mpcrun_opt/mpcrun_salloc_hydra mpcrun_opt/mpcrun_srun mpcrun_opt/mpcrun_srun_gdb mpcrun_opt/mpcrun_srun_mpcdb mpcrun_opt/mpcrun_srun_totalview
@@ -772,6 +777,56 @@ installcheck-pkgdataSCRIPTS: $(pkgdata_SCRIPTS)
 	    else echo "$$f does not support $$opt" 1>&2; bad=1; fi; \
 	  done; \
 	done; rm -f c$${pid}_.???; exit $$bad
+install-prefix_binSCRIPTS: $(prefix_bin_SCRIPTS)
+	@$(NORMAL_INSTALL)
+	@list='$(prefix_bin_SCRIPTS)'; test -n "$(prefix_bindir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(prefix_bindir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(prefix_bindir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  if test -f "$$d$$p"; then echo "$$d$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n' \
+	    -e 'h;s|.*|.|' \
+	    -e 'p;x;s,.*/,,;$(transform)' | sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1; } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) { files[d] = files[d] " " $$1; \
+	      if (++n[d] == $(am__install_max)) { \
+		print "f", d, files[d]; n[d] = 0; files[d] = "" } } \
+	    else { print "f", d "/" $$4, $$1 } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	     if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	     test -z "$$files" || { \
+	       echo " $(INSTALL_SCRIPT) $$files '$(DESTDIR)$(prefix_bindir)$$dir'"; \
+	       $(INSTALL_SCRIPT) $$files "$(DESTDIR)$(prefix_bindir)$$dir" || exit $$?; \
+	     } \
+	; done
+
+uninstall-prefix_binSCRIPTS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(prefix_bin_SCRIPTS)'; test -n "$(prefix_bindir)" || exit 0; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	       sed -e 's,.*/,,;$(transform)'`; \
+	dir='$(DESTDIR)$(prefix_bindir)'; $(am__uninstall_files_from_dir)
+
+installcheck-prefix_binSCRIPTS: $(prefix_bin_SCRIPTS)
+	bad=0; pid=$$$$; list="$(prefix_bin_SCRIPTS)"; for p in $$list; do \
+	  case ' $(AM_INSTALLCHECK_STD_OPTIONS_EXEMPT) ' in \
+	   *" $$p "* | *" $(srcdir)/$$p "*) continue;; \
+	  esac; \
+	  f=`echo "$$p" | sed 's,^.*/,,;$(transform)'`; \
+	  for opt in --help --version; do \
+	    if "$(DESTDIR)$(prefix_bindir)/$$f" $$opt >c$${pid}_.out \
+	         2>c$${pid}_.err </dev/null \
+		 && test -n "`cat c$${pid}_.out`" \
+		 && test -z "`cat c$${pid}_.err`"; then :; \
+	    else echo "$$f does not support $$opt" 1>&2; bad=1; fi; \
+	  done; \
+	done; rm -f c$${pid}_.???; exit $$bad
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -898,7 +953,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(PROGRAMS) $(SCRIPTS)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(mpcrun_plugindir)" "$(DESTDIR)$(pkgdatadir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(mpcrun_plugindir)" "$(DESTDIR)$(pkgdatadir)" "$(DESTDIR)$(prefix_bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -955,8 +1010,8 @@ info: info-am
 
 info-am:
 
-install-data-am: install-data-local install-mpcrun_pluginSCRIPTS \
-	install-pkgdataSCRIPTS
+install-data-am: install-mpcrun_pluginSCRIPTS install-pkgdataSCRIPTS \
+	install-prefix_binSCRIPTS
 
 install-dvi: install-dvi-am
 
@@ -983,7 +1038,8 @@ install-ps: install-ps-am
 install-ps-am:
 
 installcheck-am: installcheck-binPROGRAMS installcheck-binSCRIPTS \
-	installcheck-mpcrun_pluginSCRIPTS installcheck-pkgdataSCRIPTS
+	installcheck-mpcrun_pluginSCRIPTS installcheck-pkgdataSCRIPTS \
+	installcheck-prefix_binSCRIPTS
 
 maintainer-clean: maintainer-clean-am
 	-rm -rf ./$(DEPDIR)
@@ -1004,8 +1060,8 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
-	uninstall-local uninstall-mpcrun_pluginSCRIPTS \
-	uninstall-pkgdataSCRIPTS
+	uninstall-mpcrun_pluginSCRIPTS uninstall-pkgdataSCRIPTS \
+	uninstall-prefix_binSCRIPTS
 
 .MAKE: install-am install-strip
 
@@ -1014,30 +1070,23 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 	ctags ctags-am distclean distclean-compile distclean-generic \
 	distclean-libtool distclean-tags distdir dvi dvi-am html \
 	html-am info info-am install install-am install-binPROGRAMS \
-	install-binSCRIPTS install-data install-data-am \
-	install-data-local install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-mpcrun_pluginSCRIPTS \
-	install-pdf install-pdf-am install-pkgdataSCRIPTS install-ps \
+	install-binSCRIPTS install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-mpcrun_pluginSCRIPTS install-pdf install-pdf-am \
+	install-pkgdataSCRIPTS install-prefix_binSCRIPTS install-ps \
 	install-ps-am install-strip installcheck installcheck-am \
 	installcheck-binPROGRAMS installcheck-binSCRIPTS \
 	installcheck-mpcrun_pluginSCRIPTS installcheck-pkgdataSCRIPTS \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am uninstall-binPROGRAMS uninstall-binSCRIPTS \
-	uninstall-local uninstall-mpcrun_pluginSCRIPTS \
-	uninstall-pkgdataSCRIPTS
+	installcheck-prefix_binSCRIPTS installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS \
+	uninstall-binSCRIPTS uninstall-mpcrun_pluginSCRIPTS \
+	uninstall-pkgdataSCRIPTS uninstall-prefix_binSCRIPTS
 
 .PRECIOUS: Makefile
 
-
-# Make sure the source script is at the root of the prefix for retro-compatibility
-install-data-local:
-	ln -sf $(bindir)/mpcvars.sh $(prefix)/mpcvars.sh
-
-uninstall-local:
-	rm -f $(prefix)/mpcvars.sh
 
 #CLEANFILES += $(bin_SCRIPTS) $(mpcrun_plugin_SCRIPTS)
 

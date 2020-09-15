@@ -31,7 +31,7 @@
 #ifdef MPC_Threads
 /* This is needed to rewrite pthread primitives
    to MPC ones when MPC_Threads is enabled */
-#include <mpc_pthread.h>
+#include "mpcposix/pthread.h"
 #endif
 
 /************************************************************************/

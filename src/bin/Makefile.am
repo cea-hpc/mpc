@@ -14,12 +14,9 @@ endif
 bin_SCRIPTS += mpc_status mpcvars.sh
 pkgdata_SCRIPTS = mpc_compiler_common.sh
 
-# Make sure the source script is at the root of the prefix for retro-compatibility
-install-data-local:
-	ln -sf $(bindir)/mpcvars.sh $(DESTDIR)$(prefix)/mpcvars.sh
-
-uninstall-local:
-	rm -f $(DESTDIR)$(prefix)/mpcvars.sh
+# It duplicates mpcvarsh.sh but is needed for retrocompat
+prefix_bindir=$(prefix)
+prefix_bin_SCRIPTS=mpcvars.sh
 
 #
 # Cuda support

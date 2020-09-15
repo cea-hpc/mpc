@@ -805,9 +805,6 @@
 /* MPC debug messages output was enabled */
 #undef MPC_ENABLE_DEBUG_MESSAGES
 
-/* Disable assert function */
-#undef NDEBUG
-
 /* MPC Colored output */
 #undef MPC_ENABLE_SHELL_COLORS
 
@@ -885,6 +882,9 @@
 
 /* MPC Tainted Version */
 #undef MPC_VERSION_STRING
+
+/* Disable assert function */
+#undef NDEBUG
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT

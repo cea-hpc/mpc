@@ -22,12 +22,6 @@
 #                                                                      #
 ########################################################################
 mpc_headerdir=$(pkgincludedir)
-mpc_header_HEADERS= ./include/mpc_thread.h ./include/mpc_thread_engines.h
-
-
-# Install the pthread.h interceptions header
-install-data-local:
-	install -m 0644 -D $(abs_top_srcdir)/src/MPC_Threads/include/mpc_pthread.h $(DESTDIR)$(pkgincludedir)/pthread.h
-
+mpc_header_HEADERS= ./include/mpc_thread.h ./include/mpcposix/pthread.h ./include/mpc_thread_engines.h
 
 SUBDIRS=src

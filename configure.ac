@@ -2638,6 +2638,7 @@ AC_OUTPUT([Makefile
            src/MPC_Common/include/mpc_common_spinlock.h
            src/MPC_Common/include/mpc_keywords.h
            src/MPC_Config/Makefile
+           src/MPC_Config/editor/Makefile
            src/MPC_Config/src/Makefile
            src/MPC_Launch/Makefile
            src/MPC_Launch/src/Makefile

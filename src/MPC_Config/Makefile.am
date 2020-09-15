@@ -23,21 +23,6 @@
 ########################################################################
 noinst_HEADERS=$(srcdir)/include/mpc_runtime_config.h
 
-# Probably better to replace this with:
-# configdir =/path
-# configdir_DATA= files
-install-data-local:
-	test -d $(DESTDIR)$(pkgdatadir) || mkdir -p $(DESTDIR)$(pkgdatadir)
-	cp -r $(abs_srcdir)/editor $(DESTDIR)$(pkgdatadir)
-	install -m 0644 -D $(abs_srcdir)/src/generated/mpc_config_meta.js $(DESTDIR)$(pkgdatadir)/editor/javascript/mpc_config_meta.js
-	install -m 0644 -D $(abs_srcdir)/src/generated/mpc_config_xsd.js $(DESTDIR)$(pkgdatadir)/editor/javascript/mpc_config_xsd.js
-	install -m 0644 -D $(abs_srcdir)/src/generated/mpc-config.xsd $(DESTDIR)$(pkgdatadir)/mpc-config.xsd
-	install -m 0644 -D $(abs_srcdir)/extra/config.xml.example $(DESTDIR)$(pkgdatadir)/config.xml
+pkgdata_DATA= src/generated/mpc_config_meta.js src/generated/mpc_config_xsd.js src/generated/mpc-config.xsd extra/config.xml
 
-uninstall-local:
-	rm -rf $(DESTDIR)$(pkgdatadir)/editor
-	rm -f $(DESTDIR)$(pkgdatadir)/config.xml
-	rm -f $(DESTDIR)$(pkgdatadir)/mpc-config.xsd
-
-
-SUBDIRS=src
+SUBDIRS=src editor
