@@ -7,9 +7,9 @@
 #ifdef MPC_Threads
 /* This is needed to rewrite pthread primitives
    to MPC ones when MPC_Threads is enabled */
-#include <mpc_pthread.h>
+#include "mpcposix/pthread.h"
 #else
-	#include <pthread.h>
+#include <pthread.h>
 #endif
 
 #define MPC_LOWCOMM_AM_MAX_FN_LEN    32
