@@ -100,6 +100,7 @@ check_prefix_is_clean()
 		# Apparently prefix was cleared somehow
 		# Make sure deps are reinstalled
 		rm -fr "$PREFIX"/.mpc-installed-*
+		info "Prefix seems to be incomplete, forcing reinstall."
 	fi
 }
 
@@ -202,8 +203,6 @@ check_for_commands()
 			checking "locate '$c' command in PATH"
 			nok
 		fi
-
-
 	done
 
 	set -e
