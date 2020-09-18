@@ -543,7 +543,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	mpc_common_nodebug ( "Connection Infos (%d): %s", mpc_common_get_process_rank(), rail->network.tcp.connection_infos );
 
 	/* Register connection info inside the PMPI */
-	assume ( mpc_launch_pmi_put_as_rank ( rail->network.tcp.connection_infos, rail->rail_number ) == 0 );
+	assume ( mpc_launch_pmi_put_as_rank ( rail->network.tcp.connection_infos, rail->rail_number, 0 /* Not local */ ) == 0 );
 
  mpc_launch_pmi_barrier();
 

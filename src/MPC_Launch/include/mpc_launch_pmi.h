@@ -151,7 +151,7 @@ int mpc_launch_pmi_barrier();
  * @param tag identifier of the stored value
  * @return int SCTK_PMI_SUCCESS / _FAIL
  */
-int mpc_launch_pmi_put_as_rank( char *value, int tag );
+int mpc_launch_pmi_put_as_rank( char *value, int tag, int is_local );
 
 /**
  * @brief Get a value in KVS for rank using an integer tag
@@ -169,9 +169,10 @@ int mpc_launch_pmi_get_as_rank( char *value, size_t size, int tag, int rank );
  *
  * @param value value to be set
  * @param key corresponding key
+ * @param is_local if the value is to be stored locally not over net
  * @return int SCTK_PMI_SUCCESS / _FAIL
  */
-int mpc_launch_pmi_put( char *value, char *key );
+int mpc_launch_pmi_put( char *value, char *key, int is_local );
 
 /**
  * @brief Get a value at key in the KVS
@@ -179,9 +180,10 @@ int mpc_launch_pmi_put( char *value, char *key );
  * @param value value to be retrieved
  * @param size maximum value size
  * @param key corresponding key
+ * @param remote remote rank to query
  * @return int SCTK_PMI_SUCCESS / _FAIL
  */
-int mpc_launch_pmi_get( char *value, size_t size, char *key );
+int mpc_launch_pmi_get( char *value, size_t size, char *key, int remote);
 
 /*********************
  * OS PROCESS LAYOUT *

@@ -25,13 +25,18 @@
 
 #include <mpc_common_helper.h>
 #include <mpc_common_rank.h>
+#include <mpc_common_types.h>
 #include <mpc_common_flags.h>
 #include "sctk_alloc.h"
 #include "mpc_common_debug.h"
 
 #include "mpc_launch.h"
 
-#if defined(MPC_USE_SLURM) || defined(MPC_USE_HYDRA)
+#ifdef MPC_USE_PMIX
+	#include <pmix.h>
+	#define PMI_SUCCESS PMIX_SUCCESS
+	#define PMI_FAIL PMIX_FAIL
+#else
 	#include <pmi.h>
 #endif
 
@@ -55,10 +60,16 @@ struct mpc_pmi_context
 	/** If spawned */
 	int spawned;
 
-	/** PMI lengths */
-	int kvsname_len;
-	int max_val_len;
-	int max_key_len;
+	#ifdef MPC_USE_PMIX
+		pmix_proc_t pmix_proc;
+	#else
+
+		/** PMI lengths */
+		int kvsname_len;
+		int max_val_len;
+		int max_key_len;
+
+	#endif
 
 	/** Convert struct */
 	struct mpc_launch_pmi_process_layout *process_nb_from_node_rank;
@@ -74,7 +85,6 @@ void __mpc_launch_pmi_context_clear( void )
 	memset( &pmi_context, 0, sizeof( struct mpc_pmi_context ) );
 }
 
-
 /******************************************************************************
 INITIALIZATION/FINALIZE
 ******************************************************************************/
@@ -84,7 +94,7 @@ INITIALIZATION/FINALIZE
 	if ( retcode != PMI_SUCCESS )\
 	{\
 		fprintf( stderr, "FAILURE (mpc_launch_pmi): %s: %d\n", ctx, retcode );\
-		return MPC_LAUNCH_PMI_FAIL;\
+		MPC_CRASH();\
 	}\
 }while(0)
 
@@ -99,30 +109,123 @@ INITIALIZATION/FINALIZE
 	}\
 }while(0)
 
+
+
+
 /******************************************************************************
 NUMBERING/TOPOLOGY INFORMATION
 ******************************************************************************/
+
+#if defined(MPC_USE_PMIX)
+static inline pmix_status_t __pmix_get_attribute(int rank_level, const char key[], pmix_data_type_t type, void * out)
+{
+	int ret = -1;
+	pmix_proc_t *proc = &pmi_context.pmix_proc;
+
+	pmix_proc_t wproc;
+
+	if(!rank_level)
+	{
+		PMIX_PROC_CONSTRUCT(&wproc);
+		(void)strncpy(wproc.nspace, pmi_context.pmix_proc.nspace, PMIX_MAX_NSLEN);
+		wproc.rank = PMIX_RANK_WILDCARD;
+		proc = &wproc;
+	}
+
+	pmix_value_t *val = NULL;
+
+	pmix_status_t rc = PMIx_Get(proc, key, NULL, 0, &val);
+	PMI_CHECK_RC( rc, "PMIx_Get" );
+	assume(val != NULL);
+
+	switch (val->type)
+	{
+		case PMIX_INT16:
+			memcpy(out, &val->data.int16, sizeof(int16_t));
+		break;
+		case PMIX_INT32:
+			memcpy(out, &val->data.int32, sizeof(int32_t));
+		break;
+		case PMIX_UINT16:
+			memcpy(out, &val->data.int16, sizeof(uint16_t));
+		break;
+		case PMIX_UINT32:
+			memcpy(out, &val->data.int32, sizeof(uint32_t));
+		break;
+		case PMIX_PROC_RANK:
+			memcpy(out, &val->data.rank, sizeof(pmix_rank_t));
+		break;
+	}
+
+	if(!rank_level)
+	{
+		PMIX_PROC_DESTRUCT(&wproc);
+	}
+
+	PMIX_VALUE_RELEASE(val);
+	PMI_RETURN( rc );
+}
+
+
+#endif
+
+
+/*! \brief Get the rank of this process
+ * @param rank Pointer to store the rank of the process
+*/
+static inline int __mpc_pmi_get_process_rank( int *rank )
+{
+#if defined(MPC_USE_PMIX)
+	*rank = pmi_context.pmix_proc.rank;
+	return MPC_LAUNCH_PMI_SUCCESS; 
+#else
+	int rc;
+	// Get the rank of the current process
+	rc = PMI_Get_rank( rank );
+	PMI_CHECK_RC( rc, "PMI_Get_rank" );
+	PMI_RETURN( rc );
+#endif
+}
+
 /*! \brief Get the number of processes
 	* @param size Pointer to store the number of processes
 */
 	static inline int __mpc_pmi_get_process_count( int *size )
 {
+#if defined(MPC_USE_PMIX)
+	uint32_t usize;
+	*size = -1;
+	pmix_status_t rc = __pmix_get_attribute(0, PMIX_JOB_SIZE, PMIX_UINT32, &usize);
+	PMI_CHECK_RC( rc, "__pmix_get_attribute" );
+	*size = usize;
+	PMI_RETURN( rc );
+#else
 	int rc;
 	// Get the total number of processes
 	rc = PMI_Get_size( size );
 	PMI_CHECK_RC( rc, "PMI_Get_size" );
 	PMI_RETURN( rc );
+#endif
 }
+
 
 /*! \brief Get the rank of this process on the current node
  * @param rank Pointer to store the rank of the process
 */
 static inline int __mpc_pmi_get_local_process_rank( int *rank )
 {
-#if defined(MPC_USE_HYDRA)
+#if defined(MPC_USE_PMIX)
+	pmix_value_t *val = NULL;
+	pmix_status_t rc = PMIx_Get(&pmi_context.pmix_proc, PMIX_LOCAL_RANK, NULL, 0, &val);
+	PMI_CHECK_RC( rc, "PMIx_Get" );
+	assume(val != NULL);
+	*rank = val->data.uint16;
+	PMIX_VALUE_RELEASE(val);
+	PMI_RETURN( rc );
+#elif defined(MPC_USE_HYDRA)
 	*rank = pmi_context.local_process_rank;
 	return MPC_LAUNCH_PMI_SUCCESS;
-#elif defined(MPC_USE_SLURM)
+#elif defined(MPC_USE_PMI1)
 	char *env = NULL;
 	env = getenv( "SLURM_LOCALID" );
 
@@ -140,7 +243,7 @@ static inline int __mpc_pmi_get_local_process_rank( int *rank )
 	return MPC_LAUNCH_PMI_SUCCESS;
 #else
 	not_implemented();
-#endif /* MPC_USE_SLURM */
+#endif /* MPC_USE_PMI1 */
 }
 
 /*! \brief Get the number of processes on the current node
@@ -148,7 +251,14 @@ static inline int __mpc_pmi_get_local_process_rank( int *rank )
 */
 static inline int __mpc_pmi_get_local_process_count( int *size )
 {
-#if defined(MPC_USE_HYDRA) || defined(MPC_USE_SLURM)
+#if defined(MPC_USE_PMIX)
+	uint32_t usize;
+	*size = -1;
+	pmix_status_t rc = __pmix_get_attribute(0, PMIX_LOCAL_SIZE, PMIX_UINT32, &usize);
+	PMI_CHECK_RC( rc, "__pmix_get_attribute" );
+	*size = usize;
+	PMI_RETURN( rc );
+#elif defined(MPC_USE_HYDRA) || defined(MPC_USE_PMI1)
 
 	/* Testing with new PMI we had PMI_Get_clique_size returning -1
 	   on PMIX compat so we rely on the manual computation
@@ -172,6 +282,7 @@ static inline int __mpc_pmi_get_local_process_count( int *size )
 #endif
 }
 
+
 /*! \brief Get the rank of this node
  * @param rank Pointer to store the rank of the node
 */
@@ -180,7 +291,7 @@ static inline int __mpc_pmi_get_node_rank( int *rank )
 #if defined(MPC_USE_HYDRA)
 	*rank = pmi_context.node_rank;
 	return MPC_LAUNCH_PMI_SUCCESS;
-#elif defined(MPC_USE_SLURM)
+#elif defined(MPC_USE_PMI1)
 	char *env = NULL;
 	env = getenv( "SLURM_NODEID" );
 
@@ -196,6 +307,13 @@ static inline int __mpc_pmi_get_node_rank( int *rank )
 	}
 
 	return MPC_LAUNCH_PMI_SUCCESS;
+#elif defined(MPC_USE_PMIX)
+	uint32_t urank;
+	*rank = -1;
+	pmix_status_t rc = __pmix_get_attribute(0, PMIX_NODEID, PMIX_UINT32, &urank);
+	PMI_CHECK_RC( rc, "__pmix_get_attribute" );
+	*rank = urank;
+	PMI_RETURN( rc );
 #else
 	not_implemented();
 #endif
@@ -210,7 +328,7 @@ static inline int __mpc_pmi_get_node_count( int *size )
 #if defined(MPC_USE_HYDRA)
 	*size = pmi_context.node_count;
 	return MPC_LAUNCH_PMI_SUCCESS;
-#elif defined(MPC_USE_SLURM)
+#elif defined(MPC_USE_PMI1)
 	char *env = NULL;
 	env = getenv( "SLURM_NNODES" );
 
@@ -226,87 +344,95 @@ static inline int __mpc_pmi_get_node_count( int *size )
 	}
 
 	return MPC_LAUNCH_PMI_SUCCESS;
+#elif defined(MPC_USE_PMIX)
+	uint32_t usize;
+	*size = -1;
+	pmix_status_t rc = __pmix_get_attribute(0, PMIX_NUM_NODES, PMIX_UINT32, &usize);
+	PMI_CHECK_RC( rc, "__pmix_get_attribute" );
+	*size = usize;
+	PMI_RETURN( rc );
 #else
 	not_implemented();
 #endif
 	return MPC_LAUNCH_PMI_FAIL;
 }
 
-/*! \brief Get the rank of this process
- * @param rank Pointer to store the rank of the process
-*/
-static inline int __mpc_pmi_get_process_rank( int *rank )
-{
-	int rc;
-	// Get the rank of the current process
-	rc = PMI_Get_rank( rank );
-	PMI_CHECK_RC( rc, "PMI_Get_rank" );
-	PMI_RETURN( rc );
-}
 
 /******************************
  * INITIALIZATION AND RELEASE *
  ******************************/
 
+
+static inline int _pmi_initialize(struct mpc_pmi_context *ctx)
+{
+	#ifdef MPC_USE_PMIX
+
+		pmix_status_t rc = PMIX_SUCCESS;
+
+		rc = PMIx_Init(&ctx->pmix_proc,
+                       NULL,
+					   0);
+		PMI_CHECK_RC( rc, "PMIx_Init" );
+
+		ctx->initialized = PMIx_Initialized();
+
+		if ( ctx->initialized != 1 )
+		{
+			fprintf( stderr, "FAILURE (mpc_launch_pmi): PMIx_Initialized returned false\n" );
+			return MPC_LAUNCH_PMI_FAIL;
+		}
+
+	#else /* PMI / HYDRA */
+		int rc;
+
+		// Initialized PMI/SLURM
+		rc = PMI_Init( &ctx->spawned );
+		PMI_CHECK_RC( rc, "PMI_Init" );
+		// Check if PMI/SLURM is initialized
+		ctx->initialized = 0;
+		rc = PMI_Initialized( &ctx->initialized );
+		PMI_CHECK_RC( rc, "PMI_Initialized" );
+
+		if ( ctx->initialized != 1 )
+		{
+			fprintf( stderr, "FAILURE (mpc_launch_pmi): PMI_Initialized returned false\n" );
+			PMI_RETURN( rc );
+		}
+
+		// Get key, value max sizes and kvsname.
+		// NB: Need to initialize kvsname here to avoid error in barrier with slurm
+		rc = PMI_KVS_Get_name_length_max( &ctx->kvsname_len );
+		PMI_CHECK_RC( rc, "PMI_KVS_Get_name_length_max" );
+		rc = PMI_KVS_Get_key_length_max( &ctx->max_key_len );
+		PMI_CHECK_RC( rc, "PMI_KVS_Get_key_length_max" );
+		rc = PMI_KVS_Get_value_length_max( &ctx->max_val_len );
+		PMI_CHECK_RC( rc, "PMI_KVS_Get_value_length_max" );
+		// Get the kvs name
+		ctx->kvsname = ( char * ) sctk_malloc( ctx->kvsname_len * sizeof( char ) );
+		assume( ctx->kvsname );
+		rc = PMI_KVS_Get_my_name( ctx->kvsname, ctx->kvsname_len );
+		PMI_CHECK_RC( rc, "PMI_KVS_Get_my_name" );
+
+	#endif
+
+	rc = __mpc_pmi_get_process_rank( &ctx->process_rank );
+	PMI_CHECK_RC( rc, "mpc_launch_pmi_get_process_rank" );
+	rc = __mpc_pmi_get_process_count( &ctx->process_count );
+	PMI_CHECK_RC( rc, "mpc_launch_pmi_get_process_count" );
+
+	return MPC_LAUNCH_PMI_SUCCESS;
+
+}
+
+
+
 #define MPC_LAUNCH_PMI_HOSTNAME_SIZE 64
 #define MPC_LAUNCH_PMI_TAG_PMI 6000
 #define MPC_LAUNCH_PMI_TAG_PMI_HOSTNAME 1
 
-/*! \brief Initialization function
- *
- */
-int mpc_launch_pmi_init()
+int __legacy_process_layout_init(void)
 {
-	__mpc_launch_pmi_context_clear();
-
-	mpc_common_tracepoint("Starting PMI");
-
 	int rc;
-	// Initialized PMI/SLURM
-	rc = PMI_Init( &pmi_context.spawned );
-	PMI_CHECK_RC( rc, "PMI_Init" );
-	// Check if PMI/SLURM is initialized
-	pmi_context.initialized = 0;
-	rc = PMI_Initialized( &pmi_context.initialized );
-	PMI_CHECK_RC( rc, "PMI_Initialized" );
-
-	if ( pmi_context.initialized != 1 )
-	{
-		fprintf( stderr, "FAILURE (mpc_launch_pmi): PMI_Initialized returned false\n" );
-		PMI_RETURN( rc );
-	}
-
-	// Get key, value max sizes and kvsname.
-	// NB: Need to initialize kvsname here to avoid error in barrier with slurm
-	rc = PMI_KVS_Get_name_length_max( &pmi_context.kvsname_len );
-	PMI_CHECK_RC( rc, "PMI_KVS_Get_name_length_max" );
-	rc = PMI_KVS_Get_key_length_max( &pmi_context.max_key_len );
-	PMI_CHECK_RC( rc, "PMI_KVS_Get_key_length_max" );
-	rc = PMI_KVS_Get_value_length_max( &pmi_context.max_val_len );
-	PMI_CHECK_RC( rc, "PMI_KVS_Get_value_length_max" );
-	// Get the kvs name
-	pmi_context.kvsname = ( char * ) sctk_malloc( pmi_context.kvsname_len * sizeof( char ) );
-	assume( pmi_context.kvsname );
-	rc = PMI_KVS_Get_my_name( pmi_context.kvsname, pmi_context.kvsname_len );
-	PMI_CHECK_RC( rc, "PMI_KVS_Get_my_name" );
-	rc = __mpc_pmi_get_process_rank( &pmi_context.process_rank );
-	PMI_CHECK_RC( rc, "mpc_launch_pmi_get_process_rank" );
-	rc = __mpc_pmi_get_process_count( &pmi_context.process_count );
-	PMI_CHECK_RC( rc, "mpc_launch_pmi_get_process_count" );
-
-	// check if PMI_Get_size is equal to 1 (could mean application
-	// launched without mpiexec)
-
-	if ( pmi_context.process_count == 1 )
-	{
-		// no need of KVS for infos initialization
-		pmi_context.local_process_rank = 0;
-		pmi_context.node_rank = 0;
-		pmi_context.node_count = 1;
-		pmi_context.local_process_count = 1;
-		PMI_RETURN( rc );
-	}
-
 	// now we need to put node info in KVS in order to determine the
 	// following attributes,
 	// since PMI1 does not provide direct access function:
@@ -327,11 +453,11 @@ int mpc_launch_pmi_init()
 	gethostname( hostname, MPC_LAUNCH_PMI_HOSTNAME_SIZE );
 	// Put hostname on kvs for current process;
 	snprintf( value,
-	          MPC_LAUNCH_PMI_HOSTNAME_SIZE,
-	          "%s",
-	          hostname );
+			MPC_LAUNCH_PMI_HOSTNAME_SIZE,
+			"%s",
+			hostname );
 	rc = mpc_launch_pmi_put_as_rank( value,
-	                                 MPC_LAUNCH_PMI_TAG_PMI + MPC_LAUNCH_PMI_TAG_PMI_HOSTNAME );
+									MPC_LAUNCH_PMI_TAG_PMI + MPC_LAUNCH_PMI_TAG_PMI_HOSTNAME, 0 );
 	PMI_CHECK_RC( rc, "mpc_launch_pmi_put_as_rank" );
 	// wait for all processes to put their hostname in KVS
 	rc = mpc_launch_pmi_barrier();
@@ -346,7 +472,7 @@ int mpc_launch_pmi_init()
 		j = 0;
 		// get ith process hostname
 		rc = mpc_launch_pmi_get_as_rank( value, MPC_LAUNCH_PMI_HOSTNAME_SIZE,
-		                                 MPC_LAUNCH_PMI_TAG_PMI + MPC_LAUNCH_PMI_TAG_PMI_HOSTNAME, i );
+										MPC_LAUNCH_PMI_TAG_PMI + MPC_LAUNCH_PMI_TAG_PMI_HOSTNAME, i );
 		PMI_CHECK_RC( rc, "mpc_launch_pmi_get_as_rank" );
 
 		// compare value with current hostname. if the same, increase
@@ -359,7 +485,7 @@ int mpc_launch_pmi_init()
 		// acquire local process rank
 		if ( i == pmi_context.process_rank )
 			pmi_context.local_process_rank =
-			    pmi_context.local_process_count - 1;
+				pmi_context.local_process_count - 1;
 
 		while ( strcmp( nodes + j * MPC_LAUNCH_PMI_HOSTNAME_SIZE, value ) != 0 && j < nodes_nb )
 		{
@@ -374,7 +500,7 @@ int mpc_launch_pmi_init()
 		{
 			// new node
 			tmp = ( struct mpc_launch_pmi_process_layout * ) sctk_malloc(
-			          sizeof( struct mpc_launch_pmi_process_layout ) );
+					sizeof( struct mpc_launch_pmi_process_layout ) );
 			tmp->node_rank = j;
 			tmp->nb_process = 1;
 			tmp->process_list = ( int * ) sctk_malloc( sizeof( int ) * 1 );
@@ -386,7 +512,7 @@ int mpc_launch_pmi_init()
 			// one more process on this node
 			tmp->nb_process++;
 			int *tmp_tab = sctk_realloc( tmp->process_list,
-			                             sizeof( int ) * tmp->nb_process );
+										sizeof( int ) * tmp->nb_process );
 			assume( tmp_tab != NULL );
 			tmp_tab[tmp->nb_process - 1] = i;
 			tmp->process_list = tmp_tab;
@@ -413,6 +539,104 @@ int mpc_launch_pmi_init()
 	/* Free temporary values */
 	sctk_free( value );
 	sctk_free( nodes );
+}
+
+#ifdef MPC_USE_PMIX
+
+static inline void __pmix_process_layout_init()
+{
+	char *nodelist = NULL;
+	pmix_status_t rc = PMIx_Resolve_nodes(pmi_context.pmix_proc.nspace, &nodelist);
+	PMI_CHECK_RC(rc, "PMIx_Resolve_nodes");
+
+	/* Now iterate over the nodelist which is comma separated */
+
+	int node_rank = 0;
+
+	char * node = strtok ( nodelist, "," );
+    while ( node != NULL ) {
+		pmix_proc_t *procs = NULL;
+		size_t nprocs = 0;
+
+		rc = PMIx_Resolve_peers(node, pmi_context.pmix_proc.nspace, &procs, &nprocs);
+		PMI_CHECK_RC(rc, "PMIx_Resolve_peers");
+
+		struct mpc_launch_pmi_process_layout * layout = sctk_malloc(sizeof(struct mpc_launch_pmi_process_layout));
+		assume(layout != NULL);
+
+		layout->node_rank = node_rank;
+		layout->nb_process = nprocs;
+		layout->process_list = sctk_malloc(nprocs * sizeof(int));
+		assume(layout->process_list);
+
+		int i;
+		for(i=0; i < nprocs; i++)
+		{
+			layout->process_list[i] = procs[i].rank;
+		}
+
+		HASH_ADD_INT( pmi_context.process_nb_from_node_rank, node_rank, layout );
+
+		PMIX_PROC_FREE(procs, nprocs);
+		/* Go to next node */
+		node_rank++;
+        node = strtok ( NULL, "," );
+    }
+}
+
+#endif
+
+static void __process_layout_init(void)
+{
+	pmi_context.process_nb_from_node_rank = NULL;
+
+	#ifdef MPC_USE_PMIX
+		__pmix_process_layout_init();
+	#else
+		__legacy_process_layout_init();
+	#endif
+}
+
+int mpc_launch_pmi_get_process_layout( struct mpc_launch_pmi_process_layout **layout )
+{
+	*layout = pmi_context.process_nb_from_node_rank;
+	return MPC_LAUNCH_PMI_SUCCESS;
+}
+
+
+
+/*! \brief Initialization function
+ *
+ */
+int mpc_launch_pmi_init()
+{
+	__mpc_launch_pmi_context_clear();
+
+	int rc = _pmi_initialize(&pmi_context);
+
+	if( rc != MPC_LAUNCH_PMI_SUCCESS)
+	{
+		return MPC_LAUNCH_PMI_FAIL;
+	}
+
+	// check if PMI_Get_size is equal to 1 (could mean application
+	// launched without mpiexec)
+	__mpc_pmi_get_process_rank(&pmi_context.process_rank);
+	__mpc_pmi_get_process_count(&pmi_context.process_count);
+
+	if ( pmi_context.process_count == 1 )
+	{
+
+		// no need of KVS for infos initialization
+		pmi_context.local_process_rank = 0;
+		pmi_context.node_rank = 0;
+		pmi_context.node_count = 1;
+		pmi_context.local_process_count = 1;
+		PMI_RETURN( rc );
+	}
+
+	__process_layout_init();
+
 	/* Set the whole context */
 	mpc_common_set_process_rank( pmi_context.process_rank );
 	mpc_common_set_process_count( pmi_context.process_count );
@@ -420,7 +644,7 @@ int mpc_launch_pmi_init()
 	if( 0 < mpc_common_get_flags()->process_number)
 	{
 		/* Ensure coherency if a process number was on CLI */
-		assume((int)mpc_common_get_flags()->process_number == pmi_context.process_count);
+		assume(mpc_common_get_flags()->process_number == pmi_context.process_count);
 	}
 
 	/* Get process number from PMI */
@@ -454,11 +678,16 @@ int mpc_launch_pmi_init()
 int mpc_launch_pmi_finalize()
 {
 	mpc_common_debug("ENDING PMI");
+#if defined(MPC_USE_PMIX)
+	pmix_status_t rc = PMIx_Finalize(NULL, 0);
+	PMI_RETURN( rc );
+#else
 	int rc;
 	// Finalize PMI/SLURM
 	rc = PMI_Finalize();
 	sctk_free( pmi_context.kvsname );
 	PMI_RETURN( rc );
+#endif
 }
 
 
@@ -474,31 +703,59 @@ SYNCHRONIZATION
 */
 int mpc_launch_pmi_barrier()
 {
+#if defined(MPC_USE_PMIX)
+	pmix_info_t *info = NULL;
+    PMIX_INFO_CREATE(info, 1);
+    int flag = true;
+    PMIX_INFO_LOAD(info, PMIX_COLLECT_DATA, &flag, PMIX_BOOL);
+    pmix_status_t rc = PMIx_Fence(NULL, 0, info, 1);
+	PMI_CHECK_RC( rc, "PMIx_Fence" );
+	PMIX_INFO_FREE(info, 1);
+	return MPC_LAUNCH_PMI_SUCCESS;
+#else
 	int rc;
 	// Perform the barrier
 	rc = PMI_Barrier();
 	PMI_CHECK_RC( rc, "PMI_Barrier" );
-	PMI_RETURN( rc );
+	return MPC_LAUNCH_PMI_SUCCESS;
+#endif
 }
 
-int mpc_launch_pmi_get_max_key_len()
-{
-	return pmi_context.max_key_len;
-}
+#ifdef MPC_USE_PMIX
+	int mpc_launch_pmi_get_max_key_len()
+	{
+		return PMIX_MAX_KEYLEN;
+	}
 
-int mpc_launch_pmi_get_max_val_len()
-{
-	return pmi_context.max_val_len;
-}
+	int mpc_launch_pmi_get_max_val_len()
+	{
+		return PMIX_MAX_KEYLEN;
+	}
+#else
+	int mpc_launch_pmi_get_max_key_len()
+	{
+		return pmi_context.max_key_len;
+	}
+
+	int mpc_launch_pmi_get_max_val_len()
+	{
+		return pmi_context.max_val_len;
+	}
+#endif
 
 int mpc_launch_pmi_is_initialized()
 {
 	return pmi_context.initialized;
 }
 
+
 void mpc_launch_pmi_abort()
 {
+#if defined(MPC_USE_PMIX)
+	PMIx_Abort(6, "ABORT from mpc_launch_pmi_abort", NULL, 0);
+#else
 	PMI_Abort( 6, "ABORT from mpc_launch_pmi_abort" );
+#endif
 }
 
 
@@ -511,7 +768,7 @@ int mpc_launch_pmi_get_job_id( int *id )
 	/* in mpich with pmi1, kvs name is used as job id. */
 	*id = atoi( pmi_context.kvsname );
 	return MPC_LAUNCH_PMI_SUCCESS;
-#elif defined( MPC_USE_SLURM )
+#elif defined( MPC_USE_PMI1 )
 	char *env = NULL;
 	env = getenv( "SLURM_JOB_ID" );
 
@@ -545,8 +802,22 @@ int mpc_launch_pmi_get_job_id( int *id )
 INFORMATION DIFFUSION
 ******************************************************************************/
 
-int mpc_launch_pmi_put( char *value, char *key )
+int mpc_launch_pmi_put( char *value, char *key, int is_local)
 {
+#if defined(MPC_USE_PMIX)
+	pmix_status_t rc;
+	pmix_value_t val;
+    val.type = PMIX_STRING;
+    val.data.string = value;
+
+	pmix_scope_t scope = is_local?PMIX_LOCAL:PMIX_GLOBAL;
+
+	rc = PMIx_Put(scope, key, &val);
+	PMI_CHECK_RC( rc, "PMIx_Put" );
+	rc = PMIx_Commit();
+	PMI_CHECK_RC( rc, "PMIx_Commit" );
+	PMI_RETURN( rc );
+#else
 	int rc;
 	// Put info in Key-Value-Space
 	rc = PMI_KVS_Put( pmi_context.kvsname, key, value );
@@ -555,20 +826,53 @@ int mpc_launch_pmi_put( char *value, char *key )
 	rc = PMI_KVS_Commit( pmi_context.kvsname );
 	PMI_CHECK_RC( rc, "PMI_KVS_Commit" );
 	PMI_RETURN( rc );
+#endif
 }
 
-int mpc_launch_pmi_put_as_rank( char *value, int tag )
+int mpc_launch_pmi_put_as_rank( char *value, int tag, int is_local )
 {
-	int iRank, rc;
+	int my_rank, rc;
 	char *key = NULL;
 	// Get the process rank
-	__mpc_pmi_get_process_rank( &iRank );
+	__mpc_pmi_get_process_rank( &my_rank );
 	// Build the key
-	key = ( char * ) sctk_malloc( pmi_context.max_key_len * sizeof( char ) );
-	snprintf( key, pmi_context.max_key_len, "MPC_KEYS_%d_%d", tag, iRank );
-	rc = mpc_launch_pmi_put( value, key );
+	key = ( char * ) sctk_malloc( mpc_launch_pmi_get_max_key_len() * sizeof( char ) );
+	snprintf( key, mpc_launch_pmi_get_max_key_len(), "MPC_KEYS_%d_%d", tag, my_rank );
+	rc = mpc_launch_pmi_put( value, key, is_local );
+	mpc_common_debug("PUT (%s) %s @ %s as %d", is_local?"local":"global", value, key, my_rank);
 	sctk_free( key );
 	PMI_RETURN( rc );
+}
+
+
+int mpc_launch_pmi_get( char *value, size_t size, char *key, int remote)
+{
+#if defined(MPC_USE_PMIX)
+	pmix_status_t rc;
+	pmix_value_t *val = NULL;
+
+	pmix_proc_t proc;
+
+	PMIX_PROC_CONSTRUCT(&proc);
+	(void)strncpy(proc.nspace, pmi_context.pmix_proc.nspace, PMIX_MAX_NSLEN);
+	proc.rank = remote;
+	mpc_common_debug("GET %s from %d", key, remote);
+	rc = PMIx_Get(&proc,key, NULL, 0, &val);
+	PMI_CHECK_RC( rc, "PMIx_Get" );
+	assume(val != NULL);
+	assume(val->type == PMIX_STRING);
+	strcpy(value, val->data.string);
+	PMIX_VALUE_RELEASE(val);
+	PMIX_PROC_DESTRUCT(proc);
+	PMI_RETURN( rc );
+#else
+	int rc;
+
+	// Get the value associated to the given key
+	rc = PMI_KVS_Get( pmi_context.kvsname, key, value, size );
+	PMI_CHECK_RC( rc, "PMI_KVS_Get" );
+	PMI_RETURN( rc );
+#endif
 }
 
 int mpc_launch_pmi_get_as_rank( char *value, size_t size, int tag, int rank )
@@ -576,26 +880,11 @@ int mpc_launch_pmi_get_as_rank( char *value, size_t size, int tag, int rank )
 	int rc;
 	char *key = NULL;
 	// Build the key
-	key = ( char * ) sctk_malloc( pmi_context.max_key_len * sizeof( char ) );
-	snprintf( key, pmi_context.max_key_len, "MPC_KEYS_%d_%d", tag, rank );
+	key = ( char * ) sctk_malloc( mpc_launch_pmi_get_max_key_len() * sizeof( char ) );
+	snprintf( key, mpc_launch_pmi_get_max_key_len(), "MPC_KEYS_%d_%d", tag, rank );
 	// Get the value associated to the given key
-	rc = PMI_KVS_Get( pmi_context.kvsname, key, value, size );
+	rc = mpc_launch_pmi_get(value, size, key, rank);
 	sctk_free( key );
 	PMI_RETURN( rc );
 }
 
-int mpc_launch_pmi_get( char *value, size_t size, char *key )
-{
-	int rc;
-	// Get the value associated to the given key
-	rc = PMI_KVS_Get( pmi_context.kvsname, key, value, size );
-	PMI_CHECK_RC( rc, "PMI_KVS_Get" );
-	PMI_RETURN( rc );
-}
-
-
-int mpc_launch_pmi_get_process_layout( struct mpc_launch_pmi_process_layout **layout )
-{
-	*layout = pmi_context.process_nb_from_node_rank;
-	return MPC_LAUNCH_PMI_SUCCESS;
-}

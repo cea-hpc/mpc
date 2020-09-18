@@ -20,7 +20,7 @@ bool sctk_pmi_handler_send_filename(const char *filename, void* option);
 
 char* sctk_pmi_handler_recv_filename(void* option);
 
-struct sctk_alloc_mapper_handler_s* sctk_shm_pmi_handler_init(char* option);
+struct sctk_alloc_mapper_handler_s* sctk_shm_pmi_handler_init(char* option, int master_rank);
 
 void sctk_shm_pmi_handler_free(struct sctk_alloc_mapper_handler_s* pmi_handler);
 

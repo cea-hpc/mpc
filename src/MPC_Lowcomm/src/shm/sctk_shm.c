@@ -306,7 +306,7 @@ sctk_shm_add_region_slave(sctk_size_t size, sctk_alloc_mapper_handler_t *handler
 	assert(size > 0 && size % SCTK_SHM_MAPPER_PAGE_SIZE == 0);
 
 	//get filename
-	filename = handler->recv_handler(handler->option, handler->option1);
+	filename = handler->recv_handler(handler->key, handler->master_rank);
 	assume_m(filename != NULL, "Failed to get the SHM filename.");
 
 	// firt try to map
@@ -336,7 +336,7 @@ sctk_shm_add_region_master(sctk_size_t size, sctk_alloc_mapper_handler_t *handle
 	assert(size > 0 && size % SCTK_SHM_MAPPER_PAGE_SIZE == 0);
 
 	//get filename
-	filename = handler->gen_filename(handler->option, handler->option1);
+	filename = handler->gen_filename(handler->key, handler->master_rank);
 
 	// create file and map it
 	fd  = sctk_shm_mapper_create_shm_file(filename, size);
@@ -344,7 +344,7 @@ sctk_shm_add_region_master(sctk_size_t size, sctk_alloc_mapper_handler_t *handle
 
 	// sync filename
 	status =
-		handler->send_handler(filename, handler->option, handler->option1);
+		handler->send_handler(filename, handler->key, handler->master_rank);
 	assume_m(status,
 	         "Fail to send the SHM filename to other participants.");
 
@@ -414,10 +414,12 @@ static void sctk_shm_init_raw_queue(size_t size, int cells_num, int rank)
 	struct sctk_alloc_mapper_handler_s *pmi_handler = NULL;
 
 	sprintf(buffer, "%d", rank);
-	pmi_handler = sctk_shm_pmi_handler_init(buffer);
 
 	shm_role = SCTK_SHM_MAPPER_ROLE_SLAVE;
 	shm_role = (mpc_common_get_local_process_rank() == rank) ? SCTK_SHM_MAPPER_ROLE_MASTER : shm_role;
+
+	pmi_handler = sctk_shm_pmi_handler_init(buffer, rank);
+
 	shm_base = sctk_shm_add_region(size, shm_role, pmi_handler);
 
 	sctk_shm_add_region_infos(shm_base, size, cells_num, rank);
@@ -516,6 +518,7 @@ void sctk_network_init_shm(sctk_rail_info_t *rail)
 	int node_rank = mpc_common_get_node_rank();
 
 	struct mpc_launch_pmi_process_layout *tmp;
+
 	HASH_FIND_INT(nodes_infos, &node_rank, tmp);
 	assert(tmp != NULL);
 

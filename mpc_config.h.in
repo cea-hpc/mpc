@@ -862,11 +862,14 @@
 /* Infiniband support is enabled */
 #undef MPC_USE_INFINIBAND
 
+/* PMI1 will be used to launch parallel programs */
+#undef MPC_USE_PMI1
+
+/* PMIX will be used to launch parallel programs */
+#undef MPC_USE_PMIX
+
 /* Portals support is enabled */
 #undef MPC_USE_PORTALS
-
-/* Slurm PMI will be used to launch parallel programs */
-#undef MPC_USE_SLURM
 
 /* MPC Major Version */
 #undef MPC_VERSION_MAJOR

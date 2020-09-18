@@ -1177,7 +1177,8 @@ void sctk_ptl_am_register_process( sctk_ptl_am_rail_info_t *srail )
 	/* register the serialized id into the PMI */
 	tmp_ret = mpc_launch_pmi_put_as_rank(
 		srail->connection_infos,	  /* the string to publish */
-		SCTK_PTL_AM_PMI_TAG			  /* rail ID: PMI tag */
+		SCTK_PTL_AM_PMI_TAG,			  /* rail ID: PMI tag */
+		0 /* Not local */
 	);
 	assert( tmp_ret == 0 );
 

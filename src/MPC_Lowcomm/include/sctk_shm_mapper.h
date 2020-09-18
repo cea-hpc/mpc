@@ -104,10 +104,16 @@ struct sctk_alloc_mapper_handler_s
 	sctk_shm_mapper_recv_handler recv_handler;
 	/** Handler to generate the shm filename. **/
 	sctk_shm_mapper_filename_handler gen_filename;
-	/** An opaque option to transmit the handlers when calling them. **/
-	void * option;
+
+        /* FOR PMI */
+	char * key;
+        int master_rank;
+
+        /* FOR MPI */
         /** An opaque option to transmit the handlers when calling them. **/
-        void *option1;
+        void * option;
+        /** An opaque option to transmit the handlers when calling them. **/
+        void * option1;
 };
 typedef struct sctk_alloc_mapper_handler_s sctk_alloc_mapper_handler_t;
 

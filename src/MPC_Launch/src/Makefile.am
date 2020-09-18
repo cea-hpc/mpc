@@ -46,4 +46,4 @@ if HYDRA_LAUNCHER_ENABLED
 endif
 
 
-libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la -ldl
+libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la -ldl $(PMIX_LIBS) $(PMI_LIBS)

@@ -121,6 +121,21 @@ MPC Debug Messages:
   - cd $HOME/GL_$CI_PIPELINE_ID/build_debug/
   - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_debug --disable-mpc-autopriv --mpc-option="--enable-debug-messages --enable-debug"
 
+MPC Slurm:
+  <<: *run_by_main
+  stage: Configurations
+  script:
+  - mkdir $HOME/GL_$CI_PIPELINE_ID/build_slurm/
+  - cd $HOME/GL_$CI_PIPELINE_ID/build_slurm/
+  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_slurm --disable-mpc-autopriv --mpc-option="--with-slurm"
+
+MPC PMIx:
+  <<: *run_by_main
+  stage: Configurations
+  script:
+  - mkdir $HOME/GL_$CI_PIPELINE_ID/build_pmix/
+  - cd $HOME/GL_$CI_PIPELINE_ID/build_pmix/
+  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_pmix --disable-mpc-autopriv --mpc-option="--with-pmix"
 
 ############################
 ####### BUILD STAGE ########

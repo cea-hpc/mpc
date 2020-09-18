@@ -339,7 +339,8 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 	tmp_ret = mpc_launch_pmi_put_as_rank (
 			srail->connection_infos,      /* the string to publish */
 			srail->connection_infos_size, /* string size */
-			rail->rail_number             /* rail ID: PMI tag */
+			rail->rail_number,             /* rail ID: PMI tag */
+			0 /* Not local */
 	);
 	assert(tmp_ret == 0);
 	ranks_ids_map[sctk_get_process_rank()] = srail->id;

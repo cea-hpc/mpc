@@ -818,30 +818,58 @@ AC_ARG_WITH([hydra],
 [mpc_hydra_enabled=$withval],
 [mpc_hydra_enabled=yes])
 
+# Same as with SLURM
+
+mpc_pmi1_enabled=no
+
+AC_ARG_WITH([pmi1],
+[AS_HELP_STRING([--with-pmi1],
+                [Rely on PMI1 (PMI1) same as --with-slurm])],
+[mpc_hydra_enabled=no;mpc_pmi1_enabled=$withval],
+[])
+
 AC_ARG_WITH([slurm],
 [AS_HELP_STRING([--with-slurm],
-                [Rely on SLURM-based PMI])],
-[mpc_hydra_enabled=no; mpc_slurm_enabled=$withval],
-[mpc_slurm_enabled=no])
+                [Rely on SLURM-based PMI1 same as --with-pmi1])],
+[mpc_hydra_enabled=no;mpc_pmi1_enabled=$withval],
+[])
 
-if test "x$mpc_hydra_enabled" = "xyes" -a  "x$mpc_slurm_enabled" = "xyes"
-then
-        AC_MSG_ERROR([You must pick up one between Hydra and Slurm (--with-hydra or --with-slurm)])
-fi
+AC_ARG_WITH([pmix],
+[AS_HELP_STRING([--with-pmix],
+                [Compile MPC with pmix support (requires an external pmix capable launcher)])],
+[mpc_hydra_enabled=no;mpc_pmix_enabled=$withval],
+[mpc_pmix_enabled=no])
 
-if test "x$mpc_hydra_enabled" = "xno" -a  "x$mpc_slurm_enabled" = "xno"
-then
-        AC_MSG_ERROR([You must select at least one launcher (between slurm and hydra)])
-fi
+ensure_only_one_launcher()
+{
+        LAUNCHER_COUNT=0
+        test "x$mpc_hydra_enabled" != "xno" && LAUNCHER_COUNT=$(($LAUNCHER_COUNT + 1))
+        test "x$mpc_pmi1_enabled" != "xno" && LAUNCHER_COUNT=$(($LAUNCHER_COUNT + 1))
+        test "x$mpc_pmix_enabled" != "xno" && LAUNCHER_COUNT=$(($LAUNCHER_COUNT + 1))
 
-if test ! "x$mpc_slurm_enabled" = "xno"; then
+        if test "x$LAUNCHER_COUNT" != "x1"; then
+                AC_MSG_NOTICE([=================================])
+                AC_MSG_NOTICE([HYDRA Enabled: $mpc_hydra_enabled])
+                AC_MSG_NOTICE([SLURM PMI1 Enabled: $mpc_pmi1_enabled])
+                AC_MSG_NOTICE([PMIX Enabled: $mpc_pmix_enabled])
+                AC_MSG_NOTICE([=================================])
+                AC_MSG_ERROR([You must pick up one launcher between Hydra, Slurm PMI1 and PMIX (--with-hydra or --with-slurm or --with-pmix)])
+        fi
+}
 
-        MPC_LAUNCHER="SLURM"
+ensure_only_one_launcher
+
+if test "x$mpc_pmi1_enabled" != "xno"; then
+        MPC_LAUNCHER="PMI1"
         MPC_DETECT_DEPENDENCY([pmi.h],[pmi], [PMI_Finalize], [PMI])
         MPC_REQUIRED_DEPENDENCY([pmi], [$mpc_dep_found])
-
-        AC_DEFINE([MPC_USE_SLURM], [1], [Slurm PMI will be used to launch parallel programs])
-else
+        AC_DEFINE([MPC_USE_PMI1], [1], [PMI1 will be used to launch parallel programs])
+elif test "x$mpc_pmix_enabled" != "xno"; then
+        MPC_LAUNCHER="PMIX"
+        MPC_DETECT_DEPENDENCY([pmix.h],[pmix], [PMIx_Finalize], [PMIX])
+        MPC_REQUIRED_DEPENDENCY([pmix], [$mpc_dep_found])
+        AC_DEFINE([MPC_USE_PMIX], [1], [PMIX will be used to launch parallel programs])
+elif test "x$mpc_hydra_enabled" != "xno"; then
         AC_PATH_PROG([MPIEXEC_HYDRA], [mpiexec.hydra], [no])
         if test "x$MPIEXEC_HYDRA" = "xno"
         then
@@ -859,6 +887,8 @@ else
         fi
 
         AC_DEFINE([MPC_USE_HYDRA], [1], [Hydra will be used to launch parallel programs])
+else
+        AC_MSG_ERROR([No launcher was selected use either --with-slurm, --with-hydra or --with-pmix])
 fi
 
 AM_CONDITIONAL([HYDRA_LAUNCHER_ENABLED], [test "x$MPC_LAUNCHER" = "xHYDRA"])

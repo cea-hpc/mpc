@@ -140,8 +140,10 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
+am__DEPENDENCIES_1 =
 libmpclaunch_la_DEPENDENCIES =  \
-	../../MPC_Topology/src/libmpctopology.la
+	../../MPC_Topology/src/libmpctopology.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am__libmpclaunch_la_SOURCES_DIST = main.c libc_main.c mpc_launch.c \
 	pmi.c ./hydra_client/safestr2.c ./hydra_client/simple_pmi.c \
 	./hydra_client/simple_pmiutil.c
@@ -381,6 +383,8 @@ PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
 PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 PKG_DATADIR = @PKG_DATADIR@
 PKG_INCDIR = @PKG_INCDIR@
+PMIX_CFLAGS = @PMIX_CFLAGS@
+PMIX_LIBS = @PMIX_LIBS@
 PMI_CFLAGS = @PMI_CFLAGS@
 PMI_LIBS = @PMI_LIBS@
 PORTALS_CFLAGS = @PORTALS_CFLAGS@
@@ -519,7 +523,7 @@ mpc_headerdir = $(pkgincludedir)
 lib_LTLIBRARIES = libmpclaunch.la
 libmpclaunch_la_SOURCES = main.c libc_main.c mpc_launch.c pmi.c \
 	$(am__append_3)
-libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la -ldl
+libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la -ldl $(PMIX_LIBS) $(PMI_LIBS)
 all: all-am
 
 .SUFFIXES:
