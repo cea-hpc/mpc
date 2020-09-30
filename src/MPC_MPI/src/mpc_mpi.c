@@ -20379,7 +20379,7 @@ int PMPI_File_create_errhandler(__UNUSED__ MPI_File_errhandler_function *file_er
 	not_implemented(); return MPI_ERR_INTERN;
 }
 
-int PMPI_File_call_errhandler(__UNUSED__ void *fh, __UNUSED__ int errorcode)
+int PMPI_File_call_errhandler(__UNUSED__ MPI_File fh, __UNUSED__ int errorcode)
 {
 	not_implemented(); return MPI_ERR_INTERN;
 }
