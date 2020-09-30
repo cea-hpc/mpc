@@ -107,6 +107,15 @@ mpc_lowcomm_communicator_t mpc_lowcomm_delete_comm(const mpc_lowcomm_communicato
  */
 void mpc_lowcomm_wait(mpc_lowcomm_request_t *request);
 
+/**
+ * @brief Test and progress a request for completion
+ * 
+ * @param request Request to be tested
+ * @param completed 1 if the request did complete/was cancelled 0 if not
+ * 
+ */
+void mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed);
+
 /** Wait for a set of communication completion
  * @warning All communications issuing a request in the low-level
  * comm interface MUST be waited

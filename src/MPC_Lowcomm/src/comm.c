@@ -1545,6 +1545,7 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
                                          mpc_lowcomm_request_type_t request_type)
 {
 	msg->tail.request = request;
+
 	/* Save message class */
 	SCTK_MSG_SPECIFIC_CLASS_SET(msg, message_class);
 
@@ -1652,46 +1653,6 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 		                 message_tag,
 				 request);
 
-#if 0
-		/* If source matters */
-		if(source != MPC_ANY_SOURCE)
-		{
-			/* If the communicator used is the COMM_SELF */
-			if(communicator == MPC_COMM_SELF)
-			{
-				/* The world destination is actually ourself :) */
-				int world_src = mpc_common_get_task_rank();
-				SCTK_MSG_SRC_TASK_SET(
-				        msg, sctk_get_comm_world_rank(communicator, world_src) );
-			}
-			else
-			{
-				/* Get value from previous resolution according to intercomm */
-				SCTK_MSG_SRC_TASK_SET(msg, source_task);
-			}
-		}
-		else
-		{
-			/* Otherwise source does not matter */
-			SCTK_MSG_SRC_TASK_SET(msg, MPC_ANY_SOURCE);
-		}
-
-		/* Fill in dest */
-
-		/* If the communicator used is the COMM_SELF */
-		if(communicator == MPC_COMM_SELF)
-		{
-			/* The world destination is actually ourself :) */
-			int world_dest = mpc_common_get_task_rank();
-			SCTK_MSG_DEST_TASK_SET(
-			        msg, sctk_get_comm_world_rank(communicator, world_dest) );
-		}
-		else
-		{
-			/* Get value from previous resolution according to intercomm */
-			SCTK_MSG_DEST_TASK_SET(msg, dest_task);
-		}
-#endif
 	}
 
 	/* Fill in Message meta-data */
@@ -1701,6 +1662,7 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 	SCTK_MSG_SIZE_SET(msg, count);
 	SCTK_MSG_USE_MESSAGE_NUMBERING_SET(msg, 1);
 	SCTK_MSG_MATCH_SET(msg, sctk_m_probe_matching_get() );
+
 
 	/* A message can be sent with a NULL request (see the MPI standard) */
 	if(request)
@@ -2219,22 +2181,31 @@ static inline void __egreq_poll()
 	}
 }
 
-
-void mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request)
+static inline int __request_is_null_or_cancelled(mpc_lowcomm_request_t *request)
 {
 	if(mpc_lowcomm_request_is_null(request) )
 	{
-		return;
+		return 1;
 	}
-
-	struct mpc_lowcomm_ptp_msg_progress_s _wait;
 
 	if(request->completion_flag == MPC_LOWCOMM_MESSAGE_CANCELED)
 	{
-		return;
+		return 1;
 	}
 
 	if(request->request_type == REQUEST_NULL)
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
+
+
+void mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request)
+{
+	if(__request_is_null_or_cancelled(request))
 	{
 		return;
 	}
@@ -2248,6 +2219,9 @@ void mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request)
 	else
 #endif
 	{
+		struct mpc_lowcomm_ptp_msg_progress_s _wait;
+
+
 		/* Find the PTPs lists */
 		mpc_lowcomm_ptp_msg_wait_init(&_wait, request, 1);
 		/* Fastpath try a few times directly before polling */
@@ -2875,9 +2849,6 @@ void mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
 	mpc_lowcomm_irecv_class(src, data, size, tag, comm, MPC_LOWCOMM_P2P_MESSAGE, req);
 }
 
-void mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request);
-
-
 void mpc_lowcomm_sendrecv(void *sendbuf, size_t size, int dest, int tag, void *recvbuf,
                           int src, int comm)
 {
@@ -2894,15 +2865,75 @@ void mpc_lowcomm_wait(mpc_lowcomm_request_t *request)
 	mpc_lowcomm_request_wait(request);
 }
 
-void mpc_lowcomm_waitall(mpc_lowcomm_request_t *requests, int count)
+void mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed)
 {
-	int i;
+	*completed = 0;
 
-	for( i = 0 ; i < count ; i++)
+	struct mpc_lowcomm_ptp_msg_progress_s wait;
+
+	if(__request_is_null_or_cancelled(request))
 	{
-		mpc_lowcomm_request_wait(&requests[i]);
+		*completed = 1;
+		return;
 	}
 
+	mpc_lowcomm_ptp_msg_wait_init(&wait, request, 1);
+	
+	__mpc_comm_ptp_msg_wait(&wait);
+
+	*completed = (request->completion_flag == MPC_LOWCOMM_MESSAGE_DONE);
+
+	if(*completed)
+	{
+		__mpc_comm_ptp_msg_done(&wait);
+	}
+}
+
+#define WAITALL_MAX_STATIC_REQ 16
+
+void mpc_lowcomm_waitall(mpc_lowcomm_request_t *requests, int count)
+{
+	int _done_flags[WAITALL_MAX_STATIC_REQ];
+	int * done_flags = _done_flags;
+
+	if(WAITALL_MAX_STATIC_REQ <= count)
+	{
+		done_flags = sctk_malloc(sizeof(int) * count);
+		assume(done_flags != NULL);
+	}
+
+	int i = 0;
+
+	for(i = 0 ; i < count ; i++)
+	{
+		done_flags[i] = 0;
+	}
+
+	int all_done = 0;
+
+	while(!all_done)
+	{
+		all_done = 1;
+		for( i = 0; i < count ; i++)
+		{
+			if(!done_flags[i])
+			{
+				mpc_lowcomm_test(&requests[i], &done_flags[i]);
+				all_done &= done_flags[i];
+			}
+		}
+		
+		if(!all_done)
+		{
+			/* Yield for coroutines */
+			mpc_thread_yield();
+		}
+	}
+
+	if(WAITALL_MAX_STATIC_REQ <= count)
+	{
+		sctk_free(done_flags);
+	}
 }
 
 void mpc_lowcomm_send(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm)
