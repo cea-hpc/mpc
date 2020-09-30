@@ -475,6 +475,7 @@ program_transform_name = @program_transform_name@
 psdir = @psdir@
 pyexecdir = @pyexecdir@
 pythondir = @pythondir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -508,7 +509,7 @@ top_srcdir = @top_srcdir@
 #                                                                      #
 ########################################################################
 mpc_headerdir = $(pkgincludedir)
-mpc_header_HEADERS = ./include/mpc_thread.h ./include/mpcposix/pthread.h ./include/mpc_thread_engines.h
+mpc_header_HEADERS = ./include/mpcposix/semaphore.h ./include/mpc_thread_engines.h
 SUBDIRS = src
 all: all-recursive
 
@@ -847,7 +848,6 @@ uninstall-am: uninstall-mpc_headerHEADERS
 .PRECIOUS: Makefile
 
 
-	install -m 0644 -D $(abs_top_srcdir)/src/MPC_Threads/include/mpc_pthread.h $(pkgincludedir)/semaphore.h
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
