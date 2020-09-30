@@ -251,6 +251,13 @@ void mpc_lowcomm_rdma_MPI_windows_in_use(void);
 void mpc_lowcomm_set_request_completion_trampoline(int trampoline(mpc_lowcomm_request_t *) );
 
 /**
+ * @brief Set the function to be called on this request completion
+ *
+ * @param callback request completion callback
+ */
+void mpc_lowcomm_set_request_completion_callback(mpc_lowcomm_request_t *req, int callback(mpc_lowcomm_request_t *) );
+
+/**
  * @brief Notify the completion of a request from lowcomm to MPC MPI
  *
  * @param req request to be completed

@@ -547,6 +547,11 @@ void mpc_lowcomm_set_request_completion_trampoline(int trampoline(mpc_lowcomm_re
 	___notify_request_completion_trampoline = trampoline;
 }
 
+void mpc_lowcomm_set_request_completion_callback(mpc_lowcomm_request_t *req, int trampoline(mpc_lowcomm_request_t *req) )
+{
+	req->request_completion_fn = trampoline;
+}
+
 int mpc_lowcomm_notify_request_completion(mpc_lowcomm_request_t *req)
 {
 	if(___notify_request_completion_trampoline)
@@ -571,6 +576,10 @@ void mpc_lowcomm_ptp_message_complete_and_free(mpc_lowcomm_ptp_message_t *msg)
 			mpc_lowcomm_notify_request_completion(req);
 		}
 #endif
+                //mpc_lowcomm_notify_request_completion(req);
+                if (req->request_completion_fn) {
+                        req->request_completion_fn(req);
+                }
 
 		if(req->ptr_to_pin_ctx)
 		{
