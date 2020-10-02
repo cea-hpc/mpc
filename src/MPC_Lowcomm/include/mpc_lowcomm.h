@@ -35,12 +35,12 @@
 /** Get MPC_COMM_WORLD rank
  * @return the comm world rank
  */
-int mpc_lowcomm_get_rank();
+int mpc_lowcomm_get_rank(void);
 
 /** Get MPC_COMM_WORLD rank
  * @return the comm world size
  */
-int mpc_lowcomm_get_size();
+int mpc_lowcomm_get_size(void);
 
 /** Get Rank in a communicator
  * @arg communicator Communicator from which to get the rank
@@ -59,14 +59,14 @@ int mpc_lowcomm_get_comm_size(const mpc_lowcomm_communicator_t communicator);
  * @brief Return the total number of UNIX processes
  * @return number of UNIX processes
  */
-int mpc_lowcomm_get_process_count();
+int mpc_lowcomm_get_process_count(void);
 
 /**
  * @brief Return the UNIX process rank
  *
  * @return int UNIX process rank
  */
-int mpc_lowcomm_get_process_rank();
+int mpc_lowcomm_get_process_rank(void);
 
 /************************************************************************/
 /* Communicators                                                        */
@@ -290,7 +290,7 @@ void mpc_lowcomm_rdma_MPC_MPI_notify_dest_ctx_set_trampoline(void (*trampoline)(
    * If mpc is without threads: gcc `mpc_cflags` `mpc_ldflags` ./a.c
 */
 
-void mpc_lowcomm_init();
-void mpc_lowcomm_release();
+void mpc_lowcomm_init(void);
+void mpc_lowcomm_release(void);
 
 #endif /* SCTK_COMM_H */
