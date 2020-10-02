@@ -252,6 +252,7 @@ void mpc_lowcomm_set_request_completion_trampoline(int trampoline(mpc_lowcomm_re
 
 /**
  * @brief Set the function to be called on this request completion
+ * Note: deactivated without MPI_MPC. Unused without RMA Windows
  *
  * @param callback request completion callback
  */
