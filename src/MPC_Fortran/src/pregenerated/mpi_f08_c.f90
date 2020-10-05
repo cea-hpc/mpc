@@ -1721,8 +1721,23 @@ end function MPI_Type_create_hindexed_c
 ! MPI_File_iread_shared NOT IMPLEMENTED in MPC
 
 
-! MPI_File_set_errhandler NOT IMPLEMENTED in MPC
 
+function MPI_File_set_errhandler_c( file,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_file_set_errhandler_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: file     !MPI_File file
+integer(c_int), value, intent(in) :: errhandler     !MPI_Errhandler errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_File_set_errhandler_c
 
 
 function MPI_Register_datarep_c( datarep,&
@@ -1996,8 +2011,23 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Get_version_c
 
-! MPI_File_call_errhandler NOT IMPLEMENTED in MPC
 
+function MPI_File_call_errhandler_c( fh,&
+errorcode,&
+ierror)&
+bind(C, name="mpi_file_call_errhandler_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: fh     !MPI_File fh
+integer(c_int), value, intent(in) :: errorcode     !int errorcode
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_File_call_errhandler_c
 
 
 function MPI_Comm_create_errhandler_c( function,&
@@ -3066,8 +3096,23 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Alltoall_c
 
-! MPI_File_create_errhandler NOT IMPLEMENTED in MPC
 
+function MPI_File_create_errhandler_c( function,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_file_create_errhandler_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(c_ptr), value , intent(in) :: function     !MPI_File_errhandler_function* function
+integer(c_int), intent(out) :: errhandler     !MPI_Errhandler* errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_File_create_errhandler_c
 
 
 function MPI_Info_get_c( info,&
@@ -4522,8 +4567,23 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Group_size_c
 
-! MPI_File_get_errhandler NOT IMPLEMENTED in MPC
 
+function MPI_File_get_errhandler_c( file,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_file_get_errhandler_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: file     !MPI_File file
+integer(c_int), intent(out) :: errhandler     !MPI_Errhandler* errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_File_get_errhandler_c
 
 
 function MPI_Attr_put_c( comm,&

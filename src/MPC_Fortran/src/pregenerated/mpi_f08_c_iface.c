@@ -957,9 +957,15 @@ newtype);
 /* MPI_File_iread_shared NOT IMPLEMENTED in MPC */
 
 
-/* MPI_File_set_errhandler NOT IMPLEMENTED in MPC */
 
-/* Skipped function MPI_Register_datarepwith conversion */
+void mpi_file_set_errhandler_f08(
+MPI_File file,
+MPI_Errhandler errhandler,
+int * ierror)
+{
+*ierror = MPI_File_set_errhandler( file,
+errhandler);
+}/* Skipped function MPI_Register_datarepwith conversion */
 
 /* MPI_File_read_ordered NOT IMPLEMENTED in MPC */
 
@@ -1073,9 +1079,15 @@ int * ierror)
 *ierror = MPI_Get_version( version,
 subversion);
 }
-/* MPI_File_call_errhandler NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_call_errhandler_f08(
+MPI_File fh,
+int errorcode,
+int * ierror)
+{
+*ierror = MPI_File_call_errhandler( fh,
+errorcode);
+}
 
 void mpi_comm_create_errhandler_f08(
 MPI_Comm_errhandler_function* function,
@@ -1590,9 +1602,15 @@ recvcount,
 recvtype,
 comm);
 }
-/* MPI_File_create_errhandler NOT IMPLEMENTED in MPC */
 
-/* Skipped function MPI_Info_getwith conversion */
+void mpi_file_create_errhandler_f08(
+MPI_File_errhandler_function* function,
+MPI_Errhandler* errhandler,
+int * ierror)
+{
+*ierror = MPI_File_create_errhandler( function,
+errhandler);
+}/* Skipped function MPI_Info_getwith conversion */
 
 /* MPI_File_iwrite_at NOT IMPLEMENTED in MPC */
 
@@ -2348,9 +2366,15 @@ int * ierror)
 *ierror = MPI_Group_size( group,
 size);
 }
-/* MPI_File_get_errhandler NOT IMPLEMENTED in MPC */
 
-
+void mpi_file_get_errhandler_f08(
+MPI_File file,
+MPI_Errhandler* errhandler,
+int * ierror)
+{
+*ierror = MPI_File_get_errhandler( file,
+errhandler);
+}
 
 void mpi_attr_put_f08(
 MPI_Comm comm,

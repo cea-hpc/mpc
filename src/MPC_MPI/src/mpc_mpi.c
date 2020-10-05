@@ -18433,6 +18433,51 @@ int PMPI_Errhandler_free(MPI_Errhandler *errhandler)
 	MPI_ERROR_SUCESS();
 }
 
+
+/* Error handling */
+int PMPI_File_create_errhandler(MPI_File_errhandler_function *file_errhandler_fn, MPI_Errhandler *errhandler)
+{
+	sctk_errhandler_register(file_errhandler_fn, errhandler);
+	MPI_ERROR_SUCESS();
+}
+
+
+int PMPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler)
+{
+	sctk_handle_set_errhandler( (sctk_handle)file, SCTK_HANDLE_FILE,
+	                            (sctk_errhandler_t)errhandler);
+	MPI_ERROR_SUCESS();
+	return MPI_SUCCESS;
+}
+
+int PMPI_File_get_errhandler(MPI_File file, MPI_Errhandler *errhandler)
+{
+	*errhandler = (MPI_Errhandler)sctk_handle_get_errhandler( (sctk_handle)file,
+	                                                          SCTK_HANDLE_FILE);
+	return MPI_SUCCESS;
+}
+
+
+int PMPI_File_call_errhandler(MPI_File file, int errorcode)
+{
+	MPI_Errhandler errh = SCTK_ERRHANDLER_NULL;
+	
+	PMPI_File_get_errhandler(file, &errh);
+
+	if(errh != SCTK_ERRHANDLER_NULL)
+	{
+		sctk_generic_handler hlndr = sctk_errhandler_resolve(errh);
+
+		if(hlndr)
+		{
+			(hlndr)(file, &errorcode);
+		}		
+	}
+	
+	return MPI_SUCCESS;
+}
+
+
 #define MPI_Error_string_convert(code, msg) \
 	case code:                          \
 		sprintf(string, msg);       \
@@ -20212,16 +20257,6 @@ int PMPIX_Checkpoint(MPIX_Checkpoint_state *state)
 	return _mpc_cl_checkpoint(state);
 }
 
-int PMPI_File_set_errhandler(__UNUSED__ MPI_File file, __UNUSED__ MPI_Errhandler errhandler)
-{
-	return MPI_SUCCESS;
-}
-
-int PMPI_File_get_errhandler(__UNUSED__ MPI_File file, __UNUSED__ MPI_Errhandler *errhandler)
-{
-	return MPI_SUCCESS;
-}
-
 /* Aint OPs */
 
 MPI_Aint PMPI_Aint_add(MPI_Aint base, MPI_Aint disp)
@@ -20369,17 +20404,6 @@ int PMPI_Dist_graph_create_adjacent(__UNUSED__ MPI_Comm comm_old, __UNUSED__ int
 
 /* collectives */
 int PMPI_Reduce_local(__UNUSED__ const void *inbuf, __UNUSED__ void *inoutbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-/* Error handling */
-int PMPI_File_create_errhandler(__UNUSED__ MPI_File_errhandler_function *file_errhandler_fn, __UNUSED__ MPI_Errhandler *errhandler)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_File_call_errhandler(__UNUSED__ MPI_File fh, __UNUSED__ int errorcode)
 {
 	not_implemented(); return MPI_ERR_INTERN;
 }
