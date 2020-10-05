@@ -3,6 +3,18 @@
 /* BGQ platform */
 #undef BGQPLATFORM
 
+/* Fortran naming uses uppercase */
+#undef FORTRANCAPS
+
+/* Fortran naming uses double underscores */
+#undef FORTRANDOUBLEUNDERSCORE
+
+/* Fortran naming uses lowercase */
+#undef FORTRANLOWER
+
+/* Fortran naming uses underscores */
+#undef FORTRANUNDERSCORE
+
 /* Define to 1 if you have the `accept' function. */
 #undef HAVE_ACCEPT
 

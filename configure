@@ -965,7 +965,6 @@ infodir
 docdir
 oldincludedir
 includedir
-runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -1142,7 +1141,6 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
-runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1395,15 +1393,6 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
-  -runstatedir | --runstatedir | --runstatedi | --runstated \
-  | --runstate | --runstat | --runsta | --runst | --runs \
-  | --run | --ru | --r)
-    ac_prev=runstatedir ;;
-  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-  | --run=* | --ru=* | --r=*)
-    runstatedir=$ac_optarg ;;
-
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1541,7 +1530,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir runstatedir
+		libdir localedir mandir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1694,7 +1683,6 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1758,7 +1746,7 @@ Optional Features:
                           lowcomm)
   --enable-lowcomm        Compile MPC with Lowcomm Support
   --enable-mpi            Compile MPC's MPI interface
-  --enable-openmp         Compile MPC's OpenMP interface
+  --enable-openmp         Compile MPCs OpenMP interface
   --enable-fortran        Compile MPC Fortran support
   --enable-mpiio          Compile MPI IO support in MPC (romio)
   --enable-process-mode   Compile MPC in process mode
@@ -29517,6 +29505,124 @@ fi
 # MPC_Fortran
 #
 
+# Create a temporary file
+# Args:
+#  - $1 : suffix (ex .c) (optionnal)
+# Returns the file in TMP
+create_temp_file()
+{
+    # HAS Suffix
+    if test $# -gt 0; then
+        SUFFIX=$1
+        SUFFIX_ARG="--suffix=${SUFFIX}"
+    fi
+
+    TMP=$(mktemp ${SUFFIX_ARG} || true)
+
+    if test ! -f "${TMP}"; then
+        TMP="/tmp/tmp_$(date +%s%N).${SUFFIX}"
+        touch "${TMP}"
+    fi
+
+}
+
+# Read symbols from a binary file
+# Args:
+#  - $1 : binary to be read
+# Returns SYMBOL_LIST (empty in case of error)
+read_symbols()
+{
+    SYMBOL_LIST=""
+    # Ensure a path was passed
+    if test $# -eq 0; then
+        echo "read_symbols expects an argument"
+        return
+    fi
+
+    EXE_PATH="$1"
+
+    if test ! -f "${EXE_PATH}"; then
+        echo "Could not find ${EXE_PATH}"
+        return
+    fi
+
+    if command -v nm > /dev/null 2>&1; then
+        SYMBOL_LIST=$(nm "${EXE_PATH}" | cut -d " " -f 3)
+    elif command -v strings > /dev/null 2>&1; then
+        SYMBOL_LIST=$(strings "${EXE_PATH}")
+    elif command -v cat > /dev/null 2>&1; then
+        # Last resort use cat
+        SYMBOL_LIST=$(cat "${EXE_PATH}")
+    fi
+
+}
+
+
+check_fortran_naming_convention()
+{
+    create_temp_file ".f90"
+
+    FSRC="$TMP"
+
+cat << EOF > "${FSRC}"
+
+    subroutine fortran_name( a )
+        integer a
+        a = 1
+        return
+    end
+
+EOF
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran symbol format" >&5
+$as_echo_n "checking Fortran symbol format... " >&6; }
+
+    create_temp_file ".o"
+    TMPO="$TMP"
+
+    $FC -c "${FSRC}" -o "${TMPO}"
+
+    if test "x$?" = "x0"; then
+
+        read_symbols "${TMPO}"
+
+        rm -fr "${FSRC}" "${TMPO}"
+
+        FORTRAN_NAMING=""
+
+        if echo "${SYMBOL_LIST}" | grep "fortran_name__" > /dev/null 2>&1; then
+            FORTRAN_NAMING"__"
+
+$as_echo "#define FORTRANDOUBLEUNDERSCORE 1" >>confdefs.h
+
+        elif echo "${SYMBOL_LIST}" | grep "fortran_name_" > /dev/null 2>&1; then
+            FORTRAN_NAMING="_"
+
+$as_echo "#define FORTRANUNDERSCORE 1" >>confdefs.h
+
+        elif echo "${SYMBOL_LIST}" | grep "fortran_name" > /dev/null 2>&1; then
+            FORTRAN_NAMING="lowercase"
+
+$as_echo "#define FORTRANLOWER 1" >>confdefs.h
+
+        elif echo "${SYMBOL_LIST}" | grep "FORTRAN_NAME" > /dev/null 2>&1; then
+            FORTRAN_NAMING="uppercase"
+
+$as_echo "#define FORTRANCAPS 1" >>confdefs.h
+
+
+        fi
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${FORTRAN_NAMING}" >&5
+$as_echo "${FORTRAN_NAMING}" >&6; }
+
+    else
+        as_fn_error $? "\"Failed to build test fortran program\"" "$LINENO" 5
+    fi
+
+}
+
+
 # Check whether --enable-fortran was given.
 if test "${enable_fortran+set}" = set; then :
   enableval=$enable_fortran; MPC_FORTRAN_ENABLED=$enableval
@@ -29532,6 +29638,8 @@ if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
 
 $as_echo "#define MPC_FORTRAN 1" >>confdefs.h
 
+
+        check_fortran_naming_convention
 fi
 
  if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
