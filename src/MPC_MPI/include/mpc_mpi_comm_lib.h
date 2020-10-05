@@ -334,6 +334,8 @@ typedef int MPC_Message;
 #define MPC_COMM_TYPE_NUMA_TR 6
 #define MPC_COMM_TYPE_MPC_PROCESS 7
 #define MPC_COMM_TYPE_MPC_PROCESS_TR 8
+#define MPC_COMM_TYPE_HW_UNGUIDED 9
+#define MPC_COMM_TYPE_HW_SUBDOMAIN 10
 
 /* BE VERY CAREFUL HERE /!\/!\/!\/!\/!\/!\/!\/!\
  *  You have to note that these types
