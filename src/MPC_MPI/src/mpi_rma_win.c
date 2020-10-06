@@ -28,6 +28,7 @@
 #include "mpi_rma_epoch.h"
 #include "sctk_handler_mpi.h"
 #include "sctk_shm_mapper.h"
+#include "mpc_lowcomm.h"
 #include "mpc_lowcomm_rdma.h"
 
 #include <sctk_alloc.h>
@@ -38,9 +39,6 @@
 
 #define TMP_SIZE 4194305
 
-int MPC_Iprobe_inter(const int source, const int destination, const int tag,
-                     const mpc_lowcomm_communicator_t comm, int *flag, mpc_lowcomm_status_t *status);
-
 int mpc_MPI_Win_progress_probe(struct mpc_MPI_Win *desc, void *prebuff,
                                size_t buffsize) {
   int have_msg = 0;
@@ -48,7 +46,7 @@ int mpc_MPI_Win_progress_probe(struct mpc_MPI_Win *desc, void *prebuff,
 
   int dest = sctk_get_comm_world_rank(desc->comm, desc->comm_rank);
 
-  MPC_Iprobe_inter(MPC_ANY_SOURCE, dest, 16008, desc->comm, &have_msg, &st);
+  mpc_lowcomm_iprobe_src_dest(MPC_ANY_SOURCE, dest, 16008, desc->comm, &have_msg, &st);
 
   if (have_msg) {
 

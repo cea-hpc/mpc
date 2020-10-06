@@ -175,6 +175,44 @@ void mpc_lowcomm_recv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_c
  */
 void mpc_lowcomm_sendrecv(void *sendbuf, size_t size, int dest, int tag, void *recvbuf, int src, mpc_lowcomm_communicator_t comm);
 
+/**
+ * @brief Probe for a given message as both a given source and destination (advanced thread-based use)
+ * 
+ * @param world_source Source IN COMM WORLD
+ * @param world_destination Destination IN COMM WORLD
+ * @param tag message tag
+ * @param comm communicator to test for
+ * @param flag set to 1 if the message is found
+ * @param status status (similar to MPI filled with message infos)
+ * @return int SCTK_SUCCESS if no error
+ */
+int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destination, const int tag,
+                                const mpc_lowcomm_communicator_t comm, int *flag, mpc_lowcomm_status_t *status);
+
+/**
+ * @brief Non-blocking probe for a message to local rank
+ * 
+ * @param source message source (in comm)
+ * @param tag message tag
+ * @param comm message communicator
+ * @param flag set to 1 if message is found
+ * @param status status (similar to MPI filled with message infos)
+ * @return int SCTK_SUCCESS if no error
+ */
+int mpc_lowcomm_iprobe(int source, int tag, mpc_lowcomm_communicator_t comm, int *flag, mpc_lowcomm_status_t *status);
+
+/**
+ * @brief Blocking probe for a message to local rank
+ * 
+ * @param source message source (in comm)
+ * @param tag message tag
+ * @param comm message communicator
+ * @param flag set to 1 if message is found
+ * @param status status (similar to MPI filled with message infos)
+ * @return int SCTK_SUCCESS if no error
+ */
+int mpc_lowcomm_probe(int source, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_status_t *status);
+
 /************************************************************************/
 /* Collective Operations                                                */
 /************************************************************************/

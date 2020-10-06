@@ -11161,11 +11161,17 @@ int PMPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag,
 		mpi_check_rank(source, size, comm);
 	}
 
-	res = _mpc_cl_iprobe(source, tag, comm, flag, status);
+	res = mpc_lowcomm_iprobe(source, tag, comm, flag, status);
 
 	if(!(*flag) )
 	{
 		mpc_thread_yield();
+	}
+	else
+	{
+		if(status != MPI_STATUS_IGNORE){
+			status->MPI_ERROR = MPC_ERR_PENDING;
+		}
 	}
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
@@ -11185,12 +11191,11 @@ int PMPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
 		mpi_check_rank(source, size, comm);
 	}
 
-	res = _mpc_cl_probe(source, tag, comm, status);
-/*   if(status != MPI_STATUS_IGNORE){ */
-/*     if(status->MPI_ERROR != MPI_SUCCESS){ */
-/*       res = MPI_ERR_IN_STATUS; */
-/*     } */
-/*   }  */
+	res = mpc_lowcomm_probe(source, tag, comm, status);
+
+	if(status != MPI_STATUS_IGNORE){
+		status->MPI_ERROR = MPC_ERR_PENDING;
+	}
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }

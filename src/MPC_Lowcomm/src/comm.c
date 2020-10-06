@@ -2961,6 +2961,167 @@ void mpc_lowcomm_recv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_c
 	mpc_lowcomm_wait(&req);
 }
 
+int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destination, const int tag,
+                                const mpc_lowcomm_communicator_t comm, int *flag, mpc_lowcomm_status_t *status)
+{
+	mpc_lowcomm_ptp_message_header_t msg;
+
+	memset(&msg, 0, sizeof(mpc_lowcomm_ptp_message_header_t) );
+	mpc_lowcomm_status_t status_init = SCTK_STATUS_INIT;
+	int has_status = 1;
+
+	if(status == SCTK_STATUS_NULL)
+	{
+		has_status = 0;
+	}
+	else
+	{
+		*status = status_init;
+	}
+
+	*flag = 0;
+
+	/*handler for MPC_PROC_NULL*/
+	if(world_source == MPC_PROC_NULL)
+	{
+		*flag = 1;
+
+		if(has_status)
+		{
+			status->MPC_SOURCE = MPC_PROC_NULL;
+			status->MPC_TAG    = MPC_ANY_TAG;
+			status->size       = 0;
+			status->MPC_ERROR  = SCTK_SUCCESS;
+		}
+
+		return SCTK_SUCCESS;
+	}
+
+	/* Value to check that the case was handled by
+	 * one of the if in this function */
+	int __did_process = 0;
+
+	if( (world_source == MPC_ANY_SOURCE) && (tag == MPC_ANY_TAG) )
+	{
+		mpc_lowcomm_message_probe_any_source_any_tag(world_destination, comm, flag, &msg);
+		__did_process = 1;
+	}
+	else if( (world_source != MPC_ANY_SOURCE) && (tag != MPC_ANY_TAG) )
+	{
+		msg.message_tag = tag;
+		mpc_lowcomm_message_probe(world_destination, world_source, comm, flag, &msg);
+		__did_process = 1;
+	}
+	else if( (world_source != MPC_ANY_SOURCE) && (tag == MPC_ANY_TAG) )
+	{
+		mpc_lowcomm_message_probe_any_tag(world_destination, world_source, comm, flag, &msg);
+		__did_process = 1;
+	}
+	else if( (world_source == MPC_ANY_SOURCE) && (tag != MPC_ANY_TAG) )
+	{
+		msg.message_tag = tag;
+		mpc_lowcomm_message_probe_any_source(world_destination, comm, flag, &msg);
+		__did_process = 1;
+	}
+
+	if(*flag)
+	{
+		if(has_status)
+		{
+			status->MPC_SOURCE = mpc_lowcomm_communicator_rank(comm, msg.source_task);
+			status->MPC_TAG    = msg.message_tag;
+			status->size       = ( mpc_lowcomm_msg_count_t )msg.msg_size;
+			status->MPC_ERROR = SCTK_SUCCESS;
+			/* To Be set in upper layers (MPI aware) status->MPC_ERROR  = MPC_ERR_PENDING; */
+		}
+
+		return SCTK_SUCCESS;
+	}
+
+	if(!__did_process)
+	{
+		mpc_common_debug_error("source = %d dest = %d tag = %d\n", world_source, world_destination, tag);
+		not_reachable();
+	}
+
+	return SCTK_SUCCESS;
+}
+
+int mpc_lowcomm_iprobe(int source, int tag, mpc_lowcomm_communicator_t comm, int *flag, mpc_lowcomm_status_t *status)
+{
+	/* Translate ranks */
+
+	if(source != MPC_ANY_SOURCE)
+	{
+		if(sctk_is_inter_comm(comm) )
+		{
+			source = sctk_get_remote_comm_world_rank(comm, source);
+		}
+		else
+		{
+			source = sctk_get_comm_world_rank(comm, source);
+		}
+	}
+	else
+	{
+		source = MPC_ANY_SOURCE;
+	}
+
+	
+	return mpc_lowcomm_iprobe_src_dest(source, mpc_common_get_task_rank(), tag, comm, flag, status);
+}
+
+typedef struct
+{
+	int                        flag;
+	int                        source;
+	int                        destination;
+	int                        tag;
+	mpc_lowcomm_communicator_t comm;
+	mpc_lowcomm_status_t *     status;
+} __mpc_probe_t;
+
+static void __mpc_probe_poll(__mpc_probe_t *arg)
+{
+	mpc_lowcomm_iprobe_src_dest(arg->source, arg->destination, arg->tag, arg->comm, &(arg->flag), arg->status);
+}
+
+int mpc_lowcomm_probe(int source, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_status_t *status)
+{
+	__mpc_probe_t probe_struct;
+
+	if(source != MPC_ANY_SOURCE)
+	{
+		if(sctk_is_inter_comm(comm) )
+		{
+			probe_struct.source = sctk_get_remote_comm_world_rank(comm, source);
+		}
+		else
+		{
+			probe_struct.source = sctk_get_comm_world_rank(comm, source);
+		}
+	}
+	else
+	{
+		probe_struct.source = MPC_ANY_SOURCE;
+	}
+
+	probe_struct.destination = mpc_common_get_task_rank();
+	probe_struct.tag         = tag;
+	probe_struct.comm        = comm;
+	probe_struct.status      = status;
+	mpc_lowcomm_iprobe_src_dest(probe_struct.source, probe_struct.destination, tag, comm,
+	                 &probe_struct.flag, status);
+
+	if(probe_struct.flag != 1)
+	{
+		mpc_lowcomm_perform_idle(
+		        &probe_struct.flag, 1, (void (*)(void *) )__mpc_probe_poll, &probe_struct);
+	}
+
+	return SCTK_SUCCESS;
+}
+
 /*  ###############
  *  Setup & Teardown
  *  ############### */
