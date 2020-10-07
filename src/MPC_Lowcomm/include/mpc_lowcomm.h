@@ -157,7 +157,7 @@ int mpc_lowcomm_wait(mpc_lowcomm_request_t *request, mpc_lowcomm_status_t *statu
  * @param status status to be filled (only valid if completed can be NULL)
  * 
  */
-void mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowcomm_status_t *status);
+int mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowcomm_status_t *status);
 
 /** Wait for a set of communication completion
  * @warning All communications issuing a request in the low-level
@@ -167,7 +167,7 @@ void mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowc
  * @param count number of requests in the array
  * @param status array of statuses to be filled (can be NULL)
  */
-void mpc_lowcomm_waitall(mpc_lowcomm_request_t *requests, int count, mpc_lowcomm_status_t *statuses);
+int mpc_lowcomm_waitall(mpc_lowcomm_request_t *requests, int count, mpc_lowcomm_status_t *statuses);
 
 /** Send an asynchronous message
  *

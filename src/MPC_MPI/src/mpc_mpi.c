@@ -890,7 +890,7 @@ inline void sctk_check_auto_free_list(MPI_request_struct_t *requests)
 		tmp = (MPI_internal_request_t *)requests->auto_free_list;
 
 		/* Test it */
-		_mpc_cl_test(&(tmp->req), &flag, SCTK_STATUS_NULL);
+		mpc_lowcomm_test(&(tmp->req), &flag, SCTK_STATUS_NULL);
 
 		/* If call has ended */
 		if(flag != 0)
@@ -10054,7 +10054,7 @@ int PMPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest, int t
 	res = mpc_mpi_cl_isend_pack(dest, tag, comm, &request);
 	MPI_HANDLE_ERROR(res, comm, "Failed sending packed data");
 
-	res = _mpc_cl_wait(&request, &status);
+	res = mpc_lowcomm_wait(&request, &status);
 	MPI_HANDLE_ERROR(res, comm, "Failled waiting for requests");
 
 
@@ -10157,7 +10157,7 @@ int PMPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
 	res = mpc_mpi_cl_irecv_pack(source, tag, comm, &request);
 	MPI_HANDLE_ERROR(res, comm, "Failled during irecv pack");
 
-	res = _mpc_cl_wait(&request, status);
+	res = mpc_lowcomm_wait(&request, status);
 	MPI_HANDLE_ERROR(res, comm, "Failed waiting for requests");
 
 	if(status != MPI_STATUS_IGNORE)
@@ -10527,7 +10527,7 @@ int PMPI_Wait(MPI_Request *request, MPI_Status *status)
 		}
 		else
 		{
-			res = _mpc_cl_wait(mpcreq, status);
+			res = mpc_lowcomm_wait(mpcreq, status);
 		}
 	}
 
@@ -10575,7 +10575,7 @@ int PMPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
 	}
 	else
 	{
-		res = _mpc_cl_test(__sctk_convert_mpc_request(request, requests), flag, status);
+		res = mpc_lowcomm_test(__sctk_convert_mpc_request(request, requests), flag, status);
 	}
 
 	if(*flag)
@@ -10714,7 +10714,7 @@ int PMPI_Testany(int count, MPI_Request array_of_requests[], int *index,
 				}
 				else
 				{
-					res = _mpc_cl_test(req, &flag_test, status);
+					res = mpc_lowcomm_test(req, &flag_test, status);
 					if(flag_test == 0)
 					{
 						*flag = 0;
@@ -10945,7 +10945,7 @@ int PMPI_Testall(int count, MPI_Request array_of_requests[], int *flag,
 				}
 				else
 				{
-					res = _mpc_cl_test(
+					res = mpc_lowcomm_test(
 						req, &loc_flag,
 						(array_of_statuses == SCTK_STATUS_NULL)
 						? SCTK_STATUS_NULL
@@ -11104,7 +11104,7 @@ int PMPI_Testsome(int incount, MPI_Request array_of_requests[], int *outcount, i
 			}
 			else
 			{
-				tmp = _mpc_cl_test(req, &loc_flag, (array_of_statuses == MPI_STATUSES_IGNORE) ? SCTK_STATUS_NULL : &(array_of_statuses[done]) );
+				tmp = mpc_lowcomm_test(req, &loc_flag, (array_of_statuses == MPI_STATUSES_IGNORE) ? SCTK_STATUS_NULL : &(array_of_statuses[done]) );
 			}
 			if(loc_flag)
 			{

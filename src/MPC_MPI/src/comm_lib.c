@@ -2778,24 +2778,6 @@ int _mpc_cl_sendrecv(void *sendbuf, mpc_lowcomm_msg_count_t sendcount, mpc_lowco
 * MESSAGE WAIT *
 ****************/
 
-
-int _mpc_cl_wait(mpc_lowcomm_request_t *request, mpc_lowcomm_status_t *status)
-{
-	if(mpc_lowcomm_request_get_source(request) == MPC_PROC_NULL)
-	{
-		mpc_lowcomm_request_set_null(request, 1);
-	}
-
-	if(!mpc_lowcomm_request_is_null(request) )
-	{
-		mpc_lowcomm_request_wait(request);
-		mpc_lowcomm_request_set_null(request, 1);
-	}
-
-	mpc_lowcomm_commit_status_from_request(request, status);
-	MPC_ERROR_SUCESS();
-}
-
 static inline int __mpc_cl_test_light(mpc_lowcomm_request_t *request)
 {
 	if(mpc_lowcomm_request_get_completion(request) != MPC_LOWCOMM_MESSAGE_PENDING)
@@ -2806,48 +2788,6 @@ static inline int __mpc_cl_test_light(mpc_lowcomm_request_t *request)
 	__mpc_cl_request_progress(request);
 
 	return mpc_lowcomm_request_get_completion(request);
-}
-
-static inline int __mpc_cl_test_no_progress(mpc_lowcomm_request_t *request, int *flag,
-                                            mpc_lowcomm_status_t *status)
-{
-	*flag = 0;
-
-	if(mpc_lowcomm_request_get_completion(request) != MPC_LOWCOMM_MESSAGE_PENDING)
-	{
-		*flag = 1;
-		mpc_lowcomm_commit_status_from_request(request, status);
-	}
-	else
-	{
-		if( (status != SCTK_STATUS_NULL) && (*flag == 0) )
-		{
-			status->MPC_ERROR = MPC_ERR_PENDING;
-		}
-	}
-
-	MPC_ERROR_SUCESS();
-}
-
-int _mpc_cl_test(mpc_lowcomm_request_t *request, int *flag,
-                 mpc_lowcomm_status_t *status)
-{
-	*flag = 0;
-
-	if(mpc_lowcomm_request_is_null(request) )
-	{
-		*flag = 1;
-		mpc_lowcomm_commit_status_from_request(request, status);
-		MPC_ERROR_SUCESS();
-	}
-
-	if(mpc_lowcomm_request_get_completion(request) == MPC_LOWCOMM_MESSAGE_PENDING)
-	{
-		__mpc_cl_request_progress(request);
-	}
-
-	__mpc_cl_test_no_progress(request, flag, status);
-	MPC_ERROR_SUCESS();
 }
 
 struct wfv_waitall_s
@@ -3060,10 +3000,10 @@ int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parra
 				continue;
 			}
 
-			_mpc_cl_test(request, &tmp_flag, status);
+			mpc_lowcomm_test(request, &tmp_flag, status);
 
 			/* We set this flag in order to prevent the status
-				* from being updated repetitivelly in __mpc_cl_test */
+				* from being updated repetitivelly in mpc_lowcomm_test */
 			if(tmp_flag)
 			{
 				mpc_lowcomm_request_set_null(request, 1);
@@ -3157,8 +3097,8 @@ int _mpc_cl_waitsome(mpc_lowcomm_msg_count_t incount, mpc_lowcomm_request_t arra
 			if(!mpc_lowcomm_request_is_null(&(array_of_requests[i]) ) )
 			{
 				int tmp_flag = 0;
-				_mpc_cl_test(&(array_of_requests[i]), &tmp_flag,
-				             &(array_of_statuses[done]) );
+				mpc_lowcomm_test(&(array_of_requests[i]), &tmp_flag,
+				                 &(array_of_statuses[done]) );
 
 				if(tmp_flag)
 				{
@@ -3196,11 +3136,11 @@ int _mpc_cl_waitany(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t array_o
 			if(mpc_lowcomm_request_is_null(&(array_of_requests[i]) ) != 1)
 			{
 				int tmp_flag = 0;
-				_mpc_cl_test(&(array_of_requests[i]), &tmp_flag, status);
+				mpc_lowcomm_test(&(array_of_requests[i]), &tmp_flag, status);
 
 				if(tmp_flag)
 				{
-					_mpc_cl_wait(&(array_of_requests[i]), status);
+					mpc_lowcomm_wait(&(array_of_requests[i]), status);
 					*index = count;
 					SCTK_PROFIL_END(MPC_Waitany);
 					MPC_ERROR_SUCESS();
@@ -3488,7 +3428,7 @@ int _mpc_cl_gather(void *sendbuf, mpc_lowcomm_msg_count_t sendcnt,
 
 				for(; j >= 0; j--)
 				{
-					_mpc_cl_wait(&(recvrequest[j]), SCTK_STATUS_NULL);
+					mpc_lowcomm_wait(&(recvrequest[j]), SCTK_STATUS_NULL);
 				}
 			}
 		}
@@ -3496,7 +3436,7 @@ int _mpc_cl_gather(void *sendbuf, mpc_lowcomm_msg_count_t sendcnt,
 		{
 			_mpc_cl_isend(sendbuf, sendcnt, sendtype, root, MPC_GATHER_TAG, comm,
 			              &request);
-			_mpc_cl_wait(&(request), SCTK_STATUS_NULL);
+			mpc_lowcomm_wait(&(request), SCTK_STATUS_NULL);
 		}
 	}
 	else
@@ -3542,7 +3482,7 @@ int _mpc_cl_gather(void *sendbuf, mpc_lowcomm_msg_count_t sendcnt,
 			}
 		}
 
-		_mpc_cl_wait(&(request), SCTK_STATUS_NULL);
+		mpc_lowcomm_wait(&(request), SCTK_STATUS_NULL);
 	}
 
 	sctk_free(recvrequest);

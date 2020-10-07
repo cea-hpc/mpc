@@ -2934,7 +2934,7 @@ int mpc_lowcomm_wait(mpc_lowcomm_request_t *request, mpc_lowcomm_status_t *statu
 	return SCTK_SUCCESS;
 }
 
-void mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowcomm_status_t *status)
+int mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowcomm_status_t *status)
 {
 	*completed = 0;
 
@@ -2942,8 +2942,9 @@ void mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowc
 
 	if(__request_is_null_or_cancelled(request))
 	{
+		//mpc_lowcomm_commit_status_from_request(request, status);
 		*completed = 1;
-		return;
+		return SCTK_SUCCESS;
 	}
 
 	mpc_lowcomm_ptp_msg_wait_init(&wait, request, 1);
@@ -2958,9 +2959,11 @@ void mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowc
 		mpc_lowcomm_request_set_null(request, 1);
 		__mpc_comm_ptp_msg_done(&wait);
 	}
+
+	return SCTK_SUCCESS;
 }
 
-void mpc_lowcomm_waitall(mpc_lowcomm_request_t *requests, int count, mpc_lowcomm_status_t *statuses)
+int mpc_lowcomm_waitall(mpc_lowcomm_request_t *requests, int count, mpc_lowcomm_status_t *statuses)
 {
 	int all_done = 0;
 	int i;
@@ -2972,7 +2975,7 @@ void mpc_lowcomm_waitall(mpc_lowcomm_request_t *requests, int count, mpc_lowcomm
 		{
 			int done = 0;
 
-			 mpc_lowcomm_status_t *status = NULL;
+			mpc_lowcomm_status_t *status = NULL;
 			if(statuses)
 			{
 				status = &statuses[i];
@@ -2988,6 +2991,8 @@ void mpc_lowcomm_waitall(mpc_lowcomm_request_t *requests, int count, mpc_lowcomm
 			mpc_thread_yield();
 		}
 	}
+
+	return SCTK_SUCCESS;
 }
 
 void mpc_lowcomm_send(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm)
