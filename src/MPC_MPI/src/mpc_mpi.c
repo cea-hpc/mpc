@@ -17005,7 +17005,8 @@ int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_
         {
             color = mpc_common_get_node_rank();
         }
-        else{
+        else
+        {
             hwloc_topology_t topology;
             if(mpc_common_get_local_process_count() > 1)
             {
@@ -17014,7 +17015,7 @@ int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_
             }
             else
             {
-                hwloc_topology_t topology = mpc_topology_get();
+                topology = mpc_topology_get();
             }
             //int tid = syscall(SYS_gettid);
             //int ret = hwloc_get_thread_cpubind(topology, tid, newset, HWLOC_CPUBIND_THREAD);
@@ -17073,7 +17074,20 @@ int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_
                     }
                 }
             }
-            color = ancestor->logical_index;
+            if(mpc_common_get_node_count() > 1)//create color with node id
+            {
+                char str_logical_idx[512];
+                char str_node_idx[512];
+                sprintf(str_logical_idx, "%d", ancestor->logical_index); 
+                sprintf(str_node_idx, "%d", mpc_common_get_node_rank()); 
+                strcat(str_node_idx, str_logical_idx);
+                color = atoi(str_node_idx);
+
+            }
+            else
+            {
+                color = ancestor->logical_index;
+            }
         }
     }
     if(split_type == MPI_COMM_TYPE_HW_UNGUIDED)
@@ -17183,7 +17197,20 @@ int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_
                             int is_inside = hwloc_bitmap_isincluded (hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, tab_cpuid[j*2])->cpuset, child_set);
                             if(is_inside)
                             {
-                                tab_color[j] = k;
+                                if(mpc_common_get_node_count() > 1)//create color with node id
+                                {
+                                    char str_logical_idx[512];
+                                    char str_node_idx[512];
+                                    sprintf(str_logical_idx, "%d", k); 
+                                    sprintf(str_node_idx, "%d", mpc_common_get_node_rank()); 
+                                    strcat(str_node_idx, str_logical_idx);
+                                    tab_color[j] = atoi(str_node_idx);
+
+                                }
+                                else
+                                {
+                                    tab_color[j] = k;
+                                }
                             }
                         }
 
