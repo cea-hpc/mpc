@@ -758,35 +758,35 @@ locate_tarball()
 	# Now attempt to locate archive
 	tarball="$PKG-$VERS"
 
-	TARBALL_PATH=$(ls "$SCRIPTPATH/deps/$package/${tarball}"*tar* 2> /dev/null|| true)
+	TARBALL_PATH=$(find "$HOME/.mpcdep/" -iname "${tarball}*tar*" 2> /dev/null || true)
+
+	if test -f "$TARBALL_PATH"; then
+		# Found in .mpcdep in $HOME
+		return
+	fi
+
+	TARBALL_PATH=$(find "$SCRIPTPATH/deps/$package/" -iname "${tarball}*tar*" 2> /dev/null || true)
 
 	if test -f "$TARBALL_PATH"; then
 		# Found in dependency patch dir
 		return
 	fi
 
-	TARBALL_PATH=$(ls "${PROJECT_BUILD_DIR}/${tarball}"*tar* 2> /dev/null || true)
+	TARBALL_PATH=$(find "${PROJECT_BUILD_DIR}/"  -iname "${tarball}*tar*" 2> /dev/null || true)
 
 	if test -f "$TARBALL_PATH"; then
 		# Found in build dir
 		return
 	fi
 
-	TARBALL_PATH=$(ls "$SCRIPTPATH/deps/$package/${tarball}"*tar* 2> /dev/null || true)
-
-	if test -f "$TARBALL_PATH"; then
-		# Found in dependency patch dir
-		return
-	fi
-
-	TARBALL_PATH=$(ls "$SCRIPTPATH/deps/${tarball}"*tar* 2> /dev/null|| true)
+	TARBALL_PATH=$(find "$SCRIPTPATH/deps/" -iname "${tarball}*tar*" 2> /dev/null || true)
 
 	if test -f "$TARBALL_PATH"; then
 		# Found in flat deps dir
 		return
 	fi
 
-	TARBALL_PATH=$(ls "${SCRIPTPATH}/${tarball}"*tar* 2> /dev/null || true)
+	TARBALL_PATH=$(find "${SCRIPTPATH}/" -iname "${tarball}*tar*" 2> /dev/null || true)
 
 	if test -f "$TARBALL_PATH"; then
 		# Found in root source dir
