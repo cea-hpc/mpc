@@ -11167,12 +11167,7 @@ int PMPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag,
 	{
 		mpc_thread_yield();
 	}
-	else
-	{
-		if(status != MPI_STATUS_IGNORE){
-			status->MPI_ERROR = MPC_ERR_PENDING;
-		}
-	}
+
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
@@ -11192,10 +11187,6 @@ int PMPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
 	}
 
 	res = mpc_lowcomm_probe(source, tag, comm, status);
-
-	if(status != MPI_STATUS_IGNORE){
-		status->MPI_ERROR = MPC_ERR_PENDING;
-	}
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }

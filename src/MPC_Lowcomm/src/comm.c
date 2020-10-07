@@ -158,11 +158,6 @@ int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
 		status->MPC_TAG    = request->header.message_tag;
 		status->MPC_ERROR  = SCTK_SUCCESS;
 
-		if(request->truncated)
-		{
-			status->MPC_ERROR = MPC_ERR_TRUNCATE;
-		}
-
 		status->size = request->header.msg_size;
 
 		if(request->completion_flag == MPC_LOWCOMM_MESSAGE_CANCELED)
@@ -176,6 +171,11 @@ int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
 
 
 #ifdef MPC_MPI
+		if(request->truncated)
+		{
+			status->MPC_ERROR = MPC_ERR_TRUNCATE;
+		}
+
 		if(request->source_type != request->dest_type)
 		{
 			if(  /* See page 33 of 3.0 PACKED and BYTE are exceptions */
@@ -3082,7 +3082,9 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 			status->MPC_TAG    = msg.message_tag;
 			status->size       = ( mpc_lowcomm_msg_count_t )msg.msg_size;
 			status->MPC_ERROR = SCTK_SUCCESS;
-			/* To Be set in upper layers (MPI aware) status->MPC_ERROR  = MPC_ERR_PENDING; */
+#ifdef MPC_MPI
+			status->MPC_ERROR  = MPC_ERR_PENDING;
+#endif
 		}
 
 		return SCTK_SUCCESS;
