@@ -2963,7 +2963,7 @@ int mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowco
 	return SCTK_SUCCESS;
 }
 
-int mpc_lowcomm_waitall(mpc_lowcomm_request_t *requests, int count, mpc_lowcomm_status_t *statuses)
+int mpc_lowcomm_waitall(int count, mpc_lowcomm_request_t *requests, mpc_lowcomm_status_t *statuses)
 {
 	int all_done = 0;
 	int i;
