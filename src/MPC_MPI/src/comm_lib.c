@@ -187,64 +187,6 @@ static inline void __mpc_cl_per_communicator_alloc_from_existing_dup(
 /* Request Handling                                                     */
 /************************************************************************/
 
-static inline void __mpc_cl_request_commit_status(mpc_lowcomm_request_t *request,
-                                                  mpc_lowcomm_status_t *status)
-{
-	if(request->request_type == REQUEST_GENERALIZED)
-	{
-		mpc_lowcomm_status_t static_status;
-
-		/* You must provide a valid status to the querry function */
-		if(status == SCTK_STATUS_NULL)
-		{
-			status = &static_status;
-		}
-
-		memset(status, 0, sizeof(mpc_lowcomm_status_t) );
-		/* Fill in the status info */
-		(request->query_fn)(request->extra_state, status);
-		/* Free the request */
-		(request->free_fn)(request->extra_state);
-	}
-	else if(status != SCTK_STATUS_NULL)
-	{
-		status->MPC_SOURCE = request->header.source_task;
-		status->MPC_TAG    = request->header.message_tag;
-		status->MPC_ERROR  = SCTK_SUCCESS;
-
-		if(request->truncated)
-		{
-			status->MPC_ERROR = MPC_ERR_TRUNCATE;
-		}
-
-		status->size = request->header.msg_size;
-
-		if(request->completion_flag == MPC_LOWCOMM_MESSAGE_CANCELED)
-		{
-			status->cancelled = 1;
-		}
-		else
-		{
-			status->cancelled = 0;
-		}
-
-		if(request->source_type != request->dest_type)
-		{
-			if(  /* See page 33 of 3.0 PACKED and BYTE are exceptions */
-			        request->source_type != MPC_PACKED &&
-			        request->dest_type != MPC_PACKED &&
-			        request->source_type != MPC_BYTE && request->dest_type != MPC_BYTE &&
-			        request->header.msg_size > 0)
-			{
-				if(_mpc_dt_is_common(request->source_type) &&
-				   _mpc_dt_is_common(request->dest_type) )
-				{
-					request->status_error = MPC_ERR_TYPE;
-				}
-			}
-		}
-	}
-}
 
 void mpc_mpi_cl_egreq_progress_poll();
 
@@ -2136,6 +2078,10 @@ int _mpc_cl_type_ctx_set(mpc_lowcomm_datatype_t datatype,
 	MPC_ERROR_SUCESS();
 }
 
+int mpc_mpi_cl_type_is_common(mpc_lowcomm_datatype_t type){
+	return _mpc_dt_is_common(type);
+}
+
 int mpc_mpi_cl_type_is_contiguous(mpc_lowcomm_datatype_t type)
 {
 	/* UB or LB are not contiguous */
@@ -2796,7 +2742,7 @@ int _mpc_cl_recv(void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_
 		return request.status_error;
 	}
 
-	__mpc_cl_request_commit_status(&request, status);
+	mpc_lowcomm_commit_status_from_request(&request, status);
 	MPC_ERROR_SUCESS();
 }
 
@@ -2846,7 +2792,7 @@ int _mpc_cl_wait(mpc_lowcomm_request_t *request, mpc_lowcomm_status_t *status)
 		mpc_lowcomm_request_set_null(request, 1);
 	}
 
-	__mpc_cl_request_commit_status(request, status);
+	mpc_lowcomm_commit_status_from_request(request, status);
 	MPC_ERROR_SUCESS();
 }
 
@@ -2870,7 +2816,7 @@ static inline int __mpc_cl_test_no_progress(mpc_lowcomm_request_t *request, int 
 	if(mpc_lowcomm_request_get_completion(request) != MPC_LOWCOMM_MESSAGE_PENDING)
 	{
 		*flag = 1;
-		__mpc_cl_request_commit_status(request, status);
+		mpc_lowcomm_commit_status_from_request(request, status);
 	}
 	else
 	{
@@ -2891,7 +2837,7 @@ int _mpc_cl_test(mpc_lowcomm_request_t *request, int *flag,
 	if(mpc_lowcomm_request_is_null(request) )
 	{
 		*flag = 1;
-		__mpc_cl_request_commit_status(request, status);
+		mpc_lowcomm_commit_status_from_request(request, status);
 		MPC_ERROR_SUCESS();
 	}
 
@@ -2934,7 +2880,7 @@ static inline void wfv_waitall(void *arg)
 			if(args->array_of_statuses != NULL)
 			{
 				mpc_lowcomm_status_t *status = &(args->array_of_statuses[i]);
-				__mpc_cl_request_commit_status(request, status);
+				mpc_lowcomm_commit_status_from_request(request, status);
 				mpc_common_nodebug("source %d\n", status->MPC_SOURCE);
 				mpc_lowcomm_request_set_null(request, 1);
 			}
@@ -3314,7 +3260,7 @@ int mpc_mpi_cl_world_rank(mpc_lowcomm_communicator_t comm, int rank)
 
 int _mpc_cl_request_get_status(mpc_lowcomm_request_t request, int *flag, mpc_lowcomm_status_t *status)
 {
-	__mpc_cl_request_commit_status(&request, status);
+	mpc_lowcomm_commit_status_from_request(&request, status);
 	*flag = (request.completion_flag == MPC_LOWCOMM_MESSAGE_DONE);
 	return SCTK_SUCCESS;
 }

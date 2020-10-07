@@ -129,6 +129,75 @@ static inline void __mpc_comm_request_init(mpc_lowcomm_request_t *request,
 /*Functions                                                         */
 /********************************************************************/
 
+#ifdef MPC_MPI
+#include <mpc_mpi_comm_lib.h>
+#endif
+
+int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
+                                           mpc_lowcomm_status_t *status)
+{
+	if(request->request_type == REQUEST_GENERALIZED)
+	{
+		mpc_lowcomm_status_t static_status;
+
+		/* You must provide a valid status to the querry function */
+		if(status == SCTK_STATUS_NULL)
+		{
+			status = &static_status;
+		}
+
+		memset(status, 0, sizeof(mpc_lowcomm_status_t) );
+		/* Fill in the status info */
+		(request->query_fn)(request->extra_state, status);
+		/* Free the request */
+		(request->free_fn)(request->extra_state);
+	}
+	else if(status != SCTK_STATUS_NULL)
+	{
+		status->MPC_SOURCE = request->header.source_task;
+		status->MPC_TAG    = request->header.message_tag;
+		status->MPC_ERROR  = SCTK_SUCCESS;
+
+		if(request->truncated)
+		{
+			status->MPC_ERROR = MPC_ERR_TRUNCATE;
+		}
+
+		status->size = request->header.msg_size;
+
+		if(request->completion_flag == MPC_LOWCOMM_MESSAGE_CANCELED)
+		{
+			status->cancelled = 1;
+		}
+		else
+		{
+			status->cancelled = 0;
+		}
+
+
+#ifdef MPC_MPI
+		if(request->source_type != request->dest_type)
+		{
+			if(  /* See page 33 of 3.0 PACKED and BYTE are exceptions */
+			        request->source_type != MPC_PACKED &&
+			        request->dest_type != MPC_PACKED &&
+			        request->source_type != MPC_BYTE && request->dest_type != MPC_BYTE &&
+			        request->header.msg_size > 0)
+			{
+				if(mpc_mpi_cl_type_is_common(request->source_type) &&
+				   mpc_mpi_cl_type_is_common(request->dest_type) )
+				{
+					request->status_error = MPC_ERR_TYPE;
+				}
+			}
+		}
+#endif
+	}
+
+	return SCTK_SUCCESS;
+}
+
+
 /*
  * Initialize the 'incoming' list.
  */
@@ -2210,13 +2279,16 @@ static inline int __request_is_null_or_cancelled(mpc_lowcomm_request_t *request)
 	return 0;
 }
 
-
-
-void mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request)
+int mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request)
 {
+	if(mpc_lowcomm_request_get_source(request) == MPC_PROC_NULL)
+	{
+		mpc_lowcomm_request_set_null(request, 1);
+	}
+
 	if(__request_is_null_or_cancelled(request))
 	{
-		return;
+		return SCTK_SUCCESS;
 	}
 
 #ifdef MPC_MPI
@@ -2254,6 +2326,8 @@ void mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request)
 			__mpc_comm_ptp_msg_done(&_wait);
 		}
 	}
+
+	return SCTK_SUCCESS;
 }
 
 /*
@@ -2624,23 +2698,6 @@ void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request, mpc_lowcomm_commun
 	__mpc_comm_request_init(request, comm, request_type);
 }
 
-int mpc_lowcomm_request_free(mpc_lowcomm_request_t *request)
-{
-	int ret = SCTK_SUCCESS;
-
-	/* Firstly wait the message before freeing */
-	mpc_lowcomm_request_wait(request);
-
-	if(request->request_type == REQUEST_GENERALIZED)
-	{
-		ret = (request->free_fn)(request->extra_state);
-	}
-
-	mpc_lowcomm_request_init(request, MPC_COMM_NULL, REQUEST_NULL);
-	request->is_null = 1;
-	return ret;
-}
-
 int mpc_lowcomm_request_cancel(mpc_lowcomm_request_t *msg)
 {
 	int ret = SCTK_SUCCESS;
@@ -2869,12 +2926,15 @@ void mpc_lowcomm_sendrecv(void *sendbuf, size_t size, int dest, int tag, void *r
 	mpc_lowcomm_request_wait(&recvreq);
 }
 
-void mpc_lowcomm_wait(mpc_lowcomm_request_t *request)
+int mpc_lowcomm_wait(mpc_lowcomm_request_t *request, mpc_lowcomm_status_t *status)
 {
 	mpc_lowcomm_request_wait(request);
+	mpc_lowcomm_commit_status_from_request(request, status);
+	mpc_lowcomm_request_set_null(request, 1);
+	return SCTK_SUCCESS;
 }
 
-void mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed)
+void mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowcomm_status_t *status)
 {
 	*completed = 0;
 
@@ -2894,42 +2954,32 @@ void mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed)
 
 	if(*completed)
 	{
+		mpc_lowcomm_commit_status_from_request(request, status);
+		mpc_lowcomm_request_set_null(request, 1);
 		__mpc_comm_ptp_msg_done(&wait);
 	}
 }
 
-#define WAITALL_MAX_STATIC_REQ 16
-
-void mpc_lowcomm_waitall(mpc_lowcomm_request_t *requests, int count)
+void mpc_lowcomm_waitall(mpc_lowcomm_request_t *requests, int count, mpc_lowcomm_status_t *statuses)
 {
-	int _done_flags[WAITALL_MAX_STATIC_REQ];
-	int * done_flags = _done_flags;
-
-	if(WAITALL_MAX_STATIC_REQ <= count)
-	{
-		done_flags = sctk_malloc(sizeof(int) * count);
-		assume(done_flags != NULL);
-	}
-
-	int i = 0;
-
-	for(i = 0 ; i < count ; i++)
-	{
-		done_flags[i] = 0;
-	}
-
 	int all_done = 0;
+	int i;
 
 	while(!all_done)
 	{
 		all_done = 1;
 		for( i = 0; i < count ; i++)
 		{
-			if(!done_flags[i])
+			int done = 0;
+
+			 mpc_lowcomm_status_t *status = NULL;
+			if(statuses)
 			{
-				mpc_lowcomm_test(&requests[i], &done_flags[i]);
-				all_done &= done_flags[i];
+				status = &statuses[i];
 			}
+
+			mpc_lowcomm_test(&requests[i], &done, status);
+			all_done &= done;
 		}
 		
 		if(!all_done)
@@ -2938,11 +2988,6 @@ void mpc_lowcomm_waitall(mpc_lowcomm_request_t *requests, int count)
 			mpc_thread_yield();
 		}
 	}
-
-	if(WAITALL_MAX_STATIC_REQ <= count)
-	{
-		sctk_free(done_flags);
-	}
 }
 
 void mpc_lowcomm_send(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm)
@@ -2950,7 +2995,7 @@ void mpc_lowcomm_send(int dest, const void *data, size_t size, int tag, mpc_lowc
 	mpc_lowcomm_request_t req;
 
 	mpc_lowcomm_isend(dest, data, size, tag, comm, &req);
-	mpc_lowcomm_wait(&req);
+	mpc_lowcomm_wait(&req, NULL);
 }
 
 void mpc_lowcomm_recv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm)
@@ -2958,7 +3003,7 @@ void mpc_lowcomm_recv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_c
 	mpc_lowcomm_request_t req;
 
 	mpc_lowcomm_irecv(src, buffer, size, tag, comm, &req);
-	mpc_lowcomm_wait(&req);
+	mpc_lowcomm_wait(&req, NULL);
 }
 
 int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destination, const int tag,
