@@ -17028,24 +17028,22 @@ int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_
                          MPI_Comm *newcomm)
 {
 	int color = 0;
+    int guided_shared_memory = 0; /* ensure consistency MPI standard 4.0 */
 
-	if(split_type == MPI_COMM_TYPE_SHARED)
-	{
-		color = mpc_common_get_node_rank();
-
-		/* char hname[200];
-		 * gethostname(hname, 200);
-		 * mpc_common_debug_error("Color %d on %s", color, hname); */
-	}
     if(split_type == MPI_COMM_TYPE_HW_SUBDOMAIN)
     {
         int buflen = 1024;
         char value[1024];
         int flag;
         _mpc_cl_info_get(info, "mpi_hw_subdomain_type", &buflen, value, &flag);
+        if(!strcmp(value,"mpi_shared_memory")) /* ensure consistency MPI standard 4.0 */
+        {
+            guided_shared_memory = 1;
+            goto shared_memory;
+        }
         hwloc_obj_type_t type_split;
         int ret = __mpc_find_split_type(value, &type_split);
-        if(!ret) /* not find */
+        if(!ret) /* info value not find */
         {
             *newcomm = MPI_COMM_NULL;
             return;
@@ -17289,6 +17287,15 @@ int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_
          * gethostname(hname, 200);
          * mpc_common_debug_error("Color %d on %s", color, hname); */
     }
+shared_memory:
+	if(split_type == MPI_COMM_TYPE_SHARED || guided_shared_memory)
+	{
+		color = mpc_common_get_node_rank();
+
+		/* char hname[200];
+		 * gethostname(hname, 200);
+		 * mpc_common_debug_error("Color %d on %s", color, hname); */
+	}
 
 	TODO("Handle info in Comm_split_type");
 	return PMPI_Comm_split(comm, color, key, newcomm);
