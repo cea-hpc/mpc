@@ -13126,6 +13126,13 @@ fi
 ################################
 ###### GLOBAL INFORMATION ###### {sec:globals}
 ################################
+
+if test "x${prefix}" = "xNONE"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: No prefix was passed will use /usr/local/" >&5
+$as_echo "$as_me: WARNING: No prefix was passed will use /usr/local/" >&2;}
+        prefix="/usr/local/"
+fi
+
 # installation prefix, defined for the whole build
 
 cat >>confdefs.h <<_ACEOF
@@ -26304,6 +26311,12 @@ fi
 
 
 
+
+cat >>confdefs.h <<_ACEOF
+#define MPC_LAUNCHER $MPC_LAUNCHER
+_ACEOF
+
+
 #
 # Cuda Detection
 #
@@ -31901,7 +31914,7 @@ PKG_INCDIR="${prefix}/include/${PACKAGE_TARNAME}/"
 ac_config_headers="$ac_config_headers mpc_config.h"
 
 
-ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Common/include/mpc_common_types.h src/MPC_Common/include/mpc_common_spinlock.h src/MPC_Common/include/mpc_keywords.h src/MPC_Config/Makefile src/MPC_Config/editor/Makefile src/MPC_Config/src/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Lowcomm/Makefile src/MPC_Lowcomm/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/MPC_IO/Makefile src/MPC_IO/src/Makefile src/MPC_IO/include/mpio.h src/MPC_IO/src/romio/Makefile src/MPC_Fortran/Makefile src/MPC_Fortran/src/Makefile src/include/mpc_threads_config.h src/include/mpc.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpcrun src/bin/mpcvars.sh src/bin/mpc_status"
+ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Common/include/mpc_common_types.h src/MPC_Common/include/mpc_common_spinlock.h src/MPC_Common/include/mpc_keywords.h src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Config/conf/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Lowcomm/Makefile src/MPC_Lowcomm/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/MPC_IO/Makefile src/MPC_IO/src/Makefile src/MPC_IO/include/mpio.h src/MPC_IO/src/romio/Makefile src/MPC_Fortran/Makefile src/MPC_Fortran/src/Makefile src/include/mpc_threads_config.h src/include/mpc.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpcrun src/bin/mpcvars.sh src/bin/mpc_status"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -33341,8 +33354,8 @@ do
     "src/MPC_Common/include/mpc_common_spinlock.h") CONFIG_FILES="$CONFIG_FILES src/MPC_Common/include/mpc_common_spinlock.h" ;;
     "src/MPC_Common/include/mpc_keywords.h") CONFIG_FILES="$CONFIG_FILES src/MPC_Common/include/mpc_keywords.h" ;;
     "src/MPC_Config/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Config/Makefile" ;;
-    "src/MPC_Config/editor/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Config/editor/Makefile" ;;
     "src/MPC_Config/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Config/src/Makefile" ;;
+    "src/MPC_Config/conf/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Config/conf/Makefile" ;;
     "src/MPC_Launch/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Launch/Makefile" ;;
     "src/MPC_Launch/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Launch/src/Makefile" ;;
     "src/MPC_Lowcomm/Makefile") CONFIG_FILES="$CONFIG_FILES src/MPC_Lowcomm/Makefile" ;;

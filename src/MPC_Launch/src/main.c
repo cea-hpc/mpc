@@ -40,8 +40,6 @@
 * COMMON MAIN WRAPPER *
 ***********************/
 
-void sctk_use_pthread();
-
 static int __main_wrapper(int argc, char **argv)
 {
 	int bypass_mpc_launch_main = 0;
@@ -69,7 +67,6 @@ static int __main_wrapper(int argc, char **argv)
 
 	if(bypass_mpc_launch_main)
 	{
-		sctk_use_pthread();
 		return CALL_MAIN(mpc_user_main__, argc, argv);
 	}
 

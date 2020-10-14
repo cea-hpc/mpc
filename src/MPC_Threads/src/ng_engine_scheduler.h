@@ -33,8 +33,6 @@
 #include <utlist.h>
 #include <semaphore.h>
 
-#include "mpc_runtime_config.h"
-
 /***************************************/
 /* THREAD SCHEDULING                   */
 /***************************************/

@@ -30,7 +30,7 @@
 #include <pthread.h>
 #include <signal.h>
 
-#include <mpc_runtime_config.h>
+#include <mpc_conf.h>
 #include <mpc_common_flags.h>
 #include <mpc_common_helper.h>
 #include <mpc_common_rank.h>
@@ -45,7 +45,11 @@
 #include "mpc_topology.h"
 #include <mpc_launch_pmi.h>
 
-#include "mpc_runtime_config.h"
+#ifdef MPC_Threads
+#include <mpc_thread.h>
+#endif
+
+
 #include <mpc_common_types.h>
 
 #include "main.h"
@@ -56,6 +60,24 @@
 #else
 #define SCTK_DEBUG_MODE    ""
 #endif
+
+/**************************
+ * CONFIGURATION Storage   *
+ **************************/
+
+/**
+ * @brief This holds the configuration for MPC_Launch
+ * 
+ */
+struct mpc_launch_config{
+	int bt_sig_enabled; /** Produce backtraces on error */
+	int banner_enabled; /** Should MPC's banner be dispayed */
+	int autokill_timer; /** What is the kill timer in seconds (0 means none) */
+};
+
+
+static struct mpc_launch_config __launch_config;
+
 
 
 void mpc_launch_print_banner(short int restart)
@@ -69,7 +91,7 @@ void mpc_launch_print_banner(short int restart)
 			mpc_lang = "Fortran";
 		}
 
-		if(sctk_runtime_config_get()->modules.launcher.banner)
+		if(__launch_config.banner_enabled)
 		{
 			if(mpc_common_get_flags()->checkpoint_enabled && restart)
 			{
@@ -99,75 +121,46 @@ void mpc_launch_print_banner(short int restart)
 
 #ifdef MPC_Threads
 
-void sctk_use_pthread(void)
+static inline void __set_thread_engine(void)
 {
-	mpc_common_get_flags()->thread_library_kind = "pthread";
-	mpc_common_get_flags()->thread_library_init = mpc_thread_pthread_engine_init;
-}
+	if(!strcmp("pthread", mpc_common_get_flags()->thread_library_kind))
+	{
+		mpc_common_get_flags()->thread_library_init = mpc_thread_pthread_engine_init;
+	}else if(!strcmp("ethread", mpc_common_get_flags()->thread_library_kind))
+	{
+		mpc_common_get_flags()->thread_library_init = mpc_thread_ethread_engine_init;
+	}else if(!strcmp("ethread_mxn", mpc_common_get_flags()->thread_library_kind))
+	{
+		mpc_common_get_flags()->thread_library_init = mpc_thread_ethread_mxn_engine_init;
+	}else if(!strcmp("ethread_mxn_ng", mpc_common_get_flags()->thread_library_kind))
+	{
+		mpc_common_get_flags()->thread_library_init = mpc_thread_ethread_mxn_ng_engine_init;
+	}else if(!strcmp("ethread_ng", mpc_common_get_flags()->thread_library_kind))
+	{
+		mpc_common_get_flags()->thread_library_init = mpc_thread_ethread_ng_engine_init;
+	}else if(!strcmp("pthread_ng", mpc_common_get_flags()->thread_library_kind))
+	{
+		mpc_common_get_flags()->thread_library_init = mpc_thread_pthread_ng_engine_init;
+	}
+	else
+	{
+		mpc_common_debug_error("No such thread engine choices are (pthread, ethread, ethread_mxn, ethread_mxn_ng, ethread_ng, pthread_ng)");
+		mpc_common_debug_abort();
+	}
 
-static void sctk_use_ethread(void)
-{
-	mpc_common_get_flags()->thread_library_kind = "ethread";
-	mpc_common_get_flags()->thread_library_init = mpc_thread_ethread_engine_init;
-}
 
-void sctk_use_ethread_mxn(void)
-{
-	mpc_common_get_flags()->thread_library_kind = "ethread_mxn";
-	mpc_common_get_flags()->thread_library_init = mpc_thread_ethread_mxn_engine_init;
-}
+	/* Once the thread engine is set its config must be locked as it cannot change */
+	mpc_conf_config_type_elem_t *thconf = mpc_conf_root_config_get("mpc.launch.default.thread");
 
-void sctk_use_ethread_mxn_ng(void)
-{
-	mpc_common_get_flags()->thread_library_kind = "ethread_mxn_ng";
-	mpc_common_get_flags()->thread_library_init = mpc_thread_ethread_mxn_ng_engine_init;
-}
-
-void sctk_use_ethread_ng(void)
-{
-	mpc_common_get_flags()->thread_library_kind = "ethread_ng";
-	mpc_common_get_flags()->thread_library_init = mpc_thread_ethread_ng_engine_init;
-}
-
-void sctk_use_pthread_ng(void)
-{
-	mpc_common_get_flags()->thread_library_kind = "pthread_ng";
-	mpc_common_get_flags()->thread_library_init = mpc_thread_pthread_ng_engine_init;
+	if(thconf)
+	{
+		mpc_conf_config_type_elem_set_locked(thconf, 1);
+	}
 }
 
 #else
 
-void sctk_use_pthread(void)
-{
-	mpc_common_get_flags()->thread_library_kind = "NA";
-	mpc_common_get_flags()->thread_library_init = NULL;
-}
-
-static void sctk_use_ethread(void)
-{
-	mpc_common_get_flags()->thread_library_kind = "NA";
-	mpc_common_get_flags()->thread_library_init = NULL;
-}
-
-void sctk_use_ethread_mxn(void)
-{
-	mpc_common_get_flags()->thread_library_kind = "NA";
-	mpc_common_get_flags()->thread_library_init = NULL;
-}
-
-void sctk_use_ethread_mxn_ng(void)
-{
-	mpc_common_get_flags()->thread_library_kind = "NA";
-	mpc_common_get_flags()->thread_library_init = NULL;
-}
-
-void sctk_use_ethread_ng(void)
-{
-	mpc_common_get_flags()->thread_library_kind = "NA";
-	mpc_common_get_flags()->thread_library_init = NULL;
-}
-
-void sctk_use_pthread_ng(void)
+static inline void __set_thread_engine(void)
 {
 	mpc_common_get_flags()->thread_library_kind = "NA";
 	mpc_common_get_flags()->thread_library_init = NULL;
@@ -300,6 +293,7 @@ static inline void __parse_argument(char *passed_arg)
 	SET_FLAG_STRING("--sctk_use_network", network_driver_name);
 	SET_FLAG_STRING("--profiling", profiler_outputs);
 	SET_FLAG_STRING("--launcher", launcher);
+	SET_FLAG_STRING("--thread", thread_library_kind);
 
 	/* Int flags */
 	SET_FLAG_INT("--node-number", node_number);
@@ -308,14 +302,6 @@ static inline void __parse_argument(char *passed_arg)
 	SET_FLAG_INT("--processor-number", processor_number);
 
 	PARSE_ARG_WITH_EQ("--mpc-verbose", __arg_set_verbosity);
-
-	/* Thread engines */
-	PARSE_ARG("--use-pthread_ng", sctk_use_pthread_ng);
-	PARSE_ARG("--use-pthread", sctk_use_pthread);
-	PARSE_ARG("--use-ethread_mxn_ng", sctk_use_ethread_mxn_ng);
-	PARSE_ARG("--use-ethread_mxn", sctk_use_ethread_mxn);
-	PARSE_ARG("--use-ethread_ng", sctk_use_ethread_ng);
-	PARSE_ARG("--use-ethread", sctk_use_ethread);
 
 	mpc_common_debug_warning("Argument %s Unknown\n", passed_arg);
 }
@@ -478,7 +464,7 @@ static void *___auto_kill_func(void *arg)
 
 	if(timeout > 0)
 	{
-		if(sctk_runtime_config_get()->modules.launcher.banner &&
+		if(__launch_config.banner_enabled &&
 		   !mpc_common_get_flags()->is_fortran)
 		{
 			mpc_common_io_noalloc_fprintf(stderr, "Autokill in %ds\n", timeout);
@@ -501,7 +487,7 @@ static void __create_autokill_thread()
 {
 	static int auto_kill = 0;
 
-	auto_kill = sctk_runtime_config_get()->modules.launcher.autokill;
+	auto_kill = __launch_config.autokill_timer;
 
 	if(auto_kill > 0)
 	{
@@ -510,33 +496,88 @@ static void __create_autokill_thread()
 	}
 }
 
-static void __set_default_values()
+/**************************
+ * CONFIGURATION HANDLING *
+ **************************/
+
+static inline void __set_default_values()
 {
-	mpc_common_get_flags()->sctk_network_description_string = "No networking";
-	mpc_common_get_flags()->checkpoint_model = "No C/R";
+	mpc_common_get_flags()->sctk_network_description_string = strdup("No networking");
 
-	sctk_use_ethread_mxn();
+	/* Set default configuration */
+	__launch_config.bt_sig_enabled = 1;
+	__launch_config.banner_enabled = 1;
+	__launch_config.autokill_timer = 0;
+	mpc_common_get_flags()->verbosity = 0;
+	mpc_common_get_flags()->launcher = strdup(mpc_conf_stringify(MPC_LAUNCHER));
 
-	// Initializing multithreading mode
-	if(sctk_runtime_config_get()->modules.launcher.thread_init.value)
-	{
-		sctk_runtime_config_get()->modules.launcher.thread_init.value();
-	}
+	mpc_common_get_flags()->enable_smt_capabilities = 0;
+	mpc_common_get_flags()->task_number = 1;
+	mpc_common_get_flags()->process_number = 1;
+	mpc_common_get_flags()->processor_number = 1;
 
-	mpc_common_get_flags()->task_number    = sctk_runtime_config_get()->modules.launcher.nb_task;
-	mpc_common_get_flags()->process_number = 0;
-	mpc_common_get_flags()->processor_number        = sctk_runtime_config_get()->modules.launcher.nb_processor;
-	mpc_common_get_flags()->verbosity               = sctk_runtime_config_get()->modules.launcher.verbosity;
-	mpc_common_get_flags()->launcher                = sctk_runtime_config_get()->modules.launcher.launcher;
-	mpc_common_get_flags()->profiler_outputs        = sctk_runtime_config_get()->modules.launcher.profiling;
-	mpc_common_get_flags()->enable_smt_capabilities = sctk_runtime_config_get()->modules.launcher.enable_smt;
-	mpc_common_get_flags()->checkpoint_enabled      = sctk_runtime_config_get()->modules.launcher.checkpoint;
-	mpc_common_get_flags()->enable_accelerators     = sctk_runtime_config_get()->modules.accelerator.enabled;
+#ifdef MPC_Threads
+	mpc_common_get_flags()->thread_library_kind = strdup("ethread_mxn");
+	mpc_common_get_flags()->thread_library_init = mpc_thread_ethread_mxn_engine_init;
+#endif
+
+	/* TODO modularize */
+	mpc_common_get_flags()->profiler_outputs        = strdup("stdout");
+	mpc_common_get_flags()->checkpoint_enabled      = 0;
+	mpc_common_get_flags()->enable_accelerators     = 0;
+	mpc_common_get_flags()->checkpoint_model = strdup("No C/R");
+
 	/* force smt on MIC */
 #ifdef __MIC__
 	mpc_common_get_flags()->enable_smt_capabilities = 1;
 #endif
 }
+
+
+static inline void __register_config(void)
+{
+	__set_default_values();
+
+	mpc_conf_root_config_init("mpc");
+	
+	char user_prefix[512];
+	mpc_conf_user_prefix("mpc", user_prefix, 512);
+	
+	mpc_conf_root_config_search_path("mpc", MPC_PREFIX_PATH"/etc/mpcframework/", user_prefix, "both");
+
+
+	/* Register Launch Config */
+	mpc_conf_config_type_t *defaults = mpc_conf_config_type_init("default",
+	                                                       PARAM("launcher", mpc_common_get_flags()->launcher, MPC_CONF_STRING, "Default launcher to be used (SLURM, HYDRA, PMIX)"),
+														   PARAM("smt", &mpc_common_get_flags()->enable_smt_capabilities, MPC_CONF_BOOL, "Enable Hyper-Threading (SMT)"),
+														   PARAM("task", &mpc_common_get_flags()->task_number, MPC_CONF_INT, "Default number of MPI tasks"),
+														   PARAM("process", &mpc_common_get_flags()->process_number, MPC_CONF_INT, "Default number of UNIX processes"),
+														   PARAM("core", &mpc_common_get_flags()->processor_number, MPC_CONF_INT, "Default number of cores per UNIX processes"),
+#ifdef MPC_Threads
+														   PARAM("thread", mpc_common_get_flags()->thread_library_kind, MPC_CONF_STRING, "Default thread engine (pthread, ethread, ethread_mxn and X_ng variants)"),
+#endif
+	                                                       NULL);
+
+	mpc_conf_config_type_t *mc = mpc_conf_config_type_init("launch",
+	                                                       PARAM("backtrace", &__launch_config.bt_sig_enabled ,MPC_CONF_BOOL, "Produce backtraces on error"),
+	                                                       PARAM("banner", &__launch_config.banner_enabled, MPC_CONF_BOOL, "Should MPC's banner be dispayed"),
+														   PARAM("autokill", &__launch_config.autokill_timer, MPC_CONF_INT, "What is the kill timer in seconds (0 means none)"),
+														   PARAM("verbosity", &mpc_common_get_flags()->verbosity, MPC_CONF_INT, "Should debug messages be displayed (1-3)"),
+	                                                       PARAM("default", defaults, MPC_CONF_TYPE, "Default values for MPCRUN"),
+	                                                       NULL);
+
+	mpc_conf_root_config_append("mpc", mc, "MPC Laucher Configuration");
+
+	/* Trigger all other configs */
+	mpc_common_init_trigger("Config Sources");
+
+	/* Now load file based config */
+	mpc_conf_root_config_load_files_all();
+
+	/* Now load environment modifiers */
+	mpc_conf_root_config_load_env_all();
+}
+
 
 #define LEGACY_MPCRUN_ARGUMENT_START    "--sctk-args--"
 #define LEGACY_MPCRUN_ARGUMENT_END      "--sctk-args-end--"
@@ -627,21 +668,22 @@ void mpc_launch_init_runtime()
 	 * the first waitall */
 	mpc_arch_tsc_freq_compute_start();
 
-	mpc_common_init_trigger("Base Runtime Init");
 
 	/* WARNING !! NO CONFIG before this point */
+	__register_config();
 
-	if(sctk_runtime_config_get()->modules.debugger.mpc_bt_sig)
+	mpc_common_init_trigger("Base Runtime Init");
+
+	__unpack_arguments();
+	__check_cli_params();
+	__set_thread_engine();
+
+	if(__launch_config.bt_sig_enabled)
 	{
 		mpc_common_debugger_install_sig_handlers();
 	}
 
 	__create_autokill_thread();
-	__set_default_values();
-	__unpack_arguments();
-
-
-	__check_cli_params();
 
 	/* As a first step initialize the PMI */
 	mpc_launch_pmi_init();

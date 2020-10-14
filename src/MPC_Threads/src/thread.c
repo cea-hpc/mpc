@@ -46,7 +46,7 @@
 ***********/
 
 #include <mpc_config.h>
-#include <mpc_runtime_config.h>
+
 #include <mpc_common_helper.h>
 
 #include <errno.h>
@@ -56,7 +56,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <dlfcn.h>
-
+#include <mpc_conf.h>
 
 #include <mpc_topology.h>
 #include <mpc_topology_render.h>
@@ -103,6 +103,108 @@ static volatile long sctk_nb_user_threads = 0;
 volatile int sctk_multithreading_initialised = 0;
 
 struct sctk_alloc_chain *mpc_thread_tls = NULL;
+
+/************************
+ * THREAD MODULE CONFIG *
+ ************************/
+
+
+struct mpc_thread_config __thread_module_config;
+
+struct mpc_thread_config  * _mpc_thread_confif_get(void)
+{
+	return &__thread_module_config;
+}
+
+static inline void __thread_module_config_defaults(void)
+{
+	/* Here we set default values for thread config */
+	__thread_module_config.thread_layout = strdup("default");
+	__thread_module_config.thread_timer_interval = 10;
+	__thread_module_config.kthread_stack_size = (10 * 1024 * 1024);
+	__thread_module_config.ethread_spin_delay = 10;
+
+	/* NG engine */
+	__thread_module_config.scheduler_quantum = 0.0;
+
+	__thread_module_config.scheduler_polling_basic_prio = 20;
+	__thread_module_config.scheduler_polling_step_prio = 20;
+	__thread_module_config.scheduler_polling_current_prio = 20;
+
+	__thread_module_config.scheduler_nbc_basic_prio = 20;
+	__thread_module_config.scheduler_nbc_step_prio = 20;
+	__thread_module_config.scheduler_nbc_current_prio = 20;
+
+	__thread_module_config.scheduler_mpi_basic_prio = 20;
+	__thread_module_config.scheduler_omp_basic_prio = 20;
+	__thread_module_config.scheduler_posix_basic_prio = 20;
+	__thread_module_config.scheduler_progress_basic_prio = 20;
+}
+
+static inline void __init_thread_module_config(void)
+{
+	__thread_module_config_defaults();
+
+	mpc_conf_config_type_t *common = mpc_conf_config_type_init("common",
+														       PARAM("layout", __thread_module_config.thread_layout ,MPC_CONF_STRING, "Layout to be used (default, numa or numa_packed)"),
+														       PARAM("interval", &__thread_module_config.thread_timer_interval, MPC_CONF_INT, "Wakeup interval of the timer thread in milliseconds"),
+															   NULL);
+
+	mpc_conf_config_type_t *kthread = mpc_conf_config_type_init("kthread",
+														        PARAM("stack", &__thread_module_config.kthread_stack_size ,MPC_CONF_LONG_INT, "Stack size for kernel threads"),
+															    NULL);
+
+
+	mpc_conf_config_type_t *ethread = mpc_conf_config_type_init("ethread",
+														        PARAM("spindelay", &__thread_module_config.ethread_spin_delay ,MPC_CONF_LONG_INT, "Number of direct attempts before locking"),
+															    NULL);
+
+
+	/* NG Scheduler */
+	mpc_conf_config_type_t *polling = mpc_conf_config_type_init("polling",
+														        PARAM("basic", &__thread_module_config.scheduler_polling_basic_prio ,MPC_CONF_INT, "Basic priority for polling threads"),
+														        PARAM("step", &__thread_module_config.scheduler_polling_step_prio ,MPC_CONF_INT, "Step of priority for polling threads"),
+														        PARAM("current", &__thread_module_config.scheduler_polling_current_prio ,MPC_CONF_INT, "Steop of current priority for polling threads"),
+															    NULL);
+
+#ifdef MPC_MPI
+	mpc_conf_config_type_t *nbc = mpc_conf_config_type_init("nbc",
+														        PARAM("basic", &__thread_module_config.scheduler_nbc_basic_prio ,MPC_CONF_INT, "Basic priority for NBC threads"),
+														        PARAM("step", &__thread_module_config.scheduler_nbc_step_prio ,MPC_CONF_INT, "Step of priority for NBC threads"),
+														        PARAM("current", &__thread_module_config.scheduler_nbc_current_prio ,MPC_CONF_INT, "Steop of current priority for NBC threads"),
+															    NULL);
+#endif
+
+	mpc_conf_config_type_t *other = mpc_conf_config_type_init("other",
+														        PARAM("mpi", &__thread_module_config.scheduler_mpi_basic_prio ,MPC_CONF_INT, "Basic priority for MPI threads"),
+#ifdef MPC_OpenMP
+														        PARAM("omp", &__thread_module_config.scheduler_omp_basic_prio ,MPC_CONF_INT, "Basic priority for OMP threads"),
+#endif
+																PARAM("posix", &__thread_module_config.scheduler_posix_basic_prio ,MPC_CONF_INT, "Basic priority for POSIX threads"),
+														        PARAM("progress", &__thread_module_config.scheduler_progress_basic_prio ,MPC_CONF_INT, "Basic priority for PROGRESS threads"),
+															    NULL);	
+
+
+	mpc_conf_config_type_t *sched = mpc_conf_config_type_init("scheduler",
+																PARAM("quantum", &__thread_module_config.scheduler_quantum, MPC_CONF_DOUBLE, "Scheduling quantum for NG threads"),
+																PARAM("polling", polling, MPC_CONF_TYPE, "Priorities for polling threads"),
+#ifdef MPC_MPI
+																PARAM("nbc", nbc, MPC_CONF_TYPE, "Priorities for NBC progress threads"),
+#endif
+																PARAM("other", other, MPC_CONF_TYPE, "Priotities for other thread types"),
+																NULL);
+
+	/* Aggegation for the thread config */
+
+	mpc_conf_config_type_t *thconf = mpc_conf_config_type_init("thread",
+														       PARAM("common", common, MPC_CONF_TYPE, "Common knobs for thread module"),
+														       PARAM("kthread", kthread, MPC_CONF_TYPE, "Parameters for regular 'kernel' threads"),
+														       PARAM("ethread", ethread, MPC_CONF_TYPE, "Parameters for 'ethread' user level threads"),
+														       PARAM("scheduler", sched, MPC_CONF_TYPE, "Parameters for NG shceduler"),
+															   NULL);
+
+	mpc_conf_root_config_append("mpc", thconf, "MPC Thread Configuration");
+}
 
 
 /******************
@@ -370,9 +472,25 @@ int mpc_thread_get_task_placement_and_count(int i, int *nbVp)
 	// return mpc_thread_get_task_placement_and_count_numa (i, nbVp);
 	// return mpc_thread_get_task_placement_and_count_numa_packed (i, nbVp);
 	// function pointer to get the thread placement policy from the config
-	int ( *thread_placement_policy )(int i, int *nbVp);
-	thread_placement_policy = (int (*)(int, int *) )sctk_runtime_config_get()
-	                          ->modules.thread.placement_policy.value;
+	int ( *thread_placement_policy )(int i, int *nbVp) = NULL;
+
+	if(!strcmp(__thread_module_config.thread_layout, "default"))
+	{
+		thread_placement_policy = mpc_thread_get_task_placement_and_count_default;
+	}else if(!strcmp(__thread_module_config.thread_layout, "numa"))
+	{
+		thread_placement_policy = mpc_thread_get_task_placement_and_count_numa;
+	}else if(!strcmp(__thread_module_config.thread_layout, "numa_packed"))
+	{
+		thread_placement_policy = mpc_thread_get_task_placement_and_count_numa_packed;
+	}
+	else
+	{
+		mpc_common_debug_error("No such value for mpc.thread.common.layout");
+		mpc_common_debug_error("Supported are 'default', 'numa' and 'numa_packed'");
+		mpc_common_debug_abort();
+	}
+
 	assume(thread_placement_policy != NULL);
 	return thread_placement_policy(i, nbVp);
 }
@@ -585,7 +703,7 @@ static void *___timer_thread_main(void *arg)
 
 	while(___timer_thread_running)
 	{
-		kthread_usleep(sctk_time_interval * 1000);
+		kthread_usleep(__thread_module_config.thread_timer_interval * 1000);
 		___timer_thread_ticks++;
 	}
 
@@ -857,12 +975,9 @@ static inline void __scheduler_set_thread_kind_mpi(void)
 	if(mpc_common_get_flags()->new_scheduler_engine_enabled)
 	{
 		mpc_threads_generic_kind_mask_add(KIND_MASK_MPI);
-		mpc_threads_generic_kind_basic_priority(
-			sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
-		mpc_threads_generic_kind_priority(
-			sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
-		mpc_threads_generic_kind_current_priority(
-			sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
+		mpc_threads_generic_kind_basic_priority(__thread_module_config.scheduler_mpi_basic_prio);
+		mpc_threads_generic_kind_priority(__thread_module_config.scheduler_mpi_basic_prio);
+		mpc_threads_generic_kind_current_priority(__thread_module_config.scheduler_mpi_basic_prio);
 	}
 }
 
@@ -1023,8 +1138,8 @@ static inline void __thread_engine_init(void)
 	}
 	else
 	{
-		fprintf(stderr, "No multithreading mode specified!\n");
-		abort();
+		/* assume pthread */
+		mpc_thread_pthread_engine_init();
 	}
 }
 
@@ -1062,6 +1177,8 @@ void mpc_thread_module_register()
 
 	mpc_common_init_callback_register("Base Runtime Init with Config", "Base init thread", __thread_base_init, 0);
 	mpc_common_init_callback_register("Base Runtime Init with Config", "Thread engine init", __thread_engine_init, 1);
+
+	mpc_common_init_callback_register("Config Sources", "Config for MPC_Threads", __init_thread_module_config, 10);
 
 #ifdef MPC_USE_EXTLS
 	mpc_common_init_callback_register("Base Runtime Init", "Initialize EXTLS", __extls_thread_init, 0);
@@ -1105,12 +1222,9 @@ static void *___nonvp_thread_start_routine(sctk_thread_data_t *__arg)
 	if(mpc_common_get_flags()->new_scheduler_engine_enabled)
 	{
 		mpc_threads_generic_kind_mask_add(KIND_MASK_PTHREAD);
-		mpc_threads_generic_kind_basic_priority(
-			sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
-		mpc_threads_generic_kind_priority(
-			sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
-		mpc_threads_generic_kind_current_priority(
-			sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
+		mpc_threads_generic_kind_basic_priority(__thread_module_config.scheduler_posix_basic_prio);
+		mpc_threads_generic_kind_priority(__thread_module_config.scheduler_posix_basic_prio);
+		mpc_threads_generic_kind_current_priority(__thread_module_config.scheduler_posix_basic_prio);
 	}
 
 	mpc_common_init_trigger("Per Thread Init");
@@ -2940,7 +3054,7 @@ unsigned int mpc_thread_sleep(unsigned int seconds)
 	wake_time.done      = 1;
 	wake_time.wake_time =
 		( ( ( sctk_timer_t )seconds * ( sctk_timer_t )1000) /
-		  ( sctk_timer_t )sctk_time_interval) + ___timer_thread_ticks + 1;
+		  ( sctk_timer_t )__thread_module_config.thread_timer_interval) + ___timer_thread_ticks + 1;
 	mpc_thread_yield();
 	assert(_funcptr_mpc_thread_testcancel != NULL);
 	_funcptr_mpc_thread_testcancel();
@@ -2962,7 +3076,7 @@ int mpc_thread_usleep(unsigned int useconds)
 	wake_time.done      = 1;
 	wake_time.wake_time =
 		( ( ( sctk_timer_t )useconds / ( sctk_timer_t )1000) /
-		  ( sctk_timer_t )sctk_time_interval) + ___timer_thread_ticks + 1;
+		  ( sctk_timer_t )__thread_module_config.thread_timer_interval) + ___timer_thread_ticks + 1;
 	mpc_thread_yield();
 	assert(_funcptr_mpc_thread_testcancel != NULL);
 	_funcptr_mpc_thread_testcancel();
@@ -3093,7 +3207,7 @@ int mpc_thread_timed_wait_for_value(volatile int *data, int value, unsigned int 
 {
 	__check_mpc_initialized();
 	unsigned int end_time = ( ( ( sctk_timer_t )max_time_in_usec / ( sctk_timer_t )1000) /
-	                          ( sctk_timer_t )sctk_time_interval) + ___timer_thread_ticks + 1;
+	                          ( sctk_timer_t )__thread_module_config.thread_timer_interval) + ___timer_thread_ticks + 1;
 	unsigned int trials = 0;
 
 	while(*data != value)

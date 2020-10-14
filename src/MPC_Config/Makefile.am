@@ -21,8 +21,7 @@
 #   - JAEGER Julien julien.jaeger@cea.fr                               #
 #                                                                      #
 ########################################################################
-noinst_HEADERS=$(srcdir)/include/mpc_runtime_config.h
+mpc_headerdir=$(pkgincludedir)
+mpc_header_HEADERS= ./include/mpc_conf.h  ./include/mpc_conf_types.h 
 
-pkgdata_DATA= src/generated/mpc_config_meta.js src/generated/mpc_config_xsd.js src/generated/mpc-config.xsd extra/config.xml
-
-SUBDIRS=src editor
+SUBDIRS=src conf

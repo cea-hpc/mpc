@@ -122,6 +122,12 @@ fi
 ################################
 ###### GLOBAL INFORMATION ###### {sec:globals}
 ################################
+
+if test "x${prefix}" = "xNONE"; then
+        AC_MSG_WARN([No prefix was passed will use /usr/local/])
+        prefix="/usr/local/"
+fi
+
 # installation prefix, defined for the whole build
 AC_DEFINE_UNQUOTED([MPC_PREFIX_PATH], ["$prefix"], [Prefix Path for MPC])
 #static list of supported architecture (to be expanded)
@@ -959,6 +965,8 @@ AM_CONDITIONAL([HYDRA_LAUNCHER_ENABLED], [test "x$MPC_LAUNCHER" = "xHYDRA"])
 
 AC_SUBST([MPIEXEC_HYDDRA])
 AC_SUBST([MPC_LAUNCHER])
+
+AC_DEFINE_UNQUOTED([MPC_LAUNCHER], [$MPC_LAUNCHER], [Default launcher configured for MPC])
 
 #
 # Cuda Detection
@@ -2885,8 +2893,8 @@ AC_OUTPUT([Makefile
            src/MPC_Common/include/mpc_common_spinlock.h
            src/MPC_Common/include/mpc_keywords.h
            src/MPC_Config/Makefile
-           src/MPC_Config/editor/Makefile
            src/MPC_Config/src/Makefile
+           src/MPC_Config/conf/Makefile
            src/MPC_Launch/Makefile
            src/MPC_Launch/src/Makefile
            src/MPC_Lowcomm/Makefile

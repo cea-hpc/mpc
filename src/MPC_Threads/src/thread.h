@@ -44,6 +44,42 @@ extern "C"
 {
 #endif
 
+/************************
+ * THREAD MODULE CONFIG *
+ ************************/
+
+struct mpc_thread_config
+{
+	/* Common */
+	char * thread_layout;
+	int thread_timer_interval;
+
+	/* Kthread */
+	long int kthread_stack_size;
+
+	/* Ethread */
+	long int ethread_spin_delay;
+
+	/* NG Scheduler */
+	double scheduler_quantum;
+
+	int scheduler_polling_basic_prio;
+	int scheduler_polling_step_prio;
+	int scheduler_polling_current_prio;
+
+	int scheduler_nbc_basic_prio;
+	int scheduler_nbc_step_prio;
+	int scheduler_nbc_current_prio;
+
+	int scheduler_mpi_basic_prio;
+	int scheduler_omp_basic_prio;
+	int scheduler_posix_basic_prio;
+	int scheduler_progress_basic_prio;
+};
+
+struct mpc_thread_config  * _mpc_thread_confif_get(void);
+
+
 int mpc_thread_dump(char *file);
 int mpc_thread_dump_clean(void);
 int mpc_thread_migrate(void);
@@ -115,9 +151,6 @@ extern volatile unsigned sctk_long_long ___timer_thread_ticks;
 extern volatile int ___timer_thread_running;
 
 extern struct sctk_alloc_chain *mpc_thread_tls;
-
-#define sctk_time_interval    10 /*millisecondes */
-
 
 void _mpc_thread_exit_cleanup(void);
 void _mpc_thread_ethread_mxn_engine_init_kethread(void);

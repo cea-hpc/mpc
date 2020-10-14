@@ -29,7 +29,9 @@
 #include "mpc_topology.h"
 #include <string.h>
 #include <semaphore.h>
-#include "mpc_runtime_config.h"
+
+#include "thread.h"
+
 #include "sctk_alloc.h"
 #include "tls.h"
 
@@ -185,8 +187,8 @@ int _mpc_thread_kthread_create(mpc_thread_kthread_t *thread, void *(*start_routi
 {
 	_mpc_thread_kthread_create_start_t *found = NULL;
 	_mpc_thread_kthread_create_start_t *cursor;
-	size_t kthread_stack_size = sctk_runtime_config_get()->modules.thread.kthread_stack_size;
-
+	size_t kthread_stack_size = _mpc_thread_confif_get()->kthread_stack_size;
+	
 	mpc_common_nodebug("Scan already started kthreads");
 	mpc_common_spinlock_lock(&lock);
 	cursor = (_mpc_thread_kthread_create_start_t *)list;

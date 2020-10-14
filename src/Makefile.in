@@ -118,10 +118,7 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
-am_mpc_print_config_OBJECTS =  \
-	./MPC_Config/src/print_config/mpc_print_config.$(OBJEXT) \
-	./MPC_Config/src/print_config/mpc_print_config_sh.$(OBJEXT) \
-	./MPC_Config/src/print_config/mpc_print_config_xml.$(OBJEXT)
+am_mpc_print_config_OBJECTS = ./MPC_Config/src/print_config.$(OBJEXT)
 mpc_print_config_OBJECTS = $(am_mpc_print_config_OBJECTS)
 am__DEPENDENCIES_1 =
 mpc_print_config_DEPENDENCIES = $(am__DEPENDENCIES_1) \
@@ -539,21 +536,8 @@ SUBDIRS = MPC_Doc MPC_Arch MPC_Common MPC_Config MPC_Topology \
 #
 # Print Config Program
 #
-AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
-	-I$(abs_top_srcdir)/src/include/ \
-	-I$(abs_top_srcdir)/src/MPC_Config/include/ \
-	-I$(abs_top_builddir)/src/MPC_Arch/include/ \
-	-I$(abs_top_srcdir)/src/MPC_Arch/include/ $(XML2_CFLAGS) \
-	-I$(abs_top_builddir)/src/MPC_Common/include/ \
-	-I$(abs_top_srcdir)/src/MPC_Config/include/ \
-	-I$(abs_top_srcdir)/src/MPC_Config/src/ \
-	-I$(abs_top_srcdir)/src/MPC_Config/src/generated/
-mpc_print_config_SOURCES =  \
-	./MPC_Config/src/print_config/mpc_print_config.c \
-	./MPC_Config/src/print_config/mpc_print_config_sh.c \
-	./MPC_Config/src/print_config/mpc_print_config_sh.h \
-	./MPC_Config/src/print_config/mpc_print_config_xml.c \
-	./MPC_Config/src/print_config/mpc_print_config_xml.h
+AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Config/include/ -I$(abs_top_builddir)/src/include/ -I$(abs_top_srcdir)/src/include/
+mpc_print_config_SOURCES = ./MPC_Config/src/print_config.c
 mpc_print_config_LDADD = $(XML2_LIBS) $(ALLOC_LIBS) @ALL_MPC_LIBS@
 all: all-recursive
 
@@ -653,21 +637,15 @@ installcheck-binPROGRAMS: $(bin_PROGRAMS)
 	    else echo "$$f does not support $$opt" 1>&2; bad=1; fi; \
 	  done; \
 	done; rm -f c$${pid}_.???; exit $$bad
-MPC_Config/src/print_config/$(am__dirstamp):
-	@$(MKDIR_P) ./MPC_Config/src/print_config
-	@: > MPC_Config/src/print_config/$(am__dirstamp)
-MPC_Config/src/print_config/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) ./MPC_Config/src/print_config/$(DEPDIR)
-	@: > MPC_Config/src/print_config/$(DEPDIR)/$(am__dirstamp)
-./MPC_Config/src/print_config/mpc_print_config.$(OBJEXT):  \
-	MPC_Config/src/print_config/$(am__dirstamp) \
-	MPC_Config/src/print_config/$(DEPDIR)/$(am__dirstamp)
-./MPC_Config/src/print_config/mpc_print_config_sh.$(OBJEXT):  \
-	MPC_Config/src/print_config/$(am__dirstamp) \
-	MPC_Config/src/print_config/$(DEPDIR)/$(am__dirstamp)
-./MPC_Config/src/print_config/mpc_print_config_xml.$(OBJEXT):  \
-	MPC_Config/src/print_config/$(am__dirstamp) \
-	MPC_Config/src/print_config/$(DEPDIR)/$(am__dirstamp)
+MPC_Config/src/$(am__dirstamp):
+	@$(MKDIR_P) ./MPC_Config/src
+	@: > MPC_Config/src/$(am__dirstamp)
+MPC_Config/src/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ./MPC_Config/src/$(DEPDIR)
+	@: > MPC_Config/src/$(DEPDIR)/$(am__dirstamp)
+./MPC_Config/src/print_config.$(OBJEXT):  \
+	MPC_Config/src/$(am__dirstamp) \
+	MPC_Config/src/$(DEPDIR)/$(am__dirstamp)
 
 mpc_print_config$(EXEEXT): $(mpc_print_config_OBJECTS) $(mpc_print_config_DEPENDENCIES) $(EXTRA_mpc_print_config_DEPENDENCIES) 
 	@rm -f mpc_print_config$(EXEEXT)
@@ -675,14 +653,12 @@ mpc_print_config$(EXEEXT): $(mpc_print_config_OBJECTS) $(mpc_print_config_DEPEND
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
-	-rm -f ./MPC_Config/src/print_config/*.$(OBJEXT)
+	-rm -f ./MPC_Config/src/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./MPC_Config/src/print_config/$(DEPDIR)/mpc_print_config.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./MPC_Config/src/print_config/$(DEPDIR)/mpc_print_config_sh.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./MPC_Config/src/print_config/$(DEPDIR)/mpc_print_config_xml.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./MPC_Config/src/$(DEPDIR)/print_config.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -902,8 +878,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
-	-rm -f MPC_Config/src/print_config/$(DEPDIR)/$(am__dirstamp)
-	-rm -f MPC_Config/src/print_config/$(am__dirstamp)
+	-rm -f MPC_Config/src/$(DEPDIR)/$(am__dirstamp)
+	-rm -f MPC_Config/src/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -913,7 +889,7 @@ clean: clean-recursive
 clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-recursive
-	-rm -rf ./MPC_Config/src/print_config/$(DEPDIR)
+	-rm -rf ./MPC_Config/src/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -959,7 +935,7 @@ install-ps-am:
 installcheck-am: installcheck-binPROGRAMS
 
 maintainer-clean: maintainer-clean-recursive
-	-rm -rf ./MPC_Config/src/print_config/$(DEPDIR)
+	-rm -rf ./MPC_Config/src/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

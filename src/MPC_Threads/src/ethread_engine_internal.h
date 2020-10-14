@@ -33,7 +33,8 @@
 #include <mpc_common_asm.h>
 #include <mpc_common_helper.h>
 #include <mpc_common_flags.h>
-#include <mpc_runtime_config.h>
+
+#include "thread.h"
 
 #include "thread.h"
 #include "mpc_common_debug.h"
@@ -1051,8 +1052,10 @@ static inline int ___mpc_thread_ethread_mutex_spinlock(_mpc_thread_ethread_virtu
 
 	if(lock->lock >= 1)
 	{
-		long i = sctk_runtime_config_get()->modules.thread.spin_delay;
-		long j = sctk_runtime_config_get()->modules.thread.spin_delay;
+		long int _spin_delay = _mpc_thread_confif_get()->ethread_spin_delay;
+
+		long int i = _spin_delay;
+		long int j = _spin_delay;
 		cell.my_self = owner;
 		cell.next    = NULL;
 		cell.wake    = 0;
@@ -1077,7 +1080,7 @@ static inline int ___mpc_thread_ethread_mutex_spinlock(_mpc_thread_ethread_virtu
 				{
 					j--;
 					sched_yield();
-					i = sctk_runtime_config_get()->modules.thread.spin_delay;
+					i = _spin_delay;
 				}
 				else
 				{
@@ -1088,7 +1091,7 @@ static inline int ___mpc_thread_ethread_mutex_spinlock(_mpc_thread_ethread_virtu
 				if(j <= 0)
 				{
 					___mpc_thread_ethread_sched_yield_vp(vp, owner);
-					j = sctk_runtime_config_get()->modules.thread.spin_delay;
+					j = _spin_delay;
 				}
 			}
 		}

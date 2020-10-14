@@ -21,50 +21,7 @@
 #   - JAEGER Julien julien.jaeger@cea.fr                               #
 #                                                                      #
 ########################################################################
-SUBDIRS=MPC_Doc MPC_Arch MPC_Common MPC_Config MPC_Topology
+mpcconfdir=$(sysconfdir)/$(PACKAGE)/
+mpcconf_DATA = default.conf
 
-
-SUBDIRS += MPC_Launch
-
-
-if MPC_THREAD_ENABLED
-        SUBDIRS += MPC_Threads
-endif
-
-if MPC_OPENMP_ENABLED
-        SUBDIRS += MPC_OpenMP
-endif
-
-if MPC_LOWCOMM_ENABLED
-        SUBDIRS += MPC_Lowcomm
-endif
-
-if MPC_MPI_ENABLED
-        SUBDIRS += MPC_MPI
-endif
-
-if MPC_FORTRAN_ENABLED
-        SUBDIRS += MPC_Fortran
-endif
-
-if MPC_MPIIO_ENABLED
-        SUBDIRS += MPC_IO
-endif
-
-# Bin must be the last as it depends on libmpcframework.so being
-# installed for Fortran generation
-SUBDIRS += lib bin
-
-
-#
-# Print Config Program
-#
-
-AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Config/include/ -I$(abs_top_builddir)/src/include/ -I$(abs_top_srcdir)/src/include/
-
-bin_PROGRAMS = mpc_print_config
-
-mpc_print_config_SOURCES = ./MPC_Config/src/print_config.c
-mpc_print_config_LDADD = $(XML2_LIBS) $(ALLOC_LIBS)
-
-mpc_print_config_LDADD += @ALL_MPC_LIBS@
+CLEANFILES = default.conf

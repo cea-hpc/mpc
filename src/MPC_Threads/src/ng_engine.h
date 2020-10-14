@@ -31,7 +31,7 @@
 
 
 #include <ng_engine_scheduler.h>
-
+#include <uthash.h>
 
 
 /***********************

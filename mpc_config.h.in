@@ -835,6 +835,9 @@
 /* MPC compiled in process mode */
 #undef MPC_IN_PROCESS_MODE
 
+/* Default launcher configured for MPC */
+#undef MPC_LAUNCHER
+
 /* MPC_Lowcomm module was enabled */
 #undef MPC_Lowcomm
 
