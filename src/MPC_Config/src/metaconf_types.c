@@ -89,14 +89,21 @@ int mpc_conf_type_print_value(mpc_conf_type_t type, char *buf, int len, void *pt
 		case MPC_CONF_FUNC:
 		case MPC_CONF_STRING:
 		{
-			void ** pptr = (void**)ptr;
+			char ** pptr = (char**)ptr;
+
+			char * _empty = "";
+			if(!*pptr)
+			{
+				pptr = &_empty;
+			}
+
 			if(add_color)
 			{
-				return snprintf(buf, len, MAGENTA("%s"), (char *)*pptr);
+				return snprintf(buf, len, MAGENTA("%s"), *pptr);
 			}
 			else
 			{
-				return snprintf(buf, len, "%s", (char *)*pptr);
+				return snprintf(buf, len, "%s", *pptr);
 			}
 		}
 		case MPC_CONF_BOOL:

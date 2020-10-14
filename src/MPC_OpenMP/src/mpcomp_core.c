@@ -26,7 +26,7 @@
 #include <mpc_common_flags.h>
 #include "mpc_common_debug.h"
 #include "mpc_topology.h"
-#include "mpc_runtime_config.h"
+
 #include <sys/time.h>
 #include <ctype.h>
 

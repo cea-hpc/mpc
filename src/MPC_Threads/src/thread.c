@@ -486,9 +486,8 @@ int mpc_thread_get_task_placement_and_count(int i, int *nbVp)
 	}
 	else
 	{
-		mpc_common_debug_error("No such value for mpc.thread.common.layout");
-		mpc_common_debug_error("Supported are 'default', 'numa' and 'numa_packed'");
-		mpc_common_debug_abort();
+		bad_parameter("No such value '%s' for mpc.thread.common.layout\n"
+		                       "Supported are 'default', 'numa' and 'numa_packed'", __thread_module_config.thread_layout);
 	}
 
 	assume(thread_placement_policy != NULL);

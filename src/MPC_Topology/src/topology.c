@@ -33,7 +33,8 @@
 #include "mpc_common_helper.h"
 #include "mpc_common_flags.h"
 #include "mpc_common_rank.h"
-
+#include "mpc_common_flags.h"
+#include "mpc_conf.h"
 #include "topology_render.h"
 #include "topology_device.h"
 
@@ -49,9 +50,43 @@
 #include <string.h>
 #include <unistd.h>
 
+/******************************
+ * MPC TOPOLOGY CONFIGURATION *
+ ******************************/
 #if (HWLOC_API_VERSION >= 0x00020000)
   #define HWLOC_OBJ_SOCKET HWLOC_OBJ_PACKAGE
 #endif
+
+struct mpc_topology_config
+{
+	char * hwloc_xml;
+	char * pin_proc_list;
+};
+
+
+struct mpc_topology_config __mpc_topo_config = { 0 };
+
+void __init_topology_config(void)
+{
+	mpc_conf_config_type_t *topo_conf = mpc_conf_config_type_init("topology",
+																  PARAM("xml", &__mpc_topo_config.hwloc_xml ,MPC_CONF_STRING, "HWLOC XML to be used to load machine topology"),
+																  PARAM("bindings", &__mpc_topo_config.pin_proc_list ,MPC_CONF_STRING, "List of cores to pin to ex: 1,3-4, only if one proc per node"),
+																  NULL);
+
+
+	mpc_conf_root_config_append("mpc", topo_conf, "MPC Topology Configuration");
+}
+
+
+void mpc_topology_module_register() __attribute__( (constructor) );
+
+void mpc_topology_module_register()
+{
+	MPC_INIT_CALL_ONLY_ONCE
+
+	mpc_common_init_callback_register("Config Sources", "Config for MPC_Topology", __init_topology_config, 10);
+}
+
 
 /*********************************
  * MPC TOPOLOGY OBJECT INTERFACE *
@@ -85,7 +120,7 @@ void _mpc_topology_map_and_restrict_by_cpuset(hwloc_topology_t target_topology,
 
 		if ( sum != mpc_common_get_flags()->processor_number )
 		{
-			bad_parameter("MPC_PIN_PROCESSOR_LIST is set with"
+			bad_parameter("MPC_TOPOLOGY_BINDINGS is set with"
 			           " a different number of processor than"
 					   " requested: %d in the list, %d requested",
 					   sum,
@@ -117,7 +152,7 @@ static void _topo_add_cpuid_to_pin_cpuset( hwloc_cpuset_t pin_cpuset,
 
 	if ( cpuid > ( processor_count - 1 ) )
 	{
-		bad_parameter("Error in MPC_PIN_PROCESSOR_LIST:"
+		bad_parameter("Error in MPC_TOPOLOGY_BINDINGS:"
 		           " processor %d is out of range "
 				   "[0-%d]", cpuid, processor_count - 1);
 	}
@@ -131,9 +166,13 @@ hwloc_cpuset_t _mpc_topology_get_pinning_constraints(int processor_count)
 	hwloc_cpuset_t pining_constraints = hwloc_bitmap_alloc();
 	hwloc_bitmap_zero( pining_constraints );
 
-	char *pinning_env = getenv( "MPC_PIN_PROCESSOR_LIST" );
+	if ( __mpc_topo_config.pin_proc_list == NULL )
+	{
+		/* Nothing to do */
+		return pining_constraints;
+	}
 
-	if ( pinning_env == NULL )
+	if ( strlen(__mpc_topo_config.pin_proc_list) == 0 )
 	{
 		/* Nothing to do */
 		return pining_constraints;
@@ -144,10 +183,10 @@ hwloc_cpuset_t _mpc_topology_get_pinning_constraints(int processor_count)
 
 	if ( mpc_common_get_process_count() != nodes_number )
 	{
-		bad_parameter( "MPC_PIN_PROCESSOR_LIST cannot be set if more than 1 process per node is set. process_number=%d node_number=%d", mpc_common_get_process_count(), nodes_number );
+		bad_parameter( "MPC_TOPOLOGY_BINDINGS cannot be set if more than 1 process per node is set. process_number=%d node_number=%d", mpc_common_get_process_count(), nodes_number );
 	}
 
-	char * current = pinning_env;
+	char * current = __mpc_topo_config.pin_proc_list;
 	char * token = NULL;
 
 	while( (token = strtok_r(current, ",", &current)) != NULL)
@@ -1004,8 +1043,6 @@ static hwloc_topology_t* __extls_get_topology_addr(void)
 
 void mpc_topology_init()
 {
-	char *xml_path = getenv( "MPC_SET_XML_TOPOLOGY_FILE" );
-
 	hwloc_topology_init( &__mpc_module_topology );
 
 #if (HWLOC_API_VERSION < 0x00020000)
@@ -1016,10 +1053,17 @@ void mpc_topology_init()
   hwloc_topology_set_type_filter(__mpc_module_topology, HWLOC_OBJ_GROUP, HWLOC_TYPE_FILTER_KEEP_ALL);
 #endif
 
-	if ( xml_path != NULL )
+	if ( __mpc_topo_config.hwloc_xml != NULL )
 	{
-		fprintf( stderr, "USE XML file %s\n", xml_path );
-		hwloc_topology_set_xml( __mpc_module_topology, xml_path );
+		if(strlen(__mpc_topo_config.hwloc_xml))
+		{
+			fprintf( stderr, "USE XML file %s\n", __mpc_topo_config.hwloc_xml );
+			
+			if( hwloc_topology_set_xml( __mpc_module_topology, __mpc_topo_config.hwloc_xml ) < 0 )
+			{
+				bad_parameter("MPC_TOPOLOGY_XML could not load HWLOC topology from %s", __mpc_topo_config.hwloc_xml);
+			}
+		}
 	}
 
 	hwloc_topology_load( __mpc_module_topology );

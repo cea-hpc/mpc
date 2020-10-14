@@ -26,7 +26,6 @@
 #if ( !defined( __SCTK_MPCOMP_TASK_H__ ) && MPCOMP_TASK )
 #define __SCTK_MPCOMP_TASK_H__
 
-#include "mpc_runtime_config.h"
 #include "mpc_common_asm.h"
 
 /**********

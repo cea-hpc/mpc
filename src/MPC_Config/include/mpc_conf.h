@@ -117,6 +117,8 @@ int mpc_conf_root_config_init(char *conf_name);
 
 int mpc_conf_root_config_release(char *conf_name);
 
+int mpc_conf_root_config_release_all(void);
+
 mpc_conf_config_type_elem_t *mpc_conf_root_config_get_sep(char *path, char *separator);
 
 mpc_conf_config_type_elem_t *mpc_conf_root_config_get(char *path);
