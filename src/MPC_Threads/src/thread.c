@@ -164,14 +164,14 @@ static inline void __init_thread_module_config(void)
 	mpc_conf_config_type_t *polling = mpc_conf_config_type_init("polling",
 														        PARAM("basic", &__thread_module_config.scheduler_polling_basic_prio ,MPC_CONF_INT, "Basic priority for polling threads"),
 														        PARAM("step", &__thread_module_config.scheduler_polling_step_prio ,MPC_CONF_INT, "Step of priority for polling threads"),
-														        PARAM("current", &__thread_module_config.scheduler_polling_current_prio ,MPC_CONF_INT, "Steop of current priority for polling threads"),
+														        PARAM("current", &__thread_module_config.scheduler_polling_current_prio ,MPC_CONF_INT, "Step of current priority for polling threads"),
 															    NULL);
 
 #ifdef MPC_MPI
 	mpc_conf_config_type_t *nbc = mpc_conf_config_type_init("nbc",
 														        PARAM("basic", &__thread_module_config.scheduler_nbc_basic_prio ,MPC_CONF_INT, "Basic priority for NBC threads"),
 														        PARAM("step", &__thread_module_config.scheduler_nbc_step_prio ,MPC_CONF_INT, "Step of priority for NBC threads"),
-														        PARAM("current", &__thread_module_config.scheduler_nbc_current_prio ,MPC_CONF_INT, "Steop of current priority for NBC threads"),
+														        PARAM("current", &__thread_module_config.scheduler_nbc_current_prio ,MPC_CONF_INT, "Step of current priority for NBC threads"),
 															    NULL);
 #endif
 

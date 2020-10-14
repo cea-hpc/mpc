@@ -888,10 +888,10 @@ int mpc_conf_self_config_check_init(mpc_conf_self_config_t *config)
 	                                                              PARAM("verbose",
 	                                                                    &config->verbose,
 	                                                                   MPC_CONF_INT,
-	                                                                    "Metaconf's verbosity level (0-3)"),
+	                                                                    "mpc conf's verbosity level (0-3)"),
 	                                                              NULL);
 
-	mpc_conf_root_config_append("conf", self_conf, "Metaconf Configuration");
+	mpc_conf_root_config_append("conf", self_conf, "mpc conf Configuration");
 
 	mpc_conf_config_type_elem_t *conf_type = mpc_conf_root_config_get("conf");
 	if(conf_type && conf_type->type == MPC_CONF_TYPE)
@@ -909,7 +909,7 @@ int mpc_conf_self_config_check_init(mpc_conf_self_config_t *config)
 	}
 
 	mpc_conf_config_type_t *paths = mpc_conf_config_type_init("paths", NULL );
-	mpc_conf_root_config_append("conf", paths, "Metaconf Search Paths");
+	mpc_conf_root_config_append("conf", paths, "mpc conf Search Paths");
 
 	return 0;
 }

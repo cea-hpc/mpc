@@ -89,6 +89,13 @@ mpc_conf_config_type_t *mpc_conf_config_loader_paths(char *conf_name,
 																			"User level configuration prefix/file"),
 																		NULL);
 
+	int i;
+
+	for( i = 0 ; i < type->elem_count; i++)
+	{
+		 mpc_conf_config_type_elem_set_to_free(type->elems[i], 1);
+	}
+
 
 	mpc_conf_config_type_elem_t *can_create_elem = mpc_conf_config_type_get(type, "can_create");
 	mpc_conf_config_type_elem_set_locked(can_create_elem, 1);
