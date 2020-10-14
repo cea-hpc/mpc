@@ -146,7 +146,7 @@ static inline void __init_thread_module_config(void)
 	__thread_module_config_defaults();
 
 	mpc_conf_config_type_t *common = mpc_conf_config_type_init("common",
-														       PARAM("layout", __thread_module_config.thread_layout ,MPC_CONF_STRING, "Layout to be used (default, numa or numa_packed)"),
+														       PARAM("layout", &__thread_module_config.thread_layout ,MPC_CONF_STRING, "Layout to be used (default, numa or numa_packed)"),
 														       PARAM("interval", &__thread_module_config.thread_timer_interval, MPC_CONF_INT, "Wakeup interval of the timer thread in milliseconds"),
 															   NULL);
 

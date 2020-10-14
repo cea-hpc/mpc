@@ -79,7 +79,7 @@ mpc_conf_config_type_elem_t *mpc_conf_config_type_append(mpc_conf_config_type_t 
 														 mpc_conf_type_t etype,
 														 char *edoc);
 
-void mpc_conf_config_type_print_indent(mpc_conf_config_type_t *type, FILE *fd, int indent);
+int mpc_conf_config_type_print_fd(mpc_conf_config_type_t *type, FILE * fd, mpc_conf_output_type_t output_type);
 
 int mpc_conf_config_type_print(mpc_conf_config_type_t *type, mpc_conf_output_type_t output_type);
 
@@ -100,6 +100,7 @@ typedef struct mpc_conf_self_config_s
 	int color_enabled;
 	int indent_count;
 	int verbose;
+	int is_valid;
 }mpc_conf_self_config_t;
 
 mpc_conf_self_config_t * mpc_conf_self_config_get(void);
@@ -116,7 +117,7 @@ int mpc_conf_root_config_init(char *conf_name);
 
 int mpc_conf_root_config_release(char *conf_name);
 
-mpc_conf_config_type_elem_t *mpc_conf_root_config_get_sep(char *conf_name, char *separator);
+mpc_conf_config_type_elem_t *mpc_conf_root_config_get_sep(char *path, char *separator);
 
 mpc_conf_config_type_elem_t *mpc_conf_root_config_get(char *path);
 

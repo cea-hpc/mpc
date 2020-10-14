@@ -77,14 +77,8 @@ mpc_conf_config_type_elem_t *mpc_conf_config_type_elem_init(char *name, void *ad
 	/* Now set to lowercase */
 	_utils_lower_string(ret->name);
 
-	if(mpc_conf_type_is_string(type) )
-	{
-		ret->addr = strdup( (char *)addr);
-	}
-	else
-	{
-		ret->addr = addr;
-	}
+	ret->addr = addr;
+
 	ret->type = type;
 	ret->doc  = strdup(doc);
 
@@ -97,7 +91,13 @@ void mpc_conf_config_type_elem_release(mpc_conf_config_type_elem_t **elem)
 	free( (*elem)->name);
 	free( (*elem)->doc);
 
-	if( (*elem)->addr_is_to_free || mpc_conf_type_is_string( (*elem)->type) )
+	if(mpc_conf_type_is_string( (*elem)->type) )
+	{
+		char ** pstring = (char **)(*elem)->addr;
+		free(*pstring);
+	}
+
+	if( (*elem)->addr_is_to_free )
 	{
 		free( (*elem)->addr);
 	}
@@ -257,10 +257,17 @@ static inline int __mpc_conf_config_type_elem_print_gen(FILE *fd, mpc_conf_confi
 	}
 
 	fprintf(fd,"%s=%s\n", path, value_buff);
+
+	return 0;
 }
 
 int mpc_conf_config_type_elem_print_fd(mpc_conf_config_type_elem_t *elem, FILE * fd, mpc_conf_output_type_t output_type)
 {
+	if(elem->type == MPC_CONF_TYPE)
+	{
+		return mpc_conf_config_type_print_fd(mpc_conf_config_type_elem_get_inner(elem), fd, output_type);
+	}
+
 	switch(output_type)
 	{
 		case MPC_CONF_FORMAT_XML:
@@ -865,6 +872,7 @@ int mpc_conf_self_config_check_init(mpc_conf_self_config_t *config)
 	config->color_enabled = MPC_CONF_COLOR;
 	config->indent_count  = MPC_CONF_DEFAULT_INDENT;
 	config->verbose       = 0;
+	config->is_valid      = 1;
 
 	mpc_conf_root_config_init("conf");
 
@@ -884,6 +892,21 @@ int mpc_conf_self_config_check_init(mpc_conf_self_config_t *config)
 	                                                              NULL);
 
 	mpc_conf_root_config_append("conf", self_conf, "Metaconf Configuration");
+
+	mpc_conf_config_type_elem_t *conf_type = mpc_conf_root_config_get("conf");
+	if(conf_type && conf_type->type == MPC_CONF_TYPE)
+	{
+			mpc_conf_config_type_elem_t *ve = mpc_conf_config_type_append(mpc_conf_config_type_elem_get_inner(conf_type),
+																		  "valid",
+																		  &config->is_valid,
+																		  MPC_CONF_BOOL,
+																		  "Utility variable to check for configuration validity");
+			mpc_conf_config_type_elem_set_locked(ve, 1);
+	}
+	else
+	{
+		return 1;
+	}
 
 	mpc_conf_config_type_t *paths = mpc_conf_config_type_init("paths", NULL );
 	mpc_conf_root_config_append("conf", paths, "Metaconf Search Paths");

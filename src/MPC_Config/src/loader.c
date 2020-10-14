@@ -66,19 +66,28 @@ mpc_conf_config_type_t *mpc_conf_config_loader_paths(char *conf_name,
 		user_prefix = "";
 	}
 
+	char ** asystem_prefix = malloc(sizeof(char *));
+	*asystem_prefix = strdup(system_prefix);
+
+	char ** auser_prefix = malloc(sizeof(char *));
+	*auser_prefix = strdup(user_prefix);
+
+	char ** acan_create = malloc(sizeof(char *));
+	*acan_create = strdup(can_create);
+
 	mpc_conf_config_type_t *type = mpc_conf_config_type_init(conf_name, PARAM("can_create",
-	                                                                          can_create,
+	                                                                          acan_create,
 	                                                                         MPC_CONF_STRING,
 	                                                                          "Which config is allowed to create elements"),
-	                                                         PARAM("system",
-	                                                               system_prefix,
-	                                                              MPC_CONF_STRING,
-	                                                               "System level configuration prefix/file"),
-	                                                         PARAM("user",
-	                                                               user_prefix,
-	                                                              MPC_CONF_STRING,
-	                                                               "User level configuration prefix/file"),
-	                                                         NULL);
+																		PARAM("system",
+																			asystem_prefix,
+																			MPC_CONF_STRING,
+																			"System level configuration prefix/file"),
+																		PARAM("user",
+																			auser_prefix,
+																			MPC_CONF_STRING,
+																			"User level configuration prefix/file"),
+																		NULL);
 
 
 	mpc_conf_config_type_elem_t *can_create_elem = mpc_conf_config_type_get(type, "can_create");
