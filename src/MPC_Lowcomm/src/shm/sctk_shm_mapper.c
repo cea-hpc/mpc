@@ -53,6 +53,8 @@ sctk_alloc_mapper_handler_t sctk_shm_mapper_fake_handler = {
 	sctk_shm_mapper_fake_handler_recv,
 	sctk_shm_mapper_get_filename,
 	NULL,
+	-1,
+	NULL,
 	NULL
 };
 
