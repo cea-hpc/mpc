@@ -2626,6 +2626,18 @@ __mpc_comm_probe_source_tag_class_func(int destination, int source, int tag,
 
 	sctk_network_notify_probe_message(msg, status);
 
+	switch ( *status )
+	{
+		case 0: /* all rails supported probing request AND not found */
+		case 1: /* found a match ! */
+			return;
+			break;
+		default: /* not found AND at least one rail does not support low-level probing */
+			*status = 0;
+			msg->msg_size = 0;
+			break;
+	}
+
 	mpc_comm_ptp_t *dest_ptp = __mpc_comm_ptp_array_get(comm, world_destination);
 
 	if(source != MPC_ANY_SOURCE)
