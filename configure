@@ -23532,8 +23532,6 @@ fi
 
         if test "x$hfound" = "xyes"; then
                 check_or_infer_prefix_include=yes
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: System-wide" >&5
-$as_echo "System-wide" >&6; }
                 return
         fi
 
@@ -23815,6 +23813,7 @@ $as_echo "$MACRO_VALUE ($1)" >&6; }
 # $4 LIBCODE (ex XML, HWLOC, ...)
 # $5 optionnal library version (need pkg-config)
 # $6 optionnal lib_prefix
+# $7 optionnal alternative lib name (when different from pkg_config)
 #
 
 
@@ -23972,6 +23971,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=libxml/tree.h
                 libname=libxml-2.0
+                alt_libname=
                 function_name=xmlStrcmp
                 var_prefix=XML2
                 version=""
@@ -24093,6 +24093,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -24149,6 +24154,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=hwloc.h
                 libname=hwloc
+                alt_libname=
                 function_name=hwloc_topology_init
                 var_prefix=HWLOC
                 version="< 2.0.0"
@@ -24270,6 +24276,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -24326,7 +24337,8 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=opa_config.h
                 libname=openpa
-                function_name=OPA_load_int
+                alt_libname=opa
+                function_name=OPA_Queue_init
                 var_prefix=OPA
                 version=""
 
@@ -24447,6 +24459,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -24523,6 +24540,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=mpcalloc.h
                 libname=mpcalloc
+                alt_libname=
                 function_name=sctk_malloc
                 var_prefix=ALLOC
                 version=""
@@ -24644,6 +24662,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -24723,6 +24746,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=libunwind.h
                 libname=libunwind
+                alt_libname=
                 function_name=unw_init_local
                 var_prefix=UNW
                 version=""
@@ -24844,6 +24868,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -24890,6 +24919,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=libunwind.h
                 libname=unwind
+                alt_libname=
                 function_name=unw_init_local
                 var_prefix=UNW
                 version=""
@@ -25011,6 +25041,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -25078,6 +25113,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=infiniband/verbs.h
                 libname=ibverbs
+                alt_libname=
                 function_name=ibv_query_qp
                 var_prefix=IBV
                 version=""
@@ -25199,6 +25235,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -25265,6 +25306,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=portals4.h
                 libname=portals
+                alt_libname=
                 function_name=PtlGet
                 var_prefix=PORTALS
                 version=""
@@ -25386,6 +25428,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -25516,6 +25563,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=pmi.h
                 libname=pmi
+                alt_libname=
                 function_name=PMI_Finalize
                 var_prefix=PMI
                 version=""
@@ -25637,6 +25685,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -25697,6 +25750,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=pmix.h
                 libname=pmix
+                alt_libname=
                 function_name=PMIx_Finalize
                 var_prefix=PMIX
                 version=""
@@ -25818,6 +25872,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -25984,6 +26043,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=cuda.h
                 libname=cuda
+                alt_libname=
                 function_name=cuMemFree
                 var_prefix=CUDA
                 version=""
@@ -26105,6 +26165,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -26162,6 +26227,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=cuda_runtime.h
                 libname=cudart
+                alt_libname=
                 function_name=cudaDeviceSetLimit
                 var_prefix=CUDART
                 version=""
@@ -26283,6 +26349,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -30737,6 +30808,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=extls.h
                 libname=autopriv
+                alt_libname=
                 function_name=extls_init
                 var_prefix=EXTLS
                 version=""
@@ -30858,6 +30930,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"

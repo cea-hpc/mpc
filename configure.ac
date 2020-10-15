@@ -446,7 +446,6 @@ __check_or_infer_prefix_include()
 
         if test "x$hfound" = "xyes"; then
                 check_or_infer_prefix_include=yes
-                AC_MSG_RESULT([System-wide])
                 return
         fi
 
@@ -593,6 +592,7 @@ extract_integer_define_value()
 # $4 LIBCODE (ex XML, HWLOC, ...)
 # $5 optionnal library version (need pkg-config)
 # $6 optionnal lib_prefix
+# $7 optionnal alternative lib name (when different from pkg_config)
 #
 AC_DEFUN([MPC_DETECT_DEPENDENCY],
          [
@@ -616,6 +616,7 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                 check_or_infer_prefix_result="no"
                 header_name=$1
                 libname=$2
+                alt_libname=$7
                 function_name=$3
                 var_prefix=$4
                 version="$5"
@@ -667,6 +668,11 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -698,7 +704,7 @@ MPC_REQUIRED_DEPENDENCY([libxml-2.0], [$mpc_dep_found])
 MPC_DETECT_DEPENDENCY([hwloc.h],[hwloc], [hwloc_topology_init], [HWLOC], [< 2.0.0])
 MPC_REQUIRED_DEPENDENCY([hwloc], [$mpc_dep_found])
 
-MPC_DETECT_DEPENDENCY([opa_config.h],[openpa], [OPA_load_int], [OPA])
+MPC_DETECT_DEPENDENCY([opa_config.h],[openpa], [OPA_Queue_init], [OPA], [], [], [opa])
 MPC_REQUIRED_DEPENDENCY([openpa], [$mpc_dep_found])
 
 
