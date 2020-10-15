@@ -26,7 +26,6 @@
 #include "mpcomp_task.h"
 
 #include <mpc_common_debug.h>
-#include <mpc_runtime_config.h>
 #include <mpc_common_types.h>
 #include <mpc_common_asm.h>
 #include <mpc_common_rank.h>
@@ -503,7 +502,7 @@ static int ( *__task_list_producer_trylock )( mpcomp_task_list_t *, void * );
 
 void _mpc_task_list_interface_init()
 {
-	if ( sctk_runtime_config_get()->modules.openmp.omp_task_use_lockfree_queue )
+	if ( mpc_omp_conf_get()->omp_task_use_lockfree_queue )
 	{
 		__task_list_is_empty = __task_lockfree_list_is_empty;
 		__task_list_push_to_head = __task_lockfree_list_push_to_head;
@@ -536,7 +535,7 @@ void _mpc_task_list_interface_init()
 static inline void __task_list_push( mpcomp_task_list_t *mvp_task_list, mpcomp_task_t *new_task )
 {
         TODO("WHY DO WE DIFFERENCIATE AGAIN ? (see previous func)");
-	if ( sctk_runtime_config_get()->modules.openmp.omp_task_use_lockfree_queue )
+	if ( mpc_omp_conf_get()->omp_task_use_lockfree_queue )
 	{
 		__task_list_push_to_tail( mvp_task_list, new_task );
 	}
@@ -550,7 +549,7 @@ static inline void __task_list_push( mpcomp_task_list_t *mvp_task_list, mpcomp_t
 static inline mpcomp_task_t *__task_list_pop( mpcomp_task_list_t *mvp_task_list, bool is_stealing, bool one_list_per_thread )
 {
          TODO("WHY DO WE DIFFERENCIATE AGAIN ? (see previous func)");
-	if ( sctk_runtime_config_get()->modules.openmp.omp_task_use_lockfree_queue )
+	if ( mpc_omp_conf_get()->omp_task_use_lockfree_queue )
 	{
 		if ( is_stealing )
 		{
@@ -578,6 +577,38 @@ static inline mpcomp_task_t *__task_list_pop( mpcomp_task_list_t *mvp_task_list,
 /*********
  * UTILS *
  *********/
+
+int mpcomp_task_parse_larceny_mode(char * mode)
+{
+	if(!strcmp(mode, "hierarchical"))
+	{
+		return MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL;
+	}else if(!strcmp(mode, "random"))
+	{
+		return MPCOMP_TASK_LARCENY_MODE_RANDOM;
+	}else if(!strcmp(mode, "random_order"))
+	{
+		return MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER;
+	}else if(!strcmp(mode, "round_robin"))
+	{
+		return MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN;
+	}else if(!strcmp(mode, "producer"))
+	{
+		return MPCOMP_TASK_LARCENY_MODE_PRODUCER;
+	}else if(!strcmp(mode, "producer_order"))
+	{
+		return MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER;
+	}else if(!strcmp(mode, "hierarchical_random"))
+	{
+		return MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL_RANDOM;
+	}else
+	{
+		bad_parameter("Could not parse mpc.omp.task.larceny = '%s' it must be one of: hierarchical, random, random_order, round_robin, producer, producer_order, hierarchical_random", mode);
+	}
+	
+	return -1;
+}
+
 
 static inline int __task_is_child( mpcomp_task_t *task, mpcomp_task_t *current_task )
 {
@@ -658,7 +689,7 @@ static inline int __task_no_deps_is_serialized( mpcomp_thread_t *thread )
 	       mpcomp_task_property_isset( current_task->property, MPCOMP_TASK_FINAL ) ) ||
 	     ( thread->info.num_threads == 1 ) ||
 	     ( current_task &&
-	       current_task->depth > sctk_runtime_config_get()->modules.openmp.omp_task_nesting_max ) )
+	       current_task->depth > mpc_omp_conf_get()->omp_task_nesting_max ) )
 	{
 		return 1;
 	}
@@ -873,7 +904,7 @@ void _mpc_task_mvp_info_init( struct mpcomp_node_s *parent, struct mpcomp_mvp_s 
 	}
 
 	const int new_tasks_depth_value =
-	    sctk_runtime_config_get()->modules.openmp.omp_new_task_depth;
+	    mpc_omp_conf_get()->omp_new_task_depth;
 	int depth = child->threads->instance->tree_depth;
 
 	/* Ensure tasks lists depths are correct */
@@ -921,7 +952,7 @@ void _mpc_task_root_info_init( struct mpcomp_node_s *root )
 
 	mpcomp_thread_t *thread = root->mvp->threads;
 	const int new_tasks_depth_value =
-	    sctk_runtime_config_get()->modules.openmp.omp_new_task_depth;
+	    mpc_omp_conf_get()->omp_new_task_depth;
 	int depth = root->instance->tree_depth;
 
 	/* Ensure tasks lists depths are correct */
@@ -949,13 +980,10 @@ void _mpc_task_team_info_init( struct mpcomp_team_s *team,
                                   int depth )
 {
 	memset( &( team->task_infos ), 0, sizeof( mpcomp_task_team_infos_t ) );
-	const int new_tasks_depth_value =
-	    sctk_runtime_config_get()->modules.openmp.omp_new_task_depth;
-	const int untied_tasks_depth_value =
-	    sctk_runtime_config_get()->modules.openmp.omp_untied_task_depth;
-	const int omp_task_nesting_max =
-	    sctk_runtime_config_get()->modules.openmp.omp_task_nesting_max;
-	const int omp_task_larceny_mode = sctk_runtime_config_get()->modules.openmp.omp_task_larceny_mode;
+	const int new_tasks_depth_value = mpc_omp_conf_get()->omp_new_task_depth;
+	const int untied_tasks_depth_value = mpc_omp_conf_get()->omp_untied_task_depth;
+	const int omp_task_nesting_max = mpc_omp_conf_get()->omp_task_nesting_max;
+	const int omp_task_larceny_mode = mpc_omp_conf_get()->omp_task_larceny_mode;
 	/* Ensure tasks lists depths are correct */
 	const int new_tasks_depth =
 	    ( new_tasks_depth_value < depth ) ? new_tasks_depth_value : depth - 1;
@@ -1317,7 +1345,7 @@ static inline mpcomp_task_list_t * __task_try_delay( mpcomp_thread_t *thread, bo
 		return NULL;
 	}
 
-	const int __max_delayed = sctk_runtime_config_get()->modules.openmp.mpcomp_task_max_delayed;
+	const int __max_delayed = mpc_omp_conf_get()->mpcomp_task_max_delayed;
 
 	//Too much delayed tasks
 	if ( OPA_fetch_and_incr_int( &( mvp_task_list->nb_elements ) ) >=
@@ -1986,7 +2014,7 @@ static struct mpcomp_task_s *_mpc_task_new_larceny( void )
 
 		if ( nbTasklists > 1 )
 		{
-			if ( sctk_runtime_config_get()->modules.openmp.omp_task_steal_last_stolen_list )
+			if ( mpc_omp_conf_get()->omp_task_steal_last_stolen_list )
 				/* Try to steal inside the last stolen list*/
 			{
 				if ( ( list = MPCOMP_TASK_MVP_GET_LAST_STOLEN_TASK_LIST( mvp, type ) ) )
@@ -2001,7 +2029,7 @@ static struct mpcomp_task_s *_mpc_task_new_larceny( void )
 				}
 			}
 
-			if ( sctk_runtime_config_get()->modules.openmp.omp_task_resteal_to_last_thief )
+			if ( mpc_omp_conf_get()->omp_task_resteal_to_last_thief )
 				/* Try to steal to last thread that stole us a task */
 			{
 				if ( mvp->task_infos.last_thief != -1 && ( list = __task_get_list( mvp->task_infos.last_thief, type ) ) )

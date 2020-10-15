@@ -307,6 +307,8 @@
 
 /*** Task property primitives ***/
 
+int mpcomp_task_parse_larceny_mode(char * mode);
+
 static inline void
 mpcomp_task_reset_property( mpcomp_task_property_t *property )
 {

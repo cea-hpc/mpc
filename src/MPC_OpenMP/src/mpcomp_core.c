@@ -42,12 +42,115 @@
 /* Loop declaration */
 #include "mpcomp_loop.h"
 #include "mpcomp_tree.h"
-
+#include "mpc_conf.h"
 #include "mpc_thread.h"
 
 #include "ompt.h"
 /* parsing OMP_PLACES */
 #include "mpcomp_places_env.h"
+
+
+/*************************
+ * MPC_OMP CONFIGURATION *
+ *************************/
+
+static struct mpc_omp_conf __omp_conf = { 0 };
+
+struct mpc_omp_conf * mpc_omp_conf_get(void)
+{
+	return &__omp_conf;
+}
+
+static inline void __omp_conf_set_default(void)
+{
+	/* This is the chunk size as schedule modifier */
+
+	__omp_conf.OMP_MAX_ACTIVE_LEVELS=0;
+	__omp_conf.OMP_WARN_NESTED=0;
+	__omp_conf.places = strdup("cores");
+
+
+	/* Schedule */
+	__omp_conf.OMP_MODIFIER_SCHEDULE = 0;
+
+	/* Threads */
+	__omp_conf.OMP_NUM_THREADS = 0;
+	__omp_conf.OMP_NESTED = 0;
+	__omp_conf.OMP_MICROVP_NUMBER = 0;
+	__omp_conf.OMP_PROC_BIND=1;
+	__omp_conf.OMP_WAIT_POLICY=0;
+	__omp_conf.OMP_THREAD_LIMIT=64;
+	__omp_conf.OMP_DYNAMIC=0;
+
+	/* Tasks */
+
+	__omp_conf.omp_new_task_depth = 10;
+	__omp_conf.omp_untied_task_depth = 10;
+	__omp_conf.omp_task_larceny_mode_str = strdup("producer");
+	__omp_conf.omp_task_larceny_mode = MPCOMP_TASK_LARCENY_MODE_PRODUCER;
+	__omp_conf.omp_task_nesting_max = 1000000;
+	__omp_conf.mpcomp_task_max_delayed = 1024;
+	__omp_conf.omp_task_use_lockfree_queue = 1;
+	__omp_conf.omp_task_steal_last_stolen_list = 0;
+	__omp_conf.omp_task_resteal_to_last_thief = 0;
+
+}
+
+
+static inline void __omp_conf_init(void)
+{
+	__omp_conf_set_default();
+
+	mpc_conf_config_type_t *schedule = mpc_conf_config_type_init("schedule",
+	                                                       PARAM("chunk", &__omp_conf.OMP_MODIFIER_SCHEDULE , MPC_CONF_INT, "This is the chunk size as schedule modifier"),
+														   NULL);
+
+	mpc_conf_config_type_t *thread = mpc_conf_config_type_init("thread",
+	                                PARAM("number", &__omp_conf.OMP_NUM_THREADS , MPC_CONF_INT, "This is the number of threads OMP_NUM_THREADS"),
+									PARAM("nested", &__omp_conf.OMP_NESTED , MPC_CONF_BOOL, "Is nested parallelism enabled OMP_NESTED"),
+									PARAM("vpcount", &__omp_conf.OMP_MICROVP_NUMBER , MPC_CONF_INT, "Number of VP for each OMP team OMP_MICROVP_NUMBER"),
+									PARAM("bind", &__omp_conf.OMP_PROC_BIND , MPC_CONF_BOOL, "Bind OMP threads to cores OMP_PROC_BIND"),
+									PARAM("stacksize", &__omp_conf.OMP_STACKSIZE , MPC_CONF_INT, "Stack size for OpenMP threads OMP_STACKSIZE"),
+									PARAM("waitpolicy", &__omp_conf.OMP_WAIT_POLICY , MPC_CONF_INT, "Behavior of threads while waiting OMP_WAIT_POLICY"),
+									PARAM("maxthreads", &__omp_conf.OMP_THREAD_LIMIT , MPC_CONF_INT, "Max number of threads OMP_THREAD_LIMIT"),
+									PARAM("dynamic", &__omp_conf.OMP_DYNAMIC , MPC_CONF_INT, "Allow dynamic adjustment of the thread number OMP_DYNAMIC"),
+									NULL);
+
+	mpc_conf_config_type_t *task = mpc_conf_config_type_init("task",
+	                                PARAM("depth", &__omp_conf.omp_new_task_depth , MPC_CONF_INT, "Depth of the new tasks lists in the tree"),
+	                                PARAM("untieddepth", &__omp_conf.omp_untied_task_depth , MPC_CONF_INT, "Depth of the untied tasks lists in the tree"),
+									PARAM("larceny", &__omp_conf.omp_task_larceny_mode_str , MPC_CONF_STRING, "Task stealing policy (hierarchical, random, random_order, round_robin, producer, producer_order, hierarchical_random)"),
+	                                PARAM("maxnesting", &__omp_conf.omp_task_nesting_max , MPC_CONF_INT, "Task max depth in task generation"),
+	                                PARAM("maxdelayed", &__omp_conf.mpcomp_task_max_delayed , MPC_CONF_INT, "Max tasks in mpcomp list"),
+									PARAM("lockfreequeue", &__omp_conf.omp_task_use_lockfree_queue , MPC_CONF_BOOL, "Use a lock-free queue for tasks"),
+									PARAM("lastlist", &__omp_conf.omp_task_steal_last_stolen_list , MPC_CONF_BOOL, "Try to steal to same list than last successful stealing"),
+									PARAM("lastthief", &__omp_conf.omp_task_resteal_to_last_thief , MPC_CONF_BOOL, "Try to steal to the last thread that stole a task to current thread"),
+									NULL);
+
+	mpc_conf_config_type_t *omp = mpc_conf_config_type_init("omp",
+	                                PARAM("number", &__omp_conf.OMP_MAX_ACTIVE_LEVELS , MPC_CONF_INT, "Maximum depth of nested parallelism"),
+									PARAM("nested", &__omp_conf.OMP_WARN_NESTED , MPC_CONF_BOOL, "Emit warning when entering nested parallelism"),
+									PARAM("places", &__omp_conf.places , MPC_CONF_STRING, "OpenMP Places configuration OMP_PLACES"),
+									PARAM("schedule", schedule , MPC_CONF_TYPE, "Parameters associated with OpenMP schedules"),
+									PARAM("thread", thread , MPC_CONF_TYPE, "Parameters associated with OpenMP threads"),
+									PARAM("task", task , MPC_CONF_TYPE, "Parameters associated with OpenMP tasks"),
+									NULL);
+
+	mpc_conf_root_config_append("mpc", omp, "MPC OpenMP Configuration");
+
+}
+
+
+
+void mpc_openmp_registration() __attribute__( (constructor) );
+
+void mpc_openmp_registration()
+{
+	MPC_INIT_CALL_ONLY_ONCE
+
+	mpc_common_init_callback_register("Config Sources", "MPC_OMP Init", __omp_conf_init, 32);
+
+}
 
 /*****************
   ****** GLOBAL VARIABLES
@@ -55,34 +158,14 @@
 
 /* Schedule type */
 static omp_sched_t OMP_SCHEDULE = omp_sched_static;
-/* Schedule modifier */
-static int OMP_MODIFIER_SCHEDULE = 0;
-/* Defaults number of threads */
-static int OMP_NUM_THREADS = 0;
-/* Is dynamic adaptation on? */
-static int OMP_DYNAMIC = 0;
-/* Is nested parallelism handled or flaterned? */
-static int OMP_NESTED = 0;
-/* Number of VPs for each OpenMP team */
-static int OMP_MICROVP_NUMBER = 0;
 /* Default tree for OpenMP instances? (number of nodes per level) */
 static int *OMP_TREE = NULL;
+
 /* Number of level for the default tree (size of OMP_TREE) */
 static int OMP_TREE_DEPTH = 0;
 /* Total number of leaves for the tree (product of OMP_TREE elements) */
 static int OMP_TREE_NB_LEAVES = 0;
-/* Is thread binding enabled or not */
-static int OMP_PROC_BIND = 0;
-/* Size of the thread stack size */
-static int OMP_STACKSIZE = 0;
-/* Behavior of waiting threads */
-static int OMP_WAIT_POLICY = 0;
-/* Maximum number of threads participing in the whole program */
-static int OMP_THREAD_LIMIT = 0;
-/* Maximum number of nested active parallel regions */
-static int OMP_MAX_ACTIVE_LEVELS = 0;
-/* Should we emit a warning when nesting is used? */
-static int OMP_WARN_NESTED = 0;
+
 /* Hybrid MPI/OpenMP mode */
 static mpcomp_mode_t OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED;
 /* Affinity policy */
@@ -399,33 +482,37 @@ __mpcomp_init_omp_task_tree( const int num_mvps, int *shape, const int *cpus_ord
  */
 static inline void __mpcomp_read_env_variables()
 {
+
+	/* Ensure larceny mode for tasks is read from string and then locked */
+	__omp_conf.omp_task_larceny_mode = mpcomp_task_parse_larceny_mode(__omp_conf.omp_task_larceny_mode_str);
+	/* We lock as we wont parse future updates */
+	mpc_conf_root_config_set_lock("mpc.omp.task.larceny", 1);
+
 	char *env;
 	mpc_common_nodebug( "__mpcomp_read_env_variables: Read env vars (MPC rank: %d)",
 	              mpc_common_get_task_rank() );
 	/******* OMP_VP_NUMBER *********/
-	OMP_MICROVP_NUMBER = sctk_runtime_config_get()->modules.openmp.vp;
-
-	if ( OMP_MICROVP_NUMBER < 0 )
+	if ( __omp_conf.OMP_MICROVP_NUMBER < 0 )
 	{
 		fprintf(
 		    stderr,
 		    "Warning: Incorrect number of microVPs (OMP_MICROVP_NUMBER=<%d>) -> "
 		    "Switching to default value %d\n",
-		    OMP_MICROVP_NUMBER, 0 );
-		OMP_MICROVP_NUMBER = 0;
+		    __omp_conf.OMP_MICROVP_NUMBER, 0 );
+		__omp_conf.OMP_MICROVP_NUMBER = 0;
 	}
 
-	if ( OMP_MICROVP_NUMBER > mpc_topology_get_pu_count() )
+	if ( __omp_conf.OMP_MICROVP_NUMBER > mpc_topology_get_pu_count() )
 	{
 		mpc_common_debug_warning("Number of microVPs should be at most the number "
 		         "of cores per node: %d\n"
 		         "Switching to default value %d\n",
-		         mpc_topology_get_pu_count(), OMP_MICROVP_NUMBER );
-		OMP_MICROVP_NUMBER = 0;
+		         mpc_topology_get_pu_count(), __omp_conf.OMP_MICROVP_NUMBER );
+		__omp_conf.OMP_MICROVP_NUMBER = 0;
 	}
 
 	/******* OMP_SCHEDULE *********/
-	env = sctk_runtime_config_get()->modules.openmp.schedule;
+	env = getenv("OMP_SCHEDULE");
 
 	OMP_SCHEDULE = omp_sched_static; /* DEFAULT */
 
@@ -483,7 +570,7 @@ static inline void __mpcomp_read_env_variables()
 					}
 					else
 					{
-						OMP_MODIFIER_SCHEDULE = chunk_size;
+						__omp_conf.OMP_MODIFIER_SCHEDULE = chunk_size;
 					}
 
 					break;
@@ -510,55 +597,51 @@ static inline void __mpcomp_read_env_variables()
 	}
 
 	/******* OMP_NUM_THREADS *********/
-	OMP_NUM_THREADS = sctk_runtime_config_get()->modules.openmp.nb_threads;
+	env = getenv("OMP_NUM_THREADS");
 
-	if ( OMP_NUM_THREADS < 0 )
+	if(env)
 	{
-		OMP_NUM_THREADS = 0;
+		__omp_conf.OMP_NUM_THREADS = atoi(env);
+	}
+
+	if ( __omp_conf.OMP_NUM_THREADS < 0 )
+	{
+		__omp_conf.OMP_NUM_THREADS = 0;
 	}
 
 	TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it "
 	      "later" )
 
-	if ( OMP_NUM_THREADS == 0 )
+	if ( __omp_conf.OMP_NUM_THREADS == 0 )
 	{
-		OMP_NUM_THREADS = OMP_MICROVP_NUMBER; /* DEFAULT */
+		__omp_conf.OMP_NUM_THREADS = __omp_conf.OMP_MICROVP_NUMBER; /* DEFAULT */
 	}
 
 	TODO( "OMP_NUM_THREADS: need to handle x,y,z,... and keep only x" )
-	/******* OMP_DYNAMIC *********/
-	OMP_DYNAMIC = sctk_runtime_config_get()->modules.openmp.adjustment ? 1 : 0;
-	/******* OMP_PROC_BIND *********/
-	OMP_PROC_BIND = sctk_runtime_config_get()->modules.openmp.proc_bind ? 1 : 0;
-	/******* OMP_NESTED *********/
-	OMP_NESTED = sctk_runtime_config_get()->modules.openmp.nested ? 1 : 0;
-	/******* OMP_STACKSIZE *********/
-	OMP_STACKSIZE = sctk_runtime_config_get()->modules.openmp.stack_size;
 
-	if ( OMP_STACKSIZE == 0 )
+	/******* OMP_STACKSIZE *********/
+
+	env = getenv("OMP_STACKSIZE");
+
+	if(env)
+	{
+		__omp_conf.OMP_STACKSIZE = atoi(env);
+	}
+
+	if ( __omp_conf.OMP_STACKSIZE == 0 )
 	{
 		if ( mpc_common_get_flags()->is_fortran == 1 )
 		{
-			OMP_STACKSIZE = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
+			__omp_conf.OMP_STACKSIZE = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
 		}
 		else
 		{
-			OMP_STACKSIZE = SCTK_ETHREAD_STACK_SIZE;
+			__omp_conf.OMP_STACKSIZE = SCTK_ETHREAD_STACK_SIZE;
 		}
 	}
-
-	/******* OMP_WAIT_POLICY *********/
-	OMP_WAIT_POLICY = sctk_runtime_config_get()->modules.openmp.wait_policy;
-	/******* OMP_THREAD_LIMIT *********/
-	OMP_THREAD_LIMIT = sctk_runtime_config_get()->modules.openmp.thread_limit;
-	/******* OMP_MAX_ACTIVE_LEVELS *********/
-	OMP_MAX_ACTIVE_LEVELS =
-	    sctk_runtime_config_get()->modules.openmp.max_active_levels;
 	/******* ADDITIONAL VARIABLES *******/
-	/******* OMP_WARN_NESTED *******/
-	OMP_WARN_NESTED = sctk_runtime_config_get()->modules.openmp.warn_nested;
 	/******* OMP_MODE *******/
-	env = sctk_runtime_config_get()->modules.openmp.mode;
+	env = getenv("OMP_MODE");
 	OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED;
 
 	if ( env != NULL )
@@ -620,7 +703,8 @@ static inline void __mpcomp_read_env_variables()
 	}
 
 	/******* OMP_AFFINITY *******/
-	env = sctk_runtime_config_get()->modules.openmp.affinity;
+
+	env = getenv("OMP_AFFINITY");
 
 	if ( env != NULL )
 	{
@@ -664,7 +748,7 @@ static inline void __mpcomp_read_env_variables()
 
 	OMP_AFFINITY = MPCOMP_AFFINITY_SCATTER;
 	/******* OMP_TREE *********/
-	env = sctk_runtime_config_get()->modules.openmp.tree;
+	env = getenv("OMP_TREE");
 
 	if ( strlen( env ) != 0 )
 	{
@@ -707,13 +791,13 @@ static inline void __mpcomp_read_env_variables()
                 "\t\tOMP_TASK_USE_LOCKFREE_QUEUE=%d\n"
                 "\t\tOMP_TASK_STEAL_LAST_STOLEN_LIST=%d\n"
                 "\t\tOMP_TASK_RESTEAL_TO_LAST_THIEF=%d",
-		         sctk_runtime_config_get()->modules.openmp.omp_new_task_depth,
-		         sctk_runtime_config_get()->modules.openmp.omp_task_larceny_mode,
-		         sctk_runtime_config_get()->modules.openmp.omp_task_nesting_max,
-		         sctk_runtime_config_get()->modules.openmp.mpcomp_task_max_delayed,
-		         sctk_runtime_config_get()->modules.openmp.omp_task_use_lockfree_queue,
-		         sctk_runtime_config_get()->modules.openmp.omp_task_steal_last_stolen_list,
-		         sctk_runtime_config_get()->modules.openmp.omp_task_resteal_to_last_thief );
+		         __omp_conf.omp_new_task_depth,
+		         __omp_conf.omp_task_larceny_mode,
+		         __omp_conf.omp_task_nesting_max,
+		         __omp_conf.mpcomp_task_max_delayed,
+		         __omp_conf.omp_task_use_lockfree_queue,
+		         __omp_conf.omp_task_steal_last_stolen_list,
+		         __omp_conf.omp_task_resteal_to_last_thief );
 #ifdef MPCOMP_USE_TASKDEP
 		mpc_common_debug_log("\t\tDependencies ON" );
 #else
@@ -724,26 +808,26 @@ static inline void __mpcomp_read_env_variables()
 #endif
 		mpc_common_debug_log("\tOMP_SCHEDULE %d", OMP_SCHEDULE );
 
-		if ( OMP_NUM_THREADS == 0 )
+		if ( __omp_conf.OMP_NUM_THREADS == 0 )
 		{
 			mpc_common_debug_log("\tDefault #threads (OMP_NUM_THREADS)" );
 		}
 		else
 		{
-			mpc_common_debug_log("\tOMP_NUM_THREADS %d", OMP_NUM_THREADS );
+			mpc_common_debug_log("\tOMP_NUM_THREADS %d", __omp_conf.OMP_NUM_THREADS );
 		}
 
-		mpc_common_debug_log("\tOMP_DYNAMIC %d", OMP_DYNAMIC );
-		mpc_common_debug_log("\tOMP_NESTED %d", OMP_NESTED );
+		mpc_common_debug_log("\tOMP_DYNAMIC %d", __omp_conf.OMP_DYNAMIC );
+		mpc_common_debug_log("\tOMP_NESTED %d", __omp_conf.OMP_NESTED );
 
-		if ( OMP_MICROVP_NUMBER == 0 )
+		if ( __omp_conf.OMP_MICROVP_NUMBER == 0 )
 		{
 			mpc_common_debug_log("\tDefault #microVPs (OMP_MICROVP_NUMBER)" );
 		}
 		else
 		{
 			mpc_common_debug_log("\t%d microVPs (OMP_MICROVP_NUMBER)",
-			         OMP_MICROVP_NUMBER );
+			         __omp_conf.OMP_MICROVP_NUMBER );
 		}
 
 		switch ( OMP_AFFINITY )
@@ -816,10 +900,10 @@ static inline void __mpcomp_read_env_variables()
 		mpc_common_debug_log("\tStructure field alignement" );
 #endif
 
-		if ( OMP_WARN_NESTED )
+		if ( __omp_conf.OMP_WARN_NESTED )
 		{
 			mpc_common_debug_log("\tOMP_WARN_NESTED %d (breakpoint mpcomp_warn_nested)",
-			         OMP_WARN_NESTED );
+			         __omp_conf.OMP_WARN_NESTED );
 		}
 		else
 		{
@@ -869,13 +953,13 @@ void __mpcomp_init( void )
 	{
 		__mpcomp_read_env_variables();
 		mpcomp_global_icvs.def_sched_var = omp_sched_static;
-		mpcomp_global_icvs.bind_var = OMP_PROC_BIND;
-		mpcomp_global_icvs.stacksize_var = OMP_STACKSIZE;
-		mpcomp_global_icvs.active_wait_policy_var = OMP_WAIT_POLICY;
-		mpcomp_global_icvs.thread_limit_var = OMP_THREAD_LIMIT;
-		mpcomp_global_icvs.max_active_levels_var = OMP_MAX_ACTIVE_LEVELS;
-		mpcomp_global_icvs.nmicrovps_var = OMP_MICROVP_NUMBER;
-		mpcomp_global_icvs.warn_nested = OMP_WARN_NESTED;
+		mpcomp_global_icvs.bind_var = __omp_conf.OMP_PROC_BIND;
+		mpcomp_global_icvs.stacksize_var = __omp_conf.OMP_STACKSIZE;
+		mpcomp_global_icvs.active_wait_policy_var = __omp_conf.OMP_STACKSIZE;
+		mpcomp_global_icvs.thread_limit_var = __omp_conf.OMP_THREAD_LIMIT;
+		mpcomp_global_icvs.max_active_levels_var = __omp_conf.OMP_MAX_ACTIVE_LEVELS;
+		mpcomp_global_icvs.nmicrovps_var = __omp_conf.OMP_MICROVP_NUMBER;
+		mpcomp_global_icvs.warn_nested = __omp_conf.OMP_WARN_NESTED;
 		mpcomp_global_icvs.affinity = OMP_AFFINITY;
 		done = 1;
 	}
@@ -901,9 +985,9 @@ void __mpcomp_init( void )
 
 				/* Consider the env variable if between 1 and the number
 				* of cores for this task */
-				if ( OMP_MICROVP_NUMBER > 0 && OMP_MICROVP_NUMBER <= nb_mvps )
+				if ( __omp_conf.OMP_MICROVP_NUMBER > 0 && __omp_conf.OMP_MICROVP_NUMBER <= nb_mvps )
 				{
-					nb_mvps = OMP_MICROVP_NUMBER;
+					nb_mvps = __omp_conf.OMP_MICROVP_NUMBER;
 				}
 
 				break;
@@ -969,19 +1053,19 @@ void __mpcomp_init( void )
 	}
 
 	/* Initialize default ICVs */
-	if ( OMP_NUM_THREADS == 0 )
+	if ( __omp_conf.OMP_NUM_THREADS == 0 )
 	{
 		icvs.nthreads_var = nb_mvps;
 	}
 	else
 	{
-		icvs.nthreads_var = OMP_NUM_THREADS;
+		icvs.nthreads_var = __omp_conf.OMP_NUM_THREADS;
 	}
 
-	icvs.dyn_var = OMP_DYNAMIC;
-	icvs.nest_var = OMP_NESTED;
+	icvs.dyn_var = __omp_conf.OMP_DYNAMIC;
+	icvs.nest_var = __omp_conf.OMP_NESTED;
 	icvs.run_sched_var = OMP_SCHEDULE;
-	icvs.modifier_sched_var = OMP_MODIFIER_SCHEDULE;
+	icvs.modifier_sched_var = __omp_conf.OMP_MODIFIER_SCHEDULE;
 	icvs.active_levels_var = 0;
 	icvs.levels_var = 0;
 #if OMPT_SUPPORT

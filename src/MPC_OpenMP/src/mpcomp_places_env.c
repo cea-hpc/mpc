@@ -22,10 +22,10 @@
 /* ######################################################################## */
 #include "hwloc.h"
 #include "utlist.h"
-#include "mpc_runtime_config.h"
 #include "mpc_common_spinlock.h"
 #include "mpc_topology.h"
 #include "mpcomp_places_env.h"
+#include "mpcomp_core.h"
 
 static inline void mpcomp_places_restrict_bitmap( hwloc_bitmap_t res, const int nb_mvps )
 {
@@ -1032,7 +1032,15 @@ mpcomp_places_env_variable_parsing( const int nb_mvps )
 	char *tmp, *string, *end;
 	mpcomp_places_info_t *list = NULL;
 	/* Get the value of OMP_PLACES (as a string) */
-	tmp = sctk_runtime_config_get()->modules.openmp.places;
+	tmp = mpc_omp_conf_get()->places;
+
+	char * env_override = getenv("OMP_PLACES");
+
+	if(env_override)
+	{
+		tmp = env_override;
+	}
+
 	mpc_common_debug_log("OMP_PLACES = <%s>\n", tmp );
 	const char *prev_env = strdup( tmp );
 	string = ( char * ) prev_env;
