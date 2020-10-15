@@ -1746,7 +1746,7 @@ Optional Features:
                           lowcomm)
   --enable-lowcomm        Compile MPC with Lowcomm Support
   --enable-mpi            Compile MPC's MPI interface
-  --enable-openmp         Compile MPCs OpenMP interface
+  --enable-openmp         Compile MPC OpenMP interface
   --enable-fortran        Compile MPC Fortran support
   --enable-mpiio          Compile MPI IO support in MPC (romio)
   --enable-process-mode   Compile MPC in process mode
