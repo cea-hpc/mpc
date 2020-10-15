@@ -2942,7 +2942,6 @@ int mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowco
 
 	if(__request_is_null_or_cancelled(request))
 	{
-		//mpc_lowcomm_commit_status_from_request(request, status);
 		*completed = 1;
 		return SCTK_SUCCESS;
 	}
@@ -2959,6 +2958,11 @@ int mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowco
 		mpc_lowcomm_request_set_null(request, 1);
 		__mpc_comm_ptp_msg_done(&wait);
 	}
+	else
+	{
+		sctk_network_notify_idle_message();
+	}
+
 
 	return SCTK_SUCCESS;
 }
