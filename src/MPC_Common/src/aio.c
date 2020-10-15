@@ -1057,7 +1057,6 @@ int mpc_common_aio_lio_listio( int mode, struct aiocb *const aiocb_list[], int n
 	return 0;
 }
 
-#if 1
 static void __release_AIO_threads(void)
 {
 	mpc_common_aio_threads_release();
@@ -1073,5 +1072,3 @@ void mpc_common_AIO_registration()
 
         mpc_common_init_callback_register("Base Runtime Finalize", "Release AIO threads", __release_AIO_threads, 77);
 }
-
-#endif
