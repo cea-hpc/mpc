@@ -1759,7 +1759,7 @@ AC_SUBST([MPC_LOWCOMM_ENABLED])
 
 AC_ARG_ENABLE([mpi],
 [AS_HELP_STRING([--enable-mpi],
-                [Compile MPC's MPI interface])],
+                [Compile MPC MPI interface])],
 [MPC_MPI_ENABLED=$enableval],
 [])
 
