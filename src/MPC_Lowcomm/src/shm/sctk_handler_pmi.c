@@ -9,7 +9,7 @@
 
 
 
-char *sctk_pmi_handler_gen_filename(void *key, __UNUSED__ int master_rank)
+char *sctk_pmi_handler_gen_filename(void *key, __UNUSED__ void * master_rank)
 {
 	char *filename = sctk_malloc(mpc_launch_pmi_get_max_key_len() );
 
@@ -26,7 +26,7 @@ char *sctk_pmi_handler_gen_filename(void *key, __UNUSED__ int master_rank)
  * @param key No key implemented
  */
 
-bool sctk_pmi_handler_send_filename(const char *filename, void *key, __UNUSED__ int master_rank)
+bool sctk_pmi_handler_send_filename(const char *filename, void *key, __UNUSED__ void * dummy)
 {
 	if(key == NULL || filename == NULL)
 	{
@@ -44,9 +44,11 @@ bool sctk_pmi_handler_send_filename(const char *filename, void *key, __UNUSED__ 
  * @param key No key implemented
  */
 
-char *sctk_pmi_handler_recv_filename(void *key, int master_rank)
+char *sctk_pmi_handler_recv_filename(void *key,  __UNUSED__ void * pmaster_rank)
 {
 	char *filename = sctk_malloc(mpc_launch_pmi_get_max_key_len() );
+
+	int master_rank = *((int *)pmaster_rank);
 
 	if(key == NULL || filename == NULL)
 	{
