@@ -2623,6 +2623,9 @@ __mpc_comm_probe_source_tag_class_func(int destination, int source, int tag,
 	msg->message_tag       = tag;
 	msg->communicator      = comm;
 	msg->message_type.type = class;
+
+	sctk_network_notify_probe_message(msg, status);
+
 	mpc_comm_ptp_t *dest_ptp = __mpc_comm_ptp_array_get(comm, world_destination);
 
 	if(source != MPC_ANY_SOURCE)
