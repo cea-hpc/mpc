@@ -1781,7 +1781,7 @@ AC_SUBST([MPC_MPI_ENABLED])
 
 AC_ARG_ENABLE([openmp],
 [AS_HELP_STRING([--enable-openmp],
-                [Compile MPCs OpenMP interface])],
+                [Compile MPC OpenMP interface])],
 [MPC_OPENMP_ENABLED=$enableval],
 [])
 
