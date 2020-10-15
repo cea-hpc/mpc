@@ -759,12 +759,7 @@ AC_MSG_CHECKING([support for libunwind library])
 mpc_libunwind="no"
 
 # First use the pkgconfig naming scheme
-MPC_DETECT_DEPENDENCY([libunwind.h], [libunwind], [unw_init_local], [UNW])
-
-if test "x$mpc_dep_found" = "xno"; then
-        # Try to find the library
-        MPC_DETECT_DEPENDENCY([libunwind.h], [unwind], [unw_init_local], [UNW])
-fi
+MPC_DETECT_DEPENDENCY([libunwind.h], [libunwind], [unw_init_local], [UNW], [], [], [unwind])
 
 #AC_MSG_CHECKING([support for libunwind library])
 if test "x$mpc_dep_found" = "xyes"; then
