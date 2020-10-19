@@ -16887,19 +16887,19 @@ int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 //    }
 //    return 0;
 //}
-//
-//static inline hwloc_obj_t __mpc_get_pu_from_last_cpu_location(hwloc_topology_t topology)
-//{
-//        hwloc_cpuset_t newset;
-//        newset = hwloc_bitmap_alloc();
-//        int ret = hwloc_get_last_cpu_location(topology, newset, HWLOC_CPUBIND_THREAD);
-//        //int tid = syscall(SYS_gettid);
-//        //int ret = hwloc_get_thread_cpubind(topology, tid, newset, HWLOC_CPUBIND_THREAD);
-//        assert(ret == 0);
-//        hwloc_obj_t obj;
-//        obj = hwloc_get_obj_inside_cpuset_by_type(topology, newset, HWLOC_OBJ_PU, 0);
-//        return obj;
-//}
+
+static inline hwloc_obj_t __mpc_get_pu_from_last_cpu_location(hwloc_topology_t topology)
+{
+        hwloc_cpuset_t newset;
+        newset = hwloc_bitmap_alloc();
+        int ret = hwloc_get_last_cpu_location(topology, newset, HWLOC_CPUBIND_THREAD);
+        //int tid = syscall(SYS_gettid);
+        //int ret = hwloc_get_thread_cpubind(topology, tid, newset, HWLOC_CPUBIND_THREAD);
+        assert(ret == 0);
+        hwloc_obj_t obj;
+        obj = hwloc_get_obj_inside_cpuset_by_type(topology, newset, HWLOC_OBJ_PU, 0);
+        return obj;
+}
 
 
 //static inline void __mpc_find_ancestor_by_type(hwloc_topology_t topology, hwloc_obj_t ancestor
@@ -16937,6 +16937,7 @@ int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 
 static inline hwloc_obj_type_t __mpc_find_split_type(char *value, hwloc_obj_type_t *type_split)
 {
+        /* if new level added, change function PMPI_GET_HWSUBDOMAIN_TYPES accordingly */
         if(!strcmp(value,"Node"))
         {
             *type_split =  HWLOC_OBJ_MACHINE;
@@ -16968,6 +16969,12 @@ static inline hwloc_obj_type_t __mpc_find_split_type(char *value, hwloc_obj_type
             return 1;
         }
         return 0;
+}
+
+void PMPI_GET_HWSUBDOMAIN_TYPES(char * value)
+{
+    int buflen = 1024;
+    snprintf(value, buflen, "%s", "Node, Package, NUMANode, L3Cache, L2Cache, L1Cache");  
 }
 
 int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
