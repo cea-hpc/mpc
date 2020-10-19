@@ -2135,6 +2135,16 @@ int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
 int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm *newcomm);
 int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm *newcomm);
 
+/*MPI_GET_HWSUBDOMAIN_TYPES*/
+
+/**
+ * @brief MPI function MPI_GET_HWSUBDOMAIN_TYPES
+ * 
+ * @param value split level available separated with comma
+ *
+ */
+void MPI_GET_HWSUBDOMAIN_TYPES(char *value);
+void PMPI_GET_HWSUBDOMAIN_TYPES(char *value);
 
 /*MPI_Comm_test_inter*/
 
