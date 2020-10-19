@@ -203,7 +203,7 @@ static inline void __init_thread_module_config(void)
 														       PARAM("scheduler", sched, MPC_CONF_TYPE, "Parameters for NG shceduler"),
 															   NULL);
 
-	mpc_conf_root_config_append("mpc", thconf, "MPC Thread Configuration");
+	mpc_conf_root_config_append("mpcframework", thconf, "MPC Thread Configuration");
 }
 
 

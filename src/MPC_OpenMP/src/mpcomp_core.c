@@ -136,7 +136,7 @@ static inline void __omp_conf_init(void)
 									PARAM("task", task , MPC_CONF_TYPE, "Parameters associated with OpenMP tasks"),
 									NULL);
 
-	mpc_conf_root_config_append("mpc", omp, "MPC OpenMP Configuration");
+	mpc_conf_root_config_append("mpcframework", omp, "MPC OpenMP Configuration");
 
 }
 
@@ -486,7 +486,7 @@ static inline void __mpcomp_read_env_variables()
 	/* Ensure larceny mode for tasks is read from string and then locked */
 	__omp_conf.omp_task_larceny_mode = mpcomp_task_parse_larceny_mode(__omp_conf.omp_task_larceny_mode_str);
 	/* We lock as we wont parse future updates */
-	mpc_conf_root_config_set_lock("mpc.omp.task.larceny", 1);
+	mpc_conf_root_config_set_lock("mpcframework.omp.task.larceny", 1);
 
 	char *env;
 	mpc_common_nodebug( "__mpcomp_read_env_variables: Read env vars (MPC rank: %d)",
@@ -750,7 +750,7 @@ static inline void __mpcomp_read_env_variables()
 	/******* OMP_TREE *********/
 	env = getenv("OMP_TREE");
 
-	if ( strlen( env ) != 0 )
+	if ( env != NULL && strlen(env) )
 	{
 		int nb_tokens = 0;
 		char **tokens = NULL;

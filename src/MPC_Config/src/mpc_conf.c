@@ -1241,7 +1241,7 @@ mpc_conf_config_type_elem_t *mpc_conf_root_config_get_sep(char *name, char *sepa
 	/* First ensure first token is main storage key */
 	if(!type)
 	{
-		_utils_verbose_output(0, "config root node '%s' not found\n", token);
+		_utils_verbose_output(0, "config root node '%s' not found in %s for %s\n", token, __FUNCTION__, name);
 		free(to_search);
 		return NULL;
 	}
@@ -1327,7 +1327,7 @@ static inline mpc_conf_config_type_t *__create_container(char *name, char *separ
 	/* First ensure first token is main storage key */
 	if(!type)
 	{
-		_utils_verbose_output(0, "config root node was '%s' not found\n", token);
+		_utils_verbose_output(1, "config root node was '%s' not found in %s\n", token, __FUNCTION__);
 		free(to_search);
 		return NULL;
 	}
@@ -1755,75 +1755,3 @@ char *mpc_conf_user_prefix(char *conf_name, char *buff, int size)
 
 	return buff;
 }
-
-
-#if 0
-
-/**************
-* TEST THINK *
-**************/
-
-struct my_conf
-{
-	/**Process Specific Messages can use this rail**/
-	int process;
-	/**Task specific messages can use this rail**/
-	int task;
-	/**CAN DO EMU**/
-	int emulated_rma;
-	/**Common messages (MPI) can use this rail**/
-	int common;
-};
-
-struct my_conf conf;
-
-int    val  = 999;
-
-int main(int argc, char **argv)
-{
-	conf.process = 1234;
-	conf.task = 1;
-	conf.emulated_rma = 1337;
-	conf.common = 7;
-
-	mpc_conf_root_config_init("mpc");
-
-	mpc_conf_root_config_search_path("mpc", "/media/raid/phomes/jbbesnard//mpcsystem", user_prefix, "both");
-
-
-	mpc_conf_config_type_t *mc = mpc_conf_config_type_init("myconf",
-	                                                       PARAM("process", &conf.process,MPC_CONF_INT, "Process Specific Messages can use this rail"),
-	                                                       PARAM("task", &conf.task,MPC_CONF_INT, "Task specific messages can use this raill"),
-	                                                       PARAM("emulatedrma", &conf.emulated_rma,MPC_CONF_INT, "CAN DO EMU"),
-	                                                       PARAM("common", &conf.common,MPC_CONF_INT, "Common MPI Messages"),
-	                                                       NULL);
-
-	mpc_conf_root_config_append("mpc", mc, "This is example MPC configuration");
-
-	mpc_conf_root_config_set("mpc.myconf.rail.tcp",MPC_CONF_INT, &val, 1);
-
-	mpc_conf_root_config_set("mpc.test",MPC_CONF_BOOL, &val, 1);
-
-	char user_prefix[512];
-	mpc_conf_user_prefix("mpc", user_prefix, 512);
-
-	mpc_conf_root_config_search_path("mpc", "/media/raid/phomes/jbbesnard//mpcsystem", user_prefix, "both");
-
-
-	mpc_conf_root_config_load_env_all();
-
-
-	mpc_conf_config_load("mpc");
-
-
-	mpc_conf_root_config_print(MPC_CONF_FORMAT_XML);
-	mpc_conf_root_config_save("./out.xml", MPC_CONF_FORMAT_XML);
-
-
-	mpc_conf_root_config_release_all();
-
-	return 0;
-}
-
-
-#endif

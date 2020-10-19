@@ -215,7 +215,7 @@ load_mpc_configuration()
 		export ASAN_OPTION="${ASAN_OPTION}:exitcode=0"
 	fi
 
-	config_files_vars="$(${MPC_BIN_DIR}/mpc_print_config --conf conf mpc.launch 2>/dev/null)"
+	config_files_vars="$(${MPC_BIN_DIR}/mpc_print_config --conf conf mpcframework.launch 2>/dev/null)"
 
 	# Load configuration variables
 	test "x$?" = "x0" && eval "${config_files_vars}"
@@ -226,36 +226,36 @@ load_mpc_configuration()
 
 	if [ "${CONF_VALID}" = "true" ]; then
 		# Default value related to --enable-smt
-		if test "x${MPC_LAUNCH_MPCRUN_SMT}" = "xtrue"; then
+		if test "x${MPCFRAMEWORK_LAUNCH_MPCRUN_SMT}" = "xtrue"; then
 			CONFIG_ENABLE_SMT="1"
 		else
 			CONFIG_ENABLE_SMT="0"
 		fi
 		# Default value related to -v/-vv/-vvv
-		CONFIG_MPC_VERBOSE="${MPC_LAUNCH_VERBOSITY}"
+		CONFIG_MPC_VERBOSE="${MPCFRAMEWORK_LAUNCH_VERBOSITY}"
 		# User launchers
-		CONFIG_USER_LAUNCHERS="${MPC_LAUNCH_MPCRUN_USER}"
+		CONFIG_USER_LAUNCHERS="${MPCFRAMEWORK_LAUNCH_MPCRUN_USER}"
 		# Autokill parameter
-		CONFIG_AUTOKILL="${MPC_LAUNCH_AUTOKILL}"
+		CONFIG_AUTOKILL="${MPCFRAMEWORK_LAUNCH_AUTOKILL}"
 		# Configure if ASLR is to be disabled
-		CONFIG_DISABLE_ASLR="${MPC_LAUNCH_MPCRUN_ASLR}"
+		CONFIG_DISABLE_ASLR="${MPCFRAMEWORK_LAUNCH_MPCRUN_ASLR}"
 		# Number of process
-		LAUNCHER_OPTION_PROCESS_NB="${MPC_LAUNCH_MPCRUN_PROCESS}"
+		LAUNCHER_OPTION_PROCESS_NB="${MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS}"
 		# Number of node
-		LAUNCHER_OPTION_NODE_NB="${MPC_LAUNCH_MPCRUN_NODE}"
+		LAUNCHER_OPTION_NODE_NB="${MPCFRAMEWORK_LAUNCH_MPCRUN_NODE}"
 		# Number of task
-		MPC_ARG_TASK_NB="${MPC_LAUNCH_MPCRUN_TASK}"
+		MPC_ARG_TASK_NB="${MPCFRAMEWORK_LAUNCH_MPCRUN_TASK}"
 		# Number of core
-		LAUNCHER_OPTION_CPU_NB="${MPC_LAUNCH_MPCRUN_CORE}"
+		LAUNCHER_OPTION_CPU_NB="${MPCFRAMEWORK_LAUNCH_MPCRUN_CORE}"
 		# Define the launcher to use
-		LAUNCHER_PLUGIN="${MPC_LAUNCH_MPCRUN_PLUGIN}"
+		LAUNCHER_PLUGIN="${MPCFRAMEWORK_LAUNCH_MPCRUN_PLUGIN}"
 
 		if test "$LAUNCHER_PLUGIN" = 'none'; then
 			LAUNCHER_PLUGIN='mpiexec'
 		fi
 	else
 		# Call again to display the error (usually link error)
-		${MPC_BIN_DIR}/mpc_print_config --conf conf mpc.launch
+		${MPC_BIN_DIR}/mpc_print_config --conf conf mpcframework.launch
 		mpcrun_error "Error while loading MPC configuration files."
 	fi
 

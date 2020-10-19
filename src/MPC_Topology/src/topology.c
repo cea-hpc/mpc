@@ -74,7 +74,7 @@ void __init_topology_config(void)
 																  NULL);
 
 
-	mpc_conf_root_config_append("mpc", topo_conf, "MPC Topology Configuration");
+	mpc_conf_root_config_append("mpcframework", topo_conf, "MPC Topology Configuration");
 }
 
 
@@ -124,7 +124,7 @@ void _mpc_topology_map_and_restrict_by_cpuset(hwloc_topology_t target_topology,
 			           " a different number of processor than"
 					   " requested: %d in the list, %d requested",
 					   sum,
-					   processor_count );
+					   mpc_common_get_flags()->processor_number );
 			mpc_common_debug_abort();
 		}
 

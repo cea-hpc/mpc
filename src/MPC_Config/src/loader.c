@@ -76,14 +76,14 @@ mpc_conf_config_type_t *mpc_conf_config_loader_paths(char *conf_name,
 	*acan_create = strdup(can_create);
 
 	mpc_conf_config_type_t *type = mpc_conf_config_type_init(conf_name, PARAM("can_create",
-	                                                                          acan_create,
-	                                                                         MPC_CONF_STRING,
-	                                                                          "Which config is allowed to create elements"),
-																		PARAM("system",
+	                                                                        acan_create,
+	                                                                        MPC_CONF_STRING,
+	                                                                        "Which config is allowed to create elements"),
+																			PARAM("system",
 																			asystem_prefix,
 																			MPC_CONF_STRING,
 																			"System level configuration prefix/file"),
-																		PARAM("user",
+																			PARAM("user",
 																			auser_prefix,
 																			MPC_CONF_STRING,
 																			"User level configuration prefix/file"),
@@ -554,11 +554,11 @@ int mpc_conf_config_load(char *conf_name)
 		return 1;
 	}
 
-	const char *srights = (const char *)erights->addr;
+	const char *srights = *((const char **)erights->addr);
 	mpc_conf_config_loader_rights_t rights = mpc_conf_config_loader_rights_parse(srights);
 
-	char *system = ( (char *)esystem->addr);
-	char *user   = ( (char *)euser->addr);
+	char *system = *(( (char **)esystem->addr));
+	char *user   = *(( (char **)euser->addr));
 
 	if(rights == MPC_CONF_MOD_ERROR)
 	{

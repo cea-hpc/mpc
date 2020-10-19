@@ -71,6 +71,7 @@
  */
 struct mpc_launch_config{
 	int bt_sig_enabled; /** Produce backtraces on error */
+	int debug_callbacks; /** Print callbacks debug information */
 	int banner_enabled; /** Should MPC's banner be dispayed */
 	int autokill_timer; /** What is the kill timer in seconds (0 means none) */
 	char * mpcrun_launcher; /** What is the default launcher for MPCRUN */
@@ -153,7 +154,7 @@ static inline void __set_thread_engine(void)
 
 
 	/* Once the thread engine is set its config must be locked as it cannot change */
-	mpc_conf_config_type_elem_t *thconf = mpc_conf_root_config_get("mpc.launch.default.thread");
+	mpc_conf_config_type_elem_t *thconf = mpc_conf_root_config_get("mpcframework.launch.default.thread");
 
 	if(thconf)
 	{
@@ -509,6 +510,7 @@ static inline void __set_default_values()
 
 	/* Set default configuration */
 	__launch_config.bt_sig_enabled = 1;
+	__launch_config.debug_callbacks = 0;
 	__launch_config.banner_enabled = 1;
 	__launch_config.autokill_timer = 0;
 	__launch_config.mpcrun_launcher = strdup("none");
@@ -544,13 +546,19 @@ static inline void __register_config(void)
 {
 	__set_default_values();
 
-	mpc_conf_root_config_init("mpc");
+	mpc_conf_root_config_init("mpcframework");
 	
 	char user_prefix[512];
-	mpc_conf_user_prefix("mpc", user_prefix, 512);
+	mpc_conf_user_prefix("mpcframework", user_prefix, 512);
 	
-	mpc_conf_root_config_search_path("mpc", MPC_PREFIX_PATH"/etc/mpcframework/", user_prefix, "both");
+	mpc_conf_root_config_search_path("mpcframework", MPC_PREFIX_PATH"/etc/mpcframework/", user_prefix, "both");
 
+	/* Register debug config */
+	mpc_conf_config_type_t *debug = mpc_conf_config_type_init("debug",	
+	                                                       PARAM("backtrace", &__launch_config.bt_sig_enabled ,MPC_CONF_BOOL, "Produce backtraces on error"),
+														   PARAM("verbosity", &mpc_common_get_flags()->verbosity, MPC_CONF_INT, "Should debug messages be displayed (1-3)"),
+														   PARAM("callbacks", &__launch_config.debug_callbacks, MPC_CONF_BOOL, "Print callbacks debug information"),
+														   NULL);
 
 	/* Register Launch Config */
 	mpc_conf_config_type_t *mpcrun = mpc_conf_config_type_init("mpcrun",
@@ -569,14 +577,13 @@ static inline void __register_config(void)
 
 	mpc_conf_config_type_t *mc = mpc_conf_config_type_init("launch",
 	                                                       PARAM("launcher", &mpc_common_get_flags()->launcher, MPC_CONF_STRING, "Default launcher to be used (SLURM, HYDRA, PMIX)"),
-	                                                       PARAM("backtrace", &__launch_config.bt_sig_enabled ,MPC_CONF_BOOL, "Produce backtraces on error"),
 	                                                       PARAM("banner", &__launch_config.banner_enabled, MPC_CONF_BOOL, "Should MPC's banner be dispayed"),
 														   PARAM("autokill", &__launch_config.autokill_timer, MPC_CONF_INT, "What is the kill timer in seconds (0 means none)"),
-														   PARAM("verbosity", &mpc_common_get_flags()->verbosity, MPC_CONF_INT, "Should debug messages be displayed (1-3)"),
+														   PARAM("debug", debug, MPC_CONF_TYPE, "MPC debug parameters"),
 	                                                       PARAM("mpcrun", mpcrun, MPC_CONF_TYPE, "Default values for MPCRUN"),
 	                                                       NULL);
 
-	mpc_conf_root_config_append("mpc", mc, "MPC Laucher Configuration");
+	mpc_conf_root_config_append("mpcframework", mc, "MPC Laucher Configuration");
 
 	/* Trigger all other configs */
 	mpc_common_init_trigger("Config Sources");
@@ -706,7 +713,11 @@ void mpc_launch_init_runtime()
 
 	mpc_common_init_trigger("Base Runtime Init with Config");
 
-	mpc_common_init_print();
+	if( __launch_config.debug_callbacks )
+	{
+		mpc_common_init_print();
+	}
+
 	mpc_common_init_trigger("Base Runtime Init Done");
 	mpc_launch_print_banner(0 /* not in restart mode */);
 }
