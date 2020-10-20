@@ -44,10 +44,11 @@
 #include <mpc_topology.h>
 
 #include "communicator.h"
-
 #ifdef MPC_USE_INFINIBAND
 #include <sctk_ib_device.h>
 #endif
+
+#include "lowcomm_config.h"
 
 /********************************************************************/
 /*Structures                                                        */
@@ -3383,6 +3384,9 @@ void mpc_lowcomm_registration()
 
 	mpc_common_init_callback_register("VP Thread End", "MPC Message Passing Release", __lowcomm_release_per_task, 0);
 
+	mpc_common_init_callback_register("Config Sources", "MPC Lowcomm Config Registration", _mpc_lowcomm_config_register, 128);
+
+	mpc_common_init_callback_register("Config Checks", "MPC Lowcomm Config Validation", _mpc_lowcomm_config_validate, 128);
 #ifdef MPC_USE_DMTCP
 	mpc_common_init_callback_register("Base Runtime Init with Config", "Initialize Fault-Tolerance", __initialize_ft, 77);
 #endif

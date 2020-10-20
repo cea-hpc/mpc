@@ -593,6 +593,9 @@ static inline void __register_config(void)
 
 	/* Now load environment modifiers */
 	mpc_conf_root_config_load_env_all();
+
+	/* Trigger checks on the loaded config */
+	mpc_common_init_trigger("Config Checks");
 }
 
 

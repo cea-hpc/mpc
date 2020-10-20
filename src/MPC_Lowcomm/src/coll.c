@@ -38,22 +38,11 @@
 #include "mpcposix/pthread.h"
 #endif
 
+#include "lowcomm_config.h"
+
 /************************************************************************/
 /*collective communication implementation                               */
 /************************************************************************/
-
-/* Overall Collective Configuration */
-
-static int barrier_arity;
-
-static int broadcast_arity_max;
-static int broadcast_max_size;
-static int broadcast_check_threshold;
-
-static int allreduce_arity_max;
-static int allreduce_max_size;
-static int allreduce_check_threshold;
-static unsigned int allreduce_max_slot;
 
 /************************************
  * SIMPLE COLLECTIVE IMPLEMENTATION *
@@ -351,6 +340,7 @@ static void _mpc_coll_message_table_init( _mpc_coll_messages_table_t *tab )
 static void _mpc_coll_opt_barrier( const mpc_lowcomm_communicator_t communicator, __UNUSED__ struct mpc_lowcomm_coll_s *tmp )
 {
 	if ( !mpc_lowcomm_communicator_is_intercomm( communicator ) )
+
 	{
 		int myself;
 		int total;
@@ -475,7 +465,6 @@ static void _mpc_coll_opt_barrier( const mpc_lowcomm_communicator_t communicator
 
 void _mpc_coll_opt_barrier_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
-	barrier_arity = sctk_runtime_config_get()->modules.inter_thread_comm.barrier_arity;
 	tmp->barrier_func = _mpc_coll_opt_barrier;
 }
 
@@ -485,6 +474,11 @@ void mpc_lowcomm_bcast_opt_messages( void *buffer, const size_t size,
                                 const int root, const mpc_lowcomm_communicator_t communicator,
                                 struct mpc_lowcomm_coll_s *tmp )
 {
+	int check_threshold =  _mpc_lowcomm_coll_conf_get()->bcast_check_threshold;
+	size_t broadcast_max_size = _mpc_lowcomm_coll_conf_get()->bcast_max_size;
+	int broadcast_arity_max = _mpc_lowcomm_coll_conf_get()->bcast_max_arity;
+	size_t broadcast_check_threshold = _mpc_lowcomm_coll_conf_get()->bcast_check_threshold;
+
 	if ( size == 0 )
 	{
 		_mpc_coll_opt_barrier( communicator, tmp );
@@ -540,7 +534,8 @@ void mpc_lowcomm_bcast_opt_messages( void *buffer, const size_t size,
 					_mpc_coll_message_recv(
 					    communicator, ( dest + root ) % total, myself, root,
 					    buffer, size, MPC_LOWCOMM_BROADCAST_MESSAGE,
-					    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
+					    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 
+						( size < (size_t)broadcast_check_threshold ) );
 					_mpc_coll_messages_table_wait( &table );
 					break;
 				}
@@ -564,7 +559,8 @@ void mpc_lowcomm_bcast_opt_messages( void *buffer, const size_t size,
 						    ( dest + root + ( j * ( i / BROADCAST_ARRITY ) ) ) %
 						    total,
 						    root, buffer, size, MPC_LOWCOMM_BROADCAST_MESSAGE,
-						    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 0 );
+						    _mpc_coll_message_table_get_item( &table, OPT_COLL_MAX_ASYNC ), 
+							( size < (size_t)broadcast_check_threshold ) );
 					}
 				}
 			}
@@ -576,9 +572,6 @@ void mpc_lowcomm_bcast_opt_messages( void *buffer, const size_t size,
 
 void _mpc_coll_opt_bcast_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
-	broadcast_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_arity_max;
-	broadcast_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_max_size;
-	broadcast_check_threshold = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_check_threshold;
 	tmp->broadcast_func = mpc_lowcomm_bcast_opt_messages;
 }
 
@@ -593,6 +586,9 @@ static void _mpc_coll_opt_allreduce_intern( const void *buffer_in, void *buffer_
         const mpc_lowcomm_datatype_t data_type,
         struct mpc_lowcomm_coll_s *tmp )
 {
+	int allreduce_arity_max = _mpc_lowcomm_coll_conf_get()->allreduce_max_arity;
+	size_t allreduce_max_size = _mpc_lowcomm_coll_conf_get()->allreduce_max_size;
+
 	if ( elem_number == 0 )
 	{
 		_mpc_coll_opt_barrier( communicator, tmp );
@@ -761,9 +757,6 @@ static void _mpc_coll_opt_allreduce( const void *buffer_in, void *buffer_out,
 
 void _mpc_coll_opt_allreduce_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
-	allreduce_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_arity_max;
-	allreduce_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_max_size;
-	allreduce_check_threshold = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_check_threshold;
 	tmp->allreduce_func = _mpc_coll_opt_allreduce;
 }
 
@@ -798,6 +791,8 @@ static int int_cmp( const void *a, const void *b )
 static void _mpc_coll_hetero_barrier_inter( const mpc_lowcomm_communicator_t communicator,
         __UNUSED__ struct mpc_lowcomm_coll_s *tmp )
 {
+	int barrier_arity = _mpc_lowcomm_coll_conf_get()->barrier_arity;
+
 	int myself;
 	int *process_array;
 	int total = mpc_lowcomm_communicator_get_process_count( communicator );
@@ -942,7 +937,6 @@ static void _mpc_coll_hetero_barrier( const mpc_lowcomm_communicator_t communica
 
 void _mpc_coll_hetero_barrier_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
-	barrier_arity = sctk_runtime_config_get()->modules.inter_thread_comm.barrier_arity;
 	tmp->barrier_func = _mpc_coll_hetero_barrier;
 	_mpc_coll_hetero_barrier_t *barrier;
 	barrier = &tmp->barrier.barrier_hetero_messages;
@@ -955,6 +949,10 @@ void _mpc_coll_hetero_barrier_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ m
 void _mpc_coll_hetero_bcast_inter( void *buffer, const size_t size,
                                    const int root_process, const mpc_lowcomm_communicator_t communicator )
 {
+	int broadcast_check_threshold = _mpc_lowcomm_coll_conf_get()->bcast_check_threshold;
+	size_t broadcast_max_size = _mpc_lowcomm_coll_conf_get()->bcast_max_size;
+	int broadcast_arity_max = _mpc_lowcomm_coll_conf_get()->bcast_max_arity;
+
 	/* If only one process involved, we return */
 	int total = mpc_lowcomm_communicator_get_process_count( communicator );
 
@@ -1024,7 +1022,7 @@ void _mpc_coll_hetero_bcast_inter( void *buffer, const size_t size,
 					    communicator, process_array[( dest + root ) % total],
 					    process_array[myself], root_process, buffer, size,
 					    specific_tag, _mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ),
-					    1 );
+					    	( size < (size_t)broadcast_check_threshold ) );
 					_mpc_coll_messages_table_wait( &table );
 					break;
 				}
@@ -1135,9 +1133,6 @@ void _mpc_coll_hetero_bcast( void *buffer, const size_t size,
 
 void _mpc_coll_hetero_bcast_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
-	broadcast_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_arity_max;
-	broadcast_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_max_size;
-	broadcast_check_threshold = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_check_threshold;
 	tmp->broadcast_func = _mpc_coll_hetero_bcast;
 	_mpc_coll_hetero_bcast_t *bcast;
 	bcast = &tmp->broadcast.broadcast_hetero_messages;
@@ -1157,6 +1152,11 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
         const mpc_lowcomm_datatype_t data_type,
         __UNUSED__ struct mpc_lowcomm_coll_s *tmp )
 {
+	int allreduce_arity_max = _mpc_lowcomm_coll_conf_get()->allreduce_max_arity;
+	size_t allreduce_max_size = _mpc_lowcomm_coll_conf_get()->allreduce_max_size;
+	size_t allreduce_check_threshold = _mpc_lowcomm_coll_conf_get()->allreduce_check_threshold;
+
+
 	int ALLREDUCE_ARRITY = 2;
 	int total_max;
 	_mpc_coll_messages_table_t table;
@@ -1240,7 +1240,7 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
 					    process_array[src + ( j * ( i / ALLREDUCE_ARRITY ) )],
 					    process_array[myself], 0, buffer_table[j - 1], size,
 					    specific_tag, _mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ),
-					    0 );
+					    (size < allreduce_check_threshold) );
 				}
 			}
 
@@ -1267,12 +1267,12 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
 				_mpc_coll_message_send(
 				    communicator, process_array[myself], process_array[dest], 0,
 				    buffer_tmp, size, specific_tag,
-				    _mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ), 1 );
+				    _mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ), (size < allreduce_check_threshold) );
 				mpc_common_nodebug( "Leaf Recv from %d", dest );
 				_mpc_coll_message_recv(
 				    communicator, process_array[dest], process_array[myself], 1,
 				    buffer_out, size, specific_tag,
-				    _mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ),  1 );
+				    _mpc_coll_message_table_get_item( &table, HETERO_COLL_MAX_ASYNC ),  (size < allreduce_check_threshold) );
 				_mpc_coll_messages_table_wait( &table );
 				break;
 			}
@@ -1423,9 +1423,6 @@ static void _mpc_coll_hetero_allreduce( const void *buffer_in, void *buffer_out,
 
 void _mpc_coll_hetero_allreduce_init( struct mpc_lowcomm_coll_s *tmp, mpc_lowcomm_communicator_t id )
 {
-	allreduce_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_arity_max;
-	allreduce_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_max_size;
-	allreduce_check_threshold = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_check_threshold;
 	tmp->allreduce_func = _mpc_coll_hetero_allreduce;
 	_mpc_coll_hetero_allreduce_t *allreduce;
 	int nb_tasks_in_node;
@@ -1566,7 +1563,6 @@ static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communica
 
 void _mpc_coll_noalloc_barrier_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
-	barrier_arity = sctk_runtime_config_get()->modules.inter_thread_comm.barrier_arity;
 	tmp->barrier_func = _mpc_coll_noalloc_barrier;
 }
 
@@ -1576,6 +1572,11 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
                               const int root, const mpc_lowcomm_communicator_t communicator,
                               struct mpc_lowcomm_coll_s *tmp )
 {
+	int broadcast_check_threshold = _mpc_lowcomm_coll_conf_get()->bcast_check_threshold;
+	size_t broadcast_max_size = _mpc_lowcomm_coll_conf_get()->bcast_max_size;
+	int broadcast_arity_max = _mpc_lowcomm_coll_conf_get()->bcast_max_arity;
+
+
 	if ( size == 0 )
 	{
 		_mpc_coll_noalloc_barrier( communicator, tmp );
@@ -1632,7 +1633,7 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 					    communicator, ( dest + root ) % total, myself, root,
 					    buffer, size, MPC_LOWCOMM_BROADCAST_MESSAGE,
 					    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ),
-					    0 );
+					    	( size < (size_t)broadcast_check_threshold ) );
 					_mpc_coll_messages_table_wait( &table );
 					break;
 				}
@@ -1656,7 +1657,7 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 						    ( dest + root + ( j * ( i / BROADCAST_ARRITY ) ) ) %
 						    total,
 						    root, buffer, size, MPC_LOWCOMM_BROADCAST_MESSAGE,
-						    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ), 0 );
+						    _mpc_coll_message_table_get_item( &table, OPT_NOALLOC_MAX_ASYNC ), 	( size < (size_t)broadcast_check_threshold ) );
 					}
 				}
 			}
@@ -1668,9 +1669,6 @@ void _mpc_coll_noalloc_bcast( void *buffer, const size_t size,
 
 void _mpc_coll_noalloc_bcast_init( struct mpc_lowcomm_coll_s *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
-	broadcast_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_arity_max;
-	broadcast_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_max_size;
-	broadcast_check_threshold = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_check_threshold;
 	tmp->broadcast_func = _mpc_coll_noalloc_bcast;
 }
 
@@ -1686,6 +1684,9 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
         const mpc_lowcomm_communicator_t communicator,
         const mpc_lowcomm_datatype_t data_type )
 {
+	int allreduce_arity_max = _mpc_lowcomm_coll_conf_get()->allreduce_max_arity;
+	size_t allreduce_max_size = _mpc_lowcomm_coll_conf_get()->allreduce_max_size;
+
 	int myself;
 	int total;
 	size_t size;
@@ -1879,6 +1880,9 @@ static void _mpc_coll_noalloc_allreduce( const void *buffer_in, void *buffer_out
         const mpc_lowcomm_datatype_t data_type,
         struct mpc_lowcomm_coll_s *tmp )
 {
+	int allreduce_max_slot = _mpc_lowcomm_coll_conf_get()->allreduce_max_slots;
+
+
 	if ( elem_number == 0 )
 	{
 		_mpc_coll_noalloc_barrier( communicator, tmp );
@@ -1930,17 +1934,9 @@ static void _mpc_coll_noalloc_allreduce( const void *buffer_in, void *buffer_out
 	}
 }
 
-void _mpc_coll_noalloc_allreduce_allreduce_max_slot( int t )
-{
-	allreduce_max_slot = t;
-}
 
 void _mpc_coll_noalloc_allreduce_init( struct mpc_lowcomm_coll_s __UNUSED__ *tmp, __UNUSED__ mpc_lowcomm_communicator_t id )
 {
-	allreduce_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_arity_max;
-	allreduce_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_max_size;
-	allreduce_check_threshold = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_check_threshold;
-	allreduce_max_slot = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_max_slot;
 	tmp->allreduce_func = _mpc_coll_noalloc_allreduce;
 }
 
@@ -2365,8 +2361,6 @@ int mpc_lowcomm_allgather(void *sendbuf,  void *recvbuf, size_t data_size, mpc_l
 /************************************************************************/
 /*INIT                                                                  */
 /************************************************************************/
-
-void ( *mpc_lowcomm_coll_init_hook )( mpc_lowcomm_communicator_t comm ) = NULL; //_mpc_coll_init_opt;
 
 /*Init data structures used for task i*/
 void _mpc_coll_init( mpc_lowcomm_communicator_t comm,

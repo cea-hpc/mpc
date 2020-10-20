@@ -225,8 +225,6 @@ void _mpc_coll_init ( mpc_lowcomm_communicator_t id,
                       void ( *broadcast ) ( struct mpc_lowcomm_coll_s *, mpc_lowcomm_communicator_t id ),
                       void ( *allreduce ) ( struct mpc_lowcomm_coll_s *, mpc_lowcomm_communicator_t id ) );
 
-extern void ( *mpc_lowcomm_coll_init_hook ) ( mpc_lowcomm_communicator_t id );
-
 /**********************************************
  * GENERIC COLLECTIVE COMMUNICATION INTERFACE *
  **********************************************/
