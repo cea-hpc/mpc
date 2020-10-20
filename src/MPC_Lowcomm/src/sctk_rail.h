@@ -24,7 +24,6 @@
 
 #include <comm.h>
 #include <mpc_config.h>
-#include <mpc_runtime_config.h>
 #include <mpc_topology_device.h>
 #include "sctk_topological_polling.h"
 #include "mpc_lowcomm_types.h"
@@ -36,6 +35,8 @@ typedef struct sctk_endpoint_s sctk_endpoint_t;
 
 /* Driver definitions */
 #include <sctk_drivers.h>
+
+#include "lowcomm_config.h"
 
 /************************************************************************/
 /* Rail Info                                                            */

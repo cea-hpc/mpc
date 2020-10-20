@@ -84,6 +84,39 @@ static inline hwloc_obj_type_t sctk_topological_polling_trigget_to_hwloc_type( s
 	return HWLOC_OBJ_MACHINE;
 }
 
+sctk_topological_polling_set_t sctk_rail_convert_polling_set_from_string( char * poll )
+{
+	if(!strcmp("none", poll))
+	{
+			return SCTK_POLL_NONE;
+
+	}else if(!strcmp("pu", poll))
+	{
+			return SCTK_POLL_PU;
+		
+	}else if(!strcmp("core", poll))
+	{
+			return SCTK_POLL_CORE;
+
+	}else if(!strcmp("socket", poll))
+	{
+			return SCTK_POLL_SOCKET;
+
+	}else if(!strcmp("numa", poll))
+	{
+			return SCTK_POLL_NUMA;
+
+	}else if(!strcmp("machine", poll))
+	{
+			return SCTK_POLL_MACHINE;
+	}
+	else
+	{
+		bad_parameter("Could not convert polling level supported values are (none, pu, core, socket, numa, machine) got '%s'", poll);
+	}
+
+	return SCTK_POLL_MACHINE;
+}
 
 sctk_topological_polling_set_t sctk_rail_convert_polling_set_from_config( enum rail_topological_polling_level poll )
 {

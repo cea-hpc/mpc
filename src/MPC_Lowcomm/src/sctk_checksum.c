@@ -23,9 +23,13 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <mpc_runtime_config.h>
+#include <mpc_config.h>
 #include "sctk_checksum.h"
+
 #ifdef SCTK_USE_CHECKSUM
+
+#include "lowcomm_config.h"
+
 #include "mpc_common_helper.h"
 #include <zlib.h>
 
@@ -228,7 +232,8 @@ void sctk_checksum_init()
 	fprintf ( stderr, MPC_COLOR_RED_BOLD ( WARNING: inter - node message checking enabled! ) "\n" );
 	}
 
-	checksum_enabled = sctk_runtime_config_get()->modules.low_level_comm.checksum;
+	checksum_enabled = _mpc_lowcomm_conf_get()->checksum;
+;
 }
 #else
 void sctk_checksum_init()

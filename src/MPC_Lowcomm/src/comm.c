@@ -3346,8 +3346,6 @@ static void __initialize_drivers()
 	}
 
 	mpc_lowcomm_rdma_window_init_ht();
-
-	mpc_lowcomm_coll_init_hook = *( void ** )(&sctk_runtime_config_get()->modules.inter_thread_comm.collectives_init_hook.value);
   
 	_mpc_lowcomm_communicator_init();
 

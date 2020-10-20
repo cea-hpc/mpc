@@ -21,7 +21,6 @@
 /* ######################################################################## */
 #include "sctk_multirail.h"
 #include "sctk_low_level_comm.h"
-#include "sctk_polling.h"
 
 #include <stdlib.h>
 

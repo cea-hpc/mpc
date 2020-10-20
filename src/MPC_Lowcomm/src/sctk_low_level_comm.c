@@ -24,7 +24,6 @@
 #include <mpc_launch_pmi.h>
 #include <string.h>
 #include "sctk_checksum.h"
-#include "mpc_runtime_config.h"
 #include "sctk_control_messages.h"
 #include <mpc_launch.h>
 
@@ -43,6 +42,9 @@
 #ifdef MPC_USE_DMTCP
 #include "sctk_ft_iface.h"
 #endif
+
+#include "lowcomm_config.h"
+
 
 /************************************************************************/
 /* Network Hooks                                                        */
@@ -322,7 +324,7 @@ void sctk_network_notify_new_communicator_set( void (*func)(int, size_t))
 */
 static inline  const struct sctk_runtime_config_struct_networks *sctk_net_get_config()
 {
-	return ( struct sctk_runtime_config_struct_networks * ) &sctk_runtime_config_get()->networks;
+	return _mpc_lowcomm_net_config_get();
 }
 
 /** \brief Get a pointer to a given CLI configuration
@@ -628,7 +630,7 @@ void sctk_net_init_driver ( char *name )
 	struct sctk_runtime_config_struct_net_cli_option *cli_option = NULL;
 
 	/* Retrieve default network from config */
-	char *option_name = sctk_runtime_config_get()->modules.low_level_comm.network_mode;
+	char *option_name = _mpc_lowcomm_net_config_get()->cli_default_network;
 
 	/* If we have a network name from the command line (through sctk_launch.c)  */
 	if ( name != NULL )

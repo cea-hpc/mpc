@@ -23,9 +23,11 @@
 #define SCTK_TOPOLOGICAL_POLLING
 
 #include "mpc_common_debug.h"
+
 #include "mpc_common_spinlock.h"
 #include <mpc_common_asm.h>
-#include <mpc_config_struct.h>
+
+#include "lowcomm_config.h"
 
 /************************************************************************/
 /* ENUM DEFINITION                                                      */
@@ -87,6 +89,7 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
                                          sctk_topological_polling_set_t range,
                                          int root_pu );
 
+sctk_topological_polling_set_t sctk_rail_convert_polling_set_from_string( char * poll );
 sctk_topological_polling_set_t sctk_rail_convert_polling_set_from_config( enum rail_topological_polling_level poll );
 
 void sctk_topological_polling_tree_poll( struct sctk_topological_polling_tree * tree,  void (*func)( void *), void * arg );
