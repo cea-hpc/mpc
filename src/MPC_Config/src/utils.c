@@ -236,7 +236,7 @@ static inline int __get_ftype(char * path)
     {
 		_utils_verbose_output(3, "stat error for %s\n", path);
 
-        perror("stat");
+        //perror("stat");
         return -1;
     }
 
@@ -304,7 +304,7 @@ ssize_t _util_file_size(char * path)
     {
 		_utils_verbose_output(3, "stat error for %s\n", path);
 
-        perror("stat");
+        //perror("stat");
         return -1;
     }
 

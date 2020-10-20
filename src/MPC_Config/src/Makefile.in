@@ -138,7 +138,7 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libmpcconfig_la_DEPENDENCIES =
-am_libmpcconfig_la_OBJECTS = loader.lo metaconf_types.lo mpc_conf.lo \
+am_libmpcconfig_la_OBJECTS = loader.lo conf_types.lo mpc_conf.lo \
 	utils.lo
 libmpcconfig_la_OBJECTS = $(am_libmpcconfig_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -503,7 +503,7 @@ top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Config/include/
 mpc_headerdir = $(pkgincludedir)
 lib_LTLIBRARIES = libmpcconfig.la
-libmpcconfig_la_SOURCES = loader.c  metaconf_types.c  mpc_conf.c  utils.c
+libmpcconfig_la_SOURCES = loader.c  conf_types.c  mpc_conf.c  utils.c
 libmpcconfig_la_LIBADD = 
 all: all-am
 
@@ -583,8 +583,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/conf_types.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/loader.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/metaconf_types.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_conf.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Plo@am__quote@
 
