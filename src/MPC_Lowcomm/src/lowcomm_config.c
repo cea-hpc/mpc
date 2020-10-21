@@ -243,47 +243,15 @@ static inline void ___mpc_lowcomm_cli_option_validate(mpc_conf_config_type_elem_
     int i;
     for( i = 0 ; i < toptions->elem_count; i++)
     {
-        if(toptions->elems[i]->type != MPC_CONF_STRING)
+        mpc_conf_config_type_elem_t *elem = mpc_conf_config_type_nth(toptions, i);
+
+        if(elem->type != MPC_CONF_STRING)
         {
                 mpc_conf_config_type_elem_print(opt, MPC_CONF_FORMAT_XML);
-                bad_parameter("mpcframework.lowcomm.networking.cli.options.%s.%s erroneous should be MPC_CONF_STRING not %s", opt->name, toptions->elems[i]->name, mpc_conf_type_name(toptions->elems[i]->type));
+                bad_parameter("mpcframework.lowcomm.networking.cli.options.%s.%s erroneous should be MPC_CONF_STRING not %s", opt->name, elem->name, mpc_conf_type_name(elem->type));
         }
     }
 }
-
-
-static inline void ___mpc_lowcomm_cli_conf_populate(mpc_conf_config_type_t * options)
-{
-    /* The role of this function is to populate the static representation of the configuration tree */
-
-    __net_config.cli_options_size = options->elem_count;
-
-    __net_config.cli_options = malloc(__net_config.cli_options_size * sizeof(struct sctk_runtime_config_struct_net_cli_option));
-
-    assume(__net_config.cli_options != NULL);
-
-    int i;
-
-    for( i = 0 ; i < __net_config.cli_options_size ; i++)
-    {
-        struct sctk_runtime_config_struct_net_cli_option *topt = &__net_config.cli_options[i];
-
-        topt->name = strdup(options->elems[i]->name);
-
-        mpc_conf_config_type_t * trails = mpc_conf_config_type_elem_get_inner(options->elems[i]);
-
-        topt->rails_size = trails->elem_count;
-        topt->rails = malloc( topt->rails_size * sizeof(char *));
-
-        int j;
-
-        for( j = 0 ; j < topt->rails_size ; j++)
-        {
-            topt->rails[i] = strdup(*((char **)trails->elems[j]->addr));
-        }
-    }
-}
-
 
 
 static inline void ___mpc_lowcomm_cli_conf_validate(void)
@@ -293,7 +261,7 @@ static inline void ___mpc_lowcomm_cli_conf_validate(void)
     assume(def != NULL);
 
     char path_to_default[128];
-    snprintf(path_to_default, 128, "mpcframework.lowcomm.networking.cli.options.%s", *((char **)def->addr) );
+    snprintf(path_to_default, 128, "mpcframework.lowcomm.networking.cli.options.%s", mpc_conf_type_elem_get_as_string(def) );
 
     mpc_conf_config_type_elem_t *default_cli = mpc_conf_root_config_get(path_to_default);
     mpc_conf_config_type_elem_t *options = mpc_conf_root_config_get("mpcframework.lowcomm.networking.cli.options");
@@ -306,7 +274,7 @@ static inline void ___mpc_lowcomm_cli_conf_validate(void)
         }
 
 
-        bad_parameter("Could not locate mpcframework.lowcomm.networking.cli.default='%s' in mpcframework.lowcomm.networking.cli.options", *((char **)def->addr));
+        bad_parameter("Could not locate mpcframework.lowcomm.networking.cli.default='%s' in mpcframework.lowcomm.networking.cli.options", mpc_conf_type_elem_get_as_string(def));
     }
 
 
@@ -316,13 +284,12 @@ static inline void ___mpc_lowcomm_cli_conf_validate(void)
 
     for( i = 0 ; i < toptions->elem_count; i++)
     {
-        ___mpc_lowcomm_cli_option_validate(toptions->elems[i]);
+        ___mpc_lowcomm_cli_option_validate(mpc_conf_config_type_nth(toptions, i));
     }
 
     /*TODO: check rails actually exist */
 
 
-    ___mpc_lowcomm_cli_conf_populate(toptions);
 }
 
 

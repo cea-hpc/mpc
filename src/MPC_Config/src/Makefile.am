@@ -21,7 +21,7 @@
 #   - JAEGER Julien julien.jaeger@cea.fr                               #
 #                                                                      #
 ########################################################################
-AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Config/include/
+AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Config/include/ -I$(abs_top_srcdir)/src/MPC_Common/include/
 mpc_headerdir=$(pkgincludedir)
 
 lib_LTLIBRARIES = libmpcconfig.la

@@ -331,21 +331,18 @@ static inline  const struct sctk_runtime_config_struct_networks *sctk_net_get_co
 *   \param name Name of the requested configuration
 *   \return The configuration or NULL
 */
-static inline struct sctk_runtime_config_struct_net_cli_option *sctk_get_net_config_by_name ( char *name )
+static inline mpc_conf_config_type_t *__conf_get_cli_by_name ( char *name )
 {
-	int k = 0;
-	struct sctk_runtime_config_struct_net_cli_option *ret = NULL;
+	char path[512];
+	snprintf(path, 512, "mpcframework.lowcomm.networking.cli.options.%s", name);
+	mpc_conf_config_type_elem_t *elem = mpc_conf_root_config_get(path);
 
-	for ( k = 0; k < sctk_net_get_config()->cli_options_size; ++k )
+	if(!elem)
 	{
-		if ( strcmp ( name, sctk_net_get_config()->cli_options[k].name ) == 0 )
-		{
-			ret = &sctk_net_get_config()->cli_options[k];
-			break;
-		}
+		mpc_common_debug_error("Could not retrieve network cli option %s\n", path);
 	}
 
-	return ret;
+	return mpc_conf_config_type_elem_get_inner(elem);
 }
 
 /** \brief Get a pointer to a given rail
@@ -399,7 +396,7 @@ struct sctk_runtime_config_struct_net_driver_config *sctk_get_driver_config_by_n
 /* Network INIT                                                         */
 /************************************************************************/
 
-int sctk_unfold_rails( struct sctk_runtime_config_struct_net_cli_option *cli_option )
+static inline int __unfold_rails( mpc_conf_config_type_t *cli_option )
 {
 	/* Now compute the actual total number of rails knowing that
 	 * some rails might contain subrails */
@@ -407,10 +404,12 @@ int sctk_unfold_rails( struct sctk_runtime_config_struct_net_cli_option *cli_opt
 	int k;
 	int total_rail_nb = 0;
 	 
-	for ( k = 0; k < cli_option->rails_size; ++k )
+	for ( k = 0; k < mpc_conf_config_type_count(cli_option); ++k )
 	{
+		mpc_conf_config_type_elem_t *erail = mpc_conf_config_type_nth(cli_option, k);
+
 		/* Get the rail */
-		struct sctk_runtime_config_struct_net_rail *rail = sctk_get_rail_config_by_name ( cli_option->rails[k] );
+		struct sctk_runtime_config_struct_net_rail *rail = sctk_get_rail_config_by_name ( mpc_conf_type_elem_get_as_string(erail) );
 		
 		if(!rail)
 		{
@@ -625,9 +624,6 @@ void sctk_net_init_driver ( char *name )
 	/* Init Polling for control messages */
 	sctk_control_message_init();
 
-	int k;
-
-	struct sctk_runtime_config_struct_net_cli_option *cli_option = NULL;
 
 	/* Retrieve default network from config */
 	char *option_name = _mpc_lowcomm_net_config_get()->cli_default_network;
@@ -640,21 +636,20 @@ void sctk_net_init_driver ( char *name )
 
 	/* Here we retrieve the network configuration from the network list
 	   according to its name */
+
 	mpc_common_nodebug ( "Run with driver %s", option_name );
 
-	cli_option = sctk_get_net_config_by_name ( option_name );
+	mpc_conf_config_type_t* cli_option = __conf_get_cli_by_name ( option_name );
 
 	if ( cli_option == NULL )
 	{
 		/* We did not find this name in the network configurations */
-		mpc_common_debug_error ( "No configuration found for the network '%s'. Please check you '-net=' argument"
-		             " and your configuration file", option_name );
-		mpc_common_debug_abort();
+		bad_parameter( "No configuration found for the network '%s'. Please check you '-net=' argument"
+		               " and your configuration file", option_name );
 	}
 
-	
 	/* This call counts rails while also unfolding subrails */
-	int total_rail_nb = sctk_unfold_rails( cli_option );
+	int total_rail_nb = __unfold_rails( cli_option );
 
 	/* Allocate Rails Storage we need to do it at once as we are going to
 	 * distribute pointers to rails to every modules therefore, they
@@ -669,31 +664,32 @@ void sctk_net_init_driver ( char *name )
 		 * struct mpc_lowcomm_ptp_ctrl_message_header_s */
 	}
 
-	/* HERE note that we are going in reverse order so that
-	 * rails are initialized in the same order than in the config
-	 * this is important if no priority is given to make sure
-	 * that the decalration order will be the gate order */
-	for ( k = (cli_option->rails_size - 1); 0 <= k ; k-- )
+	int k;
+
+	for ( k = 0; k < mpc_conf_config_type_count(cli_option); k++ )
 	{
+		mpc_conf_config_type_elem_t *erail = mpc_conf_config_type_nth(cli_option, k);
+		char * rail_name = mpc_conf_type_elem_get_as_string(erail);
+
 		/* For each RAIL */
 		struct sctk_runtime_config_struct_net_rail *rail_config_struct;
 #ifndef MPC_USE_INFINIBAND
-		if(strcmp(cli_option->rails[k],"ib_mpi") == 0) {
-		  mpc_common_debug_warning("Network support %s not available switching to tcp_mpi",cli_option->rails[k]);
-		  cli_option->rails[k] = "tcp_mpi";
+		if(strcmp(rail_name,"ib_mpi") == 0) {
+		  mpc_common_debug_warning("Network support %s not available switching to tcp_mpi", rail_name);
+		  rail_name = "tcp_mpi";
 		}
 #endif
 #ifndef MPC_USE_PORTALS
-		if(strcmp(cli_option->rails[k],"portals_mpi") == 0) {
-		  mpc_common_debug_warning("Network support %s not available switching to tcp_mpi",cli_option->rails[k]);
-		  cli_option->rails[k] = "tcp_mpi";
+		if(strcmp(rail_name,"portals_mpi") == 0) {
+		  mpc_common_debug_warning("Network support %s not available switching to tcp_mpi",rail_name);
+		  rail_name = "tcp_mpi";
 		}
 #endif
-		rail_config_struct = sctk_get_rail_config_by_name ( cli_option->rails[k] );
+		rail_config_struct = sctk_get_rail_config_by_name ( rail_name );
 
 		if ( rail_config_struct == NULL )
 		{
-			mpc_common_debug_error ( "Rail with name '%s' not found in config!", cli_option->rails[k] );
+			mpc_common_debug_error ( "Rail with name '%s' not found in config!", rail_name );
 			mpc_common_debug_abort();
 		}
 

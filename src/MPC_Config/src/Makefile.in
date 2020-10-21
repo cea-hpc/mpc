@@ -500,7 +500,7 @@ top_srcdir = @top_srcdir@
 #   - JAEGER Julien julien.jaeger@cea.fr                               #
 #                                                                      #
 ########################################################################
-AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Config/include/
+AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Config/include/ -I$(abs_top_srcdir)/src/MPC_Common/include/
 mpc_headerdir = $(pkgincludedir)
 lib_LTLIBRARIES = libmpcconfig.la
 libmpcconfig_la_SOURCES = loader.c  conf_types.c  mpc_conf.c  utils.c

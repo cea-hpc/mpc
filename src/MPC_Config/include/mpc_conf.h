@@ -49,6 +49,8 @@ int mpc_conf_config_type_elem_print_fd(mpc_conf_config_type_elem_t *elem, FILE *
 
 int mpc_conf_config_type_elem_print(mpc_conf_config_type_elem_t *elem, mpc_conf_output_type_t output_type);
 
+char * mpc_conf_type_elem_get_as_string(mpc_conf_config_type_elem_t * elem);
+
 /**********************
 * CONFIGURATION TYPE *
 **********************/

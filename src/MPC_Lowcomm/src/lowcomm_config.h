@@ -24,7 +24,7 @@
 
 #include <mpc_config.h>
 #include <mpc_lowcomm_types.h>
-
+#include <mpc_conf.h>
 
 /*******************
  * COLLECTIVE CONF *
@@ -456,17 +456,6 @@ struct sctk_runtime_config_struct_net_rail
 	int subrails_size;
 };
 
-/******************************** STRUCTURE *********************************/
-/**Define a specific configuration for a network provided by '-net'.**/
-struct sctk_runtime_config_struct_net_cli_option
-{	int init_done;
-	/**Define the name of the option.**/
-	char * name;
-	/**Define the driver config to use for this rail.**/
-	char **rails;
-	/** Number of elements in rails array. **/
-	int rails_size;
-};
 
 /******************************** STRUCTURE *********************************/
 /**Base structure to contain the network configuration**/
@@ -483,10 +472,6 @@ struct sctk_runtime_config_struct_networks
 
 	/** Name of the default CLI option to choose */
 	char * cli_default_network;
-	/**List of networks available through the '-net' argument of mpcrun.**/
-	struct sctk_runtime_config_struct_net_cli_option * cli_options;
-	/** Number of elements in cli_options array. **/
-	int cli_options_size;
 };
 
 

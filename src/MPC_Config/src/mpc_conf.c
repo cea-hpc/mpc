@@ -606,6 +606,18 @@ mpc_conf_config_type_elem_t *mpc_conf_config_type_nth(mpc_conf_config_type_t *ty
 	return type->elems[id];
 }
 
+
+char * mpc_conf_type_elem_get_as_string(mpc_conf_config_type_elem_t * elem)
+{
+	if(elem->type != MPC_CONF_STRING)
+	{
+		_utils_verbose_output(0, "trying to get a string from a non string type %s\n", elem->name);
+		abort();
+	}
+
+	return *((char**)elem->addr);
+}
+
 /*********************************
  * Environment Manager Definition *
  **********************************/
