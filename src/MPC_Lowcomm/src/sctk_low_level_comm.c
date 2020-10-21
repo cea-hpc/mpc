@@ -324,47 +324,9 @@ void sctk_network_notify_new_communicator_set( void (*func)(int, size_t))
 */
 static inline  const struct sctk_runtime_config_struct_networks *sctk_net_get_config()
 {
-	return _mpc_lowcomm_net_config_get();
+	return _mpc_lowcomm_config_net_get();
 }
 
-/** \brief Get a pointer to a given CLI configuration
-*   \param name Name of the requested configuration
-*   \return The configuration or NULL
-*/
-static inline mpc_conf_config_type_t *__conf_get_cli_by_name ( char *name )
-{
-	char path[512];
-	snprintf(path, 512, "mpcframework.lowcomm.networking.cli.options.%s", name);
-	mpc_conf_config_type_elem_t *elem = mpc_conf_root_config_get(path);
-
-	if(!elem)
-	{
-		mpc_common_debug_error("Could not retrieve network cli option %s\n", path);
-	}
-
-	return mpc_conf_config_type_elem_get_inner(elem);
-}
-
-/** \brief Get a pointer to a given rail
-*   \param name Name of the requested rail
-*   \return The rail or NULL
-*/
-struct sctk_runtime_config_struct_net_rail *sctk_get_rail_config_by_name ( char *name )
-{
-	int l = 0;
-	struct sctk_runtime_config_struct_net_rail *ret = NULL;
-
-	for ( l = 0; l < sctk_net_get_config()->rails_size; ++l )
-	{
-		if ( strcmp ( name, sctk_net_get_config()->rails[l].name ) == 0 )
-		{
-			ret = &sctk_net_get_config()->rails[l];
-			break;
-		}
-	}
-
-	return ret;
-}
 
 /** \brief Get a pointer to a driver config
 *   \param name Name of the requested driver config
@@ -409,7 +371,7 @@ static inline int __unfold_rails( mpc_conf_config_type_t *cli_option )
 		mpc_conf_config_type_elem_t *erail = mpc_conf_config_type_nth(cli_option, k);
 
 		/* Get the rail */
-		struct sctk_runtime_config_struct_net_rail *rail = sctk_get_rail_config_by_name ( mpc_conf_type_elem_get_as_string(erail) );
+		struct sctk_runtime_config_struct_net_rail *rail = _mpc_lowcomm_conf_rail_unfolded_get ( mpc_conf_type_elem_get_as_string(erail) );
 		
 		if(!rail)
 		{
@@ -436,7 +398,8 @@ static inline int __unfold_rails( mpc_conf_config_type_t *cli_option )
 					int matching_rails = 0;
 					
 					/* +1 to skip the ! */
-				 mpc_topology_device_t ** matching_device = mpc_topology_device_get_from_handle_regexp( rail->device + 1, &matching_rails );
+				 	mpc_topology_device_t ** matching_device = mpc_topology_device_get_from_handle_regexp( rail->device + 1,
+					 																					   &matching_rails );
 					
 					/* Now we build the subrail array
 					 * we duplicate the config of current rail
@@ -626,7 +589,7 @@ void sctk_net_init_driver ( char *name )
 
 
 	/* Retrieve default network from config */
-	char *option_name = _mpc_lowcomm_net_config_get()->cli_default_network;
+	char *option_name = _mpc_lowcomm_config_net_get()->cli_default_network;
 
 	/* If we have a network name from the command line (through sctk_launch.c)  */
 	if ( name != NULL )
@@ -639,7 +602,7 @@ void sctk_net_init_driver ( char *name )
 
 	mpc_common_nodebug ( "Run with driver %s", option_name );
 
-	mpc_conf_config_type_t* cli_option = __conf_get_cli_by_name ( option_name );
+	mpc_conf_config_type_t* cli_option = _mpc_lowcomm_conf_cli_get ( option_name );
 
 	if ( cli_option == NULL )
 	{
@@ -685,7 +648,7 @@ void sctk_net_init_driver ( char *name )
 		  rail_name = "tcp_mpi";
 		}
 #endif
-		rail_config_struct = sctk_get_rail_config_by_name ( rail_name );
+		rail_config_struct = _mpc_lowcomm_conf_rail_unfolded_get ( rail_name );
 
 		if ( rail_config_struct == NULL )
 		{

@@ -37,6 +37,8 @@ mpc_conf_config_type_elem_t *mpc_conf_config_type_elem_init(char *name, void *ad
 
 void mpc_conf_config_type_elem_release(mpc_conf_config_type_elem_t **elem);
 
+int mpc_conf_config_type_elem_set_from_elem(mpc_conf_config_type_elem_t *elem, mpc_conf_config_type_elem_t *src);
+
 int mpc_conf_config_type_elem_set(mpc_conf_config_type_elem_t *elem, mpc_conf_type_t type, void *ptr);
 
 int mpc_conf_config_type_elem_set_from_string(mpc_conf_config_type_elem_t *elem, mpc_conf_type_t type, char *string);

@@ -116,19 +116,19 @@ static inline void sctk_gate_get_context( struct sctk_runtime_config_struct_net_
 	switch( gate->type )
 	{
 		case SCTK_RTCFG_net_gate_boolean:
-			ctx->func = (int (*)( sctk_rail_info_t *, mpc_lowcomm_ptp_message_t *, void *))gate->value.boolean.gatefunc.value;
+			ctx->func = sctk_rail_gate_boolean;
 			ctx->params = (void *)&gate->value.boolean;
 		break;
 		case SCTK_RTCFG_net_gate_probabilistic:
-			ctx->func = (int (*)( sctk_rail_info_t *, mpc_lowcomm_ptp_message_t *, void *))gate->value.probabilistic.gatefunc.value;
+			ctx->func = sctk_rail_gate_probabilistic;
 			ctx->params = (void *)&gate->value.probabilistic;
 		break;
 		case SCTK_RTCFG_net_gate_minsize:
-			ctx->func = (int (*)( sctk_rail_info_t *, mpc_lowcomm_ptp_message_t *, void *))gate->value.minsize.gatefunc.value;
+			ctx->func = sctk_rail_gate_minsize;
 			ctx->params = (void *)&gate->value.minsize;		
 		break;
 		case SCTK_RTCFG_net_gate_maxsize:
-			ctx->func = (int (*)( sctk_rail_info_t *, mpc_lowcomm_ptp_message_t *, void *))gate->value.maxsize.gatefunc.value;
+			ctx->func = sctk_rail_gate_maxsize;
 			ctx->params = (void *)&gate->value.maxsize;			
 		break;
 		case SCTK_RTCFG_net_gate_user:
@@ -137,7 +137,7 @@ static inline void sctk_gate_get_context( struct sctk_runtime_config_struct_net_
 		break;
 		
 		case SCTK_RTCFG_net_gate_msgtype:
-			ctx->func = (int (*)( sctk_rail_info_t *, mpc_lowcomm_ptp_message_t *, void *))gate->value.msgtype.gatefunc.value;
+			ctx->func = sctk_rail_gate_msgtype;
 			ctx->params = (void *)&gate->value.msgtype;		
 		break;
 		

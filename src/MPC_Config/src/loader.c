@@ -75,7 +75,7 @@ mpc_conf_config_type_t *mpc_conf_config_loader_paths(char *conf_name,
 	char ** acan_create = malloc(sizeof(char *));
 	*acan_create = strdup(can_create);
 
-	mpc_conf_config_type_t *type = mpc_conf_config_type_init(conf_name, PARAM("can_create",
+	mpc_conf_config_type_t *type = mpc_conf_config_type_init(conf_name, PARAM("cancreate",
 	                                                                        acan_create,
 	                                                                        MPC_CONF_STRING,
 	                                                                        "Which config is allowed to create elements"),
@@ -97,7 +97,7 @@ mpc_conf_config_type_t *mpc_conf_config_loader_paths(char *conf_name,
 	}
 
 
-	mpc_conf_config_type_elem_t *can_create_elem = mpc_conf_config_type_get(type, "can_create");
+	mpc_conf_config_type_elem_t *can_create_elem = mpc_conf_config_type_get(type, "cancreate");
 	mpc_conf_config_type_elem_set_locked(can_create_elem, 1);
 
 	mpc_conf_config_type_elem_t *system_elem = mpc_conf_config_type_get(type, "system");
@@ -182,6 +182,16 @@ int mpc_conf_config_loader_push(char *conf_name, char *key, char *value, char *s
 				perror("malloc");
 				return 1;
 			}
+		}
+		else
+		{
+			/* Elem is a pointer */
+			elem_data = malloc(sizeof(void *));
+			if(!elem_data)
+			{
+				perror("malloc");
+				return 1;
+			}			
 		}
 
 		/* Now create the new element */
@@ -544,7 +554,7 @@ int mpc_conf_config_load(char *conf_name)
 		return 1;
 	}
 
-	mpc_conf_config_type_elem_t *erights = mpc_conf_config_type_get(paths, "can_create");
+	mpc_conf_config_type_elem_t *erights = mpc_conf_config_type_get(paths, "cancreate");
 	mpc_conf_config_type_elem_t *esystem = mpc_conf_config_type_get(paths, "system");
 	mpc_conf_config_type_elem_t *euser   = mpc_conf_config_type_get(paths, "user");
 

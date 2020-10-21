@@ -74,8 +74,24 @@ mpc_conf_config_type_elem_t *mpc_conf_config_type_elem_init(char *name, void *ad
 	ret->name            = strdup(name);
 	ret->parent          = NULL;
 
+	if(strchr(name, '_'))
+	{
+			_utils_verbose_output(0, "Underscores (_) are not allowed in elements names (see %s)\n", name);
+			abort();
+	}
+
 	/* Now set to lowercase */
 	_utils_lower_string(ret->name);
+
+	/* Ensure that names do match if elem holds a type */
+	if(addr && (type == MPC_CONF_TYPE))
+	{
+		if(strcmp(name, ((mpc_conf_config_type_t*)addr)->name))
+		{
+			_utils_verbose_output(0, "cannot create a config element holding %s with a name %s they must be identical\n", name, ((mpc_conf_config_type_t*)addr)->name);
+			abort();
+		}
+	}
 
 	ret->addr = addr;
 
@@ -105,6 +121,20 @@ void mpc_conf_config_type_elem_release(mpc_conf_config_type_elem_t **elem)
 	memset(*elem, 0, sizeof(mpc_conf_config_type_elem_t) );
 	free(*elem);
 	*elem = NULL;
+}
+
+int mpc_conf_config_type_elem_set_from_elem(mpc_conf_config_type_elem_t *elem, mpc_conf_config_type_elem_t *src)
+{
+	void * addr = src->addr;
+
+	if(elem->type == MPC_CONF_STRING)
+	{
+		addr = *((char**)src->addr);
+	}
+
+
+	return mpc_conf_config_type_elem_set(elem, src->type, addr);
+
 }
 
 int mpc_conf_config_type_elem_set(mpc_conf_config_type_elem_t *elem, mpc_conf_type_t type, void *ptr)

@@ -6,6 +6,31 @@
 
 #include "coll.h"
 
+#include <sctk_alloc.h>
+
+#include "sctk_topological_polling.h"
+
+
+/***********
+ * HELPERS *
+ ***********/
+
+mpc_conf_config_type_t * __get_type_by_name ( char * prefix, char *name )
+{
+	char path[512];
+	snprintf(path, 512, "%s.%s", prefix, name);
+	mpc_conf_config_type_elem_t *elem = mpc_conf_root_config_get(path);
+
+	if(!elem)
+	{
+		mpc_common_debug_error("Could not retrieve %s\n", path);
+        return NULL;
+	}
+
+	return mpc_conf_config_type_elem_get_inner(elem);
+}
+
+
 /*******************
 * COLLECTIVE CONF *
 *******************/
@@ -127,20 +152,234 @@ void mpc_lowcomm_coll_init_hook(mpc_lowcomm_communicator_t id)
 
 static struct sctk_runtime_config_struct_networks __net_config;
 
-struct sctk_runtime_config_struct_networks *_mpc_lowcomm_net_config_get(void)
+struct sctk_runtime_config_struct_networks *_mpc_lowcomm_config_net_get(void)
 {
 	return &__net_config;
 }
 
-static inline void _mpc_lowcomm_net_config_default(void)
+/*
+ *  RAILS defines instance of configurations
+ */
+
+struct sctk_runtime_config_struct_net_rail * _mpc_lowcomm_conf_rail_unfolded_get ( char *name )
 {
+    int l = 0;
+	struct sctk_runtime_config_struct_net_rail *ret = NULL;
+
+	for ( l = 0; l < __net_config.rails_size; ++l )
+	{
+		if ( strcmp ( name, __net_config.rails[l]->name ) == 0 )
+		{
+			ret = __net_config.rails[l];
+			break;
+		}
+	}
+
+	return ret;
+}
+
+mpc_conf_config_type_t *_mpc_lowcomm_conf_conf_rail_get ( char *name )
+{
+    return __get_type_by_name("mpcframework.lowcomm.networking.rails", name);
+}
+
+
+static inline void __mpc_lowcomm_rail_conf_default(void)
+{
+    memset(__net_config.rails, 0, MPC_CONF_MAX_RAIL_COUNT * sizeof(struct sctk_runtime_config_struct_net_rail *));
+	__net_config.rails_size = 0;
+}
+
+static inline void __append_new_rail_to_unfolded(struct sctk_runtime_config_struct_net_rail * rail)
+{
+    if(__net_config.rails_size == MPC_CONF_MAX_RAIL_COUNT)
+    {
+        bad_parameter("Cannot create more than %d rails when processing rail %s.\n", MPC_CONF_MAX_RAIL_COUNT, rail->name);
+    }
+
+
+    __net_config.rails[ __net_config.rails_size ] = rail;
+    __net_config.rails_size++;
+}
+
+mpc_conf_config_type_t *__new_rail_conf_instance(
+	char *name,
+	int priority,
+	char *device,
+	char * idle_poll_range,
+	char * idle_poll_trigger,
+	char *topology,
+	int ondemand,
+	int rdma,
+	char *config)
+{
+    if(_mpc_lowcomm_conf_rail_unfolded_get(name))
+    {
+        bad_parameter("Cannot create two rails with the same name '%s'", name);
+    }
+
+    struct sctk_runtime_config_struct_net_rail * ret = sctk_malloc(sizeof(struct sctk_runtime_config_struct_net_rail));
+    assume(ret != NULL);
+
+    /* This fills in the struct */
+
+    memset(ret, 0, sizeof(struct sctk_runtime_config_struct_net_rail));
+
+    /* For unfolded retrieval */
+    ret->name = strdup(name);
+    ret->priority = priority;
+    ret->device = strdup(device);
+    ret->any_source_polling.srange = strdup(idle_poll_range);
+    ret->any_source_polling.range = sctk_rail_convert_polling_set_from_string(idle_poll_range);
+    ret->any_source_polling.strigger = strdup(idle_poll_trigger);
+    ret->any_source_polling.trigger = sctk_rail_convert_polling_set_from_string(idle_poll_trigger);
+    ret->topology = strdup(topology);
+    ret->ondemand = ondemand;
+    ret->rdma = rdma;
+    ret->config = strdup(config);
+
+    mpc_conf_config_type_t *gates = mpc_conf_config_type_init("gates", NULL);
+
+    mpc_conf_config_type_t *idle_poll = mpc_conf_config_type_init("idlepoll",
+	                                                              PARAM("range", &ret->any_source_polling.srange , MPC_CONF_STRING, "Which cores can idle poll"),
+                                                                  PARAM("trigger", &ret->any_source_polling.strigger , MPC_CONF_STRING, "Which granularity can idle poll"),
+                                                                  NULL);
+
+    /* This fills in a rail definition */
+  	mpc_conf_config_type_t *rail = mpc_conf_config_type_init(name,
+	                                                         PARAM("priority", &ret->priority, MPC_CONF_INT, "How rails should be sorted (taken in decreasing order)"),
+	                                                         PARAM("device", &ret->device, MPC_CONF_STRING, "Name of the device to use can be a regular expression if starting with '!'"),
+	                                                         PARAM("idlepoll", idle_poll, MPC_CONF_TYPE, "Parameters for idle polling"),
+	                                                         PARAM("topology", &ret->topology, MPC_CONF_STRING, "Topology to be bootstrapped on this network"),
+	                                                         PARAM("ondemand", &ret->ondemand, MPC_CONF_BOOL, "Are on-demmand connections allowed on this network"),
+	                                                         PARAM("rdma", &ret->ondemand, MPC_CONF_BOOL, "Can this rail provide RDMA capabilities"),
+	                                                         PARAM("config", &ret->config, MPC_CONF_STRING, "Name of the rail configuration to be used for this rail"),
+	                                                         PARAM("gates", gates, MPC_CONF_TYPE, "Gates to check before taking this rail"),
+	                                                         NULL);  
+
+    /* Here we append the rail to the in-memory structure */
+    __append_new_rail_to_unfolded(ret);
+
+    return rail;
+}
+
+static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
+{
+	__mpc_lowcomm_rail_conf_default();
+
+    /* Here we instanciate default rails */
+    mpc_conf_config_type_t *shm_mpi = __new_rail_conf_instance("shmmpi", 99, "default", "machine", "socket", "fully", 0, 0, "shmconfigmpi");
+    mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 9, "default", "machine", "socket", "ring", 1, 1, "tcpconfigmpi");
 #ifdef MPC_USE_PORTALS
-	__net_config.cli_default_network = strdup("portals");
-#elif defined(MPC_USE_INFINIBAND)
-	__net_config.cli_default_network = strdup("ib");
-#else
-	__net_config.cli_default_network = strdup("tcp");
+    mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 6, "default", "machine", "socket", "ring", 1, 1, "portals_config");
 #endif
+#ifdef MPC_USE_INFINIBAND
+    mpc_conf_config_type_t *ib_mpi = __new_rail_conf_instance("ibmpi", 1, "!mlx.*", "machine", "socket", "ring", 1, 1, "ib_config_mpi");
+#endif
+
+
+  	mpc_conf_config_type_t *rails = mpc_conf_config_type_init("rails",
+	                                                         PARAM("shmmpi", shm_mpi, MPC_CONF_TYPE, "A rail with only SHM"),
+                                                             PARAM("tcpmpi", tcp_mpi, MPC_CONF_TYPE, "A rail with TCP and SHM"),
+#ifdef MPC_USE_PORTALS
+                                                             PARAM("portalsmpi", portals_mpi, MPC_CONF_TYPE, "A rail with Portals 4"),
+#endif
+#ifdef MPC_USE_INFINIBAND
+                                                             PARAM("ibmpi", ib_mpi, MPC_CONF_TYPE, "A rail with Infiniband and SHM"),
+#endif
+	                                                         NULL);  
+
+    return rails;
+}
+
+mpc_conf_config_type_t * ___new_default_rail(char * name)
+{
+    return __new_rail_conf_instance(name,
+                                    1,
+                                    "default",
+                                    "machine",
+                                    "socket",
+                                    "ring",
+                                    1,
+                                    0,
+                                    "tcp_mpi");
+}
+
+
+
+static inline mpc_conf_config_type_t * ___mpc_lowcomm_rail_instanciate_from_default(mpc_conf_config_type_elem_t * elem)
+{
+    mpc_conf_config_type_t *new_rail = ___new_default_rail(elem->name);
+
+    /* Here we override with what was already present in the config */
+    mpc_conf_config_type_t * old_rail = mpc_conf_config_type_elem_get_inner(elem);
+
+    int i;
+    for(i = 0 ; i < mpc_conf_config_type_count(old_rail); i++)
+    {
+        mpc_conf_config_type_elem_t* old_elem = mpc_conf_config_type_nth(old_rail, i);
+
+        /* Now get the elem to be replaced */
+        mpc_conf_config_type_elem_t *new_elem = mpc_conf_config_type_get(new_rail, old_elem->name);
+
+        if(!new_elem)
+        {
+            mpc_conf_config_type_elem_print(elem, MPC_CONF_FORMAT_XML);
+            bad_parameter("Rail definitions does not contain '%s' elements", old_elem->name);
+        }
+
+        mpc_conf_config_type_elem_set_from_elem(new_elem, old_elem);
+
+    }
+
+    
+    return new_rail;
+}
+
+
+
+static inline void ___mpc_lowcomm_rail_conf_validate(void)
+{
+    /* First we need to parse back the polling levels from strings back to values */
+    int i;
+    for( i = 0 ; i < __net_config.rails_size; i++)
+    {
+        __net_config.rails[i]->any_source_polling.range = sctk_rail_convert_polling_set_from_string(__net_config.rails[i]->any_source_polling.srange);
+        __net_config.rails[i]->any_source_polling.trigger = sctk_rail_convert_polling_set_from_string(__net_config.rails[i]->any_source_polling.strigger);
+    }
+
+    /* Now we need to populate rails with possibly new instances
+       this is done by (1) copying the default struct and then (2)
+       updating element by element if present in the configuration
+       this allows partial rail definition */
+    mpc_conf_config_type_elem_t *eall_rails = mpc_conf_root_config_get("mpcframework.lowcomm.networking.rails");
+
+    assume(eall_rails != NULL);
+    assume(eall_rails->type == MPC_CONF_TYPE);
+
+    mpc_conf_config_type_t * all_rails = mpc_conf_config_type_elem_get_inner(eall_rails);
+
+    for(i = 0 ; i < mpc_conf_config_type_count(all_rails); i++)
+    {
+        mpc_conf_config_type_elem_t* rail = mpc_conf_config_type_nth(all_rails, i);
+        if(!_mpc_lowcomm_conf_rail_unfolded_get(rail->name))
+        {
+            mpc_conf_config_type_t *new_rail = ___mpc_lowcomm_rail_instanciate_from_default(rail);
+
+            /* Replace in rail list */
+            mpc_conf_config_type_elem_set(rail, MPC_CONF_TYPE, new_rail);
+
+        }
+    }
+}
+
+/*_
+ * CLI defines group of rails
+ */
+
+mpc_conf_config_type_t *_mpc_lowcomm_conf_cli_get ( char *name )
+{
+    return __get_type_by_name("mpcframework.lowcomm.networking.cli.options", name);
 }
 
 static mpc_conf_config_type_t *___mpc_lowcomm_cli_conf_option_init(char *name, char *rail1, char *rail2)
@@ -160,14 +399,14 @@ static mpc_conf_config_type_t *___mpc_lowcomm_cli_conf_option_init(char *name, c
 
 
 		rails = mpc_conf_config_type_init(name,
-		                                  PARAM("first", ar1, MPC_CONF_STRING, "First rail in order"),
-		                                  PARAM("second", ar2, MPC_CONF_STRING, "Second rail in order"),
+		                                  PARAM("first", ar1, MPC_CONF_STRING, "First rail to pick"),
+		                                  PARAM("second", ar2, MPC_CONF_STRING, "Second rail to pick"),
 		                                  NULL);
 	}
 	else
 	{
 		rails = mpc_conf_config_type_init(name,
-		                                  PARAM("first", ar1, MPC_CONF_STRING, "First rail in order"),
+		                                  PARAM("first", ar1, MPC_CONF_STRING, "First rail to pick"),
 		                                  NULL);
 	}
 
@@ -187,13 +426,13 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 {
 	mpc_conf_config_type_t *cliopt = mpc_conf_config_type_init("options",
 #ifdef MPC_USE_PORTALS
-	                                                           PARAM("portals", ___mpc_lowcomm_cli_conf_option_init("tcp", "portals_mpi", NULL), MPC_CONF_TYPE, "Combination of TCP and SHM"),
+	                                                           PARAM("portals", ___mpc_lowcomm_cli_conf_option_init("tcp", "portalsmpi", NULL), MPC_CONF_TYPE, "Combination of TCP and SHM"),
 #endif
 #ifdef MPC_USE_INFINIBAND
-	                                                           PARAM("ib", ___mpc_lowcomm_cli_conf_option_init("tcp", "shm_mpi", "ib_mpi"), MPC_CONF_TYPE, "Combination of TCP and SHM"),
+	                                                           PARAM("ib", ___mpc_lowcomm_cli_conf_option_init("tcp", "shmmpi", "ibmpi"), MPC_CONF_TYPE, "Combination of TCP and SHM"),
 #endif
-	                                                           PARAM("tcp", ___mpc_lowcomm_cli_conf_option_init("tcp", "shm_mpi", "tcp_mpi"), MPC_CONF_TYPE, "Combination of TCP and SHM"),
-	                                                           PARAM("shm", ___mpc_lowcomm_cli_conf_option_init("shm", "shm_mpi", NULL), MPC_CONF_TYPE, "SHM Only"),
+	                                                           PARAM("tcp", ___mpc_lowcomm_cli_conf_option_init("tcp", "shmmpi", "tcpmpi"), MPC_CONF_TYPE, "Combination of TCP and SHM"),
+	                                                           PARAM("shm", ___mpc_lowcomm_cli_conf_option_init("shm", "shmmpi", NULL), MPC_CONF_TYPE, "SHM Only"),
 
 	                                                           NULL);
 
@@ -205,13 +444,27 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 	return cli;
 }
 
+static inline void _mpc_lowcomm_net_config_default(void)
+{
+#ifdef MPC_USE_PORTALS
+	__net_config.cli_default_network = strdup("portals");
+#elif defined(MPC_USE_INFINIBAND)
+	__net_config.cli_default_network = strdup("ib");
+#else
+	__net_config.cli_default_network = strdup("tcp");
+#endif
+}
+
 static mpc_conf_config_type_t *__mpc_lowcomm_network_conf_init(void)
 {
 	_mpc_lowcomm_net_config_default();
 
 	mpc_conf_config_type_t *cli = __mpc_lowcomm_cli_conf_init();
 
+	mpc_conf_config_type_t *rails = __mpc_lowcomm_rail_conf_init();
+
 	mpc_conf_config_type_t *network = mpc_conf_config_type_init("networking",
+	                                                            PARAM("rails", rails, MPC_CONF_TYPE, "Rail definitions for Networks"),
 	                                                            PARAM("cli", cli, MPC_CONF_TYPE, "Name definitions for networks"),
 	                                                            NULL);
 
@@ -240,6 +493,15 @@ static inline void ___mpc_lowcomm_cli_option_validate(mpc_conf_config_type_elem_
 			mpc_conf_config_type_elem_print(opt, MPC_CONF_FORMAT_XML);
 			bad_parameter("mpcframework.lowcomm.networking.cli.options.%s.%s erroneous should be MPC_CONF_STRING not %s", opt->name, elem->name, mpc_conf_type_name(elem->type) );
 		}
+
+        char * rail_name = mpc_conf_type_elem_get_as_string(elem);
+
+        /* Now check that the rail does exist */
+        if(!_mpc_lowcomm_conf_conf_rail_get(rail_name))
+        {
+            mpc_conf_config_type_elem_print(opt, MPC_CONF_FORMAT_XML);
+            bad_parameter("There is no such rail named '%s'", rail_name);
+        }
 	}
 }
 
@@ -276,14 +538,13 @@ static inline void ___mpc_lowcomm_cli_conf_validate(void)
 	{
 		___mpc_lowcomm_cli_option_validate(mpc_conf_config_type_nth(toptions, i) );
 	}
-
-	/*TODO: check rails actually exist */
 }
 
 void __mpc_lowcomm_network_conf_validate(void)
 {
 	/* Validate and unfold CLI Options */
 	___mpc_lowcomm_cli_conf_validate();
+    ___mpc_lowcomm_rail_conf_validate();
 }
 
 /************************************
@@ -328,4 +589,5 @@ void _mpc_lowcomm_config_validate(void)
 {
 	__mpc_lowcomm_coll_conf_validate();
 	__mpc_lowcomm_network_conf_validate();
+    
 }
