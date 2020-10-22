@@ -83,6 +83,8 @@ mpc_conf_config_type_elem_t *mpc_conf_config_type_append(mpc_conf_config_type_t 
 														 mpc_conf_type_t etype,
 														 char *edoc);
 
+int mpc_config_type_match_order(mpc_conf_config_type_t *type, mpc_conf_config_type_t *ref);
+
 int mpc_config_type_pop_elem(mpc_conf_config_type_t *type, mpc_conf_config_type_elem_t * elem);
 
 int mpc_config_type_append_elem(mpc_conf_config_type_t *type, mpc_conf_config_type_elem_t * elem);

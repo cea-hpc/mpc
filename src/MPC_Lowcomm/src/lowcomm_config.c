@@ -213,11 +213,6 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	int rdma,
 	char *config)
 {
-    if(_mpc_lowcomm_conf_rail_unfolded_get(name))
-    {
-        bad_parameter("Cannot create two rails with the same name '%s'", name);
-    }
-
     struct sctk_runtime_config_struct_net_rail * ret = sctk_malloc(sizeof(struct sctk_runtime_config_struct_net_rail));
     assume(ret != NULL);
 
@@ -257,8 +252,6 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	                                                         PARAM("gates", gates, MPC_CONF_TYPE, "Gates to check before taking this rail"),
 	                                                         NULL);  
 
-    /* Here we append the rail to the in-memory structure */
-    __append_new_rail_to_unfolded(ret);
 
     return rail;
 }
@@ -306,6 +299,16 @@ mpc_conf_config_type_t * ___new_default_rail(char * name)
 }
 
 
+static inline mpc_conf_config_type_t *___mpc_lowcomm_rail_all(void)
+{
+	mpc_conf_config_type_elem_t *eall_rails = mpc_conf_root_config_get("mpcframework.lowcomm.networking.rails");
+
+    assume(eall_rails != NULL);
+    assume(eall_rails->type == MPC_CONF_TYPE);
+
+	return  mpc_conf_config_type_elem_get_inner(eall_rails);
+}
+
 
 static inline mpc_conf_config_type_t * ___mpc_lowcomm_rail_instanciate_from_default(mpc_conf_config_type_elem_t * elem)
 {
@@ -322,13 +325,14 @@ static inline mpc_conf_config_type_t * ___mpc_lowcomm_rail_instanciate_from_defa
         mpc_conf_config_type_elem_t* current_elem = mpc_conf_config_type_nth(current_rail, i);
 
         /* Now get the elem to ensure it already exists */
-        mpc_conf_config_type_elem_t *new_elem = mpc_conf_config_type_get(default_rail, current_elem->name);
+        mpc_conf_config_type_elem_t *default_elem = mpc_conf_config_type_get(default_rail, current_elem->name);
 
-        if(!new_elem)
+        if(!default_elem)
         {
             mpc_conf_config_type_elem_print(elem, MPC_CONF_FORMAT_XML);
             bad_parameter("Rail definitions does not contain '%s' elements", current_elem->name);
         }
+
     }
 
 
@@ -351,10 +355,12 @@ static inline mpc_conf_config_type_t * ___mpc_lowcomm_rail_instanciate_from_defa
 
 	/* Release default conf */
 	mpc_conf_config_type_release(&default_rail);
-    
-	/* Reorder to ensure pretty print */
 
-
+    /* Reorder according to default rail */
+	default_rail = ___new_default_rail(elem->name);
+	mpc_config_type_match_order(current_rail, default_rail);
+	mpc_conf_config_type_release(&default_rail);
+   
 
     return NULL;
 }
@@ -375,12 +381,9 @@ static inline void ___mpc_lowcomm_rail_conf_validate(void)
        this is done by (1) copying the default struct and then (2)
        updating element by element if present in the configuration
        this allows partial rail definition */
-    mpc_conf_config_type_elem_t *eall_rails = mpc_conf_root_config_get("mpcframework.lowcomm.networking.rails");
 
-    assume(eall_rails != NULL);
-    assume(eall_rails->type == MPC_CONF_TYPE);
 
-    mpc_conf_config_type_t * all_rails = mpc_conf_config_type_elem_get_inner(eall_rails);
+    mpc_conf_config_type_t * all_rails = ___mpc_lowcomm_rail_all();
 
     for(i = 0 ; i < mpc_conf_config_type_count(all_rails); i++)
     {

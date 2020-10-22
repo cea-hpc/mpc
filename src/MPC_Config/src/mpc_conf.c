@@ -188,6 +188,41 @@ int mpc_config_type_pop_elem(mpc_conf_config_type_t *type, mpc_conf_config_type_
 }
 
 
+int mpc_config_type_match_order(mpc_conf_config_type_t *type, mpc_conf_config_type_t *ref)
+{
+	if( type->elem_count < ref->elem_count  )
+	{
+		_utils_verbose_output(1, "REORDER: redordered type must be at least as large as ref type (type %d & ref %d)\n", type->elem_count, ref->elem_count);
+		return -1;
+	}
+
+
+	/* Move all kown types to match the order of ref */
+	unsigned int i, j;
+
+	for( i = 0 ; i < ref->elem_count; i++)
+	{
+		/* Now find it in type */
+		for( j = 0 ; j < type->elem_count; j++)
+		{
+			if(!strcmp(type->elems[j]->name, ref->elems[i]->name))
+			{
+				if( i != j)
+				{
+					/* Was found at != offset we swap to ref's offset */
+					mpc_conf_config_type_elem_t * tmp = type->elems[i];
+					type->elems[i] = type->elems[j];
+					type->elems[j] = tmp;
+				} 
+			}
+		}
+	}	
+
+
+	return 0;
+}
+
+
 int mpc_conf_config_type_elem_set_from_string(mpc_conf_config_type_elem_t *elem, mpc_conf_type_t type, char *string)
 {
 	_utils_verbose_output(3, "ELEM: setting string '%s' to %s\n", string, elem->name);
