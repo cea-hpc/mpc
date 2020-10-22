@@ -309,31 +309,54 @@ mpc_conf_config_type_t * ___new_default_rail(char * name)
 
 static inline mpc_conf_config_type_t * ___mpc_lowcomm_rail_instanciate_from_default(mpc_conf_config_type_elem_t * elem)
 {
-    mpc_conf_config_type_t *new_rail = ___new_default_rail(elem->name);
+    mpc_conf_config_type_t *default_rail = ___new_default_rail(elem->name);
 
     /* Here we override with what was already present in the config */
-    mpc_conf_config_type_t * old_rail = mpc_conf_config_type_elem_get_inner(elem);
+    mpc_conf_config_type_t * current_rail = mpc_conf_config_type_elem_get_inner(elem);
 
+
+	/* First check current in default to ensure that all entries are known */
     int i;
-    for(i = 0 ; i < mpc_conf_config_type_count(old_rail); i++)
+    for(i = 0 ; i < mpc_conf_config_type_count(current_rail); i++)
     {
-        mpc_conf_config_type_elem_t* old_elem = mpc_conf_config_type_nth(old_rail, i);
+        mpc_conf_config_type_elem_t* current_elem = mpc_conf_config_type_nth(current_rail, i);
 
-        /* Now get the elem to be replaced */
-        mpc_conf_config_type_elem_t *new_elem = mpc_conf_config_type_get(new_rail, old_elem->name);
+        /* Now get the elem to ensure it already exists */
+        mpc_conf_config_type_elem_t *new_elem = mpc_conf_config_type_get(default_rail, current_elem->name);
 
         if(!new_elem)
         {
             mpc_conf_config_type_elem_print(elem, MPC_CONF_FORMAT_XML);
-            bad_parameter("Rail definitions does not contain '%s' elements", old_elem->name);
+            bad_parameter("Rail definitions does not contain '%s' elements", current_elem->name);
         }
-
-        mpc_conf_config_type_elem_set_from_elem(new_elem, old_elem);
-
     }
 
+
+	/* Now check default in current to push missing elements from default */
+	for(i = 0 ; i < mpc_conf_config_type_count(default_rail); i++)
+    {
+        mpc_conf_config_type_elem_t* default_elem = mpc_conf_config_type_nth(default_rail, i);
+
+        /* Now get the elem to ensure it already exists */
+        mpc_conf_config_type_elem_t *existing_elem = mpc_conf_config_type_get(current_rail, default_elem->name);
+
+        if(!existing_elem)
+        {
+			/* We need to push the elem from defaults */
+            mpc_config_type_append_elem(current_rail, default_elem);
+			/* Now remoe the elem from the default not to free it with it */
+			mpc_config_type_pop_elem(default_rail, default_elem);
+        }
+    }
+
+	/* Release default conf */
+	mpc_conf_config_type_release(&default_rail);
     
-    return new_rail;
+	/* Reorder to ensure pretty print */
+
+
+
+    return NULL;
 }
 
 
@@ -364,11 +387,7 @@ static inline void ___mpc_lowcomm_rail_conf_validate(void)
         mpc_conf_config_type_elem_t* rail = mpc_conf_config_type_nth(all_rails, i);
         if(!_mpc_lowcomm_conf_rail_unfolded_get(rail->name))
         {
-            mpc_conf_config_type_t *new_rail = ___mpc_lowcomm_rail_instanciate_from_default(rail);
-
-            /* Replace in rail list */
-            mpc_conf_config_type_elem_set(rail, MPC_CONF_TYPE, new_rail);
-
+            ___mpc_lowcomm_rail_instanciate_from_default(rail);
         }
     }
 }

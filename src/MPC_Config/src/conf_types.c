@@ -151,9 +151,9 @@ ssize_t mpc_conf_type_size(mpc_conf_type_t type)
 
 		case MPC_CONF_FUNC:
 		case MPC_CONF_STRING:
-		case MPC_CONF_TYPE:
 		case MPC_CONF_TYPE_NONE:
-			/* We store the pointer */
+			return sizeof(void *);
+		case MPC_CONF_TYPE:
 			return -1;
 	}
 
@@ -318,12 +318,25 @@ int mpc_conf_type_set_value_from_string(mpc_conf_type_t type, void **dest, char 
 
 	if(0 <= tsize)
 	{
-		/* Now we need to parse */
-		if(__mpc_conf_type_parse_from_string(type, *dest, from) != 0)
+		if(mpc_conf_type_is_string(type))
 		{
-			return 1;
-		}
+			char *** sdest = dest;
 
+			free(**sdest);
+			/* No parsing needed as we set a string */
+			**sdest = strdup(from);
+		}
+		else
+		{
+			/* Now we need to parse */
+			if(__mpc_conf_type_parse_from_string(type, *dest, from) != 0)
+			{
+				_utils_verbose_output(0,"Failed parsing %s from string '%s'\n", mpc_conf_type_name(type), from);
+				return 1;
+			}
+	
+		}
+		
 		return 0;
 	}
 	else

@@ -127,6 +127,8 @@ mpc_conf_config_type_t *mpc_conf_config_loader_search_path(char *conf_name)
 
 int mpc_conf_config_loader_push(char *conf_name, char *key, char *value, char *sep, int can_create)
 {
+	_utils_verbose_output(1, "PUSH: %s to %s with value %s (can_create %d)\n", conf_name, key, value, can_create);
+	
 	/* Are we prefixed with conf_name or not (if not add it) */
 	char expanded_key[MAX_KEY_LENGTH];
 
@@ -148,11 +150,14 @@ int mpc_conf_config_loader_push(char *conf_name, char *key, char *value, char *s
 
 	if(elem)
 	{
-		_utils_verbose_output(1, "%s: set %s = %s\n", conf_name, expanded_key, value);
+		_utils_verbose_output(0, "%s: set %s = %s\n", conf_name, expanded_key, value);
 		type_to_set = elem->type;
 	}
 	else
 	{
+
+		_utils_verbose_output(1, "PUSH NEW %s = %s\n", expanded_key, value);
+
 		if(!can_create)
 		{
 			_utils_verbose_output(0, "%s: cannot set %s = %s (no such key)\n", conf_name, expanded_key, value);
@@ -183,15 +188,10 @@ int mpc_conf_config_loader_push(char *conf_name, char *key, char *value, char *s
 				return 1;
 			}
 		}
-		else
+
+		if(type_to_set == MPC_CONF_STRING)
 		{
-			/* Elem is a pointer */
-			elem_data = malloc(sizeof(void *));
-			if(!elem_data)
-			{
-				perror("malloc");
-				return 1;
-			}			
+			*((char**)elem_data)=strdup("");
 		}
 
 		/* Now create the new element */
@@ -209,6 +209,8 @@ int mpc_conf_config_loader_push(char *conf_name, char *key, char *value, char *s
 
 		mpc_conf_config_type_elem_set_to_free(elem, 1);
 	}
+
+	_utils_verbose_output(1, "PARSING %s = %s as %s\n", expanded_key, value, mpc_conf_type_name(type_to_set));
 
     return mpc_conf_config_type_elem_set_from_string(elem, type_to_set, value);
 }
@@ -279,9 +281,10 @@ static inline int ___mpc_conf_config_load_eq_list(char *conf_name, char *data, c
 							}
 						}
 
-						ret |= mpc_conf_config_loader_push(conf_name, key, value, sep, can_create);
+						int loc_ret = mpc_conf_config_loader_push(conf_name, key, value, sep, can_create);
+						ret |= loc_ret;
 
-						if(ret)
+						if(loc_ret)
 						{
 							_utils_verbose_output(0, "%s:%d: %s = %s (error parsing)\n", path, line, key, value);
 						}

@@ -125,8 +125,12 @@ void mpc_conf_config_type_elem_release(mpc_conf_config_type_elem_t **elem)
 
 int mpc_conf_config_type_elem_set_from_elem(mpc_conf_config_type_elem_t *elem, mpc_conf_config_type_elem_t *src)
 {
+	_utils_verbose_output(3, "ELEM: set %s to %s\n", src->name, elem->name);
+
+
 	void * addr = src->addr;
 
+	/* Strings are always passed as ref to string */
 	if(elem->type == MPC_CONF_STRING)
 	{
 		addr = *((char**)src->addr);
@@ -158,6 +162,32 @@ int mpc_conf_config_type_elem_set(mpc_conf_config_type_elem_t *elem, mpc_conf_ty
 	return 0;
 }
 
+int mpc_config_type_pop_elem(mpc_conf_config_type_t *type, mpc_conf_config_type_elem_t * elem)
+{
+	unsigned int i;
+
+	for( i = 0 ; i < type->elem_count; i++)
+	{
+		if(type->elems[i] == elem)
+		{
+			/* Found */
+			unsigned int j;
+			for(j = i ; j < type->elem_count -1; j++)
+			{
+				type->elems[j] = type->elems[j + 1]; 
+			}
+
+			type->elems[type->elem_count] = NULL;
+			type->elem_count--;
+		
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
+
 int mpc_conf_config_type_elem_set_from_string(mpc_conf_config_type_elem_t *elem, mpc_conf_type_t type, char *string)
 {
 	_utils_verbose_output(3, "ELEM: setting string '%s' to %s\n", string, elem->name);
@@ -166,7 +196,22 @@ int mpc_conf_config_type_elem_set_from_string(mpc_conf_config_type_elem_t *elem,
 	{
 		_utils_verbose_output(0, "cannnot write to %s which is LOCKED\n", elem->name);
 		return 1;
-	}	
+	}
+
+	if(type != elem->type)
+	{
+		/* Allow LONG_INT to INT */
+		if(elem->type == MPC_CONF_LONG_INT)
+		{
+			type = MPC_CONF_INT;
+		}
+		else
+		{
+			_utils_verbose_output(3, "ELEM: mismatching types %s != %s  when setting '%s' to %s\n", mpc_conf_type_name(type) , mpc_conf_type_name(elem->type),  elem->name);
+			return -1;
+		}
+		
+	}
 
 	return mpc_conf_type_set_value_from_string(elem->type, &elem->addr, string);
 }
@@ -253,6 +298,7 @@ int mpc_conf_config_type_elem_get_path_to(mpc_conf_config_type_elem_t *elem, cha
 {
 	path[0] = '\0';
 	__mpc_conf_config_type_elem_get_path_to(elem, elem, separator, path, len);
+	return 0;
 }
 
 
@@ -393,6 +439,24 @@ mpc_conf_config_type_t *mpc_conf_config_type_init(char *name, ...)
 
 	return ret;
 }
+
+int mpc_config_type_append_elem(mpc_conf_config_type_t *type, mpc_conf_config_type_elem_t * elem)
+{
+
+	if(mpc_conf_config_type_get(type, elem->name) )
+	{
+		_utils_verbose_output(0, "'%s' is already present in '%s'\n", elem->name, type->name);
+		return -1;
+	}
+
+	assert(elem != NULL);
+
+	type->elems[type->elem_count] = elem;
+	type->elem_count++;
+
+	return 0;
+}
+
 
 mpc_conf_config_type_elem_t *mpc_conf_config_type_append(mpc_conf_config_type_t *type, char *ename, void *eptr, mpc_conf_type_t etype, char *edoc)
 {
@@ -914,6 +978,15 @@ int mpc_conf_self_config_check_init(mpc_conf_self_config_t *config)
 	config->color_enabled = MPC_CONF_COLOR;
 	config->indent_count  = MPC_CONF_DEFAULT_INDENT;
 	config->verbose       = 0;
+
+	/* As envirnoment might be loaded later on
+	   we make an exception to allow config to be debuged early */
+	char *env_conf_verb = getenv("CONF_SETTINGS_VERBOSE");
+	if(env_conf_verb)
+	{
+		config->verbose = atoi(env_conf_verb);
+	}
+
 	config->is_valid      = 1;
 
 	mpc_conf_root_config_init("conf");
@@ -1186,7 +1259,7 @@ int mpc_conf_root_config_load_env_all(void)
 int mpc_conf_root_config_load_files(char *conf_name)
 {
 	_utils_verbose_output(1, "FILES: loading configuration files for %s\n", conf_name);
-	mpc_conf_config_load(conf_name);
+	return mpc_conf_config_load(conf_name);
 }
 
 int mpc_conf_root_config_load_files_all(void)
