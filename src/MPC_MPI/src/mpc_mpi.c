@@ -17139,8 +17139,14 @@ int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_
             {
                 char str_logical_idx[512];
                 char str_node_idx[512];
+                char tmp[512];
                 sprintf(str_logical_idx, "%d", ancestor->logical_index); 
                 sprintf(str_node_idx, "%d", mpc_common_get_node_rank()); 
+                sprintf(tmp, "%d", mpc_common_get_node_rank()); 
+                /* add node number enough time to be sure id not interfere between nodes */
+                strcat(str_node_idx, tmp);
+                strcat(str_node_idx, tmp);
+                strcat(str_node_idx, tmp);
                 strcat(str_node_idx, str_logical_idx);
                 color = atoi(str_node_idx);
 
