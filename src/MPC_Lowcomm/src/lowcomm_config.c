@@ -198,6 +198,11 @@ static inline void __append_new_rail_to_unfolded(struct sctk_runtime_config_stru
     }
 
 
+    if(_mpc_lowcomm_conf_rail_unfolded_get(rail->name))
+    {
+        bad_parameter("Cannot append the '%s' rail twice", rail->name);
+    }
+
     __net_config.rails[ __net_config.rails_size ] = rail;
     __net_config.rails_size++;
 }
@@ -215,6 +220,11 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 {
     struct sctk_runtime_config_struct_net_rail * ret = sctk_malloc(sizeof(struct sctk_runtime_config_struct_net_rail));
     assume(ret != NULL);
+
+    if(_mpc_lowcomm_conf_rail_unfolded_get(name))
+    {
+        bad_parameter("Cannot append the '%s' rail twice", name);
+    }
 
     /* This fills in the struct */
 
@@ -252,6 +262,8 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	                                                         PARAM("gates", gates, MPC_CONF_TYPE, "Gates to check before taking this rail"),
 	                                                         NULL);  
 
+
+    __append_new_rail_to_unfolded(ret);
 
     return rail;
 }
@@ -340,16 +352,13 @@ static inline mpc_conf_config_type_t * ___mpc_lowcomm_rail_instanciate_from_defa
 	for(i = 0 ; i < mpc_conf_config_type_count(default_rail); i++)
     {
         mpc_conf_config_type_elem_t* default_elem = mpc_conf_config_type_nth(default_rail, i);
-
         /* Now get the elem to ensure it already exists */
         mpc_conf_config_type_elem_t *existing_elem = mpc_conf_config_type_get(current_rail, default_elem->name);
 
-        if(!existing_elem)
+        if(existing_elem)
         {
-			/* We need to push the elem from defaults */
-            mpc_config_type_append_elem(current_rail, default_elem);
-			/* Now remoe the elem from the default not to free it with it */
-			mpc_config_type_pop_elem(default_rail, default_elem);
+			/* Here we need to update the default elem */
+            mpc_conf_config_type_elem_set_from_elem(default_elem, existing_elem);
         }
     }
 
@@ -357,12 +366,19 @@ static inline mpc_conf_config_type_t * ___mpc_lowcomm_rail_instanciate_from_defa
 	mpc_conf_config_type_release(&default_rail);
 
     /* Reorder according to default rail */
-	default_rail = ___new_default_rail(elem->name);
-	mpc_config_type_match_order(current_rail, default_rail);
-	mpc_conf_config_type_release(&default_rail);
-   
 
-    return NULL;
+    if(__net_config.rails)
+    {
+        if(__net_config.rails[0])
+        {
+            mpc_conf_config_type_t *first_rail = _mpc_lowcomm_conf_conf_rail_get ( __net_config.rails[0]->name );
+            mpc_config_type_match_order(current_rail, first_rail);
+        }
+    }
+
+	//mpc_conf_config_type_release(&default_rail);
+   
+    return default_rail;
 }
 
 
