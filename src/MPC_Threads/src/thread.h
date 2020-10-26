@@ -51,7 +51,7 @@ extern "C"
 struct mpc_thread_config
 {
 	/* Common */
-	char * thread_layout;
+	char thread_layout[MPC_CONF_STRING_SIZE];
 	int thread_timer_interval;
 
 	/* Kthread */

@@ -32,7 +32,7 @@
 
 struct _mpc_lowcomm_coll_conf
 {
-	char * algorithm;
+	char algorithm[MPC_CONF_STRING_SIZE];
 	void   ( *mpc_lowcomm_coll_init_hook )(mpc_lowcomm_communicator_t id);
 
 	/* Barrier */
@@ -308,7 +308,7 @@ struct sctk_runtime_config_struct_net_driver
 struct sctk_runtime_config_struct_net_driver_config
 {
 	/**Name of the driver configuration to be referenced in rail definitions.**/
-	char *                                       name;
+	char                                        name[MPC_CONF_STRING_SIZE];
 	/**Define the related driver to use and its configuration.**/
 	struct sctk_runtime_config_struct_net_driver driver;
 };
@@ -413,12 +413,12 @@ struct sctk_runtime_config_struct_net_gate
 struct sctk_runtime_config_struct_topological_polling
 {
 	/** Polling range as string */
-	char * srange;
+	char srange[MPC_CONF_STRING_SIZE];
 	/**Define the subset of cores involved in the polling.**/
 	enum rail_topological_polling_level range;
 
 	/** Polling trigger as string */
-	char * strigger;
+	char strigger[MPC_CONF_STRING_SIZE];
 	/**Define the subset of cores involved in the polling.**/
 	enum rail_topological_polling_level trigger;
 };
@@ -428,21 +428,21 @@ struct sctk_runtime_config_struct_topological_polling
 struct sctk_runtime_config_struct_net_rail
 {
 	/**Define the name of current rail.**/
-	char *                                                name;
+	char                                                  name[MPC_CONF_STRING_SIZE];
 	/**Number which defines the order in which routes are tested (higher first).**/
 	int                                                   priority;
 	/**Define the name of the device to use in this rail.**/
-	char *                                                device;
+	char                                                 device[MPC_CONF_STRING_SIZE];
 	/**Define how the any-source polling is done.**/
 	struct sctk_runtime_config_struct_topological_polling any_source_polling;
 	/**Define the network topology to apply on this rail.**/
-	char *                                                topology;
+	char                                                  topology[MPC_CONF_STRING_SIZE];
 	/**Define if on-demand connections are allowed on this rail.**/
 	int                                                   ondemand;
 	/**Defines if the rail has RDMA enabled.**/
 	int                                                   rdma;
 	/**Define the driver config to use for this rail.**/
-	char *                                                config;
+	char                                                 config[MPC_CONF_STRING_SIZE];
 	/**List of gates to be applied in this config.**/
 	struct sctk_runtime_config_struct_net_gate *          gates;
 	/** Number of elements in gates array. **/
@@ -472,7 +472,7 @@ struct sctk_runtime_config_struct_networks
 	int                                                  rails_size;
 
 	/** Name of the default CLI option to choose */
-	char *                                               cli_default_network;
+	char                                               cli_default_network[MPC_CONF_STRING_SIZE];
 };
 
 

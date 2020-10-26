@@ -74,8 +74,8 @@ struct mpc_launch_config{
 	int debug_callbacks; /** Print callbacks debug information */
 	int banner_enabled; /** Should MPC's banner be dispayed */
 	int autokill_timer; /** What is the kill timer in seconds (0 means none) */
-	char * mpcrun_launcher; /** What is the default launcher for MPCRUN */
-	char * mpcrun_user_launcher; /** Where to look for user launchers in mpcrun */
+	char mpcrun_launcher[MPC_CONF_STRING_SIZE]; /** What is the default launcher for MPCRUN */
+	char mpcrun_user_launcher[MPC_CONF_STRING_SIZE]; /** Where to look for user launchers in mpcrun */
 	int disable_aslr; /** If mpcrun should disable ASLR */
 };
 
@@ -263,6 +263,19 @@ static inline int __parse_arg_eq(char *arg,
 		}                                                                               \
 	} while(0)
 
+#define SET_FLAG_STRING_ARRAY(arg, flag, array_size) \
+	do \
+	{ \
+		char *__value_flag = ___extract_argument_string_value(arg, passed_arg); \
+		if(__value_flag)                                                        \
+		{                                                                       \
+			snprintf(mpc_common_get_flags()->flag, array_size ,__value_flag);         \
+			return;                                                         \
+		}  \
+	} while (0);
+	
+
+
 #define SET_FLAG_STRING(arg, flag)                  \
 	do {                                        \
 		__SET_FLAG_CONV(arg, flag, strdup); \
@@ -297,7 +310,7 @@ static inline void __parse_argument(char *passed_arg)
 	SET_FLAG_STRING("--sctk_use_network", network_driver_name);
 	SET_FLAG_STRING("--profiling", profiler_outputs);
 	SET_FLAG_STRING("--launcher", launcher);
-	SET_FLAG_STRING("--thread", thread_library_kind);
+	SET_FLAG_STRING_ARRAY("--thread", thread_library_kind, MPC_CONF_STRING_SIZE);
 
 	/* Int flags */
 	SET_FLAG_INT("--node-number", node_number);
@@ -513,8 +526,8 @@ static inline void __set_default_values()
 	__launch_config.debug_callbacks = 0;
 	__launch_config.banner_enabled = 1;
 	__launch_config.autokill_timer = 0;
-	__launch_config.mpcrun_launcher = strdup("none");
-	__launch_config.mpcrun_user_launcher = strdup("~/.mpc/");
+	snprintf(__launch_config.mpcrun_launcher, MPC_CONF_STRING_SIZE, "none");
+	snprintf(__launch_config.mpcrun_user_launcher,MPC_CONF_STRING_SIZE,"~/.mpc/");
 	__launch_config.disable_aslr = 1;
 	mpc_common_get_flags()->verbosity = 0;
 	mpc_common_get_flags()->launcher = strdup(mpc_conf_stringify(MPC_LAUNCHER));
@@ -525,7 +538,7 @@ static inline void __set_default_values()
 	mpc_common_get_flags()->processor_number = 1;
 
 #ifdef MPC_Threads
-	mpc_common_get_flags()->thread_library_kind = strdup("ethread_mxn");
+	snprintf(mpc_common_get_flags()->thread_library_kind, MPC_CONF_STRING_SIZE, "ethread_mxn");
 	mpc_common_get_flags()->thread_library_init = mpc_thread_ethread_mxn_engine_init;
 #endif
 
@@ -562,8 +575,8 @@ static inline void __register_config(void)
 
 	/* Register Launch Config */
 	mpc_conf_config_type_t *mpcrun = mpc_conf_config_type_init("mpcrun",
-	                                                       PARAM("plugin", &__launch_config.mpcrun_launcher, MPC_CONF_STRING, "Default launch plugin in mpcrun"),
-	                                                       PARAM("user", &__launch_config.mpcrun_user_launcher, MPC_CONF_STRING, "Where to look for MPCRUN user-plugins"),
+	                                                       PARAM("plugin", __launch_config.mpcrun_launcher, MPC_CONF_STRING, "Default launch plugin in mpcrun"),
+	                                                       PARAM("user", __launch_config.mpcrun_user_launcher, MPC_CONF_STRING, "Where to look for MPCRUN user-plugins"),
 														   PARAM("aslr", &__launch_config.disable_aslr, MPC_CONF_BOOL, "Disable Address space layout randomization in MPCRUN"),
 														   PARAM("smt", &mpc_common_get_flags()->enable_smt_capabilities, MPC_CONF_BOOL, "Enable Hyper-Threading (SMT)"),
 														   PARAM("task", &mpc_common_get_flags()->task_number, MPC_CONF_INT, "Default number of MPI tasks"),
@@ -571,12 +584,11 @@ static inline void __register_config(void)
 														   PARAM("node", &mpc_common_get_flags()->node_number, MPC_CONF_INT, "Default number of Nodes"),
 														   PARAM("core", &mpc_common_get_flags()->processor_number, MPC_CONF_INT, "Default number of cores per UNIX processes"),
 #ifdef MPC_Threads
-														   PARAM("thread", &mpc_common_get_flags()->thread_library_kind, MPC_CONF_STRING, "Default thread engine (pthread, ethread, ethread_mxn and X_ng variants)"),
+														   PARAM("thread", mpc_common_get_flags()->thread_library_kind, MPC_CONF_STRING, "Default thread engine (pthread, ethread, ethread_mxn and X_ng variants)"),
 #endif
 	                                                       NULL);
 
 	mpc_conf_config_type_t *mc = mpc_conf_config_type_init("launch",
-	                                                       PARAM("launcher", &mpc_common_get_flags()->launcher, MPC_CONF_STRING, "Default launcher to be used (SLURM, HYDRA, PMIX)"),
 	                                                       PARAM("banner", &__launch_config.banner_enabled, MPC_CONF_BOOL, "Should MPC's banner be dispayed"),
 														   PARAM("autokill", &__launch_config.autokill_timer, MPC_CONF_INT, "What is the kill timer in seconds (0 means none)"),
 														   PARAM("debug", debug, MPC_CONF_TYPE, "MPC debug parameters"),

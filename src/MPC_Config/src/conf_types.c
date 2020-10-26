@@ -89,21 +89,14 @@ int mpc_conf_type_print_value(mpc_conf_type_t type, char *buf, int len, void *pt
 		case MPC_CONF_FUNC:
 		case MPC_CONF_STRING:
 		{
-			char ** pptr = (char**)ptr;
-
-			char * _empty = "";
-			if(!*pptr)
-			{
-				pptr = &_empty;
-			}
 
 			if(add_color)
 			{
-				return snprintf(buf, len, MAGENTA("%s"), *pptr);
+				return snprintf(buf, len, MAGENTA("%s"), (char*)ptr);
 			}
 			else
 			{
-				return snprintf(buf, len, "%s", *pptr);
+				return snprintf(buf, len, "%s", (char*)ptr);
 			}
 		}
 		case MPC_CONF_BOOL:
@@ -151,9 +144,10 @@ ssize_t mpc_conf_type_size(mpc_conf_type_t type)
 
 		case MPC_CONF_FUNC:
 		case MPC_CONF_STRING:
-		case MPC_CONF_TYPE_NONE:
-			return sizeof(void *);
+			return sizeof(char)*MPC_CONF_STRING_SIZE;
 		case MPC_CONF_TYPE:
+			return sizeof(void *);
+		case MPC_CONF_TYPE_NONE:
 			return -1;
 	}
 
@@ -168,22 +162,14 @@ int mpc_conf_type_set_value(mpc_conf_type_t type, void **dest, void *from)
 		case MPC_CONF_BOOL:
 		case MPC_CONF_LONG_INT:
 		case MPC_CONF_DOUBLE:
-			memcpy(*dest, from, mpc_conf_type_size(type) );
-			break;
-
 		case MPC_CONF_FUNC:
 		case MPC_CONF_STRING:
-		{
-			char ***pdest = (char***)dest;
-			free(**pdest);
-			**pdest = strdup(from);
+			memcpy(*dest, from, mpc_conf_type_size(type) );
 			break;
-		}
 		case MPC_CONF_TYPE:
 			mpc_conf_config_type_release( (mpc_conf_config_type_t **)dest);
 			*dest = from;
 			break;
-
 		case MPC_CONF_TYPE_NONE:
 			return 1;
 	}
@@ -262,7 +248,7 @@ int __mpc_conf_type_parse_from_string(mpc_conf_type_t type, void *dest, char *fr
 					return 1;
 				}
 			}
-			/* Could also be an int so we falltrough */
+		/* FALLTRU Could also be an int so we falltrough */
 		case MPC_CONF_INT:
 		{
 			long tmp = 0;
@@ -295,6 +281,8 @@ int __mpc_conf_type_parse_from_string(mpc_conf_type_t type, void *dest, char *fr
 
 		case MPC_CONF_FUNC:
 		case MPC_CONF_STRING:
+			snprintf(dest, MPC_CONF_STRING_SIZE, (char *)from);
+			return 0;
 		case MPC_CONF_TYPE:
 		case MPC_CONF_TYPE_NONE:
 			return 1;
@@ -318,32 +306,19 @@ int mpc_conf_type_set_value_from_string(mpc_conf_type_t type, void **dest, char 
 
 	if(0 <= tsize)
 	{
-		if(mpc_conf_type_is_string(type))
+		/* Now we need to parse */
+		if(__mpc_conf_type_parse_from_string(type, *dest, from) != 0)
 		{
-			char *** sdest = dest;
-
-			free(**sdest);
-			/* No parsing needed as we set a string */
-			**sdest = strdup(from);
+			_utils_verbose_output(0,"Failed parsing %s from string '%s'\n", mpc_conf_type_name(type), from);
+			return 1;
 		}
-		else
-		{
-			/* Now we need to parse */
-			if(__mpc_conf_type_parse_from_string(type, *dest, from) != 0)
-			{
-				_utils_verbose_output(0,"Failed parsing %s from string '%s'\n", mpc_conf_type_name(type), from);
-				return 1;
-			}
 	
-		}
-		
 		return 0;
 	}
 	else
 	{
 		/* If we are here no parsing needed :
 		 *      - Pointer type
-		 *      - String type
 		 */
 		return mpc_conf_type_set_value(type, dest, (void *)from);
 	}

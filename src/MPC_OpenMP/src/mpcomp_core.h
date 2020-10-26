@@ -26,7 +26,7 @@
 #define __MPCOMP_CORE_H__
 
 #include "mpcomp_types.h" /* need mpcomp_mvp_t && mpcomp_instance_t */
-
+#include <mpc_conf.h>
 /**************
  * ALLOC HOOK *
  **************/
@@ -55,8 +55,8 @@ struct mpc_omp_conf
 	/* Should we emit a warning when nesting is used? */
 	int OMP_WARN_NESTED ;
 
-  /* OMP places configuration */
-  char * places;
+	/* OMP places configuration */
+	char places[MPC_CONF_STRING_SIZE];
 
 	/* Schedule modifier */
 
@@ -86,8 +86,8 @@ struct mpc_omp_conf
 	/* Tasks */	
 
 	int omp_new_task_depth;
-  int omp_untied_task_depth;
-	char * omp_task_larceny_mode_str;
+    int omp_untied_task_depth;
+	char omp_task_larceny_mode_str[MPC_CONF_STRING_SIZE];
 	enum mpcomp_task_larceny_mode_t omp_task_larceny_mode; 
 
 	int omp_task_nesting_max;

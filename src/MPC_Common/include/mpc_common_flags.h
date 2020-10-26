@@ -2,6 +2,7 @@
 #define MPC_COMMON_FLAGS_H_
 
 #include <opa_primitives.h>
+#include <mpc_conf.h>
 
 /******************
  * FLAG STRUCTURE *
@@ -39,7 +40,7 @@ struct mpc_common_flags
         short enable_topology_text_placement;   /*< Should current pinning be dumped in text */
 
         /* Thread-library */
-        char * thread_library_kind;             /*< Type of threading library requested */
+        char thread_library_kind[MPC_CONF_STRING_SIZE];             /*< Type of threading library requested */
         void ( *thread_library_init ) ( void ); /*< Function called to initialize the thread library */
         short new_scheduler_engine_enabled;     /*< If the new thread engine has been enabled */
 

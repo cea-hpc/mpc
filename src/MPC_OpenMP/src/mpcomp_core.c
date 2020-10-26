@@ -67,7 +67,7 @@ static inline void __omp_conf_set_default(void)
 
 	__omp_conf.OMP_MAX_ACTIVE_LEVELS=0;
 	__omp_conf.OMP_WARN_NESTED=0;
-	__omp_conf.places = strdup("cores");
+	snprintf(__omp_conf.places, MPC_CONF_STRING_SIZE, "cores");
 
 
 	/* Schedule */
@@ -86,7 +86,7 @@ static inline void __omp_conf_set_default(void)
 
 	__omp_conf.omp_new_task_depth = 10;
 	__omp_conf.omp_untied_task_depth = 10;
-	__omp_conf.omp_task_larceny_mode_str = strdup("producer");
+	snprintf(__omp_conf.omp_task_larceny_mode_str, MPC_CONF_STRING_SIZE, "producer");
 	__omp_conf.omp_task_larceny_mode = MPCOMP_TASK_LARCENY_MODE_PRODUCER;
 	__omp_conf.omp_task_nesting_max = 1000000;
 	__omp_conf.mpcomp_task_max_delayed = 1024;

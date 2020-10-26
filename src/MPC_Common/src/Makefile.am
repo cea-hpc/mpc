@@ -21,7 +21,7 @@
 #   - JAEGER Julien julien.jaeger@cea.fr                               #
 #                                                                      #
 ########################################################################
-AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ -I$(abs_top_srcdir)/src/include/ -I$(abs_top_builddir)/src/MPC_Arch/include/ -I$(abs_top_builddir)/src/MPC_Common/include/
+AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ -I$(abs_top_srcdir)/src/include/ -I$(abs_top_builddir)/src/MPC_Arch/include/ -I$(abs_top_builddir)/src/MPC_Common/include/ -I$(abs_top_srcdir)/src/MPC_Config/include/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Arch/include/ -I$(abs_top_builddir)/src/include/ $(OPENPA_CFLAGS)
 
 if MPC_THREAD_ENABLED

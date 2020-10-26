@@ -66,14 +66,14 @@ mpc_conf_config_type_t *mpc_conf_config_loader_paths(char *conf_name,
 		user_prefix = "";
 	}
 
-	char ** asystem_prefix = malloc(sizeof(char *));
-	*asystem_prefix = strdup(system_prefix);
+	char * asystem_prefix = malloc(sizeof(char) * MPC_CONF_STRING_SIZE);
+	snprintf(asystem_prefix, MPC_CONF_STRING_SIZE, system_prefix);
 
-	char ** auser_prefix = malloc(sizeof(char *));
-	*auser_prefix = strdup(user_prefix);
+	char * auser_prefix = malloc(sizeof(char) * MPC_CONF_STRING_SIZE);
+	snprintf(auser_prefix, MPC_CONF_STRING_SIZE, user_prefix);
 
-	char ** acan_create = malloc(sizeof(char *));
-	*acan_create = strdup(can_create);
+	char * acan_create = malloc(sizeof(char) * MPC_CONF_STRING_SIZE);
+	snprintf(acan_create, MPC_CONF_STRING_SIZE, can_create);
 
 	mpc_conf_config_type_t *type = mpc_conf_config_type_init(conf_name, PARAM("cancreate",
 	                                                                        acan_create,
@@ -187,11 +187,8 @@ int mpc_conf_config_loader_push(char *conf_name, char *key, char *value, char *s
 				perror("malloc");
 				return 1;
 			}
-		}
 
-		if(type_to_set == MPC_CONF_STRING)
-		{
-			*((char**)elem_data)=strdup("");
+			memset(elem_data, 0, elem_size);
 		}
 
 		/* Now create the new element */
@@ -567,11 +564,11 @@ int mpc_conf_config_load(char *conf_name)
 		return 1;
 	}
 
-	const char *srights = *((const char **)erights->addr);
+	const char *srights = mpc_conf_type_elem_get_as_string(erights);
 	mpc_conf_config_loader_rights_t rights = mpc_conf_config_loader_rights_parse(srights);
 
-	char *system = *(( (char **)esystem->addr));
-	char *user   = *(( (char **)euser->addr));
+	char *system = mpc_conf_type_elem_get_as_string(esystem);
+	char *user   = mpc_conf_type_elem_get_as_string(euser);
 
 	if(rights == MPC_CONF_MOD_ERROR)
 	{

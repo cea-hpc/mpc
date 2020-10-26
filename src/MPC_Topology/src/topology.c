@@ -59,8 +59,8 @@
 
 struct mpc_topology_config
 {
-	char * hwloc_xml;
-	char * pin_proc_list;
+	char hwloc_xml[MPC_CONF_STRING_SIZE];
+	char pin_proc_list[MPC_CONF_STRING_SIZE];
 };
 
 
@@ -69,8 +69,8 @@ struct mpc_topology_config __mpc_topo_config = { 0 };
 void __init_topology_config(void)
 {
 	mpc_conf_config_type_t *topo_conf = mpc_conf_config_type_init("topology",
-																  PARAM("xml", &__mpc_topo_config.hwloc_xml ,MPC_CONF_STRING, "HWLOC XML to be used to load machine topology"),
-																  PARAM("bindings", &__mpc_topo_config.pin_proc_list ,MPC_CONF_STRING, "List of cores to pin to ex: 1,3-4, only if one proc per node"),
+																  PARAM("xml", __mpc_topo_config.hwloc_xml ,MPC_CONF_STRING, "HWLOC XML to be used to load machine topology"),
+																  PARAM("bindings", __mpc_topo_config.pin_proc_list ,MPC_CONF_STRING, "List of cores to pin to ex: 1,3-4, only if one proc per node"),
 																  NULL);
 
 

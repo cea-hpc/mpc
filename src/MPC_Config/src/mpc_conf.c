@@ -107,12 +107,6 @@ void mpc_conf_config_type_elem_release(mpc_conf_config_type_elem_t **elem)
 	free( (*elem)->name);
 	free( (*elem)->doc);
 
-	if(mpc_conf_type_is_string( (*elem)->type) )
-	{
-		char ** pstring = (char **)(*elem)->addr;
-		free(*pstring);
-	}
-
 	if( (*elem)->addr_is_to_free )
 	{
 		free( (*elem)->addr);
@@ -127,17 +121,7 @@ int mpc_conf_config_type_elem_set_from_elem(mpc_conf_config_type_elem_t *elem, m
 {
 	_utils_verbose_output(3, "ELEM: set %s to %s\n", src->name, elem->name);
 
-
-	void * addr = src->addr;
-
-	/* Strings are always passed as ref to string */
-	if(elem->type == MPC_CONF_STRING)
-	{
-		addr = *((char**)src->addr);
-	}
-
-
-	return mpc_conf_config_type_elem_set(elem, src->type, addr);
+	return mpc_conf_config_type_elem_set(elem, src->type, src->addr);
 
 }
 
@@ -236,9 +220,9 @@ int mpc_conf_config_type_elem_set_from_string(mpc_conf_config_type_elem_t *elem,
 	if(type != elem->type)
 	{
 		/* Allow LONG_INT to INT */
-		if(elem->type == MPC_CONF_LONG_INT)
+		if((elem->type == MPC_CONF_LONG_INT) || (elem->type == MPC_CONF_INT) )
 		{
-			type = MPC_CONF_INT;
+			type = elem->type;
 		}
 		else
 		{
@@ -744,7 +728,7 @@ char * mpc_conf_type_elem_get_as_string(mpc_conf_config_type_elem_t * elem)
 		abort();
 	}
 
-	return *((char**)elem->addr);
+	return ((char*)elem->addr);
 }
 
 /*********************************

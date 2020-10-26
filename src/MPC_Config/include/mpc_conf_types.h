@@ -15,6 +15,8 @@ typedef enum
 	MPC_CONF_TYPE_NONE
 }mpc_conf_type_t;
 
+#define MPC_CONF_STRING_SIZE 512
+
 const char *mpc_conf_type_name(mpc_conf_type_t type);
 
 int mpc_conf_type_print_value(mpc_conf_type_t type, char *buf, int len, void *ptr, int do_color);

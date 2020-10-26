@@ -48,7 +48,7 @@ static void __mpc_lowcomm_coll_conf_set_default(void)
 	__coll_conf.checksum = 0;
 #endif
 
-	__coll_conf.algorithm = strdup("noalloc");
+	snprintf(__coll_conf.algorithm, MPC_CONF_STRING_SIZE, "noalloc");
 	__coll_conf.mpc_lowcomm_coll_init_hook = NULL;
 
 	/* Barrier */
@@ -104,7 +104,7 @@ static mpc_conf_config_type_t *__mpc_lowcomm_coll_conf_init(void)
 	                                                              NULL);
 
 	mpc_conf_config_type_t *coll = mpc_conf_config_type_init("coll",
-	                                                         PARAM("algo", &__coll_conf.algorithm, MPC_CONF_STRING, "Name of the collective module to use (simple, opt, hetero, noalloc)"),
+	                                                         PARAM("algo", __coll_conf.algorithm, MPC_CONF_STRING, "Name of the collective module to use (simple, opt, hetero, noalloc)"),
 	                                                         PARAM("barrier", barrier, MPC_CONF_TYPE, "Options for Barrier"),
 	                                                         PARAM("bcast", bcast, MPC_CONF_TYPE, "Options for Bcast"),
 	                                                         PARAM("allreduce", allreduce, MPC_CONF_TYPE, "Options for Bcast"),
@@ -231,34 +231,34 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
     memset(ret, 0, sizeof(struct sctk_runtime_config_struct_net_rail));
 
     /* For unfolded retrieval */
-    ret->name = strdup(name);
+    snprintf(ret->name, MPC_CONF_STRING_SIZE, name);
     ret->priority = priority;
-    ret->device = strdup(device);
-    ret->any_source_polling.srange = strdup(idle_poll_range);
+    snprintf(ret->device, MPC_CONF_STRING_SIZE, device);
+    snprintf(ret->any_source_polling.srange, MPC_CONF_STRING_SIZE, idle_poll_range);
     ret->any_source_polling.range = sctk_rail_convert_polling_set_from_string(idle_poll_range);
-    ret->any_source_polling.strigger = strdup(idle_poll_trigger);
+    snprintf(ret->any_source_polling.strigger, MPC_CONF_STRING_SIZE, idle_poll_trigger);
     ret->any_source_polling.trigger = sctk_rail_convert_polling_set_from_string(idle_poll_trigger);
-    ret->topology = strdup(topology);
+    snprintf(ret->topology, MPC_CONF_STRING_SIZE, topology);
     ret->ondemand = ondemand;
     ret->rdma = rdma;
-    ret->config = strdup(config);
+    snprintf(ret->config, MPC_CONF_STRING_SIZE, config);
 
     mpc_conf_config_type_t *gates = mpc_conf_config_type_init("gates", NULL);
 
     mpc_conf_config_type_t *idle_poll = mpc_conf_config_type_init("idlepoll",
-	                                                              PARAM("range", &ret->any_source_polling.srange , MPC_CONF_STRING, "Which cores can idle poll"),
-                                                                  PARAM("trigger", &ret->any_source_polling.strigger , MPC_CONF_STRING, "Which granularity can idle poll"),
+	                                                              PARAM("range", ret->any_source_polling.srange , MPC_CONF_STRING, "Which cores can idle poll"),
+                                                                  PARAM("trigger", ret->any_source_polling.strigger , MPC_CONF_STRING, "Which granularity can idle poll"),
                                                                   NULL);
 
     /* This fills in a rail definition */
   	mpc_conf_config_type_t *rail = mpc_conf_config_type_init(name,
 	                                                         PARAM("priority", &ret->priority, MPC_CONF_INT, "How rails should be sorted (taken in decreasing order)"),
-	                                                         PARAM("device", &ret->device, MPC_CONF_STRING, "Name of the device to use can be a regular expression if starting with '!'"),
+	                                                         PARAM("device", ret->device, MPC_CONF_STRING, "Name of the device to use can be a regular expression if starting with '!'"),
 	                                                         PARAM("idlepoll", idle_poll, MPC_CONF_TYPE, "Parameters for idle polling"),
-	                                                         PARAM("topology", &ret->topology, MPC_CONF_STRING, "Topology to be bootstrapped on this network"),
+	                                                         PARAM("topology", ret->topology, MPC_CONF_STRING, "Topology to be bootstrapped on this network"),
 	                                                         PARAM("ondemand", &ret->ondemand, MPC_CONF_BOOL, "Are on-demmand connections allowed on this network"),
 	                                                         PARAM("rdma", &ret->ondemand, MPC_CONF_BOOL, "Can this rail provide RDMA capabilities"),
-	                                                         PARAM("config", &ret->config, MPC_CONF_STRING, "Name of the rail configuration to be used for this rail"),
+	                                                         PARAM("config", ret->config, MPC_CONF_STRING, "Name of the rail configuration to be used for this rail"),
 	                                                         PARAM("gates", gates, MPC_CONF_TYPE, "Gates to check before taking this rail"),
 	                                                         NULL);  
 
@@ -359,11 +359,14 @@ static inline mpc_conf_config_type_t * ___mpc_lowcomm_rail_instanciate_from_defa
         {
 			/* Here we need to update the default elem */
             mpc_conf_config_type_elem_set_from_elem(default_elem, existing_elem);
-        }
+        
+			if(existing_elem->type == MPC_CONF_TYPE)
+			{
+				/* POP as we want to deep copy the elem */
+				mpc_config_type_pop_elem(current_rail, existing_elem);
+			}
+		}
     }
-
-	/* Release default conf */
-	mpc_conf_config_type_release(&default_rail);
 
     /* Reorder according to default rail */
 
@@ -375,8 +378,6 @@ static inline mpc_conf_config_type_t * ___mpc_lowcomm_rail_instanciate_from_defa
             mpc_config_type_match_order(current_rail, first_rail);
         }
     }
-
-	//mpc_conf_config_type_release(&default_rail);
    
     return default_rail;
 }
@@ -406,7 +407,9 @@ static inline void ___mpc_lowcomm_rail_conf_validate(void)
         mpc_conf_config_type_elem_t* rail = mpc_conf_config_type_nth(all_rails, i);
         if(!_mpc_lowcomm_conf_rail_unfolded_get(rail->name))
         {
-            ___mpc_lowcomm_rail_instanciate_from_default(rail);
+            mpc_conf_config_type_t * new_rail = ___mpc_lowcomm_rail_instanciate_from_default(rail);
+			mpc_conf_config_type_release((mpc_conf_config_type_t**)&all_rails->elems[i]->addr);
+			all_rails->elems[i]->addr = new_rail;
         }
     }
 }
@@ -422,19 +425,18 @@ mpc_conf_config_type_t *_mpc_lowcomm_conf_cli_get ( char *name )
 
 static mpc_conf_config_type_t *___mpc_lowcomm_cli_conf_option_init(char *name, char *rail1, char *rail2)
 {
-	char **ar1 = malloc(sizeof(char **) );
+	char *ar1 = malloc(sizeof(char)*MPC_CONF_STRING_SIZE);
 
 	assume(ar1);
-	*ar1 = strdup(rail1);
+	snprintf(ar1, MPC_CONF_STRING_SIZE, rail1);
 
 	mpc_conf_config_type_t *rails = NULL;
 
 	if(rail2)
 	{
-		char **ar2 = malloc(sizeof(char **) );
+		char *ar2 = malloc(sizeof(char)*MPC_CONF_STRING_SIZE);
 		assume(ar2);
-		*ar2 = strdup(rail2);
-
+		snprintf(ar2, MPC_CONF_STRING_SIZE, rail2);
 
 		rails = mpc_conf_config_type_init(name,
 		                                  PARAM("first", ar1, MPC_CONF_STRING, "First rail to pick"),
@@ -475,7 +477,7 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 	                                                           NULL);
 
 	mpc_conf_config_type_t *cli = mpc_conf_config_type_init("cli",
-	                                                        PARAM("default", &__net_config.cli_default_network, MPC_CONF_STRING, "Default Network CLI option to choose"),
+	                                                        PARAM("default", __net_config.cli_default_network, MPC_CONF_STRING, "Default Network CLI option to choose"),
 	                                                        PARAM("options", cliopt, MPC_CONF_TYPE, "CLI alternaltives for network configurations"),
 	                                                        NULL);
 
@@ -485,11 +487,11 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 static inline void _mpc_lowcomm_net_config_default(void)
 {
 #ifdef MPC_USE_PORTALS
-	__net_config.cli_default_network = strdup("portals");
+	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "portals");
 #elif defined(MPC_USE_INFINIBAND)
-	__net_config.cli_default_network = strdup("ib");
+	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "ib");
 #else
-	__net_config.cli_default_network = strdup("tcp");
+	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "tcp");
 #endif
 }
 

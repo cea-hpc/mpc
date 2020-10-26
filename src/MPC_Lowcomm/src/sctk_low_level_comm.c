@@ -385,7 +385,7 @@ static inline int __unfold_rails( mpc_conf_config_type_t *cli_option )
 		{
 			/* Count subrails */
 			total_rail_nb += rail->subrails_size;
-			rail->topology = "none";
+			snprintf(rail->topology, MPC_CONF_STRING_SIZE, "none");
 		}
 		else
 		{
@@ -416,7 +416,7 @@ static inline int __unfold_rails( mpc_conf_config_type_t *cli_option )
 						memcpy( &subrails[i], rail, sizeof( struct sctk_runtime_config_struct_net_rail ) );
 						
 						/* Update device name with matching device */
-						subrails[i].device = matching_device[i]->name;
+						snprintf(subrails[i].device, MPC_CONF_STRING_SIZE, matching_device[i]->name);
 						
 						/* Make sure that the topological rail has the highest priority
 						 * this is important during the on-demand election process

@@ -119,7 +119,7 @@ struct mpc_thread_config  * _mpc_thread_confif_get(void)
 static inline void __thread_module_config_defaults(void)
 {
 	/* Here we set default values for thread config */
-	__thread_module_config.thread_layout = strdup("default");
+	snprintf(__thread_module_config.thread_layout, MPC_CONF_STRING_SIZE, "default");
 	__thread_module_config.thread_timer_interval = 10;
 	__thread_module_config.kthread_stack_size = (10 * 1024 * 1024);
 	__thread_module_config.ethread_spin_delay = 10;
@@ -146,7 +146,7 @@ static inline void __init_thread_module_config(void)
 	__thread_module_config_defaults();
 
 	mpc_conf_config_type_t *common = mpc_conf_config_type_init("common",
-														       PARAM("layout", &__thread_module_config.thread_layout ,MPC_CONF_STRING, "Layout to be used (default, numa or numa_packed)"),
+														       PARAM("layout", __thread_module_config.thread_layout ,MPC_CONF_STRING, "Layout to be used (default, numa or numa_packed)"),
 														       PARAM("interval", &__thread_module_config.thread_timer_interval, MPC_CONF_INT, "Wakeup interval of the timer thread in milliseconds"),
 															   NULL);
 
