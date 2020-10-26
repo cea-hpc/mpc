@@ -117,12 +117,64 @@ void mpc_conf_config_type_elem_release(mpc_conf_config_type_elem_t **elem)
 	*elem = NULL;
 }
 
+
+mpc_conf_config_type_t * mpc_conf_config_type_elem_update(mpc_conf_config_type_t * ref, mpc_conf_config_type_t * updater, int force_content)
+{
+	/* First check current in default to ensure that all entries are known */
+    int i;
+
+	if(0 < force_content)
+	{
+		for(i = 0 ; i < mpc_conf_config_type_count(updater); i++)
+		{
+			mpc_conf_config_type_elem_t* current_elem = mpc_conf_config_type_nth(updater, i);
+
+			/* Now get the elem to ensure it already exists */
+			mpc_conf_config_type_elem_t *default_elem = mpc_conf_config_type_get(ref, current_elem->name);
+
+			if(!default_elem)
+			{
+				mpc_conf_config_type_print(updater, MPC_CONF_FORMAT_XML);
+				_utils_verbose_output(0,"Default definitions does not contain '%s' elements", current_elem->name);
+				abort();
+			}
+		}
+	}
+
+	/* Now check default in current to push missing elements from default */
+	for(i = 0 ; i < mpc_conf_config_type_count(ref); i++)
+    {
+        mpc_conf_config_type_elem_t* default_elem = mpc_conf_config_type_nth(ref, i);
+        /* Now get the elem to ensure it already exists */
+        mpc_conf_config_type_elem_t *existing_elem = mpc_conf_config_type_get(updater, default_elem->name);
+
+        if(existing_elem)
+        {
+
+			if(existing_elem->type == MPC_CONF_TYPE)
+			{
+				mpc_conf_config_type_elem_update(mpc_conf_config_type_elem_get_inner(default_elem),
+				                                 mpc_conf_config_type_elem_get_inner(existing_elem),
+												 force_content--);
+			}
+			else
+			{
+				/* Here we need to update the default elem */
+            	mpc_conf_config_type_elem_set_from_elem(default_elem, existing_elem);
+			}
+		}
+    }
+
+    return ref;
+}
+
+
+
 int mpc_conf_config_type_elem_set_from_elem(mpc_conf_config_type_elem_t *elem, mpc_conf_config_type_elem_t *src)
 {
 	_utils_verbose_output(3, "ELEM: set %s to %s\n", src->name, elem->name);
 
 	return mpc_conf_config_type_elem_set(elem, src->type, src->addr);
-
 }
 
 int mpc_conf_config_type_elem_set(mpc_conf_config_type_elem_t *elem, mpc_conf_type_t type, void *ptr)

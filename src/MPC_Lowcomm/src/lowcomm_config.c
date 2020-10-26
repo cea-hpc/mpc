@@ -328,58 +328,8 @@ static inline mpc_conf_config_type_t * ___mpc_lowcomm_rail_instanciate_from_defa
 
     /* Here we override with what was already present in the config */
     mpc_conf_config_type_t * current_rail = mpc_conf_config_type_elem_get_inner(elem);
-
-
-	/* First check current in default to ensure that all entries are known */
-    int i;
-    for(i = 0 ; i < mpc_conf_config_type_count(current_rail); i++)
-    {
-        mpc_conf_config_type_elem_t* current_elem = mpc_conf_config_type_nth(current_rail, i);
-
-        /* Now get the elem to ensure it already exists */
-        mpc_conf_config_type_elem_t *default_elem = mpc_conf_config_type_get(default_rail, current_elem->name);
-
-        if(!default_elem)
-        {
-            mpc_conf_config_type_elem_print(elem, MPC_CONF_FORMAT_XML);
-            bad_parameter("Rail definitions does not contain '%s' elements", current_elem->name);
-        }
-
-    }
-
-
-	/* Now check default in current to push missing elements from default */
-	for(i = 0 ; i < mpc_conf_config_type_count(default_rail); i++)
-    {
-        mpc_conf_config_type_elem_t* default_elem = mpc_conf_config_type_nth(default_rail, i);
-        /* Now get the elem to ensure it already exists */
-        mpc_conf_config_type_elem_t *existing_elem = mpc_conf_config_type_get(current_rail, default_elem->name);
-
-        if(existing_elem)
-        {
-			/* Here we need to update the default elem */
-            mpc_conf_config_type_elem_set_from_elem(default_elem, existing_elem);
-        
-			if(existing_elem->type == MPC_CONF_TYPE)
-			{
-				/* POP as we want to deep copy the elem */
-				mpc_config_type_pop_elem(current_rail, existing_elem);
-			}
-		}
-    }
-
-    /* Reorder according to default rail */
-
-    if(__net_config.rails)
-    {
-        if(__net_config.rails[0])
-        {
-            mpc_conf_config_type_t *first_rail = _mpc_lowcomm_conf_conf_rail_get ( __net_config.rails[0]->name );
-            mpc_config_type_match_order(current_rail, first_rail);
-        }
-    }
    
-    return default_rail;
+    return mpc_conf_config_type_elem_update(default_rail, current_rail, 1);
 }
 
 
