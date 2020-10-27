@@ -80,7 +80,7 @@ static inline char *__debug_print_info( char *buffer )
 #endif
 void mpc_common_debug_abort( void )
 {
-	mpc_common_debuger_print_backtrace( "mpc_common_debug_abort" );
+	mpc_common_debug_error("######## Program will now abort ########");
 	abort();
 }
 

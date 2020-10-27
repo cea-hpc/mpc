@@ -109,13 +109,10 @@ static const char *const mpc_lowcomm_ptp_message_class_name[MPC_LOWCOMM_MESSAGE_
 /* Low Level Message Interface                                          */
 /************************************************************************/
 
-void mpc_lowcomm_isend_class_src(int src, int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req);
-void mpc_lowcomm_irecv_class_dest(int src, int dest, void *buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req);
-void mpc_lowcomm_isend_class(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req);
-void mpc_lowcomm_irecv_class(int src, void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req);
-void mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req);
-void mpc_lowcomm_irecv(int src, void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req);
-void mpc_lowcomm_sendrecv(void *sendbuf, size_t size, int dest, int tag, void *recvbuf, int src, int comm);
+int mpc_lowcomm_isend_class_src(int src, int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req);
+int mpc_lowcomm_irecv_class_dest(int src, int dest, void *buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req);
+int mpc_lowcomm_isend_class(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req);
+int mpc_lowcomm_irecv_class(int src, void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req);
 
 /************************************************************************/
 /* Control Messages Header                                              */
@@ -391,6 +388,8 @@ void mpc_lowcomm_ptp_message_send(mpc_lowcomm_ptp_message_t *msg);
 void mpc_lowcomm_ptp_message_recv(mpc_lowcomm_ptp_message_t *msg);
 
 void mpc_lowcomm_ptp_message_complete_and_free(mpc_lowcomm_ptp_message_t *msg);
+
+int mpc_lowcomm_check_type_compat(mpc_lowcomm_datatype_t src, mpc_lowcomm_datatype_t dest);
 
 /*********************
 * BUFFERED MESSAGES *

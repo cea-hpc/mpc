@@ -177,7 +177,7 @@ int mpc_lowcomm_waitall(int count, mpc_lowcomm_request_t *requests, mpc_lowcomm_
  * @param comm Communicator of the message
  * @param req Returned request to be waited with @ref mpc_lowcomm_wait
  */
-void mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req);
+int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req);
 
 /** Receive an asynchornous message
  * @param src Source rank
@@ -187,7 +187,7 @@ void mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag, mpc_low
  * @param comm Communicator of the message
  * @param req Returned request to be waited with @ref mpc_lowcomm_wait
  */
-void mpc_lowcomm_irecv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req);
+int mpc_lowcomm_irecv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req);
 
 /** Send a synchronous message
  *
@@ -196,7 +196,7 @@ void mpc_lowcomm_irecv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_
  * @param tag Message tag
  * @param comm Communicator of the message
  */
-void mpc_lowcomm_send(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm);
+int mpc_lowcomm_send(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm);
 
 /** Receive a synchornous message
  * @param src Source rank
@@ -205,7 +205,7 @@ void mpc_lowcomm_send(int dest, const void *data, size_t size, int tag, mpc_lowc
  * @param tag Message tag
  * @param comm Communicator of the message
  */
-void mpc_lowcomm_recv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm);
+int mpc_lowcomm_recv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm);
 
 /** Do a synchronous SendRecv
  *
@@ -217,7 +217,7 @@ void mpc_lowcomm_recv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_c
  * @param src Source of the message
  * @param comm Communicator of the message
  */
-void mpc_lowcomm_sendrecv(void *sendbuf, size_t size, int dest, int tag, void *recvbuf, int src, mpc_lowcomm_communicator_t comm);
+int mpc_lowcomm_sendrecv(void *sendbuf, size_t size, int dest, int tag, void *recvbuf, int src, mpc_lowcomm_communicator_t comm);
 
 /**
  * @brief Probe for a given message as both a given source and destination (advanced thread-based use)

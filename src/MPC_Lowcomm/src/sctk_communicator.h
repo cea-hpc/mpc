@@ -114,6 +114,8 @@ struct shared_mem_gatherv
 	void *target_buff;
 	const int *counts;
 	int *send_count;
+	mpc_lowcomm_datatype_t recv_type;
+	mpc_lowcomm_datatype_t *send_types;
 	size_t *send_type_size;
 	const int *disps;
 	size_t rtype_size;
@@ -335,6 +337,9 @@ typedef struct sctk_internal_communicator_s
 
 /********************************* FUNCTION *********************************/
 void _mpc_comm_set_internal_coll ( const mpc_lowcomm_communicator_t id, struct mpc_lowcomm_coll_s *tmp );
+
+int _mpc_comm_exists(const mpc_lowcomm_communicator_t communicator);
+
 void sctk_communicator_world_init ( int task_nb );
 void sctk_communicator_self_init();
 void sctk_communicator_delete();

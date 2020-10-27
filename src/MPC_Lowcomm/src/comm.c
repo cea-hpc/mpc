@@ -129,9 +129,44 @@ static inline void __mpc_comm_request_init(mpc_lowcomm_request_t *request,
 /*Functions                                                         */
 /********************************************************************/
 
+#define CHECK_STATUS_ERROR(status) do{\
+	if((status)->MPC_ERROR  != SCTK_SUCCESS)\
+	{\
+		return (status)->MPC_ERROR ;\
+	}\
+	}\
+	while(0)
+
+
 #ifdef MPC_MPI
 #include <mpc_mpi_comm_lib.h>
 #endif
+
+int mpc_lowcomm_check_type_compat(mpc_lowcomm_datatype_t src, mpc_lowcomm_datatype_t dest)
+{
+
+#ifdef MPC_MPI
+	if(src != dest)
+	{
+		/* See page 33 of 3.0 PACKED and BYTE are exceptions */
+		if((src != MPC_PACKED) && (dest != MPC_PACKED))
+		{
+			if((src != MPC_BYTE) && (dest != MPC_BYTE))
+			{
+				if(mpc_mpi_cl_type_is_common(src) &&
+					mpc_mpi_cl_type_is_common(dest) )
+				{
+
+					return MPC_ERR_TYPE;
+				}
+			}
+		}
+	}
+#endif
+
+	return SCTK_SUCCESS;
+}
+
 
 int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
                                            mpc_lowcomm_status_t *status)
@@ -156,7 +191,7 @@ int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
 	{
 		status->MPC_SOURCE = request->header.source_task;
 		status->MPC_TAG    = request->header.message_tag;
-		status->MPC_ERROR  = SCTK_SUCCESS;
+		status->MPC_ERROR  = request->status_error;
 
 		status->size = request->header.msg_size;
 
@@ -175,23 +210,8 @@ int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
 		{
 			status->MPC_ERROR = MPC_ERR_TRUNCATE;
 		}
-
-		if(request->source_type != request->dest_type)
-		{
-			if(  /* See page 33 of 3.0 PACKED and BYTE are exceptions */
-			        request->source_type != MPC_PACKED &&
-			        request->dest_type != MPC_PACKED &&
-			        request->source_type != MPC_BYTE && request->dest_type != MPC_BYTE &&
-			        request->header.msg_size > 0)
-			{
-				if(mpc_mpi_cl_type_is_common(request->source_type) &&
-				   mpc_mpi_cl_type_is_common(request->dest_type) )
-				{
-					request->status_error = MPC_ERR_TYPE;
-				}
-			}
-		}
 #endif
+
 	}
 
 	return SCTK_SUCCESS;
@@ -1898,8 +1918,10 @@ int sctk_m_probe_matching_get()
 __thread volatile int already_processsing_a_control_message = 0;
 
 static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matching(mpc_comm_ptp_list_pending_t *pending_list,
-                                                                                  mpc_lowcomm_ptp_message_header_t *header)
+                                                                                  mpc_lowcomm_ptp_message_t * msg)
 {
+	mpc_lowcomm_ptp_message_header_t *header = &(msg->body.header);
+
 	mpc_lowcomm_msg_list_t *ptr_found = NULL;
 	mpc_lowcomm_msg_list_t *tmp = NULL;
 
@@ -1957,6 +1979,29 @@ static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matchin
 			{
 				ptr_found->msg->tail.request->source_type = header->datatype;
 				ptr_found->msg->tail.request->dest_type   = header_found->datatype;
+			}
+
+			/* This handles mismatching types in send and recv */
+			if(header->msg_size > 0)
+			{
+				int err = mpc_lowcomm_check_type_compat(header->datatype, header_found->datatype);
+				if(err != SCTK_SUCCESS)
+				{
+					if(ptr_found->msg->tail.request)
+					{
+						ptr_found->msg->tail.request->status_error = err;
+					}
+
+					if(ptr_found->msg->tail.request)
+					{
+						ptr_found->msg->tail.request->status_error = err;
+					}
+
+					if(msg->tail.request)
+					{
+						msg->tail.request->status_error = err;
+					}
+				}
 			}
 
 			/* We return the pointer to the request */
@@ -2033,7 +2078,7 @@ static inline int __mpc_comm_pending_msg_list_search_matching_from_recv(mpc_comm
 {
 	assert(msg != NULL);
 	mpc_lowcomm_msg_list_t *ptr_recv = &msg->tail.distant_list;
-	mpc_lowcomm_msg_list_t *ptr_send = __mpc_comm_pending_msg_list_search_matching(&pair->lists.pending_send, &(msg->body.header) );
+	mpc_lowcomm_msg_list_t *ptr_send = __mpc_comm_pending_msg_list_search_matching(&pair->lists.pending_send, msg );
 
 	if(SCTK_MSG_SPECIFIC_CLASS(msg) == MPC_LOWCOMM_CANCELLED_RECV)
 	{
@@ -2762,7 +2807,7 @@ int mpc_lowcomm_request_cancel(mpc_lowcomm_request_t *msg)
 	return ret;
 }
 
-static inline void __mpc_lowcomm_isend_class_src(int src, int dest, const void *data, size_t size,
+static inline int __mpc_lowcomm_isend_class_src(int src, int dest, const void *data, size_t size,
                                                  int tag, mpc_lowcomm_communicator_t comm,
                                                  mpc_lowcomm_ptp_message_class_t class,
                                                  mpc_lowcomm_request_t *req)
@@ -2770,7 +2815,7 @@ static inline void __mpc_lowcomm_isend_class_src(int src, int dest, const void *
 	if(dest == MPC_PROC_NULL)
 	{
 		mpc_lowcomm_request_init(req, comm, REQUEST_SEND);
-		return;
+		return SCTK_SUCCESS;
 	}
 
 	mpc_lowcomm_ptp_message_t *msg =
@@ -2779,21 +2824,23 @@ static inline void __mpc_lowcomm_isend_class_src(int src, int dest, const void *
 	mpc_lowcomm_ptp_message_header_init(msg, tag, comm, src, dest, req, size, class,
 	                                    MPC_DATATYPE_IGNORE, REQUEST_SEND);
 	mpc_lowcomm_ptp_message_send(msg);
+
+	return SCTK_SUCCESS;
 }
 
-void mpc_lowcomm_isend_class_src(int src, int dest, const void *data, size_t size,
+int mpc_lowcomm_isend_class_src(int src, int dest, const void *data, size_t size,
                                  int tag, mpc_lowcomm_communicator_t comm,
                                  mpc_lowcomm_ptp_message_class_t class,
                                  mpc_lowcomm_request_t *req)
 {
-	__mpc_lowcomm_isend_class_src(src, dest, data, size, tag, comm, class, req);
+	return __mpc_lowcomm_isend_class_src(src, dest, data, size, tag, comm, class, req);
 }
 
-static inline void __mpc_lowcomm_isend_class(int dest, const void *data, size_t size, int tag,
+static inline int __mpc_lowcomm_isend_class(int dest, const void *data, size_t size, int tag,
                                              mpc_lowcomm_communicator_t comm,
                                              mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req)
 {
-	__mpc_lowcomm_isend_class_src(mpc_lowcomm_communicator_rank(comm, mpc_common_get_task_rank() ),
+	return __mpc_lowcomm_isend_class_src(mpc_lowcomm_communicator_rank(comm, mpc_common_get_task_rank() ),
 	                              dest,
 	                              data,
 	                              size,
@@ -2803,11 +2850,11 @@ static inline void __mpc_lowcomm_isend_class(int dest, const void *data, size_t 
 	                              req);
 }
 
-void mpc_lowcomm_isend_class(int dest, const void *data, size_t size, int tag,
+int mpc_lowcomm_isend_class(int dest, const void *data, size_t size, int tag,
                              mpc_lowcomm_communicator_t comm,
                              mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req)
 {
-	__mpc_lowcomm_isend_class(dest,
+	return __mpc_lowcomm_isend_class(dest,
 	                          data,
 	                          size,
 	                          tag,
@@ -2816,7 +2863,7 @@ void mpc_lowcomm_isend_class(int dest, const void *data, size_t size, int tag,
 	                          req);
 }
 
-static inline void __mpc_lowcomm_irecv_class_dest(int src, int dest, void *buffer, size_t size,
+static inline int __mpc_lowcomm_irecv_class_dest(int src, int dest, void *buffer, size_t size,
                                                   int tag, mpc_lowcomm_communicator_t comm,
                                                   mpc_lowcomm_ptp_message_class_t class,
                                                   mpc_lowcomm_request_t *req)
@@ -2824,7 +2871,7 @@ static inline void __mpc_lowcomm_irecv_class_dest(int src, int dest, void *buffe
 	if(src == MPC_PROC_NULL)
 	{
 		mpc_lowcomm_request_init(req, comm, REQUEST_RECV);
-		return;
+		return SCTK_SUCCESS;
 	}
 
 	mpc_lowcomm_ptp_message_t *msg =
@@ -2833,29 +2880,31 @@ static inline void __mpc_lowcomm_irecv_class_dest(int src, int dest, void *buffe
 	mpc_lowcomm_ptp_message_header_init(msg, tag, comm, src, dest, req, size, class,
 	                                    MPC_DATATYPE_IGNORE, REQUEST_RECV);
 	mpc_lowcomm_ptp_message_recv(msg);
+
+	return SCTK_SUCCESS;
 }
 
-void mpc_lowcomm_irecv_class_dest(int src, int dest, void *buffer, size_t size,
+int mpc_lowcomm_irecv_class_dest(int src, int dest, void *buffer, size_t size,
                                   int tag, mpc_lowcomm_communicator_t comm,
                                   mpc_lowcomm_ptp_message_class_t class,
                                   mpc_lowcomm_request_t *req)
 {
-	__mpc_lowcomm_irecv_class_dest(src, dest, buffer, size, tag, comm, class, req);
+	return __mpc_lowcomm_irecv_class_dest(src, dest, buffer, size, tag, comm, class, req);
 }
 
-static inline void __mpc_lowcomm_irecv_class(int src, void *buffer, size_t size, int tag,
+static inline int __mpc_lowcomm_irecv_class(int src, void *buffer, size_t size, int tag,
                                              mpc_lowcomm_communicator_t comm,
                                              mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req)
 {
-	__mpc_lowcomm_irecv_class_dest(src, mpc_lowcomm_communicator_rank(comm, mpc_common_get_task_rank() ),
+	return __mpc_lowcomm_irecv_class_dest(src, mpc_lowcomm_communicator_rank(comm, mpc_common_get_task_rank() ),
 	                               buffer, size, tag, comm, class, req);
 }
 
-void mpc_lowcomm_irecv_class(int src, void *buffer, size_t size, int tag,
+int mpc_lowcomm_irecv_class(int src, void *buffer, size_t size, int tag,
                              mpc_lowcomm_communicator_t comm,
                              mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req)
 {
-	__mpc_lowcomm_irecv_class(src, buffer, size, tag, comm, class, req);
+	return __mpc_lowcomm_irecv_class(src, buffer, size, tag, comm, class, req);
 }
 
 /*************************
@@ -2918,27 +2967,35 @@ mpc_lowcomm_communicator_t mpc_lowcomm_delete_comm(const mpc_lowcomm_communicato
  *  ############### */
 
 
-void mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
+int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
                        mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req)
 {
-	mpc_lowcomm_isend_class(dest, data, size, tag, comm, MPC_LOWCOMM_P2P_MESSAGE, req);
+	return mpc_lowcomm_isend_class(dest, data, size, tag, comm, MPC_LOWCOMM_P2P_MESSAGE, req);
 }
 
-void mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
+int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
                        mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req)
 {
-	mpc_lowcomm_irecv_class(src, data, size, tag, comm, MPC_LOWCOMM_P2P_MESSAGE, req);
+	return mpc_lowcomm_irecv_class(src, data, size, tag, comm, MPC_LOWCOMM_P2P_MESSAGE, req);
 }
 
-void mpc_lowcomm_sendrecv(void *sendbuf, size_t size, int dest, int tag, void *recvbuf,
+int mpc_lowcomm_sendrecv(void *sendbuf, size_t size, int dest, int tag, void *recvbuf,
                           int src, int comm)
 {
 	mpc_lowcomm_request_t sendreq, recvreq;
 
 	mpc_lowcomm_isend(dest, sendbuf, size, tag, comm, &sendreq);
 	mpc_lowcomm_irecv(src, recvbuf, size, tag, comm, &recvreq);
-	mpc_lowcomm_request_wait(&sendreq);
-	mpc_lowcomm_request_wait(&recvreq);
+
+	mpc_lowcomm_status_t sts, str;
+
+	mpc_lowcomm_wait(&sendreq, &sts);
+	mpc_lowcomm_wait(&recvreq, &str);
+
+	CHECK_STATUS_ERROR(&sts);
+	CHECK_STATUS_ERROR(&str);
+
+	return SCTK_SUCCESS;
 }
 
 int mpc_lowcomm_wait(mpc_lowcomm_request_t *request, mpc_lowcomm_status_t *status)
@@ -3014,20 +3071,26 @@ int mpc_lowcomm_waitall(int count, mpc_lowcomm_request_t *requests, mpc_lowcomm_
 	return SCTK_SUCCESS;
 }
 
-void mpc_lowcomm_send(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm)
+int mpc_lowcomm_send(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm)
 {
 	mpc_lowcomm_request_t req;
 
 	mpc_lowcomm_isend(dest, data, size, tag, comm, &req);
-	mpc_lowcomm_wait(&req, NULL);
+	mpc_lowcomm_status_t status;
+	mpc_lowcomm_wait(&req, &status);
+	CHECK_STATUS_ERROR(&status);
+	return SCTK_SUCCESS;
 }
 
-void mpc_lowcomm_recv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm)
+int mpc_lowcomm_recv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm)
 {
 	mpc_lowcomm_request_t req;
 
 	mpc_lowcomm_irecv(src, buffer, size, tag, comm, &req);
-	mpc_lowcomm_wait(&req, NULL);
+	mpc_lowcomm_status_t status;
+	mpc_lowcomm_wait(&req, &status);
+	CHECK_STATUS_ERROR(&status);
+	return SCTK_SUCCESS;
 }
 
 int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destination, const int tag,

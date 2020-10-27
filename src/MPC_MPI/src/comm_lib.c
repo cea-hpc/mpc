@@ -2718,7 +2718,6 @@ FALLBACK_TO_BLOCKING_SEND:
 int _mpc_cl_recv(void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype, int source,
                  int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_status_t *status)
 {
-	mpc_lowcomm_request_t             request;
 	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
 
 	if(source == MPC_PROC_NULL)
@@ -2735,21 +2734,7 @@ int _mpc_cl_recv(void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_
 	}
 
 	size_t msg_size = count * __mpc_cl_datatype_get_size(datatype, task_specific);
-	mpc_lowcomm_irecv(source, buf, msg_size, tag, comm, &request);
-	mpc_lowcomm_request_wait(&request);
-
-	if(request.status_error != SCTK_SUCCESS)
-	{
-		if(status != NULL)
-		{
-			status->MPC_ERROR = request.status_error;
-		}
-
-		return request.status_error;
-	}
-
-	mpc_lowcomm_commit_status_from_request(&request, status);
-	MPC_ERROR_SUCESS();
+	return mpc_lowcomm_recv(source, buf, msg_size, tag, comm);
 }
 
 int _mpc_cl_sendrecv(void *sendbuf, mpc_lowcomm_msg_count_t sendcount, mpc_lowcomm_datatype_t sendtype,
@@ -2775,6 +2760,16 @@ int _mpc_cl_sendrecv(void *sendbuf, mpc_lowcomm_msg_count_t sendcount, mpc_lowco
 	if(status != SCTK_STATUS_NULL)
 	{
 		memcpy(status, &st[0], sizeof(MPI_Status) );
+	}
+
+	if(st[0].MPI_ERROR != MPI_SUCCESS)
+	{
+		return st[0].MPI_ERROR;
+	}
+
+	if(st[1].MPI_ERROR != MPI_SUCCESS)
+	{
+		return st[1].MPI_ERROR;
 	}
 
 	MPC_ERROR_SUCESS();

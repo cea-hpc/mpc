@@ -377,7 +377,7 @@ void sctk_vprint_backtrace( const char *format, va_list ap )
 	mpc_common_io_noalloc_fprintf( stderr, "---------- EVENT TRACE START ----------\n" );
 	mpc_common_io_noalloc_vfprintf( stderr, format, ap );
 
-#ifdef MPC_HAVE_LIBUNWIND
+#ifdef MPC_HAVE_LIBUNWIND && 0
 	__libunwind_backtrace();
 #else
 	__execinfo_backtrace();
@@ -489,7 +489,7 @@ void mpc_common_debugger_sig_handler( int sig, siginfo_t *info, __UNUSED__ void 
 	if(!already_in_sighandler)
 	{
 		already_in_sighandler = 1;
-		mpc_common_debuger_print_backtrace( "" );
+		mpc_common_debuger_print_backtrace( "", NULL );
 	}
 	else
 	{

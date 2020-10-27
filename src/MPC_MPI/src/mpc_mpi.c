@@ -429,6 +429,22 @@ static void __sctk_init_mpi_errors()
 
 #define MPI_ERROR_SUCESS()    return MPI_SUCCESS
 
+#define mpi_check_status_error(status) do{\
+	if( (status)->MPI_ERROR != MPI_SUCCESS )\
+	{\
+		return (status)->MPI_ERROR; \
+	}\
+	}while(0)
+
+#define mpi_check_status_array_error(size, statusses) \
+	do{\
+		int ___i;\
+		for(___i = 0 ; ___i < size ; ___i++)\
+		{\
+			mpi_check_status_error(&statusses[___i]);\
+		}\
+	}while(0)
+
 #define mpi_check_type(datatype, comm)     \
 	if(datatype == MPI_DATATYPE_NULL){ \
 		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Bad datatype provided"); }
@@ -3385,6 +3401,7 @@ int __INTERNAL__PMPI_Gather_intra(const void *sendbuf, int sendcnt,
 	int res = MPI_ERR_INTERN, rank, size;
 	MPI_Request request;
 	MPI_Request *recvrequest;
+	MPI_Status *recvstatus;
 
 	res = __cached_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
@@ -3393,11 +3410,15 @@ int __INTERNAL__PMPI_Gather_intra(const void *sendbuf, int sendcnt,
 	}
 	res = __cached_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
-	{
+	{ 
 		return res;
 	}
 
 	recvrequest = (MPI_Request *)sctk_calloc(size, sizeof(MPI_Request) );
+	assume(recvrequest != NULL);
+	recvstatus = (MPI_Status *)sctk_calloc(size, sizeof(MPI_Status) );
+	assume(recvstatus != NULL);
+
 
 	if( (sendbuf == MPI_IN_PLACE) && (rank == root) )
 	{
@@ -3410,6 +3431,7 @@ int __INTERNAL__PMPI_Gather_intra(const void *sendbuf, int sendcnt,
 		if(res != MPI_SUCCESS)
 		{
 			sctk_free(recvrequest);
+			sctk_free(recvstatus);
 			return res;
 		}
 	}
@@ -3422,6 +3444,8 @@ int __INTERNAL__PMPI_Gather_intra(const void *sendbuf, int sendcnt,
 		if(res != MPI_SUCCESS)
 		{
 			sctk_free(recvrequest);
+			sctk_free(recvstatus);
+
 			return res;
 		}
 
@@ -3439,20 +3463,36 @@ int __INTERNAL__PMPI_Gather_intra(const void *sendbuf, int sendcnt,
 				if(res != MPI_SUCCESS)
 				{
 					sctk_free(recvrequest);
+					sctk_free(recvstatus);
+
 					return res;
 				}
 			}
 		}
-		res = PMPI_Waitall(size, recvrequest, MPI_STATUSES_IGNORE);
+		res = PMPI_Waitall(size, recvrequest, recvstatus);
+
+		if(res == MPI_ERR_IN_STATUS)
+		{
+			mpi_check_status_array_error(size, recvstatus);
+		}
+		
 		if(res != MPI_SUCCESS)
 		{
 			sctk_free(recvrequest);
+			sctk_free(recvstatus);
 			return res;
 		}
 	}
 
-	res = PMPI_Wait(&(request), MPI_STATUS_IGNORE);
+	MPI_Status own_status;
+
+	res = PMPI_Wait(&(request), &own_status);
+
 	sctk_free(recvrequest);
+	sctk_free(recvstatus);
+
+	mpi_check_status_error(&own_status);
+
 	return res;
 }
 
@@ -3548,6 +3588,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
 	}
 	int did_allocate_send = 0;
 
+	gv_ctx->send_types[rank] = sendtype;
 	gv_ctx->send_type_size[rank] = stsize;
 
 	/* Does root need to pack ? */
@@ -3593,6 +3634,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
 		gv_ctx->target_buff = recvbuf;
 		gv_ctx->counts      = recvcnts;
 		gv_ctx->disps       = displs;
+		gv_ctx->recv_type   =  recvtype;
 
 		MPI_Aint rtsize = 0;
 		res = PMPI_Type_extent(recvtype, &rtsize);
@@ -3628,6 +3670,18 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
 			}
 		}
 	}
+
+	/* Now check that types are compatible */
+	int i;
+	for(i = 0 ; i < coll->comm_size; i++)
+	{
+		int err = mpc_lowcomm_check_type_compat(gv_ctx->send_types[i], gv_ctx->recv_type);
+		if(err != MPI_SUCCESS)
+		{
+			return err;
+		}
+	}
+
 
 	/* if some other processes don't have contig mem we should also unpack */
 	if(!_mpc_dt_is_contig_mem(sendtype) && rank != root)
@@ -3982,6 +4036,7 @@ int __INTERNAL__PMPI_Scatter_intra(void *sendbuf, int sendcnt,
 			}
 			j--;
 			res = PMPI_Waitall(size, sendrequest, SCTK_STATUS_NULL);
+
 			if(res != MPI_SUCCESS)
 			{
 				sctk_free(sendrequest);
@@ -10459,6 +10514,14 @@ int PMPI_Wait(MPI_Request *request, MPI_Status *status)
 	MPI_request_struct_t *requests;
 	MPI_internal_request_t *tmp;
 
+	mpc_lowcomm_status_t *mpc_status = status;
+	mpc_lowcomm_status_t static_mpc_status;
+
+	if(status == MPI_STATUS_IGNORE)
+	{
+		mpc_status = &static_mpc_status;
+	}
+
 	mpc_common_nodebug("wait request %d", *request);
 
 	requests = __sctk_internal_get_MPC_requests();
@@ -10466,7 +10529,7 @@ int PMPI_Wait(MPI_Request *request, MPI_Status *status)
 
 	if( (tmp != NULL) && (tmp->is_nbc == 1) )
 	{
-		res = NBC_Wait(&(tmp->nbc_handle), status);
+		res = NBC_Wait(&(tmp->nbc_handle), mpc_status);
 	}
 	else
 	{
@@ -10474,22 +10537,20 @@ int PMPI_Wait(MPI_Request *request, MPI_Status *status)
 
 		if(mpcreq->request_type == REQUEST_GENERALIZED)
 		{
-			res = _mpc_cl_waitall(1, mpcreq, status);
+			res = _mpc_cl_waitall(1, mpcreq, mpc_status);
 		}
 		else
 		{
-			res = mpc_lowcomm_wait(mpcreq, status);
+			res = mpc_lowcomm_wait(mpcreq, mpc_status);
 		}
 	}
 
 	__sctk_delete_mpc_request(request, requests);
 
-	if(status != MPI_STATUS_IGNORE)
+
+	if(mpc_status->MPI_ERROR != MPI_SUCCESS)
 	{
-		if(status->MPI_ERROR != MPI_SUCCESS)
-		{
-			res = status->MPI_ERROR;
-		}
+		res = mpc_status->MPI_ERROR;
 	}
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
@@ -10808,29 +10869,27 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 	/* Something bad hapenned ? */
 	MPI_HANDLE_ERROR(ret, comm, "Error in waitall");
 
+
+	for(i = 0; i < count; i++)
+	{
+		if(mpc_array_of_requests[i]->status_error != MPI_SUCCESS)
+		{
+			ret = MPI_ERR_IN_STATUS;
+		}
+	}
+
 	/* Delete the MPI requests */
 	for(i = 0; i < count; i++)
 	{
 		__sctk_delete_mpc_request(&(array_of_requests[i]), requests);
 	}
 
+
 	/* If needed free the mpc_array_of_requests */
 	if(PMPI_WAIT_ALL_STATIC_TRSH <= count)
 	{
 		sctk_free(mpc_array_of_requests);
 		sctk_free(mpc_array_of_requests_nbc);
-	}
-
-	if(array_of_statuses != MPI_STATUSES_IGNORE)
-	{
-		int i;
-		for(i = 0; i < count; i++)
-		{
-			if(array_of_statuses[i].MPI_ERROR != MPI_SUCCESS)
-			{
-				ret = MPI_ERR_IN_STATUS;
-			}
-		}
 	}
 
 	MPI_HANDLE_RETURN_VAL(ret, comm);
