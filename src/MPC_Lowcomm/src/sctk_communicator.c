@@ -61,20 +61,14 @@ static mpc_common_spinlock_t sctk_communicator_all_table_lock = SCTK_SPINLOCK_IN
  * @return the communicator structure corresponding to the identification number
  * or NULL if it doesn't exist.
 **/
-static inline sctk_internal_communicator_t *sctk_check_internal_communicator_no_lock( const mpc_lowcomm_communicator_t communicator )
+static inline sctk_internal_communicator_t *__get_internal_communicator_no_check( const mpc_lowcomm_communicator_t communicator )
 {
 	sctk_internal_communicator_t *tmp = NULL;
 	assume( communicator >= 0 );
 
 	if ( communicator >= SCTK_MAX_COMMUNICATOR_TAB )
 	{
-		while (
-			mpc_common_spinlock_read_trylock( &sctk_communicator_local_table_lock ) )
-		{
-#ifdef MPC_THREAD
-			mpc_thread_yield();
-#endif
-		}
+		mpc_common_spinlock_read_lock_yield( &sctk_communicator_local_table_lock );
 
 		//~ check in the hash table
 		HASH_FIND( hh, mpc_lowcomm_communicator_table, &communicator,
@@ -93,7 +87,7 @@ static inline sctk_internal_communicator_t *sctk_check_internal_communicator_no_
 /************************* FUNCTION ************************/
 /**
  * This method is used to check if the communicator "communicator" exist.
- * It calls the function sctk_check_internal_communicator_no_lock().
+ * It calls the function __get_internal_communicator_no_check().
  * @param communicator Identification number of the communicator.
  * @return the communicator structure corresponding to the identification number
  * or NULL if it doesn't exist.
@@ -101,7 +95,18 @@ static inline sctk_internal_communicator_t *sctk_check_internal_communicator_no_
 static inline sctk_internal_communicator_t *sctk_check_internal_communicator( const mpc_lowcomm_communicator_t communicator )
 {
 	sctk_internal_communicator_t *tmp;
-	tmp = sctk_check_internal_communicator_no_lock( communicator );
+	mpc_common_spinlock_lock( &sctk_communicator_all_table_lock );
+	tmp = __get_internal_communicator_no_check( communicator );
+
+	if(tmp)
+	{
+		if(OPA_load_int(&tmp->freed))
+		{
+			tmp = NULL;
+		}
+	}
+
+	mpc_common_spinlock_unlock( &sctk_communicator_all_table_lock );
 	return tmp;
 }
 
@@ -116,7 +121,7 @@ static inline sctk_internal_communicator_t *sctk_check_internal_communicator( co
 static inline sctk_internal_communicator_t *sctk_get_internal_communicator( const mpc_lowcomm_communicator_t communicator )
 {
 	sctk_internal_communicator_t *tmp;
-	tmp = sctk_check_internal_communicator( communicator );
+	tmp = __get_internal_communicator_no_check( communicator );
 
 	if ( tmp == NULL )
 	{
@@ -189,7 +194,7 @@ static inline int sctk_set_internal_communicator_no_lock_no_check( const mpc_low
 static inline int sctk_set_internal_communicator_no_lock( const mpc_lowcomm_communicator_t id, sctk_internal_communicator_t *tmp )
 {
 	sctk_internal_communicator_t *tmp_check;
-	tmp_check = sctk_check_internal_communicator_no_lock( id );
+	tmp_check = __get_internal_communicator_no_check( id );
 
 	//check if it exists
 	if ( tmp_check != NULL )
@@ -215,7 +220,7 @@ static inline int sctk_set_internal_communicator( const mpc_lowcomm_communicator
 	sctk_internal_communicator_t *tmp_check;
 	//use spinlocks
 	mpc_common_spinlock_lock( &sctk_communicator_all_table_lock );
-	tmp_check = sctk_check_internal_communicator_no_lock( id );
+	tmp_check = __get_internal_communicator_no_check( id );
 
 	//check if it exists
 	if ( tmp_check != NULL )
@@ -254,7 +259,6 @@ static inline int sctk_del_internal_communicator_no_lock_no_check( const mpc_low
 
 		//delete in the hash table
 		HASH_DELETE( hh, mpc_lowcomm_communicator_table, tmp );
-		mpc_common_debug_error( "COMM %d DEL in HAS_TAB", id );
 		mpc_common_spinlock_write_unlock( &sctk_communicator_local_table_lock );
 	}
 	else
@@ -414,7 +418,7 @@ static inline mpc_lowcomm_communicator_t sctk_communicator_get_new_id( int local
 			{
 				i++;
 				mpc_common_nodebug( "rank %d : First check comm %d", rank, i );
-				tmp_check = sctk_check_internal_communicator_no_lock( i );
+				tmp_check = __get_internal_communicator_no_check( i );
 				mpc_common_nodebug( "rank %d : comm %d checked", rank, i );
 			} while ( tmp_check != NULL );
 
@@ -438,7 +442,7 @@ static inline mpc_lowcomm_communicator_t sctk_communicator_get_new_id( int local
 				sctk_internal_communicator_t *tmp_check;
 				mpc_common_spinlock_lock( &sctk_communicator_all_table_lock );
 				mpc_common_nodebug( "rank %d : check comm %d", rank, comm );
-				tmp_check = sctk_check_internal_communicator_no_lock( comm );
+				tmp_check = __get_internal_communicator_no_check( comm );
 
 				if ( tmp_check != NULL )
 				{
@@ -612,7 +616,7 @@ static inline mpc_lowcomm_communicator_t sctk_intercommunicator_get_new_id( int 
 			do
 			{
 				i++;
-				tmp_check = sctk_check_internal_communicator_no_lock( i );
+				tmp_check = __get_internal_communicator_no_check( i );
 			} while ( tmp_check != NULL );
 
 			comm = i;
@@ -638,7 +642,7 @@ static inline mpc_lowcomm_communicator_t sctk_intercommunicator_get_new_id( int 
 			mpc_common_nodebug( "rank %d : SECOND try intercomm %d", rank, comm );
 			//~ re-check
 			mpc_common_spinlock_lock( &sctk_communicator_all_table_lock );
-			tmp_check = sctk_check_internal_communicator_no_lock( comm );
+			tmp_check = __get_internal_communicator_no_check( comm );
 
 			if ( tmp_check != NULL )
 			{
@@ -673,7 +677,7 @@ static inline mpc_lowcomm_communicator_t sctk_intercommunicator_get_new_id( int 
 				tmp->remote_comm->id = comm;
 				mpc_common_nodebug( "Check intercomm %d", comm );
 				mpc_common_spinlock_lock( &sctk_communicator_all_table_lock );
-				tmp_check = sctk_check_internal_communicator_no_lock( comm );
+				tmp_check = __get_internal_communicator_no_check( comm );
 
 				if ( tmp_check != NULL )
 				{
@@ -763,7 +767,7 @@ static inline mpc_lowcomm_communicator_t sctk_communicator_get_new_id_from_inter
 	mpc_common_nodebug( "rank %d : get new id from intercomm %d, local_root %d, lleader %d, rleader %d", rank, origin_communicator, local_root, local_leader, remote_leader );
 	//~ get the peer comm used to create origin_communicator
 	peer_comm = sctk_get_peer_comm( origin_communicator );
-	tmp_check = sctk_check_internal_communicator_no_lock( peer_comm );
+	tmp_check = __get_internal_communicator_no_check( peer_comm );
 	int remote_leader_rank = sctk_get_comm_world_rank( peer_comm, remote_leader );
 
 	if ( tmp_check == NULL )
@@ -795,7 +799,7 @@ static inline mpc_lowcomm_communicator_t sctk_communicator_get_new_id_from_inter
 			do
 			{
 				i++;
-				tmp_check = sctk_check_internal_communicator_no_lock( i );
+				tmp_check = __get_internal_communicator_no_check( i );
 			} while ( tmp_check != NULL );
 
 			comm = i;
@@ -820,7 +824,7 @@ static inline mpc_lowcomm_communicator_t sctk_communicator_get_new_id_from_inter
 			tmp->id = comm;
 			//~ re-check
 			mpc_common_spinlock_lock( &sctk_communicator_all_table_lock );
-			tmp_check = sctk_check_internal_communicator_no_lock( comm );
+			tmp_check = __get_internal_communicator_no_check( comm );
 
 			if ( tmp_check != NULL )
 			{
@@ -855,7 +859,7 @@ static inline mpc_lowcomm_communicator_t sctk_communicator_get_new_id_from_inter
 				tmp->id = comm;
 				mpc_common_nodebug( "check comm from intercomm %d", comm );
 				mpc_common_spinlock_lock( &sctk_communicator_all_table_lock );
-				tmp_check = sctk_check_internal_communicator_no_lock( comm );
+				tmp_check = __get_internal_communicator_no_check( comm );
 
 				if ( tmp_check != NULL )
 				{
@@ -1346,6 +1350,7 @@ static inline void sctk_communicator_init_intern_init_only( const int nb_task,
 	tmp->local_tasks = local_tasks;
 	tmp->process = process_array;
 	tmp->process_nb = process_nb;
+	OPA_store_int(&tmp->freed, 0);
 
 	if ( process_array != NULL )
 	{
@@ -1469,6 +1474,8 @@ void sctk_communicator_self_init()
 	sctk_communicator_init_intern( 1, MPC_COMM_SELF, last_local, first_local, local_tasks, NULL, NULL, NULL, process_array, 1 );
 }
 
+
+
 /************************* FUNCTION ************************/
 /**
  * This method initializes the MPI_COMM_WORLD communicator.
@@ -1553,11 +1560,18 @@ mpc_lowcomm_communicator_t sctk_delete_communicator( const mpc_lowcomm_communica
 		sctk_internal_communicator_t *tmp;
 		int val;
 		int max_val;
-		mpc_lowcomm_barrier( comm );
+
 		tmp = sctk_get_internal_communicator( comm );
+
+		/* All do notify the free so that any further reading
+		   to get the comm in the table does return NULL */
+		OPA_store_int(&tmp->freed, 1);
+		
 		mpc_lowcomm_barrier( comm );
 		max_val = tmp->local_tasks;
 		val = OPA_fetch_and_incr_int( &( tmp->nb_to_delete ) );
+
+		/* The last task does delete the communicator */
 
 		if ( val == max_val - 1 )
 		{
@@ -2973,4 +2987,10 @@ mpc_lowcomm_communicator_t sctk_create_intercommunicator_from_intercommunicator(
 
 	newintercomm = sctk_create_intercommunicator( local_com, local_leader, peer_comm, remote_leader, tag, first );
 	return newintercomm;
+}
+
+
+int _mpc_lowcomm_comm_exists(const mpc_lowcomm_communicator_t communicator)
+{
+	return (sctk_check_internal_communicator( communicator ) != NULL);
 }

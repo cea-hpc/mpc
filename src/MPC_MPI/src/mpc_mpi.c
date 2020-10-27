@@ -442,8 +442,10 @@ static int is_initialized = 0;
 
 #define mpi_check_comm(com, comm)                                                        \
 	if( (is_finalized != 0) || (is_initialized != 1) ){                              \
-		MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_OTHER, "");                     \
-	} else if(com == MPI_COMM_NULL){                                                 \
+		MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_OTHER, "The runtime is not initialized");                     \
+	} \
+	else if((com == MPI_COMM_NULL) || (!_mpc_lowcomm_comm_exists(com)) ) \
+	{                                                 \
 		MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_COMM, "Error in communicator"); \
 	}
 

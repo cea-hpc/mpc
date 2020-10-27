@@ -271,6 +271,10 @@ typedef struct sctk_internal_communicator_s
 {
 	/** communicator identification number **/
 	mpc_lowcomm_communicator_t id;
+
+	/** A flag indicating if the communicator is being freed */
+	OPA_int_t freed;
+
 	/** structure for collectives communications **/
 	struct mpc_lowcomm_coll_s *collectives;
 
@@ -471,5 +475,13 @@ mpc_lowcomm_communicator_t sctk_delete_communicator ( const mpc_lowcomm_communic
 mpc_lowcomm_communicator_t sctk_create_communicator_from_intercomm ( const mpc_lowcomm_communicator_t origin_communicator, const int nb_task_involved, const int *task_list );
 mpc_lowcomm_communicator_t sctk_create_intercommunicator_from_intercommunicator ( const mpc_lowcomm_communicator_t origin_communicator, int remote_leader, int local_com );
 struct mpc_lowcomm_coll_s *_mpc_comm_get_internal_coll ( const mpc_lowcomm_communicator_t communicator );
+
+/**
+ * @brief Check if a communicator is valid
+ * 
+ * @param communicator comm to check for existency
+ * @return int 1 if exists 0 if not
+ */
+int _mpc_lowcomm_comm_exists(const mpc_lowcomm_communicator_t communicator);
 
 #endif

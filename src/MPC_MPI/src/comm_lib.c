@@ -3960,8 +3960,7 @@ int _mpc_cl_comm_free(mpc_lowcomm_communicator_t *comm)
 
 	__mpc_cl_per_communicator_delete(task_specific, *comm);
 
-	TODO("THIS CODE IS BAD TODO FIX COMM REFCOUNTING TO FIX ANL/COMMUNICATOR/SPLIT1");
-	//sctk_delete_communicator( *old_comm );
+	sctk_delete_communicator( *comm );
 	*comm = MPC_COMM_NULL;
 
 	MPC_ERROR_SUCESS();
@@ -4250,7 +4249,7 @@ void _mpc_cl_return_error(mpc_lowcomm_communicator_t *comm, int *error, ...)
 
 	if(i != 0)
 	{
-		mpc_common_debug_error("Warning: %s on comm %d", str, ( int )*comm);
+		mpc_common_debug_error("%s on comm %d", str, ( int )*comm);
 	}
 }
 
