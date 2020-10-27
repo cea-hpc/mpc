@@ -133,11 +133,13 @@ struct shared_mem_scatterv
 
 	volatile int *tollgate;
 	OPA_int_t fare;
+	mpc_lowcomm_datatype_t *recv_types;
 
 	/* Root infos */
 	OPA_ptr_t *src_buffs;
 	int was_packed;
 	size_t stype_size;
+	mpc_lowcomm_datatype_t send_type;
 	int *counts;
 	int *disps;
 };

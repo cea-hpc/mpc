@@ -3416,9 +3416,9 @@ int __INTERNAL__PMPI_Gather_intra(const void *sendbuf, int sendcnt,
 
 	recvrequest = (MPI_Request *)sctk_calloc(size, sizeof(MPI_Request) );
 	assume(recvrequest != NULL);
+
 	recvstatus = (MPI_Status *)sctk_calloc(size, sizeof(MPI_Status) );
 	assume(recvstatus != NULL);
-
 
 	if( (sendbuf == MPI_IN_PLACE) && (rank == root) )
 	{
@@ -3431,7 +3431,6 @@ int __INTERNAL__PMPI_Gather_intra(const void *sendbuf, int sendcnt,
 		if(res != MPI_SUCCESS)
 		{
 			sctk_free(recvrequest);
-			sctk_free(recvstatus);
 			return res;
 		}
 	}
@@ -3444,7 +3443,6 @@ int __INTERNAL__PMPI_Gather_intra(const void *sendbuf, int sendcnt,
 		if(res != MPI_SUCCESS)
 		{
 			sctk_free(recvrequest);
-			sctk_free(recvstatus);
 
 			return res;
 		}
@@ -3463,8 +3461,6 @@ int __INTERNAL__PMPI_Gather_intra(const void *sendbuf, int sendcnt,
 				if(res != MPI_SUCCESS)
 				{
 					sctk_free(recvrequest);
-					sctk_free(recvstatus);
-
 					return res;
 				}
 			}
@@ -3479,7 +3475,6 @@ int __INTERNAL__PMPI_Gather_intra(const void *sendbuf, int sendcnt,
 		if(res != MPI_SUCCESS)
 		{
 			sctk_free(recvrequest);
-			sctk_free(recvstatus);
 			return res;
 		}
 	}
@@ -3974,6 +3969,7 @@ int __INTERNAL__PMPI_Scatter_intra(void *sendbuf, int sendcnt,
 	MPI_Aint dsize;
 	MPI_Request request;
 	MPI_Request *sendrequest;
+	MPI_Status *sendstatus;
 
 	res = __cached_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
@@ -3987,6 +3983,7 @@ int __INTERNAL__PMPI_Scatter_intra(void *sendbuf, int sendcnt,
 	}
 
 	sendrequest = (MPI_Request *)sctk_malloc(size * sizeof(MPI_Request) );
+	sendstatus = (MPI_Status *)sctk_malloc(size * sizeof(MPI_Status) );
 
 	if( (recvbuf == MPI_IN_PLACE) && (rank == root) )
 	{
@@ -3999,6 +3996,7 @@ int __INTERNAL__PMPI_Scatter_intra(void *sendbuf, int sendcnt,
 		if(res != MPI_SUCCESS)
 		{
 			sctk_free(sendrequest);
+			sctk_free(sendstatus);
 			return res;
 		}
 	}
@@ -4010,6 +4008,7 @@ int __INTERNAL__PMPI_Scatter_intra(void *sendbuf, int sendcnt,
 		if(res != MPI_SUCCESS)
 		{
 			sctk_free(sendrequest);
+			sctk_free(sendstatus);
 			return res;
 		}
 		while(i < size)
@@ -4028,6 +4027,7 @@ int __INTERNAL__PMPI_Scatter_intra(void *sendbuf, int sendcnt,
 					if(res != MPI_SUCCESS)
 					{
 						sctk_free(sendrequest);
+						sctk_free(sendstatus);
 						return res;
 					}
 				}
@@ -4035,11 +4035,17 @@ int __INTERNAL__PMPI_Scatter_intra(void *sendbuf, int sendcnt,
 				j++;
 			}
 			j--;
-			res = PMPI_Waitall(size, sendrequest, SCTK_STATUS_NULL);
+			res = PMPI_Waitall(size, sendrequest, sendstatus);
+
+			if(res == MPI_ERR_IN_STATUS)
+			{
+				mpi_check_status_array_error(size, sendstatus);
+			}
 
 			if(res != MPI_SUCCESS)
 			{
 				sctk_free(sendrequest);
+				sctk_free(sendstatus);
 				return res;
 			}
 		}
@@ -4047,6 +4053,7 @@ int __INTERNAL__PMPI_Scatter_intra(void *sendbuf, int sendcnt,
 
 	res = PMPI_Wait(&(request), SCTK_STATUS_NULL);
 	sctk_free(sendrequest);
+	sctk_free(sendstatus);
 	return res;
 }
 
@@ -4269,6 +4276,8 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 
 	void *data_buff = sendbuf;
 
+	sv_ctx->recv_types[rank] = recvtype;
+
 
 	MPI_Aint rtype_size = 0;
 	if(rank != root)
@@ -4305,6 +4314,8 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 				sctk_cpu_relax();
 			}
 		}
+
+		sv_ctx->send_type = sendtype;
 
 		/* Does root need to pack ? */
 		if(!_mpc_dt_is_contig_mem(sendtype) )
@@ -4388,6 +4399,17 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 			{
 				sctk_cpu_relax();
 			}
+		}
+	}
+
+	/* Now check that types are compatible */
+	int i;
+	for(i = 0 ; i < coll->comm_size; i++)
+	{
+		int err = mpc_lowcomm_check_type_compat(sv_ctx->recv_types[i], sv_ctx->send_type);
+		if(err != MPI_SUCCESS)
+		{
+			return err;
 		}
 	}
 

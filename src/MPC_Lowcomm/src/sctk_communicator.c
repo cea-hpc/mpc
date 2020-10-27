@@ -1140,7 +1140,11 @@ int sctk_shared_mem_scatterv_init( struct shared_mem_scatterv *shmsv,
 	shmsv->tollgate = sctk_malloc( nb_task * sizeof( int ) );
 	assume( shmsv->tollgate != NULL );
 	OPA_store_int( &shmsv->fare, 0 );
+	shmsv->recv_types = sctk_malloc( nb_task * sizeof( mpc_lowcomm_datatype_t ) );
+
 	/* Root CTX */
+	shmsv->send_type = -1;
+
 	shmsv->src_buffs = sctk_malloc( nb_task * sizeof( OPA_ptr_t ) );
 	assume( shmsv->src_buffs != NULL );
 	shmsv->was_packed = 0;
@@ -1159,12 +1163,14 @@ int sctk_shared_mem_scatterv_init( struct shared_mem_scatterv *shmsv,
 	return 0;
 }
 
-int sctk_shared_mem_scatterv_release( struct shared_mem_scatterv *shmgv )
+int sctk_shared_mem_scatterv_release( struct shared_mem_scatterv *shmsv )
 {
-	sctk_free( (void *) shmgv->tollgate );
-	shmgv->tollgate = NULL;
-	sctk_free( shmgv->src_buffs );
-	shmgv->src_buffs = NULL;
+	sctk_free( (void *) shmsv->tollgate );
+	shmsv->tollgate = NULL;
+	sctk_free( shmsv->src_buffs );
+	shmsv->src_buffs = NULL;
+	sctk_free(shmsv->recv_types);
+	shmsv->recv_types = NULL;
 	return 0;
 }
 
