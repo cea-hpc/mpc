@@ -73,6 +73,7 @@ struct shared_mem_reduce
 	OPA_int_t left_to_push;
 	volatile void *target_buff;
 	union shared_mem_buffer *buffer;
+	mpc_lowcomm_datatype_t *datatypes;
 	int pipelined_blocks;
 };
 

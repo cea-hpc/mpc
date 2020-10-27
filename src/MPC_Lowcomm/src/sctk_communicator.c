@@ -1011,6 +1011,7 @@ int sctk_shared_mem_barrier_release( __UNUSED__ struct shared_mem_barrier *shmb 
 int sctk_shared_mem_reduce_init( struct shared_mem_reduce *shmr, int nb_task )
 {
 	shmr->buffer = sctk_malloc( sizeof( union shared_mem_buffer ) * nb_task );
+	shmr->datatypes = sctk_malloc( sizeof( mpc_lowcomm_datatype_t ) * nb_task );
 	assume( shmr->buffer != NULL );
 	OPA_store_int( &shmr->owner, -1 );
 	OPA_store_int( &shmr->left_to_push, nb_task );
@@ -1046,6 +1047,8 @@ int sctk_shared_mem_reduce_release( struct shared_mem_reduce *shmr )
 	shmr->buff_lock = NULL;
 	sctk_free( (void *) shmr->tollgate );
 	shmr->tollgate = NULL;
+	sctk_free(shmr->datatypes);
+	shmr->datatypes = NULL;
 	return 0;
 }
 

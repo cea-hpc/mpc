@@ -7495,7 +7495,12 @@ static inline int __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *r
 	{
 		if(!rlcc && (0 <= lc) )
 		{
-			PMPI_Test(&rlc, &rlcc, MPI_STATUS_IGNORE);
+			res = PMPI_Test(&rlc, &rlcc, MPI_STATUS_IGNORE);
+
+			if(res != MPI_SUCCESS)
+			{
+				return res;
+			}
 
 			/* We just completed LC in TMPBUFF */
 			if(rlcc)
@@ -7530,7 +7535,12 @@ static inline int __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *r
 
 		if(!rrcc && (0 <= rc) )
 		{
-			PMPI_Test(&rrc, &rrcc, MPI_STATUS_IGNORE);
+			res = PMPI_Test(&rrc, &rrcc, MPI_STATUS_IGNORE);
+
+			if(res != MPI_SUCCESS)
+			{
+				return res;
+			}
 
 			if(rrcc)
 			{
@@ -7566,8 +7576,13 @@ static inline int __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *r
 	/* Now that we accumulated the childs lets move to parent */
 	if(0 <= parent)
 	{
-		PMPI_Send(tBuffRes, count, datatype,
-		          (parent + root) % size, MPC_REDUCE_TAG, comm);
+		res = PMPI_Send(tBuffRes, count, datatype,
+		          		(parent + root) % size, MPC_REDUCE_TAG, comm);
+	
+		if(res != MPI_SUCCESS)
+		{
+			return res;
+		}
 	}
 
 	if(allocated)
@@ -7582,6 +7597,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
                                 MPI_Datatype datatype, MPI_Op op, int root,
                                 MPI_Comm comm)
 {
+	int res;
 	struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
 
 	int rank;
@@ -7590,7 +7606,6 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 
 	struct shared_mem_reduce *reduce_ctx = sctk_comm_coll_get_red(coll, rank);
 
-	int res;
 	MPI_Aint tsize = 0;
 	res = PMPI_Type_extent(datatype, &tsize);
 
@@ -7630,6 +7645,8 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 	/* Reverse state so that only a root done can unlock by
 	 * also reversing the fare */
 	reduce_ctx->tollgate[rank] = !reduce_ctx->tollgate[rank];
+
+	reduce_ctx->datatypes[rank] = datatype;
 
 	void *data_buff   = sendbuf;
 	void *result_buff = recvbuf;
@@ -7870,8 +7887,8 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 		}
 	}
 
-SHM_REDUCE_DONE:
 
+SHM_REDUCE_DONE:
 	/* I'm done, notify */
 	OPA_decr_int(&reduce_ctx->left_to_push);
 
@@ -7928,6 +7945,19 @@ SHM_REDUCE_DONE:
 			sctk_free(data_buff);
 		}
 	}
+
+
+
+	/* Now check that types are compatible */
+	for(i = 0 ; i < size; i++)
+	{
+		int err = mpc_lowcomm_check_type_compat(reduce_ctx->datatypes[i], datatype);
+		if(err != MPI_SUCCESS)
+		{
+			return err;
+		}
+	}
+
 
 	return MPI_SUCCESS;
 }
@@ -10625,6 +10655,13 @@ int PMPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
 	MPI_internal_request_t *tmp;
 	MPI_request_struct_t *requests;
 
+	MPI_Status static_status;
+
+	if(!status)
+	{
+		status = &static_status;
+	}
+
 	requests = __sctk_internal_get_MPC_requests();
 	tmp      = __sctk_convert_mpc_request_internal(request, requests);
 
@@ -10646,12 +10683,9 @@ int PMPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
 		mpc_thread_yield();
 	}
 
-	if(status != MPI_STATUS_IGNORE)
+	if( (status->MPI_ERROR != MPI_SUCCESS) && (status->MPI_ERROR != MPI_ERR_PENDING) )
 	{
-		if( (status->MPI_ERROR != MPI_SUCCESS) && (status->MPI_ERROR != MPI_ERR_PENDING) )
-		{
-			res = status->MPI_ERROR;
-		}
+		res = status->MPI_ERROR;
 	}
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
