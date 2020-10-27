@@ -150,6 +150,9 @@ int sctk_shared_mem_scatterv_release( struct shared_mem_scatterv *shmgv );
 
 struct sctk_shared_mem_a2a_infos
 {
+	mpc_lowcomm_datatype_t sendtype;
+	mpc_lowcomm_datatype_t recvtype;
+
 	size_t stype_size;
 	const void *source_buff;
 	void **packed_buff;

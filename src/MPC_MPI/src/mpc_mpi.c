@@ -5228,6 +5228,9 @@ int __INTERNAL__PMPI_Alltoallv_intra_shm(const void *sendbuf, const int *sendcnt
 
 	if(sendbuf == MPI_IN_PLACE)
 	{
+		info.sendtype = recvtype;
+		info.recvtype = recvtype;
+
 		PMPI_Type_extent(recvtype, &info.stype_size);
 		info.disps  = rdispls;
 		info.counts = recvcnts;
@@ -5251,6 +5254,9 @@ int __INTERNAL__PMPI_Alltoallv_intra_shm(const void *sendbuf, const int *sendcnt
 	}
 	else
 	{
+		info.sendtype = sendtype;
+		info.recvtype = recvtype;
+	
 		PMPI_Type_extent(sendtype, &info.stype_size);
 		info.source_buff = sendbuf;
 		info.disps       = sdispls;
@@ -5310,7 +5316,17 @@ int __INTERNAL__PMPI_Alltoallv_intra_shm(const void *sendbuf, const int *sendcnt
 
 	int i, j;
 
-
+	for(j = 0; j < coll->comm_size; j++)
+	{
+		for(i = 0; i < coll->comm_size; i++)
+		{
+			int err = mpc_lowcomm_check_type_compat(aa_ctx->infos[i]->sendtype, aa_ctx->infos[j]->recvtype);
+			if(err != MPI_SUCCESS)
+			{
+				return err;
+			}
+		}
+	}	
 
 	for(j = 0; j < coll->comm_size; j++)
 	{
