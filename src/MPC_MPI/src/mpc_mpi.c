@@ -5015,6 +5015,9 @@ int __INTERNAL__PMPI_Alltoall_intra(void *sendbuf, int sendcount,
 	int rank;
 	int bblock = 4;
 	MPI_Request requests[2 * bblock * sizeof(MPI_Request)];
+	MPI_Status statuses[2 * bblock * sizeof(MPI_Request)];
+
+
 	int ss, ii;
 	int dst;
 	MPI_Aint d_send, d_recv;
@@ -5074,7 +5077,13 @@ int __INTERNAL__PMPI_Alltoall_intra(void *sendbuf, int sendcount,
 				return res;
 			}
 		}
-		res = PMPI_Waitall(2 * ss, requests, SCTK_STATUS_NULL);
+		res = PMPI_Waitall(2 * ss, requests, statuses);
+
+		if(res == MPI_ERR_IN_STATUS)
+		{
+			mpi_check_status_array_error(size, statuses);
+		}
+
 		if(res != MPI_SUCCESS)
 		{
 			return res;
