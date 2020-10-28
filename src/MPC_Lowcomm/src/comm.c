@@ -144,20 +144,23 @@ static inline void __mpc_comm_request_init(mpc_lowcomm_request_t *request,
 
 int mpc_lowcomm_check_type_compat(mpc_lowcomm_datatype_t src, mpc_lowcomm_datatype_t dest)
 {
-
+	//mpc_common_debug_error("COMPAT %d %d", src, dest);
 #ifdef MPC_MPI
 	if(src != dest)
 	{
-		/* See page 33 of 3.0 PACKED and BYTE are exceptions */
-		if((src != MPC_PACKED) && (dest != MPC_PACKED))
+		if( (src != MPC_DATATYPE_IGNORE) && (dest != MPC_DATATYPE_IGNORE))
 		{
-			if((src != MPC_BYTE) && (dest != MPC_BYTE))
+			/* See page 33 of 3.0 PACKED and BYTE are exceptions */
+			if((src != MPC_PACKED) && (dest != MPC_PACKED))
 			{
-				if(mpc_mpi_cl_type_is_common(src) &&
-					mpc_mpi_cl_type_is_common(dest) )
+				if((src != MPC_BYTE) && (dest != MPC_BYTE))
 				{
+					if(mpc_mpi_cl_type_is_common(src) &&
+						mpc_mpi_cl_type_is_common(dest) )
+					{
 
-					return MPC_ERR_TYPE;
+						return MPC_ERR_TYPE;
+					}
 				}
 			}
 		}
@@ -317,6 +320,7 @@ static inline void __mpc_comm_ptp_message_list_add_pending(mpc_comm_ptp_t *tmp,
 static inline void __mpc_comm_ptp_message_list_add_incoming_recv(mpc_comm_ptp_t *tmp,
                                                                  mpc_lowcomm_ptp_message_t *msg)
 {
+	assume(tmp != NULL);
 	msg->tail.distant_list.msg = msg;
 	mpc_common_spinlock_lock(&(tmp->lists.incomming_recv.lock) );
 	DL_APPEND(tmp->lists.incomming_recv.list, &(msg->tail.distant_list) );
@@ -331,6 +335,7 @@ static inline void __mpc_comm_ptp_message_list_add_incoming_send(mpc_comm_ptp_t 
 {
 	msg->tail.distant_list.msg = msg;
 
+	assume(tmp != NULL);
 	mpc_common_spinlock_lock(&(tmp->lists.incomming_send.lock) );
 	DL_APPEND(tmp->lists.incomming_send.list, &(msg->tail.distant_list) );
 	mpc_common_spinlock_unlock(&(tmp->lists.incomming_send.lock) );

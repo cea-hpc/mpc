@@ -2733,8 +2733,19 @@ int _mpc_cl_recv(void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_
 		MPC_ERROR_SUCESS();
 	}
 
-	size_t msg_size = count * __mpc_cl_datatype_get_size(datatype, task_specific);
-	return mpc_lowcomm_recv(source, buf, msg_size, tag, comm);
+	mpc_lowcomm_request_t req;
+	MPI_Status st;
+
+	int ret = _mpc_cl_irecv(buf, count, datatype, source, tag, comm, &req);
+
+	_mpc_cl_waitall(1, &req, &st);
+
+	if(st.MPI_ERROR != MPI_SUCCESS)
+	{
+		return st.MPI_ERROR;
+	}
+
+	MPC_ERROR_SUCESS();
 }
 
 int _mpc_cl_sendrecv(void *sendbuf, mpc_lowcomm_msg_count_t sendcount, mpc_lowcomm_datatype_t sendtype,

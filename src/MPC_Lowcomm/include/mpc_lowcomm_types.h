@@ -186,7 +186,7 @@ typedef enum sctk_ft_state_e
 /** Define the NULL error handler */
 #define SCTK_ERRHANDLER_NULL 0
 /** Not using datatypes */
-#define MPC_DATATYPE_IGNORE ((mpc_lowcomm_datatype_t)0)
+#define MPC_DATATYPE_IGNORE ((mpc_lowcomm_datatype_t)-1)
 /** In place collectives **/
 #define MPC_IN_PLACE ((void*)-1)
 /** PROC_NULL **/

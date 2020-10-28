@@ -472,9 +472,15 @@ static int is_initialized = 0;
 		} \
 	}while(0)
 
-#define mpi_check_rank_send(task, max_rank, comm)                                                                    \
-	if( ( ( (task < 0) || (task >= max_rank) ) && (sctk_is_inter_comm(comm) == 0) ) && (task != MPI_PROC_NULL) ) \
-		MPI_ERROR_REPORT(comm, MPI_ERR_RANK, "Error bad rank provided")
+#define mpi_check_rank_send(task, max_rank, comm) \
+	do{ \
+		if( !sctk_is_inter_comm(comm) ) {\
+			if( (task < 0) || (task >= max_rank) && (task != MPI_PROC_NULL) ) \
+			{ \
+				MPI_ERROR_REPORT(comm, MPI_ERR_RANK, "Error bad rank provided"); \
+			}\
+		} \
+	}while(0)
 
 #define mpi_check_root(task, max_rank, comm)                                                        \
 	if( ( (task < 0) || (task >= max_rank) ) && (task != MPI_PROC_NULL) && (task != MPI_ROOT) ) \
@@ -10045,6 +10051,9 @@ int PMPI_Send_internal(const void *buf, int count, MPI_Datatype datatype, int de
 	}
 
 	mpi_check_comm(comm, comm);
+	int size;
+	__cached_comm_size(comm, &size);
+	mpi_check_rank_send(dest, size, comm);
 	mpi_check_type(datatype, comm);
 	mpi_check_count(count, comm);
 
@@ -10140,14 +10149,13 @@ int PMPI_Recv_internal(void *buf, int count, MPI_Datatype datatype, int source, 
 	}
 
 
-	int size;
+
 	mpi_check_comm(comm, comm);
 	mpi_check_type(datatype, comm);
 	mpi_check_count(count, comm);
 	mpc_common_nodebug("tag %d", tag);
+	int size;
 	__cached_comm_size(comm, &size);
-
-
 	mpi_check_rank(source, size, comm);
 
 	if(count != 0)
@@ -10258,6 +10266,9 @@ int PMPI_Bsend(const void *buf, int count, MPI_Datatype datatype, int dest, int 
 	}
 	{
 		mpi_check_comm(comm, comm);
+		int size;
+		__cached_comm_size(comm, &size);
+		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
@@ -10290,6 +10301,9 @@ int PMPI_Ssend(const void *buf, int count, MPI_Datatype datatype, int dest, int 
 	}
 	{
 		mpi_check_comm(comm, comm);
+		int size;
+		__cached_comm_size(comm, &size);
+		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
@@ -10335,6 +10349,9 @@ int PMPI_Rsend(const void *buf, int count, MPI_Datatype datatype, int dest, int 
 	}
 	{
 		mpi_check_comm(comm, comm);
+		int size;
+		__cached_comm_size(comm, &size);
+		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
@@ -10442,19 +10459,19 @@ int PMPI_Isend_internal(const void *buf, int count, MPI_Datatype datatype, int d
 		MPI_HANDLE_RETURN_VAL(res, comm);
 	}
 
-	{
-		mpi_check_comm(comm, comm);
-		mpi_check_type(datatype, comm);
-		mpi_check_count(count, comm);
-		mpc_common_nodebug("tag %d", tag);
 
-		if(count != 0)
-		{
-			mpi_check_buf(buf, comm);
-		}
-	}
 	mpi_check_comm(comm, comm);
+	int size;
+	__cached_comm_size(comm, &size);
+	mpi_check_rank_send(dest, size, comm);
 	mpi_check_type(datatype, comm);
+	mpi_check_count(count, comm);
+	mpc_common_nodebug("tag %d", tag);
+
+	if(count != 0)
+	{
+		mpi_check_buf(buf, comm);
+	}
 
 	res = __Isend_test_req(buf, count, datatype, dest, tag, comm, request, 0, __sctk_internal_get_MPC_requests() );
 
@@ -10482,6 +10499,9 @@ int PMPI_Ibsend(const void *buf, int count, MPI_Datatype datatype, int dest, int
 
 	{
 		mpi_check_comm(comm, comm);
+		int size;
+		__cached_comm_size(comm, &size);
+		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
