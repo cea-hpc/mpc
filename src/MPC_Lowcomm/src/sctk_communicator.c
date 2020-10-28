@@ -1591,9 +1591,14 @@ mpc_lowcomm_communicator_t sctk_delete_communicator( const mpc_lowcomm_communica
 		if ( val == max_val - 1 )
 		{
 			mpc_common_spinlock_lock( &sctk_communicator_all_table_lock );
+			mpc_common_debug_error("Freeing %p in %d", tmp->local_to_global, tmp->id);
+
+TODO("This is not correctly handled in dups of comm");
+#if 0
 			sctk_free( tmp->local_to_global );
 			sctk_free( tmp->global_to_local );
 			sctk_free( tmp->task_to_process );
+#endif
 			tmp->task_to_process = NULL;
 			tmp->global_to_local = NULL;
 			tmp->local_to_global = NULL;
