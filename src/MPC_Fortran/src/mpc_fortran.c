@@ -7142,6 +7142,28 @@ void pmpi_type_create_hindexed_block__(int *count, int *blocklength, const MPI_A
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
+#pragma weak mpi_type_hvector_ = pmpi_type_hvector_
+void pmpi_type_hvector_(int *count, int *blocklength, MPI_Aint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, int *ierror)
+{
+/* MPI_Type_create_hvector */
+	MPI_Datatype c_oldtype = PMPI_Type_f2c(*oldtype);
+	MPI_Datatype c_newtype;
+
+	*ierror  = MPI_Type_hvector(*count, *blocklength, *stride, c_oldtype, &c_newtype);
+	*newtype = PMPI_Type_c2f(c_newtype);
+}
+
+#pragma weak mpi_type_hvector__ = pmpi_type_hvector__
+void pmpi_type_hvector__(int *count, int *blocklength, MPI_Aint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, int *ierror)
+{
+/* MPI_Type_create_hvector */
+	MPI_Datatype c_oldtype = PMPI_Type_f2c(*oldtype);
+	MPI_Datatype c_newtype;
+
+	*ierror  = MPI_Type_hvector(*count, *blocklength, *stride, c_oldtype, &c_newtype);
+	*newtype = PMPI_Type_c2f(c_newtype);
+}
+
 #pragma weak mpi_type_create_hvector_ = pmpi_type_create_hvector_
 void pmpi_type_create_hvector_(int *count, int *blocklength, MPI_Aint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, int *ierror)
 {

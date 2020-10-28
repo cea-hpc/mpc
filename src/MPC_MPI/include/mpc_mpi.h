@@ -5645,6 +5645,21 @@ int PMPI_Type_hindexed(int count,
 int MPI_Type_create_hindexed_block(int count, int blocklength, const MPI_Aint array_of_displacements[], MPI_Datatype oldtype, MPI_Datatype *newtype);
 int PMPI_Type_create_hindexed_block(int count, int blocklength, const MPI_Aint array_of_displacements[], MPI_Datatype oldtype, MPI_Datatype *newtype);
 
+/*MPI_Type_hvector*/
+
+/**
+ * @brief MPI function MPI_Type_hvector
+ * 
+ * @param count number of blocks
+ * @param blocklength number of elements in each block
+ * @param stride number of bytes between start of each block
+ * @param oldtype old datatype
+ * @param newtype new datatype
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
+ */
+int MPI_Type_hvector(int count, int blocklength, MPI_Aint stride, MPI_Datatype oldtype, MPI_Datatype *newtype);
+int PMPI_Type_hvector(int count, int blocklength, MPI_Aint stride, MPI_Datatype oldtype, MPI_Datatype *newtype);
 
 /*MPI_Type_create_hvector*/
 
