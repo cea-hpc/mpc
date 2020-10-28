@@ -4036,7 +4036,7 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr ) {
       requests_handles = (NBC_Handle **)sctk_malloc(sizeof(NBC_Handle *) * size);
 
 
-      if(req==MPI_REQUEST_NULL) PMPI_Irecv(&tmp_recv, 1, MPI_INT, 0, 0, MPI_COMM_SELF, &req);
+      if(req==MPI_REQUEST_NULL) PMPI_Irecv_internal(&tmp_recv, 1, MPI_INT, 0, 0, MPI_COMM_SELF, &req);
       requests[0]=req;
 
       /* re-compile list of requests */

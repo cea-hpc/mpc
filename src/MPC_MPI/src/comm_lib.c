@@ -4216,8 +4216,7 @@ int _mpc_cl_abort(__UNUSED__ mpc_lowcomm_communicator_t comm, int errorcode)
 	MPC_ERROR_SUCESS();
 }
 
-void _mpc_cl_default_error(mpc_lowcomm_communicator_t *comm, int *error, char *msg, char *file,
-                           int line)
+void _mpc_cl_default_error(mpc_lowcomm_communicator_t *comm, int *error, char *msg, char * function, char *file,  int line)
 {
 	char str[1024];
 	int  i;
@@ -4226,7 +4225,7 @@ void _mpc_cl_default_error(mpc_lowcomm_communicator_t *comm, int *error, char *m
 
 	if(i != 0)
 	{
-		mpc_common_debug_error("%s file %s line %d %s", str, file, line, msg);
+		mpc_common_debug_error("%s: %s [%s] at %s:%d ", function, msg, str, file, line);
 	}
 	else
 	{
@@ -4236,7 +4235,7 @@ void _mpc_cl_default_error(mpc_lowcomm_communicator_t *comm, int *error, char *m
 	_mpc_cl_abort(*comm, *error);
 }
 
-void _mpc_cl_return_error(mpc_lowcomm_communicator_t *comm, int *error, ...)
+void _mpc_cl_return_error(mpc_lowcomm_communicator_t *comm, int *error, char * message, char *function, char * file, int line)
 {
 	char str[1024];
 	int  i;
@@ -4245,7 +4244,15 @@ void _mpc_cl_return_error(mpc_lowcomm_communicator_t *comm, int *error, ...)
 
 	if(i != 0)
 	{
-		mpc_common_debug_error("%s on comm %d", str, ( int )*comm);
+		char extra_info[1024];
+		extra_info[0] = '\0';
+
+		// Are we in debug mode ?
+#if !defined(NDEBUG)
+		snprintf(extra_info, 1024, " at %s:%d", file, line );
+#endif
+	
+		mpc_common_debug_error("%s : %s on comm %d%s",function, str, ( int )*comm, extra_info);
 	}
 }
 

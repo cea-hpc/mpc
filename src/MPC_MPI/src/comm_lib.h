@@ -347,9 +347,9 @@ int _mpc_cl_comm_split( mpc_lowcomm_communicator_t comm, int color, int key, mpc
  * ERROR HANDLING *
  ******************/
 
-void _mpc_cl_default_error( mpc_lowcomm_communicator_t *comm, int *error, char *msg, char *file, int line );
+void _mpc_cl_default_error(mpc_lowcomm_communicator_t *comm, int *error, char *msg, char * function, char *file,  int line);
 
-void _mpc_cl_return_error( mpc_lowcomm_communicator_t *comm, int *error, ... );
+void _mpc_cl_return_error(mpc_lowcomm_communicator_t *comm, int *error, char * message, char *function, char * file, int line);
 
 int _mpc_cl_errhandler_create( MPC_Handler_function *function,
                                MPC_Errhandler *errhandler );
@@ -651,6 +651,7 @@ int _mpc_cl_derived_datatype_on_slot ( int id,
                                        long ub, int is_ub );
 
 int _mpc_cl_type_set_size( mpc_lowcomm_datatype_t datatype, size_t size );
+
 
 #ifdef __cplusplus
 }

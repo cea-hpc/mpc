@@ -56,10 +56,10 @@
  * an MPI function is different than MPI_SUCCESS.
  * We could add an additional MPC mode in order to fail in the case of a wrong returned value.
  */
-int _mpc_mpi_report_error(mpc_lowcomm_communicator_t comm, int error, char *message, char *file, int line);
+int _mpc_mpi_report_error(mpc_lowcomm_communicator_t comm, int error, char *message, char * function, char *file, int line);
 
-#define MPI_ERROR_REPORT(comm, error, message)      return _mpc_mpi_report_error(comm, error, message, __FILE__, __LINE__)
-#define MPI_HANDLE_RETURN_VAL(res, comm)            do { if(res == MPI_SUCCESS){ return res; } else { MPI_ERROR_REPORT(comm, res, "Generic error retrun"); } } while(0)
+#define MPI_ERROR_REPORT(comm, error, message)      return _mpc_mpi_report_error(comm, error, message, (char*)__FUNCTION__, (char*)__FILE__, __LINE__)
+#define MPI_HANDLE_RETURN_VAL(res, comm)            do { if(res == MPI_SUCCESS){ return res; } else { MPI_ERROR_REPORT(comm, res, "Generic error return"); } } while(0)
 #define MPI_HANDLE_ERROR(res, comm, desc_string)    do { if(res != MPI_SUCCESS){ MPI_ERROR_REPORT(comm, res, desc_string); } } while(0)
 
 
@@ -392,3 +392,27 @@ int PMPI_Type_size (MPI_Datatype, int *);
 
 int NBC_Finalize(mpc_thread_t *NBC_thread);
 
+/****************************
+ * INTERNAL COMM OPERATIONS *
+ ****************************/
+
+/* All these functions do not check for negative
+   tags to allow internal use */
+
+
+int PMPI_Send_internal(const void *buf, int count, MPI_Datatype datatype, int dest, int tag,
+              MPI_Comm comm);
+
+int PMPI_Recv_internal(void *buf, int count, MPI_Datatype datatype, int source, int tag,
+              MPI_Comm comm, MPI_Status *status);
+
+int PMPI_Sendrecv_internal(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                  int dest, int sendtag,
+                  void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                  int source, int recvtag, MPI_Comm comm, MPI_Status *status);
+
+int PMPI_Isend_internal(const void *buf, int count, MPI_Datatype datatype, int dest, int tag,
+                        MPI_Comm comm, MPI_Request *request);
+
+int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
+               int tag, MPI_Comm comm, MPI_Request *request);
