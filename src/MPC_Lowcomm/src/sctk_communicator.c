@@ -46,6 +46,11 @@ typedef struct sctk_process_ht_s
 	UT_hash_handle hh;
 } sctk_process_ht_t;
 
+/* When manipulating and creating communicators
+the shm barrier can lead to deadlocks*/
+#define mpc_lowcomm_barrier mpc_lowcomm_non_shm_barrier
+
+
 /************************* GLOBALS *************************/
 /** communicators table **/
 static sctk_internal_communicator_t *mpc_lowcomm_communicator_table = NULL;

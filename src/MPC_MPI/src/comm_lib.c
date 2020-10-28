@@ -3327,7 +3327,8 @@ int _mpc_cl_barrier(mpc_lowcomm_communicator_t comm)
 	{
 		if(size > 1)
 		{
-			mpc_lowcomm_barrier( ( mpc_lowcomm_communicator_t )comm);
+			/* Use the non shm version as we manipulate communicators */
+			mpc_lowcomm_non_shm_barrier( ( mpc_lowcomm_communicator_t )comm);
 		}
 	}
 

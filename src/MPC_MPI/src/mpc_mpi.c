@@ -299,23 +299,11 @@ void mpc_mpi_per_communicator_dup_copy_func(mpc_mpi_per_communicator_t **to, mpc
 	mpc_common_spinlock_unlock(&( (*to)->lock) );
 }
 
-static inline mpc_mpi_per_communicator_t *
-mpc_mpc_get_per_comm_data(mpc_lowcomm_communicator_t comm)
+static inline mpc_mpi_per_communicator_t * __get_per_comm_data(mpc_lowcomm_communicator_t comm)
 {
 	struct mpc_mpi_cl_per_mpi_process_ctx_s *task_specific;
 	mpc_per_communicator_t *tmp;
 
-	static __thread int task_rank = -1;
-	static __thread int tcomm     = MPI_COMM_NULL;
-	static __thread mpc_mpi_per_communicator_t *data = NULL;
-
-	if(task_rank == mpc_common_get_task_rank() )
-	{
-		if(tcomm == comm)
-		{
-			return data;
-		}
-	}
 
 	task_specific = mpc_cl_per_mpi_process_ctx_get();
 	tmp           = _mpc_cl_per_communicator_get(task_specific, comm);
@@ -324,10 +312,6 @@ mpc_mpc_get_per_comm_data(mpc_lowcomm_communicator_t comm)
 	{
 		return NULL;
 	}
-
-	data      = tmp->mpc_mpi_per_communicator;
-	task_rank = mpc_common_get_task_rank();
-	tcomm     = comm;
 
 	return tmp->mpc_mpi_per_communicator;
 }
@@ -5837,7 +5821,7 @@ static int __INTERNAL__PMPI_Neighbor_allgather_cart(
 	PMPI_Comm_rank(comm, &rank);
 
 	PMPI_Type_extent(recvtype, &extent);
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	reqs = sctk_malloc( (4 * (topo->data.cart.ndims) ) * sizeof(MPI_Request *) );
 
@@ -5933,7 +5917,7 @@ static int __INTERNAL__PMPI_Neighbor_allgather_graph(
 	mpc_mpi_per_communicator_t *tmp;
 
 	PMPI_Comm_rank(comm, &rank);
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	PMPI_Graph_neighbors_count(comm, rank, &degree);
 
@@ -5992,7 +5976,7 @@ static int __INTERNAL__PMPI_Neighbor_allgatherv_cart(
 	PMPI_Comm_rank(comm, &rank);
 
 	PMPI_Type_extent(recvtype, &extent);
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	reqs = sctk_malloc( (4 * (topo->data.cart.ndims) ) * sizeof(MPI_Request *) );
 
@@ -6083,7 +6067,7 @@ static int __INTERNAL__PMPI_Neighbor_allgatherv_graph(
 	mpc_mpi_per_communicator_t *tmp;
 
 	PMPI_Comm_rank(comm, &rank);
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	PMPI_Graph_neighbors_count(comm, rank, &degree);
 
@@ -6148,7 +6132,7 @@ static int __INTERNAL__PMPI_Neighbor_alltoall_cart(const void *sendbuf, int send
 
 	PMPI_Type_extent(recvtype, &rdextent);
 	PMPI_Type_extent(recvtype, &sdextent);
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	reqs = sctk_malloc( (4 * (topo->data.cart.ndims) ) * sizeof(MPI_Request *) );
 
@@ -6262,7 +6246,7 @@ static int __INTERNAL__PMPI_Neighbor_alltoall_graph(
 	mpc_mpi_per_communicator_t *tmp;
 
 	PMPI_Comm_rank(comm, &rank);
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	PMPI_Graph_neighbors_count(comm, rank, &degree);
 
@@ -6325,7 +6309,7 @@ static int __INTERNAL__PMPI_Neighbor_alltoallv_cart(
 
 	PMPI_Type_extent(recvtype, &rdextent);
 	PMPI_Type_extent(recvtype, &sdextent);
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	reqs = sctk_malloc( (4 * (topo->data.cart.ndims) ) * sizeof(MPI_Request *) );
 
@@ -6434,7 +6418,7 @@ static int __INTERNAL__PMPI_Neighbor_alltoallv_graph(
 	mpc_mpi_per_communicator_t *tmp;
 
 	PMPI_Comm_rank(comm, &rank);
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	PMPI_Graph_neighbors_count(comm, rank, &degree);
 
@@ -6498,7 +6482,7 @@ static int __INTERNAL__PMPI_Neighbor_alltoallw_cart(
 
 	PMPI_Comm_rank(comm, &rank);
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	reqs = sctk_malloc( (4 * (topo->data.cart.ndims) ) * sizeof(MPI_Request *) );
 
@@ -6603,7 +6587,7 @@ static int __INTERNAL__PMPI_Neighbor_alltoallw_graph(
 	mpc_mpi_per_communicator_t *tmp;
 
 	PMPI_Comm_rank(comm, &rank);
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	PMPI_Graph_neighbors_count(comm, rank, &degree);
 
@@ -9364,7 +9348,7 @@ static int SCTK__MPI_Attr_clean_communicator(MPI_Comm comm)
 
 	tmp = __get_per_task_data();
 	mpc_common_spinlock_lock(&(tmp->lock) );
-	tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
+	tmp_per_comm = __get_per_comm_data(comm);
 	mpc_common_spinlock_lock(&(tmp_per_comm->lock) );
 
 	for(i = 0; i < tmp_per_comm->max_number; i++)
@@ -9401,10 +9385,10 @@ static int SCTK__MPI_Attr_communicator_dup(MPI_Comm prev, MPI_Comm newcomm)
 
 	tmp = __get_per_task_data();
 	mpc_common_spinlock_lock(&(tmp->lock) );
-	tmp_per_comm_old = mpc_mpc_get_per_comm_data(prev);
+	tmp_per_comm_old = __get_per_comm_data(prev);
 	mpc_common_spinlock_lock(&(tmp_per_comm_old->lock) );
 
-	tmp_per_comm_new             = mpc_mpc_get_per_comm_data(newcomm);
+	tmp_per_comm_new             = __get_per_comm_data(newcomm);
 	tmp_per_comm_new->key_vals   = sctk_malloc(tmp_per_comm_old->max_number * sizeof(MPI_Caching_key_value_t) );
 	tmp_per_comm_new->max_number = tmp_per_comm_old->max_number;
 
@@ -9485,9 +9469,9 @@ static int SCTK__MPI_Comm_communicator_dup(MPI_Comm comm, MPI_Comm newcomm)
 	mpi_topology_per_comm_t *topo_old;
 	mpi_topology_per_comm_t *topo_new;
 
-	tmp      = mpc_mpc_get_per_comm_data(comm);
+	tmp      = __get_per_comm_data(comm);
 	topo_old = &(tmp->topo);
-	tmp      = mpc_mpc_get_per_comm_data(newcomm);
+	tmp      = __get_per_comm_data(newcomm);
 	topo_new = &(tmp->topo);
 
 	mpc_common_spinlock_lock(&(topo_old->lock) );
@@ -9528,7 +9512,7 @@ static int SCTK__MPI_Comm_communicator_free(MPI_Comm comm)
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 
 	mpc_common_spinlock_lock(&(topo->lock) );
@@ -9745,7 +9729,7 @@ static inline int __PMPI_Cart_rank_locked(MPI_Comm comm, const int *coords, int 
 	int loc_rank  = 0;
 	int dims_coef = 1;
 	int i;
-	mpc_mpi_per_communicator_t *tmp = mpc_mpc_get_per_comm_data(comm);
+	mpc_mpi_per_communicator_t *tmp = __get_per_comm_data(comm);
 	mpi_topology_per_comm_t *topo   = &(tmp->topo);
 
 	if(topo->type != MPI_CART)
@@ -9773,7 +9757,7 @@ static int __PMPI_Cart_coords_locked(MPI_Comm comm, int init_rank, int maxdims,
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 
 	rank = init_rank;
@@ -15017,7 +15001,7 @@ int PMPI_Neighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype sen
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	__cached_comm_rank(comm, &rank);
 
@@ -15075,7 +15059,7 @@ int PMPI_Neighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype se
 
 	__cached_comm_size(comm, &size);
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	__cached_comm_rank(comm, &rank);
 
@@ -15144,7 +15128,7 @@ int PMPI_Neighbor_alltoall(const void *sendbuf, int sendcount, MPI_Datatype send
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	__cached_comm_rank(comm, &rank);
 
@@ -15192,7 +15176,7 @@ int PMPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const i
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	__cached_comm_rank(comm, &rank);
 
@@ -15244,7 +15228,7 @@ int PMPI_Neighbor_alltoallw(const void *sendbuf, const int sendcounts[], const M
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	__cached_comm_rank(comm, &rank);
 
@@ -17252,7 +17236,7 @@ int PMPI_Attr_put(MPI_Comm comm, int keyval, void *attr_value)
 		MPI_ERROR_REPORT(comm, MPI_ERR_KEYVAL, "");
 	}
 
-	tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
+	tmp_per_comm = __get_per_comm_data(comm);
 	mpc_common_spinlock_lock(&(tmp_per_comm->lock) );
 
 	if(tmp_per_comm->max_number <= keyval)
@@ -17352,7 +17336,7 @@ int PMPI_Attr_get(MPI_Comm comm, int keyval, void *attr_value, int *flag)
 	}
 
 	/* get TLS var to check attributes for keyval */
-	tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
+	tmp_per_comm = __get_per_comm_data(comm);
 	mpc_common_spinlock_lock(&(tmp_per_comm->lock) );
 
 	/* it doesn't have any */
@@ -17421,7 +17405,7 @@ int PMPI_Attr_delete(MPI_Comm comm, int keyval)
 		return MPI_ERR_ARG;
 	}
 
-	tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
+	tmp_per_comm = __get_per_comm_data(comm);
 	mpc_common_spinlock_lock(&(tmp_per_comm->lock) );
 
 	if(tmp_per_comm->key_vals[keyval].flag == 1)
@@ -17508,7 +17492,7 @@ int PMPI_Topo_test(MPI_Comm comm, int *topo_type)
 {
 	mpi_check_comm(comm, comm);
 
-	mpc_mpi_per_communicator_t *tmp = mpc_mpc_get_per_comm_data(comm);
+	mpc_mpi_per_communicator_t *tmp = __get_per_comm_data(comm);
 	assume(tmp != NULL);
 	mpi_topology_per_comm_t *topo = &(tmp->topo);
 	assume(topo != NULL);
@@ -17636,7 +17620,7 @@ int PMPI_Cart_create(MPI_Comm comm_old, int ndims, const int dims[], const int p
 
 	if(*comm_cart != MPC_COMM_NULL)
 	{
-		tmp  = mpc_mpc_get_per_comm_data(*comm_cart);
+		tmp  = __get_per_comm_data(*comm_cart);
 		topo = &(tmp->topo);
 		mpc_common_spinlock_lock(&(topo->lock) );
 		topo->type              = MPI_CART;
@@ -17831,7 +17815,7 @@ int PMPI_Graph_create(MPI_Comm comm_old, int nnodes, const int index[], const in
 
 	if(*comm_graph >= 0)
 	{
-		tmp  = mpc_mpc_get_per_comm_data(*comm_graph);
+		tmp  = __get_per_comm_data(*comm_graph);
 		topo = &(tmp->topo);
 		mpc_common_spinlock_lock(&(topo->lock) );
 		topo->type = MPI_GRAPH;
@@ -17858,7 +17842,7 @@ int PMPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges)
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 
 	mpc_common_spinlock_lock(&(topo->lock) );
@@ -17885,7 +17869,7 @@ int PMPI_Graph_get(MPI_Comm comm, int maxindex, int maxedges,
 	mpi_topology_per_comm_t *topo;
 	int i;
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 
 	mpc_common_spinlock_lock(&(topo->lock) );
@@ -17920,7 +17904,7 @@ int PMPI_Cartdim_get(MPI_Comm comm, int *ndims)
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 
 	mpc_common_spinlock_lock(&(topo->lock) );
@@ -17952,7 +17936,7 @@ int PMPI_Cart_get(MPI_Comm comm, int maxdims, int *dims, int *periods,
 
 	int rank;
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	__cached_comm_rank(comm, &rank);
 
@@ -17983,7 +17967,7 @@ int PMPI_Cart_rank(MPI_Comm comm, const int coords[], int *rank)
 	int res = MPI_ERR_INTERN;
 	mpi_check_comm(comm, comm);
 
-	mpc_mpi_per_communicator_t *tmp = mpc_mpc_get_per_comm_data(comm);
+	mpc_mpi_per_communicator_t *tmp = __get_per_comm_data(comm);
 	mpi_topology_per_comm_t *topo   = &(tmp->topo);
 
 	mpc_common_spinlock_lock(&topo->lock);
@@ -18001,7 +17985,7 @@ int PMPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords)
 	int res = MPI_ERR_INTERN;
 	mpi_check_comm(comm, comm);
 
-	mpc_mpi_per_communicator_t *tmp = mpc_mpc_get_per_comm_data(comm);
+	mpc_mpi_per_communicator_t *tmp = __get_per_comm_data(comm);
 	mpi_topology_per_comm_t *topo   = &(tmp->topo);
 
 	mpc_common_spinlock_lock(&topo->lock);
@@ -18020,7 +18004,7 @@ int PMPI_Graph_neighbors_count(MPI_Comm comm, int rank, int *nneighbors)
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 
 	mpc_common_spinlock_lock(&(topo->lock) );
@@ -18054,7 +18038,7 @@ int PMPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors,
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 
 	mpc_common_spinlock_lock(&(topo->lock) );
@@ -18102,7 +18086,7 @@ int PMPI_Cart_shift(MPI_Comm comm, int direction, int displ, int *source,
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 
 	mpc_common_spinlock_lock(&(topo->lock) );
@@ -18250,7 +18234,7 @@ int PMPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *comm_new)
 	mpi_topology_per_comm_t *topo;
 	mpi_topology_per_comm_t *topo_new;
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	__cached_comm_rank(comm, &rank);
 	mpc_common_spinlock_lock(&(topo->lock) );
@@ -18258,7 +18242,7 @@ int PMPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *comm_new)
 	if(remain_dims == NULL)
 	{
 		PMPI_Comm_dup(MPI_COMM_SELF, comm_new);
-		tmp      = mpc_mpc_get_per_comm_data(*comm_new);
+		tmp      = __get_per_comm_data(*comm_new);
 		topo_new = &(tmp->topo);
 
 		topo_new->type            = MPI_CART;
@@ -18345,7 +18329,7 @@ int PMPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *comm_new)
 
 	sctk_free(coords_in_new);
 
-	tmp      = mpc_mpc_get_per_comm_data(*comm_new);
+	tmp      = __get_per_comm_data(*comm_new);
 	topo_new = &(tmp->topo);
 
 	topo_new->type              = MPI_CART;
@@ -19247,7 +19231,7 @@ int PMPI_Comm_get_name(MPI_Comm comm, char *comm_name, int *resultlen)
 	mpi_topology_per_comm_t *topo;
 	int len;
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 
 	mpc_common_spinlock_lock(&(topo->lock) );
@@ -19291,7 +19275,7 @@ int PMPI_Comm_set_name(MPI_Comm comm, const char *comm_name)
 	mpi_topology_per_comm_t *topo;
 	int len;
 
-	tmp  = mpc_mpc_get_per_comm_data(comm);
+	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
 
 	mpc_common_spinlock_lock(&(topo->lock) );

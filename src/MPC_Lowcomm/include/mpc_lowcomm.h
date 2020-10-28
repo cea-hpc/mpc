@@ -268,6 +268,11 @@ int mpc_lowcomm_probe(int source, int tag, mpc_lowcomm_communicator_t comm, mpc_
  */
 int mpc_lowcomm_barrier(mpc_lowcomm_communicator_t comm);
 
+/** Do a barrier on a communicator avoiding any shm implementation
+ * @param comm Communicator to do a barrier on
+ */
+int mpc_lowcomm_non_shm_barrier( const mpc_lowcomm_communicator_t communicator );
+
 /* Internal shared memory version of the barrier */
 struct shared_mem_barrier;
 int mpc_lowcomm_barrier_shm_on_context(struct shared_mem_barrier *barrier_ctx,

@@ -478,6 +478,7 @@ void mpc_MPI_accumulate_op_lock_init()
 	MPI_Comm node_comm;
 	int cw_rank;
 	PMPI_Comm_rank( MPI_COMM_WORLD, &cw_rank );
+
 	PMPI_Comm_split_type( MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, cw_rank,
 	                      MPI_INFO_NULL, &node_comm );
 	int my_rank, comm_size;

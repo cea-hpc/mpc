@@ -2021,6 +2021,10 @@ void mpc_lowcomm_terminaison_barrier( void )
 /*BARRIER                                                               */
 /************************************************************************/
 
+/* In the SHM barrier we really need to yield */
+#ifdef MPC_Threads
+#undef mpc_thread_yield
+#endif
 
 int mpc_lowcomm_barrier_shm_on_context(struct shared_mem_barrier *barrier_ctx,
                                        int comm_size)
@@ -2041,7 +2045,7 @@ int mpc_lowcomm_barrier_shm_on_context(struct shared_mem_barrier *barrier_ctx,
 					if(128 < cnt++)
 					{
 						sctk_network_notify_idle_message();
-						sched_yield();
+						mpc_thread_yield();
 					}
 				}
 	}
@@ -2059,7 +2063,7 @@ int __intercomm_barrier( const mpc_lowcomm_communicator_t communicator )
 }
 
 
-int mpc_lowcomm_barrier( const mpc_lowcomm_communicator_t communicator )
+int __lowcomm_barrier( const mpc_lowcomm_communicator_t communicator, int can_shm )
 {
 	struct mpc_lowcomm_coll_s *tmp;
 
@@ -2073,7 +2077,7 @@ int mpc_lowcomm_barrier( const mpc_lowcomm_communicator_t communicator )
 		return __intercomm_barrier(communicator);
 	}
 
-	if(sctk_is_shared_mem(communicator) )
+	if(can_shm && sctk_is_shared_mem(communicator) )
 	{
 		/* Call the SHM version */
 		struct sctk_comm_coll *    coll        = sctk_communicator_get_coll(communicator);
@@ -2094,6 +2098,16 @@ int mpc_lowcomm_barrier( const mpc_lowcomm_communicator_t communicator )
 	}
 
 	return SCTK_SUCCESS;
+}
+
+int mpc_lowcomm_barrier( const mpc_lowcomm_communicator_t communicator )
+{
+	return __lowcomm_barrier(communicator, 1);
+}
+
+int mpc_lowcomm_non_shm_barrier( const mpc_lowcomm_communicator_t communicator )
+{
+	return __lowcomm_barrier(communicator, 0);
 }
 
 /************************************************************************/
