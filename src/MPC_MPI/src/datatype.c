@@ -86,6 +86,7 @@ char *_mpc_dt_get_combiner_name( MPC_Type_combiner combiner )
 static volatile int __mpc_dt_initialized = 0;
 
 static inline void __mpc_common_types_init(void);
+static inline void __mpc_composed_common_types_init();
 
 void _mpc_dt_init()
 {
@@ -93,20 +94,21 @@ void _mpc_dt_init()
 
 	mpc_common_spinlock_lock(&init_lock);
 
-	if ( __mpc_dt_initialized )
+	/* Common types are shared */
+	if ( !__mpc_dt_initialized )
 	{
-		mpc_common_spinlock_unlock(&init_lock);
-		return;
+		__mpc_dt_initialized = 1;
+		__sctk_common_type_sizes =
+			sctk_malloc( sizeof( size_t ) * SCTK_COMMON_DATA_TYPE_COUNT );
+		assume( __sctk_common_type_sizes != NULL );
+		__mpc_common_types_init();
 	}
 
-	__mpc_dt_initialized = 1;
-
-	__sctk_common_type_sizes =
-		sctk_malloc( sizeof( size_t ) * SCTK_COMMON_DATA_TYPE_COUNT );
-	assume( __sctk_common_type_sizes != NULL );
-	__mpc_common_types_init();
-
 	mpc_common_spinlock_unlock(&init_lock);
+
+	/* Initialize composed datatypes */
+	__mpc_composed_common_types_init();
+
 }
 
 static inline void __mpc_dt_name_clear();
@@ -700,9 +702,6 @@ static inline void __mpc_common_types_init(void)
 	/* Special cases */
 	__sctk_common_type_sizes[MPC_PACKED] = 0;
 	__mpc_common_dt_set_name( MPC_PACKED, "MPI_PACKED" );
-
-	/* Initialize composed datatypes */
-	__mpc_composed_common_types_init();
 }
 
 void _mpc_dt_common_display( mpc_lowcomm_datatype_t datatype )
