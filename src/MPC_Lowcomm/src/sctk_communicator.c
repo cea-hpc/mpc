@@ -1565,6 +1565,9 @@ void sctk_communicator_delete()
 **/
 mpc_lowcomm_communicator_t sctk_delete_communicator( const mpc_lowcomm_communicator_t comm )
 {
+	TODO("sctk_communicator needs a full rewrite");
+	return MPC_COMM_NULL;
+
 	if ( ( comm == MPC_COMM_WORLD ) || ( comm == MPC_COMM_SELF ) )
 	{
 		not_reachable();
