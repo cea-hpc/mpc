@@ -465,9 +465,12 @@ static int is_initialized = 0;
 #define mpi_check_rank(task, max_rank, comm) \
 	do{ \
 		if( !sctk_is_inter_comm(comm) ) {\
-			if( (task < 0) || (task >= max_rank) && (task != MPI_ANY_SOURCE) && (task != MPI_PROC_NULL) ) \
-			{ \
-				MPI_ERROR_REPORT(comm, MPI_ERR_RANK, "Error bad rank provided"); \
+			if( (task != MPI_ANY_SOURCE) && (task != MPI_PROC_NULL) ) \
+			{\
+				if( ( (task < 0) || (task >= max_rank) )) \
+				{ \
+					MPI_ERROR_REPORT(comm, MPI_ERR_RANK, "Error bad rank provided"); \
+				}\
 			}\
 		} \
 	}while(0)
@@ -475,9 +478,12 @@ static int is_initialized = 0;
 #define mpi_check_rank_send(task, max_rank, comm) \
 	do{ \
 		if( !sctk_is_inter_comm(comm) ) {\
-			if( (task < 0) || (task >= max_rank) && (task != MPI_PROC_NULL) ) \
-			{ \
-				MPI_ERROR_REPORT(comm, MPI_ERR_RANK, "Error bad rank provided"); \
+			if(task != MPI_PROC_NULL)\
+			{\
+				if( (task < 0) || (task >= max_rank) ) \
+				{ \
+					MPI_ERROR_REPORT(comm, MPI_ERR_RANK, "Error bad rank provided"); \
+				}\
 			}\
 		} \
 	}while(0)
@@ -487,8 +493,16 @@ static int is_initialized = 0;
 		MPI_ERROR_REPORT(comm, MPI_ERR_ROOT, "Error bad root rank provided")
 
 #define mpi_check_tag(tag, comm)                                   \
-	if( ( (tag < 0) || (tag > MPI_TAG_UB_VALUE) ) && (tag != MPI_ANY_TAG) ) \
-		MPI_ERROR_REPORT(comm, MPI_ERR_TAG, "Error bad tag provided")
+	do { \
+		if( tag != MPI_ANY_TAG ) \
+		{ \
+			if( (tag < 0) || (tag > MPI_TAG_UB_VALUE) ) \
+			{ \
+				MPI_ERROR_REPORT(comm, MPI_ERR_TAG, "Error bad tag provided"); \
+			}\
+		}\
+	}\
+	while(0)
 
 #define mpi_check_tag_send(tag, comm)  \
 	if( (tag < 0) || (tag > MPI_TAG_UB_VALUE) ) \

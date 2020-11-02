@@ -1952,15 +1952,17 @@ static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matchin
 		}
 
 		/* Match the communicator, the tag, the source and the specific message tag */
-		mpc_common_debug("MATCH C %d S %d P %d T %d HAVE C %d S %d P %d T %d",
+		mpc_common_debug("MATCH C %d S %d P %d T %d TY %d HAVE C %d S %d P %d T %d TY %d",
 		                 header->communicator,
 		                 header->source_task,
 		                 header->source,
 		                 header->message_tag,
+						 header->message_type.type,
 		                 header_found->communicator,
 		                 header_found->source_task,
 		                 header_found->source,
-		                 header_found->message_tag);
+		                 header_found->message_tag,
+						 header_found->message_type.type);
 
 		if(  /* Match Communicator */
 		        (header->communicator == header_found->communicator) &&
