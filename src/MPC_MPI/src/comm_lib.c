@@ -811,7 +811,7 @@ MPC_CREATE_INTERN_FUNC(MAXLOC);
 /************************************************************************/
 
 static inline int __MPC_ERROR_REPORT__(mpc_lowcomm_communicator_t comm, int error, char *message,
-                                       char *file, int line)
+                                       char *function, char *file, int line)
 {
 	mpc_lowcomm_communicator_t comm_id;
 	int            error_id;
@@ -819,13 +819,14 @@ static inline int __MPC_ERROR_REPORT__(mpc_lowcomm_communicator_t comm, int erro
 	        ( sctk_handle )comm, SCTK_HANDLE_COMM);
 	MPC_Handler_function *func = sctk_errhandler_resolve(errh);
 
+	comm_id = comm;
 	error_id = error;
-	( func )(&comm_id, &error_id, message, file, line);
+	( func )(&comm_id, &error_id, message, function, file, line);
 	return error;
 }
 
 #define MPC_ERROR_REPORT(comm, error, message) \
-	return __MPC_ERROR_REPORT__(comm, error, message, __FILE__, __LINE__)
+	return __MPC_ERROR_REPORT__(comm, error, message, (char*)__FUNCTION__, __FILE__, __LINE__)
 
 #define MPC_ERROR_SUCESS()    return SCTK_SUCCESS;
 
@@ -2718,8 +2719,6 @@ FALLBACK_TO_BLOCKING_SEND:
 int _mpc_cl_recv(void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype, int source,
                  int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_status_t *status)
 {
-	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
-
 	if(source == MPC_PROC_NULL)
 	{
 		if(status != SCTK_STATUS_NULL)
@@ -2737,6 +2736,11 @@ int _mpc_cl_recv(void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_
 	MPI_Status st;
 
 	int ret = _mpc_cl_irecv(buf, count, datatype, source, tag, comm, &req);
+
+	if(ret != MPI_SUCCESS)
+	{
+		return ret;
+	}
 
 	_mpc_cl_waitall(1, &req, &st);
 
@@ -4263,7 +4267,7 @@ void _mpc_cl_return_error(mpc_lowcomm_communicator_t *comm, int *error, char * m
 		snprintf(extra_info, 1024, " at %s:%d", file, line );
 #endif
 	
-		mpc_common_debug_error("%s : %s on comm %d%s",function, str, ( int )*comm, extra_info);
+		mpc_common_debug_error("%s : %s [%s] on comm %d%s",function, message, str, ( int )*comm, extra_info);
 	}
 }
 
