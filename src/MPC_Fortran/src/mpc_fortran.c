@@ -8990,6 +8990,20 @@ void pmpi_comm_null_copy_fn__( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, v
 	*v6 = 0;
 }
 
+#pragma weak mpi_dup_fn_ = pmpi_dup_fn__
+void pmpi_dup_fn_ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, MPI_Fint*v6, MPI_Fint *ierr ){
+         *v5 = *v4;
+         *v6 = (1);
+         *ierr = MPI_SUCCESS;
+}
+
+#pragma weak mpi_dup_fn__ = pmpi_dup_fn_
+void pmpi_dup_fn__ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, MPI_Fint*v6, MPI_Fint *ierr ){
+         *v5 = *v4;
+         *v6 = (1);
+         *ierr = MPI_SUCCESS;
+}
+
 #pragma weak mpi_comm_dup_fn_ = pmpi_comm_dup_fn_
 void pmpi_comm_dup_fn_( MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v5, MPI_Fint *v6, int *ierr )
 {
