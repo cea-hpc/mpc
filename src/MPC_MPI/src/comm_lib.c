@@ -2717,8 +2717,17 @@ FALLBACK_TO_BLOCKING_SEND:
 }
 
 int _mpc_cl_recv(void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_t datatype, int source,
-                 int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_status_t *status)
+                 int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_status_t *pstatus)
 {
+	mpc_lowcomm_status_t __status;
+	mpc_lowcomm_status_t * status = pstatus;
+
+	if(status == MPI_STATUS_IGNORE)
+	{
+		status = &__status;
+	}
+
+
 	if(source == MPC_PROC_NULL)
 	{
 		if(status != SCTK_STATUS_NULL)
@@ -2733,7 +2742,6 @@ int _mpc_cl_recv(void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_
 	}
 
 	mpc_lowcomm_request_t req;
-	MPI_Status st;
 
 	int ret = _mpc_cl_irecv(buf, count, datatype, source, tag, comm, &req);
 
@@ -2742,11 +2750,11 @@ int _mpc_cl_recv(void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_
 		return ret;
 	}
 
-	_mpc_cl_waitall(1, &req, &st);
+	_mpc_cl_waitall(1, &req, status);
 
-	if(st.MPI_ERROR != MPI_SUCCESS)
+	if(status->MPI_ERROR != MPI_SUCCESS)
 	{
-		return st.MPI_ERROR;
+		return status->MPI_ERROR;
 	}
 
 	MPC_ERROR_SUCESS();
