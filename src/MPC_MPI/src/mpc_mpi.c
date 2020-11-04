@@ -13159,7 +13159,7 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
 			*elements = 0;
 
 			/* Retrieve the derived datatype */
-			assert( (datatype) < SCTK_USER_DATA_TYPES_MAX);
+			assert( (datatype) < SCTK_USER_DATA_TYPES_MAX * 2);
 			target_type = _mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
 			assert(target_type != NULL);
 
