@@ -1492,11 +1492,6 @@ static int __Isend_test_req(const void *buf, int count, MPI_Datatype datatype,
 	}
 	else
 	{
-		if(count == 0)
-		{
-			/* code to avoid derived datatype */
-			datatype = MPC_CHAR;
-		}
 		if(is_valid_request)
 		{
 			return _mpc_cl_isend(buf, count, datatype, dest, tag, comm,
@@ -10246,7 +10241,6 @@ int PMPI_Recv_internal(void *buf, int count, MPI_Datatype datatype, int source, 
 int PMPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
               MPI_Comm comm, MPI_Status *status)
 {
-	// Some colls pass neg tags...
 	mpi_check_tag(tag, comm);
 	return PMPI_Recv_internal(buf, count, datatype, source, tag, comm, status);
 }
@@ -10338,11 +10332,6 @@ int PMPI_Ssend(const void *buf, int count, MPI_Datatype datatype, int dest, int 
 		if(buf == NULL && count != 0)
 		{
 			MPI_ERROR_REPORT(comm, MPI_ERR_BUFFER, "");
-		}
-		if(count == 0)
-		{
-			/* code to avoid derived datatype */
-			datatype = MPC_CHAR;
 		}
 
 		res = _mpc_cl_ssend(buf, count, datatype, dest, tag, comm);
