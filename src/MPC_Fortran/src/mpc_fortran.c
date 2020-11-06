@@ -842,7 +842,14 @@ void pmpi_attr_get_(MPI_Fint *comm, int *keyval, void *attribute_val, int *flag,
 /* MPI_Attr_get */
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
-	*ierror = MPI_Attr_get(c_comm, *keyval, attribute_val, flag);
+	void * attr = NULL;
+
+	*ierror = MPI_Attr_get(c_comm, *keyval, &attr, flag);
+
+	if(*flag)
+	{
+		*((int*)attribute_val) = *((int*)attr);
+	}
 }
 
 #pragma weak mpi_attr_get__ = pmpi_attr_get__
@@ -851,7 +858,14 @@ void pmpi_attr_get__(MPI_Fint *comm, int *keyval, void *attribute_val, int *flag
 /* MPI_Attr_get */
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
-	*ierror = MPI_Attr_get(c_comm, *keyval, attribute_val, flag);
+	void * attr = NULL;
+
+	*ierror = MPI_Attr_get(c_comm, *keyval, &attr, flag);
+
+	if(*flag)
+	{
+		*((int*)attribute_val) = *((int*)attr);
+	}
 }
 
 #pragma weak mpi_attr_put_ = pmpi_attr_put_
