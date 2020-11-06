@@ -110,6 +110,13 @@ void mpc_topology_destroy(void);
  */
 hwloc_topology_t mpc_topology_get(void);
 
+/**
+ * @brief Retrieve the Main not restricted Topology Object from MPC
+ *
+ * @return hwloc_topology_t MPC's main topology object
+ */
+hwloc_topology_t mpc_topology_global_get(void);
+
 /** @brief Return the closest core_id
  * @param cpuid Main core_id
  * @param nb_cpus Number of neighbor
