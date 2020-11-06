@@ -16876,6 +16876,19 @@ int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
+static inline hwloc_obj_t __mpc_get_pu_from_last_cpu_location(hwloc_topology_t topology)
+{
+        hwloc_cpuset_t newset;
+        newset = hwloc_bitmap_alloc();
+        int ret = hwloc_get_last_cpu_location(topology, newset, HWLOC_CPUBIND_THREAD);
+        //int tid = syscall(SYS_gettid);
+        //int ret = hwloc_get_thread_cpubind(topology, tid, newset, HWLOC_CPUBIND_THREAD);
+        assert(ret == 0);
+        hwloc_obj_t obj;
+        obj = hwloc_get_obj_inside_cpuset_by_type(topology, newset, HWLOC_OBJ_PU, 0);
+        return obj;
+}
+
 static inline hwloc_obj_type_t __mpc_find_split_type(char *value, hwloc_obj_type_t *type_split)
 {
         /* if new level added, change function PMPI_GET_HWSUBDOMAIN_TYPES accordingly */
@@ -16936,14 +16949,12 @@ static int __split_guided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI
     int ret = __mpc_find_split_type(value, &type_split);
     if(!ret) /* info value not find */
     {
-        *newcomm = MPI_COMM_NULL;
-        return;
+        return MPI_PROC_NULL;
     }
     int size = mpc_lowcomm_communicator_size(comm);
     if(size == 1) 
     {
-        *newcomm = MPI_COMM_NULL;
-        return;
+        return MPI_PROC_NULL;
     }
     if(type_split ==  HWLOC_OBJ_MACHINE)
     {
@@ -16967,8 +16978,7 @@ static int __split_guided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI
         hwloc_obj_t ancestor = __mpc_get_pu_from_last_cpu_location(topology);
         if(ancestor == NULL)
         {
-            *newcomm = MPI_COMM_NULL;
-            return;
+            return MPI_PROC_NULL;
         }
         if(type_split != HWLOC_OBJ_CACHE)
         {
@@ -16979,8 +16989,7 @@ static int __split_guided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI
             }
             if(ancestor == NULL)
             {
-                *newcomm = MPI_COMM_NULL;
-                return;
+                return MPI_PROC_NULL;
             }
         }
         else
@@ -17009,8 +17018,7 @@ static int __split_guided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI
                 ancestor = ancestor->parent;
                 if(ancestor == NULL)
                 {
-                    *newcomm = MPI_COMM_NULL;
-                    return;
+                    return MPI_PROC_NULL;
                 }
                 if(ancestor->type == type_split)
                 {
@@ -17039,6 +17047,7 @@ static int __split_guided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI
             color = ancestor->logical_index;
         }
     }
+    return color;
 }
 
 static int __split_unguided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
@@ -17048,8 +17057,7 @@ static int __split_unguided(MPI_Comm comm, int split_type, int key, __UNUSED__ M
     int color = MPC_PROC_NULL;
     if(size == 1) 
     {
-        *newcomm = MPI_COMM_NULL;
-        return;
+        return MPI_PROC_NULL;
     }
 
     /* get location */
@@ -17183,18 +17191,18 @@ static int __split_unguided(MPI_Comm comm, int split_type, int key, __UNUSED__ M
 
     if(tab_color[key] == -1)
     {
-        *newcomm = MPI_COMM_NULL;
-        return;
+        return MPI_PROC_NULL;
     }
     color = tab_color[key];
     sctk_free(tab_color);
     sctk_free(tab_cpuid);
+    return color;
 }
 
 int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
                          MPI_Comm *newcomm)
 {
-	int color = 0;
+	int color = MPC_PROC_NULL;
     int guided_shared_memory = 0; /* ensure consistency MPI standard 4.0 */
 
     if(split_type == MPI_COMM_TYPE_HW_SUBDOMAIN)
