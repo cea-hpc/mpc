@@ -16918,145 +16918,39 @@ void PMPI_GET_HWSUBDOMAIN_TYPES(char * value)
     snprintf(value, buflen, "%s", "Node, Package, NUMANode, L3Cache, L2Cache, L1Cache");  
 }
 
-int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
-                         MPI_Comm *newcomm)
+static int __split_guided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
+                         int * guided_shared_memory, MPI_Comm *newcomm)
+
 {
-	int color = 0;
-    int guided_shared_memory = 0; /* ensure consistency MPI standard 4.0 */
-
-    if(split_type == MPI_COMM_TYPE_HW_SUBDOMAIN)
+    int buflen = 1024;
+    char value[1024];
+    int flag;
+    int color = MPC_PROC_NULL;
+    _mpc_cl_info_get(info, "mpi_hw_subdomain_type", &buflen, value, &flag);
+    if(!strcmp(value,"mpi_shared_memory")) /* ensure consistency MPI standard 4.0 */
     {
-        int buflen = 1024;
-        char value[1024];
-        int flag;
-        _mpc_cl_info_get(info, "mpi_hw_subdomain_type", &buflen, value, &flag);
-        if(!strcmp(value,"mpi_shared_memory")) /* ensure consistency MPI standard 4.0 */
-        {
-            guided_shared_memory = 1;
-            goto shared_memory;
-        }
-        hwloc_obj_type_t type_split;
-        int ret = __mpc_find_split_type(value, &type_split);
-        if(!ret) /* info value not find */
-        {
-            *newcomm = MPI_COMM_NULL;
-            return;
-        }
-        int size = mpc_lowcomm_communicator_size(comm);
-        if(size == 1) 
-        {
-            *newcomm = MPI_COMM_NULL;
-            return;
-        }
-        if(type_split ==  HWLOC_OBJ_MACHINE)
-        {
-            color = mpc_common_get_node_rank();
-        }
-        else
-        {
-            hwloc_topology_t topology;
-            if(mpc_common_get_local_process_count() > 1)
-            {
-                hwloc_topology_init(&topology); //TODO init one time at init topo and retrieve
-                hwloc_topology_load(topology);
-            }
-            else
-            {
-                topology = mpc_topology_get();
-            }
-            //int tid = syscall(SYS_gettid);
-            //int ret = hwloc_get_thread_cpubind(topology, tid, newset, HWLOC_CPUBIND_THREAD);
-            hwloc_obj_t obj;
-            hwloc_obj_t ancestor = __mpc_get_pu_from_last_cpu_location(topology);
-            if(ancestor == NULL)
-            {
-                *newcomm = MPI_COMM_NULL;
-                return;
-            }
-            if(type_split != HWLOC_OBJ_CACHE)
-            {
-                //__mpc_find_ancestor_by_type(topology, ancestor, type_split);
-                while(ancestor->type != type_split)
-                {
-                    ancestor = ancestor->parent;
-                }
-                if(ancestor == NULL)
-                {
-                    *newcomm = MPI_COMM_NULL;
-                    return;
-                }
-            }
-            else
-            {
-                int cache_lvl;
-                if(!strcmp(value,"L3Cache"))
-                {
-                    cache_lvl = 3;
-                }
-                if(!strcmp(value,"L2Cache"))
-                {
-                    cache_lvl = 2;
-                }
-                if(!strcmp(value,"L1Cache"))
-                {
-                    cache_lvl = 1;
-                }
-                //__mpc_find_cache_ancestor_by_level(topology, ancestor, cache_lvl);
-                int cache_iterator = 0;
-                if(ancestor->type == type_split)
-                {
-                    cache_iterator++;
-                }
-                while(cache_lvl != cache_iterator)
-                {
-                    ancestor = ancestor->parent;
-                    if(ancestor == NULL)
-                    {
-                        *newcomm = MPI_COMM_NULL;
-                        return;
-                    }
-                    if(ancestor->type == type_split)
-                    {
-                        cache_iterator++;
-                    }
-                }
-            }
-            if(mpc_common_get_node_count() > 1)/* create color with node id */
-            {
-                char str_logical_idx[512];
-                char str_node_idx[512];
-                char tmp[512];
-                sprintf(str_logical_idx, "%d", ancestor->logical_index); 
-                sprintf(str_node_idx, "%d", mpc_common_get_node_rank()); 
-                sprintf(tmp, "%d", mpc_common_get_node_rank()); 
-                /* add node number enough time to be sure id not interfere between nodes */
-                strcat(str_node_idx, tmp);
-                strcat(str_node_idx, tmp);
-                strcat(str_node_idx, tmp);
-                strcat(str_node_idx, str_logical_idx);
-                color = atoi(str_node_idx);
-
-            }
-            else
-            {
-                color = ancestor->logical_index;
-            }
-        }
+        *guided_shared_memory = 1;
+        return 0;
     }
-    if(split_type == MPI_COMM_TYPE_HW_UNGUIDED)
+    hwloc_obj_type_t type_split;
+    int ret = __mpc_find_split_type(value, &type_split);
+    if(!ret) /* info value not find */
     {
-        int size = mpc_lowcomm_communicator_size(comm);
-        if(size == 1) 
-        {
-            *newcomm = MPI_COMM_NULL;
-            return;
-        }
-
-        /* get location */
-        int *tab_cpuid, *tab_color;
-        int cpu_this;
-        hwloc_cpuset_t newset;
-        newset = hwloc_bitmap_alloc();
+        *newcomm = MPI_COMM_NULL;
+        return;
+    }
+    int size = mpc_lowcomm_communicator_size(comm);
+    if(size == 1) 
+    {
+        *newcomm = MPI_COMM_NULL;
+        return;
+    }
+    if(type_split ==  HWLOC_OBJ_MACHINE)
+    {
+        color = mpc_common_get_node_rank();
+    }
+    else
+    {
         hwloc_topology_t topology;
         if(mpc_common_get_local_process_count() > 1)
         {
@@ -17067,130 +16961,252 @@ int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_
         {
             topology = mpc_topology_get();
         }
-        int ret = hwloc_get_last_cpu_location(topology, newset, HWLOC_CPUBIND_THREAD);
-        assert(ret == 0);
+        //int tid = syscall(SYS_gettid);
+        //int ret = hwloc_get_thread_cpubind(topology, tid, newset, HWLOC_CPUBIND_THREAD);
         hwloc_obj_t obj;
-        obj = hwloc_get_obj_inside_cpuset_by_type(topology, newset,HWLOC_OBJ_PU, 0);
-        cpu_this = obj->logical_index;
-
-        /* send to root cpu id and node rank */
-        int root = 0;
-        if(key == root)
-        {
-            tab_cpuid            = ( int* )sctk_malloc(2 * size * sizeof(int));
-        }
-        else
-        {
-            tab_cpuid            = ( int* )sctk_malloc(2 * sizeof(int));
-        }
-        tab_cpuid[0] = cpu_this;
-        tab_cpuid[1] = mpc_common_get_node_rank();
-        tab_color = ( int* )sctk_malloc(size * sizeof(int) );
-        _mpc_cl_gather(tab_cpuid, 2, MPC_INT, tab_cpuid, 2, MPC_INT, root,
-                comm);
-
-        /* root computes color with infos gathered*/
-        if(key == root)
-        {
-            int k;
-            int is_multinode = 0;
-
-            /* if callers on several nodes, split with node number */
-            for(k = 0; k < size; k++)
-            {
-                if(tab_cpuid[1] != tab_cpuid[2 * k + 1]) /* one rank is not on the same node */
-                {
-                    is_multinode = 1;
-                    break;
-                }
-            }
-            if(is_multinode)
-            {
-                for(k = 0; k < size; k++)
-                {
-                    tab_color[k] = tab_cpuid[2 * k + 1]; /* color is node rank */
-                }
-            }
-            else
-            {
-                /* find common ancestor */
-                hwloc_obj_t ancestor;
-                hwloc_obj_t new_ancestor;
-                int previous_ancestor_level = -1;
-                hwloc_obj_t pivot = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, tab_cpuid[root]);
-                for(k = 0; k < size; k++)
-                {
-                    if(k == root) continue;
-                    hwloc_obj_t core_compare = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, tab_cpuid[2*k]);
-                    ancestor = hwloc_get_common_ancestor_obj(topology, core_compare, pivot);   
-                    if(ancestor->depth < previous_ancestor_level || previous_ancestor_level < 0)
-                    {
-                        new_ancestor = ancestor;
-                        previous_ancestor_level = ancestor->depth;
-                    }
-                }
-
-                /* check oversuscribing */
-                int split_over = 0;
-                if(new_ancestor->type == HWLOC_OBJ_CORE || new_ancestor->type == HWLOC_OBJ_PU)
-                {
-                    for(k = 0; k < size; k++)
-                    {
-                        tab_color[k] = -1;
-                    }
-                    split_over = 1;
-                }
-
-                /* find child common ancestor */
-                if(!split_over){
-                    for(k = 0; k < new_ancestor->arity; k++) /* each child ancestor */
-                    {
-                        int j; 
-                        hwloc_obj_t child = new_ancestor->children[k];
-                        hwloc_cpuset_t child_set;
-                        child_set = child->cpuset; 
-                        for(j = 0; j < size; j++) /* each rank calling split */
-                        {
-                            int is_inside = hwloc_bitmap_isincluded (hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, tab_cpuid[j*2])->cpuset, child_set);
-                            if(is_inside) /* if MPI process inside child ancestor */
-                            {
-                                if(mpc_common_get_node_count() > 1)
-                                {
-                                    /* create color with node id and pu id to be globaly unique */
-                                    char str_logical_idx[512];
-                                    char str_node_idx[512];
-                                    sprintf(str_logical_idx, "%d", k); 
-                                    sprintf(str_node_idx, "%d", mpc_common_get_node_rank()); 
-                                    strcat(str_node_idx, str_logical_idx);
-                                    tab_color[j] = atoi(str_node_idx);
-
-                                }
-                                else
-                                {
-                                    /* only need local object id to create color */
-                                    tab_color[j] = k;
-                                }
-                            }
-                        }
-
-                    }
-                }
-            }
-        }
-
-        /* root sends color computed */ //TODO scatter
-        _mpc_cl_bcast( ( void * )tab_color, size, MPC_INT, root, comm);
-
-        if(tab_color[key] == -1)
+        hwloc_obj_t ancestor = __mpc_get_pu_from_last_cpu_location(topology);
+        if(ancestor == NULL)
         {
             *newcomm = MPI_COMM_NULL;
             return;
         }
-        color = tab_color[key];
-        sctk_free(tab_color);
-        sctk_free(tab_cpuid);
+        if(type_split != HWLOC_OBJ_CACHE)
+        {
+            //__mpc_find_ancestor_by_type(topology, ancestor, type_split);
+            while(ancestor->type != type_split)
+            {
+                ancestor = ancestor->parent;
+            }
+            if(ancestor == NULL)
+            {
+                *newcomm = MPI_COMM_NULL;
+                return;
+            }
+        }
+        else
+        {
+            int cache_lvl;
+            if(!strcmp(value,"L3Cache"))
+            {
+                cache_lvl = 3;
+            }
+            if(!strcmp(value,"L2Cache"))
+            {
+                cache_lvl = 2;
+            }
+            if(!strcmp(value,"L1Cache"))
+            {
+                cache_lvl = 1;
+            }
+            //__mpc_find_cache_ancestor_by_level(topology, ancestor, cache_lvl);
+            int cache_iterator = 0;
+            if(ancestor->type == type_split)
+            {
+                cache_iterator++;
+            }
+            while(cache_lvl != cache_iterator)
+            {
+                ancestor = ancestor->parent;
+                if(ancestor == NULL)
+                {
+                    *newcomm = MPI_COMM_NULL;
+                    return;
+                }
+                if(ancestor->type == type_split)
+                {
+                    cache_iterator++;
+                }
+            }
+        }
+        if(mpc_common_get_node_count() > 1)/* create color with node id */
+        {
+            char str_logical_idx[512];
+            char str_node_idx[512];
+            char tmp[512];
+            sprintf(str_logical_idx, "%d", ancestor->logical_index); 
+            sprintf(str_node_idx, "%d", mpc_common_get_node_rank()); 
+            sprintf(tmp, "%d", mpc_common_get_node_rank()); 
+            /* add node number enough time to be sure id not interfere between nodes */
+            strcat(str_node_idx, tmp);
+            strcat(str_node_idx, tmp);
+            strcat(str_node_idx, tmp);
+            strcat(str_node_idx, str_logical_idx);
+            color = atoi(str_node_idx);
+
+        }
+        else
+        {
+            color = ancestor->logical_index;
+        }
     }
-shared_memory:
+}
+
+static int __split_unguided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
+                         MPI_Comm *newcomm)
+{
+    int size = mpc_lowcomm_communicator_size(comm);
+    int color = MPC_PROC_NULL;
+    if(size == 1) 
+    {
+        *newcomm = MPI_COMM_NULL;
+        return;
+    }
+
+    /* get location */
+    int *tab_cpuid, *tab_color;
+    int cpu_this;
+    hwloc_cpuset_t newset;
+    newset = hwloc_bitmap_alloc();
+    hwloc_topology_t topology;
+    if(mpc_common_get_local_process_count() > 1)
+    {
+        hwloc_topology_init(&topology); //TODO init one time at init topo and retrieve
+        hwloc_topology_load(topology);
+    }
+    else
+    {
+        topology = mpc_topology_get();
+    }
+    int ret = hwloc_get_last_cpu_location(topology, newset, HWLOC_CPUBIND_THREAD);
+    assert(ret == 0);
+    hwloc_obj_t obj;
+    obj = hwloc_get_obj_inside_cpuset_by_type(topology, newset,HWLOC_OBJ_PU, 0);
+    cpu_this = obj->logical_index;
+
+    /* send to root cpu id and node rank */
+    int root = 0;
+    if(key == root)
+    {
+        tab_cpuid            = ( int* )sctk_malloc(2 * size * sizeof(int));
+    }
+    else
+    {
+        tab_cpuid            = ( int* )sctk_malloc(2 * sizeof(int));
+    }
+    tab_cpuid[0] = cpu_this;
+    tab_cpuid[1] = mpc_common_get_node_rank();
+    tab_color = ( int* )sctk_malloc(size * sizeof(int) );
+    _mpc_cl_gather(tab_cpuid, 2, MPC_INT, tab_cpuid, 2, MPC_INT, root,
+            comm);
+
+    /* root computes color with infos gathered*/
+    if(key == root)
+    {
+        int k;
+        int is_multinode = 0;
+
+        /* if callers on several nodes, split with node number */
+        for(k = 0; k < size; k++)
+        {
+            if(tab_cpuid[1] != tab_cpuid[2 * k + 1]) /* one rank is not on the same node */
+            {
+                is_multinode = 1;
+                break;
+            }
+        }
+        if(is_multinode)
+        {
+            for(k = 0; k < size; k++)
+            {
+                tab_color[k] = tab_cpuid[2 * k + 1]; /* color is node rank */
+            }
+        }
+        else
+        {
+            /* find common ancestor */
+            hwloc_obj_t ancestor;
+            hwloc_obj_t new_ancestor;
+            int previous_ancestor_level = -1;
+            hwloc_obj_t pivot = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, tab_cpuid[root]);
+            for(k = 0; k < size; k++)
+            {
+                if(k == root) continue;
+                hwloc_obj_t core_compare = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, tab_cpuid[2*k]);
+                ancestor = hwloc_get_common_ancestor_obj(topology, core_compare, pivot);   
+                if(ancestor->depth < previous_ancestor_level || previous_ancestor_level < 0)
+                {
+                    new_ancestor = ancestor;
+                    previous_ancestor_level = ancestor->depth;
+                }
+            }
+
+            /* check oversuscribing */
+            int split_over = 0;
+            if(new_ancestor->type == HWLOC_OBJ_CORE || new_ancestor->type == HWLOC_OBJ_PU)
+            {
+                for(k = 0; k < size; k++)
+                {
+                    tab_color[k] = -1;
+                }
+                split_over = 1;
+            }
+
+            /* find child common ancestor */
+            if(!split_over){
+                for(k = 0; k < new_ancestor->arity; k++) /* each child ancestor */
+                {
+                    int j; 
+                    hwloc_obj_t child = new_ancestor->children[k];
+                    hwloc_cpuset_t child_set;
+                    child_set = child->cpuset; 
+                    for(j = 0; j < size; j++) /* each rank calling split */
+                    {
+                        int is_inside = hwloc_bitmap_isincluded (hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, tab_cpuid[j*2])->cpuset, child_set);
+                        if(is_inside) /* if MPI process inside child ancestor */
+                        {
+                            if(mpc_common_get_node_count() > 1)
+                            {
+                                /* create color with node id and pu id to be globaly unique */
+                                char str_logical_idx[512];
+                                char str_node_idx[512];
+                                sprintf(str_logical_idx, "%d", k); 
+                                sprintf(str_node_idx, "%d", mpc_common_get_node_rank()); 
+                                strcat(str_node_idx, str_logical_idx);
+                                tab_color[j] = atoi(str_node_idx);
+
+                            }
+                            else
+                            {
+                                /* only need local object id to create color */
+                                tab_color[j] = k;
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+
+    /* root sends color computed */ //TODO scatter
+    _mpc_cl_bcast( ( void * )tab_color, size, MPC_INT, root, comm);
+
+    if(tab_color[key] == -1)
+    {
+        *newcomm = MPI_COMM_NULL;
+        return;
+    }
+    color = tab_color[key];
+    sctk_free(tab_color);
+    sctk_free(tab_cpuid);
+}
+
+int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
+                         MPI_Comm *newcomm)
+{
+	int color = 0;
+    int guided_shared_memory = 0; /* ensure consistency MPI standard 4.0 */
+
+    if(split_type == MPI_COMM_TYPE_HW_SUBDOMAIN)
+    {
+        color = __split_guided(comm, split_type, key, info,
+                         &guided_shared_memory, newcomm);
+    }
+    if(split_type == MPI_COMM_TYPE_HW_UNGUIDED)
+    {
+        color = __split_unguided(comm, split_type, key, info,
+                         newcomm);
+    }
 	if(split_type == MPI_COMM_TYPE_SHARED || guided_shared_memory)
 	{
 		color = mpc_common_get_node_rank();
@@ -17199,6 +17215,11 @@ shared_memory:
 		 * gethostname(hname, 200);
 		 * mpc_common_debug_error("Color %d on %s", color, hname); */
 	}
+    if(color == MPC_PROC_NULL)
+    {
+        *newcomm = MPI_COMM_NULL;
+        return;
+    }
 
 	TODO("Handle info in Comm_split_type");
 	return PMPI_Comm_split(comm, color, key, newcomm);
