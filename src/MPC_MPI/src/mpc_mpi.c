@@ -16931,65 +16931,6 @@ int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
-//static inline int __mpc_hwloc_pu_isancestor(hwloc_topology_t topology, hwloc_obj_t pu, hwloc_obj_t ancestor)
-//{
-//    hwloc_obj_t iter = pu->parent;
-//    while(iter != NULL)
-//    {
-//        if(iter->type == ancestor->type && iter->logical_index == ancestor->logical_index)
-//            return 1;
-//        iter = iter->parent;
-//    }
-//    return 0;
-//}
-
-static inline hwloc_obj_t __mpc_get_pu_from_last_cpu_location(hwloc_topology_t topology)
-{
-        hwloc_cpuset_t newset;
-        newset = hwloc_bitmap_alloc();
-        int ret = hwloc_get_last_cpu_location(topology, newset, HWLOC_CPUBIND_THREAD);
-        //int tid = syscall(SYS_gettid);
-        //int ret = hwloc_get_thread_cpubind(topology, tid, newset, HWLOC_CPUBIND_THREAD);
-        assert(ret == 0);
-        hwloc_obj_t obj;
-        obj = hwloc_get_obj_inside_cpuset_by_type(topology, newset, HWLOC_OBJ_PU, 0);
-        return obj;
-}
-
-
-//static inline void __mpc_find_ancestor_by_type(hwloc_topology_t topology, hwloc_obj_t ancestor
-//, hwloc_obj_type_t type_split)
-//{
-//
-//    while(ancestor->type != type_split)
-//    {
-//        ancestor = ancestor->parent;
-//    }
-//}
-//
-// static inline int __mpc_find_cache_ancestor_by_level(hwloc_topology_t topology, 
-// hwloc_obj_t ancestor, int cache_lvl)
-//{
-//    int cache_iterator = 0;
-//    if(ancestor->type == HWLOC_OBJ_CACHE)
-//    {
-//        cache_iterator++;
-//    }
-//    while(cache_lvl != cache_iterator)
-//    {
-//        ancestor = ancestor->parent;
-//        if(!ancestor)
-//        {
-//            return 0;
-//        }
-//        if(ancestor->type == HWLOC_OBJ_CACHE)
-//        {
-//            cache_iterator++;
-//        }
-//    }
-//    return 1;
-//}
-
 static inline hwloc_obj_type_t __mpc_find_split_type(char *value, hwloc_obj_type_t *type_split)
 {
         /* if new level added, change function PMPI_GET_HWSUBDOMAIN_TYPES accordingly */
