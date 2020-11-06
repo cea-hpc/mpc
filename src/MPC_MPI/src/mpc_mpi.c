@@ -16963,17 +16963,7 @@ static int __split_guided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI
     else
     {
         hwloc_topology_t topology;
-        if(mpc_common_get_local_process_count() > 1)
-        {
-            hwloc_topology_init(&topology); //TODO init one time at init topo and retrieve
-            hwloc_topology_load(topology);
-        }
-        else
-        {
-            topology = mpc_topology_get();
-        }
-        //int tid = syscall(SYS_gettid);
-        //int ret = hwloc_get_thread_cpubind(topology, tid, newset, HWLOC_CPUBIND_THREAD);
+        topology = mpc_topology_global_get();
         hwloc_obj_t obj;
         hwloc_obj_t ancestor = __mpc_get_pu_from_last_cpu_location(topology);
         if(ancestor == NULL)
@@ -17066,15 +17056,7 @@ static int __split_unguided(MPI_Comm comm, int split_type, int key, __UNUSED__ M
     hwloc_cpuset_t newset;
     newset = hwloc_bitmap_alloc();
     hwloc_topology_t topology;
-    if(mpc_common_get_local_process_count() > 1)
-    {
-        hwloc_topology_init(&topology); //TODO init one time at init topo and retrieve
-        hwloc_topology_load(topology);
-    }
-    else
-    {
-        topology = mpc_topology_get();
-    }
+    topology = mpc_topology_global_get();
     int ret = hwloc_get_last_cpu_location(topology, newset, HWLOC_CPUBIND_THREAD);
     assert(ret == 0);
     hwloc_obj_t obj;

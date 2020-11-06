@@ -877,16 +877,27 @@ void _mpc_topology_get_pu_neighborhood(hwloc_topology_t target_topo, int cpuid, 
  **************************/
 
 static hwloc_topology_t __mpc_module_topology;
+static hwloc_topology_t __mpc_module_topology_global;
 
 hwloc_topology_t mpc_topology_get()
 {
 	return __mpc_module_topology;
 }
 
+hwloc_topology_t mpc_topology_global_get()
+{
+	return __mpc_module_topology_global;
+}
+
 #ifdef MPC_USE_EXTLS
 static hwloc_topology_t* __extls_get_topology_addr(void)
 {
 	return &__mpc_module_topology;
+}
+
+static hwloc_topology_t* __extls_get_topology_global_addr(void)
+{
+	return &__mpc_module_topology_global;
 }
 #endif
 
@@ -895,6 +906,8 @@ void mpc_topology_init()
 	char *xml_path = getenv( "MPC_SET_XML_TOPOLOGY_FILE" );
 
 	hwloc_topology_init( &__mpc_module_topology );
+
+	hwloc_topology_init( &__mpc_module_topology_global );
 
 	hwloc_topology_set_flags( __mpc_module_topology, HWLOC_TOPOLOGY_FLAG_IO_DEVICES );
 
@@ -905,6 +918,8 @@ void mpc_topology_init()
 	}
 
 	hwloc_topology_load( __mpc_module_topology );
+
+	hwloc_topology_load( __mpc_module_topology_global );
 
 	_mpc_topology_render_init();
 
@@ -925,6 +940,8 @@ void mpc_topology_destroy( void )
 	//_mpc_topology_device_release();
 
 	hwloc_topology_destroy( __mpc_module_topology );
+
+	hwloc_topology_destroy( __mpc_module_topology_global );
 }
 
 void mpc_topology_get_pu_neighborhood( int cpuid, unsigned int nb_cpus, int *neighborhood )
