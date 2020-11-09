@@ -900,38 +900,17 @@ void _mpc_topology_get_pu_neighborhood(hwloc_topology_t target_topo, int cpuid, 
  * MPC TOPOLOGY HARDWARE TOPOLOGY SPLIT*
  ***************************************/
 
-static inline hwloc_obj_type_t __mpc_find_split_type(char *value, hwloc_obj_type_t *type_split)
+static hwloc_obj_type_t __mpc_find_split_type(char *value, hwloc_obj_type_t *type_split)
 {
-        /* if new level added, change function PMPIX_Get_hwsubdomain_types accordingly */
-        if(!strcmp(value,"Node"))
+        /* if new level added, change enum and arrays in mpc_topology.h accordingly */
+        int i;
+        for(i = 0; i < HW_TYPE_COUNT; i++)
         {
-            *type_split =  HWLOC_OBJ_MACHINE;
-            return 1;
-        }
-        if(!strcmp(value,"Package"))
-        {
-            *type_split = HWLOC_OBJ_PACKAGE;
-            return 1;
-        }
-        if(!strcmp(value,"NUMANode"))
-        {
-            *type_split = HWLOC_OBJ_NUMANODE;
-            return 1;
-        }
-        if(!strcmp(value,"L3Cache"))
-        {
-            *type_split = HWLOC_OBJ_CACHE;
-            return 1;
-        }
-        if(!strcmp(value,"L2Cache"))
-        {
-            *type_split = HWLOC_OBJ_CACHE;
-            return 1;
-        }
-        if(!strcmp(value,"L1Cache"))
-        {
-            *type_split = HWLOC_OBJ_CACHE;
-            return 1;
+            if(!strcmp(value,mpc_mpi_split_hardware_type_name[i]))
+            {
+                *type_split = mpc_topology_split_hardware_type_name[i];
+                return 1;
+            }
         }
         return 0;
 }
