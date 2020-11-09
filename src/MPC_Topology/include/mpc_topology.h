@@ -301,6 +301,37 @@ int mpc_topology_set_pu_count(int n);
  * MPC TOPOLOGY HARDWARE TOPOLOGY SPLIT*
  ***************************************/
 
+typedef enum
+{
+    HW_NODE = 0,
+    HW_PACKAGE,
+    HW_NUMANODE,
+    HW_CACHEL3,
+    HW_CACHEL2,
+    HW_CACHEL1,
+    HW_TYPE_COUNT
+} mpc_mpi_split_hardware_type_t;
+
+static const char *const mpc_mpi_split_hardware_type_name[HW_TYPE_COUNT] =
+{
+        "Node",
+        "Package",
+        "NUMANode",
+        "L3Cache",
+        "L2Cache",
+        "L1Cache"
+};
+
+static const hwloc_obj_type_t mpc_topology_split_hardware_type_name[HW_TYPE_COUNT] =
+{
+        HWLOC_OBJ_NODE,
+        HWLOC_OBJ_PACKAGE,
+        HWLOC_OBJ_NUMANODE,
+        HWLOC_OBJ_CACHE,
+        HWLOC_OBJ_CACHE,
+        HWLOC_OBJ_CACHE
+};
+
 /** @brief Return logical id of a hardware instance for guided topological split
 */
 int mpc_topology_guided_compute_color(char *);

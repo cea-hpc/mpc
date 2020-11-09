@@ -16876,59 +16876,26 @@ int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
-static inline hwloc_obj_t __mpc_get_pu_from_last_cpu_location(hwloc_topology_t topology)
-{
-        hwloc_cpuset_t newset;
-        newset = hwloc_bitmap_alloc();
-        int ret = hwloc_get_last_cpu_location(topology, newset, HWLOC_CPUBIND_THREAD);
-        //int tid = syscall(SYS_gettid);
-        //int ret = hwloc_get_thread_cpubind(topology, tid, newset, HWLOC_CPUBIND_THREAD);
-        assert(ret == 0);
-        hwloc_obj_t obj;
-        obj = hwloc_get_obj_inside_cpuset_by_type(topology, newset, HWLOC_OBJ_PU, 0);
-        return obj;
-}
-
-static inline hwloc_obj_type_t __mpc_find_split_type(char *value, hwloc_obj_type_t *type_split)
-{
-        /* if new level added, change function PMPIX_Get_hwsubdomain_types accordingly */
-        if(!strcmp(value,"Node"))
-        {
-            *type_split =  HWLOC_OBJ_MACHINE;
-            return 1;
-        }
-        if(!strcmp(value,"Package"))
-        {
-            *type_split = HWLOC_OBJ_PACKAGE;
-            return 1;
-        }
-        if(!strcmp(value,"NUMANode"))
-        {
-            *type_split = HWLOC_OBJ_NUMANODE;
-            return 1;
-        }
-        if(!strcmp(value,"L3Cache"))
-        {
-            *type_split = HWLOC_OBJ_CACHE;
-            return 1;
-        }
-        if(!strcmp(value,"L2Cache"))
-        {
-            *type_split = HWLOC_OBJ_CACHE;
-            return 1;
-        }
-        if(!strcmp(value,"L1Cache"))
-        {
-            *type_split = HWLOC_OBJ_CACHE;
-            return 1;
-        }
-        return 0;
-}
-
 void PMPIX_Get_hwsubdomain_types(char * value)
 {
+        /* if new level added, change enum and arrays in mpc_topology.h accordingly */
     int buflen = 1024;
-    snprintf(value, buflen, "%s", "Node, Package, NUMANode, L3Cache, L2Cache, L1Cache");  
+    int i;
+    for(i = 0; i < HW_TYPE_COUNT; ++i)
+    {
+        if(i == 0)
+        {
+            snprintf(value, buflen, "%s ", mpc_mpi_split_hardware_type_name[i]);  
+        }
+        else 
+        {
+            strcat(value, mpc_mpi_split_hardware_type_name[i]);  
+            if(i != HW_TYPE_COUNT - 1)
+            {
+                strcat(value, " ");  
+            }
+        }
+    }
 }
 
 static int __split_guided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
