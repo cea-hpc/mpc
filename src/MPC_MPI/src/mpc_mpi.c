@@ -16940,11 +16940,11 @@ void PMPIX_Get_hwsubdomain_types(char * value)
     {
         if(i == 0)
         {
-            snprintf(value, buflen, "%s ", mpc_mpi_split_hardware_type_name[i]);  
+            snprintf(value, buflen, "%s ", mpc_topology_split_hardware_type_name[i]);  
         }
         else 
         {
-            strcat(value, mpc_mpi_split_hardware_type_name[i]);  
+            strcat(value, mpc_topology_split_hardware_type_name[i]);  
             if(i != HW_TYPE_COUNT - 1)
             {
                 strcat(value, " ");  
