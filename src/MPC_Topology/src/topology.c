@@ -671,6 +671,30 @@ static inline int _mpc_topology_get_current_cpu(hwloc_topology_t target_topo)
 	return pu->logical_index;
 }
 
+/*! \brief Return the current global core_id
+*/
+static inline int _mpc_topology_get_global_current_cpu(hwloc_topology_t target_topo)
+{
+	hwloc_cpuset_t set = hwloc_bitmap_alloc();
+
+	int ret = hwloc_get_last_cpu_location( target_topo, set, HWLOC_CPUBIND_THREAD );
+
+	assume( ret != -1 );
+	assume( !hwloc_bitmap_iszero( set ) );
+
+	hwloc_obj_t pu = hwloc_get_obj_inside_cpuset_by_type( target_topo, set, HWLOC_OBJ_PU, 0 );
+
+	if ( !pu )
+	{
+		hwloc_bitmap_free( set );
+        return 0;
+	}
+
+	hwloc_bitmap_free( set );
+
+	return pu->logical_index;
+}
+
 int _mpc_topology_get_pu_per_core_count(hwloc_topology_t target_topo, int cpuid)
 {
 	int pu_per_core;
@@ -872,6 +896,122 @@ void _mpc_topology_get_pu_neighborhood(hwloc_topology_t target_topo, int cpuid, 
 	sctk_free( objs );
 }
 
+/***************************************
+ * MPC TOPOLOGY HARDWARE TOPOLOGY SPLIT*
+ ***************************************/
+
+static inline hwloc_obj_type_t __mpc_find_split_type(char *value, hwloc_obj_type_t *type_split)
+{
+        /* if new level added, change function PMPI_GET_HWSUBDOMAIN_TYPES accordingly */
+        if(!strcmp(value,"Node"))
+        {
+            *type_split =  HWLOC_OBJ_MACHINE;
+            return 1;
+        }
+        if(!strcmp(value,"Package"))
+        {
+            *type_split = HWLOC_OBJ_PACKAGE;
+            return 1;
+        }
+        if(!strcmp(value,"NUMANode"))
+        {
+            *type_split = HWLOC_OBJ_NUMANODE;
+            return 1;
+        }
+        if(!strcmp(value,"L3Cache"))
+        {
+            *type_split = HWLOC_OBJ_CACHE;
+            return 1;
+        }
+        if(!strcmp(value,"L2Cache"))
+        {
+            *type_split = HWLOC_OBJ_CACHE;
+            return 1;
+        }
+        if(!strcmp(value,"L1Cache"))
+        {
+            *type_split = HWLOC_OBJ_CACHE;
+            return 1;
+        }
+        return 0;
+}
+
+int mpc_topology_guided_compute_color(char *value)
+{
+    hwloc_obj_type_t type_split;
+    int ret = __mpc_find_split_type(value, &type_split);
+    if(ret < 0)
+    {
+        return -1;
+    }
+    int color = -1;
+    if(!ret) /* info value not find */
+    {
+        return -1;
+    }
+    if(type_split ==  HWLOC_OBJ_MACHINE)
+    {
+        color = mpc_common_get_node_rank();
+        return color;
+    }
+    hwloc_topology_t topology;
+    topology = mpc_topology_global_get();
+    hwloc_obj_t obj;
+    int id_pu = mpc_thread_get_global_pu();
+    hwloc_obj_t ancestor = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, id_pu);
+    if(ancestor == NULL)
+    {
+        return -1;
+    }
+    if(type_split != HWLOC_OBJ_CACHE)
+    {
+        //__mpc_find_ancestor_by_type(topology, ancestor, type_split);
+        while(ancestor->type != type_split)
+        {
+            ancestor = ancestor->parent;
+        }
+        if(ancestor == NULL)
+        {
+            return -1;
+        }
+    }
+    else
+    {
+        int cache_lvl;
+        if(!strcmp(value,"L3Cache"))
+        {
+            cache_lvl = 3;
+        }
+        if(!strcmp(value,"L2Cache"))
+        {
+            cache_lvl = 2;
+        }
+        if(!strcmp(value,"L1Cache"))
+        {
+            cache_lvl = 1;
+        }
+        int cache_iterator = 0;
+        if(ancestor->type == type_split)
+        {
+            cache_iterator++;
+        }
+        while(cache_lvl != cache_iterator)
+        {
+            ancestor = ancestor->parent;
+            if(ancestor == NULL)
+            {
+                return -1;
+            }
+            if(ancestor->type == type_split)
+            {
+                cache_iterator++;
+            }
+        }
+    }
+    color = ancestor->logical_index;
+    return color;
+}
+
 /**************************
  * MPC TOPOLOGY ACCESSORS *
  **************************/
@@ -1011,6 +1151,11 @@ int mpc_topology_get_current_cpu()
 	{
 		return __topo_cpu_pinning_caching_value;
 	}
+}
+
+int mpc_topology_get_global_current_cpu()
+{
+    return _mpc_topology_get_global_current_cpu(__mpc_module_topology_global);
 }
 
 void mpc_topology_print(FILE *fd)
