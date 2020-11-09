@@ -17037,16 +17037,7 @@ static int __split_unguided(MPI_Comm comm, int split_type, int key, __UNUSED__ M
         return MPI_PROC_NULL;
     }
     int *tab_cpuid, *tab_color;
-    int cpu_this;
-    hwloc_cpuset_t newset;
-    newset = hwloc_bitmap_alloc();
-    hwloc_topology_t topology;
-    topology = mpc_topology_global_get();
-    int ret = hwloc_get_last_cpu_location(topology, newset, HWLOC_CPUBIND_THREAD);
-    assert(ret == 0);
-    hwloc_obj_t obj;
-    obj = hwloc_get_obj_inside_cpuset_by_type(topology, newset,HWLOC_OBJ_PU, 0);
-    cpu_this = obj->logical_index;
+    int cpu_this = mpc_thread_get_global_pu();
 
     /* send to root cpu id and node rank */
     int root = 0;
@@ -17088,68 +17079,7 @@ static int __split_unguided(MPI_Comm comm, int split_type, int key, __UNUSED__ M
         }
         else
         {
-            /* find common ancestor */
-            hwloc_obj_t ancestor;
-            hwloc_obj_t new_ancestor;
-            int previous_ancestor_level = -1;
-            hwloc_obj_t pivot = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, tab_cpuid[root]);
-            for(k = 0; k < size; k++)
-            {
-                if(k == root) continue;
-                hwloc_obj_t core_compare = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, tab_cpuid[2*k]);
-                ancestor = hwloc_get_common_ancestor_obj(topology, core_compare, pivot);   
-                if(ancestor->depth < previous_ancestor_level || previous_ancestor_level < 0)
-                {
-                    new_ancestor = ancestor;
-                    previous_ancestor_level = ancestor->depth;
-                }
-            }
-
-            /* check oversuscribing */
-            int split_over = 0;
-            if(new_ancestor->type == HWLOC_OBJ_CORE || new_ancestor->type == HWLOC_OBJ_PU)
-            {
-                for(k = 0; k < size; k++)
-                {
-                    tab_color[k] = -1;
-                }
-                split_over = 1;
-            }
-
-            /* find child common ancestor */
-            if(!split_over){
-                for(k = 0; k < new_ancestor->arity; k++) /* each child ancestor */
-                {
-                    int j; 
-                    hwloc_obj_t child = new_ancestor->children[k];
-                    hwloc_cpuset_t child_set;
-                    child_set = child->cpuset; 
-                    for(j = 0; j < size; j++) /* each rank calling split */
-                    {
-                        int is_inside = hwloc_bitmap_isincluded (hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, tab_cpuid[j*2])->cpuset, child_set);
-                        if(is_inside) /* if MPI process inside child ancestor */
-                        {
-                            if(mpc_common_get_node_count() > 1)
-                            {
-                                /* create color with node id and pu id to be globaly unique */
-                                char str_logical_idx[512];
-                                char str_node_idx[512];
-                                sprintf(str_logical_idx, "%d", k); 
-                                sprintf(str_node_idx, "%d", mpc_common_get_node_rank()); 
-                                strcat(str_node_idx, str_logical_idx);
-                                tab_color[j] = atoi(str_node_idx);
-
-                            }
-                            else
-                            {
-                                /* only need local object id to create color */
-                                tab_color[j] = k;
-                            }
-                        }
-                    }
-
-                }
-            }
+            mpc_topology_unguided_compute_color(tab_color, tab_cpuid, size);
         }
     }
 

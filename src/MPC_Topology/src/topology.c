@@ -936,6 +936,76 @@ static inline hwloc_obj_type_t __mpc_find_split_type(char *value, hwloc_obj_type
         return 0;
 }
 
+int mpc_topology_unguided_compute_color(int *colors, int *cpuids, int size)
+{
+    int root = 0;
+    int k;
+    /* find common ancestor */
+    hwloc_topology_t topology;
+    topology = mpc_topology_global_get();
+    hwloc_obj_t ancestor;
+    hwloc_obj_t new_ancestor;
+    int previous_ancestor_level = -1;
+    hwloc_obj_t pivot = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuids[root]);
+    for(k = 0; k < size; k++)
+    {
+        if(k == root) continue;
+        hwloc_obj_t core_compare = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuids[2*k]);
+        ancestor = hwloc_get_common_ancestor_obj(topology, core_compare, pivot);   
+        if(ancestor->depth < previous_ancestor_level || previous_ancestor_level < 0)
+        {
+            new_ancestor = ancestor;
+            previous_ancestor_level = ancestor->depth;
+        }
+    }
+
+    /* check oversuscribing */
+    int split_over = 0;
+    if(new_ancestor->type == HWLOC_OBJ_CORE || new_ancestor->type == HWLOC_OBJ_PU)
+    {
+        for(k = 0; k < size; k++)
+        {
+            colors[k] = -1;
+        }
+        split_over = 1;
+    }
+
+    /* find child common ancestor */
+    if(!split_over){
+        for(k = 0; k < new_ancestor->arity; k++) /* each child ancestor */
+        {
+            int j; 
+            hwloc_obj_t child = new_ancestor->children[k];
+            hwloc_cpuset_t child_set;
+            child_set = child->cpuset; 
+            for(j = 0; j < size; j++) /* each rank calling split */
+            {
+                int is_inside = hwloc_bitmap_isincluded (hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuids[j*2])->cpuset, child_set);
+                if(is_inside) /* if MPI process inside child ancestor */
+                {
+                    if(mpc_common_get_node_count() > 1)
+                    {
+                        /* create color with node id and pu id to be globaly unique */
+                        char str_logical_idx[512];
+                        char str_node_idx[512];
+                        sprintf(str_logical_idx, "%d", k); 
+                        sprintf(str_node_idx, "%d", mpc_common_get_node_rank()); 
+                        strcat(str_node_idx, str_logical_idx);
+                        colors[j] = atoi(str_node_idx);
+
+                    }
+                    else
+                    {
+                        /* only need local object id to create color */
+                        colors[j] = k;
+                    }
+                }
+            }
+
+        }
+    }
+}
+
 int mpc_topology_guided_compute_color(char *value)
 {
     hwloc_obj_type_t type_split;
