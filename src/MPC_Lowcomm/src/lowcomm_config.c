@@ -333,6 +333,118 @@ static inline mpc_conf_config_type_t * ___mpc_lowcomm_rail_instanciate_from_defa
 }
 
 
+static inline void ___assert_single_elem_in_gate(mpc_conf_config_type_t * gate, char * elem_name)
+{
+	if(mpc_conf_config_type_count(gate) != 1)
+	{
+		bad_parameter("Gate definition '%s' expects only a single element '%s'.", gate->name, elem_name);
+	}
+}
+
+static inline long int __gate_get_long_int(mpc_conf_config_type_t * gate, char * val_key)
+{
+	mpc_conf_config_type_elem_t *val = mpc_conf_config_type_get(gate, val_key);
+
+	if(!val)
+	{
+		mpc_conf_config_type_print(gate, MPC_CONF_FORMAT_XML);
+		bad_parameter("'%s' gate should contain a '%s' value", gate->name, val_key);
+	}
+
+	long int ret = 0;
+
+	if(val->type == MPC_CONF_INT)
+	{
+		int * ival = (int*)val->addr;
+		ret = *ival;
+	}else if(val->type == MPC_CONF_LONG_INT)
+	{
+		ret = *((long int*)val->addr);
+	}
+	else
+	{
+		mpc_conf_config_type_print(gate, MPC_CONF_FORMAT_XML);
+		bad_parameter("In gate '%s' entry '%s' should be either INT or LONG_INT not '%s'", gate->name, val_key, mpc_conf_type_name(val->type));
+	}
+
+	return ret;
+}
+
+static inline int ___parse_rail_gate(struct sctk_runtime_config_struct_net_gate * cur_unfolded_gate,
+								 mpc_conf_config_type_elem_t* tgate)
+{
+	mpc_conf_config_type_t * gate = mpc_conf_config_type_elem_get_inner(tgate);
+
+	char * name = gate->name;
+
+	cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_NONE;
+
+	if(!strcmp(name, "boolean"))
+	{
+		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_BOOLEAN;
+
+
+	}else if(!strcmp(name, "probabilistic"))
+	{
+		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_PROBABILISTIC;
+
+		long int proba = __gate_get_long_int(gate, "probability");
+		___assert_single_elem_in_gate(gate, "probability");
+	}else if(!strcmp(name, "minsize"))
+	{
+		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_MINSIZE;
+
+	}else if(!strcmp(name, "maxsize"))
+	{
+		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_MAXSIZE;
+
+	}else if(!strcmp(name, "msgtype"))
+	{
+		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_MSGTYPE;
+
+	}else if(!strcmp(name, "user"))
+	{
+		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_USER;
+
+	}else
+	{
+		bad_parameter("Cannot parse gate type '%s' available types are:\n[%s]", name, "boolean, probabilistic, minsize, maxsize, msgtype, user");
+	}
+
+
+	return 0;
+}
+
+
+
+
+
+
+static inline void __mpc_lowcomm_rail_unfold_gates(struct sctk_runtime_config_struct_net_rail *unfolded_rail,
+												   mpc_conf_config_type_t *gates_type)
+{
+	int i;
+
+	for(i = 0 ; i < mpc_conf_config_type_count(gates_type); i++)
+    {
+        mpc_conf_config_type_elem_t* gate = mpc_conf_config_type_nth(gates_type, i);
+		struct sctk_runtime_config_struct_net_gate * cur_unfolded_gate = &unfolded_rail->gates[unfolded_rail->gates_size];
+
+		if(___parse_rail_gate(cur_unfolded_gate, gate) == 0)
+		{
+			/* Gate  is ok continue */
+			unfolded_rail->gates_size++;	
+		}
+		else
+		{
+			bad_parameter("Failed parsing gate %s in rail %s", gate->name, unfolded_rail->name);
+		}
+
+	}
+
+}
+
+
 
 static inline void ___mpc_lowcomm_rail_conf_validate(void)
 {
@@ -349,7 +461,6 @@ static inline void ___mpc_lowcomm_rail_conf_validate(void)
        updating element by element if present in the configuration
        this allows partial rail definition */
 
-
     mpc_conf_config_type_t * all_rails = ___mpc_lowcomm_rail_all();
 
     for(i = 0 ; i < mpc_conf_config_type_count(all_rails); i++)
@@ -362,6 +473,27 @@ static inline void ___mpc_lowcomm_rail_conf_validate(void)
 			all_rails->elems[i]->addr = new_rail;
         }
     }
+
+	/* It is now time to unpack gates values for each rail */
+	for(i = 0 ; i < mpc_conf_config_type_count(all_rails); i++)
+    {
+        mpc_conf_config_type_elem_t* rail = mpc_conf_config_type_nth(all_rails, i);
+		mpc_conf_config_type_t *rail_type = mpc_conf_config_type_elem_get_inner(rail);
+
+		mpc_conf_config_type_elem_t *gates  = mpc_conf_config_type_get(rail_type, "gates");
+
+		if(gates)
+		{
+			struct sctk_runtime_config_struct_net_rail *unfolded_rail = _mpc_lowcomm_conf_rail_unfolded_get(rail->name);
+			mpc_conf_config_type_t *gates_type = mpc_conf_config_type_elem_get_inner(gates);
+			
+			__mpc_lowcomm_rail_unfold_gates(unfolded_rail, gates_type);
+		}
+		else
+		{
+			bad_parameter("There should be a gate entry in rail %s", rail->name );
+		}
+	}
 }
 
 /*_

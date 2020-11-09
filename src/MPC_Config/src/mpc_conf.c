@@ -155,7 +155,7 @@ mpc_conf_config_type_t * mpc_conf_config_type_elem_update(mpc_conf_config_type_t
 			{
 				mpc_conf_config_type_elem_update(mpc_conf_config_type_elem_get_inner(default_elem),
 				                                 mpc_conf_config_type_elem_get_inner(existing_elem),
-												 force_content--);
+												 --force_content);
 			}
 			else
 			{
@@ -164,6 +164,51 @@ mpc_conf_config_type_t * mpc_conf_config_type_elem_update(mpc_conf_config_type_t
 			}
 		}
     }
+
+	/* Ensure new elemens are also inserted only when force content is <= 0 */
+	if(force_content <= 0)
+	{
+		/* We need a tmp as we cannot pop while iterating */
+		mpc_conf_config_type_t *tmp = mpc_conf_config_type_init("tmp", NULL);
+
+		for(i = 0 ; i < mpc_conf_config_type_count(updater); i++)
+		{
+			mpc_conf_config_type_elem_t* current_elem = mpc_conf_config_type_nth(updater, i);
+
+			/* Now get the elem to ensure it already exists */
+			mpc_conf_config_type_elem_t *default_elem = mpc_conf_config_type_get(ref, current_elem->name);
+
+			if(!default_elem)
+			{
+				/* Here we save the missing element */
+				mpc_config_type_append_elem(tmp, current_elem);
+			}
+		}
+
+		/* Now we pop it from the updater and append it to ref */
+		for(i = 0 ; i < mpc_conf_config_type_count(tmp); i++)
+		{
+			mpc_conf_config_type_elem_t* current_elem = mpc_conf_config_type_nth(tmp, i);
+			mpc_conf_config_type_elem_t * updater_elem = mpc_conf_config_type_get(updater, current_elem->name);
+
+			if(updater_elem)
+			{
+				mpc_config_type_pop_elem(updater, updater_elem);
+			}
+
+			mpc_config_type_append_elem(ref, current_elem);
+		}
+
+		/* Eventually we empty TMP by popping all */
+		while(mpc_conf_config_type_count(tmp) != 0)
+		{
+			mpc_conf_config_type_elem_t* current_elem = mpc_conf_config_type_nth(tmp, 0);
+			mpc_config_type_pop_elem(tmp, current_elem);
+		}
+
+		/* And release tmp */
+		mpc_conf_config_type_release(&tmp);
+	}
 
     return ref;
 }
@@ -181,7 +226,7 @@ int mpc_conf_config_type_elem_set(mpc_conf_config_type_elem_t *elem, mpc_conf_ty
 {
 	if(elem->type != type)
 	{
-		_utils_verbose_output(0, "mismatching types between %s and %s\n", mpc_conf_type_name(elem->type), mpc_conf_type_name(type) );
+		_utils_verbose_output(0, "%s mismatching types between %s and %s\n", elem->name, mpc_conf_type_name(elem->type), mpc_conf_type_name(type) );
 		return 1;
 	}
 

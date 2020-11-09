@@ -115,33 +115,33 @@ static inline void sctk_gate_get_context( struct sctk_runtime_config_struct_net_
 
 	switch( gate->type )
 	{
-		case SCTK_RTCFG_net_gate_boolean:
+		case MPC_CONF_RAIL_GATE_BOOLEAN:
 			ctx->func = sctk_rail_gate_boolean;
 			ctx->params = (void *)&gate->value.boolean;
 		break;
-		case SCTK_RTCFG_net_gate_probabilistic:
+		case MPC_CONF_RAIL_GATE_PROBABILISTIC:
 			ctx->func = sctk_rail_gate_probabilistic;
 			ctx->params = (void *)&gate->value.probabilistic;
 		break;
-		case SCTK_RTCFG_net_gate_minsize:
+		case MPC_CONF_RAIL_GATE_MINSIZE:
 			ctx->func = sctk_rail_gate_minsize;
 			ctx->params = (void *)&gate->value.minsize;		
 		break;
-		case SCTK_RTCFG_net_gate_maxsize:
+		case MPC_CONF_RAIL_GATE_MAXSIZE:
 			ctx->func = sctk_rail_gate_maxsize;
 			ctx->params = (void *)&gate->value.maxsize;			
 		break;
-		case SCTK_RTCFG_net_gate_user:
+		case MPC_CONF_RAIL_GATE_USER:
 			ctx->func = (int (*)( sctk_rail_info_t *, mpc_lowcomm_ptp_message_t *, void *))gate->value.user.gatefunc.value;
 			ctx->params = (void *)&gate->value.user;		
 		break;
 		
-		case SCTK_RTCFG_net_gate_msgtype:
+		case MPC_CONF_RAIL_GATE_MSGTYPE:
 			ctx->func = sctk_rail_gate_msgtype;
 			ctx->params = (void *)&gate->value.msgtype;		
 		break;
 		
-		case SCTK_RTCFG_net_gate_NONE:
+		case MPC_CONF_RAIL_GATE_NONE:
 		default:
 			mpc_common_debug_fatal("No such gate type");
 	}

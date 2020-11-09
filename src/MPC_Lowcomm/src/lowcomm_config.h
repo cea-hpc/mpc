@@ -383,13 +383,13 @@ struct sctk_runtime_config_struct_gate_user
 /**Defines gates and their configuration.**/
 enum sctk_runtime_config_struct_net_gate_type
 {
-	SCTK_RTCFG_net_gate_NONE,
-	SCTK_RTCFG_net_gate_boolean,
-	SCTK_RTCFG_net_gate_probabilistic,
-	SCTK_RTCFG_net_gate_minsize,
-	SCTK_RTCFG_net_gate_maxsize,
-	SCTK_RTCFG_net_gate_msgtype,
-	SCTK_RTCFG_net_gate_user,
+	MPC_CONF_RAIL_GATE_NONE,
+	MPC_CONF_RAIL_GATE_BOOLEAN,
+	MPC_CONF_RAIL_GATE_PROBABILISTIC,
+	MPC_CONF_RAIL_GATE_MINSIZE,
+	MPC_CONF_RAIL_GATE_MAXSIZE,
+	MPC_CONF_RAIL_GATE_MSGTYPE,
+	MPC_CONF_RAIL_GATE_USER,
 };
 
 /******************************** STRUCTURE *********************************/
@@ -425,6 +425,9 @@ struct sctk_runtime_config_struct_topological_polling
 
 /******************************** STRUCTURE *********************************/
 /**Define a rail which is a name, a device associate to a driver and a routing topology.**/
+
+#define MPC_CONF_MAX_RAIL_GATE 16
+
 struct sctk_runtime_config_struct_net_rail
 {
 	/**Define the name of current rail.**/
@@ -444,7 +447,7 @@ struct sctk_runtime_config_struct_net_rail
 	/**Define the driver config to use for this rail.**/
 	char                                                 config[MPC_CONF_STRING_SIZE];
 	/**List of gates to be applied in this config.**/
-	struct sctk_runtime_config_struct_net_gate *          gates;
+	struct sctk_runtime_config_struct_net_gate            gates[MPC_CONF_MAX_RAIL_GATE];
 	/** Number of elements in gates array. **/
 	int                                                   gates_size;
 	/**Used for topological rail selection**/
