@@ -305,6 +305,10 @@ int mpc_topology_set_pu_count(int n);
 */
 int mpc_topology_guided_compute_color(char *);
 
+/** @brief Return logical id of a hardware instance for unguided topological split
+*/
+int mpc_topology_unguided_compute_color(int *, int *, int);
+
 
 /* End topology_interface_getters */
 /**
