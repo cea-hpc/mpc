@@ -301,6 +301,7 @@ int mpc_topology_set_pu_count(int n);
  * MPC TOPOLOGY HARDWARE TOPOLOGY SPLIT*
  ***************************************/
 
+
 typedef enum
 {
     HW_NODE = 0,
@@ -310,9 +311,9 @@ typedef enum
     HW_CACHEL2,
     HW_CACHEL1,
     HW_TYPE_COUNT
-} mpc_mpi_split_hardware_type_t;
+} mpc_topology_split_hardware_type_t;
 
-static const char *const mpc_mpi_split_hardware_type_name[HW_TYPE_COUNT] =
+static const char *const mpc_topology_split_hardware_type_name[HW_TYPE_COUNT] =
 {
         "Node",
         "Package",
@@ -322,7 +323,7 @@ static const char *const mpc_mpi_split_hardware_type_name[HW_TYPE_COUNT] =
         "L1Cache"
 };
 
-static const hwloc_obj_type_t mpc_topology_split_hardware_type_name[HW_TYPE_COUNT] =
+static const hwloc_obj_type_t mpc_topology_split_hardware_hwloc_type[HW_TYPE_COUNT] =
 {
         HWLOC_OBJ_NODE,
         HWLOC_OBJ_PACKAGE,

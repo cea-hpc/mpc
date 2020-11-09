@@ -906,9 +906,9 @@ static hwloc_obj_type_t __mpc_find_split_type(char *value, hwloc_obj_type_t *typ
         int i;
         for(i = 0; i < HW_TYPE_COUNT; i++)
         {
-            if(!strcmp(value,mpc_mpi_split_hardware_type_name[i]))
+            if(!strcmp(value,mpc_topology_split_hardware_type_name[i]))
             {
-                *type_split = mpc_topology_split_hardware_type_name[i];
+                *type_split = mpc_topology_split_hardware_hwloc_type[i];
                 return 1;
             }
         }
