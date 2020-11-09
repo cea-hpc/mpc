@@ -16946,7 +16946,7 @@ static inline hwloc_obj_t __mpc_get_pu_from_last_cpu_location(hwloc_topology_t t
 
 static inline hwloc_obj_type_t __mpc_find_split_type(char *value, hwloc_obj_type_t *type_split)
 {
-        /* if new level added, change function PMPI_GET_HWSUBDOMAIN_TYPES accordingly */
+        /* if new level added, change function PMPIX_Get_hwsubdomain_types accordingly */
         if(!strcmp(value,"Node"))
         {
             *type_split =  HWLOC_OBJ_MACHINE;
@@ -16980,7 +16980,7 @@ static inline hwloc_obj_type_t __mpc_find_split_type(char *value, hwloc_obj_type
         return 0;
 }
 
-void PMPI_GET_HWSUBDOMAIN_TYPES(char * value)
+void PMPIX_Get_hwsubdomain_types(char * value)
 {
     int buflen = 1024;
     snprintf(value, buflen, "%s", "Node, Package, NUMANode, L3Cache, L2Cache, L1Cache");  

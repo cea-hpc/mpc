@@ -902,7 +902,7 @@ void _mpc_topology_get_pu_neighborhood(hwloc_topology_t target_topo, int cpuid, 
 
 static inline hwloc_obj_type_t __mpc_find_split_type(char *value, hwloc_obj_type_t *type_split)
 {
-        /* if new level added, change function PMPI_GET_HWSUBDOMAIN_TYPES accordingly */
+        /* if new level added, change function PMPIX_Get_hwsubdomain_types accordingly */
         if(!strcmp(value,"Node"))
         {
             *type_split =  HWLOC_OBJ_MACHINE;
