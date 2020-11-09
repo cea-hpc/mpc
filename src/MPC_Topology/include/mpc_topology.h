@@ -159,6 +159,10 @@ int mpc_topology_get_pu_count(void);
 */
 int mpc_topology_get_current_cpu(void);
 
+/** @brief Return the current global core_id
+*/
+int mpc_topology_get_global_current_cpu(void);
+
 #ifndef MPC_Threads
 
 /**
@@ -172,9 +176,15 @@ static inline int mpc_topology_get_pu( void )
         return mpc_topology_get_current_cpu();
 }
 
+static inline int mpc_topology_get_global_pu( void )
+{
+        return mpc_topology_get_global_current_cpu();
+}
+
 #else
 
 int mpc_thread_get_pu(void);
+int mpc_thread_get_global_pu(void);
 #include "mpc_thread_accessor.h"
 
 /**
@@ -186,6 +196,17 @@ int mpc_thread_get_pu(void);
 static inline int mpc_topology_get_pu( void )
 {
         return mpc_thread_get_pu();
+}
+
+/**
+ * @brief Return the PU executing current thread
+ * @note This version relies on MPC scheduler
+ *
+ * @return int current PU executing this thread
+ */
+static inline int mpc_topology_get_global_pu( void )
+{
+        return mpc_thread_get_global_pu();
 }
 
 #endif
@@ -275,6 +296,15 @@ void mpc_topology_clear_cpu_pinning_cache();
  * @param n Number of cores used for ethread
 */
 int mpc_topology_set_pu_count(int n);
+
+/***************************************
+ * MPC TOPOLOGY HARDWARE TOPOLOGY SPLIT*
+ ***************************************/
+
+/** @brief Return logical id of a hardware instance for guided topological split
+*/
+int mpc_topology_guided_compute_color(char *);
+
 
 /* End topology_interface_getters */
 /**

@@ -16988,7 +16988,6 @@ void PMPI_GET_HWSUBDOMAIN_TYPES(char * value)
 
 static int __split_guided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
                          int * guided_shared_memory, MPI_Comm *newcomm)
-
 {
     int buflen = 1024;
     char value[1024];
@@ -17000,97 +16999,30 @@ static int __split_guided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI
         *guided_shared_memory = 1;
         return 0;
     }
-    hwloc_obj_type_t type_split;
-    int ret = __mpc_find_split_type(value, &type_split);
-    if(!ret) /* info value not find */
-    {
-        return MPI_PROC_NULL;
-    }
     int size = mpc_lowcomm_communicator_size(comm);
     if(size == 1) 
     {
         return MPI_PROC_NULL;
     }
-    if(type_split ==  HWLOC_OBJ_MACHINE)
+    color = mpc_topology_guided_compute_color(value);
+    if(color < 0) 
     {
-        color = mpc_common_get_node_rank();
+        return MPI_PROC_NULL;
     }
-    else
+    if(mpc_common_get_node_count() > 1)/* create color with node id */
     {
-        hwloc_topology_t topology;
-        topology = mpc_topology_global_get();
-        hwloc_obj_t obj;
-        hwloc_obj_t ancestor = __mpc_get_pu_from_last_cpu_location(topology);
-        if(ancestor == NULL)
-        {
-            return MPI_PROC_NULL;
-        }
-        if(type_split != HWLOC_OBJ_CACHE)
-        {
-            //__mpc_find_ancestor_by_type(topology, ancestor, type_split);
-            while(ancestor->type != type_split)
-            {
-                ancestor = ancestor->parent;
-            }
-            if(ancestor == NULL)
-            {
-                return MPI_PROC_NULL;
-            }
-        }
-        else
-        {
-            int cache_lvl;
-            if(!strcmp(value,"L3Cache"))
-            {
-                cache_lvl = 3;
-            }
-            if(!strcmp(value,"L2Cache"))
-            {
-                cache_lvl = 2;
-            }
-            if(!strcmp(value,"L1Cache"))
-            {
-                cache_lvl = 1;
-            }
-            //__mpc_find_cache_ancestor_by_level(topology, ancestor, cache_lvl);
-            int cache_iterator = 0;
-            if(ancestor->type == type_split)
-            {
-                cache_iterator++;
-            }
-            while(cache_lvl != cache_iterator)
-            {
-                ancestor = ancestor->parent;
-                if(ancestor == NULL)
-                {
-                    return MPI_PROC_NULL;
-                }
-                if(ancestor->type == type_split)
-                {
-                    cache_iterator++;
-                }
-            }
-        }
-        if(mpc_common_get_node_count() > 1)/* create color with node id */
-        {
-            char str_logical_idx[512];
-            char str_node_idx[512];
-            char tmp[512];
-            sprintf(str_logical_idx, "%d", ancestor->logical_index); 
-            sprintf(str_node_idx, "%d", mpc_common_get_node_rank()); 
-            sprintf(tmp, "%d", mpc_common_get_node_rank()); 
-            /* add node number enough time to be sure id not interfere between nodes */
-            strcat(str_node_idx, tmp);
-            strcat(str_node_idx, tmp);
-            strcat(str_node_idx, tmp);
-            strcat(str_node_idx, str_logical_idx);
-            color = atoi(str_node_idx);
-
-        }
-        else
-        {
-            color = ancestor->logical_index;
-        }
+        char str_logical_idx[512];
+        char str_node_idx[512];
+        char tmp[512];
+        sprintf(str_logical_idx, "%d", color); 
+        sprintf(str_node_idx, "%d", mpc_common_get_node_rank()); 
+        sprintf(tmp, "%d", mpc_common_get_node_rank()); 
+        /* add node number enough time to be sure id not interfere between nodes */
+        strcat(str_node_idx, tmp);
+        strcat(str_node_idx, tmp);
+        strcat(str_node_idx, tmp);
+        strcat(str_node_idx, str_logical_idx);
+        color = atoi(str_node_idx);
     }
     return color;
 }
@@ -17104,8 +17036,6 @@ static int __split_unguided(MPI_Comm comm, int split_type, int key, __UNUSED__ M
     {
         return MPI_PROC_NULL;
     }
-
-    /* get location */
     int *tab_cpuid, *tab_color;
     int cpu_this;
     hwloc_cpuset_t newset;

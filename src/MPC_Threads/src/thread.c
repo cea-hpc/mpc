@@ -524,6 +524,11 @@ int mpc_thread_get_pu(void)
 	return ret;
 }
 
+int mpc_thread_get_global_pu(void)
+{
+    return mpc_topology_get_global_current_cpu();
+}
+
 int mpc_thread_get_thread_id(void)
 {
 	sctk_thread_data_t *data = mpc_thread_data_get();
