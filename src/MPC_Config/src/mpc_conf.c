@@ -243,6 +243,21 @@ int mpc_conf_config_type_elem_set(mpc_conf_config_type_elem_t *elem, mpc_conf_ty
 	return 0;
 }
 
+
+int mpc_conf_config_type_elem_set_doc(mpc_conf_config_type_elem_t *elem, char * doc)
+{
+	if(!elem)
+	{
+		return 1;
+	}
+
+	free(elem->doc);
+
+	elem->doc = strdup(doc);
+
+	return 0;
+}
+
 int mpc_config_type_pop_elem(mpc_conf_config_type_t *type, mpc_conf_config_type_elem_t * elem)
 {
 	unsigned int i;

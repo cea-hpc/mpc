@@ -3,6 +3,7 @@
 #include <string.h>
 #include <mpc_common_debug.h>
 #include <mpc_conf.h>
+#include <dlfcn.h>
 
 #include "coll.h"
 
@@ -341,7 +342,7 @@ static inline void ___assert_single_elem_in_gate(mpc_conf_config_type_t * gate, 
 	}
 }
 
-static inline long int __gate_get_long_int(mpc_conf_config_type_t * gate, char * val_key)
+static inline long int __gate_get_long_int(mpc_conf_config_type_t * gate, char * val_key, char * doc)
 {
 	mpc_conf_config_type_elem_t *val = mpc_conf_config_type_get(gate, val_key);
 
@@ -349,6 +350,11 @@ static inline long int __gate_get_long_int(mpc_conf_config_type_t * gate, char *
 	{
 		mpc_conf_config_type_print(gate, MPC_CONF_FORMAT_XML);
 		bad_parameter("'%s' gate should contain a '%s' value", gate->name, val_key);
+	}
+
+	if(doc)
+	{
+		mpc_conf_config_type_elem_set_doc(val, doc);
 	}
 
 	long int ret = 0;
@@ -370,6 +376,38 @@ static inline long int __gate_get_long_int(mpc_conf_config_type_t * gate, char *
 	return ret;
 }
 
+static inline int __gate_get_bool(mpc_conf_config_type_t * gate, char * val_key, char * doc)
+{
+	mpc_conf_config_type_elem_t *val = mpc_conf_config_type_get(gate, val_key);
+
+	if(!val)
+	{
+		mpc_conf_config_type_print(gate, MPC_CONF_FORMAT_XML);
+		bad_parameter("'%s' gate should contain a '%s' value", gate->name, val_key);
+	}
+
+	if(doc)
+	{
+		mpc_conf_config_type_elem_set_doc(val, doc);
+	}
+
+	long int ret = 0;
+
+	if(val->type == MPC_CONF_BOOL)
+	{
+		int * ival = (int*)val->addr;
+		ret = *ival;
+	}
+	else
+	{
+		mpc_conf_config_type_print(gate, MPC_CONF_FORMAT_XML);
+		bad_parameter("In gate '%s' entry '%s' should be BOOL (true or false) not '%s'", gate->name, val_key, mpc_conf_type_name(val->type));
+	}
+
+	return ret;
+}
+
+
 static inline int ___parse_rail_gate(struct sctk_runtime_config_struct_net_gate * cur_unfolded_gate,
 								 mpc_conf_config_type_elem_t* tgate)
 {
@@ -386,26 +424,68 @@ static inline int ___parse_rail_gate(struct sctk_runtime_config_struct_net_gate 
 
 	}else if(!strcmp(name, "probabilistic"))
 	{
+		mpc_conf_config_type_elem_set_doc(tgate, "A gate defining a propability of taking the rail (0-100)");
 		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_PROBABILISTIC;
-
-		long int proba = __gate_get_long_int(gate, "probability");
+		long int proba = __gate_get_long_int(gate, "probability", "Probability of taking the rail");
 		___assert_single_elem_in_gate(gate, "probability");
+		cur_unfolded_gate->value.probabilistic.probability = proba;
 	}else if(!strcmp(name, "minsize"))
 	{
+		mpc_conf_config_type_elem_set_doc(tgate, "A gate defining a minimum size in bytes for taking the rail");
 		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_MINSIZE;
-
+		long int minsize = __gate_get_long_int(gate, "value", "Minimum size to use this rail");
+		___assert_single_elem_in_gate(gate, "value");
+		cur_unfolded_gate->value.minsize.value = minsize;
 	}else if(!strcmp(name, "maxsize"))
 	{
+		mpc_conf_config_type_elem_set_doc(tgate, "A gate defining a maximum size in bytes for taking the rail");
 		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_MAXSIZE;
-
+		long int maxsize = __gate_get_long_int(gate, "value", "Maximum size to use this rail");
+		___assert_single_elem_in_gate(gate, "value");
+		cur_unfolded_gate->value.maxsize.value = maxsize;
 	}else if(!strcmp(name, "msgtype"))
 	{
+		mpc_conf_config_type_elem_set_doc(tgate, "A gate filtering message types (process, task, emulated_rma, common)");
+
 		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_MSGTYPE;
+
+		cur_unfolded_gate->value.msgtype.process = __gate_get_bool(gate, "process", 
+																	   "Process Specific Messages can use this rail");
+		cur_unfolded_gate->value.msgtype.task = __gate_get_bool(gate, "task",
+																	"Task specific messages can use this rail");
+		cur_unfolded_gate->value.msgtype.emulated_rma = __gate_get_bool(gate, "emulatedrma",
+																			"Emulated RDMA can use this rail");
+		cur_unfolded_gate->value.msgtype.common = __gate_get_bool(gate, "common",
+																	"Common messages (MPI) can use this raill");
 
 	}else if(!strcmp(name, "user"))
 	{
-		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_USER;
+		mpc_conf_config_type_elem_set_doc(tgate, "A gate filtering message types using a custom function");
 
+		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_USER;
+		
+		mpc_conf_config_type_elem_t *fname = mpc_conf_config_type_get(gate, "funcname");
+
+		if(!fname)
+		{
+			bad_parameter("Gate %s requires a function name to be passed in as 'funcname'", name);
+		}
+
+		mpc_conf_config_type_elem_set_doc(fname, "Function used to filter our messages int func( sctk_rail_info_t * rail, mpc_lowcomm_ptp_message_t * message , void * gate_config )");
+
+
+		if(fname->type != MPC_CONF_STRING)
+		{
+		bad_parameter("In gate '%s' entry 'funcname' should be STRING not '%s'", name, mpc_conf_type_name(fname->type));
+
+		}
+
+		char * gate_name = mpc_conf_type_elem_get_as_string(fname);
+
+		cur_unfolded_gate->value.user.gatefunc.name = strdup(gate_name);
+
+		void * ptr = dlsym(NULL, gate_name);
+		cur_unfolded_gate->value.user.gatefunc.value = ptr;
 	}else
 	{
 		bad_parameter("Cannot parse gate type '%s' available types are:\n[%s]", name, "boolean, probabilistic, minsize, maxsize, msgtype, user");

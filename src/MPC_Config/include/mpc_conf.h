@@ -41,6 +41,8 @@ int mpc_conf_config_type_elem_set_from_elem(mpc_conf_config_type_elem_t *elem, m
 
 int mpc_conf_config_type_elem_set(mpc_conf_config_type_elem_t *elem, mpc_conf_type_t type, void *ptr);
 
+int mpc_conf_config_type_elem_set_doc(mpc_conf_config_type_elem_t *elem, char * doc);
+
 int mpc_conf_config_type_elem_set_from_string(mpc_conf_config_type_elem_t *elem, mpc_conf_type_t type, char *string);
 
 void mpc_conf_config_type_elem_set_to_free(mpc_conf_config_type_elem_t *elem, int to_free);
